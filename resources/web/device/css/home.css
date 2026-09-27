@@ -1,18 +1,74 @@
-body
-{
-    background-color:#eeeeee;
-    font-family: Arial, sans-serif;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
+/* Device tab placeholder ("Printer Connection") on Material Design 3 roles.
+   Light tokens live here; css/dark.css redefines the same tokens for the dark
+   colour scheme and for body.dark, so linking both files is safe in either
+   theme. Layout: the body is a scroll container of at least one viewport, and
+   the card is centred only when it fits ("safe center"), so a card taller than
+   the view starts at the top instead of overflowing above it where no scrollbar
+   can reach (the previous height:100vh + align-items:center did exactly that). */
+:root {
+    --md-surface: #faf8fd;
+    --md-surface-container-lowest: #ffffff;
+    --md-on-surface: #1a1b1f;
+    --md-on-surface-variant: #44464e;
+    --md-outline-variant: #c5c6d0;
+    --md-shape-large: 16px;
+    --md-font: "Roboto Flex", Roboto, "Segoe UI", system-ui, sans-serif;
+}
+
+html, body {
     margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: var(--md-surface);
+    color: var(--md-on-surface);
+    font-family: var(--md-font);
+    display: flex;
+    flex-direction: column;
+    justify-content: safe center;
+    align-items: center;
+    box-sizing: border-box;
+    min-height: 100vh;
+    padding: 24px;
+    overflow-y: auto;
 }
 
 .container {
+    box-sizing: border-box;
+    width: min(720px, 100%);
     text-align: center;
-    padding: 30px;
-    border-radius: 10px;
-    background-color: #ffffff;
-    box-shadow: 0 4px 6px rgba(39, 39, 39, 0.1);
+    padding: 24px;
+    border-radius: var(--md-shape-large);
+    background-color: var(--md-surface-container-lowest);
+    border: 1px solid var(--md-outline-variant);
+    /* MD3 elevation level 1 */
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.30), 0 1px 3px 1px rgba(0, 0, 0, 0.15);
+}
+
+h1 {
+    /* headline-small */
+    margin: 0 0 8px;
+    font-size: 24px;
+    line-height: 32px;
+    font-weight: 400;
+    color: var(--md-on-surface);
+    overflow-wrap: anywhere;
+}
+
+p {
+    /* body-medium */
+    margin: 0 0 16px;
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--md-on-surface-variant);
+    overflow-wrap: anywhere;
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+    border-radius: 12px;
 }

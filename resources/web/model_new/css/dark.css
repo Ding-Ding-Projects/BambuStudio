@@ -1,52 +1,49 @@
-
+/*---Material Design 3 dark theme---
+   Appended last by globalapi.js (SwitchDarkMode) when the app runs in dark
+   mode. Overriding the token values re-themes every element that references
+   var(--md-*), so element-level rules below are only needed for fixed image
+   assets and the third-party CKEditor chrome.
+   Values mirror ui-md3/design-system/tokens/colors.css (dark). */
 :root {
-  --dark-color-base-text: #B3B3B5;
+  color-scheme: dark;
+  --md-surface: #1b1c21;
+  --md-surface-dim: #161619;
+  --md-surface-bright: #3b3c43;
+  --md-sc-lowest: #131317;
+  --md-sc-low: #202127;
+  --md-sc: #25262b;
+  --md-sc-high: #2f3036;
+  --md-sc-highest: #393a41;
+  --md-on-surface: #e8e7ee;
+  --md-on-surface-variant: #cdced8;
+  --md-outline: #94959f;
+  --md-outline-variant: #4a4c54;
+  --md-inverse-surface: #e3e2e9;
+  --md-inverse-on: #2f3036;
+  --md-inverse-primary: #146c2e;
+  --md-error: #ffb4ab;
+  --md-error-container: #93000a;
+  --md-on-error: #690005;
+  --md-on-error-container: #ffdad6;
+  --md-scrim: rgba(0, 0, 0, 0.6);
+  --md-shadow: rgba(0, 0, 0, 0.5);
+  --md-primary: #8bd89b;
+  --md-on-primary: #00391a;
+  --md-primary-container: #095228;
+  --md-on-primary-container: #a6f4b8;
+  --md-accent: #8bd89b;
+  --md-secondary-container: #2b3a2f;
+  --md-on-secondary-container: #cfe9d3;
 }
 
-html, body
-{
-	background-color: #242428;
-	color: #B3B3B5;
-}
-
-.topTool {
-  background-color: #242428;
-}
-
+/* return.svg is a dark glyph — invert it so it stays visible on the dark bar. */
 .returnBtn img {
   filter: invert(87%) sepia(1%) saturate(0%) hue-rotate(192deg)
           brightness(91%) contrast(86%);
 }
 
-input {
-  background-color: #242428;
-  color: #B3B3B5;
-}
-
-.editorTitle {
-  color: #B3B3B5;
-}
-
-.accessory-rule-wrapper {
-  background-color: #242428;
-  border: 1px solid rgba(255, 255, 255, 0.247);
-}
-.accessory-rule-title {
-  color: #B3B3B5;
-}
-
-.nav-item {
-  color: var(--dark-color-base-text);
-}
-
-.Navigation .indicator {
-  background-color: var(--dark-color-base-text);;
-}
-.Navigation .rail {
-  background-color: #3d3d3d;
-}
-
-/*CKEditor*/
+/*---CKEditor dark theme (third-party chrome). Surfaces follow the MD3 dark
+     tokens; the remaining neutral shades are CKEditor's own palette.---*/
 :root {
     /* Helper variables to avoid duplication in the colors. */
 
@@ -58,11 +55,11 @@ input {
 
     --ck-content-font-color: var(--ck-custom-white);
 
-    --ck-color-base-background: #242428;
-    --ck-color-base-border: hsl(240, 4%, 24%);
+    --ck-color-base-background: var(--md-sc-lowest);
+    --ck-color-base-border: var(--md-outline-variant);
 
     --ck-color-focus-border: hsl(208, 90%, 62%);
-    --ck-color-text: hsl(0, 0%, 98%);
+    --ck-color-text: var(--md-on-surface);
     --ck-color-shadow-drop: hsla(0, 0%, 0%, 0.2);
     --ck-color-shadow-inner: hsla(0, 0%, 0%, 0.1);
 

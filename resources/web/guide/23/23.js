@@ -1,981 +1,594 @@
 
-/* =====================================================================
- *  23.js - System & Custom Filament Selection (Refactored)
- *  Compatible with the same C++ backend commands:
- *    request_userguide_profile / response_userguide_profile
- *    save_userguide_filaments / user_guide_finish / user_guide_cancel
- *    request_custom_filaments / update_custom_filaments
- *    create_custom_filament / modify_custom_filament
- * ===================================================================== */
+var m_ProfileItem;
+var searchTags = [];
+var searchTimer = null;
+var customFilaments = [];
 
-var m_ProfileItem = null;
+var FilamentPriority=new Array( "pla","abs","pet","tpu","pc");
+var VendorPriority=new Array("bambu lab","bambulab","bbl","kexcelled","polymaker","esun","generic");
 
-// Parsed data
-var g_models = [];       // [{model, nozzle_selected, vendor, materials}]
-var g_filaments = [];    // [{key, name, shortName, vendor, type, models, selected, filalist}]
-var g_printerList = [];  // unique printer names
-var g_vendorList = [];   // unique vendor names
-var g_typeList = [];     // unique type names
+function OnInit()
+{
+	[['#printerBtn', '#MachineList'], ['#filatypeBtn', '#FilatypeList'],
+		['#vendorBtn', '#VendorList']].forEach(function(pair) {
+		$(pair[0]).on('click', function() {
+			const expanded = $(this).attr('aria-expanded') === 'true';
+			$(this).attr('aria-expanded', String(!expanded));
+			$(this).find('.CArrow').toggleClass('active', expanded);
+			$(pair[1]).slideToggle(300);
+		}).on('keydown', function(event) {
+			if (event.key === 'Enter' || event.key === ' ') {
+				event.preventDefault();
+				$(this).trigger('click');
+			}
+		});
+	});
 
-// Filter state: selected items (empty = all selected)
-var g_selectedPrinters = [];  // selected printer model names
-var g_selectedVendors = [];   // selected vendor names
-var g_selectedTypes = [];     // selected type names
-
-// UI state
-var g_searchKeywords = []; // active search keyword tags
-
-var FilamentPriority = ["PLA", "ABS", "PETG", "PET", "TPU", "PC", "PA", "ASA"];
-var VendorPriority = ["Bambu Lab", "BambuLab", "BBL", "Generic", "Kexcelled", "Polymaker", "eSUN"];
-
-// IME composing state
-var g_isComposing = false;
-var g_searchTimer = null;
-
-// ===================== Init =====================
-function OnInit() {
-    TranslatePage();
-    // "custom=1" is only set when Plater reopens this page right after creating/
-    // editing a custom filament (see GuideFrame::SetStartPage's BBL_FILAMENT_ONLY
-    // branch, forwarded through guide/0's JumpToTarget()) — land on the Custom tab
-    // so the user sees what they just made. Every other entry point (first-run
-    // wizard, "add filament" from a preset combobox, ShowOnlyFilament on startup)
-    // still defaults to the System tab.
-    OnSelectMenu(GetQueryString('custom') === '1' ? 2 : 1);
-    RequestProfile();
-    RequestCustomFilaments();
-
-
-    
-
-        // Apply translated placeholder for search input
-    var searchEl = document.getElementById('searchInput');
-    if (searchEl) {
-        var lang = localStorage.getItem('BambuWebLang') || 'en';
-        if (!LangText.hasOwnProperty(lang)) lang = 'en';
-        var ph = (LangText[lang] && LangText[lang]['t253']) || (LangText['en'] && LangText['en']['t253']) || 'Search filament name and type';
-        searchEl.placeholder = ph;
+  $('#SelectAllCheckbox').change(function() {
+    if ($(this).is(':checked')) {
+      SelectAllFilament(1);
+    } else {
+      SelectAllFilament(0);
     }
-    if (searchEl) {
-        searchEl.addEventListener('compositionstart', function() {
-            g_isComposing = true;
-        });
-        searchEl.addEventListener('compositionend', function() {
-            g_isComposing = false;
-            doLiveFilter();
-        });
-        searchEl.addEventListener('input', function() {
-            if (!g_isComposing) {
-                doLiveFilterDebounced();
-            }
-        });
-        searchEl.addEventListener('keydown', function(e) {
-            if (e.keyCode === 13 && !g_isComposing) {
-                e.preventDefault();
-                commitSearch();
-            }
-        });
+  });
+	let composing = false;
+	$('#filamentSearch').on('compositionstart', function() { composing = true; })
+		.on('compositionend', function() { composing = false; SortFilament(); })
+		.on('input', function() {
+			if (composing) return;
+			clearTimeout(searchTimer);
+			searchTimer = setTimeout(SortFilament, 150);
+		}).on('keydown', function(event) {
+			if (event.key === 'Enter' && !composing) {
+				event.preventDefault();
+				addSearchTag();
+			}
+		});
+	$('#addSearchTag').on('click', addSearchTag);
+	$('#CFilament_Sort').on('change', renderCustomFilaments);
+	TranslatePage();
+  OnSelectMenu(GetQueryString('custom') === '1' ? 2 : 1);
+	
+	RequestProfile();
+	
+	RequestCustomFilaments();
+	//TestCustomFilaments();
+	//OnSelectMenu(2);
+}
+
+function RequestProfile()
+{
+	var tSend={};
+	tSend['sequence_id']=Math.round(new Date() / 1000);
+	tSend['command']="request_userguide_profile";
+	
+	SendWXMessage( JSON.stringify(tSend) );
+}
+
+//function RequestModelSelect()
+//{
+//	var tSend={};
+//	tSend['sequence_id']=Math.round(new Date() / 1000);
+//	tSend['command']="request_userguide_modelselected";
+//	
+//	SendWXMessage( JSON.stringify(tSend) );
+//}
+
+function HandleStudio(pVal)
+{
+	let strCmd=pVal['command'];
+	//alert(strCmd);
+	
+	if(strCmd=='response_userguide_profile')
+	{
+		m_ProfileItem=pVal['response'];
+		SortUI();
+	}
+	else if(strCmd=='update_custom_filaments')
+	{
+		UpdateCustomFilaments( pVal['data'] );
+	}
+}
+
+function GetFilamentShortname( sName )
+{
+	let sShort=sName.split('@')[0].trim();
+	
+	return sShort;
+}
+
+function addSearchTag()
+{
+	const term = String($('#filamentSearch').val() || '').trim().toLowerCase();
+	if (term && !searchTags.includes(term)) searchTags.push(term);
+	$('#filamentSearch').val('').trigger('focus');
+	renderSearchTags();
+	SortFilament();
+}
+
+function renderSearchTags()
+{
+	const list = $('#searchTags').empty();
+	searchTags.forEach(function(term) {
+		$('<button type="button">').addClass('searchTag')
+			.attr('aria-label', GetCurrentPlainTextByKey('t88') + ' ' + term)
+			.text(term + ' ×').on('click', function() {
+				searchTags = searchTags.filter(item => item !== term);
+				renderSearchTags();
+				SortFilament();
+			}).appendTo(list);
+	});
+}
+
+
+function SortUI()
+{
+  const models = (m_ProfileItem.model || []).filter(model => model.nozzle_selected);
+  const filaments = Object.entries(m_ProfileItem.filament || {});
+  const types = new Map();
+  const vendors = new Map();
+  const rows = new Map();
+  $('#MachineList .filter-option, #FilatypeList .filter-option, #VendorList .filter-option').remove();
+  $('#ItemBlockArea').empty();
+  for (const model of models) {
+    appendFilterOption('#MachineList', String(model.model || ''), 'mode', String(model.nozzle_selected || ''), MachineClick);
+  }
+  $('#MachineList input').prop('checked', true);
+  if (models.length <= 1) {
+    $('#MachineList').hide();
+    $('#printerBtn').attr('aria-expanded', 'false');
+  } else {
+    $('#MachineList').show();
+    $('#printerBtn').attr('aria-expanded', 'true');
+  }
+  for (const [profileKey, filament] of filaments) {
+    const wholeName = String(filament.name || profileKey).trim();
+    const shortName = GetFilamentShortname(wholeName);
+    const vendor = String(filament.vendor || '');
+    const type = String(filament.type || '');
+    const compatibility = String(filament.models || '');
+    const compatible = !compatibility || models.some(model =>
+      String(model.nozzle_selected).split(';').some(nozzle =>
+        compatibility.includes('[' + model.model + '++' + nozzle + ']')));
+    if (!compatible) continue;
+    types.set(type.toLowerCase(), type);
+    vendors.set(vendor.toLowerCase(), vendor);
+    const key = JSON.stringify([vendor, type, shortName]);
+    if (!rows.has(key)) {
+      const input = $('<input type="checkbox">').attr({
+        vendor: vendor, filatype: type, name: shortName
+      }).on('change', updateSelectAllCheckbox);
+      const row = $('<label>').addClass('filament-row').append(input, $('<span>').text(shortName));
+      row.data('models', []).data('filamentKeys', []);
+      rows.set(key, row);
+      $('#ItemBlockArea').append(row);
     }
+    const row = rows.get(key);
+    row.data('models').push(compatibility);
+    row.data('filamentKeys').push(profileKey);
+    if (Number(filament.selected) === 1) row.find('input').prop('checked', true);
+  }
+  function ordered(map, priority) {
+    return [...map].sort((a, b) => {
+      const ap = priority.indexOf(a[0]), bp = priority.indexOf(b[0]);
+      if (ap !== bp) return (ap < 0 ? 999 : ap) - (bp < 0 ? 999 : bp);
+      return a[1].localeCompare(b[1]);
+    }).map(entry => entry[1]);
+  }
+  ordered(types, FilamentPriority).forEach(type =>
+    appendFilterOption('#FilatypeList', type, 'filatype', '', FilaClick));
+  ordered(vendors, VendorPriority).forEach(vendor =>
+    appendFilterOption('#VendorList', vendor, 'vendor', '', VendorClick));
+  $('#FilatypeList input, #VendorList input').prop('checked', true);
+  if ($('#ItemBlockArea input:checked').length === 0) ChooseDefaultFilament();
+  SortFilament();
 }
 
-function doLiveFilterDebounced() {
-    if (g_searchTimer) clearTimeout(g_searchTimer);
-    g_searchTimer = setTimeout(doLiveFilter, 150);
+function appendFilterOption(parent, value, attribute, extra, handler)
+{
+  const input = $('<input type="checkbox">').addClass('inputIndent').attr(attribute, value)
+    .on('change', handler);
+  if (attribute === 'mode') input.attr('nozzle', extra);
+  $('<label>').addClass('checkboxText filter-option').append(input, $('<span>').text(value))
+    .appendTo(parent);
 }
 
-function doLiveFilter() {
-    // Live filter without committing as tag
-    renderFilamentList();
+function ChooseAllMachine()
+{
+	let bCheck=$("#MachineList input:first").prop("checked");
+	
+	$("#MachineList input").prop("checked",bCheck);
+	
+	SortFilament();
 }
 
-function commitSearch() {
-    // Commit current input as a search keyword tag
-    var val = ($('#searchInput').val() || '').trim();
-    if (val && g_searchKeywords.indexOf(val) < 0) {
-        g_searchKeywords.push(val);
-        $('#searchInput').val('');
-        updateTags();
-        renderFilamentList();
+function MachineClick()
+{
+	let nChecked=$("#MachineList input:gt(0):checked").length
+	let nAll    =$("#MachineList input:gt(0)").length
+	
+	if(nAll==nChecked)
+	{
+		$("#MachineList input:first").prop("checked",true);
+	}
+	else
+	{
+		$("#MachineList input:first").prop("checked",false);
+	}
+	
+	SortFilament();
+}
+
+function ChooseAllFilament()
+{
+	let bCheck=$("#FilatypeList input:first").prop("checked");	
+	$("#FilatypeList input").prop("checked",bCheck);	
+	
+	SortFilament();
+}
+
+function FilaClick()
+{
+	let nChecked=$("#FilatypeList input:gt(0):checked").length
+	let nAll    =$("#FilatypeList input:gt(0)").length
+	
+	if(nAll==nChecked)
+	{
+		$("#FilatypeList input:first").prop("checked",true);
+	}
+	else
+	{
+		$("#FilatypeList input:first").prop("checked",false);
+	}
+	
+	SortFilament();	
+}
+
+function ChooseAllVendor()
+{
+	let bCheck=$("#VendorList input:first").prop("checked");	
+	$("#VendorList input").prop("checked",bCheck);	
+	
+	SortFilament();
+}
+
+function VendorClick()
+{
+	let nChecked=$("#VendorList input:gt(0):checked").length
+	let nAll    =$("#VendorList input:gt(0)").length
+	
+	if(nAll==nChecked)
+	{
+		$("#VendorList input:first").prop("checked",true);
+	}
+	else
+	{
+		$("#VendorList input:first").prop("checked",false);
+	}
+	
+	SortFilament();
+}
+
+
+
+function SortFilament()
+{
+  const selectedModels = [];
+  $('#MachineList input:gt(0):checked').each(function() {
+    const model = $(this).attr('mode');
+    for (const nozzle of String($(this).attr('nozzle') || '').split(';')) {
+      if (nozzle) selectedModels.push('[' + model + '++' + nozzle + ']');
     }
+  });
+  const types = new Set($('#FilatypeList input:gt(0):checked').map(function() {
+    return $(this).attr('filatype');
+  }).get());
+  const vendors = new Set($('#VendorList input:gt(0):checked').map(function() {
+    return $(this).attr('vendor');
+  }).get());
+  const terms = searchTags.concat(String($('#filamentSearch').val() || '').trim().toLowerCase() || [])
+    .filter(Boolean);
+  let visible = 0;
+  $('#ItemBlockArea .filament-row').each(function() {
+    const row = $(this), input = row.find('input');
+    const compatibility = row.data('models') || [];
+    const modelMatch = selectedModels.length === 0 || compatibility.some(value =>
+      !value || selectedModels.some(model => value.includes(model)));
+    const typeMatch = types.size === 0 || types.has(input.attr('filatype'));
+    const vendorMatch = vendors.size === 0 || vendors.has(input.attr('vendor'));
+    const haystack = [input.attr('name'), input.attr('vendor'), input.attr('filatype')]
+      .join(' ').toLowerCase();
+    const textMatch = terms.length === 0 || terms.some(term => haystack.includes(term));
+    const show = (selectedModels.length + types.size + vendors.size > 0) &&
+      modelMatch && typeMatch && vendorMatch && textMatch;
+    row.toggle(show);
+    if (show) visible++;
+  });
+  const format = GetCurrentPlainTextByKey('t254') || 'Filter results: {n} matches';
+  $('#filterResultText').text(format.split('{n}').join(String(visible)));
+  $('#filamentEmpty').prop('hidden', visible !== 0);
+  updateFilterCount('MachineList', 'printerCount');
+  updateFilterCount('FilatypeList', 'filatypeCount');
+  updateFilterCount('VendorList', 'vendorCount');
+  updateSelectAllCheckbox();
 }
 
-function RequestProfile() {
-    var tSend = {};
-    tSend['sequence_id'] = Math.round(new Date() / 1000);
-    tSend['command'] = "request_userguide_profile";
-    SendWXMessage(JSON.stringify(tSend));
+function updateFilterCount(list, count)
+{
+  $('#' + count).text('(' + $('#' + list + ' input:gt(0):checked').length +
+    '/' + $('#' + list + ' input:gt(0)').length + ')');
 }
 
-function HandleStudio(pVal) {
-    let strCmd = pVal['command'];
-    if (strCmd == 'response_userguide_profile') {
-        m_ProfileItem = pVal['response'];
-        parseProfileData();
-        buildUI();
-        UpdateWizardFinishBtnLabel();
+function updateSelectAllCheckbox()
+{
+  const visible = $('#ItemBlockArea .filament-row:visible input');
+  const selected = visible.filter(':checked').length;
+  $('#SelectAllCheckbox').prop('checked', visible.length > 0 && selected === visible.length)
+    .prop('indeterminate', selected > 0 && selected < visible.length);
+}
 
-        // Fresh session (no filament carries a saved selection yet): mirror the
-        // legacy ConfigWizard's on-printer-pick auto-default behavior by
-        // pre-checking the recommended default filaments for the selected models.
-        var anySelected = false;
-        for (var i = 0; i < g_filaments.length; i++) {
-            if (g_filaments[i].selected) { anySelected = true; break; }
-        }
-        if (!anySelected && g_models.length > 0) {
-            ChooseDefaultFilament();
-        }
-    } else if (strCmd == 'update_custom_filaments') {
-        UpdateCustomFilaments(pVal['data']);
+function SelectAllFilament(select)
+{
+  $('#ItemBlockArea .filament-row:visible input').prop('checked', Boolean(select));
+  updateSelectAllCheckbox();
+}
+
+function ChooseDefaultFilament()
+{
+  const models = new Set($('#MachineList input:gt(0)').map(function() {
+    return $(this).attr('mode');
+  }).get());
+  const defaults = new Set();
+  for (const model of (m_ProfileItem.model || [])) {
+    if (models.has(model.model)) {
+      String(model.materials || '').split(';').filter(Boolean).forEach(name => defaults.add(name));
     }
+  }
+  $('#ItemBlockArea .filament-row').each(function() {
+    const names = $(this).data('filamentKeys') || [];
+    $(this).find('input').prop('checked', names.some(name => defaults.has(name)));
+  });
+  ShowNotice(0);
 }
 
-// ===================== Data Parsing =====================
-function GetFilamentShortname(sName) {
-    return sName.split('@')[0].trim();
+function ShowNotice( nShow )
+{
+	if(nShow==0)
+	{
+		$("#NoticeMask").hide();
+		$("#NoticeBody").hide();
+	}
+	else
+	{
+		$("#NoticeMask").show();
+		$("#NoticeBody").show();
+	}
 }
 
-function parseProfileData() {
-    g_models = [];
-    g_filaments = [];
-    var printerSet = {};
-    var vendorSet = {};
-    var typeSet = {};
 
-    // Parse models
-    var nMode = m_ProfileItem["model"].length;
-    for (var n = 0; n < nMode; n++) {
-        var OneMode = m_ProfileItem["model"][n];
-        if (OneMode["nozzle_selected"] != "") {
-            g_models.push(OneMode);
-            printerSet[OneMode['model']] = true;
-        }
-    }
+function ResponseFilamentResult()
+{
+	let FilaSelectedList= $("#ItemBlockArea input:checked");
+	let nAll=FilaSelectedList.length;
 
-    // Build model match strings
-    var modelMatchStrings = [];
-    for (var m = 0; m < g_models.length; m++) {
-        var mdl = g_models[m];
-        var nozzles = mdl['nozzle_selected'].split(';');
-        for (var b = 0; b < nozzles.length; b++) {
-            if (nozzles[b]) modelMatchStrings.push('[' + mdl['model'] + '++' + nozzles[b] + ']');
-        }
-    }
-
-    // Parse filaments
-    var shortNameMap = {}; // key: vendor+type+shortName -> index in g_filaments
-    for (var key in m_ProfileItem['filament']) {
-        var OneFila = m_ProfileItem['filament'][key];
-        var fWholeName = OneFila['name'].trim();
-        var fShortName = GetFilamentShortname(OneFila['name']);
-        var fVendor = OneFila['vendor'];
-        var fType = OneFila['type'];
-        var fSelect = OneFila['selected'];
-        var fModel = OneFila['models'];
-
-        // Check model compatibility
-        var bFind = false;
-        if (fModel == '') {
-            bFind = true;
-        } else {
-            for (var mi = 0; mi < modelMatchStrings.length; mi++) {
-                if (fModel.indexOf(modelMatchStrings[mi]) >= 0) {
-                    bFind = true;
-                    break;
-                }
-            }
-        }
-
-        if (!bFind) continue;
-
-        vendorSet[fVendor] = true;
-        typeSet[fType] = true;
-
-        var mapKey = fVendor + '|' + fType + '|' + fShortName;
-        if (shortNameMap.hasOwnProperty(mapKey)) {
-            var idx = shortNameMap[mapKey];
-            g_filaments[idx].models += fModel;
-            g_filaments[idx].filalist += fWholeName + ';';
-        } else {
-            shortNameMap[mapKey] = g_filaments.length;
-            g_filaments.push({
-                key: key,
-                name: fWholeName,
-                shortName: fShortName,
-                vendor: fVendor,
-                type: fType,
-                models: fModel,
-                selected: (fSelect * 1 == 1),
-                filalist: fWholeName + ';'
-            });
-        }
-    }
-
-    // Build sorted lists
-    g_printerList = Object.keys(printerSet).sort();
-    g_vendorList = sortByPriority(Object.keys(vendorSet), VendorPriority);
-    g_typeList = sortByPriority(Object.keys(typeSet), FilamentPriority);
-
-    // Initialize filter: all selected
-    g_selectedPrinters = g_printerList.slice();
-    g_selectedVendors = g_vendorList.slice();
-    g_selectedTypes = g_typeList.slice();
+	if( nAll==0 )
+	{
+		ShowNotice(1);
+		return false;
+	}
+	
+	let FilaArray=new Array();
+	let seen = new Set();
+	for(let n=0;n<nAll;n++)
+	{
+		let names = $(FilaSelectedList[n]).closest('.filament-row').data('filamentKeys') || [];
+		for (const name of names) {
+			if (!seen.has(name)) {
+				seen.add(name);
+				FilaArray.push(name);
+			}
+		}
+	}
+	
+	var tSend={};
+	tSend['sequence_id']=Math.round(new Date() / 1000);
+	tSend['command']="save_userguide_filaments";
+	tSend['data']={};
+	tSend['data']['filament']=FilaArray;
+	
+	SendWXMessage( JSON.stringify(tSend) );
+	
+	return true;
 }
 
-function sortByPriority(arr, priority) {
-    var priorityLower = priority.map(function(p) { return p.toLowerCase(); });
-    return arr.sort(function(a, b) {
-        var ai = priorityLower.indexOf(a.toLowerCase());
-        var bi = priorityLower.indexOf(b.toLowerCase());
-        if (ai === -1) ai = 999;
-        if (bi === -1) bi = 999;
-        if (ai !== bi) return ai - bi;
-        return a.localeCompare(b);
+
+function CancelSelect()
+{
+	var tSend={};
+	tSend['sequence_id']=Math.round(new Date() / 1000);
+	tSend['command']="user_guide_cancel";
+	tSend['data']={};
+		
+	SendWXMessage( JSON.stringify(tSend) );			
+}
+
+
+function ConfirmSelect()
+{
+	let bRet=ResponseFilamentResult();
+	
+	if(bRet)
+    {
+		var tSend={};
+		tSend['sequence_id']=Math.round(new Date() / 1000);
+		tSend['command']="user_guide_finish";
+		tSend['data']={};
+		tSend['data']['action']="finish";
+		
+		SendWXMessage( JSON.stringify(tSend) );			
+	}
+}
+
+
+function OnSelectMenu( nIndex )
+{
+	switch(nIndex)
+	{
+		case 1:
+			$('#SystemFilamentBtn').addClass('TitleSelected').removeClass('TitleUnselected').attr('aria-pressed', 'true');
+			$('#CustomFilamentBtn').addClass('TitleUnselected').removeClass('TitleSelected').attr('aria-pressed', 'false');
+			$('#SystemFilamentsArea').css('display','flex');
+			$('#CustomFilamentsArea').css('display','none');
+			updateSelectAllCheckbox();
+			break;
+		case 2:
+			$('#CustomFilamentBtn').addClass('TitleSelected').removeClass('TitleUnselected').attr('aria-pressed', 'true');
+			$('#SystemFilamentBtn').addClass('TitleUnselected').removeClass('TitleSelected').attr('aria-pressed', 'false');
+			$('#CustomFilamentsArea').css('display','flex');
+			$('#SystemFilamentsArea').css('display','none');			
+			break;
+	}
+}
+
+function RequestCustomFilaments()
+{
+	var tSend={};
+	tSend['sequence_id']=Math.round(new Date() / 1000);
+	tSend['command']="request_custom_filaments";
+		
+	SendWXMessage( JSON.stringify(tSend) );		
+}
+
+function TestCustomFilaments()
+{
+	let strTest='{"command":"update_custom_filaments","data":[{"id":"P0c71f94","name":"AMOLEN ABS 222"},{"id":"P19cc6c5","name":"PrimaSelect PLA 231654"},{"id":"P93a5c3b","name":"3DJAKE PLA 111"}],"sequence_id":"2000"}';
+	let tItem=JSON.parse(strTest);
+	
+	HandleStudio(tItem);
+}
+
+function UpdateCustomFilaments(CFList)
+{
+  customFilaments = Array.isArray(CFList) ? CFList.slice() : [];
+  renderCustomFilaments();
+}
+
+function renderCustomFilaments()
+{
+  const list = customFilaments.slice();
+  const order = $('#CFilament_Sort').val() || 'newest';
+  const countText = GetCurrentPlainTextByKey('t242') || 'Custom inks: 0';
+  $('#CFilament_Count').text(countText.replace(/0/g, String(list.length)));
+  $('#CFilament_Empty').prop('hidden', list.length !== 0);
+  $('#CFilament_Btn_Area').toggle(list.length !== 0);
+  $('#CFilament_Sort').prop('disabled', list.length === 0);
+  const host = $('#CFilament_List').empty();
+  if (!list.length) return;
+  const name = item => String(item.name || '');
+  const type = item => String(item.type || '');
+  const date = item => String(item.create_time || item.date || '');
+  if (order === 'type') {
+    list.sort((a, b) => type(a).localeCompare(type(b)) || name(a).localeCompare(name(b)));
+  } else {
+    list.sort((a, b) => {
+      const compare = date(a).localeCompare(date(b));
+      return (order === 'oldest' ? compare : -compare) || name(a).localeCompare(name(b));
     });
-}
-
-// ===================== UI Building =====================
-function buildUI() {
-    updateFilterCounts();
-    updateTags();
-    renderFilamentList();
-}
-
-function updateFilterCounts() {
-    $('#printerCount').text('(' + g_selectedPrinters.length + '/' + g_printerList.length + ')');
-    $('#vendorCount').text('(' + g_selectedVendors.length + '/' + g_vendorList.length + ')');
-    $('#filatypeCount').text('(' + g_selectedTypes.length + '/' + g_typeList.length + ')');
-}
-
-// ===================== Tags =====================
-
-function updateTags() {
-    if (g_searchKeywords.length === 0) {
-        $('#tagsArea').removeClass('has-tags');
-        $('#tagsList').html('');
-        return;
-    }
-
-    $('#tagsArea').addClass('has-tags');
-
-    var html = '';
-    for (var i = 0; i < g_searchKeywords.length; i++) {
-        html += '<span class="tag" data-idx="' + i + '">' + escapeHtml(g_searchKeywords[i]) +
-                '<span class="tag-close" data-value="' + escapeHtml(g_searchKeywords[i]) + '" onClick="removeSearchTag(this)">&times;</span></span>';
-    }
-        html += '<span class="tags-clear" onClick="clearAllFilters()">\u6e05\u7a7a\u7b5b\u9009</span>';
-    $('#tagsList').html(html);
-
-    // Check if needs collapsing
-    setTimeout(limitTagsToRows, 0);
-}
-
-var g_tagsExpanded = false;
-
-function limitTagsToRows() {
-    var container = document.getElementById('tagsList');
-    if (!container) return;
-
-    // Remove old control buttons
-    $(container).find('.tags-ellipsis, .tags-collapse').remove();
-
-    var tags = container.querySelectorAll('.tag');
-    var clearEl = container.querySelector('.tags-clear');
-    if (tags.length === 0) return;
-
-    // Show all tags
-    for (var i = 0; i < tags.length; i++) {
-        tags[i].style.display = '';
-    }
-    if (clearEl) clearEl.style.display = '';
-
-    if (g_tagsExpanded) {
-        // Insert collapse before clear
-        if (clearEl) $(clearEl).before('<span class="tags-collapse" onClick="collapseSearchTags()">\u6536\u8d77</span>');
-        return;
-    }
-
-    // Measure: is clear button on row 3+?
-    var firstTop = tags[0].offsetTop;
-    var rowHeight = tags[0].offsetHeight;
-    var row2Bottom = firstTop + rowHeight * 2 + 6; // 2 rows + gap
-
-    if (!clearEl || clearEl.offsetTop < row2Bottom) {
-        return; // everything fits in 2 rows
-    }
-
-    // Need to collapse: find how many tags fit in ~1.5 rows (leave space for ... + clear)
-    var visibleCount = tags.length;
-    for (var i = 0; i < tags.length; i++) {
-        if (tags[i].offsetTop >= firstTop + rowHeight + 6) {
-            // This tag is on row 2+, start checking from here
-            visibleCount = i;
-            break;
-        }
-    }
-
-    // Try showing tags until ... + clear would overflow row 2
-    // Hide all from visibleCount, add ..., check if it fits
-    for (var tryCount = tags.length - 1; tryCount >= 0; tryCount--) {
-        // Hide tags after tryCount
-        for (var i = 0; i < tags.length; i++) {
-            tags[i].style.display = (i < tryCount) ? '' : 'none';
-        }
-        // Remove old ellipsis
-        $(container).find('.tags-ellipsis').remove();
-        // Insert ellipsis before clear
-        $(clearEl).before('<span class="tags-ellipsis" title="\u663e\u793a\u5168\u90e8" onClick="expandSearchTags()">\u2026</span>');
-
-        // Check if clear is now within row 2
-        if (clearEl.offsetTop < row2Bottom) {
-            return; // done
-        }
-    }
-}
-
-function expandSearchTags() {
-    g_tagsExpanded = true;
-    limitTagsToRows();
-}
-
-function collapseSearchTags() {
-    g_tagsExpanded = false;
-    limitTagsToRows();
-}
-
-function removeSearchTag(el) {
-    var value = $(el).data('value');
-    g_searchKeywords = g_searchKeywords.filter(function(v) { return v !== value; });
-    updateTags();
-    renderFilamentList();
-}
-
-
-
-function clearAllFilters() {
-    g_searchKeywords = [];
-    $('#searchInput').val('');
-    updateTags();
-    renderFilamentList();
-}
-
-// ===================== Filter Sections (Accordion) =====================
-function toggleFilterSection(type) {
-    var section = $('#section_' + type);
-    var isOpen = section.hasClass('open');
-
-    if (isOpen) {
-        // Close this section
-        section.removeClass('open');
-    } else {
-        // Open this section, render dropdown content
-        section.addClass('open');
-        renderFilterDropdown(type);
-    }
-}
-
-function renderFilterDropdown(type) {
-    var dropdownId = '#dropdown_' + type;
-    var list, selected;
-    if (type === 'printer') {
-        list = g_printerList; selected = g_selectedPrinters;
-    } else if (type === 'vendor') {
-        list = g_vendorList; selected = g_selectedVendors;
-    } else {
-        list = g_typeList; selected = g_selectedTypes;
-    }
-
-    var html = '';
-    var allSelected = (selected.length === list.length && list.length > 0);
-    html += '<div class="filter-dd-item select-all"><input type="checkbox" id="dd_all_' + type + '" ' +
-            (allSelected ? 'checked' : '') + ' onChange="onDdAllChange(\'' + type + '\')" />' +
-            '<label for="dd_all_' + type + '">Select All</label></div>';
-    for (var i = 0; i < list.length; i++) {
-        var checked = selected.indexOf(list[i]) >= 0;
-        var uid = 'dd_' + type + '_' + i;
-        html += '<div class="filter-dd-item"><input type="checkbox" id="' + uid + '" value="' + escapeHtml(list[i]) + '" ' +
-                (checked ? 'checked' : '') + ' onChange="onDdItemChange(\'' + type + '\')" />' +
-                '<label for="' + uid + '" title="' + escapeHtml(list[i]) + '">' + escapeHtml(list[i]) + '</label></div>';
-    }
-    $(dropdownId).html(html);
-}
-
-function onDdAllChange(type) {
-    var checked = $('#dd_all_' + type).prop('checked');
-    var dropdown = $('#dropdown_' + type);
-    dropdown.find('input[type="checkbox"]').prop('checked', checked);
-
-    if (type === 'printer') {
-        g_selectedPrinters = checked ? g_printerList.slice() : [];
-    } else if (type === 'vendor') {
-        g_selectedVendors = checked ? g_vendorList.slice() : [];
-    } else {
-        g_selectedTypes = checked ? g_typeList.slice() : [];
-    }
-    updateFilterCounts();
-    updateTags();
-    renderFilamentList();
-}
-
-function onDdItemChange(type) {
-    var dropdown = $('#dropdown_' + type);
-    var items = dropdown.find('input[type="checkbox"][value]');
-    var selected = [];
-    items.each(function() {
-        if ($(this).prop('checked')) selected.push($(this).val());
+  }
+  function addGroup(title, items) {
+    if (!items.length) return;
+    const group = $('<section>').addClass('customGroup');
+    const heading = $('<button type="button">').addClass('customGroupHeading')
+      .attr('aria-expanded', 'true').text(title + ' (' + items.length + ')');
+    const body = $('<div>').addClass('customGroupBody');
+    heading.on('click', function() {
+      const expanded = heading.attr('aria-expanded') === 'true';
+      heading.attr('aria-expanded', String(!expanded));
+      body.prop('hidden', expanded);
     });
-
-    if (type === 'printer') {
-        g_selectedPrinters = selected;
-    } else if (type === 'vendor') {
-        g_selectedVendors = selected;
-    } else {
-        g_selectedTypes = selected;
-    }
-
-    // Update "Select All" checkbox
-    var list = type === 'printer' ? g_printerList : (type === 'vendor' ? g_vendorList : g_typeList);
-    $('#dd_all_' + type).prop('checked', selected.length === list.length);
-
-    updateFilterCounts();
-    updateTags();
-    renderFilamentList();
+    items.forEach(item => appendCustomRow(body, item));
+    group.append(heading, body).appendTo(host);
+  }
+  if (order === 'newest') {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const week = today - 7 * 86400000;
+    const todayItems = [], weekItems = [], earlierItems = [];
+    list.forEach(item => {
+      const timestamp = Date.parse(date(item).replace(/-/g, '/'));
+      if (Number.isFinite(timestamp) && timestamp >= today) todayItems.push(item);
+      else if (Number.isFinite(timestamp) && timestamp >= week) weekItems.push(item);
+      else earlierItems.push(item);
+    });
+    addGroup(GetCurrentPlainTextByKey('t255') || 'Today', todayItems);
+    addGroup(GetCurrentPlainTextByKey('t256') || 'This week', weekItems);
+    addGroup(GetCurrentPlainTextByKey('t257') || 'Earlier', earlierItems);
+  } else if (order === 'type') {
+    const groups = new Map();
+    list.forEach(item => {
+      const key = type(item) || GetCurrentPlainTextByKey('t245') || 'Ink type';
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(item);
+    });
+    groups.forEach((items, title) => addGroup(title, items));
+  } else {
+    list.forEach(item => appendCustomRow(host, item));
+  }
 }
 
-// ===================== Filament List Rendering =====================
-function getFilteredFilaments() {
-    var searchText = ($('#searchInput').val() || '').toLowerCase();
-
-    // Build model match list from selected printers
-    var modelMatchStrings = [];
-    for (var m = 0; m < g_models.length; m++) {
-        var mdl = g_models[m];
-        if (g_selectedPrinters.indexOf(mdl['model']) < 0) continue;
-        var nozzles = mdl['nozzle_selected'].split(';');
-        for (var b = 0; b < nozzles.length; b++) {
-            if (nozzles[b]) modelMatchStrings.push('[' + mdl['model'] + '++' + nozzles[b] + ']');
-        }
-    }
-
-    var result = [];
-    for (var i = 0; i < g_filaments.length; i++) {
-        var f = g_filaments[i];
-
-                // Filter logic: AND across active filters
-                // A filter with 0 selections = skip (don't apply)
-                // All three at 0 = empty result
-                var hasAnyFilter = (g_selectedPrinters.length > 0 || g_selectedVendors.length > 0 || g_selectedTypes.length > 0);
-                if (!hasAnyFilter) continue; // all empty = no results
-
-                // Vendor: skip if all deselected, otherwise must match
-                if (g_selectedVendors.length > 0 && g_selectedVendors.indexOf(f.vendor) < 0) continue;
-
-                // Type: skip if all deselected, otherwise must match
-                if (g_selectedTypes.length > 0 && g_selectedTypes.indexOf(f.type) < 0) continue;
-
-                // Printer: skip if all deselected, otherwise must match
-                if (g_selectedPrinters.length > 0 && f.models !== '') {
-                    var hasModel = false;
-                    for (var mi = 0; mi < modelMatchStrings.length; mi++) {
-                        if (f.models.indexOf(modelMatchStrings[mi]) >= 0) {
-                            hasModel = true;
-                            break;
-                        }
-                    }
-                    if (!hasModel) continue;
-                }
-                // Filter by search: committed keywords (OR union) + live input
-                var liveSearch = ($('#searchInput').val() || '').trim().toLowerCase();
-                var allKeywords = g_searchKeywords.slice();
-                if (liveSearch) allKeywords.push(liveSearch);
-
-                if (allKeywords.length > 0) {
-                    var matched = false;
-                    for (var si = 0; si < allKeywords.length; si++) {
-                        var kw = allKeywords[si].toLowerCase();
-                        // Match filament name, type, or vendor
-                        if (f.shortName.toLowerCase().indexOf(kw) >= 0 ||
-                            f.type.toLowerCase().indexOf(kw) >= 0 ||
-                            f.vendor.toLowerCase().indexOf(kw) >= 0) {
-                            matched = true;
-                            break;
-                        }
-                        // Match printer name: show compatible filaments
-                        if (f.models !== '' && searchMatchesPrinter(kw, f.models)) {
-                            matched = true;
-                            break;
-                        }
-                    }
-                    if (!matched) continue;
-                }
-
-        result.push(f);
-    }
-    return result;
+function appendCustomRow(host, item)
+{
+  const id = String(item.id || '');
+  const name = String(item.name || '');
+  const row = $('<div>').addClass('CFilament_Item');
+  $('<span>').addClass('CFilament_Name').attr('title', name).text(name).appendTo(row);
+  $('<span>').addClass('CFilament_Type').text(String(item.type || '')).appendTo(row);
+  $('<span>').addClass('CFilament_Date').text(String(item.create_time || item.date || '').slice(0, 10)).appendTo(row);
+  const edit = $('<button type="button">').addClass('CFilament_EditBtn')
+    .attr('aria-label', GetCurrentPlainTextByKey('t128') + ' ' + name)
+    .on('click', function() { CFEdit(id); });
+  $('<img>').attr({src: '../../image/edit.svg', alt: ''}).appendTo(edit);
+  row.append(edit);
+  const remove = $('<button type="button">').addClass('CFilament_DeleteBtn')
+    .attr('aria-label', GetCurrentPlainTextByKey('t88') + ' ' + name)
+    .on('click', function() { CFDelete(id, name); });
+  $('<img>').attr({src: '../../image/delete.svg', alt: ''}).appendTo(remove);
+  row.append(remove);
+  host.append(row);
 }
 
-function renderFilamentList() {
-    var filtered = getFilteredFilaments();
-
-    // Group by type
-    var groups = {};
-    var groupOrder = [];
-    for (var i = 0; i < filtered.length; i++) {
-        var f = filtered[i];
-        if (!groups.hasOwnProperty(f.type)) {
-            groups[f.type] = [];
-            groupOrder.push(f.type);
-        }
-        groups[f.type].push(f);
-    }
-
-    // Sort group order by FilamentPriority
-    groupOrder = sortByPriority(groupOrder, FilamentPriority);
-
-    // Render
-    var html = '';
-    for (var g = 0; g < groupOrder.length; g++) {
-        var type = groupOrder[g];
-        var items = groups[type];
-        html += '<div class="fila-group" data-type="' + escapeHtml(type) + '">';
-        html += '<div class="fila-group-header" onClick="toggleGroup(this)">';
-        html += '<span class="fila-group-arrow">▼</span>';
-        html += '<span class="fila-group-title">' + escapeHtml(type) + '</span>';
-        html += '<span class="fila-group-count">(' + items.length + ')</span>';
-        html += '</div>';
-        html += '<div class="fila-group-items">';
-        for (var fi = 0; fi < items.length; fi++) {
-            var fila = items[fi];
-            var uid = 'fila_' + g + '_' + fi;
-            html += '<div class="fila-item">';
-            html += '<input type="checkbox" id="' + uid + '" data-idx="' + g_filaments.indexOf(fila) + '" ' +
-                    (fila.selected ? 'checked' : '') + ' onChange="onFilaCheckChange(this)" />';
-            html += '<label for="' + uid + '" title="' + escapeHtml(fila.shortName) + '">' + escapeHtml(fila.shortName) + '</label>';
-            html += '</div>';
-        }
-        html += '</div></div>';
-    }
-
-    $('#ItemBlockArea').html(html);
-
-    // Update result count
-    var lang2 = localStorage.getItem('BambuWebLang') || 'en';
-    if (!LangText.hasOwnProperty(lang2)) lang2 = 'en';
-    var filterTpl = (LangText[lang2] && LangText[lang2]['t254']) || (LangText['en'] && LangText['en']['t254']) || 'Filter results: {n} matches';
-    $('#filterResultText').text(filterTpl.replace('{n}', filtered.length));
-
-        // Show/hide empty state
-        var hasAnyFilter = (g_selectedPrinters.length > 0 || g_selectedVendors.length > 0 || g_selectedTypes.length > 0);
-    
-        if (filtered.length === 0) {
-            $('#emptyState').show();
-            $('#ItemBlockArea').hide();
-        
-            // If empty because all base filters are unchecked, hide search
-            // If empty because of search keyword, keep search bar visible
-            if (!hasAnyFilter) {
-                $('#filterBar').hide();
-                $('#searchBar').hide();
-            } else {
-                $('#filterBar').show();
-                $('#searchBar').show();
-            }
-        } else {
-            $('#emptyState').hide();
-            $('#ItemBlockArea').show();
-            $('#filterBar').show();
-            $('#searchBar').show();
-        }
-
-    // Update select-all checkbox
-    updateSelectAllCheckbox();
+function OnClickCustomFilamentAdd()
+{
+	//alert('Create New Custom Filament');
+	
+	var tSend={};
+	tSend['sequence_id']=Math.round(new Date() / 1000);
+	tSend['command']="create_custom_filament";
+		
+	SendWXMessage( JSON.stringify(tSend) );		
 }
 
-function toggleGroup(el) {
-    var $header = $(el);
-    var $items = $header.next('.fila-group-items');
-    var $arrow = $header.find('.fila-group-arrow');
-    $items.toggleClass('collapsed');
-    $arrow.toggleClass('collapsed');
+//编辑某一个自定义材料
+function CFEdit( fid )
+{
+	//alert(fid);
+	
+	var tSend={};
+	tSend['sequence_id']=Math.round(new Date() / 1000);
+	tSend['command']="modify_custom_filament";
+	tSend['id']=fid;
+		
+	SendWXMessage( JSON.stringify(tSend) );	
 }
 
-function onFilaCheckChange(el) {
-    var idx = parseInt($(el).data('idx'));
-    g_filaments[idx].selected = $(el).prop('checked');
-    updateSelectAllCheckbox();
+function CFDelete(fid, name)
+{
+	var tSend = {};
+	tSend['sequence_id'] = Math.round(new Date() / 1000);
+	tSend['command'] = 'delete_custom_filament';
+	tSend['id'] = fid;
+	tSend['name'] = name;
+	SendWXMessage(JSON.stringify(tSend));
 }
-
-function onSelectAllChange() {
-    var checked = $('#SelectAllCheckbox').prop('checked');
-    var filtered = getFilteredFilaments();
-    for (var i = 0; i < filtered.length; i++) {
-        filtered[i].selected = checked;
-    }
-    renderFilamentList();
-}
-
-function updateSelectAllCheckbox() {
-    var filtered = getFilteredFilaments();
-    var allChecked = filtered.length > 0;
-    for (var i = 0; i < filtered.length; i++) {
-        if (!filtered[i].selected) { allChecked = false; break; }
-    }
-    $('#SelectAllCheckbox').prop('checked', allChecked);
-}
-
-// onSearchInput kept for backward compat but no longer used inline
-function onSearchInput() {
-    if (!g_isComposing) {
-        doLiveFilterDebounced();
-    }
-}
-
-// ===================== Choose Default =====================
-function ChooseDefaultFilament() {
-    // Get default materials from all models
-    var defaultMaterials = '';
-    for (var n = 0; n < g_models.length; n++) {
-        defaultMaterials += (g_models[n]['materials'] || '') + ';';
-    }
-    var defaultArr = defaultMaterials.split(';');
-
-    for (var i = 0; i < g_filaments.length; i++) {
-        var f = g_filaments[i];
-        f.selected = false;
-        var filalist = f.filalist.split(';');
-        for (var p = 0; p < filalist.length; p++) {
-            if (filalist[p] !== '' && defaultArr.indexOf(filalist[p]) > -1) {
-                f.selected = true;
-                break;
-            }
-        }
-    }
-    renderFilamentList();
-    ShowNotice(0);
-}
-
-// ===================== Notice =====================
-function ShowNotice(nShow) {
-    if (nShow == 0) {
-        $("#NoticeMask").hide();
-        $("#NoticeBody").hide();
-    } else {
-        $("#NoticeMask").show();
-        $("#NoticeBody").show();
-    }
-}
-
-// ===================== Save / Cancel / Confirm =====================
-function ResponseFilamentResult() {
-    // Collect all selected filaments
-    var selectedCount = 0;
-    var FilaArray = [];
-    for (var i = 0; i < g_filaments.length; i++) {
-        if (g_filaments[i].selected) {
-            selectedCount++;
-            // Find all matching full names in m_ProfileItem
-            var shortName = g_filaments[i].shortName;
-            for (var key in m_ProfileItem['filament']) {
-                var FName = GetFilamentShortname(key);
-                if (FName == shortName) FilaArray.push(key);
-            }
-        }
-    }
-
-    if (selectedCount == 0) {
-        ShowNotice(1);
-        return false;
-    }
-
-    var tSend = {};
-    tSend['sequence_id'] = Math.round(new Date() / 1000);
-    tSend['command'] = "save_userguide_filaments";
-    tSend['data'] = {};
-    tSend['data']['filament'] = FilaArray;
-    SendWXMessage(JSON.stringify(tSend));
-    return true;
-}
-
-function CancelSelect() {
-    var tSend = {};
-    tSend['sequence_id'] = Math.round(new Date() / 1000);
-    tSend['command'] = "user_guide_cancel";
-    tSend['data'] = {};
-    SendWXMessage(JSON.stringify(tSend));
-}
-
-function ConfirmSelect() {
-    var bRet = ResponseFilamentResult();
-    if (bRet) {
-        var tSend = {};
-        tSend['sequence_id'] = Math.round(new Date() / 1000);
-        tSend['command'] = "user_guide_finish";
-        tSend['data'] = {};
-        tSend['data']['action'] = "finish";
-        SendWXMessage(JSON.stringify(tSend));
-    }
-}
-
-function UpdateWizardFinishBtnLabel() {
-    var qs = location.search;
-    var isWizard = qs.indexOf('wizard=1') !== -1 || qs.indexOf('target=23') !== -1;
-    if (!isWizard) return;
-    var acceptBtn = document.getElementById('AcceptBtn');
-    if (!acceptBtn) return;
-    var needNetPlugin = m_ProfileItem && (m_ProfileItem["network_plugin_install"] != '1' ||
-        (m_ProfileItem["network_plugin_install"] == '1' && m_ProfileItem["network_plugin_compability"] == '0'));
-    var tid = needNetPlugin ? 't9' : 't25';
-    acceptBtn.setAttribute('tid', tid);
-    // Translate just this button, not the whole page: calling TranslatePage()
-    // here would also re-stamp #filterResultText (tid t241) with its static
-    // "0 matches" placeholder, clobbering the live count renderFilamentList()
-    // just computed.
-    var lang = localStorage.getItem('BambuWebLang') || 'en';
-    if (!LangText.hasOwnProperty(lang)) lang = 'en';
-    var text = (LangText[lang] && LangText[lang][tid]) || (LangText['en'] && LangText['en'][tid]) || (tid === 't9' ? 'Next' : 'Finish');
-    acceptBtn.textContent = text;
-    acceptBtn.style.visibility = 'visible';
-}
-
-function ConfirmSelectWizard() {
-    var bRet = ResponseFilamentResult();
-    if (!bRet) return;
-    if (m_ProfileItem && (m_ProfileItem["network_plugin_install"] != '1' ||
-        (m_ProfileItem["network_plugin_install"] == '1' && m_ProfileItem["network_plugin_compability"] == '0'))) {
-        window.open('../5/index.html', '_self');
-    } else {
-        var tSend = {};
-        tSend['sequence_id'] = Math.round(new Date() / 1000);
-        tSend['command'] = "user_guide_finish";
-        tSend['data'] = {};
-        tSend['data']['action'] = "finish";
-        SendWXMessage(JSON.stringify(tSend));
-    }
-}
-
-// ===================== Tab Switch =====================
-function OnSelectMenu(nIndex) {
-    switch (nIndex) {
-        case 1:
-            $('#SystemFilamentBtn').addClass('TitleSelected').removeClass('TitleUnselected');
-            $('#CustomFilamentBtn').addClass('TitleUnselected').removeClass('TitleSelected');
-            $('#SystemFilamentsArea').css('display', 'flex');
-            $('#CustomFilamentsArea').css('display', 'none');
-            break;
-        case 2:
-            $('#CustomFilamentBtn').addClass('TitleSelected').removeClass('TitleUnselected');
-            $('#SystemFilamentBtn').addClass('TitleUnselected').removeClass('TitleSelected');
-            $('#CustomFilamentsArea').css('display', 'flex');
-            $('#SystemFilamentsArea').css('display', 'none');
-            break;
-    }
-}
-
-// ===================== Custom Filaments =====================
-function RequestCustomFilaments() {
-    var tSend = {};
-    tSend['sequence_id'] = Math.round(new Date() / 1000);
-    tSend['command'] = "request_custom_filaments";
-    SendWXMessage(JSON.stringify(tSend));
-}
-
-var g_customFilaments = [];
-var g_customSortOrder = 'desc'; // 'desc' or 'asc'
-
-function UpdateCustomFilaments(CFList) {
-    g_customFilaments = CFList || [];
-    renderCustomFilaments();
-}
-
-function onCustomSortChange() {
-    g_customSortOrder = $('#CFilament_Sort').val();
-    renderCustomFilaments();
-}
-
-function renderCustomFilaments() {
-    var list = g_customFilaments.slice();
-
-    if (list.length === 0) {
-        $('#CFilament_Header').hide();
-        $('#CFilament_List').hide();
-        $('#CFilament_Btn_Area').hide();
-        $('#CFilament_Empty').show();
-        return;
-    }
-
-    $('#CFilament_Header').show();
-    $('#CFilament_List').show();
-    $('#CFilament_Btn_Area').show();
-    $('#CFilament_Empty').hide();
-    var _lang = localStorage.getItem('BambuWebLang') || 'en';
-    if (!LangText.hasOwnProperty(_lang)) _lang = 'en';
-    function _t(tid) { return (LangText[_lang] && LangText[_lang][tid]) || (LangText['en'] && LangText['en'][tid]) || ''; }
-    $('#CFilament_Count').text((_t('t242') || 'Custom filaments: 0').replace('0', list.length));
-
-        // Sort logic
-        if (g_customSortOrder === 'type') {
-            list.sort(function(a, b) {
-                var ta = (a['type'] || '').toLowerCase();
-                var tb = (b['type'] || '').toLowerCase();
-                if (ta !== tb) return ta.localeCompare(tb);
-                var na = (a['name'] || '').toLowerCase();
-                var nb = (b['name'] || '').toLowerCase();
-                return na.localeCompare(nb);
-            });
-        } else {
-            list.sort(function(a, b) {
-                var da = a['create_time'] || a['date'] || '';
-                var db = b['create_time'] || b['date'] || '';
-                if (!da || !db) return 0; // cannot sort without date
-                if (g_customSortOrder === 'asc') return da.localeCompare(db);
-                return db.localeCompare(da);
-            });
-        }
-
-        var strHtml = '';
-    
-        if (g_customSortOrder === 'desc') {
-            var now = new Date();
-            var todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-            var weekStart = todayStart - 7 * 24 * 60 * 60 * 1000;
-        
-            var groupToday = [];
-            var groupWeek = [];
-            var groupOlder = [];
-        
-            for (var n = 0; n < list.length; n++) {
-                var dateStr = list[n]['create_time'] || list[n]['date'] || '';
-                var ts = new Date(dateStr.replace(/-/g, '/')).getTime();
-                if (!ts) {
-                    groupOlder.push(list[n]);
-                } else if (ts >= todayStart) {
-                    groupToday.push(list[n]);
-                } else if (ts >= weekStart) {
-                    groupWeek.push(list[n]);
-                } else {
-                    groupOlder.push(list[n]);
-                }
-            }
-        
-            if (groupToday.length > 0) strHtml += renderCustomGroup(_t('t255') || 'Today', groupToday, false);
-            if (groupWeek.length > 0) strHtml += renderCustomGroup(_t('t256') || 'This week', groupWeek, false);
-            if (groupOlder.length > 0) strHtml += renderCustomGroup(_t('t257') || 'Earlier', groupOlder, false);
-        
-    } else if (g_customSortOrder === 'type') {
-            var typeGroups = {};
-            var typeOrder = [];
-            for (var n = 0; n < list.length; n++) {
-                var t = list[n]['type'] || 'Other';
-                if (!typeGroups[t]) {
-                    typeGroups[t] = [];
-                    typeOrder.push(t);
-                }
-                typeGroups[t].push(list[n]);
-            }
-            typeOrder = sortByPriority(typeOrder, FilamentPriority);
-            for (var i = 0; i < typeOrder.length; i++) {
-                strHtml += renderCustomGroup(typeOrder[i], typeGroups[typeOrder[i]], true);
-            }
-    } else {
-            // Ascending order: just flat list
-            strHtml = renderCustomGroup('', list, false);
-    }
-    
-    $('#CFilament_List').html(strHtml);
-}
-
-function toggleCustomGroup(el) {
-    if (!$(el).hasClass('collapsible')) return;
-    var $header = $(el);
-    var $items = $header.next('.CFilament_GroupItems');
-    var $arrow = $header.find('.CFilament_GroupArrow');
-    $items.toggleClass('collapsed');
-    $arrow.toggleClass('collapsed');
-}
-
-function renderCustomGroup(title, items, isCollapsible) {
-    var html = '';
-    if (title) {
-            if (isCollapsible) {
-                html += '<div class="CFilament_GroupTitle collapsible" onClick="toggleCustomGroup(this)">';
-                html += '<span class="CFilament_GroupArrow"></span>' + escapeHtml(title) + '</div>';
-            } else {
-                html += '<div class="CFilament_GroupTitle">' + escapeHtml(title) + '</div>';
-            }
-            html += '<div class="CFilament_GroupItems">';
-    } else {
-            html += '<div class="CFilament_GroupItems">';
-    }
-        for (var n = 0; n < items.length; n++) {
-            var pItem = items[n];
-            var F_id = pItem['id'] || '';
-            var F_name = pItem['name'] || '';
-            var F_type = pItem['type'] || ''; // will be empty string
-            var F_date = pItem['create_time'] || pItem['date'] || ''; // will be empty string
-        
-            if (F_date.length > 10) F_date = F_date.substring(0, 10);
-        
-            html += '<div class="CFilament_Item">' +
-                '<span class="CFilament_Name" title="' + escapeHtml(F_name) + '">' + escapeHtml(F_name) + '</span>' +
-                '<span class="CFilament_Type">' + escapeHtml(F_type) + '</span>' +
-                '<span class="CFilament_Date">' + escapeHtml(F_date) + '</span>' +
-                '<img onClick="CFEdit(\'' + F_id + '\')" class="CFilament_EditBtn" src="../../image/edit.svg" />' +
-                '<img onClick="CFDelete(\'' + F_id + '\',\'' + escapeHtml(F_name).replace(/'/g, '&#39;') + '\')" class="CFilament_DeleteBtn" src="../../image/delete.svg" />' +
-                '</div>';
-        }
-        html += '</div>';
-        return html;
-}
-
-function OnClickCustomFilamentAdd() {
-    var tSend = {};
-    tSend['sequence_id'] = Math.round(new Date() / 1000);
-    tSend['command'] = "create_custom_filament";
-    SendWXMessage(JSON.stringify(tSend));
-}
-
-function CFEdit(fid) {
-    var tSend = {};
-    tSend['sequence_id'] = Math.round(new Date() / 1000);
-    tSend['command'] = "modify_custom_filament";
-    tSend['id'] = fid;
-    SendWXMessage(JSON.stringify(tSend));
-}
-
-function CFDelete(fid, fname) {
-    // C++ side runs the native confirm dialog + actual preset deletion, then re-sends
-    // update_custom_filaments to refresh the list. Passing the name lets C++ display it
-    // in the confirm prompt.
-    var tSend = {};
-    tSend['sequence_id'] = Math.round(new Date() / 1000);
-    tSend['command'] = "delete_custom_filament";
-    tSend['id'] = fid;
-    tSend['name'] = fname || '';
-    SendWXMessage(JSON.stringify(tSend));
-}
-
-// ===================== Utilities =====================
-
-// Check if a keyword matches a printer name and the filament is compatible with that printer
-function searchMatchesPrinter(kw, filaModels) {
-    for (var pi = 0; pi < g_models.length; pi++) {
-        var printerName = g_models[pi]['model'].toLowerCase();
-        if (printerName.indexOf(kw) >= 0) {
-            // This keyword matches a printer, check if filament is compatible
-            var nozzles = g_models[pi]['nozzle_selected'].split(';');
-            for (var ni = 0; ni < nozzles.length; ni++) {
-                if (nozzles[ni] && filaModels.indexOf('[' + g_models[pi]['model'] + '++' + nozzles[ni] + ']') >= 0) {
-                    return true;
-                }
-            }
-        }
-    }
-    return false;
-}
-
-function escapeHtml(str) {
-    if (!str) return '';
-    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
-
 
 

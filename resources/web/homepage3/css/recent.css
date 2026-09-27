@@ -34,18 +34,23 @@
 {
 	border-width: 1px;
 	border-style: solid;
-	padding: 0px 10px;
-	border-radius: 6px;
+	border-color: var(--md-outline);
+	padding: 0px 14px;
+	border-radius: 999px;
 	line-height: 26px;
 	height: 26px;
 	margin-left: 20px;
 	cursor: pointer;
 	display: none;
+	color: var(--md-primary);
+	background-color: transparent;
+	font-weight: 600;
 }
 
 #RecentClearAllBtn:hover
 {
-	background-color:#CDCECE;
+	background-color:var(--md-primary-container);
+	border-color: var(--md-primary);
 }
 
 #Recent_LEFT_Title
@@ -66,6 +71,16 @@
 	display:flex;
 	align-items: center;
 	margin-right: 16px;
+	color: var(--md-primary);
+	font-weight: 600;
+	border-radius: 999px;
+	padding: 6px 10px;
+	cursor: pointer;
+}
+
+.Right_Title_Btn:hover
+{
+	background-color: var(--md-primary-container);
 }
 
 .Right_Title_Btn_Icon
@@ -102,6 +117,8 @@
     word-break: break-all;
 	position: relative;
 	cursor: pointer;
+	border-radius: 16px;
+	background-color: var(--md-sc-low);
 }
 
 .FileMask
@@ -111,8 +128,7 @@
 	left: 0px;
 	right: 0px;
 	bottom: 0px;
-	background-color: darkgrey;
-	opacity: 0.3;
+	background-color: var(--md-scrim);
 	display: none;
 }
 
@@ -123,9 +139,9 @@
 	left: 14px;
 	width: 26px;
 	height: 26px;
-	border:1px solid grey;
-	border-radius: 4px;
-	background-color: white;
+	border:1px solid var(--md-outline);
+	border-radius: 6px;
+	background-color: var(--md-sc-lowest);
 	display: none;
 }
 
@@ -152,15 +168,16 @@
 .FileImg
 {
 	text-align: center;
-	background-color: #E4E4E4;
+	background-color: var(--md-sc-high);
 	width: 100%;
-	border-radius: 8px;
+	border-radius: 15px 15px 0 0;
 	line-height: 0px;
+	border-bottom: 1px solid var(--md-outline-variant);
 }
 
 .FileImg img
 {
-	border-radius: 8px;
+	border-radius: 15px 15px 0 0;
 	width: 100%;
 	aspect-ratio: 4/3;
 	object-fit: cover;
@@ -172,48 +189,49 @@
     text-overflow: ellipsis;
     overflow: hidden;
     word-break: break-all;
-	line-height: 32px;
-	font-weight: 700;
-	padding: 0px 4px;
+	line-height: 22px;
+	font-weight: 600;
+	padding: 10px 12px 0px;
 }
 
 .FileDate
 {
-	color: #A8A8A8;
-	font-size: 10px;
-	padding: 0px 4px;	
+	color: var(--md-on-surface-variant);
+	font-size: 11px;
+	padding: 0px 12px 10px;
 }
 
 #recnet_context_menu
 {
 	position: absolute;
 	margin: 0px;
-	padding: 10px;
+	padding: 6px;
 	border: 0px;
 	min-width: 100px;
-	border: 1px solid #D7D7D7;
+	border: 1px solid var(--md-outline-variant);
     top: 100px;
-	border-radius: 5px;
-	color: #323A3D;
-	background-color: #fff;
+	border-radius: 12px;
+	color: var(--md-on-surface);
+	background-color: var(--md-sc);
     display: none;
 	z-index: 1;
+	box-shadow: 0 4px 12px var(--md-shadow);
 }
 
 .CT_Item
 {
-	padding: 4px 12px;
+	padding: 7px 12px;
 	display: flex;
 	flex-direction: row;
 	align-items: center;
+	border-radius: 8px;
 }
 
 .CT_Item:hover
 {
 	cursor: pointer;
-	background-color: #0078D4;
-	border-radius: 4px;
-	color: #fff;
+	background-color: var(--md-primary-container);
+	color: var(--md-on-primary-container);
 }
 
 
@@ -226,7 +244,7 @@
 
 #CT_Delete_Bar:hover  .CT_Delete
 {
-	background: url("../img/remove2.svg");
+	background: url("../img/remove.svg");
 	background-repeat: no-repeat;
 	background-size: contain;	
 }
@@ -240,7 +258,7 @@
 
 #CT_Folder_Bar:hover .CT_Explore
 {
-	background: url("../img/open_folder2.svg");
+	background: url("../img/open_folder.svg");
 	background-repeat: no-repeat;
 	background-size: contain;	
 }
@@ -255,7 +273,7 @@
 
 .CT_Seperate
 {
-	border-bottom:1px solid  #C5C5C5;
+	border-bottom:1px solid var(--md-outline-variant);
 }
 
 .CT_Text

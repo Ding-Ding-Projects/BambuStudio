@@ -5,12 +5,52 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>喷嘴选择表格</title>
     <style>
+      /*---Bundled design fonts-------------------------------------------------
+        Ship Roboto with the app so this webview renders the MD3 type system
+        regardless of which faces the host OS has installed. Paths are relative
+        to this document (resources/web/flush/) and point at resources/fonts/,
+        mirroring resources/web/homepage3/css/common.css. */
+      @font-face {
+        font-family: "Roboto";
+        font-style: normal;
+        font-weight: 400;
+        font-display: swap;
+        src: url("../../fonts/Roboto-Regular.ttf") format("truetype");
+      }
+      @font-face {
+        font-family: "Roboto";
+        font-style: normal;
+        font-weight: 500;
+        font-display: swap;
+        src: url("../../fonts/Roboto-Medium.ttf") format("truetype");
+      }
+
+      /*---Material Design 3 color system---------------------------------------
+        The same roles resources/web/homepage3/css/{common,dark}.css publish, so
+        this popup resolves its chrome from the kit instead of a private palette.
+        The host still drives the theme by toggling `darkmode` on <html> (it
+        pushes the flag with every payload, see NozzleListTable::BuildTableObjStr)
+        — but now that every rule below reads a token, dark mode is a palette
+        swap rather than a second, hand-tuned design. */
+      :root {
+        color-scheme: light;
+        --md-surface: #faf8fd;
+        --md-sc-low: #f4f2f9;
+        --md-sc-high: #e8e7ee;
+        --md-on-surface: #1a1b1f;
+        --md-on-surface-variant: #44464e;
+        --md-outline-variant: #c5c6d0;
+        --md-primary: #146c2e;
+      }
+
       html, body {
         margin: 0;
         padding: 0;
         height: 100%;
-        background-color: #ffffff;
-        transition: background-color 0.3s ease;
+        background-color: var(--md-surface);
+        color: var(--md-on-surface);
+        font-family: "Roboto", system-ui, "Segoe UI", "Helvetica Neue", sans-serif;
+        transition: background-color 0.3s ease, color 0.3s ease;
       }
 
       html {
@@ -28,23 +68,28 @@
         border-collapse: collapse;
         width: 100%;
         max-width: 100%;
+        /* MD3 body-medium: 14/20. */
         font-size: 14px;
+        line-height: 20px;
         table-layout: fixed;
         margin: 0 auto;
-        color: #333333;
+        color: var(--md-on-surface);
         transition: color 0.3s ease;
-        border: 1px solid #ddd; /* 表格外边框 */
+        border: 1px solid var(--md-outline-variant); /* 表格外边框 */
       }
 
       th, td {
         padding: 10px;
         vertical-align: middle;
         transition: border-color 0.3s ease, background-color 0.3s ease;
-        border: 1px solid #ddd; /* 所有单元格边框 */
+        border: 1px solid var(--md-outline-variant); /* 所有单元格边框 */
       }
 
       th {
         text-align: center; /* 表头居中 */
+        /* Roboto Medium — the kit's emphasis weight. The UA default for <th>
+           is 700, heavier than anything in the MD3 type scale. */
+        font-weight: 500;
       }
 
       td {
@@ -53,24 +98,44 @@
       }
 
       thead th {
-        background-color: #f2f2f2;
+        background-color: var(--md-sc-high);
       }
 
+      /* Zebra the body rows off the container tones. Striping used to exist
+         only in the dark map, which is a large part of why the two themes read
+         as two different tables; both now stripe from the same two roles. */
+      tbody tr {
+        background-color: var(--md-surface);
+      }
+
+      tbody tr:nth-child(even) {
+        background-color: var(--md-sc-low);
+      }
+
+      /* The radio the native MD3 RadioBox draws (Widgets/RadioBox.cpp): a 2px
+         ring in OnSurfaceVariant, ring plus a concentric dot in Primary when
+         selected — not a disc flooded with brand green. `appearance: none`
+         only suppresses the OS painting; this stays a real <input type="radio">
+         so Tab/arrow-key navigation and the screen-reader radio role and
+         checked state are unaffected. */
       input[type="radio"] {
         position: relative;
-        width: 16px;
-        height: 16px;
+        box-sizing: border-box;
+        width: 18px;
+        height: 18px;
         margin-right: 8px;
+        vertical-align: middle;
         appearance: none;
-        border: 1px solid #ccc;
+        -webkit-appearance: none;
+        background-color: transparent;
+        border: 2px solid var(--md-on-surface-variant);
         border-radius: 50%;
         cursor: pointer;
         transition: border-color 0.3s ease;
       }
 
       input[type="radio"]:checked {
-        background-color: #00ae42;
-        border-color: #00ae42;
+        border-color: var(--md-primary);
       }
 
       input[type="radio"]:checked::after {
@@ -82,52 +147,40 @@
         left: 50%;
         transform: translate(-50%, -50%);
         border-radius: 50%;
-        background-color: white;
+        background-color: var(--md-primary);
+      }
+
+      /* Keep the keyboard ring, but on-token: the UA default draws a system
+         accent that belongs to neither theme. */
+      input[type="radio"]:focus-visible {
+        outline: 2px solid var(--md-primary);
+        outline-offset: 2px;
       }
 
       label {
         cursor: pointer;
+        color: inherit;
+        vertical-align: middle;
         transition: color 0.3s ease;
       }
 
       .recommended {
-        color: #28a745;
-        font-weight: bold;
+        /* Primary at the kit's emphasis weight, rather than a second green
+           that only ever managed ~2.8:1 on the light surface. */
+        color: var(--md-primary);
+        font-weight: 500;
       }
 
-      /* 暗黑模式样式 */
+      /* 暗黑模式样式 — token overrides only; no rule above needs a dark twin. */
       html.darkmode {
-        background-color: #1a1a1a;
-      }
-
-      html.darkmode table {
-        color: #e0e0e0;
-        border-color: #555555; /* 表格外边框 */
-      }
-
-      html.darkmode th,
-      html.darkmode td {
-        border-color: #555555; /* 所有单元格边框 */
-      }
-
-      html.darkmode thead th {
-        background-color: #2d2d2d;
-      }
-
-      html.darkmode tbody tr {
-        background-color: #222222;
-      }
-      
-      html.darkmode tbody tr:nth-child(even) {
-        background-color: #282828;
-      }
-
-      html.darkmode input[type="radio"] {
-        border-color: #777777;
-      }
-
-      html.darkmode label {
-        color: #e0e0e0;
+        color-scheme: dark;
+        --md-surface: #1b1c21;
+        --md-sc-low: #202127;
+        --md-sc-high: #2f3036;
+        --md-on-surface: #e8e7ee;
+        --md-on-surface-variant: #cdced8;
+        --md-outline-variant: #4a4c54;
+        --md-primary: #8bd89b;
       }
     </style>
   </head>
@@ -213,12 +266,18 @@
       }
 
 
+      // Flip the MD3 token block between its light and dark values. The host
+      // stamps `darkmode` onto every table payload, not just the first one, so
+      // applying it on refresh as well keeps the webview in step with a theme
+      // switch instead of stranding it on the palette it loaded with.
+      function applyDarkMode(data) {
+        if (!data || typeof data.darkmode !== 'boolean') return;
+        document.documentElement.classList.toggle('darkmode', data.darkmode);
+      }
+
       // 初始化表格
       function initTable(data) {
-        if(data.darkmode == true)
-          document.documentElement.classList.add('darkmode');
-        else
-          document.documentElement.classList.remove('darkmode');
+        applyDarkMode(data);
         updateTable(data);
         // 监听单选按钮变化，通知C++
         document.getElementById('tableBody').addEventListener('change', function(e) {
@@ -236,6 +295,7 @@
       // 更新表格内容的方法
       function updateTable(nozzleOptions) {
         console.log('更新表格数据：', nozzleOptions);
+        applyDarkMode(nozzleOptions);
         const tableBody = document.getElementById('tableBody');
         // 清空现有内容
         tableBody.innerHTML = '';
@@ -280,8 +340,16 @@
     });
 
     sendLayoutMessage()
+
+    // Roboto is loaded with font-display: swap, so the first measurement above
+    // can be taken against the fallback face. Re-report once the bundled face
+    // has settled, otherwise the C++ side sizes the webview to metrics the
+    // table no longer has and clips the last row.
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(function () { sendLayoutMessage(); });
+    }
   }
-  
+
 </script>
 </body>
 </html>

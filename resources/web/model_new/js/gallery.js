@@ -23,10 +23,10 @@
   function buildDom($root, settings){
     $root.addClass('bs-gallery');
 
-    var $main = $('<div class="bs-gallery-main" />');
+    var $main = $('<button type="button" class="bs-gallery-main" aria-label="Next image" />');
     var $img = $('<img class="bs-gallery-image" alt="" />');
-    var $counter = $('<div class="bs-gallery-counter" />');
-    var $thumbs = $('<div class="bs-gallery-thumbs" />');
+    var $counter = $('<div class="bs-gallery-counter" aria-hidden="true" />');
+    var $thumbs = $('<div class="bs-gallery-thumbs" role="group" aria-label="Gallery images" />');
 
     $main.append($img);
     if (settings.counter) $main.append($counter);
@@ -40,9 +40,9 @@
     // 应用主图宽度与缩略栏宽度
     if (settings.mainWidth != null) {
       var mw = typeof settings.mainWidth === 'number' ? (settings.mainWidth + 'px') : settings.mainWidth;
-      $main.css({ width: mw });
-      // 固定主图宽度，避免被 flex 拉伸
-      $main.css({ flex: '0 0 ' + mw });
+      // mainWidth is the basis; allow shrink (0 1) + max-width:100% so the
+      // gallery stays inside the responsive content column on narrow webviews.
+      $main.css({ width: mw, maxWidth: '100%', flex: '0 1 ' + mw });
     }
     if (settings.thumbsWidth != null) {
       var tw = typeof settings.thumbsWidth === 'number' ? (settings.thumbsWidth + 'px') : settings.thumbsWidth;
@@ -53,7 +53,9 @@
     $.each(settings.images, function(i, it){
       var src = typeof it === 'string' ? it : it.src;
       var thumb = typeof it === 'string' ? it : (it.thumb || it.src);
-      var $t = $('<div class="bs-gallery-thumb" />').attr('data-index', i);
+      var $t = $('<button type="button" class="bs-gallery-thumb" />')
+        .attr('data-index', i)
+        .attr('aria-label', 'Show image ' + (i + 1) + ' of ' + settings.images.length);
       var $ti = $('<img />').attr('src', thumb).attr('alt','');
       $t.append($ti);
       $thumbs.append($t);
@@ -88,8 +90,8 @@
     }
 
     function setActiveThumb(){
-      ui.$thumbs.children('.bs-gallery-thumb').removeClass('active');
-      ui.$thumbs.children('.bs-gallery-thumb').eq(index).addClass('active');
+      ui.$thumbs.children('.bs-gallery-thumb').removeClass('active').attr('aria-pressed', 'false');
+      ui.$thumbs.children('.bs-gallery-thumb').eq(index).addClass('active').attr('aria-pressed', 'true');
       // 确保可见
       var $active = ui.$thumbs.children('.bs-gallery-thumb').eq(index);
       var cTop = ui.$thumbs.scrollTop();
@@ -103,9 +105,13 @@
     function show(i){
       if (i === index) return;
       index = i;
-      ui.$img.stop(true, true).fadeOut(120, function(){
-        ui.$img.attr('src', srcAt(index)).fadeIn(120);
-      });
+      if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        ui.$img.stop(true, true).attr('src', srcAt(index)).show();
+      } else {
+        ui.$img.stop(true, true).fadeOut(120, function(){
+          ui.$img.attr('src', srcAt(index)).fadeIn(120);
+        });
+      }
       updateCounter();
       setActiveThumb();
     }
@@ -130,7 +136,7 @@
     ui.$main.on('click', function(){ next(); });
 
     // 键盘左右切换（容器获取焦点时）
-    $root.attr('tabindex', 0);
+    $root.attr({ tabindex: 0, role: 'region', 'aria-label': 'Image gallery' });
     $root.on('keydown.bsGallery', function(e){
       if (e.which === 37) { // left
         prev(); e.preventDefault();

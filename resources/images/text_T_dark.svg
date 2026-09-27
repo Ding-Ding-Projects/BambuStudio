@@ -1,5 +1,5 @@
-<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-<rect width="20" height="20" rx="1" fill="none"/>
-<path d="M10.2981 6.10938H12.0005L9.57008 14.7039H7.86768L10.2981 6.10938Z" fill="#B6B6B6"/>
-<path d="M7.38243 6.10938H14.3824L14 7.5H7L7.38243 6.10938Z" fill="#B6B6B6"/>
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- MD3 design-contract asset: format italic (dark). Generated; do not hand-edit. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" role="img">
+  <path d="M6.4 2.5H18L17.35 5.55H13.2L10.95 16.45H15.1L14.45 19.5H2.9L3.55 16.45H7.55L9.8 5.55H5.75L6.4 2.5Z" fill="#CDCED8"/>
 </svg>

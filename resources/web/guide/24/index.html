@@ -83,8 +83,8 @@
 	
 </div>
 <div id="AcceptArea">
-	<div class="NormalBtn trans" tid="t39" id="AcceptBtn"  onclick="ConfirmSelect()">Confirm</div>	
-	<div class="GrayBtn trans" tid="t38" id="PreBtn"  onclick="CancelSelect()">Cancel</div>
+	<button type="button" class="NormalBtn trans" tid="t39" id="AcceptBtn" onclick="ConfirmSelect()">Confirm</button>
+	<button type="button" class="GrayBtn trans" tid="t38" id="PreBtn" onclick="CancelSelect()">Cancel</button>
 </div>
 	
 <div id="NoticeMask"></div>
@@ -93,24 +93,16 @@
 	<div id="NoticeContent">
 	<div id="NoticeText" class="trans" tid="t37">At least one printer must be selected.</div>
 	<div id="NoticeBtns">
-		<div class="SmallBtn trans" tid="t36" onClick="ShowNotice(0)">ok</div>
+		<button type="button" class="SmallBtn trans" tid="t36" onClick="ShowNotice(0)">ok</button>
 	</div>
 	</div>
 </div>	
 	
 	
-</body>
 <script>
-	document.onkeydown = function (event) {
-		var e = event || window.event || arguments.callee.caller.arguments[0];
-
-		if (e.keyCode == 27)
-			ClosePage();
-
-		if (window.event) {
-			try { e.keyCode = 0; } catch (e) { }
-			e.returnValue = false;
-		}
-	};
+  document.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape') ClosePage();
+  });
 </script>
+</body>
 </html>

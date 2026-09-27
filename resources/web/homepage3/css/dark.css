@@ -1,45 +1,79 @@
+:root
+{
+	color-scheme: dark;
+	--md-surface: #1b1c21;
+	--md-surface-dim: #161619;
+	--md-surface-bright: #3b3c43;
+	--md-sc-lowest: #131317;
+	--md-sc-low: #202127;
+	--md-sc: #25262b;
+	--md-sc-high: #2f3036;
+	--md-sc-highest: #393a41;
+	--md-on-surface: #e8e7ee;
+	--md-on-surface-variant: #cdced8;
+	--md-outline: #94959f;
+	--md-outline-variant: #4a4c54;
+	--md-inverse-surface: #e3e2e9;
+	--md-inverse-on: #2f3036;
+	--md-inverse-primary: #146c2e;
+	--md-error: #ffb4ab;
+	--md-error-container: #93000a;
+	--md-on-error: #690005;
+	--md-on-error-container: #ffdad6;
+	--md-scrim: rgba(0, 0, 0, 0.6);
+	--md-shadow: rgba(0, 0, 0, 0.5);
+	--md-primary: #8bd89b;
+	--md-on-primary: #00391a;
+	--md-primary-container: #095228;
+	--md-on-primary-container: #a6f4b8;
+	--md-accent: #8bd89b;
+	--md-secondary-container: #2b3a2f;
+	--md-on-secondary-container: #cfe9d3;
+}
+
 html,body
 {
-	background-color:#242428;
+	background-color:var(--md-surface);
+	color: var(--md-on-surface);
 }
 
 *
 {
-	border-color: #3E3E45;
+	border-color: var(--md-outline-variant);
 }
 
 
 .TextS1
 {
-	color:#efeff0;
+	color:var(--md-on-surface);
 }
 
 .TextS2
 {
-	color:#F8F8F8;
+	color:var(--md-on-surface-variant);
 }
 
 .DropdownBG
 {
-	background: #3E3E45;
+	background: var(--md-sc);
 }
 
 .DropdownHeaderBG
 {
-	background-color: #343436;
+	background-color: var(--md-sc-high);
 }
 
 .DropdownFooter:hover {
-	background-color: #4a4a4d;
+	background-color: var(--md-sc-highest);
 }
 
 /*---字体----*/
 .ZScrol::-webkit-scrollbar-thumb {/*滚动条里面小方块*/
-    background-color: #939594;
+	background-color: var(--md-outline-variant);
 }
 
 .ZScrol::-webkit-scrollbar-track {/*滚动条里面轨道*/
-        background: #161817;
+	background: var(--md-sc-low);
 }
 
 
@@ -48,84 +82,84 @@ html,body
 /*----Left Menu Button----*/
 #LogoutBtn:hover
 {
-	background: #243E30;
-	color: #efeff0;
+	background: var(--md-primary-container);
+	color: var(--md-on-primary-container);
 }
 
 .BtnItem
 {
-	color:#B3B3B5;
+	color:var(--md-on-surface-variant);
 }
 
 .BtnItem:hover
 {
-	color: #efeff0;
-	background-color: #243E30;
+	color: var(--md-on-secondary-container);
+	background-color: var(--md-secondary-container);
 }
 
 .BtnItem:hover .LeftIcon
 {
-	filter: brightness(300%);
+	filter: brightness(0) saturate(100%) invert(92%) sepia(15%) saturate(498%) hue-rotate(75deg) brightness(98%) contrast(87%);
 }
 
 .BtnItemSelected
 {
-	color: #efeff0;
-	background-color: #243E30;
+	color: var(--md-on-primary-container);
+	background-color: var(--md-primary-container);
 }
 
 .BtnItemSelected .LeftIcon
 {
-	filter: brightness(300%);
+	filter: brightness(0) saturate(100%) invert(92%) sepia(22%) saturate(593%) hue-rotate(75deg) brightness(101%) contrast(91%);
 }
 
 /*-----Right Top MenuBtn-----*/
 .MenuItem:hover
 {
-	border-color: #4CAA50;
-	background-color: #243E30;
+	border-color: var(--md-primary);
+	background-color: var(--md-primary-container);
 }
 
 #RecentClearAllBtn:hover
 {
-	color: #000;
+	color: var(--md-on-primary-container);
 }
 
 #recnet_context_menu
 {
-	color: #efeff0;
-	background-color:#242428;
-	border: 0px;
-	box-shadow: 0px 0px 3px #DCDCDC;
+	color: var(--md-on-surface);
+	background-color:var(--md-sc);
+	border: 1px solid var(--md-outline-variant);
+	box-shadow: 0px 4px 12px var(--md-shadow);
 }
 
 .searchBtn img
 {
-	filter: brightness(78%);
+	filter: brightness(0) saturate(100%) invert(86%) sepia(20%) saturate(769%) hue-rotate(75deg) brightness(94%) contrast(91%);
 }
 
 
 /*----User Manual------*/
 .UG_DESC
 {
-	color:#818183;
+	color:var(--md-on-surface-variant);
 }
 
 /*----Recent Opened----*/
 .FileImg
 {
-	background-color:#575757;
+	background-color:var(--md-sc-high);
 }
 
 /*---Staff PIck----*/
 .HotModelPiece
 {
-	background-color: #4C4C55;
+	background-color: var(--md-sc-low);
 }
 
 #HotModel_RIGHT_Title
 {
-	color: #818183;
+	color: var(--md-on-surface-variant);
 }
 
 .HotModel_click_info img
@@ -135,80 +169,104 @@ html,body
 
 .searchBar
 {
-	border: 1px solid #5C5C5C;
-	background-color: #242428;
+	border: 1px solid var(--md-outline-variant);
+	background-color: var(--md-sc-highest);
 }
 
 .searchInputArea
 {
+	background-color: transparent;
 }
 
 .searchInput
 {
-	background-color: #242428;
-	caret-color: white;
-	color: #FFFFFF;
+	background-color: transparent;
+	caret-color: var(--md-primary);
+	color: var(--md-on-surface);
 }
 
 .searchBtn img
 {
-	filter: invert(100%) brightness(100);
+	filter: brightness(0) saturate(100%) invert(86%) sepia(20%) saturate(769%) hue-rotate(75deg) brightness(94%) contrast(91%);
 }
 
 /*----Makerlab-----*/
 .MakerlabItem
 {
-	border: none;
+	border: 1px solid var(--md-outline-variant);
 }
 
 /*---Print History----*/
 .PrintHistoryImg
 {
-	border: 1px solid #474747;
-	background-color: #575757;
+	border-color: var(--md-outline-variant);
+	background-color: var(--md-sc-high);
 }
 
 #PrintHistory_Refresh_Btn
 {
-	filter: invert(80%) brightness(20);
+	filter: brightness(0) saturate(100%) invert(86%) sepia(20%) saturate(769%) hue-rotate(75deg) brightness(94%) contrast(91%);
 }
 
 /*-----Hide Button-----*/
 #HideBtn
 {
 	background-image: url('../img/arrow_light_left.svg');
-	border: 1px solid rgba(48, 48, 51, 1);
-	background-color: rgba(48, 48, 51, 1);
+	border-color: var(--md-outline-variant);
+	background-color: var(--md-sc);
 }
 
 #HideBtn:hover
 {
-	background-color: rgba(70, 70, 71, 1);
+	background-color: var(--md-sc-highest);
 }
 
 
 /*wiki.css*/
 .topicBlock{
-	background-color: #242428;
+	background-color: var(--md-sc-low);
 }
 
 .card{
-	background-color: #333337;
+	background-color: var(--md-sc-low);
 }
 
 .topicCard{
-	background-color: #333337;
+	background-color: var(--md-sc-lowest);
 }
 
 .academyTab{
-	color: #818183;
+	color: var(--md-on-surface-variant);
 }
 
 .academyTab:hover{
-	color: #efeff0;
+	color: var(--md-on-surface);
 }
 
 .academyTab.active{
-	color: #ffffff;
-	border-bottom-color: #ffffff;
+	color: var(--md-primary);
+	border-bottom-color: var(--md-primary);
+}
+
+/* Keep fixed-color image assets legible against the dark MD3 surfaces. */
+.Btn_White img,
+.Right_Title_Btn_Icon,
+.PrintHistory_Line2 img
+{
+	filter: brightness(0) saturate(100%) invert(86%) sepia(20%) saturate(769%) hue-rotate(75deg) brightness(94%) contrast(91%);
+}
+
+#CT_Delete_Bar:hover .CT_Delete
+{
+	background-image: url("../img/remove2.svg");
+}
+
+#CT_Folder_Bar:hover .CT_Explore
+{
+	background-image: url("../img/open_folder2.svg");
+}
+
+#NoPluginTip .RedFont
+{
+	color: var(--md-on-error-container);
 }

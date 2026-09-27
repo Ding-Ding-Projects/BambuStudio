@@ -1,10 +1,11 @@
 
 html
 {
-	background-color: #FFF;
+	background-color: var(--md-surface);
 	padding: 28px 36px;
 	display: flex;
 	justify-content: center;
+	color: var(--md-on-surface);
 }
 
 body
@@ -13,6 +14,7 @@ body
 	min-width: 544px;
 	max-width:1776px;
 	overflow-y: scroll;
+	background-color: var(--md-surface);
 }
 
 /*----TITLE-------*/
@@ -41,18 +43,23 @@ body
 .Content-Title
 {
 	line-height: 30px;
-	font-weight: 700;
+	font-weight: 600;
 	font-size: 18px;
 }
 
 
 .Right_Title_More
 {
-	font-size:16px;
+	font-size:14px;
+	font-weight: 600;
+	color: var(--md-on-surface-variant);
 	cursor: pointer;
+	border-radius: 999px;
+	padding: 6px 10px;
 }
 
 .Right_Title_More:hover
 {
-	color:#00AE42;	
+	color:var(--md-primary);
+	background-color: var(--md-primary-container);
 }

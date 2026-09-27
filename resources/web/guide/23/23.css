@@ -1,716 +1,270 @@
-/* ===================== Layout ===================== */
-html, body {
-  background-color: #fff !important;
-}
-
-#Content {
+#leftBlock {
   flex: 1;
-  height: auto !important;
-  padding: 0 !important;
-  margin: 0;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
+  padding-left: 9px;
+  padding-right: 9px;
+  border-right: 1px solid var(--md-outline-variant);
 }
 
-#SystemFilamentsArea {
-  display: none;
-  flex-direction: row;
-  flex: 1;
-  overflow: hidden;
+#rightBlock {
+  flex: 2;
+  padding-left: 15px;
+  padding-right: 9px;
 }
 
-/* Page Wrapper */
-#pageWrapper {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  overflow: hidden;
-  margin: 0 26px;
-}
-
-/* ===================== Title / Tabs ===================== */
-#Title {
-  margin: 0;
-  height: auto !important;
-  border-bottom: 1px solid #E0E0E0;
-  display: flex;
-  flex-direction: row;
-  justify-content: flex-start;
-  align-items: center;
-  gap: 4px;
-  padding: 16px 0 0 0;
-}
-
-#Title div {
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  padding: 6px 8px;
-  position: relative;
-  margin-right: 24px;
-}
-
-#Title div.TitleSelected {
-  color: #333;
+.CNameBlock {
   font-weight: 700;
-  border-bottom: 3px solid #00AE42;
+  height: 28px;
 }
 
-#Title div.TitleUnselected {
-  color: #333;
-  font-weight: 400;
-  border-bottom: 3px solid transparent;
+.inlineAlign {
+  display: inline-block;
+  vertical-align: middle;
+  line-height:normal;
 }
 
-/* ===================== Filter Panel (Left) ===================== */
-#filterPanel {
-  width: 199px;
-  min-width: 199px;
-  border-right: none;
-  padding: 12px 16px 12px 0;
-  display: flex;
-  flex-direction: column;
-  overflow-y: auto;
-  position: relative;
-}
-
-#filterPanel::after {
-  content: '';
-  position: absolute;
-  right: 0;
-  top: 36px;
-  bottom: 0;
-  width: 1px;
-  background: #EEEEEE;
-}
-
-.filter-title {
-  font-size: 12px;
-  color: #999;
-  padding: 4px 0 8px;
-}
-
-.filter-separator {
-  height: 1px;
-  background: #EEEEEE;
-  margin: 0 0 4px;
-}
-
-.filter-section {
-  /* each section is a collapsible group */
-}
-
-.filter-item {
-  display: flex;
-  align-items: center;
-  padding: 6px 0;
-  cursor: pointer;
-  transition: background 0.15s;
-  gap: 6px;
-  user-select: none;
-}
-
-.filter-item:hover {
-  background: transparent;
-}
-
-.filter-icon {
+.CNameIcon {
   width: 16px;
   height: 16px;
-  flex-shrink: 0;
 }
 
-.filter-label {
-  font-size: 13px;
-  font-weight: 600;
-  color: #333;
-}
-
-.filter-count {
-  font-size: 12px;
-  color: #999;
-}
-
-.filter-arrow {
-  font-size: 18px;
-  color: #999;
-  transition: transform 0.2s;
-  transform: rotate(0deg);
-  margin-left: 4px;
-}
-
-.filter-section.open .filter-arrow {
+.CArrow
+{
+  width: 20px;
+  height: 20px;
+  background-image: url(../img/pull.svg);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  float: right;
+  transition: transform 0.3s ease;
   transform: rotate(90deg);
 }
-
-/* Filter Dropdown (inline expand) */
-.filter-dropdown {
-  display: none;
-  padding: 4px 0 8px 22px;
+.CArrow.active {
+  transform: rotate(0deg);
 }
 
-.filter-section.open .filter-dropdown {
-  display: block;
+.CValues {
+  padding: 8px;
+  background-color: var(--md-sc-low);
 }
 
-.filter-dd-item {
-  display: flex;
-  align-items: center;
-  padding: 4px 0;
-  gap: 8px;
-  font-size: 13px;
-  color: #333;
-}
-
-.filter-dd-item input[type="checkbox"] {
-  width: 14px;
-  height: 14px;
-  margin: 0;
-  flex-shrink: 0;
-  accent-color: #00AE42;
-}
-
-.filter-dd-item label {
-  flex: 1;
-  cursor: pointer;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.filter-dd-item.select-all {
-  margin-bottom: 2px;
-  padding-bottom: 4px;
-}
-
-.filter-dd-item:not(.select-all) {
-  padding-left: 12px;
-}
-
-/* ===================== Main Content (Right) ===================== */
-#mainContent {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  padding: 16px 0 16px 16px;
-  gap: 12px;
-  overflow: hidden;
-}
-
-/* Tags Area */
-#tagsArea {
-  display: none;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #F0F0F0;
-}
-
-#tagsArea.has-tags {
-  display: flex;
-}
-
-#tagsList {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  flex: 1;
-  align-items: center;
-}
-
-/* Ellipsis indicator when tags overflow */
-.tags-ellipsis {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 0 8px;
-  height: 21px;
-  background: transparent;
-  border: 1px solid #E0E0E0;
-  border-radius: 12px;
-  font-size: 12px;
-  color: #333;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 0 8px;
-  height: 21px;
-  background: transparent;
-  border: 1px solid #E0E0E0;
-  border-radius: 12px;
-  font-size: 12px;
-  color: #333;
-  white-space: nowrap;
-}
-
-.tag .tag-close {
-  cursor: pointer;
-  font-size: 14px;
-  color: #999;
-  line-height: 1;
-  margin-left: 2px;
-}
-
-.tag .tag-close:hover {
-  color: #333;
-}
-
-
-
-.tags-clear {
-  font-size: 12px;
-  color: #00AE42;
-  cursor: pointer;
-  white-space: nowrap;
-  padding: 4px 0;
-}
-
-.tags-clear:hover {
-  text-decoration: underline;
-}
-
-.tags-collapse {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 0 8px;
-  height: 21px;
-  background: transparent;
-  border: 1px solid #E0E0E0;
-  border-radius: 12px;
-  font-size: 12px;
-  color: #333;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-/* Filter Bar */
-#filterBar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-#filterResultText {
-  font-size: 12px;
-  color: #999;
-}
-
-#selectAllCurrent {
-  font-size: 12px;
-  color: #333;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  cursor: pointer;
-}
-
-#selectAllCurrent input[type="checkbox"] {
-  width: 14px;
-  height: 14px;
-  margin: 0;
-  accent-color: #00AE42;
-}
-
-/* Search Bar */
-#searchBar {
-  display: flex;
-  align-items: center;
-  border: 1px solid #E0E0E0;
-  border-radius: 12px;
-  height: 24px;
-  padding: 0 8px;
-  gap: 6px;
-}
-
-#searchBar .search-icon {
-  flex-shrink: 0;
-  width: 14px;
-  height: 14px;
-}
-
-#searchInput {
-  border: none;
-  outline: none;
-  flex: 1;
-  font-size: 13px;
-  background: transparent;
-  color: #333;
-  line-height: 20px;
-  padding: 0;
-  -webkit-appearance: none;
-}
-
-/* ===================== Filament List ===================== */
-#ItemBlockArea {
-  flex: 1;
-  overflow-y: auto;
-  padding: 8px 12px;
-  border: 1px solid #EEEEEE;
-  border-radius: 8px;
-}
-
-.fila-group {
-  margin-bottom: 12px;
-}
-
-.fila-group-header {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
-  padding: 4px 0;
-  user-select: none;
-}
-
-.fila-group-arrow {
-  font-size: 10px;
-  color: #666;
-  transition: transform 0.2s;
-}
-
-.fila-group-arrow.collapsed {
-  transform: rotate(-90deg);
-}
-
-.fila-group-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: #333;
-}
-
-.fila-group-count {
-  font-size: 12px;
-  color: #999;
-}
-
-.fila-group-items {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2px 16px;
-  padding: 4px 0 4px 18px;
-}
-
-.fila-group-items.collapsed {
-  display: none;
-}
-
-.fila-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 0;
-  font-size: 13px;
-  color: #333;
-}
-
-.fila-item input[type="checkbox"] {
-  width: 14px;
-  height: 14px;
-  margin: 0;
-  flex-shrink: 0;
-  accent-color: #00AE42;
-}
-
-.fila-item label {
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  cursor: pointer;
-}
-
-/* Empty State */
-#emptyState {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-
-.empty-icon {
-  width: 200px;
-  height: 160px;
-  background: url('../img/no-result.svg') no-repeat center;
-  background-size: contain;
-}
-
-.empty-text {
-  font-size: 13px;
-  color: #999;
-  font-weight: 400;
-}
-
-/* ===================== Notice Dialog ===================== */
-#NoticeMask {
-  background-color: #000;
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  opacity: 0.05;
-  display: none;
-}
-
-#NoticeBody {
-  display: none;
-  width: 500px;
-  border: 1px solid #E0E0E0;
-  border-radius: 8px;
-  background-color: #fff;
-  position: absolute;
-  left: 50%;
-  top: 200px;
-  margin-left: -250px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-}
-
-#NoticeBar {
-  background-color: #00B35C;
-  height: 40px;
-  line-height: 40px;
-  color: #fff;
-  text-align: center;
-  border-radius: 8px 8px 0 0;
-}
-
-#NoticeContent {
-  padding: 20px 30px;
-}
-
-#NoticeBtns {
-  margin-top: 16px;
-  display: flex;
-  justify-content: space-around;
-}
-
-/* ===================== Custom Filaments ===================== */
-#CustomFilamentsArea {
-  display: none;
-  flex-direction: column;
-  align-items: center;
-  flex: 1;
-  overflow: hidden;
-  padding: 16px 0;
-}
-
-#CFilament_Header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 648px;
-  padding: 0 0 12px;
-}
-
-#CFilament_Count {
-  font-size: 14px;
-  font-weight: 600;
-  color: #333;
-}
-
-#CFilament_Sort {
-  font-size: 12px;
-  border: 1px solid #E0E0E0;
-  border-radius: 4px;
-  padding: 4px 8px;
-  color: #333;
-  background: #fff;
-  cursor: pointer;
-}
-
-#CFilament_List {
-  width: 648px;
-  flex: 1;
-  overflow-y: auto;
-  border: 1px solid #EEEEEE;
-  border-radius: 8px;
-  background: #fff;
-}
-
-.CFilament_GroupTitle {
-  display: flex;
-  align-items: center;
-  font-size: 13px;
-  font-weight: 700;
-  color: #262E30;
-  padding: 12px 16px 8px;
-  background: #F9F9F9;
-  cursor: default;
-  user-select: none;
-}
-
-.CFilament_GroupTitle.collapsible {
-  cursor: pointer;
-}
-
-.CFilament_GroupArrow {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+input {
+	margin-right: 8px;
+	vertical-align: middle;
   width: 16px;
   height: 16px;
-  margin-right: 4px;
-  transition: transform 0.2s;
 }
 
-.CFilament_GroupArrow::before {
-  content: '';
-  display: block;
-  width: 6px;
-  height: 6px;
-  border-right: 1.5px solid #999;
-  border-bottom: 1.5px solid #999;
-  transform: rotate(45deg) translateY(-2px);
-}
+.inputIndent { margin-left: 8px;}
 
-.CFilament_GroupArrow.collapsed {
-  transform: rotate(-90deg);
-}
-
-.CFilament_GroupItems.collapsed {
-  display: none;
-}
-
-.CFilament_Item {
-  display: flex;
-  align-items: center;
-  padding: 10px 16px 10px 24px;
-  border-bottom: 1px solid #F5F5F5;
-  gap: 12px;
-  background: #fff;
-}
-
-.CFilament_Item:last-child {
-  border-bottom: none;
-}
-
-.CFilament_Name {
-  flex: 1;
-  font-size: 13px;
-  color: #262E30;
+.checkboxText {
+  width: 212px;
   overflow: hidden;
-  white-space: nowrap;
   text-overflow: ellipsis;
+  white-space: nowrap;
+  display: inline-block;
 }
 
-.CFilament_Type {
-  font-size: 13px;
-  color: #262E30;
-  width: 137px;
+/* right block */
+.SelectAll {
+  width: 100%;
+  text-align: right;
+  font-weight: 700;
 }
 
-.CFilament_Date {
-  font-size: 13px;
-  color: #262E30;
-  width: 87px;
+#ItemBlockArea {
+  column-count: 2;
+  column-gap: 16px;
+  padding-top: 16px;
+}
+
+.cols > *{
+  break-inside: avoid;
+}
+
+
+#NoticeMask
+{
+	background-color: #000;
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	right: 0px;
+	bottom: 0px;
+	opacity: 0.05;
+	display: none;
+}
+
+#NoticeBody
+{
+	display: none;
+	width: 500px;
+	border-width: 1px;
+	border-style: solid;
+	border-radius: 4px;
+	background-color: inherit;	
+	position: absolute;
+	left: 50%;
+	top: 200px;
+	margin-left: -250px;
+}
+
+#NoticeBar
+{
+	background-color:var(--md-primary);
+	height: 40px;
+	line-height: 40px;
+	color: var(--md-on-primary);
+	text-align: center;
+}
+
+#NoticeContent
+{
+	padding: 4mm 10mm;	
+}
+
+
+#NoticeBtns
+{
+	margin-top: 4mm;
+	display: flex;
+	justify-content:space-around;
+}
+
+#SystemFilamentsArea
+{
+	display: none;
+	flex-direction: row;
+}
+
+#CFilament_Btn_Area
+{
+	display: flex;
+	align-items: center;
+	height: 30px;
+}
+
+#Title
+{
+	margin: 0px 40px;
+	border-bottom: 1px solid var(--md-outline-variant);
+	display: flex;
+	flex-direction: row;
+	justify-content: center;
+	align-items: center;
+}
+
+#Title button
+{
+	cursor: pointer;
+	font-size: var(--md-type-page-title);
+	font-weight: 700;
+	padding: 0 16px;
+}
+
+#Title button.TitleSelected
+{
+	height: calc(100% - 3px);
+	display: flex;
+	align-items: center;
+	color: var(--md-primary);
+	border-bottom: 3px solid var(--md-primary);
+}
+
+#Title button.TitleUnselected
+{
+	height: 100%;
+	display: flex;
+	align-items: center;
+	color: var(--md-on-surface-variant);
+}
+
+#CustomFilamentsArea
+{
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+}
+
+#CFilament_List
+{
+	display:flex;
+	overflow-x:auto;
+	flex-wrap:wrap;
+	flex-direction: column;
+	justify-content:flex-start;
+	align-items: flex-start;
+	align-content:flex-start;
+	line-height: 32px;
+
+	height: 100%;
+}
+
+.CFilament_Item
+{
+	display: flex;
+	align-items: center;
+	margin-right: 30px;
+}
+
+.CFilament_Name
+{
+	width: 220px;
+	overflow: hidden;
+    white-space: nowrap; /* 防止文字换行 */
+    text-overflow: ellipsis; /* 超出部分显示省略号 */
 }
 
 .CFilament_EditBtn,
-.CFilament_DeleteBtn {
-  cursor: pointer;
-  width: 16px;
-  height: 16px;
-  opacity: 0.6;
-  /* Source SVGs use their own fill colors. brightness(0) crushes any color to pure
-     black at render time — cleaner than editing the SVG files themselves, which are
-     shared. Combined with the 0.6 opacity above we get a soft dark-gray look. */
-  filter: brightness(0);
+.CFilament_DeleteBtn
+{
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	width: 40px;
+	height: 40px;
+	background: transparent;
+	border: 0;
+	border-radius: 50%;
 }
 
-.CFilament_DeleteBtn {
-  margin-left: 4px;
+.CFilament_EditBtn img,
+.CFilament_DeleteBtn img
+{
+	width: 20px;
+	height: 20px;
 }
 
 .CFilament_EditBtn:hover,
-.CFilament_DeleteBtn:hover {
-  opacity: 1;
+.CFilament_DeleteBtn:hover
+{
+	background-color: var(--md-primary-container);
 }
 
-#CFilament_Empty {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
+.CFilament_EditBtn:focus-visible,
+.CFilament_DeleteBtn:focus-visible
+{
+	outline: 2px solid var(--md-primary);
+	outline-offset: 2px;
 }
 
-#CFilament_Empty .empty-icon {
-  width: 200px;
-  height: 160px;
-}
-
-#CFilament_Btn_Area {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 648px;
-  padding: 12px 0 0;
-}
-
-.CFilament_CreateBtn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 40px;
-  border: 1px solid #E0E0E0;
-  border-radius: 8px;
-  background: #F9F9F9;
-  font-size: 14px;
-  font-weight: 500;
-  color: #262E30;
-  cursor: pointer;
-  transition: background 0.15s;
-  white-space: nowrap;
-  gap: 8px;
-}
-
-.create-plus {
-  font-size: 18px;
-  font-weight: 400;
-  line-height: 1;
-}
-
-.CFilament_CreateBtn:hover {
-  background: #EEEEEE;
-}
-
-/* ===================== Footer ===================== */
-#AcceptArea {
-  height: auto !important;
-  border-top: none;
-  padding: 10px 24px;
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 10px;
-}
-
-#AcceptArea .NormalBtn {
-  padding: 0 16px;
-  height: 32px;
-  line-height: 32px;
-  font-size: 13px;
-  border-radius: 16px;
-  margin-left: 0;
-}
-
-#AcceptArea .GrayBtn {
-  padding: 0 16px;
-  height: 32px;
-  line-height: 32px;
-  font-size: 13px;
-  border-radius: 16px;
-  margin-left: 0;
-}
+.filterCount { margin-left: 8px; color: var(--md-on-surface-variant); font-weight: 400; }
+.filterSearch { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.filterSearch label { font-size: var(--md-type-body-small); color: var(--md-on-surface-variant); }
+.filterSearch input { flex: 1 1 180px; width: auto; height: 36px; padding: 0 12px; margin: 0; color: var(--md-on-surface); background: var(--md-sc-low); border: 1px solid var(--md-outline-variant); border-radius: 18px; }
+.filterSearch button, .searchTag, #CFilament_Empty button { min-height: 32px; padding: 4px 12px; color: var(--md-primary); background: var(--md-primary-container); border: 0; border-radius: 16px; cursor: pointer; }
+.searchTags { display: flex; gap: 6px; flex-wrap: wrap; padding-top: 6px; }
+.filterSummary { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding-top: 8px; }
+.filterSummary .SelectAll { width: auto; text-align: left; }
+#filterResultText, #CFilament_Count { color: var(--md-on-surface-variant); }
+.listEmpty { padding: 20px; color: var(--md-on-surface-variant); }
+.listEmpty[hidden], .customGroupBody[hidden] { display: none; }
+#ItemBlockArea .filament-row { display: block; break-inside: avoid; padding: 3px 0; cursor: pointer; }
+#CFilament_Btn_Area { min-height: 40px; height: auto; gap: 12px; flex-wrap: wrap; }
+#CFilament_Sort { min-height: 32px; color: var(--md-on-surface); background: var(--md-sc-low); border: 1px solid var(--md-outline-variant); border-radius: 8px; }
+.CFilament_Type, .CFilament_Date { min-width: 72px; padding: 0 6px; color: var(--md-on-surface-variant); }
+.customGroup { min-width: 100%; }
+.customGroupHeading { width: 100%; text-align: left; color: var(--md-on-surface); background: var(--md-sc-low); border: 0; border-radius: 8px; padding: 6px 12px; cursor: pointer; }
+.customGroupBody { display: flex; flex-wrap: wrap; }
+.filterSearch :focus-visible, .searchTag:focus-visible, #CFilament_Sort:focus-visible, .customGroupHeading:focus-visible, #CFilament_Empty button:focus-visible { outline: 2px solid var(--md-primary); outline-offset: 2px; }

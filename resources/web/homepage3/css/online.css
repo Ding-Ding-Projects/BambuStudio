@@ -1,13 +1,13 @@
 .RedFont
 {
 	font-size:12px;
-	color: #F07E4A;		
+	color: var(--md-error);
 }
 
 .LinkBtn
 {
 	font-size:12px;
-	color: #1200FF;	
+	color: var(--md-primary);
 	cursor: pointer;
 }
 
@@ -28,6 +28,7 @@
 	flex-direction: column;
 	position: relative;
 	height: 100%;
+	background-color: var(--md-surface);
 }
 
 #Online_Models_Bar
@@ -60,23 +61,26 @@
 	display:flex;
 	flex-direction: column;
 	cursor: pointer;
-	border-radius: 10px;
+	border-radius: 16px;
 	overflow: hidden;
+	background-color: var(--md-sc-low);
+	border: 1px solid var(--md-outline-variant);
 }
 
 .HotModel_PrevBlock
 {
 	text-align: center;
-	background-color: #E4E4E4;
+	background-color: var(--md-sc-high);
 	width: 100%;
-	border-radius: 8px;
+	border-radius: 15px 15px 0 0;
 	line-height: 0px;
 	padding: 0px;
+	border-bottom: 1px solid var(--md-outline-variant);
 }
 
 .HotModel_PrevImg
 {
-	border-radius: 8px;
+	border-radius: 15px 15px 0 0;
 	width: 100%;
 	aspect-ratio: 4/3;
     object-fit: cover;
@@ -89,7 +93,7 @@
 	overflow: hidden;
 	white-space: nowrap;
 	text-overflow: ellipsis;
-	padding: 4px 2px;
+	padding: 10px 12px 12px;
 }
 
 .HotModel_Author_HeadIcon
@@ -120,7 +124,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-	font-weight: 700;
+	font-weight: 600;
 }
 
 
@@ -167,11 +171,14 @@
 	display: none;
 	align-items: center;
 	border-radius: 22px;
-	border: 1px solid #C2C2C2;	
+	border: 1px solid var(--md-outline-variant);
     flex-grow: 1;
-	background-color: #F7F7F7;
+	background-color: var(--md-sc-highest);
 	padding-right: 12px;
 	height: 40px;	
+	color: var(--md-on-surface);
+	box-sizing: border-box;
+	overflow: hidden;
 }
 
 .searchInputArea
@@ -180,7 +187,7 @@
 	align-items: center;
 	flex-grow: 1;
 	padding: 0px 22px 0px 0px;
-    border-radius: 22px 0px 0px 22px;
+	border-radius: 0px 22px 22px 0px;
 }
 
 .searchInput
@@ -189,7 +196,14 @@
 	flex-grow: 1;
 	outline: none;
 	font-size: 16px;
-	background-color: #F7F7F7;
+	background-color: transparent;
+	color: var(--md-on-surface);
+	caret-color: var(--md-primary);
+}
+
+.searchInput::placeholder
+{
+	color: var(--md-on-surface-variant);
 }
 
 
@@ -197,8 +211,15 @@
 {
 	width: 60px;
 	height: 100%;
-	border-radius: 0px 22px 22px 0px;
+	border-radius: 22px 0px 0px 22px;
 	display: flex;
 	align-items: center;
 	justify-content: center;
+	color: var(--md-primary);
+	cursor: pointer;
+}
+
+.searchBtn:hover
+{
+	background-color: var(--md-primary-container);
 }

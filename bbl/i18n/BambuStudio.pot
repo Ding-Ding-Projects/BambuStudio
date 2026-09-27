@@ -4455,6 +4455,9 @@ msgstr ""
 msgid "AMS Settings"
 msgstr ""
 
+msgid "AMS settings"
+msgstr ""
+
 msgid "Insertion update"
 msgstr ""
 
@@ -7033,6 +7036,12 @@ msgstr ""
 msgid "Print Options"
 msgstr ""
 
+msgid "Slice options"
+msgstr ""
+
+msgid "Print options"
+msgstr ""
+
 msgid "Safety Options"
 msgstr ""
 
@@ -7357,13 +7366,22 @@ msgstr ""
 msgid "The 3mf file version is newer than the current Bambu Studio version."
 msgstr ""
 
+msgid "Some settings in this 3MF file may not load in this version."
+msgstr ""
+
 msgid "Update your Bambu Studio could enable all functionality in the 3mf file."
 msgstr ""
 
 msgid "Current Version: "
 msgstr ""
 
+msgid "3MF File Version: "
+msgstr ""
+
 msgid "Latest Version: "
+msgstr ""
+
+msgid "View latest release"
 msgstr ""
 
 msgctxt "Software"
@@ -18805,4 +18823,24 @@ msgstr ""
 
 #: resources/data/helio_hints.ini: [hint: First-Time-Right Reliability]
 msgid "First-Time-Right Reliability\nLess babysitting, more predictable output. Example: a small farm running PETG parts avoids 'fail at hour 6' surprises and keeps batches on schedule."
+msgstr ""
+
+#: src/slic3r/GUI/WebViewDialog.cpp
+msgid "Network unavailable. The current page remains open."
+msgstr ""
+
+#: src/slic3r/GUI/WebViewDialog.cpp
+msgid "Cloud sign-in could not be completed. The current page remains open."
+msgstr ""
+
+#: src/slic3r/GUI/WebViewDialog.cpp
+msgid "The requested cloud page was not found. The current page remains open."
+msgstr ""
+
+#: src/slic3r/GUI/WebViewDialog.cpp
+msgid "The cloud page could not be opened securely. The current page remains open."
+msgstr ""
+
+#: src/slic3r/GUI/WebViewDialog.cpp
+msgid "The cloud page is temporarily unavailable. The current page remains open."
 msgstr ""

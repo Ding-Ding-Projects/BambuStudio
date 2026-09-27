@@ -13,13 +13,13 @@ var LangText={
 		"t11": "All",
 		"t12": "Clear all",
 		"t13": "mm nozzle",
-		"t14": "Filament Selection",
+		"t14": "Ink Selection",
 		"t15": "Printer",
-		"t16": "Filament type",
+		"t16": "Ink type",
 		"t17": "Vendor",
 		"t18": "error",
-		"t19": "At least one filament must be selected.",
-		"t20": "Do you want to use default filament ?",
+		"t19": "At least one ink must be selected.",
+		"t20": "Do you want to use default ink ?",
 		"t21": "yes",
 		"t22": "no",
 		"t23": "Release note",
@@ -100,8 +100,8 @@ var LangText={
 		"t106": "Profile description",
 		"t107": "Online Models",
 		"t108": "MORE",
-		"t109": "System Filaments",
-		"t110": "Custom Filaments",
+		"t109": "System Inks",
+		"t110": "Custom Inks",
 		"t111": "Create New",
 		"t112": "Join the Program",
 		"t113": "You may change your choice in preference anytime.",
@@ -166,7 +166,7 @@ var LangText={
 		"wk17": "Bambu Lab Academy",
 		"wk18": "Quick Start Tutorial",
 		"wk19": "Learn by Topic",
-		"wk20": "Filament Guide",
+		"wk20": "Ink Guide",
 		"wk21": "Explore now",
 		"t200": "Basic Info",
 		"t201": "Set Parameters",
@@ -180,10 +180,10 @@ var LangText={
 		"t209": "e.g. Basic, Matte, Silk, Marble",
 		"t210": "Creation Method",
 		"t211": "Create for my connected printer only",
-		"t212": "The filament will only be available for the currently connected printer",
-		"t213": "Create based on filament type",
-		"t214": "Pick one generic filament as the base and create presets in bulk for all selected printers. All printers will share the same filament parameters",
-		"t215": "Copy current filament type preset",
+		"t212": "The ink will only be available for the currently connected printer",
+		"t213": "Create based on ink type",
+		"t214": "Pick one generic ink as the base and create presets in bulk for all selected printers. All printers will share the same ink parameters",
+		"t215": "Copy current ink type preset",
 		"t216": "Pick an existing preset to copy for each printer individually. Each printer's preset parameters stay independent",
 		"t217": "Create Vendor Brand",
 		"t218": "Vendor Brand Name",
@@ -191,51 +191,51 @@ var LangText={
 		"t220": "Printer Model:",
 		"t221": "Loading...",
 		"t222": "Nozzle Diameter:",
-		"t223": "Base Filament Preset:",
+		"t223": "Base Ink Preset:",
 		"t224": "Select preset",
 		"t225": "Please select a base preset first",
-		"t226": "Select a filament preset",
+		"t226": "Select a ink preset",
 		"t227": "Select supported printers:",
 		"t228": "Select supported printers",
 		"t229": "Confirm",
 		"t230": "Set the reference preset for each printer preset",
-		"t231": "Filament Name:",
-		"t232": "Printer Presets for this Filament",
-		"t233": "Edit Filament",
-		"t234": "Filament Presets:",
+		"t231": "Ink Name:",
+		"t232": "Printer Presets for this Ink",
+		"t233": "Edit Ink",
+		"t234": "Ink Presets:",
 		"t235": "Add Preset",
 		"t236": "No presets",
 		"t237": "Filter",
-		"t238": "Filament Type",
+		"t238": "Ink Type",
 		"t239": "Printer",
 		"t240": "Vendor",
 		"t241": "Filter results: 0 matches",
-		"t242": "Custom filaments: 0",
+		"t242": "Custom inks: 0",
 		"t243": "Time: Newest first",
 		"t244": "Time: Oldest first",
-		"t245": "Filament type",
-		"t246": "No custom filaments",
-		"t247": "New custom filament",
+		"t245": "Ink type",
+		"t246": "No custom inks",
+		"t247": "New custom ink",
 		"t248": "Series",
 		"t249": "Other",
-		"t253": "Search filament name and type",
+		"t253": "Search ink name and type",
 		"t254": "Filter results: {n} matches",
 		"t255": "Today",
 		"t256": "This week",
 		"t257": "Earlier",
 		"t258": "Creating...",
 		"t259": "No data",
-		"t260": "User preset sync is not enabled, which may cause filament settings on the device page to not take effect.\nClick \"Sync user presets\" to enable sync.",
-		"t261": "Go to the filament settings page to edit your preset if needed.\nNote: Nozzle temperature, bed temperature, and max volumetric speed significantly affect print quality. Please set them carefully.",
-		"t262": "Filament Created",
+		"t260": "User preset sync is not enabled, which may cause ink settings on the device page to not take effect.\nClick \"Sync user presets\" to enable sync.",
+		"t261": "Go to the ink settings page to edit your preset if needed.\nNote: Nozzle temperature, bed temperature, and max volumetric speed significantly affect print quality. Please set them carefully.",
+		"t262": "Ink Created",
 		"t263": "Sync user presets",
 		"t264": "OK",
 		"t265": "Close",
 		"t266": "Edit Preset",
 		"t267": "Remove",
-		"t268": "Please select a base filament preset",
+		"t268": "Please select a base ink preset",
 		"t269": "Please select supported printers",
-		"t270": "No printers compatible with this filament, please add a filament first",
+		"t270": "No printers compatible with this ink, please add a ink first",
 		"t271": "",
 		"t272": "No printer connected. Please connect a printer.",
 		"t273": "Currently connected printer: ",
@@ -256,10 +256,10 @@ var LangText={
 		"t288": "Nozzle",
 		"t289": "Initial layer",
 		"t290": "Other layers",
-		"t291": "Filament",
+		"t291": "Ink",
 		"t292": "Temperature",
 		"t293": "No printer connected",
-		"t294": "No presets available, please add a filament first"
+		"t294": "No presets available, please add a ink first"
 	},
 	"zh_CN": {
 		"t1": "欢迎使用Bambu Studio",
@@ -2990,13 +2990,275 @@ var LangText={
 		"wk19": "Nauka według Tematu",
 		"wk20": "Przewodnik po Filamentach",
 		"wk21": "Odkrywaj teraz"
+	},
+	"yue_HK": {
+		"t1": "歡迎使用 Bambu Studio",
+		"t2": "幾個步驟就設定好 Bambu Studio，一齊開始啦！",
+		"t3": "使用者協議",
+		"t4": "不同意",
+		"t5": "同意",
+		"t6": "參加我哋嘅使用者<br/>體驗改善計劃，一齊令 3D 打印做得更好。",
+		"t7": "參加客戶體驗改善計劃",
+		"t8": "返回",
+		"t9": "下一步",
+		"t10": "選擇打印機",
+		"t11": "全部",
+		"t12": "全部清除",
+		"t13": "毫米噴嘴",
+		"t14": "選擇墨水",
+		"t15": "打印機",
+		"t16": "墨水類型",
+		"t17": "供應商",
+		"t18": "錯誤",
+		"t19": "請至少選擇一種墨水。",
+		"t20": "要使用預設墨水嗎？",
+		"t21": "係",
+		"t22": "唔係",
+		"t23": "發行說明",
+		"t24": "開始使用",
+		"t25": "完成",
+		"t26": "登入",
+		"t27": "註冊",
+		"t28": "模型",
+		"t29": "商城",
+		"t30": "使用手冊",
+		"t31": "新增項目",
+		"t32": "建立新項目",
+		"t33": "開啟項目",
+		"t34": "熱點",
+		"t35": "最近開啟",
+		"t36": "確定",
+		"t37": "請至少選擇一部打印機。",
+		"t38": "取消",
+		"t39": "確認",
+		"t40": "網絡已中斷，請檢查後稍後重試。",
+		"t47": "請選擇登入地區",
+		"t48": "亞太地區",
+		"t49": "中國內地",
+		"t50": "登出",
+		"t52": "略過",
+		"t53": "參加",
+		"t54": "Bambu Studio 會從真實打印嘅成功同失敗經驗中學習，改善打印質素、可靠性及整體效能。<br/><br/><span style='display:inline-block;width:2em;'></span>如你參加本計劃，打印機及軟件會分享使用及效能資料，例如裝置資料、設定、連線狀態及打印操作。這有助我們更快識別問題及改善產品。<br/><br/><span style='display:inline-block;width:2em;'></span>參加純屬自願，你可隨時在 <b>偏好設定 &gt; 使用者體驗</b> 中退出。詳情請參閱",
+		"t55": "使用者體驗改善計劃",
+		"t56": "頁面。",
+		"t57": "",
+		"t58": "",
+		"t59": "。",
+		"t60": "歐洲",
+		"t61": "北美洲",
+		"t62": "其他",
+		"t63": "變更地區後，你的帳戶將會登出。請稍後重新登入。",
+		"t64": "Bambu 網絡外掛程式",
+		"t65": "透過 WLAN 或雲端服務傳送打印工作",
+		"t66": "完整遙距控制",
+		"t67": "即時影像串流及打印機狀態監察",
+		"t68": "切片設定雲端同步",
+		"t69": "安裝 Bambu 網絡外掛程式",
+		"t70": "",
+		"t71": "正在下載",
+		"t72": "下載失敗",
+		"t73": "安裝成功。",
+		"t74": "重新啟動",
+		"t75": "Bambu 網絡外掛程式提供以下功能：",
+		"t76": "請先",
+		"t77": "安裝",
+		"t78": "網絡外掛程式，再登入",
+		"t79": "外掛程式安裝失敗。",
+		"t80": "請嘗試以下步驟：",
+		"t81": "1. 按一下",
+		"t82": "以開啟外掛程式資料夾",
+		"t83": "2. 關閉所有已開啟的 Bambu Studio",
+		"t84": "3. 刪除外掛程式資料夾內的所有檔案",
+		"t85": "4. 重新開啟 Bambu Studio，然後再次安裝外掛程式",
+		"t86": "關閉",
+		"t87": "使用者手冊",
+		"t88": "移除",
+		"t89": "開啟所在資料夾",
+		"t90": "3D 模型",
+		"t91": "下載 3D 模型",
+		"t92": "建立者",
+		"t93": "改作自",
+		"t94": "分享者",
+		"t95": "模型資料",
+		"t96": "配件",
+		"t97": "設定檔資料",
+		"t98": "模型名稱",
+		"t100": "模型描述",
+		"t101": "物料清單",
+		"t102": "組裝指南",
+		"t103": "其他",
+		"t104": "設定檔名稱",
+		"t105": "設定檔作者",
+		"t106": "設定檔描述",
+		"t107": "網上模型",
+		"t108": "更多",
+		"t109": "系統墨水",
+		"t110": "自訂墨水",
+		"t111": "建立新項目",
+		"t112": "參加計劃",
+		"t113": "你可隨時在偏好設定中更改選擇。",
+		"t114": "模型庫",
+		"t115": "批次",
+		"t116": "重試",
+		"t117": "打印記錄",
+		"t118": "打印中",
+		"t119": "成功",
+		"t120": "已取消",
+		"t121": "搜尋",
+		"t122": "搜尋網上模型",
+		"t123": "列印板",
+		"t125": "Maker’s Supply",
+		"t126": "載入緊……",
+		"t127": "請加入項目資料",
+		"t128": "編輯",
+		"t129": "項目資料",
+		"t130": "配件",
+		"t131": "設定檔資料",
+		"t132": "描述",
+		"t133": "設定檔名稱：",
+		"t134": "返回",
+		"t135": "儲存",
+		"t136": "項目名稱",
+		"t137": "圖片",
+		"t138": "加入圖片",
+		"t139": "加入配件",
+		"t140": "物料清單",
+		"t141": "組裝指南",
+		"t142": "設定檔圖片",
+		"t143": "只接受 JPG/GIF/PNG 格式，每張不超過 4MB，最多 16 張；可拖曳圖片調整次序。建議使用 4:3 比例，以獲得最佳顯示效果。",
+		"t144": "檔案類型無效",
+		"t145": "檔案大小超出限制",
+		"t146": "已超出上載數量限制",
+		"t147": "檔案上載失敗",
+		"t148": "加入",
+		"t149": "確定要清除所有最近檔案嗎？",
+		"t150": "全部選取",
+		"t151": "Bambu Lab 使用者體驗改善計劃條款",
+		"t152": "在 3D 打印社群中，我們會互相參考成功與失敗經驗，以改進切片參數及設定。Bambu Studio 亦採用相同原則，從使用者的整體成功經驗與問題中學習，持續改善效能。",
+		"t153": "為改善產品與服務的質素及效能，Bambu Studio 誠邀你參加使用者體驗改善計劃。本文件說明計劃會收集哪些資料及其用途。請在同意前仔細閱讀並充分理解本文件。你可隨時在「偏好設定－使用者體驗」中更改設定，以撤回同意。",
+		"t154": "資料收集及用途",
+		"t155": "你同意參加計劃後，系統會自動收集並傳送與裝置及使用情況相關的資料，包括：",
+		"t156": "裝置及使用者識別資料：",
+		"t158": "裝置及軟件資料：",
+		"t160": "裝置連線及設定資料：",
+		"t162": "產品及服務使用資料：",
+		"t164": "產品及服務效能資料：",
+		"t157": "裝置序號（SN）、使用者 ID、應用程式 ID，以及為記錄及關聯相關事件而產生的其他識別資料等；",
+		"t159": "作業系統名稱及類型、應用程式名稱及版本等；",
+		"t161": "IP 位址、與打印機建立網絡連線的結果及錯誤資料、網絡連線狀態、打印機系統版本、應用程式設定及連線狀態等；",
+		"t163": "使用者與應用程式互動的方式及時間、應用程式啟動與設定、與打印機互動及使用詳情、網上服務使用統計、使用者儲存、匯入或匯出檔案的中繼資料，以及所要求的服務網址等；",
+		"t165": "打印、網絡攝影機即時影像、應用程式及打印機操作等功能的效能指標及錯誤資料。",
+		"t166": "我們會使用上述資料評估及改善產品與服務。",
+		"t167": "如何退出",
+		"t168": "你可隨時在「偏好設定－使用者體驗」中更改設定，以撤回同意。",
+		"t169": "私隱保障",
+		"t170": "Bambu Lab 致力保障你的私隱。除適用法律要求外，所收集的資料不會與任何第三方分享或向其披露。除非法律規定須保存更長時間，資料只會保留至完成上述用途所需的期間。要進一步了解我們如何處理你的資料，請參閱",
+		"t171": "私隱聲明",
+		"t172": "無法連接裝置伺服器。請檢查網絡及防火牆。",
+		"wk17": "Bambu Lab 學院",
+		"wk18": "快速入門教學",
+		"wk19": "按主題學習",
+		"wk20": "墨水指南",
+		"wk21": "即刻探索",
+		"t200": "基本資料",
+		"t201": "設定參數",
+		"t202": "完成",
+		"t203": "供應商",
+		"t204": "選擇供應商",
+		"t205": "加入供應商品牌",
+		"t206": "類型",
+		"t207": "選擇物料類型",
+		"t208": "系列",
+		"t209": "例如基本、啞面、絲光、大理石紋",
+		"t210": "建立方式",
+		"t211": "只為目前連接嘅打印機建立",
+		"t212": "呢款墨水只會喺目前連接嘅打印機上提供",
+		"t213": "按墨水類型建立",
+		"t214": "揀一款通用墨水做基礎，批量為所有已選打印機建立預設。所有打印機會共用相同嘅墨水參數",
+		"t215": "複製目前墨水類型預設",
+		"t216": "為每部打印機分別揀選現有預設作複製。各部打印機嘅預設參數會獨立保留",
+		"t217": "建立供應商品牌",
+		"t218": "供應商品牌名稱",
+		"t219": "輸入名稱",
+		"t220": "打印機型號：",
+		"t221": "載入中……",
+		"t222": "噴嘴直徑：",
+		"t223": "基礎墨水預設：",
+		"t224": "選擇預設",
+		"t225": "請先選擇基礎預設",
+		"t226": "選擇墨水預設",
+		"t227": "選擇支援嘅打印機：",
+		"t228": "選擇支援嘅打印機",
+		"t229": "確認",
+		"t230": "為每部打印機嘅預設設定參考預設",
+		"t231": "墨水名稱：",
+		"t232": "呢款墨水嘅打印機預設",
+		"t233": "編輯墨水",
+		"t234": "墨水預設：",
+		"t235": "加入預設",
+		"t236": "暫無預設",
+		"t237": "篩選",
+		"t238": "墨水類型",
+		"t239": "打印機",
+		"t240": "供應商",
+		"t241": "篩選結果：0 項符合",
+		"t242": "自訂墨水：0 款",
+		"t243": "時間：由新到舊",
+		"t244": "時間：由舊到新",
+		"t245": "墨水類型",
+		"t246": "暫無自訂墨水",
+		"t247": "新增自訂墨水",
+		"t248": "系列",
+		"t249": "其他",
+		"t253": "搜尋墨水名稱同類型",
+		"t254": "篩選結果：{n} 項符合",
+		"t255": "今日",
+		"t256": "本星期",
+		"t257": "較早之前",
+		"t258": "建立中……",
+		"t259": "暫無資料",
+		"t260": "尚未啟用使用者預設同步，裝置頁面上嘅墨水設定可能唔會生效。\n按「同步使用者預設」以啟用同步。",
+		"t261": "如有需要，請到墨水設定頁面編輯預設。\n注意：噴嘴溫度、熱床溫度同最大體積速度會明顯影響打印質素，請小心設定。",
+		"t262": "墨水已建立",
+		"t263": "同步使用者預設",
+		"t264": "確定",
+		"t265": "關閉",
+		"t266": "編輯預設",
+		"t267": "移除",
+		"t268": "請選擇基礎墨水預設",
+		"t269": "請選擇支援嘅打印機",
+		"t270": "冇打印機支援呢款墨水，請先加入墨水",
+		"t271": "個",
+		"t272": "未連接打印機，請連接一部打印機。",
+		"t273": "目前連接嘅打印機：",
+		"t274": "最多 50 個字元",
+		"t275": "請輸入名稱",
+		"t276": "名稱已存在",
+		"t277": "直徑（毫米）",
+		"t278": "密度（克／立方厘米）",
+		"t279": "流量比例",
+		"t280": "最大體積速度",
+		"t281": "收縮率（%）",
+		"t282": "預設顏色",
+		"t283": "Cool Plate SuperTack 冷卻板",
+		"t284": "冷卻板",
+		"t285": "工程板",
+		"t286": "光滑 PEI 板／高溫板",
+		"t287": "紋理 PEI 板",
+		"t288": "噴嘴",
+		"t289": "首層",
+		"t290": "其他層",
+		"t291": "墨水",
+		"t292": "溫度",
+		"t293": "未連接打印機",
+		"t294": "暫無可用預設，請先加入墨水"
 	}
 };
 
 var LANG_COOKIE_NAME="BambuWebLang";
 var LANG_COOKIE_EXPIRESECOND= 365*86400;
 
-function TranslatePage()
+function GetCurrentWebLang()
 {
 	let strLang=GetQueryString("lang");
 	if(strLang!=null)
@@ -3009,67 +3271,165 @@ function TranslatePage()
 		//strLang=getCookie(LANG_COOKIE_NAME);
 		strLang=localStorage.getItem(LANG_COOKIE_NAME);
 	}
-	
-	//alert(strLang);
-	
-	if( !LangText.hasOwnProperty(strLang) )
+
+	if( strLang!="bilingual_en_yue_HK" && !LangText.hasOwnProperty(strLang) )
 		strLang="en";
+
+	return strLang;
+}
+
+function TranslatePage()
+{
+	let strLang=GetCurrentWebLang();
+
+	document.documentElement.lang = strLang==="yue_HK" ? "yue-Hant-HK" : "en";
+
+	let bBilingual=(strLang==="bilingual_en_yue_HK");
 
     let AllNode=$(".trans");
 	let nTotal=AllNode.length;
 	for(let n=0;n<nTotal;n++)
 	{
 		let OneNode=AllNode[n];
-		
+
 		let tid=$(OneNode).attr("tid");
-		if( LangText[strLang].hasOwnProperty(tid) )
+
+		// A ".bi-group" container marks a sentence composed from several
+		// ".trans" fragments (e.g. "Please " + "install" + " the plugin...").
+		// Never annotate the individual fragments in bilingual mode — that
+		// interleaves the two languages word by word. Render the fragments in
+		// English and let AnnotateBilingualGroups() append one whole-sentence
+		// Cantonese line to the container.
+		if(bBilingual && $(OneNode).closest(".bi-group").length>0)
 		{
-			$(OneNode).html(LangText[strLang][tid]);
+			if(LangText['en'].hasOwnProperty(tid))
+				$(OneNode).html(LangText['en'][tid]);
+			continue;
 		}
-		else if(strLang!='en' && LangText['en'].hasOwnProperty(tid) )
+
+		let strText=GetLocalizedTextByKey(tid, strLang);
+		if(strText!==null)
 		{
-			$(OneNode).html(LangText['en'][tid]);
+			$(OneNode).html(strText);
 		}
 	}
 
-	// Translate placeholder attributes via data-ph-tid
 	$('[data-ph-tid]').each(function() {
 		let tid = $(this).attr('data-ph-tid');
-		let text = '';
-		if (LangText[strLang] && LangText[strLang][tid]) text = LangText[strLang][tid];
-		else if (LangText['en'] && LangText['en'][tid]) text = LangText['en'][tid];
+		let text = (LangText[strLang] && LangText[strLang][tid]) || (LangText['en'] && LangText['en'][tid]);
 		if (text) $(this).attr('placeholder', text);
 	});
+
+	AnnotateBilingualGroups(bBilingual);
+}
+
+// Compact one-line secondary label: never taller than one small line, clipped
+// with an ellipsis inside fixed-height slots (full text stays reachable via
+// the title tooltip). Inherits the surrounding text color for theme safety.
+var BILINGUAL_SECONDARY_STYLE='display:block;font-size:0.85em;line-height:1.35;font-weight:400;opacity:0.85;overflow:hidden;text-overflow:ellipsis;';
+
+function StripBilingualMarkup(str)
+{
+	return String(str).replace(/<[^>]*>/g,'');
+}
+
+function EscapeBilingualAttribute(str)
+{
+	return String(str).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function BuildBilingualSecondarySpan(cantonese, extraClass)
+{
+	let strPlain='粵語：'+StripBilingualMarkup(cantonese);
+	return '<span class="BilingualSecondary'+(extraClass?' '+extraClass:'')+'" lang="yue-Hant-HK"'
+		+' title="'+EscapeBilingualAttribute(strPlain)+'"'
+		+' style="'+BILINGUAL_SECONDARY_STYLE+'">粵語：'+cantonese+'</span>';
+}
+
+// Appends (or removes, outside bilingual mode) one composed Cantonese line per
+// ".bi-group" sentence container. Fallback rule: if any fragment of the
+// composed whole lacks a real Cantonese translation, show English only.
+function AnnotateBilingualGroups(bBilingual)
+{
+	$(".bi-group").each(function(){
+		let Group=$(this);
+		Group.children(".BilingualGroupSecondary").remove();
+		if(!bBilingual)
+			return;
+
+		let strEnglish="";
+		let strCantonese="";
+		let bComplete=true;
+		Group.find(".trans").each(function(){
+			let tid=$(this).attr("tid");
+			if(!LangText['en'].hasOwnProperty(tid))
+			{
+				bComplete=false;
+				return false;
+			}
+			strEnglish+=LangText['en'][tid];
+			if(!LangText['yue_HK'].hasOwnProperty(tid) || LangText['yue_HK'][tid]==="")
+			{
+				bComplete=false;
+				return false;
+			}
+			strCantonese+=LangText['yue_HK'][tid];
+		});
+
+		if(!bComplete || strCantonese==="" || strCantonese===strEnglish)
+			return;
+
+		Group.append(BuildBilingualSecondarySpan(strCantonese,'BilingualGroupSecondary'));
+	});
+}
+
+function GetLocalizedTextByKey(key, strLang)
+{
+	if(!LangText['en'].hasOwnProperty(key))
+		return null;
+
+	let english=LangText['en'][key];
+	if(strLang==="bilingual_en_yue_HK")
+	{
+		let cantonese=LangText['yue_HK'].hasOwnProperty(key) ? LangText['yue_HK'][key] : "";
+		// Fallback rule: without a real whole-string Cantonese translation,
+		// show English only instead of annotating with a copy of the English.
+		if(cantonese==="" || cantonese===english)
+			return english;
+		if(english==="")
+			return cantonese;
+		return '<span lang="en">'+english+'</span>'+BuildBilingualSecondarySpan(cantonese,'');
+	}
+
+	if(LangText.hasOwnProperty(strLang) && LangText[strLang].hasOwnProperty(key))
+		return LangText[strLang][key];
+
+	return english;
 }
 
 function GetCurrentTextByKey( key )
 {
-	let strLang=GetQueryString("lang");
-	if(strLang!=null)
-	{
-		//setCookie(LANG_COOKIE_NAME,strLang,LANG_COOKIE_EXPIRESECOND,'/');
-		localStorage.setItem(LANG_COOKIE_NAME,strLang);
-	}
-	else
-	{
-		//strLang=getCookie(LANG_COOKIE_NAME);
-		strLang=localStorage.getItem(LANG_COOKIE_NAME);
-	}
-	
-	//alert(strLang);
-	
-	if( !LangText.hasOwnProperty(strLang) )
-		strLang="en";
+	return GetLocalizedTextByKey(key, GetCurrentWebLang()) || '';
+}
 
-	let strText='';
-	if( LangText[strLang].hasOwnProperty(key) )
+// Plain-text variant for attribute contexts (title tooltips, placeholders,
+// innerText dialogs/toasts) where the bilingual HTML markup must not leak.
+function GetCurrentPlainTextByKey( key )
+{
+	let strLang=GetCurrentWebLang();
+	if(!LangText['en'].hasOwnProperty(key))
+		return '';
+
+	let english=StripBilingualMarkup(LangText['en'][key]);
+	if(strLang==="bilingual_en_yue_HK")
 	{
-		strText=LangText[strLang][key];
+		let cantonese=LangText['yue_HK'].hasOwnProperty(key) ? StripBilingualMarkup(LangText['yue_HK'][key]) : "";
+		if(cantonese==="" || cantonese===english)
+			return english;
+		if(english==="")
+			return cantonese;
+		return english+' ／ 粵語：'+cantonese;
 	}
-	else if(strLang!='en' && LangText['en'].hasOwnProperty(key) )
-	{
-		strText=LangText['en'][key];
-	}	
-	
-	return strText;
+
+	return StripBilingualMarkup(GetLocalizedTextByKey(key, strLang) || '');
 }

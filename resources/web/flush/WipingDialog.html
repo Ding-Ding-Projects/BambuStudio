@@ -2,39 +2,152 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <style>
-        html, body {
-          margin: 0px;
-          padding: 0px;
-          height: 100%;
-          background: #f5f5f5;
-          font-family: sans-serif;
-        }
+      /*---Bundled design fonts---------------------------------------------
+        Ship Roboto with the app so this WebView2 page renders the MD3 type
+        system regardless of which fonts the host OS has installed. Paths are
+        relative to this file (resources/web/flush/) and point at the bundled
+        TTFs under resources/fonts/ — the same three faces homepage3 declares.
+        Only Regular/Medium/Bold are bundled, so every rule below asks for 400,
+        500 or 700 and never a weight the browser would have to synthesise. */
+      @font-face {
+        font-family: "Roboto";
+        font-style: normal;
+        font-weight: 400;
+        font-display: swap;
+        src: url("../../fonts/Roboto-Regular.ttf") format("truetype");
+      }
+      @font-face {
+        font-family: "Roboto";
+        font-style: normal;
+        font-weight: 500;
+        font-display: swap;
+        src: url("../../fonts/Roboto-Medium.ttf") format("truetype");
+      }
+      @font-face {
+        font-family: "Roboto";
+        font-style: normal;
+        font-weight: 700;
+        font-display: swap;
+        src: url("../../fonts/Roboto-Bold.ttf") format("truetype");
+      }
 
+      /*---Material Design 3 token layer------------------------------------
+        Same role names and tone values the other bundled pages already use
+        (resources/web/homepage3/css/{common,dark}.css and
+        resources/web/fila_manager/index.css), which in turn mirror
+        src/slic3r/GUI/Widgets/MD3Tokens.hpp. The theme is selected by
+        data-theme on <html>, set from the is_dark_mode flag C++ already
+        sends with the table payload (WipeTowerDialog.cpp:158) — this webview
+        is created with a bare wxWebView::New, so it never receives the
+        "dark" user-agent token that drives include/globalapi.js. */
+      :root,
+      [data-theme="light"] {
+        color-scheme: light;
+        --md-surface: #faf8fd;
+        --md-sc-lowest: #ffffff;
+        --md-sc-low: #f4f2f9;
+        --md-sc-high: #e8e7ee;
+        --md-on-surface: #1a1b1f;
+        --md-on-surface-variant: #44464e;
+        --md-outline: #75777f;
+        --md-outline-variant: #c5c6d0;
+        --md-primary: #146c2e;
+        --md-on-primary: #ffffff;
+        --md-secondary-container: #d7e8d9;
+        --md-on-secondary-container: #0e1f13;
+        --md-error: #ba1a1a;
+        --md-warning: #8a4f00;
+      }
+
+      [data-theme="dark"] {
+        color-scheme: dark;
+        --md-surface: #1b1c21;
+        --md-sc-lowest: #131317;
+        --md-sc-low: #202127;
+        --md-sc-high: #2f3036;
+        --md-on-surface: #e8e7ee;
+        --md-on-surface-variant: #cdced8;
+        --md-outline: #94959f;
+        --md-outline-variant: #4a4c54;
+        --md-primary: #8bd89b;
+        --md-on-primary: #00391a;
+        --md-secondary-container: #2b3a2f;
+        --md-on-secondary-container: #cfe9d3;
+        --md-error: #ffb4ab;
+        --md-warning: #ffb870;
+      }
+
+      /* Shape + type + spacing tokens, mirroring MD3::Metrics / MD3::Type.
+         Pill is the stadium radius the kit prescribes for standalone buttons
+         (always half the control height, so a large value clamps correctly at
+         any height); swatch is the filament chip corner, which belongs to the
+         data element rather than to the chrome. */
+      :root {
+        --md-radius-pill: 999px;
+        --md-radius-tiny: 8px;
+        --md-radius-rail: 12px;
+        --md-radius-swatch: 4px;
+        --md-type-body-xs: 12.5px;
+        --md-type-caption: 11.5px;
+        --md-type-micro: 10.5px;
+        --md-space-padding: 16px;
+        --md-space-gap: 12px;
+        accent-color: var(--md-primary);
+      }
+
+      html, body {
+        margin: 0px;
+        padding: 0px;
+        height: 100%;
+        background: var(--md-surface);
+        color: var(--md-on-surface);
+        font-family: "Roboto", "HarmonyOS Sans SC", system-ui, "Segoe UI", sans-serif;
+      }
+
+      /* The page IS the body of an MD3 dialog (WipeTowerDialog.cpp adopts the
+         MD3 caption around this webview), so the content sits directly on the
+         dialog surface — no card border, no second background. */
       .container {
-        background: #fff;
-        padding: 20px;
+        background: transparent;
+        padding: var(--md-space-padding);
         padding-bottom: 10px;
-        border: 1px solid #ccc;
         max-width:fit-content(1000px);
         margin: 0 auto;
       }
 
       .tip-panel {
-        background: #eeeeee;
+        background: var(--md-secondary-container);
+        color: var(--md-on-secondary-container);
+        border-radius: var(--md-radius-rail);
         padding: 10px;
         margin-bottom: 10px;
-        font-size: 12px;
+        font-size: var(--md-type-body-xs);
       }
 
       .scroll-container {
         max-width: 100%;
         max-height: 500px;
         overflow: auto;
-        border: 1px solid #ccc;
+        border: 1px solid var(--md-outline-variant);
+        border-radius: var(--md-radius-tiny);
         position: relative;
         margin: 0px;
       }
+
+      ::-webkit-scrollbar { width: 10px; height: 10px; }
+      ::-webkit-scrollbar-thumb {
+        background: var(--md-outline-variant);
+        border-radius: var(--md-radius-tiny);
+        border: 2px solid transparent;
+        background-clip: content-box;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: var(--md-outline);
+        background-clip: content-box;
+      }
+      ::-webkit-scrollbar-track { background: transparent; }
 
       table {
         border-collapse: collapse;
@@ -42,34 +155,35 @@
       }
 
       th, td {
-        border: 1px solid #ccc;
+        border: 1px solid var(--md-outline-variant);
         text-align: center;
         padding: 2px;
         position: relative;
         width: 40px;
         height: 25px;
+        color: var(--md-on-surface);
       }
 
       thead th {
         position: sticky;
         top: 0;
-        background: #eee;
+        background: var(--md-sc-high);
         z-index: 10;
       }
 
       tbody th {
         position: sticky;
         left: 0;
-        background: #eee;
+        background: var(--md-sc-high);
         z-index: 9;
       }
 
       tbody tr:nth-child(even) {
-        background: #ffffff;
+        background: var(--md-sc-lowest);
       }
 
       tbody tr:nth-child(odd) {
-        background: #eeeeee;
+        background: var(--md-sc-low);
       }
 
       tbody td:first-child,
@@ -77,21 +191,40 @@
         position: sticky;
         top: 0;
         left: 0;
-        background: #eee;
+        background: var(--md-sc-high);
         z-index: 11;
       }
 
+      /* The "from/to" corner cell label. */
+      .matrix-corner-label {
+        font-size: var(--md-type-caption);
+        color: var(--md-on-surface-variant);
+      }
+
+      /* Filament swatch chip. Its background and text colour are written
+         inline by buildTable() from the filament colours — those encode a
+         value the user reads and are deliberately NOT tokenised here.
+
+         The border is the chip's *affordance*, not its data: it is what
+         separates a white or near-white filament from the header cell it sits
+         on, so it has to stay at least as visible as the stock #999 did. Both
+         chips only ever render inside thead th / tbody th, i.e. on
+         --md-sc-high. Outline beats the stock pairing in both themes, whereas
+         OutlineVariant would have been an invisible 1.38:1. Measured off the
+         live page, not estimated:
+             stock  #999    on #eeeeee = 2.46:1
+             here   #75777f on #e8e7ee = 3.64:1  (light)
+                    #94959f on #2f3036 = 4.42:1  (dark) */
       .icon-button {
         display: inline-block;
         width: 16px;
         height: 16px;
-        border: 1px solid #999;
+        border: 1px solid var(--md-outline);
         text-align: center;
         line-height: 15px;
-        color: #fff;
-        font-weight: bold;
-        font-size: 12px;
-        border-radius: 4px;
+        font-weight: 700;
+        font-size: var(--md-type-micro);
+        border-radius: var(--md-radius-swatch);
         cursor: default;
         user-select: none;
         padding: 1px;
@@ -104,7 +237,17 @@
         -moz-appearance: textfield;
         appearance: textfield;
         border: none;
+        font-family: inherit;
+        font-size: var(--md-type-body-xs);
+        color: var(--md-on-surface);
         background-color: inherit;
+      }
+
+      /* Keyboard focus must stay visible inside the matrix; the offset keeps
+         the ring inside the 40x25 cell instead of overpainting its neighbour. */
+      input[type="number"].table-input:focus-visible {
+        outline: 2px solid var(--md-primary);
+        outline-offset: -2px;
       }
 
       input[type="number"].table-input::-webkit-inner-spin-button,
@@ -113,23 +256,55 @@
           margin: 0;
       }
 
+      /* 74px border-box = 60px of content area once the new 6px padding and
+         1px border are subtracted, i.e. exactly the text width the stock
+         content-box `width: 60px` gave. Leaving it at 60px border-box would
+         have cut the text area to 46px and pushed the value under the spin
+         buttons, which this field (unlike .table-input) does not hide. */
       input[type="number"].multiplier-input {
-        width: 60px;
+        width: 74px;
+        box-sizing: border-box;
+        padding: 3px 6px;
+        border: 1px solid var(--md-outline-variant);
+        border-radius: var(--md-radius-tiny);
+        font-family: inherit;
+        font-size: var(--md-type-body-xs);
+        color: var(--md-on-surface);
+        background-color: var(--md-sc-lowest);
       }
-      body.dark-mode input[type="number"].multiplier-input {
-        width: 60px;
-        background-color: #4c4c55;
-        color: white;
+
+      input[type="number"].multiplier-input:hover {
+        border-color: var(--md-outline);
+      }
+
+      input[type="number"].multiplier-input:focus-visible {
+        outline: none;
+        border-color: var(--md-primary);
+        box-shadow: 0 0 0 1px var(--md-primary);
+      }
+
+      /* Value state, applied by updateWarningTexts(). These say "out of the
+         accepted range" and "changed from the default" — status, not filament
+         data — so they resolve to the MD3 error / warning roles and stay
+         legible in both themes. The selectors repeat the attribute qualifier
+         so they outrank the base rules above. */
+      input[type="number"].table-input.value-modified,
+      input[type="number"].multiplier-input.value-modified {
+        color: var(--md-warning);
+      }
+
+      input[type="number"].table-input.value-error {
+        color: var(--md-error);
       }
 
       .warning-text {
-        color: red;
-        font-size: 12px;
+        color: var(--md-error);
+        font-size: var(--md-type-body-xs);
       }
 
       .normal-text {
-        color: black;
-        font-size: 12px;
+        color: var(--md-on-surface-variant);
+        font-size: var(--md-type-body-xs);
       }
 
       .icon-gap {
@@ -137,160 +312,122 @@
         display: inline-block;
       }
 
+      /* NOTE: deliberately no `overflow: hidden` here. The state layer below
+         is an inset overlay that cannot escape the button, so clipping buys
+         nothing — and on a flex item it would silently cut the label off
+         instead of letting the button grow. Symmetric vertical padding plus a
+         >1 line-height mean an over-long localized label wraps and makes the
+         pill taller; min-height keeps the single-line case at the stock 30px
+         target. */
       .btn {
-        display: inline-block;
-        padding: 6px 9px;
-        border: 2px solid transparent;
-        border-radius: 12px;
-        font-size: 12px;
+        box-sizing: border-box;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        vertical-align: middle;
+        position: relative;
+        min-height: 30px;
+        padding: 6px 12px;
+        border: 1px solid transparent;
+        border-radius: var(--md-radius-pill);
+        font-family: inherit;
+        font-size: var(--md-type-body-xs);
+        font-weight: 500;
+        line-height: 1.25;
         text-align: center;
         cursor: pointer;
-        transition: all 0.3s;
+        user-select: none;
+        transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
       }
 
+      /* MD3 state layer: the hover/pressed wash is the button's own label
+         colour at 8%/12%, which keeps a filled and an outlined button
+         responding identically in light and dark without a second palette.
+         `inset: 0` resolves against the padding box and `border-radius:
+         inherit` re-clamps the pill to that box, so the wash is already
+         contained without the parent clipping anything. */
+      .btn::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        background: currentColor;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.15s ease;
+      }
+      .btn:hover::after { opacity: 0.08; }
+      .btn:active::after { opacity: 0.12; }
+
+      .btn:focus-visible {
+        outline: 2px solid var(--md-primary);
+        outline-offset: 2px;
+      }
+
+      /* Filled button — MD3 Primary / OnPrimary, matching Button::Variant::Filled. */
       .btn-ok {
-        color: #fff;
-        background-color: #21a452;
-      }
-      .btn-ok:hover {
-        background-color: #3dcb73;
+        color: var(--md-on-primary);
+        background-color: var(--md-primary);
       }
 
+      /* Outlined button — transparent interior, Outline ring, OnSurface label,
+         matching Button::Variant::Outlined. */
       .btn-cancel {
-        color: black;
-        background-color: white;
-        border: 1px solid black;
-      }
-      .btn-cancel:hover {
-        background-color: #eeeeee;
-      }
-
-      body.dark-mode button.btn-cancel {
-          background-color: #2d2d31;
-          color: #e0e0e0;
-          border: 1px solid #e0e0e0;
+        color: var(--md-on-surface);
+        background-color: transparent;
+        border-color: var(--md-outline);
       }
 
       select {
-        padding: 6px 9px;
-        border: 1px solid #dbdbdb;
-        border-radius: 3px;
-        font-size: 12px;
+        box-sizing: border-box;
+        vertical-align: middle;
+        min-height: 30px;
+        padding: 4px 8px;
+        border: 1px solid var(--md-outline-variant);
+        border-radius: var(--md-radius-tiny);
+        font-family: inherit;
+        font-size: var(--md-type-body-xs);
         cursor: pointer;
         appearance: auto;
-        background-color: white;
-        color: black;
+        background-color: var(--md-sc-lowest);
+        color: var(--md-on-surface);
       }
 
       select option {
-        background-color: white;
-        color: black;
+        background-color: var(--md-sc-lowest);
+        color: var(--md-on-surface);
       }
 
-      select:hover,
+      select:hover {
+        border-color: var(--md-outline);
+      }
+
+      /* The stock rule tinted the field mint on hover AND focus while setting
+         `outline: none`, so keyboard focus was indistinguishable from hover.
+         An MD3 outlined field thickens its border to the primary tone instead.
+         Keyed on :focus rather than :focus-visible on purpose — Chromium does
+         not match :focus-visible on a <select> focused by pointer, so
+         :focus-visible alone would have left a mouse click with no feedback at
+         all, quietly losing a state the stock sheet did show. */
       select:focus {
         outline: none;
-        border-color: #00ae42;
-        background-color: #edfaf2;
+        border-color: var(--md-primary);
+        box-shadow: 0 0 0 1px var(--md-primary);
       }
 
       .button-container {
         display: flex;
         justify-content: center;
-        gap: 10px;
+        flex-wrap: wrap;
+        gap: var(--md-space-gap);
         margin: 10px;
       }
 
-      /* 暗色模式样式 */
-      body.dark-mode {
-        background-color: #2d2d31;
-        color: #e0e0e0;
-      }
-
-      body.dark-mode .container {
-        background: inherit;
-        border-color: #2d2d31;
-      }
-
-      body.dark-mode .tip-panel {
-        background: #4c4c55;
-        color: #ccc;
-      }
-
-      body.dark-mode .scroll-container {
-        border-color: #4c4c55;
-      }
-
-      body.dark-mode table {
-        background: inherit;
-        border-color: #4c4c55;
-      }
-
-      body.dark-mode input[type="number"].table-input {
-        width: 30px;
-        height: 20px;
-        text-align: center;
-        -moz-appearance: textfield;
-        appearance: textfield;
-        border: none;
-        color: #e0e0e0;
-        background-color: inherit;
-      }
-
-      body.dark-mode th, body.dark-mode td {
-        background: inherit;
-        border-color: #555;
-        color: #e0e0e0;
-      }
-
-      body.dark-mode thead th{
-        position: sticky;
-        z-index: 10
-      }
-
-      body.dark-mode tbody th{
-        position: sticky;
-        z-index: 9
-      }
-
-      body.dark-mode tbody tr:nth-child(even) {
-        background: #2d2d31;
-      }
-
-      body.dark-mode tbody tr:nth-child(odd) {
-        background: #4c4c55;
-      }
-
-      body.dark-mode tbody td:first-child,
-      body.dark-mode thead th:first-child {
-        position: sticky;
-        z-index: 11;
-      }
-
-      body.dark-mode .btn-ok {
-        background-color: #3a8f44;
-      }
-
-      body.dark-mode .btn-dark {
-        background-color: #34495e;
-      }
-
-      body.dark-mode select {
-        background-color: #2d2d31;
-        color: white;
-        border-color: #4c4c55;
-      }
-
-      body.dark-mode .warning-text {
-        color: #f44336;
-      }
-
-      body.dark-mode .normal-text {
-        color: #e0e0e0;
-      }
-
-      body.dark-mode .icon-button {
-        background-color: #4c4c55;
+      @media (prefers-reduced-motion: reduce) {
+        .btn,
+        .btn::after {
+          transition: none;
+        }
       }
     </style>
   </head>
@@ -346,7 +483,7 @@
           <label
             for="multiplierInput"
             id="multiplier_label"
-            style="font-size: 12px;"
+            class="normal-text"
             >Multiplier</label
           >
           <input
@@ -359,17 +496,30 @@
           />
         </div>
         <div
-          style="margin-top: 5px; margin-bottom: 5px; color: #666; font-size: 12px;"
+          class="normal-text"
+          style="margin-top: 5px; margin-bottom: 5px;"
           id="multiplier_range_panel"
         >
           The multiplier should be in range [0.50, 3.00].
         </div>
       </div>
+      <!-- These two labels are placeholders: buildText() overwrites them from
+           BuildTextObjStr(), which sends _L("OK") and _L("Cancel")
+           (WipeTowerDialog.cpp:203-204). The shipped strings to size against
+           are therefore the catalogue values of those two msgids — longest are
+           nl "Bevestigen" (10 ch) and nl "Annuleren" / de "Abbrechen" /
+           uk "Скасувати" (9 ch), which at 12.5px Roboto Medium come to roughly
+           95px and 88px wide. The narrowest viewport this page ever gets is
+           the 2-filament dialog (webview ~280 CSS px, 248px inside the
+           container padding), so 95+12+88 = 195px still sits on one line with
+           room to spare; flex-wrap gives the pair a second line before either
+           button is ever asked to shrink. min-width is a 64px floor only — it
+           never caps growth, and nothing here clips. -->
       <div class="button-container" style="padding: 0px; margin: 0px;">
-        <button class="btn btn-ok" id="ok_btn" style="width: 60px; height: 30px; font-size: 12px; text-align: center;" onclick="storeData()">
+        <button class="btn btn-ok" id="ok_btn" style="min-width: 64px;" onclick="storeData()">
           Save
         </button>
-        <button class="btn btn-cancel" id="cancel_btn" style="width: 60px; height: 30px; font-size: 12px; text-align: center;" onclick="quit()">
+        <button class="btn btn-cancel" id="cancel_btn" style="min-width: 64px;" onclick="quit()">
           Cancel
         </button>
       </div>
@@ -460,7 +610,7 @@
         document.getElementById('multiplier_label').innerText = data.multiplier_label
         document.getElementById('ok_btn').innerText = data.ok_btn_label
         document.getElementById('cancel_btn').innerText = data.cancel_btn_label
-        updateVolumeRange(m_min_flush_volumes[m_curr_extruder_id],m_max_flush_volumes[m_curr_extruder_id]) 
+        updateVolumeRange(m_min_flush_volumes[m_curr_extruder_id],m_max_flush_volumes[m_curr_extruder_id])
         updateMultiplierRange(m_min_flush_multiplier,m_max_flush_multiplier)
       }
 
@@ -526,8 +676,10 @@
         m_min_flush_multiplier = data.min_flush_multiplier
         m_max_flush_multiplier = data.max_flush_multiplier
 
-        if(data.is_dark_mode == true)
-          document.body.classList.add('dark-mode');
+        // Select the MD3 theme from the flag C++ sends with this payload. The
+        // token layer hangs off data-theme on <html>, the same switch the
+        // filament-manager page uses.
+        document.documentElement.dataset.theme = (data.is_dark_mode == true) ? 'dark' : 'light';
 
         updateFlushMultiplier(m_curr_extruder_id)
 
@@ -546,13 +698,17 @@
         for (let j = 0; j < m_number_of_filaments; j++) {
           if (j == 0) {
             var tag = document.createElement("th")
-            tag.innerHTML = "<div style='font-size:12px'>from/to</div>"
+            tag.innerHTML = "<div class='matrix-corner-label'>from/to</div>"
             thead.appendChild(tag)
           }
           let th = document.createElement("th");
+          // scope lets a screen reader announce which filament column a cell
+          // belongs to; the swatch colour itself is filament data, so it stays
+          // an inline style rather than a token.
+          th.scope = "col";
           const luminance = getLuminance(m_colours[j]);
           const textColor = luminance > 0.5 ? "black" : "white";
-          th.innerHTML = `<div class="icon-button" style="font-size:10px;background:${m_colours[j]}; color:${textColor};">${j + 1}</div>`;
+          th.innerHTML = `<div class="icon-button" style="background:${m_colours[j]}; color:${textColor};">${j + 1}</div>`;
           thead.appendChild(th);
         }
 
@@ -560,9 +716,10 @@
           let tr = document.createElement("tr");
 
           let rowHeader = document.createElement("th");
+          rowHeader.scope = "row";
           const luminance = getLuminance(m_colours[i]);
           const textColor = luminance > 0.5 ? "black" : "white";
-          rowHeader.innerHTML = `<div class="icon-button" style="font-size:10px; background:${m_colours[i]};color:${textColor};">${i + 1}</div>`;
+          rowHeader.innerHTML = `<div class="icon-button" style="background:${m_colours[i]};color:${textColor};">${i + 1}</div>`;
           tr.appendChild(rowHeader);
 
           m_cell_inputs[i] = [];
@@ -647,11 +804,10 @@
       function updateWarningTexts() {
         let val = parseFloat(document.getElementById("multiplierInput").value);
         const input = document.getElementById('multiplierInput');
-        if (val !== 1.0) {
-            input.style.color = 'orange';
-        } else {
-            input.style.color = 'black';
-        }
+        // Class instead of an inline colour: the stock code wrote a literal
+        // "black" here, which the dark theme could not override and left the
+        // multiplier unreadable on a dark field whenever it sat at 1.0.
+        input.classList.toggle('value-modified', val !== 1.0);
 
         let hasException = false;
         for (let i = 0; i < m_number_of_filaments; i++) {
@@ -665,14 +821,16 @@
             let defaultVal = rawToDislay(m_default_matrix[m_curr_extruder_id][index], m_flush_multipiers[m_curr_extruder_id])
 
             if (val < m_min_flush_volumes[m_curr_extruder_id] || val > m_max_flush_volumes[m_curr_extruder_id]) {
-              input.style.color = "red";
+              input.classList.add("value-error");
+              input.classList.remove("value-modified");
               hasException = true;
             }
             else if (val != defaultVal) {
-              input.style.color = "orange";
+              input.classList.add("value-modified");
+              input.classList.remove("value-error");
             }
             else {
-              input.style.removeProperty("color");
+              input.classList.remove("value-error", "value-modified");
             }
           }
         }

@@ -6,11 +6,15 @@
 <title>Printer Connection Required</title>
 <link rel="stylesheet" type="text/css" href="css/home.css" />
 <link rel="stylesheet" type="text/css" href="css/dark.css" />
-<script type="text/javascript" src="../data/text.js"></script>	
-<script type="text/javascript" src="../homepage/js/jquery-3.6.0.min.js"></script>
-<script type="text/javascript" src="../homepage/js/json2.js"></script>
-<script type="text/javascript" src="../homepage/js/globalapi.js"></script>
-<script type="text/javascript" src="../homepage/js/home.js"></script>
+<script type="text/javascript" src="../data/text.js"></script>
+<script type="text/javascript">
+// The four scripts this page used to link lived under web/homepage, which no
+// longer exists, so OnInit was undefined and the page never localized. The
+// translation table itself is in data/text.js.
+function OnInit() {
+    if (typeof TranslatePage === 'function') TranslatePage();
+}
+</script>
 </head>
 <body onLoad="OnInit()">
     <div class="container">

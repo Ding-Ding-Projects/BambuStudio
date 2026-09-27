@@ -1,12 +1,13 @@
 
 #PolicyTxt
 {
-	background-color: #EBEBEB;
+	background-color: var(--md-sc-low);
 	padding: 12px;
 	word-wrap:break-word;
 	overflow-y: scroll;
 	min-height: 200px;
 	text-indent: 2em;
+	border-radius: 8px;
 }
 
 #PolicyTxt::-webkit-scrollbar {/*滚动条整体样式*/
