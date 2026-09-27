@@ -25,6 +25,7 @@ assert.deepEqual(
   Object.keys(english).sort(),
   'yue_HK must have exact key parity with the authoritative English table',
 );
+assert.equal(cantonese.t271, '個', 'yue_HK count suffix must use the Cantonese unit');
 
 const markup = (value) => value.match(/<[^>]+>/g) ?? [];
 for (const key of Object.keys(english)) {
