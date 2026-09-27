@@ -67,7 +67,20 @@ jobs:
           if (-not (Test-Path scripts/md3/test-drive-packaged-behavior.py)) {
             throw 'The verifier commit does not contain the focused driver checks.'
           }
-          & python scripts/md3/test-drive-packaged-behavior.py
+          $checkPython = Join-Path $env:RUNNER_TEMP `
+            ('lowlevel-verify-venv-' + $env:GITHUB_RUN_ID + '\Scripts\python.exe')
+          if (-not (Test-Path -LiteralPath $checkPython -PathType Leaf)) {
+            $fallback = Join-Path $env:RUNNER_TEMP ('verify-check-venv-' + $env:GITHUB_RUN_ID)
+            & python -m venv $fallback
+            if ($LASTEXITCODE -ne 0) { throw 'Could not create the isolated hosted check environment.' }
+            $checkPython = Join-Path $fallback 'Scripts\python.exe'
+          }
+          & $checkPython -c 'from PIL import Image'
+          if ($LASTEXITCODE -ne 0) {
+            & $checkPython -m pip install --disable-pip-version-check --quiet 'Pillow==11.3.0'
+            if ($LASTEXITCODE -ne 0) { throw 'Could not install pinned Pillow for hosted driver checks.' }
+          }
+          & $checkPython scripts/md3/test-drive-packaged-behavior.py
           if ($LASTEXITCODE -ne 0) { throw 'Focused hosted Python driver checks failed.' }
           & scripts/md3/Test-HostedEvidenceManifestV2.ps1
           foreach ($path in @(
