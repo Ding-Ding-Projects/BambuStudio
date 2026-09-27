@@ -1,0 +1,18 @@
+<!-- @dsCard group="Colors" viewport="700x250" subtitle="accentVars(): HSL seed → six accent roles, live" name="Accent seed algorithm" -->
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="../styles.css"><style>body{padding:14px;font-family:var(--md-font);}</style></head><body>
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+  <label style="width:34px;height:34px;border-radius:50%;cursor:pointer;border:2px dashed var(--md-outline);display:flex;align-items:center;justify-content:center;color:var(--md-on-surface-variant);position:relative;overflow:hidden;"><span data-icon style="font-size:18px;">colorize</span><input id="pick" type="color" value="#22c55e" style="position:absolute;inset:-4px;opacity:0;cursor:pointer;"></label>
+  <div id="seedbtns" style="display:flex;gap:8px;"></div>
+  <div style="font-family:var(--md-font-mono);font-size:11px;color:var(--md-on-surface-variant);">s clamped 32–92 · light L36/88/90 · dark L76/28/26</div>
+</div>
+<div id="light"></div><div style="height:8px;"></div><div id="dark" data-theme="dark"></div>
+<script>
+function hexToHsl(hex){let h=hex.replace('#','');if(h.length===3)h=h.split('').map(c=>c+c).join('');const r=parseInt(h.slice(0,2),16)/255,g=parseInt(h.slice(2,4),16)/255,b=parseInt(h.slice(4,6),16)/255;const mx=Math.max(r,g,b),mn=Math.min(r,g,b);let hu=0,s=0,l=(mx+mn)/2;if(mx!==mn){const d=mx-mn;s=l>0.5?d/(2-mx-mn):d/(mx+mn);if(mx===r)hu=(g-b)/d+(g<b?6:0);else if(mx===g)hu=(b-r)/d+2;else hu=(r-g)/d+4;hu/=6;}return{h:Math.round(hu*360),s:Math.round(s*100),l:Math.round(l*100)};}
+function roles(seed,dark){const c=hexToHsl(seed);const h=c.h,s=Math.max(32,Math.min(92,c.s));const H=l=>'hsl('+h+' '+s+'% '+l+'%)';const Hs=(sat,l)=>'hsl('+h+' '+sat+'% '+l+'%)';
+return dark?[['primary',H(76),H(16)],['on-primary',H(16),H(76)],['primary-container',Hs(Math.round(s*0.9),28),H(90)],['secondary-container',Hs(Math.round(s*0.35),26),H(88)]]:[['primary',H(36),'#fff'],['on-primary','#fff',H(36)],['primary-container',Hs(Math.round(s*0.7),88),H(12)],['secondary-container',Hs(Math.round(s*0.45),90),H(20)]];}
+function render(seed){for(const mode of ['light','dark']){const el=document.getElementById(mode);el.innerHTML='<div style="display:flex;height:56px;border-radius:12px;overflow:hidden;border:1px solid var(--md-outline-variant);">'+roles(seed,mode==='dark').map(r=>'<div style="flex:1;background:'+r[1]+';color:'+r[2]+';padding:9px 10px;font-size:11px;font-weight:600;">'+r[0]+'</div>').join('')+'</div>';}}
+const seeds=['#22c55e','#7c5cff','#14b8a6','#3b82f6','#f97316','#ec4899'];
+document.getElementById('seedbtns').innerHTML=seeds.map(s=>'<button onclick="render(\''+s+'\')" title="'+s+'" style="width:26px;height:26px;border-radius:50%;border:1px solid var(--md-outline-variant);cursor:pointer;background:'+s+';"></button>').join('');
+document.getElementById('pick').addEventListener('input',e=>render(e.target.value));
+render('#22c55e');
+</script></body></html>

@@ -1,0 +1,129 @@
+:root, [data-theme="light"]{
+  --md-surface:#faf8fd; --md-surface-dim:#dad9e0; --md-surface-bright:#faf8fd;
+  --md-sc-lowest:#ffffff; --md-sc-low:#f4f2f9; --md-sc:#eeedf3; --md-sc-high:#e8e7ee; --md-sc-highest:#e2e1e9;
+  --md-on-surface:#1a1b1f; --md-on-surface-variant:#44464e; --md-outline:#75777f; --md-outline-variant:#c5c6d0;
+  --md-inverse-surface:#2f3036; --md-inverse-on:#f1f0f7; --md-inverse-primary:#8bd89b;
+  --md-error:#ba1a1a; --md-error-container:#ffdad6; --md-on-error:#fff; --md-on-error-container:#410002;
+  --md-scrim:rgba(0,0,0,.32); --md-shadow:rgba(0,0,0,.16);
+  --md-primary:#146c2e; --md-on-primary:#ffffff; --md-primary-container:#a6f4b8; --md-on-primary-container:#00210c;
+  --md-accent:#146c2e; --md-secondary-container:#d7e8d9; --md-on-secondary-container:#0e1f13;
+}
+[data-theme="dark"]{
+  --md-surface:#1b1c21; --md-surface-dim:#161619; --md-surface-bright:#3b3c43;
+  --md-sc-lowest:#131317; --md-sc-low:#202127; --md-sc:#25262b; --md-sc-high:#2f3036; --md-sc-highest:#393a41;
+  --md-on-surface:#e8e7ee; --md-on-surface-variant:#cdced8; --md-outline:#94959f; --md-outline-variant:#4a4c54;
+  --md-inverse-surface:#e3e2e9; --md-inverse-on:#2f3036; --md-inverse-primary:#146c2e;
+  --md-error:#ffb4ab; --md-error-container:#93000a; --md-on-error:#690005; --md-on-error-container:#ffdad6;
+  --md-scrim:rgba(0,0,0,.6); --md-shadow:rgba(0,0,0,.5);
+  --md-primary:#8bd89b; --md-on-primary:#00391a; --md-primary-container:#095228; --md-on-primary-container:#a6f4b8;
+  --md-accent:#8bd89b; --md-secondary-container:#2b3a2f; --md-on-secondary-container:#cfe9d3;
+}
+[data-density="comfortable"]{ --gap:12px; --pad:16px; --row:40px; --fs:14px; --rail:60px; --sidebar:344px; --radius:16px; --radius-s:10px; }
+[data-density="compact"]{ --gap:7px; --pad:10px; --row:32px; --fs:13px; --rail:50px; --sidebar:312px; --radius:12px; --radius-s:8px; }
+*{ box-sizing:border-box; }
+html,body{ margin:0; padding:0; height:100%; background:var(--md-surface); }
+button{ font-family:inherit; }
+a{ color:var(--md-primary); text-decoration:none; }
+a:hover{ text-decoration:underline; }
+:where(a,button,input,select,[tabindex]):focus-visible{ outline:3px solid var(--md-primary); outline-offset:2px; }
+[data-icon]{ font-family:'Material Symbols Outlined'; font-weight:400; font-style:normal; line-height:1; letter-spacing:normal; text-transform:none; white-space:nowrap; word-wrap:normal; direction:ltr; -webkit-font-feature-settings:'liga'; -webkit-font-smoothing:antialiased; user-select:none; }
+::-webkit-scrollbar{ width:10px; height:10px; }
+::-webkit-scrollbar-thumb{ background:var(--md-outline-variant); border-radius:8px; border:2px solid transparent; background-clip:content-box; }
+::-webkit-scrollbar-thumb:hover{ background:var(--md-outline); background-clip:content-box; }
+::-webkit-scrollbar-track{ background:transparent; }
+@keyframes spin{ to{ transform:rotate(360deg); } }
+@keyframes mdfade{ from{ opacity:0; transform:translateY(10px) scale(.99); } to{ opacity:1; transform:none; } }
+@keyframes scrimin{ from{ opacity:0; } to{ opacity:1; } }
+@keyframes pulse{ 0%,100%{ opacity:1; } 50%{ opacity:.45; } }
+
+/* Compact bilingual labels keep English as the primary DOM text. Short
+   Cantonese copy sits on the same baseline; longer copy uses a tiny 廣 badge
+   with the complete translation in its native tooltip. */
+.i18n-secondary{
+  margin-inline-start:.38em;
+  color:var(--md-on-surface-variant);
+  font-size:.72em;
+  font-weight:400;
+  letter-spacing:0;
+  line-height:1;
+  text-transform:none;
+  white-space:nowrap;
+  vertical-align:middle;
+}
+.i18n-secondary--inline{ opacity:.78; }
+.i18n-secondary--disclosure{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:1.45em;
+  height:1.45em;
+  padding:0 .28em;
+  border:1px solid var(--md-outline-variant);
+  border-radius:999px;
+  background:var(--md-sc-high);
+  color:var(--md-on-surface-variant);
+  cursor:help;
+  opacity:.9;
+}
+button .i18n-secondary{ color:inherit; }
+@media (max-width:760px){
+  .i18n-secondary--inline{ font-size:.68em; margin-inline-start:.28em; }
+}
+
+/* Image-led Home surface. The artwork is decorative and softly masked so
+   localized copy and actions keep strong contrast in every theme. */
+.home-welcome{
+  position:relative;
+  isolation:isolate;
+  overflow:hidden;
+  min-height:150px;
+}
+.home-welcome::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:0;
+  pointer-events:none;
+  background:linear-gradient(90deg, color-mix(in srgb, var(--md-primary-container) 94%, transparent) 0 38%, transparent 76%);
+}
+.home-welcome-art{
+  position:absolute;
+  inset:0 0 0 auto;
+  z-index:-1;
+  width:62%;
+  height:100%;
+  object-fit:cover;
+  object-position:70% center;
+  opacity:.48;
+  filter:saturate(.9) contrast(1.04);
+}
+@media (max-width:920px){
+  .home-welcome-art{ opacity:.24; width:100%; }
+  .home-welcome::after{ background:color-mix(in srgb, var(--md-primary-container) 72%, transparent); }
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{ scroll-behavior:auto !important; animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; }
+}
+
+/* ---------------------------------------------------------------- title bar
+ * The title bar is a single non-wrapping row inside a shell with
+ * overflow:hidden and no scroll region, so anything that does not fit is
+ * unreachable rather than merely ugly. Measured at 1280 physical px @ 200%
+ * (640 CSS px) the close button used to sit 217px past the viewport edge.
+ *
+ * The contract: the window controls are pinned and never shrink; everything
+ * to their left gives way in order of how much a user needs it.
+ */
+.titlebar{ min-width:0; }
+.titlebar .tb-menus{ display:flex; align-items:center; gap:2px; min-width:0; flex:0 1 auto; overflow:hidden; }
+.titlebar .tb-spacer{ flex:1 1 0; min-width:0; }
+.titlebar .tb-controls{ display:flex; align-items:center; flex:0 0 auto; }
+.titlebar .tb-branch,
+.titlebar .tb-project,
+.titlebar .tb-appearance{ flex:0 0 auto; }
+/* The prototype carries inline styles, so a collapse rule needs !important to
+ * beat an element style="display:flex". */
+@media (max-width:1000px){ .titlebar .tb-project{ display:none !important; } }
+@media (max-width:860px){ .titlebar .tb-menus{ display:none !important; } }
+@media (max-width:700px){ .titlebar .tb-branch{ display:none !important; } }
+@media (max-width:560px){ .titlebar .tb-title{ display:none !important; } }

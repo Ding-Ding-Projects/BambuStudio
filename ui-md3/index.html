@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bambu Studio — Material Design 3</title>
+  <link href="assets/fonts.css" rel="stylesheet">
+  <link rel="stylesheet" href="./app/styles.css">
+</head>
+<body>
+  <div id="app"></div>
+
+  <!-- Ported verbatim from the body of design-source/SearchField.dc.html. -->
+  <template data-component="SearchField">
+    <div style="position:relative; width:100%; font-family:'Roboto',system-ui,sans-serif;">
+      <div style="display:flex; align-items:center; gap:4px; height:40px; padding:0 5px 0 14px; background:var(--md-sc-highest); border:1px solid {{ borderColor }}; border-radius:22px;">
+        <span data-icon style="font-size:20px; color:var(--md-on-surface-variant);" aria-hidden="true">search</span>
+        <input value="{{ value }}" onInput="{{ onInput }}" placeholder="{{ placeholder }}" style="flex:1; min-width:0; border:none; background:transparent; outline:none; color:var(--md-on-surface); font-size:13.5px; font-family:{{ inputFont }};">
+        <sc-if value="{{ hasValue }}"><button onClick="{{ clear }}" title="Clear" style="width:30px; height:30px; border:none; background:transparent; color:var(--md-on-surface-variant); border-radius:50%; cursor:pointer;" style-hover="background:var(--md-sc-low);"><span data-icon style="font-size:18px;" aria-hidden="true">close</span></button></sc-if>
+        <button onClick="{{ toggleRegex }}" title="Use regular expression" style="min-width:32px; height:30px; padding:0 4px; border:none; border-radius:8px; cursor:pointer; font-family:'Roboto Mono',monospace; font-size:12.5px; font-weight:700; background:{{ regexBg }}; color:{{ regexFg }};">.*</button>
+        <button onClick="{{ toggleBuilder }}" title="Regex builder" style="width:32px; height:30px; border:none; border-radius:8px; cursor:pointer; background:{{ builderBg }}; color:{{ builderFg }}; display:flex; align-items:center; justify-content:center;"><span data-icon style="font-size:18px;" aria-hidden="true">tune</span></button>
+      </div>
+
+      <sc-if value="{{ open }}">
+      <div style="position:absolute; top:47px; right:0; left:0; z-index:80; background:var(--md-sc); border:1px solid var(--md-outline-variant); border-radius:18px; box-shadow:0 12px 34px var(--md-shadow); padding:14px; display:flex; flex-direction:column; gap:12px; animation:mdfade .16s ease;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span data-icon style="font-size:18px; color:var(--md-primary);" aria-hidden="true">regular_expression</span>
+          <span style="font-weight:600; font-size:13px;">Regex builder</span>
+          <span style="flex:1;"></span>
+          <span style="font-size:11px; font-weight:600; color:{{ validColor }};">{{ validText }}</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:6px; background:var(--md-sc-lowest); border:1px solid var(--md-outline-variant); border-radius:10px; padding:9px 10px; font-family:'Roboto Mono',monospace; font-size:13px;">
+          <span style="color:var(--md-on-surface-variant);">/</span>
+          <input value="{{ pattern }}" onInput="{{ onPattern }}" placeholder="pattern" style="flex:1; min-width:0; border:none; background:transparent; outline:none; color:var(--md-on-surface); font-family:inherit; font-size:13px;">
+          <span style="color:var(--md-on-surface-variant);">/{{ flagStr }}</span>
+        </div>
+        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+          <sc-for list="{{ flagChips }}" as="c" hint-placeholder-count="4">
+            <button onClick="{{ c.onClick }}" style="height:30px; padding:0 12px; border-radius:15px; cursor:pointer; font-size:11.5px; font-weight:500; background:{{ c.bg }}; color:{{ c.fg }}; border:{{ c.border }};">{{ c.label }}</button>
+          </sc-for>
+        </div>
+        <div style="font-size:10.5px; letter-spacing:.5px; text-transform:uppercase; color:var(--md-on-surface-variant);">Insert token</div>
+        <div style="display:grid; grid-template-columns:repeat(6,1fr); gap:6px;">
+          <sc-for list="{{ tokens }}" as="t" hint-placeholder-count="16">
+            <button onClick="{{ t.onClick }}" title="{{ t.l }}" style="height:38px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px; border:1px solid var(--md-outline-variant); background:var(--md-sc-lowest); border-radius:9px; cursor:pointer;" style-hover="background:var(--md-secondary-container); border-color:var(--md-primary);">
+              <span style="font-family:'Roboto Mono',monospace; font-size:12.5px; font-weight:600; color:var(--md-on-surface);">{{ t.t }}</span>
+              <span style="font-size:8.5px; color:var(--md-on-surface-variant);">{{ t.l }}</span>
+            </button>
+          </sc-for>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button onClick="{{ clearBuilder }}" style="height:38px; padding:0 16px; border:1px solid var(--md-outline); background:transparent; color:var(--md-on-surface); border-radius:19px; cursor:pointer; font-size:12.5px; font-weight:500;">Clear</button>
+          <button onClick="{{ applyBuilder }}" style="flex:1; height:38px; border:none; background:var(--md-primary); color:var(--md-on-primary); border-radius:19px; cursor:pointer; font-size:12.5px; font-weight:600;">Apply expression</button>
+        </div>
+      </div>
+      </sc-if>
+    </div>
+  </template>
+
+  <template data-shell>
+<div data-theme="{{ theme }}" data-density="{{ density }}" data-language-mode="{{ language }}" style="position:absolute; inset:0; display:flex; flex-direction:column; font-family:'Roboto',system-ui,sans-serif; font-size:var(--fs); background:var(--md-surface); color:var(--md-on-surface); overflow:hidden; -webkit-font-smoothing:antialiased; {{ accentOverride }}">
+
+  <!-- ===== TITLE BAR ===== -->
+  <div class="titlebar" style="height:46px; flex:0 0 auto; display:flex; align-items:center; gap:6px; padding:0 6px 0 12px; background:var(--md-sc-low); border-bottom:1px solid var(--md-outline-variant);">
+    <div style="width:26px; height:26px; border-radius:8px; background:var(--md-primary); color:var(--md-on-primary); display:flex; align-items:center; justify-content:center; box-shadow:0 1px 2px var(--md-shadow);">
+      <span data-icon style="font-size:18px; font-variation-settings:'FILL' 1;" aria-hidden="true">deployed_code</span>
+    </div>
+    <div class="tb-title" style="font-weight:500; font-size:14px; margin-right:10px; letter-spacing:.1px; flex:0 0 auto;">Bambu Studio</div>
+    <div class="tb-menus">
+    <sc-for list="{{ menus }}" as="m" hint-placeholder-count="5">
+      <button onClick="{{ m.onClick }}" style="height:30px; padding:0 10px; border:none; background:transparent; color:var(--md-on-surface-variant); border-radius:8px; font-size:13px; cursor:pointer;" style-hover="background:var(--md-sc-high);">{{ m.label }}</button>
+    </sc-for>
+    </div>
+    <div class="tb-spacer" style="-webkit-app-region:drag; height:100%;"></div>
+    <button class="tb-branch" onClick="{{ toggleHistory }}" title="Version history — every edit is auto-saved to this project's Git repo" style="display:flex; align-items:center; gap:7px; height:30px; padding:0 12px; margin-right:6px; border:none; border-radius:16px; background:var(--md-sc); color:var(--md-on-surface-variant); cursor:pointer; font-size:12px;" style-hover="background:var(--md-sc-high);">
+      <span data-icon style="font-size:16px; color:var(--md-primary);" aria-hidden="true">account_tree</span>
+      <span style="font-family:'Roboto Mono',monospace;">{{ branch }}</span>
+      <span style="width:5px; height:5px; border-radius:50%; background:var(--md-primary); animation:pulse 2s infinite;"></span>
+      <span style="font-family:'Roboto Mono',monospace;">#{{ historyHead }}</span>
+    </button>
+    <div class="tb-project" style="display:flex; align-items:center; gap:2px; margin-right:6px; padding:0 6px; height:30px; border-radius:20px; background:var(--md-sc); color:var(--md-on-surface-variant); font-size:12.5px;">
+      <span data-icon style="font-size:16px;" aria-hidden="true">description</span>
+      <span style="max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ projectName }}</span>
+    </div>
+    <div class="tb-controls">
+    <button class="tb-appearance" onClick="{{ toggleControls }}" title="Appearance" aria-label="Appearance" style="width:34px; height:34px; border:none; background:transparent; color:var(--md-on-surface-variant); border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center;" style-hover="background:var(--md-sc-high);">
+      <span data-icon style="font-size:20px;" aria-hidden="true">palette</span>
+    </button>
+    <div style="width:1px; height:22px; background:var(--md-outline-variant); margin:0 4px;"></div>
+    <button title="Minimize" aria-label="Minimize" style="width:38px; height:32px; border:none; background:transparent; color:var(--md-on-surface-variant); border-radius:8px; cursor:pointer;" style-hover="background:var(--md-sc-high);"><span data-icon style="font-size:18px;" aria-hidden="true">remove</span></button>
+    <button title="Maximize" aria-label="Maximize" style="width:38px; height:32px; border:none; background:transparent; color:var(--md-on-surface-variant); border-radius:8px; cursor:pointer;" style-hover="background:var(--md-sc-high);"><span data-icon style="font-size:15px;" aria-hidden="true">crop_square</span></button>
+    <button title="Close" aria-label="Close" style="width:38px; height:32px; border:none; background:transparent; color:var(--md-on-surface-variant); border-radius:8px; cursor:pointer;" style-hover="background:var(--md-error); color:var(--md-on-error);"><span data-icon style="font-size:18px;" aria-hidden="true">close</span></button>
+    </div>
+  </div>
+
+  <!-- ===== TAB BAR ===== -->
+  <div style="height:52px; flex:0 0 auto; display:flex; align-items:stretch; padding:0 8px; gap:2px; background:var(--md-surface); border-bottom:1px solid var(--md-outline-variant); overflow-x:auto;">
+    <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="9">
+      <button onClick="{{ t.onClick }}" style="position:relative; display:flex; align-items:center; gap:8px; padding:0 16px; border:none; background:transparent; color:{{ t.fg }}; font-size:13.5px; font-weight:{{ t.weight }}; cursor:pointer; white-space:nowrap;" style-hover="background:var(--md-sc-low);">
+        <span data-icon style="font-size:20px; font-variation-settings:'FILL' {{ t.fill }};" aria-hidden="true">{{ t.icon }}</span>
+        <span>{{ t.label }}</span>
+        <div style="position:absolute; left:12px; right:12px; bottom:0; height:3px; border-radius:3px 3px 0 0; background:{{ t.indicator }};"></div>
+      </button>
+    </sc-for>
+  </div>
+
+  <!-- ===== BODY ===== -->
+  <div style="flex:1 1 auto; position:relative; overflow:hidden; background:var(--md-surface-dim);">
+    <!--SCREEN:home-->
+    <!--SCREEN:prepare-->
+    <!--SCREEN:preview-->
+    <!--SCREEN:device-->
+    <!--SCREEN:multi-->
+    <!--SCREEN:project-->
+    <!--SCREEN:calibration-->
+    <!--SCREEN:filament-->
+    <!--SCREEN:settings-->
+
+  </div>
+
+  <!-- ===== APPEARANCE POPOVER ===== -->
+  <sc-if value="{{ showControls }}">
+  <div onClick="{{ toggleControls }}" style="position:absolute; inset:0; z-index:40;">
+    <div onClick="{{ stop }}" style="position:absolute; top:52px; right:12px; width:300px; background:var(--md-sc); border:1px solid var(--md-outline-variant); border-radius:24px; box-shadow:0 8px 28px var(--md-shadow); padding:18px; display:flex; flex-direction:column; gap:16px; animation:mdfade .18s ease;">
+      <div style="font-size:15px; font-weight:600; display:flex; align-items:center; gap:8px;"><span data-icon style="font-size:20px;" aria-hidden="true">palette</span> Appearance</div>
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <div style="font-size:12px; color:var(--md-on-surface-variant);">Theme</div>
+        <div style="display:flex; gap:6px; padding:4px; background:var(--md-sc-highest); border-radius:14px;">
+          <button onClick="{{ setLight }}" style="flex:1; height:36px; display:flex; align-items:center; justify-content:center; gap:6px; border:none; border-radius:11px; cursor:pointer; font-size:12.5px; font-weight:500; background:{{ lightBg }}; color:{{ lightFg }};"><span data-icon style="font-size:18px;" aria-hidden="true">light_mode</span> Light</button>
+          <button onClick="{{ setDark }}" style="flex:1; height:36px; display:flex; align-items:center; justify-content:center; gap:6px; border:none; border-radius:11px; cursor:pointer; font-size:12.5px; font-weight:500; background:{{ darkBg }}; color:{{ darkFg }};"><span data-icon style="font-size:18px;" aria-hidden="true">dark_mode</span> Dark</button>
+        </div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <div style="font-size:12px; color:var(--md-on-surface-variant);">Density</div>
+        <div style="display:flex; gap:6px; padding:4px; background:var(--md-sc-highest); border-radius:14px;">
+          <button onClick="{{ setComfortable }}" style="flex:1; height:36px; border:none; border-radius:11px; cursor:pointer; font-size:12.5px; font-weight:500; background:{{ comfBg }}; color:{{ comfFg }};">Comfortable</button>
+          <button onClick="{{ setCompact }}" style="flex:1; height:36px; border:none; border-radius:11px; cursor:pointer; font-size:12.5px; font-weight:500; background:{{ compBg }}; color:{{ compFg }};">Compact</button>
+        </div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <div style="font-size:12px; color:var(--md-on-surface-variant);">Accent color</div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <sc-for list="{{ accentSwatches }}" as="a" hint-placeholder-count="6">
+            <button onClick="{{ a.onClick }}" title="{{ a.name }}" style="width:34px; height:34px; border-radius:50%; cursor:pointer; background:{{ a.color }}; border:{{ a.border }}; display:flex; align-items:center; justify-content:center; color:#fff;"><span data-icon style="font-size:18px; opacity:{{ a.check }};" aria-hidden="true">check</span></button>
+          </sc-for>
+          <label style="width:34px; height:34px; border-radius:50%; cursor:pointer; border:2px dashed var(--md-outline); display:flex; align-items:center; justify-content:center; color:var(--md-on-surface-variant); position:relative; overflow:hidden;">
+            <span data-icon style="font-size:18px;" aria-hidden="true">colorize</span>
+            <input type="color" onInput="{{ onPickAccent }}" style="position:absolute; inset:-4px; opacity:0; cursor:pointer;">
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <div style="position:absolute; left:50%; bottom:22px; transform:translateX(-50%); z-index:90; display:flex; flex-direction:column-reverse; gap:10px; pointer-events:none; width:min(560px,92vw);">
+    <sc-for list="{{ snacks }}" as="n" hint-placeholder-count="0">
+      <div style="pointer-events:auto; display:flex; align-items:center; gap:12px; padding:12px 10px 12px 16px; background:var(--md-inverse-surface); color:var(--md-inverse-on); border-radius:12px; box-shadow:0 8px 24px var(--md-shadow); animation:mdfade .2s ease;">
+        <span data-icon style="font-size:20px; color:var(--md-inverse-primary);" aria-hidden="true">{{ n.icon }}</span>
+        <span style="flex:1; font-size:13px;">{{ n.message }}</span>
+        <sc-if value="{{ n.hasAction }}"><button onClick="{{ n.action }}" style="border:none; background:transparent; color:var(--md-inverse-primary); font-weight:600; font-size:13px; cursor:pointer; padding:6px 10px; border-radius:8px;">{{ n.actionLabel }}</button></sc-if>
+        <button onClick="{{ n.dismiss }}" style="width:28px; height:28px; border:none; background:transparent; color:var(--md-inverse-on); border-radius:50%; cursor:pointer; opacity:.7;"><span data-icon style="font-size:16px;" aria-hidden="true">close</span></button>
+      </div>
+    </sc-for>
+  </div>
+  <sc-if value="{{ showHistory }}">
+  <div onClick="{{ toggleHistory }}" style="position:absolute; inset:0; z-index:55; background:var(--md-scrim); animation:scrimin .2s;">
+    <div onClick="{{ stop }}" role="dialog" aria-modal="true" aria-label="Version history" style="position:absolute; top:0; right:0; bottom:0; width:410px; max-width:92vw; background:var(--md-sc); border-left:1px solid var(--md-outline-variant); box-shadow:-8px 0 30px var(--md-shadow); display:flex; flex-direction:column; animation:mdfade .22s ease;">
+      <div style="padding:18px 18px 14px; display:flex; align-items:center; gap:10px; border-bottom:1px solid var(--md-outline-variant);">
+        <span data-icon style="font-size:22px; color:var(--md-primary);" aria-hidden="true">account_tree</span>
+        <div style="flex:1;"><div style="font-size:15px; font-weight:600;">Version history</div><div style="font-size:11.5px; color:var(--md-on-surface-variant); font-family:'Roboto Mono',monospace;">{{ branch }} · {{ historyCount }} commits</div></div>
+        <button onClick="{{ toggleHistory }}" data-dialog-close aria-label="Close version history" style="width:36px; height:36px; border:none; background:transparent; color:var(--md-on-surface-variant); border-radius:50%; cursor:pointer;" style-hover="background:var(--md-sc-high);"><span data-icon style="font-size:20px;" aria-hidden="true">close</span></button>
+      </div>
+      <div style="padding:12px 18px; display:flex; align-items:center; gap:8px; background:var(--md-secondary-container); color:var(--md-on-secondary-container); font-size:12px;"><span data-icon style="font-size:18px;" aria-hidden="true">bolt</span> Auto-commit is on — every edit is saved automatically.</div>
+      <div style="padding:12px 18px 4px;"><dc-import name="SearchField" placeholder="Search commits" on-query="{{ setHistoryQuery }}" hint-size="100%,40px"></dc-import></div>
+      <div style="flex:1; overflow-y:auto; padding:8px 0;">
+        <sc-if value="{{ historyEmpty }}"><div style="padding:18px; font-size:12.5px; color:var(--md-on-surface-variant);">No commit matches &ldquo;{{ historyQuery }}&rdquo;.</div></sc-if>
+        <sc-for list="{{ history }}" as="h" hint-placeholder-count="6">
+          <div>
+            <button onClick="{{ h.onSelect }}" style="width:100%; text-align:left; display:flex; gap:12px; padding:10px 18px; border:none; background:transparent; cursor:pointer;" style-hover="background:var(--md-sc-low);">
+              <div style="display:flex; flex-direction:column; align-items:center; flex:0 0 auto;"><div style="width:30px; height:30px; border-radius:50%; background:{{ h.dotBg }}; color:{{ h.dotFg }}; display:flex; align-items:center; justify-content:center;"><span data-icon style="font-size:17px;" aria-hidden="true">{{ h.icon }}</span></div><div style="width:2px; flex:1; background:var(--md-outline-variant); margin-top:2px; min-height:8px;"></div></div>
+              <div style="flex:1; min-width:0; padding-bottom:6px;">
+                <div style="font-size:13px; font-weight:500; color:var(--md-on-surface);">{{ h.message }}</div>
+                <div style="display:flex; align-items:center; gap:8px; margin-top:3px;"><span style="font-size:11px; font-family:'Roboto Mono',monospace; color:var(--md-primary);">#{{ h.hash }}</span><span style="font-size:11px; color:var(--md-on-surface-variant);">{{ h.time }}</span></div>
+              </div>
+              <span data-icon style="font-size:20px; color:var(--md-on-surface-variant); flex:0 0 auto;" aria-hidden="true">{{ h.chevron }}</span>
+            </button>
+            <sc-if value="{{ h.expanded }}">
+              <div style="margin:0 18px 12px 48px; background:var(--md-sc-low); border:1px solid var(--md-outline-variant); border-radius:14px; overflow:hidden; animation:mdfade .16s ease;">
+                <div style="height:118px; background:radial-gradient(120% 100% at 50% 0%, var(--md-surface-bright), var(--md-surface-dim)); position:relative; display:flex; align-items:center; justify-content:center; border-bottom:1px solid var(--md-outline-variant);">
+                  <div style="position:relative; width:92px; height:100px; filter:drop-shadow(0 8px 8px rgba(0,0,0,.3));">
+                    <div style="position:absolute; inset:0; background:color-mix(in srgb, var(--md-primary) 84%, #fff); clip-path:polygon(50% 2%, 98% 27%, 50% 52%, 2% 27%);"></div>
+                    <div style="position:absolute; inset:0; background:color-mix(in srgb, var(--md-primary) 60%, #000 8%); clip-path:polygon(2% 27%, 50% 52%, 50% 98%, 2% 73%);"></div>
+                    <div style="position:absolute; inset:0; background:color-mix(in srgb, var(--md-primary) 42%, #000 22%); clip-path:polygon(98% 27%, 98% 73%, 50% 98%, 50% 52%);"></div>
+                  </div>
+                  <div style="position:absolute; left:10px; top:10px; font-size:10px; font-family:'Roboto Mono',monospace; color:var(--md-on-surface-variant); background:var(--md-sc); padding:2px 7px; border-radius:8px;">Plate 1 · snapshot</div>
+                </div>
+                <div style="padding:12px 14px; display:flex; flex-direction:column; gap:10px;">
+                  <div style="display:flex; flex-direction:column; gap:4px; font-size:11px; color:var(--md-on-surface-variant);">
+                    <div style="display:flex; align-items:center; gap:6px;"><span data-icon style="font-size:14px;" aria-hidden="true">person</span> {{ h.author }} · {{ h.time }}</div>
+                    <div style="display:flex; align-items:center; gap:6px;"><span data-icon style="font-size:14px;" aria-hidden="true">tag</span> <span style="font-family:'Roboto Mono',monospace;">{{ h.full }}</span></div>
+                    <div style="display:flex; align-items:center; gap:6px;"><span data-icon style="font-size:14px;" aria-hidden="true">description</span> {{ h.files }}</div>
+                  </div>
+                  <div style="height:1px; background:var(--md-outline-variant);"></div>
+                  <div style="font-size:10.5px; font-weight:600; letter-spacing:.4px; text-transform:uppercase; color:var(--md-on-surface-variant);">Changes in this commit</div>
+                  <sc-for list="{{ h.diff }}" as="d" hint-placeholder-count="2">
+                    <div style="display:flex; align-items:center; gap:8px; font-size:12px;">
+                      <span style="flex:1; min-width:0; color:var(--md-on-surface); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ d.label }}</span>
+                      <span style="font-family:'Roboto Mono',monospace; color:var(--md-error); text-decoration:line-through; opacity:.75;">{{ d.from }}</span>
+                      <span data-icon style="font-size:15px; color:var(--md-on-surface-variant);" aria-hidden="true">arrow_forward</span>
+                      <span style="font-family:'Roboto Mono',monospace; color:var(--md-primary);">{{ d.to }}</span>
+                    </div>
+                  </sc-for>
+                  <button onClick="{{ h.restore }}" style="height:36px; margin-top:2px; border:none; border-radius:18px; background:var(--md-secondary-container); color:var(--md-on-secondary-container); font-size:12px; font-weight:600; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;"><span data-icon style="font-size:16px;" aria-hidden="true">restore</span> Restore this version</button>
+                </div>
+              </div>
+            </sc-if>
+          </div>
+        </sc-for>
+      </div>
+      <div style="padding:14px 18px; border-top:1px solid var(--md-outline-variant); font-size:11.5px; color:var(--md-on-surface-variant); display:flex; align-items:center; gap:8px;"><span data-icon style="font-size:16px;" aria-hidden="true">save</span> This repository is bundled into the .3mf when you save.</div>
+    </div>
+  </div>
+  </sc-if>
+  <sc-if value="{{ isDlgExport }}">
+  <div onClick="{{ closeDialog }}" style="position:absolute; inset:0; z-index:60; background:var(--md-scrim); display:flex; align-items:center; justify-content:center; animation:scrimin .2s;">
+    <div onClick="{{ stop }}" role="dialog" aria-modal="true" aria-labelledby="dlg-export-title" style="width:580px; max-width:94vw; max-height:88vh; background:var(--md-sc); border-radius:28px; box-shadow:0 16px 44px var(--md-shadow); display:flex; flex-direction:column; overflow:hidden; animation:mdfade .2s;">
+      <div style="padding:22px 24px 14px; display:flex; align-items:center; gap:12px;">
+        <div style="width:44px; height:44px; border-radius:14px; background:var(--md-primary-container); color:var(--md-on-primary-container); display:flex; align-items:center; justify-content:center;"><span data-icon style="font-size:24px;" aria-hidden="true">file_download</span></div>
+        <div style="flex:1;"><div id="dlg-export-title" style="font-size:18px; font-weight:600;">Export inks</div><div style="font-size:12.5px; color:var(--md-on-surface-variant);">Filter, select and bulk-export presets</div></div>
+        <button onClick="{{ closeDialog }}" data-dialog-close aria-label="Close dialog" style="width:36px; height:36px; border:none; background:transparent; color:var(--md-on-surface-variant); border-radius:50%; cursor:pointer;" style-hover="background:var(--md-sc-high);"><span data-icon style="font-size:20px;" aria-hidden="true">close</span></button>
+      </div>
+      <div style="padding:0 24px 14px; display:flex; flex-direction:column; gap:12px;">
+        <dc-import name="SearchField" placeholder="Name containing… (supports regex)" on-query="{{ setExQuery }}" hint-size="100%,40px"></dc-import>
+        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;"><span style="font-size:11px; font-weight:600; letter-spacing:.4px; text-transform:uppercase; color:var(--md-on-surface-variant); width:56px;">Type</span><sc-for list="{{ exTypeChips }}" as="c" hint-placeholder-count="5"><button onClick="{{ c.onClick }}" style="height:30px; padding:0 13px; border-radius:15px; cursor:pointer; font-size:12px; font-weight:500; background:{{ c.bg }}; color:{{ c.fg }}; border:{{ c.border }};">{{ c.label }}</button></sc-for></div>
+        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;"><span style="font-size:11px; font-weight:600; letter-spacing:.4px; text-transform:uppercase; color:var(--md-on-surface-variant); width:56px;">Vendor</span><sc-for list="{{ exVendorChips }}" as="c" hint-placeholder-count="4"><button onClick="{{ c.onClick }}" style="height:30px; padding:0 13px; border-radius:15px; cursor:pointer; font-size:12px; font-weight:500; background:{{ c.bg }}; color:{{ c.fg }}; border:{{ c.border }};">{{ c.label }}</button></sc-for></div>
+      </div>
+      <div style="padding:8px 24px; display:flex; align-items:center; gap:10px; border-top:1px solid var(--md-outline-variant); background:var(--md-sc-low);">
+        <button onClick="{{ toggleSelectAllExport }}" style="display:flex; align-items:center; gap:8px; border:none; background:transparent; color:var(--md-on-surface); cursor:pointer; font-size:12.5px; font-weight:500; padding:6px 8px; border-radius:8px;"><span data-icon style="font-size:20px; color:var(--md-primary);" aria-hidden="true">{{ exAllIcon }}</span> Select all</button>
+        <div style="flex:1;"></div>
+        <span style="font-size:12px; color:var(--md-on-surface-variant); font-family:'Roboto Mono',monospace;">{{ exSelCount }} of {{ exTotal }} selected</span>
+      </div>
+      <div style="flex:1; overflow-y:auto; padding:6px 12px; min-height:120px;">
+        <sc-for list="{{ exRows }}" as="r" hint-placeholder-count="6">
+          <button onClick="{{ r.onToggle }}" style="width:100%; text-align:left; display:flex; align-items:center; gap:12px; padding:9px 12px; border:none; border-radius:12px; cursor:pointer; background:{{ r.rowBg }};" style-hover="background:var(--md-sc-high);">
+            <span data-icon style="font-size:22px; color:{{ r.checkColor }};" aria-hidden="true">{{ r.checkIcon }}</span>
+            <span style="width:22px; height:22px; border-radius:6px; background:{{ r.color }}; border:1px solid rgba(0,0,0,.25); flex:0 0 auto;"></span>
+            <span style="flex:1; min-width:0; font-size:13.5px; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ r.name }}</span>
+            <span style="font-size:11.5px; color:var(--md-on-surface-variant); width:80px;">{{ r.vendor }}</span>
+            <span style="font-size:11px; font-weight:600; padding:2px 8px; border-radius:7px; background:var(--md-secondary-container); color:var(--md-on-secondary-container);">{{ r.type }}</span>
+            <span style="font-family:'Roboto Mono',monospace; font-size:11.5px; color:var(--md-on-surface-variant); width:78px; text-align:right;">{{ r.nozzle }}/{{ r.bed }}°</span>
+          </button>
+        </sc-for>
+        <sc-if value="{{ exEmpty }}"><div style="padding:36px 12px; text-align:center; color:var(--md-on-surface-variant); font-size:13px;">No inks match your filter.</div></sc-if>
+      </div>
+      <div style="padding:14px 24px; border-top:1px solid var(--md-outline-variant); display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+        <span style="font-size:11px; font-weight:600; letter-spacing:.4px; text-transform:uppercase; color:var(--md-on-surface-variant);">Format</span>
+        <sc-for list="{{ exFormatChips }}" as="c" hint-placeholder-count="3"><button onClick="{{ c.onClick }}" style="height:30px; padding:0 13px; border-radius:15px; cursor:pointer; font-size:12px; font-weight:500; font-family:'Roboto Mono',monospace; background:{{ c.bg }}; color:{{ c.fg }}; border:{{ c.border }};">{{ c.label }}</button></sc-for>
+        <div style="flex:1;"></div>
+        <button onClick="{{ closeDialog }}" data-dialog-close aria-label="Close dialog" style="height:42px; padding:0 18px; border:none; background:transparent; color:var(--md-primary); border-radius:21px; cursor:pointer; font-size:13.5px; font-weight:600;">Cancel</button>
+        <button onClick="{{ doExport }}" style="display:flex; align-items:center; gap:8px; height:42px; padding:0 22px; border:none; border-radius:21px; background:var(--md-primary); color:var(--md-on-primary); cursor:pointer; font-size:13.5px; font-weight:600;"><span data-icon style="font-size:20px;" aria-hidden="true">file_download</span> Export {{ exSelCount }}</button>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+  <sc-if value="{{ isDlgSend }}">
+  <div onClick="{{ closeDialog }}" style="position:absolute; inset:0; z-index:60; background:var(--md-scrim); display:flex; align-items:center; justify-content:center; animation:scrimin .2s;">
+    <div onClick="{{ stop }}" role="dialog" aria-modal="true" aria-label="Send to printer" style="width:460px; max-width:92vw; background:var(--md-sc); border-radius:28px; box-shadow:0 16px 44px var(--md-shadow); padding:24px; display:flex; flex-direction:column; gap:16px; animation:mdfade .2s;">
+      <div style="display:flex; align-items:center; gap:12px;"><div style="width:44px; height:44px; border-radius:14px; background:var(--md-primary-container); color:var(--md-on-primary-container); display:flex; align-items:center; justify-content:center;"><span data-icon style="font-size:24px;" aria-hidden="true">print</span></div><div style="flex:1;"><div style="font-size:18px; font-weight:600;">Print Plate 1</div><div style="font-size:12.5px; color:var(--md-on-surface-variant);">Send to printer over the network</div></div><button onClick="{{ closeDialog }}" data-dialog-close aria-label="Close dialog" style="width:36px; height:36px; border:none; background:transparent; color:var(--md-on-surface-variant); border-radius:50%; cursor:pointer;"><span data-icon style="font-size:20px;" aria-hidden="true">close</span></button></div>
+      <div style="display:flex; align-items:center; gap:12px; padding:12px; background:var(--md-sc-highest); border-radius:16px;"><div style="width:40px; height:40px; border-radius:10px; background:var(--md-sc-lowest); color:var(--md-on-surface-variant); display:flex; align-items:center; justify-content:center;"><span data-icon style="font-size:24px;" aria-hidden="true">print</span></div><div style="flex:1;"><div style="font-size:13.5px; font-weight:600;">Bambu Lab X1 Carbon</div><div style="font-size:11.5px; color:var(--md-primary);">● Connected · Idle</div></div><span data-icon style="font-size:20px; color:var(--md-on-surface-variant);" aria-hidden="true">expand_more</span></div>
+      <div style="display:flex; flex-direction:column; gap:8px;"><div style="font-size:11px; font-weight:600; letter-spacing:.5px; text-transform:uppercase; color:var(--md-on-surface-variant);">Ink Dispenser mapping</div><div style="display:flex; gap:8px;"><sc-for list="{{ filaments }}" as="f" hint-placeholder-count="4"><div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; padding:8px 4px; background:var(--md-sc-highest); border-radius:10px;"><div style="width:24px; height:24px; border-radius:6px; background:{{ f.color }}; border:1px solid rgba(0,0,0,.25);"></div><span style="font-size:9.5px; color:var(--md-on-surface-variant);">{{ f.type }}</span></div></sc-for></div></div>
+      <div style="display:flex; flex-direction:column;">
+        <div style="display:flex; align-items:center; gap:10px; height:40px;"><span data-icon style="font-size:20px; color:var(--md-on-surface-variant);" aria-hidden="true">videocam</span><span style="flex:1; font-size:13px;">Timelapse</span><span style="width:40px; height:22px; border-radius:12px; background:var(--md-primary); position:relative;"><span style="position:absolute; top:3px; right:3px; width:16px; height:16px; border-radius:50%; background:var(--md-on-primary);"></span></span></div>
+        <div style="display:flex; align-items:center; gap:10px; height:40px;"><span data-icon style="font-size:20px; color:var(--md-on-surface-variant);" aria-hidden="true">grid_on</span><span style="flex:1; font-size:13px;">Bed leveling</span><span style="width:40px; height:22px; border-radius:12px; background:var(--md-primary); position:relative;"><span style="position:absolute; top:3px; right:3px; width:16px; height:16px; border-radius:50%; background:var(--md-on-primary);"></span></span></div>
+        <div style="display:flex; align-items:center; gap:10px; height:40px;"><span data-icon style="font-size:20px; color:var(--md-on-surface-variant);" aria-hidden="true">tune</span><span style="flex:1; font-size:13px;">Flow dynamics calibration</span><span style="width:40px; height:22px; border-radius:12px; background:var(--md-outline-variant); position:relative;"><span style="position:absolute; top:3px; left:3px; width:16px; height:16px; border-radius:50%; background:var(--md-outline);"></span></span></div>
+      </div>
+      <div style="display:flex; gap:10px; margin-top:2px;"><button onClick="{{ closeDialog }}" data-dialog-close aria-label="Close dialog" style="flex:0 0 auto; height:44px; padding:0 20px; border:none; background:transparent; color:var(--md-primary); border-radius:22px; cursor:pointer; font-size:14px; font-weight:600;">Cancel</button><button onClick="{{ sendPrint }}" style="flex:1; display:flex; align-items:center; justify-content:center; gap:8px; height:44px; border:none; border-radius:22px; background:var(--md-primary); color:var(--md-on-primary); cursor:pointer; font-size:14px; font-weight:600;"><span data-icon style="font-size:20px;" aria-hidden="true">send</span> Send print</button></div>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ isDlgAddfil }}">
+  <div onClick="{{ closeDialog }}" style="position:absolute; inset:0; z-index:60; background:var(--md-scrim); display:flex; align-items:center; justify-content:center; animation:scrimin .2s;">
+    <div onClick="{{ stop }}" role="dialog" aria-modal="true" aria-label="Add ink" style="width:520px; max-width:92vw; max-height:86vh; background:var(--md-sc); border-radius:28px; box-shadow:0 16px 44px var(--md-shadow); display:flex; flex-direction:column; overflow:hidden; animation:mdfade .2s;">
+      <div style="padding:22px 24px 12px; display:flex; align-items:center; gap:12px;"><div style="width:44px; height:44px; border-radius:14px; background:var(--md-primary-container); color:var(--md-on-primary-container); display:flex; align-items:center; justify-content:center;"><span data-icon style="font-size:24px;" aria-hidden="true">palette</span></div><div style="flex:1;"><div style="font-size:18px; font-weight:600;">Add ink</div><div style="font-size:12.5px; color:var(--md-on-surface-variant);">Pick a preset to add to this project</div></div><button onClick="{{ closeDialog }}" data-dialog-close aria-label="Close dialog" style="width:36px; height:36px; border:none; background:transparent; color:var(--md-on-surface-variant); border-radius:50%; cursor:pointer;"><span data-icon style="font-size:20px;" aria-hidden="true">close</span></button></div>
+      <div style="padding:0 24px 12px;"><dc-import name="SearchField" placeholder="Search ink presets" on-query="{{ setAddFilamentQuery }}" hint-size="100%,40px"></dc-import></div>
+      <div style="flex:1; overflow-y:auto; padding:4px 16px; display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+        <sc-if value="{{ addFilamentEmpty }}"><div style="padding:18px; font-size:12.5px; color:var(--md-on-surface-variant);">No preset matches &ldquo;{{ addFilamentQuery }}&rdquo;.</div></sc-if>
+        <sc-for list="{{ filamentRows }}" as="f" hint-placeholder-count="6">
+          <div style="display:flex; align-items:center; gap:10px; padding:12px; background:var(--md-sc-low); border:1px solid var(--md-outline-variant); border-radius:14px; cursor:pointer;" style-hover="border-color:var(--md-primary); background:var(--md-sc-high);"><div style="width:30px; height:30px; border-radius:8px; background:{{ f.color }}; border:1px solid rgba(0,0,0,.25); flex:0 0 auto;"></div><div style="flex:1; min-width:0;"><div style="font-size:13px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ f.name }}</div><div style="font-size:11px; color:var(--md-on-surface-variant);">{{ f.vendor }} · {{ f.type }}</div></div></div>
+        </sc-for>
+      </div>
+      <div style="padding:14px 24px; border-top:1px solid var(--md-outline-variant); display:flex; justify-content:flex-end; gap:10px;"><button onClick="{{ closeDialog }}" data-dialog-close aria-label="Close dialog" style="height:44px; padding:0 20px; border:none; background:transparent; color:var(--md-primary); border-radius:22px; cursor:pointer; font-size:14px; font-weight:600;">Cancel</button><button onClick="{{ addFilamentConfirm }}" style="display:flex; align-items:center; gap:8px; height:44px; padding:0 22px; border:none; border-radius:22px; background:var(--md-primary); color:var(--md-on-primary); cursor:pointer; font-size:14px; font-weight:600;"><span data-icon style="font-size:20px;" aria-hidden="true">add</span> Add to project</button></div>
+    </div>
+  </div>
+  </sc-if>
+
+</div>
+  </template>
+
+    <!-- ===== screen templates (assembled) ===== -->
+  <template data-screen="home">
+      <sc-if value="{{ isHome }}">
+      <div style="position:absolute; inset:0; overflow-y:auto; background:var(--md-surface);">
+        <div style="max-width:1120px; margin:0 auto; padding:32px 32px 56px; display:flex; flex-direction:column; gap:26px;">
+          <div class="home-welcome" style="display:flex; gap:20px; align-items:center; padding:26px 28px; border-radius:28px; background:linear-gradient(120deg, var(--md-primary-container), var(--md-secondary-container)); color:var(--md-on-primary-container);">
+            <img class="home-welcome-art" src="./assets/showcase/hero-studio.webp" alt="" aria-hidden="true">
+            <div style="position:relative; z-index:1; width:64px; height:64px; flex:0 0 64px; border-radius:20px; background:var(--md-primary); color:var(--md-on-primary); display:flex; align-items:center; justify-content:center; box-shadow:0 6px 16px var(--md-shadow);"><span data-icon style="font-size:36px; font-variation-settings:'FILL' 1;" aria-hidden="true">deployed_code</span></div>
+            <div style="position:relative; z-index:1; flex:1; min-width:0;">
+              <div style="font-size:23px; font-weight:700;">Welcome back</div>
+              <div style="font-size:14px; opacity:.82; margin-top:3px;">Start a new project, open an existing one, or continue where you left off.</div>
+            </div>
+            <div style="position:relative; z-index:1; display:flex; gap:12px;">
+              <button onClick="{{ goPrepare }}" style="display:flex; align-items:center; gap:8px; height:48px; padding:0 24px; border:none; border-radius:24px; background:var(--md-primary); color:var(--md-on-primary); font-size:14px; font-weight:600; cursor:pointer; box-shadow:0 2px 8px var(--md-shadow);"><span data-icon style="font-size:20px;" aria-hidden="true">add</span> New Project</button>
+              <button style="display:flex; align-items:center; gap:8px; height:48px; padding:0 22px; border:1px solid var(--md-primary); background:transparent; color:var(--md-on-primary-container); border-radius:24px; font-size:14px; font-weight:600; cursor:pointer;"><span data-icon style="font-size:20px;" aria-hidden="true">folder_open</span> Open</button>
+            </div>
+          </div>
+          <div style="max-width:520px;"><dc-import name="SearchField" placeholder="Search models on MakerWorld" on-query="{{ setHomeQuery }}" hint-size="100%,40px"></dc-import></div>
+          <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:16px;">
+            <div style="display:flex; flex-direction:column; gap:10px; padding:18px; background:var(--md-sc-low); border:1px solid var(--md-outline-variant); border-radius:20px; cursor:pointer;" style-hover="border-color:var(--md-primary);"><div style="width:44px; height:44px; border-radius:14px; background:var(--md-secondary-container); color:var(--md-on-secondary-container); display:flex; align-items:center; justify-content:center;"><span data-icon style="font-size:24px;" aria-hidden="true">upload_file</span></div><div style="font-size:14px; font-weight:600;">Import model</div><div style="font-size:12px; color:var(--md-on-surface-variant);">STL, STEP, 3MF, OBJ</div></div>
+            <div style="display:flex; flex-direction:column; gap:10px; padding:18px; background:var(--md-sc-low); border:1px solid var(--md-outline-variant); border-radius:20px; cursor:pointer;" style-hover="border-color:var(--md-primary);"><div style="width:44px; height:44px; border-radius:14px; background:var(--md-secondary-container); color:var(--md-on-secondary-container); display:flex; align-items:center; justify-content:center;"><span data-icon style="font-size:24px;" aria-hidden="true">folder_open</span></div><div style="font-size:14px; font-weight:600;">Open project</div><div style="font-size:12px; color:var(--md-on-surface-variant);">Resume a .3mf project</div></div>
+            <div style="display:flex; flex-direction:column; gap:10px; padding:18px; background:var(--md-sc-low); border:1px solid var(--md-outline-variant); border-radius:20px; cursor:pointer;" style-hover="border-color:var(--md-primary);"><div style="width:44px; height:44px; border-radius:14px; background:var(--md-secondary-container); color:var(--md-on-secondary-container); display:flex; align-items:center; justify-content:center;"><span data-icon style="font-size:24px;" aria-hidden="true">public</span></div><div style="font-size:14px; font-weight:600;">Explore models</div><div style="font-size:12px; color:var(--md-on-surface-variant);">Browse the online library</div></div>
+            <div onClick="{{ goDevice }}" style="display:flex; flex-direction:column; gap:10px; padding:18px; background:var(--md-sc-low); border:1px solid var(--md-outline-variant); border-radius:20px; cursor:pointer;" style-hover="border-color:var(--md-primary);"><div style="width:44px; height:44px; border-radius:14px; background:var(--md-secondary-container); color:var(--md-on-secondary-container); display:flex; align-items:center; justify-content:center;"><span data-icon style="font-size:24px;" aria-hidden="true">cast</span></div><div style="font-size:14px; font-weight:600;">My devices</div><div style="font-size:12px; color:var(--md-on-surface-variant);">Monitor &amp; control printers</div></div>
+          </div>
+          <div>
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px; font-size:16px; font-weight:600;"><span data-icon style="font-size:20px;" aria-hidden="true">history</span> Recent projects</div>
+            <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:16px;">
+              <sc-for list="{{ recent }}" as="r" hint-placeholder-count="4">
+                <button onClick="{{ goPrepare }}" style="text-align:left; padding:0; border:1px solid var(--md-outline-variant); background:var(--md-sc-low); border-radius:20px; overflow:hidden; cursor:pointer;" style-hover="border-color:var(--md-primary);">
+                  <div style="position:relative; height:118px; background:repeating-linear-gradient(45deg, var(--md-sc-high) 0 10px, var(--md-sc) 10px 20px); display:flex; align-items:center; justify-content:center; color:var(--md-on-surface-variant);"><span data-icon style="font-size:40px;" aria-hidden="true">deployed_code</span><img src="./assets/showcase/{{ r.image }}" alt="" loading="lazy" decoding="async" style="position:absolute; inset:0; display:block; width:100%; height:100%; object-fit:cover;"></div>
+                  <div style="padding:12px 14px;"><div style="font-size:13.5px; font-weight:600; color:var(--md-on-surface); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ r.name }}</div><div style="font-size:11.5px; color:var(--md-on-surface-variant); margin-top:2px;">{{ r.meta }}</div></div>
+                </button>
+              </sc-for>
+            </div>
+            <sc-if value="{{ homeEmpty }}"><div style="padding:36px 12px; text-align:center; color:var(--md-on-surface-variant); font-size:13px;">No recent projects match &#8220;{{ homeQuery }}&#8221;.</div></sc-if>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+  </template>
+  
+  <template data-screen="prepare">
+      <sc-if value="{{ isPrepare }}" hint-placeholder-val="{{ true }}">
+      <div style="position:absolute; inset:0; display:flex;">
+  
+        <!-- gizmo rail -->
+        <div style="width:var(--rail); flex:0 0 auto; background:var(--md-sc-low); border-right:1px solid var(--md-outline-variant); display:flex; flex-direction:column; align-items:center; padding:8px 0; gap:3px; overflow-y:auto;">
+          <sc-for list="{{ gizmos }}" as="g" hint-placeholder-count="16">
+            <button onClick="{{ g.onClick }}" title="{{ g.label }}" style="width:44px; height:44px; flex:0 0 auto; border:none; border-radius:12px; cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px; background:{{ g.bg }}; color:{{ g.fg }};" style-hover="filter:brightness(1.08);">
+              <span data-icon style="font-size:21px; font-variation-settings:'FILL' {{ g.fill }};" aria-hidden="true">{{ g.icon }}</span>
+            </button>
+          </sc-for>
+        </div>
+  
+        <!-- canvas column -->
+        <div style="flex:1 1 auto; position:relative; display:flex; flex-direction:column; min-width:0;">
+  
+          <!-- scene toolbar -->
+          <div style="position:absolute; top:12px; left:50%; transform:translateX(-50%); z-index:5; display:flex; align-items:center; gap:3px; padding:5px; background:var(--md-sc); border:1px solid var(--md-outline-variant); border-radius:16px; box-shadow:0 3px 10px var(--md-shadow);">
+            <sc-for list="{{ sceneTools }}" as="s" hint-placeholder-count="8">
+              <button onClick="{{ s.onClick }}" title="{{ s.label }}" style="width:40px; height:40px; border:none; background:transparent; color:var(--md-on-surface-variant); border-radius:10px; cursor:pointer; display:flex; align-items:center; justify-content:center;" style-hover="background:var(--md-sc-highest); color:var(--md-on-surface);">
+                <span data-icon style="font-size:22px;" aria-hidden="true">{{ s.icon }}</span>
+              </button>
+            </sc-for>
+          </div>
+  
+          <!-- 3D viewport -->
+          <div style="flex:1; position:relative; overflow:hidden; background:radial-gradient(120% 100% at 50% 0%, var(--md-surface-bright), var(--md-surface-dim) 70%);">
+            <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; perspective:1400px;">
+              <div style="width:520px; height:360px; transform:rotateX(58deg) rotateZ(-38deg); transform-style:preserve-3d; background:linear-gradient(var(--md-sc-high),var(--md-sc)); border:1px solid var(--md-outline); border-radius:6px; background-image:repeating-linear-gradient(0deg,transparent 0 25px, color-mix(in srgb, var(--md-outline) 34%, transparent) 25px 26px), repeating-linear-gradient(90deg,transparent 0 25px, color-mix(in srgb, var(--md-outline) 34%, transparent) 25px 26px); box-shadow:0 40px 60px rgba(0,0,0,.28);">
+                <div style="position:absolute; left:14px; top:14px; font-family:'Roboto Mono',monospace; font-size:11px; color:var(--md-on-surface-variant); transform:rotateZ(38deg) rotateX(-58deg);">256 × 256</div>
+                <!-- model rendered as overlay for clean silhouette -->
+              </div>
+            </div>
+  
+            <!-- isometric model -->
+            <div style="position:absolute; left:50%; top:44%; transform:translate(-50%,-50%); width:150px; height:164px; filter:drop-shadow(0 20px 16px rgba(0,0,0,.35));">
+              <div style="position:absolute; inset:0; background:color-mix(in srgb, var(--md-primary) 84%, #fff); clip-path:polygon(50% 2%, 98% 27%, 50% 52%, 2% 27%);"></div>
+              <div style="position:absolute; inset:0; background:color-mix(in srgb, var(--md-primary) 60%, #000 8%); clip-path:polygon(2% 27%, 50% 52%, 50% 98%, 2% 73%);"></div>
+              <div style="position:absolute; inset:0; background:color-mix(in srgb, var(--md-primary) 42%, #000 22%); clip-path:polygon(98% 27%, 98% 73%, 50% 98%, 50% 52%);"></div>
+            </div>
+  
+            <!-- axis triad -->
+            <div style="position:absolute; left:16px; bottom:16px; width:70px; height:70px;">
+              <div style="position:absolute; left:6px; bottom:6px; width:2px; height:40px; background:#4c8bf5;"></div>
+              <div style="position:absolute; left:6px; bottom:6px; width:40px; height:2px; background:#ea4335;"></div>
+              <div style="position:absolute; left:8px; bottom:8px; width:26px; height:14px; background:#34a853; transform:skewX(-45deg); opacity:.85;"></div>
+              <div style="position:absolute; left:1px; bottom:44px; font-size:10px; color:#4c8bf5; font-weight:700;">Z</div>
+              <div style="position:absolute; left:46px; bottom:0; font-size:10px; color:#ea4335; font-weight:700;">X</div>
+            </div>
+  
+            <!-- view controls -->
+            <div style="position:absolute; right:16px; bottom:16px; display:flex; flex-direction:column; gap:6px; padding:6px; background:var(--md-sc); border:1px solid var(--md-outline-variant); border-radius:26px; box-shadow:0 3px 10px var(--md-shadow);">
+              <button style="width:40px; height:40px; border:none; background:transparent; color:var(--md-on-surface-variant); border-radius:50%; cursor:pointer;" style-hover="background:var(--md-sc-highest);"><span data-icon style="font-size:22px;" aria-hidden="true">add</span></button>
+              <button style="width:40px; height:40px; border:none; background:transparent; color:var(--md-on-surface-variant); border-radius:50%; cursor:pointer;" style-hover="background:var(--md-sc-highest);"><span data-icon style="font-size:22px;" aria-hidden="true">remove</span></button>
+              <button style="width:40px; height:40px; border:none; background:transparent; color:var(--md-on-surface-variant); border-radius:50%; cursor:pointer;" style-hover="background:var(--md-sc-highest);"><span data-icon style="font-size:22px;" aria-hidden="true">filter_center_focus</span></button>
+            </div>
+  
+            <!-- object count chip -->
+            <div style="position:absolute; left:50%; bottom:16px; transform:translateX(-50%); white-space:nowrap; display:flex; gap:8px; align-items:center; padding:7px 14px; background:var(--md-sc); border:1px solid var(--md-outline-variant); border-radius:20px; font-size:12.5px; color:var(--md-on-surface-variant); box-shadow:0 2px 6px var(--md-shadow);">
+              <span data-icon style="font-size:16px;" aria-hidden="true">deployed_code</span> 1 object · 15,842 faces
+            </div>
+          </div>
+  
+          <!-- bottom bar: plates + slice -->
+          <div style="flex:0 0 auto; height:66px; display:flex; align-items:center; gap:12px; padding:0 16px; background:var(--md-sc-low); border-top:1px solid var(--md-outline-variant);">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <button style="display:flex; align-items:center; gap:8px; height:40px; padding:0 14px 0 10px; border:2px solid var(--md-primary); background:var(--md-secondary-container); color:var(--md-on-secondary-container); border-radius:12px; cursor:pointer; font-size:13px; font-weight:500;">
+                <span data-icon style="font-size:20px;" aria-hidden="true">grid_view</span> Plate 1
+              </button>
+              <button style="width:40px; height:40px; border:1px dashed var(--md-outline); background:transparent; color:var(--md-on-surface-variant); border-radius:12px; cursor:pointer;" style-hover="background:var(--md-sc-high);"><span data-icon style="font-size:20px;" aria-hidden="true">add</span></button>
+            </div>
+            <div style="flex:1;"></div>
+            <div style="text-align:right; margin-right:4px; line-height:1.3;">
+              <div style="font-family:'Roboto Mono',monospace; font-size:15px; font-weight:500;">1h 24m</div>
+              <div style="font-size:11px; color:var(--md-on-surface-variant);">23.4 g · 7.85 m</div>
+            </div>
+            <button onClick="{{ openSlice }}" style="display:flex; align-items:center; gap:8px; height:44px; padding:0 22px; border:1px solid var(--md-outline); background:var(--md-sc-high); color:var(--md-on-surface); border-radius:22px; cursor:pointer; font-size:14px; font-weight:500;" style-hover="background:var(--md-sc-highest);">
+              <span data-icon style="font-size:20px;" aria-hidden="true">deployed_code</span> Slice plate
+            </button>
+            <button onClick="{{ openSend }}" style="display:flex; align-items:center; gap:8px; height:44px; padding:0 24px; border:none; background:var(--md-primary); color:var(--md-on-primary); border-radius:22px; cursor:pointer; font-size:14px; font-weight:600; box-shadow:0 2px 6px var(--md-shadow);" style-hover="filter:brightness(1.06);">
+              <span data-icon style="font-size:20px; font-variation-settings:'FILL' 1;" aria-hidden="true">print</span> Print plate
+            </button>
+          </div>
+        </div>
+  
+        <!-- right sidebar -->
+        <div style="width:var(--sidebar); flex:0 0 auto; background:var(--md-sc-low); border-left:1px solid var(--md-outline-variant); display:flex; flex-direction:column; overflow-y:auto;">
+  
+          <!-- printer card -->
+          <div style="padding:var(--pad); display:flex; flex-direction:column; gap:10px;">
+            <div style="display:flex; align-items:center; gap:6px; font-size:11px; font-weight:600; letter-spacing:.6px; color:var(--md-on-surface-variant); text-transform:uppercase;"><span data-icon style="font-size:16px;" aria-hidden="true">print</span> Printer</div>
+            <div style="display:flex; gap:10px; align-items:center; padding:10px; background:var(--md-sc-highest); border-radius:var(--radius);">
+              <div style="width:52px; height:52px; border-radius:12px; background:var(--md-sc-lowest); border:1px solid var(--md-outline-variant); display:flex; align-items:center; justify-content:center; color:var(--md-on-surface-variant);"><span data-icon style="font-size:30px;" aria-hidden="true">print</span></div>
+              <div style="flex:1; min-width:0;">
+                <div style="font-size:13.5px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Bambu Lab X1 Carbon</div>
+                <div style="display:flex; align-items:center; gap:5px; font-size:11.5px; color:var(--md-primary); margin-top:2px;"><span style="width:7px; height:7px; border-radius:50%; background:var(--md-primary);"></span> 0.4 nozzle · Connected</div>
+              </div>
+              <button style="width:34px; height:34px; border:none; background:transparent; color:var(--md-on-surface-variant); border-radius:50%; cursor:pointer;" style-hover="background:var(--md-sc-low);"><span data-icon style="font-size:19px;" aria-hidden="true">edit</span></button>
+            </div>
+            <div style="display:flex; gap:8px;">
+              <div style="flex:1; display:flex; flex-direction:column; gap:3px;">
+                <div style="font-size:10.5px; color:var(--md-on-surface-variant); padding-left:4px;">Bed type</div>
+                <button style="height:38px; padding:0 12px; display:flex; align-items:center; justify-content:space-between; border:1px solid var(--md-outline); background:transparent; color:var(--md-on-surface); border-radius:10px; cursor:pointer; font-size:12.5px;"><span>Textured PEI Plate</span><span data-icon style="font-size:18px;" aria-hidden="true">expand_more</span></button>
+              </div>
+            </div>
+          </div>
+  
+          <div style="height:1px; background:var(--md-outline-variant); margin:0 var(--pad);"></div>
+  
+          <!-- filament -->
+          <div style="padding:var(--pad); display:flex; flex-direction:column; gap:10px;">
+            <div style="display:flex; align-items:center; gap:6px;">
+              <div style="flex:1; display:flex; align-items:center; gap:6px; font-size:11px; font-weight:600; letter-spacing:.6px; color:var(--md-on-surface-variant); text-transform:uppercase;"><span data-icon style="font-size:16px;" aria-hidden="true">palette</span> Ink</div>
+              <button title="Sync with Ink Dispenser" style="height:30px; padding:0 10px; display:flex; align-items:center; gap:5px; border:1px solid var(--md-outline); background:transparent; color:var(--md-primary); border-radius:16px; cursor:pointer; font-size:11.5px; font-weight:500;" style-hover="background:var(--md-secondary-container);"><span data-icon style="font-size:15px;" aria-hidden="true">sync</span> Sync dispenser</button>
+            </div>
+            <sc-for list="{{ filaments }}" as="f" hint-placeholder-count="4">
+              <div style="display:flex; align-items:center; gap:10px; height:44px; padding:0 8px 0 8px; background:var(--md-sc-highest); border-radius:12px;">
+                <div style="width:28px; height:28px; border-radius:8px; background:{{ f.color }}; border:1px solid rgba(0,0,0,.25); box-shadow:inset 0 0 0 2px var(--md-sc-highest), inset 0 0 0 3px rgba(255,255,255,.15);"></div>
+                <div style="flex:1; min-width:0;">
+                  <div style="font-size:12.5px; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ f.name }}</div>
+                  <div style="font-size:10.5px; color:var(--md-on-surface-variant);">{{ f.slot }}</div>
+                </div>
+                <span style="font-size:11px; font-weight:600; padding:2px 8px; border-radius:8px; background:var(--md-secondary-container); color:var(--md-on-secondary-container);">{{ f.type }}</span>
+              </div>
+            </sc-for>
+            <div style="display:flex; gap:8px;">
+              <button onClick="{{ openAddFilament }}" style="flex:1; height:36px; display:flex; align-items:center; justify-content:center; gap:6px; border:1px solid var(--md-outline); background:transparent; color:var(--md-primary); border-radius:18px; cursor:pointer; font-size:12.5px; font-weight:500;" style-hover="background:var(--md-secondary-container);"><span data-icon style="font-size:18px;" aria-hidden="true">add</span> Add ink</button>
+            </div>
+          </div>
+  
+          <div style="height:1px; background:var(--md-outline-variant); margin:0 var(--pad);"></div>
+  
+          <!-- process settings -->
+          <div style="padding:var(--pad); display:flex; flex-direction:column; gap:10px;">
+            <div style="display:flex; align-items:center; gap:6px; font-size:11px; font-weight:600; letter-spacing:.6px; color:var(--md-on-surface-variant); text-transform:uppercase;"><span data-icon style="font-size:16px;" aria-hidden="true">tune</span> Process</div>
+            <button style="height:40px; padding:0 12px; display:flex; align-items:center; justify-content:space-between; border:1px solid var(--md-outline); background:transparent; color:var(--md-on-surface); border-radius:10px; cursor:pointer; font-size:12.5px;"><span style="font-weight:500;">0.20mm Standard @BBL X1C</span><span data-icon style="font-size:18px;" aria-hidden="true">expand_more</span></button>
+            <div style="display:flex; gap:4px; padding:3px; background:var(--md-sc-highest); border-radius:12px;">
+              <sc-for list="{{ processTabs }}" as="p" hint-placeholder-count="4">
+                <button onClick="{{ p.onClick }}" style="flex:1; height:30px; border:none; border-radius:9px; cursor:pointer; font-size:11.5px; font-weight:500; background:{{ p.bg }}; color:{{ p.fg }};">{{ p.label }}</button>
+              </sc-for>
+            </div>
+  
+            <sc-for list="{{ params }}" as="p" hint-placeholder-count="5">
+              <sc-if value="{{ p.isSwitch }}">
+                <div style="display:flex; align-items:center; gap:10px; min-height:36px;">
+                  <div style="flex:1; font-size:12.5px;">{{ p.label }}</div>
+                  <button onClick="{{ p.onClick }}" role="switch" aria-checked="{{ p.on }}" aria-label="{{ p.label }}" title="{{ p.label }}" style="width:44px; height:24px; border-radius:14px; border:2px solid {{ p.trackBorder }}; background:{{ p.track }}; position:relative; cursor:pointer; padding:0; transition:.15s;">
+                    <span style="position:absolute; top:50%; left:{{ p.knobX }}; transform:translateY(-50%); width:{{ p.knobSize }}; height:{{ p.knobSize }}; border-radius:50%; background:{{ p.knob }}; transition:.15s;"></span>
+                  </button>
+                </div>
+              </sc-if>
+              <sc-if value="{{ p.isValue }}">
+                <div style="display:flex; align-items:center; gap:10px; min-height:36px;">
+                  <div style="flex:1; font-size:12.5px;">{{ p.label }}</div>
+                  <div style="display:flex; align-items:center; gap:6px; height:34px; padding:0 4px 0 12px; background:var(--md-sc-highest); border-radius:10px; min-width:96px; justify-content:flex-end;">
+                    <span style="font-family:'Roboto Mono',monospace; font-size:12.5px; font-weight:500;">{{ p.value }}</span>
+                    <span style="font-size:11px; color:var(--md-on-surface-variant);">{{ p.unit }}</span>
+                  </div>
+                </div>
+              </sc-if>
+              <sc-if value="{{ p.isSelect }}">
+                <div style="display:flex; align-items:center; gap:10px; min-height:36px;">
+                  <div style="flex:1; font-size:12.5px;">{{ p.label }}</div>
+                  <button style="display:flex; align-items:center; gap:4px; height:34px; padding:0 8px 0 12px; background:var(--md-sc-highest); border:none; border-radius:10px; cursor:pointer; color:var(--md-on-surface); font-size:12.5px;"><span>{{ p.value }}</span><span data-icon style="font-size:16px;" aria-hidden="true">expand_more</span></button>
+                </div>
+              </sc-if>
+            </sc-for>
+            <button style="align-self:flex-start; display:flex; align-items:center; gap:4px; height:30px; padding:0 6px; border:none; background:transparent; color:var(--md-primary); font-size:12px; font-weight:500; cursor:pointer;"><span data-icon style="font-size:17px;" aria-hidden="true">tune</span> Advanced settings</button>
+          </div>
+  
+          <div style="height:1px; background:var(--md-outline-variant); margin:0 var(--pad);"></div>
+  
+          <!-- object list -->
+          <div style="padding:var(--pad); display:flex; flex-direction:column; gap:6px;">
+            <div style="display:flex; align-items:center; gap:6px; margin-bottom:2px;">
+              <div style="flex:1; display:flex; align-items:center; gap:6px; font-size:11px; font-weight:600; letter-spacing:.6px; color:var(--md-on-surface-variant); text-transform:uppercase;"><span data-icon style="font-size:16px;" aria-hidden="true">account_tree</span> Objects</div>
+            </div>
+            <div style="margin-bottom:4px;"><dc-import name="SearchField" placeholder="Search objects" on-query="{{ setObjQuery }}" hint-size="100%,40px"></dc-import></div>
+            <sc-for list="{{ objectRows }}" as="o" hint-placeholder-count="2">
+              <sc-if value="{{ o.isObject }}">
+                <div style="display:flex; align-items:center; gap:8px; height:36px; padding:0 8px; background:var(--md-secondary-container); color:var(--md-on-secondary-container); border-radius:10px;">
+                  <span data-icon style="font-size:18px;" aria-hidden="true">{{ o.icon }}</span>
+                  <span style="flex:1; min-width:0; font-size:12.5px; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ o.name }}</span>
+                  <span data-icon style="font-size:17px; opacity:.7;" aria-hidden="true">visibility</span>
+                  <div style="width:16px; height:16px; flex:0 0 auto; border-radius:5px; background:var(--md-primary); border:1px solid rgba(0,0,0,.2);"></div>
+                </div>
+              </sc-if>
+              <sc-if value="{{ o.isChild }}">
+                <div style="display:flex; align-items:center; gap:8px; height:32px; padding:0 8px 0 26px; color:var(--md-on-surface-variant); font-size:12px;">
+                  <span data-icon style="font-size:16px;" aria-hidden="true">{{ o.icon }}</span> <span style="flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ o.name }}</span>
+                </div>
+              </sc-if>
+            </sc-for>
+            <sc-if value="{{ objEmpty }}">
+              <div style="padding:18px 8px; text-align:center; color:var(--md-on-surface-variant); font-size:12.5px; line-height:1.5;">
+                No objects match your search.
+                <div style="margin-top:4px; font-family:'Roboto Mono',monospace; font-size:11.5px; overflow-wrap:anywhere;">{{ objQueryEcho }}</div>
+              </div>
+            </sc-if>
+          </div>
+  
+          <div style="height:1px; background:var(--md-outline-variant); margin:0 var(--pad);"></div>
+  
+          <!-- object manipulation -->
+          <div style="padding:var(--pad); display:flex; flex-direction:column; gap:8px;">
+            <div style="display:flex; align-items:center; gap:6px; font-size:11px; font-weight:600; letter-spacing:.6px; color:var(--md-on-surface-variant); text-transform:uppercase;"><span data-icon style="font-size:16px;" aria-hidden="true">transform</span> Object manipulation</div>
+            <div style="display:grid; grid-template-columns:auto 1fr 1fr 1fr; gap:6px 8px; align-items:center;">
+              <div></div>
+              <div style="text-align:center; font-size:10.5px; color:#ea4335; font-weight:600;">X</div>
+              <div style="text-align:center; font-size:10.5px; color:#34a853; font-weight:600;">Y</div>
+              <div style="text-align:center; font-size:10.5px; color:#4c8bf5; font-weight:600;">Z</div>
+              <sc-for list="{{ manipRows }}" as="r" hint-placeholder-count="4">
+                <div style="font-size:11.5px; color:var(--md-on-surface-variant);">{{ r.label }}</div>
+                <div style="height:32px; display:flex; align-items:center; justify-content:center; background:var(--md-sc-highest); border-radius:8px; font-family:'Roboto Mono',monospace; font-size:12px;">{{ r.x }}</div>
+                <div style="height:32px; display:flex; align-items:center; justify-content:center; background:var(--md-sc-highest); border-radius:8px; font-family:'Roboto Mono',monospace; font-size:12px;">{{ r.y }}</div>
+                <div style="height:32px; display:flex; align-items:center; justify-content:center; background:var(--md-sc-highest); border-radius:8px; font-family:'Roboto Mono',monospace; font-size:12px;">{{ r.z }}</div>
+              </sc-for>
+            </div>
+          </div>
+  
+        </div>
+      </div>
+      </sc-if>
+  </template>
+  
+  <template data-screen="preview">
+      <sc-if value="{{ isPreview }}">
+      <div style="position:absolute; inset:0; display:flex;">
+        <div style="flex:1; position:relative; display:flex; flex-direction:column; min-width:0;">
+          <div style="flex:1; position:relative; overflow:hidden; background:radial-gradient(120% 100% at 50% 0%, var(--md-surface-bright), var(--md-surface-dim) 70%);">
+            <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; perspective:1400px;">
+              <div style="width:520px; height:360px; transform:rotateX(58deg) rotateZ(-38deg); background:linear-gradient(var(--md-sc-high),var(--md-sc)); border:1px solid var(--md-outline); border-radius:6px; background-image:repeating-linear-gradient(0deg,transparent 0 25px, color-mix(in srgb, var(--md-outline) 34%, transparent) 25px 26px), repeating-linear-gradient(90deg,transparent 0 25px, color-mix(in srgb, var(--md-outline) 34%, transparent) 25px 26px); box-shadow:0 40px 60px rgba(0,0,0,.28);"></div>
+            </div>
+            <div style="position:absolute; left:50%; top:44%; transform:translate(-50%,-50%); width:150px; height:164px; filter:drop-shadow(0 20px 16px rgba(0,0,0,.35));">
+              <div style="position:absolute; inset:0; background:#d2477e; clip-path:polygon(50% 2%, 98% 27%, 50% 52%, 2% 27%);"></div>
+              <div style="position:absolute; inset:0; background:repeating-linear-gradient(-6deg, #ef6c3e 0 5px, #c85a34 5px 6px); clip-path:polygon(2% 27%, 50% 52%, 50% 98%, 2% 73%);"></div>
+              <div style="position:absolute; inset:0; background:repeating-linear-gradient(6deg, #b8542f 0 5px, #97452a 5px 6px); clip-path:polygon(98% 27%, 98% 73%, 50% 98%, 50% 52%);"></div>
+            </div>
+            <div style="position:absolute; right:22px; top:0; bottom:20px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px;">
+              <div style="font-family:'Roboto Mono',monospace; font-size:11.5px; color:var(--md-on-surface); background:var(--md-sc); padding:4px 9px; border-radius:8px; border:1px solid var(--md-outline-variant);">Z {{ layerZ }} mm</div>
+              <input type="range" min="1" max="{{ maxLayer }}" value="{{ layer }}" onInput="{{ onLayer }}" style="writing-mode:vertical-lr; direction:rtl; width:12px; height:300px; accent-color:var(--md-primary); cursor:pointer;">
+              <div style="font-family:'Roboto Mono',monospace; font-size:11.5px; color:var(--md-on-surface-variant);">{{ layer }} / {{ maxLayer }}</div>
+            </div>
+            <div style="position:absolute; left:16px; top:16px; display:flex; gap:8px; align-items:center; padding:7px 14px; background:var(--md-sc); border:1px solid var(--md-outline-variant); border-radius:20px; font-size:12.5px; color:var(--md-on-surface-variant); box-shadow:0 2px 6px var(--md-shadow);"><span data-icon style="font-size:16px;" aria-hidden="true">layers</span> Sliced · {{ maxLayer }} layers</div>
+          </div>
+          <div style="flex:0 0 auto; height:58px; display:flex; align-items:center; gap:14px; padding:0 20px; background:var(--md-sc-low); border-top:1px solid var(--md-outline-variant);">
+            <button style="width:38px; height:38px; border:none; background:transparent; color:var(--md-on-surface-variant); border-radius:50%; cursor:pointer;" style-hover="background:var(--md-sc-high);"><span data-icon style="font-size:22px;" aria-hidden="true">skip_previous</span></button>
+            <button style="width:44px; height:44px; border:none; background:var(--md-primary); color:var(--md-on-primary); border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center;"><span data-icon style="font-size:24px; font-variation-settings:'FILL' 1;" aria-hidden="true">play_arrow</span></button>
+            <button style="width:38px; height:38px; border:none; background:transparent; color:var(--md-on-surface-variant); border-radius:50%; cursor:pointer;" style-hover="background:var(--md-sc-high);"><span data-icon style="font-size:22px;" aria-hidden="true">skip_next</span></button>
+            <input type="range" min="0" max="12380" style="flex:1; accent-color:var(--md-primary); cursor:pointer;">
+            <span style="font-family:'Roboto Mono',monospace; font-size:12px; color:var(--md-on-surface-variant); min-width:120px; text-align:right;">Move 8420 / 12380</span>
+          </div>
+        </div>
+        <div style="width:var(--sidebar); flex:0 0 auto; background:var(--md-sc-low); border-left:1px solid var(--md-outline-variant); display:flex; flex-direction:column; overflow-y:auto; padding:var(--pad); gap:18px;">
+          <div style="display:flex; flex-direction:column; gap:10px;">
+            <div style="display:flex; align-items:center; gap:6px; font-size:11px; font-weight:600; letter-spacing:.6px; color:var(--md-on-surface-variant); text-transform:uppercase;"><span data-icon style="font-size:16px;" aria-hidden="true">palette</span> Color scheme</div>
+            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+              <sc-for list="{{ gcodeSchemes }}" as="c" hint-placeholder-count="5">
+                <button onClick="{{ c.onClick }}" style="height:32px; padding:0 12px; border-radius:16px; cursor:pointer; font-size:12px; font-weight:500; background:{{ c.bg }}; color:{{ c.fg }}; border:{{ c.border }};">{{ c.label }}</button>
+              </sc-for>
+            </div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <div style="display:flex; align-items:center; gap:6px; font-size:11px; font-weight:600; letter-spacing:.6px; color:var(--md-on-surface-variant); text-transform:uppercase;">{{ gcodeScheme }}</div>
+            <sc-for list="{{ gcodeLegend }}" as="g" hint-placeholder-count="11">
+              <div style="display:flex; align-items:center; gap:10px; height:28px;">
+                <span style="width:16px; height:16px; border-radius:4px; background:{{ g.color }};"></span>
+                <span style="font-size:12.5px; color:var(--md-on-surface);">{{ g.label }}</span>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:10px;">
+            <div style="display:flex; align-items:center; gap:6px; font-size:11px; font-weight:600; letter-spacing:.6px; color:var(--md-on-surface-variant); text-transform:uppercase;"><span data-icon style="font-size:16px;" aria-hidden="true">tune</span> Options</div>
+            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+              <sc-for list="{{ prevOpts }}" as="o" hint-placeholder-count="4">
+                <button onClick="{{ o.onClick }}" style="display:flex; align-items:center; gap:6px; height:32px; padding:0 12px; border-radius:16px; cursor:pointer; font-size:12px; font-weight:500; background:{{ o.bg }}; color:{{ o.fg }}; border:{{ o.border }};"><span data-icon style="font-size:16px;" aria-hidden="true">{{ o.icon }}</span>{{ o.label }}</button>
+              </sc-for>
+            </div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:8px; padding:14px; background:var(--md-sc-highest); border-radius:var(--radius);">
+            <div style="display:flex; align-items:center; gap:6px; font-size:11px; font-weight:600; letter-spacing:.6px; color:var(--md-on-surface-variant); text-transform:uppercase;"><span data-icon style="font-size:16px;" aria-hidden="true">insights</span> Statistics</div>
+            <div style="display:flex; justify-content:space-between; font-size:13px;"><span style="color:var(--md-on-surface-variant);">Estimated time</span><span style="font-family:'Roboto Mono',monospace; font-weight:500;">1h 24m</span></div>
+            <div style="display:flex; justify-content:space-between; font-size:13px;"><span style="color:var(--md-on-surface-variant);">Ink</span><span style="font-family:'Roboto Mono',monospace; font-weight:500;">23.4 g · 7.85 m</span></div>
+            <div style="display:flex; justify-content:space-between; font-size:13px;"><span style="color:var(--md-on-surface-variant);">Est. cost</span><span style="font-family:'Roboto Mono',monospace; font-weight:500;">$0.47</span></div>
+            <div style="display:flex; justify-content:space-between; font-size:13px;"><span style="color:var(--md-on-surface-variant);">Layers</span><span style="font-family:'Roboto Mono',monospace; font-weight:500;">180</span></div>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+  </template>
+  
+  <template data-screen="device">
+      <sc-if value="{{ isDevice }}">
+      <div style="position:absolute; inset:0; overflow:auto; background:var(--md-surface-dim); padding:16px;">
+        <div style="display:flex; gap:16px; align-items:flex-start; max-width:1300px; margin:0 auto;">
+          <div style="flex:1.5; display:flex; flex-direction:column; gap:16px; min-width:0;">
+            <div style="border-radius:var(--radius); overflow:hidden; border:1px solid var(--md-outline-variant); background:#0c0e13;">
+              <div style="position:relative; aspect-ratio:16/9; background:repeating-linear-gradient(45deg,#15171d 0 12px,#1b1e25 12px 24px); display:flex; align-items:center; justify-content:center;">
+                <span data-icon style="font-size:52px; color:#3a3f47;" aria-hidden="true">videocam</span>
+                <div style="position:absolute; left:14px; top:14px; display:flex; align-items:center; gap:6px; padding:4px 10px; background:rgba(0,0,0,.55); border-radius:12px; color:#fff; font-size:11px; font-weight:600;"><span style="width:7px; height:7px; border-radius:50%; background:#ff4747; animation:pulse 1.6s infinite;"></span> LIVE</div>
+                <div style="position:absolute; right:12px; top:12px; display:flex; gap:6px;"><button style="width:34px; height:34px; border:none; background:rgba(0,0,0,.5); color:#fff; border-radius:50%; cursor:pointer;"><span data-icon style="font-size:18px;" aria-hidden="true">hd</span></button><button style="width:34px; height:34px; border:none; background:rgba(0,0,0,.5); color:#fff; border-radius:50%; cursor:pointer;"><span data-icon style="font-size:18px;" aria-hidden="true">fullscreen</span></button></div>
+                <div style="position:absolute; left:14px; bottom:14px; display:flex; gap:8px;"><span style="padding:4px 10px; background:rgba(0,0,0,.55); border-radius:10px; color:#fff; font-size:11.5px; font-family:'Roboto Mono',monospace;">🌡 220°C</span><span style="padding:4px 10px; background:rgba(0,0,0,.55); border-radius:10px; color:#fff; font-size:11.5px; font-family:'Roboto Mono',monospace;">▤ 60°C</span></div>
+              </div>
+            </div>
+            <div style="padding:var(--pad); background:var(--md-sc-low); border:1px solid var(--md-outline-variant); border-radius:var(--radius); display:flex; flex-direction:column; gap:14px;">
+              <div style="display:flex; gap:14px; align-items:center;">
+                <div style="width:60px; height:60px; border-radius:12px; background:repeating-linear-gradient(45deg, var(--md-sc-high) 0 8px, var(--md-sc) 8px 16px); display:flex; align-items:center; justify-content:center; color:var(--md-on-surface-variant);"><span data-icon style="font-size:30px;" aria-hidden="true">deployed_code</span></div>
+                <div style="flex:1; min-width:0;"><div style="font-size:15px; font-weight:600;">3DBenchy.gcode.3mf</div><div style="font-size:12.5px; color:var(--md-on-surface-variant); margin-top:2px;">Layer 124 / 180 · 42 min remaining</div></div>
+                <div style="font-family:'Roboto Mono',monospace; font-size:28px; font-weight:600; color:var(--md-primary);">68%</div>
+              </div>
+              <div style="height:8px; background:var(--md-sc-highest); border-radius:6px; overflow:hidden;"><div style="width:68%; height:100%; background:var(--md-primary); border-radius:6px;"></div></div>
+              <div style="display:flex; gap:10px;">
+                <button style="flex:1; display:flex; align-items:center; justify-content:center; gap:8px; height:44px; border:none; border-radius:22px; background:var(--md-secondary-container); color:var(--md-on-secondary-container); font-size:13.5px; font-weight:600; cursor:pointer;"><span data-icon style="font-size:20px;" aria-hidden="true">pause</span> Pause</button>
+                <button style="flex:1; display:flex; align-items:center; justify-content:center; gap:8px; height:44px; border:1px solid var(--md-error); background:transparent; color:var(--md-error); font-size:13.5px; font-weight:600; cursor:pointer; border-radius:22px;"><span data-icon style="font-size:20px;" aria-hidden="true">stop</span> Stop</button>
+              </div>
+            </div>
+          </div>
+          <div style="flex:1; min-width:344px; display:flex; flex-direction:column; gap:16px;">
+            <div style="padding:var(--pad); background:var(--md-sc-low); border:1px solid var(--md-outline-variant); border-radius:var(--radius); display:flex; flex-direction:column; gap:12px;">
+              <div style="display:flex; align-items:center; gap:6px; font-size:11px; font-weight:600; letter-spacing:.6px; color:var(--md-on-surface-variant); text-transform:uppercase;"><span data-icon style="font-size:16px;" aria-hidden="true">thermostat</span> Temperature</div>
+              <sc-for list="{{ temps }}" as="t" hint-placeholder-count="3">
+                <div style="display:flex; align-items:center; gap:12px; height:40px;">
+                  <span data-icon style="font-size:22px; color:var(--md-primary);" aria-hidden="true">{{ t.icon }}</span>
+                  <span style="flex:1; font-size:13.5px;">{{ t.label }}</span>
+                  <span style="font-family:'Roboto Mono',monospace; font-size:15px; font-weight:500;">{{ t.val }}°</span>
+                  <span style="font-size:12px; color:var(--md-on-surface-variant); font-family:'Roboto Mono',monospace;">/ {{ t.target }}</span>
+                  <button style="width:32px; height:32px; border:none; background:var(--md-sc-highest); color:var(--md-on-surface-variant); border-radius:50%; cursor:pointer;"><span data-icon style="font-size:17px;" aria-hidden="true">edit</span></button>
+                </div>
+              </sc-for>
+            </div>
+            <div style="padding:var(--pad); background:var(--md-sc-low); border:1px solid var(--md-outline-variant); border-radius:var(--radius); display:flex; flex-direction:column; gap:12px;">
+              <div style="display:flex; align-items:center; gap:6px; font-size:11px; font-weight:600; letter-spacing:.6px; color:var(--md-on-surface-variant); text-transform:uppercase;"><span data-icon style="font-size:16px;" aria-hidden="true">speed</span> Print options</div>
+              <div style="display:flex; gap:4px; padding:3px; background:var(--md-sc-highest); border-radius:12px;">
+                <sc-for list="{{ speedModes }}" as="m" hint-placeholder-count="4">
+                  <button onClick="{{ m.onClick }}" style="flex:1; height:30px; border:none; border-radius:9px; cursor:pointer; font-size:11.5px; font-weight:500; background:{{ m.bg }}; color:{{ m.fg }};">{{ m.label }}</button>
+                </sc-for>
+              </div>
+              <div style="display:flex; align-items:center; gap:12px;"><span data-icon style="font-size:20px; color:var(--md-on-surface-variant);" aria-hidden="true">mode_fan</span><span style="width:100px; font-size:13px;">Part cooling</span><input type="range" min="0" max="100" value="100" style="flex:1; accent-color:var(--md-primary);"></div>
+              <div style="display:flex; align-items:center; gap:12px;"><span data-icon style="font-size:20px; color:var(--md-on-surface-variant);" aria-hidden="true">air</span><span style="width:100px; font-size:13px;">Aux fan</span><input type="range" min="0" max="100" value="40" style="flex:1; accent-color:var(--md-primary);"></div>
+              <div style="display:flex; align-items:center; gap:12px; height:36px;"><span data-icon style="font-size:20px; color:var(--md-on-surface-variant);" aria-hidden="true">lightbulb</span><span style="flex:1; font-size:13px;">Chamber light</span>
+                <button onClick="{{ toggleLamp }}" role="switch" aria-checked="{{ lampOn }}" aria-label="Chamber light" title="Chamber light" style="width:44px; height:24px; border-radius:14px; border:2px solid {{ lampTrackBorder }}; background:{{ lampTrack }}; position:relative; cursor:pointer; padding:0;"><span style="position:absolute; top:50%; left:{{ lampKnobX }}; transform:translateY(-50%); width:16px; height:16px; border-radius:50%; background:{{ lampKnob }};"></span></button>
+              </div>
+            </div>
+            <div style="padding:var(--pad); background:var(--md-sc-low); border:1px solid var(--md-outline-variant); border-radius:var(--radius); display:flex; flex-direction:column; gap:12px;">
+              <div style="display:flex; align-items:center;"><div style="flex:1; display:flex; align-items:center; gap:6px; font-size:11px; font-weight:600; letter-spacing:.6px; color:var(--md-on-surface-variant); text-transform:uppercase;"><span data-icon style="font-size:16px;" aria-hidden="true">inventory_2</span> Ink Dispenser</div><span style="font-size:11px; color:var(--md-primary);">Humidity: Dry</span></div>
+              <div style="display:flex; gap:8px;">
+                <sc-for list="{{ filaments }}" as="f" hint-placeholder-count="4">
+                  <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; padding:10px 4px; background:var(--md-sc-highest); border-radius:12px;"><div style="width:30px; height:30px; border-radius:8px; background:{{ f.color }}; border:1px solid rgba(0,0,0,.25);"></div><span style="font-size:10px; color:var(--md-on-surface-variant);">{{ f.type }}</span></div>
+                </sc-for>
+              </div>
+            </div>
+            <div style="padding:var(--pad); background:var(--md-sc-low); border:1px solid var(--md-outline-variant); border-radius:var(--radius); display:flex; gap:16px;">
+              <div style="display:flex; flex-direction:column; gap:6px; align-items:center;">
+                <div style="display:flex; align-items:center; gap:6px; font-size:11px; font-weight:600; letter-spacing:.6px; color:var(--md-on-surface-variant); text-transform:uppercase; align-self:flex-start;"><span data-icon style="font-size:16px;" aria-hidden="true">control_camera</span> Move</div>
+                <div style="display:grid; grid-template-columns:repeat(3,40px); grid-template-rows:repeat(3,40px); gap:4px; margin-top:4px;">
+                  <div></div>
+                  <button style="border:none; background:var(--md-sc-highest); color:var(--md-on-surface); border-radius:8px; cursor:pointer;"><span data-icon style="font-size:20px;" aria-hidden="true">keyboard_arrow_up</span></button>
+                  <div></div>
+                  <button style="border:none; background:var(--md-sc-highest); color:var(--md-on-surface); border-radius:8px; cursor:pointer;"><span data-icon style="font-size:20px;" aria-hidden="true">keyboard_arrow_left</span></button>
+                  <button style="border:none; background:var(--md-secondary-container); color:var(--md-on-secondary-container); border-radius:8px; cursor:pointer;"><span data-icon style="font-size:18px;" aria-hidden="true">home</span></button>
+                  <button style="border:none; background:var(--md-sc-highest); color:var(--md-on-surface); border-radius:8px; cursor:pointer;"><span data-icon style="font-size:20px;" aria-hidden="true">keyboard_arrow_right</span></button>
+                  <div></div>
+                  <button style="border:none; background:var(--md-sc-highest); color:var(--md-on-surface); border-radius:8px; cursor:pointer;"><span data-icon style="font-size:20px;" aria-hidden="true">keyboard_arrow_down</span></button>
+                  <div></div>
+                </div>
+              </div>
+              <div style="flex:1; display:flex; flex-direction:column; gap:6px;">
+                <div style="display:flex; align-items:center; gap:6px; font-size:11px; font-weight:600; letter-spacing:.6px; color:var(--md-on-surface-variant); text-transform:uppercase;">Z axis</div>
+                <button style="height:40px; border:none; background:var(--md-sc-highest); color:var(--md-on-surface); border-radius:10px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; font-size:13px;"><span data-icon style="font-size:18px;" aria-hidden="true">keyboard_arrow_up</span> Z +10</button>
+                <button style="height:40px; border:none; background:var(--md-sc-highest); color:var(--md-on-surface); border-radius:10px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; font-size:13px;"><span data-icon style="font-size:18px;" aria-hidden="true">keyboard_arrow_down</span> Z −10</button>
+                <button style="height:40px; border:none; background:var(--md-sc-highest); color:var(--md-on-surface); border-radius:10px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; font-size:13px;"><span data-icon style="font-size:18px;" aria-hidden="true">vertical_align_bottom</span> Extrude</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+  </template>
+  
+  <template data-screen="multi">
+      <sc-if value="{{ isMulti }}">
+      <div style="position:absolute; inset:0; overflow:auto; background:var(--md-surface); padding:28px 32px;">
+        <div style="max-width:1120px; margin:0 auto;">
+          <div style="display:flex; align-items:center; margin-bottom:20px;"><div style="font-size:20px; font-weight:700;">Device farm</div><div style="flex:1; max-width:340px; margin:0 16px;"><dc-import name="SearchField" placeholder="Search devices" on-query="{{ setMultiQuery }}" hint-size="100%,40px"></dc-import></div><div style="flex:1;"></div><button style="display:flex; align-items:center; gap:8px; height:44px; padding:0 20px; border:none; border-radius:22px; background:var(--md-primary); color:var(--md-on-primary); font-size:13.5px; font-weight:600; cursor:pointer;"><span data-icon style="font-size:20px;" aria-hidden="true">add</span> Add device</button></div>
+          <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:16px;">
+            <sc-for list="{{ devices }}" as="d" hint-placeholder-count="4">
+              <div style="padding:16px; background:var(--md-sc-low); border:1px solid var(--md-outline-variant); border-radius:var(--radius); display:flex; flex-direction:column; gap:12px;">
+                <div style="display:flex; align-items:center; gap:12px;">
+                  <div style="width:44px; height:44px; border-radius:12px; background:var(--md-sc-highest); color:var(--md-on-surface-variant); display:flex; align-items:center; justify-content:center;"><span data-icon style="font-size:26px;" aria-hidden="true">print</span></div>
+                  <div style="flex:1; min-width:0;"><div style="font-size:14px; font-weight:600;">{{ d.name }}</div><div style="font-size:11.5px; color:var(--md-on-surface-variant);">{{ d.model }}</div></div>
+                  <div style="display:flex; align-items:center; gap:5px; font-size:11.5px; color:var(--md-on-surface-variant);"><span style="width:8px; height:8px; border-radius:50%; background:{{ d.dot }};"></span> {{ d.status }}</div>
+                </div>
+                <div style="height:96px; border-radius:12px; background:repeating-linear-gradient(45deg,#15171d 0 10px,#1b1e25 10px 20px); display:flex; align-items:center; justify-content:center; color:#3a3f47;"><span data-icon style="font-size:32px;" aria-hidden="true">videocam</span></div>
+                <div style="height:6px; background:var(--md-sc-highest); border-radius:4px; overflow:hidden;"><div style="width:{{ d.pct }}%; height:100%; background:var(--md-primary);"></div></div>
+              </div>
+            </sc-for>
+          </div>
+          <sc-if value="{{ multiEmpty }}"><div style="padding:36px 12px; text-align:center; color:var(--md-on-surface-variant); font-size:13px;">No devices match “{{ multiQuery }}”.</div></sc-if>
+        </div>
+      </div>
+      </sc-if>
+  </template>
+  
+  <template data-screen="project">
+      <sc-if value="{{ isProject }}">
+      <div style="position:absolute; inset:0; display:flex; background:var(--md-surface);">
+        <div style="width:250px; flex:0 0 auto; border-right:1px solid var(--md-outline-variant); background:var(--md-sc-low); padding:var(--pad); display:flex; flex-direction:column; gap:12px; overflow-y:auto;">
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <div style="height:120px; border-radius:var(--radius); background:repeating-linear-gradient(45deg, var(--md-sc-high) 0 10px, var(--md-sc) 10px 20px); display:flex; align-items:center; justify-content:center; color:var(--md-on-surface-variant);"><span data-icon style="font-size:40px;" aria-hidden="true">deployed_code</span></div>
+            <div style="font-size:14px; font-weight:600;">3DBenchy_project</div>
+            <div style="font-size:11.5px; color:var(--md-on-surface-variant);">by you · 3 objects</div>
+          </div>
+          <div style="height:1px; background:var(--md-outline-variant);"></div>
+          <sc-for list="{{ projectCats }}" as="c" hint-placeholder-count="4">
+            <button onClick="{{ c.onClick }}" style="display:flex; align-items:center; gap:10px; height:42px; padding:0 12px; border:none; border-radius:12px; cursor:pointer; font-size:13px; text-align:left; background:{{ c.bg }}; color:{{ c.fg }};"><span data-icon style="font-size:20px;" aria-hidden="true">{{ c.icon }}</span><span style="flex:1;">{{ c.label }}</span><span style="font-size:11px; opacity:.7;">{{ c.count }}</span></button>
+          </sc-for>
+          <div style="height:1px; background:var(--md-outline-variant);"></div>
+          <div style="padding:14px; background:var(--md-secondary-container); color:var(--md-on-secondary-container); border-radius:var(--radius); display:flex; flex-direction:column; gap:8px;">
+            <div style="display:flex; align-items:center; gap:6px; font-size:11px; font-weight:700; letter-spacing:.4px; text-transform:uppercase;"><span data-icon style="font-size:16px;" aria-hidden="true">account_tree</span> Version control</div>
+            <div style="display:flex; align-items:center; gap:8px; font-size:12px; font-family:'Roboto Mono',monospace;"><span data-icon style="font-size:15px;" aria-hidden="true">commit</span> {{ branch }} · #{{ historyHead }}</div>
+            <div style="font-size:11.5px; opacity:.85;">{{ historyCount }} commits · auto-saved. Bundled into the .3mf on save.</div>
+            <button onClick="{{ toggleHistory }}" style="height:34px; border:none; border-radius:17px; background:var(--md-primary); color:var(--md-on-primary); font-size:12px; font-weight:600; cursor:pointer;">View history</button>
+          </div>
+        </div>
+        <div style="flex:1; min-width:0; display:flex; flex-direction:column; overflow:hidden;">
+          <div style="padding:var(--pad); display:flex; gap:14px; align-items:center; border-bottom:1px solid var(--md-outline-variant);">
+            <div style="font-size:18px; font-weight:700; flex:0 0 auto;">Model pictures</div>
+            <div style="flex:1; max-width:360px;"><dc-import name="SearchField" placeholder="Search files" on-query="{{ setProjectQuery }}" hint-size="100%,40px"></dc-import></div>
+            <div style="flex:1;"></div>
+            <button style="display:flex; align-items:center; gap:8px; height:42px; padding:0 18px; border:none; border-radius:21px; background:var(--md-primary); color:var(--md-on-primary); font-size:13px; font-weight:600; cursor:pointer;"><span data-icon style="font-size:20px;" aria-hidden="true">add</span> Add file</button>
+          </div>
+          <div style="flex:1; overflow-y:auto; padding:var(--pad);">
+            <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:16px;">
+              <sc-for list="{{ projectFiles }}" as="f" hint-placeholder-count="6">
+                <div style="border:1px solid var(--md-outline-variant); background:var(--md-sc-low); border-radius:var(--radius); overflow:hidden; cursor:pointer;" style-hover="border-color:var(--md-primary);">
+                  <div style="height:130px; background:repeating-linear-gradient(45deg, var(--md-sc-high) 0 10px, var(--md-sc) 10px 20px); display:flex; align-items:center; justify-content:center; color:var(--md-on-surface-variant);"><span data-icon style="font-size:38px;" aria-hidden="true">{{ f.icon }}</span></div>
+                  <div style="padding:10px 12px; display:flex; align-items:center; gap:8px;"><span style="flex:1; font-size:12.5px; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ f.name }}</span><span style="font-size:10px; font-weight:600; padding:2px 7px; border-radius:7px; background:var(--md-secondary-container); color:var(--md-on-secondary-container);">{{ f.type }}</span></div>
+                </div>
+              </sc-for>
+            </div>
+            <sc-if value="{{ projectEmpty }}"><div style="padding:36px 12px; text-align:center; color:var(--md-on-surface-variant); font-size:13px;">No files match “{{ projectQuery }}”.</div></sc-if>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+  </template>
+  
+  <template data-screen="calibration">
+      <sc-if value="{{ isCalibration }}">
+      <div style="position:absolute; inset:0; overflow:auto; background:var(--md-surface); padding:28px 32px;">
+        <div style="max-width:1080px; margin:0 auto;">
+          <div style="display:flex; align-items:center; margin-bottom:6px;"><div style="font-size:20px; font-weight:700;">Calibration</div><div style="flex:1; max-width:340px; margin:0 16px;"><dc-import name="SearchField" placeholder="Search calibrations" on-query="{{ setCaliQuery }}" hint-size="100%,40px"></dc-import></div><div style="flex:1;"></div><button style="display:flex; align-items:center; gap:8px; height:42px; padding:0 18px; border:1px solid var(--md-outline); background:transparent; color:var(--md-on-surface); font-size:13px; font-weight:500; cursor:pointer; border-radius:21px;"><span data-icon style="font-size:20px;" aria-hidden="true">history</span> History</button></div>
+          <div style="font-size:13.5px; color:var(--md-on-surface-variant); margin-bottom:20px;">Fine-tune your printer and ink for the best possible print quality.</div>
+          <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:16px;">
+            <sc-for list="{{ caliCards }}" as="c" hint-placeholder-count="6">
+              <button onClick="{{ c.onClick }}" style="text-align:left; display:flex; gap:14px; align-items:flex-start; padding:18px; background:var(--md-sc-low); border:1px solid var(--md-outline-variant); border-radius:var(--radius); cursor:pointer;" style-hover="border-color:var(--md-primary);">
+                <div style="width:46px; height:46px; flex:0 0 auto; border-radius:14px; background:var(--md-secondary-container); color:var(--md-on-secondary-container); display:flex; align-items:center; justify-content:center;"><span data-icon style="font-size:24px;" aria-hidden="true">{{ c.icon }}</span></div>
+                <div style="flex:1; min-width:0;"><div style="font-size:14.5px; font-weight:600;">{{ c.title }}</div><div style="font-size:12px; color:var(--md-on-surface-variant); margin-top:3px; line-height:1.4;">{{ c.desc }}</div></div>
+                <span data-icon style="font-size:22px; color:var(--md-primary);" aria-hidden="true">arrow_forward</span>
+              </button>
+            </sc-for>
+          </div>
+          <sc-if value="{{ caliEmpty }}"><div style="padding:36px 12px; text-align:center; color:var(--md-on-surface-variant); font-size:13px;">No calibrations match “{{ caliQuery }}”.</div></sc-if>
+        </div>
+      </div>
+      </sc-if>
+  </template>
+  
+  <template data-screen="filament">
+      <sc-if value="{{ isFilament }}">
+      <div style="position:absolute; inset:0; overflow:auto; background:var(--md-surface); padding:24px 28px;">
+        <div style="max-width:1080px; margin:0 auto; display:flex; flex-direction:column; gap:18px;">
+          <div style="display:flex; gap:14px; align-items:center;">
+            <div style="font-size:20px; font-weight:700; flex:0 0 auto;">Ink Manager</div>
+            <div style="flex:1; max-width:380px;"><dc-import name="SearchField" placeholder="Search inks" on-query="{{ setFilQuery }}" hint-size="100%,40px"></dc-import></div>
+            <div style="flex:1;"></div>
+            <button onClick="{{ openExport }}" style="display:flex; align-items:center; gap:8px; height:42px; padding:0 18px; border:1px solid var(--md-outline); background:transparent; color:var(--md-on-surface); font-size:13px; font-weight:500; cursor:pointer; border-radius:21px;"><span data-icon style="font-size:20px;" aria-hidden="true">file_download</span> Export all</button>
+            <button style="display:flex; align-items:center; gap:8px; height:42px; padding:0 18px; border:1px solid var(--md-outline); background:transparent; color:var(--md-on-surface); font-size:13px; font-weight:500; cursor:pointer; border-radius:21px;"><span data-icon style="font-size:20px;" aria-hidden="true">download</span> Import</button>
+            <button onClick="{{ openAddFilament }}" style="display:flex; align-items:center; gap:8px; height:42px; padding:0 18px; border:none; border-radius:21px; background:var(--md-primary); color:var(--md-on-primary); font-size:13px; font-weight:600; cursor:pointer;"><span data-icon style="font-size:20px;" aria-hidden="true">add</span> New ink</button>
+          </div>
+          <div style="border:1px solid var(--md-outline-variant); border-radius:var(--radius); overflow:hidden; background:var(--md-sc-low);">
+            <div style="display:grid; grid-template-columns:2.4fr 1.4fr 1fr 1fr 1fr 84px; gap:12px; padding:12px 16px; background:var(--md-sc-high); font-size:11px; font-weight:700; letter-spacing:.4px; text-transform:uppercase; color:var(--md-on-surface-variant);"><span>Ink</span><span>Vendor</span><span>Type</span><span>Nozzle °C</span><span>Bed °C</span><span></span></div>
+            <sc-for list="{{ filRows }}" as="f" hint-placeholder-count="6">
+              <div style="display:grid; grid-template-columns:2.4fr 1.4fr 1fr 1fr 1fr 84px; gap:12px; padding:12px 16px; align-items:center; border-top:1px solid var(--md-outline-variant); font-size:13px;">
+                <span style="display:flex; align-items:center; gap:10px; min-width:0;"><span style="width:22px; height:22px; flex:0 0 auto; border-radius:6px; background:{{ f.color }}; border:1px solid rgba(0,0,0,.25);"></span><span style="font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ f.name }}</span></span>
+                <span style="color:var(--md-on-surface-variant);">{{ f.vendor }}</span>
+                <span><span style="font-size:11px; font-weight:600; padding:2px 8px; border-radius:7px; background:var(--md-secondary-container); color:var(--md-on-secondary-container);">{{ f.type }}</span></span>
+                <span style="font-family:'Roboto Mono',monospace;">{{ f.nozzle }}</span>
+                <span style="font-family:'Roboto Mono',monospace;">{{ f.bed }}</span>
+                <span style="display:flex; gap:2px; justify-content:flex-end;"><button onClick="{{ exportFilament }}" title="Export ink" style="width:32px; height:32px; border:none; background:transparent; color:var(--md-on-surface-variant); border-radius:50%; cursor:pointer;" style-hover="background:var(--md-secondary-container); color:var(--md-primary);"><span data-icon style="font-size:18px;" aria-hidden="true">file_download</span></button><button style="width:32px; height:32px; border:none; background:transparent; color:var(--md-on-surface-variant); border-radius:50%; cursor:pointer;" style-hover="background:var(--md-sc-highest);"><span data-icon style="font-size:18px;" aria-hidden="true">more_vert</span></button></span>
+              </div>
+            </sc-for>
+            <sc-if value="{{ filEmpty }}"><div style="padding:36px 12px; text-align:center; color:var(--md-on-surface-variant); font-size:13px; border-top:1px solid var(--md-outline-variant);">No inks match your filter.<div style="margin-top:6px; font-size:12px; font-family:'Roboto Mono',monospace;">{{ filEmptyNote }}</div></div></sc-if>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+  </template>
+  
+  <template data-screen="settings">
+      <sc-if value="{{ isSettings }}">
+      <div style="position:absolute; inset:0; display:flex; background:var(--md-surface);">
+        <div style="width:230px; flex:0 0 auto; border-right:1px solid var(--md-outline-variant); background:var(--md-sc-low); padding:16px 10px; display:flex; flex-direction:column; gap:2px;">
+          <div style="display:flex; align-items:center; gap:10px; height:44px; padding:0 14px; border-radius:22px; background:var(--md-secondary-container); color:var(--md-on-secondary-container); font-size:13.5px; font-weight:600;"><span data-icon style="font-size:20px;" aria-hidden="true">palette</span> Appearance</div>
+          <div style="display:flex; align-items:center; gap:10px; height:44px; padding:0 14px; border-radius:22px; color:var(--md-on-surface-variant); font-size:13.5px; cursor:pointer;" style-hover="background:var(--md-sc-high);"><span data-icon style="font-size:20px;" aria-hidden="true">settings</span> General</div>
+          <div style="display:flex; align-items:center; gap:10px; height:44px; padding:0 14px; border-radius:22px; color:var(--md-on-surface-variant); font-size:13.5px; cursor:pointer;" style-hover="background:var(--md-sc-high);"><span data-icon style="font-size:20px;" aria-hidden="true">tune</span> Presets</div>
+          <div style="display:flex; align-items:center; gap:10px; height:44px; padding:0 14px; border-radius:22px; color:var(--md-on-surface-variant); font-size:13.5px; cursor:pointer;" style-hover="background:var(--md-sc-high);"><span data-icon style="font-size:20px;" aria-hidden="true">wifi</span> Network</div>
+          <div style="display:flex; align-items:center; gap:10px; height:44px; padding:0 14px; border-radius:22px; color:var(--md-on-surface-variant); font-size:13.5px; cursor:pointer;" style-hover="background:var(--md-sc-high);"><span data-icon style="font-size:20px;" aria-hidden="true">account_tree</span> Version control</div>
+          <div style="display:flex; align-items:center; gap:10px; height:44px; padding:0 14px; border-radius:22px; color:var(--md-on-surface-variant); font-size:13.5px; cursor:pointer;" style-hover="background:var(--md-sc-high);"><span data-icon style="font-size:20px;" aria-hidden="true">info</span> About</div>
+        </div>
+        <div style="flex:1; min-width:0; overflow-y:auto; padding:28px 32px;">
+          <div style="max-width:720px; margin:0 auto; display:flex; flex-direction:column; gap:26px;">
+            <div><dc-import name="SearchField" placeholder="Search settings" on-query="{{ setSettingsQuery }}" hint-size="100%,40px"></dc-import></div>
+            <sc-if value="{{ setShowAppearance }}">
+            <div style="display:flex; flex-direction:column; gap:16px;">
+              <div style="font-size:16px; font-weight:700;">Appearance</div>
+              <sc-if value="{{ setShowTheme }}">
+              <div style="display:flex; align-items:center; gap:16px;"><div style="width:150px; font-size:13.5px;">Theme</div><div style="display:flex; gap:6px; padding:4px; background:var(--md-sc-highest); border-radius:14px;"><button onClick="{{ setLight }}" style="height:36px; padding:0 18px; display:flex; align-items:center; gap:6px; border:none; border-radius:11px; cursor:pointer; font-size:12.5px; font-weight:500; background:{{ lightBg }}; color:{{ lightFg }};"><span data-icon style="font-size:18px;" aria-hidden="true">light_mode</span> Light</button><button onClick="{{ setDark }}" style="height:36px; padding:0 18px; display:flex; align-items:center; gap:6px; border:none; border-radius:11px; cursor:pointer; font-size:12.5px; font-weight:500; background:{{ darkBg }}; color:{{ darkFg }};"><span data-icon style="font-size:18px;" aria-hidden="true">dark_mode</span> Dark</button></div></div>
+              </sc-if>
+              <sc-if value="{{ setShowDensity }}">
+              <div style="display:flex; align-items:center; gap:16px;"><div style="width:150px; font-size:13.5px;">Density</div><div style="display:flex; gap:6px; padding:4px; background:var(--md-sc-highest); border-radius:14px;"><button onClick="{{ setComfortable }}" style="height:36px; padding:0 18px; border:none; border-radius:11px; cursor:pointer; font-size:12.5px; font-weight:500; background:{{ comfBg }}; color:{{ comfFg }};">Comfortable</button><button onClick="{{ setCompact }}" style="height:36px; padding:0 18px; border:none; border-radius:11px; cursor:pointer; font-size:12.5px; font-weight:500; background:{{ compBg }}; color:{{ compFg }};">Compact</button></div></div>
+              </sc-if>
+              <sc-if value="{{ setShowLanguage }}">
+              <div style="display:flex; align-items:flex-start; gap:16px; flex-wrap:wrap;">
+                <div style="width:150px; flex:0 0 auto; padding-top:7px;"><div style="font-size:13.5px;">Language</div><div style="font-size:11px; color:var(--md-on-surface-variant); margin-top:2px;">Choose how interface text is shown</div></div>
+                <div role="group" aria-label="Language mode" style="display:flex; flex:1; min-width:260px; gap:6px; padding:4px; background:var(--md-sc-highest); border-radius:14px; flex-wrap:wrap;">
+                  <sc-for list="{{ languageModes }}" as="l" hint-placeholder-count="3">
+                    <button onClick="{{ l.onClick }}" data-language-option="{{ l.id }}" aria-label="{{ l.label }}" aria-pressed="{{ l.selected }}" style="min-height:36px; padding:0 13px; border:{{ l.border }}; border-radius:11px; cursor:pointer; font-size:12px; font-weight:500; background:{{ l.bg }}; color:{{ l.fg }}; white-space:nowrap; flex:1 1 auto;">{{ l.label }}</button>
+                  </sc-for>
+                </div>
+              </div>
+              </sc-if>
+              <sc-if value="{{ setShowAccent }}">
+              <div style="display:flex; align-items:center; gap:16px;"><div style="width:150px; font-size:13.5px;">Accent color</div><div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;"><sc-for list="{{ accentSwatches }}" as="a" hint-placeholder-count="6"><button onClick="{{ a.onClick }}" title="{{ a.name }}" style="width:32px; height:32px; border-radius:50%; cursor:pointer; background:{{ a.color }}; border:{{ a.border }}; display:flex; align-items:center; justify-content:center; color:#fff;"><span data-icon style="font-size:17px; opacity:{{ a.check }};" aria-hidden="true">check</span></button></sc-for><label style="width:32px; height:32px; border-radius:50%; cursor:pointer; border:2px dashed var(--md-outline); display:flex; align-items:center; justify-content:center; color:var(--md-on-surface-variant); position:relative; overflow:hidden;"><span data-icon style="font-size:17px;" aria-hidden="true">colorize</span><input type="color" onInput="{{ onPickAccent }}" style="position:absolute; inset:-4px; opacity:0; cursor:pointer;"></label></div></div>
+              </sc-if>
+            </div>
+            </sc-if>
+            <sc-if value="{{ setShowDivider }}">
+            <div style="height:1px; background:var(--md-outline-variant);"></div>
+            </sc-if>
+            <sc-if value="{{ setShowGeneral }}">
+            <div style="display:flex; flex-direction:column; gap:6px;">
+              <div style="font-size:16px; font-weight:700; margin-bottom:6px;">General</div>
+              <sc-for list="{{ prefs }}" as="p" hint-placeholder-count="5">
+                <div style="display:flex; align-items:center; gap:16px; padding:10px 0;">
+                  <div style="flex:1;"><div style="font-size:13.5px; font-weight:500;">{{ p.label }}</div><div style="font-size:12px; color:var(--md-on-surface-variant); margin-top:1px;">{{ p.desc }}</div></div>
+                  <button onClick="{{ p.onClick }}" role="switch" aria-checked="{{ p.on }}" aria-label="{{ p.label }}" title="{{ p.label }}" style="width:44px; height:24px; border-radius:14px; border:2px solid {{ p.trackBorder }}; background:{{ p.track }}; position:relative; cursor:pointer; padding:0; flex:0 0 auto;"><span aria-hidden="true" style="position:absolute; top:50%; left:{{ p.knobX }}; transform:translateY(-50%); width:{{ p.knobSize }}; height:{{ p.knobSize }}; border-radius:50%; background:{{ p.knob }};"></span></button>
+                </div>
+              </sc-for>
+            </div>
+            </sc-if>
+            <sc-if value="{{ setEmpty }}">
+            <div role="status" style="padding:36px 12px; text-align:center; color:var(--md-on-surface-variant); font-size:13px;">{{ setEmptyText }}</div>
+            </sc-if>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+  </template>
+
+  <script src="./app/i18n.resources.js"></script>
+  <script src="./app/i18n.js"></script>
+  <script src="./runtime/mini-dc.js"></script>
+  <script src="./app/searchfield.logic.js"></script>
+  <script src="./app/main.logic.js"></script>
+  <script src="./app/screens/registry.js"></script>
+  <script src="./app/screens/home.logic.js"></script>
+  <script src="./app/screens/prepare.logic.js"></script>
+  <script src="./app/screens/preview.logic.js"></script>
+  <script src="./app/screens/device.logic.js"></script>
+  <script src="./app/screens/multi.logic.js"></script>
+  <script src="./app/screens/project.logic.js"></script>
+  <script src="./app/screens/calibration.logic.js"></script>
+  <script src="./app/screens/filament.logic.js"></script>
+  <script src="./app/screens/settings.logic.js"></script>
+  <script src="./app/boot.js"></script>
+  <script src="./app/dialogs.js"></script>
+</body>
+</html>
+

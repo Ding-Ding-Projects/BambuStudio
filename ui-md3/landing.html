@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark" data-density="comfortable">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Where the interactive prototype lives relative to this page. Opened from
+     the checkout it is the sibling index.html; compose-site.mjs rewrites this
+     to "app/" for the published tree. -->
+<meta name="bambu-app-base" content="index.html">
+<title>Bambu Studio — Material Design 3 concept</title>
+<meta name="description" content="An independent Material Design 3 (Material You) concept redesign of the Bambu Studio slicer UI. Tabbed, bilingual, self-contained: light and dark themes, density, a customizable accent seed colour, a full regex builder and every published release.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Bambu Studio, reimagined in Material You.">
+<meta property="og:description" content="Explore an image-rich Material Design 3 concept for Bambu Studio, browse every release, then launch the interactive slicer prototype.">
+<meta property="og:url" content="https://ding-ding-projects.github.io/BambuStudio/">
+<meta property="og:image" content="https://ding-ding-projects.github.io/BambuStudio/assets/showcase/og-social.webp">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Bambu Studio, reimagined in Material You.">
+<meta name="twitter:description" content="A polished, interactive Material Design 3 concept for Bambu Studio.">
+<meta name="twitter:image" content="https://ding-ding-projects.github.io/BambuStudio/assets/showcase/og-social.webp">
+<link href="assets/fonts.css" rel="stylesheet">
+<link href="site/site.css" rel="stylesheet">
+</head>
+<body>
+
+<a class="sr-only" href="#panels" data-copy="shell.skip"></a>
+
+<header>
+  <div class="wrap nav">
+    <div class="brand">
+      <span class="logo" aria-hidden="true"><span data-icon>deployed_code</span></span>
+      <span class="brand-name" data-copy="shell.brand"></span>
+      <span class="tag" data-copy="shell.tagline"></span>
+    </div>
+    <span class="spacer"></span>
+    <select class="language-select" id="languageMode" aria-label="Language mode">
+      <option value="en">English</option>
+      <option value="yue_HK">廣東話（香港）</option>
+      <option value="bilingual_en_yue_HK">English + 廣東話</option>
+    </select>
+    <button class="iconbtn" id="notifyButton" type="button" aria-expanded="false"
+      data-copy-attr="aria-label:shell.notifications;title:shell.notifications">
+      <span data-icon aria-hidden="true">notifications</span>
+      <span class="badge-count" hidden></span>
+    </button>
+    <button class="iconbtn" id="themeToggle" type="button"
+      data-copy-attr="aria-label:shell.theme.toggle;title:shell.theme.toggle">
+      <span data-icon id="themeIcon" aria-hidden="true">light_mode</span>
+    </button>
+    <a class="btn btn-filled" id="launchTop" href="index.html" data-copy-attr="aria-label:shell.launch">
+      <span data-icon aria-hidden="true">rocket_launch</span>
+      <span class="launch-label" data-copy="shell.launch"></span>
+    </a>
+  </div>
+  <nav class="wrap tabstrip" id="tabstrip" aria-label="Site sections"></nav>
+  <div class="notify-centre" id="notifyCentre" hidden>
+    <div class="notify-head">
+      <h2 data-copy="shell.notifications"></h2>
+      <button type="button" class="btn btn-outline notify-clear" data-copy="shell.notifications.clear"></button>
+    </div>
+    <div class="notify-list"></div>
+  </div>
+</header>
+
+<!-- tabindex="-1" so the skip link actually moves focus here, not just the view. -->
+<main class="wrap" id="panels" tabindex="-1"></main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot">
+      <div class="brand">
+        <span class="logo" aria-hidden="true"><span data-icon>deployed_code</span></span>
+        <span data-copy="shell.brand"></span>
+      </div>
+      <span class="spacer"></span>
+      <a href="index.html" id="footerLaunch" data-copy="footer.launch"></a>
+      <a href="https://github.com/Ding-Ding-Projects/BambuStudio/tree/master/ui-md3" target="_blank" rel="noopener" data-copy="footer.source"></a>
+      <a href="https://github.com/Ding-Ding-Projects/BambuStudio/releases" target="_blank" rel="noopener" data-copy="footer.downloads"></a>
+      <a href="https://github.com/bambulab/BambuStudio" target="_blank" rel="noopener" data-copy="footer.upstream"></a>
+    </div>
+    <p class="disclaimer" data-copy="footer.disclaimer"></p>
+  </div>
+</footer>
+
+<noscript>
+  <div class="wrap">
+    <h1>Bambu Studio — Material Design 3 concept</h1>
+    <p>This site renders its tabs, settings and changelog with JavaScript, which is currently
+      disabled. The links below still work without it.</p>
+    <img src="./assets/showcase/hero-studio.webp" width="1536" height="1024"
+      alt="A desktop 3D printer creating a faceted model while luminous sliced toolpaths surround the build plate.">
+    <ul>
+      <li><a href="https://github.com/Ding-Ding-Projects/BambuStudio/releases/latest">Latest release and Windows installer</a></li>
+      <li><a href="https://github.com/Ding-Ding-Projects/BambuStudio/tree/master/ui-md3">Source of this site and the prototype</a></li>
+      <li><a href="https://github.com/Ding-Ding-Projects/BambuStudio/releases">Every published release</a></li>
+    </ul>
+  </div>
+</noscript>
+
+<script src="./app/i18n.resources.js"></script>
+<script src="./app/i18n.js"></script>
+<script src="./site/copy.js"></script>
+<script src="./site/changelog.data.js"></script>
+<script src="./site/dimsum.data.js"></script>
+<script src="./site/core.js"></script>
+<script src="./site/dimsum.js"></script>
+<script src="./site/regex.js"></script>
+<script src="./site/settings.js"></script>
+<script src="./site/views.js"></script>
+<script src="./site/changelog.js"></script>
+<script src="./site/tabs.js"></script>
+<script src="./site/boot.js"></script>
+</body>
+</html>

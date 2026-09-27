@@ -1,0 +1,26 @@
+/* Bambu Studio MD3 — color role tokens.
+   Source of truth: src/slic3r/GUI/Widgets/MD3Tokens.hpp (native) and
+   ui-md3/app/styles.css (web). Brand seed #146c2e (green).
+   Theme is selected with data-theme="light|dark" on any ancestor. */
+:root, [data-theme="light"]{
+  --md-surface:#faf8fd; --md-surface-dim:#dad9e0; --md-surface-bright:#faf8fd;
+  --md-sc-lowest:#ffffff; --md-sc-low:#f4f2f9; --md-sc:#eeedf3; --md-sc-high:#e8e7ee; --md-sc-highest:#e2e1e9;
+  --md-on-surface:#1a1b1f; --md-on-surface-variant:#44464e; --md-outline:#75777f; --md-outline-variant:#c5c6d0;
+  --md-inverse-surface:#2f3036; --md-inverse-on:#f1f0f7; --md-inverse-primary:#8bd89b;
+  --md-error:#ba1a1a; --md-error-container:#ffdad6; --md-on-error:#ffffff; --md-on-error-container:#410002;
+  --md-scrim:rgba(0,0,0,.32); --md-shadow:rgba(0,0,0,.16);
+  --md-primary:#146c2e; --md-on-primary:#ffffff; --md-primary-container:#a6f4b8; --md-on-primary-container:#00210c;
+  --md-accent:#146c2e; --md-secondary-container:#d7e8d9; --md-on-secondary-container:#0e1f13;
+}
+[data-theme="dark"]{
+  --md-surface:#1b1c21; --md-surface-dim:#161619; --md-surface-bright:#3b3c43;
+  --md-sc-lowest:#131317; --md-sc-low:#202127; --md-sc:#25262b; --md-sc-high:#2f3036; --md-sc-highest:#393a41;
+  --md-on-surface:#e8e7ee; --md-on-surface-variant:#cdced8; --md-outline:#94959f; --md-outline-variant:#4a4c54;
+  --md-inverse-surface:#e3e2e9; --md-inverse-on:#2f3036; --md-inverse-primary:#146c2e;
+  --md-error:#ffb4ab; --md-error-container:#93000a; --md-on-error:#690005; --md-on-error-container:#ffdad6;
+  --md-scrim:rgba(0,0,0,.6); --md-shadow:rgba(0,0,0,.5);
+  --md-primary:#8bd89b; --md-on-primary:#00391a; --md-primary-container:#095228; --md-on-primary-container:#a6f4b8;
+  --md-accent:#8bd89b; --md-secondary-container:#2b3a2f; --md-on-secondary-container:#cfe9d3;
+}
+/* Viewport axis colors (Prepare/Preview 3D viewport only — never UI chrome) */
+:root{ --md-axis-x:#ea4335; --md-axis-y:#34a853; --md-axis-z:#4c8bf5; --md-live:#ff4747; }
