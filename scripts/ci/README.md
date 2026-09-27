@@ -32,8 +32,10 @@ runs from this branch push.
 
 ## Published portable comparison
 
-`official-runtime-baseline.yml` is a separate, manually dispatched hosted
-diagnostic. It verifies that the official `v02.08.04.57` tag peels to commit
+`official-runtime-baseline.yml` is a separate hosted diagnostic. It runs on
+changes to its own comparison route on `codex/official-native-reapply`, and it
+also supports manual dispatch once available from the default branch. It verifies
+that the official `v02.08.04.57` tag peels to commit
 `f977235e6d736c4c0b650520ac5a5b72cbfe9244`, checks the published ZIP's
 size and SHA-256 against the vendor release metadata, and hashes the extracted
 native executable. The driver attempts to open the repository's public
