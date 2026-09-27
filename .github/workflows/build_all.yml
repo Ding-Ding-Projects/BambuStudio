@@ -881,3 +881,25 @@ jobs:
               }
               throw "Windows release failed: $originalError"
           }
+
+      - name: Verify the published Squirrel installer in an isolated hosted account
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN || secrets.ORG_TOKEN || secrets.GITHUB_TOKEN }}
+        run: |
+          & scripts/ci/Verify-HostedSquirrelInstall.ps1 `
+            -Tag $env:release_tag `
+            -Repository $env:GITHUB_REPOSITORY `
+            -ExpectedCommit $env:GITHUB_SHA `
+            -OutputPath (Join-Path $env:GITHUB_WORKSPACE 'hosted-install-receipt.json') `
+            -CiExecutionApproved
+
+      - name: Upload isolated installation receipt
+        if: ${{ always() }}
+        continue-on-error: true
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: BambuStudio_Windows_${{ github.run_id }}_hosted_install_receipt
+          path: hosted-install-receipt.json
+          if-no-files-found: warn
+          retention-days: 30
