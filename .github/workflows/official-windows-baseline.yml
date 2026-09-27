@@ -42,7 +42,7 @@ jobs:
         uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
         with:
           path: deps/build/BambuStudio_dep
-          key: official-windows-2025-vs2022-release-deps-${{ hashFiles('deps/**') }}
+          key: official-windows-2025-vs2026-release-deps-${{ hashFiles('deps/**') }}
 
       - name: Build official native baseline
         run: ./scripts/ci/Invoke-OfficialBaseline.ps1
