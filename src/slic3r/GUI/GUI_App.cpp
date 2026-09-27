@@ -1,5 +1,9 @@
 #include "libslic3r/Technologies.hpp"
 #include "GUI_App.hpp"
+#include "AppDisplayName.hpp"
+#include <ctime>
+#include <iomanip>
+#include <sstream>
 #include "BindDialog.hpp"
 #include "GUI_Init.hpp"
 #include "GUI_ObjectList.hpp"
@@ -23,6 +27,10 @@
 #include "libslic3r/I18N.hpp"
 #undef SLIC3R_ALLOW_LIBSLIC3R_I18N_IN_SLIC3R
 #include "slic3r/GUI/I18N.hpp"
+
+#ifdef _WIN32
+#include "WindowsNativeVisualSmoke.hpp"
+#endif
 
 #include <algorithm>
 #include <iterator>
@@ -81,8 +89,19 @@
 #include "GUI_Utils.hpp"
 #include "3DScene.hpp"
 #include "MainFrame.hpp"
+#include "LayoutProbe.hpp"
 #include "slic3r/GUI/Widgets/WebView.hpp"
+#include "Widgets/StateColor.hpp"
+#include "Widgets/MD3Tokens.hpp"
+#include "Appearance/AppearanceEditorPopover.hpp"
+#include "Widgets/TabStrip.hpp"
+#include "Widgets/BoundedRegex.hpp"
 #include "Plater.hpp"
+#include "PreferencesHistory.hpp"
+#include "PrinterWatch.hpp"
+#include "DimSumSurprise.hpp"
+#include "TtsNarrator.hpp"
+#include "HomeAssistant.hpp"
 #include "GLCanvas3D.hpp"
 #include "EncodedFilament.hpp"
 
@@ -100,6 +119,7 @@
 #include "../Utils/HelioDragon.hpp"
 #include "slic3r/Config/Snapshot.hpp"
 #include "Preferences.hpp"
+#include "CommandPaletteIndex.hpp"
 #include "Tab.hpp"
 #include "SysInfoDialog.hpp"
 #include "UpdateDialogs.hpp"
@@ -114,6 +134,7 @@
 #include "SendSystemInfoDialog.hpp"
 #include "ParamsDialog.hpp"
 #include "KBShortcutsDialog.hpp"
+#include "SingleChoiceDialog.hpp"
 #include "DownloadProgressDialog.hpp"
 #include "HttpServer.hpp"
 
@@ -265,6 +286,32 @@ static std::string convert_studio_language_to_api(std::string lang_code)
 }
 
 #ifdef _WIN32
+static std::string read_installer_language_mode()
+{
+    const wchar_t *keys[] = {
+        L"Software\\codingmachineedge\\BambuStudioMD3Preferences",
+        L"Software\\codingmachineedge\\BambuStudioMD3",
+    };
+    for (const wchar_t *key : keys) {
+        wchar_t value[64] = {};
+        DWORD value_size = sizeof(value);
+        const LSTATUS status = ::RegGetValueW(
+            HKEY_CURRENT_USER, key, L"LanguageMode", RRF_RT_REG_SZ,
+            nullptr, value, &value_size);
+        if (status != ERROR_SUCCESS || value[0] == L'\0')
+            continue;
+
+        const std::string normalized = I18N::normalize_language_mode_id(into_u8(wxString(value)));
+        if (normalized == I18N::LANGUAGE_MODE_ENGLISH ||
+            normalized == I18N::LANGUAGE_MODE_CANTONESE_HONG_KONG ||
+            normalized == I18N::LANGUAGE_MODE_ENGLISH_CANTONESE_HK)
+            return normalized;
+    }
+    return {};
+}
+#endif
+
+#ifdef _WIN32
 bool is_associate_files(std::wstring extend)
 {
     wchar_t app_path[MAX_PATH];
@@ -334,7 +381,7 @@ public:
             wxMemoryDC memDC;
             memDC.SelectObject(bitmap);
             memDC.SetFont(m_action_font);
-            memDC.SetTextForeground(StateColor::darkModeColorFor(wxColour(144, 144, 144)));
+            memDC.SetTextForeground(StateColor::darkModeColorFor(ThemeColor::TextDisabled));
             int width = bitmap.GetWidth();
             int text_height = memDC.GetTextExtent(text).GetHeight();
             int text_width = memDC.GetTextExtent(text).GetWidth();
@@ -371,13 +418,13 @@ public:
         int version_width = memDc.GetTextExtent(m_constant_text.version).GetWidth();
         int split_width = (width + title_width - version_width) / 2;
         wxRect title_rect(wxPoint(0, top_margin), wxPoint(split_width - text_padding, top_margin + title_height));
-        memDc.SetTextForeground(StateColor::darkModeColorFor(wxColour(38, 46, 48)));
+        memDc.SetTextForeground(StateColor::darkModeColorFor(ThemeColor::TextSecondary));
         memDc.SetFont(m_constant_text.title_font);
         memDc.DrawLabel(m_constant_text.title, title_rect, wxALIGN_RIGHT | wxALIGN_BOTTOM);
         //BBS align bottom of title and version text
         wxRect version_rect(wxPoint(split_width + text_padding, top_margin), wxPoint(width, top_margin + title_height - text_padding));
         memDc.SetFont(m_constant_text.version_font);
-        memDc.SetTextForeground(StateColor::darkModeColorFor(wxColor(134, 134, 134)));
+        memDc.SetTextForeground(StateColor::darkModeColorFor(ThemeColor::TextMuted));
         memDc.DrawLabel(m_constant_text.version, version_rect, wxALIGN_LEFT | wxALIGN_BOTTOM);
 
 #if BBL_INTERNAL_TESTING
@@ -414,7 +461,7 @@ public:
 
         wxMemoryDC memDC;
         memDC.SelectObject(new_bmp);
-        memDC.SetBrush(StateColor::darkModeColorFor(*wxWHITE));
+        memDC.SetBrush(StateColor::darkModeColorFor(ThemeColor::White));
         memDC.DrawRectangle(-1, -1, width + 2, height + 2);
         memDC.DrawBitmap(new_bmp, 0, 0, true);
         return new_bmp;
@@ -485,7 +532,7 @@ private:
         void init(wxFont init_font)
         {
             // title
-            title = wxGetApp().is_editor() ? SLIC3R_APP_FULL_NAME : GCODEVIEWER_APP_NAME;
+            title = wxGetApp().is_editor() ? wxGetApp().app_display_name() : wxString(GCODEVIEWER_APP_NAME);
 
             // dynamically get the version to display
             version = _L("V") + " " + GUI_App::format_display_version();
@@ -546,7 +593,7 @@ public:
             memDC.SelectObject(bitmap);
 
             memDC.SetFont(m_action_font);
-            memDC.SetTextForeground(wxColour(237, 107, 33));
+            memDC.SetTextForeground(ThemeColor::Warning);
             memDC.DrawText(text, int(m_scale * 60), m_action_line_y_position);
 
             memDC.SelectObject(wxNullBitmap);
@@ -611,7 +658,7 @@ public:
         memDc.DrawBitmap(logo_bmp, margin, margin, true);
 
         // draw the (white) labels inside of our black box (at the left of the splashscreen)
-        memDc.SetTextForeground(wxColour(255, 255, 255));
+        memDc.SetTextForeground(ThemeColor::White);
 
         memDc.SetFont(m_constant_text.title_font);
         memDc.DrawLabel(m_constant_text.title,   banner_rect, wxALIGN_TOP | wxALIGN_LEFT);
@@ -653,7 +700,7 @@ private:
         void init(wxFont init_font)
         {
             // title
-            title = wxGetApp().is_editor() ? SLIC3R_APP_FULL_NAME : GCODEVIEWER_APP_NAME;
+            title = wxGetApp().is_editor() ? wxGetApp().app_display_name() : wxString(GCODEVIEWER_APP_NAME);
 
             // dynamically get the version to display
             auto version_text = GUI_App::format_display_version();
@@ -894,7 +941,7 @@ wxString file_wildcards(FileType file_type, const std::string &custom_extension)
     return GUI::format_wxstr("%s (%s)|%s", data.title, title, mask);
 }
 
-static std::string libslic3r_translate_callback(const char *s) { return wxGetTranslation(wxString(s, wxConvUTF8)).utf8_str().data(); }
+static std::string libslic3r_translate_callback(const char *s) { return I18N::vocabulary(wxGetTranslation(wxString(s, wxConvUTF8))).utf8_str().data(); }
 
 #ifdef WIN32
 #if !wxVERSION_EQUAL_OR_GREATER_THAN(3,1,3)
@@ -1011,6 +1058,11 @@ static void register_win32_device_notification_event()
 		if (copy_data_structure->dwData == 1) {
 			LPCWSTR arguments = (LPCWSTR)copy_data_structure->lpData;
 			Slic3r::GUI::wxGetApp().other_instance_message_handler()->handle_message(boost::nowide::narrow(arguments));
+		} else if (copy_data_structure->dwData == 2) {
+			// Layout-probe command from the headless driver: L"layout-probe [<path>]".
+			// Only honoured when BAMBU_LAYOUT_PROBE armed the probe at launch.
+			LPCWSTR arguments = (LPCWSTR)copy_data_structure->lpData;
+			Slic3r::GUI::LayoutProbe::handle_command(arguments ? std::wstring(arguments) : std::wstring());
 		}
 		return true;
 		});
@@ -1054,6 +1106,10 @@ static void generic_exception_handle()
         flush_logs();
         wxString errmsg = wxString::Format(_L("BambuStudio will terminate because of running out of memory."
                                               "It may be a bug. It will be appreciated if you report the issue to our team."));
+        // Intentionally NOT the MD3 MessageDialog: the process is out of memory,
+        // so constructing a styled dialog (widget tree, fonts, icon rasters)
+        // would likely throw bad_alloc again and lose the message entirely. The
+        // native message box is the most allocation-frugal reporter available.
         wxMessageBox(errmsg + "\n\n" + wxString(ex.what()), _L("Fatal error"), wxOK | wxICON_ERROR);
 
         std::terminate();
@@ -1063,6 +1119,11 @@ static void generic_exception_handle()
         flush_logs();
         wxString errmsg = _L("BambuStudio will terminate because of a localization error. "
                              "It will be appreciated if you report the specific scenario this issue happened.");
+        // Intentionally NOT the MD3 MessageDialog: this crash handler runs mid
+        // stack-unwind in an unknown app state (possibly before/after the window
+        // hierarchy exists) and terminates immediately after; the MD3 shell also
+        // formats localized strings — the very machinery that just failed. The
+        // native message box is the robust last-words channel.
         wxMessageBox(errmsg + "\n\n" + wxString(ex.what()), _L("Critical error"), wxOK | wxICON_ERROR);
         std::terminate();
         //throw;
@@ -1093,6 +1154,33 @@ std::vector<std::string> GUI_App::split_str(std::string src, std::string separat
         }
     }
     return result;
+}
+
+void GUI_App::show_funny_level_disclosure_once()
+{
+    if (app_config == nullptr || plater_ == nullptr)
+        return;
+    if (app_config->get_bool(I18N::FUNNY_LEVEL_DISCLOSED_KEY))
+        return;
+
+    const I18N::LanguageModeService &mode_service = I18N::language_mode_service();
+    const bool above_serious = mode_service.funny_level(I18N::FunnyLanguage::English) > I18N::FUNNY_LEVEL_MIN ||
+                               mode_service.funny_level(I18N::FunnyLanguage::Cantonese) > I18N::FUNNY_LEVEL_MIN;
+    if (!above_serious)
+        return;
+
+    NotificationManager *manager = plater_->get_notification_manager();
+    if (manager == nullptr)
+        return;
+
+    const I18N::LocalizedText copy = I18N::translate_mode(
+        L("The funny level styles every message in this language, including errors and warnings. Facts never change. Adjust it in Preferences > General."));
+    const wxString text = I18N::render_localized_text_stacked(copy.finalize_without_arguments()).label;
+    manager->push_notification(NotificationType::FunnyLevelDisclosure, NotificationManager::NotificationLevel::RegularNotificationLevel,
+                               into_u8(text));
+
+    app_config->set_bool(I18N::FUNNY_LEVEL_DISCLOSED_KEY, true);
+    app_config->save();
 }
 
 namespace {
@@ -1174,6 +1262,20 @@ void GUI_App::post_init()
     assert(initialized());
     if (! this->initialized())
         throw Slic3r::RuntimeError("Calling post_init() while not yet initialized");
+
+    // Automatic preferences history: every settings save records a debounced
+    // Git snapshot of BambuStudio.conf (local only, beside the data dir).
+    PreferencesHistory::install();
+
+    // AI printer watch (opt-in, local Ollama): periodic live-view summaries.
+    PrinterWatch::install();
+
+    // TTS narrator (opt-in, off by default): printer state changes + errors,
+    // with optional Home Assistant speakers and alert lights.
+    TtsNarrator::install();
+
+    // Funny level disclosure (non-blocking snackbar, recorded so it fires once).
+    show_funny_level_disclosure_once();
 
     if (app_config->get("sync_user_preset") == "true") {
         if (m_agent) { start_sync_user_preset(); }
@@ -1406,8 +1508,12 @@ void GUI_App::post_init()
         CallAfter([this] {
             bool cw_showed = this->config_wizard_startup();
 
+            // Dim sum surprise: one launch in ten, never on a first run, never
+            // over a wizard, a startup error, a modal dialog or a CLI-opened file.
+            DimSumSurprise::maybe_show_after_startup(cw_showed);
+
             std::string http_url = get_http_url(app_config->get_country_code());
-            std::string language = GUI::into_u8(current_language_code());
+            std::string language = GUI::into_u8(current_language_code_safe());
             std::string network_ver = Slic3r::NetworkAgent::get_version();
             bool        sys_preset  = app_config->get("sync_system_preset") == "true";
             this->preset_updater->sync(http_url, language, network_ver, sys_preset ? preset_bundle : nullptr);
@@ -1502,6 +1608,7 @@ wxDEFINE_EVENT(EVT_ENTER_FORCE_UPGRADE, wxCommandEvent);
 wxDEFINE_EVENT(EVT_SHOW_NO_NEW_VERSION, wxCommandEvent);
 wxDEFINE_EVENT(EVT_SHOW_DIALOG, wxCommandEvent);
 wxDEFINE_EVENT(EVT_CONNECT_LAN_MODE_PRINT, wxCommandEvent);
+wxDEFINE_EVENT(EVT_APP_DISPLAY_NAME_CHANGED, wxCommandEvent);
 IMPLEMENT_APP(GUI_App)
 
 //BBS: remove GCodeViewer as seperate APP logic
@@ -1520,6 +1627,9 @@ GUI_App::GUI_App()
 
 	//app config initializes early becasuse it is used in instance checking in BambuStudio.cpp
     this->init_app_config();
+    if (app_config) {
+        ::Label::initSysFont(I18N::resolve_language_mode(app_config->get("language")).font_language, false);
+    }
     this->init_download_path();
 
 #if defined(__WXOSX__)
@@ -1558,6 +1668,7 @@ void GUI_App::shutdown()
     }
 
     if (m_is_recreating_gui) return;
+    HomeAssistant::shutdown();
     set_closing(true);
     BOOST_LOG_TRIVIAL(info) << "GUI_App::shutdown exit";
 }
@@ -2906,6 +3017,17 @@ void GUI_App::UnRegisterMacPowerCallBack()
 
 bool GUI_App::OnInit()
 {
+#ifdef _WIN32
+    // Before any window or GL context: a Mesa pair beside the exe needs the
+    // llvmpipe environment or the process exits within seconds (see
+    // OpenGLManager::apply_bundled_softgl_environment).
+    if (OpenGLManager::apply_bundled_softgl_environment())
+        ::ExitProcess(0);
+    const WindowsNativeVisualSmokeResult native_visual_smoke = try_start_windows_native_visual_smoke();
+    if (native_visual_smoke != WindowsNativeVisualSmokeResult::NotRequested)
+        return native_visual_smoke == WindowsNativeVisualSmokeResult::Started;
+#endif
+
 #ifdef __APPLE__
     RegisterMacPowerCallBack();
 #endif
@@ -2921,6 +3043,9 @@ bool GUI_App::OnInit()
 
 int GUI_App::OnExit()
 {
+    // Stop Home Assistant workers while wx and AppConfig are still alive.
+    // This is idempotent with the normal MainFrame -> GUI_App shutdown path.
+    HomeAssistant::shutdown();
 #ifdef __APPLE__
     UnRegisterMacPowerCallBack();
 #endif
@@ -3169,10 +3294,14 @@ bool GUI_App::on_init_inner()
     g_object_set (gtk_settings_get_default (), "gtk-menu-images", TRUE, NULL);
 #endif
 
-//#ifdef WIN32
-    //BBS set crash log folder
-    //CBaseException::set_log_folder(data_dir());
-// #endif
+#ifdef WIN32
+    // Crash log folder. The unhandled-exception filter installed in
+    // bambustu_main() writes its stack walk into <data_dir>/log/crash_*.log, but
+    // ONLY once it knows where to put it -- with no folder set it silently keeps
+    // the report to itself, which is how a reported crash can leave behind no
+    // dump, no stack and no marker in the studio log at all.
+    CBaseException::set_log_folder(data_dir());
+#endif
 
     wxGetApp().Bind(wxEVT_QUERY_END_SESSION, [this](auto &e) {
         BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << "received wxEVT_QUERY_END_SESSION, dialogs=" << dialogStack.size();
@@ -3210,6 +3339,11 @@ bool GUI_App::on_init_inner()
     wxCHECK_MSG(wxDirExists(resources_dir), false,
         wxString::Format("Resources path does not exist or is not a directory: %s", resources_dir));
 
+    // Process creation and containment never belong on a filtering/input
+    // handler. Start the persistent bounded-regex worker in the background as
+    // soon as the installation resources have been verified.
+    BoundedRegex::prewarm();
+
 #ifdef __linux__
     if (! check_old_linux_datadir(GetAppName())) {
         std::cerr << "Quitting, user chose to move their data to new location." << std::endl;
@@ -3226,6 +3360,39 @@ bool GUI_App::on_init_inner()
     BOOST_LOG_TRIVIAL(info) << get_system_info();
 
     init_live_view_track_context(app_config);
+
+    // Apply the persisted Appearance choices (Preferences > Appearance) to the
+    // MD3 runtime token state before any window or dialog is constructed, so a
+    // saved density/accent takes effect on a fresh launch without opening
+    // Preferences. Mirrors apply_persisted_md3_appearance() in Preferences.cpp:
+    // "ui_density" selects the compact/comfortable metrics preset consulted via
+    // MD3::Metrics::active(); "ui_accent_seed" recolours the six accent roles
+    // (an empty/absent key or the Brand seed leaves the pristine Brand tones,
+    // which is already the fresh-process state, so only a real override needs
+    // applying here).
+    if (app_config) {
+        MD3::Metrics::setDensity(app_config->get("ui_density") == "compact"
+                                     ? MD3::Metrics::Density::Compact
+                                     : MD3::Metrics::Density::Comfortable);
+        const std::string accent_seed = app_config->get("ui_accent_seed");
+        if (!accent_seed.empty()) {
+            // Ignore a hand-corrupted value: an invalid wxColour's RGB reads as
+            // black and would seed a near-black accent. The fresh-process state
+            // is already the pristine Brand tones, so skipping is the clear.
+            const wxColour seed_colour(wxString::FromUTF8(accent_seed));
+            if (seed_colour.IsOk())
+                MD3::setAccentSeed(seed_colour);
+        }
+    }
+    // Per-element appearance overrides (Appearance/ElementStyle.hpp): load the
+    // registry from data_dir()/appearance/element-styles.json and install the
+    // context-menu / shortcut hooks before the first adopted widget is built.
+    AppearanceEditor::init(data_dir() + "/appearance");
+    // Tab strips (project tabs, settings tabs) open the same editor from their
+    // "Edit tab appearance..." menu entries and Shift+right-click.
+    TabStrip::SetAppearanceEditorHook([](wxWindow *anchor, const std::string &element_id) {
+        AppearanceEditor::open_for(anchor, element_id);
+    });
 
 // initialize label colors and fonts
     if (app_config) {
@@ -3556,9 +3723,14 @@ bool GUI_App::on_init_inner()
             // If there are substitutions in system profiles, then a "reconfigure" event shall be triggered, which will force
             // installation of a compatible system preset, thus nullifying the system preset substitutions.
             std::string errors_cummulative;
+            // The splash names each startup phase so a slow machine shows where it
+            // is instead of sitting on "Loading configuration" for the whole launch.
+            if (scrn) { scrn->SetText(_L("Loading presets") + dots); wxYield(); }
             std::tie(init_params->preset_substitutions, errors_cummulative) = preset_bundle->load_presets(*app_config, ForwardCompatibilitySubstitutionRule::EnableSystemSilent);
-            if (!errors_cummulative.empty())
+            if (!errors_cummulative.empty()) {
+                DimSumSurprise::mark_startup_error();
                 show_error(nullptr, errors_cummulative);
+            }
             // AppConfig-restored filament colors may predate the JSON primary-color alignment
             // (see the analogous fix at 3mf project load); re-align once at startup and persist
             // the corrected order back so stale data doesn't linger in AppConfig.
@@ -3615,6 +3787,7 @@ bool GUI_App::on_init_inner()
         }
     }
 
+    if (scrn) { scrn->SetText(_L("Building the window") + dots); wxYield(); }
     BOOST_LOG_TRIVIAL(info) << "create the main window";
     mainframe = new MainFrame();
     // hide settings tabs after first Layout
@@ -3639,6 +3812,7 @@ bool GUI_App::on_init_inner()
             // ensure the selected technology is ptFFF
             plater_->set_printer_technology(ptFFF);
     }
+    if (scrn) { scrn->SetText(_L("Applying presets") + dots); wxYield(); }
     else
         load_current_presets();
 
@@ -3653,6 +3827,7 @@ bool GUI_App::on_init_inner()
     mainframe->topbar()->SaveNormalRect();
 #endif
     mainframe->Show(true);
+    LayoutProbe::install(mainframe);
     BOOST_LOG_TRIVIAL(info) << "main frame firstly shown";
     perf_mark("Main window shown");
 
@@ -3981,35 +4156,35 @@ bool GUI_App::dark_mode()
 
 const wxColour GUI_App::get_label_default_clr_system()
 {
-    return dark_mode() ? wxColour(115, 220, 103) : wxColour(26, 132, 57);
+    return dark_mode() ? StateColor::darkModeColorFor(ThemeColor::BrandGreen) : ThemeColor::BrandGreen;
 }
 
 const wxColour GUI_App::get_label_default_clr_modified()
 {
-    return dark_mode() ? wxColour(253, 111, 40) : wxColour(252, 77, 1);
+    return dark_mode() ? StateColor::darkModeColorFor(ThemeColor::Warning) : ThemeColor::Warning;
 }
 
 void GUI_App::init_label_colours()
 {
     bool is_dark_mode = dark_mode();
-    m_color_label_modified = is_dark_mode ? wxColour("#F1754E") : wxColour("#F1754E");
-    m_color_label_sys      = is_dark_mode ? wxColour("#B2B3B5") : wxColour("#363636");
+    StateColor::SetDarkMode(is_dark_mode);
+    m_color_label_modified = is_dark_mode ? StateColor::darkModeColorFor(ThemeColor::Warning) : ThemeColor::Warning;
+    m_color_label_sys      = is_dark_mode ? StateColor::darkModeColorFor(ThemeColor::TextSecondary) : ThemeColor::TextSecondary;
 
 #ifdef _WIN32
-    m_color_label_default           = is_dark_mode ? wxColour(250, 250, 250) : m_color_label_sys; // wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOWTEXT);
-    m_color_highlight_label_default = is_dark_mode ? wxColour(230, 230, 230): wxSystemSettings::GetColour(/*wxSYS_COLOUR_HIGHLIGHTTEXT*/wxSYS_COLOUR_WINDOWTEXT);
-    m_color_highlight_default       = is_dark_mode ? wxColour(78, 78, 78)   : wxSystemSettings::GetColour(wxSYS_COLOUR_3DLIGHT);
-    m_color_hovered_btn_label       = is_dark_mode ? wxColour(255, 255, 254) : wxColour(0,0,0);
-    m_color_default_btn_label       = is_dark_mode ? wxColour(255, 255, 254): wxColour(0,0,0);
-    m_color_selected_btn_bg         = is_dark_mode ? wxColour(84, 84, 91)   : wxColour(206, 206, 206);
+    m_color_label_default           = is_dark_mode ? StateColor::darkModeColorFor(ThemeColor::TextPrimary) : m_color_label_sys; // wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOWTEXT);
+    m_color_highlight_label_default = is_dark_mode ? StateColor::darkModeColorFor(ThemeColor::TextPrimary) : wxSystemSettings::GetColour(/*wxSYS_COLOUR_HIGHLIGHTTEXT*/wxSYS_COLOUR_WINDOWTEXT);
+    m_color_highlight_default       = is_dark_mode ? StateColor::darkModeColorFor(ThemeColor::Grey400) : wxSystemSettings::GetColour(wxSYS_COLOUR_3DLIGHT);
+    m_color_hovered_btn_label       = is_dark_mode ? StateColor::darkModeColorFor(ThemeColor::TextPrimary) : ThemeColor::TextPrimary;
+    m_color_default_btn_label       = is_dark_mode ? StateColor::darkModeColorFor(ThemeColor::TextPrimary) : ThemeColor::TextPrimary;
+    m_color_selected_btn_bg         = is_dark_mode ? StateColor::darkModeColorFor(ThemeColor::Grey400) : ThemeColor::Grey400;
 #elif __linux__
 // ubuntu dark mode issue. https://github.com/bambulab/BambuStudio/issues/4943
-    m_color_label_default           = is_dark_mode ? wxColour(250, 250, 250) : m_color_label_sys;
+    m_color_label_default           = is_dark_mode ? StateColor::darkModeColorFor(ThemeColor::TextPrimary) : m_color_label_sys;
 #else
     m_color_label_default = wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOWTEXT);
 #endif
-    m_color_window_default          = is_dark_mode ? wxColour(43, 43, 43)   : wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOW);
-    StateColor::SetDarkMode(is_dark_mode);
+    m_color_window_default          = is_dark_mode ? StateColor::darkModeColorFor(ThemeColor::White) : wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOW);
 }
 
 void GUI_App::update_label_colours_from_appconfig()
@@ -4226,6 +4401,28 @@ void GUI_App::UpdateAllStaticTextDarkUI(wxWindow* parent)
 #endif
 }
 
+// The kit's fixed-pitch face for code / technical content (ui-md3 type scale):
+// Roboto Mono, taken from ::Label::Mono_12 (md3MonoFont on the MD3 mono type
+// style) instead of the generic OS teletype family — Courier New on Windows.
+// Sourcing it from Label is also what makes code_font() follow Appearance >
+// UI font size, since Label::rebuild_fonts() re-bakes the Mono_ helpers under
+// the current ui_font_scale; the OS face never tracked that. It also puts the
+// native dialogs on the same mono face the ImGui 3D overlay already uses.
+// Label::initSysFont() builds the Mono_ helpers from the GUI_App constructor,
+// well before init_fonts() runs, but the old TELETYPE work-around is kept as a
+// fallback for the case where a bundled font resource fails to resolve
+// (wxSYS_OEM_FIXED_FONT / wxSYS_ANSI_FIXED_FONT are no use here — wxGtk maps
+// both onto DEFAULT).
+static wxFont md3_code_font(int fallback_point_size)
+{
+    if (::Label::Mono_12.IsOk())
+        return ::Label::Mono_12;
+
+    wxFont fallback(wxFontInfo().Family(wxFONTFAMILY_TELETYPE));
+    fallback.SetPointSize(fallback_point_size);
+    return fallback;
+}
+
 void GUI_App::init_fonts()
 {
     // BBS: modify font
@@ -4238,10 +4435,7 @@ void GUI_App::init_fonts()
     m_bold_font.SetPointSize(13);
 #endif /*__WXMAC__*/
 
-    // wxSYS_OEM_FIXED_FONT and wxSYS_ANSI_FIXED_FONT use the same as
-    // DEFAULT in wxGtk. Use the TELETYPE family as a work-around
-    m_code_font = wxFont(wxFontInfo().Family(wxFONTFAMILY_TELETYPE));
-    m_code_font.SetPointSize(m_normal_font.GetPointSize());
+    m_code_font = md3_code_font(m_normal_font.GetPointSize());
 }
 
 void GUI_App::update_fonts(const MainFrame *main_frame)
@@ -4258,7 +4452,11 @@ void GUI_App::update_fonts(const MainFrame *main_frame)
     m_bold_font     = m_normal_font.Bold();
     m_link_font     = m_bold_font.Underlined();
     m_em_unit       = main_frame->em_unit();
-    m_code_font.SetPointSize(m_normal_font.GetPointSize());
+    // Re-take the mono face rather than only re-pointing the old one: a font
+    // rescale runs after Label::rebuild_fonts(), so Mono_12 may have been rebuilt
+    // at a new Appearance font scale. The point size only matters on the
+    // fallback path (see md3_code_font).
+    m_code_font     = md3_code_font(m_normal_font.GetPointSize());
 }
 
 void GUI_App::set_label_clr_modified(const wxColour& clr)
@@ -4454,6 +4652,7 @@ void GUI_App::recreate_GUI(const wxString &msg_name)
     m_printhost_job_queue.reset(new PrintHostJobQueue(mainframe->printhost_queue_dlg()));
     load_current_presets();
     mainframe->Show(true);
+    LayoutProbe::install(mainframe);
     //mainframe->refresh_plugin_tips();
 
     dlg.Update(90, _L("Loading a mode view") + dots);
@@ -5224,7 +5423,7 @@ std::string GUI_App::handle_web_request(std::string cmd)
                 if (mainframe) {
                     if (mainframe->m_confirm_download_plugin_dlg == nullptr) {
                     mainframe->m_confirm_download_plugin_dlg = new SecondaryCheckDialog(mainframe, wxID_ANY, _L("Install network plug-in"), SecondaryCheckDialog::ButtonStyle::ONLY_CONFIRM);
-                    mainframe->m_confirm_download_plugin_dlg->SetSize(wxSize(270, 158));
+                    mainframe->m_confirm_download_plugin_dlg->SetSize(mainframe->FromDIP(wxSize(270, 158)));
                     mainframe->m_confirm_download_plugin_dlg->update_text(_L("Please Install network plug-in before log in."));
                     mainframe->m_confirm_download_plugin_dlg->update_btn_label(_L("Install Network Plug-in"), "");
 
@@ -5781,77 +5980,88 @@ bool GUI_App::check_send_print_version_policy()
 
 void GUI_App::check_new_version(bool show_tips, int by_user)
 {
-    std::string platform = "windows";
-
-#ifdef __WINDOWS__
-    platform = "windows";
-#endif
-#ifdef __APPLE__
-    platform = "macos";
-#endif
-#ifdef __LINUX__
-    platform = "linux";
-#endif
-    std::string query_params = (boost::format("?name=slicer&version=%1%&guide_version=%2%")
-        % VersionInfo::convert_full_version(SLIC3R_VERSION)
-        % VersionInfo::convert_full_version("0.0.0.1")
-        ).str();
-
-    std::string url = get_http_url(app_config->get_country_code()) + query_params;
+    // This fork updates from its own GitHub releases (Ding-Ding-Projects/
+    // BambuStudio, tags md3-v<N>), never from Bambu Lab's cloud feed: that feed
+    // announced upstream 2.8.2.x builds that would replace this app with the
+    // stock one. A release is "newer" when it was published after this binary
+    // was compiled (SLIC3R_BUILD_TIME, %Y%m%d-%H%M%S on the build host); a
+    // three-hour margin absorbs the build host's clock offset from UTC and
+    // the minutes between compiling and publishing. The dialog then offers the
+    // release's Setup.exe asset (or the release page when no asset is listed).
+    const std::string url = "https://api.github.com/repos/Ding-Ding-Projects/BambuStudio/releases/latest";
     Slic3r::Http http = Slic3r::Http::get(url);
-
-    http.header("accept", "application/json")
+    http.header("accept", "application/vnd.github+json")
+        .header("user-agent", std::string("BambuStudioMD3/") + SLIC3R_VERSION)
         .timeout_connect(TIMEOUT_CONNECT)
         .timeout_max(TIMEOUT_RESPONSE)
         .on_complete([this, show_tips, by_user](std::string body, unsigned) {
-        try {
-            json j = json::parse(body);
-            if (j.contains("message")) {
-                if (j["message"].get<std::string>() == "success") {
-                    if (j.contains("software")) {
-                        if (j["software"].empty()) {
-                            // Same reasoning as in check_update(): suppress the toast when
-                            // the beta channel is enabled so it cannot contradict the beta
-                            // release dialog raised by the async GitHub check below.
-                            if (show_tips && app_config->get("enable_beta_version_update") != "true") {
-                                this->no_new_version();
-                            } else {
-                                check_beta_version(show_tips);
-                            }
-                        }
-                        else {
-                            if (j["software"].contains("url")
-                                && j["software"].contains("version")
-                                && j["software"].contains("description")) {
-                                version_info.url = j["software"]["url"].get<std::string>();
-                                version_info.version_str = j["software"]["version"].get<std::string>();
-                                version_info.description = j["software"]["description"].get<std::string>();
-
-                                wxGetApp().app_config->set_str("app", "cloud_software_url", version_info.url);
-                            }
-                            if (j["software"].contains("force_update")) {
-                                version_info.force_upgrade = j["software"]["force_update"].get<bool>();
-                            }
-                            CallAfter([this, show_tips, by_user](){
-                                this->check_update(show_tips, by_user);
-                            });
+            try {
+                json j = json::parse(body);
+                if (!j.contains("tag_name") || !j.contains("published_at")) {
+                    if (show_tips) this->no_new_version();
+                    return;
+                }
+                const std::string tag       = j["tag_name"].get<std::string>();
+                const std::string published = j["published_at"].get<std::string>(); // 2026-09-06T03:52:13Z
+                std::tm pub_tm{};
+                std::istringstream pub_in(published);
+                pub_in >> std::get_time(&pub_tm, "%Y-%m-%dT%H:%M:%S");
+                std::tm build_tm{};
+                std::istringstream build_in(std::string(SLIC3R_BUILD_TIME));
+                build_in >> std::get_time(&build_tm, "%Y%m%d-%H%M%S");
+                if (pub_in.fail() || build_in.fail()) {
+                    BOOST_LOG_TRIVIAL(warning) << "check new version: cannot compare " << published << " with build time " << SLIC3R_BUILD_TIME;
+                    if (show_tips) this->no_new_version();
+                    return;
+                }
+                const std::time_t pub_t   = _mkgmtime(&pub_tm);
+                const std::time_t build_t = std::mktime(&build_tm);
+                const double margin_s     = 3.0 * 3600.0;
+                const bool newer = std::difftime(pub_t, build_t) > margin_s;
+                if (!newer) {
+                    if (show_tips) this->no_new_version();
+                    return;
+                }
+                std::string asset_url;
+                if (j.contains("assets") && j["assets"].is_array()) {
+                    for (const auto &a : j["assets"]) {
+                        if (a.contains("name") && a["name"].get<std::string>() == "Setup.exe" && a.contains("browser_download_url")) {
+                            asset_url = a["browser_download_url"].get<std::string>();
+                            break;
                         }
                     }
                 }
+                if (asset_url.empty() && j.contains("html_url"))
+                    asset_url = j["html_url"].get<std::string>();
+                version_info.version_str  = tag;
+                version_info.version_name = j.contains("name") ? j["name"].get<std::string>() : tag;
+                version_info.url          = asset_url;
+                version_info.description  = version_info.version_name + "\n\n" +
+                                            (j.contains("body") && j["body"].is_string() ? j["body"].get<std::string>() : std::string());
+                version_info.force_upgrade = false;
+                wxGetApp().app_config->set_str("app", "cloud_software_url", version_info.url);
+                // "Skip this version" stores the exact tag; a manual check ignores it.
+                if (by_user == 0 && this->app_config->get("app", "skip_version") == tag)
+                    return;
+                CallAfter([this, by_user]() { GUI::wxGetApp().request_new_version(by_user); });
             }
-        }
-        catch (...) {
-            ;
-        }
-            })
-        .on_error([this](std::string body, std::string error, unsigned int status) {
-            handle_http_error(status, body);
-            BOOST_LOG_TRIVIAL(error) << "check new version error" << body;
-    }).perform();
+            catch (...) {
+                if (show_tips) this->no_new_version();
+            }
+        })
+        .on_error([this, show_tips](std::string body, std::string error, unsigned int status) {
+            BOOST_LOG_TRIVIAL(error) << "check new version error (" << status << "): " << error;
+            if (show_tips) this->no_new_version();
+        }).perform();
 }
 
 void GUI_App::check_beta_version(bool show_tips_when_no_beta)
 {
+    // This fork has no beta channel: its releases are the md3-v<N> GitHub
+    // releases already checked by check_new_version(). The stable check owns
+    // the "newest version" toast, so nothing is left to do here.
+    (void) show_tips_when_no_beta;
+    return;
     // When the beta channel is off the stable callers have already shown the toast
     // (see check_update / check_new_version), so we just bail out here.
     if (app_config->get("enable_beta_version_update") != "true") {
@@ -6826,12 +7036,8 @@ int GUI_App::GetSingleChoiceIndex(const wxString& message,
                                 int initialSelection)
 {
 #ifdef _WIN32
-    wxSingleChoiceDialog dialog(nullptr, message, caption, choices);
-    dialog.SetBackgroundColour(*wxWHITE);
-    wxGetApp().UpdateDlgDarkUI(&dialog);
-
-    dialog.SetSelection(initialSelection);
-    return dialog.ShowModal() == wxID_OK ? dialog.GetSelection() : -1;
+    SingleChoiceDialog dialog(message, caption, choices, initialSelection);
+    return dialog.GetSingleChoiceIndex();
 #else
     return wxGetSingleChoiceIndex(message, caption, choices, initialSelection);
 #endif
@@ -6842,7 +7048,6 @@ bool GUI_App::select_language()
 {
 	wxArrayString translations = wxTranslations::Get()->GetAvailableTranslations(SLIC3R_APP_KEY);
     std::vector<const wxLanguageInfo*> language_infos;
-    language_infos.emplace_back(wxLocale::GetLanguageInfo(wxLANGUAGE_ENGLISH));
     for (size_t i = 0; i < translations.GetCount(); ++ i) {
 	    const wxLanguageInfo *langinfo = wxLocale::FindLanguageInfo(translations[i]);
         if (langinfo != nullptr)
@@ -6851,49 +7056,35 @@ bool GUI_App::select_language()
     sort_remove_duplicates(language_infos);
 	std::sort(language_infos.begin(), language_infos.end(), [](const wxLanguageInfo* l, const wxLanguageInfo* r) { return l->Description < r->Description; });
 
-    wxArrayString names;
-    names.Alloc(language_infos.size());
-
-    // Some valid language should be selected since the application start up.
-    const wxLanguage current_language = wxLanguage(m_wxLocale->GetLanguage());
-    int 		     init_selection   		= -1;
-    int 			 init_selection_alt     = -1;
-    int 			 init_selection_default = -1;
-    for (size_t i = 0; i < language_infos.size(); ++ i) {
-        if (wxLanguage(language_infos[i]->Language) == current_language)
-        	// The dictionary matches the active language and country.
-            init_selection = i;
-        else if ((language_infos[i]->CanonicalName.BeforeFirst('_') == m_wxLocale->GetCanonicalName().BeforeFirst('_')) ||
-        		 // if the active language is Slovak, mark the Czech language as active.
-        	     (language_infos[i]->CanonicalName.BeforeFirst('_') == "cs" && m_wxLocale->GetCanonicalName().BeforeFirst('_') == "sk"))
-        	// The dictionary matches the active language, it does not necessarily match the country.
-        	init_selection_alt = i;
-        if (language_infos[i]->CanonicalName.BeforeFirst('_') == "en")
-        	// This will be the default selection if the active language does not match any dictionary.
-        	init_selection_default = i;
-        names.Add(language_infos[i]->Description);
+    std::vector<std::pair<std::string, wxString>> language_choices {
+        {I18N::LANGUAGE_MODE_ENGLISH, wxString::FromUTF8("English")},
+        {I18N::LANGUAGE_MODE_CANTONESE_HONG_KONG, wxString::FromUTF8("廣東話（香港，預覽版）")},
+        {I18N::LANGUAGE_MODE_ENGLISH_CANTONESE_HK, wxString::FromUTF8("English + 廣東話（香港，預覽版）")},
+    };
+    for (const wxLanguageInfo *info : language_infos) {
+        if (info->CanonicalName.BeforeFirst('_') == "en")
+            continue;
+        const std::string id = into_u8(info->CanonicalName);
+        if (!I18N::is_custom_language_mode(id))
+            language_choices.emplace_back(id, info->Description);
     }
-    if (init_selection == -1)
-    	// This is the dictionary matching the active language.
-    	init_selection = init_selection_alt;
-    if (init_selection != -1)
-    	// This is the language to highlight in the choice dialog initially.
-    	init_selection_default = init_selection;
 
-    const long index = GetSingleChoiceIndex(_L("Select the language"), _L("Language"), names, init_selection_default);
+    wxArrayString names;
+    names.Alloc(language_choices.size());
+    const std::string configured = I18N::normalize_language_mode_id(into_u8(current_language_mode()));
+	int init_selection = 0;
+    for (size_t i = 0; i < language_choices.size(); ++i) {
+        names.Add(language_choices[i].second);
+        if (I18N::normalize_language_mode_id(language_choices[i].first) == configured)
+            init_selection = static_cast<int>(i);
+    }
+
+    const long index = GetSingleChoiceIndex(_L("Select the language"), _L("Language"), names, init_selection);
 	// Try to load a new language.
-    if (index != -1 && (init_selection == -1 || init_selection != index)) {
-    	const wxLanguageInfo *new_language_info = language_infos[index];
-    	if (this->load_language(new_language_info->CanonicalName, false)) {
-			// Save language at application config.
-            // Which language to save as the selected dictionary language?
-            // 1) Hopefully the language set to wxTranslations by this->load_language(), but that API is weird and we don't want to rely on its
-            //    stability in the future:
-            //    wxTranslations::Get()->GetBestTranslation(SLIC3R_APP_KEY, wxLANGUAGE_ENGLISH);
-            // 2) Current locale language may not match the dictionary name, see GH issue #3901
-            //    m_wxLocale->GetCanonicalName()
-            // 3) new_language_info->CanonicalName is a safe bet. It points to a valid dictionary name.
-			app_config->set("language", new_language_info->CanonicalName.ToUTF8().data());
+    if (index != -1 && init_selection != index) {
+        const std::string selected = I18N::normalize_language_mode_id(language_choices[index].first);
+    	if (this->load_language(from_u8(selected), false)) {
+			app_config->set("language", selected);
 			app_config->save();
     		return true;
     	}
@@ -6913,9 +7104,22 @@ bool GUI_App::load_language(wxString language, bool initial)
     	// Get the active language from PrusaSlicer.ini, or empty string if the key does not exist.
 
         language = app_config->get("language");
+#ifdef _WIN32
+        // A fresh Windows installation may select one of the three baseline
+        // modes before Bambu Studio has created its own config file. Existing
+        // app preferences always win over this installer hand-off.
+        if (language.empty()) {
+            const std::string installer_mode = read_installer_language_mode();
+            if (!installer_mode.empty()) {
+                language = from_u8(installer_mode);
+                app_config->set("language", installer_mode);
+                BOOST_LOG_TRIVIAL(info) << "language provided by the Windows installer: " << installer_mode;
+            }
+        }
+#endif
 
         /* erase the unsupported language in config files*/
-        {
+        if (!I18N::is_custom_language_mode(into_u8(language))) {
             wxLanguage cur_lang = wxLANGUAGE_UNKNOWN;
             auto cur_lang_info = wxLocale::FindLanguageInfo(language);
             if (cur_lang_info) { cur_lang = static_cast<wxLanguage> (cur_lang_info->Language);}
@@ -6962,9 +7166,22 @@ bool GUI_App::load_language(wxString language, bool initial)
                     wxString best_language = wxTranslations::Get()->GetBestTranslation(SLIC3R_APP_KEY, wxLANGUAGE_ENGLISH);
                     if (!best_language.IsEmpty()) {
                         m_language_info_best = wxLocale::FindLanguageInfo(best_language);
-                        BOOST_LOG_TRIVIAL(info) << boost::format("Best translation language detected (may be different from user locales): %1%") %
-                                                        m_language_info_best->CanonicalName.ToUTF8().data();
-                        app_config->set("language", m_language_info_best->CanonicalName.ToUTF8().data());
+                        if (m_language_info_best != nullptr) {
+                            BOOST_LOG_TRIVIAL(info) << boost::format("Best translation language detected (may be different from user locales): %1%") %
+                                                            m_language_info_best->CanonicalName.ToUTF8().data();
+                            app_config->set("language", m_language_info_best->CanonicalName.ToUTF8().data());
+                        } else if (I18N::is_custom_language_mode(into_u8(best_language))) {
+                            // wxWidgets can discover the shipped yue_HK catalog
+                            // even though its locale database exposes zh_HK rather
+                            // than yue_HK. Preserve the custom mode and let the
+                            // explicit profile choose its formatting locale.
+                            app_config->set("language", I18N::normalize_language_mode_id(into_u8(best_language)));
+                            BOOST_LOG_TRIVIAL(info) << "Best translation selected custom language mode: "
+                                                    << into_u8(best_language);
+                        } else {
+                            BOOST_LOG_TRIVIAL(warning) << "Ignoring translation with no wx language metadata: "
+                                                       << into_u8(best_language);
+                        }
                     }
 #ifdef __linux__
                     wxString lc_all;
@@ -6979,8 +7196,16 @@ bool GUI_App::load_language(wxString language, bool initial)
         }
     }
 
-	const wxLanguageInfo *language_info = language.empty() ? nullptr : wxLocale::FindLanguageInfo(language);
-	if (! language.empty() && (language_info == nullptr || language_info->CanonicalName.empty())) {
+    const std::string requested_mode_id = into_u8(language.empty() ? from_u8(app_config->get("language")) : language);
+    const I18N::LanguageModeProfile requested_profile = I18N::resolve_language_mode(requested_mode_id);
+    const bool custom_language_mode = I18N::is_custom_language_mode(requested_mode_id);
+
+	const wxLanguageInfo *language_info = custom_language_mode
+        ? wxLocale::GetLanguageInfo(requested_profile.formatting_language)
+        : (language.empty() ? nullptr : wxLocale::FindLanguageInfo(language));
+    if (custom_language_mode && language_info == nullptr)
+        language_info = wxLocale::GetLanguageInfo(wxLANGUAGE_ENGLISH_US);
+	if (!custom_language_mode && !language.empty() && (language_info == nullptr || language_info->CanonicalName.empty())) {
 		// Fix for wxWidgets issue, where the FindLanguageInfo() returns locales with undefined ANSII code (wxLANGUAGE_KONKANI or wxLANGUAGE_MANIPURI).
 		language_info = nullptr;
     	BOOST_LOG_TRIVIAL(error) << boost::format("Language code \"%1%\" is not supported") % language.ToUTF8().data();
@@ -7014,7 +7239,9 @@ bool GUI_App::load_language(wxString language, bool initial)
     //    language_info = m_language_info_system;
 
     // Alternate language code.
-    wxLanguage language_dict = wxLanguage(language_info->Language);
+    wxLanguage language_dict = custom_language_mode
+        ? wxLANGUAGE_ENGLISH_US
+        : wxLanguage(language_info->Language);
     if (language_info->CanonicalName.BeforeFirst('_') == "sk") {
     	// Slovaks understand Czech well. Give them the Czech translation.
     	language_dict = wxLANGUAGE_CZECH;
@@ -7031,6 +7258,12 @@ bool GUI_App::load_language(wxString language, bool initial)
                                     % original_lang % language_info->CanonicalName.ToUTF8().data();
     }
 #endif
+
+    if (!wxLocale::IsAvailable(language_info->Language) && custom_language_mode) {
+        BOOST_LOG_TRIVIAL(warning) << "The requested custom-mode formatting locale is unavailable; using English formatting.";
+        language_info = wxLocale::GetLanguageInfo(wxLANGUAGE_ENGLISH_US);
+        language_dict = wxLANGUAGE_ENGLISH_US;
+    }
 
     if (! wxLocale::IsAvailable(language_info->Language)&&initial) {
         language_info = wxLocale::GetLanguageInfo(wxLANGUAGE_ENGLISH_UK);
@@ -7080,7 +7313,20 @@ bool GUI_App::load_language(wxString language, bool initial)
 #endif
         if (initial)
         	message + "\n\nApplication will close.";
-        wxMessageBox(message, "Bambu Studio - Switching language failed", wxOK | wxICON_ERROR);
+        if (!initial && mainframe != nullptr) {
+            // Runtime language switch (Preferences / switch_language): the
+            // mainframe and full GUI_App state are alive, so the MD3-styled
+            // MessageDialog can be used. Deliberately untranslated text: the
+            // language catalog just failed to load.
+            MessageDialog msg_dlg(mainframe, message, "Bambu Studio - Switching language failed", wxOK | wxICON_ERROR);
+            msg_dlg.ShowModal();
+        } else {
+            // Initial load_language() runs in on_init_inner() before any window
+            // exists (and exits the process right after); the styled dialog
+            // shell (fonts, dark-mode state, mainframe parent) is not available
+            // yet, so the native message box is the correct choice here.
+            wxMessageBox(message, "Bambu Studio - Switching language failed", wxOK | wxICON_ERROR);
+        }
         if (initial)
 			std::exit(EXIT_FAILURE);
         else {
@@ -7098,9 +7344,35 @@ bool GUI_App::load_language(wxString language, bool initial)
     m_wxLocale->Init(language_info->Language);
     // Override language at the active wxTranslations class (which is stored in the active m_wxLocale)
     // to load possibly different dictionary, for example, load Czech dictionary for Slovak language.
-    wxTranslations::Get()->SetLanguage(language_dict);
+    if (requested_profile.kind == I18N::LanguageModeKind::CantoneseHongKong)
+        wxTranslations::Get()->SetLanguage(from_u8(requested_profile.primary_catalog_language));
+    else
+        wxTranslations::Get()->SetLanguage(language_dict);
     m_wxLocale->AddCatalog(SLIC3R_APP_KEY);
-    m_imgui->set_language(into_u8(language_info->CanonicalName));
+
+    const std::string active_mode_id = (custom_language_mode || I18N::is_baseline_language_mode(requested_mode_id))
+        ? requested_profile.canonical_id
+        : into_u8(language_info->CanonicalName);
+    const bool mode_catalog_ready = I18N::configure_language_mode(active_mode_id, from_u8(localization_dir()));
+    if (!mode_catalog_ready)
+        BOOST_LOG_TRIVIAL(warning) << "Cantonese preview catalog is unavailable; falling back safely to English: "
+                                   << into_u8(I18N::language_mode_service().cantonese_catalog_path());
+    if (custom_language_mode)
+        app_config->set("language", requested_profile.canonical_id);
+
+    m_imgui->set_language(I18N::language_mode_profile().font_language);
+
+    // Funny levels and dialog emojis ride along with the language mode so every
+    // translate_mode() call and MsgDialog sees the persisted values from startup.
+    {
+        I18N::LanguageModeService &mode_service = I18N::language_mode_service();
+        mode_service.set_funny_level(I18N::FunnyLanguage::English,
+                                     I18N::parse_funny_level(app_config->get(I18N::FUNNY_LEVEL_ENGLISH_KEY)));
+        mode_service.set_funny_level(I18N::FunnyLanguage::Cantonese,
+                                     I18N::parse_funny_level(app_config->get(I18N::FUNNY_LEVEL_CANTONESE_KEY)));
+        mode_service.set_dialog_emojis(I18N::parse_dialog_emojis(app_config->get(I18N::DIALOG_EMOJIS_KEY)));
+    }
+    ::Label::initSysFont(I18N::language_mode_profile().font_language, false);
 
     //FIXME This is a temporary workaround, the correct solution is to switch to "C" locale during file import / export only.
     //wxSetlocale(LC_NUMERIC, "C");
@@ -7134,20 +7406,18 @@ Tab* GUI_App::get_layer_tab()
 
 ConfigOptionMode GUI_App::get_mode()
 {
-    if (!app_config->has("user_mode"))
-        return comSimple;
-    //BBS
-    const auto mode = app_config->get("user_mode");
-    return mode == "advanced" ? comAdvanced :
-           mode == "simple" ? comSimple :
-           mode == "develop" ? comDevelop : comSimple;
+    // Every process setting is shown, always. The Simple/Advanced option
+    // filter (and its header switch) no longer exists in this fork; a stored
+    // "simple" user_mode from an older profile is read as advanced. Develop
+    // mode is the one remaining distinct mode.
+    if (app_config->has("user_mode") && app_config->get("user_mode") == "develop")
+        return comDevelop;
+    return comAdvanced;
 }
 
 std::string GUI_App::get_mode_str()
 {
-    if (!app_config->has("user_mode"))
-        return "simple";
-    return app_config->get("user_mode");
+    return get_mode() == comDevelop ? "develop" : "advanced";
 }
 
 void GUI_App::save_mode(const /*ConfigOptionMode*/int mode)
@@ -7383,7 +7653,7 @@ void  GUI_App::show_ip_address_enter_dialog_handler(wxCommandEvent& evt)
 //    menu->AppendSubMenu(local_menu, _L("Configuration"));
 //}
 
-void GUI_App::open_preferences()
+void GUI_App::open_preferences(const std::string &teleport_key)
 {
     bool app_layout_changed = false;
     {
@@ -7391,6 +7661,16 @@ void GUI_App::open_preferences()
         // or sometimes the application crashes into wxDialogBase() destructor
         // so we put it into an inner scope
         PreferencesDialog dlg(mainframe);
+        if (!teleport_key.empty()) {
+            // Once the modal loop is running the pages are laid out, so the
+            // scroll/focus/flash lands on the real row geometry.
+            PreferencesDialog *dlg_ptr = &dlg;
+            const std::string  key     = teleport_key;
+            dlg.CallAfter([dlg_ptr, key]() {
+                if (!dlg_ptr->teleport_to_setting(key))
+                    if (const auto *entry = PaletteIndex::find_preference(key)) dlg_ptr->select_page(entry->page);
+            });
+        }
         dlg.ShowModal();
 
         // BBS
@@ -7685,7 +7965,7 @@ bool GUI_App::check_print_host_queue()
     //wxMessageDialog dialog(mainframe,
     MessageDialog dialog(mainframe,
         message,
-        wxString(SLIC3R_APP_NAME) + " - " + _(L("Ongoing uploads")),
+        wxGetApp().app_display_name() + " - " + _(L("Ongoing uploads")),
         wxICON_QUESTION | wxYES_NO | wxNO_DEFAULT);
     if (dialog.ShowModal() == wxID_YES)
         return true;
@@ -7991,7 +8271,7 @@ void GUI_App::open_mall_page_dialog()
 
     //model url
 
-    wxString language_code = this->current_language_code().BeforeFirst('_');
+    wxString language_code = this->current_language_code_safe().BeforeFirst('_');
     model_url = language_code.ToStdString();
 
     if (getAgent() && mainframe) {
@@ -8032,7 +8312,7 @@ void GUI_App::open_publish_page_dialog()
     host_url = get_model_http_url(app_config->get_country_code());
 
     //publish url
-    wxString language_code = this->current_language_code().BeforeFirst('_');
+    wxString language_code = this->current_language_code_safe().BeforeFirst('_');
     model_url += (language_code.ToStdString() + "/my/models/publish");
 
     if (getAgent() && mainframe) {
@@ -8151,40 +8431,56 @@ PrintSequence GUI_App::global_print_sequence() const
     return global_print_seq;
 }
 
+wxString GUI_App::current_language_mode() const
+{
+    return from_u8(I18N::language_mode_profile().canonical_id);
+}
+
+wxString GUI_App::current_local_web_language() const
+{
+    return from_u8(I18N::language_mode_profile().local_web_language);
+}
+
+wxString GUI_App::app_display_name() const
+{
+    // The shipped product name is a brand string and is deliberately not run
+    // through the translation catalog: it reads the same in every language mode.
+    const std::string shipped = SLIC3R_APP_FULL_NAME;
+    if (app_config == nullptr)
+        return from_u8(shipped);
+    return from_u8(AppDisplayName::resolve(app_config->get(AppDisplayName::CONFIG_KEY), shipped));
+}
+
+bool GUI_App::set_app_display_name(const std::string &candidate)
+{
+    if (app_config == nullptr)
+        return false;
+    const std::string shipped = SLIC3R_APP_FULL_NAME;
+    const std::string stored  = AppDisplayName::to_stored_value(candidate, shipped);
+    // "" is the reset value; anything else must pass the same rules the
+    // Preferences field validates inline, so a programmatic caller cannot store
+    // a name the field would have refused.
+    if (!stored.empty() && !AppDisplayName::validate(stored).ok())
+        return false;
+    if (app_config->get(AppDisplayName::CONFIG_KEY) == stored)
+        return true; // nothing changed; do not wake the listeners
+    app_config->set(AppDisplayName::CONFIG_KEY, stored);
+    app_config->save();
+
+    // The main frame is owned here, so it is told directly rather than through a
+    // Bind on the app object: recreate_GUI() destroys and rebuilds the frame, and
+    // a lambda bound from the old frame would dangle into the next rename.
+    if (mainframe)
+        mainframe->on_app_display_name_changed();
+    wxCommandEvent evt(EVT_APP_DISPLAY_NAME_CHANGED);
+    evt.SetString(app_display_name());
+    ProcessEvent(evt); // synchronous, for any other live surface that Bind()s on wxGetApp()
+    return true;
+}
+
 wxString GUI_App::current_language_code_safe() const
 {
-	// Translate the language code to a code, for which Prusa Research maintains translations.
-	const std::map<wxString, wxString> mapping {
-		{ "cs", 	"cs_CZ", },
-		{ "sk", 	"cs_CZ", },
-		{ "de", 	"de_DE", },
-		{ "nl", 	"nl_NL", },
-		{ "sv", 	"sv_SE", },
-		{ "es", 	"es_ES", },
-		{ "fr", 	"fr_FR", },
-		{ "it", 	"it_IT", },
-		{ "ja", 	"ja_JP", },
-		{ "ko", 	"ko_KR", },
-		{ "pl", 	"pl_PL", },
-		{ "uk", 	"uk_UA", },
-		{ "zh", 	"zh_CN", },
-		{ "ru", 	"ru_RU", },
-        { "tr",     "tr_TR", },
-        { "pt",     "pt_BR", },
-        { "hu",     "hu_HU", },
-        { "th",     "th_TH", },
-        { "ro",     "ro_RO", },
-        { "el",     "el_GR", },
-        { "id",     "id_ID", },
-        { "vi",     "vi_VN", },
-	};
-	wxString language_code = this->current_language_code().BeforeFirst('_');
-	auto it = mapping.find(language_code);
-	if (it != mapping.end())
-		language_code = it->second;
-	else
-		language_code = "en_US";
-	return language_code;
+return from_u8(I18N::language_mode_profile().service_language);
 }
 
 void GUI_App::open_web_page_localized(const std::string &http_address)
@@ -8477,8 +8773,17 @@ void GUI_App::check_updates(const bool verbose)
             m_app_conf_exists = true;
         }
         else if (verbose && updater_result == PresetUpdater::R_NOOP) {
-            MsgNoUpdates dlg;
-            dlg.ShowModal();
+            // OK-only informational acknowledgement: surface as a corner toast,
+            // not a modal (fall back to the dialog before the Plater exists).
+            if (plater() != nullptr && plater()->get_notification_manager() != nullptr) {
+                plater()->get_notification_manager()->push_notification(
+                    NotificationType::CustomNotification,
+                    NotificationManager::NotificationLevel::RegularNotificationLevel,
+                    _u8L("The configuration is up to date."));
+            } else {
+                MsgNoUpdates dlg;
+                dlg.ShowModal();
+            }
         }
     }
     catch (const std::exception & ex) {
@@ -8798,8 +9103,23 @@ static void sLocalBindFunc(std::string str_ip,
     // disappear from the list. Keep its data when it answers, otherwise log and connect with the
     // persisted local info.
     detectResult detectData;
-    const int    result        = wxGetApp().getAgent()->bind_detect(str_ip, "secure", detectData);
-    const char*  reject_reason = nullptr;
+    // Re-check the agent HERE, not just at the caller. InnerLoad() validates it
+    // before spawning this, but this body runs later on a boost::thread, and the
+    // agent is deleted and nulled during shutdown (see the `delete m_agent;
+    // m_agent = nullptr;` in the app teardown). Between the two, getAgent() can
+    // come back null, and this is a background thread — the resulting null
+    // dereference is an access violation on a thread with no handler and no
+    // useful context in the log. It also stays null for the entire session when
+    // the network plugin fails to load, since m_agent is only ever constructed
+    // under `if (create_network_agent)`.
+    NetworkAgent *agent = wxGetApp().getAgent();
+    if (!agent) {
+        BOOST_LOG_TRIVIAL(warning) << __FUNCTION__ << ": no network agent (plugin not loaded, or "
+                                                      "shutting down); skipping LAN bind detect.";
+        return;
+    }
+    auto result = agent->bind_detect(str_ip, "secure", detectData);
+    const char* reject_reason = nullptr;
     if (result < 0) {
         reject_reason = "bind_detect failed";
     } else if (detectData.connect_type != "farm") {

@@ -7,16 +7,26 @@
 #include <wx/simplebook.h>
 #include <wx/dialog.h>
 #include <wx/sizer.h>
+#include <wx/stattext.h>
 #include <wx/timer.h>
 #include <vector>
 #include <list>
 #include <map>
+#include <unordered_map>
 #include "Widgets/ComboBox.hpp"
 #include "Widgets/CheckBox.hpp"
 #include "Widgets/TextInput.hpp"
 #include "Widgets/Button.hpp"
 #include "Widgets/RadioBox.hpp"
 #include "Widgets/LinkLabel.hpp"
+
+// Global-namespace shared widgets used by the Preferences dialog. Forward-declared
+// (members are pointers) so the header stays light; the .cpp includes the full
+// definitions (SwitchButton.hpp / SearchField.hpp).
+class SwitchButton;
+class MultiSwitchButton;
+class SearchField;
+
 namespace Slic3r { namespace GUI {
 
 class Selector
@@ -41,7 +51,7 @@ public:
 WX_DECLARE_LIST(RadioSelector, RadioSelectorList);
 class CheckBox;
 class TextInput;
-class TextTabbar;
+class TabStrip;
 
 class PreferencesDialog : public DPIDialog
 {
@@ -49,9 +59,75 @@ private:
     AppConfig *app_config;
 
 protected:
-    TextTabbar       *m_tabbar = nullptr;
+    // Section strip: the shared browser-style TabStrip (Widgets/TabStrip.hpp),
+    // docked left by default and re-placed in m_body_row when the user docks
+    // it elsewhere. m_page_ids maps m_book page index -> strip tab id (the
+    // strip may reorder, pin, group or hide sections; the book never moves).
+    TabStrip *        m_tabbar   = nullptr;
+    wxBoxSizer *      m_body_row = nullptr;
+    std::vector<std::string> m_page_ids;
+    void              place_settings_strip();
+    int               page_for_id(const std::string &id) const;
     wxSimplebook *    m_book   = nullptr;
+    SearchField *     m_search = nullptr;
+    std::vector<MultiSwitchButton *> m_segmented_list; // Appearance segmented controls (rescale)
 
+    // --- Live settings search (SearchField -> row filtering) ----------------
+    // One entry per direct row (sizer or window) of every settings page,
+    // indexed once after the pages are built. `haystack` is the original-case
+    // concatenation of the row's wxStaticText labels (the shared SearchField
+    // matcher folds case itself, and needs the true text for regex);
+    // `baseline_shown` snapshots the row's construction-time visibility (e.g.
+    // the model-mall rows) so a search reset never reveals rows another gate hid.
+    struct SearchRow
+    {
+        int                          page = 0;         // m_book page (nav section)
+        wxSizerItem                 *item = nullptr;   // row item in the page sizer
+        std::vector<wxStaticText *>  labels;           // label windows inside the row
+        wxString                     haystack;         // original-case label text
+        bool                         is_title = false; // Head_16 section header row
+        bool                         baseline_shown = true;
+        std::vector<std::string>     keys;            // AppConfig keys the row edits (teleport targets)
+    };
+    std::vector<SearchRow>                       m_search_rows;
+    std::unordered_map<wxStaticText *, wxColour> m_search_saved_colours; // pre-highlight foregrounds
+    wxStaticText                                *m_search_empty_hint = nullptr;
+    bool                                         m_search_active     = false;
+    wxString                                     m_search_last_query; // trimmed active query ("" when inactive)
+
+    void build_search_index();
+    void apply_search_filter(const wxString &query);
+    void reset_search_filter();
+    void clear_search_highlights();
+    void scroll_search_row_into_view(const SearchRow &row);
+
+    // --- Command-palette teleport ------------------------------------------
+    // Every create_item_* row registers the AppConfig key it edits, so a
+    // palette result can land on the exact row rather than merely opening the
+    // dialog: select the owning page, scroll the row into view, focus its
+    // control and flash its labels. build_search_index() folds the registry
+    // into SearchRow::keys once the pages exist.
+    struct OptionRow
+    {
+        std::string key;
+        wxSizer    *sizer  = nullptr; // rows built as sizers (most create_item_*)
+        wxWindow   *window = nullptr; // rows built as panels (downloads, external editor)
+    };
+    std::vector<OptionRow>                       m_option_rows;
+    std::unordered_map<wxStaticText *, wxColour> m_teleport_saved_colours; // pre-flash foregrounds
+    wxTimer                                      m_teleport_timer;
+    void register_option_row(const std::string &key, wxSizer *sizer, wxWindow *window = nullptr);
+    void clear_teleport_highlight();
+    void on_teleport_timer(wxTimerEvent &);
+
+public:
+    // Teleport to the row bound to `key`: returns false when no row registered
+    // that key (the caller then falls back to the page from the palette index).
+    bool teleport_to_setting(const std::string &key);
+    // Select a Preferences page by index (PaletteIndex::PreferencePage).
+    void select_page(int page);
+
+protected:
     bool m_seq_top_layer_only_changed{false};
     bool m_recreate_GUI{false};
     bool m_use_12h_time_format_changed{false};
@@ -69,7 +145,9 @@ public:
                       const wxString &title = wxT(""),
                       const wxPoint & pos   = wxDefaultPosition,
                       const wxSize &  size  = wxDefaultSize,
-                      long            style = wxSYSTEM_MENU | wxCAPTION | wxCLOSE_BOX);
+                      // MD3 caption strip instead of the native title bar
+                      // (see MD3DialogChrome).
+                      long            style = wxBORDER_NONE);
 
     ~PreferencesDialog();
 
@@ -77,10 +155,9 @@ public:
 
     void      create();
 
-    // debug mode
-    ::CheckBox * m_developer_mode_ckeckbox   = {nullptr};
-    ::CheckBox * m_internal_developer_mode_ckeckbox = {nullptr};
-    ::CheckBox * m_dark_mode_ckeckbox        = {nullptr};
+    // debug mode — the boolean preference rows are now MD3 SwitchButtons.
+    ::SwitchButton * m_developer_mode_ckeckbox   = {nullptr};
+    ::SwitchButton * m_internal_developer_mode_ckeckbox = {nullptr};
 
     wxString m_developer_mode_def;
     wxString m_internal_developer_mode_def;
@@ -91,21 +168,24 @@ public:
     // ComboBoxSelectorList    m_comxbo_group;
 
     wxBoxSizer *create_item_title(wxString title, wxWindow *parent, wxString tooltip);
-    wxBoxSizer *create_item_combobox(wxString                        title,
-                                     wxWindow                       *parent,
-                                     wxString                        tooltip,
-                                     std::string                     param,
-                                     const std::vector<wxString>    &label_list,
-                                     const std::vector<std::string> &value_list,
-                                     const std::vector<wxString>    &tooltip_list = {},
-                                     std::function<void(int)>        callback     = nullptr);
+    wxBoxSizer *create_item_combobox(wxString title, wxWindow *parent, wxString tooltip, std::string param,
+                                     const std::vector<wxString>& label_list, const std::vector<std::string>& value_list,
+                                     const std::vector<wxString>& tooltip_list = {}, std::function<void(int)> callback = nullptr,
+                                     int title_width = 0, int combox_width = 0);
     wxBoxSizer *create_item_region_combobox(wxString title, wxWindow *parent, wxString tooltip, std::vector<wxString> vlist);
     wxBoxSizer *create_item_language_combobox(wxString title, wxWindow *parent, wxString tooltip, int padding_left, std::string param, std::vector<const wxLanguageInfo *> vlist);
+    wxBoxSizer *create_item_language_mode_combobox(wxString title, wxWindow *parent, wxString tooltip, std::string param,
+                                                   const std::vector<std::pair<std::string, wxString>> &choices);
     wxBoxSizer *create_item_loglevel_combobox(wxString title, wxWindow *parent, wxString tooltip, std::vector<wxString> vlist);
     wxBoxSizer *create_item_checkbox(wxString title, wxWindow *parent, wxString tooltip, int padding_left, std::string param);
-    wxBoxSizer *create_item_darkmode_checkbox(wxString title, wxWindow *parent, wxString tooltip, int padding_left, std::string param);
+    // Funny level row: MD3 Slider (1..5) bound to param, with a progressive
+    // disclosure caption and a provenance line. cantonese selects the ladder.
+    wxBoxSizer *create_item_funny_level_slider(wxWindow *parent, std::string param, bool cantonese);
     void        set_dark_mode();
+    // Apply a theme switch + fan out the dark-mode side effects (Appearance Theme control).
+    void        apply_dark_mode(bool dark);
     wxWindow* create_item_downloads(wxWindow* parent, int padding_left, std::string param);
+    wxWindow* create_item_external_editor(wxWindow* parent, int padding_left, std::string param);
     wxBoxSizer *create_item_input(wxString title, wxString title2, wxWindow *parent, wxString tooltip, std::string param, std::function<void(wxString)> onchange = {});
     wxBoxSizer *create_item_range_input(
         wxString title, wxWindow *parent, wxString tooltip, std::string param, float range_min, float range_max, int keep_digital,std::function<void(wxString)> onchange = {});
@@ -124,13 +204,13 @@ public:
     wxBoxSizer *create_item_switch(wxString title, wxWindow *parent, wxString tooltip, std::string param);
     wxSizer    *create_item_radiobox(wxString title, wxWindow *parent, wxString tooltip, int padding_left, int groupid, std::string param);
 
+    wxWindow* create_appearance_tab();
     wxWindow* create_general_tab();
     wxWindow* create_user_tab();
     wxWindow* create_3d_tab();
     wxWindow* create_other_tab();
     wxWindow* create_developer_tab();
     wxBoxSizer *create_bottom_buttons();
-    wxSizerFlags row_flags() const;
     void on_reset_all_warnings();
     void on_reset_preferences();
 
@@ -143,7 +223,8 @@ public:
     int m_current_language_selected = {0};
 
     std::unordered_map<int, Button *> m_button_list;
-    std::unordered_map<int, ::CheckBox *> m_checkbox_list;
+    // The boolean preference rows are MD3 SwitchButtons (icon-mode) rescaled on DPI change.
+    std::unordered_map<int, ::SwitchButton *> m_checkbox_list;
     std::unordered_map<int, RadioBox *>   m_radiobox_list;
     std::unordered_map<int, ::ComboBox *> m_combobox_list;
     int                                   m_screen_height;

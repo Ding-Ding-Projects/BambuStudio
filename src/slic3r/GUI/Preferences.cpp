@@ -1,6 +1,9 @@
 #include "Preferences.hpp"
+#include "Export/ExportDatasets.hpp"
+#include "Export/ExportDialog.hpp"
 #include "OptionsGroup.hpp"
 #include "GUI_App.hpp"
+#include "AppDisplayName.hpp"
 #include "MainFrame.hpp"
 #include "Plater.hpp"
 #include "MsgDialog.hpp"
@@ -8,7 +11,7 @@
 #include "UxProgramTermsDialog.hpp"
 #include "Widgets/StateColor.hpp"
 #include "libslic3r/AppConfig.hpp"
-#include <algorithm>
+#include "../Utils/ExternalEditor.hpp"
 #include <cassert>
 #include <string>
 #include <vector>
@@ -17,11 +20,23 @@
 #include <wx/event.h>
 #include <wx/gdicmn.h>
 #include <wx/simplebook.h>
+#include <wx/filedlg.h>
+#include <wx/colordlg.h>
 #include "OG_CustomCtrl.hpp"
 #include "fila_manager/wgtFilaManagerFeature.h"
 #include "slic3r/GUI/Widgets/Label.hpp"
-#include "slic3r/GUI/Widgets/TextTabbar.hpp"
+#include "Widgets/SwitchButton.hpp"
+#include "Appearance/ElementStyle.hpp"
+#include "Widgets/SearchField.hpp"
+#include "Widgets/Slider.hpp"
+#include "Widgets/TabStrip.hpp"
+#include "Widgets/MD3ColorPicker.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
+#include "Widgets/StaticBox.hpp"
+#include "Widgets/MaterialIcon.hpp"
 #include "wx/graphics.h"
+#include <wx/dcgraph.h>
+#include <wx/fontenum.h>
 
 #include <wx/listimpl.cpp>
 #include <map>
@@ -39,134 +54,48 @@ namespace Slic3r { namespace GUI {
 WX_DEFINE_LIST(RadioSelectorList);
 
 // Raw (pre-DPI) control widths for Preferences rows. Height is -1 (auto) unless
-// noted. Wrap in FromDIP(...) at each use site, e.g. wxSize(FromDIP(COMBOBOX_WIDTH), -1).
-static constexpr int COMBOBOX_WIDTH       = 144;
-static constexpr int INPUT_WIDTH          = 144;
-static constexpr int DUAL_INPUT_WIDTH     = 68; // two inputs + 8px gap == 144 total
+// noted. Wrap in FromDIP(...) at each use site, e.g. wxSize(FromDIP(TITLE_WIDTH), -1).
+static constexpr int TITLE_WIDTH          = 100; // row label column
+static constexpr int COMBOBOX_WIDTH       = 140;
+static constexpr int LARGE_COMBOBOX_WIDTH = 160;
+static constexpr int LANGUAGE_COMBOBOX_WIDTH = 260;
+static constexpr int INPUT_WIDTH          = 100;
 static constexpr int BTN_WIDTH            = 58; // small action button (reset / browse)
 static constexpr int BTN_HEIGHT           = 22;
 static constexpr int TITLE_PADDING        = 48;
 static constexpr int ITEM_LEFT_PADDING    = 48 + 16;
 static constexpr int ITEM_RIGHT_PADDING   = 24;
-static constexpr int ITEM_MIN_HEIGHT      = 24;
-static constexpr int TITLE_CONTROL_GAP    = 20; // min gap between title text and controls
+// Minimum settings-row height. Must exceed the 24px MD3 switch pill so
+// adjacent single-line toggle rows keep a visible gap (24 made the pills
+// touch — see the Other-tab Online Models pair in the screenshot matrix).
+static constexpr int ITEM_MIN_HEIGHT      = 32;
 
-// Wrap width shared by every row title: the space left in the 640-wide dialog
-// after the left padding, title-to-control gap, control column, and right margin.
-static constexpr int TITLE_WIDTH = 640 - ITEM_LEFT_PADDING - TITLE_CONTROL_GAP - COMBOBOX_WIDTH - ITEM_RIGHT_PADDING;
-
-// Re-map a light-mode color to its dark-mode pair at use time.
-static inline wxColour C(const wxColour &light) { return StateColor::darkModeColorFor(light); }
-
-// Build a row's title as a Label word-wrapped to a fixed width.
-static ::Label *make_row_title(wxWindow *parent, const wxString &text, int wrap_width, const wxString &tooltip = {})
+static wxString language_display_name(const wxLanguageInfo *info)
 {
-    auto *title = new ::Label(parent, ::Label::Body_14, text);
-    title->SetForegroundColour(ThemeColor::TextPrimary);
-    if (!tooltip.empty()) title->SetToolTip(tooltip);
-    title->Wrap(wrap_width);
-    return title;
-}
+    if (info == nullptr)
+        return {};
 
-// One option row wrapped in a real window so it can paint a hover background.
-class OptionRow : public wxPanel
-{
-public:
-    explicit OptionRow(wxWindow *parent) : wxPanel(parent, wxID_ANY) { SetBackgroundColour(parent->GetBackgroundColour()); }
-
-    // Adopt the controls already built into `row` (currently parented to the
-    // scroll panel), then take ownership of the sizer and arm hover tracking.
-    void adopt(wxSizer *row)
-    {
-        reparent_children(row);
-        SetSizer(row);
-        arm_hover(this);
-    }
-
-    // Adopt an already-built child window (e.g. the download-path row) so it,
-    // too, gets the hover background.
-    void adopt(wxWindow *child)
-    {
-        child->Reparent(this);
-        auto *s = new wxBoxSizer(wxHORIZONTAL);
-        s->Add(child, wxSizerFlags(1).Expand());
-        SetSizer(s);
-        arm_hover(this);
-    }
-
-private:
-    void reparent_children(wxSizer *s)
-    {
-        for (wxSizerItem *item : s->GetChildren()) {
-            if (item->IsWindow())
-                item->GetWindow()->Reparent(this);
-            else if (item->IsSizer())
-                reparent_children(item->GetSizer());
-        }
-    }
-
-    void arm_hover(wxWindow *w)
-    {
-        w->Bind(wxEVT_ENTER_WINDOW, &OptionRow::on_enter, this);
-        w->Bind(wxEVT_LEAVE_WINDOW, &OptionRow::on_leave, this);
-        for (wxWindow *child : w->GetChildren()) arm_hover(child);
-    }
-
-    void set_hover(bool hover)
-    {
-        if (hover == m_hover) return;
-        m_hover           = hover;
-        const wxColour bg = hover ? C(ThemeColor::Grey200) : GetParent()->GetBackgroundColour();
-        SetBackgroundColour(bg);
-        recolor_titles(this, bg); // native static controls paint their own bg, not the parent's
-        Refresh();
-    }
-
-    // Repaint children that inherit the row background so hover shows through:
-    // wxStaticText titles and bare container windows (e.g. the download row's panel).
-    // Owner-drawn controls (combobox/checkbox/switch/TextInput) keep their own paint.
-    static void recolor_titles(wxWindow *w, const wxColour &bg)
-    {
-        for (wxWindow *child : w->GetChildren()) {
-            const std::type_info &t = typeid(*child);
-            if (dynamic_cast<wxStaticText *>(child) || t == typeid(wxWindow) || t == typeid(wxPanel)) {
-                child->SetBackgroundColour(bg);
-                child->Refresh();
-            }
-            recolor_titles(child, bg);
-        }
-    }
-
-    void on_enter(wxMouseEvent &e)
-    {
-        set_hover(true);
-        e.Skip();
-    }
-
-    void on_leave(wxMouseEvent &e)
-    {
-        // Leaving a child for another child of the same row is not a real leave.
-        set_hover(GetClientRect().Contains(ScreenToClient(wxGetMousePosition())));
-        e.Skip();
-    }
-
-    bool m_hover = false;
-};
-
-// Wrap a freshly built option-row sizer in an OptionRow window (for tab layout).
-static wxWindow *wrap_option_row(wxWindow *scrolled, wxSizer *row)
-{
-    auto *panel = new OptionRow(scrolled);
-    panel->adopt(row);
-    return panel;
-}
-
-// Overload for rows that are already a window (e.g. the download-path row).
-static wxWindow *wrap_option_row(wxWindow *scrolled, wxWindow *row)
-{
-    auto *panel = new OptionRow(scrolled);
-    panel->adopt(row);
-    return panel;
+    const std::map<wxLanguage, wxString> names {
+        {wxLANGUAGE_CHINESE_SIMPLIFIED, wxString::FromUTF8("中文(简体)")},
+        {wxLANGUAGE_CHINESE_TRADITIONAL, wxString::FromUTF8("中文(繁體)")},
+        {wxLANGUAGE_SPANISH, wxString::FromUTF8("Español")},
+        {wxLANGUAGE_GERMAN, wxString::FromUTF8("Deutsch")},
+        {wxLANGUAGE_SWEDISH, wxString::FromUTF8("Svenska")},
+        {wxLANGUAGE_DUTCH, wxString::FromUTF8("Nederlands")},
+        {wxLANGUAGE_FRENCH, wxString::FromUTF8("Français")},
+        {wxLANGUAGE_HUNGARIAN, wxString::FromUTF8("Magyar")},
+        {wxLANGUAGE_JAPANESE, wxString::FromUTF8("日本語")},
+        {wxLANGUAGE_ITALIAN, wxString::FromUTF8("italiano")},
+        {wxLANGUAGE_KOREAN, wxString::FromUTF8("한국어")},
+        {wxLANGUAGE_RUSSIAN, wxString::FromUTF8("Русский")},
+        {wxLANGUAGE_CZECH, wxString::FromUTF8("čeština")},
+        {wxLANGUAGE_UKRAINIAN, wxString::FromUTF8("Українська")},
+        {wxLANGUAGE_PORTUGUESE_BRAZILIAN, wxString::FromUTF8("Português (Brasil)")},
+        {wxLANGUAGE_TURKISH, wxString::FromUTF8("Türkçe")},
+        {wxLANGUAGE_POLISH, wxString::FromUTF8("Polski")},
+    };
+    const auto found = names.find(static_cast<wxLanguage>(info->Language));
+    return found == names.end() ? info->Description : found->second;
 }
 
 // Scrolled panel used for every Preferences tab. wxScrolledWindow's default
@@ -179,7 +108,9 @@ public:
     explicit ScrollPanel(wxWindow *parent) : wxScrolledWindow(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL)
     {
         SetScrollRate(5, 5);
-        SetBackgroundColour(*wxWHITE);
+        // Content pane surface — driven by role so dark resolves via semantic()
+        // instead of the legacy White->dark swap map.
+        SetBackgroundColour(StateColor::semantic(MD3::Role::Surface));
     }
 
     bool ShouldScrollToChildOnFocus(wxWindow* child) override { return false; }
@@ -202,19 +133,15 @@ private:
     bool      m_expanded      = false;
 };
 
-wxSizerFlags PreferencesDialog::row_flags() const
-{
-    static auto flags = wxSizerFlags().Expand().Border(wxTOP, FromDIP(8));
-    return flags;
-}
-
 wxBoxSizer *PreferencesDialog::create_item_title(wxString title, wxWindow *parent, wxString tooltip)
 {
     wxBoxSizer *m_sizer_title = new wxBoxSizer(wxHORIZONTAL);
 
-    auto m_title = new wxStaticText(parent, wxID_ANY, title, wxDefaultPosition, wxDefaultSize, 0);
-    m_title->SetForegroundColour(ThemeColor::TextSecondary);
-    m_title->SetFont(::Label::Head_13);
+    // MD3 content section title: 16px / 700 in OnSurface (kit Settings section
+    // header), replacing the legacy Head_13 in TextSecondary.
+    auto m_title = new Label(parent, title);
+    m_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+    m_title->SetFont(::Label::Head_16);
 
     // The Preferences dialog has no native default push button (every visible button
     // is a custom-drawn ::Button, i.e. a plain wxWindow, not a Win32 BUTTON control).
@@ -234,14 +161,10 @@ wxBoxSizer *PreferencesDialog::create_item_title(wxString title, wxWindow *paren
     return m_sizer_title;
 }
 
-wxBoxSizer *PreferencesDialog::create_item_combobox(wxString                        title,
-                                                    wxWindow                       *parent,
-                                                    wxString                        tooltip,
-                                                    std::string                     param,
-                                                    const std::vector<wxString>    &label_list,
-                                                    const std::vector<std::string> &value_list,
-                                                    const std::vector<wxString>    &tooltip_list,
-                                                    std::function<void(int)>        callback)
+wxBoxSizer *PreferencesDialog::create_item_combobox(wxString title, wxWindow *parent, wxString tooltip, std::string param,
+                                                    const std::vector<wxString>& label_list, const std::vector<std::string>& value_list,
+                                                    const std::vector<wxString>& tooltip_list, std::function<void(int)> callback,
+                                                    int title_width, int combox_width)
 {
     assert(label_list.size() == value_list.size());
 
@@ -269,13 +192,20 @@ wxBoxSizer *PreferencesDialog::create_item_combobox(wxString                    
     m_sizer_combox->AddSpacer(FromDIP(ITEM_LEFT_PADDING));
     m_sizer_combox->SetMinSize(wxSize(-1, FromDIP(ITEM_MIN_HEIGHT)));
 
-    auto combo_title = make_row_title(parent, title, FromDIP(TITLE_WIDTH), tooltip);
-    m_sizer_combox->Add(combo_title, wxSizerFlags().CenterVertical().Proportion(1).Border(wxRIGHT, FromDIP(TITLE_CONTROL_GAP)));
+    auto combo_title = new Label(parent, title, 0, title_width == 0 ? wxSize(FromDIP(TITLE_WIDTH), -1) : wxSize(title_width, -1));
+    combo_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+    combo_title->SetFont(::Label::Body_13);
+    combo_title->SetToolTip(tooltip);
+    combo_title->Wrap(-1);
+    m_sizer_combox->Add(combo_title, wxSizerFlags().CenterVertical().Proportion(1));
 
-    auto combobox                           = new ::ComboBox(parent, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(FromDIP(COMBOBOX_WIDTH), -1), 0, nullptr, wxCB_READONLY);
+    auto combobox = new ::ComboBox(parent, wxID_ANY, wxEmptyString, wxDefaultPosition, combox_width == 0 ? wxSize(FromDIP(LARGE_COMBOBOX_WIDTH), -1) : wxSize(combox_width, -1),
+                                   0, nullptr, wxCB_READONLY);
     m_combobox_list[m_combobox_list.size()] = combobox;
+    combobox->SetName(title);
     combobox->SetFont(::Label::Body_13);
     combobox->GetDropDown().SetFont(::Label::Body_13);
+    combobox->SetCornerRadius(FromDIP(10)); // MD3 SelectField r10
 
     for (auto label : label_list) combobox->Append(label);
 
@@ -305,6 +235,7 @@ wxBoxSizer *PreferencesDialog::create_item_combobox(wxString                    
         }
         e.Skip();
     });
+    register_option_row(param, m_sizer_combox);
     return m_sizer_combox;
 }
 
@@ -315,13 +246,18 @@ wxBoxSizer *PreferencesDialog::create_item_language_combobox(
     m_sizer_combox->AddSpacer(FromDIP(ITEM_LEFT_PADDING));
     m_sizer_combox->SetMinSize(wxSize(-1, FromDIP(ITEM_MIN_HEIGHT)));
 
-    auto combo_title = make_row_title(parent, title, FromDIP(TITLE_WIDTH), tooltip);
-    m_sizer_combox->Add(combo_title, wxSizerFlags().CenterVertical().Proportion(1).Border(wxRIGHT, FromDIP(TITLE_CONTROL_GAP)));
+    auto combo_title = new Label(parent, title, 0, wxSize(FromDIP(TITLE_WIDTH), -1));
+    combo_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+    combo_title->SetFont(::Label::Body_13);
+    combo_title->SetToolTip(tooltip);
+    combo_title->Wrap(-1);
+    m_sizer_combox->Add(combo_title, wxSizerFlags().CenterVertical().Proportion(1));
 
-    auto combobox                           = new ::ComboBox(parent, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(FromDIP(COMBOBOX_WIDTH), -1), 0, nullptr, wxCB_READONLY);
+    auto combobox = new ::ComboBox(parent, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(FromDIP(LARGE_COMBOBOX_WIDTH), -1), 0, nullptr, wxCB_READONLY);
     m_combobox_list[m_combobox_list.size()] = combobox;
     combobox->SetFont(::Label::Body_13);
     combobox->GetDropDown().SetFont(::Label::Body_13);
+    combobox->SetCornerRadius(FromDIP(10)); // MD3 SelectField r10
     auto language = app_config->get(param);
     m_current_language_selected = -1;
     std::vector<wxString>::iterator iter;
@@ -472,7 +408,7 @@ wxBoxSizer *PreferencesDialog::create_item_language_combobox(
                     Close();
                     // Reparent(nullptr);
                     GetParent()->RemoveChild(this);
-                    Label::initSysFont(app_config->get_language_code(), false);
+                    Label::initSysFont(I18N::language_mode_profile().font_language);
                     wxGetApp().recreate_GUI(_L("Changing application language"));
                 } else {
                     app_config->set(param, old_value);
@@ -485,7 +421,121 @@ wxBoxSizer *PreferencesDialog::create_item_language_combobox(
         e.Skip();
     });
 
+    register_option_row(param, m_sizer_combox);
     return m_sizer_combox;
+}
+
+wxBoxSizer *PreferencesDialog::create_item_language_mode_combobox(
+    wxString title, wxWindow *parent, wxString tooltip, std::string param,
+    const std::vector<std::pair<std::string, wxString>> &choices)
+{
+    assert(!choices.empty());
+
+    auto *row = new wxBoxSizer(wxHORIZONTAL);
+    row->AddSpacer(FromDIP(ITEM_LEFT_PADDING));
+    row->SetMinSize(wxSize(-1, FromDIP(ITEM_MIN_HEIGHT)));
+
+    auto *combo_title = new Label(parent, title, 0, wxSize(FromDIP(TITLE_WIDTH), -1));
+    combo_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+    combo_title->SetFont(::Label::Body_13);
+    combo_title->SetToolTip(tooltip);
+    combo_title->Wrap(-1);
+    row->Add(combo_title, wxSizerFlags().CenterVertical().Proportion(1));
+
+    auto *combobox = new ::ComboBox(parent, wxID_ANY, wxEmptyString, wxDefaultPosition,
+                                     wxSize(FromDIP(LANGUAGE_COMBOBOX_WIDTH), -1),
+                                     0, nullptr, wxCB_READONLY);
+    m_combobox_list[m_combobox_list.size()] = combobox;
+    combobox->SetFont(::Label::Body_13);
+    combobox->GetDropDown().SetFont(::Label::Body_13);
+    combobox->SetCornerRadius(FromDIP(10)); // MD3 SelectField r10
+
+    const std::string configured = I18N::normalize_language_mode_id(app_config->get(param));
+    m_current_language_selected = -1;
+    for (size_t index = 0; index < choices.size(); ++index) {
+        combobox->Append(choices[index].second);
+        const std::string candidate = I18N::normalize_language_mode_id(choices[index].first);
+        if (candidate == configured ||
+            (I18N::is_baseline_language_mode(candidate) && I18N::is_baseline_language_mode(configured)))
+            m_current_language_selected = static_cast<int>(index);
+    }
+    if (m_current_language_selected < 0)
+        m_current_language_selected = 0;
+    combobox->SetSelection(m_current_language_selected);
+    row->Add(combobox, wxSizerFlags().CenterVertical().Border(wxRIGHT, FromDIP(ITEM_RIGHT_PADDING)));
+
+    combobox->Bind(wxEVT_LEFT_DOWN, [this, combobox](wxMouseEvent &event) {
+        m_current_language_selected = combobox->GetSelection();
+        event.Skip();
+    });
+
+    combobox->Bind(wxEVT_COMBOBOX, [this, param, choices, combobox](wxCommandEvent &event) {
+        const int selected = combobox->GetSelection();
+        if (selected == m_current_language_selected || selected < 0 ||
+            selected >= static_cast<int>(choices.size())) {
+            event.Skip();
+            return;
+        }
+
+        if (wxGetApp().plater()->is_project_dirty()) {
+            const auto result = MessageDialog(
+                static_cast<wxWindow *>(this),
+                _L("The current project has unsaved changes, save it before continuing?"),
+                wxString(SLIC3R_APP_FULL_NAME) + " - " + _L("Save"),
+                wxYES_NO | wxCANCEL | wxYES_DEFAULT | wxCENTRE).ShowModal();
+            if (result == wxID_CANCEL) {
+                combobox->SetSelection(m_current_language_selected);
+                return;
+            }
+            if (result == wxID_YES)
+                wxGetApp().plater()->save_project();
+        }
+
+        auto restart_copy = I18N::translate_mode(L("Switching the language requires application restart.\n"));
+        restart_copy.primary.Trim();
+        restart_copy.secondary.Trim();
+        const auto restart_text = I18N::render_localized_text_stacked(
+            restart_copy.finalize_without_arguments());
+        const auto continue_text = I18N::render_localized_text_stacked(
+            I18N::translate_mode(L("Do you want to continue?")).finalize_without_arguments());
+        const auto caption_text = I18N::render_localized_text_compact(
+            I18N::translate_mode(L("Language selection")).finalize_without_arguments());
+        MessageDialog confirm(nullptr, restart_text.label + "\n\n" + continue_text.label,
+                              caption_text.label, wxICON_QUESTION | wxOK | wxCANCEL);
+        if (confirm.ShowModal() == wxID_CANCEL) {
+            combobox->SetSelection(m_current_language_selected);
+            return;
+        }
+
+        int action_buttons = UnsavedChangesDialog::ActionButtons::SAVE;
+        if (!wxGetApp().check_and_keep_current_preset_changes(
+                _L("Switching application language"),
+                _L("Switching application language while some presets are modified."), action_buttons)) {
+            combobox->SetSelection(m_current_language_selected);
+            return;
+        }
+
+        const std::string previous = app_config->get(param);
+        const std::string next = I18N::normalize_language_mode_id(choices[selected].first);
+        app_config->set(param, next);
+        app_config->save();
+        if (!wxGetApp().load_language(from_u8(next), false)) {
+            app_config->set(param, previous);
+            app_config->save();
+            combobox->SetSelection(m_current_language_selected);
+            return;
+        }
+
+        m_current_language_selected = selected;
+        Close();
+        GetParent()->RemoveChild(this);
+        Label::initSysFont(I18N::language_mode_profile().font_language);
+        wxGetApp().recreate_GUI(_L("Changing application language"));
+        event.Skip();
+    });
+
+    register_option_row(param, row);
+    return row;
 }
 
 wxBoxSizer *PreferencesDialog::create_item_region_combobox(wxString title, wxWindow *parent, wxString tooltip, std::vector<wxString> vlist)
@@ -496,13 +546,18 @@ wxBoxSizer *PreferencesDialog::create_item_region_combobox(wxString title, wxWin
     m_sizer_combox->AddSpacer(FromDIP(ITEM_LEFT_PADDING));
     m_sizer_combox->SetMinSize(wxSize(-1, FromDIP(ITEM_MIN_HEIGHT)));
 
-    auto combo_title = make_row_title(parent, title, FromDIP(TITLE_WIDTH), tooltip);
-    m_sizer_combox->Add(combo_title, wxSizerFlags().CenterVertical().Proportion(1).Border(wxRIGHT, FromDIP(TITLE_CONTROL_GAP)));
+    auto combo_title = new Label(parent, title, 0, wxSize(FromDIP(TITLE_WIDTH), -1));
+    combo_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+    combo_title->SetFont(::Label::Body_13);
+    combo_title->SetToolTip(tooltip);
+    combo_title->Wrap(-1);
+    m_sizer_combox->Add(combo_title, wxSizerFlags().CenterVertical().Proportion(1));
 
-    auto combobox                           = new ::ComboBox(parent, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(FromDIP(COMBOBOX_WIDTH), -1), 0, nullptr, wxCB_READONLY);
+    auto combobox = new ::ComboBox(parent, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(FromDIP(LARGE_COMBOBOX_WIDTH), -1), 0, nullptr, wxCB_READONLY);
     m_combobox_list[m_combobox_list.size()] = combobox;
     combobox->SetFont(::Label::Body_13);
     combobox->GetDropDown().SetFont(::Label::Body_13);
+    combobox->SetCornerRadius(FromDIP(10)); // MD3 SelectField r10
     m_sizer_combox->Add(combobox, wxSizerFlags().CenterVertical().Border(wxRIGHT, FromDIP(ITEM_RIGHT_PADDING)));
 
     std::vector<wxString>::iterator iter;
@@ -557,6 +612,7 @@ wxBoxSizer *PreferencesDialog::create_item_region_combobox(wxString title, wxWin
         //e.Skip();
     });
 
+    register_option_row("region", m_sizer_combox);
     return m_sizer_combox;
 }
 
@@ -566,13 +622,18 @@ wxBoxSizer *PreferencesDialog::create_item_loglevel_combobox(wxString title, wxW
     m_sizer_combox->AddSpacer(FromDIP(ITEM_LEFT_PADDING));
     m_sizer_combox->SetMinSize(wxSize(-1, FromDIP(ITEM_MIN_HEIGHT)));
 
-    auto combo_title = make_row_title(parent, title, FromDIP(TITLE_WIDTH), tooltip);
-    m_sizer_combox->Add(combo_title, wxSizerFlags().CenterVertical().Proportion(1).Border(wxRIGHT, FromDIP(TITLE_CONTROL_GAP)));
+    auto combo_title = new Label(parent, title, 0, wxSize(FromDIP(TITLE_WIDTH), -1));
+    combo_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+    combo_title->SetFont(::Label::Body_13);
+    combo_title->SetToolTip(tooltip);
+    combo_title->Wrap(-1);
+    m_sizer_combox->Add(combo_title, wxSizerFlags().CenterVertical().Proportion(1));
 
     auto combobox                           = new ::ComboBox(parent, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(FromDIP(COMBOBOX_WIDTH), -1), 0, nullptr, wxCB_READONLY);
     m_combobox_list[m_combobox_list.size()] = combobox;
     combobox->SetFont(::Label::Body_13);
     combobox->GetDropDown().SetFont(::Label::Body_13);
+    combobox->SetCornerRadius(FromDIP(10)); // MD3 SelectField r10
 
     std::vector<wxString>::iterator iter;
     for (iter = vlist.begin(); iter != vlist.end(); iter++) { combobox->Append(*iter); }
@@ -585,11 +646,12 @@ wxBoxSizer *PreferencesDialog::create_item_loglevel_combobox(wxString title, wxW
     // save config
     combobox->GetDropDown().Bind(wxEVT_COMBOBOX, [this](wxCommandEvent &e) {
         auto level = Slic3r::get_string_logging_level(e.GetSelection());
-        wxGetApp().set_severity_level(level);
+        Slic3r::set_logging_level(Slic3r::level_string_to_boost(level));
         app_config->set("severity_level",level);
         app_config->save();
         e.Skip();
      });
+    register_option_row("severity_level", m_sizer_combox);
     return m_sizer_combox;
 }
 
@@ -606,9 +668,12 @@ wxBoxSizer *PreferencesDialog::create_item_multiple_combobox(
    m_sizer_tcombox->Add(0, 0, 0, wxEXPAND | wxLEFT, 23);
    m_sizer_tcombox->SetMinSize(wxSize(-1, FromDIP(ITEM_MIN_HEIGHT)));
 
-   auto combo_title = make_row_title(parent, title, FromDIP(TITLE_WIDTH), tooltip);
+   auto combo_title = new Label(parent, title, 0, wxSize(FromDIP(TITLE_WIDTH), -1));
+   combo_title->SetToolTip(tooltip);
+   combo_title->Wrap(-1);
+   combo_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+   combo_title->SetFont(::Label::Body_13);
    m_sizer_tcombox->Add(combo_title, 0, wxALIGN_CENTER | wxALL, 3);
-   m_sizer_tcombox->AddSpacer(FromDIP(TITLE_CONTROL_GAP));
 
    auto combobox_left                      = new ::ComboBox(parent, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(FromDIP(COMBOBOX_WIDTH), -1), 0, nullptr, wxCB_READONLY);
    m_combobox_list[m_combobox_list.size()] = combobox_left;
@@ -620,8 +685,8 @@ wxBoxSizer *PreferencesDialog::create_item_multiple_combobox(
    combobox_left->SetValue(std::string(params[0].mb_str()));
    m_sizer_tcombox->Add(combobox_left, 0, wxALIGN_CENTER, 0);
 
-   auto combo_title_add = new wxStaticText(parent, wxID_ANY, wxT("+"), wxDefaultPosition, wxDefaultSize, 0);
-   combo_title->SetForegroundColour(ThemeColor::TextPrimary);
+   auto combo_title_add = new Label(parent, wxT("+"));
+   combo_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
    combo_title->SetFont(::Label::Body_13);
    combo_title_add->Wrap(-1);
    m_sizer_tcombox->Add(combo_title_add, 0, wxALIGN_CENTER | wxALL, 3);
@@ -650,6 +715,7 @@ wxBoxSizer *PreferencesDialog::create_item_multiple_combobox(
         e.Skip();
     });
 
+    register_option_row(param, m_sizer_tcombox);
     return m_sizer_tcombox;
 }
 
@@ -657,20 +723,32 @@ wxBoxSizer *PreferencesDialog::create_item_input(wxString title, wxString title2
 {
     wxBoxSizer *sizer_input = new wxBoxSizer(wxHORIZONTAL);
     sizer_input->SetMinSize(wxSize(-1, FromDIP(ITEM_MIN_HEIGHT)));
-    auto input_title = make_row_title(parent, title, FromDIP(TITLE_WIDTH), tooltip);
+    auto        input_title   = new Label(parent, title);
+    input_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+    input_title->SetFont(::Label::Body_13);
+    input_title->SetToolTip(tooltip);
+    input_title->Wrap(-1);
 
     auto       input = new ::TextInput(parent, wxEmptyString, wxEmptyString, wxEmptyString, wxDefaultPosition, wxSize(FromDIP(INPUT_WIDTH), FromDIP(ITEM_MIN_HEIGHT)), wxTE_PROCESS_ENTER);
-    StateColor input_bg(std::pair<wxColour, int>(ThemeColor::Grey250, StateColor::Disabled), std::pair<wxColour, int>(ThemeColor::White, StateColor::Enabled));
+    StateColor input_bg(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerHigh), StateColor::Disabled), std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerHighest), StateColor::Enabled));
     input->SetBackgroundColor(input_bg);
+    input->SetCornerRadius(FromDIP(10));
+    input->GetTextCtrl()->SetFont(::Label::Mono_13);
     input->GetTextCtrl()->SetValue(app_config->get(param));
     wxTextValidator validator(wxFILTER_DIGITS);
     input->GetTextCtrl()->SetValidator(validator);
 
-    ::Label *second_title = nullptr;
-    if (!title2.empty()) second_title = make_row_title(parent, title2, FromDIP(TITLE_WIDTH), tooltip);
+    wxStaticText *second_title = nullptr;
+    if (!title2.empty()) {
+        second_title = new Label(parent, title2, 0, wxSize(FromDIP(TITLE_WIDTH), -1));
+        second_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+        second_title->SetFont(::Label::Body_13);
+        second_title->SetToolTip(tooltip);
+        second_title->Wrap(-1);
+    }
 
     sizer_input->AddSpacer(FromDIP(ITEM_LEFT_PADDING));
-    sizer_input->Add(input_title, wxSizerFlags().CenterVertical().Proportion(1).Border(wxRIGHT, FromDIP(TITLE_CONTROL_GAP)));
+    sizer_input->Add(input_title, wxSizerFlags().CenterVertical().Proportion(1));
     sizer_input->Add(input, wxSizerFlags().CenterVertical().Border(wxRIGHT, ITEM_RIGHT_PADDING));
     if (second_title) sizer_input->Add(second_title, 0, wxALIGN_CENTER_VERTICAL | wxALL, 3);
 
@@ -690,6 +768,7 @@ wxBoxSizer *PreferencesDialog::create_item_input(wxString title, wxString title2
         e.Skip();
     });
 
+    register_option_row(param, sizer_input);
     return sizer_input;
 }
 
@@ -698,7 +777,11 @@ wxBoxSizer *PreferencesDialog::create_item_range_input(
 {
     wxBoxSizer *sizer_input = new wxBoxSizer(wxHORIZONTAL);
     sizer_input->SetMinSize(wxSize(-1, FromDIP(ITEM_MIN_HEIGHT)));
-    auto input_title = make_row_title(parent, title, FromDIP(TITLE_WIDTH), tooltip);
+    auto        input_title = new Label(parent, title);
+    input_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+    input_title->SetFont(::Label::Body_13);
+    input_title->SetToolTip(tooltip);
+    input_title->Wrap(-1);
 
     auto float_value = std::atof(app_config->get(param).c_str());
     if (float_value < range_min || float_value > range_max) {
@@ -707,14 +790,16 @@ wxBoxSizer *PreferencesDialog::create_item_range_input(
         app_config->save();
     }
     auto       input = new ::TextInput(parent, wxEmptyString, wxEmptyString, wxEmptyString, wxDefaultPosition, wxSize(FromDIP(INPUT_WIDTH), FromDIP(ITEM_MIN_HEIGHT)), wxTE_PROCESS_ENTER);
-    StateColor input_bg(std::pair<wxColour, int>(ThemeColor::Grey250, StateColor::Disabled), std::pair<wxColour, int>(ThemeColor::White, StateColor::Enabled));
+    StateColor input_bg(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerHigh), StateColor::Disabled), std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerHighest), StateColor::Enabled));
     input->SetBackgroundColor(input_bg);
+    input->SetCornerRadius(FromDIP(10));
+    input->GetTextCtrl()->SetFont(::Label::Mono_13);
     input->GetTextCtrl()->SetValue(app_config->get(param));
     wxTextValidator validator(wxFILTER_NUMERIC);
     input->GetTextCtrl()->SetValidator(validator);
 
     sizer_input->AddSpacer(FromDIP(ITEM_LEFT_PADDING));
-    sizer_input->Add(input_title, wxSizerFlags().CenterVertical().Proportion(1).Border(wxRIGHT, FromDIP(TITLE_CONTROL_GAP)));
+    sizer_input->Add(input_title, wxSizerFlags().CenterVertical().Proportion(1));
     sizer_input->Add(input, wxSizerFlags().CenterVertical().Border(wxRIGHT, FromDIP(ITEM_RIGHT_PADDING)));
     auto format_str=[](int keep_digital,float val){
         std::stringstream ss;
@@ -744,6 +829,7 @@ wxBoxSizer *PreferencesDialog::create_item_range_input(
         e.Skip();
     });
 
+    register_option_row(param, sizer_input);
     return sizer_input;
 }
 
@@ -760,7 +846,11 @@ wxBoxSizer *PreferencesDialog::create_item_range_two_input(wxString             
 {
     wxBoxSizer *sizer_input = new wxBoxSizer(wxHORIZONTAL);
     sizer_input->SetMinSize(wxSize(-1, FromDIP(ITEM_MIN_HEIGHT)));
-    auto input_title = make_row_title(parent, title, FromDIP(TITLE_WIDTH), tooltip);
+    auto        input_title = new Label(parent, title);
+    input_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+    input_title->SetFont(::Label::Body_13);
+    input_title->SetToolTip(tooltip);
+    input_title->Wrap(-1);
 
     auto float_value = std::atof(app_config->get(param).c_str());
     if (float_value < range_min || float_value > range_max) {
@@ -774,20 +864,24 @@ wxBoxSizer *PreferencesDialog::create_item_range_two_input(wxString             
         app_config->set(param1, std::to_string(range_min));
         app_config->save();
     }
-    auto       input = new ::TextInput(parent, wxEmptyString, wxEmptyString, wxEmptyString, wxDefaultPosition, wxSize(FromDIP(DUAL_INPUT_WIDTH), FromDIP(ITEM_MIN_HEIGHT)), wxTE_PROCESS_ENTER);
-    StateColor input_bg(std::pair<wxColour, int>(ThemeColor::Grey250, StateColor::Disabled), std::pair<wxColour, int>(ThemeColor::White, StateColor::Enabled));
+    auto       input = new ::TextInput(parent, wxEmptyString, wxEmptyString, wxEmptyString, wxDefaultPosition, wxSize(FromDIP(INPUT_WIDTH), FromDIP(ITEM_MIN_HEIGHT)), wxTE_PROCESS_ENTER);
+    StateColor input_bg(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerHigh), StateColor::Disabled), std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerHighest), StateColor::Enabled));
     input->SetBackgroundColor(input_bg);
+    input->SetCornerRadius(FromDIP(10));
+    input->GetTextCtrl()->SetFont(::Label::Mono_13);
     input->GetTextCtrl()->SetValue(app_config->get(param));
     wxTextValidator validator(wxFILTER_NUMERIC);
     input->GetTextCtrl()->SetValidator(validator);
 
-    auto input1 = new ::TextInput(parent, wxEmptyString, wxEmptyString, wxEmptyString, wxDefaultPosition, wxSize(FromDIP(DUAL_INPUT_WIDTH), FromDIP(ITEM_MIN_HEIGHT)), wxTE_PROCESS_ENTER);
+    auto input1 = new ::TextInput(parent, wxEmptyString, wxEmptyString, wxEmptyString, wxDefaultPosition, wxSize(FromDIP(INPUT_WIDTH), FromDIP(ITEM_MIN_HEIGHT)), wxTE_PROCESS_ENTER);
     input1->SetBackgroundColor(input_bg);
+    input1->SetCornerRadius(FromDIP(10));
+    input1->GetTextCtrl()->SetFont(::Label::Mono_13);
     input1->GetTextCtrl()->SetValue(app_config->get(param1));
     input1->GetTextCtrl()->SetValidator(validator);
 
     sizer_input->AddSpacer(FromDIP(ITEM_LEFT_PADDING));
-    sizer_input->Add(input_title, wxSizerFlags().CenterVertical().Proportion(1).Border(wxRIGHT, FromDIP(TITLE_CONTROL_GAP)));
+    sizer_input->Add(input_title, wxSizerFlags().CenterVertical().Proportion(1));
     sizer_input->Add(input, 0, wxALIGN_CENTER_VERTICAL, 0);
 
     sizer_input->AddSpacer(FromDIP(8));
@@ -839,6 +933,8 @@ wxBoxSizer *PreferencesDialog::create_item_range_two_input(wxString             
         e.Skip();
     });
 
+    register_option_row(param, sizer_input);
+    register_option_row(param1, sizer_input);
     return sizer_input;
 }
 
@@ -846,11 +942,13 @@ wxBoxSizer *PreferencesDialog::create_item_switch(wxString title, wxWindow *pare
 {
     wxBoxSizer *m_sizer_switch = new wxBoxSizer(wxHORIZONTAL);
     m_sizer_switch->SetMinSize(wxSize(-1, FromDIP(ITEM_MIN_HEIGHT)));
-    auto switch_title = make_row_title(parent, title, FromDIP(TITLE_WIDTH), tooltip);
+    auto        switch_title   = new Label(parent, title, 0, wxSize(FromDIP(TITLE_WIDTH), -1));
+    switch_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+    switch_title->SetFont(::Label::Body_13);
+    switch_title->SetToolTip(tooltip);
+    switch_title->Wrap(-1);
     auto switchbox = new ::SwitchButton(parent, wxID_ANY);
-
-    /*auto index = app_config->get(param);
-    if (!index.empty()) { combobox->SetSelection(atoi(index.c_str())); }*/
+    switchbox->SetValue(app_config->get(param) == "true");
 
     m_sizer_switch->Add(0, 0, 0, wxEXPAND | wxLEFT, 23);
     m_sizer_switch->Add(switch_title, 0, wxALIGN_CENTER | wxALL, 3);
@@ -858,50 +956,33 @@ wxBoxSizer *PreferencesDialog::create_item_switch(wxString title, wxWindow *pare
     m_sizer_switch->Add(switchbox, 0, wxALIGN_CENTER, 0);
     m_sizer_switch->Add( 0, 0, 0, wxEXPAND|wxLEFT, 40 );
 
-    //// save config
-    switchbox->Bind(wxEVT_TOGGLEBUTTON, [this, param](wxCommandEvent &e) {
-        /* app_config->set(param, std::to_string(e.GetSelection()));
-         app_config->save();*/
-         e.Skip();
+    //// save config — the handler was previously a no-op stub; wire it to the
+    //// backing AppConfig key so the MD3 Switch actually persists its value.
+    switchbox->Bind(wxEVT_TOGGLEBUTTON, [this, switchbox, param](wxCommandEvent &e) {
+        app_config->set_bool(param, switchbox->GetValue());
+        app_config->save();
+        e.Skip();
     });
+    register_option_row(param, m_sizer_switch);
     return m_sizer_switch;
 }
 
-wxBoxSizer* PreferencesDialog::create_item_darkmode_checkbox(wxString title, wxWindow* parent, wxString tooltip, int padding_left, std::string param)
+// Apply a dark/light theme switch and fan out the same side effects the legacy
+// "Enable dark mode" checkbox performed (dark-mode flag, native repaint on MSW,
+// and the GL canvas colour-mode event). Driven by the Appearance Theme
+// SegmentedControl; cross-platform (the MSW-only repaint stays behind its guard).
+void PreferencesDialog::apply_dark_mode(bool dark)
 {
-    wxBoxSizer* m_sizer_checkbox = new wxBoxSizer(wxHORIZONTAL);
-    m_sizer_checkbox->SetMinSize(wxSize(-1, FromDIP(ITEM_MIN_HEIGHT)));
+    wxGetApp().Update_dark_mode_flag();
 
-    auto checkbox = new ::CheckBox(parent);
-    m_checkbox_list[m_checkbox_list.size()] = checkbox;
-    checkbox->SetValue((app_config->get(param) == "1") ? true : false);
-    m_dark_mode_ckeckbox = checkbox;
-
-    auto checkbox_title = make_row_title(parent, title, FromDIP(TITLE_WIDTH), tooltip);
-
-    m_sizer_checkbox->AddSpacer(FromDIP(ITEM_LEFT_PADDING));
-    m_sizer_checkbox->Add(checkbox_title, wxSizerFlags().CenterVertical().Proportion(1).Border(wxRIGHT, FromDIP(TITLE_CONTROL_GAP)));
-    m_sizer_checkbox->Add(checkbox, wxSizerFlags().CenterVertical().Border(wxRIGHT, FromDIP(ITEM_RIGHT_PADDING)));
-
-    //// save config
-    checkbox->Bind(wxEVT_TOGGLEBUTTON, [this, checkbox, param](wxCommandEvent& e) {
-        app_config->set(param, checkbox->GetValue() ? "1" : "0");
-        app_config->save();
-        wxGetApp().Update_dark_mode_flag();
-
-        //dark mode
+    //dark mode
 #ifdef _MSW_DARK_MODE
-        wxGetApp().force_colors_update();
-        wxGetApp().update_ui_from_settings();
-        set_dark_mode();
+    wxGetApp().force_colors_update();
+    wxGetApp().update_ui_from_settings();
+    set_dark_mode();
 #endif
-        SimpleEvent evt = SimpleEvent(EVT_GLCANVAS_COLOR_MODE_CHANGED);
-        wxPostEvent(wxGetApp().plater(), evt);
-        e.Skip();
-        });
-
-    checkbox->SetToolTip(tooltip);
-    return m_sizer_checkbox;
+    SimpleEvent evt = SimpleEvent(EVT_GLCANVAS_COLOR_MODE_CHANGED);
+    wxPostEvent(wxGetApp().plater(), evt);
 }
 
 void PreferencesDialog::set_dark_mode()
@@ -917,12 +998,168 @@ void PreferencesDialog::set_dark_mode()
 #endif
 }
 
+// Sync the MD3 runtime density + accent token state (MD3Tokens.hpp) to the
+// persisted Appearance choices. Called at Preferences construction so the tokens
+// reflect the user's saved selection; widgets/dialogs built afterwards read the
+// active density metrics and the accent-recoloured roles. The same persisted
+// state is also applied at process startup in GUI_App::on_init_inner (before
+// the first window is built), so a saved choice takes effect on a fresh launch;
+// this construction-time sync keeps the tokens honest if the config changed
+// underneath a running process.
+static void apply_persisted_md3_appearance()
+{
+    auto *cfg = wxGetApp().app_config;
+    if (!cfg)
+        return;
+    MD3::Metrics::setDensity(cfg->get("ui_density") == "compact" ? MD3::Metrics::Density::Compact
+                                                                 : MD3::Metrics::Density::Comfortable);
+    std::string seed = cfg->get("ui_accent_seed");
+    if (seed.empty())
+        seed = "#146c2e"; // Brand seed clears the override -> pristine Brand tones
+    wxColour seed_colour(wxString::FromUTF8(seed));
+    // A hand-corrupted persisted value parses to an invalid wxColour whose RGB
+    // reads as black; fall back to the Brand seed (clears the override) rather
+    // than seeding a near-black accent.
+    if (!seed_colour.IsOk())
+        seed_colour = wxColour(wxString::FromUTF8("#146c2e"));
+    MD3::setAccentSeed(seed_colour);
+}
+
+// Re-theme the live UI after an Appearance accent/density change, reusing the
+// same fan-out the light/dark toggle performs (see apply_dark_mode): push
+// freshly-resolved MD3 role colours to the wx widget tree, refresh the 3D
+// viewport chrome, then repaint/relayout the open Preferences dialog so its
+// swatches, nav pills and segmented controls update at once. Accent (colour)
+// changes propagate live; a density change fully re-lays-out only windows built
+// after the change (restart-scoped for already-open windows — see the followup).
+static void refresh_md3_appearance(wxWindow *dialog)
+{
+#ifdef _MSW_DARK_MODE
+    wxGetApp().force_colors_update();
+    wxGetApp().update_ui_from_settings();
+#endif
+    if (wxGetApp().plater()) {
+        SimpleEvent evt = SimpleEvent(EVT_GLCANVAS_COLOR_MODE_CHANGED);
+        wxPostEvent(wxGetApp().plater(), evt);
+    }
+    if (wxGetApp().mainframe)
+        wxGetApp().mainframe->Refresh();
+    if (dialog) {
+        dialog->Refresh();
+        dialog->Layout();
+    }
+}
+
+// Bilingual label helpers for the funny-level rows. The source strings carry
+// their own Cantonese entry in the LanguageMode copy table, so they render as
+// "English · 廣東話" in bilingual mode and as plain English otherwise.
+static wxString funny_row_label(const char *source)
+{
+    return I18N::render_localized_text_compact(I18N::translate_mode(source).finalize_without_arguments()).label;
+}
+
+static wxString funny_row_label_int(const char *source, int value)
+{
+    const I18N::LocalizedText copy = I18N::translate_mode(source);
+    return I18N::render_localized_text_compact(
+               copy.format_each([value](wxString pattern) { return wxString::Format(pattern, value); }))
+        .label;
+}
+
+wxBoxSizer *PreferencesDialog::create_item_funny_level_slider(wxWindow *parent, std::string param, bool cantonese)
+{
+    const I18N::FunnyLanguage language = cantonese ? I18N::FunnyLanguage::Cantonese : I18N::FunnyLanguage::English;
+    const wxString            title    = funny_row_label(cantonese ? "Funny level (Cantonese)" : "Funny level (English)");
+    const int                 level    = I18N::parse_funny_level(app_config->get(param));
+    // Provenance: the key is only written when the user moves the slider, so an
+    // absent key genuinely means the compiled default is in effect.
+    auto stored = std::make_shared<bool>(!app_config->get(param).empty());
+
+    auto *row  = new wxBoxSizer(wxVERTICAL);
+    auto *head = new wxBoxSizer(wxHORIZONTAL);
+    head->SetMinSize(wxSize(-1, FromDIP(ITEM_MIN_HEIGHT)));
+
+    auto *text_col = new wxBoxSizer(wxVERTICAL);
+    auto *label    = new Label(parent, title);
+    label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+    label->SetFont(::Label::Body_13);
+    label->Wrap(FromDIP(320));
+    text_col->Add(label, 0);
+
+    auto *value_label = new Label(parent, wxEmptyString);
+    value_label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+    value_label->SetFont(::Label::Body_12);
+    text_col->Add(value_label, 0, wxTOP, FromDIP(2));
+
+    auto *provenance = new Label(parent, wxEmptyString);
+    provenance->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+    provenance->SetFont(::Label::Body_12);
+    text_col->Add(provenance, 0, wxTOP, FromDIP(2));
+
+    auto *slider = new ::Slider(parent, level, I18N::FUNNY_LEVEL_MIN, I18N::FUNNY_LEVEL_MAX, false, wxDefaultPosition,
+                                wxSize(FromDIP(200), -1));
+    slider->SetName(title); // screen-reader name (SliderAccessible reads GetName())
+    slider->SetToolTip(funny_row_label("1 = fully serious, 5 = maximum playfulness"));
+
+    head->AddSpacer(FromDIP(ITEM_LEFT_PADDING));
+    head->Add(text_col, wxSizerFlags().CenterVertical().Proportion(1));
+    head->Add(slider, wxSizerFlags().CenterVertical().Border(wxRIGHT, FromDIP(ITEM_RIGHT_PADDING)));
+    row->Add(head, 0, wxEXPAND);
+
+    // Progressive disclosure: the full explanation stays behind a Text button
+    // (keyboard operable: Space / Enter) until the user asks for it.
+    auto *details = new ::Button(parent, funny_row_label("What does this change?"));
+    details->SetVariant(Button::Variant::Text);
+    details->SetButtonSize(Button::Size::Small);
+    auto *caption = new Label(parent, funny_row_label(
+        "Sets the tone of every message Bambu Studio shows in this language, including errors, warnings and destructive confirmations. It never changes what a message says has happened or what will be affected."));
+    caption->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+    caption->SetFont(::Label::Body_12);
+    caption->Wrap(FromDIP(480));
+    caption->Hide();
+    row->Add(details, 0, wxLEFT, FromDIP(ITEM_LEFT_PADDING - 12));
+    row->Add(caption, 0, wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(ITEM_LEFT_PADDING));
+
+    details->Bind(wxEVT_BUTTON, [parent, details, caption](wxCommandEvent &) {
+        const bool show = !caption->IsShown();
+        caption->Show(show);
+        details->SetLabel(funny_row_label(show ? "Hide details" : "What does this change?"));
+        parent->Layout();
+        if (auto *scrolled = dynamic_cast<wxScrolledWindow *>(parent))
+            scrolled->FitInside();
+    });
+
+    auto refresh = [value_label, provenance, stored](int value) {
+        value_label->SetLabel(funny_row_label_int("Level %d of 5", value));
+        provenance->SetLabel(*stored ? funny_row_label_int("Stored in BambuStudio.conf as %d.", value)
+                                     : funny_row_label_int("Not stored yet; using the compiled default %d.",
+                                                           I18N::FUNNY_LEVEL_DEFAULT));
+    };
+    refresh(level);
+
+    slider->SetOnChange([this, param, language, stored, refresh](int value) {
+        const int clamped = I18N::clamp_funny_level(value);
+        app_config->set(param, std::to_string(clamped));
+        app_config->save();
+        I18N::language_mode_service().set_funny_level(language, clamped);
+        *stored = true;
+        refresh(clamped);
+    });
+
+    return row;
+}
+
 wxBoxSizer *PreferencesDialog::create_item_checkbox(wxString title, wxWindow *parent, wxString tooltip, int padding_left, std::string param)
 {
     wxBoxSizer *m_sizer_checkbox  = new wxBoxSizer(wxHORIZONTAL);
     m_sizer_checkbox->SetMinSize(wxSize(-1, FromDIP(ITEM_MIN_HEIGHT)));
 
-    auto checkbox = new ::CheckBox(parent);
+    // MD3 general-settings row: the boolean preference is a right-aligned MD3
+    // Switch (44x24 icon-mode SwitchButton) instead of the legacy leading
+    // CheckBox. The AppConfig read/write bindings below are unchanged — only the
+    // control class and the row anatomy change.
+    auto checkbox = new ::SwitchButton(parent, wxID_ANY);
+    checkbox->SetName(title);
     m_checkbox_list[m_checkbox_list.size()] = checkbox;
     if (param == "privacyuse") {
         checkbox->SetValue((app_config->get("firstguide", param) == "true") ? true : false);
@@ -932,10 +1169,29 @@ wxBoxSizer *PreferencesDialog::create_item_checkbox(wxString title, wxWindow *pa
         checkbox->SetValue((app_config->get(param) == "true") ? true : false);
     }
 
-    auto checkbox_title = make_row_title(parent, title, FromDIP(TITLE_WIDTH), tooltip);
+    // Two-line label column: primary 13.5/OnSurface over an optional secondary
+    // description (12/OnSurfaceVariant) sourced from the tooltip when it adds
+    // information beyond the primary label.
+    auto *text_col = new wxBoxSizer(wxVERTICAL);
+    auto  checkbox_title = new Label(parent, title);
+    checkbox_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+    checkbox_title->SetFont(::Label::Body_13);
+    checkbox_title->Wrap(FromDIP(320));
+    // Right-click on a setting row -> "Edit appearance..." for that row; the
+    // id is the AppConfig key so the override follows the setting, not its
+    // position ("preferences.row/<param>" inherits from "preferences.row").
+    ElementStyle::apply(checkbox_title, "preferences.row/" + param, title);
+    text_col->Add(checkbox_title, 0);
+    if (!tooltip.empty() && tooltip != title) {
+        auto *checkbox_desc = new Label(parent, tooltip);
+        checkbox_desc->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+        checkbox_desc->SetFont(::Label::Body_12);
+        checkbox_desc->Wrap(FromDIP(320));
+        text_col->Add(checkbox_desc, 0, wxTOP, FromDIP(2));
+    }
 
     m_sizer_checkbox->AddSpacer(FromDIP(ITEM_LEFT_PADDING));
-    m_sizer_checkbox->Add(checkbox_title, wxSizerFlags().CenterVertical().Proportion(1).Border(wxRIGHT, FromDIP(TITLE_CONTROL_GAP)));
+    m_sizer_checkbox->Add(text_col, wxSizerFlags().CenterVertical().Proportion(1));
     m_sizer_checkbox->Add(checkbox, wxSizerFlags().CenterVertical().Border(wxRIGHT, FromDIP(ITEM_RIGHT_PADDING)));
 
     //// save config
@@ -960,14 +1216,15 @@ wxBoxSizer *PreferencesDialog::create_item_checkbox(wxString title, wxWindow *pa
             app_config->save();
         }
 
+        if (param == I18N::DIALOG_EMOJIS_KEY)
+            I18N::language_mode_service().set_dialog_emojis(checkbox->GetValue());
+
+        if (param == "show_bed_heat_soak_area" && wxGetApp().plater())
+            wxGetApp().plater()->on_show_bed_heat_soak_area_changed();
+
         if (param == "staff_pick_switch") {
             bool pbool = app_config->get("staff_pick_switch") == "true";
             wxGetApp().switch_staff_pick(pbool);
-        }
-
-        if (param == "show_bed_heat_soak_area") {
-            if (wxGetApp().plater())
-                wxGetApp().plater()->on_show_bed_heat_soak_area_changed();
         }
 
         if (param == "sync_user_preset") {
@@ -1112,6 +1369,7 @@ wxBoxSizer *PreferencesDialog::create_item_checkbox(wxString title, wxWindow *pa
 
 
     checkbox->SetToolTip(tooltip);
+    register_option_row(param, m_sizer_checkbox);
     return m_sizer_checkbox;
 }
 
@@ -1119,32 +1377,31 @@ wxWindow* PreferencesDialog::create_item_downloads(wxWindow* parent, int padding
 {
     wxString download_path = wxString::FromUTF8(app_config->get("download_path"));
     auto item_panel = new wxWindow(parent, wxID_ANY);
-    item_panel->SetBackgroundColour(*wxWHITE);
+    item_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::Surface));
 
     wxBoxSizer *sizer = new wxBoxSizer(wxHORIZONTAL);
     sizer->AddSpacer(FromDIP(ITEM_LEFT_PADDING));
     sizer->SetMinSize(wxSize(-1, FromDIP(ITEM_MIN_HEIGHT)));
 
-    auto m_staticTextTitle = make_row_title(item_panel, _L("Download path"), FromDIP(TITLE_WIDTH));
+    auto m_staticTextTitle = new Label(item_panel, _L("Download path"));
+    m_staticTextTitle->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+    m_staticTextTitle->SetFont(::Label::Body_13);
+    m_staticTextTitle->Wrap(-1);
 
     auto m_staticTextPath = new ::TextInput(item_panel, download_path, wxEmptyString, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
+    // m_staticTextPath->SetBackgroundColor(ThemeColor::Grey250);
+    // m_staticTextPath->SetBorderColor(ThemeColor::Grey350);
     m_staticTextPath->SetCornerRadius(FromDIP(4));
     m_staticTextPath->GetTextCtrl()->SetFont(::Label::Body_13);
 
+    // MD3 outlined button (kit actions/Button): transparent interior + 1px
+    // Outline ring with OnSurface text and a pill radius, resolved through
+    // semantic roles by Button::applyMD3Style() — replaces the White/BrandGreen
+    // StateColor literals.
     auto m_button_download = new Button(item_panel, _L("Browse"));
     m_button_list[m_button_list.size()] = m_button_download;
-    StateColor abort_bg(std::pair<wxColour, int>(ThemeColor::White, StateColor::Disabled), std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed),
-                        std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered), std::pair<wxColour, int>(ThemeColor::White, StateColor::Enabled),
-                        std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal));
-    m_button_download->SetBackgroundColor(abort_bg);
-    StateColor abort_bd(std::pair<wxColour, int>(ThemeColor::TextDisabled, StateColor::Disabled), std::pair<wxColour, int>(ThemeColor::TextPrimary, StateColor::Enabled));
-    m_button_download->SetBorderColor(abort_bd);
-    StateColor abort_text(std::pair<wxColour, int>(ThemeColor::TextDisabled, StateColor::Disabled), std::pair<wxColour, int>(ThemeColor::TextPrimary, StateColor::Enabled));
-    m_button_download->SetTextColor(abort_text);
-    m_button_download->SetFont(Label::Body_10);
-    m_button_download->SetMinSize(wxSize(FromDIP(BTN_WIDTH), FromDIP(BTN_HEIGHT)));
-    m_button_download->SetSize(wxSize(FromDIP(58), FromDIP(22)));
-    m_button_download->SetCornerRadius(FromDIP(4));
+    m_button_download->SetVariant(Button::Variant::Outlined);
+    m_button_download->SetButtonSize(Button::Size::Small);
 
     m_button_download->Bind(wxEVT_BUTTON, [this, m_staticTextPath, item_panel](auto& e) {
         wxString defaultPath = wxT("/");
@@ -1159,20 +1416,73 @@ wxWindow* PreferencesDialog::create_item_downloads(wxWindow* parent, int padding
         }
         });
 
-    // Keep title + path together within the title column so the path input's right
-    // edge never crosses the combobox column's left edge.
-    wxBoxSizer *title_path = new wxBoxSizer(wxHORIZONTAL);
-    title_path->SetMinSize(wxSize(FromDIP(TITLE_WIDTH), -1));
-    title_path->Add(m_staticTextTitle, wxSizerFlags().CenterVertical().Border(wxRIGHT, FromDIP(8)));
-    title_path->Add(m_staticTextPath, wxSizerFlags().CenterVertical().Proportion(1));
-
-    sizer->Add(title_path, wxSizerFlags().CenterVertical().Border(wxRIGHT, FromDIP(8)));
-    sizer->AddStretchSpacer();
+    sizer->Add(m_staticTextTitle, wxSizerFlags().CenterVertical().Border(wxRIGHT, FromDIP(8)));
+    sizer->Add(m_staticTextPath, wxSizerFlags().CenterVertical().Proportion(1).Border(wxRIGHT, FromDIP(8)));
     sizer->Add(m_button_download, wxSizerFlags().CenterVertical().Border(wxRIGHT, FromDIP(ITEM_RIGHT_PADDING)));
 
     item_panel->SetSizer(sizer);
     item_panel->Layout();
 
+    register_option_row(param, nullptr, item_panel);
+    return item_panel;
+}
+
+// External-editor executable row (General > "External editor" set to Custom…):
+// a read-only path field + an outlined Browse button opening a wxFileDialog
+// whose selection persists to AppConfig key `param` ("external_editor_path").
+// Same row anatomy as create_item_downloads above.
+wxWindow* PreferencesDialog::create_item_external_editor(wxWindow* parent, int padding_left, std::string param)
+{
+    wxString editor_path = wxString::FromUTF8(app_config->get(param));
+    auto item_panel = new wxWindow(parent, wxID_ANY);
+    item_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::Surface));
+
+    wxBoxSizer *sizer = new wxBoxSizer(wxHORIZONTAL);
+    sizer->AddSpacer(FromDIP(ITEM_LEFT_PADDING));
+    sizer->SetMinSize(wxSize(-1, FromDIP(ITEM_MIN_HEIGHT)));
+
+    auto m_staticTextTitle = new Label(item_panel, _L("External editor path"));
+    m_staticTextTitle->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+    m_staticTextTitle->SetFont(::Label::Body_13);
+    m_staticTextTitle->Wrap(-1);
+
+    auto m_staticTextPath = new ::TextInput(item_panel, editor_path, wxEmptyString, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
+    m_staticTextPath->SetCornerRadius(FromDIP(4));
+    m_staticTextPath->GetTextCtrl()->SetFont(::Label::Body_13);
+
+    // MD3 outlined button, matching the Download-path Browse button above.
+    auto m_button_browse = new Button(item_panel, _L("Browse"));
+    m_button_browse->SetName(_L("External editor browse"));
+    m_button_browse->SetName(_L("Download path browse"));
+    m_button_list[m_button_list.size()] = m_button_browse;
+    m_button_browse->SetVariant(Button::Variant::Outlined);
+    m_button_browse->SetButtonSize(Button::Size::Small);
+
+    m_button_browse->Bind(wxEVT_BUTTON, [this, m_staticTextPath, item_panel, param](auto& e) {
+#ifdef __WXMSW__
+        const wxString wildcard = _L("Executable files") + " (*.exe)|*.exe";
+#else
+        const wxString wildcard = _L("All files") + " (*.*)|*.*";
+#endif
+        wxFileDialog dialog(this, _L("Choose the external editor executable"), wxEmptyString, wxEmptyString, wildcard, wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+
+        if (dialog.ShowModal() == wxID_OK) {
+            wxString editor_path = dialog.GetPath();
+            app_config->set(param, std::string(editor_path.ToUTF8().data()));
+            app_config->save();
+            m_staticTextPath->GetTextCtrl()->SetValue(editor_path);
+            item_panel->Layout();
+        }
+        });
+
+    sizer->Add(m_staticTextTitle, wxSizerFlags().CenterVertical().Border(wxRIGHT, FromDIP(8)));
+    sizer->Add(m_staticTextPath, wxSizerFlags().CenterVertical().Proportion(1).Border(wxRIGHT, FromDIP(8)));
+    sizer->Add(m_button_browse, wxSizerFlags().CenterVertical().Border(wxRIGHT, FromDIP(ITEM_RIGHT_PADDING)));
+
+    item_panel->SetSizer(sizer);
+    item_panel->Layout();
+
+    register_option_row(param, nullptr, item_panel);
     return item_panel;
 }
 
@@ -1189,7 +1499,7 @@ wxSizer *PreferencesDialog::create_item_radiobox(wxString title, wxWindow *paren
     rs->m_selected    = false;
     m_radio_group.Append(rs);
 
-    wxStaticText *text = new wxStaticText(parent, wxID_ANY, title, wxDefaultPosition, wxDefaultSize);
+    wxStaticText *text = new Label(parent, title);
 
     radiobox->SetToolTip(tooltip);
     text->SetToolTip(tooltip);
@@ -1199,17 +1509,25 @@ wxSizer *PreferencesDialog::create_item_radiobox(wxString title, wxWindow *paren
     sizer->SetMinSize(wxSize(-1, FromDIP(ITEM_MIN_HEIGHT)));
     sizer->Add(text, wxSizerFlags().CenterVertical().Proportion(1));
     sizer->Add(radiobox, wxSizerFlags().CenterVertical().Border(wxRIGHT, ITEM_RIGHT_PADDING));
+    register_option_row(param, sizer);
     return sizer;
 }
 
 PreferencesDialog::PreferencesDialog(wxWindow *parent, wxWindowID id, const wxString &title, const wxPoint &pos, const wxSize &size, long style)
     : DPIDialog(parent, id, _L("Preferences"), pos, size, style)
 {
-    SetBackgroundColour(*wxWHITE);
-    SetSize(wxSize(620, 580));
+    // Root dialog surface (kit Settings root = Surface); resolves by role in dark.
+    SetBackgroundColour(StateColor::semantic(MD3::Role::Surface));
+    SetSize(FromDIP(wxSize(780, 580)));
+    SetMinSize(FromDIP(wxSize(640, 480)));
     m_original_use_12h_time_format = wxGetApp().app_config->get("use_12h_time_format");
+    // Sync the MD3 density/accent token state to the persisted Appearance choices
+    // before the tabs are built so this dialog and later-constructed surfaces
+    // resolve the saved density metrics and accent roles.
+    apply_persisted_md3_appearance();
     create();
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::FinishChrome(this);
     Bind(wxEVT_CLOSE_WINDOW, [this](wxCloseEvent& event) {
         try {
             NetworkAgent* agent = GUI::wxGetApp().getAgent();
@@ -1230,6 +1548,29 @@ PreferencesDialog::PreferencesDialog(wxWindow *parent, wxWindowID id, const wxSt
         });
 }
 
+void PreferencesDialog::place_settings_strip()
+{
+    if (!m_body_row || !m_tabbar)
+        return;
+    m_body_row->Detach(m_tabbar);
+    using MD3::Tabs::DockEdge;
+    const DockEdge edge = m_tabbar->GetDockEdge();
+    m_body_row->SetOrientation(MD3::Tabs::is_vertical(edge) ? wxHORIZONTAL : wxVERTICAL);
+    if (edge == DockEdge::Left || edge == DockEdge::Top)
+        m_body_row->Insert(0, m_tabbar, 0, wxEXPAND);
+    else
+        m_body_row->Add(m_tabbar, 0, wxEXPAND);
+    m_body_row->Layout();
+}
+
+int PreferencesDialog::page_for_id(const std::string &id) const
+{
+    for (size_t i = 0; i < m_page_ids.size(); ++i)
+        if (m_page_ids[i] == id)
+            return int(i);
+    return -1;
+}
+
 void PreferencesDialog::create()
 {
     app_config             = get_app_config();
@@ -1247,40 +1588,94 @@ void PreferencesDialog::create()
     SetSizeHints(wxDefaultSize, wxDefaultSize);
 
     auto main_sizer = new wxBoxSizer(wxVERTICAL);
+    main_sizer->Add(new MD3DialogCaption(this, _L("Preferences")), 0, wxEXPAND);
 
-    m_tabbar = new TextTabbar(this);
+    TabStrip::Options strip_opts;
+    strip_opts.surface_key     = "preferences";
+    strip_opts.surface_name    = _L("Preferences");
+    strip_opts.strip_name      = _L("Settings sections");
+    strip_opts.default_edge    = MD3::Tabs::DockEdge::Left;
+    strip_opts.close_mode      = TabStrip::CloseMode::Hide; // "close" hides a section; restore from the overflow menu
+    strip_opts.show_new_button = false;
+    m_tabbar = new TabStrip(this, strip_opts);
     m_book   = new wxSimplebook(this, wxID_ANY);
 
-    auto add_tab = [this](const wxString &label, wxWindow *page) {
-        m_tabbar->AddTab(label);
+    // Right-hand content pane: a top MD3 SearchField pill over the section book.
+    auto *content_pane = new wxBoxSizer(wxVERTICAL);
+    m_search = new SearchField(this, _L("Search settings"));
+    content_pane->Add(m_search, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(16));
+    // Inline "no results" hint under the search pill; hidden until an active
+    // query matches nothing (see apply_search_filter).
+    m_search_empty_hint = new Label(this, _L("No settings match your search."));
+    m_search_empty_hint->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+    m_search_empty_hint->SetFont(::Label::Body_13);
+    m_search_empty_hint->Hide();
+    content_pane->Add(m_search_empty_hint, 0, wxLEFT | wxRIGHT | wxTOP, FromDIP(16));
+    content_pane->Add(m_book, 1, wxEXPAND | wxTOP, FromDIP(12));
+
+    // Section strip + content pane. The strip's dock edge decides the row's
+    // orientation and which side the strip sits on (see place_settings_strip).
+    m_body_row = new wxBoxSizer(wxHORIZONTAL);
+    m_body_row->Add(content_pane, 1, wxEXPAND);
+
+    auto add_tab = [this](const std::string &id, const wxString &label, wxWindow *page) {
+        m_page_ids.push_back(id);
         m_book->AddPage(page, label);
+        m_tabbar->AddTab(id, label);
     };
-    add_tab(_CTX(L_CONTEXT("General", "Preference"), "Preference"), create_general_tab());
-    add_tab(_CTX(L_CONTEXT("User", "Preference"), "Preference"), create_user_tab());
-    add_tab(_CTX(L_CONTEXT("3D", "Preference"), "Preference"), create_3d_tab());
-    add_tab(_CTX(L_CONTEXT("Other", "Preference"), "Preference"), create_other_tab());
+    // Sections are stable ids so the persisted strip layout (order / pins /
+    // groups / hidden / dock edge) survives relabelling and reordering in code.
+    add_tab("appearance", _L("Appearance"), create_appearance_tab());
+    add_tab("general", _CTX(L_CONTEXT("General", "Preference"), "Preference"), create_general_tab());
+    add_tab("user", _CTX(L_CONTEXT("User", "Preference"), "Preference"), create_user_tab());
+    add_tab("3d", _CTX(L_CONTEXT("3D", "Preference"), "Preference"), create_3d_tab());
+    add_tab("other", _CTX(L_CONTEXT("Other", "Preference"), "Preference"), create_other_tab());
 
 #if !BBL_RELEASE_TO_PUBLIC
-    add_tab(_L("Developer Tools"), create_developer_tab());
+    add_tab("developer", _L("Developer Tools"), create_developer_tab());
 #endif
 
-    m_tabbar->SetSelection(0);
-    m_book->SetSelection(0);
-    m_tabbar->Bind(wxEVT_CHOICE, [this](wxCommandEvent &e) { m_book->SetSelection(e.GetInt()); });
+    // Apply the saved layout, then show whichever section the strip made
+    // active (the saved one, or the first displayed section).
+    m_tabbar->LoadLayout();
+    {
+        const int page = page_for_id(m_tabbar->ActiveId());
+        m_book->SetSelection(page < 0 ? 0 : page);
+        if (page < 0 && !m_page_ids.empty())
+            m_tabbar->Activate(m_page_ids[0], /*emit*/ false);
+    }
+    m_tabbar->Bind(EVT_TABSTRIP_ACTIVATE, [this](wxCommandEvent &e) {
+        const int page = page_for_id(std::string(e.GetString().ToUTF8()));
+        if (page >= 0 && page != m_book->GetSelection())
+            m_book->SetSelection(page);
+    });
+    m_tabbar->Bind(EVT_TABSTRIP_DOCK_CHANGED, [this](wxCommandEvent &) {
+        place_settings_strip();
+        Layout();
+    });
+    place_settings_strip();
 
-    main_sizer->Add(m_tabbar, 0, wxEXPAND | wxTOP, FromDIP(4));
-    main_sizer->Add(m_book, 1, wxEXPAND);
+    // Wire the search pill to live row filtering across every section. The row
+    // index is built once here, after all pages and their gates (e.g. the
+    // model-mall visibility toggle) have settled.
+    build_search_index();
+    m_search->SetOnQuery([this](const wxString &query) { apply_search_filter(query); });
+    // Re-run the live filter when the regex / case / whole-word toggle changes so
+    // the visible rows reflect the new matching mode without a fresh keystroke.
+    // Passing the raw field value keeps the empty-query reset path intact.
+    m_search->SetOnRegexToggle([this](bool) { apply_search_filter(m_search->GetValue()); });
+
+    main_sizer->Add(m_body_row, 1, wxEXPAND);
     main_sizer->Add(create_bottom_buttons(), 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(12));
 
     SetSizer(main_sizer);
     Layout();
     Fit();
 
-    // Fixed dialog size matching the Figma panel (~640x640). The multi-tab layout
-    // makes each page short, so we no longer stretch the dialog to a fraction of
-    // the screen (the old single-scroll-page behavior). Tabs are scrollable, so a
-    // tab taller than this simply scrolls. Cap the height to the screen so it
-    // still fits on small displays.
+    // Fixed dialog size (~780x640). The nav-rail + content-pane layout widens the
+    // dialog vs. the old horizontal tab bar so the 230px rail leaves a comfortable
+    // content column. Tabs are scrollable, so a tab taller than this simply
+    // scrolls; cap the height to the screen so it still fits on small displays.
     int screen_height = std::numeric_limits<int>::max();
     int count = wxDisplay::GetCount();
     for (int i = 0; i < count; ++i) {
@@ -1291,11 +1686,366 @@ void PreferencesDialog::create()
     if (screen_height == std::numeric_limits<int>::max()) screen_height = wxGetDisplaySize().GetY();
 
     const int max_height = int(screen_height * 0.7); // never exceed most of the screen
-    this->SetSize(FromDIP(640), std::min(FromDIP(640), max_height));
+    this->SetSize(FromDIP(780), std::min(FromDIP(640), max_height));
 
     CenterOnParent();
     wxPoint start_pos = this->GetPosition();
     if (start_pos.y < 0) { this->SetPosition(wxPoint(start_pos.x, 0)); }
+}
+
+// ============================================================================
+//  Live settings search — SearchField-driven row filtering across all pages.
+// ============================================================================
+
+// Collect every wxStaticText descendant of a window (row labels, descriptions,
+// link labels — ::Label derives from wxStaticText) for the search index.
+static void collect_search_labels_from_window(wxWindow *win, std::vector<wxStaticText *> &labels)
+{
+    if (win == nullptr) return;
+    if (auto *text = dynamic_cast<wxStaticText *>(win)) labels.push_back(text);
+    for (auto *child : win->GetChildren()) collect_search_labels_from_window(child, labels);
+}
+
+static void collect_search_labels_from_sizer(wxSizer *sizer, std::vector<wxStaticText *> &labels)
+{
+    if (sizer == nullptr) return;
+    for (auto *item : sizer->GetChildren()) {
+        if (item->IsWindow()) collect_search_labels_from_window(item->GetWindow(), labels);
+        else if (item->IsSizer()) collect_search_labels_from_sizer(item->GetSizer(), labels);
+    }
+}
+
+// Normalized (wrap-break-free) label text for matching. wxStaticText::Wrap
+// rewrites the label with '\n' at the break points; fold those back to spaces
+// so multi-word queries match across a wrapped line.
+static wxString search_label_text(const wxStaticText *label)
+{
+    wxString text = label->GetLabelText();
+    text.Replace("\n", " ");
+    return text;
+}
+
+void PreferencesDialog::build_search_index()
+{
+    m_search_rows.clear();
+    if (m_book == nullptr) return;
+
+    for (size_t page = 0; page < m_book->GetPageCount(); ++page) {
+        wxWindow *page_win = m_book->GetPage(page);
+        wxSizer  *sizer    = page_win ? page_win->GetSizer() : nullptr;
+        if (sizer == nullptr) continue;
+
+        for (auto *item : sizer->GetChildren()) {
+            if (item == nullptr || item->IsSpacer()) continue; // inter-row spacers stay put
+
+            SearchRow row;
+            row.page           = int(page);
+            row.item           = item;
+            row.baseline_shown = item->IsShown();
+            if (item->IsWindow()) collect_search_labels_from_window(item->GetWindow(), row.labels);
+            else if (item->IsSizer()) collect_search_labels_from_sizer(item->GetSizer(), row.labels);
+
+            wxString haystack;
+            for (auto *label : row.labels) {
+                if (!haystack.empty()) haystack << ' ';
+                haystack << search_label_text(label);
+            }
+            row.haystack = haystack; // original case; the matcher folds case itself
+            // Section headers are the Head_16 titles from create_item_title().
+            row.is_title = !row.labels.empty() && row.labels.front()->GetFont() == ::Label::Head_16;
+            // Fold the create_item_* key registry into the row: a palette
+            // teleport looks rows up by AppConfig key.
+            for (const OptionRow &opt : m_option_rows) {
+                const bool same_sizer  = opt.sizer != nullptr && item->IsSizer() && item->GetSizer() == opt.sizer;
+                const bool same_window = opt.window != nullptr && item->IsWindow() && item->GetWindow() == opt.window;
+                if (same_sizer || same_window) row.keys.push_back(opt.key);
+            }
+            m_search_rows.push_back(std::move(row));
+        }
+    }
+}
+
+void PreferencesDialog::register_option_row(const std::string &key, wxSizer *sizer, wxWindow *window)
+{
+    if (key.empty() || (sizer == nullptr && window == nullptr)) return;
+    m_option_rows.push_back({key, sizer, window});
+}
+
+void PreferencesDialog::select_page(int page)
+{
+    if (m_book == nullptr || page < 0 || page >= int(m_book->GetPageCount())) return;
+    if (m_book->GetSelection() != page) {
+        m_book->SetSelection(page);
+        if (m_tabbar && page < int(m_page_ids.size()))
+            m_tabbar->Activate(m_page_ids[page], /*emit*/ false);
+    }
+}
+
+void PreferencesDialog::clear_teleport_highlight()
+{
+    for (auto &entry : m_teleport_saved_colours) {
+        if (entry.first == nullptr) continue;
+        // A live search may have re-tinted the label meanwhile; leave its
+        // colour to the search pass in that case.
+        if (m_search_saved_colours.find(entry.first) != m_search_saved_colours.end()) continue;
+        entry.first->SetForegroundColour(entry.second);
+        entry.first->Refresh();
+    }
+    m_teleport_saved_colours.clear();
+}
+
+// First focusable, non-label descendant of a row: the switch, combo, input
+// or button the setting is edited with.
+static wxWindow *first_focusable_control(wxWindow *win)
+{
+    if (win == nullptr) return nullptr;
+    if (dynamic_cast<wxStaticText *>(win) == nullptr && win->IsShown() && win->IsEnabled() &&
+        win->AcceptsFocus() && win->GetChildren().empty())
+        return win;
+    for (auto *child : win->GetChildren())
+        if (auto *hit = first_focusable_control(child)) return hit;
+    return nullptr;
+}
+
+static wxWindow *first_focusable_control(wxSizer *sizer)
+{
+    if (sizer == nullptr) return nullptr;
+    for (auto *item : sizer->GetChildren()) {
+        wxWindow *hit = nullptr;
+        if (item->IsWindow()) hit = first_focusable_control(item->GetWindow());
+        else if (item->IsSizer()) hit = first_focusable_control(item->GetSizer());
+        if (hit) return hit;
+    }
+    return nullptr;
+}
+
+bool PreferencesDialog::teleport_to_setting(const std::string &key)
+{
+    if (key.empty()) return false;
+    if (m_search_rows.empty()) build_search_index();
+    const SearchRow *target = nullptr;
+    for (const SearchRow &row : m_search_rows)
+        if (std::find(row.keys.begin(), row.keys.end(), key) != row.keys.end()) { target = &row; break; }
+    if (target == nullptr || target->item == nullptr) return false;
+
+    // Any active search filter would hide the row; teleport wins.
+    if (m_search) m_search->SetValue(wxEmptyString);
+    reset_search_filter();
+
+    select_page(target->page);
+    target->item->Show(true);
+    if (wxWindow *page_win = m_book->GetPage(target->page)) {
+        page_win->Layout();
+        if (auto *scrolled = dynamic_cast<wxScrolledWindow *>(page_win)) scrolled->FitInside();
+    }
+    Layout();
+    scroll_search_row_into_view(*target);
+
+    // Focus the row's control so keyboard users land ON the setting.
+    wxWindow *control = target->item->IsWindow() ? first_focusable_control(target->item->GetWindow())
+                                                 : first_focusable_control(target->item->GetSizer());
+    if (control) control->SetFocus();
+
+    // Brief Primary-tint flash on the row's labels, restored by the timer.
+    clear_teleport_highlight();
+    const wxColour highlight = StateColor::semantic(MD3::Role::Primary);
+    for (wxStaticText *label : target->labels) {
+        if (label == nullptr) continue;
+        m_teleport_saved_colours.emplace(label, label->GetForegroundColour());
+        label->SetForegroundColour(highlight);
+        label->Refresh();
+    }
+    if (!m_teleport_saved_colours.empty()) {
+        m_teleport_timer.SetOwner(this, wxID_HIGHEST + 91);
+        Unbind(wxEVT_TIMER, &PreferencesDialog::on_teleport_timer, this, wxID_HIGHEST + 91);
+        Bind(wxEVT_TIMER, &PreferencesDialog::on_teleport_timer, this, wxID_HIGHEST + 91);
+        m_teleport_timer.StartOnce(1400);
+    }
+    return true;
+}
+
+void PreferencesDialog::on_teleport_timer(wxTimerEvent &) { clear_teleport_highlight(); }
+
+void PreferencesDialog::clear_search_highlights()
+{
+    for (auto &entry : m_search_saved_colours) {
+        if (entry.first == nullptr) continue;
+        entry.first->SetForegroundColour(entry.second);
+        entry.first->Refresh();
+    }
+    m_search_saved_colours.clear();
+}
+
+void PreferencesDialog::scroll_search_row_into_view(const SearchRow &row)
+{
+    auto *scrolled = dynamic_cast<wxScrolledWindow *>(m_book->GetPage(row.page));
+    if (scrolled == nullptr) return;
+
+    wxWindow *anchor = nullptr;
+    if (!row.labels.empty()) anchor = row.labels.front();
+    else if (row.item && row.item->IsWindow()) anchor = row.item->GetWindow();
+    if (anchor == nullptr) return;
+
+    // Anchor position relative to the scrolled page (current view coords) ->
+    // virtual coords -> scroll units.
+    wxPoint   pos = anchor->GetPosition();
+    wxWindow *w   = anchor->GetParent();
+    while (w != nullptr && w != scrolled) {
+        pos += w->GetPosition();
+        w = w->GetParent();
+    }
+    if (w == nullptr) return; // anchor is not a descendant of the page
+
+    int virtual_x = 0, virtual_y = 0;
+    scrolled->CalcUnscrolledPosition(pos.x, pos.y, &virtual_x, &virtual_y);
+    int unit_x = 0, unit_y = 0;
+    scrolled->GetScrollPixelsPerUnit(&unit_x, &unit_y);
+    if (unit_y <= 0) return;
+    scrolled->Scroll(-1, std::max(0, virtual_y - FromDIP(8)) / unit_y);
+}
+
+void PreferencesDialog::apply_search_filter(const wxString &raw_query)
+{
+    wxString query = raw_query;
+    query.Trim(true).Trim(false);
+    if (query.empty()) {
+        reset_search_filter();
+        return;
+    }
+
+    m_search_active     = true;
+    m_search_last_query = query;
+    clear_search_highlights();
+
+    const bool     regex     = m_search && m_search->IsRegexEnabled();
+    const bool     case_sens = m_search && m_search->IsCaseSensitive();
+    const bool     whole     = m_search && m_search->IsWholeWord();
+    const bool     multiline = m_search && m_search->IsMultiline();
+    const wxColour highlight = StateColor::semantic(MD3::Role::Primary);
+    const size_t   count     = m_search_rows.size();
+    SearchField::MatchPass match_pass(query, regex, case_sens, whole, multiline);
+
+    // Pass 1: per-row match against the label haystack. Baseline-hidden rows
+    // (e.g. model-mall entries without a mall) never participate. Matching runs
+    // through the shared SearchField matcher so the regex / case / whole-word
+    // toggles apply here exactly as on every other search surface; with regex
+    // off and case-sensitivity off this is the same case-insensitive substring
+    // test as before.
+    std::vector<bool> matched(count, false);
+    for (size_t i = 0; i < count; ++i) {
+        const SearchRow &row = m_search_rows[i];
+        if (!row.baseline_shown || row.haystack.empty()) continue;
+        matched[i] = match_pass.matches(row.haystack);
+    }
+
+    // Pass 2: group visibility. A group is a Head_16 title row plus the rows
+    // that follow it on the same page (up to the next title). A matching title
+    // keeps its whole group visible for context; otherwise the title stays
+    // only when at least one of its rows matches, and only those rows remain.
+    size_t i = 0;
+    while (i < count) {
+        const int page  = m_search_rows[i].page;
+        size_t    title = count;
+        size_t    start = i;
+        if (m_search_rows[i].is_title) { title = i; start = i + 1; }
+        size_t end = start;
+        while (end < count && m_search_rows[end].page == page && !m_search_rows[end].is_title) ++end;
+
+        const bool title_matched   = title < count && matched[title];
+        bool       any_row_matched = false;
+        for (size_t j = start; j < end; ++j)
+            if (matched[j]) any_row_matched = true;
+
+        if (title < count)
+            m_search_rows[title].item->Show(m_search_rows[title].baseline_shown && (title_matched || any_row_matched));
+        for (size_t j = start; j < end; ++j)
+            m_search_rows[j].item->Show(m_search_rows[j].baseline_shown && (title_matched || matched[j]));
+
+        i = end;
+    }
+
+    // Highlight the matched labels (Primary tint); the pre-highlight colour is
+    // saved so an emptied query restores the exact original foreground.
+    auto tint = [this, &highlight](wxStaticText *label) {
+        if (label == nullptr) return;
+        if (m_search_saved_colours.find(label) == m_search_saved_colours.end())
+            m_search_saved_colours.emplace(label, label->GetForegroundColour());
+        label->SetForegroundColour(highlight);
+        label->Refresh();
+    };
+    for (size_t k = 0; k < count; ++k) {
+        if (!matched[k]) continue;
+        const SearchRow &row      = m_search_rows[k];
+        bool             any_tint = false;
+        for (auto *label : row.labels) {
+            if (match_pass.matches(search_label_text(label))) {
+                tint(label);
+                any_tint = true;
+            }
+        }
+        if (!any_tint && !row.labels.empty()) tint(row.labels.front()); // matched across labels
+    }
+
+    // Relayout every page for the new row visibility.
+    for (size_t p = 0; p < m_book->GetPageCount(); ++p) {
+        wxWindow *page_win = m_book->GetPage(p);
+        if (page_win == nullptr) continue;
+        page_win->Layout();
+        if (auto *scrolled = dynamic_cast<wxScrolledWindow *>(page_win)) scrolled->FitInside();
+    }
+
+    // First match in page order; prefer the section already on screen so
+    // typing does not yank the user away from a page that also matches.
+    size_t first_match = count;
+    for (size_t k = 0; k < count; ++k)
+        if (matched[k]) { first_match = k; break; }
+    size_t    nav_match    = count;
+    const int current_page = m_book->GetSelection();
+    for (size_t k = 0; k < count; ++k)
+        if (matched[k] && m_search_rows[k].page == current_page) { nav_match = k; break; }
+    if (nav_match == count) nav_match = first_match;
+
+    const bool has_match = first_match < count;
+    if (m_search_empty_hint) m_search_empty_hint->Show(!has_match);
+    Layout();
+
+    if (has_match) {
+        const SearchRow &target = m_search_rows[nav_match];
+        if (m_book->GetSelection() != target.page) {
+            m_book->SetSelection(target.page);
+            // Reveal the section in the strip too (a hidden or collapsed-group
+            // section comes back into view without touching the collapsed
+            // preference); no event, the book already switched.
+            if (target.page >= 0 && target.page < int(m_page_ids.size()))
+                m_tabbar->Activate(m_page_ids[target.page], /*emit*/ false);
+        }
+        // Re-layout the now-visible page before measuring the anchor position.
+        if (wxWindow *page_win = m_book->GetPage(target.page)) page_win->Layout();
+        scroll_search_row_into_view(target);
+    }
+}
+
+void PreferencesDialog::reset_search_filter()
+{
+    if (!m_search_active) return;
+    m_search_active = false;
+    m_search_last_query.clear();
+
+    clear_search_highlights();
+    for (auto &row : m_search_rows)
+        if (row.item) row.item->Show(row.baseline_shown);
+    if (m_search_empty_hint) m_search_empty_hint->Hide();
+
+    for (size_t p = 0; p < m_book->GetPageCount(); ++p) {
+        wxWindow *page_win = m_book->GetPage(p);
+        if (page_win == nullptr) continue;
+        page_win->Layout();
+        if (auto *scrolled = dynamic_cast<wxScrolledWindow *>(page_win)) {
+            scrolled->FitInside();
+            scrolled->Scroll(0, 0);
+        }
+    }
+    Layout();
 }
 
 PreferencesDialog::~PreferencesDialog()
@@ -1319,6 +2069,10 @@ void PreferencesDialog::on_dpi_changed(const wxRect &suggested_rect) {
     for (auto item : m_combobox_list) {
         item.second->Rescale();
     }
+    for (auto *seg : m_segmented_list) {
+        if (seg) seg->Rescale();
+    }
+    if (m_search) m_search->Rescale();
     if (m_tabbar) m_tabbar->Rescale();
     this->Refresh();
     Layout();
@@ -1329,9 +2083,9 @@ void PreferencesDialog::on_dpi_changed(const wxRect &suggested_rect) {
         wxRect    screenRect = display.GetGeometry();
         if (m_screen_height != screenRect.GetHeight()) {
             m_screen_height = screenRect.GetHeight();
-            // Keep the fixed Figma-matched size (capped to the screen) on a
-            // DPI/monitor switch instead of stretching to a fraction of the screen.
-            this->SetSize(FromDIP(640), std::min(FromDIP(640), int(m_screen_height * 0.7)));
+            // Keep the fixed size (capped to the screen) on a DPI/monitor switch
+            // instead of stretching to a fraction of the screen.
+            this->SetSize(FromDIP(780), std::min(FromDIP(640), int(m_screen_height * 0.7)));
             BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << " The display screen has switched";
         }
     }
@@ -1358,6 +2112,597 @@ void PreferencesDialog::Split(const std::string &src, const std::string &separat
     dest.push_back(substring);
 }
 
+//  AccentSwatch — a 32px filled circle (kit Settings.jsx accent row). Selected =
+//  a 2px OnSurface ring + a white check glyph. The fill is a user-chosen accent
+//  seed (data colour, exempt), custom-drawn so the ring/check re-theme by role.
+class AccentSwatch : public wxWindow
+{
+public:
+    AccentSwatch(wxWindow *parent, const wxColour &color, bool selected, std::function<void()> on_click)
+        : wxWindow(parent, wxID_ANY), m_color(color), m_selected(selected), m_on_click(std::move(on_click))
+    {
+        SetBackgroundColour(StaticBox::GetParentBackgroundColor(parent));
+        SetBackgroundStyle(wxBG_STYLE_PAINT);
+        SetMinSize(wxSize(FromDIP(32), FromDIP(32)));
+        SetCursor(wxCURSOR_HAND);
+        Bind(wxEVT_PAINT, &AccentSwatch::OnPaint, this);
+        Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &) { if (m_on_click) m_on_click(); });
+    }
+
+    void SetSelected(bool s) { if (m_selected == s) return; m_selected = s; Refresh(); }
+
+    const wxColour &colour() const { return m_color; }
+
+private:
+    void OnPaint(wxPaintEvent &)
+    {
+        wxPaintDC pdc(this);
+        pdc.SetBackground(wxBrush(GetBackgroundColour()));
+        pdc.Clear();
+#ifdef __WXMSW__
+        wxGCDC dc(pdc);
+#else
+        wxDC &dc = pdc;
+#endif
+        const wxSize sz = GetSize();
+        const int    cx = sz.x / 2, cy = sz.y / 2;
+        const int    r  = std::min(sz.x, sz.y) / 2 - FromDIP(2);
+        dc.SetPen(*wxTRANSPARENT_PEN);
+        dc.SetBrush(wxBrush(m_color)); // accent seed = data colour
+        dc.DrawCircle(cx, cy, r);
+        if (m_selected) {
+            dc.SetBrush(*wxTRANSPARENT_BRUSH);
+            dc.SetPen(wxPen(StateColor::semantic(MD3::Role::OnSurface), FromDIP(2)));
+            dc.DrawCircle(cx, cy, r);
+            if (MaterialIcon::available())
+                MaterialIcon::drawCentered(dc, MaterialIcon::Check, 16, wxColour(255, 255, 255), wxRect(0, 0, sz.x, sz.y));
+        }
+    }
+
+    wxColour              m_color;
+    bool                  m_selected;
+    std::function<void()> m_on_click;
+};
+
+//  MD3AppearancePreview — a small always-live sample of the active MD3 tokens:
+//  a Surface card with an Outline hairline ring, a Primary pill with an
+//  OnPrimary "Sample" label, and a SecondaryContainer chip. Every paint
+//  re-resolves its colours through StateColor::semantic() and re-reads the
+//  active density metrics, so the accent/density handlers' fan-out (which
+//  Refresh()es the whole dialog via refresh_md3_appearance) repaints it with
+//  the freshly-recomputed roles — no per-change hook needed.
+class MD3AppearancePreview : public wxPanel
+{
+public:
+    explicit MD3AppearancePreview(wxWindow *parent) : wxPanel(parent, wxID_ANY)
+    {
+        SetBackgroundStyle(wxBG_STYLE_PAINT);
+        SetMinSize(wxSize(-1, FromDIP(72)));
+        SetName(_L("Appearance preview"));
+        Bind(wxEVT_PAINT, &MD3AppearancePreview::OnPaint, this);
+    }
+
+private:
+    void OnPaint(wxPaintEvent &)
+    {
+        wxPaintDC pdc(this);
+        pdc.SetBackground(wxBrush(StateColor::semantic(MD3::Role::Surface)));
+        pdc.Clear();
+#ifdef __WXMSW__
+        wxGCDC dc(pdc);
+#else
+        wxDC &dc = pdc;
+#endif
+        const MD3::DensityMetrics &metrics      = MD3::Metrics::active();
+        const int                  radius       = FromDIP(metrics.radius);
+        const int                  small_radius = FromDIP(metrics.small_radius);
+        const int                  padding      = FromDIP(metrics.padding);
+
+        // Surface card + Outline hairline ring (the density radius shows live).
+        wxRect card(GetClientSize());
+        card.Deflate(FromDIP(1), FromDIP(1));
+        dc.SetPen(wxPen(StateColor::semantic(MD3::Role::Outline), FromDIP(1)));
+        dc.SetBrush(wxBrush(StateColor::semantic(MD3::Role::Surface)));
+        dc.DrawRoundedRectangle(card, radius);
+
+        dc.SetFont(::Label::Body_13); // rebuilt by the font controls; read fresh
+
+        // Primary pill with an OnPrimary sample label.
+        const wxString pill_text   = _L("Sample");
+        const wxSize   pill_extent = dc.GetTextExtent(pill_text);
+        const int      pill_h      = pill_extent.y + FromDIP(12);
+        const int      pill_w      = pill_extent.x + FromDIP(28);
+        const int      pill_x      = card.x + padding;
+        const int      pill_y      = card.y + (card.height - pill_h) / 2;
+        dc.SetPen(*wxTRANSPARENT_PEN);
+        dc.SetBrush(wxBrush(StateColor::semantic(MD3::Role::Primary)));
+        dc.DrawRoundedRectangle(pill_x, pill_y, pill_w, pill_h, MD3::Metrics::pill_radius(pill_h));
+        dc.SetTextForeground(StateColor::semantic(MD3::Role::OnPrimary));
+        dc.DrawText(pill_text, pill_x + (pill_w - pill_extent.x) / 2, pill_y + (pill_h - pill_extent.y) / 2);
+
+        // SecondaryContainer chip (small radius follows density too).
+        const wxString chip_text   = wxString::FromUTF8("Aa");
+        const wxSize   chip_extent = dc.GetTextExtent(chip_text);
+        const int      chip_h      = chip_extent.y + FromDIP(10);
+        const int      chip_w      = chip_extent.x + FromDIP(24);
+        const int      chip_x      = pill_x + pill_w + FromDIP(12);
+        const int      chip_y      = card.y + (card.height - chip_h) / 2;
+        dc.SetPen(*wxTRANSPARENT_PEN);
+        dc.SetBrush(wxBrush(StateColor::semantic(MD3::Role::SecondaryContainer)));
+        dc.DrawRoundedRectangle(chip_x, chip_y, chip_w, chip_h, small_radius);
+        dc.SetTextForeground(StateColor::semantic(MD3::Role::OnSecondaryContainer));
+        dc.DrawText(chip_text, chip_x + (chip_w - chip_extent.x) / 2, chip_y + (chip_h - chip_extent.y) / 2);
+    }
+};
+
+wxWindow *PreferencesDialog::create_appearance_tab()
+{
+    auto        scrolled = new ScrollPanel(m_book);
+    wxBoxSizer *sizer    = new wxBoxSizer(wxVERTICAL);
+
+    auto title = create_item_title(_L("Appearance"), scrolled, _L("Appearance"));
+
+    // Fixed-label + control row (kit Settings.jsx: 150px label + segmented).
+    auto make_row = [this, scrolled](const wxString &label, wxWindow *control) -> wxBoxSizer * {
+        auto *row = new wxBoxSizer(wxHORIZONTAL);
+        row->AddSpacer(FromDIP(ITEM_LEFT_PADDING));
+        auto *lbl = new Label(scrolled, label, 0, wxSize(FromDIP(150), -1));
+        lbl->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+        lbl->SetFont(::Label::Body_13);
+        row->Add(lbl, wxSizerFlags().CenterVertical());
+        row->Add(control, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(ITEM_RIGHT_PADDING));
+        return row;
+    };
+
+    // Theme: light / dark SegmentedControl bound to dark_color_mode (cross-platform).
+    auto *theme = new MultiSwitchButton(scrolled);
+    m_segmented_list.push_back(theme);
+    theme->SetOptions({_L("Light"), _L("Dark")});
+    theme->SetName(_L("Theme"));
+    theme->SetMinSize(wxSize(FromDIP(200), FromDIP(30)));
+    const bool is_dark = app_config->get("dark_color_mode") == "1";
+    theme->SetSelection(is_dark ? 1 : 0); // set before Bind so init does not re-fire the handler
+    theme->Bind(wxCUSTOMEVT_MULTISWITCH_SELECTION, [this](wxCommandEvent &e) {
+        const bool dark = e.GetInt() == 1;
+        app_config->set("dark_color_mode", dark ? "1" : "0");
+        app_config->save();
+        // An active search tints matched labels and remembers their pre-tint
+        // foregrounds. Restore those before the theme fan-out recolours the
+        // tree, then re-run the query afterwards so the highlights — and the
+        // saved-colour map — capture the new theme's colours instead of stale
+        // pre-toggle ones (which a later cleared query would otherwise restore).
+        const bool     search_was_active = m_search_active;
+        const wxString saved_query       = m_search_last_query;
+        if (search_was_active) clear_search_highlights();
+        apply_dark_mode(dark);
+        if (search_was_active) apply_search_filter(saved_query);
+        e.Skip();
+    });
+
+    // Reentrancy guard shared by the appearance controls: MultiSwitchButton::
+    // SetSelection DOES emit wxCUSTOMEVT_MULTISWITCH_SELECTION (SwitchButton.cpp
+    // send_selection_event), so the reset button's programmatic re-selection
+    // would re-fire these handlers mid-reset. The guard makes reset the single
+    // writer: handlers only persist/apply on genuine user interaction.
+    auto resetting = std::make_shared<bool>(false);
+
+    // Density: comfortable / compact SegmentedControl. Persists ui_density and
+    // drives the MD3 runtime density state (MD3::Metrics::setDensity) so later-
+    // built surfaces reflect the choice; a live re-theme refresh follows.
+    auto *density = new MultiSwitchButton(scrolled);
+    m_segmented_list.push_back(density);
+    density->SetOptions({_L("Comfortable"), _L("Compact")});
+    density->SetName(_L("Density"));
+    density->SetMinSize(wxSize(FromDIP(220), FromDIP(30)));
+    const std::string density_val = app_config->get("ui_density");
+    density->SetSelection(density_val == "compact" ? 1 : 0);
+    density->Bind(wxCUSTOMEVT_MULTISWITCH_SELECTION, [this, resetting](wxCommandEvent &e) {
+        if (*resetting) { e.Skip(); return; }
+        const bool compact = e.GetInt() == 1;
+        app_config->set("ui_density", compact ? "compact" : "comfortable");
+        app_config->save();
+        MD3::Metrics::setDensity(compact ? MD3::Metrics::Density::Compact : MD3::Metrics::Density::Comfortable);
+        refresh_md3_appearance(this);
+        e.Skip();
+    });
+
+    // Accent: swatch row. Persists ui_accent_seed and applies the seed to the MD3
+    // accent roles at runtime (MD3::setAccentSeed recomputes Primary/*Container
+    // for light+dark); a live re-theme refresh then repaints the UI.
+    const std::vector<std::pair<wxString, wxString>> seeds = {
+        {"#146c2e", _L("Green")}, {"#7c5cff", _L("Purple")}, {"#14b8a6", _L("Teal")},
+        {"#2563eb", _L("Blue")},  {"#d81b60", _L("Pink")},   {"#ea580c", _L("Orange")},
+    };
+    std::string cur_seed = app_config->get("ui_accent_seed");
+    if (cur_seed.empty()) cur_seed = "#146c2e";
+
+    auto *accent_row = new wxBoxSizer(wxHORIZONTAL);
+    auto  swatches   = std::make_shared<std::vector<AccentSwatch *>>();
+    for (size_t i = 0; i < seeds.size(); ++i) {
+        const std::string hex = seeds[i].first.ToStdString();
+        const bool        sel = seeds[i].first.IsSameAs(wxString::FromUTF8(cur_seed), false);
+        auto             *sw  = new AccentSwatch(scrolled, wxColour(seeds[i].first), sel, [this, hex, swatches, i]() {
+            app_config->set("ui_accent_seed", hex);
+            app_config->save();
+            MD3::setAccentSeed(wxColour(wxString::FromUTF8(hex)));
+            for (size_t j = 0; j < swatches->size(); ++j)
+                (*swatches)[j]->SetSelected(j == i);
+            refresh_md3_appearance(this);
+        });
+        sw->SetToolTip(seeds[i].second);
+        // Accessible name: the swatch is a painted wxWindow with no text of its own.
+        sw->SetName(wxString::Format(_L("Accent %d"), int(i + 1)));
+        swatches->push_back(sw);
+        accent_row->Add(sw, 0, wxRIGHT, FromDIP(10));
+    }
+
+    // Custom accent: a wxColourDialog seeded from the persisted seed. Any colour
+    // is a valid seed (the six swatches are just shortcuts into the same
+    // MD3::setAccentSeed pipeline), so a pick persists + applies exactly like a
+    // preset; the preset rings deselect since none of them is the active seed.
+    // A 32px "+" tile matching the swatch geometry (a full-width labeled button
+    // overflows the row at the default dialog size and clipped at the edge).
+    auto *accent_custom = new Button(scrolled, "+");
+    m_button_list[m_button_list.size()] = accent_custom;
+    accent_custom->SetVariant(Button::Variant::Outlined);
+    accent_custom->SetButtonSize(Button::Size::Small);
+    accent_custom->SetMinSize(wxSize(FromDIP(32), FromDIP(32)));
+    accent_custom->SetToolTip(_L("Custom color"));
+    accent_custom->SetName(_L("Custom accent"));
+    accent_custom->Bind(wxEVT_BUTTON, [this, swatches](wxCommandEvent &) {
+        std::string seed = app_config->get("ui_accent_seed");
+        if (seed.empty()) seed = "#146c2e";
+        wxColour initial(wxString::FromUTF8(seed));
+        if (!initial.IsOk()) initial = wxColour(wxString::FromUTF8("#146c2e"));
+        // MD3 continuous picker (hue strip + S/V field + Material tonal
+        // ladder + colour translator) instead of the native common dialog.
+        MD3ColorPickerDialog dlg(this, initial);
+        if (dlg.ShowModal() != wxID_OK) return;
+        const wxColour picked = dlg.GetColour();
+        if (!picked.IsOk()) return;
+        const wxString picked_hex = picked.GetAsString(wxC2S_HTML_SYNTAX);
+        app_config->set("ui_accent_seed", into_u8(picked_hex));
+        app_config->save();
+        MD3::setAccentSeed(picked);
+        // Keep the preset rings truthful: light up the matching swatch when the
+        // picked colour IS one of the six seeds (matches the reopen behaviour,
+        // which re-derives the selection case-insensitively), else clear all.
+        for (size_t j = 0; j < swatches->size(); ++j)
+            (*swatches)[j]->SetSelected((*swatches)[j]->colour().GetAsString(wxC2S_HTML_SYNTAX).IsSameAs(picked_hex, false));
+        refresh_md3_appearance(this);
+    });
+    accent_row->Add(accent_custom, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(2));
+
+    // ---- UI font (family + size) --------------------------------------------
+    // Live preview label. Its font is re-fetched from the freshly rebuilt static
+    // Body_16 after every change so the sample repaints in the chosen family/scale
+    // even before the tree-wide re-theme walk runs. (Latin phrase is translatable;
+    // the CJK + digits sample is fixed so all three language modes exercise CJK
+    // fallback.)
+    auto *font_preview = new Label(scrolled, _L("The quick brown fox") + wxString::FromUTF8(" / \xE4\xB8\xAD\xE6\x96\x87\xE7\xA4\xBA\xE4\xBE\x8B 123"));
+    font_preview->SetName(_L("Appearance preview text"));
+    font_preview->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+    font_preview->SetFont(::Label::Body_16);
+
+    // Shared apply step: persist has already happened at the call site; here we
+    // rebuild the static font table from AppConfig (family+scale) for the current
+    // language mode, refresh the preview's own font, then run the exact re-theme
+    // walk Density/Accent use so the live UI (and this dialog) repaints.
+    auto apply_fonts = [this, font_preview, scrolled]() {
+        ::Label::rebuild_fonts(I18N::language_mode_profile().font_language);
+        font_preview->SetFont(::Label::Body_16);
+        refresh_md3_appearance(this);
+        scrolled->Layout();
+        scrolled->FitInside();
+    };
+
+    // Font family: "Default" (ui_font_family "") + bundled Roboto + the installed
+    // system UI families (enumerated, '@'-vertical variants dropped, sorted
+    // case-insensitively, deduped, Roboto removed since it is listed explicitly).
+    std::vector<wxString>    font_labels = {_L("Default"), wxString::FromUTF8("Roboto")};
+    std::vector<std::string> font_values = {"", "Roboto"};
+    {
+        wxArrayString         faces = wxFontEnumerator::GetFacenames();
+        std::vector<wxString> sys;
+        for (const wxString &f : faces) {
+            if (f.IsEmpty() || f[0] == '@') continue;         // skip vertical CJK variants
+            if (f.IsSameAs(wxString::FromUTF8("Roboto"), false)) continue; // already listed
+            sys.push_back(f);
+        }
+        std::sort(sys.begin(), sys.end(), [](const wxString &a, const wxString &b) { return a.CmpNoCase(b) < 0; });
+        sys.erase(std::unique(sys.begin(), sys.end(), [](const wxString &a, const wxString &b) { return a.CmpNoCase(b) == 0; }), sys.end());
+        for (const wxString &f : sys) {
+            font_labels.push_back(f);
+            font_values.push_back(into_u8(f));
+        }
+    }
+
+    const std::string cur_family = app_config->get("ui_font_family");
+    int               family_idx = 0;
+    for (size_t i = 0; i < font_values.size(); ++i)
+        if (font_values[i] == cur_family) { family_idx = (int) i; break; }
+
+    auto *font_combo = new ::ComboBox(scrolled, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(FromDIP(LARGE_COMBOBOX_WIDTH), -1), 0, nullptr, wxCB_READONLY);
+    m_combobox_list[m_combobox_list.size()] = font_combo;
+    font_combo->SetFont(::Label::Body_13);
+    font_combo->GetDropDown().SetFont(::Label::Body_13);
+    font_combo->SetCornerRadius(FromDIP(10)); // MD3 SelectField r10
+    for (const wxString &l : font_labels) font_combo->Append(l);
+    font_combo->SetSelection(family_idx); // set before Bind so init does not re-fire
+    font_combo->GetDropDown().Bind(wxEVT_COMBOBOX, [this, font_values, apply_fonts](wxCommandEvent &e) {
+        const int idx = e.GetSelection();
+        if (idx >= 0 && idx < (int) font_values.size()) {
+            app_config->set("ui_font_family", font_values[idx]); // "" = default
+            app_config->save();
+            apply_fonts();
+        }
+        e.Skip();
+    });
+
+    // Text size: Small / Default / Large SegmentedControl -> ui_font_scale
+    // 0.9 / 1.0 / 1.15 (the font factory clamps 0.8..1.4 at read time).
+    static const std::vector<double>      kScaleVals = {0.9, 1.0, 1.15};
+    static const std::vector<std::string> kScaleStrs = {"0.9", "1.0", "1.15"};
+    auto *text_size = new MultiSwitchButton(scrolled);
+    m_segmented_list.push_back(text_size);
+    text_size->SetOptions({_L("Small"), _L("Default"), _L("Large")});
+    text_size->SetName(_L("Text size"));
+    text_size->SetMinSize(wxSize(FromDIP(220), FromDIP(30)));
+    double cur_scale = 1.0;
+    try {
+        const std::string s = app_config->get("ui_font_scale");
+        if (!s.empty()) cur_scale = std::stod(s);
+    } catch (...) { cur_scale = 1.0; }
+    int    scale_idx  = 1;
+    double scale_best = 1e9;
+    for (size_t i = 0; i < kScaleVals.size(); ++i) {
+        const double diff = kScaleVals[i] - cur_scale;
+        const double d    = diff < 0 ? -diff : diff;
+        if (d < scale_best) { scale_best = d; scale_idx = (int) i; }
+    }
+    text_size->SetSelection(scale_idx); // set before Bind so init does not re-fire
+    text_size->Bind(wxCUSTOMEVT_MULTISWITCH_SELECTION, [this, apply_fonts, resetting](wxCommandEvent &e) {
+        if (*resetting) { e.Skip(); return; }
+        const int idx = e.GetInt();
+        if (idx >= 0 && idx < (int) kScaleStrs.size()) {
+            app_config->set("ui_font_scale", kScaleStrs[idx]);
+            app_config->save();
+            apply_fonts();
+        }
+        e.Skip();
+    });
+
+    // Live MD3 token preview: repainted by the same refresh_md3_appearance walk
+    // the controls above trigger (its paint handler re-resolves roles/metrics).
+    auto *md3_preview = new MD3AppearancePreview(scrolled);
+
+    // Reset appearance to defaults. Theme is intentionally excluded — a light/
+    // dark flip mid-reset is disruptive; the reset covers the customized look:
+    // density, accent seed, font family and text size. Writes the defaults,
+    // re-syncs the MD3 runtime state, then re-selects the controls
+    // programmatically under the `resetting` guard: MultiSwitchButton::
+    // SetSelection emits its selection event, and the guard keeps those
+    // re-fired handlers from re-persisting/re-applying mid-reset, so this
+    // handler stays the single writer.
+    auto *reset_btn = new Button(scrolled, _L("Reset appearance to defaults"));
+    m_button_list[m_button_list.size()] = reset_btn;
+    reset_btn->SetVariant(Button::Variant::Outlined);
+    reset_btn->SetButtonSize(Button::Size::Small);
+    reset_btn->Bind(wxEVT_BUTTON, [this, density, font_combo, text_size, swatches, apply_fonts, resetting](wxCommandEvent &) {
+        app_config->set("ui_density", "comfortable");
+        app_config->set("ui_accent_seed", "#146c2e");
+        app_config->set("ui_font_family", "");
+        app_config->set("ui_font_scale", "1.0");
+        app_config->save();
+        MD3::Metrics::setDensity(MD3::Metrics::Density::Comfortable);
+        MD3::setAccentSeed(wxColour(wxString::FromUTF8("#146c2e"))); // Brand seed clears the accent override
+        *resetting = true;
+        density->SetSelection(0);   // Comfortable
+        font_combo->SetSelection(0); // Default family ("")
+        text_size->SetSelection(1); // Default scale (1.0)
+        *resetting = false;
+        for (size_t j = 0; j < swatches->size(); ++j)
+            (*swatches)[j]->SetSelected(j == 0); // Green = the Brand seed
+        apply_fonts(); // rebuild_fonts + preview re-font + refresh_md3_appearance + relayout
+    });
+
+    sizer->Add(title, wxSizerFlags().Expand().Border(wxTOP, FromDIP(24)));
+    sizer->AddSpacer(FromDIP(8));
+    auto flags = wxSizerFlags().Expand().Border(wxTOP, FromDIP(8));
+    auto *theme_row = make_row(_L("Theme"), theme);
+    register_option_row("dark_color_mode", theme_row);
+    sizer->Add(theme_row, flags);
+    auto *density_row = make_row(_L("Density"), density);
+    register_option_row("ui_density", density_row);
+    sizer->Add(density_row, flags);
+
+    // Accent row (label + swatches).
+    auto *accent_line = new wxBoxSizer(wxHORIZONTAL);
+    accent_line->AddSpacer(FromDIP(ITEM_LEFT_PADDING));
+    auto *accent_lbl = new Label(scrolled, _L("Accent color"), 0, wxSize(FromDIP(150), -1));
+    accent_lbl->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+    accent_lbl->SetFont(::Label::Body_13);
+    accent_line->Add(accent_lbl, wxSizerFlags().CenterVertical());
+    accent_line->Add(accent_row, wxSizerFlags().CenterVertical().Border(wxRIGHT, FromDIP(ITEM_RIGHT_PADDING)));
+    register_option_row("ui_accent_seed", accent_line);
+    sizer->Add(accent_line, flags);
+
+    // Live token preview row (label-column indented, stretches to the row edge).
+    auto *md3_preview_line = new wxBoxSizer(wxHORIZONTAL);
+    md3_preview_line->AddSpacer(FromDIP(ITEM_LEFT_PADDING));
+    md3_preview_line->Add(md3_preview, 1, wxEXPAND | wxRIGHT, FromDIP(ITEM_RIGHT_PADDING));
+    sizer->Add(md3_preview_line, flags);
+
+    // UI font rows (family + size + live preview), consistent with the rows above.
+    auto *font_row = make_row(_L("Font"), font_combo);
+    register_option_row("ui_font_family", font_row);
+    sizer->Add(font_row, flags);
+    auto *text_size_row = make_row(_L("Text size"), text_size);
+    register_option_row("ui_font_scale", text_size_row);
+    sizer->Add(text_size_row, flags);
+    sizer->Add(make_row(_L("Preview"), font_preview), flags);
+
+    // Reset row (indent-aligned with the rows above, no leading label).
+    auto *reset_line = new wxBoxSizer(wxHORIZONTAL);
+    reset_line->AddSpacer(FromDIP(ITEM_LEFT_PADDING));
+    reset_line->Add(reset_btn, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(ITEM_RIGHT_PADDING));
+    sizer->Add(reset_line, flags);
+
+    // ---- App name (user-renamable display label) -----------------------------
+    // Persists AppConfig "app_display_name" through GUI_App::set_app_display_name,
+    // which sanitizes, validates (1-40 code points, no control characters) and
+    // broadcasts the change so the title bar wordmark, window title and dialog
+    // captions re-read it live. It is a label only: identity-bound paths (data
+    // folder, installer/updater ids, logs, diagnostics) never read this key.
+    const std::string shipped_name = SLIC3R_APP_FULL_NAME;
+    const std::string stored_name  = app_config->get(AppDisplayName::CONFIG_KEY);
+    auto *name_input = new ::TextInput(scrolled, from_u8(AppDisplayName::resolve(stored_name, shipped_name)), wxEmptyString, wxEmptyString,
+                                       wxDefaultPosition, wxSize(FromDIP(260), -1), wxTE_PROCESS_ENTER);
+    {
+        // MD3 ValueField fill, resolved by role so it re-themes in dark.
+        StateColor name_bg(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerHigh), StateColor::Disabled),
+                           std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerHighest), StateColor::Enabled));
+        name_input->SetBackgroundColor(name_bg);
+        name_input->SetCornerRadius(FromDIP(10));
+        name_input->GetTextCtrl()->SetFont(::Label::Body_13);
+        name_input->GetTextCtrl()->SetName(_L("App name"));
+        // Sanitized suggested default: the shipped name is what the field falls back
+        // to, so it is also the hint shown while the box is empty.
+        name_input->GetTextCtrl()->SetHint(from_u8(shipped_name));
+        // Hard input bound well above the 40-code-point rule so an over-long paste is
+        // reported inline instead of silently clipped mid-word by the control.
+        name_input->GetTextCtrl()->SetMaxLength(200);
+    }
+
+    // Inline status line: the validation problem in plain words while the typed
+    // value is invalid, otherwise the provenance of the value in effect.
+    auto *name_status = new Label(scrolled, wxEmptyString, 0, wxSize(FromDIP(520), -1));
+    name_status->SetFont(::Label::Body_12);
+    name_status->SetName(_L("App name status"));
+
+    auto name_problem = [](const std::string &typed) {
+        const AppDisplayName::Validation raw = AppDisplayName::validate(typed);
+        if (raw.problem == AppDisplayName::Problem::ControlCharacters || raw.problem == AppDisplayName::Problem::TooLong)
+            return raw.problem;
+        // Empty is judged after sanitizing so whitespace-only input is reported,
+        // but "  Name  " (which sanitize() trims) is not.
+        return AppDisplayName::sanitize(typed).empty() ? AppDisplayName::Problem::Empty : AppDisplayName::Problem::None;
+    };
+
+    auto refresh_name_status = [this, name_input, name_status, name_problem, shipped_name, scrolled]() {
+        const std::string typed   = into_u8(name_input->GetTextCtrl()->GetValue());
+        const auto        problem = name_problem(typed);
+        wxString          text;
+        bool              is_error = true;
+        switch (problem) {
+        case AppDisplayName::Problem::Empty:
+            text = wxString::Format(_L("Enter a name of 1 to %d characters, or reset to the shipped name."), int(AppDisplayName::MAX_LENGTH));
+            break;
+        case AppDisplayName::Problem::TooLong:
+            text = wxString::Format(_L("Too long: %d characters. Use %d or fewer."), int(AppDisplayName::utf8_length(typed)), int(AppDisplayName::MAX_LENGTH));
+            break;
+        case AppDisplayName::Problem::ControlCharacters:
+            text = _L("Remove line breaks and other control characters.");
+            break;
+        case AppDisplayName::Problem::None: {
+            is_error                = false;
+            const std::string stored = app_config->get(AppDisplayName::CONFIG_KEY);
+            if (AppDisplayName::provenance(stored, shipped_name) == AppDisplayName::Provenance::Stored)
+                text = wxString::Format(_L("Stored in your settings (%s). Shipped name: %s"), from_u8(AppDisplayName::CONFIG_KEY), from_u8(shipped_name));
+            else
+                text = wxString::Format(_L("Not set. Showing the shipped name, %s."), from_u8(shipped_name));
+            break;
+        }
+        }
+        name_status->SetForegroundColour(StateColor::semantic(is_error ? MD3::Role::Error : MD3::Role::OnSurfaceVariant));
+        name_status->SetLabel(text);
+        name_status->Wrap(FromDIP(520));
+        scrolled->Layout();
+    };
+
+    // Commit on Enter / focus loss: sanitize, refuse invalid input (the status
+    // line already says why, and the typed text is kept for correction), else
+    // persist + broadcast and echo the sanitized form back into the field.
+    auto commit_name = [this, name_input, name_problem, refresh_name_status](wxEvent &e) {
+        e.Skip();
+        const std::string typed = into_u8(name_input->GetTextCtrl()->GetValue());
+        if (name_problem(typed) != AppDisplayName::Problem::None) { refresh_name_status(); return; }
+        const std::string clean = AppDisplayName::sanitize(typed);
+        wxGetApp().set_app_display_name(clean);
+        if (clean != typed) name_input->GetTextCtrl()->ChangeValue(from_u8(clean));
+        refresh_name_status();
+    };
+    name_input->GetTextCtrl()->Bind(wxEVT_TEXT, [refresh_name_status](wxCommandEvent &e) { e.Skip(); refresh_name_status(); });
+    name_input->GetTextCtrl()->Bind(wxEVT_TEXT_ENTER, commit_name);
+    name_input->GetTextCtrl()->Bind(wxEVT_KILL_FOCUS, commit_name);
+
+    // Reset: clears the stored value (the accessor then falls back to the shipped
+    // name) and shows that name in the field so the result is visible at once.
+    auto *name_reset = new Button(scrolled, _L("Reset to shipped name"));
+    m_button_list[m_button_list.size()] = name_reset;
+    name_reset->SetVariant(Button::Variant::Outlined);
+    name_reset->SetButtonSize(Button::Size::Small);
+    name_reset->Bind(wxEVT_BUTTON, [name_input, shipped_name, refresh_name_status](wxCommandEvent &) {
+        wxGetApp().set_app_display_name(std::string());
+        name_input->GetTextCtrl()->ChangeValue(from_u8(shipped_name));
+        refresh_name_status();
+    });
+
+    // Progressive disclosure: the explanation stays folded behind a toggle so the
+    // row reads as one field, and unfolds into a caption that says exactly what
+    // the rename does and does not touch.
+    auto *name_explain = new Label(scrolled, wxString::Format(
+        _L("The name is a label only. It changes the title bar, the window title, the About dialog and the dialog captions that "
+           "introduce the app. Your data folder, the installer and updater, log files, crash and diagnostic reports, and file "
+           "associations keep the real product name, %s, so support can still tell which software this is."),
+        from_u8(shipped_name)), 0, wxSize(FromDIP(520), -1));
+    name_explain->SetFont(::Label::Body_12);
+    name_explain->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+    name_explain->Wrap(FromDIP(520));
+    name_explain->Hide();
+    auto *name_explain_toggle = new Button(scrolled, _L("What does renaming change?"));
+    m_button_list[m_button_list.size()] = name_explain_toggle;
+    name_explain_toggle->SetVariant(Button::Variant::Text);
+    name_explain_toggle->SetButtonSize(Button::Size::Small);
+    name_explain_toggle->Bind(wxEVT_BUTTON, [name_explain, name_explain_toggle, scrolled](wxCommandEvent &) {
+        const bool show = !name_explain->IsShown();
+        name_explain->Show(show);
+        name_explain_toggle->SetLabel(show ? _L("Hide explanation") : _L("What does renaming change?"));
+        scrolled->Layout();
+        scrolled->FitInside();
+    });
+
+    sizer->Add(make_row(_L("App name"), name_input), flags);
+    auto *name_status_line = new wxBoxSizer(wxHORIZONTAL);
+    name_status_line->AddSpacer(FromDIP(ITEM_LEFT_PADDING) + FromDIP(150));
+    name_status_line->Add(name_status, 1, wxEXPAND | wxRIGHT, FromDIP(ITEM_RIGHT_PADDING));
+    sizer->Add(name_status_line, wxSizerFlags().Expand().Border(wxTOP, FromDIP(4)));
+    // Actions + folded explanation share one row so a settings-search show/hide
+    // of the row never fights the user's own fold state.
+    auto *name_actions = new wxBoxSizer(wxVERTICAL);
+    auto *name_actions_line = new wxBoxSizer(wxHORIZONTAL);
+    name_actions_line->AddSpacer(FromDIP(ITEM_LEFT_PADDING) + FromDIP(150));
+    name_actions_line->Add(name_reset, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(ITEM_RIGHT_PADDING));
+    name_actions->Add(name_actions_line, 0, wxEXPAND);
+    // The explain toggle sits on its own line: beside the reset button the two
+    // labels overran the dialog's 780 px width and the toggle was clipped.
+    auto *name_toggle_line = new wxBoxSizer(wxHORIZONTAL);
+    name_toggle_line->AddSpacer(FromDIP(ITEM_LEFT_PADDING) + FromDIP(150));
+    name_toggle_line->Add(name_explain_toggle, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(ITEM_RIGHT_PADDING));
+    name_actions->Add(name_toggle_line, 0, wxEXPAND | wxTOP, FromDIP(2));
+    auto *name_explain_line = new wxBoxSizer(wxHORIZONTAL);
+    name_explain_line->AddSpacer(FromDIP(ITEM_LEFT_PADDING) + FromDIP(150));
+    name_explain_line->Add(name_explain, 1, wxEXPAND | wxRIGHT, FromDIP(ITEM_RIGHT_PADDING));
+    name_actions->Add(name_explain_line, 0, wxEXPAND | wxTOP, FromDIP(4));
+    sizer->Add(name_actions, flags);
+    refresh_name_status();
+
+    sizer->AddSpacer(FromDIP(20));
+    scrolled->SetSizer(sizer);
+    scrolled->FitInside();
+    return scrolled;
+}
+
 wxWindow *PreferencesDialog::create_general_tab()
 {
     auto        scrolled = new ScrollPanel(m_book);
@@ -1382,7 +2727,30 @@ wxWindow *PreferencesDialog::create_general_tab()
     }
     sort_remove_duplicates(language_infos);
     std::sort(language_infos.begin(), language_infos.end(), [](const wxLanguageInfo *l, const wxLanguageInfo *r) { return l->Description < r->Description; });
-    auto item_language = create_item_language_combobox(_L("Language"), scrolled, _L("Language"), 50, "language", language_infos);
+
+    std::vector<std::pair<std::string, wxString>> language_choices {
+        {I18N::LANGUAGE_MODE_ENGLISH, wxString::FromUTF8("English")},
+        {I18N::LANGUAGE_MODE_CANTONESE_HONG_KONG, wxString::FromUTF8("廣東話（香港，預覽版）")},
+        {I18N::LANGUAGE_MODE_ENGLISH_CANTONESE_HK, wxString::FromUTF8("English + 廣東話（香港，預覽版）")},
+    };
+    for (const wxLanguageInfo *info : language_infos) {
+        const std::string id = into_u8(info->CanonicalName);
+        if (info->CanonicalName.BeforeFirst('_') == "en" ||
+            I18N::is_baseline_language_mode(id) || I18N::is_custom_language_mode(id))
+            continue;
+        language_choices.emplace_back(id, language_display_name(info));
+    }
+    auto item_language = create_item_language_mode_combobox(
+        _L("Language"), scrolled, _L("Language"), "language", language_choices);
+
+    // Per-language funny levels and the dialog emoji toggle sit directly under
+    // the language picker; all three persist in AppConfig and apply live.
+    auto item_funny_en  = create_item_funny_level_slider(scrolled, I18N::FUNNY_LEVEL_ENGLISH_KEY, false);
+    auto item_funny_yue = create_item_funny_level_slider(scrolled, I18N::FUNNY_LEVEL_CANTONESE_KEY, true);
+    auto item_dialog_emojis = create_item_checkbox(
+        funny_row_label("Show emojis in dialogs and message boxes"), scrolled,
+        funny_row_label("Adds one decorative emoji to a dialog headline. Buttons, action labels and field labels never carry one."),
+        50, I18N::DIALOG_EMOJIS_KEY);
 
     std::vector<wxString> Regions     = {_L("Asia-Pacific"), _L("Chinese Mainland"), _L("Europe"), _L("North America"), _L("Others")};
     auto                  item_region = create_item_region_combobox(_L("Login Region"), scrolled, _L("Login Region"), Regions);
@@ -1390,9 +2758,9 @@ wxWindow *PreferencesDialog::create_general_tab()
     std::vector<wxString> Units         = {_L("Metric") + " (mm, g)", _L("Imperial") + " (in, oz)"};
     auto                  item_currency = create_item_combobox(_L("Units"), scrolled, _L("Units"), "use_inches", Units, {"0", "1"});
 
-#ifdef _WIN32
-    auto item_darkmode = create_item_darkmode_checkbox(_L("Enable dark mode"), scrolled, _L("Enable dark mode"), 50, "dark_color_mode");
-#endif
+    // Theme (dark mode) now lives in the Appearance section's Theme
+    // SegmentedControl (bound to dark_color_mode), so the legacy Windows-only
+    // "Enable dark mode" checkbox is no longer created here.
 
     std::vector<wxString>    FlushOptionLabels{_L("All related changes"), _L("When color changes"), _L("Turn off auto calculate")};
     std::vector<std::string> FlushOptionValues{"all", "color change", "disabled"};
@@ -1400,6 +2768,16 @@ wxWindow *PreferencesDialog::create_general_tab()
                                                  _L("Keep current flush volumes, trigger manually when needed")};
     auto item_auto_flush = create_item_combobox(_L("Auto Calculate Flush Volume"), scrolled, _L("Auto calculate flush volumes"), "auto_calculate_flush", FlushOptionLabels,
                                                 FlushOptionValues, FlushOptionTooltips);
+
+    // Prepare panel dock edge — applies live to the Prepare workspace sidebar.
+    std::vector<wxString>    SidebarDockLabels = {_L("Left"), _L("Right"), _L("Top"), _L("Bottom")};
+    std::vector<std::string> SidebarDockValues = {"left", "right", "top", "bottom"};
+    auto item_sidebar_dock = create_item_combobox(
+        _L("Prepare panel position"), scrolled, _L("Dock the Prepare panel on the left, right, top, or bottom of the workspace."),
+        "prepare_sidebar_dock", SidebarDockLabels, SidebarDockValues, {}, [](int) {
+            if (auto *plater = wxGetApp().plater())
+                plater->apply_sidebar_dock();
+        });
 
     auto item_single_instance = create_item_checkbox(_L("Keep only one Bambu Studio instance"), scrolled,
 #if __APPLE__
@@ -1441,25 +2819,47 @@ wxWindow *PreferencesDialog::create_general_tab()
     item_priv_policy->GetItem(1)->SetProportion(0);
     item_priv_policy->Insert(item_priv_policy->GetItemCount() - 1, hyperlink, wxSizerFlags().CenterVertical().Proportion(1));
 
+    // Download path row lives inside the General Settings section (Figma:
+    // "下载地址" as a plain row, no separate "Downloads" section title).
     auto item_downloads = create_item_downloads(scrolled, 50, "download_path");
+
+    // External editor: the editors detected on this machine by friendly name,
+    // plus a trailing "Custom…" entry that uses the executable picked in the
+    // row below. Consumed by File > Open in External Editor.
+    std::vector<wxString>    EditorLabels;
+    std::vector<std::string> EditorValues;
+    for (const FoundEditor &editor : get_available_editors()) {
+        EditorLabels.push_back(wxString::FromUTF8(editor.name));
+        EditorValues.push_back(editor.name);
+    }
+    EditorLabels.push_back(_L("Custom") + dots);
+    EditorValues.push_back("custom");
+    auto item_external_editor = create_item_combobox(
+        _L("External editor"), scrolled,
+        _L("Editor used by File > Open in External Editor; \"Custom\" uses the executable chosen below."),
+        "external_editor", EditorLabels, EditorValues);
+    auto item_external_editor_path = create_item_external_editor(scrolled, 50, "external_editor_path");
 
     sizer->Add(title_basic, wxSizerFlags().Expand().Border(wxTOP, FromDIP(24)));
     sizer->AddSpacer(FromDIP(8));
-    auto flags = row_flags();
+    auto flags = wxSizerFlags().Expand().Border(wxTOP, FromDIP(4));
 
-    sizer->Add(wrap_option_row(scrolled, item_language), flags);
-    sizer->Add(wrap_option_row(scrolled, item_region), flags);
-    sizer->Add(wrap_option_row(scrolled, item_currency), flags);
-    sizer->Add(wrap_option_row(scrolled, item_auto_flush), flags);
-#ifdef _WIN32
-    sizer->Add(wrap_option_row(scrolled, item_darkmode), flags);
-#endif
-    sizer->Add(wrap_option_row(scrolled, item_single_instance), flags);
-    sizer->Add(wrap_option_row(scrolled, item_fila_manager), flags);
-    sizer->Add(wrap_option_row(scrolled, item_multi_machine), flags);
-    sizer->Add(wrap_option_row(scrolled, item_beta_version_update), flags);
-    sizer->Add(wrap_option_row(scrolled, item_priv_policy), flags);
-    sizer->Add(wrap_option_row(scrolled, item_downloads), flags);
+    sizer->Add(item_language, flags);
+    sizer->Add(item_funny_en, flags);
+    sizer->Add(item_funny_yue, flags);
+    sizer->Add(item_dialog_emojis, flags);
+    sizer->Add(item_region, flags);
+    sizer->Add(item_currency, flags);
+    sizer->Add(item_auto_flush, flags);
+    sizer->Add(item_sidebar_dock, flags);
+    sizer->Add(item_single_instance, flags);
+    sizer->Add(item_fila_manager, flags);
+    sizer->Add(item_multi_machine, flags);
+    sizer->Add(item_beta_version_update, flags);
+    sizer->Add(item_priv_policy, flags);
+    sizer->Add(item_downloads, flags);
+    sizer->Add(item_external_editor, flags);
+    sizer->Add(item_external_editor_path, flags);
     scrolled->SetSizer(sizer);
     scrolled->FitInside();
     return scrolled;
@@ -1468,7 +2868,6 @@ wxWindow *PreferencesDialog::create_general_tab()
 wxWindow *PreferencesDialog::create_user_tab()
 {
     auto        scrolled = new ScrollPanel(m_book);
-    scrolled->SetBackgroundColour(*wxWHITE);
     wxBoxSizer *sizer    = new wxBoxSizer(wxVERTICAL);
 
     auto title_user = create_item_title(_L("User Settings"), scrolled, _L("User Settings"));
@@ -1510,18 +2909,18 @@ wxWindow *PreferencesDialog::create_user_tab()
 
     sizer->Add(title_user, wxSizerFlags().Expand().Border(wxTOP, FromDIP(24)));
     sizer->AddSpacer(FromDIP(8));
-    auto flags = row_flags();
+    auto flags = wxSizerFlags().Expand().Border(wxTOP, FromDIP(4));
 
-    sizer->Add(wrap_option_row(scrolled, item_time_format), flags);
-    sizer->Add(wrap_option_row(scrolled, item_bed_type_follow_preset), flags);
-    sizer->Add(wrap_option_row(scrolled, item_auto_stop_liveview), flags);
-    sizer->Add(wrap_option_row(scrolled, item_auto_transfer), flags);
-    sizer->Add(wrap_option_row(scrolled, item_mix_print_high_low_temp), flags);
-    sizer->Add(wrap_option_row(scrolled, item_auto_arrange_wipe_tower_on_switch_printer), flags);
-    sizer->Add(wrap_option_row(scrolled, item_user_sync), flags);
-    sizer->Add(wrap_option_row(scrolled, item_system_sync), flags);
+    sizer->Add(item_time_format, flags);
+    sizer->Add(item_bed_type_follow_preset, flags);
+    sizer->Add(item_auto_stop_liveview, flags);
+    sizer->Add(item_auto_transfer, flags);
+    sizer->Add(item_mix_print_high_low_temp, flags);
+    sizer->Add(item_auto_arrange_wipe_tower_on_switch_printer, flags);
+    sizer->Add(item_user_sync, flags);
+    sizer->Add(item_system_sync, flags);
 #ifdef _WIN32
-    sizer->Add(wrap_option_row(scrolled, item_webview_auto_fill), flags);
+    sizer->Add(item_webview_auto_fill, flags);
 #endif
 
     scrolled->SetSizer(sizer);
@@ -1547,14 +2946,15 @@ wxWindow *PreferencesDialog::create_3d_tab()
                                                    "canvas_drag_to_move");
 
     std::vector<wxString> assemble_view_preview_options = {_L("Auto"), _L("Open"), _L("Close")};
-    auto                  enable_assemble_view_preview  = create_item_combobox(_L("Display overview"), scrolled, _L("Display overview"), "enable_assemble_view_preview",
-                                                                               assemble_view_preview_options, {"Auto", "Open", "Close"}, {}, [](int idx) {
-                                                                 wxGetApp().app_config->set("enable_assemble_view_preview", idx == 0 ? "Auto" : idx == 1 ? "Open" : "Close");
-                                                                 if (wxGetApp().app_config->get("enable_assemble_view_preview") == "Auto")
-                                                                     wxGetApp().app_config->set_bool("enable_bvh", true);
-                                                                 else if (wxGetApp().app_config->get("enable_assemble_view_preview") == "Open")
-                                                                     wxGetApp().app_config->set_bool("enable_bvh", false);
-                                                                               });
+    auto enable_assemble_view_preview = create_item_combobox(
+        _L("Display overview"), scrolled, _L("Display overview"), "enable_assemble_view_preview", assemble_view_preview_options,
+        {"Auto", "Open", "Close"}, {}, [](int idx) {
+            wxGetApp().app_config->set("enable_assemble_view_preview", idx == 0 ? "Auto" : idx == 1 ? "Open" : "Close");
+            if (wxGetApp().app_config->get("enable_assemble_view_preview") == "Auto")
+                wxGetApp().app_config->set_bool("enable_bvh", true);
+            else if (wxGetApp().app_config->get("enable_assemble_view_preview") == "Open")
+                wxGetApp().app_config->set_bool("enable_bvh", false);
+        }, FromDIP(150), FromDIP(120));
 
     float range_min = 1.0f, range_max = 2.5f;
     auto  item_grabber_size = create_item_range_input(_L("Grabber scale"), scrolled,
@@ -1582,9 +2982,10 @@ wxWindow *PreferencesDialog::create_3d_tab()
                                                  _L("Always show shells or not in preview view tab. If you change this value, you should reslice."), 50,
                                                  "show_shells_in_preview");
 
-    auto item_show_heat_soak_area = create_item_checkbox(_L("Show Thermal Preconditioning Area"), scrolled,
-                                                         _L("Warn if a model extends beyond the thermal preconditioning area. Available only on printers that support this feature."), 50,
-                                                         "show_bed_heat_soak_area");
+    auto item_show_heat_soak_area = create_item_checkbox(
+        _L("Show bed heat soak area"), scrolled,
+        _L("Show the heated-bed preconditioning boundaries in the 3D view and preview."), 50,
+        "show_bed_heat_soak_area");
 
     auto item_step_mesh_setting = create_item_checkbox(_L("Show the step mesh parameter setting dialog."), scrolled,
                                                        _L("If enabled,a parameter settings dialog will appear during STEP file import."), 50, "enable_step_mesh_setting");
@@ -1607,44 +3008,44 @@ wxWindow *PreferencesDialog::create_3d_tab()
 
     sizer->Add(title_3d, wxSizerFlags().Expand().Border(wxTOP, FromDIP(24)));
     sizer->AddSpacer(FromDIP(8));
-    auto flags = row_flags();
+    auto flags = wxSizerFlags().Expand().Border(wxTOP, FromDIP(4));
 
     // ---- 3D Settings ----
-    sizer->Add(wrap_option_row(scrolled, enable_assemble_view_preview), flags);
-    sizer->Add(wrap_option_row(scrolled, item_grabber_size), flags);
-    sizer->Add(wrap_option_row(scrolled, item_tooltip_offset), flags);
-    sizer->Add(wrap_option_row(scrolled, item_toolbar_style), flags);
-    sizer->Add(wrap_option_row(scrolled, item_show_shells), flags);
-    sizer->Add(wrap_option_row(scrolled, item_show_heat_soak_area), flags);
+    sizer->Add(enable_assemble_view_preview, flags);
+    sizer->Add(item_grabber_size, flags);
+    sizer->Add(item_tooltip_offset, flags);
+    sizer->Add(item_toolbar_style, flags);
+    sizer->Add(item_show_shells, flags);
+    sizer->Add(item_show_heat_soak_area, flags);
 #if !BBL_RELEASE_TO_PUBLIC
     auto item_show_bvh_bounds = create_item_checkbox(_L("Show assembly BVH primary bounds"), scrolled, _L("Display the BVH primary bounding box wireframe in assembly view."), 50,
                                                      "show_assembly_bvh_bounds");
-    sizer->Add(wrap_option_row(scrolled, item_show_bvh_bounds), flags);
+    sizer->Add(item_show_bvh_bounds, flags);
 #endif
-    sizer->Add(wrap_option_row(scrolled, item_enable_record_gcodeviewer), flags);
-    sizer->Add(wrap_option_row(scrolled, item_enable_lod), flags);
-    sizer->Add(wrap_option_row(scrolled, item_advanced_gcode), flags);
+    sizer->Add(item_enable_record_gcodeviewer, flags);
+    sizer->Add(item_enable_lod, flags);
+    sizer->Add(item_advanced_gcode, flags);
 
     // [refactor-review] Not in Figma v2 3D tab; camera-fullscreen kept here (a 3D/
     // viewport-adjacent toggle). Reviewer: confirm placement.
     auto item_camera_fullscreen = create_item_checkbox(_L("Open full screen camera view on active monitor only."), scrolled,
                                                        _L("When enabled, the camera full screen view opens only on the monitor that contains Bambu Studio."), 50,
                                                        "camera_fullscreen_active_monitor_only");
-    sizer->Add(wrap_option_row(scrolled, item_camera_fullscreen), flags); // [refactor-review]
+    sizer->Add(item_camera_fullscreen, flags); // [refactor-review]
 
     // ---- Mouse Settings ----
     sizer->Add(title_mouse, wxSizerFlags().Expand().Border(wxTOP, FromDIP(24)));
     sizer->AddSpacer(FromDIP(8));
-    sizer->Add(wrap_option_row(scrolled, item_zoom_to_mouse), flags);
-    sizer->Add(wrap_option_row(scrolled, item_reverse_mouse_wheel_zoom), flags);
-    sizer->Add(wrap_option_row(scrolled, item_drag_to_move), flags);
+    sizer->Add(item_zoom_to_mouse, flags);
+    sizer->Add(item_reverse_mouse_wheel_zoom, flags);
+    sizer->Add(item_drag_to_move, flags);
 
     // ---- Import Settings ----
     sizer->Add(title_import, wxSizerFlags().Expand().Border(wxTOP, FromDIP(24)));
     sizer->AddSpacer(FromDIP(8));
-    sizer->Add(wrap_option_row(scrolled, item_step_mesh_setting), flags);
-    sizer->Add(wrap_option_row(scrolled, item_import_svg), flags);
-    sizer->Add(wrap_option_row(scrolled, item_gamma_obj), flags);
+    sizer->Add(item_step_mesh_setting, flags);
+    sizer->Add(item_import_svg, flags);
+    sizer->Add(item_gamma_obj, flags);
 
     sizer->AddSpacer(FromDIP(20));
     scrolled->SetSizer(sizer);
@@ -1678,11 +3079,11 @@ wxWindow *PreferencesDialog::create_other_tab()
 
     sizer->Add(title_project, wxSizerFlags().Expand().Border(wxTOP, FromDIP(16)));
     sizer->AddSpacer(FromDIP(8));
-    auto flags = row_flags();
+    auto flags = wxSizerFlags().Expand().Border(wxTOP, FromDIP(4));
 
-    sizer->Add(wrap_option_row(scrolled, item_max_recent_count), flags);
-    sizer->Add(wrap_option_row(scrolled, item_auto_backup), flags);
-    sizer->Add(wrap_option_row(scrolled, item_gcodes_warning), flags);
+    sizer->Add(item_max_recent_count, flags);
+    sizer->Add(item_auto_backup, flags);
+    sizer->Add(item_gcodes_warning, flags);
 
     // ---- Online Models (visible only when has_model_mall()) ----
     auto title_modelmall   = create_item_title(_L("Online Models"), scrolled, _L("Online Models"));
@@ -1691,8 +3092,8 @@ wxWindow *PreferencesDialog::create_other_tab()
     auto item_show_history = create_item_checkbox(_L("Show history on the home page"), scrolled, _L("Show history on the home page"), 50, "show_print_history");
 
     auto title_modelmall_item   = sizer->Add(title_modelmall, wxSizerFlags().Expand().Border(wxTOP, FromDIP(16)));
-    auto item_modelmall_item    = sizer->Add(wrap_option_row(scrolled, item_modelmall), flags);
-    auto item_show_history_item = sizer->Add(wrap_option_row(scrolled, item_show_history), flags);
+    auto item_modelmall_item    = sizer->Add(item_modelmall, flags);
+    auto item_show_history_item = sizer->Add(item_show_history, flags);
 
     auto update_modelmall = [scrolled, title_modelmall_item, item_modelmall_item, item_show_history_item](wxEvent &) {
         bool has_model_mall = wxGetApp().has_model_mall();
@@ -1705,17 +3106,31 @@ wxWindow *PreferencesDialog::create_other_tab()
     wxCommandEvent dummy(wxEVT_COMBOBOX);
     update_modelmall(dummy);
 
+    // ---- AI printer watch (opt-in, strictly local: Ollama on localhost) ----
+    auto title_watch = create_item_title(_L("AI printer watch"), scrolled,
+        _L("Summarize the printer's live camera view with a local model. Frames never leave this computer."));
+    auto item_watch_enable = create_item_checkbox(
+        _L("Watch the live view and notify about progress and failures"), scrolled,
+        _L("Every few minutes a frame of the live view is described by a local Ollama model; suspected failures raise a persistent warning with fix suggestions."),
+        50, "printer_watch_enabled");
+    auto item_watch_model = create_item_input(_L("Local model tag"), "", scrolled,
+        _L("Vision-capable Ollama tag, e.g. qwen2.5vl or gemma3. Text-only tags such as gpt-oss cannot read frames."),
+        "printer_watch_model", [](wxString) {});
+    auto item_watch_interval = create_item_input(_L("Check interval (minutes)"), "", scrolled,
+        _L("Minutes between live-view checks (minimum 1)."),
+        "printer_watch_interval", [](wxString) {});
+    sizer->Add(title_watch, wxSizerFlags().Expand().Border(wxTOP, FromDIP(16)));
+    sizer->Add(item_watch_enable, flags);
+    sizer->Add(item_watch_model, flags);
+    sizer->Add(item_watch_interval, flags);
+
     // ---- Developer Mode (Figma keeps these two here, in the Other tab) ----
     auto title_dev           = create_item_title(_L("Developer Mode"), scrolled, _L("Developer Mode"));
     auto item_dev_mode       = create_item_checkbox(_L("Develop mode"), scrolled, _L("Develop mode"), 50, "developer_mode");
     auto item_skip_blacklist = create_item_checkbox(_L("Skip AMS blacklist check"), scrolled, _L("Skip AMS blacklist check"), 50, "skip_ams_blacklist_check");
-    auto item_webview_devtools = create_item_checkbox(
-        _L("Enable DevTools For Webview") + " (" + _L("Take effect after restarting Studio") + ")", scrolled,
-        _L("Enable DevTools For Webview"), 50, "enable_webview_devtools");
     sizer->Add(title_dev, wxSizerFlags().Expand().Border(wxTOP, FromDIP(16)));
-    sizer->Add(wrap_option_row(scrolled, item_dev_mode), flags);
-    sizer->Add(wrap_option_row(scrolled, item_skip_blacklist), flags);
-    sizer->Add(wrap_option_row(scrolled, item_webview_devtools), flags);
+    sizer->Add(item_dev_mode, flags);
+    sizer->Add(item_skip_blacklist, flags);
 
 #ifdef _WIN32
     // ---- Associate Files To Bambu Studio (Windows only) ----
@@ -1727,9 +3142,9 @@ wxWindow *PreferencesDialog::create_other_tab()
     auto item_associate_step  = create_item_checkbox(_L("Associate .step/.stp files to Bambu Studio"), scrolled,
                                                      _L("If enabled, sets Bambu Studio as default application to open .step files"), 50, "associate_step");
     sizer->Add(title_associate_file, wxSizerFlags().Expand().Border(wxTOP, FromDIP(16)));
-    sizer->Add(wrap_option_row(scrolled, item_associate_3mf), flags);
-    sizer->Add(wrap_option_row(scrolled, item_associate_stl), flags);
-    sizer->Add(wrap_option_row(scrolled, item_associate_step), flags);
+    sizer->Add(item_associate_3mf, flags);
+    sizer->Add(item_associate_stl, flags);
+    sizer->Add(item_associate_step, flags);
 #endif
 
     sizer->AddSpacer(FromDIP(20));
@@ -1752,10 +3167,10 @@ wxWindow *PreferencesDialog::create_developer_tab()
     auto item_log   = create_item_loglevel_combobox(_L("Log Level"), scrolled, _L("Log Level"), log_levels);
     sizer->Add(title_log, wxSizerFlags().Expand().Border(wxTOP, FromDIP(24)));
     sizer->AddSpacer(FromDIP(8));
-    auto flags = row_flags();
+    auto flags = wxSizerFlags().Expand().Border(wxTOP, FromDIP(4));
 
     sizer->AddSpacer(FromDIP(4));
-    sizer->Add(wrap_option_row(scrolled, item_log), flags);
+    sizer->Add(item_log, flags);
 
     auto title_dev         = create_item_title(_L("Developer Tools"), scrolled, _L("Developer Tools"));
     auto item_internal_dev = create_item_checkbox(_L("Internal developer mode"), scrolled, _L("Internal developer mode"), 50, "internal_developer_mode");
@@ -1784,8 +3199,7 @@ wxWindow *PreferencesDialog::create_developer_tab()
 
     Button *debug_button                = new Button(scrolled, _L("debug save button"));
     m_button_list[m_button_list.size()] = debug_button;
-    debug_button->SetBackgroundColor(btn_bg_white);
-    debug_button->SetBorderColor(btn_bd_white);
+    debug_button->SetVariant(Button::Variant::Outlined);
     debug_button->SetFont(Label::Body_13);
     debug_button->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &e) {
         // success message box
@@ -1894,30 +3308,40 @@ wxBoxSizer *PreferencesDialog::create_bottom_buttons()
 
     auto *btn_reset_warnings            = new Button(this, _L("Reset all warning dialogs"));
     auto *btn_reset_prefs               = new Button(this, _L("Reset preferences"));
+    // TRN: Opens the shared Export dialog with every preference section.
+    auto *btn_export_prefs              = new Button(this, _L("Export preferences..."));
     m_button_list[m_button_list.size()] = btn_reset_warnings;
     m_button_list[m_button_list.size()] = btn_reset_prefs;
+    m_button_list[m_button_list.size()] = btn_export_prefs;
 
-    StateColor btn_bg(std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Disabled), std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
-                      std::pair<wxColour, int>(ThemeColor::Grey300, StateColor::Normal));
-    for (Button *b : {btn_reset_warnings, btn_reset_prefs}) {
-        b->SetBackgroundColor(btn_bg);
-        b->SetFont(Label::Body_13);
-        b->SetCornerRadius(FromDIP(6));
+    // MD3 outlined buttons: transparent interior + 1px Outline ring with an
+    // OnSurface label, pill radius (height/2) and a SurfaceContainerHigh hover
+    // wash — geometry, font and colours are all resolved through semantic roles
+    // by Button::applyMD3Style(), replacing the Grey300/Grey400/BrandGreen r6 look.
+    for (Button *b : {btn_reset_warnings, btn_reset_prefs, btn_export_prefs}) {
+        b->SetVariant(Button::Variant::Outlined);
+        b->SetButtonSize(Button::Size::Small);
     }
+    btn_export_prefs->SetToolTip(_L("Export every preference section as JSON, YAML, TOML, XML, CSV, Markdown, HTML or an archive"));
+    btn_export_prefs->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) {
+        if (wxGetApp().app_config != nullptr)
+            ExportDialog::run(this, Export::app_config_dataset(*wxGetApp().app_config));
+    });
 
     btn_reset_warnings->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { on_reset_all_warnings(); });
     btn_reset_prefs->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { on_reset_preferences(); });
 
     row->AddStretchSpacer();
     row->Add(btn_reset_warnings, 0, wxRIGHT, FromDIP(8));
-    row->Add(btn_reset_prefs, 0, 0, 0);
+    row->Add(btn_reset_prefs, 0, wxRIGHT, FromDIP(8));
+    row->Add(btn_export_prefs, 0, 0, 0);
     row->AddStretchSpacer();
     return row;
 }
 
 ResetWarningsDialog::ResetWarningsDialog(wxWindow *parent) : DPIDialog(parent, wxID_ANY, _L("Reset"), wxDefaultPosition, wxDefaultSize, wxCAPTION | wxCLOSE_BOX)
 {
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(ThemeColor::White);
     std::string icon_path = (boost::format("%1%/images/BambuStudioTitle.ico") % resources_dir()).str();
     SetIcon(wxIcon(encode_path(icon_path.c_str()), wxBITMAP_TYPE_ICO));
 
@@ -1926,10 +3350,9 @@ ResetWarningsDialog::ResetWarningsDialog(wxWindow *parent) : DPIDialog(parent, w
     auto *main_sizer = new wxBoxSizer(wxVERTICAL);
 
     // Body text.
-    auto *msg = new wxStaticText(this, wxID_ANY,
-                                 _L("All warning dialogs that you have disabled by checking \"Don't show again\" "
+    auto *msg = new Label(this, _L("All warning dialogs that you have disabled by checking \"Don't show again\" "
                                     "are now re-enabled and will show next time they apply."));
-    msg->SetForegroundColour(ThemeColor::TextPrimary);
+    msg->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     msg->SetFont(::Label::Body_14);
     msg->Wrap(content_width);
     msg->SetMinSize(wxSize(content_width, -1));
@@ -1938,8 +3361,7 @@ ResetWarningsDialog::ResetWarningsDialog(wxWindow *parent) : DPIDialog(parent, w
     StateColor btn_bg_gray(std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::Grey200, StateColor::Hovered),
                            std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal));
     m_details_btn = new Button(this, _L("Check details"));
-    m_details_btn->SetBackgroundColor(btn_bg_gray);
-    m_details_btn->SetBorderColor(ThemeColor::Grey450);
+    m_details_btn->SetVariant(Button::Variant::Outlined);
     m_details_btn->SetMinSize(wxSize(FromDIP(58), FromDIP(24)));
     m_details_btn->SetFont(::Label::Body_12);
     m_details_btn->SetCornerRadius(FromDIP(6));
@@ -1951,8 +3373,7 @@ ResetWarningsDialog::ResetWarningsDialog(wxWindow *parent) : DPIDialog(parent, w
     m_details_panel = new wxPanel(this, wxID_ANY);
     m_details_panel->SetBackgroundColour(ThemeColor::Grey300);
     auto *det_sizer = new wxBoxSizer(wxVERTICAL);
-    auto *det_text  = new wxStaticText(m_details_panel, wxID_ANY,
-                                       _L("- Sync printer presets after loading a file\n"
+    auto *det_text  = new Label(m_details_panel, _L("- Sync printer presets after loading a file\n"
                                           "- \"Load 3MF\" dialog settings\n"
                                           "- Executing post-processing scripts\n"
                                           "- Support structure recommendation prompt\n"
@@ -1970,9 +3391,7 @@ ResetWarningsDialog::ResetWarningsDialog(wxWindow *parent) : DPIDialog(parent, w
     auto *btn_sizer = new wxBoxSizer(wxHORIZONTAL);
     btn_sizer->AddStretchSpacer(1);
     auto      *cancel_btn = new Button(this, _L("Cancel"));
-    cancel_btn->SetBackgroundColor(btn_bg_gray);
-    cancel_btn->SetBorderColor(ThemeColor::Grey450);
-    cancel_btn->SetTextColor(ThemeColor::TextPrimary);
+    cancel_btn->SetVariant(Button::Variant::Outlined);
     cancel_btn->SetFont(::Label::Body_12);
     cancel_btn->SetMinSize(wxSize(FromDIP(58), FromDIP(24)));
     cancel_btn->SetCornerRadius(FromDIP(6));
@@ -1982,9 +3401,7 @@ ResetWarningsDialog::ResetWarningsDialog(wxWindow *parent) : DPIDialog(parent, w
     StateColor btn_bg_green(std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed),
                             std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered), std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
     auto      *confirm_btn = new Button(this, _L("Confirm"));
-    confirm_btn->SetBackgroundColor(btn_bg_green);
-    confirm_btn->SetBorderColor(ThemeColor::BrandGreen);
-    confirm_btn->SetTextColor(*wxWHITE);
+    confirm_btn->SetVariant(Button::Variant::Filled);
     confirm_btn->SetFont(::Label::Body_12);
     confirm_btn->SetMinSize(wxSize(FromDIP(58), FromDIP(24)));
     confirm_btn->SetCornerRadius(FromDIP(6));
@@ -1996,8 +3413,9 @@ ResetWarningsDialog::ResetWarningsDialog(wxWindow *parent) : DPIDialog(parent, w
     SetSizer(main_sizer);
     Layout();
     Fit();
-    CentreOnParent();
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
+    CentreOnParent();
 }
 
 void ResetWarningsDialog::toggle_details()
@@ -2041,6 +3459,8 @@ void PreferencesDialog::on_reset_preferences()
         // "region", keep this intensinaly to avoid re-login
         "use_inches",
         "dark_color_mode",
+        "ui_density",
+        "ui_accent_seed",
         "auto_calculate_flush",
         "single_instance",
         FilaManagerEnabledConfigKey,
@@ -2083,7 +3503,6 @@ void PreferencesDialog::on_reset_preferences()
         "show_print_history",
         "developer_mode",
         "skip_ams_blacklist_check",
-        "enable_webview_devtools",
         "severity_level",
     };
     for (const char *k : kPrefKeys) app_config->erase("app", k);
