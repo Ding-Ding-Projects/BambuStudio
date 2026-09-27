@@ -869,12 +869,11 @@ void ProjectPanel::OnScriptMessage(wxWebViewEvent& evt)
 
 void ProjectPanel::update_model_data()
 {
-    Model model = wxGetApp().plater()->model();
     clear_model_info();
 
     //basics info
     //Note: Under the master branch, model_info will never return nullptr, but under the GitHub branch, it might. The reason is unclear.
-    if (model.model_info == nullptr) {
+    if (wxGetApp().plater()->model().model_info == nullptr) {
         json payload = json::object();
         payload["command"] = "show_3mf_info";
         payload["sequence_id"] = std::to_string(ProjectPanel::m_sequence_id++);
@@ -1074,7 +1073,7 @@ bool ProjectPanel::is_editing_page() const
 
 bool ProjectPanel::Show(bool show)
 {
-    if (show) update_model_data();
+    if (show && m_browser && m_browser->IsShown()) update_model_data();
     return wxPanel::Show(show);
 }
 
