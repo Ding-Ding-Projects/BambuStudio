@@ -1,0 +1,76 @@
+name: Trace published startup on hosted Windows
+
+on:
+  push:
+    branches: [codex/hosted-startup-stack]
+    paths:
+      - '.github/workflows/trace-release-startup.yml'
+      - 'scripts/ci/Trace-HostedReleaseStartup.ps1'
+      - 'scripts/md3/trace-packaged-startup.py'
+      - 'scripts/md3/test-trace-packaged-startup.py'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Published release tag
+        required: true
+        default: md3-v125
+      source_commit:
+        description: Exact published source commit
+        required: true
+        default: c5df6199e1a83b1c94be12e999c0b322fded8730
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hosted-startup-trace-${{ github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  trace:
+    if: github.ref == 'refs/heads/codex/hosted-startup-stack'
+    runs-on: windows-2025
+    timeout-minutes: 90
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - name: Check out exact verifier commit
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Parse hosted diagnostic PowerShell
+        run: |
+          $paths = @('scripts/ci/Trace-HostedReleaseStartup.ps1',
+                     'scripts/ci/Verify-HostedSquirrelInstall.ps1',
+                     'scripts/md3/Capture-HostedReleaseGui.ps1')
+          foreach ($path in $paths) {
+            $tokens = $null
+            $parseErrors = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile(
+              (Resolve-Path -LiteralPath $path), [ref]$tokens, [ref]$parseErrors)
+            if ($parseErrors.Count -ne 0) { throw "PowerShell parse failed: $path" }
+          }
+
+      - name: Trace exact installed release process
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TRACE_TAG: ${{ inputs.tag || 'md3-v125' }}
+          TRACE_SOURCE_COMMIT: ${{ inputs.source_commit || 'c5df6199e1a83b1c94be12e999c0b322fded8730' }}
+        run: ./scripts/ci/Trace-HostedReleaseStartup.ps1 -Tag $env:TRACE_TAG -ExpectedCommit $env:TRACE_SOURCE_COMMIT
+
+      - name: Upload safe and encrypted diagnostic evidence
+        if: ${{ always() }}
+        continue-on-error: true
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: hosted-startup-trace-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            diagnostic/startup/trace-summary.json
+            diagnostic/startup/encrypted/receipt.json
+            diagnostic/startup/encrypted/envelope.json
+            diagnostic/startup/encrypted/images.zip.aesgcm
+          if-no-files-found: warn
+          retention-days: 7
