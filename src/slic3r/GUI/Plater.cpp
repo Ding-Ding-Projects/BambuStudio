@@ -1,8 +1,13 @@
 #include "Plater.hpp"
+#include "Widgets/LinkLabel.hpp"
+#include "Widgets/ProgressBar.hpp"
+#include "Widgets/MD3Menu.hpp"
+#include "Widgets/TabStrip.hpp"
 #include "PerfTrace.hpp"
 #include <array>
 #include <boost/format/format_fwd.hpp>
 #include <cstddef>
+#include <cstdint>
 #include <cstdio>
 #include <cctype>
 #include <cmath>
@@ -16,12 +21,15 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <sstream>
+#include <stdexcept>
 #include <regex>
 #include <optional>
 #include <future>
+#include <filesystem>
 #include <functional>
 #include <fstream>
 #include <chrono>
+#include <deque>
 #include <iomanip>
 #include <boost/algorithm/string.hpp>
 #include <boost/optional.hpp>
@@ -41,6 +49,7 @@
 #include <wx/bmpcbox.h>
 #include <wx/statbox.h>
 #include <wx/statbmp.h>
+#include <wx/graphics.h>
 #include <wx/filedlg.h>
 #include <wx/filename.h>
 #include <wx/dnd.h>
@@ -82,9 +91,11 @@
 #include "WipeTowerPlacement.hpp"
 #include "libslic3r/Print.hpp"
 #include "libslic3r/PrintConfig.hpp"
+#include "libslic3r/ProjectHistoryManager.hpp"
 #include "libslic3r/FilamentMixer.hpp"
 #include "libslic3r/LocalesUtils.hpp"
 #include "libslic3r/SLAPrint.hpp"
+#include "BulkFilamentDialog.hpp"
 #include "MixedFilamentDialog.hpp"
 #include "ColorDecomposeDialog.hpp"
 #include "ColorDecomposeSupport.hpp"
@@ -148,9 +159,11 @@
 #include "MsgDialog.hpp"
 #include "SingleChoiceDialog.hpp"
 #include "TextureImportDialog.hpp"
+#include "ModelPreviewDialog.hpp"
 #include "ProjectDirtyStateManager.hpp"
 #include "Gizmos/GLGizmoSimplify.hpp" // create suggestion notification
 #include "Gizmos/GLGizmoSVG.hpp" // Drop SVG file
+#include "Gizmos/GizmoObjectManipulation.hpp" // MD3 sidebar object-manipulation card (read-only-live mirror of the gizmo cache)
 // BBS
 #include "Widgets/ProgressDialog.hpp"
 #include "BBLStatusBar.hpp"
@@ -164,8 +177,15 @@
 #include "Widgets/RadioBox.hpp"
 #include "Widgets/CheckBox.hpp"
 #include "Widgets/Button.hpp"
+#include "Widgets/MaterialIcon.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
+#include "Widgets/SuperConfirmGate.hpp"
 #include "Widgets/StaticBox.hpp"
+#include "Widgets/StateColor.hpp"
 #include "Widgets/ComboBox.hpp"
+#include "Widgets/SearchField.hpp"
+#include "Widgets/SwitchButton.hpp"
+#include "Widgets/TextInput.hpp"
 #include "Widgets/StaticGroup.hpp"
 #include "Widgets/MultiNozzleSync.hpp"
 
@@ -181,6 +201,8 @@
 #include "ObjColorDialog.hpp"
 
 #include "libslic3r/CustomGCode.hpp"
+#include "FilamentGroupPopup.hpp"
+#include "PrintWorkflowState.hpp"
 #include "libslic3r/Platform.hpp"
 #include "nlohmann/json.hpp"
 
@@ -201,11 +223,13 @@
 #include "DeviceCore/DevDefs.h"
 #include "DeviceCore/DevConfigUtil.h"
 #include "ImageMessageDialog.hpp"
+#include "miniz/miniz.h"
 
 #include "HelioReleaseNote.hpp"
 
 using boost::optional;
 namespace fs = boost::filesystem;
+namespace stdfs = std::filesystem;
 using Slic3r::_3DScene;
 using Slic3r::Preset;
 using Slic3r::GUI::format_wxstr;
@@ -282,9 +306,17 @@ wxDEFINE_EVENT(EVT_HELIO_PROCESSING_STARTED, HelioActionEvent);
 wxDEFINE_EVENT(EVT_HELIO_INPUT_DLG, SimpleEvent);
 // end helio
 
-#define PRINTER_THUMBNAIL_SIZE (wxSize(FromDIP(48), FromDIP(48)))
-#define PRINTER_PANEL_SIZE (wxSize(FromDIP(96), FromDIP(68)))
-#define BTN_SYNC_SIZE (wxSize(FromDIP(96), FromDIP(98)))
+// Kit printer-identity thumbnail (prepare/printer-identity-card-combobox-anatomy):
+// 52x52 cell, r12 corners.
+#define PRINTER_THUMBNAIL_SIZE (wxSize(FromDIP(52), FromDIP(52)))
+// MD3 kit printer identity card (Prepare.jsx:78-85): content-sized, pad 10 —
+// the legacy fixed 68px PRINTER_PANEL_SIZE / 84px BED_PANEL_SIZE cards are gone.
+#define BTN_SYNC_SIZE (wxSize(-1, FromDIP(MD3::Metrics::active().row_height)))
+// Kit filament info-row (Prepare.jsx:91-100): h44 + 4px gap between rows.
+#define FILAMENT_ROW_HEIGHT 44
+#define FILAMENT_ROW_PITCH  48
+// Kit SelectField (fields/SelectField.jsx): outlined h38 r10.
+#define SELECT_FIELD_HEIGHT 38
 
 static string get_diameter_string(float diameter)
 {
@@ -497,11 +529,11 @@ SlicedInfo::SlicedInfo(wxWindow *parent) :
     info_vec.reserve(siCount);
 
     auto init_info_label = [this, parent, grid_sizer](wxString text_label) {
-        auto *text = new wxStaticText(parent, wxID_ANY, text_label);
-        text->SetForegroundColour(*wxBLACK);
+        auto *text = new Label(parent, text_label);
+        text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
         text->SetFont(wxGetApp().small_font());
-        auto info_label = new wxStaticText(parent, wxID_ANY, "N/A");
-        info_label->SetForegroundColour(*wxBLACK);
+        auto info_label = new Label(parent, "N/A");
+        info_label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
         info_label->SetFont(wxGetApp().small_font());
         grid_sizer->Add(text, 0);
         grid_sizer->Add(info_label, 0);
@@ -546,38 +578,39 @@ class HoverLabel : public wxPanel
 public:
     HoverLabel(wxWindow *parent, const wxString &label) : wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE)
     {
-        SetBackgroundColour(*wxWHITE);
+        SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
         auto sizer = new wxBoxSizer(wxHORIZONTAL);
 
-        m_label = new wxStaticText(this, wxID_ANY, label, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE);
+        m_label = new Label(this, label, wxBORDER_NONE);
         m_label->SetFont(Label::Body_13);
-        m_label->SetForegroundColour("#6B6B6B");
-        m_count = new wxStaticText(this, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, wxBORDER_NONE);
+        m_label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+        m_count = new Label(this, "", wxBORDER_NONE);
         m_count->SetFont(Label::Body_13.Bold());
-        m_count->SetForegroundColour("#262E30");
+        m_count->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
 
-        m_title_type = new wxStaticText(this, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, wxBORDER_NONE);
-        m_title_type->SetForegroundColour("#ACACAC");
+        m_title_type = new Label(this, "", wxBORDER_NONE);
+        m_title_type->SetForegroundColour(StateColor::semantic(MD3::Role::Outline));
 
         m_count->Hide();
         m_title_type->Hide();
 
-        m_brace_left = new wxStaticText(this, wxID_ANY, "(", wxDefaultPosition, wxDefaultSize, wxBORDER_NONE);
+        m_brace_left = new Label(this, "(", wxBORDER_NONE);
         m_brace_left->SetFont(Label::Body_13);
-        m_brace_left->SetForegroundColour("#262E30");
+        m_brace_left->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
 
-        m_brace_right = new wxStaticText(this, wxID_ANY, ")", wxDefaultPosition, wxDefaultSize, wxBORDER_NONE);
+        m_brace_right = new Label(this, ")", wxBORDER_NONE);
         m_brace_right->SetFont(Label::Body_13);
-        m_brace_right->SetForegroundColour("#262E30");
+        m_brace_right->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
 
-        auto hover_icon = create_scaled_bitmap("dot", this, 16);
-        m_hover_btn     = new wxBitmapButton(this, wxID_ANY, hover_icon, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE);
+        m_hover_btn = new Button(this, "", "", 0, 0);
+        m_hover_btn->SetIconButton(Button::IconShape::Circle, FromDIP(24));
+        m_hover_btn->SetGlyph(MaterialIcon::FiberManualRecord, FromDIP(16));
         m_hover_btn->SetMinSize(wxSize(FromDIP(25), -1));
 #ifdef __WXOSX__
-        m_hover_btn->SetBackgroundColour("#F7F7F7");
+        m_hover_btn->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
 #else
-        m_hover_btn->SetBackgroundColour(*wxWHITE);
+        m_hover_btn->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 #endif
         sizer->Add(m_label, 0, wxALIGN_CENTER_VERTICAL);
         sizer->Add(m_brace_left, 0, wxALIGN_CENTER_VERTICAL);
@@ -596,11 +629,7 @@ public:
     void EnableEdit(bool enable)
     {
         m_enabled = enable;
-        if (enable) {
-            m_hover_btn->SetBitmap(create_scaled_bitmap("edit"));
-        } else {
-            m_hover_btn->SetBitmap(create_scaled_bitmap("dot"));
-        }
+        m_hover_btn->SetGlyph(enable ? MaterialIcon::Edit : MaterialIcon::FiberManualRecord, FromDIP(16));
     }
     void SetOnHoverClick(std::function<void()> on_click) { m_hover_on_click = on_click; }
 
@@ -651,7 +680,7 @@ public:
 
 private:
     wxStaticText   *m_label;
-    wxBitmapButton *m_hover_btn;
+    Button *m_hover_btn;
     wxStaticText   *m_count;
     wxStaticText   *m_title_type;
 
@@ -730,22 +759,28 @@ struct Sidebar::priv
 {
     Plater *plater;
 
-    wxPanel *scrolled = nullptr;
+    wxScrolledWindow *scrolled = nullptr;
     PlaterPresetComboBox *combo_sla_print = nullptr;
     PlaterPresetComboBox *combo_sla_material = nullptr;
 
     // Printer
     wxSizer *             vsizer_printer      = nullptr;
-    // Printer - preset
+    wxSizer *             sizer_dual_extruder = nullptr;
+    // Printer - preset (MD3 kit identity card: static name + status row over a
+    // hidden live PlaterPresetComboBox, trailing edit IconButton)
     StaticBox * panel_printer_preset = nullptr;
     wxStaticBitmap *      image_printer       = nullptr;
     PlaterPresetComboBox *combo_printer       = nullptr;
-    ScalableButton *      btn_edit_printer    = nullptr;
+    Label *               text_printer_name   = nullptr;
+    wxWindow *            printer_status_dot  = nullptr;
+    Label *               text_printer_status = nullptr;
+    Button *              btn_edit_printer    = nullptr;
     ScalableButton *      btn_connect_printer = nullptr;
-    // Printer - bed
+    // Printer - bed (MD3 kit SelectField: caption + outlined h38 combo; the
+    // 84px thumbnail card is gone, the big-image popup hovers off the combo)
     StaticBox *     panel_printer_bed = nullptr;
-    wxStaticBitmap *image_printer_bed = nullptr;
     ComboBox *      combo_printer_bed = nullptr;
+    wxStaticText *  text_printer_bed  = nullptr;
 
     ImageDPIFrame *big_bed_image_popup = nullptr;
     // Printer - sync
@@ -765,8 +800,14 @@ struct Sidebar::priv
 
     PlaterPresetComboBox *combo_print = nullptr;
     std::vector<PlaterPresetComboBox*> combos_filament;
+    // MD3 kit filament info-rows (Prepare.jsx:91-100): one h44 r12
+    // SurfaceContainerHighest StaticBox per combo, with a trailing material
+    // Badge. Kept in lockstep with combos_filament (same indices).
+    std::vector<StaticBox*> filament_rows;
+    std::vector<Label*>     filament_badges;
     int editing_filament = -1;
     wxBoxSizer *sizer_filaments = nullptr;
+    Button *    btn_add_filament_row = nullptr;
     bool fila_switch_warning_shown = false;
 
     //BBS Sidebar widgets
@@ -774,41 +815,123 @@ struct Sidebar::priv
     wxStaticText* m_staticText_print_title;
     wxPanel* m_panel_print_content;
     wxBoxSizer *sizer_params;
+    TabStrip *m_prepare_tabs = nullptr;
+    std::string active_prepare_section = "ink";
 
-    wxStaticBitmap *extruder_separator_icon = nullptr;
+    // Filament-switch status affordance between the dual-extruder columns.
+    // MD3/a11y: a focusable IconButton (>=24px hit target) instead of a tiny
+    // ~10px non-focusable wxStaticBitmap; the glyph raster stays small.
+    Button *extruder_separator_icon = nullptr;
 
     //wxComboBox *                m_comboBox_print_preset;
     wxStaticLine *              m_staticline1;
     StaticBox* m_panel_filament_title;
-    wxStaticText* m_staticText_filament_settings;
-    ScalableButton *  m_bpButton_add_filament;
-    ScalableButton *  m_bpButton_del_filament;
-    ScalableButton *  m_bpButton_ams_filament;
-    ScalableButton *  m_bpButton_set_filament;
+    // Filament section header: the literal shared MD3 SectionHeader (Label.hpp)
+    // replaces the former ScalableButton 'filament' icon + wxStaticText label
+    // pair; trailing Sync AMS / purge / flush buttons stay in the same title
+    // sizer, driven by adjust_filament_title_layout() (row 3).
+    SectionHeader* m_filament_header = nullptr;
+    // MD3: the legacy 'Filament' subtitle row (Body_14 label + hand-painted divider + four
+    // raster ScalableButtons add/delete/ams-sync/settings) was retired. AMS sync moved to the
+    // Filament SectionHeader trailing slot as an outlined MD3 button; add is the full-width
+    // 'Add filament' button; delete/settings fold into the per-row filament menu.
+    Button *          m_btn_sync_ams_header{nullptr};
+    // Bulk filament actions entry: trailing MD3 outlined header button opening
+    // BulkFilamentDialog (set preset / set colour / delete / add N in one batch).
+    Button *          m_bulk_filament_btn{nullptr};
+    // Filament slot search: a compact shared MD3 SearchField (regex toggle +
+    // tune builder popover included) filtering the visible filament rows by
+    // preset name and by colour ("#RRGGBB" / nearest colour name, via
+    // SearchField::colorSearchText — same semantics as the Objects search).
+    SearchField *     m_filament_search{nullptr};
     int m_menu_filament_id = -1;
-    wxPanel*          m_panel_filament_subtitle{nullptr};  // "Filament" subtitle row with +/-/AMS/set buttons
     wxPanel*          m_filament_area_wrapper{nullptr};   // Wrapper panel for collapse/expand
+    bool              filament_expanded = true;
     wxScrolledWindow* m_physical_scroll_area{nullptr};    // Scroll area for physical filaments (max 6 rows, scrolls when exceeded)
     wxScrolledWindow* m_mixed_scroll_area{nullptr};       // Scroll area for mixed filaments (max 6 rows, scrolls when exceeded)
     wxPanel*          m_panel_filament_content{nullptr};
     wxStaticLine* m_staticline2;
     wxPanel* m_panel_project_title;
-    ScalableButton* m_filament_icon = nullptr;
     Button * m_purge_mode_btn = nullptr;
     Button * m_flushing_volume_btn = nullptr;
-    wxSearchCtrl* m_search_bar = nullptr;
+    // MD3 Objects card (Prepare.jsx:116-126): SectionHeader account_tree + the
+    // kit SearchField pill in place of the raw native wxSearchCtrl.
+    SectionHeader* m_objects_header = nullptr;
+    SearchField* m_search_bar = nullptr;
     Search::SearchObjectDialog* dia = nullptr;
+
+    // MD3 compact Process card (Prepare.jsx:105-112): curated rows bound to the
+    // Print config, with an 'Advanced settings' flip to the FULL reparented
+    // ParamsPanel so no setting is orphaned.
+    ParamsPanel  *params_panel_ref = nullptr;
+    wxPanel      *m_process_card = nullptr;
+    // Kit Process card chrome (row 1): a shared SectionHeader 'tune', the live
+    // process-preset combo wrapped as a SelectField, and a
+    // [Quality/Strength/Support/Others] SegmentedControl (MultiSwitchButton)
+    // that filters which curated rows are shown.
+    SectionHeader      *m_process_header  = nullptr;
+    MultiSwitchButton  *m_process_segment = nullptr;
+    // Curated rows tagged by segment index (0=Quality, 1=Strength, 2=Support,
+    // 3=Others; -1 = always shown). apply_process_segment() shows only the
+    // rows matching the active segment.
+    std::vector<std::pair<wxWindow*, int>> process_seg_rows;
+    TextInput    *process_layer_height = nullptr;
+    TextInput    *process_infill_density = nullptr;
+    ComboBox     *process_infill_pattern = nullptr;
+    SwitchButton *process_support = nullptr;
+    std::vector<int> process_pattern_values; // combo index -> InfillPattern enum value
+    wxPanel      *m_process_simple_bar = nullptr; // 'Simple mode' bar shown above the full tree
+    // The reparented ParamsPanel mode-switch toolbar (params_panel->get_top_panel())
+    // was built for a wide standalone settings panel and clips in the narrow
+    // sidebar; it is shown only alongside the full advanced tree, gated by
+    // process_advanced. These are its two divider lines (StaticLine, stored as
+    // wxWindow* to avoid an extra include) so their space collapses when hidden.
+    wxWindow     *m_params_top_line_1 = nullptr;
+    wxWindow     *m_params_top_line_2 = nullptr;
+    bool          process_advanced = false;
+    bool          process_card_refreshing = false;
+    // Guards the 250ms sidebar refresh timer against re-entering itself through
+    // a nested event loop (see the wxEVT_TIMER binding).
+    bool          sidebar_tick_running = false;
+    void          apply_process_segment(int seg);
+    // Sidebar settings search: a shared MD3 SearchField at the top of the
+    // Process card delegating to the global Search::OptionsSearcher popup
+    // (SearchDialog), which lists matching options across every indexed preset
+    // type — process/print, printer and filament — and jumps to the owning Tab
+    // option on activation. The guard flag keeps the focus-driven popup from
+    // being re-opened by the popup's own focus bounce.
+    SearchField  *m_process_search = nullptr;
+    // Same searcher, second host: the compact card's field is hidden along with
+    // the card in advanced mode, which would leave the FULL process-settings
+    // tree — the surface with the most options in it — as the only settings
+    // surface with no search bar. This one lives on the 'Simple settings' bar.
+    SearchField  *m_process_search_adv = nullptr;
+    bool          m_process_search_open = false;
 
     // BBS printer config
     StaticBox* m_panel_printer_title = nullptr;
-    ScalableButton* m_printer_icon = nullptr;
+    // Shared MD3 SectionHeader (content-sized, no fixed-height bar) replacing
+    // the former m_printer_icon ScalableButton + m_text_printer_settings label
+    // pair; m_printer_setting stays a trailing IconButton alongside it.
+    SectionHeader* m_printer_header = nullptr;
     ScalableButton* m_printer_setting = nullptr;
-    wxStaticText *  m_text_printer_settings = nullptr;
     wxPanel* m_panel_printer_content = nullptr;
 
     ObjectList          *m_object_list{ nullptr };
     ObjectSettings      *object_settings{ nullptr };
     ObjectLayers        *object_layers{ nullptr };
+
+    // MD3 Object-manipulation X/Y/Z grid card (ui-md3 Prepare > Object manipulation).
+    // A read-only-live mirror of the ImGui gizmo manipulation cache
+    // (wxGetApp().obj_manipul()->get_cache()); a light UI-thread timer refreshes it
+    // while the 3D editor is shown. Numeric edit/write-back stays in the gizmo overlay.
+    wxPanel             *m_manip_panel{nullptr};
+    // Divider above the card; hidden and shown with it so no orphan rule is left
+    // behind while the card is away.
+    wxWindow            *m_manip_divider{nullptr};
+    Label               *m_manip_cells[12]{};  // 4 rows (Position/Rotation/Scale%/Size) x 3 axes (X/Y/Z)
+    wxTimer             *m_manip_timer{nullptr};
+    void                 refresh_manip_card();
 
     wxButton *btn_export_gcode;
     wxButton *btn_reslice;
@@ -840,6 +963,20 @@ struct Sidebar::priv
     void on_search_update();
     void jump_to_object(ObjectDataViewModelNode* item);
     void can_search();
+    // MD3 identity card: mirror the live combo selection / printer preset /
+    // MachineObject connectivity into the static name + status labels.
+    void update_printer_identity();
+    // MD3 filament rows: mirror each combo's selected preset filament_type
+    // into the trailing material Badge.
+    void update_filament_row_badges();
+    // Filament slot search: show only the rows whose preset name or colour
+    // ("#RRGGBB" / nearest colour name) matches the m_filament_search query
+    // (empty query shows all). Returns true when any row's visibility flipped
+    // so callers know a relayout is needed.
+    bool apply_filament_search_filter();
+    // MD3 compact Process card: pull the curated Print-config values into the
+    // card widgets (no-op while hidden or while the user edits a field).
+    void refresh_process_card();
 
     bool sync_extruder_list(bool &only_external_material, bool is_manual = false);
     std::optional<NozzleOption> get_nozzle_options(MachineObject *obj, int extruder_count, bool support_multi_nozzle, bool is_manual);
@@ -861,74 +998,71 @@ struct Sidebar::priv
 void Sidebar::priv::layout_printer(bool isBBL, bool isDual)
 {
     isDual = isDual && isBBL;  // It indicates a multi-extruder layout.
-    // Printer - preset
-    if (auto sizer = static_cast<wxBoxSizer *>(panel_printer_preset->GetSizer());
-            sizer == nullptr || isBBL != (sizer->GetOrientation() == wxVERTICAL)) {
-        wxBoxSizer *hsizer_printer_btn = new wxBoxSizer(wxHORIZONTAL);
-        hsizer_printer_btn->AddStretchSpacer(1);
-        hsizer_printer_btn->Add(btn_edit_printer, 0);
-        hsizer_printer_btn->Add(btn_connect_printer, 0, wxALIGN_CENTER | wxLEFT, FromDIP(4));
-        combo_printer->SetWindowStyle(combo_printer->GetWindowStyle() & ~wxALIGN_MASK | (isBBL ? wxALIGN_CENTER_HORIZONTAL : wxALIGN_RIGHT));
-        if (isBBL) {
-            wxBoxSizer *vsizer = new wxBoxSizer(wxVERTICAL);
-            wxBoxSizer *hsizer = new wxBoxSizer(wxHORIZONTAL);
-            hsizer->AddStretchSpacer(1);
-            hsizer->Add(image_printer, 0, wxEXPAND | wxTOP, FromDIP(8));
-            hsizer->Add(hsizer_printer_btn, 1, wxEXPAND, 0);
-            hsizer->AddSpacer(FromDIP(6));
-            vsizer->AddSpacer(FromDIP(4));
-            vsizer->Add(hsizer, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(8));
-            vsizer->Add(combo_printer, 0, wxEXPAND | wxALL, FromDIP(4));
-            panel_printer_preset->SetSizer(vsizer);
-        } else {
-            wxBoxSizer *hsizer = new wxBoxSizer(wxHORIZONTAL);
-            hsizer->Add(image_printer, 0, wxLEFT | wxALIGN_CENTER, FromDIP(4));
-            hsizer->Add(combo_printer, 1, wxALIGN_CENTRE | wxLEFT | wxRIGHT, FromDIP(6));
-            hsizer->Add(hsizer_printer_btn, 0, wxALIGN_TOP | wxTOP | wxRIGHT, FromDIP(4));
-            hsizer->AddSpacer(FromDIP(10));
-            panel_printer_preset->SetSizer(hsizer);
-        }
+    // MD3 kit printer identity card (Prepare.jsx:78-85): thumbnail, then a
+    // static name label (13.5/600, ellipsized) over a status row (7px Primary
+    // dot + '0.4 nozzle / Connected' 11.5 Primary), trailing edit IconButton.
+    // The live PlaterPresetComboBox stays behind the card (hidden, geometry
+    // synced to the card) so every selection/update path is preserved.
+    if (panel_printer_preset->GetSizer() == nullptr) {
+        auto *identity_row = new wxBoxSizer(wxHORIZONTAL);
+        identity_row->Add(image_printer, 0, wxALIGN_CENTER_VERTICAL | wxTOP | wxBOTTOM | wxLEFT, FromDIP(10));
+        auto *identity_col = new wxBoxSizer(wxVERTICAL);
+        identity_col->Add(text_printer_name, 0, wxEXPAND);
+        auto *status_row = new wxBoxSizer(wxHORIZONTAL);
+        status_row->Add(printer_status_dot, 0, wxALIGN_CENTER_VERTICAL);
+        status_row->Add(text_printer_status, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(5));
+        identity_col->Add(status_row, 0, wxEXPAND | wxTOP, FromDIP(2));
+        identity_row->Add(identity_col, 1, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(10));
+        identity_row->Add(btn_edit_printer, 0, wxALIGN_CENTER_VERTICAL | wxLEFT | wxRIGHT, FromDIP(6));
+        identity_row->Add(btn_connect_printer, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(8));
+        panel_printer_preset->SetSizer(identity_row);
     }
 
     if (vsizer_printer->GetItemCount() == 0) {
-        wxBoxSizer *hsizer_printer = new wxBoxSizer(wxHORIZONTAL);
-        hsizer_printer->Add(panel_printer_preset, 1, wxEXPAND, 0);
-        hsizer_printer->Add(panel_printer_bed, 0, wxLEFT | wxEXPAND, FromDIP(4));
-        hsizer_printer->Add(btn_sync_printer, 0, wxLEFT | wxEXPAND, FromDIP(4));
-        vsizer_printer->Add(hsizer_printer, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(4));
-        vsizer_printer->AddSpacer(FromDIP(4));
-        // Printer - extruder
+        vsizer_printer->Add(panel_printer_preset, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(8));
+        vsizer_printer->Add(panel_printer_bed, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(8));
+        vsizer_printer->Add(btn_sync_printer, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(8));
 
-        // double
-        auto hsizer_extruder = new wxBoxSizer(wxHORIZONTAL);
+        // Printer - extruder
+        auto *hsizer_extruder = new wxBoxSizer(wxHORIZONTAL);
         hsizer_extruder->Add(left_extruder->sizer, 1, wxEXPAND, 0);
-        hsizer_extruder->AddSpacer(FromDIP(4));
+        hsizer_extruder->AddSpacer(FromDIP(8));
         hsizer_extruder->Add(right_extruder->sizer, 1, wxEXPAND, 0);
+        sizer_dual_extruder = hsizer_extruder;
 
         if (!extruder_separator_icon) {
-            auto bitmap = ScalableBitmap(m_panel_printer_content, "fila_switch", 10);
-            extruder_separator_icon = new wxStaticBitmap(m_panel_printer_content, wxID_ANY, bitmap.bmp(), wxDefaultPosition, bitmap.GetBmpSize());
+            // a11y-hittarget: a borderless IconButton gives a >=24px focusable,
+            // keyboard-operable (Space/Enter) touch target while the fila_switch
+            // raster stays a small centered glyph. Absolutely positioned + raised
+            // between the two extruder columns (see update_extruder_separator_icon).
+            extruder_separator_icon = new Button(m_panel_printer_content, wxEmptyString, "fila_switch");
+            extruder_separator_icon->SetIconButton(Button::IconShape::Circle, 24);
+            extruder_separator_icon->SetToolTip(_L("Filament switch status"));
+            extruder_separator_icon->SetName(_L("Filament switch status"));
+            extruder_separator_icon->SetSize(wxSize(FromDIP(24), FromDIP(24)));
             extruder_separator_icon->Hide();
-            extruder_separator_icon->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent& evt) {
+            extruder_separator_icon->Bind(wxEVT_BUTTON, [this](wxCommandEvent& evt) {
                 bool ready = is_fila_switch_ready();
                 show_fila_switch_msg(ready);
                 evt.Skip();
             });
         }
 
-        // single
-        vsizer_printer->Add(hsizer_extruder, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(4));
-        vsizer_printer->Add(single_extruder->sizer, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(4));
-
-        vsizer_printer->AddSpacer(FromDIP(4));
+        vsizer_printer->Add(hsizer_extruder, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(8));
+        vsizer_printer->Add(single_extruder->sizer, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(8));
+        vsizer_printer->AddSpacer(FromDIP(8));
     }
 
     btn_connect_printer->Show(!isBBL);
     btn_sync_printer->Show(isBBL);
     panel_printer_bed->Show(isBBL);
-    vsizer_printer->GetItem(2)->GetSizer()->GetItem(1)->Show(isDual);
-    vsizer_printer->GetItem(2)->Show(isBBL && isDual);
-    vsizer_printer->GetItem(3)->Show(isBBL && !isDual);
+    vsizer_printer->Show(panel_printer_bed, isBBL, true);
+    vsizer_printer->Show(btn_sync_printer, isBBL, true);
+    if (sizer_dual_extruder != nullptr)
+        vsizer_printer->Show(sizer_dual_extruder, isBBL && isDual, true);
+    vsizer_printer->Show(single_extruder->sizer, isBBL && !isDual, true);
+    panel_printer_preset->Layout();
+    vsizer_printer->Layout();
 }
 
 void Sidebar::priv::flush_printer_sync(bool restart)
@@ -937,7 +1071,9 @@ void Sidebar::priv::flush_printer_sync(bool restart)
         *counter_sync_printer = 6;
         timer_sync_printer->Start(500);
     }
-    btn_sync_printer->SetBackgroundColorNormal((*counter_sync_printer & 1) ? "#F8F8F8" :"#00AE42");
+    btn_sync_printer->SetBackgroundColorNormal(
+        (*counter_sync_printer & 1) ? StateColor::semantic(MD3::Role::SurfaceContainerHigh)
+                                    : StateColor::semantic(MD3::Role::Primary));
     if (--*counter_sync_printer <= 0)
         timer_sync_printer->Stop();
 }
@@ -985,7 +1121,6 @@ void Sidebar::priv::adjust_filament_title_layout()
     if (m_flushing_volume_btn->IsShown()) {
         flush_ideal_width = m_flushing_volume_btn->GetTextRect().width + 10;
     }
-
     int button_spacing    = FromDIP(4);
     int total_spacing     = button_spacing * (button_count - 1);
     int ideal_total_width = purge_ideal_width + flush_ideal_width + total_spacing;
@@ -1069,14 +1204,10 @@ void Sidebar::priv::update_extruder_separator_icon(bool show, bool ready)
         center_y -= icon_size.GetHeight() / 2;
         extruder_separator_icon->SetPosition(wxPoint(center_x, center_y));
 
-        auto normal_bitmap = ScalableBitmap(m_panel_printer_content, "fila_switch", 10);
-        auto error_bitmap  = ScalableBitmap(m_panel_printer_content, "fila_switch_error", 10);
-
-        if (ready) {
-            extruder_separator_icon->SetBitmap(normal_bitmap.bmp());
-        } else {
-            extruder_separator_icon->SetBitmap(error_bitmap.bmp());
-        }
+        // Button carries the fila_switch raster as its (fallback) icon; swap the
+        // named icon for the ready/error state. Button::SetIcon reloads it at the
+        // IconButton's current glyph size.
+        extruder_separator_icon->SetIcon(ready ? "fila_switch" : "fila_switch_error");
 
         extruder_separator_icon->Show();
         extruder_separator_icon->Raise();
@@ -1110,6 +1241,12 @@ Sidebar::priv::~priv()
         delete timer_sync_printer;
         timer_sync_printer = nullptr;
     }
+    // Stop and delete the object-manipulation card refresh timer.
+    if (m_manip_timer) {
+        m_manip_timer->Stop();
+        delete m_manip_timer;
+        m_manip_timer = nullptr;
+    }
     // BBS
     //delete object_manipulation;
     delete object_settings;
@@ -1117,6 +1254,59 @@ Sidebar::priv::~priv()
 #if 0
     delete frequently_changed_parameters;
 #endif
+}
+
+// Sidebar width (DIP) while the full process-settings tree is showing. The
+// reparented ParamsPanel header alone needs ~420px before wxBoxSizer starts
+// starving items out of existence (leading icon + ellipsized title + the
+// Global/Objects switch + the Advance toggle + the table and compare buttons),
+// and the option rows below it want more still. Plater::request_sidebar_width()
+// clamps this to 55% of the frame, so a narrow window keeps its 3D canvas.
+static constexpr int ADVANCED_SIDEBAR_WIDTH = 480;
+
+// Sidebar body scroll maintenance (shared by Sidebar::update_scroll_body and
+// the priv:: paths that run before/without the public wrapper): virtual height
+// grows past the client so sections below the fold scroll into reach, and the
+// virtual width tracks the client width so rows reflow to the sidebar instead
+// of keeping a stale (wider) content-min width -- EXCEPT where a section
+// genuinely cannot compress, which must scroll rather than be cut off.
+static void update_sidebar_scroll_body(wxScrolledWindow *sw)
+{
+    if (!sw || !sw->GetSizer()) return;
+
+    // SetVirtualSize() below can add or remove a scrollbar; on MSW that resizes
+    // the client area and re-enters this helper through the sidebar's own
+    // EVT_SIZE handler. When content sits near a scrollbar threshold the two
+    // can ping-pong, so let the outermost pass win instead of recursing.
+    static bool in_update = false;
+    if (in_update) return;
+    in_update = true;
+
+    const wxSize client = sw->GetClientSize();
+    if (client.x > 0 && client.y > 0) {
+        const wxSize content = sw->GetSizer()->GetMinSize();
+        // The reparented ParamsPanel tree is built for a full-width settings
+        // tab: its option rows are label + value field, and neither half
+        // reflows. Pinning the virtual width to a narrower client width does
+        // not compress that tree, it slices the value fields off the right edge
+        // where no scrollbar can reach them. Growing the virtual width when the
+        // content genuinely cannot fit costs a horizontal scrollbar and keeps
+        // every control reachable; everything that CAN reflow still gets the
+        // client width, so the compact cards are unaffected.
+        const wxSize virt(std::max(content.x, client.x), std::max(content.y, client.y));
+        sw->SetVirtualSize(virt);
+        // wxWindow::Layout() arranges the sizer over the CLIENT rect, so the
+        // scroll range would grow while the children stayed squeezed into the
+        // visible area and the last section (the settings tree) got crushed
+        // against the bottom edge. Lay the sizer out over the VIRTUAL rect
+        // instead so everything below the fold is really placed below the fold
+        // and the scrollbar reaches it. (FitInside() is still the wrong tool:
+        // it pins the virtual width to the content min width, see the note in
+        // update_process_segment.)
+        sw->GetSizer()->SetDimension(wxPoint(0, 0), virt);
+    }
+
+    in_update = false;
 }
 
 void Sidebar::priv::show_preset_comboboxes()
@@ -1145,6 +1335,13 @@ void Sidebar::priv::on_search_update()
     m_object_list->assembly_plate_object_name();
 
     wxString search_text = m_search_bar->GetValue();
+    // Route the SearchField's live matcher state (".*" regex toggle plus the
+    // tune-popover case-sensitive / whole-word checkboxes) into the model so
+    // search_object() filters through SearchField::textMatches.
+    m_object_list->GetModel()->set_search_flags(m_search_bar->IsRegexEnabled(),
+                                                m_search_bar->IsCaseSensitive(),
+                                                m_search_bar->IsWholeWord(),
+                                                m_search_bar->IsMultiline());
     m_object_list->GetModel()->search_object(search_text);
     dia->update_list();
 }
@@ -1157,7 +1354,207 @@ void Sidebar::priv::jump_to_object(ObjectDataViewModelNode* item)
 void Sidebar::priv::can_search()
 {
     if (m_search_bar->IsShown()) {
-        m_search_bar->SetFocus();
+        m_search_bar->GetTextCtrl()->SetFocus();
+    }
+}
+
+void Sidebar::priv::update_printer_identity()
+{
+    if (!text_printer_name || !combo_printer) return;
+    PresetBundle *bundle = wxGetApp().preset_bundle;
+    if (!bundle) return;
+
+    // Name mirrors exactly what the live (hidden) combo shows, dirty marker
+    // and all, so the static label can never drift from the selection model.
+    wxString name = combo_printer->GetValue();
+    if (text_printer_name->GetLabel() != name)
+        text_printer_name->SetLabel(name);
+
+    Preset &printer = bundle->printers.get_edited_preset();
+    wxString status;
+    if (auto *nd = printer.config.option<ConfigOptionFloats>("nozzle_diameter"); nd && !nd->values.empty()) {
+        wxString diam = wxString::FromDouble(nd->values[0], 1);
+        for (size_t i = 1; i < nd->values.size(); ++i) {
+            wxString d2 = wxString::FromDouble(nd->values[i], 1);
+            if (d2 != diam) { diam += "/" + d2; break; }
+        }
+        status = wxString::Format(_L("%s nozzle"), diam);
+    }
+    if (printer.is_bbl_vendor_preset(bundle)) {
+        MachineObject *obj = wxGetApp().getDeviceManager() ? wxGetApp().getDeviceManager()->get_selected_machine() : nullptr;
+        const wxString conn = (obj && obj->is_connected()) ? _L("Connected") : _L("Idle");
+        status = status.IsEmpty() ? conn : status + wxString::FromUTF8(" \xC2\xB7 ") + conn;
+    }
+    if (text_printer_status->GetLabel() != status)
+        text_printer_status->SetLabel(status);
+    const bool show_status = !status.IsEmpty();
+    if (printer_status_dot->IsShown() != show_status) {
+        printer_status_dot->Show(show_status);
+        text_printer_status->Show(show_status);
+    }
+    panel_printer_preset->Layout();
+}
+
+void Sidebar::priv::update_filament_row_badges()
+{
+    PresetBundle *bundle = wxGetApp().preset_bundle;
+    if (!bundle) return;
+    for (size_t i = 0; i < combos_filament.size() && i < filament_badges.size(); ++i) {
+        if (!combos_filament[i] || !filament_badges[i]) continue;
+        wxString type;
+        const std::string preset_name = Preset::remove_suffix_modified(combos_filament[i]->GetValue().ToUTF8().data());
+        if (const Preset *preset = bundle->filaments.find_preset(preset_name, false)) {
+            if (auto *opt = preset->config.option<ConfigOptionStrings>("filament_type"); opt && !opt->values.empty())
+                type = wxString::FromUTF8(opt->values.front());
+        }
+        Label *badge = filament_badges[i];
+        if (badge->GetLabel() != type) {
+            badge->SetLabel(type);
+            wxWindow *box = badge->GetParent();
+            box->Show(!type.IsEmpty());
+            if (box->GetParent()) box->GetParent()->Layout();
+        }
+    }
+
+    // Keep the filament search filter live across preset renames / colour
+    // edits: a row's haystack (preset name + colour) may have changed under a
+    // non-empty query, so re-evaluate and relayout only when visibility flips.
+    if (apply_filament_search_filter() && plater) {
+        plater->sidebar().recalc_filament_scroll_sizes();
+        m_panel_filament_content->Layout();
+        m_filament_area_wrapper->Layout();
+        update_sidebar_scroll_body(scrolled);
+    }
+}
+
+bool Sidebar::priv::apply_filament_search_filter()
+{
+    if (!m_filament_search) return false;
+    const wxString query = m_filament_search->GetValue();
+    const bool     regex = m_filament_search->IsRegexEnabled();
+    const bool     csens = m_filament_search->IsCaseSensitive();
+    const bool     multiline = m_filament_search->IsMultiline();
+    const bool     wword = m_filament_search->IsWholeWord();
+
+    // Per-slot colours, resolved once per pass (same source the Objects search
+    // uses for its colour-aware haystack).
+    std::vector<std::string> filament_colors;
+    if (!query.IsEmpty() && plater)
+        filament_colors = plater->get_extruder_colors_from_plater_config();
+
+    SearchField::MatchPass match_pass(query, regex, csens, wword, multiline);
+    bool changed = false;
+    for (size_t i = 0; i < filament_rows.size(); ++i) {
+        StaticBox *row = filament_rows[i];
+        if (!row) continue;
+        bool match = true;
+        if (!query.IsEmpty()) {
+            // Haystack: "<slot #> <preset name> #RRGGBB <colour name>", so a
+            // query can hit the slot number, the preset name (substring or
+            // regex per the pill's ".*" toggle) or the slot colour by hex value
+            // or everyday colour name — exactly the shared
+            // SearchField::colorSearchText / textMatches semantics.
+            wxString haystack = wxString::Format("%d", int(i) + 1);
+            if (i < combos_filament.size() && combos_filament[i])
+                haystack += " " + combos_filament[i]->GetValue();
+            if (i < filament_colors.size())
+                haystack += " " + SearchField::colorSearchText(wxColour(filament_colors[i]));
+            match = match_pass.matches(haystack);
+        }
+        if (row->IsShown() != match) {
+            row->Show(match);
+            changed = true;
+        }
+    }
+    return changed;
+}
+
+void Sidebar::priv::refresh_process_card()
+{
+    if (!m_process_card || !m_process_card->IsShown()) return;
+
+    // Re-entrancy matters here, and it is not hypothetical: this runs off a
+    // 250ms timer, and EVERY ShowModal() spins a nested event loop that keeps
+    // that timer firing. So a tick can land in the middle of an earlier tick.
+    //
+    // process_card_refreshing is what tells the field handlers below "this value
+    // came from the config, not from the user". It used to be set true on entry
+    // and cleared unconditionally on exit, so a nested tick cleared the flag on
+    // ITS way out while the outer pass was still assigning values -- and every
+    // remaining SetValue()/SetSelection() in the outer pass was then read as a
+    // user edit, calling tab->load_config() and writing settings nobody touched,
+    // which in turn triggers another config change and another refresh.
+    //
+    // Bail out instead: the outer pass is already applying the current config,
+    // so a nested tick has nothing to add.
+    if (process_card_refreshing) return;
+
+    PresetBundle *bundle = wxGetApp().preset_bundle;
+    if (!bundle) return;
+    const DynamicPrintConfig &cfg = bundle->prints.get_edited_preset().config;
+
+    // Restore rather than clear, so the flag can never be left false while an
+    // outer pass is still running even if a future caller re-enters some other
+    // way.
+    const bool was_refreshing = process_card_refreshing;
+    process_card_refreshing   = true;
+    struct RestoreFlag {
+        bool &flag;
+        bool  prev;
+        ~RestoreFlag() { flag = prev; }
+    } restore_flag{process_card_refreshing, was_refreshing};
+
+    if (process_layer_height && !process_layer_height->GetTextCtrl()->HasFocus()) {
+        if (auto *opt = cfg.option<ConfigOptionFloat>("layer_height")) {
+            wxString s = wxString::FromDouble(opt->value, 2);
+            if (process_layer_height->GetTextCtrl()->GetValue() != s)
+                process_layer_height->GetTextCtrl()->SetValue(s);
+        }
+    }
+    if (process_infill_density && !process_infill_density->GetTextCtrl()->HasFocus()) {
+        if (auto *opt = cfg.option<ConfigOptionPercent>("sparse_infill_density")) {
+            wxString s = wxString::FromDouble(opt->value, 0);
+            if (process_infill_density->GetTextCtrl()->GetValue() != s)
+                process_infill_density->GetTextCtrl()->SetValue(s);
+        }
+    }
+    if (process_infill_pattern) {
+        if (auto *opt = cfg.option<ConfigOptionEnum<InfillPattern>>("sparse_infill_pattern")) {
+            int sel = -1;
+            for (size_t i = 0; i < process_pattern_values.size(); ++i)
+                if (process_pattern_values[i] == int(opt->value)) { sel = int(i); break; }
+            if (sel >= 0 && process_infill_pattern->GetSelection() != sel)
+                process_infill_pattern->SetSelection(sel);
+        }
+    }
+    if (process_support) {
+        if (auto *opt = cfg.option<ConfigOptionBool>("enable_support")) {
+            if (process_support->GetValue() != opt->value)
+                process_support->SetValue(opt->value);
+        }
+    }
+    // process_card_refreshing is restored by RestoreFlag above.
+}
+
+// Show only the curated rows whose segment tag matches the active
+// [Quality/Strength/Support/Others] SegmentedControl choice (tag -1 = always).
+// Purely a visibility filter over the compact Process card; the full ParamsPanel
+// tree behind 'Advanced settings' remains the reachability path for every other
+// setting, so nothing is orphaned.
+void Sidebar::priv::apply_process_segment(int seg)
+{
+    for (auto &pr : process_seg_rows) {
+        const bool show = pr.second < 0 || pr.second == seg;
+        if (pr.first && pr.first->IsShown() != show)
+            pr.first->Show(show);
+    }
+    if (m_process_card && m_process_card->IsShown()) {
+        m_process_card->Layout();
+        // NOTE: never FitInside() here — on the former plain-panel body that
+        // permanently pinned the virtual width to the content min width and
+        // right-clipped every sidebar row. The shared helper keeps the width
+        // at the client width and only grows the scrollable height.
+        update_sidebar_scroll_body(scrolled);
     }
 }
 
@@ -1524,26 +1921,26 @@ public:
     AMSCountPopupWindow(ExtruderGroup *extruder, int index)
         : PopupWindow(extruder, wxBORDER_NONE | wxPU_CONTAINS_CONTROLS)
     {
-        SetBackgroundColour(*wxWHITE);
-        auto msg  = new wxStaticText(this, wxID_ANY, _L("Set the number of AMS installed on the nozzle."));
+        SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
+        auto msg  = new Label(this, _L("Set the number of AMS installed on the nozzle."));
         msg->SetFont(Label::Body_14);
-        msg->SetForegroundColour("#262E30");
+        msg->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
         msg->Wrap(FromDIP(280));
         auto box = new StaticBox(this, wxID_ANY);
-        box->SetBackgroundColor(0xF8F8F8);
+        box->SetBackgroundColor(StateColor::semantic(MD3::Role::SurfaceContainerLow));
         box->SetBorderWidth(0);
         auto img4 = new ScalableButton(box, wxID_ANY, "ams_4_tray", {}, wxDefaultSize, wxDefaultPosition, wxBU_EXACTFIT | wxNO_BORDER, false, 44);
         //img4->SetBackgroundColour(*wxWHITE);
         auto img1 = new ScalableButton(box, wxID_ANY, "ams_1_tray", {}, wxDefaultSize, wxDefaultPosition, wxBU_EXACTFIT | wxNO_BORDER, false, 44);
         //img1->SetBackgroundColour(*wxWHITE);
-        auto txt4 = new wxStaticText(box, wxID_ANY, _L("AMS(4 slots)"));
+        auto txt4 = new Label(box, _L("AMS(4 slots)"));
         txt4->SetFont(Label::Body_14);
-        txt4->SetBackgroundColour(0xF8F8F8);
-        txt4->SetForegroundColour("#262E30");
-        auto txt1 = new wxStaticText(box, wxID_ANY, _L("AMS(1 slot)"));
+        txt4->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
+        txt4->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+        auto txt1 = new Label(box, _L("AMS(1 slot)"));
         txt1->SetFont(Label::Body_14);
-        txt1->SetBackgroundColour(0xF8F8F8);
-        txt1->SetForegroundColour("#262E30");
+        txt1->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
+        txt1->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
         int ams4 = 0, ams1 = 0;
         int oth4 = 0, oth1 = 0;
         GetAMSCount(index, ams4, ams1);
@@ -1580,12 +1977,12 @@ public:
 
         Bind(wxEVT_PAINT, [this](wxPaintEvent& evt) {
                 wxPaintDC dc(this);
-                dc.SetPen(wxColour("#EEEEEE"));
+                dc.SetPen(StateColor::semantic(MD3::Role::OutlineVariant));
                 dc.SetBrush(*wxTRANSPARENT_BRUSH);
                 dc.DrawRoundedRectangle(0, 0, GetSize().x, GetSize().y, 0);
             });
 
-        SetBackgroundColour(*wxWHITE);
+        SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
         wxGetApp().UpdateDarkUIWin(this);
     }
 
@@ -1640,27 +2037,27 @@ ExtruderGroup::ExtruderGroup(wxWindow * parent, int index, wxString const &title
     , m_index(index)
 {
     SetFont(Label::Body_10);
-    SetForegroundColour(wxColour("#CECECE"));
-    SetBackgroundColour(*wxWHITE);
-    SetBorderColor(wxColour("#EEEEEE"));
+    SetForegroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
+    SetBorderColor(StateColor::semantic(MD3::Role::OutlineVariant));
     ShowBadge(true);
 
     hover_label = new HoverLabel(this, title);
 #if defined(__WXOSX__)
-    hover_label->SetBackgroundColour("#F7F7F7");
+    hover_label->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
 #endif
 
     // Nozzle
-    wxStaticText *label_diameter = new wxStaticText(this, wxID_ANY, _L("Diameter"));
+    wxStaticText *label_diameter = new Label(this, _L("Diameter"));
     label_diameter->SetFont(Label::Body_14);
-    label_diameter->SetForegroundColour("#262E30");
+    label_diameter->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     if (index >= 0) label_diameter->SetMinSize({FromDIP(80), -1});
     auto combo_diameter = new ComboBox(this, wxID_ANY, wxString(""), wxDefaultPosition, wxDefaultSize, 0, nullptr, wxCB_READONLY);
     combo_diameter->GetDropDown().SetUseContentWidth(true);
     this->combo_diameter = combo_diameter;
-    wxStaticText *label_flow = new wxStaticText(this, wxID_ANY, _L("Flow"));
+    wxStaticText *label_flow = new Label(this, _L("Flow"));
     label_flow->SetFont(Label::Body_14);
-    label_flow->SetForegroundColour("#262E30");
+    label_flow->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     if (index >= 0) label_flow->SetMinSize({FromDIP(80), -1});
     auto combo_flow = new ComboBox(this, wxID_ANY, wxString(""), wxDefaultPosition, wxDefaultSize, 0, nullptr, wxCB_READONLY);
     combo_flow->GetDropDown().SetUseContentWidth(true);
@@ -1677,16 +2074,16 @@ ExtruderGroup::ExtruderGroup(wxWindow * parent, int index, wxString const &title
     this->combo_flow = combo_flow;
 
     // AMS
-    wxStaticText *label_ams  = new wxStaticText(this, wxID_ANY, _L("AMS"));
+    wxStaticText *label_ams  = new Label(this, _L("AMS"));
     label_ams->SetFont(Label::Body_14);
-    label_ams->SetForegroundColour("#262E30");
+    label_ams->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     //label_ams->SetMinSize({FromDIP(70), -1});
     if (index >= 0) {
         btn_edit = new ScalableButton(this, wxID_ANY, "dot");
 #ifdef __WXOSX__
-        btn_edit->SetBackgroundColour("#F7F7F7");
+        btn_edit->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
 #else
-        btn_edit->SetBackgroundColour(*wxWHITE);
+        btn_edit->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 #endif
         btn_edit->Hide();
         btn_edit->Bind(wxEVT_COMMAND_BUTTON_CLICKED, [this, index](auto &evt) {
@@ -1706,9 +2103,9 @@ ExtruderGroup::ExtruderGroup(wxWindow * parent, int index, wxString const &title
     }
 
     // AMS not installed message
-    ams_not_installed_msg = new wxStaticText(this, wxID_ANY, _L("Not installed"));
+    ams_not_installed_msg = new Label(this, _L("Not installed"));
     ams_not_installed_msg->SetFont(Label::Body_14);
-    ams_not_installed_msg->SetForegroundColour("#262E30");
+    ams_not_installed_msg->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
 
     // AMS group
     for (size_t i = 0; i < 4; ++i) {
@@ -1726,7 +2123,7 @@ ExtruderGroup::ExtruderGroup(wxWindow * parent, int index, wxString const &title
     hsizer_ams->Add(ams_not_installed_msg, 0, wxALIGN_CENTER);
 
     btn_up = new ScalableButton(this, wxID_ANY, "page_up", "", {FromDIP(14), FromDIP(14)}, wxDefaultPosition, wxBU_EXACTFIT | wxNO_BORDER, false, 14);
-    btn_up->SetBackgroundColour(*wxWHITE);
+    btn_up->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     btn_up->Bind(wxEVT_COMMAND_BUTTON_CLICKED, [this, index](auto &evt) {
         if (page_cur > 0)
             --page_cur;
@@ -1734,7 +2131,7 @@ ExtruderGroup::ExtruderGroup(wxWindow * parent, int index, wxString const &title
     });
     btn_up->Hide();
     btn_down = new ScalableButton(this, wxID_ANY, "page_down", "", {FromDIP(14), FromDIP(14)}, wxDefaultPosition, wxBU_EXACTFIT | wxNO_BORDER, false, 14);
-    btn_down->SetBackgroundColour(*wxWHITE);
+    btn_down->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     btn_down->Bind(wxEVT_COMMAND_BUTTON_CLICKED, [this, index](auto &evt) {
         if (page_cur + 1 < page_num)
             ++page_cur;
@@ -2204,7 +2601,11 @@ bool Sidebar::priv::sync_extruder_list(bool &only_external_material, bool is_man
 
 void Sidebar::priv::update_sync_status(const MachineObject *obj)
 {
-    StateColor not_synced_colour(std::pair<wxColour, int>(wxColour("#00AE42"), StateColor::Normal));
+    // Keep the MD3 identity card's Connected/Idle status in step with the
+    // machine state (cheap: labels only change when the text differs).
+    update_printer_identity();
+
+    StateColor not_synced_colour(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Normal));
     auto clear_all_sync_status = [this, &not_synced_colour]() {
         panel_printer_preset->ShowBadge(false);
         panel_printer_bed->ShowBadge(false);
@@ -2371,7 +2772,7 @@ void Sidebar::priv::update_sync_status(const MachineObject *obj)
         }
     }
 
-    StateColor synced_colour(std::pair<wxColour, int>(wxColour("#CECECE"), StateColor::Normal));
+    StateColor synced_colour(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OutlineVariant), StateColor::Normal));
     bool all_extruder_synced = std::all_of(extruder_synced.begin(), extruder_synced.end(), [](bool value) { return value; });
     if (printer_synced && all_extruder_synced) {
         btn_sync_printer->SetBorderColor(synced_colour);
@@ -2495,27 +2896,134 @@ void Sidebar::update_sync_ams_btn_enable(wxUpdateUIEvent &e)
      if (m_last_slice_state != p->plater->is_background_process_slicing()) {
          m_last_slice_state = p->plater->is_background_process_slicing();
          btn_sync->Enable(!m_last_slice_state);
-         ams_btn->Enable(!m_last_slice_state);
+         // MD3: the AMS-sync affordance is now the Filament SectionHeader trailing button.
+         if (p->m_btn_sync_ams_header) p->m_btn_sync_ams_header->Enable(!m_last_slice_state);
          Refresh();
      }
  }
 
-Sidebar::Sidebar(Plater *parent)
-    : wxPanel(parent, wxID_ANY, wxDefaultPosition, wxSize(42 * wxGetApp().em_unit(), -1)), p(new priv(parent))
+// MD3 section-header / toolbar glyphs. Paint a Material Symbols codepoint onto an
+// existing ScalableButton's bitmap (tinted to an MD3 role colour) WITHOUT
+// disturbing the button's event bindings, tooltip, id or sizer slot -- the whole
+// point of a restructure that must preserve behaviour. When the Material Symbols
+// face is unavailable the button keeps its raster resource icon (graceful
+// fallback). ScalableButton::msw_rescale() reloads the raster icon by name, so
+// callers re-invoke this after every rescale / theme change to keep the glyph
+// DPI- and theme-correct (see Sidebar::msw_rescale / sys_color_changed).
+static void apply_scalable_glyph(ScalableButton *btn, uint32_t glyph, int px, const wxColour &colour)
 {
+    if (!btn)
+        return;
+    if (!MaterialIcon::available())
+        return; // keep the button's raster bitmap
+    btn->SetBitmap(MaterialIcon::bitmap(btn, glyph, px, colour));
+}
+
+// Kit printer identity card thumbnail (prepare/printer-identity-card-combobox-
+// anatomy): a 52x52 r12 cell on SurfaceContainerLowest with a 1px OutlineVariant
+// border, replacing the bare raw raster bitmap. When no model-specific preview
+// PNG exists (is_placeholder), draws a centered 30px 'print' Material Symbol
+// glyph instead of the flat placeholder raster; otherwise composites the real
+// printer photo into the same rounded cell. Falls back to the placeholder
+// raster verbatim when the icon face is unavailable. Mirrors the DPI/alpha
+// compositing already established by StatusPanel.cpp's device_idle_thumbnail_tile.
+static wxBitmap build_printer_thumbnail_cell(wxWindow *ref, const wxBitmap &source, bool is_placeholder)
+{
+    const int    logical_px = 52; // kit cell side
+    const double scale      = (ref && ref->GetDPIScaleFactor() > 0.0) ? ref->GetDPIScaleFactor() : 1.0;
+    const int    dev        = std::max(1, static_cast<int>(std::ceil(logical_px * scale)));
+    wxBitmap     bmp(dev, dev);
+#if defined(__WXMSW__) || defined(__WXOSX__)
+    bmp.UseAlpha();
+#endif
+    {
+        wxMemoryDC mdc(bmp);
+        mdc.SetBackground(*wxTRANSPARENT_BRUSH);
+        mdc.Clear();
+        const bool     dark    = wxGetApp().dark_mode();
+        const wxColour cell_bg = MD3::resolve(MD3::Role::SurfaceContainerLowest, dark);
+        const wxColour border  = MD3::resolve(MD3::Role::OutlineVariant, dark);
+        const double   radius  = static_cast<double>(MD3::Metrics::radius_rail); // r12
+
+        wxGraphicsContext *gc = wxGraphicsContext::Create(mdc);
+        if (gc) {
+            gc->SetAntialiasMode(wxANTIALIAS_DEFAULT);
+            gc->Scale(scale, scale); // logical 0..logical_px coordinates
+
+            gc->SetPen(*wxTRANSPARENT_PEN);
+            gc->SetBrush(wxBrush(cell_bg));
+            gc->DrawRoundedRectangle(0, 0, logical_px, logical_px, radius);
+
+            // wx 3.1.5 has no path-clip overload; a rectangular clip suffices —
+            // the rounded silhouette comes from the background fill and the
+            // border ring stroked on top.
+            gc->Clip(wxDouble(0), wxDouble(0), wxDouble(logical_px), wxDouble(logical_px));
+
+            if (is_placeholder && MaterialIcon::available()) {
+                const int      glyph_px  = 30;
+                const wxColour glyph_col = MD3::resolve(MD3::Role::OnSurfaceVariant, dark);
+                const wxBitmap gb = MaterialIcon::bitmapPx(MaterialIcon::Print, glyph_px, glyph_col, scale);
+                const double   gw = gb.GetWidth() / scale, gh = gb.GetHeight() / scale;
+                gc->DrawBitmap(gb, (logical_px - gw) / 2.0, (logical_px - gh) / 2.0, gw, gh);
+            } else if (source.IsOk()) {
+                gc->DrawBitmap(source, 0, 0, logical_px, logical_px);
+            }
+            gc->ResetClip();
+
+            gc->SetPen(wxPen(border, 1));
+            gc->SetBrush(*wxTRANSPARENT_BRUSH);
+            gc->DrawRoundedRectangle(0.5, 0.5, logical_px - 1.0, logical_px - 1.0, radius);
+
+            delete gc; // flush before the bitmap is read
+        }
+        mdc.SelectObject(wxNullBitmap);
+    }
+#if wxCHECK_VERSION(3, 1, 6)
+    bmp.SetScaleFactor(scale);
+#endif
+    return bmp;
+}
+
+Sidebar::Sidebar(Plater *parent)
+    : wxPanel(parent, wxID_ANY, wxDefaultPosition,
+              wxSize(parent->FromDIP(MD3::Metrics::active().sidebar_width), -1))
+    , p(new priv(parent))
+{
+    // Region name for assistive technology and the headless driver.
+    SetName(_L("Sidebar"));
     Choice::register_dynamic_list("support_filament", &dynamic_filament_list);
     Choice::register_dynamic_list("support_interface_filament", &dynamic_filament_list);
     Choice::register_dynamic_list("wall_filament", &dynamic_filament_list);
     Choice::register_dynamic_list("sparse_infill_filament", &dynamic_filament_list);
     Choice::register_dynamic_list("solid_infill_filament", &dynamic_filament_list);
 
-    p->scrolled = new wxPanel(this);
-    //    p->scrolled->SetScrollbars(0, 100, 1, 2); // ys_DELETE_after_testing. pixelsPerUnitY = 100
-    // but this cause the bad layout of the sidebar, when all infoboxes appear.
-    // As a result we can see the empty block at the bottom of the sidebar
-    // But if we set this value to 5, layout will be better
-    //p->scrolled->SetScrollRate(0, 5);
-    p->scrolled->SetBackgroundColour(*wxWHITE);
+    // The sidebar body is a real vertical scroller. The former plain wxPanel
+    // clipped everything below the fold (no scrollbar), and its content-min
+    // size (including the stray FitInside() virtual-width pin) propagated up
+    // the sizer chain into the frame minimum size, so short windows could not
+    // even be created. Scrolling is vertical-only: update_sidebar_scroll_body()
+    // keeps the virtual width equal to the client width so rows always reflow
+    // to the sidebar, and grows only the virtual height past the client.
+    p->scrolled = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize,
+                                       wxTAB_TRAVERSAL | wxVSCROLL | wxHSCROLL);
+    p->scrolled->SetScrollRate(FromDIP(8), FromDIP(8));
+    p->scrolled->EnableScrolling(true, true);
+    // Horizontal scrolling is on demand, not always-on: update_sidebar_scroll_body()
+    // only grows the virtual width when a section cannot fit, so the bar appears
+    // for the full settings tree and stays away for the compact cards.
+    p->scrolled->ShowScrollbars(wxSHOW_SB_DEFAULT, wxSHOW_SB_DEFAULT);
+    // Explicit small minimum: the body must never dictate the sidebar/frame
+    // minimum size again — content taller than the window becomes scrollable
+    // instead of a hard window-size floor.
+    p->scrolled->SetMinSize(wxSize(FromDIP(MD3::Metrics::active().sidebar_width), FromDIP(240)));
+    const wxColour surface_low    = StateColor::semantic(MD3::Role::SurfaceContainerLow);
+    const wxColour surface_lowest = StateColor::semantic(MD3::Role::SurfaceContainerLowest);
+    const wxColour surface_high   = StateColor::semantic(MD3::Role::SurfaceContainerHigh);
+    const wxColour outline        = StateColor::semantic(MD3::Role::OutlineVariant);
+
+    SetBackgroundColour(surface_low);
+    // MD3 sidebar body surface is SurfaceContainerLow (matches the panel host).
+    p->scrolled->SetBackgroundColour(surface_low);
 
 
     SetFont(wxGetApp().normal_font());
@@ -2533,11 +3041,19 @@ Sidebar::Sidebar(Plater *parent)
     // Sizer in the scrolled area
     auto* scrolled_sizer = m_scrolled_sizer = new wxBoxSizer(wxVERTICAL);
     p->scrolled->SetSizer(scrolled_sizer);
+    // Manage the virtual size ourselves (SetSizer turned auto-layout on, whose
+    // size handler would pin the virtual width to the content min width — the
+    // exact clipping bug this scroller replaces).
+    p->scrolled->SetAutoLayout(false);
+    p->scrolled->Bind(wxEVT_SIZE, [this](wxSizeEvent &e) {
+        update_scroll_body();
+        e.Skip();
+    });
 
-    wxColour title_bg = wxColour(248, 248, 248);
-    wxColour inactive_text = wxColour(86, 86, 86);
-    wxColour active_text = wxColour(0, 0, 0);
-    wxColour static_line_col = wxColour(166, 169, 170);
+    const wxColour title_bg        = surface_low;
+    const wxColour inactive_text   = StateColor::semantic(MD3::Role::OnSurfaceVariant);
+    const wxColour active_text     = StateColor::semantic(MD3::Role::OnSurface);
+    const wxColour static_line_col = outline;
 
 #ifdef __WINDOWS__
     p->scrolled->SetDoubleBuffered(true);
@@ -2549,18 +3065,17 @@ Sidebar::Sidebar(Plater *parent)
         // 1.1 create title bar resources
         p->m_panel_printer_title = new StaticBox(p->scrolled, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL | wxBORDER_NONE);
         p->m_panel_printer_title->SetBackgroundColor(title_bg);
-        p->m_panel_printer_title->SetBackgroundColor2(0xF1F1F1);
+        p->m_panel_printer_title->SetBackgroundColor2(title_bg);
 
-        p->m_printer_icon = new ScalableButton(p->m_panel_printer_title, wxID_ANY, "printer");
-        p->m_text_printer_settings = new Label(p->m_panel_printer_title, _L("Printer"), LB_PROPAGATE_MOUSE_EVENT);
-
-        p->m_printer_icon->Bind(wxEVT_BUTTON, [this](wxCommandEvent& e) {
-            //auto wizard_t = new ConfigWizard(wxGetApp().mainframe);
-            //wizard_t->run(ConfigWizard::RR_USER, ConfigWizard::SP_CUSTOM);
-            });
-
+        // Shared MD3 SectionHeader (containment/SectionHeader): content-sized,
+        // no fixed-height bar -- replaces the former ScalableButton + wxStaticText
+        // pair built from the raster 'printer' bitmap.
+        p->m_printer_header = new SectionHeader(p->m_panel_printer_title, _L("Printer"), MaterialIcon::Print);
 
         p->m_printer_setting = new ScalableButton(p->m_panel_printer_title, wxID_ANY, "settings");
+        // a11y: icon-only gear needs an accessible name + tooltip for assistive tech.
+        p->m_printer_setting->SetToolTip(_L("Printer settings"));
+        p->m_printer_setting->SetName(_L("Printer settings"));
         p->m_printer_setting->Bind(wxEVT_BUTTON, [this](wxCommandEvent &e) {
             // p->editing_filament = -1;
             // wxGetApp().params_dialog()->Popup();
@@ -2569,13 +3084,14 @@ Sidebar::Sidebar(Plater *parent)
             wxGetApp().run_wizard(ConfigWizard::RR_USER, ConfigWizard::SP_PRINTERS);
             });
 
+        // MD3 SectionHeader anatomy: trailing 'settings' glyph from the Material
+        // Symbols face (OnSurfaceVariant), retiring the raster 'settings' bitmap.
+        apply_scalable_glyph(p->m_printer_setting, MaterialIcon::Settings, 16, StateColor::semantic(MD3::Role::OnSurfaceVariant));
+
         wxBoxSizer* h_sizer_title = new wxBoxSizer(wxHORIZONTAL);
-        h_sizer_title->Add(p->m_printer_icon, 0, wxALIGN_CENTRE | wxLEFT | wxRIGHT, em);
-        h_sizer_title->Add(p->m_text_printer_settings, 0, wxALIGN_CENTER);
-        h_sizer_title->AddStretchSpacer();
+        h_sizer_title->Add(p->m_printer_header, 1, wxALIGN_CENTER | wxLEFT | wxRIGHT, em);
         h_sizer_title->Add(p->m_printer_setting, 0, wxALIGN_CENTER);
         h_sizer_title->Add(15 * em / 10, 0, 0, 0, 0);
-        h_sizer_title->SetMinSize(-1, 3 * em);
 
         p->m_panel_printer_title->SetSizer(h_sizer_title);
         p->m_panel_printer_title->Layout();
@@ -2588,37 +3104,103 @@ Sidebar::Sidebar(Plater *parent)
 
         // add printer title
         scrolled_sizer->Add(p->m_panel_printer_title, 0, wxEXPAND | wxALL, 0);
-        p->m_panel_printer_title->Bind(wxEVT_LEFT_DOWN, [this] (auto & e) {
+        auto toggle_printer_content = [this](auto &e) {
             if (p->m_panel_printer_content->GetMaxHeight() == 0)
                 p->m_panel_printer_content->SetMaxSize({-1, -1});
             else
                 p->m_panel_printer_content->SetMaxSize({-1, 0});
-            m_scrolled_sizer->Layout();
-        });
+            update_scroll_body();
+        };
+        p->m_panel_printer_title->Bind(wxEVT_LEFT_DOWN, toggle_printer_content);
+        // m_printer_header is a separate child wxWindow (unlike the old Label's
+        // LB_PROPAGATE_MOUSE_EVENT, plain wxWindows don't forward mouse events to
+        // their parent), so the same collapse toggle is bound here directly to
+        // keep clicking the header title collapsing/expanding the printer card.
+        p->m_printer_header->Bind(wxEVT_LEFT_DOWN, toggle_printer_content);
 
         // add spliter 2
         auto spliter_2 = new ::StaticLine(p->scrolled);
-        spliter_2->SetLineColour("#CECECE");
+        spliter_2->SetLineColour(outline);
         scrolled_sizer->Add(spliter_2, 0, wxEXPAND);
 
 
         /*************************** 2. add printer content ************************/
         p->m_panel_printer_content = new wxPanel(p->scrolled, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
-        p->m_panel_printer_content->SetBackgroundColour(wxColour(255, 255, 255));
-        StateColor panel_bd_col(std::pair<wxColour, int>(wxColour("#00AE42"), StateColor::Pressed),
-                                std::pair<wxColour, int>(wxColour("#00AE42"), StateColor::Hovered),
-                                std::pair<wxColour, int>(wxColour("#EEEEEE"), StateColor::Normal));
+        p->m_panel_printer_content->SetBackgroundColour(surface_lowest);
+        StateColor panel_bd_col(
+            std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Pressed),
+            std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Hovered),
+            std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OutlineVariant), StateColor::Normal));
 
+        // MD3 kit printer identity card (Prepare.jsx:78-85): the card itself is
+        // the affordance for the live combo's dropdown; the trailing 34px edit
+        // IconButton opens the preset editor.
         p->panel_printer_preset = new StaticBox(p->m_panel_printer_content);
-        p->panel_printer_preset->SetCornerRadius(8);
+        p->panel_printer_preset->SetCornerRadius(FromDIP(MD3::Metrics::active().radius));
+        p->panel_printer_preset->SetBackgroundColor(StateColor::semantic(MD3::Role::SurfaceContainerHighest));
         p->panel_printer_preset->SetBorderColor(panel_bd_col);
-        p->panel_printer_preset->SetMinSize(PRINTER_PANEL_SIZE);
         p->panel_printer_preset->Bind(wxEVT_LEFT_DOWN, [this](auto & evt) {
             p->combo_printer->wxEvtHandler::ProcessEvent(evt);
         });
 
-        ScalableButton *edit_btn = new ScalableButton(p->panel_printer_preset, wxID_ANY, "dot");
+        // Live preset combo, created FIRST so it stays the card's first child.
+        // It is hidden — the static identity labels replace its chrome — but
+        // remains fully wired: card clicks are forwarded to it, its DropDown
+        // pops from its geometry (kept in sync with the card below), and every
+        // update()/selection path is untouched.
+        PlaterPresetComboBox *combo_printer = new PlaterPresetComboBox(p->panel_printer_preset, Preset::TYPE_PRINTER);
+        combo_printer->SetWindowStyle(combo_printer->GetWindowStyle() & ~wxALIGN_MASK | wxALIGN_LEFT);
+        combo_printer->SetBorderWidth(0);
+        combo_printer->Hide();
+        // The combo also builds its legacy cog on this panel; the card has its
+        // own kit edit button, so the stock one otherwise sits shown at 0,0 with
+        // zero width, outside every sizer (layout probe, CJ-010).
+        if (combo_printer->edit_btn)
+            combo_printer->edit_btn->Hide();
+        p->combo_printer = combo_printer;
+        p->panel_printer_preset->Bind(wxEVT_SIZE, [this](wxSizeEvent &evt) {
+            // Keep the hidden combo's geometry equal to the card so its
+            // DropDown aligns with (and spans) the identity card.
+            if (p->combo_printer)
+                p->combo_printer->SetSize(0, 0, evt.GetSize().GetWidth(), evt.GetSize().GetHeight());
+            evt.Skip();
+        });
+
+        p->image_printer    = new wxStaticBitmap(p->panel_printer_preset, wxID_ANY, wxNullBitmap, wxDefaultPosition, PRINTER_THUMBNAIL_SIZE, 0);
+        update_printer_thumbnail();
+        p->image_printer->Bind(wxEVT_LEFT_DOWN, [this](auto &evt) {
+            p->combo_printer->wxEvtHandler::ProcessEvent(evt);
+        });
+
+        // Static identity: name 13.5/600 ellipsized + status row (7px Primary
+        // dot + '0.4 nozzle · Connected' 11.5 Primary).
+        p->text_printer_name = new Label(p->panel_printer_preset, wxString(), LB_PROPAGATE_MOUSE_EVENT | wxST_ELLIPSIZE_END);
+        p->text_printer_name->SetFont(::Label::Head_13);
+        p->text_printer_name->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+        p->text_printer_name->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerHighest));
+
+        p->printer_status_dot = new wxPanel(p->panel_printer_preset, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(7), FromDIP(7)));
+        p->printer_status_dot->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerHighest));
+        p->printer_status_dot->Bind(wxEVT_PAINT, [this](wxPaintEvent &) {
+            wxPaintDC dc(p->printer_status_dot);
+            const wxSize sz = p->printer_status_dot->GetClientSize();
+            dc.SetBrush(wxBrush(StateColor::semantic(MD3::Role::Primary)));
+            dc.SetPen(*wxTRANSPARENT_PEN);
+            dc.DrawEllipse(0, 0, sz.GetWidth(), sz.GetHeight());
+        });
+
+        p->text_printer_status = new Label(p->panel_printer_preset, wxString(), LB_PROPAGATE_MOUSE_EVENT | wxST_ELLIPSIZE_END);
+        p->text_printer_status->SetFont(::Label::Body_11);
+        p->text_printer_status->SetForegroundColour(StateColor::semantic(MD3::Role::Primary));
+        p->text_printer_status->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerHighest));
+
+        Button *edit_btn = new Button(p->panel_printer_preset, wxEmptyString);
+        edit_btn->SetIconButton(Button::IconShape::Circle, 34);
+        edit_btn->SetGlyph(MaterialIcon::Edit);
         edit_btn->SetToolTip(_L("Click to edit preset"));
+        // a11y: icon-only pencil needs an accessible name for assistive tech.
+        edit_btn->SetName(_L("Click to edit preset"));
+        edit_btn->SetCanFocus(false);
         edit_btn->Bind(wxEVT_BUTTON, [this](wxCommandEvent)
             {
                 m_soft_first_start  = false;
@@ -2627,45 +3209,42 @@ Sidebar::Sidebar(Plater *parent)
                     p->editing_filament = 0;
             });
         p->btn_edit_printer = edit_btn;
-        p->image_printer    = new wxStaticBitmap(p->panel_printer_preset, wxID_ANY, wxNullBitmap, wxDefaultPosition, PRINTER_THUMBNAIL_SIZE, 0);
-        update_printer_thumbnail();
-        p->image_printer->Bind(wxEVT_LEFT_DOWN, [this](auto &evt) {
-            p->combo_printer->wxEvtHandler::ProcessEvent(evt);
-        });
-
-        PlaterPresetComboBox *combo_printer = new PlaterPresetComboBox(p->panel_printer_preset, Preset::TYPE_PRINTER);
-        combo_printer->SetWindowStyle(combo_printer->GetWindowStyle() & ~wxALIGN_MASK | wxALIGN_CENTER_HORIZONTAL);
-        combo_printer->SetBorderWidth(0);
-        p->combo_printer = combo_printer;
 
         p->btn_connect_printer = new ScalableButton(p->panel_printer_preset, wxID_ANY, "monitor_signal_strong");
-        p->btn_connect_printer->SetBackgroundColour(wxColour(255, 255, 255));
+        p->btn_connect_printer->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerHighest));
         p->btn_connect_printer->SetToolTip(_L("Connection"));
+        // a11y: icon-only connect control needs an accessible name for assistive tech.
+        p->btn_connect_printer->SetName(_L("Connection"));
+        // MD3: draw the connection affordance as a Material Symbols 'lan'
+        // glyph (OnSurfaceVariant); the raster stays the graceful fallback.
+        apply_scalable_glyph(p->btn_connect_printer, MaterialIcon::Lan, 16, StateColor::semantic(MD3::Role::OnSurfaceVariant));
         p->btn_connect_printer->Bind(wxEVT_BUTTON, [this, combo_printer](wxCommandEvent)
             {
                 PhysicalPrinterDialog dlg(this->GetParent());
                 dlg.ShowModal();
             });
 
-        {
-        auto hovered = std::make_shared<wxWindow *>();
-        for (wxWindow *w : std::initializer_list<wxWindow *>{p->panel_printer_preset, edit_btn, p->image_printer, combo_printer}) {
-            w->Bind(wxEVT_ENTER_WINDOW, [w, hovered, edit_btn](wxMouseEvent &evt) { *hovered = w; edit_btn->SetBitmap_("edit"); });
-            w->Bind(wxEVT_LEAVE_WINDOW, [w, hovered, edit_btn](wxMouseEvent &evt) { if (*hovered == w) { edit_btn->SetBitmap_("dot"); *hovered = nullptr; } });
-        }
-        }
-
-        // Bed type selection
+        // Bed type — MD3 kit SelectField (Prepare.jsx:86, fields/SelectField.jsx):
+        // caption 'Bed type' over a single outlined h38 r10 combo. The 84px card,
+        // 48px bed thumbnail and standalone help card-slot are gone; help folds
+        // into the caption row and the enlarged bed image hover-popup now hangs
+        // off the combo row itself.
         p->panel_printer_bed = new StaticBox(p->m_panel_printer_content);
-        p->panel_printer_bed->SetCornerRadius(8);
-        p->panel_printer_bed->SetBorderColor(panel_bd_col);
-        p->panel_printer_bed->SetMinSize(PRINTER_PANEL_SIZE);
+        p->panel_printer_bed->SetCornerRadius(0);
+        p->panel_printer_bed->SetBorderWidth(0);
+        p->panel_printer_bed->SetBackgroundColor(surface_lowest);
         p->panel_printer_bed->Bind(wxEVT_LEFT_DOWN, [this](auto &evt) {
             p->combo_printer_bed->wxEvtHandler::ProcessEvent(evt);
         });
 
-        ScalableButton *wiki_bed = new ScalableButton(p->panel_printer_bed, wxID_ANY, "help");
+        // MD3: help affordance as a borderless IconButton in the caption row.
+        Button *wiki_bed = new Button(p->panel_printer_bed, wxEmptyString);
+        wiki_bed->SetIconButton(Button::IconShape::Circle, 22);
+        wiki_bed->SetGlyph(MaterialIcon::Help, 16);
+        wiki_bed->SetCanFocus(false);
         wiki_bed->SetToolTip(_L("Click to view the wiki of the current plate type"));
+        // a11y: icon-only help control needs an accessible name for assistive tech.
+        wiki_bed->SetName(_L("Click to view the wiki of the current plate type"));
         wiki_bed->Bind(wxEVT_BUTTON, [this](wxCommandEvent) {
             bool is_zh  = wxGetApp().app_config->get("language") == "zh_CN";
             if (is_zh) {
@@ -2675,49 +3254,47 @@ Sidebar::Sidebar(Plater *parent)
             }
         });
 
-        p->image_printer_bed = new wxStaticBitmap(p->panel_printer_bed, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxDefaultSize, 0);
-        update_bed_thumbnail({});
-        p->image_printer_bed->Bind(wxEVT_LEFT_DOWN, [this](auto &evt) {
-            p->image_printer_bed->Unbind(wxEVT_LEAVE_WINDOW, &Sidebar::on_leave_image_printer_bed, this);
-            if (p->big_bed_image_popup) {
-                p->big_bed_image_popup->on_hide();
-            }
-            p->combo_printer_bed->wxEvtHandler::ProcessEvent(evt);
-        });
-
-        p->combo_printer_bed = new ComboBox(p->panel_printer_bed, wxID_ANY, wxString(""), wxDefaultPosition, wxDefaultSize, 0, nullptr, wxCB_READONLY | wxALIGN_CENTER_HORIZONTAL);
-        p->combo_printer_bed->SetBorderWidth(0);
+        p->combo_printer_bed = new ComboBox(p->panel_printer_bed, wxID_ANY, wxString(""), wxDefaultPosition, wxDefaultSize, 0, nullptr, wxCB_READONLY | wxALIGN_LEFT);
+        p->combo_printer_bed->SetBorderWidth(1);
+        p->combo_printer_bed->SetCornerRadius(FromDIP(MD3::Metrics::active().small_radius));
+        p->combo_printer_bed->SetBorderColor(StateColor(
+            std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Pressed),
+            std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Hovered),
+            std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Outline), StateColor::Normal)));
+        p->combo_printer_bed->SetBackgroundColor(StateColor(std::pair<wxColour, int>(surface_lowest, StateColor::Normal)));
+        p->combo_printer_bed->SetMinSize({-1, FromDIP(SELECT_FIELD_HEIGHT)});
         p->combo_printer_bed->GetDropDown().SetUseContentWidth(true);
         reset_bed_type_combox_choices(true);
 
         p->combo_printer_bed->Bind(wxEVT_COMBOBOX, [this](auto &e) {
-            bool isDual          = static_cast<wxBoxSizer *>(p->panel_printer_preset->GetSizer())->GetOrientation() == wxVERTICAL;
             bool exist;
             auto image_path = get_cur_select_bed_image(exist);
             if (exist) {
                 update_bed_thumbnail(image_path);
-                if (p->big_bed_image_popup) {
-                    p->big_bed_image_popup->set_bitmap(create_scaled_bitmap("big_" + image_path, p->big_bed_image_popup, p->big_bed_image_popup->get_image_px()));
-                }
             }
             e.Skip(); // fix bug:Event spreads to sidebar
         });
-        p->combo_printer_bed->Bind(wxEVT_LEAVE_WINDOW, [this](wxMouseEvent &evt) {
+        // Dismiss the enlarged bed image before the dropdown opens.
+        p->combo_printer_bed->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &evt) {
             if (p->big_bed_image_popup) {
                 p->big_bed_image_popup->on_hide();
             }
+            evt.Skip();
         });
-        p->image_printer_bed->Bind(wxEVT_ENTER_WINDOW, &Sidebar::on_enter_image_printer_bed, this);
+        p->combo_printer_bed->Bind(wxEVT_ENTER_WINDOW, &Sidebar::on_enter_image_printer_bed, this);
+        p->combo_printer_bed->Bind(wxEVT_LEAVE_WINDOW, &Sidebar::on_leave_image_printer_bed, this);
 
         wxBoxSizer *bed_type_vsizer = new wxBoxSizer(wxVERTICAL);
-        bed_type_vsizer->AddStretchSpacer(1);
-        wxBoxSizer *bed_type_hsizer = new wxBoxSizer(wxHORIZONTAL);
-            bed_type_hsizer->AddStretchSpacer(1);
-            bed_type_hsizer->Add(p->image_printer_bed, 1, wxEXPAND | wxTOP, FromDIP(8));
-            bed_type_hsizer->Add(wiki_bed, 1, wxTOP, FromDIP(2));
-        bed_type_vsizer->Add(bed_type_hsizer, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(8));
-        bed_type_vsizer->Add(p->combo_printer_bed, 0, wxEXPAND | wxALL, FromDIP(2));
-        bed_type_vsizer->AddStretchSpacer(1);
+        p->text_printer_bed = new Label(p->panel_printer_bed, _L("Bed type"));
+        p->text_printer_bed->SetFont(::Label::Body_11);
+        p->text_printer_bed->SetForegroundColour(inactive_text);
+
+        auto *bed_caption_hsizer = new wxBoxSizer(wxHORIZONTAL);
+        bed_caption_hsizer->Add(p->text_printer_bed, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(4));
+        bed_caption_hsizer->AddStretchSpacer(1);
+        bed_caption_hsizer->Add(wiki_bed, 0, wxALIGN_CENTER_VERTICAL);
+        bed_type_vsizer->Add(bed_caption_hsizer, 0, wxEXPAND);
+        bed_type_vsizer->Add(p->combo_printer_bed, 0, wxEXPAND | wxTOP, FromDIP(3));
 
         p->panel_printer_bed->SetSizer(bed_type_vsizer);
 
@@ -2747,22 +3324,30 @@ Sidebar::Sidebar(Plater *parent)
         btn_sync = new Button(p->m_panel_printer_content, _L("Sync info"), "printer_sync", 0, 32);
         //btn_sync->SetFont(Label::Body_8);
         btn_sync->SetToolTip(_L("Synchronize nozzle information and the number of AMS"));
-        btn_sync->SetCornerRadius(8);
+        btn_sync->SetCornerRadius(FromDIP(MD3::Metrics::active().row_height / 2));
+        // MD3 kit button anatomy: draw the leading icon as a Material Symbols
+        // 'sync' glyph (Button::SetGlyph is live-recoloured by the text colour and
+        // falls back to the raster 'printer_sync' bitmap when the face is absent).
+        btn_sync->SetGlyph(MaterialIcon::Sync);
         StateColor btn_sync_bg_col(
-                std::pair<wxColour, int>(wxColour("#CECECE"), StateColor::Pressed),
-                std::pair<wxColour, int>(wxColour("#F8F8F8"), StateColor::Hovered),
-                std::pair<wxColour, int>(wxColour("#F8F8F8"), StateColor::Normal));
+                std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SecondaryContainer), StateColor::Pressed),
+                std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerHigh), StateColor::Hovered),
+                std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerLowest), StateColor::Normal));
         StateColor btn_sync_bd_col(
-                std::pair<wxColour, int>(wxColour("#00AE42"), StateColor::Pressed),
-                std::pair<wxColour, int>(wxColour("#00AE42"), StateColor::Hovered),
-                std::pair<wxColour, int>(wxColour("#EEEEEE"), StateColor::Normal));
+                std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Pressed),
+                std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Hovered),
+                std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Outline), StateColor::Normal));
+        StateColor btn_sync_fg_col(
+                std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OnSecondaryContainer), StateColor::Pressed),
+                std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Hovered),
+                std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Normal));
         btn_sync->SetBackgroundColor(btn_sync_bg_col);
         btn_sync->SetBorderColor(btn_sync_bd_col);
+        btn_sync->SetTextColor(btn_sync_fg_col);
         btn_sync->SetCanFocus(false);
-        btn_sync->SetPaddingSize({FromDIP(6), FromDIP(12)});
+        btn_sync->SetPaddingSize({FromDIP(12), FromDIP(8)});
         btn_sync->SetMinSize(BTN_SYNC_SIZE);
-        btn_sync->SetMaxSize(BTN_SYNC_SIZE);
-        btn_sync->SetVertical();
+        btn_sync->SetMaxSize({-1, FromDIP(MD3::Metrics::active().row_height)});
         btn_sync->Bind(wxEVT_UPDATE_UI, &Sidebar::update_sync_ams_btn_enable, this);
         btn_sync->Bind(wxEVT_BUTTON, [this](wxCommandEvent &e) {
             deal_btn_sync();
@@ -2817,6 +3402,7 @@ Sidebar::Sidebar(Plater *parent)
 
         p->vsizer_printer = new wxBoxSizer(wxVERTICAL);
         p->layout_printer(true, true);
+        p->update_printer_identity();
         p->m_panel_printer_content->SetSizer(p->vsizer_printer);
         p->m_panel_printer_content->Layout();
         scrolled_sizer->Add(p->m_panel_printer_content, 0, wxEXPAND, 0);
@@ -2826,21 +3412,20 @@ Sidebar::Sidebar(Plater *parent)
     // add filament title
     p->m_panel_filament_title = new StaticBox(p->scrolled, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL | wxBORDER_NONE);
     p->m_panel_filament_title->SetBackgroundColor(title_bg);
-    p->m_panel_filament_title->SetBackgroundColor2(0xF1F1F1);
+    p->m_panel_filament_title->SetBackgroundColor2(title_bg);
     p->m_panel_filament_title->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &e) {
         if (p->m_flushing_volume_btn->IsShown() && e.GetPosition().x > p->m_flushing_volume_btn->GetPosition().x)
             return;
         if (p->m_purge_mode_btn->IsShown() && e.GetPosition().x > p->m_purge_mode_btn->GetPosition().x)
             return;
-        if (!p->m_filament_area_wrapper->IsShown()) {
+        p->filament_expanded = !p->filament_expanded;
+        if (p->filament_expanded) {
             p->m_filament_area_wrapper->Show();
-            p->m_panel_filament_subtitle->Show();
             recalc_filament_scroll_sizes();
         } else {
             p->m_filament_area_wrapper->Hide();
-            p->m_panel_filament_subtitle->Hide();
         }
-        m_scrolled_sizer->Layout();
+        update_scroll_body();
         e.Skip();
     });
     p->m_panel_filament_title->Bind(wxEVT_SIZE, [this](wxSizeEvent &event) {
@@ -2852,38 +3437,67 @@ Sidebar::Sidebar(Plater *parent)
 
     wxBoxSizer* bSizer39;
     bSizer39 = new wxBoxSizer( wxHORIZONTAL );
-    p->m_filament_icon = new ScalableButton(p->m_panel_filament_title, wxID_ANY, "filament");
-    p->m_staticText_filament_settings = new Label(p->m_panel_filament_title, _L("Project Filaments"), LB_PROPAGATE_MOUSE_EVENT);
-    bSizer39->Add(p->m_filament_icon, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT, FromDIP(10));
-    bSizer39->Add( p->m_staticText_filament_settings, 0, wxALIGN_CENTER );
+    // Filament section header on the literal shared MD3 SectionHeader (row 3):
+    // 16px leading 'palette' Material Symbol + 11px/600 uppercase OnSurfaceVariant
+    // 'Filament' label, self-maintaining across theme/DPI (no rescale/reapply
+    // calls needed). Replaces the retired ScalableButton 'filament' raster icon +
+    // wxStaticText pair; the kit label is 'Filament' (not 'Project Filaments').
+    p->m_filament_header = new SectionHeader(p->m_panel_filament_title, _L("Filament"), MaterialIcon::Palette);
+    // A plain wxWindow does not forward mouse clicks to its parent (unlike the old
+    // Label's LB_PROPAGATE_MOUSE_EVENT), so bind the same collapse toggle directly
+    // to keep clicking the header expanding/collapsing the filament area. The
+    // header sits left of the purge/flush trailing buttons, so no button-zone
+    // guard (as on the panel handler) is needed here.
+    p->m_filament_header->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &e) {
+        p->filament_expanded = !p->filament_expanded;
+        if (p->filament_expanded) {
+            p->m_filament_area_wrapper->Show();
+            recalc_filament_scroll_sizes();
+        } else {
+            p->m_filament_area_wrapper->Hide();
+        }
+        update_scroll_body();
+        e.Skip();
+    });
+    bSizer39->Add(p->m_filament_header, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT, FromDIP(10));
     bSizer39->Add(FromDIP(10), 0, 0, 0, 0);
-    bSizer39->SetMinSize(-1, FromDIP(30));
+    // No fixed-height bar: the row sizes to its content (header + any trailing
+    // buttons adjust_filament_title_layout() manages), matching the Printer
+    // section's content-sized SectionHeader.
 
     p->m_panel_filament_title->SetSizer( bSizer39 );
     p->m_panel_filament_title->Layout();
     auto spliter_1 = new ::StaticLine(p->scrolled);
-    spliter_1->SetLineColour("#A6A9AA");
+    spliter_1->SetLineColour(outline);
     scrolled_sizer->Add(spliter_1, 0, wxEXPAND);
     scrolled_sizer->Add(p->m_panel_filament_title, 0, wxEXPAND | wxALL, 0);
     auto spliter_2 = new ::StaticLine(p->scrolled);
-    spliter_2->SetLineColour("#CECECE");
+    spliter_2->SetLineColour(outline);
     scrolled_sizer->Add(spliter_2, 0, wxEXPAND);
 
     bSizer39->AddStretchSpacer(1);
 
     p->m_purge_mode_btn = new Button(p->m_panel_filament_title, _L("Purge mode"));
-    p->m_purge_mode_btn->SetFont(Label::Body_10);
+    // MD3 kit button anatomy: on-scale label (11px vs the off-scale Body_10) and
+    // the kit small radius (10) in place of the ad-hoc r8.
+    p->m_purge_mode_btn->SetFont(Label::Body_11);
     p->m_purge_mode_btn->SetPaddingSize(wxSize(FromDIP(6), FromDIP(3)));
-    p->m_purge_mode_btn->SetCornerRadius(FromDIP(8));
+    p->m_purge_mode_btn->SetCornerRadius(FromDIP(MD3::Metrics::active().small_radius));
 
-    StateColor purge_bg_col(std::pair<wxColour, int>(wxColour(219, 253, 231), StateColor::Pressed), std::pair<wxColour, int>(wxColour(238, 238, 238), StateColor::Hovered),
-                            std::pair<wxColour, int>(wxColour(238, 238, 238), StateColor::Normal));
+    StateColor purge_bg_col(
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SecondaryContainer), StateColor::Pressed),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerHigh), StateColor::Hovered),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerLowest), StateColor::Normal));
 
-    StateColor purge_fg_col(std::pair<wxColour, int>(wxColour(107, 107, 106), StateColor::Pressed), std::pair<wxColour, int>(wxColour(107, 107, 106), StateColor::Hovered),
-                            std::pair<wxColour, int>(wxColour(107, 107, 106), StateColor::Normal));
+    StateColor purge_fg_col(
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OnSecondaryContainer), StateColor::Pressed),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Hovered),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OnSurfaceVariant), StateColor::Normal));
 
-    StateColor purge_bd_col(std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Pressed), std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Hovered),
-                            std::pair<wxColour, int>(wxColour(172, 172, 172), StateColor::Normal));
+    StateColor purge_bd_col(
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Pressed),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Hovered),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Outline), StateColor::Normal));
 
     p->m_purge_mode_btn->SetBackgroundColor(purge_bg_col);
     p->m_purge_mode_btn->SetBorderColor(purge_bd_col);
@@ -2911,21 +3525,25 @@ Sidebar::Sidebar(Plater *parent)
     // add wiping dialog
     //wiping_dialog_button->SetFont(wxGetApp().normal_font());
     p->m_flushing_volume_btn = new Button(p->m_panel_filament_title, _L("Flushing volumes"));
-    p->m_flushing_volume_btn->SetFont(Label::Body_10);
+    // MD3 kit button anatomy: on-scale label + kit small radius (see Purge mode).
+    p->m_flushing_volume_btn->SetFont(Label::Body_11);
     p->m_flushing_volume_btn->SetPaddingSize(wxSize(FromDIP(6),FromDIP(3)));
-    p->m_flushing_volume_btn->SetCornerRadius(FromDIP(8));
+    p->m_flushing_volume_btn->SetCornerRadius(FromDIP(MD3::Metrics::active().small_radius));
 
-    StateColor flush_bg_col(std::pair<wxColour, int>(wxColour(219, 253, 231), StateColor::Pressed),
-                            std::pair<wxColour, int>(wxColour(238, 238, 238), StateColor::Hovered),
-                            std::pair<wxColour, int>(wxColour(238, 238, 238), StateColor::Normal));
+    StateColor flush_bg_col(
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SecondaryContainer), StateColor::Pressed),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerHigh), StateColor::Hovered),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerLowest), StateColor::Normal));
 
-    StateColor flush_fg_col(std::pair<wxColour, int>(wxColour(107, 107, 106), StateColor::Pressed),
-                            std::pair<wxColour, int>(wxColour(107, 107, 106), StateColor::Hovered),
-                            std::pair<wxColour, int>(wxColour(107, 107, 106), StateColor::Normal));
+    StateColor flush_fg_col(
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OnSecondaryContainer), StateColor::Pressed),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Hovered),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OnSurfaceVariant), StateColor::Normal));
 
-    StateColor flush_bd_col(std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Pressed),
-                            std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Hovered),
-                            std::pair<wxColour, int>(wxColour(172, 172, 172), StateColor::Normal));
+    StateColor flush_bd_col(
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Pressed),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Hovered),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Outline), StateColor::Normal));
 
     p->m_flushing_volume_btn->SetBackgroundColor(flush_bg_col);
     p->m_flushing_volume_btn->SetBorderColor(flush_bd_col);
@@ -2946,97 +3564,97 @@ Sidebar::Sidebar(Plater *parent)
     bSizer39->Hide(p->m_flushing_volume_btn);
     bSizer39->Add(FromDIP(12), 0, 0, 0, 0 );
 
+    // ---- AMS sync: kit SectionHeader trailing outlined MD3 button ----
+    // (MD3 filament-subtitle-row-legacy-raster-buttons; kit Prepare.jsx:90 — Sync AMS as the
+    // Filament header trailing control: outlined, h30, 11.5, Primary, leading 'sync' glyph.)
+    // Replaces the retired raster 'ams_fila_sync' ScalableButton from the old subtitle row;
+    // the sync_ams_list() command, tooltip, popup anchor and slice-time enable/disable are
+    // all preserved. Sits to the right of the purge/flush controls so it falls inside the
+    // existing collapse-toggle protection zone (see the title LEFT_DOWN hit-test above).
+    p->m_btn_sync_ams_header = new Button(p->m_panel_filament_title, _L("Sync AMS"), "ams_fila_sync", 0, 16);
+    // SetGlyph routes the leading icon through the shared MaterialIcon font path (live-tinted
+    // by the button's Primary text colour); the raster 'ams_fila_sync' bitmap is the graceful
+    // fallback, drawn only when MaterialIcon::available() is false.
+    p->m_btn_sync_ams_header->SetGlyph(MaterialIcon::Sync, 16);
+    p->m_btn_sync_ams_header->SetFont(Label::Body_11);
+    p->m_btn_sync_ams_header->SetPaddingSize(wxSize(FromDIP(10), FromDIP(3)));
+    p->m_btn_sync_ams_header->SetCornerRadius(FromDIP(MD3::Metrics::active().small_radius));
+    p->m_btn_sync_ams_header->SetMinSize({-1, FromDIP(30)});
+    p->m_btn_sync_ams_header->SetMaxSize({-1, FromDIP(30)});
+    p->m_btn_sync_ams_header->SetToolTip(_L("Synchronize filament list from AMS"));
+    p->m_btn_sync_ams_header->SetBackgroundColor(StateColor(
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SecondaryContainer), StateColor::Pressed),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerHigh), StateColor::Hovered),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerLowest), StateColor::Normal)));
+    p->m_btn_sync_ams_header->SetBorderColor(StateColor(
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Pressed),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Hovered),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Outline), StateColor::Normal)));
+    p->m_btn_sync_ams_header->SetTextColor(StateColor(
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OnSecondaryContainer), StateColor::Pressed),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Hovered),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Normal)));
+    p->m_btn_sync_ams_header->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { sync_ams_list(); });
+    p->m_btn_sync_ams_header->Bind(wxEVT_UPDATE_UI, &Sidebar::update_sync_ams_btn_enable, this);
+    p->m_btn_sync_ams_header->Rescale();
+    bSizer39->Add(p->m_btn_sync_ams_header, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(12));
+
     bSizer39->Add(FromDIP(16), 0, 0, 0, 0);
 
-    // ---- "Filament" subtitle row with +/-/AMS/settings buttons ----
-    {
-        p->m_panel_filament_subtitle = new wxPanel(p->scrolled, wxID_ANY);
-        p->m_panel_filament_subtitle->SetBackgroundColour(*wxWHITE);
-        auto* subtitle_sizer = new wxBoxSizer(wxHORIZONTAL);
-
-        // "Filament" label
-        auto* filament_label = new wxStaticText(p->m_panel_filament_subtitle, wxID_ANY, _L("Filament"));
-        filament_label->SetForegroundColour(wxColour("#ACACAC"));
-        filament_label->SetFont(::Label::Body_14);
-        // Figma: left-aligned with filament color swatches (10px padding)
-        subtitle_sizer->Add(filament_label, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(10));
-
-        auto* line_panel = new wxPanel(p->m_panel_filament_subtitle, wxID_ANY);
-        line_panel->SetMinSize(wxSize(-1, FromDIP(1)));
-        line_panel->Bind(wxEVT_PAINT, [line_panel](wxPaintEvent&) {
-            wxPaintDC dc(line_panel);
-            wxSize sz = line_panel->GetClientSize();
-            int y = sz.GetHeight() / 2;
-            dc.SetPen(wxPen(wxColour("#CECECE"), 1, wxPENSTYLE_SOLID));
-            dc.DrawLine(0, y, sz.GetWidth(), y);
-        });
-        subtitle_sizer->Add(line_panel, 1, wxALIGN_CENTER_VERTICAL | wxLEFT | wxRIGHT, FromDIP(8));
-
-        // + button
-        ScalableButton* add_btn = new ScalableButton(p->m_panel_filament_subtitle, wxID_ANY, "add_filament");
-        add_btn->SetToolTip(_L("Add one filament"));
-        add_btn->Bind(wxEVT_BUTTON, [this, scrolled_sizer](wxCommandEvent& e) {
-            add_filament();
-        });
-        p->m_bpButton_add_filament = add_btn;
-        subtitle_sizer->Add(add_btn, 0, wxALIGN_CENTER_VERTICAL);
-
-        // - button
-        ScalableButton* del_btn = new ScalableButton(p->m_panel_filament_subtitle, wxID_ANY, "delete_filament");
-        del_btn->SetToolTip(_L("Remove last filament"));
-        del_btn->Bind(wxEVT_BUTTON, [this, scrolled_sizer](wxCommandEvent& e) {
-            delete_filament();
-            scroll_filament_area_to_bottom();
-        });
-        p->m_bpButton_del_filament = del_btn;
-        subtitle_sizer->Add(del_btn, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(12));
-
-        // AMS sync button
-        ams_btn = new ScalableButton(p->m_panel_filament_subtitle, wxID_ANY, "ams_fila_sync", wxEmptyString, wxDefaultSize, wxDefaultPosition,
-                                     wxBU_EXACTFIT | wxNO_BORDER, false, 18);
-        ams_btn->SetToolTip(_L("Synchronize filament list from AMS"));
-        ams_btn->Bind(wxEVT_BUTTON, [this, scrolled_sizer](wxCommandEvent& e) {
-            sync_ams_list();
-        });
-        ams_btn->Bind(wxEVT_UPDATE_UI, &Sidebar::update_sync_ams_btn_enable, this);
-        p->m_bpButton_ams_filament = ams_btn;
-        subtitle_sizer->Add(ams_btn, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(12));
-
-        // Settings button
-        ScalableButton* set_btn = new ScalableButton(p->m_panel_filament_subtitle, wxID_ANY, "settings");
-        set_btn->SetToolTip(_L("Set filaments to use"));
-        set_btn->Bind(wxEVT_BUTTON, [this](wxCommandEvent& e) {
-            p->editing_filament = -1;
-            wxGetApp().run_wizard(ConfigWizard::RR_USER, ConfigWizard::SP_FILAMENTS);
-        });
-        p->m_bpButton_set_filament = set_btn;
-        subtitle_sizer->Add(set_btn, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(12));
-        subtitle_sizer->Add(FromDIP(16), 0, 0, 0, 0);
-
-        subtitle_sizer->SetMinSize(-1, FromDIP(28));
-        p->m_panel_filament_subtitle->SetSizer(subtitle_sizer);
-        scrolled_sizer->Add(p->m_panel_filament_subtitle, 0, wxEXPAND | wxTOP | wxBOTTOM, FromDIP(5));
-    }
+    // ---- (removed) legacy 'Filament' subtitle row ----
+    // The Body_14 label + hand-painted divider + four raster ScalableButtons
+    // (add_filament / delete_filament / ams_fila_sync / settings) are retired per MD3
+    // (filament-subtitle-row-legacy-raster-buttons). Their commands are preserved elsewhere:
+    //   - add_filament()      -> the full-width outlined 'Add filament' button below the rows;
+    //   - delete_filament()   -> the per-row filament menu 'Delete' item (filament_action_menu);
+    //   - sync_ams_list()     -> the outlined 'Sync AMS' button in the Filament SectionHeader
+    //                            trailing slot (created above);
+    //   - filament settings   -> the config wizard, reachable from the preset combo items and
 
     // ---- Wrapper panel for collapse/expand of all filament content ----
     p->m_filament_area_wrapper = new wxPanel(p->scrolled, wxID_ANY);
-    p->m_filament_area_wrapper->SetBackgroundColour(*wxWHITE);
+    p->m_filament_area_wrapper->SetBackgroundColour(surface_lowest);
     auto* wrapper_sizer = new wxBoxSizer(wxVERTICAL);
+
+    // ---- Filament slot search (shared MD3 SearchField pill) ----
+    // Compact row under the section header, above the slot rows. Lives inside
+    // the collapse wrapper so collapsing the Filament section hides it too.
+    // Filters the visible slot rows live as the user types: preset-name
+    // substring by default, regex via the pill's ".*" toggle / tune builder
+    // popover, and colour-aware matching ("#RRGGBB" or a colour name) through
+    // SearchField::colorSearchText — the same recipe as the Objects search.
+    p->m_filament_search = new SearchField(p->m_filament_area_wrapper, _L("Search filaments"));
+    auto refilter_filament_rows = [this]() {
+        // recalc re-applies the filter itself (it is the shared authority so
+        // add/remove/rescale paths stay filtered), then resizes the scroll
+        // areas around the surviving rows.
+        recalc_filament_scroll_sizes();
+        p->m_panel_filament_content->Layout();
+        p->m_filament_area_wrapper->Layout();
+        update_scroll_body();
+        p->scrolled->Refresh();
+    };
+    p->m_filament_search->SetOnQuery([refilter_filament_rows](const wxString &) { refilter_filament_rows(); });
+    // Re-run the filter live whenever regex mode or the builder's
+    // case-sensitive / whole-word checkboxes change (the popover re-fires this
+    // callback for all three).
+    p->m_filament_search->SetOnRegexToggle([refilter_filament_rows](bool) { refilter_filament_rows(); });
+    wrapper_sizer->Add(p->m_filament_search, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(8));
 
     // ---- Physical filament scroll area (independent scrollbar) ----
     p->m_physical_scroll_area = new wxScrolledWindow(p->m_filament_area_wrapper, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
     p->m_physical_scroll_area->SetScrollbars(0, 100, 1, 2);
     p->m_physical_scroll_area->SetScrollRate(0, 5);
-    p->m_physical_scroll_area->SetBackgroundColour(*wxWHITE);
+    p->m_physical_scroll_area->SetBackgroundColour(surface_lowest);
     auto* phys_scroll_sizer = new wxBoxSizer(wxVERTICAL);
 
     p->m_panel_filament_content = new wxPanel(p->m_physical_scroll_area, wxID_ANY);
-    p->m_panel_filament_content->SetBackgroundColour(*wxWHITE);
+    p->m_panel_filament_content->SetBackgroundColour(surface_lowest);
 
-    // BBS: filament double columns
-    p->sizer_filaments = new wxBoxSizer(wxHORIZONTAL);
-    p->sizer_filaments->Add(new wxBoxSizer(wxVERTICAL), 1, wxEXPAND);
-    p->sizer_filaments->Add(new wxBoxSizer(wxVERTICAL), 1, wxEXPAND);
+    // Material sidebar: one readable full-width row per filament. The former
+    // two-column grid made both preset names and status badges truncate in the
+    // 344/312 DIP sidebar widths.
+    p->sizer_filaments = new wxBoxSizer(wxVERTICAL);
 
     p->combos_filament.push_back(nullptr);
 
@@ -3059,19 +3677,91 @@ Sidebar::Sidebar(Plater *parent)
     });
     wrapper_sizer->Add(p->m_physical_scroll_area, 0, wxEXPAND, 0);
 
+    p->btn_add_filament_row = new Button(p->m_filament_area_wrapper, _L("Add filament"), "add_filament", 0, 18);
+    // MD3 (kit Prepare.jsx:101 — outlined sm button, leading 'add' glyph 18px): draw the
+    // leading icon as a Material Symbols 'add' glyph. SetGlyph routes through the shared
+    // MaterialIcon font path (live-recoloured by the button's text colour = Primary) and
+    // keeps the raster 'add_filament' bitmap as the graceful fallback, drawn only when
+    // MaterialIcon::available() is false.
+    p->btn_add_filament_row->SetGlyph(MaterialIcon::Add, 18);
+    // Kit body size for a sm outlined button is 12.5px / weight 500. Mirror the canonical
+    // MD3 Button::applyMD3Style Outlined-Small font (Head_12 = 12.5/600 lowered to 500)
+    // in place of the legacy Body_12.
+    {
+        wxFont add_filament_font = ::Label::Head_12;
+        add_filament_font.SetWeight(wxFONTWEIGHT_MEDIUM);
+        add_filament_font.SetNumericWeight(500);
+        p->btn_add_filament_row->SetFont(add_filament_font);
+    }
+    p->btn_add_filament_row->SetCornerRadius(FromDIP(MD3::Metrics::active().row_height / 2));
+    p->btn_add_filament_row->SetPaddingSize({FromDIP(12), FromDIP(8)});
+    p->btn_add_filament_row->SetMinSize({-1, FromDIP(MD3::Metrics::active().row_height)});
+    p->btn_add_filament_row->SetMaxSize({-1, FromDIP(MD3::Metrics::active().row_height)});
+    p->btn_add_filament_row->SetBackgroundColor(StateColor(
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SecondaryContainer), StateColor::Pressed),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerHigh), StateColor::Hovered),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerLowest), StateColor::Normal)));
+    p->btn_add_filament_row->SetBorderColor(StateColor(
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Pressed),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Hovered),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Outline), StateColor::Normal)));
+    p->btn_add_filament_row->SetTextColor(StateColor(
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OnSecondaryContainer), StateColor::Pressed),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Hovered),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Normal)));
+    p->btn_add_filament_row->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { add_filament(); });
+    // ---- Bulk filament actions: kit SectionHeader trailing outlined MD3 button ----
+    // Same recipe as the Sync AMS header button above (outlined, h30, Body_11,
+    // Primary, leading Material glyph). Opens BulkFilamentDialog to stage set
+    // preset / set colour / delete across checked slots plus add-N, applied as
+    // one batch by Sidebar::bulk_filament_actions().
+    // Icon-only: the header row is already crowded at the default sidebar
+    // width (Purge mode + Flushing volumes + Sync AMS) and a labelled fourth
+    // button clips. The tooltip carries the name.
+    p->m_bulk_filament_btn = new Button(p->m_filament_area_wrapper, wxString());
+    p->m_bulk_filament_btn->SetName(_L("Bulk ink"));
+    // 'Stack' is the closest cmap-verified Material Symbols glyph for a
+    // multi-slot batch action (no Checklist/LibraryAddCheck in the vendored TTF).
+    p->m_bulk_filament_btn->SetGlyph(MaterialIcon::Stack, 16);
+    p->m_bulk_filament_btn->SetFont(Label::Body_11);
+    p->m_bulk_filament_btn->SetPaddingSize(wxSize(FromDIP(6), FromDIP(3)));
+    p->m_bulk_filament_btn->SetCornerRadius(FromDIP(MD3::Metrics::active().small_radius));
+    p->m_bulk_filament_btn->SetMinSize({-1, FromDIP(30)});
+    p->m_bulk_filament_btn->SetMaxSize({-1, FromDIP(30)});
+    p->m_bulk_filament_btn->SetToolTip(_L("Bulk filament actions"));
+    p->m_bulk_filament_btn->SetBackgroundColor(StateColor(
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SecondaryContainer), StateColor::Pressed),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerHigh), StateColor::Hovered),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerLowest), StateColor::Normal)));
+    p->m_bulk_filament_btn->SetBorderColor(StateColor(
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Pressed),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Hovered),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Outline), StateColor::Normal)));
+    p->m_bulk_filament_btn->SetTextColor(StateColor(
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OnSecondaryContainer), StateColor::Pressed),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Hovered),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Normal)));
+    p->m_bulk_filament_btn->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { bulk_filament_actions(); });
+    p->m_bulk_filament_btn->Rescale();
+
+    auto* add_row_sizer = new wxBoxSizer(wxHORIZONTAL);
+    add_row_sizer->Add(p->btn_add_filament_row, 1, wxEXPAND);
+    add_row_sizer->Add(p->m_bulk_filament_btn, 0, wxEXPAND | wxLEFT, FromDIP(8));
+    wrapper_sizer->Add(add_row_sizer, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP | wxBOTTOM, FromDIP(8));
+
     // ---- Mixed Filament section (inside wrapper, outside scroll areas) ----
     // 1) "+ 添加混色" button (shown when no mixed filaments exist)
     {
         p->m_btn_add_mixed_filament = new wxPanel(p->m_filament_area_wrapper, wxID_ANY);
-        p->m_btn_add_mixed_filament->SetBackgroundColour(StateColor::darkModeColorFor(wxColour("#F8F8F8")));
+        p->m_btn_add_mixed_filament->SetBackgroundColour(surface_lowest);
         p->m_btn_add_mixed_filament->SetMinSize(wxSize(-1, FromDIP(23)));
 
         p->m_btn_add_mixed_filament->Bind(wxEVT_PAINT, [this](wxPaintEvent&) {
             wxPaintDC dc(p->m_btn_add_mixed_filament);
             wxSize sz = p->m_btn_add_mixed_filament->GetClientSize();
-            dc.SetBrush(wxBrush(StateColor::darkModeColorFor(wxColour("#F8F8F8"))));
-            dc.SetPen(wxPen(StateColor::darkModeColorFor(wxColour("#EEEEEE")), 1));
-            dc.DrawRectangle(0, 0, sz.GetWidth(), sz.GetHeight());
+            dc.SetBrush(wxBrush(StateColor::semantic(MD3::Role::SurfaceContainerLow)));
+            dc.SetPen(wxPen(StateColor::semantic(MD3::Role::OutlineVariant), 1));
+            dc.DrawRoundedRectangle(0, 0, sz.GetWidth(), sz.GetHeight(), FromDIP(MD3::Metrics::active().small_radius));
         });
 
         auto* btn_sizer = new wxBoxSizer(wxHORIZONTAL);
@@ -3080,10 +3770,12 @@ Sidebar::Sidebar(Plater *parent)
                                             wxSize(FromDIP(16), FromDIP(16)), wxDefaultPosition, wxBU_EXACTFIT | wxNO_BORDER);
         icon_add->SetCursor(wxCursor(wxCURSOR_HAND));
         icon_add->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { add_mixed_filament(); });
+        // MD3: Material Symbols 'add' glyph, matching the same raster->glyph swap
+        // already applied to every sibling icon button in this file.
+        apply_scalable_glyph(icon_add, MaterialIcon::Add, 16, active_text);
 
-        auto* add_label = new wxStaticText(p->m_btn_add_mixed_filament, wxID_ANY, _L("Add Mixed Filament"),
-                                           wxDefaultPosition, wxDefaultSize, wxST_ELLIPSIZE_END);
-        add_label->SetForegroundColour(StateColor::darkModeColorFor(wxColour("#262E30")));
+        auto* add_label = new Label(p->m_btn_add_mixed_filament, _L("Add Mixed Filament"), wxST_ELLIPSIZE_END);
+        add_label->SetForegroundColour(active_text);
         add_label->SetFont(::Label::Body_13);
 
         btn_sizer->AddStretchSpacer(1);
@@ -3101,13 +3793,15 @@ Sidebar::Sidebar(Plater *parent)
     // 2) Title row: "Mixed Filament ------- + -"
     {
         p->m_panel_mixed_title = new wxPanel(p->m_filament_area_wrapper, wxID_ANY);
-        p->m_panel_mixed_title->SetBackgroundColour(StateColor::darkModeColorFor(*wxWHITE));
+        p->m_panel_mixed_title->SetBackgroundColour(surface_lowest);
         auto* title_sizer = new wxBoxSizer(wxHORIZONTAL);
 
-        p->m_text_mixed_title = new wxStaticText(p->m_panel_mixed_title, wxID_ANY, _L("Mixed Filament"),
-                                                   wxDefaultPosition, wxDefaultSize, wxST_ELLIPSIZE_END);
-        p->m_text_mixed_title->SetForegroundColour(StateColor::darkModeColorFor(wxColour("#ACACAC")));
-        p->m_text_mixed_title->SetFont(::Label::Body_14);
+        p->m_text_mixed_title = new Label(p->m_panel_mixed_title, _L("Mixed Filament").Upper(), wxST_ELLIPSIZE_END);
+        p->m_text_mixed_title->SetForegroundColour(inactive_text);
+        // MD3 section-label typography (containment/SectionHeader): 11px/600
+        // uppercase, matching the Printer/Filament/Objects section headers,
+        // replacing the plain Body_14 regular-weight label.
+        p->m_text_mixed_title->SetFont(::Label::Head_11);
         title_sizer->Add(p->m_text_mixed_title, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(10));
 
         auto* mixed_line_panel = new wxPanel(p->m_panel_mixed_title, wxID_ANY);
@@ -3116,18 +3810,25 @@ Sidebar::Sidebar(Plater *parent)
             wxPaintDC dc(mixed_line_panel);
             wxSize sz = mixed_line_panel->GetClientSize();
             int y = sz.GetHeight() / 2;
-            dc.SetPen(wxPen(wxColour("#CECECE"), 1, wxPENSTYLE_SOLID));
+            dc.SetPen(wxPen(StateColor::semantic(MD3::Role::OutlineVariant), 1, wxPENSTYLE_SOLID));
             dc.DrawLine(0, y, sz.GetWidth(), y);
         });
         title_sizer->Add(mixed_line_panel, 1, wxALIGN_CENTER_VERTICAL | wxLEFT | wxRIGHT, FromDIP(8));
 
         p->m_btn_mixed_add = new ScalableButton(p->m_panel_mixed_title, wxID_ANY, "add_filament");
         p->m_btn_mixed_add->SetToolTip(_L("Add mixed filament"));
+        // a11y: icon-only control needs an accessible name for assistive tech.
+        p->m_btn_mixed_add->SetName(_L("Add mixed filament"));
         p->m_btn_mixed_add->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { add_mixed_filament(); });
+        // MD3: Material Symbols 'add'/'delete' glyphs, matching the raster->glyph
+        // swap already applied to every sibling icon button in this file.
+        apply_scalable_glyph(p->m_btn_mixed_add, MaterialIcon::Add, 16, StateColor::semantic(MD3::Role::OnSurfaceVariant));
         title_sizer->Add(p->m_btn_mixed_add, 0, wxALIGN_CENTER_VERTICAL);
 
         p->m_btn_mixed_del = new ScalableButton(p->m_panel_mixed_title, wxID_ANY, "delete_filament");
         p->m_btn_mixed_del->SetToolTip(_L("Remove last mixed filament"));
+        // a11y: icon-only control needs an accessible name for assistive tech.
+        p->m_btn_mixed_del->SetName(_L("Remove last mixed filament"));
         p->m_btn_mixed_del->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) {
             auto* plater = dynamic_cast<Plater*>(GetParent());
             if (!plater) return;
@@ -3135,6 +3836,7 @@ Sidebar::Sidebar(Plater *parent)
             if (!indices.empty())
                 delete_mixed_filament_at(indices.size() - 1);
         });
+        apply_scalable_glyph(p->m_btn_mixed_del, MaterialIcon::Delete, 16, StateColor::semantic(MD3::Role::OnSurfaceVariant));
         title_sizer->Add(p->m_btn_mixed_del, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(12));
         title_sizer->Add(FromDIP(16), 0, 0, 0, 0);
 
@@ -3146,11 +3848,11 @@ Sidebar::Sidebar(Plater *parent)
     p->m_mixed_scroll_area = new wxScrolledWindow(p->m_filament_area_wrapper, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
     p->m_mixed_scroll_area->SetScrollbars(0, 100, 1, 2);
     p->m_mixed_scroll_area->SetScrollRate(0, 5);
-    p->m_mixed_scroll_area->SetBackgroundColour(StateColor::darkModeColorFor(*wxWHITE));
+    p->m_mixed_scroll_area->SetBackgroundColour(surface_lowest);
     auto* mix_scroll_sizer = new wxBoxSizer(wxVERTICAL);
     {
         p->m_panel_mixed_content = new wxPanel(p->m_mixed_scroll_area, wxID_ANY);
-        p->m_panel_mixed_content->SetBackgroundColour(StateColor::darkModeColorFor(*wxWHITE));
+        p->m_panel_mixed_content->SetBackgroundColour(surface_lowest);
 
         p->m_sizer_mixed_filaments = new wxBoxSizer(wxHORIZONTAL);
         p->m_sizer_mixed_filaments->Add(new wxBoxSizer(wxVERTICAL), 1, wxEXPAND);
@@ -3175,11 +3877,10 @@ Sidebar::Sidebar(Plater *parent)
     // 4) Mixed filament warning panel (red bar, outside scroll areas)
     {
         p->m_panel_mixed_warning = new wxPanel(p->m_filament_area_wrapper, wxID_ANY);
-        p->m_panel_mixed_warning->SetBackgroundColour(wxColour("#FDE8E8"));
+        p->m_panel_mixed_warning->SetBackgroundColour(StateColor::semantic(MD3::Role::ErrorContainer));
         auto* warn_sizer = new wxBoxSizer(wxHORIZONTAL);
-        p->m_text_mixed_warning = new wxStaticText(p->m_panel_mixed_warning, wxID_ANY,
-            _L("Mixed filament has invalid or mismatched components. Please re-edit affected entries."));
-        p->m_text_mixed_warning->SetForegroundColour(wxColour("#D32F2F"));
+        p->m_text_mixed_warning = new Label(p->m_panel_mixed_warning, _L("Mixed filament has invalid or mismatched components. Please re-edit affected entries."));
+        p->m_text_mixed_warning->SetForegroundColour(StateColor::semantic(MD3::Role::Error));
         p->m_text_mixed_warning->SetFont(::Label::Body_12);
         p->m_text_mixed_warning->Wrap(FromDIP(360));
         warn_sizer->Add(p->m_text_mixed_warning, 1, wxALL, FromDIP(6));
@@ -3203,47 +3904,281 @@ Sidebar::Sidebar(Plater *parent)
     {
     //add project title
     auto params_panel = ((MainFrame*)parent->GetParent())->m_param_panel;
+    p->params_panel_ref = params_panel;
     if (params_panel) {
         params_panel->get_top_panel()->Reparent(p->scrolled);
         auto spliter_1 = new ::StaticLine(p->scrolled);
-        spliter_1->SetLineColour("#A6A9AA");
+        spliter_1->SetLineColour(outline);
         scrolled_sizer->Add(spliter_1, 0, wxEXPAND);
         scrolled_sizer->Add(params_panel->get_top_panel(), 0, wxEXPAND);
         auto spliter_2 = new ::StaticLine(p->scrolled);
-        spliter_2->SetLineColour("#CECECE");
+        spliter_2->SetLineColour(outline);
         scrolled_sizer->Add(spliter_2, 0, wxEXPAND);
+        // Gate the clip-prone mode-switch toolbar (+ its dividers) on
+        // process_advanced: hidden by default (compact card), shown with the
+        // full tree. Applied here and in show_process_advanced().
+        p->m_params_top_line_1 = spliter_1;
+        p->m_params_top_line_2 = spliter_2;
+        params_panel->get_top_panel()->Hide();
+        spliter_1->Hide();
+        spliter_2->Hide();
+    }
+
+    // ---- MD3 compact Process card (Prepare.jsx:105-112) ----
+    // Curated ValueField / SelectField / Switch rows live-bound to the Print
+    // config, plus an 'Advanced settings' text button that flips to the FULL
+    // reparented ParamsPanel below — so every setting stays reachable.
+    if (params_panel) {
+        const int pad = FromDIP(MD3::Metrics::active().padding);
+        const wxColour surface_highest = StateColor::semantic(MD3::Role::SurfaceContainerHighest);
+
+        p->m_process_card = new wxPanel(p->scrolled, wxID_ANY);
+        p->m_process_card->SetBackgroundColour(surface_lowest);
+        auto *card_sizer = new wxBoxSizer(wxVERTICAL);
+
+        // Kit Process card header: the shared MD3 SectionHeader with a 'tune'
+        // leading glyph (self-maintaining across theme/DPI), opening the card.
+        p->m_process_header = new SectionHeader(p->m_process_card, _L("Process"), MaterialIcon::Tune);
+        card_sizer->Add(p->m_process_header, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, pad / 2);
+
+        // ---- Sidebar settings search (shared MD3 SearchField pill) ----
+        // Top row of the Process card. Focusing the field opens the global
+        // OptionsSearcher results popup (the same SearchDialog the settings-tab
+        // magnifier uses) anchored under the pill; typing filters live and
+        // activating a result jumps to the owning option (wxCUSTOMEVT_JUMP_TO_
+        // OPTION -> Sidebar::jump_to_option, flipping to Advanced settings for
+        // print options or activating the Printer / Filament tab otherwise).
+        // Preset::TYPE_INVALID scopes the query across every preset type the
+        // searcher indexes for the current mode — process/print, PRINTER and
+        // filament options — so the Printer section needs no third search bar.
+        // The pill's ".*" toggle and tune builder popover are wired into the
+        // searcher's regex / case / whole-word flags by the SearchDialog.
+        p->m_process_search = new SearchField(p->m_process_card, _L("Search settings"));
+        p->m_process_search->GetTextCtrl()->Bind(wxEVT_SET_FOCUS, [this](wxFocusEvent &e) {
+            if (!p->m_process_search_open) {
+                p->m_process_search_open = true;
+                p->searcher.show_dialog(Preset::TYPE_INVALID, p->m_process_card,
+                                        p->m_process_search, p->m_process_search);
+            }
+            e.Skip();
+        });
+        // The SearchDialog posts wxCUSTOMEVT_EXIT_SEARCH to its host field when
+        // it dies; re-arm the focus-open guard so the next focus reopens it.
+        p->m_process_search->Bind(wxCUSTOMEVT_EXIT_SEARCH, [this](wxCommandEvent &) {
+            p->m_process_search_open = false;
+        });
+        card_sizer->Add(p->m_process_search, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, pad / 2);
+
+        // Process-preset SelectField: the live PlaterPresetComboBox (TYPE_PRINT)
+        // dressed with kit SelectField chrome (r10 small-radius, SurfaceContainer-
+        // Highest fill, borderless, the migrated ComboBox's expand_more chevron).
+        // Selection tracking and every update()/preset-switch path stay in the
+        // base combo; it is populated through update_all_preset_comboboxes() /
+        // update_presets(TYPE_PRINT).
+        p->combo_print = new PlaterPresetComboBox(p->m_process_card, Preset::TYPE_PRINT);
+        p->combo_print->SetWindowStyle(p->combo_print->GetWindowStyle() & ~wxALIGN_MASK | wxALIGN_LEFT);
+        p->combo_print->SetCornerRadius(FromDIP(MD3::Metrics::active().small_radius));
+        p->combo_print->SetBorderWidth(0);
+        p->combo_print->SetBackgroundColor(StateColor(std::pair<wxColour, int>(surface_highest, StateColor::Normal)));
+        p->combo_print->SetMinSize({-1, FromDIP(34)});
+        p->combo_print->GetDropDown().SetUseContentWidth(true);
+        // The base PlaterPresetComboBox creates a floating 'cog' edit ScalableButton
+        // parented to the card; the kit Process SelectField carries no inline edit
+        // affordance (editing is via 'Advanced settings' / the preset menu items),
+        // so keep that stray button out of the card.
+        if (p->combo_print->edit_btn)
+            p->combo_print->edit_btn->Hide();
+        card_sizer->Add(p->combo_print, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, pad / 2);
+
+        // [Quality/Strength/Support/Others] SegmentedControl (MultiSwitchButton)
+        // choosing which curated rows are visible; the categories mirror the
+        // Print-config tab pages. Wired after the rows are built (below).
+        p->m_process_segment = new MultiSwitchButton(p->m_process_card);
+        p->m_process_segment->SetOptions({_L("Quality"), _L("Strength"), _L("Support"), _L("Others")});
+        p->m_process_segment->SetMinSize(wxSize(-1, FromDIP(30)));
+        card_sizer->Add(p->m_process_segment, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, pad / 2);
+
+        // Each curated row is its own wxPanel tagged with a segment index so the
+        // SegmentedControl can show/hide it (apply_process_segment); -1 = always.
+        auto add_process_row = [&](const wxString &label, wxWindow *field, int seg) {
+            auto *row = new wxPanel(p->m_process_card, wxID_ANY);
+            row->SetBackgroundColour(surface_lowest);
+            auto *rs  = new wxBoxSizer(wxHORIZONTAL);
+            auto *lbl = new ::Label(row, label);
+            lbl->SetFont(::Label::Body_12);
+            lbl->SetForegroundColour(active_text);
+            lbl->SetBackgroundColour(surface_lowest);
+            rs->Add(lbl, 1, wxALIGN_CENTER_VERTICAL);
+            field->Reparent(row);
+            rs->Add(field, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(10));
+            row->SetSizer(rs);
+            row->SetMinSize({-1, FromDIP(36)});
+            card_sizer->Add(row, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, pad / 2);
+            p->process_seg_rows.push_back({row, seg});
+        };
+        auto style_value_field = [&](TextInput *field) {
+            field->SetCornerRadius(FromDIP(MD3::Metrics::active().small_radius));
+            field->SetBorderWidth(0);
+            field->SetBackgroundColor(StateColor(std::pair<wxColour, int>(surface_highest, StateColor::Normal)));
+            field->SetMinSize({FromDIP(96), FromDIP(34)});
+            field->SetMaxSize({-1, FromDIP(34)});
+        };
+        // Kit ValueField numbers are Roboto Mono 12.5/500.
+        auto commit_on_edit = [this](TextInput *field, std::function<void(double)> apply) {
+            auto commit = [this, field, apply]() {
+                if (p->process_card_refreshing) return;
+                double v = 0.0;
+                if (field->GetTextCtrl()->GetValue().ToDouble(&v))
+                    apply(v);
+                else
+                    p->refresh_process_card();
+            };
+            field->GetTextCtrl()->Bind(wxEVT_TEXT_ENTER, [commit](wxCommandEvent &) { commit(); });
+            field->GetTextCtrl()->Bind(wxEVT_KILL_FOCUS, [commit](wxFocusEvent &e) { commit(); e.Skip(); });
+        };
+
+        // Layer height (ValueField, mm)
+        p->process_layer_height = new TextInput(p->m_process_card, wxString(), wxString(), wxString(),
+                                                wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER, _L("mm"));
+        style_value_field(p->process_layer_height);
+        commit_on_edit(p->process_layer_height, [](double v) {
+            if (v <= 0.0) return;
+            DynamicPrintConfig conf;
+            conf.set_key_value("layer_height", new ConfigOptionFloat(v));
+            if (Tab *tab = wxGetApp().get_tab(Preset::TYPE_PRINT)) tab->load_config(conf);
+        });
+        add_process_row(_L("Layer height"), p->process_layer_height, 0 /*Quality*/);
+
+        // Sparse infill density (ValueField, %)
+        p->process_infill_density = new TextInput(p->m_process_card, wxString(), wxString(), wxString(),
+                                                  wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER, "%");
+        style_value_field(p->process_infill_density);
+        commit_on_edit(p->process_infill_density, [](double v) {
+            if (v < 0.0 || v > 100.0) return;
+            DynamicPrintConfig conf;
+            conf.set_key_value("sparse_infill_density", new ConfigOptionPercent(v));
+            if (Tab *tab = wxGetApp().get_tab(Preset::TYPE_PRINT)) tab->load_config(conf);
+        });
+        add_process_row(_L("Sparse infill density"), p->process_infill_density, 1 /*Strength*/);
+
+        // Infill pattern (filled SelectField)
+        p->process_infill_pattern = new ComboBox(p->m_process_card, wxID_ANY, wxString(), wxDefaultPosition,
+                                                 wxDefaultSize, 0, nullptr, wxCB_READONLY | wxALIGN_LEFT);
+        p->process_infill_pattern->SetCornerRadius(FromDIP(MD3::Metrics::active().small_radius));
+        p->process_infill_pattern->SetBorderWidth(0);
+        p->process_infill_pattern->SetBackgroundColor(StateColor(std::pair<wxColour, int>(surface_highest, StateColor::Normal)));
+        p->process_infill_pattern->SetMinSize({FromDIP(130), FromDIP(34)});
+        p->process_infill_pattern->GetDropDown().SetUseContentWidth(true);
+        if (const ConfigOptionDef *def = print_config_def.get("sparse_infill_pattern"); def && def->enum_keys_map) {
+            const auto &keys_map = *def->enum_keys_map;
+            for (size_t i = 0; i < def->enum_values.size(); ++i) {
+                wxString label = i < def->enum_labels.size() ? _(def->enum_labels[i])
+                                                            : wxString::FromUTF8(def->enum_values[i]);
+                p->process_infill_pattern->Append(label);
+                auto it = keys_map.find(def->enum_values[i]);
+                p->process_pattern_values.push_back(it != keys_map.end() ? it->second : int(i));
+            }
+        }
+        p->process_infill_pattern->Bind(wxEVT_COMBOBOX, [this](wxCommandEvent &e) {
+            if (p->process_card_refreshing) return;
+            int sel = p->process_infill_pattern->GetSelection();
+            if (sel >= 0 && sel < (int)p->process_pattern_values.size()) {
+                DynamicPrintConfig conf;
+                conf.set_key_value("sparse_infill_pattern",
+                                   new ConfigOptionEnum<InfillPattern>((InfillPattern)p->process_pattern_values[sel]));
+                if (Tab *tab = wxGetApp().get_tab(Preset::TYPE_PRINT)) tab->load_config(conf);
+            }
+            e.StopPropagation();
+        });
+        add_process_row(_L("Sparse infill pattern"), p->process_infill_pattern, 1 /*Strength*/);
+
+        // Enable support (MD3 Switch)
+        p->process_support = new SwitchButton(p->m_process_card);
+        p->process_support->Bind(wxEVT_TOGGLEBUTTON, [this](wxCommandEvent &e) {
+            if (!p->process_card_refreshing) {
+                DynamicPrintConfig conf;
+                conf.set_key_value("enable_support", new ConfigOptionBool(e.IsChecked()));
+                if (Tab *tab = wxGetApp().get_tab(Preset::TYPE_PRINT)) tab->load_config(conf);
+            }
+            e.Skip();
+        });
+        add_process_row(_L("Enable support"), p->process_support, 2 /*Support*/);
+
+        // No 'Advanced settings' flip: the compact card is never shown any more
+        // (process_advanced is always true below); the full tree is the only
+        // Process surface.
+
+        p->m_process_card->SetSizer(card_sizer);
+
+        // Default segment = Quality; set before Bind so the init call does not
+        // re-fire into the handler, then apply the initial row visibility.
+        p->m_process_segment->SetSelection(0);
+        p->m_process_segment->Bind(wxCUSTOMEVT_MULTISWITCH_SELECTION, [this](wxCommandEvent &e) {
+            p->apply_process_segment(e.GetInt());
+            e.Skip();
+        });
+        p->apply_process_segment(0);
+
+        scrolled_sizer->Add(p->m_process_card, 0, wxEXPAND);
     }
 
     //add project content
     p->sizer_params = new wxBoxSizer(wxVERTICAL);
 
-    p->m_search_bar = new wxSearchCtrl(p->scrolled, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER);
-    p->m_search_bar->ShowSearchButton(true);
-    p->m_search_bar->ShowCancelButton(true);
-    p->m_search_bar->SetDescriptiveText(_L("Search plate, object and part."));
+    // ---- MD3 Objects card (Prepare.jsx:116-126) ----
+    // SectionHeader 'account_tree' + the shared kit SearchField pill wrapping
+    // the live ObjectList below. All search/popup/jump behaviour is preserved.
+    p->m_objects_header = new SectionHeader(p->scrolled, _L("Objects"), MaterialIcon::AccountTree);
 
-    p->m_search_bar->Bind(wxEVT_SET_FOCUS, [this](wxFocusEvent&) {
+    p->m_search_bar = new SearchField(p->scrolled, _L("Search plate, object and part."));
+    p->m_search_bar->SetOnQuery([this](const wxString &) {
+        this->p->on_search_update();
+    });
+    // Re-run the filter live whenever the ".*" regex mode or the builder's
+    // case-sensitive / whole-word checkboxes change (the popover re-fires this
+    // callback for all three), so the result list tracks the matcher state.
+    p->m_search_bar->SetOnRegexToggle([this](bool) {
+        this->p->on_search_update();
+    });
+    p->m_search_bar->GetTextCtrl()->Bind(wxEVT_SET_FOCUS, [this](wxFocusEvent &e) {
         this->p->on_search_update();
         wxPoint pos = this->p->m_search_bar->ClientToScreen(wxPoint(0, 0));
         pos.y += this->p->m_search_bar->GetRect().height;
         p->dia->SetPosition(pos);
         p->dia->Popup();
+        e.Skip();
         });
-    p->m_search_bar->Bind(wxEVT_COMMAND_TEXT_UPDATED, [this](wxCommandEvent&) {
-        this->p->on_search_update();
-        });
-    p->m_search_bar->Bind(wxEVT_KILL_FOCUS, [this](wxFocusEvent& e) {
+    p->m_search_bar->GetTextCtrl()->Bind(wxEVT_KILL_FOCUS, [this](wxFocusEvent& e) {
         p->dia->Dismiss();
         e.Skip();
         });
 
     p->m_object_list = new ObjectList(p->scrolled);
+    // In the scrollable sidebar body the object list keeps a usable floor
+    // height (it still stretches with its proportion when space allows);
+    // without a min it collapses to a sliver before the scrollbar engages.
+    p->m_object_list->SetMinSize(wxSize(-1, FromDIP(180)));
+    // Expanding or collapsing a plate/object changes the visible row count, so
+    // refit the list and the scroll body (fit_object_list_height).
+    for (auto evt : {wxEVT_DATAVIEW_ITEM_EXPANDED, wxEVT_DATAVIEW_ITEM_COLLAPSED})
+        p->m_object_list->Bind(evt, [this](wxDataViewEvent &e) {
+            CallAfter([this]() { update_scroll_body(); });
+            e.Skip();
+        });
 
-    p->sizer_params->Add(p->m_search_bar, 0, wxALL | wxEXPAND, 0);
+    {
+        const int pad = FromDIP(MD3::Metrics::active().padding);
+        p->sizer_params->Add(p->m_objects_header, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, pad / 2);
+        p->sizer_params->Add(p->m_search_bar, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP | wxBOTTOM, pad / 2);
+    }
     p->sizer_params->Add(p->m_object_list, 1, wxEXPAND | wxTOP, 0);
-    scrolled_sizer->Add(p->sizer_params, 2, wxEXPAND | wxLEFT, 0);
+    // Proportion 0: nothing stretches inside a scroll body. The list gets a
+    // content-derived height (fit_object_list_height) instead of eating the
+    // slack that the settings tree below it needs.
+    scrolled_sizer->Add(p->sizer_params, 0, wxEXPAND | wxLEFT, 0);
     p->m_object_list->Hide();
     p->m_search_bar->Hide();
+    p->m_objects_header->Hide();
     // Frequently Object Settings
     p->object_settings = new ObjectSettings(p->scrolled);
 
@@ -3253,8 +4188,66 @@ Sidebar::Sidebar(Plater *parent)
     p->sizer_params->Add(p->object_settings->get_sizer(), 0, wxEXPAND | wxTOP, 5 * em / 10);
 #else
     if (params_panel) {
+        // Slim flip-back bar above the full tree ('Simple mode', Text button).
+        p->m_process_simple_bar = new wxPanel(p->scrolled, wxID_ANY);
+        p->m_process_simple_bar->SetBackgroundColour(surface_lowest);
+        auto *simple_sizer = new wxBoxSizer(wxHORIZONTAL);
+        // No 'Simple settings' flip button: every process setting is always
+        // shown, so this bar carries only the settings search pill.
+
+        // Settings search for the FULL tree, same shared MD3 SearchField pill and
+        // the same OptionsSearcher (with its ".*" regex toggle and tune builder)
+        // as the compact card's, so the advanced surface is searchable too.
+        // Preset::TYPE_INVALID keeps the query scoped across every indexed preset
+        // type, and jumping to a result lands on the owning option in this tree.
+        p->m_process_search_adv = new SearchField(p->m_process_simple_bar, _L("Search settings"));
+        p->m_process_search_adv->GetTextCtrl()->Bind(wxEVT_SET_FOCUS, [this](wxFocusEvent &e) {
+            if (!p->m_process_search_open) {
+                p->m_process_search_open = true;
+                p->searcher.show_dialog(Preset::TYPE_INVALID, p->m_process_simple_bar,
+                                        p->m_process_search_adv, p->m_process_search_adv);
+            }
+            e.Skip();
+        });
+        p->m_process_search_adv->Bind(wxCUSTOMEVT_EXIT_SEARCH, [this](wxCommandEvent &) {
+            p->m_process_search_open = false;
+        });
+        simple_sizer->Add(p->m_process_search_adv, 1, wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(4));
+
+        p->m_process_simple_bar->SetSizer(simple_sizer);
+        scrolled_sizer->Add(p->m_process_simple_bar, 0, wxEXPAND);
+
         params_panel->Reparent(p->scrolled);
-        scrolled_sizer->Add(params_panel, 3, wxEXPAND);
+        // Advanced-tree floor height: inside the scrollable body the full tree
+        // keeps a usable minimum (its own internal scroller handles the rest)
+        // instead of being crushed to nothing at short window heights.
+        params_panel->SetMinSize(wxSize(-1, FromDIP(240)));
+        // The tree is hosted at its content height (ParamsPanel::fit_page_to_
+        // content), so the sidebar body is one scroll surface and every
+        // setting is reachable by scrolling the sidebar; no inner scroller.
+        scrolled_sizer->Add(params_panel, 0, wxEXPAND);
+        params_panel->set_host_height_changed([this]() {
+            if (p->scrolled) {
+                p->scrolled->Layout();
+                update_scroll_body();
+            }
+        });
+
+        // Apply the persisted compact/advanced choice (compact is the kit
+        // default; 'true' restores the full legacy tree).
+        // Every process setting is shown by default and there is no simple
+        // mode to flip back to; the stored sidebar_process_advanced value is
+        // ignored on purpose.
+        p->process_advanced = true;
+        p->m_process_card->Show(!p->process_advanced);
+        p->m_process_simple_bar->Show(p->process_advanced);
+        params_panel->set_host_visibility_gate(p->process_advanced);
+        params_panel->Show(p->process_advanced);
+        // Show the reparented mode-switch toolbar only alongside the full tree.
+        if (auto *top = params_panel->get_top_panel()) top->Show(p->process_advanced);
+        if (p->m_params_top_line_1) p->m_params_top_line_1->Show(p->process_advanced);
+        if (p->m_params_top_line_2) p->m_params_top_line_2->Show(p->process_advanced);
+        p->refresh_process_card();
     }
 #endif
     }
@@ -3263,9 +4256,159 @@ Sidebar::Sidebar(Plater *parent)
     p->object_layers->Hide();
     p->sizer_params->Add(p->object_layers->get_sizer(), 0, wxEXPAND | wxTOP, 0);
 
-    auto *sizer = new wxBoxSizer(wxVERTICAL);
-    sizer->Add(p->scrolled, 1, wxEXPAND);
-    SetSizer(sizer);
+    // ---- Object manipulation (MD3 X/Y/Z grid card) ----
+    // Kit anatomy (ui-md3 Prepare > Object manipulation): a SectionHeader 'transform'
+    // over a 4-column grid whose axis headers are axis-coloured and whose Position /
+    // Rotation / Scale% / Size cells are h32 r8 SurfaceContainerHighest, centred in
+    // Roboto Mono. The card is a read-only-live mirror of the ImGui gizmo manipulation
+    // model; refresh_manip_card() pulls from wxGetApp().obj_manipul()->get_cache() on a
+    // light UI-thread timer while the 3D editor is shown. Numeric write-back stays in the
+    // gizmo overlay (see wave report: the manipulation write-half is a recorded deviation).
+    {
+        const wxColour surface_highest = StateColor::semantic(MD3::Role::SurfaceContainerHighest);
+        const wxColour on_surface      = StateColor::semantic(MD3::Role::OnSurface);
+        const wxColour on_variant      = StateColor::semantic(MD3::Role::OnSurfaceVariant);
+        const int      pad             = FromDIP(MD3::Metrics::active().padding);
+
+        auto *manip_divider = new ::StaticLine(p->scrolled);
+        manip_divider->SetLineColour(outline);
+        scrolled_sizer->Add(manip_divider, 0, wxEXPAND);
+        p->m_manip_divider = manip_divider;
+
+        p->m_manip_panel = new wxPanel(p->scrolled, wxID_ANY);
+        p->m_manip_panel->SetBackgroundColour(surface_low);
+        auto *manip_vsizer = new wxBoxSizer(wxVERTICAL);
+
+        auto *manip_header = new SectionHeader(p->m_manip_panel, _L("Object manipulation"), MaterialIcon::Transform);
+        manip_vsizer->Add(manip_header, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, pad);
+
+        auto *grid = new wxFlexGridSizer(5, 4, FromDIP(6), FromDIP(8));
+        grid->AddGrowableCol(1, 1);
+        grid->AddGrowableCol(2, 1);
+        grid->AddGrowableCol(3, 1);
+
+        // Header row: blank corner + axis-coloured X / Y / Z (data axis colours, exempt).
+        grid->AddSpacer(1);
+        auto add_axis_head = [&](const wxString &t, const wxColour &c) {
+            auto *l = new ::Label(p->m_manip_panel, t);
+            l->SetFont(::Label::Head_11);
+            l->SetForegroundColour(c);
+            grid->Add(l, 0, wxALIGN_CENTER);
+        };
+        add_axis_head("X", MD3::Viewport::axisX);
+        add_axis_head("Y", MD3::Viewport::axisY);
+        add_axis_head("Z", MD3::Viewport::axisZ);
+
+        const wxString row_labels[4] = { _L("Position"), _L("Rotation"), _L("Scale %"), _L("Size") };
+        auto add_cell = [&](int idx) {
+            auto *cell = new StaticBox(p->m_manip_panel);
+            cell->SetCornerRadius(FromDIP(MD3::Metrics::radius_tiny));
+            cell->SetBorderWidth(0);
+            cell->SetBackgroundColor(surface_highest);
+            cell->SetMinSize(wxSize(-1, FromDIP(32)));
+            auto *val = new ::Label(cell, wxString("-"));
+            val->SetFont(::Label::Mono_12);
+            val->SetForegroundColour(on_surface);
+            val->SetBackgroundColour(surface_highest);
+            auto *cs = new wxBoxSizer(wxVERTICAL);
+            cs->AddStretchSpacer();
+            cs->Add(val, 0, wxALIGN_CENTER_HORIZONTAL);
+            cs->AddStretchSpacer();
+            cell->SetSizer(cs);
+            p->m_manip_cells[idx] = val;
+            grid->Add(cell, 1, wxEXPAND);
+        };
+        for (int r = 0; r < 4; ++r) {
+            auto *rl = new ::Label(p->m_manip_panel, row_labels[r]);
+            rl->SetFont(::Label::Body_11);
+            rl->SetForegroundColour(on_variant);
+            grid->Add(rl, 0, wxALIGN_CENTER_VERTICAL);
+            for (int c = 0; c < 3; ++c)
+                add_cell(r * 3 + c);
+        }
+
+        manip_vsizer->Add(grid, 0, wxEXPAND | wxALL, pad);
+        p->m_manip_panel->SetSizer(manip_vsizer);
+        scrolled_sizer->Add(p->m_manip_panel, 0, wxEXPAND);
+
+        // Hidden by default: with nothing selected every cell reads as an en
+        // dash, so the card was occupying a screenful of sidebar to say nothing.
+        // refresh_manip_card() brings it back the moment a selection makes its
+        // values real.
+        manip_divider->Hide();
+        p->m_manip_panel->Hide();
+
+        p->m_manip_timer = new wxTimer();
+        p->m_manip_timer->Bind(wxEVT_TIMER, [this](wxTimerEvent &) {
+            // Every ShowModal() spins a nested event loop, and this timer keeps
+            // firing inside it — so a tick can land while an earlier tick, a
+            // model load, or a preset switch is still half-applied. One tick at
+            // a time; a dropped tick costs nothing, the next one is 250ms away.
+            if (p->sidebar_tick_running) return;
+            p->sidebar_tick_running = true;
+            struct ClearTick {
+                bool &flag;
+                ~ClearTick() { flag = false; }
+            } clear_tick{p->sidebar_tick_running};
+
+            p->refresh_manip_card();
+            // Keep the compact Process card live against edits made through
+            // the full tree / plate settings (no-op while hidden; focused
+            // fields are never stomped — see refresh_process_card()).
+            p->refresh_process_card();
+        });
+        p->m_manip_timer->Start(250);
+    }
+
+    // Explicit 1px OutlineVariant divider between the sidebar and the adjacent
+    // 3D scene. The scrolled body is added FIRST so its opaque surface starts at
+    // x=0 (covering the frame edge for the default left dock — no bleed-through);
+    // the divider sits on the canvas-facing (right) side where the separation is
+    // actually needed.
+    TabStrip::Options prepare_tabs_options;
+    prepare_tabs_options.surface_key = "prepare_sidebar";
+    prepare_tabs_options.surface_name = _L("Prepare");
+    prepare_tabs_options.strip_name = _L("Prepare sections");
+    prepare_tabs_options.default_edge = MD3::Tabs::DockEdge::Left;
+    prepare_tabs_options.vertical_width_dip = 128;
+    p->m_prepare_tabs = new TabStrip(this, prepare_tabs_options);
+    // Load before adding defaults: AddTab persists, so the opposite order
+    // would overwrite the user's saved dock and tab arrangement.
+    p->m_prepare_tabs->LoadTabsFromLayout();
+    std::vector<std::string> stale_tabs;
+    for (int i = 0; i < p->m_prepare_tabs->Count(); ++i) {
+        const std::string &id = p->m_prepare_tabs->GetModel().at(i).id;
+        if (id != "ink" && id != "process" && id != "objects")
+            stale_tabs.push_back(id);
+    }
+    for (const std::string &id : stale_tabs)
+        p->m_prepare_tabs->RemoveTab(id);
+    for (const auto &tab : {std::pair<const char *, wxString>{"ink", _L("Ink")},
+                            {"process", _L("Process")}, {"objects", _L("Objects")}}) {
+        if (!p->m_prepare_tabs->GetModel().find(tab.first))
+            p->m_prepare_tabs->AddTab(tab.first, tab.second);
+        else
+            p->m_prepare_tabs->SetTitle(tab.first, tab.second);
+    }
+    p->m_prepare_tabs->Bind(EVT_TABSTRIP_ACTIVATE, [this](wxCommandEvent &e) {
+        apply_prepare_section(std::string(e.GetString().ToUTF8()));
+    });
+    p->m_prepare_tabs->Bind(EVT_TABSTRIP_DOCK_CHANGED, [this](wxCommandEvent &) {
+        place_prepare_strip();
+        Layout();
+    });
+
+    auto *sidebar_border = new ::StaticLine(this, true);
+    sidebar_border->SetLineColour(outline);
+    auto *content_row = new wxBoxSizer(wxHORIZONTAL);
+    content_row->Add(p->scrolled, 1, wxEXPAND);
+    content_row->Add(sidebar_border, 0, wxEXPAND);
+    m_prepare_layout = new wxBoxSizer(wxHORIZONTAL);
+    m_prepare_layout->Add(content_row, 1, wxEXPAND);
+    SetSizer(m_prepare_layout);
+    place_prepare_strip();
+    const std::string saved_section = p->m_prepare_tabs->ActiveId();
+    apply_prepare_section(saved_section.empty() ? "ink" : saved_section);
 
     //wxGetApp().CallAfter([this]() {
     //    p->update_right_extruder_group_color();
@@ -3280,11 +4423,142 @@ Sidebar::~Sidebar() {
     }
 }
 
+void Sidebar::place_prepare_strip()
+{
+    if (!m_prepare_layout || !p->m_prepare_tabs)
+        return;
+    m_prepare_layout->Detach(p->m_prepare_tabs);
+    using MD3::Tabs::DockEdge;
+    const DockEdge edge = p->m_prepare_tabs->GetDockEdge();
+    m_prepare_layout->SetOrientation(MD3::Tabs::is_vertical(edge) ? wxHORIZONTAL : wxVERTICAL);
+    if (edge == DockEdge::Left || edge == DockEdge::Top)
+        m_prepare_layout->Insert(0, p->m_prepare_tabs, 0, wxEXPAND);
+    else
+        m_prepare_layout->Add(p->m_prepare_tabs, 0, wxEXPAND);
+    m_prepare_layout->Layout();
+}
+
+void Sidebar::apply_prepare_section(const std::string &section) const
+{
+    if (section != "ink" && section != "process" && section != "objects")
+        return;
+    p->active_prepare_section = section;
+    const bool process = section == "process";
+    const bool objects = section == "objects";
+
+    // Keep the existing controls and their state. Only their direct sidebar
+    // sizer items change visibility, so a tab switch does not rebuild presets,
+    // the settings tree, or the object model.
+    for (wxSizerItem *item : m_scrolled_sizer->GetChildren()) {
+        wxWindow *window = item->GetWindow();
+        if (item->GetSizer() == p->sizer_params ||
+            window == p->m_manip_divider || window == p->m_manip_panel) {
+            item->Show(objects);
+        } else if (window == p->m_params_top_line_1 ||
+                   window == p->m_params_top_line_2 ||
+                   (p->params_panel_ref && window == p->params_panel_ref->get_top_panel()) ||
+                   window == p->m_process_card || window == p->m_process_simple_bar ||
+                   window == p->params_panel_ref) {
+            bool visible = process;
+            if (window == p->m_process_card)
+                visible = process && !p->process_advanced;
+            else if (window == p->m_process_simple_bar ||
+                     window == p->params_panel_ref ||
+                     window == p->m_params_top_line_1 ||
+                     window == p->m_params_top_line_2 ||
+                     (p->params_panel_ref && window == p->params_panel_ref->get_top_panel()))
+                visible = process && p->process_advanced;
+            item->Show(visible);
+        } else {
+            item->Show(section == "ink" &&
+                       (window != p->m_filament_area_wrapper || p->filament_expanded));
+        }
+    }
+    if (p->params_panel_ref)
+        p->params_panel_ref->set_host_visibility_gate(process && p->process_advanced);
+    p->m_objects_header->Show(objects);
+    p->m_search_bar->Show(objects);
+    p->m_object_list->Show(objects);
+    if (objects)
+        p->refresh_manip_card();
+    p->m_prepare_tabs->Activate(section, false);
+    p->scrolled->Scroll(0, 0);
+    update_scroll_body();
+}
+
+// Read-only-live refresh of the MD3 Object-manipulation grid card. Runs on the
+// sidebar UI thread (timer), mirroring the ImGui GizmoObjectManipulation display
+// cache. is_view3D_shown() is a pure pointer comparison (current_panel == view3D),
+// so it is safe to consult before the 3D canvas exists and gates the obj_manipul()
+// dereference to the moments the canvas is actually live.
+void Sidebar::priv::refresh_manip_card()
+{
+    if (!m_manip_cells[0])
+        return;
+
+    auto set = [&](int idx, const wxString &s) {
+        Label *c = m_manip_cells[idx];
+        if (c && c->GetLabel() != s)
+            c->SetLabel(s);
+    };
+
+    // The card only means anything while something is selected; the rest of the
+    // time it is twelve en dashes under a header. Show it on selection and take
+    // it away again after, so the sidebar's scarce height goes to the sections
+    // that always have something to say.
+    auto set_card_shown = [&](bool show) {
+        const bool visible = show && active_prepare_section == "objects";
+        if (!m_manip_panel || m_manip_panel->IsShown() == visible)
+            return;
+        m_manip_panel->Show(visible);
+        if (m_manip_divider)
+            m_manip_divider->Show(visible);
+        update_sidebar_scroll_body(scrolled);
+    };
+
+    const wxString dash = wxString::FromUTF8("\xE2\x80\x93"); // en dash for the empty state
+
+    Plater *pl = wxGetApp().plater();
+    GizmoObjectManipulation *om = (pl && pl->is_view3D_shown()) ? wxGetApp().obj_manipul() : nullptr;
+    if (!om) {
+        set_card_shown(false);
+        for (int i = 0; i < 12; ++i)
+            set(i, dash);
+        return;
+    }
+
+    const GizmoObjectManipulation::Cache &cache = om->get_cache();
+    if (!cache.is_valid()) {
+        set_card_shown(false);
+        for (int i = 0; i < 12; ++i)
+            set(i, dash);
+        return;
+    }
+
+    set_card_shown(true);
+
+    const wxString degsym = wxString::FromUTF8("\xC2\xB0"); // ° (U+00B0) suffix on rotation values
+    auto ok  = [](double v) { return v < 1e300 && v > -1e300; };            // DBL_MAX/NaN guard
+    auto f1  = [&](double v) -> wxString { return ok(v) ? wxString::Format("%.1f", v) : dash; };
+    auto f0  = [&](double v) -> wxString { return ok(v) ? wxString::Format("%.0f", v) : dash; };
+    auto rot = [&](double v) -> wxString { return ok(v) ? (wxString::Format("%.0f", v) + degsym) : dash; };
+
+    const Vec3d &pos = cache.position_rounded;
+    const Vec3d &rt  = cache.rotation_rounded;
+    const Vec3d &scl = cache.scale_rounded; // stored in percent (100 == 100%)
+    const Vec3d &siz = cache.size_rounded;
+
+    set(0, f1(pos.x()));  set(1, f1(pos.y()));  set(2, f1(pos.z()));
+    set(3, rot(rt.x()));  set(4, rot(rt.y()));  set(5, rot(rt.z()));
+    set(6, f0(scl.x()));  set(7, f0(scl.y()));  set(8, f0(scl.z()));
+    set(9, f1(siz.x()));  set(10, f1(siz.y())); set(11, f1(siz.z()));
+}
+
 void Sidebar::on_enter_image_printer_bed(wxMouseEvent &evt) {
-    p->image_printer_bed->Bind(wxEVT_LEAVE_WINDOW, &Sidebar::on_leave_image_printer_bed, this);
+    // MD3: the enlarged bed image popup now hangs off the bed SelectField row
+    // (the 48px thumbnail is gone with the 84px card).
     auto    pos  = p->panel_printer_bed->GetScreenPosition();
     auto    rect = p->panel_printer_bed->GetRect();
-    wxPoint temp_pos(pos.x + rect.GetWidth() +  FromDIP(3), pos.y);
     if (p->big_bed_image_popup == nullptr) {
         p->big_bed_image_popup = new ImageDPIFrame();
         bool exist;
@@ -3292,6 +4566,22 @@ void Sidebar::on_enter_image_printer_bed(wxMouseEvent &evt) {
         if(exist){
             p->big_bed_image_popup->set_bitmap(create_scaled_bitmap("big_" + image_path, p->big_bed_image_popup, p->big_bed_image_popup->get_image_px()));
         }
+    }
+    const int popup_width  = std::max(p->big_bed_image_popup->GetSize().GetWidth(), p->big_bed_image_popup->GetBestSize().GetWidth());
+    const int popup_height = std::max(p->big_bed_image_popup->GetSize().GetHeight(), p->big_bed_image_popup->GetBestSize().GetHeight());
+    const int gap          = FromDIP(3);
+    // Place the enlarged bed image on the canvas-facing side of the docked sidebar so
+    // it never overlaps the band. Left/Right docks are vertical columns, so we offset
+    // horizontally; Top/Bottom docks are full-width horizontal bands, so we offset
+    // vertically and keep the popup aligned with the bed panel instead of shoving it
+    // to a screen edge (a horizontal offset would land it off the full-width band).
+    wxPoint temp_pos(pos.x, pos.y);
+    switch (p->plater->get_sidebar_docking_state()) {
+    case Sidebar::Right:  temp_pos.x = pos.x - popup_width - gap;      break;
+    case Sidebar::Top:    temp_pos.y = pos.y + rect.GetHeight() + gap; break;
+    case Sidebar::Bottom: temp_pos.y = pos.y - popup_height - gap;     break;
+    case Sidebar::Left:
+    default:              temp_pos.x = pos.x + rect.GetWidth() + gap;  break;
     }
     p->big_bed_image_popup->SetCanFocus(false);
     p->big_bed_image_popup->SetPosition(temp_pos);
@@ -3301,7 +4591,7 @@ void Sidebar::on_enter_image_printer_bed(wxMouseEvent &evt) {
 void Sidebar::on_leave_image_printer_bed(wxMouseEvent &evt) {
     auto pos_x = evt.GetX();
     auto pos_y = evt.GetY();
-    auto rect  = p->image_printer_bed->GetRect();
+    auto rect  = p->combo_printer_bed->GetRect();
     if ((pos_x <= 0 || pos_y <= 0 || pos_x >= rect.GetWidth()) && p->big_bed_image_popup) {
         p->big_bed_image_popup->on_hide();
     }
@@ -3334,59 +4624,78 @@ void Sidebar::create_printer_preset()
 
 void Sidebar::init_filament_combo(PlaterPresetComboBox **combo, const int filament_idx)
 {
-    *combo = new PlaterPresetComboBox(p->m_panel_filament_content, Slic3r::Preset::TYPE_FILAMENT);
+    // MD3 kit filament info-row (Prepare.jsx:91-100): an h44 r12
+    // SurfaceContainerHighest StaticBox wrapping the LIVE PlaterPresetComboBox
+    // (borderless, blended into the row), the data colour swatch, a trailing
+    // material Badge and the per-row menu affordance.
+    StaticBox *row = new StaticBox(p->m_panel_filament_content);
+    row->SetCornerRadius(FromDIP(MD3::Metrics::active().radius));
+    row->SetBorderWidth(0);
+    row->SetBackgroundColor(StateColor::semantic(MD3::Role::SurfaceContainerHighest));
+    row->SetMinSize({-1, FromDIP(FILAMENT_ROW_HEIGHT)});
+
+    // The combo MUST be the row's first child: its destructor destroys the
+    // sibling clr_picker/edit_btn, so DestroyChildren() has to reach it first.
+    *combo = new PlaterPresetComboBox(row, Slic3r::Preset::TYPE_FILAMENT);
     (*combo)->set_filament_idx(filament_idx);
+    (*combo)->SetBorderWidth(0);
+    (*combo)->SetBackgroundColor(StateColor(
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerHighest), StateColor::Normal)));
 
     auto combo_and_btn_sizer = new wxBoxSizer(wxHORIZONTAL);
 
-    // BBS:  filament double columns
-    int em = wxGetApp().em_unit();
-    combo_and_btn_sizer->Add(FromDIP(10), 0, 0, 0, 0 );
-    (*combo)->clr_picker->SetLabel(wxString::Format("%d", filament_idx + 1));
-    combo_and_btn_sizer->Add((*combo)->clr_picker, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(4));
-    combo_and_btn_sizer->Add(*combo, 1, wxALL | wxEXPAND, FromDIP(2))->SetMinSize({-1, FromDIP(30)});
+    combo_and_btn_sizer->Add(FromDIP(8), 0, 0, 0, 0 );
+    // The swatch is a kit Button now, which paints its label beside the icon;
+    // the filament index is its accessible name, not visible text (the bitmap
+    // already shows the number).
+    (*combo)->clr_picker->SetName(wxString::Format(_L("Ink %d color"), filament_idx + 1));
+    combo_and_btn_sizer->Add((*combo)->clr_picker, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(10));
+    combo_and_btn_sizer->Add(*combo, 1, wxALIGN_CENTER_VERTICAL, 0)
+        ->SetMinSize({-1, FromDIP(MD3::Metrics::active().row_height)});
 
-    /* BBS hide del_btn
-    ScalableButton* del_btn = new ScalableButton(p->m_panel_filament_content, wxID_ANY, "delete_filament");
-    del_btn->Bind(wxEVT_BUTTON, [this](wxCommandEvent& e){
-        int extruder_count = std::max(1, (int)p->combos_filament.size() - 1);
+    // Material-type Badge (containment/Badge.jsx: 11/600, SecondaryContainer, r7).
+    StaticBox *badge_box = new StaticBox(row);
+    badge_box->SetCornerRadius(FromDIP(7));
+    badge_box->SetBorderWidth(0);
+    badge_box->SetBackgroundColor(StateColor::semantic(MD3::Role::SecondaryContainer));
+    Label *badge_label = new Label(badge_box, wxString(), LB_PROPAGATE_MOUSE_EVENT);
+    badge_label->SetFont(::Label::Head_11);
+    badge_label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSecondaryContainer));
+    badge_label->SetBackgroundColour(StateColor::semantic(MD3::Role::SecondaryContainer));
+    auto *badge_sizer = new wxBoxSizer(wxHORIZONTAL);
+    badge_sizer->Add(badge_label, 0, wxALIGN_CENTER_VERTICAL | wxLEFT | wxRIGHT, FromDIP(8));
+    badge_sizer->SetMinSize(-1, FromDIP(20));
+    badge_box->SetSizer(badge_sizer);
+    badge_box->Hide(); // shown once a material type is known
+    combo_and_btn_sizer->Add(badge_box, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(8));
 
-        update_objects_list_filament_column(std::max(1, extruder_count - 1));
-        on_filament_count_change(extruder_count);
-        wxGetApp().preset_bundle->printers.get_edited_preset().set_num_extruders(extruder_count);
-        wxGetApp().preset_bundle->update_multi_material_filament_presets();
-    });
-
-    combo_and_btn_sizer->Add(32 * em / 10, 0, 0, 0, 0);
-    combo_and_btn_sizer->Add(del_btn, 0, wxALIGN_CENTER_VERTICAL, 5 * em / 10);
-    */
-    ScalableButton* edit_btn = new ScalableButton(p->m_panel_filament_content, wxID_ANY, "menu_filament");
+    ScalableButton* edit_btn = new ScalableButton(row, wxID_ANY, "menu_filament");
     edit_btn->SetToolTip(_L("Click to edit preset"));
+    // a11y: icon-only per-row filament menu needs an accessible name for assistive tech.
+    edit_btn->SetName(_L("Click to edit preset"));
+    // MD3: per-row menu as a Material Symbols 'more_vert' glyph
+    // (OnSurfaceVariant); the raster stays the graceful fallback.
+    apply_scalable_glyph(edit_btn, MaterialIcon::MoreVert, 16, StateColor::semantic(MD3::Role::OnSurfaceVariant));
+    edit_btn->SetName(_L("Ink menu"));
+    edit_btn->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerHighest));
 
     PlaterPresetComboBox* combobox = (*combo);
     edit_btn->Bind(wxEVT_BUTTON, [this, edit_btn, filament_idx](wxCommandEvent) {
         auto menu = p->plater->filament_action_menu(filament_idx);
-        wxPoint pt { 0, edit_btn->GetSize().GetHeight() + 10 };
-        pt = edit_btn->ClientToScreen(pt);
-        pt = wxGetApp().mainframe->ScreenToClient(pt);
         p->m_menu_filament_id = filament_idx;
-        p->plater->PopupMenu(menu, (int) pt.x, pt.y);
+        // Anchored below the button so the surface never covers its opener.
+        MD3::PopupMenuBelow(edit_btn, menu, true);
     });
     combobox->edit_btn = edit_btn;
 
-    combo_and_btn_sizer->Add(edit_btn, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(4));
+    combo_and_btn_sizer->Add(edit_btn, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(6));
 
-    combo_and_btn_sizer->Add(FromDIP(16), 0, 0, 0, 0);
+    combo_and_btn_sizer->Add(FromDIP(8), 0, 0, 0, 0);
 
-    // BBS:  filament double columns
-    auto side = filament_idx % 2;
-    auto /***/sizer_filaments = this->p->sizer_filaments->GetItem(side)->GetSizer();
-    if (side == 1 && filament_idx > 1) sizer_filaments->Remove(filament_idx / 2);
-    sizer_filaments->Add(combo_and_btn_sizer, 1, wxEXPAND);
-    if (side == 0 && filament_idx > 0) {
-        sizer_filaments = this->p->sizer_filaments->GetItem(1)->GetSizer();
-        sizer_filaments->AddStretchSpacer(1);
-    }
+    row->SetSizer(combo_and_btn_sizer);
+    p->filament_rows.push_back(row);
+    p->filament_badges.push_back(badge_label);
+    p->sizer_filaments->Add(row, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(4));
 }
 
 void Sidebar::remove_unused_filament_combos(const size_t current_extruder_count)
@@ -3395,23 +4704,17 @@ void Sidebar::remove_unused_filament_combos(const size_t current_extruder_count)
         return;
     while (p->combos_filament.size() > current_extruder_count) {
         const int last = p->combos_filament.size() - 1;
-        auto sizer_filaments = this->p->sizer_filaments->GetItem(last % 2)->GetSizer();
-        sizer_filaments->Remove(last / 2);
-        (*p->combos_filament[last]).Destroy();
+        p->sizer_filaments->Remove(last);
+        // Destroying the row destroys the combo first (first child), whose
+        // destructor takes the sibling clr_picker/edit_btn with it.
+        if (last < (int) p->filament_rows.size()) {
+            p->filament_rows[last]->Destroy();
+            p->filament_rows.pop_back();
+            p->filament_badges.pop_back();
+        } else {
+            (*p->combos_filament[last]).Destroy();
+        }
         p->combos_filament.pop_back();
-    }
-    // BBS:  filament double columns
-    auto sizer_filaments0 = this->p->sizer_filaments->GetItem((size_t)0)->GetSizer();
-    auto sizer_filaments1 = this->p->sizer_filaments->GetItem(1)->GetSizer();
-    if (current_extruder_count < 2) {
-        sizer_filaments1->Clear();
-    } else {
-        size_t c0 = sizer_filaments0->GetChildren().GetCount();
-        size_t c1 = sizer_filaments1->GetChildren().GetCount();
-        if (c0 < c1)
-            sizer_filaments1->Remove(c1 - 1);
-        else if (c0 > c1)
-            sizer_filaments1->AddStretchSpacer(1);
     }
 }
 
@@ -3447,7 +4750,7 @@ void Sidebar::update_all_preset_comboboxes()
         //only show connection button for not-BBL printer
         p->btn_connect_printer->Hide();
         //only show sync-ams button for BBL printer
-        p->m_bpButton_ams_filament->Show();
+        if (p->m_btn_sync_ams_header) p->m_btn_sync_ams_header->Show();
         //update print button default value for bbl or third-party printer
         p_mainframe->set_print_button_to_default(MainFrame::PrintSelectType::ePrintPlate);
         AppConfig* config = wxGetApp().app_config;
@@ -3489,7 +4792,7 @@ void Sidebar::update_all_preset_comboboxes()
         p->combo_printer_bed->Enable();
     } else {
         p->btn_connect_printer->Show();
-        p->m_bpButton_ams_filament->Hide();
+        if (p->m_btn_sync_ams_header) p->m_btn_sync_ams_header->Hide();
         reset_bed_type_combox_choices();
         p_mainframe->set_print_button_to_default(MainFrame::PrintSelectType::eSendGcode);
         auto cfg = preset_bundle.printers.get_edited_preset().config;
@@ -3533,7 +4836,14 @@ void Sidebar::update_all_preset_comboboxes()
     if (p->combo_printer) {
         p->combo_printer->update();
         update_printer_thumbnail();
+        p->update_printer_identity();
     }
+    // MD3 Process card preset SelectField: keep the process-preset combo's list
+    // and selection in step with the active printer's compatible presets.
+    if (p->combo_print)
+        p->combo_print->update();
+    p->update_filament_row_badges();
+    p->refresh_process_card();
 }
 
 void Sidebar::update_presets(Preset::Type preset_type)
@@ -3567,6 +4877,7 @@ void Sidebar::update_presets(Preset::Type preset_type)
 
         for (size_t i = 0; i < filament_cnt; i++)
             p->combos_filament[i]->update();
+        p->update_filament_row_badges();
 
         dynamic_filament_list.update();
         break;
@@ -3574,12 +4885,15 @@ void Sidebar::update_presets(Preset::Type preset_type)
 
     case Preset::TYPE_PRINT:
         //wxGetApp().mainframe->m_param_panel;
-        //p->combo_print->update();
         {
         Tab* print_tab = wxGetApp().get_tab(Preset::TYPE_PRINT);
         if (print_tab) {
             print_tab->get_combo_box()->update();
         }
+        // MD3 Process card preset SelectField mirrors the process-preset list.
+        if (p->combo_print)
+            p->combo_print->update();
+        p->refresh_process_card();
         break;
         }
     case Preset::TYPE_SLA_PRINT:
@@ -3734,6 +5048,7 @@ void Sidebar::update_presets_from_to(Slic3r::Preset::Type preset_type, std::stri
         }
         for (size_t i = 0; i < filament_cnt; i++)
             p->combos_filament[i]->update();
+        p->update_filament_row_badges();
         break;
     }
 
@@ -3893,38 +5208,84 @@ void Sidebar::change_top_border_for_mode_sizer(bool increase_border)
 
 void Sidebar::msw_rescale()
 {
-    SetMinSize(wxSize(42 * wxGetApp().em_unit(), -1));
-    p->m_panel_printer_title->GetSizer()->SetMinSize(-1, 3 * wxGetApp().em_unit());
-    p->m_panel_filament_title->GetSizer()
-        ->SetMinSize(-1, 3 * wxGetApp().em_unit());
-    p->m_printer_icon->msw_rescale();
+    SetMinSize(wxSize(FromDIP(MD3::Metrics::active().sidebar_width), -1));
+    // No fixed-height title bar: the Printer header is a content-sized
+    // SectionHeader (DPI-safe by construction, no rescale call needed), and the
+    // Filament title row now sizes to its own content the same way.
     p->m_printer_setting->msw_rescale();
-    p->btn_edit_printer->msw_rescale();
+    p->btn_connect_printer->msw_rescale();
+    p->btn_edit_printer->Rescale();
     p->image_printer->SetSize(PRINTER_THUMBNAIL_SIZE);
-    bool isDual     = static_cast<wxBoxSizer *>(p->panel_printer_preset->GetSizer())->GetOrientation() == wxVERTICAL;
+    // Re-composite the MD3 thumbnail cell at the new DPI.
+    update_printer_thumbnail();
     bool exist;
     auto image_path = get_cur_select_bed_image(exist);
     if (exist) { update_bed_thumbnail(image_path); }
 
     p->adjust_filament_title_layout();
-    p->m_filament_icon->msw_rescale();
-    p->m_bpButton_add_filament->msw_rescale();
-    p->m_bpButton_del_filament->msw_rescale();
-    p->m_bpButton_ams_filament->msw_rescale();
-    p->m_bpButton_set_filament->msw_rescale();
+    // MD3: the AMS-sync affordance is now a shared Button; its SetGlyph icon survives Rescale().
+    if (p->m_btn_sync_ams_header) p->m_btn_sync_ams_header->Rescale();
+    // ScalableButton::msw_rescale reloaded the raster icons above; re-paint the
+    // MD3 Material Symbols glyphs at the new DPI so the section headers stay
+    // glyph-based (no-op when the icon face is unavailable).
+    {
+        const wxColour glyph_col = StateColor::semantic(MD3::Role::OnSurfaceVariant);
+        // m_printer_header / m_filament_header (SectionHeader) resolve their own
+        // leading-glyph colour live at paint time -- no rescale/reapply call needed.
+        apply_scalable_glyph(p->m_printer_setting, MaterialIcon::Settings, 16, glyph_col);
+        apply_scalable_glyph(p->btn_connect_printer, MaterialIcon::Lan, 16, glyph_col);
+    }
+    p->btn_add_filament_row->SetCornerRadius(FromDIP(MD3::Metrics::active().row_height / 2));
+    p->btn_add_filament_row->SetPaddingSize({FromDIP(10), FromDIP(6)});
+    p->btn_add_filament_row->SetMinSize({-1, FromDIP(MD3::Metrics::active().row_height)});
+    p->btn_add_filament_row->SetMaxSize({-1, FromDIP(MD3::Metrics::active().row_height)});
+    p->btn_add_filament_row->Rescale();
     p->m_flushing_volume_btn->Rescale();
     p->m_purge_mode_btn->Rescale();
     //BBS
     p->combo_printer_bed->Rescale();
-    p->combo_printer_bed->SetMinSize({-1, 3 * wxGetApp().em_unit()});
+    p->combo_printer_bed->SetCornerRadius(FromDIP(MD3::Metrics::active().small_radius));
+    p->combo_printer_bed->SetMinSize({-1, FromDIP(SELECT_FIELD_HEIGHT)});
     p->left_extruder->Rescale();
     p->right_extruder->Rescale();
     p->single_extruder->Rescale();
 
     p->btn_sync_printer->SetPaddingSize({FromDIP(6), FromDIP(12)});
     p->btn_sync_printer->SetMinSize(BTN_SYNC_SIZE);
-    p->panel_printer_bed->SetMinSize(PRINTER_PANEL_SIZE);
     p->btn_sync_printer->Rescale();
+
+    // MD3 filament info-rows: re-derive radius / heights at the new DPI.
+    for (StaticBox *row : p->filament_rows) {
+        row->SetCornerRadius(FromDIP(MD3::Metrics::active().radius));
+        row->SetMinSize({-1, FromDIP(FILAMENT_ROW_HEIGHT)});
+    }
+    for (Label *badge : p->filament_badges)
+        if (auto *box = dynamic_cast<StaticBox *>(badge->GetParent()))
+            box->SetCornerRadius(FromDIP(7));
+
+    // MD3 Objects card + compact Process card widgets.
+    if (p->m_search_bar) p->m_search_bar->Rescale();
+    // Sidebar settings search + filament slot search pills re-derive their
+    // geometry and glyph rasters at the new DPI the same way.
+    if (p->m_process_search) p->m_process_search->Rescale();
+    if (p->m_process_search_adv) p->m_process_search_adv->Rescale();
+    if (p->m_filament_search) p->m_filament_search->Rescale();
+    if (p->process_layer_height) {
+        p->process_layer_height->SetCornerRadius(FromDIP(MD3::Metrics::active().small_radius));
+        p->process_layer_height->SetMinSize({FromDIP(96), FromDIP(34)});
+        p->process_layer_height->Rescale();
+    }
+    if (p->process_infill_density) {
+        p->process_infill_density->SetCornerRadius(FromDIP(MD3::Metrics::active().small_radius));
+        p->process_infill_density->SetMinSize({FromDIP(96), FromDIP(34)});
+        p->process_infill_density->Rescale();
+    }
+    if (p->process_infill_pattern) {
+        p->process_infill_pattern->SetCornerRadius(FromDIP(MD3::Metrics::active().small_radius));
+        p->process_infill_pattern->SetMinSize({FromDIP(130), FromDIP(34)});
+        p->process_infill_pattern->Rescale();
+    }
+    if (p->process_support) p->process_support->Rescale();
 #if 0
     if (p->mode_sizer)
         p->mode_sizer->msw_rescale();
@@ -3937,8 +5298,13 @@ void Sidebar::msw_rescale()
     //                                                            } )
     //    combo->msw_rescale();
     p->combo_printer->msw_rescale();
-    for (PlaterPresetComboBox* combo : p->combos_filament)
+    for (PlaterPresetComboBox* combo : p->combos_filament) {
         combo->msw_rescale();
+        // Re-paint the MD3 'more_vert' glyph at the new DPI (the rescale above
+        // reloads the raster fallback).
+        if (combo->edit_btn)
+            apply_scalable_glyph(combo->edit_btn, MaterialIcon::MoreVert, 16, StateColor::semantic(MD3::Role::OnSurfaceVariant));
+    }
 
     // BBS
     //p->frequently_changed_parameters->msw_rescale();
@@ -3964,7 +5330,7 @@ void Sidebar::msw_rescale()
     p->btn_reslice     ->SetMinSize(wxSize(-1, scaled_height));
 #endif
     recalc_filament_scroll_sizes();
-    p->scrolled->Layout();
+    update_scroll_body();
 
     p->searcher.dlg_msw_rescale();
 }
@@ -3972,6 +5338,73 @@ void Sidebar::msw_rescale()
 void Sidebar::sys_color_changed()
 {
     wxWindowUpdateLocker noUpdates(this);
+
+    const wxColour surface_low    = StateColor::semantic(MD3::Role::SurfaceContainerLow);
+    const wxColour surface_lowest = StateColor::semantic(MD3::Role::SurfaceContainerLowest);
+    const wxColour surface_high   = StateColor::semantic(MD3::Role::SurfaceContainerHigh);
+    const wxColour on_surface     = StateColor::semantic(MD3::Role::OnSurface);
+    const wxColour on_variant     = StateColor::semantic(MD3::Role::OnSurfaceVariant);
+
+    SetBackgroundColour(surface_low);
+    p->scrolled->SetBackgroundColour(surface_low);
+    p->m_panel_printer_title->SetBackgroundColor(surface_low);
+    p->m_panel_printer_title->SetBackgroundColor2(surface_low);
+    // SectionHeader captures its background from the parent StaticBox once at
+    // construction; resync it whenever the title panel's own background changes.
+    p->m_printer_header->SetBackgroundColour(StaticBox::GetParentBackgroundColor(p->m_panel_printer_title));
+    p->m_panel_printer_content->SetBackgroundColour(surface_lowest);
+    const wxColour surface_highest = StateColor::semantic(MD3::Role::SurfaceContainerHighest);
+    p->panel_printer_preset->SetBackgroundColor(surface_highest);
+    StateColor card_border(
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Pressed),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Hovered),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OutlineVariant), StateColor::Normal));
+    p->panel_printer_preset->SetBorderColor(card_border);
+    // Re-composite the MD3 thumbnail cell for the new theme (SurfaceContainerLowest
+    // fill / OutlineVariant border / fallback glyph colour all re-resolve).
+    update_printer_thumbnail();
+    // MD3 identity card labels re-tint with the theme.
+    p->text_printer_name->SetForegroundColour(on_surface);
+    p->text_printer_name->SetBackgroundColour(surface_highest);
+    p->text_printer_status->SetForegroundColour(StateColor::semantic(MD3::Role::Primary));
+    p->text_printer_status->SetBackgroundColour(surface_highest);
+    p->printer_status_dot->SetBackgroundColour(surface_highest);
+    p->btn_edit_printer->Rescale();
+    // MD3 bed SelectField: transparent container, outlined combo.
+    p->panel_printer_bed->SetBackgroundColor(surface_lowest);
+    p->combo_printer_bed->SetBorderColor(StateColor(
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Pressed),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Hovered),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Outline), StateColor::Normal)));
+    p->combo_printer_bed->SetBackgroundColor(StateColor(std::pair<wxColour, int>(surface_lowest, StateColor::Normal)));
+    p->text_printer_bed->SetForegroundColour(on_variant);
+    p->btn_connect_printer->SetBackgroundColour(surface_highest);
+    apply_scalable_glyph(p->btn_connect_printer, MaterialIcon::Lan, 16, on_variant);
+    p->m_panel_filament_title->SetBackgroundColor(surface_low);
+    p->m_panel_filament_title->SetBackgroundColor2(surface_low);
+    p->m_filament_area_wrapper->SetBackgroundColour(surface_lowest);
+    p->m_physical_scroll_area->SetBackgroundColour(surface_lowest);
+    p->m_panel_filament_content->SetBackgroundColour(surface_lowest);
+    p->m_mixed_scroll_area->SetBackgroundColour(surface_lowest);
+
+    StateColor outlined_bg(
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SecondaryContainer), StateColor::Pressed),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerHigh), StateColor::Hovered),
+        std::pair<wxColour, int>(surface_lowest, StateColor::Normal));
+    StateColor outlined_border(
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Pressed),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Hovered),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Outline), StateColor::Normal));
+    StateColor outlined_text(
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OnSecondaryContainer), StateColor::Pressed),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Hovered),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Normal));
+    for (Button *button : {p->btn_sync_printer, p->btn_add_filament_row}) {
+        button->SetBackgroundColor(outlined_bg);
+        button->SetBorderColor(outlined_border);
+        button->SetTextColor(outlined_text);
+        button->Refresh();
+    }
 
 #if 0
     for (wxWindow* win : std::vector<wxWindow*>{ this, p->sliced_info->GetStaticBox(), p->object_info->GetStaticBox(), p->btn_reslice, p->btn_export_gcode })
@@ -3984,14 +5417,14 @@ void Sidebar::sys_color_changed()
     p->btn_sync_printer->SetIcon("printer_sync");
     // for (wxWindow* btn : std::vector<wxWindow*>{ p->btn_reslice, p->btn_export_gcode })
     //    wxGetApp().UpdateDarkUI(btn, true);
-    p->m_printer_icon->msw_rescale();
     p->m_printer_setting->msw_rescale();
-    p->m_printer_setting->msw_rescale();
-    p->m_filament_icon->msw_rescale();
-    p->m_bpButton_add_filament->msw_rescale();
-    p->m_bpButton_del_filament->msw_rescale();
-    p->m_bpButton_ams_filament->msw_rescale();
-    p->m_bpButton_set_filament->msw_rescale();
+    // MD3: the AMS-sync affordance is now a shared Button; semantic StateColors re-resolve
+    // to the new theme automatically and its SetGlyph icon survives Rescale().
+    if (p->m_btn_sync_ams_header) p->m_btn_sync_ams_header->Rescale();
+    // Re-tint the MD3 Material Symbols glyphs to the new theme's OnSurfaceVariant
+    // (the raster reloads above would otherwise revert them; no-op without the face).
+    // m_printer_header / m_filament_header (SectionHeader) resolve their own colour live at paint.
+    apply_scalable_glyph(p->m_printer_setting, MaterialIcon::Settings, 16, on_variant);
     p->m_flushing_volume_btn->Rescale();
     p->m_purge_mode_btn->Rescale();
 
@@ -4011,8 +5444,45 @@ void Sidebar::sys_color_changed()
                                                                 p->combo_printer })
         combo->sys_color_changed();
 #endif
-    for (PlaterPresetComboBox* combo : p->combos_filament)
+    for (PlaterPresetComboBox* combo : p->combos_filament) {
         combo->sys_color_changed();
+        if (combo->edit_btn) {
+            apply_scalable_glyph(combo->edit_btn, MaterialIcon::MoreVert, 16, on_variant);
+            combo->edit_btn->SetBackgroundColour(surface_highest);
+        }
+        combo->SetBackgroundColor(StateColor(std::pair<wxColour, int>(surface_highest, StateColor::Normal)));
+    }
+    // MD3 filament info-rows + material badges re-tint with the theme.
+    for (StaticBox *row : p->filament_rows)
+        row->SetBackgroundColor(surface_highest);
+    for (Label *badge : p->filament_badges) {
+        badge->SetForegroundColour(StateColor::semantic(MD3::Role::OnSecondaryContainer));
+        badge->SetBackgroundColour(StateColor::semantic(MD3::Role::SecondaryContainer));
+        if (auto *box = dynamic_cast<StaticBox *>(badge->GetParent()))
+            box->SetBackgroundColor(StateColor::semantic(MD3::Role::SecondaryContainer));
+    }
+
+    // MD3 compact Process card fields.
+    if (p->m_process_card) {
+        p->m_process_card->SetBackgroundColour(surface_lowest);
+        for (TextInput *field : {p->process_layer_height, p->process_infill_density})
+            if (field)
+                field->SetBackgroundColor(StateColor(std::pair<wxColour, int>(surface_highest, StateColor::Normal)));
+        if (p->process_infill_pattern)
+            p->process_infill_pattern->SetBackgroundColor(StateColor(std::pair<wxColour, int>(surface_highest, StateColor::Normal)));
+        if (p->combo_print)
+            p->combo_print->SetBackgroundColor(StateColor(std::pair<wxColour, int>(surface_highest, StateColor::Normal)));
+        // Curated rows are now wxPanels (segment-tagged); re-tint each row panel
+        // and its label. The header / segmented control resolve their own tokens.
+        for (auto &pr : p->process_seg_rows) {
+            if (!pr.first) continue;
+            pr.first->SetBackgroundColour(surface_lowest);
+            for (wxWindow *child : pr.first->GetChildren())
+                if (auto *lbl = dynamic_cast<::Label *>(child))
+                    lbl->SetForegroundColour(on_surface);
+        }
+    }
+    if (p->m_process_simple_bar) p->m_process_simple_bar->SetBackgroundColour(surface_lowest);
 
     // BBS
     obj_list()->sys_color_changed();
@@ -4026,17 +5496,21 @@ void Sidebar::sys_color_changed()
     //p->btn_export_gcode_removable->msw_rescale();
 
     // Refresh mixed filament static panels and dynamic content
-    p->m_panel_mixed_title->SetBackgroundColour(StateColor::darkModeColorFor(*wxWHITE));
-    p->m_text_mixed_title->SetForegroundColour(StateColor::darkModeColorFor(wxColour("#ACACAC")));
-    p->m_panel_mixed_content->SetBackgroundColour(StateColor::darkModeColorFor(*wxWHITE));
-    p->m_btn_add_mixed_filament->SetBackgroundColour(StateColor::darkModeColorFor(wxColour("#F8F8F8")));
+    p->m_panel_mixed_title->SetBackgroundColour(surface_lowest);
+    p->m_text_mixed_title->SetForegroundColour(on_variant);
+    p->m_panel_mixed_content->SetBackgroundColour(surface_lowest);
+    p->m_btn_add_mixed_filament->SetBackgroundColour(surface_lowest);
+    p->m_panel_mixed_warning->SetBackgroundColour(StateColor::semantic(MD3::Role::ErrorContainer));
+    p->m_text_mixed_warning->SetForegroundColour(StateColor::semantic(MD3::Role::Error));
     for (auto* child : p->m_btn_add_mixed_filament->GetChildren()) {
         if (auto* st = dynamic_cast<wxStaticText*>(child))
-            st->SetForegroundColour(StateColor::darkModeColorFor(wxColour("#262E30")));
+            st->SetForegroundColour(on_surface);
     }
     update_mixed_filament_list();
 
-    p->scrolled->Layout();
+    update_scroll_body();
+    p->scrolled->Refresh();
+    Refresh();
 
     p->searcher.dlg_sys_color_changed();
 }
@@ -4050,6 +5524,12 @@ void Sidebar::jump_to_option(const std::string& opt_key, Preset::Type type, cons
 {
     //const Search::Option& opt = p->searcher.get_option(opt_key, type);
     if (type == Preset::TYPE_PRINT) {
+        if (p->m_prepare_tabs)
+            apply_prepare_section("process");
+        // The jump target lives in the full ParamsPanel tree; make sure the
+        // MD3 compact Process card is flipped out of the way first. The flip
+        // is transient — do not overwrite the user's stored sidebar mode.
+        show_process_advanced(true, /*persist=*/false);
         auto tab = dynamic_cast<TabPrintModel*>(wxGetApp().params_panel()->get_current_tab());
         if (tab && tab->has_key(opt_key)) {
             tab->activate_option(opt_key, category);
@@ -4058,6 +5538,48 @@ void Sidebar::jump_to_option(const std::string& opt_key, Preset::Type type, cons
         wxGetApp().params_panel()->switch_to_global();
     }
     wxGetApp().get_tab(type)->activate_option(opt_key, category);
+}
+
+bool Sidebar::is_process_advanced() const { return p->process_advanced; }
+
+void Sidebar::show_process_advanced(bool advanced, bool persist)
+{
+    if (!p->m_process_card || !p->params_panel_ref) return;
+    if (p->process_advanced == advanced && p->active_prepare_section == "process" &&
+        p->params_panel_ref->IsShown() == advanced)
+        return; // already in the requested state
+    p->process_advanced = advanced;
+    p->m_process_card->Show(!advanced);
+    if (p->m_process_simple_bar) p->m_process_simple_bar->Show(advanced);
+    p->params_panel_ref->set_host_visibility_gate(advanced);
+    p->params_panel_ref->Show(advanced);
+    // Keep the clip-prone reparented mode-switch toolbar (+ dividers) in lockstep
+    // with the full tree so it never shows over the narrow compact card.
+    if (auto *top = p->params_panel_ref->get_top_panel()) top->Show(advanced);
+    if (p->m_params_top_line_1) p->m_params_top_line_1->Show(advanced);
+    if (p->m_params_top_line_2) p->m_params_top_line_2->Show(advanced);
+    if (!advanced) p->refresh_process_card();
+    if (persist && wxGetApp().app_config)
+        wxGetApp().app_config->set("sidebar_process_advanced", advanced ? "true" : "false");
+
+    // The compact card is built for the sidebar's width; the full tree is not --
+    // it is the settings-tab layout (label + value field per row, plus a header
+    // carrying the Global/Objects switch and the compare/table buttons), and at
+    // the density default those value fields land past the right edge. Give it
+    // room while it is up, and hand the width back to the 3D canvas on the way
+    // out. request_sidebar_width() clamps to 55% of the frame and ignores the
+    // floating / top / bottom docks.
+    // grow_only on the way in, so flipping to Advanced never narrows a sidebar
+    // the user had already dragged wider; the flip back to Simple is an explicit
+    // request for the compact width, so that one does shrink.
+    if (auto *plater = dynamic_cast<Plater *>(GetParent()))
+        plater->request_sidebar_width(advanced ? FromDIP(ADVANCED_SIDEBAR_WIDTH) : 0,
+                                      /*grow_only=*/advanced);
+
+    if (p->m_prepare_tabs)
+        apply_prepare_section("process");
+    update_scroll_body();
+    p->scrolled->Refresh();
 }
 
 void Sidebar::jump_to_option(size_t selected)
@@ -4094,7 +5616,16 @@ void Sidebar::on_filament_count_change(size_t num_filaments)
         return;
     }
 
-    if (choices.size() == 1 || num_physical == 1)
+    // !choices.empty() is load-bearing, not defensive noise. num_physical is 0
+    // whenever every slot is a mixed filament (physical_indices stays empty),
+    // and the tail of this function then calls remove_unused_filament_combos(0),
+    // which pops combos_filament all the way to EMPTY -- it has no floor of one.
+    // The next call in with a single physical filament walks straight past the
+    // early-out above (0 != 1), finds num_physical == 1 true here, and indexes
+    // [0] of an empty vector: a garbage pointer, immediately dereferenced by
+    // ->GetDropDown(). In a Release build that is an access violation on
+    // project load, which is exactly when filament counts change.
+    if (!choices.empty() && (choices.size() == 1 || num_physical == 1))
         choices[0]->GetDropDown().Invalidate();
 
     wxWindowUpdateLocker noUpdates_scrolled_panel(this);
@@ -4126,6 +5657,7 @@ void Sidebar::on_filament_count_change(size_t num_filaments)
     });
 
     recalc_filament_scroll_sizes();
+    p->update_filament_row_badges();
 
     Layout();
     p->m_panel_filament_title->Refresh();
@@ -4144,29 +5676,9 @@ void Sidebar::on_filaments_delete(size_t filament_id)
 
         wxWindowUpdateLocker noUpdates_scrolled_panel(this);
 
-        // delete UI item
+        // delete UI item (the trailing MD3 info-row owns the combo)
         if (filament_id < p->combos_filament.size()) {
-            const int last            = p->combos_filament.size() - 1;
-            auto      sizer_filaments = this->p->sizer_filaments->GetItem(last % 2)->GetSizer();
-            sizer_filaments->Remove(last / 2);
-
-            PlaterPresetComboBox* to_delete_combox = p->combos_filament[filament_id];
-            (*p->combos_filament[last]).Destroy();
-            p->combos_filament.pop_back();
-
-            // BBS:  filament double columns
-            auto sizer_filaments0 = this->p->sizer_filaments->GetItem((size_t) 0)->GetSizer();
-            auto sizer_filaments1 = this->p->sizer_filaments->GetItem(1)->GetSizer();
-            if (p->combos_filament.size() < 2) {
-                sizer_filaments1->Clear();
-            } else {
-                size_t c0 = sizer_filaments0->GetChildren().GetCount();
-                size_t c1 = sizer_filaments1->GetChildren().GetCount();
-                if (c0 < c1)
-                    sizer_filaments1->Remove(c1 - 1);
-                else if (c0 > c1)
-                    sizer_filaments1->AddStretchSpacer(1);
-            }
+            remove_unused_filament_combos(p->combos_filament.size() - 1);
         }
 
         auto sizer = p->m_panel_filament_title->GetSizer();
@@ -4186,6 +5698,7 @@ void Sidebar::on_filaments_delete(size_t filament_id)
     }
 
     recalc_filament_scroll_sizes();
+    p->update_filament_row_badges();
 
     Layout();
     p->m_panel_filament_title->Refresh();
@@ -4359,12 +5872,17 @@ void Sidebar::change_filament(size_t from_id, size_t to_id)
                 }
             }
             if (target_uses_source) {
-                int ret = wxMessageBox(
+                // MD3: route the raw wxMessageBox through the kit MessageDialog shell
+                // (MsgDialog.hpp). Style flags are preserved verbatim; the confirm branch now
+                // compares against wxID_OK because MessageDialog::ShowModal returns wxID_*
+                // dialog ids (wxMessageBox returned the wxOK flag).
+                MessageDialog dlg(
+                    wxGetApp().plater(),
                     _L("The target mixed filament uses this physical filament as a component. "
                        "Merging will remove this physical filament and may invalidate the mixed filament. Continue?"),
                     _L("Warning"),
                     wxOK | wxCANCEL | wxICON_WARNING);
-                if (ret != wxOK)
+                if (dlg.ShowModal() != wxID_OK)
                     return;
             }
         }
@@ -4669,8 +6187,11 @@ void Sidebar::get_big_btn_sync_pos_size(wxPoint &pt, wxSize &size)
 }
 
 void Sidebar::get_small_btn_sync_pos_size(wxPoint &pt, wxSize &size) {
-    size = ams_btn->GetSize();
-    pt   = ams_btn->GetScreenPosition();
+    // MD3: the small AMS-sync affordance is now the Filament SectionHeader trailing button.
+    if (p->m_btn_sync_ams_header) {
+        size = p->m_btn_sync_ams_header->GetSize();
+        pt   = p->m_btn_sync_ams_header->GetScreenPosition();
+    }
 }
 
 void Sidebar::set_extruder_nozzle_count(int extruder_id, int nozzle_count)
@@ -4726,8 +6247,10 @@ void Sidebar::load_ams_list(MachineObject* obj)
             c->ShowBadge(false);//change printer,then clear badge
         }
     }
+    p->update_filament_row_badges();
 
     p->combo_printer->update();
+    p->update_printer_identity();
 }
 
 void Sidebar::sync_ams_list(bool is_from_big_sync_btn)
@@ -4873,7 +6396,8 @@ void Sidebar::sync_ams_list(bool is_from_big_sync_btn)
     for (auto& c : p->combos_filament)
         c->update();
     // Expand filament list
-    p->m_filament_area_wrapper->Show();
+    p->filament_expanded = true;
+    p->m_filament_area_wrapper->Show(p->active_prepare_section == "ink");
     recalc_filament_scroll_sizes();
     // BBS:Synchronized consumables information
     // auto calculation of flushing volumes
@@ -5023,17 +6547,19 @@ wxButton* Sidebar::get_wiping_dialog_button()
 void Sidebar::set_flushing_volume_warning(const bool flushing_volume_modify)
 {
     if (flushing_volume_modify){
-        p->m_flushing_volume_btn->SetBorderColor(wxColour(255, 111, 0));
-        p->m_flushing_volume_btn->SetTextColor(wxColour(255, 111, 0));
+        p->m_flushing_volume_btn->SetBorderColor(ThemeColor::Warning);
+        p->m_flushing_volume_btn->SetTextColor(ThemeColor::Warning);
     }
     else {
-        StateColor flush_fg_col(std::pair<wxColour, int>(wxColour(107, 107, 106), StateColor::Pressed),
-                                std::pair<wxColour, int>(wxColour(107, 107, 106), StateColor::Hovered),
-                                std::pair<wxColour, int>(wxColour(107, 107, 106), StateColor::Normal));
+        StateColor flush_fg_col(
+            std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OnSecondaryContainer), StateColor::Pressed),
+            std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Hovered),
+            std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OnSurfaceVariant), StateColor::Normal));
 
-        StateColor flush_bd_col(std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Pressed),
-                                std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Hovered),
-                                std::pair<wxColour, int>(wxColour(172, 172, 172), StateColor::Normal));
+        StateColor flush_bd_col(
+            std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Pressed),
+            std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Hovered),
+            std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Outline), StateColor::Normal));
         p->m_flushing_volume_btn->SetBorderColor(flush_bd_col);
         p->m_flushing_volume_btn->SetTextColor(flush_fg_col);
     }
@@ -5084,8 +6610,18 @@ void Sidebar::pop_sync_nozzle_and_ams_dialog() {
         wxGetApp().plater()->sidebar().get_big_btn_sync_pos_size(big_btn_pt, big_btn_size);
         temp_na_info.dialog_pos = big_btn_pt + wxPoint(big_btn_size.x, big_btn_size.y) + wxPoint(FromDIP(big_btn_size.x / 10.f - 5), FromDIP(big_btn_size.y / 10.f));
 
-        int same_dialog_pos_x     = get_sidebar_pos_right_x() + FromDIP(5);
-        temp_na_info.dialog_pos.x = same_dialog_pos_x;
+        const auto docking_state   = p->plater->get_sidebar_docking_state();
+        const bool horizontal_band = docking_state == Sidebar::Top || docking_state == Sidebar::Bottom;
+        const int dialog_width = wxGetApp().preset_bundle->get_printer_extruder_count() == 1 ? 370 : 320;
+        // Left/Right docks are vertical columns: push the dialog to the canvas-facing
+        // side of the sidebar. Top/Bottom docks are full-width horizontal bands, so a
+        // horizontal offset would shove the dialog off-screen; keep it aligned under the
+        // big sync button (which already sits just below the band's canvas-facing edge).
+        if (!horizontal_band) {
+            const bool docked_right   = docking_state == Sidebar::Right;
+            temp_na_info.dialog_pos.x = docked_right ? GetScreenPosition().x - FromDIP(dialog_width + 5)
+                                                     : get_sidebar_pos_right_x() + FromDIP(5);
+        }
         temp_na_info.dialog_pos.y += FromDIP(2);
 
         wxPoint small_btn_pt;
@@ -5110,9 +6646,18 @@ void Sidebar::pop_finsish_sync_ams_dialog()
         get_small_btn_sync_pos_size(small_btn_pt, small_btn_size);
 
         FinishSyncAmsDialog::InputInfo temp_fsa_info;
-        auto                           same_dialog_pos_x = get_sidebar_pos_right_x() + FromDIP(5);
-        temp_fsa_info.dialog_pos.x                       = same_dialog_pos_x;
-        temp_fsa_info.dialog_pos.y                       = small_btn_pt.y;
+        const auto                     docking_state = p->plater->get_sidebar_docking_state();
+        // See pop_sync_nozzle_and_ams_dialog: offset horizontally beside the vertical
+        // Left/Right columns; for the full-width Top/Bottom bands align the dialog with
+        // the AMS button instead of pushing it to a band edge (which is off-screen).
+        if (docking_state == Sidebar::Top || docking_state == Sidebar::Bottom) {
+            temp_fsa_info.dialog_pos.x = small_btn_pt.x;
+        } else {
+            const bool docked_right    = docking_state == Sidebar::Right;
+            temp_fsa_info.dialog_pos.x = docked_right ? GetScreenPosition().x - FromDIP(315)
+                                                      : get_sidebar_pos_right_x() + FromDIP(5);
+        }
+        temp_fsa_info.dialog_pos.y = small_btn_pt.y;
         temp_fsa_info.ams_btn_pos                        = small_btn_pt + wxPoint(small_btn_size.x / 2, small_btn_size.y / 2);
         if (m_sna_dialog) { m_sna_dialog->on_hide(); }
         if (m_fna_dialog) {
@@ -5197,14 +6742,18 @@ void Sidebar::update_ui_from_settings()
 
 bool Sidebar::show_object_list(bool show) const
 {
-    p->m_search_bar->Show(show);
-    if (!p->m_object_list->Show(show))
-        return false;
+    if (p->m_prepare_tabs)
+        apply_prepare_section(show ? "objects" : "process");
+    else {
+        if (p->m_objects_header) p->m_objects_header->Show(show);
+        p->m_search_bar->Show(show);
+        p->m_object_list->Show(show);
+    }
     if (!show)
         p->object_layers->Show(false);
     else
         p->m_object_list->part_selection_changed();
-    p->scrolled->Layout();
+    update_scroll_body();
     return true;
 }
 
@@ -5241,16 +6790,26 @@ static constexpr int kScrollCapThreshold     = 12;
 
 void Sidebar::recalc_filament_scroll_sizes()
 {
+    // Re-apply the filament search filter before measuring: rows are added,
+    // removed or renamed by many call sites that all funnel through here, so
+    // the filter stays authoritative over row visibility without each site
+    // knowing about it (hidden rows are excluded from the sizer min sizes).
+    p->apply_filament_search_filter();
     size_t num_physical = p->combos_filament.size();
     auto* plater = dynamic_cast<Plater*>(GetParent());
     size_t num_mixed = plater ? plater->mixed_filament_config_indices().size() : 0;
     size_t total = num_physical + num_mixed;
 
-    int max_h = (total > kScrollCapThreshold)
+    // Physical rows follow the MD3 info-row pitch (h44 + 4 gap); mixed rows
+    // keep their legacy 34px pitch.
+    int max_h_physical = (total > kScrollCapThreshold)
+        ? FromDIP(kMaxFilamentScrollRows * FILAMENT_ROW_PITCH)
+        : -1;
+    int max_h_mixed = (total > kScrollCapThreshold)
         ? FromDIP(kMaxFilamentScrollRows * 34)
         : -1;
 
-    auto recalc = [max_h](wxScrolledWindow* sw) {
+    auto recalc = [](wxScrolledWindow* sw, int max_h) {
         if (!sw || !sw->GetSizer()) return;
         auto content_size = sw->GetSizer()->GetMinSize();
         if (max_h > 0 && content_size.y > max_h) {
@@ -5262,8 +6821,56 @@ void Sidebar::recalc_filament_scroll_sizes()
         sw->SetMinSize({0, content_size.y});
     };
 
-    recalc(p->m_physical_scroll_area);
-    recalc(p->m_mixed_scroll_area);
+    recalc(p->m_physical_scroll_area, max_h_physical);
+    recalc(p->m_mixed_scroll_area, max_h_mixed);
+
+    // Every add/remove/filter path funnels through here, so this is the shared
+    // point to refresh the sidebar body's scrollable extent as well.
+    update_scroll_body();
+}
+
+// Content-derived height for the object list. The list sits in a scroll body
+// with proportion 0 (nothing stretches there), so its height must come from
+// its own rows: header + visible rows, clamped to a usable floor and to a
+// ceiling that leaves the settings tree below it in view. Expanded/collapsed
+// state is honoured so a collapsed plate does not reserve empty space.
+void Sidebar::fit_object_list_height() const
+{
+    ObjectList *list = p->m_object_list;
+    if (!list || !list->IsShown() || !list->GetModel()) return;
+
+    int rows = 0;
+    std::function<void(const wxDataViewItem &)> walk = [&](const wxDataViewItem &parent) {
+        wxDataViewItemArray children;
+        const unsigned n = list->GetModel()->GetChildren(parent, children);
+        for (unsigned i = 0; i < n; ++i) {
+            ++rows;
+            if (list->GetModel()->IsContainer(children[i]) && list->IsExpanded(children[i]))
+                walk(children[i]);
+        }
+    };
+    walk(wxDataViewItem(nullptr));
+
+    int row_h = 0;
+    {
+        wxDataViewItemArray top;
+        if (list->GetModel()->GetChildren(wxDataViewItem(nullptr), top) > 0)
+            row_h = list->GetItemRect(top[0], nullptr).GetHeight();
+    }
+    if (row_h <= 0) row_h = list->GetCharHeight() + FromDIP(8);
+    const int header_h = list->GetCharHeight() + FromDIP(12);
+
+    const int floor_h   = FromDIP(180);
+    const int ceiling_h = FromDIP(420);
+    const int wanted    = std::clamp(header_h + rows * row_h + FromDIP(8), floor_h, ceiling_h);
+    if (list->GetMinSize().GetHeight() != wanted)
+        list->SetMinSize(wxSize(-1, wanted));
+}
+
+void Sidebar::update_scroll_body() const
+{
+    fit_object_list_height();
+    update_sidebar_scroll_body(p->scrolled);
 }
 
 static std::string blend_mixed_color(const std::vector<unsigned int> &comp_ids,
@@ -5284,10 +6891,10 @@ void Sidebar::update_mixed_filament_list()
 
     wxWindowUpdateLocker noUpdates(this);
 
-    const wxColour mc_bg     = StateColor::darkModeColorFor(*wxWHITE);
-    const wxColour mc_border = StateColor::darkModeColorFor(wxColour("#CECECE"));
-    const wxColour mc_text   = StateColor::darkModeColorFor(wxColour("#262E30"));
-    const wxColour mc_dim    = StateColor::darkModeColorFor(wxColour("#ACACAC"));
+    const wxColour mc_bg     = StateColor::semantic(MD3::Role::SurfaceContainerLowest);
+    const wxColour mc_border = StateColor::semantic(MD3::Role::OutlineVariant);
+    const wxColour mc_text   = StateColor::semantic(MD3::Role::OnSurface);
+    const wxColour mc_dim    = StateColor::semantic(MD3::Role::Outline);
 
     auto& project_config = wxGetApp().preset_bundle->project_config;
     auto mixed_indices = plater->mixed_filament_config_indices();
@@ -5621,7 +7228,7 @@ void Sidebar::update_mixed_filament_list()
                         dc.DrawRectangle(x, y_swatch, cp_swatch_sz, cp_swatch_sz);
                         wxString dash = wxT("\u2014");
                         wxSize dash_sz = dc.GetTextExtent(dash);
-                        dc.SetTextForeground(wxColour("#909090"));
+                        dc.SetTextForeground(mc_dim);
                         dc.DrawText(dash, x + (cp_swatch_sz - dash_sz.GetWidth()) / 2,
                                           y_swatch + (cp_swatch_sz - dash_sz.GetHeight()) / 2);
                     }
@@ -5670,7 +7277,7 @@ void Sidebar::update_mixed_filament_list()
             auto* menu_btn = new ScalableButton(p->m_panel_mixed_content, wxID_ANY,
                 is_broken ? "error" : "menu_filament");
             menu_btn->SetToolTip(is_broken ? _L("Mixed filament has broken component references") : _L("Edit / Delete / Merge"));
-            menu_btn->Bind(wxEVT_BUTTON, [this, panel_idx, cfg_idx](wxCommandEvent&) {
+            menu_btn->Bind(wxEVT_BUTTON, [this, menu_btn, panel_idx, cfg_idx](wxCommandEvent&) {
                 wxMenu menu;
 
                 auto* edit_item = menu.Append(wxID_ANY, _L("Edit"));
@@ -5715,7 +7322,7 @@ void Sidebar::update_mixed_filament_list()
                 else
                     delete sub_menu;
 
-                PopupMenu(&menu);
+                MD3::PopupMenuBelow(menu_btn, &menu);
             });
             combo_and_btn_sizer->Add(menu_btn, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(4));
 
@@ -5736,8 +7343,7 @@ void Sidebar::update_mixed_filament_list()
     p->m_physical_scroll_area->FitInside();
     p->m_mixed_scroll_area->FitInside();
     p->m_filament_area_wrapper->Layout();
-    m_scrolled_sizer->Layout();
-    p->scrolled->Layout();
+    update_scroll_body();
 
     size_t total = wxGetApp().preset_bundle->filament_presets.size();
     obj_list()->update_objects_list_filament_column(total);
@@ -6311,6 +7917,33 @@ void Sidebar::edit_mixed_filament(size_t panel_idx)
     }
 }
 
+void Sidebar::delete_filament_with_confirm(size_t filament_id)
+{
+    if (p->combos_filament.size() <= 1)
+        return;
+    size_t resolved = filament_id;
+    if (resolved == static_cast<size_t>(kSidebarContextMenuFilamentId))
+        resolved = p->m_menu_filament_id;
+    if (resolved == size_t(-1))
+        resolved = p->combos_filament.size() - 1;
+
+    wxString preset_name;
+    const auto &presets = wxGetApp().preset_bundle->filament_presets;
+    if (resolved < presets.size())
+        preset_name = from_u8(presets[resolved]);
+
+    SuperConfirmGate::Spec spec;
+    spec.action      = _L("Delete filament");
+    spec.consequence = _L("This filament slot will be removed from the project. Objects and paint "
+                          "assigned to it are moved to another slot.");
+    // TRN %d is the 1-based filament slot number, %s the preset name.
+    spec.affected.push_back(wxString::Format(_L("Slot %d: %s"), int(resolved) + 1, preset_name));
+    wxWindow *anchor = resolved < p->combos_filament.size() ? static_cast<wxWindow *>(p->combos_filament[resolved]) : nullptr;
+    if (!SuperConfirmGate::Run(anchor, spec))
+        return;
+    delete_filament(filament_id);
+}
+
 void Sidebar::delete_mixed_filament_at(size_t panel_idx)
 {
     auto* plater = dynamic_cast<Plater*>(GetParent());
@@ -6404,6 +8037,105 @@ void Sidebar::decompose_filament_color(int filament_idx)
 
 // ---- End Mixed Filament sidebar methods ----
 
+void Sidebar::bulk_filament_actions()
+{
+    if (is_new_project_in_gcode3mf()) return;
+
+    std::vector<std::string> color_strs, names, types;
+    std::vector<size_t> config_indices;
+    collect_physical_filament_info(color_strs, names, types, &config_indices);
+    if (names.empty()) return;
+
+    BulkFilamentDialog dlg(this, color_strs, names,
+                           wxGetApp().preset_bundle->filament_presets.size(),
+                           size_t(EnforcerBlockerType::ExtruderMax));
+    if (dlg.ShowModal() != wxID_OK)
+        return;
+    BulkFilamentResult res = dlg.get_result();
+
+    wxWindowUpdateLocker noUpdates(this);
+
+    bool preset_or_color_applied = false;
+
+    // (1) Set preset on every checked slot (by full preset name).
+    if (res.do_preset && !res.preset_name.empty()) {
+        auto& preset_bundle = *wxGetApp().preset_bundle;
+        for (size_t phys : res.selected_physical) {
+            if (phys >= config_indices.size()) continue;
+            preset_bundle.set_filament_preset(config_indices[phys], res.preset_name);
+        }
+        preset_or_color_applied = true;
+    }
+
+    // (2) Set colour on every checked slot: one cloned project-config patch,
+    // applied once (solid colour => filament_colour_type "1").
+    if (res.do_color && !res.color_hex.empty()) {
+        DynamicPrintConfig* cfg = &wxGetApp().preset_bundle->project_config;
+        auto multi_colour_opt = static_cast<ConfigOptionStrings*>(cfg->option("filament_multi_colour")->clone());
+        auto colour_type_opt  = static_cast<ConfigOptionStrings*>(cfg->option("filament_colour_type")->clone());
+        auto colour_opt       = static_cast<ConfigOptionStrings*>(cfg->option("filament_colour")->clone());
+        for (size_t phys : res.selected_physical) {
+            if (phys >= config_indices.size()) continue;
+            const size_t i = config_indices[phys];
+            if (i >= multi_colour_opt->values.size()) multi_colour_opt->values.resize(i + 1);
+            if (i >= colour_type_opt->values.size())  colour_type_opt->values.resize(i + 1);
+            if (i >= colour_opt->values.size())       colour_opt->values.resize(i + 1);
+            multi_colour_opt->values[i] = res.color_hex;
+            colour_opt->values[i]       = res.color_hex;
+            colour_type_opt->values[i]  = "1";
+        }
+        DynamicPrintConfig cfg_new = *cfg;
+        cfg_new.set_key_value("filament_multi_colour", multi_colour_opt);
+        cfg_new.set_key_value("filament_colour", colour_opt);
+        cfg_new.set_key_value("filament_colour_type", colour_type_opt);
+        cfg->apply(cfg_new);
+        preset_or_color_applied = true;
+    }
+
+    // Single shared refresh tail for the preset/colour batch (mirrors
+    // on_select_preset + sync_colour_config, run once for the whole batch).
+    if (preset_or_color_applied) {
+        wxGetApp().plater()->update_project_dirty_from_presets();
+        wxGetApp().preset_bundle->export_selections(*wxGetApp().app_config);
+        for (auto* combo : combos_filament())
+            combo->update();
+        wxGetApp().plater()->on_config_change(wxGetApp().preset_bundle->full_config());
+        dynamic_filament_list.update();
+        // BBS: log the modification for the backup manager.
+        Slic3r::put_other_changes();
+        // Invalidate every plate's slice state (same as the preset-change path).
+        auto plate_list = wxGetApp().plater()->get_partplate_list().get_plate_list();
+        for (auto plate : plate_list)
+            plate->update_slice_result_valid_state(false);
+        if (res.do_color)
+            auto_calc_flushing_volumes(-1);
+    }
+
+    // (3) Delete the checked slots, descending config-index order so earlier
+    // deletes never shift the indices of later ones. delete_filament() runs its
+    // own refresh per slot and enforces its own guards; stop at the min-1 rule.
+    if (res.do_delete) {
+        std::vector<size_t> cfg_ids;
+        cfg_ids.reserve(res.selected_physical.size());
+        for (size_t phys : res.selected_physical)
+            if (phys < config_indices.size())
+                cfg_ids.push_back(config_indices[phys]);
+        std::sort(cfg_ids.begin(), cfg_ids.end(), [](size_t a, size_t b) { return a > b; });
+        for (size_t id : cfg_ids) {
+            if (combos_filament().size() <= 1) break; // min-1 rule
+            delete_filament(id);
+        }
+    }
+
+    // (4) Add N filaments; stop as soon as the combo count stops growing
+    // (capacity guard inside add_custom_filament, ExtruderMax = 32 total).
+    for (int n = 0; n < res.add_count; ++n) {
+        size_t before_count = p->combos_filament.size();
+        add_custom_filament(Plater::get_next_color_for_filament());
+        if (p->combos_filament.size() <= before_count) break;
+    }
+}
+
 Search::OptionsSearcher& Sidebar::get_searcher()
 {
     return p->searcher;
@@ -6424,14 +8156,13 @@ void Sidebar::set_is_gcode_file(bool flag)
 
 void Sidebar::update_bed_thumbnail(std::string path)
 {
-    if (path.empty()) path = "printer_placeholder";
-
-    // workaround for updating icons too many times, which may casue ui flicking
-    static std::string cur_path;
-    if (cur_path == path && p->image_printer_bed->GetBitmap().IsOk()) return;
-
-    cur_path = path;
-    p->image_printer_bed->SetBitmap(create_scaled_bitmap(cur_path, this, 48));
+    // MD3: the 48px in-card bed thumbnail is gone (bed type is a SelectField);
+    // this now refreshes the enlarged hover popup's bitmap so it tracks bed
+    // selection, preset switches and DPI changes.
+    if (path.empty() || path == "printer_placeholder") return;
+    if (p->big_bed_image_popup) {
+        p->big_bed_image_popup->set_bitmap(create_scaled_bitmap("big_" + path, p->big_bed_image_popup, p->big_bed_image_popup->get_image_px()));
+    }
 }
 
 void Sidebar::update_printer_thumbnail()
@@ -6448,11 +8179,21 @@ void Sidebar::update_printer_thumbnail()
     }
 
     // workaround for updating icons too many times, which may casue ui flicking
+    // (dark_now / scale_now additionally invalidate the cache on a theme or DPI
+    // change, since the MD3 cell now bakes both into the composited bitmap).
     static std::string image_name;
-    if (image_name == name && p->image_printer->GetBitmap().IsOk()) return;
+    static bool        image_dark  = false;
+    static double       image_scale = 1.0;
+    const bool   dark_now  = wxGetApp().dark_mode();
+    const double scale_now = GetDPIScaleFactor();
+    if (image_name == name && image_dark == dark_now && image_scale == scale_now && p->image_printer->GetBitmap().IsOk()) return;
 
-    image_name = name;
-    p->image_printer->SetBitmap(create_scaled_bitmap(image_name, this, 48));
+    image_name  = name;
+    image_dark  = dark_now;
+    image_scale = scale_now;
+    const bool is_placeholder = (name == "printer_placeholder");
+    const wxBitmap source = create_scaled_bitmap(image_name, this, 52);
+    p->image_printer->SetBitmap(build_printer_thumbnail_cell(p->image_printer, source, is_placeholder));
 }
 
 void Sidebar::auto_calc_flushing_volumes(const int filament_idx, const int extruder_id) {
@@ -6702,6 +8443,11 @@ public:
     Sidebar *  sidebar;
     AuiMgr                 m_aui_mgr;
     wxString               m_default_window_layout;
+    // One-shot latch for the startup re-assert of the advanced-mode sidebar
+    // width (see the EVT_SIZE hook in the ctor): the ctor itself runs before
+    // the frame has a usable size, and later startup layout passes overwrite an
+    // early attempt, so the width is claimed on the first real size instead.
+    bool                   m_advanced_width_applied{false};
     struct SidebarLayout
     {
         bool is_enabled{false};
@@ -6739,7 +8485,15 @@ public:
     //BBS: add a flag to ignore cancel event
     bool m_ignore_event{false};
     bool m_slice_all{false};
+    // True only for a project created here, never for imported 3MF settings.
+    bool m_fresh_project_mapping_preference_owned{false};
     bool m_is_slicing {false};
+    // A one-shot request belongs to one explicit slice and one unchanged plate.
+    uint64_t m_slice_request_generation{0};
+    uint64_t m_print_after_slice_generation{0};
+    PartPlate *m_print_after_slice_plate{nullptr};
+    int m_print_after_slice_index{-1};
+    bool m_reused_finished_slice_result{false};
     bool m_is_publishing {false};
     int m_is_RightClickInLeftUI{-1};
     int m_cur_slice_plate;
@@ -6874,7 +8628,12 @@ public:
     bool need_update() const { return m_need_update; }
     void set_need_update(bool need_update) { m_need_update = need_update; }
 
-    void set_plater_dirty(bool is_dirty) { dirty_state.set_plater_dirty(is_dirty); }
+    void set_plater_dirty(bool is_dirty)
+    {
+        dirty_state.set_plater_dirty(is_dirty);
+        if (is_dirty && !q->is_loading_project())
+            schedule_project_history_capture("Project edit");
+    }
     bool is_project_dirty() const { return dirty_state.is_dirty(); }
     bool is_presets_dirty() const { return dirty_state.is_presets_dirty(); }
     void update_project_dirty_from_presets()
@@ -6882,6 +8641,8 @@ public:
         // BBS: backup
         Slic3r::put_other_changes();
         dirty_state.update_from_presets();
+        if (dirty_state.is_presets_dirty() && !q->is_loading_project())
+            schedule_project_history_capture("Project settings changed");
     }
     int save_project_if_dirty(const wxString& reason) {
         int res = wxID_NO;
@@ -6941,6 +8702,12 @@ public:
     void enable_sidebar(bool enabled);
     void collapse_sidebar(bool collapse);
     void                  update_sidebar(bool force_update = false);
+    // Dock the sidebar pane to the edge stored in "prepare_sidebar_dock".
+    // force_dock re-docks a floating pane (used when the user picks a position);
+    // reset_size re-seeds the pane best size to the density default (else the
+    // persisted/restored size is kept); update_now runs m_aui_mgr.Update() so
+    // callers can batch a later Update().
+    void                  apply_sidebar_dock(bool force_dock, bool reset_size, bool update_now);
     void                  reset_window_layout(int width);
     Sidebar::DockingState get_sidebar_docking_state();
 
@@ -6990,7 +8757,8 @@ public:
 
     // BBS: backup & restore
     using LoadProgressCallback = std::function<bool(int, const wxString&)>;
-    std::vector<size_t> load_files(const std::vector<fs::path>& input_files, LoadStrategy strategy, bool ask_multi = false);
+    std::vector<size_t> load_files(const std::vector<fs::path>& input_files, LoadStrategy strategy, bool ask_multi = false,
+                                   bool *successful_3mf_loaded = nullptr);
     std::vector<size_t> load_model_objects(const ModelObjectPtrs& model_objects, bool allow_negative_z = false,
                                            bool split_object = false, LoadProgressCallback progress_callback = {});
 
@@ -7042,7 +8810,7 @@ public:
     void remove(size_t obj_idx);
     bool delete_object_from_model(size_t obj_idx, bool refresh_immediately = true); //BBS
     void delete_all_objects_from_model();
-    void reset(bool apply_presets_change = false);
+    bool reset(bool apply_presets_change = false);
     void center_selection();
     void distribute_selection_y();
     void distribute_selection_x();
@@ -7145,6 +8913,22 @@ public:
     /*void take_snapshot(const wxString& snapshot_name, UndoRedo::SnapshotType snapshot_type = UndoRedo::SnapshotType::Action)
         { this->take_snapshot(std::string(snapshot_name.ToUTF8().data()), snapshot_type); }*/
     int  get_active_snapshot_index();
+
+    void schedule_project_history_capture(const std::string &reason);
+    void capture_project_history_now(const std::string &reason);
+    void capture_saved_project_history(const wxString &completed_project_path, const stdfs::path &previous_identity);
+    bool flush_project_history_pending(const std::string &fallback_reason, bool stop_active_jobs, bool wait_for_commits);
+    bool reset_project_history_session();
+    bool set_project_history_session_token(const std::string &token);
+    bool persist_project_history_session_marker();
+    bool restore_project_history_session_marker(const stdfs::path &backup_dir);
+    // session_token reports the untitled identity the work was committed under,
+    // empty when the backup carried a saved project's own identity.
+    bool preserve_unsaved_backup_in_history(const stdfs::path &backup_dir, const std::string &originfile,
+                                            std::string &session_token);
+    void shutdown_project_history();
+    Slic3r::ProjectHistoryManager *project_history_manager() { return m_project_history_manager.get(); }
+    stdfs::path project_history_identity() const;
 
     void undo();
     void redo();
@@ -7405,6 +9189,7 @@ public:
     int update_print_required_data(Slic3r::DynamicPrintConfig config, Slic3r::Model model, Slic3r::PlateDataPtrs plate_data_list, std::string file_name, std::string file_path);
 private:
     friend class Plater;
+    struct PendingProjectHistoryCommit;
     bool layers_height_allowed() const;
 
     void update_fff_scene();
@@ -7415,6 +9200,34 @@ private:
     void on_action_export_to_sdcard(SimpleEvent&);
     void on_action_export_to_sdcard_all(SimpleEvent&);
     void update_plugin_when_launch(wxCommandEvent& event);
+    void on_project_history_debounce(wxTimerEvent &event);
+    void on_project_history_poll(wxTimerEvent &event);
+    stdfs::path make_project_history_staging_path();
+    void materialize_project_history_event();
+    bool process_project_history_captures(bool force_retry);
+    bool enqueue_project_history_snapshot(const stdfs::path &previous_identity, const stdfs::path &identity,
+                                          const stdfs::path &completed_snapshot, const std::string &reason);
+    bool submit_project_history_commit(PendingProjectHistoryCommit &pending, bool force_retry);
+    void collect_project_history_commits(bool wait_for_all);
+    void update_project_history_poll_timer();
+    void notify_project_history_failure(const std::string &detail, bool retrying);
+    // Durable, retry-offering variant used when a snapshot is quarantined and
+    // nothing will drain it without the user's help.
+    void notify_project_history_retained_failure(const std::string &log_detail);
+    // Moves every quarantined snapshot back onto the active FIFO and re-drives it.
+    void retry_project_history_failures();
+    // Sidecar manifest so a restart can rebuild a quarantined commit's identity.
+    stdfs::path project_history_failure_manifest_path(const stdfs::path &staging_path) const;
+    void        write_project_history_failure_manifest(const PendingProjectHistoryCommit &entry);
+    void        remove_project_history_failure_manifest(const stdfs::path &staging_path);
+    // Rebuilds quarantined commits left in prior sessions' staging directories.
+    std::size_t adopt_orphaned_project_history_failures();
+    // Claims this instance's staging directory for the process lifetime, and
+    // answers whether a sibling's owner is provably gone. Multiple instances are
+    // the default (single_instance is off) and a staging directory is named by a
+    // bare UUID with no pid, so an OS lock is the only honest liveness signal.
+    void claim_project_history_staging_dir();
+    bool project_history_instance_is_dead(const stdfs::path &instance_dir) const;
     // path to project folder stored with no extension
     boost::filesystem::path     m_project_folder;
 
@@ -7449,6 +9262,56 @@ private:
     // Such internal removes are NOT user deletes and must not be propagated to the assembly model:
     // the split/combine products keep the source part_guid, so the assembly view stays untouched.
     bool                        m_suppress_assemble_delete_propagation = false;
+    struct PendingProjectHistoryCapture
+    {
+        stdfs::path                               previous_identity;
+        stdfs::path                               identity;
+        stdfs::path                               completed_source;
+        stdfs::path                               staging_path;
+        std::string                               reason;
+        std::chrono::steady_clock::time_point     retry_after{};
+        unsigned int                              failed_attempts{0};
+        bool                                      snapshot_ready{false};
+    };
+    struct PendingProjectHistoryCommit
+    {
+        stdfs::path                               previous_identity;
+        stdfs::path                               identity;
+        stdfs::path                               staging_path;
+        ProjectHistoryCommitOptions               options;
+        std::future<ProjectHistoryCommitResult>   future;
+        std::chrono::steady_clock::time_point     retry_after{};
+        unsigned int                              submission_attempts{0};
+        bool                                      in_flight{false};
+        bool                                      retry_enabled{true};
+    };
+    std::unique_ptr<ProjectHistoryManager>      m_project_history_manager;
+    stdfs::path                                 m_project_history_identity_root;
+    stdfs::path                                 m_project_history_session_identity;
+    std::string                                 m_project_history_session_token;
+    stdfs::path                                 m_project_history_staging_dir;
+    // Held open, exclusively and unshared, for as long as this process owns its
+    // staging directory. Another instance failing to open the same file is what
+    // proves this one is still alive; the OS drops it on exit or on a crash, which
+    // is exactly the signal a pid file cannot give.
+    HANDLE                                      m_project_history_instance_lock { INVALID_HANDLE_VALUE };
+    std::deque<PendingProjectHistoryCapture>    m_project_history_pending_captures;
+    std::vector<PendingProjectHistoryCommit>    m_project_history_pending_commits;
+    std::vector<PendingProjectHistoryCommit>    m_project_history_retained_failures;
+    // A failed Save-As migration must never degrade into an ordinary commit
+    // against the pre-existing destination repository. Subsequent immutable
+    // snapshots are quarantined locally until the process exits.
+    std::set<stdfs::path>                       m_project_history_blocked_identities;
+    wxTimer                                     m_project_history_debounce_timer;
+    wxTimer                                     m_project_history_poll_timer;
+    std::string                                 m_project_history_event_reason;
+    stdfs::path                                 m_project_history_event_identity;
+    std::uint64_t                               m_project_history_staging_sequence{0};
+    bool                                        m_project_history_event_scheduled{false};
+    bool                                        m_project_history_capture_in_progress{false};
+    bool                                        m_project_history_failure_notified{false};
+    bool                                        m_project_history_restore_in_progress{false};
+    bool                                        m_project_history_shutting_down{false};
     int                         m_prevent_snapshots = 0;     /* Used for avoid of excess "snapshoting".
                                                               * Like for "delete selected" or "set numbers of copies"
                                                               * we should call tack_snapshot just ones
@@ -7505,11 +9368,47 @@ Plater::priv::priv(Plater *q, MainFrame *main_frame)
     , collapse_toolbar(GLToolbar::EType::Normal, "Collapse")
     //BBS :partplatelist construction
     , partplate_list(this->q, &model)
+    , m_project_history_debounce_timer(q)
+    , m_project_history_poll_timer(q)
 {
+    try {
+        const std::string app_data_text = data_dir();
+        if (app_data_text.empty())
+            throw std::runtime_error("application data directory is empty");
+        std::error_code path_error;
+        const stdfs::path app_data_dir = stdfs::absolute(stdfs::u8path(app_data_text), path_error).lexically_normal();
+        if (path_error)
+            throw std::runtime_error("could not resolve application data directory: " + path_error.message());
+        m_project_history_manager = std::make_unique<ProjectHistoryManager>(app_data_dir);
+        const std::string instance_id = boost::uuids::to_string(boost::uuids::random_generator()());
+        m_project_history_identity_root = app_data_dir / "project_history" / "session-identities";
+        m_project_history_staging_dir   = app_data_dir / "project_history" / "staging" / instance_id;
+        claim_project_history_staging_dir();
+        if (!reset_project_history_session())
+            throw std::runtime_error("could not initialize the untitled project-history session");
+        q->Bind(wxEVT_TIMER, &priv::on_project_history_debounce, this, m_project_history_debounce_timer.GetId());
+        q->Bind(wxEVT_TIMER, &priv::on_project_history_poll, this, m_project_history_poll_timer.GetId());
+        // A prior session may have left immutable recovery snapshots that were
+        // quarantined or never drained. Rebuild them from their sidecar
+        // manifests and re-surface a durable Retry notification.
+        if (adopt_orphaned_project_history_failures() > 0)
+            notify_project_history_retained_failure("Project-history recovery snapshots from a previous session were not saved");
+    } catch (const std::exception &ex) {
+        BOOST_LOG_TRIVIAL(error) << "Could not initialize project history: " << ex.what();
+        m_project_history_manager.reset();
+    } catch (...) {
+        BOOST_LOG_TRIVIAL(error) << "Could not initialize project history";
+        m_project_history_manager.reset();
+    }
     m_is_dark = wxGetApp().app_config->get_bool("dark_color_mode");
     m_aui_mgr.SetManagedWindow(q);
     m_aui_mgr.SetDockSizeConstraint(1, 1);
-    // m_aui_mgr.GetArtProvider()->SetMetric(wxAUI_DOCKART_PANE_BORDER_SIZE, 0);
+    // Zero the AUI pane border so a docked pane fills its dock rect flush to the
+    // frame edge. Without this the docked sidebar's border inset left a ~15px
+    // strip at x=0 that AUI never repainted, bleeding stale page content behind
+    // the sidebar (the confirmed left-edge Home bleed-through). The sidebar draws
+    // its own 1px OutlineVariant divider on the canvas side instead.
+    m_aui_mgr.GetArtProvider()->SetMetric(wxAUI_DOCKART_PANE_BORDER_SIZE, 0);
     // m_aui_mgr.GetArtProvider()->SetMetric(wxAUI_DOCKART_SASH_SIZE, 2);
     m_aui_mgr.GetArtProvider()->SetMetric(wxAUI_DOCKART_CAPTION_SIZE, wxGetApp().app_config->get_bool("enable_sidebar_floatable") ? 8 : 0);
     m_aui_mgr.GetArtProvider()->SetMetric(wxAUI_DOCKART_GRADIENT_TYPE, wxAUI_GRADIENT_NONE);
@@ -7597,17 +9496,26 @@ Plater::priv::priv(Plater *q, MainFrame *main_frame)
     });
 
     update();
-    // Orca: Make sidebar dockable
+    // Orca: Make sidebar dockable. All four edges are enabled so the Prepare
+    // sidebar can dock left/right/top/bottom; the actual edge + sizes are
+    // applied from the "prepare_sidebar_dock" app-config key by
+    // apply_sidebar_dock() below (default: left).
     m_aui_mgr.AddPane(sidebar, wxAuiPaneInfo()
                                    .Name("sidebar")
+                                   // No AUI pane border: the sidebar fills its dock
+                                   // rect flush to x=0 (matches the center pane) so
+                                   // no stale strip bleeds through at the frame edge.
+                                   .PaneBorder(false)
                                    .Left()
                                    .CloseButton(false)
-                                   .TopDockable(false)
-                                   .BottomDockable(false)
+                                   .LeftDockable(true)
+                                   .RightDockable(true)
+                                   .TopDockable(true)
+                                   .BottomDockable(true)
                                    .Floatable(wxGetApp().app_config->get_bool("enable_sidebar_floatable"))
                                    .Resizable(true)
-                                   .MinSize(wxSize(15 * wxGetApp().em_unit(), 90 * wxGetApp().em_unit()))
-                                   .BestSize(wxSize(42 * wxGetApp().em_unit(), 90 * wxGetApp().em_unit())));
+                                   .MinSize(wxSize(q->FromDIP(MD3::Metrics::active().sidebar_width), 90 * wxGetApp().em_unit()))
+                                   .BestSize(wxSize(q->FromDIP(MD3::Metrics::active().sidebar_width), 90 * wxGetApp().em_unit())));
 
     auto *panel_sizer = new wxBoxSizer(wxHORIZONTAL);
     panel_sizer->Add(view3D, 1, wxEXPAND | wxALL, 0);
@@ -7623,7 +9531,13 @@ Plater::priv::priv(Plater *q, MainFrame *main_frame)
         // Load previous window layout
         const auto cfg    = wxGetApp().app_config;
         wxString   layout = wxString::FromUTF8(cfg->get("window_layout"));
-        if (!layout.empty()) {
+        constexpr const char *md3_layout_version = "right-sidebar-v1";
+        const bool layout_matches_md3 = cfg->get("md3_window_layout_version") == md3_layout_version;
+        if (!layout_matches_md3) {
+            // Migrate the legacy left-docked perspective once. Future launches
+            // retain the user's resized/floating MD3 perspective as before.
+            cfg->set("md3_window_layout_version", md3_layout_version);
+        } else if (!layout.empty()) {
             bool                     is_new_window_layout = true;
             std::vector<std::string> parts;
             boost::split(parts, layout, boost::is_any_of(";"));
@@ -7651,9 +9565,41 @@ Plater::priv::priv(Plater *q, MainFrame *main_frame)
             e.Skip();
         });
 
+        // The stored "prepare_sidebar_dock" edge is authoritative over any edge
+        // encoded in a restored perspective, so the default (left) and the user's
+        // choice both win regardless of legacy right-docked layouts. Keep the
+        // restored size (only re-seed it if the dock orientation flips).
+        apply_sidebar_dock(false, false, false);
+
         // Hide sidebar initially, will re-show it after initialization when we got proper window size
         //sidebar.Hide();
         m_aui_mgr.Update();
+
+        // The Sidebar ctor already applied the persisted compact/advanced choice,
+        // but it ran before this pane existed, so a session restored straight
+        // into the full settings tree would come up at the compact width with
+        // its option rows cut off. Re-assert the width now that there is a dock
+        // to widen. Deferred to idle: LoadPerspective() inside the manager's own
+        // setup is not safe here.
+        // Claim it on the first real size rather than here: at ctor time the
+        // frame has no usable width yet (the width request clamps itself to a
+        // share of the frame, so it would resolve to the compact default), and
+        // the remaining startup layout passes would overwrite an early attempt
+        // anyway. NB: this ctor's parameter is also named q, so the member has
+        // to be reached through this-> inside the lambda.
+        // Both `sidebar` (a local wxAuiPaneInfo reference) and `q` (this ctor's
+        // parameter) shadow the members here, so reach them through this->.
+        this->q->Bind(wxEVT_SIZE, [this](wxSizeEvent &e) {
+            e.Skip();
+            if (m_advanced_width_applied || !this->sidebar || !this->sidebar->is_process_advanced())
+                return;
+            // Latch only once the request actually had a laid-out frame to size
+            // against; an early size event would otherwise clamp to the compact
+            // default and then never be retried.
+            if (this->q->request_sidebar_width(this->q->FromDIP(ADVANCED_SIDEBAR_WIDTH),
+                                               /*grow_only=*/true))
+                m_advanced_width_applied = true;
+        });
     }
 
     menus.init(main_frame);
@@ -7864,6 +9810,7 @@ Plater::priv::priv(Plater *q, MainFrame *main_frame)
         //BBS: set on_slice to false
         q->Bind(EVT_GLVIEWTOOLBAR_PREVIEW, [q](SimpleEvent&) { q->select_view_3D("Preview", false); });
         q->Bind(EVT_GLTOOLBAR_SLICE_PLATE, &priv::on_action_slice_plate, this);
+        q->Bind(EVT_GLTOOLBAR_SLICE_AND_PRINT_PLATE, &priv::on_action_slice_plate, this);
         q->Bind(EVT_GLTOOLBAR_SLICE_ALL, &priv::on_action_slice_all, this);
         q->Bind(EVT_GLTOOLBAR_PRINT_PLATE, &priv::on_action_print_plate, this);
         q->Bind(EVT_PRINT_FROM_SDCARD_VIEW, &priv::on_action_print_plate_from_sdcard, this);
@@ -7981,6 +9928,7 @@ Plater::priv::priv(Plater *q, MainFrame *main_frame)
     up_to_date(true, false);
     up_to_date(true, true);
     model.set_need_backup();
+    persist_project_history_session_marker();
 
     // BBS: restore project
     if (wxGetApp().is_editor()) {
@@ -7988,28 +9936,99 @@ Plater::priv::priv(Plater *q, MainFrame *main_frame)
         this->q->Bind(EVT_RESTORE_PROJECT, [this, last = last_backup](wxCommandEvent& e) {
             std::string last_backup = last;
             std::string originfile;
-            if (Slic3r::has_restore_data(last_backup, originfile)) {
+            const bool  has_restore = Slic3r::has_restore_data(last_backup, originfile);
+            // Crash recovery is all-or-nothing and silent when it declines, which
+            // makes "the prompt never appeared" impossible to diagnose after the
+            // fact. Record what was actually considered.
+            BOOST_LOG_TRIVIAL(info) << "restore check: last_backup_dir="
+                                    << PathSanitizer::sanitize(last)
+                                    << " has_restore_data=" << has_restore
+                                    << " originfile=" << originfile;
+            // Deleting the backup directory below is only ever safe once a second copy
+            // exists in version history. With no restore data there is nothing to lose,
+            // so the cleanup stays enabled; the moment we do have work to lose, this is
+            // driven by whether preserving it actually succeeded.
+            bool        backup_preserved = true;
+            std::string preserved_session_token;
+            if (has_restore) {
                 BOOST_LOG_TRIVIAL(info) << "test101: Restoring project from: " << PathSanitizer::sanitize(last_backup);
+                // Commit the unsaved work to the local history repository
+                // BEFORE the prompt: declining below deletes the backup dir,
+                // and that must never be the moment the only copy disappears.
+                backup_preserved = preserve_unsaved_backup_in_history(stdfs::u8path(last), originfile,
+                                                                      preserved_session_token);
+                if (!backup_preserved) {
+                    // Every failure inside preserve_unsaved_backup_in_history() reports
+                    // itself to the log and nowhere else, and its success snackbar - the
+                    // one that promises the work "stays restorable ... even if you decline"
+                    // - never fires. Without this the user reads the ordinary prompt,
+                    // declines it on the strength of a promise that was never made, and
+                    // the only copy of their unsaved work is deleted.
+                    BOOST_LOG_TRIVIAL(error)
+                        << "Unsaved crash backup was NOT preserved; keeping "
+                        << PathSanitizer::sanitize(last) << " instead of deleting it";
+                    if (notification_manager != nullptr)
+                        notification_manager->push_notification(NotificationType::CustomNotification,
+                            NotificationManager::NotificationLevel::WarningNotificationLevel,
+                            into_u8(_L("Your unsaved project could not be copied into version history. "
+                                       "It is being kept on disk and offered again next time, so declining "
+                                       "now will not delete it.")));
+                }
                 auto log_string = _L("It seems that you have projects that were not closed properly. Would you like to restore your last unsaved project?\nIf you have a currently opened project and click \"Restore\", the current project will be closed.");
                 MessageDialog dlg(this->q, log_string, wxString(SLIC3R_APP_FULL_NAME) + " - " + _L("Restore"), wxYES_NO | wxYES_DEFAULT | wxCENTRE);
                 dlg.SetButtonLabel(wxID_YES, _L("Restore"));
                 dlg.SetButtonLabel(wxID_NO, _L("Cancel"));
                 auto result = dlg.ShowModal();
                 if (result == wxID_YES) {
-                    this->q->load_project(from_path(last_backup), from_path(originfile));
-                    Slic3r::backup_soon();
+                    bool restore_succeeded = false;
+                    this->q->load_project(from_path(last_backup), from_path(originfile), &restore_succeeded);
+                    if (restore_succeeded) {
+                        // origin.txt is empty for an untitled crash backup. Its
+                        // marker contains only a validated token; the identity
+                        // path is always rebuilt below our app-data root.
+                        if (originfile.empty()) {
+                            restore_project_history_session_marker(stdfs::u8path(last));
+                            // Missing/legacy markers safely keep the fresh
+                            // reset token; valid markers rebind the old token.
+                            persist_project_history_session_marker();
+                        }
+                        Slic3r::backup_soon();
+                    }
                     return;
                 }
             }
             try {
-                if (originfile != "<lock>") // see bbs_3mf.cpp for lock detail
+                // "<lock>" means another instance may own this backup, and
+                // !backup_preserved means this is still the only copy of the user's
+                // unsaved work. Neither is ours to delete.
+                if (originfile != "<lock>" && backup_preserved) // see bbs_3mf.cpp for lock detail
                     boost::filesystem::remove_all(last);
             }
             catch (...) {}
-            if (this->q->get_project_filename().IsEmpty() && this->q->is_empty_project()) {
+            // Only a session that is still blank may be rebound to the crashed
+            // identity below. Capture the test now: new_project() makes it
+            // trivially true afterwards, and it is the same condition that
+            // decides whether new_project() rotates the token at all.
+            const bool started_fresh_session = this->q->get_project_filename().IsEmpty() && this->q->is_empty_project();
+            if (started_fresh_session) {
                 int skip_confirm = e.GetInt();
                 this->q->new_project(skip_confirm, true);
             }
+            // Declining preserved the work under the crashed session's untitled
+            // identity, and the snackbar promised it "stays restorable from
+            // Version history even if you decline". Version history only ever
+            // queries the live session's identity, so a session that started
+            // blank has to adopt that token exactly as the Restore branch does.
+            // A session that already carries content - an STL handed to the app
+            // on the command line is loaded before this queued event runs - keeps
+            // its own token instead: rebinding it would hide the revisions it has
+            // already committed and, on the eventual Save As, migrate the
+            // discarded crash work into the saved project for good. It has to
+            // happen here and not before the deletion above: new_project()
+            // rotates the session token, which would discard an earlier bind.
+            if (started_fresh_session && backup_preserved && originfile != "<lock>" &&
+                !preserved_session_token.empty() && set_project_history_session_token(preserved_session_token))
+                persist_project_history_session_marker();
         });
         //wxPostEvent(this->q, wxCommandEvent{EVT_RESTORE_PROJECT});
     }
@@ -8038,11 +10057,1085 @@ Plater::priv::priv(Plater *q, MainFrame *main_frame)
 
 Plater::priv::~priv()
 {
+    shutdown_project_history();
     if (config != nullptr)
         delete config;
     // Saves the database of visited (already shown) hints into hints.ini.
     notification_manager->deactivate_loaded_hints();
     main_frame->m_tabpanel->Unbind(wxEVT_NOTEBOOK_PAGE_CHANGING, &priv::on_tab_selection_changing, this);
+}
+
+stdfs::path Plater::priv::project_history_identity() const
+{
+    const wxString saved_project = get_project_filename(".3mf");
+    return saved_project.empty() ? m_project_history_session_identity : stdfs::u8path(into_u8(saved_project));
+}
+
+namespace {
+
+constexpr int          PROJECT_HISTORY_EVENT_DELAY_MS       = 1;
+constexpr int          PROJECT_HISTORY_POLL_INTERVAL_MS     = 250;
+constexpr int          PROJECT_HISTORY_MAX_RETRY_DELAY_MS   = 30000;
+constexpr unsigned int PROJECT_HISTORY_FORCED_RETRY_LIMIT   = 3;
+constexpr std::size_t  PROJECT_HISTORY_SESSION_TOKEN_LENGTH = 36;
+constexpr const char  *PROJECT_HISTORY_SESSION_MARKER       = ".bambu-project-history-token";
+
+static_assert(PROJECT_HISTORY_EVENT_DELAY_MS > 0);
+static_assert(PROJECT_HISTORY_MAX_RETRY_DELAY_MS >= PROJECT_HISTORY_POLL_INTERVAL_MS);
+
+std::chrono::milliseconds project_history_retry_delay(unsigned int failed_attempts)
+{
+    const unsigned int shift = std::min(failed_attempts, 7u);
+    return std::chrono::milliseconds(std::min(PROJECT_HISTORY_MAX_RETRY_DELAY_MS,
+                                               PROJECT_HISTORY_POLL_INTERVAL_MS * (1 << shift)));
+}
+
+bool project_history_error_is_retryable(ProjectHistoryErrorCode code)
+{
+    return code == ProjectHistoryErrorCode::IoError || code == ProjectHistoryErrorCode::RepositoryError ||
+           code == ProjectHistoryErrorCode::InternalError;
+}
+
+bool project_history_session_token_is_valid(const std::string &token)
+{
+    if (token.size() != PROJECT_HISTORY_SESSION_TOKEN_LENGTH)
+        return false;
+
+    for (std::size_t index = 0; index < token.size(); ++index) {
+        const bool hyphen_position = index == 8 || index == 13 || index == 18 || index == 23;
+        const bool hex_digit = (token[index] >= '0' && token[index] <= '9') ||
+                               (token[index] >= 'a' && token[index] <= 'f');
+        if (hyphen_position ? token[index] != '-' : !hex_digit)
+            return false;
+    }
+    return true;
+}
+
+} // namespace
+
+bool Plater::priv::set_project_history_session_token(const std::string &token)
+{
+    if (m_project_history_identity_root.empty() || !project_history_session_token_is_valid(token))
+        return false;
+
+    // The marker never supplies a path. A strict UUID token is the only input
+    // used to derive an identity below the application-owned history root.
+    const stdfs::path identity =
+        (m_project_history_identity_root / ("untitled-" + token + ".3mf")).lexically_normal();
+    if (identity.parent_path() != m_project_history_identity_root)
+        return false;
+
+    m_project_history_session_token    = token;
+    m_project_history_session_identity = identity;
+    return true;
+}
+
+bool Plater::priv::persist_project_history_session_marker()
+{
+    if (!m_project_history_manager || !project_history_session_token_is_valid(m_project_history_session_token))
+        return false;
+
+    stdfs::path temporary_path;
+    try {
+        const std::string backup_path_text = model.get_backup_path();
+        if (backup_path_text.empty())
+            return false;
+
+        const stdfs::path backup_path = stdfs::u8path(backup_path_text).lexically_normal();
+        const stdfs::path marker_path = backup_path / PROJECT_HISTORY_SESSION_MARKER;
+        const std::string temporary_suffix = boost::uuids::to_string(boost::uuids::random_generator()());
+        temporary_path = backup_path / (std::string(PROJECT_HISTORY_SESSION_MARKER) + ".tmp-" + temporary_suffix);
+
+        std::ofstream marker_stream(temporary_path, std::ios::binary | std::ios::trunc);
+        marker_stream.write(m_project_history_session_token.data(),
+                            static_cast<std::streamsize>(m_project_history_session_token.size()));
+        marker_stream.flush();
+        if (!marker_stream) {
+            marker_stream.close();
+            std::error_code cleanup_error;
+            stdfs::remove(temporary_path, cleanup_error);
+            BOOST_LOG_TRIVIAL(warning) << "Could not write the untitled project-history recovery marker";
+            return false;
+        }
+        marker_stream.close();
+        if (marker_stream.fail()) {
+            std::error_code cleanup_error;
+            stdfs::remove(temporary_path, cleanup_error);
+            BOOST_LOG_TRIVIAL(warning) << "Could not close the untitled project-history recovery marker";
+            return false;
+        }
+
+        // rename_file replaces an existing target and keeps the completed
+        // marker swap atomic on supported filesystems.
+        const std::error_code rename_error = Slic3r::rename_file(temporary_path.u8string(), marker_path.u8string());
+        if (rename_error) {
+            std::error_code cleanup_error;
+            stdfs::remove(temporary_path, cleanup_error);
+            BOOST_LOG_TRIVIAL(warning) << "Could not publish the untitled project-history recovery marker: "
+                                       << rename_error.message();
+            return false;
+        }
+        return true;
+    } catch (const std::exception &ex) {
+        if (!temporary_path.empty()) {
+            std::error_code cleanup_error;
+            stdfs::remove(temporary_path, cleanup_error);
+        }
+        BOOST_LOG_TRIVIAL(warning) << "Could not persist the untitled project-history recovery marker: " << ex.what();
+    } catch (...) {
+        if (!temporary_path.empty()) {
+            std::error_code cleanup_error;
+            stdfs::remove(temporary_path, cleanup_error);
+        }
+        BOOST_LOG_TRIVIAL(warning) << "Could not persist the untitled project-history recovery marker";
+    }
+    return false;
+}
+
+bool Plater::priv::restore_project_history_session_marker(const stdfs::path &backup_dir)
+{
+    try {
+        const stdfs::path marker_path = backup_dir.lexically_normal() / PROJECT_HISTORY_SESSION_MARKER;
+        std::error_code   size_error;
+        if (!stdfs::is_regular_file(marker_path, size_error) || size_error ||
+            stdfs::file_size(marker_path, size_error) != PROJECT_HISTORY_SESSION_TOKEN_LENGTH || size_error) {
+            BOOST_LOG_TRIVIAL(warning) << "Untitled crash backup has no valid project-history recovery marker";
+            return false;
+        }
+
+        std::string token(PROJECT_HISTORY_SESSION_TOKEN_LENGTH, '\0');
+        std::ifstream marker_stream(marker_path, std::ios::binary);
+        marker_stream.read(token.data(), static_cast<std::streamsize>(token.size()));
+        if (marker_stream.gcount() != static_cast<std::streamsize>(token.size()) ||
+            marker_stream.peek() != std::char_traits<char>::eof() || !project_history_session_token_is_valid(token)) {
+            BOOST_LOG_TRIVIAL(warning) << "Untitled crash backup project-history marker was rejected";
+            return false;
+        }
+        return set_project_history_session_token(token);
+    } catch (const std::exception &ex) {
+        BOOST_LOG_TRIVIAL(warning) << "Could not read the untitled project-history recovery marker: " << ex.what();
+    } catch (...) {
+        BOOST_LOG_TRIVIAL(warning) << "Could not read the untitled project-history recovery marker";
+    }
+    return false;
+}
+
+bool Plater::priv::preserve_unsaved_backup_in_history(const stdfs::path &backup_dir, const std::string &originfile,
+                                                      std::string &session_token)
+{
+    // A crash backup is the only copy of work the user never saved, and the
+    // recovery prompt's Cancel branch deletes it outright. Commit it to the
+    // local history repository FIRST, so declining the restore (or losing the
+    // prompt to another crash) can never destroy the only copy.
+    session_token.clear();
+    if (!m_project_history_manager || m_project_history_shutting_down)
+        return false;
+    if (m_project_history_staging_dir.empty() || m_project_history_identity_root.empty())
+        return false;
+
+    try {
+        const stdfs::path backup_snapshot = backup_dir.lexically_normal() / ".3mf";
+        std::error_code   probe_error;
+        if (!stdfs::is_regular_file(backup_snapshot, probe_error) || probe_error)
+            return false;
+
+        // Identity must be a .3mf path: a saved project keeps its own history,
+        // an untitled backup uses the identity its marker token encodes so the
+        // recovered work rejoins the crashed session's history instead of
+        // starting an orphan one.
+        stdfs::path identity;
+        if (!originfile.empty() && originfile != "<lock>") {
+            const stdfs::path origin_path = stdfs::u8path(originfile).lexically_normal();
+            // Windows keeps the case the user typed, so "Bracket.3MF" is the very
+            // project the Version history dialog opens as "Bracket.3MF". A
+            // case-sensitive test would file its recovered work under a synthetic
+            // identity that project can never reach.
+            if (boost::iequals(origin_path.extension().u8string(), ".3mf"))
+                identity = origin_path;
+        }
+        if (identity.empty()) {
+            std::string token;
+            const stdfs::path marker_path = backup_dir.lexically_normal() / PROJECT_HISTORY_SESSION_MARKER;
+            std::error_code   marker_error;
+            if (stdfs::is_regular_file(marker_path, marker_error) && !marker_error &&
+                stdfs::file_size(marker_path, marker_error) == PROJECT_HISTORY_SESSION_TOKEN_LENGTH && !marker_error) {
+                token.assign(PROJECT_HISTORY_SESSION_TOKEN_LENGTH, '\0');
+                std::ifstream marker_stream(marker_path, std::ios::binary);
+                marker_stream.read(token.data(), static_cast<std::streamsize>(token.size()));
+                if (marker_stream.gcount() != static_cast<std::streamsize>(token.size()) ||
+                    !project_history_session_token_is_valid(token))
+                    token.clear();
+            }
+            if (token.empty())
+                token = boost::uuids::to_string(boost::uuids::random_generator()());
+            if (!project_history_session_token_is_valid(token))
+                return false;
+            identity = (m_project_history_identity_root / ("untitled-" + token + ".3mf")).lexically_normal();
+            if (identity.parent_path() != m_project_history_identity_root)
+                return false;
+            // Only the live session's own identity is ever queried, and the
+            // marker this token came from lives inside the backup directory the
+            // caller may be about to delete. Hand it back while it still exists.
+            session_token = token;
+        }
+
+        // The engine validates the snapshot's extension too, and the backup
+        // file is literally named ".3mf" (no extension by path rules), so it
+        // is staged under a proper name before being committed.
+        std::error_code       staging_error;
+        stdfs::create_directories(m_project_history_staging_dir, staging_error);
+        const stdfs::path staged = m_project_history_staging_dir /
+            ("recovered-" + boost::uuids::to_string(boost::uuids::random_generator()()) + ".3mf");
+        stdfs::copy_file(backup_snapshot, staged, stdfs::copy_options::overwrite_existing, staging_error);
+        if (staging_error) {
+            BOOST_LOG_TRIVIAL(error) << "Could not stage the unsaved crash backup for project history: "
+                                     << staging_error.message();
+            return false;
+        }
+
+        ProjectHistoryCommitOptions options;
+        options.message = "Recovered unsaved project";
+        // The future carries the only error report; dropping it hides failures
+        // completely, so this waits and logs the outcome.
+        ProjectHistoryCommitResult result = m_project_history_manager
+                                                ->commit_snapshot(identity, staged, options)
+                                                .get();
+        std::error_code cleanup_error;
+        stdfs::remove(staged, cleanup_error);
+        if (!result.ok()) {
+            BOOST_LOG_TRIVIAL(error) << "Unsaved crash backup could not be preserved in project history: "
+                                     << result.error.message;
+            return false;
+        }
+        if (!result.committed) {
+            BOOST_LOG_TRIVIAL(info) << "Unsaved crash backup already matches the newest stored version";
+            return true;
+        }
+
+        const std::string commit_id = result.version ? result.version->commit_id : std::string();
+        BOOST_LOG_TRIVIAL(info) << "Unsaved crash backup preserved in project history as "
+                                << commit_id.substr(0, std::min<std::size_t>(commit_id.size(), 10));
+        if (notification_manager != nullptr)
+            notification_manager->push_notification(NotificationType::CustomNotification,
+                NotificationManager::NotificationLevel::RegularNotificationLevel,
+                into_u8(_L("Your unsaved project was saved to version history before this prompt. "
+                           "It stays restorable from Version history even if you decline to restore it now.")));
+        return true;
+    } catch (const std::exception &ex) {
+        BOOST_LOG_TRIVIAL(error) << "Could not preserve the unsaved crash backup in project history: " << ex.what();
+    } catch (...) {
+        BOOST_LOG_TRIVIAL(error) << "Could not preserve the unsaved crash backup in project history";
+    }
+    return false;
+}
+
+bool Plater::priv::reset_project_history_session()
+{
+    if (!m_project_history_manager) {
+        m_project_history_session_token.clear();
+        m_project_history_session_identity.clear();
+        return true;
+    }
+
+    // A reset replaces the live model. Stop and join UI jobs before exporting
+    // any revision that belongs to the old model, then wait for the local Git
+    // worker before rotating the synthetic identity.
+    if (!flush_project_history_pending("Autosave before closing project", true, true)) {
+        BOOST_LOG_TRIVIAL(error) << "Project replacement refused because its preceding history boundary is not durable";
+        return false;
+    }
+
+    if (m_project_history_staging_dir.empty() || m_project_history_identity_root.empty()) {
+        BOOST_LOG_TRIVIAL(error) << "Project replacement refused because project-history paths are unavailable";
+        return false;
+    }
+
+    try {
+        // Every reset is a new document, including consecutive New Project
+        // operations in one process. A fresh random token prevents their Git
+        // histories from ever sharing an identity.
+        const std::string token = boost::uuids::to_string(boost::uuids::random_generator()());
+        if (set_project_history_session_token(token))
+            return true;
+    } catch (const std::exception &ex) {
+        BOOST_LOG_TRIVIAL(error) << "Could not generate an untitled project-history identity: " << ex.what();
+    } catch (...) {
+        BOOST_LOG_TRIVIAL(error) << "Could not generate an untitled project-history identity";
+    }
+    // Keep the currently bound identity intact. The caller will leave the
+    // current model intact as well, preserving their one-to-one lifetime.
+    return false;
+}
+
+stdfs::path Plater::priv::make_project_history_staging_path()
+{
+    if (m_project_history_staging_dir.empty())
+        return {};
+
+    std::error_code ec;
+    stdfs::create_directories(m_project_history_staging_dir, ec);
+    if (ec) {
+        BOOST_LOG_TRIVIAL(error) << "Could not create project-history staging directory: " << ec.message();
+        return {};
+    }
+
+    for (unsigned int attempt = 0; attempt < 32; ++attempt) {
+        const stdfs::path candidate = m_project_history_staging_dir / ("snapshot-" + std::to_string(++m_project_history_staging_sequence) + ".3mf");
+        if (!stdfs::exists(candidate, ec) && !ec)
+            return candidate;
+        ec.clear();
+    }
+    BOOST_LOG_TRIVIAL(error) << "Could not allocate a unique project-history staging file";
+    return {};
+}
+
+void Plater::priv::notify_project_history_failure(const std::string &detail, bool retrying)
+{
+    BOOST_LOG_TRIVIAL(error) << detail;
+    if (retrying && m_project_history_failure_notified)
+        return;
+
+    const std::string message = retrying
+        ? _u8L("Project history could not save the latest edit. The app will retry automatically.")
+        : _u8L("Project history could not save the latest edit. Its recovery snapshot was kept on this device.");
+    notification_manager->push_notification(NotificationType::CustomNotification,
+                                            NotificationManager::NotificationLevel::WarningNotificationLevel,
+                                            message);
+    m_project_history_failure_notified = true;
+}
+
+void Plater::priv::notify_project_history_retained_failure(const std::string &log_detail)
+{
+    BOOST_LOG_TRIVIAL(error) << log_detail;
+
+    // Text is intentionally count-aware but generic: the Version history dialog
+    // enumerates the individual quarantined snapshots.
+    const std::size_t count = m_project_history_retained_failures.size();
+    const std::string message = count > 1
+        ? _u8L("Project history could not save some recent edits. Their recovery snapshots were kept on this device.")
+        : _u8L("Project history could not save the latest edit. Its recovery snapshot was kept on this device.");
+
+    // Capturing the plater lets the callback run on the UI thread when the user
+    // clicks Retry. Returning true dismisses this snackbar; a fresh one is
+    // pushed automatically if any snapshot fails again.
+    Plater *plater = q;
+    notification_manager->push_project_history_failure_notification(message, [plater](wxEvtHandler *) -> bool {
+        plater->retry_project_history_failures();
+        return true;
+    });
+    m_project_history_failure_notified = true;
+}
+
+void Plater::priv::retry_project_history_failures()
+{
+    if (!m_project_history_manager || m_project_history_shutting_down)
+        return;
+    if (m_project_history_retained_failures.empty())
+        return;
+
+    std::vector<PendingProjectHistoryCommit> retry_batch;
+    retry_batch.swap(m_project_history_retained_failures);
+
+    for (PendingProjectHistoryCommit &entry : retry_batch) {
+        // A deliberate user retry clears the process-local Save-As block so a
+        // destination collision that has since been resolved can migrate again.
+        // The commit still runs migrate_then_commit (previous_identity is
+        // preserved), so it never degrades into an ordinary append to an
+        // unrelated destination repository.
+        if (!entry.identity.empty())
+            m_project_history_blocked_identities.erase(entry.identity.lexically_normal());
+        entry.retry_enabled       = true;
+        entry.in_flight           = false;
+        entry.submission_attempts = 0;
+        entry.retry_after         = std::chrono::steady_clock::now();
+        entry.future              = std::future<ProjectHistoryCommitResult>();
+        m_project_history_pending_commits.emplace_back(std::move(entry));
+    }
+
+    m_project_history_failure_notified = false;
+    notification_manager->close_notification_of_type(NotificationType::ProjectHistoryFailure);
+
+    // Kick the oldest queued commit immediately (force_retry bypasses the
+    // backoff window), preserving the single-in-flight FIFO invariant, then let
+    // the shared machinery own the remaining snapshots.
+    if (!m_project_history_pending_commits.empty()) {
+        PendingProjectHistoryCommit &front = m_project_history_pending_commits.front();
+        if (!front.in_flight && front.retry_enabled)
+            submit_project_history_commit(front, true);
+    }
+    collect_project_history_commits(false);
+    update_project_history_poll_timer();
+}
+
+stdfs::path Plater::priv::project_history_failure_manifest_path(const stdfs::path &staging_path) const
+{
+    if (staging_path.empty())
+        return {};
+    // Sidecar next to the immutable snapshot: "snapshot-N.3mf" -> "snapshot-N.3mf.json".
+    stdfs::path manifest = staging_path;
+    manifest += ".json";
+    return manifest;
+}
+
+void Plater::priv::write_project_history_failure_manifest(const PendingProjectHistoryCommit &entry)
+{
+    // Best-effort recovery metadata. A failure here must never disturb the
+    // commit path, so every error is swallowed after logging.
+    const stdfs::path manifest_path = project_history_failure_manifest_path(entry.staging_path);
+    if (manifest_path.empty())
+        return;
+    try {
+        json manifest;
+        manifest["version"]           = 1;
+        manifest["identity"]          = entry.identity.u8string();
+        manifest["previous_identity"] = entry.previous_identity.u8string();
+        manifest["message"]           = entry.options.message;
+
+        stdfs::path temp_path = manifest_path;
+        temp_path += ".tmp";
+        {
+            std::ofstream stream(temp_path, std::ios::binary | std::ios::trunc);
+            if (!stream) {
+                BOOST_LOG_TRIVIAL(warning) << "Could not open project-history recovery manifest for writing";
+                return;
+            }
+            const std::string serialized = manifest.dump();
+            stream.write(serialized.data(), static_cast<std::streamsize>(serialized.size()));
+            stream.flush();
+            if (!stream) {
+                BOOST_LOG_TRIVIAL(warning) << "Could not write project-history recovery manifest";
+                std::error_code cleanup_ec;
+                stdfs::remove(temp_path, cleanup_ec);
+                return;
+            }
+        }
+        std::error_code rename_ec;
+        stdfs::rename(temp_path, manifest_path, rename_ec);
+        if (rename_ec) {
+            BOOST_LOG_TRIVIAL(warning) << "Could not finalize project-history recovery manifest: " << rename_ec.message();
+            std::error_code cleanup_ec;
+            stdfs::remove(temp_path, cleanup_ec);
+        }
+    } catch (const std::exception &ex) {
+        BOOST_LOG_TRIVIAL(warning) << "Could not persist project-history recovery manifest: " << ex.what();
+    } catch (...) {
+        BOOST_LOG_TRIVIAL(warning) << "Could not persist project-history recovery manifest";
+    }
+}
+
+void Plater::priv::remove_project_history_failure_manifest(const stdfs::path &staging_path)
+{
+    const stdfs::path manifest_path = project_history_failure_manifest_path(staging_path);
+    if (manifest_path.empty())
+        return;
+    std::error_code ec;
+    stdfs::remove(manifest_path, ec);
+}
+
+// Name of the exclusive marker each instance holds inside its own staging
+// directory. Kept next to the snapshots rather than in a central registry so it
+// disappears with the directory it describes.
+static const char *kProjectHistoryInstanceLockName = "instance.lock";
+
+void Plater::priv::claim_project_history_staging_dir()
+{
+    if (m_project_history_staging_dir.empty())
+        return;
+
+    std::error_code ec;
+    stdfs::create_directories(m_project_history_staging_dir, ec);
+    if (ec) {
+        BOOST_LOG_TRIVIAL(warning) << "Could not create the project-history staging directory: " << ec.message();
+        return;
+    }
+
+    const stdfs::path lock_path = m_project_history_staging_dir / kProjectHistoryInstanceLockName;
+    // dwShareMode 0: no other process may open this file at all while we hold it.
+    // FILE_FLAG_DELETE_ON_CLOSE would remove the marker on a clean exit but NOT on
+    // a crash, and a crashed instance is precisely the case that must look dead -
+    // so the file is left behind deliberately and liveness is read from whether it
+    // can be opened, never from whether it exists.
+    m_project_history_instance_lock = ::CreateFileW(lock_path.wstring().c_str(), GENERIC_WRITE, 0, nullptr,
+                                                    CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
+    if (m_project_history_instance_lock == INVALID_HANDLE_VALUE) {
+        // Not fatal: without the marker this instance is simply treated as
+        // possibly-alive by others, which is the safe direction to fail in.
+        BOOST_LOG_TRIVIAL(warning) << "Could not claim the project-history staging directory (error "
+                                   << ::GetLastError() << "); orphan reaping will skip it";
+    }
+}
+
+bool Plater::priv::project_history_instance_is_dead(const stdfs::path &instance_dir) const
+{
+    const stdfs::path lock_path = instance_dir / kProjectHistoryInstanceLockName;
+
+    std::error_code ec;
+    if (!stdfs::exists(lock_path, ec) || ec) {
+        // Written by a build that predates the marker, or by an instance that
+        // could not create one. Its age cannot be trusted either way, so leave it
+        // alone: adopting is safe, deleting is not.
+        return false;
+    }
+
+    // Opening unshared succeeds only when nobody else holds it. A sharing
+    // violation is the live-owner signal; anything else (permissions, a vanished
+    // file) is inconclusive and must also read as "not provably dead".
+    HANDLE probe = ::CreateFileW(lock_path.wstring().c_str(), GENERIC_WRITE, 0, nullptr, OPEN_EXISTING,
+                                 FILE_ATTRIBUTE_NORMAL, nullptr);
+    if (probe == INVALID_HANDLE_VALUE)
+        return false;
+    ::CloseHandle(probe);
+    return true;
+}
+
+std::size_t Plater::priv::adopt_orphaned_project_history_failures()
+{
+    if (!m_project_history_manager || m_project_history_staging_dir.empty())
+        return 0;
+
+    const stdfs::path staging_root = m_project_history_staging_dir.parent_path();
+    std::error_code   ec;
+    if (staging_root.empty() || !stdfs::is_directory(staging_root, ec) || ec)
+        return 0;
+
+    // New snapshots for this process go under a fresh instance directory, so a
+    // prior session's quarantined artifacts always live in a sibling directory.
+    const stdfs::path current_instance = m_project_history_staging_dir.lexically_normal();
+    static const std::string manifest_suffix = ".3mf.json";
+    std::size_t adopted = 0;
+
+    ec.clear();
+    for (stdfs::directory_iterator dir_it(staging_root, ec), dir_end; !ec && dir_it != dir_end; dir_it.increment(ec)) {
+        const stdfs::path instance_dir = dir_it->path();
+        std::error_code   entry_ec;
+        if (!stdfs::is_directory(instance_dir, entry_ec) || entry_ec)
+            continue;
+        if (instance_dir.lexically_normal() == current_instance)
+            continue;
+        // Another instance may be running right now and may be actively writing
+        // into this directory. Touching it - adopting its manifests, let alone
+        // deleting it - would steal the only copy of a commit it is still
+        // retrying. Only a directory whose owner is provably gone is ours.
+        if (!project_history_instance_is_dead(instance_dir))
+            continue;
+
+        bool saw_any_snapshot = false;
+        std::error_code scan_ec;
+        for (stdfs::directory_iterator file_it(instance_dir, scan_ec), file_end; !scan_ec && file_it != file_end;
+             file_it.increment(scan_ec)) {
+            const stdfs::path file_path = file_it->path();
+            std::error_code   file_ec;
+            if (!stdfs::is_regular_file(file_path, file_ec) || file_ec)
+                continue;
+
+            const std::string name = file_path.filename().u8string();
+            // Count snapshots AND partially written ones: a ".3mf.tmp" left by a
+            // crash is still user data, and reaping the directory around it would
+            // discard it silently.
+            if (boost::iends_with(name, ".3mf") || boost::iends_with(name, ".3mf.tmp"))
+                saw_any_snapshot = true;
+            if (!boost::iends_with(name, manifest_suffix))
+                continue;
+
+            // The snapshot is the manifest path minus the trailing ".json".
+            std::string staging_text = file_path.u8string();
+            staging_text.resize(staging_text.size() - std::string(".json").size());
+            const stdfs::path staging_path = stdfs::u8path(staging_text);
+
+            std::error_code exists_ec;
+            if (!stdfs::is_regular_file(staging_path, exists_ec) || exists_ec) {
+                // The immutable snapshot is gone; the manifest is useless.
+                std::error_code rm_ec;
+                stdfs::remove(file_path, rm_ec);
+                continue;
+            }
+
+            try {
+                std::ifstream stream(file_path, std::ios::binary);
+                if (!stream)
+                    continue;
+                json manifest;
+                stream >> manifest;
+
+                PendingProjectHistoryCommit retained;
+                retained.identity          = stdfs::u8path(manifest.value("identity", std::string()));
+                retained.previous_identity = stdfs::u8path(manifest.value("previous_identity", std::string()));
+                retained.options.message   = manifest.value("message", std::string());
+                retained.staging_path      = staging_path;
+                retained.retry_enabled     = false;
+                retained.in_flight         = false;
+                if (retained.identity.empty())
+                    continue; // cannot target a commit without an identity
+
+                m_project_history_retained_failures.emplace_back(std::move(retained));
+                ++adopted;
+            } catch (const std::exception &ex) {
+                BOOST_LOG_TRIVIAL(warning) << "Could not read a project-history recovery manifest: " << ex.what();
+            } catch (...) {
+                BOOST_LOG_TRIVIAL(warning) << "Could not read a project-history recovery manifest";
+            }
+        }
+
+        // Safe to reap now, and only now. Three conditions all hold: the owner's
+        // instance lock could be taken, so it is gone; the scan completed, so this
+        // is a real "nothing left" and not an unreadable directory reported as
+        // empty; and no snapshot or partial snapshot remains. Without the lock
+        // check this same sweep used to delete a *running* instance's only copy of
+        // a failed commit, because make_project_history_staging_path() creates the
+        // directory before writing the first snapshot into it.
+        if (!scan_ec && !saw_any_snapshot) {
+            std::error_code rm_ec;
+            const std::uintmax_t removed = stdfs::remove_all(instance_dir, rm_ec);
+            if (rm_ec)
+                BOOST_LOG_TRIVIAL(warning) << "Could not remove an abandoned project-history staging directory: "
+                                           << rm_ec.message();
+            else if (removed > 0)
+                BOOST_LOG_TRIVIAL(info) << "Removed an abandoned project-history staging directory ("
+                                        << removed << " entries)";
+        }
+    }
+
+    return adopted;
+}
+
+void Plater::priv::materialize_project_history_event()
+{
+    if (!m_project_history_event_scheduled)
+        return;
+
+    PendingProjectHistoryCapture capture;
+    capture.identity = std::move(m_project_history_event_identity);
+    capture.reason   = m_project_history_event_reason.empty() ? "Autosave project snapshot" : "Autosave: " + m_project_history_event_reason;
+    m_project_history_pending_captures.emplace_back(std::move(capture));
+    m_project_history_event_reason.clear();
+    m_project_history_event_identity.clear();
+    m_project_history_event_scheduled = false;
+}
+
+bool Plater::priv::submit_project_history_commit(PendingProjectHistoryCommit &pending, bool force_retry)
+{
+    if (!m_project_history_manager || m_project_history_shutting_down || pending.in_flight || !pending.retry_enabled)
+        return false;
+    if (!force_retry && std::chrono::steady_clock::now() < pending.retry_after)
+        return false;
+
+    try {
+        ++pending.submission_attempts;
+        if (pending.previous_identity.empty()) {
+            pending.future = m_project_history_manager->commit_snapshot(pending.identity, pending.staging_path, pending.options);
+        } else {
+            pending.future = m_project_history_manager->migrate_then_commit_snapshot(
+                pending.previous_identity, pending.identity, pending.staging_path, pending.options);
+        }
+        pending.in_flight = true;
+        return true;
+    } catch (const std::exception &ex) {
+        pending.retry_after = std::chrono::steady_clock::now() + project_history_retry_delay(pending.submission_attempts);
+        notify_project_history_failure(std::string("Could not enqueue project-history snapshot: ") + ex.what(), true);
+    } catch (...) {
+        pending.retry_after = std::chrono::steady_clock::now() + project_history_retry_delay(pending.submission_attempts);
+        notify_project_history_failure("Could not enqueue project-history snapshot", true);
+    }
+    return false;
+}
+
+bool Plater::priv::enqueue_project_history_snapshot(const stdfs::path &previous_identity, const stdfs::path &identity,
+                                                     const stdfs::path &completed_snapshot, const std::string &requested_reason)
+{
+    if (!m_project_history_manager || m_project_history_shutting_down || identity.empty() || completed_snapshot.empty())
+        return false;
+
+    std::string reason = requested_reason;
+
+    for (char &character : reason) {
+        if (character == '\0' || character == '\r' || character == '\n')
+            character = ' ';
+    }
+    if (reason.empty())
+        reason = "Autosave project snapshot";
+    if (reason.size() > 240)
+        reason.resize(240);
+
+    const stdfs::path identity_key = identity.lexically_normal();
+    if (m_project_history_blocked_identities.find(identity_key) != m_project_history_blocked_identities.end()) {
+        try {
+            PendingProjectHistoryCommit retained;
+            retained.previous_identity = previous_identity;
+            retained.identity          = identity;
+            retained.staging_path      = completed_snapshot;
+            retained.options.message   = std::move(reason);
+            retained.retry_enabled     = false;
+            // Persist recovery metadata so a restart can re-surface and retry
+            // this immutable snapshot even though nothing drains it automatically.
+            write_project_history_failure_manifest(retained);
+            m_project_history_retained_failures.emplace_back(std::move(retained));
+        } catch (const std::exception &ex) {
+            notify_project_history_failure(std::string("Could not retain a snapshot for a blocked project-history identity: ") + ex.what(), true);
+            return false;
+        } catch (...) {
+            notify_project_history_failure("Could not retain a snapshot for a blocked project-history identity", true);
+            return false;
+        }
+        // The immutable file is intentionally retained, but it must never be
+        // submitted to the repository that caused the Save-As collision.
+        notify_project_history_retained_failure("Project-history destination is blocked; recovery snapshot retained locally");
+        return true;
+    }
+
+    bool pending_slot_added = false;
+    try {
+        m_project_history_pending_commits.emplace_back();
+        pending_slot_added = true;
+        PendingProjectHistoryCommit &pending = m_project_history_pending_commits.back();
+        pending.previous_identity = previous_identity;
+        pending.identity          = identity;
+        pending.staging_path      = completed_snapshot;
+        pending.options.message   = std::move(reason);
+        // Every enqueued snapshot gets a recovery manifest so an interrupted
+        // drain (crash, forced quit, or terminal quarantine) can be rebuilt and
+        // retried on the next launch. It is removed once the commit succeeds.
+        write_project_history_failure_manifest(pending);
+        // Keep strict edit order. Only the oldest staged snapshot may be in
+        // flight; otherwise retrying an older failed blob after a newer commit
+        // would make Git HEAD regress to the older project state.
+        if (m_project_history_pending_commits.size() == 1)
+            submit_project_history_commit(pending, true);
+        update_project_history_poll_timer();
+        return true;
+    } catch (const std::exception &ex) {
+        if (pending_slot_added)
+            m_project_history_pending_commits.pop_back();
+        notify_project_history_failure(std::string("Could not allocate project-history commit state: ") + ex.what(), true);
+    } catch (...) {
+        if (pending_slot_added)
+            m_project_history_pending_commits.pop_back();
+        notify_project_history_failure("Could not allocate project-history commit state", true);
+    }
+    return false;
+}
+
+bool Plater::priv::process_project_history_captures(bool force_retry)
+{
+    if (!m_project_history_manager || m_project_history_shutting_down || m_project_history_capture_in_progress)
+        return false;
+
+    bool all_submitted = true;
+    while (!m_project_history_pending_captures.empty()) {
+        PendingProjectHistoryCapture &capture = m_project_history_pending_captures.front();
+        if (!force_retry && std::chrono::steady_clock::now() < capture.retry_after)
+            break;
+        if (q->is_loading_project() || q->is_any_job_running()) {
+            capture.retry_after = std::chrono::steady_clock::now() + std::chrono::milliseconds(PROJECT_HISTORY_POLL_INTERVAL_MS);
+            all_submitted = false;
+            break;
+        }
+
+        if (!capture.snapshot_ready) {
+            if (capture.staging_path.empty())
+                capture.staging_path = make_project_history_staging_path();
+
+            bool snapshot_ready = !capture.staging_path.empty();
+            m_project_history_capture_in_progress = true;
+            if (snapshot_ready && !capture.completed_source.empty()) {
+                std::error_code copy_error;
+                stdfs::copy_file(capture.completed_source, capture.staging_path, stdfs::copy_options::none, copy_error);
+                snapshot_ready = !copy_error;
+                if (copy_error)
+                    BOOST_LOG_TRIVIAL(error) << "Could not stage the completed manual save for project history: " << copy_error.message();
+            } else if (snapshot_ready) {
+                int export_result = -1;
+                try {
+                    const SaveStrategy strategy = SaveStrategy::Silence | SaveStrategy::SplitModel | SaveStrategy::ShareMesh |
+                                                  SaveStrategy::SkipThumbnails | SaveStrategy::Deterministic;
+                    export_result = q->export_3mf(boost::filesystem::path(capture.staging_path.native()), strategy);
+                } catch (const std::exception &ex) {
+                    BOOST_LOG_TRIVIAL(error) << "Could not serialize automatic project-history snapshot: " << ex.what();
+                } catch (...) {
+                    BOOST_LOG_TRIVIAL(error) << "Could not serialize automatic project-history snapshot";
+                }
+                snapshot_ready = export_result >= 0;
+            }
+            m_project_history_capture_in_progress = false;
+
+            if (!snapshot_ready) {
+                std::error_code cleanup_error;
+                stdfs::remove(capture.staging_path, cleanup_error);
+                capture.staging_path.clear();
+                ++capture.failed_attempts;
+                capture.retry_after = std::chrono::steady_clock::now() + project_history_retry_delay(capture.failed_attempts);
+                notify_project_history_failure("Project-history .3mf staging failed; the completed revision remains pending", true);
+                all_submitted = false;
+                break;
+            }
+            capture.snapshot_ready = true;
+        }
+
+        if (!enqueue_project_history_snapshot(capture.previous_identity, capture.identity, capture.staging_path, capture.reason)) {
+            ++capture.failed_attempts;
+            capture.retry_after = std::chrono::steady_clock::now() + project_history_retry_delay(capture.failed_attempts);
+            all_submitted = false;
+            break;
+        }
+
+        // Only now does the serialized worker own an immutable input job. The
+        // UI revision must remain pending through export and submission so an
+        // allocation/queueing failure cannot silently collapse it.
+        m_project_history_pending_captures.pop_front();
+        if (!force_retry)
+            break;
+    }
+    update_project_history_poll_timer();
+    return all_submitted && m_project_history_pending_captures.empty();
+}
+
+void Plater::priv::capture_project_history_now(const std::string &reason)
+{
+    if (!m_project_history_manager || m_project_history_shutting_down)
+        return;
+
+    m_project_history_debounce_timer.Stop();
+    if (m_project_history_event_scheduled) {
+        if (!reason.empty())
+            m_project_history_event_reason = reason;
+        materialize_project_history_event();
+    } else {
+        PendingProjectHistoryCapture capture;
+        capture.identity = project_history_identity();
+        capture.reason   = reason.empty() ? "Autosave project snapshot" : "Autosave: " + reason;
+        m_project_history_pending_captures.emplace_back(std::move(capture));
+    }
+    process_project_history_captures(true);
+}
+
+void Plater::priv::capture_saved_project_history(const wxString &completed_project_path, const stdfs::path &previous_identity)
+{
+    if (!m_project_history_manager || m_project_history_shutting_down || completed_project_path.empty())
+        return;
+
+    m_project_history_debounce_timer.Stop();
+    materialize_project_history_event();
+    PendingProjectHistoryCapture capture;
+    capture.previous_identity = previous_identity;
+    capture.identity          = stdfs::u8path(into_u8(completed_project_path));
+    capture.completed_source  = capture.identity;
+    capture.reason            = "Saved project";
+    m_project_history_pending_captures.emplace_back(std::move(capture));
+    process_project_history_captures(true);
+}
+
+void Plater::priv::schedule_project_history_capture(const std::string &reason)
+{
+    if (!m_project_history_manager || m_project_history_shutting_down || m_project_history_capture_in_progress ||
+        m_project_history_restore_in_progress)
+        return;
+
+    if (m_project_history_event_scheduled || !m_project_history_pending_captures.empty()) {
+        // A new completion boundary may not replace the live state belonging
+        // to the previous boundary. Freeze that boundary into immutable
+        // staging first; timer ordering is never used to decide that two
+        // completed edits are one version.
+        m_project_history_debounce_timer.Stop();
+        const std::string previous_reason = m_project_history_event_reason.empty()
+            ? "Completed project edit"
+            : m_project_history_event_reason;
+        if (!flush_project_history_pending(previous_reason, true, false))
+            return;
+    }
+
+    // Duplicate notifications that arrive while the export above is running
+    // are suppressed by m_project_history_capture_in_progress. Once the prior
+    // boundary is durable, arm exactly one capture for this completion.
+    m_project_history_event_scheduled = true;
+    m_project_history_event_reason    = reason;
+    m_project_history_event_identity  = project_history_identity();
+    m_project_history_debounce_timer.StartOnce(PROJECT_HISTORY_EVENT_DELAY_MS);
+}
+
+void Plater::priv::on_project_history_debounce(wxTimerEvent &)
+{
+    if (m_project_history_shutting_down || !m_project_history_manager)
+        return;
+    materialize_project_history_event();
+    process_project_history_captures(false);
+}
+
+void Plater::priv::collect_project_history_commits(bool wait_for_all)
+{
+    for (auto iterator = m_project_history_pending_commits.begin(); iterator != m_project_history_pending_commits.end();) {
+        if (!iterator->in_flight &&
+            m_project_history_blocked_identities.find(iterator->identity.lexically_normal()) !=
+                m_project_history_blocked_identities.end())
+            iterator->retry_enabled = false;
+
+        bool         completed = false;
+        unsigned int forced_attempts = 0;
+        while (!completed) {
+            if (!iterator->in_flight) {
+                if (!iterator->retry_enabled || (!wait_for_all && std::chrono::steady_clock::now() < iterator->retry_after))
+                    break;
+                if (wait_for_all && forced_attempts >= PROJECT_HISTORY_FORCED_RETRY_LIMIT)
+                    break;
+                if (!submit_project_history_commit(*iterator, wait_for_all))
+                    break;
+                ++forced_attempts;
+            }
+
+            if (!wait_for_all && iterator->future.wait_for(std::chrono::seconds(0)) != std::future_status::ready)
+                break;
+
+            ProjectHistoryCommitResult result;
+            try {
+                result = iterator->future.get();
+            } catch (const std::exception &ex) {
+                result.error = {ProjectHistoryErrorCode::InternalError, std::string("Could not finish project-history commit: ") + ex.what()};
+            } catch (...) {
+                result.error = {ProjectHistoryErrorCode::InternalError, "Could not finish project-history commit"};
+            }
+            iterator->in_flight = false;
+
+            if (result.ok()) {
+                if (result.committed && result.version.has_value())
+                    BOOST_LOG_TRIVIAL(info) << "Project-history snapshot committed: " << result.version->commit_id.substr(0, 12);
+                else
+                    BOOST_LOG_TRIVIAL(debug) << "Project-history duplicate snapshot suppressed";
+                completed = true;
+                m_project_history_failure_notified = false;
+                break;
+            }
+
+            if (!iterator->previous_identity.empty() && result.error.code == ProjectHistoryErrorCode::DestinationExists) {
+                // A Save-As destination already owns another history. Remember
+                // this process-local invariant before advancing the FIFO so no
+                // already-queued or future ordinary commit can append to it.
+                m_project_history_blocked_identities.insert(iterator->identity.lexically_normal());
+            }
+            iterator->retry_enabled = project_history_error_is_retryable(result.error.code);
+            iterator->retry_after   = std::chrono::steady_clock::now() + project_history_retry_delay(iterator->submission_attempts);
+            // Retryable failures stay informational (they auto-retry). Terminal
+            // ones are surfaced with a durable Retry action once quarantined below.
+            if (iterator->retry_enabled)
+                notify_project_history_failure("Project-history commit failed: " + result.error.message, true);
+            if (!wait_for_all || !iterator->retry_enabled)
+                break;
+        }
+
+        if (completed) {
+            std::error_code cleanup_error;
+            stdfs::remove(iterator->staging_path, cleanup_error);
+            if (cleanup_error)
+                BOOST_LOG_TRIVIAL(warning) << "Could not remove completed project-history staging file: " << cleanup_error.message();
+            // The recovery manifest tracks its snapshot's lifetime one-to-one.
+            remove_project_history_failure_manifest(iterator->staging_path);
+            iterator = m_project_history_pending_commits.erase(iterator);
+            // The durable Retry snackbar is only meaningful while a quarantined
+            // snapshot is still waiting; drop it once the last one has drained.
+            if (m_project_history_retained_failures.empty())
+                notification_manager->close_notification_of_type(NotificationType::ProjectHistoryFailure);
+        } else if (!iterator->in_flight && !iterator->retry_enabled) {
+            // A permanent error (notably a Save-As destination collision) may
+            // not wedge every later edit. Quarantine the immutable recovery
+            // file without deleting it, then let the active FIFO advance.
+            BOOST_LOG_TRIVIAL(error) << "Project-history terminal failure quarantined; staging retained at "
+                                     << PathSanitizer::sanitize(iterator->staging_path.u8string());
+            m_project_history_retained_failures.emplace_back(std::move(*iterator));
+            iterator = m_project_history_pending_commits.erase(iterator);
+            // Nothing drains a quarantined snapshot automatically. Its recovery
+            // manifest was written when it was enqueued, so surface a durable,
+            // retry-offering notification instead of a transient toast.
+            notify_project_history_retained_failure("Project-history commit failed permanently; recovery snapshot retained");
+        } else {
+            // Later snapshots remain staged until this oldest one succeeds.
+            // This preserves the user's edit order even across retries.
+            break;
+        }
+    }
+    update_project_history_poll_timer();
+}
+
+void Plater::priv::on_project_history_poll(wxTimerEvent &)
+{
+    process_project_history_captures(false);
+    collect_project_history_commits(false);
+}
+
+void Plater::priv::update_project_history_poll_timer()
+{
+    const bool has_retryable_commit = !m_project_history_pending_commits.empty() &&
+        (m_project_history_pending_commits.front().in_flight || m_project_history_pending_commits.front().retry_enabled);
+    const bool needs_poll = !m_project_history_pending_captures.empty() || has_retryable_commit;
+    if (needs_poll && !m_project_history_shutting_down) {
+        if (!m_project_history_poll_timer.IsRunning())
+            m_project_history_poll_timer.Start(PROJECT_HISTORY_POLL_INTERVAL_MS);
+    } else {
+        m_project_history_poll_timer.Stop();
+    }
+}
+
+bool Plater::priv::flush_project_history_pending(const std::string &fallback_reason, bool stop_active_jobs, bool wait_for_commits)
+{
+    if (!m_project_history_manager || m_project_history_shutting_down)
+        return false;
+
+    m_project_history_debounce_timer.Stop();
+    if (m_project_history_event_scheduled && m_project_history_event_reason.empty())
+        m_project_history_event_reason = fallback_reason;
+    materialize_project_history_event();
+
+    if (stop_active_jobs && !m_project_history_pending_captures.empty() && q->is_any_job_running()) {
+        m_ui_jobs.stop_all();
+        if (q->is_any_job_running()) {
+            notify_project_history_failure("Project-history capture is still pending because an active UI job did not stop", true);
+            update_project_history_poll_timer();
+            return false;
+        }
+    }
+
+    unsigned int attempts = 0;
+    while (!m_project_history_pending_captures.empty() && attempts++ < PROJECT_HISTORY_FORCED_RETRY_LIMIT)
+        process_project_history_captures(true);
+
+    if (wait_for_commits)
+        collect_project_history_commits(true);
+    else
+        update_project_history_poll_timer();
+
+    return m_project_history_pending_captures.empty() &&
+           (!wait_for_commits || m_project_history_pending_commits.empty());
+}
+
+void Plater::priv::shutdown_project_history()
+{
+    if (m_project_history_shutting_down)
+        return;
+
+    // Stop/join active UI jobs first so a completed edit cannot be discarded
+    // merely because its original one-shot fired while a job was active.
+    const bool history_drained = flush_project_history_pending("Autosave before shutdown", true, true);
+    if (!history_drained) {
+        // Destruction cannot safely replace or re-serialize the model after
+        // this point. Preserve every staging artifact and make the failed
+        // boundary explicit instead of treating shutdown as a successful
+        // drain.
+        notify_project_history_failure("Project history did not fully drain before shutdown; recovery data was retained", false);
+    }
+
+    m_project_history_shutting_down = true;
+    m_project_history_debounce_timer.Stop();
+    m_project_history_poll_timer.Stop();
+    q->Unbind(wxEVT_TIMER, &priv::on_project_history_debounce, this, m_project_history_debounce_timer.GetId());
+    q->Unbind(wxEVT_TIMER, &priv::on_project_history_poll, this, m_project_history_poll_timer.GetId());
+    collect_project_history_commits(true);
+    m_project_history_manager.reset();
+
+    // A failed commit deliberately retains its immutable staging file. Do not
+    // erase the process directory on shutdown unless every job completed.
+    if (history_drained && !m_project_history_staging_dir.empty() && m_project_history_pending_captures.empty() &&
+        m_project_history_pending_commits.empty() && m_project_history_retained_failures.empty()) {
+        std::error_code ec;
+        stdfs::remove_all(m_project_history_staging_dir, ec);
+        if (ec)
+            BOOST_LOG_TRIVIAL(warning) << "Could not remove project-history staging directory: " << ec.message();
+    }
 }
 
 void Plater::priv::update(unsigned int flags)
@@ -8329,7 +11422,7 @@ void Plater::priv::reset_window_layout(int width)
         m_aui_mgr.LoadPerspective(m_default_window_layout, false);
     } else {
         auto copy = m_default_window_layout;
-        wxString old_num  = wxString::Format("%d", 42 * wxGetApp().em_unit());
+        wxString old_num  = wxString::Format("%d", q->FromDIP(MD3::Metrics::active().sidebar_width));
         wxString new_num  = wxString::Format("%d", width);
         wxString str0("bestw="), str1("bestw=");
         str0 += old_num;
@@ -8337,8 +11430,74 @@ void Plater::priv::reset_window_layout(int width)
         copy.Replace(str0, str1, false);
         m_aui_mgr.LoadPerspective(copy, false);
     }
+    // Reset restores the default (left-based) perspective; re-assert the stored
+    // dock edge (with default sizing) so a right/top/bottom preference survives
+    // a layout reset.
+    apply_sidebar_dock(true, true, false);
     sidebar_layout.is_collapsed = false;
     update_sidebar(true);
+}
+
+void Plater::priv::apply_sidebar_dock(bool force_dock, bool reset_size, bool update_now)
+{
+    auto &pane = m_aui_mgr.GetPane(this->sidebar);
+    if (!pane.IsOk()) { return; }
+
+    std::string position = wxGetApp().app_config->get("prepare_sidebar_dock");
+    if (position != "left" && position != "right" && position != "top" && position != "bottom")
+        position = "left";
+
+    const int  em              = wxGetApp().em_unit();
+    const bool target_vertical = (position == "top" || position == "bottom");
+
+    // A restored perspective or a previous dock may carry a best size in the
+    // wrong axis (a width where we now need a height, or vice-versa). Re-seed
+    // the best size when the caller asks (user pick / reset) or whenever the
+    // dock orientation flips; otherwise keep the persisted size so the user's
+    // resized sidebar survives restarts and DPI changes.
+    const int  prev_dir          = pane.dock_direction;
+    const bool prev_vertical     = (prev_dir == wxAUI_DOCK_TOP || prev_dir == wxAUI_DOCK_BOTTOM);
+    const bool set_best_size     = reset_size || (prev_vertical != target_vertical);
+
+    // Re-dock a floating pane when the user explicitly picks an edge; otherwise
+    // honor a previously-floated sidebar (the floatable power-user feature).
+    if (force_dock || !wxGetApp().app_config->get_bool("enable_sidebar_floatable"))
+        pane.Dock();
+
+    // Land as the only pane on its edge; clear any stale row/layer/position from
+    // the previous dock so the switch is clean.
+    pane.dock_layer = 0;
+    pane.dock_row   = 0;
+    pane.dock_pos   = 0;
+
+    if (target_vertical) {
+        // Vertical stack: full-width band whose height is capped near 40% of the
+        // workspace (floor 260px). The sidebar keeps its own internal scrolling;
+        // the 3D canvas takes the remaining vertical space.
+        const int min_h   = q->FromDIP(260);
+        const int avail_h = q->GetClientSize().GetHeight();
+        const int cap_h   = avail_h > 0 ? std::max(min_h, (avail_h * 2) / 5) : min_h;
+        pane.MinSize(wxSize(q->FromDIP(MD3::Metrics::active().sidebar_width), min_h));
+        if (set_best_size)
+            pane.BestSize(wxSize(q->FromDIP(MD3::Metrics::active().sidebar_width), cap_h));
+        if (position == "top")
+            pane.Top();
+        else
+            pane.Bottom();
+    } else {
+        // Horizontal split: fixed-width column, existing behavior mirrored on the
+        // chosen side.
+        pane.MinSize(wxSize(q->FromDIP(MD3::Metrics::active().sidebar_width), 90 * em));
+        if (set_best_size)
+            pane.BestSize(wxSize(q->FromDIP(MD3::Metrics::active().sidebar_width), 90 * em));
+        if (position == "right")
+            pane.Right();
+        else
+            pane.Left();
+    }
+
+    if (update_now)
+        m_aui_mgr.Update();
 }
 
 Sidebar::DockingState Plater::priv::get_sidebar_docking_state()
@@ -8350,7 +11509,13 @@ Sidebar::DockingState Plater::priv::get_sidebar_docking_state()
         return Sidebar::None;
     }
 
-    return sidebar.dock_direction == wxAUI_DOCK_RIGHT ? Sidebar::Right : Sidebar::Left;
+    switch (sidebar.dock_direction) {
+    case wxAUI_DOCK_LEFT:   return Sidebar::Left;
+    case wxAUI_DOCK_RIGHT:  return Sidebar::Right;
+    case wxAUI_DOCK_TOP:    return Sidebar::Top;
+    case wxAUI_DOCK_BOTTOM: return Sidebar::Bottom;
+    default:                return Sidebar::Left;
+    }
 }
 
 
@@ -8483,9 +11648,14 @@ void read_binary_stl(const std::string& filename, std::string& model_id, std::st
 }
 
 // BBS: backup & restore
-std::vector<size_t> Plater::priv::load_files(const std::vector<fs::path>& input_files, LoadStrategy strategy, bool ask_multi)
+std::vector<size_t> Plater::priv::load_files(const std::vector<fs::path>& input_files, LoadStrategy strategy, bool ask_multi,
+                                             bool *successful_3mf_loaded)
 {
+    if (successful_3mf_loaded != nullptr)
+        *successful_3mf_loaded = false;
+
     std::vector<size_t> empty_result;
+    bool successful_3mf_applied = false;
     bool dlg_cont = true;
     bool is_user_cancel = false;
     bool translate_old = false;
@@ -8583,6 +11753,7 @@ std::vector<size_t> Plater::priv::load_files(const std::vector<fs::path>& input_
         if (!dlg_cont) return empty_result;
 
         const bool type_3mf = std::regex_match(path.string(), pattern_3mf);
+        bool       completed_3mf_try = false;
         // const bool type_zip_amf = !type_3mf && std::regex_match(path.string(), pattern_zip_amf);
         const bool type_any_amf = !type_3mf && std::regex_match(path.string(), pattern_any_amf);
         const bool type_step = boost::algorithm::iends_with(path.string(), ".stp") ||
@@ -8722,16 +11893,6 @@ std::vector<size_t> Plater::priv::load_files(const std::vector<fs::path>& input_
                         //}
                     }
                     else if (load_config && (file_version > app_version)) {
-                        Semver cloud_ver;
-                        if (wxGetApp().app_config->has("app", "cloud_version")) {
-                            std::string cloud_version = wxGetApp().app_config->get("app", "cloud_version");
-                            if (!cloud_version.empty())
-                                cloud_ver                 = *(Semver::parse(cloud_version));
-                            else
-                                cloud_ver = app_version;
-                        } else {
-                            cloud_ver = app_version;
-                        }
                         int file_version_cc = file_version.patch()/100;
                         int app_version_cc = app_version.patch()/100;
 
@@ -8748,13 +11909,13 @@ std::vector<size_t> Plater::priv::load_files(const std::vector<fs::path>& input_
                                     }
                                 }
                                 context += "\n\n";
-                                Newer3mfVersionDialog newer_dlg(q, &file_version, &cloud_ver, context);
+                                Newer3mfVersionDialog newer_dlg(q, &file_version, context);
                                 newer_dlg.ShowModal();
                             }
                             else {
                                 //if the minor version is not matched
                                 //if (file_version.min() != app_version.min()) {
-                                Newer3mfVersionDialog newer_dlg(q, &file_version, &cloud_ver, "");
+                                Newer3mfVersionDialog newer_dlg(q, &file_version, "");
                                     auto res = newer_dlg.ShowModal();
                                 //}
                             }
@@ -9366,6 +12527,12 @@ std::vector<size_t> Plater::priv::load_files(const std::vector<fs::path>& input_
                     project_presets.clear();
                 }
             }
+            // A valid project/config-only 3MF may contain no ModelObjects.
+            // Geometry count is therefore not a load-success signal. Mark a
+            // candidate only after the complete 3MF try path finishes without
+            // cancellation; publish it after all apply steps complete below.
+            if (type_3mf && !is_user_cancel)
+                completed_3mf_try = true;
         } catch (const ConfigurationError &e) {
             std::string message = GUI::format(_L("Failed loading file \"%1%\". An invalid configuration was found."), filename.string()) + "\n\n" + e.what();
             GUI::show_error(q, message);
@@ -9398,7 +12565,7 @@ std::vector<size_t> Plater::priv::load_files(const std::vector<fs::path>& input_
                     // texture-import dialog does not pop up over an empty model.
                     if (model.objects.empty())
                         model.texture_mesh.reset();
-                    MessageDialog(q, _L("Objects with zero volume removed"), _L("The volume of the object is zero"), wxICON_INFORMATION | wxOK).ShowModal();
+                    show_info(q, _L("Objects with zero volume removed"), _L("The volume of the object is zero"));
                 }
                 if (imperial_units)
                     // Convert even if the object is big.
@@ -9779,6 +12946,7 @@ std::vector<size_t> Plater::priv::load_files(const std::vector<fs::path>& input_
                 }
             }
         }
+        successful_3mf_applied = successful_3mf_applied || completed_3mf_try;
     }
 
     if (new_model != nullptr && new_model->objects.size() > 1) {
@@ -9932,6 +13100,12 @@ std::vector<size_t> Plater::priv::load_files(const std::vector<fs::path>& input_
     }
     q->schedule_background_process(true);
     q->mark_plate_toolbar_image_dirty();
+    // This is the only publication point. Every cancellation, exception, or
+    // early return leaves the caller's explicit success signal false.
+    if (successful_3mf_loaded != nullptr)
+        *successful_3mf_loaded = successful_3mf_applied;
+    if (successful_3mf_applied)
+        m_fresh_project_mapping_preference_owned = false;
     return obj_idxs;
 }
 
@@ -10835,8 +14009,12 @@ void Plater::priv::delete_all_objects_from_model()
     model.plates_custom_gcodes.clear();
 }
 
-void Plater::priv::reset(bool apply_presets_change)
+bool Plater::priv::reset(bool apply_presets_change)
 {
+    // This is the document replacement gate. Nothing below may mutate the
+    // model or filename until the outgoing history boundary is immutable.
+    if (!reset_project_history_session())
+        return false;
     Plater::TakeSnapshot snapshot(q, "Reset Project", UndoRedo::SnapshotType::ProjectSeparator);
 
     clear_warnings();
@@ -10908,6 +14086,7 @@ void Plater::priv::reset(bool apply_presets_change)
         auto layout = m_aui_mgr.SavePerspective();
         wxGetApp().app_config->set("window_layout", layout.utf8_string());
     }
+    return true;
 }
 
 void Plater::priv::center_selection()
@@ -12803,6 +15982,17 @@ void Plater::priv::on_select_preset(wxCommandEvent &evt)
                 q->on_config_change(wxGetApp().preset_bundle->full_config());
             });
 
+            // A fresh project's inherited plate modes may follow the selected
+            // printer. Imported 3MF settings and explicit plate choices may not.
+            const auto preferred = get_preferred_filament_map_mode_for_current_printer();
+            if (PrintWorkflowState::may_apply_saved_mapping(
+                    m_fresh_project_mapping_preference_owned,
+                    std::all_of(partplate_list.get_plate_list().begin(), partplate_list.get_plate_list().end(),
+                                [](const PartPlate *plate) { return plate && plate->get_filament_map_mode() == fmmDefault; }),
+                    is_auto_filament_map_mode(preferred))) {
+                    q->set_global_filament_map_mode(preferred, true);
+            }
+
 
             if (old_preset_name != preset_name && wxGetApp().app_config->get("auto_calculate_flush") == "all") {
                 wxGetApp().plater()->sidebar().auto_calc_flushing_volumes(-1);
@@ -13107,6 +16297,9 @@ void Plater::priv::on_process_completed(SlicingProcessCompletedEvent &evt)
     //BBS:ignore cancel event for some special case
     if (m_ignore_event)
     {
+        m_print_after_slice_plate = nullptr;
+        m_print_after_slice_index = -1;
+        m_print_after_slice_generation = 0;
         m_ignore_event = false;
         BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << boost::format(": ignore this event %1%") % evt.status();
         return;
@@ -13328,6 +16521,23 @@ void Plater::priv::on_process_completed(SlicingProcessCompletedEvent &evt)
             }
         }
         q->SetDropTarget(new PlaterDropTarget(q));
+        const bool same_plate = m_print_after_slice_plate != nullptr &&
+            partplate_list.get_curr_plate_index() == m_print_after_slice_index &&
+            partplate_list.get_curr_plate() == m_print_after_slice_plate &&
+            background_process.get_current_plate() == m_print_after_slice_plate;
+        const bool continue_to_setup = PrintWorkflowState::may_open_print_setup(
+            m_print_after_slice_generation, m_slice_request_generation, same_plate,
+            !has_error && !evt.cancelled() && evt.success(),
+            same_plate && m_print_after_slice_plate->has_printable_instances() &&
+            m_print_after_slice_plate->is_slice_result_ready_for_print());
+        // Clear before the modal setup. A stale request must never survive it.
+        m_print_after_slice_plate = nullptr;
+        m_print_after_slice_index = -1;
+        m_print_after_slice_generation = 0;
+        if (continue_to_setup) {
+            SimpleEvent print_event(EVT_GLTOOLBAR_PRINT_PLATE);
+            on_action_print_plate(print_event);
+        }
     }
     else
     {
@@ -13375,13 +16585,14 @@ void Plater::priv::on_action_add_plate(SimpleEvent&)
         // BBS set default view
         //q->get_camera().select_view("topfront");
         q->get_camera().requires_zoom_to_plate = REQUIRES_ZOOM_TO_ALL_PLATE;
+        wxPostEvent(q, SimpleEvent(EVT_GLCANVAS_PLATE_SELECT));
     }
 }
 
 //BBS: remove plate from toolbar
 void Plater::priv::on_action_del_plate(SimpleEvent&)
 {
-    if (q != nullptr) {
+    if (q != nullptr && q->confirm_delete_plate(-1)) {
         q->delete_plate();
         //q->get_camera().select_view("topfront");
         //q->get_camera().requires_zoom_to_plate = REQUIRES_ZOOM_TO_ALL_PLATE;
@@ -13397,9 +16608,18 @@ void Plater::priv::on_action_open_project(SimpleEvent&)
 }
 
 //BBS: GUI refactor: slice plate
-void Plater::priv::on_action_slice_plate(SimpleEvent&)
+void Plater::priv::on_action_slice_plate(SimpleEvent& event)
 {
     if (q != nullptr) {
+        ++m_slice_request_generation;
+        m_print_after_slice_plate = nullptr;
+        m_print_after_slice_index = -1;
+        m_print_after_slice_generation = 0;
+        if (event.GetEventType() == EVT_GLTOOLBAR_SLICE_AND_PRINT_PLATE) {
+            m_print_after_slice_plate = partplate_list.get_curr_plate();
+            m_print_after_slice_index = partplate_list.get_curr_plate_index();
+            m_print_after_slice_generation = m_slice_request_generation;
+        }
         BOOST_LOG_TRIVIAL(debug) << __FUNCTION__ << ":received slice plate event\n";
         //BBS update extruder params and speed table before slicing
         const Slic3r::DynamicPrintConfig& config = wxGetApp().preset_bundle->full_config();
@@ -13428,6 +16648,23 @@ void Plater::priv::on_action_slice_plate(SimpleEvent&)
         }
 
         q->reslice();
+        if (!m_is_slicing) {
+            const bool reuse_for_print = m_print_after_slice_generation == m_slice_request_generation &&
+                m_print_after_slice_plate != nullptr &&
+                m_print_after_slice_plate == partplate_list.get_curr_plate() &&
+                m_print_after_slice_plate == background_process.get_current_plate() &&
+                m_print_after_slice_index == partplate_list.get_curr_plate_index() &&
+                m_reused_finished_slice_result &&
+                m_print_after_slice_plate->has_printable_instances() &&
+                m_print_after_slice_plate->is_slice_result_ready_for_print();
+            m_print_after_slice_plate = nullptr;
+            m_print_after_slice_index = -1;
+            m_print_after_slice_generation = 0;
+            if (reuse_for_print) {
+                SimpleEvent print_event(EVT_GLTOOLBAR_PRINT_PLATE);
+                on_action_print_plate(print_event);
+            }
+        }
         q->select_view_3D("Preview");
     }
 }
@@ -13791,12 +17028,11 @@ public:
         wxBoxSizer* main_sizer = new wxBoxSizer(wxVERTICAL);
         main_sizer->SetMinSize(wxSize(wxWindowBase::FromDIP(500, mainframe), -1));
 
-        bool is_dark_mode = wxGetApp().dark_mode();
         wxColour text_color = wxGetApp().get_label_clr_default();
 
-        // Warning header with purple styling (Helio brand)
-        wxColour warning_color = wxColour("#AF7CFF");
-        wxColour warning_bg = is_dark_mode ? wxColour(45, 35, 60) : wxColour(245, 240, 255);
+        // Warning header — Helio brand purple mapped to the MD3 Preview accent scheme.
+        wxColour warning_color = StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Preview);
+        wxColour warning_bg = StateColor::semantic(MD3::Role::SecondaryContainer, MD3::ColorScheme::Preview);
 
         StaticBox* warning_box = new StaticBox(this, wxID_ANY, wxDefaultPosition,
                                                wxSize(wxWindowBase::FromDIP(470, this), -1));
@@ -13810,7 +17046,7 @@ public:
         warning_sizer->AddSpacer(wxWindowBase::FromDIP(14, this));
 
         Label* warning_title = new Label(warning_box, Label::Head_16, _L("⚠ Multiple Filament Materials Detected"));
-        wxColour warning_title_color = is_dark_mode ? StateColor::darkModeColorFor(warning_color) : wxColour(110, 60, 180);
+        wxColour warning_title_color = StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Preview);
         warning_title->SetForegroundColour(warning_title_color);
         warning_sizer->Add(warning_title, 0, wxLEFT | wxRIGHT, wxWindowBase::FromDIP(16, this));
         warning_sizer->AddSpacer(wxWindowBase::FromDIP(8, this));
@@ -13840,7 +17076,7 @@ public:
         }
 
         Label* warning_text = new Label(warning_box, Label::Body_14, warning_msg, LB_AUTO_WRAP);
-        wxColour warning_text_color = is_dark_mode ? wxColour(240, 240, 240) : wxColour(60, 50, 40);
+        wxColour warning_text_color = StateColor::semantic(MD3::Role::OnSecondaryContainer, MD3::ColorScheme::Preview);
         warning_text->SetForegroundColour(warning_text_color);
         warning_text->Wrap(wxWindowBase::FromDIP(440, this));
         warning_sizer->Add(warning_text, 0, wxEXPAND | wxLEFT | wxRIGHT, wxWindowBase::FromDIP(16, this));
@@ -13849,12 +17085,18 @@ public:
         warning_box->SetSizer(warning_sizer);
         main_sizer->Add(warning_box, 0, wxALL, wxWindowBase::FromDIP(15, this));
 
+        // Future support message
+        Label* future_msg = new Label(this, Label::Body_13,
+            _L("True multi-material support will be added in a future update."), LB_AUTO_WRAP);
+        future_msg->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+        future_msg->Wrap(wxWindowBase::FromDIP(470, this));
+        main_sizer->Add(future_msg, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, wxWindowBase::FromDIP(15, this));
 
         // Option 1: Proceed with single filament
         StaticBox* option1_box = new StaticBox(this, wxID_ANY, wxDefaultPosition,
                                                wxSize(wxWindowBase::FromDIP(470, this), -1));
-        option1_box->SetBackgroundColor(StateColor(std::make_pair(wxColour("#F8F8F8"), (int)StateColor::Normal)));
-        option1_box->SetBorderColor(StateColor(std::make_pair(wxColour("#E8E8E8"), (int)StateColor::Normal)));
+        option1_box->SetBackgroundColor(StateColor(std::make_pair(StateColor::semantic(MD3::Role::SurfaceContainerLow), (int)StateColor::Normal)));
+        option1_box->SetBorderColor(StateColor(std::make_pair(StateColor::semantic(MD3::Role::OutlineVariant), (int)StateColor::Normal)));
         option1_box->SetBorderWidth(1);
         option1_box->SetCornerRadius(wxWindowBase::FromDIP(6, this));
 
@@ -13894,8 +17136,8 @@ public:
         option1_sizer->AddSpacer(wxWindowBase::FromDIP(12, this));
 
         // Critical warning for Option 1
-        wxColour critical_color = wxColour("#D32F2F");
-        wxColour critical_bg = is_dark_mode ? wxColour(60, 35, 35) : wxColour(255, 235, 235);
+        wxColour critical_color = StateColor::semantic(MD3::Role::Error);
+        wxColour critical_bg = StateColor::semantic(MD3::Role::ErrorContainer);
 
         StaticBox* critical_box = new StaticBox(option1_box, wxID_ANY, wxDefaultPosition,
                                                 wxSize(wxWindowBase::FromDIP(420, this), -1));
@@ -13911,7 +17153,7 @@ public:
         Label* critical_text = new Label(critical_box, Label::Body_12,
             _L("⚠ This is not recommended. Filament formulations vary significantly between manufacturers and materials. Helio cannot guarantee reliable results in this configuration."),
             LB_AUTO_WRAP);
-        wxColour critical_text_color = is_dark_mode ? wxColour(255, 200, 200) : wxColour(139, 0, 0);
+        wxColour critical_text_color = StateColor::semantic(MD3::Role::OnErrorContainer);
         critical_text->SetForegroundColour(critical_text_color);
         critical_text->Wrap(wxWindowBase::FromDIP(400, this));
         critical_sizer->Add(critical_text, 0, wxEXPAND | wxLEFT | wxRIGHT, wxWindowBase::FromDIP(10, this));
@@ -13925,14 +17167,12 @@ public:
         wxBoxSizer* option1_button_sizer = new wxBoxSizer(wxHORIZONTAL);
         option1_button_sizer->AddStretchSpacer();
 
-        StateColor btn_bg_purple(std::pair<wxColour, int>(wxColour(120, 80, 180), StateColor::Pressed),
-                                 std::pair<wxColour, int>(wxColour(190, 140, 255), StateColor::Hovered),
-                                 std::pair<wxColour, int>(wxColour(175, 124, 255), StateColor::Normal));
+        StateColor btn_bg_purple(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Preview).ChangeLightness(80), StateColor::Pressed),
+                                 std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Preview).ChangeLightness(120), StateColor::Hovered),
+                                 std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Preview), StateColor::Normal));
 
         Button* proceed_button = new Button(option1_box, _L("Proceed Anyway"));
-        proceed_button->SetBackgroundColor(btn_bg_purple);
-        proceed_button->SetBorderColor(*wxWHITE);
-        proceed_button->SetTextColor(wxColour("#FFFFFE"));
+        proceed_button->SetVariant(Button::Variant::Filled);
         proceed_button->SetFont(Label::Body_12);
         proceed_button->SetSize(wxSize(wxWindowBase::FromDIP(130, this), wxWindowBase::FromDIP(28, this)));
         proceed_button->SetMinSize(wxSize(wxWindowBase::FromDIP(130, this), wxWindowBase::FromDIP(28, this)));
@@ -13963,9 +17203,9 @@ public:
 
         // Option 2: Go back (recommended)
         // Use colors that work in both light and dark mode
-        wxColour option2_bg = is_dark_mode ? wxColour(30, 60, 40) : wxColour("#E8F5E9");
-        wxColour option2_border = is_dark_mode ? wxColour(76, 175, 80) : wxColour("#4CAF50");
-        wxColour recommended_color = is_dark_mode ? wxColour(129, 199, 132) : wxColour("#2E7D32");
+        wxColour option2_bg = StateColor::semantic(MD3::Role::SecondaryContainer);
+        wxColour option2_border = StateColor::semantic(MD3::Role::Primary);
+        wxColour recommended_color = StateColor::semantic(MD3::Role::Primary);
 
         StaticBox* option2_box = new StaticBox(this, wxID_ANY, wxDefaultPosition,
                                                wxSize(wxWindowBase::FromDIP(470, this), -1));
@@ -13980,7 +17220,7 @@ public:
 
         wxBoxSizer* option2_header = new wxBoxSizer(wxHORIZONTAL);
         Label* option2_title = new Label(option2_box, Label::Head_14, _L("Option 2: Go back and change filament selection"));
-        wxColour option2_text_color = is_dark_mode ? wxColour(240, 240, 240) : text_color;
+        wxColour option2_text_color = StateColor::semantic(MD3::Role::OnSecondaryContainer);
         option2_title->SetForegroundColour(option2_text_color);
         option2_header->Add(option2_title, 0, wxALIGN_CENTER_VERTICAL);
         option2_header->AddSpacer(wxWindowBase::FromDIP(10, this));
@@ -13998,9 +17238,8 @@ public:
         option2_desc->Wrap(wxWindowBase::FromDIP(440, this));
         option2_sizer->Add(option2_desc, 0, wxEXPAND | wxLEFT | wxRIGHT, wxWindowBase::FromDIP(16, this));
 
-        wxHyperlinkCtrl* supported_materials_link = new wxHyperlinkCtrl(option2_box, wxID_ANY,
-            _L("See supported materials"), "https://wiki.helioadditive.com/en/supportedprinters",
-            wxDefaultPosition, wxDefaultSize, wxHL_DEFAULT_STYLE);
+        LinkLabel* supported_materials_link = new LinkLabel(option2_box,
+            _L("See supported materials"), "https://wiki.helioadditive.com/en/supportedprinters");
         option2_sizer->Add(supported_materials_link, 0, wxLEFT | wxRIGHT, wxWindowBase::FromDIP(16, this));
         option2_sizer->AddSpacer(wxWindowBase::FromDIP(12, this));
 
@@ -14008,14 +17247,12 @@ public:
         wxBoxSizer* option2_button_sizer = new wxBoxSizer(wxHORIZONTAL);
         option2_button_sizer->AddStretchSpacer();
 
-        StateColor btn_bg_green2(std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed),
-                                 std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-                                 std::pair<wxColour, int>(AMS_CONTROL_BRAND_COLOUR, StateColor::Normal));
+        StateColor btn_bg_green2(std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed),
+                                 std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
+                                 std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
 
         Button* goback_button = new Button(option2_box, _L("Go Back"));
-        goback_button->SetBackgroundColor(btn_bg_green2);
-        goback_button->SetBorderColor(*wxWHITE);
-        goback_button->SetTextColor(wxColour("#FFFFFE"));
+        goback_button->SetVariant(Button::Variant::Outlined);
         goback_button->SetFont(Label::Body_12);
         goback_button->SetSize(wxSize(wxWindowBase::FromDIP(100, this), wxWindowBase::FromDIP(28, this)));
         goback_button->SetMinSize(wxSize(wxWindowBase::FromDIP(100, this), wxWindowBase::FromDIP(28, this)));
@@ -14031,6 +17268,7 @@ public:
 
         option2_box->SetSizer(option2_sizer);
         main_sizer->Add(option2_box, 0, wxLEFT | wxRIGHT | wxBOTTOM, wxWindowBase::FromDIP(15, this));
+        const bool is_dark_mode = wxGetApp().dark_mode();
         wxColour option3_bg = is_dark_mode ? wxColour(30, 45, 70) : wxColour("#E3F2FD");
         wxColour option3_border = is_dark_mode ? wxColour(100, 181, 246) : wxColour("#2196F3");
         wxColour option3_text_color = is_dark_mode ? wxColour(240, 240, 240) : text_color;
@@ -14059,6 +17297,8 @@ public:
         main_sizer->Add(option3_box, 0, wxLEFT | wxRIGHT | wxBOTTOM, wxWindowBase::FromDIP(15, this));
 
         SetSizerAndFit(main_sizer);
+        wxGetApp().UpdateDlgDarkUI(this);
+        MD3DialogCaption::Adopt(this);
         {
             wxWindow* parent = GetParent();
             if (parent) {
@@ -14070,7 +17310,6 @@ public:
                 SetPosition(wxPoint(x, y));
             }
         }
-        wxGetApp().UpdateDlgDarkUI(this);
     }
 
     void on_dpi_changed(const wxRect& suggested_rect) override {}
@@ -14104,12 +17343,11 @@ public:
         wxBoxSizer* main_sizer = new wxBoxSizer(wxVERTICAL);
         main_sizer->SetMinSize(wxSize(wxWindowBase::FromDIP(500, mainframe), -1));
 
-        bool is_dark_mode = wxGetApp().dark_mode();
         wxColour text_color = wxGetApp().get_label_clr_default();
 
-        // Warning header with purple styling (Helio brand)
-        wxColour warning_color = wxColour("#AF7CFF");
-        wxColour warning_bg = is_dark_mode ? wxColour(45, 35, 60) : wxColour(245, 240, 255);
+        // Warning header — Helio brand purple mapped to the MD3 Preview accent scheme.
+        wxColour warning_color = StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Preview);
+        wxColour warning_bg = StateColor::semantic(MD3::Role::SecondaryContainer, MD3::ColorScheme::Preview);
 
         StaticBox* warning_box = new StaticBox(this, wxID_ANY, wxDefaultPosition,
                                                wxSize(wxWindowBase::FromDIP(470, this), -1));
@@ -14123,7 +17361,7 @@ public:
         warning_sizer->AddSpacer(wxWindowBase::FromDIP(14, this));
 
         Label* warning_title = new Label(warning_box, Label::Head_16, _L("⚠ Unsupported Materials Detected"));
-        wxColour warning_title_color = is_dark_mode ? StateColor::darkModeColorFor(warning_color) : wxColour(110, 60, 180);
+        wxColour warning_title_color = StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Preview);
         warning_title->SetForegroundColour(warning_title_color);
         warning_sizer->Add(warning_title, 0, wxLEFT | wxRIGHT, wxWindowBase::FromDIP(16, this));
         warning_sizer->AddSpacer(wxWindowBase::FromDIP(8, this));
@@ -14140,7 +17378,7 @@ public:
         warning_msg += unsupported_str;
 
         Label* warning_text = new Label(warning_box, Label::Body_14, warning_msg, LB_AUTO_WRAP);
-        wxColour warning_text_color = is_dark_mode ? wxColour(240, 240, 240) : wxColour(60, 50, 40);
+        wxColour warning_text_color = StateColor::semantic(MD3::Role::OnSecondaryContainer, MD3::ColorScheme::Preview);
         warning_text->SetForegroundColour(warning_text_color);
         warning_text->Wrap(wxWindowBase::FromDIP(440, this));
         warning_sizer->Add(warning_text, 0, wxEXPAND | wxLEFT | wxRIGHT, wxWindowBase::FromDIP(16, this));
@@ -14150,8 +17388,8 @@ public:
         main_sizer->Add(warning_box, 0, wxALL, wxWindowBase::FromDIP(15, this));
 
         // Option 1: Proceed with reference material
-        wxColour section_bg = is_dark_mode ? wxColour(50, 50, 55) : wxColour("#F8F8F8");
-        wxColour section_border = is_dark_mode ? wxColour(70, 70, 75) : wxColour("#E8E8E8");
+        wxColour section_bg = StateColor::semantic(MD3::Role::SurfaceContainerLow);
+        wxColour section_border = StateColor::semantic(MD3::Role::OutlineVariant);
 
         StaticBox* option1_box = new StaticBox(this, wxID_ANY, wxDefaultPosition,
                                                wxSize(wxWindowBase::FromDIP(470, this), -1));
@@ -14201,7 +17439,7 @@ public:
         option1_sizer->AddSpacer(wxWindowBase::FromDIP(12, this));
 
         // Note about approximation
-        wxColour note_color = is_dark_mode ? wxColour(180, 180, 180) : wxColour("#6B6B6B");
+        wxColour note_color = StateColor::semantic(MD3::Role::OnSurfaceVariant);
         Label* note_text = new Label(option1_box, Label::Body_12,
             _L("Note: Using a reference material may result in approximate or erroneous results."), LB_AUTO_WRAP);
         note_text->SetForegroundColour(note_color);
@@ -14213,14 +17451,12 @@ public:
         wxBoxSizer* option1_button_sizer = new wxBoxSizer(wxHORIZONTAL);
         option1_button_sizer->AddStretchSpacer();
 
-        StateColor btn_bg_purple(std::pair<wxColour, int>(wxColour(120, 80, 180), StateColor::Pressed),
-                                 std::pair<wxColour, int>(wxColour(190, 140, 255), StateColor::Hovered),
-                                 std::pair<wxColour, int>(wxColour(175, 124, 255), StateColor::Normal));
+        StateColor btn_bg_purple(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Preview).ChangeLightness(80), StateColor::Pressed),
+                                 std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Preview).ChangeLightness(120), StateColor::Hovered),
+                                 std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Preview), StateColor::Normal));
 
         Button* proceed_button = new Button(option1_box, _L("Proceed Anyway"));
-        proceed_button->SetBackgroundColor(btn_bg_purple);
-        proceed_button->SetBorderColor(*wxWHITE);
-        proceed_button->SetTextColor(wxColour("#FFFFFE"));
+        proceed_button->SetVariant(Button::Variant::Filled);
         proceed_button->SetFont(Label::Body_12);
         proceed_button->SetSize(wxSize(wxWindowBase::FromDIP(130, this), wxWindowBase::FromDIP(28, this)));
         proceed_button->SetMinSize(wxSize(wxWindowBase::FromDIP(130, this), wxWindowBase::FromDIP(28, this)));
@@ -14242,9 +17478,9 @@ public:
         main_sizer->Add(option1_box, 0, wxLEFT | wxRIGHT | wxBOTTOM, wxWindowBase::FromDIP(15, this));
 
         // Option 2: Go back (recommended)
-        wxColour option2_bg = is_dark_mode ? wxColour(30, 60, 40) : wxColour("#E8F5E9");
-        wxColour option2_border = is_dark_mode ? wxColour(76, 175, 80) : wxColour("#4CAF50");
-        wxColour recommended_color = is_dark_mode ? wxColour(129, 199, 132) : wxColour("#2E7D32");
+        wxColour option2_bg = StateColor::semantic(MD3::Role::SecondaryContainer);
+        wxColour option2_border = StateColor::semantic(MD3::Role::Primary);
+        wxColour recommended_color = StateColor::semantic(MD3::Role::Primary);
 
         StaticBox* option2_box = new StaticBox(this, wxID_ANY, wxDefaultPosition,
                                                wxSize(wxWindowBase::FromDIP(470, this), -1));
@@ -14259,7 +17495,7 @@ public:
 
         wxBoxSizer* option2_header = new wxBoxSizer(wxHORIZONTAL);
         Label* option2_title = new Label(option2_box, Label::Head_14, _L("Option 2: Go back and change filament selection"));
-        wxColour option2_text_color = is_dark_mode ? wxColour(240, 240, 240) : text_color;
+        wxColour option2_text_color = StateColor::semantic(MD3::Role::OnSecondaryContainer);
         option2_title->SetForegroundColour(option2_text_color);
         option2_header->Add(option2_title, 0, wxALIGN_CENTER_VERTICAL);
         option2_header->AddSpacer(wxWindowBase::FromDIP(10, this));
@@ -14277,9 +17513,8 @@ public:
         option2_desc->Wrap(wxWindowBase::FromDIP(440, this));
         option2_sizer->Add(option2_desc, 0, wxEXPAND | wxLEFT | wxRIGHT, wxWindowBase::FromDIP(16, this));
 
-        wxHyperlinkCtrl* supported_materials_link = new wxHyperlinkCtrl(option2_box, wxID_ANY,
-            _L("See supported materials"), "https://wiki.helioadditive.com/en/supportedprinters",
-            wxDefaultPosition, wxDefaultSize, wxHL_DEFAULT_STYLE);
+        LinkLabel* supported_materials_link = new LinkLabel(option2_box,
+            _L("See supported materials"), "https://wiki.helioadditive.com/en/supportedprinters");
         option2_sizer->Add(supported_materials_link, 0, wxLEFT | wxRIGHT, wxWindowBase::FromDIP(16, this));
         option2_sizer->AddSpacer(wxWindowBase::FromDIP(12, this));
 
@@ -14287,14 +17522,12 @@ public:
         wxBoxSizer* option2_button_sizer = new wxBoxSizer(wxHORIZONTAL);
         option2_button_sizer->AddStretchSpacer();
 
-        StateColor btn_bg_green(std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed),
-                                std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-                                std::pair<wxColour, int>(AMS_CONTROL_BRAND_COLOUR, StateColor::Normal));
+        StateColor btn_bg_green(std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed),
+                                std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
+                                std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
 
         Button* goback_button = new Button(option2_box, _L("Go Back"));
-        goback_button->SetBackgroundColor(btn_bg_green);
-        goback_button->SetBorderColor(*wxWHITE);
-        goback_button->SetTextColor(wxColour("#FFFFFE"));
+        goback_button->SetVariant(Button::Variant::Outlined);
         goback_button->SetFont(Label::Body_12);
         goback_button->SetSize(wxSize(wxWindowBase::FromDIP(100, this), wxWindowBase::FromDIP(28, this)));
         goback_button->SetMinSize(wxSize(wxWindowBase::FromDIP(100, this), wxWindowBase::FromDIP(28, this)));
@@ -14312,8 +17545,8 @@ public:
         main_sizer->Add(option2_box, 0, wxLEFT | wxRIGHT | wxBOTTOM, wxWindowBase::FromDIP(15, this));
 
         // Option 3: Refresh & Retry - re-fetch data from server
-        wxColour option3_bg = is_dark_mode ? wxColour(40, 45, 60) : wxColour("#EBF0FA");
-        wxColour option3_border = is_dark_mode ? wxColour(80, 100, 140) : wxColour("#B0C4DE");
+        wxColour option3_bg = StateColor::semantic(MD3::Role::SurfaceContainerLow);
+        wxColour option3_border = StateColor::semantic(MD3::Role::OutlineVariant);
 
         StaticBox* option3_box = new StaticBox(this, wxID_ANY, wxDefaultPosition,
                                                wxSize(wxWindowBase::FromDIP(470, this), -1));
@@ -14341,14 +17574,12 @@ public:
         wxBoxSizer* option3_button_sizer = new wxBoxSizer(wxHORIZONTAL);
         option3_button_sizer->AddStretchSpacer();
 
-        StateColor btn_bg_blue(std::pair<wxColour, int>(wxColour(40, 80, 140), StateColor::Pressed),
-                               std::pair<wxColour, int>(wxColour(80, 130, 200), StateColor::Hovered),
-                               std::pair<wxColour, int>(wxColour(60, 110, 180), StateColor::Normal));
+        StateColor btn_bg_blue(std::pair<wxColour, int>(StateColor::darkModeColorFor(ThemeColor::Link).ChangeLightness(80), StateColor::Pressed),
+                               std::pair<wxColour, int>(StateColor::darkModeColorFor(ThemeColor::Link).ChangeLightness(120), StateColor::Hovered),
+                               std::pair<wxColour, int>(StateColor::darkModeColorFor(ThemeColor::Link), StateColor::Normal));
 
         Button* refresh_button = new Button(option3_box, _L("Refresh & Retry"));
-        refresh_button->SetBackgroundColor(btn_bg_blue);
-        refresh_button->SetBorderColor(*wxWHITE);
-        refresh_button->SetTextColor(wxColour("#FFFFFE"));
+        refresh_button->SetVariant(Button::Variant::Outlined);
         refresh_button->SetFont(Label::Body_12);
         refresh_button->SetSize(wxSize(wxWindowBase::FromDIP(130, this), wxWindowBase::FromDIP(28, this)));
         refresh_button->SetMinSize(wxSize(wxWindowBase::FromDIP(130, this), wxWindowBase::FromDIP(28, this)));
@@ -14366,6 +17597,8 @@ public:
         main_sizer->Add(option3_box, 0, wxLEFT | wxRIGHT | wxBOTTOM, wxWindowBase::FromDIP(15, this));
 
         SetSizerAndFit(main_sizer);
+        wxGetApp().UpdateDlgDarkUI(this);
+        MD3DialogCaption::Adopt(this);
         {
             wxWindow* parent = GetParent();
             if (parent) {
@@ -14377,7 +17610,6 @@ public:
                 SetPosition(wxPoint(x, y));
             }
         }
-        wxGetApp().UpdateDlgDarkUI(this);
     }
 
     void on_dpi_changed(const wxRect& suggested_rect) override {}
@@ -14411,8 +17643,8 @@ public:
         sizer->Add(label, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT, wxWindowBase::FromDIP(20, this));
         sizer->AddSpacer(wxWindowBase::FromDIP(15, this));
 
-        m_gauge = new wxGauge(this, wxID_ANY, 100, wxDefaultPosition,
-                              wxSize(wxWindowBase::FromDIP(300, this), -1), wxGA_HORIZONTAL);
+        m_gauge = new ProgressBar(this, wxID_ANY, 100, wxDefaultPosition,
+                                  wxSize(wxWindowBase::FromDIP(300, this), -1));
         m_gauge->Pulse();
         sizer->Add(m_gauge, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT, wxWindowBase::FromDIP(20, this));
         sizer->AddSpacer(wxWindowBase::FromDIP(10, this));
@@ -14423,8 +17655,9 @@ public:
         sizer->AddSpacer(wxWindowBase::FromDIP(10, this));
 
         SetSizerAndFit(sizer);
-        CentreOnParent();
         wxGetApp().UpdateDlgDarkUI(this);
+        MD3DialogCaption::Adopt(this);
+        CentreOnParent();
 
         m_timer = new wxTimer(this);
         Bind(wxEVT_TIMER, &HelioSyncProgressDialog::OnTimer, this);
@@ -14475,7 +17708,8 @@ private:
     }
 
     wxTimer* m_timer;
-    wxGauge* m_gauge;
+    ProgressBar* m_gauge;
+    std::chrono::steady_clock::time_point m_start_time;
     Button* m_cancel_btn;
     bool m_wait_for_refresh_completion{false};
     bool m_cancelled_by_user{false};
@@ -14626,17 +17860,15 @@ int Plater::priv::update_helio_background_process_v2_once(std::string& printer_i
 
             // Reuse the same PrinterSelectionDialog class defined above in the V3 function scope
             // For V2, show a simple choice dialog
-            wxSingleChoiceDialog dialog(static_cast<wxWindow*>(wxGetApp().mainframe),
+            SingleChoiceDialog dialog(
                 wxString::Format(_L("Your printer '%s' is not officially supported by Helio.\nSelect a reference printer:"), printer_target_name),
-                _L("Unsupported Printer"), printer_choices);
+                _L("Unsupported Printer"), printer_choices, 0, static_cast<wxWindow*>(wxGetApp().mainframe));
 
-            if (dialog.ShowModal() == wxID_OK) {
-                int selection = dialog.GetSelection();
-                if (selection >= 0 && selection < (int)printer_ids.size()) {
-                    printer_id = printer_ids[selection];
-                    helio_support = true;
-                    helio_using_reference_printer = true;
-                }
+            int selection = dialog.GetSingleChoiceIndex();
+            if (selection >= 0 && selection < (int)printer_ids.size()) {
+                printer_id = printer_ids[selection];
+                helio_support = true;
+                helio_using_reference_printer = true;
             }
 
             if (!helio_support) return -1;
@@ -15089,12 +18321,11 @@ int Plater::priv::update_helio_background_process_once(std::string& printer_id,
                     wxBoxSizer *main_sizer = new wxBoxSizer(wxVERTICAL);
                     main_sizer->SetMinSize(wxSize(wxWindowBase::FromDIP(500, mainframe), -1));
 
-                    bool is_dark_mode = wxGetApp().dark_mode();
                     wxColour text_color = wxGetApp().get_label_clr_default();
 
                     // Warning header with purple styling (Helio brand)
-                    wxColour warning_color = wxColour("#AF7CFF");
-                    wxColour warning_bg = is_dark_mode ? wxColour(45, 35, 60) : wxColour(245, 240, 255);
+                    wxColour warning_color = StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Preview);
+                    wxColour warning_bg = StateColor::semantic(MD3::Role::SecondaryContainer, MD3::ColorScheme::Preview);
 
                     m_warning_box = new StaticBox(this, wxID_ANY, wxDefaultPosition,
                                                    wxSize(wxWindowBase::FromDIP(470, this), -1));
@@ -15108,14 +18339,14 @@ int Plater::priv::update_helio_background_process_once(std::string& printer_id,
                     warning_sizer->AddSpacer(wxWindowBase::FromDIP(14, this));
 
                     m_warning_title = new Label(m_warning_box, Label::Head_16, _L("⚠ Unsupported Printer Detected"));
-                    wxColour warning_title_color = is_dark_mode ? StateColor::darkModeColorFor(warning_color) : wxColour(110, 60, 180);
+                    wxColour warning_title_color = StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Preview);
                     m_warning_title->SetForegroundColour(warning_title_color);
                     warning_sizer->Add(m_warning_title, 0, wxLEFT | wxRIGHT, wxWindowBase::FromDIP(16, this));
                     warning_sizer->AddSpacer(wxWindowBase::FromDIP(8, this));
 
                     wxString warning_msg = wxString::Format(_L("You're using %s which is not officially supported by Helio."), m_used_printer);
                     m_warning_text = new Label(m_warning_box, Label::Body_14, warning_msg, LB_AUTO_WRAP);
-                    wxColour warning_text_color = is_dark_mode ? wxColour(240, 240, 240) : wxColour(60, 50, 40);
+                    wxColour warning_text_color = StateColor::semantic(MD3::Role::OnSecondaryContainer, MD3::ColorScheme::Preview);
                     m_warning_text->SetForegroundColour(warning_text_color);
                     m_warning_text->Wrap(wxWindowBase::FromDIP(440, this));
                     warning_sizer->Add(m_warning_text, 0, wxEXPAND | wxLEFT | wxRIGHT, wxWindowBase::FromDIP(16, this));
@@ -15125,8 +18356,8 @@ int Plater::priv::update_helio_background_process_once(std::string& printer_id,
                     main_sizer->Add(m_warning_box, 0, wxALL, wxWindowBase::FromDIP(15, this));
 
                     // Option 1: Proceed with reference printer
-                    wxColour section_bg = is_dark_mode ? wxColour(50, 50, 55) : wxColour("#F8F8F8");
-                    wxColour section_border = is_dark_mode ? wxColour(70, 70, 75) : wxColour("#E8E8E8");
+                    wxColour section_bg = StateColor::semantic(MD3::Role::SurfaceContainerLow);
+                    wxColour section_border = StateColor::semantic(MD3::Role::OutlineVariant);
 
                     StaticBox* option1_box = new StaticBox(this, wxID_ANY, wxDefaultPosition,
                                                            wxSize(wxWindowBase::FromDIP(470, this), -1));
@@ -15164,7 +18395,7 @@ int Plater::priv::update_helio_background_process_once(std::string& printer_id,
                     option1_sizer->AddSpacer(wxWindowBase::FromDIP(12, this));
 
                     // Note about approximation
-                    wxColour note_color = is_dark_mode ? wxColour(180, 180, 180) : wxColour("#6B6B6B");
+                    wxColour note_color = StateColor::semantic(MD3::Role::OnSurfaceVariant);
                     Label* note_text = new Label(option1_box, Label::Body_12,
                         _L("Note: Using a reference printer may result in approximate or erroneous results."), LB_AUTO_WRAP);
                     note_text->SetForegroundColour(note_color);
@@ -15176,14 +18407,12 @@ int Plater::priv::update_helio_background_process_once(std::string& printer_id,
                     wxBoxSizer* option1_button_sizer = new wxBoxSizer(wxHORIZONTAL);
                     option1_button_sizer->AddStretchSpacer();
 
-                    StateColor btn_bg_purple(std::pair<wxColour, int>(wxColour(120, 80, 180), StateColor::Pressed),
-                                             std::pair<wxColour, int>(wxColour(190, 140, 255), StateColor::Hovered),
-                                             std::pair<wxColour, int>(wxColour(175, 124, 255), StateColor::Normal));
+                    StateColor btn_bg_purple(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Preview).ChangeLightness(80), StateColor::Pressed),
+                                             std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Preview).ChangeLightness(120), StateColor::Hovered),
+                                             std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Preview), StateColor::Normal));
 
                     Button* proceed_button = new Button(option1_box, _L("Proceed Anyway"));
-                    proceed_button->SetBackgroundColor(btn_bg_purple);
-                    proceed_button->SetBorderColor(*wxWHITE);
-                    proceed_button->SetTextColor(wxColour("#FFFFFE"));
+                    proceed_button->SetVariant(Button::Variant::Filled);
                     proceed_button->SetFont(Label::Body_12);
                     proceed_button->SetSize(wxSize(wxWindowBase::FromDIP(130, this), wxWindowBase::FromDIP(28, this)));
                     proceed_button->SetMinSize(wxSize(wxWindowBase::FromDIP(130, this), wxWindowBase::FromDIP(28, this)));
@@ -15198,9 +18427,9 @@ int Plater::priv::update_helio_background_process_once(std::string& printer_id,
                     main_sizer->Add(option1_box, 0, wxLEFT | wxRIGHT | wxBOTTOM, wxWindowBase::FromDIP(15, this));
 
                     // Option 2: Go back (recommended)
-                    wxColour option2_bg = is_dark_mode ? wxColour(30, 60, 40) : wxColour("#E8F5E9");
-                    wxColour option2_border = is_dark_mode ? wxColour(76, 175, 80) : wxColour("#4CAF50");
-                    wxColour recommended_color = is_dark_mode ? wxColour(129, 199, 132) : wxColour("#2E7D32");
+                    wxColour option2_bg = StateColor::semantic(MD3::Role::SecondaryContainer);
+                    wxColour option2_border = StateColor::semantic(MD3::Role::Primary);
+                    wxColour recommended_color = StateColor::semantic(MD3::Role::Primary);
 
                     StaticBox* option2_box = new StaticBox(this, wxID_ANY, wxDefaultPosition,
                                                            wxSize(wxWindowBase::FromDIP(470, this), -1));
@@ -15215,7 +18444,7 @@ int Plater::priv::update_helio_background_process_once(std::string& printer_id,
 
                     wxBoxSizer* option2_header = new wxBoxSizer(wxHORIZONTAL);
                     Label* option2_title = new Label(option2_box, Label::Head_14, _L("Option 2: Go back and change printer selection"));
-                    wxColour option2_text_color = is_dark_mode ? wxColour(240, 240, 240) : text_color;
+                    wxColour option2_text_color = StateColor::semantic(MD3::Role::OnSecondaryContainer);
                     option2_title->SetForegroundColour(option2_text_color);
                     option2_header->Add(option2_title, 0, wxALIGN_CENTER_VERTICAL);
                     option2_header->AddSpacer(wxWindowBase::FromDIP(10, this));
@@ -15233,9 +18462,8 @@ int Plater::priv::update_helio_background_process_once(std::string& printer_id,
                     option2_desc->Wrap(wxWindowBase::FromDIP(440, this));
                     option2_sizer->Add(option2_desc, 0, wxEXPAND | wxLEFT | wxRIGHT, wxWindowBase::FromDIP(16, this));
 
-                    wxHyperlinkCtrl* supported_printers_link = new wxHyperlinkCtrl(option2_box, wxID_ANY,
-                        _L("See supported printers"), "https://wiki.helioadditive.com/en/supportedprinters",
-                        wxDefaultPosition, wxDefaultSize, wxHL_DEFAULT_STYLE);
+                    LinkLabel* supported_printers_link = new LinkLabel(option2_box,
+                        _L("See supported printers"), "https://wiki.helioadditive.com/en/supportedprinters");
                     option2_sizer->Add(supported_printers_link, 0, wxLEFT | wxRIGHT, wxWindowBase::FromDIP(16, this));
                     option2_sizer->AddSpacer(wxWindowBase::FromDIP(12, this));
 
@@ -15243,14 +18471,12 @@ int Plater::priv::update_helio_background_process_once(std::string& printer_id,
                     wxBoxSizer* option2_button_sizer = new wxBoxSizer(wxHORIZONTAL);
                     option2_button_sizer->AddStretchSpacer();
 
-                    StateColor btn_bg_green(std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed),
-                                           std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-                                           std::pair<wxColour, int>(AMS_CONTROL_BRAND_COLOUR, StateColor::Normal));
+                    StateColor btn_bg_green(std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed),
+                                           std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
+                                           std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
 
                     Button* goback_button = new Button(option2_box, _L("Go Back"));
-                    goback_button->SetBackgroundColor(btn_bg_green);
-                    goback_button->SetBorderColor(*wxWHITE);
-                    goback_button->SetTextColor(wxColour("#FFFFFE"));
+                    goback_button->SetVariant(Button::Variant::Outlined);
                     goback_button->SetFont(Label::Body_12);
                     goback_button->SetSize(wxSize(wxWindowBase::FromDIP(100, this), wxWindowBase::FromDIP(28, this)));
                     goback_button->SetMinSize(wxSize(wxWindowBase::FromDIP(100, this), wxWindowBase::FromDIP(28, this)));
@@ -15271,6 +18497,7 @@ int Plater::priv::update_helio_background_process_once(std::string& printer_id,
                     Layout();
                     main_sizer->Fit(this);
                     main_sizer->SetSizeHints(this);
+                    MD3DialogCaption::Adopt(this);
                 }
 
                 void on_dpi_changed(const wxRect &suggested_rect) override {}
@@ -15879,6 +19106,10 @@ void Plater::priv::on_helio_input_dlg(SimpleEvent &a)
 void Plater::priv::on_action_slice_all(SimpleEvent&)
 {
     if (q != nullptr) {
+        ++m_slice_request_generation;
+        m_print_after_slice_plate = nullptr;
+        m_print_after_slice_index = -1;
+        m_print_after_slice_generation = 0;
         BOOST_LOG_TRIVIAL(debug) << __FUNCTION__ << ":received slice project event\n";
         //BBS update extruder params and speed table before slicing
         const Slic3r::DynamicPrintConfig& config = wxGetApp().preset_bundle->full_config();
@@ -16162,6 +19393,7 @@ void Plater::priv::on_plate_selected(SimpleEvent&)
 {
     BOOST_LOG_TRIVIAL(debug) << __FUNCTION__ << ":received plate selected event\n" ;
     sidebar->obj_list()->on_plate_selected(partplate_list.get_curr_plate_index());
+    main_frame->update_prepare_action_bar_content();
     if (view3D && view3D->get_canvas3d())
         view3D->get_canvas3d()->update_all_objects_unprintable_warning();
 }
@@ -16209,6 +19441,7 @@ void Plater::priv::on_object_select(SimpleEvent& evt)
 void Plater::priv::on_plate_name_change(SimpleEvent &) {
     wxGetApp().obj_list()->update_selections();
     selection_changed();
+    main_frame->update_prepare_action_bar_content();
 }
 
 void Plater::priv::on_move_plate(SimpleEvent &)
@@ -16317,11 +19550,11 @@ void Plater::priv::apply_color_mode()
     const bool is_dark    = wxGetApp().dark_mode();
     wxColour   orca_color = wxColour(59, 68, 70); // wxColour(ColorRGBA::ORCA().r_uchar(), ColorRGBA::ORCA().g_uchar(), ColorRGBA::ORCA().b_uchar());
     orca_color            = is_dark ? StateColor::darkModeColorFor(orca_color) : StateColor::lightModeColorFor(orca_color);
-    wxColour sash_color   = is_dark ? wxColour(38, 46, 48) : wxColour(206, 206, 206);
+    wxColour sash_color   = StateColor::semantic(MD3::Role::OutlineVariant);
     m_aui_mgr.GetArtProvider()->SetColour(wxAUI_DOCKART_INACTIVE_CAPTION_COLOUR, sash_color);
-    m_aui_mgr.GetArtProvider()->SetColour(wxAUI_DOCKART_INACTIVE_CAPTION_TEXT_COLOUR, *wxWHITE);
+    m_aui_mgr.GetArtProvider()->SetColour(wxAUI_DOCKART_INACTIVE_CAPTION_TEXT_COLOUR, StateColor::semantic(MD3::Role::OnSurfaceVariant));
     m_aui_mgr.GetArtProvider()->SetColour(wxAUI_DOCKART_SASH_COLOUR, sash_color);
-    m_aui_mgr.GetArtProvider()->SetColour(wxAUI_DOCKART_BORDER_COLOUR, is_dark ? *wxBLACK : wxColour(165, 165, 165));
+    m_aui_mgr.GetArtProvider()->SetColour(wxAUI_DOCKART_BORDER_COLOUR, StateColor::semantic(MD3::Role::Outline));
 }
 
 static void get_position(wxWindowBase *child, wxWindowBase *until_parent, int &x, int &y)
@@ -16343,7 +19576,8 @@ static void get_position(wxWindowBase *child, wxWindowBase *until_parent, int &x
 
 void Plater::priv::show_right_click_menu(Vec2d mouse_position, wxMenu *menu)
 {
-    // BBS: GUI refactor: move sidebar to the left
+    // Translate the canvas position into frame coordinates; the MD3 sidebar
+    // may be docked on the right or floated without affecting this menu.
     int x, y;
     get_position(current_panel, wxGetApp().mainframe, x, y);
     wxPoint position(static_cast<int>(mouse_position.x() + x), static_cast<int>(mouse_position.y() + y));
@@ -18390,7 +21624,7 @@ void Plater::priv::on_add_filament(SimpleEvent &evt) {
 }
 
 void Plater::priv::on_delete_filament(SimpleEvent &evt) {
-    sidebar->delete_filament();
+    sidebar->delete_filament_with_confirm();
 }
 
 void Plater::priv::on_add_custom_filament(ColorEvent &evt)
@@ -19498,6 +22732,7 @@ void Plater::priv::assemble_undo_redo_to(std::vector<UndoRedo::Snapshot>::const_
         }
         assemble_canvas->restore_assembly_guide_ui_after_undo(restore_folder_id, restore_kf);
         assemble_canvas->set_as_dirty();
+        schedule_project_history_capture(snapshot_copy.name.empty() ? "Assembly undo or redo" : snapshot_copy.name);
         // Refresh assembly dirty from the stack tip vs last mark_current_as_saved so undoing
         // all the way back to the saved tip clears the unsaved-project prompt.
         m_assemble_project_dirty = m_undo_redo_stack_assemble.project_modified();
@@ -19537,6 +22772,9 @@ void Plater::priv::take_snapshot(const std::string& snapshot_name, const UndoRed
             set_plater_dirty(true);
         }
         BOOST_LOG_TRIVIAL(info) << "Assemble Undo / Redo snapshot taken: " << snapshot_name;
+        if (snapshot_type != UndoRedo::SnapshotType::ProjectSeparator && snapshot_modifies_project(snapshot_type) &&
+            (snapshot_name.empty() || snapshot_name.back() != '!'))
+            schedule_project_history_capture(snapshot_name);
         return;
     }
     // BBS: single snapshot
@@ -19606,6 +22844,9 @@ void Plater::priv::take_snapshot(const std::string& snapshot_name, const UndoRed
     // Save the last active preset name of a particular printer technology.
     ((this->printer_technology == ptFFF) ? m_last_fff_printer_profile_name : m_last_sla_printer_profile_name) = wxGetApp().preset_bundle->printers.get_selected_preset_name();
     BOOST_LOG_TRIVIAL(info) << "Undo / Redo snapshot taken: " << snapshot_name << ", Undo / Redo stack memory: " << Slic3r::format_memsize_MB(this->undo_redo_stack().memsize()) << log_memory_info();
+    if (snapshot_type != UndoRedo::SnapshotType::ProjectSeparator && snapshot_modifies_project(snapshot_type) &&
+        (snapshot_name.empty() || snapshot_name.back() != '!'))
+        schedule_project_history_capture(snapshot_name);
 }
 
 void Plater::priv::undo()
@@ -19747,9 +22988,10 @@ void Plater::priv::undo_redo_to(std::vector<UndoRedo::Snapshot>::const_iterator 
     // Make a copy of the snapshot, undo/redo could invalidate the iterator
     const UndoRedo::Snapshot snapshot_copy = *it_snapshot;
     // Do the jump in time.
-    if (it_snapshot->timestamp < this->undo_redo_stack().active_snapshot_time() ?
+    const bool history_state_changed = it_snapshot->timestamp < this->undo_redo_stack().active_snapshot_time() ?
         this->undo_redo_stack().undo(model, get_current_canvas3D()->get_canvas_type() == GLCanvas3D::CanvasAssembleView ? assemble_view->get_canvas3d()->get_selection() : this->view3D->get_canvas3d()->get_selection(), get_current_canvas3D()->get_canvas_type() == GLCanvas3D::CanvasAssembleView ? assemble_view->get_canvas3d()->get_gizmos_manager() : this->view3D->get_canvas3d()->get_gizmos_manager(), this->partplate_list, top_snapshot_data, it_snapshot->timestamp) :
-        this->undo_redo_stack().redo(model, get_current_canvas3D()->get_canvas_type() == GLCanvas3D::CanvasAssembleView ? assemble_view->get_canvas3d()->get_gizmos_manager() : this->view3D->get_canvas3d()->get_gizmos_manager(), this->partplate_list, it_snapshot->timestamp)) {
+        this->undo_redo_stack().redo(model, get_current_canvas3D()->get_canvas_type() == GLCanvas3D::CanvasAssembleView ? assemble_view->get_canvas3d()->get_gizmos_manager() : this->view3D->get_canvas3d()->get_gizmos_manager(), this->partplate_list, it_snapshot->timestamp);
+    if (history_state_changed) {
         if (printer_technology_changed) {
             // Switch to the other printer technology. Switch to the last printer active for that particular technology.
             AppConfig *app_config = wxGetApp().app_config;
@@ -19824,6 +23066,8 @@ void Plater::priv::undo_redo_to(std::vector<UndoRedo::Snapshot>::const_iterator 
     }
 
     dirty_state.update_from_undo_redo_stack(m_undo_redo_stack_main.project_modified());
+    if (history_state_changed)
+        schedule_project_history_capture(snapshot_copy.name.empty() ? "Undo or redo" : snapshot_copy.name);
 }
 
 void Plater::priv::update_after_undo_redo(const UndoRedo::Snapshot& snapshot, bool /* temp_snapshot_was_taken */)
@@ -20212,9 +23456,6 @@ void Plater::reset_flags_when_new_or_close_project()
 
 int Plater::new_project(bool skip_confirm, bool silent, const wxString &project_name)
 {
-    model().calib_pa_pattern.reset(nullptr);
-    model().plates_custom_gcodes.clear();
-
     bool transfer_preset_changes = false;
     // BBS: save confirm
     auto check = [this,&transfer_preset_changes](bool yes_or_no) {
@@ -20237,6 +23478,19 @@ int Plater::new_project(bool skip_confirm, bool silent, const wxString &project_
     if (!skip_confirm && (result = close_with_confirm(check)) == wxID_CANCEL)
         return wxID_CANCEL;
 
+    // Do not clear any project-owned state until reset has durably frozen the
+    // outgoing revision. On failure the current document remains untouched.
+    if (!p->reset(transfer_preset_changes))
+        return wxID_CANCEL;
+    cancel_pending_print_after_slice();
+    p->m_fresh_project_mapping_preference_owned = true;
+    const auto preferred_map_mode = get_preferred_filament_map_mode_for_current_printer();
+    if (is_auto_filament_map_mode(preferred_map_mode))
+        set_global_filament_map_mode(preferred_map_mode, true);
+
+    model().calib_pa_pattern.reset(nullptr);
+    model().plates_custom_gcodes.clear();
+
     if (auto *assemble_canvas = get_assmeble_canvas3D()) {
         assemble_canvas->new_project_clear_assembly_steps_tree_view(true);
     }
@@ -20250,7 +23504,6 @@ int Plater::new_project(bool skip_confirm, bool silent, const wxString &project_
     //get_partplate_list().reinit();
     //get_partplate_list().update_slice_context_to_current_plate(p->background_process);
     //p->preview->update_gcode_result(p->partplate_list.get_current_slice_result());
-    reset(transfer_preset_changes);
     reset_project_dirty_after_save();
     reset_project_dirty_initial_presets();
     get_partplate_list().reset_thumbnail_assembly_view_data();
@@ -20269,6 +23522,7 @@ int Plater::new_project(bool skip_confirm, bool silent, const wxString &project_
 
     Model m;
     model().load_from(m); // new id avoid same path name
+    p->persist_project_history_session_marker();
 
     //select first plate
     get_partplate_list().select_plate(0);
@@ -20287,6 +23541,14 @@ int Plater::new_project(bool skip_confirm, bool silent, const wxString &project_
     up_to_date(true, false);
     up_to_date(true, true);
     return wxID_YES;
+}
+
+void Plater::cancel_pending_print_after_slice()
+{
+    if (!p) return;
+    p->m_print_after_slice_plate = nullptr;
+    p->m_print_after_slice_index = -1;
+    p->m_print_after_slice_generation = 0;
 }
 
 bool Plater::try_sync_preset_with_connected_printer(int& nozzle_diameter)
@@ -20371,8 +23633,13 @@ bool Plater::try_sync_preset_with_connected_printer(int& nozzle_diameter)
 
 // BBS: FIXME, missing resotre logic
 int Plater::load_project(wxString const &filename2,
-    wxString const& originfile)
+    wxString const& originfile,
+    bool *load_succeeded,
+    bool skip_close_confirmation)
 {
+    if (load_succeeded != nullptr)
+        *load_succeeded = false;
+
     // The project path is rendered into the home page recent-file list as raw HTML, so quotes or
     // angle brackets anywhere in it - a parent directory name just as much as the file name - can
     // break out of the surrounding attribute. Refuse such files before anything is loaded or recorded.
@@ -20381,9 +23648,6 @@ int Plater::load_project(wxString const &filename2,
         show_unsafe_path_warning(this);
         return wxID_CANCEL;
     }
-
-    model().calib_pa_pattern.reset(nullptr);
-    model().plates_custom_gcodes.clear();
 
     BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << "filename is: " << PathSanitizer::sanitize(filename2.ToUTF8().data())
                             << "and originfile is: " << PathSanitizer::sanitize(originfile.ToUTF8().data());
@@ -20407,20 +23671,12 @@ int Plater::load_project(wxString const &filename2,
         return !filename.empty();
     };
 
-    // BSS: save project, force close
-    int wx_dlg_id = close_with_confirm(check);
+    // History restore already has an explicit confirmation and needs a
+    // non-interactive rollback path if loading the selected snapshot fails.
+    const int wx_dlg_id = skip_close_confirmation ? wxID_YES : close_with_confirm(check);
     if (wx_dlg_id == wxID_CANCEL) {
         return wx_dlg_id;
     }
-
-    // Same as new_project: stop playback / clear assembly runtime before the
-    // incoming 3mf replaces the model, otherwise play-mode chrome can linger.
-    if (auto *assemble_canvas = get_assmeble_canvas3D()) {
-        assemble_canvas->new_project_clear_assembly_steps_tree_view(true);
-    }
-
-    //BBS: add only gcode mode
-    bool previous_gcode = m_only_gcode;
 
     // BBS
     if (m_loading_project) {
@@ -20429,10 +23685,28 @@ int Plater::load_project(wxString const &filename2,
         BOOST_LOG_TRIVIAL(warning) << __FUNCTION__ << boost::format(": current loading other project, return directly");
         return wx_dlg_id;
     }
-    else
-        m_loading_project = true;
+    // Same as new_project: stop playback / clear assembly runtime before the
+    // incoming 3mf replaces the model, otherwise play-mode chrome can linger.
+    if (auto *assemble_canvas = get_assmeble_canvas3D()) {
+        assemble_canvas->new_project_clear_assembly_steps_tree_view(true);
+    }
 
-    m_only_gcode = false;
+    //BBS: add only gcode mode
+    const bool previous_gcode = m_only_gcode;
+    // reset() is the fail-closed history boundary. Run it before setting the
+    // loading flag (which deliberately defers history exports) and before
+    // mutating any project-owned state.
+    if (!p->reset())
+        return wxID_CANCEL;
+
+    m_loading_project = true;
+    struct LoadingFlagReset {
+        bool& flag;
+        ~LoadingFlagReset() { flag = false; }
+    } loading_flag_reset{m_loading_project};
+    model().calib_pa_pattern.reset(nullptr);
+    model().plates_custom_gcodes.clear();
+    m_only_gcode    = false;
     m_exported_file = false;
     // Same as new_project: the incoming 3mf replaces the current document, so
     // leftover toasts (simplify, slice errors, plate info, ...) must not linger.
@@ -20448,9 +23722,8 @@ int Plater::load_project(wxString const &filename2,
     }
     bool load_restore = strategy & LoadStrategy::Restore;
 
-    // Take the Undo / Redo snapshot.
-    reset();
-
+    // Take the Undo / Redo snapshot. The caller decides where the replacement
+    // document's recovery marker belongs after load.
     Plater::TakeSnapshot snapshot(this, "Load Project", UndoRedo::SnapshotType::ProjectSeparator);
 
     std::vector<fs::path> input_paths;
@@ -20458,14 +23731,32 @@ int Plater::load_project(wxString const &filename2,
     if (strategy & LoadStrategy::Restore)
         input_paths.push_back(into_u8(originfile));
 
-    std::vector<size_t> res = load_files(input_paths, strategy);
+    bool                explicit_3mf_loaded = false;
+    std::vector<size_t> res = load_files(input_paths, strategy, false, &explicit_3mf_loaded);
+    const bool loaded_project = explicit_3mf_loaded || !res.empty();
+    if (!loaded_project) {
+        BOOST_LOG_TRIVIAL(warning) << __FUNCTION__ << ": no project data was loaded";
+        return wxID_CANCEL;
+    }
+
+    if (loaded_project && explicit_3mf_loaded && p->project_history_manager()) {
+        try {
+            const stdfs::path archive_path = stdfs::u8path(into_u8(filename));
+            const auto imported = p->project_history_manager()->import_portable_history(archive_path, archive_path).get();
+            if (!imported.ok())
+                BOOST_LOG_TRIVIAL(warning) << "Embedded project history was rejected; model geometry remains available: "
+                                           << imported.error.message;
+        } catch (const std::exception &ex) {
+            BOOST_LOG_TRIVIAL(warning) << "Could not import embedded project history; model geometry remains available: " << ex.what();
+        }
+    }
 
     reset_project_dirty_initial_presets();
     update_project_dirty_from_presets();
     wxGetApp().preset_bundle->export_selections(*wxGetApp().app_config);
 
     // if res is empty no data has been loaded
-    if (!res.empty() && (load_restore || !(strategy & LoadStrategy::Silence))) {
+    if (loaded_project && (load_restore || !(strategy & LoadStrategy::Silence))) {
         BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << __LINE__ << " call set_project_filename: " << load_restore ? originfile : filename;
         p->set_project_filename(load_restore ? originfile : filename);
         if (load_restore && originfile.IsEmpty()) {
@@ -20495,6 +23786,8 @@ int Plater::load_project(wxString const &filename2,
         collapse_sidebar(false);
 
     wxGetApp().app_config->update_last_backup_dir(model().get_backup_path());
+    if (!load_restore && get_project_filename(".3mf").empty())
+        p->persist_project_history_session_marker();
     if (load_restore && !originfile.empty()) {
         wxGetApp().app_config->update_skein_dir(into_path(originfile).parent_path().string());
         wxGetApp().app_config->update_config_dir(into_path(originfile).parent_path().string());
@@ -20525,15 +23818,264 @@ int Plater::load_project(wxString const &filename2,
     statistics_burial_data(filename.utf8_string());
 
     show_wrapping_detect_dialog_if_necessary();
+    // Publish success only after every load finalizer above has completed. An
+    // exception or early return therefore leaves the caller's value false and
+    // the history-restore path will execute its rollback.
+    if (load_succeeded != nullptr)
+        *load_succeeded = loaded_project;
     return wx_dlg_id;
 }
 
+// BBS: session file-tabs — serialize ONLY the outgoing project so a tab switch
+// can round-trip it later. Reuses the shipped Backup autosave archive
+// (SaveStrategy::Backup == WithGcode|Silence|SkipStatic|SplitModel, the same
+// silent full-project format MainFrame's periodic backup writes). The caller
+// (MainFrame) invokes this only when is_project_dirty(), so switch latency is
+// paid only for tabs with unsaved edits. Never touches project dirty/title
+// state — the outgoing tab stays dirty in the tab model until re-activated.
+// Returns true only when the archive was written.
+bool Plater::save_snapshot_to(const std::string& path)
+{
+    if (path.empty())
+        return false;
+    // Do not serialize a half-loaded document if a project load is in flight.
+    if (m_loading_project) {
+        BOOST_LOG_TRIVIAL(warning) << __FUNCTION__ << ": skipped, a project load is in progress";
+        return false;
+    }
+    const boost::filesystem::path output_path = into_path(from_u8(path));
+    int ret = -1;
+    // export_3mf already contains its own serialization exceptions (Silence
+    // suppresses any dialog and it returns -1 on failure), but mirror the
+    // crash-recovery autosave call sites and stay exception-safe here too.
+    try {
+        ret = export_3mf(output_path, SaveStrategy::Backup);
+    } catch (const std::exception &ex) {
+        BOOST_LOG_TRIVIAL(error) << __FUNCTION__ << ": snapshot export threw: " << ex.what();
+        return false;
+    } catch (...) {
+        BOOST_LOG_TRIVIAL(error) << __FUNCTION__ << ": snapshot export threw";
+        return false;
+    }
+    return ret >= 0;
+}
+
+// BBS: session file-tabs — load a tab's snapshot .3mf (or its real project
+// file) as the live document when switching tabs. Reuses the crash-recovery
+// Restore round-trip: load_project() runs p->reset() internally (which also
+// stops any in-flight background slicing process) and, because a non-"-"
+// originfile selects LoadStrategy::Restore, imports model + config from the
+// archive without the interactive close/save prompt (skip_close_confirmation).
+// The originfile arg is used by load_files() only for its display filename, so
+// passing the path twice never re-parses geometry. MainFrame owns the tab
+// label/title (via SetActiveTitle and is_project_dirty()/get_project_filename()).
+// Undo history and camera reset on switch — acceptable per design. Returns true
+// only when the project actually loaded.
+bool Plater::load_snapshot_from(const std::string& path)
+{
+    if (path.empty())
+        return false;
+    // Serialize switches: block re-entrancy while another project load runs
+    // (mirrors the m_loading_project guard inside load_project()).
+    if (m_loading_project) {
+        BOOST_LOG_TRIVIAL(warning) << __FUNCTION__ << ": skipped, a project load is already in progress";
+        return false;
+    }
+    const wxString file = from_u8(path);
+    bool load_succeeded = false;
+    try {
+        load_project(file, file, &load_succeeded, /*skip_close_confirmation=*/true);
+    } catch (const std::exception &ex) {
+        // load_project() throwing leaves the loading flag latched; clear it so
+        // the next switch is not permanently blocked (matches the restore path).
+        m_loading_project = false;
+        BOOST_LOG_TRIVIAL(error) << __FUNCTION__ << ": snapshot load threw: " << ex.what();
+        return false;
+    } catch (...) {
+        m_loading_project = false;
+        BOOST_LOG_TRIVIAL(error) << __FUNCTION__ << ": snapshot load threw";
+        return false;
+    }
+    return load_succeeded;
+}
+
 // BBS: save logic
+bool Plater::export_workspace_member_with_history(const stdfs::path& destination)
+{
+    if (destination.empty() || destination.extension() != ".3mf" || m_loading_project)
+        return false;
+    std::error_code path_error;
+    if (stdfs::exists(destination, path_error) || path_error)
+        return false;
+    if (!p->flush_project_history_pending("Project edit before workspace save", true, true))
+        return false;
+
+    if (auto *assemble_canvas = get_assmeble_canvas3D())
+        assemble_canvas->prepare_assembly_steps_for_project_save();
+    auto strategy = SaveStrategy::SplitModel | SaveStrategy::ShareMesh;
+    if (wxGetApp().app_config->get_bool("export_sources_full_pathnames"))
+        strategy = strategy | SaveStrategy::FullPathSources;
+    const stdfs::path snapshot = destination.parent_path() /
+        (destination.filename().u8string() + ".pending-history-" + std::to_string(wxGetProcessId()) + "-" +
+         std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()) + ".3mf");
+    if (export_3mf(boost::filesystem::path(snapshot.native()), strategy) < 0) {
+        stdfs::remove(snapshot, path_error);
+        return false;
+    }
+
+    try {
+        auto *history = p->project_history_manager();
+        if (!history) throw std::runtime_error("Project-history storage is unavailable");
+        Slic3r::ProjectHistoryCommitOptions options;
+        options.message = "Saved workspace member";
+        const auto source_identity = p->project_history_identity();
+        const auto committed = history->commit_snapshot(source_identity, snapshot, options).get();
+        if (!committed.ok()) throw std::runtime_error(committed.error.message);
+        // The tab owns this private path for its entire lifetime. Publishing
+        // there keeps the embedded document ID and its registered owner stable.
+        const auto published = history->publish_portable_history(source_identity, snapshot, source_identity, false).get();
+        if (!published.ok()) throw std::runtime_error(published.error.message);
+        if (published.identity_registration_pending)
+            BOOST_LOG_TRIVIAL(warning) << "Workspace member saved, but local document-owner registration is pending";
+        if (!stdfs::copy_file(source_identity, destination, stdfs::copy_options::none, path_error) || path_error) {
+            stdfs::remove(destination, path_error);
+            throw std::runtime_error("Could not stage the completed workspace member");
+        }
+        stdfs::remove(snapshot, path_error);
+        return true;
+    } catch (const std::exception &ex) {
+        // Keep the completed history-free snapshot as a recovery source. The
+        // workspace bundle itself is not touched by this method.
+        BOOST_LOG_TRIVIAL(error) << "Workspace member export retained its recovery snapshot at "
+                                 << snapshot.u8string() << ": " << ex.what();
+        return false;
+    }
+}
+
+bool Plater::validate_print_setup_filament_maps(int expected_plate_index, const std::vector<int>& expected_maps,
+                                                const std::vector<int>& maps, wxString& reason)
+{
+    reason.clear();
+    if (!p || !wxGetApp().preset_bundle || expected_plate_index != p->partplate_list.get_curr_plate_index()) {
+        reason = _L("The active plate changed. Reopen print setup.");
+        return false;
+    }
+    PartPlate* plate = p->partplate_list.get_curr_plate();
+    if (!plate || p->partplate_list.get_selected_plate() != plate) {
+        reason = _L("Select the plate before changing its nozzle assignment.");
+        return false;
+    }
+    const auto& project_config = wxGetApp().preset_bundle->project_config;
+    const auto current = plate->get_real_filament_maps(project_config);
+    if (current != expected_maps || maps.size() != current.size() ||
+        std::any_of(maps.begin(), maps.end(), [](int nozzle) { return nozzle < 0 || nozzle > 2; })) {
+        reason = _L("The filament assignment changed. Reopen print setup.");
+        return false;
+    }
+    const auto used = plate->get_extruders(true);
+    for (int filament : used) {
+        if (filament < 1 || static_cast<size_t>(filament) > maps.size() || maps[filament - 1] == 0) {
+            reason = _L("Every used material needs a left or right nozzle.");
+            return false;
+        }
+    }
+
+    // Match the manual mapping editor's installed-nozzle capacity check.
+    const auto* volume_option = project_config.option<ConfigOptionEnumsGeneric>("nozzle_volume_type");
+    if (!volume_option || volume_option->values.size() < 2) {
+        reason = _L("The printer nozzle configuration is unavailable.");
+        return false;
+    }
+    const auto volumes = plate->get_real_filament_volume_maps(project_config);
+    for (int extruder = 0; extruder < 2; ++extruder) {
+        const auto volume_type = static_cast<NozzleVolumeType>(volume_option->values[extruder]);
+        for (int filament : used) {
+            if (maps[filament - 1] != extruder + 1) continue;
+            const auto required_type = volume_type == nvtHybrid
+                ? static_cast<NozzleVolumeType>(static_cast<size_t>(filament) <= volumes.size()
+                    ? volumes[filament - 1] : static_cast<int>(nvtStandard))
+                : volume_type;
+            if (wxGetApp().preset_bundle->extruder_nozzle_stat.get_extruder_nozzle_count(extruder, required_type) == 0) {
+                reason = wxString::Format(_L("The %s extruder has no available nozzle of the required type."),
+                    extruder == 0 ? _L("left") : _L("right"));
+                return false;
+            }
+        }
+    }
+
+    auto* canvas = p->view3D ? p->view3D->get_canvas3d() : nullptr;
+    if (!canvas || !canvas->is_initialized()) {
+        reason = _L("Wait for the Prepare view before changing nozzle assignments.");
+        return false;
+    }
+
+    const auto original_mode = plate->get_filament_map_mode();
+    const auto original_maps = plate->get_filament_maps();
+    auto restore = [&] {
+        if (original_maps.empty()) plate->clear_filament_map();
+        else plate->set_filament_maps(original_maps);
+        if (original_mode == fmmDefault) plate->clear_filament_map_mode();
+        else plate->set_filament_map_mode(original_mode);
+    };
+    wxString filament_error;
+    bool filament_ok = false;
+    ObjectFilamentResults object_results;
+    auto state = ModelInstancePVS_Inside;
+    try {
+        plate->set_filament_map_mode(fmmManual);
+        plate->set_filament_maps(maps);
+        filament_ok = plate->check_filament_printable(wxGetApp().preset_bundle->full_config(), filament_error);
+        state = canvas->check_volumes_outside_state(&object_results);
+    } catch (...) {
+        restore();
+        reason = _L("The proposed nozzle assignment could not be checked.");
+        return false;
+    }
+    restore();
+    ObjectFilamentResults restored_results;
+    try { canvas->check_volumes_outside_state(&restored_results); }
+    catch (...) {
+        reason = _L("The previous nozzle assignment could not be restored in Prepare.");
+        return false;
+    }
+    if (!filament_ok) {
+        reason = filament_error.empty() ? _L("This nozzle cannot print the selected material.") : filament_error;
+        return false;
+    }
+    if (state == ModelInstancePVS_Partly_Outside || !object_results.filaments.empty()) {
+        reason = _L("A model using this material is outside the target nozzle's printable area.");
+        return false;
+    }
+    return true;
+}
+
+bool Plater::apply_print_setup_filament_maps(int expected_plate_index, const std::vector<int>& expected_maps,
+                                             const std::vector<int>& maps)
+{
+    wxString reason;
+    if (maps == expected_maps || !validate_print_setup_filament_maps(expected_plate_index, expected_maps, maps, reason))
+        return false;
+    PartPlate* plate = p->partplate_list.get_curr_plate();
+    const auto& project_config = wxGetApp().preset_bundle->project_config;
+
+    const auto volumes = plate->get_real_filament_volume_maps(project_config);
+    cancel_pending_print_after_slice();
+    plate->set_filament_map_mode(fmmManual);
+    plate->set_filament_maps(maps);
+    plate->set_filament_volume_maps(volumes);
+    plate->update_slice_result_valid_state(false);
+    set_plater_dirty(true);
+    update(false, true);
+    wxGetApp().mainframe->select_tab(MainFrame::tp3DEditor);
+    return true;
+}
+
 int Plater::save_project(bool saveAs)
 {
     //if (up_to_date(false, false)) // should we always save
     //    return;
-    auto filename = get_project_filename(".3mf");
+    const stdfs::path previous_history_identity = p->project_history_identity();
+    auto              filename                  = get_project_filename(".3mf");
     if (!saveAs && filename.IsEmpty())
         saveAs = true;
     if (saveAs)
@@ -20542,6 +24084,14 @@ int Plater::save_project(bool saveAs)
         return wxID_NO;
     if (filename == "<cancel>")
         return wxID_CANCEL;
+
+    // Publish every completed edit for the old identity before Save As can
+    // change the filename or mutate assembly-save state. If staging cannot be
+    // made immutable, leave both the document and its identity untouched.
+    if (!p->flush_project_history_pending("Project edit before save", true, true)) {
+        BOOST_LOG_TRIVIAL(error) << "Project save refused because its preceding history boundary is not durable";
+        return wxID_CANCEL;
+    }
 
     if (auto *assemble_canvas = get_assmeble_canvas3D())
         assemble_canvas->prepare_assembly_steps_for_project_save();
@@ -20552,9 +24102,41 @@ int Plater::save_project(bool saveAs)
     if (full_pathnames) {
         save_strategy = save_strategy | SaveStrategy::FullPathSources;
     }
-    if (export_3mf(into_path(filename), save_strategy) < 0) {
+    const stdfs::path destination = stdfs::u8path(into_u8(filename));
+    const stdfs::path history_free_snapshot = destination.parent_path() /
+        (destination.filename().u8string() + ".pending-history-" + std::to_string(wxGetProcessId()) + "-" +
+         std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()) + ".3mf");
+    if (export_3mf(boost::filesystem::path(history_free_snapshot.native()), save_strategy) < 0) {
+        std::error_code cleanup_error;
+        stdfs::remove(history_free_snapshot, cleanup_error);
         MessageDialog(this, _L("Failed to save the project.\nPlease check whether the folder exists online or if other programs open the project file or if there is enough disk space."),
             _L("Save project"), wxOK | wxICON_WARNING).ShowModal();
+        return wxID_CANCEL;
+    }
+
+    // The ordinary model export above deliberately has no history entries.
+    // Commit that immutable snapshot, then publish the complete archive only
+    // after its embedded pack and manifest have been reopened and verified.
+    try {
+        auto *history = p->project_history_manager();
+        if (!history) throw std::runtime_error("Project-history storage is unavailable");
+        Slic3r::ProjectHistoryCommitOptions options;
+        options.message = "Saved project";
+        const auto committed = previous_history_identity == destination
+            ? history->commit_snapshot(destination, history_free_snapshot, options).get()
+            : history->migrate_then_commit_snapshot(previous_history_identity, destination, history_free_snapshot, options).get();
+        if (!committed.ok()) throw std::runtime_error(committed.error.message);
+        const auto published = history->publish_portable_history(destination, history_free_snapshot, destination,
+                                                                 saveAs || previous_history_identity != destination).get();
+        if (!published.ok()) throw std::runtime_error(published.error.message);
+        if (published.identity_registration_pending)
+            BOOST_LOG_TRIVIAL(warning) << "Portable project saved, but its local document-owner marker could not be updated";
+        std::error_code cleanup_error;
+        stdfs::remove(history_free_snapshot, cleanup_error);
+    } catch (const std::exception &ex) {
+        BOOST_LOG_TRIVIAL(error) << "Project save retained its previous archive and pending recovery snapshot: " << ex.what();
+        MessageDialog(this, _L("Failed to save the project and its version history. The previous project file was preserved."),
+                      _L("Save project"), wxOK | wxICON_WARNING).ShowModal();
         return wxID_CANCEL;
     }
 
@@ -20885,6 +24467,25 @@ void Plater::import_model_id(wxString download_info)
 
     if (download_ok) {
         BOOST_LOG_TRIVIAL(trace) << "import_model_id: target_path = " << PathSanitizer::sanitize(target_path);
+
+        // Native OpenGL preview of the downloaded MakerWorld model. Give the
+        // user an interactive look before the model is imported into Prepare.
+        // The preview is best-effort: if the geometry cannot be extracted we
+        // fall through to the existing auto-open behaviour unchanged.
+        {
+            std::vector<std::array<float, 3>> preview_vertices;
+            std::vector<std::array<int, 3>>   preview_indices;
+            if (ModelPreviewDialog::load_geometry(target_path.string(), preview_vertices, preview_indices)
+                && !preview_vertices.empty() && !preview_indices.empty()) {
+                wxString model_name = from_u8(target_path.stem().string());
+                ModelPreviewDialog preview_dlg(this, model_name, preview_vertices, preview_indices);
+                if (preview_dlg.ShowModal() != wxID_OK) {
+                    // User closed the preview instead of opening: skip the import.
+                    return;
+                }
+            }
+        }
+
         /* load project */
         auto result = this->load_project(target_path.wstring());
         statistics_burial_data_form_mw();
@@ -21842,22 +25443,24 @@ void Plater::force_update_all_plate_thumbnails()
 }
 
 // BBS: backup
-std::vector<size_t> Plater::load_files(const std::vector<fs::path>& input_files, LoadStrategy strategy, bool ask_multi) {
+std::vector<size_t> Plater::load_files(const std::vector<fs::path>& input_files, LoadStrategy strategy, bool ask_multi,
+                                       bool *successful_3mf_loaded) {
     //BBS: wish to reset state when load a new file
     p->m_slice_all_only_has_gcode = false;
     //BBS: wish to reset all plates stats item selected state when load a new file
     p->preview->get_canvas3d()->reset_select_plate_toolbar_selection();
-    return p->load_files(input_files, strategy, ask_multi);
+    return p->load_files(input_files, strategy, ask_multi, successful_3mf_loaded);
 }
 
 // To be called when providing a list of files to the GUI slic3r on command line.
-std::vector<size_t> Plater::load_files(const std::vector<std::string>& input_files, LoadStrategy strategy,  bool ask_multi)
+std::vector<size_t> Plater::load_files(const std::vector<std::string>& input_files, LoadStrategy strategy, bool ask_multi,
+                                       bool *successful_3mf_loaded)
 {
     std::vector<fs::path> paths;
     paths.reserve(input_files.size());
     for (const std::string& path : input_files)
         paths.emplace_back(path);
-    return p->load_files(paths, strategy, ask_multi);
+    return p->load_files(paths, strategy, ask_multi, successful_3mf_loaded);
 }
 
 class RadioBox;
@@ -21876,7 +25479,7 @@ WX_DECLARE_LIST(RadioSelector, RadioSelectorList);
 class ProjectDropDialog : public DPIDialog
 {
 private:
-    wxColour          m_def_color = wxColour(255, 255, 255);
+    wxColour          m_def_color = StateColor::semantic(MD3::Role::SurfaceContainerLowest);
     RadioSelectorList m_radio_group;
     int               m_action{1};
     bool              m_show_again;
@@ -21927,7 +25530,7 @@ ProjectDropDialog::ProjectDropDialog(const std::string &filename)
     wxBoxSizer *m_sizer_main = new wxBoxSizer(wxVERTICAL);
 
     m_top_line = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
-    m_top_line->SetBackgroundColour(wxColour(166, 169, 170));
+    m_top_line->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
 
     m_sizer_main->Add(m_top_line, 0, wxEXPAND, 0);
 
@@ -21936,28 +25539,28 @@ ProjectDropDialog::ProjectDropDialog(const std::string &filename)
     wxBoxSizer *m_sizer_name = new wxBoxSizer(wxVERTICAL);
     wxBoxSizer *m_sizer_fline = new wxBoxSizer(wxHORIZONTAL);
 
-    m_fname_title = new wxStaticText(this, wxID_ANY, _L("Please select an action"), wxDefaultPosition, wxDefaultSize, 0);
+    m_fname_title = new Label(this, _L("Please select an action"));
     m_fname_title->Wrap(-1);
     m_fname_title->SetFont(::Label::Body_13);
-    m_fname_title->SetForegroundColour(wxColour(107, 107, 107));
-    m_fname_title->SetBackgroundColour(wxColour(255, 255, 255));
+    m_fname_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+    m_fname_title->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     m_sizer_fline->Add(m_fname_title, 0, wxALL, 0);
     m_sizer_fline->Add(0, 0, 0, wxEXPAND | wxLEFT, 5);
 
-    m_fname_f = new wxStaticText(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0);
+    m_fname_f = new Label(this, wxEmptyString);
     m_fname_f->SetFont(::Label::Head_13);
     m_fname_f->Wrap(-1);
-    m_fname_f->SetForegroundColour(wxColour(38, 46, 48));
+    m_fname_f->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
 
     m_sizer_fline->Add(m_fname_f, 1, wxALL, 0);
 
     m_sizer_name->Add(m_sizer_fline, 1, wxEXPAND, 0);
 
-    m_fname_s = new wxStaticText(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0);
+    m_fname_s = new Label(this, wxEmptyString);
     m_fname_s->SetFont(::Label::Head_13);
     m_fname_s->Wrap(-1);
-    m_fname_s->SetForegroundColour(wxColour(38, 46, 48));
+    m_fname_s->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
 
     m_sizer_name->Add(m_fname_s, 1, wxALL, 0);
 
@@ -21966,8 +25569,8 @@ ProjectDropDialog::ProjectDropDialog(const std::string &filename)
     m_sizer_main->Add(0, 0, 0, wxEXPAND | wxTOP, 5);
 
     m_panel_select = new StaticBox(this, wxID_ANY, wxDefaultPosition, PROJECT_DROP_DIALOG_SELECT_PLANE_SIZE);
-    StateColor box_colour(std::pair<wxColour, int>(wxColour("#F8F8F8"), StateColor::Normal));
-    StateColor box_border_colour(std::pair<wxColour, int>(wxColour(*wxWHITE), StateColor::Normal));
+    StateColor box_colour(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerLow), StateColor::Normal));
+    StateColor box_border_colour(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OutlineVariant), StateColor::Normal));
 
     m_panel_select->SetBackgroundColor(box_colour);
     m_panel_select->SetBorderColor(box_border_colour);
@@ -22009,12 +25612,10 @@ ProjectDropDialog::ProjectDropDialog(const std::string &filename)
     wxBoxSizer *m_sizer_right  = new wxBoxSizer(wxHORIZONTAL);
 
     m_confirm = new Button(this, _L("OK"));
-    StateColor btn_bg_green(std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed), std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-                            std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
+    StateColor btn_bg_green(std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
+                            std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
 
-    m_confirm->SetBackgroundColor(btn_bg_green);
-    m_confirm->SetBorderColor(wxColour(0, 174, 66));
-    m_confirm->SetTextColor(wxColour("#FFFFFE"));
+    m_confirm->SetVariant(Button::Variant::Filled);
     m_confirm->SetSize(PROJECT_DROP_DIALOG_BUTTON_SIZE);
     m_confirm->SetMinSize(PROJECT_DROP_DIALOG_BUTTON_SIZE);
     m_confirm->SetCornerRadius(FromDIP(12));
@@ -22022,7 +25623,7 @@ ProjectDropDialog::ProjectDropDialog(const std::string &filename)
     m_sizer_right->Add(m_confirm, 0, wxALL, 5);
 
     m_cancel = new Button(this, _L("Cancel"));
-    m_cancel->SetTextColor(wxColour(107, 107, 107));
+    m_cancel->SetTextColor(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     m_cancel->SetSize(PROJECT_DROP_DIALOG_BUTTON_SIZE);
     m_cancel->SetMinSize(PROJECT_DROP_DIALOG_BUTTON_SIZE);
     m_cancel->SetCornerRadius(FromDIP(12));
@@ -22036,7 +25637,6 @@ ProjectDropDialog::ProjectDropDialog(const std::string &filename)
     SetSizer(m_sizer_main);
     Layout();
     Fit();
-    Centre(wxBOTH);
 
 
     auto limit_width   = m_fname_f->GetSize().GetWidth() - 2;
@@ -22062,6 +25662,8 @@ ProjectDropDialog::ProjectDropDialog(const std::string &filename)
     m_fname_s->SetLabel(bstring);
 
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
+    Centre(wxBOTH);
 }
 
 wxBoxSizer *ProjectDropDialog ::create_item_radiobox(wxString title, wxWindow *parent, int select_id, int groupid)
@@ -22069,13 +25671,13 @@ wxBoxSizer *ProjectDropDialog ::create_item_radiobox(wxString title, wxWindow *p
     wxBoxSizer *sizer = new wxBoxSizer(wxHORIZONTAL);
     auto radiobox =  new RadioBox(parent);
 
-    radiobox->SetBackgroundColour(wxColour(248,248,248));
+    radiobox->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
     sizer->Add(radiobox, 0, wxALL, 5);
     sizer->Add(0, 0, 0, wxEXPAND | wxLEFT, 5);
-    auto text = new wxStaticText(parent, wxID_ANY, title, wxDefaultPosition, wxDefaultSize, 0);
+    auto text = new Label(parent, title);
     text->Wrap(-1);
-    text->SetForegroundColour(wxColour(107, 107, 107));
-    text->SetBackgroundColour(wxColour(248,248,248));
+    text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+    text->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
     sizer->Add(text, 0, wxALL, 5);
 
     radiobox->Bind(wxEVT_LEFT_DOWN, &ProjectDropDialog::on_select_radio, this);
@@ -22102,8 +25704,8 @@ wxBoxSizer *ProjectDropDialog::create_item_checkbox(wxString title, wxWindow *pa
     m_sizer_checkbox->Add(checkbox, 0, wxALIGN_CENTER, 0);
     m_sizer_checkbox->Add(0, 0, 0, wxEXPAND | wxLEFT, 8);
 
-    auto checkbox_title = new wxStaticText(parent, wxID_ANY, title, wxDefaultPosition, wxSize(-1, -1), 0);
-    checkbox_title->SetForegroundColour(wxColour(144,144,144));
+    auto checkbox_title = new Label(parent, title, 0, wxSize(-1, -1));
+    checkbox_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     checkbox_title->SetFont(::Label::Body_13);
     checkbox_title->Wrap(-1);
     m_sizer_checkbox->Add(checkbox_title, 0, wxALIGN_CENTER | wxALL, 3);
@@ -22740,7 +26342,71 @@ void Plater::enable_sidebar(bool enabled) { p->enable_sidebar(enabled); }
 bool Plater::is_sidebar_collapsed() const { return p->sidebar_layout.is_collapsed; }
 void Plater::collapse_sidebar(bool show) { p->collapse_sidebar(show); }
 Sidebar::DockingState Plater::get_sidebar_docking_state() const { return p->get_sidebar_docking_state(); }
+
+void Plater::apply_sidebar_dock()
+{
+    p->apply_sidebar_dock(true, true, true);
+    // A same-width left<->right switch may relayout without firing a sidebar
+    // resize event, so proactively re-align the Prepare bottom action bar (its
+    // left/right spacers track the docked sidebar) to the new edge.
+    if (wxGetApp().mainframe)
+        wxGetApp().mainframe->update_prepare_action_bar_content();
+}
 void                  Plater::reset_window_layout(int width) { p->reset_window_layout(width); }
+
+bool Plater::request_sidebar_width(int width_px, bool grow_only)
+{
+    auto &pane = p->m_aui_mgr.GetPane(p->sidebar);
+    if (!pane.IsOk() || pane.IsFloating())
+        return true; // nothing this call can usefully do; do not keep retrying
+    // Only the vertical docks are width-constrained; on a top/bottom dock the
+    // sidebar already spans the frame and height is the scarce axis.
+    if (pane.dock_direction == wxAUI_DOCK_TOP || pane.dock_direction == wxAUI_DOCK_BOTTOM)
+        return true;
+
+    const int def_w = FromDIP(MD3::Metrics::active().sidebar_width);
+    // Never shrink below the density default, and never take so much that the
+    // 3D canvas is squeezed out: cap at 55% of the frame. Below this floor the
+    // frame has not been laid out yet (early startup sizes come through at a
+    // few pixels), and capping against it would resolve every request to the
+    // compact default -- report "not ready" so the caller retries.
+    const int frame_w = GetClientSize().GetWidth();
+    if (frame_w < FromDIP(500))
+        return false;
+    int target = std::max(def_w, width_px);
+    target     = std::min(target, std::max(def_w, (frame_w * 55) / 100));
+
+    pane.BestSize(wxSize(target, pane.best_size.y));
+
+    // BestSize alone does not move a dock that already carries a stored size --
+    // wxAUI keeps that in the perspective's dock_size() entry, which is exactly
+    // what reset_window_layout() rewrites for the same reason. Retarget this
+    // pane's dock in the live perspective and reload it, so the width applies
+    // now instead of at the next layout reset.
+    wxString     persp = p->m_aui_mgr.SavePerspective();
+    const wxString key = wxString::Format("dock_size(%d,%d,%d)=", pane.dock_direction,
+                                          pane.dock_layer, pane.dock_row);
+    const int    at    = persp.Find(key);
+    if (at == wxNOT_FOUND)
+        return false; // no dock entry yet -- the layout is still settling
+    size_t vstart = size_t(at) + key.length();
+    size_t vend   = vstart;
+    while (vend < persp.length() && wxIsdigit(persp[vend]))
+        ++vend;
+    if (vend == vstart)
+        return false;
+    long current = 0;
+    if (!persp.Mid(vstart, vend - vstart).ToLong(&current))
+        return false;
+    if (current == target)
+        return true; // already the width we want
+    if (grow_only && current > target)
+        return true; // the user dragged it wider than we ask for; leave it alone
+
+    persp = persp.Left(vstart) + wxString::Format("%d", target) + persp.Mid(vend);
+    p->m_aui_mgr.LoadPerspective(persp, true);
+    return true;
+}
 //BBS
 void Plater::select_curr_plate_all() { p->select_curr_plate_all(); }
 void Plater::remove_curr_plate_all() { p->remove_curr_plate_all(); }
@@ -22750,13 +26416,30 @@ void Plater::deselect_all() { p->deselect_all(); }
 void Plater::exit_gizmo() { p->exit_gizmo(); }
 
 void Plater::remove(size_t obj_idx) { p->remove(obj_idx); }
-void Plater::reset(bool apply_presets_change) { p->reset(apply_presets_change); }
+bool Plater::reset(bool apply_presets_change)
+{
+    if (!p->reset(apply_presets_change))
+        return false;
+    if (!p->persist_project_history_session_marker())
+        BOOST_LOG_TRIVIAL(warning) << "Reset completed, but its untitled recovery marker could not be persisted";
+    return true;
+}
 void Plater::reset_with_confirm()
 {
-    if (p->model.objects.empty() || MessageDialog(static_cast<wxWindow *>(this), _L("All objects will be removed, continue?"),
-                                                  wxString(SLIC3R_APP_FULL_NAME) + " - " + _L("Delete all"), wxYES_NO | wxCANCEL | wxYES_DEFAULT | wxCENTRE)
-                                            .ShowModal() == wxID_YES) {
-        reset();
+    bool proceed = p->model.objects.empty();
+    if (!proceed) {
+        // Destructive-action super confirmation: two keys plus a full slide,
+        // naming every object that goes.
+        SuperConfirmGate::Spec spec;
+        spec.action      = _L("Delete all");
+        spec.consequence = _L("Every object on every plate will be removed from this project.");
+        for (const ModelObject *obj : p->model.objects)
+            spec.affected.push_back(from_u8(obj->name));
+        proceed = SuperConfirmGate::Run(static_cast<wxWindow *>(this), spec);
+    }
+    if (proceed) {
+        if (!reset())
+            return;
         // BBS: jump to plater panel
         wxGetApp().mainframe->select_tab(size_t(0));
     }
@@ -22834,6 +26517,17 @@ bool Plater::delete_object_from_model(size_t obj_idx, bool refresh_immediately) 
 //BBS: delete all from model
 void Plater::delete_all_objects_from_model()
 {
+    // Edit > Delete all and Ctrl+Shift+D land here, not in reset_with_confirm,
+    // so the two-key super confirmation gate has to sit on this path too.
+    if (!p->model.objects.empty()) {
+        SuperConfirmGate::Spec spec;
+        spec.action      = _L("Delete all");
+        spec.consequence = _L("Every object on every plate will be removed from this project.");
+        for (const ModelObject *obj : p->model.objects)
+            spec.affected.push_back(from_u8(obj->name));
+        if (!SuperConfirmGate::Run(static_cast<wxWindow *>(this), spec))
+            return;
+    }
     p->delete_all_objects_from_model();
 }
 
@@ -23329,8 +27023,62 @@ void Plater::export_core_3mf()
 {
     wxString path = p->get_export_file(FT_3MF);
     if (path.empty()) { return; }
-    const std::string path_u8 = into_u8(path);
-    export_3mf(path_u8, SaveStrategy::Silence);
+    if (!p->flush_project_history_pending("Project edit before current-version export", true, true)) {
+        MessageDialog(this, _L("Could not preserve pending project history. The current version was not exported."),
+                      _L("Export current version"), wxOK | wxICON_WARNING).ShowModal();
+        return;
+    }
+    const stdfs::path destination = stdfs::u8path(into_u8(path));
+    const stdfs::path staged = destination.parent_path() /
+        (destination.filename().u8string() + ".pending-current-export-" + std::to_string(wxGetProcessId()) + "-" +
+         std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()) + ".3mf");
+    auto strategy = SaveStrategy::SplitModel | SaveStrategy::ShareMesh;
+    if (wxGetApp().app_config->get_bool("export_sources_full_pathnames"))
+        strategy = strategy | SaveStrategy::FullPathSources;
+    if (export_3mf(boost::filesystem::path(staged.native()), strategy) < 0) {
+        MessageDialog(this, _L("Could not export the current version. The previous file was preserved."),
+                      _L("Export current version"), wxOK | wxICON_WARNING).ShowModal();
+        return;
+    }
+    FILE *archive_file = nullptr;
+#ifdef _WIN32
+    _wfopen_s(&archive_file, staged.c_str(), L"rb");
+#else
+    archive_file = std::fopen(staged.c_str(), "rb");
+#endif
+    mz_zip_archive archive{};
+    bool valid = archive_file != nullptr && mz_zip_reader_init_cfile(&archive, archive_file, 0, 0) != 0;
+    if (valid) {
+        valid = mz_zip_reader_locate_file(&archive, "3D/3dmodel.model", nullptr, 0) >= 0 &&
+                mz_zip_reader_locate_file(&archive, "Metadata/bambu_project_history.json", nullptr, 0) < 0 &&
+                mz_zip_reader_locate_file(&archive, "Metadata/bambu_project_history.pack", nullptr, 0) < 0 &&
+                mz_zip_validate_archive(&archive, 0) != 0;
+        mz_zip_reader_end(&archive);
+    }
+    if (archive_file) std::fclose(archive_file);
+    if (!valid) {
+        MessageDialog(this, _L("Could not verify the exported 3MF. The previous file was preserved."),
+                      _L("Export current version"), wxOK | wxICON_WARNING).ShowModal();
+        return;
+    }
+#ifdef _WIN32
+    const bool destination_exists = stdfs::exists(destination);
+    const stdfs::path backup = stdfs::path(staged.native() + stdfs::path::string_type(L".previous.3mf"));
+    const BOOL published = destination_exists
+        ? ::ReplaceFileW(destination.c_str(), staged.c_str(), backup.c_str(), REPLACEFILE_IGNORE_MERGE_ERRORS, nullptr, nullptr)
+        : ::MoveFileExW(staged.c_str(), destination.c_str(), MOVEFILE_WRITE_THROUGH);
+    if (published && destination_exists) {
+        std::error_code ignored;
+        stdfs::remove(backup, ignored);
+    }
+    if (!published)
+#else
+    std::error_code publish_error;
+    stdfs::rename(staged, destination, publish_error);
+    if (publish_error)
+#endif
+        MessageDialog(this, _L("Could not publish the current-version export. The previous file and pending export were preserved."),
+                      _L("Export current version"), wxOK | wxICON_WARNING).ShowModal();
 }
 
 Preset *get_printer_preset(const MachineObject *obj)
@@ -23863,7 +27611,7 @@ int Plater::export_3mf(const boost::filesystem::path& output_path, SaveStrategy 
     std::vector<ThumbnailData*> picking_thumbnails;
     std::vector<PlateBBoxData*> plate_bboxes;
     // BBS: backup
-    if (!(strategy & SaveStrategy::Backup)) {
+    if (!(strategy & SaveStrategy::Backup) && !(strategy & SaveStrategy::SkipThumbnails)) {
         for (int i = 0; i < p->partplate_list.get_plate_count(); i++) {
             ThumbnailData* thumbnail_data = &p->partplate_list.get_plate(i)->thumbnail_data;
             if (p->partplate_list.get_plate(i)->thumbnail_data.is_valid() &&  using_exported_file()) {
@@ -24191,6 +27939,7 @@ void plater_save_post_process_script_choice(bool skip)
 //BBS: add multiple plate reslice logic
 void Plater::reslice()
 {
+    p->m_reused_finished_slice_result = false;
     BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << boost::format(", Line %1%: enter, process_completed_with_error=%2%")%__LINE__ %p->process_completed_with_error;
     // Nested wx event dispatch during PostProcessScriptDialog::ShowModal() can re-enter reslice(); ignore the inner call.
     if (p->m_inside_post_process_script_modal)
@@ -24349,6 +28098,12 @@ void Plater::reslice()
     // Only restarts if the state is valid.
     //BBS: jusdge the result
     bool result = this->p->restart_background_process(state | priv::UPDATE_BACKGROUND_PROCESS_FORCE_RESTART);
+    // A finished, unchanged slice has no completion event. The caller may use
+    // its still-valid result after the security prompt and validation above.
+    if (!result && (state & priv::UPDATE_BACKGROUND_PROCESS_INVALID) == 0 &&
+        !p->m_ui_jobs.is_any_running() && p->background_process.finished() &&
+        !p->background_process.running())
+        p->m_reused_finished_slice_result = true;
 
     BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << boost::format(", Line %1%: restart background,state=%2%, result=%3%")%__LINE__%state %result;
     if ((state & priv::UPDATE_BACKGROUND_PROCESS_INVALID) != 0)
@@ -25148,6 +28903,8 @@ void Plater::on_config_change(const DynamicPrintConfig &config)
     bool bed_shape_changed = false;
     //bool print_sequence_changed = false;
     t_config_option_keys diff_keys = p->config->diff(config);
+    if (!diff_keys.empty())
+        cancel_pending_print_after_slice();
 
     size_t old_nozzle_size = 1, new_nozzle_size = 1;
     auto * opt_old = p->config->option<ConfigOptionFloatsNullable>("nozzle_diameter");
@@ -25232,7 +28989,15 @@ void Plater::on_config_change(const DynamicPrintConfig &config)
             if (old_nozzle_size != new_nozzle_size) {
                 update_flush_volume_matrix(old_nozzle_size, new_nozzle_size);
             }
-            set_global_filament_map_mode(fmmAutoForFlush);
+            // Printer changes may update the inherited mode of a fresh project.
+            // An imported project's own mapping remains authoritative.
+            const auto preferred = get_preferred_filament_map_mode_for_current_printer();
+            if (PrintWorkflowState::may_apply_saved_mapping(
+                    p->m_fresh_project_mapping_preference_owned,
+                    std::all_of(p->partplate_list.get_plate_list().begin(), p->partplate_list.get_plate_list().end(),
+                                [](const PartPlate *plate) { return plate && plate->get_filament_map_mode() == fmmDefault; }),
+                    is_auto_filament_map_mode(preferred)))
+                set_global_filament_map_mode(preferred, true);
 
             // update to force bed selection(for texturing)
             bed_shape_changed = true;
@@ -25614,8 +29379,10 @@ std::vector<std::string> Plater::get_colors_for_color_print(const GCodeProcessor
     return colors;
 }
 
-void Plater::set_global_filament_map_mode(FilamentMapMode mode)
+void Plater::set_global_filament_map_mode(FilamentMapMode mode, bool inherited_printer_preference)
 {
+    if (!inherited_printer_preference)
+        p->m_fresh_project_mapping_preference_owned = false;
     auto& project_config = wxGetApp().preset_bundle->project_config;
     auto mode_ptr = project_config.option<ConfigOptionEnum<FilamentMapMode>>("filament_map_mode");
     FilamentMapMode old_mode = mode_ptr->value;
@@ -25697,6 +29464,202 @@ wxString Plater::get_export_gcode_filename(const wxString & extension, bool only
 void Plater::set_project_filename(const wxString& filename)
 {
     p->set_project_filename(filename);
+}
+
+Slic3r::ProjectHistoryManager *Plater::project_history_manager()
+{
+    return p->project_history_manager();
+}
+
+stdfs::path Plater::project_history_identity() const
+{
+    return p->project_history_identity();
+}
+
+bool Plater::has_project_history_retained_failures() const
+{
+    return !p->m_project_history_retained_failures.empty();
+}
+
+std::vector<RetainedProjectHistoryFailure> Plater::project_history_retained_failures() const
+{
+    std::vector<RetainedProjectHistoryFailure> failures;
+    failures.reserve(p->m_project_history_retained_failures.size());
+    for (const auto &entry : p->m_project_history_retained_failures) {
+        RetainedProjectHistoryFailure info;
+        // An untitled session's identity is a synthetic path below the managed
+        // identity root; its filename is a UUID, not something to show the user.
+        const bool untitled = !p->m_project_history_identity_root.empty() &&
+            entry.identity.parent_path().lexically_normal() == p->m_project_history_identity_root.lexically_normal() &&
+            boost::istarts_with(entry.identity.filename().u8string(), std::string("untitled-"));
+        info.untitled     = untitled;
+        info.display_name = untitled ? std::string() : entry.identity.filename().u8string();
+        info.reason       = entry.options.message;
+        failures.emplace_back(std::move(info));
+    }
+    return failures;
+}
+
+void Plater::retry_project_history_failures()
+{
+    p->retry_project_history_failures();
+}
+
+void Plater::capture_project_history_now(const std::string &reason)
+{
+    p->capture_project_history_now(reason);
+}
+
+void Plater::capture_saved_project_history(const wxString &completed_project_path, const stdfs::path &previous_identity)
+{
+    p->capture_saved_project_history(completed_project_path, previous_identity);
+}
+
+bool Plater::flush_project_history_pending(const std::string &fallback_reason, bool stop_active_jobs, bool wait_for_commits)
+{
+    return p->flush_project_history_pending(fallback_reason, stop_active_jobs, wait_for_commits);
+}
+
+bool Plater::restore_project_history_snapshot(const stdfs::path &restored_snapshot)
+{
+    std::error_code path_error;
+    if (restored_snapshot.empty() || !boost::iequals(restored_snapshot.extension().u8string(), ".3mf") ||
+        !stdfs::is_regular_file(restored_snapshot, path_error) || path_error) {
+        BOOST_LOG_TRIVIAL(error) << "Project-history restore was given an invalid completed .3mf snapshot";
+        return false;
+    }
+
+    const wxString    original_saved_project = get_project_filename(".3mf");
+    const bool        was_untitled           = original_saved_project.empty();
+    const bool        original_was_dirty     = is_project_dirty();
+    const stdfs::path original_identity       = p->project_history_identity();
+    const std::string original_session_token  = p->m_project_history_session_token;
+    const auto restore_untitled_session = [&](bool persist_marker) {
+        if (!was_untitled)
+            return;
+        if (!p->set_project_history_session_token(original_session_token)) {
+            // Preserve an already-open legacy session even if it predates the
+            // token marker format. Never derive a new path from invalid data.
+            p->m_project_history_session_identity = original_identity;
+            p->m_project_history_session_token    = original_session_token;
+        }
+        if (persist_marker)
+            p->persist_project_history_session_marker();
+    };
+
+    if (!was_untitled) {
+        const stdfs::path live_project = stdfs::u8path(into_u8(original_saved_project));
+        if (stdfs::equivalent(restored_snapshot, live_project, path_error) && !path_error) {
+            BOOST_LOG_TRIVIAL(error) << "Project-history restore refused to use the live project file as its temporary snapshot";
+            return false;
+        }
+        path_error.clear();
+    }
+
+    if (!p->flush_project_history_pending("Project edit before restore", true, true)) {
+        p->notify_project_history_failure("Version restore stopped because the current revision could not be durably queued", false);
+        return false;
+    }
+
+    // Loading a 3MF resets the live document before load_files reports whether
+    // it actually imported anything. Keep a complete rollback archive first;
+    // a corrupt or otherwise unloadable selected version must not destroy the
+    // document that was open when the user clicked Restore.
+    const stdfs::path rollback_path = p->make_project_history_staging_path();
+    if (rollback_path.empty()) {
+        p->notify_project_history_failure("Version restore could not allocate a rollback snapshot", false);
+        return false;
+    }
+
+    int rollback_export_result = -1;
+    try {
+        const SaveStrategy strategy = SaveStrategy::Silence | SaveStrategy::SplitModel | SaveStrategy::ShareMesh |
+                                      SaveStrategy::SkipThumbnails | SaveStrategy::Deterministic;
+        rollback_export_result = export_3mf(boost::filesystem::path(rollback_path.native()), strategy);
+    } catch (const std::exception &ex) {
+        BOOST_LOG_TRIVIAL(error) << "Could not serialize the project-history restore rollback: " << ex.what();
+    } catch (...) {
+        BOOST_LOG_TRIVIAL(error) << "Could not serialize the project-history restore rollback";
+    }
+    if (rollback_export_result < 0) {
+        std::error_code cleanup_error;
+        stdfs::remove(rollback_path, cleanup_error);
+        p->notify_project_history_failure("Version restore stopped because its rollback .3mf could not be created", false);
+        return false;
+    }
+
+    const wxString restored_path = from_path(boost::filesystem::path(restored_snapshot.native()));
+    bool           selected_load_succeeded = false;
+    p->m_project_history_restore_in_progress = true;
+    ScopeGuard restore_capture_guard([this]() { p->m_project_history_restore_in_progress = false; });
+    // A non-"-" origin selects the existing restore path: load from the
+    // temporary archive while keeping the original project filename. Empty is
+    // intentionally meaningful here and preserves an untitled document. The
+    // out-parameter is the explicit load_files success signal; the dialog id
+    // only describes the earlier close confirmation and cannot prove a load.
+    try {
+        load_project(restored_path, original_saved_project, &selected_load_succeeded, true);
+    } catch (const std::exception &ex) {
+        m_loading_project = false;
+        BOOST_LOG_TRIVIAL(error) << "Selected project-history version threw while loading: " << ex.what();
+    } catch (...) {
+        m_loading_project = false;
+        BOOST_LOG_TRIVIAL(error) << "Selected project-history version threw while loading";
+    }
+
+    // load_project() resets the document and rotates an untitled session id.
+    // Put the original synthetic identity back even on failure so
+    // the same open document never silently changes repositories.
+    restore_untitled_session(false);
+
+    if (!selected_load_succeeded) {
+        bool rollback_load_succeeded = false;
+        try {
+            load_project(from_path(boost::filesystem::path(rollback_path.native())), original_saved_project,
+                         &rollback_load_succeeded, true);
+        } catch (const std::exception &ex) {
+            m_loading_project = false;
+            BOOST_LOG_TRIVIAL(error) << "Project-history rollback threw while loading: " << ex.what();
+        } catch (...) {
+            m_loading_project = false;
+            BOOST_LOG_TRIVIAL(error) << "Project-history rollback threw while loading";
+        }
+
+        if (was_untitled)
+            restore_untitled_session(rollback_load_succeeded);
+        else
+            p->set_project_filename(original_saved_project);
+
+        if (rollback_load_succeeded) {
+            if (original_was_dirty)
+                set_plater_dirty(true);
+            else
+                reset_project_dirty_after_save();
+            std::error_code cleanup_error;
+            stdfs::remove(rollback_path, cleanup_error);
+            BOOST_LOG_TRIVIAL(warning) << "Selected project-history version failed to load; the original document was restored from rollback";
+        } else {
+            // This is intentionally not removed: it is the last complete copy
+            // of the pre-restore document and can be recovered manually.
+            BOOST_LOG_TRIVIAL(error) << "Selected project-history version and rollback both failed to load; rollback retained at "
+                                     << rollback_path.u8string();
+            p->notify_project_history_failure("Version restore failed and its rollback file was retained for recovery", false);
+        }
+        return false;
+    }
+
+    if (!was_untitled)
+        p->set_project_filename(original_saved_project);
+    else
+        restore_untitled_session(true);
+    set_plater_dirty(true);
+    p->capture_project_history_now("Restored project-history version");
+
+    std::error_code cleanup_error;
+    stdfs::remove(rollback_path, cleanup_error);
+    if (cleanup_error)
+        BOOST_LOG_TRIVIAL(warning) << "Could not remove successful project-history restore rollback: " << cleanup_error.message();
+    return true;
 }
 
 bool Plater::is_export_gcode_scheduled() const
@@ -26308,6 +30271,10 @@ void Plater::msw_rescale()
 
     p->menus.msw_rescale();
 
+    // Re-apply the dock pane's FromDIP-based min size at the new DPI so the
+    // sidebar band keeps a correct floor; keep the persisted best size.
+    p->apply_sidebar_dock(false, false, true);
+
     Layout();
     GetParent()->Layout();
 }
@@ -26414,6 +30381,8 @@ void Plater::apply_background_progress()
 int Plater::select_plate(int plate_index, bool need_slice)
 {
     int ret;
+    if (plate_index != p->partplate_list.get_curr_plate_index())
+        cancel_pending_print_after_slice();
     BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << boost::format(" %1%: plate %2%, need_slice %3% ")%__LINE__ %plate_index  %need_slice;
     take_snapshot("select partplate!");
     ret = p->partplate_list.select_plate(plate_index);
@@ -26783,9 +30752,9 @@ void Plater::open_platesettings_dialog(wxCommandEvent& evt) {
 
 void Plater::open_filament_map_setting_dialog(wxCommandEvent &evt)
 {
+    cancel_pending_print_after_slice();
     PartPlate* curr_plate = p->partplate_list.get_curr_plate();
-    int value = evt.GetInt(); //1 means from gcode view
-    bool need_slice = value ==1;  // If from gcode view, should slice
+    (void)evt;
 
     auto preset_bundle = wxGetApp().preset_bundle;
     const auto& project_config = wxGetApp().preset_bundle->project_config;
@@ -26820,7 +30789,8 @@ void Plater::open_filament_map_setting_dialog(wxCommandEvent &evt)
         available_modes
     );
 
-    if (filament_dlg.ShowModal() == wxID_OK) {
+    const int map_action = filament_dlg.ShowModal();
+    if (map_action == wxID_OK || map_action == wxID_APPLY) {
         std::vector<int> new_filament_maps = filament_dlg.get_filament_maps();
         std::vector<int> old_filament_maps = curr_plate->get_real_filament_maps(project_config);
 
@@ -26843,15 +30813,17 @@ void Plater::open_filament_map_setting_dialog(wxCommandEvent &evt)
                                 old_filament_maps != new_filament_maps ||
                                 old_filament_volume_maps != new_filament_volume_maps);
 
-        if (need_invalidate) {
+        if (need_invalidate || map_action == wxID_APPLY) {
+            curr_plate->update_slice_result_valid_state(false);
+            set_plater_dirty(true);
             wxString filament_printable_error_msg;
-            if (need_slice && curr_plate->check_filament_printable(wxGetApp().preset_bundle->full_config(), filament_printable_error_msg)) {
+            if (map_action == wxID_APPLY &&
+                curr_plate->check_filament_printable(wxGetApp().preset_bundle->full_config(), filament_printable_error_msg)) {
                 update(false, true);
                 wxPostEvent(this, SimpleEvent(EVT_GLTOOLBAR_SLICE_PLATE));
             } else {
-                curr_plate->update_slice_result_valid_state(false);
-                set_plater_dirty(true);
                 update(false, true);
+                wxGetApp().mainframe->select_tab(MainFrame::tp3DEditor);
             }
         }
     }
@@ -26876,6 +30848,8 @@ int Plater::select_plate_by_hover_id(int hover_id, bool right_click, bool isModi
     if (action == 0)
     {
         //select plate
+        if (plate_index != p->partplate_list.get_curr_plate_index())
+            cancel_pending_print_after_slice();
         ret = p->partplate_list.select_plate(plate_index);
         if (!ret) {
             SimpleEvent event(EVT_GLCANVAS_PLATE_SELECT);
@@ -26968,8 +30942,8 @@ int Plater::select_plate_by_hover_id(int hover_id, bool right_click, bool isModi
     }
     else if ((action == 1)&&(!right_click))
     {
-        //delete plate
-        ret = delete_plate(plate_index);
+        //delete plate (gated when the plate still carries objects)
+        ret = confirm_delete_plate(plate_index) ? delete_plate(plate_index) : -1;
     }
     else if ((action == 2)&&(!right_click))
     {
@@ -27102,6 +31076,24 @@ int Plater::select_plate_by_hover_id(int hover_id, bool right_click, bool isModi
     return ret;
 }
 
+bool Plater::confirm_delete_plate(int plate_index)
+{
+    const int index = plate_index == -1 ? p->partplate_list.get_curr_plate_index() : plate_index;
+    PartPlate *plate = p->partplate_list.get_plate(index);
+    if (plate == nullptr)
+        return false;
+    const ModelObjectPtrs objects = plate->get_objects_on_this_plate();
+    if (objects.empty())
+        return true; // nothing on it: deleting an empty plate loses no work
+    SuperConfirmGate::Spec spec;
+    spec.action = _L("Delete plate");
+    // TRN %d is the 1-based plate number.
+    spec.consequence = wxString::Format(_L("Plate %d and every object on it will be removed from this project."), index + 1);
+    for (const ModelObject *obj : objects)
+        spec.affected.push_back(from_u8(obj->name));
+    return SuperConfirmGate::Run(p->view3D != nullptr ? static_cast<wxWindow *>(p->view3D) : nullptr, spec);
+}
+
 //BBS: delete the plate, index= -1 means the current plate
 int Plater::delete_plate(int plate_index)
 {
@@ -27124,6 +31116,8 @@ int Plater::delete_plate(int plate_index)
 
     //need to call update
     update();
+    if (ret == 0)
+        wxPostEvent(this, SimpleEvent(EVT_GLCANVAS_PLATE_SELECT));
     return ret;
 }
 
@@ -27825,7 +31819,12 @@ bool Plater::PopupMenu(wxMenu *menu, const wxPoint& pos)
     SuppressBackgroundProcessingUpdate sbpu;
     // When tracking a pop-up menu, postpone error messages from the slicing result.
     m_tracking_popup_menu = true;
-    bool out = wxGetApp().mainframe->PopupMenu(menu, pos);
+    // Material menu surface over the same wxMenu; keeps the native call's
+    // client-coordinate contract (pos is relative to the main frame) and its
+    // blocking semantics, so the error bracket below still works.
+    MainFrame *frame = wxGetApp().mainframe;
+    const wxPoint screen = pos == wxDefaultPosition ? wxGetMousePosition() : frame->ClientToScreen(pos);
+    bool out = MD3::PopupMenu(frame, menu, screen);
     m_tracking_popup_menu = false;
     if (! m_tracking_popup_menu_error_message.empty()) {
         // Don't know whether the CallAfter is necessary, but it should not hurt.

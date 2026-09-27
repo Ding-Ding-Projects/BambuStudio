@@ -5,6 +5,7 @@
 #include <optional>
 #include <utility>
 #include <vector>
+#include <filesystem>
 #include <boost/filesystem/path.hpp>
 
 #include <wx/panel.h>
@@ -50,6 +51,7 @@ enum class ModelObjectCutAttribute : int;
 using ModelObjectCutAttributes = enum_bitmask<ModelObjectCutAttribute>;
 class ModelInstance;
 class Print;
+class ProjectHistoryManager;
 class SLAPrint;
 //BBS: add partplatelist and SlicingStatusEvent
 class PartPlateList;
@@ -141,7 +143,6 @@ class Sidebar : public wxPanel
 {
     ConfigOptionMode    m_mode;
     Button *         btn_sync{nullptr};
-    ScalableButton *  ams_btn{nullptr};
     bool                                    m_last_slice_state = false;
     SyncNozzleAndAmsDialog*                 m_sna_dialog{nullptr};
     FinishSyncAmsDialog*                    m_fna_dialog{nullptr};
@@ -155,7 +156,7 @@ class Sidebar : public wxPanel
     void update_sync_ams_btn_enable(wxUpdateUIEvent &e);
 
 public:
-    enum DockingState { None, Left, Right };
+    enum DockingState { None, Left, Right, Top, Bottom };
     Sidebar(Plater *parent);
     Sidebar(Sidebar &&) = delete;
     Sidebar(const Sidebar &) = delete;
@@ -189,15 +190,30 @@ public:
     void search();
     void jump_to_option(size_t selected);
     void jump_to_option(const std::string& opt_key, Preset::Type type, const std::wstring& category);
+    // MD3 compact Process card <-> full ParamsPanel flip (persisted in
+    // app_config "sidebar_process_advanced" unless persist is false, e.g.
+    // for transient flips such as search-result jumps).
+    void show_process_advanced(bool advanced, bool persist = true);
+    // True while the full (global) process-settings tree is showing instead of
+    // the compact Process card. Read at startup so the restored sidebar gets the
+    // wider dock the tree needs, since the ctor applies the persisted choice
+    // before the AUI pane that carries the width even exists.
+    bool is_process_advanced() const;
     // BBS. Add filament_added() method.
     void on_filament_count_change(size_t num_filaments);
     void on_filaments_delete(size_t filament_id);
 
     void add_filament();
     void delete_filament(size_t filament_id = size_t(-1), int replace_filament_id = -1);  // 0 base, -1 means default
+    // User-initiated filament deletion: runs the destructive-action super
+    // confirmation gate first and only then calls delete_filament().
+    void delete_filament_with_confirm(size_t filament_id = size_t(-1));
     void change_filament(size_t from_id, size_t to_id);  // 0 base
     void edit_filament();
     void add_custom_filament(wxColour new_col, const std::string& preset_name = std::string(), bool skip_preset_validation = false);
+    // Bulk filament actions dialog: set preset / set colour / delete across the
+    // checked physical slots, plus append N filaments, applied in one batch.
+    void bulk_filament_actions();
     // Batch-add physical filaments (physical-first). Returns the starting physical
     // index, or size_t(-1) if nothing was added. Truncates to ExtruderMax.
     size_t add_custom_filaments(const std::vector<std::pair<wxColour, std::string>>& items);
@@ -280,6 +296,16 @@ public:
     void delete_mixed_filament_at(size_t idx);
     void decompose_filament_color(int filament_idx);
     void recalc_filament_scroll_sizes();
+    // Sidebar body scroll maintenance: pins the scrolled body's virtual width
+    // to its client width (vertical-only scrolling, rows always reflow to the
+    // sidebar) and grows the virtual height to the content's min height so
+    // every section below the fold stays reachable by scrolling. Call after
+    // any change that alters the stacked content's height (collapse/expand,
+    // row add/remove, compact<->advanced flips).
+    void update_scroll_body() const;
+    // Size the object list to its visible rows (see Plater.cpp); called by
+    // update_scroll_body, exposed for the layout probe.
+    void fit_object_list_height() const;
     void update_mixed_filament_list();
     bool has_broken_mixed_filament() const;
     bool has_broken_mixed_filament(const PartPlate* plate) const;
@@ -307,12 +333,29 @@ private:
 private:
     struct priv;
     std::unique_ptr<priv> p;
+    void apply_prepare_section(const std::string &section) const;
+    void place_prepare_strip();
 
     wxBoxSizer* m_scrolled_sizer = nullptr;
+    wxBoxSizer* m_prepare_layout = nullptr;
     bool            m_soft_first_start {true };
     bool            m_is_gcode_file{ false };
     bool            m_update_3d_state{false};
     bool            m_need_auto_sync_after_connect_printer{false};
+};
+
+// A project-history snapshot whose commit failed terminally (a blocked Save-As
+// destination or a non-retryable error) and whose immutable recovery .3mf is
+// quarantined on disk until the user retries it. Surfaced by the durable
+// failure notification and the Version history dialog.
+struct RetainedProjectHistoryFailure
+{
+    // User-facing project filename (UTF-8). Empty when the snapshot belonged to
+    // an untitled session; use the localized "Untitled project" instead.
+    std::string display_name;
+    // The edit / autosave reason recorded for the snapshot (UTF-8).
+    std::string reason;
+    bool        untitled{false};
 };
 
 class Plater: public wxPanel
@@ -365,8 +408,24 @@ public:
     void reset_post_process_script_choice();
     void reset_flags_when_new_or_close_project();
     int new_project(bool skip_confirm = false, bool silent = false, const wxString &project_name = wxString());
+    void cancel_pending_print_after_slice();
+    bool validate_print_setup_filament_maps(int expected_plate_index, const std::vector<int>& expected_maps,
+                                            const std::vector<int>& maps, wxString& reason);
+    bool apply_print_setup_filament_maps(int expected_plate_index, const std::vector<int>& expected_maps,
+                                         const std::vector<int>& maps);
     // BBS: save & backup
-    int load_project(wxString const & filename = "", wxString const & originfile = "-");
+    int load_project(wxString const & filename = "", wxString const & originfile = "-",
+                     bool *load_succeeded = nullptr, bool skip_close_confirmation = false);
+    // BBS: session file-tabs — silent snapshot round-trip for tab switching.
+    // save_snapshot_to() writes the whole live project to a temp .3mf using the
+    // shipped Backup autosave archive; load_snapshot_from() restores it (or a
+    // real project file) through the crash-recovery Restore path. Both reuse
+    // existing serialization only and never prompt. Return true on success.
+    bool save_snapshot_to(const std::string& path);
+    bool load_snapshot_from(const std::string& path);
+    // Writes a history-bearing 3MF for workspace publication without changing
+    // the active document's file name or saved/dirty state.
+    bool export_workspace_member_with_history(const std::filesystem::path& destination);
     int save_project(bool saveAs = false);
     //BBS download project by project id
     void import_model_id(wxString download_info);
@@ -433,9 +492,13 @@ public:
     static wxString get_slice_warning_string(GCodeProcessorResult::SliceWarning& warning);
 
     // BBS: restore
-    std::vector<size_t> load_files(const std::vector<boost::filesystem::path>& input_files, LoadStrategy strategy = LoadStrategy::LoadModel | LoadStrategy::LoadConfig,  bool ask_multi = false);
+    std::vector<size_t> load_files(const std::vector<boost::filesystem::path>& input_files,
+                                   LoadStrategy strategy = LoadStrategy::LoadModel | LoadStrategy::LoadConfig,
+                                   bool ask_multi = false, bool *successful_3mf_loaded = nullptr);
     // To be called when providing a list of files to the GUI slic3r on command line.
-    std::vector<size_t> load_files(const std::vector<std::string>& input_files, LoadStrategy strategy = LoadStrategy::LoadModel | LoadStrategy::LoadConfig,  bool ask_multi = false);
+    std::vector<size_t> load_files(const std::vector<std::string>& input_files,
+                                   LoadStrategy strategy = LoadStrategy::LoadModel | LoadStrategy::LoadConfig,
+                                   bool ask_multi = false, bool *successful_3mf_loaded = nullptr);
     // to be called on drag and drop
     bool emboss_svg(const wxString &svg_file, bool from_toolbar_or_file_menu = false);
     bool load_svg(const wxArrayString &filenames, bool from_toolbar_or_file_menu = false);
@@ -476,7 +539,21 @@ public:
     bool is_sidebar_collapsed() const;
     void collapse_sidebar(bool show);
     Sidebar::DockingState get_sidebar_docking_state() const;
+    // Re-dock the Prepare sidebar to the edge stored in the app-config key
+    // "prepare_sidebar_dock" (left|right|top|bottom). Applies live, no restart.
+    void                  apply_sidebar_dock();
     void                  reset_window_layout(int width = -1);
+    // Widen (or restore) the docked Prepare sidebar so the full process-settings
+    // tree gets a width its option rows can actually live at. Pass 0 to go back
+    // to the density default. No-op while the sidebar is floating or docked to a
+    // horizontal (top/bottom) edge, where width is not the constrained axis.
+    // Returns false when the frame is not laid out enough to size against yet,
+    // so a startup caller knows to try again on the next size instead of
+    // latching a width that silently clamped to the compact default.
+    // grow_only leaves a sidebar that is already wider than the request alone:
+    // the sash is user-draggable and the dragged width is persisted, so the
+    // startup re-assert must never claw back a width the user chose.
+    bool                  request_sidebar_width(int width_px, bool grow_only = false);
     // Called after the Preferences dialog is closed and the program settings are saved.
     // Update the UI based on the current preferences.
     void update_ui_from_settings();
@@ -489,7 +566,9 @@ public:
     void deselect_all();
     void exit_gizmo();
     void remove(size_t obj_idx);
-    void reset(bool apply_presets_change = false);
+    // Returns false without replacing the live document when its preceding
+    // project-history boundary cannot be made durable.
+    bool reset(bool apply_presets_change = false);
     void reset_with_confirm();
     //BBS: return int for various result
     int close_with_confirm(std::function<bool(bool yes_or_no)> second_check = nullptr, bool allow_cancel = true); // BBS close project
@@ -619,7 +698,7 @@ public:
     std::vector<std::string> get_colors_for_color_print(const GCodeProcessorResult* const result = nullptr) const;
     bool is_color_size_equal() const;
 
-    void set_global_filament_map_mode(FilamentMapMode mode);
+    void set_global_filament_map_mode(FilamentMapMode mode, bool inherited_printer_preference = false);
     void set_global_filament_map(const std::vector<int>& filament_map);
     void set_global_filament_volume_map(const std::vector<int>& volume_map);
     std::vector<int> get_global_filament_map() const;
@@ -645,6 +724,24 @@ public:
     wxString get_project_filename(const wxString& extension = wxEmptyString) const;
     wxString get_export_gcode_filename(const wxString& extension = wxEmptyString, bool only_filename = false, bool export_all = false) const;
     void set_project_filename(const wxString& filename);
+    // The history manager owns isolated bare Git repositories below
+    // data_dir()/project_history. The identity is the saved project path or a
+    // stable synthetic .3mf path for the lifetime of an untitled session.
+    Slic3r::ProjectHistoryManager *project_history_manager();
+    std::filesystem::path          project_history_identity() const;
+    void                           capture_project_history_now(const std::string &reason);
+    void                           capture_saved_project_history(const wxString &completed_project_path,
+                                                                 const std::filesystem::path &previous_identity);
+    bool                           flush_project_history_pending(const std::string &fallback_reason,
+                                                                 bool stop_active_jobs = false,
+                                                                 bool wait_for_commits = true);
+    bool                           restore_project_history_snapshot(const std::filesystem::path &restored_snapshot);
+    // Terminal / quarantined project-history commits kept on disk for recovery.
+    bool                                        has_project_history_retained_failures() const;
+    std::vector<RetainedProjectHistoryFailure>  project_history_retained_failures() const;
+    // Re-drives every quarantined commit through the normal history machinery.
+    // Safe to call from the failure notification's Retry action or the dialog.
+    void                                        retry_project_history_failures();
     void update_print_error_info(int code, std::string msg, std::string extra);
 
     bool is_export_gcode_scheduled() const;
@@ -819,6 +916,10 @@ public:
     int select_plate_by_hover_id(int hover_id, bool right_click = false, bool isModidyPlateName = false, bool is_swap_plate = false);
     //BBS: delete the plate, index= -1 means the current plate
     int delete_plate(int plate_index = -1);
+    // Destructive-action super confirmation for deleting a plate that still
+    // carries objects. Returns true when the deletion may proceed (an empty
+    // plate needs no gate because nothing is lost).
+    bool confirm_delete_plate(int plate_index = -1);
     //BBS: select the sliced plate by index
     int select_sliced_plate(int plate_index);
     //BBS: set bed positions
