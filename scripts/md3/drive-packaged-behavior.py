@@ -631,6 +631,9 @@ def main() -> int:
         ap.error("source commit, verification commit or release tag is malformed")
     if args.scale not in (1.0, 1.25, 1.5, 2.0):
         ap.error("scale must be one of 1.0, 1.25, 1.5, 2.0")
+    if args.scope == "behavior" and (args.language, args.theme, args.scale, args.viewport) != (
+            "en", "light", 1.0, "1200x800"):
+        ap.error("the full behavior ledger is bound to the English light 100% 1200x800 baseline")
     if not re.fullmatch(r"[0-9]{1,20}", args.hosted_run_id) or args.hosted_run_id != os.environ.get("GITHUB_RUN_ID"):
         ap.error("hosted run ID must match the current runner")
     if args.output.exists():
@@ -699,6 +702,7 @@ def main() -> int:
     verdict = "blocked" if cleanup_error or failed_rows else ("diagnostic_only" if args.scope == "diagnostic" else "pending_visual_review")
     report = {"schema": 2, **drive.identity, "scope": args.scope,
               "package_version": receipt["package_version"], "runner": "github-hosted-windows",
+              "desktop": desktop,
               "rows": drive.rows, "images": drive.images, "restricted_logs": logs,
               "failed_rows": failed_rows,
               "privacy": "restricted; inspect pixels and metadata before publication",
