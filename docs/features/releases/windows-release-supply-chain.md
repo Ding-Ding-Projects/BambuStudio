@@ -172,3 +172,6 @@ Schema 2 uses distinct diagnostic, behavior-pending-review, and partial statuses
 reports are required for a complete behavior job; one report is required for a diagnostic job.
 The hosted manifest fixture Chut deliberately supplies traversal and duplicate paths and requires
 both to be rejected before private-key access or extraction.
+It also encrypts a synthetic failed diagnostic with no image or restricted log, verifies the
+partial receipt and exact report inventory, and checks that metadata and authenticated binding
+reach the owner-key boundary without extracting plaintext on the hosted runner.

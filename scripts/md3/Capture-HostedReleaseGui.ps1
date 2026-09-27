@@ -64,9 +64,9 @@ try {
     $evidence.installer_sha256 = $receipt.asset_sha256.'Setup.exe'
 
     $images = Join-Path $env:RUNNER_TEMP ('bambu-capture-images-' + $env:GITHUB_RUN_ID)
-    [void](New-Item -ItemType Directory -Path $images)
     $files = @()
     if ($legacyMode) {
+    [void](New-Item -ItemType Directory -Path $images)
     try {
     if (-not $env:LLCU_CHEAP -or -not (Test-Path -LiteralPath $env:LLCU_CHEAP -PathType Leaf)) {
         if (-not $legacyMode) { throw 'The pinned job-local headless capture tool is missing.' }
@@ -208,7 +208,8 @@ try {
         }
         $actualImages = @($tupleFiles | Where-Object Extension -CEQ '.png' | ForEach-Object Name | Sort-Object)
         if ($expectedImages.Count -ne $actualImages.Count -or
-            @(Compare-Object -ReferenceObject $expectedImages -DifferenceObject $actualImages).Count -ne 0) {
+            ($expectedImages.Count -gt 0 -and
+            @(Compare-Object -ReferenceObject $expectedImages -DifferenceObject $actualImages).Count -ne 0)) {
             throw "Behavior tuple '$($dir.Name)' has a partial or unreported image set."
         }
         if (@($tupleFiles | Where-Object { $_.Name -cne 'behavior-report.json' -and $_.Extension -cne '.png' }).Count -gt 0) {
@@ -240,7 +241,9 @@ try {
             }
         }
         $logDirectory = Join-Path $dir.FullName 'restricted-logs'
-        $logRows = if ($null -ne $report.PSObject.Properties['restricted_logs']) { @($report.restricted_logs) } else { @() }
+        $logRows = @(if ($null -ne $report.PSObject.Properties['restricted_logs']) {
+            $report.restricted_logs
+        })
         if (Test-Path -LiteralPath $logDirectory -PathType Container) {
             $logFiles = @(Get-ChildItem -LiteralPath $logDirectory -File | Sort-Object Name)
             if ($logFiles.Count -gt 8 -or $logFiles.Count -ne $logRows.Count -or
