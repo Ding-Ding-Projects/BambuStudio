@@ -9,6 +9,7 @@ import sys
 import tempfile
 import unittest
 import zipfile
+from types import SimpleNamespace
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from unittest.mock import patch
@@ -25,6 +26,109 @@ holder_spec.loader.exec_module(holder)
 
 
 class BehaviorDriveChecks(unittest.TestCase):
+    def test_startup_fallback_needs_confirmed_exit_without_replacement(self):
+        exited = {"original_exit_confirmed": True, "owned_replacement_seen": False,
+                  "owned_process_live_at_end": False}
+        self.assertTrue(drive.startup_case_exited(exited))
+        for change in ({"original_exit_confirmed": False},
+                       {"owned_replacement_seen": True},
+                       {"owned_process_live_at_end": True}):
+            self.assertFalse(drive.startup_case_exited({**exited, **change}))
+
+    def test_startup_comparison_uses_separate_seeded_routes_then_strict_empty_fallback(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            exe = root / "bambu-studio.exe"
+            exe.write_bytes(b"same installed executable")
+            args = SimpleNamespace(exe=exe, output=root, language="en", theme="light",
+                                   scale=1.0, viewport="1200x800", release_tag="md3-v125",
+                                   hosted_run_id="123")
+            receipt = {"installed_exe_sha256": hashlib.sha256(exe.read_bytes()).hexdigest(),
+                       "package_version": "2.8.4124"}
+            calls = []
+            def case(name, route, seeded, actual_args, scratch, exe_hash):
+                calls.append((name, route, seeded, actual_args.exe, exe_hash))
+                return ({"case": name, "original_exit_confirmed": True,
+                         "original_exit_code": 2147942487, "mainframe_seen": False,
+                         "owned_replacement_seen": False, "owned_process_live_at_end": False,
+                         "cleanup_error": None},
+                        {"file": name + ".log", "bytes": 1, "sha256": "a" * 64})
+            with patch.object(drive, "run_startup_case", side_effect=case):
+                self.assertEqual(drive.run_startup_comparison(
+                    args, receipt, "a" * 40, "b" * 40, root), 2)
+            self.assertEqual([(name, route, seeded) for name, route, seeded, _, _ in calls],
+                             [("seeded-direct", "direct", True),
+                              ("seeded-holder", "holder", True),
+                              ("empty-direct", "direct", False),
+                              ("empty-holder", "holder", False)])
+            self.assertEqual({item[3] for item in calls}, {exe})
+            self.assertEqual({item[4] for item in calls}, {receipt["installed_exe_sha256"]})
+            report = json.loads((root / "behavior-report.json").read_text())
+            self.assertEqual(report["images"], [])
+            self.assertFalse(report["behavior_verified"])
+            self.assertEqual(report["verdict"], "blocked")
+
+    def test_startup_comparison_does_not_fallback_from_missing_desktop(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            args = SimpleNamespace(exe=root / "bambu-studio.exe", output=root,
+                                   language="en", theme="light", scale=1.0,
+                                   viewport="1200x800", release_tag="md3-v125",
+                                   hosted_run_id="123")
+            calls = []
+            def case(name, route, seeded, *_args):
+                calls.append(name)
+                return ({"case": name, "original_exit_confirmed": route == "holder",
+                         "original_exit_code": None, "mainframe_seen": False,
+                         "owned_replacement_seen": False, "owned_process_live_at_end": False,
+                         "cleanup_error": None}, {"file": name + ".log", "bytes": 1,
+                                                  "sha256": "a" * 64})
+            with patch.object(drive, "run_startup_case", side_effect=case):
+                drive.run_startup_comparison(args, {"installed_exe_sha256": "a" * 64,
+                                             "package_version": "2.8.4124"},
+                                             "a" * 40, "b" * 40, root)
+            self.assertEqual(calls, ["seeded-direct", "seeded-holder"])
+
+    def test_case_temp_environment_restores_parent_and_bundle_excludes_shared_trace(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            profile = root / "profile"
+            profile.mkdir()
+            case_temp = root / "case-temp"
+            with patch.dict(os.environ, {"TEMP": "shared-temp", "TMP": "shared-temp"}):
+                with drive.startup_case_environment(case_temp, profile):
+                    self.assertEqual(os.environ["TEMP"], str(case_temp))
+                    self.assertEqual(os.environ["TMP"], str(case_temp))
+                    (case_temp / "bbs-launcher-trace.log").write_bytes(b"case trace")
+                self.assertEqual(os.environ["TEMP"], "shared-temp")
+                self.assertEqual(os.environ["TMP"], "shared-temp")
+            exe = root / "bambu-studio.exe"
+            exe.write_bytes(b"installed")
+            with patch.object(drive, "matching_wer_events", return_value=[]):
+                record, missing = drive.bundle_case_diagnostics(
+                    "seeded-direct", [("launcher_trace", case_temp / "bbs-launcher-trace.log")],
+                    exe, {}, root)
+            self.assertEqual(missing, [])
+            payload = json.loads((root / "restricted-logs" / record["file"]).read_text())
+            self.assertEqual(payload["files"][0]["role"], "launcher_trace")
+            self.assertNotIn("case trace", json.dumps(record))
+
+    def test_workspace_fixture_stays_outside_tuple_output(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            profile = root / "private" / "profile"
+            profile.mkdir(parents=True)
+            output = root / "behavior" / "en-light-1-1200x800"
+            output.mkdir(parents=True)
+            instance = drive.Drive(SimpleNamespace(datadir=str(profile)), output,
+                                   "a" * 40, "md3-v125", "b" * 64, "123", "en")
+            candidate = instance.workspace_scratch_file()
+            self.assertEqual(candidate, profile.parent / "fixture.bambu-workspace")
+            self.assertNotIn(output, candidate.parents)
+            candidate.write_bytes(b"existing")
+            with self.assertRaisesRegex(RuntimeError, "already exists"):
+                instance.workspace_scratch_file()
+
     def test_holder_uses_existing_base_python_not_venv_redirector(self):
         with tempfile.TemporaryDirectory() as temp:
             base = Path(temp) / "python.exe"
@@ -37,7 +141,8 @@ class BehaviorDriveChecks(unittest.TestCase):
 
     def test_holder_refuses_non_hosted_execution_before_launch(self):
         argv = ["holder", "--exe", "unused.exe", "--datadir", "unused-profile",
-                "--desktop", "hidden", "--receipt", "receipt.json", "--stop", "stop.file"]
+                "--desktop", "hidden", "--receipt", "receipt.json", "--stop", "stop.file",
+                "--stdout", "stdout.log", "--stderr", "stderr.log"]
         with patch.object(sys, "argv", argv), patch.dict(holder.os.environ, {
                 "GITHUB_ACTIONS": "false", "RUNNER_ENVIRONMENT": "github-hosted"}):
             with self.assertRaises(SystemExit):
