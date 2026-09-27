@@ -28,7 +28,7 @@ Squirrel.Windows 2.0.1 is downloaded from the official NuGet flat-container URL 
 already cached, and its package SHA-256 is checked before extraction.
 
 The current workflow deliberately keeps correctness and UI evidence checks as local release-operator
-Chuts rather than Actions test jobs. The committed local checks remain available and are run before a
+checks rather than Actions test jobs. The committed local checks remain available and are run before a
 manual release or before accepting a candidate build. A workflow build still fails on compiler,
 dependency, SBOM, or Squirrel packaging failures.
 
@@ -82,6 +82,44 @@ same-commit leftover draft and validates/reuses a same-commit immutable publicat
 a published immutable release.
 
 ## Verification status
+
+After publication and isolated Squirrel installation, the workflow attempts an optional
+hidden-desktop GUI capture. `scripts/md3/Capture-HostedReleaseGui.ps1` reads the successful
+installation receipt, checks the release tag and source commit, and rehashes the installed
+executable against both the installed-file and full-package hashes. It bootstraps a pinned
+revision of the headless capture tool into a runner-local Python environment, creates a new
+application data directory, and attempts eleven workspace and Preferences surfaces. A task-owned
+public RSA key encrypts a ZIP of the original PNGs with a fresh AES-256-GCM key and nonce per run;
+RSA-OAEP-SHA256 wraps the AES key. The encryption binds the run ID, source commit, release tag,
+installed executable hash, and image hashes as authenticated data. The private RSA key stays
+DPAPI-protected in the release operator's local application data, outside this repository.
+The workflow uploads only the encrypted ZIP, its small envelope, and `receipt.json` as a 30-day
+run artifact. Once a supported hosted capture starts with a new output directory, its receipt
+records later preflight and capture failures. Unsupported hosts and existing output directories
+are rejected before any files are changed. Raw images stay on the disposable runner; they are
+never uploaded or published in plaintext.
+This step uses `continue-on-error`, so capture availability is not a release gate.
+
+> [!IMPORTANT]
+> AES-GCM checks that the encrypted bundle matches its supplied authenticated metadata.
+> Anyone with the public key can encrypt a different bundle, so encryption alone does not
+> authenticate its GitHub origin. Before local decryption or promotion, the operator must use
+> `gh run view` to compare the exact run ID and source commit, then independently verify the
+> published release target and asset hashes against the downloaded release and installation
+> receipt. A matching self-reported envelope is not enough.
+
+The receipt records the source commit, release tag, installer and executable hashes, capture
+method, rendered-frame hashes, pixel metrics, and status. Its successful state is
+`encrypted_capture_pending_restricted_review`. It is provenance and automated pixel evidence,
+not reviewed GUI behavior. The operator runs `scripts/md3/Open-HostedReleaseGuiEvidence.ps1`
+with the exact run ID, source commit, release tag, and installed executable hash. That helper
+uses the local DPAPI key, checks the authenticated binding, enforces a fixed eleven-name image
+allowlist and ZIP size limits, and validates every image hash before extraction. The operator
+receives all eleven files only after they have been written and rehashed in a unique sibling
+directory that is atomically renamed into place. Existing output is never overwritten. The
+operator must inspect the decrypted pixels for visual quality and private content before any image is
+retained, embedded, or published. The fresh disposable profile does not import the user's local
+installation or data. A missing or failed capture must not be described as verified GUI behavior.
 
 Before a candidate is accepted, run the local release contract and one-click checks, build the real
 Squirrel output, inspect the README capture matrix from the built artifact, and record the exact
