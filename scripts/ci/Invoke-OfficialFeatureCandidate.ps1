@@ -33,6 +33,10 @@ $metadata = [ordered]@{
     dependency_cache = $null
     native_exe_sha256 = $null
     setup_sha256 = $null
+    sbom_sha256 = $null
+    symbol_count = 0
+    symbol_collection_failure_type = $null
+    package_release_number = $null
     package_status = 'not_started'
     failure_type = $null
     validation = 'build and package only; no install, GUI, or release publication'
@@ -48,6 +52,34 @@ function Invoke-Step {
     Write-Host "== $Name =="
     & $Action
     if ($LASTEXITCODE -ne 0) { throw "$Name failed with exit code $LASTEXITCODE" }
+}
+
+function Save-NativeSymbols {
+    $sourceRoot = Join-Path $root 'build\src'
+    if (-not (Test-Path -LiteralPath $sourceRoot -PathType Container)) { return 0 }
+    $files = @(Get-ChildItem -LiteralPath $sourceRoot -Filter '*.pdb' -File -Recurse -ErrorAction SilentlyContinue)
+    if (-not $files.Count) { return 0 }
+    $symbolRoot = Join-Path $diagnostic 'symbols'
+    New-Item -ItemType Directory -Force -Path $symbolRoot | Out-Null
+    $rows = @()
+    foreach ($file in $files) {
+        $relative = $file.FullName.Substring($sourceRoot.Length + 1)
+        $target = Join-Path $symbolRoot $relative
+        New-Item -ItemType Directory -Force -Path (Split-Path -Parent $target) | Out-Null
+        Copy-Item -LiteralPath $file.FullName -Destination $target -Force
+        $rows += [ordered]@{
+            path = $relative.Replace('\', '/')
+            bytes = $file.Length
+            sha256 = (Get-FileHash -LiteralPath $target -Algorithm SHA256).Hash.ToLowerInvariant()
+        }
+    }
+    [ordered]@{
+        schema = 1
+        source_sha = $env:GITHUB_SHA
+        native_exe_sha256 = $metadata.native_exe_sha256
+        symbols = $rows
+    } | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $symbolRoot 'candidate-symbols.json') -Encoding utf8
+    return $files.Count
 }
 
 try {
@@ -130,7 +162,7 @@ try {
     Invoke-Step 'Configure candidate native application' {
         & $cmake -S . -B build -G 'Visual Studio 18 2026' -A x64 `
             -DBBL_RELEASE_TO_PUBLIC=1 -DBBL_INTERNAL_TESTING=0 `
-            -DSLIC3R_MSVC_PDB=OFF -DSLIC3R_BUILD_TESTS=OFF `
+            -DSLIC3R_MSVC_PDB=ON -DSLIC3R_BUILD_TESTS=OFF `
             "-DCMAKE_PREFIX_PATH=$prefix" "-DCMAKE_INSTALL_PREFIX=$payload" `
             "-DWIN10SDK_PATH=$($sdk.FullName)"
     }
@@ -139,6 +171,8 @@ try {
     $exe = @(Get-ChildItem -LiteralPath $payload -Filter 'bambu-studio.exe' -File -Recurse)
     if ($exe.Count -ne 1) { throw 'The native payload must contain exactly one bambu-studio.exe.' }
     $metadata.native_exe_sha256 = (Get-FileHash -LiteralPath $exe[0].FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+    $metadata.symbol_count = Save-NativeSymbols
+    if ($metadata.symbol_count -lt 1) { throw 'Release build produced no native PDB symbols.' }
 
     & (Join-Path $root 'scripts\windows\Stage-ModelCreatorRenderers.ps1') `
         -PayloadDirectory $payload -CacheDirectory (Join-Path $env:RUNNER_TEMP 'bambu-model-renderers')
@@ -179,8 +213,19 @@ try {
     $versionContent = Get-Content -LiteralPath (Join-Path $root 'version.inc') -Raw
     if ($versionContent -notmatch 'set\(SLIC3R_VERSION "([^"]+)"\)') { throw 'Product version is missing from version.inc.' }
     $productVersion = $Matches[1]
+    $sbom = Join-Path $diagnostic 'BambuStudioMD3.cdx.json'
+    & (Join-Path $root 'scripts\ci\New-WindowsCycloneDxSbom.ps1') `
+        -PayloadDir $payload -OutputPath $sbom -Version $productVersion `
+        -Commit $head -Repository $env:GITHUB_REPOSITORY
+    if (-not (Test-Path -LiteralPath $sbom -PathType Leaf)) { throw 'Candidate payload SBOM is missing.' }
+    $metadata.sbom_sha256 = (Get-FileHash -LiteralPath $sbom -Algorithm SHA256).Hash.ToLowerInvariant()
     $packageOutput = Join-Path $root 'artifacts\windows'
-    $releaseNumber = [int]$env:GITHUB_RUN_NUMBER
+    $runNumber = [long]$env:GITHUB_RUN_NUMBER
+    $runAttempt = [long]$env:GITHUB_RUN_ATTEMPT
+    if ($runNumber -lt 1 -or $runAttempt -lt 1 -or $runAttempt -gt 99 -or
+        $runNumber -gt 10000000) { throw 'Hosted run numbering exceeds the diagnostic package-version range.' }
+    $releaseNumber = [int](1000000 + $runNumber * 100 + $runAttempt)
+    $metadata.package_release_number = $releaseNumber
     $metadata.package_status = 'running'
     Invoke-Step 'Build unsigned Squirrel candidate' {
         & (Join-Path $root 'scripts\windows\Invoke-SquirrelPackage.ps1') `
@@ -208,5 +253,9 @@ catch {
     throw
 }
 finally {
+    if ($metadata.symbol_count -lt 1) {
+        try { $metadata.symbol_count = Save-NativeSymbols }
+        catch { $metadata.symbol_collection_failure_type = $_.Exception.GetType().Name }
+    }
     $metadata | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $metadataPath -Encoding utf8
 }

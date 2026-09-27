@@ -76,6 +76,16 @@ jobs:
           if-no-files-found: warn
           retention-days: 7
 
+      - name: Upload candidate native symbols
+        if: ${{ always() }}
+        continue-on-error: true
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: official-feature-symbols-${{ github.run_id }}-${{ github.run_attempt }}
+          path: diagnostic/candidate/symbols/
+          if-no-files-found: warn
+          retention-days: 7
+
       - name: Upload unsigned Squirrel candidate
         if: ${{ always() }}
         continue-on-error: true
