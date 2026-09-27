@@ -537,7 +537,7 @@ DPIFrame(NULL, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, BORDERLESS_FRAME_
     // project when none were restored so single-tab use behaves exactly like today.
     m_project_tabbar->LoadFromConfig();
     if (m_project_tabbar->Count() == 0) {
-        const wxString cur_file  = m_plater ? m_plater->get_project_filename() : wxString();
+        const wxString cur_file  = m_plater ? m_plater->get_project_filename(".3mf") : wxString();
         wxString       cur_title = m_plater ? m_plater->get_project_name() : wxString();
         if (cur_title.IsEmpty())
             cur_title = _L("Untitled");
@@ -1443,6 +1443,38 @@ std::string make_project_tab_snapshot_path()
     fs::path file = dir / (std::string("tab_") + stamp + "_" + std::to_string(seq) + ".3mf");
     return file.string();
 }
+
+// A rejected incoming load may already have reset the single live Plater.
+// Restore the outgoing tab before returning control to the tab strip.
+bool restore_project_tab_document(Plater* plater, ProjectTabBar* tabbar, const ProjectTab& tab)
+{
+    bool restored = false;
+    if (!tab.snapshot_path.empty()) {
+        // A dirty tab needs the private document bytes and Restore semantics.
+        restored = plater->load_snapshot_from(tab.snapshot_path);
+    } else if (!tab.file_path.empty()) {
+        // A known-clean real file must use the ordinary load path. Restore
+        // semantics would mark the Plater dirty while the tab model is clean.
+        try {
+            plater->load_project(wxString::FromUTF8(tab.file_path), "-", &restored,
+                                 /*skip_close_confirmation=*/true);
+        } catch (const std::exception& ex) {
+            BOOST_LOG_TRIVIAL(error) << __FUNCTION__ << ": clean tab rollback threw: " << ex.what();
+        } catch (...) {
+            BOOST_LOG_TRIVIAL(error) << __FUNCTION__ << ": clean tab rollback threw";
+        }
+    } else {
+        restored = plater->new_project(/*skip_confirm=*/true, /*silent=*/true) != wxID_CANCEL;
+    }
+    if (!restored)
+        return false;
+    // Restore the on-disk identity after loading a private snapshot. An empty
+    // file_path must stay empty so Save opens Save As for an Untitled tab.
+    plater->set_project_filename(wxString::FromUTF8(tab.file_path));
+    tabbar->SetActiveTitle(tab.title.IsEmpty() ? _L("Untitled") : tab.title);
+    tabbar->SetActiveDirty(tab.dirty);
+    return true;
+}
 } // namespace
 
 void MainFrame::place_project_tabbar()
@@ -1499,15 +1531,25 @@ void MainFrame::switch_project_tab(int target)
     TabOpGuard guard(m_project_tab_switching);
 
     // p->reset() inside the load path already settles/stops any background slicing.
-    save_active_tab_snapshot_if_dirty();
+    if (!save_active_tab_snapshot_if_dirty())
+        return;
 
+    const int         outgoing_index = m_project_tabbar->GetActive();
+    const ProjectTab  outgoing       = m_project_tabbar->TabAt(outgoing_index);
     ProjectTab&       tgt                  = m_project_tabbar->TabAt(target);
     const bool        loaded_from_snapshot = !tgt.snapshot_path.empty();
     const std::string load_path            = loaded_from_snapshot ? tgt.snapshot_path : tgt.file_path;
-    if (!load_path.empty())
-        m_plater->load_snapshot_from(load_path);
-    else
-        m_plater->new_project(/*skip_confirm=*/true, /*silent=*/true); // never-saved tab
+    const bool loaded = !load_path.empty()
+        ? m_plater->load_snapshot_from(load_path)
+        : m_plater->new_project(/*skip_confirm=*/true, /*silent=*/true) != wxID_CANCEL;
+    if (!loaded) {
+        const bool restored = restore_project_tab_document(m_plater, m_project_tabbar, outgoing);
+        BOOST_LOG_TRIVIAL(error) << __FUNCTION__ << ": incoming tab load failed; outgoing restored=" << restored;
+        MessageDialog(this, restored ? _L("Could not open the selected project tab. The current project was restored.")
+                                     : _L("Could not open the selected project tab or restore the current project."),
+                      _L("Open project tab"), wxOK | wxICON_WARNING).ShowModal();
+        return;
+    }
 
     // Restore the tab's real on-disk identity. Loading from a temp snapshot leaves the
     // project filename pointing at the snapshot, which would misdirect Ctrl+S and the
@@ -1540,8 +1582,14 @@ void MainFrame::close_project_tab(int index)
     const int active = m_project_tabbar->GetActive();
 
     TabOpGuard guard(m_project_tab_switching);
+    std::string saved_tab_recovery_snapshot;
 
     if (index == active) {
+        // close_with_confirm() may mark the live undo state saved even when
+        // the user chooses Discard. Preserve exact outgoing bytes first so a
+        // failed replacement can abort the close without losing those edits.
+        if (!save_active_tab_snapshot_if_dirty())
+            return;
         // Active tab: reuse the plater's unsaved-changes confirmation (same second-check
         // as the app-close path). Cancel aborts the close.
         auto check = [](bool yes_or_no) {
@@ -1550,8 +1598,34 @@ void MainFrame::close_project_tab(int index)
             return wxGetApp().check_and_save_current_preset_changes(
                 _L("Close project tab"), _L("Closing a project tab while some presets are modified."));
         };
-        if (m_plater->close_with_confirm(check) == wxID_CANCEL)
+        const int close_result = m_plater->close_with_confirm(check);
+        if (close_result == wxID_CANCEL) {
+            // The live document remains active. Its pre-confirmation snapshot
+            // is now redundant and would become stale after a later edit/save.
+            ProjectTab& tab = m_project_tabbar->TabAt(active);
+            tab.snapshot_path.clear();
+            tab.file_path = into_u8(m_plater->get_project_filename(".3mf"));
+            tab.title = m_plater->get_project_name();
+            tab.dirty = m_plater->is_project_dirty();
+            m_project_tabbar->SetActiveTitle(tab.title.IsEmpty() ? _L("Untitled") : tab.title);
+            m_project_tabbar->SetActiveDirty(tab.dirty);
+            m_project_tabbar->SaveToConfig();
+            // Retain the detached file on disk as a recovery source if a save
+            // attempt caused Cancel; it is no longer selected by this tab.
             return;
+        }
+        if (close_result == wxID_YES) {
+            // Save As may have assigned a different real filename while the
+            // tab-operation guard suppresses update_title() synchronization.
+            // Treat that saved document as the outgoing tab. Keep its older
+            // private snapshot on disk until a replacement or rollback loads.
+            ProjectTab& tab = m_project_tabbar->TabAt(active);
+            saved_tab_recovery_snapshot = tab.snapshot_path;
+            tab.file_path = into_u8(m_plater->get_project_filename(".3mf"));
+            tab.title = m_plater->get_project_name();
+            tab.dirty = false;
+            tab.snapshot_path.clear();
+        }
     } else {
         // Background tab with unsaved changes (its edits live only in the temp snapshot):
         // confirm before discarding them, since the live plater can't run its own
@@ -1563,6 +1637,49 @@ void MainFrame::close_project_tab(int index)
             if (dlg.ShowModal() != wxID_YES)
                 return;
         }
+    }
+
+    // Load the replacement while the outgoing tab still exists. If loading
+    // fails, keep its tab and restore its document rather than closing it.
+    if (index == active) {
+        const ProjectTab outgoing = m_project_tabbar->TabAt(active);
+        bool loaded = false;
+        if (count == 1) {
+            loaded = m_plater->new_project(/*skip_confirm=*/true, /*silent=*/true) != wxID_CANCEL;
+        } else {
+            const int neighbour = index + 1 < count ? index + 1 : index - 1;
+            const ProjectTab& next = m_project_tabbar->TabAt(neighbour);
+            const std::string path = next.snapshot_path.empty() ? next.file_path : next.snapshot_path;
+            loaded = !path.empty()
+                ? m_plater->load_snapshot_from(path)
+                : m_plater->new_project(/*skip_confirm=*/true, /*silent=*/true) != wxID_CANCEL;
+            if (loaded && !next.snapshot_path.empty() && !next.file_path.empty())
+                m_plater->set_project_filename(wxString::FromUTF8(next.file_path));
+        }
+        if (!loaded) {
+            const bool restored = restore_project_tab_document(m_plater, m_project_tabbar, outgoing);
+            if (restored && !saved_tab_recovery_snapshot.empty()) {
+                boost::system::error_code ec;
+                boost::filesystem::remove(boost::filesystem::path(saved_tab_recovery_snapshot), ec);
+            } else if (!restored && !saved_tab_recovery_snapshot.empty()) {
+                // The newly saved file could not be reloaded. Retain the
+                // pre-confirmation snapshot as a recovery source for this tab.
+                ProjectTab& tab = m_project_tabbar->TabAt(active);
+                tab.snapshot_path = saved_tab_recovery_snapshot;
+                tab.dirty = true;
+            }
+            m_project_tabbar->SaveToConfig();
+            BOOST_LOG_TRIVIAL(error) << __FUNCTION__ << ": replacement tab load failed; outgoing restored=" << restored;
+            MessageDialog(this, restored ? _L("Could not close this project tab. The project was restored.")
+                                         : _L("Could not close this project tab or restore its project."),
+                          _L("Close project tab"), wxOK | wxICON_WARNING).ShowModal();
+            return;
+        }
+    }
+
+    if (!saved_tab_recovery_snapshot.empty()) {
+        boost::system::error_code ec;
+        boost::filesystem::remove(boost::filesystem::path(saved_tab_recovery_snapshot), ec);
     }
 
     // Best-effort cleanup of this tab's temp snapshot.
@@ -1579,24 +1696,20 @@ void MainFrame::close_project_tab(int index)
 
     if (remaining == 0) {
         // Never leave the app tab-less: start a fresh Untitled tab.
-        m_plater->new_project(/*skip_confirm=*/true, /*silent=*/true);
         wxString t = m_plater->get_project_name();
         if (t.IsEmpty())
             t = _L("Untitled");
         m_project_tabbar->AddTab(std::string(), t, /*activate=*/true);
         update_title();
     } else if (index == active) {
-        // Closed the visible tab: activate a neighbour and load its document.
+        // The replacement document was loaded before removing the visible tab.
         int neighbour = index;
         if (neighbour >= remaining)
             neighbour = remaining - 1;
-        ProjectTab&       n         = m_project_tabbar->TabAt(neighbour);
-        const std::string load_path = n.snapshot_path.empty() ? n.file_path : n.snapshot_path;
-        if (!load_path.empty())
-            m_plater->load_snapshot_from(load_path);
-        else
-            m_plater->new_project(/*skip_confirm=*/true, /*silent=*/true);
         m_project_tabbar->SetActive(neighbour);
+        ProjectTab& n = m_project_tabbar->TabAt(neighbour);
+        m_project_tabbar->SetActiveTitle(n.title.IsEmpty() ? _L("Untitled") : n.title);
+        m_project_tabbar->SetActiveDirty(n.dirty);
         update_title();
     } else {
         // Closed a background tab: keep the live document; fix the active index.
@@ -1619,7 +1732,8 @@ void MainFrame::new_project_tab()
 
     // Preserve the current tab, then open a fresh Untitled tab alongside it. The
     // outgoing document is already handled, so skip new_project's own confirm.
-    save_active_tab_snapshot_if_dirty();
+    if (!save_active_tab_snapshot_if_dirty())
+        return;
     if (m_plater->new_project(/*skip_confirm=*/true) == wxID_CANCEL)
         return;
 
@@ -1668,7 +1782,8 @@ void MainFrame::open_workspace_member(const WorkspaceMemberSelection& selection)
         const auto &tab = m_project_tabbar->TabAt(index);
         if (tab.workspace_bundle_id == selection.bundle_id && tab.workspace_member_id == selection.member_id) {
             switch_project_tab(index);
-            select_tab(tp3DEditor);
+            if (m_project_tabbar->GetActive() == index)
+                select_tab(tp3DEditor);
             return;
         }
     }
@@ -1686,9 +1801,18 @@ void MainFrame::open_workspace_member(const WorkspaceMemberSelection& selection)
         return;
     }
     bool loaded = false;
-    m_plater->load_project(from_u8(copied_path), "-", &loaded, /*skip_close_confirmation=*/true);
+    const ProjectTab outgoing = m_project_tabbar->TabAt(m_project_tabbar->GetActive());
+    try {
+        m_plater->load_project(from_u8(copied_path), "-", &loaded, /*skip_close_confirmation=*/true);
+    } catch (const std::exception& ex) {
+        BOOST_LOG_TRIVIAL(error) << __FUNCTION__ << ": workspace member load threw: " << ex.what();
+    } catch (...) {
+        BOOST_LOG_TRIVIAL(error) << __FUNCTION__ << ": workspace member load threw";
+    }
     if (!loaded) {
         std::filesystem::remove(std::filesystem::u8path(copied_path), error);
+        const bool restored = restore_project_tab_document(m_plater, m_project_tabbar, outgoing);
+        BOOST_LOG_TRIVIAL(error) << __FUNCTION__ << ": workspace member load failed; outgoing restored=" << restored;
         return;
     }
     wxString title = m_plater->get_project_name();
@@ -1717,8 +1841,25 @@ void MainFrame::open_project_in_tab(const wxString& filename)
 
     // Preserve the current tab, then load the file into the single live plater. We
     // already handled the outgoing document, so skip load_project's close confirmation.
-    save_active_tab_snapshot_if_dirty();
-    m_plater->load_project(filename, "-", nullptr, /*skip_close_confirmation=*/true);
+    if (!save_active_tab_snapshot_if_dirty())
+        return;
+    const ProjectTab outgoing = m_project_tabbar->TabAt(m_project_tabbar->GetActive());
+    bool loaded = false;
+    try {
+        m_plater->load_project(filename, "-", &loaded, /*skip_close_confirmation=*/true);
+    } catch (const std::exception& ex) {
+        BOOST_LOG_TRIVIAL(error) << __FUNCTION__ << ": project load threw: " << ex.what();
+    } catch (...) {
+        BOOST_LOG_TRIVIAL(error) << __FUNCTION__ << ": project load threw";
+    }
+    if (!loaded) {
+        const bool restored = restore_project_tab_document(m_plater, m_project_tabbar, outgoing);
+        BOOST_LOG_TRIVIAL(error) << __FUNCTION__ << ": project load failed; outgoing restored=" << restored;
+        MessageDialog(this, restored ? _L("Could not open the selected project. The current project was restored.")
+                                     : _L("Could not open the selected project or restore the current project."),
+                      _L("Open project"), wxOK | wxICON_WARNING).ShowModal();
+        return;
+    }
 
     wxString t = m_plater->get_project_name();
     if (t.IsEmpty())

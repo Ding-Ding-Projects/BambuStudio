@@ -43,3 +43,11 @@ not a general remote-control API.
 The `DeviceWeb` sub-project (`src/slic3r/GUI/DeviceWeb/`) remains an in-app webview front-end bundled
 with the application, not a served HTTP API; this repository publishes no separate API contract for
 it.
+
+## Official-source reconstruction
+
+- [Source inventory and reapplication](../../reapplication/README.md)
+- [Project-loading adapters and required runtime cases](../../reapplication/loader-adapters.md)
+- [Exact hosted verification status](../../reapplication/verification-status.md)
+
+The diagnostic candidate package does not replace the production release route.

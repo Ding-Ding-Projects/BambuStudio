@@ -18,14 +18,6 @@ set(SLIC3R_GUI_SOURCES
     GUI/Widgets/Button.hpp
     GUI/Widgets/CheckBox.cpp
     GUI/Widgets/CheckBox.hpp
-    GUI/Widgets/LabeledCheckBox.cpp
-    GUI/Widgets/LabeledCheckBox.hpp
-    GUI/Widgets/LabeledRadioButton.cpp
-    GUI/Widgets/LabeledRadioButton.hpp
-    GUI/Widgets/TextArea.cpp
-    GUI/Widgets/TextArea.hpp
-    GUI/Widgets/ListBox.cpp
-    GUI/Widgets/ListBox.hpp
     GUI/Widgets/RadioBox.hpp
     GUI/Widgets/RadioBox.cpp
     GUI/Widgets/ProgressDialog.hpp
@@ -42,21 +34,8 @@ set(SLIC3R_GUI_SOURCES
     GUI/Widgets/DropDown.hpp
     GUI/Widgets/PopupWindow.cpp
     GUI/Widgets/PopupWindow.hpp
-    GUI/Widgets/MD3MenuModel.hpp
-    GUI/Widgets/MD3Menu.cpp
-    GUI/Widgets/MD3Menu.hpp
-    GUI/Appearance/ElementStyle.cpp
-    GUI/Appearance/ElementStyle.hpp
-    GUI/Appearance/AppearanceEditorPopover.cpp
-    GUI/Appearance/AppearanceEditorPopover.hpp
     GUI/Widgets/Label.cpp
     GUI/Widgets/Label.hpp
-    GUI/Widgets/MaterialIcon.cpp
-    GUI/Widgets/MaterialIcon.hpp
-    GUI/Widgets/MD3Dialog.cpp
-    GUI/Widgets/MD3Dialog.hpp
-    GUI/Widgets/CameraHUD.cpp
-    GUI/Widgets/CameraHUD.hpp
     GUI/Widgets/LinkLabel.cpp
     GUI/Widgets/LinkLabel.hpp
     GUI/Widgets/Scrollbar.cpp
@@ -85,32 +64,6 @@ set(SLIC3R_GUI_SOURCES
     GUI/Widgets/TextTabbar.hpp
     GUI/Widgets/TextInput.cpp
     GUI/Widgets/TextInput.hpp
-    GUI/Widgets/BoundedRegex.cpp
-    GUI/Widgets/BoundedRegex.hpp
-    GUI/Widgets/BoundedRegexProtocol.hpp
-    GUI/Widgets/RegexBuilderBridgeState.hpp
-    GUI/Widgets/SearchField.cpp
-    GUI/Widgets/SearchField.hpp
-    GUI/Widgets/TabStripModel.hpp
-    GUI/Widgets/TabStrip.cpp
-    GUI/Widgets/TabStrip.hpp
-    GUI/Widgets/TabStripDialogs.cpp
-    GUI/Widgets/TabStripDialogs.hpp
-    GUI/Widgets/SlideToConfirm.cpp
-    GUI/Widgets/SlideToConfirm.hpp
-    GUI/Widgets/SuperConfirmGate.cpp
-    GUI/Widgets/SuperConfirmGate.hpp
-    GUI/Widgets/SuperConfirmState.hpp
-    GUI/Widgets/MD3ColorPicker.cpp
-    GUI/Widgets/MD3ColorPicker.hpp
-    GUI/Widgets/MD3Motion.cpp
-    GUI/Widgets/MD3Motion.hpp
-    GUI/Widgets/MD3DialogChrome.cpp
-    GUI/Widgets/MD3DialogChrome.hpp
-    GUI/Widgets/RegexBuilderPopup.cpp
-    GUI/Widgets/RegexBuilderPopup.hpp
-    GUI/Widgets/Slider.cpp
-    GUI/Widgets/Slider.hpp
     GUI/Widgets/TempInput.cpp
     GUI/Widgets/TempInput.hpp
     GUI/Widgets/AMSControl.cpp
@@ -139,8 +92,6 @@ set(SLIC3R_GUI_SOURCES
     GUI/Widgets/ErrorMsgStaticText.hpp
     GUI/Widgets/MultiNozzleSync.hpp
     GUI/Widgets/MultiNozzleSync.cpp
-    GUI/BulkFilamentDialog.cpp
-    GUI/BulkFilamentDialog.hpp
     GUI/MixedFilamentDialog.cpp
     GUI/MixedFilamentDialog.hpp
     GUI/ColorDecomposeDialog.cpp
@@ -163,8 +114,6 @@ set(SLIC3R_GUI_SOURCES
     GUI/EncodedFilament.cpp
     GUI/Project.cpp
     GUI/Project.hpp
-    GUI/WorkspacePanel.cpp
-    GUI/WorkspacePanel.hpp
     GUI/BackgroundSlicingProcess.cpp
     GUI/BackgroundSlicingProcess.hpp
     GUI/BitmapCache.cpp
@@ -195,8 +144,6 @@ set(SLIC3R_GUI_SOURCES
     GUI/SlicingProgressNotification.hpp
     GUI/Gizmos/GLGizmosManager.cpp
     GUI/Gizmos/GLGizmosManager.hpp
-    GUI/Gizmos/GLIconGlyphBridge.cpp
-    GUI/Gizmos/GLIconGlyphBridge.hpp
     GUI/Gizmos/GLGizmosCommon.cpp
     GUI/Gizmos/GLGizmosCommon.hpp
     GUI/Gizmos/FacetPicker.cpp
@@ -286,14 +233,6 @@ set(SLIC3R_GUI_SOURCES
     GUI/PresetHints.cpp
     GUI/PresetHints.hpp
     GUI/GUI.cpp
-    GUI/ModelCreator/SceneSpec.cpp
-    GUI/ModelCreator/SceneSpec.hpp
-    GUI/ModelCreator/ModelCreatorBackend.cpp
-    GUI/ModelCreator/ModelCreatorBackend.hpp
-    GUI/ModelCreator/ProcessRunner.cpp
-    GUI/ModelCreator/ProcessRunner.hpp
-    GUI/ModelCreator/ModelCreatorDialog.cpp
-    GUI/ModelCreator/ModelCreatorDialog.hpp
     GUI/GUI.hpp
     GUI/GUI_Init.cpp
     GUI/GUI_Init.hpp
@@ -302,60 +241,13 @@ set(SLIC3R_GUI_SOURCES
     GUI/GUI_App.cpp
     GUI/GUI_App.hpp
     GUI/GUI_Utils.cpp
-    GUI/LayoutProbe.cpp
-    GUI/LayoutProbe.hpp
     GUI/GUI_Utils.hpp
     GUI/I18N.cpp
     GUI/I18N.hpp
-    GUI/LanguageMode.cpp
-    GUI/LanguageMode.hpp
-    GUI/AppDisplayName.cpp
-    GUI/AppDisplayName.hpp
     GUI/IconManager.cpp
     GUI/IconManager.hpp
     GUI/MainFrame.cpp
     GUI/MainFrame.hpp
-    GUI/ProjectHistoryDialog.cpp
-    GUI/ProjectHistoryDialog.hpp
-    GUI/ChangelogDialog.cpp
-    GUI/ChangelogDialog.hpp
-    GUI/ConfigProfilesDialog.cpp
-    GUI/ConfigProfilesDialog.hpp
-    GUI/CommandPalette.cpp
-    GUI/CommandPalette.hpp
-    GUI/CommandPaletteIndex.cpp
-    GUI/CommandPaletteIndex.hpp
-    GUI/Export/ExportFormats.hpp
-    GUI/Export/ExportEverything.cpp
-    GUI/Export/ExportEverything.hpp
-    GUI/Export/ExportDatasets.cpp
-    GUI/Export/ExportDatasets.hpp
-    GUI/Export/ExportDialog.cpp
-    GUI/Export/ExportDialog.hpp
-    GUI/StopPrintGate.cpp
-    GUI/StopPrintGate.hpp
-    GUI/PreferencesHistory.cpp
-    GUI/PreferencesHistory.hpp
-    GUI/PrinterWatch.cpp
-    GUI/PrinterWatch.hpp
-    GUI/DimSumSurprise.cpp
-    GUI/DimSumSurprise.hpp
-    GUI/DimSumSurpriseModel.hpp
-    GUI/FilamentScanner.cpp
-    GUI/FilamentScanner.hpp
-    GUI/TtsNarrator.cpp
-    GUI/TtsNarrator.hpp
-    GUI/HomeAssistant.cpp
-    GUI/HomeAssistant.hpp
-    GUI/HomeAssistantTaskExecutor.hpp
-    GUI/HomeAssistantTransportPolicy.cpp
-    GUI/HomeAssistantTransportPolicy.hpp
-    GUI/HomeAssistantSharingService.cpp
-    GUI/HomeAssistantSharingService.hpp
-    GUI/SmartHomeDialog.cpp
-    GUI/SmartHomeDialog.hpp
-    GUI/third_party/qrcodegen.cpp
-    GUI/third_party/qrcodegen.hpp
     GUI/PerfTrace.cpp
     GUI/PerfTrace.hpp
     GUI/BBLTopbar.cpp
@@ -492,8 +384,6 @@ set(SLIC3R_GUI_SOURCES
     GUI/ObjColorDialog.hpp
     GUI/TextureImportDialog.hpp
     GUI/TextureImportDialog.cpp
-    GUI/ModelPreviewDialog.hpp
-    GUI/ModelPreviewDialog.cpp
     GUI/MixingKitsHelpDialog.hpp
     GUI/MixingKitsHelpDialog.cpp
     GUI/TextureImportUi.hpp
@@ -614,8 +504,6 @@ set(SLIC3R_GUI_SOURCES
     GUI/IMSlider_Utils.hpp
     GUI/Notebook.cpp
     GUI/Notebook.hpp
-    GUI/ProjectTabBar.cpp
-    GUI/ProjectTabBar.hpp
     GUI/TabButton.cpp
     GUI/TabButton.hpp
     GUI/Tabbook.cpp
@@ -632,10 +520,6 @@ set(SLIC3R_GUI_SOURCES
     GUI/FilamentGroupPopup.cpp
     GUI/NotificationManager.cpp
     GUI/NotificationManager.hpp
-    GUI/NotificationHistory.cpp
-    GUI/NotificationHistory.hpp
-    GUI/NotificationCenterPanel.cpp
-    GUI/NotificationCenterPanel.hpp
     GUI/UnsavedChangesDialog.cpp
     GUI/UnsavedChangesDialog.hpp
     GUI/UserPresetsDialog.cpp
@@ -757,8 +641,6 @@ set(SLIC3R_GUI_SOURCES
     Utils/FixModelByWin10.hpp
     Utils/Bonjour.cpp
     Utils/Bonjour.hpp
-    Utils/ExternalEditor.cpp
-    Utils/ExternalEditor.hpp
     Utils/FileHelp.cpp
     Utils/FileHelp.hpp
     Utils/PresetUpdater.cpp
@@ -841,21 +723,174 @@ if (WIN32)
         )
 endif ()
 
+if (APPLE)
+    list(APPEND SLIC3R_GUI_SOURCES
+            Utils/RetinaHelperImpl.mm
+            Utils/MacDarkMode.mm
+            GUI/RemovableDriveManagerMM.mm
+            GUI/RemovableDriveManagerMM.h
+            GUI/Mouse3DHandlerMac.mm
+            GUI/InstanceCheckMac.mm
+            GUI/InstanceCheckMac.h
+            GUI/CameraFullscreenMac.mm
+            GUI/CameraFullscreenMac.hpp
+            GUI/TextureImportPopupDismiss.mm
+            GUI/MacIME.mm
+            GUI/MacIME.hpp
+            GUI/wxMediaCtrl2.mm
+            GUI/wxMediaCtrl2.h
+            GUI/wxMediaCtrl3.h
+            GUI/WindowShadowMac.mm
+        )
+    FIND_LIBRARY(DISKARBITRATION_LIBRARY DiskArbitration)
+else ()
+    list(APPEND SLIC3R_GUI_SOURCES
+            GUI/AVVideoDecoder.cpp
+            GUI/AVVideoDecoder.hpp
+            GUI/wxMediaCtrl2.cpp
+            GUI/wxMediaCtrl2.h
+            GUI/wxMediaCtrl3.cpp
+            GUI/wxMediaCtrl3.h
+        )
+endif ()
+
+if (UNIX AND NOT APPLE)
+    list(APPEND SLIC3R_GUI_SOURCES
+        GUI/Printer/gstbambusrc.c
+    )
+endif ()
+
+# Keep the official platform-specific source lists above intact. Add the
+# reintroduced native feature components as a separate source group.
 list(APPEND SLIC3R_GUI_SOURCES
-        GUI/AVVideoDecoder.cpp
-        GUI/AVVideoDecoder.hpp
-        GUI/wxMediaCtrl2.cpp
-        GUI/wxMediaCtrl2.h
-        GUI/wxMediaCtrl3.cpp
-        GUI/wxMediaCtrl3.h
+    GUI/Widgets/LabeledCheckBox.cpp
+    GUI/Widgets/LabeledCheckBox.hpp
+    GUI/Widgets/LabeledRadioButton.cpp
+    GUI/Widgets/LabeledRadioButton.hpp
+    GUI/Widgets/TextArea.cpp
+    GUI/Widgets/TextArea.hpp
+    GUI/Widgets/ListBox.cpp
+    GUI/Widgets/ListBox.hpp
+    GUI/Widgets/MD3MenuModel.hpp
+    GUI/Widgets/MD3Menu.cpp
+    GUI/Widgets/MD3Menu.hpp
+    GUI/Appearance/ElementStyle.cpp
+    GUI/Appearance/ElementStyle.hpp
+    GUI/Appearance/AppearanceEditorPopover.cpp
+    GUI/Appearance/AppearanceEditorPopover.hpp
+    GUI/Widgets/MaterialIcon.cpp
+    GUI/Widgets/MaterialIcon.hpp
+    GUI/Widgets/MD3Dialog.cpp
+    GUI/Widgets/MD3Dialog.hpp
+    GUI/Widgets/CameraHUD.cpp
+    GUI/Widgets/CameraHUD.hpp
+    GUI/Widgets/BoundedRegex.cpp
+    GUI/Widgets/BoundedRegex.hpp
+    GUI/Widgets/BoundedRegexProtocol.hpp
+    GUI/Widgets/RegexBuilderBridgeState.hpp
+    GUI/Widgets/SearchField.cpp
+    GUI/Widgets/SearchField.hpp
+    GUI/Widgets/TabStripModel.hpp
+    GUI/Widgets/TabStrip.cpp
+    GUI/Widgets/TabStrip.hpp
+    GUI/Widgets/TabStripDialogs.cpp
+    GUI/Widgets/TabStripDialogs.hpp
+    GUI/Widgets/SlideToConfirm.cpp
+    GUI/Widgets/SlideToConfirm.hpp
+    GUI/Widgets/SuperConfirmGate.cpp
+    GUI/Widgets/SuperConfirmGate.hpp
+    GUI/Widgets/SuperConfirmState.hpp
+    GUI/Widgets/MD3ColorPicker.cpp
+    GUI/Widgets/MD3ColorPicker.hpp
+    GUI/Widgets/MD3Motion.cpp
+    GUI/Widgets/MD3Motion.hpp
+    GUI/Widgets/MD3DialogChrome.cpp
+    GUI/Widgets/MD3DialogChrome.hpp
+    GUI/Widgets/RegexBuilderPopup.cpp
+    GUI/Widgets/RegexBuilderPopup.hpp
+    GUI/Widgets/Slider.cpp
+    GUI/Widgets/Slider.hpp
+    GUI/BulkFilamentDialog.cpp
+    GUI/BulkFilamentDialog.hpp
+    GUI/WorkspacePanel.cpp
+    GUI/WorkspacePanel.hpp
+    GUI/Gizmos/GLIconGlyphBridge.cpp
+    GUI/Gizmos/GLIconGlyphBridge.hpp
+    GUI/ModelCreator/SceneSpec.cpp
+    GUI/ModelCreator/SceneSpec.hpp
+    GUI/ModelCreator/ModelCreatorBackend.cpp
+    GUI/ModelCreator/ModelCreatorBackend.hpp
+    GUI/ModelCreator/ProcessRunner.cpp
+    GUI/ModelCreator/ProcessRunner.hpp
+    GUI/ModelCreator/ModelCreatorDialog.cpp
+    GUI/ModelCreator/ModelCreatorDialog.hpp
+    GUI/LayoutProbe.cpp
+    GUI/LayoutProbe.hpp
+    GUI/LanguageMode.cpp
+    GUI/LanguageMode.hpp
+    GUI/AppDisplayName.cpp
+    GUI/AppDisplayName.hpp
+    GUI/ProjectHistoryDialog.cpp
+    GUI/ProjectHistoryDialog.hpp
+    GUI/ChangelogDialog.cpp
+    GUI/ChangelogDialog.hpp
+    GUI/ConfigProfilesDialog.cpp
+    GUI/ConfigProfilesDialog.hpp
+    GUI/CommandPalette.cpp
+    GUI/CommandPalette.hpp
+    GUI/CommandPaletteIndex.cpp
+    GUI/CommandPaletteIndex.hpp
+    GUI/Export/ExportFormats.hpp
+    GUI/Export/ExportEverything.cpp
+    GUI/Export/ExportEverything.hpp
+    GUI/Export/ExportDatasets.cpp
+    GUI/Export/ExportDatasets.hpp
+    GUI/Export/ExportDialog.cpp
+    GUI/Export/ExportDialog.hpp
+    GUI/StopPrintGate.cpp
+    GUI/StopPrintGate.hpp
+    GUI/PreferencesHistory.cpp
+    GUI/PreferencesHistory.hpp
+    GUI/PrinterWatch.cpp
+    GUI/PrinterWatch.hpp
+    GUI/DimSumSurprise.cpp
+    GUI/DimSumSurprise.hpp
+    GUI/DimSumSurpriseModel.hpp
+    GUI/FilamentScanner.cpp
+    GUI/FilamentScanner.hpp
+    GUI/TtsNarrator.cpp
+    GUI/TtsNarrator.hpp
+    GUI/HomeAssistant.cpp
+    GUI/HomeAssistant.hpp
+    GUI/HomeAssistantTaskExecutor.hpp
+    GUI/HomeAssistantTransportPolicy.cpp
+    GUI/HomeAssistantTransportPolicy.hpp
+    GUI/HomeAssistantSharingService.cpp
+    GUI/HomeAssistantSharingService.hpp
+    GUI/SmartHomeDialog.cpp
+    GUI/SmartHomeDialog.hpp
+    GUI/third_party/qrcodegen.cpp
+    GUI/third_party/qrcodegen.hpp
+    GUI/ModelPreviewDialog.hpp
+    GUI/ModelPreviewDialog.cpp
+    GUI/ProjectTabBar.cpp
+    GUI/ProjectTabBar.hpp
+    GUI/NotificationHistory.cpp
+    GUI/NotificationHistory.hpp
+    GUI/NotificationCenterPanel.cpp
+    GUI/NotificationCenterPanel.hpp
+    Utils/ExternalEditor.cpp
+    Utils/ExternalEditor.hpp
+)
+
+if (WIN32)
+    list(APPEND SLIC3R_GUI_SOURCES
         GUI/WindowsNativeVisualSmoke.cpp
         GUI/WindowsNativeVisualSmoke.hpp
     )
+endif ()
 
 add_library(libslic3r_gui STATIC ${SLIC3R_GUI_SOURCES})
-if (WIN32)
-    target_link_libraries(libslic3r_gui Advapi32)
-endif()
 
 if (TARGET device_page_build)
     add_dependencies(libslic3r_gui device_page_build)
@@ -895,10 +930,27 @@ endif ()
 target_link_libraries(libslic3r_gui libslic3r cereal imgui imguizmo minilzo GLEW::GLEW OpenGL::GL hidapi
     ${HPDF_LIBRARY}
     ${wxWidgets_LIBRARIES} glfw libcurl OpenSSL::SSL OpenSSL::Crypto)
+target_link_libraries(libslic3r_gui libslic3r_workspace)
 #target_link_libraries(libslic3r_gui libslic3r cereal imgui imguizmo minilzo GLEW::GLEW OpenGL::GL hidapi libcurl OpenSSL::SSL OpenSSL::Crypto ${wxWidgets_LIBRARIES} glfw)
 
-target_link_libraries(libslic3r_gui Setupapi.lib dwmapi.lib)
-target_link_libraries(libslic3r_gui libslic3r_workspace)
+if (MSVC)
+    target_link_libraries(libslic3r_gui Setupapi.lib dwmapi.lib Advapi32.lib)
+elseif (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    FIND_LIBRARY(WAYLAND_SERVER_LIBRARIES NAMES wayland-server)
+    FIND_LIBRARY(WAYLAND_EGL_LIBRARIES    NAMES wayland-egl)
+    FIND_LIBRARY(WAYLAND_CLIENT_LIBRARIES NAMES wayland-client)
+    find_package(CURL REQUIRED)
+    target_link_libraries(libslic3r_gui ${DBUS_LIBRARIES} OSMesa)
+    target_link_libraries(libslic3r_gui
+        OpenGL::EGL
+        ${WAYLAND_SERVER_LIBRARIES}
+        ${WAYLAND_EGL_LIBRARIES}
+        ${WAYLAND_CLIENT_LIBRARIES}
+        ${CURL_LIBRARIES}
+    )
+elseif (APPLE)
+    target_link_libraries(libslic3r_gui ${DISKARBITRATION_LIBRARY})
+endif()
 
 if (SLIC3R_STATIC)
     # FIXME: This was previously exported by wx-config but the wxWidgets
@@ -906,18 +958,49 @@ if (SLIC3R_STATIC)
     target_compile_definitions(libslic3r_gui PUBLIC -DwxDEBUG_LEVEL=0)
 endif()
 
+if (SLIC3R_STATIC AND NOT SLIC3R_STATIC_EXCLUDE_CURL AND UNIX AND NOT APPLE)
+    target_compile_definitions(libslic3r_gui PRIVATE OPENSSL_CERT_OVERRIDE)
+endif ()
+
 if (SLIC3R_PCH AND NOT SLIC3R_SYNTAXONLY)
     add_precompiled_header(libslic3r_gui pchheader.hpp FORCEINCLUDE)
 endif ()
 
-pkg_check_modules(LIBAV REQUIRED IMPORTED_TARGET
-    libavcodec
-    libswscale
-    libavutil
-)
-target_link_libraries(libslic3r_gui PkgConfig::LIBAV)
+if (NOT APPLE)
+    pkg_check_modules(LIBAV REQUIRED IMPORTED_TARGET
+        libavcodec
+        libswscale
+        libavutil
+    )
+    target_link_libraries(libslic3r_gui PkgConfig::LIBAV)
+endif()
 
+# We need to implement some hacks for wxWidgets and touch the underlying GTK
+# layer and sub-libraries. This forces us to use the include locations and
+# link these libraries.
+if (UNIX AND NOT APPLE)
+    find_package(GTK${SLIC3R_GTK} REQUIRED)
+    target_include_directories(libslic3r_gui PRIVATE ${GTK${SLIC3R_GTK}_INCLUDE_DIRS})
+    target_link_libraries(libslic3r_gui ${GTK${SLIC3R_GTK}_LIBRARIES})
 
+    pkg_check_modules(WEBKIT2GTK_4_1 QUIET webkit2gtk-4.1)
+    if (WEBKIT2GTK_4_1_FOUND)
+        target_compile_definitions(libslic3r_gui PRIVATE BBL_WEBKITGTK_4_1)
+    else ()
+        pkg_check_modules(WEBKIT2GTK_4_0 QUIET webkit2gtk-4.0)
+        if (WEBKIT2GTK_4_0_FOUND)
+            target_compile_definitions(libslic3r_gui PRIVATE BBL_WEBKITGTK_4_0)
+        else ()
+            message(FATAL_ERROR "Neither webkit2gtk-4.1 nor webkit2gtk-4.0 was found.")
+        endif ()
+    endif ()
+
+    # We add GStreamer for bambu:/// support.
+    pkg_check_modules(GSTREAMER REQUIRED gstreamer-1.0)
+    pkg_check_modules(GST_BASE REQUIRED gstreamer-base-1.0)
+    target_link_libraries(libslic3r_gui ${GSTREAMER_LIBRARIES} ${GST_BASE_LIBRARIES})
+    target_include_directories(libslic3r_gui PRIVATE ${GSTREAMER_INCLUDE_DIRS} ${GST_BASE_INCLUDE_DIRS})
+endif ()
 
 # Add a definition so that we can tell we are compiling slic3r.
 target_compile_definitions(libslic3r_gui PRIVATE SLIC3R_CURRENTLY_COMPILING_GUI_MODULE)

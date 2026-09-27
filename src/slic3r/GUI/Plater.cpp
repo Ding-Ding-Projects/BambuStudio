@@ -19896,7 +19896,17 @@ void Plater::priv::set_project_filename(const wxString& filename)
 
     wxGetApp().mainframe->update_title();
 
-    if (!m_project_folder.empty() && !q->m_only_gcode)
+    // A tab snapshot is an internal rollback file, not a user project. The
+    // loader calls this method before MainFrame restores the real filename.
+    const boost::filesystem::path requested_path = into_path(filename);
+    const boost::filesystem::path snapshot_dir = boost::filesystem::path(data_dir()) / "cache" / "project_tabs";
+    boost::system::error_code snapshot_error;
+    const bool private_tab_snapshot =
+        requested_path.extension() == ".3mf" &&
+        boost::algorithm::starts_with(requested_path.filename().string(), "tab_") &&
+        boost::filesystem::equivalent(requested_path.parent_path(), snapshot_dir, snapshot_error) &&
+        !snapshot_error;
+    if (!m_project_folder.empty() && !q->m_only_gcode && !private_tab_snapshot)
         wxGetApp().mainframe->add_to_recent_projects(filename);
 }
 
@@ -23678,6 +23688,13 @@ int Plater::load_project(wxString const &filename2,
         return wx_dlg_id;
     }
 
+    // BBS
+    if (m_loading_project) {
+        //some error cases happens
+        //return directly
+        BOOST_LOG_TRIVIAL(warning) << __FUNCTION__ << boost::format(": current loading other project, return directly");
+        return wx_dlg_id;
+    }
     // Same as new_project: stop playback / clear assembly runtime before the
     // incoming 3mf replaces the model, otherwise play-mode chrome can linger.
     if (auto *assemble_canvas = get_assmeble_canvas3D()) {
@@ -23686,14 +23703,6 @@ int Plater::load_project(wxString const &filename2,
 
     //BBS: add only gcode mode
     const bool previous_gcode = m_only_gcode;
-
-    // BBS
-    if (m_loading_project) {
-        //some error cases happens
-        //return directly
-        BOOST_LOG_TRIVIAL(warning) << __FUNCTION__ << boost::format(": current loading other project, return directly");
-        return wx_dlg_id;
-    }
     // reset() is the fail-closed history boundary. Run it before setting the
     // loading flag (which deliberately defers history exports) and before
     // mutating any project-owned state.
@@ -23701,6 +23710,10 @@ int Plater::load_project(wxString const &filename2,
         return wxID_CANCEL;
 
     m_loading_project = true;
+    struct LoadingFlagReset {
+        bool& flag;
+        ~LoadingFlagReset() { flag = false; }
+    } loading_flag_reset{m_loading_project};
     model().calib_pa_pattern.reset(nullptr);
     model().plates_custom_gcodes.clear();
     m_only_gcode    = false;
@@ -23731,6 +23744,10 @@ int Plater::load_project(wxString const &filename2,
     bool                explicit_3mf_loaded = false;
     std::vector<size_t> res = load_files(input_paths, strategy, false, &explicit_3mf_loaded);
     const bool loaded_project = explicit_3mf_loaded || !res.empty();
+    if (!loaded_project) {
+        BOOST_LOG_TRIVIAL(warning) << __FUNCTION__ << ": no project data was loaded";
+        return wxID_CANCEL;
+    }
 
     if (loaded_project && explicit_3mf_loaded && p->project_history_manager()) {
         try {

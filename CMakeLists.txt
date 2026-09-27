@@ -10,17 +10,8 @@ if(POLICY CMP0175)
   cmake_policy(SET CMP0175 OLD)
 endif()
 
-# This project targets Windows only. macOS and Linux support was removed
-# deliberately; configuring elsewhere would half-build against code paths
-# nobody tests or ships, so it fails loudly instead.
-if (NOT WIN32)
-    message(FATAL_ERROR
-        "BambuStudio (this fork) builds on Windows only. "
-        "Detected CMAKE_SYSTEM_NAME='${CMAKE_SYSTEM_NAME}'.")
-endif()
-
 # The CMake version on Windows: 3.13–4.2 supported (4.2.x is used by VS 2026).
-if (${CMAKE_VERSION} VERSION_GREATER_EQUAL "5.0")
+if ( ((MSVC) OR (WIN32)) AND (${CMAKE_VERSION} VERSION_GREATER_EQUAL "5.0") )
     message(FATAL_ERROR "Only cmake versions between 3.13.x and 4.2.x is supported on windows. Detected version: ${CMAKE_VERSION}")
 endif()
 
@@ -50,6 +41,7 @@ endif()
 
 option(SLIC3R_STATIC 			"Compile BambuStudio with static libraries (Boost, TBB, glew)" ${SLIC3R_STATIC_INITIAL})
 option(SLIC3R_GUI    			"Compile BambuStudio with GUI components (OpenGL, wxWidgets)" 1)
+option(SLIC3R_FHS               "Assume BambuStudio is to be installed in a FHS directory structure" 0)
 option(SLIC3R_WX_STABLE         "Build against wxWidgets stable (3.0) as oppsed to dev (3.1) on Linux" 0)
 option(SLIC3R_PROFILE 			"Compile BambuStudio with an invasive Shiny profiler" 0)
 option(SLIC3R_PCH               "Use precompiled headers" 1)
@@ -160,16 +152,8 @@ if (MSVC)
     endif ()
     # /bigobj (Increase Number of Sections in .Obj file)
     # error C3859: virtual memory range for PCH exceeded; please recompile with a command line option of '-Zm90' or greater
-    # Generate symbols at every build target, even for the release — except
-    # when SLIC3R_MSVC_PDB=OFF (CI): /Zi races the shared compiler PDB under
-    # Ninja's parallel cl (C1041) and defeats sccache, while /Z7-in-obj pushes
-    # libslic3r_gui.lib past the 4 GiB .lib limit (LNK1248). CI ships no PDBs,
-    # so it simply compiles without debug info; local builds keep /Zi.
-    option(SLIC3R_MSVC_PDB "Compile with /Zi debug info on MSVC" ON)
-    add_compile_options(-bigobj -Zm520)
-    if (SLIC3R_MSVC_PDB)
-        add_compile_options(/Zi)
-    endif ()
+    # Generate symbols at every build target, even for the release.
+    add_compile_options(-bigobj -Zm520 /Zi)
     # Disable STL4007: Many result_type typedefs and all argument_type, first_argument_type, and second_argument_type typedefs are deprecated in C++17.
     #FIXME Remove this line after eigen library adapts to the new C++17 adaptor rules.
     add_compile_options(-D_SILENCE_CXX17_ADAPTOR_TYPEDEFS_DEPRECATION_WARNING)
@@ -240,7 +224,6 @@ if(WIN32)
             configure_file(
                 "${CMAKE_SOURCE_DIR}/scripts/hooks/pre-commit"
                 "${CMAKE_SOURCE_DIR}/.git/hooks/pre-commit"
-                COPYONLY
             )
        else()
            message(STATUS "skip pre-commit git hook")
@@ -920,5 +903,40 @@ if(BUILD_BBS_TEST_TOOLS)
 endif()
 
 
-# Resources install target
-install(DIRECTORY "${SLIC3R_RESOURCES_DIR}/" DESTINATION "${CMAKE_INSTALL_PREFIX}/resources")
+# Resources install target, configure fhs.hpp on UNIX
+if (WIN32)
+    install(DIRECTORY "${SLIC3R_RESOURCES_DIR}/" DESTINATION "${CMAKE_INSTALL_PREFIX}/resources")
+elseif (SLIC3R_FHS)
+    # CMAKE_INSTALL_FULL_DATAROOTDIR: read-only architecture-independent data root (share)
+    set(SLIC3R_FHS_RESOURCES "${CMAKE_INSTALL_FULL_DATAROOTDIR}/BambuStudio")
+    install(DIRECTORY ${SLIC3R_RESOURCES_DIR}/ DESTINATION ${SLIC3R_FHS_RESOURCES}
+        PATTERN "*/udev" EXCLUDE
+    )
+    install(FILES src/platform/unix/BambuStudio.desktop DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/applications)
+    foreach(SIZE 32 128 192)
+        install(FILES ${SLIC3R_RESOURCES_DIR}/images/BambuStudio_${SIZE}px.png
+            DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/icons/hicolor/${SIZE}x${SIZE}/apps RENAME BambuStudio.png
+        )
+    endforeach()
+elseif (CMAKE_MACOSX_BUNDLE)
+    install(DIRECTORY "${SLIC3R_RESOURCES_DIR}/" DESTINATION "${CMAKE_INSTALL_PREFIX}/BambuStudio.app/Contents/resources")
+else ()
+    install(FILES src/platform/unix/BambuStudio.desktop DESTINATION ${CMAKE_INSTALL_PREFIX}/resources/applications)
+    install(DIRECTORY "${SLIC3R_RESOURCES_DIR}/" DESTINATION "${CMAKE_INSTALL_PREFIX}/resources")
+endif ()
+
+if (CMAKE_SYSTEM_NAME STREQUAL "Linux" AND NOT FLATPAK)
+    set(LIBRARY_FILES
+    ${LIBDIR_BIN}/libavcodec.so.61
+    ${LIBDIR_BIN}/libavcodec.so.61.3.100
+    ${LIBDIR_BIN}/libavutil.so.59
+    ${LIBDIR_BIN}/libavutil.so.59.8.100
+    ${LIBDIR_BIN}/libswresample.so.5
+    ${LIBDIR_BIN}/libswresample.so.5.1.100
+    ${LIBDIR_BIN}/libswscale.so.8
+    ${LIBDIR_BIN}/libswscale.so.8.1.100
+    )
+    install(FILES ${LIBRARY_FILES} DESTINATION "${CMAKE_INSTALL_PREFIX}/bin")
+endif ()
+
+configure_file(${LIBDIR}/platform/unix/fhs.hpp.in ${LIBDIR_BIN}/platform/unix/fhs.hpp)

@@ -12,8 +12,8 @@ namespace Slic3r { namespace GUI { namespace HomeAssistant {
 namespace SharingNetworkPolicy {
 
 // Pure IPv4 policy used by the mDNS receiver and deterministic tests. Address
-// values use network-byte significance (for example, 192.168.1.10 is
-// 0xc0a8010a). The sender must be in an allowed private/shared range, on the
+// values use network-byte significance (for example, 198.51.100.10 is
+// 0xc633640a). The sender must be in an allowed private/shared range, on the
 // advertised interface's actual prefix, and not a network or broadcast
 // address.
 bool mdns_sender_is_eligible_ipv4(

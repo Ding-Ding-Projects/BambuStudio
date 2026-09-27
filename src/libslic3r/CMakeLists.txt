@@ -3,58 +3,32 @@ project(libslic3r)
 
 include(PrecompiledHeader)
 
-add_library(libslic3r_workspace STATIC
-    WorkspaceBundle.cpp
-    WorkspaceBundle.hpp
-    WorkspacePlanner.cpp
-    WorkspacePlanner.hpp
-)
-target_include_directories(libslic3r_workspace PUBLIC ${PROJECT_SOURCE_DIR}/src)
-target_link_libraries(libslic3r_workspace PRIVATE miniz OpenSSL::Crypto)
-if (WIN32)
-    target_link_libraries(libslic3r_workspace PRIVATE crypt32 ws2_32 icu.lib)
-endif ()
-source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES
-    WorkspaceBundle.cpp WorkspaceBundle.hpp WorkspacePlanner.cpp WorkspacePlanner.hpp)
-encoding_check(libslic3r_workspace)
-
 add_library(libslic3r_project_history STATIC
     ProjectHistoryManager.cpp
     ProjectHistoryManager.hpp
 )
 target_include_directories(libslic3r_project_history PUBLIC ${PROJECT_SOURCE_DIR}/src)
 target_link_libraries(libslic3r_project_history PRIVATE
-    libgit2::libgit2package
-    miniz
-    OpenSSL::Crypto
-    Threads::Threads
-)
+    libgit2::libgit2package miniz OpenSSL::Crypto Threads::Threads)
 if (WIN32)
-    # The bundled static OpenSSL export omits its Windows certificate-store
-    # dependency. Keep this focused target's link closure self-contained.
     target_link_libraries(libslic3r_project_history PRIVATE crypt32)
 endif ()
-source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES
-    ProjectHistoryManager.cpp
-    ProjectHistoryManager.hpp
-)
 encoding_check(libslic3r_project_history)
 
-# Bundle validation uses the history manager's bounded portable-pack inspector.
-target_link_libraries(libslic3r_workspace PRIVATE libslic3r_project_history)
+add_library(libslic3r_workspace STATIC
+    WorkspaceBundle.cpp WorkspaceBundle.hpp
+    WorkspacePlanner.cpp WorkspacePlanner.hpp
+)
+target_include_directories(libslic3r_workspace PUBLIC ${PROJECT_SOURCE_DIR}/src)
+target_link_libraries(libslic3r_workspace PRIVATE
+    libslic3r_project_history miniz OpenSSL::Crypto)
+if (WIN32)
+    target_link_libraries(libslic3r_workspace PRIVATE crypt32 ws2_32 icu.lib)
+endif ()
+encoding_check(libslic3r_workspace)
 
-add_library(libslic3r_changelog STATIC
-    Changelog.cpp
-    Changelog.hpp
-)
-# The in-app changelog viewer's wx-free data model (JSON parsing, typed-date
-# handling, filtering and export). Kept as its own target so tests/changelog
-# links it without the whole of libslic3r.
+add_library(libslic3r_changelog STATIC Changelog.cpp Changelog.hpp)
 target_include_directories(libslic3r_changelog PUBLIC ${PROJECT_SOURCE_DIR}/src)
-source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES
-    Changelog.cpp
-    Changelog.hpp
-)
 encoding_check(libslic3r_changelog)
 
 string(TIMESTAMP COMPILE_TIME %Y%m%d-%H%M%S)
@@ -563,6 +537,13 @@ set(lisbslic3r_sources
     ColorDecomposeRecipe.cpp
 )
 
+if (APPLE)
+    list(APPEND lisbslic3r_sources
+			MacUtils.mm
+            Format/ModelIO.hpp
+            Format/ModelIO.mm
+        )
+endif ()
 
 set(libslic3r_runtime_sources
     ${CMAKE_CURRENT_SOURCE_DIR}/../slic3r/Utils/BBLUtil.cpp
@@ -571,8 +552,7 @@ set(libslic3r_runtime_sources
     ${CMAKE_CURRENT_SOURCE_DIR}/../slic3r/Utils/Http.hpp
 )
 
-add_library(libslic3r STATIC ${lisbslic3r_sources}
-    ${libslic3r_runtime_sources}
+add_library(libslic3r STATIC ${lisbslic3r_sources} ${libslic3r_runtime_sources}
     "${CMAKE_CURRENT_BINARY_DIR}/libslic3r_version.h"
     ${OpenVDBUtils_SOURCES})
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${lisbslic3r_sources})
@@ -782,10 +762,6 @@ if(NOT WIN32)
     endif()
 endif()
 
-if (SLIC3R_STATIC AND NOT SLIC3R_STATIC_EXCLUDE_CURL AND UNIX AND NOT APPLE)
-    target_compile_definitions(libslic3r PRIVATE OPENSSL_CERT_OVERRIDE)
-endif()
-
 if (APPLE)
     find_library(FOUNDATION Foundation REQUIRED)
     find_library(MODELIO ModelIO REQUIRED)
@@ -797,9 +773,6 @@ if (TARGET OpenVDB::openvdb)
 endif()
 
 if(WIN32)
-    # Boost.Filesystem's static CMake export omits its private BCrypt
-    # dependency. Consumers of libslic3r therefore need the Windows crypto
-    # provider explicitly in addition to Psapi.
     target_link_libraries(libslic3r Psapi.lib bcrypt.lib)
 endif()
 

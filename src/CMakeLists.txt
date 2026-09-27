@@ -43,15 +43,51 @@ find_package(libnoise REQUIRED)
 
 add_subdirectory(libslic3r)
 
+# Evaluate user-authored regular expressions in a separately terminable process.
+if (SLIC3R_GUI OR SLIC3R_BUILD_TESTS)
+    add_executable(BambuStudio_regex_worker
+        slic3r/GUI/Widgets/BoundedRegexWorkerMain.cpp
+        slic3r/GUI/Widgets/BoundedRegex.hpp
+        slic3r/GUI/Widgets/BoundedRegexProtocol.hpp
+    )
+    target_include_directories(BambuStudio_regex_worker PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+    target_compile_features(BambuStudio_regex_worker PRIVATE cxx_std_17)
+    target_compile_definitions(BambuStudio_regex_worker PRIVATE BOOST_REGEX_MAX_STATE_COUNT=1000000)
+    target_link_libraries(BambuStudio_regex_worker PRIVATE Boost::regex)
+    set_target_properties(BambuStudio_regex_worker PROPERTIES OUTPUT_NAME "bambu-regex-worker")
+endif ()
+
 if (SLIC3R_GUI)
     add_subdirectory(imgui)
     add_subdirectory(imguizmo)
     add_subdirectory(hidapi)
     include_directories(hidapi/include)
 
-    message(STATUS "WXWIN environment set to: $ENV{WXWIN}")
+    if(WIN32)
+        message(STATUS "WXWIN environment set to: $ENV{WXWIN}")
+    elseif(UNIX)
+        set(wxWidgets_USE_UNICODE ON)
+        if(SLIC3R_STATIC)
+            set(wxWidgets_USE_STATIC ON)
+        else()
+            set(wxWidgets_USE_STATIC OFF)
+        endif()
+    endif()
 
-    find_package(wxWidgets 3.1 REQUIRED COMPONENTS html adv gl core base webview aui net media richtext xml)
+    if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+        set (wxWidgets_CONFIG_OPTIONS "--toolkit=gtk${SLIC3R_GTK}")
+        if (SLIC3R_WX_STABLE)
+            find_package(wxWidgets 3.0 REQUIRED COMPONENTS base core adv html gl aui net media webview richtext xml)
+        else ()
+            find_package(wxWidgets 3.1 REQUIRED COMPONENTS base core adv html gl aui net media webview richtext xml)
+        endif ()
+    else ()
+        find_package(wxWidgets 3.1 REQUIRED COMPONENTS html adv gl core base webview aui net media richtext xml)
+    endif ()
+
+    if(UNIX)
+        message(STATUS "wx-config path: ${wxWidgets_CONFIG_EXECUTABLE}")
+    endif()
 
     include(${wxWidgets_USE_FILE})
 
@@ -82,7 +118,15 @@ if (SLIC3R_GUI)
         list(APPEND wxWidgets_LIBRARIES ${EXPAT_LIBRARIES})
     endif ()
 
-    # libslic3r_gui links to OpenGL itself; keep wx from adding its own entry.
+    # This is an issue in the new wxWidgets cmake build, doesn't deal with librt
+    find_library(LIBRT rt)
+    if(LIBRT)
+        list(APPEND wxWidgets_LIBRARIES ${LIBRT})
+    endif()
+
+    # This fixes a OpenGL linking issue on OSX. wxWidgets cmake build includes
+    # wrong libs for opengl in the link line and it does not link to it by himself.
+    # libslic3r_gui will link to opengl anyway, so lets override wx
     list(FILTER wxWidgets_LIBRARIES EXCLUDE REGEX OpenGL)
 
 #    list(REMOVE_ITEM wxWidgets_LIBRARIES oleacc)
@@ -96,50 +140,66 @@ endif()
 # Process manifests for various platforms.
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/platform/msw/BambuStudio.rc.in ${CMAKE_CURRENT_BINARY_DIR}/BambuStudio.rc @ONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/platform/msw/BambuStudio.manifest.in ${CMAKE_CURRENT_BINARY_DIR}/BambuStudio.manifest @ONLY)
-# BaseException/StackWalker back SET_DEFULTER_HANDLER() in bambustu_main(): the
-# unhandled-exception filter that writes <data_dir>/log/crash_*.log. They were
-# present in the tree but compiled by nothing, so the handler could not be
-# enabled without a link error -- and while it was disabled a crash left no
-# dump, no stack and no marker in the studio log at all. Windows-only (Dbghelp,
-# and this fork is Windows-only anyway).
-add_library(BambuStudio SHARED BambuStudio.cpp BambuStudio.hpp
-    BaseException.cpp BaseException.h
-    StackWalker.cpp StackWalker.h)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/platform/osx/Info.plist.in ${CMAKE_CURRENT_BINARY_DIR}/Info.plist @ONLY)
+if (APPLE)
+    file(GLOB _i18n_dirs RELATIVE "${SLIC3R_RESOURCES_DIR}/i18n" "${SLIC3R_RESOURCES_DIR}/i18n/*")
+    set(MACOSX_BUNDLE_LOCALIZATIONS "")
+    foreach(_lang ${_i18n_dirs})
+        if(IS_DIRECTORY "${SLIC3R_RESOURCES_DIR}/i18n/${_lang}")
+            string(APPEND MACOSX_BUNDLE_LOCALIZATIONS "\t\t<string>${_lang}</string>\n")
+        endif()
+    endforeach()
+endif()
+if (WIN32)
+    add_library(BambuStudio SHARED BambuStudio.cpp BambuStudio.hpp)
+else ()
+    add_executable(BambuStudio BambuStudio.cpp BambuStudio.hpp)
+endif ()
+
+if (MINGW)
+    target_link_options(BambuStudio PUBLIC "-Wl,-allow-multiple-definition")
+    set_target_properties(BambuStudio PROPERTIES PREFIX "")
+endif (MINGW)
+
+if (NOT WIN32 AND NOT APPLE)
+    # Binary name on unix like systems (Linux, Unix)
+    set_target_properties(BambuStudio PROPERTIES OUTPUT_NAME "bambu-studio")
+    set(SLIC3R_APP_CMD "bambu-studio")
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/platform/unix/BuildLinuxImage.sh.in ${CMAKE_CURRENT_BINARY_DIR}/BuildLinuxImage.sh @ONLY)
+endif ()
 
 target_link_libraries(BambuStudio libslic3r cereal)
-# Manifest is provided through BambuStudio.rc, don't generate your own.
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /MANIFEST:NO")
-
-# Keep the bounded-regex worker available to headless test configurations as
-# well as GUI builds so evaluator safety can be tested without compiling or
-# launching Studio's UI. Boost.Regex supplies portable ECMAScript multiline
-# anchors; MSVC's std::regex omits the C++17 multiline flag.
-if (SLIC3R_GUI OR SLIC3R_BUILD_TESTS)
-    add_executable(BambuStudio_regex_worker
-        slic3r/GUI/Widgets/BoundedRegexWorkerMain.cpp
-        slic3r/GUI/Widgets/BoundedRegex.hpp
-        slic3r/GUI/Widgets/BoundedRegexProtocol.hpp
-    )
-    target_include_directories(BambuStudio_regex_worker PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-    target_compile_features(BambuStudio_regex_worker PRIVATE cxx_std_17)
-    target_compile_definitions(BambuStudio_regex_worker PRIVATE BOOST_REGEX_MAX_STATE_COUNT=1000000)
-    target_link_libraries(BambuStudio_regex_worker PRIVATE Boost::regex)
-    set_target_properties(BambuStudio_regex_worker PROPERTIES OUTPUT_NAME "bambu-regex-worker")
+if (APPLE)
+#    add_compile_options(-stdlib=libc++)
+#    add_definitions(-DBOOST_THREAD_DONT_USE_CHRONO -DBOOST_NO_CXX11_RVALUE_REFERENCES -DBOOST_THREAD_USES_MOVE)
+    # -liconv: boost links to libiconv by default
+    target_link_libraries(BambuStudio "-liconv -framework IOKit" "-framework CoreFoundation" "-framework AVFoundation" "-framework AVKit" "-framework CoreMedia" "-framework VideoToolbox" -lc++)
+elseif (MSVC)
+    # Manifest is provided through BambuStudio.rc, don't generate your own.
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /MANIFEST:NO")
+else ()
+    # Boost on Raspberry-Pi does not link to pthreads explicitly.
+    target_link_libraries(BambuStudio ${CMAKE_DL_LIBS} -lstdc++ Threads::Threads pangoft2-1.0)
 endif ()
 
 # Add the Slic3r GUI library, libcurl, OpenGL and GLU libraries.
 if (SLIC3R_GUI)
 #    target_link_libraries(BambuStudio ws2_32 uxtheme setupapi libslic3r_gui ${wxWidgets_LIBRARIES})
 target_link_libraries(BambuStudio libslic3r_gui)
-
-    # User-authored regular expressions execute in the helper above. The GUI
-    # client can terminate/restart it without leaving an unbounded regex thread
-    # in the application.
-    add_dependencies(BambuStudio BambuStudio_regex_worker)
-
-    # Generate debug symbols even in release mode.
-    target_link_options(BambuStudio PUBLIC "$<$<CONFIG:RELEASE>:/DEBUG>")
-    target_link_libraries(BambuStudio user32.lib Setupapi.lib)
+    if (TARGET BambuStudio_regex_worker)
+        add_dependencies(BambuStudio BambuStudio_regex_worker)
+    endif ()
+    if (MSVC)
+        # Generate debug symbols even in release mode.
+        target_link_options(BambuStudio PUBLIC "$<$<CONFIG:RELEASE>:/DEBUG>")
+        target_link_libraries(BambuStudio user32.lib Setupapi.lib)
+    elseif (MINGW)
+        target_link_libraries(BambuStudio ws2_32 uxtheme setupapi)
+    elseif (APPLE)
+        target_link_libraries(BambuStudio "-framework OpenGL")
+    else ()
+        target_link_libraries(BambuStudio -ldl)
+    endif ()
     #if (WIN32)
     #    find_library(PSAPI_LIB NAMES Psapi)
     #    target_link_libraries(BambuStudio ${PSAPI_LIB})
@@ -222,20 +282,60 @@ if (WIN32)
             COMMENT "Symlinking the resources directory into the build tree"
             VERBATIM
         )
-        # Single-config generators (Ninja on CI) skipped the runtime DLL copy
-        # entirely: output_dlls_<config> stayed empty, install() shipped a
-        # payload whose BambuStudio.dll could never load (OCCT/ffmpeg/gmp
-        # missing, LoadLibrary error 126). Mirror the multi-config branch.
-        if ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
-            bambustudio_copy_dlls(BambuStudioDllsCopy "Debug" "d" output_dlls_Debug)
-        elseif ("${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo")
-            bambustudio_copy_dlls(BambuStudioDllsCopy "RelWithDebInfo" "" output_dlls_RelWithDebInfo)
-        else ()
-            bambustudio_copy_dlls(BambuStudioDllsCopy "Release" "" output_dlls_Release)
-        endif ()
     endif ()
 
 
+else ()
+    if (NOT APPLE AND NOT FLATPAK)
+        set(output_sos_Release "")
+        set(output_sos_Debug "")
+        add_custom_target(BambuStudioSosCopy ALL DEPENDS BambuStudio)
+        if ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+            bambustudio_copy_sos(BambuStudioSosCopy "Debug" "d" output_sos_Debug)
+        else()
+            bambustudio_copy_sos(BambuStudioSosCopy "Release" "" output_sos_Release)
+        endif()
+    endif()
+    if (APPLE AND NOT CMAKE_MACOSX_BUNDLE)
+        # On OSX, the name of the binary matches the name of the Application.
+        add_custom_command(TARGET BambuStudio POST_BUILD
+            COMMAND ln -sf BambuStudio bambu-studio
+            WORKING_DIRECTORY "$<TARGET_FILE_DIR:BambuStudio>"
+            VERBATIM)
+    else ()
+        add_custom_command(TARGET BambuStudio POST_BUILD
+            WORKING_DIRECTORY "$<TARGET_FILE_DIR:BambuStudio>"
+            VERBATIM)
+    endif ()
+    if (XCODE)
+        # Because of Debug/Release/etc. configurations (similar to MSVC) the slic3r binary is located in an extra level
+        set(BIN_RESOURCES_DIR "${CMAKE_CURRENT_BINARY_DIR}/resources")
+        # Use generator expression for Xcode multi-config builds
+        set(BIN_CONF_DIR "$<CONFIG>")
+    else ()
+        set(BIN_RESOURCES_DIR "${CMAKE_CURRENT_BINARY_DIR}/../resources")
+    endif ()
+    if (CMAKE_MACOSX_BUNDLE)
+        set(BIN_RESOURCES_DIR "${CMAKE_CURRENT_BINARY_DIR}/${BIN_CONF_DIR}/BambuStudio.app/Contents/Resources")
+        set(MACOSX_BUNDLE_ICON_FILE Icon.icns)
+        set(MACOSX_BUNDLE_BUNDLE_NAME "Bambu Studio")
+        set(MACOSX_BUNDLE_SHORT_VERSION_STRING ${SLIC3R_VERSION})
+        set(MACOSX_BUNDLE_COPYRIGHT "Copyright(C) 2021-2025 Lunkuo All Rights Reserved")
+    endif()
+    add_custom_command(TARGET BambuStudio POST_BUILD
+        COMMAND ln -sfn "${SLIC3R_RESOURCES_DIR}" "${BIN_RESOURCES_DIR}"
+        COMMENT "Symlinking the resources directory into the build tree"
+        VERBATIM)
+    #if (UNIX AND NOT APPLE)
+    #    add_custom_command(TARGET BambuStudio POST_BUILD
+    #        COMMAND ln -sfn "zh_cn" "${BIN_RESOURCES_DIR}/i18n/zh_CN"
+    #        COMMENT "Symlinking zh_CN language setting to zh_cn"
+    #        VERBATIM)
+    #    add_custom_command(TARGET BambuStudio POST_BUILD
+    #        COMMAND ln -sfn "pt-BR" "${BIN_RESOURCES_DIR}/i18n/pt_BR"
+    #        COMMENT "Symlinking pt_BR language setting to pt_BR"
+    #        VERBATIM)
+    #endif()
 endif ()
 
 # Slic3r binary install target. Default build type is release in case no CMAKE_BUILD_TYPE is provided.
@@ -253,11 +353,11 @@ message(STATUS "libslic3r-CMAKE_BUILD_TYPE: ${build_type}")
 message(STATUS "CMAKE_CURRENT_BINARY_DIR: ${CMAKE_CURRENT_BINARY_DIR}")
 if (WIN32)
     install(TARGETS BambuStudio RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}")
-    if (MSVC)
-        install(TARGETS BambuStudio_app_gui RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}")
-    endif ()
     if (TARGET BambuStudio_regex_worker)
         install(TARGETS BambuStudio_regex_worker RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}")
+    endif ()
+    if (MSVC)
+        install(TARGETS BambuStudio_app_gui RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}")
     endif ()
     install(FILES ${output_dlls_${build_type}} DESTINATION "${CMAKE_INSTALL_PREFIX}")
 else ()

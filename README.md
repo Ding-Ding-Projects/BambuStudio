@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> Official-source reconstruction is in progress from Bambu Studio `v02.08.04.57`. The candidate source, hosted build identities, and unresolved project-opening verification are recorded in [the verification status](docs/reapplication/verification-status.md). No crash fix or new packaged behavior is claimed verified by this notice.
+
 ![image](https://user-images.githubusercontent.com/106916061/179006347-497d24c0-9bd6-45b7-8c49-d5cc8ecfe5d7.png)
 # BambuStudio
 Bambu Studio is a cutting-edge, feature-rich slicing software.  

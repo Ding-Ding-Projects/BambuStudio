@@ -3958,3 +3958,33 @@ msgstr "呢個平台無法使用 IANA 時區規則"
 #. reviewed-category: destructive-dirty-error-security
 msgid "Time zone rules are unavailable"
 msgstr "時區規則無法使用"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Could not open the selected project tab. The current project was restored."
+msgstr "無法開啟所選專案分頁。原本嘅專案已還原。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Could not open the selected project tab or restore the current project."
+msgstr "無法開啟所選專案分頁，亦無法還原原本嘅專案。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Could not close this project tab. The project was restored."
+msgstr "無法關閉呢個專案分頁。專案已還原。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Could not close this project tab or restore its project."
+msgstr "無法關閉呢個專案分頁，亦無法還原當中嘅專案。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Could not open the selected project. The current project was restored."
+msgstr "無法開啟所選專案。原本嘅專案已還原。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Could not open the selected project or restore the current project."
+msgstr "無法開啟所選專案，亦無法還原原本嘅專案。"
+
+msgid "Open project tab"
+msgstr "開啟專案分頁"
+
+msgid "Open project"
+msgstr "開啟專案"
