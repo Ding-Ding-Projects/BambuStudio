@@ -29,3 +29,17 @@ baseline. The script fails if any of those trees changes before reapplication.
 The inherited cross-platform entry workflow is inactive during this
 diagnostic. Its reusable files are left intact. No inherited release publisher
 runs from this branch push.
+
+## Published portable comparison
+
+`official-runtime-baseline.yml` is a separate, manually dispatched hosted
+diagnostic. It verifies that the official `v02.08.04.57` tag peels to commit
+`f977235e6d736c4c0b650520ac5a5b72cbfe9244`, checks the published ZIP's
+size and SHA-256 against the vendor release metadata, and hashes the extracted
+native executable. The driver attempts to open the repository's public
+`flowrate-test-pass1.3mf` fixture on a named hidden desktop with a fresh
+`--datadir`. It records owned process and window observations and tears down
+only the process it can revalidate. Raw pixels, profiles, logs, and dumps are
+kept off workflow artifacts. Because the vendor executable has no instrumented
+model-state probe, a surviving window is explicitly not reported as proof that
+the 3MF loaded. Only safe JSON metadata is uploaded.
