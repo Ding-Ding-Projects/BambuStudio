@@ -177,6 +177,7 @@ ModelCreatorDialog::ModelCreatorDialog(wxWindow *parent, AddToPlate add_to_plate
     });
     m_provider_path->Bind(wxEVT_TEXT, [this](wxCommandEvent &) {
         m_provider_path_autofilled = false;
+        m_provider_path_user_edited = true;
         update_controls();
     });
     for (wxTextCtrl *control : {m_model, m_renderer_path})
@@ -228,7 +229,7 @@ ModelCreatorDialog::~ModelCreatorDialog()
 void ModelCreatorDialog::lookup_provider_path()
 {
     const int index = m_provider->GetSelection();
-    if (index < 0 || index >= 2) return;
+    if (index < 0 || index >= 2 || m_provider_path_user_edited) return;
     const auto current = m_provider_path->GetValue().ToStdWstring();
     if (!current.empty()) {
         if (!m_provider_path_autofilled) return;
@@ -275,7 +276,7 @@ void ModelCreatorDialog::collect_provider_paths()
         }
         m_provider_lookup_collected[index] = true;
         m_discovered_provider_paths[index] = path;
-        if (m_provider->GetSelection() == index &&
+        if (!m_provider_path_user_edited && m_provider->GetSelection() == index &&
             m_provider_path->GetValue().ToStdWstring() == m_provider_lookup_expected_paths[index] &&
             !path.empty()) {
             m_provider_path_autofilled = true;
