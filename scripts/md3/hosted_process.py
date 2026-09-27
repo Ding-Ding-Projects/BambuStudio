@@ -58,9 +58,14 @@ def owned_process_inventory(processes: list[dict], *, exe: str, datadir: str,
         if created < launched_at:
             continue
         # Even the original PID must retain the isolated profile in its command line.
+        # Count every switch occurrence first. A valid quoted value followed
+        # by an unquoted or malformed second switch is still ambiguous.
+        switches = re.findall(r'(?:^|\s)--datadir(?=\s|=|$)',
+                              command, flags=re.IGNORECASE)
         profile_args = re.findall(r'(?:^|\s)--datadir\s+"([^"]+)"(?=\s|$)',
                                   command, flags=re.IGNORECASE)
-        if len(profile_args) != 1 or ntpath.normcase(ntpath.abspath(profile_args[0])) != profile_path:
+        if (len(switches) != 1 or len(profile_args) != 1
+                or ntpath.normcase(ntpath.abspath(profile_args[0])) != profile_path):
             continue
         try:
             parent = int(process.get("ParentProcessId") or 0)

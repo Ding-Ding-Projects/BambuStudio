@@ -21,6 +21,32 @@ spec.loader.exec_module(drive)
 
 
 class BehaviorDriveChecks(unittest.TestCase):
+    def test_windows_profile_argument_spelling_and_rejections(self):
+        with tempfile.TemporaryDirectory() as temp:
+            exe = str(Path(temp) / "bambu-studio.exe")
+            profile = str(Path(temp) / "profile with spaces")
+            started = datetime.now(timezone.utc)
+            def candidate(command, *, image=None):
+                return [{"ProcessId": 20, "ParentProcessId": 10,
+                         "ExecutablePath": image or exe, "CommandLine": command,
+                         "CreationDate": started.isoformat()}]
+            def selected(command, *, image=None):
+                return drive.owned_processes(
+                    candidate(command, image=image), exe=exe, datadir=profile,
+                    launched_at=started, launch_pid=10, desktop_pids={20})
+            alternate_profile = profile.upper().replace("\\", "/")
+            alternate_image = exe.upper().replace("\\", "/")
+            self.assertEqual(selected(
+                f'"{exe}" --DATADIR "{alternate_profile}"', image=alternate_image), [20])
+            self.assertEqual(selected(f'"{exe}" --datadir "{profile}"'), [20])
+            self.assertEqual(selected(f'"{exe}" --datadir "{profile}-other"'), [])
+            self.assertEqual(selected(f'"{exe}" --datadir {profile}'), [])
+            self.assertEqual(selected(f'"{exe}" --datadir "{profile}'), [])
+            self.assertEqual(selected(f'"{exe}" --datadir "{profile}" --datadir other'), [])
+            self.assertEqual(selected(f'"{exe}" --datadir "{profile}" --datadir="other"'), [])
+            with patch.object(Path, "resolve", side_effect=AssertionError("must stay lexical")):
+                self.assertEqual(selected(f'"{exe}" --datadir "{profile}"'), [20])
+
     def test_file_open_requires_object_and_enabled_slice_state(self):
         tab_title = {"kind": "toplevel", "name": "flowrate-test-pass1", "shown": True,
                      "on_screen": True}
