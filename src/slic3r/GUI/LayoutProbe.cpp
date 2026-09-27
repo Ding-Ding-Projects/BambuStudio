@@ -104,6 +104,26 @@ std::string bounded_utf8(const std::string &value, size_t max_bytes)
     return value.substr(0, end);
 }
 
+bool valid_utf8(const std::string &value)
+{
+    for (size_t i = 0; i < value.size();) {
+        const unsigned char lead = static_cast<unsigned char>(value[i]);
+        if (lead < 0x80) { ++i; continue; }
+        const size_t length = lead >= 0xc2 && lead <= 0xdf ? 2
+            : lead >= 0xe0 && lead <= 0xef ? 3
+            : lead >= 0xf0 && lead <= 0xf4 ? 4 : 0;
+        if (length == 0 || i + length > value.size()) return false;
+        for (size_t j = 1; j < length; ++j)
+            if ((static_cast<unsigned char>(value[i + j]) & 0xc0) != 0x80) return false;
+        const unsigned char second = static_cast<unsigned char>(value[i + 1]);
+        if ((lead == 0xe0 && second < 0xa0) || (lead == 0xed && second >= 0xa0) ||
+            (lead == 0xf0 && second < 0x90) || (lead == 0xf4 && second >= 0x90))
+            return false;
+        i += length;
+    }
+    return true;
+}
+
 void write_model_state(boost::nowide::ofstream &out, Plater *plater)
 {
     if (!plater) {
@@ -142,7 +162,7 @@ void write_model_state(boost::nowide::ofstream &out, Plater *plater)
             const ModelInstance *instance = object->instances[instance_index];
             if (!instance) continue;
             ++active_instances;
-            if (instance->printable && outside.find(entry) == outside.end())
+            if (instance->is_printable() && outside.find(entry) == outside.end())
                 ++printable_instances;
         }
     }
@@ -168,17 +188,19 @@ void write_model_state(boost::nowide::ofstream &out, Plater *plater)
         << ",\"project_path\":" << (full_path.empty() ? "null" : json(bounded_utf8(full_path, max_path_bytes)))
         << ",\"project_path_truncated\":" << (full_path.size() > max_path_bytes ? "true" : "false")
         << ",\"project_name_available\":" << (!name.empty() ? "true" : "false")
-        << ",\"project_name\":" << json(bounded_utf8(name, max_name_bytes))
+        << ",\"project_name\":" << (name.empty() ? "null" : json(bounded_utf8(name, max_name_bytes)))
         << ",\"project_name_truncated\":" << (name.size() > max_name_bytes ? "true" : "false")
         << "}\n";
     for (size_t index = 0; index < emitted; ++index) {
         const ModelObject *object = model.objects[index];
         const std::string object_name = object ? object->name : std::string();
+        const bool name_valid_utf8 = object && valid_utf8(object_name);
         out << "{\"kind\":\"model_object\",\"index\":" << index
             << ",\"object_available\":" << (object ? "true" : "false")
-            << ",\"name_available\":" << (object ? "true" : "false")
-            << ",\"name\":" << (object ? json(bounded_utf8(object_name, max_name_bytes)) : "null")
-            << ",\"name_truncated\":" << (object_name.size() > max_name_bytes ? "true" : "false")
+            << ",\"name_available\":" << (name_valid_utf8 ? "true" : "false")
+            << ",\"name_valid_utf8\":" << (object ? (name_valid_utf8 ? "true" : "false") : "null")
+            << ",\"name\":" << (name_valid_utf8 ? json(bounded_utf8(object_name, max_name_bytes)) : "null")
+            << ",\"name_truncated\":" << (name_valid_utf8 && object_name.size() > max_name_bytes ? "true" : "false")
             << ",\"instance_count\":" << (object ? std::to_string(object->instances.size()) : "null")
             << "}\n";
     }
