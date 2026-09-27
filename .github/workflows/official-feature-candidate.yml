@@ -1,0 +1,91 @@
+name: Official source feature candidate
+
+on:
+  push:
+    branches:
+      - codex/official-feature-reapply
+    paths:
+      - '.github/workflows/official-feature-candidate.yml'
+      - 'scripts/ci/Invoke-OfficialFeatureCandidate.ps1'
+      - 'scripts/windows/**'
+      - 'deps/**'
+      - 'src/**'
+      - 'resources/**'
+      - 'ui-md3/**'
+      - 'CMakeLists.txt'
+      - 'version.inc'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: official-feature-candidate-${{ github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  build-package:
+    if: github.ref == 'refs/heads/codex/official-feature-reapply'
+    runs-on: windows-2025
+    timeout-minutes: 360
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - name: Check out exact candidate commit
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Set up MSBuild
+        uses: microsoft/setup-msbuild@6fb02220983dee41ce7ae257b6f4d8f9bf5ed4ce # v2
+
+      - name: Restore candidate dependency prefix
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
+        with:
+          path: deps/build/BambuStudio_dep
+          key: official-feature-windows-2025-vs2026-release-deps-${{ hashFiles('deps/**') }}
+
+      - name: Build and package unsigned candidate
+        run: ./scripts/ci/Invoke-OfficialFeatureCandidate.ps1
+
+      - name: Record hosted run context
+        if: ${{ always() }}
+        continue-on-error: true
+        run: |
+          $out = Join-Path $PWD 'diagnostic/candidate'
+          New-Item -ItemType Directory -Force -Path $out | Out-Null
+          [ordered]@{
+            run_id = $env:GITHUB_RUN_ID
+            run_attempt = $env:GITHUB_RUN_ATTEMPT
+            source_sha = $env:GITHUB_SHA
+            ref = $env:GITHUB_REF
+            runner_os = $env:RUNNER_OS
+            runner_arch = $env:RUNNER_ARCH
+            job_status = '${{ job.status }}'
+          } | ConvertTo-Json | Set-Content (Join-Path $out 'run.json')
+
+      - name: Upload safe build diagnostics
+        if: ${{ always() }}
+        continue-on-error: true
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: official-feature-build-${{ github.run_id }}-${{ github.run_attempt }}
+          path: diagnostic/candidate/*.json
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Upload unsigned Squirrel candidate
+        if: ${{ always() }}
+        continue-on-error: true
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: official-feature-squirrel-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            artifacts/windows/squirrel/Setup.exe
+            artifacts/windows/squirrel/Setup.exe.sha256
+            artifacts/windows/squirrel/RELEASES
+            artifacts/windows/squirrel/*-full.nupkg
+          if-no-files-found: warn
+          retention-days: 7
