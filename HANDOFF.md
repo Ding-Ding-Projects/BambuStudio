@@ -42,18 +42,21 @@ review. No private project path or filename is part of this public record.
 
 [`md3-v129`](https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v129)
 is a non-draft release targeting earlier source `c7cb11752a65810e4b02f4124b4c4b22c8438218`
-and contains package version `2.8.4128`. It does not package the current
-`acd4c0489` source. The native behavior, file-opening fix, installed current
+and contains package version `2.8.4128`. It does not package the fresh
+official-source candidate or the newer `73d50e270` source. The native
+behavior, file-opening fix, installed current
 package, fresh GUI captures, and localized Features page remain unverified.
 
 ### Earlier candidate record
 
-The current production [run 36346636917](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36346636917)
+The earlier production [run 36346636917](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36346636917)
 started for then-current `main` commit `e2c7d6ab6d55354b48504618c1486285c043d63a`
 and was in progress at that earlier handoff. Earlier runs
 [36345894046](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36345894046)
-and [36345306787](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36345306787)
-also remained in progress at the last supplied observation. The independent
+was in progress at that earlier observation. It later completed with a failure
+in the `Build slicer Win` step; its release publication job was skipped. Run
+[36345306787](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36345306787)
+also remained in progress at that earlier observation. The independent
 [diagnostic run 36345897684](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36345897684)
 at `0ff1ffdbd` used the installed `md3-v125` executable identified by SHA-256
 `f430f31a60486e27debc97cf0e41926072420dbf8683cd0503c6485510d9ef03`.

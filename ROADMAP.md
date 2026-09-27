@@ -14,7 +14,7 @@
 - [x] Complete the scoped independent source review of the project-loading adapter at `e5fe62a1ed4f6516b79d5f755f89f62dd1e94977`; runtime verification remains open below.
 - [ ] Build the exact official-source candidate and fix verified build failures without dropping requested controls or menus.
 - [ ] Obtain the terminal verdict for production run `36350056149` at `73d50e270`; verify the hook-copying repair against the `CMakeLists.txt:224` configuration failure in run `36349494073`, then obtain a native compile and exact-source package verdict.
-- [ ] Obtain the terminal verdict for production `main` run `36346636917` at `e2c7d6ab6d55354b48504618c1486285c043d63a`; earlier runs `36345894046` and `36345306787` were also running at the last supplied observation.
+- [ ] Obtain the terminal verdict for production `main` run `36346636917` at `e2c7d6ab6d55354b48504618c1486285c043d63a`; run `36345306787` was also running at the earlier observation. Run `36345894046` subsequently failed at `Build slicer Win`, and its release publication was skipped.
 - [ ] Package and install the exact built candidate through the supported unsigned Squirrel.Windows route.
 - [ ] Repair the A/B diagnostic route, compare saved-3MF opening on the official baseline and candidate under isolated profiles, and investigate installed startup exit `0x80070057` using a genuine stack or matching trace.
 - [ ] Complete exact-PID debugger review and prove the saved-file opening result from native model state, not from process lifetime or a filename.
@@ -23,7 +23,7 @@
 - [ ] Capture fresh, privacy-reviewed evidence tied to the candidate source and installed package.
 - [ ] Measure actual native 100%, 125%, 150%, and 200% DPI tuples rather than treating requested scale or browser zoom as native DPI proof.
 - [ ] Publish the English, Cantonese, and bilingual feature guide in the existing tabbed Pages site only after applicable packaged behavior is verified; link the exact verified release and leave the detachable camera widget as future work.
-- [ ] Distinguish the current candidate from `md3-v129`, which targets earlier `c7cb11752a65810e4b02f4124b4c4b22c8438218` and contains package version `2.8.4128`.
+- [x] Document that `md3-v129` targets earlier `c7cb11752a65810e4b02f4124b4c4b22c8438218` and contains package version `2.8.4128`; it does not verify the fresh official-source candidate.
 - [ ] Update release documentation and publish only after the build, runtime, and distribution checks reach verified outcomes.
 
 ## Deliberate exclusions
