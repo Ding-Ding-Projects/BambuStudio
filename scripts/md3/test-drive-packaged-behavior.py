@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 """Focused preflight and semantic-filter checks for the hosted behavior drive."""
 import importlib.util
+import hashlib
+import json
 import os
 import tempfile
 import unittest
+import zipfile
 from pathlib import Path
 from unittest.mock import patch
 
@@ -56,6 +59,43 @@ class BehaviorDriveChecks(unittest.TestCase):
         self.assertIsNone(drive.visible(records, "Process", 1))
         self.assertIsNotNone(drive.visible(records, "Objects", 1))
         self.assertNotIn("Process", drive.visible_labels(records))
+
+    def test_disposable_language_profiles_and_probe_header_must_match(self):
+        with tempfile.TemporaryDirectory() as temp:
+            for mode in drive.MODES:
+                profile = Path(temp) / mode
+                profile.mkdir()
+                drive.seed_profile(profile, mode)
+                content = (profile / "BambuStudio.conf").read_bytes().decode("utf-8")
+                body, checksum = content.split("\n# MD5 checksum ")
+                self.assertEqual(json.loads(body)["app"]["language"], mode)
+                self.assertEqual(checksum.strip(), hashlib.md5(body.encode("utf-8")).hexdigest().upper())
+                self.assertEqual(drive.probe_header([{"kind": "header", "language": mode,
+                                                     "dpi_scale": 1.25}], mode)["dpi_scale"], 1.25)
+                with self.assertRaisesRegex(RuntimeError, "requested language"):
+                    drive.probe_header([{"kind": "header", "language": "en", "dpi_scale": 1}],
+                                       "yue_HK")
+                with self.assertRaisesRegex(ValueError, "not new"):
+                    drive.seed_profile(profile, mode)
+
+    def test_false_printwindow_result_is_rejected(self):
+        with tempfile.TemporaryDirectory() as temp:
+            instance = drive.Drive(None, Path(temp), "a" * 40, "md3-v122", "b" * 64, "123", "en")
+            with patch.object(drive, "cheap", return_value={"ok": True, "rendered_ok": False}):
+                with self.assertRaisesRegex(RuntimeError, "PrintWindow"):
+                    instance.capture("unrendered", 1)
+
+    def test_workspace_roundtrip_requires_real_manifest_title(self):
+        with tempfile.TemporaryDirectory() as temp:
+            bundle = Path(temp) / "fixture.bambu-workspace"
+            with zipfile.ZipFile(bundle, "w") as archive:
+                archive.writestr("Metadata/workspace.json", json.dumps({
+                    "version": 1, "bundle_id": "test", "title": "Hosted verification workspace"}))
+            good = drive.Drive.workspace_file_evidence(bundle)
+            self.assertEqual(good["manifest_title"], "Hosted verification workspace")
+            with zipfile.ZipFile(bundle, "w") as archive:
+                archive.writestr("Metadata/workspace.json", json.dumps({"title": "wrong workspace"}))
+            self.assertIsNone(drive.Drive.workspace_file_evidence(bundle))
 
 
 if __name__ == "__main__":
