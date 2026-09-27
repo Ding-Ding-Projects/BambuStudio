@@ -1,20 +1,33 @@
 # HANDOFF — read this first
 
 > [!IMPORTANT]
-> **Current task state, 2026-09-26 23:02 UTC:** Feature source and three hosted
-> build repairs reached remote `main` at
-> `31174bce57e5b55311688bed74966cb12e4edde0` (verified with `git ls-remote`).
-> The candidate includes upstream `v02.08.04.57`, the requested print, LAN,
-> camera, fan, Model Creator, portable-history, workspace, calendar, and
-> Cantonese changes. [Hosted run 36276791022](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36276791022)
-> was still compiling this exact commit at this update. It is a source
-> candidate, not a verified release. Earlier hosted runs failed at CMake
-> `configure_file`, `WorkspaceBundle.cpp` string conversion, and a filesystem
-> namespace collision in `WorkspacePanel.cpp`; commits `d0c172f`, `d1d7a75`,
-> and `31174bc` contain those respective repairs. The exact final binary,
-> unsigned Squirrel package, installed version, UI captures, hardware, and
-> live-provider flows remain unverified. No local native build was run for
-> this candidate. `ROADMAP.md` lists the remaining checks.
+> **Current task state, 2026-09-27 02:28 UTC:** The current source and hosted
+> installation verifier reached remote `main` at
+> `181de2e669aa3b7b243a206372790fd543515ccb` (verified with `git ls-remote`).
+> The source includes upstream `v02.08.04.57`, the requested print, LAN,
+> camera autoplay, fan, Model Creator, portable-history, workspace, calendar,
+> Cantonese, and Prepare sidebar tab changes. The direct
+> `DevMappingNozzle.h` include in `SendMultiMachinePage.cpp` is at `fbb5e75`;
+> the Model Creator opening change is at `022b159`; the three-tab sidebar
+> and its 128 DIP rail are at `93d92e1` and `830b9e1`; localization is at
+> `bfcf0bc`. The isolated hosted Squirrel installation verifier is at
+> `181de2e`.
+>
+> [`md3-v120`](https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v120)
+> is a non-draft, superseded release targeting `fbb5e75`, with the five
+> expected asset names. It predates the Model Creator and sidebar changes.
+> [Main run 36287411091](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36287411091)
+> was still in `Build slicer Win` at its last check for `181de2e`.
+> [Branch run 36285563594](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36285563594)
+> was still compiling at its one-hour observation bound and was left running.
+> The prior main run `36284305193` was likewise left running at its bound.
+> No terminal success verdict for the intended current-source candidate was
+> recorded in this handoff. Its release, isolated installed-version receipt, real
+> GUI behavior matrix, and genuine current-build captures remain unverified.
+> The localized Pages feature guide is deferred until release verification;
+> the detachable camera widget remains a separate unimplemented follow-up.
+> No local native build or change to the user's installation was made.
+> `ROADMAP.md` lists the remaining checks.
 >
 > At this preservation checkpoint, the primary worktree has no tracked
 > changes. Pre-existing `.claude/worktrees/` and `fonts/` files have uncertain

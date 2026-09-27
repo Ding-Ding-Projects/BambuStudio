@@ -5,6 +5,7 @@
 ### Bambu Studio 2.8.4.57 and native project workflows (2026-09-26)
 
 - [x] Reconcile upstream `v02.08.04.57` at `f977235e6d736c4c0b650520ac5a5b72cbfe9244` with this fork's native UI. The reconciled baseline compiled before the build route moved to GitHub Actions.
+- [x] Include the full `DevNozzleMappingCtrl` definition in `SendMultiMachinePage.cpp` (`fbb5e75`). The superseded `md3-v120` release targets this repair, but the later feature candidate still needs its own verdict.
 - [ ] Build the complete current source candidate on GitHub Actions, verify the unsigned Squirrel release, and confirm the installed version. The newer print, LAN, Model Creator, workspace, and portable-history changes have not yet received that verdict.
 - [ ] Verify and capture the localized filament menus, remembered left/right nozzle grouping, quick swaps, one-shot Slice and print setup, fan motion, and camera autoplay from the exact packaged binary.
 - [ ] Verify LAN inventory, pairing, authenticated local dispatch, cancellation, per-device outcomes, and supported multi-nozzle mappings on the packaged binary and available printer hardware.
@@ -13,7 +14,8 @@
 - [ ] Verify the Prepare sidebar's Ink, Process and Objects tabs, search controls, keyboard access and narrow-layout reachability on the exact hosted package. The source change is written; a hosted build and genuine captures are pending.
 - [ ] Verify `.bambu-workspace` opening, member save/recovery, checklist and calendar reminders, daylight-saving behavior, and portable 3MF history on a fresh profile.
 - [ ] Measure the affected native UI at normal and minimum sizes in English, Cantonese, and bilingual modes, light and dark themes, and 100/125/150/200% scale. Keep genuine captures tied to the built source and binary.
-- [ ] Finish delivery from the source and build repairs integrated into `main` at `31174bce57e5b55311688bed74966cb12e4edde0`: confirm hosted run `36276791022`, verify the release and installed version, add runtime evidence, and complete preservation-first cleanup when the existing worktrees can be handled safely.
+- [ ] Publish an English, Cantonese, and bilingual feature guide in the existing tabbed Pages site after the current-source release and installed version are verified. Link the verified release and detailed feature articles; describe the detachable camera widget as future work only.
+- [ ] Finish delivery from the source and hosted verifier integrated into `main` at `181de2e669aa3b7b243a206372790fd543515ccb`: obtain a terminal verdict for [run 36287411091](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36287411091), verify its release and isolated install receipt, add runtime evidence, then complete preservation-first cleanup only for ownership-proven task work.
 
 ### Requested follow-up after this release
 
