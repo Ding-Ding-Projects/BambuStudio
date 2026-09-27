@@ -197,6 +197,7 @@ public:
     int start_local_print_with_record(PrintParams params, OnUpdateStatusFn update_fn, WasCancelledFn cancel_fn, OnWaitFn wait_fn);
     int start_send_gcode_to_sdcard(PrintParams params, OnUpdateStatusFn update_fn, WasCancelledFn cancel_fn, OnWaitFn wait_fn);
     int start_local_print(PrintParams params, OnUpdateStatusFn update_fn, WasCancelledFn cancel_fn);
+    bool can_start_local_print() const { return network_agent && start_local_print_ptr; }
     int start_sdcard_print(PrintParams params, OnUpdateStatusFn update_fn, WasCancelledFn cancel_fn);
     int get_user_presets(std::map<std::string, std::map<std::string, std::string>>* user_presets);
     std::string request_setting_id(std::string name, std::map<std::string, std::string>* values_map, unsigned int* http_code);

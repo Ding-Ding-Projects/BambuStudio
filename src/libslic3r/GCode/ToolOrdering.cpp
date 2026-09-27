@@ -1468,6 +1468,7 @@ FilamentGroupContext build_filament_group_context(
     context.group_info.mode = fg_mode;
     context.group_info.ignore_ext_filament = ignore_ext_filament;
     context.group_info.has_filament_switcher = print_config.has_filament_switcher.value;
+    context.group_info.preferred_extruder = mode == fmmPreferLeft ? 0 : mode == fmmPreferRight ? 1 : -1;
 
     if(mode == FilamentMapMode::fmmManual)
         context.group_info.filament_volume_map = print_config.filament_volume_map.values;

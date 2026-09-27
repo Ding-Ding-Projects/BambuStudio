@@ -155,5 +155,53 @@ void start_new_gcodeviewer_open_file(wxWindow *parent)
     }
 }
 
+// Open the given file or folder in an external editor.
+// The editor process is spawned asynchronously, thus it survives closing BambuStudio.
+void open_in_external_editor(const wxString &editor_exe, const wxString &target_path)
+{
+	if (editor_exe.IsEmpty() || target_path.IsEmpty()) {
+		BOOST_LOG_TRIVIAL(error) << "Cannot open an external editor: the editor executable or the target path is empty";
+		return;
+	}
+#ifdef _WIN32
+	std::vector<const wchar_t*> args;
+	args.reserve(3);
+	args.emplace_back(editor_exe.wc_str());
+	args.emplace_back(target_path.wc_str());
+	args.emplace_back(nullptr);
+	BOOST_LOG_TRIVIAL(info) << "Trying to open \"" << into_u8(target_path) << "\" in the external editor \"" << into_u8(editor_exe) << "\"";
+	if (wxExecute(const_cast<wchar_t**>(args.data()), wxEXEC_ASYNC) <= 0)
+		BOOST_LOG_TRIVIAL(error) << "Failed to spawn the external editor \"" << into_u8(editor_exe);
+#else
+#if defined(__APPLE__)
+	{
+		boost::filesystem::path bin_path = into_path(editor_exe);
+		// On Apple the wxExecute fails, thus we use boost::process instead.
+		BOOST_LOG_TRIVIAL(info) << "Trying to open \"" << into_u8(target_path) << "\" in the external editor \"" << bin_path.string() << "\"";
+		try {
+			std::vector<std::string> args { into_u8(target_path) };
+			boost::process::spawn(bin_path, args);
+		}
+		catch (const std::exception& ex) {
+			BOOST_LOG_TRIVIAL(error) << "Failed to spawn the external editor \"" << bin_path.string() << "\": " << ex.what();
+		}
+	}
+#else // Linux or Unix
+	{
+		std::vector<const char*> args;
+		args.reserve(3);
+		const std::string editor_path = into_u8(editor_exe);
+		const std::string to_open = into_u8(target_path);
+		args.emplace_back(editor_path.c_str());
+		args.emplace_back(to_open.c_str());
+		args.emplace_back(nullptr);
+		BOOST_LOG_TRIVIAL(info) << "Trying to open \"" << to_open << "\" in the external editor \"" << args[0] << "\"";
+		if (wxExecute(const_cast<char**>(args.data()), wxEXEC_ASYNC | wxEXEC_MAKE_GROUP_LEADER) <= 0)
+			BOOST_LOG_TRIVIAL(error) << "Failed to spawn the external editor \"" << args[0];
+	}
+#endif // Linux or Unix
+#endif // Win32
+}
+
 } // namespace GUI
 } // namespace Slic3r

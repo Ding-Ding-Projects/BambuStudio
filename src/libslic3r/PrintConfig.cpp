@@ -534,7 +534,9 @@ static const t_config_enum_values s_keys_map_FilamentMapMode = {
     { "Auto For Match", fmmAutoForMatch },
     { "Manual", fmmManual },
     { "Nozzle Manual", fmmNozzleManual},
-    { "Auto For Quality", fmmAutoForQuality }
+    { "Auto For Quality", fmmAutoForQuality },
+    { "Prefer Left", fmmPreferLeft },
+    { "Prefer Right", fmmPreferRight }
 };
 CONFIG_OPTION_ENUM_DEFINE_STATIC_MAPS(FilamentMapMode)
 
@@ -2532,11 +2534,15 @@ void PrintConfigDef::init_fff_params()
     def->enum_values.push_back("Manual");
     def->enum_values.push_back("Nozzle Manual");
     def->enum_values.push_back("Default");
+    def->enum_values.push_back("Prefer Left");
+    def->enum_values.push_back("Prefer Right");
     def->enum_labels.push_back(L("Auto For Flush"));
     def->enum_labels.push_back(L("Auto For Match"));
     def->enum_labels.push_back(L("Manual"));
     def->enum_labels.push_back(L("Default"));
     def->enum_labels.push_back(L("Nozzle Manual"));
+    def->enum_labels.push_back(L("Prefer Left"));
+    def->enum_labels.push_back(L("Prefer Right"));
     def->mode = comAdvanced;
     def->set_default_value(new ConfigOptionEnum<FilamentMapMode>(fmmAutoForFlush));
 

@@ -110,6 +110,8 @@ struct Http::priv
     std::string headers;
 	size_t limit;
 	bool cancel;
+	bool follow_redirects;
+	bool verbose;
 
 	std::thread io_thread;
 	Http::CompleteFn completefn;
@@ -161,6 +163,8 @@ Http::priv::priv(const std::string &url)
 	, error_buffer(CURL_ERROR_SIZE + 1, '\0')
 	, limit(0)
 	, cancel(false)
+	, follow_redirects(true)
+	, verbose(true)
 {
     Http::tls_global_init();
 
@@ -389,7 +393,7 @@ std::string Http::priv::body_size_error()
 
 void Http::priv::http_perform()
 {
-	::curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+	::curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, follow_redirects ? 1L : 0L);
 	::curl_easy_setopt(curl, CURLOPT_POSTREDIR, CURL_REDIR_POST_ALL);
 	::curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writecb);
 	::curl_easy_setopt(curl, CURLOPT_WRITEDATA, static_cast<void*>(this));
@@ -410,7 +414,7 @@ void Http::priv::http_perform()
 	::curl_easy_setopt(curl, CURLOPT_PROGRESSDATA, static_cast<void*>(this));
 #endif
 
-	::curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
+	::curl_easy_setopt(curl, CURLOPT_VERBOSE, verbose ? 1L : 0L);
 
 	if (headerlist != nullptr) {
 		::curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headerlist);
@@ -462,8 +466,11 @@ void Http::priv::http_perform()
 				}
 			}
 		}
-		//BBS check error http status code
-		else if (http_status >= 400) {
+		// BBS check error HTTP status code. When redirects are deliberately
+		// disabled, surface 3xx as an error instead of silently invoking neither
+		// callback.
+		else if (http_status >= 400 ||
+		         (!follow_redirects && http_status >= 300 && http_status < 400)) {
 			if (errorfn) { errorfn(std::move(buffer), std::string(), http_status); }
 		}
 	}
@@ -501,6 +508,18 @@ Http& Http::timeout_max(long timeout)
     if (timeout < 1) { timeout = priv::DEFAULT_TIMEOUT_MAX; }
     if (p) { p->set_timeout_max(timeout); }
     return *this;
+}
+
+Http& Http::follow_redirects(bool set)
+{
+	if (p) { p->follow_redirects = set; }
+	return *this;
+}
+
+Http& Http::verbose(bool set)
+{
+	if (p) { p->verbose = set; }
+	return *this;
 }
 
 Http& Http::size_limit(size_t sizeLimit)

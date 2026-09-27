@@ -1,6 +1,7 @@
 #ifndef slic3r_AppConfig_hpp_
 #define slic3r_AppConfig_hpp_
 
+#include <functional>
 #include <set>
 #include <map>
 #include <string>
@@ -59,6 +60,11 @@ public:
 	std::string         load();
 	// Store the slic3r.ini into a user profile directory (or a datadir, if configured).
 	void 			   	save();
+
+	// Fired (on the main thread) after every successful save. The GUI layer
+	// installs this to record automatic preferences-history snapshots; core
+	// code must not depend on it.
+	static void set_save_observer(std::function<void()> observer) { s_save_observer = std::move(observer); }
 
 	// Does this config need to be saved?
 	bool 				dirty() const { return m_dirty; }
@@ -161,6 +167,8 @@ public:
 		{ return m_storage.find(section)->second; }
 	void set_section(const std::string &section, const std::map<std::string, std::string>& data)
 		{ m_storage[section] = data; }
+	// Every section with its key/value pairs, for the "export everything" surface.
+	const std::map<std::string, std::map<std::string, std::string>>& storage() const { return m_storage; }
 	void 				clear_section(const std::string &section)
 		{ m_storage[section].clear(); }
 
@@ -262,6 +270,8 @@ public:
     static const std::string SECTION_EMBOSS_STYLE;
 
 private:
+	static std::function<void()> s_save_observer;
+
 	template<typename T>
 	bool get_3dmouse_device_numeric_value(const std::string &device_name, const char *parameter_name, T &out) const
 	{

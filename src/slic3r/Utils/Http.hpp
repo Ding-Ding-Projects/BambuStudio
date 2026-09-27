@@ -60,7 +60,9 @@ public:
 	// A HTTP request may fail at various stages of completeness (URL parsing, DNS lookup, TCP connection, ...).
 	// If the HTTP request could not be made or failed before completion, the `error` arg contains a description
 	// of the error and `http_status` is zero.
-	// If the HTTP request was completed but the response HTTP code is >= 400, `error` is empty and `http_status` contains the response code.
+	// If the HTTP request was completed but the response HTTP code is >= 400
+	// (or is 3xx while redirects are disabled), `error` is empty and
+	// `http_status` contains the response code.
 	// In either case there may or may not be a body.
 	typedef std::function<void(std::string /* body */, std::string /* error */, unsigned /* http_status */)> ErrorFn;
 
@@ -101,6 +103,14 @@ public:
 	Http& timeout_connect(long timeout);
     // Sets a maximum total request timeout in seconds
     Http& timeout_max(long timeout);
+	// Controls whether libcurl follows HTTP redirects. Existing callers keep
+	// the historical default (true); credential-bearing requests should turn
+	// this off so a response cannot redirect secrets to another destination.
+	Http& follow_redirects(bool set);
+	// Controls libcurl's verbose protocol trace. Existing callers keep the
+	// historical default (true); requests carrying credentials should disable
+	// it so headers cannot enter stderr or captured diagnostic output.
+	Http& verbose(bool set);
 	// Sets a maximum size of the data that can be received.
 	// A value of zero sets the default limit, which is is 5MB.
 	Http& size_limit(size_t sizeLimit);
@@ -159,7 +169,8 @@ public:
 	// Callback called on HTTP request complete
 	Http& on_complete(CompleteFn fn);
 	// Callback called on an error occuring at any stage of the requests: Url parsing, DNS lookup,
-	// TCP connection, HTTP transfer, and finally also when the response indicates an error (status >= 400).
+	// TCP connection, HTTP transfer, and finally also when the response indicates
+	// an error (status >= 400, or 3xx while redirects are disabled).
 	// Therefore, a response body may or may not be present.
 	Http& on_error(ErrorFn fn);
 	// Callback called on data download/upload prorgess (called fairly frequently).

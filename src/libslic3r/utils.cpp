@@ -1194,9 +1194,20 @@ std::string get_process_name(int pid)
 		GetModuleFileNameA(NULL, name, MAX_PATH);
 	}
 	else {
+		// OpenProcess reports failure by returning NULL; INVALID_HANDLE_VALUE is the
+		// CreateFile sentinel and is never returned here. Testing the wrong one let a
+		// NULL handle fall through to GetModuleFileNameEx and then to CloseHandle, and
+		// closing an invalid handle raises STATUS_INVALID_HANDLE under a debugger or
+		// with strict handle checking enabled. A dead pid is the *normal* input on this
+		// path: has_restore_data() asks about the pid a crashed instance left in its
+		// lock file, and that pid is usually already reaped (OpenProcess then fails with
+		// ERROR_INVALID_PARAMETER).
 		HANDLE h = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid);
-		if (h == INVALID_HANDLE_VALUE) return {};
-		GetModuleFileNameExA(h, NULL, name, MAX_PATH);
+		if (h == NULL) return {};
+		// A failed query leaves the caller's buffer unspecified; keep it empty so the
+		// name comparison in has_restore_data() cannot match on stack garbage.
+		if (GetModuleFileNameExA(h, NULL, name, MAX_PATH) == 0)
+			name[0] = '\0';
 		CloseHandle(h);
 	}
 	char* p = name;

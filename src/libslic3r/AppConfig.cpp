@@ -39,6 +39,8 @@ using namespace nlohmann;
 
 namespace Slic3r {
 
+std::function<void()> AppConfig::s_save_observer;
+
 static const std::string VERSION_CHECK_URL = "";
 static const std::string MODELS_STR = "models";
 
@@ -50,7 +52,14 @@ std::string AppConfig::get_language_code()
     std::string get_lang = get("language");
     if (get_lang.empty()) return "";
 
-    if (get_lang == "zh_CN")
+    // Preview UI-mode identifiers are local-only. Legacy HMS and device APIs
+    // accept app locale prefixes, so route both custom modes through their
+    // documented English fallback instead of leaking "yu" or "bi".
+    if (get_lang == "yue_HK" || get_lang == "bilingual_en_yue_HK")
+    {
+        get_lang = "en";
+    }
+    else if (get_lang == "zh_CN")
     {
         get_lang = "zh-cn";
     }
@@ -179,6 +188,13 @@ void AppConfig::set_defaults()
         set_bool("ams_sync_match_full_use_color_dist", false);
     if (get("enable_sidebar_floatable").empty())
         set_bool("enable_sidebar_floatable", false);
+    // Prepare sidebar dock edge: left|right|top|bottom. Defaults to left
+    // (deliberately overrides the design kit's right placement per user request).
+    {
+        const std::string dock = get("prepare_sidebar_dock");
+        if (dock != "left" && dock != "right" && dock != "top" && dock != "bottom")
+            set("prepare_sidebar_dock", "left");
+    }
 
     if (get("export_sources_full_pathnames").empty())
         set_bool("export_sources_full_pathnames", false);
@@ -980,6 +996,8 @@ void AppConfig::save()
     // To cope with that, we already made a backup of the config on Windows.
     rename_file(path_pid, path);
     m_dirty = false;
+    if (s_save_observer)
+        s_save_observer(); // GUI hook: e.g. schedule a preferences-history snapshot
 }
 
 #else
@@ -1185,6 +1203,8 @@ void AppConfig::save()
     // To cope with that, we already made a backup of the config on Windows.
     rename_file(path_pid, path);
     m_dirty = false;
+    if (s_save_observer)
+        s_save_observer(); // GUI hook: e.g. schedule a preferences-history snapshot
 }
 #endif
 

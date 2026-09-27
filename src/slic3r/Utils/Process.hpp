@@ -19,6 +19,10 @@ void start_new_gcodeviewer(const wxString *path_to_open = nullptr);
 // Open a file dialog, ask the user to select a new G-code to open, start a new G-code viewer.
 void start_new_gcodeviewer_open_file(wxWindow *parent = nullptr);
 
+// Open the given file or folder in an external editor (see Utils/ExternalEditor.hpp for the editor discovery).
+// The editor process is spawned asynchronously, thus it survives closing BambuStudio.
+void open_in_external_editor(const wxString &editor_exe, const wxString &target_path);
+
 } // namespace GUI
 } // namespace Slic3r
 
