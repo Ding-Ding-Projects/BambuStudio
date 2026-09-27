@@ -2,11 +2,14 @@
 
 ## Current state
 
-The candidate starts at official Bambu Studio `v02.08.04.57` commit
-`f977235e6d736c4c0b650520ac5a5b72cbfe9244`, followed by an independently
-owned baseline diagnostic commit and grouped feature reapplication commits.
-The pinned source for the existing fork features is
-`c5df6199e1a83b1c94be12e999c0b322fded8730`.
+At the 2026-09-27 20:03:59 UTC production-run start, `main` was
+`e2c7d6ab6d55354b48504618c1486285c043d63a`. It integrates the fresh
+reapplication on official Bambu Studio `v02.08.04.57` source
+`f977235e6d736c4c0b650520ac5a5b72cbfe9244`, plus bounded native model
+observation (`257c700e3`) and exact 3MF model-state verification
+(`68d1be871`). The pinned source for the earlier fork features is
+`c5df6199e1a83b1c94be12e999c0b322fded8730`; that is a source input,
+not the new package's verification identity.
 
 `docs/reapplication/source-manifest.csv` gives the selected path inventory and
 source/official blob IDs. `docs/reapplication/loader-adapters.md` records the
@@ -17,30 +20,47 @@ captures, legacy NSIS source-repair files, and old build output were excluded.
 
 ## Verification
 
-Current exact run and source identities, the restricted diagnostic result, and
-its limits are recorded in
-[`docs/reapplication/verification-status.md`](docs/reapplication/verification-status.md).
-The candidate submitted for hosted compilation and diagnostic Squirrel packaging
-is `87e005deda7ce118612df67ea1f0a9ab8d3849be`, run `36344196934`.
-The final scoped loader source review was dry at
-`e5fe62a1ed4f6516b79d5f755f89f62dd1e94977`; its runtime cases remain pending.
+The current production [run 36346636917](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36346636917)
+started for exact `main` commit `e2c7d6ab6d55354b48504618c1486285c043d63a`
+and was in progress at this handoff. Earlier runs
+[36345894046](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36345894046)
+and [36345306787](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36345306787)
+also remained in progress at the last supplied observation. The independent
+[diagnostic run 36345897684](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36345897684)
+at `0ff1ffdbd` used the installed `md3-v125` executable identified by SHA-256
+`f430f31a60486e27debc97cf0e41926072420dbf8683cd0503c6485510d9ef03`.
+It recorded natural startup exit `0x80070057` after 20 seconds at
+2026-09-27 19:54:58 UTC. Holder identity, desktop identity, and teardown were
+validated; it produced no image, matching log, or matching Windows Error
+Reporting record. The cause remains undetermined and the A/B diagnostic route
+is still being repaired.
 
-The feature reapplication lane did not run a local build, test suite, installer,
-application launch, or screen capture. Source checks identified inherited
-trailing whitespace in some old embedded web and test files. A new build and
-installed runtime verdict must bind to the final candidate commit. In
-particular, the cause of the previous installed-release crash remains unknown.
+`md3-v127` targets `6a45418f` and its production run `36338478333` succeeded,
+but it predates the fresh official-source candidate and was not marked latest
+at the last API check. `md3-v125` remains the latest-designated release; it
+targets `c5df6199e1a83b1c94be12e999c0b322fded8730`. Neither release
+verifies the fresh `e2c7d6ab6` source. The source review of native model and
+loader changes is not a packaged application or GUI verdict. The public
+fixture is parsed as nine model objects, including `flowrate_m5`; its
+verification does not infer load success from a filename.
+
+All builds, tests, installation, and GUI checks for this pass are hosted. No
+new package, feature interaction, native DPI tuple, or privacy-reviewed image
+has been verified for `e2c7d6ab6`. The localized feature guide remains
+unpublished. Existing hosted jobs and ownership-uncertain files must be
+preserved.
 
 ## Next actions
 
-1. Review the grouped commits and source manifest against the official base.
-2. Build the dependency tree, embedded device page, native application, and
-   unsigned Squirrel.Windows package from one pinned candidate commit.
-3. Resolve build or source-review findings without dropping requested features.
-4. Compare official and candidate saved-3MF opening under isolated profiles,
-   then verify the rollback cases in `loader-adapters.md`.
-5. Drive the requested features in the built package, capture fresh evidence,
-   and update release and distribution records with verified results only.
+1. Obtain the terminal verdict and exact package identity for run `36346636917`.
+2. Repair the A/B diagnostic route and compare official and candidate 3MF
+   opening under isolated profiles, including `loader-adapters.md` rollback cases.
+3. Establish the cause of the installed startup exit from a genuine trace or
+   matching report; the exit code alone does not identify the source defect.
+4. Drive requested features in the exact built package, measure native DPI,
+   and capture and review fresh pixels before claiming GUI verification.
+5. Publish the localized feature guide and release links only for verified
+   behavior, then update distribution records with the exact release source.
 
 
 ## Historical pre-reconstruction handoff

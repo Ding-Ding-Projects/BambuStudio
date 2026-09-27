@@ -2,17 +2,22 @@
 
 ## Official-source reapplication
 
+- [x] Integrate the fresh official-source candidate, bounded model observation, and exact 3MF model-state probe on `main` at `e2c7d6ab6d55354b48504618c1486285c043d63a`.
+- [x] Diagnose the installed `md3-v125` startup attempt at `0ff1ffdbd`: run `36345897684` recorded natural exit `0x80070057` after 20 seconds with validated holder and desktop identity and teardown. No image or matching diagnostic record was produced; cause remains open below.
 - [x] Start from official `v02.08.04.57` (`f977235e6d736c4c0b650520ac5a5b72cbfe9244`) and preserve the separate baseline diagnostic change.
 - [x] Record selected fork source paths, source blob IDs, official blob IDs, and review states in `docs/reapplication/source-manifest.csv`.
 - [x] Reapply native controls, workspace and history, print and device flows, Model Creator, localization, website source, and supported Windows packaging source in separate commits.
 - [x] Review the project-tab opening adapter for rejected loads, snapshot failures, rollback save targets, and internal Recent Projects entries.
 - [x] Complete the scoped independent source review of the project-loading adapter at `e5fe62a1ed4f6516b79d5f755f89f62dd1e94977`; runtime verification remains open below.
 - [ ] Build the exact official-source candidate and fix verified build failures without dropping requested controls or menus.
+- [ ] Obtain the terminal verdict for production `main` run `36346636917` at `e2c7d6ab6d55354b48504618c1486285c043d63a`; earlier runs `36345894046` and `36345306787` were also running at the last supplied observation.
 - [ ] Package and install the exact built candidate through the supported unsigned Squirrel.Windows route.
-- [ ] Compare saved-3MF opening on the official baseline and candidate under isolated profiles, then investigate the installed-release crash using a genuine stack or trace.
+- [ ] Repair the A/B diagnostic route, compare saved-3MF opening on the official baseline and candidate under isolated profiles, and investigate installed startup exit `0x80070057` using a genuine stack or matching trace.
 - [ ] Exercise the focused project-tab rollback cases in `docs/reapplication/loader-adapters.md`, including named, Untitled, clean, and discarded dirty documents.
 - [ ] Verify the requested native controls, print and device flows, Model Creator, workspace/history, localization, and website behavior in their built surfaces.
 - [ ] Capture fresh, privacy-reviewed evidence tied to the candidate source and installed package.
+- [ ] Measure actual native 100%, 125%, 150%, and 200% DPI tuples rather than treating requested scale or browser zoom as native DPI proof.
+- [ ] Publish the English, Cantonese, and bilingual feature guide in the existing tabbed Pages site only after applicable packaged behavior is verified; link the exact verified release and leave the detachable camera widget as future work.
 - [ ] Update release documentation and publish only after the build, runtime, and distribution checks reach verified outcomes.
 
 ## Deliberate exclusions
