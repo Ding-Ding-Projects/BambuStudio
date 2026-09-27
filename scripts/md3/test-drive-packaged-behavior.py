@@ -325,7 +325,7 @@ class BehaviorDriveChecks(unittest.TestCase):
                     drive.time, "monotonic", side_effect=[0, 16, 20, 26]):
                 with self.assertRaisesRegex(RuntimeError, "helper PID was not killed"):
                     app.stop()
-            self.assertEqual(calls, ["close_headless_desktop", "list_headless_windows"])
+            self.assertEqual(calls, ["close_headless_desktop"])
 
     def test_teardown_requires_absent_owned_pid_and_missing_named_desktop(self):
         with tempfile.TemporaryDirectory() as temp:
