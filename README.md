@@ -7,6 +7,20 @@ Prebuilt Windows, macOS 64-bit and Linux releases are available through the [git
 
 Bambu Studio is based on [PrusaSlicer](https://github.com/prusa3d/PrusaSlicer) by Prusa Research, which is from [Slic3r](https://github.com/Slic3r/Slic3r) by Alessandro Ranellucci and the RepRap community.
 
+## Official-source feature candidate
+
+This branch reapplies the fork's existing native interface, project workspace,
+printer workflows, Model Creator, localization, and documentation to official
+Bambu Studio `v02.08.04.57`. The selected source files and their blob IDs are
+recorded in the [reapplication manifest](docs/reapplication/source-manifest.csv).
+The [adapter notes](docs/reapplication/loader-adapters.md) explain how project
+opening and tab restoration differ from the previous fork source.
+
+This candidate still needs a fresh build, package, saved-3MF opening comparison,
+and interaction evidence. The earlier installed-release crash has not been
+attributed to a specific source change. Existing release downloads should not
+be treated as verification of this candidate.
+
 See the [wiki](https://github.com/bambulab/BambuStudio/wiki) and the [documentation directory](https://github.com/bambulab/BambuStudio/tree/master/doc) for more information.
 
 # What are Bambu Studio's main features?
