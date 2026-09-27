@@ -1,5 +1,6 @@
 #include <wx/dc.h>
 #include "TabCtrl.hpp"
+#include "StateColor.hpp"
 
 wxDEFINE_EVENT( wxEVT_TAB_SEL_CHANGING, wxCommandEvent );
 wxDEFINE_EVENT( wxEVT_TAB_SEL_CHANGED, wxCommandEvent );
@@ -34,7 +35,7 @@ TabCtrl::TabCtrl(wxWindow *      parent,
     radius = 1;
 #endif
     border_width = 1;
-    SetBorderColor(0xcecece);
+    SetBorderColor(ThemeColor::Grey400);
     sizer = new wxBoxSizer(wxHORIZONTAL);
     sizer->AddSpacer(10);
     auto hsizer = new wxBoxSizer(wxVERTICAL);
@@ -54,7 +55,7 @@ int TabCtrl::GetSelection() const { return sel; }
 
 void TabCtrl::SelectItem(int item)
 {
-    if (item == sel || !sendTabCtrlEvent(true))
+    if (item < -1 || item >= static_cast<int>(btns.size()) || item == sel || !sendTabCtrlEvent(true))
         return;
     if (sel >= 0) {
         wxCommandEvent e(wxEVT_CHECKBOX);
@@ -74,6 +75,14 @@ void TabCtrl::SelectItem(int item)
     Refresh();
 }
 
+bool TabCtrl::ActivateItem(int item)
+{
+    if (item < 0 || item >= static_cast<int>(btns.size()) || !btns[item]->IsShown() || !btns[item]->IsEnabled())
+        return false;
+    SelectItem(item);
+    return sel == item;
+}
+
 void TabCtrl::Unselect()
 {
     SelectItem(-1);
@@ -81,8 +90,18 @@ void TabCtrl::Unselect()
 
 void TabCtrl::Rescale()
 {
-    for (auto & b : btns)
+    for (auto & b : btns) {
         b->Rescale();
+        // Re-resolve the semantic glyph pin for the current theme/scheme (the
+        // per-item TEXT colour override is deliberately left alone — it encodes
+        // the preset editor's modified/sys decoration).
+        b->SetGlyphColor(tabTextColor());
+        // Re-bake the pill radius/height/fill for the new DPI (and theme). Gated
+        // on pill mode so the flat-strip consumers' per-item padding overrides
+        // (SetItemPaddingSize) are never reset here.
+        if (m_pill_style)
+            applyItemStyle(b);
+    }
 }
 
 bool TabCtrl::SetFont(wxFont const& font)
@@ -101,17 +120,15 @@ int TabCtrl::AppendItem(const wxString &item,
     Button * btn = new Button();
     btn->Create(this, item, "", wxBORDER_NONE);
     btn->SetFont(GetFont());
-    btn->SetTextColor(StateColor(
-        std::make_pair(0x6B6B6C, (int) StateColor::NotChecked),
-        std::make_pair(*wxLIGHT_GREY, (int) StateColor::Normal)));
-    btn->SetBackgroundColor(StateColor());
-    btn->SetCornerRadius(0);
-    btn->SetPaddingSize({TAB_BUTTON_PADDING});
+    btn->SetTextColor(tabTextColor());
+    applyItemStyle(btn);
     btns.push_back(btn);
-    if (btns.size() > 1)
-        sizer->GetItem(sizer->GetItemCount() - 1)->SetMinSize({0, 0});
-    sizer->Add(btn, 0, wxALIGN_CENTER_VERTICAL | wxLEFT | wxRIGHT, TAB_BUTTON_SPACE);
-    sizer->AddStretchSpacer(1);
+    if (!m_pill_style) {
+        if (btns.size() > 1)
+            sizer->GetItem(sizer->GetItemCount() - 1)->SetMinSize({0, 0});
+        sizer->Add(btn, 0, wxALIGN_CENTER_VERTICAL | wxLEFT | wxRIGHT, TAB_BUTTON_SPACE);
+        sizer->AddStretchSpacer(1);
+    }
     relayout();
     return btns.size() - 1;
 }
@@ -123,6 +140,10 @@ bool TabCtrl::DeleteItem(int item)
 
 void TabCtrl::DeleteAllItems()
 {
+    // In pill mode the items are not sizer children, so the sizer's Clear
+    // would leave them alive; destroy them by hand.
+    if (m_pill_style)
+        for (auto *b : btns) b->Destroy();
     sizer->Clear(true);
     sizer->AddSpacer(10);
     btns.clear();
@@ -189,6 +210,131 @@ void TabCtrl::SetItemTextColour(unsigned int item, const StateColor &col)
     btns[item]->SetTextColor(col);
 }
 
+void TabCtrl::SetItemGlyph(unsigned int item, uint32_t glyph)
+{
+    if (item >= btns.size()) return;
+    // Leading Material Symbol at 20 design-px. Button::SetGlyph resolves the
+    // codepoint through the shared MaterialIcon font path when the face is
+    // available, else keeps its raster-icon fallback; the assigned wxImageList
+    // is untouched either way.
+    btns[item]->SetGlyph(glyph, 20);
+    // Pin the glyph to the semantic tab palette (OnSurfaceVariant at rest,
+    // Primary / OnSecondaryContainer when selected). Without this the glyph
+    // follows the item's TEXT colour, and the preset editor's per-item
+    // modified-value decoration (Warning orange — #ffb77c in dark mode) tinted
+    // every category glyph orange. The label keeps its decoration; the glyph
+    // stays neutral per the kit's TabBar/NavItem anatomy.
+    btns[item]->SetGlyphColor(tabTextColor());
+}
+
+StateColor TabCtrl::tabTextColor() const
+{
+    if (m_pill_style) {
+        // Kit NavItem pill labels + leading glyph: the active tab (carrying the
+        // Checked state, toggled in SelectItem) reads OnSecondaryContainer for
+        // contrast on the SecondaryContainer pill fill; every other state falls
+        // through to OnSurfaceVariant. The leading glyph inherits this colour.
+        return StateColor(
+            std::make_pair(StateColor::semantic(MD3::Role::OnSecondaryContainer, m_scheme), (int) StateColor::Checked),
+            std::make_pair(StateColor::semantic(MD3::Role::OnSurfaceVariant), (int) StateColor::Normal));
+    }
+    // Kit secondary-tab labels (navigation/TabBar): the active tab (the one
+    // carrying the Checked state, toggled in SelectItem) is Primary in the
+    // current scheme; every other state falls through to the OnSurfaceVariant
+    // Normal entry. This replaces the legacy TextMuted / raw wxLIGHT_GREY pair.
+    return StateColor(
+        std::make_pair(StateColor::semantic(MD3::Role::Primary, m_scheme), (int) StateColor::Checked),
+        std::make_pair(StateColor::semantic(MD3::Role::OnSurfaceVariant), (int) StateColor::Normal));
+}
+
+StateColor TabCtrl::navPillBg() const
+{
+    // Kit NavItem pill fill: selected SecondaryContainer (current scheme), hover
+    // SurfaceContainerHigh, idle = the strip background so the resting pill is
+    // invisible (mirrors the IconButton "rest = parent background" idiom rather
+    // than a transparent brush). Checked is listed first so a hovered selected
+    // pill keeps its selected fill. GetBackgroundColour() is the same value the
+    // item buttons clear to, and is re-read on theme toggle via RefreshItemStyles.
+    const wxColour strip_bg = GetBackgroundColour();
+    return StateColor(
+        std::make_pair(StateColor::semantic(MD3::Role::SecondaryContainer, m_scheme), (int) StateColor::Checked),
+        std::make_pair(StateColor::semantic(MD3::Role::SurfaceContainerHigh), (int) StateColor::Hovered),
+        std::make_pair(strip_bg, (int) StateColor::Normal));
+}
+
+void TabCtrl::applyItemStyle(Button *btn)
+{
+    // Geometry + fill only (the text colour is owned separately: AppendItem seeds
+    // it and the preset editor overrides it per item to encode the modified /
+    // sys-value decoration). Keeping text out of here lets Rescale re-bake the
+    // pill radius/height/fill for a new DPI or theme without clobbering those
+    // per-item text colours.
+    if (m_pill_style) {
+        // MD3 NavItem: h44 pill, r22, SecondaryContainer/High/strip-bg fill,
+        // 14px horizontal inset. FromDIP keeps the geometry crisp on HiDPI.
+        btn->SetCornerRadius(FromDIP(22));
+        btn->SetBackgroundColor(navPillBg());
+        btn->SetPaddingSize({FromDIP(14), FromDIP(4)});
+        btn->SetMinSize({0, FromDIP(44)});
+    } else {
+        btn->SetCornerRadius(0);
+        btn->SetBackgroundColor(StateColor());
+        btn->SetPaddingSize({TAB_BUTTON_PADDING});
+    }
+}
+
+void TabCtrl::SetColorScheme(MD3::ColorScheme scheme)
+{
+    if (m_scheme == scheme)
+        return;
+    m_scheme = scheme;
+    // Re-resolve the scheme-aware active-label accent for every tab; the active
+    // indicator reads m_scheme live in doRender(), so a repaint recolours it. In
+    // pill mode the selected SecondaryContainer fill is scheme-aware too.
+    for (auto &b : btns) {
+        b->SetTextColor(tabTextColor());
+        b->SetGlyphColor(tabTextColor());
+        if (m_pill_style)
+            b->SetBackgroundColor(navPillBg());
+    }
+    Refresh();
+}
+
+void TabCtrl::SetNavItemStyle(bool pill)
+{
+    if (m_pill_style == pill)
+        return;
+    m_pill_style = pill;
+    // Pill mode owns the item positions (relayoutPills); the flat strip lets
+    // the horizontal sizer place them. Move the buttons across accordingly.
+    sizer->Clear(false);
+    sizer->AddSpacer(10);
+    if (!pill) {
+        for (auto *b : btns) {
+            if (sizer->GetItemCount() > 1)
+                sizer->GetItem(sizer->GetItemCount() - 1)->SetMinSize({0, 0});
+            sizer->Add(b, 0, wxALIGN_CENTER_VERTICAL | wxLEFT | wxRIGHT, TAB_BUTTON_SPACE);
+            sizer->AddStretchSpacer(1);
+        }
+    }
+    for (auto &b : btns) {
+        applyItemStyle(b);
+        b->SetTextColor(tabTextColor());
+        b->SetGlyphColor(tabTextColor());
+    }
+    relayout();
+    Refresh();
+}
+
+void TabCtrl::RefreshItemStyles()
+{
+    if (!m_pill_style)
+        return;
+    for (auto &b : btns)
+        b->SetBackgroundColor(navPillBg());
+    Refresh();
+}
+
 int TabCtrl::GetFirstVisibleItem() const
 {
     return btns.size() == 0 ? -1 : 0;
@@ -222,8 +368,41 @@ WXLRESULT TabCtrl::MSWWindowProc(WXUINT nMsg, WXWPARAM wParam, WXLPARAM lParam)
 
 #endif
 
+void TabCtrl::relayoutPills()
+{
+    // Flow layout: items keep their natural width and wrap to the next row
+    // when the strip is too narrow, so no category is ever hidden behind an
+    // overflow. The control's minimum height follows the number of rows.
+    const int width   = GetSize().x;
+    const int gap     = FromDIP(8);
+    const int row_gap = FromDIP(6);
+    const int left    = FromDIP(10);
+    int x = left, y = border_width * 2, row_h = 0;
+    for (auto *b : btns) {
+        const wxSize s = b->GetMinSize();
+        if (x > left && x + s.x > width - left) {
+            x = left;
+            y += row_h + row_gap;
+            row_h = 0;
+        }
+        b->SetSize(x, y, s.x, s.y);
+        b->Show();
+        x += s.x + gap;
+        row_h = std::max(row_h, s.y);
+    }
+    const int h = y + row_h + border_width * 4;
+    if (GetMinSize().y != h) {
+        SetMinSize(wxSize(-1, h));
+        if (GetParent()) GetParent()->Layout();
+    }
+}
+
 void TabCtrl::relayout()
 {
+    if (m_pill_style) {
+        relayoutPills();
+        return;
+    }
     int offset = 10;
     int item = sel + 1;
     int first = 0;
@@ -266,7 +445,8 @@ void TabCtrl::buttonClicked(wxCommandEvent &event)
     SetFocus();
     auto btn  = event.GetEventObject();
     auto iter = std::find(btns.begin(), btns.end(), btn);
-    SelectItem(iter == btns.end() ? -1 : iter - btns.begin());
+    if (iter != btns.end())
+        ActivateItem(static_cast<int>(iter - btns.begin()));
 }
 
 void TabCtrl::keyDown(wxKeyEvent &event)
@@ -277,9 +457,9 @@ void TabCtrl::keyDown(wxKeyEvent &event)
     case WXK_LEFT:
     case WXK_RIGHT:
         if ((event.GetKeyCode() == WXK_UP || event.GetKeyCode() == WXK_LEFT) && GetSelection() > 0) {
-            SelectItem(GetSelection() - 1);
+            ActivateItem(GetSelection() - 1);
         } else if ((event.GetKeyCode() == WXK_DOWN || event.GetKeyCode() == WXK_RIGHT) && GetSelection() + 1 < btns.size()) {
-            SelectItem(GetSelection() + 1);
+            ActivateItem(GetSelection() + 1);
         }
         break;
     }
@@ -289,6 +469,19 @@ void TabCtrl::doRender(wxDC& dc)
 {
     wxSize size = GetSize();
     int states = state_handler.states();
+
+    if (m_pill_style) {
+        // NavItem strip: the selected pill's SecondaryContainer fill is the
+        // selection cue, so the Primary underline indicator is suppressed. A 1px
+        // OutlineVariant bottom divider (role-based, replacing the legacy Grey400
+        // border line) keeps the strip boundary and adapts to light/dark by role.
+        const int bw  = std::max(1, border_width);
+        const int bs2 = (1 + border_width) / 2;
+        dc.SetPen(wxPen(StateColor::semantic(MD3::Role::OutlineVariant), bw));
+        dc.DrawLine(0, size.y - bs2, size.x, size.y - bs2);
+        return;
+    }
+
     if (sel < 0) { return; }
 
     auto x1 = btns[sel]->GetPosition().x;
@@ -311,10 +504,20 @@ void TabCtrl::doRender(wxDC& dc)
 #else
     dc.SetPen(wxPen(border_color.colorForStates(states), border_width));
     dc.DrawLine(0, size.y - BS2, size.x, size.y - BS2);
-    wxColour c("#00AE42");
-    dc.SetPen(wxPen(c, 1));
-    dc.SetBrush(c);
-    dc.DrawRoundedRectangle(x1 - radius, size.y - BS2 - border_width * 3, x2 + radius * 2 - x1, border_width * 3, radius);
+    // Kit active indicator (navigation/TabBar): a 3px bar in the current scheme's
+    // Primary, inset 12px from the selected tab's edges, with only the TOP corners
+    // rounded (radius 3px 3px 0 0). wxDC has no per-corner radius, so the pill is
+    // drawn at double height and the bitmap's bottom edge clips its lower (rounded)
+    // half, leaving square bottom corners flush with the bar baseline. FromDIP is
+    // read every paint, so the geometry stays crisp across DPI/density changes with
+    // no cached radius.
+    const int indicator_inset  = FromDIP(12);
+    const int indicator_height = FromDIP(MD3::Metrics::tab_active_indicator);
+    const int indicator_width  = std::max(1, (x2 - x1) - 2 * indicator_inset);
+    wxRect indicator(x1 + indicator_inset, size.y - indicator_height, indicator_width, indicator_height * 2);
+    dc.SetPen(*wxTRANSPARENT_PEN);
+    dc.SetBrush(wxBrush(StateColor::semantic(MD3::Role::Primary, m_scheme)));
+    dc.DrawRoundedRectangle(indicator, indicator_height);
 #endif
 }
 

@@ -1,12 +1,10 @@
 #include "ProgressBar.hpp"
-
-#include <algorithm>
-
+#include "StateColor.hpp"
 #include "../I18N.hpp"
 #include <wx/dcclient.h>
 #include <wx/dcgraph.h>
 #include "Label.hpp"
-#include "StateColor.hpp"
+#include <algorithm>
 
 
 
@@ -21,7 +19,9 @@ END_EVENT_TABLE()
 ProgressBar::ProgressBar(wxWindow *parent, wxWindowID id, int max, const wxPoint &pos, const wxSize &size, bool shown)
 {
     m_shownumber = shown;
-    SetBackgroundColour(wxColour(255,255,255));
+    // Theme-adaptive erase colour matching the track's own SurfaceContainerHighest
+    // fill, instead of a raw white literal that showed through in dark mode.
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerHighest));
 
     if (size.y >= miniHeight) {
         m_miniHeight = size.y;
@@ -30,12 +30,44 @@ ProgressBar::ProgressBar(wxWindow *parent, wxWindowID id, int max, const wxPoint
     }
 
     m_max = max;
-    m_radius = m_miniHeight / 2;
-    m_barHeight = m_miniHeight;
+    m_radius = defaultRadius;
     wxSize temp_size(size.x, m_miniHeight);
 
     SetFont(Label::Head_12);
     create(parent, id, pos, temp_size);
+    m_pulse_timer.SetOwner(this);
+    Bind(wxEVT_TIMER, &ProgressBar::onPulseTick, this, m_pulse_timer.GetId());
+}
+
+void ProgressBar::SetRange(int range)
+{
+    if (range <= 0) return;
+    m_max = range;
+    if (m_step > m_max) m_step = m_max;
+    Refresh();
+}
+
+void ProgressBar::Pulse()
+{
+    m_disable = false;
+    if (!m_indeterminate) {
+        m_indeterminate = true;
+        m_pulse_phase   = 0.0;
+    }
+    if (!m_pulse_timer.IsRunning())
+        m_pulse_timer.Start(40);
+    Refresh();
+}
+
+void ProgressBar::onPulseTick(wxTimerEvent &)
+{
+    if (!m_indeterminate || !IsShownOnScreen()) {
+        m_pulse_timer.Stop();
+        return;
+    }
+    m_pulse_phase += 0.02;
+    if (m_pulse_phase > 1.0) m_pulse_phase -= 1.0;
+    Refresh();
 }
 
 
@@ -52,8 +84,8 @@ void ProgressBar::create(wxWindow *parent, wxWindowID id, const wxPoint &pos,  w
 
      auto m_progress_bk = new StaticBox(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
      m_progress_bk->SetBackgroundColour(wxColour(238, 130, 238));
-     StateColor btn_bg_green(std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed), std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-                             std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
+     StateColor btn_bg_green(std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
+                             std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
 
      wxBoxSizer *m_sizer_progress= new wxBoxSizer(wxHORIZONTAL);
 
@@ -166,7 +198,10 @@ void ProgressBar::Reset()
 void ProgressBar::SetProgress(int step)
 {
     if (step < 0) return;
-    if (m_disable == false && m_step == step)
+    const bool was_indeterminate = m_indeterminate;
+    m_indeterminate = false;
+    m_pulse_timer.Stop();
+    if (!was_indeterminate && m_disable == false && m_step == step)
     {
         return;
     }
@@ -185,9 +220,10 @@ void ProgressBar::SetMinSize(const wxSize &size)
         return;
     }
 
-    m_barHeight = m_miniHeight;
-    m_radius    = m_miniHeight / 2.4;
-    wxWindow::SetMinSize({size.x, m_barHeight});
+    m_radius = defaultRadius;
+    wxWindow::SetMinSize({size.x, m_miniHeight});
+    // SetSize(size);
+    SetRadius(m_radius);
 }
 
 
@@ -261,18 +297,21 @@ void ProgressBar::render(wxDC &dc)
 void ProgressBar::doRender(wxDC &dc)
 {
     if (m_step >= m_max) m_step = m_max;
-    const wxSize size      = GetClientSize();
-    const int    barHeight = std::min(m_barHeight, size.y);
-    dc.SetPen(*wxTRANSPARENT_PEN);
-    dc.SetBrush(wxBrush(GetBackgroundColour()));
-    dc.DrawRectangle(0, 0, size.x, size.y);
-
+    wxSize size   = GetSize();
+    // The track is m_barHeight tall; the window can be taller when marker
+    // bubbles sit below it (upstream SetHeight), so every track draw uses
+    // barHeight, never the window height.
+    const int barHeight = std::max(1, std::min(m_barHeight, size.y));
+    // The kit uses a fixed soft radius (r6); clamp it to the track's half-height
+    // so short bars round to a clean stadium end (matching CSS border-radius)
+    // while taller bars keep the soft r6 corner instead of a full height/2 pill.
+    const double drawRadius = (m_radius > barHeight / 2.0) ? barHeight / 2.0 : m_radius;
     dc.SetPen(wxPen(m_progress_background_colour, 1));
     dc.SetBrush(wxBrush(m_progress_background_colour));
     if (m_radius == 0) {
         dc.DrawRectangle(0, 0, size.x, barHeight);
     } else {
-        dc.DrawRoundedRectangle(0, 0, size.x, barHeight, m_radius);
+        dc.DrawRoundedRectangle(0, 0, size.x, barHeight, drawRadius);
     }
 
     //draw progress
@@ -285,17 +324,29 @@ void ProgressBar::doRender(wxDC &dc)
         if (m_radius == 0) {
             dc.DrawRectangle(0, 0, m_proportion, barHeight);
         } else {
-            dc.DrawRoundedRectangle(0, 0, m_proportion, barHeight, m_radius);
+            dc.DrawRoundedRectangle(0, 0, m_proportion, barHeight, drawRadius);
         }
 
         dc.SetFont(::Label::Head_12);
         auto textSize = dc.GetMultiLineTextExtent(m_disable_text);
-        dc.SetTextForeground(wxColour(144, 144, 144));
+        dc.SetTextForeground(ThemeColor::TextDisabled);
         auto pt = wxPoint();
         pt.x    = (size.x - textSize.x) / 2;
         pt.y    = (barHeight - textSize.y) / 2;
         dc.DrawText(m_disable_text, pt);
 
+    } else if (m_indeterminate) {
+        // Indeterminate: a 30% Primary segment sweeping left to right.
+        const double seg  = std::max(size.x * 0.3, m_radius * 2.0);
+        const double span = size.x + seg;
+        const double x    = m_pulse_phase * span - seg;
+        dc.SetPen(wxPen(m_progress_colour, 1));
+        dc.SetBrush(wxBrush(m_progress_colour));
+        if (m_radius == 0) {
+            dc.DrawRectangle(x, 0, seg, size.y);
+        } else {
+            dc.DrawRoundedRectangle(x, 0, seg, barHeight, drawRadius);
+        }
     } else {
         m_proportion = float(size.x * float(this->m_step) / float(this->m_max));
         if (m_proportion < m_radius * 2  && m_proportion != 0) { m_proportion = m_radius * 2; }
@@ -305,26 +356,12 @@ void ProgressBar::doRender(wxDC &dc)
         if (m_radius == 0) {
             dc.DrawRectangle(0, 0, m_proportion, barHeight);
         } else {
-            dc.DrawRoundedRectangle(0, 0, m_proportion, barHeight, m_radius);
+            dc.DrawRoundedRectangle(0, 0, m_proportion, barHeight, drawRadius);
         }
 
-        dc.SetFont(GetFont());
-        auto textSize = dc.GetMultiLineTextExtent(wxString("000%"));
-        dc.SetTextForeground(wxColour(144, 144, 144));
-        auto pt = wxPoint();
-        pt.x    = (size.x - textSize.x) / 2;
-        pt.y    = (barHeight - textSize.y) / 2;
-
-        auto text = wxString("");
-        if (m_step < 10) {
-            text = wxString::Format("%d", m_step);
-        } else {
-            text = wxString::Format("%d", m_step);
-        }
-
-        if (m_shownumber) {
-            dc.DrawText(text + wxString("%"), pt);
-        }
+        // Kit ProgressBar bakes no percentage text into the bar itself
+        // (ui-md3 containment/ProgressBar.jsx); any readout is externalized
+        // to an adjacent label by the caller.
     }
 
     renderMarkers(dc, size, barHeight);

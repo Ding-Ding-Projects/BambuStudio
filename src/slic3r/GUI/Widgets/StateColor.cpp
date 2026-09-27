@@ -5,57 +5,114 @@ static bool gDarkMode = false;
 
 static bool operator<(wxColour const &l, wxColour const &r) { return l.GetRGBA() < r.GetRGBA(); }
 
+// IDEMPOTENCY INVARIANT: no VALUE on the dark side of this table may equal any
+// KEY on the light side. darkModeColorFor() is applied both at paint time
+// (StateColor::colorForStates) and by GUI_App::UpdateDarkUI over window fg/bg
+// colours it may visit repeatedly, so the mapping must be a fixed point on its
+// own output — otherwise a second pass corrupts an already-dark colour (the
+// old "#e8e7ee -> #2f3036" collapse that made dark-mode text near-invisible).
+// The MD3::Dark tones referenced below are hex-nudged in MD3Tokens.hpp to keep
+// this invariant (see the HEX-ALIAS INVARIANT note there).
 static std::map<wxColour, wxColour> gDarkColors{
-    {ThemeColor::BrandGreen,  "#21A452"},/*green*/
-    {ThemeColor::BrandGreenPressed, "#1C8A46"},
-    {ThemeColor::BrandGreenHovered, "#37B865"},
+    {ThemeColor::BrandGreen,  "#8bd89b"},/*green*/
+    {ThemeColor::BrandGreenPressed, "#7ac98a"},
+    {ThemeColor::BrandGreenHovered, "#9ee0ad"},
     // {"#1F8EEA", "#2778D2"},/*blue*/ -- dead, only used by disabled Notebook.cpp:80 OnPaint
-    {ThemeColor::Warning,     "#D15B00"},
-    {ThemeColor::Danger,      "#BB2A3A"},/*red*/
+    {ThemeColor::Warning,     "#ffb77c"},
+    {ThemeColor::Danger,      "#ffb4ab"},/*red*/
     {ThemeColor::Link,        "#479EF5"},/*blue*/
-    {ThemeColor::TextPrimary, "#EFEFF0"},/*black*/
-    {"#2C2C2E", "#B3B3B4"},/*black*/
-    {"#E5E7EB", "#374151"},/*gray200 -> gray800*/
-    {"#6B6B6B", "#818183"},/*gray -> */
-    {"#ACACAC", "#54545A"},/*gray -> */
-    {ThemeColor::Grey300,     "#4C4C55"},/*gray -> */
-    {ThemeColor::Grey350,     "#3E3E45"},
-    {ThemeColor::TextSecondary, "#E5E5E4"}, // #323A3D
-    {ThemeColor::TextDisabled,  "#5A5A5A"}, // #909090
-    {ThemeColor::White,       "#2D2D31"},
-    {ThemeColor::Grey200,     "#36363C"},
-    {ThemeColor::Grey250,     "#36363B"},
-    {"#3B4446", "#2D2D30"},
-    {"#CECECE", "#54545B"},
-    {"#DBFDD5", "#3B3B40"},
-    {"#000000", "#FFFFFE"},
-    {"#F4F4F4", "#36363D"},
-    {"#F7F7F7", "#333337"},
-    {"#DBDBDB", "#4A4A51"},
-    {ThemeColor::LightGreen,  "#283232"},
-    {"#323A3C", "#E5E5E6"},
-    {"#6B6B6A", "#B3B3B5"},
-    {"#303A3C", "#E5E5E5"},
-    {"#FEFFFF", "#242428"},
-    {ThemeColor::Grey450,     "#2D2D29"}, // #A6A9AA
-    {"#363636", "#B2B3B5"},
-    {"#F0F0F1", "#404040"},
-    {"#9E9E9E", "#53545A"},
-    {"#D7E8DE", "#1F2B27"},
-    {"#2B3436", "#808080"},
-    {"#ABABAB", "#ABABAB"},
-    {"#D9D9D9", "#2D2D32"},
-    {"#EBF9F0", "#293F34"},
-    {"#DBFDE7", "#1F3529"}
+    {ThemeColor::TextPrimary, MD3::Dark::onSurface},/*black -> #e9e8ef*/
+    {ThemeColor::TextSecondary, "#cdced8"},
+    {ThemeColor::TextMuted,     "#a8a9b3"},
+    // Disabled text: ~OnSurface @ 50% over the dark containers (#2f3036/#202127).
+    // The previous #6a6b73 sat at ~1.7:1 on SurfaceContainerHigh — unreadable
+    // disabled labels on the dark Slice/Print pills and input fields.
+    {ThemeColor::TextDisabled,  "#8a8b94"},
+    {ThemeColor::White,       "#202127"},
+    {ThemeColor::Grey200,     "#202127"},
+    {ThemeColor::Grey250,     "#25262b"},
+    {ThemeColor::Grey300,     "#2f3036"},/*gray -> */
+    {ThemeColor::Grey350,     "#393a41"},
+    {ThemeColor::Grey400,     "#4a4c54"},
+    {ThemeColor::Grey450,     "#94959f"},
+    {"#2C2C2E", MD3::Dark::onSurface},/*black*/
+    {"#E5E7EB", "#393a41"},/*gray200 -> gray800*/
+    {"#6B6B6B", "#a8a9b3"},/*gray -> */
+    {"#ACACAC", "#94959f"},/*gray -> */
+    {"#3B4446", "#2f3036"},
+    {"#CECECE", "#4a4c54"},
+    {"#DBFDD5", "#095228"},
+    {"#000000", MD3::Dark::onSurface},
+    {"#F4F4F4", "#202127"},
+    {"#F7F7F7", "#202127"},
+    {"#DBDBDB", "#4a4c54"},
+    {ThemeColor::LightGreen,  "#095228"},
+    {"#EDFAF2", "#095228"},
+    {"#323A3C", MD3::Dark::onSurface},
+    {"#6B6B6A", "#a8a9b3"},
+    {"#303A3C", MD3::Dark::onSurface},
+    {"#FEFFFF", "#1b1c21"},
+    {"#363636", MD3::Dark::onSurface},
+    {"#F0F0F1", "#25262b"},
+    {"#9E9E9E", "#94959f"},
+    {"#D7E8DE", "#2b3a2f"},
+    {"#2B3436", "#cdced8"},
+    {"#ABABAB", "#94959f"},
+    {"#D9D9D9", "#393a41"},
+    {"#EBF9F0", "#095228"},
+    {"#DBFDE7", "#095228"},
+    // MD3 neutral surface roles. Construction-time semantic() snapshots of the
+    // light surfaces (MainFrame's notebook plate, the Monitor/Project/Calibration
+    // page backgrounds, HMSPanel, SideTools) are taken once and never re-resolved,
+    // so without these pairs a runtime theme switch leaves a near-white plate on an
+    // otherwise dark shell until restart.
+    // SurfaceBright shares Light::surface's #faf8fd and so cannot own a second key;
+    // it remaps to Dark::surface rather than Dark::surfaceBright. Harmless while it
+    // has no consumers, but a future one must re-resolve on theme change instead of
+    // relying on this table.
+    // ErrorContainer is deliberately NOT paired: Dark::onErrorContainer aliases
+    // Light::errorContainer (#ffdad6). Mapping errorContainer alone would recolour
+    // the plate to #93000a while its #410002 text stayed put (~1.3:1, unreadable),
+    // and adding the reciprocal onErrorContainer pair to fix that would put #ffdad6
+    // on both sides of the table — the idempotency violation described above. It
+    // needs a one-step hex nudge of Dark::onErrorContainer in MD3Tokens.hpp (see
+    // the HEX-ALIAS INVARIANT note there) before either pair is safe.
+    {MD3::Light::surface,    MD3::Dark::surface},    /*#faf8fd -> #1b1c21*/
+    {MD3::Light::surfaceDim, MD3::Dark::surfaceDim}, /*#dad9e0 -> #161619*/
+    // MD3 brand container-green tokens. Construction-time semantic() snapshots of
+    // the tonal greens capture the light value; these pairs live-remap them when
+    // the app toggles to dark mode (mirrors the resolve() dark tones exactly).
+    {MD3::Light::primaryContainer,     MD3::Dark::primaryContainer},     /*#a6f4b8 -> #095228*/
+    {MD3::Light::secondaryContainer,   MD3::Dark::secondaryContainer},   /*#d7e8d9 -> #2b3a2f*/
+    {MD3::Light::onPrimaryContainer,   MD3::Dark::onPrimaryContainer},   /*#00210c -> #a7f5b9*/
+    {MD3::Light::onSecondaryContainer, MD3::Dark::onSecondaryContainer}, /*#0e1f13 -> #cfe9d3*/
+    // Device-scheme teal accent tokens. Construction-time
+    // semantic(role, ColorScheme::Device) snapshots (AMS Load/Unload buttons,
+    // ConnectPrinter, UpgradePanel, StatusPanel, ...) capture the light tones;
+    // these light->dark pairs live-remap them when the app toggles to dark mode,
+    // mirroring the 3-arg resolve() Device dark tones exactly. OnPrimary is
+    // intentionally omitted (its light tone is #ffffff == ThemeColor::White,
+    // already mapped above), as is the SecondaryContainer pair
+    // (Device::secondaryContainerLight shares #cce8e3 with
+    // Device::onSecondaryContainerDark, so mapping it would corrupt snapshots
+    // taken while dark mode is active).
+    {MD3::Device::primaryLight,            MD3::Device::primaryDark},            /*#0f766e -> #5eead4*/
+    {MD3::Device::primaryContainerLight,   MD3::Device::primaryContainerDark},   /*#9cf2e7 -> #005047*/
+    {MD3::Device::onPrimaryContainerLight, MD3::Device::onPrimaryContainerDark}  /*#00201d -> #83f5e3*/
     //{"#F0F0F0", "#4C4C54"},
 };
 
-std::map<wxColour, wxColour> const & StateColor::GetDarkMap()
-{
-    return gDarkColors;
-}
-
 void StateColor::SetDarkMode(bool dark) { gDarkMode = dark; }
+
+bool StateColor::isDarkMode() { return gDarkMode; }
+
+wxColour StateColor::semantic(MD3::Role role) { return MD3::resolve(role, gDarkMode); }
+
+wxColour StateColor::semantic(MD3::Role role, MD3::ColorScheme scheme) { return MD3::resolve(role, gDarkMode, scheme); }
+
+wxColour StateColor::scrim() { return MD3::scrim(gDarkMode); }
+
+wxColour StateColor::shadowTint() { return MD3::shadowTint(gDarkMode); }
 
 inline wxColour darkModeColorFor2(wxColour const &color)
 {
@@ -197,8 +254,8 @@ void StateColor::setTakeFocusedAsHovered(bool set) { takeFocusedAsHovered_ = set
 
 StateColor StateColor::createButtonStyleGray()
 {
-    return StateColor(std::pair<wxColour, int>(wxColour(206, 206, 206), StateColor::Pressed),
-        std::pair<wxColour, int>(*wxWHITE, StateColor::Focused),
-        std::pair<wxColour, int>(wxColour(238, 238, 238), StateColor::Hovered),
-        std::pair<wxColour, int>(*wxWHITE, StateColor::Normal));
+    return StateColor(std::pair<wxColour, int>(ThemeColor::Grey300, StateColor::Pressed),
+        std::pair<wxColour, int>(ThemeColor::Grey200, StateColor::Focused),
+        std::pair<wxColour, int>(ThemeColor::Grey200, StateColor::Hovered),
+        std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal));
 }

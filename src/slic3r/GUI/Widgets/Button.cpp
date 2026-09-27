@@ -1,9 +1,150 @@
 #include "Button.hpp"
+#include "../I18N.hpp"
 #include "Label.hpp"
+#include "MaterialIcon.hpp"
+#include "StateColor.hpp"
 
 #include <wx/dcclient.h>
 #include <wx/dcgraph.h>
 #include <wx/tipwin.h>
+#if wxUSE_ACCESSIBILITY
+#include <wx/access.h>
+#endif
+#include <algorithm>
+#include <cmath>
+#ifdef __APPLE__
+#include "libslic3r/MacUtils.hpp"
+#endif
+
+namespace {
+
+// Multiply a colour's RGB channels by a factor and clamp to [0,255] — the MD3
+// "state layer as brightness multiply" the digest uses for filled/tonal hover
+// (filled x1.06, tonal x1.04). Alpha is preserved.
+wxColour brightenColor(const wxColour &c, double factor)
+{
+    auto ch = [factor](unsigned char v) -> unsigned char {
+        double n = v * factor;
+        if (n < 0.0) n = 0.0;
+        if (n > 255.0) n = 255.0;
+        return static_cast<unsigned char>(n + 0.5);
+    };
+    return wxColour(ch(c.Red()), ch(c.Green()), ch(c.Blue()), c.Alpha());
+}
+
+// WCAG 2.1 relative luminance / contrast ratio. Only used to compare two
+// candidate focus-ring colours against the surface the ring is stroked on.
+double relativeLuminance(const wxColour &c)
+{
+    auto lin = [](unsigned char v) -> double {
+        const double s = v / 255.0;
+        return s <= 0.03928 ? s / 12.92 : std::pow((s + 0.055) / 1.055, 2.4);
+    };
+    return 0.2126 * lin(c.Red()) + 0.7152 * lin(c.Green()) + 0.0722 * lin(c.Blue());
+}
+
+double contrastRatio(const wxColour &a, const wxColour &b)
+{
+    const double la = relativeLuminance(a);
+    const double lb = relativeLuminance(b);
+    return (std::max(la, lb) + 0.05) / (std::min(la, lb) + 0.05);
+}
+
+// The keyboard focus ring is stroked INSIDE the button's own painted surface,
+// so the shared MD3 Primary ring vanishes whenever that surface is itself an
+// accent fill: Variant::Filled paints exactly semantic(Primary) -- and that is
+// the button MsgDialog::add_button gives focus to as a dialog opens -- while a
+// danger IconButton paints Error under the pointer. When `preferred` misses the
+// WCAG 1.4.11 3:1 non-text minimum against the interior, fall back to the tone
+// the button already draws its own label in, which the kit pairs with that same
+// interior (OnPrimary on Primary, OnError on Error). Handing back the
+// better-contrasting of the two leaves every variant whose interior is the
+// parent surface or a pale container -- and every legacy non-variant caller --
+// on the Primary ring they have today, and can only make a ring more visible.
+wxColour focusRingColor(const wxColour &preferred, const wxColour &fallback, const wxColour &interior)
+{
+    const double preferred_ratio = contrastRatio(preferred, interior);
+    if (preferred_ratio >= 3.0 || !fallback.IsOk() || fallback.Alpha() == 0)
+        return preferred;
+    return contrastRatio(fallback, interior) > preferred_ratio ? fallback : preferred;
+}
+
+#if wxUSE_ACCESSIBILITY
+class ButtonAccessible final : public wxWindowAccessible
+{
+public:
+    explicit ButtonAccessible(Button *button)
+        : wxWindowAccessible(button), m_button(button)
+    {
+    }
+
+    wxAccStatus GetName(int child_id, wxString *name) override
+    {
+        if (child_id != wxACC_SELF || !name)
+            return wxACC_NOT_IMPLEMENTED;
+        const wxString configured_name = m_button->GetName();
+        // StaticBox creates its underlying wxWindow with wxPanelNameStr. That
+        // implementation detail is not a useful accessible name, so prefer the
+        // visible label unless a caller supplied a real SetName() override.
+        if (!configured_name.IsEmpty() && configured_name != wxASCII_STR(wxPanelNameStr))
+            *name = configured_name;
+        else
+            *name = m_button->GetLabel();
+        if (name->IsEmpty())
+            *name = m_button->GetToolTipText();
+        if (name->IsEmpty())
+            *name = configured_name;
+        return wxACC_OK;
+    }
+
+    wxAccStatus GetRole(int child_id, wxAccRole *role) override
+    {
+        if (child_id != wxACC_SELF || !role)
+            return wxACC_NOT_IMPLEMENTED;
+        *role = wxROLE_SYSTEM_PUSHBUTTON;
+        return wxACC_OK;
+    }
+
+    wxAccStatus GetState(int child_id, long *state) override
+    {
+        if (child_id != wxACC_SELF || !state)
+            return wxACC_NOT_IMPLEMENTED;
+        *state = 0;
+        if (m_button->IsKeyboardFocusable())
+            *state |= wxACC_STATE_SYSTEM_FOCUSABLE;
+        if (m_button->HasFocus())
+            *state |= wxACC_STATE_SYSTEM_FOCUSED;
+        if (m_button->GetValue())
+            *state |= wxACC_STATE_SYSTEM_PRESSED;
+        if (!m_button->IsEnabled())
+            *state |= wxACC_STATE_SYSTEM_UNAVAILABLE;
+        if (!m_button->IsShown())
+            *state |= wxACC_STATE_SYSTEM_INVISIBLE;
+        return wxACC_OK;
+    }
+
+    wxAccStatus GetDefaultAction(int child_id, wxString *action_name) override
+    {
+        if (child_id != wxACC_SELF || !action_name)
+            return wxACC_NOT_IMPLEMENTED;
+        *action_name = _L("Press");
+        return wxACC_OK;
+    }
+
+    wxAccStatus DoDefaultAction(int child_id) override
+    {
+        if (child_id != wxACC_SELF)
+            return wxACC_NOT_IMPLEMENTED;
+        m_button->AccessibilityActivate();
+        return wxACC_OK;
+    }
+
+private:
+    Button *m_button;
+};
+#endif
+
+} // namespace
 BEGIN_EVENT_TABLE(Button, StaticBox)
 
 EVT_LEFT_DOWN(Button::mouseDown)
@@ -26,15 +167,20 @@ END_EVENT_TABLE()
 Button::Button()
     : paddingSize(10, 8)
 {
+    // Legacy (non-variant) pill default: half the active-density row height, so
+    // buttons sized to Metrics::active().row_height read as pills at either
+    // density. Variant buttons re-derive their radius in applyMD3Style(), and
+    // any explicit SetCornerRadius() still overrides this default.
+    SetDefaultCornerRadius(MD3::Metrics::active().row_height / 2);
+    // Neutral MD3 seed only. The legacy white/green palette is gone: a Button
+    // that reaches its first paint without SetVariant()/SetIconButton() and
+    // without caller styling adopts the Outlined variant (see paintEvent).
     background_color = StateColor(
-        std::make_pair(0xF0F0F1, (int) StateColor::Disabled),
-        std::make_pair(0x37EE7C, (int) StateColor::Hovered | StateColor::Checked),
-        std::make_pair(0x00AE42, (int) StateColor::Checked),
-        std::make_pair(*wxLIGHT_GREY, (int) StateColor::Hovered),
-        std::make_pair(*wxWHITE, (int) StateColor::Normal));
+        std::make_pair(StateColor::semantic(MD3::Role::SurfaceContainerHigh), (int) StateColor::Disabled),
+        std::make_pair(StateColor::semantic(MD3::Role::Surface), (int) StateColor::Normal));
     text_color       = StateColor(
-        std::make_pair(*wxLIGHT_GREY, (int) StateColor::Disabled),
-        std::make_pair(*wxBLACK, (int) StateColor::Normal));
+        std::make_pair(StateColor::semantic(MD3::Role::Outline), (int) StateColor::Disabled),
+        std::make_pair(StateColor::semantic(MD3::Role::OnSurface), (int) StateColor::Normal));
 }
 
 Button::Button(wxWindow* parent, wxString text, wxString icon, long style, int iconSize, wxWindowID btn_id)
@@ -46,6 +192,20 @@ Button::Button(wxWindow* parent, wxString text, wxString icon, long style, int i
 bool Button::Create(wxWindow* parent, wxString text, wxString icon, long style, int iconSize, wxWindowID btn_id)
 {
     StaticBox::Create(parent, btn_id, wxDefaultPosition, wxDefaultSize, style);
+#if wxUSE_ACCESSIBILITY
+    new ButtonAccessible(this); // wxWindow owns the accessible object.
+#endif
+    Bind(wxEVT_SET_FOCUS, [this](wxFocusEvent &event) {
+        Refresh(false);
+#if wxUSE_ACCESSIBILITY
+        wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_FOCUS, this, wxOBJID_CLIENT, wxACC_SELF);
+#endif
+        event.Skip();
+    });
+    Bind(wxEVT_KILL_FOCUS, [this](wxFocusEvent &event) {
+        Refresh(false);
+        event.Skip();
+    });
     state_handler.attach({&text_color});
     state_handler.update_binds();
     //BBS set default font
@@ -65,7 +225,20 @@ void Button::SetLabel(const wxString& label)
         wxWindow::SetLabel(label);
         messureSize();
         Refresh();
+#if wxUSE_ACCESSIBILITY
+        wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_NAMECHANGE, this, wxOBJID_CLIENT, wxACC_SELF);
+#endif
     }
+}
+
+void Button::SetName(const wxString& name)
+{
+    if (name == wxWindow::GetName())
+        return;
+    wxWindow::SetName(name);
+#if wxUSE_ACCESSIBILITY
+    wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_NAMECHANGE, this, wxOBJID_CLIENT, wxACC_SELF);
+#endif
 }
 
 bool Button::SetFont(const wxFont& font)
@@ -91,6 +264,14 @@ void Button::SetIcon(const wxString& icon)
         this->active_icon = ScalableBitmap();
         Refresh();
     }
+}
+
+void Button::SetIconBitmap(const wxBitmap &bitmap)
+{
+    this->active_icon   = ScalableBitmap(this, bitmap);
+    this->inactive_icon = ScalableBitmap(this, bitmap);
+    if (m_md3_variant) applyMD3Style();
+    Refresh();
 }
 
 void Button::SetInactiveIcon(const wxString &icon)
@@ -130,8 +311,40 @@ void Button::SetAllowShrink(bool allow)
     messureSize();
 }
 
+void Button::SetBackgroundColor(StateColor const &color)
+{
+    m_caller_styled = true;
+    StaticBox::SetBackgroundColor(color);
+}
+
+void Button::SetBackgroundColorNormal(wxColor const &color)
+{
+    m_caller_styled = true;
+    StaticBox::SetBackgroundColorNormal(color);
+}
+
+void Button::SetBorderColor(StateColor const &color)
+{
+    m_caller_styled = true;
+    StaticBox::SetBorderColor(color);
+}
+
+void Button::SetBorderColorNormal(wxColor const &color)
+{
+    m_caller_styled = true;
+    StaticBox::SetBorderColorNormal(color);
+}
+
+void Button::SetCornerRadius(double radius)
+{
+    // A radius pinned by the MD3 style itself is not caller styling.
+    if (!m_applying_md3) m_caller_styled = true;
+    StaticBox::SetCornerRadius(radius);
+}
+
 void Button::SetTextColor(StateColor const& color)
 {
+    m_caller_styled = true;
     text_color = color;
     state_handler.update_binds();
     Refresh();
@@ -139,7 +352,280 @@ void Button::SetTextColor(StateColor const& color)
 
 void Button::SetTextColorNormal(wxColor const &color)
 {
+    m_caller_styled = true;
     text_color.setColorForStates(color, 0);
+    Refresh();
+}
+
+void Button::SetVariant(Variant variant)
+{
+    m_variant     = variant;
+    m_md3_variant = true;
+    applyMD3Style();
+}
+
+void Button::SetButtonSize(Size size)
+{
+    m_button_size = size;
+    if (m_md3_variant)
+        applyMD3Style();
+}
+
+void Button::SetColorScheme(MD3::ColorScheme scheme)
+{
+    m_scheme = scheme;
+    if (m_md3_variant)
+        applyMD3Style();
+}
+
+void Button::SetGlyph(uint32_t codepoint, int px)
+{
+    m_glyph_cp  = codepoint;
+    m_has_glyph = codepoint != 0;
+    m_glyph_px  = px > 0 ? px : 0;
+    if (m_md3_variant) {
+        // Re-derive geometry (an IconButton's glyph size feeds its fallback
+        // raster rebuild) and repaint.
+        applyMD3Style();
+    } else {
+        messureSize();
+        Refresh();
+    }
+}
+
+void Button::SetGlyphColor(StateColor const &color)
+{
+    glyph_color = color;
+    state_handler.update_binds();
+    Refresh();
+}
+
+void Button::SetIconButton(IconShape shape, int container_px, bool filled, bool danger)
+{
+    m_variant     = Variant::IconButton;
+    m_md3_variant = true;
+    m_icon_shape  = shape;
+    if (container_px > 0)
+        m_icon_container_px = container_px;
+    m_icon_filled = filled;
+    m_icon_danger = danger;
+    applyMD3Style();
+}
+
+int Button::effectiveGlyphPx() const
+{
+    if (m_glyph_px > 0)
+        return m_glyph_px;
+    if (m_md3_variant && m_variant == Variant::IconButton) {
+        // Kit derivation: 22 (>=40) / 19 (>=34) / 17 by container edge.
+        const int c = m_icon_container_px > 0 ? m_icon_container_px : 36;
+        return c >= 40 ? 22 : (c >= 34 ? 19 : 17);
+    }
+    // Pill variant / legacy: match the size-tier icon glyph (18/20/20).
+    return m_button_size == Size::Small ? 18 : 20;
+}
+
+void Button::rebuildIcons(int px)
+{
+    if (active_icon.bmp().IsOk() && !active_icon.name().empty() && active_icon.px_cnt() != px)
+        active_icon = ScalableBitmap(this, active_icon.name(), px);
+    if (inactive_icon.bmp().IsOk() && !inactive_icon.name().empty() && inactive_icon.px_cnt() != px)
+        inactive_icon = ScalableBitmap(this, inactive_icon.name(), px);
+}
+
+void Button::applyMD3Style()
+{
+    if (!m_md3_variant)
+        return;
+    struct ApplyingGuard { bool &f; ApplyingGuard(bool &flag) : f(flag) { f = true; } ~ApplyingGuard() { f = false; } } applying(m_applying_md3);
+
+    using R = MD3::Role;
+    const MD3::ColorScheme s = m_scheme;
+
+    // Borderless IconButton mode: a circle (radius = half the container) or
+    // square (r8) ghost touch target that draws a single centered glyph. Its
+    // geometry and neutral surface colours differ from the pill variants, so it
+    // is configured here and returns before the pill layout runs.
+    if (m_variant == Variant::IconButton) {
+        const wxColour disabledFg = StateColor::semantic(R::Outline);
+        const wxColour parentBg   = StaticBox::GetParentBackgroundColor(GetParent());
+        const int      container  = m_icon_container_px > 0 ? m_icon_container_px : 36;
+        const wxColour rest       = m_icon_filled ? StateColor::semantic(R::SurfaceContainerHighest)
+                                                  : parentBg;
+
+        // Refresh the StaticBox window background (used to clear the area behind
+        // the rounded shape in StaticBox::render). The Create-time snapshot goes
+        // stale when the parent is themed AFTER the button is constructed — in
+        // dark mode that left a light system-#F0F0F0 square behind the circular
+        // icon button (Prepare action bar). Rescale()/theme rebuild re-runs this.
+        SetBackgroundColour(parentBg);
+
+        StateColor bg, fg;
+        if (m_icon_danger) {
+            // Window-close idiom: hover fills Error and flips the glyph to OnError.
+            bg = StateColor(std::make_pair(StateColor::semantic(R::Error), (int) StateColor::Hovered),
+                            std::make_pair(rest, (int) StateColor::Normal));
+            fg = StateColor(std::make_pair(disabledFg, (int) StateColor::Disabled),
+                            std::make_pair(StateColor::semantic(R::OnError), (int) StateColor::Hovered),
+                            std::make_pair(StateColor::semantic(R::OnSurfaceVariant), (int) StateColor::Normal));
+        } else {
+            // Checked icon buttons are exposed to assistive technology as
+            // pressed toggles and use the MD3 secondary container as their
+            // persistent visual state. Ordinary icon buttons never set Checked
+            // and retain the historical ghost treatment.
+            bg = StateColor(std::make_pair(StateColor::semantic(R::SecondaryContainer, s),
+                                           (int) StateColor::Hovered | StateColor::Checked),
+                            std::make_pair(StateColor::semantic(R::SecondaryContainer, s),
+                                           (int) StateColor::Checked),
+                            std::make_pair(StateColor::semantic(R::SurfaceContainerHigh), (int) StateColor::Hovered),
+                            std::make_pair(rest, (int) StateColor::Normal));
+            fg = StateColor(std::make_pair(disabledFg, (int) StateColor::Disabled),
+                            std::make_pair(StateColor::semantic(R::OnSecondaryContainer, s),
+                                           (int) StateColor::Hovered | StateColor::Checked),
+                            std::make_pair(StateColor::semantic(R::OnSecondaryContainer, s),
+                                           (int) StateColor::Checked),
+                            std::make_pair(StateColor::semantic(R::OnSurfaceVariant), (int) StateColor::Normal));
+        }
+
+        background_color = bg;
+        text_color       = fg;
+        SetBorderWidth(0);
+        // Circle => pill radius (half the DPI-scaled edge); square => r8.
+        if (m_icon_shape == IconShape::Circle)
+            SetCornerRadius(FromDIP(container) / 2.0);
+        else
+            SetCornerRadius(FromDIP(MD3::Metrics::radius_tiny));
+
+        // Square adds 4px of width (matches the kit window-control shape); the
+        // glyph stays centered via render()'s isCenter path.
+        const int wpx = container + (m_icon_shape == IconShape::Square ? 4 : 0);
+        paddingSize    = wxSize(0, 0);
+        minSize        = wxSize(FromDIP(wpx), FromDIP(container));
+
+        // Keep any fallback raster icon sized to the glyph so it lines up when
+        // the Material Symbols face is unavailable.
+        rebuildIcons(effectiveGlyphPx());
+
+        state_handler.update_binds();
+        messureSize();
+        Refresh();
+        return;
+    }
+
+    // Size tier geometry + label size + icon glyph size.
+    int   height = 42, hpad = 18, icon_px = 20;
+    switch (m_button_size) {
+    case Size::Small: height = 36; hpad = 16; icon_px = 18; break;
+    case Size::Large: height = 44; hpad = 22; icon_px = 20; break;
+    case Size::Medium:
+    default:          height = 42; hpad = 18; icon_px = 20; break;
+    }
+
+    // Per-size label font. The 12.5/13.5/14 weight-600 tokens already exist as
+    // Head_12/Head_13/Head_14 (see Label::initSysFont). Outlined uses weight
+    // 500, obtained by cloning the size-matched face and lowering the weight so
+    // the Roboto/CJK face and design px are preserved.
+    wxFont font = m_button_size == Size::Small ? Label::Head_12
+                : m_button_size == Size::Large ? Label::Head_14
+                                               : Label::Head_13;
+    if (m_variant == Variant::Outlined) {
+        font.SetWeight(wxFONTWEIGHT_MEDIUM);
+        font.SetNumericWeight(500);
+    }
+
+    const wxColour disabledBg  = StateColor::semantic(R::SurfaceContainerHigh);
+    const wxColour disabledTxt = StateColor::semantic(R::Outline);
+    const wxColour parentBg    = StaticBox::GetParentBackgroundColor(GetParent());
+
+    // Same stale-snapshot fix as the IconButton branch above: keep the pill's
+    // rounded-corner backing in sync with the parent's CURRENT background.
+    SetBackgroundColour(parentBg);
+
+    StateColor bg, fg, bd;
+    int        bw = 0;
+
+    switch (m_variant) {
+    case Variant::IconButton: break; // configured and returned above; unreachable here
+    case Variant::Filled: {
+        const wxColour fill = StateColor::semantic(R::Primary, s);
+        bg = StateColor(std::make_pair(disabledBg, (int) StateColor::Disabled),
+                        std::make_pair(brightenColor(fill, 1.06), (int) StateColor::Hovered),
+                        std::make_pair(fill, (int) StateColor::Normal));
+        fg = StateColor(std::make_pair(disabledTxt, (int) StateColor::Disabled),
+                        std::make_pair(StateColor::semantic(R::OnPrimary, s), (int) StateColor::Normal));
+        bw = 0;
+        break;
+    }
+    case Variant::Tonal: {
+        const wxColour fill = StateColor::semantic(R::SecondaryContainer, s);
+        bg = StateColor(std::make_pair(disabledBg, (int) StateColor::Disabled),
+                        std::make_pair(brightenColor(fill, 1.04), (int) StateColor::Hovered),
+                        std::make_pair(fill, (int) StateColor::Normal));
+        fg = StateColor(std::make_pair(disabledTxt, (int) StateColor::Disabled),
+                        std::make_pair(StateColor::semantic(R::OnSecondaryContainer, s), (int) StateColor::Normal));
+        bw = 0;
+        break;
+    }
+    case Variant::Outlined: {
+        // Transparent interior (parent bg for the rest fill) + Outline ring;
+        // hover adds a SurfaceContainerHigh wash while the ring/label hold.
+        // Checked (a toggle Button) fills SecondaryContainer, the MD3 selected
+        // state of an outlined button, so legacy toggles keep a selected look.
+        bg = StateColor(std::make_pair(StateColor::semantic(R::SecondaryContainer, s), (int) StateColor::Hovered | StateColor::Checked),
+                        std::make_pair(StateColor::semantic(R::SecondaryContainer, s), (int) StateColor::Checked),
+                        std::make_pair(StateColor::semantic(R::SurfaceContainerHigh), (int) StateColor::Hovered),
+                        std::make_pair(parentBg, (int) StateColor::Normal));
+        fg = StateColor(std::make_pair(disabledTxt, (int) StateColor::Disabled),
+                        std::make_pair(StateColor::semantic(R::OnSecondaryContainer, s), (int) StateColor::Checked),
+                        std::make_pair(StateColor::semantic(R::OnSurface), (int) StateColor::Normal));
+        bd = StateColor(std::make_pair(StateColor::semantic(R::OutlineVariant), (int) StateColor::Disabled),
+                        std::make_pair(StateColor::semantic(R::Outline), (int) StateColor::Normal));
+        bw = 1;
+        break;
+    }
+    case Variant::Text: {
+        // No border, transparent at rest; hover adds a SecondaryContainer wash.
+        // Checked keeps the wash as the selected state.
+        bg = StateColor(std::make_pair(StateColor::semantic(R::SecondaryContainer, s), (int) StateColor::Hovered | StateColor::Checked),
+                        std::make_pair(StateColor::semantic(R::SecondaryContainer, s), (int) StateColor::Checked),
+                        std::make_pair(StateColor::semantic(R::SecondaryContainer, s), (int) StateColor::Hovered),
+                        std::make_pair(parentBg, (int) StateColor::Normal));
+        fg = StateColor(std::make_pair(disabledTxt, (int) StateColor::Disabled),
+                        std::make_pair(StateColor::semantic(R::Primary, s), (int) StateColor::Normal));
+        bw = 0;
+        break;
+    }
+    case Variant::Danger: {
+        // Transparent + Error ring/label; hover adds a SurfaceContainerHigh wash
+        // while the Error ring and Error label hold.
+        bg = StateColor(std::make_pair(StateColor::semantic(R::SurfaceContainerHigh), (int) StateColor::Hovered),
+                        std::make_pair(parentBg, (int) StateColor::Normal));
+        fg = StateColor(std::make_pair(disabledTxt, (int) StateColor::Disabled),
+                        std::make_pair(StateColor::semantic(R::Error), (int) StateColor::Normal));
+        bd = StateColor(std::make_pair(StateColor::semantic(R::OutlineVariant), (int) StateColor::Disabled),
+                        std::make_pair(StateColor::semantic(R::Error), (int) StateColor::Normal));
+        bw = 1;
+        break;
+    }
+    }
+
+    background_color = bg;
+    text_color       = fg;
+    if (bw > 0)
+        border_color = bd;
+
+    SetBorderWidth(bw);
+    // Pill radius = button height / 2 (18 / 21 / 22 for sm / md / lg).
+    SetCornerRadius(FromDIP(height) / 2.0);
+
+    paddingSize = wxSize(FromDIP(hpad), paddingSize.y);
+    minSize.SetHeight(FromDIP(height));
+
+    wxWindow::SetFont(font);
+    rebuildIcons(icon_px);
+
+    state_handler.update_binds();
+    messureSize();
     Refresh();
 }
 
@@ -150,16 +636,28 @@ bool Button::Enable(bool enable)
         wxCommandEvent e(EVT_ENABLE_CHANGED);
         e.SetEventObject(this);
         GetEventHandler()->ProcessEvent(e);
+#if wxUSE_ACCESSIBILITY
+        wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_STATECHANGE, this, wxOBJID_CLIENT, wxACC_SELF);
+#endif
     }
     return result;
 }
 
-void Button::SetCanFocus(bool canFocus) { this->canFocus = canFocus; }
+void Button::SetCanFocus(bool canFocus)
+{
+    this->canFocus = canFocus;
+#if wxUSE_ACCESSIBILITY
+    wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_STATECHANGE, this, wxOBJID_CLIENT, wxACC_SELF);
+#endif
+}
 
 void Button::SetValue(bool state)
 {
     if (GetValue() == state) return;
     state_handler.set_state(state ? StateHandler::Checked : 0, StateHandler::Checked);
+#if wxUSE_ACCESSIBILITY
+    wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_STATECHANGE, this, wxOBJID_CLIENT, wxACC_SELF);
+#endif
 }
 
 bool Button::GetValue() const { return state_handler.states() & StateHandler::Checked; }
@@ -176,11 +674,20 @@ void Button::SetVertical(bool vertical)
 
 void Button::Rescale()
 {
+    RescaleDefaultCornerRadius();
+
     if (this->active_icon.bmp().IsOk())
         this->active_icon.msw_rescale();
 
     if (this->inactive_icon.bmp().IsOk())
         this->inactive_icon.msw_rescale();
+
+    // Re-derive the DPI-scaled radius / padding / height / icon size for a
+    // variant Button so it survives monitor DPI changes.
+    if (m_md3_variant) {
+        applyMD3Style();
+        return;
+    }
 
     messureSize();
     Refresh();
@@ -188,6 +695,12 @@ void Button::Rescale()
 
 void Button::paintEvent(wxPaintEvent& evt)
 {
+    // MD3 is the default: a Button that reaches its first paint with neither a
+    // variant nor caller styling becomes an Outlined action button. Callers
+    // that styled it by hand keep their styling; callers that chose a variant
+    // keep theirs.
+    if (!m_md3_variant && !m_caller_styled)
+        SetVariant(Variant::Outlined);
     // depending on your system you may need to look at double-buffered dcs
     wxPaintDC dc(this);
     render(dc);
@@ -217,7 +730,9 @@ void Button::render(wxDC& dc)
     else
         icon = inactive_icon;
     wxSize padding = this->paddingSize;
-    int spacing = 5;
+    // MD3 icon->label gap is 8px (was a hardcoded 5). DIP-scaled so it holds on
+    // HiDPI; must stay in sync with the value used by messureSize().
+    int spacing = FromDIP(8);
     // Wrap text
     auto text = GetLabel();
     if (vertical && textSize.x + padding.x * 2 > size.x) {
@@ -228,16 +743,27 @@ void Button::render(wxDC& dc)
             textSize = dc.GetMultiLineTextExtent(text);
         }
     }
+    // Glyph content (part b): when a Material Symbols glyph is set and the icon
+    // face resolves, it stands in for the raster icon and is drawn live in the
+    // state-resolved text colour. A raster icon set alongside it is the fallback
+    // used when the Material Symbols face is unavailable.
+    const bool drawGlyph = m_has_glyph && MaterialIcon::available();
+    const int  glyph_px  = drawGlyph ? effectiveGlyphPx() : 0;
+    const bool hasIcon   = drawGlyph || icon.bmp().IsOk();
+    // Don't reserve the icon->label gap when there is no label, so a glyph-only
+    // IconButton stays exactly centered; legacy raster call sites keep their gap.
+    const bool tightCenter = drawGlyph || (m_md3_variant && m_variant == Variant::IconButton);
+
     auto szContent = text.IsEmpty() ? wxSize(0, 0) : textSize;
-    if (icon.bmp().IsOk()) {
-        if (szContent.y > 0) {
+    if (hasIcon) {
+        if (szContent.y > 0 && !(tightCenter && text.IsEmpty())) {
             //BBS norrow size between text and icon
             if (vertical)
                 szContent.y += spacing;
             else
                 szContent.x += spacing;
         }
-        szIcon = icon.GetBmpSize();
+        szIcon = drawGlyph ? MaterialIcon::measure(dc, m_glyph_cp, glyph_px) : icon.GetBmpSize();
         if (vertical) {
             szContent.y += szIcon.y;
             if (szIcon.x > szContent.x) szContent.x = szIcon.x;
@@ -260,12 +786,16 @@ void Button::render(wxDC& dc)
     }
     // start draw
     wxPoint pt = rcContent.GetLeftTop();
-    if (icon.bmp().IsOk()) {
+    if (hasIcon) {
         if (vertical)
             pt.x += (rcContent.width - szIcon.x) / 2;
         else
             pt.y += (rcContent.height - szIcon.y) / 2;
-        dc.DrawBitmap(icon.bmp(), pt);
+        if (drawGlyph)
+            MaterialIcon::draw(dc, m_glyph_cp, glyph_px,
+                               (glyph_color.count() > 0 ? glyph_color : text_color).colorForStates(states), pt);
+        else
+            dc.DrawBitmap(icon.bmp(), pt);
         //BBS norrow size between text and icon
         if (vertical) {
             pt.y += szIcon.y + spacing;
@@ -285,6 +815,27 @@ void Button::render(wxDC& dc)
         }
         dc.SetTextForeground(text_color.colorForStates(states));
         dc.DrawText(text, pt);
+    }
+
+    if (canFocus && HasFocus()) {
+        const int inset = std::max(FromDIP(2), 1);
+        wxRect focus_rect(inset, inset,
+                          std::max(0, size.x - inset * 2),
+                          std::max(0, size.y - inset * 2));
+        // Resolve the ring against the interior StaticBox::doRender() actually
+        // fills for the current states -- not against the variant -- so the
+        // hover and disabled fills are covered by the same rule. An empty or
+        // fully transparent background_color means the plain window background
+        // is what shows through under the ring.
+        wxColour interior = background_color.count() > 0 ? background_color.colorForStates(states)
+                                                         : GetBackgroundColour();
+        if (!interior.IsOk() || interior.Alpha() == 0)
+            interior = GetBackgroundColour();
+        dc.SetBrush(*wxTRANSPARENT_BRUSH);
+        dc.SetPen(wxPen(focusRingColor(StateColor::semantic(MD3::Role::Primary, m_scheme),
+                                       text_color.colorForStates(states), interior),
+                        std::max(FromDIP(2), 1)));
+        dc.DrawRoundedRectangle(focus_rect, std::max(0.0, radius - inset));
     }
 }
 
@@ -352,15 +903,27 @@ void Button::messureSize()
     wxFontMetrics fm = dc.GetFontMetrics();
     textSize.height = fm.ascent + fm.descent;
     wxSize szContent = textSize.GetSize();
-    if (this->active_icon.bmp().IsOk()) {
-        if (szContent.y > 0) {
-            //BBS norrow size between text and icon
+    // Mirror render(): a Material Symbols glyph stands in for the raster icon
+    // for sizing when the icon face resolves, else the raster icon is measured.
+    const bool drawGlyph   = m_has_glyph && MaterialIcon::available();
+    const bool tightCenter = drawGlyph || (m_md3_variant && m_variant == Variant::IconButton);
+    wxSize     szIcon;
+    bool       hasIcon = false;
+    if (drawGlyph) {
+        szIcon  = MaterialIcon::measure(dc, m_glyph_cp, effectiveGlyphPx());
+        hasIcon = true;
+    } else if (this->active_icon.bmp().IsOk()) {
+        szIcon  = this->active_icon.GetBmpSize();
+        hasIcon = true;
+    }
+    if (hasIcon) {
+        if (szContent.y > 0 && !(tightCenter && GetLabel().IsEmpty())) {
+            // MD3 icon->label gap is 8px; keep in sync with render()'s spacing.
             if (vertical)
-                szContent.y += 5;
+                szContent.y += FromDIP(8);
             else
-                szContent.x += 5;
+                szContent.x += FromDIP(8);
         }
-        wxSize szIcon = this->active_icon.GetBmpSize();
         if (vertical) {
             szContent.y += szIcon.y;
             if (szIcon.x > szContent.x) szContent.x = szIcon.x;
@@ -451,6 +1014,12 @@ void Button::sendButtonEvent()
     wxCommandEvent event(wxEVT_COMMAND_BUTTON_CLICKED, GetId());
     event.SetEventObject(this);
     GetEventHandler()->ProcessEvent(event);
+}
+
+void Button::AccessibilityActivate()
+{
+    if (IsEnabled() && IsShown())
+        sendButtonEvent();
 }
 
 #ifdef __WIN32__

@@ -17,7 +17,9 @@ namespace Slic3r {
 FilamentLoad::FilamentLoad(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size)
     : wxSimplebook(parent, wxID_ANY, pos, size)
 {
-    SetBackgroundColour(*wxWHITE);
+    // Theme-aware surface (raw *wxWHITE stayed a light slab in dark mode until
+    // an UpdateDarkUI pass happened to revisit this book).
+    SetBackgroundColour(StateColor::darkModeColorFor(*wxWHITE));
     m_filament_load_steps = new FilamentStepIndicator(this, wxID_ANY);
     m_filament_unload_steps = new ::FilamentStepIndicator(this, wxID_ANY);
     m_filament_vt_load_steps = new ::FilamentStepIndicator(this, wxID_ANY);

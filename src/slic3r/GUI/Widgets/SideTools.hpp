@@ -6,16 +6,19 @@
 #include <wx/dcclient.h>
 #include <wx/hyperlink.h>
 #include "Button.hpp"
+#include "LinkLabel.hpp"
 #include "Label.hpp"
 #include "../GUI/Tabbook.hpp"
 #include "../DeviceManager.hpp"
 #include "../wxExtensions.hpp"
 
-#define SIDE_TOOLS_GREY900 wxColour(38, 46, 48)
-#define SIDE_TOOLS_GREY600 wxColour(144, 144, 144)
-#define SIDE_TOOLS_GREY400 wxColour(206, 206, 206)
-#define SIDE_TOOLS_BRAND wxColour(0, 174, 66)
-#define SIDE_TOOLS_LIGHT_GREEN wxColour(219, 253, 231)
+#define SIDE_TOOLS_GREY900 ThemeColor::TextPrimary
+#define SIDE_TOOLS_GREY600 ThemeColor::Grey450
+#define SIDE_TOOLS_GREY400 ThemeColor::Grey400
+// Device-teal Primary accent (kit Device.jsx), replacing the plain Brand-green
+// literal this panel previously carried regardless of workspace context.
+#define SIDE_TOOLS_BRAND (StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Device))
+#define SIDE_TOOLS_LIGHT_GREEN StateColor::semantic(MD3::Role::SecondaryContainer)
 
 enum WifiSignal {
     NONE,
@@ -45,6 +48,7 @@ private:
     wxString        m_dev_name;
     bool            m_hover{false};
     bool            m_click{false};
+    bool            m_focused{false};
     bool            m_none_printer{true};
     int             last_printer_signal = 0;
 
@@ -55,11 +59,15 @@ private:
     ScalableBitmap  m_none_arrow_img;
     ScalableBitmap  m_none_add_img;
 
-    ScalableBitmap  m_wifi_none_img;
-    ScalableBitmap  m_wifi_weak_img;
-    ScalableBitmap  m_wifi_middle_img;
-    ScalableBitmap  m_wifi_strong_img;
-    ScalableBitmap  m_network_wired_img;
+    // MD3: connectivity indicators are rendered from the Material Symbols icon
+    // font (signal level carried by the glyph shape, state by colour). Held as
+    // plain wxBitmaps because init_signal_bitmaps() rebuilds them per DPI and
+    // falls back to the legacy rasters when the icon face is unavailable.
+    wxBitmap        m_wifi_none_img;
+    wxBitmap        m_wifi_weak_img;
+    wxBitmap        m_wifi_middle_img;
+    wxBitmap        m_wifi_strong_img;
+    wxBitmap        m_network_wired_img;
 
 protected:
     wxStaticBitmap *m_bitmap_info;
@@ -80,14 +88,28 @@ public:
     bool is_in_interval();
     void msw_rescale();
 
+    // a11y: this custom-painted strip is the printer switcher, so it must join the
+    // keyboard tab order and expose Enter/Space activation. It owns no child
+    // controls, so overriding the focus predicates to true is enough to make it a
+    // tab stop; a focus ring is painted in doRender() when m_focused.
+    virtual bool AcceptsFocus() const wxOVERRIDE { return true; }
+    virtual bool AcceptsFocusFromKeyboard() const wxOVERRIDE { return true; }
+
 protected:
     void OnPaint(wxPaintEvent &event);
     void render(wxDC &dc);
     void doRender(wxDC &dc);
+    void init_signal_bitmaps();
     void on_mouse_enter(wxMouseEvent &evt);
     void on_mouse_leave(wxMouseEvent &evt);
     void on_mouse_left_down(wxMouseEvent &evt);
     void on_mouse_left_up(wxMouseEvent &evt);
+    void on_set_focus(wxFocusEvent &evt);
+    void on_kill_focus(wxFocusEvent &evt);
+    void on_key_down(wxKeyEvent &evt);
+    // Replay the primary click path (the printer-switch popup is wired to this
+    // panel's wxEVT_LEFT_DOWN by its host) so keyboard activation is identical.
+    void trigger_primary_action();
 };
 
 class SideTools : public wxPanel
@@ -99,13 +121,13 @@ public:
 private:
     SideToolsPanel* m_side_tools{ nullptr };
     Tabbook*        m_tabpanel{ nullptr };
-    wxHyperlinkCtrl* m_link_network_state{ nullptr };
+    LinkLabel* m_link_network_state{ nullptr };
     Label* m_st_txt_error_code{ nullptr };
     Label* m_st_txt_error_desc{ nullptr };
     Label* m_st_txt_extra_info{ nullptr };
     wxWindow* m_side_error_panel{ nullptr };
     Button* m_connection_info{ nullptr };
-    wxHyperlinkCtrl* m_hyperlink{ nullptr };
+    LinkLabel* m_hyperlink{ nullptr };
     ScalableButton* m_more_button{ nullptr };
     ScalableBitmap      m_more_err_open;
     ScalableBitmap      m_more_err_close;

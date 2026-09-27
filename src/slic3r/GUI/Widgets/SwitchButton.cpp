@@ -1,6 +1,9 @@
 #include "SwitchButton.hpp"
 #include "Label.hpp"
+#include "StateColor.hpp"
 #include "StaticBox.hpp"
+#include "MaterialIcon.hpp"
+#include "MD3Motion.hpp"
 
 #include "../wxExtensions.hpp"
 #include "../Utils/MacDarkMode.hpp"
@@ -10,21 +13,47 @@
 #include <wx/dcclient.h>
 #include <wx/dcgraph.h>
 #include <wx/dcmemory.h>
+#include <wx/graphics.h>
+#if wxUSE_ACCESSIBILITY
+#include <wx/access.h>
+#endif
+
+#include <algorithm>
+#include <cmath>
 
 wxDEFINE_EVENT(wxCUSTOMEVT_SWITCH_POS, wxCommandEvent);
 wxDEFINE_EVENT(wxCUSTOMEVT_MULTISWITCH_SELECTION, wxCommandEvent);
 wxDEFINE_EVENT(wxEXPAND_LEFT_DOWN, wxCommandEvent);
 
+namespace {
+inline wxColour withAlpha(const wxColour &c, int a)
+{
+    return wxColour(c.Red(), c.Green(), c.Blue(), a);
+}
+
+inline unsigned char lerp8(int a, int b, double t)
+{
+    long n = std::lround(a + (b - a) * t);
+    return static_cast<unsigned char>(std::max(0L, std::min(255L, n)));
+}
+
+inline wxColour lerpColour(const wxColour &a, const wxColour &b, double t)
+{
+    return wxColour(lerp8(a.Red(), b.Red(), t), lerp8(a.Green(), b.Green(), t),
+                    lerp8(a.Blue(), b.Blue(), t), lerp8(a.Alpha(), b.Alpha(), t));
+}
+} // namespace
+
 SwitchButton::SwitchButton(wxWindow* parent, wxWindowID id)
 	: wxBitmapToggleButton(parent, id, wxNullBitmap, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE | wxBU_EXACTFIT)
-	, m_on(this, "toggle_on", 16)
-	, m_off(this, "toggle_off", 16)
-    , text_color(std::pair{0xfffffe, (int) StateColor::Checked}, std::pair{0x6B6B6B, (int) StateColor::Normal})
-	, track_color(0xD9D9D9)
-    , thumb_color(std::pair{0x00AE42, (int) StateColor::Checked}, std::pair{0xD9D9D9, (int) StateColor::Normal})
+    , text_color(std::pair{StateColor::semantic(MD3::Role::OnPrimary), (int) StateColor::Checked}, std::pair{StateColor::semantic(MD3::Role::OnSurfaceVariant), (int) StateColor::Normal})
+	, track_color(StateColor::semantic(MD3::Role::SurfaceContainerHighest))
+    , thumb_color(StateColor::semantic(MD3::Role::Primary))
 {
 	SetBackgroundColour(StaticBox::GetParentBackgroundColor(parent));
-	Bind(wxEVT_TOGGLEBUTTON, [this](auto& e) { update(); e.Skip(); });
+	Bind(wxEVT_TOGGLEBUTTON, [this](auto& e) { if (isIconMode()) startAnim(); else update(); e.Skip(); });
+	m_anim_timer.SetOwner(this);
+	Bind(wxEVT_TIMER, &SwitchButton::onAnimTick, this);
 	SetFont(Label::Body_12);
 	Rescale();
 }
@@ -39,6 +68,7 @@ void SwitchButton::SetLabels(wxString const& lbl_on, wxString const& lbl_off)
 void SwitchButton::SetTextColor(StateColor const& color)
 {
 	text_color = color;
+	m_text_overridden = true;
 }
 
 void SwitchButton::SetTextColor2(StateColor const &color)
@@ -49,29 +79,66 @@ void SwitchButton::SetTextColor2(StateColor const &color)
 void SwitchButton::SetTrackColor(StateColor const& color)
 {
 	track_color = color;
+	m_track_overridden = true;
 }
 
 void SwitchButton::SetThumbColor(StateColor const& color)
 {
 	thumb_color = color;
+	m_thumb_overridden = true;
+}
+
+void SwitchButton::SetColorScheme(MD3::ColorScheme scheme)
+{
+	if (m_scheme == scheme)
+		return;
+	m_scheme = scheme;
+	Rescale();
 }
 
 void SwitchButton::SetValue(bool value)
 {
     if (value != GetValue()) {
         wxBitmapToggleButton::SetValue(value);
-        update();
+        if (isIconMode())
+            startAnim();
+        else
+            update();
     }
 }
 
 void SwitchButton::Rescale()
 {
-	if (labels[0].IsEmpty()) {
-		m_on.msw_rescale();
-		m_off.msw_rescale();
+	if (isIconMode()) {
+		// MD3 Switch: drawn live, no baked PNGs. Snap the knob to the current
+		// value (no animation on a DPI / theme rescale).
+		m_anim_timer.Stop();
+		m_anim = GetValue() ? 1.0 : 0.0;
+		SetBackgroundColour(StaticBox::GetParentBackgroundColor(GetParent()));
+		wxBitmap bmp = renderSwitch(m_anim, true);
+		SetSize(ScalableBitmap::GetBmpSize(bmp));
+		SetMinSize(ScalableBitmap::GetBmpSize(bmp));
+		SetBitmap(bmp);
+		SetBitmapDisabled(renderSwitch(m_anim, false));
+		return;
 	}
-	else {
+
+	{
         SetBackgroundColour(StaticBox::GetParentBackgroundColor(GetParent()));
+
+        // Effective colors: honor explicit SetXxxColor overrides, otherwise
+        // resolve the MD3 defaults fresh so they follow the current theme and
+        // ColorScheme. The selected half is the Primary thumb (OnPrimary text);
+        // the other half reads as the SurfaceContainerHighest track
+        // (OnSurfaceVariant text) — replacing the legacy Grey350 / BrandGreen /
+        // White literals.
+        StateColor eff_track = m_track_overridden ? track_color
+            : StateColor(StateColor::semantic(MD3::Role::SurfaceContainerHighest));
+        StateColor eff_thumb = m_thumb_overridden ? thumb_color
+            : StateColor(StateColor::semantic(MD3::Role::Primary, m_scheme));
+        StateColor eff_text  = m_text_overridden ? text_color
+            : StateColor(std::pair{StateColor::semantic(MD3::Role::OnPrimary, m_scheme), (int) StateColor::Checked},
+                         std::pair{StateColor::semantic(MD3::Role::OnSurfaceVariant), (int) StateColor::Normal});
 #ifdef __WXOSX__
         auto scale = Slic3r::GUI::mac_max_scaling_factor();
         int BS = (int) scale;
@@ -140,14 +207,14 @@ void SwitchButton::Rescale()
 #else
                 wxDC &dc2(memdc);
 #endif
-				dc2.SetBrush(wxBrush(track_color.colorForStates(state)));
-				dc2.SetPen(wxPen(track_color.colorForStates(state)));
+				dc2.SetBrush(wxBrush(eff_track.colorForStates(state)));
+				dc2.SetPen(wxPen(eff_track.colorForStates(state)));
                 dc2.DrawRoundedRectangle(wxRect({0, 0}, trackSize), trackSize.y / 2);
-				dc2.SetBrush(wxBrush(thumb_color.colorForStates(StateColor::Checked | StateColor::Enabled)));
-				dc2.SetPen(wxPen(thumb_color.colorForStates(StateColor::Checked | StateColor::Enabled)));
+				dc2.SetBrush(wxBrush(eff_thumb.colorForStates(StateColor::Checked | StateColor::Enabled)));
+				dc2.SetPen(wxPen(eff_thumb.colorForStates(StateColor::Checked | StateColor::Enabled)));
 				dc2.DrawRoundedRectangle(wxRect({ i == 0 ? BS : (trackSize.x - thumbSize.x - BS), BS}, thumbSize), thumbSize.y / 2);
 			}
-            memdc.SetTextForeground(text_color.colorForStates(state ^ StateColor::Checked));
+            memdc.SetTextForeground(eff_text.colorForStates(state ^ StateColor::Checked));
             auto text_y = BS + (thumbSize.y - textSize[0].y) / 2;
 #ifdef __APPLE__
             /* wx计算文字长宽都是浮点数向下取整
@@ -157,7 +224,7 @@ void SwitchButton::Rescale()
             text_y -= FromDIP(1);
 #endif
             memdc.DrawText(labels[0], {BS + (thumbSize.x - textSize[0].x) / 2, text_y});
-            memdc.SetTextForeground(text_color2.count() == 0 ? text_color.colorForStates(state) : text_color2.colorForStates(state));
+            memdc.SetTextForeground(text_color2.count() == 0 ? eff_text.colorForStates(state) : text_color2.colorForStates(state));
             auto text_y_1 = BS + (thumbSize.y - textSize[1].y) / 2;
 #ifdef __APPLE__
             text_y_1 -= FromDIP(1);
@@ -167,34 +234,306 @@ void SwitchButton::Rescale()
 #ifdef __WXOSX__
             bmp = wxBitmap(bmp.ConvertToImage(), -1, scale);
 #endif
-			(i == 0 ? m_off : m_on).bmp() = bmp;
+			(i == 0 ? m_off : m_on) = bmp;
 		}
 	}
-	SetSize(m_on.GetBmpSize());
+	SetSize(ScalableBitmap::GetBmpSize(m_on));
+	// Report the rendered track as the minimum size so sizers reserve the full
+	// width of the longest label pair. Without this the toggle could be laid
+	// out narrower than its baked bitmap and the native control clipped it from
+	// both sides (the "bal Obj" artefact in the Params panel header). The track
+	// is already capped by SetMaxSize (the font auto-shrinks), so min <= max.
+	SetMinSize(ScalableBitmap::GetBmpSize(m_on));
 	update();
 }
 
 void SwitchButton::update()
 {
-	SetBitmap((GetValue() ? m_on : m_off).bmp());
+	if (isIconMode()) {
+		SetBitmap(renderSwitch(m_anim, true));
+		SetBitmapDisabled(renderSwitch(m_anim, false));
+	} else {
+		SetBitmap(GetValue() ? m_on : m_off);
+	}
 }
 
+wxBitmap SwitchButton::renderSwitch(double t, bool enabled) const
+{
+	// Spec (selection/Switch.prompt.md): 44x24 track, 2px border, Primary fill
+	// on / transparent off, knob slides x 4->22 and grows 12->16px.
+	constexpr int W = 44, H = 24;
+	double scale = GetDPIScaleFactor();
+	if (scale <= 0.0)
+		scale = 1.0;
+	const int dw = std::max(1, static_cast<int>(std::ceil(W * scale)));
+	const int dh = std::max(1, static_cast<int>(std::ceil(H * scale)));
+
+	const wxColour primary   = StateColor::semantic(MD3::Role::Primary, m_scheme);
+	const wxColour onPrimary  = StateColor::semantic(MD3::Role::OnPrimary, m_scheme);
+	const wxColour outline    = StateColor::semantic(MD3::Role::Outline);
+	const wxColour onSurface  = StateColor::semantic(MD3::Role::OnSurface);
+
+	wxBitmap bmp(dw, dh);
+#if defined(__WXMSW__) || defined(__WXOSX__)
+	bmp.UseAlpha();
+#endif
+	{
+		wxMemoryDC mdc(bmp);
+		mdc.SetBackground(*wxTRANSPARENT_BRUSH);
+		mdc.Clear();
+		wxGraphicsContext *gc = wxGraphicsContext::Create(mdc);
+		if (gc) {
+			gc->SetAntialiasMode(wxANTIALIAS_DEFAULT);
+			gc->Scale(scale, scale); // logical 0..44 x 0..24
+
+			const double radius = H / 2.0;
+			wxColour trackFill = lerpColour(withAlpha(primary, 0), primary, t);
+			wxColour border    = lerpColour(outline, primary, t);
+			wxColour knob      = lerpColour(outline, onPrimary, t);
+			if (!enabled) {
+				trackFill = withAlpha(onSurface, 20);
+				border    = withAlpha(onSurface, 40);
+				knob      = withAlpha(onSurface, 97);
+			}
+
+			// Track fill.
+			gc->SetPen(*wxTRANSPARENT_PEN);
+			gc->SetBrush(wxBrush(trackFill));
+			gc->DrawRoundedRectangle(0, 0, W, H, radius);
+			// 2px border, stroked inside the track.
+			gc->SetBrush(*wxTRANSPARENT_BRUSH);
+			gc->SetPen(wxPen(border, 2));
+			gc->DrawRoundedRectangle(1, 1, W - 2, H - 2, radius - 1);
+
+			// Knob: center slides 10 -> 30 (left edge 4 -> 22), diameter 12 -> 16.
+			const double knobD = 12.0 + (16.0 - 12.0) * t;
+			const double cx    = 10.0 + (30.0 - 10.0) * t;
+			const double cy    = H / 2.0;
+			gc->SetPen(*wxTRANSPARENT_PEN);
+			gc->SetBrush(wxBrush(knob));
+			gc->DrawEllipse(cx - knobD / 2, cy - knobD / 2, knobD, knobD);
+
+			delete gc;
+		}
+		mdc.SelectObject(wxNullBitmap);
+	}
+	return bmp;
+}
+
+void SwitchButton::startAnim()
+{
+	if (!isIconMode()) {
+		update();
+		return;
+	}
+	m_anim_target = GetValue() ? 1.0 : 0.0;
+	if (MD3::Motion::reduced()) {
+		m_anim_timer.Stop();
+		m_anim = m_anim_target;
+		update();
+		return;
+	}
+	if (!m_anim_timer.IsRunning())
+		m_anim_timer.Start(16);
+}
+
+void SwitchButton::onAnimTick(wxTimerEvent &)
+{
+	if (MD3::Motion::reduced()) {
+		m_anim_timer.Stop();
+		m_anim = m_anim_target;
+		update();
+		return;
+	}
+
+	const double step = 16.0 / 150.0; // ~150ms sweep
+	if (m_anim < m_anim_target)
+		m_anim = std::min(m_anim_target, m_anim + step);
+	else if (m_anim > m_anim_target)
+		m_anim = std::max(m_anim_target, m_anim - step);
+
+	SetBitmap(renderSwitch(m_anim, true));
+	SetBitmapDisabled(renderSwitch(m_anim, false));
+
+	if (std::abs(m_anim - m_anim_target) < 1e-6)
+		m_anim_timer.Stop();
+}
+
+#if wxUSE_ACCESSIBILITY
+class SwitchBoard::Accessible final : public wxWindowAccessible
+{
+public:
+    explicit Accessible(SwitchBoard *board) : wxWindowAccessible(board), m_board(board) {}
+
+    wxAccStatus GetChildCount(int *child_count) override
+    {
+        if (!child_count)
+            return wxACC_NOT_IMPLEMENTED;
+        *child_count = 2;
+        return wxACC_OK;
+    }
+
+    wxAccStatus GetChild(int child_id, wxAccessible **child) override
+    {
+        if (!child || child_id < 1 || child_id > 2)
+            return wxACC_NOT_IMPLEMENTED;
+        *child = nullptr;
+        return wxACC_OK;
+    }
+
+    wxAccStatus HitTest(const wxPoint& point, int *child_id, wxAccessible **child) override
+    {
+        if (!child_id || !child)
+            return wxACC_NOT_IMPLEMENTED;
+        const wxPoint local = m_board->ScreenToClient(point);
+        *child_id = wxACC_SELF;
+        if (m_board->GetClientRect().Contains(local))
+            *child_id = local.x < m_board->GetClientSize().x / 2 ? 1 : 2;
+        *child = nullptr;
+        return wxACC_OK;
+    }
+
+    wxAccStatus GetLocation(wxRect& location, int child_id) override
+    {
+        if (child_id < wxACC_SELF || child_id > 2)
+            return wxACC_NOT_IMPLEMENTED;
+        wxRect client = m_board->GetClientRect();
+        if (child_id == 1)
+            client.width /= 2;
+        else if (child_id == 2) {
+            const int half = client.width / 2;
+            client.x += half;
+            client.width -= half;
+        }
+        client.SetPosition(m_board->ClientToScreen(client.GetPosition()));
+        location = client;
+        return wxACC_OK;
+    }
+
+    wxAccStatus GetName(int child_id, wxString *name) override
+    {
+        if (!name || child_id < wxACC_SELF || child_id > 2)
+            return wxACC_NOT_IMPLEMENTED;
+        if (child_id == wxACC_SELF) {
+            *name = m_board->GetName();
+            if (name->IsEmpty() || *name == wxASCII_STR(wxPanelNameStr))
+                *name = wxString::Format("%s / %s", m_board->leftLabel, m_board->rightLabel);
+        } else {
+            *name = child_id == 1 ? m_board->leftLabel : m_board->rightLabel;
+        }
+        return name->IsEmpty() ? wxACC_NOT_IMPLEMENTED : wxACC_OK;
+    }
+
+    wxAccStatus GetRole(int child_id, wxAccRole *role) override
+    {
+        if (!role || child_id < wxACC_SELF || child_id > 2)
+            return wxACC_NOT_IMPLEMENTED;
+        *role = child_id == wxACC_SELF ? wxROLE_SYSTEM_GROUPING : wxROLE_SYSTEM_RADIOBUTTON;
+        return wxACC_OK;
+    }
+
+    wxAccStatus GetState(int child_id, long *state) override
+    {
+        if (!state || child_id < wxACC_SELF || child_id > 2)
+            return wxACC_NOT_IMPLEMENTED;
+        *state = 0;
+        if (m_board->AcceptsFocusFromKeyboard())
+            *state |= wxACC_STATE_SYSTEM_FOCUSABLE;
+        if (m_board->HasFocus()) {
+            const int focused_child = m_board->switch_right ? 2 : 1;
+            if (child_id == wxACC_SELF || child_id == focused_child)
+                *state |= wxACC_STATE_SYSTEM_FOCUSED;
+        }
+        if ((child_id == 1 && m_board->switch_left) ||
+            (child_id == 2 && m_board->switch_right))
+            *state |= wxACC_STATE_SYSTEM_CHECKED;
+        if (!m_board->IsEnabled())
+            *state |= wxACC_STATE_SYSTEM_UNAVAILABLE;
+        if (!m_board->IsShown())
+            *state |= wxACC_STATE_SYSTEM_INVISIBLE;
+        return wxACC_OK;
+    }
+
+    wxAccStatus GetFocus(int *child_id, wxAccessible **child) override
+    {
+        if (!child_id || !child)
+            return wxACC_NOT_IMPLEMENTED;
+        *child_id = 0;
+        *child = nullptr;
+        if (!m_board->HasFocus())
+            return wxACC_OK;
+        if (m_board->switch_right)
+            *child_id = 2;
+        else
+            *child_id = 1;
+        return wxACC_OK;
+    }
+
+    wxAccStatus GetDefaultAction(int child_id, wxString *action_name) override
+    {
+        if (!action_name || child_id < 1 || child_id > 2)
+            return wxACC_NOT_IMPLEMENTED;
+        *action_name = _L("Select");
+        return wxACC_OK;
+    }
+
+    wxAccStatus DoDefaultAction(int child_id) override
+    {
+        if (child_id < 1 || child_id > 2)
+            return wxACC_NOT_IMPLEMENTED;
+        if (!m_board->IsEnabled() || !m_board->IsShown())
+            return wxACC_FAIL;
+        m_board->activateSegment(child_id == 1);
+        return wxACC_OK;
+    }
+
+    wxAccStatus GetValue(int child_id, wxString *value) override
+    {
+        if (child_id != wxACC_SELF || !value)
+            return wxACC_NOT_IMPLEMENTED;
+        if (m_board->switch_left)
+            *value = m_board->leftLabel;
+        else if (m_board->switch_right)
+            *value = m_board->rightLabel;
+        else
+            value->clear();
+        return wxACC_OK;
+    }
+
+private:
+    SwitchBoard *m_board;
+};
+#endif
+
 SwitchBoard::SwitchBoard(wxWindow *parent, wxString leftL, wxString right, wxSize size)
- : wxWindow(parent, wxID_ANY, wxDefaultPosition, size)
+ : wxWindow(parent, wxID_ANY, wxDefaultPosition, size), m_requested_min_size(size)
 {
 #ifdef __WINDOWS__
     SetDoubleBuffered(true);
 #endif //__WINDOWS__
 
-    SetBackgroundColour(*wxWHITE);
+    // The rounded container is painted in doRender(); the window background only
+    // shows at the corners, so match the surrounding surface instead of raw
+    // White (which would stay white in dark mode).
+    if (parent)
+        SetBackgroundColour(StaticBox::GetParentBackgroundColor(parent));
+    else
+        SetBackgroundColour(StateColor::semantic(MD3::Role::Surface));
 	leftLabel = leftL;
     rightLabel = right;
 
-	SetMinSize(size);
-	SetMaxSize(size);
+    SetMinSize(DoGetBestSize());
 
     Bind(wxEVT_PAINT, &SwitchBoard::paintEvent, this);
     Bind(wxEVT_LEFT_DOWN, &SwitchBoard::on_left_down, this);
+    Bind(wxEVT_KEY_DOWN, &SwitchBoard::on_key_down, this);
+    Bind(wxEVT_KEY_UP, &SwitchBoard::on_key_up, this);
+    Bind(wxEVT_SET_FOCUS, &SwitchBoard::on_focus, this);
+    Bind(wxEVT_KILL_FOCUS, &SwitchBoard::on_focus, this);
+    SetToolTip(wxString::Format("%s / %s", leftLabel, rightLabel));
+#if wxUSE_ACCESSIBILITY
+    SetAccessible(new Accessible(this));
+#endif
 
     Bind(wxEVT_ENTER_WINDOW, [this](auto &e) { SetCursor(wxCURSOR_HAND); });
     Bind(wxEVT_LEAVE_WINDOW, [this](auto &e) { SetCursor(wxCURSOR_ARROW); });
@@ -202,6 +541,8 @@ SwitchBoard::SwitchBoard(wxWindow *parent, wxString leftL, wxString right, wxSiz
 
 void SwitchBoard::updateState(wxString target)
 {
+    const bool was_left = switch_left;
+    const bool was_right = switch_right;
     if (target.empty()) {
         if (!switch_left && !switch_right) {
             return;
@@ -228,15 +569,58 @@ void SwitchBoard::updateState(wxString target)
     }
 
     Refresh();
+#if wxUSE_ACCESSIBILITY
+    if (was_left != switch_left)
+        wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_STATECHANGE, this, wxOBJID_CLIENT, 1);
+    if (was_right != switch_right)
+        wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_STATECHANGE, this, wxOBJID_CLIENT, 2);
+    wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_VALUECHANGE, this, wxOBJID_CLIENT, wxACC_SELF);
+#endif
 }
 
 void SwitchBoard::SetLabels(const wxString &left, const wxString &right)
 {
     if (leftLabel == left && rightLabel == right)
         return;
+    const bool left_changed = leftLabel != left;
+    const bool right_changed = rightLabel != right;
+    const bool selected_label_changed = (switch_left && left_changed) || (switch_right && right_changed);
     leftLabel  = left;
     rightLabel = right;
+    SetToolTip(wxString::Format("%s / %s", leftLabel, rightLabel));
+    InvalidateBestSize();
+    SetMinSize(DoGetBestSize());
+    if (wxWindow *parent = GetParent())
+        parent->Layout();
     Refresh();
+#if wxUSE_ACCESSIBILITY
+    wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_NAMECHANGE, this, wxOBJID_CLIENT, wxACC_SELF);
+    if (left_changed)
+        wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_NAMECHANGE, this, wxOBJID_CLIENT, 1);
+    if (right_changed)
+        wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_NAMECHANGE, this, wxOBJID_CLIENT, 2);
+    if (selected_label_changed)
+        wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_VALUECHANGE, this, wxOBJID_CLIENT, wxACC_SELF);
+#endif
+}
+
+wxSize SwitchBoard::DoGetBestSize() const
+{
+    int left_width = 0;
+    int right_width = 0;
+    int text_height = 0;
+    GetTextExtent(leftLabel, &left_width, &text_height, nullptr, nullptr, &::Label::Body_13);
+    int right_height = 0;
+    GetTextExtent(rightLabel, &right_width, &right_height, nullptr, nullptr, &::Label::Body_13);
+    text_height = std::max(text_height, right_height);
+
+    const int segment_width = std::max(left_width, right_width) + 2 * FromDIP(12);
+    const int measured_width = 2 * segment_width + FromDIP(4) + 2 * FromDIP(3);
+    const int measured_height = std::max(FromDIP(32), text_height + 2 * FromDIP(8));
+    const int requested_width = m_requested_min_size.x == wxDefaultCoord ? 0 : m_requested_min_size.x;
+    const int requested_height = m_requested_min_size.y == wxDefaultCoord ? 0 : m_requested_min_size.y;
+    return wxSize(std::max(measured_width, requested_width),
+                  std::max(measured_height, requested_height));
 }
 
 void SwitchBoard::paintEvent(wxPaintEvent &evt)
@@ -268,91 +652,195 @@ void SwitchBoard::render(wxDC &dc)
 
 void SwitchBoard::doRender(wxDC &dc)
 {
-    wxColour disable_color = wxColour("#CECECE");
+    // MD3 SegmentedControl (selection/SegmentedControl.prompt.md): a
+    // SurfaceContainerHighest track with an inset, rounded selected segment in
+    // Primary/OnPrimary and unselected transparent/OnSurfaceVariant. Geometry is
+    // recomputed from the live size every paint (DPI-safe, no cached radii).
+    const wxSize sz      = GetSize();
+    const int    pad     = FromDIP(3);
+    const int    gap     = FromDIP(4);
+    const int    rOuter  = FromDIP(12);
+    const int    rInner  = FromDIP(9);
+    const bool   dis     = !IsEnabled();
+
+    const wxColour container = StateColor::semantic(MD3::Role::SurfaceContainerHighest);
+    const wxColour primary   = StateColor::semantic(MD3::Role::Primary, m_scheme);
+    const wxColour onPrimary  = StateColor::semantic(MD3::Role::OnPrimary, m_scheme);
+    const wxColour onSurfVar   = StateColor::semantic(MD3::Role::OnSurfaceVariant);
+    const wxColour onSurface   = StateColor::semantic(MD3::Role::OnSurface);
 
     dc.SetPen(*wxTRANSPARENT_PEN);
+    dc.SetBrush(wxBrush(container));
+    dc.DrawRoundedRectangle(0, 0, sz.x, sz.y, rOuter);
 
-    if (is_enable) {dc.SetBrush(wxBrush(0xeeeeee));
-    } else {dc.SetBrush(disable_color);}
-    dc.DrawRoundedRectangle(0, 0, GetSize().x, GetSize().y, 8);
-
-	/*left*/
-    if (switch_left) {
-        is_enable ? dc.SetBrush(wxBrush(wxColour(0, 174, 66))) : dc.SetBrush(disable_color);
-        dc.DrawRoundedRectangle(0, 0, GetSize().x / 2, GetSize().y, 8);
-	}
-
-    if (switch_left) {
-		dc.SetTextForeground(*wxWHITE);
-    } else {
-        dc.SetTextForeground(0x333333);
-	}
+    const int segH  = sz.y - 2 * pad;
+    const int segW  = (sz.x - 2 * pad - gap) / 2;
+    const wxRect leftRect(pad, pad, segW, segH);
+    const wxRect rightRect(pad + segW + gap, pad, sz.x - pad - (pad + segW + gap), segH);
 
     dc.SetFont(::Label::Body_13);
-    Slic3r::GUI::WxFontUtils::get_suitable_font_size(0.6 * GetSize().GetHeight(), dc);
+    Slic3r::GUI::WxFontUtils::get_suitable_font_size(0.6 * sz.GetHeight(), dc);
 
-    wxFontMetrics fm = dc.GetFontMetrics();
-    int fmHeight = fm.ascent + fm.descent;
-    auto left_txt_size = dc.GetTextExtent(leftLabel);
-    dc.DrawText(leftLabel, wxPoint((GetSize().x / 2 - left_txt_size.x) / 2, (GetSize().y - fmHeight) / 2));
+    auto drawSegment = [&](const wxRect &rc, bool selected, const wxString &text) {
+        if (selected) {
+            const wxColour fill = dis ? withAlpha(onSurface, 30) : primary;
+            dc.SetPen(*wxTRANSPARENT_PEN);
+            dc.SetBrush(wxBrush(fill));
+            dc.DrawRoundedRectangle(rc, rInner);
+        }
+        const wxColour tc = dis ? withAlpha(onSurfVar, 97)
+                                : (selected ? onPrimary : onSurfVar);
+        dc.SetTextForeground(tc);
+        const wxSize ts = dc.GetTextExtent(text);
+        dc.DrawText(text, wxPoint(rc.x + (rc.width - ts.x) / 2, rc.y + (rc.height - ts.y) / 2));
+    };
 
-	/*right*/
-    if (switch_right) {
-        if (is_enable) {dc.SetBrush(wxBrush(wxColour(0, 174, 66)));
-        } else {dc.SetBrush(disable_color);}
-        dc.DrawRoundedRectangle(GetSize().x / 2, 0, GetSize().x / 2, GetSize().y, 8);
-	}
+    drawSegment(leftRect, switch_left, leftLabel);
+    drawSegment(rightRect, switch_right, rightLabel);
 
-    auto right_txt_size = dc.GetTextExtent(rightLabel);
-    if (switch_right) {
-        dc.SetTextForeground(*wxWHITE);
-    } else {
-        dc.SetTextForeground(0x333333);
+    if (HasFocus() && IsEnabled()) {
+        const int inset = std::max(FromDIP(2), 1);
+        dc.SetBrush(*wxTRANSPARENT_BRUSH);
+        dc.SetPen(wxPen(StateColor::semantic(MD3::Role::Primary, m_scheme), std::max(FromDIP(2), 1)));
+        dc.DrawRoundedRectangle(inset, inset, std::max(0, sz.x - 2 * inset), std::max(0, sz.y - 2 * inset),
+                                std::max(0, rOuter - inset));
     }
-    dc.DrawText(rightLabel, wxPoint((GetSize().x / 2 - right_txt_size.x) / 2 + GetSize().x / 2, (GetSize().y - fmHeight) / 2));
+}
 
+void SwitchBoard::activateSegment(bool left)
+{
+    if (!IsEnabled() || (left ? switch_left && !switch_right : switch_right && !switch_left))
+        return;
+
+    const bool was_left = switch_left;
+    const bool was_right = switch_right;
+    switch_left = left;
+    switch_right = !left;
+    if (auto_disable_when_switch)
+        Enable(false); // make it disable while switching
+
+    Refresh();
+#if wxUSE_ACCESSIBILITY
+    if (was_left != switch_left)
+        wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_STATECHANGE, this, wxOBJID_CLIENT, 1);
+    if (was_right != switch_right)
+        wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_STATECHANGE, this, wxOBJID_CLIENT, 2);
+    wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_VALUECHANGE, this, wxOBJID_CLIENT, wxACC_SELF);
+    if (HasFocus())
+        wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_FOCUS, this, wxOBJID_CLIENT, switch_left ? 1 : 2);
+#endif
+    wxCommandEvent event(wxCUSTOMEVT_SWITCH_POS, GetId());
+    event.SetEventObject(this);
+    event.SetInt(static_cast<int>(switch_left));
+    wxPostEvent(this, event);
 }
 
 void SwitchBoard::on_left_down(wxMouseEvent &evt)
 {
-    if (!is_enable) {
+    if (!IsEnabled())
         return;
-    }
-
-    switch_left = evt.GetPosition().x < GetSize().GetWidth() / 2;
-    switch_right = !switch_left;
-
-    if (auto_disable_when_switch)
-    {
-        is_enable = false;// make it disable while switching
-    }
-    Refresh();
-
-    wxCommandEvent event(wxCUSTOMEVT_SWITCH_POS);
-    event.SetInt((int)switch_left);
-    wxPostEvent(this, event);
+    SetFocus();
+    activateSegment(evt.GetPosition().x < GetSize().GetWidth() / 2);
 }
 
-void SwitchBoard::Enable()
+void SwitchBoard::on_key_down(wxKeyEvent &evt)
 {
-    if (is_enable == true)
-    {
+    switch (evt.GetKeyCode()) {
+    case WXK_LEFT:
+    case WXK_UP:
+    case WXK_HOME:
+        activateSegment(true);
         return;
+    case WXK_RIGHT:
+    case WXK_DOWN:
+    case WXK_END:
+        activateSegment(false);
+        return;
+    case WXK_SPACE:
+    case WXK_RETURN:
+    case WXK_NUMPAD_ENTER:
+        if (m_keyboard_pressed_key == WXK_NONE) {
+            m_keyboard_pressed_key = evt.GetKeyCode();
+            Refresh(false);
+        }
+        return;
+    case WXK_TAB:
+        HandleAsNavigationKey(evt);
+        return;
+    default:
+        evt.Skip();
     }
-
-    is_enable = true;
-    Refresh();
 }
 
-void SwitchBoard::Disable()
+void SwitchBoard::on_key_up(wxKeyEvent &evt)
 {
-    if (is_enable == false)
-    {
+    switch (evt.GetKeyCode()) {
+    case WXK_SPACE:
+    case WXK_RETURN:
+    case WXK_NUMPAD_ENTER:
+        if (m_keyboard_pressed_key == evt.GetKeyCode()) {
+            m_keyboard_pressed_key = WXK_NONE;
+            Refresh(false);
+            if (IsEnabled() && IsShown())
+                activateSegment(!switch_left);
+        }
         return;
+    default:
+        evt.Skip();
     }
+}
 
-    is_enable = false;
+void SwitchBoard::on_focus(wxFocusEvent &evt)
+{
+    if (evt.GetEventType() == wxEVT_KILL_FOCUS)
+        m_keyboard_pressed_key = WXK_NONE;
+    Refresh(false);
+#if wxUSE_ACCESSIBILITY
+    if (evt.GetEventType() == wxEVT_SET_FOCUS)
+        wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_FOCUS, this, wxOBJID_CLIENT, switch_right ? 2 : 1);
+#endif
+    evt.Skip();
+}
+
+bool SwitchBoard::AcceptsFocus() const
+{
+    return IsEnabled() && IsShown();
+}
+
+bool SwitchBoard::AcceptsFocusFromKeyboard() const
+{
+    return AcceptsFocus();
+}
+
+#ifdef __WIN32__
+WXLRESULT SwitchBoard::MSWWindowProc(WXUINT message, WXWPARAM w_param, WXLPARAM l_param)
+{
+    if (message == WM_GETDLGCODE)
+        return DLGC_WANTMESSAGE | DLGC_WANTARROWS;
+    if ((message == WM_KEYDOWN || message == WM_KEYUP) &&
+        (w_param == WXK_RETURN || w_param == WXK_NUMPAD_ENTER)) {
+        const wxEventType event_type = message == WM_KEYDOWN ? wxEVT_KEY_DOWN : wxEVT_KEY_UP;
+        wxKeyEvent event(CreateKeyEvent(event_type, w_param, l_param));
+        GetEventHandler()->ProcessEvent(event);
+        return 0;
+    }
+    return wxWindow::MSWWindowProc(message, w_param, l_param);
+}
+#endif
+
+bool SwitchBoard::Enable(bool enable)
+{
+    if (IsEnabled() == enable)
+        return false;
+
+    const bool changed = wxWindow::Enable(enable);
     Refresh();
+#if wxUSE_ACCESSIBILITY
+    wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_STATECHANGE, this, wxOBJID_CLIENT, wxACC_SELF);
+    wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_STATECHANGE, this, wxOBJID_CLIENT, 1);
+    wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_STATECHANGE, this, wxOBJID_CLIENT, 2);
+#endif
+    return changed;
 }
 
 CustomToggleButton::CustomToggleButton(wxWindow* parent, const wxString& label, wxWindowID id, const wxPoint& pos, const wxSize& size)
@@ -363,7 +851,7 @@ CustomToggleButton::CustomToggleButton(wxWindow* parent, const wxString& label, 
     Connect(wxEVT_PAINT, wxPaintEventHandler(CustomToggleButton::OnPaint));
     Connect(wxEVT_SIZE, wxSizeEventHandler(CustomToggleButton::OnSize));
     Bind(wxEVT_LEFT_DOWN, &CustomToggleButton::on_left_down, this);
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(ThemeColor::White);
     Slic3r::GUI::wxGetApp().UpdateDarkUIWin(this);
 }
 
@@ -425,53 +913,57 @@ void CustomToggleButton::render(wxDC& dc)
 
 void CustomToggleButton::doRender(wxDC& dc)
 {
+    // MD3 filter Chip (kit selection/Chip.prompt.md): a pill (r = height/2) with a
+    // 1px border, a 16px leading glyph, and OnSurfaceVariant/Primary text. The
+    // selected state keeps the tonal SecondaryContainer fill + Primary
+    // border/foreground; unselected is transparent with a 1px Outline border.
     wxRect rect = GetClientRect();
     wxSize textRect = dc.GetMultiLineTextExtent(m_label);
-    wxSize iconRect = m_selected_icon.GetSize();
-    int iconRectWidth = iconRect.GetWidth();
-    int iconRectHeight = iconRect.GetHeight();
-#ifdef __APPLE__
-    iconRectWidth = FromDIP(16);
-    iconRectHeight = FromDIP(16);
-#endif
-    int left = (rect.GetSize().x -  textRect.GetWidth() - iconRectWidth - FromDIP(6)) / 2;
 
-    // Draw background
+    // Leading glyph occupies a 16px logical box (DPI-safe).
+    const int iconRectWidth  = FromDIP(16);
+    const int iconRectHeight = FromDIP(16);
+    int left = (rect.GetSize().x - textRect.GetWidth() - iconRectWidth - FromDIP(6)) / 2;
+
+    // Shared foreground for the glyph and the label so the chip reads as one
+    // token: Primary when selected, otherwise OnSurfaceVariant (per Chip.prompt.md:
+    // "Unselected: transparent + 1px outline border + on-surface-variant text").
+    // semantic() resolves the current theme, matching the Outline border below.
+    const wxColour fg = m_isSelected
+        ? m_primary_colour
+        : StateColor::semantic(MD3::Role::OnSurfaceVariant);
+
+    // Draw background: pill radius = height/2, 1px border (Primary selected /
+    // Outline unselected), keeping the semantic SecondaryContainer selected fill.
     if (m_isSelected) {
         dc.SetBrush(wxBrush(m_secondary_colour));
         dc.SetPen(wxPen(m_primary_colour));
     }
     else {
         dc.SetBrush(*wxTRANSPARENT_BRUSH);
-        dc.SetPen(wxPen(wxColour("#EEEEEE")));
+        dc.SetPen(wxPen(StateColor::semantic(MD3::Role::Outline)));
     }
-    
-    dc.DrawRoundedRectangle(rect, 5);
 
-    // Draw icon
-    if (m_isSelected) {
-        if (m_selected_icon.IsOk()) {
-            int iconY = (rect.GetHeight() - iconRectHeight) / 2;
-            dc.DrawBitmap(m_selected_icon, left, iconY, true);
-            left += iconRectWidth + FromDIP(6);
-        }
+    dc.DrawRoundedRectangle(rect, rect.GetHeight() / 2.0);
+
+    // Draw the leading glyph: a live 16px Material Symbol (Send = the send-mode
+    // tag). Degrade to the raster PNG when the icon font is unavailable.
+    const int iconY = (rect.GetHeight() - iconRectHeight) / 2;
+    if (MaterialIcon::available()) {
+        MaterialIcon::drawCentered(dc, MaterialIcon::Send, 16, fg,
+                                   wxRect(left, iconY, iconRectWidth, iconRectHeight));
+        left += iconRectWidth + FromDIP(6);
     } else {
-        if (m_unselected_icon.IsOk()) {
-            int iconY = (rect.GetHeight() - iconRectHeight) / 2;
-            dc.DrawBitmap(m_unselected_icon, left, iconY, true);
+        const wxBitmap &icon = m_isSelected ? m_selected_icon : m_unselected_icon;
+        if (icon.IsOk()) {
+            dc.DrawBitmap(icon, left, iconY, true);
             left += iconRectWidth + FromDIP(6);
         }
     }
 
     // Draw text
     dc.SetFont(::Label::Head_13);
-
-    if (m_isSelected) {
-        dc.SetTextForeground(m_primary_colour);
-    }
-    else {
-        dc.SetTextForeground(Slic3r::GUI::wxGetApp().dark_mode() ? *wxWHITE:wxColour("#5C5C5C"));
-    }
+    dc.SetTextForeground(fg);
 
     wxFontMetrics fm = dc.GetFontMetrics();
     int textY = (rect.GetHeight() - (fm.ascent + fm.descent)) / 2;
@@ -487,7 +979,7 @@ RichTooltipPopup::RichTooltipPopup(wxWindow* parent, const wxString& iconName, c
     : wxPopupTransientWindow(parent, wxBORDER_NONE)
     , m_text(text)
 {
-    SetBackgroundColour(wxColour(50, 50, 50));
+    SetBackgroundColour(StateColor::semantic(MD3::Role::InverseSurface));
     
     wxBoxSizer* sizer = new wxBoxSizer(wxHORIZONTAL);
     
@@ -501,9 +993,9 @@ RichTooltipPopup::RichTooltipPopup(wxWindow* parent, const wxString& iconName, c
     }
     
     // Add text
-    wxStaticText* textCtrl = new wxStaticText(this, wxID_ANY, m_text);
+    wxStaticText* textCtrl = new Label(this, m_text);
     textCtrl->SetFont(Label::Body_13);
-    textCtrl->SetForegroundColour(*wxWHITE);
+    textCtrl->SetForegroundColour(StateColor::semantic(MD3::Role::InverseOn));
     sizer->Add(textCtrl, 0, wxALIGN_CENTER_VERTICAL | wxLEFT | wxRIGHT, FromDIP(12));
     
     SetSizer(sizer);
@@ -522,7 +1014,7 @@ void RichTooltipPopup::OnPaint(wxPaintEvent& event)
 {
     wxPaintDC dc(this);
     // Just fill background - controls handle their own drawing
-    dc.SetBrush(wxBrush(wxColour(50, 50, 50)));
+    dc.SetBrush(wxBrush(StateColor::semantic(MD3::Role::InverseSurface)));
     dc.SetPen(*wxTRANSPARENT_PEN);
     dc.DrawRectangle(GetClientRect());
     event.Skip();
@@ -666,12 +1158,12 @@ void ExpandButton::doRender(wxDC& dc)
 ExpandButtonHolder::ExpandButtonHolder(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size)
     : wxPanel(parent, id, pos, size)
 {
-#ifdef __APPLE__
-    SetBackgroundColour(wxColour("#2D2D30"));
-#else
-    SetBackgroundColour(wxColour("#3B4446"));
-#endif
-    
+    // The floating expand toolbar is hosted by the title bar, so it shares the
+    // title-bar surface treatment: SurfaceContainerLow, resolved through the
+    // theme-following semantic() so the overlay stays consistent with the actual
+    // top-bar background in both light and dark themes.
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
+
     hsizer = new wxBoxSizer(wxHORIZONTAL);
     hsizer->AddStretchSpacer(1);
     vsizer = new wxBoxSizer(wxVERTICAL);
@@ -720,18 +1212,15 @@ void ExpandButtonHolder::ShowExpandButton(wxWindowID id, bool show)
          ExpandButton* expandBtn = dynamic_cast<ExpandButton*>(child);
          if (expandBtn != nullptr)
          {
+             // Title-bar-hosted overlay (see ctor): theme-following surfaces that
+             // match the top-bar background. Single button sits flush with the
+             // holder; multi-button icons blend into the recessed track drawn in
+             // doRender(). Both resolve SurfaceContainerLow via semantic().
              if (length <= 1) {
-                 expandBtn->SetBackgroundColour(wxColour("#3B4446"));
+                 expandBtn->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
              }
              else {
-
-#ifdef __APPLE__
-                expandBtn->SetBackgroundColour(wxColour("#384547"));
-#else
-                expandBtn->SetBackgroundColour(wxColour("#242E30"));
-#endif
-
-                 
+                expandBtn->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
              }
          }
      }
@@ -874,13 +1363,12 @@ void ExpandButtonHolder::doRender(wxDC& dc)
     wxSize size = GetSize();
     
     if (GetAvailable() > 1) {
-#ifdef __APPLE__
-        dc.SetBrush(wxBrush(wxColour("#384547")));
-        dc.SetPen(wxPen(wxColour("#384547")));
-#else
-        dc.SetBrush(wxBrush(wxColour("#242E30")));
-        dc.SetPen(wxPen(wxColour("#242E30")));
-#endif
+        // Recessed multi-button track: a subtle container step above the shared
+        // top-bar surface (see ctor) so the grouped pill reads against the flush
+        // SurfaceContainerLow buttons, theme-following via semantic().
+        const wxColour track = StateColor::semantic(MD3::Role::SurfaceContainer);
+        dc.SetBrush(wxBrush(track));
+        dc.SetPen(wxPen(track));
         dc.DrawRoundedRectangle(0, 0, size.x, size.y, FromDIP(10));
     }
 }
@@ -888,23 +1376,31 @@ void ExpandButtonHolder::doRender(wxDC& dc)
 MultiSwitchButton::MultiSwitchButton(wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSize &size, long style)
     : StaticBox(parent, id, pos, size, style)
     , sel(-1)
+    // MD3 segmented control: selected segment = Primary fill / OnPrimary text;
+    // unselected = the SurfaceContainerHighest track it sits on (reads as
+    // transparent) with OnSurfaceVariant text. Replaces the legacy
+    // BrandGreen/White/Grey400/TextMuted literals with scheme-following tokens.
     , m_bg_color(StateColor(
-        std::make_pair(0xE8E8E8, (int) StateColor::NotChecked),
-        std::make_pair(0x00AE42, (int) StateColor::Normal)))
+        std::make_pair(StateColor::semantic(MD3::Role::SurfaceContainerHighest), (int) StateColor::NotChecked),
+        std::make_pair(StateColor::semantic(MD3::Role::Primary), (int) StateColor::Normal)))
     , m_bg_color_grayed(StateColor(
-        std::make_pair(0xE8E8E8, (int) StateColor::NotChecked),
-        std::make_pair(0x6DC48D, (int) StateColor::Normal)))
+        std::make_pair(StateColor::semantic(MD3::Role::SurfaceContainerHighest), (int) StateColor::NotChecked),
+        std::make_pair(StateColor::semantic(MD3::Role::PrimaryContainer), (int) StateColor::Normal)))
     , m_text_color(StateColor(
-        std::make_pair(0x6B6B6B, (int) StateColor::NotChecked),
-        std::make_pair(0xFFFFFE, (int) StateColor::Normal)))
+        std::make_pair(StateColor::semantic(MD3::Role::OnSurfaceVariant), (int) StateColor::NotChecked),
+        std::make_pair(StateColor::semantic(MD3::Role::OnPrimary), (int) StateColor::Normal)))
     , m_text_color_grayed(StateColor(
-        std::make_pair(0x999999, (int) StateColor::NotChecked),
-        std::make_pair(0x99DFB2, (int) StateColor::Normal)))
+        std::make_pair(ThemeColor::TextDisabled, (int) StateColor::NotChecked),
+        std::make_pair(StateColor::semantic(MD3::Role::OnPrimaryContainer), (int) StateColor::Normal)))
     , m_button_radius(10.0)
     , m_button_padding(10, 6)
 {
     SetCornerRadius(m_button_radius);
     SetBorderWidth(0);
+    // Recessed SurfaceContainerHighest track behind the segments (the base
+    // StaticBox fill). Qualified so it targets the container background and not
+    // MultiSwitchButton::SetBackgroundColor(), which restyles the segments.
+    StaticBox::SetBackgroundColor(StateColor(StateColor::semantic(MD3::Role::SurfaceContainerHighest)));
 
     sizer = new wxBoxSizer(wxHORIZONTAL);
     sizer->AddSpacer(8);

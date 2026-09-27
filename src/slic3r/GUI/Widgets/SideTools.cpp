@@ -1,15 +1,32 @@
 #include "SideTools.hpp"
+#include "LinkLabel.hpp"
 #include "bambu_networking.hpp"
 #include <wx/dcmemory.h>
 #include <wx/dcgraph.h>
 #include "Label.hpp"
 #include "StateColor.hpp"
+#include "MaterialIcon.hpp"
 #include "../GUI_App.hpp"
 #include "../wxExtensions.hpp"
 #include "../I18N.hpp"
 #include "../GUI.hpp"
 
 namespace Slic3r { namespace GUI {
+
+// Build a monochrome icon as a Material Symbols glyph rendered at a logical px
+// in colour, degrading to the legacy raster (fallback_name) when the icon face
+// is unavailable. Mirrors the same capability-gated pattern already applied to
+// this file's wifi/wired signal icons (see init_signal_bitmaps()).
+static ScalableBitmap side_tools_glyph_bitmap(wxWindow *ref, uint32_t glyph, int px, const wxColour &colour, const std::string &fallback_name)
+{
+    if (MaterialIcon::available()) {
+        ScalableBitmap sb;
+        sb.bmp() = MaterialIcon::bitmap(ref, glyph, px, colour);
+        return sb;
+    }
+    return ScalableBitmap(ref, fallback_name, px);
+}
+
 	SideToolsPanel::SideToolsPanel(wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSize &size)
 {
     wxPanel::Create(parent, id, pos, size);
@@ -18,20 +35,23 @@ namespace Slic3r { namespace GUI {
     SetMaxSize(wxSize(-1, FromDIP(50)));
 
     Bind(wxEVT_PAINT, &SideToolsPanel::OnPaint, this);
-    SetBackgroundColour(wxColour("#FEFFFF"));
+    // Device-page surface (Device.jsx SurfaceDim), replacing the legacy
+    // ThemeColor::White literal.
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceDim));
 
-    m_printing_img = ScalableBitmap(this, "printer", 16);
-    m_arrow_img    = ScalableBitmap(this, "monitor_arrow", 14);
+    m_printing_img = side_tools_glyph_bitmap(this, MaterialIcon::Print, 16, StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Device), "printer");
+    m_arrow_img    = side_tools_glyph_bitmap(this, MaterialIcon::ChevronRight, 14, StateColor::semantic(MD3::Role::OnSurfaceVariant), "monitor_arrow");
 
-    m_none_printing_img = ScalableBitmap(this, "tab_monitor_active", 24);
-    m_none_arrow_img    = ScalableBitmap(this, "monitor_none_arrow", 14);
-    m_none_add_img      = ScalableBitmap(this, "monitor_none_add", 14);
+    // Drawn on the SIDE_TOOLS_BRAND (Device Primary) fill in doRender(), so the
+    // glyph colour is OnPrimary/Device -- correct in both light AND dark theme,
+    // unlike a hardcoded white that would lose contrast once the fill itself
+    // flips to a light teal in dark mode.
+    const wxColour none_state_fg = StateColor::semantic(MD3::Role::OnPrimary, MD3::ColorScheme::Device);
+    m_none_printing_img = side_tools_glyph_bitmap(this, MaterialIcon::Print, 24, none_state_fg, "tab_monitor_active");
+    m_none_arrow_img    = side_tools_glyph_bitmap(this, MaterialIcon::ChevronRight, 14, none_state_fg, "monitor_none_arrow");
+    m_none_add_img      = side_tools_glyph_bitmap(this, MaterialIcon::Add, 14, none_state_fg, "monitor_none_add");
 
-    m_wifi_none_img     = ScalableBitmap(this, "monitor_signal_no", 18);
-    m_wifi_weak_img     = ScalableBitmap(this, "monitor_signal_weak", 18);
-    m_wifi_middle_img   = ScalableBitmap(this, "monitor_signal_middle", 18);
-    m_wifi_strong_img   = ScalableBitmap(this, "monitor_signal_strong", 18);
-    m_network_wired_img = ScalableBitmap(this, "monitor_network_wired", 18);
+    init_signal_bitmaps();
 
     m_intetval_timer = new wxTimer();
     m_intetval_timer->SetOwner(this);
@@ -41,6 +61,15 @@ namespace Slic3r { namespace GUI {
     this->Bind(wxEVT_LEAVE_WINDOW, &SideToolsPanel::on_mouse_leave, this);
     this->Bind(wxEVT_LEFT_DOWN, &SideToolsPanel::on_mouse_left_down, this);
     this->Bind(wxEVT_LEFT_UP, &SideToolsPanel::on_mouse_left_up, this);
+    this->Bind(wxEVT_SET_FOCUS, &SideToolsPanel::on_set_focus, this);
+    this->Bind(wxEVT_KILL_FOCUS, &SideToolsPanel::on_kill_focus, this);
+    this->Bind(wxEVT_KEY_DOWN, &SideToolsPanel::on_key_down, this);
+
+    // a11y-label: give the icon-only switcher strip an accessible name/tooltip so
+    // assistive tech announces its purpose (set_current_printer_name() keeps the
+    // name in sync with the live device).
+    SetName(_L("Switch printer"));
+    SetToolTip(_L("Switch printer"));
 }
 
 SideToolsPanel::~SideToolsPanel() { delete m_intetval_timer; }
@@ -61,6 +90,9 @@ void SideToolsPanel::set_current_printer_name(std::string dev_name)
 
      m_none_printer = false;
      m_dev_name     = from_u8(dev_name);
+     // Keep the accessible name in step with the visible device label.
+     if (!m_dev_name.IsEmpty())
+         SetName(m_dev_name);
      Refresh();
 }
 
@@ -92,19 +124,45 @@ bool SideToolsPanel::is_in_interval()
     return m_is_in_interval;
 }
 
+void SideToolsPanel::init_signal_bitmaps()
+{
+    // MD3: render the Wi-Fi / wired connectivity indicators from the Material
+    // Symbols icon font instead of the legacy monitor_signal_*/monitor_network_wired
+    // rasters. The Wi-Fi signal level is carried by the glyph shape (4-bar /
+    // 3-bar / 2-bar / null); state is expressed through colour, never the FILL
+    // axis. Fall back to the bundled bitmaps when the icon face is unavailable so
+    // a missing TTF degrades to the legacy look instead of tofu.
+    if (MaterialIcon::available()) {
+        const wxColour signal_on  = StateColor::semantic(MD3::Role::Primary);
+        const wxColour signal_off = StateColor::semantic(MD3::Role::OnSurfaceVariant);
+        m_wifi_strong_img   = MaterialIcon::bitmap(this, MaterialIcon::SignalWifi4Bar,          18, signal_on);
+        m_wifi_middle_img   = MaterialIcon::bitmap(this, MaterialIcon::NetworkWifi3Bar,         18, signal_on);
+        m_wifi_weak_img     = MaterialIcon::bitmap(this, MaterialIcon::NetworkWifi2Bar,         18, signal_off);
+        m_wifi_none_img     = MaterialIcon::bitmap(this, MaterialIcon::SignalWifiStatusbarNull, 18, signal_off);
+        m_network_wired_img = MaterialIcon::bitmap(this, MaterialIcon::Lan,                     18, signal_on);
+    } else {
+        m_wifi_strong_img   = create_scaled_bitmap("monitor_signal_strong", this, 18);
+        m_wifi_middle_img   = create_scaled_bitmap("monitor_signal_middle", this, 18);
+        m_wifi_weak_img     = create_scaled_bitmap("monitor_signal_weak", this, 18);
+        m_wifi_none_img     = create_scaled_bitmap("monitor_signal_no", this, 18);
+        m_network_wired_img = create_scaled_bitmap("monitor_network_wired", this, 18);
+    }
+}
+
 void SideToolsPanel::msw_rescale()
 {
-    m_printing_img.msw_rescale();
-    m_arrow_img.msw_rescale();
+    // Rebuilt fresh (not .msw_rescale()'d): a glyph-backed ScalableBitmap has no
+    // bundled name to reload from, so it is re-rendered from the Material Symbol
+    // at the new DPI, same as init_signal_bitmaps() below.
+    m_printing_img = side_tools_glyph_bitmap(this, MaterialIcon::Print, 16, StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Device), "printer");
+    m_arrow_img    = side_tools_glyph_bitmap(this, MaterialIcon::ChevronRight, 14, StateColor::semantic(MD3::Role::OnSurfaceVariant), "monitor_arrow");
 
-    m_none_printing_img.msw_rescale();
-    m_none_arrow_img.msw_rescale();
-    m_none_add_img.msw_rescale();
+    const wxColour none_state_fg = StateColor::semantic(MD3::Role::OnPrimary, MD3::ColorScheme::Device);
+    m_none_printing_img = side_tools_glyph_bitmap(this, MaterialIcon::Print, 24, none_state_fg, "tab_monitor_active");
+    m_none_arrow_img    = side_tools_glyph_bitmap(this, MaterialIcon::ChevronRight, 14, none_state_fg, "monitor_none_arrow");
+    m_none_add_img      = side_tools_glyph_bitmap(this, MaterialIcon::Add, 14, none_state_fg, "monitor_none_add");
 
-    m_wifi_none_img.msw_rescale();
-    m_wifi_weak_img.msw_rescale();
-    m_wifi_middle_img.msw_rescale();
-    m_wifi_strong_img.msw_rescale();
+    init_signal_bitmaps();
 
     Refresh();
 }
@@ -160,11 +218,11 @@ void SideToolsPanel::doRender(wxDC &dc)
         left += (m_none_arrow_img.GetBmpSize().x + FromDIP(6));
         dc.SetFont(::Label::Body_14);
         dc.SetBackgroundMode(wxTRANSPARENT);
-        dc.SetTextForeground(*wxWHITE);
+        dc.SetTextForeground(StateColor::semantic(MD3::Role::OnPrimary, MD3::ColorScheme::Device));
 
         wxString no_printer_str = _L("No printer");
         auto sizet = dc.GetTextExtent(no_printer_str);
-        auto left_add_bitmap = size.x - FromDIP(30) - m_wifi_none_img.GetBmpSize().x - m_none_add_img.GetBmpSize().x;
+        auto left_add_bitmap = size.x - FromDIP(30) - ScalableBitmap::GetBmpSize(m_wifi_none_img).x - m_none_add_img.GetBmpSize().x;
         auto size_width = left_add_bitmap - left;
 
         if (sizet.x > size_width) {
@@ -183,7 +241,7 @@ void SideToolsPanel::doRender(wxDC &dc)
 
         dc.DrawText(no_printer_str, wxPoint(left, (size.y - sizet.y) / 2));
 
-        left = size.x - FromDIP(30) - m_wifi_none_img.GetBmpSize().x;
+        left = size.x - FromDIP(30) - ScalableBitmap::GetBmpSize(m_wifi_none_img).x;
         dc.DrawBitmap(m_none_add_img.bmp(), left, (size.y - m_none_add_img.GetBmpSize().y) / 2);
     } else {
         dc.DrawBitmap(m_printing_img.bmp(), left, (size.y - m_printing_img.GetBmpSize().y) / 2);
@@ -194,10 +252,10 @@ void SideToolsPanel::doRender(wxDC &dc)
         left += (m_arrow_img.GetBmpSize().x + FromDIP(6));
         dc.SetFont(::Label::Body_14);
         dc.SetBackgroundMode(wxTRANSPARENT);
-        dc.SetTextForeground(StateColor::darkModeColorFor(SIDE_TOOLS_GREY900));
+        dc.SetTextForeground(SIDE_TOOLS_GREY900);
 
         auto sizet = dc.GetTextExtent(m_dev_name);
-        auto text_end = size.x - m_wifi_none_img.GetBmpSize().x - 20;
+        auto text_end = size.x - ScalableBitmap::GetBmpSize(m_wifi_none_img).x - 20;
 
         wxString finally_name = m_dev_name;
         if (sizet.x > (text_end - left)) {
@@ -214,12 +272,12 @@ void SideToolsPanel::doRender(wxDC &dc)
 
         dc.DrawText(finally_name, wxPoint(left, (size.y - sizet.y) / 2));
 
-        left = size.x - FromDIP(18) - m_wifi_none_img.GetBmpSize().x;
-        if (m_wifi_type == WifiSignal::NONE) dc.DrawBitmap(m_wifi_none_img.bmp(), left, (size.y - m_wifi_none_img.GetBmpSize().y) / 2);
-        if (m_wifi_type == WifiSignal::WEAK) dc.DrawBitmap(m_wifi_weak_img.bmp(), left, (size.y - m_wifi_weak_img.GetBmpSize().y) / 2);
-        if (m_wifi_type == WifiSignal::MIDDLE) dc.DrawBitmap(m_wifi_middle_img.bmp(), left, (size.y - m_wifi_middle_img.GetBmpSize().y) / 2);
-        if (m_wifi_type == WifiSignal::STRONG) dc.DrawBitmap(m_wifi_strong_img.bmp(), left, (size.y - m_wifi_strong_img.GetBmpSize().y) / 2);
-        if (m_wifi_type == WifiSignal::WIRED)  dc.DrawBitmap(m_network_wired_img.bmp(), left, (size.y - m_network_wired_img.GetBmpSize().y) / 2);
+        left = size.x - FromDIP(18) - ScalableBitmap::GetBmpSize(m_wifi_none_img).x;
+        if (m_wifi_type == WifiSignal::NONE) dc.DrawBitmap(m_wifi_none_img, left, (size.y - ScalableBitmap::GetBmpSize(m_wifi_none_img).y) / 2);
+        if (m_wifi_type == WifiSignal::WEAK) dc.DrawBitmap(m_wifi_weak_img, left, (size.y - ScalableBitmap::GetBmpSize(m_wifi_weak_img).y) / 2);
+        if (m_wifi_type == WifiSignal::MIDDLE) dc.DrawBitmap(m_wifi_middle_img, left, (size.y - ScalableBitmap::GetBmpSize(m_wifi_middle_img).y) / 2);
+        if (m_wifi_type == WifiSignal::STRONG) dc.DrawBitmap(m_wifi_strong_img, left, (size.y - ScalableBitmap::GetBmpSize(m_wifi_strong_img).y) / 2);
+        if (m_wifi_type == WifiSignal::WIRED)  dc.DrawBitmap(m_network_wired_img, left, (size.y - ScalableBitmap::GetBmpSize(m_network_wired_img).y) / 2);
     }
 
     if (m_hover) {
@@ -227,12 +285,60 @@ void SideToolsPanel::doRender(wxDC &dc)
         dc.SetBrush(*wxTRANSPARENT_BRUSH);
         dc.DrawRectangle(0, 0, size.x, size.y);
     }
+
+    // a11y-focus: keyboard focus indicator -- a distinct inset 2px Primary ring so
+    // the focused strip is visually separable from the 1px hover outline.
+    if (m_focused) {
+        dc.SetPen(wxPen(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Device), FromDIP(2)));
+        dc.SetBrush(*wxTRANSPARENT_BRUSH);
+        const int inset = FromDIP(2);
+        dc.DrawRectangle(inset, inset, size.x - 2 * inset, size.y - 2 * inset);
+    }
 }
 
 void SideToolsPanel::on_mouse_left_down(wxMouseEvent &evt)
 {
     m_click = true;
+    // Move keyboard focus here on click so the focus ring and Enter/Space
+    // activation follow a pointer interaction too.
+    if (!HasFocus())
+        SetFocus();
     Refresh();
+}
+
+void SideToolsPanel::on_set_focus(wxFocusEvent &evt)
+{
+    m_focused = true;
+    Refresh();
+    evt.Skip();
+}
+
+void SideToolsPanel::on_kill_focus(wxFocusEvent &evt)
+{
+    m_focused = false;
+    Refresh();
+    evt.Skip();
+}
+
+void SideToolsPanel::on_key_down(wxKeyEvent &evt)
+{
+    const int key = evt.GetKeyCode();
+    if (key == WXK_RETURN || key == WXK_NUMPAD_ENTER || key == WXK_SPACE) {
+        trigger_primary_action();
+    } else {
+        evt.Skip();
+    }
+}
+
+void SideToolsPanel::trigger_primary_action()
+{
+    // The host (MonitorPanel/CalibrationPanel) connects the printer-switch popup
+    // to this panel's wxEVT_LEFT_DOWN; on_printer_clicked ignores the pointer
+    // coordinate, so a synthetic left-down replays the exact same action for the
+    // keyboard.
+    wxMouseEvent e(wxEVT_LEFT_DOWN);
+    e.SetEventObject(this);
+    GetEventHandler()->ProcessEvent(e);
 }
 
 void SideToolsPanel::on_mouse_left_up(wxMouseEvent &evt)
@@ -256,14 +362,16 @@ void SideToolsPanel::on_mouse_leave(wxMouseEvent &evt)
 SideTools::SideTools(wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSize &size)
 {
     wxPanel::Create(parent, id, pos, size);
-    SetBackgroundColour(wxColour("#FEFFFF"));
+    // Device-page surface (Device.jsx SurfaceDim), replacing the legacy
+    // ThemeColor::White literal.
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceDim));
 
     m_side_tools = new SideToolsPanel(this, wxID_ANY);
 
     m_connection_info = new Button(this, wxEmptyString);
-    m_connection_info->SetBackgroundColor(wxColour(255, 111, 0));
-    m_connection_info->SetBorderColor(wxColour(255, 111, 0));
-    m_connection_info->SetTextColor(*wxWHITE);
+    m_connection_info->SetBackgroundColor(ThemeColor::Warning);
+    m_connection_info->SetBorderColor(ThemeColor::Warning);
+    m_connection_info->SetTextColor(ThemeColor::White);
     m_connection_info->SetFont(::Label::Body_13);
     m_connection_info->SetCornerRadius(0);
     m_connection_info->SetSize(wxSize(FromDIP(-1), FromDIP(25)));
@@ -280,12 +388,16 @@ SideTools::SideTools(wxWindow *parent, wxWindowID id, const wxPoint &pos, const 
                              wxT("https://wiki.bambulab.com/en/software/bambu-studio/failed-to-connect-printer");
 
 
-    m_hyperlink = new wxHyperlinkCtrl(m_connection_info, wxID_ANY, _L("Failed to connect to the server"), hyperlink_url, wxDefaultPosition, wxDefaultSize, wxHL_DEFAULT_STYLE);
-    m_hyperlink->SetBackgroundColour(wxColour(255, 111, 0));
+    m_hyperlink = new LinkLabel(m_connection_info, _L("Failed to connect to the server"), hyperlink_url.ToStdString());
+    m_hyperlink->SeLinkLabelBColour(ThemeColor::Warning);
 
-    m_more_err_open = ScalableBitmap(this, "monitir_err_open", 16);
-    m_more_err_close = ScalableBitmap(this, "monitir_err_close", 16);
+    // MD3: expand/collapse chevron glyph on the warning-fill banner, falling
+    // back to the legacy monitir_err_open/close rasters when the icon face is
+    // unavailable (mirrors the wifi/printer/arrow icons in this file).
+    m_more_err_open  = side_tools_glyph_bitmap(this, MaterialIcon::ExpandMore, 16, ThemeColor::White, "monitir_err_open");
+    m_more_err_close = side_tools_glyph_bitmap(this, MaterialIcon::ExpandLess, 16, ThemeColor::White, "monitir_err_close");
     m_more_button = new ScalableButton(m_connection_info, wxID_ANY, "monitir_err_open");
+    m_more_button->SetBitmap(m_more_err_open.bmp());
     m_more_button->Bind(wxEVT_ENTER_WINDOW, [this](auto& e) {SetCursor(wxCURSOR_HAND); });
     m_more_button->Bind(wxEVT_LEAVE_WINDOW, [this](auto& e) {SetCursor(wxCURSOR_ARROW); });
     m_more_button->Bind(wxEVT_LEFT_DOWN, [this](auto& e) {
@@ -319,7 +431,7 @@ SideTools::SideTools(wxWindow *parent, wxWindowID id, const wxPoint &pos, const 
     connection_sizer_V->Fit(m_connection_info);
 
     m_side_error_panel = new wxWindow(this, wxID_ANY);
-    m_side_error_panel->SetBackgroundColour(wxColour(255, 232, 214));
+    m_side_error_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::ErrorContainer));
     m_side_error_panel->SetMinSize(wxSize(-1, -1));
     m_side_error_panel->SetMaxSize(wxSize(-1, -1));
 
@@ -334,20 +446,21 @@ SideTools::SideTools(wxWindow *parent, wxWindowID id, const wxPoint &pos, const 
     wxBoxSizer* sizer_error_desc = new wxBoxSizer(wxHORIZONTAL);
     wxBoxSizer* sizer_extra_info = new wxBoxSizer(wxHORIZONTAL);
 
-    m_link_network_state = new wxHyperlinkCtrl(m_side_error_panel, wxID_ANY,_L("Check the status of current system services"),"",wxDefaultPosition,wxDefaultSize, wxHL_ALIGN_CENTRE |wxST_ELLIPSIZE_END);
+    m_link_network_state = new LinkLabel(m_side_error_panel, _L("Check the status of current system services"), "");
     m_link_network_state->SetMinSize(wxSize(FromDIP(220), -1));
     m_link_network_state->SetMaxSize(wxSize(FromDIP(220), -1));
-    m_link_network_state->SetFont(::Label::Body_12);
-    m_link_network_state->Bind(wxEVT_LEFT_DOWN, [this](auto& e) {wxGetApp().link_to_network_check(); });
-    m_link_network_state->Bind(wxEVT_ENTER_WINDOW, [this](auto& e) {m_link_network_state->SetCursor(wxCURSOR_HAND); });
-    m_link_network_state->Bind(wxEVT_LEAVE_WINDOW, [this](auto& e) {m_link_network_state->SetCursor(wxCURSOR_ARROW); });
+    m_link_network_state->getLabel()->SetFont(::Label::Body_12);
+    m_link_network_state->Bind(EVT_LINK_LABEL_LEFT_DOWN, [this](auto& e) { wxGetApp().link_to_network_check(); });
 
-    auto st_title_error_code = new wxStaticText(m_side_error_panel, wxID_ANY, _L("code"), wxDefaultPosition, wxDefaultSize, wxST_ELLIPSIZE_END);
-    auto st_title_error_code_doc = new wxStaticText(m_side_error_panel, wxID_ANY, ": ");
+    auto st_title_error_code = new Label(m_side_error_panel, _L("code"), wxST_ELLIPSIZE_END);
+    auto st_title_error_code_doc = new Label(m_side_error_panel, ": ");
     m_st_txt_error_code = new Label(m_side_error_panel, wxEmptyString, LB_AUTO_WRAP);
-    st_title_error_code->SetForegroundColour(0x909090);
-    st_title_error_code_doc->SetForegroundColour(0x909090);
-    m_st_txt_error_code->SetForegroundColour(0x909090);
+    // a11y-contrast: this text sits on the ErrorContainer fill (see
+    // m_side_error_panel above), so it must use the OnErrorContainer role to meet
+    // WCAG AA -- the flat legacy TextDisabled grey failed contrast on that surface.
+    st_title_error_code->SetForegroundColour(StateColor::semantic(MD3::Role::OnErrorContainer));
+    st_title_error_code_doc->SetForegroundColour(StateColor::semantic(MD3::Role::OnErrorContainer));
+    m_st_txt_error_code->SetForegroundColour(StateColor::semantic(MD3::Role::OnErrorContainer));
     st_title_error_code->SetFont(::Label::Body_12);
     st_title_error_code_doc->SetFont(::Label::Body_12);
     m_st_txt_error_code->SetFont(::Label::Body_12);
@@ -360,12 +473,12 @@ SideTools::SideTools(wxWindow *parent, wxWindowID id, const wxPoint &pos, const 
     sizer_error_code->Add(m_st_txt_error_code, 0, wxALL, 0);
 
 
-    auto st_title_error_desc = new wxStaticText(m_side_error_panel, wxID_ANY, wxT("desc"), wxDefaultPosition, wxDefaultSize, wxST_ELLIPSIZE_END);
-    auto st_title_error_desc_doc = new wxStaticText(m_side_error_panel, wxID_ANY, ": ");
+    auto st_title_error_desc = new Label(m_side_error_panel, wxT("desc"), wxST_ELLIPSIZE_END);
+    auto st_title_error_desc_doc = new Label(m_side_error_panel, ": ");
     m_st_txt_error_desc = new Label(m_side_error_panel, wxEmptyString, LB_AUTO_WRAP);
-    st_title_error_desc->SetForegroundColour(0x909090);
-    st_title_error_desc_doc->SetForegroundColour(0x909090);
-    m_st_txt_error_desc->SetForegroundColour(0x909090);
+    st_title_error_desc->SetForegroundColour(StateColor::semantic(MD3::Role::OnErrorContainer));
+    st_title_error_desc_doc->SetForegroundColour(StateColor::semantic(MD3::Role::OnErrorContainer));
+    m_st_txt_error_desc->SetForegroundColour(StateColor::semantic(MD3::Role::OnErrorContainer));
     st_title_error_desc->SetFont(::Label::Body_12);
     st_title_error_desc_doc->SetFont(::Label::Body_12);
     m_st_txt_error_desc->SetFont(::Label::Body_12);
@@ -377,12 +490,12 @@ SideTools::SideTools(wxWindow *parent, wxWindowID id, const wxPoint &pos, const 
     sizer_error_desc->Add(st_title_error_desc_doc, 0, wxALL, 0);
     sizer_error_desc->Add(m_st_txt_error_desc, 0, wxALL, 0);
 
-    auto st_title_extra_info = new wxStaticText(m_side_error_panel, wxID_ANY, wxT("info"), wxDefaultPosition, wxDefaultSize, wxST_ELLIPSIZE_END);
-    auto st_title_extra_info_doc = new wxStaticText(m_side_error_panel, wxID_ANY, ": ");
+    auto st_title_extra_info = new Label(m_side_error_panel, wxT("info"), wxST_ELLIPSIZE_END);
+    auto st_title_extra_info_doc = new Label(m_side_error_panel, ": ");
     m_st_txt_extra_info = new Label(m_side_error_panel, wxEmptyString, LB_AUTO_WRAP);
-    st_title_extra_info->SetForegroundColour(0x909090);
-    st_title_extra_info_doc->SetForegroundColour(0x909090);
-    m_st_txt_extra_info->SetForegroundColour(0x909090);
+    st_title_extra_info->SetForegroundColour(StateColor::semantic(MD3::Role::OnErrorContainer));
+    st_title_extra_info_doc->SetForegroundColour(StateColor::semantic(MD3::Role::OnErrorContainer));
+    m_st_txt_extra_info->SetForegroundColour(StateColor::semantic(MD3::Role::OnErrorContainer));
     st_title_extra_info->SetFont(::Label::Body_12);
     st_title_extra_info_doc->SetFont(::Label::Body_12);
     m_st_txt_extra_info->SetFont(::Label::Body_12);
@@ -506,13 +619,13 @@ void SideTools::show_status(int status)
 {
     if (((status & (int)MonitorStatus::MONITOR_DISCONNECTED) != 0) || ((status & (int)MonitorStatus::MONITOR_DISCONNECTED_SERVER) != 0)) {
         if ((status & (int)MonitorStatus::MONITOR_DISCONNECTED_SERVER)) {
-            m_hyperlink->SetLabel(_L("Failed to connect to the server"));
+            m_hyperlink->setLabel(_L("Failed to connect to the server"));
             update_connect_err_info(BAMBU_NETWORK_ERR_CONNECTION_TO_SERVER_FAILED,
                 _L("Failed to connect to cloud service"),
                 _L("Please click on the hyperlink above to view the cloud service status"));
         }
         else {
-            m_hyperlink->SetLabel(_L("Failed to connect to the printer"));
+            m_hyperlink->setLabel(_L("Failed to connect to the printer"));
             update_connect_err_info(BAMBU_NETWORK_ERR_CONNECTION_TO_PRINTER_FAILED,
                 _L("Connection to printer failed"),
                 _L("Please check the network connection of the printer and Studio."));
@@ -520,8 +633,8 @@ void SideTools::show_status(int status)
 
         m_hyperlink->Show();
         m_connection_info->SetLabel(wxEmptyString);
-        m_connection_info->SetBackgroundColor(0xFF6F00);
-        m_connection_info->SetBorderColor(0xFF6F00);
+        m_connection_info->SetBackgroundColor(ThemeColor::Warning);
+        m_connection_info->SetBorderColor(ThemeColor::Warning);
         m_connection_info->Show();
         m_more_button->Show();
 
@@ -534,8 +647,8 @@ void SideTools::show_status(int status)
     else if ((status & (int)MonitorStatus::MONITOR_CONNECTING) != 0) {
         m_hyperlink->Hide();
         m_connection_info->SetLabel(_L("Connecting..."));
-        m_connection_info->SetBackgroundColor(0x00AE42);
-        m_connection_info->SetBorderColor(0x00AE42);
+        m_connection_info->SetBackgroundColor(ThemeColor::BrandGreen);
+        m_connection_info->SetBorderColor(ThemeColor::BrandGreen);
         m_connection_info->Show();
         m_more_button->Hide();
         m_side_error_panel->Hide();

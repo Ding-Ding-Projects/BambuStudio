@@ -1,4 +1,5 @@
 #include "AnimaController.hpp"
+#include "StateColor.hpp"
 
 #include <wx/dcclient.h>
 #include <wx/dcgraph.h>
@@ -10,7 +11,7 @@ AnimaIcon::AnimaIcon(wxWindow *parent, wxWindowID id, std::vector<std::string> i
     : wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize), m_ivt(ivt), m_img_enable(img_enable), m_img_list(img_list), m_size(size)
 {
     auto sizer = new wxBoxSizer(wxHORIZONTAL);
-    SetBackgroundColour((wxColour(255, 255, 255)));
+    SetBackgroundColour(ThemeColor::White);
     // m_size = 25;
 
     //add ScalableBitmap
