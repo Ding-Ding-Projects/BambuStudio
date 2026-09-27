@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-22 15:53+0800\n"
+"POT-Creation-Date: 2026-09-27 19:11-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -464,6 +464,7 @@ msgstr ""
 msgid "Abnormal Hotend"
 msgstr ""
 
+#. TRN: Cancel the pending bulk delete in the notification centre.
 msgid "Cancel"
 msgstr ""
 
@@ -1933,6 +1934,9 @@ msgstr ""
 msgid "BambuStudio got an unhandled exception: %1%"
 msgstr ""
 
+msgid "The funny level styles every message in this language, including errors and warnings. Facts never change. Adjust it in Preferences > General."
+msgstr ""
+
 msgid "This file is not from a trusted site, do you want to open it anyway?"
 msgstr ""
 
@@ -1997,6 +2001,15 @@ msgid "This is the newest version."
 msgstr ""
 
 msgid "Info"
+msgstr ""
+
+msgid "Loading presets"
+msgstr ""
+
+msgid "Building the window"
+msgstr ""
+
+msgid "Applying presets"
 msgstr ""
 
 msgid "Rebuild"
@@ -2113,7 +2126,13 @@ msgstr ""
 msgid "Select a G-code file:"
 msgstr ""
 
+msgid "The configuration is up to date."
+msgstr ""
+
 msgid "Import File"
+msgstr ""
+
+msgid "Open File"
 msgstr ""
 
 msgid "Choose files"
@@ -2315,6 +2334,13 @@ msgstr ""
 msgid "Fix model"
 msgstr ""
 
+#. TRN: Context-menu item exporting the whole object list table.
+msgid "Export object list"
+msgstr ""
+
+msgid "Export every object's name, parts, instances and size as JSON, CSV, YAML, TOML, XML, Markdown, HTML or an archive"
+msgstr ""
+
 msgid "Export as one STL"
 msgstr ""
 
@@ -2463,10 +2489,22 @@ msgstr ""
 msgid "Edit"
 msgstr ""
 
+msgid "Edit this filament preset"
+msgstr ""
+
 msgid "Delete this filament"
 msgstr ""
 
+msgid "Separate this filament into its component colors"
+msgstr ""
+
+msgid "Merge this filament into the selected filament"
+msgstr ""
+
 msgid "Merge with"
+msgstr ""
+
+msgid "Choose the filament that will replace this one"
 msgstr ""
 
 msgid "Select All"
@@ -2756,10 +2794,10 @@ msgstr ""
 msgid "The type of the last solid object part is not to be changed."
 msgstr ""
 
-msgid "Enter new name"
+msgid "Renaming"
 msgstr ""
 
-msgid "Renaming"
+msgid "Enter new name"
 msgstr ""
 
 msgid "Following model object has been repaired"
@@ -2867,6 +2905,24 @@ msgstr ""
 msgid "Line Type"
 msgstr ""
 
+msgid "text"
+msgstr ""
+
+msgid "&"
+msgstr ""
+
+msgid "hypertext_menubar_item_name"
+msgstr ""
+
+msgid "Pause print simulation"
+msgstr ""
+
+msgid "Play print simulation"
+msgstr ""
+
+msgid "Simulation speed"
+msgstr ""
+
 msgid "Color"
 msgstr ""
 
@@ -2942,6 +2998,9 @@ msgstr ""
 msgid "Delete Filament Change"
 msgstr ""
 
+msgid "Switch printer"
+msgstr ""
+
 msgid "No printer"
 msgstr ""
 
@@ -2978,6 +3037,9 @@ msgstr ""
 msgid "Auto-refill"
 msgstr ""
 
+msgid "AMS settings"
+msgstr ""
+
 msgid "Load"
 msgstr ""
 
@@ -3007,6 +3069,9 @@ msgstr ""
 msgid "Load %s to "
 msgstr ""
 
+msgid "Fan speed"
+msgstr ""
+
 msgid "Changing fan speed during printing may affect print quality, please choose carefully."
 msgstr ""
 
@@ -3014,6 +3079,13 @@ msgid "Change Anyway"
 msgstr ""
 
 msgid "Off"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s fan speed"
+msgstr ""
+
+msgid "Fan Control"
 msgstr ""
 
 msgid "Filter"
@@ -3605,6 +3677,12 @@ msgstr ""
 msgid "Search"
 msgstr ""
 
+msgid "Regular expression"
+msgstr ""
+
+msgid "Regex builder"
+msgstr ""
+
 msgid "Expand all objects"
 msgstr ""
 
@@ -3874,7 +3952,7 @@ msgstr ""
 msgid "Filament Matching"
 msgstr ""
 
-msgid "Import Model: Simplify Colors"
+msgid "Import Model"
 msgstr ""
 
 msgid "Original"
@@ -3947,6 +4025,9 @@ msgstr ""
 
 #, possible-c-format, possible-boost-format
 msgid "After simplification: %d colors"
+msgstr ""
+
+msgid "Import Model: Simplify Colors"
 msgstr ""
 
 msgid "Import Model: Filament Matching"
@@ -4138,6 +4219,12 @@ msgstr ""
 msgid "There many parts of the software that come from community contributions, so we're unable to list them one-by-one, and instead, they'll be attributed in the corresponding code comments."
 msgstr ""
 
+msgid "What's new"
+msgstr ""
+
+msgid "Browse every released version with its dated, commit-linked changes"
+msgstr ""
+
 msgid "AMS Materials Setting"
 msgstr ""
 
@@ -4145,9 +4232,6 @@ msgid "Colour"
 msgstr ""
 
 msgid "Factors of Flow Dynamics Calibration"
-msgstr ""
-
-msgid "View Wiki for details"
 msgstr ""
 
 msgid "Nozzle Type"
@@ -4214,6 +4298,12 @@ msgstr ""
 msgid ""
 "The nozzle flow is not set. Please set the nozzle flow rate before editing the filament.\n"
 "'Device -> Print parts'"
+msgstr ""
+
+msgid "Custom color"
+msgstr ""
+
+msgid "Filament Manager"
 msgstr ""
 
 msgid "Matched filament"
@@ -4294,168 +4384,7 @@ msgstr ""
 msgid "Dynamic flow Calibration"
 msgstr ""
 
-msgid "Unmapped"
-msgstr ""
-
-msgid ""
-"Upper half area:  Original\n"
-"Lower half area: The filament from original project will be used when unmapped.\n"
-"And you can click it to modify"
-msgstr ""
-
-msgid ""
-"Upper half area:  Original\n"
-"Lower half area:  Filament in AMS\n"
-"And you can click it to modify"
-msgstr ""
-
-msgid ""
-"Upper half area:  Original\n"
-"Lower half area:  Filament in AMS\n"
-"And you cannot click it to modify"
-msgstr ""
-
-msgid "AMS Slots"
-msgstr ""
-
-msgid "Please select from the following filaments"
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "Select filament that installed to the %s"
-msgstr ""
-
-msgid "Left AMS"
-msgstr ""
-
-msgid "External"
-msgstr ""
-
-msgid "Reset current filament mapping"
-msgstr ""
-
-msgid "Right AMS"
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "Printing with the current nozzle may produce an extra %0.2f g of waste."
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "Tips: the filament type(%s) does not match with the filament type(%s) in the slicing file. If you want to use this slot, you can install %s instead of %s and change slot information on the 'Device' page."
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "Cannot select: the filament type(%s) does not match with the filament type(%s) in the slicing file. If you want to use this slot, you can install %s instead of %s and change slot information on the 'Device' page."
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "Cannot select: the slot is empty or undefined. If you want to use this slot, you can install %s and change slot information on the 'Device' page."
-msgstr ""
-
-msgid "Cannot select: No filament loaded in current slot."
-msgstr ""
-
-msgid "Enable AMS"
-msgstr ""
-
-msgid "Print with filaments in the AMS"
-msgstr ""
-
-msgid "Disable AMS"
-msgstr ""
-
-msgid "Print with the filament mounted on the back of chassis"
-msgstr ""
-
-msgid "Please change the desiccant when it is too wet. The indicator may not represent accurately in following cases : when the lid is open or the desiccant pack is changed. it take hours to absorb the moisture, low temperatures also slow down the process."
-msgstr ""
-
-msgid "Config which AMS slot should be used for a filament used in the print job"
-msgstr ""
-
-msgid "Filament used in this print job"
-msgstr ""
-
-msgid "AMS slot used for this filament"
-msgstr ""
-
-msgid "Click to select AMS slot manually"
-msgstr ""
-
-msgid "Do not Enable AMS"
-msgstr ""
-
-msgid "Print using materials mounted on the back of the case"
-msgstr ""
-
-msgid "Print with filaments in AMS"
-msgstr ""
-
-msgid "Print with filaments mounted on the back of the chassis"
-msgstr ""
-
-msgid "Auto Refill"
-msgstr ""
-
-msgid "When the current material run out, the printer will continue to print in the following order."
-msgstr ""
-
-msgid "Identical filament: same brand, type and color"
-msgstr ""
-
-msgid "Group"
-msgstr ""
-
-msgid "When the current material runs out, the printer would use identical filament to continue printing."
-msgstr ""
-
-msgid "The printer does not currently support auto refill."
-msgstr ""
-
-msgid "AMS filament backup is not enabled, please enable it in the AMS settings."
-msgstr ""
-
-msgid ""
-"When the current filament runs out, the printer will use identical filament to continue printing.\n"
-"*Identical filament: same brand, type and color."
-msgstr ""
-
-msgid "DRY"
-msgstr ""
-
-msgid "WET"
-msgstr ""
-
-msgid "AMS"
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "Please select the filament installed on the %s."
-msgstr ""
-
-msgid "Please select the filament."
-msgstr ""
-
-msgid "Nozzle"
-msgstr ""
-
-msgid "To learn about the filaments matching rules."
-msgstr ""
-
-msgid "External spools is not supported since Filament Track Switch has been installed. If you want to use external spool, please uninstall it."
-msgstr ""
-
-msgid "Select Filament && Hotends"
-msgstr ""
-
-msgid "Select Filament"
-msgstr ""
-
 msgid "AMS Settings"
-msgstr ""
-
-msgid "AMS settings"
 msgstr ""
 
 msgid "Insertion update"
@@ -4535,16 +4464,42 @@ msgstr ""
 msgid "File"
 msgstr ""
 
-msgid "Save Project"
+msgid "View"
 msgstr ""
 
-msgid "Undo"
-msgstr ""
-
-msgid "Redo"
+msgid "Objects"
 msgstr ""
 
 msgid "Calibration"
+msgstr ""
+
+msgid "Help"
+msgstr ""
+
+msgid "Version history"
+msgstr ""
+
+#. TRN: Tooltip / accessible name of the top-bar notification bell.
+msgid "Notifications"
+msgstr ""
+
+msgid "Appearance"
+msgstr ""
+
+msgid "Minimize"
+msgstr ""
+
+msgid "Maximize"
+msgstr ""
+
+msgid "Close window"
+msgstr ""
+
+msgid "Top bar"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Notifications (%d unread)"
 msgstr ""
 
 msgid "Failed to download the plug-in. Please check your firewall settings and vpn software, check and retry."
@@ -4575,6 +4530,10 @@ msgid "Processing G-Code from Previous file..."
 msgstr ""
 
 msgid "Slicing complete"
+msgstr ""
+
+#, possible-boost-format
+msgid "Masked SLA file exported to %1%"
 msgstr ""
 
 msgid "Access violation"
@@ -5368,6 +5327,10 @@ msgstr ""
 msgid "Time Estimation"
 msgstr ""
 
+#, possible-boost-format
+msgid "Sliced · %1% layers"
+msgstr ""
+
 msgid "up to"
 msgstr ""
 
@@ -5377,10 +5340,28 @@ msgstr ""
 msgid "from"
 msgstr ""
 
-msgid "Slicing Result"
+msgid "Color Scheme"
 msgstr ""
 
-msgid "Color Scheme"
+msgid "Travel"
+msgstr ""
+
+msgid "Seams"
+msgstr ""
+
+msgid "Retract"
+msgstr ""
+
+msgid "Unretract"
+msgstr ""
+
+msgid "Wipe"
+msgstr ""
+
+msgid "Filament Changes"
+msgstr ""
+
+msgid "More"
 msgstr ""
 
 msgid "Percent"
@@ -5411,24 +5392,6 @@ msgid "Volumetric flow rate (mm³/s)"
 msgstr ""
 
 msgid "Nozzles"
-msgstr ""
-
-msgid "Travel"
-msgstr ""
-
-msgid "Seams"
-msgstr ""
-
-msgid "Retract"
-msgstr ""
-
-msgid "Unretract"
-msgstr ""
-
-msgid "Filament Changes"
-msgstr ""
-
-msgid "Wipe"
 msgstr ""
 
 msgid "travel"
@@ -5534,6 +5497,18 @@ msgid "Set to Optimal"
 msgstr ""
 
 msgid "Regroup filament"
+msgstr ""
+
+msgid "Mean"
+msgstr ""
+
+msgid "Max"
+msgstr ""
+
+msgid "Min"
+msgstr ""
+
+msgid "GCode"
 msgstr ""
 
 msgid "Height: "
@@ -5722,6 +5697,16 @@ msgstr ""
 msgid "Align to Y axis"
 msgstr ""
 
+msgid "Front"
+msgstr ""
+
+msgid "Back"
+msgstr ""
+
+#. TRN To be shown in the main menu View->Bottom
+msgid "Bottom"
+msgstr ""
+
 msgctxt "Camera"
 msgid "Left"
 msgstr ""
@@ -5761,6 +5746,15 @@ msgid "Click to Collapse"
 msgstr ""
 
 msgid "Overview"
+msgstr ""
+
+msgid "object"
+msgstr ""
+
+msgid "objects"
+msgstr ""
+
+msgid "faces"
 msgstr ""
 
 msgid "Select Plate"
@@ -6048,6 +6042,58 @@ msgstr ""
 msgid "Preview"
 msgstr ""
 
+msgid "Could not open the selected project tab. The current project was restored."
+msgstr ""
+
+msgid "Could not open the selected project tab or restore the current project."
+msgstr ""
+
+msgid "Open project tab"
+msgstr ""
+
+msgid "Close project tab"
+msgstr ""
+
+msgid "Closing a project tab while some presets are modified."
+msgstr ""
+
+msgid "This project tab has unsaved changes that will be lost. Close it anyway?"
+msgstr ""
+
+msgid "Could not close this project tab. The project was restored."
+msgstr ""
+
+msgid "Could not close this project tab or restore its project."
+msgstr ""
+
+msgid "Open project or workspace"
+msgstr ""
+
+msgid "Bambu workspace (*.bambu-workspace)|*.bambu-workspace"
+msgstr ""
+
+msgid "Could not stage the workspace project for editing."
+msgstr ""
+
+msgid "Open workspace project"
+msgstr ""
+
+msgid "Could not open the selected project. The current project was restored."
+msgstr ""
+
+msgid "Could not open the selected project or restore the current project."
+msgstr ""
+
+msgid "Open project"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Plate %d"
+msgstr ""
+
+msgid "Not sliced"
+msgstr ""
+
 msgid "Home"
 msgstr ""
 
@@ -6058,9 +6104,6 @@ msgid "Multi-device"
 msgstr ""
 
 msgid "Project"
-msgstr ""
-
-msgid "Filament Manager"
 msgstr ""
 
 msgid "Yes"
@@ -6075,13 +6118,46 @@ msgstr ""
 msgid "The current page has unsaved changes. You can continue editing or choose to save/discard before leaving."
 msgstr ""
 
+msgid "Open the matching workspace before saving this member."
+msgstr ""
+
+msgid "Save workspace project"
+msgstr ""
+
+msgid "Could not prepare the project and its version history. The workspace was not changed."
+msgstr ""
+
+msgid "The workspace could not be saved. The previous bundle was preserved and the completed project remains in private recovery staging."
+msgstr ""
+
+msgid "Version history is waiting for the current operation to finish. Try again when it completes."
+msgstr ""
+
+msgid "The selected project version could not be prepared."
+msgstr ""
+
+msgid "The selected version was not restored."
+msgstr ""
+
+msgid "Plate 1"
+msgstr ""
+
 msgid "Unlock faster, more reliable, warp-free prints with Helio Additive."
 msgstr ""
 
 msgid "Slice plate"
 msgstr ""
 
+msgid "Slice and print"
+msgstr ""
+
+msgid "Slice options"
+msgstr ""
+
 msgid "Print plate"
+msgstr ""
+
+msgid "Print options"
 msgstr ""
 
 msgid ""
@@ -6133,6 +6209,18 @@ msgstr ""
 msgid "Send to Multi-device"
 msgstr ""
 
+msgid "Please slice the plate first."
+msgstr ""
+
+msgid "Please slice all plates first."
+msgstr ""
+
+msgid "Please select a single plate."
+msgstr ""
+
+msgid "Please configure the printer host first."
+msgstr ""
+
 msgid "Keyboard Shortcuts"
 msgstr ""
 
@@ -6160,6 +6248,9 @@ msgstr ""
 msgid "Open Network Test"
 msgstr ""
 
+msgid "What's new / Changelog"
+msgstr ""
+
 #, possible-c-format, possible-boost-format
 msgid "&About %s"
 msgstr ""
@@ -6176,14 +6267,7 @@ msgstr ""
 msgid "Top View"
 msgstr ""
 
-#. TRN To be shown in the main menu View->Bottom
-msgid "Bottom"
-msgstr ""
-
 msgid "Bottom View"
-msgstr ""
-
-msgid "Front"
 msgstr ""
 
 msgid "Front View"
@@ -6222,6 +6306,9 @@ msgstr ""
 msgid "Recent projects"
 msgstr ""
 
+msgid "Save Project"
+msgstr ""
+
 msgid "Save current project to file"
 msgstr ""
 
@@ -6237,6 +6324,36 @@ msgstr ""
 msgid "Show current project in folder"
 msgstr ""
 
+msgid "Browse and restore local Git-backed project versions"
+msgstr ""
+
+msgid "AI filament scanner"
+msgstr ""
+
+msgid "Snap a spool photo on your phone; a local model identifies it and loads an AMS slot"
+msgstr ""
+
+msgid "Smart home"
+msgstr ""
+
+msgid "Home Assistant speakers, media controls, TTS narrator and alert lights"
+msgstr ""
+
+msgid "Config profiles & backup"
+msgstr ""
+
+msgid "Export or import the complete data folder (secrets included, slide-to-confirm) and manage unlimited profiles with local Git snapshot history"
+msgstr ""
+
+msgid "Open in External Editor"
+msgstr ""
+
+msgid "Open the current project's folder in the configured external editor"
+msgstr ""
+
+msgid "No external editor is configured. Choose one in Preferences > General > External editor."
+msgstr ""
+
 msgid "Import 3MF/STL/STEP/SVG/OBJ/AMF"
 msgstr ""
 
@@ -6249,6 +6366,12 @@ msgstr ""
 msgid "Load configs"
 msgstr ""
 
+msgid "Model Creator"
+msgstr ""
+
+msgid "Describe, preview, and explicitly add a model to the plate"
+msgstr ""
+
 msgid "Import"
 msgstr ""
 
@@ -6258,10 +6381,10 @@ msgstr ""
 msgid "Export all objects as STLs"
 msgstr ""
 
-msgid "Export Generic 3MF"
+msgid "Export current version only as 3MF"
 msgstr ""
 
-msgid "Export 3mf file without using some 3mf-extensions"
+msgid "Export the current project without its version history"
 msgstr ""
 
 msgid "Export current sliced file"
@@ -6285,6 +6408,18 @@ msgstr ""
 msgid "Export current configuration to files"
 msgstr ""
 
+msgid "Export print statistics"
+msgstr ""
+
+msgid "Export the current plate's estimated times, filament use and flush volumes as JSON, YAML, TOML, XML, CSV, Markdown, HTML or an archive"
+msgstr ""
+
+msgid "Export preferences"
+msgstr ""
+
+msgid "Export every preference section as JSON, YAML, TOML, XML, CSV, Markdown, HTML or an archive"
+msgstr ""
+
 msgid "Publish to MakerWorld"
 msgstr ""
 
@@ -6292,6 +6427,12 @@ msgid "Batch Preset Management"
 msgstr ""
 
 msgid "Quit"
+msgstr ""
+
+msgid "Undo"
+msgstr ""
+
+msgid "Redo"
 msgstr ""
 
 msgid "Cut selection to clipboard"
@@ -6337,6 +6478,9 @@ msgid "Deselect all"
 msgstr ""
 
 msgid "Deselects all objects"
+msgstr ""
+
+msgid "Add model"
 msgstr ""
 
 msgid "Enter Camera Full Screen"
@@ -6399,12 +6543,6 @@ msgstr ""
 msgid "Preferences"
 msgstr ""
 
-msgid "View"
-msgstr ""
-
-msgid "Help"
-msgstr ""
-
 msgid "Temperature Calibration"
 msgstr ""
 
@@ -6448,9 +6586,6 @@ msgid "More calibrations"
 msgstr ""
 
 msgid "Window"
-msgstr ""
-
-msgid "Minimize"
 msgstr ""
 
 msgid "Zoom"
@@ -6581,6 +6716,9 @@ msgstr ""
 msgid "Plugin library failed to load. Click here to view the solution."
 msgstr ""
 
+msgid "Play or stop the camera live view"
+msgstr ""
+
 msgid "Loading failed. Please check the network and try again."
 msgstr ""
 
@@ -6698,6 +6836,12 @@ msgstr ""
 msgid "Batch manage files."
 msgstr ""
 
+msgid "Select all files."
+msgstr ""
+
+msgid "External"
+msgstr ""
+
 msgid "Internal"
 msgstr ""
 
@@ -6729,6 +6873,9 @@ msgid "No files"
 msgstr ""
 
 msgid "Load failed"
+msgstr ""
+
+msgid "Finish managing files."
 msgstr ""
 
 msgid "Browsing file in storage is not supported in current firmware. Please update the printer firmware."
@@ -6937,6 +7084,15 @@ msgstr ""
 msgid "Go to Login"
 msgstr ""
 
+msgid "Dry"
+msgstr ""
+
+msgid "Normal"
+msgstr ""
+
+msgid "Humid"
+msgstr ""
+
 msgid "Camera Full Screen"
 msgstr ""
 
@@ -7018,9 +7174,6 @@ msgstr ""
 msgid "Almost complete"
 msgstr ""
 
-msgid "Camera"
-msgstr ""
-
 msgid "Storage"
 msgstr ""
 
@@ -7036,25 +7189,43 @@ msgstr ""
 msgid "Print Options"
 msgstr ""
 
-msgid "Slice options"
-msgstr ""
-
-msgid "Print options"
-msgstr ""
-
 msgid "Safety Options"
+msgstr ""
+
+msgid "More options"
 msgstr ""
 
 msgid "Hotends"
 msgstr ""
 
-msgid "100%"
+msgid "Silent"
 msgstr ""
 
-msgid "Lamp"
+msgid "Sport"
+msgstr ""
+
+msgid "Ludicrous"
+msgstr ""
+
+msgid "This only takes effect during printing"
+msgstr ""
+
+msgid "Part cooling"
+msgstr ""
+
+msgid "Aux fan"
+msgstr ""
+
+msgid "Chamber light"
+msgstr ""
+
+msgid "Move distance (mm)"
 msgstr ""
 
 msgid "Bed"
+msgstr ""
+
+msgid "AMS"
 msgstr ""
 
 msgid "Filament loading..."
@@ -7064,12 +7235,6 @@ msgid "No Storage"
 msgstr ""
 
 msgid "Storage Abnormal"
-msgstr ""
-
-msgid "Cancel print"
-msgstr ""
-
-msgid "Are you sure you want to stop this print?"
 msgstr ""
 
 msgid "The printer is busy on other print job"
@@ -7149,18 +7314,6 @@ msgid "Please select an AMS slot before calibration"
 msgstr ""
 
 msgid "Cannot read filament info: the filament is loaded to the toolhead, please unload the filament and try again."
-msgstr ""
-
-msgid "This only takes effect during printing"
-msgstr ""
-
-msgid "Silent"
-msgstr ""
-
-msgid "Sport"
-msgstr ""
-
-msgid "Ludicrous"
 msgstr ""
 
 msgid "Turning off the lights during the task will cause the failure of AI monitoring, like spaghetti detection. Please choose carefully."
@@ -7354,22 +7507,10 @@ msgstr ""
 msgid "Newer 3mf version"
 msgstr ""
 
-msgid "The 3mf file version is in Beta and it is newer than the current Bambu Studio version."
-msgstr ""
-
-msgid "If you would like to try Bambu Studio Beta, you may click to"
-msgstr ""
-
-msgid "Download Beta Version"
-msgstr ""
-
 msgid "The 3mf file version is newer than the current Bambu Studio version."
 msgstr ""
 
 msgid "Some settings in this 3MF file may not load in this version."
-msgstr ""
-
-msgid "Update your Bambu Studio could enable all functionality in the 3mf file."
 msgstr ""
 
 msgid "Current Version: "
@@ -7382,10 +7523,6 @@ msgid "Latest Version: "
 msgstr ""
 
 msgid "View latest release"
-msgstr ""
-
-msgctxt "Software"
-msgid "Update"
 msgstr ""
 
 msgid "Not for now"
@@ -7451,13 +7588,13 @@ msgstr ""
 msgid "Goto download page."
 msgstr ""
 
-msgid "More"
-msgstr ""
-
 msgid "Open Folder."
 msgstr ""
 
 msgid "Safely remove hardware."
+msgstr ""
+
+msgid "Ejecting."
 msgstr ""
 
 #, possible-c-format, possible-boost-format
@@ -7560,6 +7697,12 @@ msgid "The application cannot run normally because OpenGL version is lower than 
 msgstr ""
 
 msgid "Please upgrade your graphics card driver."
+msgstr ""
+
+msgid "The application already tried its built-in software rendering fallback (Mesa llvmpipe), but the OpenGL version is still lower than 2.0."
+msgstr ""
+
+msgid "The application could not use its built-in software rendering fallback: the Mesa driver files (mesa\\opengl32.dll and mesa\\libgallium_wgl.dll) were not found beside the application, or the installation folder is not writable."
 msgstr ""
 
 msgid "Unsupported OpenGL version"
@@ -8245,12 +8388,6 @@ msgstr ""
 msgid "Global"
 msgstr ""
 
-msgid "Objects"
-msgstr ""
-
-msgid "Advance"
-msgstr ""
-
 msgid "Compare presets"
 msgstr ""
 
@@ -8357,6 +8494,9 @@ msgstr ""
 msgid "Filament changes"
 msgstr ""
 
+msgid "Filament switch status"
+msgstr ""
+
 msgid "Filament switcher detected. All AMS filaments are now available for both extruders. The slicer will auto-assign for optimal printing. "
 msgstr ""
 
@@ -8364,6 +8504,13 @@ msgid "A filament switcher is detected but not calibrated and thus currently una
 msgstr ""
 
 msgid "Learn more"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s nozzle"
+msgstr ""
+
+msgid "Connected"
 msgstr ""
 
 msgid "Set the number of AMS installed on the nozzle."
@@ -8415,6 +8562,9 @@ msgid ""
 "Curve planning enhancement support detected on your printer. The software has automatically disabled arc fitting to ensure this feature functions correctly."
 msgstr ""
 
+msgid "Sidebar"
+msgstr ""
+
 msgid "Click to edit preset"
 msgstr ""
 
@@ -8424,13 +8574,16 @@ msgstr ""
 msgid "Click to view the wiki of the current plate type"
 msgstr ""
 
+msgid "Bed type"
+msgstr ""
+
 msgid "Sync info"
 msgstr ""
 
 msgid "Synchronize nozzle information and the number of AMS"
 msgstr ""
 
-msgid "Project Filaments"
+msgid "Nozzle"
 msgstr ""
 
 msgid "Purge mode"
@@ -8439,16 +8592,22 @@ msgstr ""
 msgid "Flushing volumes"
 msgstr ""
 
-msgid "Add one filament"
-msgstr ""
-
-msgid "Remove last filament"
+msgid "Sync AMS"
 msgstr ""
 
 msgid "Synchronize filament list from AMS"
 msgstr ""
 
-msgid "Set filaments to use"
+msgid "Search filaments"
+msgstr ""
+
+msgid "Add filament"
+msgstr ""
+
+msgid "Bulk ink"
+msgstr ""
+
+msgid "Bulk filament actions"
 msgstr ""
 
 msgid "Add Mixed Filament"
@@ -8466,7 +8625,38 @@ msgstr ""
 msgid "Mixed filament has invalid or mismatched components. Please re-edit affected entries."
 msgstr ""
 
+msgid "Search settings"
+msgstr ""
+
+msgid "Others"
+msgstr ""
+
+msgid "Sparse infill density"
+msgstr ""
+
+msgid "Sparse infill pattern"
+msgstr ""
+
+msgid "Enable support"
+msgstr ""
+
 msgid "Search plate, object and part."
+msgstr ""
+
+msgid "Scale %"
+msgstr ""
+
+msgid "Prepare sections"
+msgstr ""
+
+msgid "Ink"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Ink %d color"
+msgstr ""
+
+msgid "Ink menu"
 msgstr ""
 
 #, possible-c-format, possible-boost-format
@@ -8514,6 +8704,17 @@ msgstr ""
 msgid "Edit / Delete / Merge"
 msgstr ""
 
+msgid "Delete filament"
+msgstr ""
+
+msgid "This filament slot will be removed from the project. Objects and paint assigned to it are moved to another slot."
+msgstr ""
+
+#. TRN %d is the 1-based filament slot number, %s the preset name.
+#, possible-c-format, possible-boost-format
+msgid "Slot %d: %s"
+msgstr ""
+
 #, possible-boost-format
 msgid "Do you want to save changes to \"%1%\"?"
 msgstr ""
@@ -8526,12 +8727,27 @@ msgstr ""
 msgid "Ejecting of device %s(%s) has failed."
 msgstr ""
 
+msgid "Your unsaved project could not be copied into version history. It is being kept on disk and offered again next time, so declining now will not delete it."
+msgstr ""
+
 msgid ""
 "It seems that you have projects that were not closed properly. Would you like to restore your last unsaved project?\n"
 "If you have a currently opened project and click \"Restore\", the current project will be closed."
 msgstr ""
 
 msgid "Restore"
+msgstr ""
+
+msgid "Your unsaved project was saved to version history before this prompt. It stays restorable from Version history even if you decline to restore it now."
+msgstr ""
+
+msgid "Project history could not save the latest edit. The app will retry automatically."
+msgstr ""
+
+msgid "Project history could not save the latest edit. Its recovery snapshot was kept on this device."
+msgstr ""
+
+msgid "Project history could not save some recent edits. Their recovery snapshots were kept on this device."
 msgstr ""
 
 msgid "The nozzle hardness required by the filament is higher than the default nozzle hardness of the printer. Please replace the hardened nozzle or filament, otherwise, the nozzle will be attrited or damaged."
@@ -8798,6 +9014,9 @@ msgid "You have selected multiple materials: %s"
 msgstr ""
 
 msgid "Note: Unsupported materials will use the selected reference material for simulation."
+msgstr ""
+
+msgid "True multi-material support will be added in a future update."
 msgstr ""
 
 msgid "Option 1: Proceed using a single filament type"
@@ -9072,12 +9291,49 @@ msgstr ""
 msgid "Load project"
 msgstr ""
 
+msgid "The active plate changed. Reopen print setup."
+msgstr ""
+
+msgid "Select the plate before changing its nozzle assignment."
+msgstr ""
+
+msgid "The filament assignment changed. Reopen print setup."
+msgstr ""
+
+msgid "Every used material needs a left or right nozzle."
+msgstr ""
+
+msgid "The printer nozzle configuration is unavailable."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The %s extruder has no available nozzle of the required type."
+msgstr ""
+
+msgid "Wait for the Prepare view before changing nozzle assignments."
+msgstr ""
+
+msgid "The proposed nozzle assignment could not be checked."
+msgstr ""
+
+msgid "The previous nozzle assignment could not be restored in Prepare."
+msgstr ""
+
+msgid "This nozzle cannot print the selected material."
+msgstr ""
+
+msgid "A model using this material is outside the target nozzle's printable area."
+msgstr ""
+
 msgid ""
 "Failed to save the project.\n"
 "Please check whether the folder exists online or if other programs open the project file or if there is enough disk space."
 msgstr ""
 
 msgid "Save project"
+msgstr ""
+
+msgid "Failed to save the project and its version history. The previous project file was preserved."
 msgstr ""
 
 msgid "Importing Model"
@@ -9144,7 +9400,7 @@ msgstr ""
 msgid "Add Models"
 msgstr ""
 
-msgid "All objects will be removed, continue?"
+msgid "Every object on every plate will be removed from this project."
 msgstr ""
 
 msgid "The current project has unsaved changes, save it before continue?"
@@ -9184,6 +9440,21 @@ msgstr ""
 
 #, possible-c-format, possible-boost-format
 msgid "The file %s has been sent to the printer's storage space and can be viewed on the printer."
+msgstr ""
+
+msgid "Could not preserve pending project history. The current version was not exported."
+msgstr ""
+
+msgid "Export current version"
+msgstr ""
+
+msgid "Could not export the current version. The previous file was preserved."
+msgstr ""
+
+msgid "Could not verify the exported 3MF. The previous file was preserved."
+msgstr ""
+
+msgid "Could not publish the current-version export. The previous file and pending export were preserved."
 msgstr ""
 
 msgid "The nozzle type is not set. Please set the nozzle and try again."
@@ -9291,6 +9562,14 @@ msgid ""
 "Thus, it is recommended to reset the skirt layer to 1 to avoid that."
 msgstr ""
 
+msgid "Delete plate"
+msgstr ""
+
+#. TRN %d is the 1-based plate number.
+#, possible-c-format, possible-boost-format
+msgid "Plate %d and every object on it will be removed from this project."
+msgstr ""
+
 msgid "Prime Tower:"
 msgstr ""
 
@@ -9382,6 +9661,33 @@ msgstr ""
 msgid "Region selection"
 msgstr ""
 
+msgid "Funny level (Cantonese)"
+msgstr ""
+
+msgid "1 = fully serious, 5 = maximum playfulness"
+msgstr ""
+
+msgid "What does this change?"
+msgstr ""
+
+msgid "Sets the tone of every message Bambu Studio shows in this language, including errors, warnings and destructive confirmations. It never changes what a message says has happened or what will be affected."
+msgstr ""
+
+msgid "Hide details"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Level %d of 5"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Stored in BambuStudio.conf as %d."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Not stored yet; using the compiled default %d."
+msgstr ""
+
 msgid ""
 "Please note that the model show will undergo certain changes at small pixels case.\n"
 "Enabled LOD requires application restart."
@@ -9408,6 +9714,27 @@ msgstr ""
 msgid "Choose Download Directory"
 msgstr ""
 
+msgid "External editor path"
+msgstr ""
+
+msgid "External editor browse"
+msgstr ""
+
+msgid "Download path browse"
+msgstr ""
+
+msgid "Executable files"
+msgstr ""
+
+msgid "Choose the external editor executable"
+msgstr ""
+
+msgid "Settings sections"
+msgstr ""
+
+msgid "No settings match your search."
+msgstr ""
+
 msgctxt "Preference"
 msgid "General"
 msgstr ""
@@ -9427,7 +9754,112 @@ msgstr ""
 msgid "Developer Tools"
 msgstr ""
 
+msgid "Appearance preview"
+msgstr ""
+
+msgid "Sample"
+msgstr ""
+
+msgid "Light"
+msgstr ""
+
+msgid "Dark"
+msgstr ""
+
+msgid "Theme"
+msgstr ""
+
+msgid "Comfortable"
+msgstr ""
+
+msgid "Compact"
+msgstr ""
+
+msgid "Density"
+msgstr ""
+
+msgid "Purple"
+msgstr ""
+
+msgid "Teal"
+msgstr ""
+
+msgid "Pink"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Accent %d"
+msgstr ""
+
+msgid "Custom accent"
+msgstr ""
+
+msgid "The quick brown fox"
+msgstr ""
+
+msgid "Appearance preview text"
+msgstr ""
+
+msgid "Small"
+msgstr ""
+
+msgid "Large"
+msgstr ""
+
+msgid "Text size"
+msgstr ""
+
+msgid "Reset appearance to defaults"
+msgstr ""
+
+msgid "Accent color"
+msgstr ""
+
+msgid "App name"
+msgstr ""
+
+msgid "App name status"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Enter a name of 1 to %d characters, or reset to the shipped name."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Too long: %d characters. Use %d or fewer."
+msgstr ""
+
+msgid "Remove line breaks and other control characters."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Stored in your settings (%s). Shipped name: %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Not set. Showing the shipped name, %s."
+msgstr ""
+
+msgid "Reset to shipped name"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The name is a label only. It changes the title bar, the window title, the About dialog and the dialog captions that introduce the app. Your data folder, the installer and updater, log files, crash and diagnostic reports, and file associations keep the real product name, %s, so support can still tell which software this is."
+msgstr ""
+
+msgid "What does renaming change?"
+msgstr ""
+
+msgid "Hide explanation"
+msgstr ""
+
 msgid "General Settings"
+msgstr ""
+
+msgid "Show emojis in dialogs and message boxes"
+msgstr ""
+
+msgid "Adds one decorative emoji to a dialog headline. Buttons, action labels and field labels never carry one."
 msgstr ""
 
 msgid "Asia-Pacific"
@@ -9442,9 +9874,6 @@ msgstr ""
 msgid "North America"
 msgstr ""
 
-msgid "Others"
-msgstr ""
-
 msgid "Login Region"
 msgstr ""
 
@@ -9455,9 +9884,6 @@ msgid "Imperial"
 msgstr ""
 
 msgid "Units"
-msgstr ""
-
-msgid "Enable dark mode"
 msgstr ""
 
 msgid "All related changes"
@@ -9482,6 +9908,12 @@ msgid "Auto Calculate Flush Volume"
 msgstr ""
 
 msgid "Auto calculate flush volumes"
+msgstr ""
+
+msgid "Prepare panel position"
+msgstr ""
+
+msgid "Dock the Prepare panel on the left, right, top, or bottom of the workspace."
 msgstr ""
 
 msgid "Keep only one Bambu Studio instance"
@@ -9516,6 +9948,12 @@ msgstr ""
 
 msgctxt "Preferences"
 msgid "Learn more"
+msgstr ""
+
+msgid "External editor"
+msgstr ""
+
+msgid "Editor used by File > Open in External Editor; \"Custom\" uses the executable chosen below."
 msgstr ""
 
 msgid "User Settings"
@@ -9638,10 +10076,10 @@ msgstr ""
 msgid "Always show shells or not in preview view tab. If you change this value, you should reslice."
 msgstr ""
 
-msgid "Show Thermal Preconditioning Area"
+msgid "Show bed heat soak area"
 msgstr ""
 
-msgid "Warn if a model extends beyond the thermal preconditioning area. Available only on printers that support this feature."
+msgid "Show the heated-bed preconditioning boundaries in the 3D view and preview."
 msgstr ""
 
 msgid "Show the step mesh parameter setting dialog."
@@ -9743,6 +10181,30 @@ msgstr ""
 msgid "Show history on the home page"
 msgstr ""
 
+msgid "AI printer watch"
+msgstr ""
+
+msgid "Summarize the printer's live camera view with a local model. Frames never leave this computer."
+msgstr ""
+
+msgid "Watch the live view and notify about progress and failures"
+msgstr ""
+
+msgid "Every few minutes a frame of the live view is described by a local Ollama model; suspected failures raise a persistent warning with fix suggestions."
+msgstr ""
+
+msgid "Local model tag"
+msgstr ""
+
+msgid "Vision-capable Ollama tag, e.g. qwen2.5vl or gemma3. Text-only tags such as gpt-oss cannot read frames."
+msgstr ""
+
+msgid "Check interval (minutes)"
+msgstr ""
+
+msgid "Minutes between live-view checks (minimum 1)."
+msgstr ""
+
 msgid "Developer Mode"
 msgstr ""
 
@@ -9750,9 +10212,6 @@ msgid "Develop mode"
 msgstr ""
 
 msgid "Skip AMS blacklist check"
-msgstr ""
-
-msgid "Enable DevTools For Webview"
 msgstr ""
 
 msgid "Associate Files To Bambu Studio"
@@ -9837,6 +10296,10 @@ msgid "Reset all warning dialogs"
 msgstr ""
 
 msgid "Reset preferences"
+msgstr ""
+
+#. TRN: Opens the shared Export dialog with every preference section.
+msgid "Export preferences..."
 msgstr ""
 
 msgid "All warning dialogs that you have disabled by checking \"Don't show again\" are now re-enabled and will show next time they apply."
@@ -9933,9 +10396,6 @@ msgstr ""
 msgid "Same as Global Plate Type"
 msgstr ""
 
-msgid "Bed type"
-msgstr ""
-
 msgid "Same as Global Print Sequence"
 msgstr ""
 
@@ -9987,10 +10447,10 @@ msgstr ""
 msgid "Move to the back"
 msgstr ""
 
-msgid "Accept"
+msgid "Log Out"
 msgstr ""
 
-msgid "Log Out"
+msgid "Accept"
 msgstr ""
 
 msgid "Slice all plate to obtain time and filament estimation"
@@ -10080,6 +10540,12 @@ msgstr ""
 msgid "Simply switch to \"%1%\""
 msgstr ""
 
+msgid "Match the search term as a regular expression"
+msgstr ""
+
+msgid "Regex"
+msgstr ""
+
 msgid ""
 "Turning off this option will affect print quality if:\n"
 "1. Uncalibrated hotends is used\n"
@@ -10133,6 +10599,27 @@ msgid "Send print job"
 msgstr ""
 
 msgid "The current estimated time has been recalculated based on the actual filament mapping."
+msgstr ""
+
+msgid "Previous plate"
+msgstr ""
+
+msgid "Next plate"
+msgstr ""
+
+msgid "Auto Refill"
+msgstr ""
+
+msgid "Swap"
+msgstr ""
+
+msgid "Swap and reslice"
+msgstr ""
+
+msgid "Apply the selected nozzle moves and return to Prepare."
+msgstr ""
+
+msgid "Apply the selected nozzle moves, reslice, then reopen print setup."
 msgstr ""
 
 msgid "Not satisfied with the grouping of filaments? Regroup and slice ->"
@@ -10332,7 +10819,30 @@ msgid ""
 "And you can click it to modify"
 msgstr ""
 
+msgid ""
+"Upper half area:  Original\n"
+"Lower half area:  Filament in AMS\n"
+"And you can click it to modify"
+msgstr ""
+
 msgid "Unable to automatically match to suitable filament. Please click to manually match."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Move material %d right"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Move material %d left"
+msgstr ""
+
+msgid "Swap nozzle assignment"
+msgstr ""
+
+msgid "The plate or filament assignment changed. Reopen print setup and try again."
+msgstr ""
+
+msgid "The nozzle assignment was saved. Start slicing from Prepare when the slice action is available."
 msgstr ""
 
 msgid "Install toolhead enhanced cooling fan to prevent filament softening."
@@ -10500,6 +11010,15 @@ msgstr ""
 msgid "Upgrade"
 msgstr ""
 
+msgid "Sending system info"
+msgstr ""
+
+msgid "Data to send"
+msgstr ""
+
+msgid "Send system info"
+msgstr ""
+
 msgid "Current firmware does not support file transfer to internal storage."
 msgstr ""
 
@@ -10521,6 +11040,12 @@ msgid "Upload file timeout, please check if the firmware version supports it."
 msgstr ""
 
 msgid "Connection timed out, please check your network."
+msgstr ""
+
+msgid "Sending"
+msgstr ""
+
+msgid "Connecting"
 msgstr ""
 
 msgid "Connection failed. Click the icon to retry"
@@ -10618,6 +11143,9 @@ msgstr ""
 msgid "Check the reason"
 msgstr ""
 
+msgid "Show details"
+msgstr ""
+
 msgid "Read and accept"
 msgstr ""
 
@@ -10672,6 +11200,11 @@ msgstr ""
 msgid "Delete this preset"
 msgstr ""
 
+#. TRN: %s is the preset kind (print / filament / printer).
+#, possible-c-format, possible-boost-format
+msgid "Export this %s preset as JSON, YAML, TOML, XML, CSV, Markdown, HTML or an archive"
+msgstr ""
+
 msgid "Search in preset"
 msgstr ""
 
@@ -10685,6 +11218,21 @@ msgid "Click to learn more"
 msgstr ""
 
 msgid "Click to reset all settings to the last saved preset."
+msgstr ""
+
+msgid "For support enforcers only"
+msgstr ""
+
+msgid "Support on build plate only"
+msgstr ""
+
+msgid "Everywhere"
+msgstr ""
+
+msgid "Around object"
+msgstr ""
+
+msgid "Below object"
 msgstr ""
 
 msgid ""
@@ -11097,9 +11645,6 @@ msgstr ""
 msgid "Motion ability"
 msgstr ""
 
-msgid "Normal"
-msgstr ""
-
 msgid "Speed limitation"
 msgstr ""
 
@@ -11424,9 +11969,6 @@ msgstr ""
 msgid "No updates available."
 msgstr ""
 
-msgid "The configuration is up to date."
-msgstr ""
-
 msgid "Open Wiki for more information >"
 msgstr ""
 
@@ -11675,9 +12217,6 @@ msgid ""
 "If you are using this filament on your printer, please reset the filament information for that slot."
 msgstr ""
 
-msgid "Delete filament"
-msgstr ""
-
 msgid "The configuration package is changed to the previous Config Guide"
 msgstr ""
 
@@ -11733,10 +12272,28 @@ msgstr ""
 msgid "Enable Dev Tools"
 msgstr ""
 
+msgid "Network unavailable. The current page remains open."
+msgstr ""
+
+msgid "Cloud sign-in could not be completed. The current page remains open."
+msgstr ""
+
+msgid "The requested cloud page was not found. The current page remains open."
+msgstr ""
+
+msgid "The cloud page could not be opened securely. The current page remains open."
+msgstr ""
+
+msgid "The cloud page is temporarily unavailable. The current page remains open."
+msgstr ""
+
 msgid "Toolbar"
 msgstr ""
 
 msgid "Objects list"
+msgstr ""
+
+msgid "Command palette"
 msgstr ""
 
 msgid "Import geometry data from STL/STEP/3MF/OBJ/AMF files"
@@ -11749,6 +12306,9 @@ msgid "Show/Hide 3Dconnexion devices settings dialog"
 msgstr ""
 
 msgid "Switch tab page"
+msgstr ""
+
+msgid "Edit appearance of the focused element"
 msgstr ""
 
 msgid "Show keyboard shortcuts list"
@@ -12397,9 +12957,6 @@ msgstr ""
 msgid "Failed to obtain Helio PAT. The number of issued PATs has reached the upper limit. Please pay attention to the information on the Helio official website. Click Refresh to get it again once it is available."
 msgstr ""
 
-msgid "HELIO ADDITIVE"
-msgstr ""
-
 msgid "Print Time Improvement"
 msgstr ""
 
@@ -12629,6 +13186,12 @@ msgid "The firmware version is abnormal. Repairing and updating are required bef
 msgstr ""
 
 msgid "Extension Board"
+msgstr ""
+
+msgid "Online projects"
+msgstr ""
+
+msgid "Workspace"
 msgstr ""
 
 msgid "Do you want to save the changes ?"
@@ -13375,6 +13938,9 @@ msgstr ""
 msgid "mm/s"
 msgstr ""
 
+msgid "100%"
+msgstr ""
+
 #, no-c-format, no-boost-format
 msgid "Speed of 100% overhang wall which has 0 overlap with the lower layer."
 msgstr ""
@@ -13542,9 +14108,6 @@ msgid "Activate air filtration"
 msgstr ""
 
 msgid "Activate for better air filtration"
-msgstr ""
-
-msgid "Fan speed"
 msgstr ""
 
 msgid "Speed of exhaust fan during printing.This speed will overwrite the speed in filament custom gcode"
@@ -13878,6 +14441,12 @@ msgstr ""
 msgid "Nozzle Manual"
 msgstr ""
 
+msgid "Prefer Left"
+msgstr ""
+
+msgid "Prefer Right"
+msgstr ""
+
 msgid "Flush temperature"
 msgstr ""
 
@@ -14032,9 +14601,6 @@ msgid "Metal stickiness"
 msgstr ""
 
 msgid "Indicates how strongly the filament tends to stick to the metal nozzle and leave residue. \"None\" means untested or custom filament, behaves the same as Low. Low: e.g. PLA - retraction can be safely skipped in infill areas. Medium: moderate stickiness - use with caution. High: e.g. PETG - retraction should not be skipped to avoid oozing artifacts on outer walls."
-msgstr ""
-
-msgid "Density"
 msgstr ""
 
 msgid "Filament density. For statistics only"
@@ -14253,9 +14819,6 @@ msgstr ""
 msgid "Angle for sparse infill pattern, which controls the start or main direction of line"
 msgstr ""
 
-msgid "Sparse infill density"
-msgstr ""
-
 #, no-c-format, no-boost-format
 msgid "Density of internal sparse infill, 100% means solid throughout"
 msgstr ""
@@ -14264,9 +14827,6 @@ msgid "Fill multiline"
 msgstr ""
 
 msgid "Using multiple lines for the infill pattern, if supported by infill pattern."
-msgstr ""
-
-msgid "Sparse infill pattern"
 msgstr ""
 
 msgid "Line pattern for internal sparse infill"
@@ -15044,9 +15604,6 @@ msgstr ""
 msgid "Part cooling fan speed may be increased when auto cooling is enabled. This is the maximum speed limitation of part cooling fan"
 msgstr ""
 
-msgid "Max"
-msgstr ""
-
 msgid "The largest printable layer height for extruder. Used to limit the maximum layer height when enable adaptive layer height"
 msgstr ""
 
@@ -15054,9 +15611,6 @@ msgid "Minimum speed for part cooling fan"
 msgstr ""
 
 msgid "Speed of auxiliary part cooling fan. Auxiliary fan will run at this speed during printing except the first several layers which are defined by no cooling layers"
-msgstr ""
-
-msgid "Min"
 msgstr ""
 
 msgid "The lowest printable layer height for extruder. Used to limit the minimum layer height when enable adaptive layer height"
@@ -15347,9 +15901,6 @@ msgstr ""
 msgid "Aligned"
 msgstr ""
 
-msgid "Back"
-msgstr ""
-
 msgid "Random"
 msgstr ""
 
@@ -15529,9 +16080,6 @@ msgid "Even-odd"
 msgstr ""
 
 msgid "Close holes"
-msgstr ""
-
-msgid "Enable support"
 msgstr ""
 
 msgid "Enable support generation."
@@ -16683,6 +17231,9 @@ msgstr ""
 msgid "To Volumetric Speed"
 msgstr ""
 
+msgid "Cancel print"
+msgstr ""
+
 msgid "Are you sure to stop printing?"
 msgstr ""
 
@@ -16851,6 +17402,9 @@ msgstr ""
 msgid "Use forward slashes ( / ) as a directory separator if needed."
 msgstr ""
 
+msgid "Group"
+msgstr ""
+
 #, possible-c-format, possible-boost-format
 msgid "Upload filename doesn't end with \"%s\". Do you wish to continue?"
 msgstr ""
@@ -16886,6 +17440,10 @@ msgstr ""
 msgid "Show error message"
 msgstr ""
 
+#. TRN: Placeholder of the search field in the print host upload queue.
+msgid "Search uploads"
+msgstr ""
+
 msgid "Enqueued"
 msgstr ""
 
@@ -16893,6 +17451,11 @@ msgid "Uploading"
 msgstr ""
 
 msgid "Cancelling"
+msgstr ""
+
+#. TRN: %1$d is how many upload jobs match the search; %2$d is the total.
+#, possible-c-format, possible-boost-format
+msgid "%d of %d match"
 msgstr ""
 
 msgid "Error uploading to print host:"
@@ -17411,9 +17974,6 @@ msgid_plural "The following preset inherits this preset."
 msgstr[0] ""
 msgstr[1] ""
 
-msgid "Delete Preset"
-msgstr ""
-
 msgid "Are you sure to delete the selected preset?"
 msgstr ""
 
@@ -17439,6 +17999,9 @@ msgid "[Delete Required]"
 msgstr ""
 
 msgid "Edit Preset"
+msgstr ""
+
+msgid "Delete Preset"
 msgstr ""
 
 msgid "For more information, please check out Wiki"
@@ -17929,7 +18492,61 @@ msgstr ""
 msgid "Helio: GCode download failed"
 msgstr ""
 
+msgid "Multi-plate sending cannot prove one nozzle mapping for every plate. Send plates separately."
+msgstr ""
+
+msgid "The plate's nozzle mapping is unavailable. Use the single-printer send flow."
+msgstr ""
+
+msgid "Select this plate before sending so its nozzle and material mappings can be checked."
+msgstr ""
+
+msgid "The plate has an incomplete left/right nozzle assignment. Review it before sending."
+msgstr ""
+
+msgid "Two matching nozzle presets are required for this printer. Use the single-printer send flow."
+msgstr ""
+
+msgid "A nozzle diameter or flow type is invalid. Review the printer preset before sending."
+msgstr ""
+
+msgid "The printer has no current nozzle mapping result. Refresh it in the single-printer send flow."
+msgstr ""
+
+msgid "The printer returned an invalid nozzle mapping. Refresh it before sending."
+msgstr ""
+
+msgid "The printer's nozzle mapping does not cover every used material. Refresh it before sending."
+msgstr ""
+
 msgid "No AMS"
+msgstr ""
+
+msgid "Pair this LAN printer with its access code before sending."
+msgstr ""
+
+msgid "This LAN printer has no local address. Reconnect it before sending."
+msgstr ""
+
+msgid "Direct LAN printing is unavailable in the installed networking module."
+msgstr ""
+
+msgid "This selected printer is no longer available. Refresh the device list before sending."
+msgstr ""
+
+msgid "This selected printer went offline while preparing the print file."
+msgstr ""
+
+msgid "This selected printer became busy while preparing the print file."
+msgstr ""
+
+msgid "This selected printer started upgrading while preparing the print file."
+msgstr ""
+
+msgid "This selected printer is incompatible with the current printer preset."
+msgstr ""
+
+msgid "This selected printer is no longer ready to print. Refresh its status before sending."
 msgstr ""
 
 msgid "There is no device available to send printing."
@@ -17994,7 +18611,13 @@ msgstr ""
 msgid "The maximum number of printers that can be selected is %d"
 msgstr ""
 
-msgid "No task"
+msgid "This printer is offline. It remains in the farm list."
+msgstr ""
+
+msgid "Device farm"
+msgstr ""
+
+msgid "Search devices"
 msgstr ""
 
 msgid "Edit Printers"
@@ -18004,6 +18627,12 @@ msgid "Task Name"
 msgstr ""
 
 msgid "Actions"
+msgstr ""
+
+msgid "Go"
+msgstr ""
+
+msgid "No devices match your search."
 msgstr ""
 
 msgid "Task Status"
@@ -18034,9 +18663,6 @@ msgid "Printing Pause"
 msgstr ""
 
 msgid "Pending"
-msgstr ""
-
-msgid "Sending"
 msgstr ""
 
 msgid "Sending Finish"
@@ -18107,6 +18733,12 @@ msgstr ""
 msgid "Custom Mode"
 msgstr ""
 
+msgid "Prefer left nozzle"
+msgstr ""
+
+msgid "Prefer right nozzle"
+msgstr ""
+
 #, possible-c-format, possible-boost-format
 msgid "Generates filament grouping for the %s and %s based on the most filament-saving principles to minimize waste"
 msgstr ""
@@ -18123,10 +18755,19 @@ msgstr ""
 msgid "Manually assign filament to the %s or %s"
 msgstr ""
 
-msgid "Global settings"
+msgid "Place as many printable materials as possible on the left nozzle; use the right nozzle when required."
+msgstr ""
+
+msgid "Place as many printable materials as possible on the right nozzle; use the left nozzle when required."
 msgstr ""
 
 msgid "Video tutorial"
+msgstr ""
+
+msgid "Prefer the left nozzle for compatible materials, then use the right nozzle as needed."
+msgstr ""
+
+msgid "Prefer the right nozzle for compatible materials, then use the left nozzle as needed."
 msgstr ""
 
 msgid "(Sync with printer)"
@@ -18139,6 +18780,19 @@ msgstr ""
 msgid "We will slice according to this grouping method:"
 msgstr ""
 
+#, possible-c-format, possible-boost-format
+msgid "Material %d"
+msgstr ""
+
+msgid "Move to left nozzle"
+msgstr ""
+
+msgid "Move to right nozzle"
+msgstr ""
+
+msgid "Swap groups"
+msgstr ""
+
 msgid "Tips: You can drag the filaments to reassign them to different nozzles."
 msgstr ""
 
@@ -18148,8 +18802,20 @@ msgstr ""
 msgid " to set nozzle count"
 msgstr ""
 
+msgid "The destination nozzle cannot preserve every material's flow type or has no available nozzle. Adjust the nozzle setup before swapping."
+msgstr ""
+
+msgid "Cannot swap groups"
+msgstr ""
+
 #, possible-c-format, possible-boost-format
 msgid "Generates filament grouping for the %s and %s based on the quality of prints, prioritizing print quality over filament saving"
+msgstr ""
+
+msgid "Use the left nozzle for compatible materials when capacity allows; otherwise use the right nozzle."
+msgstr ""
+
+msgid "Use the right nozzle for compatible materials when capacity allows; otherwise use the left nozzle."
 msgstr ""
 
 msgid "Skip Objects"
@@ -18165,6 +18831,15 @@ msgid "Zoom In"
 msgstr ""
 
 msgid "Load skipping objects information failed. Please try again."
+msgstr ""
+
+msgid "loading page"
+msgstr ""
+
+msgid "retry page"
+msgstr ""
+
+msgid "dialog page"
 msgstr ""
 
 #, possible-c-format, possible-boost-format
@@ -18202,6 +18877,9 @@ msgid "This action cannot be undone. Continue?"
 msgstr ""
 
 msgid "Skipping objects."
+msgstr ""
+
+msgid "Select Filament"
 msgstr ""
 
 msgid "Custom Color"
@@ -18681,6 +19359,3421 @@ msgstr ""
 msgid "Preset \"%s\" already exists. Overwrite?"
 msgstr ""
 
+#, possible-boost-format
+msgid "The selected 3mf file has been saved with a newer version of %1% and is not compatible."
+msgstr ""
+
+msgid "The selected 3MF contains FDM supports painted object using a newer version of PrusaSlicer and is not compatible."
+msgstr ""
+
+msgid "The selected 3MF contains seam painted object using a newer version of PrusaSlicer and is not compatible."
+msgstr ""
+
+msgid "The selected 3MF contains multi-material painted object using a newer version of PrusaSlicer and is not compatible."
+msgstr ""
+
+msgid "Hollowing"
+msgstr ""
+
+msgid "Pad brim size is too small for the current configuration."
+msgstr ""
+
+msgid "Cannot proceed without support points! Add support points or disable support generation."
+msgstr ""
+
+msgid "Elevation is too low for object. Use the \"Pad around object\" feature to print the object without elevation."
+msgstr ""
+
+msgid "The endings of the support pillars will be deployed on the gap between the object and the pad. 'Support base safety distance' has to be greater than the 'Pad object gap' parameter to avoid this."
+msgstr ""
+
+msgid "Exposition time is out of printer profile bounds."
+msgstr ""
+
+msgid "Initial exposition time is out of printer profile bounds."
+msgstr ""
+
+msgid "Slicing done"
+msgstr ""
+
+msgid "Hollowing model"
+msgstr ""
+
+msgid "Drilling holes into model."
+msgstr ""
+
+msgid "Slicing model"
+msgstr ""
+
+msgid "Generating support points"
+msgstr ""
+
+msgid "Generating support tree"
+msgstr ""
+
+msgid "Generating pad"
+msgstr ""
+
+msgid "Slicing supports"
+msgstr ""
+
+msgid "Merging slices and calculating statistics"
+msgstr ""
+
+msgid "Rasterizing layers"
+msgstr ""
+
+msgid "Slicing had to be stopped due to an internal error: Inconsistent slice index."
+msgstr ""
+
+msgid "Visualizing supports"
+msgstr ""
+
+msgid "No pad can be generated for this model with the current configuration"
+msgstr ""
+
+msgid "There are unprintable objects. Try to adjust support settings to make the objects printable."
+msgstr ""
+
+msgid "Taking a configuration snapshot failed."
+msgstr ""
+
+msgid "BambuStudio has encountered an error while taking a configuration snapshot."
+msgstr ""
+
+msgid "BambuStudio error"
+msgstr ""
+
+msgid "Unmapped"
+msgstr ""
+
+msgid ""
+"Upper half area:  Original\n"
+"Lower half area: The filament from original project will be used when unmapped.\n"
+"And you can click it to modify"
+msgstr ""
+
+msgid ""
+"Upper half area:  Original\n"
+"Lower half area:  Filament in AMS\n"
+"And you cannot click it to modify"
+msgstr ""
+
+msgid "AMS Slots"
+msgstr ""
+
+msgid "Please select from the following filaments"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Select filament that installed to the %s"
+msgstr ""
+
+msgid "Left AMS"
+msgstr ""
+
+msgid "Reset current filament mapping"
+msgstr ""
+
+msgid "Right AMS"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Printing with the current nozzle may produce an extra %0.2f g of waste."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Tips: the filament type(%s) does not match with the filament type(%s) in the slicing file. If you want to use this slot, you can install %s instead of %s and change slot information on the 'Device' page."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Cannot select: the filament type(%s) does not match with the filament type(%s) in the slicing file. If you want to use this slot, you can install %s instead of %s and change slot information on the 'Device' page."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Cannot select: the slot is empty or undefined. If you want to use this slot, you can install %s and change slot information on the 'Device' page."
+msgstr ""
+
+msgid "Cannot select: No filament loaded in current slot."
+msgstr ""
+
+msgid "Enable AMS"
+msgstr ""
+
+msgid "Print with filaments in the AMS"
+msgstr ""
+
+msgid "Disable AMS"
+msgstr ""
+
+msgid "Print with the filament mounted on the back of chassis"
+msgstr ""
+
+msgid "Please change the desiccant when it is too wet. The indicator may not represent accurately in following cases : when the lid is open or the desiccant pack is changed. it take hours to absorb the moisture, low temperatures also slow down the process."
+msgstr ""
+
+msgid "Config which AMS slot should be used for a filament used in the print job"
+msgstr ""
+
+msgid "Filament used in this print job"
+msgstr ""
+
+msgid "AMS slot used for this filament"
+msgstr ""
+
+msgid "Click to select AMS slot manually"
+msgstr ""
+
+msgid "Do not Enable AMS"
+msgstr ""
+
+msgid "Print using materials mounted on the back of the case"
+msgstr ""
+
+msgid "Print with filaments in AMS"
+msgstr ""
+
+msgid "Print with filaments mounted on the back of the chassis"
+msgstr ""
+
+msgid "When the current material run out, the printer will continue to print in the following order."
+msgstr ""
+
+msgid "Identical filament: same brand, type and color"
+msgstr ""
+
+msgid "When the current material runs out, the printer would use identical filament to continue printing."
+msgstr ""
+
+msgid "The printer does not currently support auto refill."
+msgstr ""
+
+msgid "AMS filament backup is not enabled, please enable it in the AMS settings."
+msgstr ""
+
+msgid ""
+"When the current filament runs out, the printer will use identical filament to continue printing.\n"
+"*Identical filament: same brand, type and color."
+msgstr ""
+
+msgid "DRY"
+msgstr ""
+
+msgid "WET"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Please select the filament installed on the %s."
+msgstr ""
+
+msgid "Please select the filament."
+msgstr ""
+
+msgid "To learn about the filaments matching rules."
+msgstr ""
+
+msgid "External spools is not supported since Filament Track Switch has been installed. If you want to use external spool, please uninstall it."
+msgstr ""
+
+msgid "Select Filament && Hotends"
+msgstr ""
+
+msgid "Edit appearance"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Reset %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Reset %s to the preset / default value"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Choose the %s colour"
+msgstr ""
+
+msgid "Close appearance editor"
+msgstr ""
+
+msgid "Typography"
+msgstr ""
+
+msgid "Colours"
+msgstr ""
+
+msgid "Shape & spacing"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s section"
+msgstr ""
+
+msgid "Appearance editor tab"
+msgstr ""
+
+msgid "Reset element"
+msgstr ""
+
+msgid "Drop every override of this element; the active preset still applies"
+msgstr ""
+
+msgid "Reset all"
+msgstr ""
+
+msgid "Drop every element override and return to the Material default preset (saved presets are kept)"
+msgstr ""
+
+msgid "Reset the appearance of every element and return to the Material default preset? Your saved presets are kept."
+msgstr ""
+
+msgid "Reset all appearance overrides"
+msgstr ""
+
+msgid "Keyboard shortcut that opens this editor for the focused control"
+msgstr ""
+
+msgid "Appearance editor title"
+msgstr ""
+
+msgid "Appearance editor caption"
+msgstr ""
+
+msgid "Appearance editor label"
+msgstr ""
+
+msgid "Search fonts"
+msgstr ""
+
+msgid "Font family"
+msgstr ""
+
+msgid "font family"
+msgstr ""
+
+msgid "The quick brown fox 0123 Aa Bb"
+msgstr ""
+
+msgid "Font preview"
+msgstr ""
+
+msgid "Font size in points"
+msgstr ""
+
+msgid "Size (pt)"
+msgstr ""
+
+msgid "font size"
+msgstr ""
+
+msgid "Font weight"
+msgstr ""
+
+msgid "Weight"
+msgstr ""
+
+msgid "font weight"
+msgstr ""
+
+msgid "Italic"
+msgstr ""
+
+msgid "Underline"
+msgstr ""
+
+msgid "Strikethrough"
+msgstr ""
+
+msgid "Letter spacing in pixels"
+msgstr ""
+
+msgid "Letter spacing"
+msgstr ""
+
+msgid "letter spacing"
+msgstr ""
+
+msgid "Line height multiplier"
+msgstr ""
+
+msgid "Line height"
+msgstr ""
+
+msgid "line height"
+msgstr ""
+
+msgid "Letter spacing and line height are stored for widgets that measure their own text; native labels ignore them."
+msgstr ""
+
+msgid "Highlight"
+msgstr ""
+
+msgid "Border"
+msgstr ""
+
+msgid "colour"
+msgstr ""
+
+msgid "Each swatch opens the Material colour picker with its colour translator. An unset colour keeps the theme's token."
+msgstr ""
+
+msgid "Border width (px)"
+msgstr ""
+
+msgid "Corner radius (px)"
+msgstr ""
+
+msgid "Padding (px)"
+msgstr ""
+
+msgid "Margin (px)"
+msgstr ""
+
+msgid "Shape values are read by the Material widgets that paint their own frame (buttons, tabs, menus). Native controls keep the platform shape."
+msgstr ""
+
+msgid "Search presets"
+msgstr ""
+
+msgid "Appearance presets"
+msgstr ""
+
+msgid "Make the selected preset the active one; your element overrides stay on top of it"
+msgstr ""
+
+msgid "Save as preset..."
+msgstr ""
+
+msgid "Snapshot the current look of every styled element as a named preset"
+msgstr ""
+
+msgid "Name for the new appearance preset"
+msgstr ""
+
+msgid "Save as preset"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "\"%s\" is a shipped preset and cannot be overwritten. Choose another name."
+msgstr ""
+
+msgid "Delete the selected user preset (shipped presets cannot be deleted)"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Delete the appearance preset \"%s\"? This cannot be undone."
+msgstr ""
+
+msgid "Export theme..."
+msgstr ""
+
+msgid "Write every preset and override to a JSON file you can keep or share"
+msgstr ""
+
+msgid "Export appearance theme"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The theme could not be exported: %s"
+msgstr ""
+
+msgid "Import theme..."
+msgstr ""
+
+msgid "Load presets and overrides from a JSON theme file; unknown properties are kept and listed"
+msgstr ""
+
+msgid "Import appearance theme"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The theme could not be imported: %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid ""
+"Imported. These entries were kept but are not understood by this version:\n"
+"%s"
+msgstr ""
+
+msgid "(bundled)"
+msgstr ""
+
+msgid "(shipped)"
+msgstr ""
+
+msgid "active"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Active preset: %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Edit appearance: %s"
+msgstr ""
+
+msgid "Theme default"
+msgstr ""
+
+msgid "Edit appearance..."
+msgstr ""
+
+msgid "Open the appearance editor beside this element"
+msgstr ""
+
+msgid "Model Pictures"
+msgstr ""
+
+msgid "Actions apply to the checked filament slots."
+msgstr ""
+
+msgid "Set preset..."
+msgstr ""
+
+msgid "Set color..."
+msgstr ""
+
+msgid "Delete selected filaments"
+msgstr ""
+
+msgid "At least one filament always remains."
+msgstr ""
+
+msgid "Add filaments"
+msgstr ""
+
+msgid "Choose a filament preset"
+msgstr ""
+
+msgid "Added"
+msgstr ""
+
+msgid "Fixed"
+msgstr ""
+
+msgid "Documented"
+msgstr ""
+
+msgid "Changed"
+msgstr ""
+
+msgid "Previous month"
+msgstr ""
+
+msgid "Next month"
+msgstr ""
+
+#. TRN: Instruction under the calendar grid of the changelog date picker.
+msgid "Click a start day, then an end day. Arrow keys move, Enter picks, Esc closes."
+msgstr ""
+
+msgid "Clear dates"
+msgstr ""
+
+#. TRN: Accessible name of the calendar grid; %s is "September 2026".
+#, possible-c-format, possible-boost-format
+msgid "Calendar, %s"
+msgstr ""
+
+#. TRN: Subtitle of the in-app changelog viewer.
+msgid "Every released version, with the commits behind each change."
+msgstr ""
+
+#. TRN: Placeholder of the changelog search field.
+msgid "Search changes"
+msgstr ""
+
+msgid "Type a date as YYYY-MM-DD or in your locale's short format."
+msgstr ""
+
+msgid "From"
+msgstr ""
+
+msgid "From date"
+msgstr ""
+
+msgid "To"
+msgstr ""
+
+msgid "To date"
+msgstr ""
+
+msgid "Pick dates on a calendar"
+msgstr ""
+
+msgid "Last 30 days"
+msgstr ""
+
+msgid "This year"
+msgstr ""
+
+msgid "All versions"
+msgstr ""
+
+msgid "Released versions"
+msgstr ""
+
+msgid "Copy the shown changes to the clipboard as Markdown"
+msgstr ""
+
+msgid "Save the shown changes as Markdown or plain text"
+msgstr ""
+
+msgid "Nothing to copy: the changelog data could not be read."
+msgstr ""
+
+msgid "Nothing to export: the changelog data could not be read."
+msgstr ""
+
+#. TRN: %1$zu versions and %2$zu change lines are currently listed in the changelog viewer.
+#, possible-c-format
+msgid "%zu versions and %zu changes shown"
+msgstr ""
+
+#, possible-c-format
+msgid "%zu versions in total"
+msgstr ""
+
+msgid "The changelog could not be read"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid ""
+"%s\n"
+"\n"
+"The file %s ships with the application; reinstalling restores it. The release history is also published at %s."
+msgstr ""
+
+msgid "No versions recorded"
+msgstr ""
+
+msgid "The bundled changelog lists no releases. Refresh it with: node scripts/changelog/export-app-changelog.mjs"
+msgstr ""
+
+msgid "No change matches this search inside the selected dates. Widen the dates or clear the search."
+msgstr ""
+
+msgid "No change matches this search. Plain text is matched by default; the .* toggle switches to regex."
+msgstr ""
+
+msgid "No version was published in the selected dates."
+msgstr ""
+
+msgid "Nothing to show"
+msgstr ""
+
+#. TRN: %zu is the total number of versions matching the current filters.
+#, possible-c-format
+msgid "Show all %zu versions"
+msgstr ""
+
+msgid "pre-release"
+msgstr ""
+
+msgid "Release page"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Open the release page of %s on GitHub"
+msgstr ""
+
+msgid "Oldest release: there is no earlier release to compare against."
+msgstr ""
+
+msgid "Tagged the same commit as the previous release, so it carries no new changes."
+msgstr ""
+
+msgid "No commits were recorded between this release and the previous one."
+msgstr ""
+
+#. TRN: Accessible name of a commit link; %s is the short commit id.
+#, possible-c-format, possible-boost-format
+msgid "Open commit %s on GitHub"
+msgstr ""
+
+msgid "Neither date is complete yet."
+msgstr ""
+
+msgid "The From date is not complete yet."
+msgstr ""
+
+msgid "The To date is not complete yet."
+msgstr ""
+
+msgid "The To date is before the From date, so no version can match."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Expected %s with a four-digit year."
+msgstr ""
+
+#, possible-c-format
+msgid "Copied %zu versions and %zu changes (%s) as Markdown."
+msgstr ""
+
+msgid "The clipboard is in use by another application; nothing was copied."
+msgstr ""
+
+msgid "Export changelog"
+msgstr ""
+
+msgid "Markdown"
+msgstr ""
+
+msgid "Plain text"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The changelog could not be written to %s."
+msgstr ""
+
+#, possible-c-format
+msgid "Exported %zu versions and %zu changes (%s) to %s."
+msgstr ""
+
+#. TRN: Placeholder of the command palette's search field.
+msgid "Search commands, settings and pages"
+msgstr ""
+
+msgid "Shrink the palette to a card"
+msgstr ""
+
+msgid "Expand the palette to the full window"
+msgstr ""
+
+msgid "Switch between the light and dark appearance"
+msgstr ""
+
+msgid "Comfortable or compact control spacing"
+msgstr ""
+
+msgid "Pick the accent seed the interface is tinted with"
+msgstr ""
+
+msgid "Open Preferences"
+msgstr ""
+
+msgid "General, appearance, 3D and developer settings — with live search"
+msgstr ""
+
+msgid "Search in settings"
+msgstr ""
+
+msgid "Find any print / filament / printer parameter"
+msgstr ""
+
+msgid "Setting"
+msgstr ""
+
+msgid "Documentation"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Open the anchored appearance editor (%s) for whatever has focus"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Apply appearance preset: %s"
+msgstr ""
+
+msgid "Shipped Material preset"
+msgstr ""
+
+msgid "Your saved appearance preset"
+msgstr ""
+
+msgid "The backup file could not be created at the selected location."
+msgstr ""
+
+msgid "Writing the backup archive failed. The destination may be full or unwritable."
+msgstr ""
+
+msgid "The selected backup file could not be opened."
+msgstr ""
+
+msgid "The new profile folder could not be created."
+msgstr ""
+
+msgid "The backup contains an unsafe path and was rejected."
+msgstr ""
+
+msgid "A file inside the backup could not be written."
+msgstr ""
+
+msgid "Export everything in your data folder, import it on another PC, and keep unlimited profiles - each with its own local Git-backed snapshot history."
+msgstr ""
+
+#. TRN: Placeholder of the search field filtering config profiles.
+msgid "Search profiles"
+msgstr ""
+
+msgid "Profile"
+msgstr ""
+
+msgid "Data folder"
+msgstr ""
+
+msgid "Launch profile"
+msgstr ""
+
+msgid "Snapshot now"
+msgstr ""
+
+msgid "History..."
+msgstr ""
+
+msgid "Preferences history..."
+msgstr ""
+
+msgid "A full backup includes secrets: printer access codes, network-plugin login state, API tokens and physical-printer passwords. Anyone with the file can use them. Slide to confirm before exporting or importing."
+msgstr ""
+
+#. TRN: Instruction inside the slide-to-confirm control guarding config export/import.
+msgid "Slide to allow export / import"
+msgstr ""
+
+#. TRN: Shown inside the slide-to-confirm control once completed.
+msgid "Confirmed - transfers unlocked"
+msgstr ""
+
+msgid "Export everything..."
+msgstr ""
+
+msgid "Import backup..."
+msgstr ""
+
+msgid "Current (active)"
+msgstr ""
+
+msgid "Export the complete data folder"
+msgstr ""
+
+msgid "Backup archive (*.zip)|*.zip"
+msgstr ""
+
+msgid "Exporting the data folder... this can take a while."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Backup written to %s. It contains secrets - store and transfer it safely."
+msgstr ""
+
+msgid "Import a data folder backup"
+msgstr ""
+
+msgid "Importing the backup into a new profile..."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Imported as profile \"%s\". Select it and press Launch profile to run Bambu Studio on it."
+msgstr ""
+
+msgid "The profile could not be launched."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Launching Bambu Studio on profile \"%s\"..."
+msgstr ""
+
+msgid "Recording a complete profile snapshot..."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The snapshot could not be recorded: %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Snapshot of \"%s\" recorded in its local history."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Profile history could not be read: %s"
+msgstr ""
+
+msgid "This profile has no snapshots yet. Use Snapshot now to record one."
+msgstr ""
+
+#. TRN: %s is a profile name; the dialog lists its recorded snapshots.
+#, possible-c-format, possible-boost-format
+msgid "Snapshots of \"%s\". Restoring creates a NEW profile; nothing is overwritten."
+msgstr ""
+
+msgid "Profile history"
+msgstr ""
+
+msgid "Restoring the selected snapshot into a new profile..."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The snapshot could not be restored: %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Snapshot restored as profile \"%s\"."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Preferences history could not be read: %s"
+msgstr ""
+
+msgid "No preferences snapshots yet. Change any setting and one is recorded automatically."
+msgstr ""
+
+msgid "Automatic snapshots of your preferences. Restoring writes a copy next to the live file; nothing is overwritten."
+msgstr ""
+
+msgid "Preferences history"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Preferences snapshot written to %s. Replace BambuStudio.conf with it while the app is closed to apply."
+msgstr ""
+
+msgid "Alternate nozzles:"
+msgstr ""
+
+msgid "All standard"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Welcome to the %s Configuration Assistant"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Welcome to the %s Configuration Wizard"
+msgstr ""
+
+msgid "Welcome"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Hello, welcome to %s! This %s helps you with the initial configuration; just a few settings and you will be ready to print."
+msgstr ""
+
+msgid "Remove user profiles (a snapshot will be taken beforehand)"
+msgstr ""
+
+msgid "Perform desktop integration (Sets this binary to be searchable by the system)."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s Family"
+msgstr ""
+
+msgid "Printer:"
+msgstr ""
+
+msgid "Vendor:"
+msgstr ""
+
+msgid "Profile:"
+msgstr ""
+
+msgid "(All)"
+msgstr ""
+
+#, possible-boost-format
+msgid "%1% marked with <b>*</b> are <b>not</b> compatible with some installed printers."
+msgstr ""
+
+msgid "SLA materials"
+msgstr ""
+
+#, possible-boost-format
+msgid "All installed printers are compatible with the selected %1%."
+msgstr ""
+
+msgid "filament"
+msgstr ""
+
+msgid "SLA material"
+msgstr ""
+
+msgid "Only the following installed printers are compatible with the selected filaments"
+msgstr ""
+
+msgid "Only the following installed printers are compatible with the selected SLA materials"
+msgstr ""
+
+msgid "Custom Printer Setup"
+msgstr ""
+
+msgid "Custom Printer"
+msgstr ""
+
+msgid "Define a custom printer profile"
+msgstr ""
+
+msgid "Custom profile name:"
+msgstr ""
+
+msgid "Firmware Type"
+msgstr ""
+
+msgid "Firmware"
+msgstr ""
+
+msgid "Choose the type of firmware used by your printer."
+msgstr ""
+
+msgid "Bed Shape and Size"
+msgstr ""
+
+msgid "Set the shape of your printer's bed."
+msgstr ""
+
+msgid "Invalid numeric input."
+msgstr ""
+
+msgid "Filament and Nozzle Diameters"
+msgstr ""
+
+msgid "Print Diameters"
+msgstr ""
+
+msgid "Enter the diameter of your printer's hot end nozzle."
+msgstr ""
+
+msgid "Nozzle Diameter:"
+msgstr ""
+
+msgid "Enter the diameter of your filament."
+msgstr ""
+
+msgid "Good precision is required, so use a caliper and do multiple measurements along the filament, then compute the average."
+msgstr ""
+
+msgid "Filament Diameter:"
+msgstr ""
+
+msgid "Nozzle and Bed Temperatures"
+msgstr ""
+
+msgid "Temperatures"
+msgstr ""
+
+msgid "Enter the nozzle_temperature needed for extruding your filament."
+msgstr ""
+
+msgid "A rule of thumb is 160 to 230 °C for PLA, and 215 to 250 °C for ABS."
+msgstr ""
+
+msgid "Extrusion Temperature:"
+msgstr ""
+
+msgid "Enter the bed temperature needed for getting your filament to stick to your heated bed."
+msgstr ""
+
+msgid "A rule of thumb is 60 °C for PLA and 110 °C for ABS. Leave zero if you have no heated bed."
+msgstr ""
+
+msgid "Bed Temperature:"
+msgstr ""
+
+msgid "SLA Materials"
+msgstr ""
+
+msgid "FFF Technology Printers"
+msgstr ""
+
+msgid "SLA Technology Printers"
+msgstr ""
+
+#, possible-boost-format
+msgid "Following printer profiles has no default filament: %1%Please select one manually."
+msgstr ""
+
+#, possible-boost-format
+msgid "Following printer profiles has no default material: %1%Please select one manually."
+msgstr ""
+
+msgid "The following FFF printer models have no filament selected:"
+msgstr ""
+
+msgid "Do you want to select default filaments for these FFF printer models?"
+msgstr ""
+
+msgid "Configuration is edited in ConfigWizard"
+msgstr ""
+
+msgid "All user presets will be deleted."
+msgstr ""
+
+msgid "A new vendor was installed and one of its printers will be activated"
+msgid_plural "New vendors were installed and one of theirs printers will be activated"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "A new Printer was installed and it will be activated."
+msgstr ""
+
+msgid "Some Printers were uninstalled."
+msgstr ""
+
+msgid "A new filament was installed and it will be activated."
+msgstr ""
+
+msgid "A new SLA material was installed and it will be activated."
+msgstr ""
+
+msgid "Some filaments were uninstalled."
+msgstr ""
+
+msgid "Custom printer was installed and it will be activated."
+msgstr ""
+
+msgid "<Back"
+msgstr ""
+
+msgid "Next>"
+msgstr ""
+
+msgid "Filament Profiles Selection"
+msgstr ""
+
+msgid "Configuration Assistant"
+msgstr ""
+
+msgid "Configuration &Assistant"
+msgstr ""
+
+msgid "Configuration Wizard"
+msgstr ""
+
+msgid "Configuration &Wizard"
+msgstr ""
+
+msgid "Performing desktop integration failed - boost::filesystem::canonical did not return appimage path."
+msgstr ""
+
+msgid "Performing desktop integration failed - Could not find executable."
+msgstr ""
+
+msgid "Performing desktop integration failed because the application directory was not found."
+msgstr ""
+
+msgid "Performing desktop integration failed - could not create Gcodeviewer desktop file. BambuStudio desktop file was probably created successfully."
+msgstr ""
+
+msgid "Desktop Integration"
+msgstr ""
+
+msgid ""
+"Desktop Integration sets this binary to be searchable by the system.\n"
+"\n"
+"Press \"Perform\" to proceed."
+msgstr ""
+
+msgid "This calibration does not support the currently selected nozzle diameter"
+msgstr ""
+
+msgid "Current flowrate cali param is invalid"
+msgstr ""
+
+msgid "Selected diameter and machine diameter do not match"
+msgstr ""
+
+msgid "Failed to generate cali gcode"
+msgstr ""
+
+msgid "Calibration error"
+msgstr ""
+
+msgid "The embedded webpage could not be loaded."
+msgstr ""
+
+msgid "Reload"
+msgstr ""
+
+msgid "Copy diagnostic information"
+msgstr ""
+
+msgid "AMS Control Web Debug"
+msgstr ""
+
+msgid "Please select a printer"
+msgstr ""
+
+msgid "Store (0) - no compression"
+msgstr ""
+
+msgid "Fastest (1)"
+msgstr ""
+
+msgid "Fast (3)"
+msgstr ""
+
+msgid "Normal (5) - default"
+msgstr ""
+
+msgid "Maximum (7)"
+msgstr ""
+
+msgid "Ultra (9) - slowest, most RAM"
+msgstr ""
+
+msgid "Level default"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%u GiB"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%u MiB"
+msgstr ""
+
+#. TRN: %s is the dataset name, e.g. "Project version history".
+#, possible-c-format, possible-boost-format
+msgid "Export %s"
+msgstr ""
+
+#, possible-c-format
+msgid "%zu row(s), %zu column(s)"
+msgstr ""
+
+#, possible-c-format
+msgid "structured record with %zu top-level field(s)"
+msgstr ""
+
+msgid "prose document"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Schema %s v%d - %s. Every export is UTF-8 and carries its schema, encoding and line-ending in a header."
+msgstr ""
+
+#. TRN: Placeholder of the search field filtering export formats and options.
+msgid "Search formats and options"
+msgstr ""
+
+msgid "Format"
+msgstr ""
+
+msgid "Fidelity"
+msgstr ""
+
+msgid "Export format"
+msgstr ""
+
+msgid "Text encoding"
+msgstr ""
+
+msgid "UTF-8 (always)"
+msgstr ""
+
+msgid "Encoding"
+msgstr ""
+
+msgid "Every export is UTF-8. The header records it so the reader never has to guess."
+msgstr ""
+
+msgid "LF - Unix, Git-friendly (default)"
+msgstr ""
+
+msgid "CRLF - Windows Notepad / Excel"
+msgstr ""
+
+msgid "Line endings"
+msgstr ""
+
+msgid "Choose CRLF only for tools that cannot read LF. The header names whichever you pick."
+msgstr ""
+
+msgid "Include the schema header (comment, envelope or .meta.json sidecar)"
+msgstr ""
+
+msgid "CSV and TSV have no comment syntax, so their schema goes in a sidecar file next to the data."
+msgstr ""
+
+msgid "schema header sidecar"
+msgstr ""
+
+msgid "Write a UTF-8 byte-order mark (only for spreadsheets that misread CSV without one)"
+msgstr ""
+
+msgid "byte-order mark BOM UTF-8"
+msgstr ""
+
+msgid "Archive"
+msgstr ""
+
+msgid "None - write the file directly"
+msgstr ""
+
+msgid "ZIP - Deflate, built in, no encryption"
+msgstr ""
+
+msgid "7z - via installed 7-Zip, full option set"
+msgstr ""
+
+msgid "Wrap in archive"
+msgstr ""
+
+msgid "An archive keeps the data file and its sidecar together. Paths inside are always relative."
+msgstr ""
+
+msgid "Compression method"
+msgstr ""
+
+msgid "LZMA2 (default): best general ratio, multi-threaded. LZMA: single-threaded. PPMd: best for text. BZip2/Deflate: compatibility, weaker ratio."
+msgstr ""
+
+msgid "Compression level"
+msgstr ""
+
+msgid "Higher levels use larger dictionaries: slower and hungrier for RAM, but smaller."
+msgstr ""
+
+msgid "Dictionary size"
+msgstr ""
+
+msgid "LZMA/LZMA2 dictionary or PPMd memory. Compression needs about 11x this much RAM; extraction needs this much. Ignored by BZip2 and Deflate."
+msgstr ""
+
+msgid "Word size (0 = default)"
+msgstr ""
+
+msgid "Fast bytes for LZMA/LZMA2/Deflate (5-273) or model order for PPMd (2-32). Larger is a little slower and a little smaller."
+msgstr ""
+
+msgid "Solid archive (files share one compression block)"
+msgstr ""
+
+msgid "Solid gives a better ratio; extracting one file then decompresses its whole block."
+msgstr ""
+
+msgid "solid archive block"
+msgstr ""
+
+msgid "Solid block size"
+msgstr ""
+
+msgid "How much data shares one block. Smaller blocks extract single files faster; larger blocks compress better."
+msgstr ""
+
+msgid "Threads (0 = all cores)"
+msgstr ""
+
+msgid "LZMA2 memory grows with the thread count; LZMA and PPMd compress on one thread regardless."
+msgstr ""
+
+msgid "Split into volumes (empty = single file)"
+msgstr ""
+
+msgid "A size such as 100m or 4g. 7-Zip numbers the parts .7z.001, .7z.002 ... and every part is needed to extract."
+msgstr ""
+
+msgid "AES-256 password (empty = no encryption)"
+msgstr ""
+
+msgid "Encrypts the file contents with AES-256. The password is passed to 7-Zip for this run only and never stored."
+msgstr ""
+
+msgid "Confirm password"
+msgstr ""
+
+msgid "Type the same password again."
+msgstr ""
+
+msgid "Encrypt headers too, so file names are hidden (-mhe=on)"
+msgstr ""
+
+msgid "Without this, anyone can list the file names inside the archive even though the contents are encrypted."
+msgstr ""
+
+msgid "encrypt headers hidden file names"
+msgstr ""
+
+msgid "Locate 7z.exe..."
+msgstr ""
+
+msgid "Output"
+msgstr ""
+
+msgid "Output file path"
+msgstr ""
+
+msgid "Browse..."
+msgstr ""
+
+msgid "Browse for output file"
+msgstr ""
+
+msgid "output file path browse"
+msgstr ""
+
+msgid "- recommended"
+msgstr ""
+
+msgid "Lossless"
+msgstr ""
+
+msgid "Lossy"
+msgstr ""
+
+msgid "Every field survives unchanged."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s: lossless"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s: lossy - read what will be lost before exporting"
+msgstr ""
+
+msgid "Lost:"
+msgstr ""
+
+msgid "Notes:"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Header: schema %s v%d, encoding UTF-8, line endings %s."
+msgstr ""
+
+msgid "The data file is written directly. CSV and TSV also get a .meta.json sidecar carrying the schema."
+msgstr ""
+
+msgid "ZIP is written by the bundled miniz (Deflate). It is never encrypted: nothing in it is protected, and the file names are visible. Choose 7z for AES-256."
+msgstr ""
+
+msgid "7z is produced by the 7-Zip command line on this PC with exactly the switches shown after export. All member paths are relative."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "7-Zip found: %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "7-Zip not found. Install 7-Zip or locate 7z.exe. Searched: %s"
+msgstr ""
+
+msgid "Warning: the contents will be encrypted but the file names inside the archive stay readable by anyone. Tick \"Encrypt headers too\" to hide them."
+msgstr ""
+
+msgid "AES-256 with encrypted headers: contents and file names are both protected. Losing the password loses the data."
+msgstr ""
+
+msgid "No format matches the search."
+msgstr ""
+
+msgid "Choose an output path."
+msgstr ""
+
+msgid "7-Zip was not found on this PC; ZIP and plain files still work."
+msgstr ""
+
+msgid "The two password fields differ."
+msgstr ""
+
+msgid "Write the export"
+msgstr ""
+
+msgid "ZIP archive (*.zip)|*.zip"
+msgstr ""
+
+msgid "7z archive (*.7z)|*.7z"
+msgstr ""
+
+msgid "All files (*.*)"
+msgstr ""
+
+msgid "Export to"
+msgstr ""
+
+msgid "Locate 7z.exe"
+msgstr ""
+
+msgid "7-Zip executable (7z.exe;7za.exe)|7z.exe;7za.exe|All files (*.*)|*.*"
+msgstr ""
+
+msgid "Exporting as a lossy format:"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Export failed: %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Wrote %s (%s)."
+msgstr ""
+
+msgid "7-Zip command:"
+msgstr ""
+
+msgid "Scan a spool with your phone; the result lands in an AMS slot."
+msgstr ""
+
+msgid "Scan the QR code with your phone, then photograph the spool."
+msgstr ""
+
+msgid "The upload server could not start. Check that no firewall rule blocks local listeners."
+msgstr ""
+
+msgid "Announce the slot out loud (TTS)"
+msgstr ""
+
+msgid "Photo received - identifying the filament with the local model..."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Identification failed: %s. Is a vision-capable Ollama model available?"
+msgstr ""
+
+msgid "external spool"
+msgstr ""
+
+#. TRN: %1$s is the AMS letter/number, %2$s the slot number.
+#, possible-c-format, possible-boost-format
+msgid "AMS %s slot %d"
+msgstr ""
+
+#. TRN: %s is a filament preset name applied automatically.
+#, possible-c-format, possible-boost-format
+msgid " Print settings set to \"%s\"."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Identified %s (%s). Load it into %s."
+msgstr ""
+
+#. TRN: TTS line; %1$s filament type, %2$s slot label.
+#, possible-c-format, possible-boost-format
+msgid "Filament identified: %s. Load it into %s."
+msgstr ""
+
+msgid "Entering Assembly gizmo"
+msgstr ""
+
+msgid "Leaving Assembly gizmo"
+msgstr ""
+
+msgid "Keep upper part"
+msgstr ""
+
+msgid "Keep lower part"
+msgstr ""
+
+msgid "Rotate lower part upwards"
+msgstr ""
+
+msgid "Hollow this object"
+msgstr ""
+
+msgid "Preview hollowed and drilled model"
+msgstr ""
+
+msgid "Offset"
+msgstr ""
+
+msgid "Closing distance"
+msgstr ""
+
+msgid "Hole diameter"
+msgstr ""
+
+msgid "Hole depth"
+msgstr ""
+
+msgid "Remove selected holes"
+msgstr ""
+
+msgid "Remove all holes"
+msgstr ""
+
+msgid "Clipping of view"
+msgstr ""
+
+msgid "Show supports"
+msgstr ""
+
+msgid "Hollow and drill"
+msgstr ""
+
+msgid "Entering Measure gizmo"
+msgstr ""
+
+msgid "Leaving Measure gizmo"
+msgstr ""
+
+msgid "Model simplification has been canceled"
+msgstr ""
+
+msgid "Lock supports under new islands"
+msgstr ""
+
+msgid "Remove all points"
+msgstr ""
+
+msgid "Apply changes"
+msgstr ""
+
+msgid "Discard changes"
+msgstr ""
+
+msgid "Minimal points distance"
+msgstr ""
+
+msgid "Support points density"
+msgstr ""
+
+msgid "Manual editing"
+msgstr ""
+
+msgid "SLA Support Points"
+msgstr ""
+
+msgid "Do you want to save your manually edited support points?"
+msgstr ""
+
+msgid "Save support points?"
+msgstr ""
+
+msgid "Autogeneration will erase all manually edited points."
+msgstr ""
+
+msgid "Are you sure you want to do it?"
+msgstr ""
+
+msgid "SLA gizmo keyboard shortcuts"
+msgstr ""
+
+msgid "Note: some shortcuts work in (non)editing mode only."
+msgstr ""
+
+msgid "Add point"
+msgstr ""
+
+msgid "Remove point"
+msgstr ""
+
+msgid "Move point"
+msgstr ""
+
+msgid "Add point to selection"
+msgstr ""
+
+msgid "Remove point from selection"
+msgstr ""
+
+msgid "Select by rectangle"
+msgstr ""
+
+msgid "Deselect by rectangle"
+msgstr ""
+
+msgid "Select all points"
+msgstr ""
+
+msgid "Move clipping plane"
+msgstr ""
+
+msgid "Reset clipping plane"
+msgstr ""
+
+msgid "Switch to editing mode"
+msgstr ""
+
+msgid "Best surface quality"
+msgstr ""
+
+msgid "Optimize object rotation for best surface quality."
+msgstr ""
+
+msgid "Reduced overhang slopes"
+msgstr ""
+
+msgid ""
+"Optimize object rotation to have minimum amount of overhangs needing support structures.\n"
+"Note that this method will try to find the best surface of the object for touching the print bed if no elevation is set."
+msgstr ""
+
+msgid "Lowest Z height"
+msgstr ""
+
+msgid "Rotate the model to have the lowest z height for faster print time."
+msgstr ""
+
+msgid "Describe, review, then add a printable model"
+msgstr ""
+
+msgid "Provider"
+msgstr ""
+
+msgid "Claude Code CLI"
+msgstr ""
+
+msgid "Codex CLI"
+msgstr ""
+
+msgid "Anthropic API"
+msgstr ""
+
+msgid "OpenAI API"
+msgstr ""
+
+msgid "Provider model"
+msgstr ""
+
+msgid "Enter an exact model ID"
+msgstr ""
+
+msgid "Provider executable path"
+msgstr ""
+
+msgid "Required for a CLI provider"
+msgstr ""
+
+msgid "Stored in Windows Credential Manager"
+msgstr ""
+
+msgid "Add or replace key"
+msgstr ""
+
+msgid "Test key"
+msgstr ""
+
+msgid "Clear key"
+msgstr ""
+
+msgid "Trusted renderer"
+msgstr ""
+
+msgid "OpenSCAD"
+msgstr ""
+
+msgid "Blender"
+msgstr ""
+
+msgid "Renderer executable path"
+msgstr ""
+
+msgid "Describe the model"
+msgstr ""
+
+msgid "Dimensions are in millimeters"
+msgstr ""
+
+msgid "Refinement note"
+msgstr ""
+
+msgid "Optional change for the next revision"
+msgstr ""
+
+msgid "Revisions"
+msgstr ""
+
+msgid "No model generated"
+msgstr ""
+
+msgid "Generate"
+msgstr ""
+
+msgid "Cancel generation"
+msgstr ""
+
+msgid "Preview mesh"
+msgstr ""
+
+msgid "Add to plate"
+msgstr ""
+
+msgid "Loading versions..."
+msgstr ""
+
+#, possible-c-format
+msgid "Revision %zu: "
+msgstr ""
+
+msgid "A retained revision is ready for preview."
+msgstr ""
+
+msgid "Saved revisions could not be read."
+msgstr ""
+
+msgid "API key saved in the local vault"
+msgstr ""
+
+msgid "No API key saved"
+msgstr ""
+
+msgid "CLI executable available"
+msgstr ""
+
+msgid "CLI executable not found"
+msgstr ""
+
+msgid "Renderer executable not found"
+msgstr ""
+
+msgid "Bundled renderer ready"
+msgstr ""
+
+msgid "Custom renderer ready"
+msgstr ""
+
+msgid "Key saved in the local credential vault"
+msgstr ""
+
+msgid "Choose an API provider and enter a key"
+msgstr ""
+
+msgid "Testing provider connection..."
+msgstr ""
+
+msgid "Provider connection ready"
+msgstr ""
+
+msgid "Saved key removed"
+msgstr ""
+
+msgid "No saved key was removed"
+msgstr ""
+
+msgid "Generating in an isolated revision. Nothing is on the plate yet."
+msgstr ""
+
+msgid "Mesh ready for preview. Add to plate when satisfied."
+msgstr ""
+
+msgid "Selected retained revision. Add to plate when satisfied."
+msgstr ""
+
+msgid "3D Models"
+msgstr ""
+
+msgid "Click to return (Command + Left Arrow)"
+msgstr ""
+
+msgid "Click to continue (Command + Right Arrow)"
+msgstr ""
+
+msgid "Click to return (Alt + Left Arrow)"
+msgstr ""
+
+msgid "Click to continue (Alt + Right Arrow)"
+msgstr ""
+
+msgid "Preview model"
+msgstr ""
+
+msgid "Drag to rotate, scroll to zoom, double-click to fit"
+msgstr ""
+
+msgid "Fit to view"
+msgstr ""
+
+msgid "Open in Prepare"
+msgstr ""
+
+msgid "Navigation rail"
+msgstr ""
+
+msgid "Notification centre"
+msgstr ""
+
+msgid "Every toast this app has shown, newest first. Nothing here blocks your work."
+msgstr ""
+
+#. TRN: Placeholder of the notification centre search field.
+msgid "Search notifications"
+msgstr ""
+
+#. TRN: Level filter chips of the notification centre.
+msgid "All levels"
+msgstr ""
+
+msgid "Important"
+msgstr ""
+
+msgid "Warnings"
+msgstr ""
+
+#. TRN: Toggle chip: include dismissed toasts in the notification centre list.
+msgid "Show dismissed"
+msgstr ""
+
+#. TRN: Accessible name of the notification history list.
+msgid "Notification history"
+msgstr ""
+
+#. TRN: Column headers of the notification centre list.
+msgid "Level"
+msgstr ""
+
+msgid "Action taken"
+msgstr ""
+
+#. TRN: Empty state of the notification centre.
+msgid "No notifications match. New toasts will appear here as they are shown."
+msgstr ""
+
+#. TRN: Invert the current selection in the notification centre.
+msgid "Invert selection"
+msgstr ""
+
+#. TRN: Clear the selection in the notification centre.
+msgid "Clear selection"
+msgstr ""
+
+#. TRN: Bulk action: close the selected toasts and mark them dismissed.
+msgid "Dismiss selected"
+msgstr ""
+
+#. TRN: Bulk action: export the selected (or all matching) notifications to a file.
+msgid "Export…"
+msgstr ""
+
+#. TRN: Bulk action: permanently delete the selected history entries (opens the confirmation gate).
+msgid "Delete selected…"
+msgstr ""
+
+#. TRN: Instruction on the slide-to-confirm control guarding bulk delete; second string is shown once the slide completes.
+msgid "Slide to delete these entries permanently"
+msgstr ""
+
+msgid "Deleting…"
+msgstr ""
+
+msgid "Hint"
+msgstr ""
+
+msgid "Print info"
+msgstr ""
+
+msgid "Serious warning"
+msgstr ""
+
+#. TRN: Status cell values in the notification centre list.
+msgid "Dismissed"
+msgstr ""
+
+msgid "Active"
+msgstr ""
+
+#. TRN: %1$d rows shown, %2$d matches, %3$d recorded, %4$d selected.
+#, possible-c-format, possible-boost-format
+msgid "Showing %d of %d matches (%d recorded) · %d selected"
+msgstr ""
+
+#. TRN: %1$d matches, %2$d recorded, %3$d selected.
+#, possible-c-format, possible-boost-format
+msgid "%d matches (%d recorded) · %d selected"
+msgstr ""
+
+#. TRN: %d is the number of rows currently rendered.
+#, possible-c-format, possible-boost-format
+msgid "Select this page (%d)"
+msgstr ""
+
+#. TRN: %d is the number of notifications matching the filter, rendered or not.
+#, possible-c-format, possible-boost-format
+msgid "Select all %d matches"
+msgstr ""
+
+#. TRN: %d is how many more matches the next page reveals.
+#, possible-c-format, possible-boost-format
+msgid "Show %d more"
+msgstr ""
+
+#. TRN: Tooltip of the disabled bulk buttons naming the unmet condition.
+msgid "Select at least one notification first"
+msgstr ""
+
+msgid "Close the selected toasts and mark them dismissed"
+msgstr ""
+
+msgid "Permanently remove the selected entries from the history"
+msgstr ""
+
+msgid "Nothing matches the current filter"
+msgstr ""
+
+msgid "Export the selected notifications"
+msgstr ""
+
+msgid "Export every notification matching the current filter"
+msgstr ""
+
+msgid "Dismissed toasts are listed; click to hide them"
+msgstr ""
+
+msgid "Dismissed toasts are hidden; click to list them"
+msgstr ""
+
+msgid "Export notifications"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Exported %d notifications to %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Could not write the export to %s. Check the folder is writable and try again."
+msgstr ""
+
+#. TRN: Title of the confirmation gate for deleting notification history entries.
+msgid "Delete notification entries"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Permanently delete %d notification entries from the history. This cannot be undone; the export button above keeps a copy first."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Deleted %d notification entries from the history"
+msgstr ""
+
+msgid "Parameter settings"
+msgstr ""
+
+#. TRN: prefix of the AI printer-watch toast; %s is the model's summary.
+#, possible-c-format, possible-boost-format
+msgid "Printer watch: %s"
+msgstr ""
+
+msgid "Browse complete project snapshots saved automatically in a private local Git repository."
+msgstr ""
+
+msgid "Untitled project"
+msgstr ""
+
+#. TRN: %s is a project filename, or the localized text "Untitled project".
+#, possible-c-format, possible-boost-format
+msgid "Project: %s"
+msgstr ""
+
+#. TRN: Heading of the recovery banner in the Version history dialog.
+msgid "Some versions could not be saved"
+msgstr ""
+
+msgid "Retry saving"
+msgstr ""
+
+#. TRN: Placeholder of the search field filtering the version list.
+msgid "Search versions"
+msgstr ""
+
+msgid "Commit"
+msgstr ""
+
+msgid "Load all versions"
+msgstr ""
+
+msgid "Restoring adds a new version. It never overwrites the project file or rewinds Git history."
+msgstr ""
+
+#. TRN: Opens the shared Export dialog for the version list.
+msgid "Export..."
+msgstr ""
+
+msgid "Restore selected"
+msgstr ""
+
+msgid "Export every listed version as JSON, CSV, YAML, TOML, XML, Markdown, HTML or an archive"
+msgstr ""
+
+msgid "Version history is unavailable because its local repository could not be initialized."
+msgstr ""
+
+msgid "Version history is unavailable for this project."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Could not load version history: %s"
+msgstr ""
+
+msgid "Could not load version history."
+msgstr ""
+
+#. TRN: Body text of the recovery banner in the Version history dialog.
+msgid "These recovery snapshots were kept on this device. Retry to save them to version history."
+msgstr ""
+
+#. TRN: %d is the number of additional unsaved snapshots not listed above.
+#, possible-c-format, possible-boost-format
+msgid "and %d more"
+msgstr ""
+
+msgid ""
+"Restore the selected version in the editor?\n"
+"\n"
+"The project file will not be overwritten. The restored state will be recorded as a new version."
+msgstr ""
+
+msgid "Restore project version"
+msgstr ""
+
+msgid "Could not create a secure temporary location for the restored project."
+msgstr ""
+
+msgid "Preparing selected version..."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Could not restore the selected version: %s"
+msgstr ""
+
+msgid "Could not restore the selected version."
+msgstr ""
+
+#. TRN: %1$d is how many project versions match the search; %2$d is the total.
+#, possible-c-format, possible-boost-format
+msgid "%d of %d versions match the search"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Showing the newest %d versions. Load all versions to browse older history."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%d versions saved on this device"
+msgstr ""
+
+msgid "No versions yet. A version is created automatically after completed edits and project saves."
+msgstr ""
+
+msgid "Selected commit: "
+msgstr ""
+
+msgid "Unknown time"
+msgstr ""
+
+msgid "Project snapshot"
+msgstr ""
+
+msgid "Projects"
+msgstr ""
+
+msgid "Project tabs"
+msgstr ""
+
+msgid "Home Assistant transport failed."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Home Assistant returned HTTP %s."
+msgstr ""
+
+msgid "The Home Assistant printer import worker could not finish the request."
+msgstr ""
+
+msgid "The Home Assistant printer import worker could not start."
+msgstr ""
+
+msgid "A Home Assistant printer import is already in progress."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Home Assistant request failed: %s"
+msgstr ""
+
+msgid "Home Assistant is shutting down."
+msgstr ""
+
+msgid "Home Assistant is not configured. Enter its URL and long-lived access token first."
+msgstr ""
+
+msgid "Home Assistant was not contacted. Use HTTPS for a remote URL. HTTP is allowed only for localhost or an IPv4 loopback address."
+msgstr ""
+
+msgid "Bambu Studio could not prepare the Home Assistant entity request."
+msgstr ""
+
+msgid "Home Assistant request setup failed."
+msgstr ""
+
+msgid "Home Assistant is busy with another entity request. Try again in a moment."
+msgstr ""
+
+msgid "Home Assistant could not be reached. Check the server and network connection."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Home Assistant returned HTTP %d while listing speakers and lights."
+msgstr ""
+
+msgid "Home Assistant returned more entity data than Bambu Studio can safely load."
+msgstr ""
+
+msgid "Home Assistant returned an invalid states response."
+msgstr ""
+
+msgid "Home Assistant request failed."
+msgstr ""
+
+msgid "Printer discovery sharing could not start."
+msgstr ""
+
+msgid "Printer discovery sharing is already active or still stopping. Turn it off and try again."
+msgstr ""
+
+msgid "Bambu Studio could not prepare printer discovery sharing."
+msgstr ""
+
+msgid "Printer discovery sharing needs a usable local-network IPv4 address."
+msgstr ""
+
+msgid "Printer discovery sharing could not open its local HTTP endpoint."
+msgstr ""
+
+msgid "Printer discovery sharing could not advertise itself with mDNS on this network."
+msgstr ""
+
+msgid "Printer discovery sharing could not start its background worker."
+msgstr ""
+
+msgid "This copies each accessible printer's serial number, LAN address and access code to Home Assistant. Access codes are credentials."
+msgstr ""
+
+msgid "Home Assistant speakers, media controls and alert lights."
+msgstr ""
+
+msgid "Home Assistant URL"
+msgstr ""
+
+msgid "Token"
+msgstr ""
+
+msgid "Not connected yet. Enter the URL and a long-lived access token, then press Connect."
+msgstr ""
+
+msgid "Printer handover"
+msgstr ""
+
+msgid "Printer access codes are credentials. Adding sends them to Home Assistant; discovery makes them available for five minutes to any device on this local network that sees the pairing value."
+msgstr ""
+
+msgid "Share for discovery for 5 minutes (no Home Assistant token)"
+msgstr ""
+
+msgid "Discovery publishes a temporary pairing value on this local network. Any device on this network can use it to request printer serial numbers, LAN addresses and access codes for up to five minutes. Enable only while importing, then switch it off."
+msgstr ""
+
+msgid "Printer discovery sharing is off."
+msgstr ""
+
+msgid "Search speakers and lights"
+msgstr ""
+
+msgid "Previous"
+msgstr ""
+
+msgid "Play / Pause"
+msgstr ""
+
+msgid "Use as announcement speaker"
+msgstr ""
+
+msgid "The Home Assistant list already has 32 entries. Clear the list before adding another."
+msgstr ""
+
+msgid "none"
+msgstr ""
+
+msgid "Use as alert light"
+msgstr ""
+
+msgid "You can configure up to 32 announcement speakers and 32 alert lights."
+msgstr ""
+
+msgid "Announcement speakers:"
+msgstr ""
+
+msgid "Clear speakers"
+msgstr ""
+
+msgid "Alert lights:"
+msgstr ""
+
+msgid "Clear lights"
+msgstr ""
+
+msgid "Speak printer state changes and errors (TTS narrator)"
+msgstr ""
+
+msgid "Flash alert lights red on printer errors (auto-restores)"
+msgstr ""
+
+msgid "Pulse alert lights green when a print finishes (auto-restores)"
+msgstr ""
+
+msgid "Saved Home Assistant speaker or light lists exceed the safe size limits. Existing entries were kept; only the first 32 valid entries are active."
+msgstr ""
+
+msgid "Printer access codes were not sent. Use HTTPS for a remote Home Assistant URL. HTTP is allowed only for localhost or an IPv4 loopback address."
+msgstr ""
+
+msgid "No accessible printers were found. Connect a printer and make sure its LAN address and access code are available."
+msgstr ""
+
+msgid "Printer handover is limited to the first 32 accessible printers; additional printers will not be sent."
+msgstr ""
+
+msgid "Copy printer access codes to Home Assistant?"
+msgstr ""
+
+msgid "Copy access codes and add printers"
+msgstr ""
+
+msgid "Adding one printer to Home Assistant..."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Adding %d printers to Home Assistant..."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Home Assistant processed %d of %d printer requests."
+msgstr ""
+
+msgid "Problems:"
+msgstr ""
+
+msgid "Printer discovery sharing expired after five minutes. Access codes are no longer offered."
+msgstr ""
+
+msgid "Printer discovery sharing stopped. Access codes are no longer offered."
+msgstr ""
+
+msgid "Printer discovery sharing did not start. No accessible printer has both a LAN address and an access code."
+msgstr ""
+
+msgid "Sharing one printer on the local network for up to five minutes. Turn sharing off after Home Assistant imports it."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Sharing %d printers on the local network for up to five minutes. Turn sharing off after Home Assistant imports them."
+msgstr ""
+
+msgid "Discovery sharing is limited to the first 32 accessible printers; additional printers were not included."
+msgstr ""
+
+msgid "Connecting to Home Assistant..."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Connected. %d speakers and lights found."
+msgstr ""
+
+msgid "No speakers or lights match this search."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Showing %d of %d matching speakers and lights."
+msgstr ""
+
+msgid "Refine the search to see the remaining matches."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Home Assistant returned additional speakers and lights beyond the %d-entity safety limit. Those additional entities are not shown."
+msgstr ""
+
+msgid "Stop print - safety interlock"
+msgstr ""
+
+msgid "Stopping discards the print in progress."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Arm %d (2)"
+msgstr ""
+
+#. TRN: %d is the arming button's number once fully pressed.
+#, possible-c-format, possible-boost-format
+msgid "Armed %d"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Arm %d (1)"
+msgstr ""
+
+msgid "Slide to open the safety cover"
+msgstr ""
+
+msgid "Cover unlocked"
+msgstr ""
+
+msgid "Lift cover"
+msgstr ""
+
+msgid "STOP PRINT"
+msgstr ""
+
+msgid "Keep printing"
+msgstr ""
+
+msgid "Step 1 of 4: turn both key switches."
+msgstr ""
+
+msgid "Step 2 of 4: press each arming button twice."
+msgstr ""
+
+msgid "Step 3 of 4: slide to unlock the safety cover."
+msgstr ""
+
+msgid "Step 4 of 4: lift the cover and press STOP PRINT."
+msgstr ""
+
+msgid "Interlock complete. STOP PRINT is live."
+msgstr ""
+
+msgid "Move over surface"
+msgstr ""
+
+msgid "System Information"
+msgstr ""
+
+msgid "Blacklisted libraries loaded into BambuStudio process:"
+msgstr ""
+
+msgid "SIMD is supported:"
+msgstr ""
+
+msgid "Copy to Clipboard"
+msgstr ""
+
+#. TRN: TTS lines for printer state changes.
+msgid "Printing started."
+msgstr ""
+
+msgid "Print finished."
+msgstr ""
+
+msgid "Print paused."
+msgstr ""
+
+msgid "Print failed."
+msgstr ""
+
+#. TRN: TTS line for a printer error; %06X is the hexadecimal error code.
+#, possible-c-format, possible-boost-format
+msgid "Printer error %06X. Check the device screen for details."
+msgstr ""
+
+msgid "XY axis controls"
+msgstr ""
+
+msgid "Press"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Move Y up %d mm"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Move X left %d mm"
+msgstr ""
+
+msgid "Home XY axes"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Move X right %d mm"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Move Y down %d mm"
+msgstr ""
+
+msgid "LIVE"
+msgstr ""
+
+msgid "AA large text only"
+msgstr ""
+
+msgid "fails WCAG"
+msgstr ""
+
+msgid "Material color picker"
+msgstr ""
+
+msgid "Saturation and value field"
+msgstr ""
+
+msgid "Hue"
+msgstr ""
+
+msgid "Material tones"
+msgstr ""
+
+msgid "Opacity"
+msgstr ""
+
+msgid "Opacity, 0 to 100 percent"
+msgstr ""
+
+msgid "HEX color"
+msgstr ""
+
+msgid "Enter any format"
+msgstr ""
+
+msgid "Enter any color format"
+msgstr ""
+
+msgid "Type a color in HEX, RGB, HSL, HSV, HWB, XYZ, Lab, LCH, OKLab, OKLCH, CMYK or a CSS color name"
+msgstr ""
+
+msgid "Color format status"
+msgstr ""
+
+msgid "Outside the sRGB gamut: the picker shows the nearest sRGB color (clipped)."
+msgstr ""
+
+msgid "Active color space and gamut"
+msgstr ""
+
+msgid "Contrast"
+msgstr ""
+
+msgid "Text on it: 21.00:1 (AA large text only)"
+msgstr ""
+
+msgid "As text: 21.00:1 (AA large text only)"
+msgstr ""
+
+msgid "Translations"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Copy %s"
+msgstr ""
+
+msgid "Picked in sRGB. Type any notation below to jump the picker."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Active space: %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Gamut: %s"
+msgstr ""
+
+msgid "sRGB, in gamut"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Text on it: %s (%s)"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "As text: %s (%s)"
+msgstr ""
+
+msgid "No contrast pair supplied"
+msgstr ""
+
+msgid "Type any notation to jump the picker."
+msgstr ""
+
+msgid "Not a recognised color. Try #rrggbb, rgb(), hsl(), hsv(), hwb(), lab(), lch(), oklab(), oklch(), cmyk() or a CSS name."
+msgstr ""
+
+msgid "outside sRGB"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Parsed as %s."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Copied %s"
+msgstr ""
+
+msgid "Menu"
+msgstr ""
+
+msgid "Activate"
+msgstr ""
+
+msgid "Search menu"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Pattern too long (max %d characters)"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Sample too long (max %d characters)"
+msgstr ""
+
+msgid "Pattern too complex to evaluate safely"
+msgstr ""
+
+msgid "Regex evaluation is temporarily unavailable"
+msgstr ""
+
+msgid "Unbalanced [ ] character set"
+msgstr ""
+
+msgid "Unbalanced ( ) group"
+msgstr ""
+
+msgid "Unbalanced { } quantifier"
+msgstr ""
+
+msgid "Invalid counts inside { }"
+msgstr ""
+
+msgid "Invalid character range"
+msgstr ""
+
+msgid "Invalid escape sequence"
+msgstr ""
+
+msgid "Invalid backreference"
+msgstr ""
+
+msgid "Quantifier has nothing to repeat"
+msgstr ""
+
+msgid "Unknown character class name"
+msgstr ""
+
+msgid "Invalid regular expression"
+msgstr ""
+
+msgid "Engine: Boost.Regex 1.84 wide-character ECMAScript in an isolated 50 ms worker. Case-insensitive matching uses boost::regex_constants::icase. Escape metacharacters with a backslash."
+msgstr ""
+
+msgid "Regex pattern"
+msgstr ""
+
+msgid "Copy pattern"
+msgstr ""
+
+msgid "Empty pattern matches everything"
+msgstr ""
+
+msgid "Flags"
+msgstr ""
+
+msgid "Regex mode"
+msgstr ""
+
+msgid "Case sensitive"
+msgstr ""
+
+msgid "Multiline anchors (^ and $ match line boundaries)"
+msgstr ""
+
+msgid "Whole word"
+msgstr ""
+
+msgid "Whole word applies to plain-text search only; in regex mode use \\b"
+msgstr ""
+
+msgid "Literals"
+msgstr ""
+
+msgid "Text to match literally"
+msgstr ""
+
+msgid "Insert the text with regex metacharacters escaped"
+msgstr ""
+
+msgid "Character classes"
+msgstr ""
+
+msgid "Any single character except newline"
+msgstr ""
+
+msgid "Character set — matches any one character listed inside"
+msgstr ""
+
+msgid "Negated set — matches any character not listed inside"
+msgstr ""
+
+msgid "Character range — use inside [ ], e.g. [a-z0-9]"
+msgstr ""
+
+msgid "Digit 0-9"
+msgstr ""
+
+msgid "Any character that is not a digit"
+msgstr ""
+
+msgid "Word character: letter, digit, or underscore"
+msgstr ""
+
+msgid "Any character that is not a word character"
+msgstr ""
+
+msgid "Whitespace character"
+msgstr ""
+
+msgid "Any character that is not whitespace"
+msgstr ""
+
+msgid "Anchors"
+msgstr ""
+
+msgid "Start of the text"
+msgstr ""
+
+msgid "End of the text"
+msgstr ""
+
+msgid "Word boundary"
+msgstr ""
+
+msgid "Not a word boundary"
+msgstr ""
+
+msgid "Groups & alternation"
+msgstr ""
+
+msgid "Capturing group — remembers the matched text"
+msgstr ""
+
+msgid "Non-capturing group — groups without remembering"
+msgstr ""
+
+msgid "Alternation — matches either side"
+msgstr ""
+
+msgid "Backreference — matches what group 1 captured"
+msgstr ""
+
+msgid "Quantifiers"
+msgstr ""
+
+msgid "Zero or more of the previous item (greedy)"
+msgstr ""
+
+msgid "One or more of the previous item (greedy)"
+msgstr ""
+
+msgid "Zero or one of the previous item (greedy)"
+msgstr ""
+
+msgid "Exactly n repetitions — replace n with a number"
+msgstr ""
+
+msgid "At least n repetitions — replace n with a number"
+msgstr ""
+
+msgid "Between n and m repetitions — replace n and m with numbers"
+msgstr ""
+
+msgid "Zero or more (lazy — matches as little as possible)"
+msgstr ""
+
+msgid "One or more (lazy — matches as little as possible)"
+msgstr ""
+
+msgid "Zero or one (lazy — matches as little as possible)"
+msgstr ""
+
+msgid "Test pattern"
+msgstr ""
+
+msgid "Sample text"
+msgstr ""
+
+msgid "Matches"
+msgstr ""
+
+msgid "Match results"
+msgstr ""
+
+msgid "Build"
+msgstr ""
+
+msgid "Reference"
+msgstr ""
+
+msgid "Reference & help"
+msgstr ""
+
+msgid "How search works"
+msgstr ""
+
+msgid "Plain text is the default in every search bar; regex mode is a deliberate opt-in via the .* toggle."
+msgstr ""
+
+msgid "Case sensitive refines plain-text and regex search. Multiline makes ^ and $ match line boundaries; Whole word is plain-text only, so use \\b in regex mode."
+msgstr ""
+
+msgid "An invalid or half-typed pattern never hides rows: it matches everything until it compiles."
+msgstr ""
+
+msgid "Evaluation is local and bounded - long patterns and samples are truncated and runaway matching stops safely."
+msgstr ""
+
+msgid "Examples"
+msgstr ""
+
+msgid "Rows that start with PLA"
+msgstr ""
+
+msgid "A number followed by mm, with an optional space"
+msgstr ""
+
+msgid "Rows containing the whole word red or blue"
+msgstr ""
+
+msgid "OpenCode helper"
+msgstr ""
+
+msgid "Let the OpenCode assistant draft the pattern: the button copies a prompt describing this engine, your current pattern and sample text to the clipboard, then opens OpenCode if it is installed."
+msgstr ""
+
+msgid "Copy prompt & open OpenCode"
+msgstr ""
+
+msgid "Prompt copied. OpenCode is starting - paste the prompt there."
+msgstr ""
+
+msgid "Prompt copied. OpenCode was not found on PATH - paste the prompt into your assistant."
+msgstr ""
+
+msgid "Valid pattern"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Match %d at %d-%d: %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "group %d: %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "group %d: (no match)"
+msgstr ""
+
+msgid "No matches."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Showing first %d matches only."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Sample truncated to %d characters."
+msgstr ""
+
+msgid "Valid pattern — 1 match"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Valid pattern — %d matches"
+msgstr ""
+
+msgid "Turn key off"
+msgstr ""
+
+msgid "Turn key on"
+msgstr ""
+
+#. TRN %d is how many more affected items are not listed individually.
+#, possible-c-format, possible-boost-format
+msgid "... and %d more"
+msgstr ""
+
+msgid "1 item will be affected. This cannot be undone."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%d items will be affected. This cannot be undone."
+msgstr ""
+
+msgid "Key 1 of 2: turn to arm"
+msgstr ""
+
+msgid "Key 2 of 2: turn to arm"
+msgstr ""
+
+msgid "Key 1"
+msgstr ""
+
+msgid "Key 2"
+msgstr ""
+
+#. TRN %s is the destructive action label, e.g. "Delete preset".
+#, possible-c-format, possible-boost-format
+msgid "Slide to %s"
+msgstr ""
+
+msgid "Authorized"
+msgstr ""
+
+msgid "Emergency exit"
+msgstr ""
+
+msgid "Close without doing anything (Esc)"
+msgstr ""
+
+msgid "Step 1 of 2: turn both keys."
+msgstr ""
+
+msgid "Step 1 of 2: turn the other key too."
+msgstr ""
+
+msgid "Step 2 of 2: slide all the way to the end."
+msgstr ""
+
+msgid "Keep sliding... release early to back out."
+msgstr ""
+
+msgid "Authorized. Carrying out the action."
+msgstr ""
+
+msgid "Cancelled. Nothing was changed."
+msgstr ""
+
+msgid "Hide tab from strip"
+msgstr ""
+
+msgid "Close tab"
+msgstr ""
+
+msgid "collapsed"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Group %s"
+msgstr ""
+
+msgid "Expand group"
+msgstr ""
+
+msgid "Collapse group"
+msgstr ""
+
+msgid "pinned"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "group %s"
+msgstr ""
+
+msgid "Vertical tab list. Use Up and Down to move between tabs."
+msgstr ""
+
+msgid "Horizontal tab list. Use Left and Right to move between tabs."
+msgstr ""
+
+msgid "Tabs"
+msgstr ""
+
+msgid "More tabs"
+msgstr ""
+
+msgid "Search tabs"
+msgstr ""
+
+msgid "New tab"
+msgstr ""
+
+msgid "Hide tabs"
+msgstr ""
+
+msgid "Close tabs"
+msgstr ""
+
+msgid "Dock tab strip"
+msgstr ""
+
+msgid "Search tabs..."
+msgstr ""
+
+msgid "Search tab groups..."
+msgstr ""
+
+msgid "Search all tabs..."
+msgstr ""
+
+msgid "Close tabs containing text..."
+msgstr ""
+
+msgid "Close tabs not containing text..."
+msgstr ""
+
+msgid "Show more tabs..."
+msgstr ""
+
+msgid "Edit tab strip appearance..."
+msgstr ""
+
+msgid "Unpin tab"
+msgstr ""
+
+msgid "Pin tab"
+msgstr ""
+
+msgid "Move into group..."
+msgstr ""
+
+msgid "Remove from group"
+msgstr ""
+
+msgid "New group with this tab..."
+msgstr ""
+
+msgid "Search tabs in this group..."
+msgstr ""
+
+msgid "Pinned tabs are protected. Unpin the tab to close it."
+msgstr ""
+
+msgid "Edit tab appearance..."
+msgstr ""
+
+msgid "Edit group appearance..."
+msgstr ""
+
+msgid "New group"
+msgstr ""
+
+msgid "Rename group..."
+msgstr ""
+
+msgid "Change group colour..."
+msgstr ""
+
+msgid "Remove group (keep tabs)"
+msgstr ""
+
+msgid "Rename group"
+msgstr ""
+
+msgid "hidden, click to restore"
+msgstr ""
+
+msgid "Every tab fits in the strip"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "More tabs (%d hidden)"
+msgstr ""
+
+msgid "Group name"
+msgstr ""
+
+msgid "Move into group"
+msgstr ""
+
+msgid "Search groups"
+msgstr ""
+
+msgid "Groups"
+msgstr ""
+
+msgid "No groups yet. Create one to move this tab into it."
+msgstr ""
+
+msgid "New group..."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%d tabs"
+msgstr ""
+
+msgid "No group matches this search."
+msgstr ""
+
+msgid "Close tabs not containing text"
+msgstr ""
+
+msgid "Close tabs containing text"
+msgstr ""
+
+msgid "Text to match in tab titles"
+msgstr ""
+
+msgid "Close the tabs that do NOT contain the text"
+msgstr ""
+
+msgid "Include pinned tabs"
+msgstr ""
+
+msgid "Tabs that will close"
+msgstr ""
+
+msgid "Enter text to match before closing tabs."
+msgstr ""
+
+msgid "The pattern is not a valid regular expression."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%d tabs will close"
+msgstr ""
+
+msgid "Not containing text"
+msgstr ""
+
+msgid "Containing text"
+msgstr ""
+
+msgid "regex"
+msgstr ""
+
+msgid "plain text"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%d pinned tabs kept"
+msgstr ""
+
+msgid "No tab matches this text."
+msgstr ""
+
+msgid "Search tabs in group"
+msgstr ""
+
+msgid "Search tab groups"
+msgstr ""
+
+msgid "Search all tabs"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%d tab strips"
+msgstr ""
+
+msgid "Results"
+msgstr ""
+
+msgid "Go to tab"
+msgstr ""
+
+msgid "Nothing to list."
+msgstr ""
+
+msgid "No tab matches this search."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%d results"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Please input a number greater than or equal to %d"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Please enter a number between %d and %d."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Please enter a float greater than or equal to %f."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Please enter a float between %f and %f."
+msgstr ""
+
+msgid ""
+"Failed to start the embedded browser. Pages such as the home page, the device page and the login window will stay blank.\n"
+"\n"
+"Please install or repair the Microsoft Edge WebView2 Runtime, then restart Bambu Studio."
+msgstr ""
+
+msgid "Failed to start the embedded browser. Pages such as the home page, the device page and the login window will stay blank."
+msgstr ""
+
+msgid "Embedded Browser Unavailable"
+msgstr ""
+
+msgid "Invalid local date or time"
+msgstr ""
+
+msgid "Unknown or unavailable IANA time zone"
+msgstr ""
+
+msgid "Could not resolve time-zone rules"
+msgstr ""
+
+msgid "IANA time-zone rules are unavailable on this platform"
+msgstr ""
+
+msgid "Time zone rules are unavailable"
+msgstr ""
+
+msgid "This local time does not exist because the clock jumps forward."
+msgstr ""
+
+msgid "Planned print time"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "This local time occurs twice. Use the earlier occurrence (UTC offset %d minutes)? Choose No for the later occurrence (UTC offset %d minutes)."
+msgstr ""
+
+msgid "Choose daylight-saving occurrence"
+msgstr ""
+
+msgid "Could not write the selected export file."
+msgstr ""
+
+msgid "New workspace"
+msgstr ""
+
+msgid "Open workspace"
+msgstr ""
+
+msgid "Save workspace"
+msgstr ""
+
+msgid "Rename workspace"
+msgstr ""
+
+msgid "Workspace title"
+msgstr ""
+
+msgid "Name this workspace"
+msgstr ""
+
+msgid "Time zone and reminders"
+msgstr ""
+
+msgid "Member"
+msgstr ""
+
+msgid "Project 3MF"
+msgstr ""
+
+msgid "Editable sources"
+msgstr ""
+
+msgid "Add project 3MF"
+msgstr ""
+
+msgid "Add editable source"
+msgstr ""
+
+msgid "Open selected project"
+msgstr ""
+
+msgid "Files"
+msgstr ""
+
+msgid "Edit / due date / link"
+msgstr ""
+
+msgid "Move up"
+msgstr ""
+
+msgid "Move down"
+msgstr ""
+
+msgid "Export JSON"
+msgstr ""
+
+msgid "Export CSV"
+msgstr ""
+
+msgid "Checklist"
+msgstr ""
+
+msgid "Planned print"
+msgstr ""
+
+msgid "Start (UTC)"
+msgstr ""
+
+msgid "Add planned print"
+msgstr ""
+
+msgid "Snooze reminder"
+msgstr ""
+
+msgid "Dismiss reminder"
+msgstr ""
+
+msgid "Enable / disable"
+msgstr ""
+
+msgid "Export ICS"
+msgstr ""
+
+msgid "Calendar"
+msgstr ""
+
+#, possible-c-format
+msgid "%zu projects, %zu checklist items, %zu planned prints"
+msgstr ""
+
+msgid " [saved offset differs]"
+msgstr ""
+
+msgid " [time zone unavailable]"
+msgstr ""
+
+msgid "Planned"
+msgstr ""
+
+msgid "; time zone unavailable"
+msgstr ""
+
+msgid "; saved offset differs"
+msgstr ""
+
+msgid "Discard unsaved workspace changes?"
+msgstr ""
+
+msgid "Workspace time zone"
+msgstr ""
+
+msgid "IANA time zone name"
+msgstr ""
+
+msgid "Deadline reminder"
+msgstr ""
+
+msgid "Local hour, 0 to 23"
+msgstr ""
+
+msgid "Reminders"
+msgstr ""
+
+msgid "Enable reminders? yes or no"
+msgstr ""
+
+msgid "A checklist deadline cannot be resolved in this time zone."
+msgstr ""
+
+msgid "Could not open workspace"
+msgstr ""
+
+#, possible-c-format
+msgid " (%zu additional affected members)"
+msgstr ""
+
+msgid "Workspace member warning"
+msgstr ""
+
+msgid "A saved deadline offset differs from its named time zone. The reminder uses the resolved due-date offset; review this item."
+msgstr ""
+
+msgid "A saved planned-print offset differs from its named time zone. The saved UTC time remains in use; review this slot."
+msgstr ""
+
+msgid "A calendar time zone could not be resolved. Affected deadline reminders are paused; saved planned-print UTC times remain in use."
+msgstr ""
+
+#, possible-c-format
+msgid "%zu workspace reminders became due while you were away."
+msgstr ""
+
+msgid "Planned print reminder: "
+msgstr ""
+
+msgid "Checklist deadline reminder: "
+msgstr ""
+
+msgid "Workspace item"
+msgstr ""
+
+#, possible-c-format
+msgid " (%zu more due)"
+msgstr ""
+
+msgid "Could not save workspace"
+msgstr ""
+
+msgid "Invalid project 3MF"
+msgstr ""
+
+msgid "Invalid staged project 3MF"
+msgstr ""
+
+msgid "Opening this member in the print canvas is not connected yet."
+msgstr ""
+
+msgid "Project 3MF (*.3mf)|*.3mf"
+msgstr ""
+
+msgid "All files (*.*)|*.*"
+msgstr ""
+
+msgid "Add checklist item"
+msgstr ""
+
+msgid "Task"
+msgstr ""
+
+msgid "Edit checklist item"
+msgstr ""
+
+msgid "Due date"
+msgstr ""
+
+msgid "Date only, YYYY-MM-DD (optional)"
+msgstr ""
+
+msgid "Linked project"
+msgstr ""
+
+msgid "Member ID (optional)"
+msgstr ""
+
+msgid "Linked planned print"
+msgstr ""
+
+msgid "Planned-print ID (optional)"
+msgstr ""
+
+msgid "The deadline reminder time is ambiguous or nonexistent."
+msgstr ""
+
+msgid "Printer ID"
+msgstr ""
+
+msgid "Start time"
+msgstr ""
+
+msgid "Local time, YYYY-MM-DD HH:MM"
+msgstr ""
+
+msgid "End time"
+msgstr ""
+
+msgid "The end time must be after the start time."
+msgstr ""
+
+msgid "New reminder time, UTC YYYY-MM-DD HH:MM"
+msgstr ""
+
+msgid "Export checklist"
+msgstr ""
+
+msgid "CSV (*.csv)|*.csv"
+msgstr ""
+
+msgid "JSON (*.json)|*.json"
+msgstr ""
+
+msgid "Export calendar"
+msgstr ""
+
+msgid "iCalendar (*.ics)|*.ics"
+msgstr ""
+
+msgid "Windows Media Player is required for this task! Do you want to enable 'Windows Media Player' for your operation system?"
+msgstr ""
+
+msgid "BambuSource has not correctly been registered for media playing! Press Yes to re-register it."
+msgstr ""
+
+msgid "Missing BambuSource component registered for media playing! Please re-install BambuStutio or seek after-sales help."
+msgstr ""
+
+msgid "Using a BambuSource from a different install, video play may not work correctly! Press Yes to fix it."
+msgstr ""
+
+msgid "Your system is missing H.264 codecs for GStreamer, which are required to play video.  (Try installing the gstreamer1.0-plugins-bad or gstreamer1.0-libav packages, then restart Bambu Studio?)"
+msgstr ""
+
 #: resources/data/hints.ini: [hint:How to use keyboard shortcuts]
 msgid "How to use keyboard shortcuts\nDid you know that Bambu Studio offers a wide range of keyboard shortcuts and 3D scene operations."
 msgstr ""
@@ -18823,24 +22916,4 @@ msgstr ""
 
 #: resources/data/helio_hints.ini: [hint: First-Time-Right Reliability]
 msgid "First-Time-Right Reliability\nLess babysitting, more predictable output. Example: a small farm running PETG parts avoids 'fail at hour 6' surprises and keeps batches on schedule."
-msgstr ""
-
-#: src/slic3r/GUI/WebViewDialog.cpp
-msgid "Network unavailable. The current page remains open."
-msgstr ""
-
-#: src/slic3r/GUI/WebViewDialog.cpp
-msgid "Cloud sign-in could not be completed. The current page remains open."
-msgstr ""
-
-#: src/slic3r/GUI/WebViewDialog.cpp
-msgid "The requested cloud page was not found. The current page remains open."
-msgstr ""
-
-#: src/slic3r/GUI/WebViewDialog.cpp
-msgid "The cloud page could not be opened securely. The current page remains open."
-msgstr ""
-
-#: src/slic3r/GUI/WebViewDialog.cpp
-msgid "The cloud page is temporarily unavailable. The current page remains open."
 msgstr ""

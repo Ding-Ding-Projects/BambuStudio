@@ -23746,3 +23746,2841 @@ msgstr ""
 
 msgid "Create Custom Filament"
 msgstr ""
+
+msgid "The funny level styles every message in this language, including errors and warnings. Facts never change. Adjust it in Preferences > General."
+msgstr ""
+
+msgid "Loading presets"
+msgstr ""
+
+msgid "Building the window"
+msgstr ""
+
+msgid "Applying presets"
+msgstr ""
+
+msgid "Open File"
+msgstr ""
+
+msgid "Export object list"
+msgstr ""
+
+msgid "Export every object's name, parts, instances and size as JSON, CSV, YAML, TOML, XML, Markdown, HTML or an archive"
+msgstr ""
+
+msgid "Edit this filament preset"
+msgstr ""
+
+msgid "Separate this filament into its component colors"
+msgstr ""
+
+msgid "Merge this filament into the selected filament"
+msgstr ""
+
+msgid "Choose the filament that will replace this one"
+msgstr ""
+
+msgid "text"
+msgstr ""
+
+msgid "&"
+msgstr ""
+
+msgid "hypertext_menubar_item_name"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s fan speed"
+msgstr ""
+
+msgid "What's new"
+msgstr ""
+
+msgid "Browse every released version with its dated, commit-linked changes"
+msgstr ""
+
+msgid "Notifications"
+msgstr ""
+
+msgid "Maximize"
+msgstr ""
+
+msgid "Close window"
+msgstr ""
+
+msgid "Top bar"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Notifications (%d unread)"
+msgstr ""
+
+#, possible-boost-format
+msgid "Masked SLA file exported to %1%"
+msgstr ""
+
+msgid "Mean"
+msgstr ""
+
+msgid "GCode"
+msgstr ""
+
+msgid "Could not open the selected project tab. The current project was restored."
+msgstr ""
+
+msgid "Could not open the selected project tab or restore the current project."
+msgstr ""
+
+msgid "Open project tab"
+msgstr ""
+
+msgid "Could not close this project tab. The project was restored."
+msgstr ""
+
+msgid "Could not close this project tab or restore its project."
+msgstr ""
+
+msgid "Open project or workspace"
+msgstr ""
+
+msgid "Bambu workspace (*.bambu-workspace)|*.bambu-workspace"
+msgstr ""
+
+msgid "Could not stage the workspace project for editing."
+msgstr ""
+
+msgid "Open workspace project"
+msgstr ""
+
+msgid "Could not open the selected project. The current project was restored."
+msgstr ""
+
+msgid "Could not open the selected project or restore the current project."
+msgstr ""
+
+msgid "Open project"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Plate %d"
+msgstr ""
+
+msgid "Not sliced"
+msgstr ""
+
+msgid "Open the matching workspace before saving this member."
+msgstr ""
+
+msgid "Save workspace project"
+msgstr ""
+
+msgid "Could not prepare the project and its version history. The workspace was not changed."
+msgstr ""
+
+msgid "The workspace could not be saved. The previous bundle was preserved and the completed project remains in private recovery staging."
+msgstr ""
+
+msgid "Plate 1"
+msgstr ""
+
+msgid "Slice and print"
+msgstr ""
+
+msgid "What's new / Changelog"
+msgstr ""
+
+msgid "Model Creator"
+msgstr ""
+
+msgid "Describe, preview, and explicitly add a model to the plate"
+msgstr ""
+
+msgid "Export current version only as 3MF"
+msgstr ""
+
+msgid "Export the current project without its version history"
+msgstr ""
+
+msgid "Export print statistics"
+msgstr ""
+
+msgid "Export the current plate's estimated times, filament use and flush volumes as JSON, YAML, TOML, XML, CSV, Markdown, HTML or an archive"
+msgstr ""
+
+msgid "Export preferences"
+msgstr ""
+
+msgid "Export every preference section as JSON, YAML, TOML, XML, CSV, Markdown, HTML or an archive"
+msgstr ""
+
+msgid "Add model"
+msgstr ""
+
+msgid "Select all files."
+msgstr ""
+
+msgid "Finish managing files."
+msgstr ""
+
+msgid "Ejecting."
+msgstr ""
+
+msgid "Sidebar"
+msgstr ""
+
+msgid "Bulk ink"
+msgstr ""
+
+msgid "Prepare sections"
+msgstr ""
+
+msgid "Ink"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Ink %d color"
+msgstr ""
+
+msgid "Ink menu"
+msgstr ""
+
+msgid "This filament slot will be removed from the project. Objects and paint assigned to it are moved to another slot."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Slot %d: %s"
+msgstr ""
+
+msgid "True multi-material support will be added in a future update."
+msgstr ""
+
+msgid "The active plate changed. Reopen print setup."
+msgstr ""
+
+msgid "Select the plate before changing its nozzle assignment."
+msgstr ""
+
+msgid "The filament assignment changed. Reopen print setup."
+msgstr ""
+
+msgid "Every used material needs a left or right nozzle."
+msgstr ""
+
+msgid "The printer nozzle configuration is unavailable."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The %s extruder has no available nozzle of the required type."
+msgstr ""
+
+msgid "Wait for the Prepare view before changing nozzle assignments."
+msgstr ""
+
+msgid "The proposed nozzle assignment could not be checked."
+msgstr ""
+
+msgid "The previous nozzle assignment could not be restored in Prepare."
+msgstr ""
+
+msgid "This nozzle cannot print the selected material."
+msgstr ""
+
+msgid "A model using this material is outside the target nozzle's printable area."
+msgstr ""
+
+msgid "Failed to save the project and its version history. The previous project file was preserved."
+msgstr ""
+
+msgid "Every object on every plate will be removed from this project."
+msgstr ""
+
+msgid "Could not preserve pending project history. The current version was not exported."
+msgstr ""
+
+msgid "Export current version"
+msgstr ""
+
+msgid "Could not export the current version. The previous file was preserved."
+msgstr ""
+
+msgid "Could not verify the exported 3MF. The previous file was preserved."
+msgstr ""
+
+msgid "Could not publish the current-version export. The previous file and pending export were preserved."
+msgstr ""
+
+msgid "Delete plate"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Plate %d and every object on it will be removed from this project."
+msgstr ""
+
+msgid "Funny level (Cantonese)"
+msgstr ""
+
+msgid "1 = fully serious, 5 = maximum playfulness"
+msgstr ""
+
+msgid "What does this change?"
+msgstr ""
+
+msgid "Sets the tone of every message Bambu Studio shows in this language, including errors, warnings and destructive confirmations. It never changes what a message says has happened or what will be affected."
+msgstr ""
+
+msgid "Hide details"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Level %d of 5"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Stored in BambuStudio.conf as %d."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Not stored yet; using the compiled default %d."
+msgstr ""
+
+msgid "External editor browse"
+msgstr ""
+
+msgid "Download path browse"
+msgstr ""
+
+msgid "Settings sections"
+msgstr ""
+
+msgid "Appearance preview"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Accent %d"
+msgstr ""
+
+msgid "Custom accent"
+msgstr ""
+
+msgid "Appearance preview text"
+msgstr ""
+
+msgid "App name"
+msgstr ""
+
+msgid "App name status"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Enter a name of 1 to %d characters, or reset to the shipped name."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Too long: %d characters. Use %d or fewer."
+msgstr ""
+
+msgid "Remove line breaks and other control characters."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Stored in your settings (%s). Shipped name: %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Not set. Showing the shipped name, %s."
+msgstr ""
+
+msgid "Reset to shipped name"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The name is a label only. It changes the title bar, the window title, the About dialog and the dialog captions that introduce the app. Your data folder, the installer and updater, log files, crash and diagnostic reports, and file associations keep the real product name, %s, so support can still tell which software this is."
+msgstr ""
+
+msgid "What does renaming change?"
+msgstr ""
+
+msgid "Hide explanation"
+msgstr ""
+
+msgid "Show emojis in dialogs and message boxes"
+msgstr ""
+
+msgid "Adds one decorative emoji to a dialog headline. Buttons, action labels and field labels never carry one."
+msgstr ""
+
+msgid "Show bed heat soak area"
+msgstr ""
+
+msgid "Show the heated-bed preconditioning boundaries in the 3D view and preview."
+msgstr ""
+
+msgid "Export preferences..."
+msgstr ""
+
+msgid "- Sync printer presets after loading a file\n- \"Load 3MF\" dialog settings\n- Executing post-processing scripts\n- Support structure recommendation prompt\n- Unsaved projects.\n- Mixed color sublayer with variable layer height warning\n- Delete a filament used by a model"
+msgstr ""
+
+msgid "Previous plate"
+msgstr ""
+
+msgid "Next plate"
+msgstr ""
+
+msgid "Swap"
+msgstr ""
+
+msgid "Swap and reslice"
+msgstr ""
+
+msgid "Apply the selected nozzle moves and return to Prepare."
+msgstr ""
+
+msgid "Apply the selected nozzle moves, reslice, then reopen print setup."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Move material %d right"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Move material %d left"
+msgstr ""
+
+msgid "Swap nozzle assignment"
+msgstr ""
+
+msgid "The plate or filament assignment changed. Reopen print setup and try again."
+msgstr ""
+
+msgid "The nozzle assignment was saved. Start slicing from Prepare when the slice action is available."
+msgstr ""
+
+msgid "Sending system info"
+msgstr ""
+
+msgid "Data to send"
+msgstr ""
+
+msgid "Send system info"
+msgstr ""
+
+msgid "Show details"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Export this %s preset as JSON, YAML, TOML, XML, CSV, Markdown, HTML or an archive"
+msgstr ""
+
+msgid "For support enforcers only"
+msgstr ""
+
+msgid "Support on build plate only"
+msgstr ""
+
+msgid "Everywhere"
+msgstr ""
+
+msgid "Around object"
+msgstr ""
+
+msgid "Below object"
+msgstr ""
+
+msgid "\"No sparse layers\" is not compatible with smooth timelapse, which needs a prime tower on every layer. Timelapse has been switched to instant mode."
+msgstr ""
+
+msgid "Edit appearance of the focused element"
+msgstr ""
+
+msgid "Online projects"
+msgstr ""
+
+msgid "Workspace"
+msgstr ""
+
+msgid "Prefer Left"
+msgstr ""
+
+msgid "Prefer Right"
+msgstr ""
+
+#, possible-boost-format
+msgid "Unsupported overhangs were detected.\nModel \"%1%\" has %2% overhang region(s) that could not get support. Try adjusting the support settings or re-orienting the object."
+msgstr ""
+
+msgid "Multi-plate sending cannot prove one nozzle mapping for every plate. Send plates separately."
+msgstr ""
+
+msgid "The plate's nozzle mapping is unavailable. Use the single-printer send flow."
+msgstr ""
+
+msgid "Select this plate before sending so its nozzle and material mappings can be checked."
+msgstr ""
+
+msgid "The plate has an incomplete left/right nozzle assignment. Review it before sending."
+msgstr ""
+
+msgid "Two matching nozzle presets are required for this printer. Use the single-printer send flow."
+msgstr ""
+
+msgid "A nozzle diameter or flow type is invalid. Review the printer preset before sending."
+msgstr ""
+
+msgid "The printer has no current nozzle mapping result. Refresh it in the single-printer send flow."
+msgstr ""
+
+msgid "The printer returned an invalid nozzle mapping. Refresh it before sending."
+msgstr ""
+
+msgid "The printer's nozzle mapping does not cover every used material. Refresh it before sending."
+msgstr ""
+
+msgid "Pair this LAN printer with its access code before sending."
+msgstr ""
+
+msgid "This LAN printer has no local address. Reconnect it before sending."
+msgstr ""
+
+msgid "Direct LAN printing is unavailable in the installed networking module."
+msgstr ""
+
+msgid "This selected printer is no longer available. Refresh the device list before sending."
+msgstr ""
+
+msgid "This selected printer went offline while preparing the print file."
+msgstr ""
+
+msgid "This selected printer became busy while preparing the print file."
+msgstr ""
+
+msgid "This selected printer started upgrading while preparing the print file."
+msgstr ""
+
+msgid "This selected printer is incompatible with the current printer preset."
+msgstr ""
+
+msgid "This selected printer is no longer ready to print. Refresh its status before sending."
+msgstr ""
+
+msgid "This printer is offline. It remains in the farm list."
+msgstr ""
+
+msgid "Go"
+msgstr ""
+
+msgid "Prefer left nozzle"
+msgstr ""
+
+msgid "Prefer right nozzle"
+msgstr ""
+
+msgid "Place as many printable materials as possible on the left nozzle; use the right nozzle when required."
+msgstr ""
+
+msgid "Place as many printable materials as possible on the right nozzle; use the left nozzle when required."
+msgstr ""
+
+msgid "Prefer the left nozzle for compatible materials, then use the right nozzle as needed."
+msgstr ""
+
+msgid "Prefer the right nozzle for compatible materials, then use the left nozzle as needed."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Material %d"
+msgstr ""
+
+msgid "Move to left nozzle"
+msgstr ""
+
+msgid "Move to right nozzle"
+msgstr ""
+
+msgid "Swap groups"
+msgstr ""
+
+msgid "The destination nozzle cannot preserve every material's flow type or has no available nozzle. Adjust the nozzle setup before swapping."
+msgstr ""
+
+msgid "Cannot swap groups"
+msgstr ""
+
+msgid "Use the left nozzle for compatible materials when capacity allows; otherwise use the right nozzle."
+msgstr ""
+
+msgid "Use the right nozzle for compatible materials when capacity allows; otherwise use the left nozzle."
+msgstr ""
+
+msgid "loading page"
+msgstr ""
+
+msgid "retry page"
+msgstr ""
+
+msgid "dialog page"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Preset \"%s\" already exists. Overwrite?"
+msgstr ""
+
+#, possible-boost-format
+msgid "The selected 3mf file has been saved with a newer version of %1% and is not compatible."
+msgstr ""
+
+msgid "The selected 3MF contains FDM supports painted object using a newer version of PrusaSlicer and is not compatible."
+msgstr ""
+
+msgid "The selected 3MF contains seam painted object using a newer version of PrusaSlicer and is not compatible."
+msgstr ""
+
+msgid "The selected 3MF contains multi-material painted object using a newer version of PrusaSlicer and is not compatible."
+msgstr ""
+
+msgid "Hollowing"
+msgstr ""
+
+msgid "Pad brim size is too small for the current configuration."
+msgstr ""
+
+msgid "Cannot proceed without support points! Add support points or disable support generation."
+msgstr ""
+
+msgid "Elevation is too low for object. Use the \"Pad around object\" feature to print the object without elevation."
+msgstr ""
+
+msgid "The endings of the support pillars will be deployed on the gap between the object and the pad. 'Support base safety distance' has to be greater than the 'Pad object gap' parameter to avoid this."
+msgstr ""
+
+msgid "Exposition time is out of printer profile bounds."
+msgstr ""
+
+msgid "Initial exposition time is out of printer profile bounds."
+msgstr ""
+
+msgid "Slicing done"
+msgstr ""
+
+msgid "Hollowing model"
+msgstr ""
+
+msgid "Drilling holes into model."
+msgstr ""
+
+msgid "Slicing model"
+msgstr ""
+
+msgid "Generating support points"
+msgstr ""
+
+msgid "Generating support tree"
+msgstr ""
+
+msgid "Generating pad"
+msgstr ""
+
+msgid "Slicing supports"
+msgstr ""
+
+msgid "Merging slices and calculating statistics"
+msgstr ""
+
+msgid "Rasterizing layers"
+msgstr ""
+
+msgid "Slicing had to be stopped due to an internal error: Inconsistent slice index."
+msgstr ""
+
+msgid "Visualizing supports"
+msgstr ""
+
+msgid "No pad can be generated for this model with the current configuration"
+msgstr ""
+
+msgid "There are unprintable objects. Try to adjust support settings to make the objects printable."
+msgstr ""
+
+msgid "Taking a configuration snapshot failed."
+msgstr ""
+
+msgid "BambuStudio has encountered an error while taking a configuration snapshot."
+msgstr ""
+
+msgid "BambuStudio error"
+msgstr ""
+
+msgid "Edit appearance"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Reset %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Reset %s to the preset / default value"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Choose the %s colour"
+msgstr ""
+
+msgid "Close appearance editor"
+msgstr ""
+
+msgid "Typography"
+msgstr ""
+
+msgid "Colours"
+msgstr ""
+
+msgid "Shape & spacing"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s section"
+msgstr ""
+
+msgid "Appearance editor tab"
+msgstr ""
+
+msgid "Reset element"
+msgstr ""
+
+msgid "Drop every override of this element; the active preset still applies"
+msgstr ""
+
+msgid "Reset all"
+msgstr ""
+
+msgid "Drop every element override and return to the Material default preset (saved presets are kept)"
+msgstr ""
+
+msgid "Reset the appearance of every element and return to the Material default preset? Your saved presets are kept."
+msgstr ""
+
+msgid "Reset all appearance overrides"
+msgstr ""
+
+msgid "Keyboard shortcut that opens this editor for the focused control"
+msgstr ""
+
+msgid "Appearance editor title"
+msgstr ""
+
+msgid "Appearance editor caption"
+msgstr ""
+
+msgid "Appearance editor label"
+msgstr ""
+
+msgid "Search fonts"
+msgstr ""
+
+msgid "Font family"
+msgstr ""
+
+msgid "font family"
+msgstr ""
+
+msgid "The quick brown fox 0123 Aa Bb"
+msgstr ""
+
+msgid "Font preview"
+msgstr ""
+
+msgid "Font size in points"
+msgstr ""
+
+msgid "Size (pt)"
+msgstr ""
+
+msgid "font size"
+msgstr ""
+
+msgid "Font weight"
+msgstr ""
+
+msgid "Weight"
+msgstr ""
+
+msgid "font weight"
+msgstr ""
+
+msgid "Italic"
+msgstr ""
+
+msgid "Underline"
+msgstr ""
+
+msgid "Strikethrough"
+msgstr ""
+
+msgid "Letter spacing in pixels"
+msgstr ""
+
+msgid "Letter spacing"
+msgstr ""
+
+msgid "letter spacing"
+msgstr ""
+
+msgid "Line height multiplier"
+msgstr ""
+
+msgid "Line height"
+msgstr ""
+
+msgid "line height"
+msgstr ""
+
+msgid "Letter spacing and line height are stored for widgets that measure their own text; native labels ignore them."
+msgstr ""
+
+msgid "Highlight"
+msgstr ""
+
+msgid "Border"
+msgstr ""
+
+msgid "colour"
+msgstr ""
+
+msgid "Each swatch opens the Material colour picker with its colour translator. An unset colour keeps the theme's token."
+msgstr ""
+
+msgid "Border width (px)"
+msgstr ""
+
+msgid "Corner radius (px)"
+msgstr ""
+
+msgid "Padding (px)"
+msgstr ""
+
+msgid "Margin (px)"
+msgstr ""
+
+msgid "Shape values are read by the Material widgets that paint their own frame (buttons, tabs, menus). Native controls keep the platform shape."
+msgstr ""
+
+msgid "Search presets"
+msgstr ""
+
+msgid "Appearance presets"
+msgstr ""
+
+msgid "Make the selected preset the active one; your element overrides stay on top of it"
+msgstr ""
+
+msgid "Save as preset..."
+msgstr ""
+
+msgid "Snapshot the current look of every styled element as a named preset"
+msgstr ""
+
+msgid "Name for the new appearance preset"
+msgstr ""
+
+msgid "Save as preset"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "\"%s\" is a shipped preset and cannot be overwritten. Choose another name."
+msgstr ""
+
+msgid "Delete the selected user preset (shipped presets cannot be deleted)"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Delete the appearance preset \"%s\"? This cannot be undone."
+msgstr ""
+
+msgid "Export theme..."
+msgstr ""
+
+msgid "Write every preset and override to a JSON file you can keep or share"
+msgstr ""
+
+msgid "Export appearance theme"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The theme could not be exported: %s"
+msgstr ""
+
+msgid "Import theme..."
+msgstr ""
+
+msgid "Load presets and overrides from a JSON theme file; unknown properties are kept and listed"
+msgstr ""
+
+msgid "Import appearance theme"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The theme could not be imported: %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Imported. These entries were kept but are not understood by this version:\n%s"
+msgstr ""
+
+msgid "(bundled)"
+msgstr ""
+
+msgid "(shipped)"
+msgstr ""
+
+msgid "active"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Active preset: %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Edit appearance: %s"
+msgstr ""
+
+msgid "Theme default"
+msgstr ""
+
+msgid "Edit appearance..."
+msgstr ""
+
+msgid "Open the appearance editor beside this element"
+msgstr ""
+
+msgid "Model Pictures"
+msgstr ""
+
+msgid "Added"
+msgstr ""
+
+msgid "Fixed"
+msgstr ""
+
+msgid "Documented"
+msgstr ""
+
+msgid "Changed"
+msgstr ""
+
+msgid "Previous month"
+msgstr ""
+
+msgid "Next month"
+msgstr ""
+
+msgid "Click a start day, then an end day. Arrow keys move, Enter picks, Esc closes."
+msgstr ""
+
+msgid "Clear dates"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Calendar, %s"
+msgstr ""
+
+msgid "Every released version, with the commits behind each change."
+msgstr ""
+
+msgid "Search changes"
+msgstr ""
+
+msgid "Type a date as YYYY-MM-DD or in your locale's short format."
+msgstr ""
+
+msgid "From"
+msgstr ""
+
+msgid "From date"
+msgstr ""
+
+msgid "To"
+msgstr ""
+
+msgid "To date"
+msgstr ""
+
+msgid "Pick dates on a calendar"
+msgstr ""
+
+msgid "Last 30 days"
+msgstr ""
+
+msgid "This year"
+msgstr ""
+
+msgid "All versions"
+msgstr ""
+
+msgid "Released versions"
+msgstr ""
+
+msgid "Copy the shown changes to the clipboard as Markdown"
+msgstr ""
+
+msgid "Save the shown changes as Markdown or plain text"
+msgstr ""
+
+msgid "Nothing to copy: the changelog data could not be read."
+msgstr ""
+
+msgid "Nothing to export: the changelog data could not be read."
+msgstr ""
+
+#, possible-c-format
+msgid "%zu versions and %zu changes shown"
+msgstr ""
+
+#, possible-c-format
+msgid "%zu versions in total"
+msgstr ""
+
+msgid "The changelog could not be read"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s\n\nThe file %s ships with the application; reinstalling restores it. The release history is also published at %s."
+msgstr ""
+
+msgid "No versions recorded"
+msgstr ""
+
+msgid "The bundled changelog lists no releases. Refresh it with: node scripts/changelog/export-app-changelog.mjs"
+msgstr ""
+
+msgid "No change matches this search inside the selected dates. Widen the dates or clear the search."
+msgstr ""
+
+msgid "No change matches this search. Plain text is matched by default; the .* toggle switches to regex."
+msgstr ""
+
+msgid "No version was published in the selected dates."
+msgstr ""
+
+msgid "Nothing to show"
+msgstr ""
+
+#, possible-c-format
+msgid "Show all %zu versions"
+msgstr ""
+
+msgid "pre-release"
+msgstr ""
+
+msgid "Release page"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Open the release page of %s on GitHub"
+msgstr ""
+
+msgid "Oldest release: there is no earlier release to compare against."
+msgstr ""
+
+msgid "Tagged the same commit as the previous release, so it carries no new changes."
+msgstr ""
+
+msgid "No commits were recorded between this release and the previous one."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Open commit %s on GitHub"
+msgstr ""
+
+msgid "Neither date is complete yet."
+msgstr ""
+
+msgid "The From date is not complete yet."
+msgstr ""
+
+msgid "The To date is not complete yet."
+msgstr ""
+
+msgid "The To date is before the From date, so no version can match."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Expected %s with a four-digit year."
+msgstr ""
+
+#, possible-c-format
+msgid "Copied %zu versions and %zu changes (%s) as Markdown."
+msgstr ""
+
+msgid "The clipboard is in use by another application; nothing was copied."
+msgstr ""
+
+msgid "Export changelog"
+msgstr ""
+
+msgid "Markdown"
+msgstr ""
+
+msgid "Plain text"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The changelog could not be written to %s."
+msgstr ""
+
+#, possible-c-format
+msgid "Exported %zu versions and %zu changes (%s) to %s."
+msgstr ""
+
+msgid "Shrink the palette to a card"
+msgstr ""
+
+msgid "Expand the palette to the full window"
+msgstr ""
+
+msgid "Setting"
+msgstr ""
+
+msgid "Documentation"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Open the anchored appearance editor (%s) for whatever has focus"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Apply appearance preset: %s"
+msgstr ""
+
+msgid "Shipped Material preset"
+msgstr ""
+
+msgid "Your saved appearance preset"
+msgstr ""
+
+msgid "Current (active)"
+msgstr ""
+
+msgid "Alternate nozzles:"
+msgstr ""
+
+msgid "All standard"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Welcome to the %s Configuration Assistant"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Welcome to the %s Configuration Wizard"
+msgstr ""
+
+msgid "Welcome"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Hello, welcome to %s! This %s helps you with the initial configuration; just a few settings and you will be ready to print."
+msgstr ""
+
+msgid "Remove user profiles (a snapshot will be taken beforehand)"
+msgstr ""
+
+msgid "Perform desktop integration (Sets this binary to be searchable by the system)."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s Family"
+msgstr ""
+
+msgid "Printer:"
+msgstr ""
+
+msgid "Vendor:"
+msgstr ""
+
+msgid "Profile:"
+msgstr ""
+
+msgid "(All)"
+msgstr ""
+
+#, possible-boost-format
+msgid "%1% marked with <b>*</b> are <b>not</b> compatible with some installed printers."
+msgstr ""
+
+msgid "SLA materials"
+msgstr ""
+
+#, possible-boost-format
+msgid "All installed printers are compatible with the selected %1%."
+msgstr ""
+
+msgid "SLA material"
+msgstr ""
+
+msgid "Only the following installed printers are compatible with the selected SLA materials"
+msgstr ""
+
+msgid "Custom Printer Setup"
+msgstr ""
+
+msgid "Custom Printer"
+msgstr ""
+
+msgid "Define a custom printer profile"
+msgstr ""
+
+msgid "Custom profile name:"
+msgstr ""
+
+msgid "Firmware Type"
+msgstr ""
+
+msgid "Firmware"
+msgstr ""
+
+msgid "Choose the type of firmware used by your printer."
+msgstr ""
+
+msgid "Bed Shape and Size"
+msgstr ""
+
+msgid "Set the shape of your printer's bed."
+msgstr ""
+
+msgid "Invalid numeric input."
+msgstr ""
+
+msgid "Print Diameters"
+msgstr ""
+
+msgid "Enter the diameter of your printer's hot end nozzle."
+msgstr ""
+
+msgid "Nozzle Diameter:"
+msgstr ""
+
+msgid "Nozzle and Bed Temperatures"
+msgstr ""
+
+msgid "Temperatures"
+msgstr ""
+
+msgid "A rule of thumb is 160 to 230 °C for PLA, and 215 to 250 °C for ABS."
+msgstr ""
+
+msgid "Extrusion Temperature:"
+msgstr ""
+
+msgid "A rule of thumb is 60 °C for PLA and 110 °C for ABS. Leave zero if you have no heated bed."
+msgstr ""
+
+msgid "Bed Temperature:"
+msgstr ""
+
+msgid "SLA Materials"
+msgstr ""
+
+msgid "FFF Technology Printers"
+msgstr ""
+
+msgid "SLA Technology Printers"
+msgstr ""
+
+#, possible-boost-format
+msgid "Following printer profiles has no default material: %1%Please select one manually."
+msgstr ""
+
+msgid "Configuration is edited in ConfigWizard"
+msgstr ""
+
+msgid "All user presets will be deleted."
+msgstr ""
+
+msgid "A new vendor was installed and one of its printers will be activated"
+msgid_plural "New vendors were installed and one of theirs printers will be activated"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "A new Printer was installed and it will be activated."
+msgstr ""
+
+msgid "Some Printers were uninstalled."
+msgstr ""
+
+msgid "A new SLA material was installed and it will be activated."
+msgstr ""
+
+msgid "Custom printer was installed and it will be activated."
+msgstr ""
+
+msgid "<Back"
+msgstr ""
+
+msgid "Next>"
+msgstr ""
+
+msgid "Configuration Assistant"
+msgstr ""
+
+msgid "Configuration &Assistant"
+msgstr ""
+
+msgid "Configuration Wizard"
+msgstr ""
+
+msgid "Configuration &Wizard"
+msgstr ""
+
+msgid "Performing desktop integration failed - boost::filesystem::canonical did not return appimage path."
+msgstr ""
+
+msgid "Performing desktop integration failed - Could not find executable."
+msgstr ""
+
+msgid "Performing desktop integration failed because the application directory was not found."
+msgstr ""
+
+msgid "Performing desktop integration failed - could not create Gcodeviewer desktop file. BambuStudio desktop file was probably created successfully."
+msgstr ""
+
+msgid "Desktop Integration"
+msgstr ""
+
+msgid "Desktop Integration sets this binary to be searchable by the system.\n\nPress \"Perform\" to proceed."
+msgstr ""
+
+msgid "This calibration does not support the currently selected nozzle diameter"
+msgstr ""
+
+msgid "Current flowrate cali param is invalid"
+msgstr ""
+
+msgid "Selected diameter and machine diameter do not match"
+msgstr ""
+
+msgid "Failed to generate cali gcode"
+msgstr ""
+
+msgid "Calibration error"
+msgstr ""
+
+msgid "The embedded webpage could not be loaded."
+msgstr ""
+
+msgid "Reload"
+msgstr ""
+
+msgid "Copy diagnostic information"
+msgstr ""
+
+msgid "AMS Control Web Debug"
+msgstr ""
+
+msgid "Please select a printer"
+msgstr ""
+
+msgid "Store (0) - no compression"
+msgstr ""
+
+msgid "Fastest (1)"
+msgstr ""
+
+msgid "Fast (3)"
+msgstr ""
+
+msgid "Normal (5) - default"
+msgstr ""
+
+msgid "Maximum (7)"
+msgstr ""
+
+msgid "Ultra (9) - slowest, most RAM"
+msgstr ""
+
+msgid "Level default"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%u GiB"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%u MiB"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Export %s"
+msgstr ""
+
+#, possible-c-format
+msgid "%zu row(s), %zu column(s)"
+msgstr ""
+
+#, possible-c-format
+msgid "structured record with %zu top-level field(s)"
+msgstr ""
+
+msgid "prose document"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Schema %s v%d - %s. Every export is UTF-8 and carries its schema, encoding and line-ending in a header."
+msgstr ""
+
+msgid "Search formats and options"
+msgstr ""
+
+msgid "Format"
+msgstr ""
+
+msgid "Fidelity"
+msgstr ""
+
+msgid "Export format"
+msgstr ""
+
+msgid "Text encoding"
+msgstr ""
+
+msgid "UTF-8 (always)"
+msgstr ""
+
+msgid "Encoding"
+msgstr ""
+
+msgid "Every export is UTF-8. The header records it so the reader never has to guess."
+msgstr ""
+
+msgid "LF - Unix, Git-friendly (default)"
+msgstr ""
+
+msgid "CRLF - Windows Notepad / Excel"
+msgstr ""
+
+msgid "Line endings"
+msgstr ""
+
+msgid "Choose CRLF only for tools that cannot read LF. The header names whichever you pick."
+msgstr ""
+
+msgid "Include the schema header (comment, envelope or .meta.json sidecar)"
+msgstr ""
+
+msgid "CSV and TSV have no comment syntax, so their schema goes in a sidecar file next to the data."
+msgstr ""
+
+msgid "schema header sidecar"
+msgstr ""
+
+msgid "Write a UTF-8 byte-order mark (only for spreadsheets that misread CSV without one)"
+msgstr ""
+
+msgid "byte-order mark BOM UTF-8"
+msgstr ""
+
+msgid "Archive"
+msgstr ""
+
+msgid "None - write the file directly"
+msgstr ""
+
+msgid "ZIP - Deflate, built in, no encryption"
+msgstr ""
+
+msgid "7z - via installed 7-Zip, full option set"
+msgstr ""
+
+msgid "Wrap in archive"
+msgstr ""
+
+msgid "An archive keeps the data file and its sidecar together. Paths inside are always relative."
+msgstr ""
+
+msgid "Compression method"
+msgstr ""
+
+msgid "LZMA2 (default): best general ratio, multi-threaded. LZMA: single-threaded. PPMd: best for text. BZip2/Deflate: compatibility, weaker ratio."
+msgstr ""
+
+msgid "Compression level"
+msgstr ""
+
+msgid "Higher levels use larger dictionaries: slower and hungrier for RAM, but smaller."
+msgstr ""
+
+msgid "Dictionary size"
+msgstr ""
+
+msgid "LZMA/LZMA2 dictionary or PPMd memory. Compression needs about 11x this much RAM; extraction needs this much. Ignored by BZip2 and Deflate."
+msgstr ""
+
+msgid "Word size (0 = default)"
+msgstr ""
+
+msgid "Fast bytes for LZMA/LZMA2/Deflate (5-273) or model order for PPMd (2-32). Larger is a little slower and a little smaller."
+msgstr ""
+
+msgid "Solid archive (files share one compression block)"
+msgstr ""
+
+msgid "Solid gives a better ratio; extracting one file then decompresses its whole block."
+msgstr ""
+
+msgid "solid archive block"
+msgstr ""
+
+msgid "Solid block size"
+msgstr ""
+
+msgid "How much data shares one block. Smaller blocks extract single files faster; larger blocks compress better."
+msgstr ""
+
+msgid "Threads (0 = all cores)"
+msgstr ""
+
+msgid "LZMA2 memory grows with the thread count; LZMA and PPMd compress on one thread regardless."
+msgstr ""
+
+msgid "Split into volumes (empty = single file)"
+msgstr ""
+
+msgid "A size such as 100m or 4g. 7-Zip numbers the parts .7z.001, .7z.002 ... and every part is needed to extract."
+msgstr ""
+
+msgid "AES-256 password (empty = no encryption)"
+msgstr ""
+
+msgid "Encrypts the file contents with AES-256. The password is passed to 7-Zip for this run only and never stored."
+msgstr ""
+
+msgid "Confirm password"
+msgstr ""
+
+msgid "Type the same password again."
+msgstr ""
+
+msgid "Encrypt headers too, so file names are hidden (-mhe=on)"
+msgstr ""
+
+msgid "Without this, anyone can list the file names inside the archive even though the contents are encrypted."
+msgstr ""
+
+msgid "encrypt headers hidden file names"
+msgstr ""
+
+msgid "Locate 7z.exe..."
+msgstr ""
+
+msgid "Output"
+msgstr ""
+
+msgid "Output file path"
+msgstr ""
+
+msgid "Browse..."
+msgstr ""
+
+msgid "Browse for output file"
+msgstr ""
+
+msgid "output file path browse"
+msgstr ""
+
+msgid "- recommended"
+msgstr ""
+
+msgid "Lossless"
+msgstr ""
+
+msgid "Lossy"
+msgstr ""
+
+msgid "Every field survives unchanged."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s: lossless"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s: lossy - read what will be lost before exporting"
+msgstr ""
+
+msgid "Lost:"
+msgstr ""
+
+msgid "Notes:"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Header: schema %s v%d, encoding UTF-8, line endings %s."
+msgstr ""
+
+msgid "The data file is written directly. CSV and TSV also get a .meta.json sidecar carrying the schema."
+msgstr ""
+
+msgid "ZIP is written by the bundled miniz (Deflate). It is never encrypted: nothing in it is protected, and the file names are visible. Choose 7z for AES-256."
+msgstr ""
+
+msgid "7z is produced by the 7-Zip command line on this PC with exactly the switches shown after export. All member paths are relative."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "7-Zip found: %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "7-Zip not found. Install 7-Zip or locate 7z.exe. Searched: %s"
+msgstr ""
+
+msgid "Warning: the contents will be encrypted but the file names inside the archive stay readable by anyone. Tick \"Encrypt headers too\" to hide them."
+msgstr ""
+
+msgid "AES-256 with encrypted headers: contents and file names are both protected. Losing the password loses the data."
+msgstr ""
+
+msgid "No format matches the search."
+msgstr ""
+
+msgid "Choose an output path."
+msgstr ""
+
+msgid "7-Zip was not found on this PC; ZIP and plain files still work."
+msgstr ""
+
+msgid "The two password fields differ."
+msgstr ""
+
+msgid "Write the export"
+msgstr ""
+
+msgid "ZIP archive (*.zip)|*.zip"
+msgstr ""
+
+msgid "7z archive (*.7z)|*.7z"
+msgstr ""
+
+msgid "All files (*.*)"
+msgstr ""
+
+msgid "Export to"
+msgstr ""
+
+msgid "Locate 7z.exe"
+msgstr ""
+
+msgid "7-Zip executable (7z.exe;7za.exe)|7z.exe;7za.exe|All files (*.*)|*.*"
+msgstr ""
+
+msgid "Exporting as a lossy format:"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Export failed: %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Wrote %s (%s)."
+msgstr ""
+
+msgid "7-Zip command:"
+msgstr ""
+
+msgid "Entering Assembly gizmo"
+msgstr ""
+
+msgid "Leaving Assembly gizmo"
+msgstr ""
+
+msgid "Keep upper part"
+msgstr ""
+
+msgid "Keep lower part"
+msgstr ""
+
+msgid "Rotate lower part upwards"
+msgstr ""
+
+msgid "Hollow this object"
+msgstr ""
+
+msgid "Preview hollowed and drilled model"
+msgstr ""
+
+msgid "Offset"
+msgstr ""
+
+msgid "Closing distance"
+msgstr ""
+
+msgid "Hole diameter"
+msgstr ""
+
+msgid "Hole depth"
+msgstr ""
+
+msgid "Remove selected holes"
+msgstr ""
+
+msgid "Remove all holes"
+msgstr ""
+
+msgid "Clipping of view"
+msgstr ""
+
+msgid "Show supports"
+msgstr ""
+
+msgid "Hollow and drill"
+msgstr ""
+
+msgid "Entering Measure gizmo"
+msgstr ""
+
+msgid "Leaving Measure gizmo"
+msgstr ""
+
+msgid "Model simplification has been canceled"
+msgstr ""
+
+msgid "Lock supports under new islands"
+msgstr ""
+
+msgid "Remove all points"
+msgstr ""
+
+msgid "Apply changes"
+msgstr ""
+
+msgid "Discard changes"
+msgstr ""
+
+msgid "Minimal points distance"
+msgstr ""
+
+msgid "Support points density"
+msgstr ""
+
+msgid "Manual editing"
+msgstr ""
+
+msgid "SLA Support Points"
+msgstr ""
+
+msgid "Do you want to save your manually edited support points?"
+msgstr ""
+
+msgid "Save support points?"
+msgstr ""
+
+msgid "Autogeneration will erase all manually edited points."
+msgstr ""
+
+msgid "Are you sure you want to do it?"
+msgstr ""
+
+msgid "SLA gizmo keyboard shortcuts"
+msgstr ""
+
+msgid "Note: some shortcuts work in (non)editing mode only."
+msgstr ""
+
+msgid "Add point"
+msgstr ""
+
+msgid "Remove point"
+msgstr ""
+
+msgid "Move point"
+msgstr ""
+
+msgid "Add point to selection"
+msgstr ""
+
+msgid "Remove point from selection"
+msgstr ""
+
+msgid "Select by rectangle"
+msgstr ""
+
+msgid "Deselect by rectangle"
+msgstr ""
+
+msgid "Select all points"
+msgstr ""
+
+msgid "Move clipping plane"
+msgstr ""
+
+msgid "Reset clipping plane"
+msgstr ""
+
+msgid "Switch to editing mode"
+msgstr ""
+
+msgid "Best surface quality"
+msgstr ""
+
+msgid "Optimize object rotation for best surface quality."
+msgstr ""
+
+msgid "Reduced overhang slopes"
+msgstr ""
+
+msgid "Optimize object rotation to have minimum amount of overhangs needing support structures.\nNote that this method will try to find the best surface of the object for touching the print bed if no elevation is set."
+msgstr ""
+
+msgid "Lowest Z height"
+msgstr ""
+
+msgid "Rotate the model to have the lowest z height for faster print time."
+msgstr ""
+
+msgid "Describe, review, then add a printable model"
+msgstr ""
+
+msgid "Provider"
+msgstr ""
+
+msgid "Claude Code CLI"
+msgstr ""
+
+msgid "Codex CLI"
+msgstr ""
+
+msgid "Anthropic API"
+msgstr ""
+
+msgid "OpenAI API"
+msgstr ""
+
+msgid "Provider model"
+msgstr ""
+
+msgid "Enter an exact model ID"
+msgstr ""
+
+msgid "Provider executable path"
+msgstr ""
+
+msgid "Required for a CLI provider"
+msgstr ""
+
+msgid "Stored in Windows Credential Manager"
+msgstr ""
+
+msgid "Add or replace key"
+msgstr ""
+
+msgid "Test key"
+msgstr ""
+
+msgid "Clear key"
+msgstr ""
+
+msgid "Trusted renderer"
+msgstr ""
+
+msgid "OpenSCAD"
+msgstr ""
+
+msgid "Blender"
+msgstr ""
+
+msgid "Renderer executable path"
+msgstr ""
+
+msgid "Describe the model"
+msgstr ""
+
+msgid "Dimensions are in millimeters"
+msgstr ""
+
+msgid "Refinement note"
+msgstr ""
+
+msgid "Optional change for the next revision"
+msgstr ""
+
+msgid "Revisions"
+msgstr ""
+
+msgid "No model generated"
+msgstr ""
+
+msgid "Generate"
+msgstr ""
+
+msgid "Cancel generation"
+msgstr ""
+
+msgid "Preview mesh"
+msgstr ""
+
+msgid "Add to plate"
+msgstr ""
+
+#, possible-c-format
+msgid "Revision %zu: "
+msgstr ""
+
+msgid "A retained revision is ready for preview."
+msgstr ""
+
+msgid "Saved revisions could not be read."
+msgstr ""
+
+msgid "API key saved in the local vault"
+msgstr ""
+
+msgid "No API key saved"
+msgstr ""
+
+msgid "CLI executable available"
+msgstr ""
+
+msgid "CLI executable not found"
+msgstr ""
+
+msgid "Renderer executable not found"
+msgstr ""
+
+msgid "Bundled renderer ready"
+msgstr ""
+
+msgid "Custom renderer ready"
+msgstr ""
+
+msgid "Key saved in the local credential vault"
+msgstr ""
+
+msgid "Choose an API provider and enter a key"
+msgstr ""
+
+msgid "Testing provider connection..."
+msgstr ""
+
+msgid "Provider connection ready"
+msgstr ""
+
+msgid "Saved key removed"
+msgstr ""
+
+msgid "No saved key was removed"
+msgstr ""
+
+msgid "Generating in an isolated revision. Nothing is on the plate yet."
+msgstr ""
+
+msgid "Mesh ready for preview. Add to plate when satisfied."
+msgstr ""
+
+msgid "Selected retained revision. Add to plate when satisfied."
+msgstr ""
+
+msgid "3D Models"
+msgstr ""
+
+msgid "Click to return (Command + Left Arrow)"
+msgstr ""
+
+msgid "Click to continue (Command + Right Arrow)"
+msgstr ""
+
+msgid "Click to return (Alt + Left Arrow)"
+msgstr ""
+
+msgid "Click to continue (Alt + Right Arrow)"
+msgstr ""
+
+msgid "Navigation rail"
+msgstr ""
+
+msgid "Notification centre"
+msgstr ""
+
+msgid "Every toast this app has shown, newest first. Nothing here blocks your work."
+msgstr ""
+
+msgid "Search notifications"
+msgstr ""
+
+msgid "All levels"
+msgstr ""
+
+msgid "Important"
+msgstr ""
+
+msgid "Warnings"
+msgstr ""
+
+msgid "Show dismissed"
+msgstr ""
+
+msgid "Notification history"
+msgstr ""
+
+msgid "Level"
+msgstr ""
+
+msgid "Action taken"
+msgstr ""
+
+msgid "No notifications match. New toasts will appear here as they are shown."
+msgstr ""
+
+msgid "Invert selection"
+msgstr ""
+
+msgid "Clear selection"
+msgstr ""
+
+msgid "Dismiss selected"
+msgstr ""
+
+msgid "Export…"
+msgstr ""
+
+msgid "Delete selected…"
+msgstr ""
+
+msgid "Slide to delete these entries permanently"
+msgstr ""
+
+msgid "Deleting…"
+msgstr ""
+
+msgid "Hint"
+msgstr ""
+
+msgid "Print info"
+msgstr ""
+
+msgid "Serious warning"
+msgstr ""
+
+msgid "Dismissed"
+msgstr ""
+
+msgid "Active"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Showing %d of %d matches (%d recorded) · %d selected"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%d matches (%d recorded) · %d selected"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Select this page (%d)"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Select all %d matches"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Show %d more"
+msgstr ""
+
+msgid "Select at least one notification first"
+msgstr ""
+
+msgid "Close the selected toasts and mark them dismissed"
+msgstr ""
+
+msgid "Permanently remove the selected entries from the history"
+msgstr ""
+
+msgid "Nothing matches the current filter"
+msgstr ""
+
+msgid "Export the selected notifications"
+msgstr ""
+
+msgid "Export every notification matching the current filter"
+msgstr ""
+
+msgid "Dismissed toasts are listed; click to hide them"
+msgstr ""
+
+msgid "Dismissed toasts are hidden; click to list them"
+msgstr ""
+
+msgid "Export notifications"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Exported %d notifications to %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Could not write the export to %s. Check the folder is writable and try again."
+msgstr ""
+
+msgid "Delete notification entries"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Permanently delete %d notification entries from the history. This cannot be undone; the export button above keeps a copy first."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Deleted %d notification entries from the history"
+msgstr ""
+
+msgid "Parameter settings"
+msgstr ""
+
+msgid "Export..."
+msgstr ""
+
+msgid "Export every listed version as JSON, CSV, YAML, TOML, XML, Markdown, HTML or an archive"
+msgstr ""
+
+msgid "Projects"
+msgstr ""
+
+msgid "Move over surface"
+msgstr ""
+
+msgid "System Information"
+msgstr ""
+
+msgid "Blacklisted libraries loaded into BambuStudio process:"
+msgstr ""
+
+msgid "SIMD is supported:"
+msgstr ""
+
+msgid "Copy to Clipboard"
+msgstr ""
+
+msgid "XY axis controls"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Move Y up %d mm"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Move X left %d mm"
+msgstr ""
+
+msgid "Home XY axes"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Move X right %d mm"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Move Y down %d mm"
+msgstr ""
+
+msgid "AA large text only"
+msgstr ""
+
+msgid "fails WCAG"
+msgstr ""
+
+msgid "Saturation and value field"
+msgstr ""
+
+msgid "Hue"
+msgstr ""
+
+msgid "Opacity"
+msgstr ""
+
+msgid "Opacity, 0 to 100 percent"
+msgstr ""
+
+msgid "HEX color"
+msgstr ""
+
+msgid "Enter any format"
+msgstr ""
+
+msgid "Enter any color format"
+msgstr ""
+
+msgid "Type a color in HEX, RGB, HSL, HSV, HWB, XYZ, Lab, LCH, OKLab, OKLCH, CMYK or a CSS color name"
+msgstr ""
+
+msgid "Color format status"
+msgstr ""
+
+msgid "Outside the sRGB gamut: the picker shows the nearest sRGB color (clipped)."
+msgstr ""
+
+msgid "Active color space and gamut"
+msgstr ""
+
+msgid "Contrast"
+msgstr ""
+
+msgid "Text on it: 21.00:1 (AA large text only)"
+msgstr ""
+
+msgid "As text: 21.00:1 (AA large text only)"
+msgstr ""
+
+msgid "Translations"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Copy %s"
+msgstr ""
+
+msgid "Picked in sRGB. Type any notation below to jump the picker."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Active space: %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Gamut: %s"
+msgstr ""
+
+msgid "sRGB, in gamut"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Text on it: %s (%s)"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "As text: %s (%s)"
+msgstr ""
+
+msgid "No contrast pair supplied"
+msgstr ""
+
+msgid "Type any notation to jump the picker."
+msgstr ""
+
+msgid "Not a recognised color. Try #rrggbb, rgb(), hsl(), hsv(), hwb(), lab(), lch(), oklab(), oklch(), cmyk() or a CSS name."
+msgstr ""
+
+msgid "outside sRGB"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Parsed as %s."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Copied %s"
+msgstr ""
+
+msgid "Menu"
+msgstr ""
+
+msgid "Activate"
+msgstr ""
+
+msgid "Search menu"
+msgstr ""
+
+msgid "Turn key off"
+msgstr ""
+
+msgid "Turn key on"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "... and %d more"
+msgstr ""
+
+msgid "1 item will be affected. This cannot be undone."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%d items will be affected. This cannot be undone."
+msgstr ""
+
+msgid "Key 1 of 2: turn to arm"
+msgstr ""
+
+msgid "Key 2 of 2: turn to arm"
+msgstr ""
+
+msgid "Key 1"
+msgstr ""
+
+msgid "Key 2"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Slide to %s"
+msgstr ""
+
+msgid "Authorized"
+msgstr ""
+
+msgid "Emergency exit"
+msgstr ""
+
+msgid "Close without doing anything (Esc)"
+msgstr ""
+
+msgid "Step 1 of 2: turn both keys."
+msgstr ""
+
+msgid "Step 1 of 2: turn the other key too."
+msgstr ""
+
+msgid "Step 2 of 2: slide all the way to the end."
+msgstr ""
+
+msgid "Keep sliding... release early to back out."
+msgstr ""
+
+msgid "Authorized. Carrying out the action."
+msgstr ""
+
+msgid "Cancelled. Nothing was changed."
+msgstr ""
+
+msgid "Hide tab from strip"
+msgstr ""
+
+msgid "collapsed"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Group %s"
+msgstr ""
+
+msgid "Expand group"
+msgstr ""
+
+msgid "Collapse group"
+msgstr ""
+
+msgid "pinned"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "group %s"
+msgstr ""
+
+msgid "Vertical tab list. Use Up and Down to move between tabs."
+msgstr ""
+
+msgid "Horizontal tab list. Use Left and Right to move between tabs."
+msgstr ""
+
+msgid "Tabs"
+msgstr ""
+
+msgid "More tabs"
+msgstr ""
+
+msgid "Search tabs"
+msgstr ""
+
+msgid "New tab"
+msgstr ""
+
+msgid "Hide tabs"
+msgstr ""
+
+msgid "Close tabs"
+msgstr ""
+
+msgid "Dock tab strip"
+msgstr ""
+
+msgid "Search tabs..."
+msgstr ""
+
+msgid "Search tab groups..."
+msgstr ""
+
+msgid "Search all tabs..."
+msgstr ""
+
+msgid "Close tabs containing text..."
+msgstr ""
+
+msgid "Close tabs not containing text..."
+msgstr ""
+
+msgid "Show more tabs..."
+msgstr ""
+
+msgid "Edit tab strip appearance..."
+msgstr ""
+
+msgid "Unpin tab"
+msgstr ""
+
+msgid "Pin tab"
+msgstr ""
+
+msgid "Move into group..."
+msgstr ""
+
+msgid "Remove from group"
+msgstr ""
+
+msgid "New group with this tab..."
+msgstr ""
+
+msgid "Search tabs in this group..."
+msgstr ""
+
+msgid "Pinned tabs are protected. Unpin the tab to close it."
+msgstr ""
+
+msgid "Edit tab appearance..."
+msgstr ""
+
+msgid "Edit group appearance..."
+msgstr ""
+
+msgid "New group"
+msgstr ""
+
+msgid "Rename group..."
+msgstr ""
+
+msgid "Change group colour..."
+msgstr ""
+
+msgid "Remove group (keep tabs)"
+msgstr ""
+
+msgid "Rename group"
+msgstr ""
+
+msgid "hidden, click to restore"
+msgstr ""
+
+msgid "Every tab fits in the strip"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "More tabs (%d hidden)"
+msgstr ""
+
+msgid "Group name"
+msgstr ""
+
+msgid "Move into group"
+msgstr ""
+
+msgid "Search groups"
+msgstr ""
+
+msgid "Groups"
+msgstr ""
+
+msgid "No groups yet. Create one to move this tab into it."
+msgstr ""
+
+msgid "New group..."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%d tabs"
+msgstr ""
+
+msgid "No group matches this search."
+msgstr ""
+
+msgid "Close tabs not containing text"
+msgstr ""
+
+msgid "Close tabs containing text"
+msgstr ""
+
+msgid "Text to match in tab titles"
+msgstr ""
+
+msgid "Close the tabs that do NOT contain the text"
+msgstr ""
+
+msgid "Include pinned tabs"
+msgstr ""
+
+msgid "Tabs that will close"
+msgstr ""
+
+msgid "Enter text to match before closing tabs."
+msgstr ""
+
+msgid "The pattern is not a valid regular expression."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%d tabs will close"
+msgstr ""
+
+msgid "Not containing text"
+msgstr ""
+
+msgid "Containing text"
+msgstr ""
+
+msgid "regex"
+msgstr ""
+
+msgid "plain text"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%d pinned tabs kept"
+msgstr ""
+
+msgid "No tab matches this text."
+msgstr ""
+
+msgid "Search tabs in group"
+msgstr ""
+
+msgid "Search tab groups"
+msgstr ""
+
+msgid "Search all tabs"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%d tab strips"
+msgstr ""
+
+msgid "Results"
+msgstr ""
+
+msgid "Go to tab"
+msgstr ""
+
+msgid "Nothing to list."
+msgstr ""
+
+msgid "No tab matches this search."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%d results"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Please input a number greater than or equal to %d"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Please enter a number between %d and %d."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Please enter a float greater than or equal to %f."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Please enter a float between %f and %f."
+msgstr ""
+
+msgid "Failed to start the embedded browser. Pages such as the home page, the device page and the login window will stay blank.\n\nPlease install or repair the Microsoft Edge WebView2 Runtime, then restart Bambu Studio."
+msgstr ""
+
+msgid "Failed to start the embedded browser. Pages such as the home page, the device page and the login window will stay blank."
+msgstr ""
+
+msgid "Embedded Browser Unavailable"
+msgstr ""
+
+msgid "Invalid local date or time"
+msgstr ""
+
+msgid "Unknown or unavailable IANA time zone"
+msgstr ""
+
+msgid "Could not resolve time-zone rules"
+msgstr ""
+
+msgid "IANA time-zone rules are unavailable on this platform"
+msgstr ""
+
+msgid "Time zone rules are unavailable"
+msgstr ""
+
+msgid "This local time does not exist because the clock jumps forward."
+msgstr ""
+
+msgid "Planned print time"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "This local time occurs twice. Use the earlier occurrence (UTC offset %d minutes)? Choose No for the later occurrence (UTC offset %d minutes)."
+msgstr ""
+
+msgid "Choose daylight-saving occurrence"
+msgstr ""
+
+msgid "Could not write the selected export file."
+msgstr ""
+
+msgid "New workspace"
+msgstr ""
+
+msgid "Open workspace"
+msgstr ""
+
+msgid "Save workspace"
+msgstr ""
+
+msgid "Rename workspace"
+msgstr ""
+
+msgid "Workspace title"
+msgstr ""
+
+msgid "Name this workspace"
+msgstr ""
+
+msgid "Time zone and reminders"
+msgstr ""
+
+msgid "Member"
+msgstr ""
+
+msgid "Project 3MF"
+msgstr ""
+
+msgid "Editable sources"
+msgstr ""
+
+msgid "Add project 3MF"
+msgstr ""
+
+msgid "Add editable source"
+msgstr ""
+
+msgid "Open selected project"
+msgstr ""
+
+msgid "Files"
+msgstr ""
+
+msgid "Edit / due date / link"
+msgstr ""
+
+msgid "Move up"
+msgstr ""
+
+msgid "Move down"
+msgstr ""
+
+msgid "Export JSON"
+msgstr ""
+
+msgid "Export CSV"
+msgstr ""
+
+msgid "Checklist"
+msgstr ""
+
+msgid "Planned print"
+msgstr ""
+
+msgid "Start (UTC)"
+msgstr ""
+
+msgid "Add planned print"
+msgstr ""
+
+msgid "Snooze reminder"
+msgstr ""
+
+msgid "Dismiss reminder"
+msgstr ""
+
+msgid "Enable / disable"
+msgstr ""
+
+msgid "Export ICS"
+msgstr ""
+
+msgid "Calendar"
+msgstr ""
+
+#, possible-c-format
+msgid "%zu projects, %zu checklist items, %zu planned prints"
+msgstr ""
+
+msgid " [saved offset differs]"
+msgstr ""
+
+msgid " [time zone unavailable]"
+msgstr ""
+
+msgid "Planned"
+msgstr ""
+
+msgid "; time zone unavailable"
+msgstr ""
+
+msgid "; saved offset differs"
+msgstr ""
+
+msgid "Discard unsaved workspace changes?"
+msgstr ""
+
+msgid "Workspace time zone"
+msgstr ""
+
+msgid "IANA time zone name"
+msgstr ""
+
+msgid "Deadline reminder"
+msgstr ""
+
+msgid "Local hour, 0 to 23"
+msgstr ""
+
+msgid "Reminders"
+msgstr ""
+
+msgid "Enable reminders? yes or no"
+msgstr ""
+
+msgid "A checklist deadline cannot be resolved in this time zone."
+msgstr ""
+
+msgid "Could not open workspace"
+msgstr ""
+
+#, possible-c-format
+msgid " (%zu additional affected members)"
+msgstr ""
+
+msgid "Workspace member warning"
+msgstr ""
+
+msgid "A saved deadline offset differs from its named time zone. The reminder uses the resolved due-date offset; review this item."
+msgstr ""
+
+msgid "A saved planned-print offset differs from its named time zone. The saved UTC time remains in use; review this slot."
+msgstr ""
+
+msgid "A calendar time zone could not be resolved. Affected deadline reminders are paused; saved planned-print UTC times remain in use."
+msgstr ""
+
+#, possible-c-format
+msgid "%zu workspace reminders became due while you were away."
+msgstr ""
+
+msgid "Planned print reminder: "
+msgstr ""
+
+msgid "Checklist deadline reminder: "
+msgstr ""
+
+msgid "Workspace item"
+msgstr ""
+
+#, possible-c-format
+msgid " (%zu more due)"
+msgstr ""
+
+msgid "Could not save workspace"
+msgstr ""
+
+msgid "Invalid project 3MF"
+msgstr ""
+
+msgid "Invalid staged project 3MF"
+msgstr ""
+
+msgid "Opening this member in the print canvas is not connected yet."
+msgstr ""
+
+msgid "Project 3MF (*.3mf)|*.3mf"
+msgstr ""
+
+msgid "All files (*.*)|*.*"
+msgstr ""
+
+msgid "Add checklist item"
+msgstr ""
+
+msgid "Task"
+msgstr ""
+
+msgid "Edit checklist item"
+msgstr ""
+
+msgid "Due date"
+msgstr ""
+
+msgid "Date only, YYYY-MM-DD (optional)"
+msgstr ""
+
+msgid "Linked project"
+msgstr ""
+
+msgid "Member ID (optional)"
+msgstr ""
+
+msgid "Linked planned print"
+msgstr ""
+
+msgid "Planned-print ID (optional)"
+msgstr ""
+
+msgid "The deadline reminder time is ambiguous or nonexistent."
+msgstr ""
+
+msgid "Printer ID"
+msgstr ""
+
+msgid "Start time"
+msgstr ""
+
+msgid "Local time, YYYY-MM-DD HH:MM"
+msgstr ""
+
+msgid "End time"
+msgstr ""
+
+msgid "The end time must be after the start time."
+msgstr ""
+
+msgid "New reminder time, UTC YYYY-MM-DD HH:MM"
+msgstr ""
+
+msgid "Export checklist"
+msgstr ""
+
+msgid "CSV (*.csv)|*.csv"
+msgstr ""
+
+msgid "JSON (*.json)|*.json"
+msgstr ""
+
+msgid "Export calendar"
+msgstr ""
+
+msgid "iCalendar (*.ics)|*.ics"
+msgstr ""
+
+msgid "Windows Media Player is required for this task! Do you want to enable 'Windows Media Player' for your operation system?"
+msgstr ""
+
+msgid "BambuSource has not correctly been registered for media playing! Press Yes to re-register it."
+msgstr ""
+
+msgid "Missing BambuSource component registered for media playing! Please re-install BambuStutio or seek after-sales help."
+msgstr ""
+
+msgid "Using a BambuSource from a different install, video play may not work correctly! Press Yes to fix it."
+msgstr ""
+
+msgid "Your system is missing H.264 codecs for GStreamer, which are required to play video.  (Try installing the gstreamer1.0-plugins-bad or gstreamer1.0-libav packages, then restart Bambu Studio?)"
+msgstr ""
