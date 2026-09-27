@@ -89,6 +89,8 @@ jobs:
             & $checkPython -m pip install --disable-pip-version-check --quiet 'Pillow==11.3.0'
             if ($LASTEXITCODE -ne 0) { throw 'Could not install pinned Pillow for hosted driver checks.' }
           }
+          & $checkPython scripts/md3/test-behavior-contract.py
+          if ($LASTEXITCODE -ne 0) { throw 'Focused hosted behavior contract checks failed.' }
           & $checkPython scripts/md3/test-drive-packaged-behavior.py
           if ($LASTEXITCODE -ne 0) { throw 'Focused hosted Python driver checks failed.' }
       - name: Verify published package and collect restricted behavior evidence
