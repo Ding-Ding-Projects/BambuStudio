@@ -21,6 +21,94 @@ spec.loader.exec_module(drive)
 
 
 class BehaviorDriveChecks(unittest.TestCase):
+    def test_holder_receipt_requires_exact_launcher_identity(self):
+        with tempfile.TemporaryDirectory() as temp:
+            profile = str(Path(temp) / "isolated profile")
+            started = datetime.now(timezone.utc).isoformat()
+            receipt = {"helper_pid": 10, "app_pid": 20, "exe_sha256": "a" * 64,
+                       "profile": profile, "desktop": "owned-desktop",
+                       "launch_started_at_utc": started, "status": "app_exited_holder_alive"}
+            self.assertEqual(drive.validate_holder_receipt(
+                receipt, helper_pid=10, exe_hash="a" * 64,
+                datadir=profile, desktop="owned-desktop")[0], 20)
+            for change in ({"helper_pid": 11}, {"app_pid": 10},
+                           {"exe_sha256": "b" * 64}, {"profile": profile + "-other"},
+                           {"desktop": "visible"}, {"status": "desktop_open_failed"},
+                           {"launch_started_at_utc": "not a time"}):
+                with self.subTest(change=change), self.assertRaises(RuntimeError):
+                    drive.validate_holder_receipt(
+                        {**receipt, **change}, helper_pid=10, exe_hash="a" * 64,
+                        datadir=profile, desktop="owned-desktop")
+
+    def test_missing_desktop_preserves_process_snapshot_and_rejects_stranger(self):
+        app = drive.HostedApp("exe", "profile", "owned-desktop", "probe")
+        app.launch_pid = 20
+        app.launch_started = datetime.now(timezone.utc)
+        unrelated = {"ProcessId": 30, "ParentProcessId": 20,
+                     "ExecutablePath": "other.exe",
+                     "CommandLine": '"other.exe" --datadir "profile"',
+                     "CreationDate": app.launch_started.isoformat()}
+        order = []
+        def snapshot():
+            order.append("snapshot")
+            return [unrelated]
+        def missing(_tool, **_kwargs):
+            order.append("desktop")
+            raise RuntimeError("OpenDesktopW failed")
+        with patch.object(drive, "process_snapshot", side_effect=snapshot), patch.object(
+                drive, "cheap", side_effect=missing):
+            with self.assertRaisesRegex(RuntimeError, "desktop_missing_no_owned_process"):
+                app.windows()
+        self.assertEqual(order, ["snapshot", "desktop"])
+        self.assertEqual(app.seen_owned, {})
+        self.assertEqual(app.startup_state, "desktop_missing_no_owned_process")
+
+    def test_missing_desktop_with_owned_child_has_distinct_diagnostic(self):
+        with tempfile.TemporaryDirectory() as temp:
+            exe = str(Path(temp) / "bambu-studio.exe")
+            profile = str(Path(temp) / "profile")
+            app = drive.HostedApp(exe, profile, "owned-desktop", str(Path(temp) / "probe"))
+            app.launch_pid = 20
+            app.launch_started = datetime.now(timezone.utc)
+            child = {"ProcessId": 21, "ParentProcessId": 20,
+                     "ExecutablePath": exe,
+                     "CommandLine": f'"{exe}" --datadir "{profile}"',
+                     "CreationDate": app.launch_started.isoformat()}
+            with patch.object(drive, "process_snapshot", return_value=[child]), patch.object(
+                    drive, "cheap", side_effect=RuntimeError("OpenDesktopW failed")):
+                with self.assertRaisesRegex(RuntimeError, "desktop_missing_with_owned_process"):
+                    app.windows()
+            self.assertIn(21, app.seen_owned)
+
+    def test_wer_evidence_requires_exact_pid_image_and_time(self):
+        with tempfile.TemporaryDirectory() as temp:
+            exe = str(Path(temp) / "bambu-studio.exe")
+            started = datetime.now(timezone.utc) - timedelta(seconds=10)
+            ended = datetime.now(timezone.utc)
+            def event(pid, path, at):
+                return (f'<Event><System><TimeCreated SystemTime="{at.isoformat()}" />'
+                        f'</System><EventData><Data Name="ProcessId">0x{pid:x}</Data>'
+                        f'<Data Name="AppPath">{path}</Data></EventData></Event>')
+            events = [event(99, exe, ended), event(20, str(Path(temp) / "other.exe"), ended),
+                      event(20, exe, started - timedelta(seconds=1)), event(20, exe, ended)]
+            output = subprocess.CompletedProcess([], 0, json.dumps(events), "")
+            with patch.object(drive.subprocess, "run", return_value=output):
+                self.assertEqual(drive.matching_wer_events(exe, {20: started}, ended), [events[-1]])
+
+    def test_wer_collection_skips_holder_terminated_app(self):
+        with tempfile.TemporaryDirectory() as temp:
+            app = drive.HostedApp("exe", "profile", "desktop", str(Path(temp) / "probe"))
+            app.launch_pid = 20
+            app.launch_started = datetime.now(timezone.utc) - timedelta(seconds=10)
+            app.finished_at = datetime.now(timezone.utc)
+            app.holder_receipt = {"app_exited_at_utc": app.finished_at.isoformat(),
+                                  "app_terminated_by_holder": True}
+            with patch.object(drive, "matching_wer_events") as query:
+                records, status = drive.preserve_wer("exe", app, Path(temp))
+            self.assertEqual(records, [])
+            self.assertEqual(status, "not_applicable_without_observed_natural_exit")
+            query.assert_not_called()
+
     def test_windows_profile_argument_spelling_and_rejections(self):
         with tempfile.TemporaryDirectory() as temp:
             exe = str(Path(temp) / "bambu-studio.exe")

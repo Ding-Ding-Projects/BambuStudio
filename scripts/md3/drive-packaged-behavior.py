@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import ntpath
 import os
 import re
 import shutil
@@ -24,11 +25,32 @@ from pathlib import Path
 from PIL import Image
 
 from recapture import App, Runner, cheap, find_control
-from hosted_process import owned_process_inventory, owned_processes, process_snapshot
+from hosted_process import (matching_wer_events, owned_process_inventory,
+                            owned_processes, process_snapshot)
 
 SHA = re.compile(r"^[0-9a-f]{40}$")
 HEX256 = re.compile(r"^[0-9a-f]{64}$")
 MODES = ("en", "yue_HK", "bilingual_en_yue_HK")
+
+
+def validate_holder_receipt(receipt: dict, *, helper_pid: int, exe_hash: str,
+                            datadir: str, desktop: str) -> tuple[int, datetime]:
+    if (receipt.get("helper_pid") != helper_pid or receipt.get("exe_sha256") != exe_hash
+            or receipt.get("desktop") != desktop
+            or ntpath.normcase(ntpath.abspath(str(receipt.get("profile") or "")))
+               != ntpath.normcase(ntpath.abspath(datadir))
+            or receipt.get("status") not in ("app_launched", "app_exited_holder_alive")):
+        raise RuntimeError("Hosted holder receipt identity differs from this launch")
+    pid = receipt.get("app_pid")
+    if not isinstance(pid, int) or pid <= 0 or pid == helper_pid:
+        raise RuntimeError("Hosted holder receipt has no distinct app PID")
+    try:
+        started = datetime.fromisoformat(receipt["launch_started_at_utc"])
+        if started.tzinfo is None:
+            raise ValueError("missing timezone")
+    except (KeyError, TypeError, ValueError) as exc:
+        raise RuntimeError("Hosted holder receipt has no valid launch time") from exc
+    return pid, started.astimezone(timezone.utc)
 
 
 class HostedApp(App):
@@ -42,12 +64,22 @@ class HostedApp(App):
         self.live_owned = []
         self.seen_owned = {}
         self.finished_at = None
+        self.desktop_error = None
+        self.startup_state = "not_started"
+        self.launch_exit_code = None
+        self.helper_pid = None
+        self.holder_receipt_path = Path(probe_dir) / "hosted-launch.json"
+        self.holder_stop_path = Path(probe_dir) / "hosted-launch.stop"
+        self.holder_receipt = None
+        self.cleanup_killed_pids = []
+        self.natural_exit_observed_before_cleanup = False
 
     def _desktop_windows(self):
         return cheap("list_headless_windows", name=self.desktop)["windows"]
 
     def windows(self):
-        windows = self._desktop_windows()
+        # Snapshot identity first. If an early native exit releases the final
+        # desktop handle, desktop enumeration must not hide that distinction.
         processes = process_snapshot()
         self.live_owned = owned_process_inventory(
             processes, exe=self.exe, datadir=self.datadir,
@@ -55,21 +87,52 @@ class HostedApp(App):
         )
         for item in self.live_owned:
             self.seen_owned[item["pid"]] = item
+        try:
+            windows = self._desktop_windows()
+        except Exception as exc:
+            self.desktop_error = f"{type(exc).__name__}: {exc}"
+            self.startup_state = ("desktop_missing_with_owned_process" if self.live_owned
+                                  else "desktop_missing_no_owned_process")
+            raise RuntimeError(f"{self.startup_state}: {self.desktop_error}") from exc
         candidates = [item["pid"] for item in self.live_owned
                       if item["pid"] in {int(w["process_id"]) for w in windows}]
         self.adopted_pids = candidates
         if self.pid not in candidates:
             self.pid = candidates[0] if candidates else None
+        self.startup_state = ("owned_window_available" if candidates else
+                              "owned_process_without_window" if self.live_owned else
+                              "no_owned_process_or_window")
         return [w for w in windows if int(w["process_id"]) in candidates]
 
     def start(self, timeout=240):
         os.environ["BAMBU_LAYOUT_PROBE"] = "1"
         os.environ["BAMBU_LAYOUT_PROBE_TAG"] = os.path.basename(self.datadir)
-        cheap("create_headless_desktop", name=self.desktop)
-        self.launch_started = datetime.now(timezone.utc)
-        self.launch_pid = cheap("launch_on_headless_desktop", name=self.desktop,
-                                command=f'"{self.exe}" --datadir "{self.datadir}"')["pid"]
+        holder = Path(__file__).with_name("hosted_launch_holder.py")
+        command = (f'"{sys.executable}" "{holder}" --exe "{self.exe}" '
+                   f'--datadir "{self.datadir}" --desktop "{self.desktop}" '
+                   f'--receipt "{self.holder_receipt_path}" --stop "{self.holder_stop_path}" '
+                   f'--timeout {int(timeout) + 30}')
+        self.helper_pid = cheap("launch_on_headless_desktop", name=self.desktop,
+                                command=command)["pid"]
+        receipt_deadline = time.monotonic() + 20
+        while time.monotonic() < receipt_deadline:
+            if self.holder_receipt_path.is_file():
+                try:
+                    self.holder_receipt = json.loads(self.holder_receipt_path.read_text(encoding="utf-8"))
+                except (OSError, json.JSONDecodeError):
+                    time.sleep(0.2)
+                    continue
+                self.launch_pid, self.launch_started = validate_holder_receipt(
+                    self.holder_receipt, helper_pid=self.helper_pid,
+                    exe_hash=sha256(Path(self.exe)), datadir=self.datadir,
+                    desktop=self.desktop)
+                self.startup_state = "launch_pid_reported"
+                break
+            time.sleep(0.2)
+        else:
+            raise RuntimeError("Hosted launch holder produced no bounded startup receipt")
         deadline = time.monotonic() + timeout
+        no_process_since = None
         while time.monotonic() < deadline:
             frame = self.find(lambda w: w["class"] == "wxWindowNR"
                               and w["width"] >= 1000 and w["height"] >= 600)
@@ -78,6 +141,13 @@ class HostedApp(App):
                 self.pid = int(frame["process_id"])
                 time.sleep(8)
                 return
+            if self.startup_state == "no_owned_process_or_window":
+                no_process_since = no_process_since or time.monotonic()
+                if time.monotonic() - no_process_since >= 10:
+                    self.startup_state = "launch_pid_not_live_no_replacement"
+                    raise RuntimeError("Launch PID and verified replacement are absent after startup grace period")
+            else:
+                no_process_since = None
             time.sleep(1)
         raise RuntimeError("No owned main frame appeared on the named hidden desktop")
 
@@ -85,6 +155,15 @@ class HostedApp(App):
         # Re-check live identity before terminating anything. An exited launch PID
         # is normal in a relaunch and must never obscure the drive's first error.
         errors = []
+        try:
+            if self.holder_receipt_path.is_file():
+                previous = json.loads(self.holder_receipt_path.read_text(encoding="utf-8"))
+                self.natural_exit_observed_before_cleanup = bool(
+                    previous.get("helper_pid") == self.helper_pid
+                    and previous.get("app_exited_at_utc")
+                    and not previous.get("app_terminated_by_holder"))
+        except (OSError, json.JSONDecodeError):
+            pass
         try:
             self.live_owned = owned_process_inventory(
                 process_snapshot(), exe=self.exe, datadir=self.datadir,
@@ -94,10 +173,29 @@ class HostedApp(App):
             for pid in [item["pid"] for item in self.live_owned]:
                 try:
                     cheap("kill_process", pid=pid, force=True)
+                    self.cleanup_killed_pids.append(pid)
                 except Exception as exc:
                     errors.append(f"owned PID {pid}: {type(exc).__name__}: {exc}")
         except Exception as exc:
             errors.append(f"ownership recheck: {type(exc).__name__}: {exc}")
+        if self.helper_pid is not None:
+            try:
+                self.holder_stop_path.write_text("stop\n", encoding="ascii")
+                deadline = time.monotonic() + 8
+                while time.monotonic() < deadline:
+                    if self.holder_receipt_path.is_file():
+                        receipt = json.loads(self.holder_receipt_path.read_text(encoding="utf-8"))
+                        if receipt.get("helper_pid") == self.helper_pid:
+                            self.holder_receipt = receipt
+                            self.launch_exit_code = receipt.get("app_exit_code")
+                            if receipt.get("holder_finished_at_utc"):
+                                break
+                    time.sleep(0.25)
+                else:
+                    errors.append("Hosted launch holder did not finish within eight seconds")
+                    cheap("kill_process", pid=self.helper_pid, force=True)
+            except Exception as exc:
+                errors.append(f"holder closure: {type(exc).__name__}: {exc}")
         try:
             cheap("close_headless_desktop", name=self.desktop)
         except Exception as exc:
@@ -131,7 +229,7 @@ def preserve_logs(datadir: Path, output: Path) -> list[dict]:
         return []
     records = []
     destination = output / "restricted-logs"
-    for source in sorted(log_dir.glob("*.log"))[:8]:
+    for source in sorted(log_dir.glob("*.log"))[:5]:
         if (not re.fullmatch(r"[A-Za-z0-9_.-]{1,100}", source.name)
                 or source.is_symlink() or not source.is_file()
                 or source.stat().st_size > 10_000_000):
@@ -143,6 +241,46 @@ def preserve_logs(datadir: Path, output: Path) -> list[dict]:
                         "sha256": sha256(target), "bytes": target.stat().st_size,
                         "privacy": "restricted original log; do not print or publish"})
     return records
+
+
+def preserve_holder_receipt(source: Path, output: Path) -> dict | None:
+    if not source.is_file():
+        return None
+    if source.stat().st_size > 65536:
+        raise RuntimeError("Hosted launch lifetime receipt exceeded its size limit")
+    destination = output / "restricted-logs"
+    destination.mkdir(exist_ok=True)
+    target = destination / "hosted-launch-lifetime.log"
+    shutil.copyfile(source, target)
+    return {"file": target.name, "sha256": sha256(target),
+            "bytes": target.stat().st_size,
+            "privacy": "restricted original startup receipt; do not print or publish"}
+
+
+def preserve_wer(exe: str, app: HostedApp, output: Path) -> tuple[list[dict], str]:
+    receipt = app.holder_receipt or {}
+    if (app.launch_pid is None or app.launch_started is None or app.finished_at is None
+            or receipt.get("app_exited_at_utc") is None
+            or receipt.get("app_terminated_by_holder")
+            or (app.launch_pid in app.cleanup_killed_pids
+                and not app.natural_exit_observed_before_cleanup)):
+        return [], "not_applicable_without_observed_natural_exit"
+    pid_times = {app.launch_pid: app.launch_started}
+    for item in app.seen_owned.values():
+        pid_times[item["pid"]] = datetime.fromisoformat(item["created_at_utc"])
+    events = matching_wer_events(exe, pid_times, datetime.now(timezone.utc))
+    if not events:
+        return [], "no_exact_pid_image_time_match_or_query_unavailable"
+    destination = output / "restricted-logs"
+    destination.mkdir(exist_ok=True)
+    records = []
+    for index, xml in enumerate(events[:2]):
+        target = destination / f"wer-exact-{index}.log"
+        target.write_text(xml, encoding="utf-8")
+        records.append({"file": target.name, "sha256": sha256(target),
+                        "bytes": target.stat().st_size,
+                        "privacy": "restricted exact-match WER event; do not print or publish"})
+    return records, "exact_match_restricted"
 
 
 def validate_installation(receipt: dict, exe: Path, source: str, tag: str) -> None:
@@ -166,6 +304,7 @@ def validate_installation(receipt: dict, exe: Path, source: str, tag: str) -> No
 def validate_verifier(commit: str) -> None:
     checkout = Path(__file__).resolve().parents[2]
     inputs = ["scripts/md3/drive-packaged-behavior.py", "scripts/md3/hosted_process.py",
+              "scripts/md3/hosted_launch_holder.py",
               "scripts/md3/recapture.py", "scripts/md3/send-layout-probe.py"]
     result = subprocess.run(["git", "rev-parse", "HEAD"], cwd=checkout,
                             capture_output=True, text=True, timeout=15, check=False)
@@ -771,18 +910,38 @@ def main() -> int:
         except Exception as exc:
             cleanup_error = f"{type(exc).__name__}: {exc}"
     drive.identity["process"] = {
+        "helper_pid": app.helper_pid,
         "initial_pid": app.launch_pid,
         "selected_pid": app.pid,
         "relaunched": bool(app.launch_pid and app.pid and app.pid != app.launch_pid),
         "launch_started_at_utc": app.launch_started.isoformat() if app.launch_started else None,
         "run_ended_at_utc": app.finished_at.isoformat() if app.finished_at else None,
         "owned_processes": sorted(app.seen_owned.values(), key=lambda item: item["pid"]),
+        "cleanup_killed_pids": app.cleanup_killed_pids,
+        "natural_exit_observed_before_cleanup": app.natural_exit_observed_before_cleanup,
+        "startup_state": app.startup_state,
+        "desktop_error": app.desktop_error,
+        "launch_exit_code": app.launch_exit_code,
+        "exit_code_status": "unavailable from holder" if app.launch_exit_code is None else "observed",
+        "app_exited_at_utc": (app.holder_receipt or {}).get("app_exited_at_utc"),
+        "holder_status": (app.holder_receipt or {}).get("status"),
     }
+    logs = []
+    wer_status = "not_checked"
     try:
-        logs = preserve_logs(datadir, args.output)
+        logs.extend(preserve_logs(datadir, args.output))
+        holder_log = preserve_holder_receipt(app.holder_receipt_path, args.output)
+        if holder_log is not None:
+            logs.append(holder_log)
     except Exception as exc:
-        logs = []
         drive.rows.append({"name": "restricted-log-preservation", "status": "blocked",
+                           "reason": f"{type(exc).__name__}: {exc}"})
+    try:
+        wer_logs, wer_status = preserve_wer(str(args.exe), app, args.output)
+        logs.extend(wer_logs)
+    except Exception as exc:
+        wer_status = "diagnostic_collection_failed"
+        drive.rows.append({"name": "restricted-wer-preservation", "status": "blocked",
                            "reason": f"{type(exc).__name__}: {exc}"})
     failed_rows = [r["name"] for r in drive.rows if r["status"] in ("blocked", "unverified")]
     verdict = "blocked" if cleanup_error or failed_rows else ("diagnostic_only" if args.scope == "diagnostic" else "pending_visual_review")
@@ -790,6 +949,7 @@ def main() -> int:
               "package_version": receipt["package_version"], "runner": "github-hosted-windows",
               "desktop": desktop,
               "rows": drive.rows, "images": drive.images, "restricted_logs": logs,
+              "wer_status": wer_status,
               "failed_rows": failed_rows,
               "privacy": "restricted; inspect pixels and metadata before publication",
               "cleanup": "verified" if cleanup_error is None else "failed: " + cleanup_error,

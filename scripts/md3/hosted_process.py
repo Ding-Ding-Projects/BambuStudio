@@ -5,6 +5,7 @@ import json
 import ntpath
 import re
 import subprocess
+import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 
 
@@ -85,3 +86,43 @@ def owned_processes(processes: list[dict], *, exe: str, datadir: str,
     inventory = owned_process_inventory(processes, exe=exe, datadir=datadir,
                                         launched_at=launched_at, launch_pid=launch_pid)
     return [item["pid"] for item in inventory if item["pid"] in desktop_pids]
+
+
+_WER_QUERY = r'''$ErrorActionPreference = 'SilentlyContinue'
+$events = @(Get-WinEvent -FilterHashtable @{LogName='Application';Id=1000;StartTime=(Get-Date).AddMinutes(-10)} -MaxEvents 64)
+$events | ForEach-Object { $_.ToXml() } | ConvertTo-Json -Compress'''
+
+
+def matching_wer_events(exe: str, pid_times: dict[int, datetime],
+                        ended_at: datetime) -> list[str]:
+    """Return bounded raw events only after PID, image path and time all match."""
+    result = subprocess.run(["powershell", "-NoProfile", "-NonInteractive",
+                             "-Command", _WER_QUERY], capture_output=True,
+                            text=True, timeout=20, check=False)
+    if result.returncode or not result.stdout.strip():
+        return []
+    raw = json.loads(result.stdout)
+    events = raw if isinstance(raw, list) else [raw]
+    image = ntpath.normcase(ntpath.abspath(exe))
+    matches = []
+    for xml in events[:64]:
+        if not isinstance(xml, str) or len(xml) > 65536:
+            continue
+        try:
+            root = ET.fromstring(xml)
+            timestamp = root.find(".//{*}TimeCreated")
+            event_time = _created_at(timestamp.get("SystemTime") if timestamp is not None else None)
+            fields = {item.get("Name"): (item.text or "").strip()
+                      for item in root.findall(".//{*}EventData/{*}Data")}
+            raw_pid = fields.get("ProcessId", "")
+            pid = int(raw_pid, 16) if raw_pid.lower().startswith("0x") else int(raw_pid)
+            path = fields.get("AppPath") or fields.get("FaultingApplicationPath") or ""
+            created = pid_times.get(pid)
+            if (created and event_time and created <= event_time <= ended_at
+                    and ntpath.normcase(ntpath.abspath(path)) == image):
+                matches.append(xml)
+        except (ET.ParseError, TypeError, ValueError, OSError):
+            continue
+        if len(matches) == 2:
+            break
+    return matches
