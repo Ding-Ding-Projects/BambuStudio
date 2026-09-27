@@ -14,6 +14,7 @@ from collections import Counter
 from contextlib import contextmanager
 import ctypes
 from ctypes import wintypes
+from dataclasses import asdict
 import hashlib
 import json
 import ntpath
@@ -30,6 +31,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from PIL import Image
 
+import behavior_contract
 from recapture import App, Runner, cheap, find_control
 from hosted_process import (matching_wer_events, owned_process_inventory,
                             owned_processes, process_snapshot)
@@ -832,7 +834,8 @@ def validate_verifier(commit: str) -> None:
     checkout = Path(__file__).resolve().parents[2]
     inputs = ["scripts/md3/drive-packaged-behavior.py", "scripts/md3/hosted_process.py",
               "scripts/md3/hosted_launch_holder.py",
-              "scripts/md3/recapture.py", "scripts/md3/send-layout-probe.py"]
+              "scripts/md3/recapture.py", "scripts/md3/send-layout-probe.py",
+              "scripts/md3/behavior_contract.py"]
     result = subprocess.run(["git", "rev-parse", "HEAD"], cwd=checkout,
                             capture_output=True, text=True, timeout=15, check=False)
     if result.returncode or result.stdout.strip().lower() != commit:
@@ -1367,6 +1370,132 @@ class Drive:
         return input_at
 
 
+def project_file_open_contract(row: dict, images: list[dict], app: HostedApp) -> dict | None:
+    """Translate the exact owned 3MF transition, never a file name or label alone."""
+    if row.get("status") != "probe_confirmed" or not isinstance(row.get("result"), dict):
+        return None
+    fixture = (Path(__file__).resolve().parents[2] / "resources" / "calib" /
+               "filament_flow" / "flowrate-test-pass1.3mf")
+    if (not fixture.is_file() or row.get("fixture_sha256") != sha256(fixture)
+            or row.get("expected_names") != expected_3mf_objects(fixture)):
+        return None
+    result = row["result"]
+    before, after = result.get("before"), result.get("after")
+    if not isinstance(before, dict) or not isinstance(after, dict):
+        return None
+    if any(state.get("probe_pid") != app.pid or
+           state.get("profile_tag") != Path(app.datadir).name
+           for state in (before, after)):
+        return None
+    verified = fixture_model_transition(before, after, row["expected_names"], fixture)
+    if verified is None or any(result.get(key) != value for key, value in verified.items()):
+        return None
+    before_image, after_image = row.get("before_image"), row.get("after_image")
+    if not isinstance(before_image, dict) or not isinstance(after_image, dict):
+        return None
+    capture_ids = [before_image.get("file"), after_image.get("file")]
+    inventory = {item.get("file") for item in images}
+    if (any(not isinstance(item, str) or item not in inventory for item in capture_ids)
+            or capture_ids[0] == capture_ids[1]):
+        return None
+    return {"id": "project-file-open", "status": "probe_confirmed", "proof": {
+        "source": "installed-process-probe", "predicate_id": "owned-fixture-model-transition",
+        "input_action": "File > Open Project", "action_route": "file-menu",
+        "before_state": {"project_path": before.get("path") or "",
+                         "object_ids": before["names"]},
+        "after_state": {"project_path": after["path"], "object_ids": after["names"]},
+        "capture_ids": capture_ids,
+        "fixture_sha256": row["fixture_sha256"],
+        "selected_pid": app.pid}}
+
+
+def contract_gap_reason(flow_id: str) -> str:
+    """Name the missing observation without turning an old label into proof."""
+    if flow_id in {"prepare-ink-selected", "prepare-process-selected", "prepare-objects-selected"}:
+        return "The drive records visible labels but no native active-tab and panel transition"
+    if flow_id == "prepare-narrow-layout":
+        return "Narrow geometry lacks paired before and after control rectangles"
+    if flow_id in {"prepare-ink-search", "prepare-process-search", "prepare-objects-search"}:
+        return "No query input and filtered native result-ID transition was recorded"
+    if flow_id == "prepare-keyboard-navigation":
+        return "No keyboard input with native focus and tab selection transition was recorded"
+    if flow_id == "project-recent-open":
+        return "The recent-entry card was not driven to an owned 3MF model transition"
+    if flow_id in {"project-open-responsive", "model-creator-open-responsive",
+                   "workspace-open-responsive"}:
+        return "Opening lacks native focus target and keyboard acknowledgment timing"
+    if flow_id in {"model-creator-render", "model-creator-preview",
+                   "model-creator-explicit-import"}:
+        return "No validated local mesh, preview geometry, or explicit plate import transition"
+    if flow_id == "workspace-save-reopen":
+        return "Archive title and hash do not establish a workspace-ID state transition"
+    if flow_id in {"workspace-checklist-edit", "workspace-calendar-edit"}:
+        return "The tab was visited without editing and reopening an item"
+    if flow_id == "workspace-member-reopen":
+        return "No member bytes were compared across save and reopen"
+    if flow_id == "project-portable-history":
+        return "No saved 3MF history head was verified after a portable round trip"
+    if flow_id == "print-preview":
+        return "Preview navigation lacks a native sliced-plate state transition"
+    if flow_id == "print-nozzle-selection":
+        return "No nozzle choice and resulting selected-nozzle state were recorded"
+    if flow_id == "device-unpaired-state":
+        return "Visible controls do not prove a native device-connection state"
+    return "No complete installed-process before and after semantic proof was recorded"
+
+
+def build_contract_evidence(scope: str, drive: Drive) -> tuple[list[dict], dict]:
+    """Keep every required row explicit and validate the result before reporting."""
+    flows = (behavior_contract.BEHAVIOR_FLOWS if scope == "behavior"
+             else behavior_contract.LAYOUT_FLOWS)
+    file_row = next((row for row in drive.rows if row.get("name") == "file-menu-open-project"), None)
+    file_proof = (project_file_open_contract(file_row, drive.images, drive.app)
+                  if scope == "behavior" and file_row else None)
+    rows = []
+    for flow in flows:
+        if flow.id == "project-file-open" and file_proof:
+            rows.append(file_proof)
+        else:
+            rows.append({"id": flow.id, "status": "unverified",
+                         "reason": contract_gap_reason(flow.id)})
+    if scope == "behavior":
+        reasons = {
+            "live-printer-transfer": "No paired printer or authorized transfer target was supplied",
+            "live-camera-stream": "No paired camera stream was supplied",
+            "model-provider-session": "No authenticated model provider session was supplied",
+            "print-send": "No paired printer was supplied; final Send was not attempted",
+        }
+        rows.extend({"id": flow_id, "status": "unavailable", "reason": reasons[flow_id]}
+                    for flow_id in behavior_contract.EXTERNAL_LIMITATIONS)
+    result = behavior_contract.validate_behavior_rows(scope, drive.mode, rows)
+    return rows, asdict(result)
+
+
+def contract_report_state(rows: list[dict], result: dict, source_hash: str,
+                          scope: str, language: str, images: list[dict]) -> str:
+    """Fail closed on missing, stale, mismatched, or partial contract evidence."""
+    if not isinstance(rows, list) or not isinstance(result, dict):
+        return "missing_contract_inventory"
+    if source_hash != sha256(Path(behavior_contract.__file__)):
+        return "stale_contract_source"
+    try:
+        recomputed = asdict(behavior_contract.validate_behavior_rows(scope, language, rows))
+    except (TypeError, ValueError):
+        return "invalid_contract_inventory"
+    if result != recomputed:
+        return "mismatched_contract_result"
+    required = "ready_for_pixel_review" if scope == "behavior" else "layout_only"
+    if recomputed["verdict"] != required:
+        return "partial_contract_inventory"
+    named_images = {item.get("file") for item in images if isinstance(item, dict)}
+    for row in rows:
+        if row.get("status") == "probe_confirmed":
+            captures = row.get("proof", {}).get("capture_ids", [])
+            if any(capture not in named_images for capture in captures):
+                return "unreported_contract_capture"
+    return "complete"
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--exe", type=Path, required=True)
@@ -1488,12 +1617,19 @@ def main() -> int:
         wer_status = "diagnostic_collection_failed"
         drive.rows.append({"name": "restricted-wer-preservation", "status": "blocked",
                            "reason": f"{type(exc).__name__}: {exc}"})
+    contract_rows, contract_result = build_contract_evidence(args.scope, drive)
+    contract_hash = sha256(Path(behavior_contract.__file__))
+    contract_state = contract_report_state(contract_rows, contract_result, contract_hash,
+                                           args.scope, args.language, drive.images)
     failed_rows = [r["name"] for r in drive.rows if r["status"] in ("blocked", "unverified")]
-    verdict = "blocked" if cleanup_error or failed_rows else ("diagnostic_only" if args.scope == "diagnostic" else "pending_visual_review")
+    verdict = ("blocked" if cleanup_error or failed_rows or
+               contract_state != "complete" else "pending_visual_review")
     report = {"schema": 2, **drive.identity, "scope": args.scope,
               "package_version": receipt["package_version"], "runner": "github-hosted-windows",
               "desktop": desktop,
               "rows": drive.rows, "images": drive.images, "restricted_logs": logs,
+              "contract_rows": contract_rows, "contract_result": contract_result,
+              "contract_source_sha256": contract_hash, "contract_state": contract_state,
               "wer_status": wer_status,
               "failed_rows": failed_rows,
               "privacy": "restricted; inspect pixels and metadata before publication",

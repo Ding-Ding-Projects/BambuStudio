@@ -27,6 +27,42 @@ holder_spec.loader.exec_module(holder)
 
 
 class BehaviorDriveChecks(unittest.TestCase):
+    def test_contract_binding_rejects_missing_stale_mismatched_and_partial_inventory(self):
+        contract = drive.behavior_contract
+        images = [{"file": "before.png"}, {"file": "after.png"}]
+        rows = []
+        for flow in contract.LAYOUT_FLOWS:
+            rows.append({"id": flow.id, "status": "probe_confirmed", "proof": {
+                "source": "installed-process-probe", "predicate_id": flow.predicate_id,
+                "input_action": "owned native input",
+                "before_state": {field: "before" for field in flow.state_fields},
+                "after_state": {field: "after" for field in flow.state_fields},
+                "capture_ids": ["before.png", "after.png"]}})
+        valid_result = drive.asdict(contract.validate_behavior_rows("layout", "en", rows))
+        source_hash = drive.sha256(Path(contract.__file__))
+        state = lambda items, result, digest, captures=images: drive.contract_report_state(
+            items, result, digest, "layout", "en", captures)
+        self.assertEqual(state(rows, valid_result, source_hash), "complete")
+        self.assertEqual(state(None, valid_result, source_hash), "missing_contract_inventory")
+        self.assertEqual(state(rows, valid_result, "0" * 64), "stale_contract_source")
+        self.assertEqual(state(rows, {**valid_result, "version": 1}, source_hash),
+                         "mismatched_contract_result")
+        partial_rows = rows[:-1]
+        partial_result = drive.asdict(contract.validate_behavior_rows("layout", "en", partial_rows))
+        self.assertEqual(state(partial_rows, partial_result, source_hash),
+                         "partial_contract_inventory")
+        self.assertEqual(state(rows, valid_result, source_hash, images[:1]),
+                         "unreported_contract_capture")
+
+    def test_contract_does_not_promote_visible_labels_to_file_open_proof(self):
+        row = {"name": "file-menu-open-project", "status": "probe_confirmed",
+               "result": {"before_visible": [], "after_visible": ["fixture.3mf"]},
+               "before_image": {"file": "before.png"},
+               "after_image": {"file": "after.png"}}
+        self.assertIsNone(drive.project_file_open_contract(
+            row, [{"file": "before.png"}, {"file": "after.png"}],
+            SimpleNamespace(pid=42, datadir="profile")))
+
     def test_startup_fallback_needs_confirmed_exit_without_replacement(self):
         exited = {"original_exit_confirmed": True, "owned_replacement_seen": False,
                   "owned_process_live_at_end": False}

@@ -190,6 +190,88 @@ try {
         }
         $expectedDriverScope = if ($CaptureScope -eq 'diagnostic') { 'diagnostic' } elseif (
             $dir.Name -ceq 'en-light-1-1200x800') { 'behavior' } else { 'layout' }
+        if ($CaptureScope -ne 'diagnostic') {
+            $contractModule = Join-Path $PSScriptRoot 'behavior_contract.py'
+            $contractPython = if ($env:LLCU_CHEAP) {
+                Join-Path (Split-Path -Parent $env:LLCU_CHEAP) 'python.exe'
+            } else { '' }
+            if (-not (Test-Path -LiteralPath $contractModule -PathType Leaf) -or
+                [string]::IsNullOrWhiteSpace($contractPython) -or
+                -not (Test-Path -LiteralPath $contractPython -PathType Leaf) -or
+                $null -eq $report.PSObject.Properties['contract_rows'] -or
+                $null -eq $report.PSObject.Properties['contract_result'] -or
+                $null -eq $report.contract_rows -or $null -eq $report.contract_result -or
+                $null -eq $report.PSObject.Properties['contract_source_sha256'] -or
+                $null -eq $report.PSObject.Properties['contract_state'] -or
+                $report.contract_state -cne 'complete' -or
+                $report.contract_source_sha256 -cne
+                    (Get-FileHash -LiteralPath $contractModule -Algorithm SHA256).Hash.ToLowerInvariant()) {
+                $evidence.behavior_failure = 'The behavior completeness contract is missing or stale.'
+            }
+            else {
+                $contractCheckScript = @'
+import dataclasses, importlib.util, json, sys
+spec = importlib.util.spec_from_file_location('behavior_contract', sys.argv[1])
+module = importlib.util.module_from_spec(spec)
+sys.modules[spec.name] = module
+spec.loader.exec_module(module)
+with open(sys.argv[2], encoding='utf-8') as stream:
+    report = json.load(stream)
+result = module.validate_behavior_rows(report['scope'], report['requested_tuple']['language'], report['contract_rows'])
+print(json.dumps(dataclasses.asdict(result), separators=(',', ':')))
+'@
+                $resultJson = & $contractPython -c $contractCheckScript $contractModule $reportPath 2>$null
+                if ($LASTEXITCODE -ne 0 -or -not $resultJson) {
+                    $evidence.behavior_failure = 'The behavior completeness contract could not be recomputed.'
+                }
+                else {
+                    $recomputed = $resultJson | ConvertFrom-Json
+                    $actual = $report.contract_result
+                    foreach ($key in @('version', 'scope', 'language', 'verdict')) {
+                        if ($null -eq $actual.PSObject.Properties[$key] -or
+                            [string]$actual.$key -cne [string]$recomputed.$key) {
+                            $evidence.behavior_failure = 'The behavior completeness result differs from its rows.'
+                        }
+                    }
+                    foreach ($key in @('missing', 'invalid', 'limitations', 'confirmed')) {
+                        if ($null -eq $actual.PSObject.Properties[$key] -or
+                            (@($actual.$key) -join '|') -cne
+                            (@($recomputed.$key) -join '|')) {
+                            $evidence.behavior_failure = 'The behavior completeness inventory differs from its rows.'
+                        }
+                    }
+                    $requiredVerdict = if ($expectedDriverScope -ceq 'behavior') {
+                        'ready_for_pixel_review'
+                    } else { 'layout_only' }
+                    if ($recomputed.version -ne 2 -or
+                        $recomputed.scope -cne $expectedDriverScope -or
+                        $recomputed.language -cne $expectedLanguage -or
+                        $recomputed.verdict -cne $requiredVerdict) {
+                        $evidence.behavior_failure = 'Required behavior flow coverage is incomplete.'
+                    }
+                    $namedImages = @($report.images | ForEach-Object { [string]$_.file })
+                    foreach ($contractRow in @($report.contract_rows)) {
+                        if ($null -eq $contractRow) {
+                            $evidence.behavior_failure = 'A behavior contract row is missing.'
+                            continue
+                        }
+                        if ($contractRow.status -ceq 'probe_confirmed') {
+                            if ($null -eq $contractRow.PSObject.Properties['proof'] -or
+                                $null -eq $contractRow.proof -or
+                                $null -eq $contractRow.proof.PSObject.Properties['capture_ids']) {
+                                $evidence.behavior_failure = 'A confirmed behavior flow has no capture inventory.'
+                                continue
+                            }
+                            foreach ($captureId in @($contractRow.proof.capture_ids)) {
+                                if ($namedImages -cnotcontains [string]$captureId) {
+                                    $evidence.behavior_failure = 'A confirmed behavior flow cites an unreported capture.'
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
         $expectedVerdict = if ($CaptureScope -eq 'diagnostic') { 'diagnostic_only' } else { 'pending_visual_review' }
         if ($report.scope -cne $expectedDriverScope -or $report.verdict -cne $expectedVerdict) {
             $evidence.behavior_failure = 'At least one behavior tuple did not reach the expected driver scope and pending-review verdict.'

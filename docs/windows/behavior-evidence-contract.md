@@ -2,8 +2,10 @@
 
 `scripts/md3/behavior_contract.py` defines version 2 of the required behavior
 ledger for the issue #41 software flows. It is a pure validator. The hosted
-driver and collector do not call it yet, so this source change does not make a
-release or an existing capture complete.
+driver emits every required row and its validation result for behavior and
+layout reports. The collector recomputes that result from the pinned validator,
+checks its source hash and reported captures, and rejects incomplete coverage
+as release evidence. Diagnostic startup bundles remain separate.
 
 The driver should submit a separate ordered list of contract rows using `id`
 and `status`. A confirmed software row also needs a `proof` object with the
@@ -61,12 +63,25 @@ The validator returns `diagnostic_only`, `layout_only`, `partial_behavior`, or
 or unavailable software row yields `partial_behavior`. Only full software
 coverage plus explicit external limitation rows can reach
 `ready_for_pixel_review`, which still requires a separate pixel and provenance
-review. Integrate this validator into the hosted driver and collector before
-using it as a release condition. The integration must map real actions to
-these stable IDs and retain the complete validation result in the report.
+review. The hosted integration maps only verified native actions to stable IDs
+and retains the complete validation result in the report.
+
+The current drive can map only `project-file-open` when the checked-in 3MF
+produces an exact owned model transition and both images. Prepare tab clicks
+expose visible labels without native selected-tab and panel IDs. Narrow layout
+has an after measurement without paired control geometry. Search and keyboard
+paths lack input and native result or focus state. The recent-entry card is not
+driven to a loaded model. Project, Model Creator, and Workspace openings lack
+focus, keyboard acknowledgment, and opening timing proof. Model Creator has no
+validated render, preview, or explicit import. Workspace checklist, calendar,
+member, and portable-history round trips remain unverified. Preview, nozzle
+selection, and unpaired Device state lack native state transitions. Live printer
+transfer, camera streaming, provider session, and final Send remain unavailable
+without the corresponding hardware or account. These gaps keep the contract
+verdict `partial_behavior`; label-based rows cannot complete it.
 
 The negative fixtures in `scripts/md3/test-behavior-contract.py` cover missing
 and duplicate IDs, each distinct opening row, a missing keyboard acknowledgment,
 a falsely unavailable software flow, an unknown status, label-only evidence,
-and honest hardware limitations. They have not been run
-in this source-only change.
+and honest hardware limitations. The driver and collector integration requires
+hosted verification; no local test or GUI drive was run for this source change.
