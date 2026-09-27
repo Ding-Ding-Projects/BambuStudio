@@ -7,6 +7,7 @@ import os
 import subprocess
 import sys
 import tempfile
+import threading
 import unittest
 import zipfile
 from types import SimpleNamespace
@@ -51,7 +52,7 @@ class BehaviorDriveChecks(unittest.TestCase):
                 return ({"case": name, "original_exit_confirmed": True,
                          "original_exit_code": 2147942487, "mainframe_seen": False,
                          "owned_replacement_seen": False, "owned_process_live_at_end": False,
-                         "cleanup_error": None},
+                         "cleanup_error": None, "cleanup_verified": True},
                         {"file": name + ".log", "bytes": 1, "sha256": "a" * 64})
             with patch.object(drive, "run_startup_case", side_effect=case):
                 self.assertEqual(drive.run_startup_comparison(
@@ -81,13 +82,85 @@ class BehaviorDriveChecks(unittest.TestCase):
                 return ({"case": name, "original_exit_confirmed": route == "holder",
                          "original_exit_code": None, "mainframe_seen": False,
                          "owned_replacement_seen": False, "owned_process_live_at_end": False,
-                         "cleanup_error": None}, {"file": name + ".log", "bytes": 1,
+                         "cleanup_error": None, "cleanup_verified": True},
+                        {"file": name + ".log", "bytes": 1,
                                                   "sha256": "a" * 64})
             with patch.object(drive, "run_startup_case", side_effect=case):
                 drive.run_startup_comparison(args, {"installed_exe_sha256": "a" * 64,
                                              "package_version": "2.8.4124"},
                                              "a" * 40, "b" * 40, root)
             self.assertEqual(calls, ["seeded-direct", "seeded-holder"])
+
+    def test_unverified_teardown_stops_comparison_and_retains_first_case(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            args = SimpleNamespace(exe=root / "bambu-studio.exe", output=root,
+                                   language="en", theme="light", scale=1.0,
+                                   viewport="1200x800", release_tag="md3-v125",
+                                   hosted_run_id="123")
+            calls = []
+            def case(name, *_args):
+                calls.append(name)
+                return ({"case": name, "original_exit_confirmed": True,
+                         "original_exit_code": 1, "mainframe_seen": False,
+                         "owned_replacement_seen": False, "owned_process_live_at_end": False,
+                         "cleanup_error": "desktop still open", "cleanup_verified": False},
+                        {"file": name + ".log", "bytes": 1, "sha256": "a" * 64})
+            with patch.object(drive, "run_startup_case", side_effect=case):
+                self.assertEqual(drive.run_startup_comparison(
+                    args, {"installed_exe_sha256": "a" * 64, "package_version": "2.8.4124"},
+                    "a" * 40, "b" * 40, root), 2)
+            self.assertEqual(calls, ["seeded-direct"])
+            report = json.loads((root / "behavior-report.json").read_text())
+            self.assertEqual(len(report["startup_comparison"]), 1)
+            self.assertEqual(len(report["restricted_logs"]), 1)
+            self.assertEqual(report["comparison_stopped_reason"],
+                             "owned_process_or_named_desktop_teardown_unverified")
+
+    def test_empty_stream_is_explicit_and_omitted_from_restricted_inventory(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            app = drive.HostedApp("exe", "profile", "desktop", str(root))
+            app.holder_receipt = {"streams": {"stdout": {"bytes_total": 0, "bytes_saved": 0},
+                                              "stderr": {"bytes_total": 7, "bytes_saved": 7}}}
+            self.assertEqual(drive.holder_stream_sources(app),
+                             [("stderr", app.holder_stderr_path)])
+            app.holder_stderr_path.write_bytes(b"content")
+            app.holder_stdout_path.write_bytes(b"")
+            self.assertEqual([item["file"] for item in drive.preserve_holder_streams(app, root)],
+                             ["hosted-stderr.log"])
+
+    def test_stream_prefix_is_flushed_before_inherited_writer_closes(self):
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / "stdout.log"
+            reader, writer = os.pipe()
+            result = {}
+            with patch.object(holder.msvcrt, "open_osfhandle", return_value=reader):
+                thread = threading.Thread(target=holder.drain_pipe, args=(123, path, result))
+                thread.start()
+                os.write(writer, b"early output")
+                for _ in range(100):
+                    if path.is_file() and path.read_bytes() == b"early output":
+                        break
+                    threading.Event().wait(0.01)
+                self.assertEqual(path.read_bytes(), b"early output")
+                self.assertTrue(thread.is_alive())
+                os.close(writer)
+                thread.join(timeout=2)
+            self.assertFalse(thread.is_alive())
+            self.assertEqual(result["bytes_saved"], 12)
+
+    def test_zero_byte_stream_records_counter_without_creating_file(self):
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / "stderr.log"
+            reader, writer = os.pipe()
+            os.close(writer)
+            result = {}
+            with patch.object(holder.msvcrt, "open_osfhandle", return_value=reader):
+                holder.drain_pipe(123, path, result)
+            self.assertFalse(path.exists())
+            self.assertEqual(result["bytes_total"], 0)
+            self.assertEqual(result["bytes_saved"], 0)
 
     def test_case_temp_environment_restores_parent_and_bundle_excludes_shared_trace(self):
         with tempfile.TemporaryDirectory() as temp:
@@ -249,10 +322,34 @@ class BehaviorDriveChecks(unittest.TestCase):
             calls = []
             with patch.object(drive, "process_snapshot", return_value=[]), patch.object(
                     drive, "cheap", side_effect=lambda tool, **kwargs: calls.append(tool) or {"ok": True}), patch.object(
-                    drive.time, "monotonic", side_effect=[0, 9]):
+                    drive.time, "monotonic", side_effect=[0, 16, 20, 26]):
                 with self.assertRaisesRegex(RuntimeError, "helper PID was not killed"):
                     app.stop()
-            self.assertEqual(calls, ["close_headless_desktop"])
+            self.assertEqual(calls, ["close_headless_desktop", "list_headless_windows"])
+
+    def test_teardown_requires_absent_owned_pid_and_missing_named_desktop(self):
+        with tempfile.TemporaryDirectory() as temp:
+            probe = Path(temp) / "probe"
+            probe.mkdir()
+            app = drive.HostedApp("exe", "profile", "owned-desktop", str(probe))
+            app.launch_pid = 20
+            app.launch_started = datetime.now(timezone.utc)
+            def absent(tool, **_kwargs):
+                if tool == "list_headless_windows":
+                    raise RuntimeError("OpenDesktopW('owned-desktop') failed (GetLastError=2)")
+                return {"ok": True, "closed": False}
+            with patch.object(drive, "process_snapshot", return_value=[]), patch.object(
+                    drive, "cheap", side_effect=absent):
+                app.stop()
+            self.assertTrue(app.owned_teardown_verified)
+            self.assertTrue(app.desktop_closed_verified)
+            with patch.object(drive, "process_snapshot", return_value=[]), patch.object(
+                    drive, "cheap", return_value={"ok": True, "windows": []}), patch.object(
+                    drive.time, "monotonic", side_effect=[0, 1, 6]), patch.object(
+                    drive.time, "sleep"):
+                with self.assertRaisesRegex(RuntimeError, "Named desktop closure was not verified"):
+                    app.stop()
+            self.assertFalse(app.desktop_closed_verified)
 
     def test_wer_collection_skips_holder_terminated_app(self):
         with tempfile.TemporaryDirectory() as temp:

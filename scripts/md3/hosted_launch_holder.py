@@ -50,9 +50,10 @@ class SECURITY_ATTRIBUTES(ctypes.Structure):
 
 def drain_pipe(handle: int, path: Path, result: dict) -> None:
     """Drain all bytes while retaining at most one MiB of original output."""
+    sink = None
     try:
-        saved = bytearray()
         total = 0
+        saved = 0
         fd = msvcrt.open_osfhandle(handle, os.O_RDONLY | os.O_BINARY)
         with os.fdopen(fd, "rb", buffering=0) as stream:
             while True:
@@ -60,12 +61,22 @@ def drain_pipe(handle: int, path: Path, result: dict) -> None:
                 if not block:
                     break
                 total += len(block)
-                saved.extend(block[:max(0, STREAM_LIMIT - len(saved))])
-        path.write_bytes(saved)
-        result.update({"bytes_total": total, "bytes_saved": len(saved),
-                       "truncated": total > len(saved)})
+                prefix = block[:max(0, STREAM_LIMIT - saved)]
+                if prefix:
+                    if sink is None:
+                        sink = path.open("wb")
+                    sink.write(prefix)
+                    sink.flush()
+                    saved += len(prefix)
+                result.update({"bytes_total": total, "bytes_saved": saved,
+                               "truncated": total > saved})
+        result.update({"bytes_total": total, "bytes_saved": saved,
+                       "truncated": total > saved})
     except Exception as exc:
         result["capture_error"] = type(exc).__name__
+    finally:
+        if sink is not None:
+            sink.close()
 
 
 def utc_now() -> str:

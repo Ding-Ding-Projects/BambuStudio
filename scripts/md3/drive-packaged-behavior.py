@@ -95,6 +95,8 @@ class HostedApp(App):
         self.cleanup_killed_pids = []
         self.natural_exit_observed_before_cleanup = False
         self.holder_lifetime = 600
+        self.owned_teardown_verified = False
+        self.desktop_closed_verified = False
 
     def _desktop_windows(self):
         return cheap("list_headless_windows", name=self.desktop)["windows"]
@@ -210,7 +212,7 @@ class HostedApp(App):
         if self.helper_pid is not None:
             try:
                 self.holder_stop_path.write_text("stop\n", encoding="ascii")
-                deadline = time.monotonic() + 8
+                deadline = time.monotonic() + 15
                 while time.monotonic() < deadline:
                     if self.holder_receipt_path.is_file():
                         receipt = json.loads(self.holder_receipt_path.read_text(encoding="utf-8"))
@@ -225,13 +227,39 @@ class HostedApp(App):
                                 break
                     time.sleep(0.25)
                 else:
-                    errors.append("Hosted holder teardown unverified after eight seconds; helper PID was not killed without fresh identity proof")
+                    errors.append("Hosted holder teardown unverified after fifteen seconds; helper PID was not killed without fresh identity proof")
             except Exception as exc:
                 errors.append(f"holder closure: {type(exc).__name__}: {exc}")
         try:
             cheap("close_headless_desktop", name=self.desktop)
         except Exception as exc:
             errors.append(f"desktop closure: {type(exc).__name__}: {exc}")
+        # The cheap CLI uses a new process for each call. Its close result may
+        # say "not tracked" even when the named desktop has been released.
+        # Confirm both no exact owned process and a missing named desktop.
+        verification_deadline = time.monotonic() + 5
+        while time.monotonic() < verification_deadline:
+            try:
+                remaining = owned_process_inventory(
+                    process_snapshot(), exe=self.exe, datadir=self.datadir,
+                    launched_at=self.launch_started, launch_pid=self.launch_pid)
+                self.owned_teardown_verified = self.launch_pid is not None and not remaining
+            except Exception:
+                self.owned_teardown_verified = False
+            try:
+                cheap("list_headless_windows", name=self.desktop)
+                self.desktop_closed_verified = False
+            except Exception as exc:
+                detail = str(exc)
+                self.desktop_closed_verified = (
+                    f"OpenDesktopW('{self.desktop}')" in detail and "GetLastError=2" in detail)
+            if self.owned_teardown_verified and self.desktop_closed_verified:
+                break
+            time.sleep(0.25)
+        if not self.owned_teardown_verified:
+            errors.append("Exact owned process teardown was not verified")
+        if not self.desktop_closed_verified:
+            errors.append("Named desktop closure was not verified")
         self.finished_at = datetime.now(timezone.utc)
         if errors:
             raise RuntimeError("; ".join(errors))
@@ -396,6 +424,8 @@ def preserve_holder_streams(app: HostedApp, output: Path) -> list[dict]:
     for source in (app.holder_stdout_path, app.holder_stderr_path):
         if not source.is_file():
             continue
+        if source.stat().st_size == 0:
+            continue
         if source.stat().st_size > 1_048_576:
             raise RuntimeError("Hosted output stream exceeded its bounded capture size")
         destination = output / "restricted-logs"
@@ -406,6 +436,18 @@ def preserve_holder_streams(app: HostedApp, output: Path) -> list[dict]:
                         "bytes": target.stat().st_size,
                         "privacy": "restricted original process output; do not print or publish"})
     return records
+
+
+def holder_stream_sources(app: HostedApp) -> list[tuple[str, Path]]:
+    """Distinguish confirmed empty pipes from missing or incomplete capture."""
+    streams = (app.holder_receipt or {}).get("streams") or {}
+    sources = []
+    for role, path in (("stdout", app.holder_stdout_path),
+                       ("stderr", app.holder_stderr_path)):
+        if streams.get(role, {}).get("bytes_total") == 0 and not path.is_file():
+            continue
+        sources.append((role, path))
+    return sources
 
 
 @contextmanager
@@ -629,16 +671,18 @@ def run_startup_case(name: str, route: str, seeded: bool, args, scratch: Path,
             "timeline": samples, "startup_state": app.startup_state,
             "desktop_state": samples[-1]["desktop_state"] if samples else "not_enumerated",
             "cleanup_killed_pids": app.cleanup_killed_pids,
+            "owned_teardown_verified": app.owned_teardown_verified,
+            "desktop_closed_verified": app.desktop_closed_verified,
             "primary_error": primary_error, "cleanup_error": cleanup_error,
             "holder_status": (app.holder_receipt or {}).get("status"),
             "holder_deadline_fired": (app.holder_receipt or {}).get("deadline_fired"),
             "stream_capture_complete": (app.holder_receipt or {}).get("stream_capture_complete"),
+            "stream_counters": (app.holder_receipt or {}).get("streams"),
             "gui_verified": False, "behavior_verified": False}
     sources = [("launcher_trace", case_temp / "bbs-launcher-trace.log")]
     if route == "holder":
-        sources.extend((("holder_receipt", app.holder_receipt_path),
-                        ("stdout", app.holder_stdout_path),
-                        ("stderr", app.holder_stderr_path)))
+        sources.append(("holder_receipt", app.holder_receipt_path))
+        sources.extend(holder_stream_sources(app))
     app_log_dir = profile / "log"
     if app_log_dir.is_dir() and not app_log_dir.is_symlink():
         sources.extend(("app_log", path) for path in sorted(app_log_dir.glob("*.log"))[:3])
@@ -653,6 +697,13 @@ def run_startup_case(name: str, route: str, seeded: bool, args, scratch: Path,
     case["exit_code_status"] = ("observed_before_cleanup" if original_exit and exit_code is not None
                                 else "exit_confirmed_code_unavailable" if original_exit
                                 else "unavailable_without_verified_process_handle_or_exit")
+    if route == "direct":
+        case["stream_status"] = "stdout_and_stderr_unavailable_from_direct_lowlevel_launch"
+    else:
+        case["stream_status"] = ("captured_or_explicitly_empty" if case["stream_capture_complete"]
+                                 else "incomplete_or_unavailable")
+    case["cleanup_verified"] = (cleanup_error is None and app.owned_teardown_verified
+                                and app.desktop_closed_verified)
     case["seed_config_sha256"] = (sha256(profile / "BambuStudio.conf") if seeded else None)
     return case, restricted
 
@@ -662,26 +713,38 @@ def run_startup_comparison(args, receipt: dict, source: str, verifier: str,
     """Diagnostic scope is intentionally incomplete even when a frame appears."""
     cases = []
     logs = []
+    comparison_stopped_reason = None
     for name, route, seeded in (("seeded-direct", "direct", True),
                                 ("seeded-holder", "holder", True)):
         case, record = run_startup_case(name, route, seeded, args, scratch,
                                         receipt["installed_exe_sha256"])
         cases.append(case)
         logs.append(record)
-    empty_fallback = all(startup_case_exited(case) for case in cases)
+        if not case.get("cleanup_verified"):
+            comparison_stopped_reason = "owned_process_or_named_desktop_teardown_unverified"
+            break
+    empty_fallback = (comparison_stopped_reason is None and len(cases) == 2
+                      and all(startup_case_exited(case) for case in cases))
     if empty_fallback:
         for name, route in (("empty-direct", "direct"), ("empty-holder", "holder")):
             case, record = run_startup_case(name, route, False, args, scratch,
                                             receipt["installed_exe_sha256"])
             cases.append(case)
             logs.append(record)
+            if not case.get("cleanup_verified"):
+                comparison_stopped_reason = "owned_process_or_named_desktop_teardown_unverified"
+                break
     requested = {"language": args.language, "theme": args.theme,
                  "scale": args.scale, "viewport": [int(x) for x in args.viewport.split("x")]}
-    rows = [{"name": case["case"], "status": "diagnostic_only",
+    rows = [{"name": case["case"],
+             "status": "blocked" if case.get("primary_error") or not case.get("cleanup_verified")
+             else "diagnostic_only",
              "original_exit_confirmed": case["original_exit_confirmed"],
              "original_exit_code": case["original_exit_code"],
              "mainframe_seen": case["mainframe_seen"],
-             "reason": "Startup comparison does not verify rendering or behavior"}
+             "reason": "Startup observation or teardown was unverified"
+             if case.get("primary_error") or not case.get("cleanup_verified")
+             else "Startup comparison does not verify rendering or behavior"}
             for case in cases]
     report = {"schema": 2, "scope": "diagnostic", "source_commit": source,
               "verification_commit": verifier, "release_tag": args.release_tag,
@@ -691,6 +754,7 @@ def run_startup_comparison(args, receipt: dict, source: str, verifier: str,
               "runner": "github-hosted-windows", "requested_tuple": requested,
               "measured_tuple": None, "startup_comparison": cases,
               "empty_profile_fallback_run": empty_fallback,
+              "comparison_stopped_reason": comparison_stopped_reason,
               "rows": rows, "images": [], "restricted_logs": logs,
               "rendered_ok": False, "behavior_verified": False,
               "failed_rows": [row["name"] for row in rows],
