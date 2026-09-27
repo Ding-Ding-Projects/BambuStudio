@@ -126,3 +126,80 @@ Squirrel output, inspect the README capture matrix from the built artifact, and 
 commit, Actions run, release tag, installer SHA-256, Squirrel package names, SBOM component count,
 attestation verification, immutable state, and reviewed screenshot set. A pending, cancelled, or absent
 remote result is not release proof.
+
+## Verification-only hosted workflow
+
+`.github/workflows/verify-release-evidence.yml` is an independently dispatched verification
+workflow. It never compiles the application, creates a release, changes a tag, or gates the
+publication workflow. Supply the existing immutable `release_tag`, its exact
+`expected_source_commit`, and a `verification_scope`. Start with `diagnostic` to inspect one
+English, light, 100%, 1200x800 tuple. Use `behavior` for the six language/theme hosted jobs,
+each of which records four requested scales at two viewport sizes. The verification checkout's
+commit is recorded separately from the immutable release source commit.
+The narrowly scoped `codex/hosted-behavior-verifier` push trigger performs a diagnostic run
+against `md3-v125` and `c5df6199e1a83b1c94be12e999c0b322fded8730` while the new verifier
+is reviewed on its own branch. It does not trigger for other branches or replace manual matrix
+dispatch.
+
+Each job installs and validates the published Squirrel package in a fresh hosted Windows runner
+using `Verify-HostedSquirrelInstall.ps1`. It then installs the pinned headless tool and Pillow in
+job-local Python, invokes `drive-packaged-behavior.py` against the installed executable, and
+encrypts the driver's own report, images, and attributable restricted logs. The separate
+publication workflow retains its fixed eleven-surface schema 1 capture. The schema 2 diagnostic
+does not launch that older capture route after the behavior driver, so a failed application launch
+still preserves its report and restricted logs when present. Only one behavior tuple includes the
+complete workflow drive; other tuples inspect localized layout. A diagnostic result never claims
+the matrix passed.
+The workflow uses a bounded timeout, two concurrent matrix jobs, no cancellation of existing runs,
+and a safe failure upload. Raw screenshots, private profiles, and unreviewed behavior reports are
+never attached in plaintext.
+
+The version 2 encrypted envelope binds the hosted run, release tag, release source commit,
+verification commit, installed executable hash, and the exact manifest of capture images,
+behavior reports, behavior images, and driver-owned restricted application logs. The manifest names each tuple and records every byte length
+and SHA-256. `Open-HostedReleaseGuiEvidence.ps1` retains schema 1 read support and requires an
+explicit expected verification commit for schema 2. It rejects duplicate names, traversal, extra
+or missing entries, invalid counts, and hash mismatches before releasing files to a new local
+directory. A partial capture can carry encrypted diagnostics, but its receipt remains explicitly
+partial and cannot be accepted as verified GUI evidence. Missing printer, camera, or provider
+access is reported separately from a failed probe, launch, or teardown. Operators must inspect
+decrypted pixels and reports for privacy before retaining or publishing them.
+Windows Error Reporting dumps are omitted with an explicit receipt reason because a global
+application-name match does not prove the PID, process creation interval, and installed executable
+identity of a particular hosted run. A failed fixed-surface capture still encrypts attributable
+behavior reports and restricted logs when those files were produced; it keeps a partial verdict.
+Schema 2 uses distinct diagnostic, behavior-pending-review, and partial statuses. Eight tuple
+reports are required for a complete behavior job; one report is required for a diagnostic job.
+The hosted manifest fixture Chut deliberately supplies traversal and duplicate paths and requires
+both to be rejected before private-key access or extraction.
+It also encrypts a synthetic failed diagnostic with no image or restricted log, verifies the
+partial receipt and exact report inventory, and checks that metadata and authenticated binding
+reach the owner-key boundary without extracting plaintext on the hosted runner.
+
+## Owner key initialization and public-key versions
+
+The original `hosted-gui-public.pem` remains recorded as `hosted-gui-public-v1.pem` for historical
+envelopes. Its matching local DPAPI slot, when it exists, is the legacy
+`BambuStudio\HostedGuiEvidence\private-key.dpapi` file under the current user's local application
+data. A missing legacy private key cannot be recreated from the public PEM or an encrypted bundle.
+Those historical bundles remain unreadable unless the original protected key is recovered by its
+owner. Do not substitute a new key and claim old evidence was reviewed.
+
+After owner review, run `scripts/md3/Initialize-HostedGuiEvidenceKey.ps1 -Initialize` locally under
+the account that will review evidence. The script creates a fresh RSA key, protects its private
+PKCS#8 bytes with DPAPI CurrentUser in a distinct slot named by the public SPKI SHA-256, and writes
+only `hosted-gui-public-v2.pem` to the repository checkout. It refuses an existing public file or
+protected slot and cannot run in Actions. Never commit, upload, log, or disclose the protected key
+file or its unprotected bytes. Review and commit only the public PEM. The version 2 capture route
+fails closed until that public PEM is present in the verifier checkout.
+
+New schema 2 envelopes record `key_id` and `public_key_sha256`, both the same public SPKI SHA-256.
+The opener selects only the exact archived version 1 or approved version 2 public key by that ID,
+then locates its corresponding local protected slot. Unknown or mismatched IDs are rejected before
+private-key access; hosted fixtures cover both cases. The schema 1 reader and its legacy slot remain
+supported. A successful envelope validation still requires owner decryption and privacy review
+before any report or image is promoted.
+Every newly produced envelope uses the approved version 2 public recipient, including schema 1
+captures from the independent release publication workflow. Schema number describes the evidence
+inventory format, not the encryption key version. Historical envelopes still select the archived
+version 1 public key and its legacy local slot by their recorded fingerprint.

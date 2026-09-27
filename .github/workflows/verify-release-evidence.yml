@@ -1,0 +1,188 @@
+name: Verify published Windows release evidence
+
+on:
+  push:
+    branches:
+      - codex/hosted-behavior-verifier
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Existing immutable release tag
+        required: true
+        type: string
+      expected_source_commit:
+        description: Exact 40-character source commit of that release
+        required: true
+        type: string
+      verification_scope:
+        description: Diagnostic first, then complete behavior and layout matrix
+        required: true
+        default: behavior
+        type: choice
+        options:
+          - diagnostic
+          - behavior
+
+permissions:
+  contents: read
+
+env:
+  VERIFY_RELEASE_TAG: ${{ github.event_name == 'push' && 'md3-v125' || inputs.release_tag }}
+  VERIFY_SOURCE_COMMIT: ${{ github.event_name == 'push' && 'c5df6199e1a83b1c94be12e999c0b322fded8730' || inputs.expected_source_commit }}
+
+concurrency:
+  group: release-evidence-${{ github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    if: ${{ github.event_name == 'push' || inputs.verification_scope == 'diagnostic' }}
+    runs-on: windows-2025
+    timeout-minutes: 55
+    env:
+      GH_TOKEN: ${{ secrets.RELEASE_TOKEN || secrets.ORG_TOKEN || secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Check out verifier source
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          persist-credentials: false
+      - name: Parse verifier PowerShell sources
+        shell: pwsh
+        run: |
+          foreach ($path in @(
+            'scripts/ci/Invoke-HostedReleaseVerification.ps1',
+            'scripts/md3/Capture-HostedReleaseGui.ps1',
+            'scripts/md3/Open-HostedReleaseGuiEvidence.ps1',
+            'scripts/md3/Test-HostedEvidenceManifestV2.ps1')) {
+            $tokens = $null
+            $parseErrors = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile(
+              (Resolve-Path $path), [ref]$tokens, [ref]$parseErrors)
+            if ($parseErrors.Count -gt 0) { throw "PowerShell parser rejected $path." }
+          }
+      - name: Reject malformed encrypted manifest fixtures
+        if: ${{ always() }}
+        shell: pwsh
+        run: |
+          & scripts/md3/Test-HostedEvidenceManifestV2.ps1
+      - name: Install isolated Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+      - name: Run focused hosted driver checks
+        if: ${{ always() }}
+        shell: pwsh
+        run: |
+          if (-not (Test-Path scripts/md3/test-drive-packaged-behavior.py)) {
+            throw 'The verifier commit does not contain the focused driver checks.'
+          }
+          $checkPython = Join-Path $env:RUNNER_TEMP `
+            ('lowlevel-verify-venv-' + $env:GITHUB_RUN_ID + '\Scripts\python.exe')
+          if (-not (Test-Path -LiteralPath $checkPython -PathType Leaf)) {
+            $fallback = Join-Path $env:RUNNER_TEMP ('verify-check-venv-' + $env:GITHUB_RUN_ID)
+            & python -m venv $fallback
+            if ($LASTEXITCODE -ne 0) { throw 'Could not create the isolated hosted check environment.' }
+            $checkPython = Join-Path $fallback 'Scripts\python.exe'
+          }
+          & $checkPython -c 'from PIL import Image'
+          if ($LASTEXITCODE -ne 0) {
+            & $checkPython -m pip install --disable-pip-version-check --quiet 'Pillow==11.3.0'
+            if ($LASTEXITCODE -ne 0) { throw 'Could not install pinned Pillow for hosted driver checks.' }
+          }
+          & $checkPython scripts/md3/test-drive-packaged-behavior.py
+          if ($LASTEXITCODE -ne 0) { throw 'Focused hosted Python driver checks failed.' }
+      - name: Verify published package and collect restricted behavior evidence
+        shell: pwsh
+        run: |
+          & scripts/ci/Invoke-HostedReleaseVerification.ps1 `
+            -Tag $env:VERIFY_RELEASE_TAG `
+            -ExpectedSourceCommit $env:VERIFY_SOURCE_COMMIT `
+            -VerificationCommit $env:GITHUB_SHA `
+            -Repository $env:GITHUB_REPOSITORY `
+            -VerificationScope diagnostic `
+            -OutputDirectory (Join-Path $env:GITHUB_WORKSPACE 'hosted-verification')
+      - name: Upload safe verification diagnostics and encrypted evidence
+        if: ${{ always() }}
+        continue-on-error: true
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: BambuStudio_verify_${{ github.run_id }}_diagnostic
+          path: |
+            hosted-verification/install-receipt.json
+            hosted-verification/verification-receipt.json
+            hosted-verification/evidence/receipt.json
+            hosted-verification/evidence/envelope.json
+            hosted-verification/evidence/images.zip.aesgcm
+          if-no-files-found: warn
+          retention-days: 30
+  verify-matrix:
+    if: ${{ inputs.verification_scope == 'behavior' }}
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        include:
+          - { language: en, theme: light }
+          - { language: en, theme: dark }
+          - { language: yue_HK, theme: light }
+          - { language: yue_HK, theme: dark }
+          - { language: bilingual_en_yue_HK, theme: light }
+          - { language: bilingual_en_yue_HK, theme: dark }
+    runs-on: windows-2025
+    timeout-minutes: 55
+    env:
+      GH_TOKEN: ${{ secrets.RELEASE_TOKEN || secrets.ORG_TOKEN || secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Check out verifier source
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          persist-credentials: false
+      - name: Parse verifier PowerShell sources
+        shell: pwsh
+        run: |
+          foreach ($path in @(
+            'scripts/ci/Invoke-HostedReleaseVerification.ps1',
+            'scripts/md3/Capture-HostedReleaseGui.ps1',
+            'scripts/md3/Open-HostedReleaseGuiEvidence.ps1',
+            'scripts/md3/Test-HostedEvidenceManifestV2.ps1')) {
+            $tokens = $null
+            $parseErrors = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile(
+              (Resolve-Path $path), [ref]$tokens, [ref]$parseErrors)
+            if ($parseErrors.Count -gt 0) { throw "PowerShell parser rejected $path." }
+          }
+      - name: Reject malformed encrypted manifest fixtures
+        if: ${{ always() }}
+        shell: pwsh
+        run: |
+          & scripts/md3/Test-HostedEvidenceManifestV2.ps1
+      - name: Install isolated Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+      - name: Verify installed release and behavior tuple matrix
+        shell: pwsh
+        run: |
+          & scripts/ci/Invoke-HostedReleaseVerification.ps1 `
+            -Tag $env:VERIFY_RELEASE_TAG `
+            -ExpectedSourceCommit $env:VERIFY_SOURCE_COMMIT `
+            -VerificationCommit $env:GITHUB_SHA `
+            -Repository $env:GITHUB_REPOSITORY `
+            -VerificationScope behavior `
+            -Language '${{ matrix.language }}' `
+            -Theme '${{ matrix.theme }}' `
+            -OutputDirectory (Join-Path $env:GITHUB_WORKSPACE 'hosted-verification')
+      - name: Upload safe tuple diagnostics and encrypted evidence
+        if: ${{ always() }}
+        continue-on-error: true
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: BambuStudio_verify_${{ github.run_id }}_${{ matrix.language }}_${{ matrix.theme }}
+          path: |
+            hosted-verification/install-receipt.json
+            hosted-verification/verification-receipt.json
+            hosted-verification/evidence/receipt.json
+            hosted-verification/evidence/envelope.json
+            hosted-verification/evidence/images.zip.aesgcm
+          if-no-files-found: warn
+          retention-days: 30
