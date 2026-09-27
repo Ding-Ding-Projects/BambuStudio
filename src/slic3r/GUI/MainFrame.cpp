@@ -537,7 +537,7 @@ DPIFrame(NULL, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, BORDERLESS_FRAME_
     // project when none were restored so single-tab use behaves exactly like today.
     m_project_tabbar->LoadFromConfig();
     if (m_project_tabbar->Count() == 0) {
-        const wxString cur_file  = m_plater ? m_plater->get_project_filename() : wxString();
+        const wxString cur_file  = m_plater ? m_plater->get_project_filename(".3mf") : wxString();
         wxString       cur_title = m_plater ? m_plater->get_project_name() : wxString();
         if (cur_title.IsEmpty())
             cur_title = _L("Untitled");
@@ -1604,7 +1604,7 @@ void MainFrame::close_project_tab(int index)
             // is now redundant and would become stale after a later edit/save.
             ProjectTab& tab = m_project_tabbar->TabAt(active);
             tab.snapshot_path.clear();
-            tab.file_path = into_u8(m_plater->get_project_filename());
+            tab.file_path = into_u8(m_plater->get_project_filename(".3mf"));
             tab.title = m_plater->get_project_name();
             tab.dirty = m_plater->is_project_dirty();
             m_project_tabbar->SetActiveTitle(tab.title.IsEmpty() ? _L("Untitled") : tab.title);
@@ -1621,7 +1621,7 @@ void MainFrame::close_project_tab(int index)
             // private snapshot on disk until a replacement or rollback loads.
             ProjectTab& tab = m_project_tabbar->TabAt(active);
             saved_tab_recovery_snapshot = tab.snapshot_path;
-            tab.file_path = into_u8(m_plater->get_project_filename());
+            tab.file_path = into_u8(m_plater->get_project_filename(".3mf"));
             tab.title = m_plater->get_project_name();
             tab.dirty = false;
             tab.snapshot_path.clear();
