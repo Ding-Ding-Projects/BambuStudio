@@ -152,8 +152,14 @@ if (MSVC)
     endif ()
     # /bigobj (Increase Number of Sections in .Obj file)
     # error C3859: virtual memory range for PCH exceeded; please recompile with a command line option of '-Zm90' or greater
-    # Generate symbols at every build target, even for the release.
-    add_compile_options(-bigobj -Zm520 /Zi)
+    # Generate symbols at every build target, even for the release — except
+    # when SLIC3R_MSVC_PDB=OFF (hosted CI): /Zi makes the parallel cl processes
+    # of a Ninja build share one compiler PDB and fail with C1041, and CI ships
+    # no PDBs anyway. Local builds keep the default ON and still get /Zi.
+    add_compile_options(-bigobj -Zm520)
+    if (SLIC3R_MSVC_PDB)
+        add_compile_options(/Zi)
+    endif ()
     # Disable STL4007: Many result_type typedefs and all argument_type, first_argument_type, and second_argument_type typedefs are deprecated in C++17.
     #FIXME Remove this line after eigen library adapts to the new C++17 adaptor rules.
     add_compile_options(-D_SILENCE_CXX17_ADAPTOR_TYPEDEFS_DEPRECATION_WARNING)
