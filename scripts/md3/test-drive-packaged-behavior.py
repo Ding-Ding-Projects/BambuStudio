@@ -4,6 +4,7 @@ import importlib.util
 import hashlib
 import json
 import os
+import subprocess
 import tempfile
 import unittest
 import zipfile
@@ -20,6 +21,13 @@ spec.loader.exec_module(drive)
 
 
 class BehaviorDriveChecks(unittest.TestCase):
+    def test_verifier_identity_must_match_checked_out_driver(self):
+        with patch.object(drive.subprocess, "run", return_value=subprocess.CompletedProcess(
+                args=[], returncode=0, stdout="a" * 40 + "\n")):
+            drive.validate_verifier("a" * 40)
+            with self.assertRaisesRegex(ValueError, "differs"):
+                drive.validate_verifier("b" * 40)
+
     def test_relaunch_requires_profile_lineage_desktop_and_creation(self):
         with tempfile.TemporaryDirectory() as temp:
             exe = str(Path(temp) / "bambu-studio.exe")

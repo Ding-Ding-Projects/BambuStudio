@@ -14,6 +14,7 @@ import json
 import os
 import re
 import shutil
+import subprocess
 import sys
 import tempfile
 import time
@@ -148,6 +149,14 @@ def validate_installation(receipt: dict, exe: Path, source: str, tag: str) -> No
     expected_path = Path(os.environ["LOCALAPPDATA"]) / "BambuStudioMD3" / ("app-" + version) / "bambu-studio.exe"
     if exe.resolve() != expected_path.resolve():
         raise ValueError("Executable is not inside this runner's isolated Squirrel installation")
+
+
+def validate_verifier(commit: str) -> None:
+    checkout = Path(__file__).resolve().parents[2]
+    result = subprocess.run(["git", "rev-parse", "HEAD"], cwd=checkout,
+                            capture_output=True, text=True, timeout=15, check=False)
+    if result.returncode or result.stdout.strip().lower() != commit:
+        raise ValueError("Verification commit differs from the checked-out driver source")
 
 
 def visible_labels(records: list[dict]) -> list[str]:
@@ -640,6 +649,7 @@ def main() -> int:
         ap.error("output directory already exists; this drive never overwrites prior evidence")
     receipt = json.loads(args.install_receipt.read_text(encoding="utf-8-sig"))
     validate_installation(receipt, args.exe, source, args.release_tag)
+    validate_verifier(verifier)
     runner_temp = os.environ.get("RUNNER_TEMP")
     if not runner_temp or not args.output.resolve().is_relative_to(Path(runner_temp).resolve()):
         ap.error("output must be a new child of the disposable runner's temporary directory")
