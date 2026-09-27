@@ -13,6 +13,7 @@ import hashlib
 import json
 import os
 import re
+import shutil
 import sys
 import tempfile
 import time
@@ -108,6 +109,27 @@ def sha256(path: Path) -> str:
         for block in iter(lambda: stream.read(1024 * 1024), b""):
             digest.update(block)
     return digest.hexdigest()
+
+
+def preserve_logs(datadir: Path, output: Path) -> list[dict]:
+    """Copy only bounded original app logs into the restricted output inventory."""
+    log_dir = datadir / "log"
+    if not log_dir.is_dir():
+        return []
+    records = []
+    destination = output / "restricted-logs"
+    for source in sorted(log_dir.glob("*.log"))[:8]:
+        if (not re.fullmatch(r"[A-Za-z0-9_.-]{1,100}", source.name)
+                or source.is_symlink() or not source.is_file()
+                or source.stat().st_size > 10_000_000):
+            continue
+        destination.mkdir(exist_ok=True)
+        target = destination / source.name
+        shutil.copyfile(source, target)
+        records.append({"file": target.name,
+                        "sha256": sha256(target), "bytes": target.stat().st_size,
+                        "privacy": "restricted original log; do not print or publish"})
+    return records
 
 
 def validate_installation(receipt: dict, exe: Path, source: str, tag: str) -> None:
@@ -667,11 +689,18 @@ def main() -> int:
             app.stop()
         except Exception as exc:
             cleanup_error = f"{type(exc).__name__}: {exc}"
+    try:
+        logs = preserve_logs(datadir, args.output)
+    except Exception as exc:
+        logs = []
+        drive.rows.append({"name": "restricted-log-preservation", "status": "blocked",
+                           "reason": f"{type(exc).__name__}: {exc}"})
     failed_rows = [r["name"] for r in drive.rows if r["status"] in ("blocked", "unverified")]
     verdict = "blocked" if cleanup_error or failed_rows else ("diagnostic_only" if args.scope == "diagnostic" else "pending_visual_review")
     report = {"schema": 2, **drive.identity, "scope": args.scope,
               "package_version": receipt["package_version"], "runner": "github-hosted-windows",
-              "rows": drive.rows, "images": drive.images, "failed_rows": failed_rows,
+              "rows": drive.rows, "images": drive.images, "restricted_logs": logs,
+              "failed_rows": failed_rows,
               "privacy": "restricted; inspect pixels and metadata before publication",
               "cleanup": "verified" if cleanup_error is None else "failed: " + cleanup_error,
               "verdict": verdict}
