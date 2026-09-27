@@ -43,6 +43,20 @@ find_package(libnoise REQUIRED)
 
 add_subdirectory(libslic3r)
 
+# Evaluate user-authored regular expressions in a separately terminable process.
+if (SLIC3R_GUI OR SLIC3R_BUILD_TESTS)
+    add_executable(BambuStudio_regex_worker
+        slic3r/GUI/Widgets/BoundedRegexWorkerMain.cpp
+        slic3r/GUI/Widgets/BoundedRegex.hpp
+        slic3r/GUI/Widgets/BoundedRegexProtocol.hpp
+    )
+    target_include_directories(BambuStudio_regex_worker PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+    target_compile_features(BambuStudio_regex_worker PRIVATE cxx_std_17)
+    target_compile_definitions(BambuStudio_regex_worker PRIVATE BOOST_REGEX_MAX_STATE_COUNT=1000000)
+    target_link_libraries(BambuStudio_regex_worker PRIVATE Boost::regex)
+    set_target_properties(BambuStudio_regex_worker PROPERTIES OUTPUT_NAME "bambu-regex-worker")
+endif ()
+
 if (SLIC3R_GUI)
     add_subdirectory(imgui)
     add_subdirectory(imguizmo)
@@ -172,6 +186,9 @@ endif ()
 if (SLIC3R_GUI)
 #    target_link_libraries(BambuStudio ws2_32 uxtheme setupapi libslic3r_gui ${wxWidgets_LIBRARIES})
 target_link_libraries(BambuStudio libslic3r_gui)
+    if (TARGET BambuStudio_regex_worker)
+        add_dependencies(BambuStudio BambuStudio_regex_worker)
+    endif ()
     if (MSVC)
         # Generate debug symbols even in release mode.
         target_link_options(BambuStudio PUBLIC "$<$<CONFIG:RELEASE>:/DEBUG>")
@@ -336,6 +353,9 @@ message(STATUS "libslic3r-CMAKE_BUILD_TYPE: ${build_type}")
 message(STATUS "CMAKE_CURRENT_BINARY_DIR: ${CMAKE_CURRENT_BINARY_DIR}")
 if (WIN32)
     install(TARGETS BambuStudio RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}")
+    if (TARGET BambuStudio_regex_worker)
+        install(TARGETS BambuStudio_regex_worker RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}")
+    endif ()
     if (MSVC)
         install(TARGETS BambuStudio_app_gui RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}")
     endif ()

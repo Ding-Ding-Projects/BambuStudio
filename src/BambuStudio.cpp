@@ -75,7 +75,7 @@ using namespace nlohmann;
 //BBS: add exception handler for win32
 #include <wx/stdpaths.h>
 #ifdef WIN32
-//#include "BaseException.h"
+#include "BaseException.h"
 #endif
 #include "slic3r/GUI/PartPlate.hpp"
 #include "slic3r/GUI/BitmapCache.hpp"
@@ -8799,12 +8799,9 @@ extern "C" {
             argv_ptrs[i] = argv_narrow[i].data();
 
 //BBS: register default exception handler
-#if BBL_RELEASE_TO_PUBLIC
-        //SET_DEFULTER_HANDLER();
-#else
-        //AddVectoredExceptionHandler(1, CBaseException::UnhandledExceptionFilter);
-        //SET_DEFULTER_HANDLER();
-#endif
+        // Record a crash stack before the process exits. The handler does not
+        // change exception disposition or replace the operating system report.
+        SET_DEFULTER_HANDLER();
         std::set_new_handler(bbl_out_of_memory_handler);
         // Call the UTF8 main.
         return CLI().run(argc, argv_ptrs.data());

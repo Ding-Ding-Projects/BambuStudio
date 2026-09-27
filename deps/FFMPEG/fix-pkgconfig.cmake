@@ -1,0 +1,13 @@
+if (NOT DEFINED PC_DIR OR NOT DEFINED PREFIX)
+    message(FATAL_ERROR "PC_DIR and PREFIX are required")
+endif()
+
+file(TO_CMAKE_PATH "${PREFIX}" _prefix)
+file(GLOB _pkgconfig_files "${PC_DIR}/*.pc")
+foreach (_pkgconfig_file IN LISTS _pkgconfig_files)
+    file(READ "${_pkgconfig_file}" _content)
+    string(REPLACE "prefix=./dist" "prefix=${_prefix}" _content "${_content}")
+    string(REPLACE "libdir=./dist/lib" "libdir=${_prefix}/lib" _content "${_content}")
+    string(REPLACE "includedir=./dist/include" "includedir=${_prefix}/include" _content "${_content}")
+    file(WRITE "${_pkgconfig_file}" "${_content}")
+endforeach()

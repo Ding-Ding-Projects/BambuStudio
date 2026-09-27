@@ -3,6 +3,34 @@ project(libslic3r)
 
 include(PrecompiledHeader)
 
+add_library(libslic3r_project_history STATIC
+    ProjectHistoryManager.cpp
+    ProjectHistoryManager.hpp
+)
+target_include_directories(libslic3r_project_history PUBLIC ${PROJECT_SOURCE_DIR}/src)
+target_link_libraries(libslic3r_project_history PRIVATE
+    libgit2::libgit2package miniz OpenSSL::Crypto Threads::Threads)
+if (WIN32)
+    target_link_libraries(libslic3r_project_history PRIVATE crypt32)
+endif ()
+encoding_check(libslic3r_project_history)
+
+add_library(libslic3r_workspace STATIC
+    WorkspaceBundle.cpp WorkspaceBundle.hpp
+    WorkspacePlanner.cpp WorkspacePlanner.hpp
+)
+target_include_directories(libslic3r_workspace PUBLIC ${PROJECT_SOURCE_DIR}/src)
+target_link_libraries(libslic3r_workspace PRIVATE
+    libslic3r_project_history miniz OpenSSL::Crypto)
+if (WIN32)
+    target_link_libraries(libslic3r_workspace PRIVATE crypt32 ws2_32 icu.lib)
+endif ()
+encoding_check(libslic3r_workspace)
+
+add_library(libslic3r_changelog STATIC Changelog.cpp Changelog.hpp)
+target_include_directories(libslic3r_changelog PUBLIC ${PROJECT_SOURCE_DIR}/src)
+encoding_check(libslic3r_changelog)
+
 string(TIMESTAMP COMPILE_TIME %Y%m%d-%H%M%S)
 set(SLIC3R_BUILD_TIME ${COMPILE_TIME})
 
@@ -517,10 +545,18 @@ if (APPLE)
         )
 endif ()
 
-add_library(libslic3r STATIC ${lisbslic3r_sources}
+set(libslic3r_runtime_sources
+    ${CMAKE_CURRENT_SOURCE_DIR}/../slic3r/Utils/BBLUtil.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../slic3r/Utils/BBLUtil.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../slic3r/Utils/Http.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../slic3r/Utils/Http.hpp
+)
+
+add_library(libslic3r STATIC ${lisbslic3r_sources} ${libslic3r_runtime_sources}
     "${CMAKE_CURRENT_BINARY_DIR}/libslic3r_version.h"
     ${OpenVDBUtils_SOURCES})
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${lisbslic3r_sources})
+source_group("Runtime" FILES ${libslic3r_runtime_sources})
 
 if (SLIC3R_STATIC)
     set(CGAL_Boost_USE_STATIC_LIBS ON CACHE BOOL "" FORCE)
@@ -686,6 +722,8 @@ set(OCCT_LIBS
 
 
 target_link_libraries(libslic3r
+    libslic3r_project_history
+    libslic3r_changelog
     noise::noise
     libnest2d
     admesh
@@ -711,6 +749,9 @@ target_link_libraries(libslic3r
     opencv_world
     ${_cgal_tgt}
     assimp::assimp
+    libcurl
+    OpenSSL::SSL
+    OpenSSL::Crypto
     )
 
 if(NOT WIN32)
@@ -732,7 +773,7 @@ if (TARGET OpenVDB::openvdb)
 endif()
 
 if(WIN32)
-    target_link_libraries(libslic3r Psapi.lib)
+    target_link_libraries(libslic3r Psapi.lib bcrypt.lib)
 endif()
 
 if(SLIC3R_PROFILE)

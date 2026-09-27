@@ -637,14 +637,10 @@ set(SLIC3R_GUI_SOURCES
     Utils/WxFontUtils.hpp
     Utils/EmbossStyleManager.cpp
     Utils/EmbossStyleManager.hpp
-    Utils/Http.cpp
-    Utils/Http.hpp
     Utils/FixModelByWin10.cpp
     Utils/FixModelByWin10.hpp
     Utils/Bonjour.cpp
     Utils/Bonjour.hpp
-    Utils/BBLUtil.hpp
-    Utils/BBLUtil.cpp
     Utils/FileHelp.cpp
     Utils/FileHelp.hpp
     Utils/PresetUpdater.cpp
@@ -764,6 +760,136 @@ if (UNIX AND NOT APPLE)
     )
 endif ()
 
+# Keep the official platform-specific source lists above intact. Add the
+# reintroduced native feature components as a separate source group.
+list(APPEND SLIC3R_GUI_SOURCES
+    GUI/Widgets/LabeledCheckBox.cpp
+    GUI/Widgets/LabeledCheckBox.hpp
+    GUI/Widgets/LabeledRadioButton.cpp
+    GUI/Widgets/LabeledRadioButton.hpp
+    GUI/Widgets/TextArea.cpp
+    GUI/Widgets/TextArea.hpp
+    GUI/Widgets/ListBox.cpp
+    GUI/Widgets/ListBox.hpp
+    GUI/Widgets/MD3MenuModel.hpp
+    GUI/Widgets/MD3Menu.cpp
+    GUI/Widgets/MD3Menu.hpp
+    GUI/Appearance/ElementStyle.cpp
+    GUI/Appearance/ElementStyle.hpp
+    GUI/Appearance/AppearanceEditorPopover.cpp
+    GUI/Appearance/AppearanceEditorPopover.hpp
+    GUI/Widgets/MaterialIcon.cpp
+    GUI/Widgets/MaterialIcon.hpp
+    GUI/Widgets/MD3Dialog.cpp
+    GUI/Widgets/MD3Dialog.hpp
+    GUI/Widgets/CameraHUD.cpp
+    GUI/Widgets/CameraHUD.hpp
+    GUI/Widgets/BoundedRegex.cpp
+    GUI/Widgets/BoundedRegex.hpp
+    GUI/Widgets/BoundedRegexProtocol.hpp
+    GUI/Widgets/RegexBuilderBridgeState.hpp
+    GUI/Widgets/SearchField.cpp
+    GUI/Widgets/SearchField.hpp
+    GUI/Widgets/TabStripModel.hpp
+    GUI/Widgets/TabStrip.cpp
+    GUI/Widgets/TabStrip.hpp
+    GUI/Widgets/TabStripDialogs.cpp
+    GUI/Widgets/TabStripDialogs.hpp
+    GUI/Widgets/SlideToConfirm.cpp
+    GUI/Widgets/SlideToConfirm.hpp
+    GUI/Widgets/SuperConfirmGate.cpp
+    GUI/Widgets/SuperConfirmGate.hpp
+    GUI/Widgets/SuperConfirmState.hpp
+    GUI/Widgets/MD3ColorPicker.cpp
+    GUI/Widgets/MD3ColorPicker.hpp
+    GUI/Widgets/MD3Motion.cpp
+    GUI/Widgets/MD3Motion.hpp
+    GUI/Widgets/MD3DialogChrome.cpp
+    GUI/Widgets/MD3DialogChrome.hpp
+    GUI/Widgets/RegexBuilderPopup.cpp
+    GUI/Widgets/RegexBuilderPopup.hpp
+    GUI/Widgets/Slider.cpp
+    GUI/Widgets/Slider.hpp
+    GUI/BulkFilamentDialog.cpp
+    GUI/BulkFilamentDialog.hpp
+    GUI/WorkspacePanel.cpp
+    GUI/WorkspacePanel.hpp
+    GUI/Gizmos/GLIconGlyphBridge.cpp
+    GUI/Gizmos/GLIconGlyphBridge.hpp
+    GUI/ModelCreator/SceneSpec.cpp
+    GUI/ModelCreator/SceneSpec.hpp
+    GUI/ModelCreator/ModelCreatorBackend.cpp
+    GUI/ModelCreator/ModelCreatorBackend.hpp
+    GUI/ModelCreator/ProcessRunner.cpp
+    GUI/ModelCreator/ProcessRunner.hpp
+    GUI/ModelCreator/ModelCreatorDialog.cpp
+    GUI/ModelCreator/ModelCreatorDialog.hpp
+    GUI/LayoutProbe.cpp
+    GUI/LayoutProbe.hpp
+    GUI/LanguageMode.cpp
+    GUI/LanguageMode.hpp
+    GUI/AppDisplayName.cpp
+    GUI/AppDisplayName.hpp
+    GUI/ProjectHistoryDialog.cpp
+    GUI/ProjectHistoryDialog.hpp
+    GUI/ChangelogDialog.cpp
+    GUI/ChangelogDialog.hpp
+    GUI/ConfigProfilesDialog.cpp
+    GUI/ConfigProfilesDialog.hpp
+    GUI/CommandPalette.cpp
+    GUI/CommandPalette.hpp
+    GUI/CommandPaletteIndex.cpp
+    GUI/CommandPaletteIndex.hpp
+    GUI/Export/ExportFormats.hpp
+    GUI/Export/ExportEverything.cpp
+    GUI/Export/ExportEverything.hpp
+    GUI/Export/ExportDatasets.cpp
+    GUI/Export/ExportDatasets.hpp
+    GUI/Export/ExportDialog.cpp
+    GUI/Export/ExportDialog.hpp
+    GUI/StopPrintGate.cpp
+    GUI/StopPrintGate.hpp
+    GUI/PreferencesHistory.cpp
+    GUI/PreferencesHistory.hpp
+    GUI/PrinterWatch.cpp
+    GUI/PrinterWatch.hpp
+    GUI/DimSumSurprise.cpp
+    GUI/DimSumSurprise.hpp
+    GUI/DimSumSurpriseModel.hpp
+    GUI/FilamentScanner.cpp
+    GUI/FilamentScanner.hpp
+    GUI/TtsNarrator.cpp
+    GUI/TtsNarrator.hpp
+    GUI/HomeAssistant.cpp
+    GUI/HomeAssistant.hpp
+    GUI/HomeAssistantTaskExecutor.hpp
+    GUI/HomeAssistantTransportPolicy.cpp
+    GUI/HomeAssistantTransportPolicy.hpp
+    GUI/HomeAssistantSharingService.cpp
+    GUI/HomeAssistantSharingService.hpp
+    GUI/SmartHomeDialog.cpp
+    GUI/SmartHomeDialog.hpp
+    GUI/third_party/qrcodegen.cpp
+    GUI/third_party/qrcodegen.hpp
+    GUI/ModelPreviewDialog.hpp
+    GUI/ModelPreviewDialog.cpp
+    GUI/ProjectTabBar.cpp
+    GUI/ProjectTabBar.hpp
+    GUI/NotificationHistory.cpp
+    GUI/NotificationHistory.hpp
+    GUI/NotificationCenterPanel.cpp
+    GUI/NotificationCenterPanel.hpp
+    Utils/ExternalEditor.cpp
+    Utils/ExternalEditor.hpp
+)
+
+if (WIN32)
+    list(APPEND SLIC3R_GUI_SOURCES
+        GUI/WindowsNativeVisualSmoke.cpp
+        GUI/WindowsNativeVisualSmoke.hpp
+    )
+endif ()
+
 add_library(libslic3r_gui STATIC ${SLIC3R_GUI_SOURCES})
 
 if (TARGET device_page_build)
@@ -804,10 +930,11 @@ endif ()
 target_link_libraries(libslic3r_gui libslic3r cereal imgui imguizmo minilzo GLEW::GLEW OpenGL::GL hidapi
     ${HPDF_LIBRARY}
     ${wxWidgets_LIBRARIES} glfw libcurl OpenSSL::SSL OpenSSL::Crypto)
+target_link_libraries(libslic3r_gui libslic3r_workspace)
 #target_link_libraries(libslic3r_gui libslic3r cereal imgui imguizmo minilzo GLEW::GLEW OpenGL::GL hidapi libcurl OpenSSL::SSL OpenSSL::Crypto ${wxWidgets_LIBRARIES} glfw)
 
 if (MSVC)
-    target_link_libraries(libslic3r_gui Setupapi.lib dwmapi.lib)
+    target_link_libraries(libslic3r_gui Setupapi.lib dwmapi.lib Advapi32.lib)
 elseif (CMAKE_SYSTEM_NAME STREQUAL "Linux")
     FIND_LIBRARY(WAYLAND_SERVER_LIBRARIES NAMES wayland-server)
     FIND_LIBRARY(WAYLAND_EGL_LIBRARIES    NAMES wayland-egl)
