@@ -173,19 +173,36 @@ ModelCreatorDialog::ModelCreatorDialog(wxWindow *parent, AddToPlate add_to_plate
         control->Bind(wxEVT_TEXT, [this](wxCommandEvent &) { update_controls(); });
     SetMinSize(wxSize(650, 720));
     SetSize(wxSize(720, 780));
-    try {
-        m_revisions = load_revisions(local_workspace());
-        for (size_t i = 0; i < m_revisions.size(); ++i)
-            m_history->Append(wxString::Format(_L("Revision %zu: "), i + 1) +
-                              wxString::FromUTF8(m_revisions[i].scene.title));
-        if (!m_revisions.empty()) {
-            m_history->SetSelection(static_cast<int>(m_revisions.size() - 1));
-            m_status->SetValue(_L("A retained revision is ready for preview."));
-        }
-    } catch (const std::exception &) {
-        m_status->SetValue(_L("Saved revisions could not be read."));
-    }
+    m_loading_history = true;
+    m_status->SetValue(_L("Loading ..."));
     update_controls();
+    m_history_worker = std::thread([this, alive = m_alive, workspace = local_workspace()] {
+        std::vector<Revision> revisions;
+        bool loaded = false;
+        try {
+            revisions = load_revisions(workspace);
+            loaded = true;
+        } catch (const std::exception &) {
+        }
+        if (!alive->load()) return;
+        wxTheApp->CallAfter([this, alive, revisions = std::move(revisions), loaded]() mutable {
+            if (!alive->load()) return;
+            m_loading_history = false;
+            if (loaded) {
+                m_revisions = std::move(revisions);
+                for (size_t i = 0; i < m_revisions.size(); ++i)
+                    m_history->Append(wxString::Format(_L("Revision %zu: "), i + 1) +
+                                      wxString::FromUTF8(m_revisions[i].scene.title));
+                if (!m_revisions.empty())
+                    m_history->SetSelection(static_cast<int>(m_revisions.size() - 1));
+                m_status->SetValue(m_revisions.empty() ? _L("No model generated") :
+                                   _L("A retained revision is ready for preview."));
+            } else {
+                m_status->SetValue(_L("Saved revisions could not be read."));
+            }
+            update_controls();
+        });
+    });
 }
 
 ModelCreatorDialog::~ModelCreatorDialog()
@@ -193,6 +210,7 @@ ModelCreatorDialog::~ModelCreatorDialog()
     save_preferences();
     m_alive->store(false);
     cancel_generation();
+    if (m_history_worker.joinable()) m_history_worker.join();
     if (m_worker.joinable()) m_worker.join();
 }
 
@@ -216,11 +234,11 @@ void ModelCreatorDialog::update_controls()
     m_provider_path->Enable(!api && !m_busy);
     m_key->Enable(api && !m_busy);
     m_test_key->Enable(api && !m_busy && provider_ready);
-    m_generate->Enable(!m_busy && provider_ready && renderer_ready && !m_model->IsEmpty());
+    m_generate->Enable(!m_busy && !m_loading_history && provider_ready && renderer_ready && !m_model->IsEmpty());
     m_cancel_button->Enable(m_busy);
     const bool selected = m_history->GetSelection() != wxNOT_FOUND;
-    m_preview->Enable(selected && !m_busy);
-    m_add->Enable(selected && !m_busy);
+    m_preview->Enable(selected && !m_busy && !m_loading_history);
+    m_add->Enable(selected && !m_busy && !m_loading_history);
 }
 
 void ModelCreatorDialog::save_key()

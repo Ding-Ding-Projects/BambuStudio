@@ -37,8 +37,10 @@ private:
     std::shared_ptr<std::atomic_bool> m_cancel;
     std::shared_ptr<std::atomic_bool> m_alive;
     std::thread m_worker;
+    std::thread m_history_worker;
     std::vector<Revision> m_revisions;
     bool m_busy = false;
+    bool m_loading_history = false;
     wxChoice *m_provider = nullptr;
     wxChoice *m_renderer = nullptr;
     wxChoice *m_history = nullptr;
