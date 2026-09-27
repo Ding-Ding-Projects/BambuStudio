@@ -19896,7 +19896,17 @@ void Plater::priv::set_project_filename(const wxString& filename)
 
     wxGetApp().mainframe->update_title();
 
-    if (!m_project_folder.empty() && !q->m_only_gcode)
+    // A tab snapshot is an internal rollback file, not a user project. The
+    // loader calls this method before MainFrame restores the real filename.
+    const boost::filesystem::path requested_path = into_path(filename);
+    const boost::filesystem::path snapshot_dir = boost::filesystem::path(data_dir()) / "cache" / "project_tabs";
+    boost::system::error_code snapshot_error;
+    const bool private_tab_snapshot =
+        requested_path.extension() == ".3mf" &&
+        boost::algorithm::starts_with(requested_path.filename().string(), "tab_") &&
+        boost::filesystem::equivalent(requested_path.parent_path(), snapshot_dir, snapshot_error) &&
+        !snapshot_error;
+    if (!m_project_folder.empty() && !q->m_only_gcode && !private_tab_snapshot)
         wxGetApp().mainframe->add_to_recent_projects(filename);
 }
 
