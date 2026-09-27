@@ -224,6 +224,7 @@ if(WIN32)
             configure_file(
                 "${CMAKE_SOURCE_DIR}/scripts/hooks/pre-commit"
                 "${CMAKE_SOURCE_DIR}/.git/hooks/pre-commit"
+                 COPYONLY
             )
        else()
            message(STATUS "skip pre-commit git hook")
