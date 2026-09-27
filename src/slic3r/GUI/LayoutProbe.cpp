@@ -5,6 +5,7 @@
 #include "BBLTopbar.hpp"
 #include "GLCanvas3D.hpp"
 #include "Plater.hpp"
+#include "PartPlate.hpp"
 #include "NotificationManager.hpp"
 #include "CommandPalette.hpp"
 #include "ConfigWizard.hpp"
@@ -16,6 +17,7 @@
 #include "Widgets/MD3Tokens.hpp"
 #include "Widgets/StateColor.hpp"
 #include "libslic3r/AppConfig.hpp"
+#include "libslic3r/Model.hpp"
 #include "libslic3r/Utils.hpp"
 
 #include <boost/filesystem.hpp>
@@ -90,6 +92,119 @@ std::string json(const std::string &s)
 }
 
 std::string json(const wxString &s) { return json(std::string(s.ToUTF8().data())); }
+
+// Limit user-authored fields without splitting a UTF-8 code point. The probe
+// is a local diagnostic file, but it must remain bounded on a large project.
+std::string bounded_utf8(const std::string &value, size_t max_bytes)
+{
+    if (value.size() <= max_bytes) return value;
+    size_t end = max_bytes;
+    while (end > 0 && (static_cast<unsigned char>(value[end]) & 0xc0) == 0x80)
+        --end;
+    return value.substr(0, end);
+}
+
+bool valid_utf8(const std::string &value)
+{
+    for (size_t i = 0; i < value.size();) {
+        const unsigned char lead = static_cast<unsigned char>(value[i]);
+        if (lead < 0x80) { ++i; continue; }
+        const size_t length = lead >= 0xc2 && lead <= 0xdf ? 2
+            : lead >= 0xe0 && lead <= 0xef ? 3
+            : lead >= 0xf0 && lead <= 0xf4 ? 4 : 0;
+        if (length == 0 || i + length > value.size()) return false;
+        for (size_t j = 1; j < length; ++j)
+            if ((static_cast<unsigned char>(value[i + j]) & 0xc0) != 0x80) return false;
+        const unsigned char second = static_cast<unsigned char>(value[i + 1]);
+        if ((lead == 0xe0 && second < 0xa0) || (lead == 0xed && second >= 0xa0) ||
+            (lead == 0xf0 && second < 0x90) || (lead == 0xf4 && second >= 0x90))
+            return false;
+        i += length;
+    }
+    return true;
+}
+
+void write_model_state(boost::nowide::ofstream &out, Plater *plater)
+{
+    if (!plater) {
+        MainFrame *frame = wxGetApp().mainframe;
+        out << "{\"kind\":\"model_state\",\"model_available\":false"
+            << ",\"plater_hwnd\":null"
+            << ",\"mainframe_hwnd\":" << (frame ? std::to_string(handle_of(frame)) : "null")
+            << ",\"object_count\":null,\"object_records\":0,\"objects_truncated\":false"
+            << ",\"active_plate_available\":false,\"active_plate_index\":null,\"active_plate_id\":null"
+            << ",\"active_plate_instance_count\":null,\"active_plate_printable_instance_count\":null"
+            << ",\"project_path_available\":false,\"project_path\":null,\"project_path_truncated\":false"
+            << ",\"project_name_available\":false,\"project_name\":null,\"project_name_truncated\":false}"
+            << "\n";
+        return;
+    }
+    constexpr size_t max_object_records = 64;
+    constexpr size_t max_name_bytes = 160;
+    constexpr size_t max_path_bytes = 1024;
+
+    const Model &model = plater->model();
+    PartPlateList &plates = plater->get_partplate_list();
+    const int plate_count = plates.get_plate_count();
+    const int active_index = plates.get_curr_plate_index();
+    PartPlate *active_plate = active_index >= 0 && active_index < plate_count
+        ? plates.get_curr_plate() : nullptr;
+    size_t active_instances = 0;
+    size_t printable_instances = 0;
+    if (active_plate) {
+        const auto &outside = active_plate->get_obj_and_inst_outside_set();
+        for (const auto &entry : active_plate->get_obj_and_inst_set()) {
+            const size_t object_index = static_cast<size_t>(entry.first);
+            const size_t instance_index = static_cast<size_t>(entry.second);
+            if (entry.first < 0 || entry.second < 0 || object_index >= model.objects.size()) continue;
+            const ModelObject *object = model.objects[object_index];
+            if (!object || instance_index >= object->instances.size()) continue;
+            const ModelInstance *instance = object->instances[instance_index];
+            if (!instance) continue;
+            ++active_instances;
+            if (instance->is_printable() && outside.find(entry) == outside.end())
+                ++printable_instances;
+        }
+    }
+
+    const auto path_utf8 = plater->get_project_filename(".3mf").ToUTF8();
+    const auto name_utf8 = plater->get_project_name().ToUTF8();
+    const std::string full_path = path_utf8.data() ? path_utf8.data() : "";
+    const std::string name = name_utf8.data() ? name_utf8.data() : "";
+    const size_t emitted = std::min(model.objects.size(), max_object_records);
+    MainFrame *frame = wxGetApp().mainframe;
+    out << "{\"kind\":\"model_state\",\"model_available\":true"
+        << ",\"plater_hwnd\":" << handle_of(plater)
+        << ",\"mainframe_hwnd\":" << (frame ? std::to_string(handle_of(frame)) : "null")
+        << ",\"object_count\":" << model.objects.size()
+        << ",\"object_records\":" << emitted
+        << ",\"objects_truncated\":" << (model.objects.size() > emitted ? "true" : "false")
+        << ",\"active_plate_available\":" << (active_plate ? "true" : "false")
+        << ",\"active_plate_index\":" << (active_plate ? std::to_string(active_index) : "null")
+        << ",\"active_plate_id\":" << (active_plate ? std::to_string(active_plate->get_index()) : "null")
+        << ",\"active_plate_instance_count\":" << (active_plate ? std::to_string(active_instances) : "null")
+        << ",\"active_plate_printable_instance_count\":" << (active_plate ? std::to_string(printable_instances) : "null")
+        << ",\"project_path_available\":" << (!full_path.empty() ? "true" : "false")
+        << ",\"project_path\":" << (full_path.empty() ? "null" : json(bounded_utf8(full_path, max_path_bytes)))
+        << ",\"project_path_truncated\":" << (full_path.size() > max_path_bytes ? "true" : "false")
+        << ",\"project_name_available\":" << (!name.empty() ? "true" : "false")
+        << ",\"project_name\":" << (name.empty() ? "null" : json(bounded_utf8(name, max_name_bytes)))
+        << ",\"project_name_truncated\":" << (name.size() > max_name_bytes ? "true" : "false")
+        << "}\n";
+    for (size_t index = 0; index < emitted; ++index) {
+        const ModelObject *object = model.objects[index];
+        const std::string object_name = object ? object->name : std::string();
+        const bool name_valid_utf8 = object && valid_utf8(object_name);
+        out << "{\"kind\":\"model_object\",\"index\":" << index
+            << ",\"object_available\":" << (object ? "true" : "false")
+            << ",\"name_available\":" << (name_valid_utf8 ? "true" : "false")
+            << ",\"name_valid_utf8\":" << (object ? (name_valid_utf8 ? "true" : "false") : "null")
+            << ",\"name\":" << (name_valid_utf8 ? json(bounded_utf8(object_name, max_name_bytes)) : "null")
+            << ",\"name_truncated\":" << (name_valid_utf8 && object_name.size() > max_name_bytes ? "true" : "false")
+            << ",\"instance_count\":" << (object ? std::to_string(object->instances.size()) : "null")
+            << "}\n";
+    }
+}
 
 std::string rect_json(const wxRect &r)
 {
@@ -356,7 +471,8 @@ std::string dump(const std::string &reason, const std::string &out_path)
     }
     // The scene toolbar and gizmo rail are ImGui / GL, not wx windows: emit
     // their items from the canvas so a capture can be cropped to them too.
-    if (Plater *plater = wxGetApp().plater()) {
+    Plater *plater = wxGetApp().plater();
+    if (plater) {
         if (GLCanvas3D *canvas = plater->get_view3D_canvas3D()) {
             wxWindow     *host   = canvas->get_wxglcanvas();
             const wxPoint origin = host ? host->GetScreenPosition() : wxPoint(0, 0);
@@ -370,6 +486,9 @@ std::string dump(const std::string &reason, const std::string &out_path)
             }
         }
     }
+    // Geometry is not a wx child label. Report actual model state only in
+    // this off-by-default, locally owned probe file.
+    write_model_state(out, plater);
     // Readers poll the file while it streams; the end record is the only
     // reliable completion signal (a partial file of whole lines still parses).
     out << "{\"kind\":\"end\"}\n";
