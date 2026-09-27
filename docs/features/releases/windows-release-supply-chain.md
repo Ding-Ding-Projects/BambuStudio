@@ -88,19 +88,27 @@ hidden-desktop GUI capture. `scripts/md3/Capture-HostedReleaseGui.ps1` reads the
 installation receipt, checks the release tag and source commit, and rehashes the installed
 executable against both the installed-file and full-package hashes. It bootstraps a pinned
 revision of the headless capture tool into a runner-local Python environment, creates a new
-application data directory, and attempts eleven workspace and Preferences surfaces. The
-workflow uploads only `receipt.json` as a 30-day run artifact. Once a supported hosted capture
-starts with a new output directory, its receipt records later preflight and capture failures.
-Unsupported hosts and existing output directories are rejected before any files are changed.
-Raw images remain only on the disposable runner and are not uploaded or published.
+application data directory, and attempts eleven workspace and Preferences surfaces. A task-owned
+public RSA key encrypts a ZIP of the original PNGs with a fresh AES-256-GCM key and nonce per run;
+RSA-OAEP-SHA256 wraps the AES key. The encryption binds the run ID, source commit, release tag,
+installed executable hash, and image hashes as authenticated data. The private RSA key stays
+DPAPI-protected in the release operator's local application data, outside this repository.
+The workflow uploads only the encrypted ZIP, its small envelope, and `receipt.json` as a 30-day
+run artifact. Once a supported hosted capture starts with a new output directory, its receipt
+records later preflight and capture failures. Unsupported hosts and existing output directories
+are rejected before any files are changed. Raw images stay on the disposable runner; they are
+never uploaded or published in plaintext.
 This step uses `continue-on-error`, so capture availability is not a release gate.
 
 The receipt records the source commit, release tag, installer and executable hashes, capture
 method, rendered-frame hashes, pixel metrics, and status. Its successful state is
-`capture_metrics_recorded_images_ephemeral`. It is provenance and automated pixel evidence,
-not reviewed GUI behavior. A restricted image-review route is still needed to inspect the
-actual frames for visual quality and private content before any image can be retained,
-embedded, or published. The fresh disposable profile does not import the user's local
+`encrypted_capture_pending_restricted_review`. It is provenance and automated pixel evidence,
+not reviewed GUI behavior. The operator runs `scripts/md3/Open-HostedReleaseGuiEvidence.ps1`
+with the exact run ID, source commit, release tag, and installed executable hash. That helper
+uses the local DPAPI key, checks the authenticated binding, enforces a fixed eleven-name image
+allowlist and ZIP size limits, and validates every image hash before extraction. The operator
+must inspect the decrypted pixels for visual quality and private content before any image is
+retained, embedded, or published. The fresh disposable profile does not import the user's local
 installation or data. A missing or failed capture must not be described as verified GUI behavior.
 
 Before a candidate is accepted, run the local release contract and one-click checks, build the real
