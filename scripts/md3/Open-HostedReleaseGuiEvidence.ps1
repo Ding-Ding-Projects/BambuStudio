@@ -20,8 +20,6 @@ function Assert-True {
     if (-not $Condition) { throw $Message }
 }
 
-$privatePath = Join-Path $env:LOCALAPPDATA 'BambuStudio\HostedGuiEvidence\private-key.dpapi'
-$publicPath = Join-Path $PSScriptRoot 'hosted-gui-public.pem'
 $finalPath = [System.IO.Path]::GetFullPath($OutputDirectory)
 $parentPath = [System.IO.Path]::GetDirectoryName($finalPath)
 Assert-True (-not [string]::IsNullOrWhiteSpace($parentPath) -and
@@ -52,14 +50,36 @@ foreach ($row in @($receipt, $envelope)) {
     Assert-True ($row.installed_exe_sha256 -ceq $expectedExe) 'The installed executable hash does not match.'
 }
 Assert-True ($receipt.encrypted_bundle_sha256 -ceq $envelope.ciphertext_sha256) 'The receipt and envelope name different bundles.'
-$publicRsa = [System.Security.Cryptography.RSA]::Create()
-try {
-    $publicRsa.ImportFromPem([System.IO.File]::ReadAllText($publicPath))
-    $publicKeyHash = ([Convert]::ToHexString(
-        [System.Security.Cryptography.SHA256]::HashData($publicRsa.ExportSubjectPublicKeyInfo()))).ToLowerInvariant()
+$keyId = [string]$envelope.public_key_sha256
+Assert-True ($keyId -cmatch '^[0-9a-f]{64}$') 'The public key identity is malformed.'
+if ($null -ne $envelope.PSObject.Properties['key_id']) {
+    Assert-True ($envelope.key_id -ceq $keyId) 'The envelope key ID does not match its public key identity.'
 }
-finally { $publicRsa.Dispose() }
-Assert-True ($envelope.public_key_sha256 -ceq $publicKeyHash) 'The public key identity does not match.'
+$knownKeys = @(
+    [ordered]@{ version = 1; path = (Join-Path $PSScriptRoot 'hosted-gui-public-v1.pem') },
+    [ordered]@{ version = 2; path = (Join-Path $PSScriptRoot 'hosted-gui-public-v2.pem') }
+)
+$selectedKey = $null
+foreach ($known in $knownKeys) {
+    if (-not (Test-Path -LiteralPath $known.path -PathType Leaf)) { continue }
+    $publicRsa = [System.Security.Cryptography.RSA]::Create()
+    try {
+        $publicRsa.ImportFromPem([System.IO.File]::ReadAllText($known.path))
+        $knownId = ([Convert]::ToHexString(
+            [System.Security.Cryptography.SHA256]::HashData($publicRsa.ExportSubjectPublicKeyInfo()))).ToLowerInvariant()
+    }
+    finally { $publicRsa.Dispose() }
+    if ($knownId -ceq $keyId) {
+        Assert-True ($null -eq $selectedKey) 'Two versioned public keys have the same identity.'
+        $selectedKey = $known
+    }
+}
+Assert-True ($null -ne $selectedKey) 'Unknown hosted evidence public key identity.'
+$privatePath = if ($selectedKey.version -eq 1) {
+    Join-Path $env:LOCALAPPDATA 'BambuStudio\HostedGuiEvidence\private-key.dpapi'
+} else {
+    Join-Path $env:LOCALAPPDATA ('BambuStudio\HostedGuiEvidence\keys\' + $keyId + '.dpapi')
+}
 $bundle = Get-Item -LiteralPath $BundlePath
 Assert-True ($bundle.Length -gt 0 -and $bundle.Length -le 268435456) 'The encrypted bundle exceeds the 256 MiB limit.'
 Assert-True ((Get-FileHash -LiteralPath $BundlePath -Algorithm SHA256).Hash.ToLowerInvariant() -ceq $envelope.ciphertext_sha256) 'The encrypted bundle hash does not match.'

@@ -175,3 +175,27 @@ both to be rejected before private-key access or extraction.
 It also encrypts a synthetic failed diagnostic with no image or restricted log, verifies the
 partial receipt and exact report inventory, and checks that metadata and authenticated binding
 reach the owner-key boundary without extracting plaintext on the hosted runner.
+
+## Owner key initialization and public-key versions
+
+The original `hosted-gui-public.pem` remains recorded as `hosted-gui-public-v1.pem` for historical
+envelopes. Its matching local DPAPI slot, when it exists, is the legacy
+`BambuStudio\HostedGuiEvidence\private-key.dpapi` file under the current user's local application
+data. A missing legacy private key cannot be recreated from the public PEM or an encrypted bundle.
+Those historical bundles remain unreadable unless the original protected key is recovered by its
+owner. Do not substitute a new key and claim old evidence was reviewed.
+
+After owner review, run `scripts/md3/Initialize-HostedGuiEvidenceKey.ps1 -Initialize` locally under
+the account that will review evidence. The script creates a fresh RSA key, protects its private
+PKCS#8 bytes with DPAPI CurrentUser in a distinct slot named by the public SPKI SHA-256, and writes
+only `hosted-gui-public-v2.pem` to the repository checkout. It refuses an existing public file or
+protected slot and cannot run in Actions. Never commit, upload, log, or disclose the protected key
+file or its unprotected bytes. Review and commit only the public PEM. The version 2 capture route
+fails closed until that public PEM is present in the verifier checkout.
+
+New schema 2 envelopes record `key_id` and `public_key_sha256`, both the same public SPKI SHA-256.
+The opener selects only the exact archived version 1 or approved version 2 public key by that ID,
+then locates its corresponding local protected slot. Unknown or mismatched IDs are rejected before
+private-key access; hosted fixtures cover both cases. The schema 1 reader and its legacy slot remain
+supported. A successful envelope validation still requires owner decryption and privacy review
+before any report or image is promoted.

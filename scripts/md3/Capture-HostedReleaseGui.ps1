@@ -323,7 +323,11 @@ try {
         }
     }
     $aad = [System.Text.Encoding]::UTF8.GetBytes(($bindingLines -join "`n") + "`n")
-    $publicPath = Join-Path $PSScriptRoot 'hosted-gui-public.pem'
+    $publicName = if ($legacyMode) { 'hosted-gui-public-v1.pem' } else { 'hosted-gui-public-v2.pem' }
+    $publicPath = Join-Path $PSScriptRoot $publicName
+    if (-not (Test-Path -LiteralPath $publicPath -PathType Leaf)) {
+        throw 'The selected versioned public key is unavailable in this verifier checkout.'
+    }
     $publicPem = [System.IO.File]::ReadAllText($publicPath)
     $rsa = [System.Security.Cryptography.RSA]::Create()
     $key = $null
@@ -359,6 +363,7 @@ try {
             nonce = [Convert]::ToBase64String($nonce)
             tag = [Convert]::ToBase64String($tagBytes)
         }
+        if (-not $legacyMode) { $envelope.key_id = $publicKeyHash }
         $envelope | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $OutputDirectory 'envelope.json') -Encoding utf8
         $evidence.encrypted_bundle_sha256 = $cipherHash
         $evidence.image_availability = 'encrypted_bundle_only'

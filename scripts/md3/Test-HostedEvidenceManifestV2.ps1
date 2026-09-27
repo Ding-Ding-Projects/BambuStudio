@@ -19,7 +19,7 @@ try {
     $cipherHash = (Get-FileHash -LiteralPath $bundlePath -Algorithm SHA256).Hash.ToLowerInvariant()
     $rsa = [System.Security.Cryptography.RSA]::Create()
     try {
-        $rsa.ImportFromPem([System.IO.File]::ReadAllText((Join-Path $PSScriptRoot 'hosted-gui-public.pem')))
+        $rsa.ImportFromPem([System.IO.File]::ReadAllText((Join-Path $PSScriptRoot 'hosted-gui-public-v1.pem')))
         $publicHash = ([Convert]::ToHexString([System.Security.Cryptography.SHA256]::HashData(
             $rsa.ExportSubjectPublicKeyInfo()))).ToLowerInvariant()
     }
@@ -69,6 +69,38 @@ try {
         }
         catch { $failedAsExpected = $_.Exception.Message.Contains($case.expected) }
         if (-not $failedAsExpected -or (Test-Path -LiteralPath $outputPath)) {
+            throw "Schema v2 $($case.name) fixture was not rejected before extraction."
+        }
+    }
+    $keyReceipt = [ordered]@{}
+    foreach ($key in $baseReceipt.Keys) { $keyReceipt[$key] = $baseReceipt[$key] }
+    $keyReceipt.manifest = @($validRow)
+    $keyReceiptPath = Join-Path $root 'key-receipt.json'
+    $keyReceipt | ConvertTo-Json -Depth 7 | Set-Content -LiteralPath $keyReceiptPath -Encoding utf8
+    $keyCases = @(
+        [ordered]@{ name = 'unknown-key'; publicId = ('f' * 64)
+            keyId = ('f' * 64); expected = 'Unknown hosted evidence public key identity' },
+        [ordered]@{ name = 'mismatched-key'; publicId = $publicHash
+            keyId = ('f' * 64); expected = 'envelope key ID does not match' }
+    )
+    foreach ($case in $keyCases) {
+        $keyEnvelope = [ordered]@{}
+        foreach ($key in $envelope.Keys) { $keyEnvelope[$key] = $envelope[$key] }
+        $keyEnvelope.public_key_sha256 = $case.publicId
+        $keyEnvelope.key_id = $case.keyId
+        $keyEnvelopePath = Join-Path $root ($case.name + '-envelope.json')
+        $keyEnvelope | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $keyEnvelopePath -Encoding utf8
+        $outputPath = Join-Path $root ($case.name + '-opened')
+        $rejected = $false
+        try {
+            & (Join-Path $PSScriptRoot 'Open-HostedReleaseGuiEvidence.ps1') `
+                -ReceiptPath $keyReceiptPath -EnvelopePath $keyEnvelopePath -BundlePath $bundlePath `
+                -OutputDirectory $outputPath -ExpectedRunId $runId -ExpectedCommit $source `
+                -ExpectedVerificationCommit $verifier -ExpectedTag 'md3-v9999' `
+                -ExpectedExeSha256 $exe
+        }
+        catch { $rejected = $_.Exception.Message.Contains($case.expected) }
+        if (-not $rejected -or (Test-Path -LiteralPath $outputPath)) {
             throw "Schema v2 $($case.name) fixture was not rejected before extraction."
         }
     }
