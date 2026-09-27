@@ -333,6 +333,7 @@ private:
 private:
     struct priv;
     std::unique_ptr<priv> p;
+    void apply_prepare_section(const std::string &section) const;
 
     wxBoxSizer* m_scrolled_sizer = nullptr;
     bool            m_soft_first_start {true };

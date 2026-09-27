@@ -2,6 +2,7 @@
 #include "Widgets/LinkLabel.hpp"
 #include "Widgets/ProgressBar.hpp"
 #include "Widgets/MD3Menu.hpp"
+#include "Widgets/TabStrip.hpp"
 #include "PerfTrace.hpp"
 #include <array>
 #include <boost/format/format_fwd.hpp>
@@ -814,6 +815,8 @@ struct Sidebar::priv
     wxStaticText* m_staticText_print_title;
     wxPanel* m_panel_print_content;
     wxBoxSizer *sizer_params;
+    TabStrip *m_prepare_tabs = nullptr;
+    std::string active_prepare_section = "ink";
 
     // Filament-switch status affordance between the dual-extruder columns.
     // MD3/a11y: a focusable IconButton (>=24px hit target) instead of a tiny
@@ -843,6 +846,7 @@ struct Sidebar::priv
     SearchField *     m_filament_search{nullptr};
     int m_menu_filament_id = -1;
     wxPanel*          m_filament_area_wrapper{nullptr};   // Wrapper panel for collapse/expand
+    bool              filament_expanded = true;
     wxScrolledWindow* m_physical_scroll_area{nullptr};    // Scroll area for physical filaments (max 6 rows, scrolls when exceeded)
     wxScrolledWindow* m_mixed_scroll_area{nullptr};       // Scroll area for mixed filaments (max 6 rows, scrolls when exceeded)
     wxPanel*          m_panel_filament_content{nullptr};
@@ -3414,7 +3418,8 @@ Sidebar::Sidebar(Plater *parent)
             return;
         if (p->m_purge_mode_btn->IsShown() && e.GetPosition().x > p->m_purge_mode_btn->GetPosition().x)
             return;
-        if (!p->m_filament_area_wrapper->IsShown()) {
+        p->filament_expanded = !p->filament_expanded;
+        if (p->filament_expanded) {
             p->m_filament_area_wrapper->Show();
             recalc_filament_scroll_sizes();
         } else {
@@ -3444,7 +3449,8 @@ Sidebar::Sidebar(Plater *parent)
     // header sits left of the purge/flush trailing buttons, so no button-zone
     // guard (as on the panel handler) is needed here.
     p->m_filament_header->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &e) {
-        if (!p->m_filament_area_wrapper->IsShown()) {
+        p->filament_expanded = !p->filament_expanded;
+        if (p->filament_expanded) {
             p->m_filament_area_wrapper->Show();
             recalc_filament_scroll_sizes();
         } else {
@@ -4359,12 +4365,35 @@ Sidebar::Sidebar(Plater *parent)
     // x=0 (covering the frame edge for the default left dock — no bleed-through);
     // the divider sits on the canvas-facing (right) side where the separation is
     // actually needed.
+    TabStrip::Options prepare_tabs_options;
+    prepare_tabs_options.surface_name = _L("Prepare");
+    prepare_tabs_options.strip_name = _L("Prepare sections");
+    prepare_tabs_options.default_edge = MD3::Tabs::DockEdge::Top;
+    prepare_tabs_options.allow_close = false;
+    p->m_prepare_tabs = new TabStrip(this, prepare_tabs_options);
+    p->m_prepare_tabs->AddTab("ink", _L("Ink"));
+    p->m_prepare_tabs->AddTab("process", _L("Process"));
+    p->m_prepare_tabs->AddTab("objects", _L("Objects"));
+    p->m_prepare_tabs->Activate("ink", false);
+    p->m_prepare_tabs->Bind(EVT_TABSTRIP_ACTIVATE, [this](wxCommandEvent &e) {
+        apply_prepare_section(std::string(e.GetString().ToUTF8()));
+    });
+    // The narrow sidebar always keeps these navigation tabs on its top edge.
+    p->m_prepare_tabs->Bind(EVT_TABSTRIP_DOCK_CHANGED, [this](wxCommandEvent &) {
+        if (p->m_prepare_tabs->GetDockEdge() != MD3::Tabs::DockEdge::Top)
+            p->m_prepare_tabs->SetDockEdge(MD3::Tabs::DockEdge::Top);
+    });
+
     auto *sidebar_border = new ::StaticLine(this, true);
     sidebar_border->SetLineColour(outline);
-    auto *sizer = new wxBoxSizer(wxHORIZONTAL);
-    sizer->Add(p->scrolled, 1, wxEXPAND);
-    sizer->Add(sidebar_border, 0, wxEXPAND);
-    SetSizer(sizer);
+    auto *content_row = new wxBoxSizer(wxHORIZONTAL);
+    content_row->Add(p->scrolled, 1, wxEXPAND);
+    content_row->Add(sidebar_border, 0, wxEXPAND);
+    auto *sidebar_sizer = new wxBoxSizer(wxVERTICAL);
+    sidebar_sizer->Add(p->m_prepare_tabs, 0, wxEXPAND);
+    sidebar_sizer->Add(content_row, 1, wxEXPAND);
+    SetSizer(sidebar_sizer);
+    apply_prepare_section("ink");
 
     //wxGetApp().CallAfter([this]() {
     //    p->update_right_extruder_group_color();
@@ -4377,6 +4406,54 @@ Sidebar::~Sidebar() {
         m_extruder_warning_dialog->Destroy();
         m_extruder_warning_dialog = nullptr;
     }
+}
+
+void Sidebar::apply_prepare_section(const std::string &section) const
+{
+    if (section != "ink" && section != "process" && section != "objects")
+        return;
+    p->active_prepare_section = section;
+    const bool process = section == "process";
+    const bool objects = section == "objects";
+
+    // Keep the existing controls and their state. Only their direct sidebar
+    // sizer items change visibility, so a tab switch does not rebuild presets,
+    // the settings tree, or the object model.
+    for (wxSizerItem *item : m_scrolled_sizer->GetChildren()) {
+        wxWindow *window = item->GetWindow();
+        if (item->GetSizer() == p->sizer_params ||
+            window == p->m_manip_divider || window == p->m_manip_panel) {
+            item->Show(objects);
+        } else if (window == p->m_params_top_line_1 ||
+                   window == p->m_params_top_line_2 ||
+                   (p->params_panel_ref && window == p->params_panel_ref->get_top_panel()) ||
+                   window == p->m_process_card || window == p->m_process_simple_bar ||
+                   window == p->params_panel_ref) {
+            bool visible = process;
+            if (window == p->m_process_card)
+                visible = process && !p->process_advanced;
+            else if (window == p->m_process_simple_bar ||
+                     window == p->params_panel_ref ||
+                     window == p->m_params_top_line_1 ||
+                     window == p->m_params_top_line_2 ||
+                     (p->params_panel_ref && window == p->params_panel_ref->get_top_panel()))
+                visible = process && p->process_advanced;
+            item->Show(visible);
+        } else {
+            item->Show(section == "ink" &&
+                       (window != p->m_filament_area_wrapper || p->filament_expanded));
+        }
+    }
+    if (p->params_panel_ref)
+        p->params_panel_ref->set_host_visibility_gate(process && p->process_advanced);
+    p->m_objects_header->Show(objects);
+    p->m_search_bar->Show(objects);
+    p->m_object_list->Show(objects);
+    if (objects)
+        p->refresh_manip_card();
+    p->m_prepare_tabs->Activate(section, false);
+    p->scrolled->Scroll(0, 0);
+    update_scroll_body();
 }
 
 // Read-only-live refresh of the MD3 Object-manipulation grid card. Runs on the
@@ -4400,11 +4477,12 @@ void Sidebar::priv::refresh_manip_card()
     // it away again after, so the sidebar's scarce height goes to the sections
     // that always have something to say.
     auto set_card_shown = [&](bool show) {
-        if (!m_manip_panel || m_manip_panel->IsShown() == show)
+        const bool visible = show && active_prepare_section == "objects";
+        if (!m_manip_panel || m_manip_panel->IsShown() == visible)
             return;
-        m_manip_panel->Show(show);
+        m_manip_panel->Show(visible);
         if (m_manip_divider)
-            m_manip_divider->Show(show);
+            m_manip_divider->Show(visible);
         update_sidebar_scroll_body(scrolled);
     };
 
@@ -5416,6 +5494,8 @@ void Sidebar::jump_to_option(const std::string& opt_key, Preset::Type type, cons
 {
     //const Search::Option& opt = p->searcher.get_option(opt_key, type);
     if (type == Preset::TYPE_PRINT) {
+        if (p->m_prepare_tabs)
+            apply_prepare_section("process");
         // The jump target lives in the full ParamsPanel tree; make sure the
         // MD3 compact Process card is flipped out of the way first. The flip
         // is transient — do not overwrite the user's stored sidebar mode.
@@ -5435,7 +5515,8 @@ bool Sidebar::is_process_advanced() const { return p->process_advanced; }
 void Sidebar::show_process_advanced(bool advanced, bool persist)
 {
     if (!p->m_process_card || !p->params_panel_ref) return;
-    if (p->process_advanced == advanced && p->params_panel_ref->IsShown() == advanced)
+    if (p->process_advanced == advanced && p->active_prepare_section == "process" &&
+        p->params_panel_ref->IsShown() == advanced)
         return; // already in the requested state
     p->process_advanced = advanced;
     p->m_process_card->Show(!advanced);
@@ -5465,6 +5546,8 @@ void Sidebar::show_process_advanced(bool advanced, bool persist)
         plater->request_sidebar_width(advanced ? FromDIP(ADVANCED_SIDEBAR_WIDTH) : 0,
                                       /*grow_only=*/advanced);
 
+    if (p->m_prepare_tabs)
+        apply_prepare_section("process");
     update_scroll_body();
     p->scrolled->Refresh();
 }
@@ -6283,7 +6366,8 @@ void Sidebar::sync_ams_list(bool is_from_big_sync_btn)
     for (auto& c : p->combos_filament)
         c->update();
     // Expand filament list
-    p->m_filament_area_wrapper->Show();
+    p->filament_expanded = true;
+    p->m_filament_area_wrapper->Show(p->active_prepare_section == "ink");
     recalc_filament_scroll_sizes();
     // BBS:Synchronized consumables information
     // auto calculation of flushing volumes
@@ -6628,10 +6712,13 @@ void Sidebar::update_ui_from_settings()
 
 bool Sidebar::show_object_list(bool show) const
 {
-    if (p->m_objects_header) p->m_objects_header->Show(show);
-    p->m_search_bar->Show(show);
-    if (!p->m_object_list->Show(show))
-        return false;
+    if (p->m_prepare_tabs)
+        apply_prepare_section(show ? "objects" : "process");
+    else {
+        if (p->m_objects_header) p->m_objects_header->Show(show);
+        p->m_search_bar->Show(show);
+        p->m_object_list->Show(show);
+    }
     if (!show)
         p->object_layers->Show(false);
     else

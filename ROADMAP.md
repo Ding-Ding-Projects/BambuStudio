@@ -10,6 +10,7 @@
 - [ ] Verify LAN inventory, pairing, authenticated local dispatch, cancellation, per-device outcomes, and supported multi-nozzle mappings on the packaged binary and available printer hardware.
 - [ ] Verify all four Model Creator providers, both bundled renderers, local credential handling, preview retention, and explicit plate import. Live provider and hardware evidence must be labeled separately from simulated checks.
 - [ ] Verify that Model Creator opens responsively while it validates retained meshes on a background worker. The source change is written; a hosted packaged-binary timing and GUI check is pending.
+- [ ] Verify the Prepare sidebar's Ink, Process and Objects tabs, search controls, keyboard access and narrow-layout reachability on the exact hosted package. The source change is written; a hosted build and genuine captures are pending.
 - [ ] Verify `.bambu-workspace` opening, member save/recovery, checklist and calendar reminders, daylight-saving behavior, and portable 3MF history on a fresh profile.
 - [ ] Measure the affected native UI at normal and minimum sizes in English, Cantonese, and bilingual modes, light and dark themes, and 100/125/150/200% scale. Keep genuine captures tied to the built source and binary.
 - [ ] Finish delivery from the source and build repairs integrated into `main` at `31174bce57e5b55311688bed74966cb12e4edde0`: confirm hosted run `36276791022`, verify the release and installed version, add runtime evidence, and complete preservation-first cleanup when the existing worktrees can be handled safely.
