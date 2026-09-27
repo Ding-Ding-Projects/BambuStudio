@@ -17,7 +17,7 @@ const english = sandbox.LangText.en;
 const cantonese = sandbox.LangText.yue_HK;
 assert.equal(
   Object.keys(english).length,
-  168,
+  260,
   'update the yue_HK catalog and reviewed baseline when English web keys change',
 );
 assert.deepEqual(
@@ -25,6 +25,7 @@ assert.deepEqual(
   Object.keys(english).sort(),
   'yue_HK must have exact key parity with the authoritative English table',
 );
+assert.equal(cantonese.t271, '個', 'yue_HK count suffix must use the Cantonese unit');
 
 const markup = (value) => value.match(/<[^>]+>/g) ?? [];
 for (const key of Object.keys(english)) {

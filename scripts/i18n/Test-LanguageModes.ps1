@@ -166,4 +166,4 @@ Write-Host 'Checking ui-md3 language behavior and interpolation...'
 Invoke-Checked -Command $node.Source -Arguments @('--test', $uiMd3Test) `
     -FailureMessage 'ui-md3 language mode test failed'
 
-Write-Host "Language mode validation passed: $($coverage.translated_messages) native, $($englishKeys.Count) DeviceWeb and 168 legacy web translations."
+Write-Host "Language mode validation passed: $($coverage.translated_messages) native, $($englishKeys.Count) DeviceWeb and 260 legacy web translations."
