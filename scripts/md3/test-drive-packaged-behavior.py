@@ -10,6 +10,7 @@ import zipfile
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from unittest.mock import patch
+from PIL import Image
 
 
 HERE = Path(__file__).resolve().parent
@@ -103,6 +104,12 @@ class BehaviorDriveChecks(unittest.TestCase):
                 self.assertEqual(checksum.strip(), hashlib.md5(body.encode("utf-8")).hexdigest().upper())
                 self.assertEqual(drive.probe_header([{"kind": "header", "language": mode,
                                                      "dpi_scale": 1.25}], mode)["dpi_scale"], 1.25)
+                with self.assertRaisesRegex(RuntimeError, "native display scale"):
+                    drive.probe_header([{"kind": "header", "language": mode,
+                                        "dpi_scale": 1.0, "dark": False}], mode, "light", 1.25)
+                with self.assertRaisesRegex(RuntimeError, "theme differs"):
+                    drive.probe_header([{"kind": "header", "language": mode,
+                                        "dpi_scale": 1.25, "dark": False}], mode, "dark", 1.25)
                 with self.assertRaisesRegex(RuntimeError, "requested language"):
                     drive.probe_header([{"kind": "header", "language": "en", "dpi_scale": 1}],
                                        "yue_HK")
@@ -115,6 +122,16 @@ class BehaviorDriveChecks(unittest.TestCase):
             with patch.object(drive, "cheap", return_value={"ok": True, "rendered_ok": False}):
                 with self.assertRaisesRegex(RuntimeError, "PrintWindow"):
                     instance.capture("unrendered", 1)
+
+    def test_uniform_rendered_image_is_rejected(self):
+        with tempfile.TemporaryDirectory() as temp:
+            instance = drive.Drive(None, Path(temp), "a" * 40, "md3-v122", "b" * 64, "123", "en")
+            def render(_tool, **kwargs):
+                Image.new("RGB", (1200, 800), "white").save(kwargs["output_path"])
+                return {"ok": True, "rendered_ok": True}
+            with patch.object(drive, "cheap", side_effect=render):
+                with self.assertRaisesRegex(RuntimeError, "uniform"):
+                    instance.capture("blank", 1)
 
     def test_workspace_roundtrip_requires_real_manifest_title(self):
         with tempfile.TemporaryDirectory() as temp:
