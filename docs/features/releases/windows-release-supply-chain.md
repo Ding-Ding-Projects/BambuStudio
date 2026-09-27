@@ -152,7 +152,7 @@ never attached in plaintext.
 
 The version 2 encrypted envelope binds the hosted run, release tag, release source commit,
 verification commit, installed executable hash, and the exact manifest of capture images,
-behavior reports, and behavior images. The manifest names each tuple and records every byte length
+behavior reports, behavior images, and driver-owned restricted application logs. The manifest names each tuple and records every byte length
 and SHA-256. `Open-HostedReleaseGuiEvidence.ps1` retains schema 1 read support and requires an
 explicit expected verification commit for schema 2. It rejects duplicate names, traversal, extra
 or missing entries, invalid counts, and hash mismatches before releasing files to a new local
@@ -160,3 +160,7 @@ directory. A partial capture can carry encrypted diagnostics, but its receipt re
 partial and cannot be accepted as verified GUI evidence. Missing printer, camera, or provider
 access is reported separately from a failed probe, launch, or teardown. Operators must inspect
 decrypted pixels and reports for privacy before retaining or publishing them.
+Windows Error Reporting dumps are omitted with an explicit receipt reason because a global
+application-name match does not prove the PID, process creation interval, and installed executable
+identity of a particular hosted run. A failed fixed-surface capture still encrypts attributable
+behavior reports and restricted logs when those files were produced; it keeps a partial verdict.

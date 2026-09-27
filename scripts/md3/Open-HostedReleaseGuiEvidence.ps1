@@ -97,15 +97,13 @@ else {
     $captureCount = 0
     foreach ($row in $manifest) {
         $path = [string]$row.path
-        Assert-True ($path -cmatch '^(captures/[a-z0-9-]+--en-light-comfortable--hosted\.png|behavior/(en|yue_HK|bilingual_en_yue_HK)-(light|dark)-(1|1\.25|1\.5|2)-(1200x800|1000x600)/(behavior-report\.json|[a-zA-Z0-9-]+\.png|restricted-logs/[a-zA-Z0-9_.-]+)|diagnostics/wer-\d{2}\.(wer|dmp))$' -and -not $path.Contains('..')) 'Schema v2 inventory contains an invalid or traversing path.'
+        Assert-True ($path -cmatch '^(captures/[a-z0-9-]+--en-light-comfortable--hosted\.png|behavior/(en|yue_HK|bilingual_en_yue_HK)-(light|dark)-(1|1\.25|1\.5|2)-(1200x800|1000x600)/(behavior-report\.json|[a-zA-Z0-9-]+\.png|restricted-logs/[a-zA-Z0-9_.-]+))$' -and -not $path.Contains('..')) 'Schema v2 inventory contains an invalid or traversing path.'
         Assert-True (-not $inventory.ContainsKey($path)) 'Schema v2 inventory contains a duplicate path.'
         Assert-True ($row.sha256 -cmatch '^[0-9a-f]{64}$' -and $row.bytes -gt 0 -and
             $row.bytes -le 33554432) 'Schema v2 inventory hash or length is invalid.'
         if ($path.StartsWith('captures/')) {
             Assert-True ($row.kind -ceq 'capture' -and $row.tuple -ceq 'en-light-comfortable') 'Capture metadata is invalid.'
             $captureCount++
-        } elseif ($path.StartsWith('diagnostics/')) {
-            Assert-True ($row.kind -ceq 'restricted_diagnostic' -and $row.tuple -ceq 'hosted-run') 'Restricted diagnostic metadata is invalid.'
         } else {
             $tupleName = $path.Split('/')[1]
             Assert-True ($row.tuple -ceq $tupleName) 'Behavior tuple metadata is invalid.'

@@ -61,6 +61,10 @@ try {
     $evidence.installed_exe_sha256 = $exeHash
     $evidence.installer_sha256 = $receipt.asset_sha256.'Setup.exe'
 
+    $images = Join-Path $env:RUNNER_TEMP ('bambu-capture-images-' + $env:GITHUB_RUN_ID)
+    [void](New-Item -ItemType Directory -Path $images)
+    $files = @()
+    try {
     if (-not $env:LLCU_CHEAP -or -not (Test-Path -LiteralPath $env:LLCU_CHEAP -PathType Leaf)) {
         if (-not $legacyMode) { throw 'The pinned job-local headless capture tool is missing.' }
         $toolRoot = Join-Path $env:RUNNER_TEMP ('lowlevel-capture-' + $env:GITHUB_RUN_ID)
@@ -88,8 +92,6 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Could not prepare a fresh capture profile.' }
     $tuple = 'en-light-comfortable'
     $dataDir = Join-Path $dataRoot $tuple
-    $images = Join-Path $env:RUNNER_TEMP ('bambu-capture-images-' + $env:GITHUB_RUN_ID)
-    [void](New-Item -ItemType Directory -Path $images)
     & $python (Join-Path $PSScriptRoot 'capture-tuple.py') `
         --exe $exe --datadir $dataDir --tuple $tuple --out $images `
         --suffix hosted --desktop ('bambu-' + $env:GITHUB_RUN_ID)
@@ -124,6 +126,13 @@ try {
             height = $image.height
             distinct_colors = $image.distinct_colors
         }
+    }
+    }
+    catch {
+        if ($legacyMode) { throw }
+        $evidence.capture_failure = 'Capture preflight or pixel validation failed; restricted behavior diagnostics remain eligible for encryption.'
+        $evidence.captures = @()
+        $files = @()
     }
     if (-not $legacyMode) {
     $behaviorRoot = [System.IO.Path]::GetFullPath($BehaviorDirectory)
@@ -246,36 +255,7 @@ try {
         }
         elseif ($logRows.Count -gt 0) { throw 'A behavior report names restricted logs that are missing.' }
     }
-    $werRoots = @(
-        (Join-Path $env:ProgramData 'Microsoft\Windows\WER\ReportArchive'),
-        (Join-Path $env:ProgramData 'Microsoft\Windows\WER\ReportQueue'),
-        (Join-Path $env:LOCALAPPDATA 'Microsoft\Windows\WER\ReportArchive')
-    )
-    $werDirectories = @($werRoots | Where-Object { Test-Path -LiteralPath $_ -PathType Container } |
-        ForEach-Object { Get-ChildItem -LiteralPath $_ -Directory -Filter 'AppCrash_bambu-studio*' } |
-        Sort-Object FullName -Unique | Select-Object -First 4)
-    $diagnosticIndex = 0
-    foreach ($werDir in $werDirectories) {
-        foreach ($werFile in @(Get-ChildItem -LiteralPath $werDir.FullName -File |
-            Where-Object { $_.Extension -in @('.wer', '.dmp') } | Sort-Object Name)) {
-            if ($werFile.Length -lt 1 -or $werFile.Length -gt 33554432 -or
-                ($werFile.Attributes -band [System.IO.FileAttributes]::ReparsePoint)) {
-                $evidence.diagnostics_excluded = 'A Windows Error Reporting file exceeded the 32 MiB bound or was not a regular file.'
-                continue
-            }
-            $diagnosticIndex++
-            if ($diagnosticIndex -gt 12) { throw 'Windows Error Reporting file count exceeds the encrypted evidence limit.' }
-            $name = ('wer-{0:D2}{1}' -f $diagnosticIndex, $werFile.Extension.ToLowerInvariant())
-            $destination = Join-Path $stageRoot 'diagnostics'
-            if (-not (Test-Path -LiteralPath $destination)) { [void](New-Item -ItemType Directory -Path $destination) }
-            Copy-Item -LiteralPath $werFile.FullName -Destination (Join-Path $destination $name)
-            $evidence.manifest += [ordered]@{
-                path = "diagnostics/$name"; kind = 'restricted_diagnostic'; tuple = 'hosted-run'
-                bytes = $werFile.Length
-                sha256 = (Get-FileHash -LiteralPath $werFile.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
-            }
-        }
-    }
+    $evidence.diagnostics_excluded = 'Windows Error Reporting dumps were omitted because their PID, process-creation interval, and installed executable identity were not independently attributable to this hosted run.'
     if ($imageCount -gt 256 -or $evidence.manifest.Count -gt 280) { throw 'Behavior evidence count exceeds the encryption limit.' }
     $totalPlainBytes = [long]0
     foreach ($entry in $evidence.manifest) { $totalPlainBytes += [long]$entry.bytes }
@@ -378,7 +358,9 @@ try {
     }
 }
 catch {
-    $evidence.failure = $_.Exception.Message
+    $evidence.failure = if ($legacyMode) { $_.Exception.Message } else {
+        'Evidence validation or encryption failed before a complete encrypted bundle was created.'
+    }
     throw
 }
 finally {
