@@ -27,6 +27,37 @@ holder_spec.loader.exec_module(holder)
 
 
 class BehaviorDriveChecks(unittest.TestCase):
+    def test_collector_contract_arrays_reject_null_scalar_and_delimiter_collision(self):
+        collector = HERE / "Capture-HostedReleaseGui.ps1"
+        script = r'''
+$tokens = $null
+$errors = $null
+$ast = [System.Management.Automation.Language.Parser]::ParseFile(
+    $env:BS_CONTRACT_COLLECTOR_PATH, [ref]$tokens, [ref]$errors)
+if ($errors.Count) { throw 'Collector source did not parse' }
+$definition = $ast.Find({ param($node)
+    $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and
+    $node.Name -eq 'Test-ExactContractArray' }, $true)
+if ($null -eq $definition) { throw 'Exact array comparison is missing' }
+. ([scriptblock]::Create($definition.Extent.Text))
+$checks = @(
+    (Test-ExactContractArray -Observed $null -Expected @()),
+    (Test-ExactContractArray -Observed 'one' -Expected @('one')),
+    (Test-ExactContractArray -Observed @('a|b', 'c') -Expected @('a', 'b|c')),
+    (Test-ExactContractArray -Observed @('one') -Expected @()),
+    (Test-ExactContractArray -Observed @() -Expected @()),
+    (Test-ExactContractArray -Observed @('one', 'two') -Expected @('one', 'two'))
+)
+ConvertTo-Json -InputObject $checks -Compress
+'''
+        completed = subprocess.run(
+            ["powershell", "-NoProfile", "-NonInteractive", "-Command", script],
+            capture_output=True, text=True, timeout=20, check=False,
+            env={**os.environ, "BS_CONTRACT_COLLECTOR_PATH": str(collector)})
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        self.assertEqual(json.loads(completed.stdout),
+                         [False, False, False, False, True, True])
+
     def test_contract_binding_rejects_missing_stale_mismatched_and_partial_inventory(self):
         contract = drive.behavior_contract
         images = [{"file": "before.png"}, {"file": "after.png"}]

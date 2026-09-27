@@ -11,6 +11,19 @@ param(
 
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
+function Test-ExactContractArray {
+    param([object] $Observed, [object] $Expected)
+    if ($Observed -isnot [array] -or $Expected -isnot [array] -or
+        $Observed.Count -ne $Expected.Count) { return $false }
+    for ($index = 0; $index -lt $Observed.Count; $index++) {
+        if ($Observed[$index] -isnot [string] -or $Expected[$index] -isnot [string] -or
+            -not [string]::Equals($Observed[$index], $Expected[$index],
+                                  [System.StringComparison]::Ordinal)) {
+            return $false
+        }
+    }
+    return $true
+}
 $legacyMode = [string]::IsNullOrWhiteSpace($BehaviorDirectory)
 if (-not $legacyMode -and [string]::IsNullOrWhiteSpace($VerificationCommit)) {
     throw 'Schema v2 requires an exact verifier commit.'
@@ -235,8 +248,7 @@ print(json.dumps(dataclasses.asdict(result), separators=(',', ':')))
                     }
                     foreach ($key in @('missing', 'invalid', 'limitations', 'confirmed')) {
                         if ($null -eq $actual.PSObject.Properties[$key] -or
-                            (@($actual.$key) -join '|') -cne
-                            (@($recomputed.$key) -join '|')) {
+                            -not (Test-ExactContractArray -Observed ($actual.$key) -Expected ($recomputed.$key))) {
                             $evidence.behavior_failure = 'The behavior completeness inventory differs from its rows.'
                         }
                     }
