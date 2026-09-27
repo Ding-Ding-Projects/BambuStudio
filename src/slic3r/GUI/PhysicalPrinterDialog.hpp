@@ -6,6 +6,7 @@
 #include <wx/gdicmn.h>
 
 #include "libslic3r/Preset.hpp"
+#include "Widgets/TextInput.hpp"
 #include "GUI_Utils.hpp"
 #include "Widgets/RoundedRectangle.hpp"
 #include "Widgets/Button.hpp"
@@ -38,7 +39,7 @@ class PhysicalPrinterDialog : public DPIDialog
 
     RoundedRectangle*   m_input_area                        {nullptr};
     wxStaticText*       m_valid_label                       {nullptr};
-    wxTextCtrl*         m_input_ctrl                        {nullptr};
+    TextInput*          m_input_ctrl                        {nullptr};
     Button*             m_button_ok                         {nullptr};
     Button*             m_button_cancel                     {nullptr};
 

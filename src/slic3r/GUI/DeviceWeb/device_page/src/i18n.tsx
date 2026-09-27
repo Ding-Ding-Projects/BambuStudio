@@ -20,12 +20,16 @@ import tr_TR from '@locales/tr_TR.json';
 import pt_BR from '@locales/pt_BR.json';
 import ko_KR from '@locales/ko_KR.json';
 import pl_PL from '@locales/pl_PL.json';
+import yue_HK from '@locales/yue_HK.json';
 import ro_RO from '@locales/ro_RO.json';
 import th_TH from '@locales/th_TH.json';
 import el_GR from '@locales/el_GR.json';
 import id_ID from '@locales/id_ID.json';
 import vi_VN from '@locales/vi_VN.json';
 import zh_TW from '@locales/zh_TW.json';
+import { buildEnglishCantoneseTranslation, languageFallbacks } from './i18nResources.ts';
+
+const bilingual_en_yue_HK = buildEnglishCantoneseTranslation(en, yue_HK);
 
 // Detect language: URL ?lang= param > localStorage > fallback 'en'
 // Consistent with other webview pages (text.js TranslatePage pattern)
@@ -43,7 +47,7 @@ i18n
   .use(initReactI18next)
   .init({
     lng: detectLanguage(),
-    fallbackLng: 'en',
+    fallbackLng: languageFallbacks,
     // Empty translation values must fall back to English instead of rendering
     // as blank UI labels (STUDIO-18236).
     returnEmptyString: false,
@@ -69,6 +73,8 @@ i18n
       pt_BR: { translation: pt_BR },
       ko_KR: { translation: ko_KR },
       pl_PL: { translation: pl_PL },
+      yue_HK: { translation: yue_HK },
+      bilingual_en_yue_HK: { translation: bilingual_en_yue_HK },
       ro_RO: { translation: ro_RO },
       th_TH: { translation: th_TH },
       el_GR: { translation: el_GR },

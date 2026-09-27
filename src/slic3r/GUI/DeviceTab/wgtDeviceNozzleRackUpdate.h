@@ -110,7 +110,7 @@ private:
 
     void OnBitmapHoverEnter(wxMouseEvent& event);
     void OnBitmapHoverLeave(wxMouseEvent& event);
-    void OnStatusIconClick(wxMouseEvent& event);
+    void OnStatusIconClick(wxCommandEvent& event);
     void updateNozzleImage(const DevNozzle& nozzle);
 
 private:
@@ -146,7 +146,7 @@ private:
 
     Label* m_idx_label;
     wxStaticBitmap* m_icon_bitmap{ nullptr };
-    wxStaticBitmap* m_status_bitmap{ nullptr };
+    Button* m_status_bitmap{ nullptr };
 
     Label* m_material_label{ nullptr };
     wxStaticBitmap* m_colour_box{ nullptr };

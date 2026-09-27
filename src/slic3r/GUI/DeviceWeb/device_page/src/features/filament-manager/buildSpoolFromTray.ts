@@ -21,9 +21,9 @@
 // `spool/batch_create` bridge action (with default semantics: overwrite the
 // existing record, per the STUDIO-18344 UX confirmation).
 
-import type { AmsTray, AmsUnit, PresetVendor, Spool } from './types';
-import { BAMBU_COLORS, formatTypeSeries } from './constants';
-import { canonicalizeHex } from './colors';
+import type { AmsTray, AmsUnit, PresetVendor, Spool } from './types.ts';
+import { BAMBU_COLORS, formatTypeSeries } from './constants.ts';
+import { canonicalizeHex } from './colors/hex.ts';
 
 const MAX_NET_WEIGHT_GRAMS = 999_999_999;
 

@@ -11,7 +11,7 @@ const FILTERS: Array<{ id: DebugLogFilter; label: string }> = [
 
 function formatTime(ts: number) {
   try {
-    return new Date(ts).toLocaleTimeString();
+    return new Date(ts).toLocaleTimeString([], { hour12: false });
   } catch {
     return String(ts);
   }

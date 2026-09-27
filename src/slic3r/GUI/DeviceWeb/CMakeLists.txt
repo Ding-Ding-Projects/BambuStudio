@@ -224,9 +224,12 @@ set(DEVICE_PAGE_BUILD_INPUTS
 add_custom_command(
     OUTPUT "${DEVICE_PAGE_BUILD_STAMP}"
     COMMAND echo "Running PNPM install"
-    COMMAND ${CMAKE_COMMAND} -E env "PATH=${DEVICE_PAGE_PATH}" ${PNPM_EXECUTABLE} install --store-dir ${PNPM_STORE_DIR}
+    # CI=1: pnpm must never wait for a terminal here. Under the one-click build
+    # (no console attached) an interactive install sat idle for over fifteen
+    # minutes with 1 s of CPU, and the same command finished in 27 s with CI set.
+    COMMAND ${CMAKE_COMMAND} -E env "PATH=${DEVICE_PAGE_PATH}" "CI=1" ${PNPM_EXECUTABLE} install --store-dir ${PNPM_STORE_DIR}
     COMMAND echo "Running PNPM run build"
-    COMMAND ${CMAKE_COMMAND} -E env "PATH=${DEVICE_PAGE_PATH}" ${PNPM_EXECUTABLE} run build
+    COMMAND ${CMAKE_COMMAND} -E env "PATH=${DEVICE_PAGE_PATH}" "CI=1" ${PNPM_EXECUTABLE} run build
     COMMAND echo "Removing page target directory"
     COMMAND ${CMAKE_COMMAND} -E remove_directory "${DEVICE_PAGE_TARGET_DIR}"
     COMMAND echo "Creating page target directory"

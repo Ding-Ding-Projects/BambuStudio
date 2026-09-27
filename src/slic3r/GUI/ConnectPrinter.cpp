@@ -2,9 +2,11 @@
 #include "GUI_App.hpp"
 #include <slic3r/GUI/I18N.hpp>
 #include <slic3r/GUI/Widgets/Label.hpp>
+#include "Widgets/MD3DialogChrome.hpp"
 #include "libslic3r/AppConfig.hpp"
 
 #include "DeviceCore/DevManager.h"
+#include "Widgets/Label.hpp"
 
 namespace Slic3r { namespace GUI {
 ConnectPrinterDialog::ConnectPrinterDialog(wxWindow *parent, wxWindowID id, const wxString &title, const wxPoint &pos, const wxSize &size, long style)
@@ -23,9 +25,9 @@ ConnectPrinterDialog::ConnectPrinterDialog(wxWindow *parent, wxWindowID id, cons
 
     sizer_top->Add(0, FromDIP(40));
 
-    m_staticText_connection_code = new wxStaticText(this, wxID_ANY, _L("Please input the printer access code:"), wxDefaultPosition, wxDefaultSize, 0);
+    m_staticText_connection_code = new Label(this, _L("Please input the printer access code:"));
     m_staticText_connection_code->SetFont(Label::Body_15);
-    m_staticText_connection_code->SetForegroundColour(wxColour(50, 58, 61));
+    m_staticText_connection_code->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_staticText_connection_code->Wrap(-1);
     sizer_top->Add(m_staticText_connection_code, 0, wxALL, 0);
 
@@ -43,7 +45,7 @@ ConnectPrinterDialog::ConnectPrinterDialog(wxWindow *parent, wxWindowID id, cons
     m_textCtrl_code->GetTextCtrl()->SetSize(wxSize(-1, FromDIP(22)));
     m_textCtrl_code->GetTextCtrl()->SetMinSize(wxSize(-1, FromDIP(22)));
     m_textCtrl_code->SetBackgroundColour(*wxWHITE);
-    m_textCtrl_code->GetTextCtrl()->SetForegroundColour(wxColour(107, 107, 107));
+    m_textCtrl_code->GetTextCtrl()->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     sizer_connect->Add(m_textCtrl_code, 0, wxALL | wxALIGN_CENTER_VERTICAL, 0);
 
     sizer_connect->Add(FromDIP(20), 0);
@@ -52,17 +54,21 @@ ConnectPrinterDialog::ConnectPrinterDialog(wxWindow *parent, wxWindowID id, cons
     m_button_confirm->SetFont(Label::Body_12);
     m_button_confirm->SetMinSize(wxSize(-1, FromDIP(24)));
     m_button_confirm->SetCornerRadius(FromDIP(12));
-    m_button_confirm->SetTextColor(wxColour("#FFFFFE"));
+    m_button_confirm->SetTextColor(StateColor::semantic(MD3::Role::OnPrimary, MD3::ColorScheme::Device));
 
     StateColor btn_bg(
-        std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed),
-        std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-        std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal)
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::PrimaryContainer, MD3::ColorScheme::Device), StateColor::Pressed),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::PrimaryContainer, MD3::ColorScheme::Device), StateColor::Hovered),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Device), StateColor::Normal)
     );
 
-    StateColor btn_bd(std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
+    StateColor btn_bd(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Device), StateColor::Normal));
 
-    StateColor btn_text(std::pair<wxColour, int>(wxColour(255, 255, 255), StateColor::Normal));
+    StateColor btn_text(
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OnPrimaryContainer, MD3::ColorScheme::Device), StateColor::Pressed),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OnPrimaryContainer, MD3::ColorScheme::Device), StateColor::Hovered),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OnPrimary, MD3::ColorScheme::Device), StateColor::Normal)
+    );
 
     m_button_confirm->SetBackgroundColor(btn_bg);
     m_button_confirm->SetBorderColor(btn_bd);
@@ -76,9 +82,9 @@ ConnectPrinterDialog::ConnectPrinterDialog(wxWindow *parent, wxWindowID id, cons
 
     sizer_top->Add(0, FromDIP(35));
 
-    m_staticText_hints = new wxStaticText(this, wxID_ANY, _L("You can find it in \"Settings > Network > Access code\"\non the printer, as shown in the figure:"), wxDefaultPosition, wxDefaultSize, 0);
+    m_staticText_hints = new Label(this, _L("You can find it in \"Settings > Network > Access code\"\non the printer, as shown in the figure:"));
     m_staticText_hints->SetFont(Label::Body_15);
-    m_staticText_hints->SetForegroundColour(wxColour(50, 58, 61));
+    m_staticText_hints->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_staticText_hints->Wrap(-1);
     sizer_top->Add(m_staticText_hints, 0, wxALL, 0);
 
@@ -100,11 +106,12 @@ ConnectPrinterDialog::ConnectPrinterDialog(wxWindow *parent, wxWindowID id, cons
     this->SetSizer(main_sizer);
     this->Layout();
     this->Fit();
-    CentreOnParent();
 
     m_textCtrl_code->Bind(wxEVT_TEXT, &ConnectPrinterDialog::on_input_enter, this);
     m_button_confirm->Bind(wxEVT_BUTTON, &ConnectPrinterDialog::on_button_confirm, this);
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
+    CentreOnParent();
 }
 
 ConnectPrinterDialog::~ConnectPrinterDialog() {}

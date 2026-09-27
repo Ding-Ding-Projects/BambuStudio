@@ -1,7 +1,8 @@
 #pragma once
 
+#include "slic3r/GUI/Widgets/LinkLabel.hpp"
+
 #include <wx/panel.h>
-#include <wx/hyperlink.h>
 #include <wx/sizer.h>
 
 #include <string>
@@ -29,7 +30,7 @@ public:
 
 private:
     void CreateGui();
-    void OnClickWiki(wxHyperlinkEvent& evt);
+    void OnClickWiki(wxCommandEvent& evt);
 
 private:
     int m_max_width;
@@ -38,7 +39,7 @@ private:
     wxString m_wiki_url;
 
     Label* m_text_label{ nullptr };
-    wxHyperlinkCtrl* m_wiki_link{ nullptr };
+    LinkLabel* m_wiki_link{ nullptr };
 };
 
 // Message panel based on wxWidget, shows wgtMsgPanelItem in a list

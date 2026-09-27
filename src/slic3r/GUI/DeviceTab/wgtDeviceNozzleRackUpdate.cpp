@@ -6,6 +6,8 @@
 //**********************************************************/
 
 #include "wgtDeviceNozzleRackUpdate.h"
+#include "slic3r/GUI/Widgets/StateColor.hpp"
+#include "slic3r/GUI/Widgets/MaterialIcon.hpp"
 
 #include "slic3r/GUI/DeviceCore/DevNozzleSystem.h"
 #include "slic3r/GUI/DeviceCore/DevUpgrade.h"
@@ -19,6 +21,7 @@
 
 #include "slic3r/GUI/Widgets/Button.hpp"
 #include "slic3r/GUI/Widgets/Label.hpp"
+#include "slic3r/GUI/Widgets/MD3DialogChrome.hpp"
 
 #include <wx/dcmemory.h>
 
@@ -53,6 +56,7 @@ wgtDeviceNozzleRackUpgradeDlg::wgtDeviceNozzleRackUpgradeDlg(wxWindow* parent, c
     Fit();
 
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this, _L("Hotends Info"));
 }
 
 void wgtDeviceNozzleRackUpgradeDlg::UpdateRackInfo(const std::shared_ptr<DevNozzleRack> rack)
@@ -96,7 +100,7 @@ void wgtDeviceNozzleRackUprade::CreateGui()
 
     // "Nozzles"
     m_extruder_nozzle_item = new wgtDeviceNozzleRackHotendUpdate(this, "R");
-    m_extruder_nozzle_item->UpdateColourStyle(wxColour("#F8F8F8"));
+    m_extruder_nozzle_item->UpdateColourStyle(StateColor::semantic(MD3::Role::SurfaceContainerLow));
     m_extruder_nozzle_item->SetExtruderNozzleId(MAIN_EXTRUDER_ID);
 
     main_sizer->Add(m_extruder_nozzle_item, 0, wxEXPAND | wxALL, FromDIP(12));
@@ -215,7 +219,13 @@ void wgtDeviceNozzleRackUprade::Rescale()
     }
 }
 
-#define WGT_DEVICE_NOZZLE_RACK_HOTEND_UPDATE_DEFAULT_BG *wxWHITE
+// Card surface for the hotend-update rows. SurfaceContainerLowest resolves to
+// #ffffff in light mode (byte-identical to the previous *wxWHITE) and flips to a
+// dark surface in dark mode, so the card fill AND border stay tonally paired
+// with the theme-aware, semantic()-driven foregrounds set below and during
+// status updates. A fixed *wxWHITE here left light-in-dark-mode text (and a
+// white StaticBox border, which UpdateDlgDarkUI does not remap) on a white card.
+#define WGT_DEVICE_NOZZLE_RACK_HOTEND_UPDATE_DEFAULT_BG StateColor::semantic(MD3::Role::SurfaceContainerLowest)
 wgtDeviceNozzleRackHotendUpdate::wgtDeviceNozzleRackHotendUpdate(wxWindow* parent, const wxString& idx_text)
     : StaticBox(parent, wxID_ANY)
 {
@@ -325,7 +335,7 @@ void wgtDeviceNozzleRackHotendUpdate::CreateGui()
     m_version_new_label = new Label(info_panel);
     m_version_new_label->SetFont(Label::Body_12);
     m_version_new_label->SetBackgroundColour(WGT_DEVICE_NOZZLE_RACK_HOTEND_UPDATE_DEFAULT_BG);
-    m_version_new_label->SetForegroundColour(wxColour(0, 168, 84)); // Green
+    m_version_new_label->SetForegroundColour(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Device)); // new-version accent
 
     version_h_sizer->Add(m_version_label, 0, wxALIGN_CENTER_VERTICAL);
     version_h_sizer->Add(m_version_new_label, 0, wxALIGN_CENTER_VERTICAL);
@@ -344,8 +354,11 @@ void wgtDeviceNozzleRackHotendUpdate::CreateGui()
     m_refresh_icon = new ScalableBitmap(this, "refresh_printer", 12);
     // m_in_refreh_icon = new ScalableBitmap(this, "refresh_nozzle", 12);
     m_error_icon = new ScalableBitmap(this, "error", 14);
-    m_status_bitmap = new wxStaticBitmap(this, wxID_ANY, m_refresh_icon->bmp());
-    m_status_bitmap->Bind(wxEVT_LEFT_UP, &wgtDeviceNozzleRackHotendUpdate::OnStatusIconClick, this);
+    // Kit icon Button: Refresh glyph at rest, Error glyph when the update failed.
+    m_status_bitmap = new Button(this, "", "", 0, 0);
+    m_status_bitmap->SetIconButton(Button::IconShape::Circle, FromDIP(20));
+    m_status_bitmap->SetGlyph(MaterialIcon::Refresh, FromDIP(14));
+    m_status_bitmap->Bind(wxEVT_BUTTON, &wgtDeviceNozzleRackHotendUpdate::OnStatusIconClick, this);
 
     std::vector<std::string> list{"refresh_nozzle_1", "refresh_nozzle_2", "refresh_nozzle_3", "refresh_nozzle_4"};
     m_refreshing_icon = new AnimaIcon(this, wxID_ANY, list, "refresh_nozzle", 100, 12);
@@ -370,11 +383,11 @@ void wgtDeviceNozzleRackHotendUpdate::CreateGui()
     Layout();
 }
 
-void wgtDeviceNozzleRackHotendUpdate::OnStatusIconClick(wxMouseEvent& event)
+void wgtDeviceNozzleRackHotendUpdate::OnStatusIconClick(wxCommandEvent& event)
 {
     if (m_status_label->GetLabel() == _L("Refresh"))
     {
-        m_status_label->SetForegroundColour(wxColour("#A3A3A3"));
+        m_status_label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
         m_status_label->SetLabel(_L("Refreshing"));
         m_status_bitmap->Show(false);
         // m_status_bitmap->Refresh();
@@ -678,9 +691,10 @@ void wgtDeviceNozzleRackHotendUpdate::UpdateInfo(const DevNozzle& nozzle)
 
         m_status_label->Show(true);
         m_status_bitmap->Show(true);
-        m_status_label->SetForegroundColour(StateColor::darkModeColorFor(wxColour("#E14747")));
+        m_status_label->SetForegroundColour(StateColor::semantic(MD3::Role::Error));
         m_status_label->SetLabel(_L("Error"));
-        m_status_bitmap->SetBitmap(m_error_icon->bmp());
+        m_status_bitmap->SetGlyph(MaterialIcon::Error, FromDIP(14));
+        m_status_bitmap->SetGlyphColor(StateColor(std::make_pair(StateColor::semantic(MD3::Role::Error), (int) StateColor::Normal)));
         m_status_bitmap->Refresh();
     }
     else if (nozzle.IsUnknown()  && m_nozzle_status != NOZZLE_STATUS_UNKNOWN)
@@ -704,9 +718,10 @@ void wgtDeviceNozzleRackHotendUpdate::UpdateInfo(const DevNozzle& nozzle)
         m_used_time->Show(true);
         m_status_label->Show(true);
         m_status_bitmap->Show(true);
-        m_status_label->SetForegroundColour(wxColour("#00AE42"));
+        m_status_label->SetForegroundColour(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Device));
         m_status_label->SetLabel(_L("Refresh"));
-        m_status_bitmap->SetBitmap(m_refresh_icon->bmp());
+        m_status_bitmap->SetGlyph(MaterialIcon::Refresh, FromDIP(14));
+        m_status_bitmap->SetGlyphColor(StateColor());
         m_status_bitmap->Refresh();
     }
 

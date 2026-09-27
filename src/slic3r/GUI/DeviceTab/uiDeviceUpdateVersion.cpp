@@ -9,6 +9,9 @@
 
 #include "slic3r/GUI/I18N.hpp"
 #include "slic3r/GUI/wxExtensions.hpp"
+#include "slic3r/GUI/Widgets/Label.hpp"
+#include "slic3r/GUI/Widgets/MaterialIcon.hpp"
+#include "slic3r/GUI/Widgets/StateColor.hpp"
 
 #include <wx/stattext.h>
 
@@ -73,17 +76,17 @@ wxString uiDeviceUpdateVersion::GetInfoText() const
 
 void uiDeviceUpdateVersion::CreateWidgets()
 {
-    m_dev_name = new wxStaticText(this, wxID_ANY, "-");
-    m_dev_snl = new wxStaticText(this, wxID_ANY, "-");
-    m_dev_version = new wxStaticText(this, wxID_ANY, "-");
+    m_dev_name = new Label(this, "-");
+    m_dev_snl = new Label(this, "-");
+    m_dev_version = new Label(this, "-");
 
     enable_static_text_copy_menu(m_dev_name);
     enable_static_text_copy_menu(m_dev_snl);
     enable_static_text_copy_menu(m_dev_version);
 
-    wxStaticText* serial_text = new wxStaticText(this, wxID_ANY, _L(SERIAL_STR));
-    wxStaticText* version_text = new wxStaticText(this, wxID_ANY, _L(VERSION_STR));
-    wxStaticText *model_text   = new wxStaticText(this, wxID_ANY, _L(MODEL_STR));
+    wxStaticText* serial_text = new Label(this, _L(SERIAL_STR));
+    wxStaticText* version_text = new Label(this, _L(VERSION_STR));
+    wxStaticText *model_text   = new Label(this, _L(MODEL_STR));
 
     // Use bold font
     wxFont font = Label::Head_14;
@@ -103,8 +106,8 @@ void uiDeviceUpdateVersion::CreateWidgets()
     grid_sizer->Add(serial_text, 0, wxALIGN_RIGHT | wxALL, FromDIP(5));
     grid_sizer->Add(m_dev_snl, 0, wxALL | wxEXPAND, FromDIP(5));
 
-    m_dev_upgrade_indicator = new wxStaticBitmap(this, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxSize(FromDIP(5), FromDIP(5)));
-    m_dev_upgrade_indicator->SetBitmap(ScalableBitmap(this, "monitor_upgrade_online", 5).bmp());
+    m_dev_upgrade_indicator = new wxStaticBitmap(this, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxSize(FromDIP(10), FromDIP(10)));
+    m_dev_upgrade_indicator->SetBitmap(MaterialIcon::bitmap(this, MaterialIcon::FiberManualRecord, 10, StateColor::semantic(MD3::Role::Primary)));
 
     wxBoxSizer* version_hsizer = new wxBoxSizer(wxHORIZONTAL);
     version_hsizer->Add(0, 0, 1, wxEXPAND, 0);

@@ -1,4 +1,6 @@
 #include "BBLStatusBarPrint.hpp"
+#include "Widgets/Button.hpp"
+#include "Widgets/MaterialIcon.hpp"
 
 #include <wx/timer.h>
 #include <wx/gauge.h>
@@ -10,6 +12,7 @@
 #include "GUI_App.hpp"
 
 #include "I18N.hpp"
+#include "Widgets/Label.hpp"
 
 #include <algorithm>
 #include <boost/log/trivial.hpp>
@@ -24,33 +27,42 @@ BBLStatusBarPrint::BBLStatusBarPrint(wxWindow *parent, int id)
  : m_self{new wxPanel(parent, id == -1 ? wxID_ANY : id)}
     , m_sizer(new wxBoxSizer(wxHORIZONTAL))
 {
-    m_self->SetBackgroundColour(*wxWHITE);
+    m_self->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     wxBoxSizer *m_sizer_body = new wxBoxSizer(wxVERTICAL);
     wxBoxSizer *m_sizer_top = new wxBoxSizer(wxHORIZONTAL);
     wxBoxSizer *m_sizer_bottom = new wxBoxSizer(wxHORIZONTAL);
 
 
     top_panel = new wxPanel(m_self, wxID_ANY);
-    top_panel->SetBackgroundColour(*wxWHITE);
+    top_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     top_panel->SetMinSize(wxSize(m_self->FromDIP(550), m_self->FromDIP(26)));
     top_panel->SetMaxSize(wxSize(m_self->FromDIP(550), m_self->FromDIP(26)));
 
-    m_status_text = new wxStaticText(top_panel, wxID_ANY, wxEmptyString);
-    m_status_text->SetForegroundColour(wxColour(107, 107, 107));
+    m_status_text = new Label(top_panel, wxEmptyString);
+    m_status_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     m_status_text->SetMaxSize(wxSize(m_self->FromDIP(440), m_self->FromDIP(26)));
     m_status_text->SetMinSize(wxSize(m_self->FromDIP(440), m_self->FromDIP(26)));
     m_status_text->SetFont(::Label::Body_13);
 
-    StateColor btn_bt_white(std::pair<wxColour, int>(wxColour(0x90, 0x90, 0x90), StateColor::Disabled),
-        std::pair<wxColour, int>(wxColour(206, 206, 206), StateColor::Pressed),
-        std::pair<wxColour, int>(wxColour(238, 238, 238), StateColor::Hovered),
-        std::pair<wxColour, int>(*wxWHITE, StateColor::Normal));
+    // Outlined "white" cancel button. Its fill is expressed as a monotonic
+    // surface-container state layer -- Lowest (Normal) -> High (Hovered) ->
+    // Highest (Pressed) -- and its border uses the Outline role. This
+    // interaction-ladder mapping intentionally supersedes the legacy-sweep
+    // sec. 2f per-literal table (#EEEEEE->SurfaceContainer, #CECECE->OutlineVariant,
+    // #262E30->OnSurface) for this control: a surface ladder is the idiomatic MD3
+    // state layer for a fill (OutlineVariant is a border role, wrong for a fill),
+    // and Outline is the correct border role -- an OnSurface border would render
+    // as a harsh near-white outline in dark mode.
+    StateColor btn_bt_white(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Outline), StateColor::Disabled),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerHighest), StateColor::Pressed),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerHigh), StateColor::Hovered),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerLowest), StateColor::Normal));
 
-    StateColor btn_bd_white(std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Disabled),
-        std::pair<wxColour, int>(wxColour(38, 46, 48), StateColor::Enabled));
+    StateColor btn_bd_white(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerLowest), StateColor::Disabled),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Outline), StateColor::Enabled));
 
 
-    StateColor btn_txt_white(std::pair<wxColour, int>(wxColour("#FFFFFE"), StateColor::Disabled), std::pair<wxColour, int>(wxColour(38, 46, 48), StateColor::Normal));
+    StateColor btn_txt_white(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerLowest), StateColor::Disabled), std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OnSurface), StateColor::Normal));
 
     m_cancelbutton = new Button(m_self, _L("Cancel"));
     m_cancelbutton->SetMinSize(wxSize(m_self->FromDIP(80), m_self->FromDIP(32)));
@@ -66,27 +78,32 @@ BBLStatusBarPrint::BBLStatusBarPrint(wxWindow *parent, int id)
             m_cancel_cb_fina();
     });
 
-    m_stext_percent = new wxStaticText(top_panel, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, 0);
-    m_stext_percent->SetForegroundColour(wxColour(107, 107, 107));
+    m_stext_percent = new Label(top_panel, "");
+    m_stext_percent->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     m_stext_percent->SetFont(::Label::Head_13);
     m_stext_percent->Wrap(-1);
 
     m_sizer_status_text = new wxBoxSizer(wxHORIZONTAL);
     m_link_show_error = new Label(top_panel, _L("Check the reason"));
-    m_link_show_error->SetForegroundColour(wxColour("#00AE42"));
+    m_link_show_error->SetForegroundColour(StateColor::semantic(MD3::Role::Primary));
     m_link_show_error->SetFont(::Label::Head_13);
     m_link_show_error->Bind(wxEVT_ENTER_WINDOW, [this](auto &e) { this->m_self->SetCursor(wxCURSOR_HAND); });
     m_link_show_error->Bind(wxEVT_LEAVE_WINDOW, [this](auto &e) { this->m_self->SetCursor(wxCURSOR_ARROW); });
 
     m_bitmap_show_error_close = create_scaled_bitmap("link_more_error_close", nullptr, 7);
     m_bitmap_show_error_open = create_scaled_bitmap("link_more_error_open", nullptr, 7);
-    m_static_bitmap_show_error = new wxStaticBitmap(top_panel, wxID_ANY, m_bitmap_show_error_open, wxDefaultPosition, wxSize(m_self->FromDIP(7), m_self->FromDIP(7)));
+    // Kit icon Button: the error-details expander is focusable and exposes a role;
+    // its chevron flips by glyph instead of by swapping two 7 px bitmaps.
+    m_static_bitmap_show_error = new Button(top_panel, "", "", 0, 0);
+    m_static_bitmap_show_error->SetIconButton(Button::IconShape::Circle, m_self->FromDIP(20));
+    m_static_bitmap_show_error->SetGlyph(MaterialIcon::ExpandMore, m_self->FromDIP(14));
+    m_static_bitmap_show_error->SetToolTip(_L("Show details"));
 
     m_link_show_error->Bind(wxEVT_ENTER_WINDOW, [this](auto& e) {this->m_self->SetCursor(wxCURSOR_HAND); });
     m_link_show_error->Bind(wxEVT_LEAVE_WINDOW, [this](auto& e) {this->m_self->SetCursor(wxCURSOR_ARROW); });
     m_link_show_error->Bind(wxEVT_LEFT_DOWN, [this](auto& e) {
-        if (!m_show_error_info_state) { m_show_error_info_state = true; m_static_bitmap_show_error->SetBitmap(m_bitmap_show_error_close); }
-        else { m_show_error_info_state = false; m_static_bitmap_show_error->SetBitmap(m_bitmap_show_error_open); }
+        if (!m_show_error_info_state) { m_show_error_info_state = true; m_static_bitmap_show_error->SetGlyph(MaterialIcon::ExpandLess, m_self->FromDIP(14)); }
+        else { m_show_error_info_state = false; m_static_bitmap_show_error->SetGlyph(MaterialIcon::ExpandMore, m_self->FromDIP(14)); }
         wxCommandEvent* evt = new wxCommandEvent(EVT_SHOW_ERROR_INFO);
         wxQueueEvent(this->m_self->GetParent(), evt);
     });
@@ -96,9 +113,9 @@ BBLStatusBarPrint::BBLStatusBarPrint(wxWindow *parent, int id)
     m_static_bitmap_show_error->Hide();
     m_static_bitmap_show_error->Bind(wxEVT_ENTER_WINDOW, [this](auto& e) {this->m_self->SetCursor(wxCURSOR_HAND); });
     m_static_bitmap_show_error->Bind(wxEVT_LEAVE_WINDOW, [this](auto& e) {this->m_self->SetCursor(wxCURSOR_ARROW); });
-    m_static_bitmap_show_error->Bind(wxEVT_LEFT_DOWN, [this](auto& e) {
-        if (!m_show_error_info_state) {m_show_error_info_state = true;m_static_bitmap_show_error->SetBitmap(m_bitmap_show_error_close);}
-        else {m_show_error_info_state = false;m_static_bitmap_show_error->SetBitmap(m_bitmap_show_error_open);}
+    m_static_bitmap_show_error->Bind(wxEVT_BUTTON, [this](auto& e) {
+        if (!m_show_error_info_state) {m_show_error_info_state = true;m_static_bitmap_show_error->SetGlyph(MaterialIcon::ExpandLess, m_self->FromDIP(14));}
+        else {m_show_error_info_state = false;m_static_bitmap_show_error->SetGlyph(MaterialIcon::ExpandMore, m_self->FromDIP(14));}
         wxCommandEvent* evt = new wxCommandEvent(EVT_SHOW_ERROR_INFO);
         wxQueueEvent(this->m_self->GetParent(), evt);
     });
@@ -108,7 +125,7 @@ BBLStatusBarPrint::BBLStatusBarPrint(wxWindow *parent, int id)
     m_sizer_status_text->Add(m_static_bitmap_show_error, 0, wxALIGN_CENTER, 0);
 
 
-    m_prog = new wxGauge(m_self, wxID_ANY, 100, wxDefaultPosition, wxSize(-1, m_self->FromDIP(6)), wxGA_HORIZONTAL);
+    m_prog = new ProgressBar(m_self, wxID_ANY, 100, wxDefaultPosition, wxSize(-1, m_self->FromDIP(6)));
     m_prog->SetMinSize(wxSize(m_self->FromDIP(550), m_self->FromDIP(6)));
     m_prog->SetMaxSize(wxSize(m_self->FromDIP(550), m_self->FromDIP(6)));
     m_prog->SetValue(0);

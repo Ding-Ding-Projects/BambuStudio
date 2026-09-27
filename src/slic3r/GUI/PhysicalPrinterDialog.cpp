@@ -1,4 +1,5 @@
 #include "PhysicalPrinterDialog.hpp"
+#include "Widgets/TextInput.hpp"
 #include "PresetComboBoxes.hpp"
 
 #include <cstddef>
@@ -32,6 +33,8 @@
 #include "BitmapCache.hpp"
 #include "BonjourDialog.hpp"
 #include "MsgDialog.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
+#include "Widgets/Label.hpp"
 
 namespace Slic3r {
 namespace GUI {
@@ -57,7 +60,7 @@ PhysicalPrinterDialog::PhysicalPrinterDialog(wxWindow* parent) :
 
     auto input_sizer = new wxBoxSizer(wxVERTICAL);
 
-    wxStaticText *label_top = new wxStaticText(this, wxID_ANY, from_u8((boost::format(_utf8(L("Save %s as"))) % into_u8(tab->title())).str()));
+    wxStaticText *label_top = new Label(this, from_u8((boost::format(_utf8(L("Save %s as"))) % into_u8(tab->title())).str()));
     label_top->SetFont(::Label::Body_13);
     label_top->SetForegroundColour(wxColour(38,46,48));
 
@@ -67,9 +70,8 @@ PhysicalPrinterDialog::PhysicalPrinterDialog(wxWindow* parent) :
     wxBoxSizer *input_sizer_h = new wxBoxSizer(wxHORIZONTAL);
     wxBoxSizer *input_sizer_v = new wxBoxSizer(wxVERTICAL);
 
-    m_input_ctrl = new wxTextCtrl(m_input_area, -1, from_u8(preset_name), wxDefaultPosition, wxSize(FromDIP(360), -1), 0 | wxBORDER_NONE);
-    m_input_ctrl->SetBackgroundColour(*wxWHITE);
-    m_input_ctrl->Bind(wxEVT_TEXT, [this](wxCommandEvent &) { update(); });
+    m_input_ctrl = new TextInput(m_input_area, from_u8(preset_name), "", "", wxDefaultPosition, wxSize(FromDIP(360), -1), wxBORDER_NONE);
+    m_input_ctrl->GetTextCtrl()->Bind(wxEVT_TEXT, [this](wxCommandEvent &) { update(); });
 
     input_sizer_v->Add(m_input_ctrl, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT, BORDER_W);
     input_sizer_h->Add(input_sizer_v, 0, wxALIGN_CENTER, 0);
@@ -77,7 +79,7 @@ PhysicalPrinterDialog::PhysicalPrinterDialog(wxWindow* parent) :
     m_input_area->SetSizer(input_sizer_h);
     m_input_area->Layout();
 
-    m_valid_label = new wxStaticText(this, wxID_ANY, "");
+    m_valid_label = new Label(this, "");
     m_valid_label->SetForegroundColour(wxColor(255, 111, 0));
 
     input_sizer->Add(label_top, 0, wxEXPAND | wxLEFT | wxTOP | wxBOTTOM, BORDER_W);
@@ -99,9 +101,7 @@ PhysicalPrinterDialog::PhysicalPrinterDialog(wxWindow* parent) :
                             std::pair<wxColour, int>(*wxWHITE, StateColor::Normal));
 
     m_button_ok = new Button(this, _L("OK"));
-    m_button_ok->SetBackgroundColor(btn_bg_green);
-    m_button_ok->SetBorderColor(*wxWHITE);
-    m_button_ok->SetTextColor(*wxWHITE);
+    m_button_ok->SetVariant(Button::Variant::Filled);
     m_button_ok->SetFont(Label::Body_12);
     m_button_ok->SetSize(wxSize(FromDIP(58), FromDIP(24)));
     m_button_ok->SetMinSize(wxSize(FromDIP(58), FromDIP(24)));
@@ -110,8 +110,7 @@ PhysicalPrinterDialog::PhysicalPrinterDialog(wxWindow* parent) :
     m_button_ok->Bind(wxEVT_LEFT_DOWN, &PhysicalPrinterDialog::OnOK, this);
 
     m_button_cancel = new Button(this, _L("Cancel"));
-    m_button_cancel->SetBackgroundColor(btn_bg_white);
-    m_button_cancel->SetBorderColor(wxColour(38, 46, 48));
+    m_button_cancel->SetVariant(Button::Variant::Outlined);
     m_button_cancel->SetFont(Label::Body_12);
     m_button_cancel->SetSize(wxSize(FromDIP(58), FromDIP(24)));
     m_button_cancel->SetMinSize(wxSize(FromDIP(58), FromDIP(24)));
@@ -134,8 +133,9 @@ PhysicalPrinterDialog::PhysicalPrinterDialog(wxWindow* parent) :
 
     SetSizer(topSizer);
     topSizer->SetSizeHints(this);
-    this->CenterOnParent();
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
+    this->CenterOnParent();
 }
 
 PhysicalPrinterDialog::~PhysicalPrinterDialog()
@@ -263,7 +263,7 @@ void PhysicalPrinterDialog::build_printhost_settings(ConfigOptionsGroup* m_optgr
         Line cafile_hint{ "", "" };
         cafile_hint.full_width = 1;
         cafile_hint.widget = [ca_file_hint](wxWindow* parent) {
-            auto txt = new wxStaticText(parent, wxID_ANY, ca_file_hint);
+            auto txt = new Label(parent, ca_file_hint);
             auto sizer = new wxBoxSizer(wxHORIZONTAL);
             sizer->Add(txt);
             return sizer;
@@ -281,7 +281,7 @@ void PhysicalPrinterDialog::build_printhost_settings(ConfigOptionsGroup* m_optgr
                 "\n\t" + _u8L("To use a custom CA file, please import your CA file into Certificate Store / Keychain.");
 
             //auto txt = new wxStaticText(parent, wxID_ANY, from_u8((boost::format("%1%\n\n\t%2%") % info % ca_file_hint).str()));
-            auto txt = new wxStaticText(parent, wxID_ANY, from_u8((boost::format("%1%\n\t%2%") % info % ca_file_hint).str()));
+            auto txt = new Label(parent, from_u8((boost::format("%1%\n\t%2%") % info % ca_file_hint).str()));
             txt->SetFont(wxGetApp().normal_font());
             auto sizer = new wxBoxSizer(wxHORIZONTAL);
             sizer->Add(txt, 1, wxEXPAND|wxALIGN_LEFT);
@@ -347,7 +347,7 @@ void PhysicalPrinterDialog::update_printhost_buttons()
 }
 
 void PhysicalPrinterDialog::update_preset_input() {
-    m_preset_name = into_u8(m_input_ctrl->GetValue());
+    m_preset_name = into_u8(m_input_ctrl->GetTextCtrl()->GetValue());
 
     m_valid_type = Valid;
     wxString info_line;

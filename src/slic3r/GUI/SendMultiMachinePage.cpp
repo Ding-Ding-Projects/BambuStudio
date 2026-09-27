@@ -5,13 +5,110 @@
 #include "GUI_App.hpp"
 #include "MainFrame.hpp"
 #include "Widgets/RadioBox.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 #include <wx/listimpl.cpp>
 
 #include "DeviceCore/DevManager.h"
+#include "DeviceCore/DevMappingNozzle.h"
+#include "DeviceCore/FarmDevicePolicy.hpp"
 #include "DeviceCore/DevStorage.h"
+#include "Widgets/Label.hpp"
+#include <algorithm>
+#include <cmath>
 
 namespace Slic3r {
 namespace GUI {
+
+struct FarmNozzlePayload {
+    std::string mapping;
+    std::string info;
+};
+
+static bool build_farm_nozzle_payload(MachineObject *device, Plater *plater, int plate_index,
+                                      FarmNozzlePayload &payload, wxString &reason)
+{
+    payload = {};
+    if (!farm_requires_nozzle_mapping(device->GetExtderSystem()->GetTotalExtderCount(),
+                                      device->printer_type == "O1D")) return true;
+
+    if (plate_index == PLATE_ALL_IDX) {
+        reason = _L("Multi-plate sending cannot prove one nozzle mapping for every plate. Send plates separately.");
+        return false;
+    }
+    auto *bundle = wxGetApp().preset_bundle;
+    auto *plate = plater ? (plate_index >= 0 ? plater->get_partplate_list().get_plate(plate_index) :
+                                               plater->get_partplate_list().get_curr_plate()) : nullptr;
+    if (!bundle || !plate) {
+        reason = _L("The plate's nozzle mapping is unavailable. Use the single-printer send flow.");
+        return false;
+    }
+    if (plate != plater->get_partplate_list().get_curr_plate()) {
+        reason = _L("Select this plate before sending so its nozzle and material mappings can be checked.");
+        return false;
+    }
+
+    const auto maps = plate->get_real_filament_maps(bundle->project_config);
+    const auto used_filaments = plate->get_used_filaments();
+    if (!farm_plate_nozzles_valid(maps, used_filaments)) {
+        reason = _L("The plate has an incomplete left/right nozzle assignment. Review it before sending.");
+        return false;
+    }
+
+    const auto *diameters = bundle->printers.get_edited_preset().config.option<ConfigOptionFloatsNullable>("nozzle_diameter");
+    const auto *flows = bundle->project_config.option<ConfigOptionEnumsGeneric>("nozzle_volume_type");
+    if (!diameters || !flows || diameters->size() != 2 || flows->size() != 2) {
+        reason = _L("Two matching nozzle presets are required for this printer. Use the single-printer send flow.");
+        return false;
+    }
+
+    json info = json::array();
+    for (size_t index = 0; index < 2; ++index) {
+        const double diameter = diameters->get_at(index);
+        const auto flow = static_cast<NozzleVolumeType>(flows->get_at(index));
+        if (!std::isfinite(diameter) || diameter <= 0 ||
+            (flow != nvtStandard && flow != nvtHighFlow && flow != nvtTPUHighFlow &&
+             flow != nvtE3DHighFlow && flow != nvtHybrid)) {
+            reason = _L("A nozzle diameter or flow type is invalid. Review the printer preset before sending.");
+            return false;
+        }
+        info.push_back({{"id", index == 0 ? CloudTaskNozzleId::NOZZLE_LEFT : CloudTaskNozzleId::NOZZLE_RIGHT},
+                        {"type", nullptr}, {"flowSize", get_nozzle_volume_type_cloud_string(flow)},
+                        {"diameter", diameter}});
+    }
+    payload.info = info.dump();
+
+    auto rack = device->GetNozzleRack();
+    if (rack && rack->IsSupported()) {
+        const auto &controller = device->get_nozzle_mapping_result();
+        if (!controller || !controller->HasResult() || controller->GetResultStr() == "fail" ||
+            controller->GetResultStr() == "failed") {
+            reason = _L("The printer has no current nozzle mapping result. Refresh it in the single-printer send flow.");
+            return false;
+        }
+        const auto mapping = controller->GetNozzleMappingJson();
+        if (!mapping.is_array() || mapping.empty() || mapping.size() > 128 ||
+            !std::all_of(mapping.begin(), mapping.end(), [](const json &entry) {
+                return entry.is_number_integer() && entry.get<int>() >= -1 && entry.get<int>() < 0x20;
+            })) {
+            reason = _L("The printer returned an invalid nozzle mapping. Refresh it before sending.");
+            return false;
+        }
+        controller->SetPlater(plater);
+        for (int filament : used_filaments) {
+            const auto mapped_nozzles = controller->GetMappedNozzlePosVecByFilaId(filament - 1);
+            if (mapped_nozzles.empty() ||
+                !std::all_of(mapped_nozzles.begin(), mapped_nozzles.end(), [device](int position) {
+                    return position >= 0 && position < 0x20 &&
+                           device->GetNozzleSystem()->GetNozzleByPosId(position).IsNormal();
+                })) {
+                reason = _L("The printer's nozzle mapping does not cover every used material. Refresh it before sending.");
+                return false;
+            }
+        }
+        payload.mapping = mapping.dump();
+    }
+    return true;
+}
 
 #define MATERIAL_ITEM_SIZE wxSize(FromDIP(64), FromDIP(34))
 #define MATERIAL_ITEM_REAL_SIZE wxSize(FromDIP(62), FromDIP(32))
@@ -33,7 +130,7 @@ public:
 SendDeviceItem::SendDeviceItem(wxWindow* parent,  MachineObject* obj)
     : DeviceItem(parent, obj)
 {
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_bitmap_check_disable = ScalableBitmap(this, "check_off_disabled", 18);
     m_bitmap_check_off = ScalableBitmap(this, "check_off_focused", 18);
     m_bitmap_check_on = ScalableBitmap(this, "check_on", 18);
@@ -57,7 +154,7 @@ void SendDeviceItem::DrawTextWithEllipsis(wxDC& dc, const wxString& text, int ma
     wxFont font = dc.GetFont();
 
     wxSize textSize = dc.GetTextExtent(text);
-    dc.SetTextForeground(StateColor::darkModeColorFor(wxColour(50, 58, 61)));
+    dc.SetTextForeground(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     int textWidth = textSize.GetWidth();
 
     if (textWidth > maxWidth) {
@@ -106,6 +203,7 @@ void SendDeviceItem::OnLeaveWindow(wxMouseEvent& evt)
 
 void SendDeviceItem::OnSelectedDevice(wxCommandEvent& evt)
 {
+    if (state_selected == 2) return;
     auto dev_id = evt.GetString();
     auto state = evt.GetInt();
     if (state == 0) {
@@ -128,7 +226,7 @@ void SendDeviceItem::OnLeftDown(wxMouseEvent& evt)
         mouse_pos.y > item.y &&
         mouse_pos.y < (item.y + DEVICE_ITEM_MAX_HEIGHT)) {
 
-        if (state_printable <= 2 && state_local_task > 1) {
+        if (state_selected != 2 && state_printable <= 2 && state_local_task > 1) {
              post_event(wxCommandEvent(EVT_MULTI_DEVICE_SELECTED));
         }
     }
@@ -187,7 +285,7 @@ void SendDeviceItem::doRender(wxDC& dc)
 
 
     //checkbox
-    if (state_printable > 2) {
+    if (state_printable > 2 || state_selected == 2) {
         dc.DrawBitmap(m_bitmap_check_disable.bmp(), wxPoint(left, (size.y - m_bitmap_check_disable.GetBmpSize().y) / 2 ));
     }
     else {
@@ -212,16 +310,16 @@ void SendDeviceItem::doRender(wxDC& dc)
 
     //device state
     if (state_printable <= 2) {
-        dc.SetTextForeground(wxColour(0, 174, 66));
+        dc.SetTextForeground(StateColor::semantic(MD3::Role::Primary));
     }
     else {
-        dc.SetTextForeground(wxColour(208, 27, 27));
+        dc.SetTextForeground(StateColor::semantic(MD3::Role::Error));
     }
 
     DrawTextWithEllipsis(dc, get_state_printable(), FromDIP(SEND_LEFT_DEV_NAME), left);
     left += FromDIP(SEND_LEFT_DEV_STATUS);
 
-    dc.SetTextForeground(*wxBLACK);
+    dc.SetTextForeground(StateColor::semantic(MD3::Role::OnSurface));
 
     //task state
     //DrawTextWithEllipsis(dc, get_local_state_task(), FromDIP(SEND_LEFT_DEV_NAME), left);
@@ -237,7 +335,7 @@ void SendDeviceItem::doRender(wxDC& dc)
     }
 
     if (m_hover) {
-        dc.SetPen(wxPen(wxColour(0, 174, 66)));
+        dc.SetPen(wxPen(StateColor::semantic(MD3::Role::Primary)));
         dc.SetBrush(*wxTRANSPARENT_BRUSH);
         dc.DrawRoundedRectangle(0, 0, size.x, size.y, 3);
     }
@@ -267,7 +365,7 @@ SendMultiMachinePage::SendMultiMachinePage(Plater* plater)
 
     app_config = get_app_config();
 
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
     // icon
     std::string icon_path = (boost::format("%1%/images/BambuStudioTitle.ico") % resources_dir()).str();
     SetIcon(wxIcon(encode_path(icon_path.c_str()), wxBITMAP_TYPE_ICO));
@@ -275,12 +373,12 @@ SendMultiMachinePage::SendMultiMachinePage(Plater* plater)
     wxBoxSizer* main_sizer = new wxBoxSizer(wxVERTICAL);
 
     auto line_top = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 1), wxTAB_TRAVERSAL);
-    line_top->SetBackgroundColour(wxColour(166, 169, 170));
+    line_top->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
     main_sizer->Add(line_top, 0, wxEXPAND, 0);
     main_sizer->AddSpacer(FromDIP(10));
 
     m_main_scroll = new ScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL);
-    m_main_scroll->SetBackgroundColour(*wxWHITE);
+    m_main_scroll->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_main_scroll->SetScrollRate(5, 5);
 
     m_sizer_body = new wxBoxSizer(wxVERTICAL);
@@ -296,7 +394,6 @@ SendMultiMachinePage::SendMultiMachinePage(Plater* plater)
     SetSizer(main_sizer);
     Layout();
     Fit();
-    Centre(wxBOTH);
 
     m_mapping_popup = new AmsMapingPopup(m_main_page);
     Bind(EVT_SET_FINISH_MAPPING, &SendMultiMachinePage::on_set_finish_mapping, this);
@@ -307,6 +404,8 @@ SendMultiMachinePage::SendMultiMachinePage(Plater* plater)
     init_timer();
     Bind(wxEVT_TIMER, &SendMultiMachinePage::on_timer, this);
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
+    Centre(wxBOTH);
 }
 
 SendMultiMachinePage::~SendMultiMachinePage()
@@ -380,7 +479,7 @@ void SendMultiMachinePage::refresh_user_device()
         return;
     }
 
-    auto all_machine = dev->get_my_cloud_machine_list();
+    auto all_machine = dev->get_farm_machine_list();
     auto user_machine = std::map<std::string, MachineObject*>();
 
     //selected machine
@@ -502,6 +601,17 @@ BBL::PrintParams SendMultiMachinePage::request_params(MachineObject* obj)
     params.dev_name = obj->get_dev_name();
     params.ftp_folder = obj->get_ftp_folder();
     params.connection_type = obj->connection_type();
+    if (params.connection_type == "lan") {
+        params.username = "bblp";
+        params.password = obj->get_access_code();
+#if !BBL_RELEASE_TO_PUBLIC
+        params.use_ssl_for_ftp = app_config->get("enable_ssl_for_ftp") == "true";
+        params.use_ssl_for_mqtt = app_config->get("enable_ssl_for_mqtt") == "true";
+#else
+        params.use_ssl_for_ftp = obj->local_use_ssl_for_ftp;
+        params.use_ssl_for_mqtt = obj->local_use_ssl_for_mqtt;
+#endif
+    }
     params.print_type = "from_normal";
     params.filename =  job_data._3mf_path.string();
     params.config_filename = job_data._3mf_config_path.string();
@@ -587,25 +697,7 @@ BBL::PrintParams SendMultiMachinePage::request_params(MachineObject* obj)
 
 
 
-    // check access code and ip address
-    if (obj->connection_type() == "lan") {
-        /*params.dev_id = m_dev_id;
-        params.project_name = "verify_job";
-        params.filename = job_data._temp_path.string();
-        params.connection_type = this->connection_type;
-
-        result = m_agent->start_send_gcode_to_sdcard(params, nullptr, nullptr, nullptr);
-        if (result != 0) {
-            BOOST_LOG_TRIVIAL(error) << "access code is invalid";
-            m_enter_ip_address_fun_fail();
-            m_job_finished = true;
-            return;
-        }
-
-        params.project_name = "";
-        params.filename = "";*/
-    }
-    else {
+    if (obj->connection_type() != "lan") {
         if (params.dev_ip.empty())
             params.comments = "no_ip";
         else if (obj->is_support_cloud_print_only)
@@ -645,7 +737,7 @@ bool SendMultiMachinePage::get_ams_mapping_result(std::string &mapping_array_str
         if (plater) {
             PartPlate *curr_plate = plater->get_partplate_list().get_curr_plate();
             if (curr_plate) {
-                filament_maps = curr_plate->get_filament_maps();
+                filament_maps = curr_plate->get_real_filament_maps(wxGetApp().preset_bundle->project_config);
             } else {
                 BOOST_LOG_TRIVIAL(error) << "get_ams_mapping_result, curr_plate is nullptr";
             }
@@ -673,7 +765,13 @@ bool SendMultiMachinePage::get_ams_mapping_result(std::string &mapping_array_str
                         if (it != nullptr) { mapping_item["filamentId"] = it->filament_id; }
                     }
                     /* nozzle id */
-                    mapping_item["nozzleId"] = 0;
+                    if (i < filament_maps.size()) {
+                        if (filament_maps[i] == 1) mapping_item["nozzleId"] = CloudTaskNozzleId::NOZZLE_LEFT;
+                        else if (filament_maps[i] == 2) mapping_item["nozzleId"] = CloudTaskNozzleId::NOZZLE_RIGHT;
+                        else mapping_item["nozzleId"] = CloudTaskNozzleId::NOZZLE_RIGHT;
+                    } else {
+                        mapping_item["nozzleId"] = CloudTaskNozzleId::NOZZLE_RIGHT;
+                    }
 
                     // convert #RRGGBB to RRGGBBAA
                     mapping_item["sourceColor"] = m_filaments[k].color;
@@ -709,6 +807,35 @@ void SendMultiMachinePage::on_send(wxCommandEvent& event)
 {
     event.Skip();
     BOOST_LOG_TRIVIAL(info) << "SendMultiMachinePage: on_send";
+
+    // Keep the original selection even if a device refresh changes its checkbox while
+    // the common print file is being prepared. Every selected device needs an outcome.
+    std::vector<std::string> selected_device_ids;
+    for (const auto& entry : m_device_items) {
+        auto* obj = entry.second->get_obj();
+        if (entry.second->get_state_selected() != 1) continue;
+        selected_device_ids.push_back(entry.first);
+        if (!obj) continue;
+        wxString reason;
+        FarmNozzlePayload nozzle_payload;
+        build_farm_nozzle_payload(obj, m_plater, m_print_plate_idx, nozzle_payload, reason);
+        if (reason.IsEmpty() && obj->is_lan_mode_printer()) {
+            auto* agent = wxGetApp().getDeviceManager() ? wxGetApp().getDeviceManager()->get_agent() : nullptr;
+            const auto readiness = farm_lan_readiness(obj->has_access_right(), !obj->get_access_code().empty(),
+                !obj->get_dev_ip().empty(), agent && agent->can_start_local_print());
+            if (readiness == FarmLanReadiness::PairingRequired)
+                reason = _L("Pair this LAN printer with its access code before sending.");
+            else if (readiness == FarmLanReadiness::AddressMissing)
+                reason = _L("This LAN printer has no local address. Reconnect it before sending.");
+            else if (readiness == FarmLanReadiness::TransportUnavailable)
+                reason = _L("Direct LAN printing is unavailable in the installed networking module.");
+        }
+        if (!reason.IsEmpty()) {
+            MessageDialog dialog(nullptr, wxString::FromUTF8(obj->get_dev_name()) + ": " + reason, "", wxICON_WARNING | wxOK);
+            dialog.ShowModal();
+            return;
+        }
+    }
 
     int result = m_plater->send_gcode(m_print_plate_idx, [this](int export_stage, int current, int total, bool& cancel) {
         if (m_is_canceled) return;
@@ -746,16 +873,57 @@ void SendMultiMachinePage::on_send(wxCommandEvent& event)
 
     std::vector<BBL::PrintParams> print_params;
 
-    for (auto it = m_device_items.begin(); it != m_device_items.end(); ++it) {
-        auto obj = it->second->get_obj();
-
-        if (obj && obj->is_online() && !obj->can_abort() && !obj->is_in_upgrading() && it->second->get_state_selected() == 1 && it->second->state_printable <= 2) {
-
-            if (!it->second->is_blocking_printing(obj)) {
-                BBL::PrintParams params = request_params(obj);
-                print_params.push_back(params);
-            }
+    auto* device_manager = wxGetApp().getDeviceManager();
+    const auto current_devices = device_manager ? device_manager->get_farm_machine_list()
+                                                : std::map<std::string, MachineObject*>();
+    for (const auto& device_id : selected_device_ids) {
+        auto item = m_device_items.find(device_id);
+        auto device = current_devices.find(device_id);
+        auto* obj = device != current_devices.end() ? device->second : nullptr;
+        wxString name = item != m_device_items.end()
+            ? wxString::FromUTF8(item->second->get_state_dev_name())
+            : wxString::FromUTF8(device_id);
+        wxString reason;
+        if (!obj || item == m_device_items.end())
+            reason = _L("This selected printer is no longer available. Refresh the device list before sending.");
+        else if (!obj->is_online())
+            reason = _L("This selected printer went offline while preparing the print file.");
+        else if (obj->can_abort() || obj->is_in_printing())
+            reason = _L("This selected printer became busy while preparing the print file.");
+        else if (obj->is_in_upgrading())
+            reason = _L("This selected printer started upgrading while preparing the print file.");
+        else if (item->second->is_blocking_printing(obj))
+            reason = _L("This selected printer is incompatible with the current printer preset.");
+        else if (obj->print_status != "IDLE" && obj->print_status != "FINISH" &&
+                 obj->print_status != "FAILED")
+            reason = _L("This selected printer is no longer ready to print. Refresh its status before sending.");
+        if (reason.IsEmpty() && obj->is_lan_mode_printer()) {
+            auto* agent = device_manager ? device_manager->get_agent() : nullptr;
+            const auto readiness = farm_lan_readiness(obj->has_access_right(), !obj->get_access_code().empty(),
+                !obj->get_dev_ip().empty(), agent && agent->can_start_local_print());
+            if (readiness == FarmLanReadiness::PairingRequired)
+                reason = _L("Pair this LAN printer with its access code before sending.");
+            else if (readiness == FarmLanReadiness::AddressMissing)
+                reason = _L("This LAN printer has no local address. Reconnect it before sending.");
+            else if (readiness == FarmLanReadiness::TransportUnavailable)
+                reason = _L("Direct LAN printing is unavailable in the installed networking module.");
         }
+        if (!reason.IsEmpty()) {
+            MessageDialog dialog(nullptr, name + ": " + reason, "", wxICON_WARNING | wxOK);
+            dialog.ShowModal();
+            return;
+        }
+
+        FarmNozzlePayload nozzle_payload;
+        if (!build_farm_nozzle_payload(obj, m_plater, m_print_plate_idx, nozzle_payload, reason)) {
+            MessageDialog dialog(nullptr, name + ": " + reason, "", wxICON_WARNING | wxOK);
+            dialog.ShowModal();
+            return;
+        }
+        BBL::PrintParams params = request_params(obj);
+        params.nozzle_mapping = nozzle_payload.mapping;
+        params.nozzles_info = nozzle_payload.info;
+        print_params.push_back(params);
     }
 
 
@@ -827,7 +995,7 @@ wxBoxSizer* SendMultiMachinePage::create_item_title(wxString title, wxWindow* pa
 {
     wxBoxSizer* m_sizer_title = new wxBoxSizer(wxHORIZONTAL);
 
-    auto m_title = new wxStaticText(parent, wxID_ANY, title, wxDefaultPosition, wxDefaultSize, 0);
+    auto m_title = new Label(parent, title);
     m_title->SetForegroundColour(ThemeColor::TextSecondary);
     m_title->SetFont(::Label::Head_13);
     m_title->Wrap(-1);
@@ -856,7 +1024,7 @@ wxBoxSizer* SendMultiMachinePage::create_item_checkbox(wxString title, wxWindow*
     m_sizer_checkbox->Add(checkbox, 0, wxALIGN_CENTER, 0);
     m_sizer_checkbox->Add(0, 0, 0, wxEXPAND | wxLEFT, 8);
 
-    auto checkbox_title = new wxStaticText(parent, wxID_ANY, title, wxDefaultPosition, wxDefaultSize, 0);
+    auto checkbox_title = new Label(parent, title);
     checkbox_title->SetForegroundColour(ThemeColor::TextPrimary);
     checkbox_title->SetFont(::Label::Body_13);
 
@@ -880,20 +1048,20 @@ wxBoxSizer* SendMultiMachinePage::create_item_checkbox(wxString title, wxWindow*
 wxBoxSizer* SendMultiMachinePage::create_item_input(wxString str_before, wxString str_after, wxWindow* parent, wxString tooltip, std::string param)
 {
     wxBoxSizer* sizer_input = new wxBoxSizer(wxHORIZONTAL);
-    auto input_title = new wxStaticText(parent, wxID_ANY, str_before);
+    auto input_title = new Label(parent, str_before);
     input_title->SetForegroundColour(ThemeColor::TextPrimary);
     input_title->SetFont(::Label::Body_13);
     input_title->SetToolTip(tooltip);
     input_title->Wrap(-1);
 
     auto input = new ::TextInput(parent, wxEmptyString, wxEmptyString, wxEmptyString, wxDefaultPosition, wxSize(FromDIP(INPUT_WIDTH), -1), wxTE_PROCESS_ENTER);
-    StateColor input_bg(std::pair<wxColour, int>(wxColour("#F0F0F1"), StateColor::Disabled), std::pair<wxColour, int>(*wxWHITE, StateColor::Enabled));
+    StateColor input_bg(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainer), StateColor::Disabled), std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerLowest), StateColor::Enabled));
     input->SetBackgroundColor(input_bg);
     input->GetTextCtrl()->SetValue(app_config->get(param));
     wxTextValidator validator(wxFILTER_DIGITS);
     input->GetTextCtrl()->SetValidator(validator);
 
-    auto second_title = new wxStaticText(parent, wxID_ANY, str_after, wxDefaultPosition, wxDefaultSize, wxST_ELLIPSIZE_END);
+    auto second_title = new Label(parent, str_after, wxST_ELLIPSIZE_END);
     second_title->SetForegroundColour(ThemeColor::TextPrimary);
     second_title->SetFont(::Label::Body_13);
     second_title->SetToolTip(tooltip);
@@ -928,7 +1096,7 @@ wxBoxSizer* SendMultiMachinePage::create_item_radiobox(wxString title, wxWindow*
     wxBoxSizer* radiobox_sizer = new wxBoxSizer(wxHORIZONTAL);
 
     RadioBox* radiobox = new RadioBox(parent);
-    radiobox->SetBackgroundColour(wxColour(248, 248, 248));
+    radiobox->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
     radiobox->Bind(wxEVT_LEFT_DOWN, &SendMultiMachinePage::OnSelectRadio, this);
 
     AmsRadioSelector* rs = new AmsRadioSelector;
@@ -938,7 +1106,7 @@ wxBoxSizer* SendMultiMachinePage::create_item_radiobox(wxString title, wxWindow*
     rs->m_selected = false;
     m_radio_group.Append(rs);
 
-    wxStaticText* text = new wxStaticText(parent, wxID_ANY, title, wxDefaultPosition, wxDefaultSize);
+    wxStaticText* text = new Label(parent, title);
     radiobox_sizer->Add(radiobox, 0, wxLEFT, FromDIP(23));
     radiobox_sizer->Add(text, 0, wxLEFT, FromDIP(10));
     radiobox->SetToolTip(tooltip);
@@ -1074,12 +1242,12 @@ void SendMultiMachinePage::on_set_finish_mapping(wxCommandEvent& evt)
 wxPanel* SendMultiMachinePage::create_page()
 {
     auto main_page = new wxPanel(m_main_scroll, wxID_ANY, wxDefaultPosition, wxDefaultSize);
-    main_page->SetBackgroundColour(*wxWHITE);
+    main_page->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
 
     // add title
     m_title_panel = new wxPanel(main_page, wxID_ANY, wxDefaultPosition, wxDefaultSize);
-    m_title_panel->SetBackgroundColour(*wxWHITE);
+    m_title_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_title_sizer = new wxBoxSizer(wxHORIZONTAL);
 
     m_rename_switch_panel = new wxSimplebook(m_title_panel);
@@ -1087,16 +1255,16 @@ wxPanel* SendMultiMachinePage::create_page()
     m_rename_switch_panel->SetMaxSize(wxSize(FromDIP(240), FromDIP(25)));
 
     m_rename_normal_panel = new wxPanel(m_rename_switch_panel, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
-    m_rename_normal_panel->SetBackgroundColour(*wxWHITE);
+    m_rename_normal_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     rename_sizer_v = new wxBoxSizer(wxVERTICAL);
     rename_sizer_h = new wxBoxSizer(wxHORIZONTAL);
 
-    m_task_name = new wxStaticText(m_rename_normal_panel, wxID_ANY, wxT("MyLabel"), wxDefaultPosition, wxDefaultSize, wxST_ELLIPSIZE_END | wxALIGN_CENTRE);
+    m_task_name = new Label(m_rename_normal_panel, wxT("MyLabel"), wxST_ELLIPSIZE_END | wxALIGN_CENTRE);
     m_task_name->SetFont(::Label::Body_13);
     m_task_name->SetMinSize(wxSize(FromDIP(200), -1));
     m_task_name->SetMaxSize(wxSize(FromDIP(200), -1));
     m_rename_button = new ScalableButton(m_rename_normal_panel, wxID_ANY, "ams_editable");
-    m_rename_button->SetBackgroundColour(*wxWHITE);
+    m_rename_button->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     rename_sizer_h->Add(m_task_name, 0, wxALIGN_CENTER, 0);
     rename_sizer_h->Add(m_rename_button, 0, wxALIGN_CENTER, 0);
     rename_sizer_v->Add(rename_sizer_h, 1, wxALIGN_CENTER, 0);
@@ -1106,7 +1274,7 @@ wxPanel* SendMultiMachinePage::create_page()
 
     //rename edit
     m_rename_edit_panel = new wxPanel(m_rename_switch_panel, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
-    m_rename_edit_panel->SetBackgroundColour(*wxWHITE);
+    m_rename_edit_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     auto rename_edit_sizer_v = new wxBoxSizer(wxVERTICAL);
 
     m_rename_input = new ::TextInput(m_rename_edit_panel, wxEmptyString, wxEmptyString, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER);
@@ -1167,7 +1335,7 @@ wxPanel* SendMultiMachinePage::create_page()
     print_time = new ScalableBitmap(m_title_panel, "print-time", 18);
     timeimg = new wxStaticBitmap(m_title_panel, wxID_ANY, print_time->bmp(), wxDefaultPosition, wxSize(FromDIP(18), FromDIP(18)), 0);
     m_sizer_basic_time->Add(timeimg, 1, wxEXPAND | wxALL, FromDIP(5));
-    m_stext_time = new wxStaticText(m_title_panel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxALIGN_RIGHT);
+    m_stext_time = new Label(m_title_panel, wxEmptyString, wxALIGN_RIGHT);
     m_sizer_basic_time->Add(m_stext_time, 0, wxALL, FromDIP(5));
     m_sizer_basic->Add(m_sizer_basic_time, 0, wxALIGN_CENTER, 0);
     m_sizer_basic->Add(0, 0, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(30));
@@ -1175,7 +1343,7 @@ wxPanel* SendMultiMachinePage::create_page()
     print_weight = new ScalableBitmap(m_title_panel, "print-weight", 18);
     weightimg = new wxStaticBitmap(m_title_panel, wxID_ANY, print_weight->bmp(), wxDefaultPosition, wxSize(FromDIP(18), FromDIP(18)), 0);
     m_sizer_basic_weight->Add(weightimg, 1, wxEXPAND | wxALL, FromDIP(5));
-    m_stext_weight = new wxStaticText(m_title_panel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxALIGN_LEFT);
+    m_stext_weight = new Label(m_title_panel, wxEmptyString, wxALIGN_LEFT);
     m_sizer_basic_weight->Add(m_stext_weight, 0, wxALL, FromDIP(5));
     m_sizer_basic->Add(m_sizer_basic_weight, 0, wxALIGN_CENTER, 0);
 
@@ -1208,14 +1376,14 @@ wxPanel* SendMultiMachinePage::create_page()
 
     // add table head
     StateColor head_bg(
-        std::pair<wxColour, int>(TABLE_HEAD_PRESSED_COLOUR, StateColor::Pressed),
-        std::pair<wxColour, int>(TABLE_HEAR_NORMAL_COLOUR, StateColor::Normal)
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Outline), StateColor::Pressed),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainer), StateColor::Normal)
     );
 
     m_table_head_panel = new wxPanel(main_page, wxID_ANY, wxDefaultPosition, wxDefaultSize);
     m_table_head_panel->SetMinSize(wxSize(FromDIP(DEVICE_ITEM_MAX_WIDTH), -1));
     m_table_head_panel->SetMaxSize(wxSize(FromDIP(DEVICE_ITEM_MAX_WIDTH), -1));
-    m_table_head_panel->SetBackgroundColour(TABLE_HEAR_NORMAL_COLOUR);
+    m_table_head_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
     m_table_head_sizer = new wxBoxSizer(wxHORIZONTAL);
 
     m_select_checkbox = new CheckBox(m_table_head_panel, wxID_ANY);
@@ -1226,7 +1394,7 @@ wxPanel* SendMultiMachinePage::create_page()
         if (m_select_checkbox->GetValue()) {
             for (auto it = m_device_items.begin(); it != m_device_items.end(); it++) {
 
-                if (it->second->state_printable <= 2) {
+                if (it->second->state_printable <= 2 && it->second->state_selected != 2) {
                     it->second->selected();
                 }
             }
@@ -1243,7 +1411,7 @@ wxPanel* SendMultiMachinePage::create_page()
     m_printer_name = new Button(m_table_head_panel, _L("Device Name"), "toolbar_double_directional_arrow", wxNO_BORDER, ICON_SINGLE_SIZE);
     m_printer_name->SetBackgroundColor(head_bg);
     m_printer_name->SetCornerRadius(0);
-    m_printer_name->SetFont(TABLE_HEAD_FONT);
+    m_printer_name->SetFont(Label::Head_11);
     m_printer_name->SetMinSize(wxSize(FromDIP(SEND_LEFT_DEV_NAME), FromDIP(SEND_ITEM_MAX_HEIGHT)));
     m_printer_name->SetMaxSize(wxSize(FromDIP(SEND_LEFT_DEV_NAME), FromDIP(SEND_ITEM_MAX_HEIGHT)));
     m_printer_name->SetCenter(false);
@@ -1264,7 +1432,7 @@ wxPanel* SendMultiMachinePage::create_page()
 
     m_device_status = new Button(m_table_head_panel, _L("Device Status"), "toolbar_double_directional_arrow", wxNO_BORDER, ICON_SINGLE_SIZE);
     m_device_status->SetBackgroundColor(head_bg);
-    m_device_status->SetFont(TABLE_HEAD_FONT);
+    m_device_status->SetFont(Label::Head_11);
     m_device_status->SetCornerRadius(0);
     m_device_status->SetMinSize(wxSize(FromDIP(SEND_LEFT_DEV_STATUS), FromDIP(SEND_ITEM_MAX_HEIGHT)));
     m_device_status->SetMaxSize(wxSize(FromDIP(SEND_LEFT_DEV_STATUS), FromDIP(SEND_ITEM_MAX_HEIGHT)));
@@ -1285,7 +1453,7 @@ wxPanel* SendMultiMachinePage::create_page()
 
     /*m_task_status = new Button(m_table_head_panel, _L("Task Status"), "toolbar_double_directional_arrow", wxNO_BORDER, ICON_SIZE);
     m_task_status->SetBackgroundColor(head_bg);
-    m_task_status->SetFont(TABLE_HEAD_FONT);
+    m_task_status->SetFont(Label::Head_11);
     m_task_status->SetCornerRadius(0);
     m_task_status->SetMinSize(wxSize(FromDIP(SEND_LEFT_DEV_STATUS), FromDIP(DEVICE_ITEM_MAX_HEIGHT)));
     m_task_status->SetMaxSize(wxSize(FromDIP(SEND_LEFT_DEV_STATUS), FromDIP(DEVICE_ITEM_MAX_HEIGHT)));
@@ -1308,7 +1476,7 @@ wxPanel* SendMultiMachinePage::create_page()
     m_ams = new Button(m_table_head_panel, _L("Ams Status"), "toolbar_double_directional_arrow", wxNO_BORDER, ICON_SINGLE_SIZE, false);
     m_ams->SetBackgroundColor(head_bg);
     m_ams->SetCornerRadius(0);
-    m_ams->SetFont(TABLE_HEAD_FONT);
+    m_ams->SetFont(Label::Head_11);
     m_ams->SetMinSize(wxSize(FromDIP(TASK_LEFT_SEND_TIME), FromDIP(SEND_ITEM_MAX_HEIGHT)));
     m_ams->SetMaxSize(wxSize(FromDIP(TASK_LEFT_SEND_TIME), FromDIP(SEND_ITEM_MAX_HEIGHT)));
     m_ams->SetCenter(false);
@@ -1329,7 +1497,7 @@ wxPanel* SendMultiMachinePage::create_page()
     m_refresh_button = new Button(m_table_head_panel, "", "mall_control_refresh", wxNO_BORDER, ICON_SINGLE_SIZE, false);
     m_refresh_button->SetBackgroundColor(head_bg);
     m_refresh_button->SetCornerRadius(0);
-    m_refresh_button->SetFont(TABLE_HEAD_FONT);
+    m_refresh_button->SetFont(Label::Head_11);
     m_refresh_button->SetMinSize(wxSize(FromDIP(50), FromDIP(SEND_ITEM_MAX_HEIGHT)));
     m_refresh_button->SetMaxSize(wxSize(FromDIP(50), FromDIP(SEND_ITEM_MAX_HEIGHT)));
     m_refresh_button->Bind(wxEVT_ENTER_WINDOW, [&](wxMouseEvent& evt) {
@@ -1347,7 +1515,7 @@ wxPanel* SendMultiMachinePage::create_page()
     m_table_head_panel->SetSizer(m_table_head_sizer);
     m_table_head_panel->Layout();
 
-    m_tip_text = new wxStaticText(main_page, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxALIGN_CENTER);
+    m_tip_text = new Label(main_page, wxEmptyString, wxALIGN_CENTER);
     m_tip_text->SetMinSize(wxSize(FromDIP(DEVICE_ITEM_MAX_WIDTH), -1));
     m_tip_text->SetMaxSize(wxSize(FromDIP(DEVICE_ITEM_MAX_WIDTH), -1));
     m_tip_text->SetLabel(_L("Please select the devices you would like to manage here (up to 6 devices)"));
@@ -1356,15 +1524,13 @@ wxPanel* SendMultiMachinePage::create_page()
     m_tip_text->Wrap(-1);
 
     auto m_btn_bg_enable = StateColor(
-        std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed),
-        std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-        std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal)
+        std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed),
+        std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Normal)
     );
 
     m_button_add = new Button(main_page, _L("Add"));
-    m_button_add->SetBackgroundColor(m_btn_bg_enable);
-    m_button_add->SetBorderColor(m_btn_bg_enable);
-    m_button_add->SetTextColor(*wxWHITE);
+    m_button_add->SetVariant(Button::Variant::Filled);
     m_button_add->SetFont(Label::Body_12);
     m_button_add->SetCornerRadius(6);
     m_button_add->SetMinSize(wxSize(FromDIP(90), FromDIP(36)));
@@ -1378,7 +1544,7 @@ wxPanel* SendMultiMachinePage::create_page()
     });
 
     scroll_macine_list = new wxScrolledWindow(main_page, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(800), FromDIP(300)), wxHSCROLL | wxVSCROLL);
-    scroll_macine_list->SetBackgroundColour(*wxWHITE);
+    scroll_macine_list->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     scroll_macine_list->SetScrollRate(5, 5);
     scroll_macine_list->SetMinSize(wxSize(FromDIP(DEVICE_ITEM_MAX_WIDTH), 10 * FromDIP(SEND_ITEM_MAX_HEIGHT)));
     scroll_macine_list->SetMaxSize(wxSize(FromDIP(DEVICE_ITEM_MAX_WIDTH), 10 * FromDIP(SEND_ITEM_MAX_HEIGHT)));
@@ -1418,13 +1584,11 @@ wxPanel* SendMultiMachinePage::create_page()
     sizer->AddSpacer(FromDIP(10));
 
     // add send button
-    btn_bg_enable = StateColor(std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed), std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-        std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
+    btn_bg_enable = StateColor(std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Normal));
 
     m_button_send = new Button(main_page, _L("Send"));
-    m_button_send->SetBackgroundColor(btn_bg_enable);
-    m_button_send->SetBorderColor(btn_bg_enable);
-    m_button_send->SetTextColor(StateColor::darkModeColorFor("#FFFFFE"));
+    m_button_send->SetVariant(Button::Variant::Filled);
     m_button_send->SetSize(wxSize(FromDIP(120), FromDIP(40)));
     m_button_send->SetMinSize(wxSize(FromDIP(120), FromDIP(40)));
     m_button_send->SetMinSize(wxSize(FromDIP(120), FromDIP(40)));

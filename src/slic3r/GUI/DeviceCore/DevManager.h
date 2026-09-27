@@ -81,6 +81,8 @@ public:
     /* my machine*/
     MachineObject* get_my_machine(std::string dev_id);
     std::map<std::string, MachineObject*> get_my_machine_list();
+    // Farm inventory retains remembered LAN devices while they are offline.
+    std::map<std::string, MachineObject*> get_farm_machine_list();
     std::map<std::string, MachineObject*> get_my_cloud_machine_list();
     void modify_device_name(std::string dev_id, std::string dev_name);
 

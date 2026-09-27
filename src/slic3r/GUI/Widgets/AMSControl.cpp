@@ -1,5 +1,7 @@
 #include "AMSControl.hpp"
 #include "Label.hpp"
+#include "MaterialIcon.hpp"
+#include "StateColor.hpp"
 #include "../I18N.hpp"
 #include "../GUI_App.hpp"
 
@@ -39,12 +41,12 @@ AMSControl::AMSControl(wxWindow *parent, wxWindowID id, const wxPoint &pos, cons
         parse_object(obj);
     }
 
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(ThemeColor::White);
     // normal mode
     //Freeze();
     m_sizer_body = new wxBoxSizer(wxVERTICAL);
     m_amswin                 = new wxWindow(this, wxID_ANY);
-    m_amswin->SetBackgroundColour(*wxWHITE);
+    m_amswin->SetBackgroundColour(ThemeColor::White);
     m_amswin->SetSize(wxSize(FromDIP(578), -1));
     m_amswin->SetMinSize(wxSize(FromDIP(578), -1));
 
@@ -159,8 +161,8 @@ AMSControl::AMSControl(wxWindow *parent, wxWindowID id, const wxPoint &pos, cons
     auto m_panel_option_left    = new wxPanel(m_amswin);
     auto m_panel_option_right   = new wxPanel(m_amswin);
 
-    m_panel_option_left->SetBackgroundColour(*wxWHITE);
-    m_panel_option_right->SetBackgroundColour(*wxWHITE);
+    m_panel_option_left->SetBackgroundColour(ThemeColor::White);
+    m_panel_option_right->SetBackgroundColour(ThemeColor::White);
 
     m_panel_option_left->SetSizer(m_sizer_option_left);
     m_panel_option_right->SetSizer(m_sizer_option_right);
@@ -171,27 +173,37 @@ AMSControl::AMSControl(wxWindow *parent, wxWindowID id, const wxPoint &pos, cons
     m_panel_option_right->SetMinSize(wxSize(FromDIP(180), -1));
     m_panel_option_right->SetMaxSize(wxSize(FromDIP(180), -1));
 
+    // Device-scheme primary (teal) filled button: solid Primary at rest, tonal
+    // PrimaryContainer on hover/press. Snapshots the Device tones at construction
+    // (mirrors ConnectPrinter/UpgradePanel); the tones are theme-stable so the
+    // teal is legible on both light and dark surfaces.
     StateColor btn_bg_green(std::pair<wxColour, int>(AMS_CONTROL_DISABLE_COLOUR, StateColor::Disabled),
-        std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed),
-        std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-        std::pair<wxColour, int>(AMS_CONTROL_BRAND_COLOUR, StateColor::Normal));
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::PrimaryContainer, MD3::ColorScheme::Device), StateColor::Pressed),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::PrimaryContainer, MD3::ColorScheme::Device), StateColor::Hovered),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Device), StateColor::Normal));
 
     StateColor btn_bg_white(std::pair<wxColour, int>(AMS_CONTROL_DISABLE_COLOUR, StateColor::Disabled),
         std::pair<wxColour, int>(AMS_CONTROL_DISABLE_COLOUR, StateColor::Pressed),
         std::pair<wxColour, int>(AMS_CONTROL_DEF_BLOCK_BK_COLOUR, StateColor::Hovered),
         std::pair<wxColour, int>(AMS_CONTROL_WHITE_COLOUR, StateColor::Normal));
 
+    // wxColour(255,255,254) is a deliberate near-white that dodges gDarkColors so these
+    // stay white-on-accent/grey in dark mode — do not swap for ThemeColor::White (dark-maps).
     StateColor btn_bd_green(std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Disabled),
-        std::pair<wxColour, int>(AMS_CONTROL_BRAND_COLOUR, StateColor::Enabled));
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Device), StateColor::Enabled));
 
     StateColor btn_bd_white(std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Disabled),
-        std::pair<wxColour, int>(wxColour(38, 46, 48), StateColor::Enabled));
+        std::pair<wxColour, int>(ThemeColor::TextPrimary, StateColor::Enabled));
 
+    // Near-white label on the solid teal at rest; on the tonal light-teal
+    // hover/press container the label flips to OnPrimaryContainer for contrast.
     StateColor btn_text_green(std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Disabled),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OnPrimaryContainer, MD3::ColorScheme::Device), StateColor::Pressed),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OnPrimaryContainer, MD3::ColorScheme::Device), StateColor::Hovered),
         std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Enabled));
 
     StateColor btn_text_white(std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Disabled),
-        std::pair<wxColour, int>(wxColour(38, 46, 48), StateColor::Enabled));
+        std::pair<wxColour, int>(ThemeColor::TextPrimary, StateColor::Enabled));
 
     /*option switch*/
     m_switcher = new SwitcherImage(m_amswin, wxID_ANY, "fila_switch", wxSize(FromDIP(29), FromDIP(16)), wxDefaultPosition);
@@ -209,11 +221,15 @@ AMSControl::AMSControl(wxWindow *parent, wxWindowID id, const wxPoint &pos, cons
     m_button_ams_setting_normal = ScalableBitmap(this, "ams_setting_normal", 24);
     m_button_ams_setting_hover = ScalableBitmap(this, "ams_setting_hover", 24);
     m_button_ams_setting_press = ScalableBitmap(this, "ams_setting_press", 24);
+    update_ams_setting_bitmaps();
 
-    m_button_ams_setting = new wxStaticBitmap(m_panel_option_left, wxID_ANY, m_button_ams_setting_normal.bmp(), wxDefaultPosition, wxSize(FromDIP(24), FromDIP(24)));
-    m_button_ams_setting->SetMaxSize(wxSize(FromDIP(24), FromDIP(24)));
-    m_button_ams_setting->SetMinSize(wxSize(FromDIP(24), FromDIP(24)));
-    m_button_ams_setting->SetSize(wxSize(FromDIP(24), FromDIP(24)));
+    m_button_ams_setting = new Button(m_panel_option_left, _L("AMS settings"));
+    m_button_ams_setting->SetIconButton(Button::IconShape::Circle, FromDIP(40));
+    m_button_ams_setting->SetGlyph(MaterialIcon::Settings, 24);
+    m_button_ams_setting->SetGlyphColor(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+    m_button_ams_setting->SetToolTip(_L("AMS settings"));
+    m_button_ams_setting->SetMinSize(wxSize(FromDIP(40), FromDIP(40)));
+    m_button_ams_setting->SetMaxSize(wxSize(FromDIP(40), FromDIP(40)));
     m_sizer_option_left->Add(m_button_auto_refill, 0, wxALIGN_CENTER, 0);
     m_sizer_option_left->Add(0, 0, 0, wxLEFT, FromDIP(20));
     m_sizer_option_left->Add(m_button_ams_setting, 0, wxALIGN_CENTER, 0);
@@ -237,14 +253,14 @@ AMSControl::AMSControl(wxWindow *parent, wxWindowID id, const wxPoint &pos, cons
 
     if (wxGetApp().app_config->get("language") == "de_DE") m_button_extruder_feed->SetFont(Label::Body_9);
     if (wxGetApp().app_config->get("language") == "fr_FR") m_button_extruder_feed->SetFont(Label::Body_9);
-    if (wxGetApp().app_config->get("language") == "ru_RU") m_button_extruder_feed->SetLabel("Load");
+    if (wxGetApp().app_config->get("language") == "ru_RU") m_button_extruder_feed->SetFont(Label::Body_9);
     if (wxGetApp().app_config->get("language") == "nl_NL") m_button_extruder_feed->SetFont(Label::Body_9);
     if (wxGetApp().app_config->get("language") == "hu_HU") m_button_extruder_feed->SetFont(Label::Body_9);
     if (wxGetApp().app_config->get("language") == "ja_JP") m_button_extruder_feed->SetFont(Label::Body_9);
     if (wxGetApp().app_config->get("language") == "sv_SE") m_button_extruder_feed->SetFont(Label::Body_9);
     if (wxGetApp().app_config->get("language") == "cs_CZ") m_button_extruder_feed->SetFont(Label::Body_9);
     if (wxGetApp().app_config->get("language") == "uk_UA") m_button_extruder_feed->SetFont(Label::Body_9);
-    if (wxGetApp().app_config->get("language") == "pt_BR") m_button_extruder_feed->SetLabel("Load");
+    if (wxGetApp().app_config->get("language") == "pt_BR") m_button_extruder_feed->SetFont(Label::Body_9);
 
     m_button_extruder_back = new Button(m_panel_option_right, _L("Unload"));
     m_button_extruder_back->SetBackgroundColor(btn_bg_white);
@@ -311,19 +327,8 @@ AMSControl::AMSControl(wxWindow *parent, wxWindowID id, const wxPoint &pos, cons
     m_button_extruder_back->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(AMSControl::on_filament_unload), NULL, this);
     m_button_auto_refill->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(AMSControl::auto_refill), NULL, this);
 
-    m_button_ams_setting->Bind(wxEVT_ENTER_WINDOW, [this](wxMouseEvent& e) {
-        m_button_ams_setting->SetBitmap(m_button_ams_setting_hover.bmp());
-        e.Skip();
-    });
-    m_button_ams_setting->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent& e) {
-        m_button_ams_setting->SetBitmap(m_button_ams_setting_press.bmp());
-        on_ams_setting_click(e);
-        e.Skip();
-    });
-
-    m_button_ams_setting->Bind(wxEVT_LEAVE_WINDOW, [this](wxMouseEvent& e) {
-        m_button_ams_setting->SetBitmap(m_button_ams_setting_normal.bmp());
-        e.Skip();
+    m_button_ams_setting->Bind(wxEVT_COMMAND_BUTTON_CLICKED, [this](wxCommandEvent& event) {
+        on_ams_setting_click(event);
     });
 
     Bind(EVT_AMS_SHOW_HUMIDITY_TIPS, [this](wxCommandEvent& evt) {
@@ -607,22 +612,36 @@ void AMSControl::StopRridLoading(wxString amsid, wxString canid)
     }
 }
 
+void AMSControl::update_ams_setting_bitmaps()
+{
+    // Prefer the MD3 Material Symbols 'settings' glyph, expressing rest/hover/press
+    // state through colour (Device scheme accent on press) rather than three baked
+    // rasters. Fall back to the legacy ams_setting_* bitmaps when the icon font is
+    // unavailable so a missing TTF degrades to the old look instead of tofu.
+    if (MaterialIcon::available()) {
+        m_button_ams_setting_bmp_normal = MaterialIcon::bitmap(this, MaterialIcon::Settings, 24, StateColor::semantic(MD3::Role::OnSurfaceVariant));
+        m_button_ams_setting_bmp_hover  = MaterialIcon::bitmap(this, MaterialIcon::Settings, 24, StateColor::semantic(MD3::Role::OnSurface));
+        m_button_ams_setting_bmp_press  = MaterialIcon::bitmap(this, MaterialIcon::Settings, 24, StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Device));
+    } else {
+        m_button_ams_setting_bmp_normal = m_button_ams_setting_normal.bmp();
+        m_button_ams_setting_bmp_hover  = m_button_ams_setting_hover.bmp();
+        m_button_ams_setting_bmp_press  = m_button_ams_setting_press.bmp();
+    }
+}
+
 void AMSControl::msw_rescale()
 {
     m_button_ams_setting_normal.msw_rescale();
     m_button_ams_setting_hover.msw_rescale();
     m_button_ams_setting_press.msw_rescale();
-    m_button_ams_setting->SetBitmap(m_button_ams_setting_normal.bmp());
-
+    update_ams_setting_bitmaps();
     m_extruder->msw_rescale();
 
-    if (m_button_extruder_feed) m_button_extruder_feed->SetMinSize(wxSize(FromDIP(80), FromDIP(34)));
-    if (m_button_extruder_feed) m_button_extruder_feed->SetMaxSize(wxSize(FromDIP(80), FromDIP(34)));
-    if (m_button_extruder_back) m_button_extruder_back->SetMinSize(wxSize(FromDIP(80), FromDIP(34)));
-    if (m_button_extruder_back) m_button_extruder_back->SetMaxSize(wxSize(FromDIP(80), FromDIP(34)));
+    if (m_button_extruder_feed) { m_button_extruder_feed->SetMinSize(wxSize(FromDIP(80), FromDIP(34))); m_button_extruder_feed->SetMaxSize(wxSize(-1, FromDIP(34))); }
+    if (m_button_extruder_back) { m_button_extruder_back->SetMinSize(wxSize(FromDIP(80), FromDIP(34))); m_button_extruder_back->SetMaxSize(wxSize(-1, FromDIP(34))); }
     if (m_button_auto_refill) m_button_auto_refill->SetMinSize(wxSize(FromDIP(80), FromDIP(34)));
     if (m_button_auto_refill) m_button_auto_refill->SetMaxSize(wxSize(FromDIP(80), FromDIP(34)));
-    if (m_button_ams_setting) m_button_ams_setting->SetMinSize(wxSize(FromDIP(25), FromDIP(24)));
+    if (m_button_ams_setting) { m_button_ams_setting->SetMinSize(wxSize(FromDIP(40), FromDIP(40))); m_button_ams_setting->SetMaxSize(wxSize(FromDIP(40), FromDIP(40))); }
 
 
     for (auto ams_item : m_ams_item_list) {
@@ -990,15 +1009,14 @@ void AMSControl::show_switcher_status(bool show)
     {
         m_sizer_body->Add(0, 0, 1, wxEXPAND | wxTOP, FromDIP(5));
         tipPanel = new wxPanel(m_amswin);
-        tipPanel->SetBackgroundColour(wxColour(255, 153, 0));
+        tipPanel->SetBackgroundColour(StateColor::semantic(MD3::Role::ErrorContainer));
         tipSizer = new wxBoxSizer(wxHORIZONTAL);
         tipPanel->SetSizer(tipSizer);
-        icon = new wxStaticBitmap(tipPanel, wxID_ANY,
-            wxArtProvider::GetBitmap(wxART_INFORMATION, wxART_MESSAGE_BOX, wxSize(FromDIP(16), FromDIP(16))));
+        icon = new wxStaticBitmap(tipPanel, wxID_ANY, MaterialIcon::bitmap(tipPanel, MaterialIcon::Info, 16, StateColor::semantic(MD3::Role::OnErrorContainer)));
         tipSizer->Add(icon, 0, wxALL, FromDIP(8));
-        tipText = new wxStaticText(tipPanel, wxID_ANY, _L("AMS has not been initialized. Please initialize it before use."));
-        tipText->SetForegroundColour(wxColour(255, 255, 255));
-        tipText->SetFont(wxFont(10, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD));
+        tipText = new Label(tipPanel, _L("AMS has not been initialized. Please initialize it before use."));
+        tipText->SetForegroundColour(StateColor::semantic(MD3::Role::OnErrorContainer));
+        tipText->SetFont(Label::Head_10);
         tipText->Wrap(-1);
         tipText->SetMinSize(wxSize(-1, -1));
         tipSizer->Add(tipText, 0, wxALL | wxALIGN_CENTER_VERTICAL | wxEXPAND, FromDIP(8));
@@ -1884,7 +1902,7 @@ void AMSControl::auto_refill(wxCommandEvent& event)
     post_event(SimpleEvent(EVT_AMS_FILAMENT_BACKUP));
 }
 
-void AMSControl::on_ams_setting_click(wxMouseEvent &event)
+void AMSControl::on_ams_setting_click(wxCommandEvent &event)
 {
     post_event(SimpleEvent(EVT_AMS_SETTINGS));
 }

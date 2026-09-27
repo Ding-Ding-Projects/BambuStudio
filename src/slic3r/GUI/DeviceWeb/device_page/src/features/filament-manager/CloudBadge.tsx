@@ -34,7 +34,7 @@ export function CloudBadge({ state, onPullClick, tooltipExtra }: Props) {
     if (last_synced_at) {
       try {
         const d = new Date(last_synced_at);
-        return t('Last synced: {{time}}', { time: d.toLocaleString() });
+        return t('Last synced: {{time}}', { time: d.toLocaleString([], { hour12: false }) });
       } catch {
         return last_synced_at;
       }
@@ -59,7 +59,9 @@ export function CloudBadge({ state, onPullClick, tooltipExtra }: Props) {
 
   return (
     <button
-      className={`inline-flex items-center justify-center h-[30px] w-[30px] rounded-lg border transition-colors duration-150 ${bgClass} ${colorClass} ${borderClass} ${clickable ? 'cursor-pointer hover:bg-fm-hover' : 'cursor-default'} ${!logged_in ? 'opacity-55' : ''}`}
+      type="button"
+      disabled={!clickable}
+      className={`fm-icon-target inline-flex items-center justify-center rounded-lg border transition-colors duration-150 ${bgClass} ${colorClass} ${borderClass} ${clickable ? 'cursor-pointer hover:bg-fm-hover' : 'cursor-default'} ${!logged_in ? 'opacity-55' : ''}`}
       title={tooltip}
       aria-label={tooltip}
       onClick={() => { if (clickable) onPullClick(); }}

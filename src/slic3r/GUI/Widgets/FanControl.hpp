@@ -5,7 +5,9 @@
 #include "StaticBox.hpp"
 #include "StepCtrl.hpp"
 #include "Button.hpp"
+#include "SwitchButton.hpp"
 #include "PopupWindow.hpp"
+#include "Slider.hpp"
 #include "../SelectMachine.hpp"
 #include "../DeviceManager.hpp"
 #include "slic3r/GUI/Event.hpp"
@@ -13,10 +15,40 @@
 #include <wx/hyperlink.h>
 #include <wx/animate.h>
 #include <wx/dynarray.h>
+#include <wx/timer.h>
 #include "../DeviceCore/DevFan.h"
 
 namespace Slic3r {
 namespace GUI {
+
+// A telemetry-driven preview. The slider remains the accessible control and
+// the existing fan dialog remains the only place that sends a fan command.
+class FanMotionView final : public wxWindow, private wxTimer
+{
+public:
+    FanMotionView(wxWindow* parent, bool auxiliary, ::Slider* slider);
+    ~FanMotionView() override { Stop(); }
+    void SetTelemetry(int pwm);
+    void SetCommandPending(int percent);
+    void SetSlider(::Slider* slider);
+    void RestorePreview();
+    void Reset();
+    void Notify() override;
+
+private:
+    void OnPaint(wxPaintEvent&);
+    void OnShow(wxShowEvent&);
+    void UpdateTimer();
+    ::Slider* m_slider;
+    bool m_auxiliary;
+    bool m_initialized{false};
+    int m_target{0};
+    int m_pending{-1};
+    double m_display{0.0};
+    double m_angle{0.0};
+    double m_pulse{0.0};
+    double m_press{0.0};
+};
 
 
 /*************************************************
@@ -24,9 +56,11 @@ Description:Fan
 **************************************************/
 #define SIZE_OF_FAN_OPERATE wxSize(154, 28)
 
-#define DRAW_TEXT_COLOUR wxColour("#898989")
-#define DRAW_HEAD_TEXT_COLOUR wxColour("#262e30")
-#define DRAW_OPERATE_LINE_COLOUR wxColour("#DEDEDE")
+// MD3 semantic retargets (macro names preserved for the FanControl.cpp consumers).
+// Neutral roles are scheme-independent, so no ColorScheme argument is required.
+#define DRAW_TEXT_COLOUR StateColor::semantic(MD3::Role::OnSurfaceVariant)
+#define DRAW_HEAD_TEXT_COLOUR StateColor::semantic(MD3::Role::OnSurface)
+#define DRAW_OPERATE_LINE_COLOUR StateColor::semantic(MD3::Role::OutlineVariant)
 
 enum FanControlType
 {
@@ -104,10 +138,23 @@ public:
 
 public:
     void    set_fan_speeds(int g);
+    int     get_fan_speeds() const { return m_current_speeds; }
     bool    check_printing_state();
     void    add_fan_speeds();
     void    decrease_fan_speeds();
+
+    bool AcceptsFocusFromKeyboard() const override { return IsEnabled() && IsShown(); }
+    bool AccessibilityStep(bool increase);
+    void SetAccessibleName(const wxString& name);
+
+protected:
+#ifdef __WIN32__
+    WXLRESULT MSWWindowProc(WXUINT nMsg, WXWPARAM wParam, WXLPARAM lParam) override;
+#endif
+
 private:
+    void    on_key_down(wxKeyEvent& event);
+    void    on_focus(wxFocusEvent& event);
     int     m_current_speeds;
     int     m_target_speed;
     int     m_min_speeds;
@@ -115,7 +162,7 @@ private:
     ScalableBitmap   m_bitmap_add;
     ScalableBitmap   m_bitmap_decrease;
 
-    MachineObject* m_obj;
+    MachineObject* m_obj{ nullptr };
 };
 
 
@@ -134,8 +181,6 @@ protected:
     int m_fan_id;
 
     ScalableBitmap* m_bitmap_fan{ nullptr };
-    ScalableBitmap* m_bitmap_toggle_off{ nullptr };
-    ScalableBitmap* m_bitmap_toggle_on{ nullptr };
 
     FanOperate* m_fan_operate{ nullptr };
     bool m_switch_fan{ false };
@@ -156,7 +201,10 @@ protected:
 
 public:
     wxStaticBitmap* m_static_bitmap_fan { nullptr};
-    wxStaticBitmap* m_switch_button{ nullptr };
+    // The MD3 Switch itself, not a picture of one. The toggle_on/toggle_off PNGs
+    // hung in a wxStaticBitmap were not a control at all: no focus, no role, no
+    // name, no checked state, so the fan toggles were mouse-only.
+    SwitchButton*   m_switch_button{ nullptr };
     void update_obj_state(bool stat) { m_update_already = stat; };
     void update_fan_data(const AirDuctData& data) { m_fan_data = data; };
     void command_control_fan();
@@ -169,8 +217,8 @@ public:
     void set_fan_speed_percent(int speed);
     void set_fan_switch(bool s);
     void post_event();
-    void on_swith_fan(wxMouseEvent& evt);
     void on_swith_fan(bool on);
+    void on_switch_toggled(wxCommandEvent& evt);
     void update_mode();
     void on_left_down(wxMouseEvent& event);
     void on_mode_change(wxMouseEvent& event);
@@ -182,9 +230,9 @@ wxDECLARE_EVENT(EVT_FANCTRL_SWITCH, wxCommandEvent);
 class FanControlNewSwitchPanel : public wxWindow
 {
     bool  switch_state_on = false;
-    wxStaticBitmap* m_switch_btn{ nullptr };
-    ScalableBitmap* m_bitmap_toggle_off{ nullptr };
-    ScalableBitmap* m_bitmap_toggle_on{ nullptr };
+    // Same story as FanControlNew: a real MD3 Switch, so the cooling-filter row
+    // is reachable by keyboard and reports its state to assistive tech.
+    SwitchButton* m_switch_btn{ nullptr };
 
 public:
     FanControlNewSwitchPanel(wxWindow* parent, const wxString& title, const wxString& tips, bool on = true);
@@ -194,7 +242,7 @@ public:
     void SetSwitchOn(bool on);
 
 private:
-    void on_left_down(wxMouseEvent& event);
+    void on_toggled(wxCommandEvent& event);
 };
 
 
@@ -259,7 +307,6 @@ private:
     void  post_event(int fan_type, wxString speed);
 
     void  on_show(wxShowEvent& evt);
-    void  paintEvent(wxPaintEvent& evt);
 
     void  command_control_air_duct(int mode_id, int submode = -1);
 

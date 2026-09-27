@@ -78,7 +78,7 @@ export default function DevicePage() {
             .reverse()
             .map((log, i) => (
               <li key={i}>
-                {new Date(log.ts).toLocaleTimeString()} — {log.msg}
+                {new Date(log.ts).toLocaleTimeString([], { hour12: false })} — {log.msg}
               </li>
             ))}
         </ul>

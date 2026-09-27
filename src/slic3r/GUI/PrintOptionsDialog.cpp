@@ -3,6 +3,7 @@
 #include "GUI_App.hpp"
 #include "libslic3r/Utils.hpp"
 #include "Widgets/SwitchButton.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 #include "MsgDialog.hpp"
 
 #include "DeviceCore/DevConfig.h"
@@ -11,17 +12,18 @@
 #include "DeviceCore/DevNozzleSystem.h"
 #include "DeviceCore/DevPrintOptions.h"
 #include "DeviceCore/DevFan.h"
+#include "Widgets/Label.hpp"
 
-static const wxColour STATIC_BOX_LINE_COL = wxColour(238, 238, 238);
-static const wxColour STATIC_TEXT_CAPTION_COL = wxColour(100, 100, 100);
-static const wxColour STATIC_TEXT_EXPLAIN_COL = wxColour(100, 100, 100);
+static const wxColour STATIC_BOX_LINE_COL = ThemeColor::Grey400;
+static const wxColour STATIC_TEXT_CAPTION_COL = ThemeColor::TextSecondary;
+static const wxColour STATIC_TEXT_EXPLAIN_COL = ThemeColor::TextSecondary;
 
 namespace Slic3r { namespace GUI {
 
-static StateColor btn_bg_green(std::pair<wxColour, int>(wxColour(194, 194, 194), StateColor::Disabled),
-                               std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed),
-                               std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-                               std::pair<wxColour, int>(wxColour(0, 177, 66), StateColor::Normal));
+static StateColor btn_bg_green(std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Disabled),
+                               std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed),
+                               std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
+                               std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
 
 PrintOptionsDialog::PrintOptionsDialog(wxWindow* parent)
     : DPIDialog(parent, wxID_ANY, _L("Print Options"), wxDefaultPosition, wxDefaultSize, wxCAPTION | wxCLOSE_BOX)
@@ -29,13 +31,13 @@ PrintOptionsDialog::PrintOptionsDialog(wxWindow* parent)
     this->SetDoubleBuffered(true);
     std::string icon_path = (boost::format("%1%/images/BambuStudioTitle.ico") % resources_dir()).str();
     SetIcon(wxIcon(encode_path(icon_path.c_str()), wxBITMAP_TYPE_ICO));
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     SetSize(FromDIP(480),FromDIP(520));
 
 
     m_scrollwindow = new wxScrolledWindow(this, wxID_ANY);
     m_scrollwindow->SetScrollRate(0, FromDIP(10));
-    m_scrollwindow->SetBackgroundColour(*wxWHITE);
+    m_scrollwindow->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_scrollwindow->SetMinSize(wxSize(FromDIP(480), wxDefaultCoord));
     m_scrollwindow->SetMaxSize(wxSize(FromDIP(480), wxDefaultCoord));
 
@@ -290,8 +292,9 @@ PrintOptionsDialog::PrintOptionsDialog(wxWindow* parent)
             wxString message = _L("When enabled, the printer will automatically capture photos of printed parts and upload them to the cloud. Would you like to enable this option?");
             wxString caption = _L("Confirm Enable Print Status Snapshot");
 
-            wxMessageDialog dialog(this, message, caption, wxYES_NO | wxICON_QUESTION);
-            dialog.SetYesNoLabels(_L("Confirm"), _L("Cancel"));
+            MessageDialog dialog(this, message, caption, wxYES_NO | wxICON_QUESTION);
+            dialog.SetButtonLabel(wxID_YES, _L("Confirm"));
+            dialog.SetButtonLabel(wxID_NO, _L("Cancel"));
 
             int result = dialog.ShowModal();
 
@@ -319,6 +322,7 @@ PrintOptionsDialog::PrintOptionsDialog(wxWindow* parent)
             }},m_print_option_timer->GetId());
     purify_air_bind_toast();
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
 }
 
 PrintOptionsDialog::~PrintOptionsDialog()
@@ -427,7 +431,7 @@ void PrintOptionsDialog::update_purify_air_at_print_end(MachineObject *obj_)
     m_cb_purify_air_at_print_end->Enable();
     purify_air_switch_board->Enable();
     text_purify_air_context->SetForegroundColour(STATIC_TEXT_CAPTION_COL);
-    text_purify_air->SetForegroundColour(StateColor::darkModeColorFor(wxColour("#262E30")));
+    text_purify_air->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
 
     if (obj_->GetFan()->GetAirDuctData().IsExaustFanExit())
     {
@@ -459,8 +463,8 @@ void PrintOptionsDialog::update_purify_air_at_print_end(MachineObject *obj_)
     if (obj_->is_in_printing()) {
         m_cb_purify_air_at_print_end->Disable();
         purify_air_switch_board->Disable();
-        text_purify_air_context->SetForegroundColour(wxColour(170, 170, 170));
-        text_purify_air->SetForegroundColour(wxColour(170, 170, 170));
+        text_purify_air_context->SetForegroundColour(StateColor::semantic(MD3::Role::Outline));
+        text_purify_air->SetForegroundColour(StateColor::semantic(MD3::Role::Outline));
         m_print_option_disable = true;
     }
 }
@@ -955,7 +959,7 @@ wxBoxSizer* PrintOptionsDialog::create_settings_group(wxWindow* parent)
 
     ai_refine_panel             = new wxPanel(parent);
     wxBoxSizer *ai_refine_sizer = new wxBoxSizer(wxVERTICAL);
-    ai_refine_panel->SetBackgroundColour(*wxWHITE);
+    ai_refine_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     // ai detections
     line_sizer = new wxBoxSizer(wxHORIZONTAL);
@@ -1217,7 +1221,7 @@ wxBoxSizer* PrintOptionsDialog::create_settings_group(wxWindow* parent)
     //    sizer->Add(line1, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(18));
 
     m_line = new wxPanel(parent, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(400), FromDIP(1)));
-    m_line->SetBackgroundColour(wxColour("#A6A9AA"));
+    m_line->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
     sizer->Add(m_line, 0, wxLEFT | wxBOTTOM, FromDIP(20));
 
     // detection of build plate position
@@ -1344,7 +1348,7 @@ wxBoxSizer* PrintOptionsDialog::create_settings_group(wxWindow* parent)
 
     sizer->Add(line_sizer, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(18));
     sizer->Add(text_purify_air_context, 0, wxLEFT, FromDIP(58));
-    sizer->Add(purify_air_switch_board, 0, wxLEFT, FromDIP(58));
+    sizer->Add(purify_air_switch_board, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(58));
     sizer->Add(0, 0, 0, wxTOP, FromDIP(15));
 
     // auto-recovery from step loss
@@ -1359,7 +1363,7 @@ wxBoxSizer* PrintOptionsDialog::create_settings_group(wxWindow* parent)
     line_sizer->Add(FromDIP(10), 0, 0, 0);
 
     line4 = new StaticLine(parent, false);
-    line4->SetLineColour(wxColour("#FFFFFF"));
+    line4->SetLineColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     sizer->Add(line4, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(20));
     line4->Hide();
     sizer->Add(0, 0, 0, wxTOP, FromDIP(15));
@@ -1506,7 +1510,7 @@ wxBoxSizer* PrintOptionsDialog::create_settings_group(wxWindow* parent)
 
     sizer->Add(line_sizer, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(18));
     sizer->Add(text_open_door_caption, 0, wxLEFT, FromDIP(58));
-    sizer->Add(open_door_switch_board, 0, wxLEFT, FromDIP(58));
+    sizer->Add(open_door_switch_board, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(58));
     sizer->Add(0, 0, 0, wxTOP, FromDIP(15));
 
     m_snapshot_sizer = new wxBoxSizer(wxVERTICAL);
@@ -1671,21 +1675,21 @@ bool PrintOptionsDialog::Show(bool show)
 PrinterPartsDialog::PrinterPartsDialog(wxWindow* parent)
 : DPIDialog(parent, wxID_ANY, _L("Printer Parts"), wxDefaultPosition, wxDefaultSize, wxCAPTION | wxCLOSE_BOX)
 {
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     wxBoxSizer *sizer = new wxBoxSizer(wxVERTICAL);
 
     wxBoxSizer* single_sizer = new wxBoxSizer(wxVERTICAL);
     single_panel = new wxPanel(this);
-    single_panel->SetBackgroundColour(*wxWHITE);
+    single_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     wxBoxSizer* multiple_sizer = new wxBoxSizer(wxVERTICAL);
     multiple_panel = new wxPanel(this);
-    multiple_panel->SetBackgroundColour(*wxWHITE);
+    multiple_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     /*single nozzle*/
     auto single_line = new wxPanel(single_panel, wxID_ANY, wxDefaultPosition, wxSize(-1, 1), wxTAB_TRAVERSAL);
-    single_line->SetBackgroundColour(wxColour("#A6A9AA"));
+    single_line->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
 
     //nozzle type
     wxBoxSizer* line_sizer_nozzle_type = new wxBoxSizer(wxHORIZONTAL);
@@ -1741,7 +1745,7 @@ PrinterPartsDialog::PrinterPartsDialog(wxWindow* parent)
 
     m_wiki_link = new Label(single_panel, _L("View wiki"));
     m_wiki_link->SetFont(Label::Body_13);
-    m_wiki_link->SetForegroundColour(wxColour("#00AE42"));
+    m_wiki_link->SetForegroundColour(StateColor::semantic(MD3::Role::Primary));
     m_wiki_link->Bind(wxEVT_ENTER_WINDOW, [this](auto& e) { SetCursor(wxCURSOR_HAND); });
     m_wiki_link->Bind(wxEVT_LEAVE_WINDOW, [this](auto& e) { SetCursor(wxCURSOR_ARROW); });
     m_wiki_link->Bind(wxEVT_LEFT_DOWN, &PrinterPartsDialog::OnWikiClicked, this);
@@ -1751,8 +1755,7 @@ PrinterPartsDialog::PrinterPartsDialog(wxWindow* parent)
 
     wxSizer* single_update_nozzle_sizer = new wxBoxSizer(wxHORIZONTAL);
     m_single_update_nozzle_button = new Button(single_panel, _L("Refresh"));
-    m_single_update_nozzle_button->SetBackgroundColor(btn_bg_green);
-    m_single_update_nozzle_button->SetTextColor(*wxWHITE);
+    m_single_update_nozzle_button->SetVariant(Button::Variant::Filled);
     m_single_update_nozzle_button->SetFont(Label::Body_14);
     m_single_update_nozzle_button->SetSize(wxSize(FromDIP(80), FromDIP(32)));
     m_single_update_nozzle_button->SetMinSize(wxSize(-1, FromDIP(32)));
@@ -1780,13 +1783,13 @@ PrinterPartsDialog::PrinterPartsDialog(wxWindow* parent)
 
     /*multiple nozzle*/
     auto multi_line = new wxPanel(multiple_panel, wxID_ANY, wxDefaultPosition, wxSize(-1, 1), wxTAB_TRAVERSAL);
-    multi_line->SetBackgroundColour(wxColour("#A6A9AA"));
+    multi_line->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
 
     /*left*/
     std::string pod_pt = wxGetApp().preset_bundle->printers.get_edited_preset().get_printer_type(wxGetApp().preset_bundle);
     auto leftTitle = new Label(multiple_panel, _L(DevPrinterConfigUtil::get_toolhead_display_name(pod_pt, DEPUTY_EXTRUDER_ID, ToolHeadComponent::Nozzle, ToolHeadNameCase::TitleCase)));
     leftTitle->SetFont(::Label::Head_14);
-    leftTitle->SetForegroundColour(StateColor::darkModeColorFor(wxColour("#2C2C2E")));
+    leftTitle->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
 
     wxBoxSizer *multiple_left_line_sizer = new wxBoxSizer(wxHORIZONTAL);
     auto multiple_left_nozzle_type = new Label(multiple_panel, _CTX(L_CONTEXT("Type", "Nozzle Type"), "Nozzle Type"));
@@ -1820,7 +1823,7 @@ PrinterPartsDialog::PrinterPartsDialog(wxWindow* parent)
     /*right*/
     auto rightTitle = new Label(multiple_panel, _L(DevPrinterConfigUtil::get_toolhead_display_name(pod_pt, MAIN_EXTRUDER_ID, ToolHeadComponent::Nozzle, ToolHeadNameCase::TitleCase)));
     rightTitle->SetFont(::Label::Head_14);
-    rightTitle->SetForegroundColour(StateColor::darkModeColorFor(wxColour("#2C2C2E")));
+    rightTitle->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
 
     wxBoxSizer *multiple_right_line_sizer  = new wxBoxSizer(wxHORIZONTAL);
     auto        multiple_right_nozzle_type = new Label(multiple_panel, _CTX(L_CONTEXT("Type", "Nozzle Type"), "Nozzle Type"));
@@ -1857,7 +1860,7 @@ PrinterPartsDialog::PrinterPartsDialog(wxWindow* parent)
 
     multiple_wiki_link = new Label(multiple_panel, _L("View wiki"));
     multiple_wiki_link->SetFont(Label::Body_13);
-    multiple_wiki_link->SetForegroundColour(wxColour("#00AE42"));
+    multiple_wiki_link->SetForegroundColour(StateColor::semantic(MD3::Role::Primary));
     multiple_wiki_link->Bind(wxEVT_ENTER_WINDOW, [this](auto& e) { SetCursor(wxCURSOR_HAND); });
     multiple_wiki_link->Bind(wxEVT_LEAVE_WINDOW, [this](auto& e) { SetCursor(wxCURSOR_ARROW); });
     multiple_wiki_link->Bind(wxEVT_LEFT_DOWN, &PrinterPartsDialog::OnWikiClicked, this);
@@ -1868,8 +1871,7 @@ PrinterPartsDialog::PrinterPartsDialog(wxWindow* parent)
 
     wxSizer* multiple_update_nozzle_sizer = new wxBoxSizer(wxHORIZONTAL);
     m_multiple_update_nozzle_button = new Button(multiple_panel, _L("Refresh"));
-    m_multiple_update_nozzle_button->SetBackgroundColor(btn_bg_green);
-    m_multiple_update_nozzle_button->SetTextColor(*wxWHITE);
+    m_multiple_update_nozzle_button->SetVariant(Button::Variant::Filled);
     m_multiple_update_nozzle_button->SetFont(Label::Body_14);
     m_multiple_update_nozzle_button->SetSize(wxSize(FromDIP(80), FromDIP(32)));
     m_multiple_update_nozzle_button->SetMinSize(wxSize(-1, FromDIP(32)));
@@ -1907,6 +1909,7 @@ PrinterPartsDialog::PrinterPartsDialog(wxWindow* parent)
     single_panel->Hide();
 
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
 }
 
 PrinterPartsDialog::~PrinterPartsDialog() {}
@@ -2038,7 +2041,8 @@ void PrinterPartsDialog::OnWikiClicked(wxMouseEvent& e)
     if (!url.IsEmpty()) {
         wxLaunchDefaultBrowser(url);
     } else {
-        wxMessageBox(_L("No wiki link available for this printer."), _L("Error"), wxOK | wxICON_ERROR, this);
+        MessageDialog dlg(this, _L("No wiki link available for this printer."), _L("Error"), wxOK | wxICON_ERROR);
+        dlg.ShowModal();
     }
 }// PrinterPartsDialog::OnWikiClicked
 
@@ -2113,10 +2117,10 @@ void PrinterPartsDialog::UpdateNozzleInfo(){
 
  PrintOptionToast::PrintOptionToast(wxWindow *parent, const wxString &text): wxPopupWindow(parent)
  {
-     SetBackgroundColour(wxColour(0, 0, 0));
+     SetBackgroundColour(StateColor::semantic(MD3::Role::InverseSurface));
 
-     wxStaticText *textContent = new wxStaticText(this, wxID_ANY, text);
-     textContent->SetForegroundColour(*wxWHITE);
+     wxStaticText *textContent = new Label(this, text);
+     textContent->SetForegroundColour(StateColor::semantic(MD3::Role::InverseOn));
      wxBoxSizer *sizer = new wxBoxSizer(wxVERTICAL);
      sizer->Add(textContent, 1, wxALIGN_CENTER | wxALL, 10);
      SetSizer(sizer);

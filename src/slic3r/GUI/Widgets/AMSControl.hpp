@@ -134,13 +134,20 @@ protected:
     Button *m_button_extruder_feed {nullptr};
     Button *m_button_extruder_back {nullptr};
     Button *m_button_auto_refill{ nullptr };
-    wxStaticBitmap* m_button_ams_setting   {nullptr};
+    Button*         m_button_ams_setting   {nullptr};
     wxStaticBitmap* m_img_ams_backup  {nullptr};
     wxStaticBitmap* m_img_amsmapping_tip {nullptr};
     wxStaticBitmap* m_img_vams_tip {nullptr};
     ScalableBitmap m_button_ams_setting_normal;
     ScalableBitmap m_button_ams_setting_hover;
     ScalableBitmap m_button_ams_setting_press;
+    // Resolved state bitmaps for the AMS settings button: a Material Symbols
+    // 'settings' glyph (Device scheme) when the icon font is available, else the
+    // legacy ams_setting_* rasters above. Refreshed on init and DPI rescale.
+    wxBitmap       m_button_ams_setting_bmp_normal;
+    wxBitmap       m_button_ams_setting_bmp_hover;
+    wxBitmap       m_button_ams_setting_bmp_press;
+    void           update_ams_setting_bitmaps();
 
     AmsHumidityTipPopup m_Humidity_tip_popup;
     uiAmsPercentHumidityDryPopup* m_percent_humidity_dry_popup;
@@ -197,7 +204,6 @@ public:
     void on_filament_load(wxCommandEvent &event);
     void on_filament_unload(wxCommandEvent &event);
     void auto_refill(wxCommandEvent& event);
-    void on_ams_setting_click(wxMouseEvent &event);
     void on_extrusion_cali(wxCommandEvent &event);
     void on_ams_setting_click(wxCommandEvent &event);
     void on_clibration_again_click(wxMouseEvent &event);

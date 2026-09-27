@@ -219,7 +219,7 @@ private:
 
     void SetNozzleStatus(NOZZLE_STATUS status, const wxString& str1, const wxString& str2, const std::string& color);
 
-    void OnBtnNozzleStatus(wxMouseEvent& evt);
+    void OnBtnNozzleStatus(wxCommandEvent& evt);
     void OnItemSelected(wxMouseEvent& evt);
 
 private:
@@ -248,7 +248,7 @@ private:
     wxStaticBitmap* m_nozzle_icon{ nullptr };
     Label* m_nozzle_label_id { nullptr };
     Label* m_nozzle_label_1{ nullptr };
-    wxStaticBitmap* m_nozzle_status_icon = nullptr;
+    Button* m_nozzle_status_icon = nullptr;
     Label* m_nozzle_label_2{ nullptr };
 };
 

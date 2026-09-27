@@ -1,8 +1,10 @@
 #include "MultiMachinePage.hpp"
 #include "GUI_App.hpp"
 #include "MainFrame.hpp"
+#include "Widgets/CheckBox.hpp"
 
 #include "DeviceCore/DevManager.h"
+#include "DeviceCore/FarmDevicePolicy.hpp"
 
 namespace Slic3r {
 namespace GUI {
@@ -79,7 +81,7 @@ void MultiMachinePage::init_tabpanel()
     wxBoxSizer* sizer_side_tools = new wxBoxSizer(wxHORIZONTAL);
     sizer_side_tools->Add(m_side_tools, 1, wxEXPAND, 0);
     m_tabpanel = new Tabbook(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, sizer_side_tools, wxNB_LEFT | wxTAB_TRAVERSAL | wxNB_NOPAGETHEME);
-    m_tabpanel->SetBackgroundColour(wxColour("#FEFFFF"));
+    m_tabpanel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
     m_tabpanel->Bind(wxEVT_BOOKCTRL_PAGE_CHANGED, [this](wxBookCtrlEvent& e) {; });
 
     m_local_task_manager = new LocalTaskManagerPage(m_tabpanel);
@@ -116,11 +118,7 @@ void MultiMachinePage::clear_page()
 DevicePickItem::DevicePickItem(wxWindow* parent, MachineObject* obj)
     : DeviceItem(parent, obj)
 {
-    SetBackgroundColour(*wxWHITE);
-    m_bitmap_check_disable = ScalableBitmap(this, "check_off_disabled", 18);
-    m_bitmap_check_off = ScalableBitmap(this, "check_off_focused", 18);
-    m_bitmap_check_on = ScalableBitmap(this, "check_on", 18);
-
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     SetMinSize(wxSize(FromDIP(400), FromDIP(30)));
     SetMaxSize(wxSize(FromDIP(400), FromDIP(30)));
@@ -130,7 +128,15 @@ DevicePickItem::DevicePickItem(wxWindow* parent, MachineObject* obj)
     Bind(wxEVT_LEAVE_WINDOW, &DevicePickItem::OnLeaveWindow, this);
     Bind(wxEVT_LEFT_DOWN, &DevicePickItem::OnLeftDown, this);
     Bind(wxEVT_MOTION, &DevicePickItem::OnMove, this);
+    Bind(wxEVT_KEY_DOWN, &DevicePickItem::OnKeyDown, this);
+    Bind(wxEVT_SET_FOCUS, &DevicePickItem::OnSetFocus, this);
+    Bind(wxEVT_KILL_FOCUS, &DevicePickItem::OnKillFocus, this);
     Bind(EVT_MULTI_DEVICE_SELECTED, &DevicePickItem::OnSelectedDevice, this);
+
+    // a11y-label: expose the device name so assistive tech announces the row.
+    if (obj)
+        SetName(wxString::FromUTF8(obj->get_dev_name()));
+
     wxGetApp().UpdateDarkUIWin(this);
 }
 
@@ -140,7 +146,7 @@ void DevicePickItem::DrawTextWithEllipsis(wxDC& dc, const wxString& text, int ma
     wxFont font = dc.GetFont();
 
     wxSize textSize = dc.GetTextExtent(text);
-    dc.SetTextForeground(StateColor::darkModeColorFor(wxColour(50, 58, 61)));
+    dc.SetTextForeground(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     int textWidth = textSize.GetWidth();
 
     if (textWidth > maxWidth) {
@@ -205,34 +211,43 @@ void DevicePickItem::OnSelectedDevice(wxCommandEvent& evt)
 
 void DevicePickItem::OnLeftDown(wxMouseEvent& evt)
 {
-    int left = FromDIP(15);
-    auto mouse_pos = ClientToScreen(evt.GetPosition());
-    auto item = this->ClientToScreen(wxPoint(0, 0));
-
-    if (mouse_pos.x > (item.x + left) &&
-        mouse_pos.x < (item.x + left + m_bitmap_check_disable.GetBmpWidth()) &&
-        mouse_pos.y > item.y &&
-        mouse_pos.y < (item.y + DEVICE_ITEM_MAX_HEIGHT)) {
-
-        post_event(wxCommandEvent(EVT_MULTI_DEVICE_SELECTED));
-    }
+    if (state_selected == 2) return;
+    // a11y-hittarget: the whole row toggles selection (its only action), instead
+    // of only the ~18px checkbox glyph, so the pointer target spans the full row.
+    if (!HasFocus())
+        SetFocus();
+    post_event(wxCommandEvent(EVT_MULTI_DEVICE_SELECTED));
 }
 
 void DevicePickItem::OnMove(wxMouseEvent& evt)
 {
-    int left = FromDIP(15);
-    auto mouse_pos = ClientToScreen(evt.GetPosition());
-    auto item = this->ClientToScreen(wxPoint(0, 0));
+    // Hand cursor across the whole (now fully clickable) row.
+    SetCursor(wxCURSOR_HAND);
+}
 
-    if (mouse_pos.x > (item.x + left) &&
-        mouse_pos.x < (item.x + left + m_bitmap_check_disable.GetBmpWidth()) &&
-        mouse_pos.y > item.y &&
-        mouse_pos.y < (item.y + DEVICE_ITEM_MAX_HEIGHT)) {
-        SetCursor(wxCURSOR_HAND);
+void DevicePickItem::OnKeyDown(wxKeyEvent& evt)
+{
+    const int key = evt.GetKeyCode();
+    if (key == WXK_RETURN || key == WXK_NUMPAD_ENTER || key == WXK_SPACE) {
+        if (state_selected == 2) return;
+        post_event(wxCommandEvent(EVT_MULTI_DEVICE_SELECTED));
+    } else {
+        evt.Skip();
     }
-    else {
-        SetCursor(wxCURSOR_ARROW);
-    }
+}
+
+void DevicePickItem::OnSetFocus(wxFocusEvent& evt)
+{
+    m_focused = true;
+    Refresh(false);
+    evt.Skip();
+}
+
+void DevicePickItem::OnKillFocus(wxFocusEvent& evt)
+{
+    m_focused = false;
+    Refresh(false);
+    evt.Skip();
 }
 
 void DevicePickItem::paintEvent(wxPaintEvent& evt)
@@ -269,13 +284,11 @@ void DevicePickItem::doRender(wxDC& dc)
 
     int left = FromDIP(PICK_LEFT_PADDING_LEFT);
 
-
-    //checkbox
-    if (state_selected == 0) {
-        dc.DrawBitmap(m_bitmap_check_off.bmp(), wxPoint(left, (size.y - m_bitmap_check_disable.GetBmpSize().y) / 2));
-    }
-    else if (state_selected == 1) {
-        dc.DrawBitmap(m_bitmap_check_on.bmp(), wxPoint(left, (size.y - m_bitmap_check_disable.GetBmpSize().y) / 2));
+    //checkbox: live-drawn MD3 glyph (Widgets/CheckBox.hpp), shared with the
+    //CheckBox widget instead of the legacy check_off/check_on raster bitmaps.
+    {
+        const wxBitmap check_bmp = CheckBox::RenderGlyphBitmap(kCheckboxPx, GetDPIScaleFactor(), state_selected == 1, false, false);
+        dc.DrawBitmap(check_bmp, wxPoint(left, (size.y - check_bmp.GetHeight()) / 2));
     }
 
     left += FromDIP(PICK_LEFT_PRINTABLE);
@@ -283,6 +296,14 @@ void DevicePickItem::doRender(wxDC& dc)
     //dev names
     DrawTextWithEllipsis(dc, wxString::FromUTF8(get_obj()->get_dev_name()), FromDIP(PICK_LEFT_DEV_NAME), left);
     left += FromDIP(PICK_LEFT_DEV_NAME);
+
+    // a11y-focus: 2px Primary keyboard focus ring around the row.
+    if (m_focused) {
+        dc.SetPen(wxPen(StateColor::semantic(MD3::Role::Primary), FromDIP(2)));
+        dc.SetBrush(*wxTRANSPARENT_BRUSH);
+        const int inset = FromDIP(1);
+        dc.DrawRectangle(inset, inset, size.x - 2 * inset, size.y - 2 * inset);
+    }
 }
 void DevicePickItem::post_event(wxCommandEvent&& event)
 {
@@ -298,25 +319,19 @@ void DevicePickItem::DoSetSize(int x, int y, int width, int height, int sizeFlag
 }
 
 MultiMachinePickPage::MultiMachinePickPage(Plater* plater /*= nullptr*/)
-    : DPIDialog(static_cast<wxWindow*>(wxGetApp().mainframe), wxID_ANY,
-        _L("Edit multiple printers"),
-        wxDefaultPosition, wxDefaultSize, wxCAPTION | wxCLOSE_BOX | wxRESIZE_BORDER)
+    : MD3Dialog(static_cast<wxWindow*>(wxGetApp().mainframe), _L("Edit multiple printers"), wxEmptyString, MaterialIcon::Devices)
 {
+    // Migrated onto the MD3Dialog shell (containment/Dialog.prompt.md): the
+    // borderless 28px shell + header icon tile replace the native wxCAPTION
+    // title bar; the hand-rolled OutlineVariant top divider is dropped since
+    // the shell's own header already separates title from body.
 #ifdef __WINDOWS__
     SetDoubleBuffered(true);
 #endif //__WINDOWS__
 
     app_config = get_app_config();
 
-    SetBackgroundColour(*wxWHITE);
-    // icon
-    std::string icon_path = (boost::format("%1%/images/BambuStudioTitle.ico") % resources_dir()).str();
-    SetIcon(wxIcon(encode_path(icon_path.c_str()), wxBITMAP_TYPE_ICO));
-
-    wxBoxSizer* main_sizer = new wxBoxSizer(wxVERTICAL);
-
-    auto line_top = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 1), wxTAB_TRAVERSAL);
-    line_top->SetBackgroundColour(wxColour(166, 169, 170));
+    wxBoxSizer* main_sizer = GetContentSizer();
 
     m_label = new Label(this, _L("Select connected printers (0/6)"));
 
@@ -324,24 +339,23 @@ MultiMachinePickPage::MultiMachinePickPage(Plater* plater /*= nullptr*/)
     scroll_macine_list->SetSize(wxSize(FromDIP(400), FromDIP(10 * 30)));
     scroll_macine_list->SetMinSize(wxSize(FromDIP(400), FromDIP(10 * 30)));
     scroll_macine_list->SetMaxSize(wxSize(FromDIP(400), FromDIP(10 * 30)));
-    scroll_macine_list->SetBackgroundColour(*wxWHITE);
+    scroll_macine_list->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     scroll_macine_list->SetScrollRate(0, 5);
 
     sizer_machine_list = new wxBoxSizer(wxVERTICAL);
     scroll_macine_list->SetSizer(sizer_machine_list);
     scroll_macine_list->Layout();
 
-    main_sizer->Add(line_top, 0, wxEXPAND, 0);
+    main_sizer->Add(m_label, 0, wxEXPAND, 0);
     main_sizer->AddSpacer(FromDIP(10));
-    main_sizer->Add(m_label, 0, wxLEFT, FromDIP(20));
-    main_sizer->Add(scroll_macine_list, 0, wxLEFT|wxRIGHT, FromDIP(20));
-    main_sizer->AddSpacer(FromDIP(10));
+    main_sizer->Add(scroll_macine_list, 0, wxEXPAND, 0);
 
-    SetSizer(main_sizer);
     Layout();
+    GetSizer()->SetSizeHints(this);
     Fit();
-    Centre(wxBOTH);
+    UpdateShape();
 
+    Centre(wxBOTH);
     wxGetApp().UpdateDlgDarkUI(this);
 }
 
@@ -373,7 +387,8 @@ void MultiMachinePickPage::update_selected_count()
         }
     }
 
-    m_selected_count = count;
+    selected_multi_devices = selected_farm_ids(selected_multi_devices, PICK_DEVICE_MAX);
+    m_selected_count = static_cast<int>(selected_multi_devices.size());
     m_label->SetLabel(wxString::Format(_L("Select Connected Printers (%d/6)"), m_selected_count));
 
     if (m_selected_count > PICK_DEVICE_MAX) {
@@ -395,7 +410,7 @@ void MultiMachinePickPage::update_selected_count()
 
 void MultiMachinePickPage::on_dpi_changed(const wxRect& suggested_rect)
 {
-
+    UpdateShape();
 }
 
 void MultiMachinePickPage::on_sys_color_changed()
@@ -422,16 +437,18 @@ void MultiMachinePickPage::refresh_user_device()
         return;
     }
 
-    auto user_machine = dev->get_my_cloud_machine_list();
+    auto user_machine = dev->get_farm_machine_list();
     auto task_manager = wxGetApp().getTaskManager();
 
     std::vector<std::string> subscribe_list;
 
     for (auto it = user_machine.begin(); it != user_machine.end(); ++it) {
-        if (it->second->GetExtderSystem()->GetTotalExtderCount() > 1) { continue; }
-        if (it->second->printer_type == "O1D") { continue;} /*maybe total_extder_count is not valid, hard codes here. to be moved to printers json*/
-
         DevicePickItem* di = new DevicePickItem(scroll_macine_list, it->second);
+        if (it->second->is_lan_mode_printer() && !it->second->has_access_right()) {
+            di->SetToolTip(_L("Pair this LAN printer with its access code before sending."));
+        } else if (!it->second->is_online()) {
+            di->SetToolTip(_L("This printer is offline. It remains in the farm list."));
+        }
 
         di->Bind(EVT_MULTI_DEVICE_SELECTED_FINHSH, [this, di](auto& e) {
             int count = get_selected_count();

@@ -9,6 +9,8 @@
 //**********************************************************/
 
 #include "wgtDeviceNozzleRack.h"
+#include "slic3r/GUI/Widgets/StateColor.hpp"
+#include "slic3r/GUI/Widgets/MaterialIcon.hpp"
 #include "wgtDeviceNozzleRackUpdate.h"
 
 #include "slic3r/GUI/DeviceCore/DevNozzleSystem.h"
@@ -32,10 +34,6 @@
 
 #define L_RAW_A_STR _L("Row A")
 #define L_RAW_B_STR _L("Row B")
-
-static wxColour s_gray_clr("#B0B0B0");
-static wxColour s_hgreen_clr("#00AE42");
-static wxColour s_red_clr("#D01B1B");
 
 static std::vector<int> a_nozzle_seq = { 0, 2, 4, 1, 3, 5 };
 static std::vector<int> b_nozzle_seq = { 1, 3, 5, 0, 2, 4 };
@@ -264,14 +262,12 @@ void wgtDeviceNozzleRackArea::CreateGui()
     wxSizer* btn_sizer = new wxBoxSizer(wxHORIZONTAL);
     m_btn_hotends_infos = new Button(m_panel_content, _L("Hotends Info"));
     m_btn_hotends_infos->SetFont(Label::Body_12);
-    m_btn_hotends_infos->SetBackgroundColor(StateColor::createButtonStyleGray());
-    m_btn_hotends_infos->SetBackgroundColour(*wxWHITE);
+    m_btn_hotends_infos->SetVariant(Button::Variant::Outlined);
     m_btn_hotends_infos->Bind(wxEVT_BUTTON, &wgtDeviceNozzleRackArea::OnBtnHotendsInfos, this);
 
     m_btn_read_all = new Button(m_panel_content, _L("Read All"));
     m_btn_read_all->SetFont(Label::Body_12);
-    m_btn_read_all->SetBackgroundColor(StateColor::createButtonStyleGray());
-    m_btn_read_all->SetBackgroundColour(*wxWHITE);
+    m_btn_read_all->SetVariant(Button::Variant::Outlined);
     m_btn_read_all->Bind(wxEVT_BUTTON, &wgtDeviceNozzleRackArea::OnBtnReadAll, this);
 
     btn_sizer->Add(m_btn_hotends_infos, 0, wxLEFT);
@@ -298,6 +294,14 @@ wxSizer* wgtDeviceNozzleRackArea::CreateRefreshBook(wxPanel* parent)
 {
     wxSizer* refresh_sizer = new wxBoxSizer(wxVERTICAL);
 
+    // Whole refresh page shares one theme-aware surface. SurfaceContainerLowest is
+    // #ffffff in light mode (unchanged from the previous *wxWHITE) and a dark
+    // surface in dark mode, so the counter's semantic() foreground and its
+    // sibling labels stay tonally paired instead of rendering light-in-dark text
+    // on a fixed-white background.
+    const wxColour refresh_bg = StateColor::semantic(MD3::Role::SurfaceContainerLowest);
+    parent->SetBackgroundColour(refresh_bg);
+
     std::vector<std::string> list{"ams_rfid_1", "ams_rfid_2", "ams_rfid_3", "ams_rfid_4"};
     m_refresh_icon = new AnimaIcon(parent, wxID_ANY, list, "refresh_printer", 100);
     m_refresh_icon->SetMinSize(wxSize(FromDIP(25), FromDIP(25)));
@@ -305,20 +309,20 @@ wxSizer* wgtDeviceNozzleRackArea::CreateRefreshBook(wxPanel* parent)
     wxSizer* progress_sizer = new wxBoxSizer(wxHORIZONTAL);
 
     Label* progress_prefix = new Label(parent, _L("Reading "));
-    progress_prefix->SetBackgroundColour(*wxWHITE);
+    progress_prefix->SetBackgroundColour(refresh_bg);
     m_progress_refresh = new Label(parent, "(1/6)");
-    m_progress_refresh->SetFont(Label::Body_14);
-    m_progress_refresh->SetBackgroundColour(*wxWHITE);
-    m_progress_refresh->SetForegroundColour(*wxGREEN);
+    m_progress_refresh->SetFont(Label::Mono_14);
+    m_progress_refresh->SetBackgroundColour(refresh_bg);
+    m_progress_refresh->SetForegroundColour(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Device));
     Label* progress_suffix = new Label(parent, " ...");
-    progress_suffix->SetBackgroundColour(*wxWHITE);
+    progress_suffix->SetBackgroundColour(refresh_bg);
 
     progress_sizer->Add(progress_prefix, 0, wxLEFT);
     progress_sizer->Add(m_progress_refresh, 0, wxLEFT);
     progress_sizer->Add(progress_suffix, 0, wxLEFT);
 
     Label* refresh_tip = new Label(parent, _L("Please wait"));
-    refresh_tip->SetBackgroundColour(*wxWHITE);
+    refresh_tip->SetBackgroundColour(refresh_bg);
 
     refresh_sizer->Add(0, 0, 1, wxEXPAND, 0);
     refresh_sizer->Add(m_refresh_icon, 0, wxALIGN_CENTER_HORIZONTAL, 0);
@@ -634,7 +638,7 @@ void wgtDeviceNozzleRackPos::UpdateRackPos(DevNozzleRack::RackPos new_pos,
         {
             if (new_pos == DevNozzleRack::RACK_POS_A_TOP)
             {
-                s_show_label(m_label_rowup, L_RAW_A_STR, s_hgreen_clr);
+                s_show_label(m_label_rowup, L_RAW_A_STR, StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Device));
                 s_show_label(m_label_rowup_status, _L("Raised"));
 
                 m_rowbottom_panel->SetBorderColor(*wxWHITE);
@@ -647,7 +651,7 @@ void wgtDeviceNozzleRackPos::UpdateRackPos(DevNozzleRack::RackPos new_pos,
             }
             else if (new_pos == DevNozzleRack::RACK_POS_B_TOP)
             {
-                s_show_label(m_label_rowup, L_RAW_B_STR, s_hgreen_clr);
+                s_show_label(m_label_rowup, L_RAW_B_STR, StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Device));
                 s_show_label(m_label_rowup_status, _L("Raised"));
                 s_show_label(m_label_rowbottom, L_RAW_A_STR, *wxBLACK);
                 m_label_rowbottom_status->Show(false);
@@ -768,9 +772,12 @@ void wgtDeviceNozzleRackNozzleItem::CreateGui()
 
     label_h_sizer->Add(m_nozzle_label_1, 0, wxALIGN_LEFT);
 
-    auto status_icon = create_scaled_bitmap("dev_rack_nozzle_error_icon", this, 14);
-    m_nozzle_status_icon = new wxStaticBitmap(this, wxID_ANY, status_icon, wxDefaultPosition, WX_DIP_SIZE(14, 14));
-    m_nozzle_status_icon->Bind(wxEVT_LEFT_DOWN, &wgtDeviceNozzleRackNozzleItem::OnBtnNozzleStatus, this);
+    // Kit icon Button with the Error glyph in the Error role; focusable, with a role.
+    m_nozzle_status_icon = new Button(this, "", "", 0, 0);
+    m_nozzle_status_icon->SetIconButton(Button::IconShape::Circle, FromDIP(20));
+    m_nozzle_status_icon->SetGlyph(MaterialIcon::Error, FromDIP(14));
+    m_nozzle_status_icon->SetGlyphColor(StateColor(std::make_pair(StateColor::semantic(MD3::Role::Error), (int) StateColor::Normal)));
+    m_nozzle_status_icon->Bind(wxEVT_BUTTON, &wgtDeviceNozzleRackNozzleItem::OnBtnNozzleStatus, this);
     m_nozzle_status_icon->Bind(wxEVT_ENTER_WINDOW, [this](auto&) { SetCursor(wxCURSOR_HAND); });
     m_nozzle_status_icon->Bind(wxEVT_LEAVE_WINDOW, [this](auto&) { SetCursor(wxCURSOR_ARROW); });
     m_nozzle_status_icon->SetBackgroundColour(*wxWHITE);
@@ -811,10 +818,10 @@ void wgtDeviceNozzleRackNozzleItem::SetSelected(bool selected)
             }
 
             m_nozzle_selected_bitmap->SetBitmap(m_nozzle_selected_image->bmp());
-            SetBorderColor(StateColor::darkModeColorFor(s_hgreen_clr));
+            SetBorderColor(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Device));
         } else {
             m_nozzle_selected_bitmap->SetBitmap(wxNullBitmap);
-            SetBorderColor(StateColor::darkModeColorFor(s_gray_clr));
+            SetBorderColor(StateColor::semantic(MD3::Role::Outline));
         }
 
         Refresh();
@@ -884,7 +891,7 @@ void wgtDeviceNozzleRackNozzleItem::SetNozzleStatus(NOZZLE_STATUS status, const 
 
         if (status == wgtDeviceNozzleRackNozzleItem::NOZZLE_ERROR)
         {
-            m_nozzle_label_1->SetForegroundColour(StateColor::darkModeColorFor(s_red_clr));
+            m_nozzle_label_1->SetForegroundColour(StateColor::semantic(MD3::Role::Error));
             m_nozzle_status_icon->Show(true);
         }
         else
@@ -903,7 +910,7 @@ void wgtDeviceNozzleRackNozzleItem::SetNozzleStatus(NOZZLE_STATUS status, const 
     }
 }
 
-void wgtDeviceNozzleRackNozzleItem::OnBtnNozzleStatus(wxMouseEvent& evt)
+void wgtDeviceNozzleRackNozzleItem::OnBtnNozzleStatus(wxCommandEvent& evt)
 {
     if (m_is_disabled) {
         return;
@@ -931,7 +938,7 @@ void wgtDeviceNozzleRackNozzleItem::Rescale()
     if (m_nozzle_error_image) { m_nozzle_error_image->msw_rescale(); }
 
     auto status_icon = create_scaled_bitmap("dev_rack_nozzle_error_icon", this, 14);
-    m_nozzle_status_icon->SetBitmap(status_icon);
+    m_nozzle_status_icon->SetGlyph(MaterialIcon::Error, FromDIP(14));
     m_nozzle_status_icon->Refresh();
 
     if (m_nozzle_selected_image) {

@@ -1,4 +1,4 @@
-import type { PresetVendor, Spool } from './types';
+import type { PresetVendor, Spool } from './types.ts';
 
 export function buildVendorOptions(
   presets: PresetVendor[],

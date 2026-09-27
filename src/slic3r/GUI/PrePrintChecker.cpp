@@ -220,14 +220,14 @@ static wxColour _GetLabelColour(const prePrintInfo& info)
 {
     if (info.level == Error)
     {
-        return wxColour("#D01B1B");
+        return ThemeColor::Danger;
     }
     else if (info.level == Warning)
     {
-        return wxColour("#FF6F00");
+        return ThemeColor::Warning;
     }
 
-    return *wxBLACK; // Default colour for normal messages
+    return ThemeColor::TextPrimary; // Default colour for normal messages
 }
 
 bool PrinterMsgPanel::UpdateInfos(const std::vector<prePrintInfo>& infos)
@@ -336,7 +336,7 @@ ScalableButton* PrinterMsgPanel::CreateTypeButton(const prePrintInfo& info)
         btn = new ScalableButton(this, wxID_ANY, "dev_warning");
     }
 
-    btn->SetBackgroundColour(*wxWHITE);
+    btn->SetBackgroundColour(ThemeColor::White);
     btn->SetMaxSize(wxSize(FromDIP(16), FromDIP(16)));
     btn->SetMinSize(wxSize(FromDIP(16), FromDIP(16)));
     btn->SetSize(wxSize(FromDIP(16), FromDIP(16)));
@@ -352,8 +352,8 @@ static Label* s_create_btn_label(PrinterMsgPanel* panel, const wxString& btn_nam
     auto font = btn->GetFont();
     font.SetUnderlined(true);
     btn->SetFont(font);
-    btn->SetBackgroundColour(*wxWHITE);
-    btn->SetForegroundColour(wxColour("#00AE42"));
+    btn->SetBackgroundColour(ThemeColor::White);
+    btn->SetForegroundColour(ThemeColor::BrandGreen);
 
     btn->Bind(wxEVT_ENTER_WINDOW, [panel](auto &e) { panel->SetCursor(wxCURSOR_HAND); });
     btn->Bind(wxEVT_LEAVE_WINDOW, [panel](auto &e) { panel->SetCursor(wxCURSOR_ARROW); });
