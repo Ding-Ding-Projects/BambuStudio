@@ -199,3 +199,7 @@ then locates its corresponding local protected slot. Unknown or mismatched IDs a
 private-key access; hosted fixtures cover both cases. The schema 1 reader and its legacy slot remain
 supported. A successful envelope validation still requires owner decryption and privacy review
 before any report or image is promoted.
+Every newly produced envelope uses the approved version 2 public recipient, including schema 1
+captures from the independent release publication workflow. Schema number describes the evidence
+inventory format, not the encryption key version. Historical envelopes still select the archived
+version 1 public key and its legacy local slot by their recorded fingerprint.

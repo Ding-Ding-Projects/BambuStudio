@@ -323,8 +323,7 @@ try {
         }
     }
     $aad = [System.Text.Encoding]::UTF8.GetBytes(($bindingLines -join "`n") + "`n")
-    $publicName = if ($legacyMode) { 'hosted-gui-public-v1.pem' } else { 'hosted-gui-public-v2.pem' }
-    $publicPath = Join-Path $PSScriptRoot $publicName
+    $publicPath = Join-Path $PSScriptRoot 'hosted-gui-public-v2.pem'
     if (-not (Test-Path -LiteralPath $publicPath -PathType Leaf)) {
         throw 'The selected versioned public key is unavailable in this verifier checkout.'
     }
