@@ -73,6 +73,7 @@ class HostedApp(App):
         self.holder_receipt = None
         self.cleanup_killed_pids = []
         self.natural_exit_observed_before_cleanup = False
+        self.holder_lifetime = 600
 
     def _desktop_windows(self):
         return cheap("list_headless_windows", name=self.desktop)["windows"]
@@ -111,7 +112,7 @@ class HostedApp(App):
         command = (f'"{sys.executable}" "{holder}" --exe "{self.exe}" '
                    f'--datadir "{self.datadir}" --desktop "{self.desktop}" '
                    f'--receipt "{self.holder_receipt_path}" --stop "{self.holder_stop_path}" '
-                   f'--timeout {int(timeout) + 30}')
+                   f'--timeout {int(self.holder_lifetime)}')
         self.helper_pid = cheap("launch_on_headless_desktop", name=self.desktop,
                                 command=command)["pid"]
         receipt_deadline = time.monotonic() + 20
@@ -189,11 +190,14 @@ class HostedApp(App):
                             self.holder_receipt = receipt
                             self.launch_exit_code = receipt.get("app_exit_code")
                             if receipt.get("holder_finished_at_utc"):
+                                if (receipt.get("status") != "holder_stopped"
+                                        or not receipt.get("app_exit_confirmed")
+                                        or receipt.get("deadline_fired")):
+                                    errors.append("Hosted holder did not confirm owned app teardown")
                                 break
                     time.sleep(0.25)
                 else:
-                    errors.append("Hosted launch holder did not finish within eight seconds")
-                    cheap("kill_process", pid=self.helper_pid, force=True)
+                    errors.append("Hosted holder teardown unverified after eight seconds; helper PID was not killed without fresh identity proof")
             except Exception as exc:
                 errors.append(f"holder closure: {type(exc).__name__}: {exc}")
         try:
@@ -873,6 +877,7 @@ def main() -> int:
     seed_profile(datadir, args.language, args.theme)
     desktop = "bsbehavior-" + str(os.getpid())
     app = HostedApp(str(args.exe), str(datadir), desktop, str(probe_dir))
+    app.holder_lifetime = 1800 if args.scope == "behavior" else 900 if args.scope == "layout" else 360
     requested_size = tuple(int(part) for part in args.viewport.split("x"))
     drive = Drive(app, args.output, source, args.release_tag,
                   receipt["installed_exe_sha256"], args.hosted_run_id, args.language,
@@ -925,6 +930,9 @@ def main() -> int:
         "exit_code_status": "unavailable from holder" if app.launch_exit_code is None else "observed",
         "app_exited_at_utc": (app.holder_receipt or {}).get("app_exited_at_utc"),
         "holder_status": (app.holder_receipt or {}).get("status"),
+        "holder_deadline_seconds": (app.holder_receipt or {}).get("holder_deadline_seconds"),
+        "holder_deadline_fired": (app.holder_receipt or {}).get("deadline_fired"),
+        "app_exit_confirmed": (app.holder_receipt or {}).get("app_exit_confirmed"),
     }
     logs = []
     wer_status = "not_checked"

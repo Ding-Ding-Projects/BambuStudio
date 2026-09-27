@@ -5,6 +5,7 @@ import hashlib
 import json
 import os
 import subprocess
+import sys
 import tempfile
 import unittest
 import zipfile
@@ -18,9 +19,20 @@ HERE = Path(__file__).resolve().parent
 spec = importlib.util.spec_from_file_location("behavior_drive", HERE / "drive-packaged-behavior.py")
 drive = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(drive)
+holder_spec = importlib.util.spec_from_file_location("hosted_launch_holder", HERE / "hosted_launch_holder.py")
+holder = importlib.util.module_from_spec(holder_spec)
+holder_spec.loader.exec_module(holder)
 
 
 class BehaviorDriveChecks(unittest.TestCase):
+    def test_holder_refuses_non_hosted_execution_before_launch(self):
+        argv = ["holder", "--exe", "unused.exe", "--datadir", "unused-profile",
+                "--desktop", "hidden", "--receipt", "receipt.json", "--stop", "stop.file"]
+        with patch.object(sys, "argv", argv), patch.dict(holder.os.environ, {
+                "GITHUB_ACTIONS": "false", "RUNNER_ENVIRONMENT": "github-hosted"}):
+            with self.assertRaises(SystemExit):
+                holder.main()
+
     def test_holder_receipt_requires_exact_launcher_identity(self):
         with tempfile.TemporaryDirectory() as temp:
             profile = str(Path(temp) / "isolated profile")
@@ -94,6 +106,35 @@ class BehaviorDriveChecks(unittest.TestCase):
             output = subprocess.CompletedProcess([], 0, json.dumps(events), "")
             with patch.object(drive.subprocess, "run", return_value=output):
                 self.assertEqual(drive.matching_wer_events(exe, {20: started}, ended), [events[-1]])
+
+    def test_wer_query_uses_full_bounded_run_interval(self):
+        started = datetime.now(timezone.utc) - timedelta(minutes=15)
+        ended = datetime.now(timezone.utc)
+        with patch.object(drive.subprocess, "run", return_value=subprocess.CompletedProcess([], 0, "")) as run:
+            self.assertEqual(drive.matching_wer_events("C:\\verified.exe", {20: started}, ended), [])
+        self.assertEqual(run.call_args.kwargs["env"]["BS_WER_START_UTC"], started.isoformat())
+        with patch.object(drive.subprocess, "run") as run:
+            self.assertEqual(drive.matching_wer_events(
+                "C:\\verified.exe", {20: ended - timedelta(minutes=41)}, ended), [])
+        run.assert_not_called()
+
+    def test_unverified_holder_teardown_never_kills_unchecked_helper_pid(self):
+        with tempfile.TemporaryDirectory() as temp:
+            probe = Path(temp) / "probe"
+            probe.mkdir()
+            app = drive.HostedApp("exe", "profile", "desktop", str(probe))
+            app.helper_pid = 99
+            app.launch_pid = 20
+            app.launch_started = datetime.now(timezone.utc)
+            app.holder_receipt_path.write_text(json.dumps({"helper_pid": 99,
+                                                          "app_exit_confirmed": False}), encoding="utf-8")
+            calls = []
+            with patch.object(drive, "process_snapshot", return_value=[]), patch.object(
+                    drive, "cheap", side_effect=lambda tool, **kwargs: calls.append(tool) or {"ok": True}), patch.object(
+                    drive.time, "monotonic", side_effect=[0, 9]):
+                with self.assertRaisesRegex(RuntimeError, "helper PID was not killed"):
+                    app.stop()
+            self.assertEqual(calls, ["close_headless_desktop"])
 
     def test_wer_collection_skips_holder_terminated_app(self):
         with tempfile.TemporaryDirectory() as temp:
