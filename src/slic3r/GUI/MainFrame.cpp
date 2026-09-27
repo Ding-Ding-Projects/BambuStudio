@@ -1570,6 +1570,11 @@ void MainFrame::close_project_tab(int index)
     TabOpGuard guard(m_project_tab_switching);
 
     if (index == active) {
+        // close_with_confirm() may mark the live undo state saved even when
+        // the user chooses Discard. Preserve exact outgoing bytes first so a
+        // failed replacement can abort the close without losing those edits.
+        if (!save_active_tab_snapshot_if_dirty())
+            return;
         // Active tab: reuse the plater's unsaved-changes confirmation (same second-check
         // as the app-close path). Cancel aborts the close.
         auto check = [](bool yes_or_no) {
@@ -1596,8 +1601,6 @@ void MainFrame::close_project_tab(int index)
     // Load the replacement while the outgoing tab still exists. If loading
     // fails, keep its tab and restore its document rather than closing it.
     if (index == active) {
-        if (!save_active_tab_snapshot_if_dirty())
-            return;
         const ProjectTab outgoing = m_project_tabbar->TabAt(active);
         bool loaded = false;
         if (count == 1) {
