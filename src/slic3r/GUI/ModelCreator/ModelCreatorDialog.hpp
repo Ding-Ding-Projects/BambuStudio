@@ -5,7 +5,9 @@
 
 #include <functional>
 #include <memory>
+#include <string>
 #include <thread>
+#include <wx/timer.h>
 
 class wxButton;
 class wxChoice;
@@ -13,6 +15,7 @@ class wxStaticText;
 class wxTextCtrl;
 
 namespace Slic3r::GUI::ModelCreator {
+struct ProviderLookupState;
 
 // Navigation creates this dialog. The plate import callback is invoked only
 // after the user presses Add to plate on a successfully rendered revision.
@@ -32,13 +35,20 @@ private:
     void select_revision();
     void update_renderer_path();
     void save_preferences();
+    void lookup_provider_path();
+    void collect_provider_paths();
 
     AddToPlate m_add_to_plate;
     std::shared_ptr<std::atomic_bool> m_cancel;
     std::shared_ptr<std::atomic_bool> m_alive;
     std::thread m_worker;
     std::thread m_history_worker;
-    std::thread m_provider_lookup_worker;
+    std::shared_ptr<ProviderLookupState> m_provider_lookup_state;
+    wxTimer m_provider_lookup_timer;
+    bool m_provider_lookup_started[2] = {false, false};
+    bool m_provider_lookup_collected[2] = {false, false};
+    std::filesystem::path m_discovered_provider_paths[2];
+    std::wstring m_provider_lookup_expected_paths[2];
     std::vector<Revision> m_revisions;
     bool m_busy = false;
     bool m_loading_history = false;
