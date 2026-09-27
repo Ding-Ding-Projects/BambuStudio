@@ -1582,6 +1582,7 @@ void MainFrame::close_project_tab(int index)
     const int active = m_project_tabbar->GetActive();
 
     TabOpGuard guard(m_project_tab_switching);
+    std::string saved_tab_recovery_snapshot;
 
     if (index == active) {
         // close_with_confirm() may mark the live undo state saved even when
@@ -1597,8 +1598,34 @@ void MainFrame::close_project_tab(int index)
             return wxGetApp().check_and_save_current_preset_changes(
                 _L("Close project tab"), _L("Closing a project tab while some presets are modified."));
         };
-        if (m_plater->close_with_confirm(check) == wxID_CANCEL)
+        const int close_result = m_plater->close_with_confirm(check);
+        if (close_result == wxID_CANCEL) {
+            // The live document remains active. Its pre-confirmation snapshot
+            // is now redundant and would become stale after a later edit/save.
+            ProjectTab& tab = m_project_tabbar->TabAt(active);
+            tab.snapshot_path.clear();
+            tab.file_path = into_u8(m_plater->get_project_filename());
+            tab.title = m_plater->get_project_name();
+            tab.dirty = m_plater->is_project_dirty();
+            m_project_tabbar->SetActiveTitle(tab.title.IsEmpty() ? _L("Untitled") : tab.title);
+            m_project_tabbar->SetActiveDirty(tab.dirty);
+            m_project_tabbar->SaveToConfig();
+            // Retain the detached file on disk as a recovery source if a save
+            // attempt caused Cancel; it is no longer selected by this tab.
             return;
+        }
+        if (close_result == wxID_YES) {
+            // Save As may have assigned a different real filename while the
+            // tab-operation guard suppresses update_title() synchronization.
+            // Treat that saved document as the outgoing tab. Keep its older
+            // private snapshot on disk until a replacement or rollback loads.
+            ProjectTab& tab = m_project_tabbar->TabAt(active);
+            saved_tab_recovery_snapshot = tab.snapshot_path;
+            tab.file_path = into_u8(m_plater->get_project_filename());
+            tab.title = m_plater->get_project_name();
+            tab.dirty = false;
+            tab.snapshot_path.clear();
+        }
     } else {
         // Background tab with unsaved changes (its edits live only in the temp snapshot):
         // confirm before discarding them, since the live plater can't run its own
@@ -1631,12 +1658,28 @@ void MainFrame::close_project_tab(int index)
         }
         if (!loaded) {
             const bool restored = restore_project_tab_document(m_plater, m_project_tabbar, outgoing);
+            if (restored && !saved_tab_recovery_snapshot.empty()) {
+                boost::system::error_code ec;
+                boost::filesystem::remove(boost::filesystem::path(saved_tab_recovery_snapshot), ec);
+            } else if (!restored && !saved_tab_recovery_snapshot.empty()) {
+                // The newly saved file could not be reloaded. Retain the
+                // pre-confirmation snapshot as a recovery source for this tab.
+                ProjectTab& tab = m_project_tabbar->TabAt(active);
+                tab.snapshot_path = saved_tab_recovery_snapshot;
+                tab.dirty = true;
+            }
+            m_project_tabbar->SaveToConfig();
             BOOST_LOG_TRIVIAL(error) << __FUNCTION__ << ": replacement tab load failed; outgoing restored=" << restored;
             MessageDialog(this, restored ? _L("Could not close this project tab. The project was restored.")
                                          : _L("Could not close this project tab or restore its project."),
                           _L("Close project tab"), wxOK | wxICON_WARNING).ShowModal();
             return;
         }
+    }
+
+    if (!saved_tab_recovery_snapshot.empty()) {
+        boost::system::error_code ec;
+        boost::filesystem::remove(boost::filesystem::path(saved_tab_recovery_snapshot), ec);
     }
 
     // Best-effort cleanup of this tab's temp snapshot.
