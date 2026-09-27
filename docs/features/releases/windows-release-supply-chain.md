@@ -164,3 +164,5 @@ Windows Error Reporting dumps are omitted with an explicit receipt reason becaus
 application-name match does not prove the PID, process creation interval, and installed executable
 identity of a particular hosted run. A failed fixed-surface capture still encrypts attributable
 behavior reports and restricted logs when those files were produced; it keeps a partial verdict.
+The hosted manifest fixture Chut deliberately supplies traversal and duplicate paths and requires
+both to be rejected before private-key access or extraction.

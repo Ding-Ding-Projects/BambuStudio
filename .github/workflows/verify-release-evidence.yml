@@ -69,10 +69,12 @@ jobs:
           }
           & python scripts/md3/test-drive-packaged-behavior.py
           if ($LASTEXITCODE -ne 0) { throw 'Focused hosted Python driver checks failed.' }
+          & scripts/md3/Test-HostedEvidenceManifestV2.ps1
           foreach ($path in @(
             'scripts/ci/Invoke-HostedReleaseVerification.ps1',
             'scripts/md3/Capture-HostedReleaseGui.ps1',
-            'scripts/md3/Open-HostedReleaseGuiEvidence.ps1')) {
+            'scripts/md3/Open-HostedReleaseGuiEvidence.ps1',
+            'scripts/md3/Test-HostedEvidenceManifestV2.ps1')) {
             $tokens = $null
             $parseErrors = $null
             [void][System.Management.Automation.Language.Parser]::ParseFile(

@@ -27,7 +27,6 @@ $parentPath = [System.IO.Path]::GetDirectoryName($finalPath)
 Assert-True (-not [string]::IsNullOrWhiteSpace($parentPath) -and
     (Test-Path -LiteralPath $parentPath -PathType Container)) 'The output parent directory must already exist.'
 Assert-True (-not (Test-Path -LiteralPath $finalPath)) 'The output directory already exists.'
-Assert-True (Test-Path -LiteralPath $privatePath -PathType Leaf) 'The local DPAPI-protected key is unavailable.'
 $receipt = Get-Content -LiteralPath $ReceiptPath -Raw | ConvertFrom-Json
 $envelope = Get-Content -LiteralPath $EnvelopePath -Raw | ConvertFrom-Json
 $expectedSource = $ExpectedCommit.ToLowerInvariant()
@@ -146,6 +145,7 @@ $stageCreated = $false
 $stageId = $null
 $rsa = [System.Security.Cryptography.RSA]::Create()
 try {
+    Assert-True (Test-Path -LiteralPath $privatePath -PathType Leaf) 'The local DPAPI-protected key is unavailable.'
     $protectedBytes = [System.IO.File]::ReadAllBytes($privatePath)
     $privateBytes = [System.Security.Cryptography.ProtectedData]::Unprotect(
         $protectedBytes, $null, [System.Security.Cryptography.DataProtectionScope]::CurrentUser)
