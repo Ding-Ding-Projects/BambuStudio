@@ -136,6 +136,10 @@ publication workflow. Supply the existing immutable `release_tag`, its exact
 English, light, 100%, 1200x800 tuple. Use `behavior` for the six language/theme hosted jobs,
 each of which records four requested scales at two viewport sizes. The verification checkout's
 commit is recorded separately from the immutable release source commit.
+The narrowly scoped `codex/hosted-behavior-verifier` push trigger performs a diagnostic run
+against `md3-v125` and `c5df6199e1a83b1c94be12e999c0b322fded8730` while the new verifier
+is reviewed on its own branch. It does not trigger for other branches or replace manual matrix
+dispatch.
 
 Each job installs and validates the published Squirrel package in a fresh hosted Windows runner
 using `Verify-HostedSquirrelInstall.ps1`. It then installs the pinned headless tool and Pillow in
