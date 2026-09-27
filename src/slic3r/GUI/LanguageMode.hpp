@@ -189,12 +189,30 @@ public:
     LocalizedText translate_plural(const wxString &singular, const wxString &plural, unsigned int n,
                                    const wxString &context = wxString()) const;
 
+    // The fork's English wording for a msgid (ink terminology, copy edits such
+    // as "Cancle" -> "Cancel"), before vocabulary(). In English and bilingual
+    // modes the main wx catalog is that override catalog; in Cantonese mode a
+    // second copy is loaded so an untranslated string shows the corrected
+    // English rather than the raw msgid.
+    wxString english(const wxString &message, const wxString &context = wxString()) const;
+    wxString english_plural(const wxString &singular, const wxString &plural, unsigned int n,
+                            const wxString &context = wxString()) const;
+    bool english_catalog_loaded() const { return m_english_catalog != nullptr; }
+
+    // Display text for a legacy _L()/_u8L()/_CTX() lookup whose main-catalog
+    // result is `translated`: the English fallback in Cantonese mode, then
+    // vocabulary(). Every legacy translation path ends here (see I18N.hpp).
+    wxString finish(const wxString &message, const wxString &translated, const wxString &context = wxString()) const;
+    wxString finish_plural(const wxString &singular, const wxString &plural, unsigned int n,
+                           const wxString &translated, const wxString &context = wxString()) const;
+
 private:
     const wxString *find_cantonese(const wxString &message, unsigned int n, const wxString &context) const;
 
     LanguageModeProfile          m_profile;
     std::unique_ptr<wxMsgCatalog> m_cantonese_catalog;
     wxString                     m_cantonese_catalog_path;
+    std::unique_ptr<wxMsgCatalog> m_english_catalog;
     int                          m_funny_level_english { FUNNY_LEVEL_DEFAULT };
     int                          m_funny_level_cantonese { FUNNY_LEVEL_DEFAULT };
     bool                         m_dialog_emojis { false };

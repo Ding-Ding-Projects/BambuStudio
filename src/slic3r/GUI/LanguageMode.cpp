@@ -527,25 +527,87 @@ bool LanguageModeService::configure(std::string_view language_mode_id, const wxS
 {
     LanguageModeProfile next_profile = resolve_language_mode(language_mode_id);
     std::unique_ptr<wxMsgCatalog> next_catalog;
+    std::unique_ptr<wxMsgCatalog> next_english;
     wxString next_catalog_path;
 
-    if (next_profile.uses_auxiliary_cantonese_catalog && !localization_root.empty()) {
+    auto catalog_path = [&localization_root](const char *language) {
         wxFileName catalog_file = wxFileName::DirName(localization_root);
-        catalog_file.AppendDir(wxString::FromUTF8(LANGUAGE_MODE_CANTONESE_HONG_KONG));
+        catalog_file.AppendDir(wxString::FromUTF8(language));
         catalog_file.SetFullName(wxString::FromUTF8("BambuStudio.mo"));
-        next_catalog_path = catalog_file.GetFullPath();
+        return catalog_file.GetFullPath();
+    };
 
+    if (next_profile.uses_auxiliary_cantonese_catalog && !localization_root.empty()) {
+        next_catalog_path = catalog_path(LANGUAGE_MODE_CANTONESE_HONG_KONG);
         if (wxFileExists(next_catalog_path)) {
             next_catalog.reset(wxMsgCatalog::CreateFromFile(next_catalog_path,
                                                             wxString::FromUTF8("BambuStudio-yue_HK")));
         }
+    }
+    // Only Cantonese mode makes yue_HK the main wx catalog, so only it needs a
+    // separate handle on the English wording layer for untranslated strings.
+    if (next_profile.kind == LanguageModeKind::CantoneseHongKong && !localization_root.empty()) {
+        const wxString english_path = catalog_path(LANGUAGE_MODE_ENGLISH);
+        if (wxFileExists(english_path))
+            next_english.reset(wxMsgCatalog::CreateFromFile(english_path, wxString::FromUTF8("BambuStudio-en")));
     }
 
     const bool catalog_ready = !next_profile.uses_auxiliary_cantonese_catalog || next_catalog != nullptr;
     m_profile = std::move(next_profile);
     m_cantonese_catalog = std::move(next_catalog);
     m_cantonese_catalog_path = std::move(next_catalog_path);
+    m_english_catalog = std::move(next_english);
     return catalog_ready;
+}
+
+wxString LanguageModeService::english(const wxString &message, const wxString &context) const
+{
+    if (m_english_catalog != nullptr) {
+#if wxCHECK_VERSION(3, 1, 1)
+        const wxString *found = m_english_catalog->GetString(message, UINT_MAX, context);
+#else
+        const wxString *found = m_english_catalog->GetString(message, UINT_MAX);
+#endif
+        if (found != nullptr && !found->empty())
+            return *found;
+    }
+    // In Cantonese mode the main catalog is yue_HK, so without the English
+    // handle the msgid is the best English there is.
+    if (m_profile.kind == LanguageModeKind::CantoneseHongKong)
+        return message;
+    return translate_standard(message, context);
+}
+
+wxString LanguageModeService::english_plural(const wxString &singular, const wxString &plural, unsigned int n,
+                                             const wxString &context) const
+{
+    if (m_english_catalog != nullptr) {
+#if wxCHECK_VERSION(3, 1, 1)
+        const wxString *found = m_english_catalog->GetString(singular, n, context);
+#else
+        const wxString *found = m_english_catalog->GetString(singular, n);
+#endif
+        if (found != nullptr && !found->empty())
+            return *found;
+    }
+    if (m_profile.kind == LanguageModeKind::CantoneseHongKong)
+        return untranslated_plural(singular, plural, n);
+    return translate_standard_plural(singular, plural, n, context);
+}
+
+wxString LanguageModeService::finish(const wxString &message, const wxString &translated, const wxString &context) const
+{
+    if (m_profile.kind == LanguageModeKind::CantoneseHongKong && translated == message)
+        return vocabulary(english(message, context));
+    return vocabulary(translated);
+}
+
+wxString LanguageModeService::finish_plural(const wxString &singular, const wxString &plural, unsigned int n,
+                                            const wxString &translated, const wxString &context) const
+{
+    if (m_profile.kind == LanguageModeKind::CantoneseHongKong && (translated == singular || translated == plural))
+        return vocabulary(english_plural(singular, plural, n, context));
+    return vocabulary(translated);
 }
 
 const wxString *LanguageModeService::find_cantonese(const wxString &message, unsigned int n,
@@ -567,21 +629,22 @@ LocalizedText LanguageModeService::translate(const wxString &message, const wxSt
         return { vocabulary(translate_standard(message, context)), wxString() };
 
     // The funny level swaps in a voice variant when the source string has a
-    // ladder; every other string falls through to the unchanged base copy.
+    // ladder; every other string uses the fork's English wording, exactly as
+    // _L() shows it, so the two paths never disagree.
     const wxString *english_variant = funny_copy_variant(message, FunnyLanguage::English, m_funny_level_english);
-    const wxString  english         = vocabulary(english_variant == nullptr ? message : *english_variant);
+    const wxString  english_text    = vocabulary(english_variant == nullptr ? english(message, context) : *english_variant);
 
     if (m_profile.kind == LanguageModeKind::English)
-        return { english, wxString() };
+        return { english_text, wxString() };
 
     const wxString *cantonese = funny_copy_variant(message, FunnyLanguage::Cantonese, m_funny_level_cantonese);
     if (cantonese == nullptr)
         cantonese = find_cantonese(message, UINT_MAX, context);
     if (m_profile.kind == LanguageModeKind::CantoneseHongKong)
-        return { cantonese == nullptr ? english : *cantonese, wxString() };
+        return { cantonese == nullptr ? english_text : *cantonese, wxString() };
 
-    LocalizedText result { english, wxString() };
-    if (cantonese != nullptr && !cantonese->empty() && *cantonese != message)
+    LocalizedText result { english_text, wxString() };
+    if (cantonese != nullptr && !cantonese->empty() && *cantonese != message && *cantonese != english_text)
         result.secondary = *cantonese;
     return result;
 }
@@ -592,7 +655,7 @@ LocalizedText LanguageModeService::translate_plural(const wxString &singular, co
     if (m_profile.kind == LanguageModeKind::Standard)
         return { vocabulary(translate_standard_plural(singular, plural, n, context)), wxString() };
 
-    const wxString source = vocabulary(untranslated_plural(singular, plural, n));
+    const wxString source = vocabulary(english_plural(singular, plural, n, context));
     if (m_profile.kind == LanguageModeKind::English)
         return { source, wxString() };
 

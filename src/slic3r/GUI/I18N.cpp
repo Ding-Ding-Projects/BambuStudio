@@ -20,6 +20,21 @@ const LanguageModeProfile &language_mode_profile()
 	return language_mode_service().profile();
 }
 
+wxString finish(const wxString &message, const wxString &translated)
+{
+	return language_mode_service().finish(message, translated);
+}
+
+wxString finish(const wxString &message, const wxString &translated, const char *ctx)
+{
+	return language_mode_service().finish(message, translated, ctx == nullptr ? wxString() : wxString(ctx, wxConvUTF8));
+}
+
+wxString finish_plural(const wxString &singular, const wxString &plural, unsigned int n, const wxString &translated)
+{
+	return language_mode_service().finish_plural(singular, plural, n, translated);
+}
+
 LocalizedText translate_mode(const wxString &s)
 {
 	return language_mode_service().translate(s);
@@ -40,7 +55,7 @@ LocalizedText translate_mode(const wxString &s, const char *ctx)
 wxString L_str(const std::string &str)
 {
 	//! Explicitly specify that the source string is already in UTF-8 encoding
-	return I18N::vocabulary(wxGetTranslation(wxString(str.c_str(), wxConvUTF8)));
+	return I18N::translate(wxString(str.c_str(), wxConvUTF8));
 }
 
 } }
