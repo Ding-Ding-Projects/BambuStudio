@@ -119,6 +119,11 @@ try {
     $output = Join-Path $root 'opened'
     & (Join-Path $PSScriptRoot 'Open-HostedReleaseGuiEvidence.ps1') `
         @openArgs -BundlePath $bundlePath -OutputDirectory $output
+    $actualNames = @((Get-ChildItem -LiteralPath $output -File).Name | Sort-Object)
+    if (@(Compare-Object -ReferenceObject @($names | Sort-Object) -DifferenceObject $actualNames).Count -ne 0 -or
+        @(Get-ChildItem -LiteralPath $root -Directory -Filter '.opened.stage-*').Count -ne 0) {
+        throw 'The final output is incomplete or a generated stage remains.'
+    }
     foreach ($name in $names) {
         $actual = [System.IO.File]::ReadAllBytes((Join-Path $output $name))
         $expected = [System.IO.File]::ReadAllBytes((Join-Path $images $name))

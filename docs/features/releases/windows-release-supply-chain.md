@@ -100,6 +100,14 @@ are rejected before any files are changed. Raw images stay on the disposable run
 never uploaded or published in plaintext.
 This step uses `continue-on-error`, so capture availability is not a release gate.
 
+> [!IMPORTANT]
+> AES-GCM checks that the encrypted bundle matches its supplied authenticated metadata.
+> Anyone with the public key can encrypt a different bundle, so encryption alone does not
+> authenticate its GitHub origin. Before local decryption or promotion, the operator must use
+> `gh run view` to compare the exact run ID and source commit, then independently verify the
+> published release target and asset hashes against the downloaded release and installation
+> receipt. A matching self-reported envelope is not enough.
+
 The receipt records the source commit, release tag, installer and executable hashes, capture
 method, rendered-frame hashes, pixel metrics, and status. Its successful state is
 `encrypted_capture_pending_restricted_review`. It is provenance and automated pixel evidence,
@@ -107,7 +115,9 @@ not reviewed GUI behavior. The operator runs `scripts/md3/Open-HostedReleaseGuiE
 with the exact run ID, source commit, release tag, and installed executable hash. That helper
 uses the local DPAPI key, checks the authenticated binding, enforces a fixed eleven-name image
 allowlist and ZIP size limits, and validates every image hash before extraction. The operator
-must inspect the decrypted pixels for visual quality and private content before any image is
+receives all eleven files only after they have been written and rehashed in a unique sibling
+directory that is atomically renamed into place. Existing output is never overwritten. The
+operator must inspect the decrypted pixels for visual quality and private content before any image is
 retained, embedded, or published. The fresh disposable profile does not import the user's local
 installation or data. A missing or failed capture must not be described as verified GUI behavior.
 
