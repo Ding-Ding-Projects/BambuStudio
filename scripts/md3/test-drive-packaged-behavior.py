@@ -530,11 +530,17 @@ class BehaviorDriveChecks(unittest.TestCase):
         app.adopted_pids = []
         calls = []
         app.launch_started = datetime.now(timezone.utc)
+        def closed(tool, **_kwargs):
+            calls.append(tool)
+            if tool == "list_headless_windows":
+                raise RuntimeError("OpenDesktopW('desktop') failed (GetLastError=2)")
+            return {"ok": True}
         with patch.object(drive, "process_snapshot", return_value=[]), patch.object(
-            drive, "cheap", side_effect=lambda tool, **kwargs: calls.append(tool) or {"ok": True}
-        ):
+            drive, "cheap", side_effect=closed):
             app.stop()
-        self.assertEqual(calls, ["close_headless_desktop"])
+        self.assertEqual(calls, ["close_headless_desktop", "list_headless_windows"])
+        self.assertTrue(app.owned_teardown_verified)
+        self.assertTrue(app.desktop_closed_verified)
 
     def test_owned_child_without_window_is_still_cleaned_up(self):
         with tempfile.TemporaryDirectory() as temp:
@@ -548,13 +554,44 @@ class BehaviorDriveChecks(unittest.TestCase):
                      "CommandLine": f'"{exe}" --datadir "{profile}"',
                      "CreationDate": app.launch_started.isoformat()}
             calls = []
-            with patch.object(drive, "process_snapshot", return_value=[child]), patch.object(
-                drive, "cheap", side_effect=lambda tool, **kwargs: calls.append((tool, kwargs)) or {"ok": True}
-            ):
+            def closed(tool, **kwargs):
+                calls.append((tool, kwargs))
+                if tool == "list_headless_windows":
+                    raise RuntimeError("OpenDesktopW('desktop') failed (GetLastError=2)")
+                return {"ok": True}
+            with patch.object(drive, "process_snapshot", side_effect=[[child], []]), patch.object(
+                    drive, "cheap", side_effect=closed):
                 app.stop()
-            self.assertEqual([name for name, _ in calls], ["kill_process", "close_headless_desktop"])
+            self.assertEqual([name for name, _ in calls],
+                             ["kill_process", "close_headless_desktop", "list_headless_windows"])
             self.assertEqual(calls[0][1]["pid"], 20)
             self.assertEqual(app.seen_owned[20]["parent_pid"], 10)
+            self.assertTrue(app.owned_teardown_verified)
+            self.assertTrue(app.desktop_closed_verified)
+
+    def test_owned_child_still_present_after_kill_blocks_teardown(self):
+        with tempfile.TemporaryDirectory() as temp:
+            exe = str(Path(temp) / "bambu-studio.exe")
+            profile = str(Path(temp) / "profile")
+            app = drive.HostedApp(exe, profile, "desktop", str(Path(temp) / "probe"))
+            app.launch_pid = 10
+            app.launch_started = datetime.now(timezone.utc)
+            child = {"ProcessId": 20, "ParentProcessId": 10,
+                     "ExecutablePath": exe,
+                     "CommandLine": f'"{exe}" --datadir "{profile}"',
+                     "CreationDate": app.launch_started.isoformat()}
+            def closed(tool, **_kwargs):
+                if tool == "list_headless_windows":
+                    raise RuntimeError("OpenDesktopW('desktop') failed (GetLastError=2)")
+                return {"ok": True}
+            with patch.object(drive, "process_snapshot", return_value=[child]), patch.object(
+                    drive, "cheap", side_effect=closed), patch.object(
+                    drive.time, "monotonic", side_effect=[0, 1, 6]), patch.object(
+                    drive.time, "sleep"):
+                with self.assertRaisesRegex(RuntimeError, "Exact owned process teardown was not verified"):
+                    app.stop()
+            self.assertFalse(app.owned_teardown_verified)
+            self.assertTrue(app.desktop_closed_verified)
 
     def test_installation_must_match_host_source_package_and_executable(self):
         source = "a" * 40
