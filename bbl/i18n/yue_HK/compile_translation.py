@@ -43,6 +43,7 @@ from po_catalog import (  # noqa: E402  (path set up above)
     parse_po,
     placeholder_signature,
     read_mo,
+    sequential_placeholders,
 )
 
 REPO_ROOT = SCRIPT_DIR.parents[2]
@@ -107,6 +108,11 @@ def validate_catalog(
                 raise CatalogError(
                     f"placeholder mismatch for {entry.describe()}: "
                     f"{placeholder_signature(reference or '')} != {placeholder_signature(form)}"
+                )
+            if sequential_placeholders(reference or "") != sequential_placeholders(form):
+                raise CatalogError(
+                    f"unnumbered placeholders reordered for {entry.describe()}: "
+                    f"{sequential_placeholders(reference or '')} != {sequential_placeholders(form)}"
                 )
         if len(entry.categories) != 1:
             raise CatalogError(f"exactly one reviewed-category is required: {entry.describe()}")

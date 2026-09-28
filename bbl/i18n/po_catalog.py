@@ -193,6 +193,18 @@ def placeholder_signature(value: str) -> Counter:
     return Counter(PLACEHOLDER_RE.findall(value))
 
 
+_POSITIONAL = re.compile(r"^%\d+(\$|%)")
+
+
+def sequential_placeholders(value: str) -> List[str]:
+    """Placeholders bound by their order in the string (printf %s/%d, {}), excluding %1$s, %1% and %%.
+
+    wxString::Format and boost::format fill these in order, so a translation that
+    moves one relative to another swaps the facts it prints.
+    """
+    return [token for token in PLACEHOLDER_RE.findall(value) if token != "%%" and not _POSITIONAL.match(token)]
+
+
 def mo_original(entry: Entry) -> str:
     text = entry.msgid
     if entry.msgctxt is not None:
