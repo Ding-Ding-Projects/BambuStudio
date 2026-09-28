@@ -36,6 +36,7 @@
 #include "3DScene.hpp"
 #include "GUI.hpp"
 #include "I18N.hpp"
+#include "BilingualDecorator.hpp"
 #include "Search.hpp"
 #include "BitmapCache.hpp"
 #include "FilamentBitmapUtils.hpp"
@@ -266,6 +267,71 @@ static ImVec4 md3_state_layer(const ImVec4 &base, const ImVec4 &over, float t)
                   base.w);
 }
 
+// ---- Bilingual ImGui text (BilingualDecorator's display side for widgets that
+// paint through this wrapper instead of wxWidgets) ----
+//
+// Splits the ImGui "##id" suffix (never shown, never translated, never allowed
+// to change or a widget loses its state) from the visible label.
+static void split_imgui_id(const std::string &text, std::string &visible, std::string &id_suffix)
+{
+    const std::string::size_type hash_pos = text.find("##");
+    if (hash_pos == std::string::npos) {
+        visible = text;
+        id_suffix.clear();
+    } else {
+        visible   = text.substr(0, hash_pos);
+        id_suffix = text.substr(hash_pos);
+    }
+}
+
+// Stacked form (Cantonese on its own line below the English): used for body
+// text, wrapped text and tooltips. Outside bilingual mode, or when there is no
+// Cantonese recorded for this exact English text, `text` comes back unchanged.
+static std::string bilingual_stacked_utf8(const std::string &text)
+{
+    if (!I18N::language_mode_profile().is_bilingual())
+        return text;
+
+    std::string visible, id_suffix;
+    split_imgui_id(text, visible, id_suffix);
+    if (visible.empty())
+        return text;
+
+    const wxString secondary = I18N::bilingual_secondary(wxString::FromUTF8(visible.c_str()));
+    if (secondary.empty())
+        return text;
+
+    return visible + "\n" + secondary.ToUTF8().data() + id_suffix;
+}
+
+// Compact form ("English (middle dot) Cantonese" on one line): used for
+// auto-width buttons and window titles. `max_width_px` is the pixel width the
+// caller already knows is fixed (a button given an explicit size); when the
+// compact text would not fit it, the English alone is kept instead. Leave
+// `max_width_px` <= 0 for an auto-width control, where there is nothing to
+// overflow and the compact form always applies.
+static std::string bilingual_compact_utf8(const std::string &text, float max_width_px = -1.0f)
+{
+    if (!I18N::language_mode_profile().is_bilingual())
+        return text;
+
+    std::string visible, id_suffix;
+    split_imgui_id(text, visible, id_suffix);
+    if (visible.empty())
+        return text;
+
+    const wxString secondary = I18N::bilingual_secondary(wxString::FromUTF8(visible.c_str()));
+    if (secondary.empty())
+        return text;
+
+    const std::string compact = visible + " \xC2\xB7 " + secondary.ToUTF8().data(); // " (middle dot) "
+    if (max_width_px > 0.0f) {
+        const float needed = ImGui::CalcTextSize(compact.c_str()).x + ImGui::GetStyle().FramePadding.x * 2.0f;
+        if (needed > max_width_px)
+            return text;
+    }
+    return compact + id_suffix;
+}
 
 bool get_data_from_svg(const std::string &filename, unsigned int max_size_px, ThumbnailData &thumbnail_data)
 {
@@ -1071,7 +1137,7 @@ bool ImGuiWrapper::bbl_slider_float(const std::string& label, float* v, float v_
 
 bool ImGuiWrapper::begin(const std::string &name, int flags)
 {
-    return ImGui::Begin(name.c_str(), nullptr, (ImGuiWindowFlags)flags);
+    return ImGui::Begin(bilingual_compact_utf8(name).c_str(), nullptr, (ImGuiWindowFlags)flags);
 }
 
 bool ImGuiWrapper::begin(const wxString &name, int flags)
@@ -1081,7 +1147,7 @@ bool ImGuiWrapper::begin(const wxString &name, int flags)
 
 bool ImGuiWrapper::begin(const std::string& name, bool* close, int flags)
 {
-    return ImGui::Begin(name.c_str(), close, (ImGuiWindowFlags)flags);
+    return ImGui::Begin(bilingual_compact_utf8(name).c_str(), close, (ImGuiWindowFlags)flags);
 }
 
 bool ImGuiWrapper::begin(const wxString& name, bool* close, int flags)
@@ -1096,19 +1162,19 @@ void ImGuiWrapper::end()
 
 bool ImGuiWrapper::button(const wxString &label)
 {
-    auto label_utf8 = into_u8(label);
+    auto label_utf8 = bilingual_compact_utf8(into_u8(label));
     return ImGui::Button(label_utf8.c_str());
 }
 
 bool ImGuiWrapper::bbl_button(const wxString &label)
 {
-    auto label_utf8 = into_u8(label);
+    auto label_utf8 = bilingual_compact_utf8(into_u8(label));
     return ImGui::BBLButton(label_utf8.c_str());
 }
 
 bool ImGuiWrapper::button(const wxString& label, float width, float height)
 {
-    auto label_utf8 = into_u8(label);
+    auto label_utf8 = bilingual_compact_utf8(into_u8(label), width);
     return ImGui::Button(label_utf8.c_str(), ImVec2(width, height));
 }
 
@@ -1116,7 +1182,7 @@ bool ImGuiWrapper::button(const wxString &label, const ImVec2 &size, bool enable
 {
     disabled_begin(!enable);
 
-    auto label_utf8 = into_u8(label);
+    auto label_utf8 = bilingual_compact_utf8(into_u8(label), size.x);
     bool res        = ImGui::Button(label_utf8.c_str(), size);
 
     disabled_end();
@@ -1312,7 +1378,13 @@ bool ImGuiWrapper::bbl_sliderin(const char *label, int *v, int v_min, int v_max,
 
 void ImGuiWrapper::text(const char *label)
 {
-    ImGui::Text("%s", label);
+    const std::string display = bilingual_stacked_utf8(label);
+    ImGui::Text("%s", display.c_str());
+}
+
+std::string ImGuiWrapper::bilingual_compact(const std::string &text, float max_width_px)
+{
+    return bilingual_compact_utf8(text, max_width_px);
 }
 
 void ImGuiWrapper::text(const std::string &label)
@@ -1341,7 +1413,8 @@ void ImGuiWrapper::warning_text(const wxString &all_text)
 
 void ImGuiWrapper::text_colored(const ImVec4& color, const char* label)
 {
-    ImGui::TextColored(color, "%s", label);
+    const std::string display = bilingual_stacked_utf8(label);
+    ImGui::TextColored(color, "%s", display.c_str());
 }
 
 void ImGuiWrapper::text_colored(const ImVec4& color, const std::string& label)
@@ -1397,10 +1470,11 @@ void ImGuiWrapper::text_wrapped(const wxString &label, float wrap_width)
 
 void ImGuiWrapper::tooltip(const char *label, float wrap_width)
 {
+    const std::string display = bilingual_stacked_utf8(label);
     ImGui::BeginTooltip();
     ImGui::PushTextWrapPos(wrap_width);
     ImGui::PushStyleColor(ImGuiCol_Text, md3_imgui_color(MD3::Role::InverseOn)); // tooltip plate is InverseSurface
-    ImGui::TextUnformatted(label);
+    ImGui::TextUnformatted(display.c_str());
     ImGui::PopStyleColor(1);
     ImGui::PopTextWrapPos();
     ImGui::EndTooltip();
@@ -1412,13 +1486,7 @@ void ImGuiWrapper::tooltip(const std::string &label, float wrap_width) {
 
 void ImGuiWrapper::tooltip(const wxString &label, float wrap_width)
 {
-    ImGui::BeginTooltip();
-    ImGui::PushTextWrapPos(wrap_width);
-    ImGui::PushStyleColor(ImGuiCol_Text, md3_imgui_color(MD3::Role::InverseOn)); // tooltip plate is InverseSurface
-    ImGui::TextUnformatted(label.ToUTF8().data());
-    ImGui::PopStyleColor(1);
-    ImGui::PopTextWrapPos();
-    ImGui::EndTooltip();
+    tooltip(label.ToUTF8().data(), wrap_width);
 }
 
 #if ENABLE_ENHANCED_IMGUI_SLIDER_FLOAT
@@ -3062,6 +3130,27 @@ void ImGuiWrapper::pop_radio_style() {
     ImGui::PopStyleColor(1);
 }
 
+// Cantonese and bilingual mode read Traditional Chinese, but the CJK merge
+// face below (HarmonyOS Sans SC) leans Simplified. Prefer the Traditional
+// Microsoft JhengHei that ships with Windows for those two modes only, and
+// keep the bundled fallback when msjh.ttc is not on this machine. The glyph
+// ranges built above are already GetGlyphRangesChineseFull() for both modes
+// (font_language is forced to "zh_TW", see LanguageMode.cpp), so only the
+// font file changes here, not the coverage.
+static std::string resolve_cjk_font_path(const std::string &fallback_path)
+{
+    if (!I18N::language_mode_profile().is_cantonese())
+        return fallback_path;
+
+    wxString windir;
+    if (wxGetEnv(wxS("WINDIR"), &windir) && !windir.empty()) {
+        const std::string candidate = into_u8(windir) + "\\Fonts\\msjh.ttc";
+        if (boost::filesystem::exists(candidate))
+            return candidate;
+    }
+    return fallback_path;
+}
+
 void ImGuiWrapper::init_font(bool compress)
 {
     destroy_font();
@@ -3154,7 +3243,7 @@ void ImGuiWrapper::init_font(bool compress)
     if (m_is_korean)
         io.Fonts->AddFontFromFileTTF((fdir + "NanumGothic-Regular.ttf").c_str(), m_font_size, &cfg_cjk, ranges.Data);
     else if (m_font_cjk)
-        io.Fonts->AddFontFromFileTTF((fdir + "HarmonyOS_Sans_SC_Regular.ttf").c_str(), m_font_size, &cfg_cjk, ranges.Data);
+        io.Fonts->AddFontFromFileTTF(resolve_cjk_font_path(fdir + "HarmonyOS_Sans_SC_Regular.ttf").c_str(), m_font_size, &cfg_cjk, ranges.Data);
     // (C) Material Symbols merged inline into default_font (imgui.text glyph flow).
     io.Fonts->AddFontFromFileTTF((fdir + "MaterialSymbolsOutlined.ttf").c_str(), m_font_size, &cfg_icon, icon_ranges.Data);
     // (D) Apple keyboard-shortcut glyphs: also merged into default_font. MUST run
@@ -3179,7 +3268,7 @@ void ImGuiWrapper::init_font(bool compress)
     if (m_is_korean)
         io.Fonts->AddFontFromFileTTF((fdir + "NanumGothic-Bold.ttf").c_str(), m_font_size, &cfg_cjk, ranges.Data);
     else if (m_font_cjk)
-        io.Fonts->AddFontFromFileTTF((fdir + "HarmonyOS_Sans_SC_Bold.ttf").c_str(), m_font_size, &cfg_cjk, ranges.Data);
+        io.Fonts->AddFontFromFileTTF(resolve_cjk_font_path(fdir + "HarmonyOS_Sans_SC_Bold.ttf").c_str(), m_font_size, &cfg_cjk, ranges.Data);
     // (G) Material Symbols merged inline into bold_font.
     io.Fonts->AddFontFromFileTTF((fdir + "MaterialSymbolsOutlined.ttf").c_str(), m_font_size, &cfg_icon, icon_ranges.Data);
 

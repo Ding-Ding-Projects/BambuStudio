@@ -273,5 +273,90 @@
     "file": "src/slic3r/GUI/AMSDryControl.cpp",
     "literal": "H",
     "reason": "Unit-symbol label for hours next to the drying-time input, directly parallel to the unwrapped \"℃\" (degrees Celsius) unit label a few lines above for the temperature input; both are notation, not prose."
+  },
+  {
+    "file": "src/slic3r/GUI/Gizmos/GLGizmoCut.cpp",
+    "literal": "Z",
+    "reason": "Coordinate-axis letter next to the cut-height input, not prose. Every other gizmo in this project leaves X/Y/Z axis letters untranslated (GLGizmoRotate.cpp's axis switch, GLGizmoAdvancedCut.cpp's TextAlignCenter labels, GizmoObjectManipulation.cpp's axis_header calls, whose own comment notes strlen(\"X\"/\"Y\"/\"Z\") == 1); this is the one spot where the bare letter happens to be passed straight to m_imgui->text(), so it is the only one the scanner's call-site list catches."
+  },
+  {
+    "file": "src/slic3r/GUI/Gizmos/GLGizmoMeasure.cpp",
+    "literal": "Empty selection",
+    "reason": "Inside render_debug_dialog(), compiled only under ENABLE_MEASURE_GIZMO_DEBUG and shown only from a developer debug toggle; the same developer-only debug window category as the GLCanvas3D.cpp render-statistics entries above."
+  },
+  {
+    "file": "src/slic3r/GUI/Gizmos/GLGizmoText.cpp",
+    "literal": "text lines: <no surface slice>",
+    "reason": "Inside on_render_input_window()'s '#if BBL_RELEASE_TO_PUBLIC == 0' block, shown only when the developer-only is_show_text_cs() debug toggle is on. It dumps internal per-glyph-line slice state (line index, cut points, direction vectors, mesh ids) for debugging the text gizmo's own geometry code and never compiles into a public release build."
+  },
+  {
+    "file": "src/slic3r/GUI/Gizmos/GLGizmoText.cpp",
+    "literal": "handle cut drawn: no base line crosses the object",
+    "reason": "Same developer-only 'BBL_RELEASE_TO_PUBLIC == 0' debug dump as the line above."
+  },
+  {
+    "file": "src/slic3r/GUI/Gizmos/GLGizmoText.cpp",
+    "literal": "line has no glyph, it is not placed",
+    "reason": "Same developer-only 'BBL_RELEASE_TO_PUBLIC == 0' debug dump as the line above."
+  },
+  {
+    "file": "src/slic3r/GUI/Gizmos/GLGizmoText.cpp",
+    "literal": "line base y:",
+    "reason": "Same developer-only 'BBL_RELEASE_TO_PUBLIC == 0' debug dump as the line above."
+  },
+  {
+    "file": "src/slic3r/GUI/Gizmos/GLGizmoText.cpp",
+    "literal": "line glyphs:[",
+    "reason": "Same developer-only 'BBL_RELEASE_TO_PUBLIC == 0' debug dump as the line above."
+  },
+  {
+    "file": "src/slic3r/GUI/Gizmos/GLGizmoText.cpp",
+    "literal": "line align shift:",
+    "reason": "Same developer-only 'BBL_RELEASE_TO_PUBLIC == 0' debug dump as the line above."
+  },
+  {
+    "file": "src/slic3r/GUI/Gizmos/GLGizmoText.cpp",
+    "literal": "line key point in world:",
+    "reason": "Same developer-only 'BBL_RELEASE_TO_PUBLIC == 0' debug dump as the line above."
+  },
+  {
+    "file": "src/slic3r/GUI/Gizmos/GLGizmoText.cpp",
+    "literal": "line x_dir:",
+    "reason": "Same developer-only 'BBL_RELEASE_TO_PUBLIC == 0' debug dump as the line above."
+  },
+  {
+    "file": "src/slic3r/GUI/Gizmos/GLGizmoText.cpp",
+    "literal": "line y_dir:",
+    "reason": "Same developer-only 'BBL_RELEASE_TO_PUBLIC == 0' debug dump as the line above."
+  },
+  {
+    "file": "src/slic3r/GUI/Gizmos/GLGizmoText.cpp",
+    "literal": "line z_dir:",
+    "reason": "Same developer-only 'BBL_RELEASE_TO_PUBLIC == 0' debug dump as the line above."
+  },
+  {
+    "file": "src/slic3r/GUI/Gizmos/GLGizmoText.cpp",
+    "literal": "calc tpye:",
+    "reason": "Same developer-only 'BBL_RELEASE_TO_PUBLIC == 0' debug dump as the line above (the typo is in the original debug label, left as-is since it is developer-only diagnostic text, not user-facing prose)."
+  },
+  {
+    "file": "src/slic3r/GUI/Gizmos/GLGizmoText.cpp",
+    "literal": "attach mesh world matrix (mesh_id:",
+    "reason": "Same developer-only 'BBL_RELEASE_TO_PUBLIC == 0' debug dump as the line above."
+  },
+  {
+    "file": "src/slic3r/GUI/Gizmos/GLGizmoText.cpp",
+    "literal": "attach mesh mirrored: ",
+    "reason": "Same developer-only 'BBL_RELEASE_TO_PUBLIC == 0' debug dump as the line above."
+  },
+  {
+    "file": "src/slic3r/GUI/Gizmos/GLGizmoText.cpp",
+    "literal": "attach mesh world matrix: <no valid mesh_id>",
+    "reason": "Same developer-only 'BBL_RELEASE_TO_PUBLIC == 0' debug dump as the line above."
+  },
+  {
+    "file": "src/slic3r/GUI/NotificationManager.cpp",
+    "literal": "T",
+    "reason": "The literal shortcut-key letter in the \"Cancel upload\" tooltip's Ctrl+T hint (built as _u8L(\"Cancel upload\") + \" \" + shortkey_ctrl_prefix() + \"T\"), not prose. A keyboard shortcut letter names the physical key and is not translated."
   }
 ]

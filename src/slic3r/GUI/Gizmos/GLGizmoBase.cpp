@@ -216,7 +216,8 @@ bool GLGizmoBase::render_combo(const std::string &label, const std::vector<std::
             if (ImGui::Selectable("", line_idx == selection_idx)) selection_out = line_idx;
 
             ImGui::SameLine();
-            ImGui::Text("%s", lines[line_idx].c_str());
+            // One line per item: the selectable beside it is one line tall.
+            ImGui::Text("%s", ImGuiWrapper::bilingual_compact(lines[line_idx], ImGui::GetContentRegionAvail().x).c_str());
             ImGui::PopID();
         }
 

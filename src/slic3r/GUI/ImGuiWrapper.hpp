@@ -187,6 +187,10 @@ public:
     static void  text_colored(const ImVec4 &color, const char *label);
     static void  text_colored(const ImVec4 &color, const std::string &label);
     static void  text_colored(const ImVec4 &color, const wxString &label);
+    // Bilingual mode: "English (middle dot) Cantonese" on one line when it fits
+    // `max_width_px` (no limit when <= 0), otherwise `text` unchanged. For text
+    // that must stay on one line, such as a row with a progress bar under it.
+    static std::string bilingual_compact(const std::string &text, float max_width_px = -1.0f);
     void warning_text_wrapped(const char *all_text, float wrap_width);
     void warning_text_wrapped(const wxString &all_text, float wrap_width);
     void error_text_wrapped(const char *text, float wrap_width);

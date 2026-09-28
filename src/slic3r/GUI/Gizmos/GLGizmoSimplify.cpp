@@ -278,7 +278,7 @@ void GLGizmoSimplify::on_render_input_window(float x, float y, float bottom_limi
 
     ImGui::SameLine();
     m_imgui->disabled_begin(m_configuration.use_count);
-    ImGui::Text("%s", tr_detail_level.c_str());
+    m_imgui->text(tr_detail_level);
     std::vector<std::string> reduce_captions = {
         static_cast<std::string>(_u8L("Extra high")),
         static_cast<std::string>(_u8L("High")),
@@ -325,7 +325,7 @@ void GLGizmoSimplify::on_render_input_window(float x, float y, float bottom_limi
     }
 
     m_imgui->disabled_begin(!m_configuration.use_count);
-    ImGui::Text("%s", tr_decimate_ratio.c_str());
+    m_imgui->text(tr_decimate_ratio);
     ImGui::SameLine(bottom_left_width);
 
     const char * format = (m_configuration.decimate_ratio > 10)? "%.0f %%":

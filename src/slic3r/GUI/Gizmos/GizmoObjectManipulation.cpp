@@ -577,7 +577,8 @@ bool GizmoObjectManipulation::render_combo(
             if (ImGui::Selectable("", line_idx == selection_idx)) selection_out = line_idx;
 
             ImGui::SameLine();
-            ImGui::Text("%s", lines[line_idx].c_str());
+            // One line per item: the selectable beside it is one line tall.
+            ImGui::Text("%s", ImGuiWrapper::bilingual_compact(lines[line_idx], ImGui::GetContentRegionAvail().x).c_str());
             ImGui::PopID();
         }
 

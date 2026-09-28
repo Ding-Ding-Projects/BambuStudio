@@ -822,7 +822,7 @@ void GLGizmoText::draw_style_list(float caption_size)
     ImGui::AlignTextToFramePadding();
     std::string title = _u8L("Style");
     if (m_style_manager.exist_stored_style())
-        ImGui::Text("%s", title.c_str());
+        m_imgui->text(title);
     else
         ImGui::TextColored(ImGuiWrapper::COL_BAMBU, "%s", title.c_str());
     if (ImGui::IsItemHovered()) {
@@ -1150,7 +1150,7 @@ void GLGizmoText::draw_model_type(int caption_width)
         ImVec4 color{.5f, .5f, .5f, 1.f};
         m_imgui->text_colored(color, title.c_str());
     } else {
-        ImGui::Text("%s", title.c_str());
+        m_imgui->text(title);
     }
 
     std::optional<ModelVolumeType> new_type;
@@ -3203,9 +3203,8 @@ void GLGizmoText::draw_advanced(float caption_size, float slider_width, float sl
 {
     const auto &ff = m_style_manager.get_font_file_with_cache();
     if (!ff.has_value()) {
-        ImGui::Text("%s", _u8L("Advanced options cannot be changed for the selected font.\n"
-                               "Select another font.")
-                              .c_str());
+        m_imgui->text(_u8L("Advanced options cannot be changed for the selected font.\n"
+                           "Select another font."));
         return;
     }
 
@@ -4097,7 +4096,9 @@ void draw_font_preview(FaceName& face, const std::string& text, CurFacenames& fa
 
     if (!state_text.empty()) {
         ImGui::SameLine(cfg.face_name_texture_offset_x);
-        ImGui::Text("%s", state_text.c_str());
+        // draw_font_preview() is a free function (no m_imgui), so this calls the
+        // wrapper's static text() overload instead.
+        ImGuiWrapper::text(state_text);
     }
 
     ImGui::SameLine(cfg.face_name_texture_offset_x);

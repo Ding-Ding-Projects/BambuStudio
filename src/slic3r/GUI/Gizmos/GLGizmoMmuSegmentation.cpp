@@ -468,7 +468,8 @@ static void render_extruders_combo(const std::string                       &labe
             draw_swatch(start_position, ImVec2(start_position.x + height + height / 2, start_position.y + height), extruder_idx);
 
             ImGui::SetCursorScreenPos(ImVec2(start_position.x + height + height / 2 + style.FramePadding.x, start_position.y));
-            ImGui::Text("%s", extruders[extruder_idx].c_str());
+            // One line per item, beside its colour swatch.
+            ImGui::Text("%s", ImGuiWrapper::bilingual_compact(extruders[extruder_idx], ImGui::GetContentRegionAvail().x).c_str());
             ImGui::PopID();
         }
 
@@ -485,6 +486,7 @@ static void render_extruders_combo(const std::string                       &labe
     draw_swatch(p, ImVec2(p.x + height + height / 2, p.y + height), selection_idx);
 
     ImGui::SetCursorScreenPos(ImVec2(p.x + height + height / 2 + style.FramePadding.x, p.y));
+    // The selected value inside the closed combo frame stays on its one line.
     ImGui::Text("%s", extruders[selection_out].c_str());
     ImGui::SetCursorScreenPos(backup_pos);
     ImGui::EndGroup();

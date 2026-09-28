@@ -1459,7 +1459,7 @@ void GLGizmoSVG::draw_filename()
     // Remove space between filename and gray suffix ".svg"
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
     ImGui::AlignTextToFramePadding();
-    ImGui::Text("%s", m_filename_preview.c_str());
+    m_imgui->text(m_filename_preview);
     bool is_hovered = ImGui::IsItemHovered();
     ImGui::SameLine();
     m_imgui->text_colored(ImGuiWrapper::COL_GREY_LIGHT, ".svg");
@@ -1935,7 +1935,7 @@ void GLGizmoSVG::draw_rotation()
 void GLGizmoSVG::draw_mirroring()
 {
     ImGui::AlignTextToFramePadding();
-    ImGui::Text("%s", m_gui_cfg->translations.mirror.c_str());
+    m_imgui->text(m_gui_cfg->translations.mirror);
     ImGui::SameLine(m_gui_cfg->input_offset);
     Axis axis = Axis::UNKNOWN_AXIS;
     if (draw_clickable(m_icons, IconType::reflection_x)) {
@@ -1989,7 +1989,7 @@ void GLGizmoSVG::draw_model_type()
         ImVec4 color{.5f, .5f, .5f, 1.f};
         m_imgui->text_colored(color, title.c_str());
     } else {
-        ImGui::Text("%s", title.c_str());
+        m_imgui->text(title);
     }
 
     std::optional<ModelVolumeType> new_type;

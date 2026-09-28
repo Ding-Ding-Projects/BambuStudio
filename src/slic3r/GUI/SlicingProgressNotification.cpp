@@ -8,6 +8,8 @@
 #endif
 #include <imgui/imgui_internal.h>
 
+#include <algorithm>
+
 namespace Slic3r { namespace GUI {
 
 namespace {
@@ -344,6 +346,15 @@ void Slic3r::GUI::NotificationManager::SlicingProgressNotification::render_text(
 	ImGuiWrapper& imgui = *wxGetApp().imgui();
 	float scale = imgui.get_font_size() / 15.0f;
 	ImVec2 icon_size = ImVec2(38.f, 38.f) * scale;
+	// The status stays on one line: the progress bar and the percentage sit right
+	// below it. In bilingual mode the Cantonese joins that line when it fits before
+	// the close or cancel button at the right edge; otherwise the line stays English.
+	auto draw_status_line = [this, scale]() {
+		const float button_width = (38.f + 8.f) * scale;
+		const float max_width = ImGui::GetWindowPos().x + ImGui::GetWindowWidth() - ImGui::GetCursorScreenPos().x - button_width;
+		const std::string line = ImGuiWrapper::bilingual_compact(m_text1.substr(0, m_endlines[0]), std::max(max_width, 1.0f));
+		ImGui::Text("%s", line.c_str());
+	};
 	if (m_sp_state == SlicingProgressState::SP_COMPLETED) {
 		// complete icon
 		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(.0f, .0f, .0f, .0f));
@@ -362,20 +373,20 @@ void Slic3r::GUI::NotificationManager::SlicingProgressNotification::render_text(
 		// complete text
 		imgui.push_bold_font();
 		ImGui::SetCursorScreenPos(ImVec2(pos.x + icon_size.x + ImGui::CalcTextSize(" ").x, pos.y + (icon_size.y - m_line_height) / 2));
-		imgui.text(m_text1.substr(0, m_endlines[0]).c_str());
+		draw_status_line();
 		imgui.pop_bold_font();
 		return;
 	}
 	if (m_sp_state == SlicingProgressState::SP_CANCELLED) {
 		imgui.push_bold_font();
 		ImGui::SetCursorScreenPos(ImVec2(pos.x + ImGui::CalcTextSize(" ").x, pos.y + (icon_size.y - m_line_height) / 2));
-		imgui.text(m_text1.substr(0, m_endlines[0]).c_str());
+		draw_status_line();
 		imgui.pop_bold_font();
 	}
 	if(m_sp_state == SlicingProgressState::SP_PROGRESS)	{
 		//one line text
 		ImGui::SetCursorScreenPos(pos);
-		imgui.text(m_text1.substr(0, m_endlines[0]).c_str());
+		draw_status_line();
 	}
 }
 

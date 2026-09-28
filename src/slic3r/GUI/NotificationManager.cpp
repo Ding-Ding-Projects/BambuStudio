@@ -6,6 +6,7 @@
 #include "SlicingProgressNotification.hpp"
 #include "GUI.hpp"
 #include "ImGuiWrapper.hpp"
+#include "BilingualDecorator.hpp"
 #include "Widgets/StateColor.hpp"
 #include "wxExtensions.hpp"
 #include "ObjectDataViewModel.hpp"
@@ -162,6 +163,34 @@ namespace {
         }
         return build(low);
     }
+
+    // Bilingual notification body: appends the Cantonese recorded for `english`
+    // as its own stacked line in bilingual mode, before count_lines() ever runs.
+    // count_lines()/set_next_window_size() then wrap and size the whole composite
+    // string exactly like any other multi-line notification text, so the window
+    // height already accounts for the extra line and nothing gets clipped.
+    // Outside bilingual mode, or when there is no recorded Cantonese for this
+    // exact English text (for example it was formatted with runtime values after
+    // translation), `english` comes back unchanged.
+    //
+    // Because this bakes the Cantonese into m_text1/m_text2 up front, the code
+    // that later slices those strings back into per-line ImGui::Text() calls
+    // (render_text(), bbl_render_block_notif_text(), render_hypertext() and the
+    // other per-line renderers below) must call ImGui::Text() directly rather
+    // than through ImGuiWrapper::text(), or the wrapper's own bilingual lookup
+    // would try to match a single already-wrapped line and, for a short
+    // single-line notification, append the Cantonese a second time.
+    std::string bilingual_notification_text(const std::string &english)
+    {
+        if (english.empty() || !I18N::language_mode_profile().is_bilingual())
+            return english;
+
+        const wxString secondary = I18N::bilingual_secondary(wxString::FromUTF8(english.c_str()));
+        if (secondary.empty())
+            return english;
+
+        return english + "\n" + secondary.ToUTF8().data();
+    }
 }
 
 #if 1
@@ -191,9 +220,9 @@ void NotificationManager::NotificationIDProvider::release_id(int) {}
 NotificationManager::PopNotification::PopNotification(const NotificationData &n, NotificationIDProvider &id_provider, wxEvtHandler* evt_handler) :
 	  m_data                (n)
 	, m_id_provider   		(id_provider)
-	, m_text1               (n.text1)
+	, m_text1               (bilingual_notification_text(n.text1))
 	, m_hypertext           (n.hypertext)
-	, m_text2               (n.text2)
+	, m_text2               (bilingual_notification_text(n.text2))
 	, m_evt_handler         (evt_handler)
 	, m_notification_start  (canvas_timestamp_now())
 {
@@ -779,7 +808,11 @@ void NotificationManager::PopNotification::bbl_render_block_notif_text(ImGuiWrap
 			// text comes from GUI_ObjectList's sidebar info, which arrives as a
 			// PrintInfoNotificationLevel card notification, so pos_start / pos_end stay
 			// npos for the two levels that render here.
-			imgui.text(line.c_str());
+			// ImGui::Text() directly: `line` is already a wrapped slice of m_text1,
+			// which already carries the bilingual Cantonese line where applicable
+			// (see bilingual_notification_text()); going through imgui.text() here
+			// would look up this slice again and could append it a second time.
+			ImGui::Text("%s", line.c_str());
 		}
 	}
 	//hyperlink text
@@ -834,13 +867,17 @@ void NotificationManager::PopNotification::render_text(ImGuiWrapper& imgui, cons
 			if (m_text1.size() > m_endlines[i])
 				last_end += (m_text1[m_endlines[i]] == '\n' || m_text1[m_endlines[i]] == ' ' ? 1 : 0);
 
+            // ImGui::Text() directly in both branches: `line` is already a wrapped
+            // slice of m_text1, which already carries the bilingual Cantonese line
+            // where applicable (see bilingual_notification_text()); imgui.text()
+            // would look the slice up again and could append it a second time.
             if (pos_start != string::npos && pos_end != string::npos&& m_endlines[i] - line.length() >= pos_start && m_endlines[i] <= pos_end) {
                 push_style_color(ImGuiCol_Text, m_ErrorColor, m_state == EState::FadingOut, m_current_fade_opacity);
-                imgui.text(line.c_str());
+                ImGui::Text("%s", line.c_str());
                 ImGui::PopStyleColor();
             }
             else {
-                imgui.text(line.c_str());
+                ImGui::Text("%s", line.c_str());
             }
 		}
 	}
@@ -944,7 +981,11 @@ void NotificationManager::PopNotification::render_hypertext(
     push_style_color(ImGuiCol_Text, HyperColor, m_state == EState::FadingOut, m_current_fade_opacity);
 	ImGui::SetCursorPosX(text_x);
 	ImGui::SetCursorPosY(text_y);
-	imgui.text(text.c_str());
+	// ImGui::Text() directly, not imgui.text(): the invisible button hit-box above
+	// and the underline below are both measured from a single-line CalcTextSize()
+	// of `text`, so a wrapper-added bilingual second line here would draw taller
+	// than its own hit-box and underline. Hypertext stays English-only for now.
+	ImGui::Text("%s", text.c_str());
 	ImGui::PopStyleColor();
 
 	//underline
@@ -1167,9 +1208,9 @@ bool NotificationManager::PopNotification::on_second_text_click()
 
 void NotificationManager::PopNotification::update(const NotificationData &n, bool change_level)
 {
-	m_text1          = n.text1;
+	m_text1          = bilingual_notification_text(n.text1);
 	m_hypertext      = n.hypertext;
-    m_text2          = n.text2;
+    m_text2          = bilingual_notification_text(n.text2);
     m_second_hypertext                              = n.second_hypertext;
     const_cast<NotificationData&>(m_data).callback	 = n.callback;
     const_cast<NotificationData &>(m_data).second_callback = n.second_callback;
@@ -1314,7 +1355,9 @@ void NotificationManager::ExportFinishedNotification::render_text(ImGuiWrapper& 
 				last_end += (m_text1[m_endlines[i]] == '\n' || m_text1[m_endlines[i]] == ' ' ? 1 : 0);
 			ImGui::SetCursorPosX(x_offset);
 			ImGui::SetCursorPosY(starting_y + i * shift_y);
-			imgui.text(line.c_str());
+			// ImGui::Text() directly: `line` is already a wrapped slice of m_text1
+			// (bilingual Cantonese already baked in, see bilingual_notification_text()).
+			ImGui::Text("%s", line.c_str());
 			//hyperlink text
 			if ( i == 0 && !m_eject_pending && !m_export_dir_path.empty())  {
 				render_hypertext(imgui, x_offset + ImGui::CalcTextSize(line.c_str()).x + ImGui::CalcTextSize("   ").x, starting_y, _u8L("Open Folder."));
@@ -1434,11 +1477,14 @@ void NotificationManager::ProgressBarNotification::render_text(ImGuiWrapper& img
 		// two lines text (what doesnt fit, wont show), one line bar
 		ImGui::SetCursorPosX(m_left_indentation);
 		ImGui::SetCursorPosY(m_line_height / 4);
-		imgui.text(m_text1.substr(0, m_endlines[0]).c_str());
+		// ImGui::Text() directly in this block: both slices below are already-wrapped
+		// pieces of m_text1 (bilingual Cantonese already baked in, see
+		// bilingual_notification_text()), so imgui.text() must not look them up again.
+		ImGui::Text("%s", m_text1.substr(0, m_endlines[0]).c_str());
 		ImGui::SetCursorPosX(m_left_indentation);
 		ImGui::SetCursorPosY(m_line_height + m_line_height / 4);
 		std::string line = m_text1.substr(m_endlines[0] + (m_text1[m_endlines[0]] == '\n' || m_text1[m_endlines[0]] == ' ' ? 1 : 0), m_endlines[1] - m_endlines[0] - (m_text1[m_endlines[0]] == '\n' || m_text1[m_endlines[0]] == ' ' ? 1 : 0));
-		imgui.text(line.c_str());
+		ImGui::Text("%s", line.c_str());
 		if (m_has_cancel_button)
 			render_cancel_button(imgui, win_size_x, win_size_y, win_pos_x, win_pos_y);
 		render_bar(imgui, win_size_x, win_size_y, win_pos_x, win_pos_y);
@@ -1449,7 +1495,8 @@ void NotificationManager::ProgressBarNotification::render_text(ImGuiWrapper& img
 		//one line text, one line bar
 		ImGui::SetCursorPosX(m_left_indentation);
 		ImGui::SetCursorPosY(/*win_size_y / 2 - win_size_y / 6 -*/ m_line_height / 4);
-		imgui.text(m_text1.substr(0, m_endlines[0]).c_str());
+		// ImGui::Text() directly: already-wrapped slice of m_text1, see above.
+		ImGui::Text("%s", m_text1.substr(0, m_endlines[0]).c_str());
 		if (m_has_cancel_button)
 			render_cancel_button(imgui, win_size_x, win_size_y, win_pos_x, win_pos_y);
 		render_bar(imgui, win_size_x, win_size_y, win_pos_x, win_pos_y);
