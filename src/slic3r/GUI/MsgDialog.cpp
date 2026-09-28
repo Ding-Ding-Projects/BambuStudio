@@ -224,8 +224,11 @@ Button* MsgDialog::add_button(wxWindowID btn_id, bool set_focus /*= false*/, con
     // fixed 58/76/90 x 24 sizing + first-focused-green heuristic.
     btn->SetVariant(set_focus ? Button::Variant::Filled : Button::Variant::Text);
     btn->SetButtonSize(Button::Size::Medium);
+    // 44 DIP is the touch-target floor, not a width the footer may squeeze the
+    // action down to: the button keeps the full width of its label. A row that
+    // does not fit the work area is stacked by reflow_footer_for_width(), which
+    // caps an action at the available width only when the label alone is wider.
     btn->SetMinSize(FromDIP(wxSize(44, 42)));
-    btn->SetAllowShrink(true);
     btn->SetToolTip(plain_label);
 
     if (set_focus)

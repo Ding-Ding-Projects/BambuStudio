@@ -364,6 +364,17 @@ test('Smart Home preserves saved entity lists and bounds native list rendering',
   );
 });
 
+test('message dialog actions keep the full width of their label', () => {
+  // A kit Button allowed to shrink reports a 44 DIP minimum, and the footer's
+  // flex grid hands every action its minimum, so "Left nozzle: 0.4mm" was drawn
+  // as "Left..." in the nozzle-diameter dialog and every other long action label
+  // was cut the same way. The footer already stacks its actions when a row does
+  // not fit the work area, so an action never needs to shrink below its label.
+  const addButton = msgDialog.match(/Button\* MsgDialog::add_button\([\s\S]*?\n\}/);
+  assert.ok(addButton, 'MsgDialog::add_button must exist');
+  assert.doesNotMatch(stripComments(addButton[0]), /SetAllowShrink\(\s*true\s*\)/);
+});
+
 test('message dialogs wrap, refit and stack actions inside the active work area', () => {
   assert.match(msgDialog, /wxDisplay\(display_index\)\.GetClientArea\(\)/);
   assert.match(
@@ -398,6 +409,12 @@ test('message dialogs wrap, refit and stack actions inside the active work area'
   assert.match(msgDialog, /m_text_dsa->Wrap\(text_budget\)/);
   assert.match(msgDialog, /MD3Dialog::on_dpi_changed\(suggested_rect\)/);
   assert.match(msgDialog, /btn->SetMinSize\(FromDIP\(wxSize\(44, 42\)\)\)/);
-  assert.match(msgDialog, /btn->SetAllowShrink\(true\)/);
+  // A crowded footer is resolved by stacking, and a stacked action is capped at
+  // the available width only when its label alone is wider, never by letting
+  // every action shrink to the 44 DIP floor.
+  assert.match(
+    msgDialog,
+    /stack && button->GetBestSize\(\)\.GetWidth\(\) > action_budget\)\s*button->SetMaxSize\(wxSize\(action_budget, -1\)\)/
+  );
   assert.match(msgDialogHeader, /wxFlexGridSizer \*m_action_sizer/);
 });
