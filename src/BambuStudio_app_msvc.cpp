@@ -281,6 +281,27 @@ extern "C" {
                 return -1;
             }
             else {
+            // The staged Mesa build also carries the d3d12 gallium driver. On a host whose own
+            // OpenGL is too old (usually no GPU driver at all) that driver can be chosen first and
+            // fail during context creation, ending the process with a Direct3D HRESULT. Select
+            // llvmpipe before the DLL loads, so its C runtime's copy of the environment already
+            // holds the choice; a driver the caller set explicitly is kept. This mirrors
+            // OpenGLManager::apply_bundled_softgl_environment() for Mesa beside the executable.
+            wchar_t chosen_driver[16] = { 0 };
+            if (::GetEnvironmentVariableW(L"GALLIUM_DRIVER", chosen_driver, 16) == 0) {
+                const wchar_t *mesa_environment[][2] = {
+                    { L"GALLIUM_DRIVER", L"llvmpipe" },
+                    { L"LIBGL_ALWAYS_SOFTWARE", L"1" },
+                    { L"MESA_GL_VERSION_OVERRIDE", L"3.3" },
+                };
+                for (const auto &variable : mesa_environment) {
+                    ::SetEnvironmentVariableW(variable[0], variable[1]);
+                    _wputenv_s(variable[0], variable[1]);
+                }
+                launcher_trace(L"mesa environment: GALLIUM_DRIVER=llvmpipe");
+            } else {
+                launcher_trace(L"mesa environment: keeping GALLIUM_DRIVER=%ls", chosen_driver);
+            }
             wchar_t path_to_mesa[MAX_PATH + 1] = { 0 };
             wcscpy(path_to_mesa, path_to_exe);
             wcscat(path_to_mesa, L"mesa\\opengl32.dll");
