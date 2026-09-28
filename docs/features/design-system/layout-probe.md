@@ -54,6 +54,37 @@ Both defer through `CallAfter`, so the sender's `SendMessage` returns before a p
 modal dialog blocks. Keystrokes and menu clicks do not reach a window on another desktop; these
 hooks are how the headless driver reaches anything behind a menu.
 
+## Language audit
+
+The command channel also accepts `language-audit`. When the app is in bilingual mode, it walks
+every shown `wxStaticText` (including the kit `Label`), `wxButton` and the kit `Button`, `wxCheckBox`,
+`wxRadioButton` and `wxStaticBox`, and classifies each one's label against `BilingualRegistry`:
+
+- `bilingual`: the label already carries the Cantonese for its English part;
+- `tooltip`: the label is English only, but the tooltip carries the Cantonese;
+- `english_only`: a Cantonese translation exists but neither the label nor the tooltip shows it
+  (this is the defect list);
+- `no_translation`: the label is not a catalogue string at all (a number, a name); counted, not listed.
+
+Text entry controls, combo boxes and list controls are never classified: they hold the user's own
+data or a chosen value, not catalogue text, exactly as the bilingual decorator itself leaves them
+untouched.
+
+It writes `language-audit.json` beside the dumps: the language mode (`bilingual`, `cantonese` or
+`english`), the registry size, totals per class, one entry per shown top-level window with its
+class, title and counts, and the full `english_only` list (top-level class, control class, handle,
+label capped at 200 characters, and whether a tooltip exists). Outside bilingual mode it writes
+`{"mode": ..., "skipped": "not bilingual"}` instead and still reports success; the command only
+fails when the JSON file itself cannot be written.
+
+The bilingual decorator (`BilingualDecorator.cpp`) applies its own labels on a 250 ms timer and only
+sweeps every shown window fully once every twelve ticks, about 3 seconds. A driver should wait at
+least 4 seconds after a surface first shows before sending `language-audit`, or the report describes
+a window the decorator has not reached yet.
+
+What it cannot see: text an ImGui panel or another self-drawn widget paints itself, and anything
+drawn straight onto the 3D canvas, carry no `wxWindow` label for this command to read at all.
+
 ## Activation
 
 | Setting | Effect |

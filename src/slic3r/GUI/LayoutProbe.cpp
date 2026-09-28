@@ -10,6 +10,10 @@
 #include "CommandPalette.hpp"
 #include "ConfigWizard.hpp"
 #include "WebGuideDialog.hpp"
+#include "I18N.hpp"
+#include "BilingualRegistry.hpp"
+#include "Widgets/Button.hpp"
+#include "Widgets/TextInput.hpp"
 #include <wx/scrolwin.h>
 #include <cwchar>
 #include <cstdlib>
@@ -26,11 +30,16 @@
 #include <boost/nowide/fstream.hpp>
 
 #include <wx/app.h>
+#include <wx/button.h>
+#include <wx/checkbox.h>
 #include <wx/control.h>
 #include <wx/aui/auibar.h>
 #include <wx/glcanvas.h>
+#include <wx/radiobut.h>
 #include <wx/sizer.h>
+#include <wx/statbox.h>
 #include <wx/stattext.h>
+#include <wx/textentry.h>
 #include <wx/toplevel.h>
 #include <wx/utils.h>
 #include <wx/window.h>
@@ -40,6 +49,8 @@
 #include <cstdint>
 #include <sstream>
 #include <string>
+#include <utility>
+#include <vector>
 
 #ifdef _WIN32
 #include <process.h>
@@ -418,6 +429,200 @@ std::string default_path()
     return (dir / name.str()).string();
 }
 
+// ---------------------------------------------------------------------------
+// language-audit: in bilingual mode, which shown native controls still show
+// English only even though BilingualRegistry holds Cantonese for them.
+//
+// This reads the label and tooltip already on screen instead of recomputing
+// I18N::enable_bilingual_decorator()'s own decision (BilingualDecorator.cpp,
+// decorate_window()): that watcher ticks every 250 ms and only sweeps every
+// shown window fully once every twelve ticks (about 3 seconds), so a driver
+// should wait at least 4 seconds after a surface first shows before sending
+// this command, or the answer describes a window that has not been decorated
+// yet.
+
+enum class AuditKind { Skip, Text, Button, Check, Radio, GroupBox };
+
+AuditKind audit_kind_of(wxWindow *w)
+{
+    // Typed and chosen values are the user's own data, never catalogue text;
+    // the kit ComboBox (Widgets/ComboBox.hpp) is itself a TextInput, so this
+    // one check clears native and kit text entry, and every combo box, alike.
+    // List controls and everything else fall through to the default Skip.
+    if (dynamic_cast<wxTextEntry *>(w) != nullptr || dynamic_cast<::TextInput *>(w) != nullptr)
+        return AuditKind::Skip;
+    if (dynamic_cast<::Button *>(w) != nullptr || dynamic_cast<wxButton *>(w) != nullptr)
+        return AuditKind::Button;
+    if (dynamic_cast<wxCheckBox *>(w) != nullptr)
+        return AuditKind::Check;
+    if (dynamic_cast<wxRadioButton *>(w) != nullptr)
+        return AuditKind::Radio;
+    if (dynamic_cast<wxStaticBox *>(w) != nullptr)
+        return AuditKind::GroupBox;
+    if (dynamic_cast<wxStaticText *>(w) != nullptr) // also matches the kit Label
+        return AuditKind::Text;
+    return AuditKind::Skip;
+}
+
+// The English half of a label the decorator may already have rewritten:
+// before the compact inline separator ("English (middle dot) Cantonese"), or
+// before the first newline of a stacked label. A label with neither is
+// English-only already and is its own English part.
+wxString audit_english_part(const wxString &label)
+{
+    static const wxString inline_sep = wxString::FromUTF8(" \xC2\xB7 ");
+    const int dot = label.Find(inline_sep);
+    if (dot != wxNOT_FOUND) return label.Left(dot);
+    const int newline = label.Find('\n');
+    if (newline != wxNOT_FOUND) return label.Left(newline);
+    return label;
+}
+
+enum class AuditClass { Bilingual, Tooltip, EnglishOnly, NoTranslation };
+
+AuditClass classify_audit_label(const wxString &label, const wxString &tooltip)
+{
+    const wxString english = audit_english_part(label);
+    const wxString cantonese = I18N::BilingualRegistry::instance().lookup(english);
+    if (cantonese.empty()) return AuditClass::NoTranslation; // not a catalogue string
+    if (label.Contains(cantonese)) return AuditClass::Bilingual;
+    if (!tooltip.empty() && tooltip.Contains(cantonese)) return AuditClass::Tooltip;
+    return AuditClass::EnglishOnly;
+}
+
+struct AuditCounts {
+    int bilingual = 0;
+    int tooltip = 0;
+    int english_only = 0;
+    int no_translation = 0;
+};
+
+struct AuditDefect {
+    std::string    top_class;
+    std::string    control_class;
+    std::uintptr_t handle = 0;
+    std::string    label;
+    bool           has_tooltip = false;
+};
+
+std::string audit_class_name(const wxWindow *w)
+{
+    return std::string(wxString(w->GetClassInfo()->GetClassName()).ToUTF8().data());
+}
+
+void walk_for_audit(wxWindow *w, wxWindow *top, AuditCounts &counts, std::vector<AuditDefect> &defects)
+{
+    constexpr size_t max_audit_label_bytes = 200;
+    const AuditKind kind = audit_kind_of(w);
+    if (kind != AuditKind::Skip) {
+        const wxString label = w->GetLabel();
+        if (!label.empty()) {
+            const wxString tooltip = w->GetToolTipText();
+            switch (classify_audit_label(label, tooltip)) {
+            case AuditClass::Bilingual: ++counts.bilingual; break;
+            case AuditClass::Tooltip: ++counts.tooltip; break;
+            case AuditClass::NoTranslation: ++counts.no_translation; break;
+            case AuditClass::EnglishOnly: {
+                ++counts.english_only;
+                AuditDefect defect;
+                defect.top_class     = audit_class_name(top);
+                defect.control_class = audit_class_name(w);
+                defect.handle        = handle_of(w);
+                defect.label         = bounded_utf8(std::string(label.ToUTF8().data()), max_audit_label_bytes);
+                defect.has_tooltip   = !tooltip.empty();
+                defects.push_back(std::move(defect));
+                break;
+            }
+            }
+        }
+    }
+    for (wxWindow *child : w->GetChildren())
+        if (child != nullptr && child->IsShown())
+            walk_for_audit(child, top, counts, defects);
+}
+
+// Writes language-audit.json beside the dumps. Returns false only when the
+// file could not be opened for writing.
+bool run_language_audit()
+{
+    const boost::filesystem::path out_path =
+        boost::filesystem::path(default_path()).parent_path() / "language-audit.json";
+
+    const I18N::LanguageModeProfile &profile = I18N::language_mode_profile();
+    const char *mode = "english";
+    switch (profile.kind) {
+    case I18N::LanguageModeKind::CantoneseHongKong: mode = "cantonese"; break;
+    case I18N::LanguageModeKind::BilingualEnglishCantoneseHongKong: mode = "bilingual"; break;
+    default: break;
+    }
+
+    if (!profile.is_bilingual()) {
+        boost::nowide::ofstream out(out_path.string());
+        if (!out) {
+            BOOST_LOG_TRIVIAL(error) << "LayoutProbe: language-audit cannot open " << out_path.string();
+            return false;
+        }
+        out << "{\"mode\":" << json(std::string(mode)) << ",\"skipped\":\"not bilingual\"}\n";
+        return true;
+    }
+
+    AuditCounts             totals;
+    std::vector<AuditDefect> defects;
+    std::ostringstream      windows_json;
+    bool                    first_window = true;
+    for (wxWindow *top : wxTopLevelWindows) {
+        if (!top->IsShown()) continue;
+        AuditCounts window_counts;
+        walk_for_audit(top, top, window_counts, defects);
+        totals.bilingual      += window_counts.bilingual;
+        totals.tooltip        += window_counts.tooltip;
+        totals.english_only   += window_counts.english_only;
+        totals.no_translation += window_counts.no_translation;
+        if (!first_window) windows_json << ",";
+        first_window = false;
+        windows_json << "{\"class\":" << json(wxString(top->GetClassInfo()->GetClassName()))
+                     << ",\"title\":" << json(top->GetLabel())
+                     << ",\"bilingual\":" << window_counts.bilingual
+                     << ",\"tooltip\":" << window_counts.tooltip
+                     << ",\"english_only\":" << window_counts.english_only
+                     << ",\"no_translation\":" << window_counts.no_translation
+                     << "}";
+    }
+
+    std::ostringstream defects_json;
+    bool                first_defect = true;
+    for (const AuditDefect &d : defects) {
+        if (!first_defect) defects_json << ",";
+        first_defect = false;
+        defects_json << "{\"top_class\":" << json(d.top_class)
+                     << ",\"control_class\":" << json(d.control_class)
+                     << ",\"handle\":" << d.handle
+                     << ",\"label\":" << json(d.label)
+                     << ",\"has_tooltip\":" << (d.has_tooltip ? "true" : "false")
+                     << "}";
+    }
+
+    boost::nowide::ofstream out(out_path.string());
+    if (!out) {
+        BOOST_LOG_TRIVIAL(error) << "LayoutProbe: language-audit cannot open " << out_path.string();
+        return false;
+    }
+    out << "{\"mode\":" << json(std::string(mode))
+        << ",\"registry_size\":" << I18N::BilingualRegistry::instance().size()
+        << ",\"totals\":{\"bilingual\":" << totals.bilingual
+        << ",\"tooltip\":" << totals.tooltip
+        << ",\"english_only\":" << totals.english_only
+        << ",\"no_translation\":" << totals.no_translation << "}"
+        << ",\"windows\":[" << windows_json.str() << "]"
+        << ",\"english_only\":[" << defects_json.str() << "]"
+        << "}\n";
+    BOOST_LOG_TRIVIAL(info) << "LayoutProbe: language-audit wrote " << out_path.string()
+                            << ", " << totals.english_only << " english_only of "
+                            << (totals.bilingual + totals.tooltip + totals.english_only + totals.no_translation)
+                            << " controls";
+    return true;
+}
+
 } // namespace
 
 bool enabled()
@@ -674,6 +879,22 @@ bool handle_command(const std::wstring &payload)
                     << ",\"ok\":" << (ok ? "true" : "false") << "}\n";
             }
             return ok;
+        }
+        //   language-audit       in bilingual mode, write language-audit.json
+        //                        beside the dumps: every shown native control
+        //                        that still shows English only although a
+        //                        Cantonese translation exists for it. Defers
+        //                        through CallAfter like the other mutating
+        //                        commands; wait at least 4 seconds after a
+        //                        surface first shows before sending it, since
+        //                        the bilingual decorator applies its own
+        //                        labels on a delay (see run_language_audit()).
+        if (frame && payload == L"language-audit") {
+            frame->CallAfter([]() {
+                const bool ok = run_language_audit();
+                BOOST_LOG_TRIVIAL(info) << "LayoutProbe: language-audit " << (ok ? "wrote report" : "FAILED to write report");
+            });
+            return true;
         }
         if (bar && payload.compare(0, invoke.size(), invoke) == 0) {
             const bool ok = bar->InvokeMenuItem(wxString(payload.substr(invoke.size())));

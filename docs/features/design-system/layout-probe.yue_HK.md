@@ -1,6 +1,6 @@
 ---
 translation-of: layout-probe.md
-source-sha256: 54a41d3c89e4afb85384c1df21ed359b68ab622cccc5657f11332b2bd1e73b59
+source-sha256: d2212cf9843fbeec766dd80dced2c0cf399850eaae671eae3688e7c5583078fc
 review-status: agent-drafted
 ---
 
@@ -40,6 +40,23 @@ review-status: agent-drafted
 每份轉儲都以 `{"kind":"end"}` 結尾。一份輪詢檔案嘅讀者，而應用程式仍然流入佢，必須等待該記錄：一份由整行組成嘅部分檔案係幹淨地解析，並悄悄缺乏任何仲未被走過嘅嘢（第一次重新截圖就係咁樣丟失選項卡條嘅）。
 
 命令通道（`WM_COPYDATA`、`dwData` 2）亦接受兩個驅動程式鉤子，而探測器係已武裝：`menu-popup <Title>` 會彈出標題欄嘅一個選單（檔案、編輯、檢視、物件、校正、幫助）同埋 `invoke <label>` 會觸發第一個標籤包含文字嘅選單項。兩個都經由 `CallAfter` 推遲，所以發送方嘅 `SendMessage` 會喺一個彈出迴圈或一個模式對話框阻止之前返回。按鍵同埋選單點擊唔會到達另一個桌面上嘅視窗；呢啲鉤子係無頭驅動程式如何到達選單後面任何嘢嘅方式。
+
+## 語言審核
+
+命令通道亦接受 `language-audit`。當應用程式處於雙語模式時，佢會遍歷每個顯示嘅 `wxStaticText`（包括套件 `Label`）、`wxButton` 同埋套件 `Button`、`wxCheckBox`、`wxRadioButton` 同埋 `wxStaticBox`，並按 `BilingualRegistry` 對每個嘅標籤進行分類：
+
+- `bilingual`：標籤已經為其英文部分帶咗粵語；
+- `tooltip`：標籤只係英文，但提示文字帶咗粵語；
+- `english_only`：粵語翻譯存在，但標籤同埋提示文字都唔顯示佢（呢個係缺陷清單）；
+- `no_translation`：標籤根本唔係目錄字串（一個數字、一個名稱）；計算咗，唔列出。
+
+文字輸入控制、組合框同埋清單控制永遠唔分類：佢哋持有用家自己嘅數據或選擇嘅值，唔係目錄文字，正如雙語裝飾器自己將佢哋保持原狀一樣。
+
+佢寫 `language-audit.json` 喺轉儲旁邊：語言模式（`bilingual`、`cantonese` 或 `english`）、註冊表大小、每個類別嘅總計、每個顯示嘅頂層視窗一筆條目（包括佢嘅類別、標題同埋計數），以及完整嘅 `english_only` 清單（頂層類別、控制類別、句柄、標籤上限 200 字符、同埋有冇提示文字）。喺雙語模式外，佢寫 `{"mode": ..., "skipped": "not bilingual"}` 代替，仍然報告成功；命令只會喺 JSON 檔案本身無法被寫入時先至失敗。
+
+雙語裝飾器（`BilingualDecorator.cpp`）喺 250 毫秒計時器上應用自己嘅標籤，並且只係每十二個刻度（大約 3 秒）全面掃過一次每個顯示嘅視窗。驅動程式應該喺表面首次顯示後至少等待 4 秒，先至傳送 `language-audit`；否則報告描述一個裝飾器未到達嘅視窗。
+
+佢睇唔到嘅嘢：ImGui 面板或另一個自繪製 widget 繪製嘅文字，同埋直接繪製到 3D canvas 上嘅任何嘢，都冇 `wxWindow` 標籤可以比呢個命令讀取。
 
 ## 啟動
 
