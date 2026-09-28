@@ -267,16 +267,26 @@ test('every user-visible string passes through the Ink / Ink Dispenser vocabular
   const translateBodies = i18n.match(/inline (?:wxString|std::string) translate(?:_utf8)?\([^)]*\)\s*\{[^}]*\}/g) || [];
   assert.ok(translateBodies.length >= 20, 'I18N.hpp must keep its translate overloads');
   for (const body of translateBodies) {
-    // Either applies the vocabulary itself or delegates to an overload that does.
-    assert.ok(body.includes('vocabulary(') || /return translate\(/.test(body),
+    // Applies the vocabulary itself, delegates to an overload that does, or ends
+    // in I18N::finish()/finish_plural(), which apply it (checked below).
+    assert.ok(body.includes('vocabulary(') || /return translate\(/.test(body) || /return finish(?:_plural)?\(/.test(body),
       `every translate overload must apply the vocabulary:\n${body}`);
   }
-  assert.ok(/I18N::vocabulary\(wxGetTranslation/.test(stripComments(await read('GUI_App.cpp'))),
-    'the libslic3r translate callback must apply the vocabulary too');
-  for (const kind of ['Standard', 'English']) {
-    assert.ok(new RegExp(`LanguageModeKind::${kind}\\)\\s*return \\{ vocabulary\\(`).test(mode),
-      `LanguageModeService::translate must apply the vocabulary for the ${kind} mode`);
+  const i18nSource = stripComments(await read('I18N.cpp'));
+  for (const hook of ['finish', 'finish_plural']) {
+    assert.ok(new RegExp(`wxString ${hook}\\([^)]*\\)\\s*\\{\\s*return language_mode_service\\(\\)\\.${hook}\\(`).test(i18nSource),
+      `I18N::${hook}() must hand every legacy lookup to the language-mode service`);
+    const serviceHook = mode.match(new RegExp(`wxString LanguageModeService::${hook}\\([^)]*\\)[^{]*\\{[\\s\\S]*?\\n\\}`));
+    assert.ok(serviceHook && (serviceHook[0].match(/return vocabulary\(/g) || []).length >= 2,
+      `LanguageModeService::${hook}() must apply the vocabulary on every return`);
   }
+  assert.ok(/libslic3r_translate_callback\(const char \*s\)\s*\{\s*return I18N::translate_utf8\(s\);/.test(stripComments(await read('GUI_App.cpp'))),
+    'the libslic3r translate callback must go through the vocabulary-applying translate path');
+  assert.ok(/LanguageModeKind::Standard\)\s*return \{ vocabulary\(/.test(mode),
+    'LanguageModeService::translate must apply the vocabulary for the Standard mode');
+  assert.ok(/const wxString\s+english_text\s*=\s*vocabulary\(/.test(mode) &&
+            /LanguageModeKind::English\)\s*return \{ english_text,/.test(mode),
+    'LanguageModeService::translate must apply the vocabulary for the English mode');
 });
 
 test('every label is the kit Label; no stock wxStaticText is constructed anywhere', async () => {
