@@ -35968,3 +35968,1293 @@ msgstr "使用嚟自唔同安裝嘅 BambuSource，影片播放可能會唔正常
 #. review-status: agent-drafted
 msgid "Your system is missing H.264 codecs for GStreamer, which are required to play video.  (Try installing the gstreamer1.0-plugins-bad or gstreamer1.0-libav packages, then restart Bambu Studio?)"
 msgstr "你嘅系統缺少 GStreamer 所需嘅 H.264 編解碼器，係播放影片所必需嘅。（試試安裝 gstreamer1.0-plugins-bad 或 gstreamer1.0-libav 套件，然後重新啟動 Bambu Studio？）"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Wiki->"
+msgstr "Wiki 說明→"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Objects(%1%) have duplicated connectors. Some connectors may be missing in slicing result.\nPlease report to BambuSudio team in which scenario this issue happened.\nThank you."
+msgstr "物件(%1%)有重複嘅接頭。切片結果可能會缺少部份接頭。\n請向 Bambu Studio 團隊報告呢個問題係喺邊個情景發生嘅。\n多謝。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Internal error when changing value for %1%: %2%"
+msgstr "改變 %1% 嘅值時發生內部錯誤：%2%"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "STEP files"
+msgstr "STEP 檔案"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "STL files"
+msgstr "STL 檔案"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "OBJ files"
+msgstr "OBJ 檔案"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "AMF files"
+msgstr "AMF 檔案"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "3MF files"
+msgstr "3MF 檔案"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Gcode 3MF files"
+msgstr "G-code 3MF 檔案"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "G-code files"
+msgstr "G-code 檔案"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Supported files"
+msgstr "支援嘅檔案"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Project files"
+msgstr "項目檔案"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Known files"
+msgstr "已知檔案"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "INI files"
+msgstr "INI 檔案"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "SVG files"
+msgstr "SVG 檔案"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Masked SLA files"
+msgstr "遮蔽 SLA 檔案"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Switching language failed"
+msgstr "切換語言失敗"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Ext"
+msgstr "延伸"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Empty mesh can't be created."
+msgstr "冇辦法建立空網格。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Modify Text"
+msgstr "修改文字"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "create_text_volume"
+msgstr "建立文字體積"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Bad input data for UseSurfaceJob."
+msgstr "UseSurfaceJob 嘅輸入數據唔啱。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Bad input data for EmbossUpdateJob."
+msgstr "EmbossUpdateJob 嘅輸入數據唔啱。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Created text volume is empty. Change text or font."
+msgstr "建立嘅文字體積係空嘅。改變文字或字型。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Bad input data for EmbossCreateObjectJob."
+msgstr "EmbossCreateObjectJob 嘅輸入數據唔啱。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Can't create empty object."
+msgstr "冇辦法建立空物件。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "CreateObjectJob:unknown error."
+msgstr "CreateObjectJob：未知錯誤。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Bad input data for CreateSurfaceVolumeJob."
+msgstr "CreateSurfaceVolumeJob 嘅輸入數據唔啱。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Bad input data for EmbossCreateVolumeJob."
+msgstr "EmbossCreateVolumeJob 嘅輸入數據唔啱。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Can't create empty volume."
+msgstr "冇辦法建立空體積。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "It is used default volume for embossed text, try to change text or font to fix it."
+msgstr "浮雕文字用咗預設體積，嘗試改變文字或字型嚟修復佢。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Bad object to create volume."
+msgstr "建立體積嘅物件唔啱。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "calc_position_points fail."
+msgstr "計算位置點失敗。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "update_text_positions fail."
+msgstr "更新文字位置失敗。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "generate_text_volume fail."
+msgstr "生成文字體積失敗。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The hit polygon is null,please try to regenerate after adjusting text position."
+msgstr "碰撞多邊形係空嘅，請調整文字位置後嘗試重新生成。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Add text object on plate"
+msgstr "喺打印板上添加文字物件"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Head penetration should not be greater than the head width."
+msgstr "頭部穿透唔應該大過頭部寬度。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Invalid Head penetration"
+msgstr "頭部穿透唔合法"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Pinhead diameter should be smaller than the pillar diameter."
+msgstr "針頭直徑應該細於支柱直徑。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Invalid pinhead diameter"
+msgstr "針頭直徑唔合法"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "All Plates"
+msgstr "所有打印板"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Stats"
+msgstr "統計"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Project edit before save"
+msgstr "儲存前編輯項目"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Project edit before opening version history"
+msgstr "打開版本歷史前編輯項目"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Media Files"
+msgstr "媒體檔案"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "click to add machine"
+msgstr "點擊以添加打印機"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Project edit"
+msgstr "編輯項目"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Project settings changed"
+msgstr "項目設定已改變"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Recovered unsaved project"
+msgstr "復原未儲存嘅項目"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Autosave before closing project"
+msgstr "關閉項目前自動儲存"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Autosave project snapshot"
+msgstr "自動儲存項目快照"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Autosave: "
+msgstr "自動儲存："
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Saved project"
+msgstr "已儲存項目"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Autosave before shutdown"
+msgstr "關閉應用前自動儲存"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Assembly undo or redo"
+msgstr "組裝撤銷或重做"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Undo or redo"
+msgstr "撤銷或重做"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Project edit before workspace save"
+msgstr "儲存工作區前編輯項目"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Saved workspace member"
+msgstr "已儲存工作區成員"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Project edit before current-version export"
+msgstr "匯出當前版本前編輯項目"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Project edit before restore"
+msgstr "復原前編輯項目"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Could not init m_browser"
+msgstr "無法初始化瀏覽器"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Suggestion"
+msgstr "建議"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "How to trouble shooting"
+msgstr "點樣排除問題"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Error opening History dialog: %s"
+msgstr "打開歷史對話時發生錯誤：%s"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Unknown error opening History dialog"
+msgstr "打開歷史對話時發生未知錯誤"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Beta"
+msgstr "測試版"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Deputy"
+msgstr "代理"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "start_test_sequence"
+msgstr "開始測試序列"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "end_test_sequence"
+msgstr "結束測試序列"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "test bing start..."
+msgstr "測試 Bing 開始…"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "[test_bing]: url="
+msgstr "[測試 Bing]: url="
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "test bing ip resolved = %s"
+msgstr "測試 Bing IP 已解析 = %s"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "status=%u, body=%s, error=%s"
+msgstr "狀態=%u，正文=%s，錯誤=%s"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "test bing failed"
+msgstr "測試 Bing 失敗"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "test bing ok"
+msgstr "測試 Bing 成功"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "test bambulab start..."
+msgstr "測試 Bambu Lab 開始…"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "[test_bambulab]: url="
+msgstr "[測試 Bambu Lab]: url="
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "test bambulab ip resolved = %s"
+msgstr "測試 Bambu Lab IP 已解析 = %s"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "test bambulab failed"
+msgstr "測試 Bambu Lab 失敗"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "test bambulab ok"
+msgstr "測試 Bambu Lab 成功"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "test http start..."
+msgstr "測試 HTTP 開始…"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "please login first"
+msgstr "請先登入"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "test http ok"
+msgstr "測試 HTTP 成功"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "test http failed"
+msgstr "測試 HTTP 失敗"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "test http failed, status = %u, error = %s"
+msgstr "測試 HTTP 失敗，狀態 = %u，錯誤 = %s"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "please install network module first"
+msgstr "請先安裝網絡模組"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "test storage start..."
+msgstr "測試儲存空間開始…"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "[test_oss]: url="
+msgstr "[測試 OSS]: url="
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "test oss ip resolved = %s"
+msgstr "測試 OSS IP 已解析 = %s"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "test storage failed"
+msgstr "測試儲存空間失敗"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "test storage ok"
+msgstr "測試儲存空間成功"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "test storage upgrade start..."
+msgstr "測試儲存空間升級開始…"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "[test_oss_upgrade]: url="
+msgstr "[測試 OSS 升級]: url="
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "test storage upgrade ip resolved = %s"
+msgstr "測試儲存空間升級 IP 已解析 = %s"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "test storage upgrade failed"
+msgstr "測試儲存空間升級失敗"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "test storage upgrade ok"
+msgstr "測試儲存空間升級成功"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "app config is nullptr"
+msgstr "應用設定係空指標"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "test storage download start..."
+msgstr "測試儲存空間下載開始…"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "[test_oss_download]: url="
+msgstr "[測試 OSS 下載]: url="
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "test storage download failed"
+msgstr "測試儲存空間下載失敗"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "test storage download canceled"
+msgstr "測試儲存空間下載已取消"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "downloading %1%%%"
+msgstr "下載中 %1%%%"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "test storage download ok"
+msgstr "測試儲存空間下載成功"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "test plugin download start..."
+msgstr "測試外掛下載開始…"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "[test_plugin_download]: downloadurl="
+msgstr "[測試外掛下載]: downloadurl="
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "test plugin download failed"
+msgstr "測試外掛下載失敗"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "test plugin download canceled"
+msgstr "測試外掛下載已取消"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "test plugin download ok"
+msgstr "測試外掛下載成功"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The file: %s \nin the directory may have been opened by another program. \nPlease close it and try again."
+msgstr "檔案：%s \n係資料夾內可能已被另一個程式打開。 \n請關閉佢並重試。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The file: %s \nmay have been opened by another program. \nPlease close it and try again."
+msgstr "檔案：%s \n可能已被另一個程式打開。 \n請關閉佢並重試。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Thin (100)"
+msgstr "超薄 (100)"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Extra light (200)"
+msgstr "特輕 (200)"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Light (300)"
+msgstr "輕 (300)"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Regular (400)"
+msgstr "常規 (400)"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Medium (500)"
+msgstr "中等 (500)"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Semibold (600)"
+msgstr "半粗體 (600)"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Bold (700)"
+msgstr "粗體 (700)"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Extra bold (800)"
+msgstr "特粗體 (800)"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Black (900)"
+msgstr "極粗 (900)"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Manual profile snapshot"
+msgstr "手動設定快照"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Level %d"
+msgstr "級別 %d"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Autosave: %s"
+msgstr "自動儲存：%s"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Additional printer requests were skipped because the 32-printer limit was reached."
+msgstr "因為達到咗 32 部打印機嘅限制，額外嘅打印機請求已被跳過。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "HEX"
+msgstr "HEX"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "HEX8"
+msgstr "HEX8"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "RGB"
+msgstr "RGB"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "RGBA"
+msgstr "RGBA"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "HSL"
+msgstr "HSL"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "HSLA"
+msgstr "HSLA"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "HSV"
+msgstr "HSV"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "HWB"
+msgstr "HWB"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "XYZ"
+msgstr "XYZ"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Lab"
+msgstr "Lab"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "LCH"
+msgstr "LCH"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "OKLab"
+msgstr "OKLab（色彩空間）"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "OKLCH"
+msgstr "OKLCH"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "CMYK"
+msgstr "CMYK"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "sRGB (HSV pick)"
+msgstr "sRGB (HSV 揀選)"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "(collapsed)"
+msgstr "（已摺疊）"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "[group]"
+msgstr "［組群］"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "[pinned]"
+msgstr "［已釘住］"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "[hidden]"
+msgstr "［隱藏］"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "3D"
+msgstr "3D"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Light or dark appearance"
+msgstr "淺色或深色外觀"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Seed color the interface is tinted with"
+msgstr "介面色調嘅種色"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Interface typeface"
+msgstr "介面字體"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Interface text scale"
+msgstr "介面文字大小"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Interface language mode"
+msgstr "介面語言模式"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Cloud login region"
+msgstr "雲端登入地區"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Metric or imperial units"
+msgstr "公制或英制單位"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Dock the Prepare panel on the left, right, top, or bottom"
+msgstr "將準備面板停泊到左、右、上或下"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Multi-device Management"
+msgstr "多裝置管理"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Support beta version update"
+msgstr "支援測試版本更新"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Receive beta version updates"
+msgstr "接收測試版本更新"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Join the User Experience Improvement Program"
+msgstr "加入使用者體驗改進計劃"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Downloads"
+msgstr "下載"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Folder downloaded files are saved to"
+msgstr "已下載檔案儲存嘅資料夾"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Editor used by File > Open in External Editor"
+msgstr "檔案 > 用外部編輯器開啟 使用嘅編輯器"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Executable used by the Custom external editor"
+msgstr "自訂外部編輯器使用嘅可執行檔"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Remember the build plate selected last time per printer model"
+msgstr "記住每部打印機型號上次揀選嘅打印板"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "12-hour or 24-hour clock"
+msgstr "12 小時或 24 小時制"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Keep liveview when printing"
+msgstr "打印時保留即時畫面"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Remove the restriction on mixed printing of high and low temperature filaments"
+msgstr "移除高溫同低溫墨水混合打印嘅限制"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Auto-fill previously logged-in accounts"
+msgstr "自動填入之前登入過嘅帳戶"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Grabber size for move, rotate and scale tools"
+msgstr "移動、旋轉同縮放工具嘅抓手大小"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Horizontal tooltip offset"
+msgstr "提示嘅水平偏移量"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Vertical tooltip offset"
+msgstr "提示嘅垂直偏移量"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Collapsible or uncollapsible toolbar"
+msgstr "工具列可摺疊或不可摺疊"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Show the step mesh parameter setting dialog"
+msgstr "顯示階梯網格參數設定對話框"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Open full screen camera view on active monitor only"
+msgstr "在作用中嘅監控器上打開全屏相機視圖"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Backup period in seconds"
+msgstr "備份時間間隔（秒）"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Vision-capable Ollama tag"
+msgstr "支援視覺嘅 Ollama 標籤"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Minutes between live-view checks"
+msgstr "即時畫面檢查之間嘅分鐘數"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "DEV host"
+msgstr "DEV 主機"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "QA host"
+msgstr "QA 主機"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "PRE host"
+msgstr "PRE 主機"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Go to Multi-device"
+msgstr "去多裝置"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Manage several printers at once"
+msgstr "同時管理多部打印機"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Go to Calibration"
+msgstr "去校準"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Flow, pressure advance and temperature"
+msgstr "流量、壓力提前同溫度"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Go to Filament"
+msgstr "去墨水"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Filament manager"
+msgstr "墨水管理工具"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Home Assistant printer-discovery API"
+msgstr "Home Assistant 打印機搜尋 API"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Layout clipping inventory"
+msgstr "版面剪裁清單"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Generated visual showcase"
+msgstr "生成嘅視覺展示"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Gizmo rail composite SVG completion"
+msgstr "Gizmo 導軌複合 SVG 完成度"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Kit widgets added in the every-element sweep (2026-09-05)"
+msgstr "喺每個元素掃過中加入嘅 Kit 小工具（2026-09-05）"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Runtime layout probe"
+msgstr "執行時版面探針"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Vendored Material Design 3 design system"
+msgstr "廠商 Material Design 3 設計系統"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "MD3 parity register"
+msgstr "MD3 奇偶性暫存器"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Themed surface colors on StaticBox cards"
+msgstr "StaticBox 卡上嘅主題表面顏色"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Toolpath color-scheme legend"
+msgstr "工具路徑色彩方案圖例"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "MakerWorld OpenGL preview"
+msgstr "MakerWorld OpenGL 預覽"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Changelog viewer"
+msgstr "更新日誌檢視器"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Deployment and the layout gate"
+msgstr "部署同版面門檻"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Dim sum surprise"
+msgstr "點心驚喜"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Language modes and funny levels"
+msgstr "語言模式同幽默程度"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Settings and appearance"
+msgstr "設定同外觀"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Tabbed navigation"
+msgstr "分頁導航"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Dockable Prepare sidebar"
+msgstr "可停泊嘅準備邊欄"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Every process setting shown, no Simple/Advanced filter"
+msgstr "顯示每個流程設定，冇簡單／進階過濾"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Process settings in the Prepare sidebar"
+msgstr "準備邊欄裏嘅流程設定"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Release codenames"
+msgstr "發佈代碼名"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Build from source (Windows installer)"
+msgstr "從來源構建（Windows 安裝程式）"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Native Windows installer"
+msgstr "原生 Windows 安裝程式"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "One-click Windows build and installer"
+msgstr "一鍵 Windows 構建同安裝程式"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Windows CI and release supply chain"
+msgstr "Windows CI 同發佈供應鏈"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "AI printer watch (local models)"
+msgstr "AI 打印機看更（本地模型）"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "App updates from this fork's releases"
+msgstr "從呢個分叉嘅發佈更新應用程式"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Appearance customization"
+msgstr "外觀自訂"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Cloud web-page failure recovery"
+msgstr "雲端網頁失敗復復"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Command palette (Ctrl+Shift+F)"
+msgstr "指令面板（Ctrl+Shift+F）"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Keyboard, assistive, and responsive GUI accessibility"
+msgstr "鍵盤、輔助同回應式 GUI 可訪問性"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Ink terminology (filament → ink, AMS → Ink Dispenser)"
+msgstr "墨水術語（絲材改稱墨水、換料系統改稱墨水機）"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "English, Hong Kong Cantonese, and bilingual modes"
+msgstr "英文、香港粵語同雙語模式"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Material color picker & color translator"
+msgstr "Material 色選器同色轉換器"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Native Material Design 3 UI on Windows"
+msgstr "Windows 上嘅原生 Material Design 3 UI"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Native Windows visual smoke test"
+msgstr "原生 Windows 視覺煙霧測試"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Print simulation playback (feedrate-true)"
+msgstr "打印模擬播放（進給速度真實）"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Release splash art (fresh dim sum per release)"
+msgstr "發佈飛濺藝術（每次發佈嘅新點心）"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Prepare sidebar search"
+msgstr "準備邊欄搜尋"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Smart home: printer handover, TTS narrator, and alert lights"
+msgstr "智能家居：打印機交接、TTS 旁白同警示燈"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Software OpenGL fallback (Mesa llvmpipe)"
+msgstr "軟件 OpenGL 備用方案（Mesa llvmpipe）"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Stop-print safety interlock"
+msgstr "停止打印安全互鎖"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Windows-only platform policy"
+msgstr "Windows 唯一平台原則"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Config profiles & full-data backup"
+msgstr "設定檔同完整資料備份"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Non-blocking notifications"
+msgstr "非阻止通知"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Preferences auto-history"
+msgstr "偏好設定自動歷史"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Browser-like project tabs"
+msgstr "類似瀏覽器嘅項目分頁"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Project version history"
+msgstr "項目版本歷史"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "No key is saved for this provider"
+msgstr "呢個服務商未保存任何金鑰"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "HTTP client unavailable"
+msgstr "HTTP 用戶端不可用"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Provider request failed (HTTP %1%)"
+msgstr "服務商請求失敗（HTTP %1%）"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Provider response is not JSON"
+msgstr "服務商回應唔係 JSON"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Provider did not return text"
+msgstr "服務商冇返回文字"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Renderer produced no STL mesh"
+msgstr "渲染器冇生成 STL 網格"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "STL size is outside allowed bounds"
+msgstr "STL 大細超出允許範圍"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Renderer did not produce a bounded binary STL"
+msgstr "渲染器冇生成有界二進制 STL"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "STL ended before all triangles"
+msgstr "STL 喺所有三角形之前結束"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "STL has invalid or below-plate coordinates"
+msgstr "STL 有無效或低於打印板嘅座標"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "STL contains no printable surface"
+msgstr "STL 冇包含可打印表面"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Choose an API provider"
+msgstr "揀選一個 API 服務商"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Provider connection could not be completed"
+msgstr "服務商連接無法完成"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Provider key test returned HTTP %1%"
+msgstr "服務商金鑰測試返回 HTTP %1%"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Invalid model, prompt, revision note or timeout"
+msgstr "無效嘅模型、提示、修訂備註或逾時"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Cannot create revision directory"
+msgstr "無法建立修訂目錄"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Claude CLI returned no structured scene"
+msgstr "Claude CLI 冇返回結構化場景"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Renderer produced no editable Blender project"
+msgstr "渲染器冇生成可編輯 Blender 項目"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Could not retain revision metadata"
+msgstr "無法保留修訂中繼資料"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Time Lapse"
+msgstr "縮時攝影"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Task List"
+msgstr "任務列表"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Additional printer requests were skipped because the 32-printer limit was reached"
+msgstr "已達 32 部打印機上限，額外嘅打印機要求被跳過"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid ": transport error"
+msgstr "：傳輸錯誤"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid ": "
+msgstr "： "
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "HTTP "
+msgstr "HTTP "
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "transport error"
+msgstr "傳輸錯誤"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Post-processing script %1% failed.\n\nThe post-processing script is expected to change the G-code file %2% in place, but the G-code file was deleted and likely saved under a new name.\nPlease adjust the post-processing script to change the G-code in place and consult the manual on how to optionally rename the post-processed G-code file.\n"
+msgstr "後處理指令碼 %1% 失敗。\n\n後處理指令碼應該就地修改 G-code 檔案 %2%，但該檔案遭刪除並可能已用新名稱儲存。\n請調整後處理指令碼以就地修改 G-code，並參閱使用手冊了解如何選擇重新命名後處理嘅 G-code 檔案。\n"

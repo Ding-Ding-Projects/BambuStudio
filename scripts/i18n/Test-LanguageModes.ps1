@@ -1,7 +1,11 @@
 [CmdletBinding()]
 param(
-    # Fail when any English source message lacks a Cantonese entry. Also on when
-    # LANGUAGE_REQUIRE_COMPLETE=1; otherwise the gap is reported, not enforced.
+    # Every English source message must have a Cantonese entry: the catalog is
+    # complete, and a new message without one fails this check. -AllowIncomplete
+    # (or LANGUAGE_ALLOW_INCOMPLETE=1) only reports the gap, for a branch that is
+    # still waiting for its translations.
+    [switch] $AllowIncomplete,
+    # Kept for callers that still pass it; completeness is the default now.
     [switch] $RequireComplete
 )
 
@@ -21,7 +25,8 @@ $scratch = Join-Path ([System.IO.Path]::GetTempPath()) ("language-modes-" + [gui
 $nativeMo = Join-Path $scratch 'yue_HK\BambuStudio.mo'
 $englishMo = Join-Path $scratch 'en\BambuStudio.mo'
 $missingReport = Join-Path $scratch 'missing.json'
-$requireComplete = $RequireComplete.IsPresent -or $env:LANGUAGE_REQUIRE_COMPLETE -eq '1'
+$requireComplete = $RequireComplete.IsPresent -or
+    -not ($AllowIncomplete.IsPresent -or $env:LANGUAGE_ALLOW_INCOMPLETE -eq '1')
 $nativeApp = Join-Path $repoRoot 'src\slic3r\GUI\GUI_App.cpp'
 $webLogin = Join-Path $repoRoot 'src\slic3r\GUI\WebUserLoginDialog.cpp'
 $webPanel = Join-Path $repoRoot 'src\slic3r\GUI\WebViewDialog.cpp'
@@ -167,7 +172,7 @@ try {
     if ($missing.Count -gt 0) {
         $message = "$($missing.Count) English source messages have no Cantonese entry (first: '$($missing[0].msgid)')."
         Assert-True (-not $requireComplete) $message
-        Write-Warning "$message Pass -RequireComplete to enforce."
+        Write-Warning "$message Allowed only because -AllowIncomplete was given."
     }
 }
 finally {

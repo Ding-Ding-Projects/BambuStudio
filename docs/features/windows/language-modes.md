@@ -23,8 +23,11 @@ leaking `yue` or `bilingual` identifiers to external services.
 ## The Cantonese catalog
 
 `bbl/i18n/yue_HK/BambuStudio_yue_HK.po` has an entry for every message in the current English
-extraction: 7,374 messages. 993 of them are curated; 6,381 carry `#. review-status: agent-drafted`.
-Every drafted entry has passed the mechanical checks in `scripts/i18n/merge_cantonese_drafts.py`:
+extraction (7,473 messages) and in the English override catalog. It holds 7,632 entries: 993 curated
+and 6,639 carrying `#. review-status: agent-drafted` (a few cover messages the current source no
+longer uses). `scripts/i18n/Test-LanguageModes.ps1` fails when a message has no Cantonese entry, so
+a new string needs its translation in the same change. Every drafted entry has passed the
+mechanical checks in `scripts/i18n/merge_cantonese_drafts.py`:
 
 - placeholders match the English, and unnumbered placeholders keep the English order;
 - line breaks and menu mnemonics are kept;
