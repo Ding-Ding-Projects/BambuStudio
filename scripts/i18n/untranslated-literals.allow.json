@@ -18,5 +18,260 @@
     "file": "src/slic3r/GUI/GLCanvas3D.cpp",
     "literal": "Max texture size:",
     "reason": "Same developer-only \"Render statistics\" ImGui window as the FPS line above."
+  },
+  {
+    "file": "src/slic3r/GUI/PrintOptionsDialog.cpp",
+    "literal": "Nozzle Type",
+    "reason": "This is the msgctxt argument passed to _CTX()/L_CONTEXT(), used only as a gettext disambiguation key for the already-translated short label \"Type\" (_CTX(L_CONTEXT(\"Type\", \"Nozzle Type\"), \"Nozzle Type\")). It is never itself shown on screen."
+  },
+  {
+    "file": "src/slic3r/GUI/PrintOptionsDialog.cpp",
+    "literal": "Nozzle Diameter",
+    "reason": "msgctxt argument for the already-translated short label \"Diameter\" (_CTX(L_CONTEXT(\"Diameter\", \"Nozzle Diameter\"), \"Nozzle Diameter\")); a disambiguation key, not displayed text."
+  },
+  {
+    "file": "src/slic3r/GUI/PrintOptionsDialog.cpp",
+    "literal": "Nozzle Flow",
+    "reason": "msgctxt argument for the already-translated short label \"Flow\" (_CTX(L_CONTEXT(\"Flow\", \"Nozzle Flow\"), \"Nozzle Flow\")); a disambiguation key, not displayed text."
+  },
+  {
+    "file": "src/slic3r/GUI/WebViewDialog.cpp",
+    "literal": "Back",
+    "reason": "Debug-only navigation toolbar button, compiled solely inside #if !BBL_RELEASE_TO_PUBLIC ... #endif and never built into the public release."
+  },
+  {
+    "file": "src/slic3r/GUI/WebViewDialog.cpp",
+    "literal": "Forward",
+    "reason": "Debug-only navigation toolbar button, compiled solely inside #if !BBL_RELEASE_TO_PUBLIC ... #endif and never built into the public release."
+  },
+  {
+    "file": "src/slic3r/GUI/WebViewDialog.cpp",
+    "literal": "Stop",
+    "reason": "Debug-only navigation toolbar button, compiled solely inside #if !BBL_RELEASE_TO_PUBLIC ... #endif and never built into the public release."
+  },
+  {
+    "file": "src/slic3r/GUI/WebViewDialog.cpp",
+    "literal": "Reload",
+    "reason": "Debug-only navigation toolbar button, compiled solely inside #if !BBL_RELEASE_TO_PUBLIC ... #endif and never built into the public release."
+  },
+  {
+    "file": "src/slic3r/GUI/WebViewDialog.cpp",
+    "literal": "Tools",
+    "reason": "Debug-only navigation toolbar button, compiled solely inside #if !BBL_RELEASE_TO_PUBLIC ... #endif and never built into the public release."
+  },
+  {
+    "file": "src/slic3r/GUI/StatusPanel.cpp",
+    "literal": "Quit_Switching",
+    "reason": "msgctxt argument passed to _CTX()/L_CONTEXT() for the already-translated \"Quit\" button label; a disambiguation key, not displayed text."
+  },
+  {
+    "file": "src/slic3r/GUI/StatusPanel.cpp",
+    "literal": "MqttSource",
+    "reason": "Initial placeholder text for a legacy debug-only widget (see the comment above its creation); the label is created hidden and only ever gets a real value inside the #if !BBL_RELEASE_TO_PUBLIC block below, so this placeholder text is never shown to a user."
+  },
+  {
+    "file": "src/slic3r/GUI/StatusPanel.cpp",
+    "literal": "Local Mqtt",
+    "reason": "Debug-only diagnostic label inside #if !BBL_RELEASE_TO_PUBLIC ... #endif in StatusPanel::update(), never compiled into the public release."
+  },
+  {
+    "file": "src/slic3r/GUI/StatusPanel.cpp",
+    "literal": "Tunnel Mqtt",
+    "reason": "Debug-only diagnostic label inside #if !BBL_RELEASE_TO_PUBLIC ... #endif in StatusPanel::update(), never compiled into the public release."
+  },
+  {
+    "file": "src/slic3r/GUI/StatusPanel.cpp",
+    "literal": "Cloud Mqtt",
+    "reason": "Debug-only diagnostic label inside #if !BBL_RELEASE_TO_PUBLIC ... #endif in StatusPanel::update(), never compiled into the public release."
+  },
+  {
+    "file": "src/slic3r/GUI/StatusPanel.cpp",
+    "literal": "Cloud+Lan",
+    "reason": "Debug-only mqtt-source diagnostic label inside #if !BBL_RELEASE_TO_PUBLIC ... #endif in StatusPanel::update(), never compiled into the public release."
+  },
+  {
+    "file": "src/slic3r/GUI/StatusPanel.cpp",
+    "literal": "Cloud",
+    "reason": "Debug-only mqtt-source diagnostic label inside #if !BBL_RELEASE_TO_PUBLIC ... #endif in StatusPanel::update(), never compiled into the public release."
+  },
+  {
+    "file": "src/slic3r/GUI/StatusPanel.cpp",
+    "literal": "Lan",
+    "reason": "Debug-only mqtt-source diagnostic label inside #if !BBL_RELEASE_TO_PUBLIC ... #endif in StatusPanel::update(), never compiled into the public release."
+  },
+  {
+    "file": "src/slic3r/GUI/StatusPanel.cpp",
+    "literal": "None",
+    "reason": "Debug-only mqtt-source diagnostic label inside #if !BBL_RELEASE_TO_PUBLIC ... #endif in StatusPanel::update(), never compiled into the public release."
+  },
+  {
+    "file": "src/slic3r/GUI/StatusPanel.cpp",
+    "literal": "Z",
+    "reason": "Single-letter coordinate axis label. The project already treats bare axis letters as non-translated notation (see the axis_header() comment in Gizmos/GizmoObjectManipulation.cpp, which relies on strlen(\"X\"/\"Y\"/\"Z\") == 1); the sibling branch here deliberately still translates the real word \"Bed\" with _L()."
+  },
+  {
+    "file": "src/slic3r/GUI/SyncAmsInfoDialog.cpp",
+    "literal": "Sync_AMS",
+    "reason": "msgctxt argument passed to _CTX()/L_CONTEXT() for already-translated short labels (\"Original\", \"Plate\"); a disambiguation key, not displayed text."
+  },
+  {
+    "file": "src/slic3r/GUI/Preferences.cpp",
+    "literal": "Sets the tone of every message Bambu Studio shows in this language, including errors, warnings and destructive confirmations. It never changes what a message says has happened or what will be affected.",
+    "reason": "Passed through the local funny_row_label() helper, which already calls I18N::translate_mode() internally (see the \"Bilingual label helpers for the funny-level rows\" comment above it); the scanner's safe-wrapper list does not know this project-local helper, but the text is already routed through translation."
+  },
+  {
+    "file": "src/slic3r/GUI/Preferences.cpp",
+    "literal": "Hide details",
+    "reason": "Passed through the local funny_row_label() helper, which already calls I18N::translate_mode() internally; not a bypass."
+  },
+  {
+    "file": "src/slic3r/GUI/Preferences.cpp",
+    "literal": "What does this change?",
+    "reason": "Passed through the local funny_row_label() helper, which already calls I18N::translate_mode() internally; not a bypass."
+  },
+  {
+    "file": "src/slic3r/GUI/Preferences.cpp",
+    "literal": "Level %d of 5",
+    "reason": "Passed through the local funny_row_label_int() helper, which already calls I18N::translate_mode() internally; not a bypass."
+  },
+  {
+    "file": "src/slic3r/GUI/Preferences.cpp",
+    "literal": "Stored in BambuStudio.conf as %d.",
+    "reason": "Passed through the local funny_row_label_int() helper, which already calls I18N::translate_mode() internally; not a bypass."
+  },
+  {
+    "file": "src/slic3r/GUI/Preferences.cpp",
+    "literal": "Not stored yet; using the compiled default %d.",
+    "reason": "Passed through the local funny_row_label_int() helper, which already calls I18N::translate_mode() internally; not a bypass."
+  },
+  {
+    "file": "src/slic3r/GUI/Preferences.cpp",
+    "literal": "Preferences",
+    "reason": "msgctxt argument passed to _CTX_utf8()/L_CONTEXT() for the already-translated \"Learn more\" hyperlink label; a disambiguation key, not displayed text."
+  },
+  {
+    "file": "src/slic3r/GUI/MonitorBasePanel.cpp",
+    "literal": "BBL-Printer001",
+    "reason": "Brand-prefixed placeholder device name from an old form-builder template. MonitorBasePanel is not instantiated anywhere in the codebase and this label is never updated with a real value, so the placeholder identifier is never shown to a user."
+  },
+  {
+    "file": "src/slic3r/GUI/MonitorBasePanel.cpp",
+    "literal": "Robort expose task dao movie with smart part \\ndesigned for new year\\n",
+    "reason": "Placeholder task description from the same old form-builder template. MonitorBasePanel is not instantiated anywhere, so this text is never shown and must not enter the catalogue."
+  },
+  {
+    "file": "src/slic3r/GUI/CreatePresetsDialog.cpp",
+    "literal": "X",
+    "reason": "Single-letter coordinate axis label for the bed-size/origin X field, matching the project's established convention of leaving bare axis letters untranslated (see Gizmos/GizmoObjectManipulation.cpp's axis_header())."
+  },
+  {
+    "file": "src/slic3r/GUI/CreatePresetsDialog.cpp",
+    "literal": "Y",
+    "reason": "Single-letter coordinate axis label for the bed-size/origin Y field, matching the project's established convention of leaving bare axis letters untranslated (see Gizmos/GizmoObjectManipulation.cpp's axis_header())."
+  },
+  {
+    "file": "src/slic3r/GUI/TextureImportDialog.cpp",
+    "literal": "Ag\\nAg",
+    "reason": "Temporary font-metrics sample text used only to measure two-line label height (two_line_hint_height()); it is set, measured with GetBestSize(), and immediately restored to the real label text before the control repaints, so it is never actually seen by a user."
+  },
+  {
+    "file": "src/slic3r/GUI/TextureImportDialog.cpp",
+    "literal": "TextureImport",
+    "reason": "msgctxt argument passed to _CTX_utf8()/L_CONTEXT() for the already-translated \"Previous\" button label; a disambiguation key, not displayed text."
+  },
+  {
+    "file": "src/slic3r/GUI/GCodeRenderer/LegacyRenderer.cpp",
+    "literal": "KB",
+    "reason": "Inside the developer-only render_statistics() ImGui window, gated by #if ENABLE_GCODE_VIEWER_STATISTICS, the same debug-statistics category already documented for GLCanvas3D.cpp above."
+  },
+  {
+    "file": "src/slic3r/GUI/GCodeRenderer/LegacyRenderer.cpp",
+    "literal": "MB",
+    "reason": "Inside the developer-only render_statistics() ImGui window, gated by #if ENABLE_GCODE_VIEWER_STATISTICS, the same debug-statistics category already documented for GLCanvas3D.cpp above."
+  },
+  {
+    "file": "src/slic3r/GUI/GCodeRenderer/LegacyRenderer.cpp",
+    "literal": "GB",
+    "reason": "Inside the developer-only render_statistics() ImGui window, gated by #if ENABLE_GCODE_VIEWER_STATISTICS, the same debug-statistics category already documented for GLCanvas3D.cpp above."
+  },
+  {
+    "file": "src/slic3r/GUI/Widgets/AMSControl.cpp",
+    "literal": "Unload",
+    "reason": "Deliberate per-locale override: for ru_RU and pt_BR the code re-sets this button back to plain English \"Unload\" instead of the smaller font used for every other long-translation locale (see the language-specific SetFont/SetLabel block above), working around the translated word being too long for the button. Wrapping it would undo that intentional fix."
+  },
+  {
+    "file": "src/slic3r/GUI/UnsavedChangesDialog.cpp",
+    "literal": "DiffModel::GetValue: wrong column %d",
+    "reason": "Internal invariant-violation diagnostic naming the exact C++ class/method (DiffModel::GetValue); the sibling ObjectDataViewModel.cpp uses plain printf() for the identical \"wrong column\" pattern, confirming this is a programmer diagnostic, not user-facing prose."
+  },
+  {
+    "file": "src/slic3r/GUI/UnsavedChangesDialog.cpp",
+    "literal": "DiffModel::SetValue: wrong column",
+    "reason": "Internal invariant-violation diagnostic naming the exact C++ class/method (DiffModel::SetValue); the sibling ObjectDataViewModel.cpp uses plain printf() for the identical \"wrong column\" pattern, confirming this is a programmer diagnostic, not user-facing prose."
+  },
+  {
+    "file": "src/slic3r/GUI/ObjColorDialog.cpp",
+    "literal": "ObjImport",
+    "reason": "msgctxt argument passed to _CTX()/L_CONTEXT() for the already-translated \"Original\" label; a disambiguation key, not displayed text."
+  },
+  {
+    "file": "src/slic3r/GUI/DeviceTab/uiAMSBestPositionPopup.cpp",
+    "literal": "FilamentTrack",
+    "reason": "msgctxt argument passed to _CTX()/L_CONTEXT() for the already-translated \"OK\" label; a disambiguation key, not displayed text."
+  },
+  {
+    "file": "src/slic3r/GUI/AuxiliaryDataViewModel.cpp",
+    "literal": "AuxiliaryModel::GetValue: wrong column %d",
+    "reason": "Internal invariant-violation diagnostic naming the exact C++ class/method (AuxiliaryModel::GetValue); the sibling ObjectDataViewModel.cpp uses plain printf() for the identical \"wrong column\" pattern, confirming this is a programmer diagnostic, not user-facing prose."
+  },
+  {
+    "file": "src/slic3r/GUI/AuxiliaryDataViewModel.cpp",
+    "literal": "AuxiliaryModel::SetValue: wrong column",
+    "reason": "Internal invariant-violation diagnostic naming the exact C++ class/method (AuxiliaryModel::SetValue); the sibling ObjectDataViewModel.cpp uses plain printf() for the identical \"wrong column\" pattern, confirming this is a programmer diagnostic, not user-facing prose."
+  },
+  {
+    "file": "src/slic3r/GUI/Appearance/ElementStyle.cpp",
+    "literal": "Appearance: %s",
+    "reason": "The code comment right above this call states that ElementStyle.cpp links against wx core/base only, not I18N.cpp/LanguageMode.cpp, so it cannot call _L()/L() at all; this is a documented, physical linkage constraint, not an oversight."
+  },
+  {
+    "file": "src/slic3r/GUI/Widgets/MD3ColorPicker.cpp",
+    "literal": "oklch(70% 0.1 200)  #rrggbbaa  hsl(...)  cmyk(...)  navy",
+    "reason": "A colour-syntax example shown as a text-field hint, listing literal CSS/colour notation (oklch/hex/hsl/cmyk function syntax and a colour keyword), not natural-language prose."
+  },
+  {
+    "file": "src/slic3r/GUI/SmartHomeDialog.cpp",
+    "literal": "Saved Home Assistant speaker or light lists exceed the safe size limits. Existing ",
+    "reason": "Passed through the local localized_stacked() helper, which already calls I18N::translate_mode() internally (see its definition above); the scanner's safe-wrapper list does not know this project-local helper, but the text is already routed through translation."
+  },
+  {
+    "file": "src/slic3r/GUI/SendToPrinter.cpp",
+    "literal": "MyLabel",
+    "reason": "Default placeholder name left over from the form-builder template for a rename text field; it is immediately replaced with the real file name at runtime and is never shown to a user."
+  },
+  {
+    "file": "src/slic3r/GUI/SendMultiMachinePage.cpp",
+    "literal": "MyLabel",
+    "reason": "Default placeholder name left over from the form-builder template for a rename text field; it is immediately replaced with the real task name at runtime and is never shown to a user."
+  },
+  {
+    "file": "src/slic3r/GUI/MediaPlayCtrl.cpp",
+    "literal": "MediaPlayCtrl",
+    "reason": "wxWindow::SetLabel() on a plain wxPanel used only as an internal window name/identifier; a panel does not paint its label text, so this is not text a user ever reads."
+  },
+  {
+    "file": "src/slic3r/GUI/Field.cpp",
+    "literal": "x : ",
+    "reason": "Coordinate axis label for a 2D point input field, matching the project's established convention of leaving bare axis letters untranslated (see Gizmos/GizmoObjectManipulation.cpp's axis_header())."
+  },
+  {
+    "file": "src/slic3r/GUI/AboutDialog.cpp",
+    "literal": "Copyright(C) 2021-2025 Lunkuo All Rights Reserved",
+    "reason": "A legal copyright line naming the company; copyright notices are kept in their original wording rather than translated."
+  },
+  {
+    "file": "src/slic3r/GUI/AMSDryControl.cpp",
+    "literal": "H",
+    "reason": "Unit-symbol label for hours next to the drying-time input, directly parallel to the unwrapped \"℃\" (degrees Celsius) unit label a few lines above for the temperature input; both are notation, not prose."
   }
 ]

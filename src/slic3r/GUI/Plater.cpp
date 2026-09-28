@@ -532,7 +532,7 @@ SlicedInfo::SlicedInfo(wxWindow *parent) :
         auto *text = new Label(parent, text_label);
         text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
         text->SetFont(wxGetApp().small_font());
-        auto info_label = new Label(parent, "N/A");
+        auto info_label = new Label(parent, _L("N/A"));
         info_label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
         info_label->SetFont(wxGetApp().small_font());
         grid_sizer->Add(text, 0);

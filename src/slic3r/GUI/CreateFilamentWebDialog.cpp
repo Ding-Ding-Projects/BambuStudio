@@ -198,7 +198,7 @@ CreateFilamentWebDialog::CreateFilamentWebDialog(wxWindow *parent,
 
     m_browser = WebView::CreateWebView(this, url);
     if (!m_browser) {
-        wxLogError("CreateFilamentWebDialog: failed to create WebView");
+        wxLogError(_L("CreateFilamentWebDialog: failed to create WebView"));
         return;
     }
 

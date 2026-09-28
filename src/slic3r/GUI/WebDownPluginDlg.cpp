@@ -50,7 +50,7 @@ DownPluginFrame::DownPluginFrame(GUI_App *pGUI) : wxDialog((wxWindow *) (pGUI->m
     // Create the webview
     m_browser = WebView::CreateWebView(this, TargetUrl);
     if (m_browser == nullptr) {
-        wxLogError("Could not init m_browser");
+        wxLogError(_L("Could not init m_browser"));
         return;
     }
 

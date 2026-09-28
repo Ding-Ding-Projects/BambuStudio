@@ -5498,7 +5498,7 @@ struct ConfigsOverwriteConfirmDialog : MessageDialog
                         wxString::Format(exported ? _L("A file exists with the same name: %s, do you want to override it.") :
                                                   _L("A config exists with the same name: %s, do you want to override it."),
                                          name),
-                        _L(exported ? "Overwrite file" : "Overwrite config"),
+                        (exported ? _L("Overwrite file") : _L("Overwrite config")),
                         wxYES_NO | wxNO_DEFAULT)
     {
         add_button(wxID_YESTOALL, false, _L("Yes to All"));

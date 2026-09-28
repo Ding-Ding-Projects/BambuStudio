@@ -69,7 +69,7 @@ EditFilamentWebDialog::EditFilamentWebDialog(wxWindow *parent, const std::string
 
     m_browser = WebView::CreateWebView(this, url);
     if (!m_browser) {
-        wxLogError("EditFilamentWebDialog: failed to create WebView");
+        wxLogError(_L("EditFilamentWebDialog: failed to create WebView"));
         return;
     }
 

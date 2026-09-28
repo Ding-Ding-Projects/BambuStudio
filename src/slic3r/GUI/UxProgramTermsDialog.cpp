@@ -29,7 +29,7 @@ UxProgramTermsDialog::UxProgramTermsDialog(wxWindow* parent)
 
     m_webview = WebView::CreateWebView(this, "");
     if (m_webview == nullptr) {
-        wxLogError("Could not init ux program terms webview");
+        wxLogError(_L("Could not init ux program terms webview"));
         return;
     }
     m_webview->SetBackgroundColour(*wxWHITE);

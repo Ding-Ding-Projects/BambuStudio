@@ -75,7 +75,7 @@ MonitorBasePanel::MonitorBasePanel(wxWindow* parent, wxWindowID id, const wxPoin
 
 	bSizer_printer_info->Add(m_staticText_machine_name, 0, wxALIGN_CENTER_VERTICAL | wxALL, 0);
 
-	m_staticText_capacity_val = new Label(m_panel_printer, wxT("N/A"), 0, wxSize(-1, -1));
+	m_staticText_capacity_val = new Label(m_panel_printer, _L("N/A"), 0, wxSize(-1, -1));
 	m_staticText_capacity_val->Wrap(-1);
 	m_staticText_capacity_val->SetFont(Label::Body_10);
 
@@ -334,11 +334,11 @@ TaskListBasePanel::TaskListBasePanel(wxWindow* parent, wxWindowID id, const wxPo
 	wxBoxSizer* bSizer13;
 	bSizer13 = new wxBoxSizer(wxHORIZONTAL);
 
-	m_staticText_ceation_time_title = new Label(m_panel_model_name_content, wxT("CreationTime:"));
+	m_staticText_ceation_time_title = new Label(m_panel_model_name_content, _L("CreationTime:"));
 	m_staticText_ceation_time_title->Wrap(-1);
 	bSizer13->Add(m_staticText_ceation_time_title, 0, wxALL, 5);
 
-	m_staticText_creation_time = new Label(m_panel_model_name_content, wxT("N/A"));
+	m_staticText_creation_time = new Label(m_panel_model_name_content, _L("N/A"));
 	m_staticText_creation_time->Wrap(-1);
 	bSizer13->Add(m_staticText_creation_time, 0, wxALL, 5);
 

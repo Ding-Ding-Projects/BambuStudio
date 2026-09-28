@@ -1482,7 +1482,7 @@ InputIpAddressDialog::InputIpAddressDialog(wxWindow *parent)
     auto m_input_tip_area = new wxBoxSizer(wxHORIZONTAL);
     auto m_input_area     = new wxBoxSizer(wxHORIZONTAL);
 
-    m_tips_ip = new Label(ip_input_top_panel, "IP");
+    m_tips_ip = new Label(ip_input_top_panel, _L("IP"));
     m_tips_ip->SetMinSize(wxSize(FromDIP(168), -1));
     m_tips_ip->SetMaxSize(wxSize(FromDIP(168), -1));
 
@@ -1520,7 +1520,7 @@ InputIpAddressDialog::InputIpAddressDialog(wxWindow *parent)
     auto m_input_sn_area      = new wxBoxSizer(wxHORIZONTAL);
     auto m_input_modelID_area = new wxBoxSizer(wxHORIZONTAL);
 
-    m_tips_sn = new Label(ip_input_bot_panel, "SN");
+    m_tips_sn = new Label(ip_input_bot_panel, _L("SN"));
     m_tips_sn->SetMinSize(wxSize(FromDIP(168), -1));
     m_tips_sn->SetMaxSize(wxSize(FromDIP(168), -1));
 

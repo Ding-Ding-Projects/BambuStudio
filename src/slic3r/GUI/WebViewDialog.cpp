@@ -286,7 +286,7 @@ WebViewPanel::WebViewPanel(wxWindow *parent)
     m_leftfirst   = false;
     m_browserLeft = WebView::CreateWebView(this, UrlLeft, "LeftMenu");
     if (m_browserLeft == nullptr) {
-        wxLogError("Could not init m_browser");
+        wxLogError(_L("Could not init m_browser"));
         return;
     }
     m_browserLeft->SetSize(wxSize(FromDIP(224), -1));
@@ -296,14 +296,14 @@ WebViewPanel::WebViewPanel(wxWindow *parent)
     // Create the webview
     m_browser = WebView::CreateWebView(this, UrlRight, "Home");
     if (m_browser == nullptr) {
-        wxLogError("Could not init m_browser");
+        wxLogError(_L("Could not init m_browser"));
         return;
     }
 
     // Makerworld webview
     m_browserMW = WebView::CreateWebView(m_online_container, "about:blank", "Makerworld");
     if (m_browserMW == nullptr) {
-        wxLogError("Could not init  m_browserMW");
+        wxLogError(_L("Could not init  m_browserMW"));
         return;
     }
     m_browserMW->Hide();
@@ -313,7 +313,7 @@ WebViewPanel::WebViewPanel(wxWindow *parent)
     // MakerLab webview
     m_browserML = WebView::CreateWebView(m_online_container, "about:blank", "MakerLab");
     if (m_browserML == nullptr) {
-        wxLogError("Could not init  m_browserML");
+        wxLogError(_L("Could not init  m_browserML"));
         return;
     }
     m_browserML->Hide();
@@ -323,7 +323,7 @@ WebViewPanel::WebViewPanel(wxWindow *parent)
     // PrintHistory webview
     m_browserPH = WebView::CreateWebView(this, "about:blank", "PrintHistory");
     if (m_browserPH == nullptr) {
-        wxLogError("Could not init  m_browserPH");
+        wxLogError(_L("Could not init  m_browserPH"));
         return;
     }
     m_browserPH->Hide();
@@ -333,7 +333,7 @@ WebViewPanel::WebViewPanel(wxWindow *parent)
     // Wiki webview
     m_browserWiki = WebView::CreateWebView(this, UrlWiki, "Wiki");
     if (m_browserWiki == nullptr) {
-        wxLogError("Could not init  m_browserWiki");
+        wxLogError(_L("Could not init  m_browserWiki"));
         return;
     }
     m_browserWiki->Hide();
@@ -2228,7 +2228,7 @@ void WebViewPanel::OnAddUserScript(wxCommandEvent& WXUNUSED(evt))
         return;
 
     if (!m_browser->AddUserScript(dialog.GetValue()))
-        wxLogError("Could not add user script");
+        wxLogError(_L("Could not add user script"));
 }
 
 void WebViewPanel::OnSetCustomUserAgent(wxCommandEvent& WXUNUSED(evt))
@@ -2247,7 +2247,7 @@ void WebViewPanel::OnSetCustomUserAgent(wxCommandEvent& WXUNUSED(evt))
         return;
 
     if (!m_browser->SetUserAgent(customUserAgent))
-        wxLogError("Could not set custom user agent");
+        wxLogError(_L("Could not set custom user agent"));
 }
 
 void WebViewPanel::OnClearSelection(wxCommandEvent& WXUNUSED(evt))
