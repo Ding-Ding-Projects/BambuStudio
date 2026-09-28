@@ -189,8 +189,25 @@ def entry_map(entries: Iterable[Entry], path: Path, *, allow_duplicates: bool = 
     return result
 
 
+def placeholders(value: str) -> List[str]:
+    """Format placeholders in order of appearance.
+
+    A space-flag match glued to a following letter ("94% if", "100% done")
+    is ordinary prose, not a placeholder, and is skipped: counting it once
+    pushed a translation to replace real numbers with fake "% i" tokens.
+    """
+    found = []
+    for match in PLACEHOLDER_RE.finditer(value):
+        token = match.group(0)
+        end = match.end()
+        if token.startswith("% ") and end < len(value) and value[end].isascii() and value[end].isalpha():
+            continue
+        found.append(token)
+    return found
+
+
 def placeholder_signature(value: str) -> Counter:
-    return Counter(PLACEHOLDER_RE.findall(value))
+    return Counter(placeholders(value))
 
 
 _POSITIONAL = re.compile(r"^%\d+(\$|%)")
@@ -202,7 +219,7 @@ def sequential_placeholders(value: str) -> List[str]:
     wxString::Format and boost::format fill these in order, so a translation that
     moves one relative to another swaps the facts it prints.
     """
-    return [token for token in PLACEHOLDER_RE.findall(value) if token != "%%" and not _POSITIONAL.match(token)]
+    return [token for token in placeholders(value) if token != "%%" and not _POSITIONAL.match(token)]
 
 
 def mo_original(entry: Entry) -> str:
