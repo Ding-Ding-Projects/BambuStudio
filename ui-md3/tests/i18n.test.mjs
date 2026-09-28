@@ -160,6 +160,113 @@ test('maintains broad Cantonese coverage for visible static app copy', async () 
     `static Cantonese coverage dropped to ${translated.length}/${candidates.length}`);
 });
 
+test('covers every known-gap literal that index.html left untranslated', () => {
+  // Regression guard for a fixed batch of gaps: window controls with no
+  // catalog entry at all rendered in English even in yue_HK mode, because
+  // describe() only ever finds what the catalog actually holds.
+  const gaps = ['Minimize', 'Maximize', 'Close', 'Close version history', 'Close dialog'];
+  for (const source of gaps) {
+    assert.ok(i18n.describe(source, 'yue_HK').localized, `still missing a yue_HK entry for "${source}"`);
+  }
+  assert.ok(
+    i18n.describe('No objects match your search.', 'yue_HK').localized,
+    'the empty-objects-search message is still missing a yue_HK entry',
+  );
+});
+
+test('maintains Cantonese coverage for title, aria-label, placeholder and alt attributes', async () => {
+  const html = await readFile(path.join(rootDir, 'index.html'), 'utf8');
+  const decode = (value) => value
+    .replaceAll('&amp;', '&')
+    .replaceAll('&mdash;', '—')
+    .replaceAll('&nbsp;', ' ')
+    .replaceAll('&quot;', '"')
+    .replaceAll('&#39;', "'");
+  // Only literal values: a `{{ binding }}` is computed at render time (icon
+  // names, dynamic labels) and is not a source string this catalog covers.
+  const attributePattern = /\s(?:title|aria-label|placeholder|alt)="([^"{}]*)"/g;
+  const productOrTechnical = new Set(['Clear']);
+  const candidates = [...new Set(
+    [...html.matchAll(attributePattern)]
+      .map((match) => decode(match[1]).trim())
+      .filter(Boolean)
+      .filter((source) => !productOrTechnical.has(source))
+  )];
+  assert.ok(candidates.length > 0, 'the attribute scan itself found nothing; the regex or the fixture drifted');
+  const untranslated = candidates.filter((source) => !i18n.describe(source, 'yue_HK').localized);
+  assert.deepEqual(untranslated, [], 'these title/aria-label/placeholder/alt strings have no yue_HK catalog entry');
+});
+
+test('routes the free-text search summaries through BambuI18n.message, not raw string concatenation', async () => {
+  const settingsLogic = await readFile(path.join(rootDir, 'app', 'screens', 'settings.logic.js'), 'utf8');
+  const filamentLogic = await readFile(path.join(rootDir, 'app', 'screens', 'filament.logic.js'), 'utf8');
+  const mainLogic = await readFile(path.join(rootDir, 'app', 'main.logic.js'), 'utf8');
+
+  // These four screen-logic strings interpolate a user-typed query or a
+  // filament name, so they can only ever be built at runtime; the catalog
+  // cannot key on them directly. this.msg(...) is the one indirection this
+  // runtime offers for that case (see BambuI18n.message in app/i18n.js).
+  assert.match(settingsLogic, /this\.msg\('noSettingsMatchInvalidRegex'/);
+  assert.match(settingsLogic, /this\.msg\('noSettingsMatchRegex'/);
+  assert.match(settingsLogic, /this\.msg\('noSettingsMatch'/);
+  assert.doesNotMatch(settingsLogic, /'No settings match/,
+    'a raw English literal crept back into settings.logic.js instead of BambuI18n.message');
+
+  assert.match(filamentLogic, /this\.msg\(re \? 'filamentSearchedRegex' : 'filamentSearchedPlain'/);
+  assert.doesNotMatch(filamentLogic, /'Searched/,
+    'a raw English literal crept back into filament.logic.js instead of BambuI18n.message');
+
+  assert.match(mainLogic, /this\.msg\('exportedSingle'/);
+  assert.doesNotMatch(mainLogic, /'Exported \\u201C/,
+    'exportFilament reverted to a raw English-only literal instead of BambuI18n.message');
+
+  // The messages the two screens now call must actually resolve, in both
+  // directions, with the exact query round-tripped through {query}.
+  assert.equal(
+    i18n.message('noSettingsMatch', { query: 'Xyz' }, 'yue_HK'),
+    '搵唔到符合「Xyz」嘅設定。',
+  );
+  assert.equal(
+    i18n.message('filamentSearchedPlain', { query: 'PLA' }, 'en'),
+    'Searched “PLA” · plain text',
+  );
+  assert.equal(
+    i18n.message('exportedSingle', { name: 'Bambu PLA Basic', format: '.bbsflmt' }, 'yue_HK'),
+    '已匯出「Bambu PLA Basic」→ 墨水預設（.bbsflmt）',
+  );
+});
+
+test('gives the Pages tab strip a localized landmark label instead of a hardcoded one', async () => {
+  const landing = await readFile(path.join(rootDir, 'landing.html'), 'utf8');
+  const tabsSource = await readFile(path.join(rootDir, 'site', 'tabs.js'), 'utf8');
+  const copySource = await readFile(path.join(rootDir, 'site', 'copy.js'), 'utf8');
+
+  assert.doesNotMatch(landing, /aria-label="Site sections"/,
+    'the static nav reverted to a hardcoded aria-label the site runtime never touches');
+  assert.match(landing, /id="tabstrip" data-copy-attr="aria-label:shell\.sections"/);
+  assert.doesNotMatch(tabsSource, /setAttribute\('aria-label', 'Site sections'\)/,
+    'the JS-built tablist reverted to a hardcoded aria-label the language switch never touches');
+  assert.match(tabsSource, /data-copy-attr', 'aria-label:shell\.sections'/);
+  assert.match(copySource, /'shell\.sections':\s*\{\s*en:\s*\['Site sections'\]/);
+});
+
+test('gives the no-JS landing fallback its own hardcoded Cantonese, since the runtime cannot translate it', async () => {
+  const landing = await readFile(path.join(rootDir, 'landing.html'), 'utf8');
+  const noscriptMatch = landing.match(/<noscript>([\s\S]*?)<\/noscript>/);
+  assert.ok(noscriptMatch, 'landing.html has no <noscript> fallback to check');
+  const noscript = noscriptMatch[1];
+  // A real Cantonese/Chinese character somewhere near each English sentence,
+  // not just an EN string repeated: this is static markup, not a call
+  // through i18n.describe(), so the only thing worth asserting is that a
+  // reader with JavaScript off still sees Hong Kong Cantonese at all.
+  assert.match(noscript, /概念版/);
+  assert.match(noscript, /JavaScript.*停用/s);
+  assert.match(noscript, /一部枱面 3D 打印機/);
+  assert.match(noscript, /最新版本同 Windows 安裝程式/);
+  assert.match(noscript, /呢個網站同原型嘅原始碼/);
+  assert.match(noscript, /所有已發佈版本/);
+});
+
 test('keeps every modular screen template synchronized with index.html', async () => {
   const index = (await readFile(path.join(rootDir, 'index.html'), 'utf8')).replace(/\r\n/g, '\n');
   const ids = ['home', 'prepare', 'preview', 'device', 'multi', 'project', 'calibration', 'filament', 'settings'];

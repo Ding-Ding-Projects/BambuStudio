@@ -200,5 +200,7 @@
   "Load": "入料",
   "Unload": "退料",
   "External Spool": "外置線軸",
-  "Quantity": "數量"
+  "Quantity": "數量",
+  "Opening...": "開緊…",
+  "Debug": "除錯"
 }

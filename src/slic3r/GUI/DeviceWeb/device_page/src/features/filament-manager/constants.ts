@@ -1,3 +1,5 @@
+import { toInlineBilingual } from '../../i18nResources';
+
 // Bambu preset color palette
 export const BAMBU_COLORS = [
   '#000000','#333333','#555555','#808080','#BBBBBB','#FFFFFF',
@@ -89,12 +91,16 @@ export function formatSlotLocation(
   const amsTypeName = (amsType != null && amsType >= 0 && slotId !== '255')
     ? (AMS_TYPE_NAMES[amsType] ?? `AMS(${amsType})`)
     : null;
+  // This label lands inline in a single "device · AMS type · slot" breadcrumb
+  // (DetailDialog, SpoolTable), so it cannot host BilingualText's stacked
+  // secondary line; toInlineBilingual keeps both languages on the one line
+  // the breadcrumb needs instead of dropping the Cantonese half on the floor.
   const slotLabel = trayLabel
     ? trayLabel
     : slotId === '255'
-      ? t('External Spool')
+      ? toInlineBilingual(t('External Spool'))
       : (slotId != null && slotId !== ''
-        ? t('Slot {{n}}', { n: Number(slotId) + 1 })
+        ? toInlineBilingual(t('Slot {{n}}', { n: Number(slotId) + 1 }))
         : null);
   return [deviceName, amsTypeName, slotLabel].filter(Boolean).join(' · ');
 }

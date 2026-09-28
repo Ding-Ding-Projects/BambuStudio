@@ -20,7 +20,7 @@ registerScreen({
       isFilament: this.state.view === 'filament',
       filRows: rows,
       filEmpty: q !== '' && rows.length === 0,
-      filEmptyNote: 'Searched “' + q + '” · ' + (re ? 'regular expression' : 'plain text'),
+      filEmptyNote: this.msg(re ? 'filamentSearchedRegex' : 'filamentSearchedPlain', {query:q}),
       setFilQuery:(v,mode)=>this.setState({filamentSearch:{ q:v, ...this.searchMode(mode) }})
     };
   }

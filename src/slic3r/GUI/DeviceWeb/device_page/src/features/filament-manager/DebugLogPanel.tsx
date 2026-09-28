@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { DebugLogEntry, DebugLogFilter } from './types';
+import { BilingualText } from './BilingualText';
 
 const FILTERS: Array<{ id: DebugLogFilter; label: string }> = [
   { id: 'all', label: 'All' },
@@ -126,7 +127,7 @@ export function DebugLogPanel({
     <div className="shrink-0 rounded-xl border border-fm-border bg-fm-sidebar overflow-hidden">
       <div className="flex items-center justify-between gap-4 px-4 py-3 border-b border-fm-border">
         <div className="flex items-center gap-3">
-          <div className="text-sm font-medium text-fm-text-primary">{t('Debug Log')}</div>
+          <div className="text-sm font-medium text-fm-text-primary"><BilingualText>{t('Debug Log')}</BilingualText></div>
           <div className="flex gap-2">
             {FILTERS.map((item) => (
               <button
@@ -138,7 +139,7 @@ export function DebugLogPanel({
                 }`}
                 onClick={() => onFilterChange(item.id)}
               >
-                {t(item.label)}
+                <BilingualText>{t(item.label)}</BilingualText>
               </button>
             ))}
           </div>
@@ -149,13 +150,13 @@ export function DebugLogPanel({
             className="h-7 px-3 rounded-md border border-fm-border bg-fm-inner2 cursor-pointer text-xs text-fm-text-secondary hover:bg-fm-hover"
             onClick={handleCopyAll}
           >
-            {t('Copy All')}
+            <BilingualText>{t('Copy All')}</BilingualText>
           </button>
           <button
             className="h-7 px-3 rounded-md border border-fm-border bg-fm-inner2 cursor-pointer text-xs text-fm-text-secondary hover:bg-fm-hover"
             onClick={onClear}
           >
-            {t('Clear')}
+            <BilingualText>{t('Clear')}</BilingualText>
           </button>
         </div>
       </div>

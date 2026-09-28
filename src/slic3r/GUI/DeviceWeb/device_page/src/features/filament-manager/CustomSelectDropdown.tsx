@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { BilingualText } from './BilingualText';
 
 interface CustomInputProps {
   placeholder?: string;
@@ -158,7 +159,7 @@ export function CustomSelectDropdown({
             ))}
             {options.length === 0 && !showFallback && (
               <div className="px-[10px] py-[6px] text-[12px] text-fm-text-detail">
-                {t('No options')}
+                <BilingualText>{t('No options')}</BilingualText>
               </div>
             )}
           </div>
@@ -183,7 +184,7 @@ export function CustomSelectDropdown({
                 disabled={addDisabled}
                 onMouseDown={(e) => { e.preventDefault(); handleAdd(); }}
               >
-                + {t('Add Option')}
+                + <BilingualText>{t('Add Option')}</BilingualText>
               </button>
             </div>
           )}
@@ -196,7 +197,7 @@ export function CustomSelectDropdown({
                 className="text-[12px] leading-[19px] text-fm-brand underline cursor-pointer bg-transparent border-none p-0 hover:text-fm-brand-hover"
                 onMouseDown={(e) => { e.preventDefault(); handleFooterAction(); }}
               >
-                {footerAction.label}
+                <BilingualText>{footerAction.label}</BilingualText>
               </button>
             </div>
           )}

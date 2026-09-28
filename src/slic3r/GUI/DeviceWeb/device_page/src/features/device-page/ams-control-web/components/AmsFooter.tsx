@@ -5,6 +5,7 @@ import { nozzleIconLefts } from '../geometry';
 import type { AmsControlActions, ExtruderArea } from '../types';
 import { amsSettingHoverUrl, amsSettingNormalUrl, amsSettingPressUrl } from '../assets';
 import { ExtruderIcon } from './ExtruderIcon';
+import { BilingualText } from '../../../filament-manager/BilingualText';
 
 const buttonStyle = {
   width: px(FOOTER_BUTTON.width),
@@ -53,7 +54,7 @@ export function AmsFooter({
             style={buttonStyle}
             onClick={onAutoRefill}
           >
-            {t('Auto-refill')}
+            <BilingualText>{t('Auto-refill')}</BilingualText>
           </button>
         ) : null}
         <button
@@ -76,7 +77,7 @@ export function AmsFooter({
             className="h-6 shrink-0 rounded-full border border-[#C2C2C2] px-2.5 text-xs hover:bg-[#F5F5F5] disabled:opacity-60"
             onClick={onDebug}
           >
-            {debugOpening ? 'Opening...' : 'Debug'}
+            <BilingualText>{debugOpening ? t('Opening...') : t('Debug')}</BilingualText>
           </button>
         ) : null}
       </div>
@@ -105,7 +106,7 @@ export function AmsFooter({
           style={buttonStyle}
           onClick={onUnload}
         >
-          {t('Unload')}
+          <BilingualText>{t('Unload')}</BilingualText>
         </button>
         <button
           type="button"
@@ -116,7 +117,7 @@ export function AmsFooter({
           style={buttonStyle}
           onClick={onLoad}
         >
-          {t('Load')}
+          <BilingualText>{t('Load')}</BilingualText>
         </button>
       </div>
     </div>

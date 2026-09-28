@@ -22,10 +22,10 @@ registerScreen({
     const q=this.state.settingsQuery||'';
     if(this.state.settingsRegex){
       try{ new RegExp(q, (typeof this.state.settingsFlags==='string'?this.state.settingsFlags:'i')); }
-      catch(e){ return 'No settings match “'+q+'” — that pattern is not valid, so it was searched as plain text.'; }
-      return 'No settings match regular expression “'+q+'”.';
+      catch(e){ return this.msg('noSettingsMatchInvalidRegex', {query:q}); }
+      return this.msg('noSettingsMatchRegex', {query:q});
     }
-    return 'No settings match “'+q+'”.';
+    return this.msg('noSettingsMatch', {query:q});
   },
   render_prefs(){
     const p=this.state.prefs;

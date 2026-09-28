@@ -32,6 +32,7 @@ import {
 import { ConfirmDialog } from './ConfirmDialog';
 import { AccessibleDialog } from './AccessibleDialog';
 import { BilingualText } from './BilingualText';
+import { toInlineBilingual } from '../../i18nResources';
 
 // STUDIO-17959: cap both 当前净重 / 总净重 inputs in the Add/Edit dialog.
 // Bug repro: users could type arbitrarily large numbers (e.g. 99999999999)
@@ -2065,16 +2066,16 @@ export function AddEditDialog({
               {/* Same accent bar as .fm-section-bar::before — track --color-fm-brand
                   so the rule follows MD3 primary in both themes instead of a fixed lime. */}
               <div className="w-[2px] h-[16px] rounded-[10px] bg-fm-brand" />
-              <span className="text-[14px] leading-[22px] text-fm-text-primary">{t('Select Device')}</span>
+              <span className="text-[14px] leading-[22px] text-fm-text-primary"><BilingualText>{t('Select Device')}</BilingualText></span>
             </div>
 
             {amsLoading && (
-              <div className="text-center text-fm-text-detail text-xs py-4">{t('Fetching device info...')}</div>
+              <div className="text-center text-fm-text-detail text-xs py-4"><BilingualText>{t('Fetching device info...')}</BilingualText></div>
             )}
 
             {!amsLoading && (
               <div className="flex flex-col gap-[10px] rounded-[8px] border border-fm-border-focus bg-fm-inner p-3">
-                <label className="text-[11px] leading-[16px] text-fm-text-secondary">{t('Printer')}</label>
+                <label className="text-[11px] leading-[16px] text-fm-text-secondary"><BilingualText>{t('Printer')}</BilingualText></label>
                 <div className="flex items-center gap-[8px]">
                   <select
                     className="flex-1 min-h-[36px] rounded-[6px] bg-fm-inner2 px-[8px] text-fm-text-strong text-xs outline-none focus:shadow-[0_0_0_1px_var(--color-fm-brand)] fm-select-arrow cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
@@ -2083,7 +2084,7 @@ export function AddEditDialog({
                     onChange={(e) => { if (e.target.value) void handleDeviceChange(e.target.value); }}
                   >
                     {machines.length === 0 ? (
-                      <option value="">{t('No printers — sign in and bind a device')}</option>
+                      <option value="">{toInlineBilingual(t('No printers — sign in and bind a device'))}</option>
                     ) : (
                       machines.map((m) => (
                         // Label follows SelectMachineDialog's "<dev_name>(LAN)"
@@ -2111,13 +2112,13 @@ export function AddEditDialog({
                   </button>
                 </div>
                 {machines.length === 0 && (
-                  <p className="text-[11px] leading-[16px] text-fm-text-detail m-0">{t('No printer found, please ensure logged in and device bound')}</p>
+                  <p className="text-[11px] leading-[16px] text-fm-text-detail m-0"><BilingualText>{t('No printer found, please ensure logged in and device bound')}</BilingualText></p>
                 )}
               </div>
             )}
 
             {!!amsError && !amsLoading && (
-              <div className="text-xs text-fm-warning leading-[19px] px-1">{amsError}</div>
+              <div className="text-xs text-fm-warning leading-[19px] px-1"><BilingualText>{amsError}</BilingualText></div>
             )}
 
             {!amsLoading && machines.length > 0 && (
@@ -2154,9 +2155,9 @@ export function AddEditDialog({
                       data-count={slotSelectionCount}
                       className="text-[11px] leading-[16px] text-fm-text-detail"
                     >
-                      {slotSelectionCount > 0
+                      <BilingualText>{slotSelectionCount > 0
                         ? t('Selected {{count}} slots', { count: slotSelectionCount })
-                        : t('Tap slots to select; pick multiple to batch-add')}
+                        : t('Tap slots to select; pick multiple to batch-add')}</BilingualText>
                     </span>
                     <div className="flex items-center gap-[12px]">
                       <button
@@ -2166,7 +2167,7 @@ export function AddEditDialog({
                         disabled={!currentUnit.trays.some((tr) => tr.is_exists)}
                         onClick={() => selectAllDetected(currentUnit)}
                       >
-                        {t('Select all detected')}
+                        <BilingualText>{t('Select all detected')}</BilingualText>
                       </button>
                       <button
                         type="button"
@@ -2175,7 +2176,7 @@ export function AddEditDialog({
                         disabled={slotSelectionCount === 0}
                         onClick={clearSlotSelection}
                       >
-                        {t('Clear Selection')}
+                        <BilingualText>{t('Clear Selection')}</BilingualText>
                       </button>
                     </div>
                   </div>
@@ -2193,7 +2194,7 @@ export function AddEditDialog({
                                 <SpoolColorChip colorCode="#555" size={32} />
                               </div>
                               <div className="flex-1 flex flex-col gap-[4px] min-w-0">
-                                <span className="text-[12px] leading-[19px] text-fm-text-primary truncate">{t('Empty')}</span>
+                                <span className="text-[12px] leading-[19px] text-fm-text-primary truncate"><BilingualText>{t('Empty')}</BilingualText></span>
                               </div>
                             </div>
                           </div>
@@ -2273,11 +2274,11 @@ export function AddEditDialog({
                     className="flex flex-col gap-[8px] rounded-[8px] border border-fm-border-focus bg-fm-inner p-3"
                   >
                     <div className="text-[12px] leading-[19px] text-fm-text-primary">
-                      {t('{{count}} slots will be batch-added using AMS data', { count: slotSelectionCount })}
+                      <BilingualText>{t('{{count}} slots will be batch-added using AMS data', { count: slotSelectionCount })}</BilingualText>
                     </div>
                     {batchUpdateCount > 0 && (
                       <div className="text-[11px] leading-[16px] text-fm-text-detail">
-                        {t('Some slots already exist; they will be updated')}
+                        <BilingualText>{t('Some slots already exist; they will be updated')}</BilingualText>
                       </div>
                     )}
                     <div className="flex flex-wrap gap-[6px]">
@@ -2326,7 +2327,7 @@ export function AddEditDialog({
             <div className="flex flex-col gap-[16px]">
               <div className="flex items-center gap-[6px]">
                 <div className="w-[2px] h-[16px] rounded-[10px] bg-fm-brand" />
-                <span className="text-[14px] leading-[22px] text-fm-text-strong">{t('Filament Info')}</span>
+                <span className="text-[14px] leading-[22px] text-fm-text-strong"><BilingualText>{t('Filament Info')}</BilingualText></span>
               </div>
 
               {/* Brand / Material Type — 2 columns.
@@ -2335,7 +2336,7 @@ export function AddEditDialog({
                   combined string back into material_type + series internally. */}
               <div className="flex gap-[12px]">
                 <div className="flex flex-col gap-[4px] flex-1 pb-[24px]">
-                  <label className="text-[12px] leading-[19px] text-fm-text-secondary"><span className="text-[#ff2b00]">*</span> {t('Brand')}</label>
+                  <label className="text-[12px] leading-[19px] text-fm-text-secondary"><span className="text-[#ff2b00]">*</span> <BilingualText>{t('Brand')}</BilingualText></label>
                   <CustomSelectDropdown
                     data-testid="filament-brand"
                     value={brand}
@@ -2354,7 +2355,7 @@ export function AddEditDialog({
                   />
                 </div>
                 <div className="flex flex-col gap-[4px] flex-1 pb-[24px]">
-                  <label className="text-[12px] leading-[19px] text-fm-text-secondary"><span className="text-[#ff2b00]">*</span> {t('Material Type')}</label>
+                  <label className="text-[12px] leading-[19px] text-fm-text-secondary"><span className="text-[#ff2b00]">*</span> <BilingualText>{t('Material Type')}</BilingualText></label>
                   <CustomSelectDropdown
                     data-testid="filament-material"
                     value={typeSeriesFull}
@@ -2375,7 +2376,7 @@ export function AddEditDialog({
               {/* Color palette. F4.4 feedback: 自定义颜色需要"可保存 / 能看到已选"。
                   "+" 始终保留为取色入口；新取的自定义色追加到预设色之后。 */}
               <div className="flex flex-col gap-[8px]">
-                <label className="text-[12px] leading-[19px] text-fm-text-secondary"><span className="text-[#ff2b00]">*</span> {t('Color')}</label>
+                <label className="text-[12px] leading-[19px] text-fm-text-secondary"><span className="text-[#ff2b00]">*</span> <BilingualText>{t('Color')}</BilingualText></label>
                 <div data-testid="color-candidate-panel" className={`flex flex-wrap gap-[6px] items-center ${lockColor ? 'pointer-events-none opacity-60' : ''}`}>
                   {/* STUDIO-18114: Custom-color picker — click "+" to open a
                       draft popover; the form's color is only updated after
@@ -2431,7 +2432,7 @@ export function AddEditDialog({
                           </label>
                           <div className="flex flex-col gap-[4px] min-w-0 flex-1">
                             <span className="text-[10px] leading-[12px] text-fm-text-detail uppercase tracking-wider">
-                              {t('Custom Color')}
+                              <BilingualText>{t('Custom Color')}</BilingualText>
                             </span>
                             <span className="text-[13px] leading-[18px] text-fm-text-strong font-mono tracking-wider">
                               {(draftColor || '#000000').toUpperCase()}
@@ -2443,12 +2444,12 @@ export function AddEditDialog({
                             type="button"
                             className="h-[28px] px-[14px] rounded-[6px] cursor-pointer text-[12px] leading-[19px] bg-fm-input text-fm-text-primary border-none hover:bg-fm-hover"
                             onClick={cancelCustomColor}
-                          >{t('Cancel')}</button>
+                          ><BilingualText>{t('Cancel')}</BilingualText></button>
                           <button
                             type="button"
                             className="h-[28px] px-[14px] rounded-[6px] border-none cursor-pointer text-[12px] leading-[19px] font-medium bg-fm-brand text-white hover:bg-fm-brand-hover"
                             onClick={confirmCustomColor}
-                          >{t('OK')}</button>
+                          ><BilingualText>{t('OK')}</BilingualText></button>
                         </div>
                       </div>
                     )}
@@ -2470,7 +2471,7 @@ export function AddEditDialog({
                       anything (e.g. material_type also unset). */}
                   {effectiveCandidates.length === 0 && customColors.length === 0 && (
                     <div className="text-[11px] leading-[16px] text-fm-text-detail">
-                      {t('No predefined colors for this filament')}
+                      <BilingualText>{t('No predefined colors for this filament')}</BilingualText>
                     </div>
                   )}
                   {effectiveCandidates.map((c) => {
@@ -2593,11 +2594,11 @@ export function AddEditDialog({
                   cloud never round-trips spool_weight, so it only ever
                   confused the Remain column. */}
               <div className="flex flex-col gap-[4px]">
-                <label className="text-[12px] leading-[19px] text-fm-text-secondary"><span className="text-[#ff2b00]">*</span> {t('Weight')}</label>
+                <label className="text-[12px] leading-[19px] text-fm-text-secondary"><span className="text-[#ff2b00]">*</span> <BilingualText>{t('Weight')}</BilingualText></label>
                 <div className="bg-fm-inner rounded-[6px] p-[8px]">
                   <div className="flex gap-[8px] items-center">
                     <div className="flex flex-col gap-[4px] flex-1">
-                      <span className="text-[11px] leading-[16px] text-fm-text-secondary">{t('Current Net Weight')}</span>
+                      <span className="text-[11px] leading-[16px] text-fm-text-secondary"><BilingualText>{t('Current Net Weight')}</BilingualText></span>
                       {/* type=number inputs bound to a number state in
                           React keep showing "0" after the user deletes
                           the last digit (Number("") -> 0), so the next
@@ -2621,7 +2622,7 @@ export function AddEditDialog({
                       </div>
                     </div>
                     <div className="flex flex-col gap-[4px] flex-1">
-                      <span className="text-[11px] leading-[16px] text-fm-text-secondary">{t('Total Net Weight')}</span>
+                      <span className="text-[11px] leading-[16px] text-fm-text-secondary"><BilingualText>{t('Total Net Weight')}</BilingualText></span>
                       {/* Total Net Weight is locked on edit: it is the
                           spool's factory full-weight and must not drift
                           after a row exists — only Current Net Weight
@@ -2635,7 +2636,7 @@ export function AddEditDialog({
                   </div>
                   {weightError && (
                     <div className="mt-[6px] text-[11px] leading-[16px] text-fm-warning">
-                      {weightError}
+                      <BilingualText>{weightError}</BilingualText>
                     </div>
                   )}
                 </div>
@@ -2643,7 +2644,7 @@ export function AddEditDialog({
             </div>
 
             <div className="flex flex-col gap-[4px]">
-              <label className="text-[12px] leading-[19px] text-fm-text-secondary">{t('Note')}</label>
+              <label className="text-[12px] leading-[19px] text-fm-text-secondary"><BilingualText>{t('Note')}</BilingualText></label>
               <div className="relative">
                 <textarea
                   className="bg-fm-inner2 border-none rounded-[6px] h-[110px] px-[12px] pt-[8px] pb-[4px] text-fm-text-strong text-[12px] leading-[19px] outline-none w-full focus:shadow-[0_0_0_1px_var(--color-fm-brand)] resize-none"
@@ -2696,7 +2697,7 @@ export function AddEditDialog({
                   onChange={(e) => setQuantity(clampQuantity(sanitizeWeightInput(e.target)))}
                   aria-label={t('Quantity')}
                 />
-                <span className="text-[11px] leading-[16px] text-fm-text-detail">{t('roll')}</span>
+                <span className="text-[11px] leading-[16px] text-fm-text-detail"><BilingualText>{t('roll')}</BilingualText></span>
               </div>
               <div className="flex flex-col shrink-0 w-[18px] h-[24px]">
                 <button className="flex-1 rounded-t-[6px] bg-fm-inner2 border-none cursor-pointer flex items-center justify-center text-fm-text-primary hover:bg-fm-hover" onClick={() => setQuantity(Math.min(99, quantity + 1))}>
@@ -2725,18 +2726,22 @@ export function AddEditDialog({
                 disabled={!isValid}
                 onClick={handleSubmit}
               >
-                {isEdit
+                <BilingualText>{isEdit
                   ? t('Save')
-                  : (isAmsBatch ? t('Batch Add ({{count}})', { count: slotSelectionCount }) : t('Add'))}
+                  : (isAmsBatch ? t('Batch Add ({{count}})', { count: slotSelectionCount }) : t('Add'))}</BilingualText>
               </button>
               {!isValid && (
                 <span
                   id="dialog-confirm-tooltip"
                   role="tooltip"
                   data-testid="dialog-confirm-tooltip"
-                  className="absolute right-0 bottom-[calc(100%+6px)] z-[60] w-max max-w-[280px] rounded-[6px] bg-fm-base border border-fm-border px-[8px] py-[6px] text-[12px] leading-[18px] text-fm-text-strong whitespace-pre-line shadow-lg opacity-0 pointer-events-none transition-opacity duration-100 group-hover:opacity-100"
+                  className="absolute right-0 bottom-[calc(100%+6px)] z-[60] w-max max-w-[280px] rounded-[6px] bg-fm-base border border-fm-border px-[8px] py-[6px] text-[12px] leading-[18px] text-fm-text-strong shadow-lg opacity-0 pointer-events-none transition-opacity duration-100 group-hover:opacity-100"
                 >
-                  {confirmInvalidReasons.map((reason) => `• ${reason}`).join('\n')}
+                  {confirmInvalidReasons.map((reason, index) => (
+                    <span key={index} className="block">
+                      {'• '}<BilingualText>{reason}</BilingualText>
+                    </span>
+                  ))}
                 </span>
               )}
             </span>

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { CloudToast } from './types';
+import { BilingualText } from './BilingualText';
 
 interface Props {
   toasts: CloudToast[];
@@ -73,7 +74,7 @@ export function ToastStack({ toasts, onDismiss, autoDismissMs = 5000 }: Props) {
               aria-hidden="true"
               className={`mt-[4px] inline-block size-[8px] rounded-full shrink-0 ${dotClass}`}
             />
-            <span className="flex-1 break-words">{toast.text}</span>
+            <span className="flex-1 break-words"><BilingualText>{toast.text}</BilingualText></span>
             <button
               className="fm-toast-dismiss shrink-0 size-9 inline-flex items-center justify-center rounded-full bg-transparent border-none text-fm-text-detail cursor-pointer hover:text-fm-text-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fm-brand"
               onClick={() => onDismiss(toast.id)}

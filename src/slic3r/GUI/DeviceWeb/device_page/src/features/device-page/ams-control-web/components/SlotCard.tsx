@@ -1,5 +1,6 @@
 import { useLayoutEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { BilingualText } from '../../../filament-manager/BilingualText';
 import { COLORS, SLOT_LIB, SLOT_LIB_LITE, SLOT_REMAIN_LINE, TRAY_ICON, px } from '../dip';
 import { LITE_COLOR_INSET, LITE_EXT_COLOR_INSET } from '../geometry';
 import type { SlotView } from '../types';
@@ -410,7 +411,7 @@ export function SlotCard({
           className="pointer-events-none absolute inset-0 z-[1] flex items-center justify-center text-[13px] leading-[17px]"
           style={{ color: contrast.textColor }}
         >
-          {t('Empty')}
+          <BilingualText>{t('Empty')}</BilingualText>
         </span>
       ) : nameLines ? (
         <>

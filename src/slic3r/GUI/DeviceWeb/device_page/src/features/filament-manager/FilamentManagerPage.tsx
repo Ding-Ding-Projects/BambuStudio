@@ -427,7 +427,7 @@ export function FilamentManagerPage() {
 
               <div className="fm-toolbar-actions flex min-w-0 flex-1 flex-wrap items-center justify-end gap-2">
                 <label className={`fm-search flex min-w-[8rem] flex-1 items-center gap-1 bg-fm-inner2 rounded-md px-2 min-h-9 max-w-[200px] ${!isLoggedIn ? 'opacity-40' : ''}`}>
-                  <span className="sr-only">{t('Search Filament')}</span>
+                  <span className="sr-only"><BilingualText>{t('Search Filament')}</BilingualText></span>
                   <svg className="text-fm-text-detail shrink-0" width="14" height="14" viewBox="0 0 14 14" fill="none">
                     <circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="1.2" />
                     <path d="M9.5 9.5L13 13" stroke="currentColor" strokeWidth="1.2" />
@@ -540,7 +540,7 @@ export function FilamentManagerPage() {
                       <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.2" fill="none" />
                       <path d="M8 4v5M8 11v.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
                     </svg>
-                    <span>{t('Selected {{count}} items', { count: selected.size })}</span>
+                    <BilingualText>{t('Selected {{count}} items', { count: selected.size })}</BilingualText>
                   </div>
                   <div className="flex items-center gap-2">
                     {/* text-fm-base as the on-error stand-in, same reasoning as
@@ -556,13 +556,13 @@ export function FilamentManagerPage() {
                         <path d="M3 5h10" stroke="currentColor" strokeWidth="1.1" />
                         <path d="M6.5 7v4M9.5 7v4" stroke="currentColor" strokeWidth="1" />
                       </svg>
-                      {t('Batch Delete')}
+                      <BilingualText>{t('Batch Delete')}</BilingualText>
                     </button>
                     <button
                       className="h-[28px] px-3 rounded-md border border-fm-border-focus/50 bg-transparent text-fm-text-primary text-xs cursor-pointer hover:bg-fm-hover"
                       onClick={() => setSelected(new Set())}
                     >
-                      {t('Clear Selection')}
+                      <BilingualText>{t('Clear Selection')}</BilingualText>
                     </button>
                   </div>
                 </div>
@@ -570,11 +570,11 @@ export function FilamentManagerPage() {
 
               {/* Table */}
               {isLoading ? (
-                <div className="flex flex-col items-center justify-center py-20 text-fm-text-detail gap-4"><p>{t('Loading...')}</p></div>
+                <div className="flex flex-col items-center justify-center py-20 text-fm-text-detail gap-4"><p><BilingualText>{t('Loading...')}</BilingualText></p></div>
               ) : !isLoggedIn ? (
                 <div data-testid="auth-signed-out" className="flex flex-col items-center justify-center py-20 text-center gap-3 rounded-lg border border-fm-border bg-fm-inner">
-                  <p className="m-0 text-[15px] leading-[22px] text-fm-text-strong">{t('Not signed in — no data available')}</p>
-                  <p className="m-0 text-xs leading-[19px] text-fm-text-detail">{t('Please sign in to view your filament library.')}</p>
+                  <p className="m-0 text-[15px] leading-[22px] text-fm-text-strong"><BilingualText>{t('Not signed in — no data available')}</BilingualText></p>
+                  <p className="m-0 text-xs leading-[19px] text-fm-text-detail"><BilingualText>{t('Please sign in to view your filament library.')}</BilingualText></p>
                 </div>
               ) : (
                 <SpoolTable

@@ -15,8 +15,19 @@ export default {
   // are treated as flat keys, not nested paths
   keySeparator: false,
   namespaceSeparator: false,
-  // Use the key itself as default value (key = English original text)
-  useKeysAsDefaultValue: true,
+  // `useKeysAsDefaultValue` is not an i18next-parser@9 option (checked against
+  // the installed package: it appears nowhere in its lexers, parser or
+  // transform). It was inert here and never seeded anything; `defaultValue`
+  // below is the option that actually controls what a freshly extracted key
+  // gets written as, per locale.
+  //
+  // English (and every other already-translated locale) still gets the key
+  // itself, since the key text IS the English source string. yue_HK gets an
+  // empty string instead: a brand new msgid must be translated by a person
+  // or an agent before it ships, and an empty value fails
+  // tests/i18nResources.test.ts loudly (an untranslated-but-not-empty copy of
+  // the English text would have passed that test silently, which defeats it).
+  defaultValue: (locale, _namespace, key) => (locale === 'yue_HK' ? '' : key),
   // Keep existing translations, only add new keys
   createOldCatalogs: false,
   sort: true,

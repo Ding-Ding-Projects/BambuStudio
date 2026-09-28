@@ -468,7 +468,20 @@
     'Plate 1 · snapshot': '列印板 1 · 快照',
     'by you · 3 objects': '由你製作 · 3 個物件',
     '1 object · 15,842 faces': '1 個物件 · 15,842 個面',
-    '0.4 nozzle · Connected': '0.4 噴嘴 · 已連線'
+    '0.4 nozzle · Connected': '0.4 噴嘴 · 已連線',
+
+    // Title bar window controls and dialog close buttons. These were plain
+    // literal text/aria-label with no catalog entry at all, so every mode
+    // including yue_HK rendered them in English.
+    'Minimize': '最小化',
+    'Maximize': '最大化',
+    'Close': '關閉',
+    'Close version history': '關閉版本記錄',
+    'Close dialog': '關閉對話框',
+    'No objects match your search.': {
+      text: '冇物件符合你嘅搜尋條件。',
+      display: 'inline', tone: 'literal'
+    }
   };
 
   // Patterns cover visible text whose numbers/names are interpolated by the
@@ -506,7 +519,22 @@
     exportedPresets: { en: 'Exported {count} ink preset{suffix} → {format}', yue: '已匯出 {count} 個墨水預設 → {format}' },
     restoredProject: { en: 'Restored project to #{hash}', yue: '項目已還原到 #{hash}' },
     printSent: { en: 'Sent to {printer} · print starting', yue: '已傳送到 {printer} · 即將開始列印' },
-    openingLibrary: { en: 'Opening online model library…', yue: '正在打開網上模型庫…' }
+    openingLibrary: { en: 'Opening online model library…', yue: '正在打開網上模型庫…' },
+
+    // Settings screen search: the query is user-typed, so these can only be
+    // assembled at runtime, not looked up as one fixed catalog string.
+    noSettingsMatch: { en: 'No settings match “{query}”.', yue: '搵唔到符合「{query}」嘅設定。' },
+    noSettingsMatchRegex: { en: 'No settings match regular expression “{query}”.', yue: '搵唔到符合正則表達式「{query}」嘅設定。' },
+    noSettingsMatchInvalidRegex: {
+      en: 'No settings match “{query}”: that pattern is not valid, so it was searched as plain text.',
+      yue: '搵唔到「{query}」：呢個樣式無效，所以改用純文字搜尋。'
+    },
+    // Ink Manager search summary line, same reason: the query is free text.
+    filamentSearchedPlain: { en: 'Searched “{query}” · plain text', yue: '已搜尋「{query}」· 純文字' },
+    filamentSearchedRegex: { en: 'Searched “{query}” · regular expression', yue: '已搜尋「{query}」· 正則表達式' },
+    // Single-ink export toast (main.logic.js exportFilament). exportedPresets
+    // above already covers the bulk/"N presets" toast.
+    exportedSingle: { en: 'Exported “{name}” → ink preset ({format})', yue: '已匯出「{name}」→ 墨水預設（{format}）' }
   };
 
   global.BAMBU_I18N_RESOURCES = Object.freeze({

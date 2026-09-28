@@ -9,6 +9,8 @@ import {
   hexLabelFor,
   resolveCandidateForSpool,
 } from './colors';
+import { BilingualText } from './BilingualText';
+import { toInlineBilingual } from '../../i18nResources';
 
 
 function getDisplayedRemainWeight(s: Spool) {
@@ -266,7 +268,7 @@ export function SpoolTable({
           <span className="absolute left-1/2 top-1/2 h-[2px] w-4 -translate-x-1/2 -translate-y-1/2 rounded-sm bg-current opacity-55" />
           <span className="absolute left-1/2 top-1/2 h-4 w-[2px] -translate-x-1/2 -translate-y-1/2 rounded-sm bg-current opacity-55" />
         </button>
-        <p>{t('No Data')}</p>
+        <p><BilingualText>{t('No Data')}</BilingualText></p>
       </div>
     );
   }
@@ -295,7 +297,7 @@ export function SpoolTable({
               </th>
               <ThSort label={t('Filament')} sortKey="brand" current={sort.key} asc={sort.asc} onClick={handleSort} />
               <ThSort label={t('Remain')} sortKey="remain_percent" current={sort.key} asc={sort.asc} onClick={handleSort} />
-              <th className={tableHeaderCellClass}>{t('Operation')}</th>
+              <th className={tableHeaderCellClass}><BilingualText>{t('Operation')}</BilingualText></th>
             </tr>
           </thead>
           <tbody>
@@ -555,7 +557,7 @@ export function SpoolTable({
           onClick={() => setPage((p) => Math.min(pages, Math.min(p, pages) + 1))}
         >›</button>
         <label className="ml-3">
-          <span className="sr-only">{t('Items per page')}</span>
+          <span className="sr-only"><BilingualText>{t('Items per page')}</BilingualText></span>
           <select
             aria-label={t('Items per page')}
             className="min-h-9 bg-fm-inner2 border-none rounded-md text-fm-text-primary text-xs px-2 py-[2px] cursor-pointer outline-none"
@@ -563,7 +565,7 @@ export function SpoolTable({
             onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
           >
             {PAGE_SIZES.map((s) => (
-              <option key={s} value={s}>{s}{t('per page')}</option>
+              <option key={s} value={s}>{s}{toInlineBilingual(t('per page'))}</option>
             ))}
           </select>
         </label>
@@ -593,7 +595,7 @@ function ThSort({ label, sortKey, current, asc, onClick }: {
         className="fm-sort-button -mx-2 min-h-9 px-2 inline-flex items-center rounded-md cursor-pointer bg-transparent border-none text-inherit hover:text-fm-text-strong"
         onClick={() => onClick(sortKey)}
       >
-        {label}<span className="fm-sort-icon" aria-hidden="true" />
+        <BilingualText>{label}</BilingualText><span className="fm-sort-icon" aria-hidden="true" />
       </button>
     </th>
   );

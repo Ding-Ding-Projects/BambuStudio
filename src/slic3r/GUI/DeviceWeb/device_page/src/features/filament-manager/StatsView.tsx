@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import type { Spool } from './types';
 import { SpoolColorChip } from './SpoolColorChip';
 import { canonicalizeHex } from './colors';
+import { BilingualText } from './BilingualText';
 
 const PIE_COLORS = ['#8BC34A','#4CAF50','#009688','#3F51B5','#FF9800','#F44336','#9C27B0','#00BCD4','#FFC107','#795548'];
 
@@ -55,19 +56,19 @@ export function StatsView({ spools, onOpenDetail }: Props) {
         <div className="flex-1 bg-fm-sidebar rounded-lg px-6 py-5">
           <div className="text-[28px] font-bold text-fm-text-strong leading-[1.3]">$ {totalValue.toFixed(2)}</div>
           <div className="flex items-center gap-2 mt-2 text-xs">
-            <span className="text-fm-text-secondary">{t('Total Value')}</span>
+            <span className="text-fm-text-secondary"><BilingualText>{t('Total Value')}</BilingualText></span>
           </div>
         </div>
         <div className="flex-1 bg-fm-sidebar rounded-lg px-6 py-5">
           <div className="text-[28px] font-bold text-fm-text-strong leading-[1.3]">{activeSpools.length}</div>
           <div className="flex items-center gap-2 mt-2 text-xs">
-            <span className="text-fm-text-secondary">{t('Total Quantity')}</span>
+            <span className="text-fm-text-secondary"><BilingualText>{t('Total Quantity')}</BilingualText></span>
           </div>
         </div>
         <div className="flex-1 bg-fm-sidebar rounded-lg px-6 py-5">
           <div className="text-[28px] font-bold text-fm-text-strong leading-[1.3]">{colorCount}</div>
           <div className="flex items-center gap-2 mt-2 text-xs">
-            <span className="text-fm-text-secondary">{t('Color Varieties')}</span>
+            <span className="text-fm-text-secondary"><BilingualText>{t('Color Varieties')}</BilingualText></span>
           </div>
         </div>
       </div>
@@ -76,7 +77,7 @@ export function StatsView({ spools, onOpenDetail }: Props) {
       <div className="flex gap-4">
         <div className="flex-1 flex flex-col gap-4 min-w-0">
           <div className="bg-fm-sidebar rounded-lg overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-[14px] text-sm font-medium text-fm-text-strong">{t('Distribution')}</div>
+            <div className="flex items-center justify-between px-5 py-[14px] text-sm font-medium text-fm-text-strong"><BilingualText>{t('Distribution')}</BilingualText></div>
             <div className="px-5 pb-5">
               <div className="flex gap-4">
                 <PieBlock data={typeData} label={t('By Type')} />
@@ -88,7 +89,7 @@ export function StatsView({ spools, onOpenDetail }: Props) {
 
         {/* Reminders */}
         <div className="w-60 shrink-0 bg-fm-sidebar rounded-lg flex flex-col overflow-hidden">
-          <div className="flex items-center justify-between px-5 py-[14px] text-sm font-medium text-fm-text-strong">{t('Reminders')}</div>
+          <div className="flex items-center justify-between px-5 py-[14px] text-sm font-medium text-fm-text-strong"><BilingualText>{t('Reminders')}</BilingualText></div>
           <div className="flex gap-0 px-5 border-b border-fm-border">
             {(['low', 'dry', 'empty'] as const).map((rt) => (
               <div
@@ -96,13 +97,13 @@ export function StatsView({ spools, onOpenDetail }: Props) {
                 className={`px-3 py-2 text-xs text-fm-text-secondary cursor-pointer border-b-2 border-transparent transition-colors duration-150 hover:text-fm-text-primary${reminderTab === rt ? ' text-fm-brand border-fm-brand' : ''}`}
                 onClick={() => setReminderTab(rt)}
               >
-                {rt === 'low' ? t('Low Remain') : rt === 'dry' ? t('Needs Drying') : t('Exhausted')}
+                <BilingualText>{rt === 'low' ? t('Low Remain') : rt === 'dry' ? t('Needs Drying') : t('Exhausted')}</BilingualText>
               </div>
             ))}
           </div>
           <div className="flex-1 overflow-y-auto px-3 py-2">
             {reminderItems.length === 0 ? (
-              <div className="flex items-center justify-center py-10 text-fm-text-detail text-sm" style={{ padding: '24px 0' }}>{t('No Records')}</div>
+              <div className="flex items-center justify-center py-10 text-fm-text-detail text-sm" style={{ padding: '24px 0' }}><BilingualText>{t('No Records')}</BilingualText></div>
             ) : (
               reminderItems.map((s) => (
                 <div key={s.spool_id} className="flex items-center gap-[10px] p-2 rounded-md cursor-pointer transition-colors duration-150 hover:bg-fm-hover" onClick={() => onOpenDetail(s.spool_id)}>
@@ -114,9 +115,9 @@ export function StatsView({ spools, onOpenDetail }: Props) {
                       {s.material_type}{s.series ? ' ' + s.series : ''}
                     </div>
                     <div className="text-[11px] text-fm-text-detail">
-                      {reminderTab === 'low' || reminderTab === 'empty'
+                      <BilingualText>{reminderTab === 'low' || reminderTab === 'empty'
                         ? t('Remain {{percent}}%', { percent: s.remain_percent || 0 })
-                        : t('Drying: {{date}}', { date: s.dry_date })}
+                        : t('Drying: {{date}}', { date: s.dry_date })}</BilingualText>
                     </div>
                   </div>
                 </div>
@@ -128,7 +129,7 @@ export function StatsView({ spools, onOpenDetail }: Props) {
 
       {/* Heatmap placeholder */}
       <div className="bg-fm-sidebar rounded-lg overflow-hidden">
-        <div className="flex items-center justify-between px-5 py-[14px] text-sm font-medium text-fm-text-strong">{t('Usage Heatmap')}</div>
+        <div className="flex items-center justify-between px-5 py-[14px] text-sm font-medium text-fm-text-strong"><BilingualText>{t('Usage Heatmap')}</BilingualText></div>
         <div className="px-5 pb-5">
           <Heatmap />
         </div>
@@ -199,7 +200,7 @@ function PieBlock({ data, label }: { data: PieItem[]; label: string }) {
     <div className="flex items-center gap-3 flex-1 min-w-0">
       <canvas ref={canvasRef} width={120} height={120} style={{ width: 120, height: 120 }} />
       <div className="flex flex-col gap-1 text-xs">
-        <div style={{ fontSize: 12, marginBottom: 4, opacity: 0.6 }}>{label}</div>
+        <div style={{ fontSize: 12, marginBottom: 4, opacity: 0.6 }}><BilingualText>{label}</BilingualText></div>
         {data.slice(0, 6).map((d, i) => (
           <div key={d.name} className="flex items-center gap-[6px]">
             <span className="w-2 h-2 rounded-full shrink-0" style={{ background: d.color || PIE_COLORS[i % PIE_COLORS.length] }} />

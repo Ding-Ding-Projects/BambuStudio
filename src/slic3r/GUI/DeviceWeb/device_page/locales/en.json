@@ -200,5 +200,7 @@
   "Page {{page}}": "Page {{page}}",
   "Items per page": "Items per page",
   "Select all filaments": "Select all inks",
-  "Select {{name}}": "Select {{name}}"
+  "Select {{name}}": "Select {{name}}",
+  "Opening...": "Opening...",
+  "Debug": "Debug"
 }

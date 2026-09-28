@@ -112,6 +112,23 @@ const MESSAGE_TEMPLATES = [
   ['Slicing Plate 1…', 'Slicing Plate {plate}…'],
   ['Plate 1 sliced · 1h 24m · 23.4 g', 'Plate {plate} sliced · {time} · {weight}'],
   ['Sent to Bambu Lab X1 Carbon · print starting', 'Sent to {printer} · print starting'],
+  // exportFilament and exportAllFilaments moved from a hardcoded notify() to
+  // this.msg(...) so the toast follows the language mode (see main.logic.js
+  // and app/i18n.resources.js). The design source spells its curly quotes
+  // and arrow as \u escapes rather than the literal characters, so the "from"
+  // side here is written with a doubled backslash to match that raw text
+  // exactly, the same way the design file itself would be read off disk.
+  ['Exported \\u201CBambu PLA Basic\\u201D \\u2192 ink preset (.bbsflmt)', 'Exported “{name}” → ink preset ({format})'],
+  ['Exported 6 ink presets \\u2192 bundle (.bbsflmt.zip)', 'Exported {count} ink preset{suffix} → {format}'],
+  // doExport()'s own concatenation (this.notify('Exported '+n+...+' →
+  // '+ex.format, ...), unrelated to the two rows above and never touched
+  // here) contributes this bare fragment as its own separate literal. It
+  // used to be found only by accident, as a substring of the two raw
+  // exportFilament/exportAllFilaments literals just replaced above; now that
+  // those are gone, record explicitly what every other → in this table
+  // already says: the design's escape-sequence spelling of the arrow reads
+  // as the literal arrow character in the shipped catalog.
+  [' \\u2192 ', ' → '],
 ];
 
 // Attributes the app adds on top of the design's elements. They are removed

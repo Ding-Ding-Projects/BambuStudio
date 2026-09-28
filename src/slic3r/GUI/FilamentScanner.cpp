@@ -77,10 +77,38 @@ std::string lan_address()
     }
 }
 
-// Self-contained bilingual upload page (EN + Cantonese, per the language
-// rules for user-facing surfaces; served to the phone, no external assets).
-std::string upload_page_html(const std::string &token)
+// Self-contained upload page served to the phone. Follows the desktop's own
+// language mode (English, Hong Kong Cantonese, or bilingual); any other
+// locale falls back to English, matching the local web content used
+// elsewhere in the app (see LanguageMode.hpp local_web_language). The page is
+// rendered fresh on every request, so the right-language JS string literals
+// are baked in here rather than branching in the browser.
+std::string upload_page_html(const std::string &token, const std::string &local_web_language)
 {
+    const bool cantonese = local_web_language == "yue_HK";
+    const bool bilingual = local_web_language == "bilingual_en_yue_HK";
+    const bool show_en   = !cantonese;
+    const bool show_yue  = cantonese || bilingual;
+
+    // English and Cantonese never share a quote character with the JS this
+    // gets spliced into (see the single-quoted assignments below), so a
+    // plain "en / yue" join is safe wherever bilingual mode picks both.
+    auto pick = [&](const std::string &en, const std::string &yue) -> std::string {
+        if (show_en && show_yue) return en + " / " + yue;
+        return show_yue ? yue : en;
+    };
+
+    const std::string heading = pick("Filament scan", "\xE5\xA2\xA8\xE6\xB0\xB4\xE6\x8E\x83\xE6\x8F\x8F");
+    const std::string snap_text = pick(
+        "Snap a photo of the spool or its label.",
+        "\xE5\xBD\xB1\xE5\xBC\xB5\xE5\xA2\xA8\xE6\xB0\xB4\xE8\xBB\xB8\xE6\x88\x96\xE8\x80\x85\xE6\xA8\x99\xE7\xB1\xA4\xE5\x98\x85\xE7\x9B\xB8\xE5\x85\x88\xE3\x80\x82");
+    const std::string take_photo = pick("Take photo", "\xE5\xBD\xB1\xE7\x9B\xB8");
+    const std::string uploading_js = pick("Uploading\xE2\x80\xA6", "\xE4\xB8\x8A\xE5\x82\xB3\xE7\xB7\x8A\xE2\x80\xA6");
+    const std::string sent_js = pick(
+        "Sent! Check the desktop.",
+        "\xE5\x82\xB3\xE5\x92\x97\xE5\x96\x87\xEF\xBC\x81\xE5\x8E\xBB\xE7\x9D\x87\xE5\x90\x93\xE9\x83\xA8\xE9\x9B\xBB\xE8\x85\xA6\xE3\x80\x82");
+    const std::string upload_failed_label = pick("Upload failed", "\xE4\xB8\x8A\xE8\xBC\x89\xE5\xA4\xB1\xE6\x95\x97");
+
     return
         "<!doctype html><html><head><meta charset='utf-8'>"
         "<meta name='viewport' content='width=device-width,initial-scale=1'>"
@@ -91,16 +119,15 @@ std::string upload_page_html(const std::string &token)
         "label{background:#146c2e;color:#fff;border-radius:24px;padding:14px 28px;font-weight:600}"
         "input{display:none}#s{font-weight:600}"
         "</style></head><body>"
-        "<h1>Filament scan / \xE6\x83\xA8\xE6\x9D\x90\xE6\x8E\x83\xE6\x8F\x8F</h1>"
-        "<p>Snap a photo of the spool or its label.<br>"
-        "\xE5\xBD\xB1\xE5\xBC\xB5\xE5\x96\xB1\xE6\x9D\x90\xE5\x8D\xB7\xE5\xAE\x9A\xE5\x80\x8B\xE6\xA8\x99\xE7\xB1\xA4\xE5\x85\x88\xE3\x80\x82</p>"
-        "<label>Take photo / \xE5\xBD\xB1\xE7\x9B\xB8<input id='f' type='file' accept='image/*' capture='environment'></label>"
+        "<h1>" + heading + "</h1>"
+        "<p>" + snap_text + "</p>"
+        "<label>" + take_photo + "<input id='f' type='file' accept='image/*' capture='environment'></label>"
         "<p id='s'></p>"
         "<script>document.getElementById('f').onchange=async e=>{const file=e.target.files[0];if(!file)return;"
-        "const s=document.getElementById('s');s.textContent='Uploading\\u2026';"
+        "const s=document.getElementById('s');s.textContent='" + uploading_js + "';"
         "try{const r=await fetch('/t/" + token + "/upload',{method:'POST',headers:{'Content-Type':file.type||'image/jpeg'},body:file});"
-        "s.textContent=r.ok?'Sent! Check the desktop. / \\u9001\\u5497\\uff01\\u770b\\u8fd4\\u96fb\\u8166\\u3002':'Upload failed ('+r.status+')';}"
-        "catch(err){s.textContent='Upload failed: '+err;}};</script>"
+        "s.textContent=r.ok?'" + sent_js + "':'" + upload_failed_label + " ('+r.status+')';}"
+        "catch(err){s.textContent='" + upload_failed_label + ": '+err;}};</script>"
         "</body></html>";
 }
 
@@ -206,8 +233,15 @@ private:
 class ScanUploadServer
 {
 public:
-    ScanUploadServer(std::string token, std::function<void(std::string)> on_image)
+    // local_web_language is read once on the UI thread (GUI_App::current_local_web_language())
+    // and captured here before m_worker starts below, so the accept thread
+    // never has to touch the language-mode singleton itself: reading it from
+    // a background thread while the UI thread might concurrently reconfigure
+    // it (a language switch) would be a data race on LanguageModeProfile's
+    // std::string members.
+    ScanUploadServer(std::string token, std::string local_web_language, std::function<void(std::string)> on_image)
         : m_token(std::move(token))
+        , m_local_web_language(std::move(local_web_language))
         , m_on_image(std::move(on_image))
         , m_acceptor(m_io)
     {
@@ -270,7 +304,7 @@ private:
         if (req.method() == http::verb::get && (target == page_path || target == page_path.substr(0, page_path.size() - 1))) {
             res.result(http::status::ok);
             res.set(http::field::content_type, "text/html; charset=utf-8");
-            res.body() = upload_page_html(m_token);
+            res.body() = upload_page_html(m_token, m_local_web_language);
         } else if (req.method() == http::verb::post && target == upload_path) {
             const std::string &body = req.body();
             const auto temp = std::filesystem::temp_directory_path() / ("bbs-filament-scan-" + m_token + ".jpg");
@@ -292,6 +326,7 @@ private:
     }
 
     std::string                       m_token;
+    std::string                       m_local_web_language;
     std::function<void(std::string)>  m_on_image;
     boost::asio::io_context           m_io { 1 };
     tcp::acceptor                     m_acceptor;
@@ -308,11 +343,18 @@ FilamentScanDialog::FilamentScanDialog(wxWindow *parent)
                 MaterialIcon::Palette)
 {
     const std::string token = random_token();
+    // Read on this (UI) thread, once, before the server's accept thread
+    // starts: see the constructor comment on ScanUploadServer for why the
+    // background thread must never read the language-mode singleton itself.
+    // current_local_web_language() is always one of a short list of plain
+    // ASCII ids ("en", "yue_HK", "bilingual_en_yue_HK", or a locale code like
+    // "de_DE"), so ToStdString() needs no UTF-8 conversion helper.
+    const std::string local_web_language = wxGetApp().current_local_web_language().ToStdString();
     // The server hands the photo over from its own accept thread. Joining that
     // thread in ~ScanUploadServer cannot retract a call already queued on
     // wxTheApp, so the queued lambda re-checks liveness before it touches us.
     auto alive = m_alive;
-    m_server = std::make_unique<ScanUploadServer>(token, [this, alive](std::string path) {
+    m_server = std::make_unique<ScanUploadServer>(token, local_web_language, [this, alive](std::string path) {
         wxTheApp->CallAfter([this, alive, path]() {
             if (!alive->load())
                 return;

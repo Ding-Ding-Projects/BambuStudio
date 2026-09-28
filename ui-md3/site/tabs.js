@@ -60,7 +60,7 @@
     var stripInner = doc.createElement('div');
     stripInner.className = 'tabstrip-tabs';
     stripInner.setAttribute('role', 'tablist');
-    stripInner.setAttribute('aria-label', 'Site sections');
+    stripInner.setAttribute('data-copy-attr', 'aria-label:shell.sections');
 
     var searchButton = doc.createElement('button');
     searchButton.type = 'button';

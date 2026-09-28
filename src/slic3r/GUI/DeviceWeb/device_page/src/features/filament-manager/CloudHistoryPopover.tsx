@@ -105,7 +105,7 @@ export function CloudHistoryPopover({ open, onClose }: Props) {
                       : t('Push')}
                 </BilingualText>
                 <span className={`flex-1 min-w-[12rem] text-xs leading-5 break-words ${rowColorClass(entry)}`}>
-                  {entry.summary}
+                  <BilingualText>{entry.summary}</BilingualText>
                 </span>
               </li>
             ))}

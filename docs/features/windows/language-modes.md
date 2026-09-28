@@ -97,7 +97,7 @@ pushing a change to the docs or the changelog.
 
 ## Embedded web surfaces
 
-- DeviceWeb has key parity for all 202 English entries and builds a bilingual English-first variant.
+- DeviceWeb has key parity for all 204 English entries and builds a bilingual English-first variant.
 - The legacy local web bundle (`resources/web/data/text.js`) has key parity for all 281 English keys.
   Every page element marked `.trans` must name a key the English table has; image alternative text
   (`data-alt-tid`) and input placeholders (`data-ph-tid`) follow the language mode too. In bilingual

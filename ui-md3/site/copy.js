@@ -68,6 +68,7 @@
     'shell.moveright': { en: ['Move right'], yue: ['向右移'] },
     'shell.resettabs': { en: ['Reset tab order'], yue: ['還原分頁次序'] },
     'shell.group': { en: ['Group'], yue: ['分組'] },
+    'shell.sections': { en: ['Site sections'], yue: ['網站分區'] },
 
     /* --------------------------------------------------------------- tabs */
     'tab.overview': { en: ['Overview'], yue: ['總覽'] },

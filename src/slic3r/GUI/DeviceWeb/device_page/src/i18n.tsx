@@ -43,6 +43,22 @@ function detectLanguage(): string {
   return localStorage.getItem('BambuWebLang') || 'en';
 }
 
+// <html lang> follows the active mode: 'en' for English and for bilingual
+// (the primary, first-read line is always English), 'yue-HK' for Cantonese.
+// Any other real locale (zh_CN, de_DE, ...) just swaps '_' for '-' to match
+// the BCP-47 form the `lang` attribute expects.
+function htmlLangFor(language: string): string {
+  if (language === 'yue_HK') return 'yue-HK';
+  if (language === 'bilingual_en_yue_HK') return 'en';
+  return language.replace(/_/g, '-');
+}
+
+function applyHtmlLang(language: string): void {
+  if (typeof document !== 'undefined' && document.documentElement) {
+    document.documentElement.lang = htmlLangFor(language);
+  }
+}
+
 i18n
   .use(initReactI18next)
   .init({
@@ -85,5 +101,10 @@ i18n
     // When a key has no translation, return the key itself (English original text)
     parseMissingKeyHandler: (key) => key,
   });
+
+// Keep <html lang> in step with the active mode: once at boot, then again on
+// every runtime switch (Settings, or a fresh ?lang= navigation).
+applyHtmlLang(i18n.language);
+i18n.on('languageChanged', applyHtmlLang);
 
 export default i18n;

@@ -1,6 +1,6 @@
 ---
 translation-of: language-modes.md
-source-sha256: 464bc916f84b364ff09c2cfd2f6bf2e2ddfd71aa88d5f6b16a12f7e5d0b55bf6
+source-sha256: aa2e8864f13e5ad600051a19ed031294a46583f0f2116921e8d79e96f2a990f7
 review-status: agent-drafted
 ---
 
@@ -63,7 +63,7 @@ Windows 分支定義咗三個標準用戶介面模式識別符：
 
 ## 嵌入式網頁介面
 
-- DeviceWeb 全部 202 個英文條目嘅鍵都有對應，並會建立一個英文先行嘅雙語版本。
+- DeviceWeb 全部 204 個英文條目嘅鍵都有對應，並會建立一個英文先行嘅雙語版本。
 - 舊版本地網頁資源（`resources/web/data/text.js`）全部 281 個英文鍵都有對應。每個標咗 `.trans` 嘅頁面元素都必須用英文表入面有嘅鍵；圖像替代文字（`data-alt-tid`）同輸入佔位符（`data-ph-tid`）亦會跟隨語言模式。喺雙語模式，佔位符放得落欄位就會顯示兩種語言，否則顯示英文，並喺欄位嘅工具提示顯示兩種語言。
 - 本地頁面會收到本地網頁語言，包括 `yue_HK` 同雙語模式：設定嚮導、墨水建立同編輯、項目標籤、插件下載頁面同打印機連接頁面。遠端頁面（MakerWorld、登入）就會收到服務語言。
 - `fila_manager` 頁面未被翻譯：佢嘅面板永遠唔會被構建，應用程式顯示嘅墨水管理器住喺 DeviceWeb 中。

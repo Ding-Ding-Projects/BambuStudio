@@ -89,7 +89,15 @@ MarkdownTip::~MarkdownTip() { delete _timer; }
 
 void MarkdownTip::LoadStyle()
 {
-    _language = GUI::into_u8(GUI::wxGetApp().current_language_code());
+    // current_language_code() is the raw wxLocale canonical name (e.g. "zh_HK"
+    // for the Cantonese Hong Kong formatting locale, "en_US" for bilingual,
+    // since bilingual formats as English). Neither matches the custom mode
+    // ids ("yue_HK", "bilingual_en_yue_HK") this app's tooltip folders and
+    // every other local web surface key off (see LanguageMode.hpp), so a
+    // Cantonese tip file could never be found even once someone writes one.
+    // current_local_web_language() is the same id GUI_App hands to every
+    // other local web dialog for exactly this reason.
+    _language = GUI::into_u8(GUI::wxGetApp().current_local_web_language());
     fs::path ph(data_dir());
     ph /= "resources/tooltip/common/styled.html";
     _data_dir = true;

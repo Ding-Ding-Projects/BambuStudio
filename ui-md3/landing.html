@@ -52,7 +52,7 @@
       <span class="launch-label" data-copy="shell.launch"></span>
     </a>
   </div>
-  <nav class="wrap tabstrip" id="tabstrip" aria-label="Site sections"></nav>
+  <nav class="wrap tabstrip" id="tabstrip" data-copy-attr="aria-label:shell.sections"></nav>
   <div class="notify-centre" id="notifyCentre" hidden>
     <div class="notify-head">
       <h2 data-copy="shell.notifications"></h2>
@@ -83,16 +83,22 @@
 </footer>
 
 <noscript>
+  <!-- No JavaScript means the site's own EN/yue_HK/bilingual mode runtime
+       cannot run here, so this fallback carries both languages written
+       directly into the markup instead of through the data-copy catalog. -->
   <div class="wrap">
-    <h1>Bambu Studio — Material Design 3 concept</h1>
-    <p>This site renders its tabs, settings and changelog with JavaScript, which is currently
+    <h1 lang="en">Bambu Studio — Material Design 3 concept</h1>
+    <p lang="yue-Hant-HK">Bambu Studio · Material Design 3 概念版</p>
+    <p lang="en">This site renders its tabs, settings and changelog with JavaScript, which is currently
       disabled. The links below still work without it.</p>
+    <p lang="yue-Hant-HK">呢個網站嘅分頁、設定同更新日誌需要 JavaScript 先顯示得到，而你而家嘅瀏覽器停用咗
+      JavaScript。下面啲連結唔使 JavaScript 都照常用得。</p>
     <img src="./assets/showcase/hero-studio.webp" width="1536" height="1024"
-      alt="A desktop 3D printer creating a faceted model while luminous sliced toolpaths surround the build plate.">
+      alt="A desktop 3D printer creating a faceted model while luminous sliced toolpaths surround the build plate. / 一部枱面 3D 打印機正喺度打印一個多面體模型，發光嘅切片路徑圍住打印板。">
     <ul>
-      <li><a href="https://github.com/Ding-Ding-Projects/BambuStudio/releases/latest">Latest release and Windows installer</a></li>
-      <li><a href="https://github.com/Ding-Ding-Projects/BambuStudio/tree/master/ui-md3">Source of this site and the prototype</a></li>
-      <li><a href="https://github.com/Ding-Ding-Projects/BambuStudio/releases">Every published release</a></li>
+      <li><a href="https://github.com/Ding-Ding-Projects/BambuStudio/releases/latest"><span lang="en">Latest release and Windows installer</span> / <span lang="yue-Hant-HK">最新版本同 Windows 安裝程式</span></a></li>
+      <li><a href="https://github.com/Ding-Ding-Projects/BambuStudio/tree/master/ui-md3"><span lang="en">Source of this site and the prototype</span> / <span lang="yue-Hant-HK">呢個網站同原型嘅原始碼</span></a></li>
+      <li><a href="https://github.com/Ding-Ding-Projects/BambuStudio/releases"><span lang="en">Every published release</span> / <span lang="yue-Hant-HK">所有已發佈版本</span></a></li>
     </ul>
   </div>
 </noscript>

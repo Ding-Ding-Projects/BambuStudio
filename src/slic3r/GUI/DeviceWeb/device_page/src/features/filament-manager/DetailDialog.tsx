@@ -123,14 +123,14 @@ export function DetailDialog({ open, spool, filteredSpools, onClose, onEdit, onN
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                 <path d="M7 2L3 6l4 4" stroke="currentColor" strokeWidth="1.2" />
               </svg>
-              {t('Previous')}
+              <BilingualText>{t('Previous')}</BilingualText>
             </button>
             <button
               className="fm-action-target flex items-center gap-1 bg-transparent border-none cursor-pointer text-fm-text-secondary text-xs px-2 min-h-[36px] rounded-md transition-colors duration-150 hover:text-fm-text-strong hover:bg-fm-hover disabled:text-fm-text-gray disabled:cursor-default disabled:hover:bg-transparent [&>svg]:shrink-0"
               disabled={!hasNext}
               onClick={() => hasNext && onNavigate(filteredSpools[idx + 1].spool_id)}
             >
-              {t('Next')}
+              <BilingualText>{t('Next')}</BilingualText>
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                 <path d="M5 2l4 4-4 4" stroke="currentColor" strokeWidth="1.2" />
               </svg>
@@ -148,7 +148,7 @@ export function DetailDialog({ open, spool, filteredSpools, onClose, onEdit, onN
             <div className="flex items-center gap-1 text-sm font-medium text-fm-text-strong leading-[22px] [&>svg]:text-fm-text-secondary [&>svg]:shrink-0">
               {nameParts || '—'}
               <span className="inline-flex items-center justify-center px-1 h-4 rounded-sm bg-fm-input text-[11px] text-fm-text-secondary leading-4 empty:hidden">
-                {spool.tag_uid && /[^0]/.test(spool.tag_uid) ? t('RFID') : ''}
+                {spool.tag_uid && /[^0]/.test(spool.tag_uid) ? <BilingualText>{t('RFID')}</BilingualText> : ''}
               </span>
             </div>
             <div className="text-xs text-fm-text-secondary opacity-70 leading-[19px]">
@@ -170,7 +170,7 @@ export function DetailDialog({ open, spool, filteredSpools, onClose, onEdit, onN
               so the detail panel reads the same way as the edit form
               (e.g. "PLA Basic" / "PLA Matte"). Layout: row 1 品牌 | 类型,
               row 2 颜色. */}
-              <div className="fm-section-bar flex items-center gap-[6px] text-sm font-normal text-fm-text-primary mt-4 mb-2 leading-[22px] first:mt-0">{t('Filament Info')}</div>
+              <div className="fm-section-bar flex items-center gap-[6px] text-sm font-normal text-fm-text-primary mt-4 mb-2 leading-[22px] first:mt-0"><BilingualText>{t('Filament Info')}</BilingualText></div>
               <div className="flex gap-3">
                 <DetField label={t('Brand')} value={spool.brand || '—'} />
                 <DetField
@@ -180,7 +180,7 @@ export function DetailDialog({ open, spool, filteredSpools, onClose, onEdit, onN
               </div>
               <div className="flex gap-3">
                 <div className="flex flex-col gap-1 mb-4 flex-1">
-                  <label className="text-xs text-fm-text-secondary leading-[19px]">{t('Color')}</label>
+                  <label className="text-xs text-fm-text-secondary leading-[19px]"><BilingualText>{t('Color')}</BilingualText></label>
                   <div
                     data-testid="detail-color-field"
                     data-color-type={spool.color_type ?? ''}
@@ -205,27 +205,27 @@ export function DetailDialog({ open, spool, filteredSpools, onClose, onEdit, onN
                 <div className="flex-1" />
               </div>
 
-              <div className="fm-section-bar flex items-center gap-[6px] text-sm font-normal text-fm-text-primary mt-4 mb-2 leading-[22px]">{t('Weight')}</div>
+              <div className="fm-section-bar flex items-center gap-[6px] text-sm font-normal text-fm-text-primary mt-4 mb-2 leading-[22px]"><BilingualText>{t('Weight')}</BilingualText></div>
               <div className="flex items-end gap-2 bg-fm-inner rounded-md p-2 opacity-30">
                 <div className="flex flex-col gap-1 flex-1">
-                  <span className="text-[11px] text-fm-text-secondary leading-4">{t('Current Net Weight')}</span>
+                  <span className="text-[11px] text-fm-text-secondary leading-4"><BilingualText>{t('Current Net Weight')}</BilingualText></span>
                   <span className="text-sm text-fm-text-strong leading-[22px] font-medium">{currentNet} g</span>
                 </div>
                 <div className="flex flex-col gap-1 flex-1">
-                  <span className="text-[11px] text-fm-text-secondary leading-4">{t('Total Net Weight')}</span>
+                  <span className="text-[11px] text-fm-text-secondary leading-4"><BilingualText>{t('Total Net Weight')}</BilingualText></span>
                   <span className="text-sm text-fm-text-strong leading-[22px] font-medium">{totalNet} g</span>
                 </div>
               </div>
 
               {/* 基础信息 — figma 参数1: 显示 preset 组合名 */}
-              <div className="fm-section-bar flex items-center gap-[6px] text-sm font-normal text-fm-text-primary mt-4 mb-2 leading-[22px]">{t('Basic Info')}</div>
+              <div className="fm-section-bar flex items-center gap-[6px] text-sm font-normal text-fm-text-primary mt-4 mb-2 leading-[22px]"><BilingualText>{t('Basic Info')}</BilingualText></div>
               <DetField
                 label={t('Parameter') + ' 1'}
                 value={formatSpoolDisplayName(spool) || '—'}
               />
 
               {/* 备注（云端唯一支持的扩展字段） */}
-          <div className="fm-section-bar flex items-center gap-[6px] text-sm font-normal text-fm-text-primary mt-4 mb-2 leading-[22px]">{t('Note')}</div>
+          <div className="fm-section-bar flex items-center gap-[6px] text-sm font-normal text-fm-text-primary mt-4 mb-2 leading-[22px]"><BilingualText>{t('Note')}</BilingualText></div>
           <DetField label={t('Note')} value={spool.note || '—'} />
         </div>
 
@@ -241,7 +241,7 @@ export function DetailDialog({ open, spool, filteredSpools, onClose, onEdit, onN
 function DetField({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex flex-col gap-1 mb-4 flex-1">
-      <label className="text-xs text-fm-text-secondary leading-[19px]">{label}</label>
+      <label className="text-xs text-fm-text-secondary leading-[19px]"><BilingualText>{label}</BilingualText></label>
       <div className="text-xs text-fm-text-primary leading-[19px] min-h-8 flex items-center bg-fm-inner2 rounded-md px-2 py-[6px]">{value}</div>
     </div>
   );
