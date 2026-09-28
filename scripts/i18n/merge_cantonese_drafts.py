@@ -13,12 +13,23 @@ draft is checked mechanically before it can enter the catalogue:
 * a menu mnemonic (``&F``) is kept as one mnemonic;
 * the category is one of the six reviewed categories;
 * no Simplified-only character, no disallowed term from glossary.json, and no
-  "filament" or "AMS" left in the Cantonese (the product says 墨水 / 墨水機).
+  "filament" or "AMS" left in the Cantonese (the product says 墨水 / 墨水機);
+* no "to be translated" stub, and a trailing colon, ellipsis or question mark
+  in the English survives the translation;
+* the draft belongs to its message: when the zh_TW reference has enough
+  content, the draft shares a real part of its Han characters with it, and a
+  long English message does not come back as a few characters. A draft copied
+  from a neighbouring message, or a stock word pasted over a sentence, fails
+  here even though every mechanical check above passes.
 
 Accepted entries are appended to BambuStudio_yue_HK.po with
 ``#. reviewed-category:`` and ``#. review-status: agent-drafted``, and
 coverage.json is recounted. ``--check-only`` validates without writing, for a
 translator to check its own output. Rejects are written with their reasons.
+
+``--audit`` runs the same checks over the agent-drafted entries already in the
+catalogue (with the zh_TW catalogue as their reference) and lists the failures;
+``--purge`` also removes them, so they become gaps to translate again.
 """
 
 from __future__ import annotations
@@ -98,6 +109,58 @@ FORMAL_MARKERS = (
 )
 SENTENCE_MIN_CJK = 6
 
+# Placeholder text a translator leaves when it skipped a message.
+STUB_MARKERS = re.compile(r"待翻譯|待翻译|未翻譯|翻譯中|\bTODO\b|\bTBD\b|\bTRANSLATE\b", re.I)
+
+# Alignment with the zh_TW reference. Both are Traditional Chinese renderings of
+# the same English, so a correct draft shares a good part of its content
+# characters with the reference even when the register differs. Product terms
+# are mapped to one spelling on both sides first, and function words (the part
+# that differs by register) are ignored.
+ALIGNMENT_TERMS = (
+    ("耗材絲", "墨水"), ("耗材", "墨水"), ("線材", "墨水"), ("列印", "打印"), ("印表機", "打印機"),
+    ("熱床", "打印板"), ("列印板", "打印板"), ("專案", "項目"), ("軟體", "軟件"), ("網路", "網絡"),
+    ("如何", "點樣"), ("當前", "目前"), ("檔案夾", "資料夾"), ("智慧", "智能"), ("預設集", "預設"),
+)
+FUNCTION_CHARACTERS = set("的嘅是係在喺這呢那嗰沒冇們哋了咗他她它佢很好些啲不唔與同及和就都會可以請你您我之將把被")
+ALIGNMENT_MIN_SHARED = 0.25
+ALIGNMENT_MIN_REFERENCE = 3
+# A long English message rendered in a handful of characters has lost content.
+SHORT_MIN_LETTERS = 40
+SHORT_MIN_RATIO = 0.12
+
+
+def content_characters(text: str) -> set:
+    for term, canonical in ALIGNMENT_TERMS:
+        text = text.replace(term, canonical)
+    return {char for char in CJK.findall(text) if char not in FUNCTION_CHARACTERS}
+
+
+def alignment_problems(entry: dict, msgstr: str) -> list:
+    problems = []
+    english = entry["msgid"].rstrip()
+    translated = msgstr.rstrip()
+    if english.endswith(":") and not translated.endswith((":", "：")):
+        problems.append("the English ends with a colon; the translation lost it (truncated?)")
+    if english.endswith(("...", "…")) and not translated.endswith(("...", "…")):
+        problems.append("the English ends with an ellipsis; the translation lost it (truncated?)")
+    if english.endswith("?") and not translated.endswith(("?", "？")):
+        problems.append("the English is a question; the translation lost the question mark")
+    letters = len(re.sub(r"[^A-Za-z]", "", english))
+    han = len(CJK.findall(translated))
+    if letters >= SHORT_MIN_LETTERS and han and han / letters < SHORT_MIN_RATIO:
+        problems.append(f"{han} Chinese characters for {letters} English letters: content is missing")
+    reference = entry.get("zh_TW_reference") or ""
+    ours, theirs = content_characters(translated), content_characters(reference)
+    if len(theirs) >= ALIGNMENT_MIN_REFERENCE and len(ours) >= 2:
+        shared = len(ours & theirs) / min(len(ours), len(theirs))
+        if shared < ALIGNMENT_MIN_SHARED:
+            problems.append(
+                f"shares {shared:.0%} of its content characters with the zh_TW reference "
+                f"({reference.strip()[:40]!r}); the draft probably belongs to another message"
+            )
+    return problems
+
 
 def register_problems(msgstr: str) -> list:
     if len(CJK.findall(msgstr)) < SENTENCE_MIN_CJK:
@@ -117,8 +180,10 @@ def load_glossary() -> dict:
 
 
 def english_needs_translation(english: str) -> bool:
-    words = [word.lower() for word in MEANINGFUL_WORD.findall(english)]
-    return any(word not in PRODUCT_WORDS for word in words)
+    # All-caps acronyms (VFA, PEI, HMS) stay in Latin script; forcing Chinese
+    # onto them invites an invented gloss.
+    words = [word for word in MEANINGFUL_WORD.findall(english) if not word.isupper()]
+    return any(word.lower() not in PRODUCT_WORDS for word in words)
 
 
 def validate(entry: dict, draft: dict, disallowed: dict) -> list:
@@ -152,7 +217,10 @@ def validate(entry: dict, draft: dict, disallowed: dict) -> list:
             problems.append(f"disallowed term {term} (use {replacement})")
     if ENGLISH_BANNED.search(msgstr):
         problems.append("English 'filament'/'AMS' left in the Cantonese (use 墨水 / 墨水機)")
+    if STUB_MARKERS.search(msgstr) and not STUB_MARKERS.search(entry["msgid"]):
+        problems.append("contains a 'to be translated' stub instead of a translation")
     problems.extend(register_problems(msgstr))
+    problems.extend(alignment_problems(entry, msgstr))
     return problems
 
 
@@ -183,18 +251,99 @@ def recount_coverage() -> None:
     coverage_path.write_text(json.dumps(coverage, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
+def entry_block_lines(lines: list, entry) -> range:
+    """Line indexes of one PO entry: its comments, fields and the blank line after it."""
+    start = entry.line - 1
+    while start > 0 and lines[start - 1].startswith("#"):
+        start -= 1
+    end, seen_msgstr = entry.line - 1, False
+    while end < len(lines) and lines[end].strip():
+        line = lines[end]
+        if seen_msgstr and (line.startswith("#") or line.startswith("msgctxt") or re.match(r"msgid\s", line)):
+            break  # the next entry starts without a blank separator
+        seen_msgstr = seen_msgstr or line.startswith("msgstr")
+        end += 1
+    if end < len(lines) and not lines[end].strip():
+        end += 1
+    return range(start, end)
+
+
+def audit_catalogue(purge: bool, report: Path | None) -> int:
+    disallowed = load_glossary().get("disallowed_terms", {})
+    po_path = YUE_DIR / "BambuStudio_yue_HK.po"
+    zh_tw_path = REPO_ROOT / "bbl" / "i18n" / "zh_TW" / "BambuStudio_zh_TW.po"
+    zh_tw = {}
+    for reference in parse_po(zh_tw_path):
+        if not reference.is_header:
+            zh_tw[(reference.msgctxt, reference.msgid)] = reference.msgstr or reference.msgstr_plural.get(0, "")
+
+    entries = parse_po(po_path)
+    failures = []
+    for entry in entries:
+        if entry.is_header or entry.review_status != "agent-drafted":
+            continue
+        msgstr = entry.msgstr_plural.get(0, "") if entry.is_plural else entry.msgstr
+        as_batch = {"msgid": entry.msgid, "msgctxt": entry.msgctxt, "msgid_plural": entry.msgid_plural,
+                    "english": entry.msgid, "zh_TW_reference": zh_tw.get((entry.msgctxt, entry.msgid), "")}
+        draft = {"msgstr": msgstr, "category": entry.categories[0] if entry.categories else None}
+        problems = validate(as_batch, draft, disallowed)
+        if problems:
+            failures.append((entry, msgstr, problems))
+
+    kinds = Counter(problem.split(" (")[0].split(";")[0][:48] for _, _, problems in failures for problem in problems)
+    drafted = sum(1 for entry in entries if entry.review_status == "agent-drafted")
+    print(f"audited {drafted} agent-drafted entries: {len(failures)} fail the current checks")
+    for kind, count in kinds.most_common(12):
+        print(f"  {count:5d}  {kind}")
+    for entry, msgstr, problems in failures[:20]:
+        print(f"  {entry.msgid[:60]!r} -> {msgstr[:30]!r}: {problems[0][:90]}")
+    if report:
+        report.write_text(json.dumps([
+            {"msgctxt": entry.msgctxt, "msgid": entry.msgid, "msgstr": msgstr, "problems": problems}
+            for entry, msgstr, problems in failures
+        ], ensure_ascii=False, indent=1), encoding="utf-8")
+
+    if purge and failures:
+        raw = po_path.read_bytes()
+        newline = "\r\n" if b"\r\n" in raw else "\n"
+        lines = raw.decode("utf-8").splitlines()
+        drop = set()
+        for entry, _, _ in failures:
+            drop.update(entry_block_lines(lines, entry))
+        kept = [line for index, line in enumerate(lines) if index not in drop]
+        po_path.write_bytes((newline.join(kept).rstrip("\r\n") + newline).encode("utf-8"))
+        # The purge must remove exactly the failing entries and leave every other one untouched.
+        before = {(entry.msgctxt, entry.msgid): (entry.msgstr, dict(entry.msgstr_plural)) for entry in entries if not entry.is_header}
+        after = {(entry.msgctxt, entry.msgid): (entry.msgstr, dict(entry.msgstr_plural)) for entry in parse_po(po_path) if not entry.is_header}
+        removed = {(entry.msgctxt, entry.msgid) for entry, _, _ in failures}
+        expected = {key: value for key, value in before.items() if key not in removed}
+        if after != expected:
+            raise SystemExit("purge changed entries it should have kept; restore the catalogue from Git")
+        recount_coverage()
+        print(f"purged {len(removed)} entries from {po_path.relative_to(REPO_ROOT)} and recounted coverage.json")
+        return 0
+    return 1 if failures else 0
+
+
 def main() -> int:
     # Windows consoles default to a legacy code page; the report prints Chinese.
     for stream in (sys.stdout, sys.stderr):
         if hasattr(stream, "reconfigure"):
             stream.reconfigure(encoding="utf-8", errors="replace")
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--batches", type=Path, required=True)
-    parser.add_argument("--drafts", type=Path, required=True)
+    parser.add_argument("--batches", type=Path)
+    parser.add_argument("--drafts", type=Path)
     parser.add_argument("--only", help="comma-separated batch numbers to process, e.g. 01,02")
     parser.add_argument("--check-only", action="store_true")
     parser.add_argument("--rejects", type=Path)
+    parser.add_argument("--audit", action="store_true", help="check the agent-drafted entries already merged")
+    parser.add_argument("--purge", action="store_true", help="like --audit, and remove the failing entries")
+    parser.add_argument("--report", type=Path, help="with --audit/--purge: write the failures as JSON")
     args = parser.parse_args()
+    if args.audit or args.purge:
+        return audit_catalogue(args.purge, args.report)
+    if args.batches is None or args.drafts is None:
+        parser.error("--batches and --drafts are required unless --audit or --purge is given")
 
     glossary = load_glossary()
     disallowed = glossary.get("disallowed_terms", {})

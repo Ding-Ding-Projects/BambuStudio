@@ -148,6 +148,12 @@ try {
         -FailureMessage 'Native Cantonese PO validation failed'
     Invoke-Checked -Command $pythonCommand -Arguments ($pythonPrefix + @($englishCompiler, '--po', $englishPo, '--output', $englishMo)) `
         -FailureMessage 'English override catalog compilation failed'
+    # Agent-drafted entries must still pass the draft checks, including the
+    # alignment check against the zh_TW catalogue: a translation attached to
+    # the wrong message passes every mechanical check above.
+    Invoke-Checked -Command $pythonCommand `
+        -Arguments ($pythonPrefix + @((Join-Path $repoRoot 'scripts\i18n\merge_cantonese_drafts.py'), '--audit')) `
+        -FailureMessage 'Agent-drafted Cantonese entries fail the draft checks (run merge_cantonese_drafts.py --audit)'
 
     $gnuMoMagic = [Convert]::ToUInt32('950412DE', 16)
     foreach ($mo in @($nativeMo, $englishMo)) {
