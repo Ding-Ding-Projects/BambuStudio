@@ -37258,3 +37258,63 @@ msgstr "傳輸錯誤"
 #. review-status: agent-drafted
 msgid "Post-processing script %1% failed.\n\nThe post-processing script is expected to change the G-code file %2% in place, but the G-code file was deleted and likely saved under a new name.\nPlease adjust the post-processing script to change the G-code in place and consult the manual on how to optionally rename the post-processed G-code file.\n"
 msgstr "後處理指令碼 %1% 失敗。\n\n後處理指令碼應該就地修改 G-code 檔案 %2%，但該檔案遭刪除並可能已用新名稱儲存。\n請調整後處理指令碼以就地修改 G-code，並參閱使用手冊了解如何選擇重新命名後處理嘅 G-code 檔案。\n"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Overwrite config"
+msgstr "覆寫設定"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Could not init  m_browserMW"
+msgstr "無法初始化  m_browserMW"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Could not init  m_browserML"
+msgstr "無法初始化  m_browserML"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Could not init  m_browserPH"
+msgstr "無法初始化  m_browserPH"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Could not init  m_browserWiki"
+msgstr "無法初始化  m_browserWiki"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Could not add user script"
+msgstr "無法加入用戶指令碼"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Could not set custom user agent"
+msgstr "無法設定自訂用戶代理"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "IP"
+msgstr "IP"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Could not init ux program terms webview"
+msgstr "無法初始化用戶體驗計劃條款網頁檢視"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "CreateFilamentWebDialog: failed to create WebView"
+msgstr "CreateFilamentWebDialog：無法建立 WebView"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "EditFilamentWebDialog: failed to create WebView"
+msgstr "EditFilamentWebDialog：無法建立 WebView"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "CreationTime:"
+msgstr "建立時間："

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-28 01:09-0400\n"
+"POT-Creation-Date: 2026-09-28 05:51-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -6797,6 +6797,9 @@ msgstr ""
 msgid "Overwrite file"
 msgstr ""
 
+msgid "Overwrite config"
+msgstr ""
+
 msgid "Yes to All"
 msgstr ""
 
@@ -12430,6 +12433,18 @@ msgstr ""
 msgid "Open in browser"
 msgstr ""
 
+msgid "Could not init  m_browserMW"
+msgstr ""
+
+msgid "Could not init  m_browserML"
+msgstr ""
+
+msgid "Could not init  m_browserPH"
+msgstr ""
+
+msgid "Could not init  m_browserWiki"
+msgstr ""
+
 msgid "View Source"
 msgstr ""
 
@@ -12485,6 +12500,12 @@ msgid "The cloud page could not be opened securely. The current page remains ope
 msgstr ""
 
 msgid "The cloud page is temporarily unavailable. The current page remains open."
+msgstr ""
+
+msgid "Could not add user script"
+msgstr ""
+
+msgid "Could not set custom user agent"
 msgstr ""
 
 msgid "Toolbar"
@@ -12742,6 +12763,9 @@ msgid "2. If the IP and Access Code below are different from the actual values o
 msgstr ""
 
 msgid "3. Please obtain the device SN from the printer side; it is usually found in the device information on the printer screen."
+msgstr ""
+
+msgid "IP"
 msgstr ""
 
 msgid "Access Code"
@@ -19461,6 +19485,9 @@ msgstr ""
 msgid "Terms of Bambu Lab User Experience Improvement Program"
 msgstr ""
 
+msgid "Could not init ux program terms webview"
+msgstr ""
+
 msgid "Recent Helio Runs"
 msgstr ""
 
@@ -19707,6 +19734,9 @@ msgid "An unexpected error occurred"
 msgstr ""
 
 msgid "Create Custom Filament"
+msgstr ""
+
+msgid "CreateFilamentWebDialog: failed to create WebView"
 msgstr ""
 
 #, possible-c-format, possible-boost-format
@@ -20877,6 +20907,9 @@ msgid "AMS Control Web Debug"
 msgstr ""
 
 msgid "Please select a printer"
+msgstr ""
+
+msgid "EditFilamentWebDialog: failed to create WebView"
 msgstr ""
 
 msgid "Store (0) - no compression"
@@ -23586,6 +23619,9 @@ msgid "Time Lapse"
 msgstr ""
 
 msgid "Task List"
+msgstr ""
+
+msgid "CreationTime:"
 msgstr ""
 
 msgid "Additional printer requests were skipped because the 32-printer limit was reached"
