@@ -58,7 +58,9 @@ const std::vector<std::string> license_list = {
 ProjectPanel::ProjectPanel(wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSize &size, long style) : wxPanel(parent, id, pos, size, style)
 {
     m_project_home_url = wxString::Format("file://%s/web/model_new/index.html", from_u8(resources_dir()));
-    wxString strlang = wxGetApp().current_language_code_safe();
+    // A local page: the local web language carries yue_HK and the bilingual
+    // mode. (The MakerWorld link below is remote and keeps the service language.)
+    wxString strlang = wxGetApp().current_local_web_language();
     if (strlang != "")
         m_project_home_url = wxString::Format("file://%s/web/model_new/index.html?lang=%s", from_u8(resources_dir()), strlang);
 

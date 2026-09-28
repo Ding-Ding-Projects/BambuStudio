@@ -2316,7 +2316,8 @@ void MainFrame::init_tabpanel()
                     ;
                 }
                 if (url.empty()) {
-                    wxString url = wxString::Format("file://%s/web/device/missing_connection.html", from_u8(resources_dir()));
+                    wxString url = wxString::Format("file://%s/web/device/missing_connection.html?lang=%s",
+                                                    from_u8(resources_dir()), wxGetApp().current_local_web_language());
                     m_printer_view->load_url(url);
                 }
             }

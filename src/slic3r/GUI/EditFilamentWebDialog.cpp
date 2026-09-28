@@ -61,7 +61,9 @@ EditFilamentWebDialog::EditFilamentWebDialog(wxWindow *parent, const std::string
         "file://%s/web/filament_create/edit_filament.html",
         from_u8(resources_dir()));
     url.Replace("\\", "/");
-    wxString strlang = wxGetApp().current_language_code_safe();
+    // A local page, so it gets the local web language (yue_HK and the
+    // bilingual mode included), not the online-service language.
+    wxString strlang = wxGetApp().current_local_web_language();
     if (!strlang.IsEmpty()) url = wxString::Format("%s?lang=%s", url, strlang);
 
     m_browser = WebView::CreateWebView(this, url);

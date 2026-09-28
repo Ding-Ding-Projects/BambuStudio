@@ -41,6 +41,11 @@ DownPluginFrame::DownPluginFrame(GUI_App *pGUI) : wxDialog((wxWindow *) (pGUI->m
     wxString TargetUrl    = from_u8((boost::filesystem::path(resources_dir()) / "web/guide/6/index.html").make_preferred().string());
 
     TargetUrl = "file://" + TargetUrl;
+    // Without a lang parameter the page reused whatever language the last
+    // local page stored, which need not be the current mode.
+    const wxString strlang = wxGetApp().current_local_web_language();
+    if (!strlang.IsEmpty())
+        TargetUrl += "?lang=" + strlang;
 
     // Create the webview
     m_browser = WebView::CreateWebView(this, TargetUrl);

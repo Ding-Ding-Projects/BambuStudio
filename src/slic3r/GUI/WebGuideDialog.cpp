@@ -389,7 +389,9 @@ wxString GuideFrame::SetStartPage(GuidePage startpage, bool load, bool default_c
         TargetUrl = from_u8((boost::filesystem::path(resources_dir()) / "web/guide/0/index.html?target=21").make_preferred().string());
     }
 
-    wxString strlang = wxGetApp().current_language_code_safe();
+    // A local page: it understands the Cantonese and bilingual mode IDs, which
+    // the online-service language (always en_US in those modes) would hide.
+    wxString strlang = wxGetApp().current_local_web_language();
     BOOST_LOG_TRIVIAL(info) << __FUNCTION__<< boost::format(", strlang=%1%") % into_u8(strlang);
     if (strlang != "")
         TargetUrl = wxString::Format("%s&lang=%s", w2s(TargetUrl), strlang);

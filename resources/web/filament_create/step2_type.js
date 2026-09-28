@@ -8,10 +8,11 @@ function getLangParam() {
 }
 
 function _t(tid) {
-    var lang = (typeof GetQueryString === 'function' ? GetQueryString('lang') : null)
-             || localStorage.getItem('BambuWebLang') || 'en';
-    if (typeof LangText === 'undefined' || !LangText.hasOwnProperty(lang)) lang = 'en';
-    return (LangText[lang] && LangText[lang][tid]) || (LangText['en'] && LangText['en'][tid]) || '';
+    // text.js resolves every language mode, including yue_HK and the bilingual
+    // one (plain text, since callers put this into titles and text nodes).
+    if (typeof GetCurrentPlainTextByKey === 'function')
+        return GetCurrentPlainTextByKey(tid);
+    return (typeof LangText !== 'undefined' && LangText['en'] && LangText['en'][tid]) || '';
 }
 
 // 每个机型对应的喷嘴列表：{ modelName: [printerPresetName, ...] }
