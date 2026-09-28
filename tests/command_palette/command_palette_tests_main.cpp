@@ -394,6 +394,13 @@ TEST_CASE("Palette article index matches docs/features on disk", "[CommandPalett
     for (const auto &entry : std::filesystem::recursive_directory_iterator(docs)) {
         if (!entry.is_regular_file() || entry.path().extension() != ".md") continue;
         if (entry.path().filename() == "README.md") continue; // category indexes, not articles
+        // A *.yue_HK.md file is the Cantonese translation of its sibling article,
+        // opened through that article's entry, not an article of its own.
+        const std::string name = entry.path().filename().string();
+        static const std::string translation_suffix = ".yue_HK.md";
+        if (name.size() > translation_suffix.size() &&
+            name.compare(name.size() - translation_suffix.size(), translation_suffix.size(), translation_suffix) == 0)
+            continue;
         std::string rel = std::filesystem::relative(entry.path(), kSourceRoot).generic_string();
         on_disk[rel]    = first_heading(entry.path());
     }

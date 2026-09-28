@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <stdexcept>
 #include <string>
 
 using namespace Slic3r::Changelog;
@@ -266,4 +267,41 @@ TEST_CASE("Markdown export states the range and keeps full SHAs", "[Changelog][e
 
     const std::string empty = export_text(document, {}, DateRange::all(), "", ExportFormat::Markdown);
     REQUIRE(empty.find("No versions match") != std::string::npos);
+}
+
+TEST_CASE("Cantonese entry text is attached, searched and exported per language", "[Changelog][translation]")
+{
+    Document document = parse_document(SAMPLE_JSON);
+    const size_t applied = apply_translations(document, R"JSON({
+      "schema": 1,
+      "entries": {
+        "cccccccccccccccccccccccccccccccccccccccc": "修正月曆被裁切",
+        "ffffffffffffffffffffffffffffffffffffffff": "唔存在嘅變更"
+      }
+    })JSON");
+    REQUIRE(applied == 1);
+    REQUIRE(document.releases[0].entries[0].text_yue == "修正月曆被裁切");
+    REQUIRE(document.releases[0].entries[1].text_yue.empty());
+
+    // A search in Cantonese finds the entry through its translation.
+    const auto found = filter_releases(document, DateRange::all(),
+                                       [](const std::string &s) { return s.find("月曆") != std::string::npos; });
+    REQUIRE(found.size() == 1);
+    REQUIRE(found[0].entries.size() == 1);
+
+    const auto all = filter_releases(document, DateRange::all(), nullptr);
+    const std::string english = export_text(document, all, DateRange::all(), "", ExportFormat::PlainText);
+    REQUIRE(english.find("[Fixed] Fix the calendar clipping (") != std::string::npos);
+    const std::string cantonese = export_text(document, all, DateRange::all(), "", ExportFormat::PlainText,
+                                              ExportLanguage::Cantonese);
+    REQUIRE(cantonese.find("[Fixed] 修正月曆被裁切 (") != std::string::npos);
+    // An entry without a translation falls back to English.
+    REQUIRE(cantonese.find("[Added] Add an export button (") != std::string::npos);
+    const std::string both = export_text(document, all, DateRange::all(), "", ExportFormat::PlainText,
+                                         ExportLanguage::Both);
+    REQUIRE(both.find("[Fixed] Fix the calendar clipping / 修正月曆被裁切 (") != std::string::npos);
+
+    // A missing translation file applies nothing; a corrupt one is reported.
+    REQUIRE(load_translations(document, "no-such-dir/changelog.yue_HK.json") == 0);
+    REQUIRE_THROWS_AS(apply_translations(document, "{\"schema\": 1}"), std::runtime_error);
 }

@@ -115,8 +115,10 @@ struct Article
 
 const std::vector<Article> &documentation_articles();
 // The Pages site does not host the articles as pages yet, so the palette
-// opens the rendered Markdown in the repository.
-std::string article_url(const Article &article);
+// opens the rendered Markdown in the repository. With `cantonese` it opens the
+// article's Hong Kong Cantonese sibling (<name>.yue_HK.md), which links back to
+// the English article at its top.
+std::string article_url(const Article &article, bool cantonese = false);
 
 } // namespace Slic3r::GUI::PaletteIndex
 

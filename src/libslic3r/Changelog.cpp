@@ -282,6 +282,41 @@ Document load_document(const std::string &path)
     return parse_document(buffer.str());
 }
 
+size_t apply_translations(Document &document, const std::string &json_text)
+{
+    json root;
+    try {
+        root = json::parse(json_text);
+    } catch (const json::parse_error &e) {
+        throw std::runtime_error(std::string("changelog translation is not valid JSON: ") + e.what());
+    }
+    if (!root.is_object() || !root.contains("entries") || !root["entries"].is_object())
+        throw std::runtime_error("changelog translation: missing object \"entries\"");
+    const json &translations = root["entries"];
+    size_t applied = 0;
+    for (Release &release : document.releases) {
+        for (Entry &entry : release.entries) {
+            const auto found = translations.find(entry.sha);
+            if (found == translations.end() || !found->is_string())
+                continue;
+            entry.text_yue = found->get<std::string>();
+            if (!entry.text_yue.empty())
+                ++applied;
+        }
+    }
+    return applied;
+}
+
+size_t load_translations(Document &document, const std::string &path)
+{
+    std::ifstream stream(path, std::ios::binary);
+    if (!stream)
+        return 0; // no translation shipped: every entry stays English
+    std::ostringstream buffer;
+    buffer << stream.rdbuf();
+    return apply_translations(document, buffer.str());
+}
+
 std::string commit_url(const Document &document, const std::string &sha)
 {
     std::string url = document.commit_url_template;
@@ -355,7 +390,8 @@ std::vector<FilteredRelease> filter_releases(const Document &document, const Dat
                                     (!release.code_name_en.empty() && matcher(release.code_name_en)) ||
                                     (!release.code_name_yue.empty() && matcher(release.code_name_yue));
         for (const Entry &entry : release.entries) {
-            if (header_matches || matcher(entry.text) || matcher(entry.short_sha))
+            if (header_matches || matcher(entry.text) || matcher(entry.short_sha) ||
+                (!entry.text_yue.empty() && matcher(entry.text_yue)))
                 filtered.entries.push_back(&entry);
         }
         if (!filtered.entries.empty() || (header_matches && release.entries.empty()))
@@ -386,9 +422,14 @@ std::string category_title(const std::string &category)
 } // namespace
 
 std::string export_text(const Document &document, const std::vector<FilteredRelease> &releases, const DateRange &range,
-                        const std::string &search_description, ExportFormat format)
+                        const std::string &search_description, ExportFormat format, ExportLanguage language)
 {
     const bool markdown = format == ExportFormat::Markdown;
+    const auto entry_text = [language](const Entry &entry) -> std::string {
+        if (entry.text_yue.empty() || language == ExportLanguage::English)
+            return entry.text;
+        return language == ExportLanguage::Cantonese ? entry.text_yue : entry.text + " / " + entry.text_yue;
+    };
     std::ostringstream out;
 
     if (markdown)
@@ -440,10 +481,10 @@ std::string export_text(const Document &document, const std::vector<FilteredRele
         }
         for (const Entry *entry : filtered.entries) {
             if (markdown)
-                out << "- **" << category_title(entry->category) << "**: " << entry->text << " ([`" << entry->short_sha
+                out << "- **" << category_title(entry->category) << "**: " << entry_text(*entry) << " ([`" << entry->short_sha
                     << "`](" << commit_url(document, entry->sha) << ") " << entry->sha << ")\n";
             else
-                out << "- [" << category_title(entry->category) << "] " << entry->text << " (" << entry->sha << ")\n";
+                out << "- [" << category_title(entry->category) << "] " << entry_text(*entry) << " (" << entry->sha << ")\n";
         }
         out << "\n";
     }

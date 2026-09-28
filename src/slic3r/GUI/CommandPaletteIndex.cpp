@@ -250,9 +250,14 @@ const std::vector<Article> &documentation_articles()
     return articles;
 }
 
-std::string article_url(const Article &article)
+std::string article_url(const Article &article, bool cantonese)
 {
-    return std::string("https://github.com/Ding-Ding-Projects/BambuStudio/blob/main/") + article.path;
+    std::string path = article.path;
+    static const std::string extension = ".md";
+    if (cantonese && path.size() > extension.size() &&
+        path.compare(path.size() - extension.size(), extension.size(), extension) == 0)
+        path.insert(path.size() - extension.size(), ".yue_HK");
+    return std::string("https://github.com/Ding-Ding-Projects/BambuStudio/blob/main/") + path;
 }
 
 } // namespace Slic3r::GUI::PaletteIndex

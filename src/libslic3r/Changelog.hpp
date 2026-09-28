@@ -65,6 +65,7 @@ struct Entry
     std::string sha;       // full 40-hex commit id
     std::string short_sha; // first 9 characters
     std::string text;      // commit subject
+    std::string text_yue;  // Hong Kong Cantonese of text; empty when not translated
     std::string category;  // added | changed | fixed | removed | documented
 };
 
@@ -106,6 +107,16 @@ Document parse_document(const std::string &json_text);
 
 // Reads and parses a JSON file; the same error contract as parse_document.
 Document load_document(const std::string &path);
+
+// Attaches Hong Kong Cantonese entry text from a translation document
+// ({"schema": 1, "entries": {"<full sha>": "<Cantonese>"}}) and returns how
+// many entries received one. Entries without a translation keep an empty
+// text_yue. Throws std::runtime_error when the document is malformed.
+size_t apply_translations(Document &document, const std::string &json_text);
+
+// Reads a translation file (changelog.yue_HK.json beside changelog.json). A
+// missing file is not an error and applies nothing; a corrupt one throws.
+size_t load_translations(Document &document, const std::string &path);
 
 // Substitutes {sha} in the document's template.
 std::string commit_url(const Document &document, const std::string &sha);
@@ -149,12 +160,16 @@ std::size_t count_entries(const std::vector<FilteredRelease> &releases);
 
 enum class ExportFormat { Markdown, PlainText };
 
+// Which entry text an export carries, so it matches what the viewer shows:
+// English, the Cantonese (English where none exists), or both.
+enum class ExportLanguage { English, Cantonese, Both };
+
 // Serializes the filtered view. The header states the repository, the
 // exported date range, the active search (if any) and the counts; every entry
 // keeps its full SHA so a copied changelog stays traceable.
 std::string export_text(const Document &document, const std::vector<FilteredRelease> &releases,
                         const DateRange &range, const std::string &search_description,
-                        ExportFormat format);
+                        ExportFormat format, ExportLanguage language = ExportLanguage::English);
 
 } // namespace Slic3r::Changelog
 

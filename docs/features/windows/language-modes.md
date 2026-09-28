@@ -75,6 +75,25 @@ Known limits: other self-drawn widgets (tab strips, step indicators and similar 
 canvas (ImGui gizmos and notifications) are not yet bilingual. A label that the program rewrites
 while it is on screen shows English again until the next pass, which runs about every three seconds.
 
+## Documentation and changelog
+
+Every article under `docs/features` has a Hong Kong Cantonese translation beside it, named
+`<article>.yue_HK.md`. Its front matter records `review-status: agent-drafted` and the
+`source-sha256` of the English article it translates (the SHA-256 of the English text with CRLF
+line endings normalised to LF), and its first line links back to the English article. In Cantonese
+mode the command palette opens the translation; in English and bilingual modes it opens the English
+article.
+
+The in-app changelog reads `resources/changelog/changelog.yue_HK.json` beside `changelog.json`: a map
+from each entry's commit SHA to its Cantonese text. English mode shows the English entry, Cantonese
+mode the Cantonese (English where an entry has none), and bilingual mode both, the Cantonese below.
+Search matches either language, and Copy and Export carry the text the viewer shows. A missing or
+broken translation file leaves the changelog English rather than empty.
+
+`scripts/i18n/check_translated_content.py` fails when an article has no translation, when an English
+article changed after its translation was made (its hash no longer matches), or when a changelog
+entry has no Cantonese text. The report-only hosted job runs it on every push.
+
 ## Embedded web surfaces
 
 - DeviceWeb has key parity for all 202 English entries and builds a bilingual English-first variant.

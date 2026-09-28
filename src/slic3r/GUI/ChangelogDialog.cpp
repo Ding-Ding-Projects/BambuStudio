@@ -21,6 +21,8 @@
 #include <algorithm>
 #include <fstream>
 
+#include <boost/log/trivial.hpp>
+
 #include <wx/clipbrd.h>
 #include <wx/datetime.h>
 #include <wx/dcbuffer.h>
@@ -464,6 +466,25 @@ void ChangelogDialog::load_data()
         m_document.reset();
         m_load_error = e.what();
     }
+    if (!m_document)
+        return;
+    // The Cantonese entry text ships beside the English. A broken translation
+    // file must not cost anyone the changelog: the entries stay English.
+    try {
+        Changelog::load_translations(*m_document, resources_dir() + "/changelog/changelog.yue_HK.json");
+    } catch (const std::exception &e) {
+        BOOST_LOG_TRIVIAL(error) << "Changelog translation ignored: " << e.what();
+    }
+}
+
+// The changelog language follows the language mode: English, Cantonese, or both.
+static Changelog::ExportLanguage changelog_language()
+{
+    switch (I18N::language_mode_profile().kind) {
+    case I18N::LanguageModeKind::CantoneseHongKong: return Changelog::ExportLanguage::Cantonese;
+    case I18N::LanguageModeKind::BilingualEnglishCantoneseHongKong: return Changelog::ExportLanguage::Both;
+    default: return Changelog::ExportLanguage::English;
+    }
 }
 
 void ChangelogDialog::build_ui()
@@ -791,7 +812,15 @@ void ChangelogDialog::add_release_card(const Changelog::FilteredRelease &filtere
             chip->SetForegroundColour(StateColor::semantic(roles.second));
             row->Add(chip, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(10));
 
-            auto *text = new Label(card, Label::Body_13, wxString::FromUTF8(entry->text), LB_AUTO_WRAP | wxST_NO_AUTORESIZE);
+            wxString entry_text = wxString::FromUTF8(entry->text);
+            if (!entry->text_yue.empty()) {
+                const Changelog::ExportLanguage language = changelog_language();
+                if (language == Changelog::ExportLanguage::Cantonese)
+                    entry_text = wxString::FromUTF8(entry->text_yue);
+                else if (language == Changelog::ExportLanguage::Both)
+                    entry_text += "\n" + wxString::FromUTF8(entry->text_yue);
+            }
+            auto *text = new Label(card, Label::Body_13, entry_text, LB_AUTO_WRAP | wxST_NO_AUTORESIZE);
             text->SetMinSize(wxSize(0, -1));
             text->SetBackgroundColour(card_bg);
             text->SetForegroundColour(on);
@@ -915,7 +944,8 @@ std::string ChangelogDialog::export_text(Changelog::ExportFormat format) const
 {
     if (!m_document)
         return {};
-    return Changelog::export_text(*m_document, m_filtered, m_range, search_description(), format);
+    // The export carries the entry text the viewer shows in the current mode.
+    return Changelog::export_text(*m_document, m_filtered, m_range, search_description(), format, changelog_language());
 }
 
 void ChangelogDialog::show_toast(const wxString &text, bool error)
