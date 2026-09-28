@@ -8,7 +8,7 @@ review-status: agent-drafted
 
 # 破壞性動作超級確認
 
-**表面：** `SuperConfirmGate`（`src/slic3r/GUI/Widgets/SuperConfirmGate.{hpp,cpp}`）、由無工具包狀態機 `SuperConfirmState.hpp` 驅動。佢取代曾經喺應用嘅真正不可逆轉動作前面嘅是同埋否消息框。
+**表面：** `SuperConfirmGate`（`src/slic3r/GUI/Widgets/SuperConfirmGate.{hpp,cpp}`）、由無工具包狀態機 `SuperConfirmState.hpp` 驅動。佢取代曾經喺應用嘅真正不可逆轉動作前面嘅是同埋否訊息框。
 
 ## 行為
 
@@ -51,7 +51,7 @@ SuperConfirmGate::Show(anchor_window, spec,          // callback form: non-modal
 | 刪除墨水槽 | `Sidebar::delete_filament_with_confirm`（`Plater.cpp`）、由每列墨水選單使用（`GUI_Factories.cpp`）同埋繪圖字符刪除按鈕（`EVT_DEL_FILAMENT`） | 槽嘅組合框 | 名稱槽數同埋預設。大量墨水動作同埋合併保持佢們自己確認同埋直接呼叫 `delete_filament()`、所以一個批次確認一次、唔係每個槽。 |
 | 刪除板（板工具欄同埋板懸停動作） | `Plater::confirm_delete_plate`（`Plater.cpp`） | 3D 檢視（中心） | 只當板帶着對象；一個空板損失無嘢同埋被刪除冇門。 |
 | 停止打印 | `StopPrintGateDialog`（`StopPrintGate.cpp`） | 模式 | 先前存在相同解剖連鎖（兩個鑰匙、武裝按鈕、滑動、蓋）；見[停止打印安全連鎖](stop-print-interlock.md)。 |
-| 輸出同埋導入整個數據資料夾 | `ConfigProfilesDialog` | 喺對話框內 | 先前存在內聯 `SlideToConfirm` 武裝；尚未遷移到兩鑰匙門（見失敗模式）。 |
+| 輸出同埋匯入整個數據資料夾 | `ConfigProfilesDialog` | 喺對話框內 | 先前存在內聯 `SlideToConfirm` 武裝；尚未遷移到兩鑰匙門（見失敗模式）。 |
 
 **有意唔門控：** 從對象列表同埋 3D 場景刪除對象、部分或實例、同埋恢復一個項目歷史版本。兩者都係可撤銷、對象刪除帶一個撤銷同埋重做快照同埋恢復被記錄作為新歷史版本、所以超級確認那裏會係摩擦冇保護。對象列表刪除絕唔曾要求一個是同埋否之前。
 
@@ -65,7 +65,7 @@ SuperConfirmGate::Show(anchor_window, spec,          // callback form: non-modal
 - **錨銷毀而打開** 、 錨同埋返回焦點目標係 `wxWeakRef`；焦點恢復係跳過而唔係解引用一個死視窗。
 - **停用** 、 一個錨門當佢失去激活時取消佢自己、所以佢永遠無法被留下懸掛主視窗後面同埋一個半武裝滑動。
 - **減少運動** 、 `MD3::Motion::Anim::Play` 執行 `tick(1.0)` 同埋 `done()` 同步；完成突發因此完成（同埋激發回調）喺滑塊嘅完成處理器內。條紋爬行被守衛反對喺那個模式下重新啟動。
-- **配置檔案輸出同埋導入**仍然使用內聯滑塊唯一門從之前呢個改變；佢被列出上方所以間隙係一個記錄決定、唔係一個疏忽。
+- **配置檔案輸出同埋匯入**仍然使用內聯滑塊唯一門從之前呢個改變；佢被列出上方所以間隙係一個記錄決定、唔係一個疏忽。
 
 ## 安全考慮
 

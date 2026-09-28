@@ -20,7 +20,7 @@ review-status: agent-drafted
 
 - **每個版本，最新優先。** 每個發佈卡片顯示發佈號、佢嘅點心代號中英文恰好係發佈命名嘅樣子、UTC 發佈日期、標籤、一個 *發佈頁面* 連結，同埋每行一個提交喺嗰個發佈同埋前一個發佈之間。冇啲嘢列出嘅發佈會話邊三個誠實原因適用（最舊發佈、與前代相同提交、冇記錄提交）而唔係填充。
 - **每個條目連結佢嘅提交。** 該行顯示 9 字符短 SHA 喺等寬連結中，其提示文字帶 40 字符完整 SHA；激活佢打開 `https://github.com/Ding-Ding-Projects/BambuStudio/commit/<sha>` 喺預設瀏覽器。該連結嘅可訪問名稱係「Open commit *sha* on GitHub」。
-- **類別徽章** 從提交主題嘅前導動詞機械性派生（`fix…` → Fixed、`add…` → Added、`remove…` → Removed、`document…`/`handoff…` → Documented、其他 Changed）由導出器使用，網站使用相同規則。
+- **類別徽章** 從提交主題嘅前導動詞機械性派生（`fix…` → Fixed、`add…` → Added、`remove…` → Removed、`document…`/`handoff…` → Documented、其他 Changed）由匯出器使用，網站使用相同規則。
 - **搜尋** 通過共享 `SearchField` 藥丸執行；預設純文字，`.*` 切換同埋 `tune` 按鈕打開完整 [regex 構建器](regex-builder.md)，帶有大小寫、整詞同埋多行標誌。查詢匹配條目文字、短 SHA，同埋發佈嘅版本、標籤同埋代號（標頭命中保持嗰個發佈嘅所有條目）。
 - **日期過濾器。** *從* 同埋 *到* 字段接受類型化日期；ISO `YYYY-MM-DD` 總係，或地區嘅短順序（`DD/MM/YYYY` 或 `MM/DD/YYYY`，用 `/`、`-`、`.` 或空格分隔）帶四位數年份。不完整或不可能嘅條目（`2026-09`、`8/9/26`、`30/02/2026`）保持喺字段中，並且內聯報告（「From 日期仲未完整。預期 …」）；前一個限制保持應用，直到文字再次變成日期。空字段係開放限制。一個 *To* 喺 *From* 前報告為「no version can match」而唔係默默交換。
 - **日曆選擇器。** 日曆按鈕喺日期行下打開一個錨定彈出視窗；前一個同埋下一個月、月份選擇、年份轉軸（1970–9999）、Monday 優先 7×6 網格，帶有今天列明同埋選定範圍填充、一個 *清除日期* 操作同埋 *完成*。兩次點擊選擇範圍（第二次點擊喺第一次前交換佢哋）。鍵盤；箭頭按日同埋周移動、<kbd>PgUp</kbd>/<kbd>PgDn</kbd> 更改月份、<kbd>Home</kbd> 跳到今天、<kbd>Enter</kbd> 或 <kbd>Space</kbd> 揀、<kbd>Esc</kbd> 關閉。每個改動將 ISO 日期寫入字段並實時重新過濾列表。彈出視窗喺錨點上方翻轉或向左滑動，當佢會離開顯示時。
@@ -41,10 +41,10 @@ node scripts/changelog/export-app-changelog.mjs --offline  # rebuild from ui-md3
 node scripts/changelog/export-app-changelog.mjs --check    # exit 1 when the committed JSON is stale
 ```
 
-導出器重用 [`ui-md3/scripts/build-changelog.mjs`](../../../ui-md3/scripts/build-changelog.mjs)
+匯出器重用 [`ui-md3/scripts/build-changelog.mjs`](../../../ui-md3/scripts/build-changelog.mjs)
 嘅解析（發佈名解析、主體元數據、動詞分類、`git log` 介於標籤之間），所以應用程式同埋網站永遠無法不同意版本、日期或類別。要求；Node 18+、已認證嘅 `gh`（在線模式）同埋已取得發佈標籤嘅檢出。完整刷新耗時約兩分鐘，因為每個引用嘅 SHA 個別解析。
 
-**每個 SHA 都被驗證。** 每個發佈提交同埋條目 SHA 用 `git rev-parse --verify <sha>^{commit}` 解析；未知、不明確或非提交 id 導致導出失敗。應用程式側嘅解析器另外拒絕任何 SHA 唔恰好係 40 個十六進位字符嘅條目，所以死亡提交連結無法運送。導出器仲拒絕寫一個列出少於提交數量嘅檔案（部分 API 頁面或缺失標籤）。
+**每個 SHA 都被驗證。** 每個發佈提交同埋條目 SHA 用 `git rev-parse --verify <sha>^{commit}` 解析；未知、不明確或非提交 id 導致匯出失敗。應用程式側嘅解析器另外拒絕任何 SHA 唔恰好係 40 個十六進位字符嘅條目，所以死亡提交連結無法運送。匯出器仲拒絕寫一個列出少於提交數量嘅檔案（部分 API 頁面或缺失標籤）。
 
 架構（`schema: 1`）；
 
@@ -71,7 +71,7 @@ node scripts/changelog/export-app-changelog.mjs --check    # exit 1 when the com
 - 執行時係離線；查看器讀一個綑綁嘅 JSON 檔案同埋只通過系統預設瀏覽器帶從提交範本同埋驗證 40 十六進位 SHA 構建嘅 URL 打開連結。
 - Regex 搜尋由共享有界 regex 工作者評估，帶相同截止期限同埋大小限制為每個其他搜尋欄；一個災難模式超時並匹配冇嘢。
 - 匯出只寫到用戶喺儲存對話框中揀嘅路徑；冇嘢被發送任何地方。
-- 導出器執行 `gh` 同埋 `git` 唯讀，並只寫 `resources/changelog/changelog.json`。
+- 匯出器執行 `gh` 同埋 `git` 唯讀，並只寫 `resources/changelog/changelog.json`。
 
 ## 驗證
 

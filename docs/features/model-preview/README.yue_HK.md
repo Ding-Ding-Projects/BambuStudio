@@ -10,6 +10,6 @@ review-status: agent-drafted
 
 呢個類別記錄原生模型預覽特性。
 
-- [MakerWorld OpenGL 預覽](makerworld-opengl-preview.md)；互動 3D 預覽，喺一個下載 MakerWorld 模型被導入準備前顯示。
+- [MakerWorld OpenGL 預覽](makerworld-opengl-preview.md)；互動 3D 預覽，喺一個下載 MakerWorld 模型被匯入準備前顯示。
 
 冇 Postman 集合適用；呢個類別曝露冇 HTTP API。

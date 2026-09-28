@@ -21,7 +21,7 @@ review-status: agent-drafted
 - [正則表達式構建器](regex-builder.md) ， 共用組件、佢嘅引擎同埋方言、引導構造控制同埋有界評估，保留一個失控模式離頁面。
 - [更新日誌查看器](changelog-viewer.md) ， 每個已發佈 release、日曆同埋輸入日期過濾、組成搜尋同埋 Markdown 匯出。
 - [設定同埋外觀](settings-and-appearance.md) ， 主題、密度、主色調種子、排版、每元素編輯、設定搜尋同埋該網站上一個阻塞對話框。
-- [通知](notifications.md) ， toast 棧、通知中心同埋哪些消息被允許阻塞。
+- [通知](notifications.md) ， toast 棧、通知中心同埋哪些訊息被允許阻塞。
 - [Dim sum 驚喜](dim-sum-surprise.md) ， 10% 啟動喜悅、佢嘅公開目錄照片同埋條件，喺佢保持安靜下。
 - [部署同埋佈局門](deployment-and-layout-gate.md) ， 點解網站係組成、已發佈同埋被保留到 447 測量佈局情況，前一個部署被允許。
 

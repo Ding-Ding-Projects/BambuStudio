@@ -2,20 +2,42 @@
 
 ## Current state
 
-At 2026-09-27 21:07 UTC, source revision
-`d62a9f19bc2da75af09830079ae14b8c1b38b0b8` was integrated into `main`
-and confirmed with `git ls-remote`. It includes the hook-copying repair
-`73d50e270`, documentation updates, and the isolated startup trace
-`548ab63d8`. [Production run 36350518177](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36350518177)
-had failed by the 21:12 UTC observation, repeating `C1041` while opening
-`mcut.pdb`. No green production or current-source package verdict is
-claimed. The integrated source includes the fresh
-reapplication on official Bambu Studio `v02.08.04.57` source
-`f977235e6d736c4c0b650520ac5a5b72cbfe9244`, plus bounded native model
-observation (`257c700e3`) and exact 3MF model-state verification
-(`68d1be871`). The pinned source for the earlier fork features is
-`c5df6199e1a83b1c94be12e999c0b322fded8730`; that is a source input,
-not the new package's verification identity.
+At 2026-09-28 08:40 UTC, `main` is at `e4fc4be11c0e87a9600f1257b92e4bc6c64acac7`, confirmed with
+`git ls-remote`. The production build is green: Build BambuStudio passed in
+[run 36383765054](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36383765054) at
+`fda9ba2840c35f3aef500ab0810db9463fe0c0bf`, and the same run published
+[`md3-v135`](https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v135) with an unsigned
+Squirrel.Windows `Setup.exe` (708,598,272 bytes), the full `.nupkg`, `RELEASES` and `Setup.exe.sha256`.
+The `C1041` PDB failure was removed by `6bb896464` (no `/Zi` when `SLIC3R_MSVC_PDB` is off) and the
+`CBaseException` link failure by `ee8ab3eb1`. The startup exit `0x80070057`, both file-opening routes and the
+DPI matrix have not been re-checked against `md3-v135`; an isolated install of that package is not yet
+verified.
+
+The integrated source includes the fresh reapplication on official Bambu Studio `v02.08.04.57` source
+`f977235e6d736c4c0b650520ac5a5b72cbfe9244`, plus bounded native model observation (`257c700e3`) and exact
+3MF model-state verification (`68d1be871`). The pinned source for the earlier fork features is
+`c5df6199e1a83b1c94be12e999c0b322fded8730`; that is a source input, not the new package's verification
+identity.
+
+## Language modes and Material Design 3 (issues #43 and #45)
+
+Scope: every element on the Material Design 3 kit, and every element in English, Hong Kong Cantonese and
+bilingual mode. Work lives on branch `claude/lang-gui-elements-9cc0be` and is merged to `main` per lane.
+
+- Landed and compiled (release `md3-v135`): kit conversion (36 of 36 contracts, `de1f25259`); complete
+  Cantonese catalogue with a drafted-entry audit (`db39e3bb1`, `50e82299f`); about 200 literals routed through
+  the translation layer (`e3686f59c`); the bilingual registry and fit-aware decorator (`97133f71f`,
+  `9b6baf096`); local web language routing (`08ae598e4`); Cantonese docs and changelog with a matching command
+  palette and changelog viewer (`e604fefc9`, `fda9ba284`).
+- Checks: `scripts/i18n/Test-LanguageModes.ps1` (catalogues, audit, web keys, docs and changelog) and
+  `scripts/ci/Test-InkTerminology.ps1` run locally before a push; the workflow builds and publishes only
+  (`e4fc4be11`). `language_mode_tests` is not built by the workflow.
+- The in-app changelog covers releases up to `md3-v135` (141 releases, 1,227 entries) with Cantonese text for
+  every commit it lists; `check_translated_content.py` reports 0 problems.
+- In progress: bilingual self-drawn widgets and 3D canvas, a Traditional Chinese CJK font for ImGui, the last
+  123 literals, and DeviceWeb and ui-md3 gaps.
+- Not verified: behaviour in a running application in any of the three modes (no captures from a released build
+  yet), and human review of the agent-drafted Cantonese.
 
 `docs/reapplication/source-manifest.csv` gives the selected path inventory and
 source/official blob IDs. `docs/reapplication/loader-adapters.md` records the

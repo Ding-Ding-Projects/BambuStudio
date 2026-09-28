@@ -3,11 +3,3984 @@
   "repository": "Ding-Ding-Projects/BambuStudio",
   "commitUrlTemplate": "https://github.com/Ding-Ding-Projects/BambuStudio/commit/{sha}",
   "source": "GitHub Releases API + git log",
-  "generated": "2026-09-09T03:39:57.390Z",
+  "generated": "2026-09-28T08:46:51.413Z",
   "categoryDerivation": "leading-verb of the commit subject",
-  "releaseCount": 119,
-  "entryCount": 638,
+  "releaseCount": 141,
+  "entryCount": 1227,
   "releases": [
+    {
+      "tag": "md3-v135",
+      "version": "v135",
+      "ordinal": 135,
+      "date": "2026-09-28",
+      "published": "2026-09-28T07:53:53Z",
+      "codeName": {
+        "en": "Butter and Jam Toast",
+        "yue": "油占多"
+      },
+      "qualifier": "claude/lang-gui-elements-9cc0be",
+      "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v135",
+      "prerelease": false,
+      "baseline": false,
+      "sameCommit": false,
+      "commit": "fda9ba2840c35f3aef500ab0810db9463fe0c0bf",
+      "build": "v135 \"Butter and Jam Toast 油占多\" (app build 02.08.04.57)",
+      "entries": [
+        {
+          "sha": "fda9ba2840c35f3aef500ab0810db9463fe0c0bf",
+          "short": "fda9ba284",
+          "text": "Open Cantonese docs and changelog text in Cantonese mode",
+          "category": "changed"
+        },
+        {
+          "sha": "e604fefc956469486af5bf6dff0ca3cdb07d06e4",
+          "short": "e604fefc9",
+          "text": "Translate the feature docs and changelog into Hong Kong Cantonese",
+          "category": "changed"
+        }
+      ]
+    },
+    {
+      "tag": "md3-v134",
+      "version": "v134",
+      "ordinal": 134,
+      "date": "2026-09-28",
+      "published": "2026-09-28T07:25:09Z",
+      "codeName": {
+        "en": "Club Sandwich",
+        "yue": "公司三文治"
+      },
+      "qualifier": "claude/lang-gui-elements-9cc0be",
+      "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v134",
+      "prerelease": false,
+      "baseline": false,
+      "sameCommit": false,
+      "commit": "adc30a7ba170d2043e24a514a51b9258a95c373a",
+      "build": "v134 \"Club Sandwich 公司三文治\" (app build 02.08.04.57)",
+      "entries": [
+        {
+          "sha": "adc30a7ba170d2043e24a514a51b9258a95c373a",
+          "short": "adc30a7ba",
+          "text": "Give the clipping inventory plain English file names",
+          "category": "changed"
+        },
+        {
+          "sha": "db39e3bb1111780fbb4cacea60c4a596db598f8b",
+          "short": "db39e3bb1",
+          "text": "Translate the 258 newly extracted messages and require completeness",
+          "category": "changed"
+        },
+        {
+          "sha": "e3686f59c0c0337a4fb0e8b729da362cde6b3031",
+          "short": "e3686f59c",
+          "text": "Route about 200 more UI strings through the translation layer",
+          "category": "changed"
+        },
+        {
+          "sha": "5b5c3f4f85c5f039e1dde4bafdd6de15b29bfaaa",
+          "short": "5b5c3f4f8",
+          "text": "Run the Material Design 3 contracts in the hosted report job too",
+          "category": "changed"
+        },
+        {
+          "sha": "de1f25259ef9c38efb3278c729e9af0ab16531f4",
+          "short": "de1f25259",
+          "text": "Move the last stock controls onto the Material Design 3 kit",
+          "category": "changed"
+        }
+      ]
+    },
+    {
+      "tag": "md3-v133",
+      "version": "v133",
+      "ordinal": 133,
+      "date": "2026-09-28",
+      "published": "2026-09-28T06:57:21Z",
+      "codeName": {
+        "en": "Ham and Egg Sandwich",
+        "yue": "火腿蛋治"
+      },
+      "qualifier": "superseded main build",
+      "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v133",
+      "prerelease": false,
+      "baseline": false,
+      "sameCommit": false,
+      "commit": "9b6baf0963fe89ab3ecb68e82c25c617d4a3ecf3",
+      "build": "v133 \"Ham and Egg Sandwich 火腿蛋治\" (app build 02.08.04.57)",
+      "entries": [
+        {
+          "sha": "9b6baf0963fe89ab3ecb68e82c25c617d4a3ecf3",
+          "short": "9b6baf096",
+          "text": "Keep the vocabulary visibly applied on every finish() return",
+          "category": "changed"
+        }
+      ]
+    },
+    {
+      "tag": "md3-v132",
+      "version": "v132",
+      "ordinal": 132,
+      "date": "2026-09-28",
+      "published": "2026-09-28T06:29:20Z",
+      "codeName": {
+        "en": "Egg and Beef Sandwich",
+        "yue": "蛋牛治"
+      },
+      "qualifier": "superseded main build",
+      "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v132",
+      "prerelease": false,
+      "baseline": false,
+      "sameCommit": false,
+      "commit": "97133f71f168dc555336915d7cf6d2ad23638461",
+      "build": "v132 \"Egg and Beef Sandwich 蛋牛治\" (app build 02.08.04.57)",
+      "entries": [
+        {
+          "sha": "97133f71f168dc555336915d7cf6d2ad23638461",
+          "short": "97133f71f",
+          "text": "Show both languages on every native window in bilingual mode",
+          "category": "changed"
+        },
+        {
+          "sha": "08ae598e4efb215c0b8a6bf2392559d0ae22c05d",
+          "short": "08ae598e4",
+          "text": "Open local web pages in the Cantonese and bilingual modes too",
+          "category": "changed"
+        },
+        {
+          "sha": "8fc36429bdd892718b6cc2b150af600401aa1000",
+          "short": "8fc36429b",
+          "text": "Run the language checks on every push, without holding releases",
+          "category": "changed"
+        },
+        {
+          "sha": "ee8ab3eb14ac98d7c8ed4ee0ddbf0b684c9bd73a",
+          "short": "ee8ab3eb1",
+          "text": "Link the Windows crash handler sources into the app DLL again",
+          "category": "changed"
+        },
+        {
+          "sha": "76760fabcc0a53c68368f7b546cdb32cc9692219",
+          "short": "76760fabc",
+          "text": "Complete the Hong Kong Cantonese catalogue at 7,374 messages",
+          "category": "changed"
+        },
+        {
+          "sha": "4e011e5af4acca65f54cbca1ca953cf7a73fb059",
+          "short": "4e011e5af",
+          "text": "Translate 938 more messages and settle Hong Kong term choices",
+          "category": "changed"
+        },
+        {
+          "sha": "50e82299f1afd7abbf7df3121716438d26560a50",
+          "short": "50e82299f",
+          "text": "Purge misattached Cantonese drafts and gate merges on alignment",
+          "category": "changed"
+        },
+        {
+          "sha": "fd41bb2406101a6162960ccdfd42586bedec1fae",
+          "short": "fd41bb240",
+          "text": "Localize the connection, login-error and home page leftovers",
+          "category": "changed"
+        },
+        {
+          "sha": "39581c57ae07206c15de33a6787fa3b311549f62",
+          "short": "39581c57a",
+          "text": "Stop counting \"94% if\" as a format placeholder",
+          "category": "changed"
+        },
+        {
+          "sha": "e0e5bcbb7d3d87bbec5b877acd7525fd8dc34a4c",
+          "short": "e0e5bcbb7",
+          "text": "Choose llvmpipe before the launcher loads staged Mesa",
+          "category": "changed"
+        },
+        {
+          "sha": "eb516f3bf4fe9279c0f6aa3057447e929d316b34",
+          "short": "eb516f3bf",
+          "text": "Teach the vocabulary contract the single translation hook",
+          "category": "changed"
+        },
+        {
+          "sha": "037c04283e55e620fd79dbeb3fd45928d148ea77",
+          "short": "037c04283",
+          "text": "Translate 2,120 more messages into Hong Kong Cantonese",
+          "category": "changed"
+        },
+        {
+          "sha": "65a98cc727cd639f61d6daa026f968d7a1f73b83",
+          "short": "65a98cc72",
+          "text": "Keep compiling past the first error in hosted builds",
+          "category": "changed"
+        },
+        {
+          "sha": "cf4454e589e82b7bf6155112042d866dce2c6607",
+          "short": "cf4454e58",
+          "text": "Validate Cantonese drafts before they reach the catalogue",
+          "category": "changed"
+        },
+        {
+          "sha": "da8b44ee34dd349f2ae0df3f1cbae366df482354",
+          "short": "da8b44ee3",
+          "text": "Refactor ParamTooltip to use wxPopupWindow for improved GTK compatibility",
+          "category": "changed"
+        },
+        {
+          "sha": "64d662a4d70fe23179c2a552074fa4799f2444dd",
+          "short": "64d662a4d",
+          "text": "Declare the layout probe's handle_of before its first use",
+          "category": "changed"
+        },
+        {
+          "sha": "952ee99d9543f18fd5dafb7072f3c93ce5b814dd",
+          "short": "952ee99d9",
+          "text": "Repair stale one-click build contracts and stop matching comments",
+          "category": "fixed"
+        },
+        {
+          "sha": "e478fba733d4f0eb4eb5c364d123123750c02079",
+          "short": "e478fba73",
+          "text": "Show corrected English for untranslated Cantonese text",
+          "category": "changed"
+        },
+        {
+          "sha": "94ecd98582ba55e1696343374d7e466813414ad4",
+          "short": "94ecd9858",
+          "text": "Extract every translatable string into the catalogues",
+          "category": "changed"
+        },
+        {
+          "sha": "cfddafdbda753e10eb9d7449a2f61bf116ec14ea",
+          "short": "cfddafdbd",
+          "text": "Compile the English and Cantonese catalogues during the build",
+          "category": "changed"
+        },
+        {
+          "sha": "d95493e64a8b1e27a2686225466cde7f586642ab",
+          "short": "d95493e64",
+          "text": "Repair and normalise the Cantonese catalogue",
+          "category": "fixed"
+        },
+        {
+          "sha": "6bb89646415d6fda9ab9536f999ed48ebb625e49",
+          "short": "6bb896464",
+          "text": "Compile without /Zi when SLIC3R_MSVC_PDB is off",
+          "category": "changed"
+        },
+        {
+          "sha": "a58df267bd9e3b30d1a3c68273b9990b6f409d99",
+          "short": "a58df267b",
+          "text": "Preserve terminal compiler and startup-trace evidence",
+          "category": "changed"
+        },
+        {
+          "sha": "548ab63d86f88db31e348316c9520d037e250180",
+          "short": "548ab63d8",
+          "text": "Reject incomplete hosted debugger teardown and echoed markers",
+          "category": "changed"
+        },
+        {
+          "sha": "72fdd70ce86222fc221fbc6e9e4844bf146faca4",
+          "short": "72fdd70ce",
+          "text": "Correct candidate wording and record hosted build failure",
+          "category": "fixed"
+        },
+        {
+          "sha": "3473bd64cd3d006969353dc695d57c469c2b838a",
+          "short": "3473bd64c",
+          "text": "Record hosted verification and current build limits",
+          "category": "documented"
+        },
+        {
+          "sha": "7179f66619c826bc4c0b91ba2aee6bc661bc60e6",
+          "short": "7179f6661",
+          "text": "Verify hosted trace process and desktop teardown",
+          "category": "changed"
+        },
+        {
+          "sha": "73d50e270fa10da2015f17240c652e7cf872cd4b",
+          "short": "73d50e270",
+          "text": "Copy the pre-commit hook without CMake substitution",
+          "category": "changed"
+        },
+        {
+          "sha": "32186c1c8fa8aa4dcae1aed717e137f96966e230",
+          "short": "32186c1c8",
+          "text": "Add hosted exact-PID startup trace for published release",
+          "category": "added"
+        },
+        {
+          "sha": "acd4c0489fc2952e62b27315cd93502484fe6ca2",
+          "short": "acd4c0489",
+          "text": "Add scoped hosted evidence contract checks",
+          "category": "added"
+        },
+        {
+          "sha": "ac8f5f26093cd9ec2c823f20cf10edbd2c8d2d03",
+          "short": "ac8f5f260",
+          "text": "Compare hosted contract inventories as exact arrays",
+          "category": "changed"
+        },
+        {
+          "sha": "24cd8f06fef4e9627b9e14571bd3ab8f087b83a4",
+          "short": "24cd8f06f",
+          "text": "Bind hosted behavior reports to completeness contract",
+          "category": "changed"
+        },
+        {
+          "sha": "506e8759850953386509c099779b346d7e5c4faa",
+          "short": "506e87598",
+          "text": "Align teardown fixtures with verified closure",
+          "category": "changed"
+        },
+        {
+          "sha": "02670e9899cda8008c3d7362cab2b8b8d4eaed56",
+          "short": "02670e989",
+          "text": "Run behavior coverage checks in the hosted diagnostic route",
+          "category": "changed"
+        },
+        {
+          "sha": "67507fcb1cc97d28200524c9c4da70c559c7bb73",
+          "short": "67507fcb1",
+          "text": "Bind startup seed hash before launching the app",
+          "category": "changed"
+        },
+        {
+          "sha": "1a4984002ec0b26b0e0fadba7617dfb44ee68b13",
+          "short": "1a4984002",
+          "text": "Correct teardown fixture call expectation",
+          "category": "fixed"
+        },
+        {
+          "sha": "feee83df9b82d725eaf909b1e3ebf60dc41054ef",
+          "short": "feee83df9",
+          "text": "Verify startup case teardown and preserve partial streams",
+          "category": "changed"
+        },
+        {
+          "sha": "a6ec8a4cbb6254c29a6f150fe378ff8cecdbe590",
+          "short": "a6ec8a4cb",
+          "text": "Require recent and responsive opening evidence",
+          "category": "changed"
+        },
+        {
+          "sha": "6208dd4a02caeef395a33c52497940c8f22eb43a",
+          "short": "6208dd4a0",
+          "text": "Define hosted behavior completeness contract",
+          "category": "changed"
+        },
+        {
+          "sha": "2ac3b15072ac5e676de3f14da55a1e2286057391",
+          "short": "2ac3b1507",
+          "text": "Compare packaged startup through direct and held launches",
+          "category": "changed"
+        },
+        {
+          "sha": "66448d8c13ad07e2625046ada224721df4a9eed7",
+          "short": "66448d8c1",
+          "text": "Document current official-source candidate and verification limits",
+          "category": "documented"
+        },
+        {
+          "sha": "68d1be87146532d0e1801545ab84111515c791ff",
+          "short": "68d1be871",
+          "text": "Verify File Open with exact 3MF model probe state",
+          "category": "changed"
+        },
+        {
+          "sha": "257c700e315648ba621313992e516d910ec33209",
+          "short": "257c700e3",
+          "text": "Correct probe printability and JSON name validity",
+          "category": "fixed"
+        },
+        {
+          "sha": "0ff1ffdbd8c726e2e56e3b1d8738accd4f5344d5",
+          "short": "0ff1ffdbd",
+          "text": "Launch hosted holder with base CPython identity",
+          "category": "changed"
+        },
+        {
+          "sha": "59a4b87b0929e25c7a013c08a2ef0ba93312d668",
+          "short": "59a4b87b0",
+          "text": "Record loaded model state in opt-in layout probe",
+          "category": "documented"
+        },
+        {
+          "sha": "adddd90f1efe0a16c94f826d87c371d319b8a7e3",
+          "short": "adddd90f1",
+          "text": "Record official-source verification identities and current limits",
+          "category": "documented"
+        },
+        {
+          "sha": "87e005deda7ce118612df67ea1f0a9ab8d3849be",
+          "short": "87e005ded",
+          "text": "Preserve candidate symbols and payload SBOM",
+          "category": "changed"
+        },
+        {
+          "sha": "e5fe62a1ed4f6516b79d5f755f89f62dd1e94977",
+          "short": "e5fe62a1e",
+          "text": "Store complete project filenames in tab state",
+          "category": "changed"
+        },
+        {
+          "sha": "3d8ed843c1441934380c31921435088582b1d516",
+          "short": "3d8ed843c",
+          "text": "Keep saved tab identity through aborted close",
+          "category": "changed"
+        },
+        {
+          "sha": "d3f240d982d0a5c2a8987ace4cd40da5dd981d1e",
+          "short": "d3f240d98",
+          "text": "Add hosted build and unsigned package for official feature candidate",
+          "category": "added"
+        },
+        {
+          "sha": "daded719412d1a50294e2bac3c2bb851c44eec5d",
+          "short": "daded7194",
+          "text": "Document official-source candidate and pending verification",
+          "category": "documented"
+        },
+        {
+          "sha": "44f42459216243c02d62c9bdfde46ac80a59759b",
+          "short": "44f424592",
+          "text": "Restore required release and staging helpers",
+          "category": "fixed"
+        },
+        {
+          "sha": "3fc2ebb50b805a2f45b5347f22b39e131d82c5fd",
+          "short": "3fc2ebb50",
+          "text": "Carry focused regression sources into official-base lane",
+          "category": "changed"
+        },
+        {
+          "sha": "70a1f3488f280bd62dd3f0e8c7877ec11b3b38ee",
+          "short": "70a1f3488",
+          "text": "Carry feature guides onto official-source candidate",
+          "category": "changed"
+        },
+        {
+          "sha": "e9d01e4865a4e3a80fd1891b0248c532dffb4e8f",
+          "short": "e9d01e486",
+          "text": "Restore supported Windows build and Squirrel packaging route",
+          "category": "fixed"
+        },
+        {
+          "sha": "7f01776f40e3d052cb06cc964dcb6e2a7a1a0ada",
+          "short": "7f01776f4",
+          "text": "Keep private tab snapshots out of Recent Projects",
+          "category": "changed"
+        },
+        {
+          "sha": "4d34f859c99b01d577354c8c6354815fe00c39e5",
+          "short": "4d34f859c",
+          "text": "Reapply Windows launcher diagnostics and Mesa loading",
+          "category": "changed"
+        },
+        {
+          "sha": "257706ced90866e277457a952ec6879a8dd1d048",
+          "short": "257706ced",
+          "text": "Register feature sources while preserving official platform paths",
+          "category": "changed"
+        },
+        {
+          "sha": "9e42dd926fd316e37eb7200a9cc665fdd9708004",
+          "short": "9e42dd926",
+          "text": "Keep clean tab state on rejected project open",
+          "category": "changed"
+        },
+        {
+          "sha": "62653e5f171a3cc88b6c636070136f812cc53054",
+          "short": "62653e5f1",
+          "text": "Snapshot active project before close confirmation",
+          "category": "changed"
+        },
+        {
+          "sha": "b4e21e59e245dba2310a9bc92b71cbcbda58bbd9",
+          "short": "b4e21e59e",
+          "text": "Restore real save target after rejected project load",
+          "category": "fixed"
+        },
+        {
+          "sha": "c9eb5d908df2a3fd820807c3f95e21560c1fcc4f",
+          "short": "c9eb5d908",
+          "text": "Require continuous owned frame for vendor liveness verdict",
+          "category": "changed"
+        },
+        {
+          "sha": "782eaf24ae34063dd9ca18b9e4cd204de83cfaf1",
+          "short": "782eaf24a",
+          "text": "Run vendor comparison from scoped branch pushes",
+          "category": "changed"
+        },
+        {
+          "sha": "a1d8d7bf7de3c5f8ad805a5008f69f9add3b7ebc",
+          "short": "a1d8d7bf7",
+          "text": "Port deterministic 3MF serialization support",
+          "category": "changed"
+        },
+        {
+          "sha": "72935fcc9c1de9cbda9039b3270741f133aaacbb",
+          "short": "72935fcc9",
+          "text": "Reapply project hosts with rejected-load preservation",
+          "category": "changed"
+        },
+        {
+          "sha": "831f0c248c752f6e8c7e25204ee6d0d10bcb3622",
+          "short": "831f0c248",
+          "text": "Add hosted comparison for official portable package",
+          "category": "added"
+        },
+        {
+          "sha": "00202512a928b2336860e0c0f6befa7e7b47f0d5",
+          "short": "00202512a",
+          "text": "Use documentation address in sharing-service comment",
+          "category": "changed"
+        },
+        {
+          "sha": "23d236076554b5a4af9abd917920858fd7ae244c",
+          "short": "23d236076",
+          "text": "Port application and preferences hosts",
+          "category": "changed"
+        },
+        {
+          "sha": "bc058d1e66e6f07a54a80c05535b97b13e5e23a3",
+          "short": "bc058d1e6",
+          "text": "Port native surface adapters onto official base",
+          "category": "changed"
+        },
+        {
+          "sha": "c043ca1dab98508a18f9f7a58280564c10724c08",
+          "short": "c043ca1da",
+          "text": "Port canvas and preparation adapters",
+          "category": "changed"
+        },
+        {
+          "sha": "8eab0ae799cc2e9629e520049607c2c8bcc4a64e",
+          "short": "8eab0ae79",
+          "text": "Port standalone native feature components",
+          "category": "changed"
+        },
+        {
+          "sha": "a5926d8d922ae8496f6131e46cac8dc82a6f9fb0",
+          "short": "a5926d8d9",
+          "text": "Port core services and export components onto official base",
+          "category": "changed"
+        },
+        {
+          "sha": "3347dd93fc5e1eb1bff9f93642f9215de4d7165f",
+          "short": "3347dd93f",
+          "text": "Port established website and design system sources",
+          "category": "changed"
+        },
+        {
+          "sha": "7d46ec5896a78c4c7c0361e984a5b92fed7ed67e",
+          "short": "7d46ec589",
+          "text": "Port localized visual assets onto official base",
+          "category": "changed"
+        },
+        {
+          "sha": "9c011fb0493f6361cc3344da11febd0d98c59ec1",
+          "short": "9c011fb04",
+          "text": "Port print and device feature sources onto official base",
+          "category": "changed"
+        },
+        {
+          "sha": "69b573ffc8594cf37eca193902f4173841fa66b3",
+          "short": "69b573ffc",
+          "text": "Port workspace and history components onto official base",
+          "category": "changed"
+        },
+        {
+          "sha": "f1be6e49280700913080ec424c593817e745577d",
+          "short": "f1be6e492",
+          "text": "Port Model Creator components onto official base",
+          "category": "changed"
+        },
+        {
+          "sha": "55713f72bbe4f909fde11fb652870a79e23d4ded",
+          "short": "55713f72b",
+          "text": "Keep verified CMake executable through hosted bootstrap",
+          "category": "changed"
+        },
+        {
+          "sha": "4e49f7487d8cef214a90b02d8c9a6f03125eaef4",
+          "short": "4e49f7487",
+          "text": "Port native controls and appearance sources onto official base",
+          "category": "changed"
+        },
+        {
+          "sha": "a7e4773aa36cd78ab77ab16a5f5c45472dc88b57",
+          "short": "a7e4773aa",
+          "text": "Select hosted Visual Studio 2026 for official baseline",
+          "category": "changed"
+        },
+        {
+          "sha": "1992520cedcce02290784a17ba0331186aa40b8f",
+          "short": "1992520ce",
+          "text": "Add hosted Windows baseline diagnostic for official source",
+          "category": "added"
+        }
+      ]
+    },
+    {
+      "tag": "md3-v131",
+      "version": "v131",
+      "ordinal": 131,
+      "date": "2026-09-27",
+      "published": "2026-09-27T21:47:44Z",
+      "codeName": {
+        "en": "Egg Sandwich",
+        "yue": "蛋治"
+      },
+      "qualifier": "codex/packaged-behavior-drive",
+      "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v131",
+      "prerelease": false,
+      "baseline": false,
+      "sameCommit": false,
+      "commit": "5707c0e2fca1b03902176ef07dc1bf454a75a809",
+      "build": "v131 \"Egg Sandwich 蛋治\" (app build 02.08.04.57)",
+      "entries": [
+        {
+          "sha": "5707c0e2fca1b03902176ef07dc1bf454a75a809",
+          "short": "5707c0e2f",
+          "text": "Bound hosted holder lifetime and verify teardown",
+          "category": "changed"
+        },
+        {
+          "sha": "bd2514614d737018470975e1de7ebb5c7ddf29a3",
+          "short": "bd2514614",
+          "text": "Declare Win32 handle close result explicitly",
+          "category": "changed"
+        },
+        {
+          "sha": "d5f388da7e5802dbf3f63552cf8a443a212c94b4",
+          "short": "d5f388da7",
+          "text": "Retain hosted desktop and packaged process exit evidence",
+          "category": "changed"
+        }
+      ]
+    },
+    {
+      "tag": "md3-v130",
+      "version": "v130",
+      "ordinal": 130,
+      "date": "2026-09-27",
+      "published": "2026-09-27T21:16:40Z",
+      "codeName": {
+        "en": "Pork Chop Bun",
+        "yue": "豬扒包"
+      },
+      "qualifier": "codex/hosted-behavior-verifier",
+      "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v130",
+      "prerelease": false,
+      "baseline": false,
+      "sameCommit": false,
+      "commit": "05d5ce36358871f3756232a2b94f867b32a75a29",
+      "build": "v130 \"Pork Chop Bun 豬扒包\" (app build 02.08.04.57)",
+      "entries": [
+        {
+          "sha": "05d5ce36358871f3756232a2b94f867b32a75a29",
+          "short": "05d5ce363",
+          "text": "Publish the reviewed hosted evidence public recipient",
+          "category": "changed"
+        },
+        {
+          "sha": "94cd6fbcddc9251a245ce795f2ec40bdf60d28e8",
+          "short": "94cd6fbcd",
+          "text": "Use current public recipient for every new hosted evidence envelope",
+          "category": "changed"
+        },
+        {
+          "sha": "e5b27c9f87a4f00650ac49888547712c2bdaec25",
+          "short": "e5b27c9f8",
+          "text": "Add versioned hosted evidence key initialization and selection",
+          "category": "added"
+        }
+      ]
+    },
+    {
+      "tag": "md3-v129",
+      "version": "v129",
+      "ordinal": 129,
+      "date": "2026-09-27",
+      "published": "2026-09-27T20:47:45Z",
+      "codeName": {
+        "en": "Beef with Raw Egg Rice",
+        "yue": "窩蛋牛肉飯"
+      },
+      "qualifier": "codex/hosted-behavior-verifier",
+      "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v129",
+      "prerelease": false,
+      "baseline": false,
+      "sameCommit": false,
+      "commit": "c7cb11752a65810e4b02f4124b4c4b22c8438218",
+      "build": "v129 \"Beef with Raw Egg Rice 窩蛋牛肉飯\" (app build 02.08.04.57)",
+      "entries": [
+        {
+          "sha": "c7cb11752a65810e4b02f4124b4c4b22c8438218",
+          "short": "c7cb11752",
+          "text": "Encrypt empty failed hosted diagnostics without masking the native failure",
+          "category": "changed"
+        }
+      ]
+    },
+    {
+      "tag": "md3-v128",
+      "version": "v128",
+      "ordinal": 128,
+      "date": "2026-09-27",
+      "published": "2026-09-27T20:23:28Z",
+      "codeName": {
+        "en": "Shrimp and Egg Rice",
+        "yue": "滑蛋蝦仁飯"
+      },
+      "qualifier": "codex/hosted-behavior-verifier",
+      "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v128",
+      "prerelease": false,
+      "baseline": false,
+      "sameCommit": false,
+      "commit": "d129e3496c446a043294ebcf8817990e75407bb9",
+      "build": "v128 \"Shrimp and Egg Rice 滑蛋蝦仁飯\" (app build 02.08.04.57)",
+      "entries": [
+        {
+          "sha": "474353522b74c4d73c5f581e4fa50b141d9a3703",
+          "short": "474353522",
+          "text": "Reject ambiguous hosted profile arguments",
+          "category": "changed"
+        },
+        {
+          "sha": "369a2138d5282277ac78fe5a37c453ee37d0052a",
+          "short": "369a2138d",
+          "text": "Unblock hosted verifier parsing and isolate diagnostic evidence",
+          "category": "changed"
+        },
+        {
+          "sha": "f6fa236c4328c685a2fa8547ddd1803f3e8bd745",
+          "short": "f6fa236c4",
+          "text": "Match hosted profile by exact launch argument spelling",
+          "category": "changed"
+        }
+      ]
+    },
+    {
+      "tag": "md3-v127",
+      "version": "v127",
+      "ordinal": 127,
+      "date": "2026-09-27",
+      "published": "2026-09-27T19:33:47Z",
+      "codeName": {
+        "en": "Soul-Stirring Rice",
+        "yue": "黯然銷魂飯"
+      },
+      "qualifier": "codex/hosted-behavior-verifier",
+      "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v127",
+      "prerelease": false,
+      "baseline": false,
+      "sameCommit": false,
+      "commit": "6a45418f69cf021f547d3f2f5790e2021ca95cfc",
+      "build": "v127 \"Soul-Stirring Rice 黯然銷魂飯\" (app build 02.08.04.57)",
+      "entries": [
+        {
+          "sha": "6ae6736df1826e606bac3d259ef6b3515cd55dfb",
+          "short": "6ae6736df",
+          "text": "Use isolated Python for hosted verifier checks",
+          "category": "changed"
+        },
+        {
+          "sha": "ca0e621401f453b4c861ad0f67cd96ab2bbbf140",
+          "short": "ca0e62140",
+          "text": "Require exact client and owned process proof in hosted drive",
+          "category": "changed"
+        },
+        {
+          "sha": "b6ade7b4c5992f263d8d267adb0ff578946f325b",
+          "short": "b6ade7b4c",
+          "text": "Reject malformed hosted evidence inventories before extraction",
+          "category": "changed"
+        },
+        {
+          "sha": "3d395bacd66bd57e2aff9964429eb6b54957ece3",
+          "short": "3d395bacd",
+          "text": "Keep hosted crash evidence attributable and encrypted",
+          "category": "changed"
+        },
+        {
+          "sha": "9512b30712006a36bc6cdb611149a85dc8750e8e",
+          "short": "9512b3071",
+          "text": "Run verifier diagnostics on its preservation branch",
+          "category": "changed"
+        },
+        {
+          "sha": "3a40fbef9cf335c0978eff33036511884c509f01",
+          "short": "3a40fbef9",
+          "text": "Verify hosted driver source identity before capture",
+          "category": "changed"
+        },
+        {
+          "sha": "f5e996ebd2e328124036b57e70526c1de909978d",
+          "short": "f5e996ebd",
+          "text": "Add isolated hosted release behavior verification",
+          "category": "added"
+        },
+        {
+          "sha": "8811abbb342f1cd8742d70e41a87670285cf2c45",
+          "short": "8811abbb3",
+          "text": "Guard native tuple and uniform frame evidence",
+          "category": "changed"
+        },
+        {
+          "sha": "5faabb1fff6171fb5c9affab90a20dcb8e89eaf8",
+          "short": "5faabb1ff",
+          "text": "Keep hosted behavior proof bound to its baseline tuple",
+          "category": "changed"
+        },
+        {
+          "sha": "c5ccd18059ff4d656b8587fbcbe04f89d5868c9d",
+          "short": "c5ccd1805",
+          "text": "Preserve bounded original logs in restricted hosted evidence",
+          "category": "changed"
+        },
+        {
+          "sha": "b3a1c29a09532050d0ddf4e7f2f0722c8116b4c1",
+          "short": "b3a1c29a0",
+          "text": "Probe packaged File Open before broader behavior drive",
+          "category": "changed"
+        },
+        {
+          "sha": "70eebfabe18d8a0b12bfac259368a8f38de8bbd2",
+          "short": "70eebfabe",
+          "text": "Bind hosted behavior diagnostics to owned packaged process",
+          "category": "changed"
+        },
+        {
+          "sha": "61a421a7f1a28c780921bb008bb3e71bc63e9e02",
+          "short": "61a421a7f",
+          "text": "Stage decrypted capture evidence before final output",
+          "category": "changed"
+        },
+        {
+          "sha": "648296dd54f2599414162d9d2c062ebea0e371e6",
+          "short": "648296dd5",
+          "text": "Bind hosted evidence to canonical public key bytes",
+          "category": "changed"
+        },
+        {
+          "sha": "52c027de653fb4727d1771cd3c907e56d7d6d965",
+          "short": "52c027de6",
+          "text": "Encrypt hosted GUI evidence for restricted review",
+          "category": "changed"
+        },
+        {
+          "sha": "fcc2227563eb6f93116c9be88781a1172c824cd9",
+          "short": "fcc222756",
+          "text": "Reject unsupported hosted capture before creating output",
+          "category": "changed"
+        },
+        {
+          "sha": "fdab90b77519d4fc4a552c07520563d8f7ec6222",
+          "short": "fdab90b77",
+          "text": "Keep hosted capture pixels private and record preflight failures",
+          "category": "changed"
+        },
+        {
+          "sha": "130a320be86673ff7806a77d5566cbb32fc7720e",
+          "short": "130a320be",
+          "text": "Capture installed Squirrel GUI evidence after release",
+          "category": "changed"
+        }
+      ]
+    },
+    {
+      "tag": "md3-v126",
+      "version": "v126",
+      "ordinal": 126,
+      "date": "2026-09-27",
+      "published": "2026-09-27T09:09:15Z",
+      "codeName": {
+        "en": "Minced Beef Rice",
+        "yue": "免治牛肉飯"
+      },
+      "qualifier": "codex/packaged-behavior-drive",
+      "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v126",
+      "prerelease": false,
+      "baseline": false,
+      "sameCommit": false,
+      "commit": "857f58f39538a3d421be64e2863bb1359ebc2b65",
+      "build": "v126 \"Minced Beef Rice 免治牛肉飯\" (app build 02.08.04.57)",
+      "entries": [
+        {
+          "sha": "857f58f39538a3d421be64e2863bb1359ebc2b65",
+          "short": "857f58f39",
+          "text": "Expand installed-package behavior drive",
+          "category": "changed"
+        },
+        {
+          "sha": "9c982b38d8a837ee71362127f673892c56867291",
+          "short": "9c982b38d",
+          "text": "Add hosted installed-package behavior drive",
+          "category": "added"
+        }
+      ]
+    },
+    {
+      "tag": "md3-v125",
+      "version": "v125",
+      "ordinal": 125,
+      "date": "2026-09-27",
+      "published": "2026-09-27T08:39:30Z",
+      "codeName": {
+        "en": "Fujian Fried Rice",
+        "yue": "福建炒飯"
+      },
+      "qualifier": "",
+      "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v125",
+      "prerelease": false,
+      "baseline": false,
+      "sameCommit": false,
+      "commit": "c5df6199e1a83b1c94be12e999c0b322fded8730",
+      "build": "v125 \"Fujian Fried Rice 福建炒飯\" (app build 02.08.04.57)",
+      "entries": [
+        {
+          "sha": "61a421a7f1a28c780921bb008bb3e71bc63e9e02",
+          "short": "61a421a7f",
+          "text": "Stage decrypted capture evidence before final output",
+          "category": "changed"
+        },
+        {
+          "sha": "648296dd54f2599414162d9d2c062ebea0e371e6",
+          "short": "648296dd5",
+          "text": "Bind hosted evidence to canonical public key bytes",
+          "category": "changed"
+        },
+        {
+          "sha": "52c027de653fb4727d1771cd3c907e56d7d6d965",
+          "short": "52c027de6",
+          "text": "Encrypt hosted GUI evidence for restricted review",
+          "category": "changed"
+        },
+        {
+          "sha": "fcc2227563eb6f93116c9be88781a1172c824cd9",
+          "short": "fcc222756",
+          "text": "Reject unsupported hosted capture before creating output",
+          "category": "changed"
+        },
+        {
+          "sha": "fdab90b77519d4fc4a552c07520563d8f7ec6222",
+          "short": "fdab90b77",
+          "text": "Keep hosted capture pixels private and record preflight failures",
+          "category": "changed"
+        },
+        {
+          "sha": "130a320be86673ff7806a77d5566cbb32fc7720e",
+          "short": "130a320be",
+          "text": "Capture installed Squirrel GUI evidence after release",
+          "category": "changed"
+        }
+      ]
+    },
+    {
+      "tag": "md3-v124",
+      "version": "v124",
+      "ordinal": 124,
+      "date": "2026-09-27",
+      "published": "2026-09-27T08:21:26Z",
+      "codeName": {
+        "en": "Almond Cookie",
+        "yue": "杏仁餅"
+      },
+      "qualifier": "codex/model-creator-opening-lag",
+      "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v124",
+      "prerelease": false,
+      "baseline": false,
+      "sameCommit": false,
+      "commit": "bc3336f428053bcccbb843f00ba4b373a435dc2a",
+      "build": "v124 \"Almond Cookie 杏仁餅\" (app build 02.08.04.57)",
+      "entries": [
+        {
+          "sha": "bc3336f428053bcccbb843f00ba4b373a435dc2a",
+          "short": "bc3336f42",
+          "text": "Keep manually cleared Model Creator paths empty",
+          "category": "changed"
+        },
+        {
+          "sha": "ff2492faec405a9e51b624e3da31f787abba5fb0",
+          "short": "ff2492fae",
+          "text": "Preserve custom Model Creator provider paths across selection",
+          "category": "changed"
+        },
+        {
+          "sha": "9eb2b9a2255dab4b27e97eb4209e35be76f0cdbd",
+          "short": "9eb2b9a22",
+          "text": "Keep Model Creator CLI lookup asynchronous through dialog close",
+          "category": "changed"
+        },
+        {
+          "sha": "631b2e68ede447da706f7ab222c966a158d6ac21",
+          "short": "631b2e68e",
+          "text": "Move initial Model Creator provider lookup off the UI thread",
+          "category": "changed"
+        },
+        {
+          "sha": "8d672fe70d7e3a8574048b30ed9c75337b245f0b",
+          "short": "8d672fe70",
+          "text": "Translate Cantonese count suffix in ink presets",
+          "category": "changed"
+        },
+        {
+          "sha": "87c9e3683e2a823e7020ce369d2f7429ccc7aa04",
+          "short": "87c9e3683",
+          "text": "Complete legacy web Cantonese catalog",
+          "category": "changed"
+        }
+      ]
+    },
+    {
+      "tag": "md3-v123",
+      "version": "v123",
+      "ordinal": 123,
+      "date": "2026-09-27",
+      "published": "2026-09-27T07:53:38Z",
+      "codeName": {
+        "en": "Egg Roll",
+        "yue": "蛋卷"
+      },
+      "qualifier": "superseded main build",
+      "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v123",
+      "prerelease": false,
+      "baseline": false,
+      "sameCommit": false,
+      "commit": "cb9a9e015102d65cb9cf8ba83a73dd1e325c0bdc",
+      "build": "v123 \"Egg Roll 蛋卷\" (app build 02.08.04.57)",
+      "entries": []
+    },
+    {
+      "tag": "md3-v122",
+      "version": "v122",
+      "ordinal": 122,
+      "date": "2026-09-27",
+      "published": "2026-09-27T07:26:05Z",
+      "codeName": {
+        "en": "Sa Yung",
+        "yue": "沙翁"
+      },
+      "qualifier": "superseded main build",
+      "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v122",
+      "prerelease": false,
+      "baseline": false,
+      "sameCommit": false,
+      "commit": "a0f6f8c5ea99bb4502acd44e09c1caa9a3466663",
+      "build": "v122 \"Sa Yung 沙翁\" (app build 02.08.04.57)",
+      "entries": [
+        {
+          "sha": "8d672fe70d7e3a8574048b30ed9c75337b245f0b",
+          "short": "8d672fe70",
+          "text": "Translate Cantonese count suffix in ink presets",
+          "category": "changed"
+        },
+        {
+          "sha": "cb9a9e015102d65cb9cf8ba83a73dd1e325c0bdc",
+          "short": "cb9a9e015",
+          "text": "Avoid synchronous model copy when opening Project",
+          "category": "changed"
+        },
+        {
+          "sha": "87c9e3683e2a823e7020ce369d2f7429ccc7aa04",
+          "short": "87c9e3683",
+          "text": "Complete legacy web Cantonese catalog",
+          "category": "changed"
+        },
+        {
+          "sha": "5fe76037646d57bfb75bca5be32e3a01ee228c3a",
+          "short": "5fe760376",
+          "text": "Refresh Cantonese catalog counts and DeviceWeb translations",
+          "category": "changed"
+        },
+        {
+          "sha": "b100f43d462cebe62e48b8605a6b3effa76705fc",
+          "short": "b100f43d4",
+          "text": "Refresh issue 41 release handoff and roadmap",
+          "category": "changed"
+        },
+        {
+          "sha": "181de2e669aa3b7b243a206372790fd543515ccb",
+          "short": "181de2e66",
+          "text": "Add hosted isolated Squirrel installation receipt",
+          "category": "added"
+        },
+        {
+          "sha": "bfcf0bcc7ca749786c77086ef2c0fa1d867a343c",
+          "short": "bfcf0bcc7",
+          "text": "Localize Model Creator revision loading status",
+          "category": "changed"
+        },
+        {
+          "sha": "830b9e16167b34495815a1975337921324b6d22f",
+          "short": "830b9e161",
+          "text": "Keep the Prepare tab rail compact beside sidebar content",
+          "category": "changed"
+        },
+        {
+          "sha": "93d92e1ecbcdf19c7bf13f344c068aa350862340",
+          "short": "93d92e1ec",
+          "text": "Preserve Prepare sidebar tab docking and layout",
+          "category": "changed"
+        }
+      ]
+    },
+    {
+      "tag": "md3-v121",
+      "version": "v121",
+      "ordinal": 121,
+      "date": "2026-09-27",
+      "published": "2026-09-27T02:30:36Z",
+      "codeName": {
+        "en": "Smiling Sesame Ball",
+        "yue": "笑口棗"
+      },
+      "qualifier": "codex/prepare-sidebar-tabs",
+      "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v121",
+      "prerelease": false,
+      "baseline": false,
+      "sameCommit": false,
+      "commit": "d06eb1d55d8a3e2fd0e73b40aad08a086d30d615",
+      "build": "v121 \"Smiling Sesame Ball 笑口棗\" (app build 02.08.04.57)",
+      "entries": [
+        {
+          "sha": "d06eb1d55d8a3e2fd0e73b40aad08a086d30d615",
+          "short": "d06eb1d55",
+          "text": "Group Prepare sidebar controls into Ink, Process, and Objects tabs",
+          "category": "changed"
+        },
+        {
+          "sha": "022b1593d0924753bfc91ee4262d4713e18b7c1f",
+          "short": "022b1593d",
+          "text": "Load Model Creator revisions without blocking dialog opening",
+          "category": "changed"
+        }
+      ]
+    },
+    {
+      "tag": "md3-v120",
+      "version": "v120",
+      "ordinal": 120,
+      "date": "2026-09-27",
+      "published": "2026-09-27T02:09:06Z",
+      "codeName": {
+        "en": "Egg Twist",
+        "yue": "蛋散"
+      },
+      "qualifier": "superseded main build",
+      "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v120",
+      "prerelease": false,
+      "baseline": false,
+      "sameCommit": false,
+      "commit": "fbb5e75050d6070f67f4d781bdb4c97a27560633",
+      "build": "v120 \"Egg Twist 蛋散\" (app build 02.08.04.57)",
+      "entries": [
+        {
+          "sha": "fbb5e75050d6070f67f4d781bdb4c97a27560633",
+          "short": "fbb5e7505",
+          "text": "Include nozzle mapping definition in multi-device send",
+          "category": "changed"
+        },
+        {
+          "sha": "4fb0c0f942171791f3e433b852706416f9f6f8cf",
+          "short": "4fb0c0f94",
+          "text": "Refresh hosted build and camera widget handoff",
+          "category": "changed"
+        },
+        {
+          "sha": "31174bce57e5b55311688bed74966cb12e4edde0",
+          "short": "31174bce5",
+          "text": "Resolve workspace panel filesystem alias collision",
+          "category": "changed"
+        },
+        {
+          "sha": "d1d7a758ba0d5d92194ffac37722de207f932aa7",
+          "short": "d1d7a758b",
+          "text": "Fix workspace validation error argument for MSVC",
+          "category": "fixed"
+        },
+        {
+          "sha": "d0c172f019ee65ebe36ab3261b27badb4176ac3d",
+          "short": "d0c172f01",
+          "text": "Copy Git hook without CMake interpolation on Windows",
+          "category": "changed"
+        },
+        {
+          "sha": "f1cd3a55403367b97d505efa31190b2bee787cdd",
+          "short": "f1cd3a554",
+          "text": "Record camera widget follow-up and hosted build handoff",
+          "category": "documented"
+        },
+        {
+          "sha": "9c731262944f5d86c0262ef008b85aab6ab0edb2",
+          "short": "9c7312629",
+          "text": "Verify every staged Cantonese translation in GNU MO output",
+          "category": "changed"
+        },
+        {
+          "sha": "8a95decfa2e8fa758819d3384cb1afbe33ca8456",
+          "short": "8a95decfa",
+          "text": "Compile reviewed Cantonese catalog in hosted Windows packages",
+          "category": "changed"
+        },
+        {
+          "sha": "441d6462955e869c60b79fdf0f7e89a8256b5e12",
+          "short": "441d64629",
+          "text": "Document the 2.8.4.57 source candidate and verification gaps",
+          "category": "documented"
+        },
+        {
+          "sha": "7639481222d48f8eb46662a8a7b8414948a32e87",
+          "short": "763948122",
+          "text": "Read farm printer readiness from the current device object",
+          "category": "changed"
+        },
+        {
+          "sha": "7b9c5dfcd28670bed689ab20774eb01b7ee69a36",
+          "short": "7b9c5dfcd",
+          "text": "Localize workspace calendar diagnostics at the display boundary",
+          "category": "changed"
+        },
+        {
+          "sha": "0741964e109fd669e34484ba13c989bb407f2ef8",
+          "short": "0741964e1",
+          "text": "Stop requesting unused Git LFS during hosted builds",
+          "category": "changed"
+        },
+        {
+          "sha": "617727353ab98a8196c1606dde3e8272a0fc6b92",
+          "short": "617727353",
+          "text": "Bound Model Creator revision retention and child output",
+          "category": "changed"
+        },
+        {
+          "sha": "a110e0d95ba95bf24fdb27d59bfe909ee815714f",
+          "short": "a110e0d95",
+          "text": "Abort farm batch when a selected printer changes state",
+          "category": "changed"
+        },
+        {
+          "sha": "9c1b746b7108bb9151c955a661c28ae6595b40ca",
+          "short": "9c1b746b7",
+          "text": "Translate workspace daylight-saving prompts into Cantonese",
+          "category": "changed"
+        },
+        {
+          "sha": "7819df60ada6da2e9140bb8b3acd7662369c1b83",
+          "short": "7819df60a",
+          "text": "Translate requested desktop flows into Hong Kong Cantonese",
+          "category": "changed"
+        },
+        {
+          "sha": "a4cd97bb0a50526c0ee0c3b817d40a0dee07e76c",
+          "short": "a4cd97bb0",
+          "text": "Resolve workspace calendar times with system IANA rules",
+          "category": "changed"
+        },
+        {
+          "sha": "81ca1e4090e05432de166a330c51a8d66382b59e",
+          "short": "81ca1e409",
+          "text": "Preserve material flow choices in group swaps and guard camera replay",
+          "category": "changed"
+        },
+        {
+          "sha": "a30d0f789bfb1b6812c2951841f51247e1c01f67",
+          "short": "a30d0f789",
+          "text": "Validate print-setup nozzle moves before applying them",
+          "category": "changed"
+        },
+        {
+          "sha": "2f18189e5e751fc5d858a3a54ec2d8b88694cbf1",
+          "short": "2f18189e5",
+          "text": "Validate workspace member history and preserve failed publications",
+          "category": "changed"
+        },
+        {
+          "sha": "01ea104a6f9e1ba48f94f74d36bb1c89112a5a6d",
+          "short": "01ea104a6",
+          "text": "Validate full scene primitive extents against workspace bounds",
+          "category": "changed"
+        },
+        {
+          "sha": "370623ce3445ea82e1e1d96133dd62367d4e5891",
+          "short": "370623ce3",
+          "text": "Carry validated nozzle mappings in LAN farm sends",
+          "category": "changed"
+        },
+        {
+          "sha": "a2c56aeabd29a3fb1ae6e15516f3b51b9cf23842",
+          "short": "a2c56aeab",
+          "text": "Add print-setup nozzle swaps and stable workspace member history",
+          "category": "added"
+        },
+        {
+          "sha": "dd612dc35ed40bdf4b5aec4b3e14587fc4300540",
+          "short": "dd612dc35",
+          "text": "Deliver workspace reminders through the in-app notification center",
+          "category": "changed"
+        },
+        {
+          "sha": "6a114a42ff991de412493724b14598129a82a78e",
+          "short": "6a114a42f",
+          "text": "Block unsupported farm nozzle mappings and honor transfer cancellation",
+          "category": "changed"
+        },
+        {
+          "sha": "921e18a1eb08ab0efc3ab05f793a9ac21a4825b6",
+          "short": "921e18a1e",
+          "text": "Connect workspace bundles to project tabs and history saves",
+          "category": "changed"
+        },
+        {
+          "sha": "c988cae0cc9ced8bab027f2b2118080eaf560a58",
+          "short": "c988cae0c",
+          "text": "Bundle pinned model renderers and finish creator controls",
+          "category": "changed"
+        },
+        {
+          "sha": "1712e70c035544f28323d70085cce5922f6a44fc",
+          "short": "1712e70c0",
+          "text": "Open workspace members and atomically publish saved project bytes",
+          "category": "changed"
+        },
+        {
+          "sha": "27714a207147c081dad06da052470c4e187ac141",
+          "short": "27714a207",
+          "text": "Preserve explicit mapping choices and reuse finished slices",
+          "category": "changed"
+        },
+        {
+          "sha": "060a68880f6d74a64e54ac1b1c0a0059426d426d",
+          "short": "060a68880",
+          "text": "Add native workspace view and strengthen bundle validation",
+          "category": "added"
+        },
+        {
+          "sha": "17cc9a214acbbb27f9053bfdfb039b509937b079",
+          "short": "17cc9a214",
+          "text": "Add portable workspace bundle and planning core",
+          "category": "added"
+        },
+        {
+          "sha": "83074d0230539d33a808c2a87729363a2698b5f5",
+          "short": "83074d023",
+          "text": "Keep regex controls in menu keyboard focus cycle",
+          "category": "changed"
+        },
+        {
+          "sha": "767c6c55ebf3cf57810bc0f8f97facc5d95c2170",
+          "short": "767c6c55e",
+          "text": "Bound portable history pack expansion and repair menu Tab focus",
+          "category": "changed"
+        },
+        {
+          "sha": "b2c3ad01b1208ee72a38244e61942a465730eca4",
+          "short": "b2c3ad01b",
+          "text": "Add plate-scoped slice and print workflow",
+          "category": "added"
+        },
+        {
+          "sha": "b7dbc9d01efa2fa206f9794b2a59208d186d9dfa",
+          "short": "b7dbc9d01",
+          "text": "Contain Model Creator process trees and bind provider scene schemas",
+          "category": "changed"
+        },
+        {
+          "sha": "0a91809c00dfaccdfcff38d677ee8e6495794f6a",
+          "short": "0a91809c0",
+          "text": "Retain Model Creator revisions across restarts",
+          "category": "changed"
+        },
+        {
+          "sha": "4d758d085a964b2556d9c8db9a89c4a7429161d3",
+          "short": "4d758d085",
+          "text": "Add bounded native Model Creator module",
+          "category": "added"
+        },
+        {
+          "sha": "5b0fc276d84be1b265e93645c35cd08f588328d8",
+          "short": "5b0fc276d",
+          "text": "Expose search in filament menus and preserve merge targets",
+          "category": "changed"
+        },
+        {
+          "sha": "9007d1f278815c9727c6305c92585a6ba8c0ec17",
+          "short": "9007d1f27",
+          "text": "Cover nozzle preference serialization compatibility",
+          "category": "changed"
+        },
+        {
+          "sha": "cc8984fa84ec720cafcf1e3a37f2d377ea240b0f",
+          "short": "cc8984fa8",
+          "text": "Expose nozzle preferences in grouping dialog without rewriting plates",
+          "category": "changed"
+        },
+        {
+          "sha": "9b5c200b0d3cf1a4c0abb5e8481b4df12fbef871",
+          "short": "9b5c200b0",
+          "text": "Add per-printer left and right nozzle preferences",
+          "category": "added"
+        },
+        {
+          "sha": "e4e6c5f83531e54173eb0967e32719e99bcae6ae",
+          "short": "e4e6c5f83",
+          "text": "Preserve newer local history and export the current version",
+          "category": "changed"
+        },
+        {
+          "sha": "b91759761c6124ff2c28199e3f97e5221738ef30",
+          "short": "b91759761",
+          "text": "Embed validated project history in saved 3MF archives",
+          "category": "changed"
+        },
+        {
+          "sha": "2bb678a60082391a38e39e04ef9a058496694231",
+          "short": "2bb678a60",
+          "text": "Disambiguate fan preview window events",
+          "category": "changed"
+        },
+        {
+          "sha": "c2b4caca2c34725b40aea8d95232be03f13fc5d6",
+          "short": "c2b4caca2",
+          "text": "Resolve fan slider type across GUI headers",
+          "category": "changed"
+        },
+        {
+          "sha": "b6afcdb925033113cf606633136e12e3a60bb78c",
+          "short": "b6afcdb92",
+          "text": "Document native print workflow design states",
+          "category": "documented"
+        },
+        {
+          "sha": "6a2e1cd4a8d53385269af3543480f4ba537b9740",
+          "short": "6a2e1cd4a",
+          "text": "Autoplay camera on eligible view visits",
+          "category": "changed"
+        },
+        {
+          "sha": "aebe766b49a34a3796d42b5e1a64bb3f9ce9b124",
+          "short": "aebe766b4",
+          "text": "Animate device fan telemetry previews",
+          "category": "changed"
+        },
+        {
+          "sha": "1de5409e2009427c31afc9b21bf839f860bc3802",
+          "short": "1de5409e2",
+          "text": "Add LAN printers to multi-device farm and local dispatch",
+          "category": "added"
+        },
+        {
+          "sha": "596504d13702f07a410583d90d812239b7c74c4d",
+          "short": "596504d13",
+          "text": "Restore Preferences option rows and heat soak toggle",
+          "category": "fixed"
+        },
+        {
+          "sha": "06591593f5c41a10fb5c77f0d0028c199cf6d7a5",
+          "short": "06591593f",
+          "text": "Remove obsolete AMS controls and popup methods",
+          "category": "removed"
+        },
+        {
+          "sha": "39251accd028fb45143cd6a331b85bda04c93004",
+          "short": "39251accd",
+          "text": "Fix canvas zoom controls and timeline canvas include",
+          "category": "fixed"
+        },
+        {
+          "sha": "f4195a3f95cf5c4b380d5804c497aeb3e007d573",
+          "short": "f4195a3f9",
+          "text": "Show trustworthy newer-3MF update choices",
+          "category": "changed"
+        },
+        {
+          "sha": "0318d97d4bbe5ab676392eebf11ced8296109279",
+          "short": "0318d97d4",
+          "text": "Fix DeviceWeb filament filters and regenerate routes",
+          "category": "fixed"
+        },
+        {
+          "sha": "58cb4a780401703d21689dca885865612ced13e4",
+          "short": "58cb4a780",
+          "text": "Preserve active project data when loading is canceled",
+          "category": "changed"
+        },
+        {
+          "sha": "cd1fb804963b57877d33e499c2f54850914de093",
+          "short": "cd1fb8049",
+          "text": "Handle spaces and scan errors in pre-commit color check",
+          "category": "changed"
+        },
+        {
+          "sha": "f977235e6d736c4c0b650520ac5a5b72cbfe9244",
+          "short": "f977235e6",
+          "text": "ci: update build version to 02.08.04.57",
+          "category": "changed"
+        },
+        {
+          "sha": "ca4573296e6d435bb517e8ab04f6cbedb48ea405",
+          "short": "ca4573296",
+          "text": "FIX: fix import makerworld model from website popup untrust dialog",
+          "category": "fixed"
+        },
+        {
+          "sha": "259a0e44e6b3c08c296ce12ba3509dd37fdc1ece",
+          "short": "259a0e44e",
+          "text": "ci: update translate file 2026_09_22_15_53_39",
+          "category": "changed"
+        },
+        {
+          "sha": "42d6f908cb660395a239b5d424a9e892106ae7ea",
+          "short": "42d6f908c",
+          "text": "FIX:The text name of modelObject is too long, resulting in incomplete display of imgui information",
+          "category": "changed"
+        },
+        {
+          "sha": "e1f86a146ca957fb3ede564d92addbbedadbff01",
+          "short": "e1f86a146",
+          "text": "ENH: 纹理导入耗材匹配支持调节色差阈值",
+          "category": "changed"
+        },
+        {
+          "sha": "a62ee39125ebf452bc5312aac750ce5dd723aec9",
+          "short": "a62ee3912",
+          "text": "FIX: tooltip image for support_threshold_angle",
+          "category": "fixed"
+        },
+        {
+          "sha": "5c921ccc3853ab16ab9c16f664e04c03165cbe19",
+          "short": "5c921ccc3",
+          "text": "ci: update translate file 2026_09_22_11_57_26",
+          "category": "changed"
+        },
+        {
+          "sha": "f89698e3bfc85be925cf5d6dfa67fe447dd5055c",
+          "short": "f89698e3b",
+          "text": "FIX: do not cache the pointer",
+          "category": "fixed"
+        },
+        {
+          "sha": "244aa8592869fc47fc4fb55cbcac8ca313043b3c",
+          "short": "244aa8592",
+          "text": "ci: update bbl.json version to 02.08.00.09 [20260922114246]",
+          "category": "changed"
+        },
+        {
+          "sha": "c365902b3c60a5a04d6910ed2dc9a520497e8ecd",
+          "short": "c365902b3",
+          "text": "FIX: 纹理导入自动合并语义与 Previous 语境翻译",
+          "category": "fixed"
+        },
+        {
+          "sha": "a93ad20b0b01ae64fce0c9b0e96c4a614320240a",
+          "short": "a93ad20b0",
+          "text": "FIX: 修复局域网加速打印时的进度问题",
+          "category": "fixed"
+        },
+        {
+          "sha": "7e7e2734d9e24a732384cac75b1073d98bb5fad5",
+          "short": "7e7e2734d",
+          "text": "FIX: print error action causes crash",
+          "category": "fixed"
+        },
+        {
+          "sha": "10045d7b96b96f935ee33bad5302b67f76108da7",
+          "short": "10045d7b9",
+          "text": "FIX:Fixed the issue where the text tool would show the cube handle even for separate text, and added support for vertical alignment distribution.",
+          "category": "changed"
+        },
+        {
+          "sha": "70b85b186ff168d34948c1659a026a3c1106d54c",
+          "short": "70b85b186",
+          "text": "FIX: DevExtderSystem::GetBackupAmsSlotInGroup",
+          "category": "fixed"
+        },
+        {
+          "sha": "ff614fbb0e609536fc816224ad1c51308e8124a2",
+          "short": "ff614fbb0",
+          "text": "FIX: calibration page shows last task name",
+          "category": "fixed"
+        },
+        {
+          "sha": "1d601fac9bca9617273a549b8775e7bd37665b00",
+          "short": "1d601fac9",
+          "text": "FIX: 优化近墙填充空驶回抽",
+          "category": "fixed"
+        },
+        {
+          "sha": "e9841036158c225b470100fc9ebe23379de1fbfc",
+          "short": "e98410361",
+          "text": "FIX: 纹理导入向导窗口位置与耗材下拉关闭残留",
+          "category": "fixed"
+        },
+        {
+          "sha": "ca03360168eacc588fd9c33440b53330a64d596b",
+          "short": "ca0336016",
+          "text": "FIX: 关混色时超限合并不映射到混色槽",
+          "category": "fixed"
+        },
+        {
+          "sha": "b0fe727318c7058ead834f4e6f515a71d6b5ea9b",
+          "short": "b0fe72731",
+          "text": "ci: update build version to 02.08.04.56",
+          "category": "changed"
+        },
+        {
+          "sha": "a491040024e0c0005fd34fe3089cab2f7bdfadf4",
+          "short": "a49104002",
+          "text": "ci: update translate file 2026_09_21_12_04_12",
+          "category": "changed"
+        },
+        {
+          "sha": "051b6cf7b2ea2a8a8b610a5217196b61f58d8cf7",
+          "short": "051b6cf7b",
+          "text": "ADD: include TextureImportOverLimitDialog in i18n extraction",
+          "category": "added"
+        },
+        {
+          "sha": "bbb614a5afa028c64d26b482f5a1bceecfb90755",
+          "short": "bbb614a5a",
+          "text": "FIX: inconsistent text colors in filament manager dark mode",
+          "category": "fixed"
+        },
+        {
+          "sha": "a595c1ff1c3453265da601118d42a39cbe1fb6c4",
+          "short": "a595c1ff1",
+          "text": "FIX: send printer dialog show placeholder image",
+          "category": "fixed"
+        },
+        {
+          "sha": "282d68ae0cb80a8fa3c51f3442faa2777b62c52f",
+          "short": "282d68ae0",
+          "text": "ci: update translate file 2026_09_20_20_30_42",
+          "category": "changed"
+        },
+        {
+          "sha": "bb4ef86efc2fa90401d2b5599a102e5d6374e2b0",
+          "short": "bb4ef86ef",
+          "text": "ENH: 完善纹理导入简化色参数区与耗材匹配交互",
+          "category": "changed"
+        },
+        {
+          "sha": "c09473e5f2886dae1f6abfd952137d6d92952cad",
+          "short": "c09473e5f",
+          "text": "FIX: 纹理导入 Reset 后关闭 Color mixing",
+          "category": "fixed"
+        },
+        {
+          "sha": "c65cf5a4c2b9632b2b7cff74ca93524a8b9d4def",
+          "short": "c65cf5a4c",
+          "text": "FIX: 纹理导入 Color mixing 勾选卡顿",
+          "category": "fixed"
+        },
+        {
+          "sha": "31f413915d620083a4da6e11701a9464044e1224",
+          "short": "31f413915",
+          "text": "FIX: homepage3 CSP blocks host evaluateJavaScript on macOS WebKit",
+          "category": "fixed"
+        },
+        {
+          "sha": "4e69418a17fd1e1dff2fd27600df544677f3f144",
+          "short": "4e69418a1",
+          "text": "FIX: 耗材回抽 Override 为 nil 时使用当前挤出机的打印机默认值",
+          "category": "fixed"
+        },
+        {
+          "sha": "de3a76db77cf5cc7968907431cc09d62eea84e7a",
+          "short": "de3a76db7",
+          "text": "ENH: add STUDIO_AMS_CONTROL_WX_VERSION to force use wxWidget version of AmsControl",
+          "category": "changed"
+        },
+        {
+          "sha": "da2d8729fca24a838dc0497cc72ddb7f23f7001a",
+          "short": "da2d8729f",
+          "text": "ci: update bbl.json version to 02.08.00.08 [20260920150726]",
+          "category": "changed"
+        },
+        {
+          "sha": "6b0c2d25390d67e81a2e7d691e3d49af145fd4a7",
+          "short": "6b0c2d253",
+          "text": "ci: update bbl.json version to 02.08.00.7 [20260920142526]",
+          "category": "changed"
+        },
+        {
+          "sha": "1611475d7876ff088dbdf15313db05e1e6c00f58",
+          "short": "1611475d7",
+          "text": "Fix: 自定义耗材创建ui问题",
+          "category": "fixed"
+        },
+        {
+          "sha": "d30f8aa715f043f284980c1d3136ccc17d8b90a7",
+          "short": "d30f8aa71",
+          "text": "FIX: AMS tray k-value editability and filament manager sync after plugin restart",
+          "category": "fixed"
+        },
+        {
+          "sha": "eb13d41e30c8d98d868ef96b294160b89e464d3c",
+          "short": "eb13d41e3",
+          "text": "FIX: some display for AMS panel",
+          "category": "fixed"
+        },
+        {
+          "sha": "7163097b596d99c6bcd21876586fcf2fb4c3f75f",
+          "short": "7163097b5",
+          "text": "FIX: windows强杀web页面无法自动重建",
+          "category": "fixed"
+        },
+        {
+          "sha": "b442df4b082f7036285081ea085b11d12081a4b1",
+          "short": "b442df4b0",
+          "text": "FIX: warning dialog when delete a filament",
+          "category": "fixed"
+        },
+        {
+          "sha": "804d93bb5de142c48c0dabedba87736ea9553206",
+          "short": "804d93bb5",
+          "text": "ENH:[color_code_json]Update filaments_color_codes",
+          "category": "changed"
+        },
+        {
+          "sha": "511b4c59126c7f5a585d88794774940a86616a9c",
+          "short": "511b4c591",
+          "text": "FIX: print error dialog cannot be closed",
+          "category": "fixed"
+        },
+        {
+          "sha": "93087fafe40a0b850fdea4ba6d43034c65a24e56",
+          "short": "93087fafe",
+          "text": "FIX:项目页正文图片无法保存",
+          "category": "changed"
+        },
+        {
+          "sha": "905723e744b7cd9272db8f2812a3a83db58c5c39",
+          "short": "905723e74",
+          "text": "ENH: add a placeholder on send to printer dialog",
+          "category": "changed"
+        },
+        {
+          "sha": "3daf2216daae64cb3e5e5339b8c694eb6749b231",
+          "short": "3daf2216d",
+          "text": "ENH: 纹理导入支持超 32 耗材处理并完善匹配页交互",
+          "category": "changed"
+        },
+        {
+          "sha": "77b32a62415bdc89d05d1b6891d10e6505cfcf7a",
+          "short": "77b32a624",
+          "text": "ENH:Change line gap to be calculated after releasing the mouse.Winding-based outward normal",
+          "category": "changed"
+        },
+        {
+          "sha": "533d3ed98d0b480fc9ca796a73cb8db08cae8909",
+          "short": "533d3ed98",
+          "text": "ci: update build version to 02.08.04.55",
+          "category": "changed"
+        },
+        {
+          "sha": "a3a771caa33fb0fe31351874cd7ebda2f60a4373",
+          "short": "a3a771caa",
+          "text": "ci: update network module version 02.08.04.57 based on commit ae1a9df 2026-09-18 16:22:45",
+          "category": "changed"
+        },
+        {
+          "sha": "2cdccf9bf359bbb1f94dd75148025a95fe461e85",
+          "short": "2cdccf9bf",
+          "text": "FIX: show profile name when handy is the creator",
+          "category": "fixed"
+        },
+        {
+          "sha": "62ce26b05f8210ab81a6b9eb15cedec5db3e0b4a",
+          "short": "62ce26b05",
+          "text": "ENH: 纹理导入用混色勾选框替换一键 CMYW/RYBW",
+          "category": "changed"
+        },
+        {
+          "sha": "3747773c29225ed8c97ca6c4e003931a4b564567",
+          "short": "3747773c2",
+          "text": "ci: update build version to 02.08.04.54",
+          "category": "changed"
+        },
+        {
+          "sha": "564f8c109e880c6909c33f8e0308b4dcf0d44dfb",
+          "short": "564f8c109",
+          "text": "FIX: stabilize part-mode boolean intersection order",
+          "category": "fixed"
+        },
+        {
+          "sha": "df0c52fd34e9331cf2250e1e02722f50d8adc277",
+          "short": "df0c52fd3",
+          "text": "Fix: skip dedicated support filaments in PLA/PETG mixture check",
+          "category": "fixed"
+        },
+        {
+          "sha": "d9e28599389da14360078e9f08b1f0e03d94e73b",
+          "short": "d9e285993",
+          "text": "FIX: to support gcode send to printer",
+          "category": "fixed"
+        },
+        {
+          "sha": "fa1955438f8a3fdb296f02fcd3d545052a780f87",
+          "short": "fa1955438",
+          "text": "FIX: Optimize turnback artifacts in top-surface monotonic line infill",
+          "category": "fixed"
+        },
+        {
+          "sha": "b499e3977fd13158bfcce9b66738fd9ca48f600c",
+          "short": "b499e3977",
+          "text": "ENH:Update the prices of consumables feishu: issue-7117791272",
+          "category": "changed"
+        },
+        {
+          "sha": "c60e76b9fbe61f90946c2f6c16532427bff6ddd2",
+          "short": "c60e76b9f",
+          "text": "FIX: 修复单色大件在全局摆盘时因料塔占位被摆出盘外的问题",
+          "category": "fixed"
+        },
+        {
+          "sha": "516b9c8f69c5e9cc03845abb69a4ed8bb3b8516a",
+          "short": "516b9c8f6",
+          "text": "FIX: route manual RFID spool bind through slot_mapping, not sync_ams",
+          "category": "fixed"
+        },
+        {
+          "sha": "90e5e26f0526b5db3565eb3655998a5927f32dec",
+          "short": "90e5e26f0",
+          "text": "FIX: the Optimistic update for tray",
+          "category": "fixed"
+        },
+        {
+          "sha": "5ca09009c2a97963d79d8fe8300bbc3377b92a27",
+          "short": "5ca09009c",
+          "text": "FIX: the update of ams control dialog",
+          "category": "fixed"
+        },
+        {
+          "sha": "b2c8da9d9b77fc5c13382da0d556a0dee706ada9",
+          "short": "b2c8da9d9",
+          "text": "FIX: pa items is empty for O1C",
+          "category": "fixed"
+        },
+        {
+          "sha": "6bf3978fc3d015f824e7ccb34ab6173bf974e416",
+          "short": "6bf3978fc",
+          "text": "FIX: missing warning dialog when deleting support filaments and mixed filaments",
+          "category": "fixed"
+        },
+        {
+          "sha": "24ad3749e9d17bfd1c74e32d7c7b098d7ff1c2ff",
+          "short": "24ad3749e",
+          "text": "ci: update translate file 2026_09_17_19_42_34",
+          "category": "changed"
+        },
+        {
+          "sha": "56de0624c863f5a4c54318644dac12bdc732f8a8",
+          "short": "56de0624c",
+          "text": "FIX: report mesh face issues on boolean export",
+          "category": "fixed"
+        },
+        {
+          "sha": "476791980171fe878ae20e4749cee163f5be141d",
+          "short": "476791980",
+          "text": "FIX: the sn lable for OpenAmsMaterialsSetting",
+          "category": "fixed"
+        },
+        {
+          "sha": "0a6a868012de2c87e8e7e4993ad12b0086e69307",
+          "short": "0a6a86801",
+          "text": "ENH:Add array out-of-bounds protection",
+          "category": "changed"
+        },
+        {
+          "sha": "b5e24029e22c5947c658f3d0c0514b21a63aecf5",
+          "short": "b5e24029e",
+          "text": "FIX: reject malformed FBX/glTF accessors in bundled Assimp before they read out of bounds",
+          "category": "fixed"
+        },
+        {
+          "sha": "b4beedebdda12bf0949483791e4928f40117e8b1",
+          "short": "b4beedebd",
+          "text": "FIX: Auxiliaries 一级普通文件导致项目/辅助面板扫描崩溃",
+          "category": "fixed"
+        },
+        {
+          "sha": "e9efdaa57b4c214a35e06e14b5504b21bb3dbe89",
+          "short": "e9efdaa57",
+          "text": "FIX: 3MF 导入 assemble_item 的 instance_id 增加下界校验",
+          "category": "fixed"
+        },
+        {
+          "sha": "7930283f23af9462918b101b00b12c4cb74630ca",
+          "short": "7930283f2",
+          "text": "FIX: bound 3MF importer error formatting with snprintf",
+          "category": "fixed"
+        },
+        {
+          "sha": "5fcba4361c79940ae642116b3832360dd40316e0",
+          "short": "5fcba4361",
+          "text": "ENH: use nonPersistent WebKit store for Mac local Studio pages",
+          "category": "changed"
+        },
+        {
+          "sha": "2807a56af9a9f624ea1d59cf824760cd07d15012",
+          "short": "2807a56af",
+          "text": "FIX: block 3MF path HTML-escape injection chain in home page webviews",
+          "category": "fixed"
+        },
+        {
+          "sha": "e81372651860e8e28ce3daa3d004bd9b0d4ddca4",
+          "short": "e81372651",
+          "text": "FIX: keep preview layer times in sync with mixed-color sublayers",
+          "category": "fixed"
+        },
+        {
+          "sha": "0bf83540de9d416319959153066a3880af13e2f9",
+          "short": "0bf83540d",
+          "text": "ci: update network module version 02.08.04.54 based on commit 4c54029 2026-09-17 10:40:06",
+          "category": "changed"
+        },
+        {
+          "sha": "190ee2ec3b600045fa836710078ff311eccd1f7a",
+          "short": "190ee2ec3",
+          "text": "NEW:Add left and right alignment functions for multi line text",
+          "category": "changed"
+        },
+        {
+          "sha": "19537c9dd07d5058c53ad2fffaa7cb41b30409b5",
+          "short": "19537c9dd",
+          "text": "ENH: 纹理导入增加间隙预览、未匹配拦截与向导 UI 对齐",
+          "category": "changed"
+        },
+        {
+          "sha": "790d7d04e2e949a4060a50867a5fb0a9c16a1a52",
+          "short": "790d7d04e",
+          "text": "Revert \"Revert \"NEW: popup a warning messge dialog when deleting a using filament\"\"",
+          "category": "changed"
+        },
+        {
+          "sha": "0394368c8af1be7646d9209de10050ad1e2e5336",
+          "short": "0394368c8",
+          "text": "FIX: 修复平面切割在顶点重叠处留下开放边",
+          "category": "fixed"
+        },
+        {
+          "sha": "25ed9587f906925d0a1f0e106c3e6d2e5dd45f66",
+          "short": "25ed9587f",
+          "text": "ci: update build version to 02.08.04.53",
+          "category": "changed"
+        },
+        {
+          "sha": "a8b8052772308e4820a00363885981a44466df9f",
+          "short": "a8b805277",
+          "text": "FIX: calibrate button don't display in calibration page",
+          "category": "fixed"
+        },
+        {
+          "sha": "0df0f55ad9c4bd6b7633ef1ad3b75628383bcff8",
+          "short": "0df0f55ad",
+          "text": "FIX: encode farm client upload URL query as UTF-8",
+          "category": "fixed"
+        },
+        {
+          "sha": "e8532e47745d10b393f6a4621325c15383de0cb8",
+          "short": "e8532e477",
+          "text": "Fix: mediapanel shell execute and path traverse",
+          "category": "fixed"
+        },
+        {
+          "sha": "b7d083bf650deabed4fdcad7c2b9423de86d04a0",
+          "short": "b7d083bf6",
+          "text": "FIX:According to the DMP, add protection for array out-of-bounds",
+          "category": "changed"
+        },
+        {
+          "sha": "ebe6942b6fa34091985e4c58eb0d9887f2790f2e",
+          "short": "ebe6942b6",
+          "text": "ci: update network module version 02.08.04.52 based on commit e992f5c 2026-09-16 17:20:57",
+          "category": "changed"
+        },
+        {
+          "sha": "8ee62c5fc063e3edc165d8381651fcbafd0cdb6d",
+          "short": "8ee62c5fc",
+          "text": "FIX: 手动设置喷嘴数量弹窗标题补齐翻译 key",
+          "category": "fixed"
+        },
+        {
+          "sha": "22f08d56277e37b73c157f9394dbed8d98976b5e",
+          "short": "22f08d562",
+          "text": "ENH:Optimize text multiline functionality",
+          "category": "changed"
+        },
+        {
+          "sha": "9cd35195038ed2acd495cde93b79daa32183ff35",
+          "short": "9cd351950",
+          "text": "ci: update build version to 02.08.04.52",
+          "category": "changed"
+        },
+        {
+          "sha": "ec547f8937704e344f1eb5e89e8f9e263a3594b0",
+          "short": "ec547f893",
+          "text": "ENH: convert units when in doubt after loading models",
+          "category": "changed"
+        },
+        {
+          "sha": "74eb8b79083f6b0a1cdb150232d76484ee94c95c",
+          "short": "74eb8b790",
+          "text": "Fix: skip post-processing on print-host upload after Do not execute",
+          "category": "fixed"
+        },
+        {
+          "sha": "04de87fc27a942173f8454464c2a79de098acbca",
+          "short": "04de87fc2",
+          "text": "FIX: reject out-of-range OBJ UV indices before the signed bounds check in load_obj",
+          "category": "fixed"
+        },
+        {
+          "sha": "0067891f2815d0ff15355e31370a0135c38e3b70",
+          "short": "0067891f2",
+          "text": "FIX: harden 3MF auxiliary file extraction against path escape after local encoding",
+          "category": "fixed"
+        },
+        {
+          "sha": "3e6f7510de6b60568ff2a8b521b424adcb67d72f",
+          "short": "3e6f7510d",
+          "text": "FIX: update the diamters source for fetch pa history",
+          "category": "fixed"
+        },
+        {
+          "sha": "2d4c95c95a308281ed7d847da10e3c203d1a3792",
+          "short": "2d4c95c95",
+          "text": "Fix: harden bambustudio:// open-model URL trust check against spoofing",
+          "category": "fixed"
+        },
+        {
+          "sha": "03d436a7a17671629b1f3979c70ad25259be15e9",
+          "short": "03d436a7a",
+          "text": "FIX: send imported 3mf without post-processing",
+          "category": "fixed"
+        },
+        {
+          "sha": "f236dd00331da51db16f360933aff5b2174adf14",
+          "short": "f236dd003",
+          "text": "ENH: remove redundant Filament Type filter in filament manager page",
+          "category": "changed"
+        },
+        {
+          "sha": "af816d1de4798addff76adeeeff450339c498c84",
+          "short": "af816d1de",
+          "text": "FIX: 移除机器预设喷嘴材质参数",
+          "category": "fixed"
+        },
+        {
+          "sha": "b32c8e68c37c1c61ca5d87df38716ed6b5f09298",
+          "short": "b32c8e68c",
+          "text": "FIX: 移除机器预设喷嘴材质配置",
+          "category": "fixed"
+        },
+        {
+          "sha": "fda3cb99009144fe4ac58a97a9c1d60768bea5ce",
+          "short": "fda3cb990",
+          "text": "NEW: Add M marker to first-layer change temperature commands",
+          "category": "changed"
+        },
+        {
+          "sha": "ae47d53566d080b7090fb5a4fac464433a966646",
+          "short": "ae47d5356",
+          "text": "FIX: dedup spool binding and restrict setting/color match in tray sync",
+          "category": "fixed"
+        },
+        {
+          "sha": "aebbdac9d4c87eb244e501ada20fc646b3161213",
+          "short": "aebbdac9d",
+          "text": "ENH: add support for AMS HUB merge view",
+          "category": "changed"
+        },
+        {
+          "sha": "85c6266478c8e0acd16642f15922f34513e40a81",
+          "short": "85c626647",
+          "text": "FIX: app freeze due to some enjected dll on windows",
+          "category": "fixed"
+        },
+        {
+          "sha": "61e06e0f083e3df02099d59372fdaa2a0f944fe9",
+          "short": "61e06e0f0",
+          "text": "FIX:Every time you enter the slice view, if the selected disk changes, reset the gcode rendering data",
+          "category": "changed"
+        },
+        {
+          "sha": "9f7fb482b820813903619beafbf451965c0ed97f",
+          "short": "9f7fb482b",
+          "text": "ENH:Optimize the interaction of printing item by item and layer by layer, with the shortcut keys being shift+e/ctrl+e",
+          "category": "changed"
+        },
+        {
+          "sha": "8b39b66c937d02da9d78ef02351abb5aefab79b0",
+          "short": "8b39b66c9",
+          "text": "ENH:By rendering and simulating the shape and cutting effect of dovetail joints, it avoids real calculations and provides interactive performance",
+          "category": "changed"
+        },
+        {
+          "sha": "5a0a038ad7884386bdb5177406ef61a9fd429d10",
+          "short": "5a0a038ad",
+          "text": "ci: update build version to 02.08.04.51",
+          "category": "changed"
+        },
+        {
+          "sha": "ecbd2db88d4f63633abb6f0baed37dabcec65975",
+          "short": "ecbd2db88",
+          "text": "ENH: version: bumped to 02.08.04.50",
+          "category": "changed"
+        },
+        {
+          "sha": "87536f3f017611f573d9a7a78c13911db333b07f",
+          "short": "87536f3f0",
+          "text": "NEW: 径向贴形填充、隔层加墙与贴形清理",
+          "category": "changed"
+        },
+        {
+          "sha": "bea75329d38a4dfce9a33aa4a279866716b045db",
+          "short": "bea75329d",
+          "text": "ci: update network module version 02.08.04.51 based on commit 53ad5ba 2026-09-15 10:00:48",
+          "category": "changed"
+        },
+        {
+          "sha": "8cf31931f09e220f943d5ee14afe4c4e89b79f38",
+          "short": "8cf31931f",
+          "text": "ci: update build version to 02.08.03.70",
+          "category": "changed"
+        },
+        {
+          "sha": "c5f2ba348cc0c12c27adb529ceb032cc04664e46",
+          "short": "c5f2ba348",
+          "text": "FIX: mac版本偶现退出时崩溃在备份线程",
+          "category": "fixed"
+        },
+        {
+          "sha": "187258ea58336408a0eae7927023cc6db56fa19f",
+          "short": "187258ea5",
+          "text": "FIX: the hold count of virtual trays",
+          "category": "fixed"
+        },
+        {
+          "sha": "eb711ed9f99135e38dcf757faef0a9db0247a0c6",
+          "short": "eb711ed9f",
+          "text": "FIX: skip non-fdm printers in public discovery",
+          "category": "fixed"
+        },
+        {
+          "sha": "308b6a0ce6318172eef5237aaab76905844a2223",
+          "short": "308b6a0ce",
+          "text": "ci: update network module version 02.08.03.54 based on commit 9669d9c 2026-09-14 16:21:08",
+          "category": "changed"
+        },
+        {
+          "sha": "d0c26ce42680e5d3ad9431b0d685970c4a693694",
+          "short": "d0c26ce42",
+          "text": "ENH: update the notice for CheckWarningFilamentRemain",
+          "category": "changed"
+        },
+        {
+          "sha": "9afed7f3a64bc83aefe2f7f9854c791927ed72d5",
+          "short": "9afed7f3a",
+          "text": "FIX: Adjust popup text for disabled shrinkage compensation in multi-color printing.",
+          "category": "fixed"
+        },
+        {
+          "sha": "dd5242034a0d5e0aad7f771e44350b52be05013b",
+          "short": "dd5242034",
+          "text": "ci: update network module version 02.08.03.53 based on commit 761314c 2026-09-14 14:20:52",
+          "category": "changed"
+        },
+        {
+          "sha": "9e7f36ab541680509d17e5a9aadd128145ecac70",
+          "short": "9e7f36ab5",
+          "text": "NEW:support check in records",
+          "category": "changed"
+        },
+        {
+          "sha": "38afa2250a5f72133b5b13cec2edea6f346f6cdc",
+          "short": "38afa2250",
+          "text": "FIX: user editable task name",
+          "category": "fixed"
+        },
+        {
+          "sha": "78ba35322b0ebd0b1d112127248c1728d307ce14",
+          "short": "78ba35322",
+          "text": "FIX: prevent white flash when switching filament manager page on macOS",
+          "category": "fixed"
+        },
+        {
+          "sha": "de5dbd1e92be92c0a9f62ef00733bf1a57ff30d4",
+          "short": "de5dbd1e9",
+          "text": "FIX: calib history is not refresh after pa profile edit\\new\\delete",
+          "category": "fixed"
+        },
+        {
+          "sha": "5958f0526870e765a36f73ebc97a550ba5c8ab56",
+          "short": "5958f0526",
+          "text": "FIX: print error action check assistant applies ui close command",
+          "category": "fixed"
+        },
+        {
+          "sha": "70f834e5f1774824ad21ccc735dfee7e631d8fdf",
+          "short": "70f834e5f",
+          "text": "FIX: pin the WebView2 runtime version for the process lifetime",
+          "category": "fixed"
+        },
+        {
+          "sha": "46766359f4ec7c483ed283855e95dad89fc308cd",
+          "short": "46766359f",
+          "text": "NEW: add WebView health diagnostics and recovery",
+          "category": "changed"
+        },
+        {
+          "sha": "674115ea96268c2fa2fea104d84c6a363ac70d79",
+          "short": "674115ea9",
+          "text": "ci: update build version to 02.08.03.69",
+          "category": "changed"
+        },
+        {
+          "sha": "275c45a3b3588988d3667b42db48f0f18cd450ff",
+          "short": "275c45a3b",
+          "text": "FIX: 单个对象开启精确z和料塔看不到警告",
+          "category": "fixed"
+        },
+        {
+          "sha": "ef0285e3db28e2a53f3a8cee35dd8c9b84089fbe",
+          "short": "ef0285e3d",
+          "text": "ENH: support HMS asynchronous download",
+          "category": "changed"
+        },
+        {
+          "sha": "1eee6a74ed31e72412065e411823f2c720bee752",
+          "short": "1eee6a74e",
+          "text": "ENH: 纹理导入左侧预览改为超采样面片色",
+          "category": "changed"
+        },
+        {
+          "sha": "f6b35289d336134ffdc48a9d456ed6c3a74157ae",
+          "short": "f6b35289d",
+          "text": "FIX: macOS 27.0，耗材映射弹窗无法消失，残留白色页面",
+          "category": "fixed"
+        },
+        {
+          "sha": "8ba9d2e1c395921c012862125cb00dc091f72573",
+          "short": "8ba9d2e1c",
+          "text": "ENH: Refactor the AMS material settings/RFID pop-up layout; official consumables now use a read-only view.",
+          "category": "changed"
+        },
+        {
+          "sha": "f4ae8abad60945dfe909bbc8a66f6ad358a982c6",
+          "short": "f4ae8abad",
+          "text": "FIX: keep hybrid tree supports from pruning healthy trunks",
+          "category": "fixed"
+        },
+        {
+          "sha": "b50d5e47e8e104f3b14604b5ccc05da991a20c4c",
+          "short": "b50d5e47e",
+          "text": "FIX: total layers number shows 0",
+          "category": "fixed"
+        },
+        {
+          "sha": "dd8e5d08d972e4f6a1d71350a7697d7ba37d517f",
+          "short": "dd8e5d08d",
+          "text": "FIX: abnormal display of PA select list on filament editing page",
+          "category": "fixed"
+        },
+        {
+          "sha": "fa624a2577129bd3afa3be28095bd6dc811102b7",
+          "short": "fa624a257",
+          "text": "FIX: 修复反向面片射线漏交与 macOS 纹理导入爆栈",
+          "category": "fixed"
+        },
+        {
+          "sha": "7a56be1ac38dee46c6624a3c87118212a3aea8c5",
+          "short": "7a56be1ac",
+          "text": "FIX: add alpha for calc_color_distance",
+          "category": "fixed"
+        },
+        {
+          "sha": "495753880cc01583f07df95b67c85a45ddd29f8a",
+          "short": "495753880",
+          "text": "FIX: default the vt_tray.is_exists true",
+          "category": "fixed"
+        },
+        {
+          "sha": "c8f40df960db3b2c6c3c135e3f3f3640590148b8",
+          "short": "c8f40df96",
+          "text": "FIX: add the CF\\GF filament check",
+          "category": "fixed"
+        },
+        {
+          "sha": "f3863cfeacb816da55ab11c95fe20fcefd3f11dd",
+          "short": "f3863cfea",
+          "text": "FIX: mac嵌套模态窗口下，第一次点击dock退出卡死，再次点击dock退出崩溃",
+          "category": "fixed"
+        },
+        {
+          "sha": "78e7d5270b575e514fc3ed736e550a046e575155",
+          "short": "78e7d5270",
+          "text": "FIX: preserve AMS filament color alpha",
+          "category": "fixed"
+        },
+        {
+          "sha": "02c97e4f13108bfd0f16bb19c4d6b4be57f3b8e3",
+          "short": "02c97e4f1",
+          "text": "FIX:Fix calibration refresh button icon offset",
+          "category": "changed"
+        },
+        {
+          "sha": "b9d16e2df9df3fdb6a19b7d5f9e1e1255ce2725f",
+          "short": "b9d16e2df",
+          "text": "FIX: align LegacyRenderer sequential view with AdvancedRenderer",
+          "category": "fixed"
+        },
+        {
+          "sha": "606ef5fef152315e3cca9a4755652b24395fe1b5",
+          "short": "606ef5fef",
+          "text": "NEW: MMU cannot apply filament shrinkage compensation",
+          "category": "changed"
+        },
+        {
+          "sha": "1942544651d2a2cdaab508d7650f2bbb0dba5b9b",
+          "short": "194254465",
+          "text": "ENH: 优化有机树支撑根部过分膨胀的问题",
+          "category": "changed"
+        },
+        {
+          "sha": "d254a99c3ce7cb625aead6e538b20d8e5229297f",
+          "short": "d254a99c3",
+          "text": "FIX: config: fix the variant not correct issue",
+          "category": "fixed"
+        },
+        {
+          "sha": "001c6ac14a512a1a78314a0f5b9363cf4014dc49",
+          "short": "001c6ac14",
+          "text": "ci: update build version to 02.08.03.68",
+          "category": "changed"
+        },
+        {
+          "sha": "2ff0bffb4f6c1a9c4d75580e1ebdd278d37876e0",
+          "short": "2ff0bffb4",
+          "text": "NEW: add support for AMS panel web view",
+          "category": "changed"
+        },
+        {
+          "sha": "33ccd794f2190daa32e437da56daef57463222b9",
+          "short": "33ccd794f",
+          "text": "ENH: align AMS control web panel rendering with the C++ AMS schematic",
+          "category": "changed"
+        },
+        {
+          "sha": "d966fa6efb8d99f09c833b8232346f04722c326c",
+          "short": "d966fa6ef",
+          "text": "NEW: Add support for common AMSControl web panel",
+          "category": "changed"
+        },
+        {
+          "sha": "4871e068cbe7fbbf2f6a9cfbd2358b4a95d9e14b",
+          "short": "4871e068c",
+          "text": "ENH: 对齐纹理导入预览窗口与参数区 UI",
+          "category": "changed"
+        },
+        {
+          "sha": "c9339be3ee741a38f72a5b8d025ea4b6537f02ca",
+          "short": "c9339be3e",
+          "text": "ci: update build version to 02.08.03.67",
+          "category": "changed"
+        },
+        {
+          "sha": "25fe8ae86924249e7ec29c83032415593e725b23",
+          "short": "25fe8ae86",
+          "text": "ENH: 缓存纹理转涂色修复结果并优化导入体验",
+          "category": "changed"
+        },
+        {
+          "sha": "77b9dd94d1e3c432d5e74a18ab8de146ccf3b7c7",
+          "short": "77b9dd94d",
+          "text": "fix: Restore layer Z after spiral-vase raft tool changes (#11965)",
+          "category": "fixed"
+        },
+        {
+          "sha": "56e0ee35f0e720ba6819ec2395a17e679aa95751",
+          "short": "56e0ee35f",
+          "text": "ENH: text tool supports multi-line text and a line gap control",
+          "category": "changed"
+        },
+        {
+          "sha": "f2b55a5a83f266cf56e06c7943a81a08bebb7fad",
+          "short": "f2b55a5a8",
+          "text": "FIX: Fix DynamicPrintConfig declaration",
+          "category": "fixed"
+        },
+        {
+          "sha": "d5be2b29f6e535d162c8f3f86313c0b9d42deb12",
+          "short": "d5be2b29f",
+          "text": "FIX: Fix incomplete type ‘wxBitmap’ error",
+          "category": "fixed"
+        },
+        {
+          "sha": "f22a02b4c045bfce992da815f176b522c7c71525",
+          "short": "f22a02b4c",
+          "text": "FIX: Fix ‘map’ in namespace ‘std’ does not name a template type",
+          "category": "fixed"
+        },
+        {
+          "sha": "52f10fbab68c8054bfe81c61bf24ab4b86b70a8a",
+          "short": "52f10fbab",
+          "text": "Fix stack buffer overflow in ADMesh stl_read (bound solid-name fscanf)",
+          "category": "fixed"
+        },
+        {
+          "sha": "1b22065a91bc342e53a7520b0614aad823e7fa05",
+          "short": "1b22065a9",
+          "text": "ci: update translate file 2026_09_08_19_53_39",
+          "category": "changed"
+        },
+        {
+          "sha": "5532fb5c6f77dee0378aabac3c14d18f991127fa",
+          "short": "5532fb5c6",
+          "text": "ci: update build version to 02.08.03.66",
+          "category": "changed"
+        },
+        {
+          "sha": "8d9fb0bdf04e7a9e2d5ddb7a0a5db455d165d32f",
+          "short": "8d9fb0bdf",
+          "text": "FIX: use wxTextCtrl for filament search",
+          "category": "fixed"
+        },
+        {
+          "sha": "8885be6c0130339ea9ff152e12c14f0d491b3a16",
+          "short": "8885be6c0",
+          "text": "ENH: 次顶面按实心区域整块识别，跳过过窄的顶面",
+          "category": "changed"
+        },
+        {
+          "sha": "c888fa7a13780a03ac877632439cac537553368d",
+          "short": "c888fa7a1",
+          "text": "Fix: 补全参数面板及空态提示的翻译",
+          "category": "fixed"
+        },
+        {
+          "sha": "bf7413ef3ca36360914c067fffee2907aa61d76b",
+          "short": "bf7413ef3",
+          "text": "ci: update build version to 02.08.03.65",
+          "category": "changed"
+        },
+        {
+          "sha": "8d24d7913393b79039b431d3f0a391a075402cdb",
+          "short": "8d24d7913",
+          "text": "FIX:Fix the issue of garbled characters in imgui for less commonly taught languages such as Thai",
+          "category": "changed"
+        },
+        {
+          "sha": "ccaa1e7adf60b9976daece686778ee23dad82ecd",
+          "short": "ccaa1e7ad",
+          "text": "FIX: rename shewchuk compress to avoid zlib clash",
+          "category": "fixed"
+        },
+        {
+          "sha": "b18ca54231f53aac4a819b8e401132d4432bc6b0",
+          "short": "b18ca5423",
+          "text": "FIX: update the sn label text",
+          "category": "fixed"
+        },
+        {
+          "sha": "7534d1d0016d2c73861c06d4526d5ab3d3c169b1",
+          "short": "7534d1d00",
+          "text": "ci: update translate file 2026_09_08_11_43_41",
+          "category": "changed"
+        },
+        {
+          "sha": "2a5e7d9e2eab7dd723a1f322b1d8f6bc43899e87",
+          "short": "2a5e7d9e2",
+          "text": "FIX: 拆色弹窗 PETG 首次结果裁切与切卡残影",
+          "category": "fixed"
+        },
+        {
+          "sha": "a2f36f848d468820232705f73c3f3aaa4de4269a",
+          "short": "a2f36f848",
+          "text": "ci: update build version to 02.08.03.64",
+          "category": "changed"
+        },
+        {
+          "sha": "97fc6986cdb00a496ee04a0d1668f4b57010e783",
+          "short": "97fc6986c",
+          "text": "Fix: 创建品牌弹窗没有正确翻译",
+          "category": "fixed"
+        },
+        {
+          "sha": "e5fe7f4b791728eb4bb6a72eefcfc0dc861e0c97",
+          "short": "e5fe7f4b7",
+          "text": "ENH: improve custom filament creation flow",
+          "category": "changed"
+        },
+        {
+          "sha": "4c7902397ab54e04688297d4001994785db3f84a",
+          "short": "4c7902397",
+          "text": "FIX: connect machine with access code dialog size error",
+          "category": "fixed"
+        },
+        {
+          "sha": "bedf05ef8be34be5adb3ede219b0d77e56daf230",
+          "short": "bedf05ef8",
+          "text": "FIX: skirt_height description",
+          "category": "fixed"
+        },
+        {
+          "sha": "0589694de29392502314648640f11400527f08c8",
+          "short": "0589694de",
+          "text": "ci: update translate file 2026_09_07_20_58_38",
+          "category": "changed"
+        },
+        {
+          "sha": "e838c7eb68ada9352fa4b1cdc4e6441ecccfe9a5",
+          "short": "e838c7eb6",
+          "text": "ENH: filament manager spool mount & recent list improvements",
+          "category": "changed"
+        },
+        {
+          "sha": "50551b734c8cbe01e0c65b2af74d6f1652753600",
+          "short": "50551b734",
+          "text": "FIX: suppress false c-format on overhang cooling tooltip",
+          "category": "fixed"
+        },
+        {
+          "sha": "6850c21971c2ee2f1cb2f823997a67feb15760a4",
+          "short": "6850c2197",
+          "text": "FIX: require OpenMeshCraft, refuse MCUT fallback",
+          "category": "fixed"
+        },
+        {
+          "sha": "e1e635baa64f15fef918434122cbb4f282d93443",
+          "short": "e1e635baa",
+          "text": "FIX: 首启配置向导材料页未跳转网络插件安装页",
+          "category": "fixed"
+        },
+        {
+          "sha": "8ef9fbf71b703a5d29a2debda45918edd636fb62",
+          "short": "8ef9fbf71",
+          "text": "FIX: 拆色结果区展示与侧栏拆色菜单",
+          "category": "fixed"
+        },
+        {
+          "sha": "a8ef3cb1bb457a09766df13bc53a10c07fbebe45",
+          "short": "a8ef3cb1b",
+          "text": "FIX: 手动设置喷嘴数量弹窗按挤出机变体过滤流量档",
+          "category": "fixed"
+        },
+        {
+          "sha": "e8ad6e334d2419a1372a14c8bde7f3b8c5ffd8c0",
+          "short": "e8ad6e334",
+          "text": "ci: update build version to 02.08.03.63",
+          "category": "changed"
+        },
+        {
+          "sha": "ff8f89749492d4d9a11f016f94c7877f310a7eea",
+          "short": "ff8f89749",
+          "text": "ENH: rework filament manager brand/type dropdown and add create-custom entry",
+          "category": "changed"
+        },
+        {
+          "sha": "189573870d23dde4e09b833d91dc28f14d8912d1",
+          "short": "189573870",
+          "text": "FIX: parameter tooltips",
+          "category": "fixed"
+        },
+        {
+          "sha": "fabc4af2c03db5d071cf8c899241004f2286173b",
+          "short": "fabc4af2c",
+          "text": "ci: update translate file 2026_09_07_10_00_19",
+          "category": "changed"
+        },
+        {
+          "sha": "8cd0400d95fa3e679252d19d9eb2e4e5f45c90ca",
+          "short": "8cd0400d9",
+          "text": "ci: update build version to 02.08.03.62",
+          "category": "changed"
+        },
+        {
+          "sha": "21286ff302746692f2bbd06297a7566aeeec1fdb",
+          "short": "21286ff30",
+          "text": "ci: update build version to 02.08.03.61",
+          "category": "changed"
+        },
+        {
+          "sha": "50ce2592ba5ff73b712e0de503a7f5bbd79c8964",
+          "short": "50ce2592b",
+          "text": "Revert \"FIX: require OpenMeshCraft, refuse MCUT fallback\"",
+          "category": "changed"
+        },
+        {
+          "sha": "e18c28c96798e01165c8834b46079469a5d19b7a",
+          "short": "e18c28c96",
+          "text": "ENH: 自定义耗材支持暗色模式",
+          "category": "changed"
+        },
+        {
+          "sha": "100cfeafeec7a878389e405a9361d7056fad5491",
+          "short": "100cfeafe",
+          "text": "ci: update build version to 02.08.03.60",
+          "category": "changed"
+        },
+        {
+          "sha": "b44b611b4f8238981826f51cbee2f13bf363efcf",
+          "short": "b44b611b4",
+          "text": "ENH: AMSRFIDMaterialView nozzle-type support + AMS UI polish",
+          "category": "changed"
+        },
+        {
+          "sha": "7b728cae97a54125b8cdf00f5783b792ca90cfec",
+          "short": "7b728cae9",
+          "text": "ENH: 完善自定义耗材创建向导与自定义材料列表管理",
+          "category": "changed"
+        },
+        {
+          "sha": "769d4c580044a18d242e9e154a8988229b4b86e6",
+          "short": "769d4c580",
+          "text": "ci: update build version to 02.08.03.59",
+          "category": "changed"
+        },
+        {
+          "sha": "842e2b8a4a72095dd5ef505cdd0d7df4a2fbd103",
+          "short": "842e2b8a4",
+          "text": "FIX: mac首页近期打开模型每次新打开模型都不更新",
+          "category": "fixed"
+        },
+        {
+          "sha": "2a11b633913603a69bc3de9f7f78f9c02eed6d3d",
+          "short": "2a11b6339",
+          "text": "ci: update translate file 2026_09_03_21_56_37",
+          "category": "changed"
+        },
+        {
+          "sha": "014d50e29e0bbdec4b555a478fd673a65e80b409",
+          "short": "014d50e29",
+          "text": "ci: update build version to 02.08.03.58",
+          "category": "changed"
+        },
+        {
+          "sha": "d7fdb018e63db49c428eb62db5f87f074e30406f",
+          "short": "d7fdb018e",
+          "text": "FIX: require OpenMeshCraft, refuse MCUT fallback",
+          "category": "fixed"
+        },
+        {
+          "sha": "04083184c25c7ceb6d0b09f2b9a59249129edb09",
+          "short": "04083184c",
+          "text": "ci: update translate file 2026_09_03_19_48_54",
+          "category": "changed"
+        },
+        {
+          "sha": "094c06826bdeacb8e8e4fc698115e55426af9e66",
+          "short": "094c06826",
+          "text": "FIX: mark literal percent i18n strings as no-c-format/no-boost-format",
+          "category": "fixed"
+        },
+        {
+          "sha": "2fc38113bab4ee8fe57e37dae8a5721d6b883623",
+          "short": "2fc38113b",
+          "text": "FIX: mac切换语言之后，登录状态下显示network plugin未安装",
+          "category": "fixed"
+        },
+        {
+          "sha": "d1678f0976f0bab63db06562844f05ed27c254f7",
+          "short": "d1678f097",
+          "text": "FIX: 恢复渐变效果勾选时的混色子层启用弹窗",
+          "category": "fixed"
+        },
+        {
+          "sha": "d829cadb3215cdd04f574f495df1eba748a0c9c4",
+          "short": "d829cadb3",
+          "text": "ENH: update small-object import unit conversion prompt",
+          "category": "changed"
+        },
+        {
+          "sha": "584c9c9568dce071b1fcdf1887d2c24537875847",
+          "short": "584c9c956",
+          "text": "FIX: 修复料塔避让禁区后的重叠判定误差",
+          "category": "fixed"
+        },
+        {
+          "sha": "07b8944e1a961c5017e3a84e24cfeab10b5ebcbd",
+          "short": "07b8944e1",
+          "text": "ci: update build version to 02.08.03.57",
+          "category": "changed"
+        },
+        {
+          "sha": "f196899fe8acc4e445a14b168bb9c9f82aca114e",
+          "short": "f196899fe",
+          "text": "FIX: 精确Z高度撑大料塔尺寸时给出警告",
+          "category": "fixed"
+        },
+        {
+          "sha": "fb45d116722bbf8ecc2e458ed13c9f81f3b5945d",
+          "short": "fb45d1167",
+          "text": "Revert \"NEW: add WebView health diagnostics and recovery\"",
+          "category": "changed"
+        },
+        {
+          "sha": "e9c72e8aedb4d89059c370f0d1d226d8bf721537",
+          "short": "e9c72e8ae",
+          "text": "ci: update network module version 02.08.03.52 based on commit 5a581f1 2026-09-03 13:10:58",
+          "category": "changed"
+        },
+        {
+          "sha": "832942155b30550231c06f0f1a0c0c804cac3986",
+          "short": "832942155",
+          "text": "ci: update network module version 02.08.03.51 based on commit 18373eb 2026-09-03 12:06:19",
+          "category": "changed"
+        },
+        {
+          "sha": "595daf95cc876ba918662c5058dc47d5366f6f90",
+          "short": "595daf95c",
+          "text": "ENH: 完善“为当前打印机创建耗材”向导",
+          "category": "changed"
+        },
+        {
+          "sha": "e3f6035971abdf0200dbcbecd5576761eb5feaf7",
+          "short": "e3f603597",
+          "text": "FIX: refine paramter tips",
+          "category": "fixed"
+        },
+        {
+          "sha": "271d96889d74ad8386ccc831d27e2baee1478198",
+          "short": "271d96889",
+          "text": "ENH:Block the pick face entrance of the cutting tool",
+          "category": "changed"
+        },
+        {
+          "sha": "11f97b4d7e759330870249144cfb51d72b219c29",
+          "short": "11f97b4d7",
+          "text": "FIX: mac切换语言失败逻辑调整",
+          "category": "fixed"
+        },
+        {
+          "sha": "fa4bef1652cc6a858be521fe7c419988b7c91c59",
+          "short": "fa4bef165",
+          "text": "ENH: 次顶面识别分层并行，并裁剪布尔运算的输入几何",
+          "category": "changed"
+        },
+        {
+          "sha": "6bd5c494bfe4ebe61f8da406da6e8eb7dd6f5e58",
+          "short": "6bd5c494b",
+          "text": "NEW: add WebView health diagnostics and recovery",
+          "category": "changed"
+        },
+        {
+          "sha": "9d8af76296773d6b9cf7f74c0aff9f5e09f95487",
+          "short": "9d8af7629",
+          "text": "ENH: [AMS] filament chip transparency, combo toggle-off, and wiki labels",
+          "category": "changed"
+        },
+        {
+          "sha": "92f226f3a85e7a4137a961a5092c12e3c433dbed",
+          "short": "92f226f3a",
+          "text": "ci: update build version to 02.08.03.56",
+          "category": "changed"
+        },
+        {
+          "sha": "a030eaee4500e6d40561269222bab7b7efd06a9e",
+          "short": "a030eaee4",
+          "text": "FIX: refine options compare dialog",
+          "category": "fixed"
+        },
+        {
+          "sha": "d5ca0cb2538c632875b9fb04ce8cb8ac9ebf29a6",
+          "short": "d5ca0cb25",
+          "text": "ENH: jump to create custom filament from filament manager Create Now",
+          "category": "changed"
+        },
+        {
+          "sha": "c5d8ab0c7c06c732565243f8ccc92dab65fe3155",
+          "short": "c5d8ab0c7",
+          "text": "Revert \"NEW: popup a warning messge dialog when deleting a using filament\"",
+          "category": "changed"
+        },
+        {
+          "sha": "e654e5afc865cec6187f71e0bb2bee967d8c563b",
+          "short": "e654e5afc",
+          "text": "FIX: fix macOS SVG/text emboss use_surface crash (GMP arm64 x18)",
+          "category": "fixed"
+        },
+        {
+          "sha": "aeb37cc2d543e668540ec494e194abc7148862d1",
+          "short": "aeb37cc2d",
+          "text": "ENH: docker构建的AppImage包需要导出.debug符号文件到宿主机",
+          "category": "changed"
+        },
+        {
+          "sha": "8c9732f75c63fac009edc6a931df4205dd5d1928",
+          "short": "8c9732f75",
+          "text": "ci: update build version to 02.08.03.55",
+          "category": "changed"
+        },
+        {
+          "sha": "1ec6f0e3e16a873424ee284f0658e3db54515778",
+          "short": "1ec6f0e3e",
+          "text": "FIX: remove leftover judgment logic of chamber and bed temperature popups",
+          "category": "fixed"
+        },
+        {
+          "sha": "5877dddc4b3a6d7c8e4072506b72c01c6ee74a0c",
+          "short": "5877dddc4",
+          "text": "FIX: draw ColorPicker gradient chips as antialiased circles",
+          "category": "fixed"
+        },
+        {
+          "sha": "ef10cf21c735551f5857b6061209f99130c7e54e",
+          "short": "ef10cf21c",
+          "text": "ENH: refine AMS official filament link dialog and select chips",
+          "category": "changed"
+        },
+        {
+          "sha": "226a4b240189971e828a3f27938ba06f6617a187",
+          "short": "226a4b240",
+          "text": "ENH: Clicking Home icon in Bambu Studio shows blank page",
+          "category": "changed"
+        },
+        {
+          "sha": "6ba8089c254c2e84686d12aadcaf7545a4ee1e7a",
+          "short": "6ba8089c2",
+          "text": "FIX: keep RFID badge on device switch, skip AMS Lite auto-add",
+          "category": "fixed"
+        },
+        {
+          "sha": "b5780e407a04554efb040e8d0b236a925417ddbb",
+          "short": "b5780e407",
+          "text": "FIX: Apply zoom prefs to Mac trackpad pinch",
+          "category": "fixed"
+        },
+        {
+          "sha": "3253fa0775ff291636424d6f32b01fee8c3a2320",
+          "short": "3253fa077",
+          "text": "Fix: 使用向导无法外链跳转",
+          "category": "fixed"
+        },
+        {
+          "sha": "4a459a9bbe19d03a66d92e15e4b703eeace91615",
+          "short": "4a459a9bb",
+          "text": "ENH: add message when webview crashed",
+          "category": "changed"
+        },
+        {
+          "sha": "8052edf40811e89d34880469ab191c8f3ee2f4eb",
+          "short": "8052edf40",
+          "text": "ci: update translate file 2026_09_01_14_54_50",
+          "category": "changed"
+        },
+        {
+          "sha": "988f8d9857ff545abcb193ca6b6f59c440c3b3de",
+          "short": "988f8d985",
+          "text": "ENH: adapt filament manager localization and dialog position",
+          "category": "changed"
+        },
+        {
+          "sha": "080b9d75f5cee16175feab1f78b527e8c1f23028",
+          "short": "080b9d75f",
+          "text": "ENH: update the color for wgtDeviceNozzleRackUprade",
+          "category": "changed"
+        },
+        {
+          "sha": "63024aadb50f51cf92037a0a9414939f66ed5219",
+          "short": "63024aadb",
+          "text": "FIX: update the policy for TryLoadLastMachine of LAN",
+          "category": "fixed"
+        },
+        {
+          "sha": "cc5306d4a0b7b34e3b5d198eb9328e3983a1ce0c",
+          "short": "cc5306d4a",
+          "text": "ci: update build version to 02.08.03.54",
+          "category": "changed"
+        },
+        {
+          "sha": "840df76a57854dad1db616b966d9f395676f0011",
+          "short": "840df76a5",
+          "text": "ENH: 纹理导入隐藏Loading并跳过少量色聚类",
+          "category": "changed"
+        },
+        {
+          "sha": "50a52fc172348abc7c2ee763eb34613f5756c248",
+          "short": "50a52fc17",
+          "text": "FIX:Fixed the font normal vector calculation not working properly",
+          "category": "changed"
+        },
+        {
+          "sha": "2ba84fc7218c46cb25a1998fb3c261f47ca5f187",
+          "short": "2ba84fc72",
+          "text": "FIX: make 3mf check dialog a toast message",
+          "category": "fixed"
+        },
+        {
+          "sha": "d89b4e319a5e2b973e2124b3cc96a0a816a052fa",
+          "short": "d89b4e319",
+          "text": "Revert \"ENH:ci: update translate file 2026_08_27_15_05_58\"",
+          "category": "changed"
+        },
+        {
+          "sha": "f2f3ea322e5927df5b802645f29d0229f51a08fb",
+          "short": "f2f3ea322",
+          "text": "NEW: 新增料塔生成的偏好行为、新增料塔和摆件避让禁区行为",
+          "category": "changed"
+        },
+        {
+          "sha": "aa1db7c2bd70d9b21eb3c321775c479f9eded80e",
+          "short": "aa1db7c2b",
+          "text": "FIX: AMS烘干优先系统预设避免用户料显示0",
+          "category": "fixed"
+        },
+        {
+          "sha": "62774d1acc046dc62c5e6dc87d73bf0b001107cb",
+          "short": "62774d1ac",
+          "text": "FIX: 手动设置喷嘴数量弹窗补齐 E3D High Flow 档",
+          "category": "fixed"
+        },
+        {
+          "sha": "b242cfe69a40bb6970d550f8b395c554343c38db",
+          "short": "b242cfe69",
+          "text": "ENH: 创建自定义耗材界面优化",
+          "category": "changed"
+        },
+        {
+          "sha": "29dce997f99e99d7e699dff531b32aab3b382152",
+          "short": "29dce997f",
+          "text": "ENH: refine filament select and AMS material setting dialog UI",
+          "category": "changed"
+        },
+        {
+          "sha": "dc82966e318631bd052740703fa8eeff94ec189c",
+          "short": "dc82966e3",
+          "text": "FIX:adjust mapping fila remain logic",
+          "category": "changed"
+        },
+        {
+          "sha": "cc40e84a8bc5013b407e475823d02dd5f0dafc64",
+          "short": "cc40e84a8",
+          "text": "FIX: Fill in missing flow ratio parameters for third-party presets.",
+          "category": "fixed"
+        },
+        {
+          "sha": "d4eb3402f2258e65f409d3650e4d2992f3d3fe5d",
+          "short": "d4eb3402f",
+          "text": "FIX: 发起打印完成时，进度变更到 100",
+          "category": "fixed"
+        },
+        {
+          "sha": "55c4bc33fa2c99b21fec2d12a0b333ea8e4f3604",
+          "short": "55c4bc33f",
+          "text": "FIX: restore cut part hover tooltip after PartSelection is built",
+          "category": "fixed"
+        },
+        {
+          "sha": "6b51979351f50c337c5e1fb1db58094e42797d50",
+          "short": "6b5197935",
+          "text": "FIX:  remove an object when deleting the last solid part",
+          "category": "fixed"
+        },
+        {
+          "sha": "01c2306c726bcfe4bf9d3c4de174958d655f8dd0",
+          "short": "01c2306c7",
+          "text": "FIX: process options search got unsupported options",
+          "category": "fixed"
+        },
+        {
+          "sha": "0b7b8582940e95ab8043cf192d3635c7a20ec067",
+          "short": "0b7b85829",
+          "text": "NEW: refactor option tooltips",
+          "category": "changed"
+        },
+        {
+          "sha": "9311d2ce0273b6801e4810555b3aa2c21041a809",
+          "short": "9311d2ce0",
+          "text": "FIX: keep multi-color filament chips in official color order",
+          "category": "fixed"
+        },
+        {
+          "sha": "a419f3dc36c5a926f238e5d4f27b3f4ccf3eaed7",
+          "short": "a419f3dc3",
+          "text": "FIX: max temperature is too high",
+          "category": "fixed"
+        },
+        {
+          "sha": "3b89bfeaf79c7fe57665a94260d53309bad4b0cc",
+          "short": "3b89bfeaf",
+          "text": "ci: update build version to 02.08.03.53",
+          "category": "changed"
+        },
+        {
+          "sha": "eaccb20addb7ab33a2ed9481045d7a53ef2d22cf",
+          "short": "eaccb20ad",
+          "text": "ENH: 拆色弹窗按材质大类筛选并预览编号",
+          "category": "changed"
+        },
+        {
+          "sha": "d7a85f332d3a182229cc3c5eb4052e75b7aaa1c4",
+          "short": "d7a85f332",
+          "text": "FIX:For dual-head models, handle print areas that don't overlap",
+          "category": "changed"
+        },
+        {
+          "sha": "184c2c60a6a6b2e0ba7b9a0a401fbfd400284806",
+          "short": "184c2c60a",
+          "text": "FIX: 便捷模式贴喷嘴可打印区边界时误锁到另一喷嘴",
+          "category": "fixed"
+        },
+        {
+          "sha": "e5e7472adc07d775fe3b65dba2abac35b16999d7",
+          "short": "e5e7472ad",
+          "text": "ENH: 加速导入路径网格诊断",
+          "category": "changed"
+        },
+        {
+          "sha": "646f12ab7d5fb20e9dcd3ebebb3714aa638c4154",
+          "short": "646f12ab7",
+          "text": "FIX: Archimedean spiral ironing enum name cause wrong ironing pattern",
+          "category": "fixed"
+        },
+        {
+          "sha": "554dd70d9a55e31ac91cb83c5a1cdba628c00692",
+          "short": "554dd70d9",
+          "text": "FIX: add almost complete when left time is 0",
+          "category": "fixed"
+        },
+        {
+          "sha": "700126c463c49205d9be03536e93f9a18d827814",
+          "short": "700126c46",
+          "text": "FIX: Slicing was still allowed when a model part was fully outside the plate",
+          "category": "fixed"
+        },
+        {
+          "sha": "750aa99ddc3615104ae33b884885e5cdb8b18b66",
+          "short": "750aa99dd",
+          "text": "FIX: fallback get_config_index_base to the same filament row",
+          "category": "fixed"
+        },
+        {
+          "sha": "8107ef3a6528e8cde3020b8e2a68428c1f264457",
+          "short": "8107ef3a6",
+          "text": "FIX: AMS info not synced on app startup",
+          "category": "fixed"
+        },
+        {
+          "sha": "78ef82f48186b6934bd42b1efa7d7c97bd2e3f94",
+          "short": "78ef82f48",
+          "text": "FIX: duplicated error notification when filament is unprintable",
+          "category": "fixed"
+        },
+        {
+          "sha": "f0d8368ff139b982269afc263be4a46cb87354b4",
+          "short": "f0d8368ff",
+          "text": "FIX: Limit top/bottom penetration layers to not exceed shell layer count",
+          "category": "fixed"
+        },
+        {
+          "sha": "9d60e38f9ac72faab75ade10ad2c9e2bf427345f",
+          "short": "9d60e38f9",
+          "text": "FIX: gcode 3mf laod failed on some cases",
+          "category": "fixed"
+        },
+        {
+          "sha": "0df64eeac5ff62aecfe2a4824f1d75da2e0198ab",
+          "short": "0df64eeac",
+          "text": "FIX: undo 后保存项目因 top_solid_infill_flow_ratio 的 NaN 失败",
+          "category": "fixed"
+        },
+        {
+          "sha": "c0eb759bd24ec4afc9abb62d2041b6f653625ecd",
+          "short": "c0eb759bd",
+          "text": "ci: update build version to 02.08.03.52",
+          "category": "changed"
+        },
+        {
+          "sha": "1ee11bb72f258d4207e10fd73c4b168da5aea951",
+          "short": "1ee11bb72",
+          "text": "ENH: 导入网格诊断拆成边扫描与反向面检测",
+          "category": "changed"
+        },
+        {
+          "sha": "72cb27b99baf9364c65112d4209ebff146002091",
+          "short": "72cb27b99",
+          "text": "ENH: rename FilamentSpool::setting_id to filament_id && Modify the source of the `filament_id` field created in the consumable manager",
+          "category": "changed"
+        },
+        {
+          "sha": "579c63e76ee597d46dc3c0ce58cee8b07a077cf6",
+          "short": "579c63e76",
+          "text": "FIX: mac系统智能文件夹下的.stp/.step/.3mf等模型文件无法显示和导入",
+          "category": "fixed"
+        },
+        {
+          "sha": "60b545d56cdf3beb914d94b9d3f5222a87ced9ab",
+          "short": "60b545d56",
+          "text": "ENH: 单调线填充与填缝按最近端点交错装配",
+          "category": "changed"
+        },
+        {
+          "sha": "3fb1f63670b44c22fd502b64e456856d154a27b1",
+          "short": "3fb1f6367",
+          "text": "FIX: 纹理导入一键混色撞32槽上限后半段仍单色",
+          "category": "fixed"
+        },
+        {
+          "sha": "f7adae6b873fe8c5c60da4009a96a6c2b41bdfc1",
+          "short": "f7adae6b8",
+          "text": "ENH:Avoid cutting performance issues and keep new features",
+          "category": "changed"
+        },
+        {
+          "sha": "4585ad445cc6f337bb3fff3e7e9f2a8e295ff843",
+          "short": "4585ad445",
+          "text": "FIX: bind OpenMeshCraft boolean switch in libslic3r_cgal",
+          "category": "fixed"
+        },
+        {
+          "sha": "7695ed132f9082aaff2142de9eb38b1411694b93",
+          "short": "7695ed132",
+          "text": "ENH:ci: update translate file 2026_08_27_15_05_58 feishu:none",
+          "category": "changed"
+        },
+        {
+          "sha": "a1b711b50d4f04a939658daf95bcef9e4797b18a",
+          "short": "a1b711b50",
+          "text": "FIX: fix filament_max_volumetric_speed becomes negative after cli slice",
+          "category": "fixed"
+        },
+        {
+          "sha": "89a1612867828eddf2a8e21a846867e90d39f77e",
+          "short": "89a161286",
+          "text": "ENH: Default to auto or on, when reopen the software in !BBL_RELEASE_TO_PUBLIC",
+          "category": "changed"
+        },
+        {
+          "sha": "4ca0f249e2576a10abe685ba18eae5ce8ca91ef7",
+          "short": "4ca0f249e",
+          "text": "FIX: scroll to bottom when delete the last filament",
+          "category": "fixed"
+        },
+        {
+          "sha": "10b82220d9445ffd44b586c7314e08afd0bda80e",
+          "short": "10b82220d",
+          "text": "ENH: gcode: move legal notice to end of HEADER_BLOCK",
+          "category": "changed"
+        },
+        {
+          "sha": "733d153f9b91ce432648aa99bb47bf4094fcba04",
+          "short": "733d153f9",
+          "text": "ci: update build version to 02.08.03.51",
+          "category": "changed"
+        },
+        {
+          "sha": "21af8f97c1620f770fa75b13c922a01507b6135c",
+          "short": "21af8f97c",
+          "text": "NEW: add AMSRFIDMaterialView and FilamentSelectDialog",
+          "category": "changed"
+        },
+        {
+          "sha": "9672e7d8486e59e467bdcfa6f640d7299454cf34",
+          "short": "9672e7d84",
+          "text": "FIX:Opening by project should clear all imgui notification messages",
+          "category": "changed"
+        },
+        {
+          "sha": "c9089d03c3964afb7d93df6b04bd477b370bd88e",
+          "short": "c9089d03c",
+          "text": "NEW: 从首层线宽中剥离首层填充线宽",
+          "category": "changed"
+        },
+        {
+          "sha": "ef40bccc493186f2f784a1b58c1322ed42297aa6",
+          "short": "ef40bccc4",
+          "text": "FIX: 全局开启支撑且选了支撑料并且设置筏层之后，对象将筏层关闭导致料塔消失",
+          "category": "fixed"
+        },
+        {
+          "sha": "1d4d21d154327d96a89d186fa97706c3a7c8f8d2",
+          "short": "1d4d21d15",
+          "text": "FIX: 矮料塔限高框顶部被相机近裁剪面裁掉",
+          "category": "fixed"
+        },
+        {
+          "sha": "8929780437eaca2e57b4ed354044f1ebb573ebdc",
+          "short": "892978043",
+          "text": "FIX: 平滑延时摄影后避免跨越外墙时不要回到过期 last_pos",
+          "category": "fixed"
+        },
+        {
+          "sha": "0a4fab190a39d07fb2a4fb624a43b46e66537cc2",
+          "short": "0a4fab190",
+          "text": "FIX: XY 移动时忽略亚微米落板残差以免误报浮空悬臂",
+          "category": "fixed"
+        },
+        {
+          "sha": "58ebd1039f2a3e8a02bc345e6a1183a974f44a87",
+          "short": "58ebd1039",
+          "text": "FIX: presets compare dialog does't support multile variants",
+          "category": "fixed"
+        },
+        {
+          "sha": "9f52e1bd64a7f034fad9c308620c154097b9c617",
+          "short": "9f52e1bd6",
+          "text": "ci: update network module version 02.08.03.50 based on commit 57314c2 2026-08-26 21:42:07",
+          "category": "changed"
+        },
+        {
+          "sha": "a28d0f77abf09442cb1634f4490d2e44ebb59815",
+          "short": "a28d0f77a",
+          "text": "ENH:Merge multiple snapshots, and for dual-head models, use a lower print height",
+          "category": "changed"
+        },
+        {
+          "sha": "902dfc0baa6563e26122aba0387fd6ae9184a78f",
+          "short": "902dfc0ba",
+          "text": "NEW:update slicer version",
+          "category": "changed"
+        },
+        {
+          "sha": "8945dc4c7c316f2e94f99445e2da4fad22e766f6",
+          "short": "8945dc4c7",
+          "text": "ENH:update the version of BBL.json to 2.8.0.6",
+          "category": "changed"
+        },
+        {
+          "sha": "36984f8f939a91faa7105b73e540e6d4d8bbc1fa",
+          "short": "36984f8f9",
+          "text": "ENH:[gcode]Auto sync gcode from studio_custom_gcode to the github/01.01.00.08 branch of bamboo_slicer",
+          "category": "changed"
+        },
+        {
+          "sha": "4cbfe03dc9eddd2f9a959d0cc8eabafccca95292",
+          "short": "4cbfe03dc",
+          "text": "NEW: mac调试信息级别从-g降为-gline-tables-only，减少符号文件包体积",
+          "category": "changed"
+        },
+        {
+          "sha": "f91dc0cae347ee212f0b64916a487ecf5cb360bb",
+          "short": "f91dc0cae",
+          "text": "NEW: mac支持dSYM符号文件生成和剥离",
+          "category": "changed"
+        },
+        {
+          "sha": "cc8a0550227c196b9eaee41f6837a1eb7605f252",
+          "short": "cc8a05502",
+          "text": "Revert \"ENH: support HMS asynchronous download\"",
+          "category": "changed"
+        },
+        {
+          "sha": "16f76554630e4278870e76fb35eec5274769364f",
+          "short": "16f765546",
+          "text": "ENH: orbit around selection center and add mouse wheel/move options",
+          "category": "changed"
+        },
+        {
+          "sha": "f256df0ce053f734e435d9a9f83936fded729270",
+          "short": "f256df0ce",
+          "text": "ENH:[filament-manager] render translucent colors with tinted checkerboard",
+          "category": "changed"
+        },
+        {
+          "sha": "353b6a0d6c82f08ba502b06bbb46a396283c6c5d",
+          "short": "353b6a0d6",
+          "text": "FIX:Do some protection for empty meshes on the background thread",
+          "category": "changed"
+        },
+        {
+          "sha": "b789b104984e28d1b5ffc96073c2ac159a316dbd",
+          "short": "b789b1049",
+          "text": "ci: update network module version 02.09.00.51 based on commit 6766d78 2026-08-26 10:07:38",
+          "category": "changed"
+        },
+        {
+          "sha": "67c39089f64d6bb0e0d51556d72e6fde4b359e60",
+          "short": "67c39089f",
+          "text": "ENH: support HMS asynchronous download",
+          "category": "changed"
+        },
+        {
+          "sha": "0f501eff4b5be143c397c3f7aeeb8c9c9e7e2b32",
+          "short": "0f501eff4",
+          "text": "FIX: replace wxRadioButton with RadioBox for filament slot selection",
+          "category": "fixed"
+        },
+        {
+          "sha": "0d1e8f5d3063c6201a6def3638e5c3cc03906cef",
+          "short": "0d1e8f5d3",
+          "text": "FIX: 反向面片检测改用 CGAL 射线求交，并按嵌套深度判定壳朝向",
+          "category": "fixed"
+        },
+        {
+          "sha": "309354f9bca5fdaa1370a43f14d33d26439a6ef5",
+          "short": "309354f9b",
+          "text": "FIX: mac开启Rosetta模式，创建打印机时先选择型号必现崩溃",
+          "category": "fixed"
+        },
+        {
+          "sha": "6f678600480bf84f98a12166b6fdd069fcf15bd6",
+          "short": "6f6786004",
+          "text": "NEW: Implement Archimedean spiral pattern for ironing.",
+          "category": "changed"
+        },
+        {
+          "sha": "b5d1d3b5e0c15c2bdfdce662293dd459c6bce779",
+          "short": "b5d1d3b5e",
+          "text": "NEW: add OpenMeshCraft mesh boolean backend",
+          "category": "changed"
+        },
+        {
+          "sha": "be2fe0e58792de8674702d9a56d576397cd2a45d",
+          "short": "be2fe0e58",
+          "text": "NEW: 增加次顶面填充类型，支持设置填充pattern",
+          "category": "changed"
+        },
+        {
+          "sha": "14a67b919041120b90be40d97e5bc90a5bc226da",
+          "short": "14a67b919",
+          "text": "ENH:The export features like exporting to MP4 in the assembly guide function now support cancellation.",
+          "category": "changed"
+        },
+        {
+          "sha": "d8abb285d69b3c2b171d30828984b050208c1d91",
+          "short": "d8abb285d",
+          "text": "ENH: Sort the filament color codes by HSV",
+          "category": "changed"
+        },
+        {
+          "sha": "4e943768cb7bfc6ca36f9af0a27c921e6058b6c5",
+          "short": "4e943768c",
+          "text": "NEW: popup a warning messge dialog when deleting a using filament",
+          "category": "changed"
+        },
+        {
+          "sha": "f1ec3284c9d9072cf9b41492c657a77866f75082",
+          "short": "f1ec3284c",
+          "text": "ENH:[P2S]Modify the maximum speed of the x and y axes in the machine's preset settings, and set the coasting acceleration in the process preset to 1000. (cherry picked from commit ac51e8b0126cdf1d60a5bdbd0fc250db887f8853)",
+          "category": "changed"
+        },
+        {
+          "sha": "750eaddd55361b35d48d20357b3cdf66738eb7a4",
+          "short": "750eaddd5",
+          "text": "FIX:  refine preference page",
+          "category": "fixed"
+        },
+        {
+          "sha": "14486fdd8d4444b1ca2dbf3c877205e78e31198d",
+          "short": "14486fdd8",
+          "text": "ci: update build version to 02.08.02.64",
+          "category": "changed"
+        },
+        {
+          "sha": "0642fb5d2e15de250dedc6ec92b5cf5ab4345789",
+          "short": "0642fb5d2",
+          "text": "ENH:Add a tip for non-printable objects on the canvas",
+          "category": "changed"
+        },
+        {
+          "sha": "8d73d6d42ef70fc0bbc73639b4cd41ea519528bf",
+          "short": "8d73d6d42",
+          "text": "FIX: give filament section 6 lines of filament at most",
+          "category": "fixed"
+        },
+        {
+          "sha": "0c3d74d64646d5e1c9d24eac261461b1753e1042",
+          "short": "0c3d74d64",
+          "text": "FIX: project not saved when closing app",
+          "category": "fixed"
+        },
+        {
+          "sha": "b931ec63022703c4b11f75f9156e1a2b2b5aa3f8",
+          "short": "b931ec630",
+          "text": "FIX: apply organic plate foot as 2D cone after extrude",
+          "category": "fixed"
+        },
+        {
+          "sha": "11500c6e63f1a2a84bc60e534aeee24574588a8e",
+          "short": "11500c6e6",
+          "text": "FIX: organic tree split-joint FlatDisk and analytic hemisphere inject",
+          "category": "fixed"
+        },
+        {
+          "sha": "1b8a4a9ca24feb1b084d6cda6ada7244d40d5dc7",
+          "short": "1b8a4a9ca",
+          "text": "FIX: skip when selecting a already selected region",
+          "category": "fixed"
+        },
+        {
+          "sha": "0ddcc717ed75f052dca7c18faf43120153c6c9f6",
+          "short": "0ddcc717e",
+          "text": "NEW: add new languages",
+          "category": "changed"
+        },
+        {
+          "sha": "770c4e735306c454a80de18cd4dd1d6c8049c5c2",
+          "short": "770c4e735",
+          "text": "NEW: ue jd instead of tmall in CN",
+          "category": "changed"
+        },
+        {
+          "sha": "9876f75a908ee404c7a2cb6c99c04a47998fdc13",
+          "short": "9876f75a9",
+          "text": "ci: update build version to 02.08.02.63",
+          "category": "changed"
+        },
+        {
+          "sha": "926a61e11ba8d83e3571817ab788382ed546cbcc",
+          "short": "926a61e11",
+          "text": "FIX: load 3mf error due to too strick check",
+          "category": "fixed"
+        },
+        {
+          "sha": "090deaca2ff423cd9f6bc468923e6adbb2351b3d",
+          "short": "090deaca2",
+          "text": "FIX: Preserve JSON-defined primary filament color order",
+          "category": "fixed"
+        },
+        {
+          "sha": "406cac36e774143e099b93516223f930b05f1c78",
+          "short": "406cac36e",
+          "text": "FIX: mac切换语言必崩",
+          "category": "fixed"
+        },
+        {
+          "sha": "fda5c2f0af7dff94fdbe3a15cc19c48e2a4b5996",
+          "short": "fda5c2f0a",
+          "text": "ENH: Performance Statistics 各模块性能数据",
+          "category": "changed"
+        },
+        {
+          "sha": "6fa0724f96f86d6d43827130a2a28f1033e68217",
+          "short": "6fa0724f9",
+          "text": "Revert \"﻿FIX: Preserve JSON-defined primary filament color order\"",
+          "category": "changed"
+        },
+        {
+          "sha": "e56016511f34593b289cf3f987e36a65e2f1a62a",
+          "short": "e56016511",
+          "text": "FIX: Preserve JSON-defined primary filament color order",
+          "category": "fixed"
+        },
+        {
+          "sha": "abcdde3d0e68c1c54c005a3d336c2447a38ba14e",
+          "short": "abcdde3d0",
+          "text": "FIX: organic tree floating face columns under model intrusion",
+          "category": "fixed"
+        },
+        {
+          "sha": "6b91330e0884d82ad742ae6dc218546a1e72ceb6",
+          "short": "6b91330e0",
+          "text": "FIX: bound tree support lateral merge reach for large branch diameters",
+          "category": "fixed"
+        },
+        {
+          "sha": "b403761b39c56287046bae0203b90a74865fdafa",
+          "short": "b403761b3",
+          "text": "FIX: enable devtools failed on modern mac",
+          "category": "fixed"
+        },
+        {
+          "sha": "07220ea2675136dbc7745eae587c083b78859e63",
+          "short": "07220ea26",
+          "text": "NEW: [FilamentManager] support custom brand/type input in add-filament dropdowns, show preset-missing hint with create link",
+          "category": "changed"
+        },
+        {
+          "sha": "d2368db8531a225f17633d5541c0d25e074ccdd7",
+          "short": "d2368db85",
+          "text": "NEW: update the sequence of FilamentColor",
+          "category": "changed"
+        },
+        {
+          "sha": "a0d8859d0dc6b82b61b1d73f30f5501acd039a11",
+          "short": "a0d8859d0",
+          "text": "FIX: send gcode file without post‑processing",
+          "category": "fixed"
+        },
+        {
+          "sha": "51c8fe532c74d377b8df6b87c95544a3a2d8979f",
+          "short": "51c8fe532",
+          "text": "ci: update build version to 02.08.02.62",
+          "category": "changed"
+        },
+        {
+          "sha": "12715022b46bead345647fab6a7a532eb5f0bea9",
+          "short": "12715022b",
+          "text": "ci: update build version to 02.08.02.61",
+          "category": "changed"
+        },
+        {
+          "sha": "ebf9702e27faccd3b2dc8fc12a2e592fa7731d9c",
+          "short": "ebf9702e2",
+          "text": "FIX:Fix text mirroring issue caused by mirror image in attached mesh",
+          "category": "changed"
+        },
+        {
+          "sha": "3406db52fc073efbb3e0d3cd0a2e143b4fa1cf3a",
+          "short": "3406db52f",
+          "text": "FIX: warn when tree support leaves overhangs uncovered",
+          "category": "fixed"
+        },
+        {
+          "sha": "be0ffd89ff34032d4d5ea954f79fddfe612c9275",
+          "short": "be0ffd89f",
+          "text": "ENH: split advanced cut hover hints and fix part picking",
+          "category": "changed"
+        },
+        {
+          "sha": "94b1092351a1659e38658725d8125509c501fba7",
+          "short": "94b109235",
+          "text": "FIX: fix camera orientation for no-light rendering thumbnails",
+          "category": "fixed"
+        },
+        {
+          "sha": "1a47331d0ca0a4230f6701af9f92be6ced3a3f07",
+          "short": "1a47331d0",
+          "text": "FIX: early return for selecting the already selected preset",
+          "category": "fixed"
+        },
+        {
+          "sha": "22f31b72381f22df3c7df583927d0667293a4d2e",
+          "short": "22f31b723",
+          "text": "ci: update build version to 02.08.02.62",
+          "category": "changed"
+        },
+        {
+          "sha": "89c8cb4a5f910b49d065623de475ffc23facea0e",
+          "short": "89c8cb4a5",
+          "text": "FIX:Remove features with extremely low usage rates",
+          "category": "changed"
+        },
+        {
+          "sha": "9c6f3152478b9d9d96c3ba8cf2bb7d52868b72af",
+          "short": "9c6f31524",
+          "text": "ci: update network module version 02.09.00.50 based on commit 06defc6 2026-08-19 13:23:34",
+          "category": "changed"
+        },
+        {
+          "sha": "bf8d52c724be412b51eb8d791a062a25a073d234",
+          "short": "bf8d52c72",
+          "text": "FIX: 混色子层travel时避免Z下降对角线移动刮蹭打印件",
+          "category": "fixed"
+        },
+        {
+          "sha": "f21a89598deb54b2a37f2ee15d85bf8e7b818a91",
+          "short": "f21a89598",
+          "text": "ENH:[filament-manager] AMS auto-match & edit-to-library for official filaments",
+          "category": "changed"
+        },
+        {
+          "sha": "8f07aa989f4c034d203550e690855615774ca150",
+          "short": "8f07aa989",
+          "text": "FIX: restore overhang walls and reclassify zero-gap support contacts",
+          "category": "fixed"
+        },
+        {
+          "sha": "081444f072ada94a4ad46658bba99e3c3e5f1835",
+          "short": "081444f07",
+          "text": "FIX: ground organic tree internal floating with sheath-onset lightning",
+          "category": "fixed"
+        },
+        {
+          "sha": "ee06abd0599140e340e5f4c1da8bdd424a3902c8",
+          "short": "ee06abd05",
+          "text": "Fix: 部分用户鼠标滚轮无法进行缩放",
+          "category": "fixed"
+        },
+        {
+          "sha": "48ab2de743932d6d2f3f2b3a40db8b4d5d713ff4",
+          "short": "48ab2de74",
+          "text": "FIX: 接了选料器并且是DirectDrive与Bowden混合的挤出机擦料塔冷却额外降低10度",
+          "category": "fixed"
+        },
+        {
+          "sha": "1832ee26c83f76f057ffc3f7e5f629505b2c8a16",
+          "short": "1832ee26c",
+          "text": "ENH: support configurable release build type (RelWithDebInfo) via -y",
+          "category": "changed"
+        },
+        {
+          "sha": "10113c2be700847dc97b28fa0fbb3dbceeec3c6d",
+          "short": "10113c2be",
+          "text": "ENH:Restore the previous layer range when exiting a single layer",
+          "category": "changed"
+        },
+        {
+          "sha": "b2c5009cf8c5f11a6405deee3d0ac263f3dd1f4d",
+          "short": "b2c5009cf",
+          "text": "NEW: 增加反向面片检测并在对象列表提示",
+          "category": "changed"
+        },
+        {
+          "sha": "8c9dea2e8a4b4c385789b0f604673a4c97020f75",
+          "short": "8c9dea2e8",
+          "text": "ENH:Updated the consumable display UI in the coloring tool and assembly view's consumables panel",
+          "category": "changed"
+        },
+        {
+          "sha": "b3a94c3c57a617ad8faae7946e947ff178d47acf",
+          "short": "b3a94c3c5",
+          "text": "ENH:Improve compilation speed",
+          "category": "changed"
+        },
+        {
+          "sha": "66e405477604cf9346ea7aa9e439a7854a01029b",
+          "short": "66e405477",
+          "text": "FIX: Linux startup crash when using Japanese or Korean (#12082)",
+          "category": "fixed"
+        },
+        {
+          "sha": "a9814fe2914eb1bf7cd93e415e62619c01322538",
+          "short": "a9814fe29",
+          "text": "fix(macos): skip JS on hidden WebViews; re-layout main frame on wake",
+          "category": "changed"
+        },
+        {
+          "sha": "cb745ba707b632cc737316f2955acf097d26cbe5",
+          "short": "cb745ba70",
+          "text": "FIX: use a null check instead of creating the option",
+          "category": "fixed"
+        },
+        {
+          "sha": "03c41dd60ed6406dff67b6d8394fe20db73fda28",
+          "short": "03c41dd60",
+          "text": "Fix logic for resizing different_settings vectorFIX: null deref in ConfigBase::load_from_json when a project config has a malformed array",
+          "category": "fixed"
+        },
+        {
+          "sha": "39a9b187a1d71c2ce3a98f435beb8b2e800e7b7c",
+          "short": "39a9b187a",
+          "text": "fix: show Bambu splash screen on Linux instead of black window",
+          "category": "fixed"
+        },
+        {
+          "sha": "c3b01561274dec9d775091d0ee9e4c8f82e35ad2",
+          "short": "c3b015612",
+          "text": "fix(svg): prevent use-after-free when dragging a \"Surround surface\" SVG over an object",
+          "category": "changed"
+        },
+        {
+          "sha": "108e108635f2a223219dcf8f5e8fe3fce5ef40df",
+          "short": "108e10863",
+          "text": "ENH: cut gizmo - set the cut plane from a clicked triangular facet (#12048)",
+          "category": "changed"
+        },
+        {
+          "sha": "bdfd004de8e9962d7afdea714bce4a53b91575e1",
+          "short": "bdfd004de",
+          "text": "fix(cli): multi-material slicing (e.g., PLA + TPU) on H2D",
+          "category": "changed"
+        },
+        {
+          "sha": "0d348ad107303979e59ef6b77f05ac042759bf7b",
+          "short": "0d348ad10",
+          "text": "fix: avoid travel crash before initial tool selection",
+          "category": "fixed"
+        },
+        {
+          "sha": "b57cb666cff2279d7f97b2685f99d263c8c1523a",
+          "short": "b57cb666c",
+          "text": "Fix broken G-code comment in Bambu Lab X2D 0.4 nozzle template change_filament_gcode.json",
+          "category": "fixed"
+        },
+        {
+          "sha": "4c2ca375d4c69f51562c20666e1022c3c7e130e4",
+          "short": "4c2ca375d",
+          "text": "ENH: Add \"Lock horizon\" option for 3Dconnexion devices",
+          "category": "changed"
+        },
+        {
+          "sha": "b96bc7fc270be3b0e16f9f060f4c8aa188ae77af",
+          "short": "b96bc7fc2",
+          "text": "FIX: Match D-Bus names to the verified Flatpak",
+          "category": "fixed"
+        },
+        {
+          "sha": "31763afd52f11920525729a98543536b487f4438",
+          "short": "31763afd5",
+          "text": "FIX: Fix \"Open in Bambu Studio\" not working on aarch64 and cURL 8.x",
+          "category": "fixed"
+        },
+        {
+          "sha": "5829aa45f498dc2591d58dea7b5f5df0049fc87b",
+          "short": "5829aa45f",
+          "text": "FIX: validate cut connector volume_id and type from cut_information.xml",
+          "category": "fixed"
+        }
+      ]
+    },
+    {
+      "tag": "md3-v119",
+      "version": "v119",
+      "ordinal": 119,
+      "date": "2026-09-26",
+      "published": "2026-09-26T04:00:59Z",
+      "codeName": {
+        "en": "Walnut Cookie",
+        "yue": "合桃酥"
+      },
+      "qualifier": "",
+      "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v119",
+      "prerelease": false,
+      "baseline": false,
+      "sameCommit": false,
+      "commit": "6733303f5debe32cda0eaf90b192a92899dd5984",
+      "build": "v119 \"Walnut Cookie 合桃酥\" (app build 02.08.02.61)",
+      "entries": [
+        {
+          "sha": "6733303f5debe32cda0eaf90b192a92899dd5984",
+          "short": "6733303f5",
+          "text": "Update build handoff and sanitize public documentation",
+          "category": "changed"
+        },
+        {
+          "sha": "1601ab8c0d5fbc1029342009953258f12233ac0a",
+          "short": "1601ab8c0",
+          "text": "Document verified Preferences startup and tab navigation",
+          "category": "documented"
+        },
+        {
+          "sha": "b53fad13cdbea61fceb7896f2b926bf9f023908d",
+          "short": "b53fad13c",
+          "text": "Use an existing export icon for preset buttons",
+          "category": "changed"
+        },
+        {
+          "sha": "a02c52bbfbe4d5ede2daf4b8d59410b8c4dc3089",
+          "short": "a02c52bbf",
+          "text": "Close command palette documentation loop",
+          "category": "changed"
+        },
+        {
+          "sha": "2db0346091d1c24aa7ff739e1cbc118c713a08f5",
+          "short": "2db034609",
+          "text": "Fix programmatic Preferences tab selection",
+          "category": "fixed"
+        },
+        {
+          "sha": "4472fd17bb21dfb47b8f78697c54c0b2d54ac04f",
+          "short": "4472fd17b",
+          "text": "Pin final closeout ref",
+          "category": "changed"
+        },
+        {
+          "sha": "7281bd15da7cda27e8fff73bab253521a6027954",
+          "short": "7281bd15d",
+          "text": "Document archive and safe cleanup",
+          "category": "documented"
+        },
+        {
+          "sha": "2b058b95ce138f0fe04152535ff848adb1842b8e",
+          "short": "2b058b95c",
+          "text": "Record repository closeout state",
+          "category": "documented"
+        },
+        {
+          "sha": "5014d08562b1de7f2198a2e1134eb4d378cb670f",
+          "short": "5014d0856",
+          "text": "State the agent conversation-vocabulary rule in AGENTS.md",
+          "category": "changed"
+        },
+        {
+          "sha": "69de7d38dc829646eea0b847ca9f7bae0bd96802",
+          "short": "69de7d38d",
+          "text": "Wire the merged lanes together: gate Delete all, hook tab strips and the notification centre",
+          "category": "changed"
+        },
+        {
+          "sha": "df60f7d1d2a01bd63e5af2a405d6ad3f9acdad4b",
+          "short": "df60f7d1d",
+          "text": "Add a shared Export dialog that writes any record in nine formats, ZIP or 7z",
+          "category": "added"
+        },
+        {
+          "sha": "7884f2c9ab401db037c541b673ceae7f87986ec1",
+          "short": "7884f2c9a",
+          "text": "Tab every settings surface with one shared browser-style strip",
+          "category": "changed"
+        },
+        {
+          "sha": "2afb96f3d0e8d2e55dea72a906405199726fc1df",
+          "short": "2afb96f3d",
+          "text": "Add a per-element appearance editor anchored beside any right-clicked element",
+          "category": "added"
+        },
+        {
+          "sha": "b8765394375ef7227455ff33cbcb14db7704243a",
+          "short": "b87653943",
+          "text": "Add an in-app changelog viewer covering every released version",
+          "category": "added"
+        }
+      ]
+    },
+    {
+      "tag": "md3-v118",
+      "version": "v118",
+      "ordinal": 118,
+      "date": "2026-09-09",
+      "published": "2026-09-09T06:44:40Z",
+      "codeName": {
+        "en": "Chicken Biscuit",
+        "yue": "雞仔餅"
+      },
+      "qualifier": "worktree-agent-a28cd0c64451603b9",
+      "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v118",
+      "prerelease": false,
+      "baseline": false,
+      "sameCommit": false,
+      "commit": "dcc5c09265f3f49399c3efff7e69a889426f4c73",
+      "build": "v118 \"Chicken Biscuit 雞仔餅\" (app build 02.08.02.61)",
+      "entries": [
+        {
+          "sha": "dcc5c09265f3f49399c3efff7e69a889426f4c73",
+          "short": "dcc5c0926",
+          "text": "Checkpoint: bulk actions on every list, sub-lanes finished but the final sweep was stopped",
+          "category": "changed"
+        },
+        {
+          "sha": "9fbcebf3620691339cdd9d6de2ade297c49b67e9",
+          "short": "9fbcebf36",
+          "text": "Gate irreversible deletes behind a two-key slide-to-confirm popover",
+          "category": "changed"
+        },
+        {
+          "sha": "158df6cccd61a53a207a8cc1b64fd07307912d71",
+          "short": "158df6ccc",
+          "text": "Add a notification centre with persisted toast history behind the top-bar bell",
+          "category": "added"
+        },
+        {
+          "sha": "8d59a10338f70a8f43944568605385902a87bb27",
+          "short": "8d59a1033",
+          "text": "Show a one-in-ten dim sum card after startup from the public catalog",
+          "category": "changed"
+        }
+      ]
+    },
+    {
+      "tag": "md3-v117",
+      "version": "v117",
+      "ordinal": 117,
+      "date": "2026-09-09",
+      "published": "2026-09-09T06:19:30Z",
+      "codeName": {
+        "en": "Husband Cake",
+        "yue": "老公餅"
+      },
+      "qualifier": "worktree-agent-a470984c061728c07",
+      "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v117",
+      "prerelease": false,
+      "baseline": false,
+      "sameCommit": false,
+      "commit": "29209a60bca2125ce6bd9b7d16b1270ae39a535a",
+      "build": "v117 \"Husband Cake 老公餅\" (app build 02.08.02.61)",
+      "entries": [
+        {
+          "sha": "29209a60bca2125ce6bd9b7d16b1270ae39a535a",
+          "short": "29209a60b",
+          "text": "Checkpoint: scheduled settings and Home Assistant settings sync, agent stopped before its final doc fix",
+          "category": "changed"
+        }
+      ]
+    },
+    {
+      "tag": "md3-v116",
+      "version": "v116",
+      "ordinal": 116,
+      "date": "2026-09-09",
+      "published": "2026-09-09T05:38:17Z",
+      "codeName": {
+        "en": "Wife Cake",
+        "yue": "老婆餅"
+      },
+      "qualifier": "superseded main build",
+      "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v116",
+      "prerelease": false,
+      "baseline": false,
+      "sameCommit": false,
+      "commit": "5d61f48d40bc15c66593b8c151152c70fa72d72f",
+      "build": "v116 \"Wife Cake 老婆餅\" (app build 02.08.02.61)",
+      "entries": [
+        {
+          "sha": "5d61f48d40bc15c66593b8c151152c70fa72d72f",
+          "short": "5d61f48d4",
+          "text": "Give the app-name explanation toggle its own line in Preferences",
+          "category": "changed"
+        },
+        {
+          "sha": "94684b50a1e54176090d92b203bd12c78058dcd2",
+          "short": "94684b50a",
+          "text": "Bind the command palette to Ctrl+Shift+F and index every setting, tab and article",
+          "category": "changed"
+        },
+        {
+          "sha": "16904ba35c44459dba869419ad808c53ce9e1c78",
+          "short": "16904ba35",
+          "text": "Let the user rename the app display name without touching its identity",
+          "category": "changed"
+        },
+        {
+          "sha": "3c8407f4baf1ea116ffb97313aa7f21956c5eb43",
+          "short": "3c8407f4b",
+          "text": "Add per-language funny-level sliders and a dialog emoji toggle",
+          "category": "added"
+        },
+        {
+          "sha": "3a7cfa8e7a9cab3ad4c4854d44fb3f9802738c49",
+          "short": "3a7cfa8e7",
+          "text": "Translate the colour picker into every notation and add alpha, gamut and contrast",
+          "category": "changed"
+        }
+      ]
+    },
+    {
+      "tag": "md3-v115",
+      "version": "v115",
+      "ordinal": 115,
+      "date": "2026-09-09",
+      "published": "2026-09-09T05:17:09Z",
+      "codeName": {
+        "en": "Turnip Pastry",
+        "yue": "蘿蔔絲酥餅"
+      },
+      "qualifier": "superseded main build",
+      "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v115",
+      "prerelease": false,
+      "baseline": false,
+      "sameCommit": false,
+      "commit": "f48d411db3d2ac1beca6a5de6fe9a532123ebb05",
+      "build": "v115 \"Turnip Pastry 蘿蔔絲酥餅\" (app build 02.08.02.61)",
+      "entries": [
+        {
+          "sha": "f48d411db3d2ac1beca6a5de6fe9a532123ebb05",
+          "short": "f48d411db",
+          "text": "Render every context menu as a Material menu with search and shortcuts",
+          "category": "changed"
+        }
+      ]
+    },
+    {
+      "tag": "md3-v114",
+      "version": "v114",
+      "ordinal": 114,
+      "date": "2026-09-09",
+      "published": "2026-09-09T04:33:22Z",
+      "codeName": {
+        "en": "Salted Pork Zongzi",
+        "yue": "鹹肉糉"
+      },
+      "qualifier": "superseded main build",
+      "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v114",
+      "prerelease": false,
+      "baseline": false,
+      "sameCommit": false,
+      "commit": "cc1b3397214d2ffe0f03d6d14871b814be25af0d",
+      "build": "v114 \"Salted Pork Zongzi 鹹肉糉\" (app build 02.08.02.61)",
+      "entries": [
+        {
+          "sha": "cc1b3397214d2ffe0f03d6d14871b814be25af0d",
+          "short": "cc1b33972",
+          "text": "Lay the sidebar body out at its virtual height so the settings tree is reachable",
+          "category": "changed"
+        }
+      ]
+    },
     {
       "tag": "md3-v113",
       "version": "v113",

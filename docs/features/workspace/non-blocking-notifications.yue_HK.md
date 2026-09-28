@@ -8,11 +8,11 @@ review-status: agent-drafted
 
 # 非阻塞通知
 
-資訊、成功、警告同埋錯誤消息，不需要決定被呈現為非阻塞角落 toast（存在喺畫布`NotificationManager` snackbar），唔係模態對話框。模態對話框保持保留用於真實決定；確認、未儲存更改提示、破壞性操作門衛同埋憑據步驟。
+資訊、成功、警告同埋錯誤訊息，不需要決定被呈現為非阻塞角落 toast（存在喺畫布`NotificationManager` snackbar），唔係模態對話框。模態對話框保持保留用於真實決定；確認、未儲存更改提示、破壞性操作門衛同埋憑據步驟。
 
 ## 行為
 
-喺 `src/slic3r/GUI/GUI.cpp` 中三個中央消息漏斗路由到角落toast；
+喺 `src/slic3r/GUI/GUI.cpp` 中三個中央訊息漏斗路由到角落toast；
 
 | 漏斗 | 級別 | Toast 行為 |
 | --- | --- | --- |
@@ -29,7 +29,7 @@ review-status: agent-drafted
 - 喺 Plater / NotificationManager 存在前（早期啟動，例如配置嚮導失敗），或
 - 當另一個模態對話框係頂部時（toast 畫布會被覆蓋；通過掃描 `wxTopLevelWindows` 檢測為活躍 `wxDialog::IsModal()`）。
 
-冇消息永遠被默默丟棄；後備顯示呢個確切對話框呼叫位置使用前呢個特性。
+冇訊息永遠被默默丟棄；後備顯示呢個確切對話框呼叫位置使用前呢個特性。
 
 ## 配置
 
@@ -38,12 +38,12 @@ review-status: agent-drafted
 ## 失敗模式
 
 - **模態喺頂部** → 模態後備（按設計，睇上面）。
-- **消息從工作線程發佈**；`show_error` 已經通過`CallAfter` 進行轉運；`show_info`/`warning_catcher` 保持佢哋嘅原始線程期望（主線程），從前冇改變。
+- **訊息從工作線程發佈**；`show_error` 已經通過`CallAfter` 進行轉運；`show_info`/`warning_catcher` 保持佢哋嘅原始線程期望（主線程），從前冇改變。
 - **GL 畫布不可用**（無頭/初始化失敗）→ Plater 檢查失敗 → 模態後備。
 
 ## 安全考量
 
-消息文字由 ImGui 作為純文字渲染；超連結動作只係那些呼叫位置明確連接嘅。冇消息內容被解釋為標記或執行。
+訊息文字由 ImGui 作為純文字渲染；超連結動作只係那些呼叫位置明確連接嘅。冇訊息內容被解釋為標記或執行。
 
 ## 驗證
 
@@ -52,4 +52,4 @@ review-status: agent-drafted
 
 ## 建議文章
 
-- [通知中心](notification-center.md)；頂部欄上嘅鐘保持每個 toast 嘅可搜尋、可匯出歷史記錄喺呢度記錄，所以一個褪去消息永遠唔會丟失。
+- [通知中心](notification-center.md)；頂部欄上嘅鐘保持每個 toast 嘅可搜尋、可匯出歷史記錄喺呢度記錄，所以一個褪去訊息永遠唔會丟失。

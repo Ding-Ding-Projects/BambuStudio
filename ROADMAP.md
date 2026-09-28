@@ -12,11 +12,11 @@
 - [x] Reapply native controls, workspace and history, print and device flows, Model Creator, localization, website source, and supported Windows packaging source in separate commits.
 - [x] Review the project-tab opening adapter for rejected loads, snapshot failures, rollback save targets, and internal Recent Projects entries.
 - [x] Complete the scoped independent source review of the project-loading adapter at `e5fe62a1ed4f6516b79d5f755f89f62dd1e94977`; runtime verification remains open below.
-- [ ] Build the exact official-source candidate and fix verified build failures without dropping requested controls or menus.
+- [x] Build the exact official-source candidate and fix verified build failures without dropping requested controls or menus. Build BambuStudio passed in run [36383765054](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36383765054) at `fda9ba2840c35f3aef500ab0810db9463fe0c0bf` (and earlier in run 36380880339 at `e3686f59c`), after the link fix in `ee8ab3eb1`.
 - [x] Verify the hook-copying repair against the `CMakeLists.txt:224` configuration failure: run `36350056149` at `73d50e270` passed configuration and reached native compilation.
-- [ ] Resolve the repeated MSVC `C1041` PDB access failure in runs `36350056149` and `36350518177`; `/FS` was already present. Obtain native compile and exact-source package proof for the final main revision after a relevant repair.
-- [ ] Obtain the terminal verdict for production `main` run `36346636917` at `e2c7d6ab6d55354b48504618c1486285c043d63a`; run `36345306787` was also running at the earlier observation. Run `36345894046` subsequently failed at `Build slicer Win`, and its release publication was skipped.
-- [ ] Package and install the exact built candidate through the supported unsigned Squirrel.Windows route.
+- [x] Resolve the repeated MSVC `C1041` PDB access failure in runs `36350056149` and `36350518177`; `/FS` was already present. `6bb896464` compiles without `/Zi` when `SLIC3R_MSVC_PDB` is off; native compile and package proof followed in run 36383765054 (release `md3-v135`).
+- [x] Obtain the terminal verdict for production `main` run `36346636917` at `e2c7d6ab6d55354b48504618c1486285c043d63a`: failed at Build BambuStudio, publication skipped. Run `36345306787` (`a64ecc92d`) also failed at Build BambuStudio. Run `36345894046` failed at `Build slicer Win`, and its release publication was skipped.
+- [ ] Package and install the exact built candidate through the supported unsigned Squirrel.Windows route. Packaging is done: [`md3-v135`](https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v135) targets `fda9ba284` with `Setup.exe` (708,598,272 bytes), the full `.nupkg`, `RELEASES` and `Setup.exe.sha256`. An isolated install of that package has not been verified yet.
 - [x] Complete source review and five hosted checks for the exact-PID debugger route at `548ab63d8`; run `36350457096` preserved two validated restricted entries and verified owned teardown, without claiming a working GUI.
 - [ ] Obtain a usable startup stack: run `36350457096` could not attach because the process was exiting (`0xC000010A`), with no attach marker, stack, or image. Investigate natural exit `0x80070057` without inferring its source cause.
 - [ ] Compare saved-3MF opening on the official baseline and candidate under isolated profiles, and prove both opening routes from native model state rather than process lifetime or a filename.
@@ -27,6 +27,29 @@
 - [ ] Publish the English, Cantonese, and bilingual feature guide in the existing tabbed Pages site only after applicable packaged behavior is verified; link the exact verified release and leave the detachable camera widget as future work.
 - [x] Document that `md3-v129` targets earlier `c7cb11752a65810e4b02f4124b4c4b22c8438218` and contains package version `2.8.4128`; it does not verify the fresh official-source candidate.
 - [ ] Update release documentation and publish only after the build, runtime, and distribution checks reach verified outcomes.
+
+## Every element in Material Design 3 and in three language modes (issues #43 and #45)
+
+Ticks mean implemented, on `main`, and compiled by the Windows build (Build BambuStudio passed at
+`fda9ba284`, release `md3-v135`). Behaviour in a running application is a separate box and stays unticked
+until captures from a released build exist.
+
+- [x] Every stock control on the Material Design 3 kit: 36 of 36 conversion contracts (`de1f25259`).
+- [x] Cantonese catalogue complete against the extraction (7,632 entries); `Test-LanguageModes.ps1` fails on a missing message (`db39e3bb1`).
+- [x] Drafted entries audited, including alignment with the `zh_TW` reference; misattached drafts removed and redone (`50e82299f`).
+- [x] About 200 user-visible literals routed through the translation layer, with a literal scanner (`e3686f59c`).
+- [x] Bilingual mode for native controls: registry of displayed English and its Cantonese, fit-aware decorator for labels, buttons, check boxes, group boxes, tooltips and native menus (`97133f71f`, `9b6baf096`).
+- [x] Settings labels and Material menus show the second language (`97133f71f`).
+- [x] Local web pages receive the local web language; page keys, placeholders and image text follow the mode (`08ae598e4`).
+- [x] Feature docs (82 of 82) and changelog entries (592 of 592) in Cantonese; the command palette and the changelog viewer follow the mode (`e604fefc9`, `fda9ba284`).
+- [x] Language checks run locally before a push; the workflow builds and publishes only (`e4fc4be11`).
+- [ ] Self-drawn widgets (tab strips, step indicators, switches and similar) show the second language.
+- [ ] The 3D canvas (gizmos, sliders, notifications) shows the second language, with a Traditional Chinese CJK font in Cantonese modes.
+- [ ] The remaining 123 literals go through the translation layer or carry a recorded exception.
+- [ ] DeviceWeb, the ui-md3 site, the filament scanner page and Markdown tips follow all three modes.
+- [x] The in-app changelog covers releases up to `md3-v135` (141 releases, 1,227 entries), with Cantonese text for every commit it lists.
+- [ ] Runtime check in English, Cantonese and bilingual modes from a released build, with captures of the main window, the Prepare sidebar, settings, Preferences, a dialog, a menu, a gizmo, the setup wizard and DeviceWeb.
+- [ ] Independent human review of the agent-drafted Cantonese, starting with print safety, account, networking and destructive flows.
 
 ## Deliberate exclusions
 
