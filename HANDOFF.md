@@ -34,8 +34,11 @@ bilingual mode. Work lives on branch `claude/lang-gui-elements-9cc0be` and is me
   (`e4fc4be11`). `language_mode_tests` is not built by the workflow.
 - The in-app changelog covers releases up to `md3-v135` (141 releases, 1,227 entries) with Cantonese text for
   every commit it lists; `check_translated_content.py` reports 0 problems.
-- In progress: bilingual self-drawn widgets and 3D canvas, a Traditional Chinese CJK font for ImGui, the last
-  123 literals, and DeviceWeb and ui-md3 gaps.
+- Also landed and compiled: bilingual self-drawn widgets (`adcf23a2f`), the bilingual 3D canvas with a Traditional
+  Chinese CJK font (`7bacc40ce`, release `md3-v138`), the last literals (`a479a3020`), the web surfaces
+  (`68f42a887`) and the extracted messages (`15a864edd`, catalogue 7,644 entries). The layout probe's
+  `language-audit` command (`adbd538e9`) lists native labels still English-only in bilingual mode. Release
+  `md3-v139` (target `15a864edd`) is the first package that carries every one of these lanes.
 - Not verified: behaviour in a running application in any of the three modes (no captures from a released build
   yet), and human review of the agent-drafted Cantonese.
 

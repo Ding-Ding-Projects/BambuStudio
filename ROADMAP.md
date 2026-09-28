@@ -46,7 +46,7 @@ until captures from a released build exist.
 - [x] Self-drawn widgets (tab strips, step indicators, switches and similar) show the second language (`adcf23a2f`; Build BambuStudio passed in run 36404928718).
 - [x] The 3D canvas (gizmos, sliders, notifications) shows the second language, with a Traditional Chinese CJK font in Cantonese modes (`7bacc40ce`; compiled and published in release `md3-v138`).
 - [x] The remaining 123 literals go through the translation layer or carry a recorded exception (`a479a3020`, `7bacc40ce`; the literal scanner reports none untranslated).
-- [ ] DeviceWeb, the ui-md3 site, the filament scanner page and Markdown tips follow all three modes.
+- [x] DeviceWeb, the ui-md3 site, the filament scanner page and Markdown tips follow all three modes (`68f42a887`; Build BambuStudio, including the DeviceWeb bundle, passed in run 36407429047).
 - [x] The in-app changelog covers releases up to `md3-v135` (141 releases, 1,227 entries), with Cantonese text for every commit it lists.
 - [ ] Runtime check in English, Cantonese and bilingual modes from a released build, with captures of the main window, the Prepare sidebar, settings, Preferences, a dialog, a menu, a gizmo, the setup wizard and DeviceWeb. The layout probe's `language-audit` command lists every native label that still shows English only while its Cantonese exists.
 - [ ] Independent human review of the agent-drafted Cantonese, starting with print safety, account, networking and destructive flows.
