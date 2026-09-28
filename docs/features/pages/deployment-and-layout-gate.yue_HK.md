@@ -48,13 +48,13 @@ UI 套件嘅組建器都編譯咗 JSX，使用 `ui-md3/scripts/jsx-transform.mjs
 |:---|:---|
 | `ui-md3/tests/i18n.test.mjs` | 共享本地化執行時同登陸嘅佢嘅使用 |
 | `ui-md3/tests/site.test.mjs` | 複製梯、佔位符奇偶性、每級別事實、鍵覆蓋、正則表達式邊界、日期解析、變更日誌數據完整性、點心目錄 |
-| `ui-md3/tests/layout-clipping.test.mjs` | 靜態協議：冇省略號、冇水平滾動器、44px 樓層、帶狀溢出階段、tablist 語義 |
+| `ui-md3/tests/layout-clipping.test.mjs` | 靜態協議：冇省略號、冇水平滾動器、44px 下限、帶狀溢出階段、tablist 語義 |
 | `ui-md3/tests/site-behaviour.test.mjs` | 存儲往返、元素外觀應用/重置、通知記錄同持久性 |
 | `ui-md3/tests/jsx-transform.test.mjs` | JSX 編譯器：同 Babel 輸出同空白規則嘅一致性，同拒絕超出佢嘅子集嘅一切 |
 | `ui-md3/tests/offline-render.test.mjs` | 組成嘅網站渲染喺無頭瀏覽器中，帶 **每個非主機都被黑洞化** |
 | `ui-md3/tests/runtime-layout-clipping.mjs` | **447 個測量網站個案（156 登陸 + 288 每標籤 + 3 緊湊角落表面個案）加上 6 個加載發佈原型嘅**，喺真實無頭瀏覽器中 |
 
-`offline-render.test.mjs` 組成佢自己嘅網站副本、侍奉佢同用 `--host-resolver-rules=MAP * 0.0.0.0, EXCLUDE 127.0.0.1` 指向 Chrome，所以環回仍然連接同其他一切失敗如機器被拔掉。佢然後要求真實 UI 回來：掛載點填充、同元素同文字樓層渲染。一個空白頁面同靜默依賴 CDN 嘅頁面兩個都失敗。靜態協議捕獲一個 **寫下** 嘅非主機 URL；呢個捕獲一個 **到達** 嘅，同佢係會更早捕獲 UI 套件幾年嘅檢查。
+`offline-render.test.mjs` 組成佢自己嘅網站副本、侍奉佢同用 `--host-resolver-rules=MAP * 0.0.0.0, EXCLUDE 127.0.0.1` 指向 Chrome，所以環回仍然連接同其他一切失敗如機器被拔掉。佢然後要求真實 UI 回來：掛載點有內容，而且最少有一定數量嘅元素同文字渲染出嚟。一個空白頁面同靜默依賴 CDN 嘅頁面兩個都失敗。靜態協議捕獲一個 **寫下** 嘅非主機 URL；呢個捕獲一個 **到達** 嘅，同佢係會更早捕獲 UI 套件幾年嘅檢查。
 
 兩個套件都分享 `ui-md3/tests/devtools.mjs` 中嘅 Chrome 管道。
 

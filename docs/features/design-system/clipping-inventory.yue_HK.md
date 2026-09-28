@@ -1,6 +1,6 @@
 ---
 translation-of: clipping-inventory.md
-source-sha256: e01dcac75c40f2791160968344f29e39efca0f72bd0767e3bb657111636a21e5
+source-sha256: 80586e899406214a1c4a05b2256f31efe046caa35dbf1797f39a4875137503ec
 review-status: agent-drafted
 ---
 
@@ -35,7 +35,8 @@ Windows 桌面應用程式上發現嘅每一個版面裁剪缺陷，包括佢嘅
 | CJ-010 | 準備側欄、打印機卡 | 每一個元組（版面探針） | 一個庫存齒輪按鈕坐喺 0,0 顯示零寬度喺卡上，喺每一個 sizer 外面；用戶睇唔到，但一個活嘅庫存控制項標籤順序可以到達 | PlaterPresetComboBox 喺佢嘅父面板上構建一個舊版 ScalableButton；卡將佢替換為一個工具包編輯按鈕同從未隱藏過原始嘅（Process 卡已經做咗） | 96a054981 | home--en-light-comfortable--before.png | prepare--en-light-comfortable--after.png | verified |
 | CJ-011 | 每一個工具包 SearchField（準備側欄、偏好、配置檔案、版本歷史、...） | 每一個元組 | 正則模式同構建器按鈕喺藥丸輪廓上面同下面度自己身上畫，一個空 44 px 位置坐喺尾邊 | 44 px 圖示按鈕喺 44 px 藥丸內部覆蓋佢嘅 1 px 輪廓；清除按鈕嘅位置即使被隱藏都永久預留 | baabd4e17 | prepare--en-light-comfortable--after.png | prepare-advanced--en-light-comfortable--after.png | verified |
 | CJ-012 | 準備側欄開啟進階設定（每一行：打印機卡、墨水藥丸、搜尋藥丸、流程標籤欄） | 每一個元組（版面探針，1200 x 800） | 每一個側欄行喺 479 px 捲軸內度排列 1271 px 寬同喺側欄邊度裁剪；一個水平捲軸佔 17 px 高度；流程標籤欄結束喺「Otl」 | 重新家長 ParamsPanel 頭 sizer 將標題放喺 proportion 1（56 px 最小值）旁邊伸展空間 2、1 同 12；wxBoxSizer::CalcMin 按總比例（56 x 16 + fixed = 1271）調整最小值同 update_sidebar_scroll_body 尊重內容最小值作為虛擬寬度 | 3f4d8ffeb | prepare-advanced--en-light-comfortable--before.png | prepare-advanced--en-light-comfortable--after.png | verified |
-| CJ-013 | 準備側欄、流程設定樹（類別藥丸欄同頁面區域） | 每一個元組（版面探針，1200 x 800，預設側欄寬度） | 類別欄隱藏速度/支撐/其他喺溢出後面（其他藥丸餓到 16 px）同設定樹喺 144 px 內部捲軸內度捲動，所以用戶必須拖動側欄更大先可以睇任何設定 | TabCtrl 嘅藥丸模式使用平欄隱藏唔合適嘅版面，ParamsPanel 係一個 proportion-3 項目喺 240 px 樓層喺捲動側欄本體內部，所以佢嘅頁面視圖只得到剩餘高度 | 92cd7bce7 | prepare-tree-categories--en-light-comfortable--before.png | prepare-tree-categories--en-light-comfortable--after.png | verified |
+| CJ-013 | 準備側欄、流程設定樹（類別藥丸欄同頁面區域） | 每一個元組（版面探針，1200 x 800，預設側欄寬度） | 類別欄隱藏速度/支撐/其他喺溢出後面（其他藥丸餓到 16 px）同設定樹喺 144 px 內部捲軸內度捲動，所以用戶必須拖動側欄更大先可以睇任何設定 | TabCtrl 嘅藥丸模式使用平欄隱藏唔合適嘅版面，ParamsPanel 係一個 proportion-3 項目（下限 240 px），擺喺捲動側欄本體內部，所以佢嘅頁面視圖只得到剩餘高度 | 92cd7bce7 | prepare-tree-categories--en-light-comfortable--before.png | prepare-tree-categories--en-light-comfortable--after.png | verified |
+| CJ-014 | 長動作標籤嘅訊息對話框（噴嘴直徑選擇、自訂 `SetButtonLabel` 動作、"Do not execute"、"Go to ..."） | 每一個元組（類別級別） | 動作按鈕被壓到 44 DIP 下限，截短咗："Left..." 同 "Rig..." 而唔係 "Left nozzle: 0.4mm" 同 "Right nozzle: 0.6mm" | `MsgDialog::add_button` 畀每一個頁腳按鈕縮細（`SetAllowShrink(true)`），所以工具包 Button 報告嘅最細闊度係 44 DIP，而頁腳嘅彈性網格就啱啱淨係畀每個動作咁闊 | 9615c9418 | pending | pending | fixed-unverified |
 <!-- clipping-inventory:end -->
 
 CJ-013 喺嘗試 28（源 `92cd7bce7`）度被驗證：五個藥丸排列喺兩行（其他喺 y = 52），頁面視圖係 1672 px 高所以側欄本體（內容 2549 px 喺 645 px 客戶端）係唯一嘅捲軸，探針報告側欄冇餓到嘅行（轉儲 `probe/prepare-tree-categories--en-light-comfortable--attempt28.jsonl`）。
