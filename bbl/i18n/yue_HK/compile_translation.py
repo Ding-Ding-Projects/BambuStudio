@@ -96,7 +96,9 @@ def validate_catalog(
             continue
         if entry.fuzzy:
             raise CatalogError(f"fuzzy entries are not allowed: {entry.describe()}")
-        if not entry.translated():
+        spacer = not entry.msgid.strip() and not entry.is_plural and entry.msgstr == entry.msgid
+        if not entry.translated() and not spacer:
+            # A whitespace-only source (a spacer label) legitimately translates to itself.
             raise CatalogError(f"empty translation: {entry.describe()}")
         if entry.is_plural and len(entry.forms()) != 1:
             raise CatalogError(f"Cantonese has one plural form; found {len(entry.forms())}: {entry.describe()}")
