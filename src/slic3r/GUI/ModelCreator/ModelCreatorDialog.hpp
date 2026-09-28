@@ -9,8 +9,8 @@
 #include <thread>
 #include <wx/timer.h>
 
-class wxButton;
-class wxChoice;
+class Button;
+class ComboBox;
 class wxStaticText;
 class wxTextCtrl;
 
@@ -54,9 +54,12 @@ private:
     std::vector<Revision> m_revisions;
     bool m_busy = false;
     bool m_loading_history = false;
-    wxChoice *m_provider = nullptr;
-    wxChoice *m_renderer = nullptr;
-    wxChoice *m_history = nullptr;
+    ComboBox *m_provider = nullptr;
+    ComboBox *m_renderer = nullptr;
+    ComboBox *m_history = nullptr;
+    // These point at the native editor inside a kit TextInput/TextArea (see the
+    // anonymous-namespace field() helper in the .cpp); the wrapper widget itself
+    // is owned by the dialog's sizer, not tracked here.
     wxTextCtrl *m_model = nullptr;
     wxTextCtrl *m_prompt = nullptr;
     wxTextCtrl *m_note = nullptr;
@@ -66,11 +69,11 @@ private:
     wxTextCtrl *m_status = nullptr;
     wxStaticText *m_connection = nullptr;
     wxStaticText *m_renderer_status = nullptr;
-    wxButton *m_generate = nullptr;
-    wxButton *m_test_key = nullptr;
-    wxButton *m_cancel_button = nullptr;
-    wxButton *m_preview = nullptr;
-    wxButton *m_add = nullptr;
+    Button *m_generate = nullptr;
+    Button *m_test_key = nullptr;
+    Button *m_cancel_button = nullptr;
+    Button *m_preview = nullptr;
+    Button *m_add = nullptr;
 };
 
 } // namespace Slic3r::GUI::ModelCreator

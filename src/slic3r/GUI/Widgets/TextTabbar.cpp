@@ -42,7 +42,7 @@ void TextTabbar::AddTab(const wxString &label)
     const int index = (int) m_labels.size();
 
     auto *col  = new wxBoxSizer(wxVERTICAL);
-    auto *text = new wxStaticText(this, wxID_ANY, label);
+    auto *text = new Label(this, label);
     text->SetFont(::Label::Body_14);
 
     auto *underline = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, FromDIP(2)));

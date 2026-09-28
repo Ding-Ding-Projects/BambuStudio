@@ -224,8 +224,11 @@ void AMSMaterialsSetting::create_panel_normal(wxWindow* parent)
     m_filament_text->SetBackgroundColour(StateColor::darkModeColorFor(*wxWHITE));   // match box fill; avoid grey default label bg
     box_sizer->Add(m_filament_text, 1, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(8));
 
-    m_filament_arrow = new wxStaticBitmap(m_filament_box, wxID_ANY,
-        create_scaled_bitmap("filament_select_arrow", m_filament_box, 10));
+    // Kit icon button carrying the jump chevron; a wxStaticBitmap cannot take
+    // focus or expose a role, so the click target is a real control.
+    m_filament_arrow = new Button(m_filament_box, "");
+    m_filament_arrow->SetIconButton(Button::IconShape::Circle, 20);
+    m_filament_arrow->SetGlyph(MaterialIcon::ExpandMore, 14);
     m_filament_arrow->SetBackgroundColour(StateColor::darkModeColorFor(*wxWHITE));
     box_sizer->Add(m_filament_arrow, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(8));
     m_filament_box->SetSizer(box_sizer);
@@ -233,7 +236,7 @@ void AMSMaterialsSetting::create_panel_normal(wxWindow* parent)
     auto open_filament_dialog = [this](wxMouseEvent&) { on_open_filament_select_dialog(); };
     m_filament_box->Bind(wxEVT_LEFT_DOWN, open_filament_dialog);
     m_filament_text->Bind(wxEVT_LEFT_DOWN, open_filament_dialog);
-    m_filament_arrow->Bind(wxEVT_LEFT_DOWN, open_filament_dialog);
+    m_filament_arrow->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { on_open_filament_select_dialog(); });
 
     m_sizer_filament->Add(m_filament_box, 0, wxEXPAND, 0);
 
@@ -679,9 +682,7 @@ public:
 
         auto make_btn = [&](const wxString& label, StateColor bg, bool green) -> Button* {
             auto* btn = new Button(this, label);
-            btn->SetBackgroundColor(bg);
-            btn->SetBorderColor(green ? wxColour(0, 0, 0, 0) : StateColor::darkModeColorFor(wxColour(38, 46, 48)));
-            btn->SetTextColor(green ? wxColour("#FFFFFE") : StateColor::darkModeColorFor(wxColour(38, 46, 48)));
+            btn->SetVariant(Button::Variant::Outlined);
             btn->SetFont(Label::Body_13);
             btn->SetMinSize(wxSize(FromDIP(320), FromDIP(40)));
             btn->SetMaxSize(wxSize(-1, FromDIP(40)));
@@ -1132,7 +1133,6 @@ bool AMSMaterialsSetting::Show(bool show)
         m_wiki_ctrl->Show();
         m_k_param->Show();
         m_input_k_val->Show();
-        m_filament_arrow->SetBitmap(create_scaled_bitmap("filament_select_arrow", m_filament_box, 10));
         Layout();
         apply_dialog_size();
         wxGetApp().UpdateDlgDarkUI(this);
@@ -2641,7 +2641,7 @@ void AMSMaterialsSetting::on_dpi_changed(const wxRect &suggested_rect)
     m_clr_picker->msw_rescale();
     m_filament_box->SetMinSize(AMS_MATERIALS_SETTING_COMBOX_WIDTH);
     m_filament_box->SetCornerRadius(FromDIP(4));
-    m_filament_arrow->SetBitmap(create_scaled_bitmap("filament_select_arrow", m_filament_box, 10));
+    m_filament_arrow->Rescale();
     m_button_reset->SetMinSize(AMS_MATERIALS_SETTING_BUTTON_SIZE);
     m_button_reset->SetCornerRadius(FromDIP(12));
     m_button_confirm->SetMinSize(AMS_MATERIALS_SETTING_BUTTON_SIZE);
@@ -3161,7 +3161,7 @@ void AMSNewOfficialFilamentDlg::create()
     // Title row: hint icon + bold title (text set per case in populate_link_combo())
     auto* title_row = new wxBoxSizer(wxHORIZONTAL);
     auto* info_bmp = new wxStaticBitmap(this, wxID_ANY,
-        create_scaled_bitmap("ams_filament_hint", this, 16),
+        MaterialIcon::bitmap(this, MaterialIcon::Info, 16, StateColor::semantic(MD3::Role::OnSurfaceVariant)),
         wxDefaultPosition, wxSize(FromDIP(16), FromDIP(16)));
     m_title = new Label(this, wxEmptyString);
     m_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
@@ -3213,13 +3213,7 @@ void AMSNewOfficialFilamentDlg::create()
     m_btn_record_new = new Button(this, _L("Add as new filament"));
     m_btn_record_new->SetMinSize(AMS_MATERIALS_SETTING_BUTTON_SIZE);
     m_btn_record_new->SetCornerRadius(FromDIP(12));
-    m_btn_record_new->SetBackgroundColor(StateColor(
-        std::pair<wxColour, int>(wxColour(0xD0, 0xD0, 0xD0), StateColor::Pressed),
-        std::pair<wxColour, int>(wxColour(0xE8, 0xE8, 0xE8), StateColor::Hovered),
-        std::pair<wxColour, int>(wxColour(0xF0, 0xF0, 0xF1), StateColor::Normal)
-    ));
-    m_btn_record_new->SetBorderColor(wxColour(0xCF, 0xCF, 0xCF));
-    m_btn_record_new->SetTextColor(wxColour(0x32, 0x3A, 0x3D));
+    m_btn_record_new->SetVariant(Button::Variant::Outlined);
     m_btn_record_new->Bind(wxEVT_BUTTON, &AMSNewOfficialFilamentDlg::on_record_new, this);
     btn_sizer->Add(m_btn_record_new, 0, wxRIGHT, FromDIP(12));
 
@@ -3460,11 +3454,9 @@ void AMSNewFilamentRecordedDlg::create(const FilamentSpool& sp)
     // Title row: hint icon + bold info text
     auto* title_row = new wxBoxSizer(wxHORIZONTAL);
     auto* hint_bmp = new wxStaticBitmap(this, wxID_ANY,
-        create_scaled_bitmap("ams_filament_hint", this, 16),
+        MaterialIcon::bitmap(this, MaterialIcon::Info, 16, StateColor::semantic(MD3::Role::OnSurfaceVariant)),
         wxDefaultPosition, wxSize(FromDIP(16), FromDIP(16)));
-    auto* label = new wxStaticText(this, wxID_ANY,
-        _L("New filament information has been recorded."),
-        wxDefaultPosition, wxDefaultSize, wxALIGN_LEFT);
+    auto* label = new Label(this, _L("New filament information has been recorded."), wxALIGN_LEFT);
     label->SetFont(::Label::Head_16);
     label->Wrap(FromDIP(340));
     title_row->Add(hint_bmp, 0, wxALIGN_TOP | wxRIGHT, FromDIP(6));
@@ -3483,13 +3475,7 @@ void AMSNewFilamentRecordedDlg::create(const FilamentSpool& sp)
     auto* btn_ok = new Button(this, _L("OK"));
     btn_ok->SetMinSize(AMS_MATERIALS_SETTING_BUTTON_SIZE);
     btn_ok->SetCornerRadius(FromDIP(12));
-    btn_ok->SetBackgroundColor(StateColor(
-        std::pair<wxColour, int>(wxColour(27, 136, 68),  StateColor::Pressed),
-        std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-        std::pair<wxColour, int>(wxColour(0, 174, 66),   StateColor::Normal)
-    ));
-    btn_ok->SetBorderColor(wxColour(0, 174, 66));
-    btn_ok->SetTextColor(wxColour("#FFFFFE"));
+    btn_ok->SetVariant(Button::Variant::Filled);
     btn_ok->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { EndModal(wxID_OK); });
     btn_sizer->Add(btn_ok, 0);
     sizer->Add(btn_sizer, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(12));

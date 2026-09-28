@@ -436,10 +436,19 @@ wxPanel *MachineInfoPanel::create_caption_panel(wxWindow *parent)
     m_caption_text->Wrap(-1);
     m_caption_sizer->Add(m_caption_text, 1, wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(5));
 
-    m_copy_info = new wxStaticBitmap(caption_panel, wxID_ANY, create_scaled_bitmap("tooltip_copy", this, COPY_ICON_PX));
-    m_copy_info->SetBackgroundColour(caption_panel->GetBackgroundColour());
+    // Kit IconButton rather than a bare wxStaticBitmap, so the control is keyboard-focusable and
+    // exposes a pushbutton role/name/state to assistive tech (the bitmap was an unreachable click
+    // target). SetIconBitmap() keeps the very same raster copy-icon art -- and the hover /
+    // "copied!" crossfade below -- instead of switching to a Material Symbols glyph.
+    m_copy_info = new Button(caption_panel, wxEmptyString);
+    m_copy_info->SetIconButton(Button::IconShape::Circle, COPY_ICON_PX);
+    m_copy_info->SetIconBitmap(create_scaled_bitmap("tooltip_copy", this, COPY_ICON_PX));
+    // Same MD3 role the caption bar itself is seeded with a few lines up, so the two stay in
+    // sync under a runtime theme switch instead of freezing a read-back snapshot.
+    m_copy_info->SetBackgroundColorNormal(StateColor::semantic(MD3::Role::SurfaceContainerLow));
     m_copy_info->SetCursor(wxCursor(wxCURSOR_HAND));
     m_copy_info->SetToolTip(_L("Copy Device Info"));
+    m_copy_info->SetName(_L("Copy Device Info"));
     m_copy_info->Bind(wxEVT_ENTER_WINDOW, [this](wxMouseEvent&) {
         m_copy_hovered = true;
         if (!m_copy_feedback_timer->IsRunning())
@@ -450,7 +459,7 @@ wxPanel *MachineInfoPanel::create_caption_panel(wxWindow *parent)
         if (!m_copy_feedback_timer->IsRunning())
             set_copy_bitmap("tooltip_copy");
     });
-    m_copy_info->Bind(wxEVT_LEFT_UP, [this](wxMouseEvent&) {
+    m_copy_info->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) {
         if (copy_text_to_clipboard(get_device_info_text()))
             start_copy_feedback();
     });
@@ -468,8 +477,11 @@ wxPanel *MachineInfoPanel::create_caption_panel(wxWindow *parent)
 
 void MachineInfoPanel::set_copy_bitmap(const std::string &name)
 {
-    if (m_copy_info)
-        m_copy_info->SetBitmap(create_scaled_bitmap(name, this, COPY_ICON_PX));
+    if (!m_copy_info) return;
+    m_copy_info->SetIconBitmap(create_scaled_bitmap(name, this, COPY_ICON_PX));
+    // SetIconBitmap() re-runs the IconButton MD3 restyle, which would otherwise undo the
+    // caption-bar blend on every hover swap and animation frame, so it is reasserted here.
+    m_copy_info->SetBackgroundColorNormal(StateColor::semantic(MD3::Role::SurfaceContainerLow));
 }
 
 void MachineInfoPanel::start_copy_feedback()
@@ -496,7 +508,9 @@ void MachineInfoPanel::on_copy_feedback_timer(wxTimerEvent &)
     const double t = fading_in
         ? static_cast<double>(m_copy_step) / COPY_FADE_STEPS
         : static_cast<double>(2 * COPY_FADE_STEPS - m_copy_step) / COPY_FADE_STEPS;
-    m_copy_info->SetBitmap(blend_copy_bitmaps(m_copy_from, m_copy_to, t, m_copy_scale));
+    m_copy_info->SetIconBitmap(blend_copy_bitmaps(m_copy_from, m_copy_to, t, m_copy_scale));
+    // Undo the MD3 restyle SetIconBitmap() just re-ran (see set_copy_bitmap() above).
+    m_copy_info->SetBackgroundColorNormal(StateColor::semantic(MD3::Role::SurfaceContainerLow));
     m_copy_feedback_timer->StartOnce(m_copy_step == COPY_FADE_STEPS ? COPY_HOLD_MS : COPY_FRAME_MS);
 }
 

@@ -43,9 +43,7 @@ void texture_import_style_primary_button(Button* btn)
     StateColor ok_text(
         std::pair<wxColour, int>(texture_import_dark_or(wxColour(0xFF, 0xFF, 0xFE), wxColour(0x9A, 0x9A, 0x9E)), StateColor::Disabled),
         std::pair<wxColour, int>(wxColour("#FFFFFE"), StateColor::Normal));
-    btn->SetBackgroundColor(ok_bg);
-    btn->SetBorderColor(ok_bd);
-    btn->SetTextColor(ok_text);
+    btn->SetVariant(Button::Variant::Filled);
 }
 
 void texture_import_style_secondary_button(Button* btn)
@@ -60,9 +58,7 @@ void texture_import_style_secondary_button(Button* btn)
         std::pair<wxColour, int>(texture_import_dark_or(wxColour(206, 206, 206), wxColour(0x54, 0x54, 0x5B)), StateColor::Normal));
     StateColor text(
         std::pair<wxColour, int>(texture_import_dark_or(wxColour(50, 58, 61), wxColour(0xEF, 0xEF, 0xF0)), StateColor::Normal));
-    btn->SetBackgroundColor(bg);
-    btn->SetBorderColor(bd);
-    btn->SetTextColor(text);
+    btn->SetVariant(Button::Variant::Outlined);
 }
 
 }} // namespace Slic3r::GUI

@@ -12,9 +12,9 @@
 class Button;
 class Label;
 class SearchField;
+class TextInput;
 class wxCommandEvent;
 class wxScrolledWindow;
-class wxTextCtrl;
 
 namespace Slic3r::GUI {
 
@@ -86,8 +86,8 @@ private:
     bool m_show_all = false;
 
     SearchField      *m_search          = nullptr;
-    wxTextCtrl       *m_from_field      = nullptr;
-    wxTextCtrl       *m_to_field        = nullptr;
+    TextInput        *m_from_field      = nullptr;
+    TextInput        *m_to_field        = nullptr;
     Button           *m_calendar_button = nullptr;
     Button           *m_preset_30       = nullptr;
     Button           *m_preset_year     = nullptr;

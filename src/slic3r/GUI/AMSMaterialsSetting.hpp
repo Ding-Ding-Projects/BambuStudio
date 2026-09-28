@@ -281,7 +281,7 @@ protected:
 
     StaticBox*      m_filament_box{nullptr};    // clickable jump box (was m_comboBox_filament)
     Label*          m_filament_text{nullptr};   // filament name shown left-aligned in the box
-    wxStaticBitmap* m_filament_arrow{nullptr};  // right-side jump arrow
+    Button*         m_filament_arrow{nullptr};  // right-side jump arrow (kit icon button)
     bool            m_filament_box_editable{true};  // gate clicks without disabling native controls (keeps font consistent)
     wxString   m_current_filament_alias;
 

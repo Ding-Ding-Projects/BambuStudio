@@ -11,6 +11,7 @@
 #include "WindowShadow.hpp"
 
 class Label;
+class Button;
 class wxStaticText;
 class wxStaticBitmap;
 class wxSizer;
@@ -84,6 +85,21 @@ private:
     void DoHide(bool now);
 
     /**
+     * \brief Push a new bitmap into the copy icon button and re-assert its pill-matched
+     * background.
+     *
+     * Button::SetIconBitmap() re-runs the IconButton MD3 restyle, which re-derives the
+     * rest-state background from the pill's own plain window colour -- not the rounded
+     * pill shape it actually paints -- so the button's background would drift out of sync
+     * with the pill on every hover swap or animation frame unless reasserted here each time.
+     * The correct fill is read back off m_optkey, which update_optkey_row() always keeps
+     * current, rather than threaded through by every caller.
+     *
+     * \param bmp The icon art to show (rest, hover, or an in-flight blend frame).
+     */
+    void set_copy_icon(const wxBitmap &bmp);
+
+    /**
      * \brief Play the "copied!" confirmation on the copy icon: crossfade to a check mark, hold, fade back.
      */
     void start_copy_feedback();
@@ -117,7 +133,9 @@ private:
 
     wxWindow       *m_optkey_pill = nullptr;
     wxStaticText   *m_optkey      = nullptr;
-    wxStaticBitmap *m_copy        = nullptr;
+    // Kit icon Button (IconButton mode), not a wxStaticBitmap: it must be a real
+    // control so the copy action is keyboard-reachable (see build_optkey_row()).
+    Button         *m_copy        = nullptr;
 
     wxString    m_wiki_url;
     std::string m_last_key;

@@ -5,6 +5,7 @@
 #include "I18N.hpp"
 #include "Widgets/Button.hpp"
 #include "Widgets/Label.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 #include "Widgets/StateColor.hpp"
 #include "wxExtensions.hpp"
 
@@ -86,6 +87,7 @@ MixingKitsHelpDialog::MixingKitsHelpDialog(wxWindow* parent)
     wrap_body_labels();
     Layout();
     Fit();
+    MD3DialogCaption::Adopt(this);
     CenterOnParent();
 }
 
@@ -237,9 +239,7 @@ void MixingKitsHelpDialog::build_ui()
         std::pair<wxColour, int>(wxColour("#FFFFFE"), StateColor::Normal));
 
     m_btn_add = new Button(this, _L("Add to project filament list"));
-    m_btn_add->SetBackgroundColor(btn_bg);
-    m_btn_add->SetBorderColor(btn_bd);
-    m_btn_add->SetTextColor(btn_text);
+    m_btn_add->SetVariant(Button::Variant::Filled);
     m_btn_add->SetFont(Label::Body_14);
     const wxSize add_text = m_btn_add->GetTextExtent(m_btn_add->GetLabel());
     m_btn_add->SetMinSize(wxSize(std::max(FromDIP(168), add_text.GetWidth() + FromDIP(24)), FromDIP(32)));
@@ -247,9 +247,7 @@ void MixingKitsHelpDialog::build_ui()
     m_btn_add->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { EndModal(wxID_APPLY); });
 
     m_btn_close = new Button(this, _L("Close"));
-    m_btn_close->SetBackgroundColor(StateColor::darkModeColorFor(*wxWHITE));
-    m_btn_close->SetBorderColor(StateColor::darkModeColorFor(wxColour("#CECECE")));
-    m_btn_close->SetTextColor(StateColor::darkModeColorFor(wxColour("#262E30")));
+    m_btn_close->SetVariant(Button::Variant::Outlined);
     m_btn_close->SetFont(Label::Body_14);
     m_btn_close->SetMinSize(wxSize(FromDIP(72), FromDIP(32)));
     m_btn_close->SetCornerRadius(FromDIP(16));

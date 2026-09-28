@@ -5,6 +5,7 @@
 #include "MainFrame.hpp" // complete type for the MainFrame*->wxWindow* upcast in the ctor; clangd wrongly flags this as unused
 #include "I18N.hpp"
 #include "OptionsGroup.hpp"
+#include "Widgets/Button.hpp"
 #include "Widgets/Label.hpp"
 #include "Widgets/StateColor.hpp"
 #include "wxExtensions.hpp"
@@ -43,42 +44,25 @@ struct Palette
     wxColour card_bg, border, title, description, details, note, divider, link, optkey_fg, optkey_bg;
 };
 
-// Light palette expressed with the shared semantic tokens (Widgets/StateColor.hpp).
-const Palette &light_palette()
+// The card follows the Material rich tooltip. Every colour except the warning
+// note is an MD3 role, which StateColor::semantic() resolves for the current
+// theme, so light and dark need no separate tables. The note keeps the shared
+// warning status colour: a status colour is data, and MD3 has no warning role.
+Palette palette(bool dark)
 {
-    static const Palette p{
-        ThemeColor::White,       // card_bg
-        ThemeColor::Grey350,     // border (card outline; visible against a light panel)
-        ThemeColor::TextPrimary, // title
-        ThemeColor::TextPrimary, // description
-        ThemeColor::TextMuted,   // details (== Grey700)
-        ThemeColor::Warning,     // note (remind)
-        ThemeColor::Grey350,     // divider
-        ThemeColor::BrandGreen,  // link
-        ThemeColor::Grey500,     // optkey_fg
-        ThemeColor::Grey300,     // optkey_bg
+    const auto role = [](MD3::Role r) { return StateColor::semantic(r); };
+    return Palette{
+        role(MD3::Role::SurfaceContainer),                                             // card_bg
+        role(MD3::Role::OutlineVariant),                                               // border
+        role(MD3::Role::OnSurface),                                                    // title
+        role(MD3::Role::OnSurface),                                                    // description
+        role(MD3::Role::OnSurfaceVariant),                                             // details
+        dark ? StateColor::darkModeColorFor(ThemeColor::Warning) : ThemeColor::Warning, // note (remind)
+        role(MD3::Role::OutlineVariant),                                               // divider
+        role(MD3::Role::Primary),                                                      // link
+        role(MD3::Role::OnSurfaceVariant),                                             // optkey_fg
+        role(MD3::Role::SurfaceContainerHighest),                                      // optkey_bg
     };
-    return p;
-}
-
-// Dark palette
-const Palette &dark_palette()
-{
-    auto                 d = [](const wxColour &c) { return StateColor::darkModeColorFor(c); };
-    const Palette       &l = light_palette();
-    static const Palette p{
-        d(l.card_bg),
-        d(l.border),
-        d(l.title),
-        d(l.description),
-        d(l.details),
-        d(l.note),
-        d(l.divider),
-        d(l.link),
-        wxColour(0xB3, 0xB3, 0xB4), // optkey_fg
-        wxColour(0x3F, 0x3F, 0x46), // optkey_bg
-    };
-    return p;
 }
 
 // Spacing/size tokens
@@ -555,7 +539,7 @@ ParamTooltip &ParamTooltip::instance()
 ParamTooltip::ParamTooltip() : wxPopupWindow(wxGetApp().mainframe, wxBORDER_NONE | wxPU_CONTAINS_CONTROLS)
 {
     SetBackgroundStyle(wxBG_STYLE_PAINT);
-    SetBackgroundColour(light_palette().card_bg);
+    SetBackgroundColour(palette(wxGetApp().dark_mode()).card_bg);
 
     build_layout();
 
@@ -594,7 +578,7 @@ wxWindow *ParamTooltip::build_optkey_row()
     m_optkey_pill = new wxPanel(this);
     m_optkey_pill->Bind(wxEVT_PAINT, [this](wxPaintEvent &) {
         wxPaintDC      dc(m_optkey_pill);
-        const Palette &p = m_last_dark ? dark_palette() : light_palette();
+        const Palette p = palette(m_last_dark);
         dc.SetPen(*wxTRANSPARENT_PEN);
         dc.SetBrush(wxBrush(p.optkey_bg));
         dc.DrawRoundedRectangle(m_optkey_pill->GetClientRect(), FromDIP(4));
@@ -606,10 +590,20 @@ wxWindow *ParamTooltip::build_optkey_row()
     // even when the reserved width nominally fit the text.
     m_optkey = new Label(m_optkey_pill, Label::Body_12, wxEmptyString, wxST_ELLIPSIZE_END);
 
-    // Copy icon (right of the pill): click copies the shown opt_key to the clipboard.
-    m_copy = new wxStaticBitmap(m_optkey_pill, wxID_ANY, create_scaled_bitmap("tooltip_copy", this, COPY_ICON_PX));
+    // Copy icon (right of the pill): click copies the shown opt_key to the clipboard. A kit
+    // IconButton rather than a bare wxStaticBitmap, so the control is keyboard-focusable and
+    // exposes a pushbutton role/name/state to assistive tech (the bitmap was an unreachable
+    // click target). SetIconBitmap() keeps the very same raster copy-icon art -- and the
+    // hover / "copied!" crossfade below -- instead of switching to a Material Symbols glyph.
+    m_copy = new Button(m_optkey_pill, wxEmptyString);
+    m_copy->SetIconButton(Button::IconShape::Circle, COPY_ICON_PX);
+    // The real theme is applied moments later by the first Rebuild()->update_optkey_row(), before
+    // the popup is ever shown, so the momentary default background here is never visible.
+    set_copy_icon(create_scaled_bitmap("tooltip_copy", this, COPY_ICON_PX));
     m_copy->SetCursor(wxCursor(wxCURSOR_HAND));
-    m_copy->Bind(wxEVT_LEFT_UP, [this](wxMouseEvent &) {
+    m_copy->SetToolTip(_L("Copy"));
+    m_copy->SetName(_L("Copy"));
+    m_copy->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) {
         if (m_last_key.empty()) return;
         if (wxTheClipboard->Open()) {
             wxTheClipboard->SetData(new wxTextDataObject(from_u8(m_last_key)));
@@ -620,10 +614,10 @@ wxWindow *ParamTooltip::build_optkey_row()
     // Hover feedback: the icon darkens (light) / brightens (dark) while the pointer is over it.
     // The copied-animation owns the bitmap while it runs, so hover must not overwrite a frame.
     m_copy->Bind(wxEVT_ENTER_WINDOW, [this](wxMouseEvent &) {
-        if (!m_copy_timer->IsRunning()) m_copy->SetBitmap(create_scaled_bitmap("tooltip_copy_hover", this, COPY_ICON_PX));
+        if (!m_copy_timer->IsRunning()) set_copy_icon(create_scaled_bitmap("tooltip_copy_hover", this, COPY_ICON_PX));
     });
     m_copy->Bind(wxEVT_LEAVE_WINDOW, [this](wxMouseEvent &) {
-        if (!m_copy_timer->IsRunning()) m_copy->SetBitmap(create_scaled_bitmap("tooltip_copy", this, COPY_ICON_PX));
+        if (!m_copy_timer->IsRunning()) set_copy_icon(create_scaled_bitmap("tooltip_copy", this, COPY_ICON_PX));
     });
 
     wxBoxSizer *sizer = new wxBoxSizer(wxHORIZONTAL);
@@ -710,7 +704,7 @@ wxBitmap ParamTooltip::LoadImage(const std::string &image_id, bool dark)
 
 void ParamTooltip::Rebuild(const std::string &opt_key, const std::string &wiki_path, bool dark, const wxString &line_label, const wxString &line_tooltip)
 {
-    const Palette         &p   = dark ? dark_palette() : light_palette();
+    const Palette          p   = palette(dark);
     const ConfigOptionDef *def = print_config_def.get(opt_key);
     const ParamTipEntry    e   = resolve_entry(ParamTipStore::get().find(opt_key), def, line_tooltip);
 
@@ -799,6 +793,16 @@ void ParamTooltip::set_details(const wxString &s, const wxColour &fg, const wxCo
     m_details->InvalidateBestSize();
 }
 
+void ParamTooltip::set_copy_icon(const wxBitmap &bmp)
+{
+    m_copy->SetIconBitmap(bmp);
+    // SetIconBitmap() re-runs the IconButton restyle, which takes the rest-state background from
+    // the pill's plain window colour (the surrounding card colour, so the pill's square corners
+    // blend outward), not from the rounded pill painted there. The pill fill is the palette's
+    // optkey_bg role, so that role is reasserted after every hover swap and animation frame.
+    m_copy->SetBackgroundColorNormal(StateColor::semantic(MD3::Role::SurfaceContainerHighest));
+}
+
 // The opt_key pill (grey chip: option key + copy icon) is a developer aid, shown only in Internal
 // developer mode.
 // Off: the bottom row is just the Wiki link. On: colorize it for the theme, set the
@@ -809,14 +813,13 @@ void ParamTooltip::update_optkey_row(const std::string &opt_key, bool dark)
     if (wxSizer *row = m_optkey_pill->GetContainingSizer()) row->Show(m_optkey_pill, dev, true);
     if (!dev) return;
 
-    const Palette &p = dark ? dark_palette() : light_palette();
+    const Palette p = palette(dark);
     m_optkey_pill->SetBackgroundColour(p.card_bg); // corners outside the rounded pill blend in
     m_optkey->SetForegroundColour(p.optkey_fg);
     m_optkey->SetBackgroundColour(p.optkey_bg);
     m_optkey->SetLabel(from_u8(opt_key));
-    m_copy->SetBackgroundColour(p.optkey_bg);
     m_copy_timer->Stop(); // a rebuild swaps the shown option, so any in-flight "copied!" is stale
-    m_copy->SetBitmap(create_scaled_bitmap("tooltip_copy", this, COPY_ICON_PX)); // refresh for the current theme
+    set_copy_icon(create_scaled_bitmap("tooltip_copy", this, COPY_ICON_PX)); // refresh for the current theme
     m_copy_from = m_copy_to = wxImage();                                         // re-rasterized for the new theme on the next copy
     m_optkey_pill->Refresh();
 }
@@ -842,13 +845,13 @@ void ParamTooltip::OnCopyAnim(wxTimerEvent &)
     ++m_copy_step;
     if (m_copy_step >= 2 * COPY_FADE_STEPS) { // faded all the way back; settle on the resting art
         const bool hover = m_copy->GetScreenRect().Contains(wxGetMousePosition());
-        m_copy->SetBitmap(create_scaled_bitmap(hover ? "tooltip_copy_hover" : "tooltip_copy", this, COPY_ICON_PX));
+        set_copy_icon(create_scaled_bitmap(hover ? "tooltip_copy_hover" : "tooltip_copy", this, COPY_ICON_PX));
         return;
     }
 
     const bool   fading_in = m_copy_step <= COPY_FADE_STEPS;
     const double t         = fading_in ? double(m_copy_step) / COPY_FADE_STEPS : double(2 * COPY_FADE_STEPS - m_copy_step) / COPY_FADE_STEPS;
-    m_copy->SetBitmap(blend_bitmaps(m_copy_from, m_copy_to, t, m_copy_scale));
+    set_copy_icon(blend_bitmaps(m_copy_from, m_copy_to, t, m_copy_scale));
     // Dwell on the check mark at the top of the fade so the confirmation is readable.
     m_copy_timer->StartOnce(m_copy_step == COPY_FADE_STEPS ? COPY_HOLD_MS : COPY_FRAME_MS);
 }
@@ -991,7 +994,7 @@ void ParamTooltip::OnTimer(wxTimerEvent &)
 
 void ParamTooltip::OnPaint(wxPaintEvent &)
 {
-    const Palette    &p = m_last_dark ? dark_palette() : light_palette();
+    const Palette     p = palette(m_last_dark);
     wxBufferedPaintDC dc(this);
     wxGCDC            gdc(dc); // wraps a wxGraphicsContext so the rounded corners anti-alias
 

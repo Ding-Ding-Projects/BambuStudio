@@ -6,6 +6,8 @@
 #include "DeviceCore/DevConfig.h"
 #include "DeviceCore/DevExtruderSystem.h"
 #include "DeviceCore/DevFilaSystem.h"
+#include "Widgets/Label.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 
 #include <algorithm>
 
@@ -17,6 +19,7 @@ AMSRFIDMaterialView::AMSRFIDMaterialView(wxWindow* parent, wxWindowID id)
 {
     create();
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
 }
 
 bool AMSRFIDMaterialView::should_show_kn_section() const
@@ -48,11 +51,11 @@ void AMSRFIDMaterialView::create()
     sizer_top->Add(m_clr_picker, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(12));
 
     auto* sizer_names = new wxBoxSizer(wxVERTICAL);
-    m_lbl_brand = new wxStaticText(panel_top, wxID_ANY, wxEmptyString);
+    m_lbl_brand = new Label(panel_top, wxEmptyString);
     m_lbl_brand->SetFont(Label::Body_14);
     m_lbl_brand->SetForegroundColour(AMS_MATERIALS_SETTING_GREY900);
 
-    m_lbl_color_name = new wxStaticText(panel_top, wxID_ANY, wxEmptyString);
+    m_lbl_color_name = new Label(panel_top, wxEmptyString);
     m_lbl_color_name->SetFont(Label::Body_13);
     m_lbl_color_name->SetForegroundColour(AMS_MATERIALS_SETTING_GREY700);
 
@@ -69,7 +72,7 @@ void AMSRFIDMaterialView::create()
     m_panel_info->SetBorderColor(StateColor(std::make_pair(wxColour(248, 248, 248), (int)StateColor::Normal)));
     auto* sizer_info = new wxBoxSizer(wxVERTICAL);
 
-    m_lbl_temp = new wxStaticText(m_panel_info, wxID_ANY, wxEmptyString);
+    m_lbl_temp = new Label(m_panel_info, wxEmptyString);
     m_lbl_temp->SetFont(Label::Body_13);
     m_lbl_temp->SetForegroundColour(AMS_MATERIALS_SETTING_GREY700);
     m_lbl_temp->SetBackgroundColour(StateColor::darkModeColorFor(wxColour(248, 248, 248)));
@@ -77,10 +80,10 @@ void AMSRFIDMaterialView::create()
     m_panel_sn = new wxPanel(m_panel_info, wxID_ANY);
     m_panel_sn->SetBackgroundColour(StateColor::darkModeColorFor(wxColour(248, 248, 248)));
     auto* sizer_sn = new wxBoxSizer(wxHORIZONTAL);
-    auto* lbl_sn_title = new wxStaticText(m_panel_sn, wxID_ANY, _L("SN") + ": ");
+    auto* lbl_sn_title = new Label(m_panel_sn, _L("SN") + ": ");
     lbl_sn_title->SetFont(Label::Body_13);
     lbl_sn_title->SetForegroundColour(AMS_MATERIALS_SETTING_GREY700);
-    m_lbl_sn = new wxStaticText(m_panel_sn, wxID_ANY, wxEmptyString);
+    m_lbl_sn = new Label(m_panel_sn, wxEmptyString);
     m_lbl_sn->SetFont(Label::Body_13);
     m_lbl_sn->SetForegroundColour(AMS_MATERIALS_SETTING_GREY700);
     sizer_sn->Add(lbl_sn_title, 0, wxALIGN_CENTER_VERTICAL, 0);
@@ -104,7 +107,7 @@ void AMSRFIDMaterialView::create()
     wxString link_url = wxString::Format("https://wiki.bambulab.com/%s/software/bambu-studio/calibration_pa", region);
 
     // Heading: title + wiki link (stacked above the controls below)
-    auto* lbl_kn_title = new wxStaticText(m_panel_kn, wxID_ANY, _L("Factors of Flow Dynamics Calibration"));
+    auto* lbl_kn_title = new Label(m_panel_kn, _L("Factors of Flow Dynamics Calibration"));
     lbl_kn_title->SetFont(Label::Head_14);
     lbl_kn_title->SetForegroundColour(wxColour(50, 58, 61));
     lbl_kn_title->Wrap(-1);
@@ -126,8 +129,7 @@ void AMSRFIDMaterialView::create()
     // Right column: Nozzle Type row + PA Profile row + Factor K row
 
     // Nozzle Type row
-    m_title_nozzle_type = new wxStaticText(m_panel_kn, wxID_ANY, _L("Nozzle Type"),
-        wxDefaultPosition, wxSize(AMS_MATERIALS_SETTING_LABEL_WIDTH, -1));
+    m_title_nozzle_type = new Label(m_panel_kn, _L("Nozzle Type"), 0, wxSize(AMS_MATERIALS_SETTING_LABEL_WIDTH, -1));
     m_title_nozzle_type->SetFont(Label::Body_13);
     m_title_nozzle_type->SetForegroundColour(AMS_MATERIALS_SETTING_GREY800);
     m_title_nozzle_type->SetMinSize(wxSize(FromDIP(80), -1));
@@ -142,8 +144,7 @@ void AMSRFIDMaterialView::create()
     sizer_nozzle->Add(m_comboBox_nozzle_type, 1, wxALIGN_CENTER_VERTICAL, 0);
 
     // PA Profile row
-    auto* lbl_pa_title = new wxStaticText(m_panel_kn, wxID_ANY, _L("PA Profile"),
-        wxDefaultPosition, wxSize(AMS_MATERIALS_SETTING_LABEL_WIDTH, -1));
+    auto* lbl_pa_title = new Label(m_panel_kn, _L("PA Profile"), 0, wxSize(AMS_MATERIALS_SETTING_LABEL_WIDTH, -1));
     lbl_pa_title->SetFont(Label::Body_13);
     lbl_pa_title->SetForegroundColour(AMS_MATERIALS_SETTING_GREY800);
     lbl_pa_title->SetMinSize(wxSize(FromDIP(80), -1));
@@ -160,8 +161,7 @@ void AMSRFIDMaterialView::create()
     sizer_pa->Add(lbl_pa_title,          0, wxALIGN_CENTER_VERTICAL, 0);
     sizer_pa->Add(m_comboBox_cali_result, 1, wxALIGN_CENTER_VERTICAL, 0);
 
-    auto* lbl_k_title = new wxStaticText(m_panel_kn, wxID_ANY, _L("Factor K"),
-        wxDefaultPosition, wxDefaultSize);
+    auto* lbl_k_title = new Label(m_panel_kn, _L("Factor K"));
     lbl_k_title->SetFont(Label::Body_13);
     lbl_k_title->SetForegroundColour(wxColour(50, 58, 61));
     lbl_k_title->SetMinSize(wxSize(FromDIP(80), -1));
@@ -197,9 +197,7 @@ void AMSRFIDMaterialView::create()
         std::pair<wxColour, int>(AMS_MATERIALS_SETTING_GREY700, StateColor::Pressed),
         std::pair<wxColour, int>(AMS_MATERIALS_SETTING_GREY200, StateColor::Hovered),
         std::pair<wxColour, int>(AMS_MATERIALS_SETTING_GREY200, StateColor::Normal));
-    m_button_reset->SetBackgroundColor(m_btn_bg_gray);
-    m_button_reset->SetBorderColor(AMS_MATERIALS_SETTING_GREY900);
-    m_button_reset->SetTextColor(AMS_MATERIALS_SETTING_GREY900);
+    m_button_reset->SetVariant(Button::Variant::Outlined);
     m_button_reset->SetMinSize(AMS_MATERIALS_SETTING_BUTTON_SIZE);
     m_button_reset->SetCornerRadius(FromDIP(12));
     m_button_reset->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { on_reset(); });
@@ -210,9 +208,7 @@ void AMSRFIDMaterialView::create()
         std::pair<wxColour, int>(wxColour(27,  136, 68),  StateColor::Pressed),
         std::pair<wxColour, int>(wxColour(61,  203, 115), StateColor::Hovered),
         std::pair<wxColour, int>(wxColour(0,   174, 66),  StateColor::Normal));
-    m_button_confirm->SetBackgroundColor(m_btn_bg_green);
-    m_button_confirm->SetBorderColor(wxColour(0, 174, 66));
-    m_button_confirm->SetTextColor(wxColour("#FFFFFF"));
+    m_button_confirm->SetVariant(Button::Variant::Filled);
     m_button_confirm->SetMinSize(AMS_MATERIALS_SETTING_BUTTON_SIZE);
     m_button_confirm->SetCornerRadius(FromDIP(12));
     m_button_confirm->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { on_confirm(); });

@@ -3,6 +3,8 @@
 #include "slic3r/GUI/DeviceWeb/ViewModels/DevicePage/AmsControlWeb/ViewModel.hpp"
 #include "slic3r/GUI/GUI_App.hpp"
 #include "slic3r/GUI/I18N.hpp"
+#include "slic3r/GUI/Widgets/Button.hpp"
+#include "slic3r/GUI/Widgets/Label.hpp"
 #include "slic3r/GUI/Widgets/WebViewTraceLogger.hpp"
 #include "slic3r/GUI/wxExtensions.hpp"
 #include "libslic3r/Utils.hpp"
@@ -12,9 +14,7 @@
 #endif
 
 #include <wx/sizer.h>
-#include <wx/button.h>
 #include <wx/clipbrd.h>
-#include <wx/stattext.h>
 #include <wx/timer.h>
 #include <boost/log/trivial.hpp>
 #include <algorithm>
@@ -78,10 +78,9 @@ DeviceWebHost::DeviceWebHost(wxWindow* parent, DeviceWebHostMode mode,
     SetSizer(host_sizer);
     m_fallback_panel = new wxPanel(this);
     auto *fallback_sizer = new wxBoxSizer(wxVERTICAL);
-    auto *message = new wxStaticText(m_fallback_panel, wxID_ANY,
-                                     _L("The embedded webpage could not be loaded."));
-    auto *reload = new wxButton(m_fallback_panel, wxID_ANY, _L("Reload"));
-    auto *copy = new wxButton(m_fallback_panel, wxID_ANY, _L("Copy diagnostic information"));
+    auto *message = new Label(m_fallback_panel, _L("The embedded webpage could not be loaded."));
+    auto *reload = new Button(m_fallback_panel, _L("Reload"));
+    auto *copy = new Button(m_fallback_panel, _L("Copy diagnostic information"));
     fallback_sizer->AddStretchSpacer();
     fallback_sizer->Add(message, 0, wxALIGN_CENTER | wxALL, FromDIP(8));
     fallback_sizer->Add(reload, 0, wxALIGN_CENTER | wxALL, FromDIP(4));

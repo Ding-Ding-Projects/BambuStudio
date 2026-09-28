@@ -4,6 +4,8 @@
 #include "GUI_App.hpp"
 #include "I18N.hpp"
 #include "wxExtensions.hpp"
+#include "Widgets/MaterialIcon.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 #include "libslic3r/PresetBundle.hpp"
 
 #include <wx/dcmemory.h>
@@ -274,6 +276,7 @@ FilamentSelectDialog::FilamentSelectDialog(wxWindow* parent)
 {
     create();
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
 }
 
 void FilamentSelectDialog::create()
@@ -302,9 +305,8 @@ void FilamentSelectDialog::create()
         btn->SetFont(Label::Body_14);
         btn->SetCornerRadius(0);
         btn->SetPaddingSize(wxSize(FromDIP(16), FromDIP(10)));
-        btn->SetBackgroundColor(sc(dlg_bg()));
-        btn->SetBorderColor(sc(dlg_bg()));  // no visible border; underline panel carries the indicator
-        btn->SetTextColor(sc(AMS_MATERIALS_SETTING_GREY900));
+        // No visible border; the underline panel below carries the active indicator.
+        btn->SetVariant(Button::Variant::Text);
         unit->Add(btn, 0, 0, 0);
 
         underline_out = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, FromDIP(3)));
@@ -340,17 +342,13 @@ void FilamentSelectDialog::create()
     btn_sizer->AddStretchSpacer(1);
 
     auto* ok = new Button(this, _L("Confirm"));
-    ok->SetBackgroundColor(m_btn_bg_green);
-    ok->SetBorderColor(sc(wxColour(0, 174, 66)));
-    ok->SetTextColor(sc(wxColour("#FFFFFE")));
+    ok->SetVariant(Button::Variant::Filled);
     ok->SetMinSize(AMS_MATERIALS_SETTING_BUTTON_SIZE);
     ok->SetCornerRadius(FromDIP(12));
     ok->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { on_confirm(); });
 
     auto* close = new Button(this, _L("Close"));
-    close->SetBackgroundColor(m_btn_bg_gray);
-    close->SetBorderColor(sc(AMS_MATERIALS_SETTING_GREY900));
-    close->SetTextColor(sc(AMS_MATERIALS_SETTING_GREY900));
+    close->SetVariant(Button::Variant::Outlined);
     close->SetMinSize(AMS_MATERIALS_SETTING_BUTTON_SIZE);
     close->SetCornerRadius(FromDIP(12));
     close->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { EndModal(wxID_CANCEL); });
@@ -371,14 +369,10 @@ void FilamentSelectDialog::set_tab(int n)
     if (m_book) m_book->SetSelection(n);
 
     const wxColour green(0, 174, 66);
-    const wxColour active_text   = AMS_MATERIALS_SETTING_GREY900;
-    const wxColour inactive_text = AMS_MATERIALS_SETTING_GREY700;
 
     auto apply = [&](Button* btn, wxPanel* underline, bool active) {
         if (!btn) return;
-        btn->SetBackgroundColor(sc(dlg_bg()));
-        btn->SetBorderColor(sc(dlg_bg()));
-        btn->SetTextColor(sc(active ? active_text : inactive_text));
+        btn->SetVariant(Button::Variant::Text);
         wxFont f = Label::Body_14;
         if (active) f.MakeBold();
         btn->SetFont(f);
@@ -399,23 +393,18 @@ wxWindow* FilamentSelectDialog::build_manager_page(wxWindow* parent)
     page->SetBackgroundColour(dlg_bg());
     auto* v = new wxBoxSizer(wxVERTICAL);
 
-    // search box
-    auto* search_box = new StaticBox(page);
-    search_box->SetBackgroundColor(sc(dlg_bg()));
-    search_box->SetBorderColor(sc(dlg_search_border()));
-    search_box->SetCornerRadius(FromDIP(6));
-    auto* sbs = new wxBoxSizer(wxHORIZONTAL);
-    m_search = new wxTextCtrl(search_box, wxID_ANY, wxEmptyString,
-                               wxDefaultPosition, wxDefaultSize, wxBORDER_NONE);
-    m_search->SetFont(Label::Body_14);
-    const int search_height = m_search->GetBestSize().y;
-    m_search->SetMinSize(wxSize(-1, search_height));
-    search_box->SetMinSize(wxSize(-1, search_height + FromDIP(12)));
-    m_search->SetHint(_L("Search filament"));
-    m_search->Bind(wxEVT_TEXT, [this](wxCommandEvent&) { apply_filters(); });
-    sbs->Add(m_search, 1, wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(2));
-    search_box->SetSizer(sbs);
-    v->Add(search_box, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(8));
+    // search box: a kit TextInput; its native editor lives inside the field
+    // (TextInput::GetTextCtrl()) rather than as a bare wxTextCtrl.
+    m_search = new TextInput(page, wxEmptyString);
+    m_search->SetBackgroundColor(sc(dlg_bg()));
+    m_search->SetBorderColor(sc(dlg_search_border()));
+    m_search->SetCornerRadius(FromDIP(6));
+    m_search->GetTextCtrl()->SetFont(Label::Body_14);
+    const int search_height = m_search->GetTextCtrl()->GetBestSize().y;
+    m_search->SetMinSize(wxSize(-1, search_height + FromDIP(12)));
+    m_search->GetTextCtrl()->SetHint(_L("Search filament"));
+    m_search->GetTextCtrl()->Bind(wxEVT_TEXT, [this](wxCommandEvent&) { apply_filters(); });
+    v->Add(m_search, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(8));
 
     // chip row: arrows on the right
     auto* chip_row = new wxBoxSizer(wxHORIZONTAL);
@@ -430,21 +419,22 @@ wxWindow* FilamentSelectDialog::build_manager_page(wxWindow* parent)
         refresh_chip_visibility();
     });
 
-    // SVG arrow icons — preload all four states
-    m_bmp_left_on   = create_scaled_bitmap("chip_arrow_left",           page, 16);
-    m_bmp_left_off  = create_scaled_bitmap("chip_arrow_left_disabled",  page, 16);
-    m_bmp_right_on  = create_scaled_bitmap("chip_arrow_right",          page, 16);
-    m_bmp_right_off = create_scaled_bitmap("chip_arrow_right_disabled", page, 16);
-
-    m_left_arrow = new wxStaticBitmap(page, wxID_ANY, m_bmp_left_off);
-    m_left_arrow->Bind(wxEVT_LEFT_UP, [this](wxMouseEvent&) {
+    // Chip-scroll pagination: kit icon buttons, not clickable wxStaticBitmaps
+    // (a static bitmap cannot take focus or expose a role).
+    m_left_arrow = new Button(page, "");
+    m_left_arrow->SetIconButton(Button::IconShape::Circle, 20);
+    m_left_arrow->SetGlyph(MaterialIcon::ChevronLeft, 14);
+    m_left_arrow->Enable(false);
+    m_left_arrow->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) {
         if (!m_left_arrow->IsEnabled()) return;
         --m_chip_offset;
         refresh_chip_visibility();
     });
 
-    m_right_arrow = new wxStaticBitmap(page, wxID_ANY, m_bmp_right_on);
-    m_right_arrow->Bind(wxEVT_LEFT_UP, [this](wxMouseEvent&) {
+    m_right_arrow = new Button(page, "");
+    m_right_arrow->SetIconButton(Button::IconShape::Circle, 20);
+    m_right_arrow->SetGlyph(MaterialIcon::ChevronRight, 14);
+    m_right_arrow->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) {
         if (!m_right_arrow->IsEnabled()) return;
         ++m_chip_offset;
         refresh_chip_visibility();
@@ -690,8 +680,8 @@ void FilamentSelectDialog::filter_by_chip(const wxString& chip_label)
 
 void FilamentSelectDialog::apply_filters(bool reset_chip_offset)
 {
-    const wxString q = m_search
-        ? m_search->GetValue().Lower().Trim(false).Trim(true)
+    const wxString q = (m_search && m_search->GetTextCtrl())
+        ? m_search->GetTextCtrl()->GetValue().Lower().Trim(false).Trim(true)
         : wxString();
     const bool all = m_active_chip.empty() || m_active_chip == _L("All");
 
@@ -720,8 +710,8 @@ void FilamentSelectDialog::refresh_chip_visibility()
     if (avail <= 0) return;
 
     // Determine which chips have search results (brand chips only; All/Unsupported always kept)
-    const wxString q = m_search
-        ? m_search->GetValue().Lower().Trim(false).Trim(true)
+    const wxString q = (m_search && m_search->GetTextCtrl())
+        ? m_search->GetTextCtrl()->GetValue().Lower().Trim(false).Trim(true)
         : wxString();
 
     std::vector<bool> chip_has_results(m_chips.size(), true);
@@ -789,8 +779,6 @@ void FilamentSelectDialog::refresh_chip_visibility()
 
     const bool can_left  = (m_chip_offset > 0);
     const bool can_right = (last_vi < (int)vi.size() - 1);
-    m_left_arrow->SetBitmap(can_left  ? m_bmp_left_on  : m_bmp_left_off);
-    m_right_arrow->SetBitmap(can_right ? m_bmp_right_on : m_bmp_right_off);
     m_left_arrow->Enable(can_left);
     m_right_arrow->Enable(can_right);
 }
@@ -801,17 +789,12 @@ void FilamentSelectDialog::fill_brand_chips(const std::vector<wxString>& brands)
     m_chips.clear();
     auto chips = std::make_shared<std::vector<Button*>>();
 
+    // Both states are the kit Outlined variant; selection is the standard MD3
+    // "filter chip" Checked state (SecondaryContainer wash), not a hand-picked
+    // palette swap.
     auto apply_style = [](Button* b, bool sel) {
-        const wxColour green(0, 174, 66);
-        if (sel) {
-            b->SetBackgroundColor(sc(dlg_chip_sel_bg()));            // #DBFDE7 / dark #1F3529
-            b->SetTextColor(sc(green));
-            b->SetBorderColor(sc(green));
-        } else {
-            b->SetBackgroundColor(sc(dlg_bg()));                    // transparent (matches panel)
-            b->SetTextColor(sc(AMS_MATERIALS_SETTING_GREY800));
-            b->SetBorderColor(sc(dlg_chip_border()));               // light gray frame
-        }
+        b->SetVariant(Button::Variant::Outlined);
+        b->SetValue(sel);
         b->Refresh();
     };
 
@@ -885,14 +868,15 @@ wxWindow* FilamentSelectDialog::make_spool_row(wxWindow* parent, const FilamentS
         slot_lbl->SetMinSize(wxSize(badge_col_w, -1));
         h->Add(slot_lbl, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, badge_margin);
     } else if (is_recent && !dimmed) {
-        const wxColour green(0, 174, 66);
+        // Soft green pill + dark-green text: the kit Tonal variant (its
+        // SecondaryContainer/OnSecondaryContainer roles already resolve to a
+        // green tint under the Brand colour scheme), not a hand-picked palette.
         auto* badge = new Button(row, _L("Recently used"));
         badge->SetFont(Label::Body_12);
         badge->SetCornerRadius(FromDIP(6));
         badge->SetPaddingSize(wxSize(FromDIP(6), FromDIP(2)));
-        badge->SetBackgroundColor(StateColor(std::make_pair(dlg_badge_bg(), (int)StateColor::Normal)));
-        badge->SetTextColor(StateColor(std::make_pair(green, (int)StateColor::Normal)));
-        badge->SetBorderColor(StateColor(std::make_pair(green, (int)StateColor::Normal)));
+        badge->SetButtonSize(Button::Size::Small);
+        badge->SetVariant(Button::Variant::Tonal);
         badge->SetCanFocus(false);
         badge->SetAllowShrink(true);
         badge->SetMinSize(wxSize(badge_col_w, -1));
@@ -971,8 +955,10 @@ void FilamentSelectDialog::fill_default_tab()
         lbl->SetForegroundColour(dlg_text_secondary());
         h->Add(lbl, 1, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(12));
 
-        wxBitmap arrow_bmp = create_scaled_bitmap("chip_arrow_right", row, 16);
-        auto* arrow = new wxStaticBitmap(row, wxID_ANY, arrow_bmp);
+        // Decorative "this brand expands" indicator; the click is handled by
+        // the row itself (bound below), so a Material glyph feed is enough.
+        auto* arrow = new wxStaticBitmap(row, wxID_ANY,
+            MaterialIcon::bitmap(row, MaterialIcon::ChevronRight, 14, StateColor::semantic(MD3::Role::OnSurfaceVariant)));
         h->Add(arrow, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(10));
 
         row->SetMinSize(wxSize(-1, FromDIP(36)));
@@ -1071,10 +1057,10 @@ void FilamentSelectDialog::select_brand(const wxString& brand)
 
 void FilamentSelectDialog::on_dpi_changed(const wxRect& /*suggested_rect*/)
 {
-    m_bmp_left_on   = create_scaled_bitmap("chip_arrow_left",           this, 16);
-    m_bmp_left_off  = create_scaled_bitmap("chip_arrow_left_disabled",  this, 16);
-    m_bmp_right_on  = create_scaled_bitmap("chip_arrow_right",          this, 16);
-    m_bmp_right_off = create_scaled_bitmap("chip_arrow_right_disabled", this, 16);
+    if (m_left_arrow)
+        m_left_arrow->Rescale();
+    if (m_right_arrow)
+        m_right_arrow->Rescale();
     refresh_chip_visibility();
     Layout();
 }

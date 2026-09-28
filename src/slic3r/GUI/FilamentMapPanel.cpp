@@ -1,5 +1,6 @@
 #include "FilamentMapPanel.hpp"
 #include "Widgets/Button.hpp"
+#include "Widgets/ComboBox.hpp"
 #include "Widgets/MultiNozzleSync.hpp"
 #include "GUI_App.hpp"
 #include "Plater.hpp"
@@ -7,8 +8,6 @@
 #include <boost/log/trivial.hpp>
 #include <cassert>
 #include <wx/dcbuffer.h>
-#include <wx/choice.h>
-#include <wx/button.h>
 #include <wx/msgdlg.h>
 #include "wx/graphics.h"
 #include "Widgets/Label.hpp"
@@ -312,7 +311,8 @@ FilamentMapManualPanel::FilamentMapManualPanel(wxWindow                       *p
 
     // Keyboard-accessible counterparts to dragging individual material cards.
     auto *move_row = new wxBoxSizer(wxHORIZONTAL);
-    auto *material = new wxChoice(this, wxID_ANY);
+    auto *material = new ComboBox(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize,
+                                  0, nullptr, wxCB_READONLY);
     std::vector<int> visible_ids;
     for (const int id : m_filament_list) {
         if (id > 0 && static_cast<size_t>(id) <= m_filament_type.size()) {
@@ -322,10 +322,10 @@ FilamentMapManualPanel::FilamentMapManualPanel(wxWindow                       *p
         }
     }
     if (material->GetCount() > 0) material->SetSelection(0);
-    auto *move_left = new wxButton(this, wxID_ANY, _L("Move to left nozzle"));
-    auto *move_right = new wxButton(this, wxID_ANY, _L("Move to right nozzle"));
-    auto *swap_groups = new wxButton(this, wxID_ANY, _L("Swap groups"));
-    auto *swap_reslice = new wxButton(this, wxID_ANY, _L("Swap and reslice"));
+    auto *move_left = new Button(this, _L("Move to left nozzle"));
+    auto *move_right = new Button(this, _L("Move to right nozzle"));
+    auto *swap_groups = new Button(this, _L("Swap groups"));
+    auto *swap_reslice = new Button(this, _L("Swap and reslice"));
     move_row->Add(material, 1, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(6));
     move_row->Add(move_left, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(4));
     move_row->Add(move_right, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(4));

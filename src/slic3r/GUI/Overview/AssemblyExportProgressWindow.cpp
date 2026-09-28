@@ -34,7 +34,7 @@ AssemblyExportProgressWindow::AssemblyExportProgressWindow(wxWindow *parent)
     m_gauge = new ProgressBar(panel, wxID_ANY, 100, wxDefaultPosition, wxSize(FromDIP(360), FromDIP(8)));
     m_gauge->SetMinSize(wxSize(FromDIP(300), FromDIP(8)));
 
-    m_percent = new wxStaticText(panel, wxID_ANY, "0%", wxDefaultPosition, wxDefaultSize, 0);
+    m_percent = new Label(panel, "0%");
     m_percent->SetForegroundColour(wxColour(107, 107, 107));
     m_percent->SetFont(::Label::Body_13);
     m_percent->SetMinSize(wxSize(FromDIP(40), -1));
@@ -51,9 +51,7 @@ AssemblyExportProgressWindow::AssemblyExportProgressWindow(wxWindow *parent)
     m_cancel = new Button(panel, _L("Cancel"));
     m_cancel->SetMinSize(wxSize(FromDIP(58), FromDIP(22)));
     m_cancel->SetMaxSize(wxSize(FromDIP(58), FromDIP(22)));
-    m_cancel->SetBackgroundColor(btn_bg);
-    m_cancel->SetBorderColor(btn_bd);
-    m_cancel->SetTextColor(btn_txt);
+    m_cancel->SetVariant(Button::Variant::Outlined);
     m_cancel->SetCornerRadius(FromDIP(12));
     m_cancel->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { on_cancel(); });
 

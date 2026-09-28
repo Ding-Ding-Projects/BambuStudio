@@ -14,6 +14,7 @@
 #include "DeviceCore/DevManager.h"
 #include "libslic3r/PresetBundle.hpp"
 #include "libslic3r/Utils.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 #include "Widgets/WebView.hpp"
 #include "CreatePresetsDialog.hpp"  // for CreatePresetSuccessfulDialog
 
@@ -213,9 +214,12 @@ CreateFilamentWebDialog::CreateFilamentWebDialog(wxWindow *parent,
     Bind(wxEVT_WEBVIEW_ERROR,
          &CreateFilamentWebDialog::OnError, this, m_browser->GetId());
 
+    wxGetApp().UpdateDlgDarkUI(this);
+    // Adopt the MD3 caption shell in place of the native title bar. This must
+    // run as the last layout act of the ctor, and centering moves after it.
+    MD3DialogCaption::Adopt(this);
     // Center on parent
     Centre(wxBOTH);
-    wxGetApp().UpdateDlgDarkUI(this);
 
     BOOST_LOG_TRIVIAL(info) << "CreateFilamentWebDialog created";
 }

@@ -2,16 +2,19 @@
 
 #include "../I18N.hpp"
 #include "../GUI_App.hpp"
+#include "../Widgets/Button.hpp"
+#include "../Widgets/ComboBox.hpp"
 #include "../Widgets/MaterialIcon.hpp"
 #include "libslic3r/AppConfig.hpp"
+#include "../Widgets/Label.hpp"
+#include "../Widgets/TextArea.hpp"
+#include "../Widgets/TextInput.hpp"
 
 #ifndef _L
 #define _L(s) Slic3r::GUI::I18N::translate((s))
 #endif
 
-#include <wx/button.h>
 #include <wx/app.h>
-#include <wx/choice.h>
 #include <wx/sizer.h>
 #include <wx/stattext.h>
 #include <wx/stdpaths.h>
@@ -30,14 +33,35 @@ struct ProviderLookupState {
     bool finished[2] = {false, false};
 };
 namespace {
+// Builds the caption Label plus a kit input field, and returns the field's
+// native editor -- the same wxTextCtrl* callers already used when this field
+// was a raw wxTextCtrl. wxTE_MULTILINE selects the kit multi-line TextArea;
+// everything else (including wxTE_PASSWORD) is a single-line kit TextInput.
+// The wrapper widget itself is not returned: it is parented and added to
+// sizer here, so the dialog's normal window-ownership tree keeps it alive.
 wxTextCtrl *field(wxWindow *parent, wxSizer *sizer, const wxString &label,
-                  long style = 0, const wxString &hint = {})
+                  long style = 0, const wxString &hint = wxString(),
+                  const wxSize &min_box_size = wxDefaultSize)
 {
-    auto *caption = new wxStaticText(parent, wxID_ANY, label);
-    auto *control = new wxTextCtrl(parent, wxID_ANY, {}, wxDefaultPosition, wxDefaultSize, style);
-    control->SetHint(hint);
+    auto *caption = new Label(parent, label);
     sizer->Add(caption, 0, wxTOP | wxBOTTOM, 4);
-    sizer->Add(control, 0, wxEXPAND | wxBOTTOM, 8);
+
+    wxTextCtrl *control = nullptr;
+    if (style & wxTE_MULTILINE) {
+        auto *area = new TextArea(parent, wxEmptyString, wxDefaultSize, style);
+        if (min_box_size != wxDefaultSize)
+            area->SetMinSize(min_box_size);
+        control = area->GetTextCtrl();
+        sizer->Add(area, 0, wxEXPAND | wxBOTTOM, 8);
+    } else {
+        auto *input = new TextInput(parent, wxEmptyString, wxEmptyString, wxEmptyString,
+                                    wxDefaultPosition, wxDefaultSize, style);
+        if (min_box_size != wxDefaultSize)
+            input->SetMinSize(min_box_size);
+        control = input->GetTextCtrl();
+        sizer->Add(input, 0, wxEXPAND | wxBOTTOM, 8);
+    }
+    control->SetHint(hint);
     return control;
 }
 
@@ -81,8 +105,8 @@ ModelCreatorDialog::ModelCreatorDialog(wxWindow *parent, AddToPlate add_to_plate
     , m_provider_lookup_timer(this)
 {
     auto *body = GetContentSizer();
-    body->Add(new wxStaticText(this, wxID_ANY, _L("Provider")), 0, wxBOTTOM, 4);
-    m_provider = new wxChoice(this, wxID_ANY);
+    body->Add(new Label(this, _L("Provider")), 0, wxBOTTOM, 4);
+    m_provider = new ComboBox(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, wxCB_READONLY);
     m_provider->Append(_L("Claude Code CLI"));
     m_provider->Append(_L("Codex CLI"));
     m_provider->Append(_L("Anthropic API"));
@@ -91,48 +115,49 @@ ModelCreatorDialog::ModelCreatorDialog(wxWindow *parent, AddToPlate add_to_plate
     body->Add(m_provider, 0, wxEXPAND | wxBOTTOM, 8);
     m_model = field(this, body, _L("Provider model"), 0, _L("Enter an exact model ID"));
     m_provider_path = field(this, body, _L("Provider executable path"), 0, _L("Required for a CLI provider"));
-    m_connection = new wxStaticText(this, wxID_ANY, {});
+    m_connection = new Label(this, wxEmptyString);
     body->Add(m_connection, 0, wxBOTTOM, 8);
     m_key = field(this, body, _L("API key"), wxTE_PASSWORD, _L("Stored in Windows Credential Manager"));
     auto *credentials = new wxBoxSizer(wxHORIZONTAL);
-    auto *save = new wxButton(this, wxID_ANY, _L("Add or replace key"));
-    m_test_key = new wxButton(this, wxID_ANY, _L("Test key"));
-    auto *clear = new wxButton(this, wxID_ANY, _L("Clear key"));
+    auto *save = new Button(this, _L("Add or replace key"));
+    m_test_key = new Button(this, _L("Test key"));
+    auto *clear = new Button(this, _L("Clear key"));
     credentials->Add(save, 0, wxRIGHT, 8);
     credentials->Add(m_test_key, 0, wxRIGHT, 8);
     credentials->Add(clear);
     body->Add(credentials, 0, wxBOTTOM, 8);
-    body->Add(new wxStaticText(this, wxID_ANY, _L("Trusted renderer")), 0, wxBOTTOM, 4);
-    m_renderer = new wxChoice(this, wxID_ANY);
+    body->Add(new Label(this, _L("Trusted renderer")), 0, wxBOTTOM, 4);
+    m_renderer = new ComboBox(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, wxCB_READONLY);
     m_renderer->Append(_L("OpenSCAD"));
     m_renderer->Append(_L("Blender"));
     m_renderer->SetSelection(0);
     body->Add(m_renderer, 0, wxEXPAND | wxBOTTOM, 8);
     m_renderer_path = field(this, body, _L("Renderer executable path"));
-    m_renderer_status = new wxStaticText(this, wxID_ANY, {});
+    m_renderer_status = new Label(this, wxEmptyString);
     body->Add(m_renderer_status, 0, wxBOTTOM, 8);
-    m_prompt = field(this, body, _L("Describe the model"), wxTE_MULTILINE, _L("Dimensions are in millimeters"));
-    m_prompt->SetMinSize(wxSize(-1, 90));
+    m_prompt = field(this, body, _L("Describe the model"), wxTE_MULTILINE, _L("Dimensions are in millimeters"),
+                     FromDIP(wxSize(-1, 90)));
     m_note = field(this, body, _L("Refinement note"), wxTE_MULTILINE,
-                   _L("Optional change for the next revision"));
-    m_note->SetMinSize(wxSize(-1, 55));
-    body->Add(new wxStaticText(this, wxID_ANY, _L("Revisions")), 0, wxBOTTOM, 4);
-    m_history = new wxChoice(this, wxID_ANY);
+                   _L("Optional change for the next revision"), FromDIP(wxSize(-1, 55)));
+    body->Add(new Label(this, _L("Revisions")), 0, wxBOTTOM, 4);
+    m_history = new ComboBox(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, wxCB_READONLY);
     body->Add(m_history, 0, wxEXPAND | wxBOTTOM, 8);
-    m_status = new wxTextCtrl(this, wxID_ANY, _L("No model generated"), wxDefaultPosition,
-                              wxDefaultSize, wxTE_READONLY | wxBORDER_NONE);
-    body->Add(m_status, 0, wxEXPAND);
+    auto *status_field = new TextInput(this, _L("No model generated"), wxEmptyString, wxEmptyString,
+                                       wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
+    status_field->SetBorderWidth(0);
+    m_status = status_field->GetTextCtrl();
+    body->Add(status_field, 0, wxEXPAND);
 
-    m_generate = new wxButton(this, wxID_ANY, _L("Generate"));
-    m_cancel_button = new wxButton(this, wxID_ANY, _L("Cancel generation"));
-    m_preview = new wxButton(this, wxID_ANY, _L("Preview mesh"));
-    m_add = new wxButton(this, wxID_ANY, _L("Add to plate"));
+    m_generate = new Button(this, _L("Generate"));
+    m_cancel_button = new Button(this, _L("Cancel generation"));
+    m_preview = new Button(this, _L("Preview mesh"));
+    m_add = new Button(this, _L("Add to plate"));
     auto *footer = GetFooterSizer();
     footer->Add(m_generate, 0, wxRIGHT, 6);
     footer->Add(m_cancel_button, 0, wxRIGHT, 6);
     footer->Add(m_preview, 0, wxRIGHT, 6);
     footer->Add(m_add);
-    m_history->Bind(wxEVT_CHOICE, [this](wxCommandEvent &) { select_revision(); });
+    m_history->Bind(wxEVT_COMBOBOX, [this](wxCommandEvent &) { select_revision(); });
     save->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { save_key(); });
     m_test_key->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { test_key(); });
     clear->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { clear_key(); });
@@ -163,12 +188,12 @@ ModelCreatorDialog::ModelCreatorDialog(wxWindow *parent, AddToPlate add_to_plate
          m_provider_lookup_timer.GetId());
     if (m_provider_path->IsEmpty()) lookup_provider_path();
     update_renderer_path();
-    m_renderer->Bind(wxEVT_CHOICE, [this](wxCommandEvent &) {
+    m_renderer->Bind(wxEVT_COMBOBOX, [this](wxCommandEvent &) {
         update_renderer_path();
         save_preferences();
         update_controls();
     });
-    m_provider->Bind(wxEVT_CHOICE, [this](wxCommandEvent &) {
+    m_provider->Bind(wxEVT_COMBOBOX, [this](wxCommandEvent &) {
         if (m_provider->GetSelection() < 2) {
             lookup_provider_path();
         }
@@ -182,8 +207,8 @@ ModelCreatorDialog::ModelCreatorDialog(wxWindow *parent, AddToPlate add_to_plate
     });
     for (wxTextCtrl *control : {m_model, m_renderer_path})
         control->Bind(wxEVT_TEXT, [this](wxCommandEvent &) { update_controls(); });
-    SetMinSize(wxSize(650, 720));
-    SetSize(wxSize(720, 780));
+    SetMinSize(FromDIP(wxSize(650, 720)));
+    SetSize(FromDIP(wxSize(720, 780)));
     m_loading_history = true;
     m_status->SetValue(_L("Loading versions..."));
     update_controls();

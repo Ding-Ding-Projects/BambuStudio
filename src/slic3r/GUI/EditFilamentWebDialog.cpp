@@ -10,6 +10,7 @@
 #include "DeviceCore/DevManager.h"
 #include "libslic3r/PresetBundle.hpp"
 #include "libslic3r/Utils.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 #include "Widgets/WebView.hpp"
 #include "CreatePresetsDialog.hpp"
 #include "Tab.hpp"
@@ -83,8 +84,11 @@ EditFilamentWebDialog::EditFilamentWebDialog(wxWindow *parent, const std::string
     Bind(wxEVT_WEBVIEW_ERROR,
          &EditFilamentWebDialog::OnError, this, m_browser->GetId());
 
-    Centre(wxBOTH);
     wxGetApp().UpdateDlgDarkUI(this);
+    // Adopt the MD3 caption shell in place of the native title bar. This must
+    // run as the last layout act of the ctor, and centering moves after it.
+    MD3DialogCaption::Adopt(this);
+    Centre(wxBOTH);
 }
 
 EditFilamentWebDialog::~EditFilamentWebDialog()

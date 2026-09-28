@@ -234,7 +234,7 @@ static wxPanel* create_rounded_result_card(wxWindow* parent)
 
 static wxStaticText* create_result_caption(wxWindow* parent, const wxString& text)
 {
-    auto* label = new wxStaticText(parent, wxID_ANY, text);
+    auto* label = new Label(parent, text);
     label->SetFont(Label::Body_12);
     label->SetForegroundColour(StateColor::darkModeColorFor(COLOR_LABEL_GREY));
     return label;
@@ -512,7 +512,7 @@ static wxPanel* create_component_plus_panel(wxWindow* parent, int plus_gap, int 
     plus_panel->SetMaxSize(wxSize(plus_gap, swatch_sz));
     plus_panel->SetBackgroundColour(bg);
     auto* plus_sizer = new wxBoxSizer(wxVERTICAL);
-    auto* plus_label = new wxStaticText(plus_panel, wxID_ANY, "+");
+    auto* plus_label = new Label(plus_panel, "+");
     plus_label->SetFont(Label::Body_13);
     plus_label->SetForegroundColour(StateColor::darkModeColorFor(COLOR_TEXT_DARK));
     match_parent_bg(plus_label, bg);
@@ -537,7 +537,7 @@ static void append_decompose_component(wxWindow* parent, wxBoxSizer* sizer,
         bind_select(swatch);
     col->Add(swatch, 0, wxALIGN_CENTER_HORIZONTAL);
 
-    auto* ratio_text = new wxStaticText(parent, wxID_ANY, wxString::Format("%d%%", ratio));
+    auto* ratio_text = new Label(parent, wxString::Format("%d%%", ratio));
     ratio_text->SetFont(Label::Body_13);
     ratio_text->SetForegroundColour(StateColor::darkModeColorFor(COLOR_TEXT_DARK));
     match_parent_bg(ratio_text, bg);
@@ -584,7 +584,7 @@ wxBoxSizer* ColorDecomposeDialog::create_result_section()
 {
     auto* sizer = new wxBoxSizer(wxVERTICAL);
 
-    auto* title = new wxStaticText(this, wxID_ANY, _L("Decomposition result for this combination"));
+    auto* title = new Label(this, _L("Decomposition result for this combination"));
     title->SetFont(Label::Head_14);
     title->SetForegroundColour(StateColor::darkModeColorFor(COLOR_TEXT_DARK));
     sizer->Add(title, 0, wxBOTTOM, FromDIP(8));
@@ -604,7 +604,7 @@ wxBoxSizer* ColorDecomposeDialog::create_result_section()
     m_target_swatch = create_color_swatch(m_filament_card, m_target_color, swatch_sz, 0);
     match_parent_bg(m_target_swatch, box_bg);
     filament_inner->Add(m_target_swatch, 0, wxALIGN_CENTER_HORIZONTAL | wxBOTTOM, FromDIP(4));
-    m_target_rgb_text = new wxStaticText(m_filament_card, wxID_ANY, format_rgb(m_target_color));
+    m_target_rgb_text = new Label(m_filament_card, format_rgb(m_target_color));
     m_target_rgb_text->SetFont(Label::Body_12);
     m_target_rgb_text->SetForegroundColour(StateColor::darkModeColorFor(COLOR_LABEL_GREY));
     match_parent_bg(m_target_rgb_text, box_bg);
@@ -641,7 +641,7 @@ wxBoxSizer* ColorDecomposeDialog::create_result_section()
     m_matched_swatch = create_color_swatch(m_decomposed_container, m_target_color, swatch_sz, 0);
     match_parent_bg(m_matched_swatch, box_bg);
     mixed_col->Add(m_matched_swatch, 0, wxALIGN_CENTER_HORIZONTAL | wxBOTTOM, FromDIP(4));
-    m_matched_rgb_text = new wxStaticText(m_decomposed_container, wxID_ANY, format_rgb(m_target_color));
+    m_matched_rgb_text = new Label(m_decomposed_container, format_rgb(m_target_color));
     m_matched_rgb_text->SetFont(Label::Body_12);
     m_matched_rgb_text->SetForegroundColour(StateColor::darkModeColorFor(COLOR_LABEL_GREY));
     match_parent_bg(m_matched_rgb_text, box_bg);
@@ -812,11 +812,9 @@ wxBoxSizer* ColorDecomposeDialog::create_mode_selection_section()
     m_no_card_warning_panel = new wxPanel(this, wxID_ANY);
     m_no_card_warning_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     auto* no_card_sizer = new wxBoxSizer(wxHORIZONTAL);
-    auto* no_card_bmp = new wxStaticBitmap(m_no_card_warning_panel, wxID_ANY,
-        create_scaled_bitmap("obj_warning", m_no_card_warning_panel, 16),
+    auto* no_card_bmp = new wxStaticBitmap(m_no_card_warning_panel, wxID_ANY, MaterialIcon::bitmap(m_no_card_warning_panel, MaterialIcon::Warning, 16, StateColor::semantic(MD3::Role::Error)),
         wxDefaultPosition, wxSize(FromDIP(16), FromDIP(16)));
-    m_no_card_warning_text = new wxStaticText(m_no_card_warning_panel, wxID_ANY,
-        _L("At least two filaments of the same material type are required for decomposition"));
+    m_no_card_warning_text = new Label(m_no_card_warning_panel, _L("At least two filaments of the same material type are required for decomposition"));
     m_no_card_warning_text->SetFont(Label::Body_13);
     m_no_card_warning_text->SetForegroundColour(StateColor::semantic(MD3::Role::Error));
     m_no_card_warning_text->Wrap(FromDIP(400));
@@ -829,7 +827,7 @@ wxBoxSizer* ColorDecomposeDialog::create_mode_selection_section()
     m_basic_warning_panel = new wxPanel(this, wxID_ANY);
     m_basic_warning_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     auto* basic_sizer = new wxBoxSizer(wxHORIZONTAL);
-    m_basic_warning_text = new wxStaticText(m_basic_warning_panel, wxID_ANY, wxEmptyString);
+    m_basic_warning_text = new Label(m_basic_warning_panel, wxEmptyString);
     m_basic_warning_text->SetFont(Label::Body_13);
     m_basic_warning_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     m_basic_warning_text->Wrap(FromDIP(400));

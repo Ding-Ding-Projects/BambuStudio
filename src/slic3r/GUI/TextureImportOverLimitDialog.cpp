@@ -8,6 +8,7 @@
 #include "format.hpp"
 #include "Widgets/Button.hpp"
 #include "Widgets/Label.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 #include "Widgets/RadioBox.hpp"
 #include "Widgets/StateColor.hpp"
 #include "Widgets/StaticLine.hpp"
@@ -408,7 +409,7 @@ wxPanel* make_chip_section(wxWindow* parent,
     auto* sizer = new wxBoxSizer(wxVERTICAL);
 
     auto* header = new wxBoxSizer(wxHORIZONTAL);
-    auto* label = new wxStaticText(block, wxID_ANY, title);
+    auto* label = new Label(block, title);
     label->SetFont(Label::Body_13);
     label->SetForegroundColour(dark_or(wxColour(0xAC, 0xAC, 0xAC), wxColour(0x81, 0x81, 0x83)));
     label->SetBackgroundColour(block->GetBackgroundColour());
@@ -598,6 +599,13 @@ TextureImportOverLimitDialog::TextureImportOverLimitDialog(wxWindow* parent, Tex
     // macOS only has a real NSWindow after show; Windows can apply immediately.
     on_window_geometry(this, [this]() { apply_dialog_geometry(true); });
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
+    // This dialog forces a merge/discard choice and is only ever dismissed via
+    // EndModal() from its own buttons (see the wxEVT_CLOSE_WINDOW veto above).
+    // The MD3 caption's close icon calls EndModal(wxID_CANCEL) directly for a
+    // modal dialog, bypassing that veto entirely, so it must not be offered.
+    if (wxWindow* close_btn = wxWindow::FindWindowByName(_L("Close"), this))
+        close_btn->Hide();
 }
 
 const std::vector<Slic3r::FilamentMatch>& TextureImportOverLimitDialog::selected_matches() const
@@ -879,7 +887,7 @@ wxWindow* TextureImportOverLimitDialog::create_option_block(wxWindow* parent,
     radio = new RadioBox(block);
     radio->SetValue(mode == m_mode);
     radio->Bind(wxEVT_TOGGLEBUTTON, [this, mode](wxCommandEvent&) { select_mode(mode); });
-    auto* label = new wxStaticText(block, wxID_ANY, title);
+    auto* label = new Label(block, title);
     label->SetFont(Label::Body_14);
     label->SetForegroundColour(dark_or(wxColour(0x26, 0x2E, 0x30), wxColour(0xEF, 0xEF, 0xF0)));
     label->SetBackgroundColour(block->GetBackgroundColour());

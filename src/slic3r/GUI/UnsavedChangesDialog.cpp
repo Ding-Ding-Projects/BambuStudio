@@ -2158,7 +2158,7 @@ EmptyStatePanel::EmptyStatePanel(wxWindow *parent) : wxPanel(parent, wxID_ANY)
 {
     const int border = FromDIP(10);
     m_bmp            = new wxStaticBitmap(this, wxID_ANY, create_scaled_bitmap("diff_empty_state", this, 160));
-    m_hint           = new wxStaticText(this, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, wxALIGN_CENTER_HORIZONTAL);
+    m_hint           = new Label(this, "", wxALIGN_CENTER_HORIZONTAL);
 
     wxBoxSizer *sizer = new wxBoxSizer(wxVERTICAL);
     sizer->AddStretchSpacer();
@@ -2266,14 +2266,14 @@ PresetSelectorPanel::PresetSelectorPanel(wxWindow *parent, PresetBundle *bundle_
 {
     SetBackgroundColour(*wxWHITE);
 
-    auto *label_left = new wxStaticText(this, wxID_ANY, _L("Preset A"));
+    auto *label_left = new Label(this, _L("Preset A"));
     label_left->SetFont(::Label::Head_14);
     m_col_left       = new wxBoxSizer(wxVERTICAL);
     m_col_left->Add(label_left, 0, wxBOTTOM, 2);
 
     m_equal = new ScalableButton(this, wxID_ANY, "equal");
 
-    auto *label_right = new wxStaticText(this, wxID_ANY, _L("Preset B"));
+    auto *label_right = new Label(this, _L("Preset B"));
     label_right->SetFont(::Label::Head_14);
     m_col_right       = new wxBoxSizer(wxVERTICAL);
     m_col_right->Add(label_right, 0, wxBOTTOM, 2);

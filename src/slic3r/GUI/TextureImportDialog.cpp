@@ -23,6 +23,7 @@
 #include "Widgets/StaticLine.hpp"
 #include "Widgets/ComboBox.hpp"
 #include "Widgets/Label.hpp"
+#include "Widgets/MaterialIcon.hpp"
 #include "libslic3r/ColorDecomposeRecipe.hpp"
 #include "libslic3r/FilamentMixer.hpp"
 #include "libslic3r/Model.hpp"
@@ -321,11 +322,6 @@ static wxColour texture_import_brand_green()
     return dark_or(wxColour(0, 174, 66), wxColour(61, 203, 115));
 }
 
-static wxColour texture_import_muted_text_colour()
-{
-    return dark_or(wxColour(0x6B, 0x6B, 0x6B), wxColour(0xB3, 0xB3, 0xB5));
-}
-
 static wxColour texture_import_hint_text_colour()
 {
     return dark_or(wxColour(0x90, 0x90, 0x90), wxColour(0xA0, 0xA0, 0xA2));
@@ -350,31 +346,25 @@ static wxFont texture_import_action_link_font(wxWindow* win)
     return font;
 }
 
-static void apply_color_count_preset_text(Button* btn)
-{
-    if (!btn)
-        return;
-    StateColor muted(
-        std::pair<wxColour, int>(texture_import_muted_text_colour(), StateColor::Normal));
-    btn->SetTextColor(muted);
-}
-
+// The color-count presets (4/8/16/Auto) are secondary toolbar actions; adopt
+// the kit Outlined variant at a compact size instead of the old hand-painted
+// flat-chip palette (raw 0x-hex StateColors the legacy-palette codemod cannot
+// parse). This is now a real pill Button, matching every other converted
+// secondary action in this dialog (see style_secondary_button()).
 static void apply_color_count_preset_style(Button* btn)
 {
     if (!btn)
         return;
-    btn->SetCornerRadius(btn->FromDIP(4));
-    btn->SetBorderWidth(0);
-    const wxColour bg_normal = dark_or(wxColour(0xF8, 0xF8, 0xF8), wxColour(0x3A, 0x3A, 0x3E));
-    const wxColour bg_hover  = dark_or(wxColour(0xEE, 0xEE, 0xEE), wxColour(0x48, 0x48, 0x4C));
-    const wxColour bg_press  = dark_or(wxColour(0xE0, 0xE0, 0xE0), wxColour(0x54, 0x54, 0x5B));
-    StateColor bg(
-        std::pair<wxColour, int>(bg_press, StateColor::Pressed),
-        std::pair<wxColour, int>(bg_hover, StateColor::Hovered),
-        std::pair<wxColour, int>(bg_normal, StateColor::Normal));
-    btn->SetBackgroundColor(bg);
-    btn->SetBorderColor(bg);
-    apply_color_count_preset_text(btn);
+    btn->SetButtonSize(Button::Size::Small);
+    btn->SetVariant(Button::Variant::Outlined);
+}
+
+// Shared MD3 glyph feed for the dialog's red "error" holders (color-count
+// warning banner, unmatched/over-limit warning rows): a Material Symbols
+// glyph instead of the legacy "error" raster.
+static wxBitmap texture_import_error_icon_bitmap(wxWindow* ctx)
+{
+    return MaterialIcon::bitmap(ctx, MaterialIcon::Error, 16, StateColor::semantic(MD3::Role::Error));
 }
 
 static wxSize gl_viewport_size(wxWindow* win, const wxSize& logical_size)
@@ -1796,7 +1786,7 @@ public:
         StateColor more_bg(
             std::pair<wxColour, int>(wxColour(238, 238, 238), StateColor::Hovered),
             std::pair<wxColour, int>(wxColour(248, 248, 248), StateColor::Normal));
-        m_more_btn->SetBackgroundColor(more_bg);
+        m_more_btn->SetVariant(Button::Variant::Outlined);
         m_more_btn->SetBorderStyle(wxPENSTYLE_SHORT_DASH);
         m_more_btn->SetCornerRadius(FromDIP(0));
         m_more_btn->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { pick_custom_color(); });
@@ -1814,9 +1804,7 @@ public:
             std::pair<wxColour, int>(wxColour(255, 255, 255), StateColor::Normal));
         StateColor cancel_bd(std::pair<wxColour, int>(wxColour(38, 46, 48), StateColor::Normal));
         StateColor cancel_fg(std::pair<wxColour, int>(wxColour(38, 46, 48), StateColor::Normal));
-        cancel_btn->SetBackgroundColor(cancel_bg);
-        cancel_btn->SetBorderColor(cancel_bd);
-        cancel_btn->SetTextColor(cancel_fg);
+        cancel_btn->SetVariant(Button::Variant::Outlined);
         cancel_btn->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { EndModal(wxID_CANCEL); });
         btn_row->Add(cancel_btn, 0, wxEXPAND);
         btn_row->AddSpacer(FromDIP(10));
@@ -1830,9 +1818,7 @@ public:
             std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
         StateColor ok_bd(std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
         StateColor ok_fg(std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Normal));
-        ok_btn->SetBackgroundColor(ok_bg);
-        ok_btn->SetBorderColor(ok_bd);
-        ok_btn->SetTextColor(ok_fg);
+        ok_btn->SetVariant(Button::Variant::Filled);
         ok_btn->SetFocus();
         ok_btn->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { EndModal(wxID_OK); });
         btn_row->Add(ok_btn, 0, wxEXPAND);
@@ -1847,7 +1833,6 @@ public:
         SetMinSize(wxSize(GetSize().x, FromDIP(180)));
         wxGetApp().UpdateDlgDarkUI(this);
         if (m_combo_arrow && m_type_combo) {
-            m_combo_arrow->SetBitmap(create_scaled_bitmap("drop_down", m_type_combo, 16));
             layout_combo_arrow();
         }
     }
@@ -1894,10 +1879,14 @@ private:
     {
         if (!m_type_combo)
             return;
-        const wxBitmap bmp = create_scaled_bitmap("drop_down", m_type_combo, 16);
-        m_combo_arrow = new wxStaticBitmap(m_type_combo, wxID_ANY, bmp);
+        // A real icon button, not a wxStaticBitmap: m_type_combo suppresses its
+        // own trailing chevron (CB_NO_DROP_ICON) so this one can be positioned
+        // as a custom overlay, but it must stay a focusable, clickable control.
+        m_combo_arrow = new Button(m_type_combo, "");
+        m_combo_arrow->SetIconButton(Button::IconShape::Circle, 18);
+        m_combo_arrow->SetGlyph(MaterialIcon::ExpandMore, 14);
         m_combo_arrow->SetCursor(wxCursor(wxCURSOR_HAND));
-        m_combo_arrow->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent&) {
+        m_combo_arrow->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) {
             if (!m_type_combo)
                 return;
             wxMouseEvent down(wxEVT_LEFT_DOWN);
@@ -1963,8 +1952,7 @@ private:
         m_separator_sizer = new wxBoxSizer(wxHORIZONTAL);
         m_separator_line = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, FromDIP(1)));
         m_separator_line->SetBackgroundColour(wxColour(238, 238, 238));
-        m_official_label = new wxStaticText(this, wxID_ANY, _L("Official Filament"),
-                                            wxDefaultPosition, wxDefaultSize, wxALIGN_CENTER_HORIZONTAL);
+        m_official_label = new Label(this, _L("Official Filament"), wxALIGN_CENTER_HORIZONTAL);
         m_official_label->SetForegroundColour(wxColour(128, 128, 128));
         m_separator_sizer->Add(m_official_label, 0, wxEXPAND);
         m_separator_sizer->AddSpacer(FromDIP(8));
@@ -2064,7 +2052,7 @@ private:
         scroll->SetBackgroundColour(m_grid_host->GetBackgroundColour());
         auto* grid = new wxGridSizer(needed_rows, kGridCols, FromDIP(2), FromDIP(2));
 
-        wxBitmapButton* first_btn = nullptr;
+        Button* first_btn = nullptr;
         FilamentColorCode* first_code = nullptr;
         for (const auto& color_pair : *color_map) {
             const FilamentColor& fila_color = color_pair.first;
@@ -2078,16 +2066,20 @@ private:
             if (!btn_bmp.IsOk())
                 continue;
 
-            auto* btn = new wxBitmapButton(scroll, wxID_ANY, btn_bmp, wxDefaultPosition, btn_size,
-                                           wxBU_EXACTFIT | wxNO_BORDER);
+            // Kit icon button carrying the swatch as a data image; the selection
+            // ring is the kit border (Primary, 2 px) rather than a second paint handler.
+            auto* btn = new Button(scroll, "", "", 0, 0);
+            btn->SetIconButton(Button::IconShape::Square, 30);
+            btn->SetIconBitmap(btn_bmp);
+            btn->SetMinSize(btn_size);
             btn->SetBackgroundColour(StateColor::darkModeColorFor(*wxWHITE));
             btn->SetToolTip(color_code->GetFilaColorName());
             if (!first_btn) {
                 first_btn = btn;
                 first_code = color_code;
             }
-            btn->Bind(wxEVT_LEFT_DOWN, [this, btn, color_code, btn_size, btn_bmp_size](wxMouseEvent& evt) {
-                select_color_code(btn, color_code, btn_size, btn_bmp_size);
+            btn->Bind(wxEVT_BUTTON, [this, btn, color_code](wxCommandEvent& evt) {
+                select_color_code(btn, color_code);
                 evt.Skip();
             });
             grid->Add(btn, 0, wxALL | wxALIGN_CENTER, FromDIP(1));
@@ -2110,13 +2102,12 @@ private:
         set_official_section_visible(true);
         m_grid_host->Layout();
         if (first_btn && first_code)
-            select_color_code(first_btn, first_code, btn_size, btn_bmp_size);
+            select_color_code(first_btn, first_code);
         else
             update_preview_custom(m_colour);
     }
 
-    void select_color_code(wxBitmapButton* btn, FilamentColorCode* color_code,
-                           const wxSize& btn_size, const wxSize& btn_bmp_size)
+    void select_color_code(Button* btn, FilamentColorCode* color_code)
     {
         if (!color_code)
             return;
@@ -2125,41 +2116,17 @@ private:
         if (!colors.empty())
             m_colour = colors.front();
         if (m_selected_btn && m_selected_btn != btn) {
-            m_selected_btn->Unbind(wxEVT_PAINT, &TextureImportAddFilamentDialog::on_selected_button_paint, this);
+            // Reset selected button appearance: no ring.
+            m_selected_btn->SetBorderWidth(0);
             m_selected_btn->Refresh();
         }
         m_selected_btn = btn;
-        m_selected_btn_size = btn_size;
-        m_selected_bmp_size = btn_bmp_size;
-        btn->Unbind(wxEVT_PAINT, &TextureImportAddFilamentDialog::on_selected_button_paint, this);
-        btn->Bind(wxEVT_PAINT, &TextureImportAddFilamentDialog::on_selected_button_paint, this);
+        // MD3 selection ring: Primary, 2 px, on the kit border (replaces the
+        // old hand-painted highlight rectangle drawn over the raw bitmap button).
+        btn->SetBorderColorNormal(StateColor::semantic(MD3::Role::Primary));
+        btn->SetBorderWidth(FromDIP(2));
         btn->Refresh();
         update_preview_from_color_code(color_code);
-    }
-
-    void on_selected_button_paint(wxPaintEvent& event)
-    {
-        wxWindow* button = dynamic_cast<wxWindow*>(event.GetEventObject());
-        if (!button) {
-            event.Skip();
-            return;
-        }
-        // Same recipe as FilamentPickerDialog::OnButtonPaint. wxGCDC DrawBitmap
-        // on MSW blends the swatch into a white buffer and looks like mosaic.
-        wxPaintDC dc(button);
-        dc.SetBrush(wxBrush(button->GetBackgroundColour()));
-        dc.SetPen(*wxTRANSPARENT_PEN);
-        dc.DrawRectangle(0, 0, m_selected_btn_size.GetWidth(), m_selected_btn_size.GetHeight());
-        auto* bmp_btn = dynamic_cast<wxBitmapButton*>(button);
-        if (bmp_btn && bmp_btn->GetBitmap().IsOk()) {
-            const wxBitmap& bmp = bmp_btn->GetBitmap();
-            const int x = (m_selected_btn_size.GetWidth() - m_selected_bmp_size.GetWidth()) / 2;
-            const int y = (m_selected_btn_size.GetHeight() - m_selected_bmp_size.GetHeight()) / 2;
-            dc.DrawBitmap(bmp, x, y, true);
-        }
-        dc.SetPen(wxPen(wxColour("#00AE42"), 2));
-        dc.SetBrush(*wxTRANSPARENT_BRUSH);
-        dc.DrawRectangle(1, 1, m_selected_btn_size.GetWidth() - 1, m_selected_btn_size.GetHeight() - 1);
     }
 
     void pick_custom_color()
@@ -2174,14 +2141,14 @@ private:
             update_preview_custom(m_colour);
         }
         if (m_selected_btn) {
-            m_selected_btn->Unbind(wxEVT_PAINT, &TextureImportAddFilamentDialog::on_selected_button_paint, this);
+            m_selected_btn->SetBorderWidth(0);
             m_selected_btn->Refresh();
             m_selected_btn = nullptr;
         }
     }
 
     ComboBox*                                 m_type_combo = nullptr;
-    wxStaticBitmap*                           m_combo_arrow = nullptr;
+    Button*                                   m_combo_arrow = nullptr;
     wxPanel*                                  m_color_demo = nullptr;
     wxBitmap                                  m_preview_bmp;
     int                                       m_display_number = 1;
@@ -2190,9 +2157,7 @@ private:
     wxPanel*                                  m_separator_line = nullptr;
     wxPanel*                                  m_grid_host = nullptr;
     Button*                                   m_more_btn = nullptr;
-    wxBitmapButton*                           m_selected_btn = nullptr;
-    wxSize                                    m_selected_btn_size;
-    wxSize                                    m_selected_bmp_size;
+    Button*                                   m_selected_btn = nullptr;
     FilamentColorCodeQuery*                   m_query = nullptr;
     FilamentColorCodes*                       m_color_codes = nullptr;
     std::vector<TextureAddFilamentTypeOption> m_types;
@@ -2829,8 +2794,8 @@ public:
             evt.Skip();
         });
 
-        m_decompose_label = new wxStaticText(this, wxID_ANY, _L("Decompose Color"));
-        m_add_label = new wxStaticText(this, wxID_ANY, _L("+ Add Filament"));
+        m_decompose_label = new Label(this, _L("Decompose Color"));
+        m_add_label = new Label(this, _L("+ Add Filament"));
         m_add_label->SetFont(Label::Body_12);
         m_decompose_label->SetFont(Label::Body_12);
         m_add_label->SetBackgroundColour(pop_bg);
@@ -3777,9 +3742,8 @@ public:
     ColorCountWarningPanel(wxWindow* parent)
         : wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE)
     {
-        m_icon = ScalableBitmap(this, "error", 16);
-        m_icon_bmp = new wxStaticBitmap(this, wxID_ANY, m_icon.bmp());
-        m_label = new wxStaticText(this, wxID_ANY, wxEmptyString);
+        m_icon_bmp = new wxStaticBitmap(this, wxID_ANY, texture_import_error_icon_bitmap(this));
+        m_label = new Label(this, wxEmptyString);
         m_label->SetFont(Label::Head_14);
         apply_colors();
 
@@ -3815,9 +3779,8 @@ public:
 
     void Rescale()
     {
-        m_icon.msw_rescale();
         if (m_icon_bmp)
-            m_icon_bmp->SetBitmap(m_icon.bmp());
+            m_icon_bmp->SetBitmap(texture_import_error_icon_bitmap(this));
         apply_colors();
         InvalidateBestSize();
         Layout();
@@ -3825,7 +3788,6 @@ public:
     }
 
 private:
-    ScalableBitmap  m_icon;
     wxStaticBitmap* m_icon_bmp = nullptr;
     wxStaticText*   m_label    = nullptr;
 };
@@ -5044,10 +5006,10 @@ void TextureImportDialog::build_preview_panel(wxWindow* parent, wxSizer* sizer)
     m_caption_row = new wxPanel(parent, wxID_ANY);
     m_caption_row->SetBackgroundColour(parent->GetBackgroundColour());
     wxBoxSizer* caption_sizer = new wxBoxSizer(wxHORIZONTAL);
-    m_lbl_caption_left = new wxStaticText(m_caption_row, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxALIGN_CENTRE_HORIZONTAL);
+    m_lbl_caption_left = new Label(m_caption_row, wxEmptyString, wxALIGN_CENTRE_HORIZONTAL);
     m_lbl_caption_left->SetForegroundColour(caption_fg);
     m_lbl_caption_left->SetFont(Label::Body_14);
-    m_lbl_caption_right = new wxStaticText(m_caption_row, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxALIGN_CENTRE_HORIZONTAL);
+    m_lbl_caption_right = new Label(m_caption_row, wxEmptyString, wxALIGN_CENTRE_HORIZONTAL);
     m_lbl_caption_right->SetForegroundColour(caption_fg);
     m_lbl_caption_right->SetFont(Label::Body_14);
     caption_sizer->Add(m_lbl_caption_left, 1, wxALIGN_CENTER | wxALIGN_CENTER_VERTICAL);
@@ -5065,7 +5027,7 @@ void TextureImportDialog::build_params_panel(wxWindow* parent, wxSizer* sizer)
     wxBoxSizer* panel_sizer = new wxBoxSizer(wxVERTICAL);
 
     wxBoxSizer* color_header_row = new wxBoxSizer(wxHORIZONTAL);
-    wxStaticText* lbl_colors = new wxStaticText(m_params_panel, wxID_ANY, _L("Color Count"));
+    wxStaticText* lbl_colors = new Label(m_params_panel, _L("Color Count"));
     lbl_colors->SetForegroundColour(label_fg);
     lbl_colors->SetFont(Label::Head_14);
     color_header_row->Add(lbl_colors, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(8));
@@ -5268,7 +5230,7 @@ void TextureImportDialog::build_mapping_panel(wxWindow* parent, wxSizer* sizer)
     });
     header_sizer->Add(m_match_threshold_gear, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(8));
 
-    m_lbl_mapping = new wxStaticText(m_mapping_panel, wxID_ANY, _L("Filament Matching"));
+    m_lbl_mapping = new Label(m_mapping_panel, _L("Filament Matching"));
     m_lbl_mapping->SetForegroundColour(dark_or(wxColour(50, 58, 61), wxColour(0xEF, 0xEF, 0xF0)));
     m_lbl_mapping->SetFont(Label::Head_14);
     header_sizer->Add(m_lbl_mapping, 0, wxALIGN_CENTER_VERTICAL);
@@ -5290,7 +5252,7 @@ void TextureImportDialog::build_mapping_panel(wxWindow* parent, wxSizer* sizer)
 
     header_sizer->AddStretchSpacer();
 
-    m_lbl_mix_help = new wxStaticText(m_mapping_panel, wxID_ANY, _L("Use official mixing kits →"));
+    m_lbl_mix_help = new Label(m_mapping_panel, _L("Use official mixing kits →"));
     m_lbl_mix_help->SetForegroundColour(StateColor::semantic(MD3::Role::Primary));
     m_lbl_mix_help->SetFont(Label::Body_12);
     m_lbl_mix_help->SetCursor(wxCursor(wxCURSOR_HAND));
@@ -5327,14 +5289,13 @@ void TextureImportDialog::build_bottom_buttons(wxSizer* sizer)
     auto* unmatched_sizer = new wxBoxSizer(wxVERTICAL);
     auto* unmatched_row = new wxBoxSizer(wxHORIZONTAL);
     m_unmatched_warning_icon = new wxStaticBitmap(m_unmatched_warning, wxID_ANY,
-        m_bmp_unmatched.bmp());
+        texture_import_error_icon_bitmap(this));
     m_unmatched_warning_icon->SetBackgroundColour(GetBackgroundColour());
     m_unmatched_warning_label = new Label(m_unmatched_warning,
         texture_import_warning_body_font(this),
         _L("Some colors have no matching filament. Please match them before importing."));
     m_unmatched_warning_label->SetForegroundColour(wxColour(225, 71, 71));
-    m_unmatched_add_link = new wxStaticText(m_unmatched_warning, wxID_ANY,
-        _L("Auto-Add All Filaments"));
+    m_unmatched_add_link = new Label(m_unmatched_warning, _L("Auto-Add All Filaments"));
     m_unmatched_add_link->SetForegroundColour(wxColour(0, 174, 66));
     m_unmatched_add_link->SetFont(texture_import_action_link_font(this));
     m_unmatched_add_link->SetCursor(wxCursor(wxCURSOR_HAND));
@@ -5356,12 +5317,12 @@ void TextureImportDialog::build_bottom_buttons(wxSizer* sizer)
     auto* overlimit_sizer = new wxBoxSizer(wxVERTICAL);
     auto* overlimit_row = new wxBoxSizer(wxHORIZONTAL);
     m_overlimit_warning_icon = new wxStaticBitmap(m_overlimit_warning, wxID_ANY,
-        m_bmp_unmatched.bmp());
+        texture_import_error_icon_bitmap(this));
     m_overlimit_warning_icon->SetBackgroundColour(GetBackgroundColour());
     m_overlimit_warning_label = new Label(m_overlimit_warning,
         texture_import_warning_body_font(this), wxEmptyString);
     m_overlimit_warning_label->SetForegroundColour(wxColour(225, 71, 71));
-    m_overlimit_fix_link = new wxStaticText(m_overlimit_warning, wxID_ANY, _L("Fix now"));
+    m_overlimit_fix_link = new Label(m_overlimit_warning, _L("Fix now"));
     m_overlimit_fix_link->SetForegroundColour(wxColour(0, 174, 66));
     m_overlimit_fix_link->SetFont(texture_import_action_link_font(this));
     m_overlimit_fix_link->SetCursor(wxCursor(wxCURSOR_HAND));
@@ -5708,9 +5669,9 @@ void TextureImportDialog::apply_theme()
         m_match_threshold_gear->msw_rescale();
     hide_match_threshold_popup();
     if (m_unmatched_warning_icon)
-        m_unmatched_warning_icon->SetBitmap(m_bmp_unmatched.bmp());
+        m_unmatched_warning_icon->SetBitmap(texture_import_error_icon_bitmap(this));
     if (m_overlimit_warning_icon)
-        m_overlimit_warning_icon->SetBitmap(m_bmp_unmatched.bmp());
+        m_overlimit_warning_icon->SetBitmap(texture_import_error_icon_bitmap(this));
     if (auto* warning = dynamic_cast<ColorCountWarningPanel*>(m_color_count_warning))
         warning->Rescale();
 
@@ -9512,7 +9473,7 @@ void TextureImportDialog::on_dpi_changed(const wxRect&)
         style_color_count_preset_button(btn);
     style_advanced_settings_card();
     if (m_unmatched_warning_icon) {
-        m_unmatched_warning_icon->SetBitmap(m_bmp_unmatched.bmp());
+        m_unmatched_warning_icon->SetBitmap(texture_import_error_icon_bitmap(this));
         m_unmatched_warning_icon->SetBackgroundColour(
             m_unmatched_warning ? m_unmatched_warning->GetBackgroundColour() : GetBackgroundColour());
     }
@@ -9526,7 +9487,7 @@ void TextureImportDialog::on_dpi_changed(const wxRect&)
     }
     wrap_unmatched_warning_label();
     if (m_overlimit_warning_icon) {
-        m_overlimit_warning_icon->SetBitmap(m_bmp_unmatched.bmp());
+        m_overlimit_warning_icon->SetBitmap(texture_import_error_icon_bitmap(this));
         m_overlimit_warning_icon->SetBackgroundColour(
             m_overlimit_warning ? m_overlimit_warning->GetBackgroundColour() : GetBackgroundColour());
     }

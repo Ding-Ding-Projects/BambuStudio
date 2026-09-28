@@ -5,6 +5,7 @@
 #include "NotificationManager.hpp"
 #include "Plater.hpp"
 #include "Widgets/Button.hpp"
+#include "Widgets/ComboBox.hpp"
 #include "Widgets/Label.hpp"
 #include "Widgets/LinkLabel.hpp"
 #include "Widgets/MD3Tokens.hpp"
@@ -13,13 +14,13 @@
 #include "Widgets/SearchField.hpp"
 #include "Widgets/StateColor.hpp"
 #include "Widgets/StaticBox.hpp"
+#include "Widgets/TextInput.hpp"
 
 #include "libslic3r/Utils.hpp"
 
 #include <algorithm>
 #include <fstream>
 
-#include <wx/choice.h>
 #include <wx/clipbrd.h>
 #include <wx/datetime.h>
 #include <wx/dcbuffer.h>
@@ -137,11 +138,11 @@ private:
         m_prev->SetName(_L("Previous month"));
         m_prev->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { shift_month(-1); });
 
-        m_month_choice = new wxChoice(this, wxID_ANY);
+        m_month_choice = new ComboBox(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, wxCB_READONLY);
         for (int m = 0; m < 12; ++m)
             m_month_choice->Append(wxDateTime::GetMonthName(static_cast<wxDateTime::Month>(m)));
         m_month_choice->SetName(_L("Month"));
-        m_month_choice->Bind(wxEVT_CHOICE, [this](wxCommandEvent &) {
+        m_month_choice->Bind(wxEVT_COMBOBOX, [this](wxCommandEvent &) {
             m_month = m_month_choice->GetSelection() + 1;
             clamp_cursor();
             refresh_header();
@@ -420,7 +421,7 @@ private:
 
     Button    *m_prev         = nullptr;
     Button    *m_next         = nullptr;
-    wxChoice  *m_month_choice = nullptr;
+    ComboBox  *m_month_choice = nullptr;
     wxSpinCtrl *m_year_spin   = nullptr;
     wxPanel   *m_grid         = nullptr;
     Label     *m_hint         = nullptr;
@@ -480,11 +481,15 @@ void ChangelogDialog::build_ui()
     // --- Date range ---------------------------------------------------------
     auto *dates = new wxBoxSizer(wxHORIZONTAL);
     auto make_date_field = [&](const wxString &name, Bound bound) {
-        auto *field = new wxTextCtrl(this, wxID_ANY, wxEmptyString, wxDefaultPosition, FromDIP(wxSize(132, 40)),
-                                     wxTE_PROCESS_ENTER | wxBORDER_SIMPLE);
-        field->SetHint(locale_date_hint());
-        field->SetName(name);
+        auto *field = new TextInput(this, wxEmptyString, wxEmptyString, wxEmptyString, wxDefaultPosition,
+                                    FromDIP(wxSize(132, 40)), wxTE_PROCESS_ENTER);
+        field->GetTextCtrl()->SetHint(locale_date_hint());
+        field->GetTextCtrl()->SetName(name);
         field->SetToolTip(wxString::Format("%s. %s", name, _L("Type a date as YYYY-MM-DD or in your locale's short format.")));
+        // TextInput's inner editor forwards both wxEVT_TEXT (its internal
+        // handler always Skip()s, so the command event bubbles up) and
+        // wxEVT_TEXT_ENTER (explicitly re-dispatched via ProcessEventLocally)
+        // to the TextInput itself, so binding here keeps working unchanged.
         field->Bind(wxEVT_TEXT, [this, bound](wxCommandEvent &) { on_date_typed(bound); });
         field->Bind(wxEVT_TEXT_ENTER, [this, bound](wxCommandEvent &) { on_date_typed(bound); });
         return field;
@@ -579,9 +584,9 @@ void ChangelogDialog::apply_theme()
     m_scroll->SetBackgroundColour(bg);
     m_status->SetForegroundColour(on_var);
     m_date_error->SetForegroundColour(StateColor::semantic(MD3::Role::Error));
-    for (wxTextCtrl *field : {m_from_field, m_to_field}) {
-        field->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerHighest));
-        field->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+    for (TextInput *field : {m_from_field, m_to_field}) {
+        field->GetTextCtrl()->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerHighest));
+        field->GetTextCtrl()->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     }
 }
 
@@ -837,11 +842,11 @@ wxString ChangelogDialog::locale_date_hint() const
 
 void ChangelogDialog::on_date_typed(Bound bound)
 {
-    wxTextCtrl *field = bound == Bound::From ? m_from_field : m_to_field;
+    TextInput *field = bound == Bound::From ? m_from_field : m_to_field;
     std::optional<Changelog::CivilDate> &target = bound == Bound::From ? m_range.from : m_range.to;
     bool &invalid = bound == Bound::From ? m_from_invalid : m_to_invalid;
 
-    const wxString text = field->GetValue();
+    const wxString text = field->GetTextCtrl()->GetValue();
     if (text.Strip(wxString::both).IsEmpty()) {
         target.reset();
         invalid = false;
@@ -865,8 +870,8 @@ void ChangelogDialog::set_range(const Changelog::DateRange &range, bool write_fi
     m_to_invalid   = false;
     if (write_fields) {
         // ChangeValue() does not emit wxEVT_TEXT, so the fields do not re-enter on_date_typed().
-        m_from_field->ChangeValue(range.from ? wxString::FromUTF8(range.from->to_iso()) : wxString());
-        m_to_field->ChangeValue(range.to ? wxString::FromUTF8(range.to->to_iso()) : wxString());
+        m_from_field->GetTextCtrl()->ChangeValue(range.from ? wxString::FromUTF8(range.from->to_iso()) : wxString());
+        m_to_field->GetTextCtrl()->ChangeValue(range.to ? wxString::FromUTF8(range.to->to_iso()) : wxString());
     }
     update_date_error();
     apply_filters();

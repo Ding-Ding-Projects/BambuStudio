@@ -33,6 +33,7 @@
 #include "GUI_ObjectList.hpp"
 #include "MainFrame.hpp"
 #include "GUI_Utils.hpp"
+#include "Widgets/Button.hpp"
 #include <slic3r/GUI/Widgets/WebView.hpp>
 
 #include <boost/algorithm/string/predicate.hpp>
@@ -67,8 +68,12 @@ ProjectPanel::ProjectPanel(wxWindow *parent, wxWindowID id, const wxPoint &pos, 
     wxBoxSizer* main_sizer = new wxBoxSizer(wxVERTICAL);
 
     auto *view_actions = new wxBoxSizer(wxHORIZONTAL);
-    auto *online_button = new wxButton(this, wxID_ANY, _L("Online projects"));
-    auto *workspace_button = new wxButton(this, wxID_ANY, _L("Workspace"));
+    // Kit Buttons in place of the stock wxButton pair, matching the rest of the MD3 widget kit.
+    // Outlined is the kit's own default action-button variant.
+    auto *online_button = new Button(this, _L("Online projects"));
+    online_button->SetVariant(Button::Variant::Outlined);
+    auto *workspace_button = new Button(this, _L("Workspace"));
+    workspace_button->SetVariant(Button::Variant::Outlined);
     view_actions->Add(online_button, 0, wxALL, FromDIP(4));
     view_actions->Add(workspace_button, 0, wxALL, FromDIP(4));
     main_sizer->Add(view_actions, 0, wxEXPAND | wxALL, FromDIP(4));

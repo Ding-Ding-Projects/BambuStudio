@@ -8,6 +8,7 @@
 #include "slic3r/GUI/DeviceWeb/DeviceWebHost.hpp"
 #include "slic3r/GUI/GUI_App.hpp"
 #include "slic3r/GUI/MainFrame.hpp"
+#include "slic3r/GUI/Widgets/MD3DialogChrome.hpp"
 #include "slic3r/GUI/DeviceManager.hpp"
 #include "slic3r/GUI/wxExtensions.hpp"
 #include "slic3r/GUI/DeviceCore/DevDefs.h"
@@ -60,6 +61,10 @@ void open_ams_control_web_debug_dialog()
     sizer->Add(host, 1, wxEXPAND);
     dlg.SetSizer(sizer);
     dlg.Layout();
+    // Adopt the MD3 caption shell in place of the native title bar. The
+    // dialog's own ctor builds no content (the sizer is assembled here by the
+    // caller), so this is the last layout act before the dialog is shown.
+    MD3DialogCaption::Adopt(&dlg);
     dlg.ShowModal();
 }
 

@@ -180,7 +180,9 @@ protected:
     wxStaticText *  m_staticText_release_note;
     Button *        m_button_upgrade_firmware;
     Button *        m_nozzle_rack_update_btn;
-    wxStaticBitmap *m_copy_info{nullptr};
+    // Kit icon Button (IconButton mode), not a wxStaticBitmap: it must be a real
+    // control so the copy action is keyboard-reachable (see create_caption_panel()).
+    Button *        m_copy_info{nullptr};
     wxTimer        *m_copy_feedback_timer{nullptr};
     wxImage         m_copy_from;
     wxImage         m_copy_to;

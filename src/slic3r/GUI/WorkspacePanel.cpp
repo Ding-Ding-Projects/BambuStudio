@@ -5,6 +5,9 @@
 #include "NotificationManager.hpp"
 #include "libslic3r/AppConfig.hpp"
 #include "libslic3r/WorkspacePlanner.hpp"
+#include "Widgets/Button.hpp"
+#include "Widgets/Label.hpp"
+#include "Widgets/TextArea.hpp"
 
 #include <algorithm>
 #include <ctime>
@@ -13,7 +16,6 @@
 #include <optional>
 #include <sstream>
 
-#include <wx/button.h>
 #include <wx/calctrl.h>
 #include <wx/checklst.h>
 #include <wx/filedlg.h>
@@ -138,7 +140,7 @@ void WorkspacePanel::create_ui()
     auto *root = new wxBoxSizer(wxVERTICAL);
     auto *actions = new wxBoxSizer(wxHORIZONTAL);
     const auto button = [this, actions](const wxString &label, void (WorkspacePanel::*action)()) {
-        auto *control = new wxButton(this, wxID_ANY, label);
+        auto *control = new Button(this, label);
         actions->Add(control, 0, wxALL, FromDIP(4));
         control->Bind(wxEVT_BUTTON, [this, action](wxCommandEvent &) { (this->*action)(); });
     };
@@ -150,9 +152,9 @@ void WorkspacePanel::create_ui()
     m_sections = new wxNotebook(this, wxID_ANY);
     auto *overview_page = new wxPanel(m_sections);
     auto *overview_sizer = new wxBoxSizer(wxVERTICAL);
-    m_overview = new wxStaticText(overview_page, wxID_ANY, wxEmptyString);
+    m_overview = new Label(overview_page, wxEmptyString);
     overview_sizer->Add(m_overview, 0, wxALL, FromDIP(12));
-    auto *rename = new wxButton(overview_page, wxID_ANY, _L("Rename workspace"));
+    auto *rename = new Button(overview_page, _L("Rename workspace"));
     overview_sizer->Add(rename, 0, wxALL, FromDIP(8));
     rename->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) {
         wxString title = display(m_workspace.title);
@@ -160,7 +162,7 @@ void WorkspacePanel::create_ui()
             m_workspace.title = utf8(title); m_dirty = true; refresh_overview();
         }
     });
-    auto *preferences = new wxButton(overview_page, wxID_ANY, _L("Time zone and reminders"));
+    auto *preferences = new Button(overview_page, _L("Time zone and reminders"));
     overview_sizer->Add(preferences, 0, wxALL, FromDIP(8));
     preferences->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { edit_preferences(); });
     overview_page->SetSizer(overview_sizer);
@@ -174,9 +176,9 @@ void WorkspacePanel::create_ui()
     m_files->InsertColumn(2, _L("Editable sources"));
     files_sizer->Add(m_files, 1, wxEXPAND | wxALL, FromDIP(8));
     auto *file_actions = new wxBoxSizer(wxHORIZONTAL);
-    auto *add_project = new wxButton(files_page, wxID_ANY, _L("Add project 3MF"));
-    auto *add_editable = new wxButton(files_page, wxID_ANY, _L("Add editable source"));
-    auto *open_project = new wxButton(files_page, wxID_ANY, _L("Open selected project"));
+    auto *add_project = new Button(files_page, _L("Add project 3MF"));
+    auto *add_editable = new Button(files_page, _L("Add editable source"));
+    auto *open_project = new Button(files_page, _L("Open selected project"));
     file_actions->Add(add_project, 0, wxALL, FromDIP(4));
     file_actions->Add(add_editable, 0, wxALL, FromDIP(4));
     file_actions->Add(open_project, 0, wxALL, FromDIP(4));
@@ -208,20 +210,20 @@ void WorkspacePanel::create_ui()
     });
     auto *list_actions = new wxBoxSizer(wxHORIZONTAL);
     const auto list_button = [this, list_page, list_actions](const wxString &label, void (WorkspacePanel::*action)()) {
-        auto *control = new wxButton(list_page, wxID_ANY, label);
+        auto *control = new Button(list_page, label);
         list_actions->Add(control, 0, wxALL, FromDIP(4));
         control->Bind(wxEVT_BUTTON, [this, action](wxCommandEvent &) { (this->*action)(); });
     };
     list_button(_L("Add"), &WorkspacePanel::add_checklist);
     list_button(_L("Edit / due date / link"), &WorkspacePanel::edit_checklist);
-    auto *up = new wxButton(list_page, wxID_ANY, _L("Move up"));
-    auto *down = new wxButton(list_page, wxID_ANY, _L("Move down"));
+    auto *up = new Button(list_page, _L("Move up"));
+    auto *down = new Button(list_page, _L("Move down"));
     list_actions->Add(up, 0, wxALL, FromDIP(4));
     list_actions->Add(down, 0, wxALL, FromDIP(4));
     up->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { move_checklist(-1); });
     down->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { move_checklist(1); });
-    auto *json_button = new wxButton(list_page, wxID_ANY, _L("Export JSON"));
-    auto *csv_button = new wxButton(list_page, wxID_ANY, _L("Export CSV"));
+    auto *json_button = new Button(list_page, _L("Export JSON"));
+    auto *csv_button = new Button(list_page, _L("Export CSV"));
     list_actions->Add(json_button, 0, wxALL, FromDIP(4));
     list_actions->Add(csv_button, 0, wxALL, FromDIP(4));
     json_button->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { export_checklist(false); });
@@ -232,8 +234,12 @@ void WorkspacePanel::create_ui()
 
     auto *notes_page = new wxPanel(m_sections);
     auto *notes_sizer = new wxBoxSizer(wxVERTICAL);
-    m_notes = new wxTextCtrl(notes_page, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE);
-    notes_sizer->Add(m_notes, 1, wxEXPAND | wxALL, FromDIP(8));
+    // m_notes stays a wxTextCtrl*: it points at the kit TextArea's native
+    // editor, so every existing GetValue()/ChangeValue() caller below keeps
+    // working unchanged. The wrapper itself is owned by notes_page's sizer.
+    auto *notes_area = new TextArea(notes_page, wxEmptyString, wxDefaultSize, wxTE_MULTILINE);
+    m_notes = notes_area->GetTextCtrl();
+    notes_sizer->Add(notes_area, 1, wxEXPAND | wxALL, FromDIP(8));
     m_notes->Bind(wxEVT_TEXT, [this](wxCommandEvent &) {
         m_workspace.notes = utf8(m_notes->GetValue()); m_dirty = true;
     });
@@ -253,7 +259,7 @@ void WorkspacePanel::create_ui()
     calendar_sizer->Add(m_agenda, 1, wxEXPAND | wxALL, FromDIP(8));
     auto *calendar_actions = new wxBoxSizer(wxHORIZONTAL);
     const auto calendar_button = [this, calendar_page, calendar_actions](const wxString &label, void (WorkspacePanel::*action)()) {
-        auto *control = new wxButton(calendar_page, wxID_ANY, label);
+        auto *control = new Button(calendar_page, label);
         calendar_actions->Add(control, 0, wxALL, FromDIP(4));
         control->Bind(wxEVT_BUTTON, [this, action](wxCommandEvent &) { (this->*action)(); });
     };
