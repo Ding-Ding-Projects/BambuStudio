@@ -151,7 +151,10 @@ if (APPLE)
     endforeach()
 endif()
 if (WIN32)
-    add_library(BambuStudio SHARED BambuStudio.cpp BambuStudio.hpp)
+    # BaseException/StackWalker hold the Windows crash handler that GUI_App and
+    # BambuStudio.cpp install (CBaseException::set_log_folder and the unhandled
+    # exception filter); without them the DLL link fails with LNK2001.
+    add_library(BambuStudio SHARED BambuStudio.cpp BambuStudio.hpp BaseException.cpp BaseException.h StackWalker.cpp StackWalker.h)
 else ()
     add_executable(BambuStudio BambuStudio.cpp BambuStudio.hpp)
 endif ()
