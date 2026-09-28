@@ -10,6 +10,7 @@
 #include <boost/algorithm/string/split.hpp>
 #include "libslic3r/Utils.hpp"
 #include "I18N.hpp"
+#include "BilingualDecorator.hpp"
 #include "format.hpp"
 #include <slic3r/GUI/Widgets/Label.hpp>
 
@@ -387,6 +388,12 @@ void OG_CustomCtrl::OnMotion(wxMouseEvent& event)
             if (!suppress_hyperlinks && !line.og_line.label_path.empty())
                 tooltip = OptionsGroup::get_url(line.og_line.label_path) + "\n\n";
             tooltip += line.og_line.label_tooltip;
+            // Bilingual mode: the Cantonese description below the English, and
+            // the label's own Cantonese when the column had no room for it.
+            if (const wxString description = I18N::bilingual_secondary(line.og_line.label_tooltip); !description.empty())
+                tooltip += "\n\n" + description;
+            if (!line.bilingual_note.empty())
+                tooltip += (tooltip.empty() ? wxString() : wxString("\n\n")) + line.bilingual_note;
             // BBS: rich param tooltip
             focusedLine = &line;
             // BBS
@@ -1150,8 +1157,15 @@ void OG_CustomCtrl::CtrlLine::render(wxDC& dc, wxCoord h_pos, wxCoord v_pos)
     }
 }
 
-wxCoord OG_CustomCtrl::CtrlLine::draw_text(wxDC &dc, wxPoint pos, const wxString &text, const wxColour *color, int width, bool is_url/* = false*/, bool is_main/* = false*/)
+wxCoord OG_CustomCtrl::CtrlLine::draw_text(wxDC &dc, wxPoint pos, const wxString &english, const wxColour *color, int width, bool is_url/* = false*/, bool is_main/* = false*/)
 {
+    // Bilingual mode: "English · 廣東話" when it fits the column (which keeps its
+    // English width); otherwise the main label's tooltip carries the Cantonese.
+    wxString note;
+    const wxString text = I18N::fit_bilingual(dc, english, width, &note);
+    if (is_main)
+        bilingual_note = note;
+
     wxString multiline_text;
     auto size = Label::split_lines(dc, width, text, multiline_text);
 

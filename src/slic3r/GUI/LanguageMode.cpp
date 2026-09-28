@@ -1,4 +1,5 @@
 #include "LanguageMode.hpp"
+#include "BilingualRegistry.hpp"
 
 #include <cwctype>
 
@@ -557,6 +558,10 @@ bool LanguageModeService::configure(std::string_view language_mode_id, const wxS
     m_cantonese_catalog = std::move(next_catalog);
     m_cantonese_catalog_path = std::move(next_catalog_path);
     m_english_catalog = std::move(next_english);
+    // Bilingual mode shows English through every legacy lookup and records the
+    // Cantonese that belongs to it, so display code can add the second language.
+    BilingualRegistry::instance().reset(m_profile.kind == LanguageModeKind::BilingualEnglishCantoneseHongKong &&
+                                        m_cantonese_catalog != nullptr);
     return catalog_ready;
 }
 
@@ -599,7 +604,10 @@ wxString LanguageModeService::finish(const wxString &message, const wxString &tr
 {
     if (m_profile.kind == LanguageModeKind::CantoneseHongKong && translated == message)
         return vocabulary(english(message, context));
-    return vocabulary(translated);
+    const wxString shown = vocabulary(translated);
+    if (m_profile.kind == LanguageModeKind::BilingualEnglishCantoneseHongKong)
+        record_bilingual(message, shown, find_cantonese(message, UINT_MAX, context));
+    return shown;
 }
 
 wxString LanguageModeService::finish_plural(const wxString &singular, const wxString &plural, unsigned int n,
@@ -607,7 +615,20 @@ wxString LanguageModeService::finish_plural(const wxString &singular, const wxSt
 {
     if (m_profile.kind == LanguageModeKind::CantoneseHongKong && (translated == singular || translated == plural))
         return vocabulary(english_plural(singular, plural, n, context));
-    return vocabulary(translated);
+    const wxString shown = vocabulary(translated);
+    if (m_profile.kind == LanguageModeKind::BilingualEnglishCantoneseHongKong)
+        record_bilingual(singular, shown, find_cantonese(singular, n, context));
+    return shown;
+}
+
+void LanguageModeService::record_bilingual(const wxString &message, const wxString &shown,
+                                           const wxString *cantonese) const
+{
+    // Nothing to pair when the catalogue has no Cantonese of its own for the
+    // message (wx returns the msgid) or when it reads the same as the English.
+    if (cantonese == nullptr || cantonese->empty() || *cantonese == message || *cantonese == shown)
+        return;
+    BilingualRegistry::instance().record(shown, *cantonese);
 }
 
 const wxString *LanguageModeService::find_cantonese(const wxString &message, unsigned int n,
@@ -726,6 +747,11 @@ LocalizedTextRenderResult render_localized_text(const FormattedLocalizedText &te
 LocalizedTextRenderResult apply_localized_text(wxWindow &target, const FormattedLocalizedText &text,
                                                const LocalizedTextRenderOptions &options)
 {
+    // This window renders both languages itself; the bilingual decorator must
+    // not add a second copy. (Only bilingual mode runs the decorator, which also
+    // drops the mark when the window is destroyed.)
+    if (BilingualRegistry::instance().enabled())
+        BilingualRegistry::instance().set_managed(&target, true);
     LocalizedTextRenderOptions resolved_options = options;
     if (resolved_options.presentation == LocalizedTextPresentation::Automatic && text.has_secondary()) {
         const LocalizedTextRenderResult compact = render_localized_text_compact(text, options.inline_separator);

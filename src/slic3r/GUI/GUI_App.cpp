@@ -1,6 +1,8 @@
 #include "libslic3r/Technologies.hpp"
 #include "GUI_App.hpp"
 #include "AppDisplayName.hpp"
+#include "BilingualDecorator.hpp"
+#include "BilingualRegistry.hpp"
 #include <ctime>
 #include <iomanip>
 #include <sstream>
@@ -3051,6 +3053,10 @@ int GUI_App::OnExit()
 #endif
 
     Slic3r::HelioQuery::shutdown_background_requests();
+
+    // The bilingual decorator is an event filter with a timer; remove it while
+    // the event loop still exists.
+    I18N::enable_bilingual_decorator(false);
 
     stop_sync_user_preset();
 
@@ -7387,6 +7393,10 @@ Tab* GUI_App::get_tab(Preset::Type type)
         if (tab->type() == type)
             return tab->completed() ? tab : nullptr; // To avoid actions with no-completed Tab
     return nullptr;
+    // Bilingual mode: legacy lookups show English and record the Cantonese
+    // beside it; the decorator adds the second language where windows appear.
+    I18N::enable_bilingual_decorator(I18N::BilingualRegistry::instance().enabled());
+
 }
 
 Tab* GUI_App::get_plate_tab()

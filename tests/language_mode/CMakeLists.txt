@@ -1,7 +1,9 @@
 add_executable(language_mode_tests
     language_mode_tests_main.cpp
     funny_level_tests.cpp
+    bilingual_registry_tests.cpp
     ${PROJECT_SOURCE_DIR}/src/slic3r/GUI/LanguageMode.cpp
+    ${PROJECT_SOURCE_DIR}/src/slic3r/GUI/BilingualRegistry.cpp
 )
 
 # wxWidgets is discovered under src/, whose directory-scoped variables and

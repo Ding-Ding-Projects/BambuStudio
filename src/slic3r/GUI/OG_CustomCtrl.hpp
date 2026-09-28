@@ -73,6 +73,9 @@ class OG_CustomCtrl :public wxPanel
         std::vector<wxRect> rects_undo_icon;
         std::vector<wxRect> rects_undo_to_sys_icon;
         wxRect              rect_label;
+        // Bilingual mode: "廣東話：…" for a main label whose Cantonese did not
+        // fit the label column; the label tooltip shows it instead.
+        wxString            bilingual_note;
     };
 
     std::vector<CtrlLine> ctrl_lines;

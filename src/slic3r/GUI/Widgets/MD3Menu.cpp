@@ -1,5 +1,6 @@
 #include "MD3Menu.hpp"
 
+#include "../BilingualRegistry.hpp"
 #include "../GUI_App.hpp"
 #include "../I18N.hpp"
 #include "../Appearance/AppearanceEditorPopover.hpp"
@@ -860,7 +861,13 @@ MD3MenuPopup::MD3MenuPopup(wxWindow *owner, wxMenu *menu, MD3MenuPopup *parent_p
 
     if (I18N::language_mode_profile().is_bilingual()) {
         m_secondary = [](const wxString &label) {
-            return I18N::language_mode_service().translate(label).secondary;
+            // The registry knows the Cantonese of the label exactly as shown
+            // (ink wording, mnemonics, accelerators, formatted numbers); the
+            // catalogue lookup by msgid covers labels built another way.
+            wxString found = I18N::BilingualRegistry::instance().lookup(label);
+            if (found.empty())
+                found = I18N::language_mode_service().translate(label).secondary;
+            return found;
         };
     }
 }

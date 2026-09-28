@@ -828,6 +828,10 @@ list(APPEND SLIC3R_GUI_SOURCES
     GUI/LayoutProbe.hpp
     GUI/LanguageMode.cpp
     GUI/LanguageMode.hpp
+    GUI/BilingualRegistry.cpp
+    GUI/BilingualRegistry.hpp
+    GUI/BilingualDecorator.cpp
+    GUI/BilingualDecorator.hpp
     GUI/AppDisplayName.cpp
     GUI/AppDisplayName.hpp
     GUI/ProjectHistoryDialog.cpp

@@ -20,6 +20,10 @@ public:
 
     void SetLabel(const wxString& label) override;
 
+    // The text as last set, before Wrap() inserted its line breaks (GetLabel()
+    // returns the wrapped native text).
+    const wxString &GetUnwrappedLabel() const { return m_text; }
+
     void SetWindowStyleFlag(long style) override;
 
 	/**
