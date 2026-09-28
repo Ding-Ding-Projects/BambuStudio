@@ -259,7 +259,28 @@ var LangText={
 		"t291": "Ink",
 		"t292": "Temperature",
 		"t293": "No printer connected",
-		"t294": "No presets available, please add a ink first"
+		"t294": "No presets available, please add a ink first",
+		"t295": "Printer Connection",
+		"t296": "Please set up your printer connection to view the device.",
+		"t297": "Printer connection setup demonstration",
+		"t124": "",
+		"t298": "New",
+		"wk1": "Quick Start",
+		"wk2": "This article introduces the most basic usage of Bambu Studio. It guides users to configure software, create projects, and complete the first printing task step by step.",
+		"wk3": "Project Based Workflow",
+		"wk4": "Bambu Studio has put forward a leading workflow to truly achieve an “all in one” project. Based on the mainstream 3MF project format, it provides a series of revolutionary new features, such as Multi-Plate Support, a Project Resource Manager, and Assembly/Part View. It greatly improves the efficiency of both creators and regular users.",
+		"wk5": "High Speed Print at Quality",
+		"wk6": "It is challenging to print at high speed while maintaining high quality. Bambu Studio makes this happen. “Arch Move” makes the toolhead move smoothly and reduces the machine's vibration. The smart cooling is based on fine-tuned cooling parameters for each ink type. “Auto slow down” for overhang walls works to prevent deformation at high speeds.",
+		"wk7": "Multi-Color Printing",
+		"wk8": "Bambu Studio provides versatile colorizing tools to make a colorful model. You can freely add/remove inks in a project and colorize your model with different brushes. Before printing, each ink will be auto-mapped to an Ink Dispenser slot, not needing to manually change the spool placement in the Ink Dispenser.",
+		"wk9": "Setting Guide of Slicing Parameters",
+		"wk10": "The parameter management features in Bambu Studio provide very flexible and powerful control over the slicing process. This article introduces the organization of parameters and provides some skills on taking full advantage of these capabilities.",
+		"wk11": "Remote Control &amp; Monitoring",
+		"wk12": "Bambu Studio support sending print job to your printer over WAN/LAN network, controlling &amp; monitoring every aspect of your 3D printer and printing jobs. If you have more than one printer, you can easily switch between them in the device list.",
+		"wk13": "STEP Format",
+		"wk14": "Compared with STL, STEP brings more effective information. Thanks to the high accuracy of STEP, a lot of extrusion paths can be generated as arcs. STEP also includes the assembly relationship of each part of a model, which can be used to restore the assembly view after a model is split.",
+		"wk15": "3D Text",
+		"wk16": "With 3D Text tool, users can easily create various 3D text shapes in the project, making the model more personalized. Bambu Studio provides dozens of fonts and supports bold and italic styles to give text greater flexibility."
 	},
 	"zh_CN": {
 		"t1": "欢迎使用Bambu Studio",
@@ -3038,7 +3059,7 @@ var LangText={
 		"t50": "登出",
 		"t52": "略過",
 		"t53": "參加",
-		"t54": "Bambu Studio 會從真實打印嘅成功同失敗經驗中學習，改善打印質素、可靠性及整體效能。<br/><br/><span style='display:inline-block;width:2em;'></span>如你參加本計劃，打印機及軟件會分享使用及效能資料，例如裝置資料、設定、連線狀態及打印操作。這有助我們更快識別問題及改善產品。<br/><br/><span style='display:inline-block;width:2em;'></span>參加純屬自願，你可隨時在 <b>偏好設定 &gt; 使用者體驗</b> 中退出。詳情請參閱",
+		"t54": "Bambu Studio 會從真實打印嘅成功同失敗經驗中學習，改善打印質素、可靠性及整體效能。<br/><br/><span style='display:inline-block;width:2em;'></span>如果你參加呢個計劃，你部打印機同軟件會分享使用同效能資料，例如裝置資料、設定、連線狀態同打印操作。咁可以幫我哋更快搵出問題同改善產品。<br/><br/><span style='display:inline-block;width:2em;'></span>參加與否由你決定，你可以隨時喺 <b>偏好設定 &gt; 使用者體驗</b> 退出。詳情請參閱",
 		"t55": "使用者體驗改善計劃",
 		"t56": "頁面。",
 		"t57": "",
@@ -3047,7 +3068,7 @@ var LangText={
 		"t60": "歐洲",
 		"t61": "北美洲",
 		"t62": "其他",
-		"t63": "變更地區後，你的帳戶將會登出。請稍後重新登入。",
+		"t63": "變更地區之後，你嘅帳戶會登出。請稍後再登入。",
 		"t64": "Bambu 網絡外掛程式",
 		"t65": "透過 WLAN 或雲端服務傳送打印工作",
 		"t66": "完整遙距控制",
@@ -3066,10 +3087,10 @@ var LangText={
 		"t79": "外掛程式安裝失敗。",
 		"t80": "請嘗試以下步驟：",
 		"t81": "1. 按一下",
-		"t82": "以開啟外掛程式資料夾",
-		"t83": "2. 關閉所有已開啟的 Bambu Studio",
-		"t84": "3. 刪除外掛程式資料夾內的所有檔案",
-		"t85": "4. 重新開啟 Bambu Studio，然後再次安裝外掛程式",
+		"t82": "嚟開啟外掛程式資料夾",
+		"t83": "2. 關閉所有已經開啟嘅 Bambu Studio",
+		"t84": "3. 刪除外掛程式資料夾入面嘅所有檔案",
+		"t85": "4. 重新開啟 Bambu Studio，再安裝一次外掛程式",
 		"t86": "關閉",
 		"t87": "使用者手冊",
 		"t88": "移除",
@@ -3106,7 +3127,7 @@ var LangText={
 		"t120": "已取消",
 		"t121": "搜尋",
 		"t122": "搜尋網上模型",
-		"t123": "列印板",
+		"t123": "打印板",
 		"t125": "Maker’s Supply",
 		"t126": "載入緊……",
 		"t127": "請加入項目資料",
@@ -3134,25 +3155,25 @@ var LangText={
 		"t149": "確定要清除所有最近檔案嗎？",
 		"t150": "全部選取",
 		"t151": "Bambu Lab 使用者體驗改善計劃條款",
-		"t152": "在 3D 打印社群中，我們會互相參考成功與失敗經驗，以改進切片參數及設定。Bambu Studio 亦採用相同原則，從使用者的整體成功經驗與問題中學習，持續改善效能。",
-		"t153": "為改善產品與服務的質素及效能，Bambu Studio 誠邀你參加使用者體驗改善計劃。本文件說明計劃會收集哪些資料及其用途。請在同意前仔細閱讀並充分理解本文件。你可隨時在「偏好設定－使用者體驗」中更改設定，以撤回同意。",
+		"t152": "喺 3D 打印社群入面，我哋會互相參考成功同失敗嘅經驗，改進切片參數同設定。Bambu Studio 都係用同一個原則，從用家整體嘅成功經驗同遇到嘅問題中學習，持續改善效能。",
+		"t153": "為咗改善產品同服務嘅質素同效能，Bambu Studio 誠意邀請你參加使用者體驗改善計劃。呢份文件說明計劃會收集咩資料，以及點樣使用。請你喺同意之前仔細閱讀，並充分理解呢份文件。你可以隨時喺「偏好設定－使用者體驗」更改設定，撤回同意。",
 		"t154": "資料收集及用途",
-		"t155": "你同意參加計劃後，系統會自動收集並傳送與裝置及使用情況相關的資料，包括：",
+		"t155": "你同意參加計劃之後，系統會自動收集同傳送同你嘅裝置及使用情況有關嘅資料，包括：",
 		"t156": "裝置及使用者識別資料：",
 		"t158": "裝置及軟件資料：",
 		"t160": "裝置連線及設定資料：",
 		"t162": "產品及服務使用資料：",
 		"t164": "產品及服務效能資料：",
-		"t157": "裝置序號（SN）、使用者 ID、應用程式 ID，以及為記錄及關聯相關事件而產生的其他識別資料等；",
+		"t157": "裝置序號（SN）、使用者 ID、應用程式 ID，以及為咗記錄同關聯相關事件而產生嘅其他識別資料等；",
 		"t159": "作業系統名稱及類型、應用程式名稱及版本等；",
-		"t161": "IP 位址、與打印機建立網絡連線的結果及錯誤資料、網絡連線狀態、打印機系統版本、應用程式設定及連線狀態等；",
-		"t163": "使用者與應用程式互動的方式及時間、應用程式啟動與設定、與打印機互動及使用詳情、網上服務使用統計、使用者儲存、匯入或匯出檔案的中繼資料，以及所要求的服務網址等；",
-		"t165": "打印、網絡攝影機即時影像、應用程式及打印機操作等功能的效能指標及錯誤資料。",
-		"t166": "我們會使用上述資料評估及改善產品與服務。",
+		"t161": "IP 位址、同打印機建立網絡連線嘅結果同錯誤資料、網絡連線狀態、打印機系統版本、應用程式設定同連線狀態等；",
+		"t163": "使用者同應用程式互動嘅方式同時間、應用程式啟動同設定、同打印機互動及使用詳情、網上服務使用統計、使用者儲存、匯入或者匯出檔案嘅中繼資料，以及所要求嘅服務網址等；",
+		"t165": "打印、網絡攝影機即時影像、應用程式同打印機操作等功能嘅效能指標同錯誤資料。",
+		"t166": "我哋會用上述資料評估同改善產品同服務。",
 		"t167": "如何退出",
 		"t168": "你可隨時在「偏好設定－使用者體驗」中更改設定，以撤回同意。",
 		"t169": "私隱保障",
-		"t170": "Bambu Lab 致力保障你的私隱。除適用法律要求外，所收集的資料不會與任何第三方分享或向其披露。除非法律規定須保存更長時間，資料只會保留至完成上述用途所需的期間。要進一步了解我們如何處理你的資料，請參閱",
+		"t170": "Bambu Lab 致力保障你嘅私隱。除非適用法律有要求，否則所收集嘅資料唔會同任何第三方分享或者向佢哋披露。除非法律規定要保存更耐，資料只會保留到完成上述用途所需嘅時間。想進一步了解我哋點樣處理你嘅資料，請參閱",
 		"t171": "私隱聲明",
 		"t172": "無法連接裝置伺服器。請檢查網絡及防火牆。",
 		"wk17": "Bambu Lab 學院",
@@ -3251,7 +3272,28 @@ var LangText={
 		"t291": "墨水",
 		"t292": "溫度",
 		"t293": "未連接打印機",
-		"t294": "暫無可用預設，請先加入墨水"
+		"t294": "暫無可用預設，請先加入墨水",
+		"t295": "打印機連線",
+		"t296": "請先設定好打印機連線，先可以睇到裝置。",
+		"t297": "打印機連線設定示範",
+		"t124": "",
+		"t298": "新",
+		"wk1": "快速入門",
+		"wk2": "呢篇文章介紹 Bambu Studio 最基本嘅用法，一步一步帶你設定軟件、建立項目，完成第一次打印。",
+		"wk3": "以項目為本嘅工作流程",
+		"wk4": "Bambu Studio 推出領先嘅工作流程，真正做到「一體化」項目。佢以主流嘅 3MF 項目格式為基礎，提供一系列革新功能，例如多打印板支援、項目資源管理器同組裝／零件檢視，大大提升創作者同一般用家嘅效率。",
+		"wk5": "高速打印，質素照樣好",
+		"wk6": "要高速打印又保持高質素並唔容易，Bambu Studio 就做到。「弧線移動」令打印頭移動得更順，減少機器震動；智能冷卻會按每種墨水類型微調好嘅冷卻參數運作；懸空牆嘅「自動減速」可以防止高速打印時變形。",
+		"wk7": "多色打印",
+		"wk8": "Bambu Studio 提供多款上色工具，幫你整出色彩豐富嘅模型。你可以喺項目入面隨意加入／移除墨水，再用唔同筆刷為模型上色。打印之前，每種墨水都會自動對應到墨水機嘅槽位，唔使手動調換墨水機入面料卷嘅位置。",
+		"wk9": "切片參數設定指南",
+		"wk10": "Bambu Studio 嘅參數管理功能，令你可以非常靈活同有效咁控制切片過程。呢篇文章介紹參數點樣組織，仲會分享一啲技巧，等你盡用呢啲功能。",
+		"wk11": "遙距控制同監察",
+		"wk12": "Bambu Studio 支援經 WAN／LAN 網絡將打印工作傳送到你部打印機，全面控制同監察你嘅 3D 打印機同打印工作。如果你有多過一部打印機，可以喺裝置列表入面輕鬆切換。",
+		"wk13": "STEP 格式",
+		"wk14": "同 STL 比較，STEP 帶有更多有用資料。由於 STEP 精度高，好多擠出路徑都可以生成為弧線。STEP 亦包含模型每個零件之間嘅組裝關係，模型拆開之後可以用嚟還原組裝檢視。",
+		"wk15": "3D 文字",
+		"wk16": "用 3D 文字工具，你可以喺項目入面輕鬆建立各種 3D 文字形狀，令模型更有個人風格。Bambu Studio 提供幾十款字型，仲支援粗體同斜體，令文字更加靈活。"
 	}
 };
 
@@ -3314,10 +3356,32 @@ function TranslatePage()
 		}
 	}
 
+	// Placeholders are plain text. In bilingual mode both languages go inside
+	// the field when they fit; otherwise the field keeps English and the
+	// tooltip carries both, so nothing is clipped mid-word.
 	$('[data-ph-tid]').each(function() {
 		let tid = $(this).attr('data-ph-tid');
-		let text = (LangText[strLang] && LangText[strLang][tid]) || (LangText['en'] && LangText['en'][tid]);
+		if ($(this).attr('data-bi-title')) {
+			$(this).removeAttr('title').removeAttr('data-bi-title');
+		}
+		let text = GetCurrentPlainTextByKey(tid);
+		if (bBilingual && LangText['en'].hasOwnProperty(tid)) {
+			let english = StripBilingualMarkup(LangText['en'][tid]);
+			if (text !== english && !PlainTextFitsInside(this, text)) {
+				if (!$(this).attr('title')) {
+					$(this).attr('title', text).attr('data-bi-title', '1');
+				}
+				text = english;
+			}
+		}
 		if (text) $(this).attr('placeholder', text);
+	});
+
+	// Image alternative text is read aloud, so it follows the language mode
+	// too; attribute contexts get the plain-text form (no bilingual markup).
+	$('[data-alt-tid]').each(function() {
+		let text = GetCurrentPlainTextByKey($(this).attr('data-alt-tid'));
+		if (text) $(this).attr('alt', text);
 	});
 
 	AnnotateBilingualGroups(bBilingual);
@@ -3405,6 +3469,26 @@ function GetLocalizedTextByKey(key, strLang)
 		return LangText[strLang][key];
 
 	return english;
+}
+
+// True when the text, drawn in the element's own font, fits the element's
+// content box. An element that has no layout yet (hidden, not attached)
+// reports false so the caller takes the tooltip route.
+function PlainTextFitsInside( element, text )
+{
+	let width=element.clientWidth;
+	if(!width || typeof document==='undefined')
+		return false;
+
+	let style=window.getComputedStyle(element);
+	let available=width-(parseFloat(style.paddingLeft)||0)-(parseFloat(style.paddingRight)||0);
+	let canvas=PlainTextFitsInside.canvas || (PlainTextFitsInside.canvas=document.createElement('canvas'));
+	let context=canvas.getContext('2d');
+	if(!context)
+		return false;
+
+	context.font=style.font || (style.fontSize+' '+style.fontFamily);
+	return context.measureText(text).width<=available;
 }
 
 function GetCurrentTextByKey( key )

@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync, statSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import vm from 'node:vm';
 
 const source = readFileSync(new URL('./text.js', import.meta.url), 'utf8');
@@ -17,7 +19,7 @@ const english = sandbox.LangText.en;
 const cantonese = sandbox.LangText.yue_HK;
 assert.equal(
   Object.keys(english).length,
-  260,
+  281,
   'update the yue_HK catalog and reviewed baseline when English web keys change',
 );
 assert.deepEqual(
@@ -54,4 +56,55 @@ const plain = sandbox.GetCurrentPlainTextByKey('t40');
 assert.doesNotMatch(plain, /[<>]/);
 assert.match(plain, /粵語：/);
 
-console.log(`Validated yue_HK and bilingual_en_yue_HK for ${Object.keys(english).length} English web keys.`);
+// The printer-connection page reuses nothing: its heading, body and image
+// description each have their own key, translated rather than copied.
+for (const key of ['t295', 't296', 't297']) {
+  assert.notEqual(cantonese[key], english[key], `yue_HK must translate ${key}`);
+}
+
+// Every page element marked for translation names a key the English table
+// has. A ".trans" node without one keeps whatever language its HTML was
+// written in, and an unknown key does the same without any error. Commented
+// markup is ignored; generated markup inside the pages' scripts is checked.
+const webRoot = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
+function* pageSources(directory) {
+  for (const name of readdirSync(directory)) {
+    const full = path.join(directory, name);
+    if (statSync(full).isDirectory()) {
+      if (name !== 'node_modules' && name !== 'include') yield* pageSources(full);
+    } else if (/\.(html|js)$/.test(name) && full !== fileURLToPath(new URL('./text.js', import.meta.url))) {
+      yield full;
+    }
+  }
+}
+const keyAttributes = [['tid', 'text'], ['data-ph-tid', 'placeholder'], ['data-alt-tid', 'alt text']];
+const unkeyed = [];
+let keyedElements = 0;
+for (const file of pageSources(webRoot)) {
+  let text = readFileSync(file, 'utf8');
+  if (file.endsWith('.html')) {
+    text = text.replace(/<!--[\s\S]*?-->/g, (comment) => comment.replace(/[^\n]/g, ' '));
+  }
+  for (const tag of text.matchAll(/<([a-zA-Z][\w-]*)\b([^<>]*)>/g)) {
+    const attributes = tag[2];
+    const where = `${path.relative(webRoot, file)}:${text.slice(0, tag.index).split('\n').length}`;
+    for (const [attribute, role] of keyAttributes) {
+      // (?<![\w-]) keeps "tid" from also matching inside "data-ph-tid".
+      const key = new RegExp(`(?<![\\w-])${attribute}\\s*=\\s*["']([^"']*)["']`).exec(attributes)?.[1];
+      if (key === undefined) continue;
+      keyedElements += 1;
+      if (!Object.hasOwn(english, key)) unkeyed.push(`${where}: ${role} key "${key}" is not in the English table`);
+    }
+    const classes = /(?<![\w-])class\s*=\s*["']([^"']*)["']/.exec(attributes)?.[1].split(/\s+/) ?? [];
+    if (classes.includes('trans') && !/(?<![\w-])tid\s*=/.test(attributes)) {
+      unkeyed.push(`${where}: <${tag[1]} class="trans"> has no tid`);
+    }
+  }
+}
+assert.deepEqual(unkeyed, [], 'every translatable web element needs a known key');
+assert.ok(keyedElements > 300, `expected the page scan to see the keyed elements, saw ${keyedElements}`);
+
+console.log(
+  `Validated yue_HK and bilingual_en_yue_HK for ${Object.keys(english).length} English web keys ` +
+    `and ${keyedElements} keyed page elements.`,
+);

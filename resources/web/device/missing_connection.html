@@ -6,11 +6,12 @@
 <title>Printer Connection Required</title>
 <link rel="stylesheet" type="text/css" href="css/home.css" />
 <link rel="stylesheet" type="text/css" href="css/dark.css" />
+<script type="text/javascript" src="../include/jquery-3.6.0.min.js"></script>
+<script type="text/javascript" src="../include/globalapi.js"></script>
 <script type="text/javascript" src="../data/text.js"></script>
 <script type="text/javascript">
-// The four scripts this page used to link lived under web/homepage, which no
-// longer exists, so OnInit was undefined and the page never localized. The
-// translation table itself is in data/text.js.
+// TranslatePage() in data/text.js needs jQuery and GetQueryString() from the
+// shared include folder; without them it threw and the page stayed English.
 function OnInit() {
     if (typeof TranslatePage === 'function') TranslatePage();
 }
@@ -18,9 +19,9 @@ function OnInit() {
 </head>
 <body onLoad="OnInit()">
     <div class="container">
-        <h1 class="trans">Printer Connection</h1>
-        <p class="trans">Please set up your printer connection to view the device.</p>
-        <img src="setup_connection.gif" alt="Printer connection setup demonstration" style="max-width: 100%; height: auto; display: block;"/>
+        <h1 class="trans" tid="t295">Printer Connection</h1>
+        <p class="trans" tid="t296">Please set up your printer connection to view the device.</p>
+        <img src="setup_connection.gif" data-alt-tid="t297" alt="Printer connection setup demonstration" style="max-width: 100%; height: auto; display: block;"/>
     </div>
 </body>
 </html>
