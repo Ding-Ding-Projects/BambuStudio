@@ -22,6 +22,13 @@ protected:
     std::vector<wxString> tips;
     wxString hint;
 
+    // Bilingual mode: the note last merged into the widget's tooltip. There is
+    // no per-step hover surface on this control, so every step whose compact
+    // bilingual caption did not fit its slot contributes its own caption/note
+    // block, and a render that needs none of them clears it.
+    wxString bilingual_note;
+    void updateBilingualTooltip(const wxString &combined_note);
+
     int step = -1;
 
     wxPoint drag_offset;

@@ -7,6 +7,7 @@
 #include "MD3Tokens.hpp"
 #include "StateColor.hpp"
 #include "../I18N.hpp"
+#include "../BilingualDecorator.hpp"
 
 wxDEFINE_EVENT( EVT_STEP_CHANGING, wxCommandEvent );
 wxDEFINE_EVENT( EVT_STEP_CHANGED, wxCommandEvent );
@@ -94,6 +95,20 @@ void StepCtrlBase::SetColorScheme(MD3::ColorScheme scheme)
     SetSchemeAccent(scheme); // keeps StaticBox's own accent in step with ours
     applyColorScheme();
     Refresh();
+}
+
+void StepCtrlBase::updateBilingualTooltip(const wxString &combined_note)
+{
+    // Rebuilt fresh from scratch every render, so a step that stops needing a
+    // note (more room, or the same width with shorter text) drops out instead
+    // of piling up, and setting the tooltip is skipped unless it truly changed.
+    if (combined_note == bilingual_note)
+        return;
+    bilingual_note = combined_note;
+    if (combined_note.empty())
+        UnsetToolTip();
+    else
+        SetToolTip(combined_note);
 }
 
 int StepCtrlBase::GetSelection() const { return step; }
@@ -280,29 +295,50 @@ void StepCtrl::doRender(wxDC &dc)
     int circleY = size.y / 2;
     dc.SetPen(wxPen(clr_step.colorForStates(states)));
     dc.SetBrush(wxBrush(clr_step.colorForStates(states)));
+    // Bilingual mode: every caption below draws its compact English-plus-Cantonese
+    // form when it fits the room it already has; otherwise it stays English and
+    // its note is folded into the widget's own tooltip (no per-step hover here).
+    wxString notes;
+    auto add_note = [&notes](const wxString &english, const wxString &note) {
+        if (note.empty())
+            return;
+        if (!notes.empty())
+            notes += "\n\n";
+        notes += english + "\n" + note;
+    };
     if (!hint.empty()) {
         dc.SetFont(font_tip);
         dc.SetTextForeground(clr_tip.colorForStates(states));
-        wxSize sz = dc.GetTextExtent(hint);
-        dc.DrawText(hint, dc.GetCharWidth(), circleY - FromDIP(20) - sz.y);
+        wxString note;
+        const wxString shown_hint = Slic3r::GUI::I18N::fit_bilingual(dc, hint, std::max(0, size.x - dc.GetCharWidth()), &note);
+        add_note(hint, note);
+        wxSize sz = dc.GetTextExtent(shown_hint);
+        dc.DrawText(shown_hint, dc.GetCharWidth(), circleY - FromDIP(20) - sz.y);
     }
     for (int i = 0; i < steps.size(); ++i) {
         bool check = (pos_thumb == wxPoint{0, 0} ? step : pos_thumb.y) == i;
         dc.DrawEllipse(circleX - radius, circleY - radius, radius * 2, radius * 2);
         dc.SetFont(GetFont());
         dc.SetTextForeground(clr_text.colorForStates(states | (check ? StateColor::Checked : 0)));
-        wxSize sz = dc.GetTextExtent(steps[i]);
-        dc.DrawText(steps[i], circleX - sz.x / 2, circleY + 20);
+        wxString step_note;
+        const wxString shown_step = Slic3r::GUI::I18N::fit_bilingual(dc, steps[i], itemWidth, &step_note);
+        add_note(steps[i], step_note);
+        wxSize sz = dc.GetTextExtent(shown_step);
+        dc.DrawText(shown_step, circleX - sz.x / 2, circleY + 20);
         if (check) {
             dc.SetFont(font_tip);
             dc.SetTextForeground(clr_tip.colorForStates(states));
-            wxSize sz = dc.GetTextExtent(tips[i]);
-            dc.DrawText(tips[i], circleX - sz.x / 2, circleY - 20 - sz.y);
+            wxString tip_note;
+            const wxString shown_tip = Slic3r::GUI::I18N::fit_bilingual(dc, tips[i], itemWidth, &tip_note);
+            add_note(tips[i], tip_note);
+            wxSize sz = dc.GetTextExtent(shown_tip);
+            dc.DrawText(shown_tip, circleX - sz.x / 2, circleY - 20 - sz.y);
             sz = bmp_thumb.GetBmpSize();
             dc.DrawBitmap(bmp_thumb.bmp(), circleX - sz.x / 2, circleY - sz.y / 2);
         }
         circleX += itemWidth;
     }
+    updateBilingualTooltip(notes);
 }
 
 /* StepIndicator */
@@ -348,12 +384,30 @@ void StepIndicator::doRender(wxDC &dc)
 
     int textWidth = size.x - radius * 5;
     dc.SetFont(GetFont());
+    // Bilingual mode: every step caption below draws its compact
+    // English-plus-Cantonese form when it fits the wrap width it already has;
+    // otherwise it stays English and its note joins the widget's own tooltip
+    // (there is no per-step hover surface on this rail).
+    wxString notes;
+    auto add_note = [&notes](const wxString &english, const wxString &note) {
+        if (note.empty())
+            return;
+        if (!notes.empty())
+            notes += "\n\n";
+        notes += english + "\n" + note;
+    };
     wxString firstLine;
     if (step == 0) dc.SetFont(GetFont().Bold());
-    wxSize   firstLineSize = Label::split_lines(dc, textWidth, steps.front(), firstLine);
+    wxString first_note;
+    const wxString first_text = Slic3r::GUI::I18N::fit_bilingual(dc, steps.front(), textWidth, &first_note);
+    add_note(steps.front(), first_note);
+    wxSize   firstLineSize = Label::split_lines(dc, textWidth, first_text, firstLine);
     wxString lastLine;
     if (step == steps.size() - 1) dc.SetFont(GetFont().Bold());
-    wxSize   lastLineSize = Label::split_lines(dc, textWidth, steps.back(), lastLine);
+    wxString last_note;
+    const wxString last_text = Slic3r::GUI::I18N::fit_bilingual(dc, steps.back(), textWidth, &last_note);
+    add_note(steps.back(), last_note);
+    wxSize   lastLineSize = Label::split_lines(dc, textWidth, last_text, lastLine);
     int      firstPadding = std::max(0, firstLineSize.y / 2 - radius);
     int      lastPadding  = std::max(0, lastLineSize.y / 2 - radius);
 
@@ -407,11 +461,15 @@ void StepIndicator::doRender(wxDC &dc)
             text = lastLine;
             textSize = lastLineSize;
         } else {
-            textSize = Label::split_lines(dc, textWidth, steps[i], text);
+            wxString mid_note;
+            const wxString mid_text = Slic3r::GUI::I18N::fit_bilingual(dc, steps[i], textWidth, &mid_note);
+            add_note(steps[i], mid_note);
+            textSize = Label::split_lines(dc, textWidth, mid_text, text);
         }
         dc.DrawText(text, circleX + radius * 3, circleY - (textSize.y / 2));
         circleY += itemWidth;
     }
+    updateBilingualTooltip(notes);
 }
 
 
@@ -471,8 +529,22 @@ void FilamentStepIndicator::doRender(wxDC& dc)
     const wxString heading = _L("Loading");
     int circleX = FromDIP(20);
     int circleY = FromDIP(20);
-    wxSize sz = dc.GetTextExtent(heading);
-    dc.DrawText(heading, circleX, circleY);
+    // Bilingual mode: every caption below draws its compact English-plus-Cantonese
+    // form when it fits the room it already has; otherwise it stays English and
+    // its note joins the widget's own tooltip (no per-step hover surface here).
+    wxString notes;
+    auto add_note = [&notes](const wxString &english, const wxString &note) {
+        if (note.empty())
+            return;
+        if (!notes.empty())
+            notes += "\n\n";
+        notes += english + "\n" + note;
+    };
+    wxString heading_note;
+    const wxString shown_heading = Slic3r::GUI::I18N::fit_bilingual(dc, heading, std::max(0, size.x - circleX), &heading_note);
+    add_note(heading, heading_note);
+    wxSize sz = dc.GetTextExtent(heading); // layout stays sized from the English alone
+    dc.DrawText(shown_heading, circleX, circleY);
 
     dc.SetFont(::Label::Body_13);
 
@@ -488,10 +560,16 @@ void FilamentStepIndicator::doRender(wxDC& dc)
     dc.SetFont(GetFont());
     wxString firstLine;
     if (step == 0) dc.SetFont(GetFont().Bold());
-    wxSize   firstLineSize = Label::split_lines(dc, textWidth, steps.front(), firstLine);
+    wxString first_note;
+    const wxString first_text = Slic3r::GUI::I18N::fit_bilingual(dc, steps.front(), textWidth, &first_note);
+    add_note(steps.front(), first_note);
+    wxSize   firstLineSize = Label::split_lines(dc, textWidth, first_text, firstLine);
     wxString lastLine;
     if (step == steps.size() - 1) dc.SetFont(GetFont().Bold());
-    wxSize   lastLineSize = Label::split_lines(dc, textWidth, steps.back(), lastLine);
+    wxString last_note;
+    const wxString last_text = Slic3r::GUI::I18N::fit_bilingual(dc, steps.back(), textWidth, &last_note);
+    add_note(steps.back(), last_note);
+    wxSize   lastLineSize = Label::split_lines(dc, textWidth, last_text, lastLine);
     int      firstPadding = std::max(0, firstLineSize.y / 2 - radius);
     int      lastPadding = std::max(0, lastLineSize.y / 2 - radius);
 
@@ -547,11 +625,15 @@ void FilamentStepIndicator::doRender(wxDC& dc)
             textSize = lastLineSize;
         }
         else {
-            textSize = Label::split_lines(dc, textWidth, steps[i], text);
+            wxString mid_note;
+            const wxString mid_text = Slic3r::GUI::I18N::fit_bilingual(dc, steps[i], textWidth, &mid_note);
+            add_note(steps[i], mid_note);
+            textSize = Label::split_lines(dc, textWidth, mid_text, text);
         }
         dc.DrawText(text, circleX + radius * 1.5, circleY - (textSize.y / 2));
         circleY += itemWidth;
     }
+    updateBilingualTooltip(notes);
 }
 
 void FilamentStepIndicator::SetSlotInformation(wxString slot) {

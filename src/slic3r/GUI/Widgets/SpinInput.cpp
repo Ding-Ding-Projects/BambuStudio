@@ -4,6 +4,7 @@
 #include "StateColor.hpp"
 #include "MaterialIcon.hpp"
 #include "TextCtrl.h"
+#include "../BilingualDecorator.hpp"
 
 #include <wx/dcgraph.h>
 
@@ -166,9 +167,13 @@ void SpinInput::SetRange(int min, int max)
 }
 
 void SpinInput::DoSetToolTipText(wxString const &tip)
-{ 
-    wxWindow::DoSetToolTipText(tip);
-    text_ctrl->SetToolTip(tip);
+{
+    if (tip != bilingual_base_tooltip)
+        bilingual_note.Clear(); // that note was for the old text; the next paint decides afresh
+    bilingual_base_tooltip = tip;
+    const wxString merged = bilingual_note.empty() ? tip : (tip.empty() ? bilingual_note : tip + "\n\n" + bilingual_note);
+    wxWindow::DoSetToolTipText(merged);
+    text_ctrl->SetToolTip(merged);
 }
 
 void SpinInput::Rescale()
@@ -218,7 +223,20 @@ void SpinInput::render(wxDC& dc)
         pt.y = (size.y - labelSize.y) / 2;
         dc.SetFont(GetFont());
         dc.SetTextForeground(label_color.colorForStates(states));
-        dc.DrawText(label, pt);
+        // Bilingual mode: the compact English-plus-Cantonese form when it fits
+        // the labelSize slot messureSize() already reserved (English-sized, so
+        // the value field never moves); otherwise the label stays English and
+        // the note joins this control's tooltip (already forwarded to text_ctrl).
+        wxString note;
+        const wxString shown_label = Slic3r::GUI::I18N::fit_bilingual(dc, label, labelSize.x, &note);
+        if (note != bilingual_note) {
+            bilingual_note = note;
+            const wxString merged = note.empty() ? bilingual_base_tooltip
+                                                  : (bilingual_base_tooltip.empty() ? note : bilingual_base_tooltip + "\n\n" + note);
+            wxWindow::DoSetToolTipText(merged);
+            text_ctrl->SetToolTip(merged);
+        }
+        dc.DrawText(shown_label, pt);
     }
 }
 

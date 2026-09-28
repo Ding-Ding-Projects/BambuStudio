@@ -82,6 +82,11 @@ protected:
 #ifdef __WIN32__
     WXLRESULT MSWWindowProc(WXUINT message, WXWPARAM w_param, WXLPARAM l_param) override;
 #endif
+    // Bilingual mode needs to fold "廣東話：..." into whatever tooltip the
+    // caller sets, without losing it on the next repaint -- so this virtual
+    // hook (which SetToolTip() itself funnels through) captures the caller's
+    // text and re-merges it with the current note (see dorender).
+    void DoSetToolTipText(wxString const &tip) override;
 
 private:
     wxSize textSize;
@@ -103,6 +108,11 @@ private:
     bool pressedDown      = false;
     bool keyboard_pressed = false;
     int  layout_style     = 0;
+
+    // Bilingual mode bookkeeping: the tooltip the caller actually asked for,
+    // and the Cantonese note (if any) currently folded on top of it.
+    wxString bilingual_base_tooltip;
+    wxString bilingual_note;
 
     EHorizontalOrientation text_orientation;
     int text_margin;

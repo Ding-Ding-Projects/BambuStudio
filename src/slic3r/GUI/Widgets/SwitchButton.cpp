@@ -9,6 +9,7 @@
 #include "../Utils/MacDarkMode.hpp"
 #include "../Utils/WxFontUtils.hpp"
 #include "../GUI_App.hpp"
+#include "../BilingualDecorator.hpp"
 
 #include <wx/dcclient.h>
 #include <wx/dcgraph.h>
@@ -63,6 +64,14 @@ void SwitchButton::SetLabels(wxString const& lbl_on, wxString const& lbl_off)
 	labels[0] = lbl_on;
 	labels[1] = lbl_off;
 	Rescale();
+}
+
+void SwitchButton::DoSetToolTipText(wxString const &tip)
+{
+	if (tip != bilingual_base_tooltip)
+		bilingual_note.Clear(); // that note was for the old text; the next paint decides afresh
+	bilingual_base_tooltip = tip;
+	wxWindow::DoSetToolTipText(bilingual_note.empty() ? tip : (tip.empty() ? bilingual_note : tip + "\n\n" + bilingual_note));
 }
 
 void SwitchButton::SetTextColor(StateColor const& color)
@@ -200,6 +209,27 @@ void SwitchButton::Rescale()
                 textSize[0] = { memdc.GetTextExtent(labels[0]).x, fmScaledH };
                 textSize[1] = { memdc.GetTextExtent(labels[1]).x, fmScaledH };
 			}
+			// Bilingual mode: each half draws its compact English-plus-Cantonese
+			// form when it fits the room its thumbSize slot already has (the slot
+			// itself stays sized from the English labels above); otherwise that
+			// half stays English and both notes join this control's own tooltip.
+			const int bilingual_avail = std::max(0, thumbSize.x - BS * 12);
+			wxString note0;
+			const wxString shown_label0 = Slic3r::GUI::I18N::fit_bilingual(memdc, labels[0], bilingual_avail, &note0);
+			wxString note1;
+			const wxString shown_label1 = Slic3r::GUI::I18N::fit_bilingual(memdc, labels[1], bilingual_avail, &note1);
+			if (i == 0) {
+				wxString combined_note;
+				if (!note0.empty())
+					combined_note = labels[0] + "\n" + note0;
+				if (!note1.empty())
+					combined_note += (combined_note.empty() ? wxString() : wxString("\n\n")) + labels[1] + "\n" + note1;
+				if (combined_note != bilingual_note) {
+					bilingual_note = combined_note;
+					wxWindow::DoSetToolTipText(bilingual_base_tooltip.empty() ? combined_note
+						: (combined_note.empty() ? bilingual_base_tooltip : bilingual_base_tooltip + "\n\n" + combined_note));
+				}
+			}
 			auto state = i == 0 ? StateColor::Enabled : (StateColor::Checked | StateColor::Enabled);
             {
 #ifdef __WXMSW__
@@ -223,13 +253,13 @@ void SwitchButton::Rescale()
             */
             text_y -= FromDIP(1);
 #endif
-            memdc.DrawText(labels[0], {BS + (thumbSize.x - textSize[0].x) / 2, text_y});
+            memdc.DrawText(shown_label0, {BS + (thumbSize.x - memdc.GetTextExtent(shown_label0).x) / 2, text_y});
             memdc.SetTextForeground(text_color2.count() == 0 ? eff_text.colorForStates(state) : text_color2.colorForStates(state));
             auto text_y_1 = BS + (thumbSize.y - textSize[1].y) / 2;
 #ifdef __APPLE__
             text_y_1 -= FromDIP(1);
 #endif
-            memdc.DrawText(labels[1], {trackSize.x - thumbSize.x - BS + (thumbSize.x - textSize[1].x) / 2, text_y_1});
+            memdc.DrawText(shown_label1, {trackSize.x - thumbSize.x - BS + (thumbSize.x - memdc.GetTextExtent(shown_label1).x) / 2, text_y_1});
 			memdc.SelectObject(wxNullBitmap);
 #ifdef __WXOSX__
             bmp = wxBitmap(bmp.ConvertToImage(), -1, scale);
@@ -681,6 +711,7 @@ void SwitchBoard::doRender(wxDC &dc)
     dc.SetFont(::Label::Body_13);
     Slic3r::GUI::WxFontUtils::get_suitable_font_size(0.6 * sz.GetHeight(), dc);
 
+    wxString bilingual_notes;
     auto drawSegment = [&](const wxRect &rc, bool selected, const wxString &text) {
         if (selected) {
             const wxColour fill = dis ? withAlpha(onSurface, 30) : primary;
@@ -691,12 +722,28 @@ void SwitchBoard::doRender(wxDC &dc)
         const wxColour tc = dis ? withAlpha(onSurfVar, 97)
                                 : (selected ? onPrimary : onSurfVar);
         dc.SetTextForeground(tc);
-        const wxSize ts = dc.GetTextExtent(text);
-        dc.DrawText(text, wxPoint(rc.x + (rc.width - ts.x) / 2, rc.y + (rc.height - ts.y) / 2));
+        // Bilingual mode: the compact English-plus-Cantonese form when it fits
+        // this segment's own room; otherwise the segment stays English and the
+        // note joins this board's tooltip (already "leftLabel / rightLabel").
+        wxString note;
+        const wxString shown = Slic3r::GUI::I18N::fit_bilingual(dc, text, rc.width, &note);
+        if (!note.empty()) {
+            if (!bilingual_notes.empty())
+                bilingual_notes += "\n\n";
+            bilingual_notes += text + "\n" + note;
+        }
+        const wxSize ts = dc.GetTextExtent(shown);
+        dc.DrawText(shown, wxPoint(rc.x + (rc.width - ts.x) / 2, rc.y + (rc.height - ts.y) / 2));
     };
 
     drawSegment(leftRect, switch_left, leftLabel);
     drawSegment(rightRect, switch_right, rightLabel);
+
+    if (bilingual_notes != m_bilingual_note) {
+        m_bilingual_note = bilingual_notes;
+        const wxString base = wxString::Format("%s / %s", leftLabel, rightLabel);
+        SetToolTip(bilingual_notes.empty() ? base : base + "\n\n" + bilingual_notes);
+    }
 
     if (HasFocus() && IsEnabled()) {
         const int inset = std::max(FromDIP(2), 1);
@@ -865,6 +912,14 @@ void CustomToggleButton::SetLabel(const wxString& label) {
     Refresh();
 }
 
+void CustomToggleButton::DoSetToolTipText(wxString const &tip)
+{
+    if (tip != bilingual_base_tooltip)
+        bilingual_note.Clear(); // that note was for the old text; the next paint decides afresh
+    bilingual_base_tooltip = tip;
+    wxWindow::DoSetToolTipText(bilingual_note.empty() ? tip : (tip.empty() ? bilingual_note : tip + "\n\n" + bilingual_note));
+}
+
 void CustomToggleButton::SetSelectedIcon(const wxString& iconPath) {
     m_selected_icon = create_scaled_bitmap(iconPath.ToStdString(), nullptr,  16);
     Refresh();
@@ -965,9 +1020,21 @@ void CustomToggleButton::doRender(wxDC& dc)
     dc.SetFont(::Label::Head_13);
     dc.SetTextForeground(fg);
 
+    // Bilingual mode: the compact English-plus-Cantonese form when it fits the
+    // room this chip already has; otherwise the label stays English and the
+    // note joins whatever tooltip the caller set (see SetToolTip above).
+    wxString note;
+    const int avail = std::max(0, rect.GetRight() - left);
+    const wxString shown = Slic3r::GUI::I18N::fit_bilingual(dc, m_label, avail, &note);
+    if (note != bilingual_note) {
+        bilingual_note = note;
+        wxWindow::DoSetToolTipText(note.empty() ? bilingual_base_tooltip
+                                                 : (bilingual_base_tooltip.empty() ? note : bilingual_base_tooltip + "\n\n" + note));
+    }
+
     wxFontMetrics fm = dc.GetFontMetrics();
     int textY = (rect.GetHeight() - (fm.ascent + fm.descent)) / 2;
-    dc.DrawText(m_label, left, textY);
+    dc.DrawText(shown, left, textY);
 }
 void CustomToggleButton::OnSize(wxSizeEvent& event) {
     Refresh();

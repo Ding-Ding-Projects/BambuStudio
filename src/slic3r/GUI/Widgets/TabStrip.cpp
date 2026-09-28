@@ -1,5 +1,6 @@
 #include "TabStrip.hpp"
 
+#include "../BilingualDecorator.hpp"
 #include "../GUI_App.hpp"
 #include "../I18N.hpp"
 #include "Button.hpp"
@@ -161,6 +162,10 @@ private:
     bool     m_hover   = false;
     bool     m_grouped = false;
     wxColour m_group_color;
+    // Bilingual mode: the Cantonese note last merged into the tooltip, so a
+    // paint that no longer needs it (or needs a different one) does not pile
+    // text onto what is already shown.
+    wxString m_bilingual_note;
 
     bool    m_pressed  = false;
     bool    m_dragging = false;
@@ -212,6 +217,7 @@ void TabStripButton::SetTitle(const wxString &t)
 {
     m_title = t;
     SetToolTip(t);
+    m_bilingual_note.Clear(); // re-decided at the next paint, against the new title
     SetName(t);
     DoLayout();
     Refresh(false);
@@ -397,11 +403,20 @@ void TabStripButton::OnPaint(wxPaintEvent &)
         right -= d + gap;
     }
 
-    // Title, ellipsized to the remaining room.
+    // Title, ellipsized to the remaining room. Bilingual mode: "English ·
+    // 廣東話" when it fits the room the tab already has (kTabMinWidth/kTabMaxWidth
+    // stay computed from the English alone, see PreferredExtent); otherwise the
+    // title stays English and the tooltip carries "廣東話：...".
     const int avail = std::max(0, right - x);
+    wxString  note;
+    const wxString title_text = I18N::fit_bilingual(dc, m_title, avail, &note);
+    if (note != m_bilingual_note) {
+        m_bilingual_note = note;
+        SetToolTip(note.empty() ? m_title : m_title + "\n\n" + note);
+    }
     wxCoord   tw = 0, th = 0;
-    dc.GetTextExtent(m_title, &tw, &th);
-    const wxString shown = tw > avail ? wxControl::Ellipsize(m_title, dc, wxELLIPSIZE_END, avail) : m_title;
+    dc.GetTextExtent(title_text, &tw, &th);
+    const wxString shown = tw > avail ? wxControl::Ellipsize(title_text, dc, wxELLIPSIZE_END, avail) : title_text;
     dc.SetTextForeground(fg);
     dc.DrawText(shown, x, (sz.y - th) / 2);
 

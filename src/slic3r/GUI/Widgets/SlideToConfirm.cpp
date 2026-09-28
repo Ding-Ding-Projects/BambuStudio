@@ -8,6 +8,7 @@
 #include "Label.hpp"
 #include "MaterialIcon.hpp"
 #include "StateColor.hpp"
+#include "../BilingualDecorator.hpp"
 
 namespace {
 constexpr int kHeight   = 44; // track height (also the a11y touch target)
@@ -73,6 +74,14 @@ void SlideToConfirm::Rescale()
 {
     SetMinSize(wxSize(FromDIP(kMinWidth), FromDIP(kHeight)));
     Refresh();
+}
+
+void SlideToConfirm::DoSetToolTipText(wxString const &tip)
+{
+    if (tip != m_bilingual_base_tooltip)
+        m_bilingual_note.Clear(); // that note was for the old text; the next paint decides afresh
+    m_bilingual_base_tooltip = tip;
+    wxWindow::DoSetToolTipText(m_bilingual_note.empty() ? tip : (tip.empty() ? m_bilingual_note : tip + "\n\n" + m_bilingual_note));
 }
 
 void SlideToConfirm::complete()
@@ -185,8 +194,18 @@ void SlideToConfirm::OnPaint(wxPaintEvent &)
     dc.SetFont(Label::Body_13);
     dc.SetTextForeground(label_clr);
     const wxString label = m_confirmed ? m_confirmed_label : m_instruction;
-    const wxSize   te    = dc.GetTextExtent(label);
-    dc.DrawText(label, (sz.GetWidth() - te.GetWidth()) / 2, (sz.GetHeight() - te.GetHeight()) / 2);
+    // Bilingual mode: the compact English-plus-Cantonese form when it fits the
+    // track's own width; otherwise the label stays English and the note joins
+    // whatever tooltip the caller set (see DoSetToolTipText above).
+    wxString note;
+    const wxString shown_label = Slic3r::GUI::I18N::fit_bilingual(dc, label, sz.GetWidth(), &note);
+    if (note != m_bilingual_note) {
+        m_bilingual_note = note;
+        wxWindow::DoSetToolTipText(note.empty() ? m_bilingual_base_tooltip
+                                                 : (m_bilingual_base_tooltip.empty() ? note : m_bilingual_base_tooltip + "\n\n" + note));
+    }
+    const wxSize   te    = dc.GetTextExtent(shown_label);
+    dc.DrawText(shown_label, (sz.GetWidth() - te.GetWidth()) / 2, (sz.GetHeight() - te.GetHeight()) / 2);
 
     // knob
     const int d = knobDiameter();

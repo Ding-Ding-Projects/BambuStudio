@@ -33,6 +33,13 @@ private:
     void mouseLeaveWindow(wxMouseEvent &event);
     void sendButtonEvent();
 
+    // Bilingual mode needs to fold "廣東話：..." into whatever tooltip
+    // SetLabels() derives from the active label, without losing it on the
+    // next repaint -- so this virtual hook (which SetToolTip() itself funnels
+    // through) captures that text and re-merges it with the current note
+    // (see render()).
+    void DoSetToolTipText(wxString const &tip) override;
+
 	DECLARE_EVENT_TABLE()
 
 private:
@@ -48,6 +55,11 @@ private:
 
 	wxString labels[2];
     StateColor   text_color;
+
+    // Bilingual mode bookkeeping: the tooltip SetLabels() actually asked for,
+    // and the Cantonese note (if any) currently folded on top of it.
+    wxString bilingual_base_tooltip;
+    wxString bilingual_note;
 };
 
 class FanSwitchButton : public StaticBox
@@ -79,6 +91,13 @@ private:
 
     void SetText(const wxString &text);
 
+    // Bilingual mode needs to fold "廣東話：..." into whatever tooltip
+    // SetLabels() derives from the active label, without losing it on the
+    // next repaint -- so this virtual hook (which SetToolTip() itself funnels
+    // through) captures that text and re-merges it with the current note
+    // (see render()).
+    void DoSetToolTipText(wxString const &tip) override;
+
     DECLARE_EVENT_TABLE()
 
 private:
@@ -97,6 +116,11 @@ private:
 
     wxString     m_text;
     StateColor   text_color;
+
+    // Bilingual mode bookkeeping: the tooltip SetLabels() actually asked for,
+    // and the Cantonese note (if any) currently folded on top of it.
+    wxString bilingual_base_tooltip;
+    wxString bilingual_note;
 };
 
 #endif // !slic3r_GUI_SwitchButton_hpp_

@@ -58,6 +58,12 @@ private:
 	void startAnim();
 	void onAnimTick(wxTimerEvent &evt);
 
+	// Bilingual mode needs to fold "廣東話：..." into whatever tooltip the
+	// caller sets, without losing it on the next Rescale() -- so this virtual
+	// hook (which SetToolTip() itself funnels through) captures the caller's
+	// text and re-merges it with the current note.
+	void DoSetToolTipText(wxString const &tip) override;
+
 private:
 	// Icon mode draws directly; labelled mode caches its two rendered halves here.
 	wxBitmap m_on;
@@ -77,6 +83,11 @@ private:
     wxTimer m_anim_timer;
     double  m_anim        = 0.0; // current knob phase
     double  m_anim_target = 0.0; // 0 = off, 1 = on
+
+    // Bilingual mode bookkeeping: the tooltip the caller actually asked for,
+    // and the Cantonese note (if any) currently folded on top of it.
+    wxString bilingual_base_tooltip;
+    wxString bilingual_note;
 };
 
 class SwitchBoard : public wxWindow
@@ -135,6 +146,10 @@ private:
     int m_keyboard_pressed_key = WXK_NONE;
     MD3::ColorScheme m_scheme = MD3::ColorScheme::Brand;
     wxSize m_requested_min_size = wxDefaultSize;
+
+    // Bilingual mode: the combined note last merged into this board's own
+    // tooltip (see SetToolTip("left / right") in the constructor/SetLabels).
+    wxString m_bilingual_note;
 };
 
 class CustomToggleButton : public wxWindow {
@@ -164,6 +179,12 @@ private:
 
     void on_left_down(wxMouseEvent& e);
 
+    // Bilingual mode needs to fold "廣東話：..." into whatever tooltip the
+    // caller sets, without losing it on the next repaint -- so this virtual
+    // hook (which SetToolTip() itself funnels through) captures the caller's
+    // text and re-merges it with the current note.
+    void DoSetToolTipText(wxString const &tip) override;
+
     wxString m_label;
     wxBitmap m_selected_icon;
     wxBitmap m_unselected_icon;
@@ -171,6 +192,11 @@ private:
     wxColour m_secondary_colour{StateColor::semantic(MD3::Role::SecondaryContainer)};
 
     bool m_isSelected;
+
+    // Bilingual mode bookkeeping: the tooltip the caller actually asked for,
+    // and the Cantonese note (if any) currently folded on top of it.
+    wxString bilingual_base_tooltip;
+    wxString bilingual_note;
 };
 
 class RichTooltipPopup : public wxPopupTransientWindow {

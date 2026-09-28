@@ -9,6 +9,7 @@
 #include "../GUI_App.hpp"
 #include "../wxExtensions.hpp"
 #include "../I18N.hpp"
+#include "../BilingualDecorator.hpp"
 #include "../GUI.hpp"
 
 namespace Slic3r { namespace GUI {
@@ -221,25 +222,37 @@ void SideToolsPanel::doRender(wxDC &dc)
         dc.SetTextForeground(StateColor::semantic(MD3::Role::OnPrimary, MD3::ColorScheme::Device));
 
         wxString no_printer_str = _L("No printer");
-        auto sizet = dc.GetTextExtent(no_printer_str);
         auto left_add_bitmap = size.x - FromDIP(30) - ScalableBitmap::GetBmpSize(m_wifi_none_img).x - m_none_add_img.GetBmpSize().x;
         auto size_width = left_add_bitmap - left;
 
+        // Bilingual mode: the compact English-plus-Cantonese form when it fits
+        // the room this strip actually has; otherwise the caption stays English
+        // and the note joins this panel's own tooltip (it already carries the
+        // "Switch printer" accessible hint set in the constructor).
+        wxString note;
+        wxString shown_str = I18N::fit_bilingual(dc, no_printer_str, size_width, &note);
+        if (note != m_bilingual_note) {
+            m_bilingual_note = note;
+            const wxString base = _L("Switch printer");
+            SetToolTip(note.empty() ? base : base + "\n\n" + note);
+        }
+        auto sizet = dc.GetTextExtent(shown_str);
+
         if (sizet.x > size_width) {
             wxString temp_str = wxEmptyString;
-            for (auto i = 0; i < no_printer_str.Len(); i++) {
+            for (auto i = 0; i < shown_str.Len(); i++) {
                 if (dc.GetTextExtent(L("...") + temp_str).x < size_width) {
-                    temp_str += no_printer_str[i];
+                    temp_str += shown_str[i];
                 }
                 else {
                     break;
                 }
             }
 
-            no_printer_str = temp_str + L("...");
+            shown_str = temp_str + L("...");
         }
 
-        dc.DrawText(no_printer_str, wxPoint(left, (size.y - sizet.y) / 2));
+        dc.DrawText(shown_str, wxPoint(left, (size.y - sizet.y) / 2));
 
         left = size.x - FromDIP(30) - ScalableBitmap::GetBmpSize(m_wifi_none_img).x;
         dc.DrawBitmap(m_none_add_img.bmp(), left, (size.y - m_none_add_img.GetBmpSize().y) / 2);

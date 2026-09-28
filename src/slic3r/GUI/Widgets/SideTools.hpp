@@ -69,6 +69,11 @@ private:
     wxBitmap        m_wifi_strong_img;
     wxBitmap        m_network_wired_img;
 
+    // Bilingual mode: the note last merged into this panel's own tooltip (the
+    // "No printer" caption has no hover surface of its own), so a render that
+    // no longer needs it does not leave stale text behind.
+    wxString        m_bilingual_note;
+
 protected:
     wxStaticBitmap *m_bitmap_info;
     wxStaticBitmap *m_bitmap_bind;

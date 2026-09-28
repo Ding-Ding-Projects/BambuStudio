@@ -1,5 +1,6 @@
 #include "SideButton.hpp"
 #include "../I18N.hpp"
+#include "../BilingualDecorator.hpp"
 #include "Label.hpp"
 #include "MD3Tokens.hpp"
 #include "StateColor.hpp"
@@ -271,6 +272,14 @@ void SideButton::SetLabel(const wxString& label)
 #endif
 }
 
+void SideButton::DoSetToolTipText(wxString const &tip)
+{
+    if (tip != bilingual_base_tooltip)
+        bilingual_note.Clear(); // that note was for the old text; the next paint decides afresh
+    bilingual_base_tooltip = tip;
+    wxWindow::DoSetToolTipText(bilingual_note.empty() ? tip : (tip.empty() ? bilingual_note : tip + "\n\n" + bilingual_note));
+}
+
 void SideButton::SetName(const wxString& name)
 {
     if (name == wxWindow::GetName())
@@ -528,7 +537,19 @@ void SideButton::dorender(wxDC& dc, wxDC& text_dc)
 #endif
         text_dc.SetFont(GetFont());
         text_dc.SetTextForeground(text_color.colorForStates(states));
-        text_dc.DrawText(text, pt);
+        // Bilingual mode: the compact English-plus-Cantonese form when it fits
+        // the room this paint actually has left (messureSize() keeps sizing on
+        // the English alone); otherwise the label stays English and the note
+        // joins whatever tooltip the caller set (see SetToolTip above).
+        wxString note;
+        const int avail = std::max(0, rcContent.GetRight() - pt.x + 1);
+        const wxString shown = Slic3r::GUI::I18N::fit_bilingual(text_dc, text, avail, &note);
+        if (note != bilingual_note) {
+            bilingual_note = note;
+            wxWindow::DoSetToolTipText(note.empty() ? bilingual_base_tooltip
+                                                     : (bilingual_base_tooltip.empty() ? note : bilingual_base_tooltip + "\n\n" + note));
+        }
+        text_dc.DrawText(shown, pt);
     }
 
     if (HasFocus() && IsEnabled()) {

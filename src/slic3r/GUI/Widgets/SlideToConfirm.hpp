@@ -55,6 +55,12 @@ protected:
     void OnFocus(wxFocusEvent &event);
     wxSize DoGetBestSize() const override;
 
+    // Bilingual mode needs to fold "廣東話：..." into whatever tooltip the
+    // caller sets, without losing it on the next repaint -- so this virtual
+    // hook (which SetToolTip() itself funnels through) captures the caller's
+    // text and re-merges it with the current note (see OnPaint).
+    void DoSetToolTipText(wxString const &tip) override;
+
 private:
     int  trackWidth() const;
     int  knobDiameter() const;
@@ -73,6 +79,11 @@ private:
     int  m_drag_grab_dx { 0 };
     bool m_confirmed { false };
     bool m_danger { true };
+
+    // Bilingual mode bookkeeping: the tooltip the caller actually asked for,
+    // and the Cantonese note (if any) currently folded on top of it.
+    wxString m_bilingual_base_tooltip;
+    wxString m_bilingual_note;
 };
 
 #endif // slic3r_GUI_SlideToConfirm_hpp_

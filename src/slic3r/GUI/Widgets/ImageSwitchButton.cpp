@@ -5,6 +5,7 @@
 #include "../wxExtensions.hpp"
 
 #include "slic3r/GUI/I18N.hpp"
+#include "slic3r/GUI/BilingualDecorator.hpp"
 #include <wx/dcclient.h>
 #include <wx/dcgraph.h>
 
@@ -62,6 +63,14 @@ void ImageSwitchButton::SetLabels(wxString const &lbl_on, wxString const &lbl_of
         messureSize();
         Refresh();
     }
+}
+
+void ImageSwitchButton::DoSetToolTipText(wxString const &tip)
+{
+    if (tip != bilingual_base_tooltip)
+        bilingual_note.Clear(); // that note was for the old text; the next paint decides afresh
+    bilingual_base_tooltip = tip;
+    wxWindow::DoSetToolTipText(bilingual_note.empty() ? tip : (tip.empty() ? bilingual_note : tip + "\n\n" + bilingual_note));
 }
 
 void ImageSwitchButton::SetImages(ScalableBitmap &img_on, ScalableBitmap &img_off)
@@ -134,6 +143,16 @@ void ImageSwitchButton::render(wxDC& dc)
         dc.SetTextForeground(text_color.colorForStates(states));
 
     auto fina_txt = GetValue() ? labels[0] : labels[1];
+    // Bilingual mode: the compact English-plus-Cantonese form when it fits the
+    // room this control already has; otherwise the label stays English and
+    // the note joins whatever tooltip SetLabels() derived from it.
+    wxString note;
+    fina_txt = Slic3r::GUI::I18N::fit_bilingual(dc, fina_txt, size.x, &note);
+    if (note != bilingual_note) {
+        bilingual_note = note;
+        wxWindow::DoSetToolTipText(note.empty() ? bilingual_base_tooltip
+                                                 : (bilingual_base_tooltip.empty() ? note : bilingual_base_tooltip + "\n\n" + note));
+    }
     if (dc.GetTextExtent(fina_txt).x > size.x) {
         wxString forment_txt = wxEmptyString;
         for (auto i = 0; i < fina_txt.length(); i++) {
@@ -226,6 +245,14 @@ void FanSwitchButton::SetLabels(wxString const& lbl_on, wxString const& lbl_off)
     Refresh();
 }
 
+void FanSwitchButton::DoSetToolTipText(wxString const &tip)
+{
+    if (tip != bilingual_base_tooltip)
+        bilingual_note.Clear(); // that note was for the old text; the next paint decides afresh
+    bilingual_base_tooltip = tip;
+    wxWindow::DoSetToolTipText(bilingual_note.empty() ? tip : (tip.empty() ? bilingual_note : tip + "\n\n" + bilingual_note));
+}
+
 void FanSwitchButton::SetImages(ScalableBitmap& img_on, ScalableBitmap& img_off)
 {
     m_on = img_on;
@@ -303,10 +330,21 @@ void FanSwitchButton::render(wxDC& dc)
             pt.x += icon.GetBmpWidth() + FromDIP(6);
         }
 
-        auto text_size = dc.GetMultiLineTextExtent(m_text);
+        // Bilingual mode: the compact English-plus-Cantonese form when it fits
+        // the room left after the icon; otherwise the label stays English and
+        // the note joins whatever tooltip SetLabels() derived from labels[].
+        wxString note;
+        const wxString shown_text = Slic3r::GUI::I18N::fit_bilingual(dc, m_text, std::max(0, size.x - pt.x), &note);
+        if (note != bilingual_note) {
+            bilingual_note = note;
+            wxWindow::DoSetToolTipText(note.empty() ? bilingual_base_tooltip
+                                                     : (bilingual_base_tooltip.empty() ? note : bilingual_base_tooltip + "\n\n" + note));
+        }
+
+        auto text_size = dc.GetMultiLineTextExtent(shown_text);
         pt.y           = (size.y - text_size.GetHeight()) / 2;
         //dc.SetTextForeground(0x6b6b6b);
-        dc.DrawText(m_text, pt);
+        dc.DrawText(shown_text, pt);
     }
 
     //int content_height = icon.GetBmpHeight() + textSize.y + m_padding;

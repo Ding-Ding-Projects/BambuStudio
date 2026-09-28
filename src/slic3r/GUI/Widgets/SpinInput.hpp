@@ -28,6 +28,11 @@ class SpinInput : public wxNavigationEnabled<StaticBox>
     int delta;
     bool text_updating;
 
+    // Bilingual mode bookkeeping: the tooltip the caller actually asked for,
+    // and the Cantonese note (if any) currently folded on top of it.
+    wxString bilingual_base_tooltip;
+    wxString bilingual_note;
+
     static const int SpinInputWidth = 200;
     static const int SpinInputHeight = 50;
 
