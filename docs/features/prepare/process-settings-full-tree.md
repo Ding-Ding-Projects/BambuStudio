@@ -34,4 +34,4 @@
 ## Related
 
 - [Prepare sidebar search](../windows/sidebar-search.md)
-- [Layout clipping inventory](../design-system/cheap-jor-inventory.md) (CJ-012 is this sidebar)
+- [Layout clipping inventory](../design-system/clipping-inventory.md) (CJ-012 is this sidebar)

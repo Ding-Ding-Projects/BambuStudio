@@ -2,7 +2,7 @@
 
 Every layout clipping defect found on the Windows desktop app, with its tuple, cause, fix and the
 evidence that it is gone. This file is hand-written and machine-checked by
-`ui-md3/tests/cheap-jor-inventory.test.mjs`: every row needs an id, a surface, the tuple it was
+`ui-md3/tests/clipping-inventory.test.mjs`: every row needs an id, a surface, the tuple it was
 seen at, a symptom, a root cause, a fix commit that exists in this repository, and a status. A row
 may only say `verified` when both its before and after captures exist under
 `docs/screenshots/md3-everything/` and were taken from the real built artifact.
@@ -17,7 +17,7 @@ Statuses:
 
 ## Rows
 
-<!-- cheap-jor-inventory:begin -->
+<!-- clipping-inventory:begin -->
 | Id | Surface | Tuple | Symptom | Root cause | Fix commit | Before | After | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | CJ-001 | Preferences dialog | 150% and 200%, any language, any theme | dialog opened at a 100% pixel size and clipped its lower rows | `SetSize(wxSize(780, 580))` without `FromDIP` | 44ed39a18 | pending | pending | fixed-unverified |
@@ -33,7 +33,7 @@ Statuses:
 | CJ-011 | Every kit SearchField (Prepare sidebar, Preferences, Config profiles, Version history, ...) | every tuple | the regex-mode and builder buttons paint over the pill outline above and below themselves, and an empty 44 px slot sits at the trailing edge | 44 px icon buttons inside a 44 px pill cover its 1 px outline; the Clear button's slot was reserved permanently even while hidden | baabd4e17 | prepare--en-light-comfortable--after.png | prepare-advanced--en-light-comfortable--after.png | verified |
 | CJ-012 | Prepare sidebar with Advanced settings open (every row: printer card, ink pills, search pills, process tab strip) | every tuple (layout probe, 1200 x 800) | every sidebar row is laid out 1271 px wide inside a 479 px scroller and cut at the sidebar edge; a horizontal scrollbar takes 17 px of height; the process tab strip ends at "Otl" | the reparented ParamsPanel header sizer put the title at proportion 1 (56 px min) beside stretch spacers of 2, 1 and 12; wxBoxSizer::CalcMin scales that minimum by the total proportion (56 x 16 + fixed = 1271) and update_sidebar_scroll_body honours the content minimum as the virtual width | 3f4d8ffeb | prepare-advanced--en-light-comfortable--before.png | prepare-advanced--en-light-comfortable--after.png | verified |
 | CJ-013 | Prepare sidebar, Process settings tree (category pill strip and page area) | every tuple (layout probe, 1200 x 800, default sidebar width) | the category strip hid Speed/Support/Others behind an overflow (the Others pill starved to 16 px) and the settings tree scrolled inside a 144 px inner scroller, so the user had to drag the sidebar bigger to see any setting | TabCtrl's pill mode used the flat strip's hide-what-does-not-fit layout, and the ParamsPanel was a proportion-3 item with a 240 px floor inside the scrolling sidebar body, so its page view got only the leftover height | 92cd7bce7 | prepare-tree-categories--en-light-comfortable--before.png | prepare-tree-categories--en-light-comfortable--after.png | verified |
-<!-- cheap-jor-inventory:end -->
+<!-- clipping-inventory:end -->
 
 CJ-013 was verified on attempt 28 (source `92cd7bce7`): the five pills lay out on two rows (Others at y = 52), the page view is 1672 px tall so the sidebar body (content 2549 px in a 645 px client) is the only scroller, and the probe reports no starved row in the sidebar (dump `probe/prepare-tree-categories--en-light-comfortable--attempt28.jsonl`). 
 

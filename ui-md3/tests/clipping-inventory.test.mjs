@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 
 const testDir = path.dirname(fileURLToPath(import.meta.url));
 const repoDir = path.resolve(testDir, '..', '..');
-const inventoryPath = path.join(repoDir, 'docs', 'features', 'design-system', 'cheap-jor-inventory.md');
+const inventoryPath = path.join(repoDir, 'docs', 'features', 'design-system', 'clipping-inventory.md');
 const captureRoot = path.join(repoDir, 'docs', 'screenshots', 'md3-everything');
 
 // Hand-written: every clipping defect that has been found must keep its row.
@@ -20,8 +20,8 @@ const normalise = (text) => text.replace(/\r\n|\r/g, '\n');
 
 export function parseInventory(markdown) {
   const text = normalise(markdown);
-  const begin = text.indexOf('<!-- cheap-jor-inventory:begin -->');
-  const end = text.indexOf('<!-- cheap-jor-inventory:end -->');
+  const begin = text.indexOf('<!-- clipping-inventory:begin -->');
+  const end = text.indexOf('<!-- clipping-inventory:end -->');
   assert.ok(begin >= 0 && end > begin, 'inventory markers missing');
   const block = text.slice(begin, end);
   const rows = [];

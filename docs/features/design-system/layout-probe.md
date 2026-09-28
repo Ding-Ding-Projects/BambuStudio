@@ -92,7 +92,7 @@ when the environment variable is set.
   every flag name.
 - Runtime: the tuple matrix (100 / 125 / 150 / 200 percent, English / Cantonese / bilingual, light /
   dark, comfortable / compact) is run on the built artifact and its findings, fixes and before/after
-  captures are recorded in `docs/features/design-system/cheap-jor-inventory.md`.
+  captures are recorded in `docs/features/design-system/clipping-inventory.md`.
 
 ## Suggested articles
 

@@ -193,7 +193,7 @@ const std::vector<Article> &documentation_articles()
     // H1 changed, fails that test.
     static const std::vector<Article> articles = {
         {"docs/features/api/home-assistant-printer-discovery.md", L("Home Assistant printer-discovery API")},
-        {"docs/features/design-system/cheap-jor-inventory.md", L("Layout clipping inventory")},
+        {"docs/features/design-system/clipping-inventory.md", L("Layout clipping inventory")},
         {"docs/features/design-system/generated-visual-showcase.md", L("Generated visual showcase")},
         {"docs/features/design-system/gizmo-rail-svg-icons-completion.md", L("Gizmo rail composite SVG completion")},
         {"docs/features/design-system/kit-widgets-2026-09.md", L("Kit widgets added in the every-element sweep (2026-09-05)")},

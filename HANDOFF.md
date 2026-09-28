@@ -1468,8 +1468,8 @@ diagnostics were a cascade.
   on the hidden desktop). Records carry `on_screen` and the canvas emits `gl_item` rectangles for
   the scene toolbar and gizmo rail (`GLCanvas3D::get_toolbar_item_rects()`). Reader:
   `ui-md3/tests/layout-probe-report.mjs`.
-- Clipping inventory `docs/features/design-system/cheap-jor-inventory.md`, rows CJ-001..CJ-010,
-  guarded by `ui-md3/tests/cheap-jor-inventory.test.mjs`. Verified from real captures: CJ-005
+- Clipping inventory `docs/features/design-system/clipping-inventory.md`, rows CJ-001..CJ-010,
+  guarded by `ui-md3/tests/clipping-inventory.test.mjs`. Verified from real captures: CJ-005
   (starvation class), CJ-006 (Device placeholder heading, CSS), CJ-007 (split-button chevrons),
   CJ-008 (ink swatch badge regression from the sweep itself), CJ-009 (Home caption bar stuck at
   787 px: `wxAuiToolBar::Realize` resizes to content unless `wxAUI_TB_NO_AUTORESIZE`; both

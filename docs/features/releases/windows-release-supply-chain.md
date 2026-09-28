@@ -170,7 +170,7 @@ identity of a particular hosted run. A failed fixed-surface capture still encryp
 behavior reports and restricted logs when those files were produced; it keeps a partial verdict.
 Schema 2 uses distinct diagnostic, behavior-pending-review, and partial statuses. Eight tuple
 reports are required for a complete behavior job; one report is required for a diagnostic job.
-The hosted manifest fixture Chut deliberately supplies traversal and duplicate paths and requires
+The hosted manifest fixture check deliberately supplies traversal and duplicate paths and requires
 both to be rejected before private-key access or extraction.
 It also encrypts a synthetic failed diagnostic with no image or restricted log, verifies the
 partial receipt and exact report inventory, and checks that metadata and authenticated binding
