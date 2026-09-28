@@ -208,7 +208,8 @@ public:
 
 private:
     const wxString *find_cantonese(const wxString &message, unsigned int n, const wxString &context) const;
-    void record_bilingual(const wxString &message, const wxString &shown, const wxString *cantonese) const;
+    // Records the pair in bilingual mode and returns `shown` unchanged.
+    wxString record_bilingual(const wxString &message, const wxString &shown, const wxString *cantonese) const;
 
     LanguageModeProfile          m_profile;
     std::unique_ptr<wxMsgCatalog> m_cantonese_catalog;

@@ -604,10 +604,9 @@ wxString LanguageModeService::finish(const wxString &message, const wxString &tr
 {
     if (m_profile.kind == LanguageModeKind::CantoneseHongKong && translated == message)
         return vocabulary(english(message, context));
-    const wxString shown = vocabulary(translated);
     if (m_profile.kind == LanguageModeKind::BilingualEnglishCantoneseHongKong)
-        record_bilingual(message, shown, find_cantonese(message, UINT_MAX, context));
-    return shown;
+        return record_bilingual(message, vocabulary(translated), find_cantonese(message, UINT_MAX, context));
+    return vocabulary(translated);
 }
 
 wxString LanguageModeService::finish_plural(const wxString &singular, const wxString &plural, unsigned int n,
@@ -615,20 +614,19 @@ wxString LanguageModeService::finish_plural(const wxString &singular, const wxSt
 {
     if (m_profile.kind == LanguageModeKind::CantoneseHongKong && (translated == singular || translated == plural))
         return vocabulary(english_plural(singular, plural, n, context));
-    const wxString shown = vocabulary(translated);
     if (m_profile.kind == LanguageModeKind::BilingualEnglishCantoneseHongKong)
-        record_bilingual(singular, shown, find_cantonese(singular, n, context));
-    return shown;
+        return record_bilingual(singular, vocabulary(translated), find_cantonese(singular, n, context));
+    return vocabulary(translated);
 }
 
-void LanguageModeService::record_bilingual(const wxString &message, const wxString &shown,
-                                           const wxString *cantonese) const
+wxString LanguageModeService::record_bilingual(const wxString &message, const wxString &shown,
+                                               const wxString *cantonese) const
 {
     // Nothing to pair when the catalogue has no Cantonese of its own for the
     // message (wx returns the msgid) or when it reads the same as the English.
-    if (cantonese == nullptr || cantonese->empty() || *cantonese == message || *cantonese == shown)
-        return;
-    BilingualRegistry::instance().record(shown, *cantonese);
+    if (cantonese != nullptr && !cantonese->empty() && *cantonese != message && *cantonese != shown)
+        BilingualRegistry::instance().record(shown, *cantonese);
+    return shown;
 }
 
 const wxString *LanguageModeService::find_cantonese(const wxString &message, unsigned int n,
