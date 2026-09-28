@@ -338,7 +338,10 @@ wxString NotificationCenterPanel::level_label(int level)
     case 7: return _L("Warning");
     case 8: return _L("Serious warning");
     case 9: return _L("Error");
-    default: return wxString::FromUTF8(NotificationHistory::level_display(level));
+    // Building the translated string directly (rather than translating
+    // NotificationHistory::level_display()'s already-concatenated "Level N")
+    // keeps the placeholder in the catalog instead of baking in the number.
+    default: return wxString::Format(_L("Level %d"), level);
     }
 }
 

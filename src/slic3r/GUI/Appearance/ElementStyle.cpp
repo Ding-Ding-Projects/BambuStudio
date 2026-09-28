@@ -663,6 +663,10 @@ void ElementStyle::set_storage_dir(const std::string &dir)
     if (wxFileName::FileExists(wxString::FromUTF8(file))) {
         const StyleLoadReport r = registry().load(file);
         if (!r.ok)
+            // ElementStyle.cpp links against wx core/base only (see
+            // tests/appearance/CMakeLists.txt), not I18N.cpp/LanguageMode.cpp,
+            // so it cannot call _L()/L(). Left untranslated; see the report for
+            // this task.
             wxLogWarning("Appearance: %s", wxString::FromUTF8(r.error));
     }
 }
@@ -684,6 +688,7 @@ bool ElementStyle::save()
     std::string err;
     const bool  ok = registry().save(file, &err);
     if (!ok)
+        // See the ElementStyle.cpp / wx-core-only note above load().
         wxLogWarning("Appearance: %s", wxString::FromUTF8(err));
     return ok;
 }

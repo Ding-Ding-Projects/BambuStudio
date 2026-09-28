@@ -490,7 +490,9 @@ void ConfigProfilesDialog::on_snapshot(wxCommandEvent &)
         if (!err.IsEmpty())
             return err;
         ProjectHistoryCommitOptions options;
-        options.message = "Manual profile snapshot";
+        // Persisted verbatim as a project-history commit message; L() marks it
+        // for extraction without translating it (see ProjectHistoryDialog::display_message()).
+        options.message = L("Manual profile snapshot");
         auto result = history->commit_snapshot(identity, staging, options).get();
         std::filesystem::remove(staging, ec);
         if (!result.ok())

@@ -1,6 +1,7 @@
 #include "HomeAssistant.hpp"
 
 #include "GUI_App.hpp"
+#include "I18N.hpp"
 #include "HomeAssistantTaskExecutor.hpp"
 #include "HomeAssistantTransportPolicy.hpp"
 #include "slic3r/Utils/Http.hpp"
@@ -290,8 +291,10 @@ private:
             bool task_failed = false;
             try {
                 if (job.truncated) {
+                    // Compared verbatim by SmartHomeDialog::localized_printer_import_error();
+                    // L() marks it for extraction without translating it here.
                     errors.emplace_back(
-                        "Additional printer requests were skipped because the 32-printer limit was reached");
+                        L("Additional printer requests were skipped because the 32-printer limit was reached"));
                 }
 
                 // Match the companion integration's four-connection import
@@ -352,9 +355,12 @@ private:
                                         return result;
                                     })});
                         } catch (...) {
+                            // Parsed by SmartHomeDialog::localized_printer_import_error()
+                            // via its ": transport error" suffix match; L() marks the
+                            // literal for extraction without translating it here.
                             if (!m_cancel_requested.load())
                                 errors.push_back(
-                                    printer.serial + ": transport error");
+                                    printer.serial + L(": transport error"));
                         }
                     }
 
@@ -368,11 +374,15 @@ private:
                         if (result.completed) {
                             ++processed;
                         } else if (!m_cancel_requested.load()) {
+                            // Parsed by SmartHomeDialog::localized_printer_import_error()
+                            // via its ": HTTP " marker / ": transport error" suffix match;
+                            // L() marks the literals for extraction without translating
+                            // them here.
                             errors.push_back(
-                                item.serial + ": " +
+                                item.serial + L(": ") +
                                 (result.status
-                                     ? "HTTP " + std::to_string(result.status)
-                                     : "transport error"));
+                                     ? L("HTTP ") + std::to_string(result.status)
+                                     : L("transport error")));
                         }
                     }
                 }

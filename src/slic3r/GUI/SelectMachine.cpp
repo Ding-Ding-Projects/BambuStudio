@@ -975,7 +975,7 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     sizer_error_code->Add(m_st_txt_error_code, 0, wxALL, 0);
 
 
-    auto st_title_error_desc = new Label(m_sw_print_failed_info, wxT("Error desc"));
+    auto st_title_error_desc = new Label(m_sw_print_failed_info, _L("Error desc"));
     auto st_title_error_desc_doc = new Label(m_sw_print_failed_info, ": ");
     m_st_txt_error_desc = new Label(m_sw_print_failed_info, wxEmptyString);
     st_title_error_desc->SetForegroundColour(ThemeColor::TextSecondary);
@@ -992,7 +992,7 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     sizer_error_desc->Add(st_title_error_desc_doc, 0, wxALL, 0);
     sizer_error_desc->Add(m_st_txt_error_desc, 0, wxALL, 0);
 
-    auto st_title_extra_info = new Label(m_sw_print_failed_info, wxT("Extra info"));
+    auto st_title_extra_info = new Label(m_sw_print_failed_info, _L("Extra info"));
     auto st_title_extra_info_doc = new Label(m_sw_print_failed_info, ": ");
     m_st_txt_extra_info = new Label(m_sw_print_failed_info, wxEmptyString);
     st_title_extra_info->SetForegroundColour(ThemeColor::TextSecondary);

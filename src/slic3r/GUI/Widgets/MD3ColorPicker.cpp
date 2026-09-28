@@ -40,9 +40,14 @@ using namespace MD3::Color;
 // Display order of the translator rows. "Name" is present for every colour
 // so the column never re-flows; its value is a dash when the colour has no
 // CSS name.
+//
+// These are also the raw keys matched against Translation::space in
+// refresh_translations(), so they stay untranslated here; L() only marks them
+// for extraction. The row captions built from this table are translated at
+// display with _L() (create_ui() below), independently of these keys.
 const char *const kSpaces[] = {
-    "Name", "HEX", "HEX8", "RGB", "RGBA", "HSL", "HSLA", "HSV", "HWB",
-    "XYZ", "Lab", "LCH", "OKLab", "OKLCH", "CMYK",
+    L("Name"), L("HEX"), L("HEX8"), L("RGB"), L("RGBA"), L("HSL"), L("HSLA"), L("HSV"), L("HWB"),
+    L("XYZ"), L("Lab"), L("LCH"), L("OKLab"), L("OKLCH"), L("CMYK"),
 };
 
 void hsv_to_rgb8(double h, double s, double v, unsigned char &r, unsigned char &g, unsigned char &b)
@@ -320,9 +325,9 @@ void MD3ColorPickerDialog::build(wxWindow * /*parent*/, const wxColour &initial)
     const wxColour on       = StateColor::semantic(MD3::Role::OnSurface);
     for (const char *space : kSpaces) {
         TranslationRow row;
-        row.space = space;
+        row.space = space; // raw key: matched against Translation::space at display refresh, never translated
         auto *line = new wxBoxSizer(wxHORIZONTAL);
-        row.caption = new Label(this, Label::Body_12, wxString::FromUTF8(space));
+        row.caption = new Label(this, Label::Body_12, _L(space));
         row.caption->SetBackgroundColour(surface);
         row.caption->SetForegroundColour(on_var);
         row.caption->SetMinSize(wxSize(FromDIP(48), -1));
@@ -332,12 +337,12 @@ void MD3ColorPickerDialog::build(wxWindow * /*parent*/, const wxColour &initial)
         row.value->SetFont(Label::Mono_11);
         row.value->SetBackgroundColour(field_bg);
         row.value->SetForegroundColour(on);
-        row.value->SetName(wxString::FromUTF8(space));
+        row.value->SetName(_L(space));
         line->Add(row.value, 1, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(6));
         row.copy = new Button(this, wxEmptyString);
         row.copy->SetIconButton(Button::IconShape::Circle, FromDIP(kRowH));
         row.copy->SetGlyph(MaterialIcon::ContentCopy, 16);
-        const wxString copy_name = wxString::Format(_L("Copy %s"), wxString::FromUTF8(space));
+        const wxString copy_name = wxString::Format(_L("Copy %s"), _L(space));
         row.copy->SetToolTip(copy_name);
         row.copy->SetName(copy_name);
         wxTextCtrl *value = row.value;
@@ -418,7 +423,7 @@ void MD3ColorPickerDialog::refresh_all(Source source)
         if (m_any_format && !m_any_format->GetValue().IsEmpty())
             m_any_format->ChangeValue(wxString::FromUTF8(format_hex8(from_wx(m_colour))));
         set_status(_L("Picked in sRGB. Type any notation below to jump the picker."), false);
-        if (m_gamut) m_gamut->SetLabel(wxString::Format(_L("Active space: %s"), "sRGB (HSV pick)") + wxString::FromUTF8("  ·  ") + wxString::Format(_L("Gamut: %s"), _L("sRGB, in gamut")));
+        if (m_gamut) m_gamut->SetLabel(wxString::Format(_L("Active space: %s"), _L("sRGB (HSV pick)")) + wxString::FromUTF8("  ·  ") + wxString::Format(_L("Gamut: %s"), _L("sRGB, in gamut")));
     }
     refresh_translations();
     refresh_contrast();

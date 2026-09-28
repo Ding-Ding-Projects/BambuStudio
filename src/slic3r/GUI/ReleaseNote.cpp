@@ -269,7 +269,7 @@ UpdateVersionDialog::UpdateVersionDialog(wxWindow *parent)
 
 
     m_bitmap_open_in_browser = new wxStaticBitmap(this, wxID_ANY, MaterialIcon::bitmap(this, MaterialIcon::OpenInNew, 12, StateColor::semantic(MD3::Role::OnSurfaceVariant)), wxDefaultPosition, wxDefaultSize, 0 );
-    m_link_open_in_browser   = new LinkLabel(this, "Open in browser", "");
+    m_link_open_in_browser   = new LinkLabel(this, _L("Open in browser"), "");
     m_link_open_in_browser->getLabel()->SetFont(Label::Body_12);
 
 
@@ -1573,7 +1573,7 @@ InputIpAddressDialog::InputIpAddressDialog(wxWindow *parent)
     m_tip4->SetMinSize(wxSize(FromDIP(355), -1));
     m_tip4->SetMaxSize(wxSize(FromDIP(355), -1));
 
-    m_trouble_shoot = new LinkLabel(this, "How to trouble shooting", "");
+    m_trouble_shoot = new LinkLabel(this, _L("How to trouble shooting"), "");
 
     m_img_help = new wxStaticBitmap(this, wxID_ANY, create_scaled_bitmap("input_access_code_x1_en", this, 198), wxDefaultPosition, wxSize(FromDIP(355), -1), 0);
 

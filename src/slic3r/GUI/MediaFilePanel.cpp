@@ -808,7 +808,7 @@ void MediaFilePanel::doAction(size_t index, int action)
 }
 
 MediaFileFrame::MediaFileFrame(wxWindow* parent)
-    : DPIFrame(parent, wxID_ANY, "Media Files", wxDefaultPosition, { 1600, 900 })
+    : DPIFrame(parent, wxID_ANY, _L("Media Files"), wxDefaultPosition, { 1600, 900 })
 {
     m_panel = new MediaFilePanel(this);
     wxBoxSizer * sizer = new wxBoxSizer(wxVERTICAL);

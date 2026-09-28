@@ -608,7 +608,7 @@ void BedShapePanel::load_texture()
     bool try_ok;
     if (Utils::is_file_too_large(file_name, try_ok)) {
         if (try_ok) {
-            MessageDialog dlg(this, wxString::Format(_L("The file exceeds %d MB, please import again."), STL_SVG_MAX_FILE_SIZE_MB), "Error", wxOK | wxICON_ERROR);
+            MessageDialog dlg(this, wxString::Format(_L("The file exceeds %d MB, please import again."), STL_SVG_MAX_FILE_SIZE_MB), _L("Error"), wxOK | wxICON_ERROR);
             dlg.ShowModal();
         } else {
             MessageDialog dlg(this, _L("Exception in obtaining file size, please import again."));
@@ -641,7 +641,7 @@ void BedShapePanel::load_model()
     bool try_ok;
     if (Utils::is_file_too_large(file_name, try_ok)) {
         if (try_ok) {
-            MessageDialog dlg(this, wxString::Format(_L("The file exceeds %d MB, please import again."), STL_SVG_MAX_FILE_SIZE_MB), "Error", wxOK | wxICON_ERROR);
+            MessageDialog dlg(this, wxString::Format(_L("The file exceeds %d MB, please import again."), STL_SVG_MAX_FILE_SIZE_MB), _L("Error"), wxOK | wxICON_ERROR);
             dlg.ShowModal();
         } else {
             MessageDialog dlg(this, _L("Exception in obtaining file size, please import again."));

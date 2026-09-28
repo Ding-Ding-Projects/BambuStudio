@@ -2815,7 +2815,9 @@ bool MainFrame::save_project_as(const wxString& filename)
         return m_plater->save_project(true) == wxID_YES;
 
     const std::filesystem::path previous_history_identity = m_plater->project_history_identity();
-    m_plater->flush_project_history_pending("Project edit before save", true, true);
+    // Persisted verbatim as a project-history commit message; L() marks it for
+    // extraction without translating it (see ProjectHistoryDialog::display_message()).
+    m_plater->flush_project_history_pending(L("Project edit before save"), true, true);
 
     // export_3mf returns a negative value on failure and a non-negative value
     // on success. Converting it directly to bool inverted both common cases
@@ -2838,7 +2840,7 @@ void MainFrame::show_project_history()
     // list_versions is submitted to the same serialized worker as commits.
     // Flush and wait here so the dialog's list job is ordered after the latest
     // completed UI edit instead of presenting a stale HEAD.
-    if (!m_plater->flush_project_history_pending("Project edit before opening version history", false, true)) {
+    if (!m_plater->flush_project_history_pending(L("Project edit before opening version history"), false, true)) {
         MessageDialog(this, _L("Version history is waiting for the current operation to finish. Try again when it completes."),
                       _L("Version history"), wxOK | wxICON_WARNING).ShowModal();
         return;

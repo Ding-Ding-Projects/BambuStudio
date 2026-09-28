@@ -1084,7 +1084,7 @@ bool MeshBooleanUI::draw_selectable(const ListItemInfo& item_info, bool selected
         ImGui::PopStyleColor(4);
         if (ImGui::IsItemHovered()) {
             if (m_imgui) m_imgui->tooltip(_L("This object contains non-part components."), ImGui::GetFontSize() * 20.0f);
-            else ImGui::SetTooltip("%s", "This object contains non-part components.");
+            else ImGui::SetTooltip("%s", _u8L("This object contains non-part components.").c_str());
         }
         ImGui::PopID();
         // restore cursor to avoid affecting subsequent layout

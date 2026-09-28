@@ -355,9 +355,10 @@ void AMSExtText::doRender(wxDC& dc)
     dc.SetFont(Label::Body_10);
     WxFontUtils::get_suitable_font_size(0.7 * size.GetHeight(), dc);
 
-    auto    tsize = dc.GetMultiLineTextExtent("Ext");
+    const wxString ext_label = _L("Ext");
+    auto    tsize = dc.GetMultiLineTextExtent(ext_label);
     wxPoint pot(FromDIP((size.x - tsize.x) / 2), FromDIP((size.y - tsize.y) / 2));
-    dc.DrawText("Ext", pot);
+    dc.DrawText(ext_label, pot);
 }
 
 

@@ -777,7 +777,7 @@ void HelioHistoryDialog::on_download_gcode(const std::string& gcode_url, const s
     } else {
         MessageDialog dlg(this,
             wxString::Format(_L("Failed to download GCode file.\n\nError: %s"),
-                wxString(error_msg.empty() ? "Unknown error" : error_msg)),
+                error_msg.empty() ? _L("Unknown error") : wxString::FromUTF8(error_msg)),
             _L("Download Error"),
             wxOK | wxICON_ERROR);
         dlg.ShowModal();

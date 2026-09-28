@@ -6,6 +6,7 @@
 ///////////////////////////////////////////////////////////////////////////
 
 #include "MonitorBasePanel.h"
+#include "I18N.hpp"
 #include "Printer/PrinterFileSystem.h"
 #include "Widgets/Label.hpp"
 #include "Widgets/StateColor.hpp"
@@ -105,7 +106,7 @@ MonitorBasePanel::MonitorBasePanel(wxWindow* parent, wxWindowID id, const wxPoin
 
 	bSizer_status_caption->Add(28, 0, 0, 0, 0);
 
-	m_staticText_status = new Label(m_panel_status_tab, wxT("Status"), wxST_ELLIPSIZE_END, wxSize(-1, -1));
+	m_staticText_status = new Label(m_panel_status_tab, _L("Status"), wxST_ELLIPSIZE_END, wxSize(-1, -1));
 	m_staticText_status->Wrap(-1);
 	m_staticText_status->SetFont(Label::Body_14);
 	m_staticText_status->SetMinSize(FromDIP(wxSize(65, -1)));
@@ -138,7 +139,7 @@ MonitorBasePanel::MonitorBasePanel(wxWindow* parent, wxWindowID id, const wxPoin
 
 	bSizer_time_lapse_caption->Add(28, 0, 0, wxALL, 0);
 
-	m_staticText_time_lapse = new Label(m_panel_time_lapse_tab, wxT("Time Lapse"), wxALIGN_LEFT | wxST_ELLIPSIZE_END, wxSize(-1, -1));
+	m_staticText_time_lapse = new Label(m_panel_time_lapse_tab, _L("Time Lapse"), wxALIGN_LEFT | wxST_ELLIPSIZE_END, wxSize(-1, -1));
 	m_staticText_time_lapse->Wrap(-1);
 	m_staticText_time_lapse->SetFont(Label::Body_14);
 	m_staticText_time_lapse->SetMinSize(FromDIP(wxSize(122, -1)));
@@ -169,7 +170,7 @@ MonitorBasePanel::MonitorBasePanel(wxWindow* parent, wxWindowID id, const wxPoin
 
 	bSizer_video_monitoring_caption->Add(28, 0, 0, wxALL, 0);
 
-	m_staticText_video_monitoring = new Label(m_panel_video_tab, wxT("Video"), wxALIGN_LEFT | wxST_ELLIPSIZE_END, wxSize(-1, -1));
+	m_staticText_video_monitoring = new Label(m_panel_video_tab, _L("Video"), wxALIGN_LEFT | wxST_ELLIPSIZE_END, wxSize(-1, -1));
 	m_staticText_video_monitoring->Wrap(-1);
 	m_staticText_video_monitoring->SetFont(Label::Body_14);
 	m_staticText_video_monitoring->SetMinSize(FromDIP(wxSize(122, -1)));
@@ -201,7 +202,7 @@ MonitorBasePanel::MonitorBasePanel(wxWindow* parent, wxWindowID id, const wxPoin
 
 	bSizer_tasklist_caption->Add(28, 0, 0, wxALL, 0);
 
-	m_staticText_subtask_list = new Label(m_panel_task_list_tab, wxT("Task List"), wxALIGN_LEFT | wxST_ELLIPSIZE_END, wxSize(-1, -1));
+	m_staticText_subtask_list = new Label(m_panel_task_list_tab, _L("Task List"), wxALIGN_LEFT | wxST_ELLIPSIZE_END, wxSize(-1, -1));
 	m_staticText_subtask_list->Wrap(-1);
 	m_staticText_subtask_list->SetFont(Label::Body_14);
 	m_staticText_subtask_list->SetMinSize(FromDIP(wxSize(122, -1)));
@@ -297,7 +298,7 @@ TaskListBasePanel::TaskListBasePanel(wxWindow* parent, wxWindowID id, const wxPo
 
 	bSizer_model_name_caption->Add(23, 0, 0, wxEXPAND, 0);
 
-	m_staticText_model_name = new Label(m_panel_model_name_caption, wxT("Model Name"));
+	m_staticText_model_name = new Label(m_panel_model_name_caption, _L("Model Name"));
 	m_staticText_model_name->Wrap(-1);
 	m_staticText_model_name->SetFont(Label::Head_14);
 
@@ -371,7 +372,7 @@ TaskListBasePanel::TaskListBasePanel(wxWindow* parent, wxWindowID id, const wxPo
 
 	bSizer_plater_caption->Add(23, 0, 0, wxEXPAND, 0);
 
-	m_staticText_plater = new Label(m_panel_plater_caption, wxT("Plater"));
+	m_staticText_plater = new Label(m_panel_plater_caption, _L("Plater"));
 	m_staticText_plater->Wrap(-1);
 	m_staticText_plater->SetFont(Label::Head_14);
 

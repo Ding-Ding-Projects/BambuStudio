@@ -1,6 +1,9 @@
 #include "ModelCreatorBackend.hpp"
 #include "ProcessRunner.hpp"
 
+#include "slic3r/GUI/I18N.hpp"
+#include "slic3r/GUI/format.hpp"
+
 #include <curl/curl.h>
 #include <nlohmann/json.hpp>
 
@@ -67,7 +70,7 @@ std::string api_request(const Settings &settings, const std::string &prompt, std
                         std::string &error)
 {
     const std::string key = load_api_key(settings.provider);
-    if (key.empty()) { error = "No key is saved for this provider"; return {}; }
+    if (key.empty()) { error = _u8L("No key is saved for this provider"); return {}; }
     const bool anthropic = settings.provider == Provider::AnthropicApi;
     const json schema = json::parse(scene_json_schema());
     json body = anthropic ?
@@ -79,7 +82,7 @@ std::string api_request(const Settings &settings, const std::string &prompt, std
                                     {"strict", true}, {"schema", schema}}}}}};
     std::string response;
     CURL *curl = curl_easy_init();
-    if (!curl) { error = "HTTP client unavailable"; return {}; }
+    if (!curl) { error = _u8L("HTTP client unavailable"); return {}; }
     curl_slist *headers = nullptr;
     headers = curl_slist_append(headers, "Content-Type: application/json");
     headers = curl_slist_append(headers, anthropic ? "anthropic-version: 2023-06-01" : "Accept: application/json");
@@ -107,12 +110,12 @@ std::string api_request(const Settings &settings, const std::string &prompt, std
     curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &status);
     curl_slist_free_all(headers);
     curl_easy_cleanup(curl);
-    if (cancel) { error = "Canceled"; return {}; }
+    if (cancel) { error = _u8L("Canceled"); return {}; }
     if (code != CURLE_OK || status < 200 || status >= 300) {
-        error = "Provider request failed (HTTP " + std::to_string(status) + ")"; return {};
+        error = Slic3r::GUI::format(_u8L("Provider request failed (HTTP %1%)"), status); return {};
     }
     auto parsed = json::parse(response, nullptr, false);
-    if (parsed.is_discarded()) { error = "Provider response is not JSON"; return {}; }
+    if (parsed.is_discarded()) { error = _u8L("Provider response is not JSON"); return {}; }
     try {
         if (anthropic) {
             for (const auto &item : parsed.at("content"))
@@ -124,7 +127,7 @@ std::string api_request(const Settings &settings, const std::string &prompt, std
                         if (part.value("type", "") == "output_text") return part.at("text").get<std::string>();
         }
     } catch (const json::exception &) {}
-    error = "Provider did not return text";
+    error = _u8L("Provider did not return text");
     return {};
 }
 
@@ -145,28 +148,28 @@ std::string read_bounded(const std::filesystem::path &path)
 
 bool printable_stl(const std::filesystem::path &mesh, std::string &error)
 {
-    if (!std::filesystem::is_regular_file(mesh)) { error = "Renderer produced no STL mesh"; return false; }
+    if (!std::filesystem::is_regular_file(mesh)) { error = _u8L("Renderer produced no STL mesh"); return false; }
     const auto length = std::filesystem::file_size(mesh);
-    if (length < 134 || length > 100 * 1024 * 1024) { error = "STL size is outside allowed bounds"; return false; }
+    if (length < 134 || length > 100 * 1024 * 1024) { error = _u8L("STL size is outside allowed bounds"); return false; }
     std::ifstream stream(mesh, std::ios::binary);
     char header[84];
     stream.read(header, sizeof(header));
     uint32_t count = 0;
     std::memcpy(&count, header + 80, sizeof(count));
     if (count == 0 || static_cast<uint64_t>(count) * 50 + 84 != length) {
-        error = "Renderer did not produce a bounded binary STL"; return false;
+        error = _u8L("Renderer did not produce a bounded binary STL"); return false;
     }
     bool nondegenerate = false;
     for (uint32_t i = 0; i < count; ++i) {
         char triangle[50];
         stream.read(triangle, sizeof(triangle));
-        if (!stream) { error = "STL ended before all triangles"; return false; }
+        if (!stream) { error = _u8L("STL ended before all triangles"); return false; }
         float vertices[9];
         std::memcpy(vertices, triangle + 12, sizeof(vertices));
         for (int j = 0; j < 9; ++j) {
             if (!std::isfinite(vertices[j]) || std::abs(vertices[j]) > 1000 ||
                 (j % 3 == 2 && vertices[j] < -0.01f)) {
-                error = "STL has invalid or below-plate coordinates"; return false;
+                error = _u8L("STL has invalid or below-plate coordinates"); return false;
             }
         }
         const float ax = vertices[3] - vertices[0], ay = vertices[4] - vertices[1], az = vertices[5] - vertices[2];
@@ -175,7 +178,7 @@ bool printable_stl(const std::filesystem::path &mesh, std::string &error)
                          std::abs(az * bx - ax * bz) > 0.0001f ||
                          std::abs(ax * by - ay * bx) > 0.0001f;
     }
-    if (!nondegenerate) { error = "STL contains no printable surface"; return false; }
+    if (!nondegenerate) { error = _u8L("STL contains no printable surface"); return false; }
     return true;
 }
 
@@ -281,13 +284,13 @@ bool has_api_key(Provider provider)
 bool test_api_key(Provider provider, std::string &error)
 {
     if (provider != Provider::AnthropicApi && provider != Provider::OpenAiApi) {
-        error = "Choose an API provider";
+        error = _u8L("Choose an API provider");
         return false;
     }
     std::string key = load_api_key(provider);
-    if (key.empty()) { error = "No key is saved for this provider"; return false; }
+    if (key.empty()) { error = _u8L("No key is saved for this provider"); return false; }
     CURL *curl = curl_easy_init();
-    if (!curl) { error = "HTTP client unavailable"; return false; }
+    if (!curl) { error = _u8L("HTTP client unavailable"); return false; }
     curl_slist *headers = nullptr;
     const bool anthropic = provider == Provider::AnthropicApi;
     const std::string authorization = anthropic ? "x-api-key: " + key : "Authorization: Bearer " + key;
@@ -308,11 +311,11 @@ bool test_api_key(Provider provider, std::string &error)
     curl_easy_cleanup(curl);
     std::fill(key.begin(), key.end(), '\0');
     if (result != CURLE_OK) {
-        error = "Provider connection could not be completed";
+        error = _u8L("Provider connection could not be completed");
         return false;
     }
     if (status < 200 || status >= 300) {
-        error = "Provider key test returned HTTP " + std::to_string(status);
+        error = Slic3r::GUI::format(_u8L("Provider key test returned HTTP %1%"), status);
         return false;
     }
     return true;
@@ -325,11 +328,11 @@ Result run(const Settings &settings, const std::string &prompt,
     if (settings.model.empty() || settings.model.size() > 120 ||
         prompt.empty() || prompt.size() > 4000 || revision_note.size() > 2000 ||
         settings.timeout_seconds < 5 || settings.timeout_seconds > 300) {
-        result.error = "Invalid model, prompt, revision note or timeout"; return result;
+        result.error = _u8L("Invalid model, prompt, revision note or timeout"); return result;
     }
     std::filesystem::create_directories(settings.workspace);
     const auto directory = new_revision(settings.workspace);
-    if (directory.empty()) { result.error = "Cannot create revision directory"; return result; }
+    if (directory.empty()) { result.error = _u8L("Cannot create revision directory"); return result; }
     const auto generate_once = [&](const std::string &request) -> std::string {
         if (settings.provider == Provider::AnthropicApi || settings.provider == Provider::OpenAiApi)
             return api_request(settings, request, cancel, result.error);
@@ -361,7 +364,7 @@ Result run(const Settings &settings, const std::string &prompt,
         const auto envelope = json::parse(response, nullptr, false);
         if (!envelope.is_object() || !envelope.contains("structured_output") ||
             !envelope["structured_output"].is_object()) {
-            result.error = "Claude CLI returned no structured scene";
+            result.error = _u8L("Claude CLI returned no structured scene");
             return {};
         }
         return envelope["structured_output"].dump();
@@ -369,7 +372,7 @@ Result run(const Settings &settings, const std::string &prompt,
     ParseResult spec;
     std::string request = scene_prompt(prompt, revision_note);
     for (int attempt = 0; attempt < 3; ++attempt) {
-        if (cancel) { result.error = "Canceled"; return result; }
+        if (cancel) { result.error = _u8L("Canceled"); return result; }
         const std::string response = generate_once(request);
         if (!result.error.empty()) return result;
         spec = parse_scene(response);
@@ -395,14 +398,14 @@ Result run(const Settings &settings, const std::string &prompt,
                                   directory, settings.timeout_seconds, cancel, ProcessRole::Renderer, result.error);
     if (!rendered) return result;
     if (settings.renderer == Renderer::Blender && !std::filesystem::is_regular_file(editable_blend)) {
-        result.error = "Renderer produced no editable Blender project"; return result;
+        result.error = _u8L("Renderer produced no editable Blender project"); return result;
     }
     if (!printable_stl(mesh, result.error)) return result;
-    if (cancel) { result.error = "Canceled"; return result; }
+    if (cancel) { result.error = _u8L("Canceled"); return result; }
     const json manifest = {{"version", 1}, {"title", spec.scene.title},
                            {"prompt", prompt}, {"note", revision_note}};
     { std::ofstream stream(directory / "revision.json", std::ios::binary); stream << manifest.dump();
-      if (!stream) { result.error = "Could not retain revision metadata"; return result; } }
+      if (!stream) { result.error = _u8L("Could not retain revision metadata"); return result; } }
     prune_completed_revisions(settings.workspace);
     result.revision = {prompt, revision_note, std::move(spec.scene), mesh, {}};
     return result;

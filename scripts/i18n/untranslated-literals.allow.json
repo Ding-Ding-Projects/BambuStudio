@@ -1,0 +1,22 @@
+[
+  {
+    "file": "src/slic3r/GUI/GLCanvas3D.cpp",
+    "literal": "FPS (SwapBuffers() calls per second):",
+    "reason": "Inside the developer-only \"Render statistics\" ImGui window, gated by is_render_statistic_dialog_visible(); the task notes explicitly say to leave render-statistics/ImGui-style-editor debug windows untranslated."
+  },
+  {
+    "file": "src/slic3r/GUI/GLCanvas3D.cpp",
+    "literal": "Compressed textures:",
+    "reason": "Same developer-only \"Render statistics\" ImGui window as the FPS line above."
+  },
+  {
+    "file": "src/slic3r/GUI/GLCanvas3D.cpp",
+    "literal": "not supported",
+    "reason": "Same developer-only \"Render statistics\" ImGui window as the FPS line above."
+  },
+  {
+    "file": "src/slic3r/GUI/GLCanvas3D.cpp",
+    "literal": "Max texture size:",
+    "reason": "Same developer-only \"Render statistics\" ImGui window as the FPS line above."
+  }
+]

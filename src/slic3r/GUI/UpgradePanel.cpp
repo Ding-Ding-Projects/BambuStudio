@@ -170,7 +170,7 @@ MachineInfoPanel::MachineInfoPanel(wxWindow* parent, wxWindowID id, const wxPoin
     m_staticText_ver_val->Wrap(-1);
 
 
-    m_staticText_beta_version = new Label(this, "Beta");
+    m_staticText_beta_version = new Label(this, _L("Beta"));
     m_staticText_beta_version->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     m_staticText_beta_version->Wrap(-1);
     m_staticText_beta_version->Hide();
@@ -2041,7 +2041,7 @@ bool UpgradePanel::Show(bool show)
      m_staticText_ams_ver_val->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
      m_staticText_ams_ver_val->Wrap(-1);
 
-     m_staticText_beta_version = new Label(this, "Beta");
+     m_staticText_beta_version = new Label(this, _L("Beta"));
      m_staticText_beta_version->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
      m_staticText_beta_version->Wrap(-1);
      m_staticText_beta_version->Hide();

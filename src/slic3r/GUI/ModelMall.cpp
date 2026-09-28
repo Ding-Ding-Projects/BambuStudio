@@ -107,7 +107,7 @@ namespace GUI {
 
         m_browser = WebView::CreateWebView(this, wxEmptyString);
         if (m_browser == nullptr) {
-            wxLogError("Could not init m_browser");
+            wxLogError(_L("Could not init m_browser"));
             return;
         }
 

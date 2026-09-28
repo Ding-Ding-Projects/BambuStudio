@@ -1204,11 +1204,9 @@ void ConfigManipulation::update_print_sla_config(DynamicPrintConfig* config, con
     double head_penetration = config->opt_float("support_head_penetration");
     double head_width = config->opt_float("support_head_width");
     if (head_penetration > head_width) {
-        //wxString msg_text = _(L("Head penetration should not be greater than the head width."));
-        wxString msg_text = "Head penetration should not be greater than the head width.";
+        wxString msg_text = _(L("Head penetration should not be greater than the head width."));
 
-        //MessageDialog dialog(m_msg_dlg_parent, msg_text, _(L("Invalid Head penetration")), wxICON_WARNING | wxOK);
-        MessageDialog dialog(m_msg_dlg_parent, msg_text, "Invalid Head penetration", wxICON_WARNING | wxOK);
+        MessageDialog dialog(m_msg_dlg_parent, msg_text, _(L("Invalid Head penetration")), wxICON_WARNING | wxOK);
         DynamicPrintConfig new_conf = *config;
         if (dialog.ShowModal() == wxID_OK) {
             new_conf.set_key_value("support_head_penetration", new ConfigOptionFloat(head_width));
@@ -1219,11 +1217,9 @@ void ConfigManipulation::update_print_sla_config(DynamicPrintConfig* config, con
     double pinhead_d = config->opt_float("support_head_front_diameter");
     double pillar_d = config->opt_float("support_pillar_diameter");
     if (pinhead_d > pillar_d) {
-        //wxString msg_text = _(L("Pinhead diameter should be smaller than the pillar diameter."));
-        wxString msg_text = "Pinhead diameter should be smaller than the pillar diameter.";
+        wxString msg_text = _(L("Pinhead diameter should be smaller than the pillar diameter."));
 
-        //MessageDialog dialog(m_msg_dlg_parent, msg_text, _(L("Invalid pinhead diameter")), wxICON_WARNING | wxOK);
-        MessageDialog dialog(m_msg_dlg_parent, msg_text, "Invalid pinhead diameter", wxICON_WARNING | wxOK);
+        MessageDialog dialog(m_msg_dlg_parent, msg_text, _(L("Invalid pinhead diameter")), wxICON_WARNING | wxOK);
 
         DynamicPrintConfig new_conf = *config;
         if (dialog.ShowModal() == wxID_OK) {

@@ -54,7 +54,7 @@ void wgtMsgPanelItem::CreateGui()
     text_sizer->Add(m_text_label, 0, wxALIGN_CENTER_VERTICAL);
 
     if (!m_wiki_url.IsEmpty()) {
-        m_wiki_link = new LinkLabel(this, "Wiki->", m_wiki_url.ToStdString());
+        m_wiki_link = new LinkLabel(this, _L("Wiki->"), m_wiki_url.ToStdString());
         m_wiki_link->SeLinkLabelFColour(m_colour);
         Bind(EVT_LINK_LABEL_LEFT_DOWN, &wgtMsgPanelItem::OnClickWiki, this, m_wiki_link->GetId());
         text_sizer->AddSpacer(FromDIP(4));

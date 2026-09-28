@@ -8632,7 +8632,11 @@ public:
     {
         dirty_state.set_plater_dirty(is_dirty);
         if (is_dirty && !q->is_loading_project())
-            schedule_project_history_capture("Project edit");
+            // Persisted verbatim as a project-history commit message (see
+            // ProjectHistoryManager); L() marks it for extraction without
+            // translating it here. ProjectHistoryDialog::display_message()
+            // translates the known reasons for the Message column.
+            schedule_project_history_capture(L("Project edit"));
     }
     bool is_project_dirty() const { return dirty_state.is_dirty(); }
     bool is_presets_dirty() const { return dirty_state.is_presets_dirty(); }
@@ -8642,7 +8646,8 @@ public:
         Slic3r::put_other_changes();
         dirty_state.update_from_presets();
         if (dirty_state.is_presets_dirty() && !q->is_loading_project())
-            schedule_project_history_capture("Project settings changed");
+            // See the L() note on the "Project edit" capture above.
+            schedule_project_history_capture(L("Project settings changed"));
     }
     int save_project_if_dirty(const wxString& reason) {
         int res = wxID_NO;
@@ -10294,7 +10299,9 @@ bool Plater::priv::preserve_unsaved_backup_in_history(const stdfs::path &backup_
         }
 
         ProjectHistoryCommitOptions options;
-        options.message = "Recovered unsaved project";
+        // See the L() note on the "Project edit" capture above: this becomes a
+        // persisted commit message, so it is marked but not translated here.
+        options.message = L("Recovered unsaved project");
         // The future carries the only error report; dropping it hides failures
         // completely, so this waits and logs the outcome.
         ProjectHistoryCommitResult result = m_project_history_manager
@@ -10340,7 +10347,7 @@ bool Plater::priv::reset_project_history_session()
     // A reset replaces the live model. Stop and join UI jobs before exporting
     // any revision that belongs to the old model, then wait for the local Git
     // worker before rotating the synthetic identity.
-    if (!flush_project_history_pending("Autosave before closing project", true, true)) {
+    if (!flush_project_history_pending(L("Autosave before closing project"), true, true)) {
         BOOST_LOG_TRIVIAL(error) << "Project replacement refused because its preceding history boundary is not durable";
         return false;
     }
@@ -10705,7 +10712,7 @@ void Plater::priv::materialize_project_history_event()
 
     PendingProjectHistoryCapture capture;
     capture.identity = std::move(m_project_history_event_identity);
-    capture.reason   = m_project_history_event_reason.empty() ? "Autosave project snapshot" : "Autosave: " + m_project_history_event_reason;
+    capture.reason   = m_project_history_event_reason.empty() ? L("Autosave project snapshot") : L("Autosave: ") + m_project_history_event_reason;
     m_project_history_pending_captures.emplace_back(std::move(capture));
     m_project_history_event_reason.clear();
     m_project_history_event_identity.clear();
@@ -10752,7 +10759,7 @@ bool Plater::priv::enqueue_project_history_snapshot(const stdfs::path &previous_
             character = ' ';
     }
     if (reason.empty())
-        reason = "Autosave project snapshot";
+        reason = L("Autosave project snapshot");
     if (reason.size() > 240)
         reason.resize(240);
 
@@ -10901,7 +10908,7 @@ void Plater::priv::capture_project_history_now(const std::string &reason)
     } else {
         PendingProjectHistoryCapture capture;
         capture.identity = project_history_identity();
-        capture.reason   = reason.empty() ? "Autosave project snapshot" : "Autosave: " + reason;
+        capture.reason   = reason.empty() ? L("Autosave project snapshot") : L("Autosave: ") + reason;
         m_project_history_pending_captures.emplace_back(std::move(capture));
     }
     process_project_history_captures(true);
@@ -10918,7 +10925,7 @@ void Plater::priv::capture_saved_project_history(const wxString &completed_proje
     capture.previous_identity = previous_identity;
     capture.identity          = stdfs::u8path(into_u8(completed_project_path));
     capture.completed_source  = capture.identity;
-    capture.reason            = "Saved project";
+    capture.reason            = L("Saved project");
     m_project_history_pending_captures.emplace_back(std::move(capture));
     process_project_history_captures(true);
 }
@@ -11110,7 +11117,7 @@ void Plater::priv::shutdown_project_history()
 
     // Stop/join active UI jobs first so a completed edit cannot be discarded
     // merely because its original one-shot fired while a job was active.
-    const bool history_drained = flush_project_history_pending("Autosave before shutdown", true, true);
+    const bool history_drained = flush_project_history_pending(L("Autosave before shutdown"), true, true);
     if (!history_drained) {
         // Destruction cannot safely replace or re-serialize the model after
         // this point. Preserve every staging artifact and make the failed
@@ -22742,7 +22749,7 @@ void Plater::priv::assemble_undo_redo_to(std::vector<UndoRedo::Snapshot>::const_
         }
         assemble_canvas->restore_assembly_guide_ui_after_undo(restore_folder_id, restore_kf);
         assemble_canvas->set_as_dirty();
-        schedule_project_history_capture(snapshot_copy.name.empty() ? "Assembly undo or redo" : snapshot_copy.name);
+        schedule_project_history_capture(snapshot_copy.name.empty() ? L("Assembly undo or redo") : snapshot_copy.name);
         // Refresh assembly dirty from the stack tip vs last mark_current_as_saved so undoing
         // all the way back to the saved tip clears the unsaved-project prompt.
         m_assemble_project_dirty = m_undo_redo_stack_assemble.project_modified();
@@ -23077,7 +23084,7 @@ void Plater::priv::undo_redo_to(std::vector<UndoRedo::Snapshot>::const_iterator 
 
     dirty_state.update_from_undo_redo_stack(m_undo_redo_stack_main.project_modified());
     if (history_state_changed)
-        schedule_project_history_capture(snapshot_copy.name.empty() ? "Undo or redo" : snapshot_copy.name);
+        schedule_project_history_capture(snapshot_copy.name.empty() ? L("Undo or redo") : snapshot_copy.name);
 }
 
 void Plater::priv::update_after_undo_redo(const UndoRedo::Snapshot& snapshot, bool /* temp_snapshot_was_taken */)
@@ -23917,7 +23924,7 @@ bool Plater::export_workspace_member_with_history(const stdfs::path& destination
     std::error_code path_error;
     if (stdfs::exists(destination, path_error) || path_error)
         return false;
-    if (!p->flush_project_history_pending("Project edit before workspace save", true, true))
+    if (!p->flush_project_history_pending(L("Project edit before workspace save"), true, true))
         return false;
 
     if (auto *assemble_canvas = get_assmeble_canvas3D())
@@ -23937,7 +23944,7 @@ bool Plater::export_workspace_member_with_history(const stdfs::path& destination
         auto *history = p->project_history_manager();
         if (!history) throw std::runtime_error("Project-history storage is unavailable");
         Slic3r::ProjectHistoryCommitOptions options;
-        options.message = "Saved workspace member";
+        options.message = L("Saved workspace member");
         const auto source_identity = p->project_history_identity();
         const auto committed = history->commit_snapshot(source_identity, snapshot, options).get();
         if (!committed.ok()) throw std::runtime_error(committed.error.message);
@@ -24098,7 +24105,7 @@ int Plater::save_project(bool saveAs)
     // Publish every completed edit for the old identity before Save As can
     // change the filename or mutate assembly-save state. If staging cannot be
     // made immutable, leave both the document and its identity untouched.
-    if (!p->flush_project_history_pending("Project edit before save", true, true)) {
+    if (!p->flush_project_history_pending(L("Project edit before save"), true, true)) {
         BOOST_LOG_TRIVIAL(error) << "Project save refused because its preceding history boundary is not durable";
         return wxID_CANCEL;
     }
@@ -24131,7 +24138,7 @@ int Plater::save_project(bool saveAs)
         auto *history = p->project_history_manager();
         if (!history) throw std::runtime_error("Project-history storage is unavailable");
         Slic3r::ProjectHistoryCommitOptions options;
-        options.message = "Saved project";
+        options.message = L("Saved project");
         const auto committed = previous_history_identity == destination
             ? history->commit_snapshot(destination, history_free_snapshot, options).get()
             : history->migrate_then_commit_snapshot(previous_history_identity, destination, history_free_snapshot, options).get();
@@ -27033,7 +27040,7 @@ void Plater::export_core_3mf()
 {
     wxString path = p->get_export_file(FT_3MF);
     if (path.empty()) { return; }
-    if (!p->flush_project_history_pending("Project edit before current-version export", true, true)) {
+    if (!p->flush_project_history_pending(L("Project edit before current-version export"), true, true)) {
         MessageDialog(this, _L("Could not preserve pending project history. The current version was not exported."),
                       _L("Export current version"), wxOK | wxICON_WARNING).ShowModal();
         return;
@@ -29566,7 +29573,7 @@ bool Plater::restore_project_history_snapshot(const stdfs::path &restored_snapsh
         path_error.clear();
     }
 
-    if (!p->flush_project_history_pending("Project edit before restore", true, true)) {
+    if (!p->flush_project_history_pending(L("Project edit before restore"), true, true)) {
         p->notify_project_history_failure("Version restore stopped because the current revision could not be durably queued", false);
         return false;
     }

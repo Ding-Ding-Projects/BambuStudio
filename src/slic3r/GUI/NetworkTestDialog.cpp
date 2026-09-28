@@ -560,7 +560,7 @@ void NetworkTestDialog::start_all_job()
 void NetworkTestDialog::start_all_job_sequence()
 {
 	m_sequence_job = new boost::thread([this] {
-		update_status(-1, "start_test_sequence");
+		update_status(-1, _L("start_test_sequence"));
 		start_test_bing();
 		if (m_closing) return;
 		start_test_bambulab();
@@ -572,18 +572,18 @@ void NetworkTestDialog::start_all_job_sequence()
 		start_test_oss_download();
 		if (m_closing) return;
 		start_test_plugin_download();
-		update_status(-1, "end_test_sequence");
+		update_status(-1, _L("end_test_sequence"));
 	});
 }
 
 void NetworkTestDialog::start_test_bing()
 {
 	m_in_testing[TEST_BING_JOB] = true;
-	update_status(TEST_BING_JOB, "test bing start...");
+	update_status(TEST_BING_JOB, _L("test bing start..."));
 
 	std::string url = "http://www.bing.com/";
 	Slic3r::Http http = Slic3r::Http::get(url);
-	update_status(-1, "[test_bing]: url=" + url);
+	update_status(-1, _L("[test_bing]: url=") + url);
 
 	int result = -1;
 	http.timeout_max(10)
@@ -598,16 +598,16 @@ void NetworkTestDialog::start_test_bing()
 			}
 		})
 		.on_ip_resolve([this](std::string ip) {
-			wxString ip_report = wxString::Format("test bing ip resolved = %s", ip);
+			wxString ip_report = wxString::Format(_L("test bing ip resolved = %s"), ip);
 			update_status(TEST_BING_JOB, ip_report);
 		})
 		.on_error([this](std::string body, std::string error, unsigned int status) {
-		wxString info = wxString::Format("status=%u, body=%s, error=%s", status, body, error);
-		this->update_status(TEST_BING_JOB, "test bing failed");
+		wxString info = wxString::Format(_L("status=%u, body=%s, error=%s"), status, body, error);
+		this->update_status(TEST_BING_JOB, _L("test bing failed"));
 		this->update_status(-1, info);
 	}).perform_sync();
 	if (result == 0) {
-		update_status(TEST_BING_JOB, "test bing ok");
+		update_status(TEST_BING_JOB, _L("test bing ok"));
 	}
 	m_in_testing[TEST_BING_JOB] = false;
 }
@@ -615,7 +615,7 @@ void NetworkTestDialog::start_test_bing()
 void NetworkTestDialog::start_test_bambulab()
 {
 	m_in_testing[TEST_BAMBULAB_JOB] = true;
-	update_status(TEST_BAMBULAB_JOB, "test bambulab start...");
+	update_status(TEST_BAMBULAB_JOB, _L("test bambulab start..."));
 
 	std::string platform = "windows";
 
@@ -636,7 +636,7 @@ void NetworkTestDialog::start_test_bambulab()
 	AppConfig* app_config = wxGetApp().app_config;
 	std::string url = wxGetApp().get_http_url(app_config->get_country_code()) + query_params;
 	Slic3r::Http http = Slic3r::Http::get(url);
-	update_status(-1, "[test_bambulab]: url=" + url);
+	update_status(-1, _L("[test_bambulab]: url=") + url);
 	int result = -1;
 	http.header("accept", "application/json")
 		.timeout_max(10)
@@ -651,16 +651,16 @@ void NetworkTestDialog::start_test_bambulab()
 			}
 		})
 		.on_ip_resolve([this](std::string ip) {
-			wxString ip_report = wxString::Format("test bambulab ip resolved = %s", ip);
+			wxString ip_report = wxString::Format(_L("test bambulab ip resolved = %s"), ip);
 			update_status(TEST_BAMBULAB_JOB, ip_report);
 		})
 		.on_error([this](std::string body, std::string error, unsigned int status) {
-			wxString info = wxString::Format("status=%u, body=%s, error=%s", status, body, error);
-			this->update_status(TEST_BAMBULAB_JOB, "test bambulab failed");
+			wxString info = wxString::Format(_L("status=%u, body=%s, error=%s"), status, body, error);
+			this->update_status(TEST_BAMBULAB_JOB, _L("test bambulab failed"));
 			this->update_status(-1, info);
 		}).perform_sync();
 	if (result == 0) {
-		update_status(TEST_BAMBULAB_JOB, "test bambulab ok");
+		update_status(TEST_BAMBULAB_JOB, _L("test bambulab ok"));
 	}
 	m_in_testing[TEST_BAMBULAB_JOB] = false;
 }
@@ -668,25 +668,25 @@ void NetworkTestDialog::start_test_bambulab()
 void NetworkTestDialog::start_test_iot()
 {
 	m_in_testing[TEST_IOT_JOB] = true;
-	update_status(TEST_IOT_JOB, "test http start...");
+	update_status(TEST_IOT_JOB, _L("test http start..."));
 	NetworkAgent* agent = wxGetApp().getAgent();
 	if (agent) {
 		unsigned int http_code;
 		std::string http_body;
 		if (!agent->is_user_login()) {
-			update_status(TEST_IOT_JOB, "please login first");
+			update_status(TEST_IOT_JOB, _L("please login first"));
 		} else {
 			int result = agent->get_user_print_info(&http_code, &http_body);
 			if (result == 0) {
-				update_status(TEST_IOT_JOB, "test http ok");
+				update_status(TEST_IOT_JOB, _L("test http ok"));
 			} else {
-				update_status(TEST_IOT_JOB, "test http failed");
-				wxString info = wxString::Format("test http failed, status = %u, error = %s", http_code, http_body);
+				update_status(TEST_IOT_JOB, _L("test http failed"));
+				wxString info = wxString::Format(_L("test http failed, status = %u, error = %s"), http_code, http_body);
 				update_status(-1, info);
 			}
 		}
 	} else {
-		update_status(TEST_IOT_JOB, "please install network module first");
+		update_status(TEST_IOT_JOB, _L("please install network module first"));
 	}
 	m_in_testing[TEST_IOT_JOB] = false;
 }
@@ -694,7 +694,7 @@ void NetworkTestDialog::start_test_iot()
 void NetworkTestDialog::start_test_oss()
 {
 	m_in_testing[TEST_OSS_JOB] = true;
-	update_status(TEST_OSS_JOB, "test storage start...");
+	update_status(TEST_OSS_JOB, _L("test storage start..."));
 
 	std::string url = "http://upload-file.bambulab.com";
 
@@ -705,7 +705,7 @@ void NetworkTestDialog::start_test_oss()
 	}
 
 	Slic3r::Http http = Slic3r::Http::get(url);
-	update_status(-1, "[test_oss]: url=" + url);
+	update_status(-1, _L("[test_oss]: url=") + url);
 
 	int result = -1;
 	http.timeout_max(15)
@@ -720,20 +720,20 @@ void NetworkTestDialog::start_test_oss()
 		}
 			})
 		.on_ip_resolve([this](std::string ip) {
-			wxString ip_report = wxString::Format("test oss ip resolved = %s", ip);
+			wxString ip_report = wxString::Format(_L("test oss ip resolved = %s"), ip);
 			update_status(TEST_OSS_JOB, ip_report);
 		})
 		.on_error([this, &result](std::string body, std::string error, unsigned int status) {
 			if (status == 403) {
 				result = 0;
 			} else {
-				wxString info = wxString::Format("status=%u, body=%s, error=%s", status, body, error);
-				this->update_status(TEST_OSS_JOB, "test storage failed");
+				wxString info = wxString::Format(_L("status=%u, body=%s, error=%s"), status, body, error);
+				this->update_status(TEST_OSS_JOB, _L("test storage failed"));
 				this->update_status(-1, info);
 			}
 		}).perform_sync();
 		if (result == 0) {
-			update_status(TEST_OSS_JOB, "test storage ok");
+			update_status(TEST_OSS_JOB, _L("test storage ok"));
 		}
 	m_in_testing[TEST_OSS_JOB] = false;
 }
@@ -741,7 +741,7 @@ void NetworkTestDialog::start_test_oss()
 void NetworkTestDialog::start_test_oss_upgrade()
 {
 	m_in_testing[TEST_OSS_UPGRADE_JOB] = true;
-	update_status(TEST_OSS_UPGRADE_JOB, "test storage upgrade start...");
+	update_status(TEST_OSS_UPGRADE_JOB, _L("test storage upgrade start..."));
 
 	std::string url = "http://upgrade-file.bambulab.com";
 
@@ -752,7 +752,7 @@ void NetworkTestDialog::start_test_oss_upgrade()
 	}
 
 	Slic3r::Http http = Slic3r::Http::get(url);
-	update_status(-1, "[test_oss_upgrade]: url=" + url);
+	update_status(-1, _L("[test_oss_upgrade]: url=") + url);
 
 	int result = -1;
 	http.timeout_max(15)
@@ -767,7 +767,7 @@ void NetworkTestDialog::start_test_oss_upgrade()
 		}
 			})
 		.on_ip_resolve([this](std::string ip) {
-				wxString ip_report = wxString::Format("test storage upgrade ip resolved = %s", ip);
+				wxString ip_report = wxString::Format(_L("test storage upgrade ip resolved = %s"), ip);
 				update_status(TEST_OSS_UPGRADE_JOB, ip_report);
 			})
 		.on_error([this, &result](std::string body, std::string error, unsigned int status) {
@@ -775,14 +775,14 @@ void NetworkTestDialog::start_test_oss_upgrade()
 				result = 0;
 			}
 			else {
-				wxString info = wxString::Format("status=%u, body=%s, error=%s", status, body, error);
-				this->update_status(TEST_OSS_UPGRADE_JOB, "test storage upgrade failed");
+				wxString info = wxString::Format(_L("status=%u, body=%s, error=%s"), status, body, error);
+				this->update_status(TEST_OSS_UPGRADE_JOB, _L("test storage upgrade failed"));
 				this->update_status(-1, info);
 			}
 		}).perform_sync();
 
 	if (result == 0) {
-		update_status(TEST_OSS_UPGRADE_JOB, "test storage upgrade ok");
+		update_status(TEST_OSS_UPGRADE_JOB, _L("test storage upgrade ok"));
 	}
 	m_in_testing[TEST_OSS_UPGRADE_JOB] = false;
 }
@@ -793,12 +793,12 @@ void NetworkTestDialog::start_test_oss_download()
 	// get country_code
 	AppConfig* app_config = wxGetApp().app_config;
 	if (!app_config) {
-		update_status(TEST_OSS_DOWNLOAD_JOB, "app config is nullptr");
+		update_status(TEST_OSS_DOWNLOAD_JOB, _L("app config is nullptr"));
 		return;
 	}
 
 	m_in_testing[TEST_OSS_DOWNLOAD_JOB] = true;
-	update_status(TEST_OSS_DOWNLOAD_JOB, "test storage download start...");
+	update_status(TEST_OSS_DOWNLOAD_JOB, _L("test storage download start..."));
 	m_download_cancel = false;
 	// get temp path
 	fs::path target_file_path = (fs::temp_directory_path() / "test_storage_download.zip");
@@ -809,7 +809,7 @@ void NetworkTestDialog::start_test_oss_download()
 	std::string url = wxGetApp().get_plugin_url("plugins", app_config->get_country_code());
 	std::string download_url;
 	Slic3r::Http http_url = Slic3r::Http::get(url);
-	update_status(-1, "[test_oss_download]: url=" + url);
+	update_status(-1, _L("[test_oss_download]: url=") + url);
 
 	http_url.on_complete(
 		[&download_url](std::string body, unsigned status) {
@@ -857,26 +857,26 @@ void NetworkTestDialog::start_test_oss_download()
 		}).on_error(
 			[&result, this](std::string body, std::string error, unsigned int status) {
 				BOOST_LOG_TRIVIAL(error) << "[test_storage_download] on_error: " << error << ", body = " << body;
-				wxString info = wxString::Format("status=%u, body=%s, error=%s", status, body, error);
-				this->update_status(TEST_OSS_DOWNLOAD_JOB, "test storage download failed");
+				wxString info = wxString::Format(_L("status=%u, body=%s, error=%s"), status, body, error);
+				this->update_status(TEST_OSS_DOWNLOAD_JOB, _L("test storage download failed"));
 				this->update_status(-1, info);
 				result = -1;
 		}).perform_sync();
 
 	if (result < 0) {
-		this->update_status(TEST_OSS_DOWNLOAD_JOB, "test storage download failed");
+		this->update_status(TEST_OSS_DOWNLOAD_JOB, _L("test storage download failed"));
 		m_in_testing[TEST_OSS_DOWNLOAD_JOB] = false;
 		return;
 	}
 
 	if (download_url.empty()) {
 		BOOST_LOG_TRIVIAL(info) << "[test_oss_download]: no availaible plugin found for this app version: " << SLIC3R_VERSION;
-		this->update_status(TEST_OSS_DOWNLOAD_JOB, "test storage download failed");
+		this->update_status(TEST_OSS_DOWNLOAD_JOB, _L("test storage download failed"));
 		m_in_testing[TEST_OSS_DOWNLOAD_JOB] = false;
 		return;
 	}
 	if (m_download_cancel) {
-		this->update_status(TEST_OSS_DOWNLOAD_JOB, "test storage download canceled");
+		this->update_status(TEST_OSS_DOWNLOAD_JOB, _L("test storage download canceled"));
 		m_in_testing[TEST_OSS_DOWNLOAD_JOB] = false;
 		return;
 	}
@@ -895,7 +895,7 @@ void NetworkTestDialog::start_test_oss_download()
 			}
 			if (percent - reported_percent >= 10) {
 				reported_percent = percent;
-				std::string download_progress_info = (boost::format("downloading %1%%%") % percent).str();
+				std::string download_progress_info = (boost::format(_u8L("downloading %1%%%")) % percent).str();
 				this->update_status(TEST_OSS_DOWNLOAD_JOB, download_progress_info);
 			}
 
@@ -916,16 +916,16 @@ void NetworkTestDialog::start_test_oss_download()
 		})
 		.on_error([this, &result](std::string body, std::string error, unsigned int status) {
 			BOOST_LOG_TRIVIAL(error) << "[test_oss_download] downloading... on_error: " << error << ", body = " << body;
-			wxString info = wxString::Format("status=%u, body=%s, error=%s", status, body, error);
-			this->update_status(TEST_OSS_DOWNLOAD_JOB, "test storage download failed");
+			wxString info = wxString::Format(_L("status=%u, body=%s, error=%s"), status, body, error);
+			this->update_status(TEST_OSS_DOWNLOAD_JOB, _L("test storage download failed"));
 			this->update_status(-1, info);
 			result = -1;
 		});
 	http.perform_sync();
 	if (result < 0) {
-		this->update_status(TEST_OSS_DOWNLOAD_JOB, "test storage download failed");
+		this->update_status(TEST_OSS_DOWNLOAD_JOB, _L("test storage download failed"));
 	} else {
-		this->update_status(TEST_OSS_DOWNLOAD_JOB, "test storage download ok");
+		this->update_status(TEST_OSS_DOWNLOAD_JOB, _L("test storage download ok"));
 	}
 	m_in_testing[TEST_OSS_DOWNLOAD_JOB] = false;
 	return;
@@ -941,12 +941,12 @@ void NetworkTestDialog:: start_test_plugin_download(){
     // get country_code
     AppConfig *app_config = wxGetApp().app_config;
     if (!app_config) {
-        update_status(TEST_PLUGIN_JOB, "app config is nullptr");
+        update_status(TEST_PLUGIN_JOB, _L("app config is nullptr"));
         return;
     }
 
     m_in_testing[TEST_PLUGIN_JOB] = true;
-    update_status(TEST_PLUGIN_JOB, "test plugin download start...");
+    update_status(TEST_PLUGIN_JOB, _L("test plugin download start..."));
     m_download_cancel = false;
     // get temp path
     fs::path target_file_path = (fs::temp_directory_path() / "test_plugin_download.zip");
@@ -986,7 +986,7 @@ void NetworkTestDialog:: start_test_plugin_download(){
                             }
                             BOOST_LOG_TRIVIAL(info) << "[test_plugin_download]: get type " << type << ", version " << version.to_string() << ", url " << url;
                             download_url = url;
-                           this->update_status(-1, "[test_plugin_download]: downloadurl=" + download_url);
+                           this->update_status(-1, _L("[test_plugin_download]: downloadurl=") + download_url);
                         }
                     }
                 } else {
@@ -999,8 +999,8 @@ void NetworkTestDialog:: start_test_plugin_download(){
         })
         .on_error([&result, this](std::string body, std::string error, unsigned int status) {
             BOOST_LOG_TRIVIAL(error) << "[test_plugin_download] on_error: " << error << ", body = " << body;
-            wxString info = wxString::Format("status=%u, body=%s, error=%s", status, body, error);
-            this->update_status(TEST_PLUGIN_JOB, "test plugin download failed");
+            wxString info = wxString::Format(_L("status=%u, body=%s, error=%s"), status, body, error);
+            this->update_status(TEST_PLUGIN_JOB, _L("test plugin download failed"));
             this->update_status(-1, info);
             result = -1;
         })
@@ -1008,19 +1008,19 @@ void NetworkTestDialog:: start_test_plugin_download(){
 
 
     if (result < 0) {
-        this->update_status(TEST_PLUGIN_JOB, "test plugin download failed");
+        this->update_status(TEST_PLUGIN_JOB, _L("test plugin download failed"));
         m_in_testing[TEST_PLUGIN_JOB] = false;
         return;
     }
 
     if (download_url.empty()) {
         BOOST_LOG_TRIVIAL(info) << "[test_plugin_download]: no availaible plugin found for this app version: " << SLIC3R_VERSION;
-        this->update_status(TEST_PLUGIN_JOB, "test plugin download failed");
+        this->update_status(TEST_PLUGIN_JOB, _L("test plugin download failed"));
         m_in_testing[TEST_PLUGIN_JOB] = false;
         return;
     }
     if (m_download_cancel) {
-        this->update_status(TEST_PLUGIN_JOB, "test plugin download canceled");
+        this->update_status(TEST_PLUGIN_JOB, _L("test plugin download canceled"));
         m_in_testing[TEST_PLUGIN_JOB] = false;
         return;
     }
@@ -1036,7 +1036,7 @@ void NetworkTestDialog:: start_test_plugin_download(){
             if (progress.dltotal != 0) { percent = progress.dlnow * 100 / progress.dltotal; }
             if (percent - reported_percent >= 5) {
                 reported_percent                   = percent;
-                std::string download_progress_info = (boost::format("downloading %1%%%") % percent).str();
+                std::string download_progress_info = (boost::format(_u8L("downloading %1%%%")) % percent).str();
                 this->update_status(TEST_PLUGIN_JOB, download_progress_info);
             }
 
@@ -1055,16 +1055,16 @@ void NetworkTestDialog:: start_test_plugin_download(){
         })
         .on_error([this, &result](std::string body, std::string error, unsigned int status) {
             BOOST_LOG_TRIVIAL(error) << "[test_plugin_download] downloading... on_error: " << error << ", body = " << body;
-            wxString info = wxString::Format("status=%u, body=%s, error=%s", status, body, error);
-            this->update_status(TEST_PLUGIN_JOB, "test plugin download failed");
+            wxString info = wxString::Format(_L("status=%u, body=%s, error=%s"), status, body, error);
+            this->update_status(TEST_PLUGIN_JOB, _L("test plugin download failed"));
             this->update_status(-1, info);
             result = -1;
         });
     http.perform_sync();
     if (result < 0) {
-        this->update_status(TEST_PLUGIN_JOB, "test plugin download failed");
+        this->update_status(TEST_PLUGIN_JOB, _L("test plugin download failed"));
     } else {
-        this->update_status(TEST_PLUGIN_JOB, "test plugin download ok");
+        this->update_status(TEST_PLUGIN_JOB, _L("test plugin download ok"));
     }
     m_in_testing[TEST_PLUGIN_JOB] = false;
     return;

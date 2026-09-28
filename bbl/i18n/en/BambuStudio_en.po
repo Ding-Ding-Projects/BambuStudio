@@ -26584,3 +26584,794 @@ msgstr ""
 
 msgid "Your system is missing H.264 codecs for GStreamer, which are required to play video.  (Try installing the gstreamer1.0-plugins-bad or gstreamer1.0-libav packages, then restart Bambu Studio?)"
 msgstr ""
+
+msgid "Wiki->"
+msgstr ""
+
+#, possible-boost-format
+msgid "Objects(%1%) have duplicated connectors. Some connectors may be missing in slicing result.\nPlease report to BambuSudio team in which scenario this issue happened.\nThank you."
+msgstr ""
+
+#, possible-boost-format
+msgid "Internal error when changing value for %1%: %2%"
+msgstr ""
+
+msgid "STEP files"
+msgstr ""
+
+msgid "STL files"
+msgstr ""
+
+msgid "OBJ files"
+msgstr ""
+
+msgid "AMF files"
+msgstr ""
+
+msgid "3MF files"
+msgstr ""
+
+msgid "Gcode 3MF files"
+msgstr ""
+
+msgid "G-code files"
+msgstr ""
+
+msgid "Supported files"
+msgstr ""
+
+msgid "Project files"
+msgstr ""
+
+msgid "Known files"
+msgstr ""
+
+msgid "INI files"
+msgstr ""
+
+msgid "SVG files"
+msgstr ""
+
+msgid "Masked SLA files"
+msgstr ""
+
+msgid "Switching language failed"
+msgstr ""
+
+msgid "Ext"
+msgstr ""
+
+msgid "Empty mesh can't be created."
+msgstr ""
+
+msgid "Modify Text"
+msgstr ""
+
+msgid "create_text_volume"
+msgstr ""
+
+msgid "Bad input data for UseSurfaceJob."
+msgstr ""
+
+msgid "Bad input data for EmbossUpdateJob."
+msgstr ""
+
+msgid "Created text volume is empty. Change text or font."
+msgstr ""
+
+msgid "Bad input data for EmbossCreateObjectJob."
+msgstr ""
+
+msgid "Can't create empty object."
+msgstr ""
+
+msgid "CreateObjectJob:unknown error."
+msgstr ""
+
+msgid "Bad input data for CreateSurfaceVolumeJob."
+msgstr ""
+
+msgid "Bad input data for EmbossCreateVolumeJob."
+msgstr ""
+
+msgid "Can't create empty volume."
+msgstr ""
+
+msgid "It is used default volume for embossed text, try to change text or font to fix it."
+msgstr ""
+
+msgid "Bad object to create volume."
+msgstr ""
+
+msgid "calc_position_points fail."
+msgstr ""
+
+msgid "update_text_positions fail."
+msgstr ""
+
+msgid "generate_text_volume fail."
+msgstr ""
+
+msgid "The hit polygon is null,please try to regenerate after adjusting text position."
+msgstr ""
+
+msgid "Add text object on plate"
+msgstr ""
+
+msgid "Head penetration should not be greater than the head width."
+msgstr ""
+
+msgid "Invalid Head penetration"
+msgstr ""
+
+msgid "Pinhead diameter should be smaller than the pillar diameter."
+msgstr ""
+
+msgid "Invalid pinhead diameter"
+msgstr ""
+
+msgid "All Plates"
+msgstr ""
+
+msgid "Stats"
+msgstr ""
+
+msgid "Project edit before save"
+msgstr ""
+
+msgid "Project edit before opening version history"
+msgstr ""
+
+msgid "Media Files"
+msgstr ""
+
+msgid "click to add machine"
+msgstr ""
+
+msgid "Project edit"
+msgstr ""
+
+msgid "Project settings changed"
+msgstr ""
+
+msgid "Recovered unsaved project"
+msgstr ""
+
+msgid "Autosave before closing project"
+msgstr ""
+
+msgid "Autosave project snapshot"
+msgstr ""
+
+msgid "Autosave: "
+msgstr ""
+
+msgid "Saved project"
+msgstr ""
+
+msgid "Autosave before shutdown"
+msgstr ""
+
+msgid "Assembly undo or redo"
+msgstr ""
+
+msgid "Undo or redo"
+msgstr ""
+
+msgid "Project edit before workspace save"
+msgstr ""
+
+msgid "Saved workspace member"
+msgstr ""
+
+msgid "Project edit before current-version export"
+msgstr ""
+
+msgid "Project edit before restore"
+msgstr ""
+
+msgid "Could not init m_browser"
+msgstr ""
+
+msgid "Suggestion"
+msgstr ""
+
+msgid "How to trouble shooting"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Error opening History dialog: %s"
+msgstr ""
+
+msgid "Unknown error opening History dialog"
+msgstr ""
+
+msgid "Beta"
+msgstr ""
+
+msgid "Deputy"
+msgstr ""
+
+msgid "start_test_sequence"
+msgstr ""
+
+msgid "end_test_sequence"
+msgstr ""
+
+msgid "test bing start..."
+msgstr ""
+
+msgid "[test_bing]: url="
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "test bing ip resolved = %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "status=%u, body=%s, error=%s"
+msgstr ""
+
+msgid "test bing failed"
+msgstr ""
+
+msgid "test bing ok"
+msgstr ""
+
+msgid "test bambulab start..."
+msgstr ""
+
+msgid "[test_bambulab]: url="
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "test bambulab ip resolved = %s"
+msgstr ""
+
+msgid "test bambulab failed"
+msgstr ""
+
+msgid "test bambulab ok"
+msgstr ""
+
+msgid "test http start..."
+msgstr ""
+
+msgid "please login first"
+msgstr ""
+
+msgid "test http ok"
+msgstr ""
+
+msgid "test http failed"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "test http failed, status = %u, error = %s"
+msgstr ""
+
+msgid "please install network module first"
+msgstr ""
+
+msgid "test storage start..."
+msgstr ""
+
+msgid "[test_oss]: url="
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "test oss ip resolved = %s"
+msgstr ""
+
+msgid "test storage failed"
+msgstr ""
+
+msgid "test storage ok"
+msgstr ""
+
+msgid "test storage upgrade start..."
+msgstr ""
+
+msgid "[test_oss_upgrade]: url="
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "test storage upgrade ip resolved = %s"
+msgstr ""
+
+msgid "test storage upgrade failed"
+msgstr ""
+
+msgid "test storage upgrade ok"
+msgstr ""
+
+msgid "app config is nullptr"
+msgstr ""
+
+msgid "test storage download start..."
+msgstr ""
+
+msgid "[test_oss_download]: url="
+msgstr ""
+
+msgid "test storage download failed"
+msgstr ""
+
+msgid "test storage download canceled"
+msgstr ""
+
+#, possible-boost-format
+msgid "downloading %1%%%"
+msgstr ""
+
+msgid "test storage download ok"
+msgstr ""
+
+msgid "test plugin download start..."
+msgstr ""
+
+msgid "[test_plugin_download]: downloadurl="
+msgstr ""
+
+msgid "test plugin download failed"
+msgstr ""
+
+msgid "test plugin download canceled"
+msgstr ""
+
+msgid "test plugin download ok"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The file: %s \nin the directory may have been opened by another program. \nPlease close it and try again."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The file: %s \nmay have been opened by another program. \nPlease close it and try again."
+msgstr ""
+
+msgid "Thin (100)"
+msgstr ""
+
+msgid "Extra light (200)"
+msgstr ""
+
+msgid "Light (300)"
+msgstr ""
+
+msgid "Regular (400)"
+msgstr ""
+
+msgid "Medium (500)"
+msgstr ""
+
+msgid "Semibold (600)"
+msgstr ""
+
+msgid "Bold (700)"
+msgstr ""
+
+msgid "Extra bold (800)"
+msgstr ""
+
+msgid "Black (900)"
+msgstr ""
+
+msgid "Manual profile snapshot"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Level %d"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Autosave: %s"
+msgstr ""
+
+msgid "Additional printer requests were skipped because the 32-printer limit was reached."
+msgstr ""
+
+msgid "HEX"
+msgstr ""
+
+msgid "HEX8"
+msgstr ""
+
+msgid "RGB"
+msgstr ""
+
+msgid "RGBA"
+msgstr ""
+
+msgid "HSL"
+msgstr ""
+
+msgid "HSLA"
+msgstr ""
+
+msgid "HSV"
+msgstr ""
+
+msgid "HWB"
+msgstr ""
+
+msgid "XYZ"
+msgstr ""
+
+msgid "Lab"
+msgstr ""
+
+msgid "LCH"
+msgstr ""
+
+msgid "OKLab"
+msgstr ""
+
+msgid "OKLCH"
+msgstr ""
+
+msgid "CMYK"
+msgstr ""
+
+msgid "sRGB (HSV pick)"
+msgstr ""
+
+msgid "(collapsed)"
+msgstr ""
+
+msgid "[group]"
+msgstr ""
+
+msgid "[pinned]"
+msgstr ""
+
+msgid "[hidden]"
+msgstr ""
+
+msgid "3D"
+msgstr ""
+
+msgid "Light or dark appearance"
+msgstr ""
+
+msgid "Seed color the interface is tinted with"
+msgstr ""
+
+msgid "Interface typeface"
+msgstr ""
+
+msgid "Interface text scale"
+msgstr ""
+
+msgid "Interface language mode"
+msgstr ""
+
+msgid "Cloud login region"
+msgstr ""
+
+msgid "Metric or imperial units"
+msgstr ""
+
+msgid "Dock the Prepare panel on the left, right, top, or bottom"
+msgstr ""
+
+msgid "Multi-device Management"
+msgstr ""
+
+msgid "Support beta version update"
+msgstr ""
+
+msgid "Receive beta version updates"
+msgstr ""
+
+msgid "Join the User Experience Improvement Program"
+msgstr ""
+
+msgid "Downloads"
+msgstr ""
+
+msgid "Folder downloaded files are saved to"
+msgstr ""
+
+msgid "Editor used by File > Open in External Editor"
+msgstr ""
+
+msgid "Executable used by the Custom external editor"
+msgstr ""
+
+msgid "Remember the build plate selected last time per printer model"
+msgstr ""
+
+msgid "12-hour or 24-hour clock"
+msgstr ""
+
+msgid "Keep liveview when printing"
+msgstr ""
+
+msgid "Remove the restriction on mixed printing of high and low temperature filaments"
+msgstr ""
+
+msgid "Auto-fill previously logged-in accounts"
+msgstr ""
+
+msgid "Grabber size for move, rotate and scale tools"
+msgstr ""
+
+msgid "Horizontal tooltip offset"
+msgstr ""
+
+msgid "Vertical tooltip offset"
+msgstr ""
+
+msgid "Collapsible or uncollapsible toolbar"
+msgstr ""
+
+msgid "Show the step mesh parameter setting dialog"
+msgstr ""
+
+msgid "Open full screen camera view on active monitor only"
+msgstr ""
+
+msgid "Backup period in seconds"
+msgstr ""
+
+msgid "Vision-capable Ollama tag"
+msgstr ""
+
+msgid "Minutes between live-view checks"
+msgstr ""
+
+msgid "DEV host"
+msgstr ""
+
+msgid "QA host"
+msgstr ""
+
+msgid "PRE host"
+msgstr ""
+
+msgid "Go to Multi-device"
+msgstr ""
+
+msgid "Manage several printers at once"
+msgstr ""
+
+msgid "Go to Calibration"
+msgstr ""
+
+msgid "Flow, pressure advance and temperature"
+msgstr ""
+
+msgid "Go to Filament"
+msgstr ""
+
+msgid "Filament manager"
+msgstr ""
+
+msgid "Home Assistant printer-discovery API"
+msgstr ""
+
+msgid "Layout clipping inventory"
+msgstr ""
+
+msgid "Generated visual showcase"
+msgstr ""
+
+msgid "Gizmo rail composite SVG completion"
+msgstr ""
+
+msgid "Kit widgets added in the every-element sweep (2026-09-05)"
+msgstr ""
+
+msgid "Runtime layout probe"
+msgstr ""
+
+msgid "Vendored Material Design 3 design system"
+msgstr ""
+
+msgid "MD3 parity register"
+msgstr ""
+
+msgid "Themed surface colors on StaticBox cards"
+msgstr ""
+
+msgid "Toolpath color-scheme legend"
+msgstr ""
+
+msgid "MakerWorld OpenGL preview"
+msgstr ""
+
+msgid "Changelog viewer"
+msgstr ""
+
+msgid "Deployment and the layout gate"
+msgstr ""
+
+msgid "Dim sum surprise"
+msgstr ""
+
+msgid "Language modes and funny levels"
+msgstr ""
+
+msgid "Settings and appearance"
+msgstr ""
+
+msgid "Tabbed navigation"
+msgstr ""
+
+msgid "Dockable Prepare sidebar"
+msgstr ""
+
+msgid "Every process setting shown, no Simple/Advanced filter"
+msgstr ""
+
+msgid "Process settings in the Prepare sidebar"
+msgstr ""
+
+msgid "Release codenames"
+msgstr ""
+
+msgid "Build from source (Windows installer)"
+msgstr ""
+
+msgid "Native Windows installer"
+msgstr ""
+
+msgid "One-click Windows build and installer"
+msgstr ""
+
+msgid "Windows CI and release supply chain"
+msgstr ""
+
+msgid "AI printer watch (local models)"
+msgstr ""
+
+msgid "App updates from this fork's releases"
+msgstr ""
+
+msgid "Appearance customization"
+msgstr ""
+
+msgid "Cloud web-page failure recovery"
+msgstr ""
+
+msgid "Command palette (Ctrl+Shift+F)"
+msgstr ""
+
+msgid "Keyboard, assistive, and responsive GUI accessibility"
+msgstr ""
+
+msgid "Ink terminology (filament → ink, AMS → Ink Dispenser)"
+msgstr ""
+
+msgid "English, Hong Kong Cantonese, and bilingual modes"
+msgstr ""
+
+msgid "Material color picker & color translator"
+msgstr ""
+
+msgid "Native Material Design 3 UI on Windows"
+msgstr ""
+
+msgid "Native Windows visual smoke test"
+msgstr ""
+
+msgid "Print simulation playback (feedrate-true)"
+msgstr ""
+
+msgid "Release splash art (fresh dim sum per release)"
+msgstr ""
+
+msgid "Prepare sidebar search"
+msgstr ""
+
+msgid "Smart home: printer handover, TTS narrator, and alert lights"
+msgstr ""
+
+msgid "Software OpenGL fallback (Mesa llvmpipe)"
+msgstr ""
+
+msgid "Stop-print safety interlock"
+msgstr ""
+
+msgid "Windows-only platform policy"
+msgstr ""
+
+msgid "Config profiles & full-data backup"
+msgstr ""
+
+msgid "Non-blocking notifications"
+msgstr ""
+
+msgid "Preferences auto-history"
+msgstr ""
+
+msgid "Browser-like project tabs"
+msgstr ""
+
+msgid "Project version history"
+msgstr ""
+
+msgid "No key is saved for this provider"
+msgstr ""
+
+msgid "HTTP client unavailable"
+msgstr ""
+
+#, possible-boost-format
+msgid "Provider request failed (HTTP %1%)"
+msgstr ""
+
+msgid "Provider response is not JSON"
+msgstr ""
+
+msgid "Provider did not return text"
+msgstr ""
+
+msgid "Renderer produced no STL mesh"
+msgstr ""
+
+msgid "STL size is outside allowed bounds"
+msgstr ""
+
+msgid "Renderer did not produce a bounded binary STL"
+msgstr ""
+
+msgid "STL ended before all triangles"
+msgstr ""
+
+msgid "STL has invalid or below-plate coordinates"
+msgstr ""
+
+msgid "STL contains no printable surface"
+msgstr ""
+
+msgid "Choose an API provider"
+msgstr ""
+
+msgid "Provider connection could not be completed"
+msgstr ""
+
+#, possible-boost-format
+msgid "Provider key test returned HTTP %1%"
+msgstr ""
+
+msgid "Invalid model, prompt, revision note or timeout"
+msgstr ""
+
+msgid "Cannot create revision directory"
+msgstr ""
+
+msgid "Claude CLI returned no structured scene"
+msgstr ""
+
+msgid "Renderer produced no editable Blender project"
+msgstr ""
+
+msgid "Could not retain revision metadata"
+msgstr ""
+
+msgid "Time Lapse"
+msgstr ""
+
+msgid "Task List"
+msgstr ""
+
+msgid "Additional printer requests were skipped because the 32-printer limit was reached"
+msgstr ""
+
+msgid ": transport error"
+msgstr ""
+
+msgid ": "
+msgstr ""
+
+msgid "HTTP "
+msgstr ""
+
+msgid "transport error"
+msgstr ""
+
+#, possible-boost-format
+msgid "Post-processing script %1% failed.\n\nThe post-processing script is expected to change the G-code file %2% in place, but the G-code file was deleted and likely saved under a new name.\nPlease adjust the post-processing script to change the G-code in place and consult the manual on how to optionally rename the post-processed G-code file.\n"
+msgstr ""

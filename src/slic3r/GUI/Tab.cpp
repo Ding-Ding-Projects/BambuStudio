@@ -2115,7 +2115,7 @@ static bool suggest_disable_thick_bridges_if_needed(DynamicPrintConfig *config, 
     }
     msg_text += "\n" + _L("Do you want to apply these settings?");
 
-    MessageDialog dialog(wxGetApp().plater(), msg_text, "Suggestion", wxICON_WARNING | wxYES | wxNO);
+    MessageDialog dialog(wxGetApp().plater(), msg_text, _L("Suggestion"), wxICON_WARNING | wxYES | wxNO);
     if (dialog.ShowModal() == wxID_YES)
         config_manipulation.apply(config, &filtered_conf);
     wxGetApp().plater()->update();
@@ -2442,7 +2442,7 @@ void Tab::on_value_change(const std::string& opt_key, const boost::any& value)
             msg_text += "\n\n" + _L("Change these settings automatically? \n"
                                     "Yes - Change these settings automatically\n"
                                     "No  - Do not change these settings for me");
-            MessageDialog      dialog(wxGetApp().plater(), msg_text, "Suggestion", wxICON_WARNING | wxYES | wxNO);
+            MessageDialog      dialog(wxGetApp().plater(), msg_text, _L("Suggestion"), wxICON_WARNING | wxYES | wxNO);
             DynamicPrintConfig new_conf = *m_config;
             if (dialog.ShowModal() == wxID_YES) {
                 new_conf.set_key_value("support_top_z_distance", new ConfigOptionFloat(0));
@@ -2658,7 +2658,7 @@ void Tab::on_value_change(const std::string& opt_key, const boost::any& value)
                     msg_text += "\n" + _L("Do you want to apply these settings?");
                 }
 
-                MessageDialog dialog(wxGetApp().plater(), msg_text, "Suggestion", wxICON_WARNING | wxYES | wxNO);
+                MessageDialog dialog(wxGetApp().plater(), msg_text, _L("Suggestion"), wxICON_WARNING | wxYES | wxNO);
                 if (dialog.ShowModal() == wxID_YES) {
                     if (soluble_suggestion && thick_bridges_in_recommendation)
                         append_disable_thick_bridges_if_needed(filtered_conf, *m_config);

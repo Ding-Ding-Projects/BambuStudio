@@ -275,6 +275,9 @@ wxString localized_printer_import_error(const std::string &error)
     if (error == "A Home Assistant printer import is already in progress")
         return localized_stacked(
             "A Home Assistant printer import is already in progress.");
+    if (error == "Additional printer requests were skipped because the 32-printer limit was reached")
+        return localized_stacked(
+            "Additional printer requests were skipped because the 32-printer limit was reached.");
 
     // The printer-import callback is still string-based. Keep unexpected
     // diagnostics bounded before placing them in a localized wrapper.

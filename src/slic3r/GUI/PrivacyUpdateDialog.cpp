@@ -37,7 +37,7 @@ PrivacyUpdateDialog::PrivacyUpdateDialog(wxWindow* parent, wxWindowID id, const 
     //webview — hosted in the kit body (pad 0/24)
     m_vebview_release_note = CreateTipView(this);
     if (m_vebview_release_note == nullptr) {
-        wxLogError("Could not init m_browser");
+        wxLogError(_L("Could not init m_browser"));
         return;
     }
     m_vebview_release_note->SetBackgroundColour(StateColor::semantic(MD3::Role::Surface));

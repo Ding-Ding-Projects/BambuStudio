@@ -37,6 +37,38 @@ namespace {
 constexpr int HISTORY_POLL_INTERVAL_MS = 75;
 constexpr std::size_t HISTORY_INITIAL_LIMIT = 500;
 
+// Project-history commit messages are persisted verbatim, in English, into an
+// on-disk Git repository (see ProjectHistoryManager and the L() markers on
+// their call sites in Plater.cpp, MainFrame.cpp and ConfigProfilesDialog.cpp).
+// Translating the stored text would bake a non-English string into that
+// history forever, so the raw English is kept on disk and only ever
+// translated here, at display time, for the dialog's Message column. A
+// message this table does not recognize (an arbitrary Undo/Redo snapshot
+// name, for instance) is shown exactly as stored.
+wxString translate_known_history_reason(const wxString &reason)
+{
+    // Only the English keys are cached in this table; each match is translated
+    // with a fresh _() call below so a live language-mode switch is picked up
+    // immediately, the same as every other _L()/_() call in this file.
+    static const wxString known[] = {
+        "Project edit",
+        "Project settings changed",
+        "Assembly undo or redo",
+        "Undo or redo",
+        "Autosave before closing project",
+        "Autosave before shutdown",
+        "Project edit before workspace save",
+        "Project edit before save",
+        "Project edit before current-version export",
+        "Project edit before restore",
+        "Project edit before opening version history",
+    };
+    for (const wxString &candidate : known)
+        if (reason == candidate)
+            return _(candidate);
+    return reason;
+}
+
 wxRect active_display_work_area(wxWindow *window)
 {
     int display_index = window != nullptr ? wxDisplay::GetFromWindow(window) : wxNOT_FOUND;
@@ -888,7 +920,28 @@ wxString ProjectHistoryDialog::display_message(const std::string &message)
     result.Replace("\r", " ");
     result.Replace("\n", " ");
     result.Trim(true).Trim(false);
-    return result.empty() ? _L("Project snapshot") : result;
+    if (result.empty())
+        return _L("Project snapshot");
+
+    // A handful of standalone reasons are stored exactly as one of these
+    // literals (see the L() markers in Plater.cpp and ConfigProfilesDialog.cpp).
+    if (result == "Autosave project snapshot")  return _L("Autosave project snapshot");
+    if (result == "Recovered unsaved project")  return _L("Recovered unsaved project");
+    if (result == "Saved workspace member")     return _L("Saved workspace member");
+    if (result == "Saved project")              return _L("Saved project");
+    if (result == "Manual profile snapshot")    return _L("Manual profile snapshot");
+
+    // Everything else that went through materialize_project_history_event()
+    // is stored as "Autosave: <reason>"; translate the recognized reasons and
+    // the fixed prefix, and leave an unrecognized (free-form snapshot name)
+    // reason exactly as stored.
+    static const wxString autosave_prefix = "Autosave: ";
+    if (result.StartsWith(autosave_prefix)) {
+        const wxString inner = result.Mid(autosave_prefix.size());
+        return wxString::Format(_L("Autosave: %s"), translate_known_history_reason(inner));
+    }
+
+    return translate_known_history_reason(result);
 }
 
 void ProjectHistoryDialog::on_export(wxCommandEvent &)

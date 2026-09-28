@@ -800,11 +800,11 @@ void HelioStatementDialog::create_pat_page()
                 BOOST_LOG_TRIVIAL(info) << "Dialog closed";
             } catch (const std::exception& ex) {
                 BOOST_LOG_TRIVIAL(error) << "Error opening History dialog: " << ex.what();
-                MessageDialog dlg(nullptr, wxString::Format("Error opening History dialog: %s", ex.what()), "Error", wxOK | wxICON_ERROR);
+                MessageDialog dlg(nullptr, wxString::Format(_L("Error opening History dialog: %s"), ex.what()), _L("Error"), wxOK | wxICON_ERROR);
                 dlg.ShowModal();
             } catch (...) {
                 BOOST_LOG_TRIVIAL(error) << "Unknown error opening History dialog";
-                MessageDialog dlg(nullptr, "Unknown error opening History dialog", "Error", wxOK | wxICON_ERROR);
+                MessageDialog dlg(nullptr, _L("Unknown error opening History dialog"), _L("Error"), wxOK | wxICON_ERROR);
                 dlg.ShowModal();
             }
         });

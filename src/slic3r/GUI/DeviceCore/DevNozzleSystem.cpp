@@ -32,12 +32,16 @@ wxString DevNozzle::GetNozzleFlowTypeStr(NozzleFlowType type)
 
 std::string DevNozzle::GetNozzleFlowTypeString(NozzleFlowType type)
 {
+    // Raw, untranslated values: used for comparisons (ToNozzleFlowType()) and
+    // persisted/sent to the printer (see DevFilaSystem.cpp, SelectMachine.cpp).
+    // L() only marks them for extraction; GetNozzleFlowTypeStr() above returns
+    // the translated wxString for display.
     switch (type) {
-        case NozzleFlowType::H_FLOW: return "High Flow";
-        case NozzleFlowType::S_FLOW: return "Standard";
-        case NozzleFlowType::U_FLOW: return "TPU High Flow";
-        case NozzleFlowType::E_FLOW: return "E3D High Flow";
-        default: return "Unknown";
+        case NozzleFlowType::H_FLOW: return L("High Flow");
+        case NozzleFlowType::S_FLOW: return L("Standard");
+        case NozzleFlowType::U_FLOW: return L("TPU High Flow");
+        case NozzleFlowType::E_FLOW: return L("E3D High Flow");
+        default: return L("Unknown");
     }
 }
 
@@ -369,12 +373,15 @@ DevNozzle DevNozzleSystem::GetExtNozzle(int id) const
 
 std::string DevNozzle::GetNozzleTypeString(NozzleType type)
 {
+    // Raw, untranslated values, matching GetNozzleFlowTypeString() above: L()
+    // only marks them for extraction. GetNozzleTypeStr() returns the
+    // translated wxString for display.
     switch (type) {
-    case Slic3r::ntHardenedSteel:   return "Hardened Steel";
-    case Slic3r::ntStainlessSteel:  return "Stainless Steel";
-    case Slic3r::ntTungstenCarbide: return "Tungsten Carbide";
-    case Slic3r::ntBrass:           return "Brass";
-    default:                        return "Unknown";
+    case Slic3r::ntHardenedSteel:   return L("Hardened Steel");
+    case Slic3r::ntStainlessSteel:  return L("Stainless Steel");
+    case Slic3r::ntTungstenCarbide: return L("Tungsten Carbide");
+    case Slic3r::ntBrass:           return L("Brass");
+    default:                        return L("Unknown");
     }
 }
 

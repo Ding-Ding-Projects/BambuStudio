@@ -3684,8 +3684,8 @@ std::string ExportConfigsDialog::initial_file_path(const wxString &path, const s
             try {
                 boost::filesystem::remove_all(printer_export_path);
             } catch (...) {
-                show_error(this, _L(wxString::Format("The file: %s \nin the directory may have been opened by another program. \nPlease close it and try again.",
-                                                      encode_path(printer_export_path.string().c_str()))));
+                show_error(this, wxString::Format(_L("The file: %s \nin the directory may have been opened by another program. \nPlease close it and try again."),
+                                                      encode_path(printer_export_path.string().c_str())));
                 return "initial_failed";
             }
             BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << "delete path";
@@ -3735,8 +3735,8 @@ std::string ExportConfigsDialog::initial_file_name(const wxString &path, const s
                 boost::filesystem::remove_all(printer_export_path);
             }
             catch(...) {
-                show_error(this, _L(wxString::Format("The file: %s \nmay have been opened by another program. \nPlease close it and try again.",
-                                                      encode_path(printer_export_path.string().c_str()))));
+                show_error(this, wxString::Format(_L("The file: %s \nmay have been opened by another program. \nPlease close it and try again."),
+                                                      encode_path(printer_export_path.string().c_str())));
                 return "initial_failed";
             }
             export_path = printer_export_path.string();

@@ -370,6 +370,31 @@ wxString scope_title(TabSearchDialog::Scope s)
     }
     return _L("Search tabs");
 }
+
+// SearchHit::describe() (TabStripModel.hpp) is deliberately GUI_App-free and
+// header-only, tested by tests/tab_strip with only wx core linked and its
+// exact raw English asserted on directly, so it cannot call _L()/_(). This
+// mirrors its layout for the dialog's own visible list, translating the four
+// fixed annotations that describe() always appends in English.
+wxString translated_describe(const MD3::Tabs::SearchHit &hit)
+{
+    wxString s = hit.surface;
+    if (!hit.strip.IsEmpty() && hit.strip != hit.surface)
+        s << wxString::FromUTF8(" \xE2\x80\xBA ") << hit.strip;
+    if (!hit.group.IsEmpty()) {
+        s << wxString::FromUTF8(" \xE2\x80\xBA ") << hit.group;
+        if (hit.group_collapsed)
+            s << " " << _L("(collapsed)");
+    }
+    s << wxString::FromUTF8(" \xE2\x80\xBA ") << hit.title;
+    if (hit.is_group)
+        s << " " << _L("[group]");
+    if (hit.pinned)
+        s << " " << _L("[pinned]");
+    if (hit.hidden)
+        s << " " << _L("[hidden]");
+    return s;
+}
 } // namespace
 
 TabSearchDialog::TabSearchDialog(wxWindow *parent, wxWindow *anchor, Scope scope, std::vector<TabStrip *> strips, int group_id)
@@ -433,7 +458,7 @@ void TabSearchDialog::Refilter()
     }
     std::vector<wxString> rows;
     for (const Row &r : m_rows)
-        rows.push_back(r.hit.describe());
+        rows.push_back(translated_describe(r.hit));
     m_list->Set(rows);
     if (!rows.empty())
         m_list->SetSelection(0);

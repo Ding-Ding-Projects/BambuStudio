@@ -119,6 +119,12 @@ std::string NotificationHistory::level_name(int level)
 
 std::string NotificationHistory::level_display(int level)
 {
+    // NotificationHistory.cpp is a pure, GUI_App- and wxWidgets-free C++17
+    // model: tests/notification_center links it standalone with no wx include
+    // path at all, so it cannot use L()/_L() (both live in slic3r/GUI/I18N.hpp,
+    // which pulls in <wx/intl.h>) and its exact English is asserted on by
+    // notification_center_tests.cpp. Callers that display this to the user
+    // (NotificationCenterPanel.cpp) translate the returned value themselves.
     switch (level) {
     case 1: return "Progress";
     case 2: return "Hint";

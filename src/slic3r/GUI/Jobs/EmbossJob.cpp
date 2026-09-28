@@ -121,7 +121,7 @@ ExPolygons create_shape(DataBase &input)
 void _update_volume(TriangleMesh &&mesh, const DataUpdate &data, const Transform3d *tr)
 {
     // for sure that some object will be created
-    if (mesh.its.empty()) return create_message("Empty mesh can't be created.");
+    if (mesh.its.empty()) return create_message(_u8L("Empty mesh can't be created."));
 
     Plater *plater = wxGetApp().plater();
     // Check gizmo is still open otherwise job should be canceled
@@ -186,7 +186,7 @@ bool is_valid(ModelVolumeType volume_type)
 
 void recreate_model_volume(ModelObject *model_object, int volume_idx, const TriangleMesh &mesh, Geometry::Transformation &text_tran, TextInfo &text_info)
 {
-    wxGetApp() .plater()->take_snapshot("Modify Text");
+    wxGetApp() .plater()->take_snapshot(_u8L("Modify Text"));
 
     ModelVolume *model_volume     = model_object->volumes[volume_idx];
     ModelVolume *new_model_volume = model_object->add_volume(mesh, false);
@@ -204,7 +204,7 @@ void recreate_model_volume(ModelObject *model_object, int volume_idx, const Tria
 
 void create_text_volume(Slic3r::ModelObject *model_object, const TriangleMesh &mesh, Geometry::Transformation &text_tran, TextInfo &text_info)
 {
-    wxGetApp().plater()->take_snapshot("create_text_volume");
+    wxGetApp().plater()->take_snapshot(_u8L("create_text_volume"));
 
     ModelVolume *new_model_volume = model_object->add_volume(mesh, false);
     new_model_volume->calculate_convex_hull();
@@ -341,7 +341,7 @@ UpdateSurfaceVolumeJob::UpdateSurfaceVolumeJob(UpdateSurfaceVolumeData &&input) 
 void UpdateSurfaceVolumeJob::process(Ctl &ctl)
 {
     if (!check(m_input))
-        throw JobException("Bad input data for UseSurfaceJob.");
+        throw JobException(_u8L("Bad input data for UseSurfaceJob.").c_str());
     m_result = cut_surface(*m_input.base, m_input); //, was_canceled(ctl, *m_input.base)
 }
 bool UpdateSurfaceVolumeJob::is_use_surfae_error =false;
@@ -360,13 +360,13 @@ UpdateJob::UpdateJob(DataUpdate &&input) : m_input(std::move(input)) {}
 void UpdateJob::process(Ctl &ctl)
 {
     if (!check(m_input))
-        throw JobException("Bad input data for EmbossUpdateJob.");
+        throw JobException(_u8L("Bad input data for EmbossUpdateJob.").c_str());
 
     m_result = try_create_mesh(*m_input.base);
     if (was_canceled(ctl, *m_input.base))
         return;
     if (m_result.its.empty())
-        throw JobException("Created text volume is empty. Change text or font.");
+        throw JobException(_u8L("Created text volume is empty. Change text or font.").c_str());
 }
 
 void UpdateJob::finalize(bool canceled, std::exception_ptr &eptr)
@@ -413,7 +413,7 @@ CreateObjectJob::CreateObjectJob(DataCreateObject &&input) : m_input(std::move(i
 void CreateObjectJob::process(Ctl &ctl)
 {
     if (!check(m_input))
-        throw JobException("Bad input data for EmbossCreateObjectJob.");
+        throw JobException(_u8L("Bad input data for EmbossCreateObjectJob.").c_str());
 
     // can't create new object with using surface
     if (m_input.base->shape.projection.use_surface) m_input.base->shape.projection.use_surface = false;
@@ -457,7 +457,7 @@ void CreateObjectJob::finalize(bool canceled, std::exception_ptr &eptr)
     if (!_finalize(canceled, eptr, *m_input.base)) return;
     // only for sure
     if (m_result.empty() && m_results.empty()) {
-        create_message("Can't create empty object.");
+        create_message(_u8L("Can't create empty object."));
         return;
     }
     GUI_App &app    = wxGetApp();
@@ -494,7 +494,7 @@ void CreateObjectJob::finalize(bool canceled, std::exception_ptr &eptr)
             }
 
         } else {
-            create_message("CreateObjectJob:unknown error.");
+            create_message(_u8L("CreateObjectJob:unknown error."));
         }
         // set transformation
         Slic3r::Geometry::Transformation tr(m_transformation);
@@ -528,7 +528,7 @@ CreateSurfaceVolumeJob::CreateSurfaceVolumeJob(CreateSurfaceVolumeData &&input) 
 void CreateSurfaceVolumeJob::process(Ctl &ctl)
 {
     if (!check(m_input))
-        throw JobException("Bad input data for CreateSurfaceVolumeJob.");
+        throw JobException(_u8L("Bad input data for CreateSurfaceVolumeJob.").c_str());
     m_result = cut_surface(*m_input.base, m_input); // was_canceled(ctl, *m_input.base)
 }
 void CreateSurfaceVolumeJob::finalize(bool canceled, std::exception_ptr &eptr)
@@ -544,7 +544,7 @@ CreateVolumeJob::CreateVolumeJob(DataCreateVolume &&input) : m_input(std::move(i
 void CreateVolumeJob::process(Ctl &ctl)
 {
     if (!check(m_input))
-        throw JobException("Bad input data for EmbossCreateVolumeJob.");
+        throw JobException(_u8L("Bad input data for EmbossCreateVolumeJob.").c_str());
     m_result = create_mesh(*m_input.base);
 }
 
@@ -552,7 +552,7 @@ void CreateVolumeJob::finalize(bool canceled, std::exception_ptr &eptr)
 {
     if (!_finalize(canceled, eptr, *m_input.base))
         return;
-    if (m_result.its.empty()) return create_message("Can't create empty volume.");
+    if (m_result.its.empty()) return create_message(_u8L("Can't create empty volume."));
     create_volume(std::move(m_result), m_input.object_id, m_input.volume_type, m_input.trmat, *m_input.base, m_input.gizmo_type);
 }
 /// Update Volume
@@ -689,7 +689,7 @@ TriangleMesh create_mesh(DataBase &input)
 
     if (result.its.empty()) {
         result = create_default_mesh();
-        create_message("It is used default volume for embossed text, try to change text or font to fix it.");
+        create_message(_u8L("It is used default volume for embossed text, try to change text or font to fix it."));
         // only info
         /*ctl.call_on_main_thread([]() {
             create_message("It is used default volume for embossed text, try to change text or font to fix it.");
@@ -742,9 +742,9 @@ void create_volume(
 
     // Parent object for text volume was propably removed.
     // Assumption: User know what he does, so text volume is no more needed.
-    if (obj == nullptr) return create_message("Bad object to create volume.");
+    if (obj == nullptr) return create_message(_u8L("Bad object to create volume."));
 
-    if (mesh.its.empty()) return create_message("Can't create empty volume.");
+    if (mesh.its.empty()) return create_message(_u8L("Can't create empty volume."));
 
     plater->take_snapshot(_u8L("Add Emboss text Volume"));
 
@@ -1349,7 +1349,7 @@ void calc_position_points(std::vector<Vec3d> &position_points, std::vector<doubl
 {
     auto text_num = text_lengths.size();
     if (text_num == 0) {
-        throw JobException("calc_position_points fail.");
+        throw JobException(_u8L("calc_position_points fail.").c_str());
         return;
     }
     if (position_points.size() != text_lengths.size()) { position_points.resize(text_num); }
@@ -1463,10 +1463,10 @@ void GenerateTextJob::process(Ctl &ctl)
         return;
     }
     if (!update_text_positions(m_input)) {
-        throw JobException("update_text_positions fail.");
+        throw JobException(_u8L("update_text_positions fail.").c_str());
     }
     if (!generate_text_points(m_input))
-       throw JobException("generate_text_volume fail.");
+       throw JobException(_u8L("generate_text_volume fail.").c_str());
     if (m_input.use_surface) {
         if (m_input.m_text_shape.shapes_with_ids.empty())
             throw JobException(_u8L("Font doesn't have any shape for given text.").c_str());
@@ -1913,7 +1913,7 @@ bool GenerateTextJob::generate_text_points(InputInfo &input_info)
                 if (!cut.hit) {
                     BOOST_LOG_TRIVIAL(info) << boost::format("Text: the hit polygon is null,") << "x:" << m_text_position_in_world.x()
                                             << ",y:" << m_text_position_in_world.y() << ",z:" << m_text_position_in_world.z();
-                    throw JobException("The hit polygon is null,please try to regenerate after adjusting text position.");
+                    throw JobException(_u8L("The hit polygon is null,please try to regenerate after adjusting text position.").c_str());
                 }
             }
         }
@@ -2226,7 +2226,7 @@ void CreateObjectTextJob::process(Ctl &ctl) {
 void CreateObjectTextJob::finalize(bool canceled, std::exception_ptr &eptr) {
     if (canceled || eptr) return;
     if (m_input.m_position_points.empty())
-        return create_message("Can't create empty object.");
+        return create_message(_u8L("Can't create empty object."));
 
     TriangleMesh final_mesh;
     for (int i = 0; i < m_input.m_position_points.size();i++) {
@@ -2240,7 +2240,7 @@ void CreateObjectTextJob::finalize(bool canceled, std::exception_ptr &eptr) {
 
     GUI_App &app    = wxGetApp();
     Plater * plater = app.plater();
-    plater->take_snapshot("Add text object on plate");
+    plater->take_snapshot(_u8L("Add text object on plate"));
     auto   center = plater->get_partplate_list().get_curr_plate()->get_bounding_box().center();
     Model &model = plater->model();
     {

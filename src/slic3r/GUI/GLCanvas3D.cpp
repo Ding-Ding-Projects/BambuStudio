@@ -10480,12 +10480,14 @@ void GLCanvas3D::_render_imgui_select_plate_toolbar()
         // draw text
         GImGui->FontSize = 15.0f;
         ImGui::PushStyleColor(ImGuiCol_Text, text_clr);
-        ImVec2 text_size = ImGui::CalcTextSize(("All Plates"));
+        const std::string all_plates_label = _u8L("All Plates");
+        const std::string stats_label      = _u8L("Stats");
+        ImVec2 text_size = ImGui::CalcTextSize(all_plates_label.c_str());
         ImVec2 text_start_pos = ImVec2(start_pos.x + (button_width - text_size.x) / 2, start_pos.y + 3.0f * button_height / 5.0f);
-        ImGui::RenderText(text_start_pos, ("All Plates"));
-        text_size = ImGui::CalcTextSize(("Stats"));
+        ImGui::RenderText(text_start_pos, all_plates_label.c_str());
+        text_size = ImGui::CalcTextSize(stats_label.c_str());
         text_start_pos = ImVec2(start_pos.x + (button_width - text_size.x) / 2, text_start_pos.y + ImGui::GetTextLineHeight());
-        ImGui::RenderText(text_start_pos, ("Stats"));
+        ImGui::RenderText(text_start_pos, stats_label.c_str());
         ImGui::PopStyleColor();
         ImGui::SetWindowFontScale(1.2f);
     }

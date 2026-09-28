@@ -1202,10 +1202,10 @@ static void check_objects_after_cut(const ModelObjectPtrs &objects)
     if (!err_objects_names.empty()) {
         wxString names = from_u8(err_objects_names[0]);
         for (size_t i = 1; i < err_objects_names.size(); i++) names += ", " + from_u8(err_objects_names[i]);
-        WarningDialog(plater, format_wxstr("Objects(%1%) have duplicated connectors. "
+        WarningDialog(plater, format_wxstr(_L("Objects(%1%) have duplicated connectors. "
                                            "Some connectors may be missing in slicing result.\n"
                                            "Please report to BambuSudio team in which scenario this issue happened.\n"
-                                           "Thank you.",
+                                           "Thank you."),
                                            names))
             .ShowModal();
     }

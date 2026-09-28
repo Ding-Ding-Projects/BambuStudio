@@ -245,7 +245,7 @@ void CommandPalette::collect_entries()
     // --- Documentation articles (docs/features) -----------------------------
     for (const PaletteIndex::Article &a : PaletteIndex::documentation_articles()) {
         const wxString url = PaletteIndex::article_url(a);
-        m_entries.push_back({MaterialIcon::MenuBook, _L("Documentation") + " / " + wxString::FromUTF8(a.title),
+        m_entries.push_back({MaterialIcon::MenuBook, _L("Documentation") + " / " + _(a.title),
                              wxString::FromUTF8(a.path),
                              [url]() { wxGetApp().open_browser_with_warning_dialog(url); }});
     }

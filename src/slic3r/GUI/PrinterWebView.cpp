@@ -28,7 +28,7 @@ PrinterWebView::PrinterWebView(wxWindow *parent, const wxString &view_name, WebV
       // Create the webview
     m_browser = WebView::CreateWebView(this, "", view_name, mode);
     if (m_browser == nullptr) {
-        wxLogError("Could not init m_browser");
+        wxLogError(_L("Could not init m_browser"));
         return;
     }
     if (mode == WebViewProtectionMode::DeviceHost) {

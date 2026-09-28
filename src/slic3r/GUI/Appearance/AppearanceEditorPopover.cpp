@@ -59,10 +59,13 @@ const std::vector<const char *> &bundled_faces()
 struct WeightChoice { int value; const char *label; };
 const std::vector<WeightChoice> &weight_choices()
 {
+    // label is untranslated here (matched only by index/value above); the
+    // combo box entries are translated with _L(w.label) where they are
+    // appended below. L() only marks these literals for extraction.
     static const std::vector<WeightChoice> w = {
-        {100, "Thin (100)"},     {200, "Extra light (200)"}, {300, "Light (300)"},
-        {400, "Regular (400)"},  {500, "Medium (500)"},      {600, "Semibold (600)"},
-        {700, "Bold (700)"},     {800, "Extra bold (800)"},  {900, "Black (900)"},
+        {100, L("Thin (100)")},     {200, L("Extra light (200)")}, {300, L("Light (300)")},
+        {400, L("Regular (400)")},  {500, L("Medium (500)")},      {600, L("Semibold (600)")},
+        {700, L("Bold (700)")},     {800, L("Extra bold (800)")},  {900, L("Black (900)")},
     };
     return w;
 }

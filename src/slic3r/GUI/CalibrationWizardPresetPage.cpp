@@ -1175,7 +1175,7 @@ void CalibrationPresetPage::create_multi_extruder_filament_list_panel(wxWindow *
     {
         m_main_filament_cali_panel = new wxPanel(parent);
         // 1. Preview item
-        m_main_sizer              = new wxStaticBoxSizer(wxVERTICAL, m_main_filament_cali_panel, "Main");
+        m_main_sizer              = new wxStaticBoxSizer(wxVERTICAL, m_main_filament_cali_panel, _L("Main"));
         m_main_ams_preview_panel  = new wxPanel(m_main_filament_cali_panel);
         m_main_sizer->Add(m_main_ams_preview_panel);
         m_main_filament_cali_panel->SetSizer(m_main_sizer);
@@ -1193,7 +1193,7 @@ void CalibrationPresetPage::create_multi_extruder_filament_list_panel(wxWindow *
     {
         m_deputy_filament_cali_panel = new wxPanel(parent);
         // 1. Preview item
-        m_deputy_sizer             = new wxStaticBoxSizer(wxVERTICAL, m_deputy_filament_cali_panel, "Deputy");
+        m_deputy_sizer             = new wxStaticBoxSizer(wxVERTICAL, m_deputy_filament_cali_panel, _L("Deputy"));
         m_deputy_ams_preview_panel = new wxPanel(m_deputy_filament_cali_panel);
         m_deputy_sizer->Add(m_deputy_ams_preview_panel);
         m_deputy_filament_cali_panel->SetSizer(m_deputy_sizer);

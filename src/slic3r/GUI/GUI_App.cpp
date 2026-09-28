@@ -864,28 +864,37 @@ struct FileWildcards {
     std::vector<std::string_view> file_extensions;
 };
 
+// Titles are marked with L() for extraction; file_wildcards() below translates
+// data.title at display time when it builds the file-dialog filter string.
+// The L() argument is a plain literal (no "sv" suffix) even though the field
+// is std::string_view: xgettext's --keyword=L scan expects an ordinary string
+// literal token, and a trailing user-defined-literal suffix inside the call is
+// not something every xgettext version is guaranteed to still associate with
+// the keyword. The plain const char* literal converts to string_view via its
+// non-explicit constructor at aggregate-initialization time, same as it always
+// has for a literal with no suffix, so this changes nothing at runtime.
 static const FileWildcards file_wildcards_by_type[FT_SIZE] = {
-    /* FT_STEP */    { "STEP files"sv,      { ".stp"sv, ".step"sv } },
-    /* FT_STL */     { "STL files"sv,       { ".stl"sv } },
-    /* FT_OBJ */     { "OBJ files"sv,       { ".obj"sv } },
-    /* FT_AMF */     { "AMF files"sv,       { ".amf"sv, ".zip.amf"sv, ".xml"sv } },
-    /* FT_3MF */     { "3MF files"sv,       { ".3mf"sv } },
-    /* FT_GCODE_3MF */ {"Gcode 3MF files"sv, {".gcode.3mf"sv}},
-    /* FT_GCODE */   { "G-code files"sv,    { ".gcode"sv } },
+    /* FT_STEP */    { L("STEP files"),      { ".stp"sv, ".step"sv } },
+    /* FT_STL */     { L("STL files"),       { ".stl"sv } },
+    /* FT_OBJ */     { L("OBJ files"),       { ".obj"sv } },
+    /* FT_AMF */     { L("AMF files"),       { ".amf"sv, ".zip.amf"sv, ".xml"sv } },
+    /* FT_3MF */     { L("3MF files"),       { ".3mf"sv } },
+    /* FT_GCODE_3MF */ {L("Gcode 3MF files"), {".gcode.3mf"sv}},
+    /* FT_GCODE */   { L("G-code files"),    { ".gcode"sv } },
 #ifdef __APPLE__
     /* FT_MODEL */
-    {"Supported files"sv, {".3mf"sv, ".stl"sv, ".oltp"sv, ".stp"sv, ".step"sv, ".svg"sv, ".amf"sv, ".obj"sv, ".gltf"sv, ".glb"sv, ".fbx"sv, ".usd"sv, ".usda"sv, ".usdc"sv, ".usdz"sv, ".abc"sv, ".ply"sv}},
+    {L("Supported files"), {".3mf"sv, ".stl"sv, ".oltp"sv, ".stp"sv, ".step"sv, ".svg"sv, ".amf"sv, ".obj"sv, ".gltf"sv, ".glb"sv, ".fbx"sv, ".usd"sv, ".usda"sv, ".usdc"sv, ".usdz"sv, ".abc"sv, ".ply"sv}},
 #else
     /* FT_MODEL */
-    {"Supported files"sv, {".3mf"sv, ".stl"sv, ".oltp"sv, ".stp"sv, ".step"sv, ".svg"sv, ".amf"sv, ".obj"sv, ".gltf"sv, ".glb"sv, ".fbx"sv}},
+    {L("Supported files"), {".3mf"sv, ".stl"sv, ".oltp"sv, ".stp"sv, ".step"sv, ".svg"sv, ".amf"sv, ".obj"sv, ".gltf"sv, ".glb"sv, ".fbx"sv}},
 #endif
-    /* FT_PROJECT */ { "Project files"sv,   { ".3mf"sv} },
-    /* FT_GALLERY */ { "Known files"sv,     { ".stl"sv, ".obj"sv } },
+    /* FT_PROJECT */ { L("Project files"),   { ".3mf"sv} },
+    /* FT_GALLERY */ { L("Known files"),     { ".stl"sv, ".obj"sv } },
 
-    /* FT_INI */     { "INI files"sv,       { ".ini"sv } },
-    /* FT_SVG */     { "SVG files"sv,       { ".svg"sv } },
-    /* FT_TEX */     { "Texture"sv,         { ".png"sv, ".svg"sv } },
-    /* FT_SL1 */     { "Masked SLA files"sv, { ".sl1"sv, ".sl1s"sv } },
+    /* FT_INI */     { L("INI files"),       { ".ini"sv } },
+    /* FT_SVG */     { L("SVG files"),       { ".svg"sv } },
+    /* FT_TEX */     { L("Texture"),         { ".png"sv, ".svg"sv } },
+    /* FT_SL1 */     { L("Masked SLA files"), { ".sl1"sv, ".sl1s"sv } },
 };
 
 // This function produces a Win32 file dialog file template mask to be consumed by wxWidgets on all platforms.
@@ -940,7 +949,7 @@ wxString file_wildcards(FileType file_type, const std::string &custom_extension)
             mask += ";*";
             mask += boost::to_upper_copy(std::string(ext));
         }
-    return GUI::format_wxstr("%s (%s)|%s", data.title, title, mask);
+    return GUI::format_wxstr("%s (%s)|%s", _u8L(std::string(data.title)), title, mask);
 }
 
 static std::string libslic3r_translate_callback(const char *s) { return I18N::translate_utf8(s); }
@@ -3045,6 +3054,10 @@ bool GUI_App::OnInit()
 
 int GUI_App::OnExit()
 {
+    // The bilingual decorator is an event filter with a timer; remove it while
+    // the event loop still exists.
+    I18N::enable_bilingual_decorator(false);
+
     // Stop Home Assistant workers while wx and AppConfig are still alive.
     // This is idempotent with the normal MainFrame -> GUI_App shutdown path.
     HomeAssistant::shutdown();
@@ -3053,10 +3066,6 @@ int GUI_App::OnExit()
 #endif
 
     Slic3r::HelioQuery::shutdown_background_requests();
-
-    // The bilingual decorator is an event filter with a timer; remove it while
-    // the event loop still exists.
-    I18N::enable_bilingual_decorator(false);
 
     stop_sync_user_preset();
 
@@ -7324,14 +7333,18 @@ bool GUI_App::load_language(wxString language, bool initial)
             // mainframe and full GUI_App state are alive, so the MD3-styled
             // MessageDialog can be used. Deliberately untranslated text: the
             // language catalog just failed to load.
-            MessageDialog msg_dlg(mainframe, message, "Bambu Studio - Switching language failed", wxOK | wxICON_ERROR);
+            // The title bar is translated via the still-active (working) language
+            // catalog, not the target one that just failed to load, so this is
+            // safe; the detailed diagnostic body above stays untranslated per the
+            // comment on it.
+            MessageDialog msg_dlg(mainframe, message, wxString(SLIC3R_APP_FULL_NAME) + " - " + _L("Switching language failed"), wxOK | wxICON_ERROR);
             msg_dlg.ShowModal();
         } else {
             // Initial load_language() runs in on_init_inner() before any window
             // exists (and exits the process right after); the styled dialog
             // shell (fonts, dark-mode state, mainframe parent) is not available
             // yet, so the native message box is the correct choice here.
-            wxMessageBox(message, "Bambu Studio - Switching language failed", wxOK | wxICON_ERROR);
+            wxMessageBox(message, wxString(SLIC3R_APP_FULL_NAME) + " - " + _L("Switching language failed"), wxOK | wxICON_ERROR);
         }
         if (initial)
 			std::exit(EXIT_FAILURE);
@@ -7380,6 +7393,10 @@ bool GUI_App::load_language(wxString language, bool initial)
     }
     ::Label::initSysFont(I18N::language_mode_profile().font_language, false);
 
+    // Bilingual mode: legacy lookups show English and record the Cantonese
+    // beside it; the decorator adds the second language where windows appear.
+    I18N::enable_bilingual_decorator(I18N::BilingualRegistry::instance().enabled());
+
     //FIXME This is a temporary workaround, the correct solution is to switch to "C" locale during file import / export only.
     //wxSetlocale(LC_NUMERIC, "C");
     Preset::update_suffix_modified((_L("*") + " ").ToUTF8().data());
@@ -7393,10 +7410,6 @@ Tab* GUI_App::get_tab(Preset::Type type)
         if (tab->type() == type)
             return tab->completed() ? tab : nullptr; // To avoid actions with no-completed Tab
     return nullptr;
-    // Bilingual mode: legacy lookups show English and record the Cantonese
-    // beside it; the decorator adds the second language where windows appear.
-    I18N::enable_bilingual_decorator(I18N::BilingualRegistry::instance().enabled());
-
 }
 
 Tab* GUI_App::get_plate_tab()
