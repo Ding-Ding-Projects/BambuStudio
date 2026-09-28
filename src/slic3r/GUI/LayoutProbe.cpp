@@ -93,6 +93,16 @@ std::string json(const std::string &s)
 
 std::string json(const wxString &s) { return json(std::string(s.ToUTF8().data())); }
 
+// Declared before write_model_state(), its first user.
+std::uintptr_t handle_of(const wxWindow *w)
+{
+#ifdef _WIN32
+    return reinterpret_cast<std::uintptr_t>(w->GetHWND());
+#else
+    return reinterpret_cast<std::uintptr_t>(w);
+#endif
+}
+
 // Limit user-authored fields without splitting a UTF-8 code point. The probe
 // is a local diagnostic file, but it must remain bounded on a large project.
 std::string bounded_utf8(const std::string &value, size_t max_bytes)
@@ -218,15 +228,6 @@ std::string size_json(const wxSize &s)
     std::ostringstream o;
     o << "{\"w\":" << s.x << ",\"h\":" << s.y << "}";
     return o.str();
-}
-
-std::uintptr_t handle_of(const wxWindow *w)
-{
-#ifdef _WIN32
-    return reinterpret_cast<std::uintptr_t>(w->GetHWND());
-#else
-    return reinterpret_cast<std::uintptr_t>(w);
-#endif
 }
 
 // Sum of the minimum sizes a wxBoxSizer must pay along its orientation, with
