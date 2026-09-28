@@ -151,7 +151,10 @@ jobs:
               throw "Building DeviceWeb failed with exit code $LASTEXITCODE."
           }
 
-          cmake --build build --target install --config Release --parallel
+          # -k 0 keeps Ninja compiling past a failed object, so one failed
+          # run lists every compile error instead of only the first; a
+          # failure still fails this step and nothing is installed.
+          cmake --build build --target install --config Release --parallel -- -k 0
           if ($LASTEXITCODE -ne 0) {
               throw "Building the production Windows installer payload failed with exit code $LASTEXITCODE."
           }
