@@ -146,7 +146,9 @@ def alignment_problems(entry: dict, msgstr: str) -> list:
         problems.append("the English ends with an ellipsis; the translation lost it (truncated?)")
     if english.endswith("?") and not translated.endswith(("?", "？")):
         problems.append("the English is a question; the translation lost the question mark")
-    letters = len(re.sub(r"[^A-Za-z]", "", english))
+    # Names kept in Latin script (Marlin, RepRap, G-code) are not missing content.
+    kept = set(re.findall(r"[A-Za-z]+", translated))
+    letters = sum(len(word) for word in re.findall(r"[A-Za-z]+", english) if word not in kept)
     han = len(CJK.findall(translated))
     if letters >= SHORT_MIN_LETTERS and han and han / letters < SHORT_MIN_RATIO:
         problems.append(f"{han} Chinese characters for {letters} English letters: content is missing")
