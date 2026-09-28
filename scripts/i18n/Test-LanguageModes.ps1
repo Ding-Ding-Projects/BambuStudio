@@ -159,6 +159,12 @@ try {
     Invoke-Checked -Command $pythonCommand `
         -Arguments ($pythonPrefix + @((Join-Path $repoRoot 'scripts\i18n\merge_cantonese_drafts.py'), '--audit')) `
         -FailureMessage 'Agent-drafted Cantonese entries fail the draft checks (run merge_cantonese_drafts.py --audit)'
+    # The Cantonese docs and changelog follow their English sources: a missing
+    # translation, an English article changed after it was translated, or a
+    # changelog entry without Cantonese text fails here.
+    Invoke-Checked -Command $pythonCommand `
+        -Arguments ($pythonPrefix + @((Join-Path $repoRoot 'scripts\i18n\check_translated_content.py'))) `
+        -FailureMessage 'Cantonese docs or changelog are out of step with the English (run check_translated_content.py)'
 
     $gnuMoMagic = [Convert]::ToUInt32('950412DE', 16)
     foreach ($mo in @($nativeMo, $englishMo)) {

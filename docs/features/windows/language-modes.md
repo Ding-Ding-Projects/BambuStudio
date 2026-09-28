@@ -92,7 +92,8 @@ broken translation file leaves the changelog English rather than empty.
 
 `scripts/i18n/check_translated_content.py` fails when an article has no translation, when an English
 article changed after its translation was made (its hash no longer matches), or when a changelog
-entry has no Cantonese text. The report-only hosted job runs it on every push.
+entry has no Cantonese text. `scripts/i18n/Test-LanguageModes.ps1` runs it; run that script before
+pushing a change to the docs or the changelog.
 
 ## Embedded web surfaces
 
@@ -172,12 +173,13 @@ accepted when the Squirrel package has no such contract.
 
 ## Verification status
 
-`scripts/i18n/Test-LanguageModes.ps1` compiles both catalogs strictly, runs the drafted-entry audit,
-and checks canonical IDs, DeviceWeb and legacy-web key parity, page keys, placeholders, and the
-ui-md3 language tests. `scripts/ci/Test-InkTerminology.ps1` checks the ink vocabulary in every
-catalog. `language_mode_tests` covers native normalization, route separation,
-format-before-presentation behavior and the bilingual registry, but the Windows workflow configures
-with `SLIC3R_BUILD_TESTS=OFF`, so CI does not build or run it yet.
+`scripts/i18n/Test-LanguageModes.ps1` compiles both catalogs strictly, runs the drafted-entry audit
+and the docs and changelog check, and checks canonical IDs, DeviceWeb and legacy-web key parity,
+page keys, placeholders, and the ui-md3 language tests. `scripts/ci/Test-InkTerminology.ps1` checks
+the ink vocabulary in every catalog. These scripts run locally before a push: the Windows workflow
+builds and publishes releases and runs no tests or checks. `language_mode_tests` covers native
+normalization, route separation, format-before-presentation behavior and the bilingual registry; the
+workflow configures with `SLIC3R_BUILD_TESTS=OFF`, so it is not built or run there.
 
 This page does not claim that a build containing the bilingual decorator has been verified in a
 running application. The drafted Cantonese still needs independent human review, most importantly for

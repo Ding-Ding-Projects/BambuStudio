@@ -1,6 +1,6 @@
 ---
 translation-of: language-modes.md
-source-sha256: 26724f7b7af989421fd78dfc6de192e8d451f4d99105f575ed3832a7a7591750
+source-sha256: 464bc916f84b364ff09c2cfd2f6bf2e2ddfd71aa88d5f6b16a12f7e5d0b55bf6
 review-status: agent-drafted
 ---
 
@@ -59,7 +59,7 @@ Windows 分支定義咗三個標準用戶介面模式識別符：
 
 應用程式內嘅更新日誌會讀取 `changelog.json` 旁邊嘅 `resources/changelog/changelog.yue_HK.json`：一個由每項記錄嘅提交 SHA 對應到粵語文字嘅對照表。英文模式顯示英文記錄，粵語模式顯示粵語（未有譯文嘅記錄就顯示英文），雙語模式兩樣都顯示，粵語喺下面。搜尋會配對任何一種語言，而「複製」同「匯出」會帶走檢視器顯示緊嘅文字。翻譯檔案唔見咗或者損壞，更新日誌會維持英文，唔會變成空白。
 
-`scripts/i18n/check_translated_content.py` 喺以下情況會失敗：文章冇譯本、英文文章喺翻譯之後改過（雜湊值唔再相符），或者更新日誌記錄冇粵語文字。只作報告嘅託管工作會喺每次推送時執行佢。
+`scripts/i18n/check_translated_content.py` 喺以下情況會失敗：文章冇譯本、英文文章喺翻譯之後改過（雜湊值唔再相符），或者更新日誌記錄冇粵語文字。`scripts/i18n/Test-LanguageModes.ps1` 會執行佢；改動文件或者更新日誌之後，推送之前要先跑呢個腳本。
 
 ## 嵌入式網頁介面
 
@@ -99,6 +99,6 @@ Windows 分支定義咗三個標準用戶介面模式識別符：
 
 ## 驗證狀態
 
-`scripts/i18n/Test-LanguageModes.ps1` 嚴格編譯兩個目錄，執行草稿條目審計，並檢查標準 ID、DeviceWeb 同舊版網頁嘅鍵對應、頁面鍵、佔位符同 ui-md3 語言測試。`scripts/ci/Test-InkTerminology.ps1` 檢查每個目錄中嘅墨水詞彙。`language_mode_tests` 涵蓋原生正規化、路由分離、格式前呈現行為同雙語登錄檔，但 Windows 工作流以 `SLIC3R_BUILD_TESTS=OFF` 配置，所以 GitHub Actions 尚未構建或執行佢。
+`scripts/i18n/Test-LanguageModes.ps1` 嚴格編譯兩個目錄，執行草稿條目審計同文件及更新日誌檢查，並檢查標準 ID、DeviceWeb 同舊版網頁嘅鍵對應、頁面鍵、佔位符同 ui-md3 語言測試。`scripts/ci/Test-InkTerminology.ps1` 檢查每個目錄中嘅墨水詞彙。呢啲腳本喺推送之前喺本機執行：Windows 工作流只會建置同發佈版本，唔會執行任何測試或者檢查。`language_mode_tests` 涵蓋原生正規化、路由分離、格式前呈現行為同雙語對照表；工作流以 `SLIC3R_BUILD_TESTS=OFF` 設定，所以唔會喺嗰度建置或者執行佢。
 
 此頁面唔聲稱包含雙語修飾器嘅構建已喺執行中嘅應用程式中被驗證。草稿粵語仍然需要獨立嘅人工審閱，最重要嘅係對於安全關鍵嘅打印、帳戶、網絡同破壞性流程。
