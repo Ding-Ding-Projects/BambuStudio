@@ -194,13 +194,17 @@ def placeholders(value: str) -> List[str]:
 
     A space-flag match glued to a following letter ("94% if", "100% done")
     is ordinary prose, not a placeholder, and is skipped: counting it once
-    pushed a translation to replace real numbers with fake "% i" tokens.
+    pushed a translation to replace real numbers with fake "% i" tokens. So is
+    one that follows a digit ("10% to 90%" reads "% to" as a length modifier
+    and an octal conversion), which once left "% to" in a translation.
     """
     found = []
     for match in PLACEHOLDER_RE.finditer(value):
         token = match.group(0)
         end = match.end()
         if token.startswith("% ") and end < len(value) and value[end].isascii() and value[end].isalpha():
+            continue
+        if token.startswith("% ") and match.start() > 0 and value[match.start() - 1].isdigit():
             continue
         found.append(token)
     return found

@@ -84,7 +84,7 @@ PRODUCT_WORDS = {
     "ctrl", "shift", "alt", "cmd", "esc", "tab", "enter", "del", "delete", "space", "home", "end", "pgup",
     "pgdn", "ins", "backspace", "win", "fn", "lmb", "rmb", "mmb",
     # Units, formats and protocol names that stay in Latin script.
-    "mm", "sec", "min", "rpm", "mbps", "kbps", "gb", "mb", "kb", "fps", "png", "jpg", "jpeg", "svg", "bmp",
+    "mm", "sec", "min", "rpm", "mbps", "kbps", "gb", "mb", "kb", "gib", "mib", "kib", "tib", "fps", "png", "jpg", "jpeg", "svg", "bmp",
     "ssid", "wpa", "ssl", "tls", "json", "xml", "csv", "zip", "gltf", "fbx", "ply", "amf", "oltp", "sla",
 }
 
