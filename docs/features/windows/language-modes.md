@@ -66,6 +66,8 @@ titles, tooltips and native menu items their second language:
   so decorations never accumulate.
 - List and table column titles read "English · 廣東話" when the pair fits the column. A column
   header has no tooltip, so a title that does not fit stays English.
+- Placeholder hints in text and search fields read "English · 廣東話" when the pair fits the field;
+  otherwise they stay English.
 - Typed text, list values and combo box values are never changed. Windows that already render both
   languages themselves (`apply_localized_text()`) are left alone.
 

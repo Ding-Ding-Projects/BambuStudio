@@ -401,9 +401,29 @@ private:
         }
     }
 
+    // A placeholder hint is catalogue text, not the user's: it reads "English ·
+    // 廣東話" when the pair fits the field, otherwise it stays English (a hint
+    // has no tooltip). What the user typed is never read or changed.
+    void decorate_hint(wxWindow *window)
+    {
+        auto *entry = dynamic_cast<wxTextEntry *>(window);
+        if (entry == nullptr)
+            return;
+        const wxString hint = entry->GetHint();
+        if (hint.empty() || hint.Contains(inline_separator()))
+            return;
+        const wxString cantonese = BilingualRegistry::instance().lookup(hint);
+        if (cantonese.empty())
+            return;
+        const wxString decorated = hint + inline_separator() + cantonese;
+        if (text_width(window, decorated) + window->FromDIP(12) <= window->GetClientSize().GetWidth())
+            entry->SetHint(decorated);
+    }
+
     Change decorate_window(wxWindow *window, bool allow_compact, int growth)
     {
         decorate_columns(window);
+        decorate_hint(window);
         const Kind     kind  = kind_of(window);
         const wxString label = kind == Kind::None ? wxString() : label_of(window, kind);
         const wxString tip   = window->GetToolTipText();

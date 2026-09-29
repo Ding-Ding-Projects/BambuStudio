@@ -64,3 +64,21 @@ test('list and table column titles go bilingual when the column has room', () =>
   const window = stripComments(source.match(/Change decorate_window\(wxWindow \*window, bool allow_compact, int growth\)[\s\S]*?\n    \}/)[0]);
   assert.match(window, /decorate_columns\(window\);/, 'every window the pass visits gets its columns checked');
 });
+
+test('placeholder hints go bilingual when the pair fits the field, typed text never changes', () => {
+  // Search fields ("Search profiles", "Search versions") and the Model Creator
+  // fields kept English-only placeholders in bilingual mode: text entry is
+  // skipped as the user's own data, and the hint went with it. The hint is
+  // catalogue text, so it takes its Cantonese; the value is never touched.
+  const hint = source.match(/void decorate_hint\(wxWindow \*window\)[\s\S]*?\n    \}/);
+  assert.ok(hint, 'decorate_hint() must exist');
+  const code = stripComments(hint[0]);
+  assert.match(code, /dynamic_cast<wxTextEntry \*>\(window\)/);
+  assert.match(code, /GetHint\(\)/);
+  assert.match(code, /Contains\(inline_separator\(\)\)/, 'a hint decorated once is never decorated again');
+  assert.match(code, /SetHint\(/);
+  assert.doesNotMatch(code, /SetValue\(|ChangeValue\(|GetValue\(\)/, 'the typed value is never read or written');
+  assert.match(code, /GetClientSize\(\)\.GetWidth\(\)/, 'the pair must fit the field');
+  const window = stripComments(source.match(/Change decorate_window\(wxWindow \*window, bool allow_compact, int growth\)[\s\S]*?\n    \}/)[0]);
+  assert.match(window, /decorate_hint\(window\);/, 'every window the pass visits gets its hint checked');
+});

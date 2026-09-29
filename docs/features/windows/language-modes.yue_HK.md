@@ -1,6 +1,6 @@
 ---
 translation-of: language-modes.md
-source-sha256: 766e06df1577c64f6c702c2b4e10d181d9f5925ee2d529f5a2bead8a542df0b6
+source-sha256: 9d61de2218dbabfbf2903131427ae2de0cd7bab05fa601838587327888528a4f
 review-status: agent-drafted
 ---
 
@@ -48,6 +48,7 @@ Windows 分支定義咗三個標準用戶介面模式識別符：
 - 換行同多行文字喺英文下方顯示粵語。
 - 工具提示喺英文下方顯示粵語。修飾器會記住應用程式自己嘅文字，所以修飾唔會累積。
 - 清單同表格嘅欄標題喺欄夠闊時會顯示「English · 廣東話」。欄標題冇工具提示，所以放唔落嘅標題就維持英文。
+- 文字欄同搜尋欄嘅提示文字（placeholder）喺欄位夠闊時會顯示「English · 廣東話」，唔夠位就維持英文。
 - 鍵入嘅文字、列表值同組合框值永遠唔會被更改。已經自己呈現兩種語言嘅視窗（`apply_localized_text()`）唔會被改動。
 
 設定標籤由 `OG_CustomCtrl` 自己繪製，透過 `I18N::fit_bilingual()` 喺繪製時使用相同嘅規則；標籤欄維持英文嘅闊度，標籤嘅工具提示就帶住粵語描述。Material 選單會喺每個項目嘅第二行顯示粵語。
