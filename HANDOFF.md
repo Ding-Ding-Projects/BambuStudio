@@ -109,6 +109,14 @@ kept equal to `main` and exists only as the checkout of the session that started
   three modes, captured through the splash's own bitmap hook, and CJ-020 is verified. A first Smart
   home capture raced the repaint of an auto-wrapping label and showed its paragraph English only; a
   second run showed both languages (noted in the screenshots README).
+- Privacy of the capture evidence (2026-09-29): capture profiles had lived under the Windows user
+  profile, so two public Config profiles captures (`md3-v143`, `md3-v150`, added in `e92b7fa2d`) showed
+  the account name in the data folder, and twelve layout dumps from 2026-09-06/07 recorded it in the
+  download folder field. The captures were taken again with a profile under `C:\Users\Public`, the
+  dumps' folder value is redacted, `prepare-capture-datadirs.py` refuses a root inside the profile,
+  and `ui-md3/tests/evidence-privacy.test.mjs` guards the text evidence. The old files remain in the
+  repository history; removing them there needs a history rewrite and a force push, which has not
+  been done and needs the owner's decision.
 - Release jobs share one concurrency group, and GitHub keeps one running and one waiting: a newer build
   that finishes while one waits cancels the waiting release job. The `b5cde7521` build passed but its
   release was cancelled that way on 2026-09-29, so not every push gets a release when pushes come fast.

@@ -15,6 +15,19 @@ exist on disk is a defect, not a plan.
 | Display scale | 100% (the host's single display; see Limitations) | same |
 | Taken | 2026-09-05 | 2026-09-07 04:11 to 04:36 UTC, 132 captures and 24 probe dumps (282 residual findings, all in the frame-minimum class recorded under CJ-005; the attempt-13 set had 300) |
 
+## Privacy
+
+Everything in this folder is public. The app shows folders on screen (Config profiles & backup lists
+the data folder, Preferences the download folder), and a layout dump records the text of every field,
+so a capture profile inside a Windows user profile puts the account name into the evidence. Capture
+profiles therefore live outside every user profile, under `C:\Users\Public\bbsdd`
+(`scripts/md3/prepare-capture-datadirs.py` refuses a root inside the profile and keeps each profile's
+downloads in its own folder), and `ui-md3/tests/evidence-privacy.test.mjs` fails on any text evidence
+here that names a folder under a user profile. On 2026-09-29 the two Config profiles & backup
+captures (`md3-v143`, `md3-v150`) were taken again from the same payloads with such a profile,
+showing the same layout, and the download folder recorded in the twelve 2026-09-06/07
+`*--after-preferences.jsonl` dumps was replaced with `<redacted: local user folder>`.
+
 ## Tuples
 
 Language: `en`, `yue_HK`, `bilingual_en_yue_HK`. Theme: light, dark. Density: comfortable, compact.

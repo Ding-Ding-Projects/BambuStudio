@@ -14,6 +14,13 @@ displays and are recorded by the caller.
 
 Prints one line per directory: "<tuple-id>\t<path>". Existing directories are
 replaced so a rerun starts clean.
+
+Captures are published, and the app shows folders on screen: Config profiles &
+backup lists the data folder, Preferences the download folder. So the root must
+lie outside the user profile (for example C:\\Users\\Public\\bbsdd), or a capture
+shows the Windows account name; the script refuses a root inside the profile
+unless --allow-profile-root is given for a run that stays private. Each profile
+keeps its downloads in its own "downloads" folder.
 """
 from __future__ import annotations
 
@@ -28,12 +35,15 @@ THEMES = ["light", "dark"]
 DENSITIES = ["comfortable", "compact"]
 
 
-def config_for(language: str, theme: str, density: str) -> dict:
+def config_for(language: str, theme: str, density: str, downloads: str) -> dict:
     # Keys read by GUI_App at startup: "language" (LanguageMode id),
     # "dark_color_mode" ("1" forces dark, "0" forces light), "ui_density".
     return {
         "app": {
             "language": language,
+            # Otherwise the app fills in the account's own Downloads folder, and
+            # Preferences shows it (and every layout dump records it).
+            "download_path": downloads,
             "dark_color_mode": "1" if theme == "dark" else "0",
             "ui_density": density,
             # Keep first-run chrome out of the capture: no update prompt, no
@@ -52,8 +62,17 @@ def main() -> int:
     ap.add_argument("--languages", default=",".join(LANGUAGES))
     ap.add_argument("--themes", default=",".join(THEMES))
     ap.add_argument("--densities", default=",".join(DENSITIES))
+    ap.add_argument("--allow-profile-root", action="store_true",
+                    help="allow a root inside the user profile, for captures that are never published")
     args = ap.parse_args()
     root = os.path.abspath(args.root)
+    profile = os.path.normcase(os.path.abspath(os.path.expanduser("~")))
+    inside_profile = os.path.normcase(root) == profile or os.path.normcase(root).startswith(profile + os.sep)
+    if inside_profile and not args.allow_profile_root:
+        print("prepare-capture-datadirs: the root is inside the user profile, so captures would show the account "
+              "name in the data and download folders; use a root such as C:\\Users\\Public\\bbsdd, or pass "
+              "--allow-profile-root for a private run", file=sys.stderr)
+        return 2
     os.makedirs(root, exist_ok=True)
     for language in args.languages.split(","):
         for theme in args.themes.split(","):
@@ -63,8 +82,10 @@ def main() -> int:
                 if os.path.isdir(path):
                     shutil.rmtree(path)
                 os.makedirs(os.path.join(path, "log"))
+                downloads = os.path.join(path, "downloads")
+                os.makedirs(downloads)
                 with open(os.path.join(path, "BambuStudio.conf"), "w", encoding="utf-8", newline="\n") as fh:
-                    json.dump(config_for(language, theme, density), fh, indent=4)
+                    json.dump(config_for(language, theme, density, downloads), fh, indent=4)
                     fh.write("\n")
                 print(f"{tuple_id}\t{path}")
     return 0
