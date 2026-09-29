@@ -22,7 +22,8 @@ identity.
 ## Language modes and Material Design 3 (issues #43 and #45)
 
 Scope: every element on the Material Design 3 kit, and every element in English, Hong Kong Cantonese and
-bilingual mode. Work lives on branch `claude/lang-gui-elements-9cc0be` and is merged to `main` per lane.
+bilingual mode. Every change is pushed straight to `main`; the task branch `claude/lang-gui-elements-9cc0be` is
+kept equal to `main` and exists only as the checkout of the session that started the work.
 
 - Landed and compiled (release `md3-v135`): kit conversion (36 of 36 contracts, `de1f25259`); complete
   Cantonese catalogue with a drafted-entry audit (`db39e3bb1`, `50e82299f`); about 200 literals routed through
@@ -46,6 +47,25 @@ bilingual mode. Work lives on branch `claude/lang-gui-elements-9cc0be` and is me
   now use 發佈 and 啟動畫面.
 - Not verified: behaviour in a running application in any of the three modes (no captures from a released build
   yet), and human review of the agent-drafted Cantonese.
+
+## Branch and worktree cleanup (2026-09-29)
+
+- `0d883d9fe` records 21 older `codex/*` branches as merged with `-s ours`: `git cherry` showed every one of their
+  commits already on `main` as an identical patch, so the tree did not change (the commit carries `[skip ci]`).
+- Deleted only after an ancestry check against the pushed `main`: 39 local branches, 9 remote branches and one clean
+  agent worktree. A verified archive of the Git directory and every worktree was taken first.
+- Kept on purpose:
+  - `main` and the four branches that workflows trigger on (`codex/official-feature-reapply`,
+    `codex/official-native-reapply`, `codex/hosted-startup-stack`, `codex/hosted-behavior-verifier`);
+  - `codex/workspace-core`, `codex/workspace-history-repair` and `codex/print-setup-quick-swap` (local only): each
+    has one commit whose content `main` may hold in a later form, so its author should review it before it is merged
+    or deleted;
+  - three unfinished agent checkpoints on the remote (`worktree-agent-a24267613001f90e0`,
+    `worktree-agent-a28cd0c64451603b9`, `worktree-agent-a470984c061728c07`: an offline documentation browser, bulk
+    actions, scheduled settings), never merged;
+  - branches and worktrees still open in other sessions.
+- Pushing any branch to this repository runs the Windows build and publishes a release, so preserved work that must
+  not ship stays local or goes to a tag, never to a new branch.
 
 `docs/reapplication/source-manifest.csv` gives the selected path inventory and
 source/official blob IDs. `docs/reapplication/loader-adapters.md` records the
