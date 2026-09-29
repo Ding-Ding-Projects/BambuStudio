@@ -4,14 +4,17 @@
 #include "MaterialIcon.hpp"
 #include "StateColor.hpp"
 
+#include <wx/app.h>
 #include <wx/dcclient.h>
 #include <wx/dcgraph.h>
 #include <wx/tipwin.h>
+#include <wx/weakref.h>
 #if wxUSE_ACCESSIBILITY
 #include <wx/access.h>
 #endif
 #include <algorithm>
 #include <cmath>
+#include <unordered_set>
 #ifdef __APPLE__
 #include "libslic3r/MacUtils.hpp"
 #endif
@@ -699,11 +702,44 @@ void Button::paintEvent(wxPaintEvent& evt)
     // variant nor caller styling becomes an Outlined action button. Callers
     // that styled it by hand keep their styling; callers that chose a variant
     // keep theirs.
-    if (!m_md3_variant && !m_caller_styled)
+    if (!m_md3_variant && !m_caller_styled) {
+        // The Outlined style brings its own font and padding, so the minimum
+        // usually grows here, after the parent's sizer has already placed the
+        // button. Without another layout the button stays squeezed below its
+        // new minimum and cuts its label: Smart home's "Close" drew at 59 px
+        // against a 70 px minimum (clipping inventory CJ-029).
+        const wxSize before = GetMinSize();
         SetVariant(Variant::Outlined);
+        if (GetMinSize() != before)
+            relayoutParentLater();
+    }
     // depending on your system you may need to look at double-buffered dcs
     wxPaintDC dc(this);
     render(dc);
+}
+
+void Button::relayoutParentLater()
+{
+    wxWindow *parent = GetParent();
+    // Only a button placed by its parent's sizer gains anything from a layout,
+    // and a top-level parent without a sizer would instead stretch its only
+    // child over its whole client area.
+    if (parent == nullptr || parent->GetSizer() == nullptr || GetContainingSizer() == nullptr || wxTheApp == nullptr)
+        return;
+    // Buttons sharing a footer usually restyle in the same paint pass; one
+    // layout of their parent covers all of them.
+    static std::unordered_set<wxWindow *> pending;
+    if (!pending.insert(parent).second)
+        return;
+    // Queued on the application rather than on this button, so the request is
+    // not dropped with a button destroyed before it runs; the weak reference
+    // skips a parent destroyed meanwhile.
+    wxWeakRef<wxWindow> alive(parent);
+    wxTheApp->CallAfter([parent, alive]() {
+        pending.erase(parent);
+        if (alive)
+            alive->Layout();
+    });
 }
 
 /*

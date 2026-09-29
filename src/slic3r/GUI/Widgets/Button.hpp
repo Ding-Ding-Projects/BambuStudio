@@ -204,6 +204,9 @@ protected:
 
 private:
     void paintEvent(wxPaintEvent& evt);
+    // Lay the parent out again after the current event, once per parent. Used
+    // when the first-paint Outlined style changes this button's minimum size.
+    void relayoutParentLater();
 
     void render(wxDC& dc);
     void renderWhiteCorners(wxDC &dc);

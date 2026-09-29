@@ -482,7 +482,7 @@ test('the kit Button is Material by default: no legacy palette seed, Outlined at
   for (const legacy of ['ThemeColor::BrandGreen', 'ThemeColor::BrandGreenHovered', 'ThemeColor::White', 'ThemeColor::Grey200', 'ThemeColor::Grey300', 'ThemeColor::TextPrimary']) {
     assert.ok(!button.includes(legacy), `Button.cpp must not seed the legacy ${legacy}`);
   }
-  assert.match(button, /if \(!m_md3_variant && !m_caller_styled\)\s+SetVariant\(Variant::Outlined\);/, 'an unstyled Button must adopt the Outlined variant at first paint');
+  assert.match(button, /if \(!m_md3_variant && !m_caller_styled\)\s*\{[^}]*SetVariant\(Variant::Outlined\);/, 'an unstyled Button must adopt the Outlined variant at first paint');
   assert.match(button, /^void Button::SetBackgroundColor\(StateColor const &color\)\s*\{\s*m_caller_styled = true;/m, 'explicit background styling must mark the Button caller-styled');
   assert.match(button, /StateColor::semantic\(R::SecondaryContainer, s\), \(int\) StateColor::Checked\)/, 'the Outlined variant must define its Checked (selected) state');
 });
