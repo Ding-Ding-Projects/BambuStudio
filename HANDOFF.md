@@ -184,6 +184,12 @@ still to verify.
   dialog; fixed in `13dd18236` by a scrolling form) and Smart home's Close button (CJ-029, 59 px against a 70 px
   minimum; open, the moment its minimum grows is not established). The sweep harness did not open Show Tip of the
   Day in English and Cantonese, nor About in Cantonese.
+- CJ-029 cause found in the source (2026-09-29): a kit Button that reaches its first paint unstyled adopts the
+  Outlined style there (18 DIP padding each side instead of the 10 px it was measured with, medium label font), so
+  its minimum grows after the parent's sizer has placed it, and nothing laid the Smart home footer out again outside
+  bilingual mode. `e5faf503d` makes the first paint queue one layout of the parent when the style changed the minimum
+  (`ui-md3/tests/button-first-paint-layout.test.mjs`). Waiting for a release to verify Smart home in English and
+  Cantonese.
 - Closeout cleanup (2026-09-29): the linked worktree of the auto-updater lane
   (`BambuStudio-claude-auto-updater`) and its branch `claude/auto-updater` (`37b3fce78`, contained in `main`, no copy
   on the remote) were removed after an archive of the repository to the maintainer's cloud folder was written and

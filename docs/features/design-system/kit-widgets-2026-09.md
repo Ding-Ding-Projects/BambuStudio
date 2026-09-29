@@ -65,10 +65,19 @@ corner radius) marks the Button caller-styled, so hand-styled buttons keep their
 and Text variants define a Checked (selected) state: SecondaryContainer fill, OnSecondaryContainer
 label.
 
+The Outlined style brings its own label font and 18 DIP of padding on each side, so it usually widens
+the button after its parent's sizer has already placed it. The first paint therefore compares the
+minimum size before and after the style and, when it changed, queues one layout of the parent: one per
+parent however many buttons restyle in the same pass, and only for a button a sizer places. Before
+`e5faf503d` nothing asked again, and Smart home's Close button stayed squeezed below its minimum in English
+and Cantonese mode (clipping inventory CJ-029).
+
 ## Verification
 
 - `node --test ui-md3/tests/md3-conversion-contracts.test.mjs` pins every widget's registration,
   anatomy, accessibility role and the emptiness of the corresponding stock-control allowlist.
+- `node --test ui-md3/tests/button-first-paint-layout.test.mjs` pins the parent layout after the
+  first-paint style.
 - Runtime captures (light and dark, EN / Cantonese / bilingual, 100 to 200 percent) are recorded in
   `docs/screenshots/md3-everything/` once the built artifact exists; until then the rows in
   `md3-parity-register.md` say so.

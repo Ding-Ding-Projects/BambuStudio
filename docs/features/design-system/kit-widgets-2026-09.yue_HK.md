@@ -1,6 +1,6 @@
 ---
 translation-of: kit-widgets-2026-09.md
-source-sha256: bd278fcf9aebc490deaa8bd7f7264996416ff9472bb7408754c494dc9f806e8d
+source-sha256: 126c0d1b2d062453911ca741130513d49ac415f2d43069deee22ff85c770daef
 review-status: agent-drafted
 ---
 
@@ -42,12 +42,15 @@ review-status: agent-drafted
 
 ## Button 預設係 Material
 
-一個 `Button` 達到其第一次繪製帶著既無 `SetVariant()` / `SetIconButton()` 也無呼叫者樣式採用 Outlined 變體。每個明確樣式設定者（背景、邊框、文字顏色、角落半徑）標記 Button 呼叫者樣式，所以手工樣式按鈕保持佢哋外觀。Outlined 同 Text 變體定義一個已檢查（選擇）狀態：SecondaryContainer 填充、OnSecondaryContainer 標籤。
+一個 `Button` 如果到第一次畫嘅時候都冇用 `SetVariant()` / `SetIconButton()` 揀款式，亦冇被調用者打扮過，就會用 Outlined 款式。每個明確設定樣式嘅方法（背景、邊框、文字顏色、圓角半徑）都會將 Button 標記做調用者打扮過，所以手工打扮嘅按鈕保持原本樣子。Outlined 同 Text 款式有已選取狀態：SecondaryContainer 填色、OnSecondaryContainer 標籤。
+
+Outlined 款式有自己嘅標籤字體同每邊 18 DIP 嘅留白，所以通常喺父視窗嘅排版器擺好位之後先令按鈕變闊。因此第一次畫嘅時候會比較款式前後嘅最細尺寸，有變就排隊將父視窗重新排版一次：同一輪幾多粒按鈕換款式，每個父視窗都只排一次，而且淨係處理由排版器擺位嘅按鈕。`e5faf503d` 之前冇人再問過，智能家居嘅「Close」掣喺英文同粵語模式一直被擠到細過佢嘅最細尺寸（版面裁剪清單 CJ-029）。
 
 ## 驗證
 
-- `node --test ui-md3/tests/md3-conversion-contracts.test.mjs` 釘住每個組件嘅登錄、解剖、無障礙角色同對應庫存控制允許清單嘅空性。
-- 執行時捕獲（淡同深、EN / 粵語 / 雙語、100 到 200 百分比）係記錄喺 `docs/screenshots/md3-everything/` 一旦構建工藝存在；直到那時 `md3-parity-register.md` 中嘅列係說。
+- `node --test ui-md3/tests/md3-conversion-contracts.test.mjs` 固定每個組件嘅登記、結構、無障礙角色，同埋對應原生控件允許清單係空嘅。
+- `node --test ui-md3/tests/button-first-paint-layout.test.mjs` 固定第一次畫換款式之後嘅父視窗重新排版。
+- 執行時擷圖（淺色同深色、英文 / 粵語 / 雙語、100 至 200 百分比）喺構建好嘅應用程式存在之後記錄喺 `docs/screenshots/md3-everything/`；喺嗰之前，`md3-parity-register.md` 入面嘅行會講明。
 
 ## 建議文章
 
