@@ -71,8 +71,10 @@ until captures from a released build exist.
 - [x] Re-check the bilingual Preferences search field hint on the Other page: one `md3-v155` capture showed it empty, the other four pages showed it. Not reproduced: `md3-v157` shows "Search settings · 搜尋設定" on that page.
 - [x] The Prepare sidebar counts its section rail: the full process-settings tree keeps every value field inside the sidebar, and the Process title shows whole in Cantonese (clipping inventory CJ-023 and CJ-024, seen on `md3-v151`, fixed in `11cf45423`). Verified on `md3-v157` in English and Cantonese.
 - [x] Units and separators show as themselves ("°C", "mm³", the What's new " · "), and paired section headers show whole ("SETTINGS · 設定"); both seen on `md3-v154` Temperature calibration, fixed in `32a36b134` (clipping inventory CJ-025). Verified on `md3-v158` in bilingual, Cantonese and English mode.
-- [ ] What's new date fields show their whole hint "YYYY-MM-DD / DD/MM/YYYY", and the preset chips move to a line of their own when the date row does not fit (clipping inventory CJ-027, seen on `md3-v158`, fixed in `1af648025`). Stays unticked until a released build is captured.
-- [ ] The layout probe measures placeholder hints against their field, so a cut hint is reported by the sweep rather than found by eye (CJ-027 passed a nine-dialog sweep with no finding). Implemented with its contract test (`ui-md3/tests/layout-probe-hint.test.mjs`): the record carries `hint`, `hint_width` and `hint_clipped`, and the sweep and the report count `hint_clipped`. Stays unticked until a release dump reports it.
+- [x] What's new date fields show their whole hint "YYYY-MM-DD / DD/MM/YYYY", and the preset chips move to a line of their own when the date row does not fit (clipping inventory CJ-027, seen on `md3-v158`, fixed in `1af648025`). Verified on `md3-v162` in English and bilingual mode; the chips start at the left of their own line (`3f304dded` makes the code say so).
+- [ ] Model Creator keeps every row and footer button at full size in every language mode: its form scrolls inside the dialog (clipping inventory CJ-028, seen on `md3-v162` in English and Cantonese, fixed in `13dd18236`). Stays unticked until a released build is captured.
+- [ ] Smart home's Close button gets its full width in English and Cantonese mode (clipping inventory CJ-029, open: the footer is not laid out again after the button's minimum grows).
+- [x] The layout probe measures placeholder hints against their field, so a cut hint is reported by the sweep rather than found by eye (CJ-027 passed a nine-dialog sweep with no finding). Implemented with its contract test (`ui-md3/tests/layout-probe-hint.test.mjs`): the record carries `hint`, `hint_width` and `hint_clipped`, and the sweep and the report count `hint_clipped`. Verified on `md3-v162`: every bilingual sweep dump carries the fields, 354 hints measured, none cut.
 - [x] An empty message stays empty in Cantonese mode instead of becoming the catalog header: settings fields without a unit show their number, and nothing shows "Project-Id-Version: ..." (clipping inventory CJ-022, seen on `md3-v151`, fixed in `c591f1b39`). Verified on `md3-v157`: the auto-fill row has no description, and the Prepare dump shows the "10" and "1" boxes 89 px wide (0 px on `md3-v151`) with no label carrying the header (8 on `md3-v151`).
 - [x] Wrapped Cantonese never starts a line with closing punctuation such as "。" (seen on `md3-v151` in the "Update automatically" description, fixed in `c7309b889` with its contract test). Verified on `md3-v157`: that description now breaks before "動。" instead of starting a line with "。".
 - [ ] Wrapped Cantonese never ends a line with opening punctuation such as "「" and never splits an emoji across lines (same fix and contract test). No release capture shows either case yet.
@@ -201,13 +203,14 @@ captures are a separate box and stay unticked until they exist from the real bui
       built, so every build after md3-v143 was published as superseded and the update feed stood
       still. Verified: `md3-v151` (target `ca2b6e101`) was published as latest on 2026-09-29 while
       `main` had already moved on.
-- [ ] Every latest release carries a higher Squirrel package version than the one before it. The
+- [x] Every latest release carries a higher Squirrel package version than the one before it. The
       package number was "highest md3 release plus one", read at packaging time, so builds queued
       behind one another shared it (`md3-v155` and `md3-v156` both `2.8.4155`) and Squirrel would
       skip the later release; hosted builds now use the workflow run number. Ticked once two
       consecutive latest releases built this way show increasing package versions. It happened
       between two latest releases too: `md3-v158` and `md3-v159` both carry `2.8.4158`, so an
       installed `md3-v158` does not take `md3-v159` by itself; the first run-number build is #607.
+      Verified: `md3-v160` `2.8.4159`, `md3-v161` `2.8.4608` (run #608), `md3-v162` `2.8.4611` (run #611), each latest in turn.
 
 
 ### Native and embedded GUI accessibility wave (delivery verification — 2026-07-30)

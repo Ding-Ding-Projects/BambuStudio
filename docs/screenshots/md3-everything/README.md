@@ -358,6 +358,28 @@ first, a Cantonese description line in the second), each shown whole in the othe
 | `preferences-other--bilingual_en_yue_HK-light-comfortable--md3-v161.png` | Preferences > Other (after CJ-026, first run): the Cantonese line under the 3MF warning row, the next section below it | `bilingual_en_yue_HK-light-comfortable` |
 | `preferences-general--bilingual_en_yue_HK-light-comfortable--md3-v161.png` | Preferences > General: "What does this change? · 呢個會改變啲乜？" keeps its pair | `bilingual_en_yue_HK-light-comfortable` |
 
+## Release md3-v162 captures (2026-09-29)
+
+Taken from the unmodified `md3-v162` release package with profiles under `C:\Users\Public\bbsdd\`: the pages by
+`scripts/md3/capture-tuple.py`, the dialogs by a full `scripts/md3/sweep-dialogs.py` sweep in three modes (the
+Cantonese pass with `--po bbl/i18n/yue_HK/BambuStudio_yue_HK.po`). Every import of its executables and DLLs resolves
+in the package or in Windows. This is the first release whose layout dumps measure placeholder hints.
+
+| Field | Value |
+| --- | --- |
+| Source commit | `9b1337ccc` (release `md3-v162`) |
+| Package | `BambuStudioMD3-2.8.4611-full.nupkg`, 732,156,836 bytes, SHA-1 `b62ab87ee23cb36518731316e8a560d2ced0a3df` as listed in `RELEASES` |
+| Executable | `bambu-studio.exe` sha256 `92a973d1a28813a5a32b9322ed235ce4c9ec68705c090e2e49a3df091eb2efa5`, `BambuStudio.dll` sha256 `06e3e0b1d4af940ef983e08b599bdb04d653bfab32922a435f8ea4f08c570023` |
+| Capture route | hidden Win32 desktop, `PrintWindow`, real GPU driver |
+| Display scale | 100% |
+
+| File | Surface | Tuple |
+| --- | --- | --- |
+| `dialog-what-s-new-changelog--en-light-comfortable--md3-v162.png` | What's new (after CJ-027): the whole date hint, the chips on a line of their own | `en-light-comfortable` |
+| `preferences-general--bilingual_en_yue_HK-light-comfortable--md3-v162.png` | Preferences > General: every row paired or stacked, "Not stored yet; ..." over "未儲存；..." | `bilingual_en_yue_HK-light-comfortable` |
+| `dialog-model-creator-lower--en-light-comfortable--md3-v162.png` | Model Creator, lower part (before CJ-028): nothing under "Refinement note", four blank footer buttons. Cropped: the upper part shows local folder paths the dialog fills in by itself | `en-light-comfortable` |
+| `dialog-smart-home-footer--en-light-comfortable--md3-v162.png` | Smart home footer (CJ-029, open): the Close button at 59 px against its 70 px minimum | `en-light-comfortable` |
+
 ## Layout-probe dumps
 
 `probe/<tuple>--<before|after>.jsonl`, one per main-frame idle dump plus one per opened dialog,

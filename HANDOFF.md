@@ -172,6 +172,18 @@ still to verify.
   copies move forward again. It verifies CJ-026 (stacked descriptions no longer drawn under the next row on the
   bilingual 3D and Other pages) and keeps "What does this change? · 呢個會改變啲乜？" paired. It also carries the
   upstream `v02.08.04.61` merge, which starts and draws every captured page in all three modes.
+- `md3-v162` (`9b1337ccc`, published 11:26 UTC as latest, package `2.8.4611`, SHA-1
+  `b62ab87ee23cb36518731316e8a560d2ced0a3df` matching its `RELEASES`, every import resolves, splash painted in all
+  three modes) carries every fix of this line up to `9b1337ccc`. It verifies CJ-027 (What's new shows its whole
+  date hint; the chips take a line of their own), the Funny level lines stacked in bilingual mode ("Not stored
+  yet; ..." over "未儲存；..."), hint measurement in the layout dumps (354 hints in the bilingual sweep, none cut),
+  and rising package versions (`2.8.4159`, `2.8.4608`, `2.8.4611` for three latest releases in a row). Language
+  audit: Prepare 8 labels paired, 9 with the Cantonese in the tooltip, 0 English-only; Preferences > General 58
+  paired, 15 in the tooltip, 0 English-only. Full dialog sweep: bilingual 20 dialogs, no finding; English 20 and
+  Cantonese 19 dialogs, the same two with findings: Model Creator (CJ-028, its form outgrew the fixed 720 x 780
+  dialog; fixed in `13dd18236` by a scrolling form) and Smart home's Close button (CJ-029, 59 px against a 70 px
+  minimum; open, the moment its minimum grows is not established). The sweep harness did not open Show Tip of the
+  Day in English and Cantonese, nor About in Cantonese.
 - Closeout cleanup (2026-09-29): the linked worktree of the auto-updater lane
   (`BambuStudio-claude-auto-updater`) and its branch `claude/auto-updater` (`37b3fce78`, contained in `main`, no copy
   on the remote) were removed after an archive of the repository to the maintainer's cloud folder was written and

@@ -1,6 +1,6 @@
 ---
 translation-of: clipping-inventory.md
-source-sha256: 40036e3a4f4df03dd6d4355b07df0169ece377725348d3bc175b0451e90432b5
+source-sha256: ce005f33d9bc82af89c01508b7f5c7e4ee0146af39f76b178cf8ad9711ae52b6
 review-status: agent-drafted
 ---
 
@@ -49,7 +49,9 @@ Windows 桌面應用程式上發現嘅每一個版面裁剪缺陷，包括佢嘅
 | CJ-024 | 準備側邊欄，打印設定標題（粵語） | yue_HK-light-comfortable | 顯示「打印設…」而唔係「打印設定」 | 自從 CJ-012 修正之後，標題係固定項目，但仍然保留 56 DIP 嘅最細闊度，所以永遠唔會加闊到佢 60 px 嘅文字 | 11cf45423 | prepare--yue_HK-light-comfortable--md3-v151.png | prepare--yue_HK-light-comfortable--md3-v157.png | verified |
 | CJ-025 | 雙語模式配對咗嘅段落標題（溫度校準「SETTINGS」） | bilingual_en_yue_HK-light-comfortable | 「SETTINGS · 設」：廣東話喺標題自己嘅邊緣被切 | 段落標題用 GDI+ 逐個字畫大階、加字距，但量度最佳闊度嗰陣用普通 GDI 同成串字嘅闊度，所以要求嘅位比畫出嚟嘅少 | 32a36b134 | dialog-temperature--bilingual_en_yue_HK-light-comfortable--md3-v154.png | dialog-temperature--bilingual_en_yue_HK-light-comfortable--md3-v158.png | verified |
 | CJ-026 | 偏好設定，打開對話框之後先顯示嘅每一頁：使用者、3D、其他（雙語） | bilingual_en_yue_HK-light-comfortable | 每段會換行嘅描述排成英文喺上粵語喺下，但粵語嗰行畫咗喺下一行標題底下，淨係見到啲字嘅頂 | 裝飾器改完標籤之後會重新排對話框，但對話框重排嗰陣頁面大細唔變，所以頁面自己嘅 sizer 從來冇行過，變高咗一行嘅標籤下面啲行原封不動 | a07353987 | preferences-3d--bilingual_en_yue_HK-light-comfortable--md3-v155.png | preferences-3d--bilingual_en_yue_HK-light-comfortable--md3-v161.png | verified |
-| CJ-027 | 有乜新嘢，「從」同「至」日期欄 | 每個組合（日先嘅地區設定） | 提示字「YYYY-MM-DD / DD/MM/YYYY」喺英文被切成「YYYY-MM-DD / D」、粵語「YYYY-MM-DD / [」、雙語「YYYY-MM-DD / I」 | 日期欄固定 132 DIP，窄過佢自己嘅提示字；版面探針唔量度提示字，所以冇任何掃描報告過 | 1af648025 | dialog-what-s-new-changelog--en-light-comfortable--md3-v158.png | pending | fixed-unverified |
+| CJ-027 | 有乜新嘢，「從」同「至」日期欄 | 每個組合（日先嘅地區設定） | 提示字「YYYY-MM-DD / DD/MM/YYYY」喺英文被切成「YYYY-MM-DD / D」、粵語「YYYY-MM-DD / [」、雙語「YYYY-MM-DD / I」 | 日期欄固定 132 DIP，窄過佢自己嘅提示字；版面探針唔量度提示字，所以冇任何掃描報告過 | 1af648025 | dialog-what-s-new-changelog--en-light-comfortable--md3-v158.png | dialog-what-s-new-changelog--en-light-comfortable--md3-v162.png | verified |
+| CJ-028 | 模型建立工具 | en-light-comfortable、yue_HK-light-comfortable（720 x 780） | 修改備註、版本清單同狀態行冇任何高度，金鑰同底部按鈕被壓到細過最細尺寸，底部四粒按鈕畫成空白格 | 表格直接放入對話框，而對話框固定 720 x 780，矮過個表格；雙語模式將對話框撐大到 867 x 963，所以睇唔到 | 13dd18236 | dialog-model-creator-lower--en-light-comfortable--md3-v162.png | pending | fixed-unverified |
+| CJ-029 | 智能家居底部嘅「關閉」掣 | en-light-comfortable、yue_HK-light-comfortable | 「Close」得 59 px，佢嘅最細尺寸係 70 px（粵語 50 對 64），個藥丸好迫 | 底部喺按鈕最細尺寸變大之前已經排好，雙語模式以外冇再排過；雙語模式嘅裝飾器重排會排啱佢（111 px）；最細尺寸幾時變大仲未確定 | pending | dialog-smart-home-footer--en-light-comfortable--md3-v162.png | pending | open |
 <!-- clipping-inventory:end -->
 
 CJ-014、CJ-015、CJ-017 同 CJ-018 已經用冇加過任何嘢嘅發佈套件，喺隱藏桌面上驗證咗（2026-09-29）：雙語模式下，最新版本訊息喺 `md3-v148` 完整畫出「OK · 確定」，而 `md3-v143` 就畫成「OK ·...」（CJ-014）；喺 `md3-v150`，搜尋欄完整畫出佢嘅圓形右端（CJ-015），設定檔清單完整顯示嗰一行（CJ-017），溫度校準嘅標籤維持英文，廣東話放喺提示框，唔再被裁走（CJ-018）。CJ-016 喺 `md3-v150` 仍然被裁；佢嘅修正係 `00b14ca67`。
@@ -65,6 +67,8 @@ CJ-025 已經用 `md3-v158`（目標 `32a36b134`，套件 SHA-1 `8613eadca952103
 CJ-021 已經用 `md3-v160`（目標 `dd95aace8`，套件 SHA-1 `57a99f72f9cb99efd1ff7e299be5c3b581838678`，所有匯入都搵到）驗證：雙語偏好設定 > 一般冇打橫捲動列，最闊嗰行喺 556 px 完結，頁面有 560 px，語言清單、兩條搞笑程度滑桿、表情符號開關同地區、單位清單都喺頁面入面。每條滑桿下面嘅來源行仍然係英文，粵語喺工具提示；`4d5bfc93f` 令佢換行，配對就可以排成兩行。
 
 CJ-026 已經用 `md3-v161`（目標 `a0e408559`，套件 `2.8.4608`，SHA-1 `a2c80a7ef125f3167baa06e891f124832e2f8f58`，所有匯入都搵到）驗證：雙語 3D 同其他頁嘅每段兩行描述都完整顯示粵語嗰行，下一行喺佢下面先開始。同一個重排亦令配對咗嘅「What does this change? · 呢個會改變啲乜？」掣保留配對：之前個掣喺頁面入面保持舊闊度，重新檢查以為佢被擠窄，就送返英文。嗰輪有兩張擷圖影正重繪（工具欄風格清單、一行粵語），另一張擷圖都完整顯示。
+
+CJ-027 已經用 `md3-v162`（目標 `9b1337ccc`，套件 `2.8.4611`，SHA-1 `b62ab87ee23cb36518731316e8a560d2ced0a3df`，所有匯入都搵到）驗證：有乜新嘢喺英文同雙語模式完整顯示日期提示字，預設晶片自己開一行，由左邊開始。佢係第一個喺版面轉儲量度提示字嘅發佈版：20 個對話框嘅雙語掃描記錄咗 354 個提示字，冇一個被切走，日期提示字 210 px，欄有 223 px。完整掃描喺雙語模式冇任何問題，英文同粵語就係同樣兩個對話框，即係 CJ-028（模型建立工具，`13dd18236` 修正）同 CJ-029（智能家居嘅關閉掣，未修）。模型建立工具嘅擷圖淨係截取下半部：上半部顯示咗對話框自己填入嘅本機資料夾路徑。
 
 CJ-026 喺同一輪 `md3-v155` 搵到：偏好設定打開之後先顯示嘅每一頁（使用者、3D、其他），每段排成兩行嘅描述嘅粵語嗰行都畫咗喺下一行標題底下。`a07353987` 會重排裝飾器改過嘅每個標籤周圍嘅頁面。嗰輪嘅雙語「其他」擷圖仲見到搜尋欄冇咗提示字，但一般、使用者、3D 同外觀嘅擷圖都顯示「Search settings · 搜尋設定」；只見過一次，下一個發佈再檢查，先決定要唔要開一行。
 
