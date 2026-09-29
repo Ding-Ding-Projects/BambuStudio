@@ -35,6 +35,13 @@ test('the Visual C++ runtime ships beside the app', () => {
   assert.match(srcCmake, /include\(InstallRequiredSystemLibraries\)/);
 });
 
+test('a log file that cannot be opened costs the log, not the app', async () => {
+  // A data directory whose log path ran past MAX_PATH ended startup with an
+  // unhandled filesystem_error thrown from the log sink (exit 0xE06D7363).
+  const utils = await read('src', 'libslic3r', 'utils.cpp');
+  assert.match(utils, /core::get\(\)->set_exception_handler\(logging::make_exception_suppressor\(\)\);/);
+});
+
 test('packaging refuses a payload that misses a DLL the app imports', () => {
   const check = workflow.indexOf('python .\\scripts\\ci\\check_payload_imports.py');
   assert.ok(check > 0, 'the workflow runs the payload import check');

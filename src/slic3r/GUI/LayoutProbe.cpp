@@ -333,14 +333,16 @@ void write_window(boost::nowide::ofstream &out, wxWindow *w, wxWindow *top, int 
     if (auto *st = dynamic_cast<wxStaticText *>(w)) {
         const long style = st->GetWindowStyle();
         ellipsized = (style & (wxST_ELLIPSIZE_START | wxST_ELLIPSIZE_MIDDLE | wxST_ELLIPSIZE_END)) != 0;
-        const wxString text = st->GetLabel();
+        // Measure what is drawn: "&&" shows as one "&" and a mnemonic "&" not
+        // at all, so the raw label reads wider than the text on screen.
+        const wxString text = st->GetLabelText();
         if (!text.empty() && text.Find('\n') == wxNOT_FOUND) {
             text_width = st->GetTextExtent(text).x;
             text_clipped = shown && !ellipsized && text_width > client.x;
             truncated = shown && ellipsized && text_width > client.x;
         }
     } else if (has_label && dynamic_cast<wxControl *>(w)) {
-        const wxString text = wxString::FromUTF8(label.c_str());
+        const wxString text = wxControl::RemoveMnemonics(wxString::FromUTF8(label.c_str()));
         if (text.Find('\n') == wxNOT_FOUND) {
             text_width = w->GetTextExtent(text).x;
             // Custom controls draw icons and padding too; report the extent and

@@ -49,6 +49,7 @@
 #include <boost/log/expressions.hpp>
 #include <boost/log/utility/setup/file.hpp>
 #include <boost/log/utility/setup/common_attributes.hpp>
+#include <boost/log/utility/exception_handler.hpp>
 #include <boost/log/sources/severity_logger.hpp>
 #include <boost/log/sources/record_ostream.hpp>
 #include <boost/log/support/date_time.hpp>
@@ -336,6 +337,11 @@ void set_log_path_and_level(const std::string& file, unsigned int level, const L
 		<< ":" << expr::smessage
 	);
 	boost::log::core::get()->add_sink(g_log_sink);
+	// A log file that cannot be opened (a data directory whose log path runs
+	// past MAX_PATH, a read-only folder) must cost the log, not the app:
+	// without a handler the sink's filesystem_error escapes every
+	// BOOST_LOG_TRIVIAL call and ends the process before its window opens.
+	boost::log::core::get()->set_exception_handler(logging::make_exception_suppressor());
 
 	logging::add_common_attributes();
 
