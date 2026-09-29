@@ -1,4 +1,5 @@
 #include "WorkspacePanel.hpp"
+#include "Widgets/MD3DataView.hpp"
 
 #include "I18N.hpp"
 #include "GUI_App.hpp"
@@ -191,7 +192,7 @@ void WorkspacePanel::create_ui()
 
     auto *files_page = make_page();
     auto *files_sizer = new wxBoxSizer(wxVERTICAL);
-    m_files = new wxDataViewListCtrl(files_page, wxID_ANY, wxDefaultPosition, wxDefaultSize,
+    m_files = new MD3DataViewListCtrl(files_page, wxID_ANY, wxDefaultPosition, wxDefaultSize,
                                      wxDV_SINGLE | wxDV_ROW_LINES | wxBORDER_NONE);
     m_files->AppendTextColumn(_L("Member"), wxDATAVIEW_CELL_INERT, FromDIP(200), wxALIGN_LEFT, wxDATAVIEW_COL_RESIZABLE);
     m_files->AppendTextColumn(_L("Project 3MF"), wxDATAVIEW_CELL_INERT, FromDIP(260), wxALIGN_LEFT, wxDATAVIEW_COL_RESIZABLE);
@@ -283,7 +284,7 @@ void WorkspacePanel::create_ui()
     m_month->SetHighlightColours(StateColor::semantic(MD3::Role::OnPrimary), StateColor::semantic(MD3::Role::Primary));
     calendar_sizer->Add(m_month, 0, wxALL, FromDIP(8));
     m_month->Bind(wxEVT_CALENDAR_SEL_CHANGED, [this](wxCalendarEvent &) { refresh_calendar(); });
-    m_agenda = new wxDataViewListCtrl(calendar_page, wxID_ANY, wxDefaultPosition, wxDefaultSize,
+    m_agenda = new MD3DataViewListCtrl(calendar_page, wxID_ANY, wxDefaultPosition, wxDefaultSize,
                                       wxDV_SINGLE | wxDV_ROW_LINES | wxBORDER_NONE);
     m_agenda->AppendTextColumn(_L("Planned print"), wxDATAVIEW_CELL_INERT, FromDIP(200), wxALIGN_LEFT, wxDATAVIEW_COL_RESIZABLE);
     m_agenda->AppendTextColumn(_L("Printer"), wxDATAVIEW_CELL_INERT, FromDIP(140), wxALIGN_LEFT, wxDATAVIEW_COL_RESIZABLE);

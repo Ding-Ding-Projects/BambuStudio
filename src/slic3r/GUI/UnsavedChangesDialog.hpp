@@ -7,6 +7,7 @@
 #include <wx/string.h>
 
 #include "GUI_Utils.hpp"
+#include "Widgets/MD3DataView.hpp"
 #include "Widgets/LabeledCheckBox.hpp"
 #include "wxExtensions.hpp"
 #include "libslic3r/PresetBundle.hpp"
@@ -240,7 +241,7 @@ public:
 //                  DiffViewCtrl
 // ----------------------------------------------------------------------------
 
-class DiffViewCtrl : public wxDataViewCtrl
+class DiffViewCtrl : public MD3DataViewCtrl
 {
     bool                    m_has_long_strings{ false };
     bool                    m_empty_selection { false };

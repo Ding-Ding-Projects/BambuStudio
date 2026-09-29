@@ -100,6 +100,13 @@ test('every source that builds an MD3GroupBox reaches its header', async () => {
   assert.deepEqual(missing, [], 'these use MD3GroupBox with no include path to Widgets/StaticGroup.hpp');
 });
 
+test('every source that builds an MD3 table reaches its header', async () => {
+  const { users, missing } = await unreached(path.join(slic3rDir, 'GUI', 'Widgets', 'MD3DataView.hpp'),
+    ['MD3DataViewCtrl', 'MD3DataViewListCtrl']);
+  assert.ok(users >= 10, `expected the MD3 tables across the GUI, found ${users} files`);
+  assert.deepEqual(missing, [], 'these use an MD3 table with no include path to Widgets/MD3DataView.hpp');
+});
+
 test('every source that builds an MD3ScrolledWindow reaches its header', async () => {
   const { users, missing } = await unreached(SCROLLED_HEADER, ['MD3ScrolledWindow']);
   assert.ok(users > 50, `expected MD3ScrolledWindow across the GUI, found ${users} files`);

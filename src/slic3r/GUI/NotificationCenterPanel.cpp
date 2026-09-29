@@ -1,4 +1,5 @@
 #include "NotificationCenterPanel.hpp"
+#include "Widgets/MD3DataView.hpp"
 
 #include "GUI_App.hpp"
 #include "I18N.hpp"
@@ -151,7 +152,7 @@ void NotificationCenterPanel::build_ui()
     root->Add(m_status_label, 0, wxEXPAND | wxBOTTOM, FromDIP(6));
 
     // --- List ------------------------------------------------------------
-    m_list = new wxDataViewListCtrl(this, wxID_ANY, wxDefaultPosition, wxDefaultSize,
+    m_list = new MD3DataViewListCtrl(this, wxID_ANY, wxDefaultPosition, wxDefaultSize,
                                     wxDV_MULTIPLE | wxDV_ROW_LINES | wxBORDER_NONE);
     // TRN: Accessible name of the notification history list.
     m_list->SetName(_L("Notification history"));

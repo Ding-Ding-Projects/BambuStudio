@@ -267,9 +267,14 @@ still to verify.
   constructions and subclasses (56 files), and the kit `ListBox` now creates its window from its own constructor body
   so the overrides apply from the start. The owner must be created through its own `Create()`, never through a base
   constructor, or Windows gets a scrollbar style before the override exists. The layout probe writes `scrollbars`
-  (`native_v`, `native_h`, `kit_v`, `kit_h`) for every window. Still native: the scrollbars of `wxDataViewCtrl`
-  (including the Objects list) and of multi-line text boxes. `scrollbars.test.mjs` and the include guard cover it; not
-  yet in a release.
+  (`native_v`, `native_h`, `kit_v`, `kit_h`) for every window. `scrollbars.test.mjs` and the include guard cover it;
+  not yet in a release.
+- Table scrollbars (2026-09-29): `MD3DataViewCtrl` and `MD3DataViewListCtrl` (`Widgets/MD3DataView.{hpp,cpp}`) do
+  the same forwarding for tables. ObjectList, AuxiliaryList and DiffViewCtrl derive from `MD3DataViewCtrl`, and the
+  seven `wxDataViewListCtrl` tables are `MD3DataViewListCtrl`. `wxDataViewCtrl::MSWWindowProc` is private, so both
+  call `wxDataViewCtrlBase::MSWWindowProc` and add the `DLGC_WANTARROWS` it added, keeping the arrow keys for the
+  selection. The Objects list's ink editor leaves room for the kit bar. Still native: multi-line text boxes, whose
+  Windows edit control sets and draws its own bar.
 - Closeout cleanup (2026-09-29): the linked worktree of the auto-updater lane
   (`BambuStudio-claude-auto-updater`) and its branch `claude/auto-updater` (`37b3fce78`, contained in `main`, no copy
   on the remote) were removed after an archive of the repository to the maintainer's cloud folder was written and

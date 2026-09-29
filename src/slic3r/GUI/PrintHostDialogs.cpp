@@ -1,4 +1,5 @@
 #include "PrintHostDialogs.hpp"
+#include "Widgets/MD3DataView.hpp"
 
 #include <algorithm>
 #include <iomanip>
@@ -277,7 +278,7 @@ PrintHostQueueDialog::PrintHostQueueDialog(wxWindow *parent)
             widths.push_back(-1);
     }
 
-    job_list = new wxDataViewListCtrl(this, wxID_ANY);
+    job_list = new MD3DataViewListCtrl(this, wxID_ANY);
 
     // MSW DarkMode: workaround for the selected item in the list
     auto append_text_column = [this](const wxString& label, int width, wxAlignment align = wxALIGN_LEFT,

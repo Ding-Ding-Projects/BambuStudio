@@ -15,6 +15,7 @@
 #include "Widgets/Button.hpp"
 #include "Widgets/Label.hpp"
 #include "Widgets/ListBox.hpp"
+#include "Widgets/MD3DataView.hpp"
 #include "Widgets/MD3ScrolledWindow.hpp"
 #include "Widgets/TextInput.hpp"
 #include <wx/scrolwin.h>
@@ -125,7 +126,7 @@ std::uintptr_t handle_of(const wxWindow *w)
 // Which scrollbars a window shows and whose they are. Windows keeps
 // WS_VSCROLL/WS_HSCROLL in the style only while it shows that bar itself, so
 // "native" is a Windows-drawn bar; "kit" is the Material bar (MD3ScrollBars)
-// of an MD3ScrolledWindow or a kit ListBox.
+// of an MD3ScrolledWindow, a kit ListBox or an MD3 data view table.
 std::string scrollbars_json(const wxWindow *w)
 {
     bool native_v = false;
@@ -145,6 +146,12 @@ std::string scrollbars_json(const wxWindow *w)
     } else if (const auto *list = dynamic_cast<const ListBox *>(w)) {
         kit_v = list->IsBarShown(wxVERTICAL);
         kit_h = list->IsBarShown(wxHORIZONTAL);
+    } else if (const auto *table = dynamic_cast<const MD3DataViewCtrl *>(w)) {
+        kit_v = table->IsBarShown(wxVERTICAL);
+        kit_h = table->IsBarShown(wxHORIZONTAL);
+    } else if (const auto *table_list = dynamic_cast<const MD3DataViewListCtrl *>(w)) {
+        kit_v = table_list->IsBarShown(wxVERTICAL);
+        kit_h = table_list->IsBarShown(wxHORIZONTAL);
     }
     std::ostringstream o;
     o << "{\"native_v\":" << (native_v ? "true" : "false") << ",\"native_h\":" << (native_h ? "true" : "false")

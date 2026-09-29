@@ -11,6 +11,7 @@
 #include <wx/timer.h>
 
 #include "Event.hpp"
+#include "Widgets/MD3DataView.hpp"
 #include "wxExtensions.hpp"
 #include "ObjectDataViewModel.hpp"
 
@@ -105,7 +106,7 @@ struct MeshIssueCounts
     bool has_any_issue() const { return has_error() || has_info(); }
 };
 
-class ObjectList : public wxDataViewCtrl
+class ObjectList : public MD3DataViewCtrl
 {
 public:
     enum SELECTION_MODE

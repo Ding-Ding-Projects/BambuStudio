@@ -1,5 +1,6 @@
 #include <wx/button.h>
 #include "GUI_AuxiliaryList.hpp"
+#include "Widgets/MD3DataView.hpp"
 #include "Widgets/Button.hpp"
 #include "Widgets/MD3Menu.hpp"
 #include "I18N.hpp"
@@ -15,7 +16,7 @@ using namespace Slic3r::GUI;
 using namespace Slic3r;
 
 AuxiliaryList::AuxiliaryList(wxWindow* parent)
-	: wxDataViewCtrl(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxDV_NO_HEADER)
+	: MD3DataViewCtrl(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxDV_NO_HEADER)
 {
 	wxDataViewTextRenderer* tr = new wxDataViewTextRenderer("string", wxDATAVIEW_CELL_INERT);
 	wxDataViewColumn* column0 = new wxDataViewColumn("", tr, 0, 200, wxALIGN_LEFT,

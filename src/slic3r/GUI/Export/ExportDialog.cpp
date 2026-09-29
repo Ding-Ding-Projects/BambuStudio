@@ -1,4 +1,5 @@
 #include "ExportDialog.hpp"
+#include "slic3r/GUI/Widgets/MD3DataView.hpp"
 #include "slic3r/GUI/Widgets/MD3ScrolledWindow.hpp"
 
 #include "ExportEverything.hpp"
@@ -193,7 +194,7 @@ void ExportDialog::create_ui()
     m_format_card = new StaticBox(m_body);
     auto *format_sizer = new wxBoxSizer(wxVERTICAL);
     format_sizer->Add(new Label(m_format_card, Label::Head_14, _L("Format")), 0, wxLEFT | wxRIGHT | wxTOP, FromDIP(14));
-    m_format_list = new wxDataViewListCtrl(m_format_card, wxID_ANY, wxDefaultPosition, FromDIP(wxSize(-1, 220)),
+    m_format_list = new MD3DataViewListCtrl(m_format_card, wxID_ANY, wxDefaultPosition, FromDIP(wxSize(-1, 220)),
                                            wxDV_SINGLE | wxBORDER_NONE);
     m_format_list->AppendTextColumn(_L("Format"), wxDATAVIEW_CELL_INERT, FromDIP(150), wxALIGN_LEFT, wxDATAVIEW_COL_RESIZABLE);
     m_format_list->AppendTextColumn(_L("Fidelity"), wxDATAVIEW_CELL_INERT, FromDIP(110), wxALIGN_LEFT, wxDATAVIEW_COL_RESIZABLE);

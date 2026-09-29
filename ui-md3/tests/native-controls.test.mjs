@@ -71,8 +71,8 @@ test('the Workspace panel is built from kit controls', async () => {
   const ui = fn(panel, 'void WorkspacePanel::create_ui()');
   assert.match(ui, /m_section_tabs = new TextTabbar\(this, TextTabbar::Align::Left\);/);
   assert.match(ui, /m_sections = new wxSimplebook\(this, wxID_ANY\);/);
-  assert.match(ui, /m_files = new wxDataViewListCtrl\(/);
-  assert.match(ui, /m_agenda = new wxDataViewListCtrl\(/);
+  assert.match(ui, /m_files = new MD3DataViewListCtrl\(/);
+  assert.match(ui, /m_agenda = new MD3DataViewListCtrl\(/);
   assert.match(ui, /md3_style_data_view\(m_files\);/);
   assert.match(ui, /md3_style_data_view\(m_agenda\);/);
   assert.match(ui, /m_checklist = new ListBox\(list_page, wxID_ANY\);\s*m_checklist->EnableChecks\(\);/);

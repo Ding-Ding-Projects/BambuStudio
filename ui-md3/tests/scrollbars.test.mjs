@@ -43,6 +43,25 @@ test('no GUI source builds a wxScrolledWindow of its own', async () => {
   assert.deepEqual(offenders, [], 'build an MD3ScrolledWindow, whose bars are the kit scrollbar');
 });
 
+test('no GUI source builds a data view table of its own', async () => {
+  const offenders = [];
+  for (const file of await sources(gui)) {
+    const rel = path.relative(gui, file).replaceAll('\\', '/');
+    if (rel.startsWith('Widgets/MD3DataView.')) continue;
+    const text = code(await readFile(file, 'utf8'));
+    const hits = text.match(/\bnew\s+wxDataView(?:List)?Ctrl\s*\(|\bpublic\s+wxDataView(?:List)?Ctrl\b|:\s*wxDataView(?:List)?Ctrl\s*\(/g) ?? [];
+    if (hits.length) offenders.push(`${rel} (${hits.length})`);
+  }
+  assert.deepEqual(offenders, [], 'build an MD3DataViewCtrl or MD3DataViewListCtrl, whose bars are the kit scrollbar');
+  const expectations = [
+    ['GUI_ObjectList.hpp', /class ObjectList : public MD3DataViewCtrl/],          // the Objects list
+    ['GUI_AuxiliaryList.hpp', /class AuxiliaryList : public MD3DataViewCtrl/],
+    ['UnsavedChangesDialog.hpp', /class DiffViewCtrl : public MD3DataViewCtrl/],
+  ];
+  for (const [file, pattern] of expectations)
+    assert.match(code(await read(file)), pattern, file);
+});
+
 test('the scrolled surfaces people use most are MD3ScrolledWindow', async () => {
   const expectations = [
     ['Plater.cpp', /p->scrolled\s*=\s*new MD3ScrolledWindow\(/],                         // the Prepare sidebar
@@ -72,10 +91,12 @@ test('MD3ScrollBars keeps Windows from drawing a bar and draws the kit strip ins
   assert.match(cpp, /SWP_FRAMECHANGED/, 'showing or hiding a bar recalculates the frame, as a native bar does');
 });
 
-test('MD3ScrolledWindow and the kit ListBox route every native scrollbar call to MD3ScrollBars', async () => {
+test('MD3ScrolledWindow, the kit ListBox and the MD3 tables route every native scrollbar call to MD3ScrollBars', async () => {
   const pairs = [
     ['MD3ScrolledWindow.hpp', 'MD3ScrolledWindow.cpp', 'wxScrolledWindow'],
     ['ListBox.hpp', 'ListBox.cpp', 'wxVListBox'],
+    ['MD3DataView.hpp', 'MD3DataView.cpp', 'wxDataViewCtrl'],
+    ['MD3DataView.hpp', 'MD3DataView.cpp', 'wxDataViewListCtrl'],
   ];
   for (const [hpp, cpp, base] of pairs) {
     const header = code(await read('Widgets', hpp));
@@ -88,6 +109,12 @@ test('MD3ScrolledWindow and the kit ListBox route every native scrollbar call to
     assert.match(source, /MD3ScrollBars::WithoutNativeBars\(/, `${cpp} drops the native scrollbar style`);
     assert.match(source, /m_bars\.Abandon\(\)/, `${cpp} ends a drag cut short by destruction`);
   }
+  // wxDataViewCtrl's window procedure is private, so the tables call its base's
+  // and add the one thing it adds: the arrow keys for the selection.
+  const tables = code(await read('Widgets', 'MD3DataView.cpp'));
+  assert.doesNotMatch(tables, /wxDataView(?:List)?Ctrl::MSWWindowProc\(/, 'the private wxDataViewCtrl::MSWWindowProc is never called');
+  assert.equal((tables.match(/result = wxDataViewCtrlBase::MSWWindowProc\(msg, wParam, lParam\);\s*if \(msg == WM_GETDLGCODE\)\s*result \|= DLGC_WANTARROWS;/g) ?? []).length, 2,
+    'both tables keep the arrow keys');
   // The window has to be created from the class's own constructor body: a base
   // constructor creates it before the overrides above exist.
   const list = code(await read('Widgets', 'ListBox.cpp'));
@@ -103,11 +130,14 @@ test('code that sized a scrolled window for the Windows bar sizes it for the kit
     assert.doesNotMatch(text, /wxSYS_VSCROLL_X/, `${file} still leaves room for the 17px Windows bar`);
     assert.match(text, /MD3ScrolledWindow::BarThickness\(/, `${file} leaves room for the kit bar`);
   }
+  const objects = code(await read('GUI_ObjectList.cpp'));
+  assert.doesNotMatch(objects, /wxSYS_VSCROLL_X/, 'the Objects list ink editor still leaves room for the Windows bar');
+  assert.match(objects, /MD3ScrollBars::Thickness\(this\)/, 'the Objects list ink editor leaves room for the kit bar');
 });
 
 test('the scrollbar classes are built and the layout probe reports whose bars a window shows', async () => {
   const cmake = await readFile(path.join(repoDir, 'src', 'slic3r', 'CMakeLists.txt'), 'utf8');
-  for (const file of ['MD3ScrollBars.cpp', 'MD3ScrollBars.hpp', 'MD3ScrolledWindow.cpp', 'MD3ScrolledWindow.hpp'])
+  for (const file of ['MD3ScrollBars.cpp', 'MD3ScrollBars.hpp', 'MD3ScrolledWindow.cpp', 'MD3ScrolledWindow.hpp', 'MD3DataView.cpp', 'MD3DataView.hpp'])
     assert.ok(cmake.includes(`GUI/Widgets/${file}`), `${file} is part of libslic3r_gui`);
   const probe = await read('LayoutProbe.cpp');
   assert.ok(probe.includes('<< ",\\"scrollbars\\":" << scrollbars_json(w)'), 'every window record carries its scrollbars');

@@ -1,4 +1,5 @@
 #include "ProjectHistoryDialog.hpp"
+#include "Widgets/MD3DataView.hpp"
 
 #include "Export/ExportDatasets.hpp"
 #include "Export/ExportDialog.hpp"
@@ -233,7 +234,7 @@ void ProjectHistoryDialog::create_ui()
         update_selection();
     });
     list_sizer->Add(m_search_field, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(8));
-    m_version_list = new wxDataViewListCtrl(m_list_card, wxID_ANY, wxDefaultPosition, wxDefaultSize,
+    m_version_list = new MD3DataViewListCtrl(m_list_card, wxID_ANY, wxDefaultPosition, wxDefaultSize,
                                             wxDV_SINGLE | wxBORDER_NONE);
     m_version_list->AppendTextColumn(_L("Commit"), wxDATAVIEW_CELL_INERT, FromDIP(104), wxALIGN_LEFT,
                                      wxDATAVIEW_COL_RESIZABLE);

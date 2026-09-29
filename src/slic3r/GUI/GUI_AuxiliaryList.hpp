@@ -12,9 +12,10 @@
 #include <wx/dir.h>
 
 #include "AuxiliaryDataViewModel.hpp"
+#include "Widgets/MD3DataView.hpp"
 #include "Widgets/Button.hpp"
 
-class AuxiliaryList : public wxDataViewCtrl
+class AuxiliaryList : public MD3DataViewCtrl
 {
 public:
 	AuxiliaryList(wxWindow* parent);

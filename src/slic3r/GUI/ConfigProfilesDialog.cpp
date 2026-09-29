@@ -1,4 +1,5 @@
 #include "ConfigProfilesDialog.hpp"
+#include "Widgets/MD3DataView.hpp"
 
 #include "GUI_App.hpp"
 #include "I18N.hpp"
@@ -192,7 +193,7 @@ void ConfigProfilesDialog::create_ui()
     m_search_field->SetOnQuery([this](const wxString &) { populate_profiles(); update_buttons(); });
     m_search_field->SetOnRegexToggle([this](bool) { populate_profiles(); update_buttons(); });
     list_sizer->Add(m_search_field, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(8));
-    m_profile_list = new wxDataViewListCtrl(m_list_card, wxID_ANY, wxDefaultPosition, wxDefaultSize,
+    m_profile_list = new MD3DataViewListCtrl(m_list_card, wxID_ANY, wxDefaultPosition, wxDefaultSize,
                                             wxDV_SINGLE | wxBORDER_NONE);
     m_profile_list->AppendTextColumn(_L("Profile"), wxDATAVIEW_CELL_INERT, FromDIP(180));
     m_profile_list->AppendTextColumn(_L("Data folder"), wxDATAVIEW_CELL_INERT, FromDIP(360));

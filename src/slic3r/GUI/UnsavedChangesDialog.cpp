@@ -1,4 +1,5 @@
 #include "UnsavedChangesDialog.hpp"
+#include "Widgets/MD3DataView.hpp"
 #include "Widgets/MD3ScrolledWindow.hpp"
 #include "Widgets/LabeledCheckBox.hpp"
 #include "Widgets/TextArea.hpp"
@@ -633,7 +634,7 @@ static std::string get_pure_opt_key(std::string opt_key)
 // ----------------------------------------------------------------------------
 
 DiffViewCtrl::DiffViewCtrl(wxWindow *parent, wxSize size)
-    : wxDataViewCtrl(parent,
+    : MD3DataViewCtrl(parent,
                      wxID_ANY,
                      wxDefaultPosition,
                      size,

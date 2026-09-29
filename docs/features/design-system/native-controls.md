@@ -19,7 +19,7 @@ theme. Each now has a kit counterpart.
 | `wxStaticBox` (group box) | `MD3GroupBox`: a Material outline and title | Option groups outside the settings tabs, the bed shape dialog, the calibration wizard pages, Save preset, the unsaved changes comparison, the ink picker's preview |
 | `wxChoicebook` | The kit `ComboBox` over a `wxSimplebook` | The bed shape dialog's shape |
 | `CreateButtonSizer()`, `CreateStdDialogButtonSizer()` | Kit buttons with the standard ids | Bed shape, System info, the full comparison of an unsaved change |
-| The Windows scrollbar of `wxScrolledWindow` and of the kit `ListBox` | `MD3ScrolledWindow` and the kit `ListBox`, both drawing the kit scrollbar (`MD3ScrollBars`) | Every scrolled page and panel: the Prepare sidebar, every settings page, every Preferences page, the Device tab, the command palette, long message boxes and dialogs, and the kit lists |
+| The Windows scrollbar of `wxScrolledWindow`, of the kit `ListBox` and of every table (`wxDataViewCtrl`, `wxDataViewListCtrl`) | `MD3ScrolledWindow`, the kit `ListBox`, `MD3DataViewCtrl` and `MD3DataViewListCtrl`, all drawing the kit scrollbar (`MD3ScrollBars`) | Every scrolled page and panel: the Prepare sidebar, every settings page, every Preferences page, the Device tab, the command palette, long message boxes and dialogs; the kit lists; and every table: the Objects list, the project files list, the unsaved changes comparison, the Workspace lists, Config profiles, Export, Version history, the notification centre, the print host queue |
 
 ## How
 
@@ -59,8 +59,9 @@ theme. Each now has a kit counterpart.
   (a Filled OK, an Outlined Cancel) take their place, so the dialog's own OK, Cancel and Escape
   handling still applies.
 - **Scrollbars.** Windows drew a 17 px grey strip with a thin grey thumb in every scrolled window, in
-  both themes. `MD3ScrolledWindow`, used wherever a `wxScrolledWindow` was, and the kit `ListBox`
-  create their window without a Windows scrollbar and draw the kit scrollbar instead: a 10 px strip in
+  both themes. `MD3ScrolledWindow`, used wherever a `wxScrolledWindow` was, the kit `ListBox`, and
+  `MD3DataViewCtrl` and `MD3DataViewListCtrl`, used for every table, create their window without a
+  Windows scrollbar and draw the kit scrollbar instead: a 10 px strip in
   the colour of the surface behind it, holding a fully rounded thumb inset 2 px, OutlineVariant at
   rest and Outline while the pointer is on it or drags it. A bar takes its strip beside the content,
   where the Windows bar sat, so nothing is laid out under it, and the content gains the 7 px the
@@ -68,16 +69,15 @@ theme. Each now has a kit counterpart.
   towards the pointer and repeats while the button is held. The wheel, the keyboard and scrolling a
   focused field into view work as before, because wx's own scroll logic still does the scrolling and
   only tells the kit strip where to draw. With Windows high contrast on, the strip uses the system
-  window and text colours.
+  window and text colours. A table's own scroll logic scrolls its rows and its header as before, and the
+  arrow keys still move its selection.
 
 ## What stays native, and why
 
 - The system file dialogs, which bring the user's places, previews and the Windows shell with them.
-- For now, the scrollbars of tables (the Objects list and every `wxDataViewCtrl`: the Workspace
-  lists, Config profiles, Export, Version history, the notification centre, the print host queue) and
-  of multi-line text boxes. A table's bar belongs to the data view control and a text box's to the
-  Windows edit control, and each needs its own kit subclass to hand its bar to `MD3ScrollBars`. This
-  is open work, listed in the roadmap.
+- For now, the scrollbars of multi-line text boxes. A text box's bar belongs to the Windows edit
+  control inside it, which sets and draws the bar itself, so the kit bar needs a different route
+  there. This is open work, listed in the roadmap.
 - Native classes that no build can show: the SLA archive import's file picker (the import has no
   menu entry), the check-list combo popup in `wxExtensions` (no caller), and the monitor base panel
   with its splitter (never constructed).
@@ -87,9 +87,9 @@ theme. Each now has a kit counterpart.
 - `node --test ui-md3/tests/native-controls.test.mjs` refuses a native tab control, report list,
   check list, month calendar, tip window, info bar, group box, choice book, tree control or standard
   button sizer anywhere in the GUI, and checks each kit replacement.
-- `node --test ui-md3/tests/scrollbars.test.mjs` refuses a new `wxScrolledWindow`, checks that the
-  kit scrollbar never hands a bar to Windows and reserves its strip in the non-client area, and that
-  code which left room for the Windows bar leaves room for the kit one.
+- `node --test ui-md3/tests/scrollbars.test.mjs` refuses a new `wxScrolledWindow`, data view table or
+  data view list, checks that the kit scrollbar never hands a bar to Windows and reserves its strip in
+  the non-client area, and that code which left room for the Windows bar leaves room for the kit one.
 - The layout probe records, for every window, whether it shows a Windows scrollbar or a kit one
   (`scrollbars`: `native_v`, `native_h`, `kit_v`, `kit_h`), so a probe dump of a released build
   lists every Windows scrollbar still on screen.
