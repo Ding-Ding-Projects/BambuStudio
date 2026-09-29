@@ -1264,6 +1264,13 @@ Sidebar::priv::~priv()
 // clamps this to 55% of the frame, so a narrow window keeps its 3D canvas.
 static constexpr int ADVANCED_SIDEBAR_WIDTH = 480;
 
+// Width (DIP) of the Prepare section strip (Ink / Process / Objects) when it is
+// docked to the left or right of the sidebar body, its default. The strip shares
+// the sidebar pane with the body, so this comes on top of every body width:
+// counted inside them, it left the full settings tree 334 px of a 480 px pane,
+// and every value field ended past the edge (md3-v151).
+static constexpr int PREPARE_SECTION_RAIL_WIDTH = 128;
+
 // Sidebar body scroll maintenance (shared by Sidebar::update_scroll_body and
 // the priv:: paths that run before/without the public wrapper): virtual height
 // grows past the client so sections below the fold scroll into reach, and the
@@ -4370,7 +4377,7 @@ Sidebar::Sidebar(Plater *parent)
     prepare_tabs_options.surface_name = _L("Prepare");
     prepare_tabs_options.strip_name = _L("Prepare sections");
     prepare_tabs_options.default_edge = MD3::Tabs::DockEdge::Left;
-    prepare_tabs_options.vertical_width_dip = 128;
+    prepare_tabs_options.vertical_width_dip = PREPARE_SECTION_RAIL_WIDTH;
     p->m_prepare_tabs = new TabStrip(this, prepare_tabs_options);
     // Load before adding defaults: AddTab persists, so the opposite order
     // would overwrite the user's saved dock and tab arrangement.
@@ -4396,6 +4403,10 @@ Sidebar::Sidebar(Plater *parent)
     p->m_prepare_tabs->Bind(EVT_TABSTRIP_DOCK_CHANGED, [this](wxCommandEvent &) {
         place_prepare_strip();
         Layout();
+        // Moved beside the body, the strip needs its width added to the pane.
+        if (auto *plater = dynamic_cast<Plater *>(GetParent()))
+            plater->request_sidebar_width(is_process_advanced() ? FromDIP(ADVANCED_SIDEBAR_WIDTH) + section_strip_width() : 0,
+                                          /*grow_only=*/true);
     });
 
     auto *sidebar_border = new ::StaticLine(this, true);
@@ -4435,7 +4446,22 @@ void Sidebar::place_prepare_strip()
         m_prepare_layout->Insert(0, p->m_prepare_tabs, 0, wxEXPAND);
     else
         m_prepare_layout->Add(p->m_prepare_tabs, 0, wxEXPAND);
+    // A strip beside the body takes its width out of the same pane.
+    SetMinSize(wxSize(default_width(), -1));
     m_prepare_layout->Layout();
+}
+
+int Sidebar::section_strip_width() const
+{
+    if (!p->m_prepare_tabs || !p->m_prepare_tabs->IsShown())
+        return 0;
+    // The strip pins its own width to this in a side dock (TabStrip::Relayout).
+    return MD3::Tabs::is_vertical(p->m_prepare_tabs->GetDockEdge()) ? FromDIP(PREPARE_SECTION_RAIL_WIDTH) : 0;
+}
+
+int Sidebar::default_width() const
+{
+    return FromDIP(MD3::Metrics::active().sidebar_width) + section_strip_width();
 }
 
 void Sidebar::apply_prepare_section(const std::string &section) const
@@ -5208,7 +5234,7 @@ void Sidebar::change_top_border_for_mode_sizer(bool increase_border)
 
 void Sidebar::msw_rescale()
 {
-    SetMinSize(wxSize(FromDIP(MD3::Metrics::active().sidebar_width), -1));
+    SetMinSize(wxSize(default_width(), -1));
     // No fixed-height title bar: the Printer header is a content-sized
     // SectionHeader (DPI-safe by construction, no rescale call needed), and the
     // Filament title row now sizes to its own content the same way.
@@ -5572,8 +5598,10 @@ void Sidebar::show_process_advanced(bool advanced, bool persist)
     // grow_only on the way in, so flipping to Advanced never narrows a sidebar
     // the user had already dragged wider; the flip back to Simple is an explicit
     // request for the compact width, so that one does shrink.
+    // The tree's width is the body's: a section strip docked beside it (the
+    // default left rail) comes on top, or the value fields end past the edge.
     if (auto *plater = dynamic_cast<Plater *>(GetParent()))
-        plater->request_sidebar_width(advanced ? FromDIP(ADVANCED_SIDEBAR_WIDTH) : 0,
+        plater->request_sidebar_width(advanced ? FromDIP(ADVANCED_SIDEBAR_WIDTH) + section_strip_width() : 0,
                                       /*grow_only=*/advanced);
 
     if (p->m_prepare_tabs)
@@ -9519,8 +9547,8 @@ Plater::priv::priv(Plater *q, MainFrame *main_frame)
                                    .BottomDockable(true)
                                    .Floatable(wxGetApp().app_config->get_bool("enable_sidebar_floatable"))
                                    .Resizable(true)
-                                   .MinSize(wxSize(q->FromDIP(MD3::Metrics::active().sidebar_width), 90 * wxGetApp().em_unit()))
-                                   .BestSize(wxSize(q->FromDIP(MD3::Metrics::active().sidebar_width), 90 * wxGetApp().em_unit())));
+                                   .MinSize(wxSize(this->sidebar->default_width(), 90 * wxGetApp().em_unit()))
+                                   .BestSize(wxSize(this->sidebar->default_width(), 90 * wxGetApp().em_unit())));
 
     auto *panel_sizer = new wxBoxSizer(wxHORIZONTAL);
     panel_sizer->Add(view3D, 1, wxEXPAND | wxALL, 0);
@@ -9601,7 +9629,7 @@ Plater::priv::priv(Plater *q, MainFrame *main_frame)
             // Latch only once the request actually had a laid-out frame to size
             // against; an early size event would otherwise clamp to the compact
             // default and then never be retried.
-            if (this->q->request_sidebar_width(this->q->FromDIP(ADVANCED_SIDEBAR_WIDTH),
+            if (this->q->request_sidebar_width(this->q->FromDIP(ADVANCED_SIDEBAR_WIDTH) + this->sidebar->section_strip_width(),
                                                /*grow_only=*/true))
                 m_advanced_width_applied = true;
         });
@@ -11429,7 +11457,7 @@ void Plater::priv::reset_window_layout(int width)
         m_aui_mgr.LoadPerspective(m_default_window_layout, false);
     } else {
         auto copy = m_default_window_layout;
-        wxString old_num  = wxString::Format("%d", q->FromDIP(MD3::Metrics::active().sidebar_width));
+        wxString old_num  = wxString::Format("%d", sidebar->default_width());
         wxString new_num  = wxString::Format("%d", width);
         wxString str0("bestw="), str1("bestw=");
         str0 += old_num;
@@ -11484,9 +11512,9 @@ void Plater::priv::apply_sidebar_dock(bool force_dock, bool reset_size, bool upd
         const int min_h   = q->FromDIP(260);
         const int avail_h = q->GetClientSize().GetHeight();
         const int cap_h   = avail_h > 0 ? std::max(min_h, (avail_h * 2) / 5) : min_h;
-        pane.MinSize(wxSize(q->FromDIP(MD3::Metrics::active().sidebar_width), min_h));
+        pane.MinSize(wxSize(this->sidebar->default_width(), min_h));
         if (set_best_size)
-            pane.BestSize(wxSize(q->FromDIP(MD3::Metrics::active().sidebar_width), cap_h));
+            pane.BestSize(wxSize(this->sidebar->default_width(), cap_h));
         if (position == "top")
             pane.Top();
         else
@@ -11494,9 +11522,9 @@ void Plater::priv::apply_sidebar_dock(bool force_dock, bool reset_size, bool upd
     } else {
         // Horizontal split: fixed-width column, existing behavior mirrored on the
         // chosen side.
-        pane.MinSize(wxSize(q->FromDIP(MD3::Metrics::active().sidebar_width), 90 * em));
+        pane.MinSize(wxSize(this->sidebar->default_width(), 90 * em));
         if (set_best_size)
-            pane.BestSize(wxSize(q->FromDIP(MD3::Metrics::active().sidebar_width), 90 * em));
+            pane.BestSize(wxSize(this->sidebar->default_width(), 90 * em));
         if (position == "right")
             pane.Right();
         else
@@ -26381,7 +26409,7 @@ bool Plater::request_sidebar_width(int width_px, bool grow_only)
     if (pane.dock_direction == wxAUI_DOCK_TOP || pane.dock_direction == wxAUI_DOCK_BOTTOM)
         return true;
 
-    const int def_w = FromDIP(MD3::Metrics::active().sidebar_width);
+    const int def_w = p->sidebar->default_width(); // body plus a section strip docked beside it
     // Never shrink below the density default, and never take so much that the
     // 3D canvas is squeezed out: cap at 55% of the frame. Below this floor the
     // frame has not been laid out yet (early startup sizes come through at a

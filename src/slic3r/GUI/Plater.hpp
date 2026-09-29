@@ -199,6 +199,14 @@ public:
     // wider dock the tree needs, since the ctor applies the persisted choice
     // before the AUI pane that carries the width even exists.
     bool is_process_advanced() const;
+    // Width the section strip (Ink / Process / Objects) takes beside the body
+    // when it is docked to the left or right, 0 when it runs along the top or
+    // bottom. The strip shares the sidebar pane with the body, so every pane
+    // width is the body's width plus this.
+    int section_strip_width() const;
+    // The density default body width plus the section strip: the pane's
+    // minimum and default width.
+    int default_width() const;
     // BBS. Add filament_added() method.
     void on_filament_count_change(size_t num_filaments);
     void on_filaments_delete(size_t filament_id);

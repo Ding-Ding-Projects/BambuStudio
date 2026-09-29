@@ -285,12 +285,11 @@ ParamsPanel::ParamsPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, c
         m_process_icon->SetIconButton(Button::IconShape::Circle, 32);
         m_process_icon->SetGlyph(MaterialIcon::Tune);
 
-        // Ellipsizable title: at narrow panel widths the header must shed width
-        // from the title (Proc…) instead of letting the Global/Objects switch
-        // land on top of it. The sizer item carries proportion 1 (see
-        // create_layout) so the deficit is taken here, bounded by this min.
+        // A fixed header item (proportion 0 since CJ-012, see create_layout), so
+        // it is as wide as its text: a 56 DIP minimum cut the Cantonese title
+        // "打印設定" to "打印設…" on md3-v151. The header gives way through its
+        // one stretch spacer instead.
         m_title_label = new Label(m_top_panel, _L("Process"), wxST_ELLIPSIZE_END);
-        m_title_label->SetMinSize(wxSize(FromDIP(56), -1));
 
         //int width, height;
         // BBS: new layout
