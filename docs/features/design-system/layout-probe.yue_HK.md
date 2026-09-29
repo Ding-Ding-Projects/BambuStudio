@@ -1,6 +1,6 @@
 ---
 translation-of: layout-probe.md
-source-sha256: c427485460741ed4ec9e51b2a527c4ed6e553c1ac046d53afc7bbf21cacc1e40
+source-sha256: d92664f1bc6d31bfacb11347f67622f80eae68c1fa990290929da32fa2e7971c
 review-status: agent-drafted
 ---
 
@@ -34,6 +34,7 @@ review-status: agent-drafted
 | `text_clipped` | 一個標籤雖然冇人要求就被截斷或縮短：佢嘅文字範圍比客戶端寬度闊，同埋冇省略號樣式，或者一個唔可以縮窄嘅工具包按鈕畫咗標籤縮短 |
 | `truncated` | 一個標籤被畫得用省略號縮短，要求與否：一份省略號靜態文字比客戶端寬度闊，或任何工具包按鈕嘅最後繪畫縮短咗標籤。一份喺對話框入面嘅縮短操作係一個缺陷，即使允許縮窄 |
 | `ellipsized` | 標籤攜帶省略號樣式，或工具包按鈕允許縮窄，正如分頁標籤一樣（為審查而報告，唔係發現） |
+| `hint_clipped` | 一個空白嘅單行輸入框顯示嘅提示字比佢嘅客戶端寬度闊，所以被輸入框切走；`hint` 同 `hint_width` 記錄提示字同佢嘅闊度（未量度提示字之前，有乜新嘢將「YYYY-MM-DD / DD/MM/YYYY」切成「YYYY-MM-DD / D」，版面裁剪清單 CJ-027） |
 | `clipped_by_parent` | 一個顯示緊嘅子視窗嘅矩形，喺父視窗唔會捲動嘅方向超出咗父視窗嘅客戶區（捲動面板可見範圍以外嘅一行只係被捲走，唔係被裁剪；對話框或者其他頂層視窗永遠唔會被標記：佢本身就係一個獨立視窗） |
 
 場景工具欄（`"toolbar":"main"`）嘅每個可見項目同埋 gizmo 欄（`"gizmo"`）一份 `gl_item` 記錄：名稱、主機 canvas 句柄、canvas 像素同埋螢幕上嘅矩形，源自項目嘅世界空間轉譯矩形同埋相機縮放。呢啲唔係 wx 視窗，所以冇標誌適用；佢哋存在係為咗一份截圖可以按名稱被裁剪到工具欄或欄項目。

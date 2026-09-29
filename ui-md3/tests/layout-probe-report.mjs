@@ -10,6 +10,7 @@
 //   starved          a shown sizer child allocated less than its own minimum
 //   oversubscribed   a wxBoxSizer whose children's minimums exceed its size
 //   text_clipped     a label whose text is wider than its client area and not ellipsized
+//   hint_clipped     an empty single-line entry whose placeholder hint is wider than it
 //   clipped_by_parent a shown window whose rect leaves its parent's client area
 // Hidden windows and hidden top-levels never count; a wxStaticText that is
 // ellipsized is reported under `ellipsized` for review but is not a finding.
@@ -74,6 +75,9 @@ for (const file of files) {
       }
     }
     if (w.text_clipped) findings.push({ ...base, finding: 'text_clipped', text_width: w.text_width, client: w.client });
+    // A placeholder hint wider than its empty entry is cut by the edit control
+    // (What's new's date hint, clipping inventory CJ-027).
+    if (w.hint_clipped) findings.push({ ...base, finding: 'hint_clipped', hint_width: w.hint_width, client: w.client });
     // A top-level window is positioned by the user, not clipped by its owner;
     // a row further down a scrolled page is scrolled out of view, not clipped.
     // Both would otherwise flood the report (measured on Preferences: 30 of 44
@@ -86,7 +90,7 @@ for (const file of files) {
   }
 }
 
-const order = { zero_sized: 0, starved: 1, oversubscribed: 2, text_clipped: 3, clipped_by_parent: 4 };
+const order = { zero_sized: 0, starved: 1, oversubscribed: 2, text_clipped: 3, hint_clipped: 4, clipped_by_parent: 5 };
 findings.sort((a, b) => order[a.finding] - order[b.finding] || a.where.localeCompare(b.where));
 
 if (asJson) {
@@ -98,6 +102,7 @@ if (asJson) {
     const extra = f.finding === 'oversubscribed' ? ` available=${f.available} required=${f.required} deficit=${f.deficit}`
       : f.finding === 'starved' ? ` alloc=${f.alloc?.w}x${f.alloc?.h} need=${f.need?.w}x${f.need?.h}`
       : f.finding === 'text_clipped' ? ` text=${f.text_width}px client=${f.client?.w}px`
+      : f.finding === 'hint_clipped' ? ` hint=${f.hint_width}px client=${f.client?.w}px`
       : ` rect=${f.rect?.x},${f.rect?.y} ${f.rect?.w}x${f.rect?.h}`;
     console.log(`${f.finding.padEnd(18)} ${f.where}${extra}`);
   }

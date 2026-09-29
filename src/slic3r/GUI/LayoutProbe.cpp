@@ -42,6 +42,7 @@
 #include <wx/sizer.h>
 #include <wx/statbox.h>
 #include <wx/stattext.h>
+#include <wx/textctrl.h>
 #include <wx/textentry.h>
 #include <wx/toplevel.h>
 #include <wx/utils.h>
@@ -357,6 +358,24 @@ void write_window(boost::nowide::ofstream &out, wxWindow *w, wxWindow *top, int 
         text_clipped = truncated && !ellipsized;
     }
 
+    // A placeholder hint is drawn by the single-line edit control inside its own
+    // client area, on one line, and only while the entry is empty: a hint wider
+    // than that is cut. What's new showed "YYYY-MM-DD / D" for its date hint and
+    // no sweep reported it, because nothing measured hints (clipping inventory
+    // CJ-027). The edit control keeps a small margin on each side.
+    std::string hint;
+    int hint_width = -1;
+    bool hint_clipped = false;
+    if (auto *entry = dynamic_cast<wxTextEntry *>(w)) {
+        const auto *multi = dynamic_cast<wxTextCtrl *>(w);
+        const wxString shown_hint = entry->GetHint();
+        if (!shown_hint.empty() && (multi == nullptr || !multi->IsMultiLine())) {
+            hint = std::string(shown_hint.ToUTF8().data());
+            hint_width = w->GetTextExtent(shown_hint).x;
+            hint_clipped = visible && entry->IsEmpty() && hint_width + w->FromDIP(4) > client.x;
+        }
+    }
+
     bool clipped_by_parent = false;
     // A dialog or other top-level window is its own native window and its rect
     // is in screen coordinates, so nothing of its parent can cut it.
@@ -423,6 +442,9 @@ void write_window(boost::nowide::ofstream &out, wxWindow *w, wxWindow *top, int 
         << ",\"ellipsized\":" << (ellipsized ? "true" : "false")
         << ",\"text_clipped\":" << (text_clipped ? "true" : "false")
         << ",\"truncated\":" << (truncated ? "true" : "false")
+        << ",\"hint\":" << json(hint)
+        << ",\"hint_width\":" << hint_width
+        << ",\"hint_clipped\":" << (hint_clipped ? "true" : "false")
         << ",\"clipped_by_parent\":" << (clipped_by_parent ? "true" : "false")
         << ",\"starved\":" << (starved ? "true" : "false")
         << ",\"zero_sized\":" << (zero_sized ? "true" : "false")

@@ -15,7 +15,8 @@ capture it with PrintWindow, write a layout-probe dump, close it with
 Writes <out>/dialog-<slug>--<tuple>.png, <out>/probe/dialog-<slug>--<tuple>.jsonl
 and <out>/sweep--<tuple>.json. A finding is a shown window inside the dialog
 whose record says text_clipped, truncated (builds from 4dc449e62 on),
-clipped_by_parent or starved; on a build without "truncated", a window with a
+hint_clipped (a placeholder hint wider than its empty entry), clipped_by_parent
+or starved; on a build without "truncated", a window with a
 label that is more than 2 px narrower than its own best width is reported as
 suspect_shortened (the kit Button that may shrink caches its full label width
 as its best size). With --po, a label that opens nothing in English is tried
@@ -123,7 +124,7 @@ def findings_in(dump_path, dialog_hwnd):
         if r.get('kind') != 'window' or r.get('top') != dialog_hwnd or not r.get('shown'):
             continue
         has_truncated_field = has_truncated_field or 'truncated' in r
-        flags = [f for f in ('text_clipped', 'truncated', 'clipped_by_parent', 'starved') if r.get(f)]
+        flags = [f for f in ('text_clipped', 'truncated', 'hint_clipped', 'clipped_by_parent', 'starved') if r.get(f)]
         if 'truncated' not in r and r.get('label') and r.get('class') == 'wxWindow':
             if r['rect']['w'] + 2 < r['best']['w']:
                 flags.append('suspect_shortened')
