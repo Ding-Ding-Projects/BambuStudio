@@ -1,6 +1,6 @@
 ---
 translation-of: clipping-inventory.md
-source-sha256: 3af1e0c521ef2ad86866010b0f9ec37c033d433b8f1ce99f819c5ee47602e3e2
+source-sha256: 643bb59c77fa0c05e5cd13afbfcec5a01c3a9f789c1e7f50a2d1ec0de8a9c534
 review-status: agent-drafted
 ---
 
@@ -43,7 +43,7 @@ Windows 桌面應用程式上發現嘅每一個版面裁剪缺陷，包括佢嘅
 | CJ-018 | 溫度校準、設定標籤（雙語） | bilingual_en_yue_HK-light-comfortable | "Start temp: · 開"、"End temp: · 結束"、"Temp step: · 溫度"：粵語喺標籤邊度被裁剪 | 標籤建立咗 120 px 寬，佢變咗佢哋嘅最小值，排版器計算咗排版器嘅鬆弛作為房間佢哋可以長到 | efaa98db2 | dialog-temperature--bilingual_en_yue_HK-light-comfortable--before.png | dialog-temperature--bilingual_en_yue_HK-light-comfortable--md3-v150.png | verified |
 | CJ-019 | 回抽測試、步長欄位（每個帶單位嘅置中校準同預設欄位） | yue_HK-light-comfortable | 「0.1」被裁剪，「mm/mm」嘅第一個「mm」匿咗喺輸入框後面（最大體積流量速度測試入面「5 mm³/s」顯示成「5 /秒」）；英文模式下數字得 26 px，所以任何長過「0.1」嘅值都會被裁剪 | 置中欄位將單位畫喺最左邊、輸入框下面，而欄位建立時得 90 px 闊，冇替數字保留最少闊度（`a849963bf` 為數字保留位置；呢個提交將單位畫喺數字後面） | f3aab6af1 | dialog-retraction-test--yue_HK-light-comfortable--before.png | dialog-retraction-test--yue_HK-light-comfortable--md3-v154.png | verified |
 | CJ-020 | 每個訊息對話框嘅內文（雙語）：最新版本通知，同埋每一個普通訊息 | bilingual_en_yue_HK-light-comfortable | 「This is the newest versio」尾部得返一條空白，廣東話嗰行完全冇出現 | 內文喺一個捲動頁面入面，頁面嘅最小同最大尺寸都係按一行英文定死咗；雙語裝飾器之後先將標籤變成兩行，頁面大唔到，垂直捲軸就食咗句尾 | 2b8fa5d8b | dialog-check-for-update--bilingual_en_yue_HK-light-comfortable--before.png | dialog-check-for-update--bilingual_en_yue_HK-light-comfortable--md3-v153.png | verified |
-| CJ-021 | 偏好設定，每一頁（雙語） | bilingual_en_yue_HK-light-comfortable | 頁面多咗條橫向捲動列，每行尾嘅控制項（語言清單、搞笑程度滑桿、開關、登入區域）被推出視線以外；「No warnings when loading 3MF with modified G-codes · ...」呢類行標題變成一行 629 px，壓住自己個開關，仲超出 533 px 闊嘅頁面 | 偏好設定頁唔會跟住對話框變闊，而係捲動；但雙語裝飾器畀標籤當對話框會加闊（最多 40 %），又將偏好設定按 320 DIP 換行嘅標籤配對成冇換行嘅一行；喺一行入面會拉闊嘅標籤亦將嗰行剩低嘅位計咗兩次（2e80091ef 修正）。md3-v155 照樣打橫捲：搞笑程度同表情符號嗰幾行從來冇經過裝飾器，因為偏好設定自己砌好「English · 廣東話」一行，大約 430 px 塞入 356 px 一欄 | dd95aace8 | preferences-general--bilingual_en_yue_HK-light-comfortable--md3-v151.png | pending | fixed-unverified |
+| CJ-021 | 偏好設定，每一頁（雙語） | bilingual_en_yue_HK-light-comfortable | 頁面多咗條橫向捲動列，每行尾嘅控制項（語言清單、搞笑程度滑桿、開關、登入區域）被推出視線以外；「No warnings when loading 3MF with modified G-codes · ...」呢類行標題變成一行 629 px，壓住自己個開關，仲超出 533 px 闊嘅頁面 | 偏好設定頁唔會跟住對話框變闊，而係捲動；但雙語裝飾器畀標籤當對話框會加闊（最多 40 %），又將偏好設定按 320 DIP 換行嘅標籤配對成冇換行嘅一行；喺一行入面會拉闊嘅標籤亦將嗰行剩低嘅位計咗兩次（2e80091ef 修正）。md3-v155 照樣打橫捲：搞笑程度同表情符號嗰幾行從來冇經過裝飾器，因為偏好設定自己砌好「English · 廣東話」一行，大約 430 px 塞入 356 px 一欄 | dd95aace8 | preferences-general--bilingual_en_yue_HK-light-comfortable--md3-v151.png | preferences-general--bilingual_en_yue_HK-light-comfortable--md3-v160.png | verified |
 | CJ-022 | 冇單位嘅設定欄位，同埋程式設成空白字串嘅文字（粵語） | yue_HK-light-comfortable | 準備側邊欄打印設定入面兩個數值輸入框嘅數字格闊 0 px，「10」同「1」完全睇唔到，文字欄亦由 105 px 縮到 45 px；單位位置顯示「Project-Id-Version: Bambu Studio ...」嘅開頭；偏好設定 > 使用者入面，「自動填充先前登入嘅賬號。」嘅說明係成個英文目錄標頭 | gettext 目錄會用標頭回答空白訊息；wx 自己查嗰陣會拒絕空白字串，但粵語模式搵唔到翻譯時會直接查英文目錄，嗰度冇攔住，所以每個欄位嘅空白單位（`_L(m_opt.sidetext)`）同原始碼入面每個 `_L("")` 都變成咗標頭 | c591f1b39 | preferences-search-autofill--yue_HK-light-comfortable--md3-v151.png | preferences-search-autofill--yue_HK-light-comfortable--md3-v157.png | verified |
 | CJ-023 | 準備側邊欄，完整打印設定樹 | 每個組合（1200 x 800 視窗） | 每個數值欄都超出側邊欄右邊；廣東話分類按鈕按一個睇唔到嘅闊度換行，「支撐」有一半喺外面 | 分區條（墨水／打印設定／物件）以 128 DIP 闊放喺內容左邊，同內容共用同一個窗格，但每個窗格闊度都只計內容：設定樹喺 480 px 嘅窗格只分到 334 px，但佢要大約 417 px | 11cf45423 | prepare--en-light-comfortable--md3-v151.png | prepare--en-light-comfortable--md3-v157.png | verified |
 | CJ-024 | 準備側邊欄，打印設定標題（粵語） | yue_HK-light-comfortable | 顯示「打印設…」而唔係「打印設定」 | 自從 CJ-012 修正之後，標題係固定項目，但仍然保留 56 DIP 嘅最細闊度，所以永遠唔會加闊到佢 60 px 嘅文字 | 11cf45423 | prepare--yue_HK-light-comfortable--md3-v151.png | prepare--yue_HK-light-comfortable--md3-v157.png | verified |
@@ -61,6 +61,8 @@ CJ-021 第一個修正 `2e80091ef` 冇修好發佈版：`md3-v155`（目標 `c73
 CJ-022、CJ-023 同 CJ-024 已經用 `md3-v157`（目標 `11cf45423`，套件 SHA-1 `1d14417aa7037d47d7b7e5c1b2de75172dde4dab`，所有匯入都搵到）驗證：粵語模式喺偏好設定搜尋 自動填充，嗰行自動填充冇描述，而 `md3-v151` 係成個翻譯檔檔頭（CJ-022）；準備側欄英文同粵語都將每個打印設定數值欄連單位完整顯示，標題、搜尋同預設組合嘅圖示全部喺側欄入面（CJ-023）；粵語打印設定標題完整顯示「打印設定」（CJ-024）。同一個發佈版嘅雙語偏好設定 > 其他搜尋欄有提示字，所以 `md3-v155` 一張擷圖冇提示字嘅情況冇再出現。
 
 CJ-025 已經用 `md3-v158`（目標 `32a36b134`，套件 SHA-1 `8613eadca952103e32a2cb2bfbd348b02b18113e`，所有匯入都搵到）驗證：溫度校準喺雙語模式完整顯示「SETTINGS · 設定」，所有單位都係「°C」，粵語模式亦係「°C」；最大流量顯示「mm³/s」，有乜新嘢嘅日期用「 · 」分隔。同一次掃描搵到 CJ-027：有乜新嘢嘅日期欄喺三種模式都將提示字「YYYY-MM-DD / DD/MM/YYYY」切走。版面探針唔量度提示字，所以之前冇任何掃描報告過；`1af648025` 令每個欄有提示字咁闊，日期行亦可以換行。
+
+CJ-021 已經用 `md3-v160`（目標 `dd95aace8`，套件 SHA-1 `57a99f72f9cb99efd1ff7e299be5c3b581838678`，所有匯入都搵到）驗證：雙語偏好設定 > 一般冇打橫捲動列，最闊嗰行喺 556 px 完結，頁面有 560 px，語言清單、兩條搞笑程度滑桿、表情符號開關同地區、單位清單都喺頁面入面。每條滑桿下面嘅來源行仍然係英文，粵語喺工具提示；`4d5bfc93f` 令佢換行，配對就可以排成兩行。
 
 CJ-026 喺同一輪 `md3-v155` 搵到：偏好設定打開之後先顯示嘅每一頁（使用者、3D、其他），每段排成兩行嘅描述嘅粵語嗰行都畫咗喺下一行標題底下。`a07353987` 會重排裝飾器改過嘅每個標籤周圍嘅頁面。嗰輪嘅雙語「其他」擷圖仲見到搜尋欄冇咗提示字，但一般、使用者、3D 同外觀嘅擷圖都顯示「Search settings · 搜尋設定」；只見過一次，下一個發佈再檢查，先決定要唔要開一行。
 

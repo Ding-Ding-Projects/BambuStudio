@@ -319,6 +319,24 @@ package or in Windows; the sweep reported no finding in three modes.
 | --- | --- | --- |
 | `dialog-what-s-new-changelog--yue_HK-light-comfortable--md3-v159.png` | What's new in Cantonese: 160 versions and 1307 changes, newest v154, every entry in Cantonese; the date hint is still cut (CJ-027, fixed later in `1af648025`) | `yue_HK-light-comfortable` |
 
+## Release md3-v160 captures (2026-09-29)
+
+Taken by `scripts/md3/capture-tuple.py` from the unmodified `md3-v160` release package, with profiles
+under `C:\Users\Public\bbsdd\`. Every import of its executables and DLLs resolves in the package or in
+Windows.
+
+| Field | Value |
+| --- | --- |
+| Source commit | `dd95aace8` (release `md3-v160`) |
+| Package | `BambuStudioMD3-2.8.4159-full.nupkg`, 732,156,668 bytes, SHA-1 `57a99f72f9cb99efd1ff7e299be5c3b581838678` as listed in `RELEASES` |
+| Executable | `bambu-studio.exe` sha256 `e4b90548418aa358304b37ba72f52cee2aa48951f56239389fb58d65d71e897a`, `BambuStudio.dll` sha256 `210385f5895f6d90f690568ba9e3cba3e7eee25e3c00574ad0183deaff9a70bf` |
+| Capture route | hidden Win32 desktop, `PrintWindow`, real GPU driver |
+| Display scale | 100% |
+
+| File | Page | Tuple |
+| --- | --- | --- |
+| `preferences-general--bilingual_en_yue_HK-light-comfortable--md3-v160.png` | Preferences > General (after CJ-021): no sideways scrollbar, every row's list, slider and switch inside the page | `bilingual_en_yue_HK-light-comfortable` |
+
 ## Layout-probe dumps
 
 `probe/<tuple>--<before|after>.jsonl`, one per main-frame idle dump plus one per opened dialog,

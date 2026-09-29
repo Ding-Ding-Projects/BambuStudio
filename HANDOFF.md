@@ -161,6 +161,11 @@ still to verify.
   under the old "highest release plus one" rule; `363181692` (run #607 on) numbers packages by run.
   Its package verifies (SHA-1 `83b29ae59437103fc7599578eb048838055aad01`, imports resolve), and its What's
   new lists 160 versions and 1307 changes, newest v154, every entry in Cantonese in Cantonese mode.
+- `md3-v160` (`dd95aace8`, published 10:20 UTC as latest, package `2.8.4159`, SHA-1
+  `57a99f72f9cb99efd1ff7e299be5c3b581838678` matching its `RELEASES`, every import resolves, splash painted in all
+  three modes) verifies CJ-021: bilingual Preferences > General has no sideways scrollbar and its widest row
+  ends at 556 px in the 560 px page. The provenance line under each Funny level slider still shows English
+  with its Cantonese in the tooltip; `4d5bfc93f` wraps it. CJ-026 is still visible here; its fix came later.
 - Upstream Bambu Studio `v02.08.04.61` (tagged 2026-09-29, seven commits on `v02.08.04.57`) is merged in
   `a0e408559` without conflicts: error dialog buttons act on mouse-up, the progress dialog no longer
   yields on Windows (upstream's fix for hangs after sending a print or loading a project from the device
