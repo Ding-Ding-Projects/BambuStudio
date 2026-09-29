@@ -69,7 +69,8 @@ kept equal to `main` and exists only as the checkout of the session that started
   becomes latest when its commit is newer than the latest release's. The ready notice is now a banner
   that stays until the user acts, with Restart to install update, Release notes and a notice that
   updates are not code-signed, and an installed copy re-checks every six hours (issue #46). Placeholder
-  hints are bilingual too (`f0fb0c297`). Notification links still show English only in bilingual mode.
+  hints are bilingual too (`f0fb0c297`). Notification links are bilingual when the pair fits a line of the
+  notification (on `main` after this note; see ROADMAP).
 - Release jobs share one concurrency group, and GitHub keeps one running and one waiting: a newer build
   that finishes while one waits cancels the waiting release job. The `b5cde7521` build passed but its
   release was cancelled that way on 2026-09-29, so not every push gets a release when pushes come fast.

@@ -57,6 +57,7 @@ until captures from a released build exist.
 - [ ] Section headers ("SETTINGS"), list and table column titles and placeholder hints show both languages in bilingual mode when they fit, and the language audit counts section headers (`87ec5c44c`, `f0fb0c297`). Implemented with contract tests; stays unticked until a released build is captured in bilingual mode.
 - [ ] Keyboard Shortcuts labels sit on the dialog surface instead of grey boxes (`466c24da9`). Stays unticked until a released build is captured.
 - [ ] The layout probe no longer reports a dialog as clipped by its parent: only child windows are compared with the parent's client area (`f2110b6cc`), only windows a user can see are flagged, and rows scrolled out of view are not clipped (`2906c2820`).
+- [ ] Notification links ("Restart to install update", "Retry", "Release notes") read "English · 廣東話" in bilingual mode when the pair fits a line of the notification. Implemented with its contract test; stays unticked until a released build is captured.
 - [ ] Message dialog bodies show both languages in bilingual mode instead of the English cut by a scrollbar with the Cantonese hidden (clipping inventory CJ-020, `2b8fa5d8b`). Stays unticked until a released build is captured.
 - [ ] Independent human review of the agent-drafted Cantonese, starting with print safety, account, networking and destructive flows.
 

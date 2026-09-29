@@ -75,9 +75,13 @@ The settings labels, which `OG_CustomCtrl` paints itself, use the same rule at p
 `I18N::fit_bilingual()`; the label column keeps its English width, and the label tooltip carries the
 Cantonese description. Material menus show the Cantonese as the secondary line of each item.
 
-Known limits: other self-drawn widgets (tab strips, step indicators and similar controls) and the 3D
-canvas (ImGui gizmos and notifications) are not yet bilingual. A label that the program rewrites
-while it is on screen shows English again until the next pass, which runs about every three seconds.
+Self-drawn widgets (tab strips, step indicators, switches and similar controls) and the 3D canvas
+(ImGui text, gizmos and notifications) use the same rule at paint time. A notification's link, such as
+"Restart to install update" or "Retry", reads "English · 廣東話" when the pair fits a line of the
+notification, and stays English otherwise; the notification's text itself shows the Cantonese below.
+
+Known limits: a label that the program rewrites while it is on screen shows English again until the
+next pass, which runs about every three seconds. The camera view's small LIVE badge stays English.
 
 ## Documentation and changelog
 

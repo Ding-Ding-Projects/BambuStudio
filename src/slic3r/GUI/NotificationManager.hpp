@@ -647,6 +647,10 @@ private:
 		// Aditional text after hypertext - currently not used
 		std::string      m_text2;
         std::string      m_second_hypertext;
+        // The link texts as laid out and drawn: "English · 廣東話" in bilingual mode when the
+        // pair fits a line (count_lines() decides), otherwise the English above.
+        std::string      m_hypertext_shown;
+        std::string      m_second_hypertext_shown;
 		// mark for render operation
 		size_t           pos_start = string::npos;
 		size_t	         pos_end = string::npos;

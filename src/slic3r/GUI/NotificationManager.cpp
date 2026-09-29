@@ -191,6 +191,21 @@ namespace {
 
         return english + "\n" + secondary.ToUTF8().data();
     }
+
+    // A notification link in bilingual mode: "English · 廣東話" when the pair fits the text
+    // area on a line of its own, otherwise the English alone. count_lines() decides once per
+    // layout and everything after it measures and draws the decided text, so the hit box and
+    // the underline match what is drawn and a link is never cut short by the fit.
+    std::string bilingual_link_text(const std::string &english, float available_width)
+    {
+        if (english.empty() || !I18N::language_mode_profile().is_bilingual())
+            return english;
+        const wxString secondary = I18N::bilingual_secondary(wxString::FromUTF8(english.c_str()));
+        if (secondary.empty())
+            return english;
+        const std::string compact = english + " \xC2\xB7 " + std::string(secondary.ToUTF8().data());
+        return ImGui::CalcTextSize(compact.c_str()).x <= available_width ? compact : english;
+    }
 }
 
 #if 1
@@ -229,6 +244,8 @@ NotificationManager::PopNotification::PopNotification(const NotificationData &n,
     if (!n.second_hypertext.empty()) {
         m_second_hypertext = n.second_hypertext;
     }
+    m_hypertext_shown        = m_hypertext;
+    m_second_hypertext_shown = m_second_hypertext;
     // MD3 status/accent roles. use_bbl_theme() re-resolves these against the
     // live dark-mode flag; these light-app defaults cover the pre-render window.
     // Error/Warning take the flag INVERTED because they are painted on the
@@ -712,6 +729,9 @@ void NotificationManager::PopNotification::count_lines()
 	// hypertext calculation
     if (!m_hypertext.empty()) {
         const float available_width = m_window_width - m_window_width_offset;
+        // The link texts are decided here, once per layout, and drawn as decided.
+        m_hypertext_shown        = bilingual_link_text(m_hypertext, available_width);
+        m_second_hypertext_shown = bilingual_link_text(m_second_hypertext, available_width);
         const float x_offset = m_left_indentation;
         const float link_spacing = ImGui::CalcTextSize("   ").x;
         int prev_end = m_endlines.size() > 1 ? m_endlines[m_endlines.size() - 2] : 0; // m_endlines.size() - 2 because we are fitting hypertext instead of last endline
@@ -721,16 +741,16 @@ void NotificationManager::PopNotification::count_lines()
             prev_end++;
         std::string last_line = text.substr(prev_end, last_end - prev_end);
         float first_hypertext_x = x_offset + ImGui::CalcTextSize((last_line + (last_line.empty() ? "" : " ")).c_str()).x;
-        float first_hypertext_w = ImGui::CalcTextSize(m_hypertext.c_str()).x;
+        float first_hypertext_w = ImGui::CalcTextSize(m_hypertext_shown.c_str()).x;
         if (first_hypertext_x + first_hypertext_w > available_width) {
             m_endlines.push_back(last_end);
             m_lines_count++;
             first_hypertext_x = x_offset;
         }
 
-        if (!m_second_hypertext.empty()) {
+        if (!m_second_hypertext_shown.empty()) {
             float second_hypertext_x = first_hypertext_x + first_hypertext_w + link_spacing;
-            float second_hypertext_w = ImGui::CalcTextSize(m_second_hypertext.c_str()).x;
+            float second_hypertext_w = ImGui::CalcTextSize(m_second_hypertext_shown.c_str()).x;
             if (second_hypertext_x + second_hypertext_w > available_width) {
                 m_lines_count++;
             }
@@ -830,7 +850,7 @@ void NotificationManager::PopNotification::bbl_render_block_notif_text(ImGuiWrap
         //if (imgui.button(_L("Jump"), button_size.x, button_size.y)) { if (on_text_click()) { close(); } }
 		ImGui::PopStyleColor(2);
 		ImGui::PopStyleVar(2);
-		render_hypertext(imgui, x_offset + ImGui::CalcTextSize((line + (line.empty() ? "" : " ")).c_str()).x, starting_y + (m_endlines.size() - 1) * shift_y, m_hypertext);
+		render_hypertext(imgui, x_offset + ImGui::CalcTextSize((line + (line.empty() ? "" : " ")).c_str()).x, starting_y + (m_endlines.size() - 1) * shift_y, m_hypertext_shown);
 	}
 
 	// text2 (text after hypertext) is not rendered for regular notifications
@@ -888,7 +908,7 @@ void NotificationManager::PopNotification::render_text(ImGuiWrapper& imgui, cons
 	else if (!m_hypertext.empty()) {
         float available_width = m_window_width - m_window_width_offset;
         float first_hypertext_x = x_offset + ImGui::CalcTextSize((line + (line.empty() ? "" : " ")).c_str()).x;
-        float first_hypertext_w = ImGui::CalcTextSize(m_hypertext.c_str()).x;
+        float first_hypertext_w = ImGui::CalcTextSize(m_hypertext_shown.c_str()).x;
         float hypertext_y = starting_y + (m_endlines.size() - 1) * shift_y;
         // count_lines() already reserved an own line for the hypertext when it does not fit
         // behind the last text line. Only wrap when text precedes it, otherwise a link wider
@@ -899,20 +919,20 @@ void NotificationManager::PopNotification::render_text(ImGuiWrapper& imgui, cons
        }
         // Neither count_lines() nor this function wraps the link itself, so an overlong one
         // (long object name) has to be shortened to stay inside the notification.
-        std::string hypertext = ellipsize_middle(m_hypertext, available_width - first_hypertext_x);
+        std::string hypertext = ellipsize_middle(m_hypertext_shown, available_width - first_hypertext_x);
         first_hypertext_w = ImGui::CalcTextSize(hypertext.c_str()).x;
         render_hypertext(imgui, first_hypertext_x, hypertext_y, hypertext);
 
-       if (!m_second_hypertext.empty()) {
+       if (!m_second_hypertext_shown.empty()) {
             float second_hypertext_x = first_hypertext_x + first_hypertext_w + ImGui::CalcTextSize("   ").x;
-            float second_hypertext_w = ImGui::CalcTextSize(m_second_hypertext.c_str()).x;
+            float second_hypertext_w = ImGui::CalcTextSize(m_second_hypertext_shown.c_str()).x;
             float second_hypertext_y = hypertext_y;
             if (second_hypertext_x + second_hypertext_w > available_width) {
                 second_hypertext_x = x_offset;
                 second_hypertext_y += shift_y;
             }
             render_hypertext(imgui, second_hypertext_x, second_hypertext_y,
-                              m_second_hypertext, false, true);
+                              m_second_hypertext_shown, false, true);
         }
     }
 
@@ -1212,6 +1232,8 @@ void NotificationManager::PopNotification::update(const NotificationData &n, boo
 	m_hypertext      = n.hypertext;
     m_text2          = bilingual_notification_text(n.text2);
     m_second_hypertext                              = n.second_hypertext;
+    m_hypertext_shown                               = m_hypertext;
+    m_second_hypertext_shown                        = m_second_hypertext;
     const_cast<NotificationData&>(m_data).callback	 = n.callback;
     const_cast<NotificationData &>(m_data).second_callback = n.second_callback;
     if (change_level) {
