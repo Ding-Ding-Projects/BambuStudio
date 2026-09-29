@@ -208,6 +208,11 @@ still to verify.
   entry had measured a 160 x 243 popup instead of Preferences on every release so far; the sweep now waits for the
   dialog, and captures the six caption bar menus as `menu:` entries. Tests: `context-menus.test.mjs`,
   `check-context-menus.test.mjs`.
+- Last native-looking fields (2026-09-29): the appearance editor's three decimal fields are `AppearanceDecimalField`
+  (the kit `TextInput` with two kit chevron steppers, same ranges and steps; the steppers are named with the new
+  catalogue strings Increase and Decrease, Cantonese 增加 and 減少); the colour picker's HEX and any-format fields sit
+  in the kit `TextInput`; the object list's rename editor is a Material filled field. `md3-conversion-contracts`
+  refuses `wxSpinCtrl` and `wxSpinCtrlDouble`. Tests: `appearance-decimal-field.test.mjs`, `kit-text-fields.test.mjs`.
 - Closeout cleanup (2026-09-29): the linked worktree of the auto-updater lane
   (`BambuStudio-claude-auto-updater`) and its branch `claude/auto-updater` (`37b3fce78`, contained in `main`, no copy
   on the remote) were removed after an archive of the repository to the maintainer's cloud folder was written and

@@ -566,6 +566,11 @@ test('stock wx controls are gone from the GUI except the allowlisted holders', a
   // The SmartHome volume trackbar and the option-field slider are on the kit
   // Slider now; nothing else may bring a native trackbar back.
   assertOnlyAllowed(await sitesOf(/new wxSlider\(/g), new Set(), 'wxSlider');
+  // The What's new year field and the appearance editor's decimal fields are on
+  // the kit now: a native spin control drew a system box and arrows, and opened
+  // the system edit menu.
+  assertOnlyAllowed(await sitesOf(/new wxSpinCtrl\(/g), new Set(), 'wxSpinCtrl');
+  assertOnlyAllowed(await sitesOf(/new wxSpinCtrlDouble\(/g), new Set(), 'wxSpinCtrlDouble');
   assertOnlyAllowed(await sitesOf(/new wxComboBox\(/g), new Set([
     'ExtrusionCalibration.cpp', // legacy branch of an #ifdef whose live branch is the kit ComboBox
     'Auxiliary.cpp',            // dead designer-panel code behind a commented member

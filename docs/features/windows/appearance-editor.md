@@ -51,7 +51,11 @@ open, and the element keeps re-rendering as values change.
     SC, NanumGothic, Source Han Sans JP and Symbola, tagged *(bundled)*) with a
     live preview line in the chosen face; size (pt, stepper + free entry);
     weight 100–900; italic, underline, strikethrough; letter spacing; line
-    height.
+    height. Size, letter spacing and line height are decimal fields on the kit
+    (`AppearanceDecimalField`: the kit `TextInput` with two chevron
+    steppers): Up and Down step them, typed text counts on Enter or when the
+    field is left, a comma reads as the decimal point, and each stays in its
+    range (4 to 96 pt by 0.5, -4 to 20 px by 0.1, 0.8 to 3 by 0.05).
   - *Colours* — text, background, highlight, border. Each swatch opens the
     Material colour picker (`MD3ColorPickerDialog`, with its colour
     translator); an unset colour shows *Theme default* and keeps the token.
@@ -124,8 +128,6 @@ site instead.
   `radius`, `padding` and `margin` are stored and resolved but only a widget
   that measures or frames its own text can honour them; native `wxStaticText`
   ignores them. The editor says so on each section.
-- The typography spinners are native `wxSpinCtrlDouble`s styled with the
-  surface colours, not the Material `SpinInput` (which is integer-only).
 - Anchor tracking is a timer poll (120 ms), not a move-event subscription, so
   a fast drag of the parent window shows the card catching up.
 

@@ -32,7 +32,6 @@
 class wxMenu;
 class wxMenuItem;
 class wxSimplebook;
-class wxSpinCtrlDouble;
 class Button;
 class CheckBox;
 class ComboBox;
@@ -43,6 +42,7 @@ class SpinInput;
 namespace Slic3r { namespace GUI {
 
 class ListBox;
+class AppearanceDecimalField;
 
 class AppearanceEditorPopover : public wxFrame
 {
@@ -113,13 +113,13 @@ private:
     std::vector<wxString> m_font_faces;  // face names parallel to m_all_fonts
     std::vector<int>      m_font_visible; // indices into m_all_fonts
     Label *           m_font_preview { nullptr };
-    wxSpinCtrlDouble *m_size { nullptr };
+    AppearanceDecimalField *m_size { nullptr };
     ComboBox *        m_weight { nullptr };
     CheckBox *        m_italic { nullptr };
     CheckBox *        m_underline { nullptr };
     CheckBox *        m_strike { nullptr };
-    wxSpinCtrlDouble *m_letter_spacing { nullptr };
-    wxSpinCtrlDouble *m_line_height { nullptr };
+    AppearanceDecimalField *m_letter_spacing { nullptr };
+    AppearanceDecimalField *m_line_height { nullptr };
 
     // Colours
     std::map<std::string, Button *> m_swatches; // key -> swatch button

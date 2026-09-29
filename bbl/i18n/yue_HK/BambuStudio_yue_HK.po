@@ -33461,6 +33461,16 @@ msgstr "BambuStudio錯誤"
 
 #. reviewed-category: preferences
 #. review-status: agent-drafted
+msgid "Increase"
+msgstr "增加"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Decrease"
+msgstr "減少"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
 msgid "Edit appearance"
 msgstr "編輯外觀"
 

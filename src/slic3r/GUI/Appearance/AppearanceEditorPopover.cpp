@@ -1,6 +1,7 @@
 #include "AppearanceEditorPopover.hpp"
 
 #include <algorithm>
+#include <functional>
 #include <set>
 
 #include <wx/dcbuffer.h>
@@ -32,6 +33,7 @@
 #include "slic3r/GUI/Widgets/SearchField.hpp"
 #include "slic3r/GUI/Widgets/SpinInput.hpp"
 #include "slic3r/GUI/Widgets/StateColor.hpp"
+#include "slic3r/GUI/Widgets/TextInput.hpp"
 
 namespace Slic3r { namespace GUI {
 
@@ -85,6 +87,106 @@ std::map<wxMenu *, MenuBinding> &menu_bindings()
 }
 
 } // namespace
+
+// A decimal value on the kit: the kit TextInput holds the number and two kit
+// chevron buttons (or Up / Down on the field) step it, clamped to the range. The
+// native wxSpinCtrlDouble it replaces drew a system box and arrows and opened the
+// system edit menu. Only a change made here reaches on_change; SetValue() is quiet.
+class AppearanceDecimalField : public wxPanel
+{
+public:
+    AppearanceDecimalField(wxWindow *parent, double min, double max, double initial, double step, int digits,
+                           const wxString &name)
+        : wxPanel(parent, wxID_ANY), m_min(min), m_max(max), m_step(step), m_digits(digits)
+    {
+        SetBackgroundColour(parent->GetBackgroundColour());
+        SetName(name);
+        auto *row = new wxBoxSizer(wxHORIZONTAL);
+        m_input = new ::TextInput(this, wxEmptyString, wxEmptyString, wxEmptyString, wxDefaultPosition,
+                                  wxSize(FromDIP(72), -1), wxTE_PROCESS_ENTER);
+        m_input->SetName(name);
+        m_input->GetTextCtrl()->SetName(name);
+        row->Add(m_input, 1, wxALIGN_CENTER_VERTICAL);
+        auto *steps = new wxBoxSizer(wxVERTICAL);
+        steps->Add(make_step(+1), 0);
+        steps->Add(make_step(-1), 0);
+        row->Add(steps, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(2));
+        SetSizer(row);
+
+        wxTextCtrl *text = m_input->GetTextCtrl();
+        text->Bind(wxEVT_TEXT_ENTER, [this](wxCommandEvent &) { commit(); });
+        text->Bind(wxEVT_KILL_FOCUS, [this](wxFocusEvent &e) {
+            commit();
+            e.Skip();
+        });
+        text->Bind(wxEVT_KEY_DOWN, [this](wxKeyEvent &e) {
+            if (e.GetKeyCode() == WXK_UP)
+                step_by(+1);
+            else if (e.GetKeyCode() == WXK_DOWN)
+                step_by(-1);
+            else
+                e.Skip();
+        });
+        SetValue(initial);
+    }
+
+    void SetValue(double value)
+    {
+        m_value = std::clamp(value, m_min, m_max);
+        m_input->GetTextCtrl()->ChangeValue(wxString::FromCDouble(m_value, m_digits));
+    }
+    double GetValue() const { return m_value; }
+
+    std::function<void(double)> on_change;
+
+private:
+    Button *make_step(int direction)
+    {
+        auto *b = new Button(this, "", "", 0, 0, wxID_ANY);
+        if (MaterialIcon::available()) {
+            b->SetIconButton(Button::IconShape::Square, 16);
+            b->SetGlyph(direction > 0 ? MaterialIcon::ExpandLess : MaterialIcon::ExpandMore, 14);
+        } else {
+            b->SetLabel(direction > 0 ? "+" : "-");
+            b->SetVariant(Button::Variant::Text);
+            b->SetButtonSize(Button::Size::Small);
+        }
+        b->SetName(direction > 0 ? _L("Increase") : _L("Decrease"));
+        b->SetToolTip(b->GetName());
+        b->Bind(wxEVT_BUTTON, [this, direction](wxCommandEvent &) { step_by(direction); });
+        return b;
+    }
+
+    void step_by(int direction) { set_and_notify(m_value + direction * m_step); }
+
+    // Typed text counts when the field is left or Enter is pressed. A comma is
+    // taken as the decimal point; text that is not a number restores the value.
+    void commit()
+    {
+        wxString text = m_input->GetTextCtrl()->GetValue();
+        text.Replace(",", ".");
+        text.Trim().Trim(false);
+        double parsed = m_value;
+        if (!text.ToCDouble(&parsed))
+            parsed = m_value;
+        set_and_notify(parsed);
+    }
+
+    void set_and_notify(double value)
+    {
+        const double before = m_value;
+        SetValue(value);
+        if (m_value != before && on_change)
+            on_change(m_value);
+    }
+
+    ::TextInput *m_input { nullptr };
+    double       m_min;
+    double       m_max;
+    double       m_step;
+    int          m_digits;
+    double       m_value { 0.0 };
+};
 
 AppearanceEditorPopover *AppearanceEditorPopover::s_current = nullptr;
 
@@ -433,11 +535,8 @@ void AppearanceEditorPopover::build_typography(wxWindow *page)
     m_font_preview->SetMinSize(wxSize(-1, FromDIP(28)));
     s->Add(m_font_preview, 0, wxEXPAND | wxBOTTOM, FromDIP(kRowGap));
 
-    m_size = new wxSpinCtrlDouble(page, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(FromDIP(96), -1),
-                                  wxSP_ARROW_KEYS | wxTE_PROCESS_ENTER, 4.0, 96.0, 13.0, 0.5);
-    m_size->SetName(_L("Font size in points"));
-    m_size->Bind(wxEVT_SPINCTRLDOUBLE, [this](wxSpinDoubleEvent &e) { if (!m_loading) write_number(StyleProp::font_size, e.GetValue()); });
-    m_size->Bind(wxEVT_TEXT_ENTER, [this](wxCommandEvent &) { if (!m_loading) write_number(StyleProp::font_size, m_size->GetValue()); });
+    m_size = new AppearanceDecimalField(page, 4.0, 96.0, 13.0, 0.5, 1, _L("Font size in points"));
+    m_size->on_change = [this](double value) { if (!m_loading) write_number(StyleProp::font_size, value); };
     row(_L("Size (pt)"), m_size, StyleProp::font_size, _L("font size"));
 
     m_weight = new ComboBox(page, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(FromDIP(170), -1), 0, nullptr, wxCB_READONLY);
@@ -477,16 +576,12 @@ void AppearanceEditorPopover::build_typography(wxWindow *page)
     add_check(m_strike, _L("Strikethrough"), StyleProp::strikethrough);
     s->Add(deco, 0, wxEXPAND | wxBOTTOM, FromDIP(kRowGap));
 
-    m_letter_spacing = new wxSpinCtrlDouble(page, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(FromDIP(96), -1),
-                                            wxSP_ARROW_KEYS | wxTE_PROCESS_ENTER, -4.0, 20.0, 0.0, 0.1);
-    m_letter_spacing->SetName(_L("Letter spacing in pixels"));
-    m_letter_spacing->Bind(wxEVT_SPINCTRLDOUBLE, [this](wxSpinDoubleEvent &e) { if (!m_loading) write_number(StyleProp::letter_spacing, e.GetValue()); });
+    m_letter_spacing = new AppearanceDecimalField(page, -4.0, 20.0, 0.0, 0.1, 1, _L("Letter spacing in pixels"));
+    m_letter_spacing->on_change = [this](double value) { if (!m_loading) write_number(StyleProp::letter_spacing, value); };
     row(_L("Letter spacing"), m_letter_spacing, StyleProp::letter_spacing, _L("letter spacing"));
 
-    m_line_height = new wxSpinCtrlDouble(page, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(FromDIP(96), -1),
-                                         wxSP_ARROW_KEYS | wxTE_PROCESS_ENTER, 0.8, 3.0, 1.0, 0.05);
-    m_line_height->SetName(_L("Line height multiplier"));
-    m_line_height->Bind(wxEVT_SPINCTRLDOUBLE, [this](wxSpinDoubleEvent &e) { if (!m_loading) write_number(StyleProp::line_height, e.GetValue()); });
+    m_line_height = new AppearanceDecimalField(page, 0.8, 3.0, 1.0, 0.05, 2, _L("Line height multiplier"));
+    m_line_height->on_change = [this](double value) { if (!m_loading) write_number(StyleProp::line_height, value); };
     row(_L("Line height"), m_line_height, StyleProp::line_height, _L("line height"));
 
     auto *note = new Label(page, Label::Body_11,

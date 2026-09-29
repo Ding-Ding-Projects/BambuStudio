@@ -7,6 +7,7 @@
 #include "MD3Tokens.hpp"
 #include "Slider.hpp"
 #include "StateColor.hpp"
+#include "TextInput.hpp"
 
 #include "slic3r/GUI/I18N.hpp"
 
@@ -260,7 +261,12 @@ void MD3ColorPickerDialog::build(wxWindow * /*parent*/, const wxColour &initial)
     m_preview->SetBackgroundColour(m_colour);
     m_preview->SetName(_L("Preview"));
     hex_row->Add(m_preview, 0, wxALIGN_CENTER_VERTICAL);
-    m_hex = new wxTextCtrl(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(FromDIP(110), -1));
+    // The kit field around the editor, like every other text field: a bare
+    // wxTextCtrl drew the system's white box and border inside the Material card.
+    auto *hex_field = new ::TextInput(this, wxEmptyString, wxEmptyString, wxEmptyString, wxDefaultPosition,
+                                      wxSize(FromDIP(110), -1));
+    hex_field->SetName(_L("HEX color"));
+    m_hex = hex_field->GetTextCtrl();
     m_hex->SetFont(Label::Mono_11);
     m_hex->SetName(_L("HEX color"));
     m_hex->SetMaxLength(9);
@@ -272,14 +278,17 @@ void MD3ColorPickerDialog::build(wxWindow * /*parent*/, const wxColour &initial)
         }
         e.Skip();
     });
-    hex_row->Add(m_hex, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(10));
+    hex_row->Add(hex_field, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(10));
     left->Add(hex_row, 0, wxLEFT | wxRIGHT | wxTOP, FromDIP(12));
 
     // "Enter any format": one field that understands every notation the
     // translator can print, plus CSS colour names. Parsing is local and
     // length-bounded; nothing leaves the process.
     left->Add(caption_label(_L("Enter any format")), 0, wxLEFT | wxRIGHT | wxTOP, FromDIP(12));
-    m_any_format = new wxTextCtrl(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(FromDIP(kFieldW), -1));
+    auto *any_field = new ::TextInput(this, wxEmptyString, wxEmptyString, wxEmptyString, wxDefaultPosition,
+                                      wxSize(FromDIP(kFieldW), -1));
+    any_field->SetName(_L("Enter any color format"));
+    m_any_format = any_field->GetTextCtrl();
     m_any_format->SetFont(Label::Mono_11);
     m_any_format->SetName(_L("Enter any color format"));
     m_any_format->SetHint("oklch(70% 0.1 200)  #rrggbbaa  hsl(...)  cmyk(...)  navy");
@@ -289,7 +298,7 @@ void MD3ColorPickerDialog::build(wxWindow * /*parent*/, const wxColour &initial)
         if (!m_syncing) on_any_format_edited();
         e.Skip();
     });
-    left->Add(m_any_format, 0, wxLEFT | wxRIGHT | wxTOP, FromDIP(4));
+    left->Add(any_field, 0, wxLEFT | wxRIGHT | wxTOP, FromDIP(4));
 
     // Inline, non-blocking status: active colour space and gamut, or the
     // parse problem / clipping warning. Reserved at two lines so the column

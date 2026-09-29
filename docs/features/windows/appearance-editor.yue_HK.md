@@ -1,6 +1,6 @@
 ---
 translation-of: appearance-editor.md
-source-sha256: 23b669d50c1840695db6a30be0036f2ed6512aaac91dfebecd7d9e9b35c6678a
+source-sha256: c616f3455244c402454dd25aa24ab04d294ab6e77dc0f33c961f1fc060870da3
 review-status: agent-drafted
 ---
 
@@ -34,7 +34,7 @@ review-status: agent-drafted
 - **一張卡片。** 為另一個元素打開會重新定位打開嘅卡片，而唔係堆疊第二張。
 - **焦點。** Escape 或關閉按鈕關閉卡片並將焦點返回錨點。Ctrl+PageUp／Ctrl+PageDown 喺分節之間移動；Tab 遍歷每個控制項。
 - **分節**（卡片頂部嘅分頁按鈕）：
-  - *排版*：可搜尋嘅字型清單（來自 `wxFontEnumerator` 嘅已安裝字體加上捆綁嘅 Roboto、Roboto Mono、HarmonyOS Sans SC、NanumGothic、Source Han Sans JP 和 Symbola，標記為 *(捆綁)*)，喺所選字體中有一行實時預覽；大小（pt、步進器 + 自由項目）；粗細 100–900；斜體、下劃線、刪除線；字母間距；行高。
+  - *排版*：可搜尋嘅字型清單（來自 `wxFontEnumerator` 嘅已安裝字體加上捆綁嘅 Roboto、Roboto Mono、HarmonyOS Sans SC、NanumGothic、Source Han Sans JP 和 Symbola，標記為 *(捆綁)*)，喺所選字體中有一行實時預覽；大小（pt、步進器 + 自由項目）；粗細 100–900；斜體、下劃線、刪除線；字母間距；行高。大小、字母間距同行高係套件嘅小數欄（`AppearanceDecimalField`：套件 `TextInput` 加兩粒箭嘴步進掣）：上下方向鍵可以調整，打入嘅數字喺掹 Enter 或者離開欄位時生效，逗號當小數點，每個值都限喺範圍之內（4 至 96 pt，每步 0.5；-4 至 20 px，每步 0.1；0.8 至 3，每步 0.05）。
   - *顏色*：文字、背景、高亮、邊框。每個色板打開 Material 顏色選擇器（`MD3ColorPickerDialog`，包含其顏色轉譯器）；未設定嘅顏色顯示 *主題預設值* 並保持令牌。
   - *形狀與間距*：邊框寬度、角半徑、內補間距、外邊距（px）。
   - *預設值*：可搜尋嘅預設值清單（已出貨預設值標記、活躍嘅標記），**套用**、**另存為預設值...**、**刪除**（僅用戶預設值），**匯出主題...** / **匯入主題...** (JSON via `wxFileDialog`)。
@@ -73,7 +73,6 @@ Id 可能喺斜線後帶一個父項：`project-tab/model` 喺每一層回退到
 - 僅上表中嘅小工具已連接。按鈕、側欄標籤、筆記本分頁欄和 3D 畫布 ImGui chrome 仍然從令牌繪製；佢們可以用 `ElementStyle::apply` 或繪製位置鉤子採用，但沒有樣式到達佢們。
 - 物件列表、打印板和墨水行選單帶有項目，但佢們後面嘅 `wxDataViewCtrl` 行係原生嘅，尚未讀取登記冊：編輯這些 id 會記錄數值（編輯器在其自身行預覽佢們）而唔會改變列表嘅渲染。
 - `letterSpacing`、`lineHeight`、`highlight`、`borderColor`、`borderWidth`、`radius`、`padding` 和 `margin` 係儲存和解析嘅，但只有測量或構築自身文字嘅小工具才能尊重佢們；原生 `wxStaticText` 忽略佢們。編輯器喺每個分節說明呢點。
-- 排版旋轉器係原生 `wxSpinCtrlDouble`，用表面顏色設計樣式，而唔係 Material `SpinInput`（僅限整數）。
 - 錨點跟蹤係計時器輪詢（120 毫秒），而唔係移動事件訂閱，因此父視窗嘅快速拖動會顯示卡片追上嘅情況。
 
 ## 組態

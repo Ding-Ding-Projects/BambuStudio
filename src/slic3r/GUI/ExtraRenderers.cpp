@@ -4,6 +4,8 @@
 #include "BitmapComboBox.hpp"
 #include "Plater.hpp"
 #include "Widgets/ComboBox.hpp"
+#include "Widgets/MD3Tokens.hpp"
+#include "Widgets/StateColor.hpp"
 
 #include <wx/dc.h>
 #ifdef wxHAS_GENERIC_DATAVIEWCTRL
@@ -212,12 +214,15 @@ wxWindow* BitmapTextRenderer::CreateEditorCtrl(wxWindow* parent, wxRect labelRec
             }
 #endif // __WXMSW__
 
+    // The Material filled field for the rename (SurfaceContainerHighest behind
+    // OnSurface text) instead of the system's sunken box, whose light border stood
+    // out in dark mode. The list reads the value back from this wxTextCtrl.
     wxTextCtrl* text_editor = new wxTextCtrl(parent, wxID_ANY, data.GetText(),
-                                             position, labelRect.GetSize(), wxTE_PROCESS_ENTER);
+                                             position, labelRect.GetSize(), wxTE_PROCESS_ENTER | wxBORDER_NONE);
     text_editor->SetInsertionPointEnd();
     text_editor->SelectAll();
-    text_editor->SetBackgroundColour(parent->GetBackgroundColour());
-    text_editor->SetForegroundColour(parent->GetForegroundColour());
+    text_editor->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerHighest));
+    text_editor->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
 
     return text_editor;
 }

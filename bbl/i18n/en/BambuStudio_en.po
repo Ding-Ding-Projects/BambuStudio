@@ -27458,3 +27458,9 @@ msgstr ""
 
 msgid "Next track"
 msgstr ""
+
+msgid "Increase"
+msgstr ""
+
+msgid "Decrease"
+msgstr ""
