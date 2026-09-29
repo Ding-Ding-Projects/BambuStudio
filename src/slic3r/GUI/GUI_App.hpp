@@ -584,8 +584,8 @@ public:
     // Automatic update of a copy installed by Squirrel (docs/features/windows/app-updates.md).
     // start_auto_update() runs Squirrel's Update.exe against this fork's latest release on a
     // worker thread, at most one at a time, and tells the user through a notification when the
-    // new version is ready. A failed update falls back to the download dialog for a manual
-    // check and stays silent for the automatic one. Never called for a copy without Update.exe.
+    // new version is ready. A failed update falls back to the download dialog, so the user still
+    // hears about the release. Never called for a copy without Update.exe.
     void            start_auto_update(const std::string &tag, const std::string &name, int by_user);
     // "Restart now": closes the main frame through the normal close path (so the unsaved
     // project prompt still applies and can cancel). Squirrel starts the newest version once the

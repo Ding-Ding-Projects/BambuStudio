@@ -6418,7 +6418,10 @@ void GUI_App::start_auto_update(const std::string &tag, const std::string &name,
                 return;
             if (updated)
                 push_auto_update_ready_notification(tag);
-            else if (by_user != 0)
+            else
+                // The reason is in the log. The user still hears about the new version through the
+                // download dialog, as on a copy without automatic updates, so a broken update
+                // (a release without the update files, a blocked download) never hides a release.
                 request_new_version(by_user);
         });
     });

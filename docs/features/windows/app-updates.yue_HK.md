@@ -1,6 +1,6 @@
 ---
 translation-of: app-updates.md
-source-sha256: 46d868054cb875615f1888c7194ddadf80687a1c29482a6c25c72004f5ab4b43
+source-sha256: 70a3a468e325272fbf47ea6290b2070b5bf3cd1c13ee6d24cef422e99e9f511e
 review-status: agent-drafted
 ---
 
@@ -10,33 +10,49 @@ review-status: agent-drafted
 
 ## 行為
 
-- **真實來源**：`Ding-Ding-Projects/BambuStudio` 嘅 GitHub 發佈（標籤 `md3-v<N>`），通過 `https://api.github.com/repos/Ding-Ding-Projects/BambuStudio/releases/latest` 讀取。Bambu Lab 雲源唔再為應用程式更新諮詢，因此應用程式永遠唔會提供用上游庫存構建替換自身（佢做：2.8.2.61 提示）。
-- **新意味著稍後發佈**：發佈計算為更新，當其 `published_at` 比 `SLIC3R_BUILD_TIME` 晚超過三小時（喺構建主機上喺編譯時作為 `%Y%m%d-%H%M%S` 蓋章）。邊際吸收構建主機嘅時鐘偏移和編譯與發佈之間嘅分鐘。發佈編號未比較，因此比最新發佈新嘅本地開發構建永遠唔會被騷擾。
-- **提供嘅**：發佈嘅 `Setup.exe` 資產（無資產列出時嘅發佈頁面）。對話框係 MD3 `UpdateVersionDialog`（`ReleaseNote.cpp`）：套件標題瓷磚、發佈名稱和註釋作為滾動正文中嘅文字、和下載／跳過此版本／取消頁腳藥丸。下載喺預設瀏覽器中打開資產。
-- **跳過此版本** 儲存精確標籤喺 `app_config` `app/skip_version`；手動檢查（說明 ▸ 檢查更新）忽略跳過。
+- **真實來源**：`Ding-Ding-Projects/BambuStudio` 嘅 GitHub 發佈（標籤 `md3-v<N>`），通過 `https://api.github.com/repos/Ding-Ding-Projects/BambuStudio/releases/latest` 讀取。Bambu Lab 雲源唔再為應用程式更新諮詢，所以應用程式永遠唔會提供用上游庫存構建嚟替換自身（佢做咗：2.8.2.61 提示）。
+- **新意味住稍後發佈**：發佈計算為更新，當其 `published_at` 比 `SLIC3R_BUILD_TIME` 遲超過三小時（喺構建主機上喺編譯時作為 `%Y%m%d-%H%M%S` 蓋章）。邊際吸收構建主機嘅時鐘偏移同編譯同發佈之間嘅分鐘。發佈編號冇比較，所以比最新發佈新嘅本地開發構建永遠唔會被騷擾。
+- **搵到新發佈後兩條路**：用 Squirrel 安裝程式安裝嘅副本，當 **自動更新** 開啟（預設開啟）時，會喺背景更新自身，見下一部份。其他所有副本（可攜式 zip、開發者構建，或安裝咗嘅副本而關咗偏好設定）會顯示下載對話框，正好如之前咁。
+- **對話框提供嘅**：發佈嘅 `Setup.exe` 資產（無資產列出時係發佈頁面）。對話框係 MD3 `UpdateVersionDialog`（`ReleaseNote.cpp`）：套件標題瓷磚、發佈名稱同註釋作為滾動正文中嘅文字、同下載／跳過呢個版本／取消頁腳按鈕。下載會喺預設瀏覽器開啟資產。
+- **跳過呢個版本** 儲存精確標籤喺 `app_config` `app/skip_version`；手動檢查（說明 ▸ 檢查更新）會忽略呢個跳過。佢只應用到對話框：自動更新冇對話框可跳過。
 - **測試頻道**：`check_beta_version()` 係無操作；呢個分叉冇測試頻道。
 
-## 組態
+## 已安裝副本嘅自動更新
 
-`enable_beta_version_update` 唔再改變行為。無其他設定涉及。
+1. **偵測。** 已安裝副本住喺 `%LOCALAPPDATA%\BambuStudioMD3\app-<version>\bambu-studio.exe`，Squirrel 嘅 `Update.exe` 喺上面一級資料夾。副本計算為已安裝，只有當執行緊嘅可執行檔案嘅資料夾名稱以 `app-` 開頭，同埋 `Update.exe` 存在。冇其他野會採用呢條路線。
+2. **更新。** 喺背景執行緒（永遠唔係 UI 執行緒）上，應用程式啟動 `Update.exe --update=https://github.com/Ding-Ding-Projects/BambuStudio/releases/latest/download`，不帶控制台視窗，同埋等緊佢，上到 30 分鐘。GitHub 會將嗰個位置重定向到最新發佈。Update.exe 讀取 `RELEASES`，下載整個套件，根據 `RELEASES` 嘅記錄嘅 SHA-1 檢查佢，同埋準備新嘅 `app-<version>` 資料夾喺執行緊嗰個資料夾個隔離。只有一次更新會喺同一時間運行。
+3. **準備好。** 退出代碼 0 連同新嘅 `app-<version>` 資料夾喺磁碟上計算為準備好（Update.exe 當冇野可安裝時也會退出代碼 0，所以會檢查資料夾）。應用程式然後會顯示非阻擋通知，「Bambu Studio `<tag>` 已準備好。下次開啟應用程式時會啟動。」，帶著 **立即重新啟動** 鏈結。忽視佢係冇問題嘅：新版本下次應用程式開啟時會啟動。
+4. **立即重新啟動。** 主視窗會通過正常關閉路線關閉，所以未儲存項目提示仍然適用，取消會保持應用程式開啟而冇重新啟動待決（該要求會喺每次關閉開始時取回，同埋只有當關閉被接受，或被項目頁面重播時先會交託）。當應用程式真係退出時會啟動 `Update.exe --processStartAndWait bambu-studio.exe`，不帶控制台視窗；Update.exe 會等緊應用程式退出，然後啟動已安裝嘅最新版本。
+5. **手動檢查。** 說明 ▸ 檢查更新會採用相同路線。佢首先會顯示簡短通知「喺背景下載 Bambu Studio `<tag>`。」，所以檢查唔會睇起嚟喺大型套件下載時冇做任何野。
+
+## 設定
+
+- `auto_update`（偏好設定 ▸ 一般 ▸ **自動更新**，預設開啟）：已安裝副本係否應自動更新。關閉佢嚟喺每個副本上取得下載對話框。呢個開關喺可攜式或開發者構建上冇效果，重設偏好設定會恢復預設。
+- `enable_beta_version_update` 唔再改變行為。
 
 ## 故障模式
 
-- 無網絡、API 錯誤或畸形有效負載：自動檢查不顯示任何內容；手動檢查顯示「最新版本」通知而不係錯誤，原因被記錄。
-- 無法解析 `published_at` 或構建時間：記錄，視為「無更新」。
-- Squirrel 源排序：由 md3-v106 以來套件版本係 `2.8.<patch*1000+N>`（`2.8.2106`），其中 `N` 係發佈編號，因此 Squirrel 源更新程式正確排列發佈；md3-v104 和 md3-v105 兩者都帶有 `2.8.2-build61` 且由套件版本無法區別。
+- 冇網絡、API 錯誤、或畸形有效負載：自動檢查唔會顯示任何野；手動檢查會顯示「最新版本」快訊而唔係錯誤，而原因會被記錄。
+- 無法解析 `published_at` 或構建時間：記錄、視為「冇更新」。
+- Update.exe 無法啟動、退出代碼非零、退出代碼 0 但冇準備任何新嘅、或唔會喺 30 分鐘內完成：每個步驟都會被記錄（行以 `auto update:` 開頭）。檢查然後退回到下載對話框，正如冇自動更新嘅副本上咁（已跳過嘅版本保持被跳過），所以破咗嘅更新永遠唔會隱藏新發佈；自動更新會喺下次啟動時被重試。等待會喺 30 分鐘後被放棄，但 Update.exe 本身永遠唔會被終止，由於喺中途殺死佢可能會留下不完整資料夾。
+- 應用程式喺更新下載時關閉：等待會停止，Update.exe 會被留低去自己完成，所以下次啟動會啟動新版本。應用程式對於喺同時啟動嘅第二個 Update.exe 做冇野（比如下次啟動）；無論嗰個執行報告咩都會跟隨上述路線。
+- 喺未儲存項目提示處取消立即重新啟動（或任何其他對關閉嘅否決）：冇野會重新啟動，同埋稍後、無關嘅退出唔會重新啟動。
+- 立即重新啟動時 Update.exe 無法啟動：應用程式簡單退出，新版本會喺下次開啟時啟動。
+- Squirrel 源排序：由 md3-v106 以嚟套件版本係 `2.8.<patch*1000+N>`（`2.8.2106`）其中 `N` 係發佈編號，所以 Squirrel 源更新程式會正確排列發佈；md3-v104 同 md3-v105 兩者都帶有 `2.8.2-build61` 同由套件版本無法區分。
 
 ## 安全考量
 
-- 公共 API 嘅匿名讀取；無令牌被發送。率限制（每小時每 IP 60 個請求）遠高於應用程式每次啟動一次呼叫加手動檢查。
-- 安裝程式按政策係無簽署嘅；發佈註釋帶有 `Setup.exe` 嘅 SHA-256，應用程式將下載交給瀏覽器而不係提取和執行佢。
+- 公開 API 嘅匿名讀取；冇令牌被發送。速率限制（每小時每 IP 60 個要求）遠高於應用程式每次啟動一次呼叫加手動檢查。
+- 自動更新使用 HTTPS 去 GitHub 同去 GitHub 重定向嘅發佈資產主機。源位置係源嘅常數；冇野嚟自發佈 JSON、偏好設定、或使用者輸入會到達 Update.exe 命令列，重新啟動命令列也係固定。
+- 應用程式下載同執行冇野。Squirrel 嘅 `Update.exe` 會，而佢會根據 `RELEASES` 中嘅 SHA-1 驗証套件。嗰個檢查完整性，唔係作者身份：套件按政策係未簽署嘅，所以信任落喺 HTTPS 去 GitHub 同控制發佈度。可攜式或開發者副本永遠唔會執行 `Update.exe`。
+- 喺對話框路線上安裝程式也係按政策未簽署；發佈註釋帶有 `Setup.exe` 嘅 SHA-256，同埋應用程式會將下載交俾瀏覽器而唔係提取同執行佢。
 
 ## 驗證
 
-- 合約：`ui-md3/tests/md3-conversion-contracts.test.mjs`（`check_new_version` 讀取呢個分叉嘅發佈；測試檢查係無操作）。
-- 執行時：使用比最新發佈舊嘅構建啟動並確認對話框命名 `md3-v<N>` 標籤並提供 `Setup.exe`；啟動比最新發佈新嘅構建並確認無對話框。
+- 合約：`node --test ui-md3/tests/app-auto-update.test.mjs` 固定安裝偵測、喺 `check_new_version` 嘅路線、固定源、隱藏行程、退出代碼同資料夾成功規則、重新啟動交接、取消關閉規則、`auto_update` 預設同提取訊息。`published_at` 同構建時間嘅比較冇被合約涵蓋。
+- 執行時（待機發佈擷取）：用 `Setup.exe` 安裝舊發佈、啟動佢同確認 `auto update:` 記錄行、「已準備好」通知，同係喺立即重新啟動之後新版本啟動；然後重複着偏好設定關閉同帶住可攜式副本同確認下載對話框出現。啟動比最新發佈新嘅構建同確認兩條路線都冇被觸發。
 
 ## 相關
 
 - [Windows 原生安裝程式](../releases/windows-native-installer.md)
-- [發佈代號稱](../releases/release-codenames.md)
+- [發佈代號](../releases/release-codenames.md)

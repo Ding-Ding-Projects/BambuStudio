@@ -126,9 +126,10 @@ test('the update runs once at a time on a worker thread and reports back on the 
   assert.match(start, /if \(updated\)\s*push_auto_update_ready_notification\(tag\);/, 'success tells the user the update is ready');
   assert.match(
     start,
-    /else if \(by_user != 0\)\s*request_new_version\(by_user\);/,
-    'failure falls back to the download dialog for a manual check and shows nothing on the automatic one'
+    /else\s*request_new_version\(by_user\);/,
+    'a failed update falls back to the download dialog on every check, so a broken update never hides a new release'
   );
+  assert.doesNotMatch(start, /else if \(by_user != 0\)\s*request_new_version/, 'the automatic check is not silenced on failure');
 });
 
 test('a success needs a newer app folder as well as exit code 0', () => {

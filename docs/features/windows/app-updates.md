@@ -65,9 +65,11 @@
 - Unparseable `published_at` or build time: logged, treated as "no update".
 - Update.exe cannot be started, exits with a non-zero code, exits with 0 but stages nothing newer,
   or does not finish within 30 minutes: every step is logged (lines starting with `auto update:`).
-  A manual check falls back to the download dialog; the automatic check shows nothing and tries
-  again at the next launch. The wait is abandoned after 30 minutes but Update.exe itself is never
-  terminated, since killing it half way through staging could leave a partial folder.
+  The check then falls back to the download dialog, as on a copy without automatic updates (a
+  skipped version stays skipped), so a broken update never hides a new release; the automatic
+  update is tried again at the next launch. The wait is abandoned after 30 minutes but Update.exe
+  itself is never terminated, since killing it half way through staging could leave a partial
+  folder.
 - The application closes while an update is downloading: the wait stops and Update.exe is left
   to finish on its own, so the next launch starts the new version. The app does nothing about a
   second Update.exe started meanwhile (by the next launch, say); whatever that run reports

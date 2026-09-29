@@ -37333,3 +37333,33 @@ msgstr "%s構建"
 #. review-status: agent-drafted
 msgid "Release date on the splash screen"
 msgstr "啟動畫面上嘅發佈日期"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Downloading Bambu Studio %s in the background."
+msgstr "喺背景下載 Bambu Studio %s。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Bambu Studio %s is ready. It starts the next time you open the app."
+msgstr "Bambu Studio %s 已準備好。下次開啟應用程式時會啟動。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Restart now"
+msgstr "立即重新啟動"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Update automatically"
+msgstr "自動更新"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Download new versions in the background and offer to restart when one is ready. Only an installed copy updates itself."
+msgstr "喺背景下載新版本，當有版本準備好時會提供重新啟動。只有安裝咗嘅版本先會自己更新。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Download new versions in the background"
+msgstr "喺背景下載新版本"
