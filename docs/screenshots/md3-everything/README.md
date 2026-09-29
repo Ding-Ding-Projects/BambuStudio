@@ -118,6 +118,25 @@ Taken by `scripts/md3/sweep-dialogs.py` from the unmodified `md3-v150` release p
 | `dialog-config-profiles-backup--bilingual_en_yue_HK-light-comfortable--md3-v150.png` | Config profiles & backup (after CJ-017) | `bilingual_en_yue_HK-light-comfortable` |
 | `dialog-temperature--bilingual_en_yue_HK-light-comfortable--md3-v150.png` | Temperature calibration (after CJ-018) | `bilingual_en_yue_HK-light-comfortable` |
 
+## Release md3-v151 captures (2026-09-29)
+
+Taken by `scripts/md3/capture-tuple.py` from the unmodified `md3-v151` release package, the first
+release published as latest by the release job's newer-than-latest rule. Every import of its
+executables and DLLs resolves in the package or in Windows (`scripts/ci/check_payload_imports.py`).
+
+| Field | Value |
+| --- | --- |
+| Source commit | `ca2b6e101` (release `md3-v151`) |
+| Package | `BambuStudioMD3-2.8.4150-full.nupkg`, 732,138,501 bytes, SHA-1 `6c6031131b79e06836825c9d4442f18fda5d7239` as listed in `RELEASES` |
+| Executable | `bambu-studio.exe` sha256 `b1c47e411720bf36aa5b72e3939069456b656a6bcd1366abbd07d4f248be8e05`, `BambuStudio.dll` sha256 `f22c4e9a34e6322d990ece8f91a55ca8c70caa8f168777bbbf7e268a1c3e378f` |
+| Capture route | hidden Win32 desktop, `PrintWindow` of the window, real GPU driver |
+| Display scale | 100% |
+
+| File | Surface | Tuple |
+| --- | --- | --- |
+| `preferences-general--en-light-comfortable--md3-v151.png` | Preferences, General page: every row's control in view | `en-light-comfortable` |
+| `preferences-general--bilingual_en_yue_HK-light-comfortable--md3-v151.png` | Preferences, General page (before CJ-021): a sideways scrollbar, and the Language list, the Funny level sliders, the switch and the Login Region list pushed past the right edge | `bilingual_en_yue_HK-light-comfortable` |
+
 ## Layout-probe dumps
 
 `probe/<tuple>--<before|after>.jsonl`, one per main-frame idle dump plus one per opened dialog,

@@ -62,6 +62,7 @@ until captures from a released build exist.
 - [ ] The layout probe no longer reports a dialog as clipped by its parent: only child windows are compared with the parent's client area (`f2110b6cc`), only windows a user can see are flagged, and rows scrolled out of view are not clipped (`2906c2820`).
 - [ ] Notification links ("Restart to install update", "Retry", "Release notes") read "English · 廣東話" in bilingual mode when the pair fits a line of the notification. Implemented with its contract test; stays unticked until a released build is captured.
 - [ ] Message dialog bodies show both languages in bilingual mode instead of the English cut by a scrollbar with the Cantonese hidden (clipping inventory CJ-020, `2b8fa5d8b`). Stays unticked until a released build is captured.
+- [ ] Bilingual Preferences keeps every row inside its page: no sideways scrollbar, every row's list, slider and switch in view, and the wrapped row titles and descriptions paired within their 320 DIP wrap (clipping inventory CJ-021, seen on `md3-v151`, fixed in `2e80091ef`). Stays unticked until a released build is captured.
 - [ ] Independent human review of the agent-drafted Cantonese, starting with print safety, account, networking and destructive flows.
 
 ## Deliberate exclusions

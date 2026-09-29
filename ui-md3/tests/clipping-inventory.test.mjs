@@ -13,7 +13,7 @@ const captureRoot = path.join(repoDir, 'docs', 'screenshots', 'md3-everything');
 
 // Hand-written: every clipping defect that has been found must keep its row.
 // A rule alone passes on a row that was deleted; this list does not.
-const REQUIRED_ROWS = ['CJ-001', 'CJ-002', 'CJ-003', 'CJ-004', 'CJ-005', 'CJ-006', 'CJ-007', 'CJ-008', 'CJ-009', 'CJ-010', 'CJ-011', 'CJ-012', 'CJ-013', 'CJ-014', 'CJ-015', 'CJ-016', 'CJ-017', 'CJ-018', 'CJ-019', 'CJ-020'];
+const REQUIRED_ROWS = ['CJ-001', 'CJ-002', 'CJ-003', 'CJ-004', 'CJ-005', 'CJ-006', 'CJ-007', 'CJ-008', 'CJ-009', 'CJ-010', 'CJ-011', 'CJ-012', 'CJ-013', 'CJ-014', 'CJ-015', 'CJ-016', 'CJ-017', 'CJ-018', 'CJ-019', 'CJ-020', 'CJ-021'];
 const STATUSES = new Set(['fixed-unverified', 'verified', 'open']);
 
 const normalise = (text) => text.replace(/\r\n|\r/g, '\n');

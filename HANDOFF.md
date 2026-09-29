@@ -79,6 +79,15 @@ kept equal to `main` and exists only as the checkout of the session that started
   `00b14ca67`, and CJ-019's fix was corrected in `f3aab6af1` (a centred field drew its unit under the entry).
   The bilingual sweep's missing-dump reporting (`e5a7e12ad`) and the probe's visibility rules (`2906c2820`)
   were fixed on the way; the earlier bilingual sweep had no probe data (correction on Discussion #44).
+- `md3-v151` (`ca2b6e101`, 2026-09-29) is the first release published as latest by the newer-than-latest
+  rule. Its package matches `RELEASES` (SHA-1 `6c6031131b79e06836825c9d4442f18fda5d7239`), every import of
+  its 40 files resolves, and its Preferences probe dumps list the "Update automatically" row in all three
+  modes, so the automatic updater ships in it. Its bilingual Preferences showed a new defect, CJ-021: every
+  page grew a sideways scrollbar and the controls at the end of each row moved out of sight. The decorator
+  let a label count on the dialog growing inside a page that scrolls, paired the labels Preferences wraps to
+  320 DIP on one unwrapped line, and counted a stretching label's spare room twice. Fixed in `2e80091ef`,
+  which also sends back the paired labels of a page that still needs more width than it shows
+  (fixed-unverified until a release carries it).
 - Release jobs share one concurrency group, and GitHub keeps one running and one waiting: a newer build
   that finishes while one waits cancels the waiting release job. The `b5cde7521` build passed but its
   release was cancelled that way on 2026-09-29, so not every push gets a release when pushes come fast.
