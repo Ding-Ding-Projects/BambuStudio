@@ -34,7 +34,8 @@ public:
 	 * \brief Break the label's text so that it renders inside \p width.
 	 *
 	 * Unlike the non-virtual wxStaticText::Wrap this also breaks CJK runs, which carry no spaces to
-	 * break on, and it accounts for the padding the native control adds around the text: the width a
+	 * break on (never before closing punctuation such as "。" or after opening punctuation such as
+	 * "「", and never inside an emoji), and it accounts for the padding the native control adds around the text: the width a
 	 * sizer reserves for the label is its best size, not the bare text extent the line breaks were
 	 * measured against. Overshooting that is silent on MSW but not on macOS, where wx gives every
 	 * wxStaticText a paragraph style with NSLineBreakByClipping — an NSTextField narrower than its

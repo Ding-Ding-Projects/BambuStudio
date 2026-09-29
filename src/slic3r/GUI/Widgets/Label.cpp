@@ -484,6 +484,32 @@ void Label::rebuild_fonts(std::string lang_code)
     Mono_11 = md3MonoFont(MD3::TypeStyle{11.5f, 400}); // metadata values
 }
 
+// A line may break next to a CJK character: ideographs, kana, Hangul, CJK and
+// fullwidth punctuation. UTF-16 surrogates are not, so an emoji is never split.
+static bool wrap_is_cjk(wxUniChar c)
+{
+    const auto code = c.GetValue();
+    return code >= 0x3000 && (code < 0xD800 || code >= 0xF900);
+}
+
+// Closing punctuation never starts a line, and opening punctuation never ends one:
+// "。" used to begin the second line of a wrapped Cantonese sentence.
+static bool wrap_no_line_start(wxUniChar c)
+{
+    static const wxString closing = wxString::FromUTF8("\xE3\x80\x82\xEF\xBC\x8C\xE3\x80\x81\xEF\xBC\x8E\xEF\xBC\x9A\xEF\xBC\x9B"
+                                                       "\xEF\xBC\x9F\xEF\xBC\x81\xEF\xBC\x89\xE3\x80\x8D\xE3\x80\x8F\xE3\x80\x91"
+                                                       "\xE3\x80\x8B\xE3\x80\x89\xE2\x80\xA6\xE3\x83\xBB\xEF\xBC\x85")
+                                   + wxString(".,:;?!)]}%");
+    return closing.Find(c) != wxNOT_FOUND;
+}
+
+static bool wrap_no_line_end(wxUniChar c)
+{
+    static const wxString opening = wxString::FromUTF8("\xEF\xBC\x88\xE3\x80\x8C\xE3\x80\x8E\xE3\x80\x90\xE3\x80\x8A\xE3\x80\x88")
+                                   + wxString("([{");
+    return opening.Find(c) != wxNOT_FOUND;
+}
+
 class WXDLLIMPEXP_CORE wxTextWrapper2
 {
 public:
@@ -534,17 +560,16 @@ public:
                     break;
                 }
 
-                // Find the last word to chop off.
+                // Find the last place to break before the overflow: at a space, or
+                // next to a CJK character where the punctuation rules allow it.
                 size_t lastSpace = posEnd;
                 while (lastSpace > 0) {
-                    auto c = line[lastSpace];
+                    const wxUniChar c    = line[lastSpace];
+                    const wxUniChar prev = line[lastSpace - 1];
                     if (c == ' ')
                         break;
-                    if (c > 0x4E00) {
-                        if (lastSpace != posEnd)
-                            ++lastSpace;
+                    if ((wrap_is_cjk(c) || wrap_is_cjk(prev)) && !wrap_no_line_start(c) && !wrap_no_line_end(prev))
                         break;
-                    }
                     --lastSpace;
                 }
                 if (lastSpace == 0) {
