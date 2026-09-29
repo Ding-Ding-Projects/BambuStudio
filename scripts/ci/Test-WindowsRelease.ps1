@@ -121,7 +121,13 @@ Assert-True ($buildJobText.Contains('if: ${{ always() }}')) `
     'Every push must run the Windows build/test job, including documentation-only pushes.'
 Assert-True ($releaseJobText.Contains('needs: build_windows')) `
     'The release job must depend on the complete Windows build/test job.'
-Assert-True (-not $releaseJobText.Contains('always()') -and -not $releaseJobText.Contains('failure()')) `
+# Only the job-level keys before steps: decide whether the release job runs after a failed
+# build. Step conditions, such as the always() evidence uploads after publication, do not.
+$releaseStepsStart = $releaseWorkflowText.IndexOf("`n    steps:", $releaseJobStart, [System.StringComparison]::Ordinal)
+Assert-True ($releaseStepsStart -gt $releaseJobStart) `
+    'The release job has no steps: block after its job-level keys.'
+$releaseJobHeaderText = $releaseWorkflowText.Substring($releaseJobStart, $releaseStepsStart - $releaseJobStart)
+Assert-True (-not $releaseJobHeaderText.Contains('always()') -and -not $releaseJobHeaderText.Contains('failure()')) `
     'The release job must remain skipped when the Windows build/test job fails.'
 
 $allWorkflowText = ($workflowPaths | ForEach-Object {
