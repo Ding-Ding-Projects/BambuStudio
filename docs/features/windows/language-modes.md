@@ -60,8 +60,17 @@ titles, tooltips and native menu items their second language:
 
 - Single-line text reads "English · 廣東話" when that fits the space its layout can give it. A dialog
   may grow within the screen for this; if its content still does not fit, its labels stay English.
+  On a page that scrolls (every Preferences page, the Prepare sidebar) only the room a label already
+  has counts: a page scrolls instead of growing with its dialog, so a wider label would push the
+  control at the end of its row out of sight.
 - Text that does not fit stays English, and its tooltip adds "廣東話：…".
-- Wrapped and multi-line text shows the Cantonese below the English.
+- Wrapped and multi-line text shows the Cantonese below the English. A label that the program wraps
+  to a width, such as every Preferences row title and description, reads "English · 廣東話" when the
+  pair fits that width on one line; otherwise the Cantonese goes below the English, wrapped to the
+  same width.
+- Once the layout settles, the decorator checks its own work: a pair that is cut short, reaches past
+  what its parents show, or makes a scrolling page need more width than it shows goes back to English
+  with the Cantonese in its tooltip, or below the English for a label the program wraps.
 - Tooltips show the Cantonese below the English. The decorator remembers the application's own text,
   so decorations never accumulate.
 - List and table column titles read "English · 廣東話" when the pair fits the column. A column

@@ -677,6 +677,7 @@ void Label::SetLabel(const wxString& label)
     if ((GetWindowStyle() & LB_AUTO_WRAP)) {
         Wrap(GetSize().x);
     } else {
+        m_wrap_width = 0; // the new text is not wrapped until the owner wraps it
         wxStaticText::SetLabel(label);
     }
 #ifdef __WXOSX__
@@ -731,6 +732,7 @@ void Label::Wrap(int width)
     // the base extent path derefs a null font. LB_AUTO_WRAP re-wraps on EVT_SIZE.
     if (!GetHandle()) return;
 
+    m_wrap_width = std::max(0, width);
     DoWrap(width);
     if (width <= 0) return; // no room to give back; the base class breaks per character here
 

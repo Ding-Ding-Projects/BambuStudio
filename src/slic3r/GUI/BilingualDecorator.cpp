@@ -19,6 +19,7 @@
 #include <wx/listctrl.h>
 #include <wx/menu.h>
 #include <wx/radiobut.h>
+#include <wx/scrolwin.h>
 #include <wx/sizer.h>
 #include <wx/statbox.h>
 #include <wx/stattext.h>
@@ -113,7 +114,21 @@ bool wraps(wxWindow *window, Kind kind, const wxString &english)
     if (kind != Kind::Text)
         return false;
     const auto *label = dynamic_cast<::Label *>(window);
-    return label != nullptr && (label->GetWindowStyle() & LB_AUTO_WRAP) != 0;
+    if (label == nullptr)
+        return false;
+    // A Label its owner wrapped onto several lines shows breaks its own text does
+    // not have: GetLabel() is the native text, with the wrap's line breaks.
+    return (label->GetWindowStyle() & LB_AUTO_WRAP) != 0 || label->GetLabel().Contains('\n');
+}
+
+// Width a Label's owner wrapped it at (every Preferences row title and
+// description is wrapped to 320 DIP), 0 for any other window. Paired on one
+// line past that width, md3-v151's descriptions lost their wrap and ran under
+// the row's switch.
+int owner_wrap_width(wxWindow *window, Kind kind)
+{
+    const auto *label = kind == Kind::Text ? dynamic_cast<::Label *>(window) : nullptr;
+    return label == nullptr || (label->GetWindowStyle() & LB_AUTO_WRAP) != 0 ? 0 : label->GetWrapWidth();
 }
 
 int text_width(wxWindow *window, const wxString &text)
@@ -148,8 +163,9 @@ int available_width(wxWindow *window, int growth)
     wxSizer  *sizer = window->GetContainingSizer();
     if (sizer == nullptr || sizer->GetSize().GetWidth() <= 0)
         return own;
-    int border = 0;
-    if (wxSizerItem *item = sizer->GetItem(window)) {
+    int          border = 0;
+    wxSizerItem *item   = sizer->GetItem(window);
+    if (item != nullptr) {
         if (item->GetFlag() & wxLEFT)
             border += item->GetBorder();
         if (item->GetFlag() & wxRIGHT)
@@ -158,7 +174,13 @@ int available_width(wxWindow *window, int growth)
     const auto *box = dynamic_cast<wxBoxSizer *>(sizer);
     if (box != nullptr && box->GetOrientation() == wxVERTICAL)
         return sizer->GetSize().GetWidth() - border + growth;
-    return own + std::max(0, sizer->GetSize().GetWidth() - sizer->GetMinSize().GetWidth()) + growth;
+    // A label that stretches along its row already holds its share of the
+    // row's slack, so it can only grow from its minimum by that slack: counted
+    // from its stretched width, the slack was counted twice.
+    const int from = box != nullptr && item != nullptr && item->GetProportion() > 0
+                         ? std::min(own, window->GetEffectiveMinSize().GetWidth())
+                         : own;
+    return from + std::max(0, sizer->GetSize().GetWidth() - sizer->GetMinSize().GetWidth()) + growth;
 }
 
 // Width actually visible from the window's left edge to the nearest client
@@ -179,6 +201,17 @@ int visible_width(wxWindow *window)
     return visible;
 }
 
+// The nearest ancestor below the top-level window that scrolls its content
+// instead of growing with it (every Preferences page, a settings sidebar), or
+// nullptr when there is none.
+wxWindow *scrolling_page_of(wxWindow *window)
+{
+    for (wxWindow *parent = window->GetParent(); parent != nullptr && !parent->IsTopLevel(); parent = parent->GetParent())
+        if (dynamic_cast<wxScrollHelper *>(parent) != nullptr)
+            return parent;
+    return nullptr;
+}
+
 bool fits(wxWindow *window, Kind kind, const wxString &current, const wxString &candidate, int growth)
 {
     // An ellipsizing label would cut the Cantonese off instead of growing.
@@ -186,6 +219,12 @@ bool fits(wxWindow *window, Kind kind, const wxString &current, const wxString &
         return false;
     if (window->GetSize().GetWidth() <= 0)
         return false; // not laid out yet; the next pass decides
+    // A scrolling page does not get wider when its dialog grows: its rows are
+    // laid out wider than the page instead, and the control at the end of each
+    // row moves out of sight (md3-v151's bilingual Preferences). Only the room
+    // the label already has counts there.
+    if (scrolling_page_of(window) != nullptr)
+        growth = 0;
     // Buttons, check boxes and group boxes spend part of their width on chrome.
     const int chrome = std::max(0, window->GetBestSize().GetWidth() - text_width(window, current));
     int       room   = std::min(available_width(window, growth), visible_width(window) + growth);
@@ -206,6 +245,7 @@ struct Applied
     wxString base_tooltip;  // tooltip the application set
     wxString shown_tooltip; // tooltip on screen now
     wxSize   size;          // window size the decision was made for
+    int      wrap_width = 0; // width the Label's owner wrapped it at (owner_wrap_width)
 };
 
 class Decorator;
@@ -301,6 +341,7 @@ private:
         m_applied.erase(window);
         m_no_compact.erase(window);
         m_compact_refused.erase(window);
+        m_page_width.erase(window);
         BilingualRegistry::instance().set_managed(window, false);
     }
 
@@ -348,10 +389,14 @@ private:
     // drew "Objects list · 物件清" and an import description running off the
     // dialog). Once the layout has settled, a compact label cut short in its own box
     // or reaching past what its parents show goes back to English with the Cantonese
-    // in its tooltip, and stays that way.
+    // in its tooltip, and stays that way. So does every compact label on a scrolling
+    // page whose rows now need more width than the page shows: the label itself is
+    // in view, but the control at the end of its row is not (md3-v151's Preferences
+    // grew a sideways scrollbar and hid its sliders, switches and lists).
     bool recheck_compact(wxWindow *top)
     {
-        std::vector<wxWindow *> cut;
+        std::vector<wxWindow *>              cut;
+        std::unordered_map<wxWindow *, bool> too_wide; // scrolling page -> its rows need more than it shows
         for (const auto &[window, applied] : m_applied) {
             if (window == nullptr || window->IsBeingDeleted() || wxGetTopLevelParent(window) != top)
                 continue;
@@ -361,23 +406,38 @@ private:
             const int  width    = window->GetSize().GetWidth();
             const bool squeezed = kind == Kind::Text ? text_width(window, applied.shown) > width
                                                      : width < window->GetBestSize().GetWidth();
-            if (squeezed || width > visible_width(window))
+            bool widened = false;
+            if (wxWindow *page = scrolling_page_of(window)) {
+                auto verdict = too_wide.find(page);
+                if (verdict == too_wide.end())
+                    verdict = too_wide.emplace(page, page_too_wide(page)).first;
+                widened = verdict->second;
+            }
+            if (squeezed || widened || width > visible_width(window))
                 cut.push_back(window);
         }
         BilingualRegistry &registry = BilingualRegistry::instance();
+        std::unordered_set<wxWindow *> parents;
         for (wxWindow *window : cut) {
+            if (wxWindow *parent = window->GetParent())
+                parents.insert(parent);
             Applied &applied = m_applied[window];
             const Kind kind = kind_of(window);
             m_compact_refused.insert(window);
-            window->SetLabel(applied.english);
+            // A Label its owner lets wrap goes English over Cantonese at the owner's
+            // width; any other label goes back to English, the Cantonese in its tooltip.
+            const wxString cantonese = registry.lookup(applied.english);
+            const bool     stack     = applied.wrap_width > 0 && !cantonese.empty();
+            window->SetLabel(stack ? applied.english + "\n" + as_label_text(cantonese, kind) : applied.english);
+            if (stack)
+                static_cast<::Label *>(window)->Wrap(applied.wrap_width);
             wxString tooltip = applied.base_tooltip;
             if (!tooltip.empty()) {
-                const wxString cantonese = registry.lookup(tooltip);
-                if (!cantonese.empty())
-                    tooltip += "\n" + cantonese;
+                const wxString tip_cantonese = registry.lookup(tooltip);
+                if (!tip_cantonese.empty())
+                    tooltip += "\n" + tip_cantonese;
             }
-            const wxString cantonese = registry.lookup(applied.english);
-            if (!cantonese.empty()) {
+            if (!stack && !cantonese.empty()) {
                 const wxString note = tooltip_prefix() + cantonese;
                 tooltip = tooltip.empty() ? note : tooltip + "\n\n" + note;
             }
@@ -389,7 +449,40 @@ private:
             applied.shown_tooltip = window->GetToolTipText();
             applied.size          = window->GetSize();
         }
+        for (wxWindow *parent : parents)
+            parent->Layout();
+        // A page lays its rows out at its virtual width, which may have grown with
+        // the labels; laying the dialog out again never shrinks it back.
+        for (const auto &[page, wide] : too_wide)
+            if (wide) {
+                page->FitInside();
+                page->Layout();
+            }
         return !cut.empty();
+    }
+
+    // Whether a scrolling page's rows need more width than the page shows. A
+    // page whose English rows already needed more is only held to not getting
+    // wider than that. Measured from the rows themselves: the page's virtual
+    // size catches up only when something resizes it.
+    bool page_too_wide(wxWindow *page) const
+    {
+        wxSizer *sizer = page->GetSizer();
+        if (sizer == nullptr)
+            return false;
+        int allowed = page->GetClientSize().GetWidth();
+        if (const auto english = m_page_width.find(page); english != m_page_width.end())
+            allowed = std::max(allowed, english->second);
+        return sizer->GetMinSize().GetWidth() > allowed;
+    }
+
+    // Remembers how wide a scrolling page's rows were before the first of its
+    // labels changed (page_too_wide).
+    void remember_page_width(wxWindow *window)
+    {
+        wxWindow *page = scrolling_page_of(window);
+        if (page != nullptr && page->GetSizer() != nullptr && m_page_width.count(page) == 0)
+            m_page_width.emplace(page, page->GetSizer()->GetMinSize().GetWidth());
     }
 
     template<class Visit> void walk(wxWindow *window, Visit &&visit)
@@ -507,6 +600,10 @@ private:
                 next.base_tooltip = previous->second.base_tooltip;
         }
         next.shown = next.english;
+        // Our own one-line text clears the width on the Label; it lives on here.
+        next.wrap_width = owner_wrap_width(window, kind);
+        if (next.wrap_width == 0 && previous != m_applied.end() && label == previous->second.shown)
+            next.wrap_width = previous->second.wrap_width;
 
         BilingualRegistry &registry = BilingualRegistry::instance();
         wxString           label_note; // Cantonese of a label that had to stay English
@@ -517,8 +614,11 @@ private:
                 const wxString compact = next.english + inline_separator() + second;
                 if (wraps(window, kind, next.english))
                     next.shown = next.english + "\n" + second;
-                else if (allow_compact && m_compact_refused.count(window) == 0 && fits(window, kind, label, compact, growth))
+                else if (allow_compact && m_compact_refused.count(window) == 0 && fits(window, kind, label, compact, growth) &&
+                         (next.wrap_width == 0 || text_width(window, compact) <= next.wrap_width))
                     next.shown = compact;
+                else if (next.wrap_width > 0)
+                    next.shown = next.english + "\n" + second; // its owner lets it wrap: English over Cantonese
                 else
                     label_note = tooltip_prefix() + cantonese;
             }
@@ -535,11 +635,19 @@ private:
 
         Change change = Change::None;
         if (next.shown != label) {
+            remember_page_width(window);
             const int width = window->GetSize().GetWidth();
             window->SetLabel(next.shown);
-            // A plain wxStaticText that was wrapped by its owner keeps its width.
-            if (kind == Kind::Text && dynamic_cast<::Label *>(window) == nullptr && next.shown.Contains('\n') && width > 0)
-                static_cast<wxStaticText *>(window)->Wrap(width);
+            // A wrapped label keeps its width: a plain wxStaticText at its own
+            // width, a Label at the width its owner wrapped it to (an auto-wrapping
+            // Label wraps itself).
+            if (kind == Kind::Text && next.shown.Contains('\n') && width > 0) {
+                auto *wrapped = dynamic_cast<::Label *>(window);
+                if (wrapped == nullptr)
+                    static_cast<wxStaticText *>(window)->Wrap(width);
+                else if ((wrapped->GetWindowStyle() & LB_AUTO_WRAP) == 0)
+                    wrapped->Wrap(next.wrap_width > 0 ? next.wrap_width : width);
+            }
             change     = next.shown.Freq('\n') > label.Freq('\n') ? Change::Taller : Change::Wider;
             next.shown = label_of(window, kind);
         }
@@ -592,6 +700,8 @@ private:
     std::unordered_set<wxWindow *>           m_no_compact;
     // Labels whose compact form the settled layout did not fully show (recheck_compact).
     std::unordered_set<wxWindow *>           m_compact_refused;
+    // Scrolling page -> width its rows needed before any of its labels changed.
+    std::unordered_map<wxWindow *, int>      m_page_width;
 };
 
 void DecoratorTimer::Notify() { m_owner.tick(); }

@@ -24,6 +24,10 @@ public:
     // returns the wrapped native text).
     const wxString &GetUnwrappedLabel() const { return m_text; }
 
+    // Width the text is wrapped at (the last Wrap() since the text was set), or
+    // 0 when it is not wrapped. The bilingual decorator wraps a paired label at it.
+    int GetWrapWidth() const { return m_wrap_width; }
+
     void SetWindowStyleFlag(long style) override;
 
 	/**
@@ -58,6 +62,7 @@ private:
     wxFont m_font;
     wxColour m_color;
 	wxString m_text;
+	int m_wrap_width = 0;
 	bool m_skip_size_evt = false;
 
 public:

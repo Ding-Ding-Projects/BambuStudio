@@ -103,3 +103,74 @@ test('a compact label that the settled layout does not fully show goes back to E
   const forget = stripComments(source.match(/void forget\(wxWindow \*window\)[\s\S]*?\n    \}/)[0]);
   assert.match(forget, /m_compact_refused\.erase\(window\);/);
 });
+
+test('a scrolling page never widens for a paired label and never scrolls sideways because of one', () => {
+  // md3-v151's bilingual Preferences pushed its value controls off the right edge
+  // and grew a horizontal scrollbar (clipping inventory CJ-021): the fit let a label
+  // count on the dialog growing, but a settings page scrolls instead of growing, so
+  // the row's control was pushed out of sight. The label itself stayed visible,
+  // so a check of the label alone could not see it.
+  const fits = stripComments(source.match(/bool fits\(wxWindow \*window, Kind kind[\s\S]*?\n\}/)[0]);
+  assert.match(fits, /if \(scrolling_page_of\(window\) != nullptr\)\s*growth = 0;/, 'no growth allowance inside a scrolling page');
+  const page = stripComments(source.match(/wxWindow \*scrolling_page_of\(wxWindow \*window\)[\s\S]*?\n\}/)[0]);
+  assert.match(page, /dynamic_cast<wxScrollHelper \*>\(parent\)/);
+  assert.match(page, /IsTopLevel\(\)/, 'only pages inside the dialog, not the dialog itself');
+  const recheck = stripComments(source.match(/bool recheck_compact\(wxWindow \*top\)[\s\S]*?\n    \}/)[0]);
+  assert.match(recheck, /page_too_wide\(page\)/, 'a page whose rows now need more width sends its paired labels back');
+  assert.match(recheck, /squeezed \|\| widened \|\| width > visible_width\(window\)/);
+  assert.match(recheck, /FitInside\(\)/, 'and the page gets back the width its rows need, so the sideways scrollbar goes');
+
+  const wide = stripComments(source.match(/bool page_too_wide\(wxWindow \*page\) const[\s\S]*?\n    \}/)[0]);
+  assert.match(wide, /GetSizer\(\)/);
+  assert.match(wide, /GetClientSize\(\)\.GetWidth\(\)/, 'measured against what the page shows');
+  assert.match(wide, /sizer->GetMinSize\(\)\.GetWidth\(\) > allowed/, 'from the rows themselves, not a virtual size that may not have caught up');
+  assert.match(wide, /m_page_width\.find\(page\)/, 'a page that already scrolled sideways in English is only held to its English width');
+
+  const window = stripComments(source.match(/Change decorate_window\(wxWindow \*window, bool allow_compact, int growth\)[\s\S]*?\n    \}/)[0]);
+  assert.match(window, /remember_page_width\(window\);[\s\S]*?window->SetLabel\(next\.shown\)/, 'the English width is measured before the first label on the page changes');
+  const forget = stripComments(source.match(/void forget\(wxWindow \*window\)[\s\S]*?\n    \}/)[0]);
+  assert.match(forget, /m_page_width\.erase\(window\);/);
+});
+
+test('a label its owner wrapped stays within the owner\'s width: compact when the pair fits it, stacked otherwise', async () => {
+  // Every Preferences row title and description is a Label wrapped to 320 DIP.
+  // md3-v151 paired it on one line ("No warnings when loading 3MF with modified
+  // G-codes · ..." 629 px wide), which dropped the wrap: the label ran under the
+  // row's switch and past the page edge. A short title ("Language · 語言") still
+  // fits the owner's width on one line and stays compact.
+  const labelHpp = await readFile(path.join(repoDir, 'src', 'slic3r', 'GUI', 'Widgets', 'Label.hpp'), 'utf8');
+  const labelCpp = await readFile(path.join(repoDir, 'src', 'slic3r', 'GUI', 'Widgets', 'Label.cpp'), 'utf8');
+  assert.match(labelHpp, /int GetWrapWidth\(\) const \{ return m_wrap_width; \}/);
+  const wrap = stripComments(labelCpp.match(/void Label::Wrap\(int width\)[\s\S]*?\n\}/)[0]);
+  assert.match(wrap, /if \(!GetHandle\(\)\) return;\s*m_wrap_width = std::max\(0, width\);/, 'recorded only when the wrap happens');
+  const setLabel = stripComments(labelCpp.match(/void Label::SetLabel\(const wxString& label\)[\s\S]*?\n\}/)[0]);
+  assert.match(setLabel, /\} else \{\s*m_wrap_width = 0;[^\n]*\s*wxStaticText::SetLabel\(label\);/, 'new text is not wrapped until its owner wraps it');
+
+  const wraps = stripComments(source.match(/bool wraps\(wxWindow \*window, Kind kind, const wxString &english\)[\s\S]*?\n\}/)[0]);
+  assert.match(wraps, /label->GetLabel\(\)\.Contains\('\\n'\)/, 'a label its owner wrapped onto several lines is stacked');
+  const owner = stripComments(source.match(/int owner_wrap_width\(wxWindow \*window, Kind kind\)[\s\S]*?\n\}/)[0]);
+  assert.match(owner, /label->GetWrapWidth\(\)/);
+  assert.match(owner, /LB_AUTO_WRAP/, 'an auto-wrapping Label wraps itself');
+
+  const window = stripComments(source.match(/Change decorate_window\(wxWindow \*window, bool allow_compact, int growth\)[\s\S]*?\n    \}/)[0]);
+  assert.match(window, /next\.wrap_width = owner_wrap_width\(window, kind\);/);
+  assert.match(window, /next\.wrap_width = previous->second\.wrap_width;/, 'our own one-line text clears the width on the Label, so it is kept');
+  assert.match(window, /fits\(window, kind, label, compact, growth\) &&\s*\(next\.wrap_width == 0 \|\| text_width\(window, compact\) <= next\.wrap_width\)\)\s*next\.shown = compact;/,
+    'compact only when the pair fits the owner\'s width on one line');
+  assert.match(window, /else if \(next\.wrap_width > 0\)\s*next\.shown = next\.english \+ "\\n" \+ second;/, 'otherwise English over Cantonese, never English only');
+  assert.match(window, /wrapped->Wrap\(next\.wrap_width > 0 \? next\.wrap_width : width\);/, 'wrapped again at the owner\'s width');
+  assert.match(window, /static_cast<wxStaticText \*>\(window\)->Wrap\(width\);/, 'a plain static text still keeps its own width');
+
+  const recheck = stripComments(source.match(/bool recheck_compact\(wxWindow \*top\)[\s\S]*?\n    \}/)[0]);
+  assert.match(recheck, /const bool\s+stack\s+= applied\.wrap_width > 0 && !cantonese\.empty\(\);/, 'a compact label sent back from a page that is too wide stacks when its owner lets it wrap');
+  assert.match(recheck, /static_cast<::Label \*>\(window\)->Wrap\(applied\.wrap_width\);/);
+});
+
+test('a label that stretches along its row counts the row\'s slack once', () => {
+  // A stretching item already holds its share of the slack; adding the slack to
+  // its stretched width let a paired label take the room of the control beside it.
+  const available = stripComments(source.match(/int available_width\(wxWindow \*window, int growth\)[\s\S]*?\n\}/)[0]);
+  assert.match(available, /item->GetProportion\(\) > 0/);
+  assert.match(available, /std::min\(own, window->GetEffectiveMinSize\(\)\.GetWidth\(\)\)/);
+  assert.match(available, /return from \+ std::max\(0, sizer->GetSize\(\)\.GetWidth\(\) - sizer->GetMinSize\(\)\.GetWidth\(\)\) \+ growth;/);
+});
