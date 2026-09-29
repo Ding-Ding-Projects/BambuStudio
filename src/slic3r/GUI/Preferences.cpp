@@ -1140,11 +1140,17 @@ wxBoxSizer *PreferencesDialog::create_item_funny_level_slider(wxWindow *parent, 
             scrolled->FitInside();
     });
 
+    // Both lines are wrapped like every other Preferences description, again after
+    // each new text: a bilingual pair that does not fit one line then goes English
+    // over Cantonese instead of leaving the Cantonese in a tooltip ("Not stored
+    // yet; ... · 未儲存；...", about 430 px, is wider than the column).
     auto refresh = [value_label, provenance, stored](int value) {
         value_label->SetLabel(funny_row_label_int("Level %d of 5", value));
+        value_label->Wrap(value_label->FromDIP(320));
         provenance->SetLabel(*stored ? funny_row_label_int("Stored in BambuStudio.conf as %d.", value)
                                      : funny_row_label_int("Not stored yet; using the compiled default %d.",
                                                            I18N::FUNNY_LEVEL_DEFAULT));
+        provenance->Wrap(provenance->FromDIP(320));
     };
     refresh(level);
 

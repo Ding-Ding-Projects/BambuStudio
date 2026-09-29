@@ -31,6 +31,17 @@ test('the funny-level helpers register the pair and show English', () => {
   assert.match(source, /#include "BilingualRegistry\.hpp"/);
 });
 
+test('the level and provenance lines are wrapped again after every new text', () => {
+  // Label::SetLabel clears the wrap width until the owner wraps again. Without it
+  // the decorator has no width to stack the pair at, so a bilingual line wider than
+  // the column ("Not stored yet; ... · 未儲存；...") kept its Cantonese in a tooltip.
+  const refresh = source.match(/auto refresh = \[value_label, provenance, stored\]\(int value\) \{[\s\S]*?\n    \};/);
+  assert.ok(refresh, 'the funny-level refresh must exist');
+  const code = stripComments(refresh[0]);
+  assert.match(code, /value_label->SetLabel\([\s\S]*?\);\s*value_label->Wrap\(value_label->FromDIP\(320\)\);/);
+  assert.match(code, /provenance->SetLabel\([\s\S]*?\);\s*provenance->Wrap\(provenance->FromDIP\(320\)\);/);
+});
+
 test('Preferences builds no compact pair for a label of its own', () => {
   // The one compact pair left is the title bar of the language-switch
   // confirmation: a native caption, not a label in a sizer, so there is no row
