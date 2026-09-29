@@ -453,6 +453,23 @@ void TextInput::messureSize()
 
     wxSize minSize = size;
     minSize.x = GetMinWidth();
+    // The label is drawn after the entry (the unit in "0.1 mm/mm") and DoSetSize() takes its
+    // width out of the entry. A field created at a fixed width with a wide unit left the number
+    // a sliver: the retraction step drew "0.1" in 22 px and cut anything longer. Keep room for
+    // a short number beside the label, whatever width the caller asked for.
+    if (text_ctrl && labelSize.x > 0 && static_tips.empty()) {
+        int needed = 5 + labelSize.x + 10 + text_ctrl->GetTextExtent(wxS("0.000")).x + FromDIP(6);
+        if (this->icon.bmp().IsOk())
+            needed += this->icon.GetBmpSize().x;
+        if (this->icon_1.bmp().IsOk())
+            needed += this->icon_1.GetBmpSize().x;
+        if (!m_prefix.IsEmpty())
+            needed += dc.GetTextExtent(m_prefix).x + 8;
+        if (!m_unit.IsEmpty())
+            needed += dc.GetTextExtent(m_unit).x + 5 + 10;
+        minSize.x = std::max(minSize.x, needed);
+        size.x = std::max(size.x, needed);
+    }
     /*if (!m_unit.IsEmpty()) {
         wxClientDC dc(this);
         wxSize     unitSize = dc.GetTextExtent(m_unit);
