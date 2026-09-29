@@ -152,11 +152,15 @@ def main():
     os.environ['BAMBU_LAYOUT_PROBE'] = '1'
     os.environ['BAMBU_LAYOUT_PROBE_TAG'] = f'dialogs--{args.tuple_id}'
     cheap('create_headless_desktop', name=args.desktop)
-    launched = cheap('launch_on_headless_desktop', name=args.desktop, command=f'"{args.exe}" --datadir "{args.datadir}"')['pid']
-    print(f'launched pid {launched} on {args.desktop} for {args.tuple_id}', flush=True)
-    pid = launched
-    results = []
-    try:
+    owned = set()
+
+    def start():
+        """Launch the app; return (pid, main frame handle)."""
+        launched = cheap('launch_on_headless_desktop', name=args.desktop,
+                         command=f'"{args.exe}" --datadir "{args.datadir}"')['pid']
+        owned.add(launched)
+        print(f'launched pid {launched} on {args.desktop} for {args.tuple_id}', flush=True)
+
         # Without OpenGL 2.0 the app stages its Mesa fallback and relaunches
         # itself once, so the main frame can belong to a new process. The
         # desktop is task-owned: adopt the frame from whichever process shows it.
@@ -165,14 +169,27 @@ def main():
                 if w['class'] == 'wxWindowNR' and w['width'] >= 1000 and w['height'] >= 600:
                     return w
             return None
-        main_frame = wait_for(any_main_frame, args.startup_timeout, step=1.0)
-        if not main_frame:
+        frame = wait_for(any_main_frame, args.startup_timeout, step=1.0)
+        if not frame:
             raise SystemExit('timed out waiting for the main frame')
-        pid = main_frame['process_id']
-        if pid != launched:
-            print(f'main frame belongs to relaunched pid {pid}', flush=True)
-        main_hwnd = main_frame['handle']
+        owned.add(frame['process_id'])
+        if frame['process_id'] != launched:
+            print(f'main frame belongs to relaunched pid {frame["process_id"]}', flush=True)
         time.sleep(10)  # first layout, plugin prompt, bilingual decoration
+        return frame['process_id'], frame['handle']
+
+    def stop():
+        for pid_ in list(owned):
+            try:
+                cheap('kill_process', pid=pid_, force=True)
+            except SystemExit as gone:  # already exited (the relaunch parent does)
+                print(f'  pid {pid_}: {gone}', flush=True)
+            owned.discard(pid_)
+        time.sleep(2)
+
+    results = []
+    try:
+        pid, main_hwnd = start()
         for entry in entries:
             before = {w['handle'] for w in windows_of(args.desktop, pid)}
 
@@ -194,6 +211,9 @@ def main():
                 dialog = wait_for(new_window, 20)
             else:
                 forms = [entry]
+                # The app's English says "ink" where the catalogue says "filament".
+                if 'filament' in entry:
+                    forms.append(entry.replace('filament', 'ink'))
                 yue = cantonese.get(entry) or next((v for k, v in cantonese.items() if menu_text(k) == entry), None)
                 if yue and menu_text(yue) != entry:
                     forms.append(menu_text(yue))
@@ -233,21 +253,18 @@ def main():
                 # window messages do not cross desktops.
                 cheap('launch_on_headless_desktop', name=args.desktop,
                       command=f'"{sys.executable}" "{os.path.abspath(__file__)}" --post-close {dialog["handle"]}')
-                if not wait_for(closed, 8):
-                    row['close'] = 'still open'
-                    print(f'  {entry}: window did not close; stopping the sweep here', flush=True)
-                    results.append(row)
-                    break
-                row['close'] = 'closed by WM_CLOSE'
+                if wait_for(closed, 8):
+                    row['close'] = 'closed by WM_CLOSE'
+                else:
+                    # Still open: restart the app rather than lose the rest of the sweep.
+                    row['close'] = 'still open; app restarted'
+                    print(f'  {entry}: window did not close; restarting the app', flush=True)
+                    stop()
+                    pid, main_hwnd = start()
             results.append(row)
             time.sleep(1.0)
     finally:
-        for owned in {pid, launched}:
-            try:
-                cheap('kill_process', pid=owned, force=True)
-            except SystemExit as gone:  # already exited (the relaunch parent does)
-                print(f'  pid {owned}: {gone}', flush=True)
-        time.sleep(2)
+        stop()
         cheap('close_headless_desktop', name=args.desktop)
     report = {'tuple': args.tuple_id, 'exe': args.exe, 'exe_sha256': exe_sha, 'source_commit': args.source_commit,
               'captured_at': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()), 'route': 'cheap-lowlevel-headless',

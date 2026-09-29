@@ -27,3 +27,11 @@ test('the compact bilingual label must fit the visible width, not only the sizer
   assert.ok(fits, 'fits() must exist');
   assert.match(stripComments(fits[0]), /std::min\(available_width\(window, growth\), visible_width\(window\) \+ growth\)/);
 });
+
+test('a label whose width is pinned by an explicit minimum only goes compact when it fits that width', () => {
+  // Temperature calibration's 120 DIP labels drew "Start temp: · 開" and cut the rest.
+  const fits = source.match(/bool fits\(wxWindow \*window, Kind kind[\s\S]*?\n\}/);
+  assert.ok(fits, 'fits() must exist');
+  const code = stripComments(fits[0]);
+  assert.match(code, /if \(window->GetMinSize\(\)\.GetWidth\(\) > 0\)\s*room = std::min\(room, window->GetSize\(\)\.GetWidth\(\)\);/);
+});

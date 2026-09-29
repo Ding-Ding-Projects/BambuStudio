@@ -167,7 +167,12 @@ bool fits(wxWindow *window, Kind kind, const wxString &current, const wxString &
         return false; // not laid out yet; the next pass decides
     // Buttons, check boxes and group boxes spend part of their width on chrome.
     const int chrome = std::max(0, window->GetBestSize().GetWidth() - text_width(window, current));
-    const int room   = std::min(available_width(window, growth), visible_width(window) + growth);
+    int       room   = std::min(available_width(window, growth), visible_width(window) + growth);
+    // A control created with an explicit size keeps it as its minimum, so the
+    // sizer never widens it for a longer label: the compact text has to fit
+    // the width it already has (Temperature calibration cut "開始溫度" to "開").
+    if (window->GetMinSize().GetWidth() > 0)
+        room = std::min(room, window->GetSize().GetWidth());
     return text_width(window, candidate) + chrome <= room;
 }
 
