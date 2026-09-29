@@ -1,6 +1,6 @@
 ---
 translation-of: README.md
-source-sha256: a9348af0801ce2d64a88dc80121ce5f09afd9096422dc4dbdb141df93a792b1c
+source-sha256: 5743efcd264100335ac85a978346c60091de96a25d279a7cfc0cc01995aa154c
 review-status: agent-drafted
 ---
 
@@ -30,6 +30,7 @@ review-status: agent-drafted
 - [右鍵選單](context-menus.md)：每個右鍵選單都係 Material 選單，包括文字欄由滑鼠同鍵盤打開嘅編輯選單、可以複製嘅標籤同
   網頁，同點樣檢查發佈套件有冇系統選單。
 - [工具提示](tooltips.md)：每個工具提示都係 Material 純文字工具提示，兩種主題都係，同點樣檢查發佈套件有冇系統工具提示。
+- [對話框同揀選器](dialogs-and-pickers.md)：取代 wxWidgets 內置提示、揀選器、忙碌通知同顏色對話框嘅 Material 對話框、最近使用嘅顏色，同邊啲保留原生。
 
 ## 設計來源
 

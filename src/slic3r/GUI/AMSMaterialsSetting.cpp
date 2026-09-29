@@ -2982,29 +2982,12 @@ ColorPickerPopup::ColorPickerPopup(wxWindow* parent, wxWindow* evt_target)
 
 void ColorPickerPopup::on_custom_clr_picker(wxCommandEvent& event)
 {
-    std::vector<std::string> colors = wxGetApp().app_config->get_custom_color_from_config();
-    for (int i = 0; i < colors.size(); i++) {
-        m_clrData->SetCustomColour(i, string_to_wxColor(colors[i]));
-    }
-    auto clr_dialog = new wxColourDialog(nullptr, m_clrData);
-    wxColour picker_color;
-
-    if (clr_dialog->ShowModal() == wxID_OK) {
-        m_clrData = &(clr_dialog->GetColourData());
-        if (colors.size() != CUSTOM_COLOR_COUNT) {
-            colors.resize(CUSTOM_COLOR_COUNT);
-        }
-        for (int i = 0; i < CUSTOM_COLOR_COUNT; i++) {
-            colors[i] = color_to_string(m_clrData->GetCustomColour(i));
-        }
-        wxGetApp().app_config->save_custom_color_to_config(colors);
-
-        picker_color = wxColour(
-            m_clrData->GetColour().Red(),
-            m_clrData->GetColour().Green(),
-            m_clrData->GetColour().Blue(),
-            255
-        );
+    // The Material picker, which keeps the recently used colours the system
+    // dialog showed as its custom colours.
+    const wxColour picked = pick_filament_color(nullptr, m_clrData->GetColour());
+    if (picked.IsOk()) {
+        m_clrData->SetColour(picked);
+        const wxColour picker_color(picked.Red(), picked.Green(), picked.Blue(), 255);
 
         set_def_colour(picker_color, { picker_color }, 2);
         wxCommandEvent evt(EVT_SELECTED_COLOR);

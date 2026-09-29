@@ -11,6 +11,7 @@
 #include "Widgets/MaterialIcon.hpp"
 #include "Widgets/StateColor.hpp"
 #include "I18N.hpp"
+#include "MsgDialog.hpp"
 #include "Plater.hpp"
 #include "ObjectDataViewModel.hpp"
 
@@ -389,10 +390,12 @@ static wxMenu* create_settings_popupmenu(wxMenu* parent_menu, const bool is_obje
             }
         }
 
-        if (!category_options.empty() &&
-            wxGetSelectedChoices(selections, _L("Select settings"), category_name, names) != -1) {
-            for (auto sel : selections)
-                category_options[sel].second = true;
+        if (!category_options.empty()) {
+            MultiChoiceDialog dialog(nullptr, _L("Select settings"), category_name, names);
+            dialog.SetSelections(selections);
+            if (dialog.ShowModal() == wxID_OK)
+                for (auto sel : dialog.GetSelections())
+                    category_options[sel].second = true;
         }
         return category_options;
     };

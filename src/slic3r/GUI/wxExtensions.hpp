@@ -91,6 +91,17 @@ std::vector<wxBitmap *> get_extruder_color_icons(bool thin_icon = false, bool ro
 wxBitmap * get_extruder_color_icon(std::string color, std::string label, int icon_width, int icon_height, bool rounded_ring = false);
 wxBitmap * get_extruder_color_icon(std::vector<std::string> colors, bool is_gradient, std::string label, int icon_width, int icon_height);
 std::vector<std::vector<std::string>> read_color_pack(std::vector<std::string> color_pack);
+// The recently used colours (the app config's custom colour list, which the
+// system colour dialog showed as its custom colours), most recent first.
+std::vector<wxColour> recent_custom_colors();
+// Moves an accepted pick to the front of that list.
+void remember_custom_color(const wxColour &color);
+// Asks for a filament colour in the Material picker: opaque, with the recently
+// used colours as quick picks, and the pick remembered among them. Returns
+// wxNullColour when the user cancels.
+wxColour pick_filament_color(wxWindow *parent, const wxColour &initial, const wxString &title = wxEmptyString);
+// The same, for callers that keep a wxColourData: returns clr_data with the
+// picked colour, or unchanged when the user cancels.
 wxColourData show_sys_picker_dialog(wxWindow *parent, const wxColourData &clr_data);
 
 namespace Slic3r {

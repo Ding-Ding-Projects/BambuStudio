@@ -32,6 +32,8 @@ constexpr int kFieldW = 280;
 constexpr int kFieldH = 160;
 constexpr int kHueH   = 22;
 constexpr int kTone   = 11; // 5,10,...,95 tone quick picks
+constexpr int kRecentPerLine = 8; // recently used swatches per line
+constexpr int kSwatchH = 28;
 constexpr int kRowH   = 26; // one translation row
 constexpr int kValueW = 250; // widest translation value at Mono_11 (xyz-d65 / oklab rows)
 constexpr int kMaxAnyFormatLen = 128; // parser input bound: no notation needs more
@@ -99,13 +101,22 @@ MD3ColorPickerDialog::MD3ColorPickerDialog(wxWindow *parent, const wxColour &ini
     build(parent, initial);
 }
 
+MD3ColorPickerDialog::MD3ColorPickerDialog(wxWindow *parent, const wxColour &initial, const Options &options)
+    : wxDialog(parent, wxID_ANY, options.title.IsEmpty() ? _L("Material color picker") : options.title, wxDefaultPosition,
+               wxDefaultSize, wxBORDER_NONE)
+    , m_contrast(defaultContrastContext())
+    , m_options(options)
+{
+    build(parent, initial);
+}
+
 void MD3ColorPickerDialog::build(wxWindow * /*parent*/, const wxColour &initial)
 {
     const wxColour surface = StateColor::semantic(MD3::Role::Surface);
     const wxColour on_var  = StateColor::semantic(MD3::Role::OnSurfaceVariant);
     SetBackgroundColour(surface);
     m_colour = initial.IsOk() ? initial : wxColour(20, 108, 46);
-    m_alpha_percent = initial.IsOk() ? int(std::lround(initial.Alpha() * 100.0 / 255.0)) : 100;
+    m_alpha_percent = (m_options.opacity && initial.IsOk()) ? int(std::lround(initial.Alpha() * 100.0 / 255.0)) : 100;
     m_colour = wxColour(m_colour.Red(), m_colour.Green(), m_colour.Blue(), (unsigned char) std::lround(m_alpha_percent * 2.55));
     rgb_to_hsv8(m_colour, m_h, m_s, m_v);
 
@@ -117,7 +128,7 @@ void MD3ColorPickerDialog::build(wxWindow * /*parent*/, const wxColour &initial)
     };
 
     auto *root = new wxBoxSizer(wxVERTICAL);
-    root->Add(new MD3DialogCaption(this, _L("Material color picker")), 0, wxEXPAND);
+    root->Add(new MD3DialogCaption(this, m_options.title.IsEmpty() ? _L("Material color picker") : m_options.title), 0, wxEXPAND);
 
     // Two columns: the picker on the left, the translations on the right, so
     // the fifteen translator rows never push the dialog past 600 DIP tall.
@@ -239,22 +250,57 @@ void MD3ColorPickerDialog::build(wxWindow * /*parent*/, const wxColour &initial)
     });
     left->Add(m_tone_row, 0, wxLEFT | wxRIGHT | wxTOP, FromDIP(4));
 
+    // The caller's recently used colours: the custom colours the system colour
+    // dialog used to keep, as one-click picks in lines of kRecentPerLine.
+    if (!m_options.recent.empty()) {
+        left->Add(caption_label(_L("Recently used")), 0, wxLEFT | wxRIGHT | wxTOP, FromDIP(12));
+        const int lines = (int(m_options.recent.size()) + kRecentPerLine - 1) / kRecentPerLine;
+        m_recent_row = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(kFieldW), FromDIP(kSwatchH) * lines));
+        m_recent_row->SetBackgroundStyle(wxBG_STYLE_PAINT);
+        m_recent_row->SetName(_L("Recently used"));
+        m_recent_row->Bind(wxEVT_PAINT, [this, surface](wxPaintEvent &) {
+            wxAutoBufferedPaintDC dc(m_recent_row);
+            dc.SetBackground(wxBrush(surface));
+            dc.Clear();
+            const int w = m_recent_row->GetClientSize().x / kRecentPerLine;
+            const int h = FromDIP(kSwatchH);
+            // The outline keeps a swatch in the colour of the surface visible.
+            dc.SetPen(wxPen(StateColor::semantic(MD3::Role::OutlineVariant), 1));
+            for (size_t i = 0; i < m_options.recent.size(); ++i) {
+                const wxColour &c = m_options.recent[i];
+                dc.SetBrush(wxBrush(wxColour(c.Red(), c.Green(), c.Blue())));
+                dc.DrawRoundedRectangle(int(i % kRecentPerLine) * w + 1, int(i / kRecentPerLine) * h + 1, w - 2, h - 2,
+                                        FromDIP(5));
+            }
+        });
+        m_recent_row->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &e) {
+            const int    w = std::max(1, m_recent_row->GetClientSize().x / kRecentPerLine);
+            const int    h = std::max(1, FromDIP(kSwatchH));
+            const size_t i = size_t(std::max(0, e.GetY() / h)) * kRecentPerLine + size_t(std::clamp(e.GetX() / w, 0, kRecentPerLine - 1));
+            if (i < m_options.recent.size())
+                set_colour(m_options.recent[i]);
+        });
+        left->Add(m_recent_row, 0, wxLEFT | wxRIGHT | wxTOP, FromDIP(4));
+    }
+
     // Alpha: an MD3 Slider (keyboard-focusable, wxAccessible-named) with a
-    // live percentage beside it.
-    auto *alpha_row = new wxBoxSizer(wxHORIZONTAL);
-    auto *alpha_caption = caption_label(_L("Opacity"));
-    alpha_row->Add(alpha_caption, 0, wxALIGN_CENTER_VERTICAL);
-    m_alpha = new Slider(this, m_alpha_percent, 0, 100, false, wxDefaultPosition, wxSize(FromDIP(kFieldW - 110), FromDIP(24)));
-    m_alpha->SetName(_L("Opacity"));
-    m_alpha->SetToolTip(_L("Opacity, 0 to 100 percent"));
-    m_alpha->SetOnChange([this](int v) { set_alpha(v); });
-    alpha_row->Add(m_alpha, 1, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(8));
-    m_alpha_value = new Label(this, Label::Mono_11, "100%");
-    m_alpha_value->SetBackgroundColour(surface);
-    m_alpha_value->SetForegroundColour(on_var);
-    m_alpha_value->SetMinSize(wxSize(FromDIP(40), -1));
-    alpha_row->Add(m_alpha_value, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(6));
-    left->Add(alpha_row, 0, wxLEFT | wxRIGHT | wxTOP | wxEXPAND, FromDIP(12));
+    // live percentage beside it. Left out when the caller stores opaque colours.
+    if (m_options.opacity) {
+        auto *alpha_row = new wxBoxSizer(wxHORIZONTAL);
+        auto *alpha_caption = caption_label(_L("Opacity"));
+        alpha_row->Add(alpha_caption, 0, wxALIGN_CENTER_VERTICAL);
+        m_alpha = new Slider(this, m_alpha_percent, 0, 100, false, wxDefaultPosition, wxSize(FromDIP(kFieldW - 110), FromDIP(24)));
+        m_alpha->SetName(_L("Opacity"));
+        m_alpha->SetToolTip(_L("Opacity, 0 to 100 percent"));
+        m_alpha->SetOnChange([this](int v) { set_alpha(v); });
+        alpha_row->Add(m_alpha, 1, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(8));
+        m_alpha_value = new Label(this, Label::Mono_11, "100%");
+        m_alpha_value->SetBackgroundColour(surface);
+        m_alpha_value->SetForegroundColour(on_var);
+        m_alpha_value->SetMinSize(wxSize(FromDIP(40), -1));
+        alpha_row->Add(m_alpha_value, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(6));
+        left->Add(alpha_row, 0, wxLEFT | wxRIGHT | wxTOP | wxEXPAND, FromDIP(12));
+    }
 
     auto *hex_row = new wxBoxSizer(wxHORIZONTAL);
     m_preview = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(30), FromDIP(30)));

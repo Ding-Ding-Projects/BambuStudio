@@ -1067,15 +1067,10 @@ void PlaterPresetComboBox::change_extruder_color()
     if (!clr.IsOk())
         clr = wxColour(0, 0, 0); // Don't set alfa to transparence
 
-    auto data = new wxColourData();
-    data->SetChooseFull(1);
-    data->SetColour(clr);
-
-    wxColourDialog dialog(this, data);
-    dialog.CenterOnParent();
-    if (dialog.ShowModal() == wxID_OK)
+    const wxColour picked = pick_filament_color(this, clr);
+    if (picked.IsOk())
     {
-        colors->values[m_filament_idx] = dialog.GetColourData().GetColour().GetAsString(wxC2S_HTML_SYNTAX).ToStdString();
+        colors->values[m_filament_idx] = picked.GetAsString(wxC2S_HTML_SYNTAX).ToStdString();
 
         DynamicPrintConfig cfg_new = *cfg;
         cfg_new.set_key_value("filament_colour", colors);

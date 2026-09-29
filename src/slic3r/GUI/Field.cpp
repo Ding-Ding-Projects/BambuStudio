@@ -1853,7 +1853,11 @@ void ColourPicker::pick_color()
     // lets the dialog fall back to its own default when the option is undefined.
     const wxColour initial = m_color_picker->HasColour() ? m_color_picker->GetColour() : wxNullColour;
 
-    MD3ColorPickerDialog dlg(wxGetTopLevelParent(m_color_picker), initial);
+    // Filament colours keep their opacity here, so the slider stays; the
+    // recently used colours are quick picks as in every filament picker.
+    MD3ColorPickerDialog::Options options;
+    options.recent = recent_custom_colors();
+    MD3ColorPickerDialog dlg(wxGetTopLevelParent(m_color_picker), initial, options);
     if (dlg.ShowModal() != wxID_OK)
         return;
 
@@ -1869,29 +1873,9 @@ void ColourPicker::pick_color()
 
 void ColourPicker::remember_custom_color(const wxColour &color)
 {
-    // The native common dialog kept a 16-slot custom-colour palette in its
-    // wxColourData, and this field mirrored that palette into app_config so the
-    // AMS material and filament pickers saw the same recents. The MD3 dialog
-    // owns no palette, so the shared list is kept alive here instead: every
-    // accepted pick moves to the front of it. Entries past the end are left
-    // where they are rather than padded, so a short list never writes empty
-    // slots that the other readers would have to parse.
-    if (!color.IsOk() || color.Alpha() == wxALPHA_TRANSPARENT)
-        return;
-
-    const std::string picked = color_to_string(color);
-
-    std::vector<std::string> recents;
-    recents.reserve(CUSTOM_COLOR_COUNT);
-    recents.push_back(picked);
-    for (const std::string &previous : wxGetApp().app_config->get_custom_color_from_config()) {
-        if (previous.empty() || previous == picked)
-            continue;
-        if ((int) recents.size() >= CUSTOM_COLOR_COUNT)
-            break;
-        recents.push_back(previous);
-    }
-    wxGetApp().app_config->save_custom_color_to_config(recents);
+    // The shared recently used list every filament colour picker offers (see
+    // wxExtensions.hpp): the pick moves to its front.
+    ::remember_custom_color(color);
 }
 
 void ColourPicker::clear_color()

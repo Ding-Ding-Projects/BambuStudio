@@ -20,6 +20,7 @@ class Button;
 //   * a Material tonal ladder of the current pick (11 tones, 5..95) as
 //     one-click quick picks — a fresh ladder for every hue, so the set of
 //     ladders is as infinite as the hue wheel;
+//   * optionally, the caller's recently used colours as more quick picks;
 //   * an alpha slider (0..100 %), carried in GetColour().Alpha();
 //   * a live preview chip and a #RRGGBB hex field, kept in two-way sync;
 //   * a Translations column: the same colour written as a CSS name (when it
@@ -49,8 +50,21 @@ public:
     // Default context: MD3 OnSurface text over the MD3 Surface role.
     static ContrastContext defaultContrastContext();
 
+    // What a caller can add to the picker, or take away from it.
+    struct Options {
+        // One-click picks under "Recently used", most recent first. An empty
+        // list leaves the row out.
+        std::vector<wxColour> recent;
+        // false leaves the opacity slider out, and the pick is always opaque:
+        // for callers that store opaque colours, such as filament colours.
+        bool opacity { true };
+        // The caption; empty keeps "Material color picker".
+        wxString title;
+    };
+
     MD3ColorPickerDialog(wxWindow *parent, const wxColour &initial);
     MD3ColorPickerDialog(wxWindow *parent, const wxColour &initial, const ContrastContext &contrast);
+    MD3ColorPickerDialog(wxWindow *parent, const wxColour &initial, const Options &options);
 
     // The pick, alpha included (255 when the slider was left at 100 %).
     wxColour GetColour() const { return m_colour; }
@@ -75,10 +89,12 @@ private:
     double   m_h { 140.0 }, m_s { 0.8 }, m_v { 0.45 };
     int      m_alpha_percent { 100 };
     ContrastContext m_contrast;
+    Options         m_options;
 
     wxPanel    *m_sv_field { nullptr };
     wxPanel    *m_hue_strip { nullptr };
     wxPanel    *m_tone_row { nullptr };
+    wxPanel    *m_recent_row { nullptr };
     wxPanel    *m_preview { nullptr };
     wxTextCtrl *m_hex { nullptr };
     Label      *m_tone_caption { nullptr };

@@ -28,6 +28,7 @@
 #include "Plater.hpp"
 #include "../Utils/MacDarkMode.hpp"
 #include "BitmapComboBox.hpp"
+#include "Widgets/MD3ColorPicker.hpp"
 #include "Widgets/MD3Menu.hpp"
 #include "Widgets/StaticBox.hpp"
 #include "Widgets/Label.hpp"
@@ -658,38 +659,68 @@ std::vector<std::vector<std::string>> read_color_pack(std::vector<std::string> c
 wxColourData show_sys_picker_dialog(wxWindow *parent, const wxColourData &clr_data)
 {
     wxColourData data = clr_data;
-    data.SetChooseFull(true);
-
-    // Load custom colors from config (support both "r,g,b,a" and "#RRGGBB" formats)
-    std::vector<std::string> colors = Slic3r::GUI::wxGetApp().app_config->get_custom_color_from_config();
-    for (int i = 0; i < (int)colors.size(); i++) {
-        wxColour c;
-        if (colors[i].find(',') != std::string::npos)
-            c = string_to_wxColor(colors[i]);
-        else
-            c = wxColour(colors[i]);
-        if (c.IsOk())
-            data.SetCustomColour(i, c);
-    }
-
-    wxColourDialog dialog(parent, &data);
-    dialog.SetTitle(_L("Please choose the filament colour"));
-
-    if (dialog.ShowModal() == wxID_OK) {
-        data = dialog.GetColourData();
-
-        // Save custom colors to config (use RGBA string format for consistency)
-        std::vector<std::string> colors;
-        colors.resize(CUSTOM_COLOR_COUNT);
-        for (int i = 0; i < CUSTOM_COLOR_COUNT; i++) {
-            wxColour custom_clr = data.GetCustomColour(i);
-            if (custom_clr.IsOk())
-                colors[i] = color_to_string(custom_clr);
-        }
-        Slic3r::GUI::wxGetApp().app_config->save_custom_color_to_config(colors);
-    }
-
+    const wxColour picked = pick_filament_color(parent, clr_data.GetColour(), _L("Please choose the filament colour"));
+    if (picked.IsOk())
+        data.SetColour(picked);
     return data;
+}
+
+// Both formats occur in the list: "r,g,b,a" from color_to_string() and
+// "#RRGGBB" from older builds.
+static wxColour parse_custom_color(const std::string &text)
+{
+    if (text.empty())
+        return wxNullColour;
+    return text.find(',') != std::string::npos ? string_to_wxColor(text) : wxColour(text);
+}
+
+static bool same_rgb(const wxColour &a, const wxColour &b)
+{
+    return a.Red() == b.Red() && a.Green() == b.Green() && a.Blue() == b.Blue();
+}
+
+std::vector<wxColour> recent_custom_colors()
+{
+    std::vector<wxColour> colors;
+    for (const std::string &text : Slic3r::GUI::wxGetApp().app_config->get_custom_color_from_config()) {
+        const wxColour color = parse_custom_color(text);
+        if (color.IsOk() && color.Alpha() != wxALPHA_TRANSPARENT)
+            colors.push_back(color);
+    }
+    return colors;
+}
+
+void remember_custom_color(const wxColour &color)
+{
+    if (!color.IsOk() || color.Alpha() == wxALPHA_TRANSPARENT)
+        return;
+    // The pick goes first and the older entries follow, without the pick's own
+    // earlier entry, up to the 16 slots the system dialog had. A short list is
+    // written short, so no reader has to parse empty slots.
+    std::vector<std::string> recents { color_to_string(color) };
+    for (const std::string &previous : Slic3r::GUI::wxGetApp().app_config->get_custom_color_from_config()) {
+        const wxColour parsed = parse_custom_color(previous);
+        if (!parsed.IsOk() || same_rgb(parsed, color))
+            continue;
+        if ((int) recents.size() >= CUSTOM_COLOR_COUNT)
+            break;
+        recents.push_back(previous);
+    }
+    Slic3r::GUI::wxGetApp().app_config->save_custom_color_to_config(recents);
+}
+
+wxColour pick_filament_color(wxWindow *parent, const wxColour &initial, const wxString &title)
+{
+    MD3ColorPickerDialog::Options options;
+    options.recent  = recent_custom_colors();
+    options.opacity = false;
+    options.title   = title;
+    MD3ColorPickerDialog dialog(parent, initial, options);
+    if (dialog.ShowModal() != wxID_OK)
+        return wxNullColour;
+    const wxColour picked = dialog.GetColour();
+    remember_custom_color(picked);
+    return picked;
 }
 
 wxBitmap *get_extruder_color_icon(std::vector<std::string> colors, bool is_gradient, std::string label, int icon_width, int icon_height){

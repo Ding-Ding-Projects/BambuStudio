@@ -25,8 +25,11 @@
 class wxBoxSizer;
 class wxCheckBox;
 class wxFlexGridSizer;
+class wxFrame;
 class wxStaticBitmap;
 class wxStaticText;
+class LabeledCheckBox;
+class SpinInput;
 
 enum ButtonSizeType{
 	ButtonSizeNormal = 0,
@@ -411,6 +414,74 @@ public:
 // that name as a macro.)
 int md3_message_box(const wxString &message, const wxString &caption = wxEmptyString,
                     long style = wxOK | wxCENTRE, wxWindow *parent = nullptr);
+
+// The Material stand-ins for wx's stock input dialogs. wxTextEntryDialog,
+// wxNumberEntryDialog and wxMultiChoiceDialog are system dialogs whose frame,
+// fields and buttons ignore the theme and the language modes. These take the
+// same arguments in the same order and offer the same accessors, so a call site
+// only changes the class name, and they are MsgDialogs: the Material shell,
+// footer actions, Escape and the close button come with them.
+
+// Asks for a line of text, or several with wxTE_MULTILINE in the style.
+class TextEntryDialog : public MsgDialog
+{
+public:
+    TextEntryDialog(wxWindow *parent, const wxString &message, const wxString &caption = wxEmptyString,
+                    const wxString &value = wxEmptyString, long style = wxOK | wxCANCEL);
+
+    wxString GetValue() const;
+    void     SetValue(const wxString &value);
+
+private:
+    wxTextCtrl *m_text { nullptr };
+};
+
+// Asks for a whole number between min and max.
+class NumberEntryDialog : public MsgDialog
+{
+public:
+    NumberEntryDialog(wxWindow *parent, const wxString &message, const wxString &prompt, const wxString &caption,
+                      long value, long min, long max);
+
+    // The number in the field, kept inside min and max. What was typed counts
+    // even when the field has not committed it yet.
+    long GetValue() const;
+
+private:
+    ::SpinInput *m_spin { nullptr };
+    long       m_min;
+    long       m_max;
+};
+
+// Lets the user tick any number of choices.
+class MultiChoiceDialog : public MsgDialog
+{
+public:
+    MultiChoiceDialog(wxWindow *parent, const wxString &message, const wxString &caption, const wxArrayString &choices);
+
+    void       SetSelections(const wxArrayInt &selections);
+    wxArrayInt GetSelections() const;
+
+private:
+    std::vector<::LabeledCheckBox *> m_choices;
+};
+
+// The Material stand-in for wxBusyInfo: while this object lives, a small
+// rounded panel in the dialog surface colours shows the message over the
+// parent. It paints before the constructor returns, because the caller is about
+// to block the event loop.
+class BusyInfo
+{
+public:
+    // detail: supporting text under the message, such as the file being read.
+    explicit BusyInfo(const wxString &message, wxWindow *parent = nullptr, const wxString &detail = wxEmptyString);
+    ~BusyInfo();
+    BusyInfo(const BusyInfo &) = delete;
+    BusyInfo &operator=(const BusyInfo &) = delete;
+
+private:
+    wxFrame *m_frame { nullptr };
+};
 
 // Generic info dialog, used for displaying exceptions
 class InfoDialog : public MsgDialog

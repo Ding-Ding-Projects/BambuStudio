@@ -222,6 +222,19 @@ still to verify.
   control and gives it the Material plain tooltip's colours (InverseSurface, InverseOn), margins, the kit's small font
   and Windows 11 small rounded corners, once the main window exists and after every theme change.
   `scripts/md3/check-tooltips.py` hovers a Smart home button on a hidden desktop and judges the tooltip by its colour.
+- Missing include (2026-09-29): `8c1e4a5ab` made the appearance editor call `md3_message_box()` and `MessageDialog`
+  with no include path to `MsgDialog.hpp` (the forced precompiled header does not include it), so
+  `AppearanceEditorPopover.cpp` cannot compile in that commit or any later one before `784d86ff3`, which adds the
+  include. `dialog-header-includes.test.mjs` follows every source's quoted includes along the compiler's search path
+  and fails when a file that uses a Material dialog cannot reach the header.
+- Stock dialogs (2026-09-29): `TextEntryDialog`, `NumberEntryDialog` and `MultiChoiceDialog` in `MsgDialog.{hpp,cpp}`
+  take the stock wx arguments on the MsgDialog shell with kit fields; `BusyInfo` is a rounded SurfaceContainerHigh
+  panel painted before the blocking work. They replace 11 stock calls (appearance editor, workspace panel, Plater
+  copies, clone, reload and replace, the layer range settings chooser, compatible presets, the web view's developer
+  prompts), and `GetSingleChoiceIndex` uses the kit `SingleChoiceDialog` everywhere. Every ink colour goes through
+  `pick_filament_color()` (`wxExtensions`): the Material picker, opaque, with the app config's sixteen recently used
+  colours as quick picks; the three `wxColourDialog` sites are gone. `stock-dialogs.test.mjs` refuses the stock
+  dialogs; only the developer-only log window stays (compiled out of releases).
 - Closeout cleanup (2026-09-29): the linked worktree of the auto-updater lane
   (`BambuStudio-claude-auto-updater`) and its branch `claude/auto-updater` (`37b3fce78`, contained in `main`, no copy
   on the remote) were removed after an archive of the repository to the maintainer's cloud folder was written and

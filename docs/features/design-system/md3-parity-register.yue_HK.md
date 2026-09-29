@@ -1,6 +1,6 @@
 ---
 translation-of: md3-parity-register.md
-source-sha256: 4c6a1d65f96bddbc58ea3b99fb16de2b4db38d00efebdb78125311f68291d714
+source-sha256: cfbb5fcd03c474c0dac8cc0741866c8fde7fe3416836a19836f00c06f84ce16d
 review-status: agent-drafted
 ---
 
@@ -52,6 +52,9 @@ Bambu Studio 嘅全整個 GUI 都必須符合內嵌 `ui-md3/design-system` 套�
 | generic-text-views | 多行／唯讀 `wxTextCtrl` 視圖同編輯器 | 冇套件文字區組件 | UnsavedChangesDialog diff、UpdateDialogs 更改日誌、MsgDialog 指令碼、WebViewDialog 頁面/來源、SendSystemInfoDialog JSON、NetworkTestDialog 日誌、StatusPanel 評論、MixedFilamentDialog 比例編輯器、ExtraRenderers 儲存格編輯器、Field.cpp 滑塊讀出、Overview/AssemblyPdfExportDialog（幫助 API 接收 `wxTextCtrl*`）、WebViewDialog 開發 URL 欄 | 套件 `TextArea`（輪廓容器、主要焦點環、radius_tiny、SurfaceContainerLowest／-Low 唯讀、等寬選項）通過 `GetTextCtrl()` 裝載原生編輯器；喺 UpdateDialogs、MsgDialog、SendSystemInfoDialog、NetworkTestDialog、StatusPanel 評論、兩個 WebViewDialog 檢視者、UnsavedChangesDialog 儲存格中採用；單行迷失兒移至 `TextInput`。因錄製原因保留原生：套件內部編輯器、正則表達式製造者欄位、dataview 儲存格編輯器、混合墨水比例儲存格編輯器、開發人員專用 URL 欄（2026-09-05） | 完成 |
 | generic-listbox | 1 個 `new wxListBox(` | 套件中無 | SmartHomeDialog 實體列表 | 套件 `ListBox`（所有人繪製 wxVListBox、DropDown 列解剖學、省略符號 + 工具提示）喺 SmartHomeDialog（2026-09-05） | 完成 |
 | fatal-path-message-boxes | 5 個現場 `wxMessageBox(` 呼叫 | containment/Dialog.jsx | GUI_App.cpp（Fatal error、Critical error、第一次載入語言）、GUI_Init.cpp（初始化失敗，兩個） | 喺 GUI 被清除前或當時發火，其中 MD3 殼可能無法建構；刻意原生 | 偏離 |
+| stock-input-dialogs | 11 個內置提示、揀選器同忙碌通知：`wxTextEntryDialog`（5）、`wxNumberEntryDialog` 同 `wxGetNumberFromUser`（2）、`wxMultiChoiceDialog` 同 `wxGetSelectedChoices`（2）、`wxBusyInfo`（2），加埋其他平台嘅 `wxGetSingleChoiceIndex` 分支 | containment/Dialog.jsx; fields/ValueField.jsx; selection/Checkbox.jsx | AppearanceEditorPopover（「另存為預設」）、WorkspacePanel（提示）、Plater（「克隆數量：」、「克隆」、「重新載入來自：」、「替換來自：」）、GUI_Factories（層範圍設定）、Tab（相容預設）、WebViewDialog（開發者腳本提示）、GUI_App（單選） | `TextEntryDialog`、`NumberEntryDialog` 同 `MultiChoiceDialog` 建基於 MsgDialog 外殼，用套件 `TextInput`／`TextArea`、`SpinInput` 同 `LabeledCheckBox`；`BusyInfo` 係喺阻住事件迴圈嘅工作開始之前已經畫好嘅圓角 SurfaceContainerHigh 面板；每個平台都用 `SingleChoiceDialog`；`stock-dialogs.test.mjs` 會拒絕內置版本（2026-09-29） | 完成 |
+| stock-colour-dialogs | 3 處 `wxColourDialog`：Windows 顏色對話框，連同佢十六格自訂顏色，同用系統外觀同語言嘅掣 | Material 揀色器（`MD3ColorPickerDialog`） | AMSMaterialsSetting（墨水機槽位顏色）、PresetComboBoxes（墨水顏色）、wxExtensions `show_sys_picker_dialog`（墨水揀選器嘅「更多顏色」、紋理匯入、預設選單本身嘅揀色器） | `pick_filament_color()`：Material 揀色器，不透明，將系統對話框保存嘅最近用過嘅顏色做「最近使用」快速選項；確定咗嘅顏色會加入去；批量墨水對話框同設定頁嘅顏色欄用同一份清單（2026-09-29） | 完成 |
+| developer-log-window | `MainFrame::show_log_window()` 打開嘅 `wxLogWindow` | 無 | MainFrame，由「偏好設定」、「開發者工具」、「內部開發者模式」打開 | 「開發者工具」分頁唔會編譯入任何發佈版本（`BBL_RELEASE_TO_PUBLIC=1`），所以冇一個發佈版本可以打開佢；刻意保留原生 | 偏離 |
 | static-bitmaps | 175 處 `new wxStaticBitmap(` | 套件顯示圖示嘅地方係 Material Symbols 字形；產品相片／圖表係資料 | 喺整個 GUI 樹中 | 手工審查清單 `static-bitmap-triage.csv`（清掃後 146 處仍在使用）：12 個可點擊圖片控制項變成套件圖示按鈕、48 個圖片控制項用 MD3 角色中嘅 Material 字形、98 個係內容影像或呼叫方提供嘅資料且記錄咗原因若非明顯、8 個未填充 MonitorBasePanel 圖片控制項刪除、兩個度數標記係排版標籤。檢查只接受 `data` 同 `md3-rendered` 兩種判定，並固定每個已轉換嘅位置。執行時捕獲等待本地構建（2026-09-05） | 完成（來源） |
 
 ## 第三次掃過：每一個元素（2026-09-05）

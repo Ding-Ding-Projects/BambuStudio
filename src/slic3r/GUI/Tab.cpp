@@ -7982,8 +7982,9 @@ wxSizer* Tab::compatible_widget_create(wxWindow* parent, PresetDependencies &dep
                 presets.Add(from_u8(preset.name));
         }
 
-        wxMultiChoiceDialog dlg(parent, deps.dialog_title, deps.dialog_label, presets);
-        wxGetApp().UpdateDlgDarkUI(&dlg);
+        // The short title heads the dialog and the sentence explains it; the stock
+        // call passed them the other way round.
+        MultiChoiceDialog dlg(parent, deps.dialog_label, deps.dialog_title, presets);
         // Collect and set indices of depending_presets marked as compatible.
         wxArrayInt selections;
         auto *compatible_printers = dynamic_cast<const ConfigOptionStrings*>(m_config->option(deps.key_list));

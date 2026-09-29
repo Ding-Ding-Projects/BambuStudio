@@ -7517,12 +7517,8 @@ int GUI_App::GetSingleChoiceIndex(const wxString& message,
                                 const wxArrayString& choices,
                                 int initialSelection)
 {
-#ifdef _WIN32
     SingleChoiceDialog dialog(message, caption, choices, initialSelection);
     return dialog.GetSingleChoiceIndex();
-#else
-    return wxGetSingleChoiceIndex(message, caption, choices, initialSelection);
-#endif
 }
 
 // select language from the list of installed languages

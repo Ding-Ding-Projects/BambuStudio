@@ -14,7 +14,6 @@
 #include <wx/simplebook.h>
 #include <wx/sizer.h>
 #include <wx/spinctrl.h>
-#include <wx/textdlg.h>
 
 #include "ElementStyle.hpp"
 #include "slic3r/GUI/GUI.hpp"
@@ -703,7 +702,7 @@ void AppearanceEditorPopover::build_presets(wxWindow *page)
     save_as->SetButtonSize(Button::Size::Small);
     save_as->SetToolTip(_L("Snapshot the current look of every styled element as a named preset"));
     save_as->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) {
-        wxTextEntryDialog ask(this, _L("Name for the new appearance preset"), _L("Save as preset"));
+        TextEntryDialog ask(this, _L("Name for the new appearance preset"), _L("Save as preset"));
         if (ask.ShowModal() != wxID_OK)
             return;
         wxString name = ask.GetValue();

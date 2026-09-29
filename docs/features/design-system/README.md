@@ -30,6 +30,8 @@ Design 3 design system.
   package is checked for a system menu.
 - [Tooltips](tooltips.md): every tooltip is the Material plain tooltip, in both themes, and how a
   released package is checked for the system's.
+- [Dialogs and pickers](dialogs-and-pickers.md): the Material dialogs that replaced wxWidgets' stock
+  prompts, choosers, busy notice and colour dialog, the recently used colours, and what stays native.
 
 ## Design source
 

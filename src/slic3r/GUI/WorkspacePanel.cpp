@@ -27,7 +27,6 @@
 #include <wx/stattext.h>
 #include <wx/stdpaths.h>
 #include <wx/textctrl.h>
-#include <wx/textdlg.h>
 
 namespace workspace_fs = std::filesystem;
 
@@ -86,7 +85,7 @@ std::optional<Workspace::LocalInstant> choose_local_time(wxWindow *parent, const
 
 bool ask_text(wxWindow *parent, const wxString &caption, const wxString &prompt, wxString &value)
 {
-    wxTextEntryDialog dialog(parent, prompt, caption, value);
+    TextEntryDialog dialog(parent, prompt, caption, value);
     if (dialog.ShowModal() != wxID_OK) return false;
     value = dialog.GetValue();
     return true;

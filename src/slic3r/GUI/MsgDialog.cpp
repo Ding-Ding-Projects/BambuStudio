@@ -13,11 +13,17 @@
 #include <wx/checkbox.h>
 #include <wx/html/htmlwin.h>
 #include <wx/textctrl.h>
+#include <wx/frame.h>
+#include <wx/dcclient.h>
+#include <wx/dcmemory.h>
+#include <wx/region.h>
 
 #include <boost/algorithm/string/replace.hpp>
 
 #include "Widgets/Label.hpp"
+#include "Widgets/LabeledCheckBox.hpp"
 #include "Widgets/MaterialIcon.hpp"
+#include "Widgets/SpinInput.hpp"
 #include "libslic3r/libslic3r.h"
 #include "libslic3r/Utils.hpp"
 #include "GUI.hpp"
@@ -750,6 +756,221 @@ int md3_message_box(const wxString &message, const wxString &caption, long style
     case wxID_NO: return wxNO;
     case wxID_OK: return wxOK;
     default: return wxCANCEL; // Cancel, Escape or the close button
+    }
+}
+
+static wxString entry_caption(const wxString &caption)
+{
+    return caption.IsEmpty() ? wxGetApp().app_display_name() : caption;
+}
+
+// TextEntryDialog
+
+TextEntryDialog::TextEntryDialog(wxWindow *parent, const wxString &message, const wxString &caption, const wxString &value, long style)
+    : MsgDialog(parent, entry_caption(caption), wxEmptyString, (style & (wxOK | wxCANCEL)) ? (style & (wxOK | wxCANCEL)) : (wxOK | wxCANCEL))
+{
+    if (!message.Strip(wxString::both).IsEmpty())
+        add_msg_content(this, content_sizer, message);
+    const int gap = message.Strip(wxString::both).IsEmpty() ? 0 : FromDIP(12);
+    if (style & wxTE_MULTILINE) {
+        auto *area = new ::TextArea(this, value, wxSize(FromDIP(420), -1));
+        area->SetMinLines(6);
+        m_text = area->GetTextCtrl();
+        content_sizer->Add(area, 1, wxEXPAND | wxTOP, gap);
+    } else {
+        auto *input = new ::TextInput(this, value, wxEmptyString, wxEmptyString, wxDefaultPosition, wxSize(FromDIP(320), -1));
+        m_text = input->GetTextCtrl();
+        // Enter accepts, as it did in the stock dialog.
+        input->Bind(wxEVT_TEXT_ENTER, [this](wxCommandEvent &) { EndModal(wxID_OK); });
+        content_sizer->Add(input, 0, wxEXPAND | wxTOP, gap);
+    }
+    finalize();
+    // The field, not the OK button, starts with the focus, its text selected.
+    CallAfter([this]() {
+        m_text->SetFocus();
+        m_text->SelectAll();
+    });
+}
+
+wxString TextEntryDialog::GetValue() const { return m_text->GetValue(); }
+
+void TextEntryDialog::SetValue(const wxString &value) { m_text->ChangeValue(value); }
+
+// NumberEntryDialog
+
+NumberEntryDialog::NumberEntryDialog(wxWindow *parent, const wxString &message, const wxString &prompt, const wxString &caption,
+                                     long value, long min, long max)
+    : MsgDialog(parent, entry_caption(caption), wxEmptyString, wxOK | wxCANCEL)
+    , m_min(std::min(min, max))
+    , m_max(std::max(min, max))
+{
+    const bool has_message = !message.Strip(wxString::both).IsEmpty();
+    if (has_message)
+        add_msg_content(this, content_sizer, message);
+    auto *row = new wxBoxSizer(wxHORIZONTAL);
+    if (!prompt.IsEmpty()) {
+        auto *label = new Label(this, ::Label::Body_14, prompt);
+        label->SetBackgroundColour(GetBackgroundColour());
+        row->Add(label, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(12));
+    }
+    m_spin = new ::SpinInput(this, wxEmptyString, wxEmptyString, wxDefaultPosition, wxSize(FromDIP(120), -1), 0,
+                             int(m_min), int(m_max), int(std::clamp(value, m_min, m_max)));
+    m_spin->Bind(wxEVT_TEXT_ENTER, [this](wxCommandEvent &) { EndModal(wxID_OK); });
+    row->Add(m_spin, 0, wxALIGN_CENTER_VERTICAL);
+    content_sizer->Add(row, 0, wxTOP, has_message ? FromDIP(12) : 0);
+    finalize();
+    CallAfter([this]() {
+        m_spin->GetTextCtrl()->SetFocus();
+        m_spin->GetTextCtrl()->SelectAll();
+    });
+}
+
+long NumberEntryDialog::GetValue() const
+{
+    long typed = 0;
+    if (!m_spin->GetTextCtrl()->GetValue().ToLong(&typed))
+        typed = m_spin->GetValue();
+    return std::clamp(typed, m_min, m_max);
+}
+
+// MultiChoiceDialog
+
+MultiChoiceDialog::MultiChoiceDialog(wxWindow *parent, const wxString &message, const wxString &caption, const wxArrayString &choices)
+    : MsgDialog(parent, entry_caption(caption), wxEmptyString, wxOK | wxCANCEL)
+{
+    const bool has_message = !message.Strip(wxString::both).IsEmpty();
+    if (has_message)
+        add_msg_content(this, content_sizer, message);
+    auto *list = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL);
+    list->SetBackgroundColour(GetBackgroundColour());
+    list->SetScrollRate(0, FromDIP(20));
+    auto *list_sizer = new wxBoxSizer(wxVERTICAL);
+    for (const wxString &choice : choices) {
+        auto *box = new ::LabeledCheckBox(list, choice);
+        box->SetBackgroundColour(list->GetBackgroundColour());
+        list_sizer->Add(box, 0, wxEXPAND | wxBOTTOM, FromDIP(6));
+        m_choices.push_back(box);
+    }
+    list->SetSizer(list_sizer);
+    const wxSize rows = list_sizer->GetMinSize();
+    list->SetMinSize(wxSize(std::max(rows.GetWidth() + FromDIP(16), FromDIP(280)), std::min(rows.GetHeight(), FromDIP(320))));
+    list->FitInside();
+    content_sizer->Add(list, 1, wxEXPAND | wxTOP, has_message ? FromDIP(12) : 0);
+    finalize();
+}
+
+void MultiChoiceDialog::SetSelections(const wxArrayInt &selections)
+{
+    for (::LabeledCheckBox *box : m_choices)
+        box->SetValue(false);
+    for (int index : selections)
+        if (index >= 0 && size_t(index) < m_choices.size())
+            m_choices[index]->SetValue(true);
+}
+
+wxArrayInt MultiChoiceDialog::GetSelections() const
+{
+    wxArrayInt selections;
+    for (size_t index = 0; index < m_choices.size(); ++index)
+        if (m_choices[index]->GetValue())
+            selections.Add(int(index));
+    return selections;
+}
+
+// BusyInfo
+
+BusyInfo::BusyInfo(const wxString &message, wxWindow *parent, const wxString &detail)
+{
+    wxWindow *over  = parent ? parent : wxTheApp->GetTopWindow();
+    wxWindow *owner = over ? wxGetTopLevelParent(over) : nullptr;
+    m_frame = new wxFrame(owner, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize,
+                          wxBORDER_NONE | wxFRAME_SHAPED | wxFRAME_TOOL_WINDOW | wxFRAME_NO_TASKBAR |
+                              (owner ? wxFRAME_FLOAT_ON_PARENT : wxSTAY_ON_TOP));
+    const wxWindow *scale = over ? over : m_frame;
+
+    // The message as the headline, its Cantonese under it in bilingual mode, then
+    // the detail (a file path, say) in the smaller supporting style.
+    struct Block { wxString text; wxFont font; wxColour colour; wxRect rect; };
+    std::vector<Block> blocks;
+    blocks.push_back({message, ::Label::Head_14, StateColor::semantic(MD3::Role::OnSurface), {}});
+    const wxString secondary = I18N::bilingual_secondary(message);
+    if (!secondary.empty())
+        blocks.push_back({secondary, ::Label::Body_14, StateColor::semantic(MD3::Role::OnSurface), {}});
+    if (!detail.IsEmpty())
+        blocks.push_back({detail, ::Label::Body_12, StateColor::semantic(MD3::Role::OnSurfaceVariant), {}});
+
+    const int pad = scale->FromDIP(24);
+    const int gap = scale->FromDIP(4);
+    const int max_width = scale->FromDIP(420);
+    int width = 0;
+    int y = pad;
+    {
+        wxClientDC dc(m_frame);
+        for (Block &block : blocks) {
+            dc.SetFont(block.font);
+            wxString wrapped;
+            const wxSize size = ::Label::split_lines(dc, max_width, block.text, wrapped);
+            block.text = wrapped;
+            block.rect = wxRect(wxPoint(pad, y), size);
+            y += size.GetHeight() + gap;
+            width = std::max(width, size.GetWidth());
+        }
+    }
+    const wxSize size(width + 2 * pad, y - gap + pad);
+    m_frame->SetClientSize(size);
+
+    // Centred on the window the work blocks, kept inside its screen.
+    const wxRect area = over ? over->GetScreenRect() : msg_dialog_work_area(m_frame);
+    wxPoint at(area.GetX() + (area.GetWidth() - size.GetWidth()) / 2, area.GetY() + (area.GetHeight() - size.GetHeight()) / 2);
+    const wxRect work = msg_dialog_work_area(over ? over : m_frame);
+    if (!work.IsEmpty()) {
+        at.x = std::max(work.GetLeft(), std::min(at.x, work.GetRight() - size.GetWidth()));
+        at.y = std::max(work.GetTop(), std::min(at.y, work.GetBottom() - size.GetHeight()));
+    }
+    m_frame->Move(at);
+
+    // The dialog container: SurfaceContainerHigh, rounded like every Material dialog.
+    const int radius = scale->FromDIP(MD3::Metrics::radius_dialog);
+    wxBitmap mask(size.GetWidth(), size.GetHeight(), 32);
+    {
+        wxMemoryDC dc;
+        dc.SelectObject(mask);
+        dc.SetBackground(wxBrush(wxColour(0, 0, 0)));
+        dc.Clear();
+        dc.SetBrush(wxBrush(wxColour(255, 255, 255)));
+        dc.SetPen(*wxTRANSPARENT_PEN);
+        dc.DrawRoundedRectangle(0, 0, size.GetWidth(), size.GetHeight(), radius);
+        dc.SelectObject(wxNullBitmap);
+    }
+    wxRegion region(mask, wxColour(0, 0, 0));
+    if (region.IsOk())
+        m_frame->SetShape(region);
+
+    const wxColour surface = StateColor::semantic(MD3::Role::SurfaceContainerHigh);
+    m_frame->SetBackgroundStyle(wxBG_STYLE_PAINT);
+    m_frame->Bind(wxEVT_PAINT, [frame = m_frame, blocks, surface](wxPaintEvent &) {
+        wxPaintDC dc(frame);
+        dc.SetBackground(wxBrush(surface));
+        dc.Clear();
+        for (const Block &block : blocks) {
+            dc.SetFont(block.font);
+            dc.SetTextForeground(block.colour);
+            dc.DrawLabel(block.text, block.rect);
+        }
+    });
+
+    // Paint now: the caller blocks the event loop next, so no paint message
+    // would be handled until the work is over.
+    m_frame->Show();
+    m_frame->Refresh();
+    m_frame->Update();
+}
+
+BusyInfo::~BusyInfo()
+{
+    if (m_frame) {
+        m_frame->Show(false);
+        m_frame->Destroy();
     }
 }
 

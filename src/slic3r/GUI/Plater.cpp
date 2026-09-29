@@ -57,9 +57,7 @@
 #include <wx/timer.h>
 #include <wx/gauge.h>
 #include <wx/wupdlock.h>
-#include <wx/numdlg.h>
 #include <wx/debug.h>
-#include <wx/busyinfo.h>
 #include <wx/event.h>
 #include <wx/wrapsizer.h>
 #include <wx/dcbuffer.h>
@@ -14898,7 +14896,7 @@ bool Plater::priv::replace_volume_with_stl(int object_idx, int volume_idx, const
         return false;
     }
 
-    wxBusyInfo info(_L("Replace from:") + " " + from_u8(path), q->get_current_canvas3D()->get_wxglcanvas());
+    BusyInfo info(_L("Replace from:"), q->get_current_canvas3D()->get_wxglcanvas(), from_u8(path));
 
     if (!snapshot.empty())
         q->take_snapshot(snapshot);
@@ -15212,7 +15210,7 @@ void Plater::priv::reload_from_disk()
         };
         wxBusyCursor wait;
         if (!boost::iends_with(path, ".obj")) {
-            wxBusyInfo info(_L("Reload from:") + " " + from_u8(path), q->get_current_canvas3D()->get_wxglcanvas());
+            BusyInfo info(_L("Reload from:"), q->get_current_canvas3D()->get_wxglcanvas(), from_u8(path));
         }
         Model new_model;
         try
@@ -26674,16 +26672,11 @@ static long GetNumberFromUser(  const wxString& msg,
                                 long max,
                                 wxWindow* parent)
 {
-#ifdef _WIN32
-    wxNumberEntryDialog dialog(parent, msg, prompt, title, value, min, max, wxDefaultPosition);
-    wxGetApp().UpdateDlgDarkUI(&dialog);
+    NumberEntryDialog dialog(parent, msg, prompt, title, value, min, max);
     if (dialog.ShowModal() == wxID_OK)
         return dialog.GetValue();
 
     return -1;
-#else
-    return wxGetNumberFromUser(msg, prompt, title, value, min, max, parent);
-#endif
 }
 
 void Plater::set_number_of_copies(/*size_t num*/)
@@ -30205,10 +30198,9 @@ void Plater::clone_selection()
 {
     if (is_selection_empty())
         return;
-    long res = wxGetNumberFromUser("",
-        _L("Clone"),
-        _L("Number of copies:"),
-        1, 0, 1000, this);
+    // "Clone" is the title and "Number of copies:" the prompt; the stock call had
+    // them the other way round.
+    long res = GetNumberFromUser(wxEmptyString, _L("Number of copies:"), _L("Clone"), 1, 0, 1000, this);
     wxString msg;
     if (res == -1) {
         msg = _L("Invalid number");

@@ -24,7 +24,6 @@
 
 #include <wx/sizer.h>
 #include <wx/toolbar.h>
-#include <wx/textdlg.h>
 #include <wx/url.h>
 
 #include <slic3r/GUI/Widgets/WebView.hpp>
@@ -2197,15 +2196,8 @@ void WebViewPanel::OnRunScriptMessage(wxCommandEvent& WXUNUSED(evt))
 
 void WebViewPanel::OnRunScriptCustom(wxCommandEvent& WXUNUSED(evt))
 {
-    wxTextEntryDialog dialog
-    (
-        this,
-        "Please enter JavaScript code to execute",
-        wxGetTextFromUserPromptStr,
-        m_javascript,
-        wxOK | wxCANCEL | wxCENTRE | wxTE_MULTILINE
-    );
-    MD3DialogCaption::Adopt(&dialog);
+    TextEntryDialog dialog(this, "Please enter JavaScript code to execute", _L("Run Script"), m_javascript,
+                           wxOK | wxCANCEL | wxTE_MULTILINE);
     if (dialog.ShowModal() != wxID_OK)
         return;
 
@@ -2215,15 +2207,8 @@ void WebViewPanel::OnRunScriptCustom(wxCommandEvent& WXUNUSED(evt))
 void WebViewPanel::OnAddUserScript(wxCommandEvent& WXUNUSED(evt))
 {
     wxString userScript = "window.wx_test_var = 'wxWidgets webview sample';";
-    wxTextEntryDialog dialog
-    (
-        this,
-        "Enter the JavaScript code to run as the initialization script that runs before any script in the HTML document.",
-        wxGetTextFromUserPromptStr,
-        userScript,
-        wxOK | wxCANCEL | wxCENTRE | wxTE_MULTILINE
-    );
-    MD3DialogCaption::Adopt(&dialog);
+    TextEntryDialog dialog(this, "Enter the JavaScript code to run as the initialization script that runs before any script in the HTML document.",
+                           _L("Add user script"), userScript, wxOK | wxCANCEL | wxTE_MULTILINE);
     if (dialog.ShowModal() != wxID_OK)
         return;
 
@@ -2234,15 +2219,8 @@ void WebViewPanel::OnAddUserScript(wxCommandEvent& WXUNUSED(evt))
 void WebViewPanel::OnSetCustomUserAgent(wxCommandEvent& WXUNUSED(evt))
 {
     wxString customUserAgent = "Mozilla/5.0 (iPhone; CPU iPhone OS 13_1_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.1 Mobile/15E148 Safari/604.1";
-    wxTextEntryDialog dialog
-    (
-        this,
-        "Enter the custom user agent string you would like to use.",
-        wxGetTextFromUserPromptStr,
-        customUserAgent,
-        wxOK | wxCANCEL | wxCENTRE
-    );
-    MD3DialogCaption::Adopt(&dialog);
+    TextEntryDialog dialog(this, "Enter the custom user agent string you would like to use.", _L("Set custom user agent"),
+                           customUserAgent, wxOK | wxCANCEL);
     if (dialog.ShowModal() != wxID_OK)
         return;
 

@@ -319,9 +319,10 @@ void BulkFilamentDialog::on_pick_color()
         }
     }
 
-    MD3ColorPickerDialog dlg(this, initial);
-    if (dlg.ShowModal() == wxID_OK) {
-        m_staged_color = dlg.GetColour().GetAsString(wxC2S_HTML_SYNTAX).ToStdString();
+    // A filament colour: opaque, with the recently used colours to pick from.
+    const wxColour picked = pick_filament_color(this, initial);
+    if (picked.IsOk()) {
+        m_staged_color = picked.GetAsString(wxC2S_HTML_SYNTAX).ToStdString();
         update_staged_labels();
         update_apply_enabled();
     }
