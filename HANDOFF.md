@@ -99,6 +99,16 @@ kept equal to `main` and exists only as the checkout of the session that started
   Preferences > User "Auto-fill previously logged-in accounts.". `c591f1b39` skips an empty message in
   every direct catalog lookup (contract test `ui-md3/tests/empty-message-lookup.test.mjs`, and a case in
   the hand-built `language_mode_tests`).
+- The same `md3-v151` Prepare captures showed CJ-023 and CJ-024: the section strip (Ink / Process /
+  Objects) docks left of the sidebar body at 128 DIP inside the same pane, and no pane width counted
+  it, so the full process-settings tree got 334 of its roughly 417 px and every value field ran past
+  the edge; the Process title kept a 56 DIP minimum and read "打印設…" in Cantonese. `11cf45423`
+  adds the strip to every pane width and lets the title be as wide as its text.
+- `md3-v153` (`1757d880f`, 2026-09-29) is verified from its package (SHA-1
+  `3a97afd5d4e083e92a40c72d2c62310e66dcd8c2`, imports resolve): the splash reads its release date in all
+  three modes, captured through the splash's own bitmap hook, and CJ-020 is verified. A first Smart
+  home capture raced the repaint of an auto-wrapping label and showed its paragraph English only; a
+  second run showed both languages (noted in the screenshots README).
 - Release jobs share one concurrency group, and GitHub keeps one running and one waiting: a newer build
   that finishes while one waits cancels the waiting release job. The `b5cde7521` build passed but its
   release was cancelled that way on 2026-09-29, so not every push gets a release when pushes come fast.

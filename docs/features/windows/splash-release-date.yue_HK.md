@@ -1,6 +1,6 @@
 ---
 translation-of: splash-release-date.md
-source-sha256: 79d4124bd34cd9d4ed447f1638dbb496d7f83d93f202f91614a6f06495305e5c
+source-sha256: e155c4cb3cebe6146ea27d34ad83ae641708569d4f74db7f0e47b870d4f73533
 review-status: agent-drafted
 ---
 
@@ -57,3 +57,4 @@ review-status: agent-drafted
   啟動畫面繪製同語言路由，同檢查廣東話翻譯目錄翻譯個兩行。
 - 發佈工作流嘅呢個改變嘅構建係編譯檢查。
 - 包含呢行嘅第一個發佈嘅啟動畫面會喺全部三個語言模式拍咗相做視覺檢查。啟動畫面顯示唔夠一秒，佢未畫好之前，視窗嘅截圖就已經影完（`md3-v148` 嗰次得到嘅全部都係黑色畫面）。設定咗 `BAMBU_LAYOUT_PROBE` 之後，啟動畫面會將佢顯示緊嘅點陣圖原封不動儲存做探測器轉儲旁邊嘅 `splash.png`，截圖程序就讀取嗰個檔案。
+- 已經喺 `md3-v153`（目標 `1757d880f`，2026 年 9 月 29 日發佈）驗證，呢個係第一個有截圖鈎嘅發佈：英文模式顯示「Released 29 September 2026」，廣東話模式顯示「2026年9月29日發佈」，雙語模式兩行都有，英文先（`docs/screenshots/md3-everything/splash--*--md3-v153.png`，每個像素都畫咗）。

@@ -140,6 +140,8 @@ executables and DLLs resolves in the package or in Windows (`scripts/ci/check_pa
 | `preferences-search-update--yue_HK-light-comfortable--md3-v151.png` | Preferences searched for 自動更新: the same row in Cantonese; its wrapped description starts the second line with "。" (fixed in `c7309b889`) | `yue_HK-light-comfortable` |
 | `preferences-search-update--bilingual_en_yue_HK-light-comfortable--md3-v151.png` | The same row in bilingual mode: the title reads "Update automatically · 自動更新", the description shows English only (`2e80091ef` puts its Cantonese below it; not yet captured from a release) | `bilingual_en_yue_HK-light-comfortable` |
 
+| `prepare--en-light-comfortable--md3-v151.png` | Main window, Prepare, full process-settings tree (before CJ-023): every value field runs past the sidebar edge | `en-light-comfortable` |
+| `prepare--yue_HK-light-comfortable--md3-v151.png` | The same in Cantonese (before CJ-023 and CJ-024): the title reads "打印設…" and the fourth category pill sits half outside | `yue_HK-light-comfortable` |
 | `preferences-search-autofill--en-light-comfortable--md3-v151.png` | Preferences searched for "Auto-fill": the row has no description | `en-light-comfortable` |
 | `preferences-search-autofill--yue_HK-light-comfortable--md3-v151.png` | The same row in Cantonese (before CJ-022): its description is the whole English catalog header, "Project-Id-Version: Bambu Studio" to "Plural-Forms" | `yue_HK-light-comfortable` |
 
@@ -149,6 +151,34 @@ The three `preferences-search-update` files were taken with the steps of
 instead of scrolling: the row sits below the fold of the General page. The committed script reproduces
 the bilingual file byte for byte (SHA-256
 `f9d15a3ab87c828e26ee6e939b2a2292f810509e77c41cf6ae23b784ace48b42`).
+
+## Release md3-v153 captures (2026-09-29)
+
+Taken from the unmodified `md3-v153` release package: the splash by `scripts/md3/capture-splash.py`
+(the release is the first with the splash's capture hook, so each file is the exact bitmap the splash
+showed), the dialogs by `scripts/md3/sweep-dialogs.py`. Every import of its executables and DLLs
+resolves in the package or in Windows (`scripts/ci/check_payload_imports.py`).
+
+| Field | Value |
+| --- | --- |
+| Source commit | `1757d880f` (release `md3-v153`) |
+| Package | `BambuStudioMD3-2.8.4152-full.nupkg`, 732,142,810 bytes, SHA-1 `3a97afd5d4e083e92a40c72d2c62310e66dcd8c2` as listed in `RELEASES` |
+| Executable | `bambu-studio.exe` sha256 `30c71437527d54aaef42c59248245d1cc93a6b96f71047ae676f711a55c05b2d`, `BambuStudio.dll` sha256 `59336cca697a63a936258641b26fe4adceaf304c409ae96fe665f7020b965feb` |
+| Capture route | hidden Win32 desktop; splash from the probe's `splash.png`, dialogs by `PrintWindow` |
+| Display scale | 100% |
+
+| File | Surface | Tuple |
+| --- | --- | --- |
+| `splash--en-light-comfortable--md3-v153.png` | Splash: "Released 29 September 2026" | `en-light-comfortable` |
+| `splash--yue_HK-light-comfortable--md3-v153.png` | Splash: "2026年9月29日發佈" | `yue_HK-light-comfortable` |
+| `splash--bilingual_en_yue_HK-light-comfortable--md3-v153.png` | Splash: both lines, English first | `bilingual_en_yue_HK-light-comfortable` |
+| `dialog-check-for-update--bilingual_en_yue_HK-light-comfortable--md3-v153.png` | Newest-version message (after CJ-020): the English whole, the Cantonese below | `bilingual_en_yue_HK-light-comfortable` |
+| `dialog-smart-home--bilingual_en_yue_HK-light-comfortable--md3-v153.png` | Smart home: the search hint reads "Search speakers and lights · 搵喇叭同燈"; the kit buttons are still English only, fixed in `00b14ca67` | `bilingual_en_yue_HK-light-comfortable` |
+
+A first Smart home capture on this release showed the "Printer access codes are credentials" paragraph
+in English only while its probe record held both languages; a second run showed both. The first
+capture was taken while the auto-wrapping label was still being repainted after its wrap, so it is
+not kept as evidence of a defect.
 
 ## Layout-probe dumps
 

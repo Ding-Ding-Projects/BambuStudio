@@ -75,3 +75,8 @@ network request is made, and no user data is read.
   `md3-v148` attempt produced only black frames). With `BAMBU_LAYOUT_PROBE` set,
   the splash saves the exact bitmap it shows as `splash.png` beside the probe
   dumps, and the capture reads that file.
+- Verified on `md3-v153` (target `1757d880f`, released 29 September 2026), the
+  first release with the capture hook: the splash reads "Released 29 September
+  2026" in English, "2026年9月29日發佈" in Cantonese, and both lines, English
+  first, in bilingual mode (`docs/screenshots/md3-everything/splash--*--md3-v153.png`,
+  every pixel painted).
