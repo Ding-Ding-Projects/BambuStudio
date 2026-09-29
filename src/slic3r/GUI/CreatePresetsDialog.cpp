@@ -318,30 +318,6 @@ static std::string get_filament_name(std::string &preset_name)
     }
 }
 
-static wxBoxSizer *create_preset_tree(wxWindow *parent, std::pair<std::string, std::vector<std::shared_ptr<Preset>>> printer_and_preset)
-{
-    wxTreeCtrl *treeCtrl = new wxTreeCtrl(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTR_DEFAULT_STYLE | wxNO_BORDER);
-    wxColour    backgroundColor = parent->GetBackgroundColour();
-    treeCtrl->SetBackgroundColour(backgroundColor);
-
-    wxString     printer_name = wxString::FromUTF8(printer_and_preset.first);
-    wxTreeItemId rootId       = treeCtrl->AddRoot(printer_name);
-    int          row          = 1;
-    for (std::shared_ptr<Preset> preset : printer_and_preset.second) {
-        wxString     preset_name = wxString::FromUTF8(preset->name);
-        wxTreeItemId childId1    = treeCtrl->AppendItem(rootId, preset_name);
-        row++;
-    }
-
-    treeCtrl->Expand(rootId);
-    wxBoxSizer *sizer = new wxBoxSizer(wxVERTICAL);
-    treeCtrl->SetMinSize(wxSize(-1, row * 22));
-    treeCtrl->SetMaxSize(wxSize(-1, row * 22));
-    sizer->Add(treeCtrl, 0, wxEXPAND | wxALL, 0);
-
-    return sizer;
-}
-
 static std::string get_vendor_name(const Preset *preset)
 {
     if (!preset) return "";

@@ -242,6 +242,14 @@ still to verify.
   brand green. `md3_style_data_view()` (`wxExtensions`) styles the Workspace tables, Config profiles, Export, Version
   history and the notification centre. `native-controls.test.mjs` refuses the native classes. Still native with a
   group box: `wxStaticBoxSizer` in 8 files, the option groups outside settings tabs, and the bed shape page chooser.
+- Group boxes and standard buttons (2026-09-29): `MD3GroupBox` (`Widgets/StaticGroup.{hpp,cpp}`) is a `wxStaticBox`
+  whose `PaintForeground()` draws an OutlineVariant outline and a Head_14 title, the same hook `StaticGroup` already
+  overrides; it replaces every native group box (option groups outside tabs, bed shape, calibration wizard pages, Save
+  preset, the unsaved changes comparison, the ink picker preview, the Plater's sliced info). `StaticGroup` takes the
+  Material roles. The bed shape dialog chooses its page with the kit `ComboBox` over a `wxSimplebook`, without fixed
+  white or raw red. Bed shape, System info and the full comparison use kit OK and Cancel buttons with the standard ids
+  in place of `CreateButtonSizer()` / `CreateStdDialogButtonSizer()`. The never-called native preset tree in
+  CreatePresetsDialog is gone. `native-controls.test.mjs` refuses all of these.
 - Closeout cleanup (2026-09-29): the linked worktree of the auto-updater lane
   (`BambuStudio-claude-auto-updater`) and its branch `claude/auto-updater` (`37b3fce78`, contained in `main`, no copy
   on the remote) were removed after an archive of the repository to the maintainer's cloud folder was written and

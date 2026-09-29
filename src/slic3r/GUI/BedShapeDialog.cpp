@@ -1,4 +1,8 @@
 #include "BedShapeDialog.hpp"
+#include "Widgets/ComboBox.hpp"
+#include "Widgets/StaticGroup.hpp"
+
+#include <wx/simplebook.h>
 #include "GUI_App.hpp"
 #include "OptionsGroup.hpp"
 #include "MsgDialog.hpp"
@@ -137,14 +141,24 @@ void BedShape::apply_optgroup_values(ConfigOptionsGroupShp optgroup)
 void BedShapeDialog::build_dialog(const ConfigOptionPoints &default_pt, const ConfigOptionString &custom_texture, const ConfigOptionString &custom_model, bool can_edit)
 {
     SetFont(wxGetApp().normal_font());
-    this->SetBackgroundColour(*wxWHITE);
+    this->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_panel = new BedShapePanel(this);
     m_panel->set_edit_state(can_edit);
     m_panel->build_panel(default_pt, custom_texture, custom_model);
 
     auto main_sizer = new wxBoxSizer(wxVERTICAL);
     main_sizer->Add(m_panel, 1, wxEXPAND);
-    main_sizer->Add(CreateButtonSizer(wxOK | wxCANCEL), 0, wxALIGN_CENTER_HORIZONTAL | wxBOTTOM, 10);
+    // Kit buttons with the standard ids, so the dialog's own OK, Cancel and Escape
+    // handling still applies; CreateButtonSizer() made native ones.
+    auto *buttons = new wxBoxSizer(wxHORIZONTAL);
+    auto *cancel  = new Button(this, _L("Cancel"), "", 0, 0, wxID_CANCEL);
+    cancel->SetVariant(Button::Variant::Outlined);
+    auto *ok = new Button(this, _L("OK"), "", 0, 0, wxID_OK);
+    ok->SetVariant(Button::Variant::Filled);
+    buttons->AddStretchSpacer();
+    buttons->Add(cancel, 0, wxRIGHT, FromDIP(8));
+    buttons->Add(ok, 0);
+    main_sizer->Add(buttons, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(16));
 
     wxGetApp().UpdateDlgDarkUI(this);
 
@@ -185,15 +199,21 @@ void BedShapePanel::build_panel(const ConfigOptionPoints& default_pt, const Conf
     m_custom_texture = custom_texture.value.empty() ? NONE : custom_texture.value;
     m_custom_model = custom_model.value.empty() ? NONE : custom_model.value;
 
-    auto sbsizer = new wxStaticBoxSizer(wxVERTICAL, this, _L("Shape"));
-    sbsizer->GetStaticBox()->SetFont(wxGetApp().bold_font());
+    auto sbsizer = new wxStaticBoxSizer(new MD3GroupBox(this, _L("Shape")), wxVERTICAL);
     sbsizer->GetStaticBox()->Enable(m_can_edit);
-    wxGetApp().UpdateDarkUI(sbsizer->GetStaticBox());
 
-	// shape options
-    m_shape_options_book = new wxChoicebook(this, wxID_ANY, wxDefaultPosition, wxSize(25*wxGetApp().em_unit(), -1), wxCHB_TOP);
-    wxGetApp().UpdateDarkUI(m_shape_options_book->GetChoiceCtrl());
+	// shape options: the kit combo chooses the page of a simple book, where a
+	// wxChoicebook put a native choice control over its pages
+    m_shape_choice = new ComboBox(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(25 * wxGetApp().em_unit(), -1), 0, nullptr,
+                                  wxCB_READONLY);
+    m_shape_options_book = new wxSimplebook(this, wxID_ANY, wxDefaultPosition, wxSize(25*wxGetApp().em_unit(), -1));
+    m_shape_options_book->SetBackgroundColour(GetBackgroundColour());
+    m_shape_choice->Bind(wxEVT_COMBOBOX, [this](wxCommandEvent &) {
+        m_shape_options_book->SetSelection(m_shape_choice->GetSelection());
+        update_shape();
+    });
 
+    sbsizer->Add(m_shape_choice, 0, wxEXPAND | wxBOTTOM, FromDIP(8));
     sbsizer->Add(m_shape_options_book);
 
     auto optgroup = init_shape_options_page(BedShape::get_name(BedShape::PageType::Rectangle));
@@ -229,8 +249,6 @@ void BedShapePanel::build_panel(const ConfigOptionPoints& default_pt, const Conf
     wxPanel* texture_panel = init_texture_panel();
     wxPanel* model_panel = init_model_panel();
 
-    Bind(wxEVT_CHOICEBOOK_PAGE_CHANGED, ([this](wxCommandEvent& e) { update_shape(); }));
-
 	// right pane with preview canvas
 	m_canvas = new Bed_2D(this);
     m_canvas->SetMinSize({ FromDIP(320), FromDIP(320) });
@@ -257,7 +275,7 @@ void BedShapePanel::build_panel(const ConfigOptionPoints& default_pt, const Conf
 ConfigOptionsGroupShp BedShapePanel::init_shape_options_page(const wxString& title)
 {
     wxPanel* panel = new wxPanel(m_shape_options_book);
-    panel->SetBackgroundColour(*wxWHITE);
+    panel->SetBackgroundColour(GetBackgroundColour());
     ConfigOptionsGroupShp optgroup = std::make_shared<ConfigOptionsGroup>(panel, _L("Settings"));
 
     optgroup->label_width = 10;
@@ -268,6 +286,7 @@ ConfigOptionsGroupShp BedShapePanel::init_shape_options_page(const wxString& tit
     m_optgroups.push_back(optgroup);
 //    panel->SetSizerAndFit(optgroup->sizer);
     m_shape_options_book->AddPage(panel, title);
+    m_shape_choice->Append(title);
 
     return optgroup;
 }
@@ -290,15 +309,8 @@ wxPanel *BedShapePanel::init_texture_panel()
     Line line{"", ""};
     line.full_width = 1;
     line.widget     = [this](wxWindow *parent) {
-        StateColor btn_bg_white(std::pair<wxColour, int>(wxColour(206, 206, 206), StateColor::Disabled), std::pair<wxColour, int>(wxColour(206, 206, 206), StateColor::Pressed),
-            std::pair<wxColour, int>(wxColour(206, 206, 206), StateColor::Hovered),
-            std::pair<wxColour, int>(*wxWHITE, StateColor::Normal));
-
-        StateColor btn_bd_white(std::pair<wxColour, int>(*wxWHITE, StateColor::Disabled), std::pair<wxColour, int>(wxColour(38, 46, 48), StateColor::Enabled));
-
         Button* load_btn = new Button(parent, _L("Load..."));
         load_btn->SetVariant(Button::Variant::Outlined);
-        load_btn->SetBackgroundColour(*wxWHITE);
         load_btn->Enable(true);
         wxSizer * load_sizer = new wxBoxSizer(wxHORIZONTAL);
         load_sizer->Add(load_btn, 1, wxEXPAND);
@@ -310,7 +322,6 @@ wxPanel *BedShapePanel::init_texture_panel()
 
         Button* remove_btn = new Button(parent, _L("Remove"));
         remove_btn->SetVariant(Button::Variant::Outlined);
-        remove_btn->SetBackgroundColour(*wxWHITE);
         wxSizer * remove_sizer = new wxBoxSizer(wxHORIZONTAL);
         remove_sizer->Add(remove_btn, 1, wxEXPAND);
 
@@ -332,7 +343,7 @@ wxPanel *BedShapePanel::init_texture_panel()
                                wxStaticText *lbl = dynamic_cast<wxStaticText *>(e.GetEventObject());
                                if (lbl != nullptr) {
                                    bool exists = (m_custom_texture == NONE) || boost::filesystem::exists(m_custom_texture);
-                                   lbl->SetForegroundColour(exists ? wxGetApp().get_label_clr_default() : wxColor(*wxRED));
+                                   lbl->SetForegroundColour(exists ? wxGetApp().get_label_clr_default() : StateColor::semantic(MD3::Role::Error));
 
                                    wxString tooltip_text = "";
                                    if (m_custom_texture != NONE) {
@@ -347,7 +358,6 @@ wxPanel *BedShapePanel::init_texture_panel()
                            }));
 
         remove_btn->Bind(wxEVT_UPDATE_UI, ([this](wxUpdateUIEvent &e) { e.Enable(m_custom_texture != NONE); }));
-        parent->SetBackgroundColour(*wxWHITE);
         return sizer;
     };
     optgroup->append_line(line);
@@ -370,15 +380,8 @@ wxPanel *BedShapePanel::init_model_panel()
     Line line{"", ""};
     line.full_width = 1;
     line.widget     = [this](wxWindow *parent) {
-        StateColor btn_bg_white(std::pair<wxColour, int>(wxColour(206, 206, 206), StateColor::Disabled), std::pair<wxColour, int>(wxColour(206, 206, 206), StateColor::Pressed),
-            std::pair<wxColour, int>(wxColour(206, 206, 206), StateColor::Hovered),
-            std::pair<wxColour, int>(*wxWHITE, StateColor::Normal));
-
-        StateColor btn_bd_white(std::pair<wxColour, int>(*wxWHITE, StateColor::Disabled), std::pair<wxColour, int>(wxColour(38, 46, 48), StateColor::Enabled));
-
         Button* load_btn = new Button(parent, _L("Load..."));
         load_btn->SetVariant(Button::Variant::Outlined);
-        load_btn->SetBackgroundColour(*wxWHITE);
         load_btn->Enable(m_can_edit);
         wxSizer * load_sizer = new wxBoxSizer(wxHORIZONTAL);
         load_sizer->Add(load_btn, 1, wxEXPAND);
@@ -389,7 +392,6 @@ wxPanel *BedShapePanel::init_model_panel()
 
         Button* remove_btn = new Button(parent, _L("Remove"));
         remove_btn->SetVariant(Button::Variant::Outlined);
-        remove_btn->SetBackgroundColour(*wxWHITE);
         wxSizer * remove_sizer = new wxBoxSizer(wxHORIZONTAL);
         remove_sizer->Add(remove_btn, 1, wxEXPAND);
 
@@ -412,7 +414,7 @@ wxPanel *BedShapePanel::init_model_panel()
                                wxStaticText *lbl = dynamic_cast<wxStaticText *>(e.GetEventObject());
                                if (lbl != nullptr) {
                                    bool exists = (m_custom_model == NONE) || boost::filesystem::exists(m_custom_model);
-                                   lbl->SetForegroundColour(exists ? wxGetApp().get_label_clr_default() : wxColor(*wxRED));
+                                   lbl->SetForegroundColour(exists ? wxGetApp().get_label_clr_default() : StateColor::semantic(MD3::Role::Error));
 
                                    wxString tooltip_text = "";
                                    if (m_custom_model != NONE) {
@@ -427,7 +429,6 @@ wxPanel *BedShapePanel::init_model_panel()
                            }));
 
         remove_btn->Bind(wxEVT_UPDATE_UI, ([this](wxUpdateUIEvent &e) { e.Enable(m_custom_model != NONE); }));
-        parent->SetBackgroundColour(*wxWHITE);
         return sizer;
     };
     optgroup->append_line(line);
@@ -448,6 +449,7 @@ void BedShapePanel::set_shape(const ConfigOptionPoints& points)
     BedShape shape(points);
 
     m_shape_options_book->SetSelection(int(shape.get_page_type()));
+    m_shape_choice->SetSelection(int(shape.get_page_type()));
     shape.apply_optgroup_values(m_optgroups[int(shape.get_page_type())]);
 
     // Copy the polygon to the canvas, make a copy of the array, if custom shape is selected

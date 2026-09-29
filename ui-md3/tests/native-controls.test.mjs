@@ -30,13 +30,16 @@ async function sources(dir) {
   return out;
 }
 
-test('no native tab control, report list, check list, month calendar, tip window or info bar is constructed', async () => {
-  const pattern = /new\s+(wxNotebook|wxListCtrl|wxCheckListBox|wxCalendarCtrl|wxTipWindow|wxInfoBar)\s*\(/g;
+test('no native tab control, list, check list, calendar, tip window, info bar, group box, choice book or tree is constructed', async () => {
+  // A wxStaticBoxSizer given an orientation first makes its own native box; given a
+  // box, it takes whatever box it is handed (MD3GroupBox, or the sidebar's StaticGroup).
+  // The standard button sizers make native OK and Cancel buttons.
+  const pattern = /new\s+(wxNotebook|wxListCtrl|wxCheckListBox|wxCalendarCtrl|wxTipWindow|wxInfoBar|wxStaticBox|wxChoicebook|wxTreeCtrl)\s*\(|(wxStaticBoxSizer)\s*\(\s*wx(?:VERTICAL|HORIZONTAL)|\b(CreateButtonSizer|CreateStdDialogButtonSizer|CreateSeparatedButtonSizer|wxStdDialogButtonSizer)\b/g;
   const found = [];
   for (const file of await sources(guiDir)) {
     const text = code(await readFile(file, 'utf8')).replace(/"(?:[^"\\\n]|\\.)*"/g, '""');
     for (const match of text.matchAll(pattern))
-      found.push(`${path.relative(guiDir, file).replaceAll('\\', '/')}: ${match[1]}`);
+      found.push(`${path.relative(guiDir, file).replaceAll('\\', '/')}: ${match[1] ?? match[2] ?? match[3]}`);
   }
   assert.deepEqual(found, []);
 });
@@ -88,6 +91,22 @@ test('the kit list can carry check boxes, and the kit text tabs take the Materia
   const tabs = await read('Widgets', 'TextTabbar.cpp');
   assert.doesNotMatch(tabs, /ThemeColor::|\*wxWHITE/, 'no legacy palette');
   assert.match(fn(tabs, 'void TextTabbar::render()'), /active \? MD3::Role::Primary : MD3::Role::OnSurfaceVariant/);
+});
+
+test('every group box draws the Material outline and title', async () => {
+  const group = await read('Widgets', 'StaticGroup.cpp');
+  const paint = fn(group, 'void MD3GroupBox::PaintForeground(');
+  assert.match(paint, /wxPen\(StateColor::semantic\(MD3::Role::OutlineVariant\), 1\)/);
+  assert.match(paint, /DrawRoundedRectangle\(0, top, rc\.right, rc\.bottom - top, FromDIP\(4\)\)/);
+  assert.match(paint, /IsEnabled\(\) \? MD3::Role::OnSurface : MD3::Role::OnSurfaceVariant/);
+  assert.match(fn(group, 'MD3GroupBox::MD3GroupBox('), /SetFont\(::Label::Head_14\);/);
+  assert.doesNotMatch(fn(group, 'StaticGroup::StaticGroup('), /ThemeColor::/, 'the sidebar extruder groups take the roles too');
+  assert.match(await read('OptionsGroup.cpp'), /wxStaticBox \* stb = new MD3GroupBox\(m_parent, _\(title\)\);/);
+  const bed = await read('BedShapeDialog.cpp');
+  assert.match(bed, /new wxStaticBoxSizer\(new MD3GroupBox\(this, _L\("Shape"\)\), wxVERTICAL\)/);
+  assert.match(bed, /m_shape_choice = new ComboBox\(/);
+  assert.match(bed, /m_shape_options_book = new wxSimplebook\(/);
+  assert.doesNotMatch(bed, /\*wxWHITE|\*wxRED/, 'no white panels or buttons, no raw red');
 });
 
 test('every data-view table takes the Material table style', async () => {

@@ -516,9 +516,8 @@ private:
 };
 
 SlicedInfo::SlicedInfo(wxWindow *parent) :
-    wxStaticBoxSizer(new wxStaticBox(parent, wxID_ANY, _L("Sliced Info")), wxVERTICAL)
+    wxStaticBoxSizer(new MD3GroupBox(parent, _L("Sliced Info")), wxVERTICAL)
 {
-    GetStaticBox()->SetFont(wxGetApp().bold_font());
     wxGetApp().UpdateDarkUI(GetStaticBox());
 
     auto *grid_sizer = new wxFlexGridSizer(2, 5, 15);

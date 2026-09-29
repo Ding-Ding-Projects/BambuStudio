@@ -2,6 +2,7 @@
 #include "CalibrationWizardPresetPage.hpp"
 #include "I18N.hpp"
 #include "Widgets/Label.hpp"
+#include "Widgets/StaticGroup.hpp"
 #include "MsgDialog.hpp"
 #include "libslic3r/Print.hpp"
 #include "BBLUtil.hpp"
@@ -701,7 +702,7 @@ void CalibrationPresetPage::create_selection_panel(wxWindow* parent)
 
         wxBoxSizer *      type_sizer  = new wxBoxSizer(wxHORIZONTAL);
         std::string cwp_pt = curr_obj ? curr_obj->printer_type : wxGetApp().preset_bundle->printers.get_edited_preset().get_printer_type(wxGetApp().preset_bundle);
-        m_left_nozzle_volume_type_sizer  = new wxStaticBoxSizer(wxVERTICAL, m_multi_nozzle_info_panel, _L(DevPrinterConfigUtil::get_toolhead_display_name(cwp_pt, DEPUTY_EXTRUDER_ID, ToolHeadComponent::Nozzle, ToolHeadNameCase::TitleCase)));
+        m_left_nozzle_volume_type_sizer  = new wxStaticBoxSizer(new MD3GroupBox(m_multi_nozzle_info_panel, _L(DevPrinterConfigUtil::get_toolhead_display_name(cwp_pt, DEPUTY_EXTRUDER_ID, ToolHeadComponent::Nozzle, ToolHeadNameCase::TitleCase))), wxVERTICAL);
         {
             //wxBoxSizer *nozzle_diameter_sizer = new wxBoxSizer(wxHORIZONTAL);
             auto        nozzle_diameter_text  = new Label(m_multi_nozzle_info_panel, _L("Nozzle Diameter"));
@@ -735,7 +736,7 @@ void CalibrationPresetPage::create_selection_panel(wxWindow* parent)
             //m_left_nozzle_volume_type_sizer->Add(nozzle_volume_sizer);
         }
 
-        m_right_nozzle_volume_type_sizer = new wxStaticBoxSizer(wxVERTICAL, m_multi_nozzle_info_panel, _L(DevPrinterConfigUtil::get_toolhead_display_name(cwp_pt, MAIN_EXTRUDER_ID, ToolHeadComponent::Nozzle, ToolHeadNameCase::TitleCase)));
+        m_right_nozzle_volume_type_sizer = new wxStaticBoxSizer(new MD3GroupBox(m_multi_nozzle_info_panel, _L(DevPrinterConfigUtil::get_toolhead_display_name(cwp_pt, MAIN_EXTRUDER_ID, ToolHeadComponent::Nozzle, ToolHeadNameCase::TitleCase))), wxVERTICAL);
         {
             //wxBoxSizer *nozzle_diameter_sizer = new wxBoxSizer(wxHORIZONTAL);
             auto        nozzle_diameter_text  = new Label(m_multi_nozzle_info_panel, _L("Nozzle Diameter"));
@@ -1175,7 +1176,7 @@ void CalibrationPresetPage::create_multi_extruder_filament_list_panel(wxWindow *
     {
         m_main_filament_cali_panel = new wxPanel(parent);
         // 1. Preview item
-        m_main_sizer              = new wxStaticBoxSizer(wxVERTICAL, m_main_filament_cali_panel, _L("Main"));
+        m_main_sizer              = new wxStaticBoxSizer(new MD3GroupBox(m_main_filament_cali_panel, _L("Main")), wxVERTICAL);
         m_main_ams_preview_panel  = new wxPanel(m_main_filament_cali_panel);
         m_main_sizer->Add(m_main_ams_preview_panel);
         m_main_filament_cali_panel->SetSizer(m_main_sizer);
@@ -1193,7 +1194,7 @@ void CalibrationPresetPage::create_multi_extruder_filament_list_panel(wxWindow *
     {
         m_deputy_filament_cali_panel = new wxPanel(parent);
         // 1. Preview item
-        m_deputy_sizer             = new wxStaticBoxSizer(wxVERTICAL, m_deputy_filament_cali_panel, _L("Deputy"));
+        m_deputy_sizer             = new wxStaticBoxSizer(new MD3GroupBox(m_deputy_filament_cali_panel, _L("Deputy")), wxVERTICAL);
         m_deputy_ams_preview_panel = new wxPanel(m_deputy_filament_cali_panel);
         m_deputy_sizer->Add(m_deputy_ams_preview_panel);
         m_deputy_filament_cali_panel->SetSizer(m_deputy_sizer);

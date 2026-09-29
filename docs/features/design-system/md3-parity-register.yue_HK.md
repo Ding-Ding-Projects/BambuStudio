@@ -1,6 +1,6 @@
 ---
 translation-of: md3-parity-register.md
-source-sha256: bd10792c127b890f771fe5274fda1f91243495428a89a216ec19d00bb0968698
+source-sha256: 14fa89a6d5dfcb5c1d28c0ee62d70bb33ad420d0313d5900a60297366aabeacd
 review-status: agent-drafted
 ---
 
@@ -56,6 +56,8 @@ Bambu Studio 嘅全整個 GUI 都必須符合內嵌 `ui-md3/design-system` 套�
 | stock-colour-dialogs | 3 處 `wxColourDialog`：Windows 顏色對話框，連同佢十六格自訂顏色，同用系統外觀同語言嘅掣 | Material 揀色器（`MD3ColorPickerDialog`） | AMSMaterialsSetting（墨水機槽位顏色）、PresetComboBoxes（墨水顏色）、wxExtensions `show_sys_picker_dialog`（墨水揀選器嘅「更多顏色」、紋理匯入、預設選單本身嘅揀色器） | `pick_filament_color()`：Material 揀色器，不透明，將系統對話框保存嘅最近用過嘅顏色做「最近使用」快速選項；確定咗嘅顏色會加入去；批量墨水對話框同設定頁嘅顏色欄用同一份清單（2026-09-29） | 完成 |
 | native-tip-and-info-bar | 停用咗嘅套件 Button 嘅提示用 `wxTipWindow`，網頁雲端通知用 `wxInfoBar`：系統淡色提示方塊，同系統資訊顏色、圖示同原生掣 | 純文字工具提示（InverseSurface）；橫額 | Widgets/Button.cpp、WebViewDialog.cpp | `ButtonDisabledTip`：放喺永遠唔會攞走指標或者焦點嘅彈出視窗入面嘅 Material 純文字工具提示；`MD3InfoBanner`：有狀態圖示、套件文字動作同關閉掣嘅 SurfaceContainerHigh 長條（2026-09-29） | 完成 |
 | workspace-native-controls | 工作區面板嘅 `wxNotebook`、兩個 `wxListCtrl` 報告、`wxCheckListBox` 同 `wxCalendarCtrl`：Windows 分頁控件、清單檢視、待辦清單同月曆 | navigation/TabBar.jsx; selection/Checkbox.jsx | WorkspacePanel.cpp | 喺 `wxSimplebook` 上面嘅 `TextTabbar`（而家用 Material 角色）；用 `md3_style_data_view()` 嘅 `wxDataViewListCtrl` 表格；加咗 `EnableChecks()` 嘅套件 `ListBox`；Material 顏色、逐月切換嘅 `wxGenericCalendarCtrl`；`native-controls.test.mjs` 會拒絕原生類別（2026-09-29） | 完成 |
+| native-group-boxes | 12 個整原生分組框嘅地方（`wxStaticBox`、指定方向嘅 `wxStaticBoxSizer`）同「打印床形狀」對話框嘅 `wxChoicebook`：Windows 分組框同標題，同喺頁上面嘅原生選擇控件 | containment/Card.jsx（outlined）; fields/SelectField.jsx | OptionsGroup（設定分頁以外嘅選項組）、BedShapeDialog、CalibrationWizardPresetPage（4）、CalibrationWizardSavePage（2）、SavePresetDialog、UnsavedChangesDialog、FilamentPickerDialog、Plater 切片資訊 | `MD3GroupBox`：`PaintForeground()` 畫 OutlineVariant 小圓角外框同 Head_14 標題嘅 `wxStaticBox`；側邊欄 `StaticGroup` 用 OutlineVariant 同 OnSurfaceVariant；「打印床形狀」用喺 `wxSimplebook` 上面嘅套件 `ComboBox`（2026-09-29） | 完成 |
+| native-standard-buttons | `CreateButtonSizer()` 同 `CreateStdDialogButtonSizer()`：原生「確定」同「取消」掣 | actions/Button.jsx | BedShapeDialog、SysInfoDialog、UnsavedChangesDialog 完整比較 | 用標準 id 嘅套件掣（Filled「確定」、Outlined「取消」），所以對話框自己嘅「確定」、「取消」同 Escape 處理照舊有效（2026-09-29） | 完成 |
 | developer-log-window | `MainFrame::show_log_window()` 打開嘅 `wxLogWindow` | 無 | MainFrame，由「偏好設定」、「開發者工具」、「內部開發者模式」打開 | 「開發者工具」分頁唔會編譯入任何發佈版本（`BBL_RELEASE_TO_PUBLIC=1`），所以冇一個發佈版本可以打開佢；刻意保留原生 | 偏離 |
 | static-bitmaps | 175 處 `new wxStaticBitmap(` | 套件顯示圖示嘅地方係 Material Symbols 字形；產品相片／圖表係資料 | 喺整個 GUI 樹中 | 手工審查清單 `static-bitmap-triage.csv`（清掃後 146 處仍在使用）：12 個可點擊圖片控制項變成套件圖示按鈕、48 個圖片控制項用 MD3 角色中嘅 Material 字形、98 個係內容影像或呼叫方提供嘅資料且記錄咗原因若非明顯、8 個未填充 MonitorBasePanel 圖片控制項刪除、兩個度數標記係排版標籤。檢查只接受 `data` 同 `md3-rendered` 兩種判定，並固定每個已轉換嘅位置。執行時捕獲等待本地構建（2026-09-05） | 完成（來源） |
 

@@ -1,8 +1,9 @@
 # Native controls on the kit
 
 A few native Windows controls were still on surfaces people use: the tip of a disabled button, the
-web pages' notice bar, and the Workspace panel's tabs, lists, check list and month calendar. They
-drew the Windows look in the system font, whatever the theme. Each now has a kit counterpart.
+web pages' notice bar, the Workspace panel's tabs, lists, check list and month calendar, every group
+box, the bed shape page chooser, and the OK and Cancel buttons of three dialogs. They drew the
+Windows look in the system font, whatever the theme. Each now has a kit counterpart.
 
 ## What replaced what
 
@@ -14,6 +15,9 @@ drew the Windows look in the system font, whatever the theme. Each now has a kit
 | `wxListCtrl` | `wxDataViewListCtrl` in the Material table style | The Workspace panel's member list and its calendar agenda |
 | `wxCheckListBox` | The kit `ListBox` with check boxes | The Workspace checklist |
 | `wxCalendarCtrl` | `wxGenericCalendarCtrl` in the Material colours | The Workspace calendar |
+| `wxStaticBox` (group box) | `MD3GroupBox`: a Material outline and title | Option groups outside the settings tabs, the bed shape dialog, the calibration wizard pages, Save preset, the unsaved changes comparison, the ink picker's preview |
+| `wxChoicebook` | The kit `ComboBox` over a `wxSimplebook` | The bed shape dialog's shape |
+| `CreateButtonSizer()`, `CreateStdDialogButtonSizer()` | Kit buttons with the standard ids | Bed shape, System info, the full comparison of an unsaved change |
 
 ## How
 
@@ -41,6 +45,17 @@ drew the Windows look in the system font, whatever the theme. Each now has a kit
   with OnSurface days, the weekday header in OnSurfaceVariant and the selected day in Primary. With
   sequential month selection it draws its own month header with arrows, instead of a native choice
   and spin control.
+- **Group boxes.** `MD3GroupBox` is a `wxStaticBox` that paints its own border band: a 1 px
+  OutlineVariant outline with small rounded corners, and the title in the kit's small title face in
+  OnSurface (OnSurfaceVariant while disabled). The native box still does everything
+  `wxStaticBoxSizer` relies on, so the controls inside lay out as before. The sidebar's extruder
+  groups (`StaticGroup`) take OutlineVariant and OnSurfaceVariant instead of a legacy grey.
+- **Bed shape.** The kit combo chooses the page of a `wxSimplebook`, where a `wxChoicebook` put a
+  native choice over its pages. The dialog, its pages and its buttons lost their fixed white, and a
+  missing texture or model file is named in the Error role instead of a raw red.
+- **OK and Cancel.** The standard button sizers make native buttons. Kit buttons with the standard ids
+  (a Filled OK, an Outlined Cancel) take their place, so the dialog's own OK, Cancel and Escape
+  handling still applies.
 
 ## What stays native, and why
 
@@ -52,6 +67,6 @@ drew the Windows look in the system font, whatever the theme. Each now has a kit
 ## Verification
 
 - `node --test ui-md3/tests/native-controls.test.mjs` refuses a native tab control, report list,
-  check list, month calendar, tip window or info bar anywhere in the GUI, and checks each kit
-  replacement. It fails on the previous tree in all six cases.
+  check list, month calendar, tip window, info bar, group box, choice book, tree control or standard
+  button sizer anywhere in the GUI, and checks each kit replacement.
 - A released build has not been driven through these surfaces yet.

@@ -19,6 +19,7 @@
 #include "libslic3r/AppConfig.hpp"
 #include "I18N.hpp"
 #include "Widgets/Label.hpp"
+#include "Widgets/StaticGroup.hpp"
 
 namespace Slic3r { namespace GUI {
 
@@ -494,10 +495,10 @@ bool OptionsGroup::activate(std::function<void()> throw_if_canceled/* = [](){}*/
 
 	try {
 		if (staticbox) {
-			wxStaticBox * stb = new wxStaticBox(m_parent, wxID_ANY, _(title));
+			// The Material group box: an OutlineVariant outline and the title in the
+			// kit's small title face, not the Windows group frame.
+			wxStaticBox * stb = new MD3GroupBox(m_parent, _(title));
 			if (!wxOSX) stb->SetBackgroundStyle(wxBG_STYLE_PAINT);
-            stb->SetBackgroundColour(m_parent->GetBackgroundColour());
-			stb->SetFont(wxOSX ? wxGetApp().normal_font() : wxGetApp().bold_font());
 			wxGetApp().UpdateDarkUI(stb);
 			// BBS: new layout
 			sizer = new wxStaticBoxSizer(stb, wxVERTICAL);

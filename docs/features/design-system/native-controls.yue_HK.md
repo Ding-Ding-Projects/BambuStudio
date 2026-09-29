@@ -1,6 +1,6 @@
 ---
 translation-of: native-controls.md
-source-sha256: e39d1d16b013effc7e287fee7f9409e2f26beb14a09859d0f8e22b4d8d11e28b
+source-sha256: 975d541b860ee2ff2ea18cb8d78ee324bfb5f0db582f3f392166489ba7a17077
 review-status: agent-drafted
 ---
 
@@ -8,8 +8,9 @@ review-status: agent-drafted
 
 # 套件上嘅原生控件
 
-有幾個 Windows 原生控件仲喺大家會用到嘅介面度：停用咗嘅掣嘅提示、網頁上面嘅通知列，同工作區面板嘅分頁、清單、待辦清單同月曆。
-佢哋用系統字型畫出 Windows 嘅樣，唔理主題係乜。而家每個都有對應嘅套件控件。
+有幾個 Windows 原生控件仲喺大家會用到嘅介面度：停用咗嘅掣嘅提示、網頁上面嘅通知列、工作區面板嘅分頁、清單、待辦清單同月曆、
+每個分組框、「打印床形狀」嘅頁選擇器，同三個對話框嘅「確定」同「取消」掣。佢哋用系統字型畫出 Windows 嘅樣，唔理主題係乜。
+而家每個都有對應嘅套件控件。
 
 ## 邊個換咗邊個
 
@@ -21,6 +22,9 @@ review-status: agent-drafted
 | `wxListCtrl` | 用 Material 表格樣式嘅 `wxDataViewListCtrl` | 工作區面板嘅成員清單同日曆議程 |
 | `wxCheckListBox` | 加咗剔選框嘅套件 `ListBox` | 工作區待辦清單 |
 | `wxCalendarCtrl` | 用 Material 顏色嘅 `wxGenericCalendarCtrl` | 工作區日曆 |
+| `wxStaticBox`（分組框） | `MD3GroupBox`：Material 外框同標題 | 設定分頁以外嘅選項組、「打印床形狀」對話框、校準精靈頁、「儲存預設」、未儲存變更嘅比較、墨水揀選器嘅預覽 |
+| `wxChoicebook` | 喺 `wxSimplebook` 上面嘅套件 `ComboBox` | 「打印床形狀」對話框嘅形狀 |
+| `CreateButtonSizer()`、`CreateStdDialogButtonSizer()` | 用標準 id 嘅套件掣 | 「打印床形狀」、「系統資訊」、未儲存變更嘅完整比較 |
 
 ## 點做
 
@@ -39,6 +43,13 @@ review-status: agent-drafted
   待辦清單咁送出帶行號嘅 `wxEVT_CHECKLISTBOX`；撳行上面其他地方就揀中嗰行，方便用「編輯」、「上移」同「下移」。
 - **日曆。** 通用日曆用畀佢嘅顏色自己畫：SurfaceContainerLowest 底配 OnSurface 日子，星期表頭用 OnSurfaceVariant，揀中嘅日子
   用 Primary。用逐月切換嘅樣式時，佢會自己畫帶箭嘴嘅月份表頭，唔再用原生下拉選單同數值控件。
+- **分組框。** `MD3GroupBox` 係一個自己畫邊框帶嘅 `wxStaticBox`：1 px OutlineVariant 小圓角外框，標題用套件細標題字型、
+  OnSurface 色（停用時用 OnSurfaceVariant）。`wxStaticBoxSizer` 依賴嘅嘢仍然由原生框負責，所以入面啲控件排版同以前一樣。
+  側邊欄嘅擠出機分組（`StaticGroup`）改用 OutlineVariant 同 OnSurfaceVariant，唔再用舊灰色。
+- **打印床形狀。** 套件下拉選單負責揀 `wxSimplebook` 嘅頁，唔再用喺頁上面放原生選擇控件嘅 `wxChoicebook`。對話框、佢啲頁同掣
+  唔再有固定白色，搵唔到嘅紋理或者模型檔案用 Error 角色標示，唔再用原始紅色。
+- **「確定」同「取消」。** 標準掣排列會整出原生掣。改用標準 id 嘅套件掣（Filled「確定」、Outlined「取消」），所以對話框自己嘅
+  「確定」、「取消」同 Escape 處理照舊有效。
 
 ## 邊啲保留原生，點解
 
@@ -48,6 +59,6 @@ review-status: agent-drafted
 
 ## 驗證
 
-- `node --test ui-md3/tests/native-controls.test.mjs` 會拒絕 GUI 入面任何地方嘅原生分頁控件、報告清單、待辦清單、月曆、提示視窗
-  或者通知列，同埋檢查每個套件替代品。喺之前嘅源碼上六個情況全部失敗。
+- `node --test ui-md3/tests/native-controls.test.mjs` 會拒絕 GUI 入面任何地方嘅原生分頁控件、報告清單、待辦清單、月曆、提示視窗、
+  通知列、分組框、選擇頁簿、樹狀控件或者標準掣排列，同埋檢查每個套件替代品。
 - 仲未喺發佈版本度逐個用過呢啲介面。

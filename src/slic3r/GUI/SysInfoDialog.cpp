@@ -168,11 +168,17 @@ SysInfoDialog::SysInfoDialog()
         main_sizer->Add(m_opengl_info_html, 1, wxEXPAND | wxBOTTOM, 15);
     }
 
-    wxStdDialogButtonSizer* buttons = this->CreateStdDialogButtonSizer(wxOK);
+    // A kit OK with the standard id (the dialog's own OK handling still applies);
+    // CreateStdDialogButtonSizer() made a native one.
+    auto *buttons = new wxBoxSizer(wxHORIZONTAL);
     m_btn_copy_to_clipboard = new Button(this, _L("Copy to Clipboard"));
     m_btn_copy_to_clipboard->SetVariant(Button::Variant::Outlined);
+    auto *ok = new Button(this, _L("OK"), "", 0, 0, wxID_OK);
+    ok->SetVariant(Button::Variant::Filled);
 
-    buttons->Insert(0, m_btn_copy_to_clipboard, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, 5);
+    buttons->Add(m_btn_copy_to_clipboard, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, 5);
+    buttons->AddStretchSpacer();
+    buttons->Add(ok, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 5);
     m_btn_copy_to_clipboard->Bind(wxEVT_BUTTON, &SysInfoDialog::onCopyToClipboard, this);
 
     this->SetEscapeId(wxID_OK);

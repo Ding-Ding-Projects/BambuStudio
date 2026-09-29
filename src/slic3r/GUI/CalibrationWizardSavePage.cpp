@@ -1,6 +1,7 @@
 #include "CalibrationWizardSavePage.hpp"
 #include "I18N.hpp"
 #include "Widgets/Label.hpp"
+#include "Widgets/StaticGroup.hpp"
 #include "MsgDialog.hpp"
 #include "DeviceCore/DevNozzleRack.h"
 #include "DeviceCore/DevManager.h"
@@ -482,8 +483,8 @@ void CaliPASaveAutoPanel::sync_cali_result_for_multi_extruder(const std::vector<
     m_multi_extruder_grid_panel->Bind(wxEVT_LEFT_DOWN, [this](auto &e) { SetFocusIgnoringChildren(); });
 
     const std::string& cwsp_pt = m_obj->printer_type;
-    wxStaticBoxSizer *left_sizer  = new wxStaticBoxSizer(wxVERTICAL, m_multi_extruder_grid_panel, _L(DevPrinterConfigUtil::get_toolhead_display_name(cwsp_pt, DEPUTY_EXTRUDER_ID, ToolHeadComponent::Extruder, ToolHeadNameCase::SentenceCase)));
-    wxStaticBoxSizer *right_sizer = new wxStaticBoxSizer(wxVERTICAL, m_multi_extruder_grid_panel, _L(DevPrinterConfigUtil::get_toolhead_display_name(cwsp_pt, MAIN_EXTRUDER_ID, ToolHeadComponent::Extruder, ToolHeadNameCase::SentenceCase)));
+    wxStaticBoxSizer *left_sizer  = new wxStaticBoxSizer(new MD3GroupBox(m_multi_extruder_grid_panel, _L(DevPrinterConfigUtil::get_toolhead_display_name(cwsp_pt, DEPUTY_EXTRUDER_ID, ToolHeadComponent::Extruder, ToolHeadNameCase::SentenceCase))), wxVERTICAL);
+    wxStaticBoxSizer *right_sizer = new wxStaticBoxSizer(new MD3GroupBox(m_multi_extruder_grid_panel, _L(DevPrinterConfigUtil::get_toolhead_display_name(cwsp_pt, MAIN_EXTRUDER_ID, ToolHeadComponent::Extruder, ToolHeadNameCase::SentenceCase))), wxVERTICAL);
     grid_sizer->Add(left_sizer);
     grid_sizer->AddSpacer(COLUMN_GAP);
     grid_sizer->Add(right_sizer);

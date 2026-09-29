@@ -5,6 +5,7 @@
 #include "MainFrame.hpp"
 #include "EncodedFilament.hpp"
 #include "Widgets/Label.hpp"
+#include "Widgets/StaticGroup.hpp"
 #include "Widgets/Button.hpp"
 #include "Widgets/StateColor.hpp"
 #include "wxExtensions.hpp"
@@ -255,7 +256,7 @@ wxBoxSizer* FilamentPickerDialog::CreateInfoSection()
     wxBoxSizer *main_sizer = new wxBoxSizer(wxVERTICAL);
 
     // Create the container box
-    wxStaticBox *info_box = new wxStaticBox(this, wxID_ANY, wxEmptyString, wxDefaultPosition);
+    wxStaticBox *info_box = new MD3GroupBox(this);
     info_box->SetSize(wxSize(FromDIP(240), FromDIP(24)));
     info_box->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     wxStaticBoxSizer *box_sizer = new wxStaticBoxSizer(info_box, wxHORIZONTAL);

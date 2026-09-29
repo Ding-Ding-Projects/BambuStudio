@@ -44,6 +44,7 @@
 #include "Widgets/CheckBox.hpp"
 #include "Widgets/MD3DialogChrome.hpp"
 #include "Widgets/Label.hpp"
+#include "Widgets/StaticGroup.hpp"
 #include "Widgets/TextTabbar.hpp"
 
 using boost::optional;
@@ -2040,7 +2041,7 @@ FullCompareDialog::FullCompareDialog(const wxString& option_name, const wxString
 
     int border = 10;
 
-    wxStaticBoxSizer* sizer = new wxStaticBoxSizer(wxVERTICAL, this);
+    wxStaticBoxSizer* sizer = new wxStaticBoxSizer(new MD3GroupBox(this), wxVERTICAL);
 
     wxFlexGridSizer* grid_sizer = new wxFlexGridSizer(2, 2, 1, 0);
     grid_sizer->SetFlexibleDirection(wxBOTH);
@@ -2098,8 +2099,12 @@ FullCompareDialog::FullCompareDialog(const wxString& option_name, const wxString
 
     sizer->Add(grid_sizer, 1, wxEXPAND);
 
-    wxStdDialogButtonSizer* buttons = this->CreateStdDialogButtonSizer(wxOK);
-    wxGetApp().UpdateDarkUI(static_cast<wxButton*>(this->FindWindowById(wxID_OK, this)), true);
+    // A kit OK with the standard id; CreateStdDialogButtonSizer() made a native one.
+    auto *buttons = new wxBoxSizer(wxHORIZONTAL);
+    auto *ok      = new Button(this, _L("OK"), "", 0, 0, wxID_OK);
+    ok->SetVariant(Button::Variant::Filled);
+    buttons->AddStretchSpacer();
+    buttons->Add(ok, 0);
 
     wxBoxSizer* topSizer = new wxBoxSizer(wxVERTICAL);
 

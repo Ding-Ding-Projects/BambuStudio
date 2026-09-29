@@ -20,6 +20,7 @@
 #include "Tab.hpp"
 #include "Widgets/MD3DialogChrome.hpp"
 #include "Widgets/Label.hpp"
+#include "Widgets/StaticGroup.hpp"
 
 using Slic3r::GUI::format_wxstr;
 
@@ -452,9 +453,8 @@ void SavePresetDialog::add_info_for_edit_ph_printer(wxBoxSizer *sizer)
     m_action      = ChangePreset;
     m_radio_sizer = new wxBoxSizer(wxHORIZONTAL);
 
-    wxStaticBox *action_stb = new wxStaticBox(this, wxID_ANY, "");
+    wxStaticBox *action_stb = new MD3GroupBox(this);
     if (!wxOSX) action_stb->SetBackgroundStyle(wxBG_STYLE_PAINT);
-    action_stb->SetFont(wxGetApp().bold_font());
 
     wxStaticBoxSizer *stb_sizer = new wxStaticBoxSizer(action_stb, wxVERTICAL);
     for (int id = 0; id < 3; id++) {
