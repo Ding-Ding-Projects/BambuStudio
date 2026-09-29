@@ -22,6 +22,11 @@ latest now (or is that same commit rebuilt). An older build that finishes late i
 non-latest. The branch may have moved on while the build ran; the latest release, and the update
 feed installed copies read from it, still move forward.
 
+GitHub keeps at most one release job waiting behind the running one. When another build finishes
+while one is waiting, GitHub cancels the waiting (older) release job, so after a burst of pushes the
+newest build is released and the builds in between have no release of their own; their build jobs
+still run to completion and their results stay in the workflow run.
+
 ## Windows build and package boundary
 
 The reusable build resolves or rebuilds the dependency cache, configures and installs the production

@@ -1,6 +1,6 @@
 ---
 translation-of: windows-release-supply-chain.md
-source-sha256: 56cebc068d5debf25194de8f579fa5efe3080db7cf04c2ee8b8b8f191828bd29
+source-sha256: 1e2083109318b027eacfcc7ba1d3782d57c4676ee0933e65d60403601b1310ac
 review-status: agent-drafted
 ---
 
@@ -15,6 +15,8 @@ review-status: agent-drafted
 每一次成功嘅非 pull request 分支推送或手動觸發都會發佈一個唯一標籤的、非草稿嘅 release。標籤包含應用版本同埋工作流執行編號。一次重新執行會收斂到相同嘅標籤，而唔係建立一個重複嘅。release 工作會喺發佈草稿之前驗證確切嘅 Squirrel 資産、原始碼提交元數據、校驗和、空嘅 PE 安全目錄（未簽署嘅 Setup.exe）、feed 索引、完整軟件包、SBOM 同埋 GitHub 資産摘要。構建工作唔會建立一個快取預發佈或任何其他次要嘅 GitHub Release。
 
 發佈工作會一次執行一個，每一個都喺發佈前立即決定「最新版本」。預設分支構建會喺佢嘅提交比目前最新版本嘅提交更新時（或者係同一提交重新構建）變成最新版本。一個完成得遲嘅舊構建會喺佢嘅標題中帶住「(superseded main build)」發佈並保持非最新狀態，而其他分支嘅構建都保持非最新狀態。構建執行時分支可能已經向前移動；最新版本，同埋已安裝版本讀取嘅更新來源，仍然會向前移動。
+
+GitHub 最多只會留一個發佈工作喺執行緊嗰個後面等候。等候期間如果另一個構建完成，GitHub 會取消等緊嗰個（較舊嘅）發佈工作，所以一連串推送之後，只有最新嘅構建會發佈，中間嘅構建冇自己嘅發佈；佢哋嘅構建工作照樣會做完，結果亦會保留喺工作流程執行記錄入面。
 
 ## Windows 構建同埋軟件包邊界
 
