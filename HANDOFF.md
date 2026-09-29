@@ -71,6 +71,14 @@ kept equal to `main` and exists only as the checkout of the session that started
   updates are not code-signed, and an installed copy re-checks every six hours (issue #46). Placeholder
   hints are bilingual too (`f0fb0c297`). Notification links are bilingual when the pair fits a line of the
   notification (on `main` after this note; see ROADMAP).
+- Verified from released packages with nothing added (2026-09-29): `md3-v148` (`3a935ed9f`) starts and
+  every import of its 40 files resolves; CJ-014 (`md3-v148`) and CJ-015, CJ-017, CJ-018 (`md3-v150`,
+  `74641b8c0`) have before and after captures. The `md3-v150` captures also showed two regressions of this
+  task's own: every kit button English only in bilingual mode (from `efaa98db2`, which pinned any control
+  with a minimum width) and CJ-016 still cut (`d27eadfdb` counted on the dialog growing); both are fixed in
+  `00b14ca67`, and CJ-019's fix was corrected in `f3aab6af1` (a centred field drew its unit under the entry).
+  The bilingual sweep's missing-dump reporting (`e5a7e12ad`) and the probe's visibility rules (`2906c2820`)
+  were fixed on the way; the earlier bilingual sweep had no probe data (correction on Discussion #44).
 - Release jobs share one concurrency group, and GitHub keeps one running and one waiting: a newer build
   that finishes while one waits cancels the waiting release job. The `b5cde7521` build passed but its
   release was cancelled that way on 2026-09-29, so not every push gets a release when pushes come fast.
