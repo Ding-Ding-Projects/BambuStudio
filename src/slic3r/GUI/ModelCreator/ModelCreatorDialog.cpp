@@ -15,6 +15,7 @@
 #endif
 
 #include <wx/app.h>
+#include <wx/scrolwin.h>
 #include <wx/sizer.h>
 #include <wx/stattext.h>
 #include <wx/stdpaths.h>
@@ -104,45 +105,58 @@ ModelCreatorDialog::ModelCreatorDialog(wxWindow *parent, AddToPlate add_to_plate
     , m_provider_lookup_state(std::make_shared<ProviderLookupState>())
     , m_provider_lookup_timer(this)
 {
-    auto *body = GetContentSizer();
-    body->Add(new Label(this, _L("Provider")), 0, wxBOTTOM, 4);
-    m_provider = new ComboBox(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, wxCB_READONLY);
+    // The form scrolls inside the dialog. Laid straight into the dialog at a fixed
+    // 720 x 780, it outgrew the dialog: the layout gave the last rows (the
+    // refinement note, Revisions, the status line) no height at all and squeezed
+    // the footer buttons below their minimum, so they drew blank (clipping
+    // inventory CJ-028). The footer stays outside the scroll at its full size, and
+    // the form asks for a small minimum height so the dialog does not grow to it.
+    auto *form = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize,
+                                      wxVSCROLL | wxTAB_TRAVERSAL | wxBORDER_NONE);
+    form->SetScrollRate(0, FromDIP(16));
+    form->SetBackgroundColour(GetBackgroundColour());
+    form->SetMinSize(wxSize(-1, FromDIP(240)));
+    auto *body = new wxBoxSizer(wxVERTICAL);
+    form->SetSizer(body);
+    GetContentSizer()->Add(form, 1, wxEXPAND);
+    body->Add(new Label(form, _L("Provider")), 0, wxBOTTOM, 4);
+    m_provider = new ComboBox(form, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, wxCB_READONLY);
     m_provider->Append(_L("Claude Code CLI"));
     m_provider->Append(_L("Codex CLI"));
     m_provider->Append(_L("Anthropic API"));
     m_provider->Append(_L("OpenAI API"));
     m_provider->SetSelection(0);
     body->Add(m_provider, 0, wxEXPAND | wxBOTTOM, 8);
-    m_model = field(this, body, _L("Provider model"), 0, _L("Enter an exact model ID"));
-    m_provider_path = field(this, body, _L("Provider executable path"), 0, _L("Required for a CLI provider"));
-    m_connection = new Label(this, wxEmptyString);
+    m_model = field(form, body, _L("Provider model"), 0, _L("Enter an exact model ID"));
+    m_provider_path = field(form, body, _L("Provider executable path"), 0, _L("Required for a CLI provider"));
+    m_connection = new Label(form, wxEmptyString);
     body->Add(m_connection, 0, wxBOTTOM, 8);
-    m_key = field(this, body, _L("API key"), wxTE_PASSWORD, _L("Stored in Windows Credential Manager"));
+    m_key = field(form, body, _L("API key"), wxTE_PASSWORD, _L("Stored in Windows Credential Manager"));
     auto *credentials = new wxBoxSizer(wxHORIZONTAL);
-    auto *save = new Button(this, _L("Add or replace key"));
-    m_test_key = new Button(this, _L("Test key"));
-    auto *clear = new Button(this, _L("Clear key"));
+    auto *save = new Button(form, _L("Add or replace key"));
+    m_test_key = new Button(form, _L("Test key"));
+    auto *clear = new Button(form, _L("Clear key"));
     credentials->Add(save, 0, wxRIGHT, 8);
     credentials->Add(m_test_key, 0, wxRIGHT, 8);
     credentials->Add(clear);
     body->Add(credentials, 0, wxBOTTOM, 8);
-    body->Add(new Label(this, _L("Trusted renderer")), 0, wxBOTTOM, 4);
-    m_renderer = new ComboBox(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, wxCB_READONLY);
+    body->Add(new Label(form, _L("Trusted renderer")), 0, wxBOTTOM, 4);
+    m_renderer = new ComboBox(form, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, wxCB_READONLY);
     m_renderer->Append(_L("OpenSCAD"));
     m_renderer->Append(_L("Blender"));
     m_renderer->SetSelection(0);
     body->Add(m_renderer, 0, wxEXPAND | wxBOTTOM, 8);
-    m_renderer_path = field(this, body, _L("Renderer executable path"));
-    m_renderer_status = new Label(this, wxEmptyString);
+    m_renderer_path = field(form, body, _L("Renderer executable path"));
+    m_renderer_status = new Label(form, wxEmptyString);
     body->Add(m_renderer_status, 0, wxBOTTOM, 8);
-    m_prompt = field(this, body, _L("Describe the model"), wxTE_MULTILINE, _L("Dimensions are in millimeters"),
+    m_prompt = field(form, body, _L("Describe the model"), wxTE_MULTILINE, _L("Dimensions are in millimeters"),
                      FromDIP(wxSize(-1, 90)));
-    m_note = field(this, body, _L("Refinement note"), wxTE_MULTILINE,
+    m_note = field(form, body, _L("Refinement note"), wxTE_MULTILINE,
                    _L("Optional change for the next revision"), FromDIP(wxSize(-1, 55)));
-    body->Add(new Label(this, _L("Revisions")), 0, wxBOTTOM, 4);
-    m_history = new ComboBox(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, wxCB_READONLY);
+    body->Add(new Label(form, _L("Revisions")), 0, wxBOTTOM, 4);
+    m_history = new ComboBox(form, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, wxCB_READONLY);
     body->Add(m_history, 0, wxEXPAND | wxBOTTOM, 8);
-    auto *status_field = new TextInput(this, _L("No model generated"), wxEmptyString, wxEmptyString,
+    auto *status_field = new TextInput(form, _L("No model generated"), wxEmptyString, wxEmptyString,
                                        wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
     status_field->SetBorderWidth(0);
     m_status = status_field->GetTextCtrl();
@@ -209,6 +223,7 @@ ModelCreatorDialog::ModelCreatorDialog(wxWindow *parent, AddToPlate add_to_plate
         control->Bind(wxEVT_TEXT, [this](wxCommandEvent &) { update_controls(); });
     SetMinSize(FromDIP(wxSize(650, 720)));
     SetSize(FromDIP(wxSize(720, 780)));
+    form->FitInside();
     m_loading_history = true;
     m_status->SetValue(_L("Loading versions..."));
     update_controls();
