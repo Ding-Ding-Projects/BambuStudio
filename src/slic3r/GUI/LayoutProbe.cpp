@@ -315,6 +315,9 @@ void write_window(boost::nowide::ofstream &out, wxWindow *w, wxWindow *top, int 
     const wxRect screen = w->GetScreenRect();
     const wxSize client = w->GetClientSize();
     const bool shown = w->IsShown();
+    // Only what a user can see can be clipped: a window whose own flag says shown
+    // still sits unseen inside a hidden parent (Version history's failure banner).
+    const bool visible = w->IsShownOnScreen();
 
     // wxWindow carries the label, not only wxControl: the kit Button and
     // every other StaticBox-based control descend from wxWindow directly and
@@ -339,8 +342,8 @@ void write_window(boost::nowide::ofstream &out, wxWindow *w, wxWindow *top, int 
         const wxString text = st->GetLabelText();
         if (!text.empty() && text.Find('\n') == wxNOT_FOUND) {
             text_width = st->GetTextExtent(text).x;
-            text_clipped = shown && !ellipsized && text_width > client.x;
-            truncated = shown && ellipsized && text_width > client.x;
+            text_clipped = visible && !ellipsized && text_width > client.x;
+            truncated = visible && ellipsized && text_width > client.x;
         }
     } else if (has_label && dynamic_cast<wxControl *>(w)) {
         const wxString text = wxControl::RemoveMnemonics(wxString::FromUTF8(label.c_str()));
@@ -348,7 +351,7 @@ void write_window(boost::nowide::ofstream &out, wxWindow *w, wxWindow *top, int 
             text_width = w->GetTextExtent(text).x;
             // Custom controls draw icons and padding too; report the extent and
             // let the reader judge, flagging only the unambiguous case.
-            text_clipped = shown && text_width > client.x;
+            text_clipped = visible && text_width > client.x;
         }
     } else if (auto *btn = dynamic_cast<::Button *>(w)) {
         // The kit Button descends from wxWindow, not wxControl, and shortens its
@@ -356,7 +359,7 @@ void write_window(boost::nowide::ofstream &out, wxWindow *w, wxWindow *top, int 
         // Shrinking is by design only where it is allowed (notebook tabs).
         text_width = btn->GetTextRect().width;
         ellipsized = btn->AllowsShrink();
-        truncated = shown && btn->LabelTruncated();
+        truncated = visible && btn->LabelTruncated();
         text_clipped = truncated && !ellipsized;
     }
 
@@ -364,8 +367,16 @@ void write_window(boost::nowide::ofstream &out, wxWindow *w, wxWindow *top, int 
     // A dialog or other top-level window is its own native window and its rect
     // is in screen coordinates, so nothing of its parent can cut it.
     if (parent && !w->IsTopLevel()) {
-        const wxRect parent_client(wxPoint(0, 0), parent->GetClientSize());
-        clipped_by_parent = shown && rect.width > 0 && rect.height > 0 && !parent_client.Contains(rect);
+        const wxSize parent_client = parent->GetClientSize();
+        const wxSize parent_virtual = parent->GetVirtualSize();
+        // A scrolling parent shows part of its content at a time: a child outside the
+        // visible part along the axis it scrolls is scrolled away, not clipped
+        // (the Keyboard Shortcuts rows below the fold).
+        const bool scrolls_x = parent_virtual.x > parent_client.x;
+        const bool scrolls_y = parent_virtual.y > parent_client.y;
+        const bool out_x = rect.x < 0 || rect.x + rect.width > parent_client.x;
+        const bool out_y = rect.y < 0 || rect.y + rect.height > parent_client.y;
+        clipped_by_parent = visible && rect.width > 0 && rect.height > 0 && ((out_x && !scrolls_x) || (out_y && !scrolls_y));
     }
 
     // Sizer view of this window: allocation versus minimum, and the row verdict.
@@ -373,7 +384,7 @@ void write_window(boost::nowide::ofstream &out, wxWindow *w, wxWindow *top, int 
     wxSizerItem *item = parent ? item_for(parent->GetSizer(), w, &owner) : nullptr;
     std::string sizer_json = "null";
     bool starved = false;
-    bool zero_sized = shown && (rect.width == 0 || rect.height == 0);
+    bool zero_sized = visible && (rect.width == 0 || rect.height == 0);
     if (item) {
         const wxSize min = item->CalcMin();
         const wxSize alloc = item->GetSize();
@@ -381,7 +392,7 @@ void write_window(boost::nowide::ofstream &out, wxWindow *w, wxWindow *top, int 
         if (row.is_box) {
             const int have = row.orient == wxHORIZONTAL ? alloc.x : alloc.y;
             const int need = row.orient == wxHORIZONTAL ? min.x : min.y;
-            starved = shown && need > 0 && have < need;
+            starved = visible && need > 0 && have < need;
         }
         std::ostringstream o;
         o << "{\"proportion\":" << item->GetProportion()

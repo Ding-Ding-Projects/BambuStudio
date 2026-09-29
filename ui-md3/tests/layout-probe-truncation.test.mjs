@@ -39,7 +39,7 @@ test('the layout probe reports a shortened kit Button label', () => {
   assert.ok(writer, 'write_window must exist');
   const code = stripComments(writer[0]);
   assert.match(code, /dynamic_cast<::Button \*>\(w\)/, 'kit Buttons are measured, not skipped');
-  assert.match(code, /truncated = shown && btn->LabelTruncated\(\);/);
+  assert.match(code, /truncated = visible && btn->LabelTruncated\(\);/);
   assert.match(code, /text_clipped = truncated && !ellipsized;/, 'shrinking is by design only where the button allows it');
   assert.match(code, /\\"truncated\\":/, 'every record carries the truncated field');
   assert.match(code, /\\"type\\":" << json\(type_name_of\(w\)\)/, 'every record names its C++ type');
@@ -53,7 +53,7 @@ test('a top-level window is never reported as clipped by its parent', () => {
   const writer = probeCpp.match(/void write_window\([\s\S]*?\n\}/);
   assert.ok(writer, 'write_window must exist');
   const code = stripComments(writer[0]);
-  assert.match(code, /if \(parent && !w->IsTopLevel\(\)\) \{\s*const wxRect parent_client/, 'only child windows are compared with the parent client area');
+  assert.match(code, /if \(parent && !w->IsTopLevel\(\)\) \{\s*const wxSize parent_client/, 'only child windows are compared with the parent client area');
 });
 
 test('the language audit counts section headers as labels', () => {
@@ -62,4 +62,16 @@ test('the language audit counts section headers as labels', () => {
   const kind = stripComments(probeCpp.match(/AuditKind audit_kind_of\(wxWindow \*w\)[\s\S]*?\n\}/)[0]);
   assert.match(kind, /dynamic_cast<::SectionHeader \*>\(w\) != nullptr\)\s*return AuditKind::Text;/);
   assert.match(probeCpp, /#include "Widgets\/Label\.hpp"/);
+});
+
+test('only what a user can see is flagged, and scrolling away is not clipping', () => {
+  // On md3-v148 the probe flagged the children of Version history's hidden
+  // failure banner (their own shown flag is set, the banner is hidden) and
+  // about sixty Keyboard Shortcuts rows that were merely scrolled below the
+  // fold of their panel.
+  const writer = stripComments(probeCpp.match(/void write_window\([\s\S]*?\n\}/)[0]);
+  assert.match(writer, /const bool visible = w->IsShownOnScreen\(\);/, 'visibility includes every ancestor');
+  assert.doesNotMatch(writer, /(text_clipped|truncated|starved|zero_sized|clipped_by_parent)\s*=\s*shown &&/, 'no flag rests on the window\'s own shown flag alone');
+  assert.match(writer, /parent->GetVirtualSize\(\)/, 'the parent\'s scrollable area is read');
+  assert.match(writer, /\(out_x && !scrolls_x\) \|\| \(out_y && !scrolls_y\)/, 'a child outside the visible part along a scrolling axis is not clipped');
 });
