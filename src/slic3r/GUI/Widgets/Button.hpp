@@ -78,9 +78,12 @@ private:
     bool m_left_corner_white = false;
     bool m_right_corner_white = false;
     bool grayed = false;
-    // when true, the button can shrink and the label is truncated 
+    // when true, the button can shrink and the label is truncated
     // with an ellipsis (Chrome-style notebook tabs).
     bool m_allow_shrink = false;
+    // Set by render() when the last paint had to shorten the label with an
+    // ellipsis; the layout probe reports it as clipped text.
+    bool m_label_truncated = false;
 
     wxTipWindow* tipWindow = nullptr;
 
@@ -186,6 +189,11 @@ public:
     void AccessibilityActivate();
 
     wxRect GetTextRect() const { return textSize; }
+
+    // Whether the last paint drew the label shortened with an ellipsis, and
+    // whether this button is allowed to shrink that far (notebook tabs are).
+    bool LabelTruncated() const { return m_label_truncated; }
+    bool AllowsShrink() const { return m_allow_shrink; }
 
 protected:
 #ifdef __WIN32__

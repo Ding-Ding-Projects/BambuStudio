@@ -735,12 +735,14 @@ void Button::render(wxDC& dc)
     int spacing = FromDIP(8);
     // Wrap text
     auto text = GetLabel();
+    m_label_truncated = false;
     if (vertical && textSize.x + padding.x * 2 > size.x) {
         Label::split_lines(dc, size.x - padding.x * 2, text, text, 2);
         textSize = dc.GetMultiLineTextExtent(text);
         if (padding.x * 2 + textSize.x > size.x) {
             text = wxControl::Ellipsize(text, dc, wxELLIPSIZE_END, size.x - padding.x * 2);
             textSize = dc.GetMultiLineTextExtent(text);
+            m_label_truncated = true;
         }
     }
     // Glyph content (part b): when a Material Symbols glyph is set and the icon
@@ -809,8 +811,11 @@ void Button::render(wxDC& dc)
         if (vertical) {
             pt.x += (rcContent.width - textSize.x) / 2;
         } else {
-            if (pt.x + textSize.x > size.x)
+            if (pt.x + textSize.x > size.x) {
+                const wxString full = text;
                 text = wxControl::Ellipsize(text, dc, wxELLIPSIZE_END, size.x - pt.x);
+                if (text != full) m_label_truncated = true;
+            }
             pt.y += (rcContent.height - textSize.y) / 2;
         }
         dc.SetTextForeground(text_color.colorForStates(states));

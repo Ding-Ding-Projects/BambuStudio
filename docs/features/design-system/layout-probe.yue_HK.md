@@ -1,6 +1,6 @@
 ---
 translation-of: layout-probe.md
-source-sha256: d2212cf9843fbeec766dd80dced2c0cf399850eaae671eae3688e7c5583078fc
+source-sha256: 0240b2607b2e3e54ed0e3029bf21b25bed021a4552950cd7cbe08c87384a5344
 review-status: agent-drafted
 ---
 
@@ -20,7 +20,7 @@ review-status: agent-drafted
 
 - 一份 `header` 記錄：原因、自由形式 `tag`（來自 `BAMBU_LAYOUT_PROBE_TAG`）、pid、DPI 比例、語言、深色模式、密度、頂級視窗數量；
 - 每個頂級視窗一份 `toplevel` 記錄；
-- 樹中每個視窗一份 `window` 記錄：類別（wx 類別名稱，所以 `Label`、`Button`、`TextArea` 而唔係 Win32 類別）、名稱、標籤、矩形、螢幕矩形、客戶端、最小值、最佳值、已展示、已啟用、父項句柄、擁有佢嘅 sizer 項目（比例、標誌、邊界、`CalcMin`、分配）同埋擁有嘅盒子 sizer 嘅判決（方向、可用、必需、訂閱過度）。
+- 樹中每個視窗一份 `window` 記錄：類別（wx 類別資料名稱；一個冇聲明嘅工具包組件，例如 `Button` 或 `Label`，報告佢最近嘅 wx 基類，通常係 `wxWindow`），類型（C++ 類型，所以 `Button`、`Label`、`TextInput`），名稱、標籤、矩形、螢幕矩形、客戶端、最小值、最佳值、已展示、已啟用、父項句柄、擁有佢嘅 sizer 項目（比例、標誌、邊界、`CalcMin`、分配）同埋擁有嘅盒子 sizer 嘅判決（方向、可用、必需、訂閱過度）。
 
 每份視窗記錄上嘅標誌：
 
@@ -29,8 +29,9 @@ review-status: agent-drafted
 | `starved` | 一個已展示嘅 sizer 子項分配比佢自己嘅最小值要少 |
 | `zero_sized` | 一個已展示嘅、寬度或高度為零嘅視窗 |
 | `oversubscribed`（喺 `sizer.row` 裏面） | 盒子 sizer 嘅子項需要超過佢有嘅 |
-| `text_clipped` | 一個標籤嘅文字範圍比佢嘅客戶端寬度要寬，同埋佢冇省略號樣式 |
-| `ellipsized` | 標籤攜帶一個省略號樣式（為審查而報告，唔係發現） |
+| `text_clipped` | 一個標籤雖然冇人要求就被截斷或縮短：佢嘅文字範圍比客戶端寬度闊，同埋冇省略號樣式，或者一個唔可以縮窄嘅工具包按鈕畫咗標籤縮短 |
+| `truncated` | 一個標籤被畫得用省略號縮短，要求與否：一份省略號靜態文字比客戶端寬度闊，或任何工具包按鈕嘅最後繪畫縮短咗標籤。一份喺對話框入面嘅縮短操作係一個缺陷，即使允許縮窄 |
+| `ellipsized` | 標籤攜帶省略號樣式，或工具包按鈕允許縮窄，正如分頁標籤一樣（為審查而報告，唔係發現） |
 | `clipped_by_parent` | 一個已展示視窗嘅矩形會離開佢父項嘅客戶端區域 |
 
 場景工具欄（`"toolbar":"main"`）嘅每個可見項目同埋 gizmo 欄（`"gizmo"`）一份 `gl_item` 記錄：名稱、主機 canvas 句柄、canvas 像素同埋螢幕上嘅矩形，源自項目嘅世界空間轉譯矩形同埋相機縮放。呢啲唔係 wx 視窗，所以冇標誌適用；佢哋存在係為咗一份截圖可以按名稱被裁剪到工具欄或欄項目。

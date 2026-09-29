@@ -51,6 +51,7 @@ until captures from a released build exist.
 - [ ] Runtime check in English, Cantonese and bilingual modes from a released build, with captures of the main window, the Prepare sidebar, settings, Preferences, a dialog, a menu, a gizmo, the setup wizard and DeviceWeb. The layout probe's `language-audit` command lists every native label that still shows English only while its Cantonese exists.
 - [ ] Message dialog actions keep the full width of their labels instead of shrinking to "Left..." and "Rig..." (clipping inventory CJ-014, `9615c9418`). On `main`; stays unticked until the Windows build passes and a released build is captured before and after.
 - [ ] The splash screen says when the running version was released, in all three language modes ([splash-release-date.md](docs/features/windows/splash-release-date.md)). Implemented with its contract test; stays unticked until the Windows build passes and the splash of that release is captured in each mode.
+- [ ] The layout probe reports a kit button whose label was drawn shortened (`truncated`, plus the C++ `type` of every window), so a sweep of every menu-reachable dialog in the three language modes can find the remaining shortened actions. Implemented with its contract test; stays unticked until a release carries it and the sweep has run.
 - [ ] Independent human review of the agent-drafted Cantonese, starting with print safety, account, networking and destructive flows.
 
 ## Deliberate exclusions

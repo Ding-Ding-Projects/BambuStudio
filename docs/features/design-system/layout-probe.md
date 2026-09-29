@@ -17,10 +17,12 @@ When `BAMBU_LAYOUT_PROBE` is set at launch, the app writes one NDJSON file per d
 - a `header` record: reason, free-form `tag` (from `BAMBU_LAYOUT_PROBE_TAG`), pid, DPI scale,
   language, dark mode, density, number of top-level windows;
 - one `toplevel` record per top-level window;
-- one `window` record per window in the tree: class (the wx class name, so `Label`, `Button`,
-  `TextArea` rather than the Win32 class), name, label, rect, screen rect, client, min, best, shown,
-  enabled, parent handle, the sizer item that owns it (proportion, flag, border, `CalcMin`,
-  allocation) and the owning box sizer's verdict (orientation, available, required, oversubscribed).
+- one `window` record per window in the tree: class (the wx class-info name; a kit widget that
+  declares none, such as `Button` or `Label`, reports its nearest wx base, usually `wxWindow`), type
+  (the C++ type, so `Button`, `Label`, `TextInput`), name, label, rect, screen rect, client, min,
+  best, shown, enabled, parent handle, the sizer item that owns it (proportion, flag, border,
+  `CalcMin`, allocation) and the owning box sizer's verdict (orientation, available, required,
+  oversubscribed).
 
 Flags on each window record:
 
@@ -29,8 +31,9 @@ Flags on each window record:
 | `starved` | a shown sizer child allocated less than its own minimum |
 | `zero_sized` | a shown window with zero width or height |
 | `oversubscribed` (in `sizer.row`) | the box sizer's children need more than it has |
-| `text_clipped` | a label's text extent is wider than its client width and it has no ellipsize style |
-| `ellipsized` | the label carries an ellipsize style (reported for review, not a finding) |
+| `text_clipped` | a label is cut or shortened although nothing asked for it: its text extent is wider than its client width and it has no ellipsize style, or a kit `Button` that may not shrink drew its label shortened |
+| `truncated` | a label was drawn shortened with an ellipsis, asked for or not: an ellipsizing static text wider than its client width, or any kit `Button` whose last paint shortened its label. A shortened action in a dialog is a defect even where shrinking is allowed |
+| `ellipsized` | the label carries an ellipsize style, or the kit `Button` is allowed to shrink, as the notebook tabs are (reported for review, not a finding) |
 | `clipped_by_parent` | a shown window's rect leaves its parent's client area |
 
 One `gl_item` record per visible item of the scene toolbar (`"toolbar":"main"`) and the gizmo rail

@@ -17,6 +17,8 @@
 #include <wx/scrolwin.h>
 #include <cwchar>
 #include <cstdlib>
+#include <cstring>
+#include <typeinfo>
 #include <algorithm>
 #include "Widgets/MD3Tokens.hpp"
 #include "Widgets/StateColor.hpp"
@@ -292,6 +294,19 @@ wxSizerItem *item_for(wxSizer *sizer, wxWindow *w, wxSizer **owner)
     return nullptr;
 }
 
+// The C++ type of a window. Most kit widgets carry no wx class info of their
+// own, so "class" reads "wxWindow" for every one of them; this names them.
+wxString type_name_of(wxWindow *w)
+{
+    std::string name = typeid(*w).name();
+    for (const char *prefix : {"class ", "struct "})
+        if (name.rfind(prefix, 0) == 0) {
+            name.erase(0, std::strlen(prefix));
+            break;
+        }
+    return wxString::FromUTF8(name.c_str());
+}
+
 void write_window(boost::nowide::ofstream &out, wxWindow *w, wxWindow *top, int depth)
 {
     wxWindow *parent = w->GetParent();
@@ -307,7 +322,12 @@ void write_window(boost::nowide::ofstream &out, wxWindow *w, wxWindow *top, int 
     std::string label = std::string(w->GetLabel().ToUTF8().data());
     bool        has_label = !label.empty();
 
+    // text_clipped: the label is cut or shortened although nothing asked for it.
+    // truncated: the label is drawn shortened with an ellipsis, asked for or not
+    // (an ellipsizing static text, a kit Button that shrank). A shortened action
+    // in a dialog is a defect either way, so a sweep reads both.
     bool text_clipped = false;
+    bool truncated = false;
     bool ellipsized = false;
     int text_width = -1;
     if (auto *st = dynamic_cast<wxStaticText *>(w)) {
@@ -317,6 +337,7 @@ void write_window(boost::nowide::ofstream &out, wxWindow *w, wxWindow *top, int 
         if (!text.empty() && text.Find('\n') == wxNOT_FOUND) {
             text_width = st->GetTextExtent(text).x;
             text_clipped = shown && !ellipsized && text_width > client.x;
+            truncated = shown && ellipsized && text_width > client.x;
         }
     } else if (has_label && dynamic_cast<wxControl *>(w)) {
         const wxString text = wxString::FromUTF8(label.c_str());
@@ -326,6 +347,14 @@ void write_window(boost::nowide::ofstream &out, wxWindow *w, wxWindow *top, int 
             // let the reader judge, flagging only the unambiguous case.
             text_clipped = shown && text_width > client.x;
         }
+    } else if (auto *btn = dynamic_cast<::Button *>(w)) {
+        // The kit Button descends from wxWindow, not wxControl, and shortens its
+        // own label while painting; it records when the last paint had to.
+        // Shrinking is by design only where it is allowed (notebook tabs).
+        text_width = btn->GetTextRect().width;
+        ellipsized = btn->AllowsShrink();
+        truncated = shown && btn->LabelTruncated();
+        text_clipped = truncated && !ellipsized;
     }
 
     bool clipped_by_parent = false;
@@ -369,6 +398,7 @@ void write_window(boost::nowide::ofstream &out, wxWindow *w, wxWindow *top, int 
         << ",\"top\":" << handle_of(top)
         << ",\"depth\":" << depth
         << ",\"class\":" << json(wxString(w->GetClassInfo()->GetClassName()))
+        << ",\"type\":" << json(type_name_of(w))
         << ",\"name\":" << json(w->GetName())
         << ",\"label\":" << json(label)
         << ",\"shown\":" << (shown ? "true" : "false")
@@ -382,6 +412,7 @@ void write_window(boost::nowide::ofstream &out, wxWindow *w, wxWindow *top, int 
         << ",\"text_width\":" << text_width
         << ",\"ellipsized\":" << (ellipsized ? "true" : "false")
         << ",\"text_clipped\":" << (text_clipped ? "true" : "false")
+        << ",\"truncated\":" << (truncated ? "true" : "false")
         << ",\"clipped_by_parent\":" << (clipped_by_parent ? "true" : "false")
         << ",\"starved\":" << (starved ? "true" : "false")
         << ",\"zero_sized\":" << (zero_sized ? "true" : "false")
