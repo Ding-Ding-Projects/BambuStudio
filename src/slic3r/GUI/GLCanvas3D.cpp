@@ -2838,9 +2838,10 @@ void GLCanvas3D::mark_context_dirty()
 }
 
 // Layout probe "canvas-png": save the frame as drawn, ImGui panels included, before
-// the swap. PrintWindow cannot capture an OpenGL surface, so on a hidden desktop this
-// file is the only picture of the canvas. It is written beside the target and then
-// renamed, so a driver waiting for the file never reads half of it.
+// the swap. On the real graphics driver PrintWindow gets a blank canvas, so a capture
+// of an unmodified package has only this file to show it (staging Mesa's software
+// OpenGL beside the executable also works, but changes the package). It is written
+// beside the target and then renamed, so a driver waiting for it never reads half.
 static void save_frame_png(const std::string &path, const Size &size)
 {
     const int width  = size.get_width();

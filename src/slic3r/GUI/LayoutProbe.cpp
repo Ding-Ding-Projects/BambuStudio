@@ -967,10 +967,10 @@ bool handle_command(const std::wstring &payload)
             return ok;
         }
         //   canvas-png <path>    save the 3D canvas's next frame, ImGui panels
-        //                        included, as a PNG at <path>. PrintWindow cannot
-        //                        capture an OpenGL surface, so a hidden-desktop
-        //                        capture shows the canvas blank; the canvas reads
-        //                        its frame back just before the buffer swap
+        //                        included, as a PNG at <path>. On the real graphics
+        //                        driver PrintWindow gets a blank canvas, so a
+        //                        capture of an unmodified package cannot show it;
+        //                        the canvas reads its frame back just before the swap
         //                        (GLCanvas3D::render) and writes <path>.part first.
         const std::wstring canvas_png = L"canvas-png ";
         if (frame && payload.compare(0, canvas_png.size(), canvas_png) == 0) {

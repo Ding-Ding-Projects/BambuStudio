@@ -4,11 +4,13 @@ import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 
-// Every release capture taken on a hidden desktop shows the 3D canvas as a blank
-// white area: PrintWindow cannot capture an OpenGL surface. The gizmo panels, the
-// notifications and the Daily Tips panel are ImGui drawn on that canvas, so no
-// release could show them in any language mode. The layout probe's "canvas-png"
-// command makes the canvas save its own frame, read back before the buffer swap.
+// Every capture of an unmodified release package shows the 3D canvas as a blank
+// white area: on the real graphics driver PrintWindow gets nothing from the OpenGL
+// surface (the earlier canvas captures staged Mesa's software OpenGL beside a local
+// build, which changes the package). The gizmo panels, the notifications and the
+// Daily Tips panel are ImGui drawn on that canvas, so no release check could show
+// them in any language mode. The layout probe's "canvas-png" command makes the
+// canvas save its own frame, read back before the buffer swap.
 
 const testDir = path.dirname(fileURLToPath(import.meta.url));
 const repoDir = path.resolve(testDir, '..', '..');

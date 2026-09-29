@@ -62,9 +62,11 @@ modal dialog blocks. Keystrokes and menu clicks do not reach a window on another
 hooks are how the headless driver reaches anything behind a menu.
 
 `canvas-png <path>` saves the 3D canvas's next frame, ImGui panels included (gizmo panels,
-notifications, the Daily Tips panel), as a PNG at the given path. PrintWindow cannot capture an
-OpenGL surface, so every hidden-desktop capture shows the canvas as a blank area; instead the
-canvas reads its frame back after the ImGui pass and before the buffer swap, writes
+notifications, the Daily Tips panel), as a PNG at the given path. On the real graphics driver,
+PrintWindow gets nothing from the OpenGL surface, so a capture of an unmodified package shows the
+canvas as a blank area (staging Mesa's software OpenGL beside the executable also works, but
+changes the package); instead the canvas reads its frame back after the ImGui pass and before the
+buffer swap, writes
 `<path>.part` and renames it, so a driver waiting for the file never reads half of it. One
 request saves one frame, and the canvas only draws while it is shown: switch to the Prepare or
 Preview tab first. `scripts/md3/sweep-dialogs.py` uses it for its `canvas:` entries.

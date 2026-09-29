@@ -49,8 +49,9 @@ bool handle_command(const std::wstring &payload);
 std::string artifact_path(const std::string &file_name);
 
 // A pending "canvas-png <path>" command: the 3D canvas saves its next frame,
-// ImGui panels included, at that path (GLCanvas3D::render). PrintWindow cannot
-// capture an OpenGL surface, so this is how a hidden-desktop capture sees it.
+// ImGui panels included, at that path (GLCanvas3D::render). On the real graphics
+// driver PrintWindow gets a blank canvas, so this is how a capture of an
+// unmodified package sees it.
 bool canvas_png_requested();
 // The pending path, cleared, so one request saves exactly one frame.
 std::string take_canvas_png_request();

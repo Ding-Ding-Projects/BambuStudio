@@ -27,7 +27,8 @@ a catalogue label with a placeholder ("&About %s") counts by its fixed words.
 Tip of the Day draws the Daily Tips panel there): the sweep switches to the
 Prepare tab, where the canvas shows, invokes the menu item in the language the
 menus show, asks the canvas for its own frame with the probe's "canvas-png"
-command (PrintWindow leaves an OpenGL canvas blank) and saves it as
+command (on the real graphics driver PrintWindow leaves the OpenGL canvas
+blank) and saves it as
 <out>/canvas-<slug>--<tuple>.png beside a PrintWindow capture of the whole
 frame (...--frame.png), returns to Home and records the row as canvas-capture.
 The layout probe does not measure ImGui, so those rows carry captures and no
@@ -265,8 +266,8 @@ def main():
                 name = f'canvas-{slug(label)}--{args.tuple_id}'
                 png = os.path.join(args.out, name + '.png')
                 frame_png = os.path.join(args.out, name + '--frame.png')
-                # PrintWindow leaves the OpenGL canvas blank, so the frame capture is only
-                # context; the canvas saves its own frame, ImGui included, on "canvas-png"
+                # On the real graphics driver PrintWindow leaves the OpenGL canvas blank, so
+                # the frame capture is only context; the canvas saves its own frame, ImGui included, on "canvas-png"
                 # (a build without that command saves nothing, and the row says so).
                 shot = cheap('screenshot', hwnd=main_hwnd, output_path=frame_png)
                 staged = os.path.join(staging_dir, f'{pid}-{len(results)}-canvas.png')
