@@ -1,4 +1,4 @@
-import { toInlineBilingual } from '../../i18nResources';
+import { toInlineBilingual } from '../../i18nResources.ts';
 
 // Bambu preset color palette
 export const BAMBU_COLORS = [
