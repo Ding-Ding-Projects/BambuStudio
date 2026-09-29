@@ -397,6 +397,28 @@ Scope: shorten the hosted Windows build. Full record:
   after it is the first warm build. Record both runs, the restore notice, the part sizes and the compile
   step's time. If a warm build ever looks stale, push with `[cold build]` and compare.
 
+## Executable path buffer in the file association code (issue #49, 2026-09-29)
+
+Scope: `GetModuleFileNameW` takes its buffer size in characters, but `is_associate_files`,
+`GUI_App::associate_files` and `GUI_App::disassociate_files` passed `sizeof(app_path)` for a
+`wchar_t app_path[MAX_PATH]` (520 bytes), so Windows could write an executable path of 260 characters or more
+past the end of the buffer. The handoff record is [#49](https://github.com/Ding-Ding-Projects/BambuStudio/issues/49).
+
+- `d49b4ea68` takes the path from `current_executable_path()` in `associate_files` and `disassociate_files`
+  (the helper the automatic update code already used, which grows its buffer until the path fits) and drops
+  the lookup from `is_associate_files`, which never read it. The registry values written are unchanged.
+- `ui-md3/tests/module-file-name-size.test.mjs` scans every C and C++ source under `src/slic3r/GUI` (comments
+  and literals blanked, arguments split by counting brackets) and fails on a `sizeof` byte count passed to
+  `GetModuleFileName`, `GetModuleFileNameW`, `GetModuleFileNameEx` or `GetModuleFileNameExW`. It failed on
+  `GUI_App.cpp` lines 323, 9424 and 9447 before the change (3 of 5 tests passed) and passes after it.
+- Verified: `node --test` 255 of 255 at `d49b4ea68` and 304 of 304 at `9409f33ae`; Build BambuStudio passed
+  in [run 36609309787](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36609309787), which
+  published [`md3-v168`](https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v168) (target
+  `d49b4ea68`, package `2.8.4617`, all five assets download). The C++ app was not built locally.
+- Open: file association in a running application (associate, then disassociate `.3mf`, `.stl` and `.step`)
+  was not re-checked on `md3-v168`; it rewrites the current user's file associations, so run it on a test
+  machine.
+
 ## Branch and worktree cleanup (2026-09-29)
 
 - `0d883d9fe` records 21 older `codex/*` branches as merged with `-s ours`: `git cherry` showed every one of their

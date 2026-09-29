@@ -50,6 +50,12 @@
 - [ ] Reuse the last `main` build tree from the draft release `build-cache-windows`, in parts of at most 1,500,000,000 bytes, so Ninja rebuilds only what changed ([Build cache](docs/features/releases/windows-release-supply-chain.md#build-cache)). A local run of both scripts passes 34 checks, a Ninja check confirms only changed files rebuild after the round trip, and every `gh release` command they use works on the draft. Unticked until the first hosted `main` build saves a set and the next build restores it.
 - [ ] Measure the first warm build against the 80-minute cold build and record both runs.
 
+## Executable path buffer in the file association code (issue #49)
+
+- [x] `associate_files` and `disassociate_files` take the executable path from `current_executable_path()`, which grows its buffer until the path fits, instead of passing the byte size of a `wchar_t[MAX_PATH]` to `GetModuleFileNameW`; `is_associate_files` no longer looks the path up (`d49b4ea68`). Compiled by Build BambuStudio in run [36609309787](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36609309787) and shipped in [`md3-v168`](https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v168).
+- [x] `ui-md3/tests/module-file-name-size.test.mjs` refuses a `sizeof` byte count as the size of any `GetModuleFileName` buffer under `src/slic3r/GUI`; it failed on the three old calls and passes since `d49b4ea68`.
+- [ ] Associate and then disassociate `.3mf`, `.stl` and `.step` in a running `md3-v168` or later on a test machine, and read the registry values back.
+
 ## Every element in Material Design 3 and in three language modes (issues #43 and #45)
 
 The new features of this line, with their status in one table, are listed under "New features in this
