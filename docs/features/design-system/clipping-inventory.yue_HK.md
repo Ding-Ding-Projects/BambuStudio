@@ -1,6 +1,6 @@
 ---
 translation-of: clipping-inventory.md
-source-sha256: 12d163795b3a66f83d0c1fa1b0c8e4b0e7c94dcf97f9cf55d4e35510251bd253
+source-sha256: b511f60a12aa923daf6b5aa09a756c08c24267fbc758de6cdd7d7d219825c2b4
 review-status: agent-drafted
 ---
 
@@ -41,6 +41,7 @@ Windows 桌面應用程式上發現嘅每一個版面裁剪缺陷，包括佢嘅
 | CJ-016 | 鍵盤快速鍵、部分清單同快速鍵描述（雙語） | bilingual_en_yue_HK-light-comfortable | 緊湊標籤執行超過捲動面板："Objects list · 物件清"同描述喺對話框邊度被裁剪 | 雙語裝飾器只對包含排版器測量咗適合度，排版器喺捲動面板內度比可見面板寬 | d27eadfdb | dialog-keyboard-shortcuts--bilingual_en_yue_HK-light-comfortable--before.png | pending | fixed-unverified |
 | CJ-017 | 配置檔案及備份、檔案清單 | 每一個元組（雙語時最差） | 清單顯示英文嘅一行同雙語模式下被截斷咗一半嘅行 | 資料檢視要求幾乎冇高度，所以清單只得到固定 720 x 700 對話框度文本上面剩下嘅 | 9670a437a | pending | pending | fixed-unverified |
 | CJ-018 | 溫度校準、設定標籤（雙語） | bilingual_en_yue_HK-light-comfortable | "Start temp: · 開"、"End temp: · 結束"、"Temp step: · 溫度"：粵語喺標籤邊度被裁剪 | 標籤建立咗 120 px 寬，佢變咗佢哋嘅最小值，排版器計算咗排版器嘅鬆弛作為房間佢哋可以長到 | efaa98db2 | dialog-temperature--bilingual_en_yue_HK-light-comfortable--before.png | pending | fixed-unverified |
+| CJ-019 | 回抽測試、步長欄位（每個單位較闊嘅校準欄位） | yue_HK-light-comfortable | 「0.1」被裁剪，「mm/mm」嘅首個「mm」隱藏喺輸入欄後面；英文模式下數字得 26 px，所以任何長過「0.1」嘅值都會被裁剪 | 欄位建立時得 90 px 闊，單位嘅闊度喺數字嗰份度扣，數字冇保留最少闊度 | a849963bf | dialog-retraction-test--yue_HK-light-comfortable--before.png | pending | fixed-unverified |
 <!-- clipping-inventory:end -->
 
 CJ-013 喺嘗試 28（源 `92cd7bce7`）度被驗證：五個藥丸排列喺兩行（其他喺 y = 52），頁面視圖係 1672 px 高所以側欄本體（內容 2549 px 喺 645 px 客戶端）係唯一嘅捲軸，探針報告側欄冇餓到嘅行（轉儲 `probe/prepare-tree-categories--en-light-comfortable--attempt28.jsonl`）。

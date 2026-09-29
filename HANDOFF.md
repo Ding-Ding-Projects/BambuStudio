@@ -53,6 +53,15 @@ kept equal to `main` and exists only as the checkout of the session that started
   version was released, in all three modes (`docs/features/windows/splash-release-date.md`, contract test
   `ui-md3/tests/splash-release-date.test.mjs`). Cantonese docs that rendered "release" and "splash" literally
   now use 發佈 and 啟動畫面.
+- On `main`, compile pending when written (2026-09-29): installed copies update themselves through Squirrel
+  (issue #46; `44e3940d7`, then `b2370c9a7` so a failed update falls back to the download dialog on every
+  check); the layout probe compares only child windows with their parent's client area (`f2110b6cc`); a field
+  that draws a unit after its number keeps room for the number (`a849963bf`, CJ-019); section headers and list
+  and table column titles show both languages in bilingual mode (`87ec5c44c`); Keyboard Shortcuts labels sit on the dialog
+  surface (`466c24da9`). The sweep of the remaining dialogs on `md3-v143` (Temperature, Flow rate, Pressure
+  advance, Retraction test, the three Export items, Setup Wizard, the gear menu, AI ink scanner) found CJ-019
+  and otherwise only probe false positives; the Export items and the gear menu open popups that the capture
+  route paints black, so they have probe data and no image.
 - Not verified: behaviour in a running application in any of the three modes (no captures from a released build
   yet), and human review of the agent-drafted Cantonese.
 
@@ -174,6 +183,10 @@ preserved.
    and capture and review fresh pixels before claiming GUI verification.
 5. Publish the localized feature guide and release links only for verified
    behavior, then update distribution records with the exact release source.
+6. When a release carries `3a935ed9f` (payload DLLs): confirm it starts with no DLL added, capture the
+   splash date in the three modes, take the after captures for CJ-014 to CJ-019, rerun the dialog
+   sweep with the probe's `truncated` field, and, once a second release follows, install the older one
+   and watch it update and restart (issue #46).
 
 ## Preservation boundary
 

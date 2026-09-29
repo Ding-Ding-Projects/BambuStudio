@@ -56,7 +56,7 @@ Each surface below is captured at every tuple; the file name is
 
 Taken by `scripts/md3/sweep-dialogs.py`, which opens each menu-reachable dialog on a hidden
 desktop and writes a layout-probe dump beside each capture. These are the "before" captures of
-clipping inventory rows CJ-015, CJ-016 and CJ-018.
+clipping inventory rows CJ-015, CJ-016, CJ-018 and CJ-019.
 
 | Field | Value |
 | --- | --- |
@@ -71,6 +71,7 @@ clipping inventory rows CJ-015, CJ-016 and CJ-018.
 | `dialog-smart-home--en-light-comfortable--before.png` | Smart home | `en-light-comfortable` |
 | `dialog-keyboard-shortcuts--bilingual_en_yue_HK-light-comfortable--before.png` | Keyboard Shortcuts | `bilingual_en_yue_HK-light-comfortable` |
 | `dialog-temperature--bilingual_en_yue_HK-light-comfortable--before.png` | Temperature calibration | `bilingual_en_yue_HK-light-comfortable` |
+| `dialog-retraction-test--yue_HK-light-comfortable--before.png` | Retraction test | `yue_HK-light-comfortable` |
 
 ## Layout-probe dumps
 
