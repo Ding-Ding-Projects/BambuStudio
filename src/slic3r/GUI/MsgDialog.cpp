@@ -22,6 +22,8 @@
 #include "libslic3r/Utils.hpp"
 #include "GUI.hpp"
 #include "I18N.hpp"
+#include "BilingualDecorator.hpp"
+#include "BilingualRegistry.hpp"
 //#include "ConfigWizard.hpp"
 #include "wxExtensions.hpp"
 #include "slic3r/GUI/MainFrame.hpp"
@@ -470,6 +472,15 @@ static void add_msg_content(wxWindow   *parent,
         page_size       = wxSize(info_width, page_height);
     }
     else {
+        // Bilingual mode: the plain body shows the Cantonese below the English. It is added
+        // here so the page is measured for the text it shows. Left to the bilingual
+        // decorator, the second line arrived after the page had been sized for one: a
+        // scrollbar took the end of the English and the Cantonese was never visible.
+        wxString secondary;
+        if (!monospaced_font && !is_marked_msg && link_text.IsEmpty() && !link_callback)
+            secondary = I18N::bilingual_secondary(msg);
+        if (!secondary.empty())
+            msg += "\n" + secondary;
         wxClientDC dc(parent);
         // Measure in the face the body actually renders in. This used to fall out
         // of the parent dialog's own font happening to match; pinning it keeps the
@@ -497,6 +508,9 @@ static void add_msg_content(wxWindow   *parent,
             wrapped_text->SetMinSize(wxSize(info_width, -1));
             wrapped_text->SetMaxSize(wxSize(info_width, -1));
             wrapped_text->Wrap(info_width);
+            // It already shows both languages; the decorator must not stack them again.
+            if (!secondary.empty())
+                I18N::BilingualRegistry::instance().set_managed(wrapped_text, true);
             sizer_scrolled->Add(wrapped_text, wxALIGN_LEFT ,0);
             sizer_scrolled->AddSpacer(5);
             sizer_scrolled->AddStretchSpacer();
