@@ -3,11 +3,518 @@
   "repository": "Ding-Ding-Projects/BambuStudio",
   "commitUrlTemplate": "https://github.com/Ding-Ding-Projects/BambuStudio/commit/{sha}",
   "source": "GitHub Releases API + git log",
-  "generated": "2026-09-28T08:46:51.413Z",
+  "generated": "2026-09-29T03:43:55.435Z",
   "categoryDerivation": "leading-verb of the commit subject",
-  "releaseCount": 141,
-  "entryCount": 1227,
+  "releaseCount": 153,
+  "entryCount": 1272,
   "releases": [
+    {
+      "tag": "md3-v147",
+      "version": "v147",
+      "ordinal": 147,
+      "date": "2026-09-29",
+      "published": "2026-09-29T03:27:35Z",
+      "codeName": {
+        "en": "Two-Item Roast Plate",
+        "yue": "燒味雙拼"
+      },
+      "qualifier": "superseded main build",
+      "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v147",
+      "prerelease": false,
+      "baseline": false,
+      "sameCommit": false,
+      "commit": "4dc449e621b55a02ba633c7a740229e09a9a03e6",
+      "build": "v147 \"Two-Item Roast Plate 燒味雙拼\" (app build 02.08.04.57)",
+      "entries": [
+        {
+          "sha": "4dc449e621b55a02ba633c7a740229e09a9a03e6",
+          "short": "4dc449e62",
+          "text": "Teach the layout probe to see a kit button's shortened label",
+          "category": "changed"
+        },
+        {
+          "sha": "82f5a5b65e9bfa1389eaddbca20f017d836e330c",
+          "short": "82f5a5b65",
+          "text": "Record the branch and worktree cleanup in the handoff [skip ci]",
+          "category": "documented"
+        },
+        {
+          "sha": "309f243a84759cb0b8691bc34f9336a7c4bf97c7",
+          "short": "309f243a8",
+          "text": "Read farm printer readiness from the current device object",
+          "category": "changed"
+        },
+        {
+          "sha": "5eb057753a6c6d20035dcc4ae79c018aa13f27a3",
+          "short": "5eb057753",
+          "text": "Localize workspace calendar diagnostics at the display boundary",
+          "category": "changed"
+        },
+        {
+          "sha": "34fcea3dee7653bf4e3d9b6e51f2b72deacef8ab",
+          "short": "34fcea3de",
+          "text": "Translate workspace daylight-saving prompts into Cantonese",
+          "category": "changed"
+        },
+        {
+          "sha": "5f24bbcb312669562b87c145057456f2103b69e2",
+          "short": "5f24bbcb3",
+          "text": "Translate requested desktop flows into Hong Kong Cantonese",
+          "category": "changed"
+        },
+        {
+          "sha": "defcafe1f1b068807fca45bb145493a1f4ef9dd4",
+          "short": "defcafe1f",
+          "text": "Bound Model Creator revision retention and child output",
+          "category": "changed"
+        },
+        {
+          "sha": "400766fb23210851c1e869467be223343ee33a5f",
+          "short": "400766fb2",
+          "text": "Abort farm batch when a selected printer changes state",
+          "category": "changed"
+        },
+        {
+          "sha": "daa6aef5da07438d3b558b7c74614f74c3ef9646",
+          "short": "daa6aef5d",
+          "text": "Translate workspace daylight-saving prompts into Cantonese",
+          "category": "changed"
+        },
+        {
+          "sha": "e98acffa8a485f1156155cda546a0dc108dfde53",
+          "short": "e98acffa8",
+          "text": "Translate requested desktop flows into Hong Kong Cantonese",
+          "category": "changed"
+        },
+        {
+          "sha": "28a7b8d28fea562d91854025fc827a229af54c23",
+          "short": "28a7b8d28",
+          "text": "Resolve workspace calendar times with system IANA rules",
+          "category": "changed"
+        },
+        {
+          "sha": "95aaf900f023673770eb87290327dc41b41958fb",
+          "short": "95aaf900f",
+          "text": "Preserve material flow choices in group swaps and guard camera replay",
+          "category": "changed"
+        },
+        {
+          "sha": "3c2ea5073dbb6a034e0a7357baa5f7dd9b7446a3",
+          "short": "3c2ea5073",
+          "text": "Validate print-setup nozzle moves before applying them",
+          "category": "changed"
+        },
+        {
+          "sha": "3ed561a3f43266e44fde7099897f0bb4f2ec4d40",
+          "short": "3ed561a3f",
+          "text": "Validate full scene primitive extents against workspace bounds",
+          "category": "changed"
+        },
+        {
+          "sha": "7878442f3468f7e3840ea69d9f2e280b66273c60",
+          "short": "7878442f3",
+          "text": "Carry validated nozzle mappings in LAN farm sends",
+          "category": "changed"
+        },
+        {
+          "sha": "110065c5dd21180914058ec7599e317ebf791525",
+          "short": "110065c5d",
+          "text": "Deliver workspace reminders through the in-app notification center",
+          "category": "changed"
+        },
+        {
+          "sha": "b474fd26775d7f6dbc7cc8e772c86df134ced4a7",
+          "short": "b474fd267",
+          "text": "Block unsupported farm nozzle mappings and honor transfer cancellation",
+          "category": "changed"
+        },
+        {
+          "sha": "e17ee632188ea89c27037032289dbe8d21c8ae04",
+          "short": "e17ee6321",
+          "text": "Connect workspace bundles to project tabs and history saves",
+          "category": "changed"
+        },
+        {
+          "sha": "d8284bd0c44dc6df1118aa1b0b94c16356e88f93",
+          "short": "d8284bd0c",
+          "text": "Bundle pinned model renderers and finish creator controls",
+          "category": "changed"
+        },
+        {
+          "sha": "f1971bf79c9bc66e5321887bed0b83f1527204ee",
+          "short": "f1971bf79",
+          "text": "Open workspace members and atomically publish saved project bytes",
+          "category": "changed"
+        },
+        {
+          "sha": "7f165abd1050623eafaa9f72b131e99d2c9886a7",
+          "short": "7f165abd1",
+          "text": "Preserve explicit mapping choices and reuse finished slices",
+          "category": "changed"
+        },
+        {
+          "sha": "32b36d5a741e96cea03d2dde370073af4d27870f",
+          "short": "32b36d5a7",
+          "text": "Keep regex controls in menu keyboard focus cycle",
+          "category": "changed"
+        },
+        {
+          "sha": "d59204a62e18ef0848786860973ae54357ab8e42",
+          "short": "d59204a62",
+          "text": "Add plate-scoped slice and print workflow",
+          "category": "added"
+        },
+        {
+          "sha": "1844f6f529b935e37e704942c91a4842f0e80e29",
+          "short": "1844f6f52",
+          "text": "Bound portable history pack expansion and repair menu Tab focus",
+          "category": "changed"
+        },
+        {
+          "sha": "59975210262d711e123a495564bb0f73efc26f6a",
+          "short": "599752102",
+          "text": "Contain Model Creator process trees and bind provider scene schemas",
+          "category": "changed"
+        },
+        {
+          "sha": "983e7a463fda2408e0ad3445fcc49dfaf2ac73a0",
+          "short": "983e7a463",
+          "text": "Expose search in filament menus and preserve merge targets",
+          "category": "changed"
+        },
+        {
+          "sha": "02f56d8d7a74973e0fb6c7e1d71e9c2327de3499",
+          "short": "02f56d8d7",
+          "text": "Preserve newer local history and export the current version",
+          "category": "changed"
+        },
+        {
+          "sha": "f9aee50724802a948efd1cbf7d6ecb349365ce53",
+          "short": "f9aee5072",
+          "text": "Cover nozzle preference serialization compatibility",
+          "category": "changed"
+        },
+        {
+          "sha": "6497aaa5af01382d346953c5dbfd04c129c6f232",
+          "short": "6497aaa5a",
+          "text": "Expose nozzle preferences in grouping dialog without rewriting plates",
+          "category": "changed"
+        },
+        {
+          "sha": "e74eb70f562b0b90f925acb7fe073e6b8fa43d07",
+          "short": "e74eb70f5",
+          "text": "Embed validated project history in saved 3MF archives",
+          "category": "changed"
+        },
+        {
+          "sha": "8819d44721c87329f1bbd1008fd590503b47e680",
+          "short": "8819d4472",
+          "text": "Retain Model Creator revisions across restarts",
+          "category": "changed"
+        },
+        {
+          "sha": "a7604765d171d15c7db769f6b2a24a5b3eb757c0",
+          "short": "a7604765d",
+          "text": "Add bounded native Model Creator module",
+          "category": "added"
+        },
+        {
+          "sha": "d0836ec7e361ea3c4b4263171edf88e0b841cb0d",
+          "short": "d0836ec7e",
+          "text": "Add per-printer left and right nozzle preferences",
+          "category": "added"
+        }
+      ]
+    },
+    {
+      "tag": "md3-v146",
+      "version": "v146",
+      "ordinal": 146,
+      "date": "2026-09-29",
+      "published": "2026-09-29T02:13:07Z",
+      "codeName": {
+        "en": "Honey Char Siu",
+        "yue": "蜜汁叉燒"
+      },
+      "qualifier": "superseded main build",
+      "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v146",
+      "prerelease": false,
+      "baseline": false,
+      "sameCommit": false,
+      "commit": "ac8a1639534dca1f7561c497fde3753540a244ad",
+      "build": "v146 \"Honey Char Siu 蜜汁叉燒\" (app build 02.08.04.57)",
+      "entries": [
+        {
+          "sha": "ac8a1639534dca1f7561c497fde3753540a244ad",
+          "short": "ac8a16395",
+          "text": "Show the release date on the splash screen",
+          "category": "changed"
+        }
+      ]
+    },
+    {
+      "tag": "md3-v145",
+      "version": "v145",
+      "ordinal": 145,
+      "date": "2026-09-29",
+      "published": "2026-09-29T01:44:35Z",
+      "codeName": {
+        "en": "White Cut Chicken",
+        "yue": "白切雞"
+      },
+      "qualifier": "superseded main build",
+      "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v145",
+      "prerelease": false,
+      "baseline": false,
+      "sameCommit": false,
+      "commit": "34d42347cd0ca10493893ea3fb78c736b09d8c94",
+      "build": "v145 \"White Cut Chicken 白切雞\" (app build 02.08.04.57)",
+      "entries": [
+        {
+          "sha": "34d42347cd0ca10493893ea3fb78c736b09d8c94",
+          "short": "34d42347c",
+          "text": "Record the message dialog button fix in the clipping inventory",
+          "category": "documented"
+        }
+      ]
+    },
+    {
+      "tag": "md3-v144",
+      "version": "v144",
+      "ordinal": 144,
+      "date": "2026-09-29",
+      "published": "2026-09-29T01:02:59Z",
+      "codeName": {
+        "en": "Roast Suckling Pig",
+        "yue": "乳豬"
+      },
+      "qualifier": "superseded main build",
+      "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v144",
+      "prerelease": false,
+      "baseline": false,
+      "sameCommit": false,
+      "commit": "9615c9418561029e8b32fe153a31df4f7955ffe7",
+      "build": "v144 \"Roast Suckling Pig 乳豬\" (app build 02.08.04.57)",
+      "entries": [
+        {
+          "sha": "9615c9418561029e8b32fe153a31df4f7955ffe7",
+          "short": "9615c9418",
+          "text": "Stop message dialogs from cutting their action labels short",
+          "category": "changed"
+        }
+      ]
+    },
+    {
+      "tag": "md3-v143",
+      "version": "v143",
+      "ordinal": 143,
+      "date": "2026-09-28",
+      "published": "2026-09-28T15:21:10Z",
+      "codeName": {
+        "en": "Regular Set",
+        "yue": "常餐"
+      },
+      "qualifier": "",
+      "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v143",
+      "prerelease": false,
+      "baseline": false,
+      "sameCommit": true,
+      "commit": "73a952b15447ed89a4dbe6d6c40cedcff969f7e2",
+      "build": "v143 \"Regular Set 常餐\" (app build 02.08.04.57)",
+      "entries": []
+    },
+    {
+      "tag": "md3-v142",
+      "version": "v142",
+      "ordinal": 142,
+      "date": "2026-09-28",
+      "published": "2026-09-28T14:50:50Z",
+      "codeName": {
+        "en": "Tossed Instant Noodles",
+        "yue": "撈丁"
+      },
+      "qualifier": "claude/lang-gui-elements-9cc0be",
+      "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v142",
+      "prerelease": false,
+      "baseline": false,
+      "sameCommit": false,
+      "commit": "73a952b15447ed89a4dbe6d6c40cedcff969f7e2",
+      "build": "v142 \"Tossed Instant Noodles 撈丁\" (app build 02.08.04.57)",
+      "entries": [
+        {
+          "sha": "73a952b15447ed89a4dbe6d6c40cedcff969f7e2",
+          "short": "73a952b15",
+          "text": "Record the compiled language lanes in the roadmap and handoff",
+          "category": "documented"
+        }
+      ]
+    },
+    {
+      "tag": "md3-v141",
+      "version": "v141",
+      "ordinal": 141,
+      "date": "2026-09-28",
+      "published": "2026-09-28T14:02:34Z",
+      "codeName": {
+        "en": "Tomato Beef Macaroni",
+        "yue": "茄牛通"
+      },
+      "qualifier": "claude/lang-gui-elements-9cc0be",
+      "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v141",
+      "prerelease": false,
+      "baseline": false,
+      "sameCommit": true,
+      "commit": "adbd538e9bfbd16d86d3910123bf9d46404d6586",
+      "build": "v141 \"Tomato Beef Macaroni 茄牛通\" (app build 02.08.04.57)",
+      "entries": []
+    },
+    {
+      "tag": "md3-v140",
+      "version": "v140",
+      "ordinal": 140,
+      "date": "2026-09-28",
+      "published": "2026-09-28T13:34:43Z",
+      "codeName": {
+        "en": "Fruit Punch",
+        "yue": "雜果賓治"
+      },
+      "qualifier": "superseded main build",
+      "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v140",
+      "prerelease": false,
+      "baseline": false,
+      "sameCommit": false,
+      "commit": "adbd538e9bfbd16d86d3910123bf9d46404d6586",
+      "build": "v140 \"Fruit Punch 雜果賓治\" (app build 02.08.04.57)",
+      "entries": [
+        {
+          "sha": "adbd538e9bfbd16d86d3910123bf9d46404d6586",
+          "short": "adbd538e9",
+          "text": "Add a language audit to the layout probe",
+          "category": "added"
+        }
+      ]
+    },
+    {
+      "tag": "md3-v139",
+      "version": "v139",
+      "ordinal": 139,
+      "date": "2026-09-28",
+      "published": "2026-09-28T11:58:54Z",
+      "codeName": {
+        "en": "Pineapple Ice",
+        "yue": "菠蘿冰"
+      },
+      "qualifier": "claude/lang-gui-elements-9cc0be",
+      "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v139",
+      "prerelease": false,
+      "baseline": false,
+      "sameCommit": false,
+      "commit": "15a864edd281eb89473d055e0bdc5fb0f93d9bd0",
+      "build": "v139 \"Pineapple Ice 菠蘿冰\" (app build 02.08.04.57)",
+      "entries": [
+        {
+          "sha": "15a864edd281eb89473d055e0bdc5fb0f93d9bd0",
+          "short": "15a864edd",
+          "text": "Translate the messages the literal and canvas changes extracted",
+          "category": "changed"
+        },
+        {
+          "sha": "68f42a8870a9d38faebfd1b49ed0fb1c4b0d379f",
+          "short": "68f42a887",
+          "text": "Make the embedded web surfaces follow all three language modes",
+          "category": "changed"
+        },
+        {
+          "sha": "adcf23a2f805d90f715934e0acd219fd6cc1c590",
+          "short": "adcf23a2f",
+          "text": "Give self-drawn widget captions their second language",
+          "category": "changed"
+        }
+      ]
+    },
+    {
+      "tag": "md3-v138",
+      "version": "v138",
+      "ordinal": 138,
+      "date": "2026-09-28",
+      "published": "2026-09-28T11:30:54Z",
+      "codeName": {
+        "en": "Salty Lemon Seven",
+        "yue": "鹹檸七"
+      },
+      "qualifier": "claude/lang-gui-elements-9cc0be",
+      "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v138",
+      "prerelease": false,
+      "baseline": false,
+      "sameCommit": false,
+      "commit": "7bacc40ce827dac7936ab152ef2aa7b5c97f2e40",
+      "build": "v138 \"Salty Lemon Seven 鹹檸七\" (app build 02.08.04.57)",
+      "entries": [
+        {
+          "sha": "7bacc40ce827dac7936ab152ef2aa7b5c97f2e40",
+          "short": "7bacc40ce",
+          "text": "Show the 3D canvas in both languages in bilingual mode",
+          "category": "changed"
+        },
+        {
+          "sha": "a479a30208328307a2cec12d48aeebd5c7050862",
+          "short": "a479a3020",
+          "text": "Route the remaining literal strings through the translation layer",
+          "category": "changed"
+        },
+        {
+          "sha": "de1bff22637d9e796a75b3a4c54f8dad61d8ceea",
+          "short": "de1bff226",
+          "text": "Bring the in-app changelog up to md3-v135, in both languages",
+          "category": "changed"
+        }
+      ]
+    },
+    {
+      "tag": "md3-v137",
+      "version": "v137",
+      "ordinal": 137,
+      "date": "2026-09-28",
+      "published": "2026-09-28T10:59:50Z",
+      "codeName": {
+        "en": "Lemon Coke",
+        "yue": "檸樂"
+      },
+      "qualifier": "claude/lang-gui-elements-9cc0be",
+      "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v137",
+      "prerelease": false,
+      "baseline": false,
+      "sameCommit": true,
+      "commit": "e4fc4be11c0e87a9600f1257b92e4bc6c64acac7",
+      "build": "v137 \"Lemon Coke 檸樂\" (app build 02.08.04.57)",
+      "entries": []
+    },
+    {
+      "tag": "md3-v136",
+      "version": "v136",
+      "ordinal": 136,
+      "date": "2026-09-28",
+      "published": "2026-09-28T10:30:17Z",
+      "codeName": {
+        "en": "Peanut Butter Toast",
+        "yue": "花生醬多士"
+      },
+      "qualifier": "superseded main build",
+      "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v136",
+      "prerelease": false,
+      "baseline": false,
+      "sameCommit": false,
+      "commit": "e4fc4be11c0e87a9600f1257b92e4bc6c64acac7",
+      "build": "v136 \"Peanut Butter Toast 花生醬多士\" (app build 02.08.04.57)",
+      "entries": [
+        {
+          "sha": "e4fc4be11c0e87a9600f1257b92e4bc6c64acac7",
+          "short": "e4fc4be11",
+          "text": "Move the language checks out of CI and into the local run",
+          "category": "changed"
+        }
+      ]
+    },
     {
       "tag": "md3-v135",
       "version": "v135",
