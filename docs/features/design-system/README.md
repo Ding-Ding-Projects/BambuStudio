@@ -28,6 +28,8 @@ Design 3 design system.
 - [Context menus](context-menus.md): every context menu is the Material menu, including the text
   fields' edit menu from the mouse and the keyboard, copyable labels and web pages, and how a released
   package is checked for a system menu.
+- [Tooltips](tooltips.md): every tooltip is the Material plain tooltip, in both themes, and how a
+  released package is checked for the system's.
 
 ## Design source
 

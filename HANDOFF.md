@@ -218,6 +218,10 @@ still to verify.
   `MsgDialog.{hpp,cpp}` takes wxMessageBox's arguments and returns its values on the Material `MessageDialog`, so each
   site only changed its name; `GUI_App::show_message_box` uses it too. The five fatal-path boxes (GUI_Init twice,
   GUI_App fatal, critical and first language load) stay native. `message-boxes.test.mjs` refuses any other.
+- Tooltips (2026-09-29): `style_tooltips_md3()` in `GUI_App.cpp` removes the visual style of wx's shared tooltip
+  control and gives it the Material plain tooltip's colours (InverseSurface, InverseOn), margins, the kit's small font
+  and Windows 11 small rounded corners, once the main window exists and after every theme change.
+  `scripts/md3/check-tooltips.py` hovers a Smart home button on a hidden desktop and judges the tooltip by its colour.
 - Closeout cleanup (2026-09-29): the linked worktree of the auto-updater lane
   (`BambuStudio-claude-auto-updater`) and its branch `claude/auto-updater` (`37b3fce78`, contained in `main`, no copy
   on the remote) were removed after an archive of the repository to the maintainer's cloud folder was written and

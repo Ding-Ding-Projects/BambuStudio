@@ -1,6 +1,6 @@
 ---
 translation-of: README.md
-source-sha256: 76f7f7ed9c73065ce6682d5291e98eda27bda3ef392f78335e2c1a009a8cd1c7
+source-sha256: a9348af0801ce2d64a88dc80121ce5f09afd9096422dc4dbdb141df93a792b1c
 review-status: agent-drafted
 ---
 
@@ -29,6 +29,7 @@ review-status: agent-drafted
   部署同驗證行為。
 - [右鍵選單](context-menus.md)：每個右鍵選單都係 Material 選單，包括文字欄由滑鼠同鍵盤打開嘅編輯選單、可以複製嘅標籤同
   網頁，同點樣檢查發佈套件有冇系統選單。
+- [工具提示](tooltips.md)：每個工具提示都係 Material 純文字工具提示，兩種主題都係，同點樣檢查發佈套件有冇系統工具提示。
 
 ## 設計來源
 

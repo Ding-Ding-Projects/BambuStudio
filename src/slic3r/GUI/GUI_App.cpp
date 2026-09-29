@@ -170,6 +170,9 @@
 #ifdef __WXMSW__
 #include <dbt.h>
 #include <shlobj.h>
+#include <commctrl.h>
+#include <dwmapi.h>
+#include <uxtheme.h>
 
 #ifdef __WINDOWS__
 #ifdef _MSW_DARK_MODE
@@ -218,6 +221,10 @@ namespace Slic3r {
 namespace GUI {
 
 class MainFrame;
+
+#ifdef __WXMSW__
+static void style_tooltips_md3(wxWindow *scale_from);
+#endif
 
 void start_ping_test()
 {
@@ -4133,6 +4140,9 @@ bool GUI_App::on_init_inner()
 
 //     update_mode(); // !!! do that later
     SetTopWindow(mainframe);
+#ifdef __WXMSW__
+    style_tooltips_md3(mainframe);
+#endif
 
     plater_->init_notification_manager();
 
@@ -5194,6 +5204,32 @@ void GUI_App::force_menu_update()
 #endif //_MSW_DARK_MODE
 #endif //__WINDOWS__
 
+#ifdef __WXMSW__
+// Every wx tooltip is shown by one shared Win32 tooltip control. With its visual
+// style it is the system's pale box in the system font, whatever the theme; without
+// it the control fills with the colours given here. So it becomes the Material
+// plain tooltip: InverseSurface behind InverseOn text, the kit's small font, 8 x 4
+// DIP of padding, and small rounded corners where Windows 11 draws them. Applied
+// once the main window exists and again whenever the theme changes.
+static void style_tooltips_md3(wxWindow *scale_from)
+{
+    HWND tip = static_cast<HWND>(wxToolTip::GetToolTipCtrl());
+    if (tip == nullptr)
+        return;
+    ::SetWindowTheme(tip, L"", L"");
+    const auto colorref = [](const wxColour &c) { return RGB(c.Red(), c.Green(), c.Blue()); };
+    ::SendMessage(tip, TTM_SETTIPBKCOLOR, colorref(StateColor::semantic(MD3::Role::InverseSurface)), 0);
+    ::SendMessage(tip, TTM_SETTIPTEXTCOLOR, colorref(StateColor::semantic(MD3::Role::InverseOn)), 0);
+    const int across = scale_from ? scale_from->FromDIP(8) : 8;
+    const int down   = scale_from ? scale_from->FromDIP(4) : 4;
+    RECT margin{across, down, across, down};
+    ::SendMessage(tip, TTM_SETMARGIN, 0, reinterpret_cast<LPARAM>(&margin));
+    ::SendMessage(tip, WM_SETFONT, reinterpret_cast<WPARAM>(::Label::Body_12.GetHFONT()), TRUE);
+    const DWORD round_small = 3; // DWMWCP_ROUNDSMALL; Windows 10 ignores the attribute
+    ::DwmSetWindowAttribute(tip, 33 /* DWMWA_WINDOW_CORNER_PREFERENCE */, &round_small, sizeof(round_small));
+}
+#endif
+
 void GUI_App::show_message_box(std::string msg)
 {
     // The Material message box, not the system one.
@@ -5215,6 +5251,10 @@ void GUI_App::force_colors_update()
 
 #endif // __WINDOWS__
 #endif //_MSW_DARK_MODE
+#ifdef __WXMSW__
+    // After the dark theme above: the Material tooltip takes the new theme's colours.
+    style_tooltips_md3(mainframe);
+#endif
     m_force_colors_update = true;
 }
 
