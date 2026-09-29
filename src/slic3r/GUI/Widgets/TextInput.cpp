@@ -346,7 +346,11 @@ void TextInput::render(wxDC& dc)
                 wxSize     prefix_size = dc.GetTextExtent(m_prefix);
                 prefix_space           = prefix_size.x + 8;
             }
-            if (align_right || align_center)
+            // Only a right-aligned field moves its entry right to make room for the label on
+            // the left (DoSetSize). A centred one keeps the entry at the left edge, so its label
+            // goes after the entry like a left-aligned one; drawn at the left edge it sat under
+            // the entry, which hid the start of the unit ("0.1/mm" for "0.1 mm/mm").
+            if (align_right)
             {
                 if (pt.x + labelSize.x + 5 > size.x)
                     text = wxControl::Ellipsize(text, dc, wxELLIPSIZE_END, size.x - pt.x - 5);
@@ -362,7 +366,7 @@ void TextInput::render(wxDC& dc)
             dc.DrawText(text, pt);
         } else {
             wxSize textSize = text_ctrl->GetSize();
-            if (align_right || align_center) {
+            if (align_right) {
                 if (pt.x + labelSize.x + 5 > size.x)
                     text = wxControl::Ellipsize(text, dc, wxELLIPSIZE_END, size.x - pt.x - 5);
                 pt.y = (size.y - labelSize.y - static_tips_size.y - 8) / 2;
@@ -374,7 +378,7 @@ void TextInput::render(wxDC& dc)
             dc.SetFont(GetFont());
             dc.DrawText(text, pt);
 
-            if (align_right || align_center) {
+            if (align_right) {
                 if (pt.x + static_tips_size.x + 5 > size.x) {
                     text = wxControl::Ellipsize(static_tips, dc, wxELLIPSIZE_END, size.x - pt.x - 5);
                 }

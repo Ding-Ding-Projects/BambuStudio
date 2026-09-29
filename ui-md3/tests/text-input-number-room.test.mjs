@@ -34,3 +34,18 @@ test('the room counts everything DoSetSize takes out of the entry', () => {
     assert.match(measure, part);
   }
 });
+
+test('a centred field draws its unit after the number, not under it', () => {
+  // The calibration fields are created with wxTE_CENTRE. The unit label was then
+  // drawn at the field's left edge while the entry also sat there, so the entry
+  // covered the start of the unit: "0.1/mm" for "0.1 mm/mm", "5 /秒" for
+  // "5 mm³/秒". Only a right-aligned field moves the entry to make room for a
+  // label on the left, so only a right-aligned field draws it there.
+  const render = source.match(/void TextInput::render\(wxDC& dc\)[\s\S]*?\n\}/);
+  assert.ok(render, 'render() must exist');
+  const code = stripComments(render[0]);
+  assert.doesNotMatch(code, /if \(align_right \|\| align_center\)\s*\{/, 'a centred field does not draw its label at the left edge');
+  assert.equal((code.match(/if \(align_right\)\s*\{/g) || []).length, 3, 'every label branch keeps the left placement for right alignment only');
+  const layout = stripComments(source.match(/void TextInput::DoSetSize\([\s\S]*?\n\}/)[0]);
+  assert.match(layout, /if \(align_right\)\s*textPos\.x \+= labelSize\.x;/, 'the entry moves right only for a right-aligned field, matching render()');
+});
