@@ -60,8 +60,10 @@ kept equal to `main` and exists only as the checkout of the session that started
   and table column titles show both languages in bilingual mode (`87ec5c44c`); Keyboard Shortcuts labels sit on the dialog
   surface (`466c24da9`). The sweep of the remaining dialogs on `md3-v143` (Temperature, Flow rate, Pressure
   advance, Retraction test, the three Export items, Setup Wizard, the gear menu, AI ink scanner) found CJ-019
-  and otherwise only probe false positives; the Export items and the gear menu open popups that the capture
-  route paints black, so they have probe data and no image.
+  and otherwise only probe false positives in English and Cantonese; the Export items and the gear menu open
+  popups that the capture route paints black, so they have probe data and no image. Correction: the bilingual
+  pass had no probe data at all (its dump path was 272 characters, past the 260 limit) and the driver counted
+  the missing dumps as zero findings; the driver now dumps through a short folder and reports a missing dump.
 - The update feed was stuck: a main build became the latest release only if `main` had not moved while
   it built, so every build after `md3-v143` was published as superseded. From `904ccc37a` a main build
   becomes latest when its commit is newer than the latest release's. The ready notice is now a banner

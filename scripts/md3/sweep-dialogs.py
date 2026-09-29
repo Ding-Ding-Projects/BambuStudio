@@ -28,6 +28,7 @@ import hashlib
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import time
@@ -145,6 +146,11 @@ def main():
     sys.stdout.reconfigure(encoding='utf-8')  # dialog titles can be Cantonese
     probe_dir = os.path.join(args.out, 'probe')
     os.makedirs(probe_dir, exist_ok=True)
+    # The app writes the dump itself, and a Windows path past 260 characters fails to
+    # open: the bilingual tuple's long name pushed deep output folders over the limit
+    # and every bilingual dump went missing. Dump to a short folder, then move it.
+    staging_dir = os.path.join(os.environ.get('TEMP', os.path.expanduser('~')), 'bbsp')
+    os.makedirs(staging_dir, exist_ok=True)
     entries = [e.strip() for e in args.only.split(',')] if args.only else ENTRIES
     cantonese = load_po(args.po)
     exe_sha = hashlib.sha256(open(args.exe, 'rb').read()).hexdigest()
@@ -234,16 +240,25 @@ def main():
             name = f'dialog-{slug(entry)}--{args.tuple_id}'
             png = os.path.join(args.out, name + '.png')
             dump = os.path.join(probe_dir, name + '.jsonl')
+            staged = os.path.join(staging_dir, f'{pid}-{len(results)}.jsonl')
+            if os.path.exists(staged):
+                os.remove(staged)
             shot = cheap('screenshot', hwnd=dialog['handle'], output_path=png)
-            send(args.desktop, main_hwnd, dump=dump)
-            dumped = wait_for(lambda: os.path.exists(dump) and os.path.getsize(dump) > 0 and
-                              open(dump, encoding='utf-8').read().rstrip().endswith('{"kind":"end"}'), 30)
+            send(args.desktop, main_hwnd, dump=staged)
+            dumped = wait_for(lambda: os.path.exists(staged) and os.path.getsize(staged) > 0 and
+                              open(staged, encoding='utf-8').read().rstrip().endswith('{"kind":"end"}'), 30)
+            if dumped:
+                shutil.move(staged, dump)
             found, has_truncated = findings_in(dump, dialog['handle']) if dumped else ([], False)
             row.update({'result': 'opened', 'title': dialog.get('title', ''), 'class': dialog.get('class'),
                         'size': [dialog['width'], dialog['height']], 'screenshot': png,
                         'rendered_ok': shot.get('rendered_ok'), 'dump': dump if dumped else None,
                         'has_truncated_field': has_truncated, 'findings': found})
-            print(f'  {entry}: "{row["title"]}" {row["size"]} findings {len(found)}', flush=True)
+            if dumped:
+                print(f'  {entry}: "{row["title"]}" {row["size"]} findings {len(found)}', flush=True)
+            else:
+                # No dump means no measurement, which is not the same as nothing found.
+                print(f'  {entry}: "{row["title"]}" {row["size"]} NO PROBE DUMP (findings unknown)', flush=True)
             def closed():
                 return all(w['handle'] != dialog['handle'] for w in windows_of(args.desktop, pid))
             send(args.desktop, main_hwnd, command=f'close {dialog["handle"]}')
@@ -274,8 +289,9 @@ def main():
         json.dump(report, fh, ensure_ascii=False, indent=1)
     opened = [r for r in results if r.get('result') == 'opened']
     flagged = [r for r in opened if r['findings']]
-    print(f'{len(opened)} dialogs opened, {len(flagged)} with findings; report {out_json}')
-    return 0
+    unmeasured = [r for r in opened if r.get('dump') is None]
+    print(f'{len(opened)} dialogs opened, {len(flagged)} with findings, {len(unmeasured)} without a probe dump; report {out_json}')
+    return 1 if unmeasured else 0
 
 
 if __name__ == '__main__':
