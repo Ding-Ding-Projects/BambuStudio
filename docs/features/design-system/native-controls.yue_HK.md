@@ -1,6 +1,6 @@
 ---
 translation-of: native-controls.md
-source-sha256: 42568c932beaef1a8a18ed7bc2d5421fa92c8d1b6a0236c5107f0778fff2cabd
+source-sha256: d497572280e3a5743f42d9a0db7428c9207e8269767a598f5685618030bf1b13
 review-status: agent-drafted
 ---
 
@@ -25,7 +25,7 @@ review-status: agent-drafted
 | `wxStaticBox`（分組框） | `MD3GroupBox`：Material 外框同標題 | 設定分頁以外嘅選項組、「打印床形狀」對話框、校準精靈頁、「儲存預設」、未儲存變更嘅比較、墨水揀選器嘅預覽 |
 | `wxChoicebook` | 喺 `wxSimplebook` 上面嘅套件 `ComboBox` | 「打印床形狀」對話框嘅形狀 |
 | `CreateButtonSizer()`、`CreateStdDialogButtonSizer()` | 用標準 id 嘅套件掣 | 「打印床形狀」、「系統資訊」、未儲存變更嘅完整比較 |
-| `wxScrolledWindow`、套件 `ListBox` 同每個表格（`wxDataViewCtrl`、`wxDataViewListCtrl`）嘅 Windows 捲動列 | `MD3ScrolledWindow`、套件 `ListBox`、`MD3DataViewCtrl` 同 `MD3DataViewListCtrl`，全部都畫套件捲動列（`MD3ScrollBars`） | 每個會捲動嘅頁面同面板：準備側邊欄、每個設定頁、每個偏好設定頁、「裝置」分頁、指令面板、長嘅訊息框同對話框；套件清單；同埋每個表格：物件清單、專案檔案清單、未儲存變更嘅比較、工作區清單、「設定檔同備份」、「匯出」、「版本記錄」、「通知中心」、打印主機佇列 |
+| `wxScrolledWindow`、套件 `ListBox`、每個表格（`wxDataViewCtrl`、`wxDataViewListCtrl`）同每個多行文字框嘅 Windows 捲動列 | `MD3ScrolledWindow`、套件 `ListBox`、`MD3DataViewCtrl`、`MD3DataViewListCtrl` 同 `TextAreaEditor`，全部都畫套件捲動列（`MD3ScrollBars`） | 每個會捲動嘅頁面同面板：準備側邊欄、每個設定頁、每個偏好設定頁、「裝置」分頁、指令面板、長嘅訊息框同對話框；套件清單；每個表格：物件清單、專案檔案清單、未儲存變更嘅比較、工作區清單、「設定檔同備份」、「匯出」、「版本記錄」、「通知中心」、打印主機佇列；同埋每個多行文字框：`TextArea`（更新說明、記錄、指令碼、筆記、提示）、設定嘅 G-code 欄位，同正規表示式建立器嘅範例同結果 |
 
 ## 點做
 
@@ -52,19 +52,19 @@ review-status: agent-drafted
 - **「確定」同「取消」。** 標準掣排列會整出原生掣。改用標準 id 嘅套件掣（Filled「確定」、Outlined「取消」），所以對話框自己嘅
   「確定」、「取消」同 Escape 處理照舊有效。
 - **捲動列。** Windows 以前喺每個會捲動嘅視窗度，兩個主題都畫一條 17 px 灰色嘅條，入面有一條幼幼嘅灰色滑塊。
-  `MD3ScrolledWindow`（以前用 `wxScrolledWindow` 嘅地方都改用佢）、套件 `ListBox`，同埋每個表格用嘅 `MD3DataViewCtrl`
-  同 `MD3DataViewListCtrl`，開視窗嘅時候唔帶 Windows 捲動列，改為畫套件捲動列：一條 10 px 嘅條，顏色同後面嘅表面一樣，
-  入面有一粒完全圓角、四邊縮入 2 px 嘅滑塊，平時係 OutlineVariant，指標停喺上面或者拖緊嗰陣係 Outline。捲動列放喺
-  內容旁邊，即係以前 Windows 捲動列嘅位置，所以冇嘢會排喺佢下面；Windows 捲動列多佔嘅 7 px 亦都還返畀內容。拖滑塊，
-  內容會跟住郁；撳軌道會向指標嗰邊翻一頁，撳住唔放就會一直翻。滾輪、鍵盤，同埋將有焦點嘅欄位捲入畫面，都同以前一樣，
-  因為捲動仍然係 wx 自己嘅捲動邏輯做，佢只係話畀套件捲動列知要畫喺邊。開咗 Windows 高對比嘅時候，捲動列用系統嘅
-  視窗同文字顏色。表格自己嘅捲動邏輯照舊捲動佢嘅行同表頭，方向鍵亦照舊移動揀選。
+  `MD3ScrolledWindow`（以前用 `wxScrolledWindow` 嘅地方都改用佢）、套件 `ListBox`、每個表格用嘅 `MD3DataViewCtrl` 同
+  `MD3DataViewListCtrl`，同埋每個多行文字框用嘅 `TextAreaEditor`，開視窗嘅時候唔帶 Windows 捲動列，改為畫套件捲動列：
+  一條 10 px 嘅條，顏色同後面嘅表面一樣，入面有一粒完全圓角、四邊縮入 2 px 嘅滑塊，平時係 OutlineVariant，指標停喺上面
+  或者拖緊嗰陣係 Outline。捲動列放喺內容旁邊，即係以前 Windows 捲動列嘅位置，所以冇嘢會排喺佢下面；Windows 捲動列多佔
+  嘅 7 px 亦都還返畀內容。拖滑塊，內容會跟住郁；撳軌道會向指標嗰邊翻一頁，撳住唔放就會一直翻。滾輪、鍵盤，同埋將有焦點
+  嘅欄位捲入畫面，都同以前一樣，因為捲動仍然係 wx 自己嘅捲動邏輯做，佢只係話畀套件捲動列知要畫喺邊。開咗 Windows 高對比
+  嘅時候，捲動列用系統嘅視窗同文字顏色。表格自己嘅捲動邏輯照舊捲動佢嘅行同表頭，方向鍵亦照舊移動揀選。多行文字框係一個
+  Windows 編輯控件，佢自己會跟住游標、滾輪同鍵盤捲動；每次收到可能移動文字嘅訊息之後，`TextAreaEditor` 都會讀佢嘅第一條
+  可見行、總行數同顯示得到嘅行數，照住畫捲動列；拖捲動列或者翻頁嗰陣，就逐行捲動編輯控件。
 
 ## 邊啲保留原生，點解
 
 - 系統檔案對話框，因為佢哋帶埋用戶常用嘅位置、預覽同 Windows 殼層。
-- 暫時仍然係原生嘅：多行文字框嘅捲動列。文字框嘅捲動列屬於佢入面嘅 Windows 編輯控件，由嗰個控件自己設定同畫，
-  所以套件捲動列要行另一條路。呢部分仲未做，已經列喺路線圖。
 - 冇任何建置會顯示得到嘅原生類別：SLA 壓縮檔匯入嘅檔案揀選器（匯入冇選單項目）、`wxExtensions` 入面嘅剔選清單下拉彈出
   （冇人呼叫），同從來冇建構過嘅監察基礎面板同佢嘅分割器。
 
@@ -72,9 +72,9 @@ review-status: agent-drafted
 
 - `node --test ui-md3/tests/native-controls.test.mjs` 會拒絕 GUI 入面任何地方嘅原生分頁控件、報告清單、待辦清單、月曆、提示視窗、
   通知列、分組框、選擇頁簿、樹狀控件或者標準掣排列，同埋檢查每個套件替代品。
-- `node --test ui-md3/tests/scrollbars.test.mjs` 會拒絕新嘅 `wxScrolledWindow`、資料檢視表格或者資料檢視清單，檢查套件
-  捲動列從來唔會將捲動列交畀 Windows、會喺非客戶端區域預留自己條位，同埋以前幫 Windows 捲動列留位嘅程式碼而家幫套件
-  捲動列留位。
+- `node --test ui-md3/tests/scrollbars.test.mjs` 會拒絕新嘅 `wxScrolledWindow`、資料檢視表格、資料檢視清單或者多行
+  `wxTextCtrl`，檢查套件捲動列從來唔會將捲動列交畀 Windows、會喺非客戶端區域預留自己條位，同埋以前幫 Windows 捲動列
+  留位嘅程式碼而家幫套件捲動列留位。
 - 版面探針會幫每個視窗記低佢顯示緊 Windows 捲動列定係套件捲動列（`scrollbars`：`native_v`、`native_h`、`kit_v`、`kit_h`），
   所以一個發佈版本嘅探針轉儲會列出畫面上仲有嘅每一條 Windows 捲動列。
 - 仲未喺發佈版本度逐個用過呢啲介面。

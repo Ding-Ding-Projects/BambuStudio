@@ -278,8 +278,17 @@ still to verify.
   the same forwarding for tables. ObjectList, AuxiliaryList and DiffViewCtrl derive from `MD3DataViewCtrl`, and the
   seven `wxDataViewListCtrl` tables are `MD3DataViewListCtrl`. `wxDataViewCtrl::MSWWindowProc` is private, so both
   call `wxDataViewCtrlBase::MSWWindowProc` and add the `DLGC_WANTARROWS` it added, keeping the arrow keys for the
-  selection. The Objects list's ink editor leaves room for the kit bar. Still native: multi-line text boxes, whose
-  Windows edit control sets and draws its own bar.
+  selection. The Objects list's ink editor leaves room for the kit bar.
+- Text box scrollbars (2026-09-29): `TextAreaEditor` (`Widgets/TextArea.{hpp,cpp}`) is the multi-line editor for
+  `TextArea`, the settings' G-code fields (`Field.cpp`, `Builder<TextAreaEditor>`) and the regex builder's sample and
+  results. A Windows edit control sets and draws its own bar, so the editor creates it without `WS_VSCROLL`/`WS_HSCROLL`
+  (a rich one also without `ES_DISABLENOSCROLL`, bit `0x2000`, which a plain edit uses for `ES_NUMBER`), lets it keep
+  scrolling itself, and after every message that can move the text reads `EM_GETFIRSTVISIBLELINE`, `EM_GETLINECOUNT` and
+  `EM_GETRECT` / `GetCharHeight()` and hands them to `MD3ScrollBars::SetScrollbar()`. `MD3ScrollBars::SetScrollHandler()`
+  routes the strip's drag and page to `EM_LINESCROLL` / `EM_SCROLL` instead of a wx scroll event. `m_syncing` guards the
+  re-entry the `EM_GET*` queries cause. No Windows scrollbar is left in the GUI sources except the system file dialogs'.
+  `scripts/md3/scan-scrollbars.py <dump folders>` lists every shown window with a Windows bar in a release's
+  layout-probe dumps (exit 1), or says the build predates the `scrollbars` field (exit 2).
 - Closeout cleanup (2026-09-29): the linked worktree of the auto-updater lane
   (`BambuStudio-claude-auto-updater`) and its branch `claude/auto-updater` (`37b3fce78`, contained in `main`, no copy
   on the remote) were removed after an archive of the repository to the maintainer's cloud folder was written and

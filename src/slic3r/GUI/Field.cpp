@@ -29,6 +29,7 @@
 #include "Widgets/SpinInput.hpp"
 #include "Widgets/ComboBox.hpp"
 #include "Widgets/TextCtrl.h"
+#include "Widgets/TextArea.hpp"
 #include "Widgets/MD3ColorPicker.hpp"
 #include "Widgets/MaterialIcon.hpp"
 
@@ -623,7 +624,7 @@ void TextCtrl::BUILD() {
 
 	// BBS: new param ui style
     // const long style = m_opt.multiline ? wxTE_MULTILINE : wxTE_PROCESS_ENTER/*0*/;
-    static Builder<wxTextCtrl> builder1;
+    static Builder<TextAreaEditor> builder1; // multi-line: the kit scrollbar
     static Builder<::TextInput> builder2;
     auto temp = m_opt.multiline
         ? (wxWindow*)builder1.build(m_parent, wxID_ANY, "", wxDefaultPosition, size, wxTE_MULTILINE)

@@ -1,6 +1,6 @@
 ---
 translation-of: md3-parity-register.md
-source-sha256: cf2290c8771cf52736bea80dc2ee83b883ff060eb3c3b90586601bebf773750a
+source-sha256: f455bcc7deb932fda6dfd0e01b8e9d64f702b4d0be92eff73961490a3ed7c3cf
 review-status: agent-drafted
 ---
 
@@ -59,7 +59,7 @@ Bambu Studio 嘅全整個 GUI 都必須符合內嵌 `ui-md3/design-system` 套�
 | native-group-boxes | 12 個整原生分組框嘅地方（`wxStaticBox`、指定方向嘅 `wxStaticBoxSizer`）同「打印床形狀」對話框嘅 `wxChoicebook`：Windows 分組框同標題，同喺頁上面嘅原生選擇控件 | containment/Card.jsx（outlined）; fields/SelectField.jsx | OptionsGroup（設定分頁以外嘅選項組）、BedShapeDialog、CalibrationWizardPresetPage（4）、CalibrationWizardSavePage（2）、SavePresetDialog、UnsavedChangesDialog、FilamentPickerDialog、Plater 切片資訊 | `MD3GroupBox`：`PaintForeground()` 畫 OutlineVariant 小圓角外框同 Head_14 標題嘅 `wxStaticBox`；側邊欄 `StaticGroup` 用 OutlineVariant 同 OnSurfaceVariant；「打印床形狀」用喺 `wxSimplebook` 上面嘅套件 `ComboBox`（2026-09-29） | 完成 |
 | native-standard-buttons | `CreateButtonSizer()` 同 `CreateStdDialogButtonSizer()`：原生「確定」同「取消」掣 | actions/Button.jsx | BedShapeDialog、SysInfoDialog、UnsavedChangesDialog 完整比較 | 用標準 id 嘅套件掣（Filled「確定」、Outlined「取消」），所以對話框自己嘅「確定」、「取消」同 Escape 處理照舊有效（2026-09-29） | 完成 |
 | native-scrollbars | 每個 `wxScrolledWindow`（56 個檔案入面 84 個建立同子類別）、套件 `ListBox` 同每個表格（12 個檔案入面 13 個 `wxDataViewCtrl` 同 `wxDataViewListCtrl` 嘅建立同子類別）嘅 Windows 捲動列：兩個主題都係一條 17 px 灰色嘅條，加一條幼幼嘅灰色滑塊 | base.css scrollbar（10 px、軌道唔填色、圓角 OutlineVariant 滑塊四邊縮入 2 px、懸停時 Outline） | 準備側邊欄、每個設定頁、每個偏好設定頁、「裝置」分頁、指令面板、長嘅訊息框同對話框、Widgets/ListBox、物件清單、專案檔案清單、未儲存變更嘅比較同每個 `wxDataViewListCtrl` 表格 | 用 `MD3ScrolledWindow`、`MD3DataViewCtrl` 同 `MD3DataViewListCtrl` 取代原本嘅控件，`MD3ScrollBars` 喺佢哋同套件 `ListBox` 後面負責：Windows 唔會收到捲動列樣式，控件嘅捲動邏輯將位置、頁同範圍報畀套件捲動列，捲動列佔用 Windows 捲動列原本佔嘅非客戶端空間（10 px 而唔係 17 px），可以拖、撳住會一直翻頁、跟高對比；表格保留方向鍵做揀選；版面探針幫每個視窗記錄 `scrollbars`；`scrollbars.test.mjs` 會拒絕新嘅 `wxScrolledWindow` 或者資料檢視控件（2026-09-29） | done (source) |
-| native-text-box-scrollbars | 多行文字框嘅 Windows 捲動列 | base.css scrollbar | `TextArea` 同其他用多行 `wxTextCtrl` 嘅地方 | 捲動列屬於文字框入面嘅 Windows 編輯控件，由嗰個控件自己設定同畫，所以套件捲動列要行另一條路 | open |
+| native-text-box-scrollbars | 多行文字框嘅 Windows 捲動列：由 Windows 編輯控件自己設定同畫 | base.css scrollbar | `TextArea`（每個現成嘅多行檢視）、設定嘅 G-code 欄位（`Field.cpp`）、正規表示式建立器嘅範例同結果 | `TextAreaEditor`：編輯控件建立時唔帶 `WS_VSCROLL`/`WS_HSCROLL`（Rich Edit 控件亦唔帶 `ES_DISABLENOSCROLL`），自己照舊捲動；每次收到可能移動文字嘅訊息之後，將第一條可見行、總行數同顯示得到嘅行數報畀 `MD3ScrollBars`；拖捲動列或者撳住軌道就會逐行捲動；`scrollbars.test.mjs` 會拒絕多行 `wxTextCtrl`（2026-09-29） | done (source) |
 | developer-log-window | `MainFrame::show_log_window()` 打開嘅 `wxLogWindow` | 無 | MainFrame，由「偏好設定」、「開發者工具」、「內部開發者模式」打開 | 「開發者工具」分頁唔會編譯入任何發佈版本（`BBL_RELEASE_TO_PUBLIC=1`），所以冇一個發佈版本可以打開佢；刻意保留原生 | 偏離 |
 | static-bitmaps | 175 處 `new wxStaticBitmap(` | 套件顯示圖示嘅地方係 Material Symbols 字形；產品相片／圖表係資料 | 喺整個 GUI 樹中 | 手工審查清單 `static-bitmap-triage.csv`（清掃後 146 處仍在使用）：12 個可點擊圖片控制項變成套件圖示按鈕、48 個圖片控制項用 MD3 角色中嘅 Material 字形、98 個係內容影像或呼叫方提供嘅資料且記錄咗原因若非明顯、8 個未填充 MonitorBasePanel 圖片控制項刪除、兩個度數標記係排版標籤。檢查只接受 `data` 同 `md3-rendered` 兩種判定，並固定每個已轉換嘅位置。執行時捕獲等待本地構建（2026-09-05） | 完成（來源） |
 

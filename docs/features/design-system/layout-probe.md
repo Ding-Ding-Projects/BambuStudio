@@ -43,7 +43,8 @@ hidden panel is never flagged, whatever its own shown flag says.
 Each window record also carries `scrollbars`, which bars the window shows and whose they are:
 `native_v` and `native_h` for a vertical or horizontal bar that Windows draws (Windows keeps
 `WS_VSCROLL`/`WS_HSCROLL` in the style only while it shows that bar), `kit_v` and `kit_h` for the kit
-scrollbar of an `MD3ScrolledWindow`, a kit `ListBox` or an MD3 table. A true `native_v` or `native_h`
+scrollbar of an `MD3ScrolledWindow`, a kit `ListBox`, an MD3 table or a multi-line `TextAreaEditor`. A
+true `native_v` or `native_h`
 on a shown window is a Windows scrollbar still on screen.
 
 One `gl_item` record per visible item of the scene toolbar (`"toolbar":"main"`) and the gizmo rail

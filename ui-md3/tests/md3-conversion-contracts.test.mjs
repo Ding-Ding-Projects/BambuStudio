@@ -348,7 +348,9 @@ test('every text field is a kit TextInput or TextArea; native editors exist only
   assert.match(area, /R::SurfaceContainerLow : R::SurfaceContainerLowest/, 'TextArea must tone read-only and editable fields from MD3 roles');
   assert.match(area, /m_focused \? R::Primary : R::OutlineVariant/, 'TextArea must promote its outline to Primary on focus');
   assert.match(area, /MD3::Metrics::radius_tiny/, 'TextArea must use the kit small radius');
-  assert.match(area, /new TextCtrl\(this, wxID_ANY, text/, 'TextArea must host the MSW-colour-safe TextCtrl editor');
+  assert.match(area, /new TextAreaEditor\(this, wxID_ANY, text/, 'TextArea must host the TextAreaEditor (kit scrollbar)');
+  assert.match(area, /return wxTextCtrl::DoMSWControlColor\(pDC, wxColour\(\), hWnd\);/,
+    'the editor must stay MSW-colour-safe, as the kit TextCtrl is');
   const cmake = await readFile(path.join(repoDir, 'src', 'slic3r', 'CMakeLists.txt'), 'utf8');
   assert.match(cmake, /^\s*GUI\/Widgets\/TextArea\.cpp\s*$/m, 'TextArea.cpp must be registered');
   for (const [file, needle] of [

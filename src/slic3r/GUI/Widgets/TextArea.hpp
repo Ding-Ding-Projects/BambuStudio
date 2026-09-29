@@ -3,7 +3,54 @@
 
 #include <wx/textctrl.h>
 
+#include "MD3ScrollBars.hpp"
 #include "StaticBox.hpp"
+
+// The multi-line editor with the kit scrollbar instead of the Windows one. The
+// Windows edit control inside keeps scrolling itself (the caret, the wheel, the
+// keyboard, programmatic scrolling), but is created without WS_VSCROLL and
+// WS_HSCROLL, so it neither shows nor sets a bar of its own. After every
+// message that can move the text, the editor reads the first visible line,
+// the line count and the lines that fit, and hands them to MD3ScrollBars,
+// which draws the kit strip in the editor's non-client area; a drag or a page
+// on the strip scrolls the edit control by lines. It is a wxTextCtrl, so every
+// caller keeps the whole wxTextCtrl interface. TextArea uses it, and so does
+// any other multi-line text box.
+class TextAreaEditor : public wxTextCtrl
+{
+public:
+    TextAreaEditor(wxWindow        *parent,
+                   wxWindowID       id,
+                   const wxString  &value = wxEmptyString,
+                   const wxPoint   &pos   = wxDefaultPosition,
+                   const wxSize    &size  = wxDefaultSize,
+                   long             style = wxTE_MULTILINE);
+    ~TextAreaEditor() override;
+
+    // Whether the kit bar for orient (wxVERTICAL or wxHORIZONTAL) is shown.
+    bool IsBarShown(int orient) const { return m_bars.IsShown(orient); }
+
+#ifdef __WXMSW__
+    WXDWORD   MSWGetStyle(long flags, WXDWORD *exstyle = nullptr) const override;
+    WXLRESULT MSWWindowProc(WXUINT msg, WXWPARAM wParam, WXLPARAM lParam) override;
+
+protected:
+    // As the kit TextCtrl: the window's own background, never a colour passed in.
+    WXHBRUSH DoMSWControlColor(WXHDC pDC, wxColour colBg, WXHWND hWnd) override;
+
+private:
+    void sync();
+    void scroll(int orient, wxEventType type, int pos);
+
+    int  m_first { -1 }; // last reported first visible line, line count and lines that fit
+    int  m_count { -1 };
+    int  m_page { -1 };
+    bool m_syncing { false };
+#endif
+
+private:
+    MD3ScrollBars m_bars { this };
+};
 
 // The kit multi-line text field. Every stock multi-line wxTextCtrl view in the
 // GUI (changelogs, logs, JSON dumps, diffs, scripts, comments) now lives inside

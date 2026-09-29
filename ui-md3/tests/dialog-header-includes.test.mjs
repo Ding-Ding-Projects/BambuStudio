@@ -107,6 +107,12 @@ test('every source that builds an MD3 table reaches its header', async () => {
   assert.deepEqual(missing, [], 'these use an MD3 table with no include path to Widgets/MD3DataView.hpp');
 });
 
+test('every source that builds a TextAreaEditor reaches its header', async () => {
+  const { users, missing } = await unreached(path.join(slic3rDir, 'GUI', 'Widgets', 'TextArea.hpp'), ['TextAreaEditor']);
+  assert.ok(users >= 3, `expected TextAreaEditor in the text area, the regex builder and the settings fields, found ${users} files`);
+  assert.deepEqual(missing, [], 'these use TextAreaEditor with no include path to Widgets/TextArea.hpp');
+});
+
 test('every source that builds an MD3ScrolledWindow reaches its header', async () => {
   const { users, missing } = await unreached(SCROLLED_HEADER, ['MD3ScrolledWindow']);
   assert.ok(users > 50, `expected MD3ScrolledWindow across the GUI, found ${users} files`);

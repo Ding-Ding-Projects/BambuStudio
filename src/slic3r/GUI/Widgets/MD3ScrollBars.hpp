@@ -5,6 +5,9 @@
 #include <wx/gdicmn.h>
 #include <wx/window.h>
 
+#include <functional>
+#include <utility>
+
 // The kit scrollbar (ui-md3 design-system/tokens/base.css) for a window that
 // would otherwise show the Windows ones: a 10px strip with no track fill,
 // holding a fully rounded thumb inset 2px, OutlineVariant at rest and Outline
@@ -58,6 +61,12 @@ public:
     // content and every wxEVT_SCROLLWIN_* handler still hears about it.
     void SendScroll(int orient, wxEventType type, int pos = 0);
 
+    // For an owner without a wx scroll helper (a multi-line text box scrolls
+    // its Windows edit control itself): the strip's drags and pages go here,
+    // as the same wxEVT_SCROLLWIN_* type and position, instead of as an event.
+    using ScrollHandler = std::function<void(int orient, wxEventType type, int pos)>;
+    void SetScrollHandler(ScrollHandler handler) { m_handler = std::move(handler); }
+
 #ifdef __WXMSW__
     void SetScrollbar(int orient, int pos, int thumb, int range, bool refresh);
     void SetScrollPos(int orient, int pos, bool refresh);
@@ -110,7 +119,8 @@ private:
     void release(bool release_capture, bool notify);
     void set_hover(int orient);
 
-    wxWindow *m_owner;
+    wxWindow     *m_owner;
+    ScrollHandler m_handler;
     Bar       m_vbar;
     Bar       m_hbar;
     int       m_reserved_v { 0 };   // strip widths reserved by the last WM_NCCALCSIZE
@@ -125,7 +135,8 @@ private:
     bool      m_releasing { false };
 #else
 private:
-    wxWindow *m_owner;
+    wxWindow     *m_owner;
+    ScrollHandler m_handler;
 #endif // __WXMSW__
 };
 

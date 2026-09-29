@@ -124,6 +124,46 @@ test('MD3ScrolledWindow, the kit ListBox and the MD3 tables route every native s
     'MD3ScrolledWindow creates its window through Create()');
 });
 
+test('multi-line text boxes draw the kit scrollbar through TextAreaEditor', async () => {
+  // A multi-line wxTextCtrl is a Windows edit control, which sets and draws its
+  // own bar; TextAreaEditor creates it without one and draws the kit strip from
+  // its line counts.
+  const offenders = [];
+  for (const file of await sources(gui)) {
+    const rel = path.relative(gui, file).replaceAll('\\', '/');
+    const text = code(await readFile(file, 'utf8'));
+    for (const m of text.matchAll(/\bnew\s+wxTextCtrl\s*\(([^;]*);/g))
+      if (m[1].includes('wxTE_MULTILINE')) offenders.push(rel);
+    if (/Builder<wxTextCtrl>/.test(text) && /wxTE_MULTILINE/.test(text)) offenders.push(`${rel} (builder)`);
+  }
+  assert.deepEqual(offenders, [], 'a multi-line text box must be a TextAreaEditor (or a TextArea)');
+  assert.match(code(await read('Widgets', 'TextArea.cpp')), /m_text = new TextAreaEditor\(/, 'TextArea hosts a TextAreaEditor');
+  assert.match(code(await read('Field.cpp')), /static Builder<TextAreaEditor> builder1;/, 'the settings G-code fields are TextAreaEditors');
+  const regex = code(await read('Widgets', 'RegexBuilderPopup.cpp'));
+  assert.match(regex, /m_sample = new TextAreaEditor\(/);
+  assert.match(regex, /m_results = new TextAreaEditor\(/);
+
+  const editor = code(await read('Widgets', 'TextArea.cpp'));
+  const header = code(await read('Widgets', 'TextArea.hpp'));
+  for (const name of ['MSWGetStyle', 'MSWWindowProc', 'DoMSWControlColor'])
+    assert.match(header, new RegExp(`\\b${name}\\([^;]*\\)[^;]*override;`), `TextAreaEditor overrides ${name}`);
+  assert.match(editor, /MD3ScrollBars::WithoutNativeBars\(wxTextCtrl::MSWGetStyle\(flags, exstyle\)\)/, 'no WS_VSCROLL or WS_HSCROLL');
+  assert.match(editor, /if \(flags & \(wxTE_RICH \| wxTE_RICH2\)\)\s*style &= ~static_cast<WXDWORD>\(0x00002000\);/,
+    'a rich edit control loses ES_DISABLENOSCROLL, which would bring its bar back');
+  assert.doesNotMatch(editor, /TextAreaEditor::TextAreaEditor\([^)]*\)\s*:\s*wxTextCtrl\(/, 'the window is created through Create()');
+  for (const message of ['EM_GETFIRSTVISIBLELINE', 'EM_GETLINECOUNT', 'EM_GETRECT'])
+    assert.match(editor, new RegExp(`::SendMessage\\(hwnd, ${message}`), `the strip reads ${message}`);
+  assert.match(editor, /m_bars\.SetScrollbar\(wxVERTICAL, first, page, count > page \? count : 0, true\);/);
+  assert.match(editor, /::SendMessage\(hwnd, EM_LINESCROLL, 0, pos - first\);/, 'a drag scrolls the edit control by lines');
+  assert.match(editor, /EM_SCROLL, type == wxEVT_SCROLLWIN_PAGEUP \? SB_PAGEUP : SB_PAGEDOWN/, 'a held track pages the edit control');
+  assert.match(editor, /m_bars\.SetScrollHandler\(/);
+  assert.match(editor, /m_bars\.Before\(msg, wParam, lParam, result\)/);
+  assert.match(editor, /m_bars\.After\(msg, wParam, lParam, result\)/);
+  assert.match(editor, /m_bars\.Abandon\(\)/);
+  const bars = code(await read('Widgets', 'MD3ScrollBars.cpp'));
+  assert.match(bars, /if \(m_handler\) \{\s*m_handler\(orient, type, pos\);\s*return;\s*\}/, 'a scroll handler takes the drag and page instead of an event');
+});
+
 test('code that sized a scrolled window for the Windows bar sizes it for the kit bar', async () => {
   for (const file of ['FilamentPickerDialog.cpp', 'TextureImportDialog.cpp', path.join('Widgets', 'RegexBuilderPopup.cpp')]) {
     const text = code(await read(file));

@@ -7,6 +7,7 @@
 #include "Label.hpp"
 #include "MaterialIcon.hpp"
 #include "StateColor.hpp"
+#include "TextArea.hpp"
 
 #include "slic3r/GUI/I18N.hpp"
 
@@ -396,7 +397,7 @@ void RegexBuilderPopup::build()
     // wxTE_RICH2 for SetStyle() match highlighting (repo precedent:
     // UnsavedChangesDialog). Multiline hints are unsupported on MSW, hence the
     // label above instead of a hint.
-    m_sample = new wxTextCtrl(m_test_panel, wxID_ANY, wxEmptyString, wxDefaultPosition,
+    m_sample = new TextAreaEditor(m_test_panel, wxID_ANY, wxEmptyString, wxDefaultPosition,
                               wxSize(contentW, FromDIP(84)),
                               wxTE_MULTILINE | wxTE_RICH2 | wxBORDER_NONE);
     m_sample->SetFont(Label::Body_13);
@@ -415,7 +416,7 @@ void RegexBuilderPopup::build()
     matches_lbl->SetForegroundColour(on_var);
     test_sizer->Add(matches_lbl, 0, wxTOP, gap);
 
-    m_results = new wxTextCtrl(m_test_panel, wxID_ANY, wxEmptyString, wxDefaultPosition,
+    m_results = new TextAreaEditor(m_test_panel, wxID_ANY, wxEmptyString, wxDefaultPosition,
                                wxSize(contentW, FromDIP(110)),
                                wxTE_MULTILINE | wxTE_READONLY | wxBORDER_NONE);
     m_results->SetFont(Label::Mono_11);

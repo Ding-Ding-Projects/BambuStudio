@@ -64,6 +64,10 @@ int MD3ScrollBars::Thickness(const wxWindow *ref)
 
 void MD3ScrollBars::SendScroll(int orient, wxEventType type, int pos)
 {
+    if (m_handler) {
+        m_handler(orient, type, pos);
+        return;
+    }
     wxScrollWinEvent event(type, pos, orient);
     event.SetEventObject(m_owner);
     m_owner->HandleWindowEvent(event);
