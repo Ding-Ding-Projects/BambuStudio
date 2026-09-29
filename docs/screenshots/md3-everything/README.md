@@ -76,6 +76,24 @@ stayed English only (column titles and a section header, fixed in `87ec5c44c`).
 | `dialog-retraction-test--bilingual_en_yue_HK-light-comfortable--before.png` | Retraction test | `bilingual_en_yue_HK-light-comfortable` |
 | `dialog-version-history--bilingual_en_yue_HK-light-comfortable--before.png` | Version history | `bilingual_en_yue_HK-light-comfortable` |
 
+## Release md3-v148 captures (2026-09-29)
+
+Taken by `scripts/md3/sweep-dialogs.py` from the unmodified `md3-v148` release package: nothing was
+added to its payload, and every import of its executables and DLLs resolves in the package or in
+Windows (`scripts/ci/check_payload_imports.py`).
+
+| Field | Value |
+| --- | --- |
+| Source commit | `3a935ed9f` (release `md3-v148`) |
+| Package | `BambuStudioMD3-2.8.4147-full.nupkg`, SHA-1 `ffb45f1e5662f604753c6cbfd1fb148435e53594` as listed in `RELEASES` |
+| Executable | `bambu-studio.exe` sha256 `68621a2a1b399327d327dcd63775370aaad61a66319c8d8f625991dc866a3c09`, `BambuStudio.dll` sha256 `91cfa047d572b467f11e4c458f959dab61ecbb11835d3f781201a1df06431d81` |
+| Capture route | hidden Win32 desktop, `PrintWindow` of the dialog, real GPU driver |
+| Display scale | 100% |
+
+| File | Dialog | Tuple |
+| --- | --- | --- |
+| `dialog-check-for-update--bilingual_en_yue_HK-light-comfortable--before.png` | Newest-version message (before CJ-020) | `bilingual_en_yue_HK-light-comfortable` |
+
 ## Layout-probe dumps
 
 `probe/<tuple>--<before|after>.jsonl`, one per main-frame idle dump plus one per opened dialog,
