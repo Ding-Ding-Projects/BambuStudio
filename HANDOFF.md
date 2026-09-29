@@ -121,6 +121,14 @@ still to verify.
   (`ui-md3/tests/wx-narrow-literals.test.mjs` now scans for them), and its bilingual section header
   read "SETTINGS · 設", because the header measured itself with GDI and one whole-string extent but
   paints with GDI+ glyph by glyph (CJ-025).
+- `md3-v155` (`c7309b889`, 2026-09-29, package SHA-1 `00332a4f71ff225d1efc073bb3fb2b9243778bc1`, matching
+  its `RELEASES`) did not verify CJ-021: bilingual Preferences > General still scrolls sideways, its rows
+  681 px wide in a 560 px page. The fit rules of `2e80091ef` never ran on the funny-level and emoji rows,
+  whose helpers built their own "English · 廣東話" line; `dd95aace8` hands those pairs to the bilingual
+  registry (`ui-md3/tests/preferences-funny-rows-bilingual.test.mjs`). The same commit fixes the layout
+  probe's row judge, which counted every sizer border twice, so every `oversubscribed` figure taken before
+  it is inflated (`ui-md3/tests/layout-probe-row-judge.test.mjs`); the bottom button row it flagged in
+  bilingual Preferences fits exactly (783 of 783 px).
 - Privacy of the capture evidence (2026-09-29): capture profiles had lived under the Windows user
   profile, so two public Config profiles captures (`md3-v143`, `md3-v150`, added in `e92b7fa2d`) showed
   the account name in the data folder, and twelve layout dumps from 2026-09-06/07 recorded it in the

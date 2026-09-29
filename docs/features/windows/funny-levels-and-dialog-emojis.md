@@ -85,8 +85,12 @@ notice fires once per configuration directory. It never gates startup or steals 
   `LanguageModeService`, so the next `translate_mode()` call and the next dialog use the new
   value without a restart. On startup `GUI_App` loads all three values right after the language
   mode is configured.
-- Labels honor the language modes: English, Cantonese, and bilingual (compact
-  `English · 廣東話`) presentation via `render_localized_text_compact()`.
+- Labels honor the language modes: English, Cantonese, and bilingual. In bilingual mode the row
+  helpers record each English and Cantonese pair in the bilingual registry and show the English;
+  the bilingual decorator then pairs the label like every other one, on one line
+  (`English · 廣東話`) where the pair fits, English over Cantonese where the row wraps, and with the
+  Cantonese in the tooltip otherwise. Building the one-line pair in the rows themselves ran them
+  past the scrolling page and pushed each row's slider out of sight (clipping inventory CJ-021).
 
 ## Failure modes
 

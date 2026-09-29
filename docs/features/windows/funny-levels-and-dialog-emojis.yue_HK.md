@@ -1,6 +1,6 @@
 ---
 translation-of: funny-levels-and-dialog-emojis.md
-source-sha256: c0fcb5edd13e2119fa8876ca6b018bad50d652e2571ecf3978ab678c428da83c
+source-sha256: 72c3a9ed3b6262642674eafcba8d91785d8ed345aae76636b0b2a1539b5ec353
 review-status: agent-drafted
 ---
 
@@ -60,7 +60,7 @@ review-status: agent-drafted
 - 每行顯示 `Level N of 5`、一條 **來源行**（`Stored in BambuStudio.conf as N.` 或 `Not stored yet; using the compiled default 2.`）和一個 **此項改變什麼？** 文字按鈕，要求時顯示完整說明（漸進式披露）。標題清楚地陳述級別設定所有訊息嘅樣式，包括錯誤、警告和破壞性確認。
 - 鍵刻意 **未** 由 `AppConfig::set_defaults()` 播種。缺少鍵意味著「編譯預設值有效」，呢個係使來源行真實嘅原因；鍵僅喺用戶移動滑桿或翻轉開關時寫入。
 - 變更即時套用：滑桿寫入 AppConfig、儲存並更新處理中嘅 `LanguageModeService`，因此下一個 `translate_mode()` 呼叫和下一個對話框使用新值而唔需重新啟動。啟動時 `GUI_App` 喺語言模式配置後立即加載所有三個數值。
-- 標籤尊重語言模式：英文、廣東話和雙語（緊湊 `English · 廣東話`）呈現通過 `render_localized_text_compact()`。
+- 標籤跟足語言模式：英文、廣東話同雙語。雙語模式下，每行嘅 helper 將英文同粵語嗰一對記入雙語登記表，自己淨係顯示英文；之後由雙語裝飾器好似處理其他標籤咁配對：夠位就一行（`English · 廣東話`），嗰行會換行就英文喺上粵語喺下，唔夠位就將粵語放入工具提示。以前由呢幾行自己砌一行配對，會撐出捲動頁面，將每行嘅滑桿推出視線以外（版面裁剪清單 CJ-021）。
 
 ## 故障模式
 
