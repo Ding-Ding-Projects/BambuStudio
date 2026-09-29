@@ -27,6 +27,7 @@
 #include <wx/wfstream.h>
 #include <wx/zipstrm.h>
 
+#include <algorithm>
 #include <chrono>
 
 namespace Slic3r::GUI {
@@ -147,8 +148,10 @@ ConfigProfilesDialog::ConfigProfilesDialog(wxWindow *parent)
     apply_theme();
     refresh_profiles();
     Bind(wxEVT_TIMER, &ConfigProfilesDialog::poll_operation, this);
-    SetMinSize(FromDIP(wxSize(680, 640)));
-    SetSize(FromDIP(wxSize(720, 700)));
+    // Never smaller than the content needs, the profile list's rows included.
+    const wxSize need = GetSizer()->CalcMin() + (GetSize() - GetClientSize());
+    SetMinSize(wxSize(std::max(FromDIP(680), need.GetWidth()), std::max(FromDIP(640), need.GetHeight())));
+    SetSize(wxSize(std::max(FromDIP(720), need.GetWidth()), std::max(FromDIP(700), need.GetHeight())));
     CenterOnParent();
     MD3DialogCaption::FinishChrome(this);
 }
@@ -195,6 +198,11 @@ void ConfigProfilesDialog::create_ui()
     m_profile_list->AppendTextColumn(_L("Data folder"), wxDATAVIEW_CELL_INERT, FromDIP(360));
     wxGetApp().UpdateDVCDarkUI(m_profile_list); // native header follows the theme
     m_profile_list->Bind(wxEVT_DATAVIEW_SELECTION_CHANGED, [this](wxDataViewEvent &) { update_buttons(); });
+    // A data view asks for almost no height of its own, so the list took only
+    // what the text above it left over: one row in English, and in bilingual
+    // mode (taller, stacked text) half a row cut through its middle. Keep room
+    // for the header and four rows; the dialog grows to hold it instead.
+    m_profile_list->SetMinSize(wxSize(-1, FromDIP(150)));
     list_sizer->Add(m_profile_list, 1, wxEXPAND | wxALL, FromDIP(8));
 
     auto *profile_actions = new wxBoxSizer(wxHORIZONTAL);
