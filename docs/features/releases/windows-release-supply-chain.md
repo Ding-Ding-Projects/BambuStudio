@@ -32,6 +32,32 @@ checks rather than Actions test jobs. The committed local checks remain availabl
 manual release or before accepting a candidate build. A workflow build still fails on compiler,
 dependency, SBOM, or Squirrel packaging failures.
 
+## Payload DLLs
+
+`BambuStudio.dll` loads OpenCascade (`TK*.dll`), FFmpeg (`avcodec-61.dll`, `avutil-59.dll`,
+`swscale-8.dll`, `swresample-5.dll`), GMP and MPFR, FreeType and `WebView2Loader.dll`, and both it
+and the `bambu-studio.exe` launcher use the Visual C++ runtime (`MSVCP140`, `VCRUNTIME140`,
+`CONCRT140`). All of them must ship in the payload:
+
+- `bambustudio_copy_dlls` (top-level `CMakeLists.txt`) copies the dependency DLLs from the dependency
+  prefix, and `src/CMakeLists.txt` installs the list it returns. It is called for multi-config
+  generators (Visual Studio) and single-config ones (Ninja, which the workflow uses) alike. Release
+  `md3-v143` was built while only the Visual Studio branch called it: its payload held
+  `BambuStudio.dll` alone, `LoadLibrary` failed with error 126 (a dependency not found), and the
+  launcher exited with -1 before the app could write a log line.
+- `InstallRequiredSystemLibraries` installs the Visual C++ runtime beside the app (app-local
+  deployment), so a Windows machine without the VC++ redistributable can start it.
+- The step "Verify the payload carries every DLL the app imports" runs
+  `scripts/ci/check_payload_imports.py` on `install-dir` before anything is packaged. It reads the
+  import and delay-import tables of the launcher and `BambuStudio.dll`, follows every payload DLL they
+  pull in, and fails the build when an imported DLL is neither in the payload nor a Windows system DLL.
+  The Visual C++ runtime counts as payload, not as Windows. Run it locally on any unpacked payload:
+  `py -3 scripts/ci/check_payload_imports.py <payload-dir>`; on the `md3-v143` payload it lists 24
+  missing DLLs.
+
+The launcher also records its early decisions in `%TEMP%\bbs-launcher-trace.log` (OpenGL check, Mesa
+choice, `BambuStudio.dll` load result), which is where a start that ends before logging can be read.
+
 ## CycloneDX payload inventory
 
 `scripts/ci/New-WindowsCycloneDxSbom.ps1` emits `BambuStudioMD3.cdx.json` as CycloneDX 1.6. Every

@@ -186,6 +186,22 @@ jobs:
               throw "Verifying the installed English override catalog failed with exit code $LASTEXITCODE."
           }
 
+      # The payload must start on a machine that has only Windows: every DLL
+      # the launcher and BambuStudio.dll import, and every payload DLL they pull
+      # in, is in the payload or is a Windows system DLL; the Visual C++ runtime
+      # counts as payload. md3-v143 shipped without its OpenCascade, FFmpeg, GMP
+      # and VC++ runtime DLLs, and its launcher exited with -1 before logging.
+      - name: Verify the payload carries every DLL the app imports
+        if: inputs.os == 'windows-latest'
+        working-directory: ${{ github.workspace }}
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          python .\scripts\ci\check_payload_imports.py '${{ github.workspace }}\install-dir'
+          if ($LASTEXITCODE -ne 0) {
+              throw "The payload is missing DLLs the app imports (exit $LASTEXITCODE)."
+          }
+
       # Stage the Mesa llvmpipe software-OpenGL fallback into the payload's
       # mesa/ subfolder before SBOM generation, the portable zip, and Squirrel
       # packaging. The app copies these DLLs beside bambu-studio.exe and

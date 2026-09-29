@@ -1,6 +1,6 @@
 ---
 translation-of: windows-release-supply-chain.md
-source-sha256: 7a4545bbae05e9ec5fc995a402780d0592a7d66a5a316153cda23fa0e7f4a75a
+source-sha256: 738602d2acd8c2c536b3c2ca04342c801b3c0a103038f1db827d7bc3f2344b68
 review-status: agent-drafted
 ---
 
@@ -21,6 +21,16 @@ release 工作會喺發佈之前立即解析當前預設分支嘅頂端。只有
 可重用嘅構建會解析或重新構建依賴快取、配置同埋安裝生產原生 Release 負載、添加哈希釘選嘅 Mesa 軟件 OpenGL 後備、生成一個 CycloneDX 1.6 清單、並用承諾嘅 `scripts/windows/Invoke-SquirrelPackage.ps1` 打包負載。Squirrel.Windows 2.0.1 只係喺未被快取嗰陣先至從官方 NuGet 扁平容器 URL 下載，而且佢嘅軟件包 SHA-256 會喺提取前被檢查。
 
 當前工作流會刻意將正確性同埋 UI 證據檢查保留為本地 release 操作員檢查，而唔係 Actions 測試工作。承諾嘅本地檢查依然可用，同埋會喺手動 release 或接受一個候選構建之前執行。一個工作流構建仍然會喺編譯器、依賴、SBOM 或 Squirrel 軟件包失敗時失敗。
+
+## 負載 DLL
+
+`BambuStudio.dll` 會載入 OpenCascade (`TK*.dll`)、FFmpeg (`avcodec-61.dll`、`avutil-59.dll`、`swscale-8.dll`、`swresample-5.dll`)、GMP 同埋 MPFR、FreeType 同埋 `WebView2Loader.dll`，同埋佢同埋 `bambu-studio.exe` 啟動器都會用 Visual C++ 執行階段(`MSVCP140`、`VCRUNTIME140`、`CONCRT140`)。呢啲都必須隨附喺負載裏面：
+
+- `bambustudio_copy_dlls`(頂層 `CMakeLists.txt`)會從依賴項字首複製依賴項 DLL，而 `src/CMakeLists.txt` 會安裝佢返回嘅清單。無論係 multi-config 產生器(Visual Studio)定係 single-config 嘅(Ninja，就係工作流用嗰個)，都會被調用。Release `md3-v143` 就係喺得返 Visual Studio 分支先至調用佢嗰陣構建嘅：佢嘅負載得返 `BambuStudio.dll` 而已，`LoadLibrary` 失敗咗，錯誤 126(缺少一個依賴項)，啟動器喺應用寫到日誌之前就退出咗，返回碼係 -1。
+- `InstallRequiredSystemLibraries` 會喺應用旁邊安裝 Visual C++ 執行階段(應用本地部署)，所以一部 Windows 機器就算冇 VC++ 可轉散發套件都能夠啟動佢。
+- "Verify the payload carries every DLL the app imports" 呢一步會執行 `scripts/ci/check_payload_imports.py` 喺 `install-dir`，喺任何嘢被打包之前。佢會讀取啟動器同埋 `BambuStudio.dll` 嘅匯入同埋延遲匯入表，跟蹤每一個負載 DLL 佢哋拉入嘅，當一個匯入嘅 DLL 唔喺負載度都唔係 Windows 系統 DLL 嗰陣，工作流就會失敗。Visual C++ 執行階段計作負載，唔係作為 Windows。喺任何未打包嘅負載上本地執行：`py -3 scripts/ci/check_payload_imports.py <payload-dir>`；喺 `md3-v143` 負載上佢列出 24 個缺失 DLL。
+
+啟動器亦會喺 `%TEMP%\bbs-launcher-trace.log` 記錄佢嘅早期決定(OpenGL 檢查、Mesa 選擇、`BambuStudio.dll` 載入結果)，呢個係喺啟動失敗得於記錄系統開始之前時，可以讀取資訊嘅地方。
 
 ## CycloneDX 負載清單
 

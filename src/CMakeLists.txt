@@ -285,6 +285,18 @@ if (WIN32)
             COMMENT "Symlinking the resources directory into the build tree"
             VERBATIM
         )
+        # Single-config generators (Ninja, which the release workflow uses)
+        # skipped the runtime DLL copy entirely: output_dlls_<config> stayed
+        # empty, install() shipped a payload whose BambuStudio.dll could never
+        # load (OCCT, FFmpeg and GMP missing, LoadLibrary error 126, the
+        # launcher exits with -1). Mirror the multi-config branch.
+        if ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+            bambustudio_copy_dlls(BambuStudioDllsCopy "Debug" "d" output_dlls_Debug)
+        elseif ("${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo")
+            bambustudio_copy_dlls(BambuStudioDllsCopy "RelWithDebInfo" "" output_dlls_RelWithDebInfo)
+        else ()
+            bambustudio_copy_dlls(BambuStudioDllsCopy "Release" "" output_dlls_Release)
+        endif ()
     endif ()
 
 
@@ -363,6 +375,12 @@ if (WIN32)
         install(TARGETS BambuStudio_app_gui RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}")
     endif ()
     install(FILES ${output_dlls_${build_type}} DESTINATION "${CMAKE_INSTALL_PREFIX}")
+    # Ship the Visual C++ runtime beside the app (app-local deployment): the
+    # launcher and BambuStudio.dll import MSVCP140, VCRUNTIME140 and CONCRT140,
+    # which a Windows machine without the VC++ redistributable does not have.
+    set(CMAKE_INSTALL_SYSTEM_RUNTIME_DESTINATION ".")
+    set(CMAKE_INSTALL_UCRT_LIBRARIES FALSE)
+    include(InstallRequiredSystemLibraries)
 else ()
     if (APPLE)
     else()

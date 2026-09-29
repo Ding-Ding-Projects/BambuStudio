@@ -13,6 +13,14 @@ The `C1041` PDB failure was removed by `6bb896464` (no `/Zi` when `SLIC3R_MSVC_P
 DPI matrix have not been re-checked against `md3-v135`; an isolated install of that package is not yet
 verified.
 
+A direct launch of the `md3-v143` payload exits -1 after 0.2 s: `BambuStudio.dll` fails to load
+(`LoadLibrary` error 126, recorded in `%TEMP%\bbs-launcher-trace.log`) because the Ninja build skipped the
+dependency DLL copy, so the payload held `BambuStudio.dll` alone. With the OpenCascade, FFmpeg, GMP and MPFR
+DLLs added beside it, the same payload starts on a hidden desktop. The build now copies them for Ninja too,
+ships the Visual C++ runtime beside the app, and packaging refuses a payload that misses a DLL
+(`docs/features/releases/windows-release-supply-chain.md`, "Payload DLLs"). Whether the installed
+`0x80070057` exit shares this cause is re-checked on the first release built from that change.
+
 The integrated source includes the fresh reapplication on official Bambu Studio `v02.08.04.57` source
 `f977235e6d736c4c0b650520ac5a5b72cbfe9244`, plus bounded native model observation (`257c700e3`) and exact
 3MF model-state verification (`68d1be871`). The pinned source for the earlier fork features is
