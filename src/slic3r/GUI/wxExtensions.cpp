@@ -665,6 +665,19 @@ wxColourData show_sys_picker_dialog(wxWindow *parent, const wxColourData &clr_da
     return data;
 }
 
+void md3_style_data_view(wxDataViewCtrl *view)
+{
+    view->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
+    view->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+    view->SetFont(::Label::Body_13);
+    view->SetRowHeight(view->FromDIP(32));
+    view->SetAlternateRowColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
+    wxItemAttr header;
+    header.SetTextColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+    header.SetFont(::Label::Head_13);
+    view->SetHeaderAttr(header);
+}
+
 // Both formats occur in the list: "r,g,b,a" from color_to_string() and
 // "#RRGGBB" from older builds.
 static wxColour parse_custom_color(const std::string &text)

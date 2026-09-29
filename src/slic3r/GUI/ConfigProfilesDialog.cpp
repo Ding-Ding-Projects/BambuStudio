@@ -197,6 +197,7 @@ void ConfigProfilesDialog::create_ui()
     m_profile_list->AppendTextColumn(_L("Profile"), wxDATAVIEW_CELL_INERT, FromDIP(180));
     m_profile_list->AppendTextColumn(_L("Data folder"), wxDATAVIEW_CELL_INERT, FromDIP(360));
     wxGetApp().UpdateDVCDarkUI(m_profile_list); // native header follows the theme
+    md3_style_data_view(m_profile_list);
     m_profile_list->Bind(wxEVT_DATAVIEW_SELECTION_CHANGED, [this](wxDataViewEvent &) { update_buttons(); });
     // A data view asks for almost no height of its own, so the list took only
     // what the text above it left over: one row in English, and in bilingual

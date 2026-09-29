@@ -162,6 +162,8 @@ void NotificationCenterPanel::build_ui()
     m_list->AppendTextColumn(_L("Details"), wxDATAVIEW_CELL_INERT, FromDIP(220), wxALIGN_LEFT, wxDATAVIEW_COL_RESIZABLE);
     m_list->AppendTextColumn(_L("Status"), wxDATAVIEW_CELL_INERT, FromDIP(84), wxALIGN_LEFT, wxDATAVIEW_COL_RESIZABLE);
     m_list->AppendTextColumn(_L("Action taken"), wxDATAVIEW_CELL_INERT, FromDIP(120), wxALIGN_LEFT, wxDATAVIEW_COL_RESIZABLE);
+    wxGetApp().UpdateDVCDarkUI(m_list); // native header follows the theme
+    md3_style_data_view(m_list);
     m_list->Bind(wxEVT_DATAVIEW_SELECTION_CHANGED, &NotificationCenterPanel::on_selection_changed, this);
     m_list->Bind(wxEVT_CHAR_HOOK, &NotificationCenterPanel::on_list_key, this);
     root->Add(m_list, 1, wxEXPAND);

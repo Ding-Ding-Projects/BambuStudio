@@ -1,6 +1,6 @@
 ---
 translation-of: README.md
-source-sha256: 5743efcd264100335ac85a978346c60091de96a25d279a7cfc0cc01995aa154c
+source-sha256: 6d4db043c7c7cfca19c719b8e64f0cf4371eb677061363040acfc0aa18e54b2e
 review-status: agent-drafted
 ---
 
@@ -31,6 +31,7 @@ review-status: agent-drafted
   網頁，同點樣檢查發佈套件有冇系統選單。
 - [工具提示](tooltips.md)：每個工具提示都係 Material 純文字工具提示，兩種主題都係，同點樣檢查發佈套件有冇系統工具提示。
 - [對話框同揀選器](dialogs-and-pickers.md)：取代 wxWidgets 內置提示、揀選器、忙碌通知同顏色對話框嘅 Material 對話框、最近使用嘅顏色，同邊啲保留原生。
+- [套件上嘅原生控件](native-controls.md)：停用咗嘅掣嘅提示、網頁嘅通知橫額，同工作區面板嘅分頁、表格、待辦清單同日曆嘅套件替代品，同所有表格共用嘅 Material 樣式。
 
 ## 設計來源
 

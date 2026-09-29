@@ -204,6 +204,7 @@ void ExportDialog::create_ui()
         update_export_enabled();
     });
     wxGetApp().UpdateDVCDarkUI(m_format_list);
+    md3_style_data_view(m_format_list);
     format_sizer->Add(m_format_list, 0, wxEXPAND | wxALL, FromDIP(8));
     m_format_badge_label = new Label(m_format_card, Label::Head_13, wxEmptyString);
     format_sizer->Add(m_format_badge_label, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(14));

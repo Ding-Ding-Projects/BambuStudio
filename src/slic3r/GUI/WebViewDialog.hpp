@@ -41,6 +41,8 @@ class NetworkAgent;
 namespace GUI {
 
 
+class MD3InfoBanner;
+
 class WebViewPanel : public wxPanel
 {
 public:
@@ -262,7 +264,7 @@ private:
     wxMenuItem* m_context_menu;
     wxMenuItem* m_dev_tools;
 
-    wxInfoBar *m_info;
+    MD3InfoBanner *m_info { nullptr };
     wxStaticText* m_info_text;
     int m_cloud_retry_button_id {wxID_NONE};
     wxWebView *m_cloud_failure_browser {nullptr};

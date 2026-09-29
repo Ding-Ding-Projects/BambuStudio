@@ -6,9 +6,14 @@
 
 #include <wx/app.h>
 #include <wx/dcclient.h>
+#include <wx/dcbuffer.h>
 #include <wx/dcgraph.h>
-#include <wx/tipwin.h>
+#include <wx/display.h>
+#include <wx/popupwin.h>
 #include <wx/weakref.h>
+#ifdef __WXMSW__
+#include <dwmapi.h>
+#endif
 #if wxUSE_ACCESSIBILITY
 #include <wx/access.h>
 #endif
@@ -1084,6 +1089,71 @@ WXLRESULT Button::MSWWindowProc(WXUINT nMsg, WXWPARAM wParam, WXLPARAM lParam)
 
 bool Button::AcceptsFocus() const { return canFocus; }
 
+// A disabled window gets no native tooltip, so a disabled Button shows its tip
+// in this popup instead. It is the Material plain tooltip, like the shared
+// native one (GUI_App's style_tooltips_md3): InverseSurface behind InverseOn
+// text in the kit's small font, 8 x 4 DIP of padding, small rounded corners
+// where Windows 11 draws them. wx's wxTipWindow was a pale system box.
+class ButtonDisabledTip : public wxPopupWindow
+{
+public:
+    explicit ButtonDisabledTip(wxWindow *owner) : wxPopupWindow(owner, wxBORDER_NONE)
+    {
+        SetBackgroundStyle(wxBG_STYLE_PAINT);
+        Bind(wxEVT_PAINT, &ButtonDisabledTip::on_paint, this);
+        // Never takes the pointer or the focus from the window under it.
+        Disable();
+#ifdef __WXMSW__
+        const int round_small = 3; // DWMWCP_ROUNDSMALL
+        ::DwmSetWindowAttribute(static_cast<HWND>(GetHWND()), 33 /* DWMWA_WINDOW_CORNER_PREFERENCE */, &round_small,
+                                sizeof(round_small));
+#endif
+    }
+
+    void SetTip(const wxString &text)
+    {
+        if (text == m_text && !m_wrapped.IsEmpty())
+            return;
+        m_text = text;
+        wxClientDC dc(this);
+        dc.SetFont(::Label::Body_12);
+        const wxSize text_size = ::Label::split_lines(dc, FromDIP(280), text, m_wrapped);
+        SetClientSize(text_size + FromDIP(wxSize(16, 8)));
+        Refresh();
+    }
+
+    // Under the pointer like the system tooltip, kept on the pointer's screen.
+    void ShowAt(const wxPoint &pointer)
+    {
+        const wxSize size = GetSize();
+        wxPoint at = pointer + wxPoint(0, FromDIP(20));
+        const int display = wxDisplay::GetFromPoint(pointer);
+        if (display != wxNOT_FOUND) {
+            const wxRect area = wxDisplay(display).GetClientArea();
+            at.x = std::max(area.GetLeft(), std::min(at.x, area.GetRight() - size.x));
+            if (at.y + size.y > area.GetBottom())
+                at.y = pointer.y - size.y - FromDIP(4);
+        }
+        Move(at);
+        if (!IsShown())
+            Show();
+    }
+
+private:
+    void on_paint(wxPaintEvent &)
+    {
+        wxAutoBufferedPaintDC dc(this);
+        dc.SetBackground(wxBrush(StateColor::semantic(MD3::Role::InverseSurface)));
+        dc.Clear();
+        dc.SetFont(::Label::Body_12);
+        dc.SetTextForeground(StateColor::semantic(MD3::Role::InverseOn));
+        dc.DrawLabel(m_wrapped, wxRect(FromDIP(wxPoint(8, 4)), GetClientSize() - FromDIP(wxSize(16, 8))));
+    }
+
+    wxString m_text;
+    wxString m_wrapped;
+};
+
 void Button::EnableTooltipEvenDisabled()
 {
 #if defined(_MSC_VER) || defined(_WIN32)
@@ -1108,18 +1178,15 @@ void Button::OnParentMotion(wxMouseEvent& event)
     {
         if (!tipWindow)
         {
-            tipWindow = new wxTipWindow(this, tip);
-            tipWindow->Bind(wxEVT_DESTROY, [this](wxEvent& event) { this->tipWindow = nullptr;});
-            tipWindow->Enable(false);
+            tipWindow = new ButtonDisabledTip(this);
+            tipWindow->Bind(wxEVT_DESTROY, [this](wxWindowDestroyEvent &event) {
+                this->tipWindow = nullptr;
+                event.Skip();
+            });
         }
 
-        if (tipWindow->GetLabel() != tip)
-        {
-            tipWindow->SetLabel(tip);
-        }
-
-        tipWindow->Position(wxGetMousePosition(), wxSize(0, 0));
-        tipWindow->Popup();
+        tipWindow->SetTip(tip);
+        tipWindow->ShowAt(wxGetMousePosition());
     }
     else
     {
@@ -1145,7 +1212,7 @@ void Button::OnParentLeave(wxMouseEvent& event)
         wxString tip = this->GetToolTipText();
         if (!screen_rect.Contains(pos))
         {
-            tipWindow->Dismiss();
+            tipWindow->Hide();
             delete tipWindow;
             tipWindow = nullptr;
         }

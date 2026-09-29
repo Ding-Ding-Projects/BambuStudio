@@ -91,6 +91,11 @@ std::vector<wxBitmap *> get_extruder_color_icons(bool thin_icon = false, bool ro
 wxBitmap * get_extruder_color_icon(std::string color, std::string label, int icon_width, int icon_height, bool rounded_ring = false);
 wxBitmap * get_extruder_color_icon(std::vector<std::string> colors, bool is_gradient, std::string label, int icon_width, int icon_height);
 std::vector<std::vector<std::string>> read_color_pack(std::vector<std::string> color_pack);
+// The Material table look for a wxDataViewCtrl: the kit body face in OnSurface on
+// SurfaceContainerLowest, a SurfaceContainerLow stripe on every other row, and a
+// header in the kit's small title face and OnSurfaceVariant.
+void md3_style_data_view(wxDataViewCtrl *view);
+
 // The recently used colours (the app config's custom colour list, which the
 // system colour dialog showed as its custom colours), most recent first.
 std::vector<wxColour> recent_custom_colors();

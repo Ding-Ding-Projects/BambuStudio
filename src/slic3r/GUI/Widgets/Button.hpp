@@ -6,7 +6,7 @@
 
 #include <cstdint>
 
-class wxTipWindow;
+class ButtonDisabledTip;
 class Button : public StaticBox
 {
 public:
@@ -85,7 +85,7 @@ private:
     // ellipsis; the layout probe reports it as clipped text.
     bool m_label_truncated = false;
 
-    wxTipWindow* tipWindow = nullptr;
+    ButtonDisabledTip* tipWindow = nullptr;
 
     static const int buttonWidth = 200;
     static const int buttonHeight = 50;

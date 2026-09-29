@@ -12,14 +12,15 @@ namespace Slic3r { namespace GUI {
 TextTabbar::TextTabbar(wxWindow *parent, Align align, int tab_gap)
     : wxControl(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE), m_align(align), m_tab_gap(tab_gap)
 {
-    SetBackgroundColour(*wxWHITE);
+    // The surface it sits on, not a fixed white: a dialog's container or a page.
+    SetBackgroundColour(parent->GetBackgroundColour());
     auto *outer = new wxBoxSizer(wxVERTICAL);
     m_row       = new wxBoxSizer(wxHORIZONTAL);
 
     const int side_border = m_align == Align::Center ? FromDIP(48) : FromDIP(8);
     outer->Add(m_row, wxSizerFlags().Expand().Border(wxLEFT | wxRIGHT, side_border));
     auto *line = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 1));
-    line->SetBackgroundColour(ThemeColor::Grey300);
+    line->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
     outer->Add(line, wxSizerFlags().Expand());
 
     SetSizer(outer);
@@ -97,10 +98,12 @@ void TextTabbar::render()
     for (int i = 0; i < (int) m_labels.size(); ++i) {
         const bool active = (i == m_selection);
         m_labels[i]->SetFont(active ? Label::Head_14 : Label::Body_14);
-        // render() re-runs on every SetSelection()/Rescale(), long after the one-shot UpdateDlgDarkUI
-        // pass — so resolve the accent through darkModeColorFor here or the active underline reverts
-        // to the light-mode green in dark mode.
-        m_underlines[i]->SetBackgroundColour(active ? StateColor::darkModeColorFor(ThemeColor::BrandGreen) : GetBackgroundColour());
+        // Material tabs: the active label and its indicator in Primary, the others in
+        // OnSurfaceVariant. Resolved here, on every SetSelection()/Rescale(), so a theme
+        // change reaches them.
+        m_labels[i]->SetForegroundColour(StateColor::semantic(active ? MD3::Role::Primary : MD3::Role::OnSurfaceVariant));
+        m_labels[i]->SetBackgroundColour(GetBackgroundColour());
+        m_underlines[i]->SetBackgroundColour(active ? StateColor::semantic(MD3::Role::Primary) : GetBackgroundColour());
         m_underlines[i]->Refresh();
     }
     Layout();

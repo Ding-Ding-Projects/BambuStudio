@@ -235,6 +235,13 @@ still to verify.
   `pick_filament_color()` (`wxExtensions`): the Material picker, opaque, with the app config's sixteen recently used
   colours as quick picks; the three `wxColourDialog` sites are gone. `stock-dialogs.test.mjs` refuses the stock
   dialogs; only the developer-only log window stays (compiled out of releases).
+- Native controls (2026-09-29): a disabled kit Button shows its tip in `ButtonDisabledTip` (the Material plain
+  tooltip) instead of `wxTipWindow`; the web panel's cloud-page notice is `MD3InfoBanner` instead of `wxInfoBar`; the
+  Workspace panel uses `TextTabbar` + `wxSimplebook`, `wxDataViewListCtrl` tables, the kit `ListBox` with the new
+  `EnableChecks()`, and `wxGenericCalendarCtrl` in Material colours. `TextTabbar` lost its legacy white, grey and
+  brand green. `md3_style_data_view()` (`wxExtensions`) styles the Workspace tables, Config profiles, Export, Version
+  history and the notification centre. `native-controls.test.mjs` refuses the native classes. Still native with a
+  group box: `wxStaticBoxSizer` in 8 files, the option groups outside settings tabs, and the bed shape page chooser.
 - Closeout cleanup (2026-09-29): the linked worktree of the auto-updater lane
   (`BambuStudio-claude-auto-updater`) and its branch `claude/auto-updater` (`37b3fce78`, contained in `main`, no copy
   on the remote) were removed after an archive of the repository to the maintainer's cloud folder was written and

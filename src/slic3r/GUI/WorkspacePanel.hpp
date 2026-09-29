@@ -10,14 +10,16 @@
 #include <wx/panel.h>
 #include <wx/timer.h>
 
-class wxCalendarCtrl;
-class wxCheckListBox;
-class wxListCtrl;
-class wxNotebook;
+class wxDataViewListCtrl;
+class wxGenericCalendarCtrl;
+class wxSimplebook;
 class wxStaticText;
 class wxTextCtrl;
 
 namespace Slic3r::GUI {
+
+class ListBox;
+class TextTabbar;
 
 struct WorkspaceMemberSelection {
     std::string bundle_id;
@@ -88,13 +90,14 @@ private:
     std::int64_t m_last_reminder_check_utc = 0;
     bool m_timezone_warning_shown = false;
     bool m_dirty = false;
-    wxNotebook *m_sections = nullptr;
+    TextTabbar *m_section_tabs = nullptr;
+    wxSimplebook *m_sections = nullptr;
     wxStaticText *m_overview = nullptr;
-    wxListCtrl *m_files = nullptr;
-    wxCheckListBox *m_checklist = nullptr;
+    wxDataViewListCtrl *m_files = nullptr;
+    ListBox *m_checklist = nullptr;
     wxTextCtrl *m_notes = nullptr;
-    wxCalendarCtrl *m_month = nullptr;
-    wxListCtrl *m_agenda = nullptr;
+    wxGenericCalendarCtrl *m_month = nullptr;
+    wxDataViewListCtrl *m_agenda = nullptr;
 };
 
 } // namespace Slic3r::GUI

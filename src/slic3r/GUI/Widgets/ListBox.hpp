@@ -32,6 +32,13 @@ public:
 
     // Recolor the selected pane to a workspace accent (Preview / Device).
     void SetColorScheme(MD3::ColorScheme scheme);
+
+    // Checkable rows, in place of wxCheckListBox: a Material check box glyph
+    // starts every row. A click on the glyph or the Space key toggles it and
+    // sends wxEVT_CHECKLISTBOX with the row in GetInt(), as wxCheckListBox did.
+    void EnableChecks(bool enable = true);
+    void Check(unsigned index, bool checked = true);
+    bool IsChecked(unsigned index) const { return index < m_checked.size() && m_checked[index] != 0; }
     void Rescale();
 
 protected:
@@ -42,9 +49,15 @@ protected:
 private:
     void onMotion(wxMouseEvent &evt);
     void onLeave(wxMouseEvent &evt);
+    void onLeftDown(wxMouseEvent &evt);
+    void onKey(wxKeyEvent &evt);
+    int  checkWidth() const;
+    void toggle(size_t row);
 
     std::vector<wxString> m_rows;
     int                   m_hover { -1 };
+    std::vector<char>     m_checked;
+    bool                  m_checks { false };
     MD3::ColorScheme      m_scheme { MD3::ColorScheme::Brand };
 };
 

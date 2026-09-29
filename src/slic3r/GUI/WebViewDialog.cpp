@@ -1,6 +1,7 @@
 #include "WebViewDialog.hpp"
 #include "Widgets/TextArea.hpp"
 #include "Widgets/Button.hpp"
+#include "Widgets/Label.hpp"
 #include "Widgets/MD3Menu.hpp"
 
 #include "I18N.hpp"
@@ -64,6 +65,81 @@ std::string extract_web_command(const std::string &payload)
 
 namespace Slic3r {
 namespace GUI {
+
+// The Material banner in place of wxInfoBar, whose generic implementation drew
+// the system's info colour, a system icon and native buttons at the top of the
+// page. It keeps what the panel used: ShowMessage(), Dismiss(), IsShown(), and
+// an action button that sends wxEVT_BUTTON with its id up to the panel.
+class MD3InfoBanner : public wxPanel
+{
+public:
+    MD3InfoBanner(wxWindow *parent, wxWindowID action_id, const wxString &action_label) : wxPanel(parent, wxID_ANY)
+    {
+        SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerHigh));
+        auto *row = new wxBoxSizer(wxHORIZONTAL);
+        // The status glyph is painted into this space by on_paint().
+        row->AddSpacer(FromDIP(16 + kIcon + 12));
+        m_text = new Label(this, Label::Body_14, wxEmptyString, LB_AUTO_WRAP);
+        m_text->SetBackgroundColour(GetBackgroundColour());
+        m_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+        row->Add(m_text, 1, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(12));
+        auto *action = new Button(this, action_label, "", 0, 0, action_id);
+        action->SetVariant(Button::Variant::Text);
+        action->SetName(action_label);
+        row->Add(action, 0, wxALIGN_CENTER_VERTICAL);
+        auto *close = new Button(this, wxEmptyString);
+        close->SetIconButton(Button::IconShape::Circle, FromDIP(36));
+        close->SetGlyph(MaterialIcon::Close, 18);
+        close->SetToolTip(_L("Close"));
+        close->SetName(_L("Close"));
+        close->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { Dismiss(); });
+        row->Add(close, 0, wxALIGN_CENTER_VERTICAL | wxLEFT | wxRIGHT, FromDIP(8));
+        auto *column = new wxBoxSizer(wxVERTICAL);
+        column->Add(row, 0, wxEXPAND | wxTOP | wxBOTTOM, FromDIP(8));
+        // The banner's lower edge.
+        auto *divider = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 1));
+        divider->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
+        column->Add(divider, 0, wxEXPAND);
+        SetSizer(column);
+        Bind(wxEVT_PAINT, &MD3InfoBanner::on_paint, this);
+        Hide();
+    }
+
+    void ShowMessage(const wxString &message, int flags)
+    {
+        const bool warning = (flags & (wxICON_WARNING | wxICON_ERROR)) != 0;
+        m_icon = MaterialIcon::bitmap(this, warning ? MaterialIcon::Warning : MaterialIcon::Info, kIcon,
+                                      StateColor::semantic(warning ? MD3::Role::Error : MD3::Role::Primary));
+        m_text->SetLabel(message);
+        SetName(message);
+        if (!IsShown())
+            Show();
+        GetParent()->Layout();
+        Refresh();
+    }
+
+    void Dismiss()
+    {
+        if (!IsShown())
+            return;
+        Hide();
+        GetParent()->Layout();
+    }
+
+private:
+    static constexpr int kIcon = 20;
+
+    void on_paint(wxPaintEvent &)
+    {
+        wxPaintDC dc(this);
+        if (m_icon.IsOk())
+            dc.DrawBitmap(m_icon, FromDIP(16), (GetClientSize().GetHeight() - m_icon.GetScaledHeight()) / 2, true);
+    }
+
+    Label   *m_text { nullptr };
+    wxBitmap m_icon;
+};
+
     wxDECLARE_EVENT(EVT_RESPONSE_MESSAGE, wxCommandEvent);
 
     wxDEFINE_EVENT(EVT_RESPONSE_MESSAGE, wxCommandEvent);
@@ -211,13 +287,8 @@ WebViewPanel::WebViewPanel(wxWindow *parent)
     panel->SetSizer(panel_sizer);
 #endif //BBL_RELEASE_TO_PUBLIC
     // Create the info panel
-    m_info = new wxInfoBar(this);
     m_cloud_retry_button_id = wxWindow::NewControlId();
-    m_info->AddButton(m_cloud_retry_button_id, _L("Retry"));
-    if (wxWindow *retry_button = m_info->FindWindow(m_cloud_retry_button_id)) {
-        retry_button->SetMinSize(wxSize(FromDIP(44), FromDIP(44)));
-        retry_button->SetName(_L("Retry"));
-    }
+    m_info = new MD3InfoBanner(this, m_cloud_retry_button_id, _L("Retry"));
     Bind(wxEVT_BUTTON, &WebViewPanel::OnCloudPageRetry, this, m_cloud_retry_button_id);
     topsizer->Add(m_info, wxSizerFlags().Expand());
 

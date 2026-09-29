@@ -6,9 +6,13 @@
 #include "NotificationManager.hpp"
 #include "libslic3r/AppConfig.hpp"
 #include "libslic3r/WorkspacePlanner.hpp"
+#include "wxExtensions.hpp"
 #include "Widgets/Button.hpp"
 #include "Widgets/Label.hpp"
+#include "Widgets/ListBox.hpp"
+#include "Widgets/StateColor.hpp"
 #include "Widgets/TextArea.hpp"
+#include "Widgets/TextTabbar.hpp"
 
 #include <algorithm>
 #include <ctime>
@@ -17,12 +21,11 @@
 #include <optional>
 #include <sstream>
 
-#include <wx/calctrl.h>
-#include <wx/checklst.h>
+#include <wx/dataview.h>
 #include <wx/filedlg.h>
-#include <wx/listctrl.h>
+#include <wx/generic/calctrlg.h>
 #include <wx/msgdlg.h>
-#include <wx/notebook.h>
+#include <wx/simplebook.h>
 #include <wx/sizer.h>
 #include <wx/stattext.h>
 #include <wx/stdpaths.h>
@@ -137,6 +140,9 @@ WorkspacePanel::~WorkspacePanel()
 
 void WorkspacePanel::create_ui()
 {
+    // The Material surface, and kit controls throughout: the native tab control,
+    // report lists, check list and month calendar drew the Windows look.
+    SetBackgroundColour(StateColor::semantic(MD3::Role::Surface));
     auto *root = new wxBoxSizer(wxVERTICAL);
     auto *actions = new wxBoxSizer(wxHORIZONTAL);
     const auto button = [this, actions](const wxString &label, void (WorkspacePanel::*action)()) {
@@ -149,8 +155,20 @@ void WorkspacePanel::create_ui()
     button(_L("Save workspace"), &WorkspacePanel::choose_save);
     root->Add(actions, 0, wxEXPAND | wxALL, FromDIP(4));
 
-    m_sections = new wxNotebook(this, wxID_ANY);
-    auto *overview_page = new wxPanel(m_sections);
+    m_section_tabs = new TextTabbar(this, TextTabbar::Align::Left);
+    m_sections = new wxSimplebook(this, wxID_ANY);
+    m_sections->SetBackgroundColour(GetBackgroundColour());
+    // Pages take the panel's surface before their children copy it.
+    const auto make_page = [this]() {
+        auto *page = new wxPanel(m_sections);
+        page->SetBackgroundColour(GetBackgroundColour());
+        return page;
+    };
+    const auto add_section = [this](wxWindow *page, const wxString &label) {
+        m_sections->AddPage(page, label);
+        m_section_tabs->AddTab(label);
+    };
+    auto *overview_page = make_page();
     auto *overview_sizer = new wxBoxSizer(wxVERTICAL);
     m_overview = new Label(overview_page, wxEmptyString);
     overview_sizer->Add(m_overview, 0, wxALL, FromDIP(12));
@@ -166,14 +184,17 @@ void WorkspacePanel::create_ui()
     overview_sizer->Add(preferences, 0, wxALL, FromDIP(8));
     preferences->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { edit_preferences(); });
     overview_page->SetSizer(overview_sizer);
-    m_sections->AddPage(overview_page, _L("Overview"));
+    add_section(overview_page, _L("Overview"));
 
-    auto *files_page = new wxPanel(m_sections);
+    auto *files_page = make_page();
     auto *files_sizer = new wxBoxSizer(wxVERTICAL);
-    m_files = new wxListCtrl(files_page, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_REPORT | wxLC_SINGLE_SEL);
-    m_files->InsertColumn(0, _L("Member"));
-    m_files->InsertColumn(1, _L("Project 3MF"));
-    m_files->InsertColumn(2, _L("Editable sources"));
+    m_files = new wxDataViewListCtrl(files_page, wxID_ANY, wxDefaultPosition, wxDefaultSize,
+                                     wxDV_SINGLE | wxDV_ROW_LINES | wxBORDER_NONE);
+    m_files->AppendTextColumn(_L("Member"), wxDATAVIEW_CELL_INERT, FromDIP(200), wxALIGN_LEFT, wxDATAVIEW_COL_RESIZABLE);
+    m_files->AppendTextColumn(_L("Project 3MF"), wxDATAVIEW_CELL_INERT, FromDIP(260), wxALIGN_LEFT, wxDATAVIEW_COL_RESIZABLE);
+    m_files->AppendTextColumn(_L("Editable sources"), wxDATAVIEW_CELL_INERT, FromDIP(140), wxALIGN_LEFT, wxDATAVIEW_COL_RESIZABLE);
+    wxGetApp().UpdateDVCDarkUI(m_files); // native header follows the theme
+    md3_style_data_view(m_files);
     files_sizer->Add(m_files, 1, wxEXPAND | wxALL, FromDIP(8));
     auto *file_actions = new wxBoxSizer(wxHORIZONTAL);
     auto *add_project = new Button(files_page, _L("Add project 3MF"));
@@ -185,21 +206,20 @@ void WorkspacePanel::create_ui()
     add_project->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { add_member(); });
     add_editable->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { add_source(); });
     open_project->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { open_selected_member(); });
-    m_files->Bind(wxEVT_LIST_ITEM_ACTIVATED, [this](wxListEvent &event) {
-        for (long selected = m_files->GetNextItem(-1, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
-             selected >= 0;
-             selected = m_files->GetNextItem(-1, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED))
-            m_files->SetItemState(selected, 0, wxLIST_STATE_SELECTED);
-        m_files->SetItemState(event.GetIndex(), wxLIST_STATE_SELECTED, wxLIST_STATE_SELECTED);
+    m_files->Bind(wxEVT_DATAVIEW_ITEM_ACTIVATED, [this](wxDataViewEvent &event) {
+        const int row = m_files->ItemToRow(event.GetItem());
+        if (row == wxNOT_FOUND) return;
+        m_files->SelectRow(static_cast<unsigned>(row));
         open_selected_member();
     });
     files_sizer->Add(file_actions, 0, wxALL, FromDIP(4));
     files_page->SetSizer(files_sizer);
-    m_sections->AddPage(files_page, _L("Files"));
+    add_section(files_page, _L("Files"));
 
-    auto *list_page = new wxPanel(m_sections);
+    auto *list_page = make_page();
     auto *list_sizer = new wxBoxSizer(wxVERTICAL);
-    m_checklist = new wxCheckListBox(list_page, wxID_ANY);
+    m_checklist = new ListBox(list_page, wxID_ANY);
+    m_checklist->EnableChecks();
     list_sizer->Add(m_checklist, 1, wxEXPAND | wxALL, FromDIP(8));
     m_checklist->Bind(wxEVT_CHECKLISTBOX, [this](wxCommandEvent &event) {
         const int index = event.GetInt();
@@ -230,9 +250,9 @@ void WorkspacePanel::create_ui()
     csv_button->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { export_checklist(true); });
     list_sizer->Add(list_actions, 0, wxALL, FromDIP(4));
     list_page->SetSizer(list_sizer);
-    m_sections->AddPage(list_page, _L("Checklist"));
+    add_section(list_page, _L("Checklist"));
 
-    auto *notes_page = new wxPanel(m_sections);
+    auto *notes_page = make_page();
     auto *notes_sizer = new wxBoxSizer(wxVERTICAL);
     // m_notes stays a wxTextCtrl*: it points at the kit TextArea's native
     // editor, so every existing GetValue()/ChangeValue() caller below keeps
@@ -244,18 +264,30 @@ void WorkspacePanel::create_ui()
         m_workspace.notes = utf8(m_notes->GetValue()); m_dirty = true;
     });
     notes_page->SetSizer(notes_sizer);
-    m_sections->AddPage(notes_page, _L("Notes"));
+    add_section(notes_page, _L("Notes"));
 
-    auto *calendar_page = new wxPanel(m_sections);
+    auto *calendar_page = make_page();
     auto *calendar_sizer = new wxBoxSizer(wxVERTICAL);
-    m_month = new wxCalendarCtrl(calendar_page, wxID_ANY);
+    // The generic calendar paints itself in the colours it is given; the native one
+    // was the system month control. Sequential month selection draws its own month
+    // header with arrows instead of a native choice and spin control.
+    m_month = new wxGenericCalendarCtrl(calendar_page, wxID_ANY, wxDefaultDateTime, wxDefaultPosition, wxDefaultSize,
+                                        wxCAL_SEQUENTIAL_MONTH_SELECTION | wxCAL_SHOW_SURROUNDING_WEEKS);
+    m_month->SetFont(::Label::Body_13);
+    m_month->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
+    m_month->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+    m_month->SetHeaderColours(StateColor::semantic(MD3::Role::OnSurfaceVariant), StateColor::semantic(MD3::Role::SurfaceContainerLowest));
+    m_month->SetHighlightColours(StateColor::semantic(MD3::Role::OnPrimary), StateColor::semantic(MD3::Role::Primary));
     calendar_sizer->Add(m_month, 0, wxALL, FromDIP(8));
     m_month->Bind(wxEVT_CALENDAR_SEL_CHANGED, [this](wxCalendarEvent &) { refresh_calendar(); });
-    m_agenda = new wxListCtrl(calendar_page, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_REPORT | wxLC_SINGLE_SEL);
-    m_agenda->InsertColumn(0, _L("Planned print"));
-    m_agenda->InsertColumn(1, _L("Printer"));
-    m_agenda->InsertColumn(2, _L("Start (UTC)"));
-    m_agenda->InsertColumn(3, _L("Status"));
+    m_agenda = new wxDataViewListCtrl(calendar_page, wxID_ANY, wxDefaultPosition, wxDefaultSize,
+                                      wxDV_SINGLE | wxDV_ROW_LINES | wxBORDER_NONE);
+    m_agenda->AppendTextColumn(_L("Planned print"), wxDATAVIEW_CELL_INERT, FromDIP(200), wxALIGN_LEFT, wxDATAVIEW_COL_RESIZABLE);
+    m_agenda->AppendTextColumn(_L("Printer"), wxDATAVIEW_CELL_INERT, FromDIP(140), wxALIGN_LEFT, wxDATAVIEW_COL_RESIZABLE);
+    m_agenda->AppendTextColumn(_L("Start (UTC)"), wxDATAVIEW_CELL_INERT, FromDIP(160), wxALIGN_LEFT, wxDATAVIEW_COL_RESIZABLE);
+    m_agenda->AppendTextColumn(_L("Status"), wxDATAVIEW_CELL_INERT, FromDIP(180), wxALIGN_LEFT, wxDATAVIEW_COL_RESIZABLE);
+    wxGetApp().UpdateDVCDarkUI(m_agenda);
+    md3_style_data_view(m_agenda);
     calendar_sizer->Add(m_agenda, 1, wxEXPAND | wxALL, FromDIP(8));
     auto *calendar_actions = new wxBoxSizer(wxHORIZONTAL);
     const auto calendar_button = [this, calendar_page, calendar_actions](const wxString &label, void (WorkspacePanel::*action)()) {
@@ -270,8 +302,12 @@ void WorkspacePanel::create_ui()
     calendar_button(_L("Export ICS"), &WorkspacePanel::export_calendar);
     calendar_sizer->Add(calendar_actions, 0, wxALL, FromDIP(4));
     calendar_page->SetSizer(calendar_sizer);
-    m_sections->AddPage(calendar_page, _L("Calendar"));
+    add_section(calendar_page, _L("Calendar"));
 
+    m_section_tabs->Bind(wxEVT_CHOICE, [this](wxCommandEvent &event) { m_sections->SetSelection(event.GetInt()); });
+    m_section_tabs->SetSelection(0);
+    m_sections->SetSelection(0);
+    root->Add(m_section_tabs, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(4));
     root->Add(m_sections, 1, wxEXPAND);
     SetSizer(root);
 }
@@ -288,9 +324,11 @@ void WorkspacePanel::refresh_files()
     m_files->DeleteAllItems();
     for (std::size_t index = 0; index < m_workspace.members.size(); ++index) {
         const auto &member = m_workspace.members[index];
-        const long row = m_files->InsertItem(static_cast<long>(index), display(member.name));
-        m_files->SetItem(row, 1, display(member.project_path.filename().u8string()));
-        m_files->SetItem(row, 2, wxString::Format("%zu", member.editable_sources.size()));
+        wxVector<wxVariant> row;
+        row.push_back(wxVariant(display(member.name)));
+        row.push_back(wxVariant(display(member.project_path.filename().u8string())));
+        row.push_back(wxVariant(wxString::Format("%zu", member.editable_sources.size())));
+        m_files->AppendItem(row);
     }
 }
 
@@ -322,18 +360,21 @@ void WorkspacePanel::refresh_calendar()
     const auto slots = Workspace::month_slots(m_workspace, selected.GetYear(), static_cast<int>(selected.GetMonth()) + 1, 0);
     for (std::size_t index = 0; index < slots.size(); ++index) {
         const auto &slot = slots[index];
-        const long row = m_agenda->InsertItem(static_cast<long>(index), display(slot.title));
-        m_agenda->SetItem(row, 1, display(slot.printer_id));
-        m_agenda->SetItem(row, 2, wxDateTime(static_cast<time_t>(slot.start_utc)).ToUTC().FormatISOCombined(' '));
         wxString state = !slot.enabled ? _L("Disabled") : slot.completed ? _L("Completed") : _L("Planned");
         int actual_offset = 0;
         if (!Workspace::zone_offset_at_utc(slot.time_zone, slot.start_utc, actual_offset))
             state += _L("; time zone unavailable");
         else if (actual_offset != slot.utc_offset_minutes)
             state += _L("; saved offset differs");
-        m_agenda->SetItem(row, 3, state);
-        m_agenda->SetItemData(row, static_cast<long>(std::find_if(m_workspace.slots.begin(), m_workspace.slots.end(),
-            [&](const auto &candidate) { return candidate.id == slot.id; }) - m_workspace.slots.begin()));
+        wxVector<wxVariant> row;
+        row.push_back(wxVariant(display(slot.title)));
+        row.push_back(wxVariant(display(slot.printer_id)));
+        row.push_back(wxVariant(wxDateTime(static_cast<time_t>(slot.start_utc)).ToUTC().FormatISOCombined(' ')));
+        row.push_back(wxVariant(state));
+        // The row keeps the slot's index in m_workspace.slots for the actions below.
+        const auto position = std::find_if(m_workspace.slots.begin(), m_workspace.slots.end(),
+            [&](const auto &candidate) { return candidate.id == slot.id; }) - m_workspace.slots.begin();
+        m_agenda->AppendItem(row, static_cast<wxUIntPtr>(position));
     }
 }
 
@@ -558,7 +599,7 @@ std::optional<workspace_fs::path> WorkspacePanel::stage_member_file(const worksp
 
 std::optional<WorkspaceMemberSelection> WorkspacePanel::selected_member() const
 {
-    const long index = m_files->GetNextItem(-1, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
+    const long index = m_files->GetSelectedRow();
     if (index < 0 || static_cast<std::size_t>(index) >= m_workspace.members.size()) return std::nullopt;
     const auto &member = m_workspace.members[static_cast<std::size_t>(index)];
     if (!workspace_fs::is_regular_file(member.project_path)) return std::nullopt;
@@ -617,7 +658,7 @@ void WorkspacePanel::add_member()
 
 void WorkspacePanel::add_source()
 {
-    const long index = m_files->GetNextItem(-1, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
+    const long index = m_files->GetSelectedRow();
     if (index < 0 || static_cast<std::size_t>(index) >= m_workspace.members.size()) return;
     wxFileDialog dialog(this, _L("Add editable source"), wxEmptyString, wxEmptyString,
                         _L("All files (*.*)|*.*"), wxFD_OPEN | wxFD_FILE_MUST_EXIST);
@@ -711,9 +752,9 @@ void WorkspacePanel::add_slot()
 
 void WorkspacePanel::snooze_selected_slot()
 {
-    const long row = m_agenda->GetNextItem(-1, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
-    if (row < 0) return;
-    const long index = m_agenda->GetItemData(row);
+    const int row = m_agenda->GetSelectedRow();
+    if (row == wxNOT_FOUND) return;
+    const long index = static_cast<long>(m_agenda->GetItemData(m_agenda->RowToItem(row)));
     if (index < 0 || static_cast<std::size_t>(index) >= m_workspace.slots.size()) return;
     wxString when;
     if (!ask_text(this, _L("Snooze reminder"), _L("New reminder time, UTC YYYY-MM-DD HH:MM"), when)) return;
@@ -726,9 +767,9 @@ void WorkspacePanel::snooze_selected_slot()
 
 void WorkspacePanel::dismiss_selected_slot()
 {
-    const long row = m_agenda->GetNextItem(-1, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
-    if (row < 0) return;
-    const long index = m_agenda->GetItemData(row);
+    const int row = m_agenda->GetSelectedRow();
+    if (row == wxNOT_FOUND) return;
+    const long index = static_cast<long>(m_agenda->GetItemData(m_agenda->RowToItem(row)));
     if (index >= 0 && static_cast<std::size_t>(index) < m_workspace.slots.size() &&
         Workspace::dismiss_slot_reminder(m_workspace, m_workspace.slots[index].id)) {
         m_dirty = true;
@@ -738,9 +779,9 @@ void WorkspacePanel::dismiss_selected_slot()
 
 void WorkspacePanel::toggle_selected_slot()
 {
-    const long row = m_agenda->GetNextItem(-1, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
-    if (row < 0) return;
-    const long index = m_agenda->GetItemData(row);
+    const int row = m_agenda->GetSelectedRow();
+    if (row == wxNOT_FOUND) return;
+    const long index = static_cast<long>(m_agenda->GetItemData(m_agenda->RowToItem(row)));
     if (index < 0 || static_cast<std::size_t>(index) >= m_workspace.slots.size()) return;
     auto &slot = m_workspace.slots[static_cast<std::size_t>(index)];
     slot.enabled = !slot.enabled;

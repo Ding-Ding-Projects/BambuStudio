@@ -246,6 +246,7 @@ void ProjectHistoryDialog::create_ui()
     m_version_list->Bind(wxEVT_DATAVIEW_SELECTION_CHANGED, &ProjectHistoryDialog::on_selection_changed, this);
     m_version_list->Bind(wxEVT_DATAVIEW_ITEM_ACTIVATED, &ProjectHistoryDialog::on_item_activated, this);
     wxGetApp().UpdateDVCDarkUI(m_version_list); // native header follows the theme
+    md3_style_data_view(m_version_list);
     list_sizer->Add(m_version_list, 1, wxEXPAND | wxALL, FromDIP(8));
 
     // This line is where every failure lands, and a libgit2 error carries its
