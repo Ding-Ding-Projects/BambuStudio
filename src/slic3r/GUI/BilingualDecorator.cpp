@@ -212,6 +212,29 @@ wxWindow *scrolling_page_of(wxWindow *window)
     return nullptr;
 }
 
+// Lays out again every parent of a label that changed, and the scrolling page
+// around it. Laying the top-level window out is not enough: a page keeps its
+// size when its dialog lays out again, so the page's own sizer never runs and
+// the rows under a label that grew taller stay where they were (md3-v155's
+// bilingual Preferences > 3D drew each description's Cantonese line under the
+// next row's title).
+void relayout(const std::unordered_set<wxWindow *> &parents)
+{
+    std::unordered_set<wxWindow *> pages;
+    for (wxWindow *parent : parents) {
+        parent->Layout();
+        wxWindow *page = dynamic_cast<wxScrollHelper *>(parent) != nullptr ? parent : scrolling_page_of(parent);
+        // A scrolled canvas without a sizer sets its virtual size itself;
+        // FitInside would shrink it to its child windows.
+        if (page != nullptr && page->GetSizer() != nullptr)
+            pages.insert(page);
+    }
+    for (wxWindow *page : pages) {
+        page->FitInside();
+        page->Layout();
+    }
+}
+
 bool fits(wxWindow *window, Kind kind, const wxString &current, const wxString &candidate, int growth)
 {
     // An ellipsizing label would cut the Cantonese off instead of growing.
@@ -370,15 +393,14 @@ private:
         });
         if (parents.empty())
             return;
+        relayout(parents);
         if (dialog) {
             settle(top, allow_retry);
-        } else {
-            // A frame re-lays out only what changed: compact labels were only
-            // chosen where their row had room, so their parent is enough.
-            for (wxWindow *parent : parents)
-                parent->Layout();
-            if (taller)
-                top->Layout();
+        } else if (taller) {
+            // A frame otherwise re-lays out only what changed: compact labels
+            // were only chosen where their row had room, so their parents are
+            // enough. A label that grew a line may move the frame's own rows.
+            top->Layout();
         }
         if (recheck_compact(top))
             top->Layout();
@@ -449,8 +471,7 @@ private:
             applied.shown_tooltip = window->GetToolTipText();
             applied.size          = window->GetSize();
         }
-        for (wxWindow *parent : parents)
-            parent->Layout();
+        relayout(parents);
         // A page lays its rows out at its virtual width, which may have grown with
         // the labels; laying the dialog out again never shrinks it back.
         for (const auto &[page, wide] : too_wide)

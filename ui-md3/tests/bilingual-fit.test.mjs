@@ -174,3 +174,19 @@ test('a label that stretches along its row counts the row\'s slack once', () => 
   assert.match(available, /std::min\(own, window->GetEffectiveMinSize\(\)\.GetWidth\(\)\)/);
   assert.match(available, /return from \+ std::max\(0, sizer->GetSize\(\)\.GetWidth\(\) - sizer->GetMinSize\(\)\.GetWidth\(\)\) \+ growth;/);
 });
+
+test('a label that grows taller moves the rows of its page', () => {
+  // md3-v155's bilingual Preferences > 3D drew each stacked description's
+  // Cantonese line under the next row's title: the dialog laid itself out again,
+  // but a page keeps its size then, so the page's own sizer never ran.
+  const relayout = stripComments(source.match(/void relayout\(const std::unordered_set<wxWindow \*> &parents\)[\s\S]*?\n\}/)[0]);
+  assert.match(relayout, /parent->Layout\(\);/, 'every parent of a changed label lays out again');
+  assert.match(relayout, /dynamic_cast<wxScrollHelper \*>\(parent\) != nullptr \? parent : scrolling_page_of\(parent\)/, 'and so does the scrolling page around it');
+  assert.match(relayout, /page->FitInside\(\);\s*page->Layout\(\);/, 'the page takes the height its rows need and moves them');
+  assert.match(relayout, /page != nullptr && page->GetSizer\(\) != nullptr/, 'a canvas that sets its own virtual size is left alone');
+
+  const top = stripComments(source.match(/void decorate_top\(wxWindow \*top, bool allow_retry\)[\s\S]*?\n    \}/)[0]);
+  assert.match(top, /relayout\(parents\);\s*if \(dialog\) \{\s*settle\(top, allow_retry\);/, 'a dialog lays out its pages before it settles');
+  const recheck = stripComments(source.match(/bool recheck_compact\(wxWindow \*top\)[\s\S]*?\n    \}/)[0]);
+  assert.match(recheck, /relayout\(parents\);/, 'labels sent back to a stacked pair move their rows too');
+});
