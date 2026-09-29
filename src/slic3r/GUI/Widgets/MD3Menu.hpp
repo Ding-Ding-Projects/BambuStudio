@@ -163,6 +163,14 @@ int PopupMenuSelection(wxWindow *owner, wxMenu &menu, wxPoint screen_pos = wxDef
 // show_search exposes the shared search and regex builder even for a short menu.
 bool PopupMenuBelow(wxWindow *anchor, wxMenu *menu, bool show_search = false);
 
+// Gives every text entry of the application (wxTextCtrl, the kit fields' inner
+// controls, editable combo boxes, search and rich text controls) this menu in
+// place of the native Undo / Cut / Copy / Paste menu, for a right-click and for
+// the Menu key or Shift+F10. A masked field never offers its text to Cut or
+// Copy. Enabled once at startup; disabled during shutdown while the event loop
+// still exists.
+void EnableTextContextMenus(bool enable);
+
 } // namespace MD3
 
 #endif // slic3r_GUI_MD3Menu_hpp_

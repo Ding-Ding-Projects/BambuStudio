@@ -106,7 +106,7 @@ void TextInput::Create(wxWindow *     parent,
         e.SetId(GetId());
         ProcessEventLocally(e);
     });
-    text_ctrl->Bind(wxEVT_RIGHT_DOWN, [this](auto &e) {}); // disable context menu
+    // A right-click reaches the Material text menu (MD3::EnableTextContextMenus), not the native one.
 
     text_ctrl->Bind(wxEVT_TEXT, [this](auto &e)
         {

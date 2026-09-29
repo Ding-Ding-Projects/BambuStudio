@@ -12,13 +12,19 @@
 #include "SearchField.hpp"
 #include "StateColor.hpp"
 
+#include <wx/combobox.h>
 #include <wx/dcbuffer.h>
 #include <wx/dcclient.h>
 #include <wx/dcgraph.h>
 #include <wx/display.h>
+#include <wx/eventfilter.h>
 #include <wx/evtloop.h>
 #include <wx/settings.h>
+#include <wx/textctrl.h>
+#include <wx/textentry.h>
 #include <wx/tooltip.h>
+#include <wx/utils.h>
+#include <wx/weakref.h>
 
 #if wxUSE_ACCESSIBILITY
 #include <wx/access.h>
@@ -1410,6 +1416,116 @@ bool PopupMenuBelow(wxWindow *anchor, wxMenu *menu, bool show_search)
         return false;
     run_blocking(anchor, menu, anchor->GetScreenRect(), true, show_search);
     return true;
+}
+
+// ---------------------------------------------------------------------------
+// Text entry context menus
+// ---------------------------------------------------------------------------
+
+namespace {
+
+// The text entry a context menu request came from, or null. A read-only combo
+// box is a list rather than a field, so it keeps whatever its widget offers.
+wxTextEntryBase *text_entry_of(wxWindow *window)
+{
+    if (window == nullptr)
+        return nullptr;
+    if (auto *combo = dynamic_cast<wxComboBox *>(window); combo != nullptr && combo->HasFlag(wxCB_READONLY))
+        return nullptr;
+    return dynamic_cast<wxTextEntryBase *>(window);
+}
+
+// A password field never offers its text for copying: wxTE_PASSWORD, or an
+// EDIT control masked after creation with EM_SETPASSWORDCHAR (the Smart home
+// token is masked that way).
+bool is_masked(wxWindow *window)
+{
+    if (window->HasFlag(wxTE_PASSWORD))
+        return true;
+#ifdef __WIN32__
+    if (HWND hwnd = static_cast<HWND>(window->GetHWND()))
+        return ::SendMessage(hwnd, EM_GETPASSWORDCHAR, 0, 0) != 0;
+#endif
+    return false;
+}
+
+void show_text_menu(wxWindow *window, wxPoint screen_pos)
+{
+    wxTextEntryBase *entry = text_entry_of(window);
+    if (entry == nullptr)
+        return;
+    const bool editable = entry->IsEditable();
+    const bool masked   = is_masked(window);
+    long       from = 0, to = 0;
+    entry->GetSelection(&from, &to);
+
+    wxMenu menu;
+    menu.Append(wxID_UNDO, _L("Undo"))->Enable(editable && entry->CanUndo());
+    menu.AppendSeparator();
+    menu.Append(wxID_CUT, _L("Cut"))->Enable(editable && !masked && entry->CanCut());
+    menu.Append(wxID_COPY, _L("Copy"))->Enable(!masked && entry->CanCopy());
+    menu.Append(wxID_PASTE, _L("Paste"))->Enable(editable && entry->CanPaste());
+    menu.Append(wxID_DELETE, _L("Delete"))->Enable(editable && from != to);
+    menu.AppendSeparator();
+    menu.Append(wxID_SELECTALL, _L("Select all"))->Enable(!entry->IsEmpty());
+    menu.Bind(wxEVT_MENU, [entry](wxCommandEvent &) { entry->Undo(); }, wxID_UNDO);
+    menu.Bind(wxEVT_MENU, [entry](wxCommandEvent &) { entry->Cut(); }, wxID_CUT);
+    menu.Bind(wxEVT_MENU, [entry](wxCommandEvent &) { entry->Copy(); }, wxID_COPY);
+    menu.Bind(wxEVT_MENU, [entry](wxCommandEvent &) { entry->Paste(); }, wxID_PASTE);
+    menu.Bind(wxEVT_MENU, [entry, from, to](wxCommandEvent &) { entry->Remove(from, to); }, wxID_DELETE);
+    menu.Bind(wxEVT_MENU, [entry](wxCommandEvent &) { entry->SelectAll(); }, wxID_SELECTALL);
+
+    // The Menu key and Shift+F10 carry no position: open under the field.
+    if (screen_pos == wxDefaultPosition)
+        screen_pos = window->ClientToScreen(wxPoint(0, window->GetSize().GetHeight()));
+    // Sent events, so the "Edit appearance..." item run_blocking() adds for a
+    // styled field works here as in every other menu.
+    MD3::PopupMenu(window, &menu, screen_pos);
+}
+
+class TextContextMenus : public wxEventFilter
+{
+public:
+    TextContextMenus() { wxEvtHandler::AddFilter(this); }
+    ~TextContextMenus() override { wxEvtHandler::RemoveFilter(this); }
+
+    int FilterEvent(wxEvent &event) override
+    {
+        if (event.GetEventType() != wxEVT_CONTEXT_MENU)
+            return Event_Skip;
+        auto *window = dynamic_cast<wxWindow *>(event.GetEventObject());
+        if (text_entry_of(window) == nullptr)
+            return Event_Skip;
+        // Shift+right-click on a styled field still opens its appearance editor.
+        if (wxGetKeyState(WXK_SHIFT) && !Slic3r::GUI::ElementStyle::element_id_of(window).empty())
+            return Event_Skip;
+        // Handled here, so the native menu never opens. The Material menu runs its
+        // own event loop, which starts after this message instead of inside it.
+        const wxPoint       at = static_cast<wxContextMenuEvent &>(event).GetPosition();
+        wxWeakRef<wxWindow> ref(window);
+        window->CallAfter([ref, at]() {
+            if (ref)
+                show_text_menu(ref.get(), at);
+        });
+        return Event_Processed;
+    }
+};
+
+std::unique_ptr<TextContextMenus> &text_context_menus()
+{
+    static std::unique_ptr<TextContextMenus> instance;
+    return instance;
+}
+
+} // namespace
+
+void EnableTextContextMenus(bool enable)
+{
+    std::unique_ptr<TextContextMenus> &instance = text_context_menus();
+    if (!enable)
+        instance.reset();
+    else if (!instance)
+        instance = std::make_unique<TextContextMenus>();
 }
 
 } // namespace MD3

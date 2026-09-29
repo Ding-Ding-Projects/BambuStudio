@@ -25,6 +25,9 @@ Design 3 design system.
 - [Generated visual showcase](generated-visual-showcase.md) — the image suite shared by the
   interactive app, GitHub Pages landing page, and social preview, including loading, accessibility,
   deployment, and verification behavior.
+- [Context menus](context-menus.md): every context menu is the Material menu, including the text
+  fields' edit menu from the mouse and the keyboard, copyable labels and web pages, and how a released
+  package is checked for a system menu.
 
 ## Design source
 

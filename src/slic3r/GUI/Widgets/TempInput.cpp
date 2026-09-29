@@ -189,7 +189,7 @@ void TempInput::Create(wxWindow *parent, wxString text, wxString label, wxString
             }
         }
     });
-    text_ctrl->Bind(wxEVT_RIGHT_DOWN, [this](auto &e) {}); // disable context menu
+    // A right-click reaches the Material text menu (MD3::EnableTextContextMenus), not the native one.
     text_ctrl->Bind(wxEVT_LEFT_DOWN, [this](auto &e) {
         if (m_read_only) {
             return;

@@ -272,6 +272,10 @@ WipingDialog::WipingDialog(wxWindow* parent, const int max_flush_volume) :
         applied_size,
         wxWebViewBackendDefault,
         wxNO_BORDER);
+    // No browser menu (Back, Refresh, Save as, Inspect) over the dialog's page:
+    // it is neither Material nor translated, and WebView::CreateWebView turns it
+    // off for every other page unless the developer tools are enabled.
+    m_webview->EnableContextMenu(false);
 
     m_webview->AddScriptMessageHandler("wipingDialog");
     main_sizer->Add(m_webview, 1, wxEXPAND);

@@ -64,6 +64,8 @@ ENTRIES = [
     'Temperature', 'Pressure advance', 'Retraction test', 'Max flowrate', 'VFA',
     'Export preferences', 'Export object list', 'Export print statistics',
     'probe:config-wizard', 'gear',
+    # The caption bar's menus, captured as they open (the probe cannot measure them).
+    'menu:File', 'menu:Edit', 'menu:View', 'menu:Objects', 'menu:Calibration', 'menu:Help',
 ]
 GEAR = (1155, 121)  # client coordinates in the 1200x800 main frame the datadirs configure
 # Workspace tabs at the same scale (as in capture-tuple.py): the 3D canvas that draws the
@@ -237,22 +239,70 @@ def main():
         for entry in entries:
             before = {w['handle'] for w in windows_of(args.desktop, pid)}
 
+            def fresh():
+                return [w for w in windows_of(args.desktop, pid)
+                        if w['handle'] not in before and w['width'] >= 120 and w['height'] >= 60]
+
             def new_window():
-                for w in windows_of(args.desktop, pid):
-                    if w['handle'] not in before and w['width'] >= 120 and w['height'] >= 60:
-                        return w
-                return None
+                return next(iter(fresh()), None)
+
+            def new_dialog(timeout):
+                # A surface can bring a small popup of its own before its dialog shows: the
+                # gear showed a 160 x 243 "panel" first, and every sweep until md3-v162
+                # measured that instead of Preferences. Wait for a dialog; settle for the
+                # largest new window only when none comes.
+                found = wait_for(lambda: next((w for w in fresh() if w['class'] == '#32770'), None), timeout)
+                if found:
+                    return found
+                others = fresh()
+                return max(others, key=lambda w: w['width'] * w['height']) if others else None
 
             tried = []
             dialog = None
             if entry == 'gear':
                 cheap('mouse_click', hwnd=main_hwnd, x=GEAR[0], y=GEAR[1])
                 tried.append('gear')
-                dialog = wait_for(new_window, 15)
+                dialog = new_dialog(15)
             elif entry.startswith('probe:'):
                 send(args.desktop, main_hwnd, command=entry[len('probe:'):])
                 tried.append(entry)
-                dialog = wait_for(new_window, 20)
+                dialog = new_dialog(20)
+            elif entry.startswith('menu:'):
+                # A top-bar menu is an MD3 popup, not a top-level wx window: the layout
+                # probe's walk never reaches it, so the row carries a capture and no findings.
+                title = entry[len('menu:'):]
+                send(args.desktop, main_hwnd, command=f'menu-popup {title}')
+                popup = wait_for(new_window, 10)
+                row = {'entry': entry, 'tried': [entry]}
+                if not popup:
+                    row['result'] = 'no-popup'
+                    print(f'  {entry}: no popup', flush=True)
+                else:
+                    time.sleep(1.5)
+                    png = os.path.join(args.out, f'menu-{slug(title)}--{args.tuple_id}.png')
+                    shot = cheap('screenshot', hwnd=popup['handle'], output_path=png)
+                    row.update({'result': 'menu-capture', 'screenshot': png, 'rendered_ok': shot.get('rendered_ok'),
+                                'size': [popup['width'], popup['height']]})
+                    print(f'  {entry}: menu captured {row["size"]}', flush=True)
+                    # The popup runs its own event loop and closes when it is deactivated,
+                    # which a message posted from the hidden desktop can say; a popup that
+                    # stays costs a restart, not the rest of the sweep.
+                    gone = lambda: all(w['handle'] != popup['handle'] for w in windows_of(args.desktop, pid))
+                    cheap('launch_on_headless_desktop', name=args.desktop,
+                          command=f'"{sys.executable}" "{os.path.abspath(__file__)}" --post-deactivate {popup["handle"]}')
+                    if wait_for(gone, 5):
+                        row['close'] = 'closed by deactivation'
+                    else:
+                        cheap('launch_on_headless_desktop', name=args.desktop,
+                              command=f'"{sys.executable}" "{os.path.abspath(__file__)}" --post-close {popup["handle"]}')
+                        if wait_for(gone, 5):
+                            row['close'] = 'closed by WM_CLOSE'
+                        else:
+                            row['close'] = 'still open; app restarted'
+                            stop()
+                            pid, main_hwnd = start()
+                results.append(row)
+                continue
             elif entry.startswith('canvas:'):
                 label = entry[len('canvas:'):]
                 # No window appears to confirm that the item was found, so invoke it once,
@@ -296,7 +346,7 @@ def main():
                 for form in forms:
                     send(args.desktop, main_hwnd, command=f'invoke {form}')
                     tried.append(form)
-                    dialog = wait_for(new_window, 12)
+                    dialog = new_dialog(12)
                     if dialog:
                         break
             row = {'entry': entry, 'tried': tried}
@@ -375,4 +425,9 @@ if __name__ == '__main__':
         # Helper mode, launched on the hidden desktop: post WM_CLOSE to one window.
         import ctypes
         sys.exit(0 if ctypes.windll.user32.PostMessageW(int(sys.argv[2], 0), 0x0010, 0, 0) else 1)
+    if len(sys.argv) == 3 and sys.argv[1] == '--post-deactivate':
+        # Helper mode, launched on the hidden desktop: post WM_ACTIVATE(WA_INACTIVE),
+        # which dismisses a transient popup such as an MD3 menu.
+        import ctypes
+        sys.exit(0 if ctypes.windll.user32.PostMessageW(int(sys.argv[2], 0), 0x0006, 0, 0) else 1)
     sys.exit(main())

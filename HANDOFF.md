@@ -199,6 +199,15 @@ still to verify.
   Cantonese About opens with no finding. Tests: `canvas-frame-capture.test.mjs`, `sweep-dialogs-menus.test.mjs`.
 - In-app changelog (2026-09-29): exported up to `md3-v164` (170 releases, 1,355 entries); the 43 new commits were
   drafted in Cantonese in a batch and reviewed line by line, 32 of them rewritten for sense or Hong Kong usage.
+- Context menus (2026-09-29): every context menu is the Material one. `MD3::EnableTextContextMenus` (an event filter
+  installed by `GUI_App` at startup) answers every text entry's menu request with Undo, Cut, Copy, Paste, Delete and
+  Select all, never Cut or Copy for a masked field; the kit fields let the right-click through; the copyable device
+  labels use `MD3::PopupMenu`; the wiping dialog's web page has no browser menu; What's new's year field is the kit
+  `SpinInput`. `scripts/md3/check-context-menus.py` found the system menu on `md3-v162` (keyboard request on the Smart
+  home and Preferences fields, nothing on a right-click) and fails on it. It also showed that the dialog sweep's gear
+  entry had measured a 160 x 243 popup instead of Preferences on every release so far; the sweep now waits for the
+  dialog, and captures the six caption bar menus as `menu:` entries. Tests: `context-menus.test.mjs`,
+  `check-context-menus.test.mjs`.
 - Closeout cleanup (2026-09-29): the linked worktree of the auto-updater lane
   (`BambuStudio-claude-auto-updater`) and its branch `claude/auto-updater` (`37b3fce78`, contained in `main`, no copy
   on the remote) were removed after an archive of the repository to the maintainer's cloud folder was written and

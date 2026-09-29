@@ -12,6 +12,7 @@
 #include "Widgets/MaterialIcon.hpp"
 #include "Widgets/PopupWindow.hpp"
 #include "Widgets/SearchField.hpp"
+#include "Widgets/SpinInput.hpp"
 #include "Widgets/StateColor.hpp"
 #include "Widgets/StaticBox.hpp"
 #include "Widgets/TextInput.hpp"
@@ -151,11 +152,12 @@ private:
             refresh_header();
         });
 
-        m_year_spin = new wxSpinCtrl(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize,
-                                     wxSP_ARROW_KEYS | wxTE_PROCESS_ENTER, 1970, 9999, m_year);
+        // The kit spin field, like the month list beside it: the native spin control
+        // drew a system box and arrows, and opened the system edit menu.
+        m_year_spin = new SpinInput(this, wxEmptyString, wxEmptyString, wxDefaultPosition, wxSize(FromDIP(96), -1),
+                                    wxTE_PROCESS_ENTER, 1970, 9999, m_year);
         m_year_spin->SetName(_L("Year"));
-        m_year_spin->SetMinSize(FromDIP(wxSize(84, -1)));
-        m_year_spin->Bind(wxEVT_SPINCTRL, [this](wxSpinEvent &) {
+        m_year_spin->Bind(wxEVT_SPINCTRL, [this](wxCommandEvent &) {
             m_year = m_year_spin->GetValue();
             clamp_cursor();
             refresh_header();
@@ -425,7 +427,7 @@ private:
     Button    *m_prev         = nullptr;
     Button    *m_next         = nullptr;
     ComboBox  *m_month_choice = nullptr;
-    wxSpinCtrl *m_year_spin   = nullptr;
+    SpinInput *m_year_spin    = nullptr;
     wxPanel   *m_grid         = nullptr;
     Label     *m_hint         = nullptr;
 };

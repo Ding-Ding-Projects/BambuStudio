@@ -101,6 +101,7 @@
 #include "Appearance/AppearanceEditorPopover.hpp"
 #include "Widgets/TabStrip.hpp"
 #include "Widgets/BoundedRegex.hpp"
+#include "Widgets/MD3Menu.hpp"
 #include "Plater.hpp"
 #include "PreferencesHistory.hpp"
 #include "PrinterWatch.hpp"
@@ -3367,8 +3368,9 @@ int GUI_App::OnExit()
         launch_squirrel_restart();
 
     // The bilingual decorator is an event filter with a timer; remove it while
-    // the event loop still exists.
+    // the event loop still exists. The text context menus are a filter too.
     I18N::enable_bilingual_decorator(false);
+    MD3::EnableTextContextMenus(false);
 
     // Stop Home Assistant workers while wx and AppConfig are still alive.
     // This is idempotent with the normal MainFrame -> GUI_App shutdown path.
@@ -3604,6 +3606,8 @@ bool GUI_App::on_init_inner()
 
     // Set initialization of image handlers before any UI actions - See GH issue #7469
     wxInitAllImageHandlers();
+    // Text fields get the Material context menu instead of the native one, before any window exists.
+    MD3::EnableTextContextMenus(true);
 #ifdef NDEBUG
     wxImage::SetDefaultLoadFlags(0); // ignore waring in release build
 #endif

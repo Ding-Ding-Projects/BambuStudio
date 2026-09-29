@@ -85,7 +85,7 @@ void SpinInput::Create(wxWindow *parent,
     text_ctrl->Bind(wxEVT_KILL_FOCUS, &SpinInput::onTextLostFocus, this);
     text_ctrl->Bind(wxEVT_TEXT_ENTER, &SpinInput::onTextEnter, this);
     text_ctrl->Bind(wxEVT_KEY_DOWN, &SpinInput::keyPressed, this);
-    text_ctrl->Bind(wxEVT_RIGHT_DOWN, [this](auto &e) {}); // disable context menu
+    // A right-click reaches the Material text menu (MD3::EnableTextContextMenus), not the native one.
     text_ctrl->Bind(wxEVT_SET_FOCUS, [this](wxFocusEvent &e) {
         e.Skip();
         CallAfter([this]() {

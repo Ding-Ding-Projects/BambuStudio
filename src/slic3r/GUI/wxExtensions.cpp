@@ -28,6 +28,7 @@
 #include "Plater.hpp"
 #include "../Utils/MacDarkMode.hpp"
 #include "BitmapComboBox.hpp"
+#include "Widgets/MD3Menu.hpp"
 #include "Widgets/StaticBox.hpp"
 #include "Widgets/Label.hpp"
 #include "../Utils/WxFontUtils.hpp"
@@ -417,7 +418,8 @@ void enable_static_text_copy_menu(wxStaticText* label)
         const int copy_id = wxWindow::NewControlId();
         menu.Append(copy_id, _L("Copy"));
         menu.Bind(wxEVT_MENU, [value](wxCommandEvent&) { copy_text_to_clipboard(value); }, copy_id);
-        label->PopupMenu(&menu, evt.GetPosition());
+        // The Material menu, like every other context menu; the native one does not follow the theme or the language modes.
+        MD3::PopupMenu(label, &menu, label->ClientToScreen(evt.GetPosition()));
     });
 }
 

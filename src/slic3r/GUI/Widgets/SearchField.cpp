@@ -76,7 +76,7 @@ void SearchField::Create(wxWindow *parent, const wxString &placeholder, const wx
         Refresh();
         e.Skip();
     });
-    m_text->Bind(wxEVT_RIGHT_DOWN, [](wxMouseEvent &) {}); // suppress native context menu
+    // A right-click reaches the Material text menu (MD3::EnableTextContextMenus), not the native one.
     m_text->Bind(wxEVT_CHAR_HOOK, [this](wxKeyEvent &e) {
         // Escape is the keyboard equivalent of the clear 'x' affordance (which is
         // painted, not a focusable child): it empties a non-empty query. When the

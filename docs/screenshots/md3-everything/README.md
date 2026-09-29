@@ -380,6 +380,16 @@ in the package or in Windows. This is the first release whose layout dumps measu
 | `dialog-model-creator-lower--en-light-comfortable--md3-v162.png` | Model Creator, lower part (before CJ-028): nothing under "Refinement note", four blank footer buttons. Cropped: the upper part shows local folder paths the dialog fills in by itself | `en-light-comfortable` |
 | `dialog-smart-home-footer--en-light-comfortable--md3-v162.png` | Smart home footer (CJ-029, open): the Close button at 59 px against its 70 px minimum | `en-light-comfortable` |
 
+## Release md3-v162 context menu (before)
+
+Taken by `scripts/md3/check-context-menus.py` from the same unmodified `md3-v162` package, profile under
+`C:\Users\Public\bbsdd\`: the Smart home URL field asked for its menu the way the Menu key and Shift+F10 do
+(`WM_CONTEXTMENU` without a position). A right-click on the same field opened nothing.
+
+| File | Surface | Tuple |
+| --- | --- | --- |
+| `context-menu-smart-home-keyboard--en-light-comfortable--md3-v162.png` | Smart home URL field: the system's English edit menu (window class `#32768`), with Undo, Cut, Copy, Paste, Delete, Select All and the right-to-left, Unicode and IME items | `en-light-comfortable` |
+
 ## Layout-probe dumps
 
 `probe/<tuple>--<before|after>.jsonl`, one per main-frame idle dump plus one per opened dialog,
