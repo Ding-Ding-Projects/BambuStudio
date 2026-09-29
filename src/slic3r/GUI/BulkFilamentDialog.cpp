@@ -1,4 +1,5 @@
 #include "BulkFilamentDialog.hpp"
+#include "Widgets/MD3ScrolledWindow.hpp"
 
 #include <algorithm>
 
@@ -75,7 +76,7 @@ BulkFilamentDialog::BulkFilamentDialog(wxWindow* parent,
 
     // ---- Physical slot list: checkbox + swatch(+index) + preset name ----
     {
-        auto scroll = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL | wxVSCROLL);
+        auto scroll = new MD3ScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL | wxVSCROLL);
         scroll->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
         scroll->SetScrollRate(0, FromDIP(8));
         auto rows_sizer = new wxBoxSizer(wxVERTICAL);

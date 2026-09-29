@@ -1,4 +1,5 @@
 ﻿#include "MsgDialog.hpp"
+#include "Widgets/MD3ScrolledWindow.hpp"
 #include "Widgets/LinkLabel.hpp"
 
 #include <algorithm>
@@ -505,7 +506,7 @@ static void add_msg_content(wxWindow   *parent,
                 // glyph cannot be clipped off a single-line message.
                 info_width = std::min(info_width, msg_sz.GetX() + parent->FromDIP(4));
             }
-            wxScrolledWindow *scrolledWindow = new wxScrolledWindow(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL);
+            wxScrolledWindow *scrolledWindow = new MD3ScrolledWindow(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL);
             scrolledWindow->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
             scrolledWindow->SetScrollRate(0, 20);
             scrolledWindow->EnableScrolling(false, true);
@@ -841,7 +842,7 @@ MultiChoiceDialog::MultiChoiceDialog(wxWindow *parent, const wxString &message, 
     const bool has_message = !message.Strip(wxString::both).IsEmpty();
     if (has_message)
         add_msg_content(this, content_sizer, message);
-    auto *list = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL);
+    auto *list = new MD3ScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL);
     list->SetBackgroundColour(GetBackgroundColour());
     list->SetScrollRate(0, FromDIP(20));
     auto *list_sizer = new wxBoxSizer(wxVERTICAL);

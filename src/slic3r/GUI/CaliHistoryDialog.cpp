@@ -1,4 +1,5 @@
 #include "CaliHistoryDialog.hpp"
+#include "Widgets/MD3ScrolledWindow.hpp"
 #include "I18N.hpp"
 
 #include "libslic3r/Utils.hpp"
@@ -114,7 +115,7 @@ HistoryWindow::HistoryWindow(wxWindow* parent, const std::vector<PACalibResult>&
     this->SetBackgroundColour(*wxWHITE);
     auto main_sizer = new wxBoxSizer(wxVERTICAL);
 
-    auto scroll_window = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL | wxVSCROLL);
+    auto scroll_window = new MD3ScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL | wxVSCROLL);
     scroll_window->SetScrollRate(5, 5);
     scroll_window->SetBackgroundColour(*wxWHITE);
     scroll_window->SetMinSize(HISTORY_WINDOW_SIZE);

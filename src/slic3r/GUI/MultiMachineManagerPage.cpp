@@ -1,4 +1,5 @@
 #include "MultiMachineManagerPage.hpp"
+#include "Widgets/MD3ScrolledWindow.hpp"
 #include "GUI_App.hpp"
 #include "MainFrame.hpp"
 #include "Widgets/MaterialIcon.hpp"
@@ -478,7 +479,7 @@ MultiMachineManagerPage::MultiMachineManagerPage(wxWindow* parent)
         evt.Skip();
     });
 
-    m_machine_list = new wxScrolledWindow(m_main_panel, wxID_ANY, wxDefaultPosition, wxDefaultSize);
+    m_machine_list = new MD3ScrolledWindow(m_main_panel, wxID_ANY, wxDefaultPosition, wxDefaultSize);
     m_machine_list->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_machine_list->SetScrollRate(0, 5);
     // Width is fluid (min = one card column, no max pin) so the grid host fills

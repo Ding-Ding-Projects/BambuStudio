@@ -1,4 +1,5 @@
 #include "TextureImportOverLimitDialog.hpp"
+#include "Widgets/MD3ScrolledWindow.hpp"
 #include "TextureImportUi.hpp"
 
 #include "I18N.hpp"
@@ -847,7 +848,7 @@ wxPanel* TextureImportOverLimitDialog::create_plan_card(wxWindow* parent, Textur
     });
     card->Bind(wxEVT_LEFT_DOWN, [this, mode](wxMouseEvent&) { select_mode(mode); });
 
-    auto* scroll = new wxScrolledWindow(card, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE);
+    auto* scroll = new MD3ScrolledWindow(card, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE);
     scroll->SetBackgroundColour(card->GetBackgroundColour());
     scroll->SetScrollRate(0, FromDIP(8));
     auto* inner = new wxBoxSizer(wxVERTICAL);

@@ -1,4 +1,5 @@
 #include "wx/wxprec.h"
+#include "MD3ScrolledWindow.hpp"
 
 #ifndef WX_PRECOMP
 #include "wx/utils.h"
@@ -187,7 +188,7 @@ bool ProgressDialog::Create(const wxString &title, const wxString &message, int 
 
         body->Add(m_simplebook, 0, wxEXPAND);
     } else {
-        m_msg_scrolledWindow = new wxScrolledWindow( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL );
+        m_msg_scrolledWindow = new MD3ScrolledWindow( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL );
         m_msg_scrolledWindow->SetBackgroundColour(PROGRESSDIALOG_DEF_BK);
         m_msg_scrolledWindow->SetScrollRate(0,5);
         wxBoxSizer* m_msg_sizer= new wxBoxSizer(wxVERTICAL);

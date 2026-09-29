@@ -9,7 +9,8 @@ import { fileURLToPath } from 'node:url';
 // them, MsgDialog.hpp, through its own includes. The forced precompiled header
 // does not include it, so a missing include is a compile error on the next build
 // and nothing short of a build notices. The appearance editor once called
-// md3_message_box() with no route to its declaration.
+// md3_message_box() with no route to its declaration. The same holds for every
+// source that builds an MD3ScrolledWindow.
 
 const testDir = path.dirname(fileURLToPath(import.meta.url));
 const repoDir = path.resolve(testDir, '..', '..');
@@ -21,7 +22,7 @@ const includeDirs = [path.join(slic3rDir, 'Utils'), srcDir];
 const HEADER = path.join(slic3rDir, 'GUI', 'MsgDialog.hpp');
 const DIALOGS = ['md3_message_box', 'MessageDialog', 'RichMessageDialog', 'InfoDialog', 'ErrorDialog', 'WarningDialog',
   'TextEntryDialog', 'NumberEntryDialog', 'MultiChoiceDialog', 'BusyInfo'];
-const USE = new RegExp(`\\b(?:${DIALOGS.join('|')})\\b`, 'g');
+const SCROLLED_HEADER = path.join(slic3rDir, 'GUI', 'Widgets', 'MD3ScrolledWindow.hpp');
 
 const strip = (text) => text.replace(/\r\n/g, '\n')
   .replace(/\/\*[\s\S]*?\*\//g, '')
@@ -68,20 +69,33 @@ async function sources(dir) {
   return out;
 }
 
-test('every source that uses a Material dialog reaches MsgDialog.hpp', async () => {
+// Sources that name one of `names` without reaching `header` through their includes.
+async function unreached(header, names) {
+  const use = new RegExp(`\\b(?:${names.join('|')})\\b`, 'g');
   const missing = [];
   let users = 0;
   for (const file of await sources(slic3rDir)) {
-    if (file === HEADER) continue;
+    if (file === header) continue;
     const code = strip(await readFile(file, 'utf8'));
-    const used = new Set(code.match(USE) ?? []);
-    // A header may name a dialog through its own forward declaration (a pointer
+    const used = new Set(code.match(use) ?? []);
+    // A header may name a class through its own forward declaration (a pointer
     // member, say); the source that constructs it is the one that needs the header.
     const declared = new Set([...code.matchAll(/\b(?:class|struct)\s+(\w+)\s*;/g)].map((m) => m[1]));
     if (used.size === 0 || [...used].every((name) => declared.has(name))) continue;
     users += 1;
-    if (!await reaches(file, HEADER)) missing.push(path.relative(repoDir, file).replaceAll('\\', '/'));
+    if (!await reaches(file, header)) missing.push(path.relative(repoDir, file).replaceAll('\\', '/'));
   }
+  return { users, missing };
+}
+
+test('every source that uses a Material dialog reaches MsgDialog.hpp', async () => {
+  const { users, missing } = await unreached(HEADER, DIALOGS);
   assert.ok(users > 50, `expected the dialogs in use across the GUI, found ${users} files`);
   assert.deepEqual(missing, [], 'these use a Material dialog with no include path to MsgDialog.hpp');
+});
+
+test('every source that builds an MD3ScrolledWindow reaches its header', async () => {
+  const { users, missing } = await unreached(SCROLLED_HEADER, ['MD3ScrolledWindow']);
+  assert.ok(users > 50, `expected MD3ScrolledWindow across the GUI, found ${users} files`);
+  assert.deepEqual(missing, [], 'these use MD3ScrolledWindow with no include path to MD3ScrolledWindow.hpp');
 });

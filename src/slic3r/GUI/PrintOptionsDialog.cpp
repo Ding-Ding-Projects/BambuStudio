@@ -1,4 +1,5 @@
 #include "PrintOptionsDialog.hpp"
+#include "Widgets/MD3ScrolledWindow.hpp"
 #include "I18N.hpp"
 #include "GUI_App.hpp"
 #include "libslic3r/Utils.hpp"
@@ -35,7 +36,7 @@ PrintOptionsDialog::PrintOptionsDialog(wxWindow* parent)
     SetSize(FromDIP(480),FromDIP(520));
 
 
-    m_scrollwindow = new wxScrolledWindow(this, wxID_ANY);
+    m_scrollwindow = new MD3ScrolledWindow(this, wxID_ANY);
     m_scrollwindow->SetScrollRate(0, FromDIP(10));
     m_scrollwindow->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_scrollwindow->SetMinSize(wxSize(FromDIP(480), wxDefaultCoord));

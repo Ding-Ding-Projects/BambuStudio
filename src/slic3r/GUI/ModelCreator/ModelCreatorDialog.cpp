@@ -1,4 +1,5 @@
 #include "ModelCreatorDialog.hpp"
+#include "slic3r/GUI/Widgets/MD3ScrolledWindow.hpp"
 
 #include "../I18N.hpp"
 #include "../GUI_App.hpp"
@@ -111,7 +112,7 @@ ModelCreatorDialog::ModelCreatorDialog(wxWindow *parent, AddToPlate add_to_plate
     // the footer buttons below their minimum, so they drew blank (clipping
     // inventory CJ-028). The footer stays outside the scroll at its full size, and
     // the form asks for a small minimum height so the dialog does not grow to it.
-    auto *form = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize,
+    auto *form = new MD3ScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize,
                                       wxVSCROLL | wxTAB_TRAVERSAL | wxBORDER_NONE);
     form->SetScrollRate(0, FromDIP(16));
     form->SetBackgroundColour(GetBackgroundColour());

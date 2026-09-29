@@ -33,8 +33,8 @@ Design 3 design system.
 - [Dialogs and pickers](dialogs-and-pickers.md): the Material dialogs that replaced wxWidgets' stock
   prompts, choosers, busy notice and colour dialog, the recently used colours, and what stays native.
 - [Native controls on the kit](native-controls.md): the kit replacements for a disabled button's tip,
-  the web pages' notice bar and the Workspace panel's tabs, tables, checklist and calendar, and the
-  one Material style every table takes.
+  the web pages' notice bar and the Workspace panel's tabs, tables, checklist and calendar, the one
+  Material style every table takes, and the kit scrollbar in every scrolled page, panel and list.
 
 ## Design source
 

@@ -1,4 +1,5 @@
 #include "SendMultiMachinePage.hpp"
+#include "Widgets/MD3ScrolledWindow.hpp"
 #include "TaskManager.hpp"
 #include "I18N.hpp"
 
@@ -116,13 +117,13 @@ static bool build_farm_nozzle_payload(MachineObject *device, Plater *plater, int
 static constexpr int INPUT_WIDTH = 50; // raw (pre-DPI) text-input width; wrap in FromDIP()
 WX_DEFINE_LIST(AmsRadioSelectorList);
 
-class ScrolledWindow : public wxScrolledWindow {
+class ScrolledWindow : public MD3ScrolledWindow {
 public:
     ScrolledWindow(wxWindow* parent,
         wxWindowID id = wxID_ANY,
         const wxPoint& pos = wxDefaultPosition,
         const wxSize& size = wxDefaultSize,
-        long style = wxVSCROLL) : wxScrolledWindow(parent, id, pos, size, style) {}
+        long style = wxVSCROLL) : MD3ScrolledWindow(parent, id, pos, size, style) {}
 
     bool ShouldScrollToChildOnFocus(wxWindow* child) override { return false; }
 };
@@ -1543,7 +1544,7 @@ wxPanel* SendMultiMachinePage::create_page()
         evt.Skip();
     });
 
-    scroll_macine_list = new wxScrolledWindow(main_page, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(800), FromDIP(300)), wxHSCROLL | wxVSCROLL);
+    scroll_macine_list = new MD3ScrolledWindow(main_page, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(800), FromDIP(300)), wxHSCROLL | wxVSCROLL);
     scroll_macine_list->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     scroll_macine_list->SetScrollRate(5, 5);
     scroll_macine_list->SetMinSize(wxSize(FromDIP(DEVICE_ITEM_MAX_WIDTH), 10 * FromDIP(SEND_ITEM_MAX_HEIGHT)));

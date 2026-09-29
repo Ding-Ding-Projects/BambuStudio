@@ -1,4 +1,5 @@
 #include "SliceInfoPanel.hpp"
+#include "Widgets/MD3ScrolledWindow.hpp"
 
 #include "I18N.hpp"
 #include "Widgets/Label.hpp"
@@ -53,7 +54,7 @@ SliceInfoPopup::SliceInfoPopup(wxWindow *parent, wxBitmap bmp, BBLSliceInfo *inf
 #ifdef __WINDOWS__
     SetDoubleBuffered(true);
 #endif
-    m_panel = new wxScrolledWindow(this, wxID_ANY);
+    m_panel = new MD3ScrolledWindow(this, wxID_ANY);
     m_panel->SetBackgroundColour(*wxWHITE);
 
     m_panel->Bind(wxEVT_MOTION, &SliceInfoPopup::OnMouse, this);

@@ -1,5 +1,6 @@
 
 #include "UserPresetsDialog.hpp"
+#include "Widgets/MD3ScrolledWindow.hpp"
 #include "I18N.hpp"
 #include "GUI_App.hpp"
 #include "Plater.hpp"
@@ -54,7 +55,7 @@ UserPresetsDialog::UserPresetsDialog(wxWindow *parent)
         m_empty_panel->Hide();
     }
 
-    m_scrolled = new wxScrolledWindow(this);
+    m_scrolled = new MD3ScrolledWindow(this);
     m_scrolled->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
     m_scrolled->SetScrollbars(0, 100, 1, 2);
     m_scrolled->SetScrollRate(0, 5);

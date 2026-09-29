@@ -251,7 +251,7 @@ test('every prototype search field is wired, and plain text is the default', () 
 
 test('Smart Home keeps a fixed footer around a work-area-capped scrolling body', () => {
   assert.match(smartHome, /MD3Dialog::Options\{true, false\}/);
-  assert.match(smartHome, /new wxScrolledWindow\([\s\S]*?wxVSCROLL \| wxTAB_TRAVERSAL/);
+  assert.match(smartHome, /new MD3ScrolledWindow\([\s\S]*?wxVSCROLL \| wxTAB_TRAVERSAL/);
   assert.match(smartHome, /GetContentSizer\(\)->Add\(m_scroll, 1, wxEXPAND\)/);
   assert.match(smartHome, /wxDisplay\(display_index\)\.GetClientArea\(\)/);
   assert.match(smartHome, /std::min\(target\.GetHeight\(\), available\.GetHeight\(\)\)/);

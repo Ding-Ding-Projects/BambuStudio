@@ -1,4 +1,5 @@
 #include "CalibrationWizardPage.hpp"
+#include "Widgets/MD3ScrolledWindow.hpp"
 #include "I18N.hpp"
 #include "Widgets/Label.hpp"
 #include "MsgDialog.hpp"
@@ -884,7 +885,7 @@ void CaliPageSendingPanel::create(wxWindow* parent)
     m_send_progress_bar = std::shared_ptr<BBLStatusBarSend>(new BBLStatusBarSend(parent));
     panel_sizer->Add(m_send_progress_bar->get_panel(), 0, wxEXPAND);
 
-    m_sw_print_failed_info = new wxScrolledWindow(parent, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(380), FromDIP(125)), wxVSCROLL);
+    m_sw_print_failed_info = new MD3ScrolledWindow(parent, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(380), FromDIP(125)), wxVSCROLL);
     m_sw_print_failed_info->SetBackgroundColour(*wxWHITE);
     m_sw_print_failed_info->SetScrollRate(0, 5);
     m_sw_print_failed_info->SetMinSize(wxSize(FromDIP(380), FromDIP(125)));

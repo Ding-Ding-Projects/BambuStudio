@@ -1,4 +1,5 @@
 #include "ExportDialog.hpp"
+#include "slic3r/GUI/Widgets/MD3ScrolledWindow.hpp"
 
 #include "ExportEverything.hpp"
 
@@ -161,7 +162,7 @@ void ExportDialog::create_ui()
     auto *root = new wxBoxSizer(wxVERTICAL);
     root->Add(new MD3DialogCaption(this, _L("Export")), 0, wxEXPAND);
 
-    m_body = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL | wxBORDER_NONE);
+    m_body = new MD3ScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL | wxBORDER_NONE);
     m_body->SetScrollRate(0, FromDIP(16));
     auto *body = new wxBoxSizer(wxVERTICAL);
 

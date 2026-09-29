@@ -1,4 +1,5 @@
 #include "AmsMappingPopup.hpp"
+#include "Widgets/MD3ScrolledWindow.hpp"
 #include "I18N.hpp"
 
 #include "libslic3r/Utils.hpp"
@@ -859,7 +860,7 @@ AmsMapingPopup::AmsMapingPopup(wxWindow *parent, bool use_in_sync_dialog) :
      title_panel->SetSize(wxSize(-1, FromDIP(30)));
      title_panel->SetMinSize(wxSize(-1, FromDIP(30)));
 
-     m_scrolled_window = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL | wxHSCROLL);
+     m_scrolled_window = new MD3ScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL | wxHSCROLL);
      m_scrolled_window->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
      m_scrolled_window->SetScrollRate(0, FromDIP(10));
 
@@ -2141,7 +2142,7 @@ void AmsReplaceMaterialDialog::create()
     identical_filament->SetFont(Label::Body_13);
     identical_filament->SetForegroundColour(StateColor::semantic(MD3::Role::Primary));
 
-    m_scrollview_groups = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL | wxVSCROLL);
+    m_scrollview_groups = new MD3ScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL | wxVSCROLL);
     m_scrollview_groups->SetScrollRate(5, 5);
     //m_scrollview_groups->SetMinSize(wxSize(400, 400));
     //m_scrollview_groups->SetMaxSize(wxSize(400, 400));

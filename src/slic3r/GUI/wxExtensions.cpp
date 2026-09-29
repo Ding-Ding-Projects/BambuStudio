@@ -1,4 +1,5 @@
 #include "wxExtensions.hpp"
+#include "Widgets/MD3ScrolledWindow.hpp"
 
 #include <stdexcept>
 #include <cmath>
@@ -1409,7 +1410,7 @@ ImageTransientPopup::ImageTransientPopup( wxWindow *parent, bool scrolled, wxBit
                                               wxBORDER_NONE |
                                               wxPU_CONTAINS_CONTROLS )
 {
-    m_panel = new wxScrolledWindow( this, wxID_ANY );
+    m_panel = new MD3ScrolledWindow( this, wxID_ANY );
     m_panel->SetBackgroundColour( *wxLIGHT_GREY );
 
     // Keep this code to verify if mouse events work, they're required if

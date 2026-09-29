@@ -1,4 +1,5 @@
 #include "libslic3r/libslic3r.h"
+#include "Widgets/MD3ScrolledWindow.hpp"
 #include "KBShortcutsDialog.hpp"
 #include "I18N.hpp"
 #include "libslic3r/Utils.hpp"
@@ -343,7 +344,7 @@ wxPanel* KBShortcutsDialog::create_page(wxWindow* parent, const ShortcutsItem& s
     }
 
     int items_count = (int) shortcuts.second.size();
-    wxScrolledWindow *scrollable_panel = new wxScrolledWindow(main_page);
+    wxScrolledWindow *scrollable_panel = new MD3ScrolledWindow(main_page);
     wxGetApp().UpdateDarkUI(scrollable_panel);
     scrollable_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     scrollable_panel->SetScrollbars(20, 20, 50, 50);

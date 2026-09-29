@@ -1,4 +1,5 @@
 #include "GUI_Utils.hpp"
+#include "Widgets/MD3ScrolledWindow.hpp"
 #include "GUI_App.hpp"
 #include <wx/panel.h>
 #include <wx/bitmap.h>
@@ -157,7 +158,7 @@ PartSkipDialog::PartSkipDialog(wxWindow *parent) : DPIDialog(parent, wxID_ANY, _
     m_line->SetMaxSize(wxSize(FromDIP(267), 1));
     m_line->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
 
-    m_list_view = new wxScrolledWindow(m_book_third_panel, wxID_ANY, wxDefaultPosition, wxSize(267, -1), wxHSCROLL | wxVSCROLL);
+    m_list_view = new MD3ScrolledWindow(m_book_third_panel, wxID_ANY, wxDefaultPosition, wxSize(267, -1), wxHSCROLL | wxVSCROLL);
     m_list_view->SetScrollRate(5, 5);
     m_list_view->SetMinSize(wxSize(FromDIP(267), FromDIP(378)));
     m_list_view->SetMaxSize(wxSize(FromDIP(267), FromDIP(378)));

@@ -1,6 +1,7 @@
 // FIXME: extract absolute units -> em
 
 #include "ConfigWizard_private.hpp"
+#include "Widgets/MD3ScrolledWindow.hpp"
 #include "Widgets/TextInput.hpp"
 #include "Widgets/LabeledCheckBox.hpp"
 
@@ -2679,7 +2680,7 @@ ConfigWizard::ConfigWizard(wxWindow *parent)
 
     // Initially we _do not_ SetScrollRate in order to figure out the overall width of the Wizard  without scrolling.
     // Later, we compare that to the size of the current screen and set minimum width based on that (see below).
-    p->hscroll = new wxScrolledWindow(this);
+    p->hscroll = new MD3ScrolledWindow(this);
     p->hscroll_sizer = new wxBoxSizer(wxHORIZONTAL);
     p->hscroll->SetSizer(p->hscroll_sizer);
 

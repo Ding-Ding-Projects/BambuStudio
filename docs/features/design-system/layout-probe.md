@@ -40,6 +40,12 @@ hidden panel is never flagged, whatever its own shown flag says.
 | `hint_clipped` | an empty single-line text entry shows a placeholder hint wider than its client width, so the edit control cuts it; `hint` and `hint_width` carry the hint and its extent (What's new cut "YYYY-MM-DD / DD/MM/YYYY" to "YYYY-MM-DD / D", clipping inventory CJ-027, before hints were measured) |
 | `clipped_by_parent` | a shown child window's rect leaves its parent's client area along an axis the parent does not scroll (a row below the fold of a scrolling panel is scrolled away, not clipped; a dialog or other top-level window is never flagged: it is its own window) |
 
+Each window record also carries `scrollbars`, which bars the window shows and whose they are:
+`native_v` and `native_h` for a vertical or horizontal bar that Windows draws (Windows keeps
+`WS_VSCROLL`/`WS_HSCROLL` in the style only while it shows that bar), `kit_v` and `kit_h` for the kit
+scrollbar of an `MD3ScrolledWindow` or a kit `ListBox`. A true `native_v` or `native_h` on a shown
+window is a Windows scrollbar still on screen.
+
 One `gl_item` record per visible item of the scene toolbar (`"toolbar":"main"`) and the gizmo rail
 (`"gizmo"`): name, host canvas handle, rectangle in canvas pixels and on screen, derived from the
 item's world-space render rectangle and the camera zoom. These are not wx windows, so no flag

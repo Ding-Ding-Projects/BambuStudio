@@ -1,4 +1,5 @@
 #include "AMSControl.hpp"
+#include "MD3ScrolledWindow.hpp"
 #include "Label.hpp"
 #include "MaterialIcon.hpp"
 #include "StateColor.hpp"
@@ -54,7 +55,7 @@ AMSControl::AMSControl(wxWindow *parent, wxWindowID id, const wxPoint &pos, cons
     m_sizer_ams_items = new wxBoxSizer(wxHORIZONTAL);
 
     /*right items*/
-    m_panel_prv_left = new wxScrolledWindow(m_amswin, wxID_ANY);
+    m_panel_prv_left = new MD3ScrolledWindow(m_amswin, wxID_ANY);
     m_panel_prv_left->SetScrollRate(10, 0);
     m_panel_prv_left->SetSize(AMS_ITEMS_PANEL_SIZE);
     m_panel_prv_left->SetMinSize(AMS_ITEMS_PANEL_SIZE);
@@ -66,7 +67,7 @@ AMSControl::AMSControl(wxWindow *parent, wxWindowID id, const wxPoint &pos, cons
     //m_sizer_items_left->Fit(m_panel_prv_left);
 
     /*right items*/
-    m_panel_prv_right = new wxScrolledWindow(m_amswin, wxID_ANY);
+    m_panel_prv_right = new MD3ScrolledWindow(m_amswin, wxID_ANY);
     m_panel_prv_right->SetScrollRate(10, 0);
     m_panel_prv_right->SetSize(AMS_ITEMS_PANEL_SIZE);
     m_panel_prv_right->SetMinSize(AMS_ITEMS_PANEL_SIZE);
@@ -82,7 +83,7 @@ AMSControl::AMSControl(wxWindow *parent, wxWindowID id, const wxPoint &pos, cons
     // origin left      | arrow_left  |    arrow_right
 
     m_sizer_prv_arrow_left = new wxBoxSizer(wxHORIZONTAL);
-    m_panel_prv_arrow_left = new wxScrolledWindow(m_amswin, wxID_ANY);
+    m_panel_prv_arrow_left = new MD3ScrolledWindow(m_amswin, wxID_ANY);
     m_panel_prv_arrow_left->SetScrollRate(10, 0);
     m_panel_prv_arrow_left->SetSize(AMS_ITEMS_ARROW_LEFT_PANEL_SIZE);
     m_panel_prv_arrow_left->SetMinSize(AMS_ITEMS_ARROW_LEFT_PANEL_SIZE);
@@ -91,7 +92,7 @@ AMSControl::AMSControl(wxWindow *parent, wxWindowID id, const wxPoint &pos, cons
     m_panel_prv_arrow_left->Layout();
 
     m_sizer_prv_arrow_right = new wxBoxSizer(wxHORIZONTAL);
-    m_panel_prv_arrow_right = new wxScrolledWindow(m_amswin, wxID_ANY);
+    m_panel_prv_arrow_right = new MD3ScrolledWindow(m_amswin, wxID_ANY);
     m_panel_prv_arrow_right->SetScrollRate(10, 0);
     m_panel_prv_arrow_right->SetSize(AMS_ITEMS_ARROW_RIGHT_PANEL_SIZE);
     m_panel_prv_arrow_right->SetMinSize(AMS_ITEMS_ARROW_RIGHT_PANEL_SIZE);

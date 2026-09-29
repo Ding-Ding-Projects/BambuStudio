@@ -20,8 +20,11 @@ constexpr int kCheckGap = 8; // between the glyph and the text, DIP
 } // namespace
 
 ListBox::ListBox(wxWindow *parent, wxWindowID id, const wxSize &size, long style)
-    : wxVListBox(parent, id, wxDefaultPosition, size, (style & ~wxBORDER_MASK) | wxBORDER_NONE)
 {
+    // Created here rather than through the base constructor, so that Create()
+    // already runs with this class's MSWGetStyle() and MSWWindowProc() and
+    // Windows never gets a scrollbar of its own to draw.
+    Create(parent, id, wxDefaultPosition, size, (style & ~wxBORDER_MASK) | wxBORDER_NONE);
     SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
     SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     SetFont(Label::Body_13);
@@ -30,6 +33,45 @@ ListBox::ListBox(wxWindow *parent, wxWindowID id, const wxSize &size, long style
     Bind(wxEVT_LEFT_DOWN, &ListBox::onLeftDown, this);
     Bind(wxEVT_KEY_DOWN, &ListBox::onKey, this);
 }
+
+ListBox::~ListBox()
+{
+#ifdef __WXMSW__
+    m_bars.Abandon();
+#endif
+}
+
+#ifdef __WXMSW__
+// The kit scrollbar: the list's scroll helper reports here instead of to
+// Windows (MD3ScrollBars).
+void ListBox::SetScrollbar(int orient, int pos, int thumbVisible, int range, bool refresh)
+{
+    m_bars.SetScrollbar(orient, pos, thumbVisible, range, refresh);
+}
+
+void ListBox::SetScrollPos(int orient, int pos, bool refresh) { m_bars.SetScrollPos(orient, pos, refresh); }
+
+int ListBox::GetScrollPos(int orient) const { return m_bars.GetScrollPos(orient); }
+
+int ListBox::GetScrollThumb(int orient) const { return m_bars.GetScrollThumb(orient); }
+
+int ListBox::GetScrollRange(int orient) const { return m_bars.GetScrollRange(orient); }
+
+WXDWORD ListBox::MSWGetStyle(long flags, WXDWORD *exstyle) const
+{
+    return MD3ScrollBars::WithoutNativeBars(wxVListBox::MSWGetStyle(flags, exstyle));
+}
+
+WXLRESULT ListBox::MSWWindowProc(WXUINT msg, WXWPARAM wParam, WXLPARAM lParam)
+{
+    WXLRESULT result = 0;
+    if (m_bars.Before(msg, wParam, lParam, result))
+        return result;
+    result = wxVListBox::MSWWindowProc(msg, wParam, lParam);
+    m_bars.After(msg, wParam, lParam, result);
+    return result;
+}
+#endif // __WXMSW__
 
 void ListBox::EnableChecks(bool enable)
 {

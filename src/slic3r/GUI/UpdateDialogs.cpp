@@ -1,4 +1,5 @@
 #include "UpdateDialogs.hpp"
+#include "Widgets/MD3ScrolledWindow.hpp"
 
 #include <cstring>
 #include <boost/format.hpp>
@@ -109,7 +110,7 @@ MsgUpdateConfig::MsgUpdateConfig(const std::vector<Update> &updates, bool force_
 
     m_sizer_right->AddSpacer(FromDIP(15));
 
-    auto m_scrollwindw_release_note = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(560), FromDIP(430)),wxVSCROLL);
+    auto m_scrollwindw_release_note = new MD3ScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(560), FromDIP(430)),wxVSCROLL);
     m_scrollwindw_release_note->SetScrollRate(0, 5);
     m_scrollwindw_release_note->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
     m_scrollwindw_release_note->SetMaxSize(wxSize(FromDIP(560), FromDIP(430)));

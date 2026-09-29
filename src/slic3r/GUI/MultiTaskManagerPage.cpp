@@ -1,4 +1,5 @@
 #include "MultiTaskManagerPage.hpp"
+#include "Widgets/MD3ScrolledWindow.hpp"
 #include "I18N.hpp"
 
 #include "GUI_App.hpp"
@@ -675,7 +676,7 @@ LocalTaskManagerPage::LocalTaskManagerPage(wxWindow* parent)
     m_tip_text->SetFont(::Label::Head_24);
     m_tip_text->Wrap(-1);
 
-    m_task_list = new wxScrolledWindow(m_main_panel, wxID_ANY, wxDefaultPosition, wxDefaultSize);
+    m_task_list = new MD3ScrolledWindow(m_main_panel, wxID_ANY, wxDefaultPosition, wxDefaultSize);
     m_task_list->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_task_list->SetScrollRate(0, 5);
     m_task_list->SetMinSize(wxSize(FromDIP(CLOUD_TASK_ITEM_MAX_WIDTH), FromDIP(DEVICE_ITEM_MAX_HEIGHT)));
@@ -1064,7 +1065,7 @@ CloudTaskManagerPage::CloudTaskManagerPage(wxWindow* parent)
     m_loading_text->Wrap(-1);
     m_loading_text->Show(false);
 
-    m_task_list = new wxScrolledWindow(m_main_panel, wxID_ANY, wxDefaultPosition, wxDefaultSize);
+    m_task_list = new MD3ScrolledWindow(m_main_panel, wxID_ANY, wxDefaultPosition, wxDefaultSize);
     m_task_list->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_task_list->SetScrollRate(0, 5);
     m_task_list->SetMinSize(wxSize(FromDIP(CLOUD_TASK_ITEM_MAX_WIDTH), FromDIP(DEVICE_ITEM_MAX_HEIGHT)));

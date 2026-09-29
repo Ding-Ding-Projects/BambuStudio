@@ -1,4 +1,5 @@
 #include "BindDialog.hpp"
+#include "Widgets/MD3ScrolledWindow.hpp"
 #include "Widgets/Button.hpp"
 #include "Widgets/MaterialIcon.hpp"
 #include "Widgets/LinkLabel.hpp"
@@ -593,7 +594,7 @@ PingCodeBindDialog::~PingCodeBindDialog() {
      m_panel_agreement->Layout();
 
      //show bind failed info
-     m_sw_bind_failed_info = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(450), FromDIP(300)), wxVSCROLL);
+     m_sw_bind_failed_info = new MD3ScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(450), FromDIP(300)), wxVSCROLL);
      m_sw_bind_failed_info->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
      m_sw_bind_failed_info->SetScrollRate(5, 5);
      m_sw_bind_failed_info->SetMinSize(wxSize(FromDIP(450), FromDIP(90)));

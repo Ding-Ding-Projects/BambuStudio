@@ -1,4 +1,5 @@
 #include "SmartHomeDialog.hpp"
+#include "Widgets/MD3ScrolledWindow.hpp"
 #include "Widgets/Slider.hpp"
 
 #include "DeviceCore/DevManager.h"
@@ -453,7 +454,7 @@ SmartHomeDialog::SmartHomeDialog(wxWindow *parent)
 
     // Keep the header and decision footer fixed while the potentially long,
     // bilingual Home Assistant content scrolls inside the available work area.
-    m_scroll = new wxScrolledWindow(
+    m_scroll = new MD3ScrolledWindow(
         this, wxID_ANY, wxDefaultPosition, wxDefaultSize,
         wxVSCROLL | wxTAB_TRAVERSAL | wxBORDER_NONE);
     m_scroll->SetBackgroundColour(bg);

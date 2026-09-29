@@ -1,4 +1,5 @@
 #include "MixedFilamentDialog.hpp"
+#include "Widgets/MD3ScrolledWindow.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -1261,7 +1262,7 @@ wxBoxSizer* MixedFilamentDialog::create_recommendation_grid()
 
     outer->Add(title_sizer, 0, wxEXPAND | wxBOTTOM, FromDIP(4));
 
-    m_recommendation_scroll = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxSize(-1, FromDIP(116)));
+    m_recommendation_scroll = new MD3ScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxSize(-1, FromDIP(116)));
     m_recommendation_scroll->SetScrollRate(0, 5);
     m_recommendation_scroll->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
 

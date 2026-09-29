@@ -1,6 +1,6 @@
 ---
 translation-of: layout-probe.md
-source-sha256: 196fe4de2e212098f31fd64f0f9ac8e9ea17bf64fe1b3757d0d34f560593da1f
+source-sha256: d952164da4c17bbd4fed8c3801d07cae9d0078877eee186b50bcf1841f4abd67
 review-status: agent-drafted
 ---
 
@@ -36,6 +36,8 @@ review-status: agent-drafted
 | `ellipsized` | 標籤攜帶省略號樣式，或工具包按鈕允許縮窄，正如分頁標籤一樣（為審查而報告，唔係發現） |
 | `hint_clipped` | 一個空白嘅單行輸入框顯示嘅提示字比佢嘅客戶端寬度闊，所以被輸入框切走；`hint` 同 `hint_width` 記錄提示字同佢嘅闊度（未量度提示字之前，有乜新嘢將「YYYY-MM-DD / DD/MM/YYYY」切成「YYYY-MM-DD / D」，版面裁剪清單 CJ-027） |
 | `clipped_by_parent` | 一個顯示緊嘅子視窗嘅矩形，喺父視窗唔會捲動嘅方向超出咗父視窗嘅客戶區（捲動面板可見範圍以外嘅一行只係被捲走，唔係被裁剪；對話框或者其他頂層視窗永遠唔會被標記：佢本身就係一個獨立視窗） |
+
+每個視窗記錄仲有 `scrollbars`，記低視窗顯示緊邊啲捲動列、係邊個畫嘅：`native_v` 同 `native_h` 係 Windows 畫嘅垂直或者水平捲動列（Windows 只係喺顯示緊嗰條捲動列嘅時候，先會喺樣式保留 `WS_VSCROLL`/`WS_HSCROLL`），`kit_v` 同 `kit_h` 係 `MD3ScrolledWindow` 或者套件 `ListBox` 嘅套件捲動列。一個顯示緊嘅視窗如果 `native_v` 或 `native_h` 係 true，即係畫面上仲有 Windows 捲動列。
 
 場景工具欄（`"toolbar":"main"`）嘅每個可見項目同埋 gizmo 欄（`"gizmo"`）一份 `gl_item` 記錄：名稱、主機 canvas 句柄、canvas 像素同埋螢幕上嘅矩形，源自項目嘅世界空間轉譯矩形同埋相機縮放。呢啲唔係 wx 視窗，所以冇標誌適用；佢哋存在係為咗一份截圖可以按名稱被裁剪到工具欄或欄項目。
 

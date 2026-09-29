@@ -1,4 +1,5 @@
 #include "UnsavedChangesDialog.hpp"
+#include "Widgets/MD3ScrolledWindow.hpp"
 #include "Widgets/LabeledCheckBox.hpp"
 #include "Widgets/TextArea.hpp"
 
@@ -1072,7 +1073,7 @@ void UnsavedChangesDialog::build(Preset::Type type, PresetCollection *dependent_
         m_sizer_top->Fit(m_table_top);
         m_sizer_tab->Add(m_table_top, 1, 0, 0);
 
-        m_scrolledWindow = new wxScrolledWindow(m_panel_tab, wxID_ANY, wxDefaultPosition, UNSAVE_CHANGE_DIALOG_SCROLL_WINDOW_SIZE,  wxNO_BORDER|wxVSCROLL);
+        m_scrolledWindow = new MD3ScrolledWindow(m_panel_tab, wxID_ANY, wxDefaultPosition, UNSAVE_CHANGE_DIALOG_SCROLL_WINDOW_SIZE,  wxNO_BORDER|wxVSCROLL);
         m_scrolledWindow->SetScrollRate(0, 5);
         m_scrolledWindow->SetBackgroundColour(GREY200);
         m_sizer_bottom = new wxBoxSizer(wxVERTICAL);

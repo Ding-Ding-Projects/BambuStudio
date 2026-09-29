@@ -1,4 +1,5 @@
 #include "UpgradePanel.hpp"
+#include "Widgets/MD3ScrolledWindow.hpp"
 #include "Widgets/MaterialIcon.hpp"
 #include "Widgets/StateColor.hpp"
 #include "Widgets/Button.hpp"
@@ -1820,7 +1821,7 @@ UpgradePanel::UpgradePanel(wxWindow *parent, wxWindowID id, const wxPoint &pos, 
 
     auto m_main_sizer = new wxBoxSizer(wxVERTICAL);
 
-    m_scrolledWindow = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL);
+    m_scrolledWindow = new MD3ScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL);
     m_scrolledWindow->SetScrollRate(5, 25);
 
     m_machine_list_sizer = new wxBoxSizer(wxVERTICAL);

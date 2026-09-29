@@ -1,6 +1,7 @@
 #include <GL/glew.h>
 
 #include "TextureImportDialog.hpp"
+#include "Widgets/MD3ScrolledWindow.hpp"
 #include "Widgets/LabeledCheckBox.hpp"
 #include "TextureImportOverLimitDialog.hpp"
 #include "TextureImportPopupDismiss.hpp"
@@ -2047,7 +2048,7 @@ private:
         const wxSize btn_bmp_size(FromDIP(24), FromDIP(24));
         const wxSize btn_size(FromDIP(30), FromDIP(30));
 
-        auto* scroll = new wxScrolledWindow(m_grid_host, wxID_ANY, wxDefaultPosition, wxDefaultSize,
+        auto* scroll = new MD3ScrolledWindow(m_grid_host, wxID_ANY, wxDefaultPosition, wxDefaultSize,
                                             wxVSCROLL | wxNO_BORDER);
         scroll->SetBackgroundColour(m_grid_host->GetBackgroundColour());
         auto* grid = new wxGridSizer(needed_rows, kGridCols, FromDIP(2), FromDIP(2));
@@ -2089,7 +2090,7 @@ private:
         if (need_scroll) {
             const int row_height = btn_size.GetHeight() + FromDIP(2);
             const int col_width = btn_size.GetWidth() + FromDIP(4);
-            const int scrollbar_width = wxSystemSettings::GetMetric(wxSYS_VSCROLL_X);
+            const int scrollbar_width = MD3ScrolledWindow::BarThickness(scroll);
             scroll->SetMinSize(wxSize(col_width * kGridCols + scrollbar_width, row_height * kMaxVisibleRows));
             scroll->FitInside();
             scroll->SetScrollRate(0, row_height);
@@ -2782,7 +2783,7 @@ public:
         Bind(wxEVT_IDLE, [](wxIdleEvent&) {});
 #endif
 
-        m_content = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL);
+        m_content = new MD3ScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL);
         m_content->SetBackgroundColour(pop_bg);
         m_content->SetScrollRate(0, FromDIP(5));
         m_content->Bind(wxEVT_MOTION, [this](wxMouseEvent& evt) {
@@ -5263,7 +5264,7 @@ void TextureImportDialog::build_mapping_panel(wxWindow* parent, wxSizer* sizer)
 
     panel_sizer->Add(header_sizer, 0, wxEXPAND | wxBOTTOM, FromDIP(8));
 
-    m_mapping_scroll = new wxScrolledWindow(m_mapping_panel, wxID_ANY, wxDefaultPosition,
+    m_mapping_scroll = new MD3ScrolledWindow(m_mapping_panel, wxID_ANY, wxDefaultPosition,
                                              wxSize(-1, FromDIP(252)));
     m_mapping_scroll->SetScrollRate(0, FromDIP(10));
     m_mapping_scroll->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));

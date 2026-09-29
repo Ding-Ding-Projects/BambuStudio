@@ -1,4 +1,5 @@
 #include "Tab.hpp"
+#include "Widgets/MD3ScrolledWindow.hpp"
 #include "Auxiliary.hpp"
 #include "Widgets/Button.hpp"
 #include "Widgets/MaterialIcon.hpp"
@@ -591,7 +592,7 @@ AuFolderPanel::AuFolderPanel(wxWindow *parent, AuxiliaryFolderType type, wxWindo
     SetBackgroundColour(AUFILE_GREY300);
     wxBoxSizer *sizer_main = new wxBoxSizer(wxVERTICAL);
 
-    m_scrolledWindow = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL | wxVSCROLL);
+    m_scrolledWindow = new MD3ScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL | wxVSCROLL);
     m_scrolledWindow->SetScrollRate(5, 5);
     wxBoxSizer *sizer_body = new wxBoxSizer(wxVERTICAL);
     wxBoxSizer *sizer_top  = new wxBoxSizer(wxHORIZONTAL);

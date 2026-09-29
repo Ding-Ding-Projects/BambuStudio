@@ -1,4 +1,5 @@
 #include "DeviceErrorDialog.hpp"
+#include "Widgets/MD3ScrolledWindow.hpp"
 #include "HMS.hpp"
 
 #include "DeviceManager.hpp"
@@ -65,7 +66,7 @@ DeviceErrorDialog::DeviceErrorDialog(MachineObject* obj, wxWindow* parent, wxWin
     auto        m_line_top = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(350), 1));
     m_line_top->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
 
-    m_scroll_area = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL);
+    m_scroll_area = new MD3ScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL);
     m_scroll_area->SetScrollRate(0, 5);
     m_scroll_area->SetBackgroundColour(*wxWHITE);
     m_scroll_area->SetMinSize(wxSize(FromDIP(320), FromDIP(250)));

@@ -1,4 +1,5 @@
 #include "Preferences.hpp"
+#include "Widgets/MD3ScrolledWindow.hpp"
 #include "Export/ExportDatasets.hpp"
 #include "Export/ExportDialog.hpp"
 #include "OptionsGroup.hpp"
@@ -103,10 +104,10 @@ static wxString language_display_name(const wxLanguageInfo *info)
 // behavior is to scroll to whatever child receives focus, which makes the
 // dialog jump around when the user tabs between combobox/checkbox rows.
 // Suppressing that and presetting a sensible scroll rate keeps tab pages stable.
-class ScrollPanel : public wxScrolledWindow
+class ScrollPanel : public MD3ScrolledWindow
 {
 public:
-    explicit ScrollPanel(wxWindow *parent) : wxScrolledWindow(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL)
+    explicit ScrollPanel(wxWindow *parent) : MD3ScrolledWindow(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL)
     {
         SetScrollRate(5, 5);
         // Content pane surface — driven by role so dark resolves via semantic()

@@ -1,4 +1,5 @@
 #include "ReleaseNote.hpp"
+#include "Widgets/MD3ScrolledWindow.hpp"
 #include "I18N.hpp"
 #include "GCodeViewer.hpp"
 
@@ -79,7 +80,7 @@ ReleaseNoteDialog::ReleaseNoteDialog(Plater *plater /*= nullptr*/)
 
     m_sizer_right->AddSpacer(FromDIP(15));
 
-    m_vebview_release_note = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(560), FromDIP(430)), wxVSCROLL);
+    m_vebview_release_note = new MD3ScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(560), FromDIP(430)), wxVSCROLL);
     m_vebview_release_note->SetScrollRate(5, 5);
     m_vebview_release_note->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
     m_vebview_release_note->SetMaxSize(wxSize(FromDIP(560), FromDIP(430)));
@@ -133,7 +134,7 @@ UpdatePluginDialog::UpdatePluginDialog(wxWindow* parent /*= nullptr*/)
     operation_tips->SetMinSize(wxSize(FromDIP(260), -1));
     operation_tips->SetMaxSize(wxSize(FromDIP(260), -1));
 
-    m_vebview_release_note = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL);
+    m_vebview_release_note = new MD3ScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL);
     m_vebview_release_note->SetScrollRate(5, 5);
     m_vebview_release_note->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
     m_vebview_release_note->SetMinSize(wxSize(FromDIP(260), FromDIP(150)));
@@ -241,7 +242,7 @@ UpdateVersionDialog::UpdateVersionDialog(wxWindow *parent)
     m_simplebook_release_note->SetMinSize(wxSize(FromDIP(560), FromDIP(430)));
     m_simplebook_release_note->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
 
-    m_scrollwindows_release_note = new wxScrolledWindow(m_simplebook_release_note, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(560), FromDIP(430)), wxVSCROLL);
+    m_scrollwindows_release_note = new MD3ScrolledWindow(m_simplebook_release_note, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(560), FromDIP(430)), wxVSCROLL);
     m_scrollwindows_release_note->SetScrollRate(5, 5);
     m_scrollwindows_release_note->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
 
@@ -470,7 +471,7 @@ SecondaryCheckDialog::SecondaryCheckDialog(wxWindow* parent, wxWindowID id, cons
 
     wxBoxSizer* m_sizer_right = GetContentSizer();
 
-    m_vebview_release_note = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL);
+    m_vebview_release_note = new MD3ScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL);
     m_vebview_release_note->SetScrollRate(0, 5);
     m_vebview_release_note->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
     m_vebview_release_note->SetMinSize(wxSize(FromDIP(400), FromDIP(380)));
@@ -813,7 +814,7 @@ PrintErrorDialog::PrintErrorDialog(wxWindow* parent, wxWindowID id, const wxStri
 
     wxBoxSizer* m_sizer_right = GetContentSizer();
 
-    m_vebview_release_note = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL);
+    m_vebview_release_note = new MD3ScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL);
     m_vebview_release_note->SetScrollRate(0, 5);
     m_vebview_release_note->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
     m_vebview_release_note->SetMinSize(wxSize(FromDIP(320), FromDIP(250)));
@@ -1112,7 +1113,7 @@ ConfirmBeforeSendDialog::ConfirmBeforeSendDialog(wxWindow* parent, wxWindowID id
 
     wxBoxSizer* m_sizer_right = GetContentSizer();
 
-    m_vebview_release_note = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL);
+    m_vebview_release_note = new MD3ScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL);
     m_vebview_release_note->SetScrollRate(0, 5);
     m_vebview_release_note->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
     m_vebview_release_note->SetMinSize(wxSize(FromDIP(400), FromDIP(380)));

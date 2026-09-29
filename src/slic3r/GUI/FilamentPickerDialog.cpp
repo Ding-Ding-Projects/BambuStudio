@@ -1,4 +1,5 @@
 #include "FilamentPickerDialog.hpp"
+#include "Widgets/MD3ScrolledWindow.hpp"
 #include "GUI.hpp"
 #include "I18N.hpp"
 #include "GUI_App.hpp"
@@ -353,7 +354,7 @@ wxScrolledWindow* FilamentPickerDialog::CreateColorGrid()
     bool need_scroll = needed_rows > MAX_VISIBLE_ROWS;
 
     // Create a vertical-only scrolled window
-    wxScrolledWindow* scroll_win = new wxScrolledWindow(
+    wxScrolledWindow* scroll_win = new MD3ScrolledWindow(
         this,
         wxID_ANY,
         wxDefaultPosition,
@@ -438,7 +439,7 @@ wxScrolledWindow* FilamentPickerDialog::CreateColorGrid()
         int col_width = COLOR_BTN_SIZE.GetWidth() + FromDIP(4);
 
         // Reserve space for vertical scrollbar so it doesn't overlay content
-        int scrollbar_width = wxSystemSettings::GetMetric(wxSYS_VSCROLL_X);
+        int scrollbar_width = MD3ScrolledWindow::BarThickness(scroll_win);
 
         // Set minimum visible area (including scrollbar width)
         scroll_win->SetMinSize(wxSize(col_width * COLS + scrollbar_width, row_height * MAX_VISIBLE_ROWS));

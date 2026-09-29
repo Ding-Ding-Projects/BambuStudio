@@ -1,4 +1,5 @@
 #include "CreatePresetsDialog.hpp"
+#include "Widgets/MD3ScrolledWindow.hpp"
 #include "Widgets/TextInput.hpp"
 #include "Widgets/LinkLabel.hpp"
 #include <vector>
@@ -621,7 +622,7 @@ CreateFilamentPresetDialog::CreateFilamentPresetDialog(wxWindow *parent)
     m_filament_preset_text = new Label(this, _L("We could create the filament presets for your following printer:"));
     m_main_sizer->Add(m_filament_preset_text, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(15));
 
-    m_scrolled_preset_panel = new wxScrolledWindow(this, wxID_ANY);
+    m_scrolled_preset_panel = new MD3ScrolledWindow(this, wxID_ANY);
     m_scrolled_preset_panel->SetMaxSize(wxSize(-1, FromDIP(350)));
     m_scrolled_preset_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_scrolled_preset_panel->SetScrollRate(5, 5);
@@ -1471,7 +1472,7 @@ CreatePrinterPresetDialog::CreatePrinterPresetDialog(wxWindow *parent)
 
     wxBoxSizer *page_sizer = new wxBoxSizer(wxHORIZONTAL);
 
-    m_page1 = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize);
+    m_page1 = new MD3ScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize);
     m_page1->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_page1->SetScrollRate(5, 5);
     m_page2 = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize);\
@@ -2596,7 +2597,7 @@ wxBoxSizer *CreatePrinterPresetDialog::create_presets_template_item(wxWindow *pa
 {
     wxBoxSizer *vertical_sizer = new wxBoxSizer(wxVERTICAL);
 
-    m_scrolled_preset_window = new wxScrolledWindow(parent);
+    m_scrolled_preset_window = new MD3ScrolledWindow(parent);
     m_scrolled_preset_window->SetScrollRate(5, 5);
     m_scrolled_preset_window->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     //m_scrolled_preset_window->SetMinSize(wxSize(FromDIP(1500), FromDIP(-1)));
@@ -4361,7 +4362,7 @@ wxBoxSizer *ExportConfigsDialog::create_select_printer(wxWindow *parent)
     optionSizer->Add(m_serial_text, 0, wxEXPAND | wxALL, 0);
     optionSizer->SetMinSize(OPTION_SIZE);
     horizontal_sizer->Add(optionSizer, 0, wxEXPAND | wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(10));
-    m_scrolled_preset_window = new wxScrolledWindow(parent);
+    m_scrolled_preset_window = new MD3ScrolledWindow(parent);
     m_scrolled_preset_window->SetScrollRate(5, 5);
     m_scrolled_preset_window->SetBackgroundColour(PRINTER_LIST_COLOUR);
     m_scrolled_preset_window->SetMaxSize(wxSize(FromDIP(660), FromDIP(400)));
@@ -4818,7 +4819,7 @@ wxBoxSizer *EditFilamentPresetDialog::create_add_filament_btn()
 wxBoxSizer *EditFilamentPresetDialog::create_preset_tree_sizer()
 {
     wxBoxSizer *filament_preset_tree_sizer = new wxBoxSizer(wxHORIZONTAL);
-    m_preset_tree_window = new wxScrolledWindow(this);
+    m_preset_tree_window = new MD3ScrolledWindow(this);
     m_preset_tree_window->SetScrollRate(5, 5);
     m_preset_tree_window->SetBackgroundColour(PRINTER_LIST_COLOUR);
     m_preset_tree_window->SetMinSize(wxSize(-1, FromDIP(400)));

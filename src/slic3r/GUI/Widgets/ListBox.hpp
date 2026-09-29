@@ -6,6 +6,7 @@
 #include <wx/arrstr.h>
 #include <wx/vlbox.h>
 
+#include "MD3ScrollBars.hpp"
 #include "MD3Tokens.hpp"
 
 namespace Slic3r { namespace GUI {
@@ -17,11 +18,13 @@ namespace Slic3r { namespace GUI {
 // the kit body face. wxVListBox keeps the native keyboard model (arrows,
 // Home/End, Page keys) and emits wxEVT_LISTBOX on selection, so callers that
 // used wxListBox::Set/GetSelection keep working. Long rows ellipsize at the
-// end; the full text is the row's tooltip so nothing is unreachable.
+// end; the full text is the row's tooltip so nothing is unreachable. Its
+// scrollbar is the kit scrollbar (MD3ScrollBars), not the Windows one.
 class ListBox : public wxVListBox
 {
 public:
     ListBox(wxWindow *parent, wxWindowID id = wxID_ANY, const wxSize &size = wxDefaultSize, long style = 0);
+    ~ListBox() override;
 
     void     Set(const std::vector<wxString> &rows);
     void     Set(const wxArrayString &rows) { Set(std::vector<wxString>(rows.begin(), rows.end())); }
@@ -41,6 +44,19 @@ public:
     bool IsChecked(unsigned index) const { return index < m_checked.size() && m_checked[index] != 0; }
     void Rescale();
 
+    // Whether the kit bar for orient (wxVERTICAL or wxHORIZONTAL) is shown.
+    bool IsBarShown(int orient) const { return m_bars.IsShown(orient); }
+
+#ifdef __WXMSW__
+    void      SetScrollbar(int orient, int pos, int thumbVisible, int range, bool refresh = true) override;
+    void      SetScrollPos(int orient, int pos, bool refresh = true) override;
+    int       GetScrollPos(int orient) const override;
+    int       GetScrollThumb(int orient) const override;
+    int       GetScrollRange(int orient) const override;
+    WXDWORD   MSWGetStyle(long flags, WXDWORD *exstyle = nullptr) const override;
+    WXLRESULT MSWWindowProc(WXUINT msg, WXWPARAM wParam, WXLPARAM lParam) override;
+#endif
+
 protected:
     void    OnDrawItem(wxDC &dc, const wxRect &rect, size_t n) const override;
     void    OnDrawBackground(wxDC &dc, const wxRect &rect, size_t n) const override;
@@ -59,6 +75,7 @@ private:
     std::vector<char>     m_checked;
     bool                  m_checks { false };
     MD3::ColorScheme      m_scheme { MD3::ColorScheme::Brand };
+    MD3ScrollBars         m_bars { this };
 };
 
 }} // namespace Slic3r::GUI

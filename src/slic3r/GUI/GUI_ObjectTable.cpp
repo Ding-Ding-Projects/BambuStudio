@@ -1,4 +1,5 @@
 #include "wx/clipbrd.h"
+#include "Widgets/MD3ScrolledWindow.hpp"
 #include "Widgets/MD3DialogChrome.hpp"
 #include "wx/display.h"
 
@@ -2778,7 +2779,7 @@ ObjectTablePanel::ObjectTablePanel( wxWindow* parent, wxWindowID id, const wxPoi
     //m_object_grid_table->SetAttrProvider(new MyGridCellAttrProvider);
     //m_object_grid->AssignTable(m_object_grid_table);
 
-    m_side_window = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(440),FromDIP(480)), wxVSCROLL);
+    m_side_window = new MD3ScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(440),FromDIP(480)), wxVSCROLL);
     m_side_window->SetScrollRate( 0, 5 );
     m_page_sizer = new wxBoxSizer(wxVERTICAL);
     //m_page_top_sizer = new wxBoxSizer(wxHORIZONTAL);

@@ -1,4 +1,5 @@
 #include "HelioReleaseNote.hpp"
+#include "Widgets/MD3ScrolledWindow.hpp"
 #include "Widgets/Button.hpp"
 #include "Widgets/MaterialIcon.hpp"
 #include "HelioHistoryDialog.hpp"
@@ -354,7 +355,7 @@ void HelioStatementDialog::create_legal_page()
     subtitle->SetForegroundColour(wxColour(180, 180, 180));
     
     // Scrollable content area
-    m_scroll_panel = new wxScrolledWindow(page_legal_panel, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL);
+    m_scroll_panel = new MD3ScrolledWindow(page_legal_panel, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL);
     m_scroll_panel->SetScrollRate(0, 10);
     m_scroll_panel->SetBackgroundColour(HELIO_BG_BASE);
     wxBoxSizer* scroll_sizer = new wxBoxSizer(wxVERTICAL);
@@ -3664,7 +3665,7 @@ HelioSimulationResultsDialog::HelioSimulationResultsDialog(wxWindow *parent,
         m_fix_suggestions_preview->Bind(wxEVT_LEAVE_WINDOW, [this](auto& e) { SetCursor(wxCURSOR_ARROW); });
         
         // Scrolled window to contain the fix suggestions content
-        m_fix_suggestions_scroll = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL);
+        m_fix_suggestions_scroll = new MD3ScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL);
         m_fix_suggestions_scroll->SetBackgroundColour(theme.bg);
         m_fix_suggestions_scroll->SetScrollRate(0, FromDIP(10));
         m_fix_suggestions_scroll->SetMinSize(wxSize(-1, FromDIP(200)));

@@ -5,6 +5,7 @@
 // PLEASE DO *NOT* EDIT THIS FILE!
 ///////////////////////////////////////////////////////////////////////////
 #include "libslic3r/PresetBundle.hpp"
+#include "Widgets/MD3ScrolledWindow.hpp"
 #include "libslic3r/Preset.hpp"
 #include "ParamsPanel.hpp"
 #include "Tab.hpp"
@@ -353,11 +354,11 @@ ParamsPanel::ParamsPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, c
 #endif
 
     // BBS: fix scroll to tip view
-    class PageScrolledWindow : public wxScrolledWindow
+    class PageScrolledWindow : public MD3ScrolledWindow
     {
     public:
         PageScrolledWindow(wxWindow *parent)
-            : wxScrolledWindow(parent,
+            : MD3ScrolledWindow(parent,
                                wxID_ANY,
                                wxDefaultPosition,
                                wxDefaultSize,

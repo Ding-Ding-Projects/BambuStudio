@@ -2,6 +2,7 @@
 #include <sstream>
 //#include "libslic3r/FlushVolCalc.hpp"
 #include "ObjColorDialog.hpp"
+#include "Widgets/MD3ScrolledWindow.hpp"
 #include "BitmapCache.hpp"
 #include "GUI.hpp"//for ICON_SIZE
 #include "I18N.hpp"
@@ -487,7 +488,7 @@ ObjColorPanel::ObjColorPanel(wxWindow *parent, Slic3r::ObjDialogInOut &in_out, c
         matching_title_sizer->Add(matching_title, 0, wxEXPAND , 0);
         m_sizer_simple->Add(matching_title_sizer, 0, wxEXPAND | wxTOP, FromDIP(15));// wxTop has FromDIP(10) margin
         //new color table
-        m_scrolledWindow = new wxScrolledWindow(m_page_simple, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL);
+        m_scrolledWindow = new MD3ScrolledWindow(m_page_simple, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL);
         m_scrolledWindow->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
         m_scrolledWindow->SetScrollRate(0, 20);
         m_scrolledWindow->EnableScrolling(false, true);

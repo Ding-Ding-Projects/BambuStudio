@@ -1,4 +1,5 @@
 #include "CalibrationWizard.hpp"
+#include "Widgets/MD3ScrolledWindow.hpp"
 #include "I18N.hpp"
 #include "GUI_App.hpp"
 #include "MsgDialog.hpp"
@@ -78,7 +79,7 @@ CalibrationWizard::CalibrationWizard(wxWindow* parent, CalibMode mode, wxWindowI
 
     wxBoxSizer* main_sizer = new wxBoxSizer(wxVERTICAL);
 
-    m_scrolledWindow = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL | wxVSCROLL);
+    m_scrolledWindow = new MD3ScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL | wxVSCROLL);
     m_scrolledWindow->SetScrollRate(5, 5);
     m_scrolledWindow->SetBackgroundColour(*wxWHITE);
 

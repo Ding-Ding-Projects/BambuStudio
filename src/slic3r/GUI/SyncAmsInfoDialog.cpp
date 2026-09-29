@@ -1,4 +1,5 @@
 #include "SyncAmsInfoDialog.hpp"
+#include "Widgets/MD3ScrolledWindow.hpp"
 
 #include <thread>
 #include <wx/event.h>
@@ -692,7 +693,7 @@ SyncAmsInfoDialog::SyncAmsInfoDialog(wxWindow *parent, SyncInfo &info) :
     m_sizer_this = new wxBoxSizer(wxVERTICAL);
 
     //wxBoxSizer *m_scroll_sizer = new wxBoxSizer(wxVERTICAL);
-    m_scrolledWindow = new wxScrolledWindow(m_show_page, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL);
+    m_scrolledWindow = new MD3ScrolledWindow(m_show_page, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL);
     m_scrolledWindow->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_scrolledWindow->SetScrollRate(0, 20);
     m_scrolledWindow->SetMinSize(wxSize(-1, SyncAmsInfoDialogHeightMAX));

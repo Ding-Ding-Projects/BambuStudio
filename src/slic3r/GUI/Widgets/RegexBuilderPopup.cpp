@@ -1,4 +1,5 @@
 #include "RegexBuilderPopup.hpp"
+#include "MD3ScrolledWindow.hpp"
 
 #include "Button.hpp"
 #include "BoundedRegex.hpp"
@@ -183,7 +184,7 @@ void RegexBuilderPopup::build()
     const int gap      = FromDIP(kGapY);
     const int contentW = FromDIP(kContentW);
 
-    m_scroll = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize,
+    m_scroll = new MD3ScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize,
                                     wxTAB_TRAVERSAL | wxVSCROLL | wxBORDER_NONE);
     m_scroll->SetBackgroundColour(surface);
 
@@ -451,7 +452,7 @@ void RegexBuilderPopup::buildReference()
     const int pad      = FromDIP(kPad);
     const int contentW = FromDIP(kContentW);
 
-    m_ref_scroll = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize,
+    m_ref_scroll = new MD3ScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize,
                                         wxTAB_TRAVERSAL | wxVSCROLL | wxBORDER_NONE);
     m_ref_scroll->SetBackgroundColour(surface);
     wxBoxSizer *sizer = new wxBoxSizer(wxVERTICAL);
@@ -891,7 +892,7 @@ void RegexBuilderPopup::fitPopup()
     const int inset  = FromDIP(4); // keeps square children inside the r12 border arc
     const int tab_h  = FromDIP(52); // 44-DIP Build | Reference targets + insets
     const int view_h = std::min(content.y, max_h - tab_h);
-    const int sb_w   = content.y > view_h ? wxSystemSettings::GetMetric(wxSYS_VSCROLL_X, active) : 0;
+    const int sb_w   = content.y > view_h ? MD3ScrolledWindow::BarThickness(this) : 0;
 
     SetClientSize(content.x + sb_w + 2 * inset, tab_h + view_h + 2 * inset);
     if (m_tab_build && m_tab_ref) {

@@ -2,6 +2,7 @@
 #define slic3r_StatusPanel_hpp_
 
 #include "libslic3r/ProjectTask.hpp"
+#include "Widgets/MD3ScrolledWindow.hpp"
 #include "DeviceManager.hpp"
 #include "MonitorPage.hpp"
 #include "SliceInfoPanel.hpp"
@@ -417,7 +418,7 @@ private:
     void paint(wxPaintEvent&);
 };
 
-class StatusBasePanel : public wxScrolledWindow
+class StatusBasePanel : public MD3ScrolledWindow
 {
 protected:
     wxBitmap m_item_placeholder;

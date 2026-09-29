@@ -1,4 +1,5 @@
 #include "AMSDryControl.hpp"
+#include "Widgets/MD3ScrolledWindow.hpp"
 #include "Widgets/TextInput.hpp"
 #include "Widgets/CheckBox.hpp"
 #include "Widgets/StaticLine.hpp"
@@ -281,7 +282,7 @@ AMSDryCtrWin::~AMSDryCtrWin()
 
 wxScrolledWindow* AMSDryCtrWin::create_preview_scrolled_window(wxWindow* parent)
 {
-    wxScrolledWindow* panel = new wxScrolledWindow(parent, wxID_ANY);
+    wxScrolledWindow* panel = new MD3ScrolledWindow(parent, wxID_ANY);
     panel->SetScrollRate(10, 0);
     panel->SetMinSize(AMS_ITEMS_PANEL_SIZE);
     panel->SetBackgroundColour(AMS_CONTROL_DEF_BLOCK_BK_COLOUR);

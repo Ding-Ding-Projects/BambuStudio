@@ -256,6 +256,20 @@ still to verify.
   white or raw red. Bed shape, System info and the full comparison use kit OK and Cancel buttons with the standard ids
   in place of `CreateButtonSizer()` / `CreateStdDialogButtonSizer()`. The never-called native preset tree in
   CreatePresetsDialog is gone. `native-controls.test.mjs` refuses all of these.
+- Scrollbars (2026-09-29): `MD3ScrollBars` (`Widgets/MD3ScrollBars.{hpp,cpp}`) draws the kit scrollbar for a window
+  whose native scrollbar calls are forwarded to it: `SetScrollbar`/`SetScrollPos`/`GetScroll*` record the scroll
+  helper's position, page and range instead of calling Windows, `MSWGetStyle()` drops `WS_HSCROLL`/`WS_VSCROLL`, and
+  `MSWWindowProc()` offers each message to `Before()`/`After()`, which reserve a 10 DIP strip per shown bar in
+  `WM_NCCALCSIZE` (so the client area shrinks like it did for a native bar), paint it on `WM_NCPAINT` and `WM_PAINT`,
+  claim it as `HTBORDER` in hit testing, drag the thumb with `wxEVT_SCROLLWIN_THUMBTRACK`/`THUMBRELEASE`, and page with
+  `PAGEUP`/`PAGEDOWN` on a 350 ms then 50 ms timer. Showing or hiding a bar calls `SetWindowPos(SWP_FRAMECHANGED)`,
+  which brings the same `WM_SIZE` a native bar brings. `MD3ScrolledWindow` replaces all 84 `wxScrolledWindow`
+  constructions and subclasses (56 files), and the kit `ListBox` now creates its window from its own constructor body
+  so the overrides apply from the start. The owner must be created through its own `Create()`, never through a base
+  constructor, or Windows gets a scrollbar style before the override exists. The layout probe writes `scrollbars`
+  (`native_v`, `native_h`, `kit_v`, `kit_h`) for every window. Still native: the scrollbars of `wxDataViewCtrl`
+  (including the Objects list) and of multi-line text boxes. `scrollbars.test.mjs` and the include guard cover it; not
+  yet in a release.
 - Closeout cleanup (2026-09-29): the linked worktree of the auto-updater lane
   (`BambuStudio-claude-auto-updater`) and its branch `claude/auto-updater` (`37b3fce78`, contained in `main`, no copy
   on the remote) were removed after an archive of the repository to the maintainer's cloud folder was written and

@@ -1,4 +1,5 @@
 #include "SendToPrinter.hpp"
+#include "Widgets/MD3ScrolledWindow.hpp"
 #include "Widgets/LinkLabel.hpp"
 #include "I18N.hpp"
 
@@ -524,7 +525,7 @@ SendToPrinterDialog::SendToPrinterDialog(Plater *plater)
     m_simplebook->AddPage(m_panel_finish, wxEmptyString, false);
 
     //show bind failed info
-    m_sw_print_failed_info = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(380), FromDIP(125)), wxVSCROLL);
+    m_sw_print_failed_info = new MD3ScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(380), FromDIP(125)), wxVSCROLL);
     m_sw_print_failed_info->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
     m_sw_print_failed_info->SetScrollRate(0, 5);
     m_sw_print_failed_info->SetMinSize(wxSize(FromDIP(380), FromDIP(125)));

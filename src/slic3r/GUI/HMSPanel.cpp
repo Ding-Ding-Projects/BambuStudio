@@ -1,4 +1,5 @@
 #include "HMS.hpp"
+#include "Widgets/MD3ScrolledWindow.hpp"
 #include "HMSPanel.hpp"
 #include "DeviceCore/DevHMSQuery.h"
 #include <slic3r/GUI/Widgets/SideTools.hpp>
@@ -225,7 +226,7 @@ HMSPanel::HMSPanel(wxWindow *parent, wxWindowID id, const wxPoint &pos, const wx
 
     auto m_main_sizer = new wxBoxSizer(wxVERTICAL);
 
-    m_scrolledWindow = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL);
+    m_scrolledWindow = new MD3ScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL);
     m_scrolledWindow->SetScrollRate(5, 5);
     m_scrolledWindow->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceDim));
 

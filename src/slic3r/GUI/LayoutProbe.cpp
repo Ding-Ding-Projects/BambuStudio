@@ -14,6 +14,8 @@
 #include "BilingualRegistry.hpp"
 #include "Widgets/Button.hpp"
 #include "Widgets/Label.hpp"
+#include "Widgets/ListBox.hpp"
+#include "Widgets/MD3ScrolledWindow.hpp"
 #include "Widgets/TextInput.hpp"
 #include <wx/scrolwin.h>
 #include <cwchar>
@@ -118,6 +120,36 @@ std::uintptr_t handle_of(const wxWindow *w)
 #else
     return reinterpret_cast<std::uintptr_t>(w);
 #endif
+}
+
+// Which scrollbars a window shows and whose they are. Windows keeps
+// WS_VSCROLL/WS_HSCROLL in the style only while it shows that bar itself, so
+// "native" is a Windows-drawn bar; "kit" is the Material bar (MD3ScrollBars)
+// of an MD3ScrolledWindow or a kit ListBox.
+std::string scrollbars_json(const wxWindow *w)
+{
+    bool native_v = false;
+    bool native_h = false;
+#ifdef _WIN32
+    if (HWND hwnd = static_cast<HWND>(w->GetHWND())) {
+        const LONG_PTR style = ::GetWindowLongPtrW(hwnd, GWL_STYLE);
+        native_v = (style & WS_VSCROLL) != 0;
+        native_h = (style & WS_HSCROLL) != 0;
+    }
+#endif
+    bool kit_v = false;
+    bool kit_h = false;
+    if (const auto *kit = dynamic_cast<const MD3ScrolledWindow *>(w)) {
+        kit_v = kit->IsBarShown(wxVERTICAL);
+        kit_h = kit->IsBarShown(wxHORIZONTAL);
+    } else if (const auto *list = dynamic_cast<const ListBox *>(w)) {
+        kit_v = list->IsBarShown(wxVERTICAL);
+        kit_h = list->IsBarShown(wxHORIZONTAL);
+    }
+    std::ostringstream o;
+    o << "{\"native_v\":" << (native_v ? "true" : "false") << ",\"native_h\":" << (native_h ? "true" : "false")
+      << ",\"kit_v\":" << (kit_v ? "true" : "false") << ",\"kit_h\":" << (kit_h ? "true" : "false") << "}";
+    return o.str();
 }
 
 // Limit user-authored fields without splitting a UTF-8 code point. The probe
@@ -438,6 +470,7 @@ void write_window(boost::nowide::ofstream &out, wxWindow *w, wxWindow *top, int 
         << ",\"rect\":" << rect_json(rect)
         << ",\"screen\":" << rect_json(screen)
         << ",\"client\":" << size_json(client)
+        << ",\"scrollbars\":" << scrollbars_json(w)
         << ",\"min\":" << size_json(w->GetMinSize())
         << ",\"best\":" << size_json(w->GetBestSize())
         << ",\"text_width\":" << text_width

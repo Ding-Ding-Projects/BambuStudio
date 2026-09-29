@@ -1,4 +1,5 @@
 #include "MultiMachinePage.hpp"
+#include "Widgets/MD3ScrolledWindow.hpp"
 #include "GUI_App.hpp"
 #include "MainFrame.hpp"
 #include "Widgets/CheckBox.hpp"
@@ -335,7 +336,7 @@ MultiMachinePickPage::MultiMachinePickPage(Plater* plater /*= nullptr*/)
 
     m_label = new Label(this, _L("Select connected printers (0/6)"));
 
-    scroll_macine_list = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL);
+    scroll_macine_list = new MD3ScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL);
     scroll_macine_list->SetSize(wxSize(FromDIP(400), FromDIP(10 * 30)));
     scroll_macine_list->SetMinSize(wxSize(FromDIP(400), FromDIP(10 * 30)));
     scroll_macine_list->SetMaxSize(wxSize(FromDIP(400), FromDIP(10 * 30)));

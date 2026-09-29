@@ -1,4 +1,5 @@
 #include "SelectMachinePop.hpp"
+#include "Widgets/MD3ScrolledWindow.hpp"
 #include "Widgets/LinkLabel.hpp"
 #include "I18N.hpp"
 
@@ -390,7 +391,7 @@ SelectMachinePopup::SelectMachinePopup(wxWindow *parent)
 
 
 
-    m_scrolledWindow = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, SELECT_MACHINE_LIST_SIZE, wxHSCROLL | wxVSCROLL);
+    m_scrolledWindow = new MD3ScrolledWindow(this, wxID_ANY, wxDefaultPosition, SELECT_MACHINE_LIST_SIZE, wxHSCROLL | wxVSCROLL);
     m_scrolledWindow->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_scrolledWindow->SetMinSize(SELECT_MACHINE_LIST_SIZE);
     m_scrolledWindow->SetScrollRate(0, 5);

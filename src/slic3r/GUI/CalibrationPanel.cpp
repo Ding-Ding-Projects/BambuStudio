@@ -1,5 +1,6 @@
 #include <wx/dcgraph.h>
 #include "GUI.hpp"
+#include "Widgets/MD3ScrolledWindow.hpp"
 #include "GUI_App.hpp"
 #include "MainFrame.hpp"
 #include "CalibrationPanel.hpp"
@@ -204,7 +205,7 @@ SelectMObjectPopup::SelectMObjectPopup(wxWindow* parent)
 
 
 
-    m_scrolledWindow = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, SELECT_MACHINE_LIST_SIZE, wxHSCROLL | wxVSCROLL);
+    m_scrolledWindow = new MD3ScrolledWindow(this, wxID_ANY, wxDefaultPosition, SELECT_MACHINE_LIST_SIZE, wxHSCROLL | wxVSCROLL);
     m_scrolledWindow->SetBackgroundColour(*wxWHITE);
     m_scrolledWindow->SetMinSize(SELECT_MACHINE_LIST_SIZE);
     m_scrolledWindow->SetScrollRate(0, 5);

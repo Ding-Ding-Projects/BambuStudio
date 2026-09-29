@@ -1,4 +1,5 @@
 #include "CameraPopup.hpp"
+#include "Widgets/MD3ScrolledWindow.hpp"
 
 #include "I18N.hpp"
 #include "Widgets/Label.hpp"
@@ -45,7 +46,7 @@ CameraPopup::CameraPopup(wxWindow *parent)
 #ifdef __WINDOWS__
     SetDoubleBuffered(true);
 #endif
-    m_panel = new wxScrolledWindow(this, wxID_ANY);
+    m_panel = new MD3ScrolledWindow(this, wxID_ANY);
     m_panel->SetBackgroundColour(*wxWHITE);
     m_panel->SetMinSize(wxSize(FromDIP(180),-1));
     m_panel->Bind(wxEVT_MOTION, &CameraPopup::OnMouse, this);

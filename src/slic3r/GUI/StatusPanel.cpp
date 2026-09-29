@@ -1,4 +1,5 @@
 #include "StatusPanel.hpp"
+#include "Widgets/MD3ScrolledWindow.hpp"
 
 #include <algorithm>
 
@@ -2216,7 +2217,7 @@ void PrintingTaskPanel::set_star_count(int star_count)
 }
 
 StatusBasePanel::StatusBasePanel(wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSize &size, long style, const wxString &name)
-    : wxScrolledWindow(parent, id, pos, size, wxHSCROLL | wxVSCROLL)
+    : MD3ScrolledWindow(parent, id, pos, size, wxHSCROLL | wxVSCROLL)
 {
     this->SetScrollRate(25, 25);
     Slic3r::DeviceManager *dev = Slic3r::GUI::wxGetApp().getDeviceManager();

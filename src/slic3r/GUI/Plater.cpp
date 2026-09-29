@@ -1,4 +1,5 @@
 #include "Plater.hpp"
+#include "Widgets/MD3ScrolledWindow.hpp"
 #include "Widgets/LinkLabel.hpp"
 #include "Widgets/ProgressBar.hpp"
 #include "Widgets/MD3Menu.hpp"
@@ -3008,7 +3009,7 @@ Sidebar::Sidebar(Plater *parent)
     // even be created. Scrolling is vertical-only: update_sidebar_scroll_body()
     // keeps the virtual width equal to the client width so rows always reflow
     // to the sidebar, and grows only the virtual height past the client.
-    p->scrolled = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize,
+    p->scrolled = new MD3ScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize,
                                        wxTAB_TRAVERSAL | wxVSCROLL | wxHSCROLL);
     p->scrolled->SetScrollRate(FromDIP(8), FromDIP(8));
     p->scrolled->EnableScrolling(true, true);
@@ -3646,7 +3647,7 @@ Sidebar::Sidebar(Plater *parent)
     wrapper_sizer->Add(p->m_filament_search, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(8));
 
     // ---- Physical filament scroll area (independent scrollbar) ----
-    p->m_physical_scroll_area = new wxScrolledWindow(p->m_filament_area_wrapper, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
+    p->m_physical_scroll_area = new MD3ScrolledWindow(p->m_filament_area_wrapper, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
     p->m_physical_scroll_area->SetScrollbars(0, 100, 1, 2);
     p->m_physical_scroll_area->SetScrollRate(0, 5);
     p->m_physical_scroll_area->SetBackgroundColour(surface_lowest);
@@ -3849,7 +3850,7 @@ Sidebar::Sidebar(Plater *parent)
     }
 
     // 3) Mixed filament scroll area (independent scrollbar)
-    p->m_mixed_scroll_area = new wxScrolledWindow(p->m_filament_area_wrapper, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
+    p->m_mixed_scroll_area = new MD3ScrolledWindow(p->m_filament_area_wrapper, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
     p->m_mixed_scroll_area->SetScrollbars(0, 100, 1, 2);
     p->m_mixed_scroll_area->SetScrollRate(0, 5);
     p->m_mixed_scroll_area->SetBackgroundColour(surface_lowest);

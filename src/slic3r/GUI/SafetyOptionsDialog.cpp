@@ -1,4 +1,5 @@
 #include "SafetyOptionsDialog.hpp"
+#include "Widgets/MD3ScrolledWindow.hpp"
 #include "I18N.hpp"
 #include "GUI_App.hpp"
 #include "libslic3r/Utils.hpp"
@@ -43,7 +44,7 @@ SafetyOptionsDialog::SafetyOptionsDialog(wxWindow* parent)
     SetBackgroundColour(StateColor::semantic(MD3::Role::Surface));
     SetSize(FromDIP(480),FromDIP(320));
 
-    m_scrollwindow = new wxScrolledWindow(this, wxID_ANY);
+    m_scrollwindow = new MD3ScrolledWindow(this, wxID_ANY);
     m_scrollwindow->SetScrollRate(0, FromDIP(10));
     m_scrollwindow->SetBackgroundColour(StateColor::semantic(MD3::Role::Surface));
     m_scrollwindow->SetMinSize(wxSize(FromDIP(480), wxDefaultCoord));

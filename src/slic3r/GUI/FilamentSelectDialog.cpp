@@ -1,4 +1,5 @@
 #include "FilamentSelectDialog.hpp"
+#include "Widgets/MD3ScrolledWindow.hpp"
 #include "AMSMaterialsSetting.hpp"  // AMS_MATERIALS_SETTING_GREY* colour constants
 #include "FilamentBitmapUtils.hpp"
 #include "GUI_App.hpp"
@@ -446,7 +447,7 @@ wxWindow* FilamentSelectDialog::build_manager_page(wxWindow* parent)
     v->Add(chip_row, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(6));
 
     // spool list
-    m_mgr_list = new wxScrolledWindow(page, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL);
+    m_mgr_list = new MD3ScrolledWindow(page, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL);
     m_mgr_list->SetScrollRate(0, 10);
     m_mgr_list->SetBackgroundColour(dlg_bg());
     m_mgr_list_sizer = new wxBoxSizer(wxVERTICAL);
@@ -463,13 +464,13 @@ wxWindow* FilamentSelectDialog::build_default_page(wxWindow* parent)
     page->SetBackgroundColour(dlg_bg());
     auto* h = new wxBoxSizer(wxHORIZONTAL);
 
-    m_brand_list = new wxScrolledWindow(page, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL);
+    m_brand_list = new MD3ScrolledWindow(page, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL);
     m_brand_list->SetScrollRate(0, 10);
     m_brand_list->SetBackgroundColour(dlg_bg());
     m_brand_list_sizer = new wxBoxSizer(wxVERTICAL);
     m_brand_list->SetSizer(m_brand_list_sizer);
 
-    m_type_list = new wxScrolledWindow(page, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL);
+    m_type_list = new MD3ScrolledWindow(page, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL);
     m_type_list->SetScrollRate(0, 10);
     m_type_list->SetBackgroundColour(dlg_bg());
     m_type_list_sizer = new wxBoxSizer(wxVERTICAL);

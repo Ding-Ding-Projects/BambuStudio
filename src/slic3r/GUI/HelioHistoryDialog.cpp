@@ -1,4 +1,5 @@
 #include "HelioHistoryDialog.hpp"
+#include "Widgets/MD3ScrolledWindow.hpp"
 #include "HelioReleaseNote.hpp"
 #include "I18N.hpp"
 
@@ -133,7 +134,7 @@ void HelioHistoryDialog::create_ui()
     create_header(m_main_sizer);
 
     // Create scrollable content area
-    m_scroll_window = new wxScrolledWindow(this, wxID_ANY);
+    m_scroll_window = new MD3ScrolledWindow(this, wxID_ANY);
     m_scroll_window->SetBackgroundColour(HELIO_BG_BASE);
     m_scroll_window->SetScrollRate(0, 20);
 

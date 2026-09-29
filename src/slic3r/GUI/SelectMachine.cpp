@@ -1,4 +1,5 @@
 #include "SelectMachine.hpp"
+#include "Widgets/MD3ScrolledWindow.hpp"
 #include "Widgets/LinkLabel.hpp"
 #include "Widgets/Button.hpp"
 #include "I18N.hpp"
@@ -242,7 +243,7 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     SetBackgroundColour(m_colour_def_color);
 
     wxBoxSizer* m_scroll_sizer = new wxBoxSizer(wxVERTICAL);
-    m_scroll_area              = new wxScrolledWindow(this);
+    m_scroll_area              = new MD3ScrolledWindow(this);
     m_scroll_area->SetScrollRate(0, 20);
     m_scroll_area->SetBackgroundColour(m_colour_def_color);
     m_scroll_area->SetMinSize(wxSize(FromDIP(700), FromDIP(600)));
@@ -943,7 +944,7 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     m_simplebook->AddPage(m_panel_finish, wxEmptyString, false);
 
     //show bind failed info
-    m_sw_print_failed_info = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxSize(SELECT_MACHINE_DIALOG_SIMBOOK_SIZE2.x, FromDIP(125)), wxVSCROLL);
+    m_sw_print_failed_info = new MD3ScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxSize(SELECT_MACHINE_DIALOG_SIMBOOK_SIZE2.x, FromDIP(125)), wxVSCROLL);
     m_sw_print_failed_info->SetBackgroundColour(ThemeColor::White);
     m_sw_print_failed_info->SetScrollRate(0, 5);
     m_sw_print_failed_info->SetMinSize(wxSize(SELECT_MACHINE_DIALOG_SIMBOOK_SIZE2.x, FromDIP(125)));

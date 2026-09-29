@@ -17,7 +17,7 @@ const ctor = stripComments(source.match(/ModelCreatorDialog::ModelCreatorDialog\
 
 test('the Model Creator form scrolls inside the dialog', () => {
   assert.match(source, /#include <wx\/scrolwin\.h>/);
-  assert.match(ctor, /auto \*form = new wxScrolledWindow\(this,[^;]*wxVSCROLL[^;]*\);/);
+  assert.match(ctor, /auto \*form = new MD3ScrolledWindow\(this,[^;]*wxVSCROLL[^;]*\);/);
   assert.match(ctor, /form->SetScrollRate\(0, FromDIP\(16\)\);/);
   assert.match(ctor, /form->SetMinSize\(wxSize\(-1, FromDIP\(240\)\)\);/, 'a small minimum, so the dialog does not grow to the whole form');
   assert.match(ctor, /form->SetSizer\(body\);\s*GetContentSizer\(\)->Add\(form, 1, wxEXPAND\);/);
@@ -25,9 +25,9 @@ test('the Model Creator form scrolls inside the dialog', () => {
 });
 
 test('every form control lives on the scrolled form, the footer buttons on the dialog', () => {
-  const formPart = ctor.slice(ctor.indexOf('auto *form = new wxScrolledWindow('), ctor.indexOf('m_generate = new Button('));
+  const formPart = ctor.slice(ctor.indexOf('auto *form = new MD3ScrolledWindow('), ctor.indexOf('m_generate = new Button('));
   assert.ok(formPart.length > 0, 'the form section is found');
-  assert.doesNotMatch(formPart.replace('new wxScrolledWindow(this,', ''), /\((this),/,
+  assert.doesNotMatch(formPart.replace('new MD3ScrolledWindow(this,', ''), /\((this),/,
     'a control parented to the dialog would sit outside the scroll');
   assert.ok((formPart.match(/\(form, /g) || []).length >= 18, 'the labels, fields, lists and key buttons are on the form');
   for (const name of ['Generate', 'Cancel generation', 'Preview mesh', 'Add to plate']) {

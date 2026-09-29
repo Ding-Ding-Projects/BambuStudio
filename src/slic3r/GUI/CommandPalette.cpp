@@ -1,4 +1,5 @@
 #include "CommandPalette.hpp"
+#include "Widgets/MD3ScrolledWindow.hpp"
 
 #include "Appearance/AppearanceEditorPopover.hpp"
 #include "Appearance/ElementStyle.hpp"
@@ -75,7 +76,7 @@ CommandPalette::CommandPalette(MainFrame *frame)
     header->Add(m_size_button, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(8));
     root->Add(header, 0, wxEXPAND | wxALL, FromDIP(12));
 
-    m_list = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition,
+    m_list = new MD3ScrolledWindow(this, wxID_ANY, wxDefaultPosition,
                                   wxSize(FromDIP(kWidth), FromDIP(kListHeight)),
                                   wxVSCROLL | wxBORDER_NONE);
     m_list->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));

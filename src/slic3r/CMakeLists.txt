@@ -806,6 +806,10 @@ list(APPEND SLIC3R_GUI_SOURCES
     GUI/Widgets/MD3Motion.hpp
     GUI/Widgets/MD3DialogChrome.cpp
     GUI/Widgets/MD3DialogChrome.hpp
+    GUI/Widgets/MD3ScrollBars.cpp
+    GUI/Widgets/MD3ScrollBars.hpp
+    GUI/Widgets/MD3ScrolledWindow.cpp
+    GUI/Widgets/MD3ScrolledWindow.hpp
     GUI/Widgets/RegexBuilderPopup.cpp
     GUI/Widgets/RegexBuilderPopup.hpp
     GUI/Widgets/Slider.cpp

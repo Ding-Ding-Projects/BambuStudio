@@ -1,4 +1,5 @@
 #include "ChangelogDialog.hpp"
+#include "Widgets/MD3ScrolledWindow.hpp"
 
 #include "GUI_App.hpp"
 #include "I18N.hpp"
@@ -584,7 +585,7 @@ void ChangelogDialog::build_ui()
     content->Add(m_status, 0, wxEXPAND | wxTOP, FromDIP(8));
 
     // --- Release list -------------------------------------------------------
-    m_scroll = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize,
+    m_scroll = new MD3ScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize,
                                     wxVSCROLL | wxTAB_TRAVERSAL | wxBORDER_NONE);
     m_scroll->SetScrollRate(0, FromDIP(16));
     m_scroll->SetName(_L("Released versions"));
