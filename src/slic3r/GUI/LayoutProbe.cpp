@@ -246,6 +246,10 @@ std::string size_json(const wxSize &s)
 
 // Sum of the minimum sizes a wxBoxSizer must pay along its orientation, with
 // borders, against what it actually has. This is the starvation detector.
+// wxSizerItem::CalcMin() already returns the minimum with the item's borders
+// (GetMinSizeWithBorder), so they are not added again: counted twice, the
+// bilingual Preferences button row read 799 px required in a row its three
+// buttons fill to the pixel (783 of 783).
 struct RowVerdict {
     bool is_box = false;
     int  orient = 0;
@@ -266,17 +270,7 @@ RowVerdict judge_sizer(wxSizer *sizer)
     for (wxSizerItem *item : box->GetChildren()) {
         if (!item->IsShown()) continue;
         const wxSize min = item->CalcMin();
-        int need = v.orient == wxHORIZONTAL ? min.x : min.y;
-        const int flag = item->GetFlag();
-        const int border = item->GetBorder();
-        if (v.orient == wxHORIZONTAL) {
-            if (flag & wxLEFT) need += border;
-            if (flag & wxRIGHT) need += border;
-        } else {
-            if (flag & wxTOP) need += border;
-            if (flag & wxBOTTOM) need += border;
-        }
-        v.required += need;
+        v.required += v.orient == wxHORIZONTAL ? min.x : min.y;
     }
     v.oversubscribed = v.available > 0 && v.required > v.available;
     return v;

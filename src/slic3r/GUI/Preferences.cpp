@@ -8,6 +8,7 @@
 #include "Plater.hpp"
 #include "MsgDialog.hpp"
 #include "I18N.hpp"
+#include "BilingualRegistry.hpp"
 #include "UxProgramTermsDialog.hpp"
 #include "Widgets/StateColor.hpp"
 #include "libslic3r/AppConfig.hpp"
@@ -1051,19 +1052,29 @@ static void refresh_md3_appearance(wxWindow *dialog)
 }
 
 // Bilingual label helpers for the funny-level rows. The source strings carry
-// their own Cantonese entry in the LanguageMode copy table, so they render as
-// "English · 廣東話" in bilingual mode and as plain English otherwise.
+// their own Cantonese entry in the LanguageMode copy table. In bilingual mode
+// the pair goes to the bilingual registry and the label shows its English, so
+// the bilingual decorator pairs it only where it fits, as it does every other
+// label: on one line when the pair fits, English over Cantonese where the row
+// wraps, in the tooltip otherwise. Rendered here as one "English · 廣東話"
+// line, these rows ran past the page and pushed every row's control out of
+// sight (clipping inventory CJ-021).
+static wxString registered_english(const I18N::FormattedLocalizedText &text)
+{
+    if (text.has_secondary())
+        I18N::BilingualRegistry::instance().record(text.primary(), text.secondary());
+    return text.primary();
+}
+
 static wxString funny_row_label(const char *source)
 {
-    return I18N::render_localized_text_compact(I18N::translate_mode(source).finalize_without_arguments()).label;
+    return registered_english(I18N::translate_mode(source).finalize_without_arguments());
 }
 
 static wxString funny_row_label_int(const char *source, int value)
 {
     const I18N::LocalizedText copy = I18N::translate_mode(source);
-    return I18N::render_localized_text_compact(
-               copy.format_each([value](wxString pattern) { return wxString::Format(pattern, value); }))
-        .label;
+    return registered_english(copy.format_each([value](wxString pattern) { return wxString::Format(pattern, value); }));
 }
 
 wxBoxSizer *PreferencesDialog::create_item_funny_level_slider(wxWindow *parent, std::string param, bool cantonese)
