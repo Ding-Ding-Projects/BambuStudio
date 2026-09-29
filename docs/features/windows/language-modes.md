@@ -207,6 +207,8 @@ on a hidden desktop in all three modes; the captures and their provenance are li
 inventory. On `md3-v153`, the layout probe's `language-audit` found no English-only label with a
 Cantonese translation on the Prepare page or on Preferences > General in bilingual mode: every such
 label showed both languages or, where the pair did not fit, carried the Cantonese in its tooltip
-(`docs/screenshots/md3-everything/probe/language-audit--*--md3-v153.json`). Other surfaces have not
+(`docs/screenshots/md3-everything/probe/language-audit--*--md3-v153.json`). On `md3-v154`, with kit
+buttons paired again, the same audit counts 8 and 42 labels showing both languages and 9 and 19
+with the Cantonese in their tooltip, and still no English-only label. Other surfaces have not
 been audited that way yet. The drafted Cantonese still needs independent human review, most
 importantly for safety-critical print, account, networking, and destructive flows.

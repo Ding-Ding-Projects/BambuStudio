@@ -51,7 +51,7 @@ until captures from a released build exist.
 - [x] The 3D canvas (gizmos, sliders, notifications) shows the second language, with a Traditional Chinese CJK font in Cantonese modes (`7bacc40ce`; compiled and published in release `md3-v138`).
 - [x] The remaining 123 literals go through the translation layer or carry a recorded exception (`a479a3020`, `7bacc40ce`; the literal scanner reports none untranslated).
 - [x] DeviceWeb, the ui-md3 site, the filament scanner page and Markdown tips follow all three modes (`68f42a887`; Build BambuStudio, including the DeviceWeb bundle, passed in run 36407429047).
-- [x] The in-app changelog covers releases up to `md3-v147` (153 releases, 1,272 entries), with Cantonese text for every commit it lists.
+- [x] The in-app changelog covers releases up to `md3-v154` (160 releases, 1,307 entries), with Cantonese text for every commit it lists.
 - [ ] Runtime check in English, Cantonese and bilingual modes from a released build, with captures of the main window, the Prepare sidebar, settings, Preferences, a dialog, a menu, a gizmo, the setup wizard and DeviceWeb. The layout probe's `language-audit` command lists every native label that still shows English only while its Cantonese exists.
 - [x] Message dialog actions keep the full width of their labels instead of shrinking to "Left..." and "Rig..." (clipping inventory CJ-014, `9615c9418`): verified on the released `md3-v148` package, where the newest-version message draws "OK · 確定" whole in bilingual mode.
 - [x] The search field keeps its full rounded end, the Config profiles list shows its rows, and the calibration labels stay English with the Cantonese in their tooltip instead of cutting it (CJ-015, CJ-017, CJ-018): verified on the released `md3-v150` package.

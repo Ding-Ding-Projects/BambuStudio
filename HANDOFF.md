@@ -45,7 +45,7 @@ still to verify.
 - Checks: `scripts/i18n/Test-LanguageModes.ps1` (catalogues, audit, web keys, docs and changelog) and
   `scripts/ci/Test-InkTerminology.ps1` run locally before a push; the workflow builds and publishes only
   (`e4fc4be11`). `language_mode_tests` is not built by the workflow.
-- The in-app changelog covers releases up to `md3-v147` (153 releases, 1,272 entries) with Cantonese text for
+- The in-app changelog covers releases up to `md3-v154` (160 releases, 1,307 entries) with Cantonese text for
   every commit it lists; `check_translated_content.py` reports 0 problems.
 - Also landed and compiled: bilingual self-drawn widgets (`adcf23a2f`), the bilingual 3D canvas with a Traditional
   Chinese CJK font (`7bacc40ce`, release `md3-v138`), the last literals (`a479a3020`), the web surfaces

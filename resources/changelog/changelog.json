@@ -3,11 +3,361 @@
   "repository": "Ding-Ding-Projects/BambuStudio",
   "commitUrlTemplate": "https://github.com/Ding-Ding-Projects/BambuStudio/commit/{sha}",
   "source": "GitHub Releases API + git log",
-  "generated": "2026-09-29T03:43:55.435Z",
+  "generated": "2026-09-29T07:37:13.326Z",
   "categoryDerivation": "leading-verb of the commit subject",
-  "releaseCount": 153,
-  "entryCount": 1272,
+  "releaseCount": 160,
+  "entryCount": 1307,
   "releases": [
+    {
+      "tag": "md3-v154",
+      "version": "v154",
+      "ordinal": 154,
+      "date": "2026-09-29",
+      "published": "2026-09-29T06:59:05Z",
+      "codeName": {
+        "en": "Fish Ball Noodles",
+        "yue": "魚蛋粉"
+      },
+      "qualifier": "",
+      "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v154",
+      "prerelease": false,
+      "baseline": false,
+      "sameCommit": false,
+      "commit": "00b14ca6762c6daab0c6a3f06237e3bd69c4c328",
+      "build": "v154 \"Fish Ball Noodles 魚蛋粉\" (app build 02.08.04.57)",
+      "entries": [
+        {
+          "sha": "00b14ca6762c6daab0c6a3f06237e3bd69c4c328",
+          "short": "00b14ca67",
+          "text": "Give buttons their Cantonese again, and take back pairs the layout cannot show",
+          "category": "changed"
+        },
+        {
+          "sha": "b2983be2520a2237f815d98e1f7be0bf942d1433",
+          "short": "b2983be25",
+          "text": "Pair notification links with their Cantonese in bilingual mode",
+          "category": "changed"
+        },
+        {
+          "sha": "d5059b241f2361d6f1daf20ef1e776d724106cff",
+          "short": "d5059b241",
+          "text": "Correct CJ-019's root cause: the unit was drawn under the number [skip ci]",
+          "category": "fixed"
+        },
+        {
+          "sha": "20162f703a610c91cddfdca89a3ae2877231217c",
+          "short": "20162f703",
+          "text": "Sweep the Max flowrate and VFA dialogs instead of the Flow rate submenu [skip ci]",
+          "category": "changed"
+        },
+        {
+          "sha": "f3aab6af1291a73672e5cf3d22440925fa2b7e3d",
+          "short": "f3aab6af1",
+          "text": "Draw a centred field's unit after the number, not underneath it",
+          "category": "changed"
+        },
+        {
+          "sha": "a6430cdc0c01161ebbbc08b3f3b0a62c63588284",
+          "short": "a6430cdc0",
+          "text": "Note where the updater can be tested, and repair two mangled paths [skip ci]",
+          "category": "documented"
+        },
+        {
+          "sha": "09fa20c5ca96e11c2587e311355db9f46ec03605",
+          "short": "09fa20c5c",
+          "text": "Keep the before capture of the Smart home media buttons [skip ci]",
+          "category": "changed"
+        },
+        {
+          "sha": "f00c9f7b1d26606a00bf70966a4397dbec8b81da",
+          "short": "f00c9f7b1",
+          "text": "Keep the captures that show md3-v148 starting with nothing added [skip ci]",
+          "category": "changed"
+        }
+      ]
+    },
+    {
+      "tag": "md3-v153",
+      "version": "v153",
+      "ordinal": 153,
+      "date": "2026-09-29",
+      "published": "2026-09-29T06:34:31Z",
+      "codeName": {
+        "en": "Chinese Sausage",
+        "yue": "臘腸"
+      },
+      "qualifier": "",
+      "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v153",
+      "prerelease": false,
+      "baseline": false,
+      "sameCommit": false,
+      "commit": "1757d880ff8ae9db14bc79f0d5b8ac5649d02e68",
+      "build": "v153 \"Chinese Sausage 臘腸\" (app build 02.08.04.57)",
+      "entries": [
+        {
+          "sha": "1757d880ff8ae9db14bc79f0d5b8ac5649d02e68",
+          "short": "1757d880f",
+          "text": "Say \"Previous track\" and \"Next track\" on the Smart home media controls",
+          "category": "changed"
+        },
+        {
+          "sha": "0639d06721a4e84795f7996a673070a240deca0d",
+          "short": "0639d0672",
+          "text": "Record the bilingual message body defect with its before capture [skip ci]",
+          "category": "documented"
+        },
+        {
+          "sha": "2b8fa5d8bc54a280dd465aefef7346dcb5894ea7",
+          "short": "2b8fa5d8b",
+          "text": "Measure the bilingual message body before sizing its page",
+          "category": "changed"
+        },
+        {
+          "sha": "e5a7e12ad50c109185d3a40817fb1159e49cef79",
+          "short": "e5a7e12ad",
+          "text": "Stop the dialog sweep counting a missing probe dump as a clean result",
+          "category": "changed"
+        },
+        {
+          "sha": "2906c28206461e65042e9aa63689f2dbf390acf5",
+          "short": "2906c2820",
+          "text": "Flag only what a user can see, and let scrolled rows be scrolled",
+          "category": "changed"
+        },
+        {
+          "sha": "5866d96b90c0203c90b3a5c8b338718c0f74ecd3",
+          "short": "5866d96b9",
+          "text": "Let the splash leave its own picture for the capture run",
+          "category": "changed"
+        },
+        {
+          "sha": "01abd6974c3f140f9ed230e66ab568000fd66f40",
+          "short": "01abd6974",
+          "text": "Explain why fast pushes leave some builds without a release [skip ci]",
+          "category": "changed"
+        }
+      ]
+    },
+    {
+      "tag": "md3-v152",
+      "version": "v152",
+      "ordinal": 152,
+      "date": "2026-09-29",
+      "published": "2026-09-29T06:03:54Z",
+      "codeName": {
+        "en": "Preserved Meat Rice",
+        "yue": "臘味飯"
+      },
+      "qualifier": "",
+      "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v152",
+      "prerelease": false,
+      "baseline": false,
+      "sameCommit": false,
+      "commit": "0c6a8e3608755c73e1a29c005de4886deefd874f",
+      "build": "v152 \"Preserved Meat Rice 臘味飯\" (app build 02.08.04.57)",
+      "entries": [
+        {
+          "sha": "0c6a8e3608755c73e1a29c005de4886deefd874f",
+          "short": "0c6a8e360",
+          "text": "Call the setup wizard 設定嚮導 in Cantonese",
+          "category": "changed"
+        },
+        {
+          "sha": "275dc716c80a521319390479658bed0e5d15d1c3",
+          "short": "275dc716c",
+          "text": "Bring the in-app changelog up to md3-v147, in both languages",
+          "category": "changed"
+        }
+      ]
+    },
+    {
+      "tag": "md3-v151",
+      "version": "v151",
+      "ordinal": 151,
+      "date": "2026-09-29",
+      "published": "2026-09-29T05:31:38Z",
+      "codeName": {
+        "en": "Braised Cuttlefish",
+        "yue": "鹵水墨魚"
+      },
+      "qualifier": "",
+      "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v151",
+      "prerelease": false,
+      "baseline": false,
+      "sameCommit": false,
+      "commit": "ca2b6e101aee2dd403ca2b99d0c7636613f379dc",
+      "build": "v151 \"Braised Cuttlefish 鹵水墨魚\" (app build 02.08.04.57)",
+      "entries": [
+        {
+          "sha": "ca2b6e101aee2dd403ca2b99d0c7636613f379dc",
+          "short": "ca2b6e101",
+          "text": "Keep the update banner up until the user acts, and check again every six hours",
+          "category": "changed"
+        },
+        {
+          "sha": "904ccc37aa6b9956479ae9afdf19649237e80565",
+          "short": "904ccc37a",
+          "text": "Let the newest main build become the latest release even when main moved on",
+          "category": "changed"
+        },
+        {
+          "sha": "f0fb0c2977f3581c42386090f22679ebd37199a0",
+          "short": "f0fb0c297",
+          "text": "Pair placeholder hints with their Cantonese in bilingual mode",
+          "category": "changed"
+        },
+        {
+          "sha": "cccc4264160f51e11b52dbcf8bbfaa5ceb72dbc0",
+          "short": "cccc42641",
+          "text": "Keep the before captures of text that stayed English in bilingual mode [skip ci]",
+          "category": "changed"
+        },
+        {
+          "sha": "5adf009f878a2019576a16c29925c3025294cf1d",
+          "short": "5adf009f8",
+          "text": "Record the squeezed calibration field and this batch in the inventory and roadmap",
+          "category": "documented"
+        },
+        {
+          "sha": "87ec5c44c93a36441d80d8c3afa5db1b43159fd6",
+          "short": "87ec5c44c",
+          "text": "Give section headers and column titles their Cantonese in bilingual mode",
+          "category": "changed"
+        },
+        {
+          "sha": "466c24da9fdc6e93271f66e0a121a34db7f1bc07",
+          "short": "466c24da9",
+          "text": "Take the grey boxes off the keyboard shortcut labels",
+          "category": "changed"
+        },
+        {
+          "sha": "a849963bf343f1e346397913947acb4d251c5c8f",
+          "short": "a849963bf",
+          "text": "Keep room for the number when a field's unit is wide",
+          "category": "changed"
+        },
+        {
+          "sha": "f2110b6cc971197da98eab51f2ef9b4e9b58924e",
+          "short": "f2110b6cc",
+          "text": "Stop the layout probe calling every dialog clipped by its parent",
+          "category": "changed"
+        },
+        {
+          "sha": "b2370c9a7d677e706ac196490d49aa11a32b7f6e",
+          "short": "b2370c9a7",
+          "text": "Show the download dialog when an automatic update fails, and say it in Cantonese",
+          "category": "changed"
+        },
+        {
+          "sha": "37b3fce789b962751bd6bdd17a08d761e67ee799",
+          "short": "37b3fce78",
+          "text": "Say which hosts the automatic update reaches",
+          "category": "changed"
+        },
+        {
+          "sha": "7118f1b70c43613e2660c70f0640a619995e409d",
+          "short": "7118f1b70",
+          "text": "Update an installed copy in the background through Squirrel",
+          "category": "changed"
+        }
+      ]
+    },
+    {
+      "tag": "md3-v150",
+      "version": "v150",
+      "ordinal": 150,
+      "date": "2026-09-29",
+      "published": "2026-09-29T04:58:38Z",
+      "codeName": {
+        "en": "Braised Tofu",
+        "yue": "鹵水豆腐"
+      },
+      "qualifier": "superseded main build",
+      "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v150",
+      "prerelease": false,
+      "baseline": false,
+      "sameCommit": false,
+      "commit": "74641b8c02002b1c8e28635b96232c4a8cd0817a",
+      "build": "v150 \"Braised Tofu 鹵水豆腐\" (app build 02.08.04.57)",
+      "entries": [
+        {
+          "sha": "74641b8c02002b1c8e28635b96232c4a8cd0817a",
+          "short": "74641b8c0",
+          "text": "Record the four clipping defects the dialog sweep found",
+          "category": "documented"
+        },
+        {
+          "sha": "efaa98db2bc080da5028433dc4345b959dee6d7d",
+          "short": "efaa98db2",
+          "text": "Keep pinned-width labels English when their Cantonese will not fit",
+          "category": "changed"
+        },
+        {
+          "sha": "9670a437a83daf0f7b22b749977dbdffc70776c9",
+          "short": "9670a437a",
+          "text": "Give the config profile list room for its rows",
+          "category": "changed"
+        }
+      ]
+    },
+    {
+      "tag": "md3-v149",
+      "version": "v149",
+      "ordinal": 149,
+      "date": "2026-09-29",
+      "published": "2026-09-29T04:26:18Z",
+      "codeName": {
+        "en": "Braised Goose Slices",
+        "yue": "鹵水鵝片"
+      },
+      "qualifier": "superseded main build",
+      "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v149",
+      "prerelease": false,
+      "baseline": false,
+      "sameCommit": false,
+      "commit": "d27eadfdbc84e852abc89caa7312d0744478d3fb",
+      "build": "v149 \"Braised Goose Slices 鹵水鵝片\" (app build 02.08.04.57)",
+      "entries": [
+        {
+          "sha": "d27eadfdbc84e852abc89caa7312d0744478d3fb",
+          "short": "d27eadfdb",
+          "text": "Keep search fields whole and bilingual labels inside what is visible",
+          "category": "changed"
+        },
+        {
+          "sha": "b5cde7521209357b95b24f27363b39078d852f38",
+          "short": "b5cde7521",
+          "text": "Sweep dialogs for clipped labels, and keep a bad log path from ending the app",
+          "category": "changed"
+        }
+      ]
+    },
+    {
+      "tag": "md3-v148",
+      "version": "v148",
+      "ordinal": 148,
+      "date": "2026-09-29",
+      "published": "2026-09-29T03:56:08Z",
+      "codeName": {
+        "en": "Three-Treasure Rice",
+        "yue": "三寶飯"
+      },
+      "qualifier": "superseded main build",
+      "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v148",
+      "prerelease": false,
+      "baseline": false,
+      "sameCommit": false,
+      "commit": "3a935ed9f50910b9cbd315a042c264750cf62f57",
+      "build": "v148 \"Three-Treasure Rice 三寶飯\" (app build 02.08.04.57)",
+      "entries": [
+        {
+          "sha": "3a935ed9f50910b9cbd315a042c264750cf62f57",
+          "short": "3a935ed9f",
+          "text": "Ship the DLLs BambuStudio.dll needs, so the packaged app starts again",
+          "category": "added"
+        }
+      ]
+    },
     {
       "tag": "md3-v147",
       "version": "v147",
