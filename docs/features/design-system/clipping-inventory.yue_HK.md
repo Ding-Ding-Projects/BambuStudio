@@ -1,6 +1,6 @@
 ---
 translation-of: clipping-inventory.md
-source-sha256: d3c079cba16c1d496b4858a200ad40d0b7c1499118ab60448432a67c194c7d8e
+source-sha256: c5c52e363f7faa169319214663f0fbf0ee98c1bfc53bfef8c38edc876bed8050
 review-status: agent-drafted
 ---
 
@@ -47,6 +47,7 @@ Windows 桌面應用程式上發現嘅每一個版面裁剪缺陷，包括佢嘅
 | CJ-022 | 冇單位嘅設定欄位，同埋程式設成空白字串嘅文字（粵語） | yue_HK-light-comfortable | 準備側邊欄打印設定入面兩個數值輸入框嘅數字格闊 0 px，「10」同「1」完全睇唔到，文字欄亦由 105 px 縮到 45 px；單位位置顯示「Project-Id-Version: Bambu Studio ...」嘅開頭；偏好設定 > 使用者入面，「自動填充先前登入嘅賬號。」嘅說明係成個英文目錄標頭 | gettext 目錄會用標頭回答空白訊息；wx 自己查嗰陣會拒絕空白字串，但粵語模式搵唔到翻譯時會直接查英文目錄，嗰度冇攔住，所以每個欄位嘅空白單位（`_L(m_opt.sidetext)`）同原始碼入面每個 `_L("")` 都變成咗標頭 | c591f1b39 | preferences-search-autofill--yue_HK-light-comfortable--md3-v151.png | pending | fixed-unverified |
 | CJ-023 | 準備側邊欄，完整打印設定樹 | 每個組合（1200 x 800 視窗） | 每個數值欄都超出側邊欄右邊；廣東話分類按鈕按一個睇唔到嘅闊度換行，「支撐」有一半喺外面 | 分區條（墨水／打印設定／物件）以 128 DIP 闊放喺內容左邊，同內容共用同一個窗格，但每個窗格闊度都只計內容：設定樹喺 480 px 嘅窗格只分到 334 px，但佢要大約 417 px | 11cf45423 | prepare--en-light-comfortable--md3-v151.png | pending | fixed-unverified |
 | CJ-024 | 準備側邊欄，打印設定標題（粵語） | yue_HK-light-comfortable | 顯示「打印設…」而唔係「打印設定」 | 自從 CJ-012 修正之後，標題係固定項目，但仍然保留 56 DIP 嘅最細闊度，所以永遠唔會加闊到佢 60 px 嘅文字 | 11cf45423 | prepare--yue_HK-light-comfortable--md3-v151.png | pending | fixed-unverified |
+| CJ-025 | 雙語模式配對咗嘅段落標題（溫度校準「SETTINGS」） | bilingual_en_yue_HK-light-comfortable | 「SETTINGS · 設」：廣東話喺標題自己嘅邊緣被切 | 段落標題用 GDI+ 逐個字畫大階、加字距，但量度最佳闊度嗰陣用普通 GDI 同成串字嘅闊度，所以要求嘅位比畫出嚟嘅少 | 32a36b134 | dialog-temperature--bilingual_en_yue_HK-light-comfortable--md3-v154.png | pending | fixed-unverified |
 <!-- clipping-inventory:end -->
 
 CJ-014、CJ-015、CJ-017 同 CJ-018 已經用冇加過任何嘢嘅發佈套件，喺隱藏桌面上驗證咗（2026-09-29）：雙語模式下，最新版本訊息喺 `md3-v148` 完整畫出「OK · 確定」，而 `md3-v143` 就畫成「OK ·...」（CJ-014）；喺 `md3-v150`，搜尋欄完整畫出佢嘅圓形右端（CJ-015），設定檔清單完整顯示嗰一行（CJ-017），溫度校準嘅標籤維持英文，廣東話放喺提示框，唔再被裁走（CJ-018）。CJ-016 喺 `md3-v150` 仍然被裁；佢嘅修正係 `00b14ca67`。

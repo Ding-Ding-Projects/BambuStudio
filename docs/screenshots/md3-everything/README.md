@@ -219,6 +219,7 @@ Cantonese label). Every import of its executables and DLLs resolves in the packa
 | `dialog-smart-home--bilingual_en_yue_HK-light-comfortable--md3-v154.png` | Smart home: "Close · 關閉", bilingual search hint | `bilingual_en_yue_HK-light-comfortable` |
 | `dialog-retraction-test--yue_HK-light-comfortable--md3-v154.png` | Retraction test (after CJ-019): "0 mm", "2 mm", "0.1 mm/mm" | `yue_HK-light-comfortable` |
 | `dialog-retraction-test--en-light-comfortable--md3-v154.png` | Retraction test in English: the step's unit after the number | `en-light-comfortable` |
+| `dialog-temperature--bilingual_en_yue_HK-light-comfortable--md3-v154.png` | Temperature calibration (before CJ-025 and the unit fix of `32a36b134`): units read "Â°C", the header "SETTINGS · 設" | `bilingual_en_yue_HK-light-comfortable` |
 
 A first Smart home capture on `md3-v154` caught its search field mid-repaint (no magnifier, no
 outline) and a second run showed it whole, like the `md3-v153` paragraph case above; the sweep now
