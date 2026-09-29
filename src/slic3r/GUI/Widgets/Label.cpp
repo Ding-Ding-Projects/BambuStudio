@@ -795,14 +795,43 @@ void Label::OnSize(wxSizeEvent &evt)
 
 namespace {
 
-// Width of a run drawn with per-glyph letter-spacing: the natural extent plus
-// one tracking step between each pair of glyphs.
+// Width of a run drawn with per-glyph letter-spacing, measured the way
+// drawTrackedText() advances: each glyph's own extent plus one tracking step
+// between each pair. A whole-string extent comes out narrower, and a header
+// sized by it was cut at its own edge ("SETTINGS · 設" on md3-v154).
 double trackedTextWidth(wxDC &dc, const wxString &text, double tracking)
 {
     if (text.empty()) return 0.0;
-    wxCoord w = 0, h = 0;
-    dc.GetTextExtent(text, &w, &h);
-    return static_cast<double>(w) + tracking * (text.length() - 1);
+    double width = 0.0;
+    for (size_t i = 0; i < text.length(); ++i) {
+        wxCoord w = 0, h = 0;
+        dc.GetTextExtent(text.SubString(i, i), &w, &h);
+        width += static_cast<double>(w);
+    }
+    return width + tracking * (text.length() - 1);
+}
+
+// The font a header paints with: Head_11 when its face is installed, the GUI
+// font otherwise. Guard: GDI+ heap-corrupts when handed a font whose face is
+// missing from the session font table (see the MaterialIcon.cpp plain-GDI
+// rewrite), so the face is checked with a strict enumerator, not
+// faceIsInstalled(), whose construct-and-compare fallback echoes the requested
+// name on wxMSW and so never fails. Cached per face; it only changes on
+// Label::rebuild_fonts.
+wxFont sectionHeaderFont()
+{
+#ifdef __WXMSW__
+    static wxString s_face;
+    static bool     s_ok = false;
+    const wxString  face = Label::Head_11.GetFaceName();
+    if (face != s_face) {
+        s_face = face;
+        s_ok   = !face.empty() && wxFontEnumerator::IsValidFacename(face);
+    }
+    return s_ok ? Label::Head_11 : wxSystemSettings::GetFont(wxSYS_DEFAULT_GUI_FONT);
+#else
+    return Label::Head_11;
+#endif
 }
 
 // Draw text one glyph at a time so the +tracking letter-spacing lands between
@@ -851,8 +880,15 @@ void SectionHeader::SetLeadingIcon(uint32_t codepoint)
 
 wxSize SectionHeader::DoGetBestClientSize() const
 {
-    wxClientDC dc(const_cast<SectionHeader *>(this));
-    dc.SetFont(Label::Head_11);
+    // Measure with what paints: the same font and, on Windows, the same GDI+
+    // context, whose glyphs (CJK fallback above all) are wider than plain GDI's.
+    wxClientDC client_dc(const_cast<SectionHeader *>(this));
+#ifdef __WXMSW__
+    wxGCDC dc(client_dc);
+#else
+    wxDC &dc = client_dc;
+#endif
+    dc.SetFont(sectionHeaderFont());
 
     const double scale    = static_cast<double>(FromDIP(1000)) / 1000.0; // fractional DPI factor
     const double tracking = MD3::Type::label_tracking * scale;
@@ -885,29 +921,11 @@ void SectionHeader::OnPaint(wxPaintEvent &)
 
 #ifdef __WXMSW__
     wxGCDC dc(pdc);
-    // Guard: GDI+ heap-corrupts when handed a font whose face is missing from
-    // the session font table (see the MaterialIcon.cpp plain-GDI rewrite), so
-    // verify the Label-table face before it reaches this wxGCDC. Deliberately
-    // NOT faceIsInstalled(): its construct-and-compare fallback echoes the
-    // requested name on wxMSW and so never fails; a strict enumerator check is
-    // required for the heap-safety property. Cached per face — it can only
-    // change on Label::rebuild_fonts.
-    const wxFont header_font = [] {
-        static wxString s_face;
-        static bool     s_ok = false;
-        const wxString  face = Label::Head_11.GetFaceName();
-        if (face != s_face) {
-            s_face = face;
-            s_ok   = !face.empty() && wxFontEnumerator::IsValidFacename(face);
-        }
-        return s_ok ? Label::Head_11 : wxSystemSettings::GetFont(wxSYS_DEFAULT_GUI_FONT);
-    }();
 #else
     wxDC &dc = pdc;
-    const wxFont &header_font = Label::Head_11;
 #endif
 
-    dc.SetFont(header_font);
+    dc.SetFont(sectionHeaderFont());
     const wxColour fg = StateColor::semantic(MD3::Role::OnSurfaceVariant);
     dc.SetTextForeground(fg);
 

@@ -373,7 +373,7 @@ Temp_Calibration_Dlg::Temp_Calibration_Dlg(wxWindow* parent, wxWindowID id, Plat
     // start temp
     auto start_temp_sizer = new wxBoxSizer(wxHORIZONTAL);
     auto start_temp_text = new Label(this, start_temp_str, wxALIGN_LEFT, st_size);
-    m_tiStart = new TextInput(this, std::to_string(230), "°C", "", wxDefaultPosition, ti_size, wxTE_CENTRE);
+    m_tiStart = new TextInput(this, std::to_string(230), wxString::FromUTF8("°C"), "", wxDefaultPosition, ti_size, wxTE_CENTRE);
     m_tiStart->GetTextCtrl()->SetValidator(wxTextValidator(wxFILTER_NUMERIC));
     apply_valuefield_style(m_tiStart);
 
@@ -384,7 +384,7 @@ Temp_Calibration_Dlg::Temp_Calibration_Dlg(wxWindow* parent, wxWindowID id, Plat
     // end temp
     auto end_temp_sizer = new wxBoxSizer(wxHORIZONTAL);
     auto end_temp_text = new Label(this, end_temp_str, wxALIGN_LEFT, st_size);
-    m_tiEnd = new TextInput(this, std::to_string(190), "°C", "", wxDefaultPosition, ti_size, wxTE_CENTRE);
+    m_tiEnd = new TextInput(this, std::to_string(190), wxString::FromUTF8("°C"), "", wxDefaultPosition, ti_size, wxTE_CENTRE);
     m_tiStart->GetTextCtrl()->SetValidator(wxTextValidator(wxFILTER_NUMERIC));
     apply_valuefield_style(m_tiEnd);
     end_temp_sizer->Add(end_temp_text, 0, wxALL | wxALIGN_CENTER_VERTICAL, 2);
@@ -394,7 +394,7 @@ Temp_Calibration_Dlg::Temp_Calibration_Dlg(wxWindow* parent, wxWindowID id, Plat
     // temp step
     auto temp_step_sizer = new wxBoxSizer(wxHORIZONTAL);
     auto temp_step_text = new Label(this, temp_step_str, wxALIGN_LEFT, st_size);
-    m_tiStep = new TextInput(this, wxString::FromDouble(5),"°C", "", wxDefaultPosition, ti_size, wxTE_CENTRE);
+    m_tiStep = new TextInput(this, wxString::FromDouble(5), wxString::FromUTF8("°C"), "", wxDefaultPosition, ti_size, wxTE_CENTRE);
     m_tiStart->GetTextCtrl()->SetValidator(wxTextValidator(wxFILTER_NUMERIC));
     apply_valuefield_style(m_tiStep);
     m_tiStep->Enable(false);

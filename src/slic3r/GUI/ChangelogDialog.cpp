@@ -761,7 +761,7 @@ void ChangelogDialog::add_release_card(const Changelog::FilteredRelease &filtere
 
     wxString heading = wxString::FromUTF8(release.version);
     if (!release.code_name_en.empty()) {
-        heading += " — " + wxString::FromUTF8(release.code_name_en);
+        heading += wxString::FromUTF8(" — ") + wxString::FromUTF8(release.code_name_en);
         if (!release.code_name_yue.empty())
             heading += " " + wxString::FromUTF8(release.code_name_yue);
     }
@@ -772,9 +772,9 @@ void ChangelogDialog::add_release_card(const Changelog::FilteredRelease &filtere
     body->Add(title, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(16));
 
     auto *meta_row = new wxBoxSizer(wxHORIZONTAL);
-    wxString meta = wxString::FromUTF8(release.date.to_iso()) + " · " + wxString::FromUTF8(release.tag);
+    wxString meta = wxString::FromUTF8(release.date.to_iso()) + wxString::FromUTF8(" · ") + wxString::FromUTF8(release.tag);
     if (release.prerelease)
-        meta += " · " + _L("pre-release");
+        meta += wxString::FromUTF8(" · ") + _L("pre-release");
     auto *meta_label = new Label(card, Label::Body_12, meta);
     meta_label->SetBackgroundColour(card_bg);
     meta_label->SetForegroundColour(on_var);
