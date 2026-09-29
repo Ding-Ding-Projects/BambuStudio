@@ -201,6 +201,12 @@ builds and publishes releases and runs no tests or checks. `language_mode_tests`
 normalization, route separation, format-before-presentation behavior and the bilingual registry; the
 workflow configures with `SLIC3R_BUILD_TESTS=OFF`, so it is not built or run there.
 
-This page does not claim that a build containing the bilingual decorator has been verified in a
-running application. The drafted Cantonese still needs independent human review, most importantly for
-safety-critical print, account, networking, and destructive flows.
+Released builds carrying the bilingual decorator (`md3-v148` to `md3-v153`) have been run unmodified
+on a hidden desktop in all three modes; the captures and their provenance are listed in
+`docs/screenshots/md3-everything/README.md`, and each defect they showed is a row of the clipping
+inventory. On `md3-v153`, the layout probe's `language-audit` found no English-only label with a
+Cantonese translation on the Prepare page or on Preferences > General in bilingual mode: every such
+label showed both languages or, where the pair did not fit, carried the Cantonese in its tooltip
+(`docs/screenshots/md3-everything/probe/language-audit--*--md3-v153.json`). Other surfaces have not
+been audited that way yet. The drafted Cantonese still needs independent human review, most
+importantly for safety-critical print, account, networking, and destructive flows.

@@ -175,6 +175,11 @@ resolves in the package or in Windows (`scripts/ci/check_payload_imports.py`).
 | `dialog-check-for-update--bilingual_en_yue_HK-light-comfortable--md3-v153.png` | Newest-version message (after CJ-020): the English whole, the Cantonese below | `bilingual_en_yue_HK-light-comfortable` |
 | `dialog-smart-home--bilingual_en_yue_HK-light-comfortable--md3-v153.png` | Smart home: the search hint reads "Search speakers and lights · 搵喇叭同燈"; the kit buttons are still English only, fixed in `00b14ca67` | `bilingual_en_yue_HK-light-comfortable` |
 
+`probe/language-audit--prepare--md3-v153.json` and `probe/language-audit--preferences-general--md3-v153.json`
+were written by `scripts/md3/language-audit.py` in bilingual mode: no English-only label with a
+Cantonese translation on either surface (`english_only` 0 in both; labels whose pair did not fit carry
+the Cantonese in their tooltip).
+
 A first Smart home capture on this release showed the "Printer access codes are credentials" paragraph
 in English only while its probe record held both languages; a second run showed both. The first
 capture was taken while the auto-wrapping label was still being repainted after its wrap, so it is

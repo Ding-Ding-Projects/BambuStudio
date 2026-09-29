@@ -1,6 +1,6 @@
 ---
 translation-of: language-modes.md
-source-sha256: 0ad91431a438305d99c40b0cb149fed0899ebec05d0648ab2da5feac2f8e4a8e
+source-sha256: f0a95a2970ae70c2925409fcbbb9a8a308a1fcfd33b5091d2f997232d56128bb
 review-status: agent-drafted
 ---
 
@@ -107,4 +107,4 @@ Windows 分支定義咗三個標準用戶介面模式識別符：
 
 `scripts/i18n/Test-LanguageModes.ps1` 嚴格編譯兩個目錄，執行草稿條目審計同文件及更新日誌檢查，並檢查標準 ID、DeviceWeb 同舊版網頁嘅鍵對應、頁面鍵、佔位符同 ui-md3 語言測試。`scripts/ci/Test-InkTerminology.ps1` 檢查每個目錄中嘅墨水詞彙。呢啲腳本喺推送之前喺本機執行：Windows 工作流只會建置同發佈版本，唔會執行任何測試或者檢查。`language_mode_tests` 涵蓋原生正規化、路由分離、格式前呈現行為同雙語對照表；工作流以 `SLIC3R_BUILD_TESTS=OFF` 設定，所以唔會喺嗰度建置或者執行佢。
 
-此頁面唔聲稱包含雙語修飾器嘅構建已喺執行中嘅應用程式中被驗證。草稿粵語仍然需要獨立嘅人工審閱，最重要嘅係對於安全關鍵嘅打印、帳戶、網絡同破壞性流程。
+包含雙語修飾器嘅發佈版本（`md3-v148` 至 `md3-v153`）已經喺隱藏桌面上以三種模式原封不動運行過；截圖同來源列喺 `docs/screenshots/md3-everything/README.md`，截圖顯示嘅每個問題都係裁切清單入面嘅一行。喺 `md3-v153`，版面探測器嘅 `language-audit` 喺雙語模式嘅準備頁同偏好設定 > 一般，搵唔到任何有粵語翻譯但淨係顯示英文嘅標籤：每個呢類標籤都顯示兩種語言，放唔落嘅就將粵語放喺工具提示（`docs/screenshots/md3-everything/probe/language-audit--*--md3-v153.json`）。其他介面仲未用呢個方法審計。草稿粵語仍然需要獨立嘅人工審閱，最重要嘅係對於安全關鍵嘅打印、帳戶、網絡同破壞性流程。
