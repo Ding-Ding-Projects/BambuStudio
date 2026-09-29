@@ -96,6 +96,7 @@ Windows (`scripts/ci/check_payload_imports.py`).
 | `release-md3-v148-prepare--en-light-comfortable.png` | Main window, Prepare page: the release starts with nothing added | `en-light-comfortable` |
 | `release-md3-v148-prepare--yue_HK-light-comfortable.png` | Main window, Prepare page | `yue_HK-light-comfortable` |
 | `release-md3-v148-prepare--bilingual_en_yue_HK-light-comfortable.png` | Main window, Prepare page | `bilingual_en_yue_HK-light-comfortable` |
+| `dialog-smart-home--bilingual_en_yue_HK-light-comfortable--before.png` | Smart home: media buttons "Previous · 上一首" beside "Next · 下一步" (before `1757d880f`) | `bilingual_en_yue_HK-light-comfortable` |
 
 ## Layout-probe dumps
 
