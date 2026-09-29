@@ -190,6 +190,15 @@ still to verify.
   bilingual mode. `e5faf503d` makes the first paint queue one layout of the parent when the style changed the minimum
   (`ui-md3/tests/button-first-paint-layout.test.mjs`). Waiting for a release to verify Smart home in English and
   Cantonese.
+- Canvas capture (2026-09-29): on the real graphics driver PrintWindow gets a blank 3D canvas, so no capture of an
+  unmodified release package had shown a gizmo panel, a notification or the Daily Tips panel (the earlier canvas
+  captures staged Mesa's software OpenGL beside a local build). `a40082726` adds the probe command
+  `canvas-png <path>`: the canvas reads its frame back after the ImGui pass and before the buffer swap and writes the
+  PNG through a `.part` file. `scripts/md3/sweep-dialogs.py` now sweeps Show Tip of the Day as a `canvas:` entry (it
+  opens no window) and finds About in Cantonese mode by the fixed words of "&About %s"; tried on `md3-v162`, the
+  Cantonese About opens with no finding. Tests: `canvas-frame-capture.test.mjs`, `sweep-dialogs-menus.test.mjs`.
+- In-app changelog (2026-09-29): exported up to `md3-v164` (170 releases, 1,355 entries); the 43 new commits were
+  drafted in Cantonese in a batch and reviewed line by line, 32 of them rewritten for sense or Hong Kong usage.
 - Closeout cleanup (2026-09-29): the linked worktree of the auto-updater lane
   (`BambuStudio-claude-auto-updater`) and its branch `claude/auto-updater` (`37b3fce78`, contained in `main`, no copy
   on the remote) were removed after an archive of the repository to the maintainer's cloud folder was written and

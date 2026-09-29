@@ -3,11 +3,497 @@
   "repository": "Ding-Ding-Projects/BambuStudio",
   "commitUrlTemplate": "https://github.com/Ding-Ding-Projects/BambuStudio/commit/{sha}",
   "source": "GitHub Releases API + git log",
-  "generated": "2026-09-29T07:37:13.326Z",
+  "generated": "2026-09-29T17:25:16.743Z",
   "categoryDerivation": "leading-verb of the commit subject",
-  "releaseCount": 160,
-  "entryCount": 1307,
+  "releaseCount": 170,
+  "entryCount": 1355,
   "releases": [
+    {
+      "tag": "md3-v164",
+      "version": "v164",
+      "ordinal": 164,
+      "date": "2026-09-29",
+      "published": "2026-09-29T13:32:14Z",
+      "codeName": {
+        "en": "Braised Radish",
+        "yue": "蘿蔔"
+      },
+      "qualifier": "",
+      "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v164",
+      "prerelease": false,
+      "baseline": false,
+      "sameCommit": false,
+      "commit": "3f304ddeddda8a5a2c13ba489dbc6d6854320d1e",
+      "build": "v164 \"Braised Radish 蘿蔔\" (app build 02.08.04.61)",
+      "entries": [
+        {
+          "sha": "3f304ddeddda8a5a2c13ba489dbc6d6854320d1e",
+          "short": "3f304dded",
+          "text": "Say what the What's new date row really does with its chips",
+          "category": "changed"
+        },
+        {
+          "sha": "c5d31f8f6edbee76e77b6cd0456cbd6c97ba1aad",
+          "short": "c5d31f8f6",
+          "text": "Verify md3-v161: CJ-026, and package versions climb again [skip ci]",
+          "category": "changed"
+        },
+        {
+          "sha": "d74419d31f50385a728dd89863dd412358935421",
+          "short": "d74419d31",
+          "text": "Verify md3-v160: bilingual Preferences stays inside its page (CJ-021) [skip ci]",
+          "category": "changed"
+        },
+        {
+          "sha": "3a5408f713c0f4a22a98b8ff1a23c53a813431b4",
+          "short": "3a5408f71",
+          "text": "Verify md3-v159: What's new reaches md3-v154 in both languages [skip ci]",
+          "category": "changed"
+        },
+        {
+          "sha": "9b1337ccca00d2f6a755cb7c1bf3a19f71939800",
+          "short": "9b1337ccc",
+          "text": "Teach the layout probe to measure placeholder hints",
+          "category": "changed"
+        },
+        {
+          "sha": "defd4b44335b194e62e230c263760834a30e5469",
+          "short": "defd4b443",
+          "text": "Verify md3-v158: units, separators and section headers; record CJ-027 [skip ci]",
+          "category": "changed"
+        }
+      ]
+    },
+    {
+      "tag": "md3-v163",
+      "version": "v163",
+      "ordinal": 163,
+      "date": "2026-09-29",
+      "published": "2026-09-29T11:57:47Z",
+      "codeName": {
+        "en": "Pork Blood",
+        "yue": "豬紅"
+      },
+      "qualifier": "superseded main build",
+      "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v163",
+      "prerelease": false,
+      "baseline": false,
+      "sameCommit": false,
+      "commit": "1af648025107a930c136bac93f473a604934795f",
+      "build": "v163 \"Pork Blood 豬紅\" (app build 02.08.04.61)",
+      "entries": []
+    },
+    {
+      "tag": "md3-v162",
+      "version": "v162",
+      "ordinal": 162,
+      "date": "2026-09-29",
+      "published": "2026-09-29T11:26:59Z",
+      "codeName": {
+        "en": "Fried Dough Stick",
+        "yue": "油炸鬼"
+      },
+      "qualifier": "",
+      "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v162",
+      "prerelease": false,
+      "baseline": false,
+      "sameCommit": false,
+      "commit": "9b1337ccca00d2f6a755cb7c1bf3a19f71939800",
+      "build": "v162 \"Fried Dough Stick 油炸鬼\" (app build 02.08.04.61)",
+      "entries": [
+        {
+          "sha": "9b1337ccca00d2f6a755cb7c1bf3a19f71939800",
+          "short": "9b1337ccc",
+          "text": "Teach the layout probe to measure placeholder hints",
+          "category": "changed"
+        },
+        {
+          "sha": "defd4b44335b194e62e230c263760834a30e5469",
+          "short": "defd4b443",
+          "text": "Verify md3-v158: units, separators and section headers; record CJ-027 [skip ci]",
+          "category": "changed"
+        },
+        {
+          "sha": "1af648025107a930c136bac93f473a604934795f",
+          "short": "1af648025",
+          "text": "Show the What's new date hint whole, and let the date row wrap",
+          "category": "changed"
+        },
+        {
+          "sha": "4d5bfc93feabe701aa3fd9659fe5b6f4b1e17d30",
+          "short": "4d5bfc93f",
+          "text": "Wrap the funny-level lines so bilingual mode can stack them",
+          "category": "changed"
+        },
+        {
+          "sha": "90accd92d4d2fea6fc54ae731a466373c2098682",
+          "short": "90accd92d",
+          "text": "Verify md3-v157: CJ-022, CJ-023, CJ-024 and the Cantonese line break [skip ci]",
+          "category": "changed"
+        },
+        {
+          "sha": "05fb3916cfca77e92856d5d469e3d8447451a1fa",
+          "short": "05fb3916c",
+          "text": "Record the upstream 2.8.4.61 merge and the package numbering fix [skip ci]",
+          "category": "documented"
+        }
+      ]
+    },
+    {
+      "tag": "md3-v161",
+      "version": "v161",
+      "ordinal": 161,
+      "date": "2026-09-29",
+      "published": "2026-09-29T10:51:28Z",
+      "codeName": {
+        "en": "Plain Congee",
+        "yue": "白粥"
+      },
+      "qualifier": "",
+      "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v161",
+      "prerelease": false,
+      "baseline": false,
+      "sameCommit": false,
+      "commit": "a0e408559cbbbc85332372de790302fbac0d722f",
+      "build": "v161 \"Plain Congee 白粥\" (app build 02.08.04.61)",
+      "entries": [
+        {
+          "sha": "363181692f3715bcf1aec482c4fa6f4a4a9e76ed",
+          "short": "363181692",
+          "text": "Number Squirrel packages by workflow run, so no two releases share a version",
+          "category": "changed"
+        },
+        {
+          "sha": "15cdabde50ce7b39458bfe7495814a62e4d077ed",
+          "short": "15cdabde5",
+          "text": "Record CJ-026 and the md3-v155 captures behind it [skip ci]",
+          "category": "documented"
+        },
+        {
+          "sha": "a07353987bcf536ab21f57ef0352386d399fac19",
+          "short": "a07353987",
+          "text": "Move the rows of a page when a bilingual label grows a line",
+          "category": "changed"
+        },
+        {
+          "sha": "a29b2d1d019edb613085036f5b0df07f6d783eb2",
+          "short": "a29b2d1d0",
+          "text": "Point the screenshots README at the clipping inventory that exists [skip ci]",
+          "category": "changed"
+        },
+        {
+          "sha": "124dc90cd3c269c445154f8d62a153ac0c755a4b",
+          "short": "124dc90cd",
+          "text": "Record why md3-v155 kept CJ-021, and what dd95aace8 changes [skip ci]",
+          "category": "documented"
+        },
+        {
+          "sha": "f5e51a20bd328d4a043af9344825d7347270c2c9",
+          "short": "f5e51a20b",
+          "text": "ci: update build version to 02.08.04.61",
+          "category": "changed"
+        },
+        {
+          "sha": "0675d2391974db506ca80d316d299a0c452a8d10",
+          "short": "0675d2391",
+          "text": "FIX: mac设备页点击前往HMS机器助手必现崩溃",
+          "category": "fixed"
+        },
+        {
+          "sha": "3cb918056e1b190b6f1be10908a27852d475a081",
+          "short": "3cb918056",
+          "text": "ci: update build version to 02.08.04.60",
+          "category": "changed"
+        },
+        {
+          "sha": "54f94bbdd16eb5b33a344ed04122a3d612231d27",
+          "short": "54f94bbdd",
+          "text": "ci: update build version to 02.08.04.59",
+          "category": "changed"
+        },
+        {
+          "sha": "a2f14de004f9c82c3a20a0cc6a488b1d139ec44b",
+          "short": "a2f14de00",
+          "text": "FIX: hang if load project in device page",
+          "category": "fixed"
+        },
+        {
+          "sha": "03ffd8e632b56b3229ea6609e28b81d808fa97cd",
+          "short": "03ffd8e63",
+          "text": "FIX: hang after send print if the device page is not triggered before",
+          "category": "fixed"
+        },
+        {
+          "sha": "7a34b2dc6ac732763577da0307a8c247db3e7599",
+          "short": "7a34b2dc6",
+          "text": "ci: update build version to 02.08.04.58",
+          "category": "changed"
+        }
+      ]
+    },
+    {
+      "tag": "md3-v160",
+      "version": "v160",
+      "ordinal": 160,
+      "date": "2026-09-29",
+      "published": "2026-09-29T10:20:22Z",
+      "codeName": {
+        "en": "Dried Fish Peanut Congee",
+        "yue": "柴魚花生粥"
+      },
+      "qualifier": "",
+      "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v160",
+      "prerelease": false,
+      "baseline": false,
+      "sameCommit": false,
+      "commit": "dd95aace8c77b9189bcf2ae7c3139ca81df7cf54",
+      "build": "v160 \"Dried Fish Peanut Congee 柴魚花生粥\" (app build 02.08.04.57)",
+      "entries": [
+        {
+          "sha": "dd95aace8c77b9189bcf2ae7c3139ca81df7cf54",
+          "short": "dd95aace8",
+          "text": "Let the bilingual decorator pair the funny-level rows, and count sizer borders once",
+          "category": "changed"
+        }
+      ]
+    },
+    {
+      "tag": "md3-v159",
+      "version": "v159",
+      "ordinal": 159,
+      "date": "2026-09-29",
+      "published": "2026-09-29T09:50:18Z",
+      "codeName": {
+        "en": "Congee with Offal",
+        "yue": "及第粥"
+      },
+      "qualifier": "",
+      "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v159",
+      "prerelease": false,
+      "baseline": false,
+      "sameCommit": false,
+      "commit": "d8fe5047accc3851d42ba51fd35aa4b809ba7037",
+      "build": "v159 \"Congee with Offal 及第粥\" (app build 02.08.04.57)",
+      "entries": [
+        {
+          "sha": "d8fe5047accc3851d42ba51fd35aa4b809ba7037",
+          "short": "d8fe5047a",
+          "text": "Bring the in-app changelog up to md3-v154, in both languages",
+          "category": "changed"
+        },
+        {
+          "sha": "c969177806ea08ee3e6c5f5dd99a4ab0f424226a",
+          "short": "c96917780",
+          "text": "Record CJ-025 and the unit fix of 32a36b134 [skip ci]",
+          "category": "documented"
+        }
+      ]
+    },
+    {
+      "tag": "md3-v158",
+      "version": "v158",
+      "ordinal": 158,
+      "date": "2026-09-29",
+      "published": "2026-09-29T09:21:49Z",
+      "codeName": {
+        "en": "Bamboo Pole Noodles",
+        "yue": "竹昇麵"
+      },
+      "qualifier": "",
+      "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v158",
+      "prerelease": false,
+      "baseline": false,
+      "sameCommit": false,
+      "commit": "32a36b134a9d7497000841693e72df95ee7287d4",
+      "build": "v158 \"Bamboo Pole Noodles 竹昇麵\" (app build 02.08.04.57)",
+      "entries": [
+        {
+          "sha": "32a36b134a9d7497000841693e72df95ee7287d4",
+          "short": "32a36b134",
+          "text": "Show °C and · as themselves, and measure section headers the way they paint",
+          "category": "changed"
+        },
+        {
+          "sha": "d0b37658402fa8489b8f3f5cc73341abd13bd433",
+          "short": "d0b376584",
+          "text": "List the new features of this line in the README, with their status [skip ci]",
+          "category": "changed"
+        },
+        {
+          "sha": "72a5f4307d2dee26377f44e74aa965ddb273e398",
+          "short": "72a5f4307",
+          "text": "Verify md3-v154: CJ-016, CJ-019 and bilingual kit buttons [skip ci]",
+          "category": "changed"
+        },
+        {
+          "sha": "3d31e46b6781111fb1e796b7c6a806f365eec31f",
+          "short": "3d31e46b6",
+          "text": "Keep the capture machine's account name out of the public evidence [skip ci]",
+          "category": "changed"
+        },
+        {
+          "sha": "aba2f7cf5a0045273b5c71621355da59d80eb2f2",
+          "short": "aba2f7cf5",
+          "text": "Audit md3-v153 for English-only labels: none on Prepare or Preferences [skip ci]",
+          "category": "changed"
+        },
+        {
+          "sha": "250661d4a7ebb3fb9147cd30633216d5b10cb1b6",
+          "short": "250661d4a",
+          "text": "Verify md3-v153: the splash tells its date, and CJ-020 is gone [skip ci]",
+          "category": "changed"
+        }
+      ]
+    },
+    {
+      "tag": "md3-v157",
+      "version": "v157",
+      "ordinal": 157,
+      "date": "2026-09-29",
+      "published": "2026-09-29T08:46:08Z",
+      "codeName": {
+        "en": "Shrimp Roe Noodles",
+        "yue": "蝦子撈麵"
+      },
+      "qualifier": "",
+      "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v157",
+      "prerelease": false,
+      "baseline": false,
+      "sameCommit": false,
+      "commit": "11cf454237243f1b7f9a9ddb8210ec5d1328004a",
+      "build": "v157 \"Shrimp Roe Noodles 蝦子撈麵\" (app build 02.08.04.57)",
+      "entries": [
+        {
+          "sha": "11cf454237243f1b7f9a9ddb8210ec5d1328004a",
+          "short": "11cf45423",
+          "text": "Count the Prepare section rail in the sidebar's width",
+          "category": "changed"
+        },
+        {
+          "sha": "f532d7d683aecc0ebb8be37cde914219f82a1d4b",
+          "short": "f532d7d68",
+          "text": "Record CJ-022, the catalog header that Cantonese mode showed as text [skip ci]",
+          "category": "documented"
+        },
+        {
+          "sha": "c591f1b3960ec434e28bd8e0563a4107e4ce1204",
+          "short": "c591f1b39",
+          "text": "Keep an empty message empty, instead of the catalogue header",
+          "category": "changed"
+        },
+        {
+          "sha": "4e847da0144ccd280ae09a8513f94889f6cbd500",
+          "short": "4e847da01",
+          "text": "Capture the automatic-update row on md3-v151, in all three modes [skip ci]",
+          "category": "changed"
+        },
+        {
+          "sha": "c7309b88960f045cc8faa5e6bf63ee284adff8c0",
+          "short": "c7309b889",
+          "text": "Stop wrapped Cantonese lines from starting with a full stop",
+          "category": "changed"
+        },
+        {
+          "sha": "c69613a3f5758c6c154dd5353a617035d1d3bf7f",
+          "short": "c69613a3f",
+          "text": "Call CJ-021's 629 px label what it is: a row title [skip ci]",
+          "category": "changed"
+        },
+        {
+          "sha": "d491a6aea56eb96cb26ef9184e0b04401d0d98ce",
+          "short": "d491a6aea",
+          "text": "Record CJ-021 and the md3-v151 checks [skip ci]",
+          "category": "documented"
+        }
+      ]
+    },
+    {
+      "tag": "md3-v156",
+      "version": "v156",
+      "ordinal": 156,
+      "date": "2026-09-29",
+      "published": "2026-09-29T08:14:00Z",
+      "codeName": {
+        "en": "Fresh Shrimp Wonton",
+        "yue": "鮮蝦雲吞"
+      },
+      "qualifier": "superseded main build",
+      "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v156",
+      "prerelease": false,
+      "baseline": false,
+      "sameCommit": false,
+      "commit": "2e80091efcb8b3c63f8f3205e4720fe15272166e",
+      "build": "v156 \"Fresh Shrimp Wonton 鮮蝦雲吞\" (app build 02.08.04.57)",
+      "entries": []
+    },
+    {
+      "tag": "md3-v155",
+      "version": "v155",
+      "ordinal": 155,
+      "date": "2026-09-29",
+      "published": "2026-09-29T07:43:20Z",
+      "codeName": {
+        "en": "Beef Offal",
+        "yue": "牛雜"
+      },
+      "qualifier": "",
+      "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v155",
+      "prerelease": false,
+      "baseline": false,
+      "sameCommit": false,
+      "commit": "c7309b88960f045cc8faa5e6bf63ee284adff8c0",
+      "build": "v155 \"Beef Offal 牛雜\" (app build 02.08.04.57)",
+      "entries": [
+        {
+          "sha": "c7309b88960f045cc8faa5e6bf63ee284adff8c0",
+          "short": "c7309b889",
+          "text": "Stop wrapped Cantonese lines from starting with a full stop",
+          "category": "changed"
+        },
+        {
+          "sha": "c69613a3f5758c6c154dd5353a617035d1d3bf7f",
+          "short": "c69613a3f",
+          "text": "Call CJ-021's 629 px label what it is: a row title [skip ci]",
+          "category": "changed"
+        },
+        {
+          "sha": "d491a6aea56eb96cb26ef9184e0b04401d0d98ce",
+          "short": "d491a6aea",
+          "text": "Record CJ-021 and the md3-v151 checks [skip ci]",
+          "category": "documented"
+        },
+        {
+          "sha": "2e80091efcb8b3c63f8f3205e4720fe15272166e",
+          "short": "2e80091ef",
+          "text": "Keep bilingual Preferences rows inside the page they scroll in",
+          "category": "changed"
+        },
+        {
+          "sha": "c2cb1a173463adf1864b06438f65e6402d129c3a",
+          "short": "c2cb1a173",
+          "text": "Tick the latest-release fix: md3-v151 became latest [skip ci]",
+          "category": "changed"
+        },
+        {
+          "sha": "48266bf6df65f45dd60b6f3a102cce9e44b629c1",
+          "short": "48266bf6d",
+          "text": "Record the released-package checks and the two regressions they caught [skip ci]",
+          "category": "documented"
+        },
+        {
+          "sha": "e92b7fa2df9ba1f8c13a04d04d6791f7585d7db9",
+          "short": "e92b7fa2d",
+          "text": "Mark four clipping fixes verified from released packages [skip ci]",
+          "category": "changed"
+        },
+        {
+          "sha": "18b4c720013bc509b60e52c9f10ca94434104ede",
+          "short": "18b4c7200",
+          "text": "Count splash pixels without the deprecated Pillow call [skip ci]",
+          "category": "changed"
+        }
+      ]
+    },
     {
       "tag": "md3-v154",
       "version": "v154",
