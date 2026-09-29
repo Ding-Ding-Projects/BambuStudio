@@ -1,6 +1,6 @@
 ---
 translation-of: clipping-inventory.md
-source-sha256: 6e75cedbbb3df35d0ac52c1d9ca9c45864959773f28435bb0476e8706b5a65ee
+source-sha256: 462efb5f2353e80e09cc3dcf90dceb154f26b4a21543b3b186e5ca9f7d11a48c
 review-status: agent-drafted
 ---
 
@@ -50,8 +50,9 @@ Windows 桌面應用程式上發現嘅每一個版面裁剪缺陷，包括佢嘅
 | CJ-025 | 雙語模式配對咗嘅段落標題（溫度校準「SETTINGS」） | bilingual_en_yue_HK-light-comfortable | 「SETTINGS · 設」：廣東話喺標題自己嘅邊緣被切 | 段落標題用 GDI+ 逐個字畫大階、加字距，但量度最佳闊度嗰陣用普通 GDI 同成串字嘅闊度，所以要求嘅位比畫出嚟嘅少 | 32a36b134 | dialog-temperature--bilingual_en_yue_HK-light-comfortable--md3-v154.png | dialog-temperature--bilingual_en_yue_HK-light-comfortable--md3-v158.png | verified |
 | CJ-026 | 偏好設定，打開對話框之後先顯示嘅每一頁：使用者、3D、其他（雙語） | bilingual_en_yue_HK-light-comfortable | 每段會換行嘅描述排成英文喺上粵語喺下，但粵語嗰行畫咗喺下一行標題底下，淨係見到啲字嘅頂 | 裝飾器改完標籤之後會重新排對話框，但對話框重排嗰陣頁面大細唔變，所以頁面自己嘅 sizer 從來冇行過，變高咗一行嘅標籤下面啲行原封不動 | a07353987 | preferences-3d--bilingual_en_yue_HK-light-comfortable--md3-v155.png | preferences-3d--bilingual_en_yue_HK-light-comfortable--md3-v161.png | verified |
 | CJ-027 | 有乜新嘢，「從」同「至」日期欄 | 每個組合（日先嘅地區設定） | 提示字「YYYY-MM-DD / DD/MM/YYYY」喺英文被切成「YYYY-MM-DD / D」、粵語「YYYY-MM-DD / [」、雙語「YYYY-MM-DD / I」 | 日期欄固定 132 DIP，窄過佢自己嘅提示字；版面探針唔量度提示字，所以冇任何掃描報告過 | 1af648025 | dialog-what-s-new-changelog--en-light-comfortable--md3-v158.png | dialog-what-s-new-changelog--en-light-comfortable--md3-v162.png | verified |
-| CJ-028 | 模型建立工具 | en-light-comfortable、yue_HK-light-comfortable（720 x 780） | 修改備註、版本清單同狀態行冇任何高度，金鑰同底部按鈕被壓到細過最細尺寸，底部四粒按鈕畫成空白格 | 表格直接放入對話框，而對話框固定 720 x 780，矮過個表格；雙語模式將對話框撐大到 867 x 963，所以睇唔到 | 13dd18236 | dialog-model-creator-lower--en-light-comfortable--md3-v162.png | pending | fixed-unverified |
-| CJ-029 | 智能家居底部嘅「關閉」掣 | en-light-comfortable、yue_HK-light-comfortable | 「Close」得 59 px，佢嘅最細尺寸係 70 px（粵語 50 對 64），個藥丸好迫 | 冇打扮過嘅套件按鈕第一次畫嘅時候先換上外框款式，每邊 18 DIP 嘅留白同中等粗幼字體令佢嘅最細尺寸喺底部排版器擺好位之後先變大；雙語模式以外冇再排過底部，雙語模式嘅裝飾器重排會排啱佢（111 px） | e5faf503d | dialog-smart-home-footer--en-light-comfortable--md3-v162.png | pending | fixed-unverified |
+| CJ-028 | 模型建立工具 | en-light-comfortable、yue_HK-light-comfortable（720 x 780） | 修改備註、版本清單同狀態行冇任何高度，金鑰同底部按鈕被壓到細過最細尺寸，底部四粒按鈕畫成空白格 | 表格直接放入對話框，而對話框固定 720 x 780，矮過個表格；雙語模式將對話框撐大到 867 x 963，所以睇唔到 | 13dd18236 | dialog-model-creator-lower--en-light-comfortable--md3-v162.png | dialog-model-creator-key-row--en-light-comfortable--md3-v165.png | verified |
+| CJ-029 | 智能家居底部嘅「關閉」掣 | en-light-comfortable、yue_HK-light-comfortable | 「Close」得 59 px，佢嘅最細尺寸係 70 px（粵語 50 對 64），個藥丸好迫 | 冇打扮過嘅套件按鈕第一次畫嘅時候先換上外框款式，每邊 18 DIP 嘅留白同中等粗幼字體令佢嘅最細尺寸喺底部排版器擺好位之後先變大；雙語模式以外冇再排過底部，雙語模式嘅裝飾器重排會排啱佢（111 px） | e5faf503d | dialog-smart-home-footer--en-light-comfortable--md3-v162.png | dialog-smart-home-footer--en-light-comfortable--md3-v165.png | verified |
+| CJ-030 | 模型建立工具底部 | en-light-comfortable、yue_HK-light-comfortable、bilingual_en_yue_HK-light-comfortable | 底部按鈕喺擷圖入面係空白方框（白色，雙語模式有一個黑色），雖然版面探針量到每粒都係完整最細尺寸、亦喺螢幕上（「產生」93、「取消產生」148、「預覽網格模型」122、「加入打印板」111 px）；只有英文模式嘅「產生」畫咗出嚟 | 原因未搵到：按鈕嘅位置同大細都啱，所以問題係冇畫出嚟，唔係被擠細；`md3-v162` 嘅擷圖都有同樣嘅方框 | pending | dialog-model-creator-lower--en-light-comfortable--md3-v165.png | pending | open |
 <!-- clipping-inventory:end -->
 
 CJ-014、CJ-015、CJ-017 同 CJ-018 已經用冇加過任何嘢嘅發佈套件，喺隱藏桌面上驗證咗（2026-09-29）：雙語模式下，最新版本訊息喺 `md3-v148` 完整畫出「OK · 確定」，而 `md3-v143` 就畫成「OK ·...」（CJ-014）；喺 `md3-v150`，搜尋欄完整畫出佢嘅圓形右端（CJ-015），設定檔清單完整顯示嗰一行（CJ-017），溫度校準嘅標籤維持英文，廣東話放喺提示框，唔再被裁走（CJ-018）。CJ-016 喺 `md3-v150` 仍然被裁；佢嘅修正係 `00b14ca67`。
@@ -69,6 +70,8 @@ CJ-021 已經用 `md3-v160`（目標 `dd95aace8`，套件 SHA-1 `57a99f72f9cb99e
 CJ-026 已經用 `md3-v161`（目標 `a0e408559`，套件 `2.8.4608`，SHA-1 `a2c80a7ef125f3167baa06e891f124832e2f8f58`，所有匯入都搵到）驗證：雙語 3D 同其他頁嘅每段兩行描述都完整顯示粵語嗰行，下一行喺佢下面先開始。同一個重排亦令配對咗嘅「What does this change? · 呢個會改變啲乜？」掣保留配對：之前個掣喺頁面入面保持舊闊度，重新檢查以為佢被擠窄，就送返英文。嗰輪有兩張擷圖影正重繪（工具欄風格清單、一行粵語），另一張擷圖都完整顯示。
 
 CJ-027 已經用 `md3-v162`（目標 `9b1337ccc`，套件 `2.8.4611`，SHA-1 `b62ab87ee23cb36518731316e8a560d2ced0a3df`，所有匯入都搵到）驗證：有乜新嘢喺英文同雙語模式完整顯示日期提示字，預設晶片自己開一行，由左邊開始。佢係第一個喺版面轉儲量度提示字嘅發佈版：20 個對話框嘅雙語掃描記錄咗 354 個提示字，冇一個被切走，日期提示字 210 px，欄有 223 px。完整掃描喺雙語模式冇任何問題，英文同粵語就係同樣兩個對話框，即係 CJ-028（模型建立工具，`13dd18236` 修正）同 CJ-029（智能家居嘅關閉掣，未修）。模型建立工具嘅擷圖淨係截取下半部：上半部顯示咗對話框自己填入嘅本機資料夾路徑。
+
+CJ-029 已經用 `md3-v165` 驗證（目標 `e5faf503d`，套件 `2.8.4614`，SHA-1 `bb7984acec9b57d5bff3a8995d10cb892ed54956`，所有匯入都搵到）：智能家居嘅「關閉」藥丸喺擷圖入面英文係 70 px、粵語係 64 px，即係完整最細尺寸，而 `md3-v162` 只係畫咗 59 px。CJ-028 用同一個發佈版驗證咗表格部分：每行都保持高度，表格可以捲動，金鑰一行完整顯示「新增或取代金鑰」、「測試金鑰」同「清除金鑰」，而 `md3-v162` 切咗兩粒、唔見咗第三粒。四粒底部按鈕喺擷圖入面仍然係空白方框，雖然探針量到每粒都係完整最細尺寸，所以嗰部分而家係 CJ-030。20 個對話框嘅完整掃描喺三種模式都冇發現任何問題。
 
 CJ-029 嘅原因喺源碼度搵到：冇揀款式、亦冇被調用者打扮過嘅套件按鈕，第一次畫嘅時候先換上外框款式，而嗰款每邊 18 DIP 嘅留白（量度時得 10 px）同中等粗幼字體，令佢嘅最細尺寸喺父視窗排版器擺好位之後先變大。智能家居嘅底部之後冇再排過，所以「Close」一直係最初嘅闊度；雙語模式排啱佢，只係因為裝飾器喺頁面顯示之後再排一次。`e5faf503d` 令款式改變咗最細尺寸嘅時候，第一次畫會排隊將父視窗重新排版一次。
 

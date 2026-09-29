@@ -190,6 +190,12 @@ still to verify.
   bilingual mode. `e5faf503d` makes the first paint queue one layout of the parent when the style changed the minimum
   (`ui-md3/tests/button-first-paint-layout.test.mjs`). Waiting for a release to verify Smart home in English and
   Cantonese.
+- `md3-v165` verified (2026-09-29): target `e5faf503d`, package `2.8.4614`, SHA-1 `bb7984ac...`, every import resolved;
+  splash, pages and searches in three modes; a full sweep of 20 dialogs and the six top menus in each mode with no
+  finding; the language audit found no English-only label on Prepare or Preferences > General. CJ-029 verified (Close
+  70 px in English, 64 px in Cantonese). CJ-028 verified for the form and key row; its four footer buttons still capture
+  as blank boxes at full size, now CJ-030 (open, cause not found; the same boxes are in the `md3-v162` captures).
+  Evidence: `docs/screenshots/md3-everything/*--md3-v165.png` and the key-row pair, cropped to leave out folder paths.
 - Canvas capture (2026-09-29): on the real graphics driver PrintWindow gets a blank 3D canvas, so no capture of an
   unmodified release package had shown a gizmo panel, a notification or the Daily Tips panel (the earlier canvas
   captures staged Mesa's software OpenGL beside a local build). `a40082726` adds the probe command

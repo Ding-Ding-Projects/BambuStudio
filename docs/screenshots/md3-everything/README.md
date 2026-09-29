@@ -390,6 +390,29 @@ Taken by `scripts/md3/check-context-menus.py` from the same unmodified `md3-v162
 | --- | --- | --- |
 | `context-menu-smart-home-keyboard--en-light-comfortable--md3-v162.png` | Smart home URL field: the system's English edit menu (window class `#32768`), with Undo, Cut, Copy, Paste, Delete, Select All and the right-to-left, Unicode and IME items | `en-light-comfortable` |
 
+## Release md3-v165 captures (2026-09-29)
+
+Taken from the unmodified `md3-v165` release package with profiles under `C:\Users\Public\bbsdd\` by a full
+`scripts/md3/sweep-dialogs.py` sweep in three modes: 20 dialogs and the six top menus in each, no layout finding,
+no missing layout dump. Every import of its executables and DLLs resolves in the package or in Windows. The Model
+Creator crops leave out the rows that show local folder paths.
+
+| Field | Value |
+| --- | --- |
+| Source commit | `e5faf503d` (release `md3-v165`) |
+| Package | `BambuStudioMD3-2.8.4614-full.nupkg`, 732,163,530 bytes, SHA-1 `bb7984acec9b57d5bff3a8995d10cb892ed54956` as listed in `RELEASES` |
+| Executable | `bambu-studio.exe` sha256 `a06fc526dd65d4845e3232a32086f0ad7a96ac17157a6c07882808d0451a6ef5`, `BambuStudio.dll` sha256 `ee0d935810baf67397ca0688fa124ece308b54ecf03bda9e8e969fc6a76def79` |
+| Capture route | hidden Win32 desktop, `PrintWindow`, real GPU driver |
+| Display scale | 100% |
+
+| File | Surface | Tuple |
+| --- | --- | --- |
+| `dialog-smart-home-footer--en-light-comfortable--md3-v165.png` | Smart home footer (CJ-029, verified): the Close pill at 70 px, its full minimum | `en-light-comfortable` |
+| `dialog-smart-home-footer--yue_HK-light-comfortable--md3-v165.png` | Smart home footer (CJ-029, verified): 「關閉」 at 64 px, its full minimum | `yue_HK-light-comfortable` |
+| `dialog-model-creator-key-row--en-light-comfortable--md3-v162.png` | Model Creator key row before CJ-028: Add or replace key and Clear key cut, Test key missing | `en-light-comfortable` |
+| `dialog-model-creator-key-row--en-light-comfortable--md3-v165.png` | Model Creator key row after CJ-028: Add or replace key, Test key and Clear key whole | `en-light-comfortable` |
+| `dialog-model-creator-lower--en-light-comfortable--md3-v165.png` | Model Creator, lower part after CJ-028: the form scrolls with its rows at full height; the footer buttons still capture blank (CJ-030) | `en-light-comfortable` |
+
 ## Layout-probe dumps
 
 `probe/<tuple>--<before|after>.jsonl`, one per main-frame idle dump plus one per opened dialog,
