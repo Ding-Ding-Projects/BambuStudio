@@ -84,9 +84,18 @@
   restarts, and a later, unrelated quit does not restart either.
 - Update.exe cannot be started for the restart: the app simply exits and the new version starts
   the next time it is opened.
-- Squirrel feed ordering: since md3-v106 the package version is `2.8.<patch*1000+N>` (`2.8.2106`) with `N` the release
-  number, so a Squirrel-feed updater ranks releases correctly; md3-v104 and md3-v105 both carried
-  `2.8.2-build61` and are not distinguishable by package version.
+- Squirrel feed ordering: since md3-v106 the package version is `2.8.<patch*1000+N>` (`2.8.2106`),
+  so a Squirrel-feed updater can rank releases; md3-v104 and md3-v105 both carried
+  `2.8.2-build61` and are not distinguishable by package version. Builds packaged before the
+  run-number change took `N` as the highest release number plus one, read when the package was
+  built, so builds queued behind one another could share a version: md3-v155 and md3-v156 both
+  carry `2.8.4155`, and releases published from builds that were already queued may repeat one too. Squirrel installs
+  nothing when the feed's version equals the installed one, so the later of two such releases
+  never arrived by itself; the app fell back to its download dialog, as for any update that
+  prepares nothing. Hosted builds now take `N` from the run number of the Windows build and
+  release workflow, which only grows in push order, while a build becomes the latest release only
+  when it is ahead of the current one, so the feed's version always goes up. The first package
+  built that way jumps once, to about `2.8.4607`.
 
 ## Security considerations
 

@@ -721,7 +721,7 @@ test('the settings tree is one scroll surface: pill categories wrap and the page
   assert.match(plater, /params_panel->set_host_height_changed\(/, 'the sidebar listens for height changes');
 });
 
-test('the Squirrel package version is derived from the GitHub release number', async () => {
+test('the Squirrel package version carries a strictly increasing build number', async () => {
   // Two releases built from one version.inc used to ship the same package
   // version (2.8.2-build61 for both md3-v104 and md3-v105), so a Squirrel feed
   // could not rank them. The packaging script now takes the release number
@@ -735,9 +735,16 @@ test('the Squirrel package version is derived from the GitHub release number', a
   assert.match(build, /^function Resolve-ReleaseNumber \{/m, 'the one-click build resolves the release number');
   assert.match(build, /-ReleaseNumber \$releaseNumber -IconPath/m, 'and passes it to the packaging script');
   const workflow = await readFile(path.join(repoDir, '.github', 'workflows', 'build_bambu.yml'), 'utf8');
-  assert.match(workflow, /^\s*-ReleaseNumber \$releaseNumber `$/m, 'the hosted packaging step passes the release number too');
-  assert.match(workflow, /^\s*\$releaseNumber = \$maxN \+ 1$/m, 'which it derives from the highest existing md3-v tag');
-  assert.ok(workflow.indexOf('$productVersion = $matches[1]') < workflow.indexOf("-match '^md3-v(\\d+)$'"), 'the product version is captured before the tag loop clobbers $matches');
+  assert.match(workflow, /^\s*-ReleaseNumber \$releaseNumber `$/m, 'the hosted packaging step passes a build number too');
+  // Hosted builds take N from the workflow's run number. "Highest md3-v tag plus
+  // one", read at packaging time, gave builds queued behind one another the same
+  // number (md3-v155 and md3-v156 both shipped 2.8.4155), and Squirrel installs
+  // nothing when the feed's version equals the installed one.
+  assert.match(workflow, /^\s*\$releaseNumber = \[int\]'\$\{\{ github\.run_number \}\}'$/m, 'which is the run number, strictly increasing in push order');
+  const packaging = workflow.slice(workflow.indexOf('- name: Create Windows Squirrel installer'), workflow.indexOf('- name: Validate Squirrel Windows package contract'));
+  assert.ok(packaging.includes('Invoke-SquirrelPackage.ps1'), 'the packaging step is found');
+  assert.doesNotMatch(packaging, /md3-v\(\\d\+\)/, 'and the packaging step no longer counts release tags');
+  assert.ok(workflow.indexOf('$productVersion = $matches[1]') > 0, 'the product version is captured from version.inc');
   assert.match(workflow, /^\s*-ProductVersion \$productVersion `$/m, 'and the captured value is what packaging receives');
 });
 

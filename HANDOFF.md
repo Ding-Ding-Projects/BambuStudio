@@ -134,6 +134,15 @@ still to verify.
   own sizer never ran; `a07353987` lays out the page around every label the decorator changes. Seen
   once, to re-check on the next release: the bilingual Other capture shows the search field without its
   hint, while the other four pages show "Search settings · 搜尋設定".
+- `md3-v156` (published 08:14 UTC, not latest) targets `2e80091ef`, an ancestor of `md3-v155`'s target,
+  and carries the same Squirrel package version, `2.8.4155`, with different bytes. The packaging step
+  took the number as "highest md3 release plus one" long before the release job assigns the tag, so
+  builds queued behind one another share it, and Squirrel installs nothing when the feed's version
+  equals the installed one: the later of two such latest releases would never arrive by itself.
+  Hosted builds now take the number from the workflow run number, which only grows in push order
+  (`.github/workflows/build_bambu.yml`, contract in `ui-md3/tests/md3-conversion-contracts.test.mjs`);
+  the one-click local build keeps its own rule. Builds that were already queued still packaged under
+  the old rule.
 - Privacy of the capture evidence (2026-09-29): capture profiles had lived under the Windows user
   profile, so two public Config profiles captures (`md3-v143`, `md3-v150`, added in `e92b7fa2d`) showed
   the account name in the data folder, and twelve layout dumps from 2026-09-06/07 recorded it in the

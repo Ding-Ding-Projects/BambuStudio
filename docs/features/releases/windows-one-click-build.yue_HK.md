@@ -1,6 +1,6 @@
 ---
 translation-of: windows-one-click-build.md
-source-sha256: 901fc93e8f8b0c241d5e3012d03bfd704d2e35004dbdfa4b533b40faecc3a257
+source-sha256: 903e3a561ba695a011367e8aeda26e3d903dc0633ebe46f17c3dacf21b488dc8
 review-status: agent-drafted
 ---
 
@@ -18,7 +18,7 @@ review-status: agent-drafted
 
 - `squirrel/Setup.exe`：無簽署嘅 Squirrel 引導程式；
 - `squirrel/RELEASES`：更新源索引；
-- `squirrel/BambuStudioMD3-<version>-full.nupkg` 和任何已生成嘅差異套件。`<version>` 係 `<major>.<minor>.<patch*1000+N>`，其中 `N` 係 GitHub 發佈編號（`md3-v<N>`），例如產品 2.8.2 喺發佈 106 嘅 `2.8.2106`（Squirrel.Windows 僅接受三個數字部分並將預發佈標籤作為字串比較），因此每個發佈提供嚴格遞增嘅 Squirrel 套件版本，即使 `version.inc` 未改變。編號係從 `-ReleaseNumber` 解析，然後 `BAMBU_RELEASE_NUMBER`，然後由 `gh` 見過嘅最新 `md3-v<N>` 發佈加一；如果無任何這些，套件版本回退到產品版本單獨（`2.8.2-build61`），日誌會說明；
+- `squirrel/BambuStudioMD3-<version>-full.nupkg` 和任何已生成嘅差異套件。`<version>` 係 `<major>.<minor>.<patch*1000+N>`，例如產品 2.8.2、`N` = 106 就係 `2.8.2106`（Squirrel.Windows 只接受三個數字部分，而且將預發佈標籤當字串比較），所以就算 `version.inc` 冇變，套件都排得啱次序。一鍵構建會由 `-ReleaseNumber` 解析 `N`，然後 `BAMBU_RELEASE_NUMBER`，然後由 `gh` 見到嘅最新 `md3-v<N>` 發佈加一；三樣都冇嘅話，套件版本就淨係用產品版本（`2.8.2-build61`），日誌會講明。雲端發佈構建就改用 Windows 構建與發佈工作流程嘅執行編號：喺發佈工作分配標籤之前讀到嘅發佈編號，構建排隊嗰陣會重複（`md3-v155` 同 `md3-v156` 都係 `2.8.4155`），而執行編號只會跟推送次序增加；
 - `squirrel/Setup.exe.sha256`：引導程式嘅 SHA-256 附屬文件；
 - `BambuStudioMD3.cdx.json`：綁定到源提交嘅 CycloneDX SBOM。
 

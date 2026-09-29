@@ -14,13 +14,15 @@ outputs are written to `artifacts/windows/`:
 - `squirrel/Setup.exe` — unsigned Squirrel bootstrapper;
 - `squirrel/RELEASES` — update-feed index;
 - `squirrel/BambuStudioMD3-<version>-full.nupkg` and any generated delta packages. `<version>` is
-  `<major>.<minor>.<patch*1000+N>` where `N` is the GitHub release number (`md3-v<N>`), for
-  example `2.8.2106` for product 2.8.2 at release 106 (Squirrel.Windows accepts only three
-  numeric parts and compares prerelease labels as strings), so every
-  release ships a strictly increasing Squirrel package version even when `version.inc` is
-  unchanged. The number is resolved from `-ReleaseNumber`, then `BAMBU_RELEASE_NUMBER`, then the
-  latest `md3-v<N>` release seen by `gh` plus one; with none of those the package version falls
-  back to the product version alone (`2.8.2-build61`) and the log says so;
+  `<major>.<minor>.<patch*1000+N>`, for example `2.8.2106` for product 2.8.2 with `N` = 106
+  (Squirrel.Windows accepts only three numeric parts and compares prerelease labels as strings),
+  so packages rank correctly even when `version.inc` is unchanged. A one-click build resolves `N`
+  from `-ReleaseNumber`, then `BAMBU_RELEASE_NUMBER`, then the latest `md3-v<N>` release seen by
+  `gh` plus one; with none of those the package version falls back to the product version alone
+  (`2.8.2-build61`) and the log says so. Hosted release builds use the run number of the Windows
+  build and release workflow instead: a release number read before the release job assigns the
+  tag repeats when builds queue behind one another (`md3-v155` and `md3-v156` both carry
+  `2.8.4155`), and the run number only grows in push order;
 - `squirrel/Setup.exe.sha256` — SHA-256 sidecar for the bootstrapper;
 - `BambuStudioMD3.cdx.json` — CycloneDX SBOM bound to the source commit.
 

@@ -310,8 +310,6 @@ jobs:
         if: inputs.os == 'windows-latest'
         working-directory: ${{ github.workspace }}
         shell: pwsh
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: |
           $ErrorActionPreference = 'Stop'
           $versionContent = Get-Content version.inc -Raw
@@ -319,7 +317,7 @@ jobs:
               throw 'Could not read SLIC3R_VERSION from version.inc.'
           }
 
-          # Capture the product version now: the tag-matching loop below
+          # Capture the product version now, before any later -match
           # overwrites the automatic $matches variable (hosted runs
           # 34148103919 and 34149103478 passed a tag number as the product
           # version and failed inside the packaging script).
@@ -329,24 +327,22 @@ jobs:
               throw 'Could not read the source commit.'
           }
 
-          # The Squirrel package version carries the release number
+          # The Squirrel package version carries a build number
           # (major.minor.(patch*1000+N)) so a Squirrel feed can rank releases
-          # whose version.inc has not moved. The release job assigns md3-v<N>
-          # later under its serialized concurrency group; this step reads the
-          # same "highest existing md3-v tag plus one", so the two agree unless
-          # another run publishes in between, in which case the package version
-          # is still strictly increasing in build order and the release notes
-          # name it.
-          $maxN = 0
-          $existing = & gh api --paginate "repos/$env:GITHUB_REPOSITORY/releases?per_page=100" | ConvertFrom-Json
-          foreach ($r in $existing) {
-              if ($r.tag_name -match '^md3-v(\d+)$') {
-                  $n = [int]$Matches[1]
-                  if ($n -gt $maxN) { $maxN = $n }
-              }
+          # whose version.inc has not moved. N is this workflow's run number,
+          # which only grows in push order, and a build only becomes the latest
+          # release when it is ahead of the latest one, so the update feed's
+          # version always goes up. N used to be "highest existing md3-v tag
+          # plus one", read here long before the release job assigns the tag:
+          # builds that packaged while another one waited to publish got the
+          # same number (md3-v155 and md3-v156 both shipped 2.8.4155), and
+          # Squirrel installs nothing when the feed's version equals the
+          # installed one. The md3-v<N> tag is still assigned by the release job.
+          $releaseNumber = [int]'${{ github.run_number }}'
+          if ($releaseNumber -le 0) {
+              throw 'The workflow run number is not a positive integer.'
           }
-          $releaseNumber = $maxN + 1
-          Write-Host "Squirrel package release number: $releaseNumber"
+          Write-Host "Squirrel package build number: $releaseNumber"
 
           & .\scripts\windows\Invoke-SquirrelPackage.ps1 `
             -PayloadDirectory '${{ github.workspace }}\install-dir' `

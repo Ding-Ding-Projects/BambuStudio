@@ -198,6 +198,11 @@ captures are a separate box and stay unticked until they exist from the real bui
       built, so every build after md3-v143 was published as superseded and the update feed stood
       still. Verified: `md3-v151` (target `ca2b6e101`) was published as latest on 2026-09-29 while
       `main` had already moved on.
+- [ ] Every latest release carries a higher Squirrel package version than the one before it. The
+      package number was "highest md3 release plus one", read at packaging time, so builds queued
+      behind one another shared it (`md3-v155` and `md3-v156` both `2.8.4155`) and Squirrel would
+      skip the later release; hosted builds now use the workflow run number. Ticked once two
+      consecutive latest releases built this way show increasing package versions.
 
 
 ### Native and embedded GUI accessibility wave (delivery verification — 2026-07-30)
