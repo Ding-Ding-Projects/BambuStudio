@@ -238,7 +238,11 @@ def main():
                 print(f'  {entry}: no new window', flush=True)
                 results.append(row)
                 continue
-            time.sleep(4.5)  # the bilingual decorator applies its labels on a delay
+            # The bilingual decorator labels a dialog on its first pass and checks the
+            # settled layout on its next full sweep (about every 3 s), which can send
+            # labels back and lay the dialog out again. At 4.5 s two md3-v153/v154
+            # captures caught a label or a search field mid-repaint; 6.5 s is two sweeps.
+            time.sleep(6.5)
             dialog = next((w for w in windows_of(args.desktop, pid) if w['handle'] == dialog['handle']), dialog)
             name = f'dialog-{slug(entry)}--{args.tuple_id}'
             png = os.path.join(args.out, name + '.png')

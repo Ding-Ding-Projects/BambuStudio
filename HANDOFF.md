@@ -109,6 +109,11 @@ kept equal to `main` and exists only as the checkout of the session that started
   three modes, captured through the splash's own bitmap hook, and CJ-020 is verified. A first Smart
   home capture raced the repaint of an auto-wrapping label and showed its paragraph English only; a
   second run showed both languages (noted in the screenshots README).
+- `md3-v154` (`00b14ca67`, 2026-09-29) is verified from its package (SHA-1
+  `8ac42b12ec13fd2e814690414882e9926cdd0a3f`, imports resolve): CJ-016 and CJ-019 are verified, and kit
+  buttons read "OK · 確定" and "Close · 關閉" again in bilingual mode. The same sweep found two things
+  on Temperature calibration in bilingual mode, not fixed yet: its units read "Â°C" (a degree sign
+  decoded as Latin-1) and its section header shows "SETTINGS · 設", cut short.
 - Privacy of the capture evidence (2026-09-29): capture profiles had lived under the Windows user
   profile, so two public Config profiles captures (`md3-v143`, `md3-v150`, added in `e92b7fa2d`) showed
   the account name in the data folder, and twelve layout dumps from 2026-09-06/07 recorded it in the

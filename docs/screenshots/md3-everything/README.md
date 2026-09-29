@@ -193,10 +193,36 @@ were written by `scripts/md3/language-audit.py` in bilingual mode: no English-on
 Cantonese translation on either surface (`english_only` 0 in both; labels whose pair did not fit carry
 the Cantonese in their tooltip).
 
-A first Smart home capture on this release showed the "Printer access codes are credentials" paragraph
+A first Smart home capture on `md3-v153` showed the "Printer access codes are credentials" paragraph
 in English only while its probe record held both languages; a second run showed both. The first
 capture was taken while the auto-wrapping label was still being repainted after its wrap, so it is
 not kept as evidence of a defect.
+
+## Release md3-v154 captures (2026-09-29)
+
+Taken by `scripts/md3/sweep-dialogs.py` from the unmodified `md3-v154` release package (the Cantonese
+Retraction test with `--po bbl/i18n/yue_HK/BambuStudio_yue_HK.po`, which finds the menu item by its
+Cantonese label). Every import of its executables and DLLs resolves in the package or in Windows.
+
+| Field | Value |
+| --- | --- |
+| Source commit | `00b14ca67` (release `md3-v154`) |
+| Package | `BambuStudioMD3-2.8.4153-full.nupkg`, 732,143,762 bytes, SHA-1 `8ac42b12ec13fd2e814690414882e9926cdd0a3f` as listed in `RELEASES` |
+| Executable | `bambu-studio.exe` sha256 `04397945b2c9eb671d9c51c5417ab2059d396cffaba0079e393cfed4038ce14e`, `BambuStudio.dll` sha256 `a9ff0c54983d0d9c767301c4787ead30648d605c9993fce7a2db27c7a3165f33` |
+| Capture route | hidden Win32 desktop, `PrintWindow` of the dialog, real GPU driver |
+| Display scale | 100% |
+
+| File | Dialog | Tuple |
+| --- | --- | --- |
+| `dialog-keyboard-shortcuts--bilingual_en_yue_HK-light-comfortable--md3-v154.png` | Keyboard Shortcuts (after CJ-016): every label and description inside the dialog | `bilingual_en_yue_HK-light-comfortable` |
+| `dialog-check-for-update--bilingual_en_yue_HK-light-comfortable--md3-v154.png` | Newest-version message: the kit button reads "OK · 確定" again | `bilingual_en_yue_HK-light-comfortable` |
+| `dialog-smart-home--bilingual_en_yue_HK-light-comfortable--md3-v154.png` | Smart home: "Close · 關閉", bilingual search hint | `bilingual_en_yue_HK-light-comfortable` |
+| `dialog-retraction-test--yue_HK-light-comfortable--md3-v154.png` | Retraction test (after CJ-019): "0 mm", "2 mm", "0.1 mm/mm" | `yue_HK-light-comfortable` |
+| `dialog-retraction-test--en-light-comfortable--md3-v154.png` | Retraction test in English: the step's unit after the number | `en-light-comfortable` |
+
+A first Smart home capture on `md3-v154` caught its search field mid-repaint (no magnifier, no
+outline) and a second run showed it whole, like the `md3-v153` paragraph case above; the sweep now
+waits 6.5 s after a dialog opens, two passes of the bilingual decorator, instead of 4.5 s.
 
 ## Layout-probe dumps
 
