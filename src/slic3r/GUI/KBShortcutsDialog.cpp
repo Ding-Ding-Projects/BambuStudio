@@ -326,6 +326,10 @@ void KBShortcutsDialog::fill_shortcuts()
 wxPanel* KBShortcutsDialog::create_page(wxWindow* parent, const ShortcutsItem& shortcuts, const wxFont& font, const wxFont& bold_font)
 {
     wxPanel* main_page = new wxPanel(parent);
+    // A kit Label copies its parent's background when it is created: without a
+    // colour of their own, the page and its scrolled panel handed every key and
+    // description the system face colour, a grey box on the dialog's surface.
+    main_page->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     wxBoxSizer* main_sizer = new wxBoxSizer(wxVERTICAL);
 
     if (!shortcuts.first.second.empty()) {
@@ -341,6 +345,7 @@ wxPanel* KBShortcutsDialog::create_page(wxWindow* parent, const ShortcutsItem& s
     int items_count = (int) shortcuts.second.size();
     wxScrolledWindow *scrollable_panel = new wxScrolledWindow(main_page);
     wxGetApp().UpdateDarkUI(scrollable_panel);
+    scrollable_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     scrollable_panel->SetScrollbars(20, 20, 50, 50);
     scrollable_panel->SetInitialSize(wxSize(FromDIP(850), FromDIP(450)));
 
