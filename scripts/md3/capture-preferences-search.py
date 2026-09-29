@@ -109,7 +109,8 @@ def main():
             pass
         time.sleep(2)
         cheap('close_headless_desktop', name=args.desktop)
-    print(json.dumps(result, ensure_ascii=False))
+    # ASCII escapes: a Cantonese query must not fail on a cp1252 console after the capture.
+    print(json.dumps(result))
     return 0
 
 

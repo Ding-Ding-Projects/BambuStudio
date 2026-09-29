@@ -1,6 +1,6 @@
 ---
 translation-of: clipping-inventory.md
-source-sha256: b107e9d62a747d7631ca147e48db366bf50d378b1b0c68932c0b604f3bb22666
+source-sha256: 9a87b60dd7fa130b4e53ee43716a33d3ff225cb35f5d189915d7b17070a35c49
 review-status: agent-drafted
 ---
 
@@ -44,6 +44,7 @@ Windows 桌面應用程式上發現嘅每一個版面裁剪缺陷，包括佢嘅
 | CJ-019 | 回抽測試、步長欄位（每個帶單位嘅置中校準同預設欄位） | yue_HK-light-comfortable | 「0.1」被裁剪，「mm/mm」嘅第一個「mm」匿咗喺輸入框後面（最大體積流量速度測試入面「5 mm³/s」顯示成「5 /秒」）；英文模式下數字得 26 px，所以任何長過「0.1」嘅值都會被裁剪 | 置中欄位將單位畫喺最左邊、輸入框下面，而欄位建立時得 90 px 闊，冇替數字保留最少闊度（`a849963bf` 為數字保留位置；呢個提交將單位畫喺數字後面） | f3aab6af1 | dialog-retraction-test--yue_HK-light-comfortable--before.png | pending | fixed-unverified |
 | CJ-020 | 每個訊息對話框嘅內文（雙語）：最新版本通知，同埋每一個普通訊息 | bilingual_en_yue_HK-light-comfortable | 「This is the newest versio」尾部得返一條空白，廣東話嗰行完全冇出現 | 內文喺一個捲動頁面入面，頁面嘅最小同最大尺寸都係按一行英文定死咗；雙語裝飾器之後先將標籤變成兩行，頁面大唔到，垂直捲軸就食咗句尾 | 2b8fa5d8b | dialog-check-for-update--bilingual_en_yue_HK-light-comfortable--before.png | pending | fixed-unverified |
 | CJ-021 | 偏好設定，每一頁（雙語） | bilingual_en_yue_HK-light-comfortable | 頁面多咗條橫向捲動列，每行尾嘅控制項（語言清單、搞笑程度滑桿、開關、登入區域）被推出視線以外；「No warnings when loading 3MF with modified G-codes · ...」呢類行標題變成一行 629 px，壓住自己個開關，仲超出 533 px 闊嘅頁面 | 偏好設定頁唔會跟住對話框變闊，而係捲動；但雙語裝飾器畀標籤當對話框會加闊（最多 40 %），又將偏好設定按 320 DIP 換行嘅標籤配對成冇換行嘅一行；喺一行入面會拉闊嘅標籤亦將嗰行剩低嘅位計咗兩次 | 2e80091ef | preferences-general--bilingual_en_yue_HK-light-comfortable--md3-v151.png | pending | fixed-unverified |
+| CJ-022 | 冇單位嘅設定欄位，同埋程式設成空白字串嘅文字（粵語） | yue_HK-light-comfortable | 準備側邊欄打印設定入面兩個數值輸入框嘅數字格闊 0 px，「10」同「1」完全睇唔到，文字欄亦由 105 px 縮到 45 px；單位位置顯示「Project-Id-Version: Bambu Studio ...」嘅開頭；偏好設定 > 使用者入面，「自動填充先前登入嘅賬號。」嘅說明係成個英文目錄標頭 | gettext 目錄會用標頭回答空白訊息；wx 自己查嗰陣會拒絕空白字串，但粵語模式搵唔到翻譯時會直接查英文目錄，嗰度冇攔住，所以每個欄位嘅空白單位（`_L(m_opt.sidetext)`）同原始碼入面每個 `_L("")` 都變成咗標頭 | c591f1b39 | preferences-search-autofill--yue_HK-light-comfortable--md3-v151.png | pending | fixed-unverified |
 <!-- clipping-inventory:end -->
 
 CJ-014、CJ-015、CJ-017 同 CJ-018 已經用冇加過任何嘢嘅發佈套件，喺隱藏桌面上驗證咗（2026-09-29）：雙語模式下，最新版本訊息喺 `md3-v148` 完整畫出「OK · 確定」，而 `md3-v143` 就畫成「OK ·...」（CJ-014）；喺 `md3-v150`，搜尋欄完整畫出佢嘅圓形右端（CJ-015），設定檔清單完整顯示嗰一行（CJ-017），溫度校準嘅標籤維持英文，廣東話放喺提示框，唔再被裁走（CJ-018）。CJ-016 喺 `md3-v150` 仍然被裁；佢嘅修正係 `00b14ca67`。

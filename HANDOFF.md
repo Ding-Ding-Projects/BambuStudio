@@ -92,6 +92,13 @@ kept equal to `main` and exists only as the checkout of the session that started
   since the row is below the fold and the hidden desktop cannot scroll). The Cantonese capture showed
   a wrapped description starting its second line with "。": the label wrapper counted only characters
   above U+4E00 as CJK. `c7309b889` makes it follow the CJK punctuation rules and never split an emoji.
+  The `md3-v151` Cantonese probe dumps also showed CJ-022: a catalog answers the empty message with its
+  header, and the Cantonese fallback to the English catalog did not refuse an empty string, so every
+  settings field without a unit carried "Project-Id-Version: ..." as its unit (two spin fields drew their
+  number 0 px wide) and every `_L("")` in the source showed the header, such as the description of
+  Preferences > User "Auto-fill previously logged-in accounts.". `c591f1b39` skips an empty message in
+  every direct catalog lookup (contract test `ui-md3/tests/empty-message-lookup.test.mjs`, and a case in
+  the hand-built `language_mode_tests`).
 - Release jobs share one concurrency group, and GitHub keeps one running and one waiting: a newer build
   that finishes while one waits cancels the waiting release job. The `b5cde7521` build passed but its
   release was cancelled that way on 2026-09-29, so not every push gets a release when pushes come fast.

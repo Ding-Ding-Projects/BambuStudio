@@ -140,6 +140,10 @@ executables and DLLs resolves in the package or in Windows (`scripts/ci/check_pa
 | `preferences-search-update--yue_HK-light-comfortable--md3-v151.png` | Preferences searched for 自動更新: the same row in Cantonese; its wrapped description starts the second line with "。" (fixed in `c7309b889`) | `yue_HK-light-comfortable` |
 | `preferences-search-update--bilingual_en_yue_HK-light-comfortable--md3-v151.png` | The same row in bilingual mode: the title reads "Update automatically · 自動更新", the description shows English only (`2e80091ef` puts its Cantonese below it; not yet captured from a release) | `bilingual_en_yue_HK-light-comfortable` |
 
+| `preferences-search-autofill--en-light-comfortable--md3-v151.png` | Preferences searched for "Auto-fill": the row has no description | `en-light-comfortable` |
+| `preferences-search-autofill--yue_HK-light-comfortable--md3-v151.png` | The same row in Cantonese (before CJ-022): its description is the whole English catalog header, "Project-Id-Version: Bambu Studio" to "Plural-Forms" | `yue_HK-light-comfortable` |
+
+The two `preferences-search-autofill` files were taken by `scripts/md3/capture-preferences-search.py`.
 The three `preferences-search-update` files were taken with the steps of
 `scripts/md3/capture-preferences-search.py`, which types the query into the Preferences search field
 instead of scrolling: the row sits below the fold of the General page. The committed script reproduces
