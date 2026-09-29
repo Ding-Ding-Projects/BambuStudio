@@ -33,7 +33,8 @@ test('a label whose width is pinned by an explicit minimum only goes compact whe
   const fits = source.match(/bool fits\(wxWindow \*window, Kind kind[\s\S]*?\n\}/);
   assert.ok(fits, 'fits() must exist');
   const code = stripComments(fits[0]);
-  assert.match(code, /if \(window->GetMinSize\(\)\.GetWidth\(\) > 0\)\s*room = std::min\(room, window->GetSize\(\)\.GetWidth\(\)\);/);
+  assert.match(code, /if \(kind != Kind::KitButton && window->GetMinSize\(\)\.GetWidth\(\) > 0\)\s*room = std::min\(room, window->GetSize\(\)\.GetWidth\(\)\);/,
+    'a kit Button grows its minimum with its label (md3-v150 showed every button English only), so it is never pinned');
 });
 
 test('section headers are paired with their Cantonese like any other label', () => {
@@ -81,4 +82,24 @@ test('placeholder hints go bilingual when the pair fits the field, typed text ne
   assert.match(code, /GetClientSize\(\)\.GetWidth\(\)/, 'the pair must fit the field');
   const window = stripComments(source.match(/Change decorate_window\(wxWindow \*window, bool allow_compact, int growth\)[\s\S]*?\n    \}/)[0]);
   assert.match(window, /decorate_hint\(window\);/, 'every window the pass visits gets its hint checked');
+});
+
+test('a compact label that the settled layout does not fully show goes back to English', () => {
+  // The fit counts on the dialog growing, but a fixed-width panel or a scrolling
+  // page does not grow with it: on md3-v150 Keyboard Shortcuts still drew
+  // "Objects list · 物件清" and an import description running off the dialog.
+  const recheck = source.match(/bool recheck_compact\(wxWindow \*top\)[\s\S]*?\n    \}/);
+  assert.ok(recheck, 'recheck_compact() must exist');
+  const code = stripComments(recheck[0]);
+  assert.match(code, /wxGetTopLevelParent\(window\) != top/, 'only the labels of this top-level window');
+  assert.match(code, /visible_width\(window\)/, 'a label reaching past what its parents show is not shown');
+  assert.match(code, /m_compact_refused\.insert\(window\)/, 'a label sent back stays English');
+  assert.match(code, /SetLabel\(/, 'the English goes back on the label');
+  assert.match(code, /tooltip_prefix\(\)/, 'and the Cantonese into its tooltip');
+  const top = stripComments(source.match(/void decorate_top\(wxWindow \*top, bool allow_retry\)[\s\S]*?\n    \}/)[0]);
+  assert.match(top, /recheck_compact\(top\)/, 'every pass checks after the layout has settled');
+  const window = stripComments(source.match(/Change decorate_window\(wxWindow \*window, bool allow_compact, int growth\)[\s\S]*?\n    \}/)[0]);
+  assert.match(window, /m_compact_refused\.count\(window\) == 0/, 'a refused label is not compacted again');
+  const forget = stripComments(source.match(/void forget\(wxWindow \*window\)[\s\S]*?\n    \}/)[0]);
+  assert.match(forget, /m_compact_refused\.erase\(window\);/);
 });

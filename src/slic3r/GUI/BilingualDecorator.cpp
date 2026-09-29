@@ -33,6 +33,7 @@
 #include <memory>
 #include <unordered_map>
 #include <unordered_set>
+#include <vector>
 
 namespace Slic3r { namespace GUI { namespace I18N {
 
@@ -191,7 +192,9 @@ bool fits(wxWindow *window, Kind kind, const wxString &current, const wxString &
     // A control created with an explicit size keeps it as its minimum, so the
     // sizer never widens it for a longer label: the compact text has to fit
     // the width it already has (Temperature calibration cut "開始溫度" to "開").
-    if (window->GetMinSize().GetWidth() > 0)
+    // A kit Button is the exception: its minimum grows with its label, so
+    // pinning it left every button English only (md3-v150).
+    if (kind != Kind::KitButton && window->GetMinSize().GetWidth() > 0)
         room = std::min(room, window->GetSize().GetWidth());
     return text_width(window, candidate) + chrome <= room;
 }
@@ -297,6 +300,7 @@ private:
     {
         m_applied.erase(window);
         m_no_compact.erase(window);
+        m_compact_refused.erase(window);
         BilingualRegistry::instance().set_managed(window, false);
     }
 
@@ -335,6 +339,57 @@ private:
             if (taller)
                 top->Layout();
         }
+        if (recheck_compact(top))
+            top->Layout();
+    }
+
+    // The fit counts on the dialog growing for a compact label, but a fixed-width
+    // panel or a scrolling page does not grow with it (md3-v150's Keyboard Shortcuts
+    // drew "Objects list · 物件清" and an import description running off the
+    // dialog). Once the layout has settled, a compact label cut short in its own box
+    // or reaching past what its parents show goes back to English with the Cantonese
+    // in its tooltip, and stays that way.
+    bool recheck_compact(wxWindow *top)
+    {
+        std::vector<wxWindow *> cut;
+        for (const auto &[window, applied] : m_applied) {
+            if (window == nullptr || window->IsBeingDeleted() || wxGetTopLevelParent(window) != top)
+                continue;
+            if (applied.shown == applied.english || applied.shown.Contains('\n') || !window->IsShownOnScreen())
+                continue;
+            const Kind kind     = kind_of(window);
+            const int  width    = window->GetSize().GetWidth();
+            const bool squeezed = kind == Kind::Text ? text_width(window, applied.shown) > width
+                                                     : width < window->GetBestSize().GetWidth();
+            if (squeezed || width > visible_width(window))
+                cut.push_back(window);
+        }
+        BilingualRegistry &registry = BilingualRegistry::instance();
+        for (wxWindow *window : cut) {
+            Applied &applied = m_applied[window];
+            const Kind kind = kind_of(window);
+            m_compact_refused.insert(window);
+            window->SetLabel(applied.english);
+            wxString tooltip = applied.base_tooltip;
+            if (!tooltip.empty()) {
+                const wxString cantonese = registry.lookup(tooltip);
+                if (!cantonese.empty())
+                    tooltip += "\n" + cantonese;
+            }
+            const wxString cantonese = registry.lookup(applied.english);
+            if (!cantonese.empty()) {
+                const wxString note = tooltip_prefix() + cantonese;
+                tooltip = tooltip.empty() ? note : tooltip + "\n\n" + note;
+            }
+            if (tooltip.empty())
+                window->UnsetToolTip();
+            else
+                window->SetToolTip(tooltip);
+            applied.shown         = label_of(window, kind);
+            applied.shown_tooltip = window->GetToolTipText();
+            applied.size          = window->GetSize();
+        }
+        return !cut.empty();
     }
 
     template<class Visit> void walk(wxWindow *window, Visit &&visit)
@@ -462,7 +517,7 @@ private:
                 const wxString compact = next.english + inline_separator() + second;
                 if (wraps(window, kind, next.english))
                     next.shown = next.english + "\n" + second;
-                else if (allow_compact && fits(window, kind, label, compact, growth))
+                else if (allow_compact && m_compact_refused.count(window) == 0 && fits(window, kind, label, compact, growth))
                     next.shown = compact;
                 else
                     label_note = tooltip_prefix() + cantonese;
@@ -535,6 +590,8 @@ private:
     std::deque<wxWeakRef<wxWindow>>          m_queue;
     std::unordered_map<wxWindow *, Applied>  m_applied;
     std::unordered_set<wxWindow *>           m_no_compact;
+    // Labels whose compact form the settled layout did not fully show (recheck_compact).
+    std::unordered_set<wxWindow *>           m_compact_refused;
 };
 
 void DecoratorTimer::Notify() { m_owner.tick(); }
