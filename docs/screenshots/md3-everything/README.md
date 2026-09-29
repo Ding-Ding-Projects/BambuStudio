@@ -337,6 +337,27 @@ Windows.
 | --- | --- | --- |
 | `preferences-general--bilingual_en_yue_HK-light-comfortable--md3-v160.png` | Preferences > General (after CJ-021): no sideways scrollbar, every row's list, slider and switch inside the page | `bilingual_en_yue_HK-light-comfortable` |
 
+## Release md3-v161 captures (2026-09-29)
+
+Taken by `scripts/md3/capture-tuple.py` from the unmodified `md3-v161` release package, with profiles
+under `C:\Users\Public\bbsdd\`. Every import of its executables and DLLs resolves in the package or in
+Windows. The bilingual pages were taken twice: each run caught one repaint (the Toolbar Style list in the
+first, a Cantonese description line in the second), each shown whole in the other run.
+
+| Field | Value |
+| --- | --- |
+| Source commit | `a0e408559` (release `md3-v161`) |
+| Package | `BambuStudioMD3-2.8.4608-full.nupkg`, 732,157,005 bytes, SHA-1 `a2c80a7ef125f3167baa06e891f124832e2f8f58` as listed in `RELEASES` |
+| Executable | `bambu-studio.exe` sha256 `5b67aeff9eb47fc2855617a8c8f42880ec0a3ee7a121af8152f55853fb02fe8a`, `BambuStudio.dll` sha256 `40760d07e3cd7114ca4f715f12eab2e3d71352284d3756aeed32e1a1b5eb0af6` |
+| Capture route | hidden Win32 desktop, `PrintWindow`, real GPU driver |
+| Display scale | 100% |
+
+| File | Page | Tuple |
+| --- | --- | --- |
+| `preferences-3d--bilingual_en_yue_HK-light-comfortable--md3-v161.png` | Preferences > 3D (after CJ-026, second run): each stacked description whole, the next row below it | `bilingual_en_yue_HK-light-comfortable` |
+| `preferences-other--bilingual_en_yue_HK-light-comfortable--md3-v161.png` | Preferences > Other (after CJ-026, first run): the Cantonese line under the 3MF warning row, the next section below it | `bilingual_en_yue_HK-light-comfortable` |
+| `preferences-general--bilingual_en_yue_HK-light-comfortable--md3-v161.png` | Preferences > General: "What does this change? · 呢個會改變啲乜？" keeps its pair | `bilingual_en_yue_HK-light-comfortable` |
+
 ## Layout-probe dumps
 
 `probe/<tuple>--<before|after>.jsonl`, one per main-frame idle dump plus one per opened dialog,

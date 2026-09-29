@@ -166,6 +166,17 @@ still to verify.
   three modes) verifies CJ-021: bilingual Preferences > General has no sideways scrollbar and its widest row
   ends at 556 px in the 560 px page. The provenance line under each Funny level slider still shows English
   with its Cantonese in the tooltip; `4d5bfc93f` wraps it. CJ-026 is still visible here; its fix came later.
+- `md3-v161` (`a0e408559`, published 10:51 UTC as latest, package `2.8.4608`, SHA-1
+  `a2c80a7ef125f3167baa06e891f124832e2f8f58` matching its `RELEASES`, every import resolves, splash painted in all
+  three modes) is the first run-numbered package: `2.8.4608` after `md3-v160`'s `2.8.4159`, so installed
+  copies move forward again. It verifies CJ-026 (stacked descriptions no longer drawn under the next row on the
+  bilingual 3D and Other pages) and keeps "What does this change? · 呢個會改變啲乜？" paired. It also carries the
+  upstream `v02.08.04.61` merge, which starts and draws every captured page in all three modes.
+- Closeout cleanup (2026-09-29): the linked worktree of the auto-updater lane
+  (`BambuStudio-claude-auto-updater`) and its branch `claude/auto-updater` (`37b3fce78`, contained in `main`, no copy
+  on the remote) were removed after an archive of the repository to the maintainer's cloud folder was written and
+  read back (4,468,361,508 bytes, 151,602 entries). The other worktrees and the primary checkout's untracked
+  `fonts/` folder were kept: none is proven to belong to this work.
 - Upstream Bambu Studio `v02.08.04.61` (tagged 2026-09-29, seven commits on `v02.08.04.57`) is merged in
   `a0e408559` without conflicts: error dialog buttons act on mouse-up, the progress dialog no longer
   yields on Windows (upstream's fix for hangs after sending a print or loading a project from the device
