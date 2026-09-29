@@ -84,9 +84,9 @@
 
 - Anonymous read of a public API; no token is sent. The rate limit (60 requests per hour per IP)
   is far above the app's one call per launch plus manual checks.
-- The automatic update talks HTTPS to GitHub only. The feed address is a constant in the source;
-  nothing from the release JSON, the preferences or user input reaches the Update.exe command
-  line, and the restart command line is fixed too.
+- The automatic update uses HTTPS to GitHub and to the release-asset hosts GitHub redirects to.
+  The feed address is a constant in the source; nothing from the release JSON, the preferences or
+  user input reaches the Update.exe command line, and the restart command line is fixed too.
 - The app downloads and executes nothing itself. Squirrel's `Update.exe` does, and it verifies the
   package against the SHA-1 in `RELEASES`. That checks integrity, not authorship: the packages are
   unsigned by policy, so trust rests on HTTPS to GitHub and on control of the release. A portable
