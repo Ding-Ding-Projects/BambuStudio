@@ -33,6 +33,7 @@
 #include <wx/sizer.h>
 #include <wx/spinctrl.h>
 #include <wx/textctrl.h>
+#include <wx/wrapsizer.h>
 
 namespace Slic3r::GUI {
 
@@ -500,11 +501,23 @@ void ChangelogDialog::build_ui()
     content->Add(m_search, 0, wxEXPAND | wxBOTTOM, FromDIP(12));
 
     // --- Date range ---------------------------------------------------------
-    auto *dates = new wxBoxSizer(wxHORIZONTAL);
+    // The date fields and the preset chips share a line when they fit; the chips
+    // move to a line of their own when they do not (a wide date hint, bilingual
+    // chips, a narrow dialog), instead of running past the dialog's edge.
+    auto *dates   = new wxWrapSizer(wxHORIZONTAL);
+    auto *range   = new wxBoxSizer(wxHORIZONTAL);
+    auto *presets = new wxBoxSizer(wxHORIZONTAL);
     auto make_date_field = [&](const wxString &name, Bound bound) {
         auto *field = new TextInput(this, wxEmptyString, wxEmptyString, wxEmptyString, wxDefaultPosition,
                                     FromDIP(wxSize(132, 40)), wxTE_PROCESS_ENTER);
-        field->GetTextCtrl()->SetHint(locale_date_hint());
+        const wxString hint = locale_date_hint();
+        field->GetTextCtrl()->SetHint(hint);
+        // Wide enough for the whole hint: "YYYY-MM-DD / DD/MM/YYYY" does not fit
+        // 132 DIP, and the field read "YYYY-MM-DD / D" in every language mode.
+        // The frame keeps 15 px around its entry, and the entry has margins too.
+        const int width = std::max(FromDIP(132), field->GetTextCtrl()->GetTextExtent(hint).GetWidth() + FromDIP(28));
+        field->SetMinSize(wxSize(width, FromDIP(40)));
+        field->SetSize(wxSize(width, FromDIP(40)));
         field->GetTextCtrl()->SetName(name);
         field->SetToolTip(wxString::Format("%s. %s", name, _L("Type a date as YYYY-MM-DD or in your locale's short format.")));
         // TextInput's inner editor forwards both wxEVT_TEXT (its internal
@@ -540,15 +553,19 @@ void ChangelogDialog::build_ui()
     m_preset_year = make_preset(_L("This year"),    [] { return Changelog::DateRange::this_year(today_civil()); });
     m_preset_all  = make_preset(_L("All versions"), [] { return Changelog::DateRange::all(); });
 
-    dates->Add(from_label, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(6));
-    dates->Add(m_from_field, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(12));
-    dates->Add(to_label, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(6));
-    dates->Add(m_to_field, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(6));
-    dates->Add(m_calendar_button, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(12));
-    dates->AddStretchSpacer();
-    dates->Add(m_preset_30, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(6));
-    dates->Add(m_preset_year, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(6));
-    dates->Add(m_preset_all, 0, wxALIGN_CENTER_VERTICAL);
+    range->Add(from_label, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(6));
+    range->Add(m_from_field, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(12));
+    range->Add(to_label, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(6));
+    range->Add(m_to_field, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(6));
+    range->Add(m_calendar_button, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(12));
+    // The chips keep to the right of whichever line they land on: the group takes
+    // the rest of that line and its spacer pushes them over.
+    presets->AddStretchSpacer();
+    presets->Add(m_preset_30, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(6));
+    presets->Add(m_preset_year, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(6));
+    presets->Add(m_preset_all, 0, wxALIGN_CENTER_VERTICAL);
+    dates->Add(range, 0, wxALIGN_CENTER_VERTICAL | wxBOTTOM, FromDIP(6));
+    dates->Add(presets, 1, wxALIGN_CENTER_VERTICAL | wxBOTTOM, FromDIP(6));
     content->Add(dates, 0, wxEXPAND);
 
     // Inline validation: what was typed stays in the field; this line says why
