@@ -436,6 +436,24 @@ label on Prepare or Preferences > General.
 | `context-menu-smart-home-right-click--bilingual_en_yue_HK-light-comfortable--md3-v169.png` | The same menu in bilingual mode: "Undo · 復原", "Cut · 剪下", "Copy · 複製", "Paste · 貼上", "Delete · 刪除", "Select all · 全部選取" | `bilingual_en_yue_HK-light-comfortable` |
 | `context-menu-preferences-keyboard--yue_HK-light-comfortable--md3-v169.png` | Preferences search field, keyboard request: the menu in Cantonese, 「搜尋選單」 over 復原, 剪下, 複製, 貼上, 刪除 and 全部選取, with 貼上 and 全部選取 enabled | `yue_HK-light-comfortable` |
 
+## Release md3-v171 checks (the dependency pin release)
+
+The checks recorded for `md3-v169` above, run on the unmodified `md3-v171` package (the first release with all
+three device page pins, see [Dependency security alerts](../../features/releases/dependency-security-alerts.md)),
+gave the same results. Every import of the launcher and `BambuStudio.dll` resolves in the payload or in Windows;
+the splash screen opens in all three modes; the full sweep found no layout finding in 20 dialogs per mode; 8 of 8
+menu requests per mode opened the Material menu; and the language audit found no English-only label on Prepare
+(12 bilingual labels, 9 with the Cantonese in the tooltip) or on Preferences > General (62 and 15). No new
+captures are kept here: the pins changed no installed file of the device page.
+
+| Field | Value |
+| --- | --- |
+| Source commit | `85a1d9e86` (release `md3-v171`) |
+| Package | `BambuStudioMD3-2.8.4625-full.nupkg`, 732,184,951 bytes, SHA-1 `20835b714c8a892a5d63af3eb25301082d93de47` as listed in `RELEASES` |
+| Executable | `bambu-studio.exe` sha256 `447d0386d3f4527824693e2cb76734525625e00a56c108087512c8b14945089a`, `BambuStudio.dll` sha256 `76ec36efde4befbd04eabbf323b89f58ca2d7a32a94a4edae3bc86a06bb3e40a` |
+| Capture route | hidden Win32 desktop, `PrintWindow`, real GPU driver |
+| Display scale | 100% |
+
 ## Layout-probe dumps
 
 `probe/<tuple>--<before|after>.jsonl`, one per main-frame idle dump plus one per opened dialog,

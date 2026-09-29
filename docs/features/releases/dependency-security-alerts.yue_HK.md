@@ -1,6 +1,6 @@
 ---
 translation-of: dependency-security-alerts.md
-source-sha256: 9d1eccd0691883f8abbd8e6ccdcced55fc1728e16104346c49567ec916f63533
+source-sha256: 225609462f78f6fe6bf808304451ad7f802d0c2ba3ae322e6a87d5e81172fbb1
 review-status: agent-drafted
 ---
 
@@ -196,4 +196,6 @@ run 36611172274（`75fc64c69`）同 run 36614198573（`46792f02a`）嘅 `device_
 第一批帶住新鎖版本嘅 release 係 `md3-v169`（由 `087fe6f70` build，有 `js-yaml` 同 `nanoid` 兩個鎖）同
 `md3-v170`（由 `784d86ff3` build，三個都有）；`md3-v171`（由 `85a1d9e86` build）一樣有齊三個。`md3-v171`
 隨附嘅 CycloneDX 清單（`BambuStudioMD3.cdx.json`）列出 `resources/web/device_page/dist` 嘅 16 個檔，SHA-256
-同未郁任何鎖版本之前嘅本機 build 一模一樣，即係用家安裝到嘅頁面完全冇變過。
+同未郁任何鎖版本之前嘅本機 build 一模一樣，即係用家安裝到嘅頁面完全冇變過。喺隱藏桌面上，未改動過嘅
+`md3-v171` 套件亦通過咗 `md3-v169` 記錄過嘅發佈檢查，結果一樣
+（[擷圖來源紀錄](../../screenshots/md3-everything/README.md#release-md3-v171-checks-the-dependency-pin-release)）。

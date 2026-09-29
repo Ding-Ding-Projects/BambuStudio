@@ -210,4 +210,7 @@ The first releases with the new pins are `md3-v169` (from `087fe6f70`, with the 
 `nanoid` pins) and `md3-v170` (from `784d86ff3`, with all three); `md3-v171` (from `85a1d9e86`) has
 all three as well. The CycloneDX inventory published with `md3-v171` (`BambuStudioMD3.cdx.json`)
 lists the 16 files of `resources/web/device_page/dist` with the same SHA-256 values as the local build
-from before any pin moved, so the page that users install did not change at all.
+from before any pin moved, so the page that users install did not change at all. On a hidden desktop,
+the unmodified `md3-v171` package also passed the release checks recorded for `md3-v169`, with the
+same results
+([capture provenance](../../screenshots/md3-everything/README.md#release-md3-v171-checks-the-dependency-pin-release)).
