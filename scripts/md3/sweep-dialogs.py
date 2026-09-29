@@ -45,7 +45,10 @@ ENTRIES = [
     'Keyboard Shortcuts', 'Show Tip of the Day', "What's new / Changelog", 'About',
     'Config profiles & backup', 'AI filament scanner', 'Smart home', 'Model Creator',
     'Open Network Test', 'Version history', 'Check for Update',
-    'Temperature', 'Flow rate', 'Pressure advance', 'Retraction test',
+    # "Flow rate" is a submenu whose items (Coarse, Fine) put test objects on the
+    # plate and open no dialog; "Max flowrate" and "VFA" open the calibration
+    # dialogs whose fields carry the widest units (mm³/s, mm/s).
+    'Temperature', 'Pressure advance', 'Retraction test', 'Max flowrate', 'VFA',
     'Export preferences', 'Export object list', 'Export print statistics',
     'probe:config-wizard', 'gear',
 ]
