@@ -27,6 +27,7 @@
 
 #include <algorithm>
 #include <deque>
+#include <limits>
 #include <memory>
 #include <unordered_map>
 #include <unordered_set>
@@ -139,6 +140,24 @@ int available_width(wxWindow *window, int growth)
     return own + std::max(0, sizer->GetSize().GetWidth() - sizer->GetMinSize().GetWidth()) + growth;
 }
 
+// Width actually visible from the window's left edge to the nearest client
+// edge of its ancestors, up to the top-level window. A scrolled panel's sizer
+// can be wider than the panel itself: text laid out past the panel's edge is
+// cut, not scrolled into view, and the dialog never learns it needed room
+// (Keyboard Shortcuts showed "Objects list · 物件清").
+int visible_width(wxWindow *window)
+{
+    const int left    = window->GetScreenPosition().x;
+    int       visible = std::numeric_limits<int>::max();
+    for (wxWindow *parent = window->GetParent(); parent != nullptr; parent = parent->GetParent()) {
+        const int right = parent->ClientToScreen(wxPoint(parent->GetClientSize().GetWidth(), 0)).x;
+        visible = std::min(visible, right - left);
+        if (parent->IsTopLevel())
+            break;
+    }
+    return visible;
+}
+
 bool fits(wxWindow *window, Kind kind, const wxString &current, const wxString &candidate, int growth)
 {
     // An ellipsizing label would cut the Cantonese off instead of growing.
@@ -148,7 +167,8 @@ bool fits(wxWindow *window, Kind kind, const wxString &current, const wxString &
         return false; // not laid out yet; the next pass decides
     // Buttons, check boxes and group boxes spend part of their width on chrome.
     const int chrome = std::max(0, window->GetBestSize().GetWidth() - text_width(window, current));
-    return text_width(window, candidate) + chrome <= available_width(window, growth);
+    const int room   = std::min(available_width(window, growth), visible_width(window) + growth);
+    return text_width(window, candidate) + chrome <= room;
 }
 
 struct Applied

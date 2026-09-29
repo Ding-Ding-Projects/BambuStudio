@@ -23,7 +23,12 @@
 namespace {
 constexpr int kHeight    = 44; // pill height and minimum interactive target
 constexpr int kPadLeft   = 14; // leading padding to the search glyph
-constexpr int kPadRight  = 5;  // trailing padding
+// Trailing padding. A child button paints its whole square, so the last
+// icon button must stay clear of the pill's rounded end: with a 22 px
+// radius and the button 2 px inside the outline, the arc sits 12.8 px in
+// from the end at the button's corner. At 5 px the square covered the arc
+// and the outline stopped short of a floating end (CJ-015).
+constexpr int kPadRight  = 13;
 constexpr int kGap       = 4;  // glyph <-> input, input <-> clear
 constexpr int kSearchPx  = 20; // leading search glyph
 constexpr int kClosePx   = 18; // clear glyph
