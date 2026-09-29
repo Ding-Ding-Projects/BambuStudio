@@ -52,7 +52,7 @@ TextAreaEditor::TextAreaEditor(wxWindow *parent, wxWindowID id, const wxString &
     // gets a scrollbar of its own.
     Create(parent, id, value, pos, size, style);
 #ifdef __WXMSW__
-    sync();
+    sync_bars();
 #endif
 }
 
@@ -90,11 +90,11 @@ WXLRESULT TextAreaEditor::MSWWindowProc(WXUINT msg, WXWPARAM wParam, WXLPARAM lP
     result = wxTextCtrl::MSWWindowProc(msg, wParam, lParam);
     m_bars.After(msg, wParam, lParam, result);
     if (!m_syncing && !leaves_view_alone(msg))
-        sync();
+        sync_bars();
     return result;
 }
 
-void TextAreaEditor::sync()
+void TextAreaEditor::sync_bars()
 {
     HWND hwnd = (HWND) GetHWND();
     if (m_syncing || hwnd == nullptr)
@@ -134,7 +134,7 @@ void TextAreaEditor::scroll(int orient, wxEventType type, int pos)
     } else if (type == wxEVT_SCROLLWIN_LINEUP || type == wxEVT_SCROLLWIN_LINEDOWN) {
         ::SendMessage(hwnd, EM_SCROLL, type == wxEVT_SCROLLWIN_LINEUP ? SB_LINEUP : SB_LINEDOWN, 0);
     }
-    sync();
+    sync_bars();
 }
 #endif // __WXMSW__
 

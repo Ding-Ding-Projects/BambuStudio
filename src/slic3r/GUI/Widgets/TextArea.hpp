@@ -39,7 +39,7 @@ protected:
     WXHBRUSH DoMSWControlColor(WXHDC pDC, wxColour colBg, WXHWND hWnd) override;
 
 private:
-    void sync();
+    void sync_bars();
     void scroll(int orient, wxEventType type, int pos);
 
     int  m_first { -1 }; // last reported first visible line, line count and lines that fit

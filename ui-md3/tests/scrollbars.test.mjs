@@ -124,6 +124,28 @@ test('MD3ScrolledWindow, the kit ListBox and the MD3 tables route every native s
     'MD3ScrolledWindow creates its window through Create()');
 });
 
+test('no text control subclass reuses the name of a std::streambuf virtual', async () => {
+  // On Windows wxTextCtrl is also a std::streambuf (wxHAS_TEXT_WINDOW_STREAM),
+  // so a member named after one of its virtuals overrides it: TextAreaEditor's
+  // "void sync()" met "int sync()" there and failed the hosted build (C2555).
+  const virtuals = ['imbue', 'setbuf', 'seekoff', 'seekpos', 'sync', 'showmanyc', 'xsgetn', 'underflow', 'uflow',
+    'pbackfail', 'xsputn', 'overflow'];
+  const clashes = [];
+  let classes = 0;
+  for (const file of await sources(gui)) {
+    const text = code(await readFile(file, 'utf8'));
+    for (const m of text.matchAll(/\bclass\s+(\w+)\s*(?:final\s*)?:\s*public\s+wxTextCtrl\b[^{;]*\{/g)) {
+      classes += 1;
+      const end = text.indexOf('\n};', m.index);
+      const body = text.slice(m.index + m[0].length, end === -1 ? undefined : end);
+      for (const name of virtuals)
+        if (new RegExp(`\\b${name}\\s*\\(`).test(body)) clashes.push(`${m[1]}::${name}`);
+    }
+  }
+  assert.ok(classes >= 1, 'TextAreaEditor derives from wxTextCtrl');
+  assert.deepEqual(clashes, [], 'these members override a std::streambuf virtual on Windows');
+});
+
 test('multi-line text boxes draw the kit scrollbar through TextAreaEditor', async () => {
   // A multi-line wxTextCtrl is a Windows edit control, which sets and draws its
   // own bar; TextAreaEditor creates it without one and draws the kit strip from
