@@ -27565,7 +27565,7 @@ msgstr " 請檢查並調整零件嘅位置或尺寸以適應打印範圍：\n"
 #. reviewed-category: navigation
 #. review-status: agent-drafted
 msgid "Setup Wizard"
-msgstr "配置嚮導"
+msgstr "設定嚮導"
 
 #. reviewed-category: connection-offline
 #. review-status: agent-drafted
