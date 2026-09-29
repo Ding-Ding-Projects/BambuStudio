@@ -410,7 +410,7 @@ public:
     ~GUI_App() override;
 
     bool get_app_conf_exists() { return m_app_conf_exists; }
-    void show_message_box(std::string msg) { wxMessageBox(msg); }
+    void show_message_box(std::string msg);
     // BBS: warn before a mesh-rebuilding op (repair/simplify/smooth/boolean) that
     // painting is transferred by best-effort approximation and may be imperfect.
     // Returns true if the user chooses to continue.

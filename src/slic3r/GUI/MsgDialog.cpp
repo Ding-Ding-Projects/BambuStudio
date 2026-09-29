@@ -742,6 +742,17 @@ bool RichMessageDialog::IsCheckBoxChecked() const
 }
 #endif
 
+int md3_message_box(const wxString &message, const wxString &caption, long style, wxWindow *parent)
+{
+    MessageDialog dialog(parent, message, caption, style);
+    switch (dialog.ShowModal()) {
+    case wxID_YES: return wxYES;
+    case wxID_NO: return wxNO;
+    case wxID_OK: return wxOK;
+    default: return wxCANCEL; // Cancel, Escape or the close button
+    }
+}
+
 // InfoDialog
 InfoDialog::InfoDialog(wxWindow* parent, const wxString &title, const wxString& msg, bool is_marked_msg/* = false*/, long style/* = wxOK | wxICON_INFORMATION*/)
     : MsgDialog(parent, wxString::Format(_L("%s information"), wxGetApp().app_display_name()), title, style)

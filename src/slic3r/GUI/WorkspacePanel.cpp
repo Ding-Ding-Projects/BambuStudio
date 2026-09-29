@@ -2,6 +2,7 @@
 
 #include "I18N.hpp"
 #include "GUI_App.hpp"
+#include "MsgDialog.hpp"
 #include "NotificationManager.hpp"
 #include "libslic3r/AppConfig.hpp"
 #include "libslic3r/WorkspacePlanner.hpp"
@@ -69,12 +70,12 @@ std::optional<Workspace::LocalInstant> choose_local_time(wxWindow *parent, const
 {
     const auto resolved = Workspace::resolve_local_time(zone, utf8(wall));
     if (!resolved.error.empty() || resolved.candidates.empty()) {
-        wxMessageBox(resolved.error.empty() ? _L("This local time does not exist because the clock jumps forward.") :
+        md3_message_box(resolved.error.empty() ? _L("This local time does not exist because the clock jumps forward.") :
                      local_time_error(resolved.error), _L("Planned print time"), wxOK | wxICON_WARNING, parent);
         return std::nullopt;
     }
     if (resolved.candidates.size() == 1) return resolved.candidates.front();
-    const auto choice = wxMessageBox(
+    const auto choice = md3_message_box(
         wxString::Format(_L("This local time occurs twice. Use the earlier occurrence (UTC offset %d minutes)? Choose No for the later occurrence (UTC offset %d minutes)."),
             resolved.candidates.front().offset_minutes, resolved.candidates.back().offset_minutes),
         _L("Choose daylight-saving occurrence"), wxYES_NO | wxCANCEL | wxICON_QUESTION, parent);
@@ -98,7 +99,7 @@ bool write_export(wxWindow *parent, const wxString &name, const wxString &filter
     std::ofstream output(workspace_fs::u8path(utf8(dialog.GetPath())), std::ios::binary | std::ios::trunc);
     output.write(content.data(), static_cast<std::streamsize>(content.size()));
     if (output.good()) return true;
-    wxMessageBox(_L("Could not write the selected export file."), name, wxOK | wxICON_WARNING, parent);
+    md3_message_box(_L("Could not write the selected export file."), name, wxOK | wxICON_WARNING, parent);
     return false;
 }
 
@@ -346,7 +347,7 @@ void WorkspacePanel::refresh_all()
 
 void WorkspacePanel::create_new()
 {
-    if (m_dirty && wxMessageBox(_L("Discard unsaved workspace changes?"), _L("New workspace"),
+    if (m_dirty && md3_message_box(_L("Discard unsaved workspace changes?"), _L("New workspace"),
                                 wxYES_NO | wxICON_QUESTION, this) != wxYES) return;
     m_workspace = {};
     m_workspace.id = Workspace::new_id();
@@ -375,7 +376,7 @@ void WorkspacePanel::edit_preferences()
         (enabled.Lower() != "yes" && enabled.Lower() != "no")) return;
     const auto probe = Workspace::resolve_local_time(utf8(zone), "2026-01-15 12:00");
     if (!probe.error.empty() || probe.candidates.size() != 1) {
-        wxMessageBox(local_time_error(probe.error),
+        md3_message_box(local_time_error(probe.error),
                      _L("Workspace time zone"), wxOK | wxICON_WARNING, this);
         return;
     }
@@ -384,7 +385,7 @@ void WorkspacePanel::edit_preferences()
         const auto resolved = Workspace::resolve_local_time(utf8(zone), item.due_date + " " +
             (parsed < 10 ? "0" : "") + std::to_string(parsed) + ":00");
         if (!resolved.error.empty() || resolved.candidates.size() != 1) {
-            wxMessageBox(_L("A checklist deadline cannot be resolved in this time zone."),
+            md3_message_box(_L("A checklist deadline cannot be resolved in this time zone."),
                          _L("Workspace time zone"), wxOK | wxICON_WARNING, this);
             return;
         }
@@ -413,11 +414,11 @@ void WorkspacePanel::choose_open()
 
 bool WorkspacePanel::open_bundle(const workspace_fs::path &path)
 {
-    if (m_dirty && wxMessageBox(_L("Discard unsaved workspace changes?"), _L("Open workspace"),
+    if (m_dirty && md3_message_box(_L("Discard unsaved workspace changes?"), _L("Open workspace"),
                                 wxYES_NO | wxICON_QUESTION, this) != wxYES) return false;
     const auto loaded = Workspace::load_bundle(path, m_staging_root);
     if (!loaded.ok()) {
-        wxMessageBox(display(loaded.error), _L("Could not open workspace"), wxOK | wxICON_WARNING, this);
+        md3_message_box(display(loaded.error), _L("Could not open workspace"), wxOK | wxICON_WARNING, this);
         return false;
     }
     if (!m_loaded_staging.empty()) { std::error_code ignored; workspace_fs::remove_all(m_loaded_staging, ignored); }
@@ -437,7 +438,7 @@ bool WorkspacePanel::open_bundle(const workspace_fs::path &path)
             notifications->push_notification(NotificationType::CustomNotification,
                 NotificationManager::NotificationLevel::WarningNotificationLevel, utf8(warning));
         else
-            wxMessageBox(warning, _L("Workspace member warning"), wxOK | wxICON_WARNING, this);
+            md3_message_box(warning, _L("Workspace member warning"), wxOK | wxICON_WARNING, this);
     }
     reset_reminder_cursor();
     check_reminders();
@@ -528,7 +529,7 @@ bool WorkspacePanel::save_bundle()
     if (m_bundle_path.empty()) return false;
     const auto saved = Workspace::save_bundle(m_workspace, m_bundle_path);
     if (!saved.ok()) {
-        wxMessageBox(display(saved.error), _L("Could not save workspace"), wxOK | wxICON_WARNING, this);
+        md3_message_box(display(saved.error), _L("Could not save workspace"), wxOK | wxICON_WARNING, this);
         return false;
     }
     m_dirty = false;
@@ -539,7 +540,7 @@ std::optional<workspace_fs::path> WorkspacePanel::stage_member_file(const worksp
 {
     std::string validation_error;
     if (!Workspace::validate_member_3mf(source, &validation_error)) {
-        wxMessageBox(display(validation_error), _L("Invalid project 3MF"), wxOK | wxICON_WARNING, this);
+        md3_message_box(display(validation_error), _L("Invalid project 3MF"), wxOK | wxICON_WARNING, this);
         return std::nullopt;
     }
     const workspace_fs::path staged = m_staging_root / ("member-" + Workspace::new_id() + ".3mf");
@@ -550,7 +551,7 @@ std::optional<workspace_fs::path> WorkspacePanel::stage_member_file(const worksp
     }
     if (!Workspace::validate_member_3mf(staged, &validation_error)) {
         workspace_fs::remove(staged, error);
-        wxMessageBox(display(validation_error), _L("Invalid staged project 3MF"), wxOK | wxICON_WARNING, this);
+        md3_message_box(display(validation_error), _L("Invalid staged project 3MF"), wxOK | wxICON_WARNING, this);
         return std::nullopt;
     }
     return staged;
@@ -570,7 +571,7 @@ void WorkspacePanel::open_selected_member()
     const auto selected = selected_member();
     if (!selected) return;
     if (m_member_open_handler) m_member_open_handler(*selected);
-    else wxMessageBox(_L("Opening this member in the print canvas is not connected yet."),
+    else md3_message_box(_L("Opening this member in the print canvas is not connected yet."),
                       _L("Open selected project"), wxOK | wxICON_INFORMATION, this);
 }
 
@@ -659,7 +660,7 @@ void WorkspacePanel::edit_checklist()
             utf8(due) + " " + (m_workspace.deadline_reminder_hour < 10 ? "0" : "") +
             std::to_string(m_workspace.deadline_reminder_hour) + ":00");
         if (!resolved.error.empty() || resolved.candidates.size() != 1) {
-            wxMessageBox(resolved.error.empty() ? _L("The deadline reminder time is ambiguous or nonexistent.") :
+            md3_message_box(resolved.error.empty() ? _L("The deadline reminder time is ambiguous or nonexistent.") :
                          local_time_error(resolved.error), _L("Due date"), wxOK | wxICON_WARNING, this);
             return;
         }
@@ -696,7 +697,7 @@ void WorkspacePanel::add_slot()
     const auto finish = choose_local_time(this, m_workspace.time_zone, end);
     if (!finish) return;
     if (finish->utc <= begin->utc) {
-        wxMessageBox(_L("The end time must be after the start time."),
+        md3_message_box(_L("The end time must be after the start time."),
                      _L("Planned print"), wxOK | wxICON_WARNING, this);
         return;
     }

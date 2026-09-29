@@ -102,6 +102,7 @@
 #include "Widgets/TabStrip.hpp"
 #include "Widgets/BoundedRegex.hpp"
 #include "Widgets/MD3Menu.hpp"
+#include "MsgDialog.hpp"
 #include "Plater.hpp"
 #include "PreferencesHistory.hpp"
 #include "PrinterWatch.hpp"
@@ -5192,6 +5193,12 @@ void GUI_App::force_menu_update()
 }
 #endif //_MSW_DARK_MODE
 #endif //__WINDOWS__
+
+void GUI_App::show_message_box(std::string msg)
+{
+    // The Material message box, not the system one.
+    md3_message_box(wxString::FromUTF8(msg));
+}
 
 void GUI_App::force_colors_update()
 {

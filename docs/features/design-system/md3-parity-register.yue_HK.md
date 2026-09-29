@@ -1,6 +1,6 @@
 ---
 translation-of: md3-parity-register.md
-source-sha256: 6ac1df2ba6056c33475462a89c829ff1e7c03219c8952a797b286b3072fc0087
+source-sha256: 4c6a1d65f96bddbc58ea3b99fb16de2b4db38d00efebdb78125311f68291d714
 review-status: agent-drafted
 ---
 
@@ -51,7 +51,7 @@ Bambu Studio 嘅全整個 GUI 都必須符合內嵌 `ui-md3/design-system` 套�
 | generic-radios | 7 處 `new wxRadioButton(` | selection（RadioBox 字形） | Widgets/AMSItem FeedDirectionDialog（3）、CalibrationWizardPresetPage（3，一個交給 `SetRadioBox(wxRadioButton*)`）、SavePresetDialog（3 喺一個羣組中） | 套件 `LabeledRadioButton`（RadioBox 字形 + Label、可聚焦、wxAccessible 無線電角色、空格/Enter）喺 `RadioGroup` 內部（排他性、上／下／左／右／主頁／結尾）；`FilamentComboBox::SetRadioBox` 接收套件列；FeedDirectionDialog 用 `GetSelection() == -1` 而唔係隱藏助手無線電（2026-09-05） | 完成 |
 | generic-text-views | 多行／唯讀 `wxTextCtrl` 視圖同編輯器 | 冇套件文字區組件 | UnsavedChangesDialog diff、UpdateDialogs 更改日誌、MsgDialog 指令碼、WebViewDialog 頁面/來源、SendSystemInfoDialog JSON、NetworkTestDialog 日誌、StatusPanel 評論、MixedFilamentDialog 比例編輯器、ExtraRenderers 儲存格編輯器、Field.cpp 滑塊讀出、Overview/AssemblyPdfExportDialog（幫助 API 接收 `wxTextCtrl*`）、WebViewDialog 開發 URL 欄 | 套件 `TextArea`（輪廓容器、主要焦點環、radius_tiny、SurfaceContainerLowest／-Low 唯讀、等寬選項）通過 `GetTextCtrl()` 裝載原生編輯器；喺 UpdateDialogs、MsgDialog、SendSystemInfoDialog、NetworkTestDialog、StatusPanel 評論、兩個 WebViewDialog 檢視者、UnsavedChangesDialog 儲存格中採用；單行迷失兒移至 `TextInput`。因錄製原因保留原生：套件內部編輯器、正則表達式製造者欄位、dataview 儲存格編輯器、混合墨水比例儲存格編輯器、開發人員專用 URL 欄（2026-09-05） | 完成 |
 | generic-listbox | 1 個 `new wxListBox(` | 套件中無 | SmartHomeDialog 實體列表 | 套件 `ListBox`（所有人繪製 wxVListBox、DropDown 列解剖學、省略符號 + 工具提示）喺 SmartHomeDialog（2026-09-05） | 完成 |
-| fatal-path-message-boxes | 5 個現場 `wxMessageBox(` 呼叫 | containment/Dialog.jsx | GUI_App.cpp:1091/1105/6919、GUI_Init.cpp:77/84 | 喺 GUI 被清除前或當時發火，其中 MD3 殼可能無法建構；刻意原生 | 偏離 |
+| fatal-path-message-boxes | 5 個現場 `wxMessageBox(` 呼叫 | containment/Dialog.jsx | GUI_App.cpp（Fatal error、Critical error、第一次載入語言）、GUI_Init.cpp（初始化失敗，兩個） | 喺 GUI 被清除前或當時發火，其中 MD3 殼可能無法建構；刻意原生 | 偏離 |
 | static-bitmaps | 175 處 `new wxStaticBitmap(` | 套件顯示圖示嘅地方係 Material Symbols 字形；產品相片／圖表係資料 | 喺整個 GUI 樹中 | 手工審查清單 `static-bitmap-triage.csv`（清掃後 146 處仍在使用）：12 個可點擊圖片控制項變成套件圖示按鈕、48 個圖片控制項用 MD3 角色中嘅 Material 字形、98 個係內容影像或呼叫方提供嘅資料且記錄咗原因若非明顯、8 個未填充 MonitorBasePanel 圖片控制項刪除、兩個度數標記係排版標籤。檢查只接受 `data` 同 `md3-rendered` 兩種判定，並固定每個已轉換嘅位置。執行時捕獲等待本地構建（2026-09-05） | 完成（來源） |
 
 ## 第三次掃過：每一個元素（2026-09-05）
@@ -272,7 +272,7 @@ Bambu Studio 嘅全整個 GUI 都必須符合內嵌 `ui-md3/design-system` 套�
 | syncams-shell-image-panel-greys | DPIDialog wxCAPTION+wxCLOSE_BOX 庫存 chrome；雙影像比較面板 bgs 硬編碼 wxColour(48,48,48,100)/(246,246,246,100)；StaticBox 次面板；進階選項光柵圖示（advanced_option3/4）；「立即同步」確定 SetCornerRadius(12) + 白色文字；取消 r12 | Overlays.jsx（SendDialog）；containment/Dialog.prompt.md；actions/Button.jsx | SyncAmsInfoDialog.cpp:606 | 重新父類別到套件對話框殼（AMS 風格標題欄圖示標題 + 頁尾）；用 SurfaceContainer 角色取代影像面板灰色；轉換確定/取消到套件藥丸按鈕（已填加 OnPrimary）；遷移進階選項光柵圖示到物料符號 | large | medium | deviation |
 | filamentgrouppopup-raster-radio-icons | 墨水組模式選擇彈出式視窗從光柵 PNG（map_mode_on/off/disabled/on_hovered/off_hovered）繪製單選指示器；bg 白色 + 手捲圓形區域；行缺乏套件 SecondaryContainer/主色選擇灰色 | selection/Checkbox.jsx / Chip.jsx（物料符號字形）；containment/Card.jsx；Filament.jsx | FilamentGroupPopup.cpp:88 | 用即時著色物料符號單選字形（已檢查主色 / 未檢查 OnSurfaceVariant）取代五個光柵單選點陣圖；將彈出式視窗放喺 SurfaceContainer 介面上，有 OutlineVariant 邊框 + 高度；給已選行 SecondaryContainer/主色選擇樣式 | medium | low | done |
 | helio-release-stock-chrome-radius4 | Helio 陳述/發佈對話框係 DPIDialog wxCAPTION+wxCLOSE_BOX 庫存標題欄，有「了解」按鈕喺 SetCornerRadius(4) + 白色文字；永遠深色 HELIO_* 品牌調色盤被記錄為有意，係免除（只有庫存 chrome + 非藥丸按鈕幾何係範圍內） | containment/Dialog.prompt.md；actions/Button.jsx | HelioReleaseNote.cpp:75 | 採用套件對話框殼（無邊框圓形、標題欄圖示標題 + 標題/副標題、頁尾 flex-end）同埋套件藥丸按鈕，同時保留刻意嘅 Helio 永遠深色品牌介面顏色（做唔做遷移 HELIO_* 調色盤） | medium | low | done |
-| raw-wxmessagebox-bypasses-md3 | 44 個原始 wxMessageBox() 呼叫遍佈 19 個 GUI 檔案，渲染完全 OS 原生訊息盒，繞過 MD3 chrome；某些 grep 搜尋結果係已評論，必須排除 | containment/Dialog.prompt.md（MD3 MessageDialog 係預期取代） | PartSkipDialog.cpp:401 | 用 MD3 MessageDialog（一旦 MsgDialog 基礎被改皮）取代每個活躍原始 wxMessageBox()/原生 wxMessageDialog，篩選出已評論嘅出現 | medium | medium | done |
+| raw-wxmessagebox-bypasses-md3 | 44 個原始 wxMessageBox() 呼叫遍佈 19 個 GUI 檔案，渲染完全 OS 原生訊息盒，繞過 MD3 chrome；某些 grep 搜尋結果係已評論，必須排除 | containment/Dialog.prompt.md（MD3 MessageDialog 係預期取代） | PartSkipDialog.cpp:401 | 用 MD3 MessageDialog（一旦 MsgDialog 基礎被改皮）取代每個活躍原始 wxMessageBox()/原生 wxMessageDialog，篩選出已評論嘅出現。之後加入嘅功能又帶返 22 個（工作區面板 15 個、外觀編輯器 6 個、墨水對應交換 1 個），`GUI_App::show_message_box` 亦包住一個；由 2026-09-29 起全部經 `md3_message_box()`（用 wxMessageBox 嘅參數同回傳值，顯示 Material `MessageDialog`），並由 `ui-md3/tests/message-boxes.test.mjs` 把關 | medium | medium | done |
 
 **合併備註（此介面）：**發現 **`msgdialog-base-shell-anatomy`**（相同 `MsgDialog.cpp:29` 基礎殼、相同重建改動）係**合併進 widgets-containment `msgdialog-base-shell-anatomy`**（共用基礎小工具係更具體嘅首頁）。上面嘅葉對話框行保留不同；佢哋使用改皮嘅基礎殼，各自帶上佢哋自己嘅子類別特定工作（`raw-wxmessagebox-bypasses-md3` 依賴該基礎到達）。
 

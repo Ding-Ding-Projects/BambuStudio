@@ -1,4 +1,5 @@
 #include "FilamentMapPanel.hpp"
+#include "MsgDialog.hpp"
 #include "Widgets/Button.hpp"
 #include "Widgets/ComboBox.hpp"
 #include "Widgets/MultiNozzleSync.hpp"
@@ -478,7 +479,7 @@ bool FilamentMapManualPanel::SwapGroups()
                             std::all_of(right_blocks.begin(), right_blocks.end(),
                                         [&](const ColorPanel *block) { return can_move(block, 0); });
     if (!compatible) {
-        wxMessageBox(_L("The destination nozzle cannot preserve every material's flow type or has no available nozzle. Adjust the nozzle setup before swapping."),
+        md3_message_box(_L("The destination nozzle cannot preserve every material's flow type or has no available nozzle. Adjust the nozzle setup before swapping."),
                      _L("Cannot swap groups"), wxOK | wxICON_WARNING, this);
         return false;
     }

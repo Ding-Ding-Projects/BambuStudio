@@ -404,6 +404,14 @@ public:
 };
 #endif
 
+// The Material stand-in for wxMessageBox(): the same arguments and the same
+// return values (wxYES, wxNO, wxOK, wxCANCEL), so a call site only changes its
+// name. wxMessageBox opened the system's own box, whose look and buttons ignore
+// the theme and the language modes. (Not called MessageBox: windows.h defines
+// that name as a macro.)
+int md3_message_box(const wxString &message, const wxString &caption = wxEmptyString,
+                    long style = wxOK | wxCENTRE, wxWindow *parent = nullptr);
+
 // Generic info dialog, used for displaying exceptions
 class InfoDialog : public MsgDialog
 {

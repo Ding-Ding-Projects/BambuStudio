@@ -213,6 +213,11 @@ still to verify.
   catalogue strings Increase and Decrease, Cantonese 增加 and 減少); the colour picker's HEX and any-format fields sit
   in the kit `TextInput`; the object list's rename editor is a Material filled field. `md3-conversion-contracts`
   refuses `wxSpinCtrl` and `wxSpinCtrlDouble`. Tests: `appearance-decimal-field.test.mjs`, `kit-text-fields.test.mjs`.
+- Message boxes (2026-09-29): 22 system message boxes had come back with later features (workspace panel 15,
+  appearance editor 6, ink map swap 1) although the parity register marked the sweep done. `md3_message_box()` in
+  `MsgDialog.{hpp,cpp}` takes wxMessageBox's arguments and returns its values on the Material `MessageDialog`, so each
+  site only changed its name; `GUI_App::show_message_box` uses it too. The five fatal-path boxes (GUI_Init twice,
+  GUI_App fatal, critical and first language load) stay native. `message-boxes.test.mjs` refuses any other.
 - Closeout cleanup (2026-09-29): the linked worktree of the auto-updater lane
   (`BambuStudio-claude-auto-updater`) and its branch `claude/auto-updater` (`37b3fce78`, contained in `main`, no copy
   on the remote) were removed after an archive of the repository to the maintainer's cloud folder was written and

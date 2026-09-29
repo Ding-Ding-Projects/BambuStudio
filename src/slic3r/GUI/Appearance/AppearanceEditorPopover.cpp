@@ -466,7 +466,7 @@ void AppearanceEditorPopover::build()
     reset_all->SetButtonSize(Button::Size::Small);
     reset_all->SetToolTip(_L("Drop every element override and return to the Material default preset (saved presets are kept)"));
     reset_all->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) {
-        wxMessageDialog ask(this,
+        MessageDialog ask(this,
                             _L("Reset the appearance of every element and return to the Material default preset? "
                                "Your saved presets are kept."),
                             _L("Reset all appearance overrides"), wxYES_NO | wxNO_DEFAULT | wxICON_QUESTION);
@@ -712,7 +712,7 @@ void AppearanceEditorPopover::build_presets(wxWindow *page)
         StyleRegistry &reg = ElementStyle::registry();
         const std::string n(name.ToUTF8().data());
         if (reg.is_shipped_preset(n)) {
-            wxMessageBox(wxString::Format(_L("\"%s\" is a shipped preset and cannot be overwritten. Choose another name."), name),
+            md3_message_box(wxString::Format(_L("\"%s\" is a shipped preset and cannot be overwritten. Choose another name."), name),
                          _L("Save as preset"), wxOK | wxICON_INFORMATION, this);
             return;
         }
@@ -729,7 +729,7 @@ void AppearanceEditorPopover::build_presets(wxWindow *page)
         if (sel < 0 || sel >= static_cast<int>(m_preset_visible.size()))
             return;
         const std::string name = m_preset_visible[sel];
-        wxMessageDialog ask(this, wxString::Format(_L("Delete the appearance preset \"%s\"? This cannot be undone."), wxString::FromUTF8(name)),
+        MessageDialog ask(this, wxString::Format(_L("Delete the appearance preset \"%s\"? This cannot be undone."), wxString::FromUTF8(name)),
                             _L("Delete preset"), wxYES_NO | wxNO_DEFAULT | wxICON_WARNING);
         if (ask.ShowModal() != wxID_YES)
             return;
@@ -753,7 +753,7 @@ void AppearanceEditorPopover::build_presets(wxWindow *page)
             return;
         std::string err;
         if (!ElementStyle::registry().export_theme(std::string(dlg.GetPath().ToUTF8().data()), &err))
-            wxMessageBox(wxString::Format(_L("The theme could not be exported: %s"), wxString::FromUTF8(err)),
+            md3_message_box(wxString::Format(_L("The theme could not be exported: %s"), wxString::FromUTF8(err)),
                          _L("Export appearance theme"), wxOK | wxICON_ERROR, this);
     });
     auto *import_btn = new Button(page, _L("Import theme..."));
@@ -767,7 +767,7 @@ void AppearanceEditorPopover::build_presets(wxWindow *page)
             return;
         const StyleLoadReport r = ElementStyle::registry().import_theme(std::string(dlg.GetPath().ToUTF8().data()));
         if (!r.ok) {
-            wxMessageBox(wxString::Format(_L("The theme could not be imported: %s"), wxString::FromUTF8(r.error)),
+            md3_message_box(wxString::Format(_L("The theme could not be imported: %s"), wxString::FromUTF8(r.error)),
                          _L("Import appearance theme"), wxOK | wxICON_ERROR, this);
             return;
         }
@@ -778,7 +778,7 @@ void AppearanceEditorPopover::build_presets(wxWindow *page)
                 list << wxString::FromUTF8(k) << "\n";
             for (const std::string &k : r.unknown_properties)
                 list << wxString::FromUTF8(k) << "\n";
-            wxMessageBox(wxString::Format(_L("Imported. These entries were kept but are not understood by this version:\n%s"), list),
+            md3_message_box(wxString::Format(_L("Imported. These entries were kept but are not understood by this version:\n%s"), list),
                          _L("Import appearance theme"), wxOK | wxICON_INFORMATION, this);
         }
     });
