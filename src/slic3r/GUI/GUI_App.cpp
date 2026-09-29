@@ -319,9 +319,6 @@ static std::string read_installer_language_mode()
 #ifdef _WIN32
 bool is_associate_files(std::wstring extend)
 {
-    wchar_t app_path[MAX_PATH];
-    ::GetModuleFileNameW(nullptr, app_path, sizeof(app_path));
-
     std::wstring prog_id             = L" Bambu.Studio.1";
     std::wstring reg_base            = L"Software\\Classes";
     std::wstring reg_extension       = reg_base + L"\\." + extend;
@@ -9420,10 +9417,9 @@ static bool del_win_registry(HKEY hkeyHive, const wchar_t *pszVar, const wchar_t
 
 void GUI_App::associate_files(std::wstring extend)
 {
-    wchar_t app_path[MAX_PATH];
-    ::GetModuleFileNameW(nullptr, app_path, sizeof(app_path));
+    const std::wstring app_path = current_executable_path().wstring();
 
-    std::wstring prog_path = L"\"" + std::wstring(app_path) + L"\"";
+    std::wstring prog_path = L"\"" + app_path + L"\"";
     std::wstring prog_id = L" Bambu.Studio.1";
     std::wstring prog_desc = L"BambuStudio";
     std::wstring prog_command = prog_path + L" \"%1\"";
@@ -9443,10 +9439,9 @@ void GUI_App::associate_files(std::wstring extend)
 
 void GUI_App::disassociate_files(std::wstring extend)
 {
-    wchar_t app_path[MAX_PATH];
-    ::GetModuleFileNameW(nullptr, app_path, sizeof(app_path));
+    const std::wstring app_path = current_executable_path().wstring();
 
-    std::wstring prog_path = L"\"" + std::wstring(app_path) + L"\"";
+    std::wstring prog_path = L"\"" + app_path + L"\"";
     std::wstring prog_id = L" Bambu.Studio.1";
     std::wstring prog_desc = L"BambuStudio";
     std::wstring prog_command = prog_path + L" \"%1\"";
