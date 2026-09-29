@@ -1,6 +1,6 @@
 ---
 translation-of: layout-probe.md
-source-sha256: 7e12b70e91377f28136b8f2667440e9c3374941e8cd69cd6074d498de7cda55b
+source-sha256: 196fe4de2e212098f31fd64f0f9ac8e9ea17bf64fe1b3757d0d34f560593da1f
 review-status: agent-drafted
 ---
 
@@ -45,7 +45,7 @@ review-status: agent-drafted
 
 命令通道（`WM_COPYDATA`、`dwData` 2）亦接受兩個驅動程式鉤子，而探測器係已武裝：`menu-popup <Title>` 會彈出標題欄嘅一個選單（檔案、編輯、檢視、物件、校正、幫助）同埋 `invoke <label>` 會觸發第一個標籤包含文字嘅選單項。兩個都經由 `CallAfter` 推遲，所以發送方嘅 `SendMessage` 會喺一個彈出迴圈或一個模式對話框阻止之前返回。按鍵同埋選單點擊唔會到達另一個桌面上嘅視窗；呢啲鉤子係無頭驅動程式如何到達選單後面任何嘢嘅方式。
 
-`canvas-png <path>` 會將 3D 畫布下一格畫面，連埋 ImGui 面板（物件操作工具面板、通知、每日提示面板），儲存做指定路徑嘅 PNG。用真嘅顯示卡驅動程式，PrintWindow 喺 OpenGL 表面攞唔到任何嘢，所以原封不動嘅套件影出嚟嘅擷圖，畫布都係一片空白（喺執行檔旁邊放 Mesa 軟件 OpenGL 都得，但係會改變套件）；改為由畫布喺 ImGui 畫完之後、交換緩衝區之前讀返自己嘅畫面，先寫 `<path>.part` 再改名，所以等緊個檔案嘅驅動程式永遠唔會讀到一半。每次請求只儲存一格畫面，而且畫布淨係喺顯示緊嘅時候先會畫：要先切換到準備或者預覽分頁。`scripts/md3/sweep-dialogs.py` 嘅 `canvas:` 項目就係用佢。
+`canvas-png <path>` 會將 3D 畫布下一格畫面，連埋 ImGui 面板（物件操作工具面板、通知、每日提示面板），儲存做指定路徑嘅 PNG。用真嘅顯示卡驅動程式，PrintWindow 喺 OpenGL 表面攞唔到任何嘢，所以原封不動嘅套件影出嚟嘅擷圖，畫布都係一片空白（喺執行檔旁邊放 Mesa 軟件 OpenGL 都得，但係會改變套件）；改為由畫布喺 ImGui 畫完之後、交換緩衝區之前讀返自己嘅畫面，先寫 `<path>.part` 再改名，所以等緊個檔案嘅驅動程式永遠唔會讀到一半。每次請求只儲存一格畫面，而且畫布淨係喺顯示緊嘅時候先會畫：要先切換到準備或者預覽分頁。`scripts/md3/sweep-dialogs.py` 嘅 `canvas:` 項目就係用佢；`scripts/md3/capture-canvas.py` 亦用佢影放咗示範立方體嘅打印板同每個物件操作工具面板，佢撳轉儲入面 `gl_item` 紀錄點名嘅工具列項目嚟打開面板。
 
 ## 語言審核
 

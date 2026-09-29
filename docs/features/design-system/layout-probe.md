@@ -69,7 +69,9 @@ changes the package); instead the canvas reads its frame back after the ImGui pa
 buffer swap, writes
 `<path>.part` and renames it, so a driver waiting for the file never reads half of it. One
 request saves one frame, and the canvas only draws while it is shown: switch to the Prepare or
-Preview tab first. `scripts/md3/sweep-dialogs.py` uses it for its `canvas:` entries.
+Preview tab first. `scripts/md3/sweep-dialogs.py` uses it for its `canvas:` entries, and
+`scripts/md3/capture-canvas.py` for the plate with the sample cube and for each gizmo panel, which it
+opens by clicking the gizmo rail item that the dump's `gl_item` records name.
 
 ## Language audit
 
