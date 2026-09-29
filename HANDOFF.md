@@ -87,7 +87,11 @@ kept equal to `main` and exists only as the checkout of the session that started
   let a label count on the dialog growing inside a page that scrolls, paired the labels Preferences wraps to
   320 DIP on one unwrapped line, and counted a stretching label's spare room twice. Fixed in `2e80091ef`,
   which also sends back the paired labels of a page that still needs more width than it shows
-  (fixed-unverified until a release carries it).
+  (fixed-unverified until a release carries it). Preferences searched for "Update automatically"
+  shows the new row, switched on, in all three modes (`scripts/md3/capture-preferences-search.py`,
+  since the row is below the fold and the hidden desktop cannot scroll). The Cantonese capture showed
+  a wrapped description starting its second line with "。": the label wrapper counted only characters
+  above U+4E00 as CJK. `c7309b889` makes it follow the CJK punctuation rules and never split an emoji.
 - Release jobs share one concurrency group, and GitHub keeps one running and one waiting: a newer build
   that finishes while one waits cancels the waiting release job. The `b5cde7521` build passed but its
   release was cancelled that way on 2026-09-29, so not every push gets a release when pushes come fast.

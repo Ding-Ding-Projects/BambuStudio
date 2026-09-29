@@ -63,6 +63,7 @@ until captures from a released build exist.
 - [ ] Notification links ("Restart to install update", "Retry", "Release notes") read "English · 廣東話" in bilingual mode when the pair fits a line of the notification. Implemented with its contract test; stays unticked until a released build is captured.
 - [ ] Message dialog bodies show both languages in bilingual mode instead of the English cut by a scrollbar with the Cantonese hidden (clipping inventory CJ-020, `2b8fa5d8b`). Stays unticked until a released build is captured.
 - [ ] Bilingual Preferences keeps every row inside its page: no sideways scrollbar, every row's list, slider and switch in view, and the wrapped row titles and descriptions paired within their 320 DIP wrap (clipping inventory CJ-021, seen on `md3-v151`, fixed in `2e80091ef`). Stays unticked until a released build is captured.
+- [ ] Wrapped Cantonese never starts a line with closing punctuation such as "。" or ends one with opening punctuation such as "「", and an emoji is never split across lines (seen on `md3-v151` in the "Update automatically" description, fixed in `c7309b889` with its contract test). Stays unticked until a released build is captured.
 - [ ] Independent human review of the agent-drafted Cantonese, starting with print safety, account, networking and destructive flows.
 
 ## Deliberate exclusions
@@ -180,7 +181,9 @@ captures are a separate box and stay unticked until they exist from the real bui
       automatically", default on), shows a banner that stays until the user acts, with Restart to
       install update, Release notes and a notice that updates are not code-signed, and keeps the
       download dialog as the fallback (issue #46). Ticked once a release capture installs an older
-      release and watches it update and restart (docs/features/windows/app-updates.md).
+      release and watches it update and restart (docs/features/windows/app-updates.md). Captured so
+      far: `md3-v151` shows the "Update automatically" row, switched on, in all three language modes
+      (`preferences-search-update--*--md3-v151.png`).
 - [x] A main build becomes the latest release when its commit is newer than the current latest
       release's (`904ccc37a`); before, a build became latest only if main had not moved while it
       built, so every build after md3-v143 was published as superseded and the update feed stood

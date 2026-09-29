@@ -136,6 +136,15 @@ executables and DLLs resolves in the package or in Windows (`scripts/ci/check_pa
 | --- | --- | --- |
 | `preferences-general--en-light-comfortable--md3-v151.png` | Preferences, General page: every row's control in view | `en-light-comfortable` |
 | `preferences-general--bilingual_en_yue_HK-light-comfortable--md3-v151.png` | Preferences, General page (before CJ-021): a sideways scrollbar, and the Language list, the Funny level sliders, the switch and the Login Region list pushed past the right edge | `bilingual_en_yue_HK-light-comfortable` |
+| `preferences-search-update--en-light-comfortable--md3-v151.png` | Preferences searched for "Update automatically": the automatic-update row, switched on | `en-light-comfortable` |
+| `preferences-search-update--yue_HK-light-comfortable--md3-v151.png` | Preferences searched for 自動更新: the same row in Cantonese; its wrapped description starts the second line with "。" (fixed in `c7309b889`) | `yue_HK-light-comfortable` |
+| `preferences-search-update--bilingual_en_yue_HK-light-comfortable--md3-v151.png` | The same row in bilingual mode: the title reads "Update automatically · 自動更新", the description shows English only (`2e80091ef` puts its Cantonese below it; not yet captured from a release) | `bilingual_en_yue_HK-light-comfortable` |
+
+The three `preferences-search-update` files were taken with the steps of
+`scripts/md3/capture-preferences-search.py`, which types the query into the Preferences search field
+instead of scrolling: the row sits below the fold of the General page. The committed script reproduces
+the bilingual file byte for byte (SHA-256
+`f9d15a3ab87c828e26ee6e939b2a2292f810509e77c41cf6ae23b784ace48b42`).
 
 ## Layout-probe dumps
 
