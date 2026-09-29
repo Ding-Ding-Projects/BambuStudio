@@ -198,6 +198,11 @@ preserved.
    splash date in the three modes, take the after captures for CJ-014 to CJ-019, rerun the dialog
    sweep with the probe's `truncated` field, and, once a second release follows, install the older one
    and watch it update and restart (issue #46).
+7. The updater's runtime check needs an isolated Windows account or machine: Squirrel installs per user
+   under `%LOCALAPPDATA%\BambuStudioMD3`, and the development machine's own installed copy
+   (`app-2.8.4142`, which is `md3-v143`, the release that cannot start) must not be replaced by a test.
+   Installing `md3-v148` or later there by hand fixes that copy; a copy with the updater then updates
+   itself from the next release, which is itself a check.
 
 ## Preservation boundary
 
@@ -1659,11 +1664,11 @@ diagnostics were a cascade.
   (`docs/screenshots/md3-everything/evidence/softgl-relaunch-main-frame--build32.png`).
 - Fixed 2026-09-07 (build attempt 35): Setup.exe reported "Installation has failed" on a machine
   with an earlier install. Squirrel's log: it could not delete
-  `app-2.8.1-build55esourcesonts\Roboto-Regular.ttf` because the Windows Font Cache Service,
+  `app-2.8.1-build55\resources\fonts\Roboto-Regular.ttf` because the Windows Font Cache Service,
   fontdrvhost and Chrome held it. The app registers its bundled faces session-wide on purpose
   (GDI+ crashes on FR_PRIVATE faces), and a session font inside the versioned install folder
   stays mapped by other processes after the app exits, so no installer or updater can replace
-  that folder. `Label.cpp` and `MaterialIcon.cpp` now copy each face to `<data_dir>onts` and
+  that folder. `Label.cpp` and `MaterialIcon.cpp` now copy each face to `<data_dir>\fonts` and
   register the copy (Restart Manager proof: zero holders on the payload's fonts while the app
   runs, holders only on the staged copies). Machines already locked need a sign-out or reboot
   (or a Font Cache Service restart) once before the next Setup.exe succeeds.
