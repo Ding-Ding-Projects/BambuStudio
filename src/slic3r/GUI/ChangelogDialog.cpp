@@ -558,14 +558,14 @@ void ChangelogDialog::build_ui()
     range->Add(to_label, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(6));
     range->Add(m_to_field, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(6));
     range->Add(m_calendar_button, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(12));
-    // The chips keep to the right of whichever line they land on: the group takes
-    // the rest of that line and its spacer pushes them over.
-    presets->AddStretchSpacer();
+    // The chips wrap as one group: beside the date fields when they fit, on a line
+    // of their own, starting at its left edge, when they do not (md3-v162 in every
+    // language mode).
     presets->Add(m_preset_30, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(6));
     presets->Add(m_preset_year, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(6));
     presets->Add(m_preset_all, 0, wxALIGN_CENTER_VERTICAL);
     dates->Add(range, 0, wxALIGN_CENTER_VERTICAL | wxBOTTOM, FromDIP(6));
-    dates->Add(presets, 1, wxALIGN_CENTER_VERTICAL | wxBOTTOM, FromDIP(6));
+    dates->Add(presets, 0, wxALIGN_CENTER_VERTICAL | wxBOTTOM, FromDIP(6));
     content->Add(dates, 0, wxEXPAND);
 
     // Inline validation: what was typed stays in the field; this line says why

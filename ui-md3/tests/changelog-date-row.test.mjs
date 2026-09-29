@@ -25,7 +25,10 @@ test('a date field is as wide as its whole hint', () => {
 test('the date row puts its preset chips on a line of their own when they do not fit', () => {
   assert.match(source, /#include <wx\/wrapsizer\.h>/);
   assert.match(buildUi, /auto \*dates\s+= new wxWrapSizer\(wxHORIZONTAL\);/);
-  assert.match(buildUi, /presets->AddStretchSpacer\(\);\s*presets->Add\(m_preset_30,/, 'the chips keep to the right of their line');
-  assert.match(buildUi, /dates->Add\(range, 0,[^;]*\);\s*dates->Add\(presets, 1,[^;]*\);/, 'the chips wrap as one group, which takes the rest of its line');
+  // md3-v162 showed the chips at the start of their own line in every mode; the
+  // group carries no spacer that would claim otherwise.
+  assert.match(buildUi, /presets->Add\(m_preset_30,[^;]*\);\s*presets->Add\(m_preset_year,[^;]*\);\s*presets->Add\(m_preset_all,/);
+  assert.doesNotMatch(buildUi, /presets->AddStretchSpacer\(/);
+  assert.match(buildUi, /dates->Add\(range, 0,[^;]*\);\s*dates->Add\(presets, 0,[^;]*\);/, 'the chips wrap as one group');
   assert.doesNotMatch(buildUi, /dates->Add\(m_preset_/, 'no chip is laid out on its own in the wrapping row');
 });
