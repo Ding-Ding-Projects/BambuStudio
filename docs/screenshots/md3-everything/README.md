@@ -56,7 +56,8 @@ Each surface below is captured at every tuple; the file name is
 
 Taken by `scripts/md3/sweep-dialogs.py`, which opens each menu-reachable dialog on a hidden
 desktop and writes a layout-probe dump beside each capture. These are the "before" captures of
-clipping inventory rows CJ-015, CJ-016, CJ-018 and CJ-019.
+clipping inventory rows CJ-015, CJ-016, CJ-018 and CJ-019, plus two bilingual captures of text that
+stayed English only (column titles and a section header, fixed in `87ec5c44c`).
 
 | Field | Value |
 | --- | --- |
@@ -72,6 +73,8 @@ clipping inventory rows CJ-015, CJ-016, CJ-018 and CJ-019.
 | `dialog-keyboard-shortcuts--bilingual_en_yue_HK-light-comfortable--before.png` | Keyboard Shortcuts | `bilingual_en_yue_HK-light-comfortable` |
 | `dialog-temperature--bilingual_en_yue_HK-light-comfortable--before.png` | Temperature calibration | `bilingual_en_yue_HK-light-comfortable` |
 | `dialog-retraction-test--yue_HK-light-comfortable--before.png` | Retraction test | `yue_HK-light-comfortable` |
+| `dialog-retraction-test--bilingual_en_yue_HK-light-comfortable--before.png` | Retraction test | `bilingual_en_yue_HK-light-comfortable` |
+| `dialog-version-history--bilingual_en_yue_HK-light-comfortable--before.png` | Version history | `bilingual_en_yue_HK-light-comfortable` |
 
 ## Layout-probe dumps
 
