@@ -73,6 +73,8 @@ stayed English only (column titles and a section header, fixed in `87ec5c44c`).
 | `dialog-keyboard-shortcuts--bilingual_en_yue_HK-light-comfortable--before.png` | Keyboard Shortcuts | `bilingual_en_yue_HK-light-comfortable` |
 | `dialog-temperature--bilingual_en_yue_HK-light-comfortable--before.png` | Temperature calibration | `bilingual_en_yue_HK-light-comfortable` |
 | `dialog-retraction-test--yue_HK-light-comfortable--before.png` | Retraction test | `yue_HK-light-comfortable` |
+| `dialog-check-for-update--bilingual_en_yue_HK-light-comfortable--md3-v143.png` | Newest-version message (before CJ-014) | `bilingual_en_yue_HK-light-comfortable` |
+| `dialog-config-profiles-backup--bilingual_en_yue_HK-light-comfortable--md3-v143.png` | Config profiles & backup (before CJ-017) | `bilingual_en_yue_HK-light-comfortable` |
 | `dialog-retraction-test--bilingual_en_yue_HK-light-comfortable--before.png` | Retraction test | `bilingual_en_yue_HK-light-comfortable` |
 | `dialog-version-history--bilingual_en_yue_HK-light-comfortable--before.png` | Version history | `bilingual_en_yue_HK-light-comfortable` |
 
@@ -97,6 +99,24 @@ Windows (`scripts/ci/check_payload_imports.py`).
 | `release-md3-v148-prepare--yue_HK-light-comfortable.png` | Main window, Prepare page | `yue_HK-light-comfortable` |
 | `release-md3-v148-prepare--bilingual_en_yue_HK-light-comfortable.png` | Main window, Prepare page | `bilingual_en_yue_HK-light-comfortable` |
 | `dialog-smart-home--bilingual_en_yue_HK-light-comfortable--before.png` | Smart home: media buttons "Previous · 上一首" beside "Next · 下一步" (before `1757d880f`) | `bilingual_en_yue_HK-light-comfortable` |
+
+## Release md3-v150 captures (2026-09-29)
+
+Taken by `scripts/md3/sweep-dialogs.py` from the unmodified `md3-v150` release package.
+
+| Field | Value |
+| --- | --- |
+| Source commit | `74641b8c0` (release `md3-v150`) |
+| Package | `BambuStudioMD3-2.8.4149-full.nupkg`, SHA-1 `293c1b652266cd6a190fb8026531121c934676be` as listed in `RELEASES` |
+| Executable | `bambu-studio.exe` sha256 `395396bbe14193dee1b9aff04612a2f80af9e52f72662f1d498d6ed0d7b8a9e4`, `BambuStudio.dll` sha256 `3807cf4b1f1268b250db431b01c0f2d6a1f09be720c8c3a15603b99ba3918b35` |
+| Capture route | hidden Win32 desktop, `PrintWindow` of the dialog, real GPU driver |
+| Display scale | 100% |
+
+| File | Dialog | Tuple |
+| --- | --- | --- |
+| `dialog-smart-home--en-light-comfortable--md3-v150.png` | Smart home, full search field (after CJ-015) | `en-light-comfortable` |
+| `dialog-config-profiles-backup--bilingual_en_yue_HK-light-comfortable--md3-v150.png` | Config profiles & backup (after CJ-017) | `bilingual_en_yue_HK-light-comfortable` |
+| `dialog-temperature--bilingual_en_yue_HK-light-comfortable--md3-v150.png` | Temperature calibration (after CJ-018) | `bilingual_en_yue_HK-light-comfortable` |
 
 ## Layout-probe dumps
 
