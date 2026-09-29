@@ -39,6 +39,11 @@ bilingual mode. Work lives on branch `claude/lang-gui-elements-9cc0be` and is me
   (`68f42a887`) and the extracted messages (`15a864edd`, catalogue 7,644 entries). The layout probe's
   `language-audit` command (`adbd538e9`) lists native labels still English-only in bilingual mode. Release
   `md3-v139` (target `15a864edd`) is the first package that carries every one of these lanes.
+- On `main`, compile pending when written: message dialog actions keep the full width of their labels
+  (`9615c9418`, clipping inventory CJ-014, fixed-unverified), and the splash screen says when the running
+  version was released, in all three modes (`docs/features/windows/splash-release-date.md`, contract test
+  `ui-md3/tests/splash-release-date.test.mjs`). Cantonese docs that rendered "release" and "splash" literally
+  now use 發佈 and 啟動畫面.
 - Not verified: behaviour in a running application in any of the three modes (no captures from a released build
   yet), and human review of the agent-drafted Cantonese.
 

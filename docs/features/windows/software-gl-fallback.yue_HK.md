@@ -38,7 +38,7 @@ Bambu Studio MD3 需要 OpenGL 2.0。喺機器上面 display driver 無法提供
 
 ## 安全考慮
 
-- Mesa 二進制文件嚟自上游 [pal1000/mesa-dist-win](https://github.com/pal1000/mesa-dist-win) 項目，釘住喺 `.github/workflows/build_bambu.yml` 到釋放**26.1.3**（`mesa3d-26.1.3-release-msvc.7z`），針對記錄 SHA-256 用於存檔**同**用於每一兩個提取 x64 DLL 驗證。一個雜湊不匹配失敗建立，所以被篡改或靜靜替換上游資產永唔可以進入有效載荷。
+- Mesa 二進制文件嚟自上游 [pal1000/mesa-dist-win](https://github.com/pal1000/mesa-dist-win) 項目，釘住喺 `.github/workflows/build_bambu.yml` 到發佈**26.1.3**（`mesa3d-26.1.3-release-msvc.7z`），針對記錄 SHA-256 用於存檔**同**用於每一兩個提取 x64 DLL 驗證。一個雜湊不匹配失敗建立，所以被篡改或靜靜替換上游資產永唔可以進入有效載荷。
   - 存檔 SHA-256：`6dd431f4620cea73970b13e3ffa94f721f2a3924306b8a4283c97648cdb6eb9c`
   - `x64\opengl32.dll` SHA-256：`12499866437a161d2b250d5105188ae00732dd74b4bebbcdf972e6145af00f9e`
   - `x64\libgallium_wgl.dll` SHA-256：`1895f8c19ede5efd0497f9dfab463b19bf4377e3af7c06c2d4d073e4680c5f69`

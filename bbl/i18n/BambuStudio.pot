@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-28 05:51-0400\n"
+"POT-Creation-Date: 2026-09-28 20:05-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1924,6 +1924,14 @@ msgstr ""
 
 #, possible-boost-format
 msgid "Configuration file \"%1%\" was loaded, but some values were not recognized."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Released %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Built %s"
 msgstr ""
 
 msgid "Internal Version"
@@ -23533,6 +23541,9 @@ msgid "Smart home: printer handover, TTS narrator, and alert lights"
 msgstr ""
 
 msgid "Software OpenGL fallback (Mesa llvmpipe)"
+msgstr ""
+
+msgid "Release date on the splash screen"
 msgstr ""
 
 msgid "Stop-print safety interlock"

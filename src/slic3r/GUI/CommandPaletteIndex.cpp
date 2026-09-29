@@ -238,6 +238,7 @@ const std::vector<Article> &documentation_articles()
         {"docs/features/windows/sidebar-search.md", L("Prepare sidebar search")},
         {"docs/features/windows/smart-home.md", L("Smart home: printer handover, TTS narrator, and alert lights")},
         {"docs/features/windows/software-gl-fallback.md", L("Software OpenGL fallback (Mesa llvmpipe)")},
+        {"docs/features/windows/splash-release-date.md", L("Release date on the splash screen")},
         {"docs/features/windows/stop-print-interlock.md", L("Stop-print safety interlock")},
         {"docs/features/windows/windows-only-platform.md", L("Windows-only platform policy")},
         {"docs/features/workspace/config-profiles-backup.md", L("Config profiles & full-data backup")},

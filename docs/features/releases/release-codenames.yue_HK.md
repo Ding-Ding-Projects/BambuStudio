@@ -58,4 +58,4 @@ Chestnut Cake 馬蹄糕`。花名冊坐喺 [`.github/workflows/build_all.yml`](.
 
 ## 相關
 
-- [發佈飛濺藝術](../windows/release-splash-art.md)，每發佈點心 SVG 標記、一個獨立同獨立播種菜式庫。
+- [發佈啟動畫面藝術](../windows/release-splash-art.md)，每發佈點心 SVG 標記、一個獨立同獨立播種菜式庫。

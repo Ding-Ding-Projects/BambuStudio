@@ -74,6 +74,7 @@
 #include <wx/dialog.h>
 #include <wx/textctrl.h>
 #include <wx/splash.h>
+#include <wx/datetime.h>
 #include <wx/fontutil.h>
 #include <wx/glcanvas.h>
 
@@ -338,6 +339,40 @@ bool is_associate_files(std::wstring extend)
 }
 #endif
 
+// The line under the splash title that says when this version was released:
+// the day the release host built it (the same workflow run publishes the
+// release, normally within the hour), shown in the user's time zone. Only a
+// public release build says "Released"; any other build says "Built". English
+// writes the date as "29 September 2026", Cantonese as "2026年9月29日", any
+// other language as the system's short date; bilingual mode stacks the English
+// and Cantonese lines. Empty when the build carries no UTC stamp.
+static wxString splash_release_date_text()
+{
+    const wxString stamp = wxString::FromUTF8(SLIC3R_BUILD_TIME_UTC); // 2026-09-28T23:55:52Z
+    wxDateTime when;
+    if (stamp.length() < 19 || !when.ParseISOCombined(stamp.Left(19), 'T'))
+        return wxString();
+    when.MakeFromUTC();
+
+    const wxString english_date = wxString::Format("%d %s %d", when.GetDay(),
+                                                   wxDateTime::GetEnglishMonthName(when.GetMonth()), when.GetYear());
+    // "%d年%d月%d日": year, month and day, the way Hong Kong writes a date.
+    const wxString cantonese_date = wxString::Format(wxString::FromUTF8("%d\xE5\xB9\xB4%d\xE6\x9C\x88%d\xE6\x97\xA5"),
+                                                     when.GetYear(), int(when.GetMonth()) + 1, when.GetDay());
+
+    const char *message = BBL_RELEASE_TO_PUBLIC ? L("Released %s") : L("Built %s");
+    const bool  standard = I18N::language_mode_profile().kind == I18N::LanguageModeKind::Standard;
+    const wxString english_copy = I18N::vocabulary(I18N::language_mode_service().english(wxString::FromUTF8(message)));
+    const I18N::FormattedLocalizedText text = I18N::translate_mode(message).format_each([&](const wxString &copy) {
+        // The English wording (also what Cantonese mode shows while the
+        // catalogue lacks the line) takes the English date, the Cantonese
+        // wording the Cantonese date.
+        const wxString date = standard ? when.FormatDate() : (copy == english_copy ? english_date : cantonese_date);
+        return wxString::Format(copy, date);
+    });
+    return I18N::render_localized_text_stacked(text).label;
+}
+
 class BBLSplashScreen : public wxSplashScreen
 {
 public:
@@ -365,6 +400,7 @@ public:
         m_constant_text.init(Label::Body_16);
         scale_font(m_constant_text.title_font, 2.0f);
         scale_font(m_constant_text.version_font, 1.2f);
+        scale_font(m_constant_text.release_font, 1.0f);
 
         // this font will be used for the action string
         m_action_font = m_constant_text.credits_font;
@@ -439,13 +475,29 @@ public:
         memDc.DrawLabel(versionText, internal_sign_rect, wxALIGN_TOP | wxALIGN_LEFT);
 #endif
 
+        // the release date, centred under the title and version; bilingual
+        // mode gives it an English and a Cantonese line
+        int header_bottom = title_rect.GetBottom();
+#if BBL_INTERNAL_TESTING
+        header_bottom = std::max(header_bottom, internal_sign_rect.GetBottom());
+#endif
+        if (!m_constant_text.release.empty()) {
+            memDc.SetFont(m_constant_text.release_font);
+            memDc.SetTextForeground(StateColor::darkModeColorFor(ThemeColor::TextMuted));
+            const int release_height = memDc.GetMultiLineTextExtent(m_constant_text.release).GetHeight();
+            const wxRect release_rect(wxPoint(0, header_bottom + FromDIP(8 * m_scale)), wxSize(width, release_height));
+            memDc.DrawLabel(m_constant_text.release, release_rect, wxALIGN_CENTER_HORIZONTAL | wxALIGN_TOP);
+            header_bottom = release_rect.GetBottom();
+        }
+
         // load bitmap for logo
         BitmapCache bmp_cache;
         int logo_margin = FromDIP(72 * m_scale);
         int logo_size = FromDIP(122 * m_scale);
         int logo_width = FromDIP(94 * m_scale);
         wxBitmap logo_bmp = *bmp_cache.load_svg("splash_logo", logo_size, logo_size);
-        int logo_y = top_margin + title_rect.GetHeight() + logo_margin;
+        // the logo keeps its place unless a large font pushed the header into it
+        int logo_y = std::max(top_margin + title_rect.GetHeight() + logo_margin, header_bottom + FromDIP(16 * m_scale));
         memDc.DrawBitmap(logo_bmp, (width - logo_width) / 2, logo_y, true);
 
         // calculate position for the dynamic text
@@ -525,10 +577,12 @@ private:
     {
         wxString title;
         wxString version;
+        wxString release;
         wxString credits;
 
         wxFont   title_font;
         wxFont   version_font;
+        wxFont   release_font;
         wxFont   credits_font;
 
         void init(wxFont init_font)
@@ -539,11 +593,15 @@ private:
             // dynamically get the version to display
             version = _L("V") + " " + GUI_App::format_display_version();
 
+            // when this version was released (two lines in bilingual mode)
+            release = splash_release_date_text();
+
             // credits infornation
             credits = "";
 
             title_font = Label::Head_16;
             version_font = Label::Body_16;
+            release_font = Label::Body_13;
             credits_font = init_font;
         }
     }

@@ -27411,3 +27411,14 @@ msgstr ""
 
 msgid "CreationTime:"
 msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Released %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Built %s"
+msgstr ""
+
+msgid "Release date on the splash screen"
+msgstr ""

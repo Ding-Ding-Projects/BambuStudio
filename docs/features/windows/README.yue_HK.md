@@ -1,6 +1,6 @@
 ---
 translation-of: README.md
-source-sha256: 86f2c0e95efcc7b7ee8f4ede7bee82ba1f2e21498dc85a60b628d656d1805e0f
+source-sha256: f5e93614d1b656060f444db8d96492cf869829ddea6b8d171ea066135d622ec2
 review-status: agent-drafted
 ---
 
@@ -33,14 +33,15 @@ review-status: agent-drafted
 - [AI 打印機監察（本地模型）](ai-printer-watch.md)
 - [AI 墨水掃描器（QR 手機上傳 → AMS 插槽）](ai-filament-scanner.md)
 - [智能家庭：打印機移交、TTS 敘述者同警報燈](smart-home.md)
-- [釋放飛濺藝術（每個釋放新鮮點心）](release-splash-art.md)
+- [發佈啟動畫面藝術（每個發佈新鮮點心）](release-splash-art.md)
+- [啟動畫面上嘅發佈日期](splash-release-date.md)
 - [點心啟動驚喜（十分之一啟動）](dim-sum-surprise.md)
 - [原生視覺煙霧測試](native-visual-smoke.md)
 - [雲網頁故障恢復](cloud-web-recovery.md)
 - [軟件 OpenGL 後備（Mesa llvmpipe）](software-gl-fallback.md)
-- [應用更新從呢個分支釋放](app-updates.md)
+- [應用更新從呢個分支發佈](app-updates.md)
 
-Windows 係呢個分支嘅活躍釋放目標。macOS 同 Linux 源支援保持上游，但呢啲平台唔係分支釋放接受門嘅部分。
+Windows 係呢個分支嘅活躍發佈目標。macOS 同 Linux 源支援保持上游，但呢啲平台唔係分支發佈接受門嘅部分。
 
 應用依家暴露一個緊密範圍 HTTP 合約只當用戶明確啟用 Home Assistant 打印機發現時。佢嘅端點、安全邊界同 Postman 集合記錄喺 [HTTP/API 功能](../api/README.md) 下面。佢係一個短生命認證移交，唔係一般遠端控制 API。
 
@@ -52,4 +53,4 @@ Windows 係呢個分支嘅活躍釋放目標。macOS 同 Linux 源支援保持�
 - [項目載入適配器同需要執行時情況](../../reapplication/loader-adapters.md)
 - [確切托管確認狀態](../../reapplication/verification-status.md)
 
-診斷候選套件唔替換生產釋放路線。
+診斷候選套件唔替換生產發佈路線。

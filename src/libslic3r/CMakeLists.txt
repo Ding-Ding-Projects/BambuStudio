@@ -33,6 +33,10 @@ encoding_check(libslic3r_changelog)
 
 string(TIMESTAMP COMPILE_TIME %Y%m%d-%H%M%S)
 set(SLIC3R_BUILD_TIME ${COMPILE_TIME})
+# The same moment in UTC. The stamp above is the build host's local time with
+# no offset; the splash screen's release date converts this one to the user's
+# time zone instead (docs/features/windows/splash-release-date.md).
+string(TIMESTAMP SLIC3R_BUILD_TIME_UTC "%Y-%m-%dT%H:%M:%SZ" UTC)
 
 if("${BBL_RELEASE_TO_PUBLIC}" STREQUAL "0")
 execute_process(

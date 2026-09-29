@@ -103,7 +103,7 @@ dim-sum/
 
 ## 建議文章
 
-- [發佈濺藝術](release-splash-art.md) 、 每發佈點心 SVG、一個單獨種子圖書館絕唔觸及公共目錄。
+- [發佈啟動畫面藝術](release-splash-art.md) 、 每發佈點心 SVG、一個單獨種子圖書館絕唔觸及公共目錄。
 - [發佈代號稱](../releases/release-codenames.md) 、 發佈借一個菜餚名稱如何。
 - [英文、香港粵語同埋雙語模式](language-modes.md) 、 卡尊重的語言模式。
 - [原生Material Design 3 用戶介面](md3-native-ui.md) 、 令牌同埋排版卡被繪製。

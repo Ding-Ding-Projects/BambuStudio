@@ -1,6 +1,6 @@
 ---
 translation-of: language-modes.md
-source-sha256: f271acb74ae4d32f824284dfdd7d6b587abc8501afcde8c2f27899f8363dfa9a
+source-sha256: 512016cabaf1af032f1733f9087e79f52c49e7c18b74c2f07f1cca5d94c14c91
 review-status: agent-drafted
 ---
 
@@ -24,7 +24,7 @@ Windows 分支定義咗三個標準用戶介面模式識別符：
 
 ## 粵語目錄
 
-`bbl/i18n/yue_HK/BambuStudio_yue_HK.po` 為當前英文抽取（7,485 個訊息）同英文覆蓋目錄中嘅每個訊息都有一個條目。佢持有 7,644 個條目：993 個人手整理、 6,651 個帶有 `#. review-status: agent-drafted` 嘅條目（少數涵蓋當前原始碼已唔再使用嘅訊息）。`scripts/i18n/Test-LanguageModes.ps1` 會喺某個訊息冇粵語條目時失敗，所以新字串需要喺同一次變更中翻譯。每個草稿條目都通過咗 `scripts/i18n/merge_cantonese_drafts.py` 中嘅機械檢查：
+`bbl/i18n/yue_HK/BambuStudio_yue_HK.po` 為當前英文抽取（7,488 個訊息）同英文覆蓋目錄中嘅每個訊息都有一個條目。佢持有 7,647 個條目：993 個人手整理、 6,654 個帶有 `#. review-status: agent-drafted` 嘅條目（少數涵蓋當前原始碼已唔再使用嘅訊息）。`scripts/i18n/Test-LanguageModes.ps1` 會喺某個訊息冇粵語條目時失敗，所以新字串需要喺同一次變更中翻譯。每個草稿條目都通過咗 `scripts/i18n/merge_cantonese_drafts.py` 中嘅機械檢查：
 
 - 佔位符與英文相符，未編號嘅佔位符保持英文順序；
 - 換行符同選單助記符會被保留；

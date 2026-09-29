@@ -37072,7 +37072,7 @@ msgstr "打印模擬播放（進給速度真實）"
 #. reviewed-category: navigation
 #. review-status: agent-drafted
 msgid "Release splash art (fresh dim sum per release)"
-msgstr "發佈飛濺藝術（每次發佈嘅新點心）"
+msgstr "發佈版啟動畫面圖案（每次發佈都有新鮮點心）"
 
 #. reviewed-category: navigation
 #. review-status: agent-drafted
@@ -37318,3 +37318,18 @@ msgstr "EditFilamentWebDialog：無法建立 WebView"
 #. review-status: agent-drafted
 msgid "CreationTime:"
 msgstr "建立時間："
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Released %s"
+msgstr "%s發佈"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Built %s"
+msgstr "%s構建"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Release date on the splash screen"
+msgstr "啟動畫面上嘅發佈日期"

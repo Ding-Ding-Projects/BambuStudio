@@ -26,6 +26,7 @@
 - [AI filament scanner (QR phone upload → AMS slot)](ai-filament-scanner.md)
 - [Smart home: printer handover, TTS narrator, and alert lights](smart-home.md)
 - [Release splash art (fresh dim sum per release)](release-splash-art.md)
+- [Release date on the splash screen](splash-release-date.md)
 - [Dim sum startup surprise (one launch in ten)](dim-sum-surprise.md)
 - [Native visual smoke test](native-visual-smoke.md)
 - [Cloud web-page failure recovery](cloud-web-recovery.md)
