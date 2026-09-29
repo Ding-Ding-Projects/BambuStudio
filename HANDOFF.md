@@ -348,19 +348,28 @@ the tracking issue is [#47](https://github.com/Ding-Ding-Projects/BambuStudio/is
   `md3-v171` lists all 16 device page files with the same SHA-256 values as the local build from before
   any pin moved.
 - Found on the way:
-  - The repository's dependency graph reports "disabled", so Dependabot does not rescan pushes and fixed
-    alerts never close by themselves. Turning it back on is the owner's decision.
+  - The repository's dependency graph reported "disabled", so Dependabot never rescanned pushes and
+    fixed alerts never closed by themselves. With the maintainer's approval it was switched back on at
+    22:03 UTC through `gh api -X PUT repos/Ding-Ding-Projects/BambuStudio/vulnerability-alerts` (alerts
+    and the graph only; the organization's "GitHub recommended" configuration was not attached because
+    it would add CodeQL runs). Its snapshot still dated from 2026-08-11 afterwards, so every September
+    alert had been matched against August lockfiles; the next push that changes the device page
+    manifests should refresh it.
+  - With the graph back on, three advisories published that afternoon raised #25 (auto-dismissed), #26
+    and #27 on `undici` 8.9.0 in the unused npm lockfile; #26 and #27 are dismissed as `not_used`. The
+    pnpm pin already holds 7.29.1, the first fixed 7.x release for both.
   - An auto-triage rule dismisses low-impact alerts on development-scope packages within a second
-    (#4, #5, #8, #9, #22, #23, #24); check those against the lockfiles too, which is how the `undici` pin
-    was found.
+    (#4, #5, #8, #9, #22, #23, #24, #25); check those against the lockfiles too, which is how the
+    `undici` pin was found.
   - `tests/buildSpoolFromTray.test.ts` failed with `ERR_MODULE_NOT_FOUND` from `68f42a887` until
     `0a0bb64c1` (an extensionless import in `src/features/filament-manager/constants.ts`), independently
     of this work; all five DeviceWeb tests pass since `0a0bb64c1`.
   - A local pnpm check in a path deeper than about 180 characters fails on Windows (`ENAMETOOLONG` in the
     patched `minimatch` step, then `ERR_PACKAGE_IMPORT_NOT_DEFINED` from `vite`); run it inside the
     repository's own `device_page` folder, as the build does.
-- Open: the dependency graph decision (owner) and vitest 4.x (the only way to clear GHSA-82fw-gwwq-j7x9
-  at the source).
+- Open: the graph's refresh of the device page manifests (next manifest-changing push), whether to
+  remove the unused npm `package-lock.json` (it keeps raising alerts now that the graph is on), and
+  vitest 4.x (the only way to clear GHSA-82fw-gwwq-j7x9 at the source).
 
 ## Branch and worktree cleanup (2026-09-29)
 

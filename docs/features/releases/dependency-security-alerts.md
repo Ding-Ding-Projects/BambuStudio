@@ -32,21 +32,32 @@ from 36 packages. Those 36 are the Radix UI primitives, `@tanstack/history`, `@t
 `use-sidecar`, `use-sync-external-store` and `zustand`. Build and development tools such as `vite`,
 `postcss`, `nanoid`, `eslint`, `vitest`, `undici` and `js-yaml` never appear in it.
 
-## The dependency graph is disabled
+## The dependency graph was off
 
 On 2026-09-29 the repository's Insights page reported "Dependency graph is disabled", and the SBOM
 export (`gh api repos/Ding-Ding-Projects/BambuStudio/dependency-graph/sbom`) answered 404. No
-organization code security configuration is attached to the repository. What that means in
-practice:
+organization code security configuration is attached to the repository. With the maintainer's
+approval it was switched back on the same day at 22:03 UTC with
+`gh api -X PUT repos/Ding-Ding-Projects/BambuStudio/vulnerability-alerts`, which enables Dependabot
+alerts and the dependency graph and nothing else: secret scanning, push protection and security
+updates stayed off. The organization's "GitHub recommended" configuration was deliberately not
+attached, because it would also turn on CodeQL code scanning runs, and this repository's workflows
+build and release without analysis jobs.
 
-- **Dependabot did not rescan the lockfiles after pushes.** Alerts #10 and #17 stayed open for three
-  days after the 2026-09-26 upstream merge (`22151a379`) brought the patched versions, and alerts #2
-  and #19 could not close as fixed after the pins moved in `75fc64c69`.
-- **A short or empty alert list is not evidence of a clean lockfile.** Check the locked versions
-  directly, as described below.
-- Alerts were still being raised on 2026-09-29 until at least 07:27 UTC (#24), so the graph was
-  switched off, or stopped updating, recently. Turning it back on is a repository setting for the
-  maintainer to decide.
+What the graph showed once it was back:
+
+- **Its snapshot was seven weeks old.** Every manifest was "Detected automatically on Aug 11, 2026",
+  and 35 minutes after the switch it still listed `js-yaml` 4.3.1, `nanoid` 3.3.17, `undici` 7.29.0,
+  `browserslist` 4.28.6 and `baseline-browser-mapping` 2.10.43 for the device page. Every alert raised
+  in September was matched against those August lockfiles, which is why #10 and #17 stayed open after
+  the patched versions landed and why #2 and #19 could not close as fixed. The snapshot should
+  refresh the next time a push changes the device page's manifests.
+- **New advisories kept arriving.** Three advisories published that afternoon raised #25, #26 and
+  #27 on `undici` 8.9.0 in the unused npm lockfile. GHSA-w293-vg96-wgc3 and GHSA-8436-99hf-9mmv are
+  both fixed in 7.29.1 on the 7.x line, the version the pnpm pin already holds. #25 was
+  auto-dismissed, and #26 and #27 were dismissed as `not_used`.
+- **A short or empty alert list is not evidence of a clean lockfile** until the snapshot has caught
+  up. Check the locked versions directly, as described below.
 
 ## How to triage an alert
 
@@ -69,7 +80,7 @@ practice:
    tool that only reads this repository's own files cannot be fed hostile input from outside.
 4. **Check the locked versions against every advisory, including dismissed ones.** An auto-triage
    rule dismisses low-impact alerts on development-scope packages within a second of their creation
-   (#4, #5, #8, #9, #22, #23 and #24 so far), so they never appear in the open count. Compare every
+   (#4, #5, #8, #9, #22, #23, #24 and #25 so far), so they never appear in the open count. Compare every
    `name@version` key in each `pnpm-lock.yaml` with the vulnerable ranges that
    `gh api "repos/Ding-Ding-Projects/BambuStudio/dependabot/alerts?per_page=100"` lists for all
    alerts, whatever their state. That is how the `undici` pin below was found.
@@ -96,7 +107,8 @@ practice:
 Seventeen alerts were open (9 high, 8 moderate) on seven packages in four manifests. None of the
 flagged packages ships, and no vulnerable code path is reachable from outside the build machine.
 All seventeen are now dismissed: 13 as `not_used`, and 4 as `inaccurate` because the lockfile on
-`main` no longer contains the flagged version and Dependabot cannot rescan it.
+`main` no longer contains the flagged version and the graph never rescanned it. The two alerts that
+arrived after the graph came back (#26 and #27, see above) are dismissed as `not_used` too.
 
 | Alert | Package | Manifest | Locked version | Decision |
 |---|---|---|---|---|
@@ -151,10 +163,12 @@ raised an alert there) remain; both are development tools of the manually run ha
 - **A lockfile out of sync with `pnpm.overrides` fails the Windows build.** Always regenerate
   `pnpm-lock.yaml` with pnpm 10.12.1 after changing an override, and prove `CI=1 pnpm install`
   passes before pushing.
-- **Dependabot lags behind the lockfile while the dependency graph is off.** Before acting on a
+- **Dependabot lags behind the lockfile until the graph re-reads it.** Before acting on a
   `pnpm-lock.yaml` alert, check the version the lockfile really contains.
-- **The npm lockfile is not maintained for security.** Its alerts are dismissed as `not_used`. If a
-  build path ever starts installing with npm, this decision has to be revisited.
+- **The npm lockfile is not maintained for security.** Its alerts are dismissed as `not_used`. With
+  the graph back on, every new advisory for a package in it raises another alert (#25 to #27 on
+  2026-09-29); removing the file from this repository would end that. If a build path ever starts
+  installing with npm, this decision has to be revisited.
 - **Deep paths break a local check.** On Windows, pnpm's patch step changes into the patched
   `minimatch` folder, and Node reads `vite`'s `package.json` imports; both fail with
   `ENAMETOOLONG` or `ERR_PACKAGE_IMPORT_NOT_DEFINED` when the checkout sits deeper than about 180

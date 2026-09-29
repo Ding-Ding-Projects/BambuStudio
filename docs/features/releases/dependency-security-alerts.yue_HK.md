@@ -1,6 +1,6 @@
 ---
 translation-of: dependency-security-alerts.md
-source-sha256: e103387d85e358d9401f4e8ff01dd5f3ddc639142974cf7016886edc74efb9c0
+source-sha256: 9d1eccd0691883f8abbd8e6ccdcced55fc1728e16104346c49567ec916f63533
 review-status: agent-drafted
 ---
 
@@ -37,17 +37,27 @@ pnpm 唔肯改 lockfile：build 會一字不差咁安裝 `pnpm-lock.yaml` 寫嘅
 `scheduler`、`tslib`、`use-callback-ref`、`use-sidecar`、`use-sync-external-store` 同 `zustand`。
 `vite`、`postcss`、`nanoid`、`eslint`、`vitest`、`undici`、`js-yaml` 呢啲 build 同開發工具從來唔會出現喺入面。
 
-## Dependency graph 已經停用
+## Dependency graph 之前停用咗
 
 2026-09-29 呢個 repository 嘅 Insights 頁面顯示「Dependency graph is disabled」，SBOM 匯出
 （`gh api repos/Ding-Ding-Projects/BambuStudio/dependency-graph/sbom`）回應 404。repository 冇掛任何
-組織 code security 設定。實際上即係：
+組織 code security 設定。維護者同意之後，同日 22:03 UTC 用
+`gh api -X PUT repos/Ding-Ding-Projects/BambuStudio/vulnerability-alerts` 重新開返；呢個指令只會開
+Dependabot 警報同 dependency graph，secret scanning、push protection 同 security updates 全部照舊關住。
+組織嗰個「GitHub recommended」設定刻意冇掛上去，因為佢會連 CodeQL code scanning 一齊開，而呢個
+repository 嘅 workflow 只係 build 同出 release，唔行分析工作。
 
-- **push 之後 Dependabot 冇重新掃描 lockfile。** 2026-09-26 merge 上游（`22151a379`）帶嚟修正版之後，
-  #10 同 #17 仲開咗三日；`75fc64c69` 升咗鎖版本之後，#2 同 #19 亦冇辦法自動變做 fixed。
-- **警報清單短或者係空，唔代表 lockfile 乾淨。** 要直接檢查鎖定嘅版本，方法見下面。
-- 2026-09-29 最遲到 07:27 UTC 仲有新警報開出嚟（#24），所以 graph 係最近先至停用或者停咗更新。要唔要
-  重新開返，係 repository 設定，由維護者決定。
+graph 開返之後見到：
+
+- **佢個 snapshot 係七個禮拜前嘅。** 每個 manifest 都寫住「Detected automatically on Aug 11, 2026」，
+  開返 35 分鐘之後，裝置頁仍然列住 `js-yaml` 4.3.1、`nanoid` 3.3.17、`undici` 7.29.0、`browserslist`
+  4.28.6 同 `baseline-browser-mapping` 2.10.43。九月開出嚟嘅每個警報都係對住八月嘅 lockfile，所以修正版
+  入咗嚟之後 #10 同 #17 仲係開住，#2 同 #19 亦冇辦法自動變做 fixed。下次有 push 改到裝置頁嘅 manifest，
+  snapshot 應該就會更新。
+- **新公告照樣陸續嚟。** 當日下晝公佈嘅三份公告喺冇人用嘅 npm lockfile 度，對住 `undici` 8.9.0 開咗
+  #25、#26 同 #27。GHSA-w293-vg96-wgc3 同 GHSA-8436-99hf-9mmv 喺 7.x 嗰條線都係 7.29.1 修正，正正係
+  pnpm 鎖住嗰個版本。#25 俾自動分流 dismiss 咗，#26 同 #27 就 dismiss 做 `not_used`。
+- **snapshot 未追上之前，警報清單短或者係空，唔代表 lockfile 乾淨。** 要直接檢查鎖定嘅版本，方法見下面。
 
 ## 點樣分流一個警報
 
@@ -68,7 +78,7 @@ pnpm 唔肯改 lockfile：build 會一字不差咁安裝 `pnpm-lock.yaml` 寫嘅
    call 公告講嗰個 function。一個只會讀 repository 自己檔案嘅 build、lint 或者測試工具，外人冇辦法餵惡意
    輸入俾佢。
 4. **將鎖定版本同每一份公告對一次，包括已經 dismiss 咗嘅。** 有一條自動分流規則會喺開單一秒內 dismiss
-   開發用套件嘅低影響警報（到而家有 #4、#5、#8、#9、#22、#23 同 #24），所以佢哋唔會出現喺未處理數字度。
+   開發用套件嘅低影響警報（到而家有 #4、#5、#8、#9、#22、#23、#24 同 #25），所以佢哋唔會出現喺未處理數字度。
    將每個 `pnpm-lock.yaml` 入面每個 `name@version`，同
    `gh api "repos/Ding-Ding-Projects/BambuStudio/dependabot/alerts?per_page=100"` 列出嘅所有警報（無論咩
    狀態）嘅漏洞範圍逐個對。下面個 `undici` 鎖版本就係咁樣搵到。
@@ -91,7 +101,8 @@ pnpm 唔肯改 lockfile：build 會一字不差咁安裝 `pnpm-lock.yaml` 寫嘅
 
 當時有 17 個未處理警報（9 個高、8 個中），涉及四個 manifest 入面嘅七個套件。冇一個被標記嘅套件會出貨，
 亦冇一段有漏洞嘅 code 可以由 build 機以外嘅地方行到。十七個而家全部 dismiss 咗：13 個係 `not_used`，
-4 個係 `inaccurate`，因為 `main` 上面嘅 lockfile 已經冇咗被標記嗰個版本，而 Dependabot 冇辦法重新掃描。
+4 個係 `inaccurate`，因為 `main` 上面嘅 lockfile 已經冇咗被標記嗰個版本，而 graph 從來冇重新掃描過。graph 開返之後
+先嚟嘅兩個警報（#26 同 #27，見上面）都一樣 dismiss 做 `not_used`。
 
 | 警報 | 套件 | Manifest | 鎖定版本 | 決定 |
 |---|---|---|---|---|
@@ -143,10 +154,11 @@ pnpm 唔肯改 lockfile：build 會一字不差咁安裝 `pnpm-lock.yaml` 寫嘅
 
 - **lockfile 同 `pnpm.overrides` 唔一致，Windows build 會失敗。** 改完 override 一定要用 pnpm 10.12.1
   重新生成 `pnpm-lock.yaml`，push 之前證明 `CI=1 pnpm install` 過到。
-- **dependency graph 停咗嘅時候，Dependabot 會追唔上 lockfile。** 處理 `pnpm-lock.yaml` 嘅警報之前，
+- **graph 未重新讀 lockfile 之前，Dependabot 會追唔上。** 處理 `pnpm-lock.yaml` 嘅警報之前，
   先睇清楚 lockfile 真正寫住邊個版本。
-- **npm lockfile 唔會為保安而維護。** 佢嘅警報會 dismiss 做 `not_used`。如果有一日有 build 開始用 npm
-  安裝，呢個決定就要重新諗過。
+- **npm lockfile 唔會為保安而維護。** 佢嘅警報會 dismiss 做 `not_used`。graph 開返之後，裏面套件每有一份
+  新公告就會多一個警報（2026-09-29 嘅 #25 至 #27）；將呢個檔喺 repository 度刪走就可以停咗佢。如果有一日
+  有 build 開始用 npm 安裝，呢個決定就要重新諗過。
 - **路徑太深會搞壞本機檢查。** 喺 Windows，pnpm 嘅 patch 步驟會轉入打咗 patch 嘅 `minimatch` 資料夾，
   Node 又會讀 `vite` 嘅 `package.json` imports；checkout 深過大約 180 個字元，兩個都會以
   `ENAMETOOLONG` 或者 `ERR_PACKAGE_IMPORT_NOT_DEFINED` 失敗。好似 build 咁，喺 repository 自己嘅
