@@ -225,6 +225,29 @@ A first Smart home capture on `md3-v154` caught its search field mid-repaint (no
 outline) and a second run showed it whole, like the `md3-v153` paragraph case above; the sweep now
 waits 6.5 s after a dialog opens, two passes of the bilingual decorator, instead of 4.5 s.
 
+## Release md3-v155 captures (2026-09-29)
+
+Taken by `scripts/md3/capture-tuple.py` from the unmodified `md3-v155` release package, with a
+profile under `C:\Users\Public\bbsdd`. Every import of its executables and DLLs resolves in the package or
+in Windows.
+
+| Field | Value |
+| --- | --- |
+| Source commit | `c7309b889` (release `md3-v155`) |
+| Package | `BambuStudioMD3-2.8.4155-full.nupkg`, 732,154,934 bytes, SHA-1 `00332a4f71ff225d1efc073bb3fb2b9243778bc1` as listed in `RELEASES` |
+| Executable | `bambu-studio.exe` sha256 `1fcbcdc7b7f1e723629b07a82a70fed30c2d770aa5837d007fcb40bf83e2dc89`, `BambuStudio.dll` sha256 `9dec027dae933b7a455c3e0d60c3d940ae791a26fe34f7635bb6c99b8fd4e3f3` |
+| Capture route | hidden Win32 desktop, `PrintWindow` of the dialog, real GPU driver |
+| Display scale | 100% |
+
+| File | Page | Tuple |
+| --- | --- | --- |
+| `preferences-general--bilingual_en_yue_HK-light-comfortable--md3-v155.png` | Preferences > General (before the second CJ-021 fix): the page still scrolls sideways and the Language list and sliders are cut at the right edge | `bilingual_en_yue_HK-light-comfortable` |
+| `preferences-3d--bilingual_en_yue_HK-light-comfortable--md3-v155.png` | Preferences > 3D (before CJ-026): each description's Cantonese line is drawn under the next row's title | `bilingual_en_yue_HK-light-comfortable` |
+
+The General capture lacks the "Reset all warning dialogs" button, which the layout dump taken right
+after places at x = 12; the 3D capture of the same run shows it, so the General capture caught a
+repaint.
+
 ## Layout-probe dumps
 
 `probe/<tuple>--<before|after>.jsonl`, one per main-frame idle dump plus one per opened dialog,

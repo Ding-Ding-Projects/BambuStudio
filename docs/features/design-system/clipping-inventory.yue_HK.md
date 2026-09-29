@@ -1,6 +1,6 @@
 ---
 translation-of: clipping-inventory.md
-source-sha256: 2162fcaf11be648aa27ac3ab1db842a91db340990d41db4ac4ad96fa049c973a
+source-sha256: 155c443bb8f644bd644ab0a6335eb2c005ddc2dfbeb71ec97e4afd3d38b0c9d7
 review-status: agent-drafted
 ---
 
@@ -48,6 +48,7 @@ Windows 桌面應用程式上發現嘅每一個版面裁剪缺陷，包括佢嘅
 | CJ-023 | 準備側邊欄，完整打印設定樹 | 每個組合（1200 x 800 視窗） | 每個數值欄都超出側邊欄右邊；廣東話分類按鈕按一個睇唔到嘅闊度換行，「支撐」有一半喺外面 | 分區條（墨水／打印設定／物件）以 128 DIP 闊放喺內容左邊，同內容共用同一個窗格，但每個窗格闊度都只計內容：設定樹喺 480 px 嘅窗格只分到 334 px，但佢要大約 417 px | 11cf45423 | prepare--en-light-comfortable--md3-v151.png | pending | fixed-unverified |
 | CJ-024 | 準備側邊欄，打印設定標題（粵語） | yue_HK-light-comfortable | 顯示「打印設…」而唔係「打印設定」 | 自從 CJ-012 修正之後，標題係固定項目，但仍然保留 56 DIP 嘅最細闊度，所以永遠唔會加闊到佢 60 px 嘅文字 | 11cf45423 | prepare--yue_HK-light-comfortable--md3-v151.png | pending | fixed-unverified |
 | CJ-025 | 雙語模式配對咗嘅段落標題（溫度校準「SETTINGS」） | bilingual_en_yue_HK-light-comfortable | 「SETTINGS · 設」：廣東話喺標題自己嘅邊緣被切 | 段落標題用 GDI+ 逐個字畫大階、加字距，但量度最佳闊度嗰陣用普通 GDI 同成串字嘅闊度，所以要求嘅位比畫出嚟嘅少 | 32a36b134 | dialog-temperature--bilingual_en_yue_HK-light-comfortable--md3-v154.png | pending | fixed-unverified |
+| CJ-026 | 偏好設定，打開對話框之後先顯示嘅每一頁：使用者、3D、其他（雙語） | bilingual_en_yue_HK-light-comfortable | 每段會換行嘅描述排成英文喺上粵語喺下，但粵語嗰行畫咗喺下一行標題底下，淨係見到啲字嘅頂 | 裝飾器改完標籤之後會重新排對話框，但對話框重排嗰陣頁面大細唔變，所以頁面自己嘅 sizer 從來冇行過，變高咗一行嘅標籤下面啲行原封不動 | a07353987 | preferences-3d--bilingual_en_yue_HK-light-comfortable--md3-v155.png | pending | fixed-unverified |
 <!-- clipping-inventory:end -->
 
 CJ-014、CJ-015、CJ-017 同 CJ-018 已經用冇加過任何嘢嘅發佈套件，喺隱藏桌面上驗證咗（2026-09-29）：雙語模式下，最新版本訊息喺 `md3-v148` 完整畫出「OK · 確定」，而 `md3-v143` 就畫成「OK ·...」（CJ-014）；喺 `md3-v150`，搜尋欄完整畫出佢嘅圓形右端（CJ-015），設定檔清單完整顯示嗰一行（CJ-017），溫度校準嘅標籤維持英文，廣東話放喺提示框，唔再被裁走（CJ-018）。CJ-016 喺 `md3-v150` 仍然被裁；佢嘅修正係 `00b14ca67`。
@@ -55,6 +56,8 @@ CJ-014、CJ-015、CJ-017 同 CJ-018 已經用冇加過任何嘢嘅發佈套件�
 CJ-020 已經用 `md3-v153`（目標 `1757d880f`，套件 SHA-1 `3a97afd5d4e083e92a40c72d2c62310e66dcd8c2`，所有匯入都搵到）驗證：雙語模式嘅最新版本訊息完整顯示「This is the newest version.」，下面有「已經係最新版本。」，冇捲動列。CJ-016 同 CJ-019 已經用 `md3-v154`（目標 `00b14ca67`，套件 SHA-1 `8ac42b12ec13fd2e814690414882e9926cdd0a3f`，所有匯入都搵到）驗證：雙語模式下，鍵盤快速鍵嘅每個標籤同描述都喺對話框入面（「Objects list」完整維持英文，粵語放喺工具提示），回抽測試嘅步長顯示「0.1 mm/mm」，單位喺數字後面，粵語同英文都係。
 
 CJ-021 第一個修正 `2e80091ef` 冇修好發佈版：`md3-v155`（目標 `c7309b889`）嘅雙語偏好設定 > 一般照樣打橫捲，每行 681 px 闊，頁面得 560 px。裝飾器嘅 fit 規則冇錯，但從來冇喺搞笑程度同表情符號嗰幾行行過，因為佢哋嘅 helper 自己砌好「English · 廣東話」一行；`dd95aace8` 改為將呢啲配對交畀雙語登記表。同一個 commit 亦修正咗版面探針：佢將每個 sizer 邊框計咗兩次（`wxSizerItem::CalcMin()` 本身已經計埋），所以報雙語偏好設定底部嗰行按鈕「需要 799 px、有 783 px」，其實三粒按鈕啱啱好填滿。`dd95aace8` 之前量到嘅所有 `oversubscribed` 數字，包括下面 CJ-005 註解入面嗰 240，都多咗同樣嘅數。`md3-v155` 其中一張嗰頁嘅擷圖冇咗「Reset all warning dialogs」掣，但緊接住嘅轉儲將佢放喺 x = 12；同一輪嘅 3D 同外觀擷圖都有佢，所以嗰張擷圖係影正重繪嘅時候。
+
+CJ-026 喺同一輪 `md3-v155` 搵到：偏好設定打開之後先顯示嘅每一頁（使用者、3D、其他），每段排成兩行嘅描述嘅粵語嗰行都畫咗喺下一行標題底下。`a07353987` 會重排裝飾器改過嘅每個標籤周圍嘅頁面。嗰輪嘅雙語「其他」擷圖仲見到搜尋欄冇咗提示字，但一般、使用者、3D 同外觀嘅擷圖都顯示「Search settings · 搜尋設定」；只見過一次，下一個發佈再檢查，先決定要唔要開一行。
 
 CJ-013 喺嘗試 28（源 `92cd7bce7`）度被驗證：五個藥丸排列喺兩行（其他喺 y = 52），頁面視圖係 1672 px 高所以側欄本體（內容 2549 px 喺 645 px 客戶端）係唯一嘅捲軸，探針報告側欄冇餓到嘅行（轉儲 `probe/prepare-tree-categories--en-light-comfortable--attempt28.jsonl`）。
 

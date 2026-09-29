@@ -128,7 +128,12 @@ still to verify.
   registry (`ui-md3/tests/preferences-funny-rows-bilingual.test.mjs`). The same commit fixes the layout
   probe's row judge, which counted every sizer border twice, so every `oversubscribed` figure taken before
   it is inflated (`ui-md3/tests/layout-probe-row-judge.test.mjs`); the bottom button row it flagged in
-  bilingual Preferences fits exactly (783 of 783 px).
+  bilingual Preferences fits exactly (783 of 783 px). The same captures showed CJ-026: on every
+  Preferences page opened after the first (User, 3D, Other), each stacked description's Cantonese line
+  is drawn under the next row's title, because a page keeps its size when its dialog lays out and its
+  own sizer never ran; `a07353987` lays out the page around every label the decorator changes. Seen
+  once, to re-check on the next release: the bilingual Other capture shows the search field without its
+  hint, while the other four pages show "Search settings · 搜尋設定".
 - Privacy of the capture evidence (2026-09-29): capture profiles had lived under the Windows user
   profile, so two public Config profiles captures (`md3-v143`, `md3-v150`, added in `e92b7fa2d`) showed
   the account name in the data folder, and twelve layout dumps from 2026-09-06/07 recorded it in the
