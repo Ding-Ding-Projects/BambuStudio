@@ -10,11 +10,13 @@
 #include <wx/button.h>
 #include <wx/checkbox.h>
 #include <wx/control.h>
+#include <wx/dataview.h>
 #include <wx/dc.h>
 #include <wx/dcclient.h>
 #include <wx/dialog.h>
 #include <wx/display.h>
 #include <wx/eventfilter.h>
+#include <wx/listctrl.h>
 #include <wx/menu.h>
 #include <wx/radiobut.h>
 #include <wx/sizer.h>
@@ -54,7 +56,7 @@ constexpr int TICK_MS         = 250;  // how often queued windows are decorated
 constexpr int SWEEP_EVERY     = 12;   // ticks between passes over every shown window (~3 s)
 constexpr int DIALOG_GROWTH_PCT = 40; // how much wider a dialog may grow for compact labels
 
-enum class Kind { None, Text, NativeButton, KitButton, Check, Radio, GroupBox };
+enum class Kind { None, Text, NativeButton, KitButton, Check, Radio, GroupBox, Header };
 
 // How a window's label changed: wider (compact) or taller (stacked).
 enum class Change { None, Wider, Taller };
@@ -66,6 +68,9 @@ Kind kind_of(wxWindow *window)
         return Kind::None;
     if (dynamic_cast<::Button *>(window) != nullptr)
         return Kind::KitButton;
+    // The upper-case micro-header over a section ("SETTINGS"): custom-drawn, one line.
+    if (dynamic_cast<::SectionHeader *>(window) != nullptr)
+        return Kind::Header;
     if (wxDynamicCast(window, wxStaticText) != nullptr)
         return Kind::Text;
     if (wxDynamicCast(window, wxCheckBox) != nullptr)
@@ -89,10 +94,11 @@ wxString label_of(wxWindow *window, Kind kind)
     return window->GetLabel();
 }
 
-// Native controls read '&' as a mnemonic marker; the kit Button draws it.
+// Native controls read '&' as a mnemonic marker; the kit Button and the
+// section header draw it.
 wxString as_label_text(const wxString &text, Kind kind)
 {
-    if (kind == Kind::KitButton)
+    if (kind == Kind::KitButton || kind == Kind::Header)
         return text;
     wxString escaped(text);
     escaped.Replace("&", "&&");
@@ -117,6 +123,20 @@ int text_width(wxWindow *window, const wxString &text)
     for (const wxString &line : wxSplit(wxControl::RemoveMnemonics(text), '\n', '\0'))
         width = std::max(width, dc.GetTextExtent(line).GetWidth());
     return width;
+}
+
+// "English · 廣東話" for a list or table column title, when the pair fits the column.
+// A column header has no tooltip of its own, so a title that does not fit stays English.
+bool bilingual_title(wxWindow *owner, const wxString &title, int width, wxString &decorated)
+{
+    if (title.empty() || width <= 0 || title.Contains(inline_separator()))
+        return false;
+    const wxString cantonese = BilingualRegistry::instance().lookup(title);
+    if (cantonese.empty())
+        return false;
+    decorated = title + inline_separator() + cantonese;
+    // The header spends part of the column on its margins and the sort arrow.
+    return text_width(owner, decorated) + owner->FromDIP(24) <= width;
 }
 
 // Width the layout can give the window without squeezing a neighbour: its own
@@ -351,8 +371,39 @@ private:
             decorate_top(top, false);
     }
 
+    // Column titles of data views and report lists are not windows of their
+    // own, so the label pass below never reaches them.
+    void decorate_columns(wxWindow *window)
+    {
+        if (auto *view = dynamic_cast<wxDataViewCtrl *>(window)) {
+            for (unsigned int i = 0; i < view->GetColumnCount(); ++i) {
+                wxDataViewColumn *column = view->GetColumn(i);
+                // Icon columns have no title, and an auto-sized column measures its
+                // rows to report a width, so only a title that could change asks for it.
+                if (column == nullptr || column->GetTitle().empty() || column->GetTitle().Contains(inline_separator()))
+                    continue;
+                wxString decorated;
+                if (bilingual_title(view, column->GetTitle(), column->GetWidth(), decorated))
+                    column->SetTitle(decorated);
+            }
+        } else if (auto *list = dynamic_cast<wxListCtrl *>(window)) {
+            if (!list->InReportView())
+                return;
+            for (int i = 0; i < list->GetColumnCount(); ++i) {
+                wxListItem item;
+                item.SetMask(wxLIST_MASK_TEXT);
+                wxString decorated;
+                if (list->GetColumn(i, item) && bilingual_title(list, item.GetText(), list->GetColumnWidth(i), decorated)) {
+                    item.SetText(decorated);
+                    list->SetColumn(i, item);
+                }
+            }
+        }
+    }
+
     Change decorate_window(wxWindow *window, bool allow_compact, int growth)
     {
+        decorate_columns(window);
         const Kind     kind  = kind_of(window);
         const wxString label = kind == Kind::None ? wxString() : label_of(window, kind);
         const wxString tip   = window->GetToolTipText();

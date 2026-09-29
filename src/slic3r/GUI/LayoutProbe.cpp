@@ -13,6 +13,7 @@
 #include "I18N.hpp"
 #include "BilingualRegistry.hpp"
 #include "Widgets/Button.hpp"
+#include "Widgets/Label.hpp"
 #include "Widgets/TextInput.hpp"
 #include <wx/scrolwin.h>
 #include <cwchar>
@@ -495,6 +496,9 @@ AuditKind audit_kind_of(wxWindow *w)
     if (dynamic_cast<wxStaticBox *>(w) != nullptr)
         return AuditKind::GroupBox;
     if (dynamic_cast<wxStaticText *>(w) != nullptr) // also matches the kit Label
+        return AuditKind::Text;
+    // The section header is custom-drawn, but a label all the same.
+    if (dynamic_cast<::SectionHeader *>(w) != nullptr)
         return AuditKind::Text;
     return AuditKind::Skip;
 }

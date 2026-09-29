@@ -55,3 +55,11 @@ test('a top-level window is never reported as clipped by its parent', () => {
   const code = stripComments(writer[0]);
   assert.match(code, /if \(parent && !w->IsTopLevel\(\)\) \{\s*const wxRect parent_client/, 'only child windows are compared with the parent client area');
 });
+
+test('the language audit counts section headers as labels', () => {
+  // The bilingual decorator pairs section headers with their Cantonese; an
+  // audit that skipped them could never report one left English only.
+  const kind = stripComments(probeCpp.match(/AuditKind audit_kind_of\(wxWindow \*w\)[\s\S]*?\n\}/)[0]);
+  assert.match(kind, /dynamic_cast<::SectionHeader \*>\(w\) != nullptr\)\s*return AuditKind::Text;/);
+  assert.match(probeCpp, /#include "Widgets\/Label\.hpp"/);
+});

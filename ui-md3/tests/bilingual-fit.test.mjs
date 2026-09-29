@@ -35,3 +35,32 @@ test('a label whose width is pinned by an explicit minimum only goes compact whe
   const code = stripComments(fits[0]);
   assert.match(code, /if \(window->GetMinSize\(\)\.GetWidth\(\) > 0\)\s*room = std::min\(room, window->GetSize\(\)\.GetWidth\(\)\);/);
 });
+
+test('section headers are paired with their Cantonese like any other label', () => {
+  // The upper-case section header ("SETTINGS" in every calibration dialog) is a
+  // custom-drawn window, so the decorator classed it as nothing and bilingual
+  // mode left it English only. It is a single-line label that draws its text
+  // as given (no mnemonics), and it re-measures itself when the label changes.
+  const kindOf = stripComments(source.match(/Kind kind_of\(wxWindow \*window\)[\s\S]*?\n\}/)[0]);
+  assert.match(source, /enum class Kind \{[^}]*\bHeader\b[^}]*\}/, 'a Kind for section headers');
+  assert.match(kindOf, /dynamic_cast<::SectionHeader \*>\(window\) != nullptr\)\s*return Kind::Header;/);
+  const asLabel = stripComments(source.match(/wxString as_label_text\([\s\S]*?\n\}/)[0]);
+  assert.match(asLabel, /kind == Kind::KitButton \|\| kind == Kind::Header/, 'no mnemonic escaping for a header, it draws "&" as is');
+});
+
+test('list and table column titles go bilingual when the column has room', () => {
+  // Version history ("Commit", "Message", "Time", "Size") and Config profiles
+  // ("Profile", "Data folder") kept English-only column titles in bilingual
+  // mode: a column title is not a window, so the per-window pass never saw it.
+  const columns = source.match(/void decorate_columns\(wxWindow \*window\)[\s\S]*?\n    \}/);
+  assert.ok(columns, 'decorate_columns() must exist');
+  const code = stripComments(columns[0]);
+  assert.match(code, /dynamic_cast<wxDataViewCtrl \*>\(window\)/, 'data view columns');
+  assert.match(code, /dynamic_cast<wxListCtrl \*>\(window\)/, 'report list columns');
+  assert.match(code, /InReportView\(\)/, 'only a report list has column titles');
+  const title = stripComments(source.match(/bool bilingual_title\([\s\S]*?\n\}/)[0]);
+  assert.match(title, /Contains\(inline_separator\(\)\)/, 'a title decorated once is never decorated again');
+  assert.match(title, /text_width\(owner, decorated\) \+ owner->FromDIP\(24\) <= width/, 'the pair must fit the column width');
+  const window = stripComments(source.match(/Change decorate_window\(wxWindow \*window, bool allow_compact, int growth\)[\s\S]*?\n    \}/)[0]);
+  assert.match(window, /decorate_columns\(window\);/, 'every window the pass visits gets its columns checked');
+});

@@ -55,8 +55,8 @@ Every legacy lookup (`_L`, `_u8L`, `_CTX` and the plural forms, all of which end
 with `format()` or `wxString::Format()` finds its Cantonese with the same values filled in.
 
 `BilingualDecorator` runs only in bilingual mode. It watches windows as they are shown and gives
-labels, buttons, check boxes, radio buttons, group boxes, tooltips and native menu items their second
-language:
+labels, buttons, check boxes, radio buttons, group boxes, section headers, list and table column
+titles, tooltips and native menu items their second language:
 
 - Single-line text reads "English · 廣東話" when that fits the space its layout can give it. A dialog
   may grow within the screen for this; if its content still does not fit, its labels stay English.
@@ -64,6 +64,8 @@ language:
 - Wrapped and multi-line text shows the Cantonese below the English.
 - Tooltips show the Cantonese below the English. The decorator remembers the application's own text,
   so decorations never accumulate.
+- List and table column titles read "English · 廣東話" when the pair fits the column. A column
+  header has no tooltip, so a title that does not fit stays English.
 - Typed text, list values and combo box values are never changed. Windows that already render both
   languages themselves (`apply_localized_text()`) are left alone.
 
