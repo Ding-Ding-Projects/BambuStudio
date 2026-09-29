@@ -31,6 +31,7 @@
 #include "slic3r/GUI/OpenGLManager.hpp"
 #include "slic3r/GUI/Plater.hpp"
 #include "slic3r/GUI/MainFrame.hpp"
+#include "slic3r/GUI/LayoutProbe.hpp"
 #include "slic3r/Utils/UndoRedo.hpp"
 #include "slic3r/GUI/Gizmos/GLGizmoPainterBase.hpp"
 #include "slic3r/GUI/BitmapCache.hpp"
@@ -67,6 +68,7 @@
 #include <wx/bitmap.h>
 #include <wx/dcmemory.h>
 #include <wx/image.h>
+#include <wx/filefn.h>
 #include <wx/settings.h>
 #include <wx/tooltip.h>
 #include <wx/debug.h>
@@ -2835,6 +2837,36 @@ void GLCanvas3D::mark_context_dirty()
     m_dirty_context = true;
 }
 
+// Layout probe "canvas-png": save the frame as drawn, ImGui panels included, before
+// the swap. PrintWindow cannot capture an OpenGL surface, so on a hidden desktop this
+// file is the only picture of the canvas. It is written beside the target and then
+// renamed, so a driver waiting for the file never reads half of it.
+static void save_frame_png(const std::string &path, const Size &size)
+{
+    const int width  = size.get_width();
+    const int height = size.get_height();
+    if (path.empty() || width <= 0 || height <= 0)
+        return;
+    std::vector<unsigned char> rgba(size_t(width) * size_t(height) * 4);
+    glsafe(::glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, rgba.data()));
+    wxImage image(width, height);
+    unsigned char *rgb = image.GetData();
+    for (int y = 0; y < height; ++y) {
+        // OpenGL rows run bottom-up.
+        const unsigned char *src = rgba.data() + size_t(height - 1 - y) * size_t(width) * 4;
+        unsigned char       *dst = rgb + size_t(y) * size_t(width) * 3;
+        for (int x = 0; x < width; ++x, src += 4, dst += 3) {
+            dst[0] = src[0];
+            dst[1] = src[1];
+            dst[2] = src[2];
+        }
+    }
+    const wxString target = wxString::FromUTF8(path.c_str());
+    const wxString part   = target + ".part";
+    const bool     saved  = image.SaveFile(part, wxBITMAP_TYPE_PNG) && wxRenameFile(part, target, true);
+    BOOST_LOG_TRIVIAL(info) << "LayoutProbe: canvas-png " << (saved ? "saved " : "failed ") << path;
+}
+
 void GLCanvas3D::render(bool only_init)
 {
     if (m_in_render) {
@@ -3230,6 +3262,9 @@ void GLCanvas3D::render(bool only_init)
         m_assembly_steps->process_video_capture_per_frame();
         m_assembly_steps->process_assembly_pdf_capture();
     }
+
+    if (LayoutProbe::canvas_png_requested())
+        save_frame_png(LayoutProbe::take_canvas_png_request(), get_canvas_size());
 
     ogl_manager.unbind_vao();
     ogl_manager.clear_dirty();

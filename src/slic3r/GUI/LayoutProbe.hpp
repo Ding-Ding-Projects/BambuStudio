@@ -48,6 +48,13 @@ bool handle_command(const std::wstring &payload);
 // evidence a surface leaves while the probe is on, such as the splash bitmap.
 std::string artifact_path(const std::string &file_name);
 
+// A pending "canvas-png <path>" command: the 3D canvas saves its next frame,
+// ImGui panels included, at that path (GLCanvas3D::render). PrintWindow cannot
+// capture an OpenGL surface, so this is how a hidden-desktop capture sees it.
+bool canvas_png_requested();
+// The pending path, cleared, so one request saves exactly one frame.
+std::string take_canvas_png_request();
+
 }}} // namespace Slic3r::GUI::LayoutProbe
 
 #endif // slic3r_GUI_LayoutProbe_hpp_

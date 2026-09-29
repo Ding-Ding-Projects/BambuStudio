@@ -71,6 +71,8 @@ namespace {
 std::atomic<int> g_dump_counter{0};
 bool g_installed = false;
 bool g_first_dump_done = false;
+// Target of a pending "canvas-png" command; the 3D canvas takes it on its next frame.
+std::string g_canvas_png;
 
 std::string env_value(const char *name)
 {
@@ -703,6 +705,18 @@ std::string artifact_path(const std::string &file_name)
     return (boost::filesystem::path(default_path()).parent_path() / file_name).string();
 }
 
+bool canvas_png_requested()
+{
+    return !g_canvas_png.empty();
+}
+
+std::string take_canvas_png_request()
+{
+    std::string path;
+    path.swap(g_canvas_png);
+    return path;
+}
+
 std::string dump(const std::string &reason, const std::string &out_path)
 {
     if (!enabled()) return std::string();
@@ -951,6 +965,24 @@ bool handle_command(const std::wstring &payload)
                     << ",\"ok\":" << (ok ? "true" : "false") << "}\n";
             }
             return ok;
+        }
+        //   canvas-png <path>    save the 3D canvas's next frame, ImGui panels
+        //                        included, as a PNG at <path>. PrintWindow cannot
+        //                        capture an OpenGL surface, so a hidden-desktop
+        //                        capture shows the canvas blank; the canvas reads
+        //                        its frame back just before the buffer swap
+        //                        (GLCanvas3D::render) and writes <path>.part first.
+        const std::wstring canvas_png = L"canvas-png ";
+        if (frame && payload.compare(0, canvas_png.size(), canvas_png) == 0) {
+            g_canvas_png = boost::nowide::narrow(payload.substr(canvas_png.size()));
+            frame->CallAfter([]() {
+                if (Plater *plater = wxGetApp().plater())
+                    if (GLCanvas3D *canvas = plater->get_current_canvas3D()) {
+                        canvas->set_as_dirty();
+                        canvas->request_extra_frame();
+                    }
+            });
+            return !g_canvas_png.empty();
         }
         //   language-audit       in bilingual mode, write language-audit.json
         //                        beside the dumps: every shown native control

@@ -20,7 +20,18 @@ or starved; on a build without "truncated", a window with a
 label that is more than 2 px narrower than its own best width is reported as
 suspect_shortened (the kit Button that may shrink caches its full label width
 as its best size). With --po, a label that opens nothing in English is tried
-again in its Cantonese form, which is what the menus show in Cantonese mode.
+again in its Cantonese form, which is what the menus show in Cantonese mode;
+a catalogue label with a placeholder ("&About %s") counts by its fixed words.
+
+"canvas:" entries open an ImGui panel inside the 3D canvas, not a window (Show
+Tip of the Day draws the Daily Tips panel there): the sweep switches to the
+Prepare tab, where the canvas shows, invokes the menu item in the language the
+menus show, asks the canvas for its own frame with the probe's "canvas-png"
+command (PrintWindow leaves an OpenGL canvas blank) and saves it as
+<out>/canvas-<slug>--<tuple>.png beside a PrintWindow capture of the whole
+frame (...--frame.png), returns to Home and records the row as canvas-capture.
+The layout probe does not measure ImGui, so those rows carry captures and no
+findings.
 """
 from __future__ import annotations
 
@@ -43,7 +54,7 @@ SENDER = os.path.join(HERE, 'send-layout-probe.py')
 # window). "probe:" entries are layout-probe commands; "gear" clicks the
 # caption bar's Preferences button like capture-tuple.py does.
 ENTRIES = [
-    'Keyboard Shortcuts', 'Show Tip of the Day', "What's new / Changelog", 'About',
+    'Keyboard Shortcuts', 'canvas:Show Tip of the Day', "What's new / Changelog", 'About',
     'Config profiles & backup', 'AI filament scanner', 'Smart home', 'Model Creator',
     'Open Network Test', 'Version history', 'Check for Update',
     # "Flow rate" is a submenu whose items (Coarse, Fine) put test objects on the
@@ -54,6 +65,9 @@ ENTRIES = [
     'probe:config-wizard', 'gear',
 ]
 GEAR = (1155, 121)  # client coordinates in the 1200x800 main frame the datadirs configure
+# Workspace tabs at the same scale (as in capture-tuple.py): the 3D canvas that draws the
+# "canvas:" panels only shows on Prepare, and the app starts on Home.
+HOME_TAB, PREPARE_TAB = (90, 119), (211, 119)
 
 
 def cheap(tool, **kw):
@@ -112,6 +126,25 @@ def load_po(path):
 
 def menu_text(label):
     return label.replace('&', '').split('\\t')[0].rstrip('. …')
+
+
+def fixed_words(label):
+    """menu_text without printf placeholders or a trailing Cantonese mnemonic such as (&A).
+
+    The About item is built from "&About %s" and the application's display name, which
+    the user can change, so the menus can only be matched on the words around it; the
+    app's menu search matches any item whose label contains the given text.
+    """
+    text = re.sub(r'\(&[A-Za-z0-9]\)$', '', label.split('\\t')[0].strip())
+    return menu_text(re.sub(r'%[sd]', '', text)).strip()
+
+
+def cantonese_form(entry, cantonese):
+    """The Cantonese menu text for an English entry, or None when the catalogue has none."""
+    yue = cantonese.get(entry) or next((v for k, v in cantonese.items() if menu_text(k) == entry), None)
+    if yue is None:
+        yue = next((v for k, v in cantonese.items() if '%' in k and fixed_words(k) == entry), None)
+    return fixed_words(yue) if yue else None
 
 
 def findings_in(dump_path, dialog_hwnd):
@@ -219,14 +252,46 @@ def main():
                 send(args.desktop, main_hwnd, command=entry[len('probe:'):])
                 tried.append(entry)
                 dialog = wait_for(new_window, 20)
+            elif entry.startswith('canvas:'):
+                label = entry[len('canvas:'):]
+                # No window appears to confirm that the item was found, so invoke it once,
+                # in the language the menus show: Cantonese with --po, English otherwise
+                # (bilingual menus keep the English half).
+                form = (cantonese_form(label, cantonese) if cantonese else None) or label
+                cheap('mouse_click', hwnd=main_hwnd, x=PREPARE_TAB[0], y=PREPARE_TAB[1])
+                time.sleep(2.5)
+                send(args.desktop, main_hwnd, command=f'invoke {form}')
+                time.sleep(4)  # the canvas draws the panel on its next frame
+                name = f'canvas-{slug(label)}--{args.tuple_id}'
+                png = os.path.join(args.out, name + '.png')
+                frame_png = os.path.join(args.out, name + '--frame.png')
+                # PrintWindow leaves the OpenGL canvas blank, so the frame capture is only
+                # context; the canvas saves its own frame, ImGui included, on "canvas-png"
+                # (a build without that command saves nothing, and the row says so).
+                shot = cheap('screenshot', hwnd=main_hwnd, output_path=frame_png)
+                staged = os.path.join(staging_dir, f'{pid}-{len(results)}-canvas.png')
+                if os.path.exists(staged):
+                    os.remove(staged)
+                send(args.desktop, main_hwnd, command=f'canvas-png {staged}')
+                saved = wait_for(lambda: os.path.exists(staged) and os.path.getsize(staged) > 0, 15)
+                if saved:
+                    shutil.move(staged, png)
+                cheap('mouse_click', hwnd=main_hwnd, x=HOME_TAB[0], y=HOME_TAB[1])
+                time.sleep(1.5)
+                results.append({'entry': entry, 'tried': [form], 'result': 'canvas-capture',
+                                'canvas_png': png if saved else None, 'screenshot': frame_png,
+                                'rendered_ok': shot.get('rendered_ok')})
+                print(f'  {entry}: canvas ' + (f'saved, {png}' if saved else 'NOT SAVED (no canvas-png in this build?)'),
+                      flush=True)
+                continue
             else:
                 forms = [entry]
                 # The app's English says "ink" where the catalogue says "filament".
                 if 'filament' in entry:
                     forms.append(entry.replace('filament', 'ink'))
-                yue = cantonese.get(entry) or next((v for k, v in cantonese.items() if menu_text(k) == entry), None)
-                if yue and menu_text(yue) != entry:
-                    forms.append(menu_text(yue))
+                yue = cantonese_form(entry, cantonese)
+                if yue and yue != entry:
+                    forms.append(yue)
                 for form in forms:
                     send(args.desktop, main_hwnd, command=f'invoke {form}')
                     tried.append(form)
@@ -298,7 +363,9 @@ def main():
     opened = [r for r in results if r.get('result') == 'opened']
     flagged = [r for r in opened if r['findings']]
     unmeasured = [r for r in opened if r.get('dump') is None]
-    print(f'{len(opened)} dialogs opened, {len(flagged)} with findings, {len(unmeasured)} without a probe dump; report {out_json}')
+    canvas = [r for r in results if r.get('result') == 'canvas-capture']
+    print(f'{len(opened)} dialogs opened, {len(flagged)} with findings, {len(unmeasured)} without a probe dump, '
+          f'{len(canvas)} canvas panels captured; report {out_json}')
     return 1 if unmeasured else 0
 
 

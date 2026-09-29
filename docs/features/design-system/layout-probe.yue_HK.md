@@ -1,6 +1,6 @@
 ---
 translation-of: layout-probe.md
-source-sha256: d92664f1bc6d31bfacb11347f67622f80eae68c1fa990290929da32fa2e7971c
+source-sha256: 6e2ae8129e64c4a8334015917791d2f46e6b9dd23d0628389e64e3f838e7dfc9
 review-status: agent-drafted
 ---
 
@@ -45,6 +45,8 @@ review-status: agent-drafted
 
 命令通道（`WM_COPYDATA`、`dwData` 2）亦接受兩個驅動程式鉤子，而探測器係已武裝：`menu-popup <Title>` 會彈出標題欄嘅一個選單（檔案、編輯、檢視、物件、校正、幫助）同埋 `invoke <label>` 會觸發第一個標籤包含文字嘅選單項。兩個都經由 `CallAfter` 推遲，所以發送方嘅 `SendMessage` 會喺一個彈出迴圈或一個模式對話框阻止之前返回。按鍵同埋選單點擊唔會到達另一個桌面上嘅視窗；呢啲鉤子係無頭驅動程式如何到達選單後面任何嘢嘅方式。
 
+`canvas-png <path>` 會將 3D 畫布下一格畫面，連埋 ImGui 面板（物件操作工具面板、通知、每日提示面板），儲存做指定路徑嘅 PNG。PrintWindow 擷取唔到 OpenGL 表面，所以喺隱藏桌面影嘅每張擷圖，畫布都係一片空白；改為由畫布喺 ImGui 畫完之後、交換緩衝區之前讀返自己嘅畫面，先寫 `<path>.part` 再改名，所以等緊個檔案嘅驅動程式永遠唔會讀到一半。每次請求只儲存一格畫面，而且畫布淨係喺顯示緊嘅時候先會畫：要先切換到準備或者預覽分頁。`scripts/md3/sweep-dialogs.py` 嘅 `canvas:` 項目就係用佢。
+
 ## 語言審核
 
 命令通道亦接受 `language-audit`。當應用程式處於雙語模式時，佢會遍歷每個顯示嘅 `wxStaticText`（包括套件 `Label`）、`wxButton` 同埋套件 `Button`、`wxCheckBox`、`wxRadioButton` 同埋 `wxStaticBox`，並按 `BilingualRegistry` 對每個嘅標籤進行分類：
@@ -60,7 +62,7 @@ review-status: agent-drafted
 
 雙語裝飾器（`BilingualDecorator.cpp`）喺 250 毫秒計時器上應用自己嘅標籤，並且只係每十二個刻度（大約 3 秒）全面掃過一次每個顯示嘅視窗。驅動程式應該喺表面首次顯示後至少等待 4 秒，先至傳送 `language-audit`；否則報告描述一個裝飾器未到達嘅視窗。
 
-佢睇唔到嘅嘢：ImGui 面板或另一個自繪製 widget 繪製嘅文字，同埋直接繪製到 3D canvas 上嘅任何嘢，都冇 `wxWindow` 標籤可以比呢個命令讀取。
+佢睇唔到嘅嘢：ImGui 面板或另一個自繪製 widget 繪製嘅文字，同埋直接繪製到 3D canvas 上嘅任何嘢，都冇 `wxWindow` 標籤可以比呢個命令讀取。畫布嘅話，可以改用 `canvas-png` 攞像素嚟檢查。
 
 ## 啟動
 
