@@ -107,3 +107,19 @@ TEST_CASE("Checked-in Cantonese catalog loads and supplies bilingual fallback", 
     REQUIRE(fallback.primary == wxString::FromUTF8("__missing_catalog_message__"));
     REQUIRE_FALSE(fallback.has_secondary());
 }
+
+TEST_CASE("An empty message never comes back as the catalogue header", "[LanguageMode][catalog]")
+{
+    // A catalogue answers the empty msgid with its header. On md3-v151 every
+    // Cantonese spin field without a unit showed "Project-Id-Version: ..." and
+    // squeezed its number to nothing.
+    LanguageModeService service;
+    const wxString catalog_root = wxString::FromUTF8(LANGUAGE_MODE_TEST_I18N_DIR);
+    for (const char *mode : {LANGUAGE_MODE_CANTONESE_HONG_KONG, LANGUAGE_MODE_ENGLISH_CANTONESE_HK, LANGUAGE_MODE_ENGLISH}) {
+        REQUIRE(service.configure(mode, catalog_root));
+        REQUIRE(service.finish(wxString(), wxString()).empty());
+        const LocalizedText empty = service.translate(wxString());
+        REQUIRE(empty.primary.empty());
+        REQUIRE_FALSE(empty.has_secondary());
+    }
+}

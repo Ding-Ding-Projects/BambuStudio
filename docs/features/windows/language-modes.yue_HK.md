@@ -1,6 +1,6 @@
 ---
 translation-of: language-modes.md
-source-sha256: 7db8b35cfcabfccff9c7e9e58af367531d234fe3f8eeb32d6a0b339df271a886
+source-sha256: 0ad91431a438305d99c40b0cb149fed0899ebec05d0648ab2da5feac2f8e4a8e
 review-status: agent-drafted
 ---
 
@@ -96,6 +96,7 @@ Windows 分支定義咗三個標準用戶介面模式識別符：
 ## 後備同安全規則
 
 - 缺少原生粵語目錄或未翻譯嘅訊息會後備到英文用詞。
+- 空白訊息喺每種模式都維持空白。目錄會用佢嘅標頭（「Project-Id-Version: ...」）回答空白訊息，所以每個直接查目錄嘅地方都會跳過佢；以前粵語模式會將呢個標頭當成每個冇單位嘅數值輸入框嘅標籤。
 - 兩個分支目錄喺構建時被編譯：CMake `fork_catalogs` 目標（需要 Python）會將英文覆蓋 PO 同粵語 PO 轉換為 `BambuStudio.mo` 檔案，Git 入面唔會追蹤任何 MO 檔。Windows 工作流會喺打包前使用 `--check` 再次編譯已安裝嘅粵語目錄，所以過時嘅目錄唔會靜靜雞出貨。
 - Pages／瀏覽器遇到未知模式會後備到英文，而唔會覆蓋已儲存嘅有效偏好設定。
 - DeviceWeb 同舊版本地網絡資源嘅英文同粵語鍵必須完全對應，插值佔位符亦要相符。

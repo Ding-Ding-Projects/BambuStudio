@@ -565,9 +565,13 @@ bool LanguageModeService::configure(std::string_view language_mode_id, const wxS
     return catalog_ready;
 }
 
+// A catalogue answers the empty msgid with its header ("Project-Id-Version: ..."):
+// wx's own lookup refuses an empty string, a direct GetString() does not. On
+// md3-v151 every spin field without a unit showed that header in Cantonese mode.
+// So every direct lookup below skips an empty message.
 wxString LanguageModeService::english(const wxString &message, const wxString &context) const
 {
-    if (m_english_catalog != nullptr) {
+    if (m_english_catalog != nullptr && !message.empty()) {
 #if wxCHECK_VERSION(3, 1, 1)
         const wxString *found = m_english_catalog->GetString(message, UINT_MAX, context);
 #else
@@ -586,7 +590,7 @@ wxString LanguageModeService::english(const wxString &message, const wxString &c
 wxString LanguageModeService::english_plural(const wxString &singular, const wxString &plural, unsigned int n,
                                              const wxString &context) const
 {
-    if (m_english_catalog != nullptr) {
+    if (m_english_catalog != nullptr && !singular.empty()) {
 #if wxCHECK_VERSION(3, 1, 1)
         const wxString *found = m_english_catalog->GetString(singular, n, context);
 #else
@@ -632,7 +636,7 @@ wxString LanguageModeService::record_bilingual(const wxString &message, const wx
 const wxString *LanguageModeService::find_cantonese(const wxString &message, unsigned int n,
                                                     const wxString &context) const
 {
-    if (m_cantonese_catalog == nullptr)
+    if (m_cantonese_catalog == nullptr || message.empty())
         return nullptr;
 #if wxCHECK_VERSION(3, 1, 1)
     return m_cantonese_catalog->GetString(message, n, context);

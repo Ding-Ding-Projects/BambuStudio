@@ -176,6 +176,9 @@ accepted when the Squirrel package has no such contract.
 ## Fallback and safety rules
 
 - A missing native Cantonese catalog or untranslated message falls back to the English wording.
+- An empty message stays empty in every mode. A catalog answers the empty message with its header
+  ("Project-Id-Version: ..."), so every direct catalog lookup skips it; before this, Cantonese mode
+  gave every spin field without a unit that header as its label.
 - Both fork catalogs are compiled at build time: the CMake `fork_catalogs` target (which needs
   Python) turns the English override PO and the Cantonese PO into `BambuStudio.mo` files, and no MO
   is tracked in Git. The Windows workflow compiles the installed Cantonese catalog again with
