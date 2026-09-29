@@ -27452,3 +27452,9 @@ msgstr ""
 
 msgid "Release notes"
 msgstr ""
+
+msgid "Previous track"
+msgstr ""
+
+msgid "Next track"
+msgstr ""

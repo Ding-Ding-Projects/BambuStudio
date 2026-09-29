@@ -37378,3 +37378,13 @@ msgstr "重新啟動以安裝更新"
 #. review-status: agent-drafted
 msgid "Release notes"
 msgstr "發佈說明"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Previous track"
+msgstr "上一首"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Next track"
+msgstr "下一首"

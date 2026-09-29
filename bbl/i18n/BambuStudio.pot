@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-28 23:34-0400\n"
+"POT-Creation-Date: 2026-09-29 00:38-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -22015,10 +22015,13 @@ msgstr ""
 msgid "Search speakers and lights"
 msgstr ""
 
-msgid "Previous"
+msgid "Previous track"
 msgstr ""
 
 msgid "Play / Pause"
+msgstr ""
+
+msgid "Next track"
 msgstr ""
 
 msgid "Use as announcement speaker"

@@ -597,10 +597,12 @@ SmartHomeDialog::SmartHomeDialog(wxWindow *parent)
 
     // --- media controls ------------------------------------------------------
     auto *media = new wxWrapSizer(wxHORIZONTAL);
+    // "Next" alone is the wizards' next step (下一步); the bilingual layer looks labels up
+    // by their English, so the media controls say which kind of next they mean.
     const std::vector<std::pair<wxString, std::string>> controls = {
-        {_L("Previous"), "media_previous_track"},
+        {_L("Previous track"), "media_previous_track"},
         {_L("Play / Pause"), "media_play_pause"},
-        {_L("Next"), "media_next_track"},
+        {_L("Next track"), "media_next_track"},
     };
     for (const auto &[text, service] : controls) {
         auto *b = new Button(m_scroll, text);
