@@ -547,14 +547,26 @@ static void push_auto_update_ready_notification(const std::string &tag)
     NotificationManager *manager = plater ? plater->get_notification_manager() : nullptr;
     if (manager == nullptr)
         return;
-    manager->push_notification(NotificationType::AppUpdateReady, NotificationManager::NotificationLevel::ImportantNotificationLevel,
-                               auto_update_message(L("Bambu Studio %s is ready. It starts the next time you open the app."), tag), _u8L("Restart now"),
-                               [](wxEvtHandler *) {
-                                   // The link is clicked while the canvas renders. Closing the window from here
-                                   // would tear the canvas down mid-frame, so it waits for the next turn of the event loop.
-                                   wxGetApp().CallAfter([] { wxGetApp().restart_after_update(); });
-                                   return true;
-                               });
+    // The release page of that tag. The tag comes from the release JSON, so only the fork's own
+    // tag form reaches the link; anything else opens the list of releases.
+    const std::string releases = "https://github.com/Ding-Ding-Projects/BambuStudio/releases";
+    const std::string notes_url = std::regex_match(tag, std::regex("md3-v[0-9]+")) ? releases + "/tag/" + tag : releases;
+    // Stays until the user acts: restart, or close it to install later (the new version then
+    // starts the next time the app opens). Reading the notes keeps it.
+    manager->push_app_update_ready_notification(
+        auto_update_message(L("Bambu Studio %s is ready. It starts the next time you open the app. Updates from this fork are not code-signed."), tag),
+        _u8L("Restart to install update"),
+        [](wxEvtHandler *) {
+            // The link is clicked while the canvas renders. Closing the window from here
+            // would tear the canvas down mid-frame, so it waits for the next turn of the event loop.
+            wxGetApp().CallAfter([] { wxGetApp().restart_after_update(); });
+            return true;
+        },
+        _u8L("Release notes"),
+        [notes_url](wxEvtHandler *) {
+            wxLaunchDefaultBrowser(wxString::FromUTF8(notes_url));
+            return false;
+        });
 }
 
 #else // _WIN32
@@ -1815,6 +1827,7 @@ void GUI_App::post_init()
 
             //BBS: check new version
             this->check_new_version();
+            this->start_periodic_update_check();
 
             //BBS: pull the studio version policy, the startup check point waits for it
             VersionPolicyManager::inst().init([this] {
@@ -3341,6 +3354,7 @@ int GUI_App::OnExit()
     // An automatic update that is still running is not waited for: the worker stops waiting
     // and Update.exe finishes staging on its own. Joining keeps the worker from touching this
     // object once it is gone.
+    m_update_check_timer.Stop();
     m_auto_update_cancel = true;
     if (m_auto_update_thread.joinable())
         m_auto_update_thread.join();
@@ -6416,13 +6430,16 @@ void GUI_App::start_auto_update(const std::string &tag, const std::string &name,
         CallAfter([this, tag, by_user, updated]() {
             if (is_closing())
                 return;
-            if (updated)
+            if (updated) {
                 push_auto_update_ready_notification(tag);
-            else
+            } else if (by_user != 0 || m_auto_update_fallback_tag != tag) {
                 // The reason is in the log. The user still hears about the new version through the
                 // download dialog, as on a copy without automatic updates, so a broken update
                 // (a release without the update files, a blocked download) never hides a release.
+                // The six-hourly re-check shows it once per release; a manual check always does.
+                m_auto_update_fallback_tag = tag;
                 request_new_version(by_user);
+            }
         });
     });
 #else
@@ -6431,6 +6448,29 @@ void GUI_App::start_auto_update(const std::string &tag, const std::string &name,
     (void) name;
     request_new_version(by_user);
 #endif
+}
+
+// How often a running installed copy asks the feed again: a long session still finds a new release
+// the same working day, and GitHub's anonymous API limit (60 requests an hour) is never close.
+static const int kUpdateCheckIntervalMs = 6 * 60 * 60 * 1000;
+
+void GUI_App::start_periodic_update_check()
+{
+    boost::filesystem::path update_exe;
+    if (!app_config->get_bool("auto_update") || !squirrel_update_exe(update_exe))
+        return;
+    if (m_update_check_timer.IsRunning())
+        return;
+    m_update_check_timer.SetOwner(this);
+    Bind(wxEVT_TIMER, [this](wxTimerEvent &) {
+        // Turning the preference off stops the checks; the next launch decides again.
+        if (!app_config->get_bool("auto_update")) {
+            m_update_check_timer.Stop();
+            return;
+        }
+        check_new_version();
+    }, m_update_check_timer.GetId());
+    m_update_check_timer.Start(kUpdateCheckIntervalMs);
 }
 
 void GUI_App::restart_after_update()

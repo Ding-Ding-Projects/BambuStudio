@@ -37363,3 +37363,18 @@ msgstr "喺背景下載新版本，當有版本準備好時會提供重新啟動
 #. review-status: agent-drafted
 msgid "Download new versions in the background"
 msgstr "喺背景下載新版本"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Bambu Studio %s is ready. It starts the next time you open the app. Updates from this fork are not code-signed."
+msgstr "Bambu Studio %s 已準備好。下次開啟應用程式時會啟動。呢個分叉嘅更新冇數碼簽署。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Restart to install update"
+msgstr "重新啟動以安裝更新"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Release notes"
+msgstr "發佈說明"

@@ -386,6 +386,10 @@ private:
     std::atomic<bool>  m_auto_update_cancel  { false };
     // UI thread only. See take_restart_after_update().
     bool               m_restart_after_update { false };
+    // An installed copy with automatic updates checks the feed again every six hours while it runs.
+    wxTimer            m_update_check_timer;
+    // UI thread only: the release whose failed automatic update already showed the download dialog.
+    std::string        m_auto_update_fallback_tag;
 
     TryLoadLastMachine m_load_last_machine;
 
@@ -591,6 +595,9 @@ public:
     // project prompt still applies and can cancel). Squirrel starts the newest version once the
     // application has really exited.
     void            restart_after_update();
+    // Starts the six-hourly re-check for an installed copy with "Update automatically" on;
+    // does nothing for any other copy. Called once, after the startup check.
+    void            start_periodic_update_check();
     // The restart request lives only while a close is in flight: the main frame's close handler
     // takes it back at its start and hands it on again only once the close is accepted (or
     // replayed by the project page), so a cancelled close never restarts the application.

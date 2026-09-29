@@ -123,11 +123,11 @@ test('the update runs once at a time on a worker thread and reports back on the 
   assert.match(start, /m_auto_update_running\.compare_exchange_strong\(/, 'an atomic flag lets one update run at a time');
   assert.match(start, /Slic3r::create_thread\(/, 'the wait happens off the UI thread');
   assert.match(start, /CallAfter\(\[this, tag, by_user, updated\]/, 'the outcome is handled on the UI thread');
-  assert.match(start, /if \(updated\)\s*push_auto_update_ready_notification\(tag\);/, 'success tells the user the update is ready');
+  assert.match(start, /if \(updated\)\s*\{?\s*push_auto_update_ready_notification\(tag\);/, 'success tells the user the update is ready');
   assert.match(
     start,
-    /else\s*request_new_version\(by_user\);/,
-    'a failed update falls back to the download dialog on every check, so a broken update never hides a new release'
+    /else if \(by_user != 0 \|\| m_auto_update_fallback_tag != tag\) \{\s*m_auto_update_fallback_tag = tag;\s*request_new_version\(by_user\);/,
+    'a failed update falls back to the download dialog: always for a manual check, once per release for the automatic ones'
   );
   assert.doesNotMatch(start, /else if \(by_user != 0\)\s*request_new_version/, 'the automatic check is not silenced on failure');
 });
@@ -140,21 +140,44 @@ test('a success needs a newer app folder as well as exit code 0', () => {
   assert.match(staged, /directory_iterator/);
 });
 
-test('the ready notification is a non-blocking notification with a Restart now link', () => {
+test('the ready banner stays until the user acts, says the update is unsigned, and offers restart and release notes', () => {
   const ready = bodyOf(guiApp, 'static void push_auto_update_ready_notification(');
-  assert.match(ready, /NotificationType::AppUpdateReady/);
-  assert.match(ready, /_u8L\("Restart now"\)/);
-  assert.match(ready, /Bambu Studio %s is ready\. It starts the next time you open the app\./);
+  assert.match(ready, /push_app_update_ready_notification\(/);
+  assert.match(ready, /Bambu Studio %s is ready\. It starts the next time you open the app\. Updates from this fork are not code-signed\./);
+  assert.match(ready, /_u8L\("Restart to install update"\)/);
+  assert.match(ready, /_u8L\("Release notes"\)/);
   assert.match(
     ready,
     /CallAfter\(\[\]\s*\{\s*wxGetApp\(\)\.restart_after_update\(\);\s*\}\);/,
     'the link is clicked while the canvas renders, so the window closes on the next turn of the event loop'
   );
+  assert.match(ready, /wxLaunchDefaultBrowser\(/, 'release notes open in the browser');
+  assert.match(ready, /"https:\/\/github\.com\/Ding-Ding-Projects\/BambuStudio\/releases"/, 'the fork\'s own releases');
+  assert.match(ready, /releases \+ "\/tag\/" \+ tag/, 'on the page of that release');
+  assert.match(ready, /std::regex_match\(tag, std::regex\("md3-v\[0-9\]\+"\)\)/, 'only a well-formed tag reaches the link; anything else opens the release list');
+
+  const push = bodyOf(notificationSource, 'void NotificationManager::push_app_update_ready_notification(');
+  assert.match(push, /NotificationType::AppUpdateReady,\s*NotificationLevel::ImportantNotificationLevel,\s*0,/, 'duration 0: the banner never fades');
+  assert.match(push, /\.second_hypertext\s*=\s*notes_text;/);
+  assert.match(push, /\.second_callback\s*=\s*std::move\(notes_callback\);/);
+  assert.match(notificationHeader, /void push_app_update_ready_notification\(/);
   assert.match(notificationHeader, /AppUpdateReady,\s*NotificationTypeCount/, 'a dedicated notification type, added before the count');
   assert.match(notificationSource, /case NotificationType::AppUpdateReady:\s*return "AppUpdateReady";/);
 });
 
-test('"Restart now" hands over to Squirrel and waits for the app to exit', () => {
+test('an installed copy with the preference on checks again every six hours while it runs', () => {
+  assert.match(guiApp, /kUpdateCheckIntervalMs\s*=\s*6 \* 60 \* 60 \* 1000;/);
+  const start = bodyOf(guiApp, 'void GUI_App::start_periodic_update_check()');
+  assert.match(start, /app_config->get_bool\("auto_update"\)\s*\|\|\s*!squirrel_update_exe\(/, 'only an installed copy with the preference on');
+  assert.match(start, /m_update_check_timer\.Start\(kUpdateCheckIntervalMs\);/);
+  assert.match(start, /check_new_version\(\);/, 'the timer runs the same check as the startup');
+  assert.match(start, /if \(!app_config->get_bool\("auto_update"\)\)\s*\{\s*m_update_check_timer\.Stop\(\);/, 'turning the preference off stops the checks');
+  const onExit = bodyOf(guiApp, 'int GUI_App::OnExit()');
+  assert.match(onExit, /m_update_check_timer\.Stop\(\);/);
+  assert.match(guiApp, /this->check_new_version\(\);\s*this->start_periodic_update_check\(\);/, 'started right after the startup check');
+});
+
+test('"Restart to install update" hands over to Squirrel and waits for the app to exit', () => {
   assert.match(guiApp, /kSquirrelRestartArguments\s*=\s*L"--processStartAndWait bambu-studio\.exe"/);
   const launch = bodyOf(guiApp, 'static void launch_squirrel_restart()');
   assert.match(launch, /squirrel_update_exe\(/, 'only a Squirrel install can restart this way');
@@ -198,8 +221,9 @@ test('the new messages are extracted into the source catalogue', async () => {
   const ids = catalogueIds(await read('bbl', 'i18n', 'BambuStudio.pot'));
   for (const id of [
     'Update automatically',
-    'Restart now',
-    'Bambu Studio %s is ready. It starts the next time you open the app.',
+    'Restart to install update',
+    'Release notes',
+    'Bambu Studio %s is ready. It starts the next time you open the app. Updates from this fork are not code-signed.',
     'Downloading Bambu Studio %s in the background.',
   ]) {
     assert.ok(ids.has(id), `${id} must be in bbl/i18n/BambuStudio.pot (run scripts/i18n/update_catalogs.py)`);
@@ -208,7 +232,7 @@ test('the new messages are extracted into the source catalogue', async () => {
 
 test('the feature article describes the preference, the restart and the fallbacks', async () => {
   const doc = await read('docs', 'features', 'windows', 'app-updates.md');
-  for (const needle of ['Update automatically', '`auto_update`', 'Update.exe', 'Restart now', '--processStartAndWait']) {
+  for (const needle of ['Update automatically', '`auto_update`', 'Update.exe', 'Restart to install update', 'Release notes', 'not code-signed', 'every six hours', '--processStartAndWait']) {
     assert.ok(doc.includes(needle), `app-updates.md must mention ${needle}`);
   }
 });

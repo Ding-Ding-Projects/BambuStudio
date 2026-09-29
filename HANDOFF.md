@@ -62,6 +62,12 @@ kept equal to `main` and exists only as the checkout of the session that started
   advance, Retraction test, the three Export items, Setup Wizard, the gear menu, AI ink scanner) found CJ-019
   and otherwise only probe false positives; the Export items and the gear menu open popups that the capture
   route paints black, so they have probe data and no image.
+- The update feed was stuck: a main build became the latest release only if `main` had not moved while
+  it built, so every build after `md3-v143` was published as superseded. From `904ccc37a` a main build
+  becomes latest when its commit is newer than the latest release's. The ready notice is now a banner
+  that stays until the user acts, with Restart to install update, Release notes and a notice that
+  updates are not code-signed, and an installed copy re-checks every six hours (issue #46). Placeholder
+  hints are bilingual too (`f0fb0c297`). Notification links still show English only in bilingual mode.
 - Not verified: behaviour in a running application in any of the three modes (no captures from a released build
   yet), and human review of the agent-drafted Cantonese.
 

@@ -2032,6 +2032,18 @@ void NotificationManager::push_project_history_failure_notification(const std::s
 	                  text, _u8L("Retry"), std::move(retry_callback));
 }
 
+void NotificationManager::push_app_update_ready_notification(const std::string& text,
+                                                             const std::string& restart_text, std::function<bool(wxEvtHandler*)> restart_callback,
+                                                             const std::string& notes_text, std::function<bool(wxEvtHandler*)> notes_callback)
+{
+	// Duration 0: the important-level look without its 20 s fade, so the banner waits for the user.
+	NotificationData data{ NotificationType::AppUpdateReady, NotificationLevel::ImportantNotificationLevel, 0,
+	                       text, restart_text, std::move(restart_callback) };
+	data.second_hypertext = notes_text;
+	data.second_callback = std::move(notes_callback);
+	push_notification_data(data, 0);
+}
+
 void NotificationManager::push_delayed_notification(const NotificationType type, std::function<bool(void)> condition_callback, int64_t initial_delay, int64_t delay_interval)
 {
 	auto it = std::find_if(std::begin(basic_notifications), std::end(basic_notifications),

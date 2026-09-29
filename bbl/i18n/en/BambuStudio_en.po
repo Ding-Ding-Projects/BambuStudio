@@ -27442,3 +27442,13 @@ msgstr ""
 
 msgid "Download new versions in the background"
 msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Bambu Studio %s is ready. It starts the next time you open the app. Updates from this fork are not code-signed."
+msgstr ""
+
+msgid "Restart to install update"
+msgstr ""
+
+msgid "Release notes"
+msgstr ""

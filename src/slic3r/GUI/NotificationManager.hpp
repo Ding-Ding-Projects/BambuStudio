@@ -258,6 +258,12 @@ public:
 	// hyperlink wired to the caller's callback (which should return true to
 	// dismiss the snackbar once the retry is under way).
 	void push_project_history_failure_notification(const std::string& text, std::function<bool(wxEvtHandler*)> retry_callback);
+	// A new version is downloaded and staged. The banner never fades: it stays until the user
+	// restarts, or closes it to install later. Two links: restart, and the release notes (which
+	// keeps the banner). Repeated checks refresh the one banner.
+	void push_app_update_ready_notification(const std::string& text,
+	                                        const std::string& restart_text, std::function<bool(wxEvtHandler*)> restart_callback,
+	                                        const std::string& notes_text, std::function<bool(wxEvtHandler*)> notes_callback);
 	// Pushes basic_notification with delay. See push_delayed_notification_data.
 	void push_delayed_notification(const NotificationType type, std::function<bool(void)> condition_callback, int64_t initial_delay, int64_t delay_interval);
 	// Removes all notifications of type from m_waiting_notifications

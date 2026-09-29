@@ -38,10 +38,12 @@
    one. Only one update runs at a time.
 3. **Ready.** Exit code 0 together with a newer `app-<version>` folder on disk counts as ready
    (Update.exe also exits with 0 when there is nothing to install, so the folder is checked too).
-   The app then shows a non-blocking notification, "Bambu Studio `<tag>` is ready. It starts the
-   next time you open the app.", with a **Restart now** link. Ignoring it is fine: the new version
-   starts the next time the app is opened.
-4. **Restart now.** The main window is closed through the normal close path, so the
+   The app then shows a non-blocking banner that stays until the user acts: "Bambu Studio `<tag>`
+   is ready. It starts the next time you open the app. Updates from this fork are
+   not code-signed.", with two links, **Restart to install update** and **Release notes** (the page
+   of that release in the browser; the banner stays). Closing the banner is "later": the new
+   version starts the next time the app is opened.
+4. **Restart to install update.** The main window is closed through the normal close path, so the
    unsaved-project prompt still applies and Cancel keeps the app open with no restart pending
    (the request is taken back at the start of every close and handed on again only when the close
    is accepted, or replayed by the project page). When the application is really exiting it
@@ -50,6 +52,9 @@
 5. **Manual check.** Help ▸ Check for updates takes the same route. It first shows a short
    "Downloading Bambu Studio `<tag>` in the background." notification, so the check does not look
    like it did nothing while a large package downloads.
+6. **While it runs.** An installed copy with the preference on checks again every six hours, so a
+   session left open for days still finds a new release. Turning the preference off stops these
+   checks until the next launch.
 
 ## Configuration
 
@@ -66,15 +71,16 @@
 - Update.exe cannot be started, exits with a non-zero code, exits with 0 but stages nothing newer,
   or does not finish within 30 minutes: every step is logged (lines starting with `auto update:`).
   The check then falls back to the download dialog, as on a copy without automatic updates (a
-  skipped version stays skipped), so a broken update never hides a new release; the automatic
-  update is tried again at the next launch. The wait is abandoned after 30 minutes but Update.exe
+  skipped version stays skipped), so a broken update never hides a new release: always after a
+  manual check, and once per release for the automatic checks, so the six-hourly re-check does not
+  repeat it. The automatic update is tried again at the next check. The wait is abandoned after 30 minutes but Update.exe
   itself is never terminated, since killing it half way through staging could leave a partial
   folder.
 - The application closes while an update is downloading: the wait stops and Update.exe is left
   to finish on its own, so the next launch starts the new version. The app does nothing about a
   second Update.exe started meanwhile (by the next launch, say); whatever that run reports
   follows the paths above.
-- Restart now cancelled at the unsaved-project prompt (or any other veto of the close): nothing
+- Restart to install update cancelled at the unsaved-project prompt (or any other veto of the close): nothing
   restarts, and a later, unrelated quit does not restart either.
 - Update.exe cannot be started for the restart: the app simply exits and the new version starts
   the next time it is opened.
@@ -85,10 +91,13 @@
 ## Security considerations
 
 - Anonymous read of a public API; no token is sent. The rate limit (60 requests per hour per IP)
-  is far above the app's one call per launch plus manual checks.
+  is far above the app's one call per launch, one every six hours on an installed copy, plus
+  manual checks.
 - The automatic update uses HTTPS to GitHub and to the release-asset hosts GitHub redirects to.
   The feed address is a constant in the source; nothing from the release JSON, the preferences or
-  user input reaches the Update.exe command line, and the restart command line is fixed too.
+  user input reaches the Update.exe command line, and the restart command line is fixed too. The
+  release notes link is the fork's release page for a tag of the form `md3-v<N>`; any other tag
+  opens the list of releases.
 - The app downloads and executes nothing itself. Squirrel's `Update.exe` does, and it verifies the
   package against the SHA-1 in `RELEASES`. That checks integrity, not authorship: the packages are
   unsigned by policy, so trust rests on HTTPS to GitHub and on control of the release. A portable
@@ -101,10 +110,11 @@
 
 - Contract: `node --test ui-md3/tests/app-auto-update.test.mjs` pins the install detection, the routing in
   `check_new_version`, the fixed feed, the hidden process, the exit-code-and-folder success rule,
-  the restart hand-over, the cancelled-close rule, the `auto_update` default and the extracted
+  the restart hand-over, the cancelled-close rule, the banner that never fades with its two links
+  and unsigned notice, the six-hourly re-check, the `auto_update` default and the extracted
   messages. The comparison of `published_at` with the build time is not covered by a contract.
 - Runtime (pending a release capture): install an older release with `Setup.exe`, launch it and
-  confirm the `auto update:` log lines, the "is ready" notification and, after Restart now, that
+  confirm the `auto update:` log lines, the "is ready" banner and, after Restart to install update, that
   the newer version starts; then repeat with the preference off and with a portable copy and
   confirm the download dialog appears instead. Launch a build newer than the latest release and
   confirm neither route triggers.
