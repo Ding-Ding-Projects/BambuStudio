@@ -228,8 +228,8 @@ waits 6.5 s after a dialog opens, two passes of the bilingual decorator, instead
 ## Layout-probe dumps
 
 `probe/<tuple>--<before|after>.jsonl`, one per main-frame idle dump plus one per opened dialog,
-read with `node ui-md3/tests/layout-probe-report.mjs`. The findings table for each run is recorded
-in `docs/features/design-system/cheap-jor-inventory.md`.
+read with `node ui-md3/tests/layout-probe-report.mjs`. The findings for each run are recorded in
+`docs/features/design-system/clipping-inventory.md`.
 
 ## Limitations
 
