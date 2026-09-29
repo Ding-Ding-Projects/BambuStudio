@@ -31,6 +31,9 @@
 
 ## Every element in Material Design 3 and in three language modes (issues #43 and #45)
 
+The new features of this line, with their status in one table, are listed under "New features in this
+line" in the [README](README.md).
+
 Ticks mean implemented, on `main`, and compiled by the Windows build (Build BambuStudio passed at
 `fda9ba284`, release `md3-v135`). Behaviour in a running application is a separate box and stays unticked
 until captures from a released build exist.

@@ -31,7 +31,11 @@ identity.
 
 Scope: every element on the Material Design 3 kit, and every element in English, Hong Kong Cantonese and
 bilingual mode. Every change is pushed straight to `main`; the task branch `claude/lang-gui-elements-9cc0be` is
-kept equal to `main` and exists only as the checkout of the session that started the work.
+kept equal to `main` and exists only as the checkout of the session that started the work. The README's
+"New features in this line" table lists every feature this work added (automatic updates, the moving
+release feed, the splash release date, bilingual coverage, the Cantonese catalog and content,
+Cantonese line breaking, the clipping fixes and the verification tools) with its status and what is
+still to verify.
 
 - Landed and compiled (release `md3-v135`): kit conversion (36 of 36 contracts, `de1f25259`); complete
   Cantonese catalogue with a drafted-entry audit (`db39e3bb1`, `50e82299f`); about 200 literals routed through

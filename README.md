@@ -29,12 +29,33 @@ last verified release until a newer release is confirmed. See the
 [roadmap](ROADMAP.md) and [handoff](HANDOFF.md) for exact state and limitations.
 
 The Windows UI provides three canonical fork modes: English (`en`), playful Hong Kong Cantonese
-preview (`yue_HK`), and compact English + Cantonese preview (`bilingual_en_yue_HK`). Existing Bambu Studio
-locales remain available. Missing Cantonese copy falls back to English; native bilingual presentation
-is opt-in on migrated surfaces, and the Cantonese catalog remains a curated preview pending broader
-human review. See the
+preview (`yue_HK`), and English + Cantonese (`bilingual_en_yue_HK`). Existing Bambu Studio locales remain
+available. The Cantonese catalog covers every message the app extracts, with any gap falling back to
+English, and bilingual mode pairs both languages on every native surface where they fit. The Cantonese
+is agent-drafted and still awaits broader human review. See the
 [language-mode documentation](docs/features/windows/language-modes.md) for coverage and fallback
 details.
+
+### New features in this line
+
+Features added for this line of releases, with where each one stands. "Verified" means checked in an
+unmodified release package on a hidden desktop; the evidence is listed in
+[the capture provenance](docs/screenshots/md3-everything/README.md).
+
+| Feature | Status | Details |
+| --- | --- | --- |
+| Automatic updates from this fork's GitHub releases: an installed copy downloads a new version in the background, then a banner offers **Restart to install update** and **Release notes** and says the update is not code-signed; it checks again every six hours, and the download dialog stays as the fallback | In releases since `md3-v151`; the **Update automatically** preference is verified in all three language modes; an installed copy updating itself is not verified yet | [App updates](docs/features/windows/app-updates.md) |
+| The release feed moves: a build becomes the latest release when its commit is newer than the current latest | Verified (`md3-v151` onward) | [Release supply chain](docs/features/releases/windows-release-supply-chain.md) |
+| The splash screen says when the running version was released, in English, Cantonese or both | Verified on `md3-v153` | [Splash release date](docs/features/windows/splash-release-date.md) |
+| Bilingual mode on every native surface: labels, buttons, check boxes, radio buttons, group boxes, section headers, list and table column titles, placeholder hints, tooltips, menus, message dialog bodies, notification links, self-drawn widgets and the 3D canvas, each paired only where both languages fit, with the Cantonese in the tooltip otherwise | Verified surface by surface; the `md3-v153` language audit found no English-only label on Prepare or Preferences > General | [Language modes](docs/features/windows/language-modes.md) |
+| A complete Hong Kong Cantonese catalog (7,658 entries), Cantonese feature articles (72) and a Cantonese in-app changelog | In releases; human review pending | [Language modes](docs/features/windows/language-modes.md) |
+| Cantonese line breaking that never starts a line with closing punctuation such as "。" and never splits an emoji | Fixed in source (`c7309b889`), not yet in a release | [Language modes](docs/features/windows/language-modes.md) |
+| Every dialog kept inside its own edges in all three modes: 24 clipping defects found by capture and by the layout probe, each with its cause and fix | 16 verified in built packages (CJ-014 to CJ-020 from this month's releases), 8 fixed in source and waiting for a capture | [Clipping inventory](docs/features/design-system/clipping-inventory.md) |
+| Verification tools: the layout probe's `language-audit` command and splash hook, and capture scripts for dialogs, the splash, Preferences search and the language audit | In use for every release check above | [Layout probe](docs/features/design-system/layout-probe.md) |
+
+Still to add or verify for these features: an installed copy updating itself from one release to the
+next (it needs a Windows account whose installed copy can be replaced), notification links captured
+in a release, the 125%, 150% and 200% display scales, and human review of the Cantonese.
 
 ## Native UI modernization (Material Design 3)
 
