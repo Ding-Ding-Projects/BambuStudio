@@ -43,8 +43,10 @@ def painted_fraction(path):
     """Share of pixels that are not pure black: 0.0 for a frame taken before the splash painted."""
     from PIL import Image
     with Image.open(path) as im:
-        pixels = im.convert('RGB').getdata()
-        return sum(1 for p in pixels if p != (0, 0, 0)) / max(1, len(pixels))
+        data = im.convert('RGB').tobytes()
+    count = len(data) // 3
+    black = sum(1 for i in range(0, len(data), 3) if data[i] == 0 and data[i + 1] == 0 and data[i + 2] == 0)
+    return (count - black) / max(1, count)
 
 
 def burst(w, args):
