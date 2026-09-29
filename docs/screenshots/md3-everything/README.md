@@ -78,7 +78,7 @@ stayed English only (column titles and a section header, fixed in `87ec5c44c`).
 
 ## Release md3-v148 captures (2026-09-29)
 
-Taken by `scripts/md3/sweep-dialogs.py` from the unmodified `md3-v148` release package: nothing was
+Taken by `scripts/md3/sweep-dialogs.py` and `scripts/md3/capture-tuple.py` from the unmodified `md3-v148` release package: nothing was
 added to its payload, and every import of its executables and DLLs resolves in the package or in
 Windows (`scripts/ci/check_payload_imports.py`).
 
@@ -93,6 +93,9 @@ Windows (`scripts/ci/check_payload_imports.py`).
 | File | Dialog | Tuple |
 | --- | --- | --- |
 | `dialog-check-for-update--bilingual_en_yue_HK-light-comfortable--before.png` | Newest-version message (before CJ-020) | `bilingual_en_yue_HK-light-comfortable` |
+| `release-md3-v148-prepare--en-light-comfortable.png` | Main window, Prepare page: the release starts with nothing added | `en-light-comfortable` |
+| `release-md3-v148-prepare--yue_HK-light-comfortable.png` | Main window, Prepare page | `yue_HK-light-comfortable` |
+| `release-md3-v148-prepare--bilingual_en_yue_HK-light-comfortable.png` | Main window, Prepare page | `bilingual_en_yue_HK-light-comfortable` |
 
 ## Layout-probe dumps
 
