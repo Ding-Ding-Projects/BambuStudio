@@ -1,0 +1,12 @@
+#ifndef __SLIC3R_BUILD_TIME_H
+#define __SLIC3R_BUILD_TIME_H
+
+// The moment this build was configured, kept apart from libslic3r_version.h.
+// Nearly every source (and the precompiled header) includes the version
+// header, so a value that changes with every configure there made every
+// object out of date and no build could reuse an earlier build's objects.
+// Only the few sources that show or log the build time include this one.
+#define SLIC3R_BUILD_TIME "@SLIC3R_BUILD_TIME@"
+#define SLIC3R_BUILD_TIME_UTC "@SLIC3R_BUILD_TIME_UTC@"
+
+#endif /* __SLIC3R_BUILD_TIME_H */

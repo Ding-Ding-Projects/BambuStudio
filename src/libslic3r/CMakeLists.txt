@@ -49,6 +49,10 @@ set(SLIC3R_COMPILE_VERSION "${GIT_SHA1}")
 endif()
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/libslic3r_version.h.in ${CMAKE_CURRENT_BINARY_DIR}/libslic3r_version.h @ONLY)
+# The build time goes into a header of its own: libslic3r_version.h is included
+# nearly everywhere, and a value that changes with every configure there would
+# make every object out of date on every build.
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/libslic3r_build_time.h.in ${CMAKE_CURRENT_BINARY_DIR}/libslic3r_build_time.h @ONLY)
 
 if (MINGW)
     add_compile_options(-Wa,-mbig-obj)

@@ -43,6 +43,13 @@
 - [ ] Decide whether to remove the unused npm `package-lock.json` from the device page: with the graph back on, every new advisory for a package in it raises another alert (#25 to #27 arrived on 2026-09-29 and are dismissed).
 - [ ] Move the device page to vitest 4.x when its local tests are next touched; that clears GHSA-82fw-gwwq-j7x9 at the source instead of by dismissal.
 
+## Faster hosted Windows builds
+
+- [x] Find where the time goes: in run [36631880242](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36631880242) (`bb78abee1`) the compile step took 72 of the build job's 80 minutes, and sccache cached 99 of 795 compile requests; the other 696 use the precompiled header (`/Fp` 693, `/Yc` 3), which it cannot cache.
+- [ ] Keep the per-configure build-time stamp out of `libslic3r_version.h`, which nearly every source and the precompiled header include: it moved to `libslic3r_build_time.h`, included by three sources. In source; unticked until a hosted build compiles it.
+- [ ] Reuse the last `main` build tree from the draft release `build-cache-windows`, in parts of at most 1,500,000,000 bytes, so Ninja rebuilds only what changed ([Build cache](docs/features/releases/windows-release-supply-chain.md#build-cache)). A local run of both scripts passes 34 checks, a Ninja check confirms only changed files rebuild after the round trip, and every `gh release` command they use works on the draft. Unticked until the first hosted `main` build saves a set and the next build restores it.
+- [ ] Measure the first warm build against the 80-minute cold build and record both runs.
+
 ## Every element in Material Design 3 and in three language modes (issues #43 and #45)
 
 The new features of this line, with their status in one table, are listed under "New features in this

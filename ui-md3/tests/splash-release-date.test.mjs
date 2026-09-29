@@ -21,6 +21,7 @@ const stripComments = (source) => source
   .replace(/[ \t]+\/\/[^"\n]*$/gm, '');
 
 const versionHeader = await read('src', 'libslic3r', 'libslic3r_version.h.in');
+const buildTimeHeader = await read('src', 'libslic3r', 'libslic3r_build_time.h.in');
 const libslic3rCmake = await read('src', 'libslic3r', 'CMakeLists.txt');
 const guiApp = await read('src', 'slic3r', 'GUI', 'GUI_App.cpp');
 
@@ -30,7 +31,17 @@ test('the build records the moment it was made in UTC', () => {
     /string\(TIMESTAMP\s+SLIC3R_BUILD_TIME_UTC\s+"%Y-%m-%dT%H:%M:%SZ"\s+UTC\)/,
     'the local-time build stamp carries no offset, so the release date needs its own UTC stamp'
   );
-  assert.match(versionHeader, /#define SLIC3R_BUILD_TIME_UTC "@SLIC3R_BUILD_TIME_UTC@"/);
+  assert.match(buildTimeHeader, /#define SLIC3R_BUILD_TIME_UTC "@SLIC3R_BUILD_TIME_UTC@"/);
+  assert.match(stripComments(libslic3rCmake), /configure_file\([^)]*libslic3r_build_time\.h\.in[^)]*libslic3r_build_time\.h @ONLY\)/,
+    'the build time is generated into its own header');
+  assert.match(guiApp, /^#include "libslic3r_build_time\.h"\r?$/m, 'and the splash screen reads it from there');
+});
+
+test('the version header carries nothing that changes from one build to the next', () => {
+  // libslic3r_version.h is included by libslic3r.h and by the precompiled
+  // header, so a per-build value in it made every object out of date and no
+  // build could reuse an earlier build's objects (the Windows build cache).
+  assert.doesNotMatch(versionHeader, /SLIC3R_BUILD_TIME/, 'the build time lives in libslic3r_build_time.h');
 });
 
 test('the splash screen draws the release date under its title', () => {

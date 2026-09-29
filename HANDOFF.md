@@ -371,6 +371,32 @@ the tracking issue is [#47](https://github.com/Ding-Ding-Projects/BambuStudio/is
   remove the unused npm `package-lock.json` (it keeps raising alerts now that the graph is on), and
   vitest 4.x (the only way to clear GHSA-82fw-gwwq-j7x9 at the source).
 
+## Faster hosted Windows builds (2026-09-29)
+
+Scope: shorten the hosted Windows build. Full record:
+[`docs/features/releases/windows-release-supply-chain.md`, "Build cache"](docs/features/releases/windows-release-supply-chain.md#build-cache).
+
+- Cause, from run [36631880242](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36631880242)
+  (`bb78abee1`): "Build slicer Win" took 72 minutes of the 80-minute build job. sccache cached 99 of 795
+  compile requests; the other 696 use the precompiled header (`/Fp` 693, `/Yc` 3), which it cannot cache.
+- Change (in source, not yet run on GitHub): the build-time stamp moved from `libslic3r_version.h` (in
+  every object's includes and the precompiled header) to `libslic3r_build_time.h`, which three sources
+  include. `scripts/ci/Restore-BuildCache.ps1` restores the last `main` build tree from the draft release
+  `build-cache-windows` before the compile, and `scripts/ci/Save-BuildCache.ps1` saves each successful
+  `main` push build there in 7-Zip parts of at most 1,500,000,000 bytes. The steps use the owner token
+  `TOKEN_GITHUB`, passed down with `secrets: inherit`. Any problem means a build from scratch, never a
+  failed build; `[cold build]` in a commit message forces one.
+- Checked: `ui-md3/tests/build-cache.test.mjs`; a local run of both scripts against a stand-in `gh` (34
+  checks, including every fallback); a Ninja file whose steps only write files (no compiler), confirming that after the 7-Zip
+  round trip only changed sources and their dependents rebuild; a stand-in runner showing that the
+  background save must start hidden and log for itself (started with redirected output, it held the
+  step's output open for 20 seconds after the step exited); and a live round trip of every `gh
+  release` command the scripts use on the (still empty) draft `build-cache-windows`, which anonymous
+  visitors cannot see.
+- Open: the first hosted `main` build after this change saves the first set (a cold build); the one
+  after it is the first warm build. Record both runs, the restore notice, the part sizes and the compile
+  step's time. If a warm build ever looks stale, push with `[cold build]` and compare.
+
 ## Branch and worktree cleanup (2026-09-29)
 
 - `0d883d9fe` records 21 older `codex/*` branches as merged with `-s ours`: `git cherry` showed every one of their

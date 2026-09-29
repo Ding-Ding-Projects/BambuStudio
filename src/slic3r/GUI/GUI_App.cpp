@@ -1,5 +1,6 @@
 #include "libslic3r/Technologies.hpp"
 #include "GUI_App.hpp"
+#include "libslic3r_build_time.h"
 #include "AppDisplayName.hpp"
 #include "BilingualDecorator.hpp"
 #include "BilingualRegistry.hpp"

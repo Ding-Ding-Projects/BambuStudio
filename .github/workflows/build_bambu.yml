@@ -121,6 +121,27 @@ jobs:
         with:
           python-version: '3.13'
 
+      # sccache cannot cache a compile that uses the precompiled header ("Non-
+      # cacheable: /Fp"), which is nearly every source, so every build compiled
+      # them all. The Ninja tree of the latest main build, precompiled header
+      # included, is restored from the draft build cache release instead, and
+      # Ninja rebuilds only what changed since (docs/features/releases/
+      # windows-release-supply-chain.md, Build cache). A missing, mismatched or
+      # damaged cache only means a build from scratch, and a commit message
+      # containing [cold build] asks for one.
+      - name: Restore the build tree from the build cache release
+        id: build_cache
+        if: inputs.os == 'windows-latest'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.TOKEN_GITHUB }}
+        run: >-
+          ./scripts/ci/Restore-BuildCache.ps1
+          -Repository '${{ github.repository }}'
+          -Workspace '${{ github.workspace }}'
+          -DependencyCacheKey '${{ inputs.cache-key }}'
+          -Cold:$${{ contains(github.event.head_commit.message, '[cold build]') }}
+
       - name: Build slicer Win
         id: build_win
         if: inputs.os == 'windows-latest'
@@ -130,18 +151,28 @@ jobs:
           SCCACHE_GHA_ENABLED: 'true'
         run: |
           $ErrorActionPreference = 'Stop'
-          cmake -S . -B build `
-            -G Ninja `
-            -DCMAKE_C_COMPILER_LAUNCHER=sccache `
-            -DCMAKE_CXX_COMPILER_LAUNCHER=sccache `
-            -DSLIC3R_MSVC_PDB=OFF `
-            -DBBL_RELEASE_TO_PUBLIC=1 `
-            -DBBL_INTERNAL_TESTING=0 `
-            -DSLIC3R_BUILD_TESTS=OFF `
-            '-DCMAKE_PREFIX_PATH=${{ github.workspace }}\deps\build\BambuStudio_dep\usr\local' `
-            '-DCMAKE_INSTALL_PREFIX=${{ github.workspace }}\install-dir' `
-            -DCMAKE_BUILD_TYPE=Release `
+          $configure = @(
+            '-S', '.', '-B', 'build',
+            '-G', 'Ninja',
+            '-DCMAKE_C_COMPILER_LAUNCHER=sccache',
+            '-DCMAKE_CXX_COMPILER_LAUNCHER=sccache',
+            '-DSLIC3R_MSVC_PDB=OFF',
+            '-DBBL_RELEASE_TO_PUBLIC=1',
+            '-DBBL_INTERNAL_TESTING=0',
+            '-DSLIC3R_BUILD_TESTS=OFF',
+            '-DCMAKE_PREFIX_PATH=${{ github.workspace }}\deps\build\BambuStudio_dep\usr\local',
+            '-DCMAKE_INSTALL_PREFIX=${{ github.workspace }}\install-dir',
+            '-DCMAKE_BUILD_TYPE=Release',
             '-DWIN10SDK_PATH=C:/Program Files (x86)/Windows Kits/10/Include/10.0.22000.0'
+          )
+          cmake @configure
+          # A restored tree that will not configure is dropped, never trusted:
+          # the build goes on from scratch, as it would have without a cache.
+          if ($LASTEXITCODE -ne 0 -and '${{ steps.build_cache.outputs.state }}' -eq 'warm') {
+              Write-Host "::warning::Configuring the restored build tree failed with exit code $LASTEXITCODE; configuring from scratch."
+              Remove-Item -LiteralPath build -Recurse -Force
+              cmake @configure
+          }
           if ($LASTEXITCODE -ne 0) {
               throw "Configuring the production Windows build failed with exit code $LASTEXITCODE."
           }
@@ -162,6 +193,26 @@ jobs:
           # Stats from THIS step's server session — the post-job stats step
           # spawns a fresh server whose zeroed counters say nothing.
           sccache --show-stats
+
+      # Only main builds write the cache, so every build starts from main's
+      # tree. The tree is archived and uploaded in parts of at most 1.5 GB in
+      # the background while the payload is packaged; the last step waits.
+      - name: Start saving the build tree to the build cache release
+        if: inputs.os == 'windows-latest' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.TOKEN_GITHUB }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $log = Join-Path $env:RUNNER_TEMP 'build-cache-save.log'
+          $script = Join-Path $env:GITHUB_WORKSPACE 'scripts\ci\Save-BuildCache.ps1'
+          # Started hidden and without output redirection, and it writes its own
+          # log: a child started with redirection inherits this step's output
+          # pipe, and the runner kills whatever still holds it once the step ends.
+          $process = Start-Process -FilePath pwsh -WindowStyle Hidden -PassThru `
+            -ArgumentList @('-NoProfile', '-Command', "& '$script' *> '$log'")
+          "BUILD_CACHE_SAVE_PID=$($process.Id)" | Out-File -Append -FilePath $env:GITHUB_ENV -Encoding utf8
+          Write-Host "Saving the build tree to the build cache release in the background (process $($process.Id))."
 
       # The build compiled and installed both fork catalogs (fork_catalogs in
       # CMakeLists.txt). Verify the installed Cantonese MO is byte-identical to
@@ -415,3 +466,17 @@ jobs:
             ${{ github.workspace }}/artifacts/windows/squirrel/*
             ${{ github.workspace }}/BambuStudioMD3.cdx.json
           if-no-files-found: warn
+
+      - name: Finish saving the build tree to the build cache release
+        if: always() && inputs.os == 'windows-latest' && env.BUILD_CACHE_SAVE_PID != ''
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          $process = Get-Process -Id ([int]$env:BUILD_CACHE_SAVE_PID) -ErrorAction SilentlyContinue
+          if ($process) {
+              $process | Wait-Process -Timeout 1800 -ErrorAction SilentlyContinue
+              if (-not $process.HasExited) { Write-Host '::warning::Saving the build cache did not finish within 30 minutes.' }
+          }
+          $log = Join-Path $env:RUNNER_TEMP 'build-cache-save.log'
+          if (Test-Path -LiteralPath $log) { Get-Content -LiteralPath $log }
+          else { Write-Host '::warning::The build cache save wrote no log.' }

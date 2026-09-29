@@ -12,8 +12,9 @@ Every successful non-pull-request branch-push or manual-dispatch run publishes o
 non-draft release. Tags include the application version and workflow run number. A rerun converges on
 the same tag instead of creating a duplicate. The release job validates the exact Squirrel assets,
 source-commit metadata, checksum, an empty PE security directory (unsigned Setup.exe), feed index, full package, SBOM, and
-GitHub asset digests before publishing the draft. The build job does not create a cache prerelease or
-any other secondary GitHub Release.
+GitHub asset digests before publishing the draft. Apart from the draft that holds the build cache,
+which is never published (see [Build cache](#build-cache)), the build job creates no cache
+prerelease or other secondary GitHub Release.
 
 Release jobs run one at a time, and each decides "latest" immediately before publication. A
 default-branch build becomes latest when its commit is newer than the commit of the release that is
@@ -39,6 +40,74 @@ The current workflow deliberately keeps correctness and UI evidence checks as lo
 checks rather than Actions test jobs. The committed local checks remain available and are run before a
 manual release or before accepting a candidate build. A workflow build still fails on compiler,
 dependency, SBOM, or Squirrel packaging failures.
+
+## Build cache
+
+A hosted Windows build compiled nearly every source every time. sccache wraps the compiler, but it
+cannot cache a compile that uses the precompiled header, which nearly every source does: in run
+36631880242 (`bb78abee1`) it saw 795 compile requests and cached 99, while 696 were non-cacheable
+(`/Fp` 693, `/Yc` 3). The "Build slicer Win" step took 72 minutes of that run's 80-minute build
+job. The build therefore reuses the whole Ninja build tree of the latest `main` build, precompiled
+headers included, and Ninja compiles only what changed since.
+
+**Where it lives.** The tree is kept in the draft release `build-cache-windows`, in 7-Zip volumes
+of at most 1,500,000,000 bytes each (GitHub accepts release assets up to 2 GiB). A draft never fires
+release events, never becomes the latest release and keeps its assets replaceable, while the
+published releases here are immutable. It is never published, and `Save-BuildCache.ps1` refuses to
+write to it if it ever is. `windows-build-latest.json` names the current set. Each set is
+`windows-build-<commit>.7z.001`, `.002`, ... plus `windows-build-<commit>.json`, a manifest with
+the commit, run number, key, tree size, and every part's name, size, and SHA-256. The steps read
+and write the draft with the owner token secret `TOKEN_GITHUB`, which `build_all.yml`,
+`build_check_cache.yml`, and `build_deps.yml` pass down with `secrets: inherit`.
+
+**Restore, before the compile.** `scripts/ci/Restore-BuildCache.ps1` uses the tree only when its key
+equals this run's: MSVC toolset (`VCToolsVersion`), Windows SDK, CMake and Ninja versions, the
+dependency cache key, the workspace path, and the script's layout version. It checks the free disk
+space, downloads the parts, and checks every size and SHA-256 before extracting. A checkout gives
+every file the current time, which would make Ninja rebuild everything. So every tracked file is
+set to 2020-01-01, then every file that differs between the cached commit and the checkout (the
+working tree, so a file an earlier step edited counts) is set to now. Objects keep their build
+times, so exactly the changed files and what includes them are rebuilt. 2020 rather than an
+earlier date: Ninja on Windows counts time from about 2001. The device page bundle is built into
+the source tree, which a checkout lacks, so its stamp is removed and the bundle rebuilt.
+
+**Save, after a `main` build.** Only a successful push build of `main` saves, so every build starts
+from `main`'s tree. `scripts/ci/Save-BuildCache.ps1` starts in the background while the payload is
+packaged. It is started hidden and writes its own log: started with redirected output, it would hold
+the step's output open after the step ended (measured locally), and the runner stops the processes
+still holding a finished step's output. It archives the tree with fast LZMA2 compression (`-mx=1`), leaving out the `resources`
+junction, debug databases, and the device page's package store. It uploads the parts and the
+manifest, reads every part's size back from GitHub, and moves `windows-build-latest.json` only when
+no newer run already points it at its own set. It keeps the newest three sets and removes parts
+without a manifest once they are two hours old, so a run still uploading keeps its own. It refuses
+to start when the drive lacks the tree size plus 10 GB. The job's last step waits up to 30 minutes
+for it and prints its log.
+
+**It can make a build faster, never make it fail.** A missing token (a pull request from a fork),
+no cached set, a different key, a damaged or missing part, too little disk space, or a tree already
+in place means a build from scratch, as before, with the reason in a warning. The restore removes
+only a tree it extracted itself. When a restored tree fails to configure, the build step deletes it
+and configures from scratch. A save that fails is a warning. To force a build from scratch, put
+`[cold build]` in the pushed commit's message. It skips the restore, and a `main` build still saves
+a fresh tree. Changing the layout version in both scripts discards every existing set.
+
+The build-time stamp (`SLIC3R_BUILD_TIME`, `SLIC3R_BUILD_TIME_UTC`) now lives in
+`libslic3r_build_time.h`, which only the log, the About dialog, and the splash date include. In
+`libslic3r_version.h`, which nearly every source and the precompiled header include, a value that
+changes with every configure made every object out of date on every build, cache or not.
+
+Checked locally before the first hosted run. A run of both scripts against a stand-in `gh` backed by
+a folder, with the real 7-Zip and a scratch repository of four commits, passed 34 checks: parts at
+most the limit, a warm restore with exact timestamps, the pointer never moving back, pruning to three
+sets, and every fallback leaving no tree behind. A Ninja file whose steps only write files and
+print an MSVC include note (no compiler) confirmed three things after the 7-Zip round trip: object
+times come back exact to 100 ns, nothing is rebuilt when nothing changed, and a changed source or
+header rebuilds only its objects and the link. A stand-in for the runner, reading a step's output
+to the end, showed why the save starts hidden: a child started with redirected output held that
+output open until it finished, 20 seconds after the step exited, while a hidden child that writes
+its own log let it close with the step. The first hosted `main` build after this change
+saves the first set (cold). The build after it is the first warm one. Until both have run, the
+speed-up is not measured.
 
 ## Payload DLLs
 

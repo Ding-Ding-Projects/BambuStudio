@@ -78,6 +78,8 @@ jobs:
     # compiles (and their would-be releases and caches) during push trains.
     # Release tags are unique per run, so parallel runs cannot collide.
     uses: ./.github/workflows/build_check_cache.yml
+    # The build cache steps read and write a draft release with the owner token.
+    secrets: inherit
     with:
       os: windows-latest
       build-deps-only: false

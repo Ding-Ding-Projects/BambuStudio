@@ -560,10 +560,11 @@ function Invoke-ApplicationBuild {
     $prefixPath = Join-Path $DependencyDestination 'usr\local'
     $jobs = Get-BuildParallelism
     # src/libslic3r/CMakeLists.txt stamps the configure time into a generated
-    # header (SLIC3R_BUILD_TIME), so every explicit configure recompiles the
-    # whole tree. Configure only when the cache is missing, points at another
-    # install prefix, or a reconfigure was asked for; otherwise the generator's
-    # own ZERO_CHECK re-runs CMake exactly when a CMakeLists changed.
+    # header (libslic3r_build_time.h), so every explicit configure recompiles
+    # the few sources that show the build time. Configure only when the cache is
+    # missing, points at another install prefix, or a reconfigure was asked
+    # for; otherwise the generator's own ZERO_CHECK re-runs CMake exactly when a
+    # CMakeLists changed.
     $appCache = Join-Path $buildDirectory 'CMakeCache.txt'
     $expectedPrefix = [System.IO.Path]::GetFullPath($InstallPrefix).Replace('\', '/')
     $cacheMatches = (Test-Path -LiteralPath $appCache -PathType Leaf) -and

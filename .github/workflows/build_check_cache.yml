@@ -46,6 +46,7 @@ jobs:
     name: Build Deps
     needs: [check_cache]
     uses: ./.github/workflows/build_deps.yml
+    secrets: inherit
     with:
       cache-key: ${{ needs.check_cache.outputs.cache-key }}
       cache-path: ${{ needs.check_cache.outputs.cache-path }}
