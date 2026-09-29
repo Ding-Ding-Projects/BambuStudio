@@ -670,6 +670,12 @@ bool enabled()
     return on;
 }
 
+std::string artifact_path(const std::string &file_name)
+{
+    // default_path() creates the folder; only its directory is used here.
+    return (boost::filesystem::path(default_path()).parent_path() / file_name).string();
+}
+
 std::string dump(const std::string &reason, const std::string &out_path)
 {
     if (!enabled()) return std::string();

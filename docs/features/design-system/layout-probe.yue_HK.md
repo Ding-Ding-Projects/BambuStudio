@@ -1,6 +1,6 @@
 ---
 translation-of: layout-probe.md
-source-sha256: 958bd2d2853d42fe59a2b17f322d612c7806c585c229ceb02ffbd0812842b9aa
+source-sha256: 91d11e55ec983e28441af42445bdaf0a0e093449744d8c52ddf26488ce4a6ae7
 review-status: agent-drafted
 ---
 
@@ -68,6 +68,8 @@ review-status: agent-drafted
 | `BAMBU_LAYOUT_PROBE_TAG=<text>` | 複製進頭（命名元組：比例、語言、主題） |
 
 一次轉儲會喺主框架首次展示同埋空閒後執行一次，每當流程收到 `WM_COPYDATA`（`dwData == 2` 同埋負載 `L"layout-probe [<path>]"`）時再次執行，呢個係無頭驅動程式喺打開對話框後要求轉儲嘅方式。未設定，成本係一個環境讀取。
+
+探測器開住嘅時候，啟動畫面亦會喺啟動時將佢顯示緊嘅點陣圖原封不動儲存做同一個資料夾入面嘅 `splash.png`（只寫一次）。啟動畫面顯示唔夠一秒，佢未畫好之前，視窗嘅截圖就已經影完；截圖程序就係靠呢個檔案檢查啟動畫面（[splash-release-date.md](../windows/splash-release-date.md)）。
 
 `scripts/md3/send-layout-probe.py <hwnd> <out.jsonl>` 從標準庫單獨發送該訊息，給予主視窗句柄一份無頭視窗列表報告，並喺超時內冇轉儲出現時以非零碼退出。
 

@@ -70,4 +70,8 @@ network request is made, and no user data is read.
   catalogue translates both lines.
 - The release workflow's build of the change is the compile check.
 - The splash of the first release that contains the line is captured in all
-  three language modes as the visual check.
+  three language modes as the visual check. The splash lives for well under a
+  second, so a screenshot of its window comes back before it paints (the
+  `md3-v148` attempt produced only black frames). With `BAMBU_LAYOUT_PROBE` set,
+  the splash saves the exact bitmap it shows as `splash.png` beside the probe
+  dumps, and the capture reads that file.

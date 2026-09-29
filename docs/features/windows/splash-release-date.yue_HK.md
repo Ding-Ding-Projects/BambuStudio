@@ -1,6 +1,6 @@
 ---
 translation-of: splash-release-date.md
-source-sha256: 09c6234fab073a14db3388146f33868227a0f224eb2f4ae8caf376764b01832f
+source-sha256: 79d4124bd34cd9d4ed447f1638dbb496d7f83d93f202f91614a6f06495305e5c
 review-status: agent-drafted
 ---
 
@@ -56,4 +56,4 @@ review-status: agent-drafted
 - `node --test ui-md3/tests/splash-release-date.test.mjs` 釘咗 UTC 標記、
   啟動畫面繪製同語言路由，同檢查廣東話翻譯目錄翻譯個兩行。
 - 發佈工作流嘅呢個改變嘅構建係編譯檢查。
-- 包含呢行嘅第一個發佈嘅啟動畫面會喺全部三個語言模式拍咗相做視覺檢查。
+- 包含呢行嘅第一個發佈嘅啟動畫面會喺全部三個語言模式拍咗相做視覺檢查。啟動畫面顯示唔夠一秒，佢未畫好之前，視窗嘅截圖就已經影完（`md3-v148` 嗰次得到嘅全部都係黑色畫面）。設定咗 `BAMBU_LAYOUT_PROBE` 之後，啟動畫面會將佢顯示緊嘅點陣圖原封不動儲存做探測器轉儲旁邊嘅 `splash.png`，截圖程序就讀取嗰個檔案。

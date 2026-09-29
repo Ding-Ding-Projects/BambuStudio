@@ -61,3 +61,19 @@ test('both release date messages have a Cantonese translation', async () => {
     assert.ok(entry[1].includes('%s') && entry[1] !== id, `${id} needs a Cantonese msgstr that keeps %s`);
   }
 });
+
+test('with the layout probe on, the splash leaves the bitmap it shows beside the probe dumps', async () => {
+  // The splash lives for well under a second, so a screenshot of its window
+  // comes back before it paints. The capture of a built release reads the
+  // exact bitmap the splash shows instead.
+  const probeHeader = await read('src', 'slic3r', 'GUI', 'LayoutProbe.hpp');
+  assert.match(probeHeader, /std::string artifact_path\(const std::string &file_name\);/);
+  const probeSource = stripComments(await read('src', 'slic3r', 'GUI', 'LayoutProbe.cpp'));
+  assert.match(probeSource, /std::string artifact_path\(const std::string &file_name\)\s*\{/);
+  const code = stripComments(guiApp);
+  assert.match(
+    code,
+    /Decorate\(m_main_bitmap\);\s*if \(LayoutProbe::enabled\(\)\)\s*m_main_bitmap\.SaveFile\(wxString::FromUTF8\(LayoutProbe::artifact_path\("splash\.png"\)\), wxBITMAP_TYPE_PNG\);/,
+    'the decorated bitmap is saved right after it is drawn, only when the probe is on'
+  );
+});

@@ -100,6 +100,11 @@ A dump runs once after the main frame is first shown and idle, and again wheneve
 receives `WM_COPYDATA` with `dwData == 2` and payload `L"layout-probe [<path>]"`, which is how a
 headless driver asks for a dump after opening a dialog. Unset, the cost is one environment read.
 
+While the probe is on, the splash screen also saves the exact bitmap it shows as `splash.png` in the
+same folder, once at startup. The splash lives for well under a second, so a screenshot of its window
+comes back before it paints; the file is how a capture run checks the splash
+([splash-release-date.md](../windows/splash-release-date.md)).
+
 `scripts/md3/send-layout-probe.py <hwnd> <out.jsonl>` sends that message from the standard library
 alone, given the main window handle a headless window list reports, and exits non-zero when no dump
 appears within its timeout.

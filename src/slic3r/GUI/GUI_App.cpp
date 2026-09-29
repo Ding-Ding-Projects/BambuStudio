@@ -645,6 +645,10 @@ public:
 
         // draw logo and constant info text
         Decorate(m_main_bitmap);
+        // The splash lives for well under a second, too short for a screenshot of its window:
+        // with the layout probe on, it leaves the exact bitmap it shows beside the probe dumps.
+        if (LayoutProbe::enabled())
+            m_main_bitmap.SaveFile(wxString::FromUTF8(LayoutProbe::artifact_path("splash.png")), wxBITMAP_TYPE_PNG);
         wxGetApp().UpdateFrameDarkUI(this);
     }
 

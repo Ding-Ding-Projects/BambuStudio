@@ -44,6 +44,9 @@ std::string dump(const std::string &reason, const std::string &out_path = std::s
 // Handle a WM_COPYDATA command payload. Returns true when the payload was a
 // probe command (whether or not the dump succeeded).
 bool handle_command(const std::wstring &payload);
+// Path of `file_name` in the folder the dumps go to (created if missing), for
+// evidence a surface leaves while the probe is on, such as the splash bitmap.
+std::string artifact_path(const std::string &file_name);
 
 }}} // namespace Slic3r::GUI::LayoutProbe
 
