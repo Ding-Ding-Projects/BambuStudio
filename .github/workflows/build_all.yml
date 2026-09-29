@@ -787,15 +787,29 @@ jobs:
 
               [void](Wait-ForReleaseState -ExpectedState Draft)
 
-               # Serialize release jobs, then resolve the default branch immediately
-               # before publication so a queued older build cannot become latest.
+               # Serialize release jobs, then decide "latest" immediately before
+               # publication. A default-branch build becomes latest when it is newer
+               # than the release that is latest now, so a queued older build cannot
+               # replace a newer one, and a branch that moves faster than a build takes
+               # still moves the latest release (and the in-app update feed) forward.
               $latestArgument = '--latest=false'
               if ($env:GITHUB_REF_NAME -eq $defaultBranch) {
-                  $defaultSha = (& gh api "repos/$env:GITHUB_REPOSITORY/commits/$defaultBranch" --jq '.sha').Trim()
-                  if ($LASTEXITCODE -ne 0 -or -not $defaultSha) {
-                      throw "Could not resolve the current $defaultBranch commit immediately before publishing."
+                  $isNewer = $true
+                  $currentLatestTag = & gh api "repos/$env:GITHUB_REPOSITORY/releases/latest" --jq '.tag_name' 2>$null
+                  if ($LASTEXITCODE -eq 0 -and $currentLatestTag) {
+                      $currentLatestSha = (& gh api "repos/$env:GITHUB_REPOSITORY/commits/$($currentLatestTag.Trim())" --jq '.sha').Trim()
+                      if ($LASTEXITCODE -ne 0 -or -not $currentLatestSha) {
+                          throw "Could not resolve the commit of the latest release $currentLatestTag immediately before publishing."
+                      }
+                      $comparison = (& gh api "repos/$env:GITHUB_REPOSITORY/compare/$currentLatestSha...$env:GITHUB_SHA" --jq '.status').Trim()
+                      if ($LASTEXITCODE -ne 0 -or -not $comparison) {
+                          throw "Could not compare $env:GITHUB_SHA with the latest release $currentLatestTag."
+                      }
+                      $isNewer = $comparison -eq 'ahead' -or $comparison -eq 'identical'
                   }
-                  if ($defaultSha -eq $env:GITHUB_SHA) {
+                  # No latest release yet (the lookup answers 404) leaves $isNewer true.
+                  $global:LASTEXITCODE = 0
+                  if ($isNewer) {
                       $latestArgument = '--latest'
                   } else {
                       $releaseTitle += " (superseded $defaultBranch build)"

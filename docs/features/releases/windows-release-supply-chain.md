@@ -15,9 +15,12 @@ source-commit metadata, checksum, an empty PE security directory (unsigned Setup
 GitHub asset digests before publishing the draft. The build job does not create a cache prerelease or
 any other secondary GitHub Release.
 
-The release job resolves the current default-branch tip immediately before publication. Only an
-artifact built from that exact tip may become latest; superseded or non-default-ref builds remain
-non-latest.
+Release jobs run one at a time, and each decides "latest" immediately before publication. A
+default-branch build becomes latest when its commit is newer than the commit of the release that is
+latest now (or is that same commit rebuilt). An older build that finishes late is published with
+"(superseded main build)" in its title and stays non-latest, and builds of other refs stay
+non-latest. The branch may have moved on while the build ran; the latest release, and the update
+feed installed copies read from it, still move forward.
 
 ## Windows build and package boundary
 
