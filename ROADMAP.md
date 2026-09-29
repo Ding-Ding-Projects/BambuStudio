@@ -180,10 +180,11 @@ captures are a separate box and stay unticked until they exist from the real bui
       install update, Release notes and a notice that updates are not code-signed, and keeps the
       download dialog as the fallback (issue #46). Ticked once a release capture installs an older
       release and watches it update and restart (docs/features/windows/app-updates.md).
-- [ ] A main build becomes the latest release when its commit is newer than the current latest
+- [x] A main build becomes the latest release when its commit is newer than the current latest
       release's (`904ccc37a`); before, a build became latest only if main had not moved while it
       built, so every build after md3-v143 was published as superseded and the update feed stood
-      still. Ticked when a release built from `904ccc37a` or later is published as latest.
+      still. Verified: `md3-v151` (target `ca2b6e101`) was published as latest on 2026-09-29 while
+      `main` had already moved on.
 
 
 ### Native and embedded GUI accessibility wave (delivery verification — 2026-07-30)
