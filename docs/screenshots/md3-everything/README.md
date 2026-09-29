@@ -248,6 +248,31 @@ The General capture lacks the "Reset all warning dialogs" button, which the layo
 after places at x = 12; the 3D capture of the same run shows it, so the General capture caught a
 repaint.
 
+## Release md3-v157 captures (2026-09-29)
+
+Taken from the unmodified `md3-v157` release package with profiles under `C:\Users\Public\bbsdd\`:
+the Prepare pages by `scripts/md3/capture-tuple.py`, the searches by
+`scripts/md3/capture-preferences-search.py` with the queries of the `md3-v151` captures
+("Update automatically", 自動更新, 自動填充). Every import of its executables and DLLs resolves in the
+package or in Windows.
+
+| Field | Value |
+| --- | --- |
+| Source commit | `11cf45423` (release `md3-v157`) |
+| Package | `BambuStudioMD3-2.8.4156-full.nupkg`, 732,150,972 bytes, SHA-1 `1d14417aa7037d47d7b7e5c1b2de75172dde4dab` as listed in `RELEASES` |
+| Executable | `bambu-studio.exe` sha256 `f74b78905227d8193be1d3059996a1fc583efeabe64939a7ef07f5b39222c8be`, `BambuStudio.dll` sha256 `bd55f84ba3f4969970f9f03c544c9ad22ea77e3e7933ebdbfcc5de142721845c` |
+| Capture route | hidden Win32 desktop, `PrintWindow`, real GPU driver |
+| Display scale | 100% |
+
+| File | Surface | Tuple |
+| --- | --- | --- |
+| `prepare--en-light-comfortable--md3-v157.png` | Prepare (after CJ-023): every process value field whole with its unit, every header, search and preset icon inside the sidebar | `en-light-comfortable` |
+| `prepare--yue_HK-light-comfortable--md3-v157.png` | Prepare in Cantonese (after CJ-023 and CJ-024): the title reads "打印設定" whole, "支撐" and the fields inside the sidebar | `yue_HK-light-comfortable` |
+| `preferences-search-autofill--yue_HK-light-comfortable--md3-v157.png` | Preferences searched for 自動填充 (after CJ-022): the row has no description, no catalog header | `yue_HK-light-comfortable` |
+| `preferences-search-update--yue_HK-light-comfortable--md3-v157.png` | Preferences searched for 自動更新: the wrapped description no longer starts a line with "。" (`c7309b889`) | `yue_HK-light-comfortable` |
+| `preferences-search-update--bilingual_en_yue_HK-light-comfortable--md3-v157.png` | The same row in bilingual mode: the description in English with its Cantonese below it (`2e80091ef`) | `bilingual_en_yue_HK-light-comfortable` |
+| `preferences-other--bilingual_en_yue_HK-light-comfortable--md3-v157.png` | Preferences > Other in bilingual mode: the search hint is back; CJ-026 is still visible, its fix `a07353987` came after this build | `bilingual_en_yue_HK-light-comfortable` |
+
 ## Layout-probe dumps
 
 `probe/<tuple>--<before|after>.jsonl`, one per main-frame idle dump plus one per opened dialog,

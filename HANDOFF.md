@@ -143,6 +143,13 @@ still to verify.
   (`.github/workflows/build_bambu.yml`, contract in `ui-md3/tests/md3-conversion-contracts.test.mjs`);
   the one-click local build keeps its own rule. Builds that were already queued still packaged under
   the old rule.
+- `md3-v157` (`11cf45423`, 2026-09-29, latest, package `2.8.4156`, SHA-1
+  `1d14417aa7037d47d7b7e5c1b2de75172dde4dab` matching its `RELEASES`, every import resolves, splash painted
+  in all three modes) verifies CJ-022, CJ-023 and CJ-024 and the Cantonese line break before "。". The
+  Cantonese Prepare dump shows the "10" and "1" spin boxes 89 px wide (0 px on `md3-v151`) and no label
+  carrying the catalog header (8 on `md3-v151`). The bilingual "Update automatically" description shows
+  its Cantonese below the English, and the bilingual Other page shows its search hint, so the empty hint
+  of one `md3-v155` capture did not reproduce. CJ-026 is still visible on `md3-v157`; its fix came later.
 - Upstream Bambu Studio `v02.08.04.61` (tagged 2026-09-29, seven commits on `v02.08.04.57`) is merged in
   `a0e408559` without conflicts: error dialog buttons act on mouse-up, the progress dialog no longer
   yields on Windows (upstream's fix for hangs after sending a print or loading a project from the device
