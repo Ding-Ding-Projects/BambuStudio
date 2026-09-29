@@ -34,7 +34,7 @@ Flags on each window record:
 | `text_clipped` | a label is cut or shortened although nothing asked for it: its text extent is wider than its client width and it has no ellipsize style, or a kit `Button` that may not shrink drew its label shortened |
 | `truncated` | a label was drawn shortened with an ellipsis, asked for or not: an ellipsizing static text wider than its client width, or any kit `Button` whose last paint shortened its label. A shortened action in a dialog is a defect even where shrinking is allowed |
 | `ellipsized` | the label carries an ellipsize style, or the kit `Button` is allowed to shrink, as the notebook tabs are (reported for review, not a finding) |
-| `clipped_by_parent` | a shown window's rect leaves its parent's client area |
+| `clipped_by_parent` | a shown child window's rect leaves its parent's client area (a dialog or other top-level window is never flagged: it is its own window) |
 
 One `gl_item` record per visible item of the scene toolbar (`"toolbar":"main"`) and the gizmo rail
 (`"gizmo"`): name, host canvas handle, rectangle in canvas pixels and on screen, derived from the

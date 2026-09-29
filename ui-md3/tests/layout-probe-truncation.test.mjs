@@ -44,3 +44,14 @@ test('the layout probe reports a shortened kit Button label', () => {
   assert.match(code, /\\"truncated\\":/, 'every record carries the truncated field');
   assert.match(code, /\\"type\\":" << json\(type_name_of\(w\)\)/, 'every record names its C++ type');
 });
+
+test('a top-level window is never reported as clipped by its parent', () => {
+  // A dialog's rectangle is in screen coordinates and it is its own native
+  // window, so comparing it with the main frame's client area flagged every
+  // dialog placed away from the frame's top-left corner (Setup Wizard, AI ink
+  // scanner) as clipped.
+  const writer = probeCpp.match(/void write_window\([\s\S]*?\n\}/);
+  assert.ok(writer, 'write_window must exist');
+  const code = stripComments(writer[0]);
+  assert.match(code, /if \(parent && !w->IsTopLevel\(\)\) \{\s*const wxRect parent_client/, 'only child windows are compared with the parent client area');
+});

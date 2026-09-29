@@ -360,7 +360,9 @@ void write_window(boost::nowide::ofstream &out, wxWindow *w, wxWindow *top, int 
     }
 
     bool clipped_by_parent = false;
-    if (parent) {
+    // A dialog or other top-level window is its own native window and its rect
+    // is in screen coordinates, so nothing of its parent can cut it.
+    if (parent && !w->IsTopLevel()) {
         const wxRect parent_client(wxPoint(0, 0), parent->GetClientSize());
         clipped_by_parent = shown && rect.width > 0 && rect.height > 0 && !parent_client.Contains(rect);
     }
