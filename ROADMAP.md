@@ -29,6 +29,17 @@
 - [x] Document that `md3-v129` targets earlier `c7cb11752a65810e4b02f4124b4c4b22c8438218` and contains package version `2.8.4128`; it does not verify the fresh official-source candidate.
 - [ ] Update release documentation and publish only after the build, runtime, and distribution checks reach verified outcomes.
 
+## Dependency security alerts (issue #47)
+
+- [x] Triage the 17 open Dependabot alerts (9 high, 8 moderate): none of the flagged packages ships in the Windows app or on the Pages site, and no vulnerable code path is reachable ([Dependency security alerts](docs/features/releases/dependency-security-alerts.md)).
+- [x] Raise the device page's `js-yaml` and `nanoid` security pins to 4.3.2 and 3.3.18 (`75fc64c69`, on `main`); verified locally with the pinned Node and pnpm: frozen install passes and the built page is byte-identical.
+- [x] Raise the device page's `undici` pin from 7.29.0 to 7.29.1 (GHSA-3wwx-pv8p-q78v, auto-dismissed alert #24); verified locally the same way.
+- [x] Dismiss the 13 unreachable alerts as `not_used` and the 4 already-fixed ones as `inaccurate`, each with its reason on the alert.
+- [ ] Windows build and release for the pin changes. Run [36611172274](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36611172274) for `75fc64c69` was still running when this was written; the `undici` pin gets its own run.
+- [ ] Owner decision: re-enable the repository's dependency graph, which reported "disabled" on 2026-09-29, so that Dependabot rescans pushes and closes fixed alerts itself.
+- [ ] Fix `tests/buildSpoolFromTray.test.ts`, which fails because `src/features/filament-manager/constants.ts` imports `../../i18nResources` without a file extension (since `68f42a887`).
+- [ ] Move the device page to vitest 4.x when its local tests are next touched; that clears GHSA-82fw-gwwq-j7x9 at the source instead of by dismissal.
+
 ## Every element in Material Design 3 and in three language modes (issues #43 and #45)
 
 The new features of this line, with their status in one table, are listed under "New features in this

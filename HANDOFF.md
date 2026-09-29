@@ -247,6 +247,44 @@ still to verify.
 - Not verified: behaviour in a running application in any of the three modes (no captures from a released build
   yet), and human review of the agent-drafted Cantonese.
 
+## Dependency security alerts (issue #47, 2026-09-29)
+
+Scope: the 17 open Dependabot alerts (9 high, 8 moderate) that every push reported. The full record,
+including how to triage the next alert, is
+[`docs/features/releases/dependency-security-alerts.md`](docs/features/releases/dependency-security-alerts.md);
+the tracking issue is [#47](https://github.com/Ding-Ding-Projects/BambuStudio/issues/47).
+
+- None of the seven flagged packages ships. The built device page bundles 36 runtime packages (React,
+  Radix UI, TanStack Router, i18next, immer, zustand and their helpers); every flagged package is a build,
+  lint or test tool, and no vulnerable function is called with outside input.
+- Three security pins in `src/slic3r/GUI/DeviceWeb/device_page/package.json` (`pnpm.overrides`) held
+  versions inside an advisory range and were raised one patch release each: `js-yaml` 4.3.2 and `nanoid`
+  3.3.18 in `75fc64c69`, then `undici` 7.29.1. `pnpm-lock.yaml` was regenerated with pnpm 10.12.1
+  `--lockfile-only`; only those packages changed.
+- All 17 alerts are dismissed: 13 as `not_used` (the unused npm `package-lock.json`, vitest's unused plugin
+  path, the manually run `tests/web-e2e` harness) and 4 as `inaccurate` (#2, #19, #10, #17: the lockfile on
+  `main` no longer holds the flagged version).
+- Verified locally with the Node 22.22.2 and pnpm 10.12.1 from `../node-cache`: the frozen install passed and
+  all 16 files of `dist/` (4,079,543 bytes) were byte-identical before any pin moved, after `75fc64c69` and
+  after the `undici` pin; `pnpm run test:a11y` passed 7 of 7; four of the five dependency-free tests passed.
+  The C++ app was not built locally. Windows build run
+  [36611172274](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36611172274) for `75fc64c69`
+  was still running when this was written.
+- Found on the way:
+  - The repository's dependency graph reports "disabled", so Dependabot does not rescan pushes and fixed
+    alerts never close by themselves. Turning it back on is the owner's decision.
+  - An auto-triage rule dismisses low-impact alerts on development-scope packages within a second
+    (#4, #5, #8, #9, #22, #23, #24); check those against the lockfiles too, which is how the `undici` pin
+    was found.
+  - `tests/buildSpoolFromTray.test.ts` fails with `ERR_MODULE_NOT_FOUND` since `68f42a887` (an
+    extensionless import in `src/features/filament-manager/constants.ts`), independently of this work; it
+    stops `scripts/ci/Test-WindowsRelease.ps1` at its DeviceWeb step.
+  - A local pnpm check in a path deeper than about 180 characters fails on Windows (`ENAMETOOLONG` in the
+    patched `minimatch` step, then `ERR_PACKAGE_IMPORT_NOT_DEFINED` from `vite`); run it inside the
+    repository's own `device_page` folder, as the build does.
+- Open: the dependency graph decision, the failing DeviceWeb test, and vitest 4.x (the only way to clear
+  GHSA-82fw-gwwq-j7x9 at the source).
+
 ## Branch and worktree cleanup (2026-09-29)
 
 - `0d883d9fe` records 21 older `codex/*` branches as merged with `-s ours`: `git cherry` showed every one of their

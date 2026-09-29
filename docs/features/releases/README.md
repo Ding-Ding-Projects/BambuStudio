@@ -5,6 +5,8 @@
 - [One-click local Windows build and installer](windows-one-click-build.md)
 - [Windows CI and release supply chain](windows-release-supply-chain.md)
 - [Release codenames](release-codenames.md) — the Hong Kong dish roster every release is named from
+- [Dependency security alerts](dependency-security-alerts.md): which package manifests reach users,
+  how Dependabot alerts are triaged, and the decisions of 2026-09-29
 
 This fork intentionally publishes a Windows installer only. Automatic upstream WinGet and Homebrew
 jobs are gated to the upstream `bambulab/BambuStudio` repository so fork releases cannot mutate those
