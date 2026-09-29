@@ -37,6 +37,7 @@
 #include <algorithm>
 #include <iterator>
 #include <exception>
+#include <cctype>
 #include <cstdlib>
 #include <chrono>
 #include <regex>
@@ -44,6 +45,7 @@
 #include <string_view>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/filesystem.hpp>
 #include <boost/format.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/log/trivial.hpp>
@@ -338,6 +340,230 @@ bool is_associate_files(std::wstring extend)
     return false;
 }
 #endif
+
+// ---------------------------------------------------------------------------
+// Automatic updates through Squirrel.Windows (docs/features/windows/app-updates.md).
+//
+// A copy installed by the Squirrel installer lives in <root>\app-<version>\bambu-studio.exe
+// with Squirrel's Update.exe in <root>. Update.exe does all of the work: it reads the feed,
+// downloads the full package, checks it against the SHA-1 in RELEASES and stages the new
+// app-<version> folder beside the running one. The code below only starts Update.exe and reads
+// its exit code. It downloads and runs nothing itself, and a copy that is not installed (a
+// portable zip, a developer build) never takes this route.
+// ---------------------------------------------------------------------------
+
+#ifdef _WIN32
+
+// The one feed Squirrel is ever pointed at: the latest release of this fork. GitHub redirects
+// the RELEASES index and the package under it to the assets of that release. No user input and
+// no server response reaches the command lines below.
+static const char *const kSquirrelFeedUrl = "https://github.com/Ding-Ding-Projects/BambuStudio/releases/latest/download";
+
+// Update.exe waits for its parent, which is this process, to exit and then starts the
+// executable from the newest app-<version> folder.
+static const wchar_t *const kSquirrelRestartArguments = L"--processStartAndWait bambu-studio.exe";
+
+// A full package is large, so an update gets this long before the wait is given up on.
+// Update.exe itself is never terminated: killing it half way through staging could leave a
+// partial app-<version> folder behind.
+static const unsigned long long kSquirrelUpdateTimeoutMs = 30ull * 60ull * 1000ull;
+
+// Path of the running executable, without the MAX_PATH ceiling.
+static boost::filesystem::path current_executable_path()
+{
+    std::wstring buffer(MAX_PATH, L'\0');
+    for (;;) {
+        const DWORD length = ::GetModuleFileNameW(nullptr, buffer.data(), static_cast<DWORD>(buffer.size()));
+        if (length == 0)
+            return boost::filesystem::path();
+        if (length < buffer.size()) {
+            buffer.resize(length);
+            return boost::filesystem::path(buffer);
+        }
+        if (buffer.size() >= 32768)
+            return boost::filesystem::path();
+        buffer.resize(buffer.size() * 2);
+    }
+}
+
+// Finds the Update.exe of a copy installed by Squirrel. The running executable sits in an
+// app-<version> folder and Update.exe in the folder above it; a portable zip or a developer
+// build has no such file.
+static bool squirrel_update_exe(boost::filesystem::path &out)
+{
+    const boost::filesystem::path executable = current_executable_path();
+    if (executable.empty())
+        return false;
+    const boost::filesystem::path app_dir = executable.parent_path();
+    if (!boost::algorithm::starts_with(boost::nowide::narrow(app_dir.filename().wstring()), "app-"))
+        return false;
+    const boost::filesystem::path update_exe = app_dir.parent_path() / "Update.exe";
+    boost::system::error_code ec;
+    if (!boost::filesystem::is_regular_file(update_exe, ec))
+        return false;
+    out = update_exe;
+    return true;
+}
+
+// Starts `exe` with `arguments` and no console window, and does not wait for it. On success
+// the caller owns `process` and has to close it.
+static bool spawn_hidden_process(const boost::filesystem::path &exe, const std::wstring &arguments, HANDLE &process, DWORD &error)
+{
+    std::wstring        command_line = L"\"" + exe.wstring() + L"\" " + arguments;
+    const std::wstring  working_dir  = exe.parent_path().wstring();
+    STARTUPINFOW        startup_info = {};
+    PROCESS_INFORMATION process_info = {};
+    startup_info.cb                  = sizeof(startup_info);
+    if (!::CreateProcessW(exe.c_str(), command_line.data(), nullptr, nullptr, FALSE, CREATE_NO_WINDOW, nullptr, working_dir.c_str(), &startup_info, &process_info)) {
+        error = ::GetLastError();
+        return false;
+    }
+    ::CloseHandle(process_info.hThread);
+    process = process_info.hProcess;
+    return true;
+}
+
+// The dotted numbers of an app-<version> folder name ("app-2.8.4142" is 2, 8, 4142), empty
+// when the name is not of that form. A prerelease suffix such as "-build61" is ignored.
+static std::vector<long long> squirrel_folder_version(const std::string &folder_name)
+{
+    std::vector<long long> parts;
+    if (!boost::algorithm::starts_with(folder_name, "app-"))
+        return parts;
+    size_t i = 4;
+    while (i < folder_name.size() && std::isdigit(static_cast<unsigned char>(folder_name[i]))) {
+        long long value = 0;
+        for (; i < folder_name.size() && std::isdigit(static_cast<unsigned char>(folder_name[i])); ++i)
+            value = std::min(value * 10 + (folder_name[i] - '0'), 1000000000000LL);
+        parts.push_back(value);
+        if (i >= folder_name.size() || folder_name[i] != '.')
+            break;
+        ++i;
+    }
+    return parts;
+}
+
+// True when Squirrel has staged an app-<version> folder that is newer than the running one.
+// Update.exe also exits with 0 when there is nothing to install, so the exit code alone does
+// not say that an update is ready.
+static bool squirrel_newer_version_staged(const boost::filesystem::path &update_exe)
+{
+    const std::vector<long long> running = squirrel_folder_version(boost::nowide::narrow(current_executable_path().parent_path().filename().wstring()));
+    if (running.empty())
+        return true; // the running folder cannot be compared, so trust the exit code
+    boost::system::error_code ec;
+    for (boost::filesystem::directory_iterator it(update_exe.parent_path(), ec), end; !ec && it != end; it.increment(ec)) {
+        boost::system::error_code status_ec;
+        if (!boost::filesystem::is_directory(it->path(), status_ec))
+            continue;
+        if (squirrel_folder_version(boost::nowide::narrow(it->path().filename().wstring())) > running)
+            return true;
+    }
+    return false;
+}
+
+// Runs "Update.exe --update=<feed>" hidden and waits for it, on the worker thread. Returns true
+// only when Update.exe succeeded and a newer version is really staged beside the running one.
+static bool run_squirrel_update(const boost::filesystem::path &update_exe, const std::atomic<bool> &cancel)
+{
+    const std::wstring arguments = L"--update=" + boost::nowide::widen(kSquirrelFeedUrl);
+    HANDLE process = nullptr;
+    DWORD  error   = 0;
+    if (!spawn_hidden_process(update_exe, arguments, process, error)) {
+        BOOST_LOG_TRIVIAL(error) << "auto update: could not start Update.exe, error " << error;
+        return false;
+    }
+    BOOST_LOG_TRIVIAL(info) << "auto update: Update.exe started, waiting for it to finish";
+
+    const ULONGLONG deadline    = ::GetTickCount64() + kSquirrelUpdateTimeoutMs;
+    DWORD           wait_result = WAIT_TIMEOUT;
+    while (wait_result == WAIT_TIMEOUT && !cancel.load() && ::GetTickCount64() < deadline)
+        wait_result = ::WaitForSingleObject(process, 500);
+
+    bool updated = false;
+    if (wait_result == WAIT_OBJECT_0) {
+        DWORD exit_code = 1;
+        if (!::GetExitCodeProcess(process, &exit_code))
+            BOOST_LOG_TRIVIAL(warning) << "auto update: could not read the exit code of Update.exe, error " << ::GetLastError();
+        BOOST_LOG_TRIVIAL(info) << "auto update: Update.exe exited with code " << exit_code;
+        updated = exit_code == 0 && squirrel_newer_version_staged(update_exe);
+        if (exit_code == 0 && !updated)
+            BOOST_LOG_TRIVIAL(info) << "auto update: Update.exe found nothing newer to install";
+    } else if (cancel.load()) {
+        BOOST_LOG_TRIVIAL(info) << "auto update: the application is closing, Update.exe is left to finish on its own";
+    } else {
+        BOOST_LOG_TRIVIAL(warning) << "auto update: gave up waiting for Update.exe (wait result " << wait_result << "), it is left running";
+    }
+    ::CloseHandle(process);
+    return updated;
+}
+
+// Hands the application over to Squirrel: Update.exe waits for this process to exit and then
+// starts the newest installed version. Only called while the application is really exiting.
+static void launch_squirrel_restart()
+{
+    boost::filesystem::path update_exe;
+    if (!squirrel_update_exe(update_exe)) {
+        BOOST_LOG_TRIVIAL(warning) << "auto update: restart requested but there is no Update.exe next to this copy, not restarting";
+        return;
+    }
+    HANDLE process = nullptr;
+    DWORD  error   = 0;
+    if (!spawn_hidden_process(update_exe, kSquirrelRestartArguments, process, error)) {
+        BOOST_LOG_TRIVIAL(error) << "auto update: could not start Update.exe to restart, error " << error;
+        return;
+    }
+    ::CloseHandle(process);
+    BOOST_LOG_TRIVIAL(info) << "auto update: Update.exe will start the newest version once this process has exited";
+}
+
+// The text of an automatic update notification in the current language mode. `message` carries
+// one %s for the release tag, which is filled in per language after translation.
+static std::string auto_update_message(const char *message, const std::string &tag)
+{
+    const wxString release = wxString::FromUTF8(tag);
+    const I18N::FormattedLocalizedText text = I18N::translate_mode(message).format_each([&release](const wxString &copy) {
+        return wxString::Format(copy, release);
+    });
+    return into_u8(I18N::render_localized_text_stacked(text).label);
+}
+
+// Manual check only: says that the package is coming down in the background, so the check
+// does not look like it did nothing while a large download runs.
+static void push_auto_update_started_notification(const std::string &tag)
+{
+    Plater              *plater  = wxGetApp().plater();
+    NotificationManager *manager = plater ? plater->get_notification_manager() : nullptr;
+    if (manager == nullptr)
+        return;
+    manager->push_notification(auto_update_message(L("Downloading Bambu Studio %s in the background."), tag));
+}
+
+// Squirrel has staged the new version. The link restarts the application; without it the new
+// version starts the next time the application opens.
+static void push_auto_update_ready_notification(const std::string &tag)
+{
+    Plater              *plater  = wxGetApp().plater();
+    NotificationManager *manager = plater ? plater->get_notification_manager() : nullptr;
+    if (manager == nullptr)
+        return;
+    manager->push_notification(NotificationType::AppUpdateReady, NotificationManager::NotificationLevel::ImportantNotificationLevel,
+                               auto_update_message(L("Bambu Studio %s is ready. It starts the next time you open the app."), tag), _u8L("Restart now"),
+                               [](wxEvtHandler *) {
+                                   // The link is clicked while the canvas renders. Closing the window from here
+                                   // would tear the canvas down mid-frame, so it waits for the next turn of the event loop.
+                                   wxGetApp().CallAfter([] { wxGetApp().restart_after_update(); });
+                                   return true;
+                               });
+}
+
+#else // _WIN32
+
+// Squirrel is a Windows installer: no other platform has an Update.exe, so none updates itself.
+static bool squirrel_update_exe(boost::filesystem::path &) { return false; }
+static void launch_squirrel_restart() {}
+
+#endif // _WIN32
 
 // The line under the splash title that says when this version was released:
 // the day the release host built it (the same workflow run publishes the
@@ -3112,6 +3338,19 @@ bool GUI_App::OnInit()
 
 int GUI_App::OnExit()
 {
+    // An automatic update that is still running is not waited for: the worker stops waiting
+    // and Update.exe finishes staging on its own. Joining keeps the worker from touching this
+    // object once it is gone.
+    m_auto_update_cancel = true;
+    if (m_auto_update_thread.joinable())
+        m_auto_update_thread.join();
+
+    // "Restart now" after an automatic update. The close was accepted, so the application is
+    // really exiting: hand over to Squirrel first, so the restart still happens if a later
+    // step of the shutdown goes wrong. Update.exe waits for this process to exit.
+    if (take_restart_after_update())
+        launch_squirrel_restart();
+
     // The bilingual decorator is an event filter with a timer; remove it while
     // the event loop still exists.
     I18N::enable_bilingual_decorator(false);
@@ -6116,6 +6355,14 @@ void GUI_App::check_new_version(bool show_tips, int by_user)
                 // "Skip this version" stores the exact tag; a manual check ignores it.
                 if (by_user == 0 && this->app_config->get("app", "skip_version") == tag)
                     return;
+                // A copy installed by Squirrel updates itself in the background when the preference
+                // is on; every other copy, and a copy with the preference off, keeps the download dialog.
+                boost::filesystem::path update_exe;
+                if (this->app_config->get_bool("auto_update") && squirrel_update_exe(update_exe)) {
+                    const std::string name = version_info.version_name;
+                    CallAfter([this, tag, name, by_user]() { this->start_auto_update(tag, name, by_user); });
+                    return;
+                }
                 CallAfter([this, by_user]() { GUI::wxGetApp().request_new_version(by_user); });
             }
             catch (...) {
@@ -6126,6 +6373,73 @@ void GUI_App::check_new_version(bool show_tips, int by_user)
             BOOST_LOG_TRIVIAL(error) << "check new version error (" << status << "): " << error;
             if (show_tips) this->no_new_version();
         }).perform();
+}
+
+void GUI_App::start_auto_update(const std::string &tag, const std::string &name, int by_user)
+{
+#ifdef _WIN32
+    boost::filesystem::path update_exe;
+    if (!squirrel_update_exe(update_exe)) {
+        // Not an installed copy after all: keep the manual route.
+        BOOST_LOG_TRIVIAL(info) << "auto update: no Update.exe next to this copy, offering the download instead of updating to " << tag;
+        request_new_version(by_user);
+        return;
+    }
+
+    // A manual check must not look like it did nothing while the package downloads. The
+    // automatic check stays quiet until there is something to say.
+    if (by_user != 0)
+        push_auto_update_started_notification(tag);
+
+    bool expected = false;
+    if (!m_auto_update_running.compare_exchange_strong(expected, true)) {
+        BOOST_LOG_TRIVIAL(info) << "auto update: an update is already running, not starting another one for " << tag;
+        return;
+    }
+    // The previous run cleared the flag as its last step, so joining its thread returns at once.
+    if (m_auto_update_thread.joinable())
+        m_auto_update_thread.join();
+
+    BOOST_LOG_TRIVIAL(info) << "auto update: updating to " << tag << " (" << name << ") through " << boost::nowide::narrow(update_exe.wstring());
+    m_auto_update_thread = Slic3r::create_thread([this, tag, by_user, update_exe]() {
+        bool updated = false;
+        try {
+            updated = run_squirrel_update(update_exe, m_auto_update_cancel);
+        } catch (const std::exception &e) {
+            BOOST_LOG_TRIVIAL(error) << "auto update: " << e.what();
+        } catch (...) {
+            BOOST_LOG_TRIVIAL(error) << "auto update: unknown error";
+        }
+        m_auto_update_running = false;
+        if (m_auto_update_cancel.load())
+            return;
+        CallAfter([this, tag, by_user, updated]() {
+            if (is_closing())
+                return;
+            if (updated)
+                push_auto_update_ready_notification(tag);
+            else if (by_user != 0)
+                request_new_version(by_user);
+        });
+    });
+#else
+    // Squirrel is a Windows installer: keep the download dialog everywhere else.
+    (void) tag;
+    (void) name;
+    request_new_version(by_user);
+#endif
+}
+
+void GUI_App::restart_after_update()
+{
+    if (mainframe == nullptr)
+        return;
+    BOOST_LOG_TRIVIAL(info) << "auto update: restart requested, closing the main window";
+    // The close goes through the normal path, so the unsaved project prompt still applies and
+    // can cancel it. The main frame's close handler takes this request back at its start and
+    // hands it on again only when the close is accepted, so a cancelled close restarts nothing.
+    m_restart_after_update = true;
+    mainframe->Close();
 }
 
 void GUI_App::check_beta_version(bool show_tips_when_no_beta)

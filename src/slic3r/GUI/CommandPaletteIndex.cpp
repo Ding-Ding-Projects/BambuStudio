@@ -97,6 +97,7 @@ const std::vector<PreferenceEntry> &preference_entries()
         {"studio_enable_fila_manager", L("Filament Manager"), L("Take effect after restarting Studio"), PageGeneral},
         {"enable_multi_machine", L("Multi-device Management"), L("Take effect after restarting Studio"), PageGeneral},
         {"enable_beta_version_update", L("Support beta version update"), L("Receive beta version updates"), PageGeneral},
+        {"auto_update", L("Update automatically"), L("Download new versions in the background"), PageGeneral},
         {"privacyuse", L("Join the User Experience Improvement Program"), "", PageGeneral},
         {"download_path", L("Downloads"), L("Folder downloaded files are saved to"), PageGeneral},
         {"external_editor", L("External editor"), L("Editor used by File > Open in External Editor"), PageGeneral},

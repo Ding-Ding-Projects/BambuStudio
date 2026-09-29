@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-28 20:05-0400\n"
+"POT-Creation-Date: 2026-09-28 22:42-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1924,6 +1924,17 @@ msgstr ""
 
 #, possible-boost-format
 msgid "Configuration file \"%1%\" was loaded, but some values were not recognized."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Downloading Bambu Studio %s in the background."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Bambu Studio %s is ready. It starts the next time you open the app."
+msgstr ""
+
+msgid "Restart now"
 msgstr ""
 
 #, possible-c-format, possible-boost-format
@@ -10140,6 +10151,12 @@ msgid "Support beta version update."
 msgstr ""
 
 msgid "With this option enabled, you can receive beta version updates."
+msgstr ""
+
+msgid "Update automatically"
+msgstr ""
+
+msgid "Download new versions in the background and offer to restart when one is ready. Only an installed copy updates itself."
 msgstr ""
 
 msgid "Join the User Experience Improvement Program."
@@ -23304,6 +23321,9 @@ msgid "Support beta version update"
 msgstr ""
 
 msgid "Receive beta version updates"
+msgstr ""
+
+msgid "Download new versions in the background"
 msgstr ""
 
 msgid "Join the User Experience Improvement Program"

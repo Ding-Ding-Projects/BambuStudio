@@ -36,6 +36,7 @@
 #include <wx/msgdlg.h>
 #include <wx/language.h>
 
+#include <atomic>
 #include <mutex>
 #include <stack>
 
@@ -377,6 +378,15 @@ private:
 #endif
 
     boost::thread    m_check_cert_thread;
+
+    // Automatic update through Squirrel. The worker waits for Update.exe, so OnExit() sets the
+    // cancel flag and joins it; a run in progress is left to Update.exe to finish on its own.
+    boost::thread      m_auto_update_thread;
+    std::atomic<bool>  m_auto_update_running { false };
+    std::atomic<bool>  m_auto_update_cancel  { false };
+    // UI thread only. See take_restart_after_update().
+    bool               m_restart_after_update { false };
+
     TryLoadLastMachine m_load_last_machine;
 
 public:
@@ -570,6 +580,23 @@ public:
 
     void            check_update(bool show_tips, int by_user);
     void            check_new_version(bool show_tips = false, int by_user = 0);
+
+    // Automatic update of a copy installed by Squirrel (docs/features/windows/app-updates.md).
+    // start_auto_update() runs Squirrel's Update.exe against this fork's latest release on a
+    // worker thread, at most one at a time, and tells the user through a notification when the
+    // new version is ready. A failed update falls back to the download dialog for a manual
+    // check and stays silent for the automatic one. Never called for a copy without Update.exe.
+    void            start_auto_update(const std::string &tag, const std::string &name, int by_user);
+    // "Restart now": closes the main frame through the normal close path (so the unsaved
+    // project prompt still applies and can cancel). Squirrel starts the newest version once the
+    // application has really exited.
+    void            restart_after_update();
+    // The restart request lives only while a close is in flight: the main frame's close handler
+    // takes it back at its start and hands it on again only once the close is accepted (or
+    // replayed by the project page), so a cancelled close never restarts the application.
+    bool            take_restart_after_update() { const bool pending = m_restart_after_update; m_restart_after_update = false; return pending; }
+    void            set_restart_after_update(bool restart) { m_restart_after_update = restart; }
+
     void            check_cert();
     void            post_device_region();
     bool            process_network_msg(std::string dev_id, std::string msg);
