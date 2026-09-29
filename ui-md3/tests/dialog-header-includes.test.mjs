@@ -94,6 +94,12 @@ test('every source that uses a Material dialog reaches MsgDialog.hpp', async () 
   assert.deepEqual(missing, [], 'these use a Material dialog with no include path to MsgDialog.hpp');
 });
 
+test('every source that builds an MD3GroupBox reaches its header', async () => {
+  const { users, missing } = await unreached(path.join(slic3rDir, 'GUI', 'Widgets', 'StaticGroup.hpp'), ['MD3GroupBox']);
+  assert.ok(users >= 9, `expected MD3GroupBox in the group box sites, found ${users} files`);
+  assert.deepEqual(missing, [], 'these use MD3GroupBox with no include path to Widgets/StaticGroup.hpp');
+});
+
 test('every source that builds an MD3ScrolledWindow reaches its header', async () => {
   const { users, missing } = await unreached(SCROLLED_HEADER, ['MD3ScrolledWindow']);
   assert.ok(users > 50, `expected MD3ScrolledWindow across the GUI, found ${users} files`);

@@ -23,6 +23,9 @@
 
 #include <wx/dataview.h>
 #include <wx/filedlg.h>
+// The generic calendar's header declares only the control: its base class,
+// styles and events come from <wx/calctrl.h>, which has to come first.
+#include <wx/calctrl.h>
 #include <wx/generic/calctrlg.h>
 #include <wx/msgdlg.h>
 #include <wx/simplebook.h>

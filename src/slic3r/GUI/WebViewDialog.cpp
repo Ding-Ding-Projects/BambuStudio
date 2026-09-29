@@ -133,7 +133,7 @@ private:
     {
         wxPaintDC dc(this);
         if (m_icon.IsOk())
-            dc.DrawBitmap(m_icon, FromDIP(16), (GetClientSize().GetHeight() - m_icon.GetScaledHeight()) / 2, true);
+            dc.DrawBitmap(m_icon, FromDIP(16), static_cast<int>((GetClientSize().GetHeight() - m_icon.GetScaledHeight()) / 2), true);
     }
 
     Label   *m_text { nullptr };

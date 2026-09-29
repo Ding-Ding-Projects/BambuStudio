@@ -83,6 +83,21 @@ test('the Workspace panel is built from kit controls', async () => {
   assert.equal((panel.match(/m_agenda->GetItemData\(m_agenda->RowToItem\(row\)\)/g) || []).length, 3);
 });
 
+test('a source that uses the generic calendar includes its base header first', async () => {
+  // <wx/generic/calctrlg.h> declares only the control: wxCalendarCtrlBase, the
+  // wxCAL_* styles and the calendar events live in <wx/calctrl.h>. Without it
+  // the Workspace panel failed to compile ("wxCalendarCtrlBase: base class
+  // undefined"), which only a hosted build noticed.
+  for (const file of await sources(guiDir)) {
+    const text = code(await readFile(file, 'utf8'));
+    const generic = text.search(/#\s*include\s*[<"]wx\/generic\/calctrlg\.h[>"]/);
+    if (generic === -1) continue;
+    const base = text.search(/#\s*include\s*[<"]wx\/calctrl\.h[>"]/);
+    const rel = path.relative(guiDir, file).replaceAll('\\', '/');
+    assert.ok(base !== -1 && base < generic, `${rel} includes <wx/generic/calctrlg.h> without <wx/calctrl.h> before it`);
+  }
+});
+
 test('the kit list can carry check boxes, and the kit text tabs take the Material roles', async () => {
   const list = await read('Widgets', 'ListBox.cpp');
   assert.match(fn(list, 'void ListBox::toggle('), /wxCommandEvent event\(wxEVT_CHECKLISTBOX, GetId\(\)\);/);
