@@ -159,6 +159,8 @@ still to verify.
 - `md3-v159` (`d8fe5047a`, published 09:50 UTC as latest) carries package `2.8.4158`, the same version as
   `md3-v158` before it: an installed `md3-v158` does not take `md3-v159` by itself. Both were packaged
   under the old "highest release plus one" rule; `363181692` (run #607 on) numbers packages by run.
+  Its package verifies (SHA-1 `83b29ae59437103fc7599578eb048838055aad01`, imports resolve), and its What's
+  new lists 160 versions and 1307 changes, newest v154, every entry in Cantonese in Cantonese mode.
 - Upstream Bambu Studio `v02.08.04.61` (tagged 2026-09-29, seven commits on `v02.08.04.57`) is merged in
   `a0e408559` without conflicts: error dialog buttons act on mouse-up, the progress dialog no longer
   yields on Windows (upstream's fix for hangs after sending a print or loading a project from the device

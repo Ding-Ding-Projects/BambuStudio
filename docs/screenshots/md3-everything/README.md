@@ -300,6 +300,25 @@ A bilingual What's new capture of the same sweep shows its first entry without t
 dump taken right after has the text on screen and the English capture shows it: a capture that caught a
 repaint, not kept as evidence.
 
+## Release md3-v159 captures (2026-09-29)
+
+Taken by `scripts/md3/sweep-dialogs.py --only "What's new / Changelog"` from the unmodified `md3-v159`
+release package, with profiles under `C:\Users\Public\bbsdd\` (the Cantonese pass with
+`--po bbl/i18n/yue_HK/BambuStudio_yue_HK.po`). Every import of its executables and DLLs resolves in the
+package or in Windows; the sweep reported no finding in three modes.
+
+| Field | Value |
+| --- | --- |
+| Source commit | `d8fe5047a` (release `md3-v159`) |
+| Package | `BambuStudioMD3-2.8.4158-full.nupkg`, 732,155,975 bytes, SHA-1 `83b29ae59437103fc7599578eb048838055aad01` as listed in `RELEASES` (the same package version as `md3-v158`) |
+| Executable | `bambu-studio.exe` sha256 `a59166b78e3f8d4cdf4c84772937807a2c42391f319a7831f6a5c3fb73499690`, `BambuStudio.dll` sha256 `b01bf53753e67f20ebff401e5dbf17f35775cbf56b1a7a871e023f4000a28410` |
+| Capture route | hidden Win32 desktop, `PrintWindow` of the dialog, real GPU driver |
+| Display scale | 100% |
+
+| File | Dialog | Tuple |
+| --- | --- | --- |
+| `dialog-what-s-new-changelog--yue_HK-light-comfortable--md3-v159.png` | What's new in Cantonese: 160 versions and 1307 changes, newest v154, every entry in Cantonese; the date hint is still cut (CJ-027, fixed later in `1af648025`) | `yue_HK-light-comfortable` |
+
 ## Layout-probe dumps
 
 `probe/<tuple>--<before|after>.jsonl`, one per main-frame idle dump plus one per opened dialog,
