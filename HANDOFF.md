@@ -143,6 +143,12 @@ still to verify.
   (`.github/workflows/build_bambu.yml`, contract in `ui-md3/tests/md3-conversion-contracts.test.mjs`);
   the one-click local build keeps its own rule. Builds that were already queued still packaged under
   the old rule.
+- Upstream Bambu Studio `v02.08.04.61` (tagged 2026-09-29, seven commits on `v02.08.04.57`) is merged in
+  `a0e408559` without conflicts: error dialog buttons act on mouse-up, the progress dialog no longer
+  yields on Windows (upstream's fix for hangs after sending a print or loading a project from the device
+  page), a macOS-only WebView change, and `version.inc` at `02.08.04.61`. The network agent version
+  stays `02.08.04.57`, as upstream left it. The official baseline diagnostics still compare against the
+  official `v02.08.04.57` release on purpose.
 - Privacy of the capture evidence (2026-09-29): capture profiles had lived under the Windows user
   profile, so two public Config profiles captures (`md3-v143`, `md3-v150`, added in `e92b7fa2d`) showed
   the account name in the data folder, and twelve layout dumps from 2026-09-06/07 recorded it in the

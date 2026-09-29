@@ -19,7 +19,7 @@ configured on any other system. Cross-platform builds remain available upstream 
 ## Current development work
 
 The source branch for the next Windows release reconciles upstream Bambu Studio
-2.8.4.57 with this fork's native UI. It adds remembered dual-nozzle grouping,
+2.8.4.57, with the fixes of upstream 2.8.4.61 merged on 2026-09-29, with this fork's native UI. It adds remembered dual-nozzle grouping,
 quick swaps and a Slice and print setup action, LAN printer farm routing,
 camera autoplay and fan feedback, a native Model Creator, portable multi-file
 workspaces with checklists and planning, and history embedded in saved 3MF
@@ -46,10 +46,11 @@ unmodified release package on a hidden desktop; the evidence is listed in
 | --- | --- | --- |
 | Automatic updates from this fork's GitHub releases: an installed copy downloads a new version in the background, then a banner offers **Restart to install update** and **Release notes** and says the update is not code-signed; it checks again every six hours, and the download dialog stays as the fallback | In releases since `md3-v151`; the **Update automatically** preference is verified in all three language modes; an installed copy updating itself is not verified yet | [App updates](docs/features/windows/app-updates.md) |
 | The release feed moves: a build becomes the latest release when its commit is newer than the current latest | Verified (`md3-v151` onward) | [Release supply chain](docs/features/releases/windows-release-supply-chain.md) |
+| Every update package carries a higher version than the latest release before it: hosted builds number packages by workflow run, because two queued builds could share a number (`md3-v155` and `md3-v156` both `2.8.4155`) and Squirrel skips an equal version | Fixed in source (`363181692`), not yet in a release | [App updates](docs/features/windows/app-updates.md) |
 | The splash screen says when the running version was released, in English, Cantonese or both | Verified on `md3-v153` | [Splash release date](docs/features/windows/splash-release-date.md) |
 | Bilingual mode on every native surface: labels, buttons, check boxes, radio buttons, group boxes, section headers, list and table column titles, placeholder hints, tooltips, menus, message dialog bodies, notification links, self-drawn widgets and the 3D canvas, each paired only where both languages fit, with the Cantonese in the tooltip otherwise | Verified surface by surface; the `md3-v153` language audit found no English-only label on Prepare or Preferences > General | [Language modes](docs/features/windows/language-modes.md) |
 | A complete Hong Kong Cantonese catalog (7,658 entries), Cantonese feature articles (72) and a Cantonese in-app changelog | In releases; human review pending | [Language modes](docs/features/windows/language-modes.md) |
-| Cantonese line breaking that never starts a line with closing punctuation such as "。" and never splits an emoji | Fixed in source (`c7309b889`), not yet in a release | [Language modes](docs/features/windows/language-modes.md) |
+| Cantonese line breaking that never starts a line with closing punctuation such as "。" and never splits an emoji | In `md3-v155` (`c7309b889`); capture pending | [Language modes](docs/features/windows/language-modes.md) |
 | Every dialog kept inside its own edges in all three modes: 26 clipping defects found by capture and by the layout probe, each with its cause and fix | 16 verified in built packages (CJ-014 to CJ-020 from this month's releases), 10 fixed in source and waiting for a capture | [Clipping inventory](docs/features/design-system/clipping-inventory.md) |
 | Units and separators shown as themselves: "°C", "mm³" and the What's new separators used to read "Â°C" and "Â·" because narrow literals went through the Windows code page | Fixed in source (`32a36b134`), not yet in a release | [Handoff](HANDOFF.md) |
 | Verification tools: the layout probe's `language-audit` command and splash hook, and capture scripts for dialogs, the splash, Preferences search and the language audit | In use for every release check above | [Layout probe](docs/features/design-system/layout-probe.md) |
