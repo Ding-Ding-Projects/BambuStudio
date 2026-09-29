@@ -269,6 +269,11 @@ still to verify.
   constructor, or Windows gets a scrollbar style before the override exists. The layout probe writes `scrollbars`
   (`native_v`, `native_h`, `kit_v`, `kit_h`) for every window. `scrollbars.test.mjs` and the include guard cover it;
   not yet in a release.
+- Context menus verified (2026-09-29): on `md3-v169` (`087fe6f70`, package `2.8.4620`, SHA-1 `7e63bc7e…`),
+  `scripts/md3/check-context-menus.py` got the Material menu for 8 of 8 requests per mode in English, Cantonese and
+  bilingual (right-click and keyboard, two Smart home fields and two Preferences fields); the full sweeps found no
+  layout finding in 20 dialogs per mode, and the language audit found no English-only label. Captures are in
+  `docs/screenshots/md3-everything/` under the md3-v169 section.
 - Table scrollbars (2026-09-29): `MD3DataViewCtrl` and `MD3DataViewListCtrl` (`Widgets/MD3DataView.{hpp,cpp}`) do
   the same forwarding for tables. ObjectList, AuxiliaryList and DiffViewCtrl derive from `MD3DataViewCtrl`, and the
   seven `wxDataViewListCtrl` tables are `MD3DataViewListCtrl`. `wxDataViewCtrl::MSWWindowProc` is private, so both

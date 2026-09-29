@@ -413,6 +413,29 @@ Creator crops leave out the rows that show local folder paths.
 | `dialog-model-creator-key-row--en-light-comfortable--md3-v165.png` | Model Creator key row after CJ-028: Add or replace key, Test key and Clear key whole | `en-light-comfortable` |
 | `dialog-model-creator-lower--en-light-comfortable--md3-v165.png` | Model Creator, lower part after CJ-028: the form scrolls with its rows at full height; the footer buttons still capture blank (CJ-030) | `en-light-comfortable` |
 
+## Release md3-v169 context menus (after)
+
+Taken by `scripts/md3/check-context-menus.py` from the unmodified `md3-v169` release package with profiles under
+`C:\Users\Public\bbsdd\`, in all three modes. Each run asked two text fields in Smart home and two in Preferences
+for a menu, once with a right-click and once the way the Menu key and Shift+F10 do: 8 of 8 requests per mode
+opened the Material menu (window class `wxWindowNR`), none the system menu (`#32768`), none nothing. The same
+package's full sweep found no layout finding in 20 dialogs per mode, and its language audit found no English-only
+label on Prepare or Preferences > General.
+
+| Field | Value |
+| --- | --- |
+| Source commit | `087fe6f70` (release `md3-v169`) |
+| Package | `BambuStudioMD3-2.8.4620-full.nupkg`, 732,177,294 bytes, SHA-1 `7e63bc7e9638497fd22a3175ef13a95cd26cbc77` as listed in `RELEASES` |
+| Executable | `bambu-studio.exe` sha256 `6d650249d86e77364c3719eea3e9a4d547bf7ad0e9efdc79750a010f05389da3`, `BambuStudio.dll` sha256 `840b1a8da19178249bcf0945e93bac3310c2e2a17a049adf8df0a54477611abf` |
+| Capture route | hidden Win32 desktop, `PrintWindow`, real GPU driver |
+| Display scale | 100% |
+
+| File | Surface | Tuple |
+| --- | --- | --- |
+| `context-menu-smart-home-right-click--en-light-comfortable--md3-v169.png` | Smart home URL field, right-click: the Material menu with its search field; on the empty field only Paste is enabled, and Undo, Cut, Copy, Delete and Select all are dimmed | `en-light-comfortable` |
+| `context-menu-smart-home-right-click--bilingual_en_yue_HK-light-comfortable--md3-v169.png` | The same menu in bilingual mode: "Undo · 復原", "Cut · 剪下", "Copy · 複製", "Paste · 貼上", "Delete · 刪除", "Select all · 全部選取" | `bilingual_en_yue_HK-light-comfortable` |
+| `context-menu-preferences-keyboard--yue_HK-light-comfortable--md3-v169.png` | Preferences search field, keyboard request: the menu in Cantonese, 「搜尋選單」 over 復原, 剪下, 複製, 貼上, 刪除 and 全部選取, with 貼上 and 全部選取 enabled | `yue_HK-light-comfortable` |
+
 ## Layout-probe dumps
 
 `probe/<tuple>--<before|after>.jsonl`, one per main-frame idle dump plus one per opened dialog,

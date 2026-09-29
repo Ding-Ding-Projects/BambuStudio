@@ -1,6 +1,6 @@
 ---
 translation-of: context-menus.md
-source-sha256: 579a315581cdc31a9b0efc0c57fe646d1a97bd66eff14c6bc4ca07e0ec8bc21e
+source-sha256: 0395d9227a563f1be0d248ddcc9680ed58b7c231f12c6393a768c05f56a6f087
 review-status: agent-drafted
 ---
 
@@ -53,5 +53,8 @@ Material 選單。
   冇打開，執行就會失敗。喺 `md3-v162`（呢次改動之前），智能家居嘅網址欄同偏好設定嘅搜尋欄，右鍵點擊乜都冇打開，鍵盤請求
   就打開系統嘅英文編輯選單
   （`docs/screenshots/md3-everything/context-menu-smart-home-keyboard--en-light-comfortable--md3-v162.png`）。
+- 喺 `md3-v169`（目標 `087fe6f70`）驗證咗：英文、粵語同雙語模式下，每種模式 8 個請求全部都打開咗 Material 選單，選單有
+  搜尋欄，項目用返嗰個模式嘅語言；冇一個打開系統選單，亦冇一個乜都冇打開
+  （`docs/screenshots/md3-everything/context-menu-smart-home-right-click--bilingual_en_yue_HK-light-comfortable--md3-v169.png`）。
 
 視窗標題列保留 Windows 嘅系統選單（Alt+Space）；佢屬於視窗框，唔屬於程式嘅內容。

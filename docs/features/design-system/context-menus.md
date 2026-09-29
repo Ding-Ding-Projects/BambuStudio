@@ -58,6 +58,10 @@ switches it off as well. Internal builds may switch it on for debugging (`#if !B
   change, the Smart home URL field and the Preferences search field opened nothing on a right-click
   and the system's English edit menu on the keyboard request
   (`docs/screenshots/md3-everything/context-menu-smart-home-keyboard--en-light-comfortable--md3-v162.png`).
+- Verified on `md3-v169` (target `087fe6f70`): in English, Cantonese and bilingual mode, 8 of 8
+  requests per mode opened the Material menu, with its search field and its items in the mode's
+  language, and none opened the system menu or nothing
+  (`docs/screenshots/md3-everything/context-menu-smart-home-right-click--bilingual_en_yue_HK-light-comfortable--md3-v169.png`).
 
 Window title bars keep the system menu of Windows (Alt+Space); it belongs to the window frame rather
 than to the app's content.
