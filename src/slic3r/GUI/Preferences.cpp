@@ -2805,6 +2805,12 @@ wxWindow *PreferencesDialog::create_general_tab()
     auto item_beta_version_update = create_item_checkbox(_L("Support beta version update."), scrolled, _L("With this option enabled, you can receive beta version updates."), 50,
                                                          "enable_beta_version_update");
 
+    // Only a copy installed by the Squirrel installer can update itself; the switch
+    // does nothing on a portable or developer build, and its description says so.
+    auto item_auto_update = create_item_checkbox(_L("Update automatically"), scrolled,
+                                                 _L("Download new versions in the background and offer to restart when one is ready. Only an installed copy updates itself."),
+                                                 50, "auto_update");
+
     // User Experience Improvement Program + "what data" hyperlink.
     auto  item_priv_policy = create_item_checkbox(_L("Join the User Experience Improvement Program."), scrolled, "", 50, "privacyuse");
     auto *hyperlink        = new Label(scrolled, wxString::FromUTF8(_CTX_utf8(L_CONTEXT("Learn more", "Preferences"), "Preferences")));
@@ -2856,6 +2862,7 @@ wxWindow *PreferencesDialog::create_general_tab()
     sizer->Add(item_fila_manager, flags);
     sizer->Add(item_multi_machine, flags);
     sizer->Add(item_beta_version_update, flags);
+    sizer->Add(item_auto_update, flags);
     sizer->Add(item_priv_policy, flags);
     sizer->Add(item_downloads, flags);
     sizer->Add(item_external_editor, flags);
@@ -3466,6 +3473,7 @@ void PreferencesDialog::on_reset_preferences()
         FilaManagerEnabledConfigKey,
         "enable_multi_machine",
         "enable_beta_version_update",
+        "auto_update",
         "privacyuse",
         "download_path",
         "webview_auto_fill",

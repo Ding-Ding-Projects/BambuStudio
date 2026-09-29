@@ -190,6 +190,10 @@ enum class NotificationType
     // One-time disclosure that the funny level styles every message. Fires the
     // first time a level above 1 is active and is then recorded in AppConfig.
     FunnyLevelDisclosure,
+    // A new release was downloaded and staged in the background by Squirrel. Carries a
+    // "Restart now" hyperlink; without it the new version starts the next time the app opens.
+    // De-duplicated by type, so repeated checks refresh one toast.
+    AppUpdateReady,
     NotificationTypeCount
 
 };

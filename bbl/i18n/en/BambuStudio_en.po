@@ -27422,3 +27422,23 @@ msgstr ""
 
 msgid "Release date on the splash screen"
 msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Downloading Bambu Studio %s in the background."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Bambu Studio %s is ready. It starts the next time you open the app."
+msgstr ""
+
+msgid "Restart now"
+msgstr ""
+
+msgid "Update automatically"
+msgstr ""
+
+msgid "Download new versions in the background and offer to restart when one is ready. Only an installed copy updates itself."
+msgstr ""
+
+msgid "Download new versions in the background"
+msgstr ""

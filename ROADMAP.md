@@ -165,6 +165,11 @@ captures are a separate box and stay unticked until they exist from the real bui
       process start; startup now relaunches once with it when the pair is beside the exe
       (verified on build attempt 32, HANDOFF §12).
 - [ ] Chrome-style in-app updater (Squirrel feed); today the dialog hands Setup.exe to the browser.
+      Built in source, not yet captured from a release: an installed copy runs Update.exe against the
+      latest-release feed on a worker thread (preference "Update automatically", default on), shows an
+      "is ready" notification with Restart now, and keeps the download dialog as the fallback. Ticked once
+      a release capture installs an older release and watches it update and restart
+      (docs/features/windows/app-updates.md).
 
 
 ### Native and embedded GUI accessibility wave (delivery verification — 2026-07-30)

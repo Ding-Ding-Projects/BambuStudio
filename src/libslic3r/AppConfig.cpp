@@ -505,6 +505,11 @@ void AppConfig::set_defaults()
     if (get("enable_beta_version_update").empty()) {
         set_bool("enable_beta_version_update", true);
     }
+    // A copy installed by Squirrel downloads new releases in the background; see
+    // docs/features/windows/app-updates.md. Copies that are not installed ignore it.
+    if (get("auto_update").empty()) {
+        set_bool("auto_update", true);
+    }
     if (get("linear_defletion").empty()) {
         set("linear_defletion", "0.003");
     }

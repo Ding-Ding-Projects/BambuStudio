@@ -1933,6 +1933,7 @@ std::string NotificationManager::type_name(NotificationType type)
     case NotificationType::BBLArcFittingInfo: return "BBLArcFittingInfo";
     case NotificationType::BBLCalibExtruderMismatch: return "BBLCalibExtruderMismatch";
     case NotificationType::ProjectHistoryFailure: return "ProjectHistoryFailure";
+    case NotificationType::AppUpdateReady: return "AppUpdateReady";
     default: return "notification_" + std::to_string(static_cast<int>(type));
     }
 }
