@@ -1,6 +1,6 @@
 ---
 translation-of: dependency-security-alerts.md
-source-sha256: 4f5dc24a0e6936f6d151665fa58fd7caf9a6ddd3d7e37dee220ed86920fe8981
+source-sha256: e103387d85e358d9401f4e8ff01dd5f3ddc639142974cf7016886edc74efb9c0
 review-status: agent-drafted
 ---
 
@@ -128,7 +128,7 @@ pnpm 唔肯改 lockfile：build 會一字不差咁安裝 `pnpm-lock.yaml` 寫嘅
 ### 自動 dismiss 咗嘅警報，都一樣檢查過
 
 - **#24**（`undici`，GHSA-3wwx-pv8p-q78v，7.29.1 修正）撞正頁面自己 `pnpm.overrides` 將 `undici` 鎖喺
-  7.29.0。個鎖已經升到 7.29.1。`undici` 只係開發工具用：本機測試嘅 jsdom，同 i18next-parser 入面嘅
+  7.29.0。`9eb6ee5d2` 已經將個鎖升到 7.29.1。`undici` 只係開發工具用：本機測試嘅 jsdom，同 i18next-parser 入面嘅
   cheerio；vitest 測試就係用緊佢，全部過晒。
 - **#22、#23**：同一份公告，喺冇人用嘅 npm lockfile 度（`undici` 7.28.0 同 8.9.0）。
 - **#4、#5**（`brace-expansion`，GHSA-rgw5-rvv9-x895）同 **#8、#9**（`browserslist`，GHSA-c83g-rgw3-j3cx）：
@@ -151,9 +151,14 @@ pnpm 唔肯改 lockfile：build 會一字不差咁安裝 `pnpm-lock.yaml` 寫嘅
   Node 又會讀 `vite` 嘅 `package.json` imports；checkout 深過大約 180 個字元，兩個都會以
   `ENAMETOOLONG` 或者 `ERR_PACKAGE_IMPORT_NOT_DEFINED` 失敗。好似 build 咁，喺 repository 自己嘅
   `device_page` 資料夾入面做檢查就得。
-- **有一個 DeviceWeb 測試嘅失敗同今次無關。** `tests/buildSpoolFromTray.test.ts` 會以
-  `ERR_MODULE_NOT_FOUND` 失敗，因為 `src/features/filament-manager/constants.ts` 由 `68f42a887` 開始 import
-  冇副檔名嘅 `../../i18nResources`，用 `--experimental-strip-types` 行測試嗰陣 Node 嘅 ESM loader 搵唔到。
+- **有一個 DeviceWeb 測試因為無關嘅原因失敗過，直到 `0a0bb64c1`。** 由 `68f42a887` 開始，
+  `tests/buildSpoolFromTray.test.ts` 會以 `ERR_MODULE_NOT_FOUND` 失敗，因為
+  `src/features/filament-manager/constants.ts` import 冇副檔名嘅 `../../i18nResources`，用
+  `--experimental-strip-types` 行測試嗰陣 Node 嘅 ESM loader 搵唔到。`0a0bb64c1` 加返 `.ts` 副檔名，之後 5 個
+  測試全部過晒。
+- **其他改動都可以令升鎖版本嘅 build 變紅。** `46792f02a` 嘅 run 36614198573 喺一個今次完全冇掂過嘅 C++ 檔
+  （`AppearanceEditorPopover.cpp`，嚟自 `8c1e4a5ab`）失敗。怪 lockfile 之前先睇失敗嗰步：`device_page_build`
+  嗰幾行會話你 pnpm 步驟過咗未。
 
 ## 安全考慮
 
@@ -169,6 +174,14 @@ GitHub Pages 網站，所以冇任何已安裝嘅版本受影響。保持保安�
 - `CI=1 pnpm install`（frozen lockfile）次次都過。
 - `pnpm run build` 次次都過，三次 build 出嚟嘅 `dist/` 16 個檔（4,079,543 bytes）逐個 byte 一樣。
 - `pnpm run test:a11y` 次次都係 7 個過晒 7 個。
-- 5 個唔使依賴套件嘅測試次次過咗 4 個；`tests/buildSpoolFromTray.test.ts` 次次都因為上面講嘅原因失敗。
+- 5 個唔使依賴套件嘅測試次次過咗 4 個；`tests/buildSpoolFromTray.test.ts` 次次都因為上面講嘅原因失敗，
+  `0a0bb64c1` 之後就過咗。
 
-C++ app 只會由 Windows build and release workflow build，嗰個 workflow 唔行測試。
+C++ app 只會由 Windows build and release workflow build，嗰個 workflow 唔行測試。喺雲端 Windows runner 度，
+run 36611172274（`75fc64c69`）同 run 36614198573（`46792f02a`）嘅 `device_page_build` 步驟都寫住
+「Lockfile is up to date, resolution step is skipped」，用 pnpm 10.12.1 裝完再 build 好個頁面。
+
+第一批帶住新鎖版本嘅 release 係 `md3-v169`（由 `087fe6f70` build，有 `js-yaml` 同 `nanoid` 兩個鎖）同
+`md3-v170`（由 `784d86ff3` build，三個都有）；`md3-v171`（由 `85a1d9e86` build）一樣有齊三個。`md3-v171`
+隨附嘅 CycloneDX 清單（`BambuStudioMD3.cdx.json`）列出 `resources/web/device_page/dist` 嘅 16 個檔，SHA-256
+同未郁任何鎖版本之前嘅本機 build 一模一樣，即係用家安裝到嘅頁面完全冇變過。

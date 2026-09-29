@@ -135,7 +135,7 @@ Why each package is unreachable, checked in the installed sources:
 ### Auto-dismissed alerts, checked as well
 
 - **#24** (`undici`, GHSA-3wwx-pv8p-q78v, fixed in 7.29.1) matched the page's own `pnpm.overrides`
-  pin of `undici` 7.29.0. The pin was raised to 7.29.1. `undici` is only used by development tools,
+  pin of `undici` 7.29.0. The pin was raised to 7.29.1 in `9eb6ee5d2`. `undici` is only used by development tools,
   jsdom in the local tests and cheerio inside i18next-parser; the vitest tests run on it and pass.
 - **#22, #23**: the same advisory on the unused npm lockfile (`undici` 7.28.0 and 8.9.0).
 - **#4, #5** (`brace-expansion`, GHSA-rgw5-rvv9-x895) and **#8, #9** (`browserslist`,
@@ -159,10 +159,14 @@ raised an alert there) remain; both are development tools of the manually run ha
   `minimatch` folder, and Node reads `vite`'s `package.json` imports; both fail with
   `ENAMETOOLONG` or `ERR_PACKAGE_IMPORT_NOT_DEFINED` when the checkout sits deeper than about 180
   characters. Run the check in the repository's own `device_page` folder, as the build does.
-- **One DeviceWeb test fails independently of this work.** `tests/buildSpoolFromTray.test.ts` fails
-  with `ERR_MODULE_NOT_FOUND` because `src/features/filament-manager/constants.ts` imports
-  `../../i18nResources` without a file extension (since `68f42a887`), which Node's ESM loader cannot
-  resolve when the tests run with `--experimental-strip-types`.
+- **A DeviceWeb test failed for an unrelated reason until `0a0bb64c1`.** From `68f42a887` on,
+  `tests/buildSpoolFromTray.test.ts` failed with `ERR_MODULE_NOT_FOUND` because
+  `src/features/filament-manager/constants.ts` imported `../../i18nResources` without a file
+  extension, which Node's ESM loader cannot resolve when the tests run with
+  `--experimental-strip-types`. `0a0bb64c1` added the `.ts` extension, and all five tests pass since.
+- **Another change can turn a pin bump's build red.** Run 36614198573 for `46792f02a` failed in a
+  C++ file this work never touched (`AppearanceEditorPopover.cpp`, from `8c1e4a5ab`). Read the failed
+  step before blaming the lockfile: the `device_page_build` lines show whether the pnpm step passed.
 
 ## Security considerations
 
@@ -181,6 +185,15 @@ On 2026-09-29, with the Node 22.22.2 and pnpm 10.12.1 that CMake pins, before an
   byte-identical across the three builds.
 - `pnpm run test:a11y` passed 7 of 7 every time.
 - Four of the five dependency-free tests passed every time; `tests/buildSpoolFromTray.test.ts`
-  failed every time for the reason above.
+  failed every time for the reason above, and passes since `0a0bb64c1`.
 
-The C++ app is built only by the Windows build and release workflow, which runs no tests.
+The C++ app is built only by the Windows build and release workflow, which runs no tests. On the
+hosted Windows runner, the `device_page_build` step of run 36611172274 (`75fc64c69`) and of run
+36614198573 (`46792f02a`) logged "Lockfile is up to date, resolution step is skipped", installed with
+pnpm 10.12.1 and built the page.
+
+The first releases with the new pins are `md3-v169` (from `087fe6f70`, with the `js-yaml` and
+`nanoid` pins) and `md3-v170` (from `784d86ff3`, with all three); `md3-v171` (from `85a1d9e86`) has
+all three as well. The CycloneDX inventory published with `md3-v171` (`BambuStudioMD3.cdx.json`)
+lists the 16 files of `resources/web/device_page/dist` with the same SHA-256 values as the local build
+from before any pin moved, so the page that users install did not change at all.

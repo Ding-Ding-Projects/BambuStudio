@@ -33,11 +33,12 @@
 
 - [x] Triage the 17 open Dependabot alerts (9 high, 8 moderate): none of the flagged packages ships in the Windows app or on the Pages site, and no vulnerable code path is reachable ([Dependency security alerts](docs/features/releases/dependency-security-alerts.md)).
 - [x] Raise the device page's `js-yaml` and `nanoid` security pins to 4.3.2 and 3.3.18 (`75fc64c69`, on `main`); verified locally with the pinned Node and pnpm: frozen install passes and the built page is byte-identical.
-- [x] Raise the device page's `undici` pin from 7.29.0 to 7.29.1 (GHSA-3wwx-pv8p-q78v, auto-dismissed alert #24); verified locally the same way.
+- [x] Raise the device page's `undici` pin from 7.29.0 to 7.29.1 (GHSA-3wwx-pv8p-q78v, auto-dismissed alert #24) in `9eb6ee5d2`; verified locally the same way.
 - [x] Dismiss the 13 unreachable alerts as `not_used` and the 4 already-fixed ones as `inaccurate`, each with its reason on the alert.
-- [ ] Windows build and release for the pin changes. Run [36611172274](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36611172274) for `75fc64c69` was still running when this was written; the `undici` pin gets its own run.
+- [x] Hosted build accepts the new lockfile: the `device_page_build` step of runs [36611172274](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36611172274) (`75fc64c69`) and [36614198573](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36614198573) (`46792f02a`) logged "Lockfile is up to date" and built the page. The second run failed later in an unrelated C++ file from `8c1e4a5ab`, which `784d86ff3` repaired.
+- [x] Ship the pins: [`md3-v170`](https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v170) (from `784d86ff3`) and [`md3-v171`](https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v171) (from `85a1d9e86`) carry all three, and `md3-v171`'s CycloneDX inventory lists the 16 device page files with the same SHA-256 values as the build from before any pin moved.
+- [x] `tests/buildSpoolFromTray.test.ts` passes again: `0a0bb64c1` imports `../../i18nResources.ts` with its extension (it failed from `68f42a887` on), and all five DeviceWeb tests pass.
 - [ ] Owner decision: re-enable the repository's dependency graph, which reported "disabled" on 2026-09-29, so that Dependabot rescans pushes and closes fixed alerts itself.
-- [ ] Fix `tests/buildSpoolFromTray.test.ts`, which fails because `src/features/filament-manager/constants.ts` imports `../../i18nResources` without a file extension (since `68f42a887`).
 - [ ] Move the device page to vitest 4.x when its local tests are next touched; that clears GHSA-82fw-gwwq-j7x9 at the source instead of by dismissal.
 
 ## Every element in Material Design 3 and in three language modes (issues #43 and #45)
