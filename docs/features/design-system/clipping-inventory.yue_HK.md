@@ -1,6 +1,6 @@
 ---
 translation-of: clipping-inventory.md
-source-sha256: 80586e899406214a1c4a05b2256f31efe046caa35dbf1797f39a4875137503ec
+source-sha256: 12d163795b3a66f83d0c1fa1b0c8e4b0e7c94dcf97f9cf55d4e35510251bd253
 review-status: agent-drafted
 ---
 
@@ -37,6 +37,10 @@ Windows 桌面應用程式上發現嘅每一個版面裁剪缺陷，包括佢嘅
 | CJ-012 | 準備側欄開啟進階設定（每一行：打印機卡、墨水藥丸、搜尋藥丸、流程標籤欄） | 每一個元組（版面探針，1200 x 800） | 每一個側欄行喺 479 px 捲軸內度排列 1271 px 寬同喺側欄邊度裁剪；一個水平捲軸佔 17 px 高度；流程標籤欄結束喺「Otl」 | 重新家長 ParamsPanel 頭 sizer 將標題放喺 proportion 1（56 px 最小值）旁邊伸展空間 2、1 同 12；wxBoxSizer::CalcMin 按總比例（56 x 16 + fixed = 1271）調整最小值同 update_sidebar_scroll_body 尊重內容最小值作為虛擬寬度 | 3f4d8ffeb | prepare-advanced--en-light-comfortable--before.png | prepare-advanced--en-light-comfortable--after.png | verified |
 | CJ-013 | 準備側欄、流程設定樹（類別藥丸欄同頁面區域） | 每一個元組（版面探針，1200 x 800，預設側欄寬度） | 類別欄隱藏速度/支撐/其他喺溢出後面（其他藥丸餓到 16 px）同設定樹喺 144 px 內部捲軸內度捲動，所以用戶必須拖動側欄更大先可以睇任何設定 | TabCtrl 嘅藥丸模式使用平欄隱藏唔合適嘅版面，ParamsPanel 係一個 proportion-3 項目（下限 240 px），擺喺捲動側欄本體內部，所以佢嘅頁面視圖只得到剩餘高度 | 92cd7bce7 | prepare-tree-categories--en-light-comfortable--before.png | prepare-tree-categories--en-light-comfortable--after.png | verified |
 | CJ-014 | 長動作標籤嘅訊息對話框（噴嘴直徑選擇、自訂 `SetButtonLabel` 動作、"Do not execute"、"Go to ..."） | 每一個元組（類別級別） | 動作按鈕被壓到 44 DIP 下限，截短咗："Left..." 同 "Rig..." 而唔係 "Left nozzle: 0.4mm" 同 "Right nozzle: 0.6mm" | `MsgDialog::add_button` 畀每一個頁腳按鈕縮細（`SetAllowShrink(true)`），所以工具包 Button 報告嘅最細闊度係 44 DIP，而頁腳嘅彈性網格就啱啱淨係畀每個動作咁闊 | 9615c9418 | pending | pending | fixed-unverified |
+| CJ-015 | 每一個工具包搜尋欄（Smart home、配置檔案及備份、版本歷史、準備側欄、偏好） | 每一個元組（類別級別） | 藥丸形外框嘅圓右端被覆蓋咗：佢嘅外框停止短咗同末端弧嘅一絲浮喺最後嘅圖示按鈕旁邊 | 尾部 40 px 圖示按鈕係一個子視窗，佢畫佢嘅整個正方形，喺 5 px 尾部填充度佢覆蓋咗 22 px 半徑末端嘅弧 | d27eadfdb | dialog-smart-home--en-light-comfortable--before.png | pending | fixed-unverified |
+| CJ-016 | 鍵盤快速鍵、部分清單同快速鍵描述（雙語） | bilingual_en_yue_HK-light-comfortable | 緊湊標籤執行超過捲動面板："Objects list · 物件清"同描述喺對話框邊度被裁剪 | 雙語裝飾器只對包含排版器測量咗適合度，排版器喺捲動面板內度比可見面板寬 | d27eadfdb | dialog-keyboard-shortcuts--bilingual_en_yue_HK-light-comfortable--before.png | pending | fixed-unverified |
+| CJ-017 | 配置檔案及備份、檔案清單 | 每一個元組（雙語時最差） | 清單顯示英文嘅一行同雙語模式下被截斷咗一半嘅行 | 資料檢視要求幾乎冇高度，所以清單只得到固定 720 x 700 對話框度文本上面剩下嘅 | 9670a437a | pending | pending | fixed-unverified |
+| CJ-018 | 溫度校準、設定標籤（雙語） | bilingual_en_yue_HK-light-comfortable | "Start temp: · 開"、"End temp: · 結束"、"Temp step: · 溫度"：粵語喺標籤邊度被裁剪 | 標籤建立咗 120 px 寬，佢變咗佢哋嘅最小值，排版器計算咗排版器嘅鬆弛作為房間佢哋可以長到 | efaa98db2 | dialog-temperature--bilingual_en_yue_HK-light-comfortable--before.png | pending | fixed-unverified |
 <!-- clipping-inventory:end -->
 
 CJ-013 喺嘗試 28（源 `92cd7bce7`）度被驗證：五個藥丸排列喺兩行（其他喺 y = 52），頁面視圖係 1672 px 高所以側欄本體（內容 2549 px 喺 645 px 客戶端）係唯一嘅捲軸，探針報告側欄冇餓到嘅行（轉儲 `probe/prepare-tree-categories--en-light-comfortable--attempt28.jsonl`）。

@@ -52,6 +52,26 @@ Each surface below is captured at every tuple; the file name is
 | regex-builder | Regex builder popover from the sidebar search | pending |
 | command-palette | Command palette | pending |
 
+## Dialog sweep captures (2026-09-29)
+
+Taken by `scripts/md3/sweep-dialogs.py`, which opens each menu-reachable dialog on a hidden
+desktop and writes a layout-probe dump beside each capture. These are the "before" captures of
+clipping inventory rows CJ-015, CJ-016 and CJ-018.
+
+| Field | Value |
+| --- | --- |
+| Source commit | `73a952b15` (release `md3-v143`) |
+| Executable | the `md3-v143` payload, `bambu-studio.exe` sha256 `c88eea3912b82b9e9aef428bd53a219f4874c010a930ad71e7032b46295ae202`, `BambuStudio.dll` sha256 `ab2f92d88f3778464c327bfce755e10944809e0623a27920b97f8b70af25ef48` |
+| Payload note | that release shipped `BambuStudio.dll` without its dependency DLLs and could not start; the OpenCascade, FFmpeg, GMP, MPFR, FreeType and WebView2 loader DLLs of the same dependency build were placed beside it for these captures. The app code in the captures is the release's own. |
+| Capture route | hidden Win32 desktop, `PrintWindow` of the dialog, real GPU driver |
+| Display scale | 100% |
+
+| File | Dialog | Tuple |
+| --- | --- | --- |
+| `dialog-smart-home--en-light-comfortable--before.png` | Smart home | `en-light-comfortable` |
+| `dialog-keyboard-shortcuts--bilingual_en_yue_HK-light-comfortable--before.png` | Keyboard Shortcuts | `bilingual_en_yue_HK-light-comfortable` |
+| `dialog-temperature--bilingual_en_yue_HK-light-comfortable--before.png` | Temperature calibration | `bilingual_en_yue_HK-light-comfortable` |
+
 ## Layout-probe dumps
 
 `probe/<tuple>--<before|after>.jsonl`, one per main-frame idle dump plus one per opened dialog,
