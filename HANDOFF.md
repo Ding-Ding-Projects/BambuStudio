@@ -150,6 +150,15 @@ still to verify.
   carrying the catalog header (8 on `md3-v151`). The bilingual "Update automatically" description shows
   its Cantonese below the English, and the bilingual Other page shows its search hint, so the empty hint
   of one `md3-v155` capture did not reproduce. CJ-026 is still visible on `md3-v157`; its fix came later.
+- `md3-v158` (`32a36b134`, package `2.8.4158`, SHA-1 `8613eadca952103e32a2cb2bfbd348b02b18113e` matching
+  its `RELEASES`, every import resolves, splash painted in all three modes) verifies CJ-025 and the unit
+  fix: Temperature calibration reads "SETTINGS · 設定" and "°C", Max flowrate "mm³/s", and What's new
+  separates its dates with " · ". The same sweep found CJ-027, the What's new date hint cut in all three
+  modes; the probe does not measure placeholder hints, so the sweep reported no finding. `1af648025`
+  sizes each date field to its hint and lets the date row wrap.
+- `md3-v159` (`d8fe5047a`, published 09:50 UTC as latest) carries package `2.8.4158`, the same version as
+  `md3-v158` before it: an installed `md3-v158` does not take `md3-v159` by itself. Both were packaged
+  under the old "highest release plus one" rule; `363181692` (run #607 on) numbers packages by run.
 - Upstream Bambu Studio `v02.08.04.61` (tagged 2026-09-29, seven commits on `v02.08.04.57`) is merged in
   `a0e408559` without conflicts: error dialog buttons act on mouse-up, the progress dialog no longer
   yields on Windows (upstream's fix for hangs after sending a print or loading a project from the device

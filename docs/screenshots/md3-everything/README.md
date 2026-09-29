@@ -273,6 +273,33 @@ package or in Windows.
 | `preferences-search-update--bilingual_en_yue_HK-light-comfortable--md3-v157.png` | The same row in bilingual mode: the description in English with its Cantonese below it (`2e80091ef`) | `bilingual_en_yue_HK-light-comfortable` |
 | `preferences-other--bilingual_en_yue_HK-light-comfortable--md3-v157.png` | Preferences > Other in bilingual mode: the search hint is back; CJ-026 is still visible, its fix `a07353987` came after this build | `bilingual_en_yue_HK-light-comfortable` |
 
+## Release md3-v158 captures (2026-09-29)
+
+Taken by `scripts/md3/sweep-dialogs.py --only "Temperature,What's new / Changelog,Max flowrate"` from
+the unmodified `md3-v158` release package, with profiles under `C:\Users\Public\bbsdd\` (the Cantonese
+pass with `--po bbl/i18n/yue_HK/BambuStudio_yue_HK.po`). Every import of its executables and DLLs
+resolves in the package or in Windows. The sweep reported no finding in nine dialogs; the probe does not
+measure placeholder hints, which is how CJ-027 passed it.
+
+| Field | Value |
+| --- | --- |
+| Source commit | `32a36b134` (release `md3-v158`) |
+| Package | `BambuStudioMD3-2.8.4158-full.nupkg`, 732,151,435 bytes, SHA-1 `8613eadca952103e32a2cb2bfbd348b02b18113e` as listed in `RELEASES` |
+| Executable | `bambu-studio.exe` sha256 `6f1bfa0ed00bcbab51f5533f40665d95fc279cc601be7f8c7c7efb44e2520dde`, `BambuStudio.dll` sha256 `a2c5e0ec6505d5e803706aee306faa36f6edcfd7b56131f9b70b0b3d2b80492e` |
+| Capture route | hidden Win32 desktop, `PrintWindow` of the dialog, real GPU driver |
+| Display scale | 100% |
+
+| File | Dialog | Tuple |
+| --- | --- | --- |
+| `dialog-temperature--bilingual_en_yue_HK-light-comfortable--md3-v158.png` | Temperature calibration (after CJ-025 and the unit fix): "SETTINGS · 設定" whole, units "°C" | `bilingual_en_yue_HK-light-comfortable` |
+| `dialog-temperature--yue_HK-light-comfortable--md3-v158.png` | Temperature calibration in Cantonese: units "°C" | `yue_HK-light-comfortable` |
+| `dialog-max-flowrate--bilingual_en_yue_HK-light-comfortable--md3-v158.png` | Max volumetric speed test: units "mm³/s" | `bilingual_en_yue_HK-light-comfortable` |
+| `dialog-what-s-new-changelog--en-light-comfortable--md3-v158.png` | What's new (before CJ-027): dates separated by " · ", the date hint cut to "YYYY-MM-DD / D" | `en-light-comfortable` |
+
+A bilingual What's new capture of the same sweep shows its first entry without text, while the layout
+dump taken right after has the text on screen and the English capture shows it: a capture that caught a
+repaint, not kept as evidence.
+
 ## Layout-probe dumps
 
 `probe/<tuple>--<before|after>.jsonl`, one per main-frame idle dump plus one per opened dialog,
