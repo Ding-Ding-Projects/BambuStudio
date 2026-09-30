@@ -68,6 +68,12 @@
 - [ ] Text that never passed through the catalogue (dispenser names built from tables, names a printer reports, raw labels, web pages, the device page) says ink and Ink Dispenser (`3bb44bc5d`); `ui-md3/tests/ink-display-names.test.mjs` guards the tables. Left on purpose: the material type TPU-AMS, text the printer or cloud sends, dated history. Unticked until a release is read back.
 - [ ] Decide whether the material type TPU-AMS is shown as ink wording too (it is stored in presets and 3MF files under that name).
 
+## Native controls and dismissable prompts (2026-09-30)
+
+- [ ] Seven more native control groups on the kit (dialog captions, message boxes and frames, single-line editors, image and swatch tiles, printer connection and lookup, the Parameter Table grid and search popups, ScalableButton). In source; unticked until a release is captured.
+- [ ] "Don't show again" on the sync prompt and the new-ink prompt, reset by Reset all warning dialogs. In source.
+- [ ] Show the material type TPU-AMS as "TPU for Ink Dispenser" wherever it is displayed, keeping the stored value (owner's choice). Started; saved as `preserve/tpu-display-rename-20260930`, not merged.
+
 ## Installer shortcuts (issue #52)
 
 - [ ] One shortcut pair named Bambu Studio MD3 that starts the application; none for the regex helper. The launcher is marked aware of the installer and makes and removes its own shortcuts; the release job reads them back after installing. In source; unticked until a release passes that check.

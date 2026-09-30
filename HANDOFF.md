@@ -434,6 +434,24 @@ past the end of the buffer. The handoff record is [#49](https://github.com/Ding-
   was not re-checked on `md3-v168`; it rewrites the current user's file associations, so run it on a test
   machine.
 
+## Native controls on the kit, and prompts that can be dismissed for good (2026-09-30)
+
+- `md3-v178` was built from scratch on request (`[cold build]` in `9a0a18064`, run 36784220441) and published.
+- Seven conversions of native controls that a release still showed, each reviewed for compile and behaviour before
+  it was committed: five dialogs get the kit caption instead of the native title bar (sign-in, dispenser humidity,
+  texture add-ink chooser, Add to Library prompt, recorded-ink notice); the save-as replace box, export progress card,
+  command palette and DLL warning; the last bare single-line editors and the Height range buttons; image and swatch
+  tiles as kit Buttons; the printer connection buttons and the network lookup list; the Parameter Table grid and the
+  search popups with the kit scrollbar; ScalableButton as a kit Button with hover, focus and disabled states. Each
+  carries its own `ui-md3/tests/lane-*.test.mjs`.
+- The sync prompt ("Sync now / Later") and the new-ink prompt have "Don't show again"; the answers are kept in
+  `sync_ams_info_choice` and `hide_new_filament_prompt` and cleared by Preferences, Reset all warning dialogs.
+- Not compiled locally; the hosted build of this push is the first compile of all of it. ScalableButton is used
+  widely, so its conversion is the one to watch in the build and in the first captures.
+- Unfinished and not merged, saved as tags on the remote: `preserve/tpu-display-rename-20260930` (the display-only
+  rename of the material type TPU-AMS that the owner chose) and `preserve/preview-capture-driver-20260930` (a Preview
+  capture driver). Both stopped at a usage limit before their checks ran.
+
 ## Preview overlays, ink wording and installer shortcuts (2026-09-30)
 
 - **Preview overlays (issue #51), `856d92a2c`.** Full record: [`docs/features/gcode-preview/preview-overlays.md`](docs/features/gcode-preview/preview-overlays.md).
