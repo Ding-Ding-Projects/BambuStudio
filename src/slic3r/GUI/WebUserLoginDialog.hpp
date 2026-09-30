@@ -59,7 +59,7 @@ public:
     bool m_networkOk;
     bool ShowErrorPage();
 
-    // Reveals the web view, which is created hidden and sized 0x0 so that a
+    // Reveals the web view, which is created hidden so that a
     // partially loaded page is never visible. Safe to call more than once:
     // the page may become displayable through either a successful navigation
     // or a failed one that still produced content (an HTTP error page).

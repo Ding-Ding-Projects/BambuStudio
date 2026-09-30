@@ -381,7 +381,10 @@ test('the humidity popup has one title, theme colours and a size that includes t
   const files = await guiFiles();
   const { raw, text } = await fileNamed('DeviceTab/uiAmsHumidityPopup.cpp');
   const create = methodBody('uiAmsPercentHumidityDryPopup', 'Create', files)[0];
-  expect((raw.match(/_L\("Current AMS humidity"\)/g) || []).length === 1, 'the title appears once, in the caption strip');
+  // One visible title, in the caption strip: the message is named twice, once for the strip and
+  // once for the window text (see the window-text test below), and no in-body label repeats it.
+  expect((raw.match(/_L\("Current AMS humidity"\)/g) || []).length === 2, 'the title is named for the strip and for the window text, and nowhere else');
+  expect(!/new\s+Label\([^;]*Current AMS humidity/.test(raw), 'no in-body label repeats the title the strip shows');
   expect(!/\*wxWHITE|\*wxBLACK/.test(text), 'no fixed white body or black text that stays bright in dark mode');
   expect(/SetBackgroundColour\(surface\)/.test(create) && /const wxColour surface = StateColor::semantic\(MD3::Role::SurfaceContainerLowest\);/.test(create),
     'the body sits on the kit surface role');
@@ -393,6 +396,29 @@ test('the humidity popup has one title, theme colours and a size that includes t
   expect(floor > 0 && adopt > floor, 'the body floor leaves room for the strip and precedes Adopt');
   expect(!/SetM(?:in|ax)Size\(wxSize\(FromDIP\(400\), FromDIP\(270\)\)\)/.test(create), 'the frame pins made before the strip existed are gone');
   expect(/Refresh\(\);\s*}$/.test(create.trimEnd()) && create.indexOf('Fit();') < adopt, 'nothing is added to the window after Adopt');
+});
+
+test('the window text of a dialog matches the title its strip shows', async () => {
+  // The strip's title is a panel name; the window text is what Alt-Tab and assistive technology
+  // read. The humidity popup is built with an empty window text, and the sign-in window's missing
+  // plug-in notice keeps the application name, so each sets the window text to its strip title
+  // before the strip is adopted. The other three converted dialogs already pass their title to
+  // the dialog constructor.
+  const files = await guiFiles();
+
+  const login = await fileNamed('WebUserLoginDialog.cpp');
+  const ctor = constructorsOf('ZUserLogin', files)[0].body;
+  const adopts = [...ctor.matchAll(/MD3DialogCaption::Adopt\(/g)].map((m) => m.index);
+  const titles = [...ctor.matchAll(/\bSetTitle\(_L\(""\)\)/g)].map((m) => m.index);
+  expect(adopts.length === 2 && titles.length === 2, `the sign-in window sets its window text in both branches (${titles.length} SetTitle, ${adopts.length} Adopt)`);
+  expect(titles[0] < adopts[0] && titles[1] < adopts[1] && titles[1] > adopts[0], 'each branch sets the window text before its own Adopt');
+  expect((login.raw.match(/SetTitle\(_L\("Login"\)\);/g) || []).length === 2, 'the window text in both branches is the same message as the strip');
+
+  const popup = await fileNamed('DeviceTab/uiAmsHumidityPopup.cpp');
+  const create = methodBody('uiAmsPercentHumidityDryPopup', 'Create', files)[0];
+  const setTitle = create.search(/\bSetTitle\(_L\(""\)\)/);
+  expect(setTitle > 0 && setTitle < create.indexOf('MD3DialogCaption::Adopt('), 'the humidity popup sets its window text before Adopt');
+  expect(/SetTitle\(_L\("Current AMS humidity"\)\);/.test(popup.raw), 'the window text is the same message as the strip');
 });
 
 test('the add-filament chooser adds the strip to its minimum height after Adopt', async () => {

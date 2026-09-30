@@ -747,8 +747,8 @@ void AMSMaterialsSetting::on_select_ok(wxCommandEvent& event)
             if (preset_type_changed || color_changed) {
             FilaManagerPromptDialog dlg(this);
             const int result = dlg.ShowModal();
-            // The caption close and Escape end the modal with wxID_CANCEL rather than RESULT_CANCEL,
-            // so only the two explicit choices go on.
+            // The caption close ends the modal with wxID_CANCEL rather than RESULT_CANCEL (it does
+            // not go through the close event), so only the two explicit choices go on.
             if (result != FilaManagerPromptDialog::RESULT_ADD_TO_LIBRARY && result != FilaManagerPromptDialog::RESULT_SAVE_ONLY)
                 return;
             auto compute_series = [](const FilamentBaseInfo& fi) -> std::string {
