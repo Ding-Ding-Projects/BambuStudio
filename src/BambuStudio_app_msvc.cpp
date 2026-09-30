@@ -41,8 +41,124 @@ static void launcher_trace(const wchar_t *fmt, ...)
 #ifdef SLIC3R_GUI
 #include <GL/GL.h>
 #endif /* SLIC3R_GUI */
+#include <objbase.h>
+#include <shlobj.h>
 #include <string>
 #include <vector>
+#pragma comment(lib, "ole32.lib")
+#pragma comment(lib, "uuid.lib")
+#pragma comment(lib, "shell32.lib")
+
+// Squirrel.Windows install events.
+//
+// The version resource marks this executable as aware of Squirrel (SquirrelAwareVersion in the
+// 040904B0 block, the one Squirrel reads). Squirrel then runs it with one of the arguments below
+// instead of making a shortcut for, and starting, every executable in the package; that is how the
+// regex helper ended up with the application's shortcut. Each event does its work and exits at
+// once: nothing of the application is loaded, because Squirrel waits for the process.
+
+// This executable's folder and file name, and the install root (the folder above app-<version>,
+// where Squirrel keeps Update.exe). The folder and root end in a backslash.
+static bool squirrel_paths(std::wstring &exe_name, std::wstring &root)
+{
+    wchar_t path[MAX_PATH + 1] = { 0 };
+    const DWORD length = ::GetModuleFileNameW(nullptr, path, MAX_PATH);
+    if (length == 0 || length >= MAX_PATH)
+        return false;
+    std::wstring full(path, length);
+    const size_t name_at = full.find_last_of(L'\\');
+    if (name_at == std::wstring::npos || name_at == 0)
+        return false;
+    exe_name = full.substr(name_at + 1);
+    const size_t root_at = full.find_last_of(L'\\', name_at - 1);
+    if (root_at == std::wstring::npos)
+        return false;
+    root = full.substr(0, root_at + 1);
+    return true;
+}
+
+// Runs Update.exe from the install root with the given arguments and waits up to ten seconds.
+static bool run_squirrel_update(const std::wstring &root, const std::wstring &arguments)
+{
+    const std::wstring update = root + L"Update.exe";
+    if (::GetFileAttributesW(update.c_str()) == INVALID_FILE_ATTRIBUTES)
+        return false;
+    std::wstring command = L"\"" + update + L"\" " + arguments;
+    std::vector<wchar_t> buffer(command.begin(), command.end());
+    buffer.push_back(L'\0');
+    STARTUPINFOW startup = { 0 };
+    startup.cb = sizeof(startup);
+    PROCESS_INFORMATION process = { 0 };
+    if (!::CreateProcessW(nullptr, buffer.data(), nullptr, nullptr, FALSE, CREATE_NO_WINDOW, nullptr, root.c_str(), &startup, &process))
+        return false;
+    ::WaitForSingleObject(process.hProcess, 10000);
+    DWORD exit_code = 1;
+    ::GetExitCodeProcess(process.hProcess, &exit_code);
+    ::CloseHandle(process.hThread);
+    ::CloseHandle(process.hProcess);
+    return exit_code == 0;
+}
+
+// Packages made before the executable was marked aware got shortcuts named after the old version
+// resource ("BambuStudio", in a Start Menu folder "Bambu Research"). Removes such a shortcut, but
+// only when it points into this installation, so a shortcut of any other copy is left alone.
+static void remove_legacy_squirrel_shortcut(int folder_id, const wchar_t *relative_path, const std::wstring &root)
+{
+    wchar_t folder[MAX_PATH + 1] = { 0 };
+    if (FAILED(::SHGetFolderPathW(nullptr, folder_id, nullptr, SHGFP_TYPE_CURRENT, folder)))
+        return;
+    const std::wstring link = std::wstring(folder) + L"\\" + relative_path;
+    if (::GetFileAttributesW(link.c_str()) == INVALID_FILE_ATTRIBUTES)
+        return;
+    bool ours = false;
+    IShellLinkW *shell_link = nullptr;
+    if (SUCCEEDED(::CoCreateInstance(CLSID_ShellLink, nullptr, CLSCTX_INPROC_SERVER, IID_IShellLinkW, reinterpret_cast<void **>(&shell_link)))) {
+        IPersistFile *file = nullptr;
+        if (SUCCEEDED(shell_link->QueryInterface(IID_IPersistFile, reinterpret_cast<void **>(&file)))) {
+            wchar_t target[MAX_PATH + 1] = { 0 };
+            if (SUCCEEDED(file->Load(link.c_str(), STGM_READ)) && SUCCEEDED(shell_link->GetPath(target, MAX_PATH, nullptr, 0)))
+                ours = _wcsnicmp(target, root.c_str(), root.size()) == 0;
+            file->Release();
+        }
+        shell_link->Release();
+    }
+    if (!ours)
+        return;
+    ::DeleteFileW(link.c_str());
+    // The Start Menu folder goes too once it is empty; RemoveDirectory refuses a folder that is not.
+    const size_t folder_end = link.find_last_of(L'\\');
+    if (wcschr(relative_path, L'\\') != nullptr && folder_end != std::wstring::npos)
+        ::RemoveDirectoryW(link.substr(0, folder_end).c_str());
+}
+
+// Returns -1 when the arguments are not a Squirrel event (a normal start), else the exit code.
+static int handle_squirrel_event(int argc, wchar_t **argv)
+{
+    if (argc < 2 || wcsncmp(argv[1], L"--squirrel-", 11) != 0)
+        return -1;
+    const wchar_t *event = argv[1];
+    // The first start after an install: a normal start; the argument is dropped from the command line.
+    if (wcscmp(event, L"--squirrel-firstrun") == 0)
+        return -1;
+    const bool install   = wcscmp(event, L"--squirrel-install") == 0 || wcscmp(event, L"--squirrel-updated") == 0;
+    const bool uninstall = wcscmp(event, L"--squirrel-uninstall") == 0;
+    std::wstring exe_name, root;
+    if ((install || uninstall) && squirrel_paths(exe_name, root)) {
+        const std::wstring arguments = std::wstring(install ? L"--createShortcut=" : L"--removeShortcut=") + exe_name +
+                                       L" --shortcut-locations=Desktop,StartMenu";
+        const bool done = run_squirrel_update(root, arguments);
+        launcher_trace(L"squirrel event %ls: Update.exe %ls -> %d", event, arguments.c_str(), (int) done);
+        const HRESULT com = ::CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
+        remove_legacy_squirrel_shortcut(CSIDL_DESKTOPDIRECTORY, L"BambuStudio.lnk", root);
+        remove_legacy_squirrel_shortcut(CSIDL_PROGRAMS, L"Bambu Research\\BambuStudio.lnk", root);
+        if (SUCCEEDED(com))
+            ::CoUninitialize();
+    } else {
+        // --squirrel-obsolete, and any event a later Squirrel adds: nothing to do.
+        launcher_trace(L"squirrel event %ls: nothing to do", event);
+    }
+    return 0;
+}
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/classification.hpp>
 #include <stdio.h>
@@ -230,6 +346,10 @@ extern "C" {
         // Without this call, the seemingly same message box is being opened by the abort() function, but that is too late and
         // the application will be killed even if "Ignore" button is pressed.
         _set_error_mode(_OUT_TO_MSGBOX);
+        // An install, update or uninstall event from Squirrel is handled here and never starts the app.
+        const int squirrel_exit = handle_squirrel_event(argc, argv);
+        if (squirrel_exit >= 0)
+            return squirrel_exit;
         std::vector<wchar_t*> argv_extended;
         argv_extended.emplace_back(argv[0]);
 #ifdef SLIC3R_WRAPPER_GCODEVIEWER
@@ -241,6 +361,9 @@ extern "C" {
         bool force_mesa = false;
 #endif /* SLIC3R_GUI */
         for (int i = 1; i < argc; ++i) {
+            // Squirrel starts the app with this after the first install; it means nothing to the app.
+            if (wcscmp(argv[i], L"--squirrel-firstrun") == 0)
+                continue;
 #ifdef SLIC3R_GUI
             if (wcscmp(argv[i], L"--sw-renderer") == 0)
                 force_mesa = true;

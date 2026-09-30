@@ -119,6 +119,32 @@ try {
     $installedExeHash = (Get-FileHash -LiteralPath $installedExe -Algorithm SHA256).Hash.ToLowerInvariant()
     Assert-True ($installedExeHash -ceq $packageExeHash) 'The installed executable differs from the downloaded full package.'
 
+    # Shortcuts. The launcher is the one executable marked aware of Squirrel, so Squirrel runs it
+    # with --squirrel-install and it makes its own shortcuts; no other executable in the package may
+    # get one. A package without the mark gave the regex helper the application's shortcut.
+    $shell = New-Object -ComObject WScript.Shell
+    $desktopLink = Join-Path ([Environment]::GetFolderPath('Desktop')) 'Bambu Studio MD3.lnk'
+    $startLink = Join-Path ([Environment]::GetFolderPath('Programs')) 'codingmachineedge\Bambu Studio MD3.lnk'
+    for ($attempt = 0; $attempt -lt 30 -and -not ((Test-Path -LiteralPath $desktopLink) -and (Test-Path -LiteralPath $startLink)); ++$attempt) {
+        Start-Sleep -Seconds 2
+    }
+    $expectedTarget = Join-Path $installRoot 'bambu-studio.exe'
+    foreach ($link in @($desktopLink, $startLink)) {
+        Assert-True (Test-Path -LiteralPath $link -PathType Leaf) "The shortcut '$link' was not created."
+        $target = $shell.CreateShortcut($link).TargetPath
+        Assert-True ($target -ieq $expectedTarget) "The shortcut '$link' points at '$target', not at '$expectedTarget'."
+    }
+    $strayLinks = @(
+        @([Environment]::GetFolderPath('Desktop'), [Environment]::GetFolderPath('Programs')) |
+            ForEach-Object { Get-ChildItem -LiteralPath $_ -Filter '*.lnk' -Recurse -File -ErrorAction SilentlyContinue } |
+            Where-Object {
+                $linkTarget = $shell.CreateShortcut($_.FullName).TargetPath
+                $linkTarget -and $linkTarget.StartsWith($installRoot, [StringComparison]::OrdinalIgnoreCase) -and
+                    -not ($linkTarget -ieq $expectedTarget) -and -not ($linkTarget -ieq (Join-Path $installRoot 'Update.exe'))
+            } | ForEach-Object { $_.FullName })
+    Assert-True ($strayLinks.Count -eq 0) "Shortcuts point at another executable of the installation: $($strayLinks -join ', ')."
+    $receipt.shortcuts = @($desktopLink, $startLink)
+
     $receipt.package_version = $version
     $receipt.product_version = (Get-Item -LiteralPath $installedExe).VersionInfo.ProductVersion
     $receipt.installed_exe_sha256 = $installedExeHash

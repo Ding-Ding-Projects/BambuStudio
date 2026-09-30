@@ -46,9 +46,9 @@
 ## Faster hosted Windows builds
 
 - [x] Find where the time goes: in run [36631880242](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36631880242) (`bb78abee1`) the compile step took 72 of the build job's 80 minutes, and sccache cached 99 of 795 compile requests; the other 696 use the precompiled header (`/Fp` 693, `/Yc` 3), which it cannot cache.
-- [ ] Keep the per-configure build-time stamp out of `libslic3r_version.h`, which nearly every source and the precompiled header include: it moved to `libslic3r_build_time.h`, included by three sources. In source; unticked until a hosted build compiles it.
+- [x] Keep the per-configure build-time stamp out of `libslic3r_version.h`, which nearly every source and the precompiled header include: it moved to `libslic3r_build_time.h`, included by three sources. Compiled by run [36645906111](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36645906111) (`84b96e720`).
 - [ ] Reuse the last `main` build tree from the draft release `build-cache-windows`, in parts of at most 1,500,000,000 bytes, so Ninja rebuilds only what changed ([Build cache](docs/features/releases/windows-release-supply-chain.md#build-cache)). A local run of both scripts passes 34 checks, a Ninja check confirms only changed files rebuild after the round trip, and every `gh release` command they use works on the draft. Unticked until the first hosted `main` build saves a set and the next build restores it.
-- [ ] Measure the first warm build against the 80-minute cold build and record both runs.
+- [x] Measure the first warm build against the 80-minute cold build and record both runs: run [36739933076](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36739933076) (`eff5fe381`) restored the tree of `84b96e720` (23 files changed since), compiled in 3 min 4 s with 10 compile requests, and its build job took 12 min 44 s, against 71 min 53 s, 795 requests and 80 min 16 s in run [36631880242](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36631880242). It published `md3-v176`.
 
 ## Executable path buffer in the file association code (issue #49)
 

@@ -6,20 +6,34 @@ PRODUCTVERSION @SLIC3R_COMMA_SEPARATED_VERSION@
  {
   BLOCK "040904E4"
   {
-   VALUE "CompanyName", "Bambu Research"
-   VALUE "FileDescription", "@SLIC3R_APP_NAME@"
+   VALUE "CompanyName", "codingmachineedge"
+   VALUE "FileDescription", "Bambu Studio MD3"
    VALUE "FileVersion", "@SLIC3R_VERSION@"
-   VALUE "ProductName", "@SLIC3R_APP_NAME@"
+   VALUE "ProductName", "Bambu Studio MD3"
    VALUE "ProductVersion", "@SLIC3R_BUILD_ID@"
    VALUE "InternalName", "@SLIC3R_APP_NAME@"
    VALUE "LegalCopyright", "Copyright(C) 2021-2025 Lunkuo All Rights Reserved"
    VALUE "OriginalFilename", "bambu-studio.exe"
   }
+  // Squirrel.Windows reads SquirrelAwareVersion from this block only. Marked aware, this is the one
+  // executable Squirrel runs for install, update and uninstall events, and it makes its own
+  // shortcuts (BambuStudio_app_msvc.cpp); the installer names them after ProductName and files them
+  // under CompanyName, so they read "Bambu Studio MD3".
+  BLOCK "040904B0"
+  {
+   VALUE "CompanyName", "codingmachineedge"
+   VALUE "FileDescription", "Bambu Studio MD3"
+   VALUE "FileVersion", "@SLIC3R_VERSION@"
+   VALUE "ProductName", "Bambu Studio MD3"
+   VALUE "ProductVersion", "@SLIC3R_BUILD_ID@"
+   VALUE "OriginalFilename", "bambu-studio.exe"
+   VALUE "SquirrelAwareVersion", "1"
+  }
  }
  BLOCK "VarFileInfo"
  {
-   VALUE "Translation", 0x409, 1252
+   VALUE "Translation", 0x409, 1252, 0x409, 1200
  }
 }
 2 ICON "@SLIC3R_RESOURCES_DIR@/images/BambuStudio.ico"
-1 24 "BambuStudio.manifest" 
+1 24 "BambuStudio.manifest"

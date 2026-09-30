@@ -405,8 +405,12 @@ Scope: shorten the hosted Windows build. Full record:
   (`84b96e720`, run number 633) built from scratch, as its own commit message asked, and its background save finished
   within the packaging steps: a 6,786,436,758 byte tree in one part of 672,688,710 bytes, plus the manifest and
   `windows-build-latest.json`, in the draft `build-cache-windows`. Its compile step took 55 min 52 s.
-- Open: the next `main` build is the first warm one. Record its restore notice and its compile step's time. If a warm
-  build ever looks stale, push with `[cold build]` and compare.
+- First warm build: run [36739933076](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36739933076) (`eff5fe381`, run number 634). Restore step 68 s, notice
+  "Build cache: restored the tree built from 84b96e720b8516895bf6b74b0429f46592b3639d (run 633); 23 files changed
+  since." Compile step 3 min 4 s with 10 compile requests (795 before the cache); build job 12 min 44 s (80 min 16 s
+  before). It published `md3-v176` (package `2.8.4634`) and saved its own tree as the next set, one part.
+- One warm run is one measurement. A change to a widely included header still rebuilds every source that includes
+  it. If a warm build ever looks stale, push with `[cold build]` and compare.
 
 ## Executable path buffer in the file association code (issue #49, 2026-09-29)
 
