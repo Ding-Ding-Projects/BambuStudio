@@ -1183,20 +1183,21 @@ void AMSDryCtrWin::update_normal_description(DevAms* dev_ams)
     std::optional<Slic3r::DevFilamentDryingPreset> preset = DevUtilBackend::GetFilamentDryingPreset(info.filament_id);
     auto total_dry = preset.has_value() ? preset.value().ams_limitations : std::unordered_set<DevAmsType>();
 
+    // The names are catalogue message ids, translated where the sentence is built below.
     struct AmsTempLimit { DevAmsType type; int min_temp; int max_temp; const char* name; };
     static const AmsTempLimit ams_limits[] = {
-        { DevAmsType::N3F, 45, 65, "AMS2" },
-        { DevAmsType::N3S, 45, 85, "AMS-S" }
+        { DevAmsType::N3F, 45, 65, L("AMS 2 Pro") },
+        { DevAmsType::N3S, 45, 85, L("AMS HT") }
     };
 
     for (const auto& lim : ams_limits) {
         if (dev_ams->GetAmsType() == lim.type) {
             if (temp_val > lim.max_temp) {
-                wxString msg = wxString(lim.name) + _L(" maximum drying temperature is ") + wxString::Format(wxT("%d"), lim.max_temp) + wxString::FromUTF8("°C.");
+                wxString msg = _L(lim.name) + _L(" maximum drying temperature is ") + wxString::Format(wxT("%d"), lim.max_temp) + wxString::FromUTF8("°C.");
                 warning_text += msg + "\n";
                 can_enable_button = false;
             } else if (temp_val < lim.min_temp) {
-                wxString msg = wxString(lim.name) + _L(" minimum drying temperature is ") + wxString::Format(wxT("%d"), lim.min_temp) + wxString::FromUTF8("°C.");
+                wxString msg = _L(lim.name) + _L(" minimum drying temperature is ") + wxString::Format(wxT("%d"), lim.min_temp) + wxString::FromUTF8("°C.");
                 warning_text += msg + "\n";
                 can_enable_button = false;
             }

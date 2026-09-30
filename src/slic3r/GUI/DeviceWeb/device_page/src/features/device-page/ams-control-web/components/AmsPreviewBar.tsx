@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   COLORS,
   PREVIEW_CHIP_FOUR,
@@ -147,6 +148,7 @@ function PreviewChip({
   const four = isFourSlotPreview(item);
   const chip = four ? PREVIEW_CHIP_FOUR : PREVIEW_CHIP_SINGLE;
   const ref = useRef<HTMLButtonElement>(null);
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (item.active) ref.current?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
@@ -157,7 +159,7 @@ function PreviewChip({
       ref={ref}
       type="button"
       data-testid={`ams-preview-${item.ams_id}`}
-      aria-label={`AMS ${item.ams_id}`}
+      aria-label={t('AMS {{n}}', { n: item.ams_id })}
       onClick={() => onSelect(item)}
       className={cn('ams-preview-chip relative shrink-0 overflow-hidden rounded-[3px] border-0', item.active && 'active')}
       style={{

@@ -202,5 +202,13 @@
   "External Spool": "外置線軸",
   "Quantity": "數量",
   "Opening...": "開緊…",
-  "Debug": "除錯"
+  "Debug": "除錯",
+  "AMS": "墨水機",
+  "AMS Lite": "墨水機 Lite",
+  "AMS 2 Pro": "墨水機 2 Pro",
+  "AMS HT": "墨水機 HT",
+  "AMS({{n}})": "墨水機({{n}})",
+  "AMS {{n}}": "墨水機 {{n}}",
+  "View Filament": "檢視墨水",
+  "New Filament": "新墨水"
 }

@@ -374,7 +374,7 @@ export function SlotCard({
       {showEdit || showRead ? (
         <button
           type="button"
-          aria-label={showEdit ? 'Edit filament' : 'View filament'}
+          aria-label={showEdit ? t('Edit Filament') : t('View Filament')}
           className="absolute left-1/2 z-[1] -translate-x-1/2 cursor-default"
           style={{ bottom: px(glyphBottom), marginLeft: lite ? 3 : 0 }}
           onClick={(e) => {
@@ -471,7 +471,7 @@ export function SlotCard({
       {slot.menu_actions.show_filament_mgr_hint ? (
         <button
           type="button"
-          aria-label="New filament"
+          aria-label={t('New Filament')}
           className="absolute right-0 top-0 z-[1] cursor-default"
           onClick={(e) => {
             e.stopPropagation();

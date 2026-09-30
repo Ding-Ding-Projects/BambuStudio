@@ -1159,7 +1159,7 @@ void ObjectList::update_filament_in_config(const wxDataViewItem& item)
     if (!m_config)
         return;
 
-    take_snapshot("Change Filament");
+    take_snapshot(L("Change Filament"));
 
     const int extruder = m_objects_model->GetExtruderNumber(item);
     m_config->set_key_value("extruder", new ConfigOptionInt(extruder));
@@ -7122,7 +7122,7 @@ void ObjectList::set_extruder_for_selected_items(const int extruder)
     if (sels.empty())
         return;
 
-    take_snapshot("Change Filaments");
+    take_snapshot(L("Change Filaments"));
 
     for (const wxDataViewItem& sel_item : sels)
     {

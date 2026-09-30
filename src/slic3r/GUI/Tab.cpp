@@ -6271,7 +6271,9 @@ static struct DynamicAmsTimeTypeList : DynamicList
             const std::string display_name = get_ams_type_display_name(ams_type);
             if (display_name.empty())
                 continue;
-            items.push_back({wxString::FromUTF8(display_name.c_str()), ams_type});
+            // The name is a catalogue message id: show its translation. The stored value is the
+            // type number (get_value and index_of use it), so the shown text can follow the language.
+            items.push_back({_L(display_name), ams_type});
         }
     }
 

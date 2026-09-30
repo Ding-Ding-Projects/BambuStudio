@@ -890,7 +890,7 @@ int ReselectMachineDialog::CaculateSwitcherDistribution(MachineObject* obj, cons
         if (ams->second->IsExist() && info.parse_ams_info(obj, ams->second, obj->GetFilaSystem()->IsDetectRemainEnabled(), obj->is_support_ams_humidity))
         {
             auto pos = ams->second->GetSwitcherPos();
-            auto amsName = ams->second->GetDisplayName();
+            auto amsName = ams->second->GetDisplayName(ams->second->GetSlotCount() == 1);
             if (pos.has_value())
             {
                 ams_info[pos.value()].push_back(info);

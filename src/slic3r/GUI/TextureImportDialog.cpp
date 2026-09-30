@@ -1262,7 +1262,7 @@ static std::vector<TextureFilamentEntry> collect_project_filament_entries()
                 name = preset->label(false);
         }
         if (name.empty())
-            name = "Filament " + std::to_string(i + 1);
+            name = default_filament_stored_name((int)i + 1);
         entry.name = name;
 
         if (entry.kind == TextureFilamentKind::ExistingMixed) {

@@ -232,26 +232,40 @@ std::optional<int> DevAms::GetCurrentExtruderId() const
     return std::nullopt;
 }
 
-static unordered_map<DevAmsType, wxString> s_ams_display_formats = {
-    {DevAmsType::AMS,      "AMS(%d)"},
-    {DevAmsType::AMS_LITE, "AMS Lite(%d)"},
-    {DevAmsType::N3F,      "AMS 2 Pro(%d)"},
-    {DevAmsType::N3S,      "AMS HT(%d)"}
+// The dispenser names are catalogue message ids, not the text a person reads: every value is
+// marked with L or L_CONTEXT and translated when a name is built (GetDisplayName), never at
+// static-initialisation time. The narrow form is for a block that is only as wide as one slot
+// (the mapping popup and the reselect dialog); the catalogues give it a short wording so the
+// name is not clipped. Keep the context string below identical to the one in GetDisplayName.
+struct DevAmsDisplayFormat
+{
+    const char *full;
+    const char *narrow;
 };
 
-wxString DevAms::GetDisplayName() const
+static const unordered_map<DevAmsType, DevAmsDisplayFormat> s_ams_display_formats = {
+    {DevAmsType::AMS,      {L("AMS(%d)"),       L_CONTEXT("AMS(%d)",       "NarrowBlock")}},
+    {DevAmsType::AMS_LITE, {L("AMS Lite(%d)"),  L_CONTEXT("AMS Lite(%d)",  "NarrowBlock")}},
+    {DevAmsType::N3F,      {L("AMS 2 Pro(%d)"), L_CONTEXT("AMS 2 Pro(%d)", "NarrowBlock")}},
+    {DevAmsType::N3S,      {L("AMS HT(%d)"),    L_CONTEXT("AMS HT(%d)",    "NarrowBlock")}}
+};
+
+static const DevAmsDisplayFormat s_ams_default_display_format = {L("AMS(%d)"), L_CONTEXT("AMS(%d)", "NarrowBlock")};
+
+wxString DevAms::GetDisplayName(bool narrow) const
 {
-    wxString ams_display_format;
+    const DevAmsDisplayFormat *names = &s_ams_default_display_format;
     auto iter = s_ams_display_formats.find(GetAmsType());
     if (iter != s_ams_display_formats.end())
     {
-        ams_display_format = iter->second;
+        names = &iter->second;
     }
     else
     {
         assert(0 && __FUNCTION__);
-        ams_display_format = "AMS(%d)";
     }
+
+    const wxString ams_display_format = narrow ? _CTX(names->narrow, "NarrowBlock") : _L(names->full);
 
     int num_id;
     try

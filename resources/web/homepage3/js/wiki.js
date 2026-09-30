@@ -23,7 +23,7 @@ var youtubeData = [
   },
   {
     "id": "4W4vczKsiX8",
-    "title": "Episode 5: Setup for Filaments"
+    "title": "Episode 5: Setup for Inks"
   },
   {
     "id": "lQ4ySwPQeY4",
@@ -79,7 +79,7 @@ var topicData = [
         "link": "software/bambu-studio/remote-control"
       },
       {
-        "title": "Use AMS on Bambu Studio",
+        "title": "Use Ink Dispenser on Bambu Studio",
         "zhcn-title": "在 Bambu Studio 中使用 AMS",
         "link": "software/bambu-studio/use-ams-on-bambu-studio"
       },
@@ -157,7 +157,7 @@ var topicData = [
     "zhcn-title": "多材料打印",
     "children": [
       {
-        "title": "Introduction to Filament Grouping Strategy for Dual Nozzle Printers",   
+        "title": "Introduction to Ink Grouping Strategy for Dual Nozzle Printers",   
         "zhcn-title": "双喷嘴打印机耗材切片分组",
         "link": "software/bambu-studio/manual/dual-nozzles-slicing-filament-grouping"
       },
@@ -172,7 +172,7 @@ var topicData = [
         "link": "software/bambu-studio/color-painting-tool"
       },
       {
-        "title": "Reduce Waste during Filament Change",   
+        "title": "Reduce Waste during Ink Change",   
         "zhcn-title": "减少多色打印时的材料浪费",
         "link": "software/bambu-studio/reduce-wasting-during-filament-change"
       },

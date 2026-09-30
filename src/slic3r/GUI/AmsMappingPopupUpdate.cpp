@@ -262,7 +262,7 @@ void AmsMapingPopup::update_mapping_items(MachineObject* obj, const std::vector<
         }
 
         auto sizer_mapping_list = new wxBoxSizer(wxHORIZONTAL);
-        auto ams_mapping_item_container = new MappingContainer(target_panel, ams_iter->second->GetDisplayName(), ams_iter->second->GetSlotCount());
+        auto ams_mapping_item_container = new MappingContainer(target_panel, ams_iter->second->GetDisplayName(ams_iter->second->GetSlotCount() == 1), ams_iter->second->GetSlotCount());
         ams_mapping_item_container->SetName(target_panel->GetName());
         ams_mapping_item_container->SetSizer(sizer_mapping_list);
         ams_mapping_item_container->Layout();
@@ -405,7 +405,7 @@ void AmsMapingPopup::update_ams_data_multi_machines()
         if (ams_type >= 1 || ams_type <= 3) { // 1:ams 2:ams-lite 3:n3f
 
             auto sizer_mapping_list = new wxBoxSizer(wxHORIZONTAL);
-            auto ams_mapping_item_container = new MappingContainer(nozzle_id == 0 ? m_right_marea_panel : m_left_marea_panel, "AMS-1", 4);
+            auto ams_mapping_item_container = new MappingContainer(nozzle_id == 0 ? m_right_marea_panel : m_left_marea_panel, wxString::Format(_L("AMS(%d)"), 1), 4);
             ams_mapping_item_container->SetName(nozzle_id == 0 ? m_right_marea_panel->GetName() : m_left_marea_panel->GetName());
             ams_mapping_item_container->SetSizer(sizer_mapping_list);
             ams_mapping_item_container->Layout();

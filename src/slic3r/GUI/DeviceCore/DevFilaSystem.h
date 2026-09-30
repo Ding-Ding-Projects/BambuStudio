@@ -203,7 +203,9 @@ public:
 
 public:
     std::string GetAmsId() const { return m_ams_id; }
-    wxString    GetDisplayName() const; // display
+    // The translated name with the position, for example "Ink Dispenser(1)". The narrow form is
+    // for a block that is only as wide as one slot and uses a shorter wording.
+    wxString    GetDisplayName(bool narrow = false) const; // display
 
     void       SetAmsType(int type) { m_ams_type = (DevAmsType) type; }
     void       SetAmsType(DevAmsType type) { m_ams_type = type; }

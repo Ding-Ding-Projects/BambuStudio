@@ -37398,3 +37398,98 @@ msgstr "上一首"
 #. review-status: agent-drafted
 msgid "Next track"
 msgstr "下一首"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "AMS(%d)"
+msgstr "墨水機(%d)"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgctxt "NarrowBlock"
+msgid "AMS(%d)"
+msgstr "墨水(%d)"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "AMS Lite(%d)"
+msgstr "墨水機 Lite(%d)"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgctxt "NarrowBlock"
+msgid "AMS Lite(%d)"
+msgstr "墨水 Lite(%d)"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "AMS 2 Pro(%d)"
+msgstr "墨水機 2 Pro(%d)"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgctxt "NarrowBlock"
+msgid "AMS 2 Pro(%d)"
+msgstr "墨水 2 Pro(%d)"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "AMS HT(%d)"
+msgstr "墨水機 HT(%d)"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgctxt "NarrowBlock"
+msgid "AMS HT(%d)"
+msgstr "墨水 HT(%d)"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Change Filaments"
+msgstr "更改墨水"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgctxt "ColorSwatch"
+msgid "AMS"
+msgstr "墨水"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "AMS C++"
+msgstr "墨水機 C++"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "AMS Web"
+msgstr "墨水機 Web"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "AMS 2 Pro"
+msgstr "墨水機 2 Pro"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "AMS HT"
+msgstr "墨水機 HT"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "AMS Lite"
+msgstr "墨水機 Lite"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Filament Buffer"
+msgstr "墨水緩衝器"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "AMS-%s"
+msgstr "墨水機-%s"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "AMS 2 Pro/AMS HT"
+msgstr "墨水機 2 Pro/HT"

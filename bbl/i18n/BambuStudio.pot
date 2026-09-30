@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-29 14:16-0400\n"
+"POT-Creation-Date: 2026-09-30 13:09-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -260,6 +260,42 @@ msgstr ""
 
 #, possible-c-format, possible-boost-format
 msgid "There may be print quality issues when printing '%s' with %s extruder. Use with caution."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "AMS(%d)"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgctxt "NarrowBlock"
+msgid "AMS(%d)"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "AMS Lite(%d)"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgctxt "NarrowBlock"
+msgid "AMS Lite(%d)"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "AMS 2 Pro(%d)"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgctxt "NarrowBlock"
+msgid "AMS 2 Pro(%d)"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "AMS HT(%d)"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgctxt "NarrowBlock"
+msgid "AMS HT(%d)"
 msgstr ""
 
 msgid "The toolhead and hotend rack may move. Please keep your hands away from the chamber."
@@ -2908,6 +2944,9 @@ msgstr ""
 msgid "\"%s\" part's mesh contains errors. Please repair it first."
 msgstr ""
 
+msgid "Change Filaments"
+msgstr ""
+
 msgid "Additional process preset"
 msgstr ""
 
@@ -4445,6 +4484,10 @@ msgid ""
 msgstr ""
 
 msgid "Custom color"
+msgstr ""
+
+msgctxt "ColorSwatch"
+msgid "AMS"
 msgstr ""
 
 msgid "Filament Manager"
@@ -7367,6 +7410,12 @@ msgid "More options"
 msgstr ""
 
 msgid "Hotends"
+msgstr ""
+
+msgid "AMS C++"
+msgstr ""
+
+msgid "AMS Web"
 msgstr ""
 
 msgid "Silent"
@@ -13396,6 +13445,12 @@ msgstr ""
 msgid "If you prefer not to participate in the Beta program, you can disable Beta Update prompts at any time in Settings."
 msgstr ""
 
+msgid "AMS 2 Pro"
+msgstr ""
+
+msgid "AMS HT"
+msgstr ""
+
 msgid "Air Pump"
 msgstr ""
 
@@ -13414,6 +13469,12 @@ msgstr ""
 msgid "Auto Fire Extinguishing System"
 msgstr ""
 
+msgid "AMS Lite"
+msgstr ""
+
+msgid "Filament Buffer"
+msgstr ""
+
 msgid "Beta"
 msgstr ""
 
@@ -13427,6 +13488,10 @@ msgid "Copy Device Info"
 msgstr ""
 
 msgid "Beta version"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "AMS-%s"
 msgstr ""
 
 msgid "Refreshing hotend information..."
@@ -13898,6 +13963,9 @@ msgid "The relative position of the model and the prime tower does not meet the 
 msgstr ""
 
 msgid "Failed processing of the filename_format template."
+msgstr ""
+
+msgid "AMS 2 Pro/AMS HT"
 msgstr ""
 
 msgid "Printable area"

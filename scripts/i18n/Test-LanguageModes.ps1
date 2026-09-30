@@ -192,7 +192,7 @@ $deviceEnglish = Get-Content -LiteralPath (Join-Path $deviceRoot 'locales\en.jso
 $deviceCantonese = Get-Content -LiteralPath (Join-Path $deviceRoot 'locales\yue_HK.json') -Raw | ConvertFrom-Json
 $englishKeys = @($deviceEnglish.PSObject.Properties.Name | Sort-Object)
 $cantoneseKeys = @($deviceCantonese.PSObject.Properties.Name | Sort-Object)
-Assert-True ($englishKeys.Count -eq 204) "Expected 204 DeviceWeb English resources, found $($englishKeys.Count)."
+Assert-True ($englishKeys.Count -eq 212) "Expected 212 DeviceWeb English resources, found $($englishKeys.Count)."
 Assert-True (($englishKeys -join "`n") -ceq ($cantoneseKeys -join "`n")) `
     'DeviceWeb yue_HK keys do not exactly match the English resource keys.'
 

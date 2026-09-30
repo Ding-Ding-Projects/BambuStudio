@@ -77,9 +77,10 @@ wxBitmap blend_copy_bitmaps(const wxImage &from, const wxImage &to, double t, do
 }
 } // namespace
 
+// The values are catalogue message ids; the firmware page translates them where it builds a name.
 static const std::unordered_map<wxString, wxString> ACCESSORY_DISPLAY_STR = {
-    {"N3F", "AMS 2 PRO"},
-    {"N3S", "AMS HT"},
+    {"N3F", L("AMS 2 Pro")},
+    {"N3S", L("AMS HT")},
     {"O2L_PC", L("Air Pump")},
     {"O2L_10B", L("Laser 10W")},
     {"O2L_40B", L("Laser 40W")},
@@ -90,6 +91,26 @@ static const std::unordered_map<wxString, wxString> ACCESSORY_DISPLAY_STR = {
     {"O2L-AFP",L("Auto Fire Extinguishing System")},
     {"O2L-FTS",L("Filament Track Switch")}
 };
+
+// The product name a printer reports for a dispenser or an accessory. The printer sends English,
+// so the names this application knows are shown with their catalogue wording, and any other name
+// is shown exactly as reported. Only the display text changes: DevFirmware.h compares the raw
+// name, so it is never translated where it is parsed.
+static wxString reported_product_name_text(const wxString &product_name)
+{
+    static const std::unordered_map<wxString, const char *> known = {
+        {"AMS", L("AMS")},
+        {"AMS LITE", L("AMS Lite")},
+        {"AMS 2 PRO", L("AMS 2 Pro")},
+        {"AMS HT", L("AMS HT")},
+        {"FILAMENT BUFFER", L("Filament Buffer")},
+        {"FILAMENT TRACK SWITCH", L("Filament Track Switch")}
+    };
+    wxString key = product_name;
+    key.Trim().Trim(false).MakeUpper();
+    const auto it = known.find(key);
+    return it == known.end() ? product_name : _L(it->second);
+}
 
 enum FIRMWARE_STASUS
 {
@@ -1130,9 +1151,9 @@ void MachineInfoPanel::update_ams_ext(MachineObject *obj)
         }
         wxString name_text = "-";
         if (!extra_ams_it->second.product_name.empty())
-            name_text = extra_ams_it->second.product_name;
+            name_text = reported_product_name_text(extra_ams_it->second.product_name);
         else
-            name_text = "AMS Lite";
+            name_text = _L("AMS Lite");
 
         m_extra_ams_panel->m_staticText_ams->SetLabel(name_text);
         m_extra_ams_panel->m_staticText_ams_sn_val->SetLabelText(sn_text);
@@ -1199,15 +1220,15 @@ void MachineInfoPanel::update_ams_ext(MachineObject *obj)
             ams_id -= ams_id >= 128 ? 128 : 0;
 
             if (!iter_ams->second.product_name.empty()) {
-                ams_name = iter_ams->second.product_name;
+                ams_name = reported_product_name_text(iter_ams->second.product_name);
             } else {
                 size_t   pos             = iter_ams->second.name.find('/');
-                wxString ams_device_name = "AMS-%s";
+                wxString ams_device_name = _L("AMS-%s");
 
                 if (pos != std::string::npos) {
                     wxString result = iter_ams->second.name.substr(0, pos);
                     result.MakeUpper();
-                    if (auto str_it = ACCESSORY_DISPLAY_STR.find(result); str_it != ACCESSORY_DISPLAY_STR.end()) result = str_it->second;
+                    if (auto str_it = ACCESSORY_DISPLAY_STR.find(result); str_it != ACCESSORY_DISPLAY_STR.end()) result = _L(str_it->second);
                     ams_device_name = result + "-%s";
                 }
 

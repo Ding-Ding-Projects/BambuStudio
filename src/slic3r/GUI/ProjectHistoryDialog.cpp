@@ -63,6 +63,9 @@ wxString translate_known_history_reason(const wxString &reason)
         "Project edit before current-version export",
         "Project edit before restore",
         "Project edit before opening version history",
+        // Undo/Redo snapshot names that appear in the list as "Autosave: <name>".
+        "Change Filament",
+        "Change Filaments",
     };
     for (const wxString &candidate : known)
         if (reason == candidate)

@@ -98,7 +98,7 @@ std::string upload_page_html(const std::string &token, const std::string &local_
         return show_yue ? yue : en;
     };
 
-    const std::string heading = pick("Filament scan", "\xE5\xA2\xA8\xE6\xB0\xB4\xE6\x8E\x83\xE6\x8F\x8F");
+    const std::string heading = pick("Ink scan", "\xE5\xA2\xA8\xE6\xB0\xB4\xE6\x8E\x83\xE6\x8F\x8F");
     const std::string snap_text = pick(
         "Snap a photo of the spool or its label.",
         "\xE5\xBD\xB1\xE5\xBC\xB5\xE5\xA2\xA8\xE6\xB0\xB4\xE8\xBB\xB8\xE6\x88\x96\xE8\x80\x85\xE6\xA8\x99\xE7\xB1\xA4\xE5\x98\x85\xE7\x9B\xB8\xE5\x85\x88\xE3\x80\x82");
@@ -112,7 +112,7 @@ std::string upload_page_html(const std::string &token, const std::string &local_
     return
         "<!doctype html><html><head><meta charset='utf-8'>"
         "<meta name='viewport' content='width=device-width,initial-scale=1'>"
-        "<title>Bambu Studio - Filament scan</title><style>"
+        "<title>Bambu Studio - Ink scan</title><style>"
         "body{font-family:Roboto,system-ui,sans-serif;background:#f7f9f4;color:#191d17;"
         "display:flex;flex-direction:column;align-items:center;padding:24px;gap:16px}"
         "h1{font-size:1.25rem;margin:0}p{margin:0;color:#44483e;text-align:center}"

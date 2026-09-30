@@ -58,6 +58,54 @@ Longer renamed labels worth watching at narrow widths (they reflow but were not
 shortened): "Ink Dispenser Settings" (device status page) and
 "Sync Ink Dispenser and nozzle information" (tooltip, unconstrained).
 
+## Names built in code
+
+A catalogue override only reaches a string that is translated. Some names are
+not a whole message: a dispenser name comes from a table, a format string or a
+label, and written as a bare literal it skips the catalogue and shows the old
+word in every language (in Cantonese mode it shows English). Those names are
+now message ids: marked with `L(...)` (or `L_CONTEXT(...)` for a context) where
+the table is written, and translated where the name is built, never when the
+table is initialised. `ui-md3/tests/ink-display-names.test.mjs` fails when one
+of them is a raw literal again.
+
+- **Dispenser names** `AMS(%d)`, `AMS Lite(%d)`, `AMS 2 Pro(%d)`, `AMS HT(%d)`
+  (`DeviceCore/DevFilaSystem.cpp`, one table): the print mapping popup, the
+  drying dialog and the suggested rearrangement dialog all read it through
+  `DevAms::GetDisplayName`.
+- **Printer settings** (`get_ams_type_display_name` in `PrintConfig.cpp`): the
+  default dispenser type dropdown is translated where it is filled; the row
+  labels are translated by the `Line` constructor. The stored value is the type
+  number, so a renamed label cannot disturb a preset.
+- **Firmware page** (`UpgradePanel.cpp`): the accessory name table, the
+  `AMS-%s` format and the extra-dispenser fallback are translated where the
+  name is built. A product name reported by the printer is matched, ignoring
+  case, against the names this application knows and shown with the same
+  wording; any other name is shown exactly as the printer sent it.
+  `DevFirmware.h` compares the raw name, so it is never translated where it is
+  parsed.
+- **Drying limits** (`AMSDryControl.cpp`), the multi-device mapping popup, the
+  developer-only dispenser control switch in the device panel, and the fallback
+  `Filament %d` names in the mixed-ink and texture import dialogs.
+- **Undo snapshot names** (`Change Filament`, `Change Filaments`): stored in
+  English on purpose and translated when the project history lists them.
+- **Device page webview**: dispenser type names in the Ink Manager breadcrumb
+  and the accessible names of the unit chips and slot buttons go through `t()`.
+- The English-only fallback texts of the flushing dialog, and the validation
+  fragments that `libslic3r` writes for a 3MF with inconsistent mixed-colour
+  arrays, are passed through the product vocabulary where they are shown.
+
+### Narrow spaces
+
+A block that is only as wide as one slot cannot hold "Ink Dispenser HT(1)": the
+one-slot block of the print mapping popup is 74 DIP wide and the one-slot panel
+of the suggested rearrangement dialog is 92 DIP. `GetDisplayName(true)` reads the
+same four names with the `NarrowBlock` context, which the catalogues give a
+shorter wording ("Ink HT(%d)", 墨水 HT(%d)). The colour swatch on the dispenser
+colours of the colour picker is a disc about 25 DIP wide, so its label uses the
+`ColorSwatch` context ("Ink", 墨水). The printer settings type
+"AMS 2 Pro/AMS HT" reads "Ink Dispenser 2 Pro/HT" so the row label stays short.
+
 ## Intentionally left
 
 - **`AMS Materials Setting`** already displays as "Materials Setting" via an
@@ -65,6 +113,16 @@ shortened): "Ink Dispenser Settings" (device status page) and
 - Other display languages (de/fr/ja/…): upstream terminology retained.
 - Internal/log-only strings, HMS cloud-served error texts, and any msgid text
   itself: unchanged by design.
+- **The material type `TPU-AMS`** and the preset names `Bambu TPU for AMS` and
+  `Generic TPU for AMS`: the type is a value of the `filament_type` setting that
+  is saved into presets and 3MF files and compared in code, so it is shown as
+  written wherever it is the type value (the Type dropdown, the type chips of the
+  calibration dialog, the preview legend, the mixed-ink type mismatch message and
+  the ink picker pages). Renaming it is a separate decision.
+- **Text the printer or the cloud sends at run time**: HMS messages, calibration
+  failure reasons and wiki search results are shown as received.
+- **Dated history**: the entries of `resources/changelog` keep the wording of
+  their own date.
 
 Two surfaces were listed here as holdouts by the original rename and have since
 been renamed; they are no longer exceptions:

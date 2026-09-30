@@ -27483,3 +27483,71 @@ msgstr ""
 
 msgid "Decrease"
 msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "AMS(%d)"
+msgstr "Ink Dispenser(%d)"
+
+#, possible-c-format, possible-boost-format
+msgctxt "NarrowBlock"
+msgid "AMS(%d)"
+msgstr "Ink(%d)"
+
+#, possible-c-format, possible-boost-format
+msgid "AMS Lite(%d)"
+msgstr "Ink Dispenser Lite(%d)"
+
+#, possible-c-format, possible-boost-format
+msgctxt "NarrowBlock"
+msgid "AMS Lite(%d)"
+msgstr "Ink Lite(%d)"
+
+#, possible-c-format, possible-boost-format
+msgid "AMS 2 Pro(%d)"
+msgstr "Ink Dispenser 2 Pro(%d)"
+
+#, possible-c-format, possible-boost-format
+msgctxt "NarrowBlock"
+msgid "AMS 2 Pro(%d)"
+msgstr "Ink 2 Pro(%d)"
+
+#, possible-c-format, possible-boost-format
+msgid "AMS HT(%d)"
+msgstr "Ink Dispenser HT(%d)"
+
+#, possible-c-format, possible-boost-format
+msgctxt "NarrowBlock"
+msgid "AMS HT(%d)"
+msgstr "Ink HT(%d)"
+
+msgid "Change Filaments"
+msgstr "Change Inks"
+
+msgctxt "ColorSwatch"
+msgid "AMS"
+msgstr "Ink"
+
+msgid "AMS C++"
+msgstr "Ink C++"
+
+msgid "AMS Web"
+msgstr "Ink Web"
+
+msgid "AMS 2 Pro"
+msgstr "Ink Dispenser 2 Pro"
+
+msgid "AMS HT"
+msgstr "Ink Dispenser HT"
+
+msgid "AMS Lite"
+msgstr "Ink Dispenser Lite"
+
+msgid "Filament Buffer"
+msgstr "Ink Buffer"
+
+#, possible-c-format, possible-boost-format
+msgid "AMS-%s"
+msgstr "Ink Dispenser-%s"
+
+msgid "AMS 2 Pro/AMS HT"
+msgstr "Ink Dispenser 2 Pro/HT"

@@ -3043,7 +3043,9 @@ void ColorPickerPopup::set_ams_colours(const std::vector<ColorItem>& ams)
         cp->set_colors(item.colors);
         cp->ctype = item.colors.size() > 1 ? item.ctype : 2;
         cp->set_selected(false);
-        cp->set_label("AMS");
+        // The disc is about 25 DIP wide, so the full dispenser name would be clipped: the
+        // "ColorSwatch" context gives this label a short wording in each catalogue.
+        cp->set_label(_CTX("AMS", "ColorSwatch"));
         cp->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
         m_color_pickers.push_back(cp);
         m_ams_color_pickers.push_back(cp);

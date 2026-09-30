@@ -660,12 +660,15 @@ std::string get_ams_type_name(int ams_type)
     }
 }
 
+// The names a person reads, as catalogue message ids: the caller translates them at the point of
+// display (the printer settings dropdown and the row labels), so the wording a person sees comes
+// from the translation catalogues and not from these literals.
 std::string get_ams_type_display_name(int ams_type)
 {
     switch (static_cast<AmsTimeType>(ams_type)) {
-    case AmsTimeType::Ams:     return "AMS";
-    case AmsTimeType::AmsLite: return "AMS Lite";
-    case AmsTimeType::N3SF:    return "AMS 2 Pro/AMS HT";
+    case AmsTimeType::Ams:     return L("AMS");
+    case AmsTimeType::AmsLite: return L("AMS Lite");
+    case AmsTimeType::N3SF:    return L("AMS 2 Pro/AMS HT");
     default:                   return std::string();
     }
 }

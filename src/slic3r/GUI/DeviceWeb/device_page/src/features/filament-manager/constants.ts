@@ -68,16 +68,19 @@ export function toCreateFilamentPrefill(
   return { vendor, type, serial: full };
 }
 
-// Maps numeric ams_type (C++ DevAmsType enum) to product display names.
-export const AMS_TYPE_NAMES: Record<number, string> = {
-  0: 'External Spool',
-  1: 'AMS',
-  2: 'AMS Lite',
-  3: 'AMS 2 Pro',
-  4: 'AMS HT',
-  5: 'AMS Lite',
-  6: 'AMS',
-  7: 'AMS',
+// Maps numeric ams_type (C++ DevAmsType enum) to the product display name. Each name is a
+// translation key (the English upstream spelling), so the wording a person reads comes from
+// the locale catalogues and not from this table. Every key is a literal t() call so the key
+// extractor sees it.
+export const AMS_TYPE_NAMES: Record<number, (t: (key: string, opts?: Record<string, unknown>) => string) => string> = {
+  0: (t) => t('External Spool'),
+  1: (t) => t('AMS'),
+  2: (t) => t('AMS Lite'),
+  3: (t) => t('AMS 2 Pro'),
+  4: (t) => t('AMS HT'),
+  5: (t) => t('AMS Lite'),
+  6: (t) => t('AMS'),
+  7: (t) => t('AMS'),
 };
 
 export function formatSlotLocation(
@@ -89,7 +92,7 @@ export function formatSlotLocation(
 ): string | null {
   if (!deviceName) return null;
   const amsTypeName = (amsType != null && amsType >= 0 && slotId !== '255')
-    ? (AMS_TYPE_NAMES[amsType] ?? `AMS(${amsType})`)
+    ? toInlineBilingual(AMS_TYPE_NAMES[amsType]?.(t) ?? t('AMS({{n}})', { n: amsType }))
     : null;
   // This label lands inline in a single "device · AMS type · slot" breadcrumb
   // (DetailDialog, SpoolTable), so it cannot host BilingualText's stacked

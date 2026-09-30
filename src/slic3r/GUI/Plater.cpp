@@ -7561,7 +7561,7 @@ void Sidebar::collect_physical_filament_info(std::vector<std::string>& color_str
 
     for (size_t i = 0; i < num_physical; ++i) {
         auto* combo = p->combos_filament[i];
-        names.push_back(combo ? into_u8(combo->GetValue()) : "Filament " + std::to_string(i + 1));
+        names.push_back(combo ? into_u8(combo->GetValue()) : into_u8(wxString::Format(_L("Filament %d"), (int)i + 1)));
     }
 
     auto& preset_bundle = *wxGetApp().preset_bundle;
@@ -12062,8 +12062,9 @@ std::vector<size_t> Plater::priv::load_files(const std::vector<fs::path>& input_
                             NotificationManager *notify_manager = q->get_notification_manager();
                             std::string error_message = L("Invalid values found in the 3mf:");
                             error_message += "\n";
+                            // The value is a fragment written in libslic3r; show it in the product wording.
                             for (std::map<std::string, std::string>::iterator it=validity.begin(); it!=validity.end(); ++it)
-                                error_message += "-" + it->first + ": " + it->second + "\n";
+                                error_message += "-" + it->first + ": " + into_u8(I18N::vocabulary(from_u8(it->second))) + "\n";
                             error_message += "\n";
                             error_message += L("Please correct them in the param tabs");
                             notify_manager->bbl_show_3mf_warn_notification(error_message);
@@ -22266,8 +22267,9 @@ void Plater::priv::change_extruder_for_assemble_selection(int extruder)
     if (sel.is_empty())
         return;
 
-    // Snapshot on the assembly undo stack (active while in the assembly view).
-    take_snapshot("Change Filaments");
+    // Snapshot on the assembly undo stack (active while in the assembly view). The name is stored in
+    // English and shown translated in the project history, so it is only marked here.
+    take_snapshot(L("Change Filaments"));
     bool changed = false;
     for (unsigned int idx : sel.get_volume_idxs()) {
         const GLVolume *v = sel.get_volume(idx);

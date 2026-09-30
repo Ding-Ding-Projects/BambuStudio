@@ -2598,7 +2598,7 @@ wxBoxSizer *StatusBasePanel::create_machine_control_page(wxWindow *parent)
     m_ams_rack_switch->Bind(wxCUSTOMEVT_SWITCH_POS, &StatusBasePanel::on_ams_rack_switch, this);
 
 #if BBL_ENABLE_AMS_CONTROL_WEB
-    m_ams_control_web_switch = new SwitchBoard(parent, "AMS C++", "AMS Web", wxSize(FromDIP(160), FromDIP(26)));
+    m_ams_control_web_switch = new SwitchBoard(parent, _L("AMS C++"), _L("AMS Web"), wxSize(FromDIP(160), FromDIP(26)));
     m_ams_control_web_switch->updateState("left");
     m_ams_control_web_switch->Hide();
     m_ams_control_web_switch->Bind(wxCUSTOMEVT_SWITCH_POS, &StatusBasePanel::on_ams_control_web_switch, this);

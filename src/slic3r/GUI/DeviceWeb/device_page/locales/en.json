@@ -202,5 +202,13 @@
   "Select all filaments": "Select all inks",
   "Select {{name}}": "Select {{name}}",
   "Opening...": "Opening...",
-  "Debug": "Debug"
+  "Debug": "Debug",
+  "AMS": "Ink Dispenser",
+  "AMS Lite": "Ink Dispenser Lite",
+  "AMS 2 Pro": "Ink Dispenser 2 Pro",
+  "AMS HT": "Ink Dispenser HT",
+  "AMS({{n}})": "Ink Dispenser({{n}})",
+  "AMS {{n}}": "Ink Dispenser {{n}}",
+  "View Filament": "View Ink",
+  "New Filament": "New Ink"
 }
