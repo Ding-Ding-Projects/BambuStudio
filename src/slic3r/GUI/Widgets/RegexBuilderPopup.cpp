@@ -8,6 +8,7 @@
 #include "MaterialIcon.hpp"
 #include "StateColor.hpp"
 #include "TextArea.hpp"
+#include "TextInput.hpp"
 
 #include "slic3r/GUI/I18N.hpp"
 
@@ -216,19 +217,20 @@ void RegexBuilderPopup::build()
     // --- Raw pattern editor + copy ------------------------------------------
     sectionLabel(_L("Pattern"));
     wxBoxSizer *pat_row = new wxBoxSizer(wxHORIZONTAL);
-    m_pattern = new wxTextCtrl(m_scroll, wxID_ANY, wxEmptyString, wxDefaultPosition,
-                               wxSize(contentW - FromDIP(50), FromDIP(kTargetH)),
-                               wxBORDER_NONE | wxTE_PROCESS_ENTER);
+    // A kit field around the editor, like every other text field; m_pattern is its inner
+    // entry, so the focus call, the reads and the binds below reach the control typed into.
+    auto *pattern_field = new ::TextInput(m_scroll, wxEmptyString, wxEmptyString, wxEmptyString, wxDefaultPosition,
+                                          wxSize(contentW - FromDIP(50), FromDIP(kTargetH)), wxTE_PROCESS_ENTER);
+    pattern_field->SetName(_L("Regex pattern"));
+    m_pattern = pattern_field->GetTextCtrl();
     m_pattern->SetFont(Label::Mono_13);
-    m_pattern->SetBackgroundColour(field_bg);
-    m_pattern->SetForegroundColour(on);
     m_pattern->SetMaxLength(kMaxPatternLen);
     m_pattern->SetName(_L("Regex pattern"));
     m_pattern->Bind(wxEVT_TEXT, [this](wxCommandEvent &e) {
         onPatternEdited();
         e.Skip();
     });
-    pat_row->Add(m_pattern, 1, wxALIGN_CENTER_VERTICAL);
+    pat_row->Add(pattern_field, 1, wxALIGN_CENTER_VERTICAL);
 
     m_copy = new Button(m_scroll, wxEmptyString);
     m_copy->SetIconButton(Button::IconShape::Circle, kTargetH);
@@ -319,17 +321,16 @@ void RegexBuilderPopup::build()
     // --- Literals (auto-escaped input) ----------------------------------------
     sectionLabel(_L("Literals"));
     wxBoxSizer *lit_row = new wxBoxSizer(wxHORIZONTAL);
-    m_literal = new wxTextCtrl(m_scroll, wxID_ANY, wxEmptyString, wxDefaultPosition,
-                               wxSize(contentW - FromDIP(92), FromDIP(kTargetH)),
-                               wxBORDER_NONE | wxTE_PROCESS_ENTER);
+    auto *literal_field = new ::TextInput(m_scroll, wxEmptyString, wxEmptyString, wxEmptyString, wxDefaultPosition,
+                                          wxSize(contentW - FromDIP(92), FromDIP(kTargetH)), wxTE_PROCESS_ENTER);
+    literal_field->SetName(_L("Text to match literally"));
+    m_literal = literal_field->GetTextCtrl();
     m_literal->SetFont(Label::Body_13);
-    m_literal->SetBackgroundColour(field_bg);
-    m_literal->SetForegroundColour(on);
     m_literal->SetHint(_L("Text to match literally"));
     m_literal->SetName(_L("Text to match literally"));
     m_literal->SetMaxLength(kMaxPatternLen);
     m_literal->Bind(wxEVT_TEXT_ENTER, [this](wxCommandEvent &) { addLiteral(); });
-    lit_row->Add(m_literal, 1, wxALIGN_CENTER_VERTICAL);
+    lit_row->Add(literal_field, 1, wxALIGN_CENTER_VERTICAL);
 
     auto *add_btn = new Button(m_scroll, _L("Add"));
     add_btn->SetVariant(Button::Variant::Tonal);

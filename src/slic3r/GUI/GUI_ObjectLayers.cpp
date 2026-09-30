@@ -29,9 +29,6 @@ ObjectLayers::ObjectLayers(wxWindow* parent) :
     m_og->activate();
     m_og->sizer->Clear(true);
     m_og->sizer->Add(m_grid_sizer, 0, wxEXPAND | wxLEFT | wxRIGHT, wxOSX ? 0 : 5);
-
-    m_bmp_delete    = ScalableBitmap(parent, "delete_filament"/*"cross"*/);
-    m_bmp_add       = ScalableBitmap(parent, "add_filament");
 }
 
 void ObjectLayers::select_editor(LayerRangeEditor* editor, const bool is_last_edited_range)
@@ -173,21 +170,21 @@ void ObjectLayers::create_layers_list()
 {
     for (const auto &layer : m_object->layer_config_ranges) {
         const t_layer_height_range& range = layer.first;
-        auto del_btn = new PlusMinusButton(m_parent, m_bmp_delete, range); 
+        // Kit icon buttons. They still take the focus on a click (no SetCanFocus(false)):
+        // the edit fields detect a click on one of them by the window that receives the focus.
+        auto del_btn = new PlusMinusButton(m_parent, "delete_filament", MaterialIcon::Delete, range);
         del_btn->DisableFocusFromKeyboard();
-        del_btn->SetBackgroundColour(m_parent->GetBackgroundColour());
         del_btn->SetToolTip(_L("Remove height range"));
 
-        auto add_btn = new PlusMinusButton(m_parent, m_bmp_add, range); 
+        auto add_btn = new PlusMinusButton(m_parent, "add_filament", MaterialIcon::Add, range);
         add_btn->DisableFocusFromKeyboard();
-        add_btn->SetBackgroundColour(m_parent->GetBackgroundColour());
         wxString tooltip = wxGetApp().obj_list()->can_add_new_range_after_current(range);
         add_btn->SetToolTip(tooltip.IsEmpty() ? _L("Add height range") : tooltip);
         add_btn->Enable(tooltip.IsEmpty());
 
         auto sizer = create_layer(range, del_btn, add_btn);
-        sizer->Add(del_btn, 0, wxRIGHT | wxLEFT, em_unit(m_parent));
-        sizer->Add(add_btn);
+        sizer->Add(del_btn, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT | wxLEFT, em_unit(m_parent));
+        sizer->Add(add_btn, 0, wxALIGN_CENTER_VERTICAL);
 
         del_btn->Bind(wxEVT_BUTTON, [del_btn](wxEvent &) {
             wxGetApp().obj_list()->del_layer_range(del_btn->range);
@@ -251,9 +248,6 @@ void ObjectLayers::UpdateAndShow(const bool show)
 
 void ObjectLayers::msw_rescale()
 {
-    m_bmp_delete.msw_rescale();
-    m_bmp_add.msw_rescale();
-
     m_grid_sizer->SetHGap(wxGetApp().em_unit());
 
     // rescale edit-boxes
@@ -280,7 +274,7 @@ void ObjectLayers::msw_rescale()
                     if (b_item->IsWindow()) {
                         auto button = dynamic_cast<PlusMinusButton*>(b_item->GetWindow());
                         if (button != nullptr)
-                            button->msw_rescale();
+                            button->Rescale();
                     }
                 }
         }
@@ -290,9 +284,6 @@ void ObjectLayers::msw_rescale()
 
 void ObjectLayers::sys_color_changed()
 {
-    m_bmp_delete.msw_rescale();
-    m_bmp_add.msw_rescale();
-
     // rescale edit-boxes
     const int cells_cnt = m_grid_sizer->GetCols() * m_grid_sizer->GetEffectiveRowsCount();
     for (int i = 0; i < cells_cnt; ++i) {
@@ -303,7 +294,7 @@ void ObjectLayers::sys_color_changed()
                 if (b_item && b_item->IsWindow()) {
                     auto button = dynamic_cast<PlusMinusButton*>(b_item->GetWindow());
                     if (button != nullptr)
-                        button->msw_rescale();
+                        button->Rescale();
                 }
             }
         }
@@ -340,35 +331,35 @@ LayerRangeEditor::LayerRangeEditor( ObjectLayers* parent,
                                     std::function<void(EditorType)> set_focus_data_fn,
                                     std::function<bool(coordf_t, bool, bool)>   edit_fn
                                     ) :
+    ::TextInput(parent->m_parent, value, wxEmptyString, wxEmptyString, wxDefaultPosition,
+                wxSize(7 * em_unit(parent->m_parent), wxDefaultCoord), 0),
     m_valid_value(value),
     m_type(type),
-    m_set_focus_data(set_focus_data_fn),
-    wxTextCtrl(parent->m_parent, wxID_ANY, value, wxDefaultPosition, 
-               wxSize(7 * em_unit(parent->m_parent), wxDefaultCoord), wxTE_PROCESS_ENTER
-#ifdef _WIN32
-        | wxBORDER_SIMPLE
-#endif
-    )
+    m_set_focus_data(set_focus_data_fn)
 {
-    this->SetFont(wxGetApp().normal_font());
+    // The entry is the inner control of the kit field.
+    wxTextCtrl* entry = GetTextCtrl();
+    entry->SetFont(wxGetApp().normal_font());
     wxGetApp().UpdateDarkUI(this);
 
     // Reset m_enter_pressed flag to _false_, when value is editing
-    this->Bind(wxEVT_TEXT, [this](wxEvent&) { m_enter_pressed = false; }, this->GetId());
-    
+    entry->Bind(wxEVT_TEXT, [this](wxEvent&) { m_enter_pressed = false; });
+
+    // The kit field sends the Enter and the focus loss of its entry on to itself
+    // under its own id, so these two handlers stay bound to this window.
     this->Bind(wxEVT_TEXT_ENTER, [this, edit_fn](wxEvent&)
     {
         m_enter_pressed     = true;
         // If LayersList wasn't updated/recreated, we can call wxEVT_KILL_FOCUS.Skip()
         if (m_type&etLayerHeight) {
             if (!edit_fn(get_value(), true, false))
-                SetValue(m_valid_value);
+                GetTextCtrl()->SetValue(m_valid_value);
             else
                 m_valid_value = double_to_string(get_value());
             m_call_kill_focus = true;
         }
         else if (!edit_fn(get_value(), true, false)) {
-            SetValue(m_valid_value);
+            GetTextCtrl()->SetValue(m_valid_value);
             m_call_kill_focus = true;
         }
     }, this->GetId());
@@ -379,24 +370,25 @@ LayerRangeEditor::LayerRangeEditor( ObjectLayers* parent,
 #ifndef __WXGTK__
             /* Update data for next editor selection.
              * But under GTK it looks like there is no information about selected control at e.GetWindow(),
-             * so we'll take it from wxEVT_LEFT_DOWN event
+             * so we'll take it from wxEVT_LEFT_DOWN event.
+             * The window that takes the focus is the entry of the next field, whose parent is the field.
              * */
-            LayerRangeEditor* new_editor = dynamic_cast<LayerRangeEditor*>(e.GetWindow());
+            LayerRangeEditor* new_editor = dynamic_cast<LayerRangeEditor*>(e.GetWindow() ? e.GetWindow()->GetParent() : nullptr);
             if (new_editor)
                 new_editor->set_focus_data();
 #endif // not __WXGTK__
             // If LayersList wasn't updated/recreated, we should call e.Skip()
             if (m_type & etLayerHeight) {
                 if (!edit_fn(get_value(), false, dynamic_cast<ObjectLayers::PlusMinusButton*>(e.GetWindow()) != nullptr))
-                    SetValue(m_valid_value);
+                    GetTextCtrl()->SetValue(m_valid_value);
                 else
                     m_valid_value = double_to_string(get_value());
                 e.Skip();
             }
             else if (!edit_fn(get_value(), false, dynamic_cast<ObjectLayers::PlusMinusButton*>(e.GetWindow()) != nullptr)) {
-                SetValue(m_valid_value);
+                GetTextCtrl()->SetValue(m_valid_value);
                 e.Skip();
-            } 
+            }
         }
         else if (m_call_kill_focus) {
             m_call_kill_focus = false;
@@ -404,47 +396,47 @@ LayerRangeEditor::LayerRangeEditor( ObjectLayers* parent,
         }
     }, this->GetId());
 
-    this->Bind(wxEVT_SET_FOCUS, [this, parent](wxFocusEvent& e)
+    entry->Bind(wxEVT_SET_FOCUS, [this, parent](wxFocusEvent& e)
     {
         set_focus_data();
         parent->update_scene_from_editor_selection();
         e.Skip();
-    }, this->GetId());
+    });
 
 #ifdef __WXGTK__ // Workaround! To take information about selectable range
-    this->Bind(wxEVT_LEFT_DOWN, [this](wxEvent& e)
+    entry->Bind(wxEVT_LEFT_DOWN, [this](wxEvent& e)
     {
         set_focus_data();
         e.Skip();
-    }, this->GetId());
+    });
 #endif //__WXGTK__
 
-    this->Bind(wxEVT_CHAR, ([this](wxKeyEvent& event)
+    entry->Bind(wxEVT_CHAR, ([this](wxKeyEvent& event)
     {
         // select all text using Ctrl+A
         if (wxGetKeyState(wxKeyCode('A')) && wxGetKeyState(WXK_CONTROL))
-            this->SetSelection(-1, -1); //select all
+            GetTextCtrl()->SetSelection(-1, -1); //select all
         event.Skip();
     }));
 }
 
 coordf_t LayerRangeEditor::get_value()
 {
-    wxString str = GetValue();
+    wxString str = GetTextCtrl()->GetValue();
 
     coordf_t layer_height;
     const char dec_sep = is_decimal_separator_point() ? '.' : ',';
     const char dec_sep_alt = dec_sep == '.' ? ',' : '.';
     // Replace the first incorrect separator in decimal number.
     if (str.Replace(dec_sep_alt, dec_sep, false) != 0)
-        SetValue(str);
+        GetTextCtrl()->SetValue(str);
 
     if (str == ".")
         layer_height = 0.0;
     else {
         if (!str.ToDouble(&layer_height) || layer_height < 0.0f) {
             show_error(m_parent, _L("Invalid numeric."));
-            SetValue(m_valid_value); // reset to a valid value
+            GetTextCtrl()->SetValue(m_valid_value); // reset to a valid value
         }
     }
 
@@ -454,6 +446,7 @@ coordf_t LayerRangeEditor::get_value()
 void LayerRangeEditor::msw_rescale()
 {
     SetMinSize(wxSize(8 * wxGetApp().em_unit(), wxDefaultCoord));
+    Rescale();
 }
 
 } //namespace GUI

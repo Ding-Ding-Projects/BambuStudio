@@ -32,6 +32,7 @@
 #include "Widgets/ComboBox.hpp"
 #include "Widgets/DropDown.hpp"
 #include "Widgets/Label.hpp"
+#include "Widgets/TextInput.hpp"
 
 namespace Slic3r {
 namespace GUI {
@@ -474,44 +475,49 @@ void MixedFilamentDialog::start_ratio_editor(size_t idx, wxWindow* anchor, const
 
     if (!m_ratio_editor_panel) {
         wxColour bg = StateColor::semantic(MD3::Role::SurfaceContainerLow);
-        wxColour fg = StateColor::semantic(MD3::Role::OnSurface);
 
+        // The kit field draws its own outline and rounded corners, so the panel
+        // carries no frame of its own: two frames would stack.
         m_ratio_editor_panel = new wxPanel(this, wxID_ANY, wxDefaultPosition,
-                                           wxDefaultSize, wxBORDER_SIMPLE);
+                                           wxDefaultSize, wxBORDER_NONE);
         m_ratio_editor_panel->SetBackgroundColour(bg);
 
         auto* hsizer = new wxBoxSizer(wxHORIZONTAL);
 
-        m_ratio_editor = new wxTextCtrl(m_ratio_editor_panel, wxID_ANY, wxEmptyString,
-                                        wxDefaultPosition, wxDefaultSize,
-                                        wxTE_PROCESS_ENTER | wxTE_RIGHT | wxBORDER_NONE);
+        // A kit text field with the percent sign as its unit. m_ratio_editor is
+        // the field's own entry, so the reads, the focus calls and the binds
+        // below reach the control the person types into.
+        m_ratio_field = new ::TextInput(m_ratio_editor_panel, wxEmptyString, wxEmptyString, wxEmptyString,
+                                        wxDefaultPosition, wxDefaultSize, 0, wxT("%"));
+        m_ratio_editor = m_ratio_field->GetTextCtrl();
         m_ratio_editor->SetFont(::Label::Body_10);
         m_ratio_editor->SetMaxLength(3);
-        m_ratio_editor->SetBackgroundColour(bg);
-        m_ratio_editor->SetForegroundColour(fg);
-        // Default wxTextCtrl best width (~140px) is too wide for the sizer to
-        // shrink, which would push the "%" suffix out of the panel.  Size the
-        // editor for the *widest* three digits rather than the largest accepted
-        // value: SetMaxLength above lets anything up to "888" be typed, and the
-        // macOS system font renders digits at different advances, so "100" is
-        // narrower than what the user can actually enter.  GetSizeFromTextSize()
-        // then adds the platform's own text field margins; on macOS those margins
-        // are what clipped the digits.
+        // The kit keeps its entry left aligned; the digits sit against the
+        // percent sign, as they always did.
+        m_ratio_editor->SetWindowStyleFlag(m_ratio_editor->GetWindowStyleFlag() | wxTE_RIGHT);
+        // The kit sized the entry for its own, larger font. Take the size again
+        // for Body_10 so the field is not taller than the label it stands in for.
+        m_ratio_editor->SetInitialSize(m_ratio_editor->GetBestSize());
+        // Size the field for the *widest* three digits rather than the largest
+        // accepted value: SetMaxLength above lets anything up to "888" be typed,
+        // and the macOS system font renders digits at different advances, so
+        // "100" is narrower than what the user can actually enter.
+        // GetSizeFromTextSize() then adds the platform's own text field margins;
+        // on macOS those margins are what clipped the digits. TextInput keeps 5 px
+        // before its entry and 10 px after it, and gives its unit a 5 px gap and
+        // a 10 px end pad (30 px with the unit), then 8 px of height around the entry.
         {
-            wxClientDC mdc(m_ratio_editor);
-            mdc.SetFont(::Label::Body_10);
-            int digits_w = mdc.GetTextExtent(wxT("888")).GetWidth();
-            m_ratio_editor->SetMinSize(m_ratio_editor->GetSizeFromTextSize(digits_w));
+            wxClientDC digits_dc(m_ratio_editor);
+            digits_dc.SetFont(::Label::Body_10);
+            const int digits_w = digits_dc.GetTextExtent(wxT("888")).GetWidth();
+            wxClientDC unit_dc(m_ratio_field);
+            const int unit_w = unit_dc.GetTextExtent(wxT("%")).GetWidth();
+            const int field_w = m_ratio_editor->GetSizeFromTextSize(digits_w).GetWidth() + unit_w + 30;
+            const int field_h = m_ratio_editor->GetSize().GetHeight() + 8;
+            m_ratio_field->SetMinSize(wxSize(field_w, field_h));
         }
 
-        auto* pct_label = new Label(m_ratio_editor_panel, wxT("%"));
-        pct_label->SetFont(::Label::Body_10);
-        pct_label->SetForegroundColour(fg);
-        pct_label->SetBackgroundColour(bg);
-        pct_label->SetMinSize(pct_label->GetBestSize());
-
-        hsizer->Add(m_ratio_editor, 1, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(2));
-        hsizer->Add(pct_label, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(2));
+        hsizer->Add(m_ratio_field, 1, wxALIGN_CENTER_VERTICAL | wxEXPAND);
         m_ratio_editor_panel->SetSizer(hsizer);
         m_ratio_editor_panel->Hide();
 
@@ -553,6 +559,9 @@ void MixedFilamentDialog::start_ratio_editor(size_t idx, wxWindow* anchor, const
     wxSize size = anchor->GetSize();
     size.SetWidth(std::max(size.GetWidth(), needed.GetWidth()));
     size.SetHeight(std::max(size.GetHeight(), needed.GetHeight()));
+    // The kit field can be a little taller than the label it covers: grow it
+    // evenly above and below so it stays centred on the label.
+    pos.y -= std::max(0, size.GetHeight() - anchor->GetSize().GetHeight()) / 2;
     // An editor wider than the label must still stay inside its parent, or the
     // corner labels of the triangle picker would have it clipped at the edge.
     if (wxWindow* editor_parent = m_ratio_editor_panel->GetParent()) {

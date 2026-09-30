@@ -6,8 +6,11 @@
 #include "Widgets/ComboBox.hpp"
 #include "Widgets/MD3Tokens.hpp"
 #include "Widgets/StateColor.hpp"
+#include "Widgets/TextInput.hpp"
 
+#include <wx/app.h>
 #include <wx/dc.h>
+#include <wx/weakref.h>
 #ifdef wxHAS_GENERIC_DATAVIEWCTRL
 #include "wx/generic/private/markuptext.h"
 #include "wx/generic/private/rowheightcache.h"
@@ -204,32 +207,58 @@ wxWindow* BitmapTextRenderer::CreateEditorCtrl(wxWindow* parent, wxRect labelRec
     }
 
 #ifdef __WXMSW__
-    // Case when from some reason we try to create next EditorCtrl till old one was not deleted
+    // Case when from some reason we try to create next EditorCtrl till old one was not deleted.
+    // The stale editor is a kit text field; the Filament column's editor is a ComboBox, which is
+    // a text field too, and is not ours to destroy.
     if (auto children = parent->GetChildren(); children.GetCount() > 0)
         for (auto child : children)
-            if (dynamic_cast<wxTextCtrl*>(child)) {
+            if (dynamic_cast<::TextInput*>(child) && !dynamic_cast<::ComboBox*>(child)) {
                 parent->RemoveChild(child);
                 child->Destroy();
                 break;
             }
 #endif // __WXMSW__
 
-    // The Material filled field for the rename (SurfaceContainerHighest behind
-    // OnSurface text) instead of the system's sunken box, whose light border stood
-    // out in dark mode. The list reads the value back from this wxTextCtrl.
-    wxTextCtrl* text_editor = new wxTextCtrl(parent, wxID_ANY, data.GetText(),
-                                             position, labelRect.GetSize(), wxTE_PROCESS_ENTER | wxBORDER_NONE);
+    // The Material filled field for the rename: the kit text field, with its own
+    // fill, outline and focus ring, instead of the system's edit box. The list reads
+    // the value back from the field's inner wxTextCtrl (see GetValueFromEditorCtrl).
+    ::TextInput* editor = new ::TextInput(parent, data.GetText(), wxEmptyString, wxEmptyString,
+                                          position, labelRect.GetSize(), 0);
+    wxTextCtrl* text_editor = editor->GetTextCtrl();
+    // The cell is a data view row, shorter than the kit's own field: type the entry in the
+    // list's font, take its size again for that font, and then put the box on exactly the cell.
+    text_editor->SetFont(parent->GetFont());
+    text_editor->SetSize(wxDefaultCoord, text_editor->GetBestSize().GetHeight());
+    editor->SetCornerRadius(parent->FromDIP(4));
+    editor->SetSize(wxRect(position, labelRect.GetSize()));
     text_editor->SetInsertionPointEnd();
     text_editor->SelectAll();
-    text_editor->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerHighest));
-    text_editor->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
 
-    return text_editor;
+    // The focus sits on the inner entry, so the handler wx pushes onto the returned window
+    // never sees it leave: finish the edit here when it does. It is finished after the event
+    // has been delivered, and only if this editor is still the one being edited, because
+    // hiding the editor inside FinishEditing() moves the focus a second time.
+    text_editor->Bind(wxEVT_KILL_FOCUS, [this, editor_ref = wxWeakRef<wxWindow>(editor)](wxFocusEvent& e) {
+        e.Skip();
+        // The focus moving inside the editor (its frame, its entry) is not leaving it.
+        for (wxWindow* win = e.GetWindow(); win; win = win->GetParent())
+            if (win == editor_ref.get())
+                return;
+        wxTheApp->CallAfter([this, editor_ref] {
+            if (editor_ref && GetEditorCtrl() == editor_ref.get())
+                FinishEditing();
+        });
+    });
+
+    return editor;
 }
 
 bool BitmapTextRenderer::GetValueFromEditorCtrl(wxWindow* ctrl, wxVariant& value)
 {
-    wxTextCtrl* text_editor = wxDynamicCast(ctrl, wxTextCtrl);
+    // The editor is a kit text field, which has no wx run-time class information: cast it
+    // with dynamic_cast and read the value from its inner wxTextCtrl.
+    auto* editor = dynamic_cast<::TextInput*>(ctrl);
+    wxTextCtrl* text_editor = editor ? editor->GetTextCtrl() : nullptr;
     auto item = GetView()->GetModel()->GetParent(m_item);
     if (!text_editor || (item.IsOk() && text_editor->GetValue().IsEmpty()))
         return false;

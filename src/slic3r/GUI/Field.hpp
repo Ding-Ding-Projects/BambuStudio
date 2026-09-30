@@ -32,6 +32,8 @@
 #define wxMSW false
 #endif
 
+class TextInput;
+
 namespace Slic3r { namespace GUI {
 
 class Field;
@@ -484,6 +486,10 @@ public:
 	~PointCtrl() {}
 
 	wxSizer*		sizer{ nullptr };
+	// The kit fields the person sees; x_textctrl and y_textctrl are their own
+	// entries, which the reads, writes and binds go through.
+	::TextInput*	x_input{ nullptr };
+	::TextInput*	y_input{ nullptr };
 	wxTextCtrl*		x_textctrl{ nullptr };
 	wxTextCtrl*		y_textctrl{ nullptr };
 
@@ -498,14 +504,10 @@ public:
     void            msw_rescale() override;
 	void            sys_color_changed() override;
 
-	void			enable() override {
-		x_textctrl->Enable();
-		y_textctrl->Enable(); }
-	void			disable() override{
-		x_textctrl->Disable();
-		y_textctrl->Disable(); }
+	void			enable() override;
+	void			disable() override;
 	wxSizer*		getSizer() override { return sizer; }
-	wxWindow*		getWindow() override { return dynamic_cast<wxWindow*>(x_textctrl); }
+	wxWindow*		getWindow() override;
 };
 
 class StaticText : public Field {
