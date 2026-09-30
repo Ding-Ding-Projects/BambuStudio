@@ -22,7 +22,7 @@ public:
     // BBS
     ObjColorPanel(wxWindow *parent, Slic3r::ObjDialogInOut &in_out, const std::vector<std::string> &extruder_colours);
     ~ObjColorPanel();
-    wxBoxSizer *create_sizer_thumbnail(wxButton *image_button, bool left);
+    wxBoxSizer *create_sizer_thumbnail(Button *image_button, bool left);
     void msw_rescale();
     bool is_ok();
     void send_new_filament_to_ui();
@@ -69,8 +69,8 @@ private:
     StaticBox *               m_two_image_panel{nullptr};
     wxBoxSizer *                       m_left_sizer_thumbnail{nullptr};
     wxBoxSizer *                       m_right_sizer_thumbnail{nullptr};
-    wxButton *                         m_left_image_button{nullptr};
-    wxButton *                         m_right_image_button{nullptr};
+    Button *                           m_left_image_button{nullptr};
+    Button *                           m_right_image_button{nullptr};
     wxBoxSizer *                       m_two_image_panel_sizer{nullptr};
 
     wxPanel *                 m_page_simple  = nullptr;
@@ -85,8 +85,8 @@ private:
     Button *    m_quick_approximate_match_btn{nullptr};
     Button *    m_quick_add_btn{nullptr};
     Button *    m_quick_reset_btn{nullptr};
-    std::vector<wxButton*> m_extruder_icon_list;
-    std::vector<wxButton*> m_color_cluster_icon_list;//need modeify
+    std::vector<Button*> m_extruder_icon_list;
+    std::vector<Button*> m_color_cluster_icon_list;//need modeify
     std::vector<wxStaticText*> m_color_cluster_text_list;//need modeify
     std::vector<wxGridSizer*> m_row_sizer_list;         // control show or not
     std::vector<wxBoxSizer *> m_row_col_boxsizer_list;
@@ -95,7 +95,6 @@ private:
     const int               m_combox_width{50};
     int                     m_combox_icon_width;
     int                     m_combox_icon_height;
-    wxButton *              m_image_button = nullptr;
     LayoutChanggeCallback   m_layout_callback;
     //data
     char                       m_last_cluster_number{-2};

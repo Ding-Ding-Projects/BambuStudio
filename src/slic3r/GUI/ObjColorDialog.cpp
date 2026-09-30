@@ -273,7 +273,7 @@ ObjColorDialog::ObjColorDialog(wxWindow *parent, Slic3r::ObjDialogInOut &in_out,
             }, wxID_OK);
     }
     if (this->FindWindowById(wxID_CANCEL, this)) {
-        update_ui(static_cast<wxButton*>(this->FindWindowById(wxID_CANCEL, this)));
+        update_ui(this->FindWindowById(wxID_CANCEL, this));
         this->FindWindowById(wxID_CANCEL, this)->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) {
             if (m_panel_ObjColor) {
                 m_panel_ObjColor->cancel_paint_color();
@@ -413,14 +413,26 @@ ObjColorPanel::ObjColorPanel(wxWindow *parent, Slic3r::ObjDialogInOut &in_out, c
                 m_two_image_panel->SetBorderWidth(0);
 
                 m_two_image_panel_sizer = new wxBoxSizer(wxHORIZONTAL);
-                m_left_image_button     = new wxButton(m_two_image_panel, wxID_ANY, {}, wxDefaultPosition,
-                                                   wxSize(FromDIP(LEFT_THUMBNAIL_SIZE_WIDTH), FromDIP(LEFT_THUMBNAIL_SIZE_WIDTH)), wxBORDER_NONE | wxBU_AUTODRAW);
+                // The two previews are display tiles: flat kit Buttons that only hold a bitmap
+                // and are never a Tab stop. The order matters. The padding goes first (the
+                // default is 10 x 8), then the minimum size, and the bitmap goes last through
+                // SetIconBitmap(). A plain Button does not measure itself when it gets an
+                // icon, so the tile keeps exactly the size given here; setting the minimum
+                // size after the bitmap would add the icon-to-label gap to its width.
+                m_left_image_button     = new Button(m_two_image_panel, wxEmptyString, wxEmptyString, wxBORDER_NONE, 0);
+                m_left_image_button->SetPaddingSize(wxSize(0, 0));
+                m_left_image_button->SetMinSize(wxSize(FromDIP(LEFT_THUMBNAIL_SIZE_WIDTH), FromDIP(LEFT_THUMBNAIL_SIZE_WIDTH)));
+                m_left_image_button->SetCornerRadius(0);
+                m_left_image_button->SetCanFocus(false);
                 m_left_sizer_thumbnail  = create_sizer_thumbnail(m_left_image_button, true);
                 m_two_image_panel_sizer->Add(m_left_sizer_thumbnail, FromDIP(0), wxALIGN_LEFT | wxEXPAND | wxTOP | wxBOTTOM, FromDIP(8));
                 m_two_image_panel_sizer->AddSpacer(FromDIP(10));
 
-                m_right_image_button    = new wxButton(m_two_image_panel, wxID_ANY, {}, wxDefaultPosition,
-                                                    wxSize(FromDIP(RIGHT_THUMBNAIL_SIZE_WIDTH), FromDIP(RIGHT_THUMBNAIL_SIZE_WIDTH)), wxBORDER_NONE | wxBU_AUTODRAW);
+                m_right_image_button    = new Button(m_two_image_panel, wxEmptyString, wxEmptyString, wxBORDER_NONE, 0);
+                m_right_image_button->SetPaddingSize(wxSize(0, 0));
+                m_right_image_button->SetMinSize(wxSize(FromDIP(RIGHT_THUMBNAIL_SIZE_WIDTH), FromDIP(RIGHT_THUMBNAIL_SIZE_WIDTH)));
+                m_right_image_button->SetCornerRadius(0);
+                m_right_image_button->SetCanFocus(false);
                 m_right_sizer_thumbnail = create_sizer_thumbnail(m_right_image_button, false);
                 m_two_image_panel_sizer->Add(m_right_sizer_thumbnail, FromDIP(0), wxALIGN_LEFT | wxEXPAND | wxRIGHT | wxTOP | wxBOTTOM, FromDIP(8));
                 m_two_image_panel->SetSizer(m_two_image_panel_sizer);
@@ -432,8 +444,10 @@ ObjColorPanel::ObjColorPanel(wxWindow *parent, Slic3r::ObjDialogInOut &in_out, c
                 // MD3 tokens instead of the hand-picked grey pair: the semantic
                 // roles resolve per theme, so the dark_mode() branch collapses.
                 m_two_image_panel->SetBackgroundColor(StateColor::semantic(MD3::Role::SurfaceContainer));
-                m_left_image_button->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerHigh));
-                m_right_image_button->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerHigh));
+                // The well fill is the tile's own background: SetBackgroundColour() would only
+                // change the window behind it, which a flat tile paints over.
+                m_left_image_button->SetBackgroundColorNormal(StateColor::semantic(MD3::Role::SurfaceContainerHigh));
+                m_right_image_button->SetBackgroundColorNormal(StateColor::semantic(MD3::Role::SurfaceContainerHigh));
             }
             { // add  ComboBox cur_combox
                 auto combox_title = new Label(m_two_image_panel, _L("view"));
@@ -567,7 +581,7 @@ ObjColorPanel::ObjColorPanel(wxWindow *parent, Slic3r::ObjDialogInOut &in_out, c
 ObjColorPanel::~ObjColorPanel() {
 }
 
-wxBoxSizer *ObjColorPanel::create_sizer_thumbnail(wxButton *image_button, bool left)
+wxBoxSizer *ObjColorPanel::create_sizer_thumbnail(Button *image_button, bool left)
 {
     auto sizer_thumbnail = new wxBoxSizer(wxVERTICAL);
     if (left) {
@@ -591,11 +605,11 @@ void ObjColorPanel::msw_rescale()
 {
     for (unsigned int i = 0; i < m_extruder_icon_list.size(); ++i) {
         auto bitmap = *get_extruder_color_icon(m_colours[i].GetAsString(wxC2S_HTML_SYNTAX).ToStdString(), std::to_string(i + 1), FromDIP(16), FromDIP(16));
-        m_extruder_icon_list[i]->SetBitmap(bitmap);
+        m_extruder_icon_list[i]->SetIconBitmap(bitmap);
     }
    /* for (unsigned int i = 0; i < m_color_cluster_icon_list.size(); ++i) {
         auto bitmap = *get_extruder_color_icon(m_cluster_colours[i].GetAsString(wxC2S_HTML_SYNTAX).ToStdString(), std::to_string(i + 1), FromDIP(16), FromDIP(16));
-        m_color_cluster_icon_list[i]->SetBitmap(bitmap);
+        m_color_cluster_icon_list[i]->SetIconBitmap(bitmap);
     }*/
 }
 
@@ -830,9 +844,15 @@ wxBoxSizer *ObjColorPanel::create_reset_btn_sizer(wxWindow *parent)
 wxBoxSizer *ObjColorPanel::create_extruder_icon_and_rgba_sizer(wxWindow *parent, int id, const wxColour &color)
 {
     auto icon_sizer = new wxBoxSizer(wxHORIZONTAL);
-    wxButton *icon       = new wxButton(parent, wxID_ANY, {}, wxDefaultPosition, ICON_SIZE, wxBORDER_NONE | wxBU_AUTODRAW);
-    icon->SetBitmap(*get_extruder_color_icon(color.GetAsString(wxC2S_HTML_SYNTAX).ToStdString(), std::to_string(id + 1), FromDIP(16), FromDIP(16)));
+    // A colour swatch is a display tile, built like the two previews in the constructor:
+    // padding, then minimum size, then the bitmap last (see the note there).
+    Button *icon = new Button(parent, wxEmptyString, wxEmptyString, wxBORDER_NONE, 0);
+    icon->SetPaddingSize(wxSize(0, 0));
+    icon->SetMinSize(ICON_SIZE);
+    icon->SetCornerRadius(0);
+    icon->SetBackgroundColorNormal(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     icon->SetCanFocus(false);
+    icon->SetIconBitmap(*get_extruder_color_icon(color.GetAsString(wxC2S_HTML_SYNTAX).ToStdString(), std::to_string(id + 1), FromDIP(16), FromDIP(16)));
     m_extruder_icon_list.emplace_back(icon);
     icon_sizer->Add(icon, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0); // wxALIGN_CENTER_VERTICAL | wxTOP | wxBOTTOM
     //icon_sizer->AddSpacer(FromDIP(5));
@@ -968,7 +988,7 @@ void ObjColorPanel::draw_new_table()
                     break;
                 }
                 auto color = m_cluster_colours[id];
-                m_color_cluster_icon_list[id]->SetBitmap(*get_extruder_color_icon(color.GetAsString(wxC2S_HTML_SYNTAX).ToStdString(), "", FromDIP(16), FromDIP(16)));
+                m_color_cluster_icon_list[id]->SetIconBitmap(*get_extruder_color_icon(color.GetAsString(wxC2S_HTML_SYNTAX).ToStdString(), "", FromDIP(16), FromDIP(16)));
             }
         }
     }
@@ -1195,7 +1215,7 @@ void ObjColorPanel::generate_thumbnail()
                 }
             }
             image = image.Rescale(FromDIP(RIGHT_THUMBNAIL_SIZE_WIDTH), FromDIP(RIGHT_THUMBNAIL_SIZE_WIDTH));
-            m_right_image_button->SetBitmap(image);
+            m_right_image_button->SetIconBitmap(wxBitmap(image));
         }
 
     }
@@ -1282,7 +1302,7 @@ void ObjColorPanel::generate_origin_thumbnail()
                 }
             }
             image = image.Rescale(FromDIP(LEFT_THUMBNAIL_SIZE_WIDTH), FromDIP(LEFT_THUMBNAIL_SIZE_WIDTH));
-            m_left_image_button->SetBitmap(image);
+            m_left_image_button->SetIconBitmap(wxBitmap(image));
         }
     }
 }
@@ -1381,9 +1401,14 @@ wxBoxSizer *ObjColorPanel::create_color_icon_map_rgba_sizer(wxWindow *parent, in
 {
     auto icon_sizer = new wxBoxSizer(wxHORIZONTAL);
     //icon_sizer->AddSpacer(FromDIP(40));
-    wxButton *icon = new wxButton(parent, wxID_ANY, {}, wxDefaultPosition, ICON_SIZE, wxBORDER_NONE | wxBU_AUTODRAW);
-    icon->SetBitmap(*get_extruder_color_icon(color.GetAsString(wxC2S_HTML_SYNTAX).ToStdString(), "", FromDIP(16), FromDIP(16)));
+    // The same display tile as the current-colour swatches (padding, minimum size, bitmap last).
+    Button *icon = new Button(parent, wxEmptyString, wxEmptyString, wxBORDER_NONE, 0);
+    icon->SetPaddingSize(wxSize(0, 0));
+    icon->SetMinSize(ICON_SIZE);
+    icon->SetCornerRadius(0);
+    icon->SetBackgroundColorNormal(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     icon->SetCanFocus(false);
+    icon->SetIconBitmap(*get_extruder_color_icon(color.GetAsString(wxC2S_HTML_SYNTAX).ToStdString(), "", FromDIP(16), FromDIP(16)));
     m_color_cluster_icon_list.emplace_back(icon);
     icon_sizer->Add(icon, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0); // wxALIGN_CENTER_VERTICAL | wxTOP | wxBOTTOM
     icon_sizer->AddSpacer(FromDIP(10));

@@ -271,7 +271,7 @@ public:
     void set_check_dirty_fialment(bool flag) { m_check_dirty_fialment = flag; };
 
 private:
-    wxBoxSizer *create_sizer_thumbnail(wxButton *image_button, bool left);
+    wxBoxSizer *create_sizer_thumbnail(Button *image_button, bool left);
     void        update_when_change_plate(int);
     void        update_when_change_map_mode(int);
     void        update_plate_combox();
@@ -305,8 +305,8 @@ private:
     wxStaticText* m_warning_text{nullptr};
     wxBoxSizer *  m_left_sizer_thumbnail{nullptr};
     wxBoxSizer *  m_right_sizer_thumbnail{nullptr};
-    wxButton *      m_left_image_button = nullptr;
-    wxButton *      m_right_image_button = nullptr;
+    Button *        m_left_image_button = nullptr;
+    Button *        m_right_image_button = nullptr;
     wxBoxSizer *    sizer_basic_right_info = nullptr;
     wxBoxSizer *    sizer_advanced_options_title = nullptr;
     Label *  m_confirm_title                = nullptr;

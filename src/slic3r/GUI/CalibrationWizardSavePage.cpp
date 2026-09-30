@@ -1,6 +1,7 @@
 #include "CalibrationWizardSavePage.hpp"
 #include "I18N.hpp"
 #include "Widgets/Label.hpp"
+#include "Widgets/Button.hpp"
 #include "Widgets/StaticGroup.hpp"
 #include "MsgDialog.hpp"
 #include "DeviceCore/DevNozzleRack.h"
@@ -604,10 +605,15 @@ void CaliPASaveAutoPanel::sync_cali_result_for_multi_extruder(const std::vector<
         }
 
         wxString tray_name = m_obj->GetFilaSystem()->GetTrayNameByTrayId(item.tray_id);
-        wxButton *tray_title = new wxButton(m_multi_extruder_grid_panel, wxID_ANY, {}, wxDefaultPosition, wxSize(FromDIP(20), FromDIP(20)), wxBU_EXACTFIT | wxBU_AUTODRAW | wxBORDER_NONE);
-        tray_title->SetBackgroundColour(*wxWHITE);
-        tray_title->SetBitmap(*get_extruder_color_icon(full_filament_ams_list[item.tray_id].opt_string("filament_colour", 0u), tray_name.ToStdString(), FromDIP(20), FromDIP(20)));
-        tray_title->SetToolTip("");
+        // The tray swatch only shows the tray colour: a kit icon button at the swatch size,
+        // never a Tab stop. It takes no colour of its own, because the plate behind it is the
+        // literal white that the dark-mode pass remaps; the icon button's rest fill follows
+        // that plate in both themes. SetIconButton() takes design pixels and scales them
+        // itself, so it is given 20 and not FromDIP(20).
+        Button *tray_title = new Button(m_multi_extruder_grid_panel, wxEmptyString, wxEmptyString, wxBORDER_NONE, 0);
+        tray_title->SetIconButton(Button::IconShape::Circle, 20);
+        tray_title->SetCanFocus(false);
+        tray_title->SetIconBitmap(*get_extruder_color_icon(full_filament_ams_list[item.tray_id].opt_string("filament_colour", 0u), tray_name.ToStdString(), FromDIP(20), FromDIP(20)));
 
         auto k_value = new GridTextInput(m_multi_extruder_grid_panel, "", "", CALIBRATION_SAVE_NUMBER_INPUT_SIZE, item.tray_id, GridTextInputType::K, item.extruder_id);
         auto n_value = new GridTextInput(m_multi_extruder_grid_panel, "", "", CALIBRATION_SAVE_NUMBER_INPUT_SIZE, item.tray_id, GridTextInputType::N, item.extruder_id);
@@ -723,7 +729,7 @@ void CaliPASaveAutoPanel::sync_cali_result_for_multi_extruder(const std::vector<
                 left_first_add_item = false;
             }
 
-            left_grid_sizer->Add(tray_title, 1, wxEXPAND);
+            left_grid_sizer->Add(tray_title, 0, wxALIGN_CENTER);
 
             if (comboBox_tray_name->IsShown()) {
                 left_grid_sizer->Add(comboBox_tray_name, 1, wxEXPAND);
@@ -745,7 +751,7 @@ void CaliPASaveAutoPanel::sync_cali_result_for_multi_extruder(const std::vector<
                 right_sizer->GetStaticBox()->SetLabel(title_name);
                 right_first_add_item = false;
             }
-            right_grid_sizer->Add(tray_title, 1, wxEXPAND);
+            right_grid_sizer->Add(tray_title, 0, wxALIGN_CENTER);
 
             if (comboBox_tray_name->IsShown()) {
                 right_grid_sizer->Add(comboBox_tray_name, 1, wxEXPAND);
