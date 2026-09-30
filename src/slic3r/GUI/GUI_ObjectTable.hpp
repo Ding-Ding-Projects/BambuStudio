@@ -23,6 +23,7 @@
 #include "OptionsGroup.hpp"
 #include "GUI_Factories.hpp"
 #include "GUI_ObjectTableSettings.hpp"
+#include "Widgets/MD3Grid.hpp"
 #include "Widgets/TextInput.hpp"
 
 class ComboBox;
@@ -101,6 +102,11 @@ public:
     virtual wxGridActivationResult TryActivate(int row, int col, wxGrid* grid, const wxGridActivationSource& actSource) wxOVERRIDE;
     virtual void DoActivate(int row, int col, wxGrid* grid) wxOVERRIDE;
 
+    // The base class reads and sets its control as a wxComboBox, which the kit
+    // ComboBox is not: both go through Combo() instead.
+    virtual void Reset() wxOVERRIDE;
+    virtual wxString GetValue() const wxOVERRIDE;
+
 protected:
     ::ComboBox *Combo() const { return (::ComboBox *)m_control; }
     void OnComboCloseUp(wxCommandEvent& evt);
@@ -149,6 +155,11 @@ public:
 
     virtual wxGridActivationResult TryActivate(int row, int col, wxGrid *grid, const wxGridActivationSource &actSource) wxOVERRIDE;
     virtual void                   DoActivate(int row, int col, wxGrid *grid) wxOVERRIDE;
+
+    // The base class reads and sets its control as a wxComboBox, which the kit
+    // ComboBox is not: both go through Combo() instead.
+    virtual void     Reset() wxOVERRIDE;
+    virtual wxString GetValue() const wxOVERRIDE;
 
 protected:
     ::ComboBox *Combo() const { return (::ComboBox *) m_control; }
@@ -213,7 +224,7 @@ public:
 
 
 //ObjectGrid for the param setting table
-class ObjectGrid : public wxGrid
+class ObjectGrid : public MD3Grid
 {
 public:
     ObjectGrid(wxWindow *parent,
@@ -222,7 +233,7 @@ public:
         const wxSize& size = wxDefaultSize,
         long style = wxWANTS_CHARS,
         const wxString& name = wxASCII_STR(wxGridNameStr))
-        :wxGrid(parent, id, pos, size, style, name)
+        :MD3Grid(parent, id, pos, size, style, name)
     {
     }
 

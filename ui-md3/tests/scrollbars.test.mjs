@@ -108,13 +108,14 @@ test('MD3ScrollBars keeps Windows from drawing a bar and draws the kit strip ins
   assert.match(cpp, /SWP_FRAMECHANGED/, 'showing or hiding a bar recalculates the frame, as a native bar does');
 });
 
-test('MD3ScrolledWindow, the kit ListBox and the MD3 tables route every native scrollbar call to MD3ScrollBars', async () => {
+test('MD3ScrolledWindow, the kit ListBox, the MD3 tables, the HTML window and the grid route every native scrollbar call to MD3ScrollBars', async () => {
   const pairs = [
     ['MD3ScrolledWindow.hpp', 'MD3ScrolledWindow.cpp', 'wxScrolledWindow'],
     ['ListBox.hpp', 'ListBox.cpp', 'wxVListBox'],
     ['MD3DataView.hpp', 'MD3DataView.cpp', 'wxDataViewCtrl'],
     ['MD3DataView.hpp', 'MD3DataView.cpp', 'wxDataViewListCtrl'],
     ['MD3HtmlWindow.hpp', 'MD3HtmlWindow.cpp', 'wxHtmlWindow'],
+    ['MD3Grid.hpp', 'MD3Grid.cpp', 'wxGrid'],
   ];
   for (const [hpp, cpp, base] of pairs) {
     const header = code(await read('Widgets', hpp));
@@ -222,10 +223,10 @@ test('code that sized a scrolled window for the Windows bar sizes it for the kit
 test('the scrollbar classes are built and the layout probe reports whose bars a window shows', async () => {
   const cmake = await readFile(path.join(repoDir, 'src', 'slic3r', 'CMakeLists.txt'), 'utf8');
   for (const file of ['MD3ScrollBars.cpp', 'MD3ScrollBars.hpp', 'MD3ScrolledWindow.cpp', 'MD3ScrolledWindow.hpp', 'MD3DataView.cpp', 'MD3DataView.hpp',
-    'MD3HtmlWindow.cpp', 'MD3HtmlWindow.hpp'])
+    'MD3HtmlWindow.cpp', 'MD3HtmlWindow.hpp', 'MD3Grid.cpp', 'MD3Grid.hpp'])
     assert.ok(cmake.includes(`GUI/Widgets/${file}`), `${file} is part of libslic3r_gui`);
   const probe = await read('LayoutProbe.cpp');
-  for (const kit of ['MD3ScrolledWindow', 'ListBox', 'MD3DataViewCtrl', 'MD3DataViewListCtrl', 'TextAreaEditor', 'MD3HtmlWindow'])
+  for (const kit of ['MD3ScrolledWindow', 'ListBox', 'MD3DataViewCtrl', 'MD3DataViewListCtrl', 'TextAreaEditor', 'MD3HtmlWindow', 'MD3Grid'])
     assert.ok(probe.includes(`dynamic_cast<const ${kit} *>(w)`), `the probe reports the kit bars of ${kit}`);
   assert.ok(probe.includes('<< ",\\"scrollbars\\":" << scrollbars_json(w)'), 'every window record carries its scrollbars');
   for (const field of ['native_v', 'native_h', 'kit_v', 'kit_h'])

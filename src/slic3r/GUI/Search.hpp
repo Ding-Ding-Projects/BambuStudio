@@ -19,6 +19,7 @@
 #include "wxExtensions.hpp"
 #include "GUI_Utils.hpp"
 #include "libslic3r/Preset.hpp"
+#include "Widgets/MD3ScrolledWindow.hpp"
 #include "Widgets/ScrolledWindow.hpp"
 #include "Widgets/TextInput.hpp"
 #include "Widgets/PopupWindow.hpp"
@@ -262,7 +263,7 @@ public:
     Preset::Type     search_type = Preset::TYPE_INVALID;
 
     wxDataViewCtrl * search_list{nullptr};
-    ScrolledWindow * m_scrolledWindow{nullptr};
+    MD3ScrolledWindow *m_scrolledWindow{nullptr};
     SearchListModel *search_list_model{nullptr};
     wxCheckBox *     check_category{nullptr};
     // Optional ".*" regex toggle for the option search (see OptionsSearcher).
@@ -353,7 +354,7 @@ public:
     const int POPUP_WIDTH = 41;
     const int POPUP_HEIGHT = 45;
 
-    ScrolledWindow* m_scrolledWindow{ nullptr };
+    MD3ScrolledWindow* m_scrolledWindow{ nullptr };
 
     wxColour m_text_color;
     wxColour m_bg_color;
