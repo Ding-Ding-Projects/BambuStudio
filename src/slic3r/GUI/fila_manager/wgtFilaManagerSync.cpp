@@ -145,7 +145,10 @@ void wgtFilaManagerSync::check_and_register_new_rfid_spools(MachineObject* obj)
             BBL::AmsSyncParams params;
             params.devId = obj->get_dev_id();
             params.items.push_back(std::move(sync_item));
-            m_pending_badges[obj->get_dev_id() + ":" + ams_id_key + ":" + slot_id_key] = uuid;
+            // The spool is registered with the Ink Manager either way. The badge only exists for a
+            // person who has not turned it off with "Don't show again" on the new-ink prompt.
+            if (!wxGetApp().is_new_filament_prompt_hidden())
+                m_pending_badges[obj->get_dev_id() + ":" + ams_id_key + ":" + slot_id_key] = uuid;
 
             wgtFilaManagerCloudClient client;
             client.sync_ams(std::move(params),
@@ -168,6 +171,11 @@ void wgtFilaManagerSync::check_and_register_new_rfid_spools(MachineObject* obj)
 
 void wgtFilaManagerSync::drain_filament_hints(const std::string& dev_id)
 {
+    // "Don't show again" on the new-ink prompt: show nothing. Any record that is still pending
+    // for another printer stays recorded and simply goes unshown.
+    if (wxGetApp().is_new_filament_prompt_hidden())
+        return;
+
     const std::string prefix = dev_id + ":";
     for (const auto& [key, uuid] : m_pending_badges) {
         if (key.rfind(prefix, 0) != 0) continue;

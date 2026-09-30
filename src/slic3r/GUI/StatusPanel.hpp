@@ -832,6 +832,7 @@ protected:
     void on_new_official_filament_hint(wxCommandEvent &event);
     void show_new_official_filament_dlg(const std::string& dev_id, const std::string& ams_id, const std::string& slot_id);
     void dismiss_filament_hint_ui(const std::string& dev_id, const std::string& ams_id, const std::string& slot_id);
+    void dismiss_all_filament_hint_ui();
     void on_ext_spool_edit(wxCommandEvent &event);
     void open_rfid_view(int ams_id, int slot_id,
                         const std::string& setting_id, int ctype,

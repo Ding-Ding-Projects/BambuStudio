@@ -4290,6 +4290,11 @@ bool GUI_App::on_init_inner()
 
 void GUI_App::notify_new_rfid_filament(const std::string& ams_id, const std::string& slot_id)
 {
+    // This is the one place a pending badge becomes visible, on the native slot and on the Web
+    // page alike. "Don't show again" on the new-ink prompt turns it off for both.
+    if (is_new_filament_prompt_hidden())
+        return;
+
     // The Web AMS panel tracks the hint on its own, so record it before the
     // classic monitor check: the Web page may be up while the monitor is not.
     DevicePageAmsControlWebVM::NotifyNewRfidFilament(ams_id, slot_id);

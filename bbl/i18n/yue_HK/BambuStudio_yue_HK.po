@@ -37493,3 +37493,13 @@ msgstr "墨水機-%s"
 #. review-status: agent-drafted
 msgid "AMS 2 Pro/AMS HT"
 msgstr "墨水機 2 Pro/HT"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "- Sync nozzle and AMS information before slicing"
+msgstr "- 切片前同步噴嘴同墨水機資訊"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "- New filament badge and prompt"
+msgstr "- 新墨水角標同提示"

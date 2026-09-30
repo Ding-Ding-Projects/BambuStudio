@@ -314,6 +314,9 @@ public:
     std::string GetSelectedLinkSpoolId() const { return m_selected_link_spool_id; }
     int GetHitSpoolId() const          { return m_hit_spool_id; }
     int GetSelectedCandidateId() const { return m_selected_candidate_id; }
+    // True when "Don't show again" was ticked before the dialog closed, by either button or by
+    // the window's close button. The caller remembers it and stops offering the prompt.
+    bool GetDontShowAgain() const { return m_chk_dont_show && m_chk_dont_show->GetValue(); }
 
     void on_dpi_changed(const wxRect&) override {
         m_btn_confirm->SetMinSize(AMS_MATERIALS_SETTING_BUTTON_SIZE);
@@ -342,6 +345,7 @@ private:
     wxStaticText*   m_match_label{ nullptr };
     Button*   m_btn_record_new{ nullptr };
     Button*   m_btn_confirm{ nullptr };
+    ::CheckBox* m_chk_dont_show{ nullptr };
 
     ::ComboBox*                m_combo_link{ nullptr };
     wxSizer*                   m_combo_row{ nullptr };
