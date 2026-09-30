@@ -79,6 +79,9 @@ wxBitmap blend_copy_bitmaps(const wxImage &from, const wxImage &to, double t, do
 
 // The values are catalogue message ids; the firmware page translates them where it builds a name.
 static const std::unordered_map<wxString, wxString> ACCESSORY_DISPLAY_STR = {
+    // Module names "ams/<n>" and "ams_f1/<n>" reach the firmware page as AMS and AMS_F1.
+    {"AMS", L("AMS")},
+    {"AMS_F1", L("AMS Lite")},
     {"N3F", L("AMS 2 Pro")},
     {"N3S", L("AMS HT")},
     {"O2L_PC", L("Air Pump")},
@@ -109,7 +112,8 @@ static wxString reported_product_name_text(const wxString &product_name)
     wxString key = product_name;
     key.Trim().Trim(false).MakeUpper();
     const auto it = known.find(key);
-    return it == known.end() ? product_name : _L(it->second);
+    // A name this application does not know still reads in the product wording.
+    return it == known.end() ? I18N::vocabulary(product_name) : _L(it->second);
 }
 
 enum FIRMWARE_STASUS

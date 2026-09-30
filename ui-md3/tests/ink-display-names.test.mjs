@@ -68,6 +68,14 @@ test('GetDisplayName translates the name when it is built, never at static initi
   const source = read(...gui('DeviceCore/DevFilaSystem.cpp'));
   const fn = block(source, /wxString DevAms::GetDisplayName\(/, /\n\}\n/, 'GetDisplayName');
   assert.match(fn, /_CTX\(\s*names->narrow\s*,\s*"NarrowBlock"\s*\)/, 'the narrow form uses the NarrowBlock context');
+  assert.match(fn, /if \(narrow\)\s*ams_display_format\.Replace\("Ink Dispenser", "Ink"\);/,
+    'a language without the short wording still gets the short form');
+  // L_CONTEXT drops its context at run time; only the extraction sees it. Every entry must carry the
+  // context the lookup asks for, or the catalogues and the lookup stop matching.
+  const table = block(source, /s_ams_display_formats\s*=\s*\{/, /\n\};/, 's_ams_display_formats');
+  const fallback = source.match(/s_ams_default_display_format\s*=\s*[^;]*;/)[0];
+  assert.equal((table + fallback).match(/L_CONTEXT\("[^"]+",\s*"NarrowBlock"\)/g)?.length, 5, 'four table entries and the fallback use NarrowBlock');
+  assert.equal((table + fallback).match(/L_CONTEXT\(/g)?.length, 5, 'no entry uses another context');
   assert.match(fn, /_L\(\s*names->full\s*\)/, 'the wide form is translated');
   assert.match(fn, /wxString::Format\(\s*ams_display_format\s*,\s*loc\s*\)/);
   const header = read(...gui('DeviceCore/DevFilaSystem.h'));
@@ -105,7 +113,8 @@ test('the firmware page translates every dispenser name it builds', () => {
   const table = block(source, /ACCESSORY_DISPLAY_STR\s*=\s*\{/, /\n\};/, 'ACCESSORY_DISPLAY_STR');
   assert.ok(table.includes('{"N3F", L("AMS 2 Pro")}'));
   assert.ok(table.includes('{"N3S", L("AMS HT")}'));
-  assert.deepEqual(rawDisplayLiterals(table), [], 'no dispenser name in the accessory table is a raw literal');
+  // The keys are module names the printer uses ("AMS", "N3F"); only the values are shown.
+  assert.deepEqual(rawDisplayLiterals(table.replace(/\{"[^"]*",/g, '{')), [], 'no dispenser name in the accessory table is a raw literal');
   assert.match(source, /result\s*=\s*_L\(str_it->second\)/, 'the table value is translated where the name is built');
   assert.match(source, /ams_device_name\s*=\s*_L\("AMS-%s"\)/);
   assert.match(source, /name_text\s*=\s*_L\("AMS Lite"\)/);
@@ -114,7 +123,11 @@ test('the firmware page translates every dispenser name it builds', () => {
   const helper = block(source, /static wxString reported_product_name_text\(/, /\n\}\n/, 'reported_product_name_text');
   for (const pair of helper.matchAll(/\{"([^"]+)",\s*([^}]*)\}/g))
     assert.match(pair[2], /^L\("[^"]+"\)$/, `the reported name ${pair[1]} maps to a marked message id`);
-  assert.match(helper, /return it == known\.end\(\) \? product_name : _L\(it->second\);/, 'an unknown name is shown unchanged');
+  assert.match(helper, /return it == known\.end\(\) \? I18N::vocabulary\(product_name\) : _L\(it->second\);/,
+    'an unknown name keeps its words but reads in the product wording');
+  // The module names ams/<n> and ams_f1/<n> reach the table as AMS and AMS_F1 when no product name is reported.
+  assert.ok(table.includes('{"AMS", L("AMS")}'), 'the plain dispenser module has a display name');
+  assert.ok(table.includes('{"AMS_F1", L("AMS Lite")}'), 'the Lite module has a display name');
 });
 
 test('the drying limits name each dispenser through the catalogue', () => {
@@ -128,7 +141,8 @@ test('the drying limits name each dispenser through the catalogue', () => {
 test('the colour-swatch label is a short context message, not the raw word', () => {
   const source = read(...gui('AMSMaterialsSetting.cpp'));
   assert.doesNotMatch(source, /set_label\(\s*"AMS"\s*\)/, 'the swatch label is no longer a raw AMS');
-  assert.match(source, /set_label\(\s*_CTX\(\s*"AMS"\s*,\s*"ColorSwatch"\s*\)\s*\)/);
+  assert.match(source, /wxString swatch_label = _CTX\("AMS", "ColorSwatch"\);\s*swatch_label\.Replace\("Ink Dispenser", "Ink"\);\s*cp->set_label\(swatch_label\);/,
+    'a language without the short wording still gets a label that fits the disc');
 });
 
 test('the developer switch labels and the flush texts use the catalogue or the product wording', () => {
@@ -215,4 +229,26 @@ test('the catalogues carry every marked dispenser message, and the narrow names 
   }
   assert.ok(english.get(key('ColorSwatch', 'AMS')).length <= 3, 'the colour swatch English label fits a 25 DIP disc');
   assert.ok([...cantonese.get(key('ColorSwatch', 'AMS'))].length <= 2, 'the colour swatch Cantonese label is at most two characters');
+});
+
+test('the device page keys the components ask for exist in both locale files in the ink wording', () => {
+  const locales = ['en.json', 'yue_HK.json'].map((file) => JSON.parse(readRaw(repoDir, ...devicePage(`locales/${file}`))));
+  const components = [
+    'src/features/device-page/ams-control-web/components/SlotCard.tsx',
+    'src/features/device-page/ams-control-web/components/AmsPreviewBar.tsx',
+    'src/features/filament-manager/AddEditDialog.tsx',
+    'src/features/filament-manager/constants.ts',
+  ];
+  // The keys are the English source text, so a key that names the old word is expected; its value is what shows.
+  const asked = new Set(['AMS', 'AMS Lite', 'AMS 2 Pro', 'AMS HT', 'AMS({{n}})', 'AMS {{n}}', 'View Filament', 'New Filament']);
+  for (const file of components) {
+    const text = readRaw(repoDir, ...devicePage(file));
+    for (const m of text.matchAll(/\bt\(\s*'([^']*)'/g))
+      if (/\bAMS\b|[Ff]ilament/.test(m[1])) asked.add(m[1]);
+  }
+  for (const k of asked)
+    for (const [index, locale] of locales.entries()) {
+      assert.equal(typeof locale[k], 'string', `${index ? 'yue_HK' : 'en'} has the key ${k}`);
+      assert.doesNotMatch(locale[k], /\bAMS\b|[Ff]ilament/, `${index ? 'yue_HK' : 'en'} value for ${k} uses the ink wording`);
+    }
 });

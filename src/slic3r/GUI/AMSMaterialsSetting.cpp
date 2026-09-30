@@ -3045,7 +3045,11 @@ void ColorPickerPopup::set_ams_colours(const std::vector<ColorItem>& ams)
         cp->set_selected(false);
         // The disc is about 25 DIP wide, so the full dispenser name would be clipped: the
         // "ColorSwatch" context gives this label a short wording in each catalogue.
-        cp->set_label(_CTX("AMS", "ColorSwatch"));
+        // Languages without the short wording get the message id back, which the product
+        // vocabulary turns into "Ink Dispenser": too wide for the disc, so it is shortened here.
+        wxString swatch_label = _CTX("AMS", "ColorSwatch");
+        swatch_label.Replace("Ink Dispenser", "Ink");
+        cp->set_label(swatch_label);
         cp->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
         m_color_pickers.push_back(cp);
         m_ams_color_pickers.push_back(cp);

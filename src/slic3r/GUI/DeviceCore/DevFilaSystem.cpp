@@ -265,7 +265,12 @@ wxString DevAms::GetDisplayName(bool narrow) const
         assert(0 && __FUNCTION__);
     }
 
-    const wxString ams_display_format = narrow ? _CTX(names->narrow, "NarrowBlock") : _L(names->full);
+    wxString ams_display_format = narrow ? _CTX(names->narrow, "NarrowBlock") : _L(names->full);
+    // Only the English and Cantonese catalogues carry the short wording. In any other language the
+    // lookup returns the message id, which the product vocabulary turns into the full "Ink
+    // Dispenser"; the narrow block keeps the short form whatever the language.
+    if (narrow)
+        ams_display_format.Replace("Ink Dispenser", "Ink");
 
     int num_id;
     try
