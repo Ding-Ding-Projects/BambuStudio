@@ -25,6 +25,7 @@
 #include "MainFrame.hpp"
 #include "MsgDialog.hpp"
 #include "slic3r/GUI/Widgets/Label.hpp"
+#include "slic3r/GUI/Widgets/MD3DialogChrome.hpp"
 #include <boost/dll.hpp>
 
 #include <sstream>
@@ -79,6 +80,8 @@ ZUserLogin::ZUserLogin() : wxDialog((wxWindow *) (wxGetApp().mainframe), wxID_AN
         m_sizer_main->SetSizeHints(this);
         Layout();
         Fit();
+        // The missing plug-in notice wears the kit caption too (last layout act before centring).
+        MD3DialogCaption::Adopt(this, _L("Login"));
         CentreOnParent();
     }
     else {
@@ -105,8 +108,12 @@ ZUserLogin::ZUserLogin() : wxDialog((wxWindow *) (wxGetApp().mainframe), wxID_AN
             wxLogError(_L("Could not init m_browser"));
             return;
         }
+        // Created hidden so a partially loaded page is never visible; ShowBrowser() reveals it.
+        // It sits in a root sizer so the kit caption strip can be placed above it.
         m_browser->Hide();
-        m_browser->SetSize(0, 0);
+        auto *browser_sizer = new wxBoxSizer(wxVERTICAL);
+        browser_sizer->Add(m_browser, 1, wxEXPAND);
+        SetSizer(browser_sizer);
 
         // Log backend information
         // wxLogMessage(wxWebView::GetBackendVersionInfo().ToString());
@@ -133,6 +140,10 @@ ZUserLogin::ZUserLogin() : wxDialog((wxWindow *) (wxGetApp().mainframe), wxID_AN
         // Set a more sensible size for web browsing
         wxSize pSize = FromDIP(wxSize(650, 840));
         SetSize(pSize);
+        // Swap the native title bar for the kit caption strip. The web view keeps the client
+        // area it had; the frame grows by the strip, so the placement below uses the final size.
+        MD3DialogCaption::Adopt(this, _L("Login"));
+        pSize = GetSize();
 
         int screenheight = wxSystemSettings::GetMetric(wxSYS_SCREEN_Y, NULL);
         int screenwidth = wxSystemSettings::GetMetric(wxSYS_SCREEN_X, NULL);

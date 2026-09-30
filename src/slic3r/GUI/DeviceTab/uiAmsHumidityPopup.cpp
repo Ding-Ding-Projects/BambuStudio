@@ -12,6 +12,7 @@
 #include "slic3r/GUI/GUI_App.hpp"
 #include "slic3r/GUI/I18N.hpp"
 #include "slic3r/GUI/Widgets/StateColor.hpp"
+#include "slic3r/GUI/Widgets/MD3DialogChrome.hpp"
 
 
 #include <wx/dcgraph.h>
@@ -31,20 +32,10 @@ void uiAmsPercentHumidityDryPopup::Create()
     idle_img = ScalableBitmap(this, "ams_drying", 16);
     drying_img = ScalableBitmap(this, "dev_ams_dry_ctr_heating_icon", 16);
 
-    // background
-    SetBackgroundColour(*wxWHITE);
-
-    // create title sizer
-    wxSizer* title_sizer = new wxBoxSizer(wxHORIZONTAL);
-
-    Label* title = new Label(this, _L("Current AMS humidity"));
-    title->SetForegroundColour(*wxBLACK);
-    title->SetBackgroundColour(*wxWHITE);
-    title->SetFont(Label::Head_18);
-
-    title_sizer->AddStretchSpacer();
-    title_sizer->Add(title, 0);
-    title_sizer->AddStretchSpacer();
+    // background: the kit surface and text roles follow the light and dark themes. The title
+    // is drawn by the kit caption strip that Adopt() adds at the end of this function.
+    const wxColour surface = StateColor::semantic(MD3::Role::SurfaceContainerLowest);
+    SetBackgroundColour(surface);
 
     // create humidity image
     m_humidity_img = new wxStaticBitmap(this, wxID_ANY, wxNullBitmap);
@@ -55,8 +46,8 @@ void uiAmsPercentHumidityDryPopup::Create()
     m_dry_state_img->SetMinSize(wxSize(FromDIP(16), FromDIP(16)));
     m_dry_state_img->SetMaxSize(wxSize(FromDIP(16), FromDIP(16)));
     m_dry_state = new Label(this);
-    m_dry_state->SetForegroundColour(*wxBLACK);
-    m_dry_state->SetBackgroundColour(*wxWHITE);
+    m_dry_state->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+    m_dry_state->SetBackgroundColour(surface);
     m_dry_state->SetFont(Label::Body_14);
     dry_state_sizer->Add(m_dry_state_img, 1, wxALIGN_RIGHT);
     dry_state_sizer->Add(m_dry_state, 1, wxALIGN_LEFT);
@@ -80,7 +71,6 @@ void uiAmsPercentHumidityDryPopup::Create()
     // complete main sizer
     m_sizer = new wxBoxSizer(wxVERTICAL);
     m_sizer->AddSpacer(FromDIP(10));
-    m_sizer->Add(title_sizer, 1, wxEXPAND | wxHORIZONTAL);
     m_sizer->Add(m_humidity_img, 1, wxALIGN_CENTER_HORIZONTAL, 0);
     m_sizer->AddSpacer(FromDIP(10));
     m_sizer->Add(dry_state_sizer, 1 ,wxEXPAND | wxHORIZONTAL);
@@ -88,12 +78,16 @@ void uiAmsPercentHumidityDryPopup::Create()
     m_sizer->AddSpacer(FromDIP(10));
     SetSizer(m_sizer);
 
-    SetSize(wxSize(FromDIP(400), FromDIP(270)));
-    SetMinSize(wxSize(FromDIP(400), FromDIP(270)));
-    SetMaxSize(wxSize(FromDIP(400), FromDIP(270)));
+    // The popup keeps the 400 x 270 footprint it had with the native frame: the kit caption
+    // strip takes its height out of that and the body gets the rest. The floor sits on the body
+    // sizer rather than on the frame, so the strip that Adopt() adds cannot push the last row
+    // out of a fixed-height window, and Fit() in UpdateContents() keeps the same size.
+    m_sizer->SetMinSize(FromDIP(400), FromDIP(270) - MD3DialogCaption::Height(this));
 
     Fit();
     Layout();
+    // Last layout act: swap the native title bar for the kit caption strip.
+    MD3DialogCaption::Adopt(this, _L("Current AMS humidity"));
     Refresh();
 }
 
