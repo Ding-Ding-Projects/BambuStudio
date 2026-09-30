@@ -58,8 +58,8 @@ bool SyncAmsInfoDialog::Show(bool show)
             // Thumbnail button surfaces track the compare panel (SurfaceContainer)
             // instead of the former hardcoded greys; the thumbnail itself (data
             // imagery) is exempt and unchanged.
-            m_left_image_button->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
-            m_right_image_button->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
+            m_left_image_button->SetBackgroundColorNormal(StateColor::semantic(MD3::Role::SurfaceContainer));
+            m_right_image_button->SetBackgroundColorNormal(StateColor::semantic(MD3::Role::SurfaceContainer));
             init_bitmaps();
         }
         if (m_options_other) { m_options_other->Hide(); }
@@ -144,7 +144,7 @@ void SyncAmsInfoDialog::set_default_normal(const ThumbnailData &data)
         }
         //image.SaveFile("preview-left.png", wxBITMAP_TYPE_PNG);
         image = image.Rescale(FromDIP(LEFT_THUMBNAIL_SIZE_WIDTH), FromDIP(LEFT_THUMBNAIL_SIZE_WIDTH), wxIMAGE_QUALITY_BOX_AVERAGE);
-        m_left_image_button->SetBitmap(image);
+        m_left_image_button->SetIconBitmap(wxBitmap(image));
     }
     if (data.is_valid() && m_right_image_button) {
         wxImage image(data.width, data.height);
@@ -159,7 +159,7 @@ void SyncAmsInfoDialog::set_default_normal(const ThumbnailData &data)
         }
         //image.SaveFile("preview-right.png", wxBITMAP_TYPE_PNG);
         image = image.Rescale(FromDIP(RIGHT_THUMBNAIL_SIZE_WIDTH), FromDIP(RIGHT_THUMBNAIL_SIZE_WIDTH), wxIMAGE_QUALITY_BOX_AVERAGE);
-        m_right_image_button->SetBitmap(image);
+        m_right_image_button->SetIconBitmap(wxBitmap(image));
         auto extruders = wxGetApp().plater()->get_partplate_list().get_plate(m_specify_plate_idx)->get_extruders();
         if (wxGetApp().plater()->get_extruders_colors().size() == extruders.size()) {
             //m_used_colors_tip_text->Hide();
@@ -264,7 +264,7 @@ bool SyncAmsInfoDialog::is_need_show()
     return true;
 }
 
-wxBoxSizer *SyncAmsInfoDialog::create_sizer_thumbnail(wxButton *image_button, bool left)
+wxBoxSizer *SyncAmsInfoDialog::create_sizer_thumbnail(Button *image_button, bool left)
 {
     auto sizer_thumbnail = new wxBoxSizer(wxVERTICAL);
     if (left) {
@@ -496,15 +496,28 @@ void SyncAmsInfoDialog::add_two_image_control()
         m_two_image_panel = new StaticBox(m_two_thumbnail_panel);
         m_two_image_panel->SetBorderWidth(0);
         m_two_image_panel_sizer = new wxBoxSizer(wxHORIZONTAL);
-        m_left_image_button     = new wxButton(m_two_image_panel, wxID_ANY, {}, wxDefaultPosition, wxSize(FromDIP(LEFT_THUMBNAIL_SIZE_WIDTH), FromDIP(LEFT_THUMBNAIL_SIZE_WIDTH)),
-                                           wxBORDER_NONE | wxBU_AUTODRAW);
+        // The two previews are display tiles: flat kit Buttons that only hold a bitmap and
+        // are never a Tab stop. The padding goes first (the default is 10 x 8), then the
+        // minimum size, and the bitmap last through SetIconBitmap(). A plain Button does not
+        // measure itself when it gets an icon, so the tile keeps exactly the size given
+        // here; setting the minimum size after the bitmap would add the icon-to-label gap
+        // to its width. Show() sets the fill again so a theme change is picked up.
+        m_left_image_button     = new Button(m_two_image_panel, wxEmptyString, wxEmptyString, wxBORDER_NONE, 0);
+        m_left_image_button->SetPaddingSize(wxSize(0, 0));
+        m_left_image_button->SetMinSize(wxSize(FromDIP(LEFT_THUMBNAIL_SIZE_WIDTH), FromDIP(LEFT_THUMBNAIL_SIZE_WIDTH)));
+        m_left_image_button->SetCornerRadius(0);
+        m_left_image_button->SetBackgroundColorNormal(StateColor::semantic(MD3::Role::SurfaceContainer));
+        m_left_image_button->SetCanFocus(false);
         m_left_sizer_thumbnail = create_sizer_thumbnail(m_left_image_button, true);
         m_two_image_panel_sizer->Add(m_left_sizer_thumbnail, FromDIP(0), wxALIGN_LEFT | wxEXPAND | wxLEFT | wxTOP | wxBOTTOM, FromDIP(8));
         m_two_image_panel_sizer->AddSpacer(FromDIP(5));
 
-        m_right_image_button = new wxButton(m_two_image_panel, wxID_ANY, {}, wxDefaultPosition,
-                                            wxSize(FromDIP(RIGHT_THUMBNAIL_SIZE_WIDTH), FromDIP(RIGHT_THUMBNAIL_SIZE_WIDTH)),
-                                            wxBORDER_NONE | wxBU_AUTODRAW);
+        m_right_image_button = new Button(m_two_image_panel, wxEmptyString, wxEmptyString, wxBORDER_NONE, 0);
+        m_right_image_button->SetPaddingSize(wxSize(0, 0));
+        m_right_image_button->SetMinSize(wxSize(FromDIP(RIGHT_THUMBNAIL_SIZE_WIDTH), FromDIP(RIGHT_THUMBNAIL_SIZE_WIDTH)));
+        m_right_image_button->SetCornerRadius(0);
+        m_right_image_button->SetBackgroundColorNormal(StateColor::semantic(MD3::Role::SurfaceContainer));
+        m_right_image_button->SetCanFocus(false);
         m_right_sizer_thumbnail = create_sizer_thumbnail(m_right_image_button, false);
         m_two_image_panel_sizer->Add(m_right_sizer_thumbnail, FromDIP(0), wxALIGN_LEFT | wxEXPAND | wxRIGHT | wxTOP | wxBOTTOM, FromDIP(8));
         m_two_image_panel->SetSizer(m_two_image_panel_sizer);
@@ -673,8 +686,10 @@ SyncAmsInfoDialog::SyncAmsInfoDialog(wxWindow *parent, SyncInfo &info) :
 
         wxBoxSizer *loading_Sizer = new wxBoxSizer(wxHORIZONTAL);
         m_gif_ctrl = new wxAnimationCtrl(m_loading_page, wxID_ANY, wxNullAnimation, wxDefaultPosition, wxDefaultSize, wxAC_DEFAULT_STYLE);
-        auto gif_path = Slic3r::var("loading.gif").c_str();
-        if (m_gif_ctrl->LoadFile(gif_path)){
+        // Keep the path string alive: Slic3r::var() returns a temporary, and a pointer
+        // taken from it is dangling as soon as the statement ends.
+        const std::string gif_path = Slic3r::var("loading.gif");
+        if (m_gif_ctrl->LoadFile(from_u8(gif_path))){
             m_gif_ctrl->SetSize(m_gif_ctrl->GetAnimation().GetSize());
             m_gif_ctrl->Play();
 
