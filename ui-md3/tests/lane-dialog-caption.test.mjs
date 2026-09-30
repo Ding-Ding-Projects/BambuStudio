@@ -274,7 +274,6 @@ const ALLOWED_WITHOUT_CAPTION = new Map([
   ['AMSTraySettingBase', 'abstract base: AMSMaterialsSetting, the derived class, adopts in its own constructor'],
   ['AmsControlWebDebugDialog', 'developer-only page of the web AMS view, adopts outside its constructor, in the function that builds it'],
   ['BedShapeDialog', 'its constructor is empty; build_dialog(), which every caller runs before showing it, adopts'],
-  ['CommandPalette', 'borderless (wxBORDER_SIMPLE) quick-open overlay with no title bar, owned by the message boxes and frames lane'],
   ['DPIDialog', 'the DPI-aware base class itself: it draws no chrome and has no constructor of its own'],
   ['DownPluginFrame', 'plug-in download page that nothing constructs, so no person can reach it'],
   ['FilamentPickerDialog', 'borderless popup chooser (wxBORDER_NONE), so there is no native title bar to replace'],
