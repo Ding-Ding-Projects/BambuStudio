@@ -3407,7 +3407,14 @@ ResetWarningsDialog::ResetWarningsDialog(wxWindow *parent) : DPIDialog(parent, w
                                           "- Delete a filament used by a model"));
     det_text->SetForegroundColour(ThemeColor::TextSecondary);
     det_text->SetFont(::Label::Body_13);
-    det_sizer->Add(det_text, 0, wxALL, FromDIP(12));
+    det_sizer->Add(det_text, 0, wxLEFT | wxRIGHT | wxTOP, FromDIP(12));
+    // The two answers that "Don't show again" can remember on the printer prompts. They sit in a
+    // label of their own so the list above keeps its catalogue entry and its translations.
+    auto *det_prompts = new Label(m_details_panel, _L("- Sync nozzle and AMS information before slicing") + "\n" +
+                                                   _L("- New filament badge and prompt"));
+    det_prompts->SetForegroundColour(ThemeColor::TextSecondary);
+    det_prompts->SetFont(::Label::Body_13);
+    det_sizer->Add(det_prompts, 0, wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(12));
     m_details_panel->SetSizer(det_sizer);
     m_details_panel->Hide();
     main_sizer->Add(m_details_panel, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(20));
@@ -3466,6 +3473,8 @@ void PreferencesDialog::on_reset_all_warnings()
     app_config->erase("app", "post_process_script_choice");
     app_config->erase("app", "no_warn_mixed_sublayer_variable_layer");
     app_config->erase("app", "no_warn_delete_used_filament");
+    app_config->erase("app", "sync_ams_info_choice");
+    app_config->erase("app", "hide_new_filament_prompt");
     app_config->set("show_support_recommend_dialog", "true");
     app_config->set("save_project_choise", "");
     if (wxGetApp().plater()) wxGetApp().plater()->reset_post_process_script_choice();

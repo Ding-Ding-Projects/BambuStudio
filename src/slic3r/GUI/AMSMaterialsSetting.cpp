@@ -3195,6 +3195,18 @@ void AMSNewOfficialFilamentDlg::create()
     m_combo_link->Bind(wxEVT_COMMAND_COMBOBOX_SELECTED,
                        &AMSNewOfficialFilamentDlg::on_combo_selected, this);
 
+    // "Don't show again": the kit check box and its label on a row of their own, the way the
+    // message dialogs lay it out, so a long translation cannot push the buttons out of the dialog.
+    m_chk_dont_show = new ::CheckBox(this);
+    auto* dsa_label = new Label(this, _L("Don't show again"));
+    dsa_label->SetFont(::Label::Body_13);
+    dsa_label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+    dsa_label->SetMinSize(wxSize(0, -1));
+    auto* dsa_row = new wxBoxSizer(wxHORIZONTAL);
+    dsa_row->Add(m_chk_dont_show, 0, wxALIGN_CENTER_VERTICAL);
+    dsa_row->Add(dsa_label, 1, wxLEFT | wxALIGN_CENTER_VERTICAL, FromDIP(8));
+    sizer->Add(dsa_row, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(12));
+
     // Bottom buttons: [Add as new filament] (secondary)  [Confirm] (primary)
     auto* btn_sizer = new wxBoxSizer(wxHORIZONTAL);
     btn_sizer->AddStretchSpacer();
@@ -3281,6 +3293,11 @@ void AMSNewOfficialFilamentDlg::SetTrayContext(MachineObject* obj,
     m_obj     = obj;
     m_ams_id  = ams_id;
     m_slot_id = slot_id;
+
+    // The dialog is reused for every badge: each opening starts with the box clear, so a tick
+    // from an earlier opening never decides this one.
+    if (m_chk_dont_show)
+        m_chk_dont_show->SetValue(false);
 
     // Layout (card vs dropdown) and button state are managed by populate_link_combo().
     populate_link_combo();

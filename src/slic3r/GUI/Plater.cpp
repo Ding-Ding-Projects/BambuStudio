@@ -8752,6 +8752,9 @@ public:
     void unbind_canvas_event_handlers();
     void reset_canvas_volumes();
     bool check_ams_status_impl(bool is_slice_all);  // Check whether the printer and ams status are consistent, for grouping algorithm
+    // Set when a remembered "sync" answer has synced the printer and re-posted the slice, so the
+    // slice that comes back through the check does not sync a second time.
+    bool m_auto_sync_ams_pending{false};
     bool get_machine_sync_status(); // check whether the printer is linked and the printer type is same as selected profile
     bool is_extruder_stat_synced(int target_extruder_id = -1); // check whether nozzle staus is synced with printer, extruder = -1 means check both extruder
     Camera& get_current_camera();
@@ -20983,6 +20986,11 @@ void Plater::priv::reset_canvas_volumes()
 
 bool Plater::priv::check_ams_status_impl(bool is_slice_all)
 {
+    // A slice that an automatic sync re-posted lands here once; read the mark and clear it on the
+    // way in, so it can never outlive that one visit.
+    const bool came_back_from_auto_sync = m_auto_sync_ams_pending;
+    m_auto_sync_ams_pending = false;
+
     Slic3r::DeviceManager *dev = Slic3r::GUI::wxGetApp().getDeviceManager();
     if (!dev)
         return true;
@@ -21044,27 +21052,54 @@ bool Plater::priv::check_ams_status_impl(bool is_slice_all)
         }
 
         if (!is_same_as_printer) {
-            struct SyncInfoDialog : MessageDialog
-            {
-                SyncInfoDialog(wxWindow *parent)
-                    : MessageDialog(parent,
-                                    _L("The nozzle type and AMS quantity information has not been synced from the connected printer.\n"
-                                       "After syncing, software can optimize printing time and filament usage when slicing.\n"
-                                       "Would you like to sync now ?"),
-                                    _L("Warning"), 0)
+            // "Don't show again" on this prompt keeps the answer in the app configuration under
+            // sync_ams_info_choice, and the stored answer then stands in for the dialog:
+            //   "later": slice as the project is, without syncing.
+            //   "sync":  run the sync without asking, by the same path as the Sync now button.
+            const std::string remembered_choice = wxGetApp().app_config->get("sync_ams_info_choice");
+
+            // A remembered "sync" that already ran once for this slice and still finds the printer
+            // and the project apart cannot reconcile them: slice as they are instead of syncing
+            // again and again.
+            if (remembered_choice == "later" || (remembered_choice == "sync" && came_back_from_auto_sync))
+                return true;
+
+            bool sync_now = remembered_choice == "sync";
+            if (!sync_now) {
+                struct SyncInfoDialog : MessageDialog
                 {
-                    add_button(wxID_YES, true, _L("Sync now"));
-                    add_button(wxID_NO, true, _L("Later"));
-                }
-            } dlg(q);
-            dlg.Fit();
-            if (dlg.ShowModal() == wxID_YES) {
-                if (GUI::wxGetApp().sidebar().sync_extruder_list() && wxGetApp().check_slice_version_policy()) {
+                    SyncInfoDialog(wxWindow *parent)
+                        : MessageDialog(parent,
+                                        _L("The nozzle type and AMS quantity information has not been synced from the connected printer.\n"
+                                           "After syncing, software can optimize printing time and filament usage when slicing.\n"
+                                           "Would you like to sync now ?"),
+                                        _L("Warning"), 0)
+                    {
+                        add_button(wxID_YES, true, _L("Sync now"));
+                        add_button(wxID_NO, true, _L("Later"));
+                    }
+                } dlg(q);
+                dlg.show_dsa_button();
+                dlg.Fit();
+                sync_now = dlg.ShowModal() == wxID_YES;
+                // Sync now is remembered as "sync"; Later, Escape and the close button as "later".
+                if (dlg.get_checkbox_state())
+                    wxGetApp().app_config->set("sync_ams_info_choice", sync_now ? "sync" : "later");
+            }
+
+            if (sync_now) {
+                const bool synced = GUI::wxGetApp().sidebar().sync_extruder_list();
+                if (synced && wxGetApp().check_slice_version_policy()) {
+                    m_auto_sync_ams_pending = wxGetApp().app_config->get("sync_ams_info_choice") == "sync";
                     if (is_slice_all)
                         wxPostEvent(q, SimpleEvent(EVT_GLTOOLBAR_SLICE_ALL));
                     else
                         wxPostEvent(q, SimpleEvent(EVT_GLTOOLBAR_SLICE_PLATE));
                     wxGetApp().mainframe->m_tabpanel->SetSelection(MainFrame::TabPosition::tpPreview);
+                } else if (!synced && remembered_choice == "sync") {
+                    // The sync reports its own reason when it cannot run (printer offline, nozzle
+                    // types unset). A remembered answer never blocks slicing, so carry on unsynced.
+                    return true;
                 }
                 return false;
             }

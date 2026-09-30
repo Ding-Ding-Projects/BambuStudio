@@ -5961,10 +5961,44 @@ void StatusPanel::dismiss_filament_hint_ui(const std::string& dev_id, const std:
 #endif
 }
 
+void StatusPanel::dismiss_all_filament_hint_ui()
+{
+    if (!obj) return;
+    const std::string dev_id = obj->get_dev_id();
+    auto fila_sys = obj->GetFilaSystem();
+    if (!fila_sys) return;
+
+    // One pass over every tray of every unit on the connected printer: the pending record, the
+    // native slot badge and the Web page badge. The Web panel is refreshed once at the end.
+    for (const auto& ams : fila_sys->GetAmsList()) {
+        if (!ams.second) continue;
+        for (const auto& tray : ams.second->GetTrays()) {
+            if (auto* sync = wxGetApp().fila_manager_sync())
+                sync->dismiss_pending_badge(dev_id, ams.first, tray.first);
+            if (m_ams_control)
+                m_ams_control->dismiss_filament_hint(ams.first, tray.first);
+            DevicePageAmsControlWebVM::DismissFilamentMgrHint(ams.first, tray.first);
+        }
+    }
+#if BBL_ENABLE_AMS_CONTROL_WEB
+    if (m_ams_control_web_panel && m_ams_control_web_panel->IsShown())
+        m_ams_control_web_panel->UpdateByMachine(obj);
+#endif
+}
+
 void StatusPanel::show_new_official_filament_dlg(
     const std::string& dev_id, const std::string& ams_id, const std::string& slot_id)
 {
     int rc = m_new_official_filament_dlg->ShowModal();
+    // "Don't show again" counts however the dialog closed, by either button or by the window's
+    // close button. Remember it, and from then on offer no new-ink badge and no prompt: this
+    // badge and every other one still showing go away now, and GUI_App::notify_new_rfid_filament
+    // keeps new ones from appearing while the setting stands.
+    if (m_new_official_filament_dlg->GetDontShowAgain()) {
+        wxGetApp().app_config->set("hide_new_filament_prompt", "1");
+        dismiss_filament_hint_ui(dev_id, ams_id, slot_id);
+        dismiss_all_filament_hint_ui();
+    }
     if (rc == wxID_OK) {
         dismiss_filament_hint_ui(dev_id, ams_id, slot_id);
         auto choice = m_new_official_filament_dlg->GetChoice();
@@ -6025,6 +6059,13 @@ void StatusPanel::on_new_official_filament_hint(wxCommandEvent &event)
 
 void StatusPanel::open_new_official_filament_hint(const std::string& ams_id, const std::string& slot_id)
 {
+    // The person ticked "Don't show again": the prompt never opens, from the native badge or the
+    // Web page. A badge that is still showing (drawn before the tick) is taken down instead.
+    if (wxGetApp().is_new_filament_prompt_hidden()) {
+        dismiss_filament_hint_ui(obj ? obj->get_dev_id() : std::string(), ams_id, slot_id);
+        return;
+    }
+
     if (!m_new_official_filament_dlg)
         m_new_official_filament_dlg = new AMSNewOfficialFilamentDlg(this);
     m_new_official_filament_dlg->SetTrayContext(obj, ams_id, slot_id);

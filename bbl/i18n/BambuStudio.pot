@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-30 13:09-0400\n"
+"POT-Creation-Date: 2026-09-30 19:40-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -4496,6 +4496,9 @@ msgstr ""
 msgid "Matched filament"
 msgstr ""
 
+msgid "Don't show again"
+msgstr ""
+
 msgid "Add as new filament"
 msgstr ""
 
@@ -7669,9 +7672,6 @@ msgstr ""
 msgid "0"
 msgstr ""
 
-msgid "Don't show again"
-msgstr ""
-
 msgid "Calculating, please wait..."
 msgstr ""
 
@@ -10586,6 +10586,12 @@ msgid ""
 "- Delete a filament used by a model"
 msgstr ""
 
+msgid "- Sync nozzle and AMS information before slicing"
+msgstr ""
+
+msgid "- New filament badge and prompt"
+msgstr ""
+
 msgid "Are you sure you want to reset all preferences? Changes will take effect after restart."
 msgstr ""
 
@@ -13445,6 +13451,9 @@ msgstr ""
 msgid "If you prefer not to participate in the Beta program, you can disable Beta Update prompts at any time in Settings."
 msgstr ""
 
+msgid "AMS Lite"
+msgstr ""
+
 msgid "AMS 2 Pro"
 msgstr ""
 
@@ -13467,9 +13476,6 @@ msgid "Rotary Attachment"
 msgstr ""
 
 msgid "Auto Fire Extinguishing System"
-msgstr ""
-
-msgid "AMS Lite"
 msgstr ""
 
 msgid "Filament Buffer"

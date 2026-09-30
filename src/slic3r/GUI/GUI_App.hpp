@@ -427,6 +427,9 @@ public:
     bool                            is_fila_manager_disabled() const { return m_disable_fila_manager; }
     void notify_new_rfid_filament(const std::string& ams_id, const std::string& slot_id);
     void open_new_official_filament_hint(const std::string& ams_id, const std::string& slot_id);
+    // True once the person ticked "Don't show again" on the new-ink prompt. While it is set no
+    // new-ink badge is created or shown, native or Web, and the prompt never opens.
+    bool is_new_filament_prompt_hidden() const { return app_config && app_config->get("hide_new_filament_prompt") == "1"; }
 #if !BBL_RELEASE_TO_PUBLIC
     void set_fila_debug_sink(std::function<void(const nlohmann::json&)> sink)
     {

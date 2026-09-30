@@ -27551,3 +27551,9 @@ msgstr "Ink Dispenser-%s"
 
 msgid "AMS 2 Pro/AMS HT"
 msgstr "Ink Dispenser 2 Pro/HT"
+
+msgid "- Sync nozzle and AMS information before slicing"
+msgstr "- Sync nozzle and Ink Dispenser information before slicing"
+
+msgid "- New filament badge and prompt"
+msgstr "- New ink badge and prompt"
