@@ -17,10 +17,10 @@ manifest、邊啲會變成用家收到嘅嘢、一個警報點樣分流，同埋
 | Manifest | 套件管理器 | 邊個用佢 | 會唔會去到用家手 |
 |---|---|---|---|
 | `src/slic3r/GUI/DeviceWeb/device_page/package.json` 同 `pnpm-lock.yaml` | pnpm 10.12.1 | CMake target `device_page_build` 用佢自己指定嘅 Node 22.22.2 同 pnpm 行 `CI=1 pnpm install` 同 `pnpm run build`，然後將 `dist/` 抄去 `resources/web/device_page/dist`，Windows app 就係載入呢度。 | 只有頁面 import 嘅套件先會入 bundle（見下面）。 |
-| `src/slic3r/GUI/DeviceWeb/device_page/package-lock.json` | npm | 冇人用。CMake、每個 workflow、每個 script 同頁面嘅 README 全部用 pnpm。上游 Bambu Studio 有呢個檔，所以留住佢，免得每次 merge 上游都撞衝突。 | 唔會 |
+| `src/slic3r/GUI/DeviceWeb/device_page/package-lock.json` | npm | 2026-09-29 已經刪咗（原因見下面「npm lockfile 刪咗」）。從來冇人用佢：CMake、每個 workflow、每個 script 同頁面嘅 README 全部用 pnpm。 | 唔會 |
 | `tests/web-e2e/package.json` 同 `pnpm-lock.yaml` | pnpm | 一套 Playwright 端對端測試，要人手對住 app 行。冇任何 workflow 會行佢。 | 唔會 |
 | `resources/web/guide/swiper/…/package.json`、`resources/web/include/swiper/…/package.json` | 冇 | 隨附嘅 Swiper build 嘅 metadata；冇 lockfile，亦冇嘢會由佢度安裝。 | 隨附嘅檔案原封不動咁出貨。 |
-| `ui-md3/desktop/package.json` | 冇 | 冇 lockfile；GitHub Pages 網站係靜態嘅，冇安裝步驟。 | 唔會 |
+| `ui-md3/desktop/package.json` | npm，冇 lockfile | 佢個 README 講明係舊嘅參考用外殼：開發者可以自己人手行，`devDependencies` 寫住 `electron` ^31.7.6 同 `electron-builder` ^24.13.3。冇任何 workflow 或者 script 會由佢度安裝，佢 build 出嚟嘅嘢亦冇發佈過。GitHub Pages 網站係靜態嘅，冇安裝步驟。 | 唔會 |
 
 `dist/` 冇被追蹤。Windows build and release workflow 每次 push 都會重新 build 個頁面；因為 `CI` 已經設定，
 pnpm 唔肯改 lockfile：build 會一字不差咁安裝 `pnpm-lock.yaml` 寫嘅嘢，而一個同 `package.json`
@@ -37,6 +37,32 @@ pnpm 唔肯改 lockfile：build 會一字不差咁安裝 `pnpm-lock.yaml` 寫嘅
 `scheduler`、`tslib`、`use-callback-ref`、`use-sidecar`、`use-sync-external-store` 同 `zustand`。
 `vite`、`postcss`、`nanoid`、`eslint`、`vitest`、`undici`、`js-yaml` 呢啲 build 同開發工具從來唔會出現喺入面。
 
+## npm lockfile 刪咗
+
+`src/slic3r/GUI/DeviceWeb/device_page/package-lock.json` 喺 2026-09-29 刪咗。嗰陣 repository 97 個警報入面
+有 47 個喺佢身上，而 build 入面冇任何嘢會讀佢：
+
+- `device_page_build` target 嘅輸入列咗 `package.json` 同 `pnpm-lock.yaml`，用 pnpm 安裝。冇任何 workflow
+  或者 script 提過呢個 npm lockfile；`scripts/ci/Test-WindowsRelease.ps1` 會 parse `git ls-files` 喺頁面
+  資料夾搵到嘅所有 JSON 檔，所以而家只係少 parse 一個檔。頁面嘅 README 寫明用 pnpm，`package.json` 亦喺
+  `packageManager` 鎖定咗 pnpm。
+- 唯一另一個提到佢嘅地方係 `docs/reapplication/source-manifest.csv`，記錄嘅係固定 commit 嘅 blob ID，冇
+  script 會讀，所以原封不動。
+
+刪咗佢，merge 上游嘅代價好細。上游 Bambu Studio 喺 2026-04-21（`ef2096efd`）喺 `resources/web/device_page`
+加入呢個檔，2026-04-27（`a765d131d`）改過一次，2026-05-11（`2fc6d4690`）搬到而家呢個路徑。之後佢就再冇
+掂過，反而 `pnpm-lock.yaml` 改咗兩次：`446c3f9ec`（2026-06-21，一次保安升級，冇郁 npm lockfile）同
+`33ccd794f`（2026-08-24）。之後兩次 merge 上游（2026-09-26 嘅 `22151a379` 同 2026-09-27 嘅 `34ae216eb`）
+都冇掂到佢。呢個 fork 嘅版本本身已經同上游差咗 1,477 行新增、867 行刪除（`4112056e0`、`0c38d100f`），
+所以上游一改佢，點都會撞衝突。而家呢種 merge 會停喺 modify/delete 衝突；解決方法係繼續刪走佢：
+
+```bash
+git rm src/slic3r/GUI/DeviceWeb/device_page/package-lock.json
+```
+
+頁面資料夾入面有個 `.gitignore`，唔會俾本機行 `npm install` 又將呢個檔加返入嚟。如果有一日有 build 開始用
+npm 安裝，就要重新諗過呢個決定。
+
 ## Dependency graph 之前停用咗
 
 2026-09-29 呢個 repository 嘅 Insights 頁面顯示「Dependency graph is disabled」，SBOM 匯出
@@ -52,17 +78,21 @@ graph 開返之後見到：
 - **佢個 snapshot 係七個禮拜前嘅。** 每個 manifest 都寫住「Detected automatically on Aug 11, 2026」，
   開返 35 分鐘之後，裝置頁仍然列住 `js-yaml` 4.3.1、`nanoid` 3.3.17、`undici` 7.29.0、`browserslist`
   4.28.6 同 `baseline-browser-mapping` 2.10.43。九月開出嚟嘅每個警報都係對住八月嘅 lockfile，所以修正版
-  入咗嚟之後 #10 同 #17 仲係開住，#2 同 #19 亦冇辦法自動變做 fixed。下次有 push 改到裝置頁嘅 manifest，
-  snapshot 應該就會更新。
-- **新公告照樣陸續嚟。** 當日下晝公佈嘅三份公告喺冇人用嘅 npm lockfile 度，對住 `undici` 8.9.0 開咗
-  #25、#26 同 #27。GHSA-w293-vg96-wgc3 同 GHSA-8436-99hf-9mmv 喺 7.x 嗰條線都係 7.29.1 修正，正正係
-  pnpm 鎖住嗰個版本。#25 俾自動分流 dismiss 咗，#26 同 #27 就 dismiss 做 `not_used`。
+  入咗嚟之後 #10 同 #17 仲係開住，#2 同 #19 亦冇辦法自動變做 fixed。
+- **警報狀態郁咗，套件清單仲未郁。** 23:34 UTC，`84b96e720`（冇改任何 manifest）入咗 `main` 之後幾分鐘，
+  Dependabot 將每個 manifest 重新計過：#2、#8、#10、#16、#17、#19 同 #24 變咗 `fixed`，另外開咗 #34 至
+  #97（見下面）。到 23:46 UTC，SBOM 匯出同 graph 自己逐個 manifest 嘅資料（GraphQL API 嘅
+  `dependencyGraphManifests`）仍然話頁面嘅 `pnpm-lock.yaml` 係 `js-yaml` 4.3.1、`nanoid` 3.3.17 同
+  `undici` 7.29.0，但個檔入面其實係 4.3.2、3.3.18 同 7.29.1。
+- **新公告照樣陸續嚟。** 22:01 至 22:57 UTC 之間，當日下晝公佈嘅九份公告喺 npm lockfile 度，對住
+  `undici` 8.9.0 開咗 #25 至 #33。九份喺 7.x 嗰條線都係 7.29.1 修正，正正係 pnpm 鎖住嗰個版本。#25、#32
+  同 #33 俾自動分流 dismiss 咗，#26 至 #28 dismiss 做 `not_used`，#29 至 #31 就一直開住，直到個檔刪咗。
 - **snapshot 未追上之前，警報清單短或者係空，唔代表 lockfile 乾淨。** 要直接檢查鎖定嘅版本，方法見下面。
 
 ## 點樣分流一個警報
 
-1. **搵出個 manifest 係俾邊個用。** 睇上面個表。喺 `package-lock.json` 嘅警報，講緊嘅係一個冇人會由佢度
-   安裝嘅檔案。
+1. **搵出個 manifest 係俾邊個用。** 睇上面個表。喺 `package-lock.json` 嘅警報，講緊嘅係一個從來冇人由佢度
+   安裝、2026-09-29 已經刪咗嘅檔案。
 2. **問：個套件會唔會出貨？** 用 CMake 嘅方法 build 個頁面，再喺 source map 列出啲套件：
 
    ```bash
@@ -102,7 +132,7 @@ graph 開返之後見到：
 當時有 17 個未處理警報（9 個高、8 個中），涉及四個 manifest 入面嘅七個套件。冇一個被標記嘅套件會出貨，
 亦冇一段有漏洞嘅 code 可以由 build 機以外嘅地方行到。十七個而家全部 dismiss 咗：13 個係 `not_used`，
 4 個係 `inaccurate`，因為 `main` 上面嘅 lockfile 已經冇咗被標記嗰個版本，而 graph 從來冇重新掃描過。graph 開返之後
-先嚟嘅兩個警報（#26 同 #27，見上面）都一樣 dismiss 做 `not_used`。
+先嚟嘅兩個警報（#26 同 #27，見上面）都一樣 dismiss 做 `not_used`；之後再嚟嘅就列喺下面。
 
 | 警報 | 套件 | Manifest | 鎖定版本 | 決定 |
 |---|---|---|---|---|
@@ -146,19 +176,46 @@ graph 開返之後見到：
   頁面嘅 pnpm lockfile 解析到嘅版本唔喺嗰啲範圍入面。
 
 改完之後，頁面 `pnpm-lock.yaml` 入面仲跌落警報清單任何一份公告範圍嘅鎖定版本，就只有 `vitest` 同
-`@vitest/mocker` 3.2.7。`tests/web-e2e/pnpm-lock.yaml` 入面仲有 `js-yaml` 4.3.0（警報 #20）同
-`brace-expansion` 5.0.8（喺 GHSA-rgw5-rvv9-x895 範圍入面，但係嗰度從來冇開過警報）；兩個都係人手先行嘅
-測試架嘅開發工具。
+`@vitest/mocker` 3.2.7，同埋 `postcss` 8.5.19（#58，見下面）。`tests/web-e2e/pnpm-lock.yaml` 入面仲有
+`js-yaml` 4.3.0（警報 #20 同 #60）同 `brace-expansion` 5.0.8（警報 #59）；兩個都係人手先行嘅測試架嘅開發工具。
+
+### 2026-09-29 夜晚開出嚟嘅警報
+
+graph 開返之後再多咗七十個警報：#28 至 #33 嚟自當日下晝公佈嘅公告，#34 至 #97 就係 23:34 UTC Dependabot
+將每個 manifest 重新計過嗰陣開嘅。下面每個鎖定版本都喺 `main` 上面嘅檔案度核對過。
+
+| 警報 | 套件 | Manifest | 鎖定版本 | 決定 |
+|---|---|---|---|---|
+| #28 至 #57（30 個） | `undici`（20 個）、`brace-expansion`（5 個）、`postcss`（3 個）、`js-yaml`、`nanoid` | 裝置頁 `package-lock.json` | `undici` 7.28.0 同 8.9.0、`brace-expansion` 1.1.14、2.1.0 同 5.0.7、`postcss` 8.5.10、`js-yaml` 4.3.0、`nanoid` 3.3.11 | #28 dismiss 做 `not_used`；#32、#33、#37 至 #40、#49、#54 同 #55 俾自動 dismiss；其餘 20 個直到個檔刪咗都仲開住。 |
+| #58 | `postcss`（GHSA-fxqj-rqcc-2cmp） | 裝置頁 `pnpm-lock.yaml` | 8.5.19 | 準確，dismiss 做 `not_used`。 |
+| #59 | `brace-expansion`（GHSA-rgw5-rvv9-x895） | `tests/web-e2e/pnpm-lock.yaml` | 5.0.8 | 自動 dismiss。 |
+| #60 | `js-yaml`（GHSA-5p4m-2wfm-xmqj） | `tests/web-e2e/pnpm-lock.yaml` | 4.3.0 | dismiss 做 `not_used`，原因同 #20 一樣。 |
+| #61 至 #97（37 個） | `electron` | `ui-md3/desktop/package.json` | `^31.7.6`，冇 lockfile | #76 俾自動 dismiss；其餘 36 個 dismiss 做 `not_used`。 |
+
+- **`postcss`**：唯一 import 佢嘅係 `vite`，build 嗰陣用佢處理頁面自己嘅三個 CSS 檔（`src/styles.css`，同
+  filament manager 同 AMS control 嘅樣式表）。公告要嘅係攻擊者控制嘅 CSS，入面嘅 `sourceMappingURL` 註解
+  指住一個要讀嘅檔。build 出嚟嘅頁面入面冇 `postcss`。警報顯示 runtime scope：頁面喺 `dependencies` 列咗
+  `@tailwindcss/vite`，而呢個 plugin 將 `vite` 當做 peer dependency，`postcss` 就係跟 `vite` 一齊嚟。
+- **`tests/web-e2e` 嘅 `js-yaml`**：GHSA-5p4m-2wfm-xmqj 係 `load()` 入面處理 `!!omap` 太慢。同 #20 一樣，
+  唯一 import 佢嘅係 `@eslint/eslintrc`，淨係讀舊式 `.eslintrc.yml` 先會 parse YAML，而測試架用嘅係 flat
+  `eslint.config.js`。
+- **`electron`**：`ui-md3/desktop` 係佢個 README 講嗰個舊參考外殼。冇任何 workflow 或者 script 會安裝或者
+  build 佢，佢整出嚟嘅嘢亦冇發佈過。因為冇 lockfile，Dependabot 會用 `^31.7.6` 容許嘅最低版本嚟對，漏洞範圍
+  包到 31.7.6 嘅 37 份公告都開咗警報。個外殼載入嘅係 `ui-md3` 嘅本機副本，開咗 context isolation、關咗
+  Node integration，網頁連結會喺系統瀏覽器度開。
 
 ## 失敗情況同限制
 
 - **lockfile 同 `pnpm.overrides` 唔一致，Windows build 會失敗。** 改完 override 一定要用 pnpm 10.12.1
   重新生成 `pnpm-lock.yaml`，push 之前證明 `CI=1 pnpm install` 過到。
-- **graph 未重新讀 lockfile 之前，Dependabot 會追唔上。** 處理 `pnpm-lock.yaml` 嘅警報之前，
-  先睇清楚 lockfile 真正寫住邊個版本。
-- **npm lockfile 唔會為保安而維護。** 佢嘅警報會 dismiss 做 `not_used`。graph 開返之後，裏面套件每有一份
-  新公告就會多一個警報（2026-09-29 嘅 #25 至 #27）；將呢個檔喺 repository 度刪走就可以停咗佢。如果有一日
-  有 build 開始用 npm 安裝，呢個決定就要重新諗過。
+- **graph 未重新讀 lockfile 之前，Dependabot 會追唔上**，警報狀態同 graph 嘅套件清單亦可以唔一致（見上面）。
+  處理 `pnpm-lock.yaml` 嘅警報之前，先睇清楚 lockfile 真正寫住邊個版本。
+- **冇人用嘅 npm lockfile 一直開警報，直到佢刪咗為止。** graph 開返之後，裏面套件每有一份新公告就會多一個
+  警報（2026-09-29 嘅 #25 至 #57），所以將佢刪咗（見上面「npm lockfile 刪咗」）。上游 merge 如果改到佢，
+  會停喺 modify/delete 衝突；繼續刪走佢就得。如果有一日有 build 開始用 npm 安裝，就要重新諗過呢個決定。
+- **冇 lockfile 嘅 manifest，會用佢範圍容許嘅最低版本嚟對。** `ui-md3/desktop/package.json` 寫住
+  `electron` `^31.7.6`，2026-09-29 開咗 37 個警報。冇嘢會 build 或者發佈呢個外殼，所以全部 dismiss 做
+  `not_used`；刪走個外殼或者升高個範圍，就唔會再有新警報。
 - **路徑太深會搞壞本機檢查。** 喺 Windows，pnpm 嘅 patch 步驟會轉入打咗 patch 嘅 `minimatch` 資料夾，
   Node 又會讀 `vite` 嘅 `package.json` imports；checkout 深過大約 180 個字元，兩個都會以
   `ENAMETOOLONG` 或者 `ERR_PACKAGE_IMPORT_NOT_DEFINED` 失敗。好似 build 咁，喺 repository 自己嘅
@@ -176,7 +233,8 @@ graph 開返之後見到：
 
 新 lockfile 項目嘅 integrity 已經同 npm registry 公佈嘅數值對過。冇一個被標記嘅套件會去到 Windows app 或者
 GitHub Pages 網站，所以冇任何已安裝嘅版本受影響。保持保安鎖版本最新，主要係為咗 build 機，同埋喺自己部機
-行開發工具嘅人。
+行開發工具嘅人。舊嘅桌面外殼係唯一一個會有被標記套件以應用程式身份行嘅地方：人手安裝佢會攞到一個 `electron`
+31 版本，嗰 37 份公告全部包到。刪走 npm lockfile 冇改到任何會 build 或者出貨嘅嘢。
 
 ## 驗證
 
@@ -199,3 +257,8 @@ run 36611172274（`75fc64c69`）同 run 36614198573（`46792f02a`）嘅 `device_
 同未郁任何鎖版本之前嘅本機 build 一模一樣，即係用家安裝到嘅頁面完全冇變過。喺隱藏桌面上，未改動過嘅
 `md3-v171` 套件亦通過咗 `md3-v169` 記錄過嘅發佈檢查，結果一樣
 （[擷圖來源紀錄](../../screenshots/md3-everything/README.md#release-md3-v171-checks-the-dependency-pin-release)）。
+
+刪走 npm lockfile 之前，喺每個追蹤緊嘅檔案（包括 `.github/` 同 `scripts/`）搵過，冇任何 build 步驟、workflow
+或者 script 提到佢。搵到嘅只有呢篇文章、佢嘅廣東話翻譯、`ROADMAP.md`、`HANDOFF.md`、歷史嘅 reapplication
+清單，同兩個會對中任何 npm lockfile 嘅 pattern（喺 `scripts/ci/Measure-LineCount.ps1` 同舊外殼自己嘅
+`.gitignore`）。C++ app 冇喺本機 build；Windows build and release workflow 會喺 `main` 上面 build 呢個改動。

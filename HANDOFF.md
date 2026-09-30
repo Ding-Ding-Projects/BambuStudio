@@ -367,9 +367,27 @@ the tracking issue is [#47](https://github.com/Ding-Ding-Projects/BambuStudio/is
   - A local pnpm check in a path deeper than about 180 characters fails on Windows (`ENAMETOOLONG` in the
     patched `minimatch` step, then `ERR_PACKAGE_IMPORT_NOT_DEFINED` from `vite`); run it inside the
     repository's own `device_page` folder, as the build does.
-- Open: the graph's refresh of the device page manifests (next manifest-changing push), whether to
-  remove the unused npm `package-lock.json` (it keeps raising alerts now that the graph is on), and
-  vitest 4.x (the only way to clear GHSA-82fw-gwwq-j7x9 at the source).
+- The unused npm `package-lock.json` was removed from the device page (follow-up, 2026-09-29). Nothing in
+  the build read it: `device_page_build` lists `package.json` and `pnpm-lock.yaml` and installs with pnpm,
+  no workflow or script names it, and the only other mention is the historical
+  `docs/reapplication/source-manifest.csv`. It carried 47 of the 97 alerts. Upstream changed it three times
+  (2026-04-21, 2026-04-27 and the move on 2026-05-11) and never since, and this fork's copy already differed
+  from upstream's by 2,344 lines, so an upstream merge that edits it stops with a modify/delete conflict:
+  keep the file deleted (`git rm`). A new `src/slic3r/GUI/DeviceWeb/device_page/.gitignore` keeps a local
+  `npm install` from adding it back.
+- A second wave of 70 alerts arrived that evening: #28 to #33 from advisories published in the afternoon,
+  and #34 to #97 when Dependabot re-evaluated every manifest at 23:34 UTC (#2, #8, #10, #16, #17, #19 and
+  #24 turned `fixed` at the same time). #58 (`postcss` 8.5.19 in the page's `pnpm-lock.yaml`, run only by
+  `vite` on the page's own CSS), #60 (`js-yaml` 4.3.0 in `tests/web-e2e`) and 36 alerts on `electron`
+  ^31.7.6 in `ui-md3/desktop/package.json` (the legacy reference shell: no lockfile, nothing builds or
+  publishes it) are dismissed as `not_used`, each with its reason on the alert. Twenty were still open on
+  the npm lockfile when it was deleted. At 23:46 UTC the SBOM export and the GraphQL manifest view still
+  listed `js-yaml` 4.3.1, `nanoid` 3.3.17 and `undici` 7.29.0 for the page's `pnpm-lock.yaml`.
+- Open: whether the graph's package list catches up with the page's `pnpm-lock.yaml` now that the npm
+  lockfile is gone (it still showed the August versions at 23:46 UTC), what GitHub does with the 20 alerts
+  still open on the deleted file, whether to keep the legacy reference shell `ui-md3/desktop` (its
+  `electron` range raises new alerts), and vitest 4.x (the only way to clear GHSA-82fw-gwwq-j7x9 at the
+  source).
 
 ## Faster hosted Windows builds (2026-09-29)
 

@@ -1,0 +1,3 @@
+# This page installs with pnpm from pnpm-lock.yaml. An npm lockfile here would be unused
+# (see docs/features/releases/dependency-security-alerts.md).
+package-lock.json
