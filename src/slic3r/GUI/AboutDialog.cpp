@@ -13,6 +13,7 @@
 #include "Widgets/MD3DialogChrome.hpp"
 #include "Widgets/StateColor.hpp"
 #include "Widgets/StaticBox.hpp"
+#include "Widgets/MD3HtmlWindow.hpp"
 #include "ChangelogDialog.hpp"
 
 #include <wx/clipbrd.h>
@@ -76,7 +77,7 @@ CopyrightsDialog::CopyrightsDialog()
 
     fill_entries();
 
-    m_html = new wxHtmlWindow(this, wxID_ANY, wxDefaultPosition,
+    m_html = new MD3HtmlWindow(this, wxID_ANY, wxDefaultPosition,
                               wxSize(40 * em_unit(), 20 * em_unit()), wxHW_SCROLLBAR_AUTO);
     m_html->SetMinSize(wxSize(FromDIP(870),FromDIP(520)));
     m_html->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
@@ -435,7 +436,7 @@ AboutDialog::AboutDialog()
 
     copyright_ver_sizer->Add(html_text, 0, wxALL , 0);
 
-    m_html = new wxHtmlWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHW_SCROLLBAR_NEVER /*NEVER*/);
+    m_html = new MD3HtmlWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHW_SCROLLBAR_NEVER /*NEVER*/);
       {
           wxFont font = get_default_font(this);
           const int fs = font.GetPointSize()-1;

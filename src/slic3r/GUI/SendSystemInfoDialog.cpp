@@ -2,6 +2,7 @@
 #include "Widgets/Button.hpp"
 #include "Widgets/TextArea.hpp"
 #include "Widgets/MD3DialogChrome.hpp"
+#include "Widgets/MD3HtmlWindow.hpp"
 
 #if __APPLE__
 #import <IOKit/IOKitLib.h>
@@ -613,7 +614,7 @@ SendSystemInfoDialog::SendSystemInfoDialog(wxWindow* parent)
 
      wxString text2 = GUI::format_wxstr(wxEmptyString, std::string("<i>") + filename + "</i>");
 
-    auto* html_window = new wxHtmlWindow(this, wxID_ANY, wxDefaultPosition, wxSize(70*em, 34*em), wxHW_SCROLLBAR_NEVER);
+    auto* html_window = new MD3HtmlWindow(this, wxID_ANY, wxDefaultPosition, wxSize(70*em, 34*em), wxHW_SCROLLBAR_NEVER);
     wxString html = GUI::format_wxstr(
             "<html><body bgcolor=%1%><font color=%2%>"
             "<table><tr><td>"

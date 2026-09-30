@@ -54,6 +54,7 @@
 #include "MainFrame.hpp"
 #include "Widgets/MD3DialogChrome.hpp"
 #include "Widgets/Label.hpp"
+#include "Widgets/MD3HtmlWindow.hpp"
 
 #if defined(__linux__) && defined(__WXGTK3__)
 #define wxLinux_gtk3 true
@@ -705,7 +706,7 @@ PageMaterials::PageMaterials(ConfigWizard *parent, Materials *materials, wxStrin
 
     append_spacer(VERTICAL_SPACING);
 
-    html_window = new wxHtmlWindow(this, wxID_ANY, wxDefaultPosition,
+    html_window = new MD3HtmlWindow(this, wxID_ANY, wxDefaultPosition,
         wxSize(60 * em, 20 * em), wxHW_SCROLLBAR_AUTO);
     append(html_window, 0, wxEXPAND);
 

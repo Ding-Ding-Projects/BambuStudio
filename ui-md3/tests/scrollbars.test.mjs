@@ -43,6 +43,23 @@ test('no GUI source builds a wxScrolledWindow of its own', async () => {
   assert.deepEqual(offenders, [], 'build an MD3ScrolledWindow, whose bars are the kit scrollbar');
 });
 
+test('no GUI source builds a wxHtmlWindow of its own', async () => {
+  // wxHtmlWindow is a wxScrolledWindow: the HTML bodies of message boxes, the
+  // System Information dialog and the release notes showed the Windows bar.
+  const offenders = [];
+  for (const file of await sources(gui)) {
+    const rel = path.relative(gui, file).replaceAll('\\', '/');
+    if (rel.startsWith('Widgets/MD3HtmlWindow.')) continue;
+    const text = code(await readFile(file, 'utf8'));
+    const hits = text.match(/\bnew\s+wxHtmlWindow\s*\(|\bpublic\s+wxHtmlWindow\b|:\s*wxHtmlWindow\s*\(/g) ?? [];
+    if (hits.length) offenders.push(`${rel} (${hits.length})`);
+  }
+  assert.deepEqual(offenders, [], 'build an MD3HtmlWindow, whose bars are the kit scrollbar');
+  assert.match(code(await read('MsgDialog.cpp')), /wxHtmlWindow\* html = new MD3HtmlWindow\(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHW_SCROLLBAR_AUTO\);/,
+    'the message box body is an MD3HtmlWindow');
+  assert.match(code(await read('SysInfoDialog.cpp')), /m_opengl_info_html = new MD3HtmlWindow\(/, 'so is the OpenGL information in System Information');
+});
+
 test('no GUI source builds a data view table of its own', async () => {
   const offenders = [];
   for (const file of await sources(gui)) {
@@ -97,6 +114,7 @@ test('MD3ScrolledWindow, the kit ListBox and the MD3 tables route every native s
     ['ListBox.hpp', 'ListBox.cpp', 'wxVListBox'],
     ['MD3DataView.hpp', 'MD3DataView.cpp', 'wxDataViewCtrl'],
     ['MD3DataView.hpp', 'MD3DataView.cpp', 'wxDataViewListCtrl'],
+    ['MD3HtmlWindow.hpp', 'MD3HtmlWindow.cpp', 'wxHtmlWindow'],
   ];
   for (const [hpp, cpp, base] of pairs) {
     const header = code(await read('Widgets', hpp));
@@ -122,6 +140,10 @@ test('MD3ScrolledWindow, the kit ListBox and the MD3 tables route every native s
   const scrolled = code(await read('Widgets', 'MD3ScrolledWindow.cpp'));
   assert.doesNotMatch(scrolled, /MD3ScrolledWindow::MD3ScrolledWindow\([^)]*\)\s*:\s*wxScrolledWindow\(/,
     'MD3ScrolledWindow creates its window through Create()');
+  const html = code(await read('Widgets', 'MD3HtmlWindow.cpp'));
+  assert.doesNotMatch(html, /MD3HtmlWindow::MD3HtmlWindow\([^)]*\)\s*:\s*wxHtmlWindow\(/, 'MD3HtmlWindow creates its window through Create()');
+  assert.match(html, /MD3HtmlWindow::MD3HtmlWindow\([^)]*\)\s*\{[\s\S]*?Create\(parent, id, pos, size, style, name\);/,
+    'from its own constructor body');
 });
 
 test('no text control subclass reuses the name of a std::streambuf virtual', async () => {
@@ -199,9 +221,12 @@ test('code that sized a scrolled window for the Windows bar sizes it for the kit
 
 test('the scrollbar classes are built and the layout probe reports whose bars a window shows', async () => {
   const cmake = await readFile(path.join(repoDir, 'src', 'slic3r', 'CMakeLists.txt'), 'utf8');
-  for (const file of ['MD3ScrollBars.cpp', 'MD3ScrollBars.hpp', 'MD3ScrolledWindow.cpp', 'MD3ScrolledWindow.hpp', 'MD3DataView.cpp', 'MD3DataView.hpp'])
+  for (const file of ['MD3ScrollBars.cpp', 'MD3ScrollBars.hpp', 'MD3ScrolledWindow.cpp', 'MD3ScrolledWindow.hpp', 'MD3DataView.cpp', 'MD3DataView.hpp',
+    'MD3HtmlWindow.cpp', 'MD3HtmlWindow.hpp'])
     assert.ok(cmake.includes(`GUI/Widgets/${file}`), `${file} is part of libslic3r_gui`);
   const probe = await read('LayoutProbe.cpp');
+  for (const kit of ['MD3ScrolledWindow', 'ListBox', 'MD3DataViewCtrl', 'MD3DataViewListCtrl', 'TextAreaEditor', 'MD3HtmlWindow'])
+    assert.ok(probe.includes(`dynamic_cast<const ${kit} *>(w)`), `the probe reports the kit bars of ${kit}`);
   assert.ok(probe.includes('<< ",\\"scrollbars\\":" << scrollbars_json(w)'), 'every window record carries its scrollbars');
   for (const field of ['native_v', 'native_h', 'kit_v', 'kit_h'])
     assert.ok(probe.includes(`\\"${field}\\"`), `the scrollbars record names ${field}`);

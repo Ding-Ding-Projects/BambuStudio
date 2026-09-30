@@ -25,6 +25,7 @@
 #include "Widgets/LabeledCheckBox.hpp"
 #include "Widgets/MaterialIcon.hpp"
 #include "Widgets/SpinInput.hpp"
+#include "Widgets/MD3HtmlWindow.hpp"
 #include "libslic3r/libslic3r.h"
 #include "libslic3r/Utils.hpp"
 #include "GUI.hpp"
@@ -405,7 +406,7 @@ static void add_msg_content(wxWindow   *parent,
                             const wxString &link_text = "",
                             std::function<void(const wxString &)> link_callback = nullptr)
 {
-    wxHtmlWindow* html = new wxHtmlWindow(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHW_SCROLLBAR_AUTO);
+    wxHtmlWindow* html = new MD3HtmlWindow(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHW_SCROLLBAR_AUTO);
     html->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
 
     // count lines in the message

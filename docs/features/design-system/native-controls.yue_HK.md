@@ -1,6 +1,6 @@
 ---
 translation-of: native-controls.md
-source-sha256: d497572280e3a5743f42d9a0db7428c9207e8269767a598f5685618030bf1b13
+source-sha256: 82b9e0fabdb43dbc20d1e81a936dc16558893e176ef08e55e126de2af6fcd222
 review-status: agent-drafted
 ---
 
@@ -9,7 +9,7 @@ review-status: agent-drafted
 # 套件上嘅原生控件
 
 有幾個 Windows 原生控件仲喺大家會用到嘅介面度：停用咗嘅掣嘅提示、網頁上面嘅通知列、工作區面板嘅分頁、清單、待辦清單同月曆、
-每個分組框、「打印床形狀」嘅頁選擇器、三個對話框嘅「確定」同「取消」掣，同埋每個會捲動嘅頁面、面板同清單嘅捲動列。佢哋用系統
+每個分組框、「打印床形狀」嘅頁選擇器、三個對話框嘅「確定」同「取消」掣，同埋每個會捲動嘅頁面、面板、清單、表格、多行文字框同 HTML 檢視嘅捲動列。佢哋用系統
 字型畫出 Windows 嘅樣，唔理主題係乜。而家每個都有對應嘅套件控件。
 
 ## 邊個換咗邊個
@@ -25,7 +25,7 @@ review-status: agent-drafted
 | `wxStaticBox`（分組框） | `MD3GroupBox`：Material 外框同標題 | 設定分頁以外嘅選項組、「打印床形狀」對話框、校準精靈頁、「儲存預設」、未儲存變更嘅比較、墨水揀選器嘅預覽 |
 | `wxChoicebook` | 喺 `wxSimplebook` 上面嘅套件 `ComboBox` | 「打印床形狀」對話框嘅形狀 |
 | `CreateButtonSizer()`、`CreateStdDialogButtonSizer()` | 用標準 id 嘅套件掣 | 「打印床形狀」、「系統資訊」、未儲存變更嘅完整比較 |
-| `wxScrolledWindow`、套件 `ListBox`、每個表格（`wxDataViewCtrl`、`wxDataViewListCtrl`）同每個多行文字框嘅 Windows 捲動列 | `MD3ScrolledWindow`、套件 `ListBox`、`MD3DataViewCtrl`、`MD3DataViewListCtrl` 同 `TextAreaEditor`，全部都畫套件捲動列（`MD3ScrollBars`） | 每個會捲動嘅頁面同面板：準備側邊欄、每個設定頁、每個偏好設定頁、「裝置」分頁、指令面板、長嘅訊息框同對話框；套件清單；每個表格：物件清單、專案檔案清單、未儲存變更嘅比較、工作區清單、「設定檔同備份」、「匯出」、「版本記錄」、「通知中心」、打印主機佇列；同埋每個多行文字框：`TextArea`（更新說明、記錄、指令碼、筆記、提示）、設定嘅 G-code 欄位，同正規表示式建立器嘅範例同結果 |
+| `wxScrolledWindow`、套件 `ListBox`、每個表格（`wxDataViewCtrl`、`wxDataViewListCtrl`）、每個多行文字框同每個 HTML 檢視（`wxHtmlWindow`）嘅 Windows 捲動列 | `MD3ScrolledWindow`、套件 `ListBox`、`MD3DataViewCtrl`、`MD3DataViewListCtrl`、`TextAreaEditor` 同 `MD3HtmlWindow`，全部都畫套件捲動列（`MD3ScrollBars`） | 每個會捲動嘅頁面同面板：準備側邊欄、每個設定頁、每個偏好設定頁、「裝置」分頁、指令面板、長嘅訊息框同對話框；套件清單；每個表格：物件清單、專案檔案清單、未儲存變更嘅比較、工作區清單、「設定檔同備份」、「匯出」、「版本記錄」、「通知中心」、打印主機佇列；同埋每個多行文字框：`TextArea`（更新說明、記錄、指令碼、筆記、提示）、設定嘅 G-code 欄位，同正規表示式建立器嘅範例同結果；同埋每個 HTML 檢視：有表格或者連結嘅訊息框內文、系統資訊、關於、設定精靈嘅 HTML 頁面同其他 HTML 說明 |
 
 ## 點做
 
@@ -60,7 +60,9 @@ review-status: agent-drafted
   嘅欄位捲入畫面，都同以前一樣，因為捲動仍然係 wx 自己嘅捲動邏輯做，佢只係話畀套件捲動列知要畫喺邊。開咗 Windows 高對比
   嘅時候，捲動列用系統嘅視窗同文字顏色。表格自己嘅捲動邏輯照舊捲動佢嘅行同表頭，方向鍵亦照舊移動揀選。多行文字框係一個
   Windows 編輯控件，佢自己會跟住游標、滾輪同鍵盤捲動；每次收到可能移動文字嘅訊息之後，`TextAreaEditor` 都會讀佢嘅第一條
-  可見行、總行數同顯示得到嘅行數，照住畫捲動列；拖捲動列或者翻頁嗰陣，就逐行捲動編輯控件。
+  可見行、總行數同顯示得到嘅行數，照住畫捲動列；拖捲動列或者翻頁嗰陣，就逐行捲動編輯控件。HTML 檢視
+  （`wxHtmlWindow`）都係一個會捲動嘅視窗，`MD3HtmlWindow` 畀佢同樣嘅套件捲動列：有表格或者連結嘅訊息框內文、系統資訊、
+  關於、設定精靈嘅 HTML 頁面同其他 HTML 說明。
 
 ## 邊啲保留原生，點解
 
@@ -72,7 +74,7 @@ review-status: agent-drafted
 
 - `node --test ui-md3/tests/native-controls.test.mjs` 會拒絕 GUI 入面任何地方嘅原生分頁控件、報告清單、待辦清單、月曆、提示視窗、
   通知列、分組框、選擇頁簿、樹狀控件或者標準掣排列，同埋檢查每個套件替代品。
-- `node --test ui-md3/tests/scrollbars.test.mjs` 會拒絕新嘅 `wxScrolledWindow`、資料檢視表格、資料檢視清單或者多行
+- `node --test ui-md3/tests/scrollbars.test.mjs` 會拒絕新嘅 `wxScrolledWindow`、`wxHtmlWindow`、資料檢視表格、資料檢視清單或者多行
   `wxTextCtrl`，檢查套件捲動列從來唔會將捲動列交畀 Windows、會喺非客戶端區域預留自己條位，同埋以前幫 Windows 捲動列
   留位嘅程式碼而家幫套件捲動列留位。
 - 版面探針會幫每個視窗記低佢顯示緊 Windows 捲動列定係套件捲動列（`scrollbars`：`native_v`、`native_h`、`kit_v`、`kit_h`），

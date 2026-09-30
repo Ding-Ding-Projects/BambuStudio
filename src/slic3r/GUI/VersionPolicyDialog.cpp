@@ -19,6 +19,7 @@
 #include "I18N.hpp"
 #include "Widgets/StateColor.hpp"
 #include "Widgets/MD3DialogChrome.hpp"
+#include "Widgets/MD3HtmlWindow.hpp"
 #include "libslic3r/Utils.hpp"
 #include "wxExtensions.hpp"
 
@@ -403,7 +404,7 @@ void VersionPolicyDialog::CreateGUI()
 
 void VersionPolicyDialog::CreateBody(wxSizer *sizer)
 {
-    m_body = new wxHtmlWindow(this, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(DIALOG_WIDTH), FromDIP(BODY_HEIGHT)), wxHW_SCROLLBAR_AUTO);
+    m_body = new MD3HtmlWindow(this, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(DIALOG_WIDTH), FromDIP(BODY_HEIGHT)), wxHW_SCROLLBAR_AUTO);
     m_body->SetBackgroundColour(ThemeColor::Grey200);
     m_body->SetMinSize(wxSize(FromDIP(DIALOG_WIDTH), FromDIP(BODY_HEIGHT)));
     m_body->SetBorders(FromDIP(BODY_PADDING));

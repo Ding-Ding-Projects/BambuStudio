@@ -286,7 +286,15 @@ still to verify.
   scrolling itself, and after every message that can move the text reads `EM_GETFIRSTVISIBLELINE`, `EM_GETLINECOUNT` and
   `EM_GETRECT` / `GetCharHeight()` and hands them to `MD3ScrollBars::SetScrollbar()`. `MD3ScrollBars::SetScrollHandler()`
   routes the strip's drag and page to `EM_LINESCROLL` / `EM_SCROLL` instead of a wx scroll event. `m_syncing` guards the
-  re-entry the `EM_GET*` queries cause. No Windows scrollbar is left in the GUI sources except the system file dialogs'.
+  re-entry the `EM_GET*` queries cause.
+- HTML view scrollbars (2026-09-30): that entry once said no Windows scrollbar was left in the GUI sources. It was wrong:
+  `wxHtmlWindow` is a `wxScrolledWindow` of its own, and nine of them in seven dialogs (the message box body when it holds
+  a table or a link, System Information, About, the setup wizard, Helio's terms, the version policy notice, Send system
+  information) still drew the Windows bar. `MD3HtmlWindow` (`Widgets/MD3HtmlWindow.{hpp,cpp}`) is MD3ScrolledWindow's
+  arrangement for `wxHtmlWindow`; wx lays an HTML page out by forcing the bar on and then letting it hide, which reaches
+  the kit strip as a range of -1 that it already shows as an empty track. `scrollbars.test.mjs` refuses a new
+  `wxHtmlWindow`. Still open from the same audit: the object settings table is a `wxGrid` with Windows bars, and a few
+  native combo boxes, buttons and text fields remain (tracked for the next change).
   `scripts/md3/scan-scrollbars.py <dump folders>` lists every shown window with a Windows bar in a release's
   layout-probe dumps (exit 1), or says the build predates the `scrollbars` field (exit 2).
 - Closeout cleanup (2026-09-29): the linked worktree of the auto-updater lane
@@ -393,9 +401,12 @@ Scope: shorten the hosted Windows build. Full record:
   step's output open for 20 seconds after the step exited); and a live round trip of every `gh
   release` command the scripts use on the (still empty) draft `build-cache-windows`, which anonymous
   visitors cannot see.
-- Open: the first hosted `main` build after this change saves the first set (a cold build); the one
-  after it is the first warm build. Record both runs, the restore notice, the part sizes and the compile
-  step's time. If a warm build ever looks stale, push with `[cold build]` and compare.
+- First set saved: run [36645906111](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36645906111)
+  (`84b96e720`, run number 633) built from scratch, as its own commit message asked, and its background save finished
+  within the packaging steps: a 6,786,436,758 byte tree in one part of 672,688,710 bytes, plus the manifest and
+  `windows-build-latest.json`, in the draft `build-cache-windows`. Its compile step took 55 min 52 s.
+- Open: the next `main` build is the first warm one. Record its restore notice and its compile step's time. If a warm
+  build ever looks stale, push with `[cold build]` and compare.
 
 ## Executable path buffer in the file association code (issue #49, 2026-09-29)
 

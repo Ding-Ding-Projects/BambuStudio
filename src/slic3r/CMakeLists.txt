@@ -808,6 +808,8 @@ list(APPEND SLIC3R_GUI_SOURCES
     GUI/Widgets/MD3DialogChrome.hpp
     GUI/Widgets/MD3DataView.cpp
     GUI/Widgets/MD3DataView.hpp
+    GUI/Widgets/MD3HtmlWindow.cpp
+    GUI/Widgets/MD3HtmlWindow.hpp
     GUI/Widgets/MD3ScrollBars.cpp
     GUI/Widgets/MD3ScrollBars.hpp
     GUI/Widgets/MD3ScrolledWindow.cpp

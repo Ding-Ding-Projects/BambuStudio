@@ -28,6 +28,7 @@ namespace GUI {
 #include "Widgets/StaticLine.hpp"
 #include "Widgets/WebView.hpp"
 #include "Widgets/SwitchButton.hpp"
+#include "Widgets/MD3HtmlWindow.hpp"
 #include "slic3r/GUI/GCodeRenderer/BaseRenderer.hpp"
 #include <wx/regex.h>
 #include <wx/progdlg.h>
@@ -492,7 +493,7 @@ void HelioStatementDialog::create_legal_page()
 
 
     // Use wxHtmlWindow for proper text rendering with embedded links
-    wxHtmlWindow* terms_html_window = new wxHtmlWindow(terms_content_panel, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHW_SCROLLBAR_AUTO | wxHW_NO_SELECTION);
+    wxHtmlWindow* terms_html_window = new MD3HtmlWindow(terms_content_panel, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHW_SCROLLBAR_AUTO | wxHW_NO_SELECTION);
     terms_html_window->SetBackgroundColour(wxColour(55, 55, 59));
     terms_html_window->SetMinSize(wxSize(FromDIP(560), FromDIP(300)));
     terms_html_window->SetMaxSize(wxSize(FromDIP(560), -1));

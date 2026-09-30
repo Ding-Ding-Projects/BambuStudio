@@ -19,6 +19,7 @@
 #include "../libslic3r/BlacklistedLibraryCheck.hpp"
 #include "format.hpp"
 #include "Widgets/Label.hpp"
+#include "Widgets/MD3HtmlWindow.hpp"
 
 #ifdef _WIN32
 	// The standard Windows includes.
@@ -123,7 +124,7 @@ SysInfoDialog::SysInfoDialog()
     const int fs = font.GetPointSize() - 1;
     int size[] = { static_cast<int>(fs*1.5), static_cast<int>(fs*1.4), static_cast<int>(fs*1.3), fs, fs, fs, fs };
 
-    m_html = new wxHtmlWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHW_SCROLLBAR_NEVER);
+    m_html = new MD3HtmlWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHW_SCROLLBAR_NEVER);
     {
         m_html->SetFonts(font.GetFaceName(), font.GetFaceName(), size);
         m_html->SetBorders(2);
@@ -141,7 +142,7 @@ SysInfoDialog::SysInfoDialog()
     }
 
     // opengl_info
-    m_opengl_info_html = new wxHtmlWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHW_SCROLLBAR_AUTO);
+    m_opengl_info_html = new MD3HtmlWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHW_SCROLLBAR_AUTO);
     {
         m_opengl_info_html->SetMinSize(wxSize(-1, 16 * wxGetApp().em_unit()));
         m_opengl_info_html->SetFonts(font.GetFaceName(), font.GetFaceName(), size);
