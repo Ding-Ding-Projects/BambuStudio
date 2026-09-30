@@ -33,6 +33,9 @@ private:
     wxSize paddingSize;
     ScalableBitmap active_icon;
     ScalableBitmap inactive_icon;
+    // Drawn instead of the icon while the button is disabled. Empty unless a
+    // caller supplied one through SetIconBitmapDisabled().
+    ScalableBitmap m_disabled_icon;
 
     StateColor   text_color;
     // Optional dedicated glyph colour. Empty (count()==0) means the glyph
@@ -109,6 +112,11 @@ public:
     // Show a bitmap the caller already rendered (a colour swatch) as the icon,
     // in every state. For data images that have no icon name.
     void SetIconBitmap(const wxBitmap& bitmap);
+
+    // Show this bitmap instead of the icon while the button is disabled. It is
+    // drawn only when one was supplied; an invalid bitmap removes it and the
+    // icon is drawn in every state again, as before.
+    void SetIconBitmapDisabled(const wxBitmap& bitmap);
 
     void SetMinSize(const wxSize& size) override;
     void SetMaxSize(const wxSize& size) override;
@@ -230,7 +238,7 @@ private:
     void mouseCaptureLost(wxMouseCaptureLostEvent &event);
     void keyDownUp(wxKeyEvent &event);
 
-    // 
+    //
     void sendButtonEvent();
 
     // parent motion
@@ -238,6 +246,109 @@ private:
     void OnParentLeave(wxMouseEvent& event);
 
     DECLARE_EVENT_TABLE()
+};
+
+// ----------------------------------------------------------------------------
+// ScalableButton
+// ----------------------------------------------------------------------------
+// The flat icon button of the Prepare sidebar, the object list, the Device tab,
+// the print dialogs and the calibration pages. It is a kit Button: an empty
+// label makes it a borderless icon button with the kit hover wash and focus
+// ring, a label makes it a small outlined button with the icon in front of the
+// text. It keeps the public names the wxButton based class had (the SetBitmap
+// family, SetBitmap_, SetBitmapDisabled_, GetBitmapHeight, msw_rescale and
+// UpdateDarkUI), so no caller changes.
+//
+// It is defined here and not in wxExtensions.hpp: Button derives from StaticBox,
+// which includes wxExtensions.hpp, so a class that derives from Button cannot
+// live in that header. wxExtensions.hpp only forward declares it; a source that
+// constructs one, derives from one or calls a method on one must reach this
+// header through its own includes.
+class ScalableButton : public Button
+{
+public:
+    ScalableButton() {}
+    // `style` keeps the wxButton flag vocabulary of the callers. The kit style of
+    // a Button is a border style, so none of it is forwarded to the window; only
+    // wxBU_LEFT is read, and only for a button that has a label.
+    ScalableButton(
+        wxWindow *          parent,
+        wxWindowID          id,
+        const std::string&  icon_name = "",
+        const wxString&     label = wxEmptyString,
+        const wxSize&       size = wxDefaultSize,
+        const wxPoint&      pos = wxDefaultPosition,
+        long                style = wxBU_EXACTFIT | wxNO_BORDER,
+        bool                use_default_disabled_bitmap = false,
+        int                 bmp_px_cnt = 16);
+
+    ScalableButton(
+        wxWindow *          parent,
+        wxWindowID          id,
+        const ScalableBitmap&  bitmap,
+        const wxString&     label = wxEmptyString,
+        long                style = wxBU_EXACTFIT | wxNO_BORDER);
+
+    ~ScalableButton() {}
+
+    void SetBitmap_(const ScalableBitmap& bmp);
+    bool SetBitmap_(const std::string& bmp_name);
+    void SetBitmapDisabled_(const ScalableBitmap &bmp);
+    int  GetBitmapHeight();
+    void UseDefaultBitmapDisabled();
+
+    void    msw_rescale();
+    void    UpdateDarkUI() { msw_rescale(); };
+
+    // The wxButton bitmap API, for the callers that set a bitmap directly. The
+    // bitmap is drawn by the kit Button; a disabled bitmap the caller did not
+    // supply is made from the normal one, as the native button did.
+    void     SetBitmap(const wxBitmap& bitmap, wxDirection dir = wxLEFT);
+    wxBitmap GetBitmap() const { return m_bitmap; }
+    void     SetBitmapDisabled(const wxBitmap& bitmap);
+    // The kit draws its own hover, pressed and focus layers, so the native
+    // button's per-state bitmaps and bitmap layout have nothing left to do.
+    void     SetBitmapFocus(const wxBitmap&) {}
+    void     SetBitmapCurrent(const wxBitmap&) {}
+    void     SetBitmapHover(const wxBitmap&) {}
+    void     SetBitmapPressed(const wxBitmap&) {}
+    void     SetBitmapMargins(wxCoord, wxCoord) {}
+    void     SetBitmapMargins(const wxSize&) {}
+    void     SetBitmapPosition(wxDirection) {}
+
+    // A flat icon button has no face of its own: the colour a caller names is the
+    // surface behind it, so the resting fill follows it and only the kit hover
+    // wash differs from it. The colour is remembered and put back, mapped for the
+    // current theme, after the kit re-derives its style from the parent (a new
+    // bitmap, a rescale), which is what the native button's colour did.
+    bool SetBackgroundColour(const wxColour& colour) override;
+    // Remembered, so that changing the icon (which re-derives the kit geometry)
+    // does not drop a size the caller asked for.
+    void SetMinSize(const wxSize& size) override;
+
+private:
+    void init_style(const wxString& label, const wxSize& size, long style);
+    void apply_bitmap(const wxBitmap& bitmap);
+    void update_disabled_bitmap(bool from_icon_name);
+    void set_surface(const wxColour& colour);
+    void reassert_style();
+
+    wxWindow*       m_parent { nullptr };
+    std::string     m_current_icon_name;
+    std::string     m_disabled_icon_name;
+    int             m_width {-1}; // should be multiplied to em_unit
+    int             m_height{-1}; // should be multiplied to em_unit
+    wxSize          m_min_size { wxDefaultSize };
+    wxColour        m_backdrop;               // the surface a caller named, invalid until one did
+    bool            m_restyling { false };    // the kit is re-deriving its style from the parent
+
+    bool            m_use_default_disabled_bitmap {false};
+    bool            m_has_explicit_disabled {false};
+
+    wxBitmap        m_bitmap;
+
+    // bitmap dimensions
+    int             m_px_cnt{ 16 };
 };
 
 #endif // !slic3r_GUI_Button_hpp_
