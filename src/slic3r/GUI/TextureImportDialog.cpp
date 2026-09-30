@@ -25,6 +25,7 @@
 #include "Widgets/ComboBox.hpp"
 #include "Widgets/Label.hpp"
 #include "Widgets/MaterialIcon.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 #include "libslic3r/ColorDecomposeRecipe.hpp"
 #include "libslic3r/FilamentMixer.hpp"
 #include "libslic3r/Model.hpp"
@@ -1831,8 +1832,12 @@ public:
         rebuild_color_grid(false);
         Layout();
         Fit();
-        SetMinSize(wxSize(GetSize().x, FromDIP(180)));
         wxGetApp().UpdateDlgDarkUI(this);
+        // Last layout act: swap the native title bar for the kit caption strip. The body keeps
+        // the client height the layout gave it, so the minimum height is taken afterwards and
+        // adds the strip instead of counting it against the body.
+        MD3DialogCaption::Adopt(this, _L("Add Filament"));
+        SetMinSize(wxSize(GetSize().x, FromDIP(180) + MD3DialogCaption::Height(this)));
         if (m_combo_arrow && m_type_combo) {
             layout_combo_arrow();
         }

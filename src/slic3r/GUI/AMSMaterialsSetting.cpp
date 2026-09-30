@@ -708,8 +708,12 @@ public:
 
         SetSizer(sizer);
         Fit();
-        CentreOnParent();
         wxGetApp().UpdateDlgDarkUI(this);
+        // Last layout act: swap the native title bar for the kit caption strip. Its close button
+        // ends the modal with wxID_CANCEL, none of the RESULT_ values above, so the caller must
+        // treat anything but the two explicit choices as a cancel.
+        MD3DialogCaption::Adopt(this, _L("Add to Filament Library?"));
+        CentreOnParent();
     }
 
     void on_dpi_changed(const wxRect&) override { Fit(); }
@@ -743,7 +747,9 @@ void AMSMaterialsSetting::on_select_ok(wxCommandEvent& event)
             if (preset_type_changed || color_changed) {
             FilaManagerPromptDialog dlg(this);
             const int result = dlg.ShowModal();
-            if (result == FilaManagerPromptDialog::RESULT_CANCEL)
+            // The caption close and Escape end the modal with wxID_CANCEL rather than RESULT_CANCEL,
+            // so only the two explicit choices go on.
+            if (result != FilaManagerPromptDialog::RESULT_ADD_TO_LIBRARY && result != FilaManagerPromptDialog::RESULT_SAVE_ONLY)
                 return;
             auto compute_series = [](const FilamentBaseInfo& fi) -> std::string {
                 const std::string& original = fi.filament_name;
@@ -3433,11 +3439,16 @@ AMSNewFilamentRecordedDlg::AMSNewFilamentRecordedDlg(wxWindow* parent,
 {
     create(sp);
     wxGetApp().UpdateDlgDarkUI(this);
+    // Last layout act: swap the native title bar for the kit caption strip; centre afterwards
+    // because the frame changes size. Its OK button ends the modal with its own id, so no
+    // caller change is needed.
+    MD3DialogCaption::Adopt(this, _L("New Filament"));
+    Centre();
 }
 
 void AMSNewFilamentRecordedDlg::create(const FilamentSpool& sp)
 {
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     auto* sizer = new wxBoxSizer(wxVERTICAL);
 
     // Title row: hint icon + bold info text
