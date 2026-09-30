@@ -86,7 +86,9 @@ void uiAmsPercentHumidityDryPopup::Create()
 
     Fit();
     Layout();
-    // Last layout act: swap the native title bar for the kit caption strip.
+    // Last layout act: swap the native title bar for the kit caption strip. The window text is
+    // set to the same title first, because Alt-Tab and assistive technology read it, not the strip.
+    SetTitle(_L("Current AMS humidity"));
     MD3DialogCaption::Adopt(this, _L("Current AMS humidity"));
     Refresh();
 }

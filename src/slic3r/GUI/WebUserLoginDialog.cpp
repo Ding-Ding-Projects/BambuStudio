@@ -81,6 +81,8 @@ ZUserLogin::ZUserLogin() : wxDialog((wxWindow *) (wxGetApp().mainframe), wxID_AN
         Layout();
         Fit();
         // The missing plug-in notice wears the kit caption too (last layout act before centring).
+        // The window text matches the strip, so Alt-Tab and assistive technology read the same title.
+        SetTitle(_L("Login"));
         MD3DialogCaption::Adopt(this, _L("Login"));
         CentreOnParent();
     }
