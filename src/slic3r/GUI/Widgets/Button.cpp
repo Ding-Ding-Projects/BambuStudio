@@ -282,6 +282,12 @@ void Button::SetIconBitmap(const wxBitmap &bitmap)
     Refresh();
 }
 
+void Button::SetIconBitmapDisabled(const wxBitmap &bitmap)
+{
+    this->m_disabled_icon = bitmap.IsOk() ? ScalableBitmap(this, bitmap) : ScalableBitmap();
+    Refresh();
+}
+
 void Button::SetInactiveIcon(const wxString &icon)
 {
     if (!icon.IsEmpty()) {
@@ -770,6 +776,10 @@ void Button::render(wxDC& dc)
         icon = active_icon;
     else
         icon = inactive_icon;
+    // A disabled bitmap the caller supplied replaces the icon while the button
+    // is disabled. Without one, the icon is drawn in every state as before.
+    if (m_disabled_icon.bmp().IsOk() && !IsEnabled())
+        icon = m_disabled_icon;
     wxSize padding = this->paddingSize;
     // MD3 icon->label gap is 8px (was a hardcoded 5). DIP-scaled so it holds on
     // HiDPI; must stay in sync with the value used by messureSize().

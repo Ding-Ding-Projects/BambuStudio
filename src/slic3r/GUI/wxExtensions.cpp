@@ -1,6 +1,7 @@
 #include "wxExtensions.hpp"
 #include "Widgets/MD3ScrolledWindow.hpp"
 
+#include <algorithm>
 #include <stdexcept>
 #include <cmath>
 #include <memory>
@@ -32,6 +33,7 @@
 #include "Widgets/MD3ColorPicker.hpp"
 #include "Widgets/MD3Menu.hpp"
 #include "Widgets/StaticBox.hpp"
+#include "Widgets/Button.hpp"
 #include "Widgets/Label.hpp"
 #include "../Utils/WxFontUtils.hpp"
 #include "FilamentBitmapUtils.hpp"
@@ -936,204 +938,6 @@ void apply_extruder_selector(Slic3r::GUI::BitmapComboBox** ctrl,
 }
 
 // ----------------------------------------------------------------------------
-// LockButton
-// ----------------------------------------------------------------------------
-
-LockButton::LockButton( wxWindow *parent,
-                        wxWindowID id,
-                        const wxPoint& pos /*= wxDefaultPosition*/,
-                        const wxSize& size /*= wxDefaultSize*/):
-                        wxButton(parent, id, wxEmptyString, pos, size, wxBU_EXACTFIT | wxNO_BORDER)
-{
-    m_bmp_lock_closed   = ScalableBitmap(this, "lock_normal");
-    m_bmp_lock_closed_f = ScalableBitmap(this, "lock_hover");
-    m_bmp_lock_open     = ScalableBitmap(this, "unlock_normal");
-    m_bmp_lock_open_f   = ScalableBitmap(this, "unlock_hover");
-
-    Slic3r::GUI::wxGetApp().UpdateDarkUI(this);
-    SetBitmap(m_bmp_lock_open.bmp());
-    SetBitmapDisabled(m_bmp_lock_open.bmp());
-    SetBitmapHover(m_bmp_lock_closed_f.bmp());
-
-    //button events
-    Bind(wxEVT_BUTTON, &LockButton::OnButton, this);
-}
-
-void LockButton::OnButton(wxCommandEvent& event)
-{
-    if (m_disabled)
-        return;
-
-    m_is_pushed = !m_is_pushed;
-    update_button_bitmaps();
-
-    event.Skip();
-}
-
-void LockButton::SetLock(bool lock)
-{
-    m_is_pushed = lock;
-    update_button_bitmaps();
-}
-
-void LockButton::msw_rescale()
-{
-    m_bmp_lock_closed.msw_rescale();
-    m_bmp_lock_closed_f.msw_rescale();
-    m_bmp_lock_open.msw_rescale();
-    m_bmp_lock_open_f.msw_rescale();
-
-    update_button_bitmaps();
-}
-
-void LockButton::update_button_bitmaps()
-{
-    Slic3r::GUI::wxGetApp().UpdateDarkUI(this);
-    SetBitmap(m_is_pushed ? m_bmp_lock_closed.bmp() : m_bmp_lock_open.bmp());
-    SetBitmapHover(m_is_pushed ? m_bmp_lock_closed_f.bmp() : m_bmp_lock_open_f.bmp());
-
-    Refresh();
-    Update();
-}
-
-
-
-// ----------------------------------------------------------------------------
-// ModeButton
-// ----------------------------------------------------------------------------
-
-ModeButton::ModeButton( wxWindow *          parent,
-                        wxWindowID          id,
-                        const std::string&  icon_name   /* = ""*/,
-                        const wxString&     mode        /* = wxEmptyString*/,
-                        const wxSize&       size        /* = wxDefaultSize*/,
-                        const wxPoint&      pos         /* = wxDefaultPosition*/) :
-    ScalableButton(parent, id, icon_name, mode, size, pos, wxBU_EXACTFIT)
-{
-    Init(mode);
-}
-
-ModeButton::ModeButton( wxWindow*           parent,
-                        const wxString&     mode/* = wxEmptyString*/,
-                        const std::string&  icon_name/* = ""*/,
-                        int                 px_cnt/* = 16*/) :
-    ScalableButton(parent, wxID_ANY, ScalableBitmap(parent, icon_name, px_cnt), mode, wxBU_EXACTFIT)
-{
-    Init(mode);
-}
-
-void ModeButton::Init(const wxString &mode)
-{
-    std::string mode_str = std::string(mode.ToUTF8());
-    //m_tt_focused  = Slic3r::GUI::from_u8((boost::format(_utf8(L("Switch to the %s mode"))) % mode_str).str());
-    //m_tt_selected = Slic3r::GUI::from_u8((boost::format(_utf8(L("Current mode is %s"))) % mode_str).str());
-
-    SetBitmapMargins(3, 0);
-
-    //button events
-    Bind(wxEVT_BUTTON,          &ModeButton::OnButton, this);
-    Bind(wxEVT_ENTER_WINDOW,    &ModeButton::OnEnterBtn, this);
-    Bind(wxEVT_LEAVE_WINDOW,    &ModeButton::OnLeaveBtn, this);
-}
-
-void ModeButton::OnButton(wxCommandEvent& event)
-{
-    m_is_selected = true;
-    focus_button(m_is_selected);
-
-    event.Skip();
-}
-
-void ModeButton::SetState(const bool state)
-{
-    m_is_selected = state;
-    focus_button(m_is_selected);
-    SetToolTip(state ? m_tt_selected : m_tt_focused);
-}
-
-void ModeButton::focus_button(const bool focus)
-{
-    const wxFont& new_font = focus ?
-                             Slic3r::GUI::wxGetApp().bold_font() :
-                             Slic3r::GUI::wxGetApp().normal_font();
-
-    SetFont(new_font);
-#ifdef _WIN32
-    GetParent()->Refresh(); // force redraw a background of the selected mode button
-#else
-    SetForegroundColour(wxSystemSettings::GetColour(focus ? wxSYS_COLOUR_BTNTEXT :
-#if defined (__linux__) && defined (__WXGTK3__)
-        wxSYS_COLOUR_GRAYTEXT
-#elif defined (__linux__) && defined (__WXGTK2__)
-        wxSYS_COLOUR_BTNTEXT
-#else
-        wxSYS_COLOUR_BTNSHADOW
-#endif
-    ));
-#endif /* no _WIN32 */
-
-    Refresh();
-    Update();
-}
-
-
-// ----------------------------------------------------------------------------
-// ModeSizer
-// ----------------------------------------------------------------------------
-
-ModeSizer::ModeSizer(wxWindow *parent, int hgap/* = 0*/) :
-    wxFlexGridSizer(3, 0, hgap),
-    m_parent(parent),
-    m_hgap_unscaled((double)(hgap)/em_unit(parent))
-{
-    SetFlexibleDirection(wxHORIZONTAL);
-
-    std::vector < std::pair < wxString, std::string >> buttons = {
-        //{_(L("Simple")),    "mode_simple"},
-        //{_(L("Advanced")),  "mode_advanced"},
-        //{_CTX(L_CONTEXT("Advanced", "Mode"), "Mode"), "mode_advanced"}
-    };
-
-    auto modebtnfn = [](wxCommandEvent &event, int mode_id) {
-        Slic3r::GUI::wxGetApp().save_mode(mode_id);
-        event.Skip();
-    };
-
-    m_mode_btns.reserve(3);
-    for (const auto& button : buttons) {
-        m_mode_btns.push_back(new ModeButton(parent, button.first, button.second, mode_icon_px_size()));
-
-        m_mode_btns.back()->Bind(wxEVT_BUTTON, std::bind(modebtnfn, std::placeholders::_1, int(m_mode_btns.size() - 1)));
-        Add(m_mode_btns.back());
-    }
-}
-
-void ModeSizer::SetMode(const int mode)
-{
-    for (size_t m = 0; m < m_mode_btns.size(); m++)
-        m_mode_btns[m]->SetState(int(m) == mode);
-}
-
-void ModeSizer::set_items_flag(int flag)
-{
-    for (wxSizerItem* item : this->GetChildren())
-        item->SetFlag(flag);
-}
-
-void ModeSizer::set_items_border(int border)
-{
-    for (wxSizerItem* item : this->GetChildren())
-        item->SetBorder(border);
-}
-
-void ModeSizer::msw_rescale()
-{
-    this->SetHGap(std::lround(m_hgap_unscaled * em_unit(m_parent)));
-    for (size_t m = 0; m < m_mode_btns.size(); m++)
-        m_mode_btns[m]->msw_rescale();
-}
-
-// ----------------------------------------------------------------------------
 // MenuWithSeparators
 // ----------------------------------------------------------------------------
 
@@ -1232,7 +1036,7 @@ void ScalableBitmap::msw_rescale()
 }
 
 // ----------------------------------------------------------------------------
-// BambuButton
+// ScalableButton
 // ----------------------------------------------------------------------------
 
 ScalableButton::ScalableButton( wxWindow *          parent,
@@ -1244,22 +1048,20 @@ ScalableButton::ScalableButton( wxWindow *          parent,
                                 long                style /*= wxBU_EXACTFIT | wxNO_BORDER*/,
                                 bool                use_default_disabled_bitmap/* = false*/,
                                 int                 bmp_px_cnt/* = 16*/) :
+    Button(parent, label, wxString(), 0, 0, id),
     m_parent(parent),
     m_current_icon_name(icon_name),
     m_use_default_disabled_bitmap (use_default_disabled_bitmap),
-    m_px_cnt(bmp_px_cnt),
-    m_has_border(!(style & wxNO_BORDER))
+    m_px_cnt(bmp_px_cnt)
 {
-    SetBackgroundColour(StaticBox::GetParentBackgroundColor(parent));
-    Create(parent, id, label, pos, size, style);
-    Slic3r::GUI::wxGetApp().UpdateDarkUI(this);
+    if (pos != wxDefaultPosition)
+        Move(pos);
+
+    init_style(label, size, style);
 
     if (!icon_name.empty()) {
-        SetBitmap(create_scaled_bitmap(icon_name, parent, m_px_cnt));
-        if (m_use_default_disabled_bitmap)
-            SetBitmapDisabled(create_scaled_bitmap(m_current_icon_name, m_parent, m_px_cnt, true));
-        if (!label.empty())
-            SetBitmapMargins(int(0.5* em_unit(parent)), 0);
+        apply_bitmap(create_scaled_bitmap(icon_name, parent, m_px_cnt));
+        update_disabled_bitmap(true);
     }
 
     if (size != wxDefaultSize)
@@ -1267,7 +1069,10 @@ ScalableButton::ScalableButton( wxWindow *          parent,
         const int em = em_unit(parent);
         m_width = size.x * 10 / em;
         m_height= size.y * 10 / em;
+        SetMinSize(size);
     }
+    // A window made without a size starts at its minimum, as the native button started at its best size.
+    SetSize(GetEffectiveMinSize());
 }
 
 
@@ -1276,15 +1081,113 @@ ScalableButton::ScalableButton( wxWindow *          parent,
                                 const ScalableBitmap&  bitmap,
                                 const wxString&     label /*= wxEmptyString*/,
                                 long                style /*= wxBU_EXACTFIT | wxNO_BORDER*/) :
+    Button(parent, label, wxString(), 0, 0, id),
     m_parent(parent),
     m_current_icon_name(bitmap.name()),
-    m_px_cnt(bitmap.px_cnt()),
-    m_has_border(!(style& wxNO_BORDER))
+    m_px_cnt(bitmap.px_cnt())
 {
-    Create(parent, id, label, wxDefaultPosition, wxDefaultSize, style);
-    Slic3r::GUI::wxGetApp().UpdateDarkUI(this);
+    init_style(label, wxDefaultSize, style);
+    apply_bitmap(bitmap.bmp());
+    update_disabled_bitmap(false);
+    SetSize(GetEffectiveMinSize());
+}
 
-    SetBitmap(bitmap.bmp());
+void ScalableButton::init_style(const wxString& label, const wxSize& size, long style)
+{
+    m_restyling = true;
+    if (label.IsEmpty()) {
+        // The flat icon button: the kit icon button, which washes on hover and rings on
+        // focus, a little larger than the icon so the wash reads around it. A size the
+        // caller gave wins over the icon size, as it did for the native button.
+        int container = m_px_cnt + 6;
+        if (size.x > 0 && size.y > 0)
+            container = std::max(ToDIP(size.x), ToDIP(size.y));
+        SetIconButton(container > 36 ? Button::IconShape::Square : Button::IconShape::Circle, container);
+    } else {
+        SetButtonSize(Button::Size::Small);
+        SetVariant(Button::Variant::Outlined);
+        if (style & wxBU_LEFT)
+            SetCenter(false);
+    }
+    m_restyling = false;
+}
+
+void ScalableButton::apply_bitmap(const wxBitmap& bitmap)
+{
+    m_bitmap = bitmap;
+    m_restyling = true;
+    SetIconBitmap(bitmap);
+    m_restyling = false;
+    reassert_style();
+}
+
+// The bitmap drawn while the button is disabled: the one the caller supplied, else the
+// greyscale icon when the caller asked for the default one, else the normal bitmap made
+// disabled, which is what the native button did for every bitmap it was given.
+void ScalableButton::update_disabled_bitmap(bool from_icon_name)
+{
+    if (m_has_explicit_disabled)
+        return;
+    wxBitmap disabled;
+    if (from_icon_name && m_use_default_disabled_bitmap && !m_current_icon_name.empty())
+        disabled = create_scaled_bitmap(m_current_icon_name, m_parent, m_px_cnt, true);
+    else if (m_bitmap.IsOk())
+        disabled = m_bitmap.ConvertToDisabled();
+    SetIconBitmapDisabled(disabled);
+}
+
+// The window colour shows outside the rounded shape and the resting fill inside it; both
+// are the surface behind a flat icon button.
+void ScalableButton::set_surface(const wxColour& colour)
+{
+    Button::SetBackgroundColour(colour);
+    background_color.setColorForStates(colour, StateColor::Normal);
+    Refresh();
+}
+
+// Each time the kit restyles the button it re-derives the colours, the radius, the padding
+// and the minimum size from the parent and its size tier. Put back what a caller asked for.
+void ScalableButton::reassert_style()
+{
+    if (m_backdrop.IsOk())
+        set_surface(StateColor::isDarkMode() ? StateColor::darkModeColorFor(m_backdrop) : StateColor::lightModeColorFor(m_backdrop));
+    if (m_min_size != wxDefaultSize)
+        Button::SetMinSize(m_min_size);
+}
+
+void ScalableButton::SetMinSize(const wxSize& size)
+{
+    m_min_size = size;
+    Button::SetMinSize(size);
+}
+
+bool ScalableButton::SetBackgroundColour(const wxColour& colour)
+{
+    const bool changed = Button::SetBackgroundColour(colour);
+    if (colour.IsOk()) {
+        // The kit's own restyle passes the parent colour through here; only a colour a
+        // caller named is the surface to keep.
+        if (!m_restyling)
+            m_backdrop = colour;
+        if (background_color.setColorForStates(colour, StateColor::Normal))
+            Refresh();
+    }
+    return changed;
+}
+
+void ScalableButton::SetBitmap(const wxBitmap& bitmap, wxDirection /*dir*/)
+{
+    apply_bitmap(bitmap);
+    update_disabled_bitmap(false);
+}
+
+void ScalableButton::SetBitmapDisabled(const wxBitmap& bitmap)
+{
+    m_has_explicit_disabled = bitmap.IsOk();
+    if (m_has_explicit_disabled)
+        SetIconBitmapDisabled(bitmap);
+    else
+        update_disabled_bitmap(false);
 }
 
 void ScalableButton::SetBitmap_(const ScalableBitmap& bmp)
@@ -1304,13 +1207,8 @@ bool ScalableButton::SetBitmap_(const std::string& bmp_name)
     if (m_current_icon_name.empty())
         return false;
 
-    wxBitmap bmp = create_scaled_bitmap(m_current_icon_name, m_parent, m_px_cnt);
-    SetBitmap(bmp);
-    SetBitmapCurrent(bmp);
-    SetBitmapPressed(bmp);
-    SetBitmapFocus(bmp);
-    if (m_use_default_disabled_bitmap)
-        SetBitmapDisabled(create_scaled_bitmap(m_current_icon_name, m_parent, m_px_cnt, true));
+    apply_bitmap(create_scaled_bitmap(m_current_icon_name, m_parent, m_px_cnt));
+    update_disabled_bitmap(true);
     return true;
 }
 
@@ -1332,32 +1230,32 @@ int ScalableButton::GetBitmapHeight()
 void ScalableButton::UseDefaultBitmapDisabled()
 {
     m_use_default_disabled_bitmap = true;
-    SetBitmapDisabled(create_scaled_bitmap(m_current_icon_name, m_parent, m_px_cnt, true));
+    m_has_explicit_disabled = false;
+    update_disabled_bitmap(true);
 }
 
 void ScalableButton::msw_rescale()
 {
-    Slic3r::GUI::wxGetApp().UpdateDarkUI(this, m_has_border);
-
     if (!m_current_icon_name.empty()) {
-        wxBitmap bmp = create_scaled_bitmap(m_current_icon_name, m_parent, m_px_cnt);
-        SetBitmap(bmp);
-        // BBS: why disappear on hover? why current HBITMAP differ from other
-        //SetBitmapCurrent(bmp);
-        //SetBitmapPressed(bmp);
-        //SetBitmapFocus(bmp);
+        apply_bitmap(create_scaled_bitmap(m_current_icon_name, m_parent, m_px_cnt));
         if (!m_disabled_icon_name.empty())
-            SetBitmapDisabled(create_scaled_bitmap(m_disabled_icon_name, m_parent, m_px_cnt));
-        else if (m_use_default_disabled_bitmap)
-            SetBitmapDisabled(create_scaled_bitmap(m_current_icon_name, m_parent, m_px_cnt, true));
+            SetIconBitmapDisabled(create_scaled_bitmap(m_disabled_icon_name, m_parent, m_px_cnt));
+        else
+            update_disabled_bitmap(true);
     }
+
+    // Derives the kit radius, padding, height and the parent surface colour again, for
+    // the current scale and theme.
+    m_restyling = true;
+    Rescale();
+    m_restyling = false;
 
     if (m_width > 0 || m_height>0)
     {
         const int em = em_unit(m_parent);
-        wxSize size(m_width * em / 10, m_height * em / 10);
-        SetMinSize(size);
+        m_min_size = wxSize(m_width > 0 ? m_width * em / 10 : -1, m_height > 0 ? m_height * em / 10 : -1);
     }
+    reassert_style();
 }
 
 

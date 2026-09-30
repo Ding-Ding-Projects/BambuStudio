@@ -1,4 +1,5 @@
 #include "StaticGroup.hpp"
+#include "Button.hpp"
 #include "Label.hpp"
 #include "StateColor.hpp"
 #include "slic3r/GUI/I18N.hpp"
