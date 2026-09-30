@@ -12,7 +12,7 @@
 #include "Widgets/Button.hpp"
 #include "Widgets/Label.hpp"
 #include "Widgets/MaterialIcon.hpp"
-#include "Widgets/MD3Motion.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 #include "Widgets/MD3Tokens.hpp"
 #include "Widgets/SearchField.hpp"
 #include "Widgets/SwitchButton.hpp"
@@ -52,7 +52,7 @@ std::uint32_t glyph_for_menu(const wxString &top)
 
 CommandPalette::CommandPalette(MainFrame *frame)
     : wxDialog(frame, wxID_ANY, _L("Command palette"), wxDefaultPosition, wxDefaultSize,
-               wxBORDER_SIMPLE)
+               wxBORDER_NONE)
     , m_frame(frame)
 {
     SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
@@ -114,6 +114,11 @@ CommandPalette::CommandPalette(MainFrame *frame)
         if (e.GetKeyCode() == WXK_ESCAPE) { dismiss(); return; }
         e.Skip();
     });
+
+    // Borderless like every other kit dialog: no system border line. The palette has
+    // no caption strip, so only the chrome is finished here (DWM rounded corners and
+    // the entrance fade), after the sizing above.
+    MD3DialogCaption::FinishChrome(this);
 }
 
 void CommandPalette::ShowPalette(MainFrame *frame)
@@ -130,7 +135,7 @@ void CommandPalette::ShowPalette(MainFrame *frame)
         // apply_size() already placed a full-window palette over the frame.
         if (palette.size_choice() == PaletteIndex::PaletteSize::Card)
             palette.CenterOnParent();
-        MD3::Motion::FadeIn(&palette, MD3::Motion::short2);
+        // The entrance fade is played once, by FinishChrome() in the constructor.
         palette.ShowModal();
     }
     s_open = false;

@@ -1877,6 +1877,18 @@ void GUI_App::post_init()
         m_agent->start_discovery(true, false);
     }
 
+    // A warning the command-line setup found before any window existed (a blacklisted
+    // library injected into the process): shown here, with the Material message dialog,
+    // now that the main window is up. It is posted with CallAfter() so the dialog opens
+    // from the event loop rather than from inside start-up. The text is copied into the
+    // closure because init_params belongs to the caller of GUI_Run().
+    if (!this->init_params->startup_warning.empty()) {
+        CallAfter([this, warning = this->init_params->startup_warning] {
+            MessageDialog dlg(mainframe, wxString(warning.c_str()), _L("Warning"), wxOK | wxICON_WARNING);
+            dlg.ShowModal();
+        });
+    }
+
     //update the plugin tips
     CallAfter([this] {
             mainframe->refresh_plugin_tips();

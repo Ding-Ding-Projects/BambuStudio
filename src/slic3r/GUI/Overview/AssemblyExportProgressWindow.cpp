@@ -6,8 +6,12 @@
 #include "../Widgets/Label.hpp"
 #include "../Widgets/StateColor.hpp"
 
+#include <wx/bitmap.h>
+#include <wx/brush.h>
+#include <wx/dcmemory.h>
 #include <wx/gauge.h>
 #include <wx/panel.h>
+#include <wx/region.h>
 #include <wx/sizer.h>
 #include <wx/stattext.h>
 #include <wx/window.h>
@@ -17,36 +21,32 @@
 namespace Slic3r {
 namespace GUI {
 
+// The card is a borderless, shaped frame like the busy notice (BusyInfo in
+// MsgDialog.cpp): no system border line, a SurfaceContainerHigh fill that follows
+// the theme, and the rounded dialog silhouette cut out of the window itself.
+// wxFRAME_SHAPED is what lets SetShape() take effect.
 AssemblyExportProgressWindow::AssemblyExportProgressWindow(wxWindow *parent)
     : wxFrame(parent, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize,
-              wxFRAME_NO_TASKBAR | wxBORDER_SIMPLE | wxSTAY_ON_TOP)
+              wxFRAME_NO_TASKBAR | wxFRAME_SHAPED | wxBORDER_NONE | wxSTAY_ON_TOP)
 {
     SetFont(wxGetApp().normal_font());
-    SetBackgroundColour(wxColour(255, 255, 255));
+    const wxColour surface = StateColor::semantic(MD3::Role::SurfaceContainerHigh);
+    SetBackgroundColour(surface);
 
     wxPanel *panel = new wxPanel(this, wxID_ANY);
-    panel->SetBackgroundColour(wxColour(255, 255, 255));
+    panel->SetBackgroundColour(surface);
 
     m_message = new Label(panel, wxEmptyString);
-    m_message->SetForegroundColour(wxColour(107, 107, 107));
+    m_message->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_message->SetFont(::Label::Body_13);
 
     m_gauge = new ProgressBar(panel, wxID_ANY, 100, wxDefaultPosition, wxSize(FromDIP(360), FromDIP(8)));
     m_gauge->SetMinSize(wxSize(FromDIP(300), FromDIP(8)));
 
     m_percent = new Label(panel, "0%");
-    m_percent->SetForegroundColour(wxColour(107, 107, 107));
+    m_percent->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     m_percent->SetFont(::Label::Body_13);
     m_percent->SetMinSize(wxSize(FromDIP(40), -1));
-
-    StateColor btn_bg(std::pair<wxColour, int>(wxColour(0x90, 0x90, 0x90), StateColor::Disabled),
-                      std::pair<wxColour, int>(wxColour(206, 206, 206), StateColor::Pressed),
-                      std::pair<wxColour, int>(wxColour(238, 238, 238), StateColor::Hovered),
-                      std::pair<wxColour, int>(*wxWHITE, StateColor::Normal));
-    StateColor btn_bd(std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Disabled),
-                      std::pair<wxColour, int>(wxColour(38, 46, 48), StateColor::Enabled));
-    StateColor btn_txt(std::pair<wxColour, int>(wxColour("#FFFFFE"), StateColor::Disabled),
-                       std::pair<wxColour, int>(wxColour(38, 46, 48), StateColor::Normal));
 
     m_cancel = new Button(panel, _L("Cancel"));
     m_cancel->SetMinSize(wxSize(FromDIP(58), FromDIP(22)));
@@ -60,15 +60,45 @@ AssemblyExportProgressWindow::AssemblyExportProgressWindow(wxWindow *parent)
     row->Add(m_percent, 0, wxALIGN_CENTER_VERTICAL | wxLEFT | wxRIGHT, FromDIP(10));
     row->Add(m_cancel, 0, wxALIGN_CENTER_VERTICAL);
 
+    // The rounded corners cut into the card, so the content keeps a little more
+    // room from the edge than a square frame needed.
+    const int edge = FromDIP(16);
     wxBoxSizer *sizer = new wxBoxSizer(wxVERTICAL);
-    sizer->Add(m_message, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(10));
-    sizer->Add(row, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP | wxBOTTOM, FromDIP(10));
+    sizer->Add(m_message, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, edge);
+    sizer->Add(row, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP | wxBOTTOM, edge);
     panel->SetSizer(sizer);
 
     wxBoxSizer *root_sizer = new wxBoxSizer(wxVERTICAL);
     root_sizer->Add(panel, 1, wxEXPAND);
     SetSizer(root_sizer);
     Fit();
+    apply_shape();
+}
+
+// Cuts the rounded dialog silhouette out of the window, the same mask-bitmap to
+// wxRegion route the busy notice uses. It is redone only when the size changed,
+// because update_progress() fits the frame on every tick.
+void AssemblyExportProgressWindow::apply_shape()
+{
+    const wxSize size = GetSize();
+    if (size.GetWidth() <= 0 || size.GetHeight() <= 0 || size == m_shape_size)
+        return;
+
+    wxBitmap mask(size.GetWidth(), size.GetHeight(), 32);
+    {
+        wxMemoryDC dc;
+        dc.SelectObject(mask);
+        dc.SetBackground(wxBrush(wxColour(0, 0, 0)));
+        dc.Clear();
+        dc.SetBrush(*wxWHITE_BRUSH); // the mask: any colour but the black background
+        dc.SetPen(*wxTRANSPARENT_PEN);
+        dc.DrawRoundedRectangle(0, 0, size.GetWidth(), size.GetHeight(), FromDIP(MD3::Metrics::radius_dialog));
+        dc.SelectObject(wxNullBitmap);
+    }
+
+    wxRegion region(mask, wxColour(0, 0, 0));
+    if (region.IsOk() && SetShape(region))
+        m_shape_size = size;
 }
 
 void AssemblyExportProgressWindow::set_cancel_callback(std::function<void()> cb)
@@ -108,6 +138,7 @@ void AssemblyExportProgressWindow::update_progress(const wxString &message, int 
 
     Layout();
     Fit();
+    apply_shape();
     position_near_anchor(anchor);
     if (!IsShown())
         ShowWithoutActivating();

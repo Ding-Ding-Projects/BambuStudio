@@ -13833,11 +13833,15 @@ wxString Plater::priv::get_export_file(GUI::FileType file_type)
         out_path += output_file.extension().wstring();
         boost::system::error_code ec;
         if (boost::filesystem::exists(into_u8(out_path), ec)) {
-            auto result = MessageBox(q->GetHandle(),
+            // The Material message box instead of the system one, so the replace question
+            // follows the theme and the language modes. md3_message_box answers wxYES or
+            // wxNO, the same values wxMessageBox used.
+            const int replace_choice = md3_message_box(
                 wxString::Format(_L("The file %s already exists\nDo you want to replace it?"), out_path),
                 _L("Comfirm Save As"),
-                MB_YESNO | MB_ICONWARNING);
-            if (result != IDYES)
+                wxYES_NO | wxICON_WARNING | wxCENTRE,
+                q);
+            if (replace_choice != wxYES)
                 return wxEmptyString;
         }
     }

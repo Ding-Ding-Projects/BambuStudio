@@ -5,10 +5,12 @@ import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 
 // wxMessageBox and wxMessageDialog open the system's own message box: its look and
-// its buttons follow Windows, not the theme or the language modes. Every message
-// box of the app is the Material MessageDialog, through md3_message_box() where a
-// call site used wxMessageBox's arguments and return values. The only system boxes
-// left are the ones that must work before the Material layer does.
+// its buttons follow Windows, not the theme or the language modes. The same goes for
+// a raw Win32 MessageBox, MessageBoxA or MessageBoxW call, which the scan below
+// counts too. Every message box of the app is the Material MessageDialog, through
+// md3_message_box() where a call site used wxMessageBox's arguments and return
+// values. The only system boxes left are the ones that must work before the
+// Material layer does.
 
 const testDir = path.dirname(fileURLToPath(import.meta.url));
 const repoDir = path.resolve(testDir, '..', '..');
@@ -37,7 +39,11 @@ test('no system message box outside the few that must precede the Material layer
   const found = {};
   for (const file of await sources(guiDir)) {
     const text = strip(await readFile(file, 'utf8'));
-    const hits = (text.match(/\bwxMessageBox\s*\(|\bwxMessageDialog\b|\bwxRichMessageDialog\b/g) || []).length;
+    // A raw Win32 call is found by the same scan: MessageBox(, MessageBoxA( and
+    // MessageBoxW(, with or without the :: prefix. wxMessageBox( has no word boundary
+    // before its MessageBox, and the `#define MessageBox MessageBoxA` line in
+    // GLCanvas3D.cpp has no opening bracket, so neither counts twice.
+    const hits = (text.match(/\bwxMessageBox\s*\(|\bwxMessageDialog\b|\bwxRichMessageDialog\b|\bMessageBox[AW]?\s*\(/g) || []).length;
     if (hits) found[path.relative(guiDir, file).replace(/\\/g, '/')] = hits;
   }
   const unexpected = Object.entries(found).filter(([file, hits]) => !ALLOWED[file] || hits > ALLOWED[file].count);

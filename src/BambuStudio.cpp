@@ -38,6 +38,7 @@ using namespace nlohmann;
 #include <boost/filesystem.hpp>
 #include <boost/nowide/args.hpp>
 #include <boost/nowide/cenv.hpp>
+#include <boost/nowide/convert.hpp>
 #include <boost/nowide/iostream.hpp>
 #include <boost/nowide/fstream.hpp>
 #include <boost/nowide/integration/filesystem.hpp>
@@ -1523,6 +1524,30 @@ static void load_downward_settings_list_from_config(std::string config_file, std
     }
 }
 
+#ifdef WIN32
+// The warning text for libraries injected into the process that BambuStudio is known not to
+// run correctly with (for example Nahimic, see GH #5573), built from what
+// BlacklistedLibraryCheck::perform_check() found. Empty when nothing was found. No system
+// message box shows it: none of the Material layer exists at process start, and in a
+// scripted command-line run a box would block the job. CLI::setup() logs the text and the
+// GUI start-up carries it to the main window through GUI_InitParams::startup_warning.
+static std::wstring blacklisted_library_warning_text()
+{
+    const std::wstring found = BlacklistedLibraryCheck::get_instance().get_blacklisted_string();
+    if (found.empty())
+        return std::wstring();
+    std::wstring text = L"Following DLLs have been injected into the BambuStudio process:\n\n";
+    text += found;
+    text += L"\n\n"
+            L"BambuStudio is known to not run correctly with these DLLs injected. "
+            L"We suggest stopping or uninstalling these services if you experience "
+            L"crashes or unexpected behaviour while using BambuStudio.\n"
+            L"For example, ASUS Sonic Studio injects a Nahimic driver, which makes BambuStudio "
+            L"to crash on a secondary monitor";
+    return text;
+}
+#endif
+
 int CLI::run(int argc, char **argv)
 {
     // Mark the main thread for the debugger and for runtime checks.
@@ -1662,6 +1687,10 @@ int CLI::run(int argc, char **argv)
         params.argv = argv;
         params.load_configs = load_configs;
         params.extra_config = std::move(m_extra_config);
+#ifdef WIN32
+        // Found by CLI::setup() before any window existed; the main window shows it.
+        params.startup_warning = blacklisted_library_warning_text();
+#endif
 
         std::vector<std::string>    gcode_files;
         std::vector<std::string>    non_gcode_files;
@@ -8390,15 +8419,9 @@ bool CLI::setup(int argc, char **argv)
     // We hope that if a DLL is being injected into a BambuStudio process, it happens at the very start of the application,
     // thus we shall detect them now.
     if (BlacklistedLibraryCheck::get_instance().perform_check()) {
-        std::wstring text = L"Following DLLs have been injected into the BambuStudio process:\n\n";
-        text += BlacklistedLibraryCheck::get_instance().get_blacklisted_string();
-        text += L"\n\n"
-                L"BambuStudio is known to not run correctly with these DLLs injected. "
-                L"We suggest stopping or uninstalling these services if you experience "
-                L"crashes or unexpected behaviour while using BambuStudio.\n"
-                L"For example, ASUS Sonic Studio injects a Nahimic driver, which makes BambuStudio "
-                L"to crash on a secondary monitor";
-        MessageBoxW(NULL, text.c_str(), L"Warning"/*L"Incopatible library found"*/, MB_OK);
+        // Logged only: the GUI shows the same text in its Material message dialog once the
+        // main window exists (see blacklisted_library_warning_text()).
+        BOOST_LOG_TRIVIAL(warning) << boost::nowide::narrow(blacklisted_library_warning_text());
     }
 #endif
 
