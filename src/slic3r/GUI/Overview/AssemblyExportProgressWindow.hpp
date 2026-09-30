@@ -25,11 +25,13 @@ public:
 
 private:
     void on_cancel();
+    void apply_shape();
 
     wxStaticText *m_message{nullptr};
     ProgressBar   *m_gauge{nullptr};
     wxStaticText *m_percent{nullptr};
     Button       *m_cancel{nullptr};
+    wxSize        m_shape_size;
     std::function<void()> m_cancel_cb;
 };
 
