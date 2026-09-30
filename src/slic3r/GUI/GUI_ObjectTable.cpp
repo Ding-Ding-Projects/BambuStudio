@@ -280,6 +280,25 @@ bool GridCellFilamentsEditor::EndEdit(int WXUNUSED(row),
     return true;
 }
 
+// wxGridCellChoiceEditor::Reset() and GetValue() take their control for a
+// wxComboBox, which the kit ComboBox is not (a virtual call through that cast
+// lands in the wrong vtable). wxGridCellEditorEvtHandler calls Reset() when
+// Escape is pressed in the cell, so both go through the kit Combo() here. The
+// box is always read-only: it is chosen from, never typed into.
+void GridCellFilamentsEditor::Reset()
+{
+    // find the right position, or default to the first if not found
+    int pos = Combo()->FindString(m_value);
+    if (pos == wxNOT_FOUND)
+        pos = 0;
+    Combo()->SetSelection(pos);
+}
+
+wxString GridCellFilamentsEditor::GetValue() const
+{
+    return Combo()->GetValue();
+}
+
 wxGridActivationResult GridCellFilamentsEditor::TryActivate(int row, int col, wxGrid* grid, const wxGridActivationSource& actSource)
 {
     ObjectGridTable *table = dynamic_cast<ObjectGridTable *>(grid->GetTable());
@@ -472,6 +491,22 @@ bool GridCellChoiceEditor::EndEdit(int WXUNUSED(row), int WXUNUSED(col), const w
     if (newval) *newval = value;
 
     return true;
+}
+
+// As for GridCellFilamentsEditor: the control is the kit ComboBox, never a
+// wxComboBox, so Reset() (called on Escape) and GetValue() go through Combo().
+void GridCellChoiceEditor::Reset()
+{
+    // find the right position, or default to the first if not found
+    int pos = Combo()->FindString(m_value);
+    if (pos == wxNOT_FOUND)
+        pos = 0;
+    Combo()->SetSelection(pos);
+}
+
+wxString GridCellChoiceEditor::GetValue() const
+{
+    return Combo()->GetValue();
 }
 
 wxGridActivationResult GridCellChoiceEditor::TryActivate(int row, int col, wxGrid *grid, const wxGridActivationSource &actSource)
@@ -2981,8 +3016,14 @@ void ObjectTablePanel::load_data()
     m_object_grid->SetCellSize(0, ObjectGridTable::col_brim_type, 1, 2);
     m_object_grid->SetCellSize(0, ObjectGridTable::col_speed_perimeter, 1, 2);
 
-    //m_object_grid->SetSelectionForeground(wxColour(0xDB,0xFD,0xE7));
-    //m_object_grid->SetSelectionBackground(*wxWHITE);
+    // Selected cells: the Material selected state rather than the Windows
+    // highlight blue with white text. The current cell's rectangle is the
+    // primary colour, one DIP thick (wx draws it in the selection foreground
+    // while the cell is inside a selection, so it stays visible there).
+    m_object_grid->SetSelectionBackground(StateColor::semantic(MD3::Role::SecondaryContainer));
+    m_object_grid->SetSelectionForeground(StateColor::semantic(MD3::Role::OnSecondaryContainer));
+    m_object_grid->SetCellHighlightColour(StateColor::semantic(MD3::Role::Primary));
+    m_object_grid->SetCellHighlightPenWidth(FromDIP(1));
     m_object_grid->SetDefaultCellBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     for (int col = 0; col < cols; col++)
     {

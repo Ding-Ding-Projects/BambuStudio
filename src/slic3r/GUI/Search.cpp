@@ -832,15 +832,15 @@ SearchDialog::SearchDialog(OptionsSearcher *searcher, Preset::Type type, wxWindo
     }
 
     // scroll window
-    m_scrolledWindow = new ScrolledWindow(m_client_panel, wxID_ANY, wxDefaultPosition, wxSize(m_pop_width - (em + em / 2), POPUP_HEIGHT * em), wxVSCROLL, 6, 6);
-    m_scrolledWindow->SetMarginColor(m_bg_colour);
-    m_scrolledWindow->SetScrollbarColor(m_thumb_color);
+    // The kit scrollbar is a strip inside the window's own client area: the list
+    // panel leaves room for it.
+    m_scrolledWindow = new MD3ScrolledWindow(m_client_panel, wxID_ANY, wxDefaultPosition, wxSize(m_pop_width - (em + em / 2), POPUP_HEIGHT * em), wxVSCROLL);
     m_scrolledWindow->SetBackgroundColour(m_bg_colour);
 
     auto m_listsizer = new wxBoxSizer(wxVERTICAL);
-    auto m_listPanel = new wxWindow(m_scrolledWindow->GetPanel(), -1);
+    auto m_listPanel = new wxWindow(m_scrolledWindow, -1);
     m_listPanel->SetBackgroundColour(m_bg_colour);
-    m_listPanel->SetSize(wxSize(m_scrolledWindow->GetSize().GetWidth(), -1));
+    m_listPanel->SetSize(wxSize(m_scrolledWindow->GetSize().GetWidth() - MD3ScrolledWindow::BarThickness(m_scrolledWindow), -1));
 
     m_listPanel->SetSizer(m_listsizer);
     m_listPanel->Fit();
@@ -1047,17 +1047,15 @@ void SearchDialog::update_list()
 #endif
     m_scrolledWindow->Destroy();
 
-    m_scrolledWindow = new ScrolledWindow(m_client_panel, wxID_ANY, wxDefaultPosition, wxSize(m_pop_width - (em + em / 2), POPUP_HEIGHT * em - em), wxVSCROLL, 6, 6);
-    m_scrolledWindow->SetMarginColor(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
-    m_scrolledWindow->SetScrollbarColor(StateColor::semantic(MD3::Role::Outline));
+    m_scrolledWindow = new MD3ScrolledWindow(m_client_panel, wxID_ANY, wxDefaultPosition, wxSize(m_pop_width - (em + em / 2), POPUP_HEIGHT * em - em), wxVSCROLL);
     m_scrolledWindow->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     auto m_listsizer = new wxBoxSizer(wxVERTICAL);
     // Assign the member (not a shadowing local) so keyboard nav in OnKeyDown can
     // reach the freshly-built SearchItem rows.
-    m_listPanel = new wxWindow(m_scrolledWindow->GetPanel(), -1);
+    m_listPanel = new wxWindow(m_scrolledWindow, -1);
     m_listPanel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
-    m_listPanel->SetSize(wxSize(m_scrolledWindow->GetSize().GetWidth(), -1));
+    m_listPanel->SetSize(wxSize(m_scrolledWindow->GetSize().GetWidth() - MD3ScrolledWindow::BarThickness(m_scrolledWindow), -1));
 
     const std::vector<FoundOption> &filters = searcher->found_options();
     auto                            index   = 0;
@@ -1240,14 +1238,12 @@ SearchObjectDialog::SearchObjectDialog(GUI::ObjectList* object_list, wxWindow* p
     m_client_panel->SetBackgroundColour(m_bg_color);
 
     // scroll window
-    m_scrolledWindow = new ScrolledWindow(m_client_panel, wxID_ANY, wxDefaultPosition, wxSize(POPUP_WIDTH * em - (em + em / 2), POPUP_HEIGHT * em), wxVSCROLL, 6, 6);
-    m_scrolledWindow->SetMarginColor(m_bg_color);
-    m_scrolledWindow->SetScrollbarColor(m_thumb_color);
+    m_scrolledWindow = new MD3ScrolledWindow(m_client_panel, wxID_ANY, wxDefaultPosition, wxSize(POPUP_WIDTH * em - (em + em / 2), POPUP_HEIGHT * em), wxVSCROLL);
     m_scrolledWindow->SetBackgroundColour(m_bg_color);
     auto m_listsizer = new wxBoxSizer(wxVERTICAL);
-    auto m_listPanel = new wxWindow(m_scrolledWindow->GetPanel(), -1);
+    auto m_listPanel = new wxWindow(m_scrolledWindow, -1);
     m_listPanel->SetBackgroundColour(m_bg_color);
-    m_listPanel->SetSize(wxSize(m_scrolledWindow->GetSize().GetWidth(), -1));
+    m_listPanel->SetSize(wxSize(m_scrolledWindow->GetSize().GetWidth() - MD3ScrolledWindow::BarThickness(m_scrolledWindow), -1));
 
     m_listPanel->SetSizer(m_listsizer);
     m_listPanel->Fit();
@@ -1296,15 +1292,13 @@ void SearchObjectDialog::update_list()
 #endif
     m_scrolledWindow->Destroy();
 
-    m_scrolledWindow = new ScrolledWindow(m_client_panel, wxID_ANY, wxDefaultPosition, wxSize(POPUP_WIDTH * em - (em + em / 2), POPUP_HEIGHT * em - em), wxVSCROLL, 6, 6);
-    m_scrolledWindow->SetMarginColor(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
-    m_scrolledWindow->SetScrollbarColor(StateColor::semantic(MD3::Role::Outline));
+    m_scrolledWindow = new MD3ScrolledWindow(m_client_panel, wxID_ANY, wxDefaultPosition, wxSize(POPUP_WIDTH * em - (em + em / 2), POPUP_HEIGHT * em - em), wxVSCROLL);
     m_scrolledWindow->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     auto m_listsizer = new wxBoxSizer(wxVERTICAL);
-    auto m_listPanel = new wxWindow(m_scrolledWindow->GetPanel(), -1);
+    auto m_listPanel = new wxWindow(m_scrolledWindow, -1);
     m_listPanel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
-    m_listPanel->SetSize(wxSize(m_scrolledWindow->GetSize().GetWidth(), -1));
+    m_listPanel->SetSize(wxSize(m_scrolledWindow->GetSize().GetWidth() - MD3ScrolledWindow::BarThickness(m_scrolledWindow), -1));
 
     const std::vector<std::tuple<GUI::ObjectDataViewModelNode*, wxString, wxString>>& found = m_object_list->GetModel()->get_found_list();
     auto                            index = 0;
