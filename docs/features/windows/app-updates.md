@@ -56,6 +56,36 @@
    session left open for days still finds a new release. Turning the preference off stops these
    checks until the next launch.
 
+## Shortcuts and install events
+
+Squirrel makes a shortcut for, and starts, every executable in a package unless one of them is
+marked as aware of it. Packages built before this change had no mark, so the regex helper
+`bambu-regex-worker.exe` got a shortcut that carried the package title, **Bambu Studio MD3**, and
+started a helper that shows nothing, while the application's own shortcut was named **BambuStudio**
+in a Start Menu folder "Bambu Research" ([issue #52](https://github.com/Ding-Ding-Projects/BambuStudio/issues/52)).
+
+Now the version resource of `bambu-studio.exe` carries `SquirrelAwareVersion` "1" in the
+`040904B0` block, the only one Squirrel reads, and names the product **Bambu Studio MD3** and the
+company **codingmachineedge**. Squirrel then runs only the launcher for its events, and the
+launcher handles each one and exits before it loads anything of the application:
+
+| Event | What the launcher does |
+| --- | --- |
+| `--squirrel-install` | `Update.exe --createShortcut=bambu-studio.exe --shortcut-locations=Desktop,StartMenu`, which makes (or replaces) `Bambu Studio MD3.lnk` on the desktop and in the Start Menu folder "codingmachineedge" |
+| `--squirrel-updated` | the same, but only for the places that still hold one of this application's shortcuts (new or legacy), so a shortcut the person deleted stays deleted |
+| `--squirrel-uninstall` | `--removeShortcut` for both places, then the Start Menu folder "codingmachineedge" when it is empty |
+| `--squirrel-obsolete` | nothing |
+| `--squirrel-firstrun` | a normal start; the argument is removed before the application sees it |
+
+Once the new shortcuts exist (and on uninstall) it also removes the two shortcuts older packages made,
+`BambuStudio.lnk` on the desktop and in "Bambu Research", but only when they point into this
+installation. The first update from an older package replaces the helper's wrongly aimed
+`Bambu Studio MD3.lnk` in place, because the new shortcut has the same name and folder.
+
+A copy installed by the setup program used before the Squirrel packages (in
+`%LOCALAPPDATA%\Programs\Bambu Studio MD3`) is a separate installation. Squirrel never updates it;
+remove it with its own uninstaller.
+
 ## Configuration
 
 - `auto_update` (Preferences ▸ General ▸ **Update automatically**, default on): whether an

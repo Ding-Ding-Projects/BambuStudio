@@ -1,6 +1,6 @@
 ---
 translation-of: app-updates.md
-source-sha256: 832a703ce3cdb4ae4c8a5980a175d3277f067a4b546cf6caa88030d174223091
+source-sha256: 548c046dd01bf043c23e20dbe7c3fb1a1fb7f1efa42ba6659648dfbf7de8d0db
 review-status: agent-drafted
 ---
 
@@ -25,6 +25,24 @@ review-status: agent-drafted
 4. **重新啟動以安裝更新。** 主視窗會通過正常關閉路線關閉，所以未儲存項目提示仍然適用，取消會保持應用程式開啟而冇重新啟動待決（該要求會喺每次關閉開始時取回，同埋只有當關閉被接受，或被項目頁面重播時先會交託）。當應用程式真係退出時會啟動 `Update.exe --processStartAndWait bambu-studio.exe`，不帶控制台視窗；Update.exe 會等緊應用程式退出，然後啟動已安裝嘅最新版本。
 5. **手動檢查。** 說明 ▸ 檢查更新會採用相同路線。佢首先會顯示簡短通知「喺背景下載 Bambu Studio `<tag>`。」，所以檢查唔會睇起嚟喺大型套件下載時冇做任何野。
 6. **喺佢執行時。** 已安裝副本嘅偏好設定開啟時會每六小時檢查一次，所以開啟數日嘅會話仍然會發現新發佈。關閉偏好設定會停止呢啲檢查直到下一次啟動。
+
+## 捷徑同安裝事件
+
+除非套件入面有一個可執行檔標明知道 Squirrel，否則 Squirrel 會幫套件入面每個可執行檔都整一個捷徑，仲會逐個啟動。喺呢個改動之前建置嘅套件都冇呢個標記，所以正規表示式輔助程式 `bambu-regex-worker.exe` 攞咗一個用套件標題命名嘅捷徑 **Bambu Studio MD3**，撳落去啟動一個乜都唔顯示嘅輔助程式；而應用程式自己嘅捷徑就叫 **BambuStudio**，放喺開始功能表「Bambu Research」資料夾（[issue #52](https://github.com/Ding-Ding-Projects/BambuStudio/issues/52)）。
+
+而家 `bambu-studio.exe` 嘅版本資源喺 `040904B0` 區塊（Squirrel 淨係讀呢一個）寫住 `SquirrelAwareVersion` "1"，產品名係 **Bambu Studio MD3**，公司名係 **codingmachineedge**。咁 Squirrel 就淨係為佢嘅事件啟動啟動器，啟動器處理完每個事件就退出，唔會載入應用程式任何部分：
+
+| 事件 | 啟動器做乜 |
+| --- | --- |
+| `--squirrel-install` | `Update.exe --createShortcut=bambu-studio.exe --shortcut-locations=Desktop,StartMenu`，喺桌面同開始功能表「codingmachineedge」資料夾整（或者換走）`Bambu Studio MD3.lnk` |
+| `--squirrel-updated` | 一樣，不過淨係做仲有呢個應用程式捷徑（新或者舊）嘅位置，所以用家刪咗嘅捷徑唔會再出現 |
+| `--squirrel-uninstall` | 兩個位置都用 `--removeShortcut`，之後「codingmachineedge」開始功能表資料夾變空就一併刪走 |
+| `--squirrel-obsolete` | 乜都唔做 |
+| `--squirrel-firstrun` | 正常啟動；應用程式睇到之前會拎走呢個參數 |
+
+新捷徑整好之後（同埋解除安裝嗰陣），佢亦會刪走舊套件整嘅兩個捷徑：桌面同「Bambu Research」入面嘅 `BambuStudio.lnk`，但淨係喺佢哋指住呢個安裝嘅時候先刪。由舊套件第一次更新嗰陣，輔助程式嗰個指錯咗嘅 `Bambu Studio MD3.lnk` 會原地被換走，因為新捷徑同佢同名、同資料夾。
+
+用 Squirrel 套件之前嗰個安裝程式裝嘅副本（喺 `%LOCALAPPDATA%\Programs\Bambu Studio MD3`）係另一個安裝。Squirrel 永遠唔會更新佢；請用佢自己嘅解除安裝程式移除。
 
 ## 設定
 
