@@ -36,6 +36,7 @@ constexpr int kRecentPerLine = 8; // recently used swatches per line
 constexpr int kSwatchH = 28;
 constexpr int kRowH   = 26; // one translation row
 constexpr int kValueW = 250; // widest translation value at Mono_11 (xyz-d65 / oklab rows)
+constexpr int kFieldPadPx = 15; // what a kit TextInput keeps around its entry: 5 px before it, 10 px after it
 constexpr int kMaxAnyFormatLen = 128; // parser input bound: no notation needs more
 
 using namespace MD3::Color;
@@ -376,8 +377,6 @@ void MD3ColorPickerDialog::build(wxWindow * /*parent*/, const wxColour &initial)
 
     // ---------------------------------------------------- translations column
     right->Add(caption_label(_L("Translations")), 0, wxLEFT | wxRIGHT | wxTOP, FromDIP(16));
-    const wxColour field_bg = StateColor::semantic(MD3::Role::SurfaceContainerLow);
-    const wxColour on       = StateColor::semantic(MD3::Role::OnSurface);
     for (const char *space : kSpaces) {
         TranslationRow row;
         row.space = space; // raw key: matched against Translation::space at display refresh, never translated
@@ -387,13 +386,16 @@ void MD3ColorPickerDialog::build(wxWindow * /*parent*/, const wxColour &initial)
         row.caption->SetForegroundColour(on_var);
         row.caption->SetMinSize(wxSize(FromDIP(48), -1));
         line->Add(row.caption, 0, wxALIGN_CENTER_VERTICAL);
-        row.value = new wxTextCtrl(this, wxID_ANY, wxEmptyString, wxDefaultPosition,
-                                   wxSize(FromDIP(kValueW), FromDIP(kRowH)), wxTE_READONLY | wxBORDER_NONE);
+        // A read-only kit field, like the HEX field above it; row.value is its inner entry.
+        // The kit keeps 5 px before the entry and 10 px after it, so the field is that much
+        // wider than the widest value the entry has to show.
+        auto *value_field = new ::TextInput(this, wxEmptyString, wxEmptyString, wxEmptyString, wxDefaultPosition,
+                                            wxSize(FromDIP(kValueW) + kFieldPadPx, FromDIP(kRowH)), wxTE_READONLY);
+        value_field->SetName(_L(space));
+        row.value = value_field->GetTextCtrl();
         row.value->SetFont(Label::Mono_11);
-        row.value->SetBackgroundColour(field_bg);
-        row.value->SetForegroundColour(on);
         row.value->SetName(_L(space));
-        line->Add(row.value, 1, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(6));
+        line->Add(value_field, 1, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(6));
         row.copy = new Button(this, wxEmptyString);
         row.copy->SetIconButton(Button::IconShape::Circle, FromDIP(kRowH));
         row.copy->SetGlyph(MaterialIcon::ContentCopy, 16);
@@ -495,7 +497,8 @@ void MD3ColorPickerDialog::refresh_translations()
             if (std::string(t.space) == row.space) { text = wxString::FromUTF8(t.text); break; }
         if (row.value->GetValue() != text) {
             row.value->ChangeValue(text);
-            row.value->SetToolTip(text);
+            // The entry's parent is the kit field, which gives both itself and the entry the tip.
+            row.value->GetParent()->SetToolTip(text);
         }
         row.copy->Enable(text != wxString::FromUTF8("\xE2\x80\x94"));
     }

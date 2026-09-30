@@ -3,6 +3,9 @@
 
 #include "GUI_ObjectSettings.hpp"
 #include "wxExtensions.hpp"
+#include "Widgets/Button.hpp"
+#include "Widgets/MaterialIcon.hpp"
+#include "Widgets/TextInput.hpp"
 
 #ifdef __WXOSX__
 #include "../libslic3r/PrintConfig.hpp"
@@ -29,7 +32,9 @@ enum EditorType
     etLayerHeight   = 4,
 };
 
-class LayerRangeEditor : public wxTextCtrl
+// A kit text field. Its entry is the inner wxTextCtrl, reached through
+// GetTextCtrl(); the field itself is the window that goes into the sizer.
+class LayerRangeEditor : public ::TextInput
 {
     bool                m_enter_pressed     { false };
     bool                m_call_kill_focus   { false };
@@ -58,8 +63,6 @@ private:
 
 class ObjectLayers : public OG_Settings
 {
-    ScalableBitmap  m_bmp_delete;
-    ScalableBitmap  m_bmp_add;
     ModelObject*    m_object {nullptr};
 
     wxFlexGridSizer*       m_grid_sizer;
@@ -74,10 +77,19 @@ public:
     // Button remembers the layer height range, for which it has been created.
     // The layer height range for this button is updated when the low or high boundary of the layer height range is updated
     // by the respective text edit field, so that this button emits an action for an up to date layer height range value.
-    class PlusMinusButton : public ScalableButton
+    //
+    // A kit icon button: a Material glyph, with the named raster icon as the fallback when the icon font is missing.
+    // It keeps taking the focus on a click: the edit fields tell that a click on one of these buttons moved the focus
+    // by casting the window that receives it to this class.
+    class PlusMinusButton : public ::Button
     {
     public:
-        PlusMinusButton(wxWindow *parent, const ScalableBitmap &bitmap, std::pair<coordf_t, coordf_t> range) : ScalableButton(parent, wxID_ANY, bitmap), range(range) {}
+        PlusMinusButton(wxWindow *parent, const std::string &raster, uint32_t glyph, std::pair<coordf_t, coordf_t> range)
+            : ::Button(parent, wxEmptyString, wxString::FromUTF8(raster.c_str())), range(range)
+        {
+            SetIconButton(::Button::IconShape::Circle, 28);
+            SetGlyph(glyph);
+        }
         // updated when the text edit field loses focus for any PlusMinusButton.
         std::pair<coordf_t, coordf_t> range;
     };

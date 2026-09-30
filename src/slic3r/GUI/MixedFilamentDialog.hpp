@@ -16,6 +16,7 @@
 class Button;
 class CheckBox;
 class ComboBox;
+class TextInput;
 class wxMouseEvent;
 class wxScrolledWindow;
 class wxTextCtrl;
@@ -132,6 +133,9 @@ private:
     RatioLabelPanel*            m_label_ratio_a{nullptr};
     RatioLabelPanel*            m_label_ratio_b{nullptr};
     wxPanel*                    m_ratio_editor_panel{nullptr};
+    // The kit field around the percentage editor; m_ratio_editor is its inner
+    // entry, which every read, focus call and bind goes through.
+    ::TextInput*                m_ratio_field{nullptr};
     wxTextCtrl*                 m_ratio_editor{nullptr};
     CheckBox*                   m_chk_gradient{nullptr};
     wxStaticText*               m_label_gradient{nullptr};

@@ -4,9 +4,11 @@ import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 
-// Two editable fields still drew the system's white box and sunken border: the
-// colour picker's HEX and "Enter any format" fields, inside a Material card, and
-// the object list's rename editor, whose light border stood out in dark mode.
+// Editable fields that drew the system's white box and sunken border: the colour
+// picker's HEX and "Enter any format" fields, inside a Material card, and the
+// object list's rename editor, whose light border stood out in dark mode. All of
+// them are kit TextInput fields now. lane-text-fields.test.mjs covers the other
+// single-line editors and keeps the list of native edit boxes closed.
 
 const testDir = path.dirname(fileURLToPath(import.meta.url));
 const repoDir = path.resolve(testDir, '..', '..');
@@ -22,9 +24,14 @@ test('the colour picker\'s editable fields are kit fields', async () => {
   assert.doesNotMatch(picker, /m_hex = new wxTextCtrl\(|m_any_format = new wxTextCtrl\(/);
 });
 
-test('the object list\'s rename editor is a Material filled field', async () => {
+test('the object list\'s rename editor is a kit text field', async () => {
+  // It was a flat wxTextCtrl tinted by hand (SurfaceContainerHighest behind OnSurface);
+  // the kit field draws that fill, its outline and its focus ring itself, so the
+  // editor is the kit TextInput and the list reads the name from its inner entry.
   const renderers = strip(await readFile(path.join(gui, 'ExtraRenderers.cpp'), 'utf8'));
-  assert.match(renderers, /new wxTextCtrl\(parent, wxID_ANY, data\.GetText\(\),\s*position, labelRect\.GetSize\(\), wxTE_PROCESS_ENTER \| wxBORDER_NONE\);/);
-  assert.match(renderers, /text_editor->SetBackgroundColour\(StateColor::semantic\(MD3::Role::SurfaceContainerHighest\)\);/);
-  assert.match(renderers, /text_editor->SetForegroundColour\(StateColor::semantic\(MD3::Role::OnSurface\)\);/);
+  assert.match(renderers, /::TextInput\* editor = new ::TextInput\(parent, data\.GetText\(\), wxEmptyString, wxEmptyString,\s*position, labelRect\.GetSize\(\), 0\);/);
+  assert.match(renderers, /wxTextCtrl\* text_editor = editor->GetTextCtrl\(\);/);
+  assert.match(renderers, /auto\* editor = dynamic_cast<::TextInput\*>\(ctrl\);\s*wxTextCtrl\* text_editor = editor \? editor->GetTextCtrl\(\) : nullptr;/);
+  assert.doesNotMatch(renderers, /new wxTextCtrl\(|wxDynamicCast\(ctrl, wxTextCtrl\)/);
+  assert.doesNotMatch(renderers, /text_editor->SetBackgroundColour|text_editor->SetForegroundColour/, 'the kit field paints its own fill and text colour');
 });

@@ -2006,7 +2006,9 @@ void PointCtrl::BUILD()
 {
 	auto temp = new wxBoxSizer(wxHORIZONTAL);
 
-    const wxSize field_size(4 * m_em_unit, -1);
+    // A kit field takes 15 px of its width for its own padding, so it is asked
+    // for six em where the bare edit box was given four.
+    const wxSize field_size(6 * m_em_unit, -1);
     Slic3r::Vec2d default_pt;
     if(m_opt.type == coPoints)
 	    default_pt = m_opt.get_default_value<ConfigOptionPoints>()->values.at(0);
@@ -2017,19 +2019,21 @@ void PointCtrl::BUILD()
 	val = default_pt(1);
 	wxString Y = val - int(val) == 0 ? wxString::Format(_T("%i"), int(val)) : wxNumberFormatter::ToString(val, 2, wxNumberFormatter::Style_None);
 
-	long style = wxTE_PROCESS_ENTER;
-#ifdef _WIN32
-	style |= wxBORDER_SIMPLE;
-#endif
-	x_textctrl = new ::TextCtrl(m_parent, wxID_ANY, X, wxDefaultPosition, field_size, style);
-	y_textctrl = new ::TextCtrl(m_parent, wxID_ANY, Y, wxDefaultPosition, field_size, style);
+	// Two kit fields, built the way TextCtrl::BUILD builds its own. The inner
+	// entries stay in x_textctrl and y_textctrl, so the reads, the writes and
+	// the binds below are unchanged.
+	x_input = new ::TextInput(m_parent, X, wxEmptyString, wxEmptyString, wxDefaultPosition, field_size, wxTE_PROCESS_ENTER);
+	y_input = new ::TextInput(m_parent, Y, wxEmptyString, wxEmptyString, wxDefaultPosition, field_size, wxTE_PROCESS_ENTER);
+	x_textctrl = x_input->GetTextCtrl();
+	y_textctrl = y_input->GetTextCtrl();
     if (parent_is_custom_ctrl && m_opt.height < 0)
-        opt_height = (double)x_textctrl->GetSize().GetHeight() / m_em_unit;
+        opt_height = (double)x_input->GetSize().GetHeight() / m_em_unit;
 
-    x_textctrl->SetFont(Slic3r::GUI::wxGetApp().normal_font());
-	x_textctrl->SetBackgroundStyle(wxBG_STYLE_PAINT);
-	y_textctrl->SetFont(Slic3r::GUI::wxGetApp().normal_font());
-	y_textctrl->SetBackgroundStyle(wxBG_STYLE_PAINT);
+	if (!wxOSX) {
+		// The kit field paints its whole surface, so nothing is erased behind it.
+		x_input->SetBackgroundStyle(wxBG_STYLE_PAINT);
+		y_input->SetBackgroundStyle(wxBG_STYLE_PAINT);
+	}
 
 	auto static_text_x = new Label(m_parent, "x : ");
 	auto static_text_y = new Label(m_parent, "   y : ");
@@ -2038,15 +2042,15 @@ void PointCtrl::BUILD()
 	static_text_y->SetFont(Slic3r::GUI::wxGetApp().normal_font());
 	static_text_y->SetBackgroundStyle(wxBG_STYLE_PAINT);
 
-	wxGetApp().UpdateDarkUI(x_textctrl);
-	wxGetApp().UpdateDarkUI(y_textctrl);
+	wxGetApp().UpdateDarkUI(x_input);
+	wxGetApp().UpdateDarkUI(y_input);
 	wxGetApp().UpdateDarkUI(static_text_x, false, true);
 	wxGetApp().UpdateDarkUI(static_text_y, false, true);
 
 	temp->Add(static_text_x, 0, wxALIGN_CENTER_VERTICAL, 0);
-	temp->Add(x_textctrl);
+	temp->Add(x_input);
 	temp->Add(static_text_y, 0, wxALIGN_CENTER_VERTICAL, 0);
-	temp->Add(y_textctrl);
+	temp->Add(y_input);
 
     x_textctrl->Bind(wxEVT_TEXT_ENTER, ([this](wxCommandEvent e) { propagate_value(x_textctrl); }), x_textctrl->GetId());
 	y_textctrl->Bind(wxEVT_TEXT_ENTER, ([this](wxCommandEvent e) { propagate_value(y_textctrl); }), y_textctrl->GetId());
@@ -2057,25 +2061,44 @@ void PointCtrl::BUILD()
 	// 	// recast as a wxWindow to fit the calling convention
 	sizer = dynamic_cast<wxSizer*>(temp);
 
-	x_textctrl->SetToolTip(get_tooltip_text(X+", "+Y));
-	y_textctrl->SetToolTip(get_tooltip_text(X+", "+Y));
+	x_input->SetToolTip(get_tooltip_text(X+", "+Y));
+	y_input->SetToolTip(get_tooltip_text(X+", "+Y));
+}
+
+void PointCtrl::enable()
+{
+    x_input->Enable();
+    y_input->Enable();
+}
+
+void PointCtrl::disable()
+{
+    x_input->Disable();
+    y_input->Disable();
+}
+
+wxWindow* PointCtrl::getWindow()
+{
+    return x_input;
 }
 
 void PointCtrl::msw_rescale()
 {
     Field::msw_rescale();
 
-    wxSize field_size(4 * m_em_unit, -1);
+    wxSize field_size(6 * m_em_unit, -1);
 
     if (parent_is_custom_ctrl) {
         field_size.SetHeight(lround(opt_height * m_em_unit));
-        x_textctrl->SetSize(field_size);
-        y_textctrl->SetSize(field_size);
+        x_input->SetSize(field_size);
+        y_input->SetSize(field_size);
     }
     else {
-        x_textctrl->SetMinSize(field_size);
-        y_textctrl->SetMinSize(field_size);
+        x_input->SetMinSize(field_size);
+        y_input->SetMinSize(field_size);
     }
+    x_input->Rescale();
+    y_input->Rescale();
 }
 
 void PointCtrl::sys_color_changed()
