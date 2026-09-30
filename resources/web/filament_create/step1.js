@@ -22,6 +22,19 @@ function _t(tid) {
     return (typeof LangText !== 'undefined' && LangText['en'] && LangText['en'][tid]) || '';
 }
 
+// The Type field is a readonly input, so the text it shows would also be the value. The value that
+// is stored and sent on ("TPU-AMS" and every other type) is kept in the field's data, and the field
+// shows the ink wording for it. Everything that reads or compares the type goes through these two.
+function setTypeValue(type) {
+    var stored = String(type === undefined || type === null ? '' : type);
+    $('#input-type').data('type', stored).val(stored ? DisplayInkWording(stored) : '');
+}
+
+function getTypeValue() {
+    var stored = $('#input-type').data('type');
+    return String(stored === undefined ? ($('#input-type').val() || '') : stored).trim();
+}
+
 // Hover text for the "为当前打印机创建" radio card:
 //   - No printer connected  → t272 "暂无打印机，请连接打印机" / "No printer connected. Please connect a printer."
 //   - Printer connected     → t273 prefix + printer name
@@ -47,7 +60,7 @@ $(document).ready(function () {
     // ── 下一步按鈕禁用逻辑：vendor + type + serial 全填完才可点 ──
     function updateNextBtn() {
         const vendor = ($('#input-vendor').val() || '').trim();
-        const type   = ($('#input-type').val()   || '').trim();
+        const type   = getTypeValue();
         const serial = ($('#input-series').val()  || '').trim();
         $('#btn-next').prop('disabled', !(vendor && type && serial));
     }
@@ -59,7 +72,7 @@ $(document).ready(function () {
     // ── 回填 sessionStorage 中保存的数据（在所有事件绑定之前）──
     var _s1 = JSON.parse(sessionStorage.getItem('step1') || '{}');
     if (_s1.vendor) $('#input-vendor').val(_s1.vendor);
-    if (_s1.type)   $('#input-type').val(_s1.type);
+    if (_s1.type)   setTypeValue(_s1.type);
     if (_s1.serial) $('#input-series').val(_s1.serial);
     if (_s1.mode) {
         $('.radio-card').removeClass('active');
@@ -96,7 +109,7 @@ $(document).ready(function () {
     // Next step -> route based on selected creation mode
     $('#btn-next').on('click', function() {
         const vendor = ($('#input-vendor').val() || '').trim();
-        const type   = ($('#input-type').val()   || '').trim();
+        const type   = getTypeValue();
         const serial = ($('#input-series').val()  || '').trim();
 
         // 读 active card 里的 input value
@@ -179,7 +192,7 @@ $(document).ready(function () {
                         refreshTypeDropdown();
                     }
                     $('#input-vendor').val(selectedVendor);
-                    $('#input-type').val(selectedType);
+                    setTypeValue(selectedType);
                     $('#input-series').val(selectedSerial);
                     sessionStorage.removeItem('step1');
                 }
@@ -231,7 +244,8 @@ $(document).ready(function () {
 
     function renderTypes(list) {
         var typeHtml = '';
-        (list || TYPE_LIST).forEach(function(t) { typeHtml += '<div class="dropdown-item" data-val="' + t + '">' + t + '</div>'; });
+        // data-val is the stored type; the row shows the ink wording for the type that names the dispenser.
+        (list || TYPE_LIST).forEach(function(t) { typeHtml += '<div class="dropdown-item" data-val="' + t + '">' + DisplayInkWording(t) + '</div>'; });
         $('#type-options').html(typeHtml || '<div class="dropdown-item disabled">No data</div>');
     }
 
@@ -246,15 +260,15 @@ $(document).ready(function () {
             list = TYPE_LIST.filter(function(t) { return SUPPORTED_TYPES.indexOf(t) !== -1; });
         }
         renderTypes(list);
-        var cur = ($('#input-type').val() || '').trim();
+        var cur = getTypeValue();
         if (cur && list.indexOf(cur) === -1) {
-            $('#input-type').val('');
+            setTypeValue('');
         }
         updateNextBtn();
     }
 
     $(document).on('click', '#type-options .dropdown-item', function() {
-        $('#input-type').val($(this).data('val'));
+        setTypeValue($(this).data('val'));
         $('#type-dropdown-list').addClass('hidden');
         updateNextBtn();
     });

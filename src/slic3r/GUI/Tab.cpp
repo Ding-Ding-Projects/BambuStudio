@@ -1954,7 +1954,7 @@ static wxString generate_support_param_description(const std::string& key, const
         if (int_opt->value <= static_cast<int>(filament_presets.size())) {
             Slic3r::Preset *filament = filaments.find_preset(filament_presets[int_opt->value - 1]);
             if (filament)
-                slot_str += " " + wxString::FromUTF8(filament->config.option<ConfigOptionStrings>("filament_type")->values[0]);
+                slot_str += " " + I18N::display_material_type(filament->config.option<ConfigOptionStrings>("filament_type")->values[0]);
         }
         return wxString::Format("%s: %s", label, slot_str);
     }
@@ -2639,7 +2639,8 @@ void Tab::on_value_change(const std::string& opt_key, const boost::any& value)
                     wxString msg_header;
                     if (from_json) {
                         // JSON 推荐：显示支撑料名称和匹配的主体料
-                        msg_header = wxString::Format(_L("When using %s to support %s, We recommend the following settings:"), wxString::FromUTF8(support_material_display_name), wxString::FromUTF8(model_material_display_name));
+                        // Both names are a preset alias or a material type, shown in the ink wording; the message is only text.
+                        msg_header = wxString::Format(_L("When using %s to support %s, We recommend the following settings:"), I18N::display_material_name(support_material_display_name), I18N::display_material_name(model_material_display_name));
                     } else if (support_material_display_name == "PLA" && has_filaments({"TPU", "TPU-AMS"})) {
                         msg_header = _L("When using PLA to support TPU, We recommend the following settings:");
                     } else {

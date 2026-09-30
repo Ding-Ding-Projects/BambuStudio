@@ -27551,3 +27551,10 @@ msgstr "Ink Dispenser-%s"
 
 msgid "AMS 2 Pro/AMS HT"
 msgstr "Ink Dispenser 2 Pro/HT"
+
+msgid "TPU-AMS"
+msgstr "TPU for Ink Dispenser"
+
+msgctxt "NarrowBlock"
+msgid "TPU-AMS"
+msgstr "TPU for Ink"

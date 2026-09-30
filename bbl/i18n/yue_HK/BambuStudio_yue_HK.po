@@ -37493,3 +37493,14 @@ msgstr "墨水機-%s"
 #. review-status: agent-drafted
 msgid "AMS 2 Pro/AMS HT"
 msgstr "墨水機 2 Pro/HT"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "TPU-AMS"
+msgstr "墨水機用 TPU"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgctxt "NarrowBlock"
+msgid "TPU-AMS"
+msgstr "墨水用 TPU"

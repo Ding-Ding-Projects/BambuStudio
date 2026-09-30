@@ -1464,8 +1464,13 @@ static wxString get_string_value(std::string opt_key, const DynamicPrintConfig& 
                 out.RemoveLast(1);
                 return out;
             }
-            if (!strings->empty() && opt_idx < strings->values.size())
+            if (!strings->empty() && opt_idx < strings->values.size()) {
+                // A material type that names the dispenser is shown in the ink wording; the row only
+                // displays the value, the preset keeps it as stored.
+                if (opt_key == "filament_type")
+                    return I18N::display_material_type(strings->get_at(opt_idx));
                 return from_u8(strings->get_at(opt_idx));
+            }
         }
         break;
         }

@@ -314,7 +314,9 @@ Temp_Calibration_Dlg::Temp_Calibration_Dlg(wxWindow* parent, wxWindowID id, Plat
     // sizer (was a 2-column wxRadioBox). A 9-wide SegmentedControl would not fit,
     // so each option is a live-drawn RadioBox + label chip; single-selection is
     // managed here, preserving the original selected-index -> temperature mapping.
-    wxString filamentLabels[] = {"PLA", "ABS/ASA", "PETG", "PCTG", "TPU", "TPU-AMS", "PA-CF", "PET-CF", _L("Custom")};
+    // The labels are display text only: the selected index picks the temperatures, never the text. The
+    // material type that names the dispenser is shown in the ink wording.
+    wxString filamentLabels[] = {"PLA", "ABS/ASA", "PETG", "PCTG", "TPU", I18N::display_material_type("TPU-AMS"), "PA-CF", "PET-CF", _L("Custom")};
     const int nFilament = sizeof(filamentLabels) / sizeof(wxString);
 
     auto* fil_caption = new Label(this, _L("Filament type"));

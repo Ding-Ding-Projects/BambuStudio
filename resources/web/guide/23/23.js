@@ -158,7 +158,10 @@ function SortUI()
       const input = $('<input type="checkbox">').attr({
         vendor: vendor, filatype: type, name: shortName
       }).on('change', updateSelectAllCheckbox);
-      const row = $('<label>').addClass('filament-row').append(input, $('<span>').text(shortName));
+      // The name is shown in the ink wording; the attribute and the profile key keep the preset's own name.
+      const nameText = $('<span>').text(DisplayInkWording(shortName));
+      if (DisplayInkWordingTitle(shortName)) nameText.attr('title', DisplayInkWordingTitle(shortName));
+      const row = $('<label>').addClass('filament-row').append(input, nameText);
       row.data('models', []).data('filamentKeys', []);
       rows.set(key, row);
       $('#ItemBlockArea').append(row);
@@ -189,7 +192,10 @@ function appendFilterOption(parent, value, attribute, extra, handler)
   const input = $('<input type="checkbox">').addClass('inputIndent').attr(attribute, value)
     .on('change', handler);
   if (attribute === 'mode') input.attr('nozzle', extra);
-  $('<label>').addClass('checkboxText filter-option').append(input, $('<span>').text(value))
+  // The value stays in the attribute (it is what the filters compare); only the shown text changes.
+  const text = $('<span>').text(DisplayInkWording(value));
+  if (DisplayInkWordingTitle(value)) text.attr('title', DisplayInkWordingTitle(value));
+  $('<label>').addClass('checkboxText filter-option').append(input, text)
     .appendTo(parent);
 }
 
@@ -296,8 +302,9 @@ function SortFilament()
       !value || selectedModels.some(model => value.includes(model)));
     const typeMatch = types.size === 0 || types.has(input.attr('filatype'));
     const vendorMatch = vendors.size === 0 || vendors.has(input.attr('vendor'));
-    const haystack = [input.attr('name'), input.attr('vendor'), input.attr('filatype')]
-      .join(' ').toLowerCase();
+    // A search matches what the row shows as well as the stored name and type.
+    const haystack = [input.attr('name'), DisplayInkWording(input.attr('name') || ''), input.attr('vendor'),
+      input.attr('filatype'), DisplayInkWording(input.attr('filatype') || '')].join(' ').toLowerCase();
     const textMatch = terms.length === 0 || terms.some(term => haystack.includes(term));
     const show = (selectedModels.length + types.size + vendors.size > 0) &&
       modelMatch && typeMatch && vendorMatch && textMatch;
@@ -530,7 +537,7 @@ function renderCustomFilaments()
       if (!groups.has(key)) groups.set(key, []);
       groups.get(key).push(item);
     });
-    groups.forEach((items, title) => addGroup(title, items));
+    groups.forEach((items, title) => addGroup(DisplayInkWording(title), items));
   } else {
     list.forEach(item => appendCustomRow(host, item));
   }
@@ -542,7 +549,7 @@ function appendCustomRow(host, item)
   const name = String(item.name || '');
   const row = $('<div>').addClass('CFilament_Item');
   $('<span>').addClass('CFilament_Name').attr('title', name).text(name).appendTo(row);
-  $('<span>').addClass('CFilament_Type').text(String(item.type || '')).appendTo(row);
+  $('<span>').addClass('CFilament_Type').text(DisplayInkWording(String(item.type || ''))).appendTo(row);
   $('<span>').addClass('CFilament_Date').text(String(item.create_time || item.date || '').slice(0, 10)).appendTo(row);
   const edit = $('<button type="button">').addClass('CFilament_EditBtn')
     .attr('aria-label', GetCurrentPlainTextByKey('t128') + ' ' + name)

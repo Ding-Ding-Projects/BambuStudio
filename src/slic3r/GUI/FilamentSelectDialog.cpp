@@ -1003,7 +1003,9 @@ void FilamentSelectDialog::select_brand(const wxString& brand)
             row->SetBackgroundColour(dlg_bg());
             auto* h = new wxBoxSizer(wxHORIZONTAL);
 
-            auto* lbl = new Label(row, alias);
+            // The row shows the preset alias in the ink wording; the click handler below keeps the alias
+            // itself, so what is shown is never what gets selected or returned.
+            auto* lbl = new Label(row, I18N::display_material_name(std::string(alias.ToUTF8().data())));
             lbl->SetFont(Label::Body_14);
             lbl->SetForegroundColour(dlg_text_primary());
             h->Add(lbl, 1, wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(8));

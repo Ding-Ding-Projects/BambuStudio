@@ -341,7 +341,7 @@ function SortUI()
 			let LowType=fType.toLowerCase();
 		    if(!TypeHtmlArray.hasOwnProperty(LowType))
 		    {
-			    let HtmlType='<div class="checkboxText"><input class="inputIndent" type="checkbox" filatype="'+fType+'" onChange="FilaClick()"   />'+fType+'</div>';
+			    let HtmlType='<div class="checkboxText"><input class="inputIndent" type="checkbox" filatype="'+fType+'" onChange="FilaClick()"   />'+DisplayInkWording(fType)+'</div>';
 			
 				TypeHtmlArray[LowType]=HtmlType;
 		    }
@@ -359,7 +359,7 @@ function SortUI()
 			let pFila=$("#ItemBlockArea input[vendor='"+fVendor+"'][filatype='"+fType+"'][name='"+fShortName+"']");
 	        if(pFila.length==0)
 		    {
-			    let HtmlFila='<div><input type="checkbox" vendor="'+fVendor+'"  filatype="'+fType+'" filalist="'+fWholeName+';'+'"  model="'+fModel+'" name="'+fShortName+'" />'+fShortName+'</div>';
+			    let HtmlFila='<div><input type="checkbox" vendor="'+fVendor+'"  filatype="'+fType+'" filalist="'+fWholeName+';'+'"  model="'+fModel+'" name="'+fShortName+'" />'+DisplayInkWording(fShortName)+'</div>';
 			
 			    $("#ItemBlockArea").append(HtmlFila);
 		    } 

@@ -132,6 +132,17 @@ static wxColour blend_n_colors(const std::vector<wxColour>& cols, const std::vec
     return wxColour(hex);
 }
 
+// The preset names the dialog lists are display text only: a selection is tracked by index, never by
+// name. A name that says "TPU for AMS" is shown in the ink wording; the types stay as stored.
+static std::vector<std::string> display_preset_names(const std::vector<std::string>& names)
+{
+    std::vector<std::string> shown;
+    shown.reserve(names.size());
+    for (const std::string& name : names)
+        shown.push_back(std::string(I18N::display_material_name(name).ToUTF8().data()));
+    return shown;
+}
+
 // ---- Constructors ----
 
 MixedFilamentDialog::MixedFilamentDialog(wxWindow* parent,
@@ -142,7 +153,7 @@ MixedFilamentDialog::MixedFilamentDialog(wxWindow* parent,
                 wxDefaultSize, wxCAPTION | wxCLOSE_BOX)
     , m_edit_mode(false)
     , m_physical_colors(physical_colors)
-    , m_physical_names(physical_names)
+    , m_physical_names(display_preset_names(physical_names))
     , m_physical_types(physical_types)
 {
     m_result.components = {1, (physical_colors.size() >= 2) ? 2u : 1u};
@@ -169,7 +180,7 @@ MixedFilamentDialog::MixedFilamentDialog(wxWindow* parent,
     , m_result(existing)
     , m_edit_mode(true)
     , m_physical_colors(physical_colors)
-    , m_physical_names(physical_names)
+    , m_physical_names(display_preset_names(physical_names))
     , m_physical_types(physical_types)
 {
     if (m_result.components.size() < 2) {
@@ -1821,7 +1832,8 @@ void MixedFilamentDialog::update_ok_button_state()
                     if (!slots.empty()) slots += ", ";
                     slots += std::to_string(it->second[j]);
                 }
-                parts += wxString::Format(_L("Slot %s (%s)"), slots, wxString::FromUTF8(it->first));
+                // The type is compared and grouped as stored; only the text shown here uses the ink wording.
+                parts += wxString::Format(_L("Slot %s (%s)"), slots, I18N::display_material_type(it->first));
             }
             m_type_mismatch_msg = parts + " " + _L("cannot be mixed. Please select the same filament type.");
         } else {

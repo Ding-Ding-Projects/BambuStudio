@@ -2249,6 +2249,13 @@ msgstr ""
 msgid "The configuration is up to date."
 msgstr ""
 
+msgid "TPU-AMS"
+msgstr ""
+
+msgctxt "NarrowBlock"
+msgid "TPU-AMS"
+msgstr ""
+
 msgid "Import File"
 msgstr ""
 
