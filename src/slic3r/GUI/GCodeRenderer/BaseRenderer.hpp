@@ -96,6 +96,9 @@ namespace Slic3r {
                 bool is_legend_enabled() const;
                 void enable_legend(bool enable);
                 float get_legend_height() const;
+                // Pixel width of the legend dock while it is expanded; 0 when it is
+                // folded, disabled or not drawn. The notification column stops left of it.
+                float get_legend_dock_width() const;
                 const Shells& get_shells() const;
                 const GCodeCheckResult& get_gcode_check_result() const;
                 const FilamentPrintableResult& get_filament_printable_result() const;
@@ -213,6 +216,10 @@ namespace Slic3r {
                 float m_legend_height{ 0.0f };
                 float m_legend_width{ 0.0f };
                 bool m_legend_expanded{ false };
+                // Grouping card sizes measured on the previous frame (0 = not measured yet). ImGui 1.83
+                // cannot auto-fit a child window, so the real content height is fed back a frame late.
+                float m_ams_card_content_height{ 0.0f };
+                float m_ams_nozzle_box_content_height{ 0.0f };
                 size_t m_extruders_count{ 0 };
                 std::vector<ExtrusionRole> m_roles;
                 float m_max_print_height{ 0.0f };

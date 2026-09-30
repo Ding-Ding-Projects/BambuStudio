@@ -630,6 +630,8 @@ private:
     // Assembly view intentionally keeps its legacy combined toolbar.
     mutable std::shared_ptr<GLToolbar> m_gizmo_toolbar{ nullptr };
     mutable IMToolbar m_sel_plate_toolbar;
+    // Width in canvas px of the Preview plate strip as last drawn, 0 while it is not shown.
+    float m_sel_plate_toolbar_width{ 0.0f };
     mutable IMToolbar m_assembly_view_thumbnail;
     mutable IMReturnToolbar m_return_toolbar;
 
@@ -1003,6 +1005,9 @@ public:
     void _update_select_plate_toolbar_stats_item(bool force_selected = false);
     void reset_select_plate_toolbar_selection();
     void enable_select_plate_toolbar(bool enable);
+    // The plate strip sits at the canvas's left edge, so its width is its right
+    // edge; overlays that share that corner (the Preview status pill) start beyond it.
+    float get_select_plate_toolbar_width() const { return m_sel_plate_toolbar_width; }
     void enable_return_toolbar(bool enable);
     void enable_dynamic_background(bool enable);
     void enable_labels(bool enable) { m_labels.enable(enable); }

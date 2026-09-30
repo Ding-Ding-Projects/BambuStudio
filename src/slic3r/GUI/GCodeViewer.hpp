@@ -29,6 +29,7 @@ namespace Slic3r {
                 ~GCodeViewer();
 
                 float get_legend_height() const;
+                float get_legend_dock_width() const;
                 IMSlider* get_moves_slider();
                 IMSlider* get_layers_slider();
                 EViewType get_view_type() const;

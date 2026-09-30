@@ -6884,7 +6884,8 @@ void Sidebar::fit_object_list_height() const
             row_h = list->GetItemRect(top[0], nullptr).GetHeight();
     }
     if (row_h <= 0) row_h = list->GetCharHeight() + FromDIP(8);
-    const int header_h = list->GetCharHeight() + FromDIP(12);
+    // The list is built without a column header, so there is no header row to reserve.
+    const int header_h = list->HasFlag(wxDV_NO_HEADER) ? 0 : list->GetCharHeight() + FromDIP(12);
 
     const int floor_h   = FromDIP(180);
     const int ceiling_h = FromDIP(420);

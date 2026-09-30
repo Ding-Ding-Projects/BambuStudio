@@ -251,6 +251,13 @@ void NotificationManager::SlicingProgressNotification::render(GLCanvas3D& canvas
 	const float  dailytips_panel_height = 380.0f * scale;
 
 	float right_gap = right_margin + (move_from_overlay ? overlay_width + m_line_height * 5 : 0);
+	// In Preview right_margin carries the layer slider column and, while it is
+	// expanded, the legend dock, so the card sits beside them rather than under
+	// the dock. A canvas too narrow for that keeps the card on the canvas and
+	// lifts it in front instead of pushing it off the left edge.
+	const float widest_gap = std::max(0.0f, (float)cnv_size.get_width() - m_window_width);
+	const bool  over_dock  = right_gap > widest_gap;
+	right_gap = std::min(right_gap, widest_gap);
 	m_window_pos = ImVec2((float)cnv_size.get_width() - right_gap - m_window_width, (float)cnv_size.get_height() - m_top_y);
 	imgui.set_next_window_pos(m_window_pos.x, m_window_pos.y, ImGuiCond_Always, 0.0f, 0.0f);
 	m_window_height = progress_panel_height + m_dailytips_panel->get_size().y + progress_child_window_padding.y + dailytips_child_window_padding.y + bottom_padding.y;
@@ -331,6 +338,8 @@ void NotificationManager::SlicingProgressNotification::render(GLCanvas3D& canvas
 			set_hovered();
 		}
 	}
+	if (over_dock && !ImGui::IsPopupOpen("", ImGuiPopupFlags_AnyPopup))
+		ImGui::BringWindowToDisplayFront(ImGui::GetCurrentWindow());
 	imgui.end();
 
 

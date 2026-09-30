@@ -315,6 +315,11 @@ namespace Slic3r
                 return m_legend_height;
             }
 
+            float BaseRenderer::get_legend_dock_width() const
+            {
+                return m_legend_expanded ? m_legend_width : 0.0f;
+            }
+
             const Shells& BaseRenderer::get_shells() const
             {
                 return m_shells;
@@ -1512,27 +1517,48 @@ namespace Slic3r
                 if (status_layer_count > 0) {
                     const std::string status_text =
                         (boost::format(_u8L("Sliced · %1% layers")) % status_layer_count).str();
-                    imgui.set_next_window_pos(16.0f * m_scale, 16.0f * m_scale, ImGuiCond_Always, 0.0f, 0.0f);
-                    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, float(MD3::Metrics::radius_home) * m_scale);
-                    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 1.0f * m_scale);
-                    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(14.0f * m_scale, 7.0f * m_scale));
-                    ImGui::PushStyleColor(ImGuiCol_WindowBg, md3_imgui_color(MD3::Role::SurfaceContainer, m_is_dark));
-                    ImGui::PushStyleColor(ImGuiCol_Border, md3_imgui_color(MD3::Role::OutlineVariant, m_is_dark));
-                    ImGui::PushStyleColor(ImGuiCol_Text, md3_imgui_color(MD3::Role::OnSurfaceVariant, m_is_dark));
-                    ImGui::SetNextWindowBgAlpha(1.0f);
-                    imgui.begin(std::string("Preview status pill"),
-                                ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
-                                ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
-                                ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize |
-                                ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav |
-                                ImGuiWindowFlags_NoInputs);
-                    if (imgui.material_icons_available())
-                        imgui.text(ImGuiWrapper::material_icon(MaterialIcon::Layers) + "  " + status_text);
-                    else
-                        imgui.text(status_text);
-                    imgui.end();
-                    ImGui::PopStyleColor(3);
-                    ImGui::PopStyleVar(3);
+                    const std::string pill_text = imgui.material_icons_available()
+                        ? ImGuiWrapper::material_icon(MaterialIcon::Layers) + "  " + status_text
+                        : status_text;
+                    // The plate strip owns the canvas's left edge, so the pill starts to
+                    // its right instead of over it. With no strip (one plate in an
+                    // exported file, G-code only) the strip publishes 0 and the kit's
+                    // 16 px inset applies.
+                    float pill_left = 16.0f * m_scale;
+                    if (const GLCanvas3D* preview_canvas = wxGetApp().plater()->get_preview_canvas3D()) {
+                        const float strip_width = preview_canvas->get_select_plate_toolbar_width();
+                        if (strip_width > 0.0f)
+                            pill_left = strip_width + 12.0f * m_scale;
+                    }
+                    // The legend dock below is right-anchored and would cover the pill's
+                    // tail on a narrow canvas. Its left edge follows the same width rule
+                    // as legend_width further down; the pill is additive chrome, so it is
+                    // drawn only when it fits between the strip and the dock.
+                    const float dock_avail = std::max(1.0f, float(canvas_width) - right_margin * m_scale);
+                    float dock_left = float(canvas_width);
+                    if (dock_avail >= 112.0f * m_scale)
+                        dock_left = dock_avail - std::max(1.0f, std::min(float(MD3::Metrics::active().sidebar_width) * m_scale, dock_avail - 12.0f * m_scale));
+                    const float pill_width = ImGui::CalcTextSize(pill_text.c_str()).x + (2.0f * 14.0f + 2.0f * 1.0f) * m_scale;
+                    if (pill_left + pill_width + 8.0f * m_scale <= dock_left) {
+                        imgui.set_next_window_pos(pill_left, 16.0f * m_scale, ImGuiCond_Always, 0.0f, 0.0f);
+                        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, float(MD3::Metrics::radius_home) * m_scale);
+                        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 1.0f * m_scale);
+                        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(14.0f * m_scale, 7.0f * m_scale));
+                        ImGui::PushStyleColor(ImGuiCol_WindowBg, md3_imgui_color(MD3::Role::SurfaceContainer, m_is_dark));
+                        ImGui::PushStyleColor(ImGuiCol_Border, md3_imgui_color(MD3::Role::OutlineVariant, m_is_dark));
+                        ImGui::PushStyleColor(ImGuiCol_Text, md3_imgui_color(MD3::Role::OnSurfaceVariant, m_is_dark));
+                        ImGui::SetNextWindowBgAlpha(1.0f);
+                        imgui.begin(std::string("Preview status pill"),
+                                    ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
+                                    ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
+                                    ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize |
+                                    ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav |
+                                    ImGuiWindowFlags_NoInputs);
+                        imgui.text(pill_text);
+                        imgui.end();
+                        ImGui::PopStyleColor(3);
+                        ImGui::PopStyleVar(3);
+                    }
                 }
                 //BBS: GUI refactor: move to the right
                 imgui.set_next_window_pos(float(canvas_width - right_margin * m_scale), 0.0f, ImGuiCond_Always, 1.0f, 0.0f);
@@ -1582,6 +1608,14 @@ namespace Slic3r
                                                    ImGuiWindowFlags_HorizontalScrollbar);
                 m_legend_width = legend_width;
                 m_legend_expanded = !dock_collapsed;
+                // One full-width span for the dock blocks that are neither chip rows
+                // nor data tables (the view-mode overflow combo and the statistics
+                // card). It is the window content region, already net of a vertical
+                // scrollbar, inset by the window border so their outlines stay inside
+                // the clip rect: the span the ink grouping child already fills.
+                const float dock_edge = ImGui::GetCurrentWindow()->WindowBorderSize;
+                const float dock_x0   = ImGui::GetWindowPos().x + ImGui::GetWindowContentRegionMin().x + dock_edge;
+                const float dock_span = std::max(1.0f, ImGui::GetWindowContentRegionWidth() - 2.0f * dock_edge);
                 enum class EItemType : unsigned char
                 {
                     Rect,
@@ -2079,6 +2113,12 @@ namespace Slic3r
                 const std::string overflow_label = is_primary_view(selected_view_type)
                     ? _u8L("More")
                     : view_type_image_names[m_view_type_sel].option_name;
+                // Without a width the combo takes ImGui's default item width (65% of
+                // the dock) and ends halfway across it. BBLBeginCombo draws its frame
+                // two arrow widths narrower than the item width, so ask for the span
+                // plus that much.
+                ImGui::SetCursorScreenPos(ImVec2(dock_x0, ImGui::GetCursorScreenPos().y));
+                ImGui::SetNextItemWidth(dock_span + 2.0f * ImGui::GetFrameHeight());
                 if (ImGui::BBLBeginCombo("##preview_view_overflow", overflow_label.c_str(), flags)) {
                     ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 0.0f);
                     for (int i = 0; i < view_type_image_names.size(); i++) {
@@ -2100,8 +2140,8 @@ namespace Slic3r
                     ImGui::EndCombo();
                 }
                 pop_combo_style();
-                ImGui::SameLine();
-                ImGui::Dummy({ window_padding, window_padding });
+                // No trailing spacer: beside a full-width combo it would sit past the
+                // content edge and switch the dock's horizontal scrollbar on.
                 // data used to properly align items in columns when showing time
                 std::vector<float> offsets;
                 std::vector<std::string> labels;
@@ -3005,8 +3045,12 @@ namespace Slic3r
                     ImGui::EndGroup();
                     const ImVec2 stats_rect_min = ImGui::GetItemRectMin();
                     const ImVec2 stats_rect_max = ImGui::GetItemRectMax();
-                    const ImVec2 stats_min(stats_rect_min.x - 6.0f * m_scale, stats_rect_min.y - 4.0f * m_scale);
-                    const ImVec2 stats_max(stats_rect_max.x + 6.0f * m_scale, stats_rect_max.y + 6.0f * m_scale);
+                    // The card spans the dock like the blocks around it, instead of
+                    // hugging its widest line with its left outline outside the clip
+                    // rect. It grows past the dock only for a line wider than the dock.
+                    const ImVec2 stats_min(dock_x0, stats_rect_min.y - 4.0f * m_scale);
+                    const ImVec2 stats_max(std::max(dock_x0 + dock_span, stats_rect_max.x + 6.0f * m_scale),
+                                           stats_rect_max.y + 6.0f * m_scale);
                     draw_list->ChannelsSetCurrent(0);
                     // Statistics card: sc-highest fill + outline-variant hairline
                     // at the card radius, matching the kit Preview statistics card.
@@ -3134,6 +3178,15 @@ namespace Slic3r
                     };
                 // BBS AMS containers
                 float line_height = ImGui::GetFrameHeight();
+                // Ask for one more frame when a measured card size changed, so the new size is applied at once.
+                auto request_card_relayout = [&imgui]() {
+#if ENABLE_ENHANCED_IMGUI_SLIDER_FLOAT
+                    imgui.set_requires_extra_frame();
+#else
+                    wxGetApp().plater()->get_current_canvas3D()->set_as_dirty();
+                    wxGetApp().plater()->get_current_canvas3D()->request_extra_frame();
+#endif // ENABLE_ENHANCED_IMGUI_SLIDER_FLOAT
+                };
                 float ams_item_height = 0;
                 float filament_group_item_align_width = 0;
                 {
@@ -3169,25 +3222,40 @@ namespace Slic3r
                 }
                 else
                     tips_count = 5;
+                // The nozzle boxes are estimated from the material rows only. Prefer what they really needed on the
+                // previous frame (bilingual mode stacks a second header line, and rows can be taller than estimated).
+                if (m_ams_nozzle_box_content_height > 0.0f)
+                    ams_item_height = std::max(ams_item_height, m_ams_nozzle_box_content_height);
                 float AMS_container_height = is_show_left_right_result ? line_height * (tips_count - 3) + line_height / 2 :
                                                                     ams_item_height + line_height * tips_count + line_height / 2;
+                // The line counts above are a fixed guess (a one-line sentence, title and link). Wrapped text, stacked
+                // bilingual lines and other languages break it and cut the last link off behind a scrollbar, so once the
+                // real content height is known, use it. ImGui 1.83 cannot auto-fit a child, hence the one-frame feedback.
+                if (m_ams_card_content_height > 0.0f)
+                    AMS_container_height = m_ams_card_content_height;
                 is_show_left_right_result ? ImGui::PushStyleColor(ImGuiCol_ChildBg, md3_imgui_color(MD3::Role::SurfaceContainer, m_is_dark)) :
                                        ImGui::PushStyleColor(ImGuiCol_ChildBg, md3_imgui_color(MD3::Role::SurfaceContainerLowest, m_is_dark));
                 ImGui::PushStyleColor(ImGuiCol_Text, md3_imgui_color(MD3::Role::OnSurface, m_is_dark));
                 ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(window_padding * 3, 0));
                 // ImGui::Dummy({window_padding, window_padding});
-                ImGui::BeginChild("#AMS", ImVec2(0, AMS_container_height), true, ImGuiWindowFlags_AlwaysUseWindowPadding);
+                // BeginChild returns false while the card is clipped out of the dock's visible area. ImGui then skips
+                // every item, so the cursor never advances and nothing may be measured in that frame.
+                const bool ams_card_open = ImGui::BeginChild("#AMS", ImVec2(0, AMS_container_height), true, ImGuiWindowFlags_AlwaysUseWindowPadding);
                 {
                     if (!is_show_left_right_result) {
                         float available_width = ImGui::GetContentRegionAvail().x;
                         float half_width      = available_width * 0.49f;
                         float spacing         = 18.0f * m_scale;
+                        float nozzle_box_needed   = 0.0f;
+                        bool  nozzle_box_measured = false;
                         ImGui::Dummy({ window_padding, window_padding });
                         ImGui::PushStyleColor(ImGuiCol_Separator, md3_imgui_color(MD3::Role::OutlineVariant, m_is_dark));
                         imgui.bold_text(_u8L("Filament Grouping"));
                         ImGui::SameLine();
                         std::string tip_str = _u8L("Why this grouping");
-                        ImGui::SetCursorPosX(ImGui::GetWindowContentRegionWidth() - window_padding - ImGui::CalcTextSize(tip_str.c_str()).x);
+                        // Right-aligned with the end of the text column (the content region edge,
+                        // the same edge the wrapped text below uses).
+                        ImGui::SetCursorPosX(ImGui::GetWindowContentRegionMax().x - ImGui::CalcTextSize(tip_str.c_str()).x);
                         link_filament_group_wiki(tip_str);
                         ImGui::Separator();
                         ImGui::PopStyleColor();
@@ -3198,7 +3266,23 @@ namespace Slic3r
                         ImVec2      cursor_pos            = ImGui::GetCursorScreenPos();
                         child_begin_draw_list->AddRectFilled(cursor_pos, ImVec2(cursor_pos.x + half_width, cursor_pos.y + line_height), md3_imgui_col32(MD3::Role::SurfaceContainerHigh, m_is_dark));
                         std::string br_pt = wxGetApp().preset_bundle->printers.get_edited_preset().get_printer_type(wxGetApp().preset_bundle);
-                        ImGui::BeginChild("#LeftAMS", ImVec2(half_width, ams_item_height), false, ImGuiWindowFlags_AlwaysUseWindowPadding);
+                        // The content bottom of a nozzle box. CursorMaxPos is what ImGui itself uses for the scroll range,
+                        // and unlike GetCursorPosY() it is not moved back by the SameLine() that follows every material
+                        // that is not last in its row.
+                        bool  nozzle_box_stale_bar = false;
+                        auto measure_nozzle_box = [&nozzle_box_needed, &nozzle_box_measured, &nozzle_box_stale_bar, window_padding](bool box_open) {
+                            if (!box_open)
+                                return;
+                            const ImGuiWindow* box_win = ImGui::GetCurrentWindowRead();
+                            const float box_needed = box_win->DC.CursorMaxPos.y - box_win->Pos.y + box_win->Scroll.y + window_padding * 2.0f;
+                            nozzle_box_needed = std::max(nozzle_box_needed, box_needed);
+                            nozzle_box_measured = true;
+                            // ImGui decides a child's scrollbar from the previous frame's size, so the
+                            // first frame at a larger height can still draw one although the content fits.
+                            if (box_win->ScrollbarY && box_needed <= box_win->Size.y)
+                                nozzle_box_stale_bar = true;
+                        };
+                        const bool left_box_open = ImGui::BeginChild("#LeftAMS", ImVec2(half_width, ams_item_height), false, ImGuiWindowFlags_AlwaysUseWindowPadding);
                         {
                             std::string br_dep_nz = DevPrinterConfigUtil::get_toolhead_display_name(br_pt, DEPUTY_EXTRUDER_ID, ToolHeadComponent::Nozzle, ToolHeadNameCase::SentenceCase);
                             imgui.text(_u8L(br_dep_nz.c_str()));
@@ -3210,12 +3294,13 @@ namespace Slic3r
                                 if (index % 4 != 0) { ImGui::SameLine(0, spacing); }
                                 index++;
                             }
+                            measure_nozzle_box(left_box_open);
                             ImGui::EndChild();
                         }
                         ImGui::SameLine();
                         cursor_pos = ImGui::GetCursorScreenPos();
                         child_begin_draw_list->AddRectFilled(cursor_pos, ImVec2(cursor_pos.x + half_width, cursor_pos.y + line_height), md3_imgui_col32(MD3::Role::SurfaceContainerHigh, m_is_dark));
-                        ImGui::BeginChild("#RightAMS", ImVec2(half_width, ams_item_height), false, ImGuiWindowFlags_AlwaysUseWindowPadding);
+                        const bool right_box_open = ImGui::BeginChild("#RightAMS", ImVec2(half_width, ams_item_height), false, ImGuiWindowFlags_AlwaysUseWindowPadding);
                         {
                             std::string br_main_nz = DevPrinterConfigUtil::get_toolhead_display_name(br_pt, MAIN_EXTRUDER_ID, ToolHeadComponent::Nozzle, ToolHeadNameCase::SentenceCase);
                             imgui.text(_u8L(br_main_nz.c_str()));
@@ -3227,10 +3312,18 @@ namespace Slic3r
                                 if (index % 4 != 0) { ImGui::SameLine(0, spacing); }
                                 index++;
                             }
+                            measure_nozzle_box(right_box_open);
                             ImGui::EndChild();
                         }
                         ImGui::PopStyleColor(1);
                         ImGui::PopStyleVar(1);
+                        if (nozzle_box_measured && std::abs(nozzle_box_needed - m_ams_nozzle_box_content_height) > 0.5f) {
+                            m_ams_nozzle_box_content_height = nozzle_box_needed;
+                            request_card_relayout();
+                        } else if (nozzle_box_stale_bar) {
+                            // One more frame clears a scrollbar left over from the smaller size.
+                            request_card_relayout();
+                        }
                         ImGui::Dummy({ window_padding, window_padding });
                         imgui.text_wrapped(from_u8(_u8L("Please place filaments on the printer based on grouping result.")), ImGui::GetContentRegionAvail().x);
                     }
@@ -3303,6 +3396,21 @@ namespace Slic3r
                         ImGui::SameLine();
                     }
                     link_text(_u8L("Regroup filament"));
+                    if (ams_card_open) {
+                        // Content bottom in window space plus a bottom margin. With WindowPadding.y = 0 on this child the
+                        // scrollbar appears only when the height is below the content bottom, so this leaves 8 px spare.
+                        const ImGuiWindow* card_win = ImGui::GetCurrentWindowRead();
+                        const float ams_card_needed = card_win->DC.CursorMaxPos.y - card_win->Pos.y + card_win->Scroll.y + window_padding * 2.0f;
+                        if (std::abs(ams_card_needed - m_ams_card_content_height) > 0.5f) {
+                            m_ams_card_content_height = ams_card_needed;
+                            request_card_relayout();
+                        } else if (card_win->ScrollbarY && ams_card_needed <= card_win->Size.y) {
+                            // ImGui decides a child's scrollbar from the previous frame's size: the first
+                            // frame at the measured height can still draw one although the content fits.
+                            // One more frame clears it, and a cleared scrollbar asks for nothing further.
+                            request_card_relayout();
+                        }
+                    }
                     ImGui::EndChild();
                 }
                 ImGui::PopStyleColor(2);

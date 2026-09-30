@@ -396,7 +396,7 @@ void NotificationManager::PopNotification::render(GLCanvas3D& canvas, float init
 	ImGuiWrapper& imgui = *wxGetApp().imgui();
 	ImVec2        mouse_pos = ImGui::GetMousePos();
 	bool          fading_pop = false;
-	(void) move_from_overlay; (void) overlay_width; (void) right_margin; // MD3 snackbar is canvas-centered, ignores the side overlay
+	(void) move_from_overlay; (void) overlay_width; // the corner column ignores the side overlay; right_margin is honoured below
 
 	if (m_line_height != ImGui::CalcTextSize("A").y)
 		init();
@@ -416,11 +416,21 @@ void NotificationManager::PopNotification::render(GLCanvas3D& canvas, float init
 	ensure_ui_inited();
 	const float scale   = canvas.get_scale();
 	const float corner_margin = 16.0f * scale;
-	const float toast_w = std::min(560.0f * scale, 0.92f * (float) cnv_size.get_width());
+	const float cnv_w   = (float) cnv_size.get_width();
+	const float wrap_w  = m_line_height * 25.0f; // the width count_spaces() wrapped the text at
+	// Prepare and Assembly pass a margin below the corner margin and keep the
+	// corner anchor. Preview passes its layer slider column plus, while it is
+	// expanded, the legend dock: the column ends left of both, where it used to
+	// lie under the dock with its text cut. A canvas too narrow for a card
+	// there hands gap back, never below the corner margin, so the card stays on
+	// the canvas; it is lifted in front of the dock further down.
+	const bool  beside_preview = right_margin > corner_margin;
+	const float right_gap = std::max(corner_margin, std::min(beside_preview ? right_margin : corner_margin, cnv_w - wrap_w - corner_margin));
+	const float toast_w = std::min(std::min(560.0f * scale, 0.92f * cnv_w), std::max(cnv_w - right_gap - corner_margin, wrap_w));
 	m_window_width = toast_w;
 
 	// Right-corner anchored (top-right pivot), stacked upward from the bottom.
-	ImVec2 win_pos((float) cnv_size.get_width() - corner_margin, 1.0f * (float) cnv_size.get_height() - m_top_y);
+	ImVec2 win_pos(cnv_w - right_gap, 1.0f * (float) cnv_size.get_height() - m_top_y);
 	imgui.set_next_window_pos(win_pos.x, win_pos.y, ImGuiCond_Always, 1.0f, 0.0f);
 	imgui.set_next_window_size(m_window_width, m_window_height, ImGuiCond_Always);
 
@@ -478,6 +488,12 @@ void NotificationManager::PopNotification::render(GLCanvas3D& canvas, float init
 		if (m_minimize_b_visible)
 			render_minimize_button(imgui, win_tr.x, win_tr.y);
 	}
+	// In Preview the G-code window (shown while the moves slider is scrubbed)
+	// opens in this column, and a narrow canvas leaves the card over the dock:
+	// a notification stays readable, with its close button reachable, in front.
+	// Never while a popup is open: a slider menu the person just opened wins.
+	if (beside_preview && !ImGui::IsPopupOpen("", ImGuiPopupFlags_AnyPopup))
+		ImGui::BringWindowToDisplayFront(ImGui::GetCurrentWindow());
 	imgui.end();
 
 	restore_default_theme();
@@ -519,6 +535,10 @@ void NotificationManager::PopNotification::bbl_render_block_notification(GLCanva
 
 	// top y of window
     m_top_y = initial_y + m_window_height;
+
+    // In Preview right_margin also carries the expanded legend dock; a canvas
+    // too narrow for the banner beside it keeps the banner on the canvas.
+    right_gap = std::min(right_gap, std::max(0.0f, (float) cnv_size.get_width() - m_window_width));
 
     ImVec2 win_pos(1.0f * (float) cnv_size.get_width() - right_gap, 1.0f * (float) cnv_size.get_height() - m_top_y);
     imgui.set_next_window_pos(win_pos.x, win_pos.y, ImGuiCond_Always, 1.0f, 0.0f);

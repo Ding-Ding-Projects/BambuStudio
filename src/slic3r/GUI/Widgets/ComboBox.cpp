@@ -53,6 +53,9 @@ ComboBox::ComboBox(wxWindow *parent,
                       style | wxTE_PROCESS_ENTER);
     drop.Create(this, style & DD_STYLE_MASK);
     applyDropChevron();
+    // The list is measured against the face once and then cached. A face that a row resizes
+    // (a row-wide settings dropdown follows its panel) would leave the list at the old width.
+    Bind(wxEVT_SIZE, [this](wxSizeEvent &e) { drop.Invalidate(); e.Skip(); });
 
     if (style & wxCB_READONLY) {
         GetTextCtrl()->Hide();

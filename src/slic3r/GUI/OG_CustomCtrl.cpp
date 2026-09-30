@@ -68,6 +68,11 @@ OG_CustomCtrl::OG_CustomCtrl(   wxWindow*            parent,
     this->Bind(wxEVT_MOTION,    &OG_CustomCtrl::OnMotion, this);
     this->Bind(wxEVT_LEFT_DOWN, &OG_CustomCtrl::OnLeftDown, this);
     this->Bind(wxEVT_LEAVE_WINDOW, &OG_CustomCtrl::OnLeaveWin, this);
+    // Fields of full_width rows are sized during paint (CtrlLine::render). This
+    // panel does not repaint on a plain resize, so narrowing it would leave a
+    // wide field cut off at the panel edge: refresh on every size change so the
+    // width is recomputed both ways.
+    this->Bind(wxEVT_SIZE, [this](wxSizeEvent &e) { Refresh(); e.Skip(); });
 }
 
 void OG_CustomCtrl::init_ctrl_lines()
@@ -1095,8 +1100,13 @@ void OG_CustomCtrl::CtrlLine::render(wxDC& dc, wxCoord h_pos, wxCoord v_pos)
         if (!ctrl->opt_group->option_label_at_right)
             draw_buttons(field);
         // update width for full_width fields
-        if (option_set.front().opt.full_width && field && field->getWindow())
-            field->getWindow()->SetSize(ctrl->GetSize().x - h_pos2 + h_pos3 - h_pos - ctrl->m_em_unit * 3, -1);
+        if (option_set.front().opt.full_width && field && field->getWindow()) {
+            // Never narrower than the default field width: on a narrow panel the row leaves
+            // less than that, and a dropdown there would show less of its value than a
+            // fixed-width one does.
+            const int row_width = ctrl->GetSize().x - h_pos2 + h_pos3 - h_pos - ctrl->m_em_unit * 3;
+            field->getWindow()->SetSize(std::max(row_width, Field::def_width_wider() * ctrl->m_em_unit), -1);
+        }
         return;
     }
 

@@ -23,6 +23,11 @@ namespace Slic3r {
                 }
                 return 0.0f;
             }
+            float GCodeViewer::get_legend_dock_width() const
+            {
+                const auto& p_renderer = get_renderer();
+                return p_renderer ? p_renderer->get_legend_dock_width() : 0.0f;
+            }
             IMSlider* GCodeViewer::get_moves_slider()
             {
                 const auto& p_renderer = get_renderer();

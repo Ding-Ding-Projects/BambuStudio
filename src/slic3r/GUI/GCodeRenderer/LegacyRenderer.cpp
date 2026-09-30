@@ -339,6 +339,10 @@ namespace Slic3r {
                 glsafe(::glEnable(GL_DEPTH_TEST));
                 render_shells();
                 m_legend_height = 0.0f;
+                // Cleared with the height, so an early return below can never leave
+                // last frame's dock behind for the notification column to dodge.
+                m_legend_width = 0.0f;
+                m_legend_expanded = false;
                 if (m_roles.empty())
                     return;
                 render_toolpaths();

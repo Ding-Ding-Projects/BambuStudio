@@ -4715,10 +4715,12 @@ void GUI_App::UpdateDVCDarkUI(wxDataViewCtrl* dvc, bool highlited/* = false*/, c
     UpdateDarkUI(dvc, highlited ? dark_mode() : false);
 #ifdef _MSW_DARK_MODE
     //dvc->RefreshHeaderDarkMode(&m_normal_font);
-    HWND hwnd = (HWND)dvc->GenericGetHeader()->GetHandle();
-    hwnd = GetWindow(hwnd, GW_CHILD);
-    if (hwnd != NULL)
-        NppDarkMode::SetDarkListViewHeader(hwnd);
+    // A table created with wxDV_NO_HEADER has no header control.
+    if (wxHeaderCtrl *header = dvc->GenericGetHeader()) {
+        HWND hwnd = GetWindow((HWND)header->GetHandle(), GW_CHILD);
+        if (hwnd != NULL)
+            NppDarkMode::SetDarkListViewHeader(hwnd);
+    }
     wxItemAttr attr;
     attr.SetTextColour(NppDarkMode::GetTextColor());
     attr.SetFont(header_font ? *header_font : m_normal_font);
@@ -4726,7 +4728,10 @@ void GUI_App::UpdateDVCDarkUI(wxDataViewCtrl* dvc, bool highlited/* = false*/, c
 #endif //_MSW_DARK_MODE
     if (dvc->HasFlag(wxDV_ROW_LINES))
         dvc->SetAlternateRowColour(m_color_highlight_default);
-    if (dvc->GetBorder() != wxBORDER_SIMPLE)
+    // Only a table that left its border at the default gets the system frame.
+    // One created with wxBORDER_NONE stays borderless: NONE | SIMPLE is neither
+    // border and asserts in debug builds.
+    if ((dvc->GetWindowStyle() & wxBORDER_MASK) == wxBORDER_DEFAULT)
         dvc->SetWindowStyle(dvc->GetWindowStyle() | wxBORDER_SIMPLE);
 #endif
 }

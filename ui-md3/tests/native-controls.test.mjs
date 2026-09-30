@@ -124,6 +124,41 @@ test('every group box draws the Material outline and title', async () => {
   assert.doesNotMatch(bed, /\*wxWHITE|\*wxRED/, 'no white panels or buttons, no raw red');
 });
 
+test('the Objects list has no native column header and no system frame', async () => {
+  const list = await read('GUI_ObjectList.cpp');
+  assert.match(list, /MD3DataViewCtrl\(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxDV_MULTIPLE \| wxDV_NO_HEADER \| wxBORDER_NONE\)/,
+    'the kit Objects card is rows under a search field: no header strip, no outline');
+  assert.doesNotMatch(list, /GenericGetHeader\(\)/, 'there is no header to style (a call here would dereference null)');
+
+  const dark = fn(await read('GUI_App.cpp'), 'void GUI_App::UpdateDVCDarkUI(');
+  assert.match(dark, /if \(wxHeaderCtrl \*header = dvc->GenericGetHeader\(\)\) \{/, 'a table without a header is safe to pass in');
+  assert.doesNotMatch(dark, /dvc->GenericGetHeader\(\)->/);
+  assert.match(dark, /if \(\(dvc->GetWindowStyle\(\) & wxBORDER_MASK\) == wxBORDER_DEFAULT\)\s*dvc->SetWindowStyle\(dvc->GetWindowStyle\(\) \| wxBORDER_SIMPLE\);/,
+    'only a table that left its border at the default gets the system frame');
+  assert.doesNotMatch(dark, /GetBorder\(\) != wxBORDER_SIMPLE/);
+
+  assert.match(await read('Plater.cpp'), /const int header_h = list->HasFlag\(wxDV_NO_HEADER\) \? 0 : list->GetCharHeight\(\) \+ FromDIP\(12\);/,
+    'the list height reserves no header row');
+});
+
+test('the plate settings dropdowns take the width of their row', async () => {
+  const build = fn(await read('Tab.cpp'), 'void TabPrintPlate::build()');
+  assert.match(build, /auto append_select = \[&optgroup\]\(const std::string &key, const std::string &path = std::string\(\)\) \{\s*Option option = optgroup->get_option\(key\);\s*option\.opt\.full_width = true;\s*optgroup->append_single_option_line\(option, path\);\s*\};/);
+  for (const key of ['curr_bed_type', 'print_sequence', 'first_layer_sequence_choice', 'other_layers_sequence_choice']) {
+    assert.match(build, new RegExp(`append_select\\("${key}"`), `${key} is row-wide, so a long value is not cut to a 12 em face`);
+    assert.doesNotMatch(build, new RegExp(`append_single_option_line\\("${key}"`), key);
+  }
+  assert.match(build, /optgroup->append_single_option_line\("spiral_mode", "spiral-vase"\);/, 'the checkbox row is unchanged');
+  // Row-wide fields are sized during paint, so the option panel must repaint when it is resized.
+  const panel = await read('OG_CustomCtrl.cpp');
+  assert.match(fn(panel, 'OG_CustomCtrl::OG_CustomCtrl('), /this->Bind\(wxEVT_SIZE, \[this\]\(wxSizeEvent &e\) \{ Refresh\(\); e\.Skip\(\); \}\);/);
+  // At the default sidebar width the row leaves less than the old fixed face; the field keeps
+  // at least that, so a row-wide dropdown never shows less of its value than before.
+  assert.match(panel, /const int row_width = ctrl->GetSize\(\)\.x - h_pos2 \+ h_pos3 - h_pos - ctrl->m_em_unit \* 3;\s*field->getWindow\(\)->SetSize\(std::max\(row_width, Field::def_width_wider\(\) \* ctrl->m_em_unit\), -1\);/);
+  // The popup list caches its width; a face that changes width must make it measure again.
+  assert.match(await read('Widgets', 'ComboBox.cpp'), /drop\.Create\(this, style & DD_STYLE_MASK\);\s*applyDropChevron\(\);\s*Bind\(wxEVT_SIZE, \[this\]\(wxSizeEvent &e\) \{ drop\.Invalidate\(\); e\.Skip\(\); \}\);/);
+});
+
 test('every data-view table takes the Material table style', async () => {
   const ext = await read('wxExtensions.cpp');
   const style = fn(ext, 'void md3_style_data_view(');

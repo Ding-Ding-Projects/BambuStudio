@@ -2556,6 +2556,8 @@ void GLCanvas3D::reset_select_plate_toolbar_selection() {
 void GLCanvas3D::enable_select_plate_toolbar(bool enable)
 {
     m_sel_plate_toolbar.set_enabled(enable);
+    if (!enable)
+        m_sel_plate_toolbar_width = 0.0f;
 }
 
 void GLCanvas3D::_exit_assembly_to_3d_view()
@@ -3244,6 +3246,15 @@ void GLCanvas3D::render(bool only_init)
     if (m_canvas_type == ECanvasType::CanvasPreview) {
         right_margin = SLIDER_RIGHT_MARGIN;
         bottom_margin = SLIDER_BOTTOM_MARGIN;
+        // The expanded legend is a full-height dock that ends at the slider
+        // column: notifications stop 16 px left of it instead of lying under
+        // it. Read only while the preview (and with it the dock) was drawn this
+        // frame; the All Plates statistics view draws no dock.
+        if (m_render_preview) {
+            const float dock_w = get_gcode_viewer().get_legend_dock_width();
+            if (dock_w > 0.0f)
+                right_margin += dock_w / std::max(get_scale(), 0.5f) + 16.0f;
+        }
     }
     // In the assembly view, suppress notification toasts while exporting (PDF / video)
     const bool suppress_notifications = m_canvas_type == ECanvasType::CanvasAssembleView
@@ -10256,6 +10267,7 @@ void GLCanvas3D::_render_gizmo_toolbar()
 void GLCanvas3D::_render_imgui_select_plate_toolbar()
 {
     if (!m_sel_plate_toolbar.is_enabled()) {
+        m_sel_plate_toolbar_width = 0.0f;
         if (!m_render_preview)
             m_render_preview = true;
         return;
@@ -10377,6 +10389,9 @@ void GLCanvas3D::_render_imgui_select_plate_toolbar()
     show_scroll = m_sel_plate_toolbar.is_display_scrollbar && show_scroll;
     float window_height = std::min(item_count * (button_height + (frame_padding + margin_size) * 2.0f + button_margin) - button_margin + 28.0f * f_scale, window_height_max);
     float window_width = m_sel_plate_toolbar.icon_width + margin_size * 2 + (show_scroll ? 28.0f * f_scale : 20.0f * f_scale);
+    // Published for the Preview status pill, which shares this corner. Always the
+    // wider scrollbar variant, so hovering the strip never moves the pill.
+    m_sel_plate_toolbar_width = m_sel_plate_toolbar.icon_width + margin_size * 2 + 28.0f * f_scale;
 
     // MD3 floating-toolbar chrome. The strip is a real container plate that
     // follows the theme, not the old 50%-alpha grey slab; the window/hover
@@ -10452,20 +10467,29 @@ void GLCanvas3D::_render_imgui_select_plate_toolbar()
             }
         }
 
-        ImVec4 text_clr;
-        ImTextureID btn_texture_id;
-        if (all_plates_stats_item->slice_state == IMToolbarItem::SliceState::UNSLICED || all_plates_stats_item->slice_state == IMToolbarItem::SliceState::SLICING || all_plates_stats_item->slice_state == IMToolbarItem::SliceState::SLICE_FAILED)
-        {
-            text_clr = md3_imvec4(MD3::Role::Primary, 0.2f);
-            btn_texture_id = (ImTextureID)(intptr_t)(all_plates_stats_item->image_texture_transparent.get_id());
-        }
-        else
-        {
-            text_clr = md3_imvec4(MD3::Role::Primary, 1.0f);
-            btn_texture_id = (ImTextureID)(intptr_t)(all_plates_stats_item->image_texture.get_id());
-        }
-        imgui.disabled_begin(wxGetApp().plater()->get_helio_process_status() == Slic3r::HelioBackgroundProcess::State::STATE_RUNNING);
-        if (ImGui::ImageButton2(btn_texture_id, size, {0,0}, {1,1}, frame_padding, bg_col, tint_col, margin)) {
+        // The tile used to ghost its glyph and label (brand green at 20% alpha, a
+        // pale baked glyph) under the slice-state wash, about 1.2:1 on the wash.
+        // Both are now painted above the wash in opaque roles, so the wash dims
+        // only the tile's background. Not yet sliced reads neutral, sliced reads
+        // Primary, and a failed slice colours the glyph Error while the label
+        // stays neutral, which keeps it readable on the Error wash.
+        const bool stats_sliced = all_plates_stats_item->slice_state == IMToolbarItem::SliceState::SLICED;
+        const bool stats_failed = all_plates_stats_item->slice_state == IMToolbarItem::SliceState::SLICE_FAILED;
+        const bool stats_busy   = wxGetApp().plater()->get_helio_process_status() == Slic3r::HelioBackgroundProcess::State::STATE_RUNNING;
+        const ImVec4 text_clr  = stats_sliced ? md3_imvec4(MD3::Role::Primary) : md3_imvec4(MD3::Role::OnSurface);
+        ImVec4 glyph_clr = stats_failed ? md3_imvec4(MD3::Role::Error)
+                         : stats_sliced ? md3_imvec4(MD3::Role::Primary)
+                                        : md3_imvec4(MD3::Role::OnSurfaceVariant);
+        // The tile is disabled while a Helio job runs; the glyph dims as the button's own image did.
+        if (stats_busy)
+            glyph_clr.w *= 0.5f;
+        // Every state uses the one white glyph, tinted with its role: it is hidden
+        // in the button (alpha 0) and drawn after the wash below, so the button
+        // stays fully interactive and the sliced glyph matches its Primary label.
+        const ImTextureID btn_texture_id = (ImTextureID)(intptr_t)(all_plates_stats_item->image_texture_transparent.get_id());
+        const ImVec4 btn_tint = ImVec4(1.0f, 1.0f, 1.0f, 0.0f);
+        imgui.disabled_begin(stats_busy);
+        if (ImGui::ImageButton2(btn_texture_id, size, {0,0}, {1,1}, frame_padding, bg_col, btn_tint, margin)) {
             if (all_plates_stats_item->slice_state != IMToolbarItem::SliceState::SLICE_FAILED) {
                 if (m_process && !m_process->running()) {
                     for (int i = 0; i < m_sel_plate_toolbar.m_items.size(); i++) {
@@ -10512,6 +10536,10 @@ void GLCanvas3D::_render_imgui_select_plate_toolbar()
             ImVec2 end_pos = ImVec2(start_pos.x + size.x, start_pos.y + size.y);
             ImGui::GetWindowDrawList()->AddRectFilled(start_pos, end_pos, md3_scrim_imu32(0.125f));
         }
+        // The same rect the button uses for its image, now above the wash.
+        ImGui::GetWindowDrawList()->AddImage(btn_texture_id, start_pos,
+            ImVec2(start_pos.x + button_width, start_pos.y + button_height),
+            ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), ImGui::GetColorU32(glyph_clr));
 
         // draw text
         GImGui->FontSize = 15.0f;

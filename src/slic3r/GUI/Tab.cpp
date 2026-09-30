@@ -4146,11 +4146,22 @@ void TabPrintPlate::build()
 
     auto page = add_options_page(L("Plate Settings"), "empty");
     auto optgroup = page->new_optgroup("");
-    optgroup->append_single_option_line("curr_bed_type");
-    optgroup->append_single_option_line("print_sequence", "sequent-print");
+    // The dropdowns take the width of the row (the full_width path the option
+    // panel already resizes on every paint), so a wider sidebar shows more of
+    // the value, for example "Textured PEI Plate" or "Smooth PEI Plate / High
+    // Temp Plate", instead of a fixed 12 em face that ended in an ellipsis at
+    // every width. At the narrowest sidebar the row leaves no more than those
+    // 12 em, which the option panel keeps as the minimum.
+    auto append_select = [&optgroup](const std::string &key, const std::string &path = std::string()) {
+        Option option = optgroup->get_option(key);
+        option.opt.full_width = true;
+        optgroup->append_single_option_line(option, path);
+    };
+    append_select("curr_bed_type");
+    append_select("print_sequence", "sequent-print");
     optgroup->append_single_option_line("spiral_mode", "spiral-vase");
-    optgroup->append_single_option_line("first_layer_sequence_choice", "parameter/filament-sequence-for-different-layers");
-    optgroup->append_single_option_line("other_layers_sequence_choice", "parameter/filament-sequence-for-different-layers");
+    append_select("first_layer_sequence_choice", "parameter/filament-sequence-for-different-layers");
+    append_select("other_layers_sequence_choice", "parameter/filament-sequence-for-different-layers");
 
     for (auto& line : const_cast<std::vector<Line>&>(optgroup->get_lines())) {
         line.undo_to_sys = true;

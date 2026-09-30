@@ -122,7 +122,11 @@ public:
 };
 
 ObjectList::ObjectList(wxWindow* parent) :
-    MD3DataViewCtrl(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxDV_MULTIPLE)
+    // The kit Objects card has no column header and no outline: the rows sit
+    // directly under the search field. wxBORDER_NONE keeps UpdateDVCDarkUI from
+    // adding the system 1 px frame, and wxDV_NO_HEADER removes the native header
+    // control (a white strip with "Name" and blank cells split by separators).
+    MD3DataViewCtrl(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxDV_MULTIPLE | wxDV_NO_HEADER | wxBORDER_NONE)
 {
     wxGetApp().UpdateDVCDarkUI(this, true);
 #ifdef __linux__
@@ -131,7 +135,6 @@ ObjectList::ObjectList(wxWindow* parent) :
 #endif
     SetFont(Label::sysFont(13));
 #ifdef __WXMSW__
-    GenericGetHeader()->SetFont(Label::sysFont(13));
     static auto render = new wxRenderer;
     wxRendererNative::Set(render);
 #endif
