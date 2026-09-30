@@ -1443,7 +1443,7 @@ msgstr "入料"
 
 #. reviewed-category: connection-offline
 msgid "Filament switch status"
-msgstr "換料狀態"
+msgstr "換墨水狀態"
 
 #. reviewed-category: connection-offline
 msgid "Play or stop the camera live view"
@@ -10870,7 +10870,7 @@ msgstr "呢個會檢測無法容納兩條走線嘅薄壁並用單條走線打印
 #. reviewed-category: slicing-printing
 #. review-status: agent-drafted
 msgid "This gcode is inserted when change filament, including T command to trigger tool change"
-msgstr "呢個 G-code 係喺換料時插入，包括 T 命令。"
+msgstr "呢個 G-code 係喺換墨水時插入，包括 T 命令。"
 
 #. reviewed-category: slicing-printing
 #. review-status: agent-drafted
@@ -11260,17 +11260,17 @@ msgstr "填充間隙"
 #. reviewed-category: slicing-printing
 #. review-status: agent-drafted
 msgid "Purging after filament change will be done inside objects' infills. This may lower the amount of waste and decrease the print time. If the walls are printed with transparent filament, the mixed color infill will be seen outside. It will not take effect, unless the prime tower is enabled."
-msgstr "換料後嘅過渡料會被用嚟打印物件嘅填充。呢個可以減少材料浪費同縮短打印時間。但係如果物件嘅內外牆係採用透明墨水打印嘅，則可以從模型外觀上睇到內部嘅混色過渡料。該功能只有喺啟用擦料塔嘅時候先至生效。"
+msgstr "換墨水後嘅過渡料會被用嚟打印物件嘅填充。呢個可以減少材料浪費同縮短打印時間。但係如果物件嘅內外牆係採用透明墨水打印嘅，則可以從模型外觀上睇到內部嘅混色過渡料。該功能只有喺啟用擦料塔嘅時候先至生效。"
 
 #. reviewed-category: slicing-printing
 #. review-status: agent-drafted
 msgid "Purging after filament change will be done inside objects' support. This may lower the amount of waste and decrease the print time. It will not take effect, unless the prime tower is enabled."
-msgstr "換料後嘅過渡料會被用嚟打印物件嘅支撐。呢個可以減少材料浪費以及縮短打印時間。該功能只有喺啟用擦料塔嘅時候先至生效。"
+msgstr "換墨水後嘅過渡料會被用嚟打印物件嘅支撐。呢個可以減少材料浪費以及縮短打印時間。該功能只有喺啟用擦料塔嘅時候先至生效。"
 
 #. reviewed-category: slicing-printing
 #. review-status: agent-drafted
 msgid "This object will be used to purge the nozzle after a filament change to save filament and decrease the print time. Colours of the objects will be mixed as a result. It will not take effect, unless the prime tower is enabled."
-msgstr "換料後嘅過渡料會被用嚟打印呢個物件。呢個可以減少材料浪費同縮短打印時間，但係呢個物件嘅外觀會係混色嘅。該功能只有喺啟用擦料塔嘅時候先至生效。"
+msgstr "換墨水後嘅過渡料會被用嚟打印呢個物件。呢個可以減少材料浪費同縮短打印時間，但係呢個物件嘅外觀會係混色嘅。該功能只有喺啟用擦料塔嘅時候先至生效。"
 
 #. reviewed-category: slicing-printing
 #. review-status: agent-drafted
@@ -12431,7 +12431,7 @@ msgstr "*當乾燥劑過於潮溼時，請及時更換。以下幾種情況下, 
 #. reviewed-category: preferences
 #. review-status: agent-drafted
 msgid "Config which AMS slot should be used for a filament used in the print job"
-msgstr "配置當前打印任務應使用哪個AMS槽位"
+msgstr "設定當前打印任務入面每種墨水應該用邊個墨水機槽位"
 
 #. reviewed-category: slicing-printing
 #. review-status: agent-drafted
@@ -12476,7 +12476,7 @@ msgstr "相同墨水：相同品牌、類型同顏色"
 #. reviewed-category: preferences
 #. review-status: agent-drafted
 msgid "AMS filament backup is not enabled, please enable it in the AMS settings."
-msgstr "AMS自動續料未啟用，請在AMS設定中啟用。"
+msgstr "墨水機自動續墨未啟用，請喺墨水機設定入面啟用。"
 
 #. reviewed-category: slicing-printing
 #. review-status: agent-drafted
@@ -12496,7 +12496,7 @@ msgstr "潮濕"
 #. reviewed-category: slicing-printing
 #. review-status: agent-drafted
 msgid "Upper half area:  Original\nLower half area:  Filament in AMS\nAnd you can click it to modify"
-msgstr "上半部分：原項目墨水\n下半部分：AMS中嘅墨水\n你可以單擊佢進行修改"
+msgstr "上半部分：原項目墨水\n下半部分：墨水機中嘅墨水\n你可以單擊佢進行修改"
 
 #. reviewed-category: preferences
 #. review-status: agent-drafted
@@ -12661,12 +12661,12 @@ msgstr "目前韌體最多支援 %s 種材料。你可以在「準備」頁面�
 #. reviewed-category: slicing-printing
 #. review-status: agent-drafted
 msgid "Filament %s does not match the filament in AMS slot %s. Please update the printer firmware to support AMS slot assignment."
-msgstr "材料編號%s和AMS槽位%s中嘅墨水絲材質唔匹配，請更新打印機韌體以支援AMS槽位對映功能"
+msgstr "墨水 %s 同墨水機槽位 %s 入面嘅墨水唔匹配，請更新打印機韌體以支援墨水機槽位對映功能"
 
 #. reviewed-category: slicing-printing
 #. review-status: agent-drafted
 msgid "Filament does not match the filament in AMS slot. Please update the printer firmware to support AMS slot assignment."
-msgstr "材料編號和AMS槽位中嘅墨水絲材質唔匹配，請更新打印機韌體以支援AMS槽位對映功能"
+msgstr "墨水同墨水機槽位入面嘅墨水唔匹配，請更新打印機韌體以支援墨水機槽位對映功能"
 
 #. reviewed-category: file-actions
 #. review-status: agent-drafted
@@ -12856,7 +12856,7 @@ msgstr "%s中墨水未知，可能會軟化，請設定墨水->"
 #. reviewed-category: slicing-printing
 #. review-status: agent-drafted
 msgid "Upper half area:  Original\nMiddle  area:  Filament in AMS\nLower half area:  Selected nozzle\nAnd you can click it to modify"
-msgstr "上半部分：原項目墨水\n中間部分：AMS中嘅墨水\n下半部分：選定嘅噴嘴\n你可以單擊佢進行修改"
+msgstr "上半部分：原項目墨水\n中間部分：墨水機中嘅墨水\n下半部分：選定嘅噴嘴\n你可以單擊佢進行修改"
 
 #. reviewed-category: slicing-printing
 #. review-status: agent-drafted
@@ -14476,7 +14476,7 @@ msgstr "打印機上嘅墨水均為未知型別，請先去打印機螢幕或者
 #. reviewed-category: connection-offline
 #. review-status: agent-drafted
 msgid "Synchronize AMS Filament Information"
-msgstr "同步AMS墨水資訊"
+msgstr "同步墨水機墨水資訊"
 
 #. reviewed-category: destructive-dirty-error-security
 #. review-status: agent-drafted
@@ -32772,7 +32772,7 @@ msgstr "控制頂面顏色向下滲透嘅層數，防止內部其他墨水顏色
 #. reviewed-category: preferences
 #. review-status: agent-drafted
 msgid "Fewer layers make color bleed-through more likely.\nMore layers reduce bleed-through but increase the number of filament changes.\nTo keep the downward penetration from affecting the model's side colors, the penetrated area shrinks layer by layer."
-msgstr "層數越少，顏色透出嘅可能性就越大。\n增加層數可減少透色，不過會增加換線次數。\n為避免向下滲透影響模型側面顏色，滲透區域會逐層縮細。"
+msgstr "層數越少，顏色透出嘅可能性就越大。\n增加層數可減少透色，不過會增加換墨水次數。\n為避免向下滲透影響模型側面顏色，滲透區域會逐層縮細。"
 
 #. reviewed-category: preferences
 #. review-status: agent-drafted
@@ -32782,7 +32782,7 @@ msgstr "控制底面顏色向上滲透嘅層數，防止內部其他墨水顏色
 #. reviewed-category: preferences
 #. review-status: agent-drafted
 msgid "Fewer layers make color bleed-through more likely.\nMore layers reduce bleed-through but increase the number of filament changes.\nTo keep the upward penetration from affecting the model's side colors, the penetrated area shrinks layer by layer."
-msgstr "層數越少，顏色透出嘅可能性就越大。\n增加層數可減少透色，不過會增加換線次數。\n為避免向上滲透影響模型側面顏色，滲透區域會逐層縮細。"
+msgstr "層數越少，顏色透出嘅可能性就越大。\n增加層數可減少透色，不過會增加換墨水次數。\n為避免向上滲透影響模型側面顏色，滲透區域會逐層縮細。"
 
 #. reviewed-category: preferences
 #. review-status: agent-drafted
@@ -32887,7 +32887,7 @@ msgstr "支撐介面係支撐同模型接觸處較緻密嘅接觸層；可固定
 #. reviewed-category: preferences
 #. review-status: agent-drafted
 msgid "By default the interface uses the same filament as the model, which can make removal harder.\nAssigning an easy-release filament makes the contact surface easier to remove and cleaner, but adds filament changes."
-msgstr "預設情況下，介面使用同模型相同嘅墨水，呢會提高移除作業嘅難度。\n指派易剝離墨水可使接觸面更易移除且更乾淨，不過會增加換線次數。"
+msgstr "預設情況下，介面使用同模型相同嘅墨水，呢會提高移除作業嘅難度。\n指派易剝離墨水可使接觸面更易移除且更乾淨，不過會增加換墨水次數。"
 
 #. reviewed-category: preferences
 #. review-status: agent-drafted
@@ -32897,7 +32897,7 @@ msgstr "用於打印支撐本體同底筏嘅墨水。"
 #. reviewed-category: preferences
 #. review-status: agent-drafted
 msgid "By default the support uses the same filament as the model, matching the model filament of each layer in multi-filament prints.\nAssigning a different filament can make removal easier or lower cost, but adds filament-change time."
-msgstr "預設情況下，支撐使用同模型相同嘅墨水，喺多墨水打印中匹配每層嘅模型墨水。\n指派唔同墨水可提升移除便利性或降低成本，不過會增加換線時間。"
+msgstr "預設情況下，支撐使用同模型相同嘅墨水，喺多墨水打印中匹配每層嘅模型墨水。\n指派唔同墨水可提升移除便利性或降低成本，不過會增加換墨水時間。"
 
 #. reviewed-category: preferences
 #. review-status: agent-drafted
@@ -32947,7 +32947,7 @@ msgstr "較大寬度可改善熱床黏合並抑制翹曲，不過材料消耗更
 #. reviewed-category: preferences
 #. review-status: agent-drafted
 msgid "After a color or filament change, the printer purges residual filament and stabilizes nozzle pressure on a separate prime tower before resuming the model, reducing color mixing, starvation, and surface defects."
-msgstr "喺換色或換線後，打印機將喺獨立嘅填充塔上清除殘留墨水並穩定噴嘴壓力，然後再繼續打印模型，以減少混色、缺料及表面瑕疵。"
+msgstr "喺換色或換墨水後，打印機將喺獨立嘅填充塔上清除殘留墨水並穩定噴嘴壓力，然後再繼續打印模型，以減少混色、缺料及表面瑕疵。"
 
 #. reviewed-category: preferences
 #. review-status: agent-drafted
@@ -32987,7 +32987,7 @@ msgstr "建議用於高填充塔、PETG 等黏性較高嘅材料，或頻繁換�
 #. reviewed-category: preferences
 #. review-status: agent-drafted
 msgid "Uses part of the transition filament after a change to print the object's internal infill, reducing waste and print time."
-msgstr "將換線後嘅部分過渡墨水用於打印物件內部填充，減少浪費同打印時間。"
+msgstr "將換墨水後嘅部分過渡墨水用於打印物件內部填充，減少浪費同打印時間。"
 
 #. reviewed-category: preferences
 #. review-status: agent-drafted
@@ -32997,7 +32997,7 @@ msgstr "喺唔透明零件上啟用可節省材料；透明或薄壁零件，或
 #. reviewed-category: preferences
 #. review-status: agent-drafted
 msgid "Uses the transition filament after a change to print the model's supports, reducing waste and time."
-msgstr "將換線後嘅過渡墨水用於打印模型支撐，減少浪費同時間。"
+msgstr "將換墨水後嘅過渡墨水用於打印模型支撐，減少浪費同時間。"
 
 #. reviewed-category: preferences
 #. review-status: agent-drafted

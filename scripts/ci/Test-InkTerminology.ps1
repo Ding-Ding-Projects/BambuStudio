@@ -188,6 +188,25 @@ foreach ($entry in $producerRoots) {
     }
 }
 
+# The checks above read translated VALUES, one line at a time. Both miss a message that has no
+# English override at all (it is shown as its msgid, with the upstream words) and a value that
+# continues over several lines. check_ink_overrides.py starts from the extracted template instead:
+# every message the application can show that uses an old word must have a clean override.
+Write-Host 'Checking that every extracted message with an old word has an English override...'
+$overrideCheck = Join-Path $repoRoot 'scripts\i18n\check_ink_overrides.py'
+$python = if (Get-Command py -ErrorAction SilentlyContinue) { @('py', '-3') } else { @('python') }
+$env:PYTHONIOENCODING = 'utf-8'
+$overrideOutput = & $python[0] @($python | Select-Object -Skip 1) $overrideCheck 2>&1
+$overrideExit = $LASTEXITCODE
+foreach ($line in $overrideOutput) {
+    $text = [string] $line
+    if ($text -match '^\s+\[(en|yue_HK)\]\s+(.*)$') { Add-Failure -Surface "native/$($Matches[1])" -Location 'check_ink_overrides.py' -Text $Matches[2] }
+    else { Write-Host "  $text" }
+}
+if ($overrideExit -ne 0 -and -not ($failures | Where-Object { $_ -like '*check_ink_overrides.py*' })) {
+    $failures.Add("[native/en] check_ink_overrides.py exited with $overrideExit and listed no message")
+}
+
 Write-Host ''
 if ($failures.Count -gt 0) {
     Write-Host "Ink terminology violations: $($failures.Count)" -ForegroundColor Red

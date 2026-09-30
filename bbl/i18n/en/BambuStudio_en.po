@@ -5847,7 +5847,7 @@ msgid "PLA and PETG filaments detected in the mixture. Adjust parameters accordi
 msgstr "PLA and PETG inks detected in the mixture. Adjust parameters according to the Wiki to ensure print quality."
 
 msgid "Detected brittle filament (e.g., PPS-CF). Please place the models at the center of the heated bed. Printing near the edge may cause the filament to bend excessively and break inside the tube."
-msgstr ""
+msgstr "Detected brittle ink (e.g., PPS-CF). Please place the models at the center of the heated bed. Printing near the edge may cause the ink to bend excessively and break inside the tube."
 
 msgid "The prime tower improves multi-color print quality and is recommended."
 msgstr ""
@@ -9515,7 +9515,7 @@ msgid "Send print job"
 msgstr ""
 
 msgid "The current estimated time has been recalculated based on the actual filament mapping."
-msgstr ""
+msgstr "The current estimated time has been recalculated based on the actual ink mapping."
 
 msgid "Not satisfied with the grouping of filaments? Regroup and slice ->"
 msgstr "Not satisfied with the grouping of inks? Regroup and slice ->"
@@ -10430,7 +10430,7 @@ msgid "Printable space"
 msgstr "Printable space"
 
 msgid "AMS filament load/unload time"
-msgstr ""
+msgstr "Ink Dispenser ink load/unload time"
 
 msgid "Extruder Clearance"
 msgstr "Extruder Clearance"
@@ -13240,46 +13240,46 @@ msgid "Time to unload old filament when switch filament. For statistics only"
 msgstr "Time to unload old ink when switching ink, for statistical purposes only."
 
 msgid "AMS filament load time"
-msgstr ""
+msgstr "Ink Dispenser ink load time"
 
 msgid "Filament load time when printing with an AMS. For statistics only"
-msgstr ""
+msgstr "Ink load time when printing with an Ink Dispenser. For statistics only"
 
 msgid "AMS Lite filament load time"
-msgstr ""
+msgstr "Ink Dispenser Lite ink load time"
 
 msgid "Filament load time when printing with an AMS Lite. For statistics only"
-msgstr ""
+msgstr "Ink load time when printing with an Ink Dispenser Lite. For statistics only"
 
 msgid "N3F/N3S filament load time"
-msgstr ""
+msgstr "N3F/N3S ink load time"
 
 msgid "Filament load time when printing with an N3F or N3S. For statistics only"
-msgstr ""
+msgstr "Ink load time when printing with an N3F or N3S. For statistics only"
 
 msgid "AMS filament unload time"
-msgstr ""
+msgstr "Ink Dispenser ink unload time"
 
 msgid "Filament unload time when printing with an AMS. For statistics only"
-msgstr ""
+msgstr "Ink unload time when printing with an Ink Dispenser. For statistics only"
 
 msgid "AMS Lite filament unload time"
-msgstr ""
+msgstr "Ink Dispenser Lite ink unload time"
 
 msgid "Filament unload time when printing with an AMS Lite. For statistics only"
-msgstr ""
+msgstr "Ink unload time when printing with an Ink Dispenser Lite. For statistics only"
 
 msgid "N3F/N3S filament unload time"
-msgstr ""
+msgstr "N3F/N3S ink unload time"
 
 msgid "Filament unload time when printing with an N3F or N3S. For statistics only"
-msgstr ""
+msgstr "Ink unload time when printing with an N3F or N3S. For statistics only"
 
 msgid "Default AMS type"
-msgstr ""
+msgstr "Default Ink Dispenser type"
 
 msgid "The default AMS type used to estimate filament load/unload time, stored as the AMS timing type enum value. It comes from the printer preset and does not reflect the AMS currently attached to the machine."
-msgstr ""
+msgstr "The default Ink Dispenser type used to estimate ink load/unload time, stored as the Ink Dispenser timing type enum value. It comes from the printer preset and does not reflect the Ink Dispenser currently attached to the machine."
 
 msgid "Extruder switch time"
 msgstr ""
@@ -22703,26 +22703,26 @@ msgid "Auto Merge Small Fragments: the higher, the more merging"
 msgstr ""
 
 msgid "Add Filament"
-msgstr ""
+msgstr "Add Ink"
 
 msgid "Filament matching color difference threshold"
-msgstr ""
+msgstr "Ink matching color difference threshold"
 
 msgid "Color difference range allowed for automatic filament matching. A larger value tolerates more color difference and matches more easily."
-msgstr ""
+msgstr "Color difference range allowed for automatic ink matching. A larger value tolerates more color difference and matches more easily."
 
 msgid "+ Add Filament"
-msgstr ""
+msgstr "+ Add Ink"
 
 #, boost-format
 msgid "The project supports up to %1% filaments. Extra filaments must be merged before importing."
-msgstr ""
+msgstr "The project supports up to %1% inks. Extra inks must be merged before importing."
 
 msgid "Simplify Colors"
 msgstr ""
 
 msgid "Filament Matching"
-msgstr ""
+msgstr "Ink Matching"
 
 msgid "Import Model: Simplify Colors"
 msgstr ""
@@ -22746,23 +22746,23 @@ msgid "Use official mixing kits →"
 msgstr ""
 
 msgid "Some colors have no matching filament. Please match them before importing."
-msgstr ""
+msgstr "Some colors have no matching ink. Please match them before importing."
 
 msgid "Auto-Add All Filaments"
-msgstr ""
+msgstr "Auto-Add All Inks"
 
 msgid "Fix now"
 msgstr ""
 
 msgid "Automatically merge filaments of the same color and type"
-msgstr ""
+msgstr "Automatically merge inks of the same color and type"
 
 msgctxt "TextureImport"
 msgid "Previous"
 msgstr ""
 
 msgid "Discard newly added filaments and re-run automatic matching"
-msgstr ""
+msgstr "Discard newly added inks and re-run automatic matching"
 
 msgid "Before matching"
 msgstr ""
@@ -22779,7 +22779,7 @@ msgid "After simplification: %d colors"
 msgstr ""
 
 msgid "Import Model: Filament Matching"
-msgstr ""
+msgstr "Import Model: Ink Matching"
 
 #, c-format, boost-format
 msgid "The color count cannot exceed the original color count (%d)."
@@ -22787,46 +22787,46 @@ msgstr ""
 
 #, c-format, boost-format
 msgid "The color count cannot exceed the project's filament limit (%d)."
-msgstr ""
+msgstr "The color count cannot exceed the project's ink limit (%d)."
 
 msgid "The current printer has no compatible PLA Basic filament."
-msgstr ""
+msgstr "The current printer has no compatible PLA Basic ink."
 
 msgid "Click to select a matching filament"
-msgstr ""
+msgstr "Click to select a matching ink"
 
 #, boost-format
 msgid "The project supports up to %1% filaments. Current count is %2%, which exceeds the limit."
-msgstr ""
+msgstr "The project supports up to %1% inks. Current count is %2%, which exceeds the limit."
 
 msgid "Error Prompt"
 msgstr ""
 
 msgid "This plan cannot merge any filaments. Remaining filaments use different materials."
-msgstr ""
+msgstr "This plan cannot merge any inks. Remaining inks use different materials."
 
 #, boost-format
 msgid "This plan reduces to %1% filaments (limit %2%). Remaining filaments cannot be merged because they use different materials."
-msgstr ""
+msgstr "This plan reduces to %1% inks (limit %2%). Remaining inks cannot be merged because they use different materials."
 
 msgid "Kept filaments"
-msgstr ""
+msgstr "Kept inks"
 
 msgid "Deleted filaments"
-msgstr ""
+msgstr "Deleted inks"
 
 msgid "After merging"
 msgstr ""
 
 #, boost-format
 msgid "The project supports up to %1% filaments. Current count is %2%, which exceeds the limit. Please choose how to proceed."
-msgstr ""
+msgstr "The project supports up to %1% inks. Current count is %2%, which exceeds the limit. Please choose how to proceed."
 
 msgid "Prioritize merging similar-color filaments"
-msgstr ""
+msgstr "Prioritize merging similar-color inks"
 
 msgid "Prioritize merging small-area filaments"
-msgstr ""
+msgstr "Prioritize merging small-area inks"
 
 msgid "How to use standard mixing kits"
 msgstr ""
@@ -22844,28 +22844,28 @@ msgid "Cyan · Magenta · Yellow · White"
 msgstr ""
 
 msgid "Therefore, when importing a model, you can match colors using these kit filaments and their mixes."
-msgstr ""
+msgstr "Therefore, when importing a model, you can match colors using these kit inks and their mixes."
 
 msgid "Add to project filament list"
-msgstr ""
+msgstr "Add to project ink list"
 
 msgid "View Wiki for details"
 msgstr ""
 
 msgid "Tip: Setting AMS slot information while printing is not supported"
-msgstr ""
+msgstr "Tip: Setting Ink Dispenser slot information while printing is not supported"
 
 msgid "Tip: Setting Virtual slot information while printing is not supported"
 msgstr ""
 
 msgid "Add to Filament Library?"
-msgstr ""
+msgstr "Add to Ink Library?"
 
 msgid "Modifying the filament type or color will remove the binding to the Filament Library. Do you want to add this filament as a new spool?"
-msgstr ""
+msgstr "Modifying the ink type or color will remove the binding to the Ink Library. Do you want to add this ink as a new spool?"
 
 msgid "Add to Filament Library"
-msgstr ""
+msgstr "Add to Ink Library"
 
 msgid "Save Only"
 msgstr ""
@@ -22874,22 +22874,22 @@ msgid "Please select a color"
 msgstr ""
 
 msgid "Matched filament"
-msgstr ""
+msgstr "Matched ink"
 
 msgid "AMS detected a new filament. Add it to Filament Manager?"
-msgstr ""
+msgstr "Ink Dispenser detected a new ink. Add it to Ink Manager?"
 
 msgid "A similar filament was found in Filament Manager and matched automatically."
-msgstr ""
+msgstr "A similar ink was found in Ink Manager and matched automatically."
 
 msgid "Multiple similar filaments were found in Filament Manager. Please confirm the match."
-msgstr ""
+msgstr "Multiple similar inks were found in Ink Manager. Please confirm the match."
 
 msgid "New Filament"
-msgstr ""
+msgstr "New Ink"
 
 msgid "New filament information has been recorded."
-msgstr ""
+msgstr "New ink information has been recorded."
 
 msgid "View wiki for details"
 msgstr ""
@@ -22973,7 +22973,7 @@ msgid "Usually set to half the nozzle diameter."
 msgstr ""
 
 msgid "For the mixed-color filament feature. When enabled, layers that use mixed-color filament are split proportionally into thinner sub-layers for a more even color blend."
-msgstr ""
+msgstr "For the mixed-color ink feature. When enabled, layers that use mixed-color ink are split proportionally into thinner sub-layers for a more even color blend."
 
 msgid ""
 "When off, colors change per full layer, so the blend is coarser and less even.\n"
@@ -22981,7 +22981,7 @@ msgid ""
 msgstr ""
 
 msgid "Recommended only when using mixed-color filament, to get a better layered-color effect."
-msgstr ""
+msgstr "Recommended only when using mixed-color ink, to get a better layered-color effect."
 
 msgid "Controls where each layer's outer wall starts and ends."
 msgstr ""
@@ -23079,22 +23079,28 @@ msgid ""
 msgstr ""
 
 msgid "Controls how many layers the top-surface color penetrates downward, keeping other filament colors inside from showing through."
-msgstr ""
+msgstr "Controls how many layers the top-surface color penetrates downward, keeping other ink colors inside from showing through."
 
 msgid ""
 "Fewer layers make color bleed-through more likely.\n"
 "More layers reduce bleed-through but increase the number of filament changes.\n"
 "To keep the downward penetration from affecting the model's side colors, the penetrated area shrinks layer by layer."
 msgstr ""
+"Fewer layers make color bleed-through more likely.\n"
+"More layers reduce bleed-through but increase the number of ink changes.\n"
+"To keep the downward penetration from affecting the model's side colors, the penetrated area shrinks layer by layer."
 
 msgid "Controls how many layers the bottom-surface color penetrates upward, keeping other filament colors inside from showing through."
-msgstr ""
+msgstr "Controls how many layers the bottom-surface color penetrates upward, keeping other ink colors inside from showing through."
 
 msgid ""
 "Fewer layers make color bleed-through more likely.\n"
 "More layers reduce bleed-through but increase the number of filament changes.\n"
 "To keep the upward penetration from affecting the model's side colors, the penetrated area shrinks layer by layer."
 msgstr ""
+"Fewer layers make color bleed-through more likely.\n"
+"More layers reduce bleed-through but increase the number of ink changes.\n"
+"To keep the upward penetration from affecting the model's side colors, the penetrated area shrinks layer by layer."
 
 msgid "Controls the toolpath pattern of internal solid infill, applied to the solid layers between the top and bottom shells and to internal solid regions."
 msgstr ""
@@ -23167,20 +23173,24 @@ msgid "Recommended when appearance matters."
 msgstr ""
 
 msgid "The support interface is a denser contact layer where support meets the model; it holds the model steady, eases removal, and reduces surface marks. This sets the filament used for that contact surface."
-msgstr ""
+msgstr "The support interface is a denser contact layer where support meets the model; it holds the model steady, eases removal, and reduces surface marks. This sets the ink used for that contact surface."
 
 msgid ""
 "By default the interface uses the same filament as the model, which can make removal harder.\n"
 "Assigning an easy-release filament makes the contact surface easier to remove and cleaner, but adds filament changes."
 msgstr ""
+"By default the interface uses the same ink as the model, which can make removal harder.\n"
+"Assigning an easy-release ink makes the contact surface easier to remove and cleaner, but adds ink changes."
 
 msgid "The filament used to print the support body and the raft."
-msgstr ""
+msgstr "The ink used to print the support body and the raft."
 
 msgid ""
 "By default the support uses the same filament as the model, matching the model filament of each layer in multi-filament prints.\n"
 "Assigning a different filament can make removal easier or lower cost, but adds filament-change time."
 msgstr ""
+"By default the support uses the same ink as the model, matching the model ink of each layer in multi-ink prints.\n"
+"Assigning a different ink can make removal easier or lower cost, but adds ink-change time."
 
 msgid "Prints detached outline loops (a skirt) around the model to purge the nozzle and stabilize extrusion before printing starts."
 msgstr ""
@@ -23214,12 +23224,14 @@ msgid "A larger width improves bed adhesion and resists warping but uses more ma
 msgstr ""
 
 msgid "After a color or filament change, the printer purges residual filament and stabilizes nozzle pressure on a separate prime tower before resuming the model, reducing color mixing, starvation, and surface defects."
-msgstr ""
+msgstr "After a color or ink change, the printer purges residual ink and stabilizes nozzle pressure on a separate prime tower before resuming the model, reducing color mixing, starvation, and surface defects."
 
 msgid ""
 "Off: saves material and takes less bed space, but residual filament during a color change may land on the model and cause color mixing, stringing, or local starvation.\n"
 "On: cleaner color transitions and more consistent multi-color prints, but it uses extra material and time and takes up bed space."
 msgstr ""
+"Off: saves material and takes less bed space, but residual ink during a color change may land on the model and cause color mixing, stringing, or local starvation.\n"
+"On: cleaner color transitions and more consistent multi-color prints, but it uses extra material and time and takes up bed space."
 
 msgid "Mutually exclusive with by-object printing and independent support layer height."
 msgstr ""
@@ -23240,19 +23252,19 @@ msgid "Recommended for tall prime towers, stickier materials such as PETG, or fr
 msgstr ""
 
 msgid "Uses part of the transition filament after a change to print the object's internal infill, reducing waste and print time."
-msgstr ""
+msgstr "Uses part of the transition ink after a change to print the object's internal infill, reducing waste and print time."
 
 msgid "Enable it on opaque parts to save material; turn it off for transparent or thin-walled parts, or when the internal color matters."
 msgstr ""
 
 msgid "Uses the transition filament after a change to print the model's supports, reducing waste and time."
-msgstr ""
+msgstr "Uses the transition ink after a change to print the model's supports, reducing waste and time."
 
 msgid "Enabling it saves material, but the supports may show mixed colors."
 msgstr ""
 
 msgid "Takes effect when printing multiple filaments through the same nozzle."
-msgstr ""
+msgstr "Takes effect when printing multiple inks through the same nozzle."
 
 msgid "Chooses whether to print the whole plate layer by layer, or to finish one object before starting the next."
 msgstr ""
@@ -23376,7 +23388,7 @@ msgid "A snapshot is taken directly after each layer."
 msgstr ""
 
 msgid "After each layer the toolhead moves to the excess chute before the snapshot for a cleaner shot; filament may leak during the shot, so a prime tower is required to wipe the nozzle and is generated even for single-color jobs."
-msgstr ""
+msgstr "After each layer the toolhead moves to the excess chute before the snapshot for a cleaner shot; ink may leak during the shot, so a prime tower is required to wipe the nozzle and is generated even for single-color jobs."
 
 msgid "No fuzzy skin is added automatically, but you can still paint it on locally."
 msgstr ""
@@ -23430,10 +23442,10 @@ msgstr ""
 
 #, c-format, boost-format
 msgid "The filament you are trying to delete is currently used by %s. After deletion, the model's filament will be reset to the first filament in the list."
-msgstr ""
+msgstr "The ink you are trying to delete is currently used by %s. After deletion, the model's ink will be reset to the first ink in the list."
 
 msgid "Tips: If you wish to replace it with another filament, please use the \"Merge to\" function on the right side of the filament list."
-msgstr ""
+msgstr "Tips: If you wish to replace it with another ink, please use the \"Merge to\" function on the right side of the ink list."
 
 msgid "Enabling instant timelapse photography may cause surface imperfections. It is recommended to change to smooth mode."
 msgstr ""
@@ -23470,7 +23482,7 @@ msgid "Auto calculate when color changes, type or configuration changes"
 msgstr ""
 
 msgid "Auto calculate when sync or modify filament colors"
-msgstr ""
+msgstr "Auto calculate when sync or modify ink colors"
 
 msgid "Keep current flush volumes, trigger manually when needed"
 msgstr ""
@@ -23510,15 +23522,15 @@ msgstr ""
 
 #, c-format, boost-format
 msgid "The filament in %s may be insufficient for this print. Please refill or replace it."
-msgstr ""
+msgstr "The ink in %s may be insufficient for this print. Please refill or replace it."
 
 #, c-format, boost-format
 msgid "The filament in auto refill group %s may be insufficient for this print. Please refill or replace it."
-msgstr ""
+msgstr "The ink in auto refill group %s may be insufficient for this print. Please refill or replace it."
 
 #, c-format, boost-format
 msgid "The filament in auto refill groups %s may be insufficient for this print. Please refill or replace it."
-msgstr ""
+msgstr "The ink in auto refill groups %s may be insufficient for this print. Please refill or replace it."
 
 msgid "Modifier cycle"
 msgstr ""
@@ -23666,7 +23678,7 @@ msgid "Do not apply this modifier's infill settings (pattern, density, conformal
 msgstr ""
 
 msgid "If smooth or instant mode is selected, a timelapse video will be generated for each print. After each layer is printed, a snapshot is taken with the chamber camera. All of these snapshots are composed into a timelapse video when printing completes. If smooth mode is selected, the toolhead will move to the excess chute after each layer is printed and then take a snapshot. Since the melt filament may leak from the nozzle during the process of taking a snapshot, prime tower is required for smooth mode to wipe nozzle."
-msgstr ""
+msgstr "If smooth or instant mode is selected, a timelapse video will be generated for each print. After each layer is printed, a snapshot is taken with the chamber camera. All of these snapshots are composed into a timelapse video when printing completes. If smooth mode is selected, the toolhead will move to the excess chute after each layer is printed and then take a snapshot. Since the melt ink may leak from the nozzle during the process of taking a snapshot, prime tower is required for smooth mode to wipe nozzle."
 
 msgid "Instant"
 msgstr ""
@@ -23695,11 +23707,11 @@ msgid ""
 "The Filament name %s you created already exists. \n"
 "If you continue, the new preset will be saved alongside the existing custom filaments and shown with its full name to distinguish it. Do you want to continue?"
 msgstr ""
-"The Filament name %s you created already exists. \n"
-"If you continue, the new preset will be saved alongside the existing custom filaments and shown with its full name to distinguish it. Do you want to continue?"
+"The Ink name %s you created already exists. \n"
+"If you continue, the new preset will be saved alongside the existing custom inks and shown with its full name to distinguish it. Do you want to continue?"
 
 msgid "Search filament"
-msgstr ""
+msgstr "Search ink"
 
 msgid "slot"
 msgstr ""
@@ -23718,22 +23730,22 @@ msgid "Decomposition result for this combination"
 msgstr ""
 
 msgid "Filament Color"
-msgstr ""
+msgstr "Ink Color"
 
 msgid "Decomposed Colors"
 msgstr ""
 
 msgid "Project Filament"
-msgstr ""
+msgstr "Project Ink"
 
 msgid "Standard Palette"
 msgstr ""
 
 msgid "A closer mix is calculated from four base colors: cyan, magenta, yellow, and white. Currently only PLA Basic is supported. If matching filaments are not in the project, they will be added automatically."
-msgstr ""
+msgstr "A closer mix is calculated from four base colors: cyan, magenta, yellow, and white. Currently only PLA Basic is supported. If matching inks are not in the project, they will be added automatically."
 
 msgid "A closer mix is calculated from four base colors: red, yellow, blue, and white. Currently only PLA Basic is supported. If matching filaments are not in the project, they will be added automatically."
-msgstr ""
+msgstr "A closer mix is calculated from four base colors: red, yellow, blue, and white. Currently only PLA Basic is supported. If matching inks are not in the project, they will be added automatically."
 
 msgid "Decompose Color (gradient not supported)"
 msgstr ""
@@ -23745,7 +23757,7 @@ msgid "Decompose Color (multi-color not supported)"
 msgstr ""
 
 msgid "Create Custom Filament"
-msgstr ""
+msgstr "Create Custom Ink"
 
 msgid "The funny level styles every message in this language, including errors and warnings. Facts never change. Adjust it in Preferences > General."
 msgstr ""
@@ -23769,16 +23781,16 @@ msgid "Export every object's name, parts, instances and size as JSON, CSV, YAML,
 msgstr ""
 
 msgid "Edit this filament preset"
-msgstr ""
+msgstr "Edit this ink preset"
 
 msgid "Separate this filament into its component colors"
-msgstr ""
+msgstr "Separate this ink into its component colors"
 
 msgid "Merge this filament into the selected filament"
-msgstr ""
+msgstr "Merge this ink into the selected ink"
 
 msgid "Choose the filament that will replace this one"
-msgstr ""
+msgstr "Choose the ink that will replace this one"
 
 msgid "text"
 msgstr ""
@@ -23905,7 +23917,7 @@ msgid "Export print statistics"
 msgstr ""
 
 msgid "Export the current plate's estimated times, filament use and flush volumes as JSON, YAML, TOML, XML, CSV, Markdown, HTML or an archive"
-msgstr ""
+msgstr "Export the current plate's estimated times, ink use and flush volumes as JSON, YAML, TOML, XML, CSV, Markdown, HTML or an archive"
 
 msgid "Export preferences"
 msgstr ""
@@ -23945,7 +23957,7 @@ msgid "Ink menu"
 msgstr ""
 
 msgid "This filament slot will be removed from the project. Objects and paint assigned to it are moved to another slot."
-msgstr ""
+msgstr "This ink slot will be removed from the project. Objects and paint assigned to it are moved to another slot."
 
 #, possible-c-format, possible-boost-format
 msgid "Slot %d: %s"
@@ -23961,7 +23973,7 @@ msgid "Select the plate before changing its nozzle assignment."
 msgstr ""
 
 msgid "The filament assignment changed. Reopen print setup."
-msgstr ""
+msgstr "The ink assignment changed. Reopen print setup."
 
 msgid "Every used material needs a left or right nozzle."
 msgstr ""
@@ -24120,6 +24132,13 @@ msgstr ""
 
 msgid "- Sync printer presets after loading a file\n- \"Load 3MF\" dialog settings\n- Executing post-processing scripts\n- Support structure recommendation prompt\n- Unsaved projects.\n- Mixed color sublayer with variable layer height warning\n- Delete a filament used by a model"
 msgstr ""
+"- Sync printer presets after loading a file\n"
+"- \"Load 3MF\" dialog settings\n"
+"- Executing post-processing scripts\n"
+"- Support structure recommendation prompt\n"
+"- Unsaved projects.\n"
+"- Mixed color sublayer with variable layer height warning\n"
+"- Delete an ink used by a model"
 
 msgid "Previous plate"
 msgstr ""
@@ -24151,7 +24170,7 @@ msgid "Swap nozzle assignment"
 msgstr ""
 
 msgid "The plate or filament assignment changed. Reopen print setup and try again."
-msgstr ""
+msgstr "The plate or ink assignment changed. Reopen print setup and try again."
 
 msgid "The nozzle assignment was saved. Start slicing from Prepare when the slice action is available."
 msgstr ""
@@ -25074,7 +25093,7 @@ msgid "Copy diagnostic information"
 msgstr ""
 
 msgid "AMS Control Web Debug"
-msgstr ""
+msgstr "Ink Dispenser Control Web Debug"
 
 msgid "Please select a printer"
 msgstr ""
@@ -27089,7 +27108,7 @@ msgid "Keep liveview when printing"
 msgstr ""
 
 msgid "Remove the restriction on mixed printing of high and low temperature filaments"
-msgstr ""
+msgstr "Remove the restriction on mixed printing of high and low temperature inks"
 
 msgid "Auto-fill previously logged-in accounts"
 msgstr ""
@@ -27143,10 +27162,10 @@ msgid "Flow, pressure advance and temperature"
 msgstr ""
 
 msgid "Go to Filament"
-msgstr ""
+msgstr "Go to Ink"
 
 msgid "Filament manager"
-msgstr ""
+msgstr "Ink manager"
 
 msgid "Home Assistant printer-discovery API"
 msgstr ""
