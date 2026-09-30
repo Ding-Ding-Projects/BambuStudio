@@ -1,6 +1,6 @@
 ---
 translation-of: ink-terminology.md
-source-sha256: 256f237da6b304f465479ddfa9871fd02a08092c462d855c3f20180e7334d7e0
+source-sha256: ec909157cd7dc36f644304cbb288a42f0acf26e6da0bf7533377f811934f7ed0
 review-status: agent-drafted
 ---
 
@@ -51,6 +51,16 @@ review-status: agent-drafted
 - 破壞/錯誤訊息保持佢哋精確意義；只有兩個項目係
   替換。
 
+### 完整性檢查（2026-09-30）
+
+用字由兩層負責。目錄逐條訊息寫好用字；翻譯之後，`LanguageModeService::finish` 會喺每種模式對每個翻譯好嘅字串行 `vocabulary()`（`src/slic3r/GUI/LanguageMode.cpp`），將成個字嘅 filament 換成 ink、AMS 換成 Ink Dispenser。所以冇英文覆寫嘅訊息喺畫面上都係寫 ink，不過只係逐字換：「a filament」會變「a ink」，貼住中文字嘅英文字會喺粵語句子入面被換成英文。
+
+第一版檢查淨係讀翻譯值，所以睇唔到冇覆寫嘅訊息。去到 2026-09-30，呢類訊息有 93 條（配色匯入對話框、「Add Filament」、「AMS filament load time」等等），另外有一個值分幾行寫，逐行讀嘅檢查會跳過。佢哋而家有咗覆寫，文法亦係逐字換做唔到嘅。粵語方面有 19 個值仲用緊舊字：7 個嘅 AMS 直接貼住中文字（「AMS槽位」），中文字當係單字字元，所以字界樣式唔會中；另外 12 個用「換線」或者「換料」嚟講換墨水。
+
+`scripts/i18n/check_ink_overrides.py` 改為由抽取出嚟嘅範本開始查。應用程式會顯示、又用到舊字嘅每條訊息（663 條）都要有乾淨嘅英文覆寫，英文同粵語嘅值，單行定多行都好，都唔可以再有舊字。佢嘅粵語樣式淨係睇英文字前後嘅英文字母。`Test-InkTerminology.ps1` 會行佢。呢篇文章嘅標題係唯一一條指名保留原樣嘅訊息。
+
+從來唔經目錄嘅文字，例如由名稱表砌出嚟嘅墨水機名稱，記錄喺下面「喺程式碼內砌成嘅名稱」。
+
 ## 寬度限制標籤
 
 `Sidebar::priv::adjust_filament_title_layout()` 擠壓尾隨按鈕
@@ -95,7 +105,7 @@ ID：喺寫表嘅地方用 `L(...)` 標記（有語境就用 `L_CONTEXT(...)`）
 
 - **`AMS Materials Setting`** 已經顯示為「Materials Setting」透過一個
   上游複製編輯覆蓋、所以無 AMS 保持可見喺嗰個標題。
-- 其他顯示語言（de/fr/ja/…）：上游術語保持。
+- 其他顯示語言（de/fr/ja/…）：佢哋嘅目錄保留上游術語，不過執行時嘅改寫仍然會將英文字 filament 同 AMS 換成 ink 同 Ink Dispenser，所以其他語言嘅句子入面可能會出現英文字。
 - 內部/只記錄字串、HMS 雲端供應錯誤文字同任何 msgid 文字
   本身：設計未改變。
 - **物料類型 `TPU-AMS`** 同預設名稱 `Bambu TPU for AMS`、`Generic TPU for AMS`：類型係 `filament_type` 設定嘅值，

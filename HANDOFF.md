@@ -405,8 +405,12 @@ Scope: shorten the hosted Windows build. Full record:
   (`84b96e720`, run number 633) built from scratch, as its own commit message asked, and its background save finished
   within the packaging steps: a 6,786,436,758 byte tree in one part of 672,688,710 bytes, plus the manifest and
   `windows-build-latest.json`, in the draft `build-cache-windows`. Its compile step took 55 min 52 s.
-- Open: the next `main` build is the first warm one. Record its restore notice and its compile step's time. If a warm
-  build ever looks stale, push with `[cold build]` and compare.
+- First warm build: run [36739933076](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36739933076) (`eff5fe381`, run number 634). Restore step 68 s, notice
+  "Build cache: restored the tree built from 84b96e720b8516895bf6b74b0429f46592b3639d (run 633); 23 files changed
+  since." Compile step 3 min 4 s with 10 compile requests (795 before the cache); build job 12 min 44 s (80 min 16 s
+  before). It published `md3-v176` (package `2.8.4634`) and saved its own tree as the next set, one part.
+- One warm run is one measurement. A change to a widely included header still rebuilds every source that includes
+  it. If a warm build ever looks stale, push with `[cold build]` and compare.
 
 ## Executable path buffer in the file association code (issue #49, 2026-09-29)
 
@@ -429,6 +433,39 @@ past the end of the buffer. The handoff record is [#49](https://github.com/Ding-
 - Open: file association in a running application (associate, then disassociate `.3mf`, `.stl` and `.step`)
   was not re-checked on `md3-v168`; it rewrites the current user's file associations, so run it on a test
   machine.
+
+## Preview overlays, ink wording and installer shortcuts (2026-09-30)
+
+- **Preview overlays (issue #51), `856d92a2c`.** Full record: [`docs/features/gcode-preview/preview-overlays.md`](docs/features/gcode-preview/preview-overlays.md).
+  The legend dock reports its width and the notification column, the error banner and the slicing card stop left
+  of it; the status chip starts right of the plate strip; the All Plates Stats tile paints its glyph and label
+  above the wash; the view-mode combo and the time estimation card span the dock; the Ink Grouping card measures
+  its content; the Objects list is created without the native header and the system frame; the four plate
+  dropdowns follow the row width with the old 12 em as the minimum.
+  - Checked: `ui-md3/tests/preview-overlays.test.mjs` and `native-controls.test.mjs` (8 new checks, 6 of them seen
+    failing on the previous sources); `node --test` 320 of 320. Compiled by run [36747308882](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36747308882) and published as `md3-v177` (package `2.8.4635`).
+  - Not checked: no capture of the Preview tab exists from a release yet. The clipping inventory rows CJ-031 to
+    CJ-034 are `fixed-unverified`; CJ-035 (plate type at the default sidebar width) is open.
+  - The report came from an installation built on 2026-07-30 (file version 02.08.01.55), not from a current
+    release. Two of its eleven items were already fixed in current releases; one is by design (the Preview accent).
+- **Ink wording, `4ef3a9394` and `3bb44bc5d`.** 94 English overrides and 19 Cantonese values;
+  `scripts/i18n/check_ink_overrides.py` starts from the extracted template and `Test-InkTerminology.ps1` runs it.
+  The second commit routes the text that skipped the catalogue (dispenser name tables, names a printer reports,
+  undo names, web pages, the device page) through it, with short context wording where the space is narrow.
+  Left on purpose: the material type TPU-AMS (stored in presets and 3MF files; the owner is asked), text the
+  printer or cloud sends, dated history. The narrow-space widths are estimates from the source, not measured.
+  Correction: the message of `4ef3a9394` says 93 messages reached the screen in the upstream words. They did not:
+  `LanguageModeService::finish` runs `vocabulary()` over every translated string in every mode, a whole-word
+  rewrite, so they already read ink, as a word swap ("a ink"). The overrides give the grammar and put the wording
+  in the catalogue; the Cantonese fixes and the text that skipped the translation layer were the visible part.
+  The message cannot be changed without rewriting published history, so the article records the correction.
+- **Installer shortcuts, [issue #52](https://github.com/Ding-Ding-Projects/BambuStudio/issues/52).** On an installed `md3-v173` the shortcut named
+  Bambu Studio MD3 started `bambu-regex-worker.exe`, and the application's own shortcut was named BambuStudio in a
+  Start Menu folder "Bambu Research": no executable in the package was marked as aware of the installer, so it
+  made a shortcut for every one. The launcher is now marked aware (`040904B0` block), handles the install events
+  itself and makes its own shortcuts, and `Verify-HostedSquirrelInstall.ps1` reads them back after the hosted
+  install ([record](docs/features/windows/app-updates.md#shortcuts-and-install-events)). In source; the next
+  release run is the first real install of it.
 
 ## Branch and worktree cleanup (2026-09-29)
 

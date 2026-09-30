@@ -46,6 +46,32 @@ output, and upstream merges are unaffected.
 - Destructive/error messages keep their exact meaning; only the two terms are
   substituted.
 
+### Completeness check (2026-09-30)
+
+Two layers carry the wording. The catalogues hold it per message, and after translation
+`LanguageModeService::finish` runs `vocabulary()` (`src/slic3r/GUI/LanguageMode.cpp`) over every
+translated string in every mode: a whole-word rewrite of filament to ink and AMS to Ink Dispenser.
+So a message without an English override still reads ink on screen, but only as a word swap:
+"a filament" becomes "a ink", and a Latin word glued to Chinese text is rewritten inside the
+Cantonese sentence as English.
+
+The first version of the check read the translated values and nothing else, so it could not see
+a message that had no override. By 2026-09-30 that was 93 messages (the colour-matching import
+dialog, "Add Filament", "AMS filament load time" and others), plus one value that continues
+over several lines, which a line-by-line reader skips. They now have overrides, with the grammar
+the word swap cannot give. In Cantonese 19 values still used an old word: 7 said AMS directly
+against a Chinese character ("AMS槽位"), where a word-boundary pattern does not fire because a
+Chinese character counts as a word character, and 12 said 換線 or 換料 for changing the ink.
+
+`scripts/i18n/check_ink_overrides.py` starts from the extracted template instead. Every message
+the application can show that uses an old word (663) must have a clean English override, and no
+English or Cantonese value may use one, single line or not. Its Cantonese patterns look only at
+the Latin letters around a Latin word. `Test-InkTerminology.ps1` runs it. The title of this
+article is the one message kept as written, by name.
+
+Text that never passed through the catalogue, such as the dispenser names built from a table, is
+covered under "Names built in code" below.
+
 ## Width-constrained labels
 
 `Sidebar::priv::adjust_filament_title_layout()` squeezes the trailing buttons
@@ -110,7 +136,9 @@ colours of the colour picker is a disc about 25 DIP wide, so its label uses the
 
 - **`AMS Materials Setting`** already displays as "Materials Setting" via an
   upstream copy-edit override, so no AMS remains visible in that title.
-- Other display languages (de/fr/ja/…): upstream terminology retained.
+- Other display languages (de/fr/ja/…): their catalogues keep the upstream terms, but the runtime
+  rewrite still turns the Latin words filament and AMS into ink and Ink Dispenser, so an English
+  word can appear inside a sentence of another language.
 - Internal/log-only strings, HMS cloud-served error texts, and any msgid text
   itself: unchanged by design.
 - **The material type `TPU-AMS`** and the preset names `Bambu TPU for AMS` and

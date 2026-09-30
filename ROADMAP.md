@@ -46,15 +46,31 @@
 ## Faster hosted Windows builds
 
 - [x] Find where the time goes: in run [36631880242](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36631880242) (`bb78abee1`) the compile step took 72 of the build job's 80 minutes, and sccache cached 99 of 795 compile requests; the other 696 use the precompiled header (`/Fp` 693, `/Yc` 3), which it cannot cache.
-- [ ] Keep the per-configure build-time stamp out of `libslic3r_version.h`, which nearly every source and the precompiled header include: it moved to `libslic3r_build_time.h`, included by three sources. In source; unticked until a hosted build compiles it.
+- [x] Keep the per-configure build-time stamp out of `libslic3r_version.h`, which nearly every source and the precompiled header include: it moved to `libslic3r_build_time.h`, included by three sources. Compiled by run [36645906111](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36645906111) (`84b96e720`).
 - [ ] Reuse the last `main` build tree from the draft release `build-cache-windows`, in parts of at most 1,500,000,000 bytes, so Ninja rebuilds only what changed ([Build cache](docs/features/releases/windows-release-supply-chain.md#build-cache)). A local run of both scripts passes 34 checks, a Ninja check confirms only changed files rebuild after the round trip, and every `gh release` command they use works on the draft. Unticked until the first hosted `main` build saves a set and the next build restores it.
-- [ ] Measure the first warm build against the 80-minute cold build and record both runs.
+- [x] Measure the first warm build against the 80-minute cold build and record both runs: run [36739933076](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36739933076) (`eff5fe381`) restored the tree of `84b96e720` (23 files changed since), compiled in 3 min 4 s with 10 compile requests, and its build job took 12 min 44 s, against 71 min 53 s, 795 requests and 80 min 16 s in run [36631880242](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36631880242). It published `md3-v176`.
 
 ## Executable path buffer in the file association code (issue #49)
 
 - [x] `associate_files` and `disassociate_files` take the executable path from `current_executable_path()`, which grows its buffer until the path fits, instead of passing the byte size of a `wchar_t[MAX_PATH]` to `GetModuleFileNameW`; `is_associate_files` no longer looks the path up (`d49b4ea68`). Compiled by Build BambuStudio in run [36609309787](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36609309787) and shipped in [`md3-v168`](https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v168).
 - [x] `ui-md3/tests/module-file-name-size.test.mjs` refuses a `sizeof` byte count as the size of any `GetModuleFileName` buffer under `src/slic3r/GUI`; it failed on the three old calls and passes since `d49b4ea68`.
 - [ ] Associate and then disassociate `.3mf`, `.stl` and `.step` in a running `md3-v168` or later on a test machine, and read the registry values back.
+
+## Preview overlays and sidebar defects (issue #51)
+
+- [ ] Notifications, the slicing card and the error banner keep clear of the legend dock; the status chip starts right of the plate strip; the All Plates Stats tile draws an opaque glyph and label; the view-mode combo and the time estimation card span the dock; the Ink Grouping card is sized from its content; the Objects list has no native header or frame (`856d92a2c`, [preview overlays](docs/features/gcode-preview/preview-overlays.md)). Compiled by run [36747308882](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36747308882) and published as `md3-v177` (package `2.8.4635`). Unticked until the Preview tab is captured from a release after slicing, in English, Cantonese and bilingual mode.
+- [ ] Plate type shows its whole name at the default sidebar width (clipping inventory CJ-035): the dropdowns now follow the row width, which fixes a wide sidebar only.
+- [x] Two reported items were already fixed in current releases (the dropdown arrows of the Slice and Print buttons, the gap under Plate Settings): the report came from an installation built on 2026-07-30.
+
+## Ink wording (owner request, 2026-09-30)
+
+- [ ] Every message the application can show says ink and Ink Dispenser: 94 English overrides added, 19 Cantonese values corrected, and `scripts/i18n/check_ink_overrides.py` checks all 663 messages that use an old word (`4ef3a9394`). Unticked until a release is read back in the three language modes.
+- [ ] Text that never passed through the catalogue (dispenser names built from tables, names a printer reports, raw labels, web pages, the device page) says ink and Ink Dispenser (`3bb44bc5d`); `ui-md3/tests/ink-display-names.test.mjs` guards the tables. Left on purpose: the material type TPU-AMS, text the printer or cloud sends, dated history. Unticked until a release is read back.
+- [ ] Decide whether the material type TPU-AMS is shown as ink wording too (it is stored in presets and 3MF files under that name).
+
+## Installer shortcuts (issue #52)
+
+- [ ] One shortcut pair named Bambu Studio MD3 that starts the application; none for the regex helper. The launcher is marked aware of the installer and makes and removes its own shortcuts; the release job reads them back after installing. In source; unticked until a release passes that check.
 
 ## Every element in Material Design 3 and in three language modes (issues #43 and #45)
 

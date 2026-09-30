@@ -1,6 +1,6 @@
 ---
 translation-of: clipping-inventory.md
-source-sha256: 462efb5f2353e80e09cc3dcf90dceb154f26b4a21543b3b186e5ca9f7d11a48c
+source-sha256: bd8dd53195ed701a6572ad38a2ca89ed3258fe62bf4ec5597d3fd85d709fd3d5
 review-status: agent-drafted
 ---
 
@@ -53,6 +53,11 @@ Windows 桌面應用程式上發現嘅每一個版面裁剪缺陷，包括佢嘅
 | CJ-028 | 模型建立工具 | en-light-comfortable、yue_HK-light-comfortable（720 x 780） | 修改備註、版本清單同狀態行冇任何高度，金鑰同底部按鈕被壓到細過最細尺寸，底部四粒按鈕畫成空白格 | 表格直接放入對話框，而對話框固定 720 x 780，矮過個表格；雙語模式將對話框撐大到 867 x 963，所以睇唔到 | 13dd18236 | dialog-model-creator-lower--en-light-comfortable--md3-v162.png | dialog-model-creator-key-row--en-light-comfortable--md3-v165.png | verified |
 | CJ-029 | 智能家居底部嘅「關閉」掣 | en-light-comfortable、yue_HK-light-comfortable | 「Close」得 59 px，佢嘅最細尺寸係 70 px（粵語 50 對 64），個藥丸好迫 | 冇打扮過嘅套件按鈕第一次畫嘅時候先換上外框款式，每邊 18 DIP 嘅留白同中等粗幼字體令佢嘅最細尺寸喺底部排版器擺好位之後先變大；雙語模式以外冇再排過底部，雙語模式嘅裝飾器重排會排啱佢（111 px） | e5faf503d | dialog-smart-home-footer--en-light-comfortable--md3-v162.png | dialog-smart-home-footer--en-light-comfortable--md3-v165.png | verified |
 | CJ-030 | 模型建立工具底部 | en-light-comfortable、yue_HK-light-comfortable、bilingual_en_yue_HK-light-comfortable | 底部按鈕喺擷圖入面係空白方框（白色，雙語模式有一個黑色），雖然版面探針量到每粒都係完整最細尺寸、亦喺螢幕上（「產生」93、「取消產生」148、「預覽網格模型」122、「加入打印板」111 px）；只有英文模式嘅「產生」畫咗出嚟 | 原因未搵到：按鈕嘅位置同大細都啱，所以問題係冇畫出嚟，唔係被擠細；`md3-v162` 嘅擷圖都有同樣嘅方框 | pending | dialog-model-creator-lower--en-light-comfortable--md3-v165.png | pending | open |
+| CJ-031 | 預覽畫布嘅通知欄 | en-light-comfortable，報告嚟自 2026-07-30 建置嘅安裝版本；而家嘅發佈版本係同一段程式碼 | 警告同更新通知畫咗喺圖例側欄下面，文字喺側欄左邊被切走；佢哋嘅關閉按鈕喺側欄右邊露出嚟 | 通知欄唔理右邊距，定咗喺畫布角落 16 px，即係成條側欄下面 | 856d92a2c | pending | pending | fixed-unverified |
+| CJ-032 | 預覽圖例側欄嘅墨水分組卡 | en-light-comfortable，報告嚟自 2026-07-30 建置嘅安裝版本；而家嘅發佈版本係同一段程式碼 | 「Regroup ink」連結淨係見到上半截，張卡仲生咗條捲動列 | 張卡嘅高度係估出嚟嘅行數，假設嗰句得一行；344 px 嘅側欄令佢變兩行，多咗大約 10 px | 856d92a2c | pending | pending | fixed-unverified |
+| CJ-033 | 打印板設定嘅四個下拉選單（側邊欄拉闊咗） | en-light-comfortable，報告嚟自 2026-07-30 建置嘅安裝版本；而家嘅發佈版本係同一段程式碼，側邊欄 580 px | 「Textured PEI Plate」畫成「Textured P...」，雖然成行仲有位 | 無論成行幾闊都係固定 12 em；下拉選單而家跟成行咁闊 | 856d92a2c | pending | pending | fixed-unverified |
+| CJ-034 | 預覽圖例側欄嘅時間估算卡同檢視模式下拉選單 | en-light-comfortable，報告嚟自 2026-07-30 建置嘅安裝版本；而家嘅發佈版本係同一段程式碼 | 張卡左邊嘅外框同圓角被切走，張卡同下拉選單都去到側欄一半就收尾 | 張卡嘅範圍由最闊嗰行左邊 6 px 開始，喺視窗裁剪範圍出面；下拉選單用咗 ImGui 預設嘅項目闊度，即係視窗嘅 65% | 856d92a2c | pending | pending | fixed-unverified |
+| CJ-035 | 打印板設定嘅打印板類型下拉選單（預設側邊欄闊度） | en-light-comfortable，側邊欄 344 DIP（由原始碼計出嚟，未有擷圖） | 長嘅打印板名仍然用省略號收尾 | 喺 20 em 嘅標籤欄隔籬，成行淨返嘅位唔多過 12 em 嘅最細闊度；標籤欄收窄嘅話有兩個標籤會變兩行 | pending | pending | pending | open |
 <!-- clipping-inventory:end -->
 
 CJ-014、CJ-015、CJ-017 同 CJ-018 已經用冇加過任何嘢嘅發佈套件，喺隱藏桌面上驗證咗（2026-09-29）：雙語模式下，最新版本訊息喺 `md3-v148` 完整畫出「OK · 確定」，而 `md3-v143` 就畫成「OK ·...」（CJ-014）；喺 `md3-v150`，搜尋欄完整畫出佢嘅圓形右端（CJ-015），設定檔清單完整顯示嗰一行（CJ-017），溫度校準嘅標籤維持英文，廣東話放喺提示框，唔再被裁走（CJ-018）。CJ-016 喺 `md3-v150` 仍然被裁；佢嘅修正係 `00b14ca67`。

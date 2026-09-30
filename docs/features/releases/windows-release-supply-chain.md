@@ -105,9 +105,21 @@ times come back exact to 100 ns, nothing is rebuilt when nothing changed, and a 
 header rebuilds only its objects and the link. A stand-in for the runner, reading a step's output
 to the end, showed why the save starts hidden: a child started with redirected output held that
 output open until it finished, 20 seconds after the step exited, while a hidden child that writes
-its own log let it close with the step. The first hosted `main` build after this change
-saves the first set (cold). The build after it is the first warm one. Until both have run, the
-speed-up is not measured.
+its own log let it close with the step.
+
+Measured on hosted runs:
+
+| Run | Commit | Tree | Compile step | Build job | Compile requests |
+| --- | --- | --- | --- | --- | --- |
+| [36631880242](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36631880242) | `bb78abee1` | none (before the cache) | 71 min 53 s | 80 min 16 s | 795 |
+| [36645906111](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36645906111) | `84b96e720` | built from scratch, saved the first set | 55 min 52 s | not recorded | not recorded |
+| [36739933076](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36739933076) | `eff5fe381` | restored from `84b96e720`, 23 files changed since | 3 min 4 s | 12 min 44 s | 10 |
+
+The first set was a 6,786,436,758 byte tree in one part of 672,688,710 bytes. The warm run's restore
+step took 68 seconds, and its notice read "Build cache: restored the tree built from
+84b96e720b8516895bf6b74b0429f46592b3639d (run 633); 23 files changed since." It published `md3-v176` and saved its own tree as the next set (run 634, one
+part). One warm run is one measurement: a change to a header that many sources include still
+rebuilds all of them, so a later run can take far longer than this one.
 
 ## Payload DLLs
 
