@@ -8065,10 +8065,12 @@ void TabPrinter::set_extruder_volume_type(int extruder_id, NozzleVolumeType type
 // Return a callback to create a TabPrinter widget to edit bed shape
 wxSizer* TabPrinter::create_bed_shape_widget(wxWindow* parent)
 {
-    ScalableButton* btn = new ScalableButton(parent, wxID_ANY, "printer", " " + _(L("Set")) + " " + dots,
-        wxDefaultSize, wxDefaultPosition, wxBU_LEFT | wxBU_EXACTFIT, true);
-    btn->SetFont(wxGetApp().normal_font());
-    btn->SetSize(btn->GetBestSize());
+    // A kit outlined button. It measures itself (height, padding and label font
+    // come from its size tier), and draws the icon with a gap of its own, so the
+    // label carries no leading space.
+    Button* btn = new Button(parent, _(L("Set")) + " " + dots, "printer", 0, 16);
+    btn->SetVariant(Button::Variant::Outlined);
+    btn->SetButtonSize(Button::Size::Small);
 
     auto sizer = new wxBoxSizer(wxHORIZONTAL);
     sizer->Add(btn, 0, wxALIGN_CENTER_VERTICAL);

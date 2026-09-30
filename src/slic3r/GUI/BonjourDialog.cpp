@@ -7,7 +7,6 @@
 
 #include <wx/sizer.h>
 #include <wx/button.h>
-#include <wx/listctrl.h>
 #include <wx/stattext.h>
 #include <wx/timer.h>
 #include <wx/wupdlock.h>
@@ -18,8 +17,10 @@
 #include "slic3r/Utils/Bonjour.hpp"
 #include "Widgets/Button.hpp"
 #include "Widgets/Label.hpp"
+#include "Widgets/MD3DataView.hpp"
 #include "Widgets/MD3DialogChrome.hpp"
 #include "Widgets/StateColor.hpp"
+#include "wxExtensions.hpp"
 
 namespace Slic3r {
 
@@ -57,7 +58,7 @@ struct LifetimeGuard
 
 BonjourDialog::BonjourDialog(wxWindow *parent, Slic3r::PrinterTechnology tech)
 	: wxDialog(parent, wxID_ANY, _(L("Network lookup")), wxDefaultPosition, wxDefaultSize, wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER)
-	, list(new wxListView(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_REPORT|wxSIMPLE_BORDER))
+	, list(new MD3DataViewListCtrl(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxDV_SINGLE | wxBORDER_NONE))
 	, replies(new ReplySet)
 	, label(new Label(this, ""))
 	, timer(new wxTimer())
@@ -70,12 +71,9 @@ BonjourDialog::BonjourDialog(wxWindow *parent, Slic3r::PrinterTechnology tech)
 	SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
 	const int em = GUI::wxGetApp().em_unit();
+	// A data view asks for almost no height of its own, so the minimum keeps
+	// room for the header and the rows.
 	list->SetMinSize(wxSize(80 * em, 30 * em));
-	// The results grid stays a native wxListView (keyboard + screen-reader
-	// support come free with it); only its surface/text tones are tokenised so
-	// it follows the theme instead of the OS listbox colours.
-	list->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
-	list->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
 
 	// Progress line ("Searching for devices ...") in the kit body face/tone
 	// instead of the OS default dialog font.
@@ -86,14 +84,24 @@ BonjourDialog::BonjourDialog(wxWindow *parent, Slic3r::PrinterTechnology tech)
 
 	vsizer->Add(label, 0, wxEXPAND | wxTOP | wxLEFT | wxRIGHT, em);
 
-	list->SetSingleStyle(wxLC_SINGLE_SEL);
-	list->SetSingleStyle(wxLC_SORT_DESCENDING);
-	list->AppendColumn(_(L("Address")), wxLIST_FORMAT_LEFT, 5 * em);
-	list->AppendColumn(_(L("Hostname")), wxLIST_FORMAT_LEFT, 10 * em);
-	list->AppendColumn(_(L("Service name")), wxLIST_FORMAT_LEFT, 20 * em);
+	// The results table is the kit table. A column fits its content (as the
+	// native list's columns did) and never drops below its minimum width; the
+	// person can still drag a column edge. Rows are inserted at the top, so the
+	// table stays in descending order.
+	auto add_column = [this](const wxString &title, int min_width) {
+		wxDataViewColumn *column = list->AppendTextColumn(title, wxDATAVIEW_CELL_INERT, wxCOL_WIDTH_AUTOSIZE, wxALIGN_LEFT, wxDATAVIEW_COL_RESIZABLE);
+		column->SetMinWidth(min_width);
+	};
+	add_column(_(L("Address")), 10 * em);
+	add_column(_(L("Hostname")), 10 * em);
+	add_column(_(L("Service name")), 20 * em);
 	if (tech == ptFFF) {
-		list->AppendColumn(_(L("OctoPrint version")), wxLIST_FORMAT_LEFT, 5 * em);
+		add_column(_(L("OctoPrint version")), 10 * em);
 	}
+	// Styled once its columns exist, as the other kit tables are: the header
+	// follows the theme, and the rows take the Material table look.
+	GUI::wxGetApp().UpdateDVCDarkUI(list);
+	md3_style_data_view(list);
 
 	vsizer->Add(list, 1, wxEXPAND | wxALL, em);
 
@@ -184,7 +192,7 @@ bool BonjourDialog::show_and_lookup()
 		})
 		.lookup();
 
-	bool res = ShowModal() == wxID_OK && list->GetFirstSelected() >= 0;
+	bool res = ShowModal() == wxID_OK && list->GetSelectedRow() != wxNOT_FOUND;
 	{
 		// Tell the background thread the dialog is going away...
 		std::lock_guard<std::mutex> lock_guard(dguard->mutex);
@@ -195,8 +203,9 @@ bool BonjourDialog::show_and_lookup()
 
 wxString BonjourDialog::get_selected() const
 {
-	auto sel = list->GetFirstSelected();
-	return sel >= 0 ? list->GetItemText(sel) : wxString();
+	// The first column is the address.
+	const int row = list->GetSelectedRow();
+	return row != wxNOT_FOUND ? list->GetTextValue(row, 0) : wxString();
 }
 
 
@@ -225,32 +234,30 @@ void BonjourDialog::on_reply(BonjourReplyEvent &e)
 
 	list->DeleteAllItems();
 
-	// The whole list is recreated so that we benefit from it already being sorted in the set.
-	// (And also because wxListView's sorting API is bananas.)
+	// The whole table is recreated so that we benefit from it already being sorted in the set.
+	// Every row carries one value per column: the version cell exists only for FFF,
+	// where the OctoPrint version column does, and is empty when the reply has no version.
 	for (const auto &reply : *replies) {
-		auto item = list->InsertItem(0, reply.full_address);
-		list->SetItem(item, 1, reply.hostname);
-		list->SetItem(item, 2, reply.service_name);
+		wxVector<wxVariant> row;
+		row.push_back(wxVariant(GUI::from_u8(reply.full_address)));
+		row.push_back(wxVariant(GUI::from_u8(reply.hostname)));
+		row.push_back(wxVariant(GUI::from_u8(reply.service_name)));
 
 		if (tech == ptFFF) {
 			const auto it = reply.txt_data.find("version");
-			if (it != reply.txt_data.end()) {
-				list->SetItem(item, 3, GUI::from_u8(it->second));
-			}
+			row.push_back(wxVariant(it != reply.txt_data.end() ? GUI::from_u8(it->second) : wxString()));
 		}
-	}
-
-	const int em = GUI::wxGetApp().em_unit();
-
-	for (int i = 0; i < list->GetColumnCount(); i++) {
-		list->SetColumnWidth(i, wxLIST_AUTOSIZE);
-		if (list->GetColumnWidth(i) < 10 * em) { list->SetColumnWidth(i, 10 * em); }
+		list->InsertItem(0, row);
 	}
 
 	if (!selected.IsEmpty()) {
 		// Attempt to preserve selection
-		auto hit = list->FindItem(-1, selected);
-		if (hit >= 0) { list->SetItemState(hit, wxLIST_STATE_SELECTED, wxLIST_STATE_SELECTED); }
+		for (int r = 0; r < list->GetItemCount(); ++r) {
+			if (list->GetTextValue(r, 0) == selected) {
+				list->SelectRow(r);
+				break;
+			}
+		}
 	}
 }
 
