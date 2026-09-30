@@ -153,9 +153,12 @@ void PhysicalPrinterDialog::build_printhost_settings(ConfigOptionsGroup* m_optgr
 
     m_optgroup->append_single_option_line("host_type");
 
-    auto create_sizer_with_btn = [](wxWindow* parent, ScalableButton** btn, const std::string& icon_name, const wxString& label) {
-        *btn = new ScalableButton(parent, wxID_ANY, icon_name, label, wxDefaultSize, wxDefaultPosition, wxBU_LEFT | wxBU_EXACTFIT);
-        (*btn)->SetFont(wxGetApp().normal_font());
+    // A kit outlined button: the variant owns the font, border, colours and
+    // pill shape, so nothing here sets a font (a later SetFont would override it).
+    auto create_sizer_with_btn = [](wxWindow* parent, Button** btn, const std::string& icon_name, const wxString& label) {
+        *btn = new Button(parent, label, wxString::FromUTF8(icon_name.c_str()), 0, 16);
+        (*btn)->SetVariant(Button::Variant::Outlined);
+        (*btn)->SetButtonSize(Button::Size::Small);
 
         auto sizer = new wxBoxSizer(wxHORIZONTAL);
         sizer->Add(*btn);
@@ -203,10 +206,8 @@ void PhysicalPrinterDialog::build_printhost_settings(ConfigOptionsGroup* m_optgr
     };
 
     auto print_host_printers = [this, create_sizer_with_btn](wxWindow* parent) {
-        //add_scaled_button(parent, &m_printhost_port_browse_btn, "browse", _(L("Refresh Printers")), wxBU_LEFT | wxBU_EXACTFIT);
         auto sizer = create_sizer_with_btn(parent, &m_printhost_port_browse_btn, "monitor_signal_strong", _(L("Refresh Printers")));
-        ScalableButton* btn = m_printhost_port_browse_btn;
-        btn->SetFont(Slic3r::GUI::wxGetApp().normal_font());
+        Button* btn = m_printhost_port_browse_btn;
         btn->Bind(wxEVT_BUTTON, [this](wxCommandEvent e) { update_printers(); });
         return sizer;
     };
@@ -529,10 +530,13 @@ void PhysicalPrinterDialog::on_dpi_changed(const wxRect& suggested_rect)
 {
     const int& em = em_unit();
 
-    m_printhost_browse_btn->msw_rescale();
-    m_printhost_test_btn->msw_rescale();
+    // The kit buttons re-derive their height, padding, radius and icon size
+    // for the new scale.
+    m_printhost_browse_btn->Rescale();
+    m_printhost_test_btn->Rescale();
+    m_printhost_port_browse_btn->Rescale();
     if (m_printhost_cafile_browse_btn)
-        m_printhost_cafile_browse_btn->msw_rescale();
+        m_printhost_cafile_browse_btn->Rescale();
 
     m_optgroup->msw_rescale();
 

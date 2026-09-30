@@ -14,7 +14,6 @@
 class wxString;
 class wxTextCtrl;
 class wxStaticText;
-class ScalableButton;
 class wxBoxSizer;
 
 namespace Slic3r {
@@ -31,11 +30,11 @@ class PhysicalPrinterDialog : public DPIDialog
     DynamicPrintConfig* m_config            { nullptr };
     ConfigOptionsGroup* m_optgroup          { nullptr };
 
-    ScalableButton*     m_printhost_browse_btn              {nullptr};
-    ScalableButton*     m_printhost_test_btn                {nullptr};
-    ScalableButton*     m_printhost_cafile_browse_btn       {nullptr};
-    ScalableButton*     m_printhost_client_cert_browse_btn  {nullptr};
-    ScalableButton*     m_printhost_port_browse_btn         {nullptr};
+    Button*             m_printhost_browse_btn              {nullptr};
+    Button*             m_printhost_test_btn                {nullptr};
+    Button*             m_printhost_cafile_browse_btn       {nullptr};
+    Button*             m_printhost_client_cert_browse_btn  {nullptr};
+    Button*             m_printhost_port_browse_btn         {nullptr};
 
     RoundedRectangle*   m_input_area                        {nullptr};
     wxStaticText*       m_valid_label                       {nullptr};

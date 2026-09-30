@@ -7,7 +7,7 @@
 
 #include "libslic3r/PrintConfig.hpp"
 
-class wxListView;
+class MD3DataViewListCtrl;
 class wxStaticText;
 class wxTimer;
 class wxTimerEvent;
@@ -33,7 +33,7 @@ public:
 	bool show_and_lookup();
 	wxString get_selected() const;
 private:
-	wxListView *list;
+	MD3DataViewListCtrl *list;
 	std::unique_ptr<ReplySet> replies;
 	wxStaticText *label;
 	std::shared_ptr<Bonjour> bonjour;
