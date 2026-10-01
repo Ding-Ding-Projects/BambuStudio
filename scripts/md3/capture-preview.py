@@ -656,6 +656,9 @@ class Run:
                         '(the second plate row was selected in the Objects list before)')
             return
         self.save_window('prepare-plate-settings', 'Process page switched to Objects with the second plate selected')
+        # Which settings page the switch brought up: the plate's own page is TabPrintPlate.
+        tabs = sorted({r.get('type') for r in shown(s.probe(), type_contains='Slic3r::GUI::Tab')})
+        self.notes.append({'plate_settings_tabs_shown': tabs})
 
 
 def main():
