@@ -6768,23 +6768,33 @@ void Sidebar::update_ui_from_settings()
 
 bool Sidebar::show_object_list(bool show) const
 {
-    // Nothing to do when the list already has this visibility. This early return also ends a
-    // cycle: part_selection_changed() refreshes the object settings, which call
-    // ParamsPanel::set_active_tab(nullptr), which calls back here. Without it, switching the
-    // Process page to Objects with a plate or object selected recursed until the stack overflowed.
-    if (p->m_object_list->IsShown() == show)
+    // part_selection_changed() refreshes the object settings, which call
+    // ParamsPanel::set_active_tab(nullptr), which calls back here. A call made during that refresh
+    // returns at once; without this, switching the Process page to Objects with a plate or an
+    // object selected recursed until the stack overflowed.
+    static bool refreshing_selection = false;
+    if (refreshing_selection)
         return false;
-    if (p->m_prepare_tabs)
-        apply_prepare_section(show ? "objects" : "process");
-    else {
+    if (p->m_prepare_tabs) {
+        // With the Ink, Process and Objects tabs the list belongs to the Objects tab. The Global
+        // and Objects switch on the Process page only picks which settings that page edits, the
+        // project's or those of the plate, object or part selected in the list, so it stays on
+        // the Process page (moving to the Objects tab hid the settings it had just picked).
+    } else {
+        // Upstream layout: the switch shows or hides the list above the settings.
+        if (p->m_object_list->IsShown() == show)
+            return false;
         if (p->m_objects_header) p->m_objects_header->Show(show);
         p->m_search_bar->Show(show);
         p->m_object_list->Show(show);
+        if (!show)
+            p->object_layers->Show(false);
     }
-    if (!show)
-        p->object_layers->Show(false);
-    else
+    if (show) {
+        struct Reset { bool &flag; ~Reset() { flag = false; } } reset{refreshing_selection};
+        refreshing_selection = true;
         p->m_object_list->part_selection_changed();
+    }
     update_scroll_body();
     return true;
 }

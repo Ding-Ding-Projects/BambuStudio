@@ -12,9 +12,9 @@ import { fileURLToPath } from 'node:url';
 //   part_selection_changed()               -> ObjectSettings::update_settings_list()
 //                                          -> ParamsPanel::set_active_tab(nullptr)
 //
-// Upstream ends the cycle in show_object_list, which returns early when the list already has the
-// requested visibility. The early return was lost when the sidebar was split into tabs. This test
-// pins it, and pins that it comes before any call that can lead back to set_active_tab.
+// show_object_list now returns at once when it is called again during its own refresh of the
+// selection. The switch also stays on the Process page: it moved to the Objects tab before, which
+// hides the settings panel, so the plate settings it had just picked could never be seen.
 //
 // OBJECT_LIST_SOURCE_ROOT points the test at another copy of the tree, so it can be shown to fail
 // on the old source.
@@ -42,22 +42,32 @@ function body(text, signature) {
   throw new Error(`${signature} has no closing brace`);
 }
 
-test('show_object_list returns early when the visibility does not change', () => {
-  const fn = body(read('src', 'slic3r', 'GUI', 'Plater.cpp'), 'bool Sidebar::show_object_list(bool show) const');
-  const guard = fn.search(/if\s*\(\s*p->m_object_list->IsShown\(\)\s*==\s*show\s*\)\s*return\s+false\s*;/);
-  assert.notEqual(guard, -1, 'show_object_list has no early return for an unchanged visibility');
-  for (const call of ['apply_prepare_section', 'part_selection_changed', '->Show(']) {
-    const at = fn.indexOf(call);
-    assert.ok(at === -1 || at > guard, `${call} runs before the early return`);
-  }
+const showObjectList = () =>
+  body(read('src', 'slic3r', 'GUI', 'Plater.cpp'), 'bool Sidebar::show_object_list(bool show) const');
+
+test('show_object_list returns at once when it is called during its own selection refresh', () => {
+  const fn = showObjectList();
+  const flag = fn.match(/static\s+bool\s+(\w+)\s*=\s*false\s*;/);
+  assert.ok(flag, 'show_object_list has no re-entrancy flag');
+  const name = flag[1];
+  const early = fn.search(new RegExp(`if\\s*\\(\\s*${name}\\s*\\)\\s*return\\s+false\\s*;`));
+  assert.notEqual(early, -1, 'the flag does not end a nested call');
+  const set = fn.indexOf(`${name} = true;`);
+  const refresh = fn.indexOf('part_selection_changed()');
+  assert.ok(early < set && set < refresh, 'the flag is not set before the selection refresh');
+  assert.match(fn, new RegExp(`struct\\s+\\w+\\s*\\{\\s*bool\\s*&\\s*flag;\\s*~\\w+\\(\\)\\s*\\{\\s*flag\\s*=\\s*false;`),
+    'the flag is not cleared when the refresh ends');
 });
 
-test('the cycle the early return breaks is still the one described', () => {
-  // When these links change, the test above may no longer protect anything: read the cycle again.
+test('the Objects switch does not move the sidebar to another tab', () => {
+  assert.doesNotMatch(showObjectList(), /apply_prepare_section\(/);
+});
+
+test('the cycle the flag breaks is still the one described', () => {
+  // When these links change, the tests above may no longer protect anything: read the cycle again.
   const params = body(read('src', 'slic3r', 'GUI', 'ParamsPanel.cpp'), 'void ParamsPanel::set_active_tab(wxPanel* tab)');
   assert.match(params, /sidebar\(\)\.show_object_list\(/);
-  const settings = read('src', 'slic3r', 'GUI', 'GUI_ObjectSettings.cpp');
-  assert.match(settings, /set_active_tab\(nullptr\)/);
+  assert.match(read('src', 'slic3r', 'GUI', 'GUI_ObjectSettings.cpp'), /set_active_tab\(nullptr\)/);
   const list = body(read('src', 'slic3r', 'GUI', 'GUI_ObjectList.cpp'), 'void ObjectList::part_selection_changed()');
   assert.match(list, /obj_settings\(\)->UpdateAndShow\(/);
 });
