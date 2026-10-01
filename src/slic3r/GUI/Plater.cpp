@@ -6768,6 +6768,12 @@ void Sidebar::update_ui_from_settings()
 
 bool Sidebar::show_object_list(bool show) const
 {
+    // Nothing to do when the list already has this visibility. This early return also ends a
+    // cycle: part_selection_changed() refreshes the object settings, which call
+    // ParamsPanel::set_active_tab(nullptr), which calls back here. Without it, switching the
+    // Process page to Objects with a plate or object selected recursed until the stack overflowed.
+    if (p->m_object_list->IsShown() == show)
+        return false;
     if (p->m_prepare_tabs)
         apply_prepare_section(show ? "objects" : "process");
     else {
