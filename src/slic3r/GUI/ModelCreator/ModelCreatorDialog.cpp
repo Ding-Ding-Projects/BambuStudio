@@ -160,6 +160,9 @@ ModelCreatorDialog::ModelCreatorDialog(wxWindow *parent, AddToPlate add_to_plate
     auto *status_field = new TextInput(form, _L("No model generated"), wxEmptyString, wxEmptyString,
                                        wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
     status_field->SetBorderWidth(0);
+    // Without a minimum the scrolled form gave the status line 18 px of its 26 px (the dialog
+    // sweep of md3-v180 reported it starved).
+    status_field->SetMinSize(wxSize(-1, status_field->GetBestSize().y));
     m_status = status_field->GetTextCtrl();
     body->Add(status_field, 0, wxEXPAND);
 
@@ -178,6 +181,14 @@ ModelCreatorDialog::ModelCreatorDialog(wxWindow *parent, AddToPlate add_to_plate
     footer->Add(m_cancel_button, 0, wxRIGHT, 6);
     footer->Add(m_preview, 0, wxRIGHT, 6);
     footer->Add(m_add);
+    Bind(wxEVT_SHOW, [this](wxShowEvent &event) {
+        event.Skip();
+        if (event.IsShown())
+            CallAfter([this, alive = m_alive] {
+                if (alive->load())
+                    refresh_footer();
+            });
+    });
     m_history->Bind(wxEVT_COMBOBOX, [this](wxCommandEvent &) { select_revision(); });
     save->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { save_key(); });
     m_test_key->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { test_key(); });
@@ -359,6 +370,18 @@ void ModelCreatorDialog::update_controls()
     const bool selected = m_history->GetSelection() != wxNOT_FOUND;
     m_preview->Enable(selected && !m_busy && !m_loading_history);
     m_add->Enable(selected && !m_busy && !m_loading_history);
+    refresh_footer();
+}
+
+void ModelCreatorDialog::refresh_footer()
+{
+    // The footer buttons were placed and styled right but stayed unpainted after the dialog's
+    // last layout: a capture showed blank boxes until the buttons were invalidated by hand, and
+    // then all four drew correctly (clipping inventory CJ-030). Repaint them whenever their
+    // state may have changed and once the dialog is on screen.
+    for (Button *button : {m_generate, m_cancel_button, m_preview, m_add})
+        if (button)
+            button->Refresh();
 }
 
 void ModelCreatorDialog::save_key()

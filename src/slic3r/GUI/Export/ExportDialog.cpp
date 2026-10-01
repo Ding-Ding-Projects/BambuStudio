@@ -196,9 +196,14 @@ void ExportDialog::create_ui()
     format_sizer->Add(new Label(m_format_card, Label::Head_14, _L("Format")), 0, wxLEFT | wxRIGHT | wxTOP, FromDIP(14));
     m_format_list = new MD3DataViewListCtrl(m_format_card, wxID_ANY, wxDefaultPosition, FromDIP(wxSize(-1, 220)),
                                            wxDV_SINGLE | wxBORDER_NONE);
-    m_format_list->AppendTextColumn(_L("Format"), wxDATAVIEW_CELL_INERT, FromDIP(150), wxALIGN_LEFT, wxDATAVIEW_COL_RESIZABLE);
-    m_format_list->AppendTextColumn(_L("Fidelity"), wxDATAVIEW_CELL_INERT, FromDIP(110), wxALIGN_LEFT, wxDATAVIEW_COL_RESIZABLE);
-    m_format_list->AppendTextColumn(_L("Details"), wxDATAVIEW_CELL_INERT, FromDIP(380), wxALIGN_LEFT, wxDATAVIEW_COL_RESIZABLE);
+    // At 150 px the format column cut "CSV (.csv, recommended)" to "CSV (.csv...ommended"; the
+    // fidelity words ("Lossless", "Reshaped") need far less than the 110 px they had. A cut detail
+    // keeps its start, and the full text is in the notes under the list.
+    m_format_list->AppendTextColumn(_L("Format"), wxDATAVIEW_CELL_INERT, FromDIP(185), wxALIGN_LEFT, wxDATAVIEW_COL_RESIZABLE);
+    m_format_list->AppendTextColumn(_L("Fidelity"), wxDATAVIEW_CELL_INERT, FromDIP(80), wxALIGN_LEFT, wxDATAVIEW_COL_RESIZABLE);
+    auto *details = m_format_list->AppendTextColumn(_L("Details"), wxDATAVIEW_CELL_INERT, FromDIP(380), wxALIGN_LEFT, wxDATAVIEW_COL_RESIZABLE);
+    if (details && details->GetRenderer())
+        details->GetRenderer()->EnableEllipsize(wxELLIPSIZE_END);
     m_format_list->SetName(_L("Export format"));
     m_format_list->Bind(wxEVT_DATAVIEW_SELECTION_CHANGED, [this](wxDataViewEvent &) {
         update_format_details();

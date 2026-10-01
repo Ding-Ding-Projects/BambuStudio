@@ -29,6 +29,7 @@ private:
     void generate();
     void cancel_generation();
     void update_controls();
+    void refresh_footer();
     void save_key();
     void test_key();
     void clear_key();
