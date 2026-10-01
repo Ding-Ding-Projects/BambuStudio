@@ -1,6 +1,6 @@
 ---
 translation-of: clipping-inventory.md
-source-sha256: 560bd034d1d900bde92687996c9521fce0f3160df84ae32a2c0308c71d713a0f
+source-sha256: ec45c98797298a118c0ae1502fc38fc3987039711f04b32126672aef3bbf0c30
 review-status: agent-drafted
 ---
 
@@ -52,13 +52,14 @@ Windows 桌面應用程式上發現嘅每一個版面裁剪缺陷，包括佢嘅
 | CJ-027 | 有乜新嘢，「從」同「至」日期欄 | 每個組合（日先嘅地區設定） | 提示字「YYYY-MM-DD / DD/MM/YYYY」喺英文被切成「YYYY-MM-DD / D」、粵語「YYYY-MM-DD / [」、雙語「YYYY-MM-DD / I」 | 日期欄固定 132 DIP，窄過佢自己嘅提示字；版面探針唔量度提示字，所以冇任何掃描報告過 | 1af648025 | dialog-what-s-new-changelog--en-light-comfortable--md3-v158.png | dialog-what-s-new-changelog--en-light-comfortable--md3-v162.png | verified |
 | CJ-028 | 模型建立工具 | en-light-comfortable、yue_HK-light-comfortable（720 x 780） | 修改備註、版本清單同狀態行冇任何高度，金鑰同底部按鈕被壓到細過最細尺寸，底部四粒按鈕畫成空白格 | 表格直接放入對話框，而對話框固定 720 x 780，矮過個表格；雙語模式將對話框撐大到 867 x 963，所以睇唔到 | 13dd18236 | dialog-model-creator-lower--en-light-comfortable--md3-v162.png | dialog-model-creator-key-row--en-light-comfortable--md3-v165.png | verified |
 | CJ-029 | 智能家居底部嘅「關閉」掣 | en-light-comfortable、yue_HK-light-comfortable | 「Close」得 59 px，佢嘅最細尺寸係 70 px（粵語 50 對 64），個藥丸好迫 | 冇打扮過嘅套件按鈕第一次畫嘅時候先換上外框款式，每邊 18 DIP 嘅留白同中等粗幼字體令佢嘅最細尺寸喺底部排版器擺好位之後先變大；雙語模式以外冇再排過底部，雙語模式嘅裝飾器重排會排啱佢（111 px） | e5faf503d | dialog-smart-home-footer--en-light-comfortable--md3-v162.png | dialog-smart-home-footer--en-light-comfortable--md3-v165.png | verified |
-| CJ-030 | 模型建立工具底部 | en-light-comfortable、yue_HK-light-comfortable、bilingual_en_yue_HK-light-comfortable | 底部按鈕喺擷圖入面係空白方框（白色，雙語模式有一個黑色），雖然版面探針量到每粒都係完整最細尺寸、亦喺螢幕上（「產生」93、「取消產生」148、「預覽網格模型」122、「加入打印板」111 px）；只有英文模式嘅「產生」畫咗出嚟 | 按鈕建立時冇設定樣式，要等第一次繪畫先變做外框樣式，嗰下喺底部繪畫期間改咗每粒嘅最細尺寸，結果只有第一粒畫到出嚟。而家對話框一建立就將「產生」設做實心、其餘三粒設做外框 | 22ad5e68c | dialog-model-creator-lower--en-light-comfortable--md3-v165.png | pending | fixed-unverified |
+| CJ-030 | 模型建立工具底部 | en-light-comfortable、yue_HK-light-comfortable、bilingual_en_yue_HK-light-comfortable | 底部按鈕喺擷圖入面係空白方框（白色，雙語模式有一個黑色），雖然版面探針量到每粒都係完整最細尺寸、亦喺螢幕上（「產生」93、「取消產生」148、「預覽網格模型」122、「加入打印板」111 px）；只有英文模式嘅「產生」畫咗出嚟 | 唔係排版期間畫嘢嘅問題：喺 `md3-v180` 人手叫按鈕重畫，四粒即刻畫得啱，即係對話框最後一次排版之後佢哋從來冇再畫過。對話框而家一建立就設定每粒嘅樣式（`22ad5e68c`），一出現同每次更新狀態都重畫底部；表格下面嘅狀態行亦攞返全高（掃描報告 26 px 得 18 px） | 108259a2a | dialog-model-creator-lower--en-light-comfortable--md3-v165.png | pending | fixed-unverified |
 | CJ-031 | 預覽畫布嘅通知欄 | en-light-comfortable，報告嚟自 2026-07-30 建置嘅安裝版本；而家嘅發佈版本係同一段程式碼 | 警告同更新通知畫咗喺圖例側欄下面，文字喺側欄左邊被切走；佢哋嘅關閉按鈕喺側欄右邊露出嚟 | 通知欄唔理右邊距，定咗喺畫布角落 16 px，即係成條側欄下面 | 856d92a2c | pending | pending | fixed-unverified |
 | CJ-032 | 預覽圖例側欄嘅墨水分組卡 | en-light-comfortable，報告嚟自 2026-07-30 建置嘅安裝版本；而家嘅發佈版本係同一段程式碼 | 「Regroup ink」連結淨係見到上半截，張卡仲生咗條捲動列 | 張卡嘅高度係估出嚟嘅行數，假設嗰句得一行；344 px 嘅側欄令佢變兩行，多咗大約 10 px | 856d92a2c | pending | pending | fixed-unverified |
 | CJ-033 | 打印板設定嘅四個下拉選單（側邊欄拉闊咗） | en-light-comfortable，報告嚟自 2026-07-30 建置嘅安裝版本；而家嘅發佈版本係同一段程式碼，側邊欄 580 px | 「Textured PEI Plate」畫成「Textured P...」，雖然成行仲有位 | 無論成行幾闊都係固定 12 em；下拉選單而家跟成行咁闊 | 856d92a2c | pending | pending | fixed-unverified |
 | CJ-034 | 預覽圖例側欄嘅時間估算卡同檢視模式下拉選單 | en-light-comfortable，報告嚟自 2026-07-30 建置嘅安裝版本；而家嘅發佈版本係同一段程式碼 | 張卡左邊嘅外框同圓角被切走，張卡同下拉選單都去到側欄一半就收尾 | 張卡嘅範圍由最闊嗰行左邊 6 px 開始，喺視窗裁剪範圍出面；下拉選單用咗 ImGui 預設嘅項目闊度，即係視窗嘅 65% | 856d92a2c | pending | pending | fixed-unverified |
 | CJ-035 | 打印板設定嘅打印板類型下拉選單（預設側邊欄闊度） | en-light-comfortable，側邊欄 344 DIP（由原始碼計出嚟，未有擷圖） | 預設闊度下「Textured PEI Plate」仍然用省略號收尾 | 喺 20 em 嘅標籤欄隔籬，成行淨返嘅位唔多過 12 em 嘅最細闊度；而家呢頁用 14 em 標籤欄（較長嘅標籤會轉行），剩返大約 17 em | e4a6c1ccb | pending | pending | fixed-unverified |
 | CJ-036 | 打印板設定嘅打印板類型下拉選單，預設側邊欄闊度下最長嘅兩個打印板名 | en-light-comfortable，側邊欄 344 DIP（由原始碼計出嚟，未有擷圖） | 「Smooth PEI Plate / High Temp Plate」同「Bambu Cool Plate SuperTack」仍然用省略號收尾；打開清單會完整顯示 | 佢哋分別要大約 21 同 26.5 em，就算用 14 em 標籤欄，最窄側邊欄成行都唔夠位 | pending | pending | pending | open |
+| CJ-037 | 匯出對話框（物件清單、偏好設定、打印統計）嘅格式清單 | en-light-comfortable | 格式欄顯示「CSV (.csv...ommended」同「TSV (.tsv...ommended」，太長嘅說明喺中間被切 | 格式欄得 150 px，啲名要大約 175 px；精確度欄得一個字，卻有 110 px | 108259a2a | dialog-export-object-list--en-light-comfortable--md3-v180.png | pending | fixed-unverified |
 <!-- clipping-inventory:end -->
 
 CJ-014、CJ-015、CJ-017 同 CJ-018 已經用冇加過任何嘢嘅發佈套件，喺隱藏桌面上驗證咗（2026-09-29）：雙語模式下，最新版本訊息喺 `md3-v148` 完整畫出「OK · 確定」，而 `md3-v143` 就畫成「OK ·...」（CJ-014）；喺 `md3-v150`，搜尋欄完整畫出佢嘅圓形右端（CJ-015），設定檔清單完整顯示嗰一行（CJ-017），溫度校準嘅標籤維持英文，廣東話放喺提示框，唔再被裁走（CJ-018）。CJ-016 喺 `md3-v150` 仍然被裁；佢嘅修正係 `00b14ca67`。
