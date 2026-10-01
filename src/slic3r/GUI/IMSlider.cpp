@@ -604,9 +604,13 @@ bool IMSlider::horizontal_slider(const char* str_id, int* value, int v_min, int 
 
         // measure the right-aligned mono counter, the speed chip label and the
         // fixed-width elapsed/total readout probe before laying out the bar
+        // The word "Move" stays in the regular font: the mono font has no CJK glyphs, so its
+        // Cantonese form drew as "??". Only the numbers use the mono font.
+        const std::string counter_word = _u8L("Move") + " ";
+        const float counter_word_w = ImGui::CalcTextSize(counter_word.c_str()).x;
         const bool  mono_m     = imgui.push_mono_font();
-        const std::string counter_probe = _u8L("Move") + " " + std::to_string(*value) + " / " + std::to_string(v_max);
-        const float counter_probe_w = ImGui::CalcTextSize(counter_probe.c_str()).x;
+        const std::string counter_probe = std::to_string(*value) + " / " + std::to_string(v_max);
+        const float counter_probe_w = counter_word_w + ImGui::CalcTextSize(counter_probe.c_str()).x;
         char speed_label[16];
         ::snprintf(speed_label, sizeof(speed_label), "%dx", (int) std::lround(m_play_speed));
         const float speed_label_w = ImGui::CalcTextSize(speed_label).x;
@@ -782,11 +786,14 @@ bool IMSlider::horizontal_slider(const char* str_id, int* value, int v_min, int 
 
         // right-aligned mono counter 'Move cur / max'
         if (show_counter) {
+            const ImVec2 word_sz = ImGui::CalcTextSize(counter_word.c_str());
             const bool  mono_r  = imgui.push_mono_font();
-            const std::string counter = _u8L("Move") + " " + std::to_string(*value) + " / " + std::to_string(v_max);
+            const std::string counter = std::to_string(*value) + " / " + std::to_string(v_max);
             const ImVec2 counter_sz = ImGui::CalcTextSize(counter.c_str());
-            window->DrawList->AddText(ImVec2(counter_right - counter_sz.x, center_y - counter_sz.y * 0.5f), counter_clr, counter.c_str());
+            const float  numbers_x  = counter_right - counter_sz.x;
+            window->DrawList->AddText(ImVec2(numbers_x, center_y - counter_sz.y * 0.5f), counter_clr, counter.c_str());
             if (mono_r) imgui.pop_mono_font();
+            window->DrawList->AddText(ImVec2(numbers_x - word_sz.x, center_y - word_sz.y * 0.5f), counter_clr, counter_word.c_str());
         }
 
         // elapsed / total simulated print clock (mono, right-aligned)
