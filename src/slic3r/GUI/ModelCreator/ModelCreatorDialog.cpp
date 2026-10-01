@@ -167,6 +167,12 @@ ModelCreatorDialog::ModelCreatorDialog(wxWindow *parent, AddToPlate add_to_plate
     m_cancel_button = new Button(this, _L("Cancel generation"));
     m_preview = new Button(this, _L("Preview mesh"));
     m_add = new Button(this, _L("Add to plate"));
+    // Styled here rather than left to the default restyle of the first paint: that restyle
+    // changes each button's minimum while the footer is painting, and the three buttons after
+    // the first captured as blank boxes (clipping inventory CJ-030).
+    m_generate->SetVariant(Button::Variant::Filled);
+    for (Button *button : {m_cancel_button, m_preview, m_add})
+        button->SetVariant(Button::Variant::Outlined);
     auto *footer = GetFooterSizer();
     footer->Add(m_generate, 0, wxRIGHT, 6);
     footer->Add(m_cancel_button, 0, wxRIGHT, 6);
