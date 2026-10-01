@@ -125,6 +125,19 @@ namespace I18N {
 		{ return translate_mode(wxString(s.c_str(), wxConvUTF8), ctx); }
 	inline LocalizedText translate_mode(const std::wstring &s, const char *ctx)
 		{ return translate_mode(wxString(s.c_str()), ctx); }
+
+	// The material type "TPU-AMS" is a value of the filament_type setting: it is saved in presets and
+	// 3MF files and compared in code, so the value itself is never renamed. The functions below are for
+	// text a person reads. "TPU-AMS" is shown as "TPU for Ink Dispenser" (the catalogues carry the other
+	// languages) and any other type is shown as written. A result of these functions is display text
+	// only: never store it, compare it with a type, or look a preset up with it.
+	bool        is_ink_dispenser_material_type(const std::string &value);
+	// narrow asks for the short wording, for a label that is only a few letters wide.
+	wxString    display_material_type(const std::string &type, bool narrow = false);
+	std::string display_material_type_utf8(const std::string &type, bool narrow = false);
+	// A preset name or alias that contains "TPU for AMS" (Bambu TPU for AMS, Generic TPU for AMS) is
+	// shown with the same wording; every other name is shown as written.
+	wxString    display_material_name(const std::string &name);
 } // namespace I18N
 
 // Return translated std::string as a wxString

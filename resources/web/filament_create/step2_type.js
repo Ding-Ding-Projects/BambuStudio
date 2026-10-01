@@ -73,7 +73,8 @@ $(document).ready(function () {
     });
     $(document).on('click', '#base-preset-options .dropdown-item', function () {
         selectedPreset = $(this).data('val');
-        $('#input-base-preset').val(selectedPreset);
+        // The field only shows the preset; selectedPreset keeps the name that is sent on.
+        $('#input-base-preset').val(DisplayInkWording(selectedPreset));
         $('#base-preset-dropdown').addClass('hidden');
         loadPrinterList(selectedPreset);
     });
@@ -94,7 +95,7 @@ $(document).ready(function () {
                         && systemPresets.indexOf(s.base_preset) !== -1) {
                         pendingRestore = s;
                         selectedPreset = s.base_preset;
-                        $('#input-base-preset').val(s.base_preset);
+                        $('#input-base-preset').val(DisplayInkWording(s.base_preset));
                         loadPrinterList(s.base_preset);
                     }
                 } catch (e) {}
@@ -121,7 +122,7 @@ $(document).ready(function () {
 function renderPresetDropdown() {
     var html = '';
     systemPresets.forEach(function (p) {
-        html += '<div class="dropdown-item" data-val="' + p + '">' + p + '</div>';
+        html += '<div class="dropdown-item" data-val="' + p + '">' + DisplayInkWording(p) + '</div>';
     });
     $('#base-preset-options').html(html || ('<div class="dropdown-item disabled">' + _t('t294') + '</div>'));
 }

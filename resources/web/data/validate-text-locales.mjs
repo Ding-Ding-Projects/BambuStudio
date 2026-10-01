@@ -19,7 +19,7 @@ const english = sandbox.LangText.en;
 const cantonese = sandbox.LangText.yue_HK;
 assert.equal(
   Object.keys(english).length,
-  281,
+  282,
   'update the yue_HK catalog and reviewed baseline when English web keys change',
 );
 assert.deepEqual(

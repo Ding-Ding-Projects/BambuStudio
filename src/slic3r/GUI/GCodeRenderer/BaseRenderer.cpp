@@ -3171,10 +3171,12 @@ namespace Slic3r
                 bool any_more_to_best = delta_weight_to_best > EPSILON || delta_change_to_best > 0;
                 bool all_less_to_single_ext = delta_weight_to_single_ext > EPSILON && delta_change_to_single_ext > 0;
                 bool all_more_to_best = delta_weight_to_best > EPSILON && delta_change_to_best > 0;
-                auto get_filament_display_type = [](const ExtruderFilament& filament) {
+                auto get_filament_display_type = [](const ExtruderFilament& filament) -> std::string {
                     if (filament.is_support_filament && (filament.type == "PLA" || filament.type == "PA" || filament.type == "ABS"))
                         return "Sup." + filament.type;
-                    return filament.type;
+                    // The chip is only a few letters wide, so the material type that names the dispenser is
+                    // shown in its short ink wording. The type itself is stored as written; this is display text.
+                    return I18N::display_material_type_utf8(filament.type, true);
                     };
                 // BBS AMS containers
                 float line_height = ImGui::GetFrameHeight();

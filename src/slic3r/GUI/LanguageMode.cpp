@@ -164,6 +164,11 @@ const std::pair<const wchar_t *, const wchar_t *> VOCABULARY_RULES[] = {
     { L"Filament",  L"Ink" },
     { L"filament",  L"ink" },
     { L"FILAMENT",  L"INK" },
+    // The material type TPU-AMS is stored as written in presets and 3MF files, so it is shown here
+    // and nowhere else. It has to come before the plain AMS rule, or the hyphen (a word boundary)
+    // would turn it into "TPU-Ink Dispenser". Only text that has been translated for display passes
+    // through this function; the stored value is never read back from it.
+    { L"TPU-AMS",   L"TPU for Ink Dispenser" },
     { L"AMS",       L"Ink Dispenser" },
 };
 

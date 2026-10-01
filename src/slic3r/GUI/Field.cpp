@@ -1120,6 +1120,29 @@ using choice_ctrl = ::ComboBox; // BBS
 
 static std::map<std::string, DynamicList*> dynamic_lists;
 
+// The Type dropdown of a filament preset is an editable dropdown of material types, and the text it
+// shows is what get_value() stores: there is no separate label and value. The type that names the
+// dispenser ("TPU-AMS") is shown in the ink wording, so its list item carries display text and the
+// stored value is restored from that item in get_value(). Every other type is shown as it is stored.
+static wxString enum_item_text(const ConfigOptionDef &opt, const std::string &value)
+{
+    if (opt.opt_key == "filament_type" && I18N::is_ink_dispenser_material_type(value))
+        return I18N::display_material_type(value);
+    return wxString(value);
+}
+
+// The value to store for the text a dropdown shows. Text that is not the display text of a list item
+// (a type the user typed, or any other dropdown) is returned unchanged.
+static wxString stored_enum_text(const ConfigOptionDef &opt, const choice_ctrl &field, const wxString &shown)
+{
+    if (opt.opt_key != "filament_type" || !opt.enum_labels.empty())
+        return shown;
+    for (size_t i = 0; i < opt.enum_values.size() && i < field.GetCount(); ++i)
+        if (I18N::is_ink_dispenser_material_type(opt.enum_values[i]) && shown == field.GetString(static_cast<unsigned int>(i)))
+            return wxString(opt.enum_values[i]);
+    return shown;
+}
+
 void Choice::register_dynamic_list(std::string const &optname, DynamicList *list) { dynamic_lists.emplace(optname, list); }
 
 void DynamicList::update()
@@ -1205,9 +1228,9 @@ void Choice::BUILD()
 
 	if (! m_opt.enum_labels.empty() || ! m_opt.enum_values.empty()) {
 		if (m_opt.enum_labels.empty()) {
-			// Append non-localized enum_values
+			// Append non-localized enum_values (a material type that names the dispenser shows its display text)
 			for (auto el : m_opt.enum_values)
-				temp->Append(el);
+				temp->Append(enum_item_text(m_opt, el));
 		} else {
 			// Append localized enum_labels
             int i = 0;
@@ -1517,7 +1540,8 @@ boost::any& Choice::get_value()
 {
     choice_ctrl* field = dynamic_cast<choice_ctrl*>(window);
 
-	wxString ret_str = field->GetValue();
+	// The text of a filament Type item that is shown in the ink wording is stored as the type it stands for.
+	wxString ret_str = stored_enum_text(m_opt, *field, field->GetValue());
 
 	// options from right panel
 	std::vector <std::string> right_panel_options{ "support", "pad", "scale_unit" };

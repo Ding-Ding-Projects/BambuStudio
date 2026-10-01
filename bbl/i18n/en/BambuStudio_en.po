@@ -27557,3 +27557,10 @@ msgstr "- Sync nozzle and Ink Dispenser information before slicing"
 
 msgid "- New filament badge and prompt"
 msgstr "- New ink badge and prompt"
+
+msgid "TPU-AMS"
+msgstr "TPU for Ink Dispenser"
+
+msgctxt "NarrowBlock"
+msgid "TPU-AMS"
+msgstr "TPU for Ink"

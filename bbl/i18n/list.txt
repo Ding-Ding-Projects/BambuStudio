@@ -88,6 +88,7 @@ src/slic3r/GUI/Gizmos/GLGizmoSVG.cpp
 src/slic3r/GUI/Gizmos/GLGizmoSVG.hpp
 src/slic3r/GUI/GUI.cpp
 src/slic3r/GUI/GUI_App.cpp
+src/slic3r/GUI/I18N.cpp
 src/slic3r/GUI/GUI_AuxiliaryList.cpp
 src/slic3r/GUI/GUI_Init.cpp
 src/slic3r/GUI/GUI_Factories.cpp

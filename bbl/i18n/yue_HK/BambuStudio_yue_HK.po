@@ -37503,3 +37503,14 @@ msgstr "- 切片前同步噴嘴同墨水機資訊"
 #. review-status: agent-drafted
 msgid "- New filament badge and prompt"
 msgstr "- 新墨水角標同提示"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "TPU-AMS"
+msgstr "墨水機用 TPU"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgctxt "NarrowBlock"
+msgid "TPU-AMS"
+msgstr "墨水用 TPU"

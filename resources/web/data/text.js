@@ -265,6 +265,7 @@ var LangText={
 		"t297": "Printer connection setup demonstration",
 		"t124": "",
 		"t298": "New",
+		"t299": "TPU for Ink Dispenser",
 		"wk1": "Quick Start",
 		"wk2": "This article introduces the most basic usage of Bambu Studio. It guides users to configure software, create projects, and complete the first printing task step by step.",
 		"wk3": "Project Based Workflow",
@@ -3278,6 +3279,7 @@ var LangText={
 		"t297": "打印機連線設定示範",
 		"t124": "",
 		"t298": "新",
+		"t299": "墨水機用 TPU",
 		"wk1": "快速入門",
 		"wk2": "呢篇文章介紹 Bambu Studio 最基本嘅用法，一步一步帶你設定軟件、建立項目，完成第一次打印。",
 		"wk3": "以項目為本嘅工作流程",
@@ -3516,4 +3518,39 @@ function GetCurrentPlainTextByKey( key )
 	}
 
 	return StripBilingualMarkup(GetLocalizedTextByKey(key, strLang) || '');
+}
+
+// Display-only wording for the material type "TPU-AMS" and for the preset names that say
+// "TPU for AMS" (Bambu TPU for AMS, Generic TPU for AMS). The type is a value that is stored in
+// presets and sent back to the application, and a preset name is how a preset is found, so a page
+// keeps the original text in its data and attributes and uses this for what a person reads only.
+// Any other text is returned unchanged. The bilingual mode reads English; see
+// DisplayInkWordingTitle for the Cantonese.
+function DisplayInkWording( text, strLang )
+{
+	let value=String(text);
+	if(value.indexOf('AMS')<0)
+		return value;
+
+	let lang=strLang || GetCurrentWebLang();
+	let label=(lang==="yue_HK") ? LangText['yue_HK']['t299'] : LangText['en']['t299'];
+	if(value==='TPU-AMS')
+		return label;
+
+	return value.replace(/(^|[^A-Za-z0-9_])TPU for AMS(?![A-Za-z0-9_])/, function(match, before){ return before+label; });
+}
+
+// Tooltip that carries both languages for a text DisplayInkWording changed, in the bilingual mode
+// only. Empty when there is nothing to add.
+function DisplayInkWordingTitle( text )
+{
+	if(GetCurrentWebLang()!=="bilingual_en_yue_HK")
+		return '';
+
+	let english=DisplayInkWording(text,'en');
+	let cantonese=DisplayInkWording(text,'yue_HK');
+	if(english===String(text) || cantonese===english)
+		return '';
+
+	return english+' ／ 粵語：'+cantonese;
 }

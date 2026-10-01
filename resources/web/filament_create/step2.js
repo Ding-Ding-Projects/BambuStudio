@@ -163,7 +163,8 @@ function handleDeviceInfo(data) {
     // 渲染基准预设下拉
     var presetsHtml = '';
     (data.system_presets || []).forEach(function (p, i) {
-        presetsHtml += '<div class="dropdown-item" data-idx="' + i + '">' + p.name + '</div>';
+        // The row shows the ink wording; the preset keeps its own name in system_presets.
+        presetsHtml += '<div class="dropdown-item" data-idx="' + i + '">' + DisplayInkWording(p.name) + '</div>';
     });
     $('#base-preset-options').html(presetsHtml || ('<div class="dropdown-item disabled">' + _t('t294') + '</div>'));
 
@@ -179,7 +180,7 @@ function handleDeviceInfo(data) {
         var idx = $(this).data('idx');
         var p = data.system_presets[idx];
         selectedPreset = p;
-        $('#input-base-preset').val(p.name);
+        $('#input-base-preset').val(DisplayInkWording(p.name));
         $('#base-preset-dropdown').addClass('hidden');
         // Re-render nozzle checkboxes: this preset's coverage decides what's checkable.
         // A preset that only exists for 0.4 (e.g. Bambu ABS on P1S) must not leave 0.2/
@@ -208,12 +209,12 @@ function handleDeviceInfo(data) {
         var match = data.system_presets.find(function (p) { return p.name === saved.base_preset; });
         if (match) {
             selectedPreset = match;
-            $('#input-base-preset').val(match.name);
+            $('#input-base-preset').val(DisplayInkWording(match.name));
         }
     }
     if (!selectedPreset && data.system_presets && data.system_presets.length > 0) {
         selectedPreset = data.system_presets[0];
-        $('#input-base-preset').val(selectedPreset.name);
+        $('#input-base-preset').val(DisplayInkWording(selectedPreset.name));
     }
 
     // Reverse-map saved printer preset names back to nozzle sizes so we can carry the
