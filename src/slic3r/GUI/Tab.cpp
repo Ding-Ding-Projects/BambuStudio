@@ -4146,7 +4146,11 @@ void TabPrintPlate::build()
     m_config->option("other_layers_sequence_choice", true);
 
     auto page = add_options_page(L("Plate Settings"), "empty");
-    auto optgroup = page->new_optgroup("");
+    // A 14 em label column instead of the usual 20 em: the plate names are the long values here, and a
+    // label wider than the column wraps onto a second line (the row grows) instead of being cut. At the
+    // default sidebar width this leaves the dropdowns about 17 em, enough for "Textured PEI Plate" and the
+    // Cantonese plate names.
+    auto optgroup = page->new_optgroup("", wxEmptyString, 14);
     // The dropdowns take the width of the row (the full_width path the option
     // panel already resizes on every paint), so a wider sidebar shows more of
     // the value, for example "Textured PEI Plate" or "Smooth PEI Plate / High

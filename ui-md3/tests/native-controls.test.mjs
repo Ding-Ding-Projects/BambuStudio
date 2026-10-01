@@ -143,6 +143,8 @@ test('the Objects list has no native column header and no system frame', async (
 
 test('the plate settings dropdowns take the width of their row', async () => {
   const build = fn(await read('Tab.cpp'), 'void TabPrintPlate::build()');
+  // A narrower label column (labels wrap instead of being cut) leaves the dropdowns room at the default width.
+  assert.match(build, /auto optgroup = page->new_optgroup\("", wxEmptyString, 14\);/);
   assert.match(build, /auto append_select = \[&optgroup\]\(const std::string &key, const std::string &path = std::string\(\)\) \{\s*Option option = optgroup->get_option\(key\);\s*option\.opt\.full_width = true;\s*optgroup->append_single_option_line\(option, path\);\s*\};/);
   for (const key of ['curr_bed_type', 'print_sequence', 'first_layer_sequence_choice', 'other_layers_sequence_choice']) {
     assert.match(build, new RegExp(`append_select\\("${key}"`), `${key} is row-wide, so a long value is not cut to a 12 em face`);
