@@ -215,6 +215,7 @@ bool  NotificationManager::SlicingProgressNotification::update_state(bool paused
 
 void NotificationManager::SlicingProgressNotification::render(GLCanvas3D& canvas, float initial_y, bool move_from_overlay, float overlay_width, float right_margin)
 {
+    if (m_observe_cancel) m_cancel_canvas = &canvas;
 	if (m_state == EState::Unknown || m_state == PopNotification::EState::Hovered)
 		init();
 
@@ -474,6 +475,21 @@ void NotificationManager::SlicingProgressNotification::on_show_dailytips()
 	wxGetApp().plater()->get_dailytips()->open();
 }
 
+NotificationManager::RenderedCancelTarget
+NotificationManager::SlicingProgressNotification::automation_cancel_target(const GLCanvas3D& canvas) const
+{
+    if (!m_observe_cancel || m_cancel_canvas != &canvas || !m_rendered_this_frame ||
+        m_state == EState::Hidden || m_state == EState::Finished || m_state == EState::ClosePending ||
+        m_sp_state != SlicingProgressState::SP_PROGRESS || !m_cancel_callback ||
+        !m_cancel_target.visible || !ImGui::GetCurrentContext() ||
+        m_cancel_target.frame != ImGui::GetFrameCount()) return {};
+    auto result = m_cancel_target;
+    result.age_ms = std::chrono::duration<double, std::milli>(
+        std::chrono::steady_clock::now() - m_cancel_render_time).count();
+    if (result.age_ms > 500.0) return {};
+    return result;
+}
+
 void Slic3r::GUI::NotificationManager::SlicingProgressNotification::render_cancel_button(const ImVec2& pos, const ImVec2& size)
 {
 	if (m_sp_state == SlicingProgressState::SP_PROGRESS) {
@@ -487,10 +503,21 @@ void Slic3r::GUI::NotificationManager::SlicingProgressNotification::render_cance
 
 		ImVec2 button_size = size;
 		ImVec2 button_pos = pos;
-		ImGui::SetCursorScreenPos(button_pos);
+        if (m_observe_cancel && wxGetApp().plater()) {
+            // The intersection is the same visible hit area used by ImGui input.
+            const ImRect clip = ImGui::GetCurrentWindow()->ClipRect;
+            const float left = std::max(button_pos.x, clip.Min.x);
+            const float top = std::max(button_pos.y, clip.Min.y);
+            const float right = std::min(button_pos.x + button_size.x, clip.Max.x);
+            const float bottom = std::min(button_pos.y + button_size.y, clip.Max.y);
+            m_cancel_target = {right > left && bottom > top, ImGui::GetFrameCount(),
+                               wxGetApp().plater()->automation_slice_workflow().native_generation, 0.0, left, top, std::max(0.0f, right - left), std::max(0.0f, bottom - top)};
+            m_cancel_render_time = std::chrono::steady_clock::now();
+        }
+        ImGui::SetCursorScreenPos(button_pos);
 
-		std::wstring button_text;
-		button_text = ImGui::CancelButton;
+        std::wstring button_text;
+        button_text = ImGui::CancelButton;
 		if (ImGui::IsMouseHoveringRect(button_pos, button_pos + button_size, true))
 		{
 			button_text = ImGui::CancelHoverButton;

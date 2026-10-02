@@ -11,6 +11,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
+#include <string_view>
 #include <cctype>
 #include <cmath>
 #include <limits>
@@ -8552,7 +8553,7 @@ public:
         m_slice_completions[(sequence - 1) % m_slice_completions.size()] = {
             sequence, event.generation(), current_generation,
             event.success() ? "completed" : event.cancelled() ? "cancelled" : "failed",
-            rejection, rejection[0] == 'n'};
+            rejection, std::string_view(rejection) == "none"};
     }
     void observe_slice_continuation(PrintWorkflowState::SliceOutputAction action,
                                     const PrintWorkflowState::PendingSliceOutput& request) noexcept

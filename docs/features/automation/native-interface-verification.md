@@ -27,14 +27,15 @@ the exact release candidate. The checkout must be at that source commit.
 | `slice-controls` | Empty-model proof, visible disabled Slice and Print/Send controls, disabled clicks that open no dialog, named options buttons with real chevron labels, measured action layout | This is an empty-scene preflight, not proof of slicing or device continuation. |
 | `combined-print` | Native cube import, installed presets, real Slice and Print click, ready output on plate zero, existing Send print job dialog, Escape dismissal | No submit or printer selection. Missing presets, account requirements, version preflight or an unavailable dialog fail the scope. |
 | `combined-send` | Native cube import, installed presets, real Slice and Send click, ready output on plate zero, existing Send to Printer storage dialog, Escape dismissal | No transfer or physical printing. It verifies the confirmation boundary only. |
-| `cancellation` | Explicitly reports unverified and returns nonzero | The current read-only interface lacks the generation and pending-continuation observations needed to prove stale-event rejection. A controlled in-flight workload and accessible cancellation interaction are still required. |
+| `cancellation` | Up to three actual combined requests followed by native clicks on the freshly rendered cancel target | Requires in-flight identity, cancellation without continuation, and an actually delivered stale completion rejected by the receiver. A timing miss returns nonzero with `not_observed`, never success. |
 
 The real-cube scopes copy the same checked-in STL used by `drive-automation.py`.
 They use the packaged companion only for the read-only `project_inspect` and
 `presets_list` operations. All product mutations use observed native controls.
-They cannot prove which internal generation produced a result, so the separate
-cancellation scope remains visibly incomplete rather than inferring success
-from an idle snapshot.
+The versioned diagnostic observation also binds completion and continuation
+to the current native generation and plate. The separate cancellation scope
+requires positive rejection evidence rather than inferring success from an
+idle snapshot.
 
 ## Matrix and evidence
 
@@ -123,5 +124,99 @@ the cancellation scope or any requested tuple remains unverified.
 無效版本檔案必須顯示拒絕訊息並保留原有有效替換；兩次新程序啟動分別
 檢查替換仍然生效，以及清除之後原文仍然恢復，唔會偷偷重建快取充數。
 切片連接操作只去到現有確認視窗，唔會傳送工作或者啟動打印。
-取消同過期世代事件嘅真實互動證據仍然未完成，`cancellation` 範圍會明確
-回報未驗證，唔會用一個閒置畫面冒充已經測過。
+取消範圍最多實際嘗試三次，用當前繪製嘅取消按鈕位置點擊；需要真實取消同
+接收端拒絕過期事件嘅證據。未撞到時序窗口會回報 `not_observed` 並失敗，
+唔會用一個閒置畫面冒充已經測過。實際託管執行仍然待驗證。
+## Slice workflow observation contract (version 1)
+
+With `BAMBU_AUTOMATION=1`, `capabilities.sliceWorkflow` advertises version 1 and
+`project_inspect.sliceWorkflow` returns diagnostics from the UI thread. This is
+an observation surface, not an event-injection or cancellation command. It adds
+no printer submission route and does not change existing confirmation dialogs.
+
+| Field | Meaning |
+| --- | --- |
+| `schemaVersion`, `enabled`, `diagnosticOnly`, `eventCapacity` | Version 1, enabled opt-in diagnostics, capacity 16 per event ring. |
+| `requestGeneration` | UI slice-request counter. It is distinct from the companion automation job counter. |
+| `nativeGeneration` | Background process generation, also advanced when cancellation invalidates earlier work. |
+| `modelRevision` | Active undo snapshot timestamp, an opaque revision identity, not wall-clock time or a content hash. |
+| `outcome` | `idle`, `running`, `completed`, `failed`, `cancelled`, or `unknown`, from the existing atomic background outcome. |
+| `cancellationRequested` | Existing asynchronous cancellation-request flag; it does not imply worker termination. |
+| `workerRunning` | Existing background ownership state: started, running, finished awaiting consumption, or cancelled awaiting consumption. False alone is not success. |
+| `processingPlateIndex` | Index resolved against currently owned plates, or -1 when no current plate matches. |
+| `pending` | Action `none`/`print`/`send`, plate index, UI request and native generations, and equality against current and processing plate identities. No pointers are exported. |
+| `completionSequence`, `completionEvents` | Process-local monotonic sequence and the latest 16 actual completion-receiver entries, oldest first. Each includes event/current generations, status, accepted flag and rejection reason. |
+| `continuationSequence`, `continuationEvents` | Separate monotonic sequence and latest 16 consumed Print/Send continuations, with action, plate and generation identities. Dispatch is not proof that a dialog opened or a device received data. |
+| `cancelTarget` | Current rendered cancel intersection, or `{ "visible": false }`. No native handle, model name, file path or printer identity is included. |
+
+The completion receiver records before its early exits. `accepted` means the
+entry passed shutdown, generation and ignore checks. It is not a claim of
+successful slicing; inspect `status` separately. Rejections are `shutting_down`,
+`stale_generation`, or `ignored`; accepted entries use `none`. Two fixed arrays
+avoid allocation in the receiver. Serialization allocates only on an explicit
+read request. These are bounded observations, not a permanent audit history.
+Consumers must detect sequence gaps or overwritten evidence and never treat
+missing entries as proof that an event did not happen. Process restart resets
+both sequences. `modelRevision` is explicitly separate from both generation
+counters and may move backwards after undo.
+
+`cancelTarget.rect` and `canvasRect` are `[left, top, right, bottom]` in native
+screen pixels. The rendered ImGui hit area is clipped to its actual child-window
+clip rectangle, then converted from canvas pixels through the current native
+client dimensions and screen origin. `frame` is the actual ImGui frame count;
+`ageMs` is measured with a monotonic clock. The observation is invalid unless
+it belongs to the same canvas and native generation as the observation, matches
+the current ImGui frame, is at most 500 ms old, is inside the
+visible canvas, and the notification remains in progress with a callback.
+Every notification-render pass clears the cached area before skipping hidden
+or overflowed entries. No draw is requested by this getter. Another frame,
+state change, hidden canvas, or delayed read may therefore produce no target.
+The driver resolves the owned native GLCanvas under that point and sends real
+mouse input through the existing low-level route. The usual race between an
+observation and an input remains possible and is reported, never hidden.
+
+## Cancellation evidence and limits
+
+The bounded stress fixture uses the existing closed cube STL, with every vertex
+scaled by 20 to make a 200 mm cube. It is imported through the native file picker
+and uses the same bundled preset profile as the ordinary combined-action flow.
+Its exact generated file hash is recorded. This widens the real slicing interval
+without adding artificial delays to product code. Printers with a smaller build
+volume or unavailable bundled presets may reject it; that is an unavailable
+fixture, not successful cancellation evidence.
+
+The driver makes at most three genuine requests, alternating Slice and Print
+and Slice and Send. Before each
+cancel click it re-reads the opt-in observation, requires a live matching native
+generation and pending action, then uses the real current rendered hit area.
+Afterward it waits at most 90 seconds for ownership release, requires the
+cancelled outcome and empty continuation, and retains the observations. Each
+subsequent trial uses the same imported model and a newer genuine slice request.
+A successful cancellation scope additionally requires an actual old-generation
+completion at the receiver, with `accepted=false` and `stale_generation`.
+Neither injected events nor fabricated delayed work are used. A machine that
+does not produce that timing window returns `not_observed` and a nonzero exit.
+A missed click, changed generation, truncated event history, unavailable target,
+failed slice, or hanging worker cannot be labelled a pass. A confirmation reached
+because slicing finished too quickly is dismissed with Escape only.
+
+These checks cover same-plate cancellation/retry and observed stale completion.
+They do not yet prove model/config edits, plate switching, application closure
+during active work, every platform scheduler interleaving, or cancellation of a
+noninterruptible kernel. They do not submit a print or transfer to hardware.
+The ordinary combined Print and Send scopes separately require a successful
+current-generation completion and matching consumed continuation before the
+existing dialog is accepted as evidence. A missing printer/account dialog
+remains unavailable even if the telemetry says dispatch occurred.
+
+Required hosted review, currently pending:
+
+- [ ] Build this exact candidate and execute the versioned observation contract.
+- [ ] Observe real cancellation with an empty pending action and unchanged continuation sequence.
+- [ ] Observe an actual stale completion rejected before any current-run mutation.
+- [ ] Inspect every retained image and encrypted native record before publication.
+- [ ] Repeat the required language, theme, viewport and real DPI tuples.
+- [ ] Independently review shutdown, event ordering, ring truncation and native target freshness.
+
+No local build, test, native execution or capture was used to prepare this
+extension. Source review and whitespace checks are not runtime verification.

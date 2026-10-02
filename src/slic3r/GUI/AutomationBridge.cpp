@@ -1,6 +1,8 @@
 #include "AutomationBridge.hpp"
 #include "GUI_App.hpp"
 #include "Plater.hpp"
+#include "GLCanvas3D.hpp"
+#include "NotificationManager.hpp"
 #include "Tab.hpp"
 #include "PartPlate.hpp"
 #include "DeviceCore/DevManager.h"
@@ -200,7 +202,7 @@ struct AutomationBridge::State : std::enable_shared_from_this<AutomationBridge::
 #endif
         auto p = app.plater();
         if (!p || p->is_loading_project()) throw Rejected("not_ready","Workspace is unavailable or loading");
-        if (op == "capabilities") return {{"operations",Json::array({"capabilities","project_inspect","project_new","project_open","project_save","model_import","presets_list","settings_get","settings_update","slice_start","export_file","printer_list","printer_status","printer_start","printer_pause","printer_resume","printer_cancel","job_status","job_cancel"})},{"maxMessageBytes",max_message},{"overwrite",true},{"enable","BAMBU_AUTOMATION=1"},{"requestIdScope","process result cache plus durable intent journal; earlier-process requests return submission_unknown"},{"plateIndexBase",0},{"exportFormats",Json::array({"stl","gcode.3mf"})},{"printerStartRequires",Json::array({"sliceJobId","printerId","requestId","path"})},{"printerStartRestrictions","one known reliable nozzle, one filament, external spool, matching printer model and diameter; AMS and dual nozzle are rejected"}};
+        if (op == "capabilities") return {{"operations",Json::array({"capabilities","project_inspect","project_new","project_open","project_save","model_import","presets_list","settings_get","settings_update","slice_start","export_file","printer_list","printer_status","printer_start","printer_pause","printer_resume","printer_cancel","job_status","job_cancel"})},{"sliceWorkflow",{{"schemaVersion",1},{"operation","project_inspect"},{"diagnosticOnly",true},{"eventCapacity",16}}},{"maxMessageBytes",max_message},{"overwrite",true},{"enable","BAMBU_AUTOMATION=1"},{"requestIdScope","process result cache plus durable intent journal; earlier-process requests return submission_unknown"},{"plateIndexBase",0},{"exportFormats",Json::array({"stl","gcode.3mf"})},{"printerStartRequires",Json::array({"sliceJobId","printerId","requestId","path"})},{"printerStartRestrictions","one known reliable nozzle, one filament, external spool, matching printer model and diameter; AMS and dual nozzle are rejected"}};
         if (op == "project_inspect") {
             Json objects=Json::array(), plates=Json::array();
             for (size_t i=0;i<p->model().objects.size();++i) {
@@ -208,7 +210,49 @@ struct AutomationBridge::State : std::enable_shared_from_this<AutomationBridge::
                 objects.push_back({{"index",i},{"name",o->name},{"instances",o->instances.size()},{"volumes",o->volumes.size()}});
             }
             for (auto plate:p->get_partplate_list().get_plate_list()) plates.push_back({{"index",plate->get_index()},{"sliceReady",plate->is_slice_result_ready_for_print()}});
-            return {{"name",p->get_project_name().ToStdString()},{"dirty",p->is_project_dirty()},{"objects",objects},{"plates",plates},{"currentPlate",p->get_partplate_list().get_curr_plate_index()},{"slicing",p->is_background_process_slicing()}};
+            const auto observed = p->automation_slice_workflow();
+            Json completions = Json::array(), continuations = Json::array();
+            for (size_t i = 0; i < observed.completion_count; ++i) {
+                const auto& e = observed.completions[i];
+                completions.push_back({{"sequence",e.sequence},{"eventGeneration",e.event_generation},
+                    {"currentGeneration",e.current_generation},{"status",e.status},
+                    {"accepted",e.accepted},{"rejection",e.rejection}});
+            }
+            for (size_t i = 0; i < observed.continuation_count; ++i) {
+                const auto& e = observed.continuations[i];
+                continuations.push_back({{"sequence",e.sequence},{"requestGeneration",e.request_generation},
+                    {"nativeGeneration",e.native_generation},{"plateIndex",e.plate_index},{"action",e.action}});
+            }
+            Json cancel = {{"visible",false}};
+            auto* canvas = p->get_current_canvas3D();
+            if (observed.enabled && canvas && canvas->get_wxglcanvas()->IsShownOnScreen()) {
+                const auto target = p->get_notification_manager()->automation_slice_cancel_target(*canvas);
+                const auto pixels = canvas->get_canvas_size();
+                const auto client = canvas->get_wxglcanvas()->GetClientSize();
+                if (target.visible && target.generation == observed.native_generation && target.x >= 0 && target.y >= 0 &&
+                    target.x + target.width <= pixels.get_width() && target.y + target.height <= pixels.get_height() &&
+                    pixels.get_width() > 0 && pixels.get_height() > 0) {
+                    const auto origin = canvas->get_wxglcanvas()->ClientToScreen(wxPoint(0,0));
+                    const double sx = double(client.x) / pixels.get_width(), sy = double(client.y) / pixels.get_height();
+                    cancel = {{"visible",true},{"frame",target.frame},{"nativeGeneration",target.generation},{"ageMs",target.age_ms},
+                        {"coordinateSpace","screen-pixels"},
+                        {"rect",Json::array({origin.x + target.x * sx, origin.y + target.y * sy,
+                            origin.x + (target.x + target.width) * sx, origin.y + (target.y + target.height) * sy})},
+                        {"canvasRect",Json::array({origin.x,origin.y,origin.x + client.x,origin.y + client.y})}};
+                }
+            }
+            Json workflow = {{"schemaVersion",1},{"enabled",observed.enabled},{"diagnosticOnly",true},
+                {"eventCapacity",observed.event_capacity},{"requestGeneration",observed.request_generation},
+                {"nativeGeneration",observed.native_generation},{"modelRevision",observed.model_revision},
+                {"outcome",observed.outcome},{"cancellationRequested",observed.cancellation_requested},
+                {"workerRunning",observed.worker_running},{"processingPlateIndex",observed.processing_plate_index},
+                {"pending",{{"action",observed.pending_action},{"plateIndex",observed.pending_plate_index},
+                    {"requestGeneration",observed.pending_request_generation},{"nativeGeneration",observed.pending_native_generation},
+                    {"matchesCurrentPlate",observed.pending_matches_current_plate},
+                    {"matchesProcessingPlate",observed.pending_matches_processing_plate}}},
+                {"completionSequence",observed.completion_sequence},{"continuationSequence",observed.continuation_sequence},
+                {"completionEvents",completions},{"continuationEvents",continuations},{"cancelTarget",cancel}};
+            return {{"name",p->get_project_name().ToStdString()},{"dirty",p->is_project_dirty()},{"objects",objects},{"plates",plates},{"currentPlate",p->get_partplate_list().get_curr_plate_index()},{"slicing",p->is_background_process_slicing()},{"sliceWorkflow",workflow}};
         }
         if (op=="project_new" || op=="project_open") {
             if (p->is_project_dirty()) throw Rejected("unsaved_changes","Save the current project before replacing it");

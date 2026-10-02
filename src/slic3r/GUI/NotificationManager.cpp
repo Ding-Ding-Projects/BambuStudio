@@ -3053,6 +3053,16 @@ void NotificationManager::stop_delayed_notifications_of_type(const NotificationT
 	}
 }
 
+NotificationManager::RenderedCancelTarget NotificationManager::automation_slice_cancel_target(const GLCanvas3D& canvas) const
+{
+    for (const auto& notification : m_pop_notifications)
+        if (const auto* slicing = dynamic_cast<const SlicingProgressNotification*>(notification.get())) {
+            const auto target = slicing->automation_cancel_target(canvas);
+            if (target.visible) return target;
+        }
+    return {};
+}
+
 void NotificationManager::render_notifications(GLCanvas3D &canvas, float overlay_width, float bottom_margin, float right_margin)
 {
 	sort_notifications();

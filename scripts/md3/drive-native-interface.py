@@ -2,8 +2,8 @@
 """Exercise installed native controls using the cheap hidden-desktop input route.
 
 One bounded scope per invocation keeps evidence compatible with the existing
-automation recipient and reader. No automation mutation or layout-probe command
-is used. Native UI Automation is read-only. Raw evidence requires pixel review.
+automation recipient and reader. Application commands and layout probes are
+read-only; interaction uses native input. Raw evidence requires pixel review.
 """
 from __future__ import annotations
 
@@ -78,7 +78,63 @@ def native_worker(request_path: Path, output: Path):
         hwnd = info.hwndFocus
         user.GetWindowThreadProcessId(hwnd, ctypes.byref(actual))
         require(actual.value == pid, "Keyboard focus left the owned process")
-    if operation == "click":
+    cancel_observation = None
+    if operation == "cancel-current":
+        deadline = time.monotonic() + 10
+        while time.monotonic() < deadline:
+            result = subprocess.run([request["cli"], "command", "project_inspect", "--json",
+                "--workspace", request["workspace"], "--instance", str(pid)], capture_output=True,
+                text=True, timeout=5, creationflags=subprocess.CREATE_NO_WINDOW)
+            require(result.returncode == 0 and len(result.stdout) <= 1048576,
+                    "Fresh cancellation observation unavailable")
+            response = json.loads(result.stdout)
+            require(response.get("ok") is True, "Fresh cancellation observation rejected")
+            w = response["result"].get("sliceWorkflow", {})
+            require(w.get("nativeGeneration") == request["generation"] and
+                    w.get("outcome") == "running" and w.get("workerRunning") is True and
+                    w.get("pending", {}).get("action") == request["action"],
+                    "In-flight generation ended before cancellation input")
+            target = w.get("cancelTarget", {})
+            if (target.get("visible") and target.get("ageMs", 501) <= 500 and
+                    target.get("nativeGeneration") == request["generation"]):
+                break
+            time.sleep(0.05)
+        require(target.get("visible") is True and target.get("coordinateSpace") == "screen-pixels",
+                "Rendered cancel target was not observed within the bounded interval")
+        left, top, right, bottom = target["rect"]
+        cl, ct, cr, cb = target["canvasRect"]
+        require(cl <= left < right <= cr and ct <= top < bottom <= cb and
+                target.get("nativeGeneration") == request["generation"],
+                "Rendered cancel target identity or bounds changed")
+        x, y = round((left + right) / 2), round((top + bottom) / 2)
+        # Resolve the actual owned native child under the freshly observed point.
+        # Sending canvas input to a top-level frame would not exercise the control.
+        user.ChildWindowFromPointEx.argtypes = [wintypes.HWND, wintypes.POINT, wintypes.UINT]
+        user.ChildWindowFromPointEx.restype = wintypes.HWND
+        for _ in range(32):
+            point = wintypes.POINT(x, y)
+            require(user.ScreenToClient(hwnd, ctypes.byref(point)), "Cancel coordinate conversion failed")
+            child = user.ChildWindowFromPointEx(hwnd, point, 0x0001 | 0x0002 | 0x0004)
+            if not child or child == hwnd:
+                break
+            hwnd = child
+        user.GetWindowThreadProcessId(hwnd, ctypes.byref(actual))
+        require(actual.value == pid, "Rendered cancel target left the owned process")
+        # wxWidgets may register a generic native class name for GLCanvas.
+        # Match its actual client geometry instead of guessing a class string.
+        user.GetClientRect.argtypes = [wintypes.HWND, ctypes.POINTER(wintypes.RECT)]
+        user.ClientToScreen.argtypes = [wintypes.HWND, ctypes.POINTER(wintypes.POINT)]
+        bounds, origin = wintypes.RECT(), wintypes.POINT(0, 0)
+        require(user.GetClientRect(hwnd, ctypes.byref(bounds)) and
+                user.ClientToScreen(hwnd, ctypes.byref(origin)), "Canvas geometry unavailable")
+        actual_rect = [origin.x, origin.y, origin.x + bounds.right, origin.y + bounds.bottom]
+        require(all(abs(a - b) <= 1 for a, b in zip(actual_rect, target["canvasRect"])),
+                "Rendered cancel target does not match the native canvas")
+        point = wintypes.POINT(x, y)
+        require(user.ScreenToClient(hwnd, ctypes.byref(point)), "Cancel coordinate conversion failed")
+        cheap("mouse_click", hwnd=hwnd, x=point.x, y=point.y, button="left")
+        cancel_observation = w
+    elif operation == "click":
         point = wintypes.POINT(*request["point"])
         require(user.ScreenToClient(hwnd, ctypes.byref(point)), "No client coordinate conversion")
         cheap("mouse_click", hwnd=hwnd, x=point.x, y=point.y, button=request.get("button", "left"))
@@ -97,7 +153,7 @@ def native_worker(request_path: Path, output: Path):
     if operation != "observe":
         # A click can create or destroy a top level. The controller re-enumerates
         # owned windows before a separate observation, without replaying input.
-        atomic_json(output, {"pid": pid, "rows": []})
+        atomic_json(output, {"pid": pid, "rows": [], "cancel_observation": cancel_observation})
         return
     comtypes.client.GetModule("UIAutomationCore.dll")
     from comtypes.gen.UIAutomationClient import CUIAutomation, IUIAutomation, IUIAutomationValuePattern
@@ -187,6 +243,7 @@ class Driver:
         require(data.get("pid") == self.app.pid and isinstance(data.get("rows"), list),
                 "Native observation identity mismatch")
         if operation != "observe":
+            self.last_input = data
             return self.worker()
         self.native = data["rows"]
         self.probe = self.app.probe()
@@ -207,6 +264,13 @@ class Driver:
                     and (expected is None or text == expected or text.startswith(expected + "\n")
                          or text.startswith(expected + " · ") or text.startswith(expected + "\t")))
         return [row for row in self.native if matches(row)]
+
+    def prose_status(self, name):
+        # Auto-wrapped native text inserts layout whitespace. Normalize only
+        # prose status text, never menu, button or editable-control identity.
+        expected = re.sub(r"\s+", "", self.label(name))
+        return any(not row["offscreen"] and row["type"] == 50020 and
+                   re.sub(r"\s+", "", row["name"]) == expected for row in self.native)
 
     def one(self, name=None, kind=None, top=None):
         rows = self.candidates(name, kind, top)
@@ -459,7 +523,7 @@ class Driver:
         invalid = self.scratch / "neutral-invalid.json"
         invalid.write_text(json.dumps({"schemaVersion": 2, "entries": {source: "Invalid replacement"}}), encoding="utf-8")
         self.upload_vocabulary("invalid", target, invalid, preferences)
-        require(self.candidates("The vocabulary file could not be applied. Use valid version 1 JSON within the supported size limits.")
+        require(self.prose_status("The vocabulary file could not be applied. Use valid version 1 JSON within the supported size limits.")
                 and self.candidates("Replace JSON")
                 and not self.candidates("Invalid replacement"),
                 "Invalid JSON did not visibly preserve the active mapping")
@@ -488,7 +552,7 @@ class Driver:
         self.restart("restart-cleared")
         self.open_vocabulary("cleared")
         require(self.candidates("Personal vocabulary") and self.candidates("Load JSON")
-                and self.candidates("Original wording is active.") and self.title_pixels("restarted-clear") == baseline,
+                and self.prose_status("Original wording is active.") and self.title_pixels("restarted-clear") == baseline,
                 "Clear did not persist across a fresh native process")
 
     def slice_controls(self):
@@ -532,7 +596,7 @@ class Driver:
         require(data.get("ok") is True, "Native read-only observation was rejected")
         return data["result"]
 
-    def combined(self, action):
+    def load_slice_fixture(self, stress=False):
         self.click("prepare", self.one("Prepare"))
         presets = self.inspect("presets_list")
         require(all(presets.get(key) for key in ("printer", "print", "filament")),
@@ -540,7 +604,15 @@ class Driver:
         before = self.inspect("project_inspect")
         require(before.get("objects") == [], "Combined action fixture requires an empty project")
         fixture = self.scratch / "cube.stl"
-        shutil.copyfile(HERE.parents[1] / "tests/automation-fixtures/cube.stl", fixture)
+        source = HERE.parents[1] / "tests/automation-fixtures/cube.stl"
+        if stress:
+            # Same closed cube geometry, scaled to 200 mm to widen the real
+            # cancellation window without artificial sleeps in product code.
+            fixture.write_text(re.sub(r"(?m)^vertex ([^\n]+)",
+                lambda m: "vertex " + " ".join(str(float(v) * 20) for v in m[1].split()),
+                source.read_text(encoding="utf-8")), encoding="utf-8")
+        else:
+            shutil.copyfile(source, fixture)
         self.click("open-file", self.one("File"))
         self.click("open-import", self.one("Import", kind=50011))
         self.click("import-cube", self.one("Import 3MF/STL/STEP/SVG/OBJ/AMF", kind=50011))
@@ -558,6 +630,24 @@ class Driver:
         require(imported.get("plates") and imported["plates"][0].get("sliceReady") is False,
                 "Fixture unexpectedly has reusable slice output")
         self.rows[-1]["fixture_sha256"] = behavior.sha256(fixture)
+
+    def workflow(self, state=None):
+        state = state or self.inspect("project_inspect")
+        w = state.get("sliceWorkflow", {})
+        require(w.get("schemaVersion") == 1 and w.get("enabled") is True and
+                w.get("diagnosticOnly") is True and w.get("eventCapacity") == 16,
+                "Versioned slice workflow observation unavailable")
+        for events, sequence in (("completionEvents", "completionSequence"),
+                                 ("continuationEvents", "continuationSequence")):
+            rows, last = w.get(events), w.get(sequence)
+            require(isinstance(last, int) and isinstance(rows, list) and len(rows) == min(16, last)
+                    and [r.get("sequence") for r in rows] == list(range(last - len(rows) + 1, last + 1)),
+                    "Slice event history is incomplete or not monotonic")
+        return w
+
+    def combined(self, action):
+        self.load_slice_fixture()
+        before = self.workflow()
         caption = "Slice and Print" if action == "print" else "Slice and Send"
         title = "Send print job" if action == "print" else "Send to Printer storage"
         self.click("combined-start", self.one(caption))
@@ -566,7 +656,7 @@ class Driver:
         while time.monotonic() < deadline:
             state = self.inspect("project_inspect")
             observations.append({"slicing": state.get("slicing"), "plates": state.get("plates"),
-                                 "currentPlate": state.get("currentPlate")})
+                                 "currentPlate": state.get("currentPlate"), "sliceWorkflow": self.workflow(state)})
             self.worker()
             confirmation = next((w for w in self.app.windows() if w["class"] == "#32770"
                                  and self.label(title) in w.get("title", "")), None)
@@ -579,6 +669,19 @@ class Driver:
         require(state.get("slicing") is False and state.get("currentPlate") == 0 and
                 state.get("plates") and state["plates"][0].get("sliceReady") is True,
                 "Device confirmation opened without ready output for the requested plate")
+        workflow = self.workflow(state)
+        require(workflow["completionSequence"] - before["completionSequence"] <= 16 and
+                workflow["continuationSequence"] - before["continuationSequence"] <= 16,
+                "Combined-action evidence was overwritten in the bounded history")
+        dispatched = [r for r in workflow["continuationEvents"] if r["sequence"] > before["continuationSequence"]]
+        require(len(dispatched) == 1 and dispatched[0]["action"] == action and
+                dispatched[0]["plateIndex"] == 0 and
+                dispatched[0]["requestGeneration"] == workflow["requestGeneration"] > before["requestGeneration"] and
+                dispatched[0]["nativeGeneration"] == workflow["nativeGeneration"] > before["nativeGeneration"] and
+                workflow["pending"]["action"] == "none" and workflow["outcome"] == "completed" and
+                any(e["accepted"] and e["status"] == "completed" and
+                    e["eventGeneration"] == workflow["nativeGeneration"] for e in workflow["completionEvents"]),
+                "Confirmation lacks successful current-generation continuation evidence")
         self.record("combined-confirmation", capture_hwnd=confirmation["handle"])
         # No Enter or submit click is sent to a printer dialog. Escape may only
         # dismiss it; a dialog that ignores Escape produces an unverified result.
@@ -593,12 +696,69 @@ class Driver:
         self.combined("send")
 
     def cancellation(self):
-        # The current public read-only observation exposes slicing/sliceReady,
-        # but no generation identity or pending continuation. This scope must
-        # not report stale-event cancellation as verified from an idle snapshot.
-        self.rows.append({"operation": "explicit-cancel-and-stale-generation", "status": "unverified",
-            "reason": "Requires an observable in-flight generation, an accessible cancel target, and a newer-generation completion fixture"})
-        raise RuntimeError("Cancellation and stale-generation native interaction remain unverified")
+        self.load_slice_fixture(stress=True)
+        initial = self.workflow()
+        trials, cancelled = [], 0
+        for attempt in range(3):
+            baseline = self.workflow()
+            action = "print" if attempt % 2 == 0 else "send"
+            caption = "Slice and Print" if action == "print" else "Slice and Send"
+            self.click(f"cancel-start-{attempt}", self.one(caption))
+            observed = self.workflow()
+            trial = {"attempt": attempt + 1, "action": action, "before": baseline, "started": observed}
+            trials.append(trial)
+            self.rows[-1]["cancellation_trials"] = trials
+            # A complete small job is not an in-flight cancellation test.
+            if observed["outcome"] != "running" or not observed["workerRunning"]:
+                trial["status"] = "not_observed"
+                break
+            require(observed["pending"]["action"] == action and
+                    observed["pending"]["nativeGeneration"] == observed["nativeGeneration"] and
+                    observed["pending"]["requestGeneration"] == observed["requestGeneration"] and
+                    observed["pending"]["plateIndex"] == 0,
+                    "Combined request was not bound to the in-flight plate and generation")
+            row = self.record(f"cancel-click-{attempt}", "cancel-current",
+                cli=str(self.args.cli), workspace=str(self.scratch),
+                generation=observed["nativeGeneration"], action=action)
+            trial["input_observation"] = self.last_input.get("cancel_observation")
+            require(trial["input_observation"] is not None, "Cancel input has no fresh observation")
+            deadline = time.monotonic() + 90
+            while time.monotonic() < deadline:
+                finished = self.workflow()
+                if not finished["workerRunning"] and finished["outcome"] != "running":
+                    break
+                time.sleep(0.1)
+            trial["finished"] = finished
+            require(finished["modelRevision"] == initial["modelRevision"],
+                    "Cancellation fixture model changed during the trial")
+            require(finished["outcome"] == "cancelled" and not finished["workerRunning"] and
+                    finished["pending"]["action"] == "none" and
+                    finished["continuationSequence"] == baseline["continuationSequence"],
+                    "Explicit cancel did not finish without a continuation")
+            trial["status"] = "cancelled_without_continuation"
+            cancelled += 1
+            self.worker()
+        final = self.workflow()
+        require(final["completionSequence"] - initial["completionSequence"] <= 16 and
+                final["continuationSequence"] - initial["continuationSequence"] <= 16,
+                "Cancellation evidence was overwritten in the bounded history")
+        stale = [e for e in final["completionEvents"] if e["sequence"] > initial["completionSequence"]
+                 and e["eventGeneration"] < e["currentGeneration"]]
+        require(all(not e["accepted"] and e["rejection"] == "stale_generation" for e in stale),
+                "An old completion was accepted by the current receiver")
+        # A natural stale event is required, never injected or inferred from
+        # the absence of a dialog. A timing miss remains explicitly unverified.
+        self.rows.append({"operation": "cancellation-result", "trials": trials,
+            "explicit_cancel_count": cancelled, "stale_events": stale,
+            "status": "observed" if cancelled and stale else "not_observed"})
+        # If a timing miss reached a confirmation, dismiss it without submission.
+        self.worker()
+        for window in self.app.windows():
+            if window["class"] == "#32770" and any(self.label(title) in window.get("title", "")
+                    for title in ("Send print job", "Send to Printer storage")):
+                self.key("timing-miss-dismiss", ["esc"], window["handle"])
+        require(cancelled > 0 and bool(stale),
+                "Bounded native trials did not observe both explicit cancel and a rejected stale completion")
 
 
 def main():
