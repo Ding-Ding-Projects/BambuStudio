@@ -1,5 +1,14 @@
 # Roadmap
 
+## MCP and CLI automation
+
+- [ ] Bundle stdio and authenticated Streamable HTTP MCP with a shared CLI.
+- [ ] Expose validated live-project and configured-printer operations through a same-user native bridge.
+- [ ] Support isolated headless slicing, progress, cancellation, and export.
+- [ ] Verify protocol, CLI, native bridge, slicing, and simulated-printer behavior on hosted Windows runners.
+- [ ] Verify the exact installed release and record physical-printer limitations separately.
+
+
 ## Official-source reapplication
 
 - [x] Prove the diagnostic candidate reached remote `main` at `acd4c0489fc2952e62b27315cd93502484fe6ca2` and the hook-copying repair reached remote `main` at `73d50e270fa10da2015f17240c652e7cf872cd4b`.

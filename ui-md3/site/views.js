@@ -244,7 +244,10 @@
         '<p data-copy="build.step' + index + '.body"></p>' +
         '</article>';
     }).join('');
-    panel.innerHTML = sectionHead('build.heading', 'build.body') + '<div class="steps">' + steps + '</div>';
+    panel.innerHTML = sectionHead('build.heading', 'build.body') + '<div class="steps">' + steps + '</div>' +
+      '<section class="section-head"><h2 data-copy="automation.heading"></h2>' +
+      '<p data-copy="automation.body"></p><p><a href="' + REPO +
+      '/blob/main/docs/features/automation/mcp-and-cli.md" data-copy="automation.guide"></a></p></section>';
   }
 
   function escapeHtml(value) {
