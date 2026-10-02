@@ -37516,108 +37516,163 @@ msgid "TPU-AMS"
 msgstr "墨水用 TPU"
 
 #: src/slic3r/GUI/ConfigProfilesDialog.cpp
+#. reviewed-category: preferences
+#. review-status: agent-drafted
 msgid "Loading profile history..."
 msgstr "正在載入設定檔歷史..."
 
 #: src/slic3r/GUI/ConfigProfilesDialog.cpp
+#. reviewed-category: preferences
+#. review-status: agent-drafted
 msgid "Loading preferences history..."
 msgstr "正在載入偏好設定歷史..."
 
 #: src/slic3r/GUI/ConfigProfilesDialog.cpp
+#. reviewed-category: preferences
+#. review-status: agent-drafted
 msgid "Restoring preferences snapshot..."
 msgstr "正在還原偏好設定快照..."
+
 #: src/slic3r/GUI/Preferences.cpp src/slic3r/GUI/Widgets/MD3Menu.cpp
+#. reviewed-category: preferences
+#. review-status: agent-drafted
 msgid "Personal vocabulary"
 msgstr "個人用語"
 
 #: src/slic3r/GUI/Preferences.cpp src/slic3r/GUI/Widgets/MD3Menu.cpp
+#. reviewed-category: preferences
+#. review-status: agent-drafted
 msgid "Load JSON"
 msgstr "載入 JSON"
 
 #: src/slic3r/GUI/Preferences.cpp src/slic3r/GUI/Widgets/MD3Menu.cpp
+#. reviewed-category: preferences
+#. review-status: agent-drafted
 msgid "Replace JSON"
 msgstr "更換 JSON"
 
 #: src/slic3r/GUI/Preferences.cpp src/slic3r/GUI/Widgets/MD3Menu.cpp
+#. reviewed-category: preferences
+#. review-status: agent-drafted
 msgid "Clear personal vocabulary"
 msgstr "清除個人用語"
 
 #: src/slic3r/GUI/Preferences.cpp src/slic3r/GUI/Widgets/MD3Menu.cpp
+#. reviewed-category: preferences
+#. review-status: agent-drafted
 msgid "Load personal vocabulary"
 msgstr "載入個人用語"
 
 #: src/slic3r/GUI/Preferences.cpp src/slic3r/GUI/Widgets/MD3Menu.cpp
+#. reviewed-category: preferences
+#. review-status: agent-drafted
 msgid "JSON files (*.json)|*.json"
 msgstr "JSON 檔案 (*.json)|*.json"
 
 #: src/slic3r/GUI/Preferences.cpp src/slic3r/GUI/Widgets/MD3Menu.cpp
+#. reviewed-category: preferences
+#. review-status: agent-drafted
 msgid "Load a version 1 JSON file to change display wording on this device. Original data, logs and exports keep their original wording."
 msgstr "載入第 1 版 JSON 檔案，更改呢部裝置顯示嘅用語。原始資料、記錄同匯出內容會保留原本用語。"
 
 #: src/slic3r/GUI/Preferences.cpp src/slic3r/GUI/Widgets/MD3Menu.cpp
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
 msgid "The vocabulary file could not be applied. Use valid version 1 JSON within the supported size limits."
 msgstr "無法套用個人用語檔案。請使用符合大小限制嘅有效第 1 版 JSON。"
 
 #: src/slic3r/GUI/Preferences.cpp src/slic3r/GUI/Widgets/MD3Menu.cpp
+#. reviewed-category: preferences
+#. review-status: agent-drafted
 msgid "Personal vocabulary is active on this device."
 msgstr "呢部裝置已啟用個人用語。"
 
 #: src/slic3r/GUI/Preferences.cpp src/slic3r/GUI/Widgets/MD3Menu.cpp
+#. reviewed-category: preferences
+#. review-status: agent-drafted
 msgid "Original wording is active."
 msgstr "目前顯示原本用語。"
 
 #: src/slic3r/GUI/Preferences.cpp src/slic3r/GUI/Widgets/MD3Menu.cpp
+#. reviewed-category: preferences
+#. review-status: agent-drafted
 msgid "Finishing the current operation before closing..."
 msgstr "完成目前操作後就會關閉..."
 
 #: src/slic3r/GUI/Preferences.cpp src/slic3r/GUI/Widgets/MD3Menu.cpp
+#. reviewed-category: navigation
+#. review-status: agent-drafted
 msgid "Clear search"
 msgstr "清除搜尋"
 
 #: src/slic3r/GUI/Preferences.cpp src/slic3r/GUI/Widgets/MD3Menu.cpp
+#. reviewed-category: navigation
+#. review-status: agent-drafted
 msgid "Searching..."
 msgstr "搜尋中..."
 
 #: src/slic3r/GUI/Preferences.cpp src/slic3r/GUI/Widgets/MD3Menu.cpp
+#. reviewed-category: navigation
+#. review-status: agent-drafted
 msgid "Search unavailable. All items are shown."
 msgstr "暫時無法搜尋，已顯示全部項目。"
 
 #: src/slic3r/GUI/Preferences.cpp src/slic3r/GUI/Widgets/MD3Menu.cpp
+#. reviewed-category: navigation
+#. review-status: agent-drafted
 msgid "No matches"
 msgstr "搵唔到符合嘅項目"
 
 #: src/slic3r/GUI/Preferences.cpp src/slic3r/GUI/Widgets/MD3Menu.cpp
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
 msgid "Slice and Print"
-msgstr "切片並列印"
+msgstr "切片並打印"
 
 #: src/slic3r/GUI/Preferences.cpp src/slic3r/GUI/Widgets/MD3Menu.cpp
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
 msgid "Slice and Send"
 msgstr "切片並傳送"
 
 #: src/slic3r/GUI/Preferences.cpp src/slic3r/GUI/Widgets/MD3Menu.cpp
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
 msgid "Slice this plate, then choose a printer and confirm printing."
-msgstr "先幫呢個打印盤切片，再揀打印機同確認列印。"
+msgstr "先幫呢個打印盤切片，再揀打印機同確認打印。"
 
 #: src/slic3r/GUI/Preferences.cpp src/slic3r/GUI/Widgets/MD3Menu.cpp
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
 msgid "Slice this plate, then send it to a printer without starting a print."
-msgstr "先幫呢個打印盤切片，再傳送去打印機，暫時唔開始列印。"
+msgstr "先幫呢個打印盤切片，再傳送去打印機，暫時唔開始打印。"
 
 #: src/slic3r/GUI/Preferences.cpp src/slic3r/GUI/Widgets/MD3Menu.cpp
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
 msgid "Canceling slicing..."
 msgstr "正在取消切片..."
 
 #: src/slic3r/GUI/ConfigProfilesDialog.cpp
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
 msgid "The new profile folder could not be reserved. Choose a different name or try again."
 msgstr "無法建立專用嘅新設定檔資料夾。請改名或者再試一次。"
 
 #: src/slic3r/GUI/ConfigProfilesDialog.cpp
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
 msgid "The backup is damaged or is not a valid ZIP archive. No profile was imported."
 msgstr "備份已損壞或者唔係有效嘅 ZIP 壓縮檔，未有匯入設定檔。"
 
 #: src/slic3r/GUI/ConfigProfilesDialog.cpp
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
 msgid "The backup could not be imported."
 msgstr "無法匯入備份。"
 
 #: src/slic3r/GUI/NotificationManager.cpp
+#. reviewed-category: navigation
+#. review-status: agent-drafted
 msgid "Next notifications"
 msgstr "下一批通知"

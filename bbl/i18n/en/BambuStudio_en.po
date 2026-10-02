@@ -27576,6 +27576,7 @@ msgstr "Loading preferences history..."
 #: src/slic3r/GUI/ConfigProfilesDialog.cpp
 msgid "Restoring preferences snapshot..."
 msgstr "Restoring preferences snapshot..."
+
 #: src/slic3r/GUI/Preferences.cpp src/slic3r/GUI/Widgets/MD3Menu.cpp
 msgid "Personal vocabulary"
 msgstr "Personal vocabulary"

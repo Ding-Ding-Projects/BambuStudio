@@ -22,6 +22,15 @@ passed 27 checks with zero failures or skips at `2026-10-02T19:31:19Z` in
 Native compilation and installed runtime verification remain pending.
 All product execution continues exclusively on hosted Windows runners.
 
+Focused run `37055936191` at `cb5981a5977f56a10174f72bad7945100004a355`
+passed 46 canvas checks, 49 source tests, eight slice lifecycle contracts and
+five print-workflow cases with 28 assertions. Its native-service job failed:
+new Cantonese entries lacked required reviewed-category metadata and an
+unqualified `apply` call in PersonalVocabulary.cpp selected `std::apply`.
+Both repairs are independently reviewed in c68cf438413b99633eb376ad89c2d4688dc95d20.
+They await a new hosted run. The prior run is failed overall; no native-service or
+installed-interface success is claimed.
+
 ## MCP automation implementation, 2026-10-02
 
 Task: [issue #53](https://github.com/Ding-Ding-Projects/BambuStudio/issues/53), with

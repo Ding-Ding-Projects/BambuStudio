@@ -25,12 +25,12 @@ run only on GitHub-hosted Windows runners. No local product execution occurred.
   Independent source review accepted both repairs; hosted verification is pending. Only synthetic
   neutral mappings may enter public tests, logs, captures or hosted payloads.
 - Canvas: 4eba2c62a0265d950c172e63ed711db83e3b0f04 on feature/ui-canvas-menus,
-  with 46 model assertions written but not run. Independent source review
+  with 46 model assertions passed on hosted run 37055936191. Independent source review
   accepted the bounded transient retry repair.
 - Slicing: a3143f67d60dcb93f2e766dcd51c2a41182a9e03 is pushed and verified on
   feature/slice-print-send. Independent source review found no additional
-  accepted defect. Five C++ cases and eight source mutation contracts await
-  hosted execution. Synchronous model replacement and shutdown can still wait
+  accepted defect. Five C++ cases (28 assertions) and eight source mutation
+  contracts passed in hosted run 37055936191. Synchronous model replacement and shutdown can still wait
   for a noninterruptible geometry operation; user cancellation is nonblocking.
 
 The parent reused its idle integration checkout on feature/ui-integration,
@@ -42,8 +42,9 @@ This is not main and does not establish runtime correctness.
 ## Work in progress
 
 The personal-wording owner is frozen after independent review.
-A separate feature/preview-layout candidate fea8fc9fd4c476e20852c708aad950d41f5d28b8
-repairs notification and preview geometry and awaits independent review.
+A separate feature/preview-layout candidate 35ce8dbcbf5d695425e64f652054790c332ee891
+repairs notification and preview geometry and passed independent source review.
+It is pushed and merged into the integration candidate, with 68 checks pending.
 A feature/ui-runtime-verification lane implements genuine
 hosted menu, vocabulary and slice-control interactions using the existing
 restricted evidence route. The parent owns focused hosted workflow wiring,
@@ -57,7 +58,13 @@ Its obsolete runtime driver is not used to verify the current candidate.
 
 ## Next steps and boundaries
 
-Push and run focused hosted verification against the combined candidate.
+Run 37055936191 passed the focused job but failed native-service compilation:
+the Cantonese catalog requires reviewed-category metadata on new entries, and
+PersonalVocabulary.cpp:231 selected std::apply through argument-dependent lookup.
+Both are repaired and independently reviewed at
+c68cf438413b99633eb376ad89c2d4688dc95d20. A new hosted run is required;
+the previous run is not green.
+The focused job also passed 49 source tests with zero failures.
 The focused native-service job requires the dependency prefix produced by the
 existing native build and fails explicitly on a cache miss. It builds generated
 translation catalogs before running language checks. It does not replace a full

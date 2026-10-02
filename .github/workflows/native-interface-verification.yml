@@ -43,6 +43,13 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Canvas search model compilation failed.' }
           & artifacts/native-interface/canvas-menu.exe
           if ($LASTEXITCODE -ne 0) { throw 'Canvas search model checks failed.' }
+      - name: Compile and exercise preview geometry and deferred timing
+        if: ${{ !cancelled() }}
+        run: |
+          cl /nologo /std:c++17 /EHsc /I src tests/preview_layout/geometry_tests.cpp /Fe:artifacts/native-interface/preview-layout.exe
+          if ($LASTEXITCODE -ne 0) { throw 'Preview geometry compilation failed.' }
+          & artifacts/native-interface/preview-layout.exe
+          if ($LASTEXITCODE -ne 0) { throw 'Preview geometry checks failed.' }
       - name: Compile and exercise print continuation state
         if: ${{ !cancelled() }}
         run: |
@@ -53,7 +60,7 @@ jobs:
       - name: Verify native conversion and menu contracts
         if: ${{ !cancelled() }}
         run: |
-          node --test --test-reporter=tap ui-md3/tests/md3-conversion-contracts.test.mjs ui-md3/tests/context-menus.test.mjs ui-md3/tests/check-context-menus.test.mjs ui-md3/tests/config-profiles-list.test.mjs ui-md3/tests/search-field-end-cap.test.mjs 2>&1 |
+          node --test --test-reporter=tap ui-md3/tests/md3-conversion-contracts.test.mjs ui-md3/tests/context-menus.test.mjs ui-md3/tests/check-context-menus.test.mjs ui-md3/tests/config-profiles-list.test.mjs ui-md3/tests/search-field-end-cap.test.mjs ui-md3/tests/preview-overlays.test.mjs 2>&1 |
             Tee-Object -FilePath artifacts/native-interface/source-contracts.tap
           if ($LASTEXITCODE -ne 0) { throw 'Native source contracts failed.' }
       - name: Verify slice lifecycle source mutations
@@ -120,7 +127,8 @@ jobs:
           New-Item -ItemType Directory -Force artifacts/native-services | Out-Null
           [ordered]@{sourceCommit=$env:GITHUB_SHA;runId=$env:GITHUB_RUN_ID;execution='github-hosted-windows'} |
             ConvertTo-Json | Set-Content artifacts/native-services/run.json -Encoding utf8
-          cmake -S . -B focused-build -G Ninja -DSLIC3R_BUILD_TESTS=ON -DSLIC3R_MSVC_PDB=OFF -DBBL_RELEASE_TO_PUBLIC=1 -DBBL_INTERNAL_TESTING=0 "-DCMAKE_PREFIX_PATH=$prefix" -DCMAKE_BUILD_TYPE=Release
+          $python = (Get-Command python.exe -ErrorAction Stop).Source
+          cmake -S . -B focused-build -G Ninja -DSLIC3R_BUILD_TESTS=ON -DSLIC3R_MSVC_PDB=OFF -DBBL_RELEASE_TO_PUBLIC=1 -DBBL_INTERNAL_TESTING=0 "-DCMAKE_PREFIX_PATH=$prefix" "-DPython3_EXECUTABLE=$python" -DCMAKE_BUILD_TYPE=Release
           if ($LASTEXITCODE -ne 0) { throw 'Focused native service configuration failed.' }
           cmake --build focused-build --config Release --parallel 4 --target personal_vocabulary_tests personal_vocabulary_probe language_mode_tests profile_archive_tests
           if ($LASTEXITCODE -ne 0) { throw 'Focused native service compilation failed.' }

@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "sourceCommit": "cb5981a5977f56a10174f72bad7945100004a355",
+  "runId": "37055936191",
+  "jobId": "111000539240",
+  "runUrl": "https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37055936191",
+  "jobConclusion": "success",
+  "execution": "github-hosted-windows",
+  "counts": {
+    "canvasChecks": 46,
+    "sourceTests": 49,
+    "sourceFailures": 0,
+    "sliceLifecycleContracts": 8,
+    "printCases": 5,
+    "printAssertions": 28,
+    "printFailures": 0
+  },
+  "limitations": [
+    "Native service compilation is a separate job.",
+    "No installed GUI interaction or pixel review is represented.",
+    "Preview geometry was added after this candidate and is not covered."
+  ],
+  "records": [
+    {
+      "file": "print-workflow.xml",
+      "bytes": 1077,
+      "sha256": "b84130807e5792b57c91ad76f99e34271f599c453724b2360872f2739fafebe7"
+    },
+    {
+      "file": "run.json",
+      "bytes": 136,
+      "sha256": "57d2feb47a8a9047ea0b042afe8d9b4b7c22d4c2728f1300b9679b250412cec5"
+    },
+    {
+      "file": "slice-lifecycle.tap",
+      "bytes": 867,
+      "sha256": "d988b3835e47e768f440cbd16ef88e3a39d50ce3ce299159eb57e28cdafeb8f7"
+    },
+    {
+      "file": "source-contracts.tap",
+      "bytes": 10369,
+      "sha256": "4adc3c4caba3859aedf95d767dbde761a692d53f0a5c2ef711001a8f6dcd5e87"
+    }
+  ]
+}

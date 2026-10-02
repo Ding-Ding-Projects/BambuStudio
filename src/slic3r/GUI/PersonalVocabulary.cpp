@@ -228,7 +228,7 @@ wxString display(const wxString &source)
 {
     const auto value = source.ToStdWstring();
     { std::lock_guard<std::mutex> lock(source_mutex); if (!sources.count(value)) return source; }
-    return apply(source, entries);
+    return Slic3r::GUI::PersonalVocabulary::apply(source, entries);
 }
 
 wxString apply(const wxString &source, const Entries &mapping)
