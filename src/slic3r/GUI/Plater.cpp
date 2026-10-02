@@ -28035,6 +28035,7 @@ void plater_save_post_process_script_choice(bool skip)
 //BBS: add multiple plate reslice logic
 void Plater::reslice()
 {
+    ++m_automation_slice_request_generation;
     p->m_reused_finished_slice_result = false;
     BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << boost::format(", Line %1%: enter, process_completed_with_error=%2%")%__LINE__ %p->process_completed_with_error;
     // Nested wx event dispatch during PostProcessScriptDialog::ShowModal() can re-enter reslice(); ignore the inner call.

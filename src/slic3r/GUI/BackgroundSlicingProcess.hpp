@@ -2,6 +2,7 @@
 #define slic3r_GUI_BackgroundSlicingProcess_hpp_
 
 #include <cstdint>
+#include <atomic>
 #include <string>
 #include <condition_variable>
 #include <mutex>
@@ -157,6 +158,10 @@ public:
 
 	// Start the background processing. Returns false if the background processing was already running.
 	bool start();
+    // A generation changes for every new native run or invalidated workspace.
+    uint64_t automation_generation() const { return m_automation_generation.load(); }
+    // 0 idle/invalidated, 1 running, 2 completed, 3 failed, 4 cancelled.
+    int automation_outcome() const { return m_automation_outcome.load(); }
 	// Cancel the background processing. Returns false if the background processing was not running.
 	// A stopped background processing may be restarted with start().
 	bool stop();
@@ -292,7 +297,9 @@ private:
 	State 						m_state = STATE_INITIAL;
 	// Incremented on force-cancel (stop() timeout). The background thread checks this
 	// after completing work; if it changed, the thread skips state/event updates.
-	unsigned int				m_task_generation = 0;
+	unsigned int				 m_task_generation = 0;
+    std::atomic<uint64_t> m_automation_generation{0};
+    std::atomic<int> m_automation_outcome{0};
 
 	// For executing tasks from the background thread on UI thread synchronously (waiting for result) using wxWidgets CallAfter().
 	// When the background proces is canceled, the UITask has to be invalidated as well, so that it will not be

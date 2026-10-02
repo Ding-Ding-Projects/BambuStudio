@@ -623,6 +623,7 @@ public:
     bool has_toolpaths_to_export() const;
     void export_toolpaths_to_obj() const;
     void reslice();
+    uint64_t automation_slice_request_generation() const { return m_automation_slice_request_generation; }
     void stop_helio_process();
     void feedback_helio_process(float rating, std::string commend);
     void record_slice_preset(std::string action);
@@ -1177,6 +1178,7 @@ private:
     bool m_exported_file { false };
     bool skip_thumbnail_invalid { false };
     bool m_loading_project {false };
+    uint64_t m_automation_slice_request_generation{0};
     bool m_new_project_and_check_state{false};
     std::string m_preview_only_filename;
     int m_valid_plates_count { 0 };
