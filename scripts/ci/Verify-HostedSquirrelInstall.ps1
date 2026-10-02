@@ -54,6 +54,11 @@ try {
     & gh release download $Tag --repo $Repository --dir $downloadRoot
     Assert-True ($LASTEXITCODE -eq 0) 'Downloading the published release assets failed.'
 
+    # Release reads are complete. Never pass workflow credentials to downloaded code.
+    foreach ($credentialName in @('GH_TOKEN', 'GITHUB_TOKEN', 'ORG_TOKEN', 'RELEASE_TOKEN')) {
+        [Environment]::SetEnvironmentVariable($credentialName, $null, 'Process')
+    }
+
     $required = @('Setup.exe', 'RELEASES', 'Setup.exe.sha256', 'BambuStudioMD3.cdx.json')
     foreach ($name in $required) {
         Assert-True (Test-Path -LiteralPath (Join-Path $downloadRoot $name) -PathType Leaf) "Missing published asset '$name'."

@@ -24,7 +24,7 @@ jobs:
     runs-on: windows-2025
     timeout-minutes: 40
     env:
-      GH_TOKEN: ${{ secrets.RELEASE_TOKEN || secrets.ORG_TOKEN || secrets.GITHUB_TOKEN }}
+      GH_TOKEN: ${{ github.token }}
       RELEASE_TAG: ${{ inputs.release_tag }}
       SOURCE_SHA: ${{ inputs.expected_source_commit }}
     steps:

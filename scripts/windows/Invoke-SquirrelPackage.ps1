@@ -58,7 +58,17 @@ if ((Test-Path -LiteralPath $automationIdentity -PathType Leaf) -and
         $identity.sha256 -eq (Get-FileHash -LiteralPath $automationExe -Algorithm SHA256).Hash.ToLowerInvariant()
 }
 if (-not $automationCurrent) {
+    $sourceRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
+    $checkoutCommit = & git -C $sourceRoot rev-parse HEAD
+    if ($LASTEXITCODE -ne 0 -or $checkoutCommit.Trim() -cne $SourceCommit.ToLowerInvariant()) {
+        throw 'Automation staging checkout does not match the package source commit.'
+    }
     & (Join-Path $PSScriptRoot 'Stage-Automation.ps1') -PayloadDirectory $PayloadDirectory
+}
+$identity = Get-Content -LiteralPath $automationIdentity -Raw | ConvertFrom-Json
+if ($identity.sourceCommit -cne $SourceCommit.ToLowerInvariant() -or
+    $identity.sha256 -cne (Get-FileHash -LiteralPath $automationExe -Algorithm SHA256).Hash.ToLowerInvariant()) {
+    throw 'Staged automation does not match the package source identity and executable hash.'
 }
 
 $script:SquirrelPackageSha256 = '923e18abb4fd50b5a4878a39dbcd042ed3f7eb68fc0f82c0955cd5380c921ac7'
