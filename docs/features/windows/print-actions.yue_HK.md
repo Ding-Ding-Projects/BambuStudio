@@ -1,6 +1,6 @@
 ---
 translation-of: print-actions.md
-source-sha256: 6e78a5ca50ddedd378345cd199817885d6c77c84b3413e7d8e887e58db36ff55
+source-sha256: 9b60c42e4be9d63b2f3dfbdbbdc056eff239fe6968e14fcb9cc059e99a9f34f4
 review-status: agent-drafted
 ---
 
@@ -8,9 +8,9 @@ review-status: agent-drafted
 
 # 打印盤操作同材料映射
 
-準備操作欄提供 **Slice plate**、**Slice and print** 同 **Print plate** 分開。Slice and print 使用相同版本、材料同構建盤預檢 as Slice plate。佢開始當前盤嘅一個 slice，接著只打開打印設定當果個同一盤有成功、當前、可打印結果。佢從未提交工作。最後 **Print** 操作喺打印設定保持明確。
+準備同預覽操作欄分開提供 **Slice plate**、**Slice and Print**、**Slice and Send** 同 **Print plate**。兩個組合操作都會檢查版本、材料同打印盤，而且只處理當前打印盤。**Slice and Print** 成功切片後開啟原有打印機選擇同打印設定；**Slice and Send** 開啟原有傳送對話框，確認後只傳送檔案，唔會開始打印。打印機選擇同最後確認都保留。操作欄喺較窄畫面會換行；即使符號字型未能載入，選項按鈕仍會顯示文字箭嘴。
 
-continuation 係一次性。唔同 slice、取消、失敗或未開始 slice、盤或項目替換或改變盤結果防止打印設定打開。當盤已經有完成、不變、可打印 slice，**Slice and print** 重用果個結果同打開設定一次冇等待完成事件。佢清除打印設定對話框出現之前。改變材料映射使切片結果無效同返回準備除非用戶選擇 **Swap and reslice**。
+每個後續操作只會執行一次，並綁定打印盤、請求批次同原生切片批次。取消、切片失敗或未開始、打印盤或項目被替換，以及切片輸入改變，都唔會開啟後續對話框。成功而且未改變嘅切片可以重用；開啟任何設定對話框之前都會清除待處理操作。材料映射改變會令舊切片失效，並返回準備畫面，除非用戶選擇 **Swap and reslice**。
 
 Custom material 頁面保留拖放同新增材料選擇器帶 **Move to left nozzle** 同 **Move to right nozzle** 控制項。**Swap groups** 交換両個噴嘴組進行檢查同時保留每個材料嘅流選擇。如果目標冇相容噴嘴或無法代表果個流選擇，swap 被拒絕喺改變任何組前。**Swap and reslice** 要求新鮮 slice 只在被接受交換通過噴嘴驗證之後。呢啲係項目同盤選擇；佢哋唔改變活實體打印或打印機嘅預設設定。
 
@@ -23,3 +23,15 @@ Custom material 頁面保留拖放同新增材料選擇器帶 **Move to left noz
 匯入選單公開 Model Creator。命令調色盤索引相同選單命令。佢嘅驗證 STL 到達 `Plater::load_files` 只有在對話框嘅 **Add to plate** 操作之後。
 
 聚焦 C++ 迴歸覆蓋儲存偏好優先同單次 slice continuation 謂詞。一個完整 Windows 構建、原生交互捕獲、真實打印機設定同硬件打印保持未驗證直到那啲檢查對抗構建應用程式執行。
+
+## 取消同非同步通知
+
+原生進度、中途完成同最後完成通知會帶有切片批次。舊批次通知會喺停止工作執行緒之前被忽略，唔會取消較新切片。普通按鈕狀態更新唔會清除待處理操作。明確切片要求會先處理，之後先切換預覽，避免預覽嘅自動切片搶先開始。
+
+通知上嘅取消按鈕只會提出合作式停止要求，介面仍然可以回應，完成之前顯示 **Canceling slicing...**。工作執行緒未放開打印資料之前，唔會開始新切片或者重用嗰份資料。逾時唔會令仍然運行嘅工作執行緒被分離。模型、設定更換同關閉程式仍然要等資料擁有權釋放；無法即時中斷嘅幾何運算可能令呢幾種操作需要等候。
+
+## 驗證狀態
+
+C++ 測試目標係 `print_workflow_tests`。原生通知順序、工作執行緒擁有權同負面變更檢查使用 `node tests/print_workflow/slice_lifecycle_source_tests.mjs`。原始碼檢查唔代表執行緒時序或者畫面已經驗證。
+
+今次修改未有喺本機執行產品建置、測試、切片或者畫面擷取。GitHub 託管嘅 Windows 驗證仍然要編譯程式、執行上述測試、檢查成功／取消／重試同舊通知情況，並驗證英文、廣東話、雙語、光暗主題、支援縮放比例同最窄畫面。驗證必須喺最後硬件打印確認之前停止。
