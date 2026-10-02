@@ -25,8 +25,11 @@ an incorrect child-process startup path in both transport checks. Both defects
 are repaired. At `65dc4577fb29f2d00fd525a1de11e370784c5b3e`, the managed job in
 [`37045639569`](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37045639569)
 passed all 24 checks: 22 in `BoundaryTests.cs` and 2 in `TransportTests.cs`.
-Self-contained publication and documentation parsing also passed. Native
-compilation in that run remains pending. The preceding candidate passed native
+Self-contained publication and documentation parsing also passed. Native compilation,
+payload checks, Squirrel creation, and package-contract validation passed in job
+`110966508477`. At the one-hour observation boundary, release job `110986759894`
+was still validating release assets and metadata (last observation 2026-10-02T19:10:35Z).
+The preceding candidate passed native
 compilation and Squirrel packaging, but reached its one-hour observation limit
 with release validation still running. The two superseded native runs were
 canceled because their older release dependency did not include the red MCP
@@ -37,10 +40,15 @@ historical GUI recipients. Only the public PEM is tracked. Protected review
 material remains local. Administrative cryptographic initialization is distinct
 from product execution; no application or product test ran locally.
 
-Remaining work: hosted native compiler result; packaged runtime verification
+Remaining work: terminal hosted release result; packaged runtime verification
 against the exact released SHA; hosted evidence parser and strict-reader use;
 genuine capture review; documentation completion; default-branch
 integration and remote proof. No physical printer operation has been verified.
+The agreed one-hour observation limit was reached. A structured request to extend
+this run to two hours has no answer yet. The hosted run was not canceled. Continue
+only after an authorized extension or a later terminal-state handoff; do not treat
+the pending release as successful. All task work remains retained and no cleanup
+has run. The wiki is published at `f0dc140038ae19d0487f74a4b4ba0a64b265485b`.
 See [automation documentation](docs/features/automation/mcp-and-cli.md) for the
 transport, security, setup and operation contract.
 
