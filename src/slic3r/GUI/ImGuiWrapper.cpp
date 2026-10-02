@@ -5,6 +5,10 @@
 #include <vector>
 #include <cmath>
 #include <stdexcept>
+#include <future>
+#include <chrono>
+#include "GLCanvas3D.hpp"
+#include "Plater.hpp"
 
 #include <boost/format.hpp>
 #include <boost/log/trivial.hpp>
@@ -37,6 +41,8 @@
 #include "GUI.hpp"
 #include "I18N.hpp"
 #include "BilingualDecorator.hpp"
+#include "PersonalVocabulary.hpp"
+#include "CanvasMenuSearchModel.hpp"
 #include "Search.hpp"
 #include "BitmapCache.hpp"
 #include "FilamentBitmapUtils.hpp"
@@ -89,8 +95,167 @@ void open_imgui_regex_builder(const std::shared_ptr<RegexBuilderBridgeState> &st
                      initial.regex_enabled, initial.case_sensitive,
                      initial.multiline, initial.whole_word, std::move(callbacks));
 
-    popup->Position(wxGetMousePosition() + wxPoint(0, parent->FromDIP(8)), wxSize(0, 0));
+    wxWindow *anchor_window = wxWindow::FindFocus();
+    if (!anchor_window) anchor_window = parent;
+    const ImVec2 anchor = ImGui::GetItemRectMin();
+    const ImVec2 extent = ImGui::GetItemRectSize();
+    popup->Position(anchor_window->ClientToScreen(wxPoint(int(anchor.x), int(anchor.y))),
+                    wxSize(int(extent.x), int(extent.y)));
     popup->PopupAndFocusPattern();
+}
+
+std::string canvas_menu_label(const char* original)
+{
+    const std::string source(original);
+    const auto end = source.find("##");
+    const wxString visible = from_u8(source.substr(0, end));
+    const auto display = PersonalVocabulary::display(PersonalVocabulary::remember(visible));
+    // ### keeps ImGui identity based on the original label, not display text.
+    return into_u8(display) + "###" + source;
+}
+
+void constrain_canvas_menu()
+{
+    const ImVec2 display = ImGui::GetIO().DisplaySize;
+    ImGui::SetNextWindowSizeConstraints(ImVec2(0, 0),
+        ImVec2(std::max(1.0f, display.x - 16.0f), std::max(1.0f, display.y - 16.0f)));
+}
+
+// Owned by one ImGuiWrapper/context. Worker requests own copied values and
+// never capture this state or any window; stale results cannot change a field.
+struct CanvasMenuSearchState : CanvasMenuSearchModel
+{
+    RegexBuilderValues values;
+    std::shared_ptr<RegexBuilderBridgeState> bridge = std::make_shared<RegexBuilderBridgeState>();
+    std::future<std::pair<std::vector<bool>, bool>> pending;
+    ImGuiID popup_id = 0;
+    int last_frame = -1;
+    bool request_focus = false;
+};
+
+std::vector<bool> ImGuiWrapper::menu_search(const char* stable_id,
+                                           const std::vector<std::string>& items, bool focus)
+{
+    const ImGuiID id = ImGui::GetID(stable_id);
+    auto found = m_menu_search_states.find(id);
+    if (found == m_menu_search_states.end()) {
+        constexpr size_t max_retained_fields = 128;
+        if (m_menu_search_states.size() >= max_retained_fields) {
+            auto oldest = m_menu_search_states.end();
+            for (auto it = m_menu_search_states.begin(); it != m_menu_search_states.end(); ++it) {
+                const auto& candidate = *it->second;
+                if (candidate.last_frame >= ImGui::GetFrameCount() - 1) continue;
+                if (candidate.pending.valid() && candidate.pending.wait_for(std::chrono::milliseconds(0)) != std::future_status::ready) continue;
+                if (oldest == m_menu_search_states.end() || candidate.last_frame < oldest->second->last_frame) oldest = it;
+            }
+            // Never wait for a worker or evict an actively rendered field.
+            if (oldest == m_menu_search_states.end()) {
+                ImGui::TextWrapped("%s", into_u8(PersonalVocabulary::display(PersonalVocabulary::remember(_L("Search unavailable. All items are shown.")))).c_str());
+                return std::vector<bool>(items.size(), true);
+            }
+            m_menu_search_states.erase(oldest);
+        }
+        found = m_menu_search_states.emplace(id, std::make_shared<CanvasMenuSearchState>()).first;
+    }
+    auto& state = *found->second;
+    state.last_frame = ImGui::GetFrameCount();
+    state.popup_id = ImGui::GetCurrentWindow()->ID;
+    state.bridge->apply_pending_to_host(state.values);
+    auto& values = state.values;
+    ImGui::PushID(stable_id);
+    const float max_width = std::max(1.0f, ImGui::GetIO().DisplaySize.x - ImGui::GetStyle().WindowPadding.x * 2.0f - 16.0f);
+    const float width = std::min(max_width, std::max(ImGui::GetContentRegionAvail().x, ImGui::GetFontSize() * 12.0f));
+    const float button_width = ImGui::GetFrameHeight();
+    const float gap = ImGui::GetStyle().ItemSpacing.x;
+    const bool compact = width < ImGui::GetFontSize() * 19.0f;
+    ImGui::SetNextItemWidth(compact ? width : width - button_width * 3.0f - gap * 3.0f);
+    if (focus || ImGui::IsWindowAppearing() || state.request_focus) {
+        ImGui::SetKeyboardFocusHere();
+        state.request_focus = false;
+    }
+    if (ImGui::InputTextWithHint("##query", into_u8(PersonalVocabulary::display(PersonalVocabulary::remember(_L("Search menu")))).c_str(), &values.pattern))
+        values.pattern = into_u8(from_u8(values.pattern).Left(BoundedRegex::kMaxPatternCodeUnits));
+    const bool move_to_results = ImGui::IsItemActive() &&
+        ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_DownArrow), false);
+    if (move_to_results) ImGui::ClearActiveID();
+    // At narrow widths controls move to their own row rather than disappearing.
+    if (!compact) ImGui::SameLine();
+    const bool tinted = values.regex_enabled;
+    if (tinted) ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
+    if (ImGui::Button(".*##regex", ImVec2(button_width, 0))) values.regex_enabled = !values.regex_enabled;
+    if (tinted) ImGui::PopStyleColor();
+    if (ImGui::IsItemHovered() || ImGui::IsItemFocused()) ImGui::SetTooltip("%s", into_u8(PersonalVocabulary::display(PersonalVocabulary::remember(_L("Regular expression")))).c_str());
+    ImGui::SameLine();
+    if (ImGui::Button((into_u8(static_cast<wchar_t>(MaterialIcon::Tune)) + "##builder").c_str(), ImVec2(button_width, 0))) {
+        state.bridge->synchronize_from_host(values);
+        open_imgui_regex_builder(state.bridge);
+    }
+    if (ImGui::IsItemHovered() || ImGui::IsItemFocused()) ImGui::SetTooltip("%s", into_u8(PersonalVocabulary::display(PersonalVocabulary::remember(_L("Regex builder")))).c_str());
+    ImGui::SameLine();
+    if (ImGui::Button((into_u8(ImGui::TextSearchCloseIcon) + "##clear").c_str(), ImVec2(button_width, 0))) {
+        values.pattern.clear();
+        state.request_focus = true;
+    }
+    if (ImGui::IsItemHovered() || ImGui::IsItemFocused()) ImGui::SetTooltip("%s", into_u8(PersonalVocabulary::display(PersonalVocabulary::remember(_L("Clear search")))).c_str());
+    state.bridge->synchronize_from_host(values);
+
+    const std::string signature = canvas_menu_search_key(values, items);
+    if (state.change_input(signature, items.size())) {
+        if (!values.regex_enabled && !values.pattern.empty()) {
+            const auto pattern = from_u8(values.pattern).ToStdWstring();
+            for (size_t i = 0; i < items.size(); ++i)
+                state.visible[i] = BoundedRegex::plain_search(pattern, from_u8(items[i]).ToStdWstring(), values.case_sensitive, values.whole_word);
+        }
+    }
+    if (state.pending.valid() && state.pending.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
+        try {
+            auto result = state.pending.get();
+            state.accept_result(state.requested_signature, std::move(result.first), result.second);
+        } catch (...) {
+            state.accept_result(state.requested_signature, {}, true);
+        }
+    }
+    if (values.regex_enabled && !values.pattern.empty() && !state.pending.valid() && state.needs_result()) {
+        std::vector<std::wstring> subjects;
+        for (const auto& item : items) subjects.emplace_back(from_u8(item).ToStdWstring());
+        auto pattern = from_u8(values.pattern).ToStdWstring();
+        if (values.whole_word) pattern = L"\\b(?:" + pattern + L")\\b";
+        BoundedRegex::Options options;
+        options.case_sensitive = values.case_sensitive;
+        options.multiline = values.multiline;
+        state.requested_signature = state.signature;
+        try {
+            state.pending = std::async(std::launch::async, [pattern = std::move(pattern), subjects = std::move(subjects), options]() {
+                std::vector<bool> mask(subjects.size(), true);
+                BoundedRegex::SearchPass pass(pattern, options);
+                for (size_t i = 0; i < subjects.size() && !pass.circuit_open(); ++i)
+                    mask[i] = pass.evaluate(subjects[i]).allows_candidate();
+                if (pass.circuit_open()) std::fill(mask.begin(), mask.end(), true);
+                return std::make_pair(std::move(mask), pass.circuit_open());
+            });
+        } catch (...) {
+            state.unavailable = true;
+            state.evaluated_signature = state.signature;
+        }
+    }
+    if (state.pending.valid()) {
+        ImGui::TextWrapped("%s", into_u8(PersonalVocabulary::display(PersonalVocabulary::remember(_L("Searching...")))).c_str());
+#if ENABLE_ENHANCED_IMGUI_SLIDER_FLOAT
+        set_requires_extra_frame();
+#endif
+        if (auto* canvas = wxGetApp().plater()->get_current_canvas3D()) canvas->request_extra_frame();
+    } else if (state.unavailable) {
+        ImGui::TextWrapped("%s", into_u8(PersonalVocabulary::display(PersonalVocabulary::remember(_L("Search unavailable. All items are shown.")))).c_str());
+    } else {
+        const size_t count = std::count(state.visible.begin(), state.visible.end(), true);
+        if (count == 0) ImGui::TextWrapped("%s", into_u8(PersonalVocabulary::display(PersonalVocabulary::remember(_L("No matches")))).c_str());
+        else ImGui::TextWrapped("%s: %zu / %zu", into_u8(PersonalVocabulary::display(PersonalVocabulary::remember(_L("Results")))).c_str(), count, items.size());
+    }
+    ImGui::Separator();
+    ImGui::PopID();
+    if (move_to_results && std::find(state.visible.begin(), state.visible.end(), true) != state.visible.end())
+        ImGui::SetKeyboardFocusHere();
+    return state.visible;
 }
 
 static const std::map<const wchar_t, std::string> font_icons = {
@@ -660,6 +825,38 @@ bool ImGuiWrapper::update_key_data(wxKeyEvent &evt)
 
     ImGuiIO& io = ImGui::GetIO();
 
+    // Consume the first Escape before NewFrame can close the popup. A held key
+    // must not clear the query and also close the menu through key repeats.
+    if (evt.GetKeyCode() == WXK_ESCAPE && evt.GetEventType() != wxEVT_CHAR) {
+        if (evt.GetEventType() == wxEVT_KEY_UP) m_menu_search_escape_held = false;
+        else {
+            if (m_menu_search_escape_held) return true;
+            auto& g = *GImGui;
+            if (!g.OpenPopupStack.empty() && g.OpenPopupStack.back().Window) {
+                const ImGuiID popup_id = g.OpenPopupStack.back().Window->ID;
+                CanvasMenuSearchState* target = nullptr;
+                for (auto& entry : m_menu_search_states) {
+                    auto& state = *entry.second;
+                    if (state.popup_id == popup_id && (!target || state.last_frame > target->last_frame)) target = &state;
+                }
+                if (target) {
+                    if (!target->values.pattern.empty()) {
+                        target->values.pattern.clear();
+                        target->bridge->set_pattern_from_builder("");
+                        target->request_focus = true;
+                    } else {
+                        ImGui::ClosePopupToLevel(g.OpenPopupStack.Size - 1, true);
+                    }
+                    m_menu_search_escape_held = true;
+                    io.KeysDown[WXK_ESCAPE] = false;
+                    ImGui::ClearActiveID();
+                    if (auto* canvas = wxGetApp().plater()->get_current_canvas3D()) canvas->set_as_dirty();
+                    return true;
+                }
+            }
+        }
+    }
+
     if (evt.GetEventType() == wxEVT_CHAR) {
         // Char event
         const auto key = evt.GetUnicodeKey();
@@ -828,206 +1025,34 @@ void ImGuiWrapper::set_next_window_size(float x, float y, ImGuiCond cond)
 /* BBL style widgets */
 bool ImGuiWrapper::bbl_combo_with_filter(const char* label, const std::string& preview_value, const std::vector<std::string>& all_items, std::vector<int>* filtered_items_idx, bool* is_filtered, float item_height)
 {
-    ImGuiContext& g = *GImGui;
-    const ImGuiStyle& style = g.Style;
-    ImGuiWindow* window = ImGui::GetCurrentWindow();
-    if (window->SkipItems)
-        return false;
-
-    static std::string pattern;
-    // ".*" regex mode for the popup filter (persists across opens, like the
-    // in-canvas search_list toggle). Matching is guarded: an invalid or
-    // half-typed pattern filters nothing out (match-all), and matching is
-    // case-insensitive by default — mirroring search_list's regex support.
-    static bool regex_mode = false;
-    static bool case_sensitive = false;
-    static bool whole_word = false;
-    static bool multiline = false;
-    static auto builder_state = std::make_shared<RegexBuilderBridgeState>();
-
-    RegexBuilderValues builder_values{pattern, regex_mode, case_sensitive, whole_word, multiline};
-    if (builder_state->apply_pending_to_host(builder_values)) {
-        pattern        = std::move(builder_values.pattern);
-        regex_mode     = builder_values.regex_enabled;
-        case_sensitive = builder_values.case_sensitive;
-        whole_word     = builder_values.whole_word;
-        multiline      = builder_values.multiline;
-    }
-    builder_state->synchronize_from_host({pattern, regex_mode, case_sensitive, whole_word, multiline});
-
-    bool is_filtering = false;
-    bool is_new_open = false;
-
-    float sz = ImGui::GetFrameHeight();
-    ImVec2 arrow_size(sz, sz);
-    ImVec2 CursorPos = window->DC.CursorPos;
-    const ImRect arrow_bb(CursorPos, CursorPos + arrow_size);
-
-    float ButtonTextAlignX = g.Style.ButtonTextAlign.x;
-    g.Style.ButtonTextAlign.x = 0;
-    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { sz, style.FramePadding.y});
-    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImGui::GetStyleColorVec4(ImGuiCol_ButtonHovered));
-    if (button(preview_value + label, ImGui::CalcItemWidth(), 0))
-    {
-        ImGui::OpenPopup(label);
-        is_new_open = true;
-    }
-    g.Style.ButtonTextAlign.x = ButtonTextAlignX;
+    if (ImGui::GetCurrentWindow()->SkipItems) return false;
+    filtered_items_idx->clear();
+    *is_filtered = false;
+    const float field_width = ImGui::CalcItemWidth();
+    const ImVec2 button_pos = ImGui::GetCursorScreenPos();
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(ImGui::GetFrameHeight(), ImGui::GetStyle().FramePadding.y));
+    const bool opened = button(preview_value + label, field_width, 0);
     ImGui::PopStyleVar();
-    ImGui::PopStyleColor();
-    ImGui::BBLRenderArrow(window->DrawList, arrow_bb.Min + ImVec2(ImMax(0.0f, (arrow_size.x - g.FontSize) * 0.5f), ImMax(0.0f, (arrow_size.y - g.FontSize) * 0.5f)), ImGui::GetColorU32(ImGuiCol_Text), ImGuiDir_Down);
-
-    float item_rect_width = ImGui::GetItemRectSize().x;
-    float item_rect_height = item_height ? item_height : ImGui::GetItemRectSize().y;
-    ImGui::SetNextWindowPos({ CursorPos.x, ImGui::GetItemRectMax().y + 4 * m_style_scaling });
-    ImGui::SetNextWindowSize({ item_rect_width, 0 });
-    if (ImGui::BeginPopup(label))
-    {
-        ImGuiWindow* popup_window = ImGui::GetCurrentWindow();
-
-        ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
-
-        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(8.0f * m_style_scaling, item_rect_height - g.FontSize) * 0.5f);
-        // Reserve room at the right of the search row for the ".*" regex toggle
-        // (same affordance as the in-canvas search_list toggle); the input and
-        // its search/clear icon shift left by that amount.
-        const ImVec2 regex_label_size = ImGui::CalcTextSize(".*");
-        const float  regex_btn_w      = regex_label_size.x + g.Style.FramePadding.x * 2.0f;
-        const std::string builder_label = into_u8(static_cast<wchar_t>(MaterialIcon::Tune)) +
-                                          "##bbl_combo_with_filter_builder";
-        const float builder_btn_w = ImGui::GetFrameHeight();
-        const float  regex_gap        = 4.0f * m_style_scaling;
-        const float action_width = regex_btn_w + builder_btn_w + regex_gap * 2.0f;
-        wchar_t ICON_SEARCH = !pattern.empty() ? ImGui::TextSearchCloseIcon : ImGui::TextSearchIcon;
-        const ImVec2 label_size = ImGui::CalcTextSize(into_u8(ICON_SEARCH).c_str(), nullptr, true);
-        const ImVec2 search_icon_pos(ImGui::GetItemRectMax().x - label_size.x - action_width,
-                                     popup_window->DC.CursorPos.y + style.FramePadding.y);
-        ImGui::RenderText(search_icon_pos, into_u8(ICON_SEARCH).c_str());
-
-        auto temp = popup_window->DC.CursorPos;
-        popup_window->DC.CursorPos = search_icon_pos;
-        ImGui::PushStyleColor(ImGuiCol_Button, {0, 0, 0, 0});
-        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImGui::GetStyleColorVec4(ImGuiCol_Button));
-        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImGui::GetStyleColorVec4(ImGuiCol_Button));
-        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImGui::GetStyleColorVec4(ImGuiCol_Button));
-        ImGui::PushStyleColor(ImGuiCol_Border, { 0, 0, 0, 0 });
-        if (button("##invisible_clear_button", label_size.x, label_size.y))
-        {
-            if (!pattern.empty()) {
-                pattern.clear();
-                builder_state->synchronize_from_host({pattern, regex_mode, case_sensitive, whole_word, multiline});
-            }
-        }
-        ImGui::PopStyleColor(5);
-        popup_window->DC.CursorPos = temp;
-
-
-        ImGui::PushItemWidth(std::max(1.0f, item_rect_width - action_width));
-        if (is_new_open)
-            ImGui::SetKeyboardFocusHere();
-        if (ImGui::InputText("##bbl_combo_with_filter_inputText", &pattern)) {
-            pattern = into_u8(from_u8(pattern).Left(BoundedRegex::kMaxPatternCodeUnits));
-            builder_state->synchronize_from_host({pattern, regex_mode, case_sensitive, whole_word, multiline});
-        }
-        ImGui::PopItemWidth();
-
-        // ".*" regex toggle, tinted while active so it reads as stateful
-        // (mirrors the in-canvas search_list toggle). Flipping it re-filters on
-        // the next frame; no other state is touched.
-        ImGui::SameLine(0.0f, regex_gap);
-        if (regex_mode) {
-            const ImVec4 on = ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive);
-            ImGui::PushStyleColor(ImGuiCol_Button, on);
-            ImGui::PushStyleColor(ImGuiCol_ButtonHovered, on);
-        }
-        if (ImGui::Button(".*##bbl_combo_with_filter_regex", ImVec2(regex_btn_w, 0.0f))) {
-            regex_mode = !regex_mode;
-            builder_state->synchronize_from_host({pattern, regex_mode, case_sensitive, whole_word, multiline});
-        }
-        if (regex_mode)
-            ImGui::PopStyleColor(2);
-        if (ImGui::IsItemHovered())
-            ImGui::SetTooltip("%s", into_u8(_L("Regular expression")).c_str());
-
-        ImGui::SameLine(0.0f, regex_gap);
-        if (ImGui::Button(builder_label.c_str(), ImVec2(builder_btn_w, 0.0f))) {
-            builder_state->synchronize_from_host({pattern, regex_mode, case_sensitive, whole_word, multiline});
-            open_imgui_regex_builder(builder_state);
-        }
-        if (ImGui::IsItemHovered() || ImGui::IsItemFocused())
-            ImGui::SetTooltip("%s", into_u8(_L("Regex builder")).c_str());
-
-        ImGui::PopStyleVar();
-
-        if (!pattern.empty())
-            is_filtering = true;
-
-        // Regex mode: validate once in the bounded worker. An invalid / half-typed pattern
-        // disables filtering entirely (match-all) rather than hiding every row.
-        bool       use_regex   = false;
-        std::wstring regex_pattern;
-        std::unique_ptr<BoundedRegex::SearchPass> regex_pass;
-        if (is_filtering && regex_mode) {
-            regex_pattern = from_u8(pattern).ToStdWstring();
-            BoundedRegex::Options options;
-            options.case_sensitive = case_sensitive;
-            options.multiline = multiline;
-            regex_pass = std::make_unique<BoundedRegex::SearchPass>(regex_pattern, options);
-            use_regex = !regex_pass->circuit_open();
-            if (!use_regex)
-                is_filtering = false;
-        }
-
-        if (is_filtering) {
-            std::vector<std::pair<int, int>> filtered_items_with_priority; // std::pair<index, priority>
-            for (int i = 0; i < all_items.size(); i++) {
-                if (use_regex) {
-                    const auto result = regex_pass->evaluate(from_u8(all_items[i]).ToStdWstring());
-                    if (!result.definitive()) {
-                        filtered_items_with_priority.push_back({i, 0});
-                    } else if (result.matched() && !result.matches.empty() &&
-                               !result.matches.front().groups.empty())
-                        filtered_items_with_priority.push_back(
-                            {i, static_cast<int>(result.matches.front().groups.front().begin)});
-                } else {
-                    const std::wstring needle = from_u8(pattern).ToStdWstring();
-                    const std::wstring subject = from_u8(all_items[i]).ToStdWstring();
-                    if (BoundedRegex::plain_search(needle, subject, case_sensitive, whole_word)) {
-                        wxString subject_wx = from_u8(all_items[i]);
-                        wxString needle_wx  = from_u8(pattern);
-                        if (!case_sensitive) {
-                            subject_wx.MakeLower();
-                            needle_wx.MakeLower();
-                        }
-                        const int priority = subject_wx.Find(needle_wx);
-                        filtered_items_with_priority.push_back({i, std::max(0, priority)});
-                    }
-                }
-            }
-            std::sort(filtered_items_with_priority.begin(), filtered_items_with_priority.end(),
-                      [](const std::pair<int, int> &a, const std::pair<int, int> &b) { return (b.second > a.second); });
-            for (auto item : filtered_items_with_priority) {
-                filtered_items_idx->push_back(item.first);
-            }
-        }
-
-        *is_filtered = is_filtering;
-
-        popup_window->DC.CursorPos.y -= 1 * m_style_scaling;
-        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(1.0f, 1.0f) * m_style_scaling);
-        if (ImGui::BeginListBox("##bbl_combo_with_filter_listBox", { item_rect_width, item_rect_height * 7.75f})) {
-            ImGui::PopStyleVar(2);
-            return true;
-        }
-        else
-        {
-            ImGui::PopStyleVar(2);
-            ImGui::EndPopup();
-            return false;
-        }
-    }
-    else
-        return false;
+    ImGui::BBLRenderArrow(ImGui::GetWindowDrawList(), button_pos + ImVec2(ImGui::GetStyle().FramePadding.x, ImGui::GetStyle().FramePadding.y),
+                          ImGui::GetColorU32(ImGuiCol_Text), ImGuiDir_Down);
+    if (opened) ImGui::OpenPopup(label);
+    const ImVec2 anchor = ImGui::GetItemRectMin();
+    const ImVec2 bottom = ImGui::GetItemRectMax();
+    const float row_height = item_height > 0 ? item_height : ImGui::GetFrameHeightWithSpacing();
+    const ImVec2 display = ImGui::GetIO().DisplaySize;
+    const float width = std::min(std::max(field_width, ImGui::GetFontSize() * 18.0f), std::max(1.0f, display.x - 16.0f));
+    ImGui::SetNextWindowPos(ImVec2(std::clamp(anchor.x, 0.0f, std::max(0.0f, display.x - width)), bottom.y), ImGuiCond_Appearing);
+    ImGui::SetNextWindowSizeConstraints(ImVec2(width, 0), ImVec2(width, std::max(1.0f, display.y - 16.0f)));
+    if (!ImGui::BeginPopup(label)) return false;
+    const auto visible = menu_search("filtered_combo", all_items, opened);
+    for (size_t i = 0; i < visible.size(); ++i)
+        if (visible[i]) filtered_items_idx->push_back(static_cast<int>(i));
+    *is_filtered = true;
+    const float list_height = std::max(row_height, std::min(row_height * 7.75f,
+        display.y - ImGui::GetCursorScreenPos().y - ImGui::GetStyle().WindowPadding.y * 2.0f));
+    if (ImGui::BeginListBox("##filtered_combo_items", ImVec2(-FLT_MIN, list_height))) return true;
+    ImGui::EndPopup();
+    return false;
 }
 
 bool ImGuiWrapper::bbl_input_double(const wxString& label, const double& value, const std::string& format)
@@ -1597,16 +1622,27 @@ bool ImGuiWrapper::combo(const wxString& label, const std::vector<std::string>& 
     bool res = false;
 
     const char *selection_str = selection < int(options.size()) && selection >= 0 ? options[selection].c_str() : "";
-    if (ImGui::BeginCombo("", selection_str)) {
+    ImGui::PushID(&selection);
+    constrain_canvas_menu();
+    if (ImGui::BeginCombo("##canvas_combo", selection_str)) {
+        // Combo popup windows are pooled by depth, so retain the caller identity
+        // inside the popup rather than using only its recycled window ID.
+        ImGui::PushID(&selection);
+        const auto visible = menu_search("canvas_combo_options", options);
+        ImGui::PopID();
         for (int i = 0; i < (int)options.size(); i++) {
-            if (ImGui::Selectable(options[i].c_str(), i == selection)) {
+            if (!visible[i]) continue;
+            ImGui::PushID(i);
+            if (ImGui::Selectable(canvas_menu_label(options[i].c_str()).c_str(), i == selection)) {
                 selection_out = i;
             }
+            ImGui::PopID();
         }
 
         ImGui::EndCombo();
         res = true;
     }
+    ImGui::PopID();
 
     selection = selection_out;
     return res;
@@ -1812,16 +1848,16 @@ static bool selectable(const char* label, bool selected, ImGuiSelectableFlags fl
         ImGui::TablePopBackgroundChannel();
 
     // mark a label with a ColorMarkerHovered, if item is hovered
-    char marked_label[512]; //255 symbols is not enough for translated string (e.t. to Russian)
+    std::string marked_label; // Localized display text may exceed a fixed byte buffer.
     if (hovered || selected) {
-        sprintf(marked_label, "%c%s", ImGui::ColorMarkerHovered, label);
+        marked_label = std::string(1, static_cast<char>(ImGui::ColorMarkerHovered)) + label;
         ImGui::PushStyleColor(ImGuiCol_Text, md3_imgui_color(MD3::Role::OnPrimary)); // row fill is Primary
     }
     else
-        strcpy(marked_label, label);
+        marked_label = label;
 
     if (flags & ImGuiSelectableFlags_Disabled) ImGui::PushStyleColor(ImGuiCol_Text, style.Colors[ImGuiCol_TextDisabled]);
-    ImGui::RenderTextClipped(text_min, text_max, marked_label, NULL, &label_size, style.SelectableTextAlign, &bb);
+    ImGui::RenderTextClipped(text_min, text_max, marked_label.c_str(), NULL, &label_size, style.SelectableTextAlign, &bb);
     if (flags & ImGuiSelectableFlags_Disabled) ImGui::PopStyleColor();
     if (hovered || selected) ImGui::PopStyleColor();
 
@@ -1836,6 +1872,9 @@ static bool selectable(const char* label, bool selected, ImGuiSelectableFlags fl
 
 bool begin_menu(const char *label, bool enabled)
 {
+    const std::string display_label = canvas_menu_label(label);
+    label = display_label.c_str();
+    constrain_canvas_menu();
     ImGuiWindow *window = ImGui::GetCurrentWindow();
     if (window->SkipItems) return false;
 
@@ -2000,6 +2039,8 @@ void end_menu()
 
 bool menu_item_with_icon(const char *label, const char *shortcut, ImVec2 icon_size /* = ImVec2(0, 0)*/, ImU32 icon_color /* = 0*/, bool selected /* = false*/, bool enabled /* = true*/, bool* hovered/* = nullptr*/)
 {
+    const std::string display_label = canvas_menu_label(label);
+    label = display_label.c_str();
     ImGuiWindow *window = ImGui::GetCurrentWindow();
     if (window->SkipItems) return false;
 

@@ -28,6 +28,7 @@ namespace Slic3r {
 namespace GUI {
 
 class RegexBuilderBridgeState;
+struct CanvasMenuSearchState;
 
 // Opens the full wx regex builder for an ImGui-owned search field. The shared
 // bridge state keeps callbacks lifetime-safe and carries edits back on the next
@@ -47,6 +48,8 @@ bool button_with_pos(ImTextureID   user_texture_id,
                      const ImVec4 &bg_col        = ImVec4(0, 0, 0, 0),
                      const ImVec4 &tint_col      = ImVec4(1, 1, 1, 1),
                      const ImVec2 &margin        = ImVec2(0, 0));
+std::string canvas_menu_label(const char* original);
+void constrain_canvas_menu();
 bool begin_menu(const char *label, bool enabled = true);
 void end_menu();
 bool menu_item_with_icon(const char *label, const char *shortcut, ImVec2 icon_size = ImVec2(0, 0), ImU32 icon_color = 0, bool selected = false, bool enabled = true, bool* hovered = nullptr);
@@ -79,6 +82,8 @@ class ImGuiWrapper
     std::string m_search_pattern;
     std::string m_search_exported_pattern;
     std::shared_ptr<RegexBuilderBridgeState> m_search_builder_state;
+    std::map<ImGuiID, std::shared_ptr<CanvasMenuSearchState>> m_menu_search_states;
+    bool m_menu_search_escape_held = false;
 #if ENABLE_ENHANCED_IMGUI_SLIDER_FLOAT
     bool m_requires_extra_frame{ false };
 #endif // ENABLE_ENHANCED_IMGUI_SLIDER_FLOAT
@@ -139,6 +144,9 @@ public:
 	void set_next_window_size(float x, float y, ImGuiCond cond);
 
     /* BBL style widgets */
+    // Draw inside an open popup; use an untranslated stable ID.
+    std::vector<bool> menu_search(const char* stable_id, const std::vector<std::string>& items, bool focus = false);
+
     bool bbl_combo_with_filter(const char* label, const std::string& preview_value, const std::vector<std::string>& all_items, std::vector<int>* filtered_items_idx, bool* is_filtered, float item_height = 0.0f);
     bool bbl_input_double(const wxString &label, const double &value, const std::string &format = "%0.2f");
     bool bbl_slider_float(const std::string &label, float* v, float v_min, float v_max, const char* format = "%.3f", float power = 1.0f, bool clamp = true, const wxString& tooltip = {});
