@@ -10,7 +10,7 @@ the branch's moving tip as tested.
 
 The native bridge is opt-in and exposes current-user named-pipe project, model,
 preset, settings, slicing, export, printer and job operations. A self-contained
-companion under `automation/` provides 19 typed MCP tools through stdio and
+companion under `automation/` provides 20 typed MCP tools through stdio and
 authenticated Streamable HTTP, plus the same JSON CLI service. Native slicing
 uses generation, plate and revision identities. Printer starts use the native
 task manager with a durable intent journal and an immutable staging-file lease.
@@ -22,11 +22,13 @@ run only on GitHub-hosted Windows runners. No local product execution occurred.
 The first focused run, `37038981051`, failed compilation on nullable HTTP Host
 handling. The next run, `37040259653`, compiled and passed 22 cases but exposed
 an incorrect child-process startup path in both transport checks. Both defects
-are repaired. At `cd13252c5e6bac330583c1e1e3e25921bf2b3175`, the managed job in
-[`37040835823`](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37040835823)
+are repaired. At `65dc4577fb29f2d00fd525a1de11e370784c5b3e`, the managed job in
+[`37045639569`](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37045639569)
 passed all 24 checks: 22 in `BoundaryTests.cs` and 2 in `TransportTests.cs`.
 Self-contained publication and documentation parsing also passed. Native
-compilation in that run remains pending. The two superseded native runs were
+compilation in that run remains pending. The preceding candidate passed native
+compilation and Squirrel packaging, but reached its one-hour observation limit
+with release validation still running. The two superseded native runs were
 canceled because their older release dependency did not include the red MCP
 verdict; current release publication requires both native and managed jobs.
 

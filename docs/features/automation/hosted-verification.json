@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "sourceCommit": "cd13252c5e6bac330583c1e1e3e25921bf2b3175",
-  "runId": "37040835823",
-  "runUrl": "https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37040835823",
-  "finishedAt": "2026-10-02T17:28:56.0345089+00:00",
+  "sourceCommit": "65dc4577fb29f2d00fd525a1de11e370784c5b3e",
+  "runId": "37045639569",
+  "runUrl": "https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37045639569",
+  "finishedAt": "2026-10-02T18:11:48.9018721+00:00",
   "execution": "github-hosted-windows",
   "total": 24,
   "passed": 24,
@@ -21,7 +21,7 @@
       "outcome": "passed"
     }
   ],
-  "testResultSha256": "78063e8bbb3eb6bd9ca7c24a4374a9849d5872e85bf2dacf44409deb2d12c4f0",
+  "testResultSha256": "2a62aca4a649e1333f2d9ba135c02a1b651a25c120b21e4a8237f5e3a3315436",
   "nativeRuntime": "not_verified_by_this_receipt",
   "physicalPrinters": "unverified",
   "localProductExecution": false
