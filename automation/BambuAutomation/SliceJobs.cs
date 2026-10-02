@@ -19,6 +19,7 @@ public sealed class SliceJobs(Workspace workspace, string nativeExecutable) : ID
         public string? Hash;
         public string? InputHash;
         public string? Destination;
+        public FileStream? InputLock;
         public long Bytes;
         public int? ExitCode;
         public readonly CancellationTokenSource Cancellation = new();
@@ -49,7 +50,7 @@ public sealed class SliceJobs(Workspace workspace, string nativeExecutable) : ID
             if (jobs.Values.Count(job => job.State is "queued" or "running") >= 4)
                 throw new CommandException("queue_full", "The bounded headless queue is full (one running, three waiting).");
             if (jobs.Count >= 128) throw new CommandException("job_limit", "The service has retained 128 job records; restart after collecting results.");
-            if (jobs.Values.Any(existing => existing.Destination == output && existing.State is "queued" or "running"))
+            if (jobs.Values.Any(existing => string.Equals(existing.Destination, output, StringComparison.OrdinalIgnoreCase) && existing.State is "queued" or "running"))
                 throw new CommandException("output_busy", "An active headless job already owns that output path.");
             var job = new Job("headless-" + Guid.NewGuid().ToString("N"));
             job.Destination = output;
@@ -62,8 +63,8 @@ public sealed class SliceJobs(Workspace workspace, string nativeExecutable) : ID
             using (var source = new FileStream(input, FileMode.Open, FileAccess.Read, FileShare.Read))
             using (var destination = new FileStream(snapshot, FileMode.CreateNew, FileAccess.Write, FileShare.None))
                 source.CopyTo(destination);
-            using (var source = File.OpenRead(snapshot))
-                job.InputHash = Convert.ToHexString(SHA256.HashData(source)).ToLowerInvariant();
+            job.InputLock = File.OpenRead(snapshot);
+            job.InputHash = Convert.ToHexString(SHA256.HashData(job.InputLock)).ToLowerInvariant();
             jobs[job.Id] = job;
             _ = RunAsync(job, snapshot, output, overwrite, plate);
             return Snapshot(job);
@@ -121,17 +122,19 @@ public sealed class SliceJobs(Workspace workspace, string nativeExecutable) : ID
             if (process.ExitCode != 0) throw new CommandException("slice_failed", "Native slicer returned a nonzero exit code; inspect the isolated job result.json.");
             ValidateSlicedArchive(nativeOutput);
             workspace.Resolve(output, true, overwrite);
+            job.Cancellation.Token.ThrowIfCancellationRequested();
             File.Move(nativeOutput, output, overwrite);
             var file = new FileInfo(output);
             using var data = File.OpenRead(output);
-            var hash = Convert.ToHexString(await SHA256.HashDataAsync(data, job.Cancellation.Token)).ToLowerInvariant();
+            // Atomic publication has settled. Cancellation after this point must not conceal a real output.
+            var hash = Convert.ToHexString(await SHA256.HashDataAsync(data, CancellationToken.None)).ToLowerInvariant();
             lock (job.Sync) { job.Output = output; job.Hash = hash; job.Bytes = file.Length; job.State = "completed"; }
         }
         catch (OperationCanceledException)
         { lock (job.Sync) { job.State = job.Cancellation.IsCancellationRequested ? "cancelled" : "failed"; job.Error = job.Cancellation.IsCancellationRequested ? "cancelled" : "slice_timeout"; } }
         catch (Exception exception) when (exception is CommandException or IOException or UnauthorizedAccessException or InvalidDataException or System.ComponentModel.Win32Exception)
         { lock (job.Sync) { job.State = "failed"; job.Error = exception is CommandException command ? command.Code : "slice_io_error"; } }
-        finally { if (acquired) slots.Release(); }
+        finally { job.InputLock?.Dispose(); if (acquired) slots.Release(); }
     }
     private static async Task DrainAsync(StreamReader reader, CancellationToken cancellationToken)
     {
