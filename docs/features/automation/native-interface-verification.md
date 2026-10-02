@@ -22,7 +22,8 @@ the exact release candidate. The checkout must be at that source commit.
 | Scope | Required observations | Limits |
 | --- | --- | --- |
 | `menus` | Empty-scene short context menu, literal search, no matches, regex matching, Tab to regex, Escape clear/dismiss, nested Add Primitive menu, parent focus restoration, layout measurements | Requires the actual native accessibility provider to expose menu rows and search fields. It never invokes a primitive action. |
-| `vocabulary` | Preferences opened through the Edit menu, native JSON picker, synthetic label load, replacement, visible invalid-file rejection, preservation of the valid mapping, fresh-process restoration, clear and fresh-process confirmation of original wording | Uses only generated `Fixture wording alpha` and `Fixture wording beta` mappings. Exports are not covered by this scope. |
+| `vocabulary` | Preferences opened through the Edit menu, native JSON picker, synthetic label load, replacement, visible invalid-file rejection, preservation of the valid mapping and clear | Original native accessibility text must remain unchanged. Stable real title pixels prove change/preservation/restoration; exact painted wording still requires image review. |
+| `vocabulary-persistence` | Load a neutral mapping, observe it after a fresh process, clear it and verify original display after another fresh process | Uses generated neutral JSON only. Does not test exports or graceful application shutdown. |
 | `slice-controls` | Empty-model proof, visible disabled Slice and Print/Send controls, disabled clicks that open no dialog, named options buttons with real chevron labels, measured action layout | This is an empty-scene preflight, not proof of slicing or device continuation. |
 | `combined-print` | Native cube import, installed presets, real Slice and Print click, ready output on plate zero, existing Send print job dialog, Escape dismissal | No submit or printer selection. Missing presets, account requirements, version preflight or an unavailable dialog fail the scope. |
 | `combined-send` | Native cube import, installed presets, real Slice and Send click, ready output on plate zero, existing Send to Printer storage dialog, Escape dismissal | No transfer or physical printing. It verifies the confirmation boundary only. |
@@ -50,7 +51,9 @@ desktop for clicks, text, keyboard input and PrintWindow captures. A short-lived
 helper runs on that desktop to observe native UI Automation and target keyboard
 input at the actual focused owned control. UI Automation patterns are read-only.
 There is no InvokePattern, ValuePattern setter, WM_SETTEXT, `invoke`,
-`menu-popup` or other application test-command mutation. Modifier shortcuts are
+`menu-popup` or other application test-command mutation. The existing
+`app.probe()` path does launch `send-layout-probe.py` for read-only observations;
+it is not an input mechanism. Modifier shortcuts are
 not used because the pinned background-key implementation documents limitations
 for controls that inspect physical modifier state.
 
@@ -76,14 +79,23 @@ Decryption verifies integrity; it does not approve privacy or publication.
 Review every image before publishing it. No screenshot in this document is
 fabricated to stand in for that pending review.
 
-The vocabulary scope takes 28 captures. Its invalid fixture uses unsupported
-schema version 2 and must leave the displayed version-1 replacement intact.
-It stops the owned process, verifies teardown, starts a different process with
-the same isolated profile, and requires the replacement to remain visible.
-After a visible clear action, a second fresh process must show original wording
-and the Load JSON control. The driver never copies or reconstructs the display
-cache between launches. This tests persistence through process termination;
-it does not claim a graceful application-exit flow.
+The vocabulary and persistence scopes retain 23 and 25 images respectively.
+The invalid fixture uses unsupported schema version 2 and must show the rejection
+message while leaving the valid replacement's title pixels unchanged. Each
+display checkpoint waits for two identical title crops, with at most six
+observations, and retains the full raw image that produced the stable crop.
+Transient stability samples remain restricted scratch data; all per-input
+captures and accepted stable images are retained in the encrypted bundle.
+Original native accessibility text is required throughout. Pixel differences
+and equality prove display changes and restoration, not the exact text content;
+human review of the retained images is still required.
+
+The persistence scope stops the owned process, verifies teardown, starts a
+different process with the same isolated profile, and requires the mapped title
+pixels to remain equal. After a visible clear action, a second fresh process
+must restore the baseline pixels and the Load JSON control. The driver never
+copies or reconstructs the display cache between launches. This tests persistence
+through process termination; it does not claim graceful application shutdown.
 
 ## Failure and recovery
 

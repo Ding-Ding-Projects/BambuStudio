@@ -12,6 +12,7 @@ import ctypes
 from ctypes import wintypes
 from datetime import datetime, timezone
 import gettext
+import hashlib
 import importlib.util
 import json
 import os
@@ -221,7 +222,7 @@ class Driver:
                 "Native filename field is unavailable, ambiguous, or not empty")
         return rows[0]
 
-    def capture(self, label, hwnd=None):
+    def capture(self, label, hwnd=None, stable_source=None):
         require(len(self.images) < 30, "Scope exceeds encrypted capture inventory bound")
         handle = hwnd or self.app.main
         windows = self.app.windows()
@@ -230,7 +231,11 @@ class Driver:
         require(frame.get("dpi") == round(96 * self.args.scale), "Actual window DPI differs from requested scale")
         name = f"{len(self.images):03d}-{label}.png"
         path = self.args.output / name
-        result = cheap("screenshot", hwnd=handle, output_path=str(path))
+        if stable_source is None:
+            result = cheap("screenshot", hwnd=handle, output_path=str(path))
+        else:
+            shutil.copyfile(stable_source, path)
+            result = {"rendered_ok": True}
         require(result.get("rendered_ok") is True, "Native capture did not confirm rendering")
         from PIL import Image
         with Image.open(path) as image:
@@ -364,6 +369,45 @@ class Driver:
         self.type(prefix + "-find-wording", self.label("Personal vocabulary"), search["top"])
         return search["top"]
 
+    def title_pixels(self, label):
+        """Observe stable real pixels while requiring original native text.
+
+        Equality/change is evidence of display persistence, not OCR or proof of
+        the exact painted replacement. Full raw images remain review-required.
+        """
+        from PIL import Image
+        last = None
+        scratch_image = self.scratch / (label + "-stability.png")
+        for attempt in range(6):
+            self.worker()
+            title = self.one("Personal vocabulary", kind=50020)
+            require(title["name"] == self.label("Personal vocabulary"),
+                    "Native title no longer exposes original wording")
+            require(not self.candidates("Fixture wording alpha") and not self.candidates("Fixture wording beta"),
+                    "Replacement wording leaked into native accessibility")
+            top = next(r for r in self.probe if r.get("kind") == "toplevel" and r.get("hwnd") == title["top"])
+            origin = top["rect"]
+            rect = [title["rect"][0] - origin["x"], title["rect"][1] - origin["y"],
+                    title["rect"][2] - origin["x"], title["rect"][3] - origin["y"]]
+            rendered = cheap("screenshot", hwnd=title["top"], output_path=str(scratch_image))
+            require(rendered.get("rendered_ok") is True, "Title stability capture did not render")
+            captured_at = datetime.now(timezone.utc).isoformat()
+            with Image.open(scratch_image) as image:
+                require(0 <= rect[0] < rect[2] <= image.width and 0 <= rect[1] < rect[3] <= image.height,
+                        "Observed title leaves its captured surface")
+                crop = image.crop(rect).convert("RGB")
+                signature = hashlib.sha256(str(crop.size).encode("ascii") + crop.tobytes()).hexdigest()
+            if last == signature:
+                name = self.capture(label + "-stable-title", title["top"], scratch_image)
+                self.images[-1]["captured_at_utc"] = captured_at
+                self.rows[-1]["display_title"] = {"capture": name, "crop": rect,
+                    "pixel_sha256": signature, "stable_samples": 2, "attempts": attempt + 1,
+                    "native_original_text": True, "exact_painted_text_review": "pending"}
+                return signature
+            last = signature
+            time.sleep(0.25)
+        raise RuntimeError("Title pixels did not stabilize within six bounded observations")
+
     def upload_vocabulary(self, prefix, target, fixture, preferences):
         self.click(prefix + "-load", target)
         dialogs = [w for w in self.app.windows() if w["class"] == "#32770" and w["handle"] != preferences]
@@ -399,37 +443,52 @@ class Driver:
     def vocabulary(self):
         preferences = self.open_vocabulary("initial")
         target = self.one("Load JSON")
-        # The source labels remain unchanged. Native accessibility must show the
-        # synthetic display value, proving the real display adapter is exercised.
+        baseline = self.title_pixels("original")
+        previous = baseline
+        # Native text must stay original. Only genuine captured pixels are used
+        # for change/preservation checks; exact replacement text needs review.
         source = self.label("Personal vocabulary")
         for index, replacement in enumerate(("Fixture wording alpha", "Fixture wording beta")):
             fixture = self.scratch / f"neutral-{index}.json"
             fixture.write_text(json.dumps({"schemaVersion": 1, "entries": {source: replacement}}), encoding="utf-8")
             self.upload_vocabulary(f"valid-{index}", target, fixture, preferences)
-            require(self.candidates(replacement), "Native displayed wording did not change")
-            if index:
-                require(not self.candidates("Fixture wording alpha"), "Replacement retained the old display mapping")
+            current = self.title_pixels(f"valid-{index}")
+            require(current != previous and current != baseline, "Title pixels did not change for the replacement")
+            previous = current
             target = self.one("Replace JSON")
         invalid = self.scratch / "neutral-invalid.json"
         invalid.write_text(json.dumps({"schemaVersion": 2, "entries": {source: "Invalid replacement"}}), encoding="utf-8")
         self.upload_vocabulary("invalid", target, invalid, preferences)
         require(self.candidates("The vocabulary file could not be applied. Use valid version 1 JSON within the supported size limits.")
-                and self.candidates("Fixture wording beta") and self.candidates("Replace JSON")
+                and self.candidates("Replace JSON")
                 and not self.candidates("Invalid replacement"),
                 "Invalid JSON did not visibly preserve the active mapping")
-        self.restart("restart-loaded")
-        self.open_vocabulary("restored")
-        require(self.candidates("Fixture wording beta") and self.candidates("Replace JSON")
-                and not self.candidates("Fixture wording alpha") and not self.candidates("Invalid replacement"),
-                "The valid replacement did not survive a fresh native process")
-        clear_label = self.label("Clear personal vocabulary").replace(source, "Fixture wording beta")
-        self.click("clear-wording", self.one(clear_label))
+        require(self.title_pixels("invalid") == previous, "Invalid JSON changed the painted title")
+        self.click("clear-wording", self.one("Clear personal vocabulary"))
         require(self.candidates("Personal vocabulary") and self.candidates("Load JSON") and
                 not self.candidates("Fixture wording beta"), "Clear did not restore native original wording")
+        require(self.title_pixels("cleared") == baseline, "Clear did not restore original title pixels")
+
+    def vocabulary_persistence(self):
+        preferences = self.open_vocabulary("initial")
+        baseline = self.title_pixels("original")
+        fixture = self.scratch / "neutral-persistence.json"
+        fixture.write_text(json.dumps({"schemaVersion": 1,
+            "entries": {self.label("Personal vocabulary"): "Fixture wording beta"}}), encoding="utf-8")
+        self.upload_vocabulary("valid", self.one("Load JSON"), fixture, preferences)
+        mapped = self.title_pixels("loaded")
+        require(mapped != baseline and self.candidates("Replace JSON"), "Title replacement did not become active")
+        self.restart("restart-loaded")
+        self.open_vocabulary("restored")
+        require(self.candidates("Replace JSON") and self.title_pixels("restored") == mapped,
+                "Mapped title pixels did not survive a fresh native process")
+        self.click("clear-wording", self.one("Clear personal vocabulary"))
+        require(self.candidates("Load JSON") and self.title_pixels("cleared") == baseline,
+                "Clear did not restore original title pixels")
         self.restart("restart-cleared")
         self.open_vocabulary("cleared")
         require(self.candidates("Personal vocabulary") and self.candidates("Load JSON")
-                and self.candidates("Original wording is active.") and not self.candidates("Fixture wording beta"),
+                and self.candidates("Original wording is active.") and self.title_pixels("restarted-clear") == baseline,
                 "Clear did not persist across a fresh native process")
 
     def slice_controls(self):
@@ -548,7 +607,7 @@ def main():
         parser.add_argument("--" + name, type=Path, required=True)
     parser.add_argument("--source-commit", required=True)
     parser.add_argument("--release-tag", required=True)
-    parser.add_argument("--scope", choices=("menus", "vocabulary", "slice-controls", "combined-print", "combined-send", "cancellation"), required=True)
+    parser.add_argument("--scope", choices=("menus", "vocabulary", "vocabulary-persistence", "slice-controls", "combined-print", "combined-send", "cancellation"), required=True)
     parser.add_argument("--language", choices=behavior.MODES, default="en")
     parser.add_argument("--theme", choices=("light", "dark"), default="light")
     parser.add_argument("--scale", type=float, choices=(1.0, 1.25, 1.5, 2.0), default=1.0)
