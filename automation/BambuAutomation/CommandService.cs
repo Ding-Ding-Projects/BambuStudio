@@ -65,7 +65,11 @@ public sealed class CommandService(Workspace workspace, INativeBridge bridge, Sl
         if (operation == "printer_start") Responses.Required(args, "requestId");
         if (operation == "printer_start")
         {
-            args["path"] = workspace.Resolve(Responses.Required(args, "path"), true, Responses.Flag(args, "overwrite"));
+            if (Responses.Flag(args, "overwrite"))
+                throw new CommandException("invalid_arguments", "Print staging must not overwrite an existing file.");
+            // Native deduplication must see retries after the first submission created its staging file.
+            // Native rejects existing output for a new request ID before exporting the current sliced plate.
+            args["path"] = workspace.Resolve(Responses.Required(args, "path"), true, true);
             if (!args["path"]!.GetValue<string>().EndsWith(".3mf", StringComparison.OrdinalIgnoreCase))
                 throw new CommandException("invalid_format", "Print staging output must be a .3mf file.");
         }

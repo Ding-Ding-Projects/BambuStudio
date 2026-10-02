@@ -144,6 +144,8 @@ public sealed class BoundaryTests : IDisposable
         var service = new CommandService(Workspace, bridge, jobs);
         var args = new JsonObject { ["printerId"] = "printer", ["requestId"] = "one-intent", ["instanceId"] = 1, ["path"] = Path.Combine(root, "staging.3mf") };
         var first = await service.ExecuteAsync("printer_start", args);
+        // The actual native first submission creates its staging output before returning.
+        File.WriteAllText(args["path"]!.GetValue<string>(), "submitted staging archive");
         var second = await service.ExecuteAsync("printer_start", args);
         Assert.True(first["ok"]!.GetValue<bool>()); Assert.True(second["ok"]!.GetValue<bool>());
         Assert.Equal(1, bridge.PrintStarts);
