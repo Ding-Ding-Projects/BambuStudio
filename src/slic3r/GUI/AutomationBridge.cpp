@@ -180,13 +180,27 @@ struct AutomationBridge::State : std::enable_shared_from_this<AutomationBridge::
         return {{"printerId",m->get_dev_id()},{"name",m->get_dev_name()},{"connected",m->is_connected()},
                 {"state",m->print_status},{"progress",m->mc_print_percent}};
     }
+    int select_plate(Plater* plater, const Json& arguments) {
+        int index = plater->get_partplate_list().get_curr_plate_index();
+        if(arguments.contains("plateIndex") && !arguments["plateIndex"].is_null()) {
+            if(!arguments["plateIndex"].is_number_integer()) throw Rejected("invalid_arguments","plateIndex must be a zero-based integer");
+            const auto selected=arguments["plateIndex"].get<int64_t>();
+            if(selected<0 || selected>=plater->get_partplate_list().get_plate_count()) throw Rejected("invalid_arguments","plateIndex is outside the project plate inventory");
+            index=static_cast<int>(selected);
+        }
+        if(index!=plater->get_partplate_list().get_curr_plate_index()) {
+            if(plater->is_background_process_slicing()) throw Rejected("busy","Cannot select a plate while slicing");
+            if(plater->select_plate(index,false)!=0 || plater->get_partplate_list().get_curr_plate_index()!=index) throw Rejected("plate_selection_failed","Native plate selection failed");
+        }
+        return index;
+    }
     Json execute(const std::string& op, const Json& a) {
 #ifdef _WIN32
         struct LeaseRelease { State* state; ~LeaseRelease() {for(auto h:state->path_leases) CloseHandle(h);state->path_leases.clear();} } leases{this};
 #endif
         auto p = app.plater();
         if (!p || p->is_loading_project()) throw Rejected("not_ready","Workspace is unavailable or loading");
-        if (op == "capabilities") return {{"operations",Json::array({"capabilities","project_inspect","project_new","project_open","project_save","model_import","presets_list","settings_get","settings_update","slice_start","export_file","printer_list","printer_status","printer_start","printer_pause","printer_resume","printer_cancel","job_status","job_cancel"})},{"maxMessageBytes",max_message},{"overwrite",true},{"enable","BAMBU_AUTOMATION=1"},{"requestIdScope","process result cache plus durable intent journal; earlier-process requests return submission_unknown"},{"printerStartRestrictions","one known reliable nozzle, one filament, external spool, matching printer model and diameter; AMS and dual nozzle are rejected"}};
+        if (op == "capabilities") return {{"operations",Json::array({"capabilities","project_inspect","project_new","project_open","project_save","model_import","presets_list","settings_get","settings_update","slice_start","export_file","printer_list","printer_status","printer_start","printer_pause","printer_resume","printer_cancel","job_status","job_cancel"})},{"maxMessageBytes",max_message},{"overwrite",true},{"enable","BAMBU_AUTOMATION=1"},{"requestIdScope","process result cache plus durable intent journal; earlier-process requests return submission_unknown"},{"plateIndexBase",0},{"exportFormats",Json::array({"stl","gcode.3mf"})},{"printerStartRequires",Json::array({"sliceJobId","printerId","requestId","path"})},{"printerStartRestrictions","one known reliable nozzle, one filament, external spool, matching printer model and diameter; AMS and dual nozzle are rejected"}};
         if (op == "project_inspect") {
             Json objects=Json::array(), plates=Json::array();
             for (size_t i=0;i<p->model().objects.size();++i) {
@@ -208,7 +222,7 @@ struct AutomationBridge::State : std::enable_shared_from_this<AutomationBridge::
         if (op=="project_save" || op=="export_file") {
             if (p->is_background_process_slicing()) throw Rejected("busy","Slicing is active");
             auto file=path(a,true);
-            if (file.extension()!=".3mf") throw Rejected("invalid_arguments","Export output must be .3mf");
+            if (op=="project_save" && file.extension()!=".3mf") throw Rejected("invalid_arguments","Project output must be .3mf");
             if (op=="project_save") {
                 auto previous=p->project_history_identity();
                 if (!publish(file,a.value("overwrite",false),[&](const std::filesystem::path& temp) {return p->export_3mf(boost::filesystem::path(temp.u8string()),SaveStrategy::Silence)>=0;})) throw Rejected("save_failed","Native project serialization failed");
@@ -217,6 +231,12 @@ struct AutomationBridge::State : std::enable_shared_from_this<AutomationBridge::
                 p->capture_saved_project_history(wxString::FromUTF8(file.u8string().c_str()),previous);
                 return {{"saved",true},{"dirty",p->is_project_dirty()}};
             }
+            int plate_index=select_plate(p,a);
+            if(file.extension()==".stl") {
+                if(!publish(file,a.value("overwrite",false),[&](const std::filesystem::path& temp) {return p->automation_export_plate_stl(temp,plate_index);})) throw Rejected("export_failed","Native STL export requires nonempty FFF geometry with no negative volumes");
+                return {{"exported",true},{"format","stl"},{"plate",plate_index}};
+            }
+            if(file.extension()!=".3mf") throw Rejected("invalid_arguments","Supported export outputs are .stl and sliced .3mf");
             auto plate=p->get_partplate_list().get_curr_plate();
             if (!plate->is_slice_result_ready_for_export()) throw Rejected("not_ready","Current plate has no valid slice result");
             if (!publish(file,a.value("overwrite",false),[&](const std::filesystem::path& temp) {return p->export_3mf(boost::filesystem::path(temp.u8string()),SaveStrategy::Silence|SaveStrategy::WithGcode|SaveStrategy::SkipModel,plate->get_index())>=0;}))
@@ -262,6 +282,7 @@ struct AutomationBridge::State : std::enable_shared_from_this<AutomationBridge::
         }
         if (op=="slice_start") {
             if(p->is_background_process_slicing() || p->model().objects.empty()) throw Rejected("not_ready","Workspace is empty or already slicing");
+            select_plate(p,a);
             if(jobs.size()>=128) throw Rejected("job_limit","Automation job inventory is full; restart only after resolving existing jobs");
             auto full_config=app.preset_bundle ? app.preset_bundle->full_config() : *p->config();
             auto post=full_config.option<ConfigOptionStrings>("post_process");
@@ -291,6 +312,13 @@ struct AutomationBridge::State : std::enable_shared_from_this<AutomationBridge::
                 if(prior->second["arguments"]!=a) throw Rejected("request_conflict","requestId was already used with different arguments");
                 return prior->second["result"];
             }
+            auto slice_id=required(a,"sliceJobId");
+            auto slice=jobs.find(slice_id);
+            if(slice==jobs.end() || slice->second.kind!="slice") throw Rejected("slice_job_not_found","sliceJobId must name a native slice job");
+            const auto& sliced=slice->second;
+            if(sliced.cancelled || sliced.plate!=p->get_partplate_list().get_curr_plate_index() || sliced.revision!=p->get_active_snapshot_time() || sliced.generation!=p->background_process().automation_generation() || sliced.request_generation!=p->automation_slice_request_generation()) throw Rejected("stale_job","Referenced slice job no longer matches the active workspace");
+            if(a.contains("plateIndex") && !a["plateIndex"].is_null() && (!a["plateIndex"].is_number_integer() || a["plateIndex"]!=sliced.plate)) throw Rejected("invalid_arguments","plateIndex must match the referenced completed slice job");
+            if((!sliced.reused && p->background_process().automation_outcome()!=2) || !p->get_partplate_list().get_curr_plate()->is_slice_result_ready_for_print()) throw Rejected("slice_not_completed","Referenced slice job must be successfully completed with a valid print result");
             if(starts.size()>=64 || jobs.size()>=128 || request.size()>128) throw Rejected("job_limit","Print request inventory is full or requestId exceeds 128 bytes");
             auto m=printer(a); auto plate=p->get_partplate_list().get_curr_plate();
             if(!m->is_connected() || m->is_in_printing() || (m->print_status!="IDLE" && m->print_status!="FINISH") || !plate->is_slice_result_ready_for_print()) throw Rejected("not_ready","Printer must be online and idle and the active plate sliced");
