@@ -17,6 +17,8 @@ public sealed class SliceJobs(Workspace workspace, string nativeExecutable) : ID
         public string? Error;
         public string? Output;
         public string? Hash;
+        public string? InputHash;
+        public string? Destination;
         public long Bytes;
         public int? ExitCode;
         public readonly CancellationTokenSource Cancellation = new();
@@ -25,6 +27,7 @@ public sealed class SliceJobs(Workspace workspace, string nativeExecutable) : ID
     private readonly SemaphoreSlim slots = new(1, 1);
     private readonly object admission = new();
     private bool disposed;
+    public bool NativeAvailable => File.Exists(nativeExecutable);
     public JsonObject Start(JsonObject args)
     {
         var input = workspace.Resolve(Responses.Required(args, "path"));
@@ -46,9 +49,23 @@ public sealed class SliceJobs(Workspace workspace, string nativeExecutable) : ID
             if (jobs.Values.Count(job => job.State is "queued" or "running") >= 4)
                 throw new CommandException("queue_full", "The bounded headless queue is full (one running, three waiting).");
             if (jobs.Count >= 128) throw new CommandException("job_limit", "The service has retained 128 job records; restart after collecting results.");
+            if (jobs.Values.Any(existing => existing.Destination == output && existing.State is "queued" or "running"))
+                throw new CommandException("output_busy", "An active headless job already owns that output path.");
             var job = new Job("headless-" + Guid.NewGuid().ToString("N"));
+            job.Destination = output;
+            var directory = Path.Combine(Path.GetDirectoryName(output)!, ".bambu-automation-jobs", job.Id);
+            Workspace.CheckAncestors(directory);
+            Directory.CreateDirectory(directory);
+            Workspace.CheckAncestors(directory);
+            var snapshot = Path.Combine(directory, "input.3mf");
+            // Hold the original against concurrent writes/deletion while making an immutable queued input.
+            using (var source = new FileStream(input, FileMode.Open, FileAccess.Read, FileShare.Read))
+            using (var destination = new FileStream(snapshot, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+                source.CopyTo(destination);
+            using (var source = File.OpenRead(snapshot))
+                job.InputHash = Convert.ToHexString(SHA256.HashData(source)).ToLowerInvariant();
             jobs[job.Id] = job;
-            _ = RunAsync(job, input, output, overwrite, plate);
+            _ = RunAsync(job, snapshot, output, overwrite, plate);
             return Snapshot(job);
         }
     }
@@ -67,7 +84,7 @@ public sealed class SliceJobs(Workspace workspace, string nativeExecutable) : ID
     {
         lock (job.Sync) return new JsonObject { ["jobId"] = job.Id, ["state"] = job.State,
             ["progress"] = job.State == "completed" ? 100 : 0, ["progressKind"] = "indeterminate_until_complete",
-            ["exitCode"] = job.ExitCode, ["output"] = job.Output, ["sha256"] = job.Hash, ["bytes"] = job.Bytes, ["error"] = job.Error };
+            ["exitCode"] = job.ExitCode, ["output"] = job.Output, ["sha256"] = job.Hash, ["inputSha256"] = job.InputHash, ["bytes"] = job.Bytes, ["error"] = job.Error };
     }
     private async Task RunAsync(Job job, string input, string output, bool overwrite, int plate)
     {

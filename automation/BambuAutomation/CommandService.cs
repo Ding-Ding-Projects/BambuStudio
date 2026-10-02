@@ -23,6 +23,8 @@ public sealed class CommandService(Workspace workspace, INativeBridge bridge, Sl
                 return Responses.Success(jobs.Start(args));
             Validate(operation, args);
             var instances = bridge.Instances();
+            if (operation == "capabilities" && args["instanceId"] is null && instances.Count != 1)
+                return Responses.Success(Capabilities(instances, null));
             int instance;
             if (args["instanceId"] is JsonValue value && value.TryGetValue<int>(out var requested) && requested > 0)
                 instance = requested;
@@ -32,13 +34,25 @@ public sealed class CommandService(Workspace workspace, INativeBridge bridge, Sl
             else if (instances.Count == 0) throw new CommandException("instance_unavailable", "No enabled Bambu Studio instance is running.");
             else throw new CommandException("ambiguous_instance", "Multiple native instances are running; specify instanceId.");
             args.Remove("instanceId");
-            return Responses.Success(await bridge.InvokeAsync(instance, operation, args, cancellationToken));
+            var result = await bridge.InvokeAsync(instance, operation, args, cancellationToken);
+            return Responses.Success(operation == "capabilities" ? Capabilities(instances, result) : result);
         }
         catch (CommandException exception) { return Responses.Error(exception.Code, exception.Message); }
         catch (OperationCanceledException) { return Responses.Error("cancelled", "The request was cancelled; inspect native state before retrying."); }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or ArgumentException or InvalidOperationException or System.Text.Json.JsonException)
         { return Responses.Error("invalid_request", "The request could not be processed safely."); }
     }
+
+    private JsonObject Capabilities(IReadOnlyList<int> instances, JsonObject? native) => new()
+    {
+        ["serviceVersion"] = "1",
+        ["transports"] = new JsonArray("stdio", "streamable-http", "cli"),
+        ["headlessSlicing"] = new JsonObject { ["available"] = jobs.NativeAvailable, ["input"] = "configured .3mf", ["output"] = "sliced .3mf", ["maxActiveJobs"] = 4 },
+        ["nativeAttached"] = native is not null,
+        ["instanceSelectionRequired"] = native is null && instances.Count > 1,
+        ["enabledInstances"] = new JsonArray(instances.Select(pid => (JsonNode)JsonValue.Create(pid)!).ToArray()),
+        ["nativeCapabilities"] = native?.DeepClone()
+    };
 
     private void Validate(string operation, JsonObject args)
     {
@@ -49,6 +63,12 @@ public sealed class CommandService(Workspace workspace, INativeBridge bridge, Sl
         if (operation.StartsWith("printer_", StringComparison.Ordinal) && operation != "printer_list")
             Responses.Required(args, "printerId");
         if (operation == "printer_start") Responses.Required(args, "requestId");
+        if (operation == "printer_start")
+        {
+            args["path"] = workspace.Resolve(Responses.Required(args, "path"), true, Responses.Flag(args, "overwrite"));
+            if (!args["path"]!.GetValue<string>().EndsWith(".3mf", StringComparison.OrdinalIgnoreCase))
+                throw new CommandException("invalid_format", "Print staging output must be a .3mf file.");
+        }
         if (operation == "settings_update" && args["values"] is not JsonObject)
             throw new CommandException("invalid_arguments", "settings_update requires values as an object.");
         // No unvalidated alternate path can reach the native file operations.

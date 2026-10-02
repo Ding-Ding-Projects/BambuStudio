@@ -18,7 +18,7 @@ dotnet publish automation/BambuAutomation/BambuAutomation.csproj -c Release -r w
 dotnet test automation/BambuAutomation.Tests/BambuAutomation.Tests.csproj -c Release
 ```
 
-Compilation, automated checks, installation, runtime checks, and slicing are executed only on the approved hosted build machine for this task. Source written here is unverified until that machine reports a verdict. The test project includes workspace and HTTP security checks, real local named-pipe framing checks with a fixture server, and simulated printer identity/replay checks. Those fixture results do not prove a real printer started or native readiness checks passed.
+Compilation, automated checks, installation, runtime checks, and slicing are executed only on the approved hosted build machine for this task. Source written here is unverified until that machine reports a verdict. The test project includes workspace and HTTP security checks, actual compiled MCP stdio/HTTP initialization, discovery and tool-call exchanges, real local named-pipe framing checks with a fixture server, and simulated printer identity/replay checks. Those fixture results do not prove a real printer started or native readiness checks passed.
 
 ## Enable native automation explicitly
 
@@ -37,12 +37,12 @@ Multiple enabled instances require an explicit `instanceId` in tool arguments or
 
 ## Operations
 
-Every operation has a stable `bambu_<operation>` MCP tool accepting an `arguments` JSON object. The CLI uses the operation name without the prefix.
+Every operation has a stable `bambu_<operation>` MCP tool accepting an `arguments` object with an operation-specific typed schema, required fields, and constraint descriptions. The CLI uses the operation name without the prefix.
 
 | Operation | Required arguments and behavior |
 | --- | --- |
 | `instances` | List enabled native instance process IDs. |
-| `capabilities` | Report supported capabilities and unsupported native operations. |
+| `capabilities` | Service transports and headless availability are reported even with no GUI attached. Selected native capabilities appear in `nativeCapabilities`; ambiguous GUI instances report selection required. |
 | `project_inspect`, `project_new` | Inspect or create a native project. |
 | `project_open`, `model_import` | `path` to a workspace file. |
 | `project_save` | `path`, optional `overwrite`. |
@@ -52,14 +52,14 @@ Every operation has a stable `bambu_<operation>` MCP tool accepting an `argument
 | `export_file` | `path`, `format` accepted by native bridge, optional `overwrite`. |
 | `printer_list` | Only printers connected through the selected native instance. |
 | `printer_status`, `printer_pause`, `printer_resume`, `printer_cancel` | Explicit `printerId`. |
-| `printer_start` | Explicit `printerId`, `requestId`, and native-required print arguments. No additional confirmation dialogue is introduced. The native bridge preserves readiness and request-ID deduplication. |
-| `job_status`, `job_cancel` | `jobId`; native jobs remain with their native instance. |
+| `printer_start` | Explicit `printerId`, `requestId`, new `.3mf` staging `path`, `overwrite:false`, `useAms:false`, `amsMapping:[-1]`, `nozzleMapping:{}`. Native exports the current sliced plate itself, checks one known reliable nozzle, one used filament, matching target model/diameter, online/idle state, and sliced-plate readiness. No additional confirmation dialogue is introduced. Request-ID deduplication lasts only for the native process lifetime. Never automatically replay after restart, `operation_in_progress`, or `submission_unknown`. |
+| `job_status`, `job_cancel` | `jobId`; native jobs remain with their native instance. Native slicing may report `result_available` with `completionVerified:false`; native cancellation returns `cancellation_not_safe` without a safe native operation ID. Those states are not converted into verified completion or successful cancellation. |
 
 The service never accepts shell commands, executable paths, raw printer instructions, or caller-supplied native CLI flags. Unsupported operations and disconnected printers return structured errors rather than simulated success. A timeout or disconnect leaves mutation outcome uncertain; query state and reuse the same print `requestId` before retrying.
 
 ## Isolated headless slicing
 
-`slice_start` with `headless: true` requires a configured `.3mf` input in `path`, a distinct `.3mf` `output`, optional integer `plate` (0 means all plates), and optional `overwrite`. The packaged native CLI uses `--slice`, `--export-3mf`, `--datadir`, and `--outputdir`; native `--export-gcode` is disabled in this source. Each job uses an isolated directory under the output parent's `.bambu-automation-jobs/` directory. The service accepts at most four active jobs, executes one at a time, retains at most 128 job records, and limits native execution to 30 minutes. Diagnostics are drained without retaining or reflecting potentially sensitive native log text.
+`slice_start` with `headless: true` requires a configured `.3mf` input in `path`, a distinct `.3mf` `output`, optional integer `plate` (0 means all plates), and optional `overwrite`. The packaged native CLI uses `--slice`, `--export-3mf`, `--datadir`, and `--outputdir`; native `--export-gcode` is disabled in this source. Each job uses an isolated directory under the output parent's `.bambu-automation-jobs/` directory. Input is snapshotted while held against concurrent writes/deletion before queue admission; `inputSha256` records that snapshot's identity. Active jobs cannot share an output destination. The service accepts at most four active jobs, executes one at a time, retains at most 128 job records, and limits native execution to 30 minutes. Diagnostics are drained without retaining or reflecting potentially sensitive native log text.
 
 The service reports progress as indeterminate until native completion, then 100%. Exit 0 alone is insufficient: the exported ZIP must exist and contain nonempty, readable `.gcode` entries. Successful output includes the actual path, byte count, SHA-256, native exit code, and job ID. Failed job directories are retained for inspection. They are not automatically deleted.
 
