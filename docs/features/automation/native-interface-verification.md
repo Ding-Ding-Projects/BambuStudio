@@ -22,7 +22,7 @@ the exact release candidate. The checkout must be at that source commit.
 | Scope | Required observations | Limits |
 | --- | --- | --- |
 | `menus` | Empty-scene short context menu, literal search, no matches, regex matching, Tab to regex, Escape clear/dismiss, nested Add Primitive menu, parent focus restoration, layout measurements | Requires the actual native accessibility provider to expose menu rows and search fields. It never invokes a primitive action. |
-| `vocabulary` | Preferences opened through the Edit menu, native JSON picker, synthetic label load, replacement, clear and restored displayed wording | Uses only generated `Fixture wording alpha` and `Fixture wording beta` mappings. Persistence across restart, malformed input and exports are not covered by this scope. |
+| `vocabulary` | Preferences opened through the Edit menu, native JSON picker, synthetic label load, replacement, visible invalid-file rejection, preservation of the valid mapping, fresh-process restoration, clear and fresh-process confirmation of original wording | Uses only generated `Fixture wording alpha` and `Fixture wording beta` mappings. Exports are not covered by this scope. |
 | `slice-controls` | Empty-model proof, visible disabled Slice and Print/Send controls, disabled clicks that open no dialog, named options buttons with real chevron labels, measured action layout | This is an empty-scene preflight, not proof of slicing or device continuation. |
 | `combined-print` | Native cube import, installed presets, real Slice and Print click, ready output on plate zero, existing Send print job dialog, Escape dismissal | No submit or printer selection. Missing presets, account requirements, version preflight or an unavailable dialog fail the scope. |
 | `combined-send` | Native cube import, installed presets, real Slice and Send click, ready output on plate zero, existing Send to Printer storage dialog, Escape dismissal | No transfer or physical printing. It verifies the confirmation boundary only. |
@@ -76,6 +76,15 @@ Decryption verifies integrity; it does not approve privacy or publication.
 Review every image before publishing it. No screenshot in this document is
 fabricated to stand in for that pending review.
 
+The vocabulary scope takes 28 captures. Its invalid fixture uses unsupported
+schema version 2 and must leave the displayed version-1 replacement intact.
+It stops the owned process, verifies teardown, starts a different process with
+the same isolated profile, and requires the replacement to remain visible.
+After a visible clear action, a second fresh process must show original wording
+and the Load JSON control. The driver never copies or reconstructs the display
+cache between launches. This tests persistence through process termination;
+it does not claim a graceful application-exit flow.
+
 ## Failure and recovery
 
 An absent, ambiguous or disabled target fails the affected scope. Provider
@@ -99,6 +108,8 @@ the cancellation scope or any requested tuple remains unverified.
 
 個人用詞測試只產生中性示例 JSON，唔會讀取私人用詞檔。檔案選擇器同
 原始介面記錄一律加密，逐張檢查私隱之前唔可以公開。
+無效版本檔案必須顯示拒絕訊息並保留原有有效替換；兩次新程序啟動分別
+檢查替換仍然生效，以及清除之後原文仍然恢復，唔會偷偷重建快取充數。
 切片連接操作只去到現有確認視窗，唔會傳送工作或者啟動打印。
 取消同過期世代事件嘅真實互動證據仍然未完成，`cancellation` 範圍會明確
 回報未驗證，唔會用一個閒置畫面冒充已經測過。

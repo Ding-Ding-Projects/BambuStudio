@@ -356,12 +356,48 @@ class Driver:
                 "Nested Escape dismissed the parent menu")
         self.key("root-final-dismiss", ["esc"], root_search["top"])
 
-    def vocabulary(self):
-        self.click("open-edit", self.one("Edit"))
-        self.click("open-preferences", self.one("Preferences", kind=50011))
+    def open_vocabulary(self, prefix):
+        self.click(prefix + "-edit", self.one("Edit"))
+        self.click(prefix + "-preferences", self.one("Preferences", kind=50011))
         search = self.one("Search settings", kind=50004)
-        self.click("preferences-search", search)
-        self.type("find-wording", self.label("Personal vocabulary"), search["top"])
+        self.click(prefix + "-search", search)
+        self.type(prefix + "-find-wording", self.label("Personal vocabulary"), search["top"])
+        return search["top"]
+
+    def upload_vocabulary(self, prefix, target, fixture, preferences):
+        self.click(prefix + "-load", target)
+        dialogs = [w for w in self.app.windows() if w["class"] == "#32770" and w["handle"] != preferences]
+        require(len(dialogs) == 1, "File picker is missing or ambiguous")
+        dialog = dialogs[0]["handle"]
+        self.click(prefix + "-filename-focus", self.filename_entry(dialog))
+        require(any(r["focused"] and r["type"] == 50004 and r["top"] == dialog for r in self.native),
+                "File picker filename edit did not receive focus")
+        self.type(prefix + "-filename", str(fixture), dialog)
+        self.key(prefix + "-filename-submit", ["enter"], dialog)
+
+    def restart(self, label):
+        previous = self.app
+        old_pid = previous.pid
+        previous.stop()
+        require(previous.owned_teardown_verified and previous.desktop_closed_verified,
+                "Prior native instance teardown is unverified")
+        probe = self.scratch / (label + "-probe")
+        probe.mkdir()
+        self.app = behavior.HostedApp(previous.exe, previous.datadir,
+                                      "bsnative-" + str(os.getpid()) + "-" + label, str(probe))
+        self.app.holder_lifetime = 1800
+        # Reuse the same isolated profile and existing local display cache. Never
+        # seed, copy or reconstruct a vocabulary file between these processes.
+        self.app.start(timeout=240)
+        require(self.app.pid != old_pid, "Fresh process identity was not observed")
+        self.exact_client()
+        row = self.record(label)
+        row["restart"] = {"previous_pid": old_pid, "new_pid": self.app.pid,
+                          "previous_teardown_verified": True,
+                          "launch_started_utc": str(self.app.launch_started)}
+
+    def vocabulary(self):
+        preferences = self.open_vocabulary("initial")
         target = self.one("Load JSON")
         # The source labels remain unchanged. Native accessibility must show the
         # synthetic display value, proving the real display adapter is exercised.
@@ -369,24 +405,32 @@ class Driver:
         for index, replacement in enumerate(("Fixture wording alpha", "Fixture wording beta")):
             fixture = self.scratch / f"neutral-{index}.json"
             fixture.write_text(json.dumps({"schemaVersion": 1, "entries": {source: replacement}}), encoding="utf-8")
-            self.click(f"load-{index}", target)
-            dialogs = [w for w in self.app.windows() if w["class"] == "#32770" and w["handle"] != search["top"]]
-            require(len(dialogs) == 1, "File picker is missing or ambiguous")
-            dialog = dialogs[0]["handle"]
-            self.click(f"filename-focus-{index}", self.filename_entry(dialog))
-            require(any(r["focused"] and r["type"] == 50004 and r["top"] == dialog for r in self.native),
-                    "File picker filename edit did not receive focus")
-            self.type(f"filename-{index}", str(fixture), dialog)
-            self.key(f"filename-submit-{index}", ["enter"], dialog)
-            self.worker()
+            self.upload_vocabulary(f"valid-{index}", target, fixture, preferences)
             require(self.candidates(replacement), "Native displayed wording did not change")
             if index:
                 require(not self.candidates("Fixture wording alpha"), "Replacement retained the old display mapping")
             target = self.one("Replace JSON")
+        invalid = self.scratch / "neutral-invalid.json"
+        invalid.write_text(json.dumps({"schemaVersion": 2, "entries": {source: "Invalid replacement"}}), encoding="utf-8")
+        self.upload_vocabulary("invalid", target, invalid, preferences)
+        require(self.candidates("The vocabulary file could not be applied. Use valid version 1 JSON within the supported size limits.")
+                and self.candidates("Fixture wording beta") and self.candidates("Replace JSON")
+                and not self.candidates("Invalid replacement"),
+                "Invalid JSON did not visibly preserve the active mapping")
+        self.restart("restart-loaded")
+        self.open_vocabulary("restored")
+        require(self.candidates("Fixture wording beta") and self.candidates("Replace JSON")
+                and not self.candidates("Fixture wording alpha") and not self.candidates("Invalid replacement"),
+                "The valid replacement did not survive a fresh native process")
         clear_label = self.label("Clear personal vocabulary").replace(source, "Fixture wording beta")
         self.click("clear-wording", self.one(clear_label))
         require(self.candidates("Personal vocabulary") and self.candidates("Load JSON") and
                 not self.candidates("Fixture wording beta"), "Clear did not restore native original wording")
+        self.restart("restart-cleared")
+        self.open_vocabulary("cleared")
+        require(self.candidates("Personal vocabulary") and self.candidates("Load JSON")
+                and self.candidates("Original wording is active.") and not self.candidates("Fixture wording beta"),
+                "Clear did not persist across a fresh native process")
 
     def slice_controls(self):
         self.click("prepare", self.one("Prepare"))
@@ -539,8 +583,9 @@ def main():
         failure = f"{type(exc).__name__}: {exc}"
     finally:
         try:
-            app.stop()
-            teardown = bool(app.owned_teardown_verified and app.desktop_closed_verified)
+            final_app = drive.app if drive else app
+            final_app.stop()
+            teardown = bool(final_app.owned_teardown_verified and final_app.desktop_closed_verified)
         except Exception as exc:
             failure = failure or f"{type(exc).__name__}: {exc}"
         if not teardown:
