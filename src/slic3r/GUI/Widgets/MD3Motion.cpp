@@ -47,35 +47,67 @@ constexpr int kFrameMs = 16; // ~60fps
 constexpr int kEntranceFloorAlpha = 64; // 25%
 } // namespace
 
+Anim::~Anim()
+{
+    Stop();
+    m_run->alive = false;
+}
+
+void Anim::Stop()
+{
+    wxTimer::Stop();
+    ++m_run->generation;
+    m_run->tick = nullptr;
+    m_run->done = nullptr;
+}
+
+void Anim::Finish(const std::shared_ptr<Run>& run, uint64_t generation)
+{
+    wxTimer::Stop();
+    auto tick = run->tick;
+    auto done = run->done;
+    run->tick = nullptr;
+    run->done = nullptr;
+    if (tick) tick(1.0);
+    if (run->alive && run->generation == generation && done) done();
+}
+
 void Anim::Play(int duration_ms, std::function<void(double)> tick,
                 std::function<void()> done, double (*curve)(double))
 {
     Stop();
-    m_tick     = std::move(tick);
-    m_done     = std::move(done);
-    m_curve    = curve != nullptr ? curve : &easeStandard;
-    m_elapsed  = 0;
-    m_duration = std::max(1, duration_ms);
-    if (reduced() || m_duration <= kFrameMs) {
-        if (m_tick) m_tick(1.0);
-        if (m_done) m_done();
+    auto run = m_run;
+    const auto generation = run->generation;
+    run->tick = std::move(tick);
+    run->done = std::move(done);
+    run->curve = curve != nullptr ? curve : &easeStandard;
+    run->duration = std::max(1, duration_ms);
+    run->started = std::chrono::steady_clock::now();
+    if (reduced() || run->duration <= kFrameMs) {
+        Finish(run, generation);
         return;
     }
-    if (m_tick) m_tick(0.0);
-    Start(kFrameMs);
+    auto first_tick = run->tick;
+    if (first_tick) first_tick(0.0);
+    // A callback can restart or destroy the animator.
+    if (!run->alive || run->generation != generation) return;
+    if (!Start(kFrameMs)) Finish(run, generation);
 }
 
 void Anim::Notify()
 {
-    m_elapsed += kFrameMs;
-    const double t = double(m_elapsed) / double(m_duration);
-    if (t >= 1.0) {
-        Stop();
-        if (m_tick) m_tick(1.0);
-        if (m_done) m_done();
+    auto run = m_run;
+    const auto generation = run->generation;
+    const auto elapsed = std::chrono::duration<double, std::milli>(
+        std::chrono::steady_clock::now() - run->started).count();
+    const double t = std::clamp(elapsed / run->duration, 0.0, 1.0);
+    if (t >= 1.0 || reduced()) {
+        Finish(run, generation);
         return;
     }
-    if (m_tick) m_tick(m_curve(t));
+    auto tick = run->tick;
+    const double eased = run->curve(t);
+    if (tick) tick(eased);
 }
 
 void FadeIn(wxWindow *window, int duration_ms)

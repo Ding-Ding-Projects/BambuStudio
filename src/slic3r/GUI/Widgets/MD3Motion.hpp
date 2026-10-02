@@ -1,6 +1,8 @@
 #ifndef slic3r_GUI_MD3Motion_hpp_
 #define slic3r_GUI_MD3Motion_hpp_
 
+#include <chrono>
+#include <cstdint>
 #include <functional>
 #include <memory>
 
@@ -37,7 +39,8 @@ class Anim : public wxTimer
 {
 public:
     Anim() = default;
-    ~Anim() override { Stop(); }
+    ~Anim() override;
+    void Stop(); // Cancels callbacks and timer, on the UI thread.
 
     void Play(int duration_ms,
               std::function<void(double)> tick,
@@ -47,11 +50,18 @@ public:
     void Notify() override;
 
 private:
-    std::function<void(double)> m_tick;
-    std::function<void()>       m_done;
-    double (*m_curve)(double) { &easeStandard };
-    int m_elapsed { 0 };
-    int m_duration { 0 };
+    struct Run {
+        std::function<void(double)> tick;
+        std::function<void()> done;
+        double (*curve)(double) = &easeStandard;
+        std::chrono::steady_clock::time_point started;
+        int duration = 1;
+        uint64_t generation = 0;
+        bool alive = true;
+    };
+    // Callback destruction leaves this detached state safe to inspect.
+    std::shared_ptr<Run> m_run = std::make_shared<Run>();
+    void Finish(const std::shared_ptr<Run>& run, uint64_t generation);
 };
 
 // Fade a window with its own HWND (dialogs, frames, transient popups) in
