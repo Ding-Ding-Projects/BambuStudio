@@ -65,10 +65,10 @@ $plain = $null
 $validated = @{}
 $stage = $null
 try {
-    $rsa.ImportFromPem([IO.File]::ReadAllText((Join-Path $PSScriptRoot 'hosted-gui-public-v2.pem')))
+    $rsa.ImportFromPem([IO.File]::ReadAllText((Join-Path $PSScriptRoot 'hosted-automation-public-v1.pem')))
     $keyId = Hash-Bytes ($rsa.ExportSubjectPublicKeyInfo())
     Assert-True ($keyId -ceq $envelope.public_key_sha256) 'Unknown automation evidence recipient.'
-    $privatePath = Join-Path $env:LOCALAPPDATA ("BambuStudio/HostedGuiEvidence/keys/$keyId.dpapi")
+    $privatePath = Join-Path $env:LOCALAPPDATA ("BambuStudio/HostedAutomationEvidence/keys/$keyId.dpapi")
     Assert-True (Test-Path -LiteralPath $privatePath -PathType Leaf) 'Protected local review key is unavailable.'
     $privateBytes = [Security.Cryptography.ProtectedData]::Unprotect([IO.File]::ReadAllBytes($privatePath), $null, [Security.Cryptography.DataProtectionScope]::CurrentUser)
     $read = 0

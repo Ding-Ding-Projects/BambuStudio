@@ -10,7 +10,7 @@ and its exact source commit. It checks the installed companion against the
 digest-verified Squirrel package, then drives native operations on a named hidden
 desktop. Missing presets or an incomplete slice fail verification rather than
 becoming a passing skip. Screenshots and detailed diagnostics are encrypted
-with the existing restricted-review public key before upload. Pixel review is
+with the dedicated automation restricted-review public key before upload. Pixel review is
 still required before any screenshot may be published.
 
 The runner bootstraps Python 3.12, the pinned headless tool commit
@@ -21,8 +21,8 @@ verification does not install a .NET runtime or send real printer commands.
 
 ## Restricted evidence reader
 
-Use PowerShell 7 on the maintainer's Windows account with the existing
-DPAPI-protected hosted GUI evidence key. The reader derives the local key path
+Use PowerShell 7 on the maintainer's Windows account with the dedicated
+DPAPI-protected automation evidence key. The reader derives the local key path
 from the checked-in public key fingerprint. It never accepts key material in
 arguments, prints it, or places it in an environment variable.
 
@@ -48,3 +48,27 @@ inventory. Schema-v1 automation envelopes lack the required binding and are not
 accepted. Extracted `review-state.json` records integrity as verified while
 pixel review, privacy review and publication remain unverified or unauthorized.
 An unavailable protected local key or invalid bundle blocks extraction.
+
+## Dedicated recipient initialization
+
+The owner performs this one-time local administrative cryptographic operation
+before the hosted runtime dispatch:
+
+```powershell
+scripts/md3/Initialize-HostedAutomationEvidenceKey.ps1 -Initialize
+```
+
+This creates `scripts/md3/hosted-automation-public-v1.pem` exclusively and stores
+the private key only in a fingerprint-named DPAPI CurrentUser slot under the
+current account's local application data. The initializer refuses existing
+public files or key slots and never overwrites historical GUI recipients.
+Commit only the new public PEM. No private key, protected slot or credential
+belongs in the repository, workflow, upload, command argument or report.
+
+Initialization and evidence decryption are local cryptographic administration,
+not product build, test or runtime execution. All product installation,
+automation checks and hidden-window capture continue to run only on the
+explicitly authorized disposable hosted runner. The initializer is not run by
+the workflow; the workflow parses its source only. A missing dedicated public
+recipient blocks evidence encryption, and an unavailable local protected slot
+blocks restricted review without affecting historical GUI evidence keys.
