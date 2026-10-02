@@ -10541,18 +10541,28 @@ void GLCanvas3D::_render_imgui_select_plate_toolbar()
             ImVec2(start_pos.x + button_width, start_pos.y + button_height),
             ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), ImGui::GetColorU32(glyph_clr));
 
-        // draw text
-        GImGui->FontSize = 15.0f;
-        ImGui::PushStyleColor(ImGuiCol_Text, text_clr);
-        const std::string all_plates_label = _u8L("All Plates");
-        const std::string stats_label      = _u8L("Stats");
-        ImVec2 text_size = ImGui::CalcTextSize(all_plates_label.c_str());
-        ImVec2 text_start_pos = ImVec2(start_pos.x + (button_width - text_size.x) / 2, start_pos.y + 3.0f * button_height / 5.0f);
-        ImGui::RenderText(text_start_pos, all_plates_label.c_str());
-        text_size = ImGui::CalcTextSize(stats_label.c_str());
-        text_start_pos = ImVec2(start_pos.x + (button_width - text_size.x) / 2, text_start_pos.y + ImGui::GetTextLineHeight());
-        ImGui::RenderText(text_start_pos, stats_label.c_str());
-        ImGui::PopStyleColor();
+        // Fit the complete translated label to the tile instead of painting past its edge.
+        const std::string stats_text = _u8L("All Plates") + "\n" + _u8L("Stats");
+        const float label_width = std::max(1.0f, button_width - 8.0f);
+        const float label_height = std::max(1.0f, button_height * 0.60f - 4.0f);
+        ImFont* label_font = ImGui::GetFont();
+        float label_size = 15.0f;
+        ImVec2 label_extent = label_font->CalcTextSizeA(label_size, FLT_MAX, label_width, stats_text.c_str());
+        for (int attempt = 0; attempt < 24 && (label_extent.y > label_height || label_extent.x > label_width); ++attempt) {
+            label_size *= 0.9f;
+            label_extent = label_font->CalcTextSizeA(label_size, FLT_MAX, label_width, stats_text.c_str());
+        }
+        const ImVec2 label_pos(start_pos.x + (button_width - label_extent.x) * 0.5f,
+                              start_pos.y + button_height - label_height);
+        ImGui::GetWindowDrawList()->AddText(label_font, label_size, label_pos,
+            ImGui::GetColorU32(text_clr), stats_text.c_str(), nullptr, label_width);
+        if (ImGui::IsItemHovered() || ImGui::IsItemFocused()) {
+            ImGui::BeginTooltip();
+            ImGui::PushTextWrapPos(ImGui::GetFontSize() * 24.0f);
+            ImGui::TextUnformatted(stats_text.c_str());
+            ImGui::PopTextWrapPos();
+            ImGui::EndTooltip();
+        }
         ImGui::SetWindowFontScale(1.2f);
     }
 
