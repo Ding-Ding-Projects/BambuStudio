@@ -6,10 +6,13 @@ The user extended this task to native transitions and practical asynchronous
 work, complete Material Design 3 context menus and search/regex builders,
 clipped or hidden text, unexpected slicing cancellation, adjacent Slice and Print
 and Slice and Send actions, and local personal-vocabulary JSON controls.
-The combined checkpoint `cb7e28b8547b9714450b6bd5c2ddb7aa8698c610` is pushed
-on `feature/ui-motion-responsiveness`. It is incomplete and not runtime verified.
-Isolated Astra implementation lanes own shared controls and personal vocabulary,
-canvas menus, and slicing actions. Personal vocabulary must remain local,
+The combined candidate on `feature/ui-integration` contains shared controls,
+canvas menus, slicing actions and personal vocabulary. It is incomplete and not
+runtime verified. Independent source review accepted the native getter and
+concurrent-cache repairs in `26526edc1f43996d7b467962b63ee0471742ab1f`.
+The generated language-catalog dependency is corrected in
+`29fdc865c5e554cb76ad9ca7a544d6911f7e5e21`. Isolated Astra lanes continue preview
+layout review and hosted UI interaction automation. Personal vocabulary must remain local,
 validate a bounded versioned schema, restore original wording when cleared,
 and never enter logs or exports.
 

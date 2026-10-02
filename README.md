@@ -6,6 +6,12 @@
 
 MCP and command-line automation is being implemented for live projects, headless
 slicing, and configured printers. See [setup and verification status](docs/features/automation/mcp-and-cli.md).
+
+The current interface work also includes [local personal wording](docs/features/windows/personal-vocabulary.md),
+[separate slicing actions](docs/features/windows/print-actions.md), and
+[searchable canvas menus](docs/features/canvas-menu-search.md). These changes are
+under hosted verification; the [audit register](docs/features/design-system/native-interface-audit-2026-10-02.md)
+records remaining runtime and layout evidence rather than claiming completion.
 All builds and runtime verification for this work run on GitHub Actions; implementation
 is not a claim of verified physical-printer behavior.
 

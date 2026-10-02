@@ -2,6 +2,8 @@
 
 #include <nlohmann/json.hpp>
 #include <algorithm>
+#include <atomic>
+#include <chrono>
 #include <cwctype>
 #include <fstream>
 #include <map>
@@ -16,6 +18,9 @@
 #include <wx/weakref.h>
 #ifdef _WIN32
 #include <windows.h>
+#else
+#include <fcntl.h>
+#include <unistd.h>
 #endif
 
 namespace Slic3r::GUI::PersonalVocabulary {
@@ -55,6 +60,36 @@ bool valid_text(const std::string &text)
     }
     return has_content && text != "__proto__" && text != "constructor" && text != "prototype";
 }
+
+bool write_exclusive(const std::filesystem::path &path, const std::string &bytes)
+{
+#ifdef _WIN32
+    HANDLE file = ::CreateFileW(path.c_str(), GENERIC_WRITE, 0, nullptr, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, nullptr);
+    if (file == INVALID_HANDLE_VALUE) return false;
+    DWORD written = 0;
+    const bool ok = ::WriteFile(file, bytes.data(), static_cast<DWORD>(bytes.size()), &written, nullptr) &&
+        written == bytes.size() && ::FlushFileBuffers(file);
+    ::CloseHandle(file);
+#else
+    const int file = ::open(path.c_str(), O_WRONLY | O_CREAT | O_EXCL, 0600);
+    if (file < 0) return false;
+    std::size_t offset = 0;
+    while (offset < bytes.size()) {
+        const auto n = ::write(file, bytes.data() + offset, bytes.size() - offset);
+        if (n <= 0) break;
+        offset += static_cast<std::size_t>(n);
+    }
+    const bool ok = offset == bytes.size() && ::fsync(file) == 0;
+    ::close(file);
+#endif
+    if (!ok) { std::error_code ignored; std::filesystem::remove(path, ignored); }
+    return ok;
+}
+
+struct PendingFile {
+    std::filesystem::path path;
+    ~PendingFile() { if (!path.empty()) { std::error_code ignored; std::filesystem::remove(path, ignored); } }
+};
 
 struct Observer {
     wxWeakRef<wxWindow> window;
@@ -128,19 +163,27 @@ bool load(const std::filesystem::path &file)
     if (ec) return false;
     // The private cache is outside the profile configuration and its history.
     // Persist no selected source path and expose no payload in diagnostics.
-    const auto temporary = cache.parent_path() / "vocabulary.pending";
-    {
-        std::ofstream output(temporary, std::ios::binary | std::ios::trunc);
-        output.write(bytes.data(), static_cast<std::streamsize>(bytes.size()));
-        output.close();
-        if (!output) return false;
-    }
+    PendingFile pending;
+    static std::atomic<unsigned long long> sequence{0};
 #ifdef _WIN32
-    if (!::MoveFileExW(temporary.c_str(), cache.c_str(), MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH)) return false;
+    const auto process_id = ::GetCurrentProcessId();
 #else
-    std::filesystem::rename(temporary, cache, ec);
+    const auto process_id = ::getpid();
+#endif
+    const auto stamp = std::chrono::steady_clock::now().time_since_epoch().count();
+    for (int attempt = 0; attempt < 32 && pending.path.empty(); ++attempt) {
+        const auto candidate = cache.parent_path() / ("vocabulary-" + std::to_string(process_id) + "-" +
+            std::to_string(stamp) + "-" + std::to_string(sequence.fetch_add(1)) + ".pending");
+        if (write_exclusive(candidate, bytes)) pending.path = candidate;
+    }
+    if (pending.path.empty()) return false;
+#ifdef _WIN32
+    if (!::MoveFileExW(pending.path.c_str(), cache.c_str(), MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH)) return false;
+#else
+    std::filesystem::rename(pending.path, cache, ec);
     if (ec) return false;
 #endif
+    pending.path.clear();
     entries = std::move(next);
     cache_loaded = true;
     refresh();
@@ -153,7 +196,6 @@ bool clear()
     std::error_code ec;
     std::filesystem::remove(cache_path(), ec);
     if (ec) return false;
-    std::filesystem::remove(cache_path().parent_path() / "vocabulary.pending", ec);
     entries.clear();
     cache_loaded = false;
     refresh();
@@ -166,9 +208,9 @@ bool is_cache_path(const std::filesystem::path &path)
 {
     std::error_code ec;
     const auto canonical = std::filesystem::weakly_canonical(path, ec);
-    if (ec) return false;
+    if (ec) return true;
     const auto private_dir = std::filesystem::weakly_canonical(cache_path().parent_path(), ec);
-    if (ec) return false;
+    if (ec) return true;
     const auto relative = canonical.lexically_relative(private_dir);
     return !relative.empty() && *relative.begin() != ".." && !relative.is_absolute();
 }

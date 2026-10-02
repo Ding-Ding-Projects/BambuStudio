@@ -18,7 +18,7 @@ int main(int argc, char **argv)
     std::error_code error;
     std::filesystem::create_directories(root, error);
     if (error) return 3;
-    const auto input = root / "synthetic-input.json";
+    const auto input = root / ("synthetic-" + phase + ".json");
     auto write = [&](const char *json) { std::ofstream file(input); file << json; file.close(); return bool(file); };
     auto shown = [&] { return PV::display(PV::remember("Open item")); };
     bool ok = false;
@@ -36,6 +36,19 @@ int main(int argc, char **argv)
         ok = PV::loaded() && shown() == "Review item";
     } else if (phase == "clear") {
         ok = PV::clear() && !PV::loaded() && shown() == "Open item";
+    } else if (phase == "race-a" || phase == "race-b") {
+        ok = write(phase == "race-a" ? R"({"schemaVersion":1,"entries":{"Open":"Inspect"}})" :
+                                    R"({"schemaVersion":1,"entries":{"Open":"Review"}})");
+        int successes = 0;
+        for (int attempt = 0; ok && attempt < 40; ++attempt) {
+            if (PV::load(input)) {
+                ++successes;
+                ok = shown() == (phase == "race-a" ? "Inspect item" : "Review item");
+            }
+        }
+        ok = ok && successes > 0;
+    } else if (phase == "verify-race") {
+        ok = PV::loaded() && (shown() == "Inspect item" || shown() == "Review item");
     } else if (phase == "restore-empty") {
         ok = !PV::loaded() && shown() == "Open item";
     }

@@ -1,0 +1,172 @@
+name: Focused native interface verification
+
+on:
+  push:
+    branches: [feature/ui-integration]
+    paths: [.github/workflows/native-interface-verification.yml]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+# Explicitly requested hosted-only verification for this interface change.
+# Registration pushes do not run an incomplete cross-branch candidate.
+jobs:
+  focused:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: windows-2025
+    timeout-minutes: 20
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with:
+          persist-credentials: false
+      - name: Initialize x64 compiler
+        uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756
+        with:
+          arch: x64
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: '24'
+      - name: Record candidate and toolchain
+        run: |
+          New-Item -ItemType Directory -Force artifacts/native-interface | Out-Null
+          if (-not (Get-Command cl.exe -ErrorAction SilentlyContinue)) { throw 'MSVC is unavailable.' }
+          if (-not (Get-Command node.exe -ErrorAction SilentlyContinue)) { throw 'Node.js is unavailable.' }
+          [ordered]@{sourceCommit=$env:GITHUB_SHA;runId=$env:GITHUB_RUN_ID;execution='github-hosted-windows'} |
+            ConvertTo-Json | Set-Content artifacts/native-interface/run.json -Encoding utf8
+      - name: Compile and exercise canvas search state
+        run: |
+          cl /nologo /std:c++17 /EHsc /I src tests/canvas_menu/search_state_tests.cpp /Fe:artifacts/native-interface/canvas-menu.exe
+          if ($LASTEXITCODE -ne 0) { throw 'Canvas search model compilation failed.' }
+          & artifacts/native-interface/canvas-menu.exe
+          if ($LASTEXITCODE -ne 0) { throw 'Canvas search model checks failed.' }
+      - name: Compile and exercise print continuation state
+        if: ${{ !cancelled() }}
+        run: |
+          cl /nologo /std:c++17 /EHsc /I src /I tests tests/print_workflow/print_workflow_tests.cpp /Fe:artifacts/native-interface/print-workflow.exe
+          if ($LASTEXITCODE -ne 0) { throw 'Print continuation compilation failed.' }
+          & artifacts/native-interface/print-workflow.exe --reporter junit --out artifacts/native-interface/print-workflow.xml
+          if ($LASTEXITCODE -ne 0) { throw 'Print continuation checks failed.' }
+      - name: Verify native conversion and menu contracts
+        if: ${{ !cancelled() }}
+        run: |
+          node --test --test-reporter=tap ui-md3/tests/md3-conversion-contracts.test.mjs ui-md3/tests/context-menus.test.mjs ui-md3/tests/check-context-menus.test.mjs ui-md3/tests/config-profiles-list.test.mjs ui-md3/tests/search-field-end-cap.test.mjs 2>&1 |
+            Tee-Object -FilePath artifacts/native-interface/source-contracts.tap
+          if ($LASTEXITCODE -ne 0) { throw 'Native source contracts failed.' }
+      - name: Verify slice lifecycle source mutations
+        if: ${{ !cancelled() }}
+        run: |
+          node tests/print_workflow/slice_lifecycle_source_tests.mjs 2>&1 |
+            Tee-Object -FilePath artifacts/native-interface/slice-lifecycle.tap
+          if ($LASTEXITCODE -ne 0) { throw 'Slice lifecycle source checks failed.' }
+      - name: Retain safe verification records
+        if: ${{ always() }}
+        continue-on-error: true
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: native-interface-${{ github.sha }}
+          path: |
+            artifacts/native-interface/*.json
+            artifacts/native-interface/*.xml
+            artifacts/native-interface/*.tap
+          if-no-files-found: warn
+          retention-days: 14
+  native-services:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: windows-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with:
+          persist-credentials: false
+      - uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756
+        with:
+          arch: x64
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.13'
+      - name: Prepare native configuration tools
+        run: |
+          foreach ($tool in @('cmake.exe','ninja.exe')) {
+            if (-not (Get-Command $tool -ErrorAction SilentlyContinue)) { throw "Hosted native tool is missing: $tool" }
+          }
+          if (-not (Get-Command pkg-config.exe -ErrorAction SilentlyContinue)) {
+            for ($attempt = 1; $attempt -le 3; $attempt++) {
+              choco install pkgconfiglite --version=0.28.0 --yes --no-progress
+              if ($LASTEXITCODE -eq 0) { break }
+              if ($attempt -eq 3) { throw 'pkgconfiglite 0.28.0 provisioning failed.' }
+              Start-Sleep -Seconds (10 * $attempt)
+            }
+          }
+          if (-not (Get-Command pkg-config.exe -ErrorAction SilentlyContinue)) { throw 'pkg-config is unavailable after provisioning.' }
+      - name: Restore dependency prefix from the native build
+        uses: actions/cache/restore@caa296126883cff596d87d8935842f9db880ef25
+        with:
+          path: ${{ github.workspace }}/deps/build/BambuStudio_dep
+          key: windows-latest-cache-bambustudio_deps-build-${{ hashFiles('deps/**') }}
+          fail-on-cache-miss: true
+      - name: Configure focused native services
+        run: |
+          $prefix = Join-Path $env:GITHUB_WORKSPACE 'deps/build/BambuStudio_dep/usr/local'
+          if (-not (Test-Path -LiteralPath $prefix -PathType Container)) {
+            throw 'The native dependency build must finish for this source before focused service verification.'
+          }
+          New-Item -ItemType Directory -Force artifacts/native-services | Out-Null
+          [ordered]@{sourceCommit=$env:GITHUB_SHA;runId=$env:GITHUB_RUN_ID;execution='github-hosted-windows'} |
+            ConvertTo-Json | Set-Content artifacts/native-services/run.json -Encoding utf8
+          cmake -S . -B focused-build -G Ninja -DSLIC3R_BUILD_TESTS=ON -DSLIC3R_MSVC_PDB=OFF -DBBL_RELEASE_TO_PUBLIC=1 -DBBL_INTERNAL_TESTING=0 "-DCMAKE_PREFIX_PATH=$prefix" -DCMAKE_BUILD_TYPE=Release
+          if ($LASTEXITCODE -ne 0) { throw 'Focused native service configuration failed.' }
+          cmake --build focused-build --config Release --parallel 4 --target personal_vocabulary_tests personal_vocabulary_probe language_mode_tests profile_archive_tests
+          if ($LASTEXITCODE -ne 0) { throw 'Focused native service compilation failed.' }
+      - name: Exercise native parser display persistence and archive behavior
+        run: |
+          $prefix = Join-Path $env:GITHUB_WORKSPACE 'deps/build/BambuStudio_dep/usr/local'
+          $dllPaths = @(Get-ChildItem -LiteralPath $prefix -Filter '*.dll' -File -Recurse | ForEach-Object DirectoryName | Sort-Object -Unique)
+          $env:PATH = ($dllPaths -join ';') + ';' + $env:PATH
+          foreach ($target in @('personal_vocabulary_tests','language_mode_tests','profile_archive_tests')) {
+            $executables = @(Get-ChildItem focused-build -Filter "$target.exe" -File -Recurse)
+            if ($executables.Count -ne 1) { throw "Expected one executable for $target." }
+            & $executables[0].FullName --reporter junit --out "artifacts/native-services/$target.xml"
+            if ($LASTEXITCODE -ne 0) { throw "Native service verification failed: $target." }
+          }
+          $probes = @(Get-ChildItem focused-build -Filter 'personal_vocabulary_probe.exe' -File -Recurse)
+          if ($probes.Count -ne 1) { throw 'Expected one vocabulary persistence probe.' }
+          foreach ($phase in @('load-first','restore-first','invalid','replace','restore-second','clear','restore-empty')) {
+            & $probes[0].FullName $phase
+            if ($LASTEXITCODE -ne 0) { throw "Synthetic persistence phase failed: $phase." }
+          }
+          $writers = @()
+          try {
+            $writers += Start-Process -FilePath $probes[0].FullName -ArgumentList 'race-a' -WindowStyle Hidden -PassThru
+            $writers += Start-Process -FilePath $probes[0].FullName -ArgumentList 'race-b' -WindowStyle Hidden -PassThru
+            foreach ($writer in $writers) {
+              if (-not $writer.WaitForExit(30000)) { throw 'Synthetic concurrent writer timed out.' }
+              if ($writer.ExitCode -ne 0) { throw 'Synthetic concurrent writer failed.' }
+            }
+          } finally {
+            foreach ($writer in $writers) {
+              if (-not $writer.HasExited) { $writer.Kill(); [void]$writer.WaitForExit(5000) }
+              $writer.Dispose()
+            }
+          }
+          foreach ($phase in @('verify-race','clear','restore-empty')) {
+            & $probes[0].FullName $phase
+            if ($LASTEXITCODE -ne 0) { throw "Concurrent persistence verification failed: $phase." }
+          }
+          ctest --test-dir focused-build -R '^personal_vocabulary_native_contract$' --output-on-failure
+          if ($LASTEXITCODE -ne 0) { throw 'Native display boundary contract failed.' }
+      - name: Retain native service results
+        if: ${{ always() }}
+        continue-on-error: true
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: native-services-${{ github.sha }}
+          path: artifacts/native-services/
+          if-no-files-found: warn
+          retention-days: 14

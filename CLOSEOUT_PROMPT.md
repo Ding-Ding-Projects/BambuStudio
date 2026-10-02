@@ -1,46 +1,76 @@
 # Native interface continuation
 
-Current requested scope: MCP automation; application-wide transitions and
-animations; practical asynchronous execution; a full Material Design 3 and
-small-detail audit; search with a regex builder in every context menu;
-clipped/hidden text repairs; unintended slice cancellation investigation;
-visible Slice and Print plus Slice and Send buttons beside Print; and local
-personal-vocabulary JSON import, validation, replace, clear and original-wording
-restoration. New audit and implementation
-lanes must use gpt-6-astra. Final main must have green hosted verification.
+## Objective and constraints
 
-Only GitHub-hosted Windows runners may build, test, install or execute the
-product. Local work is source and administration only. No local product
-execution has occurred.
+Complete MCP automation; responsive native transitions and asynchronous work;
+Material Design 3 details; search and regex builders in every context menu;
+clipped or hidden text repairs; unintended slice cancellation; adjacent Slice
+and Print and Slice and Send actions; and local personal-vocabulary JSON
+import, validation, persistence, replacement, clearing and original wording.
+All new implementation and independent review lanes use gpt-6-astra.
+All product builds, tests, packaging, installation, slicing and GUI execution
+run only on GitHub-hosted Windows runners. No local product execution occurred.
 
-This branch feature/ui-motion-responsiveness contains the shared animation
-engine checkpoint e8517e37d09b8bab3ac738eba3074682b3c8c7c5 and incomplete
-configuration-history asynchronous work. The latter moves history listing and
-preferences restoration off the UI thread, but still needs the independently
-accepted archive-containment, restored-copy overwrite and deferred-close
-repairs. It is not complete or runtime verified. Other changes remain in
-feature/mcp-integration, currently ce61d22e390e4bf69938730434f1e494fa34f7a9.
+## Preserved candidates
 
-The initial source audit at b03bd70 found missing search in short menus,
-shared filter state, unfiltered canvas menus and dropdowns, menu text overflow,
-and blank zero-result states. It also identified fixed-tick motion timing and
-reachable native combo boxes. These require implementation and actual hosted
-normal/minimum viewport, language, theme and display-scale evidence.
+- MCP: ce61d22e390e4bf69938730434f1e494fa34f7a9 on feature/mcp-integration.
+  Run 37054493889 passed 27 managed checks with zero failures or skips;
+  native compilation and installed runtime are still pending.
+- Shared menus and profile recovery: 45f1101542c239d14713a3ff705da281a9dbc0d4,
+  followed by profile reservation and corrupt-archive checks in
+  13ce9d652220a489c965561aea313d92a859430c. Independent source review accepted
+  the latter fixes; hosted execution remains pending.
+- Personal wording: 9ec8e9604b9fbbd2cb3108b1f03f209042c96a33, with native-label
+  getter and concurrent-cache fixes at 26526edc1f43996d7b467962b63ee0471742ab1f.
+  Independent source review accepted both repairs; hosted verification is pending. Only synthetic
+  neutral mappings may enter public tests, logs, captures or hosted payloads.
+- Canvas: 4eba2c62a0265d950c172e63ed711db83e3b0f04 on feature/ui-canvas-menus,
+  with 46 model assertions written but not run. Independent source review
+  accepted the bounded transient retry repair.
+- Slicing: a3143f67d60dcb93f2e766dcd51c2a41182a9e03 is pushed and verified on
+  feature/slice-print-send. Independent source review found no additional
+  accepted defect. Five C++ cases and eight source mutation contracts await
+  hosted execution. Synchronous model replacement and shutdown can still wait
+  for a noninterruptible geometry operation; user cancellation is nonblocking.
 
-The combined checkpoint cb7e28b8547b9714450b6bd5c2ddb7aa8698c610 is pushed and
-verified on feature/ui-motion-responsiveness. Isolated Astra lanes now own
-shared controls and personal vocabulary, canvas menus on feature/ui-canvas-menus,
-and slicing actions on feature/slice-print-send.
+The parent reused its idle integration checkout on feature/ui-integration,
+combining the shared controls, profile repairs, canvas and slicing candidates.
+It also incorporates the display boundary repairs and generated test catalogs
+from 29fdc865c5e554cb76ad9ca7a544d6911f7e5e21.
+This is not main and does not establish runtime correctness.
 
-Next: repair accepted defects,
-and add focused hosted regression coverage. Do not claim random slice
-cancellation has a proven cause yet. Inspect the existing request_slice_and_print
-and cancel_pending_print_after_slice paths before adding a competing flow.
+## Work in progress
 
-Preserve all task worktrees and branches. Do not delete anything until verified
-work is integrated into main, the remote main contains each source tip, and a
-complete verified backup exists. No cleanup has run. Shared-status enrollment
-is unavailable; no status delivery is claimed. Source checkpoints are not
-release or runtime success claims.
+The personal-wording owner is frozen after independent review.
+A separate feature/preview-layout candidate fea8fc9fd4c476e20852c708aad950d41f5d28b8
+repairs notification and preview geometry and awaits independent review.
+A feature/ui-runtime-verification lane implements genuine
+hosted menu, vocabulary and slice-control interactions using the existing
+restricted evidence route. The parent owns focused hosted workflow wiring,
+root documentation, integration and publication evidence.
 
-MCP source ce61d22e390e4bf69938730434f1e494fa34f7a9 is now integrated into this candidate. Its hosted run 37054493889 began at 2026-10-02T19:29:56Z. The managed job passed 27 checks with zero failures or skips at 19:31:19Z. Native compilation and packaged runtime remain unverified. The one-hour observation boundary is 20:29:56Z. Earlier 24-case evidence applies only to source 65dc4577f. Slice and Send must transfer successful output without starting a print.
+The earlier MCP-only run 37045639569 completed successfully at
+2026-10-02T19:38:58Z and published md3-v185 for
+65dc4577fb29f2d00fd525a1de11e370784c5b3e. Its five installer/feed/checksum/SBOM
+assets exist. It does not contain the newer interface or vocabulary work.
+Its obsolete runtime driver is not used to verify the current candidate.
+
+## Next steps and boundaries
+
+Push and run focused hosted verification against the combined candidate.
+The focused native-service job requires the dependency prefix produced by the
+existing native build and fails explicitly on a cache miss. It builds generated
+translation catalogs before running language checks. It does not replace a full
+application build or installed UI verification.
+Complete preview repairs and genuine installed interaction evidence across
+normal/minimum dimensions, English/Cantonese/bilingual, light/dark and measured
+100/125/150/200% display scales. Do not call source changes visible success.
+Preserve final device selection and confirmation; no real printer action is
+part of verification without separately authorized hardware.
+
+Integrate completed verified work into main, push and verify its remote SHA,
+and obtain the final hosted verdict. Retain all worktrees until their tips
+are proven ancestors of remote main and a complete verified external backup
+exists. No cleanup has run. Status Hub enrollment remains unavailable, and no
+status delivery is claimed. Current MCP observation limit is 20:29:56 UTC;
+a pending run is never a successful verdict.
