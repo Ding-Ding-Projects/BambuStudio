@@ -4,8 +4,9 @@
 
 Task: [issue #53](https://github.com/Ding-Ding-Projects/BambuStudio/issues/53), with
 [rolling progress #54](https://github.com/Ding-Ding-Projects/BambuStudio/discussions/54).
-The implementation candidate is `9d73f69f2ac01ec73ec82fbd4a4d9e0fb7b6e518` on
-`feature/mcp-integration`. It is not yet integrated into `main`.
+Implementation is on `feature/mcp-integration`. It is not yet integrated into
+`main`. Verification below records exact source identities rather than treating
+the branch's moving tip as tested.
 
 The native bridge is opt-in and exposes current-user named-pipe project, model,
 preset, settings, slicing, export, printer and job operations. A self-contained
@@ -19,15 +20,24 @@ external-spool filament; AMS and dual-nozzle mappings fail explicitly.
 Builds, tests, packaging, installation and application execution for this task
 run only on GitHub-hosted Windows runners. No local product execution occurred.
 The first focused run, `37038981051`, failed compilation on nullable HTTP Host
-handling. This candidate includes that repair. Follow-up focused run
-[`37040259653`](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37040259653)
-and native build
-[`37040261280`](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37040261280)
-were running when this handoff was written. No passing verdict is claimed.
+handling. The next run, `37040259653`, compiled and passed 22 cases but exposed
+an incorrect child-process startup path in both transport checks. Both defects
+are repaired. At `cd13252c5e6bac330583c1e1e3e25921bf2b3175`, the managed job in
+[`37040835823`](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37040835823)
+passed all 24 checks: 22 in `BoundaryTests.cs` and 2 in `TransportTests.cs`.
+Self-contained publication and documentation parsing also passed. Native
+compilation in that run remains pending. The two superseded native runs were
+canceled because their older release dependency did not include the red MCP
+verdict; current release publication requires both native and managed jobs.
 
-Remaining work: hosted compiler and protocol results; packaged runtime
-verification against the exact released SHA; a strict reader for its encrypted
-evidence; genuine capture review; documentation completion; default-branch
+A dedicated automation recipient and strict schema-v2 evidence reader preserve
+historical GUI recipients. Only the public PEM is tracked. Protected review
+material remains local. Administrative cryptographic initialization is distinct
+from product execution; no application or product test ran locally.
+
+Remaining work: hosted native compiler result; packaged runtime verification
+against the exact released SHA; hosted evidence parser and strict-reader use;
+genuine capture review; documentation completion; default-branch
 integration and remote proof. No physical printer operation has been verified.
 See [automation documentation](docs/features/automation/mcp-and-cli.md) for the
 transport, security, setup and operation contract.

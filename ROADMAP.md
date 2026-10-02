@@ -2,6 +2,7 @@
 
 ## MCP and CLI automation
 
+- [x] Pass 24 hosted managed checks, including actual stdio/HTTP exchanges, at `cd13252c5` in run `37040835823`; this does not verify native runtime or physical printers.
 - [ ] Bundle stdio and authenticated Streamable HTTP MCP with a shared CLI.
 - [ ] Expose validated live-project and configured-printer operations through a same-user native bridge.
 - [ ] Support isolated headless slicing, progress, cancellation, and export.
