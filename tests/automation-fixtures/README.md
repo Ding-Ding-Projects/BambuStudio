@@ -18,3 +18,33 @@ The runner bootstraps Python 3.12, the pinned headless tool commit
 directories. PowerShell 7, Git and GitHub CLI come from `windows-2025` and missing
 tools fail bootstrap. The installed automation executable is self-contained;
 verification does not install a .NET runtime or send real printer commands.
+
+## Restricted evidence reader
+
+Use PowerShell 7 on the maintainer's Windows account with the existing
+DPAPI-protected hosted GUI evidence key. The reader derives the local key path
+from the checked-in public key fingerprint. It never accepts key material in
+arguments, prints it, or places it in an environment variable.
+
+```powershell
+scripts/md3/Open-HostedAutomationEvidence.ps1 `
+  -ReceiptPath ./download/receipt.json `
+  -EnvelopePath ./download/envelope.json `
+  -BundlePath ./download/evidence.aesgcm `
+  -OutputDirectory ./restricted-review `
+  -ExpectedRunId <run-id> `
+  -ExpectedCommit <released-source-sha> `
+  -ExpectedTag md3-vN `
+  -ExpectedExeSha256 <verified-native-executable-sha256> `
+  -ExpectedCliSha256 <verified-companion-executable-sha256>
+```
+
+The dedicated schema-v2 reader checks expected run, release, source, native and
+companion identities, public-key fingerprint, ciphertext hash, authenticated
+metadata and bounded ZIP inventory before extracting any entry. It rejects
+undeclared, duplicate, traversing and symlink entries, verifies every length and
+hash, and cross-checks the decrypted installation/runtime receipts and image
+inventory. Schema-v1 automation envelopes lack the required binding and are not
+accepted. Extracted `review-state.json` records integrity as verified while
+pixel review, privacy review and publication remain unverified or unauthorized.
+An unavailable protected local key or invalid bundle blocks extraction.
