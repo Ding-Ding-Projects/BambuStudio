@@ -1,56 +1,45 @@
-# MCP automation continuation
+# MCP and native responsiveness continuation
 
-Objective: complete Bambu Studio MCP support under issue #53 and progress
-Discussion #54. All product compilation, tests, packaging, installation,
-slicing and runtime execution remain on GitHub-hosted Windows runners only.
-No local product execution occurred.
+Complete MCP automation (issue #53, discussion #54), then the current requested
+native transitions, practical asynchronous operations and defect hunt. All
+product builds, tests, packaging, installation and execution run only on
+GitHub-hosted Windows runners. Final completion requires green checks for the
+integrated main revision, not an earlier candidate.
 
-The implementation branch is `feature/mcp-integration`. The verified remote
-candidate before this handoff is `65dc4577fb29f2d00fd525a1de11e370784c5b3e`.
-The default branch remains `ce883543177ef7df46fa5b798dcc5c7f3d2f8020`.
-This handoff and documentation corrections are additional preservation work,
-not completed default-branch integration.
+Source: feature/mcp-integration includes native commit
+4c9442616a752b0143ce128598c19e9bc894fc46 and companion commit
+c564981a65ffde533e73cd7a013b2cb5a95a2088, plus additional hosted runtime coverage.
+These changes add explicit zero-based plateIndex, binary STL export, required
+completed native sliceJobId for print requests, concurrent HTTP clients and
+actual MCP request cancellation. New verification is pending.
 
-Implemented: opt-in current-user native pipe bridge; project/model/preset/
-settings control; generation-bound native slicing; atomic project and toolpath
-export; configured-printer controls; durable print-intent replay protection;
-20 typed MCP tools; stdio and authenticated Streamable HTTP; shared JSON CLI;
-isolated headless slicing; self-contained companion packaging; exact source
-and payload hash checks; encrypted hosted runtime evidence producer and reader.
-The corrected command reference describes actual native job cancellation and
-durable print-intent behavior.
+Earlier candidate 65dc4577fb29f2d00fd525a1de11e370784c5b3e passed 24 managed
+checks and native compilation/package validation in run 37045639569. Its
+release validation remained live when observation resumed at 19:19:37 UTC.
+The current bounded observer ends at 20:19:37 UTC. Release md3-v184 targets
+older cd13252c5e6bac330583c1e1e3e25921bf2b3175, not the new source.
 
-Hosted run 37045639569 at the exact candidate passed all 24 managed checks,
-zero failures and zero skipped cases: BoundaryTests.cs has 22 cases and
-TransportTests.cs has 2. Native compilation, payload validation, companion
-staging, Squirrel creation and package validation passed in job 110966508477.
-The receipt is docs/features/automation/hosted-verification.json.
+The hosted runtime driver now reads nativeCapabilities.operations correctly
+and checks unsaved-project protection, STL triangles, real running headless
+cancellation with child exit and absent output, and stopped-instance recovery.
+No installed runtime evidence has been accepted yet. Physical printer behavior
+remains unverified; starts support one reliable nozzle and external-spool
+filament only. No local product execution occurred.
 
-The run reached its agreed one-hour observation limit at 2026-10-02T19:10:22Z.
-Last observation at 19:10:35Z: release job 110986759894 remained in progress at
-"Validate Squirrel release assets and prepare metadata". Observation stopped;
-the hosted job was not canceled. A structured request to extend this current
-run to two hours has no answer yet. No release completion is claimed.
+The additional UI lane is feature/ui-motion-responsiveness, based on
+b03bd70cd1462766efacf4bea617d5e35fd37c50. Shared animation work and asynchronous
+configuration-history operations are in progress there. Independent review
+accepted archive path containment, restored-copy overwrite and close-time
+blocking defects for repair. Preserve that lane and its active work.
 
-Remaining: obtain the terminal release result after an authorized extension
-or later terminal-state handoff; identify the release targeting the exact
-candidate; dispatch mcp-runtime.yml with that tag and expected_source_commit;
-verify the installed package, native project round-trip, native slicing and
-headless slicing; decrypt and inspect restricted genuine captures; update
-factual evidence; integrate completed work into main and verify its remote
-SHA; archive and remove only proven task-owned redundant branches/worktrees.
-Do not merge unfinished work merely to satisfy a default-branch requirement.
+Next: run focused/native verification for the new MCP candidate; obtain an
+exact-source release and execute mcp-runtime.yml; inspect decrypted genuine
+evidence. Finish and independently review UI changes, then verify the combined
+revision on hosted runners. Integrate completed work into main and prove the
+remote SHA. Archive before deleting only task-owned redundant worktrees and
+branches after ancestry proof. No cleanup has run. Main remains
+ce883543177ef7df46fa5b798dcc5c7f3d2f8020.
 
-Physical printers remain unverified. The supported start mapping is one
-reliable known nozzle and one external-spool filament. AMS and dual-nozzle
-starts are explicitly unsupported. Never replay an uncertain print submission.
-No arbitrary shell or raw printer command interface is exposed.
-
-Only the dedicated public evidence recipient is tracked. Its protected private
-key remains outside version control. No runtime capture exists yet. Preserve
-all task worktrees, branches and local evidence until verification and archive
-proof are complete. No cleanup or deletion has run. Project-board access lacks
-read:project; authenticated shared-status enrollment is unavailable. The wiki
-uses its host-required master branch. No unrelated backlog was adopted.
-
-Wiki handoff: `f0dc140038ae19d0487f74a4b4ba0a64b265485b` on master, remote verified.
+Project-board access lacks read:project. Shared-status enrollment is unavailable.
+The existing wiki handoff f0dc140038ae19d0487f74a4b4ba0a64b265485b predates these
+latest additions and needs refresh. No unrelated backlog was adopted.

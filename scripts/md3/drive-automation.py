@@ -255,9 +255,12 @@ def main():
         drive.protocol(scratch / "native-outside.3mf")
         require(not (scratch / "native-outside.3mf").exists(), "Native workspace rejection still wrote a file")
         capabilities = drive.call("capabilities")
+        native_capabilities = capabilities.get("nativeCapabilities")
+        require(capabilities.get("nativeAttached") is True and isinstance(native_capabilities, dict),
+                "Companion did not attach to the selected native instance")
         required_operations = {"project_inspect", "project_new", "project_open", "project_save",
                                "model_import", "presets_list", "slice_start", "export_file"}
-        require(required_operations.issubset(set(capabilities.get("operations", []))), "Native capability inventory is incomplete")
+        require(required_operations.issubset(set(native_capabilities.get("operations", []))), "Native capability inventory is incomplete")
         drive.call("project_new")
         empty = drive.call("project_inspect")
         require(empty.get("objects") == [], "Native new project is not empty")
