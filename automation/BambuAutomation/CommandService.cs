@@ -20,7 +20,11 @@ public sealed class CommandService(Workspace workspace, INativeBridge bridge, Sl
             if (operation is "job_status" or "job_cancel" && args["jobId"]?.GetValue<string>() is { } jobId && jobId.StartsWith("headless-", StringComparison.Ordinal))
                 return Responses.Success(operation == "job_status" ? jobs.Status(jobId) : jobs.Cancel(jobId));
             if (operation == "slice_start" && Responses.Flag(args, "headless"))
+            {
+                if (args["plateIndex"] is not null)
+                    throw new CommandException("invalid_arguments", "Headless mode uses plate, not native plateIndex.");
                 return Responses.Success(jobs.Start(args));
+            }
             Validate(operation, args);
             var instances = bridge.Instances();
             if (operation == "capabilities" && args["instanceId"] is null && instances.Count != 1)
@@ -56,13 +60,23 @@ public sealed class CommandService(Workspace workspace, INativeBridge bridge, Sl
 
     private void Validate(string operation, JsonObject args)
     {
+        if (args["plateIndex"] is not null &&
+            (operation is not ("slice_start" or "export_file" or "printer_start") ||
+             args["plateIndex"] is not JsonValue plate || !plate.TryGetValue<int>(out var index) || index < 0))
+            throw new CommandException("invalid_arguments", "plateIndex must be a nonnegative integer for a native plate operation.");
         if (operation is "project_open" or "model_import")
             args["path"] = workspace.Resolve(Responses.Required(args, "path"));
         if (operation is "project_save" or "export_file")
             args["path"] = workspace.Resolve(Responses.Required(args, "path"), true, Responses.Flag(args, "overwrite"));
         if (operation.StartsWith("printer_", StringComparison.Ordinal) && operation != "printer_list")
             Responses.Required(args, "printerId");
-        if (operation == "printer_start") Responses.Required(args, "requestId");
+        if (operation == "printer_start")
+        {
+            Responses.Required(args, "requestId");
+            var sliceJob = Responses.Required(args, "sliceJobId");
+            if (!sliceJob.StartsWith("slice-", StringComparison.Ordinal))
+                throw new CommandException("invalid_arguments", "sliceJobId must identify a native slice job from the selected instance.");
+        }
         if (operation == "printer_start")
         {
             if (Responses.Flag(args, "overwrite"))

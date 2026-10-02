@@ -14,7 +14,7 @@ public sealed class InputArguments : InstanceArguments
 }
 public class OutputArguments : InstanceArguments
 {
-    [Description("Required absolute output .3mf path within an explicit workspace root. Parent must exist.")]
+    [Description("Required absolute workspace output path. project_save requires .3mf; export_file supports .3mf or .stl. Parent must exist.")]
     public required string Path { get; set; }
     [Description("Explicit consent to replace an existing output. Defaults false.")]
     public bool Overwrite { get; set; }
@@ -23,6 +23,11 @@ public sealed class SettingsArguments : InstanceArguments
 {
     [Description("Required numeric settings. Supported keys: layer_height, sparse_infill_density, wall_loops, top_shell_layers, bottom_shell_layers. Native validates ranges and integer fields.")]
     public required Dictionary<string, double> Values { get; set; }
+}
+public sealed class ExportArguments : OutputArguments
+{
+    [Description("Optional zero-based native plate index. Omit to use the current plate. Output extension chooses printable .3mf or model .stl.")]
+    public int? PlateIndex { get; set; }
 }
 public sealed class SliceArguments : InstanceArguments
 {
@@ -34,6 +39,8 @@ public sealed class SliceArguments : InstanceArguments
     public string? Output { get; set; }
     [Description("Headless mode only: 0 for all plates, otherwise positive plate index up to 1000.")]
     public int Plate { get; set; }
+    [Description("Native mode only: optional zero-based plate index. Omit to slice the current plate. Do not use with headless mode.")]
+    public int? PlateIndex { get; set; }
     [Description("Headless mode only: explicit permission to replace an existing output. Defaults false.")]
     public bool Overwrite { get; set; }
 }
@@ -46,6 +53,10 @@ public sealed class PrintStartArguments : PrinterArguments
 {
     [Description("Required idempotency identity for this print intent, preserved by native process-lifetime deduplication. Never auto-replay after restart, submission_unknown, or operation_in_progress.")]
     public required string RequestId { get; set; }
+    [Description("Required completed native slice job ID from the same instance. Native verifies its generation, revision and current plate before printing; headless jobs cannot be submitted here.")]
+    public required string SliceJobId { get; set; }
+    [Description("Optional zero-based plate index, which must match the completed slice job and current native plate.")]
+    public int? PlateIndex { get; set; }
     [Description("Required new absolute workspace .3mf staging output. Native exports the currently sliced plate itself; this is never an input archive.")]
     public required string Path { get; set; }
     [Description("Must remain false for native print staging. Existing staging output is rejected.")]
@@ -64,4 +75,3 @@ public sealed class JobArguments : InstanceArguments
     [Description("Required native job identity or service-owned headless-... identity. Native jobs remain with their original instance.")]
     public required string JobId { get; set; }
 }
-

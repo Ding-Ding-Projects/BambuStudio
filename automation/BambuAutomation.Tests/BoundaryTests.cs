@@ -119,7 +119,7 @@ public sealed class BoundaryTests : IDisposable
     {
         var bridge = new RecordingBridge([1, 2]); using var jobs = new SliceJobs(Workspace, Path.Combine(root, "missing.exe"));
         var service = new CommandService(Workspace, bridge, jobs);
-        var result = await service.ExecuteAsync("printer_start", new JsonObject { ["printerId"] = "printer", ["requestId"] = "once", ["path"] = Path.Combine(root, "staging.3mf") });
+        var result = await service.ExecuteAsync("printer_start", new JsonObject { ["printerId"] = "printer", ["requestId"] = "once", ["sliceJobId"] = "slice-1", ["path"] = Path.Combine(root, "staging.3mf") });
         Assert.Equal("ambiguous_instance", result["error"]!["code"]!.GetValue<string>());
         Assert.Empty(bridge.Calls);
     }
@@ -142,7 +142,7 @@ public sealed class BoundaryTests : IDisposable
     {
         var bridge = new RecordingBridge([1]); using var jobs = new SliceJobs(Workspace, Path.Combine(root, "missing.exe"));
         var service = new CommandService(Workspace, bridge, jobs);
-        var args = new JsonObject { ["printerId"] = "printer", ["requestId"] = "one-intent", ["instanceId"] = 1, ["path"] = Path.Combine(root, "staging.3mf") };
+        var args = new JsonObject { ["printerId"] = "printer", ["requestId"] = "one-intent", ["sliceJobId"] = "slice-1", ["instanceId"] = 1, ["path"] = Path.Combine(root, "staging.3mf") };
         var first = await service.ExecuteAsync("printer_start", args);
         // The actual native first submission creates its staging output before returning.
         File.WriteAllText(args["path"]!.GetValue<string>(), "submitted staging archive");
@@ -169,7 +169,7 @@ public sealed class BoundaryTests : IDisposable
     {
         var bridge = new RecordingBridge([1]); using var jobs = new SliceJobs(Workspace, Path.Combine(root, "missing.exe"));
         var result = await new CommandService(Workspace, bridge, jobs).ExecuteAsync("printer_start", new JsonObject
-        { ["printerId"] = "printer", ["requestId"] = "once", ["path"] = Path.Combine(root, "..", "outside.3mf") });
+        { ["printerId"] = "printer", ["requestId"] = "once", ["sliceJobId"] = "slice-1", ["path"] = Path.Combine(root, "..", "outside.3mf") });
         Assert.Equal("outside_workspace", result["error"]!["code"]!.GetValue<string>());
         Assert.Empty(bridge.Calls);
     }
@@ -181,6 +181,42 @@ public sealed class BoundaryTests : IDisposable
         using (var zip = ZipFile.Open(path, ZipArchiveMode.Create))
         { using var writer = new StreamWriter(zip.CreateEntry("3D/3dmodel.model").Open()); writer.Write("model"); }
         Assert.Equal("invalid_output", Assert.Throws<CommandException>(() => SliceJobs.ValidateSlicedArchive(path)).Code);
+    }
+
+    [Fact]
+    public async Task NativePlateAndSliceIdentityAreValidatedBeforeDispatch()
+    {
+        var bridge = new RecordingBridge([1]); using var jobs = new SliceJobs(Workspace, Path.Combine(root, "missing.exe"));
+        var service = new CommandService(Workspace, bridge, jobs);
+        foreach (var index in new JsonNode[] { JsonValue.Create(-1)!, JsonValue.Create(1.5)!, JsonValue.Create("1")! })
+        {
+            var result = await service.ExecuteAsync("slice_start", new JsonObject { ["plateIndex"] = index });
+            Assert.Equal("invalid_arguments", result["error"]!["code"]!.GetValue<string>());
+        }
+        foreach (var job in new string?[] { null, "headless-other" })
+        {
+            var result = await service.ExecuteAsync("printer_start", new JsonObject
+            { ["printerId"] = "printer", ["requestId"] = "once", ["sliceJobId"] = job, ["path"] = Path.Combine(root, "staging.3mf") });
+            Assert.Equal("invalid_arguments", result["error"]!["code"]!.GetValue<string>());
+        }
+        var wrongMode = await service.ExecuteAsync("slice_start", new JsonObject { ["headless"] = true, ["plateIndex"] = 0 });
+        Assert.Equal("invalid_arguments", wrongMode["error"]!["code"]!.GetValue<string>());
+        Assert.Empty(bridge.Calls);
+        var slice = await service.ExecuteAsync("slice_start", new JsonObject { ["plateIndex"] = 2 });
+        Assert.True(slice["ok"]!.GetValue<bool>());
+        Assert.Equal(2, bridge.Calls.Single()["plateIndex"]!.GetValue<int>());
+    }
+
+    [Fact]
+    public async Task StlExportPreservesValidatedPlateAndWorkspacePath()
+    {
+        var bridge = new RecordingBridge([1]); using var jobs = new SliceJobs(Workspace, Path.Combine(root, "missing.exe"));
+        var destination = Path.Combine(root, "plate.stl");
+        var result = await new CommandService(Workspace, bridge, jobs).ExecuteAsync("export_file", new JsonObject
+        { ["path"] = destination, ["plateIndex"] = 1 });
+        Assert.True(result["ok"]!.GetValue<bool>());
+        Assert.Equal(destination, bridge.Calls.Single()["path"]!.GetValue<string>());
+        Assert.Equal(1, bridge.Calls.Single()["plateIndex"]!.GetValue<int>());
     }
 
     [Fact]
