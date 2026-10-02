@@ -33,6 +33,8 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Site view syntax is invalid.' }
           node --check ui-md3/site/copy.js
           if ($LASTEXITCODE -ne 0) { throw 'Site copy syntax is invalid.' }
+          python -m py_compile scripts/md3/drive-automation.py
+          if ($LASTEXITCODE -ne 0) { throw 'Hosted automation driver syntax is invalid.' }
       - name: Publish self-contained companion
         run: ./scripts/windows/Stage-Automation.ps1 -PayloadDirectory artifacts/automation-payload
       - name: Record source and run identity
