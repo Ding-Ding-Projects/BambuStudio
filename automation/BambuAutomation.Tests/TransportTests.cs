@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
+using System.IO.Pipes;
 using System.Text;
 using System.Text.Json.Nodes;
 using BambuAutomation;
@@ -86,6 +87,55 @@ public sealed class TransportTests : IDisposable
     }
 
     [Fact]
+    public async Task StdioCancellationNotificationClosesPendingNativeRequestAndKeepsProtocolUsable()
+    {
+        var instance = Random.Shared.Next(1000000, 1999999);
+        await using var server = new NamedPipeServerStream(NativeBridge.Prefix + instance, PipeDirection.InOut, 1,
+            PipeTransmissionMode.Byte, PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly);
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+        var accepted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var disconnected = Task.Run(async () =>
+        {
+            await server.WaitForConnectionAsync(timeout.Token);
+            var request = await NativeBridge.ReadFrameAsync(server, timeout.Token);
+            Assert.Equal("project_inspect", request["operation"]!.GetValue<string>());
+            accepted.SetResult();
+            // The fixture intentionally sends no response. MCP cancellation must close the
+            // companion's pending native connection; this is not a job_cancel simulation.
+            var buffer = new byte[1];
+            try { Assert.Equal(0, await server.ReadAsync(buffer, timeout.Token)); }
+            catch (IOException) { /* A disconnected pipe can report EOF or broken pipe. */ }
+        });
+        using var process = Start("serve");
+        var stderr = process.StandardError.ReadToEndAsync();
+        try
+        {
+            await process.StandardInput.WriteLineAsync(Initialize().ToJsonString()); await process.StandardInput.FlushAsync();
+            await ReadResponse(process, stderr, 1, timeout.Token);
+            await process.StandardInput.WriteLineAsync("{\"jsonrpc\":\"2.0\",\"method\":\"notifications/initialized\"}");
+            await process.StandardInput.WriteLineAsync(Request(3, "tools/call", new JsonObject
+            { ["name"] = "bambu_project_inspect", ["arguments"] = new JsonObject
+                { ["arguments"] = new JsonObject { ["instanceId"] = instance } } }).ToJsonString());
+            await process.StandardInput.FlushAsync();
+            await accepted.Task.WaitAsync(timeout.Token);
+            await process.StandardInput.WriteLineAsync("{\"jsonrpc\":\"2.0\",\"method\":\"notifications/cancelled\",\"params\":{\"requestId\":3,\"reason\":\"Transport cancellation fixture\"}}");
+            await process.StandardInput.FlushAsync();
+            await disconnected.WaitAsync(TimeSpan.FromSeconds(5), timeout.Token);
+            // Cancellation is not evidence that a mutation was undone. Prove only that
+            // pending native I/O stopped and subsequent protocol traffic still works.
+            await process.StandardInput.WriteLineAsync(Request(4, "tools/list").ToJsonString()); await process.StandardInput.FlushAsync();
+            var recovered = await ReadResponse(process, stderr, 4, timeout.Token);
+            Assert.Contains(recovered["result"]!["tools"]!.AsArray(), tool => tool?["name"]?.GetValue<string>() == "bambu_job_cancel");
+        }
+        finally
+        {
+            process.StandardInput.Close();
+            if (!process.HasExited) process.Kill(true);
+            await process.WaitForExitAsync(); await stderr;
+        }
+    }
+
+    [Fact]
     public async Task HttpNegotiatesAndRejectsUnauthorizedOrigin()
     {
         var listener = new TcpListener(IPAddress.Loopback, 0); listener.Start();
@@ -128,14 +178,25 @@ public sealed class TransportTests : IDisposable
             { ["name"] = "bambu_capabilities", ["arguments"] = new JsonObject { ["arguments"] = new JsonObject() } }));
             Assert.True(call["result"]!["structuredContent"]!["ok"]!.GetValue<bool>());
 
-            async Task<JsonObject> Post(JsonObject request)
+            var simultaneous = await Task.WhenAll(Enumerable.Range(10, 8).Select(async id =>
+            {
+                using var concurrentClient = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
+                var result = await Post(Request(id, "tools/call", new JsonObject
+                { ["name"] = "bambu_instances", ["arguments"] = new JsonObject { ["arguments"] = new JsonObject() } }), concurrentClient);
+                Assert.Equal(id, result["id"]!.GetValue<int>());
+                Assert.True(result["result"]!["structuredContent"]!["ok"]!.GetValue<bool>());
+                return id;
+            }));
+            Assert.Equal(8, simultaneous.Distinct().Count());
+
+            async Task<JsonObject> Post(JsonObject request, HttpClient? transport = null)
             {
                 using var message = new HttpRequestMessage(HttpMethod.Post, origin + "/mcp");
                 message.Headers.Authorization = new("Bearer", secret); message.Headers.Add("Origin", origin);
                 message.Headers.Add("MCP-Protocol-Version", "2025-03-26");
                 message.Headers.Accept.ParseAdd("application/json"); message.Headers.Accept.ParseAdd("text/event-stream");
                 message.Content = new StringContent(request.ToJsonString(), Encoding.UTF8, "application/json");
-                using var response = await client.SendAsync(message);
+                using var response = await (transport ?? client).SendAsync(message);
                 response.EnsureSuccessStatusCode();
                 var text = await response.Content.ReadAsStringAsync();
                 if (response.Content.Headers.ContentType?.MediaType == "text/event-stream")
