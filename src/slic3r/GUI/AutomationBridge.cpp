@@ -1,6 +1,7 @@
 #include "AutomationBridge.hpp"
 #include "GUI_App.hpp"
 #include "Plater.hpp"
+#include "Tab.hpp"
 #include "PartPlate.hpp"
 #include "DeviceCore/DevManager.h"
 #include "DeviceCore/DevNozzleSystem.h"
@@ -47,7 +48,7 @@ struct AutomationBridge::State : std::enable_shared_from_this<AutomationBridge::
     std::thread worker;
     std::vector<std::filesystem::path> roots;
     std::map<std::string, Json> starts;
-    struct Job { std::string kind; int task_id{-1}; int plate{-1}; size_t revision{0}; bool cancelled{false}; uint64_t generation{0}; uint64_t request_generation{0}; bool reused{false}; };
+    struct Job { std::string kind; int task_id{-1}; int plate{-1}; size_t revision{0}; bool cancelled{false}; uint64_t generation{0}; uint64_t request_generation{0}; bool reused{false}; std::shared_ptr<void> staging_lease; };
     std::map<std::string, Job> jobs;
     std::mutex pending_mutex;
     std::vector<std::function<void()>> wake_pending;
@@ -121,6 +122,17 @@ struct AutomationBridge::State : std::enable_shared_from_this<AutomationBridge::
 #ifdef _WIN32
         // Intent is durable before dispatch. A restarted process never blindly replays it.
         const auto file=std::filesystem::u8path(Slic3r::data_dir())/"automation-print-intents.jsonl";
+        std::filesystem::path walk;
+        for(const auto& component:file.parent_path()) {
+            walk/=component;if(!walk.has_root_directory()) continue;
+            HANDLE lease=CreateFileW(walk.c_str(),FILE_READ_ATTRIBUTES,FILE_SHARE_READ|FILE_SHARE_WRITE,nullptr,OPEN_EXISTING,FILE_FLAG_BACKUP_SEMANTICS|FILE_FLAG_OPEN_REPARSE_POINT,nullptr);
+            BY_HANDLE_FILE_INFORMATION info{};
+            if(lease==INVALID_HANDLE_VALUE || !GetFileInformationByHandle(lease,&info) || (info.dwFileAttributes&FILE_ATTRIBUTE_REPARSE_POINT)) {
+                if(lease!=INVALID_HANDLE_VALUE) CloseHandle(lease);
+                throw Rejected("intent_unavailable","Print intent journal directory is unsafe");
+            }
+            path_leases.push_back(lease);
+        }
         HANDLE token=nullptr;
         if(!OpenProcessToken(GetCurrentProcess(),TOKEN_QUERY,&token)) throw Rejected("intent_unavailable","Cannot secure print intent journal");
         DWORD size=0; GetTokenInformation(token,TokenUser,nullptr,0,&size); std::vector<unsigned char> user(size);
@@ -238,9 +250,13 @@ struct AutomationBridge::State : std::enable_shared_from_this<AutomationBridge::
                     if(!std::isfinite(v) || v<0 || v>upper || (it.key()=="layer_height" && v<0.01)) throw Rejected("invalid_arguments","Setting is outside supported bounds");
                     changes.set_deserialize_strict(it.key(),it.value().dump());
                 }
-                p->on_config_change(changes);
+                auto tab=app.get_tab(Preset::TYPE_PRINT);
+                if(!tab || !app.preset_bundle) throw Rejected("not_ready","Print settings editor unavailable");
+                tab->load_config(changes);
+                p->on_config_change(app.preset_bundle->full_config());
             }
-            Json values=Json::object(); for(const auto& key:keys) if(auto option=p->config()->option(key)) values[key]=option->serialize();
+            auto config=app.preset_bundle?app.preset_bundle->full_config():*p->config();
+            Json values=Json::object(); for(const auto& key:keys) if(auto option=config.option(key)) values[key]=option->serialize();
             return {{"values",values},{"scope","current project print parameters"}};
         }
         if (op=="slice_start") {
@@ -286,13 +302,15 @@ struct AutomationBridge::State : std::enable_shared_from_this<AutomationBridge::
             auto used=plate->get_extruders(true);
             if(used.size()!=1 || a.value("useAms",false) || a["amsMapping"]!=Json::array({-1}) || !a["nozzleMapping"].empty())
                 throw Rejected("unsupported_mapping","Single-nozzle external-spool printing requires one used filament, useAms=false, amsMapping=[-1], nozzleMapping={}");
-            auto model=p->config()->option("printer_model");
-            auto diameter=p->config()->option<ConfigOptionFloats>("nozzle_diameter");
+            auto full=app.preset_bundle?app.preset_bundle->full_config():*p->config();
+            auto model=full.option("printer_model");
+            auto diameter=full.option<ConfigOptionFloatsNullable>("nozzle_diameter");
             auto nozzle=nozzles->GetExtNozzles().begin()->second;
             if(!model || model->serialize()!=m->printer_type || !diameter || diameter->values.size()!=1 || std::abs(diameter->values[0]-nozzle.GetNozzleDiameter())>0.001)
                 throw Rejected("printer_mismatch","Sliced printer model and nozzle diameter must match the target printer");
             // Existing farm scheduler owns SDK transfer serialization and cancellation.
             auto manager=app.getTaskManager(); if(!manager || !app.getAgent()) throw Rejected("not_ready","Network print scheduler unavailable");
+            record_print_intent(request,m->get_dev_id());
             if(a.value("overwrite",false)) throw Rejected("invalid_arguments","Printer staging path must be new");
             auto file=path(a,true);
             if(file.extension()!=".3mf") throw Rejected("invalid_arguments","path must name a new .3mf staging archive");
@@ -307,9 +325,16 @@ struct AutomationBridge::State : std::enable_shared_from_this<AutomationBridge::
             params.task_use_ams=a.value("useAms",false); params.task_bed_leveling=a.value("bedLeveling",true);
             params.use_ssl_for_ftp=true; params.use_ssl_for_mqtt=true; params.print_type="from_plater";
             TaskSettings settings; settings.max_sending_at_same_time=1; settings.sending_interval=0;
-            record_print_intent(request,m->get_dev_id());
+
+#ifdef _WIN32
+            HANDLE staged=CreateFileW(file.c_str(),GENERIC_READ,FILE_SHARE_READ,nullptr,OPEN_EXISTING,FILE_FLAG_OPEN_REPARSE_POINT,nullptr);
+            if(staged==INVALID_HANDLE_VALUE) throw Rejected("print_start_failed","Cannot lock native print staging archive");
+            std::shared_ptr<void> staging_lease(staged,[](void* handle){CloseHandle(handle);});
+#else
+            std::shared_ptr<void> staging_lease;
+#endif
             int rc=manager->start_print({params},&settings); if(rc!=0) throw Rejected("print_start_failed","Native scheduler rejected print submission");
-            auto id="print-"+std::to_string(++next_job); Job job; job.kind="print";
+            auto id="print-"+std::to_string(++next_job); Job job; job.kind="print"; job.staging_lease=staging_lease;
             for(auto& item:manager->get_local_task_list()) if(item.second && item.second->get_params().filename==params.filename) {job.task_id=item.first;break;}
             jobs[id]=job; Json result={{"jobId",id},{"state","queued"},{"printerId",m->get_dev_id()}};
             starts[request]={{"arguments",a},{"result",result}}; return result;
