@@ -185,15 +185,22 @@ def main():
         job = drive.call("slice_start")
         job_id = job.get("jobId")
         require(isinstance(job_id, str) and job_id, "Native slice returned no job identity")
+        generation, plate, revision = (job.get(key) for key in ("generation", "plate", "revision"))
+        require(all(isinstance(value, int) and not isinstance(value, bool) and value >= 0
+                    for value in (generation, plate, revision)), "Native slice identity fields are unavailable")
+        require(job.get("reused") is False, "Fresh fixture slice unexpectedly reused an earlier result")
         deadline = time.monotonic() + 300
         while time.monotonic() < deadline:
             job = drive.call("job_status", {"jobId": job_id})
-            if job.get("state") == "result_available":
+            require((job.get("generation"), job.get("plate"), job.get("revision")) ==
+                    (generation, plate, revision), "Native slice generation or workspace identity changed")
+            if job.get("state") in ("completed", "failed", "cancelled"):
                 break
             time.sleep(2)
-        require(job.get("state") == "result_available", "Native slice produced no result within deadline")
-        drive.rows.append({"operation": "slice_job_identity", "status": "unverified",
-                           "reason": "native background slice has no operation-correlated completion identity"})
+        require(job.get("state") == "completed" and job.get("completionVerified") is True,
+                "Native slice generation did not complete with verified identity within deadline")
+        drive.rows.append({"operation": "slice_job_identity", "status": "verified",
+                           "generation": generation, "plate": plate, "revision": revision})
         sliced = workspace / "sliced.gcode.3mf"
         drive.call("export_file", {"path": str(sliced), "overwrite": False})
         require(sliced.is_file() and zipfile.is_zipfile(sliced), "Native sliced archive was not written")

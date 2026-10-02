@@ -1,5 +1,10 @@
 name: Verify packaged automation runtime
 on:
+  push:
+    branches:
+      - feature/mcp-integration
+    paths:
+      - .github/workflows/mcp-runtime.yml
   workflow_dispatch:
     inputs:
       release_tag:
@@ -15,6 +20,7 @@ permissions:
   actions: read
 jobs:
   runtime:
+    if: ${{ github.event_name == 'workflow_dispatch' }}
     runs-on: windows-2025
     timeout-minutes: 40
     env:
