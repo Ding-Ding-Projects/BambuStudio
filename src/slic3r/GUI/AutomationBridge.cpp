@@ -24,6 +24,7 @@
 #ifdef _WIN32
 #include <windows.h>
 #include <sddl.h>
+#include <aclapi.h>
 #endif
 namespace Slic3r { namespace GUI {
 using Json = nlohmann::json;
@@ -71,7 +72,6 @@ struct AutomationBridge::State : std::enable_shared_from_this<AutomationBridge::
         std::filesystem::path walk;
         for (const auto& component : p) {
             walk /= component;
-            if(!walk.has_root_directory()) continue;
             if(!walk.has_root_directory()) continue;
             DWORD attr = GetFileAttributesW(walk.c_str());
             if (attr != INVALID_FILE_ATTRIBUTES && (attr & FILE_ATTRIBUTE_REPARSE_POINT))
@@ -143,8 +143,9 @@ struct AutomationBridge::State : std::enable_shared_from_this<AutomationBridge::
         PSECURITY_DESCRIPTOR sd=nullptr;
         if(!ConvertStringSecurityDescriptorToSecurityDescriptorW(acl.c_str(),SDDL_REVISION_1,&sd,nullptr)) throw Rejected("intent_unavailable","Cannot secure print intent journal");
         SECURITY_ATTRIBUTES sa{sizeof(sa),sd,FALSE};
-        HANDLE h=CreateFileW(file.c_str(),GENERIC_READ|GENERIC_WRITE,0,&sa,OPEN_ALWAYS,FILE_ATTRIBUTE_NORMAL|FILE_FLAG_OPEN_REPARSE_POINT,nullptr);
-        bool secured=h!=INVALID_HANDLE_VALUE && SetFileSecurityW(file.c_str(),DACL_SECURITY_INFORMATION|PROTECTED_DACL_SECURITY_INFORMATION,sd);
+        HANDLE h=CreateFileW(file.c_str(),GENERIC_READ|GENERIC_WRITE|WRITE_DAC,0,&sa,OPEN_ALWAYS,FILE_ATTRIBUTE_NORMAL|FILE_FLAG_OPEN_REPARSE_POINT,nullptr);
+        BOOL present=FALSE, defaulted=FALSE; PACL dacl=nullptr;
+        bool secured=h!=INVALID_HANDLE_VALUE && GetSecurityDescriptorDacl(sd,&present,&dacl,&defaulted) && present && SetSecurityInfo(h,SE_FILE_OBJECT,DACL_SECURITY_INFORMATION|PROTECTED_DACL_SECURITY_INFORMATION,nullptr,nullptr,dacl,nullptr)==ERROR_SUCCESS;
         LocalFree(sd);
         if(!secured) {if(h!=INVALID_HANDLE_VALUE) CloseHandle(h);throw Rejected("intent_unavailable","Print intent journal is unavailable");}
         struct Close {HANDLE h;~Close(){CloseHandle(h);}} close{h};
