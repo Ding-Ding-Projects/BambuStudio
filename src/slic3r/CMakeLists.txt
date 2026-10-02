@@ -238,6 +238,8 @@ set(SLIC3R_GUI_SOURCES
     GUI/GUI_Init.hpp
     GUI/GUI_Preview.cpp
     GUI/GUI_Preview.hpp
+    GUI/AutomationBridge.cpp
+    GUI/AutomationBridge.hpp
     GUI/GUI_App.cpp
     GUI/GUI_App.hpp
     GUI/GUI_Utils.cpp

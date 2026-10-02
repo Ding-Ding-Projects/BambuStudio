@@ -1,3 +1,4 @@
+#include "AutomationBridge.hpp"
 #include "libslic3r/Technologies.hpp"
 #include "GUI_App.hpp"
 #include "libslic3r_build_time.h"
@@ -3364,7 +3365,12 @@ bool GUI_App::OnInit()
 #endif
 
     try {
-        return on_init_inner();
+        const bool initialized = on_init_inner();
+        if (initialized) {
+            m_automation_bridge = std::make_unique<AutomationBridge>(*this);
+            m_automation_bridge->start();
+        }
+        return initialized;
     } catch (const std::exception& e) {
         BOOST_LOG_TRIVIAL(fatal) << "OnInit Got Fatal error: " << e.what();
         generic_exception_handle();
@@ -3374,6 +3380,10 @@ bool GUI_App::OnInit()
 
 int GUI_App::OnExit()
 {
+    if (m_automation_bridge) {
+        m_automation_bridge->stop();
+        m_automation_bridge.reset();
+    }
     // An automatic update that is still running is not waited for: the worker stops waiting
     // and Update.exe finishes staging on its own. Joining keeps the worker from touching this
     // object once it is gone.
