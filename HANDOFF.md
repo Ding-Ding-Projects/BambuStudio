@@ -40,14 +40,26 @@ historical GUI recipients. Only the public PEM is tracked. Protected review
 material remains local. Administrative cryptographic initialization is distinct
 from product execution; no application or product test ran locally.
 
+Additional source changes implement explicit native plate selection, binary STL
+export, and a completed native slice reference for printer submission. The
+companion adds concurrent-client and actual MCP cancellation coverage. The
+hosted driver now checks the nested native capability inventory and includes
+unsaved-work protection, STL validation, running headless cancellation and
+native exit/recovery. These additions are not covered by the earlier 24-case
+verdict and require new hosted verification.
+
+The current user also requested application-wide transitions, practical
+asynchronous execution, a defect hunt, and a green final default-branch run.
+That additional UI work is isolated on `feature/ui-motion-responsiveness`.
+
 Remaining work: terminal hosted release result; packaged runtime verification
 against the exact released SHA; hosted evidence parser and strict-reader use;
 genuine capture review; documentation completion; default-branch
 integration and remote proof. No physical printer operation has been verified.
-The agreed one-hour observation limit was reached. A structured request to extend
-this run to two hours has no answer yet. The hosted run was not canceled. Continue
-only after an authorized extension or a later terminal-state handoff; do not treat
-the pending release as successful. All task work remains retained and no cleanup
+The earlier one-hour observation window ended without canceling the hosted run.
+The subsequent continuation revalidated the live run and started a new bounded
+observation window ending at 20:19:37 UTC. No pending release is treated as
+successful. All task work remains retained and no cleanup
 has run. The wiki is published at `f0dc140038ae19d0487f74a4b4ba0a64b265485b`.
 See [automation documentation](docs/features/automation/mcp-and-cli.md) for the
 transport, security, setup and operation contract.

@@ -8,6 +8,14 @@
 - [ ] Support isolated headless slicing, progress, cancellation, and export.
 - [ ] Verify protocol, CLI, native bridge, slicing, and simulated-printer behavior on hosted Windows runners.
 - [ ] Verify the exact installed release and record physical-printer limitations separately.
+- [ ] Verify explicit native plate selection, model STL export, completed slice references, concurrent clients, and running-job cancellation.
+
+## Native motion and responsiveness
+
+- [ ] Extend shared native transitions with real elapsed-time animation and reduced-motion support.
+- [ ] Move practical blocking I/O from UI handlers into lifetime-safe background operations.
+- [ ] Complete independent defect review and hosted regression evidence for motion and asynchronous paths.
+- [ ] Verify the final integrated `main` revision with green hosted checks.
 
 
 ## Official-source reapplication

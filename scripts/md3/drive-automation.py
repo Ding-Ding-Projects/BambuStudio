@@ -5,13 +5,17 @@ from __future__ import annotations
 import argparse
 import importlib.util
 import json
+import ntpath
 import os
 from pathlib import Path
 import shutil
 import subprocess
+import queue
+import struct
 import sys
 import tempfile
 import time
+import threading
 import uuid
 import zipfile
 from datetime import datetime, timezone
@@ -80,7 +84,7 @@ class Driver:
         envelope = json.loads(completed.stdout)
         if error_code:
             if completed.returncode != 1 or envelope.get("ok") is not False or envelope.get("error", {}).get("code") != error_code:
-                raise RuntimeError("CLI did not reject the forbidden workspace path")
+                raise RuntimeError(f"CLI {operation} did not return expected error {error_code}")
             result = {}
         else:
             if completed.returncode != 0 or envelope.get("ok") is not True or not isinstance(envelope.get("result"), dict):
@@ -115,6 +119,100 @@ class Driver:
                     while stream.read(65536):
                         pass
         self.rows.append({"operation": "slice_start_headless", "status": "verified", "output_sha256": behavior.sha256(output)})
+
+    def cancel_headless(self, project):
+        """Exercise explicit cancellation through a persistent real MCP service."""
+        output = self.workspace / "cancelled-slice.3mf"
+        started = datetime.now(timezone.utc)
+        service = subprocess.Popen([str(self.args.cli), "serve", "--workspace", str(self.workspace)],
+                                   stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                   stderr=subprocess.DEVNULL, text=True, bufsize=1,
+                                   creationflags=subprocess.CREATE_NO_WINDOW)
+        replies = queue.Queue(maxsize=128)
+        def read_replies():
+            try:
+                for line in service.stdout:
+                    require(len(line) <= 1_048_576, "MCP response exceeds fixture bound")
+                    replies.put_nowait(json.loads(line))
+            except Exception as exc:
+                replies.put_nowait(exc)
+        reader = threading.Thread(target=read_replies, daemon=True)
+        reader.start()
+        sequence = 0
+        job_id = None
+        def request(method, params):
+            nonlocal sequence
+            sequence += 1
+            service.stdin.write(json.dumps({"jsonrpc": "2.0", "id": sequence,
+                                            "method": method, "params": params}) + "\n")
+            service.stdin.flush()
+            deadline = time.monotonic() + 30
+            while time.monotonic() < deadline:
+                reply = replies.get(timeout=max(0.1, deadline - time.monotonic()))
+                if isinstance(reply, Exception):
+                    raise reply
+                if reply.get("id") == sequence:
+                    require("error" not in reply, "MCP cancellation fixture request failed")
+                    return reply["result"]
+            raise RuntimeError("MCP cancellation fixture timed out")
+        def tool(name, arguments):
+            result = request("tools/call", {"name": "bambu_" + name,
+                                            "arguments": {"arguments": arguments}})
+            envelope = result.get("structuredContent", {})
+            require(envelope.get("ok") is True, "MCP cancellation fixture tool failed")
+            return envelope["result"]
+        def children():
+            # Match the exact launched service parent and packaged image. Never borrow
+            # the GUI instance or another service's process for teardown evidence.
+            return [p for p in process_snapshot()
+                    if p.get("ParentProcessId") == service.pid
+                    and ntpath.normcase(str(p.get("ExecutablePath"))) ==
+                        ntpath.normcase(str(self.args.exe))
+                    and job_id in str(p.get("CommandLine", ""))]
+        try:
+            request("initialize", {"protocolVersion": "2025-03-26", "capabilities": {},
+                                   "clientInfo": {"name": "hosted-cancellation", "version": "1"}})
+            service.stdin.write('{"jsonrpc":"2.0","method":"notifications/initialized"}\n')
+            service.stdin.flush()
+            job = tool("slice_start", {"headless": True, "path": str(project),
+                                       "output": str(output), "plate": 0})
+            job_id = job["jobId"]
+            deadline = time.monotonic() + 30
+            observed = []
+            while time.monotonic() < deadline:
+                observed = children()
+                if observed:
+                    break
+                state = tool("job_status", {"jobId": job_id})["state"]
+                require(state in ("queued", "running"), "Real slice ended before cancellation could be observed")
+                time.sleep(0.1)
+            require(len(observed) == 1, "Real headless child was not observed before cancellation")
+            tool("job_cancel", {"jobId": job_id})
+            deadline = time.monotonic() + 30
+            while time.monotonic() < deadline:
+                job = tool("job_status", {"jobId": job_id})
+                if job["state"] not in ("queued", "running"):
+                    break
+                time.sleep(0.1)
+            require(job["state"] == "cancelled" and job.get("output") is None,
+                    "Explicit cancellation did not produce a cancelled job")
+            require(not output.exists(), "Cancelled slice published a final output")
+            deadline = time.monotonic() + 20
+            while children() and time.monotonic() < deadline:
+                time.sleep(0.2)
+            require(not children(), "Cancelled native child remains alive")
+            self.rows.append({"operation": "headless_running_cancel", "status": "verified",
+                              "native_child_observed": True, "owned_child_exited": True,
+                              "final_output_absent": True, "started_at_utc": started.isoformat()})
+        finally:
+            service.stdin.close()
+            try:
+                service.wait(timeout=15)
+            except subprocess.TimeoutExpired:
+                # Only terminate the process object created above. The surrounding
+                # disposable hosted job remains responsible for failed-run isolation.
+                service.kill()
+                service.wait(timeout=10)
 
 
 def require(condition, message):
@@ -157,9 +255,12 @@ def main():
         drive.protocol(scratch / "native-outside.3mf")
         require(not (scratch / "native-outside.3mf").exists(), "Native workspace rejection still wrote a file")
         capabilities = drive.call("capabilities")
+        native_capabilities = capabilities.get("nativeCapabilities")
+        require(capabilities.get("nativeAttached") is True and isinstance(native_capabilities, dict),
+                "Companion did not attach to the selected native instance")
         required_operations = {"project_inspect", "project_new", "project_open", "project_save",
                                "model_import", "presets_list", "slice_start", "export_file"}
-        require(required_operations.issubset(set(capabilities.get("operations", []))), "Native capability inventory is incomplete")
+        require(required_operations.issubset(set(native_capabilities.get("operations", []))), "Native capability inventory is incomplete")
         drive.call("project_new")
         empty = drive.call("project_inspect")
         require(empty.get("objects") == [], "Native new project is not empty")
@@ -167,6 +268,9 @@ def main():
         drive.call("model_import", {"path": str(workspace / "cube.stl")})
         imported = drive.call("project_inspect")
         require(len(imported.get("objects", [])) == 1, "Native import did not produce exactly one object")
+        require(imported.get("plates") and imported.get("currentPlate") == 0,
+                "Imported fixture has no explicit initial plate identity")
+        drive.call("project_new", error_code="unsaved_changes")
         drive.capture("imported-cube")
         project = workspace / "roundtrip.3mf"
         drive.call("project_save", {"path": str(project)})
@@ -176,13 +280,22 @@ def main():
         reopened = drive.call("project_inspect")
         require(len(reopened.get("objects", [])) == 1, "Native saved project did not reopen with one object")
         drive.capture("reopened-cube")
+        model_output = workspace / "exported-cube.stl"
+        drive.call("export_file", {"path": str(model_output), "plateIndex": 0})
+        model_bytes = model_output.read_bytes()
+        require(len(model_bytes) >= 84, "Native STL export is empty")
+        triangles = struct.unpack_from("<I", model_bytes, 80)[0]
+        require(triangles > 0 and len(model_bytes) == 84 + 50 * triangles,
+                "Native STL export is not a complete binary triangle mesh")
+        drive.rows.append({"operation": "model_export_stl", "status": "verified",
+                           "triangles": triangles, "sha256": behavior.sha256(model_output)})
         drive.call("project_save", {"path": str(scratch / "outside.3mf")}, error_code="outside_workspace")
         require(not (scratch / "outside.3mf").exists(), "Workspace refusal still wrote outside the allowed root")
         presets = drive.call("presets_list")
         # A missing bundled preset is an unresolved runtime result, never a passing skip.
         require(presets.get("printer") and presets.get("print") and presets.get("filament"),
                 "Bundled presets unavailable; slicing remains unverified")
-        job = drive.call("slice_start")
+        job = drive.call("slice_start", {"plateIndex": 0})
         job_id = job.get("jobId")
         require(isinstance(job_id, str) and job_id, "Native slice returned no job identity")
         generation, plate, revision = (job.get(key) for key in ("generation", "plate", "revision"))
@@ -215,7 +328,49 @@ def main():
         drive.capture("sliced-project")
         # The packaged one-shot service waits; no process-local job registry is borrowed.
         drive.headless_slice(project)
+        # A dense, fine-layer fixture keeps real work in flight long enough to
+        # observe its owned native process before requesting cancellation.
+        drive.call("project_new")
+        cancellation_model = workspace / "cancellation-cube.stl"
+        scaled = []
+        for line in fixture.read_text(encoding="utf-8").splitlines():
+            fields = line.split()
+            scaled.append("vertex " + " ".join(str(float(v) * 10) for v in fields[1:])
+                          if fields and fields[0] == "vertex" else line)
+        cancellation_model.write_text("\n".join(scaled) + "\n", encoding="utf-8")
+        drive.call("model_import", {"path": str(cancellation_model)})
+        drive.call("settings_update", {"values": {"layer_height": 0.08, "sparse_infill_density": 100}})
+        cancellation_project = workspace / "cancellation.3mf"
+        drive.call("project_save", {"path": str(cancellation_project)})
+        drive.capture("cancellation-fixture")
+        drive.cancel_headless(cancellation_project)
         drive.call("printer_list")
+        old_pid = app.pid
+        app.stop()
+        require(app.owned_teardown_verified and app.desktop_closed_verified,
+                "Original instance teardown failed before recovery check")
+        disconnected = subprocess.run(
+            [str(args.cli), "command", "project_inspect", "--json", "--workspace", str(workspace),
+             "--instance", str(old_pid)], capture_output=True, text=True, timeout=40,
+            creationflags=subprocess.CREATE_NO_WINDOW)
+        disconnected_result = json.loads(disconnected.stdout)
+        require(disconnected.returncode == 1 and disconnected_result.get("ok") is False
+                and disconnected_result.get("error", {}).get("code") == "instance_unavailable",
+                "Stopped native instance did not report unavailable without replay")
+        recovery_profile, recovery_probe = scratch / "recovery-profile", scratch / "recovery-probe"
+        recovery_profile.mkdir()
+        recovery_probe.mkdir()
+        behavior.seed_profile(recovery_profile, "en", "light")
+        app = behavior.HostedApp(str(args.exe), str(recovery_profile),
+                                 "bsautomation-recovery-" + str(os.getpid()), str(recovery_probe))
+        app.holder_lifetime = 600
+        drive.app = app
+        app.start(timeout=240)
+        recovered = drive.call("project_inspect")
+        require(recovered.get("objects") == [], "Replacement instance did not start with isolated state")
+        drive.capture("recovered-instance")
+        drive.rows.append({"operation": "native_exit_recovery", "status": "verified",
+                           "stopped_instance_rejected": True, "fresh_instance_inspected": True})
         status = "runtime_verified"
     except Exception as exc:
         failure = f"{type(exc).__name__}: {exc}"

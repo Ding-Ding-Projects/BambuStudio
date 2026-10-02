@@ -67,10 +67,18 @@ configured-printer commands are exposed through capability discovery. Unsupporte
 device features return explicit errors rather than fabricated success.
 
 An explicit print-start call does not add a second confirmation dialog. It must
-identify the printer, request ID, and required print configuration. Native
+identify the printer, request ID, completed native `sliceJobId`, and required print configuration. Native
 readiness and supported mapping checks still apply. Retrying a request must not
 start another physical print. An uncertain network result is reported as uncertain
 and must be reconciled with printer state before a new request is submitted.
+
+Native slicing and export accept an optional zero-based `plateIndex`; omitted
+or null selects the current plate. Inspect the plate inventory before choosing
+an index. Headless slicing retains its separate `plate` convention: zero means
+all plates and a positive number selects that native CLI plate number.
+Model export supports binary STL for supported FFF plate geometry. Negative
+volumes requiring an interactive boolean choice are rejected. Project saving
+uses `.3mf`; printable export uses a sliced `.3mf` archive.
 
 Printer operations reuse the application's configured connection. Credentials
 are never returned to the MCP client. No arbitrary shell, raw printer command,

@@ -66,8 +66,8 @@ public sealed class AutomationTools(CommandService service)
     public Task<CallToolResult> SliceStart([Description("Typed slice_start arguments, including required fields and safety constraints.")] SliceArguments arguments, CancellationToken cancellationToken)
         => Invoke("slice_start", arguments, cancellationToken);
 
-    [McpServerTool(Name = "bambu_export_file"), Description("Export current native sliced toolpaths atomically to a workspace .3mf file. Use project_save to save the project.")]
-    public Task<CallToolResult> ExportFile([Description("Typed export_file arguments, including required fields and safety constraints.")] OutputArguments arguments, CancellationToken cancellationToken)
+    [McpServerTool(Name = "bambu_export_file"), Description("Export a selected native plate atomically: printable toolpaths to .3mf or model geometry to .stl. Omit plateIndex for the current plate. Use project_save to save the project.")]
+    public Task<CallToolResult> ExportFile([Description("Typed export_file arguments, including required fields and safety constraints.")] ExportArguments arguments, CancellationToken cancellationToken)
         => Invoke("export_file", arguments, cancellationToken);
 
     [McpServerTool(Name = "bambu_printer_list"), Description("List printers connected through the selected native instance.")]
@@ -78,7 +78,7 @@ public sealed class AutomationTools(CommandService service)
     public Task<CallToolResult> PrinterStatus([Description("Typed printer_status arguments, including required fields and safety constraints.")] PrinterArguments arguments, CancellationToken cancellationToken)
         => Invoke("printer_status", arguments, cancellationToken);
 
-    [McpServerTool(Name = "bambu_printer_start"), Description("Start the current sliced plate through native readiness checks, no extra confirmation. Only one known reliable nozzle, one used filament, matching target model/diameter, online idle printer, non-AMS [-1] mapping supported.")]
+    [McpServerTool(Name = "bambu_printer_start"), Description("Start the current plate bound to a completed native sliceJobId through readiness checks, no extra confirmation. Only one known reliable nozzle, one used filament, matching target model/diameter, online idle printer, non-AMS [-1] mapping supported.")]
     public Task<CallToolResult> PrinterStart([Description("Typed printer_start arguments, including required fields and safety constraints.")] PrintStartArguments arguments, CancellationToken cancellationToken)
         => Invoke("printer_start", arguments, cancellationToken);
 

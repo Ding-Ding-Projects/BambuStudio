@@ -27334,6 +27334,39 @@ TriangleMesh Plater::combine_mesh_fff(const ModelObject& mo, int instance_id, st
 }
 
 // BBS export with/without boolean, however, stil merge mesh
+// Silent automation shares the native export mesh transforms and STL writer.
+// Negative volumes require the interactive boolean choice, so reject them here.
+bool Plater::automation_export_plate_stl(const std::filesystem::path& destination, int plate_index)
+{
+    if (printer_technology() != ptFFF || plate_index < 0 || plate_index >= p->partplate_list.get_plate_count())
+        return false;
+    PartPlate* plate = p->partplate_list.get_plate_list()[plate_index];
+    TriangleMesh combined;
+    bool have_instances = false;
+    for (size_t obj_index = 0; obj_index < p->model.objects.size(); ++obj_index) {
+        const ModelObject* object = p->model.objects[obj_index];
+        for (size_t instance_index = 0; instance_index < object->instances.size(); ++instance_index) {
+            if (!plate->contain_instance(static_cast<int>(obj_index), static_cast<int>(instance_index)))
+                continue;
+            have_instances = true;
+            TriangleMesh instance_mesh;
+            for (const ModelVolume* volume : object->volumes) {
+                if (volume->type() == ModelVolumeType::NEGATIVE_VOLUME)
+                    return false;
+                if (!volume->is_model_part())
+                    continue;
+                TriangleMesh mesh(volume->mesh());
+                mesh.transform(volume->get_matrix(), true);
+                instance_mesh.merge(mesh);
+            }
+            instance_mesh.transform(object->instances[instance_index]->get_matrix(), true);
+            combined.merge(instance_mesh);
+        }
+    }
+    if (!have_instances || combined.empty())
+        return false;
+    return Slic3r::store_stl(destination.u8string().c_str(), &combined, true);
+}
 void Plater::export_stl(bool extended, bool selection_only, bool multi_stls)
 {
     if (p->model.objects.empty()) { return; }

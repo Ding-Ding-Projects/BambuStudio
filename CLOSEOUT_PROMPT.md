@@ -4,7 +4,7 @@ Current requested scope: MCP automation; application-wide transitions and
 animations; practical asynchronous execution; a full Material Design 3 and
 small-detail audit; search with a regex builder in every context menu;
 clipped/hidden text repairs; unintended slice cancellation investigation;
-and a visible Slice and Print button beside Print. New audit and implementation
+and visible Slice and Print plus Slice and Send buttons beside Print. New audit and implementation
 lanes must use gpt-6-astra. Final main must have green hosted verification.
 
 Only GitHub-hosted Windows runners may build, test, install or execute the
@@ -36,3 +36,5 @@ work is integrated into main, the remote main contains each source tip, and a
 complete verified backup exists. No cleanup has run. Shared-status enrollment
 is unavailable; no status delivery is claimed. Source checkpoints are not
 release or runtime success claims.
+
+MCP source ce61d22e390e4bf69938730434f1e494fa34f7a9 is now integrated into this candidate. Its hosted run 37054493889 began at 2026-10-02T19:29:56Z and is not yet verified. The one-hour observation boundary is 20:29:56Z. Earlier 24-case evidence applies only to source 65dc4577f. Slice and Send must transfer successful output without starting a print.
