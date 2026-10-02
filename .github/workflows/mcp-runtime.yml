@@ -44,7 +44,7 @@ jobs:
       - name: Parse automation evidence sources
         shell: pwsh
         run: |
-          foreach ($path in @('scripts/ci/Verify-HostedAutomation.ps1', 'scripts/md3/Open-HostedAutomationEvidence.ps1')) {
+          foreach ($path in @('scripts/ci/Verify-HostedAutomation.ps1', 'scripts/md3/Open-HostedAutomationEvidence.ps1', 'scripts/md3/Initialize-HostedAutomationEvidenceKey.ps1')) {
             $tokens = $null
             $errors = $null
             [void][System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path $path), [ref]$tokens, [ref]$errors)

@@ -11,6 +11,9 @@ if ($env:GITHUB_ACTIONS -ne 'true' -or $env:RUNNER_ENVIRONMENT -ne 'github-hoste
     throw 'Automation verification requires a disposable GitHub-hosted Windows runner.'
 }
 if ((& git rev-parse HEAD).Trim() -cne $ExpectedSourceCommit) { throw 'Verifier source SHA mismatch.' }
+if (-not (Test-Path -LiteralPath "$PSScriptRoot/../md3/hosted-automation-public-v1.pem" -PathType Leaf)) {
+    throw 'Dedicated automation evidence recipient is missing; initialize and commit its public PEM before hosted verification.'
+}
 $tempRoot = [IO.Path]::GetFullPath($env:RUNNER_TEMP).TrimEnd('\') + '\'
 $output = [IO.Path]::GetFullPath($OutputDirectory)
 if (-not $output.StartsWith($tempRoot, [StringComparison]::OrdinalIgnoreCase) -or (Test-Path -LiteralPath $output)) {
@@ -105,7 +108,7 @@ try {
         $nonce = [Security.Cryptography.RandomNumberGenerator]::GetBytes(12)
         $tagBytes = [byte[]]::new(16)
         $cipher = [byte[]]::new($plain.Length)
-        $rsa.ImportFromPem([IO.File]::ReadAllText("$PSScriptRoot/../md3/hosted-gui-public-v2.pem"))
+        $rsa.ImportFromPem([IO.File]::ReadAllText("$PSScriptRoot/../md3/hosted-automation-public-v1.pem"))
         $keyId = [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($rsa.ExportSubjectPublicKeyInfo())).ToLowerInvariant()
         $wrapped = $rsa.Encrypt($key, [Security.Cryptography.RSAEncryptionPadding]::OaepSHA256)
         $aes = [Security.Cryptography.AesGcm]::new($key, 16)
