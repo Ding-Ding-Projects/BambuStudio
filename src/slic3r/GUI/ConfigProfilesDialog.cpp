@@ -106,22 +106,34 @@ wxString unzip_to_directory(const std::filesystem::path &archive, const std::fil
     if (ec)
         return _L("The new profile folder could not be created.");
     const std::filesystem::path canon_dest = std::filesystem::weakly_canonical(dest_dir, ec);
+    if (ec)
+        return _L("The new profile folder could not be created.");
     for (wxZipEntry *entry = zip.GetNextEntry(); entry != nullptr; entry = zip.GetNextEntry()) {
         std::unique_ptr<wxZipEntry> guard(entry);
         if (entry->IsDir())
             continue;
         const std::filesystem::path rel = std::filesystem::path(entry->GetName().ToStdWstring());
+        if (rel.empty() || rel.is_absolute() || rel.has_root_name() || rel.has_root_directory())
+            return _L("The backup contains an unsafe path and was rejected.");
+        for (const auto &part : rel)
+            if (part == ".." || part.native().find(':') != std::filesystem::path::string_type::npos)
+                return _L("The backup contains an unsafe path and was rejected.");
         const std::filesystem::path out = dest_dir / rel;
         // Zip-slip guard: every extracted path must stay inside the profile.
         const std::filesystem::path canon_out = std::filesystem::weakly_canonical(out, ec);
-        if (ec || canon_out.native().rfind(canon_dest.native(), 0) != 0)
+        const auto relative_out = canon_out.lexically_relative(canon_dest);
+        if (ec || relative_out.empty() || relative_out == "." || relative_out.is_absolute() ||
+            *relative_out.begin() == "..")
             return _L("The backup contains an unsafe path and was rejected.");
         std::filesystem::create_directories(out.parent_path(), ec);
+        if (ec || std::filesystem::exists(out, ec) || ec)
+            return _L("A file inside the backup could not be written.");
         wxFFileOutputStream out_stream(wxString::FromUTF8(out.string()));
         if (!out_stream.IsOk())
             return _L("A file inside the backup could not be written.");
         out_stream.Write(zip);
-        out_stream.Close();
+        if (!out_stream.IsOk() || !out_stream.Close())
+            return _L("A file inside the backup could not be written.");
     }
     return wxString{};
 }
@@ -158,6 +170,19 @@ ConfigProfilesDialog::ConfigProfilesDialog(wxWindow *parent)
 }
 
 ConfigProfilesDialog::~ConfigProfilesDialog() = default;
+
+void ConfigProfilesDialog::EndModal(int retCode)
+{
+    // A std::async future joins on destruction. Keep the dialog and its history
+    // manager alive while polling instead of joining on the UI thread.
+    if (m_busy) {
+        m_close_requested = true;
+        m_close_result = retCode;
+        m_status_label->SetLabel(_L("Finishing the current operation before closing..."));
+        return;
+    }
+    DPIDialog::EndModal(retCode);
+}
 
 std::filesystem::path ConfigProfilesDialog::profiles_root() const
 {
@@ -393,11 +418,13 @@ void ConfigProfilesDialog::poll_operation(wxTimerEvent &)
         auto done = std::move(m_list_done);
         try {
             auto result = m_list_future.get();
-            if (done) done(std::move(result));
+            if (done && !m_close_requested) done(std::move(result));
         } catch (const std::exception &ex) {
             m_status_label->SetLabel(wxString::FromUTF8(ex.what()));
+            m_close_requested = false;
         }
         update_buttons();
+        if (m_close_requested) EndModal(m_close_result);
         return;
     }
     if (!m_busy_future.valid() ||
@@ -409,8 +436,10 @@ void ConfigProfilesDialog::poll_operation(wxTimerEvent &)
     wxString error;
     try { error = m_busy_future.get(); }
     catch (const std::exception &ex) { error = wxString::FromUTF8(ex.what()); }
-    if (done) done(error);
+    if (!error.IsEmpty()) m_close_requested = false;
+    if (done && !m_close_requested) done(error);
     update_buttons();
+    if (m_close_requested) EndModal(m_close_result);
 }
 
 void ConfigProfilesDialog::on_export(wxCommandEvent &)
@@ -484,6 +513,7 @@ void ConfigProfilesDialog::on_import(wxCommandEvent &)
 
 void ConfigProfilesDialog::on_launch(wxCommandEvent &)
 {
+    if (m_busy) return;
     const ProfileRow *sel = selected_profile();
     if (sel == nullptr || sel->active)
         return;
@@ -675,16 +705,14 @@ void ConfigProfilesDialog::show_preferences_history(ProjectHistoryListResult ver
         std::error_code ec;
         std::filesystem::create_directories(staging_conf.parent_path(), ec);
         std::filesystem::remove(staging_conf, ec);
-        std::filesystem::remove(destination, ec);
         auto restored = history->restore_version(identity, commit_id, staging_conf).get();
         if (!restored.ok()) return wxString::FromUTF8(restored.error.message);
-        std::filesystem::rename(staging_conf, destination, ec);
-        if (ec) {
-            std::filesystem::copy_file(staging_conf, destination, std::filesystem::copy_options::overwrite_existing, ec);
-            std::error_code cleanup_ec;
-            std::filesystem::remove(staging_conf, cleanup_ec);
-            if (ec) return wxString::FromUTF8(ec.message());
-        }
+        // copy_options::none atomically refuses an existing destination on all
+        // platforms. A POSIX rename could silently replace a previous recovery.
+        std::filesystem::copy_file(staging_conf, destination, std::filesystem::copy_options::none, ec);
+        if (ec) return wxString::FromUTF8(ec.message());
+        std::error_code cleanup_ec;
+        std::filesystem::remove(staging_conf, cleanup_ec);
         return wxString{};
     });
     m_busy_done = [this, destination](wxString error) {

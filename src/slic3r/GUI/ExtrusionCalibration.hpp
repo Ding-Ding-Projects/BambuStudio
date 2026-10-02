@@ -100,23 +100,14 @@ protected:
     // title of select filament preset
     Label*       m_filament_preset_title;
     // select a filament preset
-#ifdef __APPLE__
-    wxComboBox* m_comboBox_filament;
-#else
     ComboBox* m_comboBox_filament;
-#endif
 
-#ifdef __APPLE__
-    wxComboBox* m_comboBox_bed_type;
-#else
+
     ComboBox* m_comboBox_bed_type;
-#endif
 
-#ifdef __APPLE__
-    wxComboBox* m_comboBox_nozzle_dia;
-#else
+
     ComboBox* m_comboBox_nozzle_dia;
-#endif
+
 
     TextInput*          m_nozzle_temp;
     TextInput*          m_bed_temp;

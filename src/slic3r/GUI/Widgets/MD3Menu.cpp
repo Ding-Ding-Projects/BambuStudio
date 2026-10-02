@@ -211,7 +211,7 @@ public:
         if (!name)
             return wxACC_FAIL;
         if (child_id == wxACC_SELF) {
-            *name = _L("Menu");
+            *name = m_list->Visible().empty() ? _L("No matches.") : _L("Menu");
             return wxACC_OK;
         }
         const MD3::Menu::Item *it = item(child_id);
@@ -227,6 +227,15 @@ public:
     {
         if (!description)
             return wxACC_FAIL;
+        if (child_id == wxACC_SELF) {
+            int results = 0;
+            for (size_t row = 0; row < m_list->Visible().size(); ++row) {
+                const auto *entry = m_list->ItemAt(static_cast<int>(row));
+                if (entry && entry->actionable()) ++results;
+            }
+            *description = wxString::Format(_L("%d results"), results);
+            return wxACC_OK;
+        }
         const MD3::Menu::Item *it = item(child_id);
         if (!it)
             return wxACC_NOT_IMPLEMENTED;
@@ -390,6 +399,11 @@ void MD3MenuList::SetVisible(std::vector<int> visible)
     m_offset_y = 0;
     m_hover_timer.Stop();
     m_pending_submenu = -1;
+#if wxUSE_ACCESSIBILITY
+    wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_REORDER, this, wxOBJID_CLIENT, wxACC_SELF);
+    wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_NAMECHANGE, this, wxOBJID_CLIENT, wxACC_SELF);
+    wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_DESCRIPTIONCHANGE, this, wxOBJID_CLIENT, wxACC_SELF);
+#endif
     Refresh();
 }
 
@@ -405,6 +419,8 @@ const MD3::Menu::Item *MD3MenuList::ItemAt(int vis_index) const
 
 int MD3MenuList::ContentHeight() const
 {
+    if (m_visible.empty())
+        return RowHeight();
     int h = 0;
     for (int vis = 0; vis < static_cast<int>(m_visible.size()); ++vis) {
         const MD3::Menu::Item *it = ItemAt(vis);
@@ -737,6 +753,13 @@ void MD3MenuList::paintEvent(wxPaintEvent &)
     dc.SetBrush(wxBrush(surface));
     dc.DrawRectangle(GetClientRect());
 
+    if (m_visible.empty()) {
+        dc.SetFont(body_s_font());
+        dc.SetTextForeground(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+        dc.DrawLabel(_L("No matches."), GetClientRect().Deflate(FromDIP(12), 0), wxALIGN_CENTER);
+        return;
+    }
+
     const int view = GetClientSize().y;
     for (int vis = 0; vis < static_cast<int>(m_visible.size()); ++vis) {
         const wxRect r = RowRect(vis);
@@ -835,7 +858,10 @@ void MD3MenuList::paintRow(wxDC &dc, int vis, const wxRect &r, const wxColour &s
     if (vis < static_cast<int>(m_secondary_inline.size()))
         m_secondary_inline[vis] = inline_secondary;
     wxSize ext = dc.GetTextExtent(text);
-    if (ext.x > avail && avail > 0) {
+    if (avail <= 0)
+        return;
+    wxDCClipper label_clip(dc, wxRect(label_x, r.y, avail, r.height));
+    if (ext.x > avail) {
         // Ellipsize from the end so the leading words stay readable.
         const wxString ellipsis = wxString::FromUTF8("\xE2\x80\xA6");
         while (!text.IsEmpty() && dc.GetTextExtent(text + ellipsis).x > avail)
@@ -918,16 +944,10 @@ void MD3MenuPopup::build()
         return;
     m_rows = MD3::Menu::snapshot(*m_menu, m_secondary);
 
-    int actionable = 0;
-    for (const MD3::Menu::Item &it : m_rows)
-        if (it.actionable())
-            ++actionable;
-
-    if (m_show_search || actionable >= kSearchThreshold) {
-        m_search = new SearchField(this, _L("Search menu"));
-        m_search->SetOnQuery([this](const wxString &) { ApplyFilter(); });
-        m_search->SetOnRegexToggle([this](bool) { ApplyFilter(); });
-    }
+    // Every menu, including one-item and nested menus, owns its query and builder.
+    m_search = new SearchField(this, _L("Search menu"));
+    m_search->SetOnQuery([this](const wxString &) { ApplyFilter(); });
+    m_search->SetOnRegexToggle([this](bool) { ApplyFilter(); });
     m_list = new MD3MenuList(this, m_rows);
     ApplyFilter();
 }
@@ -1004,14 +1024,14 @@ void MD3MenuPopup::Dismiss()
 {
     // A parent stays up while its submenu is showing (DropDown pattern): the
     // focus loss caused by the child opening must not close us.
-    if (IsSubmenuShown())
+    if (IsSubmenuShown() || (m_search && m_search->IsBuilderShown()))
         return;
     PopupWindow::Dismiss();
 }
 
 void MD3MenuPopup::OnDismiss()
 {
-    if (IsSubmenuShown())
+    if (IsSubmenuShown() || (m_search && m_search->IsBuilderShown()))
         return;
     if (m_closed)
         return;
@@ -1209,7 +1229,7 @@ void MD3MenuPopup::ApplyFilter()
 
 void MD3MenuPopup::onCharHook(wxKeyEvent &evt)
 {
-    if (!m_list) {
+    if (!m_list || (m_search && m_search->IsBuilderShown())) {
         evt.Skip();
         return;
     }
@@ -1221,7 +1241,10 @@ void MD3MenuPopup::onCharHook(wxKeyEvent &evt)
     const bool search_has_text = m_search && !m_search->GetValue().IsEmpty();
 
     switch (evt.GetKeyCode()) {
-    case WXK_ESCAPE: RequestEscape(); return;
+    case WXK_ESCAPE:
+        if (search_has_text) m_search->Clear();
+        else RequestEscape();
+        return;
     case WXK_DOWN: m_list->MoveSelection(1); return;
     case WXK_UP: m_list->MoveSelection(-1); return;
     case WXK_TAB:

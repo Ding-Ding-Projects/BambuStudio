@@ -23,18 +23,41 @@ bool reduced()
     return false;
 }
 
+namespace {
+double bezierCoordinate(double t, double a, double b, double c, double d)
+{
+    const double s = 1.0 - t;
+    return s*s*s*a + 3.0*s*s*t*b + 3.0*s*t*t*c + t*t*t*d;
+}
+
+double bezierAtX(double x, double x0, double y0, double x1, double y1,
+                 double x2, double y2, double x3, double y3)
+{
+    double lo = 0.0, hi = 1.0;
+    for (int i = 0; i < 32; ++i) {
+        const double mid = (lo + hi) * 0.5;
+        if (bezierCoordinate(mid, x0, x1, x2, x3) < x) lo = mid;
+        else hi = mid;
+    }
+    return bezierCoordinate((lo + hi) * 0.5, y0, y1, y2, y3);
+}
+} // namespace
+
 double easeStandard(double t)
 {
-    // cubic-bezier(0.2, 0, 0, 1) flavour: fast start, long decelerate tail.
-    t = std::clamp(t, 0.0, 1.0);
-    return 1.0 - std::pow(1.0 - t, 3.0);
+    if (t <= 0.0) return 0.0;
+    if (t >= 1.0) return 1.0;
+    return bezierAtX(t, 0, 0, 0.2, 0, 0, 1, 1, 1);
 }
 
 double easeEmphasized(double t)
 {
-    // A stronger settle for large moves: quintic decelerate.
-    t = std::clamp(t, 0.0, 1.0);
-    return 1.0 - std::pow(1.0 - t, 5.0);
+    if (t <= 0.0) return 0.0;
+    if (t >= 1.0) return 1.0;
+    // Material's emphasized path uses two connected cubic segments.
+    if (t <= 0.166666)
+        return bezierAtX(t, 0, 0, 0.05, 0, 0.133333, 0.06, 0.166666, 0.4);
+    return bezierAtX(t, 0.166666, 0.4, 0.208333, 0.82, 0.25, 1, 1, 1);
 }
 
 namespace {

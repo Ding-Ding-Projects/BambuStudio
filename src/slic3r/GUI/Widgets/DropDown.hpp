@@ -17,6 +17,8 @@
 
 wxDECLARE_EVENT(EVT_DISMISS, wxCommandEvent);
 
+class SearchField;
+
 class DropDown : public PopupWindow
 {
 public:
@@ -41,6 +43,9 @@ private:
     bool               need_sync  = false;
     int                selection  = -1;
     int                hover_item = -1;
+    SearchField *      m_search = nullptr;
+    // Original item indices; a negative index encodes a group header as -index-2.
+    std::vector<int>   m_visible;
 
     DropDown * subDropDown { nullptr };
     DropDown * mainDropDown { nullptr };
@@ -115,6 +120,8 @@ public:
 public:
     void Rescale();
 
+    void Popup(wxWindow *focus = nullptr) override;
+
     bool HasDismissLongTime();
 
 protected:
@@ -135,6 +142,12 @@ private:
     friend class ComboBox;
     void messureSize();
     void autoPosition();
+    void rebuildRows();
+    void applyFilter();
+    void onCharHook(wxKeyEvent &event);
+    void activateHover();
+    int headerHeight() const;
+    int viewportHeight() const;
 
     // some useful events
     void mouseDown(wxMouseEvent& event);

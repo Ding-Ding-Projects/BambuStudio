@@ -249,6 +249,11 @@ void SearchField::SetMultiline(bool on)
         m_on_regex_toggle(m_regex);
 }
 
+bool SearchField::IsBuilderShown() const
+{
+    return m_builder_popup && m_builder_popup->IsShown();
+}
+
 void SearchField::openBuilder()
 {
     if (m_on_builder)

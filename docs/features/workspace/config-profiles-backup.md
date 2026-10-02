@@ -59,3 +59,15 @@
   immediately.
 - Language modes: all user-facing strings are in the curated `yue_HK`
   catalog (`compile_translation.py --check` green, 494 entries).
+
+
+## Recovery safety update
+
+Archive import rejects parent traversal, absolute paths, alternate-stream syntax,
+and destinations outside the new profile directory. It refuses to overwrite an
+existing extracted file and reports output stream errors. Preference recovery
+preserves an existing recovery file instead of deleting it before copying.
+
+Closing during a background operation keeps the dialog alive and responsive until
+the future is consumed. A failed operation remains visible for inspection. Hosted
+Windows interaction verification is still required for this update.

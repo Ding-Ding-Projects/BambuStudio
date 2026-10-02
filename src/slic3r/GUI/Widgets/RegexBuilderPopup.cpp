@@ -889,14 +889,15 @@ void RegexBuilderPopup::fitPopup()
     if (disp_idx == wxNOT_FOUND)
         disp_idx = 0;
     const wxRect area  = wxDisplay((unsigned) disp_idx).GetClientArea();
-    const int    max_h = std::min(FromDIP(600), area.height - FromDIP(96));
+    const int    max_h = std::max(FromDIP(96), std::min(FromDIP(600), area.height - FromDIP(32)));
 
     const int inset  = FromDIP(4); // keeps square children inside the r12 border arc
     const int tab_h  = FromDIP(52); // 44-DIP Build | Reference targets + insets
     const int view_h = std::min(content.y, max_h - tab_h);
     const int sb_w   = content.y > view_h ? MD3ScrolledWindow::BarThickness(this) : 0;
 
-    SetClientSize(content.x + sb_w + 2 * inset, tab_h + view_h + 2 * inset);
+    const int view_w = std::max(1, std::min(content.x + sb_w, area.width - 2 * inset - FromDIP(16)));
+    SetClientSize(view_w + 2 * inset, tab_h + view_h + 2 * inset);
     if (m_tab_build && m_tab_ref) {
         const int tab_w = FromDIP(96);
         m_tab_build->SetSize(inset + FromDIP(8), inset + FromDIP(4), tab_w, FromDIP(kTargetH));
@@ -905,8 +906,8 @@ void RegexBuilderPopup::fitPopup()
     for (wxScrolledWindow *scroll : {m_scroll, m_ref_scroll}) {
         if (!scroll)
             continue;
-        scroll->SetSize(inset, inset + tab_h, content.x + sb_w, view_h);
-        scroll->SetScrollRate(0, FromDIP(16));
+        scroll->SetSize(inset, inset + tab_h, view_w, view_h);
+        scroll->SetScrollRate(FromDIP(16), FromDIP(16));
     }
     active->FitInside();
     active->Layout();

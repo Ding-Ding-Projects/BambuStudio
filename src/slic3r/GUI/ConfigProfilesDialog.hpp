@@ -42,6 +42,7 @@ class ConfigProfilesDialog final : public DPIDialog
 public:
     explicit ConfigProfilesDialog(wxWindow *parent);
     ~ConfigProfilesDialog() override;
+    void EndModal(int retCode) override;
 
 protected:
     void on_dpi_changed(const wxRect &suggested_rect) override;
@@ -87,6 +88,8 @@ private:
     std::function<void(ProjectHistoryListResult)> m_list_done;
     wxTimer                                m_poll_timer;
     bool                                   m_busy { false };
+    bool                                   m_close_requested { false };
+    int                                    m_close_result { wxID_CANCEL };
 
     Label              *m_title_label { nullptr };
     Label              *m_subtitle_label { nullptr };

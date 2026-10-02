@@ -86,6 +86,7 @@ public:
     void SetOnRegexToggle(std::function<void(bool)> cb) { m_on_regex_toggle = std::move(cb); }
     // Fired (in addition to opening the built-in popover) when the tune button
     // is clicked, so a host may layer its own behaviour.
+    bool IsBuilderShown() const;
     void SetOnBuilderRequested(std::function<void()> cb) { m_on_builder = std::move(cb); }
 
     // Matcher modifiers driven by the builder popover (both default false).
