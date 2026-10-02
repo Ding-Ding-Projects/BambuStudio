@@ -13,4 +13,11 @@
     <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" PrivateAssets="all" />
     <ProjectReference Include="../BambuAutomation/BambuAutomation.csproj" />
   </ItemGroup>
+  <Target Name="RecordBuiltCompanion" AfterTargets="Build">
+    <PropertyGroup>
+      <BuiltCompanionPath>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/../BambuAutomation/bin/$(Configuration)/$(TargetFramework)/$(RuntimeIdentifier)/bambu-automation.exe'))</BuiltCompanionPath>
+    </PropertyGroup>
+    <Error Condition="!Exists('$(BuiltCompanionPath)')" Text="The actual companion build output is missing: $(BuiltCompanionPath)" />
+    <WriteLinesToFile File="$(TargetDir)companion-path.txt" Lines="$(BuiltCompanionPath)" Overwrite="true" />
+  </Target>
 </Project>

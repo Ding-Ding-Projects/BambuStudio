@@ -24,12 +24,15 @@ public sealed class TransportTests : IDisposable
 
     private Process Start(params string[] arguments)
     {
-        var info = new ProcessStartInfo("dotnet") { UseShellExecute = false, CreateNoWindow = true,
+        var manifest = Path.Combine(AppContext.BaseDirectory, "companion-path.txt");
+        Assert.True(File.Exists(manifest), "The build must record the actual companion apphost path.");
+        var executable = File.ReadAllText(manifest).Trim();
+        Assert.True(Path.IsPathFullyQualified(executable) && File.Exists(executable), "The recorded actual companion apphost must exist.");
+        var info = new ProcessStartInfo(executable) { UseShellExecute = false, CreateNoWindow = true,
             RedirectStandardInput = true, RedirectStandardOutput = true, RedirectStandardError = true };
-        // Use the test runtime configuration so project-reference copies need no publish step.
-        info.ArgumentList.Add("exec"); info.ArgumentList.Add("--runtimeconfig");
-        info.ArgumentList.Add(Path.Combine(AppContext.BaseDirectory, "BambuAutomation.Tests.runtimeconfig.json"));
-        info.ArgumentList.Add(typeof(Workspace).Assembly.Location);
+        // A self-contained Web companion must use its own runtime/dependency tree, not a DLL
+        // copied into the test project's output with an unrelated test runtime configuration.
+        info.WorkingDirectory = Path.GetDirectoryName(executable)!;
         foreach (var arg in arguments) info.ArgumentList.Add(arg);
         info.ArgumentList.Add("--workspace"); info.ArgumentList.Add(root);
         info.Environment.Remove("BAMBU_AUTOMATION");
@@ -45,17 +48,17 @@ public sealed class TransportTests : IDisposable
         try
         {
             await process.StandardInput.WriteLineAsync(Initialize().ToJsonString()); await process.StandardInput.FlushAsync();
-            var initialized = await ReadResponse(process, 1, timeout.Token);
+            var initialized = await ReadResponse(process, stderr, 1, timeout.Token);
             Assert.NotNull(initialized["result"]!["protocolVersion"]);
             await process.StandardInput.WriteLineAsync("{\"jsonrpc\":\"2.0\",\"method\":\"notifications/initialized\"}");
             await process.StandardInput.WriteLineAsync(Request(2, "tools/list").ToJsonString()); await process.StandardInput.FlushAsync();
-            var listed = await ReadResponse(process, 2, timeout.Token);
+            var listed = await ReadResponse(process, stderr, 2, timeout.Token);
             var tools = listed["result"]!["tools"]!.AsArray();
             Assert.Contains(tools, tool => tool?["name"]?.GetValue<string>() == "bambu_capabilities");
             await process.StandardInput.WriteLineAsync(Request(3, "tools/call", new JsonObject
             { ["name"] = "bambu_capabilities", ["arguments"] = new JsonObject { ["arguments"] = new JsonObject() } }).ToJsonString());
             await process.StandardInput.FlushAsync();
-            var called = await ReadResponse(process, 3, timeout.Token);
+            var called = await ReadResponse(process, stderr, 3, timeout.Token);
             Assert.False(called["result"]!["isError"]!.GetValue<bool>());
             Assert.True(called["result"]!["structuredContent"]!["ok"]!.GetValue<bool>());
         }
@@ -67,12 +70,16 @@ public sealed class TransportTests : IDisposable
         }
     }
 
-    private static async Task<JsonObject> ReadResponse(Process process, int id, CancellationToken cancellationToken)
+    private static async Task<JsonObject> ReadResponse(Process process, Task<string> stderr, int id, CancellationToken cancellationToken)
     {
         while (true)
         {
             var line = await process.StandardOutput.ReadLineAsync(cancellationToken);
-            Assert.NotNull(line);
+            if (line is null)
+            {
+                await process.WaitForExitAsync(cancellationToken);
+                Assert.Fail($"The actual companion exited before MCP response {id}, exit={process.ExitCode}. Startup diagnostics: {await stderr}");
+            }
             var response = JsonNode.Parse(line!)!.AsObject();
             if (response["id"] is JsonValue value && value.TryGetValue<int>(out var actual) && actual == id) return response;
         }
@@ -101,6 +108,12 @@ public sealed class TransportTests : IDisposable
                     Assert.Equal(HttpStatusCode.Unauthorized, probe.StatusCode); break;
                 }
                 catch (HttpRequestException) when (DateTime.UtcNow < deadline && !process.HasExited) { await Task.Delay(100); }
+                catch (HttpRequestException)
+                {
+                    if (process.HasExited)
+                        Assert.Fail($"The actual HTTP companion exited before binding, exit={process.ExitCode}. Startup diagnostics: {await stderr}");
+                    throw;
+                }
             }
             using var forbidden = new HttpRequestMessage(HttpMethod.Post, origin + "/mcp");
             forbidden.Headers.Authorization = new("Bearer", secret); forbidden.Headers.Add("Origin", "https://evil.example");

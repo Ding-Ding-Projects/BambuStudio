@@ -20,6 +20,8 @@ dotnet test automation/BambuAutomation.Tests/BambuAutomation.Tests.csproj -c Rel
 
 Compilation, automated checks, installation, runtime checks, and slicing are executed only on the approved hosted build machine for this task. Source written here is unverified until that machine reports a verdict. The test project includes workspace and HTTP security checks, actual compiled MCP stdio/HTTP initialization, discovery and tool-call exchanges, real local named-pipe framing checks with a fixture server, and simulated printer identity/replay checks. Those fixture results do not prove a real printer started or native readiness checks passed.
 
+Transport checks launch the actual companion apphost from its own build output, using a generated test-output path receipt. They never launch a project-reference DLL copy with the test project's runtime configuration: a self-contained Web executable requires its own runtime and dependency tree. Early child exits fail with the actual exit code and startup diagnostics while preserving the real protocol assertions.
+
 ## Enable native automation explicitly
 
 Before launching Bambu Studio, set `BAMBU_AUTOMATION=1` and `BAMBU_AUTOMATION_ROOTS` to a semicolon-separated list of absolute existing workspace directories. The native bridge is otherwise disabled. Set the companion's `--workspace` arguments explicitly to the same roots. Each enabled instance listens on `BambuStudio.Automation.v1.<PID>` using a current-user byte-mode pipe.
