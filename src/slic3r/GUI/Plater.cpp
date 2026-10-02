@@ -10,6 +10,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
+#include <cstdlib>
 #include <cctype>
 #include <cmath>
 #include <limits>
@@ -8536,6 +8537,32 @@ public:
     // A one-shot request belongs to one explicit slice and one unchanged plate.
     uint64_t m_slice_request_generation{0};
     PrintWorkflowState::PendingSliceOutput m_pending_slice_output;
+    const bool m_slice_observation_enabled{[] {
+        const char* enabled = std::getenv("BAMBU_AUTOMATION");
+        return enabled && enabled[0] == '1' && enabled[1] == '\0';
+    }()};
+    uint64_t m_slice_completion_sequence{0}, m_slice_continuation_sequence{0};
+    std::array<SliceWorkflowCompletionObservation, SliceWorkflowObservation::event_capacity> m_slice_completions{};
+    std::array<SliceWorkflowContinuationObservation, SliceWorkflowObservation::event_capacity> m_slice_continuations{};
+    void observe_slice_completion(const SlicingProcessCompletedEvent& event, uint64_t current_generation,
+                                  const char* rejection) noexcept
+    {
+        if (!m_slice_observation_enabled) return;
+        const uint64_t sequence = ++m_slice_completion_sequence;
+        m_slice_completions[(sequence - 1) % m_slice_completions.size()] = {
+            sequence, event.generation(), current_generation,
+            event.success() ? "completed" : event.cancelled() ? "cancelled" : "failed",
+            rejection, rejection[0] == 'n'};
+    }
+    void observe_slice_continuation(PrintWorkflowState::SliceOutputAction action,
+                                    const PrintWorkflowState::PendingSliceOutput& request) noexcept
+    {
+        if (!m_slice_observation_enabled || action == PrintWorkflowState::SliceOutputAction::None) return;
+        const uint64_t sequence = ++m_slice_continuation_sequence;
+        m_slice_continuations[(sequence - 1) % m_slice_continuations.size()] = {
+            sequence, request.request_generation, request.native_generation, request.plate_index,
+            action == PrintWorkflowState::SliceOutputAction::Print ? "print" : "send"};
+    }
     bool m_reused_finished_slice_result{false};
     bool m_is_publishing {false};
     int m_is_RightClickInLeftUI{-1};
@@ -16372,8 +16399,14 @@ void Plater::priv::track_slice_mesh_stat()
 //BBS: add project slice logic
 void Plater::priv::on_process_completed(SlicingProcessCompletedEvent &evt)
 {
+    const auto current_generation = background_process.automation_generation();
+    const bool current_event = PrintWorkflowState::is_current_slice_event(evt.generation(), current_generation);
+    // Record actual delivered events before every early rejection. Diagnostics
+    // neither dispatch events nor change the workflow's acceptance decision.
+    observe_slice_completion(evt, current_generation, m_shutting_down ? "shutting_down" :
+        !current_event ? "stale_generation" : m_ignore_event ? "ignored" : "none");
     // Reject before stop(): an old queued cancellation must never stop a newer run.
-    if (m_shutting_down || !PrintWorkflowState::is_current_slice_event(evt.generation(), background_process.automation_generation()))
+    if (m_shutting_down || !current_event)
         return;
     BOOST_LOG_TRIVIAL(debug) << __FUNCTION__ << boost::format(": enter, m_ignore_event %1%, status %2%")%m_ignore_event %evt.status();
     //BBS:ignore cancel event for some special case
@@ -16602,10 +16635,12 @@ void Plater::priv::on_process_completed(SlicingProcessCompletedEvent &evt)
         }
         q->SetDropTarget(new PlaterDropTarget(q));
         auto* selected_plate = partplate_list.get_curr_plate();
+        const auto requested_output = m_pending_slice_output;
         const auto action = m_pending_slice_output.consume(m_slice_request_generation,
             background_process.automation_generation(), selected_plate, partplate_list.get_curr_plate_index(),
             background_process.get_current_plate(), !has_error && !evt.cancelled() && evt.success(),
             selected_plate && selected_plate->has_printable_instances() && selected_plate->is_slice_result_ready_for_print());
+        observe_slice_continuation(action, requested_output);
         if (action == PrintWorkflowState::SliceOutputAction::Print) {
             SimpleEvent print_event(EVT_GLTOOLBAR_PRINT_PLATE);
             on_action_print_plate(print_event);
@@ -16726,10 +16761,12 @@ void Plater::priv::on_action_slice_plate(SimpleEvent& event)
         m_pending_slice_output.native_generation = background_process.automation_generation();
         if (!m_is_slicing) {
             auto* selected_plate = partplate_list.get_curr_plate();
+            const auto requested_output = m_pending_slice_output;
             const auto action = m_pending_slice_output.consume(m_slice_request_generation,
                 background_process.automation_generation(), selected_plate, partplate_list.get_curr_plate_index(),
                 background_process.get_current_plate(), m_reused_finished_slice_result,
                 selected_plate && selected_plate->has_printable_instances() && selected_plate->is_slice_result_ready_for_print());
+            observe_slice_continuation(action, requested_output);
             if (action == PrintWorkflowState::SliceOutputAction::Print) {
                 SimpleEvent print_event(EVT_GLTOOLBAR_PRINT_PLATE);
                 on_action_print_plate(print_event);
@@ -23661,6 +23698,48 @@ void Plater::cancel_pending_print_after_slice()
 {
     if (!p) return;
     p->m_pending_slice_output.clear();
+}
+
+SliceWorkflowObservation Plater::automation_slice_workflow()
+{
+    SliceWorkflowObservation result;
+    if (!p || !p->m_slice_observation_enabled) return result;
+    result.enabled = true;
+    result.request_generation = p->m_slice_request_generation;
+    result.native_generation = p->background_process.automation_generation();
+    result.model_revision = get_active_snapshot_time();
+    result.cancellation_requested = p->background_process.cancellation_requested();
+    result.worker_running = p->background_process.running();
+    switch (p->background_process.automation_outcome()) {
+    case 0: result.outcome = "idle"; break;
+    case 1: result.outcome = "running"; break;
+    case 2: result.outcome = "completed"; break;
+    case 3: result.outcome = "failed"; break;
+    case 4: result.outcome = "cancelled"; break;
+    default: result.outcome = "unknown"; break;
+    }
+    auto* processing = p->background_process.get_current_plate();
+    // Resolve only by equality against currently owned plates. Never dereference
+    // an old pending or processing identity to obtain an index.
+    for (auto* plate : p->partplate_list.get_plate_list())
+        if (plate == processing) result.processing_plate_index = plate->get_index();
+    const auto& pending = p->m_pending_slice_output;
+    result.pending_action = pending.action == PrintWorkflowState::SliceOutputAction::Print ? "print" :
+        pending.action == PrintWorkflowState::SliceOutputAction::Send ? "send" : "none";
+    result.pending_plate_index = pending.plate_index;
+    result.pending_request_generation = pending.request_generation;
+    result.pending_native_generation = pending.native_generation;
+    result.pending_matches_current_plate = pending.plate && pending.plate == p->partplate_list.get_curr_plate();
+    result.pending_matches_processing_plate = pending.plate && pending.plate == processing;
+    result.completion_sequence = p->m_slice_completion_sequence;
+    result.continuation_sequence = p->m_slice_continuation_sequence;
+    result.completion_count = static_cast<size_t>(std::min<uint64_t>(result.completion_sequence, result.event_capacity));
+    result.continuation_count = static_cast<size_t>(std::min<uint64_t>(result.continuation_sequence, result.event_capacity));
+    for (size_t i = 0; i < result.completion_count; ++i)
+        result.completions[i] = p->m_slice_completions[(result.completion_sequence - result.completion_count + i) % result.event_capacity];
+    for (size_t i = 0; i < result.continuation_count; ++i)
+        result.continuations[i] = p->m_slice_continuations[(result.continuation_sequence - result.continuation_count + i) % result.event_capacity];
+    return result;
 }
 
 bool Plater::try_sync_preset_with_connected_printer(int& nozzle_diameter)
