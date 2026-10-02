@@ -1,19 +1,7 @@
 name: MCP focused hosted verification
 
 on:
-  push:
-    paths:
-      - 'automation/**'
-      - 'src/slic3r/GUI/Automation*'
-      - '.github/workflows/mcp-verification.yml'
-      - 'scripts/windows/Stage-Automation.ps1'
-      - 'ui-md3/site/views.js'
-      - 'ui-md3/site/copy.js'
-  pull_request:
-    paths:
-      - 'automation/**'
-      - 'src/slic3r/GUI/Automation*'
-      - '.github/workflows/mcp-verification.yml'
+  workflow_call: {}
   workflow_dispatch: {}
 
 permissions:

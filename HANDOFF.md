@@ -1,4 +1,41 @@
-# Official-source reapplication handoff
+# Bambu Studio handoff
+
+## MCP automation implementation, 2026-10-02
+
+Task: [issue #53](https://github.com/Ding-Ding-Projects/BambuStudio/issues/53), with
+[rolling progress #54](https://github.com/Ding-Ding-Projects/BambuStudio/discussions/54).
+The implementation candidate is `9d73f69f2ac01ec73ec82fbd4a4d9e0fb7b6e518` on
+`feature/mcp-integration`. It is not yet integrated into `main`.
+
+The native bridge is opt-in and exposes current-user named-pipe project, model,
+preset, settings, slicing, export, printer and job operations. A self-contained
+companion under `automation/` provides 19 typed MCP tools through stdio and
+authenticated Streamable HTTP, plus the same JSON CLI service. Native slicing
+uses generation, plate and revision identities. Printer starts use the native
+task manager with a durable intent journal and an immutable staging-file lease.
+Current print-start support is restricted to a verified single nozzle and one
+external-spool filament; AMS and dual-nozzle mappings fail explicitly.
+
+Builds, tests, packaging, installation and application execution for this task
+run only on GitHub-hosted Windows runners. No local product execution occurred.
+The first focused run, `37038981051`, failed compilation on nullable HTTP Host
+handling. This candidate includes that repair. Follow-up focused run
+[`37040259653`](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37040259653)
+and native build
+[`37040261280`](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37040261280)
+were running when this handoff was written. No passing verdict is claimed.
+
+Remaining work: hosted compiler and protocol results; packaged runtime
+verification against the exact released SHA; a strict reader for its encrypted
+evidence; genuine capture review; documentation completion; default-branch
+integration and remote proof. No physical printer operation has been verified.
+See [automation documentation](docs/features/automation/mcp-and-cli.md) for the
+transport, security, setup and operation contract.
+
+## Earlier handoff, retained as historical context
+
+The following record predates this MCP task. Its timestamps, releases and
+verification claims describe that earlier work and are not current MCP evidence.
 
 ## Current state
 
