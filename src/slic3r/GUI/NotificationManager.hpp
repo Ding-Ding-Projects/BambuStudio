@@ -7,6 +7,7 @@
 #include "I18N.hpp"
 #include "Jobs/ProgressIndicator.hpp"
 #include "NotificationHistory.hpp"
+#include "PreviewLayout.hpp"
 
 #include <libslic3r/ObjectID.hpp>
 #include <libslic3r/Technologies.hpp>
@@ -536,6 +537,8 @@ private:
         // Cleared by the manager for notifications it skips so their stale rect
         // does not keep blocking input.
         void                   set_not_rendered() { m_rendered_this_frame = false; }
+        void set_stack_bounds(float bottom, float top) { m_stack_bottom = bottom; m_stack_top = top; m_stack_deferred = false; }
+        bool stack_deferred() const { return m_stack_deferred; }
 		void				   set_hovered() { if (m_state != EState::Finished && m_state != EState::ClosePending && m_state != EState::Hidden && m_state != EState::Unknown) m_state = EState::Hovered; }
 		// set start of notification to now. Used by delayed notifications
 		void                   reset_timer() { m_notification_start = canvas_timestamp_now(); m_state = EState::Shown; }
@@ -549,6 +552,12 @@ private:
         void          set_history(NotificationHistory* history, std::uint64_t id) { m_history = history; m_history_id = id; }
         std::uint64_t history_id() const { return m_history_id; }
 	protected:
+        bool fit_to_stack(float initial_y);
+        float m_stack_bottom{0.0f};
+        float m_stack_top{100000.0f};
+        bool m_stack_deferred{false};
+        PreviewLayout::DeferredTimer m_deferred_timer;
+        float m_wrapped_width{0.0f};
 		// Call after every size change
 		virtual void init();
 		// Calculetes correct size but not se it in imgui!
@@ -955,6 +964,10 @@ private:
 	bool m_is_dark = false;
 	// Notification-centre history (see history()). Loaded from and saved to
 	// m_history_path on every change; a failed save is logged, never thrown.
+    size_t m_notification_page{0};
+    bool m_overflow_rendered{false};
+    ImVec2 m_overflow_min{0.0f, 0.0f};
+    ImVec2 m_overflow_max{0.0f, 0.0f};
 	NotificationHistory   m_history;
 	std::string           m_history_path;
 	void record_history_push(PopNotification* notification);

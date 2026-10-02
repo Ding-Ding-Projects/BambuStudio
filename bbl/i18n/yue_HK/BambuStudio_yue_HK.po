@@ -37617,3 +37617,7 @@ msgstr "備份已損壞或者唔係有效嘅 ZIP 壓縮檔，未有匯入設定�
 #: src/slic3r/GUI/ConfigProfilesDialog.cpp
 msgid "The backup could not be imported."
 msgstr "無法匯入備份。"
+
+#: src/slic3r/GUI/NotificationManager.cpp
+msgid "Next notifications"
+msgstr "下一批通知"
