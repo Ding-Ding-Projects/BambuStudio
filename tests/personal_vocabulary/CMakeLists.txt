@@ -16,3 +16,7 @@ foreach(target personal_vocabulary_tests personal_vocabulary_probe)
 endforeach()
 target_link_libraries(personal_vocabulary_tests PRIVATE test_common)
 add_test(personal_vocabulary_tests personal_vocabulary_tests "${CATCH_EXTRA_ARGS}")
+
+add_test(NAME personal_vocabulary_native_contract
+    COMMAND ${CMAKE_COMMAND} -DBAMBU_SOURCE_DIR=${PROJECT_SOURCE_DIR}
+            -P ${CMAKE_CURRENT_SOURCE_DIR}/native_display_contract.cmake)
