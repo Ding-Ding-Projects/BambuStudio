@@ -68,8 +68,12 @@ test('overflow keeps live notifications accessible and preserves their timers', 
   assert.match(notifications, /wrapped_button\("###notification_history", history_label\)/);
   assert.match(notifications, /topbar\(\)->OnNotificationBell\(event\)/);
   assert.match(notifications, /notification->update_state\(hover \|\| notification->stack_deferred\(\), time_since_render\)/);
-  assert.match(notifications, /m_notification_start \+= std::max<int64_t>\(0, delta\)/);
-  assert.match(notifications, /m_fading_start \+= std::max<int64_t>\(0, delta\)/);
+  assert.match(notifications, /m_deferred_timer\.set_deferred\(item\.deferred, canvas_timestamp_now\(\)\)/);
+  assert.match(notifications, /const int64_t deferred_elapsed = m_deferred_timer\.consume\(now\)/);
+  assert.match(notifications, /m_notification_start \+= deferred_elapsed/);
+  assert.match(notifications, /m_fading_start \+= deferred_elapsed/);
+  assert.doesNotMatch(notifications, /m_(notification_start|fading_start) \+= std::max<int64_t>\(0, delta\)/,
+    'time since the last render must not be added again by each idle update');
   assert.match(notifications, /if \(m_overflow_rendered && point\.x >= m_overflow_min\.x/);
   // Numeric boundary cases call PreviewLayout.hpp directly in
   // tests/preview_layout/geometry_tests.cpp, not a JavaScript copy of its math.

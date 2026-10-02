@@ -7,6 +7,7 @@
 #include "I18N.hpp"
 #include "Jobs/ProgressIndicator.hpp"
 #include "NotificationHistory.hpp"
+#include "PreviewLayout.hpp"
 
 #include <libslic3r/ObjectID.hpp>
 #include <libslic3r/Technologies.hpp>
@@ -555,6 +556,7 @@ private:
         float m_stack_bottom{0.0f};
         float m_stack_top{100000.0f};
         bool m_stack_deferred{false};
+        PreviewLayout::DeferredTimer m_deferred_timer;
         float m_wrapped_width{0.0f};
 		// Call after every size change
 		virtual void init();

@@ -33,5 +33,28 @@ int main()
     require(tips_height(20.0f, 0.0f, 116.0f, 40.0f, 2.0f) == 1.0f, "Tips never request a negative child size");
     require(inline_link_fits(320.0f, 140.0f, 160.0f, 8.0f), "A short title and link share a row");
     require(!inline_link_fits(320.0f, 200.0f, 180.0f, 8.0f), "Long translated title and link need separate rows");
+    DeferredTimer timer;
+    timer.reset(false, 1000);
+    require(timer.consume(1010) == 0, "Visible time never extends notification timers");
+    timer.set_deferred(true, 1020);
+    require(timer.consume(1030) == 10, "The first deferred update accounts from deferral, not the last render");
+    require(timer.consume(1050) == 20, "Repeated idle updates account only for new elapsed time");
+    require(timer.consume(1050) == 0, "A repeated timestamp cannot be counted twice");
+    timer.set_deferred(true, 1060);
+    require(timer.consume(1070) == 20, "A repeated deferred render does not restart the interval");
+    timer.set_deferred(false, 1080);
+    require(timer.consume(1100) == 10, "Resume preserves the final deferred interval and excludes visible time");
+    require(timer.consume(1120) == 0, "Later visible updates do not extend expiry");
+    timer.set_deferred(true, 1200);
+    timer.set_deferred(false, 1240);
+    require(timer.consume(1300) == 40, "An interval without idle updates is counted exactly once");
+    timer.reset(false, 1400);
+    require(timer.consume(1500) == 0, "New notification initialization discards old intervals");
+    timer.set_deferred(true, 1600);
+    std::int64_t extension = 0;
+    for (std::int64_t now : {1610, 1620, 1640, 1680}) extension += timer.consume(now);
+    timer.set_deferred(false, 1700);
+    extension += timer.consume(1700);
+    require(extension == 100, "Idle ticks totaling 100 ms extend expiry by exactly 100 ms");
     std::cout << checks << " preview layout checks passed\n";
 }

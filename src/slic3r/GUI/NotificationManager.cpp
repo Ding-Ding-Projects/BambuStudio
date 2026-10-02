@@ -600,6 +600,7 @@ void NotificationManager::PopNotification::bbl_render_block_notification(GLCanva
 bool NotificationManager::PopNotification::fit_to_stack(float initial_y)
 {
     const auto item = PreviewLayout::stack_item(m_window_height, initial_y, m_stack_bottom, m_stack_top);
+    m_deferred_timer.set_deferred(item.deferred, canvas_timestamp_now());
     m_stack_deferred = item.deferred;
     if (item.deferred) {
         m_top_y = initial_y - GAP_WIDTH;
@@ -808,6 +809,7 @@ void NotificationManager::PopNotification::init()
 	}
 
 	m_notification_start = canvas_timestamp_now();
+    m_deferred_timer.reset(m_stack_deferred, m_notification_start);
 	if (m_state == EState::Unknown || m_state == EState::Hovered)
 		m_state = EState::Shown;
 }
@@ -1314,11 +1316,12 @@ bool NotificationManager::PopNotification::update_state(bool paused, const int64
 	}
 
 	int64_t now = canvas_timestamp_now();
-    if (m_stack_deferred) {
-        // Time spent waiting for a visible slot is not exposure to the user.
-        m_notification_start += std::max<int64_t>(0, delta);
-        m_fading_start += std::max<int64_t>(0, delta);
-    }
+    // delta is measured from the last render, so repeated idle updates overlap.
+    // Consume the independent deferred interval, including its final partial
+    // interval when the next render makes this notification visible again.
+    const int64_t deferred_elapsed = m_deferred_timer.consume(now);
+    m_notification_start += deferred_elapsed;
+    m_fading_start += deferred_elapsed;
 
 	// reset fade opacity for non-closing notifications or hover during fading
 	if (m_state != EState::FadingOut && m_state != EState::ClosePending && m_state != EState::Finished) {

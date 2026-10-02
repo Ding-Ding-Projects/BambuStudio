@@ -2,8 +2,41 @@
 #define slic3r_PreviewLayout_hpp_
 
 #include <algorithm>
+#include <cstdint>
 
 namespace Slic3r { namespace GUI { namespace PreviewLayout {
+// Accumulate each deferred interval exactly once, independently of redraws.
+class DeferredTimer {
+public:
+    void reset(bool deferred, std::int64_t now)
+    {
+        m_deferred = deferred;
+        m_since = now;
+        m_pending = 0;
+    }
+    void set_deferred(bool deferred, std::int64_t now)
+    {
+        if (deferred == m_deferred) return;
+        if (m_deferred) m_pending += std::max<std::int64_t>(0, now - m_since);
+        m_since = now;
+        m_deferred = deferred;
+    }
+    std::int64_t consume(std::int64_t now)
+    {
+        std::int64_t elapsed = m_pending;
+        m_pending = 0;
+        if (m_deferred) {
+            elapsed += std::max<std::int64_t>(0, now - m_since);
+            m_since = std::max(m_since, now);
+        }
+        return elapsed;
+    }
+private:
+    bool m_deferred{false};
+    std::int64_t m_since{0};
+    std::int64_t m_pending{0};
+};
+
 struct Column { float width; float right; };
 inline Column notification_column(float canvas_width, float scale, float desired, float right)
 {
