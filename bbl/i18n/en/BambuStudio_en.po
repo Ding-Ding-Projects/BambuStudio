@@ -27564,3 +27564,15 @@ msgstr "TPU for Ink Dispenser"
 msgctxt "NarrowBlock"
 msgid "TPU-AMS"
 msgstr "TPU for Ink"
+
+#: src/slic3r/GUI/ConfigProfilesDialog.cpp
+msgid "Loading profile history..."
+msgstr "Loading profile history..."
+
+#: src/slic3r/GUI/ConfigProfilesDialog.cpp
+msgid "Loading preferences history..."
+msgstr "Loading preferences history..."
+
+#: src/slic3r/GUI/ConfigProfilesDialog.cpp
+msgid "Restoring preferences snapshot..."
+msgstr "Restoring preferences snapshot..."

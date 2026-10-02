@@ -380,19 +380,36 @@ void ConfigProfilesDialog::update_buttons()
     m_launch_button->Enable(!m_busy && sel != nullptr && !sel->active);
     m_snapshot_button->Enable(!m_busy && sel != nullptr && m_history != nullptr);
     m_history_button->Enable(!m_busy && sel != nullptr && m_history != nullptr);
+    m_prefs_history_button->Enable(!m_busy && PreferencesHistory::manager() != nullptr);
 }
 
 void ConfigProfilesDialog::poll_operation(wxTimerEvent &)
 {
+    if (m_list_future.valid()) {
+        if (m_list_future.wait_for(std::chrono::seconds(0)) != std::future_status::ready)
+            return;
+        m_poll_timer.Stop();
+        m_busy = false;
+        auto done = std::move(m_list_done);
+        try {
+            auto result = m_list_future.get();
+            if (done) done(std::move(result));
+        } catch (const std::exception &ex) {
+            m_status_label->SetLabel(wxString::FromUTF8(ex.what()));
+        }
+        update_buttons();
+        return;
+    }
     if (!m_busy_future.valid() ||
         m_busy_future.wait_for(std::chrono::seconds(0)) != std::future_status::ready)
         return;
     m_poll_timer.Stop();
     m_busy = false;
-    const wxString error = m_busy_future.get();
-    if (m_busy_done)
-        m_busy_done(error);
-    m_busy_done = nullptr;
+    auto done = std::move(m_busy_done);
+    wxString error;
+    try { error = m_busy_future.get(); }
+    catch (const std::exception &ex) { error = wxString::FromUTF8(ex.what()); }
+    if (done) done(error);
     update_buttons();
 }
 
@@ -525,7 +542,18 @@ void ConfigProfilesDialog::on_history(wxCommandEvent &)
     if (m_busy || sel == nullptr || m_history == nullptr)
         return;
     const ProfileRow row = *sel;
-    auto versions = m_history->list_versions(profile_archive_path(row)).get();
+    m_busy = true;
+    m_status_label->SetLabel(_L("Loading profile history..."));
+    m_list_future = m_history->list_versions(profile_archive_path(row));
+    m_list_done = [this, row](ProjectHistoryListResult versions) {
+        show_profile_history(row, std::move(versions));
+    };
+    m_poll_timer.Start(POLL_INTERVAL_MS);
+    update_buttons();
+}
+
+void ConfigProfilesDialog::show_profile_history(ProfileRow row, ProjectHistoryListResult versions)
+{
     if (!versions.ok()) {
         m_status_label->SetLabel(wxString::Format(_L("Profile history could not be read: %s"),
                                                   wxString::FromUTF8(versions.error.message)));
@@ -594,7 +622,20 @@ void ConfigProfilesDialog::on_prefs_history(wxCommandEvent &)
     ProjectHistoryManager *history = PreferencesHistory::manager();
     if (m_busy || history == nullptr)
         return;
-    auto versions = history->list_versions(PreferencesHistory::identity()).get();
+    m_busy = true;
+    m_status_label->SetLabel(_L("Loading preferences history..."));
+    m_list_future = history->list_versions(PreferencesHistory::identity());
+    m_list_done = [this](ProjectHistoryListResult versions) {
+        show_preferences_history(std::move(versions));
+    };
+    m_poll_timer.Start(POLL_INTERVAL_MS);
+    update_buttons();
+}
+
+void ConfigProfilesDialog::show_preferences_history(ProjectHistoryListResult versions)
+{
+    ProjectHistoryManager *history = PreferencesHistory::manager();
+    if (history == nullptr) return;
     if (!versions.ok()) {
         m_status_label->SetLabel(wxString::Format(_L("Preferences history could not be read: %s"),
                                                   wxString::FromUTF8(versions.error.message)));
@@ -626,30 +667,34 @@ void ConfigProfilesDialog::on_prefs_history(wxCommandEvent &)
     // move onto the conf-style name the user actually wants.
     const std::filesystem::path staging_conf =
         profiles_root() / ".staging" / ("prefs-" + version.commit_id.substr(0, 8) + ".3mf");
-    std::error_code ec;
-    std::filesystem::create_directories(staging_conf.parent_path(), ec);
-    std::filesystem::remove(staging_conf, ec);
-    std::filesystem::remove(destination, ec);
-    auto restored = history->restore_version(PreferencesHistory::identity(), version.commit_id, staging_conf).get();
-    if (!restored.ok()) {
-        m_status_label->SetLabel(wxString::Format(_L("The snapshot could not be restored: %s"),
-                                                  wxString::FromUTF8(restored.error.message)));
-        return;
-    }
-    std::filesystem::rename(staging_conf, destination, ec);
-    if (ec) {
-        std::filesystem::copy_file(staging_conf, destination, std::filesystem::copy_options::overwrite_existing, ec);
-        std::error_code cleanup_ec;
-        std::filesystem::remove(staging_conf, cleanup_ec);
+    const auto identity = PreferencesHistory::identity();
+    const std::string commit_id = version.commit_id;
+    m_busy = true;
+    m_status_label->SetLabel(_L("Restoring preferences snapshot..."));
+    m_busy_future = std::async(std::launch::async, [history, identity, commit_id, staging_conf, destination]() -> wxString {
+        std::error_code ec;
+        std::filesystem::create_directories(staging_conf.parent_path(), ec);
+        std::filesystem::remove(staging_conf, ec);
+        std::filesystem::remove(destination, ec);
+        auto restored = history->restore_version(identity, commit_id, staging_conf).get();
+        if (!restored.ok()) return wxString::FromUTF8(restored.error.message);
+        std::filesystem::rename(staging_conf, destination, ec);
         if (ec) {
-            m_status_label->SetLabel(wxString::Format(_L("The snapshot could not be restored: %s"),
-                                                      wxString::FromUTF8(ec.message())));
-            return;
+            std::filesystem::copy_file(staging_conf, destination, std::filesystem::copy_options::overwrite_existing, ec);
+            std::error_code cleanup_ec;
+            std::filesystem::remove(staging_conf, cleanup_ec);
+            if (ec) return wxString::FromUTF8(ec.message());
         }
-    }
-    m_status_label->SetLabel(wxString::Format(
-        _L("Preferences snapshot written to %s. Replace BambuStudio.conf with it while the app is closed to apply."),
-        wxString::FromUTF8(destination.string())));
+        return wxString{};
+    });
+    m_busy_done = [this, destination](wxString error) {
+        m_status_label->SetLabel(error.IsEmpty() ? wxString::Format(
+            _L("Preferences snapshot written to %s. Replace BambuStudio.conf with it while the app is closed to apply."),
+            wxString::FromUTF8(destination.string())) :
+            wxString::Format(_L("The snapshot could not be restored: %s"), error));
+    };
+    m_poll_timer.Start(POLL_INTERVAL_MS);
+    update_buttons();
 }
 
 void ConfigProfilesDialog::on_dpi_changed(const wxRect &)

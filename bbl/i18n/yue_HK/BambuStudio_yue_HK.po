@@ -37514,3 +37514,15 @@ msgstr "墨水機用 TPU"
 msgctxt "NarrowBlock"
 msgid "TPU-AMS"
 msgstr "墨水用 TPU"
+
+#: src/slic3r/GUI/ConfigProfilesDialog.cpp
+msgid "Loading profile history..."
+msgstr "正在載入設定檔歷史..."
+
+#: src/slic3r/GUI/ConfigProfilesDialog.cpp
+msgid "Loading preferences history..."
+msgstr "正在載入偏好設定歷史..."
+
+#: src/slic3r/GUI/ConfigProfilesDialog.cpp
+msgid "Restoring preferences snapshot..."
+msgstr "正在還原偏好設定快照..."
