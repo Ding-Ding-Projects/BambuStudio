@@ -51,6 +51,7 @@ public sealed class BoundaryTests : IDisposable
     {
         var security = new HttpSecurity(HttpSecurity.ValidateEndpoint("http://127.0.0.1:8766"), new string('x', 48));
         Assert.True(security.AcceptHost("127.0.0.1:8766"));
+        Assert.False(security.AcceptHost(null));
         Assert.False(security.AcceptHost("evil.example:8766"));
         Assert.True(security.AcceptOrigin(null));
         Assert.True(security.AcceptOrigin("http://127.0.0.1:8766"));
@@ -118,7 +119,7 @@ public sealed class BoundaryTests : IDisposable
     {
         var bridge = new RecordingBridge([1, 2]); using var jobs = new SliceJobs(Workspace, Path.Combine(root, "missing.exe"));
         var service = new CommandService(Workspace, bridge, jobs);
-        var result = await service.ExecuteAsync("printer_start", new JsonObject { ["printerId"] = "printer", ["requestId"] = "once" });
+        var result = await service.ExecuteAsync("printer_start", new JsonObject { ["printerId"] = "printer", ["requestId"] = "once", ["path"] = Path.Combine(root, "staging.3mf") });
         Assert.Equal("ambiguous_instance", result["error"]!["code"]!.GetValue<string>());
         Assert.Empty(bridge.Calls);
     }
@@ -141,13 +142,34 @@ public sealed class BoundaryTests : IDisposable
     {
         var bridge = new RecordingBridge([1]); using var jobs = new SliceJobs(Workspace, Path.Combine(root, "missing.exe"));
         var service = new CommandService(Workspace, bridge, jobs);
-        var args = new JsonObject { ["printerId"] = "printer", ["requestId"] = "one-intent", ["instanceId"] = 1 };
+        var args = new JsonObject { ["printerId"] = "printer", ["requestId"] = "one-intent", ["instanceId"] = 1, ["path"] = Path.Combine(root, "staging.3mf") };
         var first = await service.ExecuteAsync("printer_start", args);
         var second = await service.ExecuteAsync("printer_start", args);
         Assert.True(first["ok"]!.GetValue<bool>()); Assert.True(second["ok"]!.GetValue<bool>());
         Assert.Equal(1, bridge.PrintStarts);
         Assert.Equal("one-intent", bridge.Calls[0]["requestId"]!.GetValue<string>());
         Assert.Null(bridge.Calls[0]["instanceId"]);
+    }
+
+    [Fact]
+    public async Task ServiceCapabilitiesWorkWithoutNativeInstance()
+    {
+        var bridge = new RecordingBridge([]); using var jobs = new SliceJobs(Workspace, Path.Combine(root, "missing.exe"));
+        var result = await new CommandService(Workspace, bridge, jobs).ExecuteAsync("capabilities", new JsonObject());
+        Assert.True(result["ok"]!.GetValue<bool>());
+        Assert.False(result["result"]!["nativeAttached"]!.GetValue<bool>());
+        Assert.False(result["result"]!["headlessSlicing"]!["available"]!.GetValue<bool>());
+        Assert.Empty(bridge.Calls);
+    }
+
+    [Fact]
+    public async Task PrintStagingCannotEscapeWorkspace()
+    {
+        var bridge = new RecordingBridge([1]); using var jobs = new SliceJobs(Workspace, Path.Combine(root, "missing.exe"));
+        var result = await new CommandService(Workspace, bridge, jobs).ExecuteAsync("printer_start", new JsonObject
+        { ["printerId"] = "printer", ["requestId"] = "once", ["path"] = Path.Combine(root, "..", "outside.3mf") });
+        Assert.Equal("outside_workspace", result["error"]!["code"]!.GetValue<string>());
+        Assert.Empty(bridge.Calls);
     }
 
     [Fact]

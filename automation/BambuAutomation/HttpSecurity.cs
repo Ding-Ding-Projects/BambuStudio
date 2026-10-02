@@ -9,7 +9,7 @@ namespace BambuAutomation;
 public sealed class HttpSecurity(Uri endpoint, string bearer)
 {
     private readonly byte[] expected = SHA256.HashData(Encoding.UTF8.GetBytes(bearer));
-    public bool AcceptHost(string host) => host.Equals(endpoint.Authority, StringComparison.OrdinalIgnoreCase);
+    public bool AcceptHost(string? host) => host is not null && host.Equals(endpoint.Authority, StringComparison.OrdinalIgnoreCase);
     public bool AcceptOrigin(string? origin) => string.IsNullOrEmpty(origin) || origin.Equals(endpoint.GetLeftPart(UriPartial.Authority), StringComparison.OrdinalIgnoreCase);
     public bool AcceptBearer(string? authorization)
     {
