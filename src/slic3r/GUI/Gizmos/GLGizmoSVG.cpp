@@ -1491,22 +1491,29 @@ void GLGizmoSVG::draw_filename()
     ImGuiComboFlags flags   = ImGuiComboFlags_PopupAlignLeft | ImGuiComboFlags_NoPreview;
     ImGui::SameLine();
     ImGuiWrapper::push_combo_style(m_parent.get_scale());
+    constrain_canvas_menu();
     if (ImGui::BeginCombo("##file_options", nullptr, flags)) {
         ScopeGuard combo_sg([]() { ImGui::EndCombo(); });
+        ImGui::PushID(this);
+        const auto visible = m_imgui->menu_search("svg_file_options", {_u8L("Change file"), _u8L("Bake to model"), _u8L("Save as")});
+        ImGui::PopID();
 
         ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, {ImGui::GetStyle().FramePadding.x, 0});
-        draw(get_icon(m_icons, IconType::change_file, IconState::hovered));
-        ImGui::SameLine();
-        if (ImGui::Selectable((_L("Change file") + dots).ToUTF8().data())) {
-            std::string new_path = choose_svg_file();
-            if (!new_path.empty()) {
-                file_changed = true;
-                EmbossShape::SvgFile svg_file_new;
-                svg_file_new.path       = new_path;
-                m_volume_shape.svg_file = svg_file_new; // clear data
+        if (visible[0]) {
+            draw(get_icon(m_icons, IconType::change_file, IconState::hovered));
+            ImGui::SameLine();
+            if (ImGui::Selectable(canvas_menu_label(into_u8(_L("Change file") + dots).c_str()).c_str())) {
+                std::string new_path = choose_svg_file();
+                if (!new_path.empty()) {
+                    file_changed = true;
+                    EmbossShape::SvgFile svg_file_new;
+                    svg_file_new.path       = new_path;
+                    m_volume_shape.svg_file = svg_file_new; // clear data
+                }
+            } else if (ImGui::IsItemHovered()) {
+                tooltip = _L("Change to another .svg file");
             }
-        } else if (ImGui::IsItemHovered()) {
-            tooltip = _L("Change to another .svg file");
+
         }
 
         //std::string forget_path = _u8L("Forget the file path");
@@ -1528,48 +1535,53 @@ void GLGizmoSVG::draw_filename()
         //    }
         //}
 
-        draw(get_icon(m_icons, IconType::bake, IconState::hovered));
-        ImGui::SameLine();
-        // TRN: An menu option to convert the SVG into an unmodifiable model part.
-        if (ImGui::Selectable(_u8L("Bake to model").c_str())) {
-            m_volume->emboss_shape.reset();
-            close();
-        } else if (ImGui::IsItemHovered()) {
-            // TRN: Tooltip for the menu item.
-            tooltip = _L("Bake into model as uneditable part");
-        }
-
-        draw(get_icon(m_icons, IconType::save, IconState::activable));
-        ImGui::SameLine();
-        if (ImGui::Selectable((_L("Save as") + dots).ToUTF8().data())) {
-            wxWindow *                  parent    = nullptr;
-            GUI::FileType               file_type = FT_SVG;
-            wxString                    wildcard  = file_wildcards(file_type);
-            wxString                    dlg_title = _L("Save SVG file");
-            const EmbossShape::SvgFile &svg       = *m_volume_shape.svg_file;
-            wxString                    dlg_file  = from_u8(get_file_name(((!svg.path.empty()) ? svg.path : svg.path_in_3mf))) + ".svg";
-            wxFileDialog                dlg(parent, dlg_title, last_used_directory, dlg_file, wildcard, wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
-            if (dlg.ShowModal() == wxID_OK) {
-                last_used_directory  = dlg.GetDirectory();
-                wxString    out_path = dlg.GetPath();
-                std::string path{out_path.c_str()};
-                // Slic3r::save(*m_volume_shape.svg_file.image, path);
-
-                std::ofstream stream(path);
-                if (stream.is_open()) {
-                    stream << *svg.file_data;
-
-                    // change source file
-                    m_filename_preview.clear();
-                    m_volume_shape.svg_file->path = path;
-                    m_volume_shape.svg_file->path_in_3mf.clear();               // possible change name
-                    m_volume->emboss_shape->svg_file = m_volume_shape.svg_file; // copy - write changes into volume
-                } else {
-                    BOOST_LOG_TRIVIAL(error) << "Opening file: \"" << path << "\" Failed";
-                }
+        if (visible[1]) {
+            draw(get_icon(m_icons, IconType::bake, IconState::hovered));
+            ImGui::SameLine();
+            // TRN: An menu option to convert the SVG into an unmodifiable model part.
+            if (ImGui::Selectable(canvas_menu_label(_u8L("Bake to model").c_str()).c_str())) {
+                m_volume->emboss_shape.reset();
+                close();
+            } else if (ImGui::IsItemHovered()) {
+                // TRN: Tooltip for the menu item.
+                tooltip = _L("Bake into model as uneditable part");
             }
-        } else if (ImGui::IsItemHovered()) {
-            tooltip = _L("Save as '.svg' file");
+
+        }
+        if (visible[2]) {
+            draw(get_icon(m_icons, IconType::save, IconState::activable));
+            ImGui::SameLine();
+            if (ImGui::Selectable(canvas_menu_label(into_u8(_L("Save as") + dots).c_str()).c_str())) {
+                wxWindow *                  parent    = nullptr;
+                GUI::FileType               file_type = FT_SVG;
+                wxString                    wildcard  = file_wildcards(file_type);
+                wxString                    dlg_title = _L("Save SVG file");
+                const EmbossShape::SvgFile &svg       = *m_volume_shape.svg_file;
+                wxString                    dlg_file  = from_u8(get_file_name(((!svg.path.empty()) ? svg.path : svg.path_in_3mf))) + ".svg";
+                wxFileDialog                dlg(parent, dlg_title, last_used_directory, dlg_file, wildcard, wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
+                if (dlg.ShowModal() == wxID_OK) {
+                    last_used_directory  = dlg.GetDirectory();
+                    wxString    out_path = dlg.GetPath();
+                    std::string path{out_path.c_str()};
+                    // Slic3r::save(*m_volume_shape.svg_file.image, path);
+
+                    std::ofstream stream(path);
+                    if (stream.is_open()) {
+                        stream << *svg.file_data;
+
+                        // change source file
+                        m_filename_preview.clear();
+                        m_volume_shape.svg_file->path = path;
+                        m_volume_shape.svg_file->path_in_3mf.clear();               // possible change name
+                        m_volume->emboss_shape->svg_file = m_volume_shape.svg_file; // copy - write changes into volume
+                    } else {
+                        BOOST_LOG_TRIVIAL(error) << "Opening file: \"" << path << "\" Failed";
+                    }
+                }
+            } else if (ImGui::IsItemHovered()) {
+                tooltip = _L("Save as '.svg' file");
+            }
+
         }
 
         // draw(get_icon(m_icons, IconType::save));
