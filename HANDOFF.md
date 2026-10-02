@@ -1,5 +1,24 @@
 # Bambu Studio handoff
 
+## Active interface extension, 2026-10-02
+
+The user extended this task to native transitions and practical asynchronous
+work, complete Material Design 3 context menus and search/regex builders,
+clipped or hidden text, unexpected slicing cancellation, adjacent Slice and Print
+and Slice and Send actions, and local personal-vocabulary JSON controls.
+The combined checkpoint `cb7e28b8547b9714450b6bd5c2ddb7aa8698c610` is pushed
+on `feature/ui-motion-responsiveness`. It is incomplete and not runtime verified.
+Isolated Astra implementation lanes own shared controls and personal vocabulary,
+canvas menus, and slicing actions. Personal vocabulary must remain local,
+validate a bounded versioned schema, restore original wording when cleared,
+and never enter logs or exports.
+
+Managed verification for MCP source `ce61d22e390e4bf69938730434f1e494fa34f7a9`
+passed 27 checks with zero failures or skips at `2026-10-02T19:31:19Z` in
+[run 37054493889](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37054493889).
+Native compilation and installed runtime verification remain pending.
+All product execution continues exclusively on hosted Windows runners.
+
 ## MCP automation implementation, 2026-10-02
 
 Task: [issue #53](https://github.com/Ding-Ding-Projects/BambuStudio/issues/53), with

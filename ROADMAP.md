@@ -10,6 +10,16 @@
 - [ ] Verify the exact installed release and record physical-printer limitations separately.
 - [ ] Verify explicit native plate selection, model STL export, completed slice references, concurrent clients, and running-job cancellation.
 
+## Native interface completeness and slicing actions
+
+- [ ] Add local personal-vocabulary JSON import, replace and clear with bounded validation, local persistence and original-wording restoration.
+- [ ] Provide search and an anchored regex builder in every reachable context menu, nested menu and chooser.
+- [ ] Repair empty search states, per-control query isolation, keyboard focus and Escape handling.
+- [ ] Verify hidden and clipped text at normal/minimum dimensions across language, theme and display-scale combinations.
+- [ ] Diagnose unintended slicing cancellation while preserving explicit cancellation and stale-result protection.
+- [ ] Add Slice and Print and Slice and Send beside Print, bound to a successful current plate result.
+- [ ] Complete independent Astra review and hosted native interaction evidence.
+
 ## Native motion and responsiveness
 
 - [ ] Extend shared native transitions with real elapsed-time animation and reduced-motion support.
