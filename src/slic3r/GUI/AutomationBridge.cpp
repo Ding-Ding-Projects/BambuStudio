@@ -47,7 +47,7 @@ struct AutomationBridge::State : std::enable_shared_from_this<AutomationBridge::
     std::thread worker;
     std::vector<std::filesystem::path> roots;
     std::map<std::string, Json> starts;
-    struct Job { std::string kind; int task_id{-1}; int plate{-1}; size_t revision{0}; bool cancelled{false}; };
+    struct Job { std::string kind; int task_id{-1}; int plate{-1}; size_t revision{0}; bool cancelled{false}; uint64_t generation{0}; uint64_t request_generation{0}; bool reused{false}; };
     std::map<std::string, Job> jobs;
     std::mutex pending_mutex;
     std::vector<std::function<void()>> wake_pending;
@@ -70,9 +70,12 @@ struct AutomationBridge::State : std::enable_shared_from_this<AutomationBridge::
         std::filesystem::path walk;
         for (const auto& component : p) {
             walk /= component;
+            if(!walk.has_root_directory()) continue;
+            if(!walk.has_root_directory()) continue;
             DWORD attr = GetFileAttributesW(walk.c_str());
             if (attr != INVALID_FILE_ATTRIBUTES && (attr & FILE_ATTRIBUTE_REPARSE_POINT))
-                throw Rejected("path_denied","Reparse points are prohibited");            if(attr != INVALID_FILE_ATTRIBUTES && (attr & FILE_ATTRIBUTE_DIRECTORY)) {
+                throw Rejected("path_denied","Reparse points are prohibited");
+            if(attr != INVALID_FILE_ATTRIBUTES && (attr & FILE_ATTRIBUTE_DIRECTORY)) {
                 HANDLE lease=CreateFileW(walk.c_str(),FILE_READ_ATTRIBUTES,FILE_SHARE_READ|FILE_SHARE_WRITE,nullptr,OPEN_EXISTING,FILE_FLAG_BACKUP_SEMANTICS|FILE_FLAG_OPEN_REPARSE_POINT,nullptr);
                 BY_HANDLE_FILE_INFORMATION info{};
                 if(lease==INVALID_HANDLE_VALUE || !GetFileInformationByHandle(lease,&info) || (info.dwFileAttributes&FILE_ATTRIBUTE_REPARSE_POINT)) {
@@ -92,7 +95,7 @@ struct AutomationBridge::State : std::enable_shared_from_this<AutomationBridge::
         if (!allowed) throw Rejected("path_denied","Path is outside configured roots");
         if (output) {
             if (!std::filesystem::is_directory(p.parent_path())) throw Rejected("path_denied","Output parent must exist");
-            // Never replace an existing file, even when a caller asks for overwrite.
+            // Replacement requires explicit consent and is published atomically.
             if (std::filesystem::exists(p) && !args.value("overwrite",false)) throw Rejected("already_exists","Explicit overwrite=true is required");
         } else if (!std::filesystem::is_regular_file(p)) throw Rejected("not_found","Input file does not exist");
         return p;
@@ -114,6 +117,45 @@ struct AutomationBridge::State : std::enable_shared_from_this<AutomationBridge::
         throw Rejected("unsupported_platform","Named pipe automation requires Windows");
 #endif
     }
+    void record_print_intent(const std::string& request, const std::string& printer_id) {
+#ifdef _WIN32
+        // Intent is durable before dispatch. A restarted process never blindly replays it.
+        const auto file=std::filesystem::u8path(Slic3r::data_dir())/"automation-print-intents.jsonl";
+        HANDLE token=nullptr;
+        if(!OpenProcessToken(GetCurrentProcess(),TOKEN_QUERY,&token)) throw Rejected("intent_unavailable","Cannot secure print intent journal");
+        DWORD size=0; GetTokenInformation(token,TokenUser,nullptr,0,&size); std::vector<unsigned char> user(size);
+        if(!GetTokenInformation(token,TokenUser,user.data(),size,&size)) {CloseHandle(token);throw Rejected("intent_unavailable","Cannot secure print intent journal");}
+        LPWSTR sid=nullptr; BOOL converted=ConvertSidToStringSidW(reinterpret_cast<TOKEN_USER*>(user.data())->User.Sid,&sid); CloseHandle(token);
+        if(!converted) throw Rejected("intent_unavailable","Cannot secure print intent journal");
+        std::wstring acl=L"D:P(A;;GA;;;"+std::wstring(sid)+L")"; LocalFree(sid);
+        PSECURITY_DESCRIPTOR sd=nullptr;
+        if(!ConvertStringSecurityDescriptorToSecurityDescriptorW(acl.c_str(),SDDL_REVISION_1,&sd,nullptr)) throw Rejected("intent_unavailable","Cannot secure print intent journal");
+        SECURITY_ATTRIBUTES sa{sizeof(sa),sd,FALSE};
+        HANDLE h=CreateFileW(file.c_str(),GENERIC_READ|GENERIC_WRITE,0,&sa,OPEN_ALWAYS,FILE_ATTRIBUTE_NORMAL|FILE_FLAG_OPEN_REPARSE_POINT,nullptr);
+        bool secured=h!=INVALID_HANDLE_VALUE && SetFileSecurityW(file.c_str(),DACL_SECURITY_INFORMATION|PROTECTED_DACL_SECURITY_INFORMATION,sd);
+        LocalFree(sd);
+        if(!secured) {if(h!=INVALID_HANDLE_VALUE) CloseHandle(h);throw Rejected("intent_unavailable","Print intent journal is unavailable");}
+        struct Close {HANDLE h;~Close(){CloseHandle(h);}} close{h};
+        BY_HANDLE_FILE_INFORMATION info{}; LARGE_INTEGER length{};
+        if(!GetFileInformationByHandle(h,&info) || (info.dwFileAttributes&FILE_ATTRIBUTE_REPARSE_POINT) || !GetFileSizeEx(h,&length) || length.QuadPart>max_message)
+            throw Rejected("intent_unavailable","Print intent journal is invalid or full");
+        std::string contents(static_cast<size_t>(length.QuadPart),'\0'); DWORD count=0;
+        if(!contents.empty() && (!ReadFile(h,&contents[0],static_cast<DWORD>(contents.size()),&count,nullptr) || count!=contents.size())) throw Rejected("intent_unavailable","Cannot read print intent journal");
+        size_t pos=0; unsigned records=0;
+        while(pos<contents.size()) {
+            auto end=contents.find('\n',pos); if(end==std::string::npos) throw Rejected("intent_unavailable","Incomplete print intent journal; inspect printer state before repair");
+            Json entry; try {entry=Json::parse(contents.substr(pos,end-pos));} catch(...) {throw Rejected("intent_unavailable","Invalid print intent journal");}
+            if(!entry.is_object() || !entry.contains("requestId") || !entry["requestId"].is_string()) throw Rejected("intent_unavailable","Invalid print intent record");
+            if(entry["requestId"]==request) throw Rejected("submission_unknown","This requestId was recorded by an earlier native process; inspect printer state and do not automatically replay");
+            if(++records>=1024) throw Rejected("intent_full","Print intent journal is full; resolve old intents before reuse");
+            pos=end+1;
+        }
+        auto line=Json({{"requestId",request},{"printerId",printer_id},{"intentOnly",true}}).dump()+"\n";
+        if(contents.size()+line.size()>max_message || !WriteFile(h,line.data(),static_cast<DWORD>(line.size()),&count,nullptr) || count!=line.size() || !FlushFileBuffers(h)) throw Rejected("intent_unavailable","Cannot durably record print intent; no print was dispatched");
+#else
+        throw Rejected("unsupported_platform","Printer automation requires Windows");
+#endif
+    }
     MachineObject* printer(const Json& a) {
         auto id = required(a,"printerId");
         auto dm = app.getDeviceManager();
@@ -131,7 +173,7 @@ struct AutomationBridge::State : std::enable_shared_from_this<AutomationBridge::
 #endif
         auto p = app.plater();
         if (!p || p->is_loading_project()) throw Rejected("not_ready","Workspace is unavailable or loading");
-        if (op == "capabilities") return {{"operations",Json::array({"capabilities","project_inspect","project_new","project_open","project_save","model_import","presets_list","settings_get","settings_update","slice_start","export_file","printer_list","printer_status","printer_start","printer_pause","printer_resume","printer_cancel","job_status","job_cancel"})},{"maxMessageBytes",max_message},{"overwrite",true},{"enable","BAMBU_AUTOMATION=1"},{"requestIdScope","process lifetime; do not replay printer_start after process restart"},{"printerStartRestrictions","one known reliable nozzle, one filament, external spool, matching printer model and diameter; AMS and dual nozzle are rejected"}};
+        if (op == "capabilities") return {{"operations",Json::array({"capabilities","project_inspect","project_new","project_open","project_save","model_import","presets_list","settings_get","settings_update","slice_start","export_file","printer_list","printer_status","printer_start","printer_pause","printer_resume","printer_cancel","job_status","job_cancel"})},{"maxMessageBytes",max_message},{"overwrite",true},{"enable","BAMBU_AUTOMATION=1"},{"requestIdScope","process result cache plus durable intent journal; earlier-process requests return submission_unknown"},{"printerStartRestrictions","one known reliable nozzle, one filament, external spool, matching printer model and diameter; AMS and dual nozzle are rejected"}};
         if (op == "project_inspect") {
             Json objects=Json::array(), plates=Json::array();
             for (size_t i=0;i<p->model().objects.size();++i) {
@@ -204,8 +246,16 @@ struct AutomationBridge::State : std::enable_shared_from_this<AutomationBridge::
         if (op=="slice_start") {
             if(p->is_background_process_slicing() || p->model().objects.empty()) throw Rejected("not_ready","Workspace is empty or already slicing");
             if(jobs.size()>=128) throw Rejected("job_limit","Automation job inventory is full; restart only after resolving existing jobs");
-            auto id="slice-"+std::to_string(++next_job); Job job; job.kind="slice"; job.plate=p->get_partplate_list().get_curr_plate_index(); job.revision=p->get_active_snapshot_time(); jobs[id]=job;
-            p->reslice(); return {{"jobId",id},{"state","requested"}};
+            auto full_config=app.preset_bundle ? app.preset_bundle->full_config() : *p->config();
+            auto post=full_config.option<ConfigOptionStrings>("post_process");
+            if(post && std::any_of(post->values.begin(),post->values.end(),[](const std::string& command){return !command.empty();})) throw Rejected("unsafe_configuration","Remove post-processing commands before automated slicing");
+            auto id="slice-"+std::to_string(++next_job); Job job; job.kind="slice"; job.plate=p->get_partplate_list().get_curr_plate_index(); job.revision=p->get_active_snapshot_time();
+            auto before=p->background_process().automation_generation();
+            p->reslice();
+            job.generation=p->background_process().automation_generation(); job.request_generation=p->automation_slice_request_generation();
+            job.reused=job.generation==before && p->get_partplate_list().get_curr_plate()->is_slice_result_ready_for_print();
+            if(!job.reused && p->background_process().automation_outcome()!=1) throw Rejected("slice_not_started","Native slice request did not start processing");
+            jobs[id]=job; return {{"jobId",id},{"state",job.reused?"completed":"running"},{"reused",job.reused},{"generation",job.generation},{"plate",job.plate},{"revision",job.revision}};
         }
         if (op=="printer_list") {
             Json list=Json::array(); auto dm=app.getDeviceManager(); if(dm) for(auto& item:dm->get_farm_machine_list()) if(item.second) list.push_back(machine_json(item.second)); return {{"printers",list}};
@@ -226,7 +276,7 @@ struct AutomationBridge::State : std::enable_shared_from_this<AutomationBridge::
             }
             if(starts.size()>=64 || jobs.size()>=128 || request.size()>128) throw Rejected("job_limit","Print request inventory is full or requestId exceeds 128 bytes");
             auto m=printer(a); auto plate=p->get_partplate_list().get_curr_plate();
-            if(!m->is_connected() || m->is_in_printing() || !plate->is_slice_result_ready_for_print()) throw Rejected("not_ready","Printer must be online and idle and the active plate sliced");
+            if(!m->is_connected() || m->is_in_printing() || (m->print_status!="IDLE" && m->print_status!="FINISH") || !plate->is_slice_result_ready_for_print()) throw Rejected("not_ready","Printer must be online and idle and the active plate sliced");
             // Mapping must be prepared by the same native UI flow that validates nozzle and AMS compatibility.
             if(!a.contains("nozzleMapping") || !a["nozzleMapping"].is_object() || !a.contains("amsMapping") || !a["amsMapping"].is_array()) throw Rejected("invalid_arguments","nozzleMapping object and amsMapping integer array are required");
             int plate_idx=plate->get_index();
@@ -257,6 +307,7 @@ struct AutomationBridge::State : std::enable_shared_from_this<AutomationBridge::
             params.task_use_ams=a.value("useAms",false); params.task_bed_leveling=a.value("bedLeveling",true);
             params.use_ssl_for_ftp=true; params.use_ssl_for_mqtt=true; params.print_type="from_plater";
             TaskSettings settings; settings.max_sending_at_same_time=1; settings.sending_interval=0;
+            record_print_intent(request,m->get_dev_id());
             int rc=manager->start_print({params},&settings); if(rc!=0) throw Rejected("print_start_failed","Native scheduler rejected print submission");
             auto id="print-"+std::to_string(++next_job); Job job; job.kind="print";
             for(auto& item:manager->get_local_task_list()) if(item.second && item.second->get_params().filename==params.filename) {job.task_id=item.first;break;}
@@ -267,9 +318,14 @@ struct AutomationBridge::State : std::enable_shared_from_this<AutomationBridge::
             auto id=required(a,"jobId"); auto it=jobs.find(id); if(it==jobs.end()) throw Rejected("job_not_found","Unknown automation job");
             auto& job=it->second;
             if(job.kind=="slice") {
-                if(job.plate!=p->get_partplate_list().get_curr_plate_index() || job.revision!=p->get_active_snapshot_time()) throw Rejected("stale_job","Workspace or active plate changed since slice submission");
-                if(op=="job_cancel") throw Rejected("cancellation_not_safe","Native slicing has no operation ID; use the application cancel control to avoid cancelling a newer user slice");
-                return {{"state",p->is_background_process_slicing()?"running":p->get_partplate_list().get_curr_plate()->is_slice_result_ready_for_print()?"result_available":"not_ready"},{"completionVerified",false}};
+                if(job.cancelled) return {{"state","cancelled"},{"completionVerified",true}};
+                if(job.plate!=p->get_partplate_list().get_curr_plate_index() || job.revision!=p->get_active_snapshot_time() || job.generation!=p->background_process().automation_generation() || job.request_generation!=p->automation_slice_request_generation()) throw Rejected("stale_job","Workspace, active plate or slicing generation changed since submission");
+                int outcome=p->background_process().automation_outcome();
+                if(op=="job_cancel" && !job.reused && outcome==1) {
+                    p->background_process().stop(); job.cancelled=true; return {{"state","cancelled"},{"completionVerified",true}};
+                }
+                bool ready=p->get_partplate_list().get_curr_plate()->is_slice_result_ready_for_print();
+                return {{"state",job.reused || (outcome==2 && ready)?"completed":outcome==3?"failed":outcome==4?"cancelled":outcome==1 || (outcome==2 && !ready)?"running":"not_ready"},{"completionVerified",job.reused || outcome==2 || outcome==3 || outcome==4},{"generation",job.generation},{"plate",job.plate},{"revision",job.revision}};
             }
             auto manager=app.getTaskManager(); if(!manager) throw Rejected("not_ready","Print scheduler unavailable");
             if(job.task_id<0) throw Rejected("submission_unknown","Print was submitted but scheduler task identity is unavailable; inspect printer state and do not resubmit");
@@ -307,11 +363,11 @@ struct AutomationBridge::State : std::enable_shared_from_this<AutomationBridge::
         return stopping?failure(id,"shutting_down","Application is closing"):pending->response;
     }
 #ifdef _WIN32
-    bool io(HANDLE h, bool write, void* data, DWORD bytes, DWORD& count) {
+    bool io(HANDLE h, bool write, void* data, DWORD bytes, DWORD& count, DWORD timeout_ms=30000) {
         OVERLAPPED ov{}; ov.hEvent=CreateEventW(nullptr,TRUE,FALSE,nullptr); if(!ov.hEvent) return false;
         BOOL ok=write?WriteFile(h,data,bytes,&count,&ov):ReadFile(h,data,bytes,&count,&ov);
         if(!ok && GetLastError()==ERROR_IO_PENDING) {
-            DWORD waited=WaitForSingleObject(ov.hEvent,30000);
+            DWORD waited=WaitForSingleObject(ov.hEvent,timeout_ms);
             if(waited!=WAIT_OBJECT_0 || stopping) {CancelIoEx(h,&ov); WaitForSingleObject(ov.hEvent,INFINITE); ok=FALSE;}
             else ok=GetOverlappedResult(h,&ov,&count,FALSE);
         }
@@ -337,13 +393,23 @@ struct AutomationBridge::State : std::enable_shared_from_this<AutomationBridge::
             if(!connected) {CancelIoEx(h,&ov); if(error==ERROR_IO_PENDING) WaitForSingleObject(ov.hEvent,INFINITE);}
             CloseHandle(ov.hEvent);
             std::string line;
+            auto deadline=std::chrono::steady_clock::now()+std::chrono::seconds(30);
             while(connected && !stopping) {
-                char c; DWORD count=0; if(!io(h,false,&c,1,count) || count!=1) break;
-                if(c!='\n') {line+=c; if(line.size()>max_message) break; continue;}
-                Json reply;
-                try { reply=dispatch(Json::parse(line)); } catch(...) { reply=failure("","invalid_json","Invalid UTF-8 JSON request"); }
-                line.clear(); auto output=reply.dump()+"\n"; if(output.size()>max_message) output=failure(reply.value("id",std::string()),"response_too_large","Response exceeds protocol limit").dump()+"\n";
-                size_t offset=0; while(offset<output.size()) {if(!io(h,true,&output[offset],static_cast<DWORD>(output.size()-offset),count) || count==0) {connected=FALSE;break;} offset+=count;}
+                auto remaining=std::chrono::duration_cast<std::chrono::milliseconds>(deadline-std::chrono::steady_clock::now()).count();
+                if(remaining<=0) break;
+                char buffer[8192]; DWORD count=0;
+                if(!io(h,false,buffer,sizeof(buffer),count,static_cast<DWORD>(remaining)) || count==0) break;
+                for(DWORD i=0;i<count && connected && !stopping;++i) {
+                    char c=buffer[i];
+                    if(c!='\n') {line+=c;if(line.size()>max_message) {connected=FALSE;break;}continue;}
+                    Json reply;
+                    try { reply=dispatch(Json::parse(line)); } catch(...) { reply=failure("","invalid_json","Invalid UTF-8 JSON request"); }
+                    line.clear(); auto output=reply.dump()+"\n";
+                    if(output.size()>max_message) output=failure(reply.value("id",std::string()),"response_too_large","Response exceeds protocol limit").dump()+"\n";
+                    size_t offset=0;
+                    while(offset<output.size()) {DWORD written=0;if(!io(h,true,&output[offset],static_cast<DWORD>(output.size()-offset),written) || written==0) {connected=FALSE;break;} offset+=written;}
+                    deadline=std::chrono::steady_clock::now()+std::chrono::seconds(30);
+                }
             }
             {std::lock_guard<std::mutex> lock(pipe_mutex); CancelIoEx(h,nullptr); DisconnectNamedPipe(h); CloseHandle(h); pipe=INVALID_HANDLE_VALUE;}
         }

@@ -334,6 +334,7 @@ void BackgroundSlicingProcess::thread_proc()
 		//BBS: internal cancel
 		m_internal_cancelled = false;
 		const unsigned int task_gen = m_task_generation;
+        const uint64_t automation_gen = m_automation_generation.load();
 		lck.unlock();
 		std::exception_ptr exception;
 #ifdef _WIN32
@@ -353,6 +354,8 @@ void BackgroundSlicingProcess::thread_proc()
 			return;
 		}
 		m_state = m_print->canceled() ? STATE_CANCELED : STATE_FINISHED;
+        if (automation_gen == m_automation_generation.load())
+            m_automation_outcome = m_state == STATE_CANCELED ? 4 : exception ? 3 : 2;
 		BOOST_LOG_TRIVIAL(debug) << __FUNCTION__ << boost::format(": process finished, state %1%, print cancel_status %2%")%m_state %m_print->cancel_status();
 		if (m_print->cancel_status() != Print::CANCELED_INTERNAL) {
 			// Only post the canceled event, if canceled by user.
@@ -546,7 +549,9 @@ bool BackgroundSlicingProcess::start()
 		return false;
 	if (! this->idle())
 		throw Slic3r::RuntimeError("Cannot start a background task, the worker thread is not idle.");
-	m_state = STATE_STARTED;
+	++m_automation_generation;
+    m_automation_outcome = 1;
+    m_state = STATE_STARTED;
 	m_print->set_cancel_callback([this](){ this->stop_internal(); });
 	lck.unlock();
 	m_condition.notify_one();
@@ -567,6 +572,8 @@ bool BackgroundSlicingProcess::stop()
 	}
 //	assert(this->running());
 	if (m_state == STATE_STARTED || m_state == STATE_RUNNING) {
+        ++m_automation_generation;
+        m_automation_outcome = 4;
 		// Cancel any task planned by the background thread on UI thread.
 		cancel_ui_task(m_ui_task);
 		m_print->cancel();
@@ -606,6 +613,8 @@ bool BackgroundSlicingProcess::stop()
 bool BackgroundSlicingProcess::reset()
 {
 	bool stopped = this->stop();
+    ++m_automation_generation;
+    m_automation_outcome = 0;
 	this->reset_export();
 	//BBS: don't clear print for print is not owned by background slicing process anymore
 	//do it in the part_plate
@@ -627,6 +636,8 @@ void BackgroundSlicingProcess::stop_internal()
 	std::unique_lock<std::mutex> lck(m_mutex);
 	assert(m_state == STATE_STARTED || m_state == STATE_RUNNING || m_state == STATE_FINISHED || m_state == STATE_CANCELED);
 	if (m_state == STATE_STARTED || m_state == STATE_RUNNING) {
+        ++m_automation_generation;
+        m_automation_outcome = 4;
 		// Cancel any task planned by the background thread on UI thread.
 		cancel_ui_task(m_ui_task);
 		// At this point of time the worker thread may be blocking on m_print->state_mutex().
@@ -734,6 +745,10 @@ Print::ApplyStatus BackgroundSlicingProcess::apply(const Model &model, const Dyn
 	DynamicPrintConfig new_config = config;
 	new_config.apply(*m_current_plate->config());
 	Print::ApplyStatus invalidated = m_print->apply(model, new_config);
+    if ((invalidated & PrintBase::APPLY_STATUS_INVALIDATED) != 0) {
+        ++m_automation_generation;
+        m_automation_outcome = 0;
+    }
 	if ((invalidated & PrintBase::APPLY_STATUS_INVALIDATED) != 0 && m_print->technology() == ptFFF &&
 		!m_fff_print->is_step_done(psGCodeExport)) {
 		// Some FFF status was invalidated, and the G-code was not exported yet.
