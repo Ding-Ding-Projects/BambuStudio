@@ -43,43 +43,39 @@ test('the notification column in Preview stops left of the expanded legend dock'
 
   const toast = body(notifications, 'void NotificationManager::PopNotification::render(');
   assert.doesNotMatch(toast, /\(void\) right_margin/, 'a toast no longer throws the right margin away');
-  assert.match(toast, /const bool  beside_preview = right_margin > corner_margin;/);
-  assert.match(toast, /const float right_gap = std::max\(corner_margin, std::min\(beside_preview \? right_margin : corner_margin, cnv_w - wrap_w - corner_margin\)\);/,
-    'the gap is clamped so the card stays on the canvas');
+  assert.match(toast, /const bool beside_preview = right_margin > 16\.0f \* scale;/);
+  assert.match(toast, /PreviewLayout::notification_column\(cnv_w, scale, 560\.0f \* scale, right_margin\)/,
+    'the toast uses the production bounded-column helper');
+  assert.match(toast, /m_window_width = column\.width;[\s\S]*?count_lines\(\);[\s\S]*?set_next_window_size\(imgui\);[\s\S]*?fit_to_stack\(initial_y\)/,
+    'the final width determines text wrapping before stack placement');
   assert.match(toast, /ImVec2 win_pos\(cnv_w - right_gap,/, 'the toast is anchored at that gap');
   assert.match(toast, /if \(beside_preview && !ImGui::IsPopupOpen\("", ImGuiPopupFlags_AnyPopup\)\)\s*ImGui::BringWindowToDisplayFront\(ImGui::GetCurrentWindow\(\)\);\s*imgui\.end\(\);/,
     'in Preview a toast stays in front of the G-code window and, on a narrow canvas, of the dock, but never of an open popup');
 
   const banner = body(notifications, 'void NotificationManager::PopNotification::bbl_render_block_notification(');
-  assert.match(banner, /right_gap = std::min\(right_gap, std::max\(0\.0f, \(float\) cnv_size\.get_width\(\) - m_window_width\)\);/,
-    'an error banner stays on the canvas too');
-  assert.match(slicing, /const float widest_gap = std::max\(0\.0f, \(float\)cnv_size\.get_width\(\) - m_window_width\);\s*const bool  over_dock  = right_gap > widest_gap;\s*right_gap = std::min\(right_gap, widest_gap\);/,
-    'the slicing card stays on the canvas');
+  assert.match(banner, /PreviewLayout::notification_column\(float\(cnv_size\.get_width\(\)\)/,
+    'error banners use the same canvas bounds');
+  assert.match(slicing, /PreviewLayout::notification_column\(float\(cnv_size\.get_width\(\)\)/,
+    'the slicing card uses the production bounded-column helper');
+  assert.match(slicing, /const bool over_dock = column\.right < right_margin;/);
   assert.match(slicing, /if \(over_dock && !ImGui::IsPopupOpen\("", ImGuiPopupFlags_AnyPopup\)\)\s*ImGui::BringWindowToDisplayFront\(ImGui::GetCurrentWindow\(\)\);\s*imgui\.end\(\);/,
     'and is lifted in front when it cannot sit beside the dock');
 });
 
-test('the toast geometry keeps every card on the canvas and clear of the dock when there is room', () => {
-  // The same arithmetic as PopNotification::render, at 100% (line height 15).
-  const place = (cnvW, rightMargin) => {
-    const corner = 16;
-    const wrapW = 15 * 25;
-    const beside = rightMargin > corner;
-    const gap = Math.max(corner, Math.min(beside ? rightMargin : corner, cnvW - wrapW - corner));
-    const width = Math.min(Math.min(560, 0.92 * cnvW), Math.max(cnvW - gap - corner, wrapW));
-    return { left: cnvW - gap - width, right: cnvW - gap, width };
-  };
-  const dockMargin = 124 + 344 + 16; // slider column, dock, corner gap
-  const wide = place(1315, dockMargin); // the reported screen: sidebar shown, 1919 px window
-  assert.equal(wide.right, 1315 - dockMargin, 'the toast ends 16 px left of the dock');
-  assert.ok(wide.right <= 1315 - 124 - 344 - 16 && wide.width === 560);
-  for (const cnvW of [1315, 859, 766, 600, 440])
-    assert.ok(place(cnvW, dockMargin).left >= 0, `a toast stays on a ${cnvW} px Preview canvas`);
-  assert.equal(place(1315, 124).right, 1315 - 124, 'with the dock folded the toast clears the layer slider column');
-  assert.deepEqual(place(1300, 10), { left: 1300 - 16 - 560, right: 1300 - 16, width: 560 }, 'Prepare keeps its 16 px corner anchor');
+test('overflow keeps live notifications accessible and preserves their timers', () => {
+  assert.match(notifications, /notification->set_stack_bounds\(stack_bottom, stack_top\)/);
+  assert.match(notifications, /wrapped_button\("###next_notifications", next\)/);
+  assert.match(notifications, /wrapped_button\("###notification_history", history_label\)/);
+  assert.match(notifications, /topbar\(\)->OnNotificationBell\(event\)/);
+  assert.match(notifications, /notification->update_state\(hover \|\| notification->stack_deferred\(\), time_since_render\)/);
+  assert.match(notifications, /m_notification_start \+= std::max<int64_t>\(0, delta\)/);
+  assert.match(notifications, /m_fading_start \+= std::max<int64_t>\(0, delta\)/);
+  assert.match(notifications, /if \(m_overflow_rendered && point\.x >= m_overflow_min\.x/);
+  // Numeric boundary cases call PreviewLayout.hpp directly in
+  // tests/preview_layout/geometry_tests.cpp, not a JavaScript copy of its math.
 });
 
-test('the Sliced pill starts right of the plate strip and is drawn only where it fits', () => {
+test('the Sliced status stays beside the strip or in the dock header', () => {
   assert.match(canvasHeader, /float get_select_plate_toolbar_width\(\) const \{ return m_sel_plate_toolbar_width; \}/);
   assert.match(canvasHeader, /float m_sel_plate_toolbar_width\{ 0\.0f \};/);
   const strip = body(canvas, 'void GLCanvas3D::_render_imgui_select_plate_toolbar(');
@@ -92,6 +88,9 @@ test('the Sliced pill starts right of the plate strip and is drawn only where it
     'the pill starts 12 px right of the strip');
   assert.match(base, /if \(pill_left \+ pill_width \+ 8\.0f \* m_scale <= dock_left\) \{\s*imgui\.set_next_window_pos\(pill_left, 16\.0f \* m_scale,/,
     'and is drawn only when it ends before the dock');
+  assert.match(base, /dock_status_text = pill_text;/);
+  assert.match(base, /ImGui::TextUnformatted\(dock_status_text\.c_str\(\)\)/);
+  assert.doesNotMatch(base, /forced_compact/, 'a narrow dock still permits expansion');
   assert.doesNotMatch(base, /imgui\.set_next_window_pos\(16\.0f \* m_scale, 16\.0f \* m_scale,/, 'never at the fixed corner over the strip');
 });
 
@@ -115,7 +114,7 @@ test('the dock blocks span the dock and the grouping card is sized from its cont
   assert.match(card, /const bool ams_card_open = ImGui::BeginChild\("#AMS", ImVec2\(0, AMS_container_height\)/);
   assert.match(card, /if \(ams_card_open\) \{\s*const ImGuiWindow\* card_win = ImGui::GetCurrentWindowRead\(\);\s*const float ams_card_needed = card_win->DC\.CursorMaxPos\.y - card_win->Pos\.y \+ card_win->Scroll\.y \+ window_padding \* 2\.0f;/,
     'nothing is measured while the card is clipped out and its items are skipped');
-  assert.match(card, /if \(!box_open\)\s*return;\s*const ImGuiWindow\* box_win = ImGui::GetCurrentWindowRead\(\);\s*const float box_needed = box_win->DC\.CursorMaxPos\.y - box_win->Pos\.y \+ box_win->Scroll\.y \+ window_padding \* 2\.0f;\s*nozzle_box_needed = std::max\(nozzle_box_needed, box_needed\);/,
+  assert.match(card, /if \(!box_open\)\s*return;\s*const ImGuiWindow\* box_win = ImGui::GetCurrentWindowRead\(\);\s*const float box_needed = box_win->DC\.CursorMaxPos\.y - box_win->Pos\.y \+ box_win->Scroll\.y \+ window_padding \* 2\.0f \+ box_win->ScrollbarSizes\.y;\s*nozzle_box_needed = std::max\(nozzle_box_needed, box_needed\);/,
     'a nozzle box is measured from CursorMaxPos, which a trailing SameLine does not move back');
   // ImGui decides a child's scrollbar from the previous frame's size, so the frame that first
   // applies the measured height can still draw one. It must ask for one more frame, or the
@@ -127,8 +126,11 @@ test('the dock blocks span the dock and the grouping card is sized from its cont
   for (const side of ['left', 'right'])
     assert.match(card, new RegExp(`measure_nozzle_box\\(${side}_box_open\\);\\s*ImGui::EndChild\\(\\);`), `${side} box`);
   assert.doesNotMatch(card, /GetCursorPosY\(\)/, 'no measurement reads the cursor, which SameLine rewinds');
-  assert.match(card, /ImGui::SetCursorPosX\(ImGui::GetWindowContentRegionMax\(\)\.x - ImGui::CalcTextSize\(tip_str\.c_str\(\)\)\.x\);/,
-    'the help link ends at the content edge');
+  assert.match(card, /PreviewLayout::inline_link_fits\(/,
+    'the help link only shares a row when both labels fit');
+  assert.match(card, /ImGui::Button\("###grouping_help"/,
+    'the wrapped help link retains keyboard activation');
+
 });
 
 test('the grouping card arithmetic: the fixed line count was short once the sentence wrapped', () => {

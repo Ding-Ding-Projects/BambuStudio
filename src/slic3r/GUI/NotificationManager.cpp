@@ -1,4 +1,5 @@
 #include "NotificationManager.hpp"
+#include "PreviewLayout.hpp"
 #include "GLCanvas3D.hpp"
 #include "Plater.hpp"
 
@@ -401,33 +402,20 @@ void NotificationManager::PopNotification::render(GLCanvas3D& canvas, float init
 	if (m_line_height != ImGui::CalcTextSize("A").y)
 		init();
 
-	set_next_window_size(imgui);
-
-	// top y of window
-	m_top_y = initial_y + m_window_height;
-
-	// MD3 snackbar geometry: a bottom-right-corner column of cards, each
-	// min(560px, 92vw) wide. Corner (not center) anchoring is a deliberate
-	// deviation from the kit's centered snackbar: non-blocking notifications
-	// are required to stack in a bottom screen corner so they never sit over
-	// the model/plate center-of-attention. Override the content width so the
-	// surface matches the kit; text was wrapped at the (narrower) base width,
-	// which still fits.
-	ensure_ui_inited();
-	const float scale   = canvas.get_scale();
-	const float corner_margin = 16.0f * scale;
-	const float cnv_w   = (float) cnv_size.get_width();
-	const float wrap_w  = m_line_height * 25.0f; // the width count_spaces() wrapped the text at
-	// Prepare and Assembly pass a margin below the corner margin and keep the
-	// corner anchor. Preview passes its layer slider column plus, while it is
-	// expanded, the legend dock: the column ends left of both, where it used to
-	// lie under the dock with its text cut. A canvas too narrow for a card
-	// there hands gap back, never below the corner margin, so the card stays on
-	// the canvas; it is lifted in front of the dock further down.
-	const bool  beside_preview = right_margin > corner_margin;
-	const float right_gap = std::max(corner_margin, std::min(beside_preview ? right_margin : corner_margin, cnv_w - wrap_w - corner_margin));
-	const float toast_w = std::min(std::min(560.0f * scale, 0.92f * cnv_w), std::max(cnv_w - right_gap - corner_margin, wrap_w));
-	m_window_width = toast_w;
+    ensure_ui_inited();
+    const float scale = canvas.get_scale();
+    const float cnv_w = float(cnv_size.get_width());
+    const bool beside_preview = right_margin > 16.0f * scale;
+    const auto column = PreviewLayout::notification_column(cnv_w, scale, 560.0f * scale, right_margin);
+    const float right_gap = column.right;
+    // Reflow at the final drawable width, including room for a vertical scrollbar.
+    m_window_width = column.width;
+    if (m_wrapped_width != m_window_width) {
+        m_wrapped_width = m_window_width;
+        count_lines();
+    }
+    set_next_window_size(imgui);
+    if (!fit_to_stack(initial_y)) return;
 
 	// Right-corner anchored (top-right pivot), stacked upward from the bottom.
 	ImVec2 win_pos(cnv_w - right_gap, 1.0f * (float) cnv_size.get_height() - m_top_y);
@@ -444,9 +432,8 @@ void NotificationManager::PopNotification::render(GLCanvas3D& canvas, float init
 	                           m_WindowRadius, scale, m_state == EState::FadingOut ? m_current_fade_opacity : 1.0f);
 
 	// find if hovered FIXME:  do it only in update state?
-	if (m_state == EState::Hovered) {
-		init();
-	}
+    if (m_state == EState::Hovered)
+        m_notification_start = canvas_timestamp_now();
 
 	if (mouse_pos.x > m_rendered_win_min.x && mouse_pos.x < m_rendered_win_max.x && mouse_pos.y > win_pos.y && mouse_pos.y < win_pos.y + m_window_height) {
 		// Uncomment if imgui window focus is needed on hover. I cant find any case.
@@ -471,7 +458,7 @@ void NotificationManager::PopNotification::render(GLCanvas3D& canvas, float init
 
     use_bbl_theme();
 
-	int window_flags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
+	int window_flags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize;
 	if (imgui.begin(name, window_flags)) {
 		ImVec2 win_size = ImGui::GetWindowSize();
 		// The render helpers below expect the window's top-right corner (they
@@ -531,14 +518,15 @@ void NotificationManager::PopNotification::bbl_render_block_notification(GLCanva
 	if (m_line_height != ImGui::CalcTextSize("A").y)
 		init();
 
-	set_next_window_size(imgui);
-
-	// top y of window
-    m_top_y = initial_y + m_window_height;
-
-    // In Preview right_margin also carries the expanded legend dock; a canvas
-    // too narrow for the banner beside it keeps the banner on the canvas.
-    right_gap = std::min(right_gap, std::max(0.0f, (float) cnv_size.get_width() - m_window_width));
+    const auto column = PreviewLayout::notification_column(float(cnv_size.get_width()), canvas.get_scale(), m_line_height * 25.0f, right_gap);
+    right_gap = column.right;
+    m_window_width = column.width;
+    if (m_wrapped_width != m_window_width) {
+        m_wrapped_width = m_window_width;
+        count_lines();
+    }
+    set_next_window_size(imgui);
+    if (!fit_to_stack(initial_y)) return;
 
     ImVec2 win_pos(1.0f * (float) cnv_size.get_width() - right_gap, 1.0f * (float) cnv_size.get_height() - m_top_y);
     imgui.set_next_window_pos(win_pos.x, win_pos.y, ImGuiCond_Always, 1.0f, 0.0f);
@@ -580,7 +568,7 @@ void NotificationManager::PopNotification::bbl_render_block_notification(GLCanva
     }
 	push_style_color(ImGuiCol_Text, { 1,1,1,1 }, true, m_current_fade_opacity);
 
-	if (imgui.begin(name, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse)) {
+	if (imgui.begin(name, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize)) {
 		ImVec2 win_size = ImGui::GetWindowSize();
 		ImVec2 win_pos = ImGui::GetWindowPos();
 		if (ImGui::IsMouseHoveringRect(win_pos, win_pos + win_size)) {
@@ -607,6 +595,20 @@ void NotificationManager::PopNotification::bbl_render_block_notification(GLCanva
 
 	if (fading_pop)
 		ImGui::PopStyleColor(3);
+}
+
+bool NotificationManager::PopNotification::fit_to_stack(float initial_y)
+{
+    const auto item = PreviewLayout::stack_item(m_window_height, initial_y, m_stack_bottom, m_stack_top);
+    m_stack_deferred = item.deferred;
+    if (item.deferred) {
+        m_top_y = initial_y - GAP_WIDTH;
+        m_rendered_this_frame = false;
+        return false;
+    }
+    m_window_height = item.height;
+    m_top_y = initial_y + m_window_height;
+    return true;
 }
 
 void NotificationManager::PopNotification::close()
@@ -653,7 +655,7 @@ void NotificationManager::PopNotification::count_spaces()
 	//	float picture_width = ImGui::CalcTextSize(text.c_str()).x;
 	//	m_left_indentation = picture_width + m_line_height / 2;
 	//}
-	m_window_width_offset = m_left_indentation + m_line_height * 3.f;
+	m_window_width_offset = m_left_indentation + m_line_height * 3.f + ImGui::GetStyle().ScrollbarSize;
     if (m_data.level == NotificationLevel::ErrorNotificationLevel || m_data.level == NotificationLevel::SeriousWarningNotificationLevel) {
 
 #ifdef __APPLE__
@@ -661,7 +663,7 @@ void NotificationManager::PopNotification::count_spaces()
 #else
 		m_left_indentation = 32 + m_line_height;
 #endif // __APPLE__
-		m_window_width_offset = 90.f;
+		m_window_width_offset = 90.f + ImGui::GetStyle().ScrollbarSize;
 	}
 	m_window_width = m_line_height * 25;
 }
@@ -718,7 +720,7 @@ void NotificationManager::PopNotification::count_lines()
 					//BBS
 					wxString wx_text = from_u8(text.substr(last_end, text.length() - last_end).c_str());
                     float    width_of_char = ImGui::CalcTextSize("a").x;
-                    int letter_count = (int) ((m_window_width - m_window_width_offset) / width_of_char) / 2;	// give a predict value of char count
+                    int letter_count = std::max(0, (int) ((m_window_width - m_window_width_offset) / width_of_char) / 2);	// give a predict value of char count
 					int output_count = 0;
 					while (true) {
                         if (letter_count >= wx_text.size())
@@ -730,6 +732,12 @@ void NotificationManager::PopNotification::count_lines()
 					}
 					if (letter_count > 0) {
 						output_count = into_u8(wx_text.SubString(0, letter_count - 1)).size();
+                    }
+                    if (output_count == 0) {
+                        output_count = 1;
+                        while (last_end + output_count < text.size() &&
+                               (static_cast<unsigned char>(text[last_end + output_count]) & 0xc0) == 0x80)
+                            ++output_count;
                     }
                     m_endlines.push_back(last_end + output_count);
                     last_end += output_count;
@@ -791,6 +799,7 @@ void NotificationManager::PopNotification::init()
 		return;
 
 	count_spaces();
+    m_wrapped_width = 0.0f;
 	count_lines();
 
 	if (m_lines_count <= 6) {
@@ -827,7 +836,7 @@ void NotificationManager::PopNotification::bbl_render_block_notif_text(ImGuiWrap
 			if (i == 1 && m_endlines.size() > 2 && !m_multiline) {
 				// second line with "more" hypertext
 				line = m_text1.substr(m_endlines[0] + (m_text1[m_endlines[0]] == '\n' || m_text1[m_endlines[0]] == ' ' ? 1 : 0), m_endlines[1] - m_endlines[0] - (m_text1[m_endlines[0]] == '\n' || m_text1[m_endlines[0]] == ' ' ? 1 : 0));
-				while (ImGui::CalcTextSize(line.c_str()).x > m_window_width - m_window_width_offset - ImGui::CalcTextSize((".." + _u8L("More")).c_str()).x) {
+				while (!line.empty() && ImGui::CalcTextSize(line.c_str()).x > m_window_width - m_window_width_offset - ImGui::CalcTextSize((".." + _u8L("More")).c_str()).x) {
 					line = line.substr(0, line.length() - 1);
 				}
 				line += "..";
@@ -894,7 +903,7 @@ void NotificationManager::PopNotification::render_text(ImGuiWrapper& imgui, cons
 			if (i == 1 && m_endlines.size() > 2 && !m_multiline) {
 				// second line with "more" hypertext
 				line = m_text1.substr(m_endlines[0] + (m_text1[m_endlines[0]] == '\n' || m_text1[m_endlines[0]] == ' ' ? 1 : 0), m_endlines[1] - m_endlines[0] - (m_text1[m_endlines[0]] == '\n' || m_text1[m_endlines[0]] == ' ' ? 1 : 0));
-				while (ImGui::CalcTextSize(line.c_str()).x > m_window_width - m_window_width_offset - ImGui::CalcTextSize((".." + _u8L("More")).c_str()).x) {
+				while (!line.empty() && ImGui::CalcTextSize(line.c_str()).x > m_window_width - m_window_width_offset - ImGui::CalcTextSize((".." + _u8L("More")).c_str()).x) {
 					line = line.substr(0, line.length() - 1);
 				}
 				line += "..";
@@ -1305,6 +1314,11 @@ bool NotificationManager::PopNotification::update_state(bool paused, const int64
 	}
 
 	int64_t now = canvas_timestamp_now();
+    if (m_stack_deferred) {
+        // Time spent waiting for a visible slot is not exposure to the user.
+        m_notification_start += std::max<int64_t>(0, delta);
+        m_fading_start += std::max<int64_t>(0, delta);
+    }
 
 	// reset fade opacity for non-closing notifications or hover during fading
 	if (m_state != EState::FadingOut && m_state != EState::ClosePending && m_state != EState::Finished) {
@@ -1580,7 +1594,7 @@ void NotificationManager::UpdatedItemsInfoNotification::count_spaces()
 	//m_left_indentation = picture_width + m_line_height / 2;
     m_left_indentation = m_line_height;
 
-	m_window_width_offset = m_left_indentation + m_line_height * 3.f;
+	m_window_width_offset = m_left_indentation + m_line_height * 3.f + ImGui::GetStyle().ScrollbarSize;
 	m_window_width = m_line_height * 25;
 }
 void NotificationManager::UpdatedItemsInfoNotification::add_type(InfoItemType type)
@@ -3042,8 +3056,24 @@ void NotificationManager::render_notifications(GLCanvas3D &canvas, float overlay
 
 	float bottom_up_last_y = bottom_margin * m_scale;
 
-	int i = 0;
-	for (const auto& notification : m_pop_notifications) {
+    const float stack_bottom = bottom_up_last_y;
+    const auto overflow_column = PreviewLayout::notification_column(float(canvas.get_canvas_size().get_width()), m_scale, 560.0f * m_scale, right_margin * m_scale);
+    const std::string next_label = _u8L("Next notifications");
+    const std::string history_label = _u8L("Notification history");
+    const float overflow_text_width = std::max(1.0f, overflow_column.width - 2.0f * (ImGui::GetStyle().WindowPadding.x + ImGui::GetStyle().FramePadding.x));
+    // Include the largest count string before reserving the stack's top boundary.
+    const std::string measured_next = next_label + " (" + std::to_string(m_pop_notifications.size()) + ")";
+    const float overflow_height = ImGui::CalcTextSize(measured_next.c_str(), nullptr, false, overflow_text_width).y +
+        ImGui::CalcTextSize(history_label.c_str(), nullptr, false, overflow_text_width).y +
+        ImGui::GetStyle().FramePadding.y * 4.0f + ImGui::GetStyle().WindowPadding.y * 2.0f +
+        ImGui::GetStyle().ItemSpacing.y + 16.0f * m_scale;
+    const float stack_top = std::max(stack_bottom + 1.0f, float(canvas.get_canvas_size().get_height()) - overflow_height);
+    m_overflow_rendered = false;
+    size_t deferred_count = 0;
+    int i = 0;
+    for (size_t offset = 0; offset < m_pop_notifications.size(); ++offset) {
+        const auto& notification = m_pop_notifications[(m_notification_page + offset) % m_pop_notifications.size()];
+        notification->set_stack_bounds(stack_bottom, stack_top);
         // Reset each frame; render()/bbl_render_block_notification() set it back
         // to true (with the cached rect) only for notifications actually drawn.
         notification->set_not_rendered();
@@ -3075,8 +3105,50 @@ void NotificationManager::render_notifications(GLCanvas3D &canvas, float overlay
 					bottom_up_last_y = notification->get_top() + GAP_WIDTH;
 			}
 		}
-	}
-	for (const auto& notification : m_pop_notifications) {
+        if (notification->stack_deferred()) ++deferred_count;
+    }
+    if (deferred_count > 0) {
+        ImGuiWrapper& imgui = *wxGetApp().imgui();
+        const auto column = overflow_column;
+        imgui.set_next_window_pos(float(canvas.get_canvas_size().get_width()) - column.right, 8.0f * m_scale, ImGuiCond_Always, 1.0f, 0.0f);
+        imgui.set_next_window_size(column.width, overflow_height - 8.0f * m_scale, ImGuiCond_Always);
+        ImGui::PushStyleColor(ImGuiCol_WindowBg, to_imvec4(MD3::resolve(MD3::Role::SurfaceContainer, m_is_dark)));
+        ImGui::PushStyleColor(ImGuiCol_Text, to_imvec4(MD3::resolve(MD3::Role::OnSurface, m_is_dark)));
+        ImGui::PushStyleColor(ImGuiCol_Button, to_imvec4(MD3::resolve(MD3::Role::PrimaryContainer, m_is_dark)));
+        if (imgui.begin("Notification overflow", ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize)) {
+            m_overflow_rendered = true;
+            m_overflow_min = ImGui::GetWindowPos();
+            m_overflow_max = m_overflow_min + ImGui::GetWindowSize();
+            auto wrapped_button = [](const char* id, const std::string& label) {
+                const float width = std::max(1.0f, ImGui::GetContentRegionAvail().x);
+                const float text_width = std::max(1.0f, width - ImGui::GetStyle().FramePadding.x * 2.0f);
+                const ImVec2 extent = ImGui::CalcTextSize(label.c_str(), nullptr, false, text_width);
+                const ImVec2 pos = ImGui::GetCursorScreenPos() + ImGui::GetStyle().FramePadding;
+                const bool activated = ImGui::Button(id, ImVec2(width, extent.y + 2.0f * ImGui::GetStyle().FramePadding.y));
+                ImGui::GetWindowDrawList()->AddText(ImGui::GetFont(), ImGui::GetFontSize(), pos,
+                    ImGui::GetColorU32(ImGuiCol_Text), label.c_str(), nullptr, text_width);
+                return activated;
+            };
+            const std::string next = next_label + " (" + std::to_string(deferred_count) + ")";
+            if (wrapped_button("###next_notifications", next)) {
+                m_notification_page = (m_notification_page + 1) % m_pop_notifications.size();
+                canvas.schedule_extra_frame(0);
+            }
+            if (wrapped_button("###notification_history", history_label) && wxGetApp().mainframe && wxGetApp().mainframe->topbar()) {
+                wxGetApp().CallAfter([] {
+                    if (wxGetApp().mainframe && wxGetApp().mainframe->topbar()) {
+                        wxAuiToolBarEvent event;
+                        wxGetApp().mainframe->topbar()->OnNotificationBell(event);
+                    }
+                });
+            }
+        }
+        if (!ImGui::IsPopupOpen("", ImGuiPopupFlags_AnyPopup))
+            ImGui::BringWindowToDisplayFront(ImGui::GetCurrentWindow());
+        imgui.end();
+        ImGui::PopStyleColor(3);
+    }
+    for (const auto& notification : m_pop_notifications) {
 		if (notification->get_data().type == NotificationType::SlicingProgress && notification->get_state() != PopNotification::EState::Hidden && notification->get_state() != PopNotification::EState::Finished) {
 			;// assert(i <= 1);
 		}
@@ -3115,7 +3187,7 @@ bool NotificationManager::update_notifications(GLCanvas3D& canvas)
 	// update state of all notif and erase finished
 	for (auto it = m_pop_notifications.begin(); it != m_pop_notifications.end();) {
 		std::unique_ptr<PopNotification>& notification = *it;
-		request_render |= notification->update_state(hover, time_since_render);
+		request_render |= notification->update_state(hover || notification->stack_deferred(), time_since_render);
 		next_render = std::min<int64_t>(next_render, notification->next_render());
 		if (notification->get_state() == PopNotification::EState::Finished) {
 			record_history_dismissed(notification.get());
@@ -3269,6 +3341,9 @@ size_t NotificationManager::get_notification_count() const
 
 bool NotificationManager::is_point_over_any_notification(const ImVec2 &point) const
 {
+    if (m_overflow_rendered && point.x >= m_overflow_min.x && point.y >= m_overflow_min.y &&
+        point.x <= m_overflow_max.x && point.y <= m_overflow_max.y)
+        return true;
 	for (const std::unique_ptr<PopNotification>& notification : m_pop_notifications) {
 		if (notification->contains_point(point))
 			return true;

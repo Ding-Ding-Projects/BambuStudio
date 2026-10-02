@@ -27667,3 +27667,7 @@ msgstr "The backup is damaged or is not a valid ZIP archive. No profile was impo
 #: src/slic3r/GUI/ConfigProfilesDialog.cpp
 msgid "The backup could not be imported."
 msgstr "The backup could not be imported."
+
+#: src/slic3r/GUI/NotificationManager.cpp
+msgid "Next notifications"
+msgstr "Next notifications"
