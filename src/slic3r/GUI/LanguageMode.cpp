@@ -1,5 +1,6 @@
 #include "LanguageMode.hpp"
 #include "BilingualRegistry.hpp"
+#include "PersonalVocabulary.hpp"
 
 #include <cwctype>
 
@@ -202,7 +203,7 @@ wxString vocabulary(const wxString &text)
             }
         }
     }
-    return changed ? wxString(value) : text;
+    return PersonalVocabulary::remember(changed ? wxString(value) : text);
 }
 
 std::string normalize_language_mode_id(std::string_view language_mode_id)
@@ -531,6 +532,7 @@ LanguageModeService::~LanguageModeService() = default;
 
 bool LanguageModeService::configure(std::string_view language_mode_id, const wxString &localization_root)
 {
+    PersonalVocabulary::initialize();
     LanguageModeProfile next_profile = resolve_language_mode(language_mode_id);
     std::unique_ptr<wxMsgCatalog> next_catalog;
     std::unique_ptr<wxMsgCatalog> next_english;
@@ -634,7 +636,7 @@ wxString LanguageModeService::record_bilingual(const wxString &message, const wx
     // Nothing to pair when the catalogue has no Cantonese of its own for the
     // message (wx returns the msgid) or when it reads the same as the English.
     if (cantonese != nullptr && !cantonese->empty() && *cantonese != message && *cantonese != shown)
-        BilingualRegistry::instance().record(shown, *cantonese);
+        BilingualRegistry::instance().record(shown, PersonalVocabulary::remember(*cantonese));
     return shown;
 }
 
@@ -669,11 +671,11 @@ LocalizedText LanguageModeService::translate(const wxString &message, const wxSt
     if (cantonese == nullptr)
         cantonese = find_cantonese(message, UINT_MAX, context);
     if (m_profile.kind == LanguageModeKind::CantoneseHongKong)
-        return { cantonese == nullptr ? english_text : *cantonese, wxString() };
+        return { cantonese == nullptr ? english_text : PersonalVocabulary::remember(*cantonese), wxString() };
 
     LocalizedText result { english_text, wxString() };
     if (cantonese != nullptr && !cantonese->empty() && *cantonese != message && *cantonese != english_text)
-        result.secondary = *cantonese;
+        result.secondary = PersonalVocabulary::remember(*cantonese);
     return result;
 }
 
@@ -689,11 +691,11 @@ LocalizedText LanguageModeService::translate_plural(const wxString &singular, co
 
     const wxString *cantonese = find_cantonese(singular, n, context);
     if (m_profile.kind == LanguageModeKind::CantoneseHongKong)
-        return { cantonese == nullptr ? source : *cantonese, wxString() };
+        return { cantonese == nullptr ? source : PersonalVocabulary::remember(*cantonese), wxString() };
 
     LocalizedText result { source, wxString() };
     if (cantonese != nullptr && !cantonese->empty() && *cantonese != source)
-        result.secondary = *cantonese;
+        result.secondary = PersonalVocabulary::remember(*cantonese);
     return result;
 }
 

@@ -27576,3 +27576,82 @@ msgstr "Loading preferences history..."
 #: src/slic3r/GUI/ConfigProfilesDialog.cpp
 msgid "Restoring preferences snapshot..."
 msgstr "Restoring preferences snapshot..."
+#: src/slic3r/GUI/Preferences.cpp src/slic3r/GUI/Widgets/MD3Menu.cpp
+msgid "Personal vocabulary"
+msgstr "Personal vocabulary"
+
+#: src/slic3r/GUI/Preferences.cpp src/slic3r/GUI/Widgets/MD3Menu.cpp
+msgid "Load JSON"
+msgstr "Load JSON"
+
+#: src/slic3r/GUI/Preferences.cpp src/slic3r/GUI/Widgets/MD3Menu.cpp
+msgid "Replace JSON"
+msgstr "Replace JSON"
+
+#: src/slic3r/GUI/Preferences.cpp src/slic3r/GUI/Widgets/MD3Menu.cpp
+msgid "Clear personal vocabulary"
+msgstr "Clear personal vocabulary"
+
+#: src/slic3r/GUI/Preferences.cpp src/slic3r/GUI/Widgets/MD3Menu.cpp
+msgid "Load personal vocabulary"
+msgstr "Load personal vocabulary"
+
+#: src/slic3r/GUI/Preferences.cpp src/slic3r/GUI/Widgets/MD3Menu.cpp
+msgid "JSON files (*.json)|*.json"
+msgstr "JSON files (*.json)|*.json"
+
+#: src/slic3r/GUI/Preferences.cpp src/slic3r/GUI/Widgets/MD3Menu.cpp
+msgid "Load a version 1 JSON file to change display wording on this device. Original data, logs and exports keep their original wording."
+msgstr "Load a version 1 JSON file to change display wording on this device. Original data, logs and exports keep their original wording."
+
+#: src/slic3r/GUI/Preferences.cpp src/slic3r/GUI/Widgets/MD3Menu.cpp
+msgid "The vocabulary file could not be applied. Use valid version 1 JSON within the supported size limits."
+msgstr "The vocabulary file could not be applied. Use valid version 1 JSON within the supported size limits."
+
+#: src/slic3r/GUI/Preferences.cpp src/slic3r/GUI/Widgets/MD3Menu.cpp
+msgid "Personal vocabulary is active on this device."
+msgstr "Personal vocabulary is active on this device."
+
+#: src/slic3r/GUI/Preferences.cpp src/slic3r/GUI/Widgets/MD3Menu.cpp
+msgid "Original wording is active."
+msgstr "Original wording is active."
+
+#: src/slic3r/GUI/Preferences.cpp src/slic3r/GUI/Widgets/MD3Menu.cpp
+msgid "Finishing the current operation before closing..."
+msgstr "Finishing the current operation before closing..."
+
+#: src/slic3r/GUI/Preferences.cpp src/slic3r/GUI/Widgets/MD3Menu.cpp
+msgid "Clear search"
+msgstr "Clear search"
+
+#: src/slic3r/GUI/Preferences.cpp src/slic3r/GUI/Widgets/MD3Menu.cpp
+msgid "Searching..."
+msgstr "Searching..."
+
+#: src/slic3r/GUI/Preferences.cpp src/slic3r/GUI/Widgets/MD3Menu.cpp
+msgid "Search unavailable. All items are shown."
+msgstr "Search unavailable. All items are shown."
+
+#: src/slic3r/GUI/Preferences.cpp src/slic3r/GUI/Widgets/MD3Menu.cpp
+msgid "No matches"
+msgstr "No matches"
+
+#: src/slic3r/GUI/Preferences.cpp src/slic3r/GUI/Widgets/MD3Menu.cpp
+msgid "Slice and Print"
+msgstr "Slice and Print"
+
+#: src/slic3r/GUI/Preferences.cpp src/slic3r/GUI/Widgets/MD3Menu.cpp
+msgid "Slice and Send"
+msgstr "Slice and Send"
+
+#: src/slic3r/GUI/Preferences.cpp src/slic3r/GUI/Widgets/MD3Menu.cpp
+msgid "Slice this plate, then choose a printer and confirm printing."
+msgstr "Slice this plate, then choose a printer and confirm printing."
+
+#: src/slic3r/GUI/Preferences.cpp src/slic3r/GUI/Widgets/MD3Menu.cpp
+msgid "Slice this plate, then send it to a printer without starting a print."
+msgstr "Slice this plate, then send it to a printer without starting a print."
+
+#: src/slic3r/GUI/Preferences.cpp src/slic3r/GUI/Widgets/MD3Menu.cpp
+msgid "Canceling slicing..."
+msgstr "Canceling slicing..."

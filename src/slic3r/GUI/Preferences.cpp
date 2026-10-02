@@ -1,4 +1,5 @@
 #include "Preferences.hpp"
+#include "PersonalVocabulary.hpp"
 #include "Widgets/MD3ScrolledWindow.hpp"
 #include "Export/ExportDatasets.hpp"
 #include "Export/ExportDialog.hpp"
@@ -1738,7 +1739,8 @@ static void collect_search_labels_from_sizer(wxSizer *sizer, std::vector<wxStati
 // so multi-word queries match across a wrapped line.
 static wxString search_label_text(const wxStaticText *label)
 {
-    wxString text = label->GetLabelText();
+    const auto *native_label = dynamic_cast<const ::Label *>(label);
+    wxString text = native_label ? native_label->GetUnwrappedLabel() : label->GetLabelText();
     text.Replace("\n", " ");
     return text;
 }
@@ -2714,6 +2716,50 @@ wxWindow *PreferencesDialog::create_appearance_tab()
     name_actions->Add(name_explain_line, 0, wxEXPAND | wxTOP, FromDIP(4));
     sizer->Add(name_actions, flags);
     refresh_name_status();
+
+    auto *wording = new StaticBox(scrolled);
+    auto *wording_sizer = new wxBoxSizer(wxVERTICAL);
+    wording->SetSizer(wording_sizer);
+    auto *wording_title = new Label(wording, _L("Personal vocabulary"));
+    wording_sizer->Add(wording_title, 0, wxEXPAND | wxALL, FromDIP(12));
+    auto *wording_description = new Label(wording,
+        _L("Load a version 1 JSON file to change display wording on this device. Original data, logs and exports keep their original wording."),
+        LB_AUTO_WRAP);
+    wording_sizer->Add(wording_description, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(12));
+    auto *wording_status = new Label(wording, wxEmptyString, LB_AUTO_WRAP);
+    auto *wording_load = new Button(wording, _L("Load JSON"));
+    auto *wording_clear = new Button(wording, _L("Clear personal vocabulary"));
+    for (Button *button : {wording_load, wording_clear}) {
+        button->SetVariant(Button::Variant::Outlined);
+        button->SetButtonSize(Button::Size::Small);
+        m_button_list[m_button_list.size()] = button;
+        wording_sizer->Add(button, 0, wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(12));
+    }
+    wording_sizer->Add(wording_status, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(12));
+    auto refresh_wording = [wording_load, wording_clear, wording_status, scrolled](bool failed) {
+        const bool active = PersonalVocabulary::loaded();
+        wording_load->SetLabel(active ? _L("Replace JSON") : _L("Load JSON"));
+        wording_clear->Enable(true);
+        wording_status->SetLabel(failed
+            ? _L("The vocabulary file could not be applied. Use valid version 1 JSON within the supported size limits.")
+            : active ? _L("Personal vocabulary is active on this device.") : _L("Original wording is active."));
+        wording_status->SetForegroundColour(StateColor::semantic(failed ? MD3::Role::Error : MD3::Role::OnSurfaceVariant));
+        scrolled->Layout();
+        scrolled->FitInside();
+    };
+    wording_load->Bind(wxEVT_BUTTON, [this, refresh_wording](wxCommandEvent &) {
+        wxFileDialog picker(this, _L("Load personal vocabulary"), wxEmptyString, wxEmptyString,
+            _L("JSON files (*.json)|*.json"), wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+        if (picker.ShowModal() != wxID_OK) return;
+        const bool applied = PersonalVocabulary::load(std::filesystem::path(picker.GetPath().ToStdWstring()));
+        refresh_wording(!applied);
+    });
+    wording_clear->Bind(wxEVT_BUTTON, [refresh_wording](wxCommandEvent &) {
+        refresh_wording(!PersonalVocabulary::clear());
+    });
+    sizer->Add(wording, 0, wxEXPAND | wxALL, FromDIP(16));
+    register_option_row("personal_vocabulary", nullptr, wording);
+    refresh_wording(false);
 
     sizer->AddSpacer(FromDIP(20));
     scrolled->SetSizer(sizer);

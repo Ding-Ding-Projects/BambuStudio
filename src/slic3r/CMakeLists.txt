@@ -839,6 +839,8 @@ list(APPEND SLIC3R_GUI_SOURCES
     GUI/LayoutProbe.cpp
     GUI/LayoutProbe.hpp
     GUI/LanguageMode.cpp
+    GUI/PersonalVocabulary.cpp
+    GUI/PersonalVocabulary.hpp
     GUI/LanguageMode.hpp
     GUI/BilingualRegistry.cpp
     GUI/BilingualRegistry.hpp

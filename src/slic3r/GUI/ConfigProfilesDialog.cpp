@@ -8,6 +8,7 @@
 #include "Widgets/Button.hpp"
 #include "Widgets/Label.hpp"
 #include "PreferencesHistory.hpp"
+#include "PersonalVocabulary.hpp"
 #include "Widgets/MD3DialogChrome.hpp"
 #include "Widgets/MD3Tokens.hpp"
 #include "Widgets/SearchField.hpp"
@@ -76,6 +77,7 @@ wxString zip_directory(const std::filesystem::path &source_dir, const std::files
         if (ec)
             break;
         const std::filesystem::path &p = it->path();
+        if (PersonalVocabulary::is_cache_path(p)) continue;
         std::error_code type_ec;
         if (!it->is_regular_file(type_ec) || type_ec)
             continue;

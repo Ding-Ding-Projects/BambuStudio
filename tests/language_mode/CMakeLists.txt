@@ -3,6 +3,7 @@ add_executable(language_mode_tests
     funny_level_tests.cpp
     bilingual_registry_tests.cpp
     ${PROJECT_SOURCE_DIR}/src/slic3r/GUI/LanguageMode.cpp
+    ${PROJECT_SOURCE_DIR}/src/slic3r/GUI/PersonalVocabulary.cpp
     ${PROJECT_SOURCE_DIR}/src/slic3r/GUI/BilingualRegistry.cpp
 )
 

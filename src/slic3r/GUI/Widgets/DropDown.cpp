@@ -1,3 +1,4 @@
+#include "../PersonalVocabulary.hpp"
 #include "DropDown.hpp"
 #include "Label.hpp"
 #include "StateColor.hpp"
@@ -552,6 +553,7 @@ void DropDown::render(wxDC &dc)
         auto text = group.IsEmpty()
                         ? (item.group.IsEmpty() ? item.text : item.group)
                         : strip_brand_prefix(item.text, group);
+        text = Slic3r::GUI::PersonalVocabulary::display(text);
         if (!text_off && !text.IsEmpty() && !icon_fills_row) {
             wxSize tSize = dc.GetMultiLineTextExtent(text);
             if (pt.x + tSize.x > rcContent.GetRight()) {
@@ -617,6 +619,7 @@ void DropDown::messureSize()
             auto text = group.IsEmpty()
                         ? (item.group.IsEmpty() ? item.text : item.group)
                         : strip_brand_prefix(item.text, group);
+        text = Slic3r::GUI::PersonalVocabulary::display(text);
             size1 = dc.GetMultiLineTextExtent(text);
             if (group.IsEmpty() && !item.group.IsEmpty())
                 size1.x += 5 + arrow_bitmap.GetBmpWidth();

@@ -1,5 +1,6 @@
 #include "libslic3r/Utils.hpp"
 #include "Label.hpp"
+#include "../PersonalVocabulary.hpp"
 #include "MaterialIcon.hpp"
 #include "StateColor.hpp"
 #include "StaticBox.hpp"
@@ -673,6 +674,16 @@ Label::Label(wxWindow *parent, wxFont const &font, wxString const &text, long st
 {
     this->m_font = font;
     this->m_text = text;
+    Slic3r::GUI::PersonalVocabulary::observe(this, [this] {
+        const auto original = m_text;
+        const int width = m_wrap_width;
+        m_text.clear();
+        SetLabel(original);
+        if (width > 0) Wrap(width);
+        InvalidateBestSize();
+        if (GetParent()) GetParent()->Layout();
+    });
+    wxStaticText::SetLabel(Slic3r::GUI::PersonalVocabulary::display(text));
     SetFont(font);
     SetBackgroundColour(StaticBox::GetParentBackgroundColor(parent));
     // Seed the text tone from the MD3 OnSurface role for the CURRENT theme.
@@ -703,7 +714,7 @@ void Label::SetLabel(const wxString& label)
         Wrap(GetSize().x);
     } else {
         m_wrap_width = 0; // the new text is not wrapped until the owner wraps it
-        wxStaticText::SetLabel(label);
+        wxStaticText::SetLabel(Slic3r::GUI::PersonalVocabulary::display(label));
     }
 #ifdef __WXOSX__
     if ((GetWindowStyle() & LB_HYPERLINK)) {
@@ -776,7 +787,7 @@ void Label::Wrap(int width)
 void Label::DoWrap(int width)
 {
     wxLabelWrapper2 wrapper;
-    wrapper.Wrap(this, m_text, width);
+    wrapper.Wrap(this, Slic3r::GUI::PersonalVocabulary::display(m_text), width);
     m_skip_size_evt = true;
     wxStaticText::SetLabel(wrapper.GetText());
     m_skip_size_evt = false;

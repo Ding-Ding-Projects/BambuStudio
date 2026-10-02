@@ -52,3 +52,5 @@ it.
 - [Exact hosted verification status](../../reapplication/verification-status.md)
 
 The diagnostic candidate package does not replace the production release route.
+
+- [Personal vocabulary](personal-vocabulary.md): local display-only JSON mappings and restoration.

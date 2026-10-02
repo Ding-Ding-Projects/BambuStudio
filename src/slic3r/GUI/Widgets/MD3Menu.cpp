@@ -1,3 +1,4 @@
+#include "../PersonalVocabulary.hpp"
 #include "MD3Menu.hpp"
 
 #include "../BilingualRegistry.hpp"
@@ -217,9 +218,9 @@ public:
         const MD3::Menu::Item *it = item(child_id);
         if (!it)
             return wxACC_FAIL;
-        *name = it->label;
+        *name = PersonalVocabulary::display(it->label);
         if (!it->secondary.IsEmpty())
-            *name << wxString::FromUTF8(" \xC2\xB7 ") << it->secondary;
+            *name << wxString::FromUTF8(" \xC2\xB7 ") << PersonalVocabulary::display(it->secondary);
         return wxACC_OK;
     }
 
@@ -439,9 +440,9 @@ int MD3MenuList::MeasureWidth()
         if (!it.actionable())
             continue;
         dc.SetFont(body_s_font());
-        int label_w = dc.GetTextExtent(it.label).x;
+        int label_w = dc.GetTextExtent(PersonalVocabulary::display(it.label)).x;
         if (!it.secondary.IsEmpty())
-            label_w = dc.GetTextExtent(it.label + wxString::FromUTF8(" \xC2\xB7 ") + it.secondary).x;
+            label_w = dc.GetTextExtent(PersonalVocabulary::display(it.label) + wxString::FromUTF8(" \xC2\xB7 ") + PersonalVocabulary::display(it.secondary)).x;
         int trailing = 0;
         if (it.kind == MD3::Menu::Item::Submenu) {
             trailing = FromDIP(kGlyphPx);
@@ -846,10 +847,10 @@ void MD3MenuList::paintRow(wxDC &dc, int vis, const wxRect &r, const wxColour &s
     const int avail    = trailing_left - FromDIP(kTrailingGap) - label_x;
     dc.SetFont(body_s_font());
     dc.SetTextForeground(fg);
-    wxString text = it->label;
+    wxString text = PersonalVocabulary::display(it->label);
     bool     inline_secondary = false;
     if (!it->secondary.IsEmpty()) {
-        const wxString combined = it->label + wxString::FromUTF8(" \xC2\xB7 ") + it->secondary;
+        const wxString combined = PersonalVocabulary::display(it->label) + wxString::FromUTF8(" \xC2\xB7 ") + PersonalVocabulary::display(it->secondary);
         if (dc.GetTextExtent(combined).x <= avail) {
             text             = combined;
             inline_secondary = true;

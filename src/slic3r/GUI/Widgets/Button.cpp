@@ -1,3 +1,4 @@
+#include "../PersonalVocabulary.hpp"
 #include "Button.hpp"
 #include "../I18N.hpp"
 #include "Label.hpp"
@@ -102,6 +103,7 @@ public:
             *name = m_button->GetToolTipText();
         if (name->IsEmpty())
             *name = configured_name;
+        *name = Slic3r::GUI::PersonalVocabulary::display(*name);
         return wxACC_OK;
     }
 
@@ -219,6 +221,12 @@ bool Button::Create(wxWindow* parent, wxString text, wxString icon, long style, 
     //BBS set default font
     SetFont(Label::Body_14);
     wxWindow::SetLabel(text);
+    Slic3r::GUI::PersonalVocabulary::observe(this, [this] {
+        messureSize();
+        InvalidateBestSize();
+        if (GetParent()) GetParent()->Layout();
+        Refresh();
+    });
     if (!icon.IsEmpty()) {
         //BBS set button icon default size to 20
         this->active_icon = ScalableBitmap(this, icon.ToStdString(), iconSize > 0 ? iconSize : 20);
@@ -785,7 +793,7 @@ void Button::render(wxDC& dc)
     // HiDPI; must stay in sync with the value used by messureSize().
     int spacing = FromDIP(8);
     // Wrap text
-    auto text = GetLabel();
+    auto text = Slic3r::GUI::PersonalVocabulary::display(GetLabel());
     m_label_truncated = false;
     if (vertical && textSize.x + padding.x * 2 > size.x) {
         Label::split_lines(dc, size.x - padding.x * 2, text, text, 2);
@@ -955,7 +963,7 @@ void Button::renderWhiteCorners(wxDC& dc)
 void Button::messureSize()
 {
     wxClientDC dc(this);
-    dc.GetTextExtent(GetLabel(), &textSize.width, &textSize.height);
+    dc.GetTextExtent(Slic3r::GUI::PersonalVocabulary::display(GetLabel()), &textSize.width, &textSize.height);
     wxFontMetrics fm = dc.GetFontMetrics();
     textSize.height = fm.ascent + fm.descent;
     wxSize szContent = textSize.GetSize();
