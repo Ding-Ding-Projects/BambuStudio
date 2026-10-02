@@ -109,7 +109,9 @@ std::string canvas_menu_label(const char* original)
     const std::string source(original);
     const auto end = source.find("##");
     const wxString visible = from_u8(source.substr(0, end));
-    const auto display = PersonalVocabulary::display(PersonalVocabulary::remember(visible));
+    // Generic options may be user content. Only already-registered catalog copy
+    // is eligible; never register arbitrary row text as trusted UI copy.
+    const auto display = PersonalVocabulary::display(visible);
     // ### keeps ImGui identity based on the original label, not display text.
     return into_u8(display) + "###" + source;
 }
