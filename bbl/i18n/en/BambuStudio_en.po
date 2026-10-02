@@ -27655,3 +27655,15 @@ msgstr "Slice this plate, then send it to a printer without starting a print."
 #: src/slic3r/GUI/Preferences.cpp src/slic3r/GUI/Widgets/MD3Menu.cpp
 msgid "Canceling slicing..."
 msgstr "Canceling slicing..."
+
+#: src/slic3r/GUI/ConfigProfilesDialog.cpp
+msgid "The new profile folder could not be reserved. Choose a different name or try again."
+msgstr "The new profile folder could not be reserved. Choose a different name or try again."
+
+#: src/slic3r/GUI/ConfigProfilesDialog.cpp
+msgid "The backup is damaged or is not a valid ZIP archive. No profile was imported."
+msgstr "The backup is damaged or is not a valid ZIP archive. No profile was imported."
+
+#: src/slic3r/GUI/ConfigProfilesDialog.cpp
+msgid "The backup could not be imported."
+msgstr "The backup could not be imported."

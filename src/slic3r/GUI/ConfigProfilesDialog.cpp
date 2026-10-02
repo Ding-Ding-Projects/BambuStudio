@@ -1,4 +1,5 @@
 #include "ConfigProfilesDialog.hpp"
+#include "ConfigProfileArchive.hpp"
 #include "Widgets/MD3DataView.hpp"
 
 #include "GUI_App.hpp"
@@ -99,45 +100,16 @@ wxString zip_directory(const std::filesystem::path &source_dir, const std::files
 
 wxString unzip_to_directory(const std::filesystem::path &archive, const std::filesystem::path &dest_dir)
 {
-    wxFFileInputStream file_in(wxString::FromUTF8(archive.string()));
-    if (!file_in.IsOk())
-        return _L("The selected backup file could not be opened.");
-    wxZipInputStream zip(file_in);
-    std::error_code ec;
-    std::filesystem::create_directories(dest_dir, ec);
-    if (ec)
-        return _L("The new profile folder could not be created.");
-    const std::filesystem::path canon_dest = std::filesystem::weakly_canonical(dest_dir, ec);
-    if (ec)
-        return _L("The new profile folder could not be created.");
-    for (wxZipEntry *entry = zip.GetNextEntry(); entry != nullptr; entry = zip.GetNextEntry()) {
-        std::unique_ptr<wxZipEntry> guard(entry);
-        if (entry->IsDir())
-            continue;
-        const std::filesystem::path rel = std::filesystem::path(entry->GetName().ToStdWstring());
-        if (rel.empty() || rel.is_absolute() || rel.has_root_name() || rel.has_root_directory())
-            return _L("The backup contains an unsafe path and was rejected.");
-        for (const auto &part : rel)
-            if (part == ".." || part.native().find(':') != std::filesystem::path::string_type::npos)
-                return _L("The backup contains an unsafe path and was rejected.");
-        const std::filesystem::path out = dest_dir / rel;
-        // Zip-slip guard: every extracted path must stay inside the profile.
-        const std::filesystem::path canon_out = std::filesystem::weakly_canonical(out, ec);
-        const auto relative_out = canon_out.lexically_relative(canon_dest);
-        if (ec || relative_out.empty() || relative_out == "." || relative_out.is_absolute() ||
-            *relative_out.begin() == "..")
-            return _L("The backup contains an unsafe path and was rejected.");
-        std::filesystem::create_directories(out.parent_path(), ec);
-        if (ec || std::filesystem::exists(out, ec) || ec)
-            return _L("A file inside the backup could not be written.");
-        wxFFileOutputStream out_stream(wxString::FromUTF8(out.string()));
-        if (!out_stream.IsOk())
-            return _L("A file inside the backup could not be written.");
-        out_stream.Write(zip);
-        if (!out_stream.IsOk() || !out_stream.Close())
-            return _L("A file inside the backup could not be written.");
+    using ConfigProfileArchive::ImportError;
+    switch (ConfigProfileArchive::import_archive(archive, dest_dir)) {
+    case ImportError::None: return {};
+    case ImportError::Open: return _L("The selected backup file could not be opened.");
+    case ImportError::Destination: return _L("The new profile folder could not be reserved. Choose a different name or try again.");
+    case ImportError::UnsafePath: return _L("The backup contains an unsafe path and was rejected.");
+    case ImportError::Write: return _L("A file inside the backup could not be written.");
+    case ImportError::Corrupt: return _L("The backup is damaged or is not a valid ZIP archive. No profile was imported.");
     }
-    return wxString{};
+    return _L("The backup could not be imported.");
 }
 
 } // namespace

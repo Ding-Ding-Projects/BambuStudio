@@ -852,6 +852,8 @@ list(APPEND SLIC3R_GUI_SOURCES
     GUI/ProjectHistoryDialog.hpp
     GUI/ChangelogDialog.cpp
     GUI/ChangelogDialog.hpp
+    GUI/ConfigProfileArchive.cpp
+    GUI/ConfigProfileArchive.hpp
     GUI/ConfigProfilesDialog.cpp
     GUI/ConfigProfilesDialog.hpp
     GUI/CommandPalette.cpp
