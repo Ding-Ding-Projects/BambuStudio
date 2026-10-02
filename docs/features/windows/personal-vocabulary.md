@@ -22,11 +22,15 @@ original unwrapped labels. The canvas display adapter uses the same interface.
 
 Persistence uses the operating system's local application-data directory under
 `private-display/vocabulary.json`, outside synchronized preferences. Replacement
-uses a sibling temporary file and an atomic Windows rename. The selected input
+uses a unique, exclusively created sibling temporary file for each operation and
+an atomic Windows rename. Concurrent writers cannot rename each other's pending
+contents, and clear never deletes another operation's pending file. The selected input
 path is not retained. No payload, mapped value or selected filename is logged or
 sent over the network. Profile archives exclude the private cache, including when
-a custom data folder encloses it. Shared labels retain their original unwrapped
-text; buttons and menu models retain their original values.
+a custom data folder encloses it. Shared labels retain original native text and all original getter values, applying
+replacement only while painting and measuring. Buttons and menu models also retain
+their original values. Logging, action comparisons and layout receipts therefore
+continue receiving the original text.
 
 ## Verification
 
@@ -36,7 +40,8 @@ On a configured hosted Windows build, build `personal_vocabulary_tests` and
 `load-first`, `restore-first`, `invalid`, `replace`, `restore-second`, `clear`,
 `restore-empty`. Each probe invocation must be a fresh process. The probe uses
 only synthetic neutral text in an isolated application-data namespace and emits
-only a pass/fail result.
+only a pass/fail result. Also run `race-a` and `race-b` concurrently as separate
+processes, wait for both, then run `verify-race` and `clear`.
 
 The native UI still requires hosted interaction evidence for load, applied wording,
 restart, replace, clear and invalid input, plus original wording in exports/logs.
@@ -45,3 +50,12 @@ Exercise normal/minimum sizes, English/Cantonese/bilingual modes, light/dark and
 public hosted inputs, logs or captures; its private end-to-end verification is
 separate and remains unavailable in that environment. Source coverage does not
 claim all custom-drawn surfaces are verified.
+
+
+The `personal_vocabulary_native_contract` source check rejects writes of mapped
+text to native label storage and exercises the reviewed bad-setter mutation.
+It is not a substitute for native interaction: with a synthetic mapping loaded,
+verify `Label::GetLabel()`, `GetLabelText()`, and `GetUnwrappedLabel()` retain their
+original values before and after painting, replacement and clear. Check the
+calibration title log, nozzle-rack action comparisons and layout receipt labels
+against those originals in the hosted application.

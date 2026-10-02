@@ -15,6 +15,7 @@
 
 #include <wx/app.h>
 #include <wx/dcclient.h>
+#include <wx/control.h>
 #include <wx/dcgraph.h>
 #include <wx/font.h>
 #include <wx/fontenum.h>
@@ -675,15 +676,11 @@ Label::Label(wxWindow *parent, wxFont const &font, wxString const &text, long st
     this->m_font = font;
     this->m_text = text;
     Slic3r::GUI::PersonalVocabulary::observe(this, [this] {
-        const auto original = m_text;
-        const int width = m_wrap_width;
-        m_text.clear();
-        SetLabel(original);
-        if (width > 0) Wrap(width);
         InvalidateBestSize();
         if (GetParent()) GetParent()->Layout();
+        Refresh();
     });
-    wxStaticText::SetLabel(Slic3r::GUI::PersonalVocabulary::display(text));
+    Bind(wxEVT_PAINT, &Label::OnPersonalVocabularyPaint, this);
     SetFont(font);
     SetBackgroundColour(StaticBox::GetParentBackgroundColor(parent));
     // Seed the text tone from the MD3 OnSurface role for the CURRENT theme.
@@ -714,7 +711,7 @@ void Label::SetLabel(const wxString& label)
         Wrap(GetSize().x);
     } else {
         m_wrap_width = 0; // the new text is not wrapped until the owner wraps it
-        wxStaticText::SetLabel(Slic3r::GUI::PersonalVocabulary::display(label));
+        wxStaticText::SetLabel(label);
     }
 #ifdef __WXOSX__
     if ((GetWindowStyle() & LB_HYPERLINK)) {
@@ -751,9 +748,46 @@ void Label::SetWindowStyleFlag(long style)
     Refresh();
 }
 
+wxString Label::PersonalDisplayText() const
+{
+    const wxString rendered = Slic3r::GUI::PersonalVocabulary::display(m_text);
+    if (rendered == m_text || m_wrap_width <= 0) return rendered;
+    wxClientDC dc(const_cast<Label *>(this));
+    dc.SetFont(GetFont());
+    wxLabelWrapper2 wrapper;
+    wrapper.WrapLabel(dc, rendered, std::max(1, m_wrap_width - FromDIP(4)));
+    return wrapper.GetText();
+}
+
+void Label::OnPersonalVocabularyPaint(wxPaintEvent &event)
+{
+    // Native text and all public getters retain the original wording. Existing
+    // actions, logs, layout receipts and exporters may read those getters.
+    if (Slic3r::GUI::PersonalVocabulary::display(m_text) == m_text) {
+        event.Skip();
+        return;
+    }
+    wxPaintDC dc(this);
+    dc.SetBackground(wxBrush(GetBackgroundColour()));
+    dc.Clear();
+    dc.SetFont(GetFont());
+    dc.SetTextForeground(IsEnabled() ? GetForegroundColour() : wxSystemSettings::GetColour(wxSYS_COLOUR_GRAYTEXT));
+    int alignment = wxALIGN_LEFT | wxALIGN_TOP;
+    if (HasFlag(wxALIGN_CENTRE_HORIZONTAL)) alignment = wxALIGN_CENTRE_HORIZONTAL | wxALIGN_TOP;
+    else if (HasFlag(wxALIGN_RIGHT)) alignment = wxALIGN_RIGHT | wxALIGN_TOP;
+    dc.DrawLabel(wxControl::RemoveMnemonics(PersonalDisplayText()), GetClientRect(), alignment);
+}
+
 wxSize Label::DoGetBestClientSize() const
 {
-    wxSize size = wxStaticText::DoGetBestClientSize();
+    wxSize size;
+    if (Slic3r::GUI::PersonalVocabulary::display(m_text) == m_text) {
+        size = wxStaticText::DoGetBestClientSize();
+    } else {
+        wxClientDC dc(const_cast<Label *>(this));
+        dc.SetFont(GetFont());
+        size = dc.GetMultiLineTextExtent(wxControl::RemoveMnemonics(PersonalDisplayText()));
+    }
 #ifdef WIN32
     // GetTextExtentPoint32 can underestimate the width needed by the native
     // STATIC control to render text. Add a small margin to prevent clipping.
@@ -787,7 +821,7 @@ void Label::Wrap(int width)
 void Label::DoWrap(int width)
 {
     wxLabelWrapper2 wrapper;
-    wrapper.Wrap(this, Slic3r::GUI::PersonalVocabulary::display(m_text), width);
+    wrapper.Wrap(this, m_text, width);
     m_skip_size_evt = true;
     wxStaticText::SetLabel(wrapper.GetText());
     m_skip_size_evt = false;
