@@ -19,7 +19,7 @@ if (-not $output.StartsWith($tempRoot, [StringComparison]::OrdinalIgnoreCase) -o
 [void](New-Item -ItemType Directory -Path $output)
 $raw = Join-Path $env:RUNNER_TEMP ('automation-restricted-' + $env:GITHUB_RUN_ID)
 [void](New-Item -ItemType Directory -Path $raw)
-$receipt = [ordered]@{schema=1; source_commit=$ExpectedSourceCommit; release_tag=$Tag; run_id=$env:GITHUB_RUN_ID; status='failed'; hardware='unverified_no_printer_commands'; capture='not_started'}
+$receipt = [ordered]@{schema=2; protocol='bambu-automation-v2'; source_commit=$ExpectedSourceCommit; release_tag=$Tag; run_id=$env:GITHUB_RUN_ID; status='failed'; hardware='unverified_no_printer_commands'; capture='not_started'; exe_sha256=$null; cli_sha256=$null}
 try {
     $installReceipt = Join-Path $raw 'install.json'
     & "$PSScriptRoot/Verify-HostedSquirrelInstall.ps1" -Tag $Tag -Repository $Repository -ExpectedCommit $ExpectedSourceCommit -OutputPath $installReceipt -CiExecutionApproved
@@ -80,22 +80,40 @@ try {
     $plain = $null
     try {
         Add-Type -AssemblyName System.IO.Compression.FileSystem
+        $manifest = @()
+        $totalBytes = [long]0
+        foreach ($file in @(Get-ChildItem -LiteralPath $raw -File | Sort-Object Name)) {
+            if ($file.Name -cnotmatch '^(install\.json|runtime\.json|\d{3}-[a-z0-9-]+\.png)$' -or
+                ($file.Attributes -band [IO.FileAttributes]::ReparsePoint) -or $file.Length -le 0 -or $file.Length -gt 33554432) {
+                throw 'Restricted evidence inventory contains an unsupported file.'
+            }
+            $totalBytes += $file.Length
+            $manifest += [ordered]@{path=$file.Name; bytes=$file.Length; sha256=(Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash.ToLowerInvariant()}
+        }
+        if ($manifest.Count -lt 1 -or $manifest.Count -gt 32 -or $totalBytes -gt 67108864 -or
+            @(Get-ChildItem -LiteralPath $raw -Directory).Count -ne 0) { throw 'Restricted evidence inventory exceeds its bounds.' }
+        $receipt.manifest = $manifest
+        $binding = @('bambu-automation-v2', $env:GITHUB_RUN_ID, $ExpectedSourceCommit, $Tag,
+            [string]$receipt.exe_sha256, [string]$receipt.cli_sha256, [string]$receipt.status,
+            [string]$receipt.hardware, [string]$receipt.capture)
+        foreach ($row in $manifest) { $binding += "$($row.path)|$($row.bytes)|$($row.sha256)" }
+        $aad = [Text.Encoding]::UTF8.GetBytes(($binding -join "`n") + "`n")
         [IO.Compression.ZipFile]::CreateFromDirectory($raw, $zipPath)
         if ((Get-Item -LiteralPath $zipPath).Length -gt 67108864) { throw 'Restricted evidence exceeds 64 MiB.' }
         $plain = [IO.File]::ReadAllBytes($zipPath)
         $key = [Security.Cryptography.RandomNumberGenerator]::GetBytes(32)
         $nonce = [Security.Cryptography.RandomNumberGenerator]::GetBytes(12)
         $tagBytes = [byte[]]::new(16)
-        $aadText = "bambu-automation-v1`n$($env:GITHUB_RUN_ID)`n$ExpectedSourceCommit`n$Tag`n"
-        $aad = [Text.Encoding]::UTF8.GetBytes($aadText)
         $cipher = [byte[]]::new($plain.Length)
         $rsa.ImportFromPem([IO.File]::ReadAllText("$PSScriptRoot/../md3/hosted-gui-public-v2.pem"))
+        $keyId = [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($rsa.ExportSubjectPublicKeyInfo())).ToLowerInvariant()
         $wrapped = $rsa.Encrypt($key, [Security.Cryptography.RSAEncryptionPadding]::OaepSHA256)
         $aes = [Security.Cryptography.AesGcm]::new($key, 16)
         try { $aes.Encrypt($nonce, $plain, $cipher, $tagBytes, $aad) } finally { $aes.Dispose() }
         $cipherPath = Join-Path $output 'evidence.aesgcm'
         [IO.File]::WriteAllBytes($cipherPath, $cipher)
-        @{schema=1; protocol='bambu-automation-v1'; run_id=$env:GITHUB_RUN_ID; source_commit=$ExpectedSourceCommit; release_tag=$Tag; aad=[Convert]::ToBase64String($aad); wrapped_key=[Convert]::ToBase64String($wrapped); nonce=[Convert]::ToBase64String($nonce); tag=[Convert]::ToBase64String($tagBytes); ciphertext_sha256=(Get-FileHash -LiteralPath $cipherPath).Hash.ToLowerInvariant()} | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $output 'envelope.json') -Encoding utf8
+        $receipt.encrypted_bundle_sha256 = (Get-FileHash -LiteralPath $cipherPath -Algorithm SHA256).Hash.ToLowerInvariant()
+        @{schema=2; protocol='bambu-automation-v2'; run_id=$env:GITHUB_RUN_ID; source_commit=$ExpectedSourceCommit; release_tag=$Tag; exe_sha256=$receipt.exe_sha256; cli_sha256=$receipt.cli_sha256; public_key_sha256=$keyId; aad_sha256=[Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($aad)).ToLowerInvariant(); wrapped_key=[Convert]::ToBase64String($wrapped); nonce=[Convert]::ToBase64String($nonce); tag=[Convert]::ToBase64String($tagBytes); ciphertext_sha256=$receipt.encrypted_bundle_sha256} | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $output 'envelope.json') -Encoding utf8
     } catch { $receipt.capture = 'encryption_failed'; $receipt.status = 'failed'; throw 'Restricted evidence encryption failed.' }
     finally {
         $rsa.Dispose()
