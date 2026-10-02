@@ -129,7 +129,7 @@ struct CanvasMenuSearchState : CanvasMenuSearchModel
 {
     RegexBuilderValues values;
     std::shared_ptr<RegexBuilderBridgeState> bridge = std::make_shared<RegexBuilderBridgeState>();
-    std::future<std::pair<std::vector<bool>, bool>> pending;
+    std::future<std::pair<std::vector<bool>, BoundedRegex::Status>> pending;
     ImGuiID popup_id = 0;
     int last_frame = -1;
     bool request_focus = false;
@@ -214,7 +214,7 @@ std::vector<bool> ImGuiWrapper::menu_search(const char* stable_id,
             auto result = state.pending.get();
             state.accept_result(state.requested_signature, std::move(result.first), result.second);
         } catch (...) {
-            state.accept_result(state.requested_signature, {}, true);
+            state.accept_result(state.requested_signature, {}, BoundedRegex::Status::ProtocolError);
         }
     }
     if (values.regex_enabled && !values.pattern.empty() && !state.pending.valid() && state.needs_result()) {
@@ -225,7 +225,7 @@ std::vector<bool> ImGuiWrapper::menu_search(const char* stable_id,
         BoundedRegex::Options options;
         options.case_sensitive = values.case_sensitive;
         options.multiline = values.multiline;
-        state.requested_signature = state.signature;
+        state.begin_request();
         try {
             state.pending = std::async(std::launch::async, [pattern = std::move(pattern), subjects = std::move(subjects), options]() {
                 std::vector<bool> mask(subjects.size(), true);
@@ -233,20 +233,20 @@ std::vector<bool> ImGuiWrapper::menu_search(const char* stable_id,
                 for (size_t i = 0; i < subjects.size() && !pass.circuit_open(); ++i)
                     mask[i] = pass.evaluate(subjects[i]).allows_candidate();
                 if (pass.circuit_open()) std::fill(mask.begin(), mask.end(), true);
-                return std::make_pair(std::move(mask), pass.circuit_open());
+                return std::make_pair(std::move(mask), pass.circuit_open() ? pass.circuit_status() : BoundedRegex::Status::Valid);
             });
         } catch (...) {
-            state.unavailable = true;
-            state.evaluated_signature = state.signature;
+            state.accept_result(state.requested_signature, {}, BoundedRegex::Status::ProtocolError);
         }
     }
     if (state.pending.valid()) {
         ImGui::TextWrapped("%s", into_u8(PersonalVocabulary::display(PersonalVocabulary::remember(_L("Searching...")))).c_str());
-#if ENABLE_ENHANCED_IMGUI_SLIDER_FLOAT
-        set_requires_extra_frame();
-#endif
-        if (auto* canvas = wxGetApp().plater()->get_current_canvas3D()) canvas->request_extra_frame();
+        // Poll bounded in-flight work at a timed cadence, not a render busy loop.
+        if (auto* canvas = wxGetApp().plater()->get_current_canvas3D()) canvas->schedule_extra_frame(16);
     } else if (state.unavailable) {
+        if (state.retry_waiting)
+            if (auto* canvas = wxGetApp().plater()->get_current_canvas3D())
+                canvas->schedule_extra_frame(state.retry_delay_ms());
         ImGui::TextWrapped("%s", into_u8(PersonalVocabulary::display(PersonalVocabulary::remember(_L("Search unavailable. All items are shown.")))).c_str());
     } else {
         const size_t count = std::count(state.visible.begin(), state.visible.end(), true);

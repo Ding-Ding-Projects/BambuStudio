@@ -15,7 +15,12 @@ Regex matching runs asynchronously through the existing bounded worker. Results
 are cached by the complete query, flags and ordered labels. Pending or invalid
 searches show all actions with explicit status; a valid empty result says
 "No matches". Stale or incomplete results cannot hide a subset of actions.
-Literal search uses bounded in-process matching. Matching uses original localized
+Temporary worker startup or contention (`WorkerUnavailable`) retries after 250 ms
+and then 1000 ms, with at most three total attempts for unchanged input. Invalid
+patterns, complexity limits, timeouts and protocol errors do not retry. The
+canvas schedules timed frames rather than continuously redrawing while waiting;
+changing the query resets this bounded retry policy. Literal search uses bounded
+in-process matching. Matching uses original localized
 labels; optional display vocabulary changes only the rendered text and not IDs,
 actions, saved data or logs.
 
