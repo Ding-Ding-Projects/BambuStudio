@@ -19,8 +19,16 @@ endif()
 include(${wxWidgets_USE_FILE})
 
 target_include_directories(language_mode_tests PRIVATE ${PROJECT_SOURCE_DIR}/src)
+if(WIN32)
+    # Match the production catalog output, including the generated Cantonese
+    # catalog that is deliberately absent from the source resource directory.
+    set(LANGUAGE_MODE_TEST_CATALOG_DIR "${CMAKE_BINARY_DIR}/fork-i18n")
+    add_dependencies(language_mode_tests fork_catalogs)
+else()
+    set(LANGUAGE_MODE_TEST_CATALOG_DIR "${PROJECT_SOURCE_DIR}/resources/i18n")
+endif()
 target_compile_definitions(language_mode_tests PRIVATE
-    LANGUAGE_MODE_TEST_I18N_DIR=R"\(${PROJECT_SOURCE_DIR}/resources/i18n\)"
+    LANGUAGE_MODE_TEST_I18N_DIR=R"\(${LANGUAGE_MODE_TEST_CATALOG_DIR}\)"
 )
 target_link_libraries(language_mode_tests test_common ${wxWidgets_LIBRARIES} PNG::PNG)
 set_property(TARGET language_mode_tests PROPERTY FOLDER "tests")
