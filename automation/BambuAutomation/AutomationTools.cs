@@ -66,7 +66,7 @@ public sealed class AutomationTools(CommandService service)
     public Task<CallToolResult> SliceStart([Description("Typed slice_start arguments, including required fields and safety constraints.")] SliceArguments arguments, CancellationToken cancellationToken)
         => Invoke("slice_start", arguments, cancellationToken);
 
-    [McpServerTool(Name = "bambu_export_file"), Description("Export the current native project to a workspace .3mf file atomically.")]
+    [McpServerTool(Name = "bambu_export_file"), Description("Export current native sliced toolpaths atomically to a workspace .3mf file. Use project_save to save the project.")]
     public Task<CallToolResult> ExportFile([Description("Typed export_file arguments, including required fields and safety constraints.")] OutputArguments arguments, CancellationToken cancellationToken)
         => Invoke("export_file", arguments, cancellationToken);
 
@@ -98,8 +98,7 @@ public sealed class AutomationTools(CommandService service)
     public Task<CallToolResult> JobStatus([Description("Typed job_status arguments, including required fields and safety constraints.")] JobArguments arguments, CancellationToken cancellationToken)
         => Invoke("job_status", arguments, cancellationToken);
 
-    [McpServerTool(Name = "bambu_job_cancel"), Description("Cancel a service-owned headless job. Native cancellation returns cancellation_not_safe until a safe native operation ID exists.")]
+    [McpServerTool(Name = "bambu_job_cancel"), Description("Cancel a service-owned headless job or the exact native slicing task identified by its generation and task ID. Native cancellation remains scoped to the owning job.")]
     public Task<CallToolResult> JobCancel([Description("Typed job_cancel arguments, including required fields and safety constraints.")] JobArguments arguments, CancellationToken cancellationToken)
         => Invoke("job_cancel", arguments, cancellationToken);
 }
-
