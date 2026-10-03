@@ -28,3 +28,6 @@ Related: [Windows release supply chain](../releases/windows-release-supply-chain
 - [Cancellation observation contract](hosted-cancellation-contract-37095515540.json),
   18 passing hosted cases including deliberate epoch-validation mutation;
   this verifies evidence rules, not an installed cancellation interaction.
+- [Hosted 150% display receipt](hosted-display-resolution-37096062899.json),
+  13 passing lifecycle cases, measured 144 DPI at 1920x1080, and verified
+  restoration to the original 1024x768 and 96 DPI. Application rendering is excluded.

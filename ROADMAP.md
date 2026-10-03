@@ -12,6 +12,7 @@
 
 ## Native interface completeness and slicing actions
 
+- [x] Verify standalone 150%/144 DPI provisioning and original display restoration in run `37096062899` at `54ff825c0`; 13 lifecycle cases passed. Product rendering remains unverified.
 - [x] Pass 46 canvas checks, 68 preview geometry/timing checks, 55 source tests and eight slicing contracts at `4436c7f91` on hosted run `37056354867`; this does not establish native-service or rendered correctness.
 - [ ] Repair the static wxWidgets focused-target link configuration and ambiguous preview `ImGuiWrapper::begin` call, then verify the combined candidate.
 - [x] Pass complete focused run `37085341046` at `6bc6656ef`, including native services, seven cancellation-observation tests and three fixture-path tests; installed behavior remains unverified.

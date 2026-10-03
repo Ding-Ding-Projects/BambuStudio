@@ -1,5 +1,30 @@
 # Bambu Studio handoff
 
+## Current continuation, 2026-10-03 UTC
+
+Preserved integration source is 91dc1720bb4a795868c2d02655dae771d6842d49.
+Run 37096062899 passed 13 lifecycle cases in 13126 ms and selected 150%,
+measuring 144 DPI at 1920x1080. Original 1024x768 and 100%/96 DPI were restored;
+worker/recovery termination was verified with no recovery uncertainty. Exact
+receipt hashes are in docs/features/automation/hosted-display-resolution-37096062899.json.
+Private images precede selection and contain account identity, so remain
+unpublished. They do not establish product rendering.
+
+Startup diagnostic 37096346917, verifier e5b003ee5d24fd9ac76f9f68b9657d90842e94a8,
+again confirmed natural exit 0xFFFFFFFF, empty streams and no profile log
+folder. Independent eleven-file manifest validation passed. Two source reviews
+identified an existing earlier launcher trace outside the profile; isolated,
+bounded encrypted collection is being implemented. No particular native loader
+failure is established and no speculative product repair is made.
+
+Run 37096376814 is the single 1600x1200/200% diagnostic at 91dc1720b;
+lifecycle passed and provisioning is pending. Release md3-v192 exists at
+7bd7420c7972aa186d246c76c93265600d8cd2ee with five uploaded assets, but does
+not change the observed launcher path. This is not runtime acceptance.
+Main remains ce883543177ef7df46fa5b798dcc5c7f3d2f8020. Product execution stays
+hosted only. No final integration, product matrix, physical printer operation
+or deletion is complete. Earlier sections describe historical observations.
+
 ## Latest verified state, 2026-10-03 UTC
 
 Display run 37095764151 at 67eada8bda7b2fd6d5a589547004eea8415d559f passed
