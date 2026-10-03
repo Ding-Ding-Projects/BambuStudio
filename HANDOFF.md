@@ -2682,3 +2682,10 @@ repair e70638618 is included in new native run37101358501. Combined package
 run37101358049 is queued at the same source. No current installed pixels or
 final-main verdict exist. Menu-builder interaction scope and temporal capture
 planning continue; page-body transitions remain incomplete.
+
+Independent authenticated review of run 37101357236 found the debugger unable
+to resolve NtGlobalFlag in nt!_PEB. The initial marker and target identity were
+emitted, but required sls readback was absent; no g command was sent. Exit 2
+follows the bounded 90-second acknowledgement wait, not an observed product
+initializer. Matching operating-system symbol repair is assigned separately.
+The prior natural initialization error 1114 remains unresolved.

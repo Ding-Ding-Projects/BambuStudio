@@ -77,7 +77,7 @@ Latest user steering explicitly requires animations and transitions throughout
 the GUI, with Astra implementation and independent review. Existing motion is
 partial. Shared policy/lifetime foundation c309da8a and persisted system/reduced
 preference passed two independent source reviews and are integrated at ea1464255.
-Hosted run 37100211528 is queued against that foundation. Additional reviewed
+Hosted run 37100211528 failed catalog metadata counts; corrected source is in c7aefb4b8. Additional reviewed
 control/tab motion 53c96f649 and notification/progress e83163284 are integrated
 at 8a2750717, alongside transient entrance 20280c50e. The combined pure policy
 count is now 26, pending hosted execution. Those outcomes do not prove real timers
@@ -104,8 +104,9 @@ assembly Export search/builder, bounded layout and keyboard rows at 866bd20b;
 canvas regex Whole word parity at ba8b0a0e. Both had two independent source reviews.
 The latter calls an actual production evaluator and includes a real-worker parity
 case that cannot pass through fail-open visibility. Hosted native verification
-37099796194 is queued at 6c5e619aaa63b00944951d5caaf30b9d1c415185. Compilation,
-actual assembly/preview interaction and visible motion remain pending. The existing
+37099796194 passed at 6c5e619aaa63b00944951d5caaf30b9d1c415185, including
+one canvas regex case with 19 assertions. Actual assembly/preview interaction
+and visible motion remain pending. The existing
 menus flow still lacks direct builder interaction and full native/canvas invoker
 coverage. Do not silently treat the two original menu fixtures as exhaustive.
 
@@ -124,3 +125,26 @@ repair e70638618 is included in new native run37101358501. Combined package
 run37101358049 is queued at the same source. No current installed pixels or
 final-main verdict exist. Menu-builder interaction scope and temporal capture
 planning continue; page-body transitions remain incomplete.
+
+Latest authenticated diagnostic: run 37101357236 retained partial encrypted
+output with verified worker termination and desktop closure at verifier c7aefb4b8.
+The canonical version-3 reader opened and authenticated two restricted entries.
+The trace driver returned 2; independent causal review is pending. No product
+startup or rendered-interface success follows from diagnostic transport.
+
+Source review identifies remaining content-page transitions, canvas tooltips,
+canvas hover/filter decoration and the assembly-export progress frame. Timers
+alone cannot animate BusyInfo while its callers block the event loop.
+Menu-builder scopes are preserved at 1ae08f84917e65e0b1a95dd4f1e671e47a3a1d2b
+(root 22 and nested 27 required observations), with duplicate entrance removal
+at 9aa64b75bf327d4268782df6e45fb0d9a10cb359. One independent source review
+accepts both; second review and hosted interaction remain pending. Temporal
+capture implementation is active in its separate lane. PrintWindow capture
+cannot be assumed to establish compositor alpha transitions.
+
+Independent authenticated review of run 37101357236 found the debugger unable
+to resolve NtGlobalFlag in nt!_PEB. The initial marker and target identity were
+emitted, but required sls readback was absent; no g command was sent. Exit 2
+follows the bounded 90-second acknowledgement wait, not an observed product
+initializer. Matching operating-system symbol repair is assigned separately.
+The prior natural initialization error 1114 remains unresolved.

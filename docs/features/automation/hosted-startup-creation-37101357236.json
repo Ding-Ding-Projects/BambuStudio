@@ -1,0 +1,42 @@
+{
+  "schema": 1,
+  "url": "https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37101357236",
+  "receipt_sha256": "a765584b99358cee92a5b12be88a1651a2707b28e74255f5d3bae09e40e519bd",
+  "receipt": {
+    "schema": 1,
+    "status": "instrumented_trace_partial_encrypted_pending_review",
+    "run_id": "37101357236",
+    "run_attempt": "1",
+    "release_tag": "md3-v190",
+    "source_commit": "35d1074faea221fa4f289f1db1e0ee428a90d701",
+    "verification_commit": "c7aefb4b84f31a4bc2519d8052ac78b3ccaa3a17",
+    "installed_exe_sha256": "8fab11fc9adcae579e14ec8895b6e53ab1f769494bc2bc807db1b0b654e210ec",
+    "cdb_sha256": "31789c2c2645d5fdafb1621c47b0db8bc2fbca47b510a0e4e6fdede0479ce105",
+    "debugger_source": "signed hosted Windows SDK",
+    "execution_class": "instrumented_from_creation; separate from uninstrumented baseline",
+    "evidence_meaning": "partial diagnostic transport only; no measured GUI geometry or behavior verdict",
+    "project_symbols": "matching_project_symbols_unavailable; module_offsets_only",
+    "evidence_status": "encrypted_partial_behavior_pending_restricted_review",
+    "failure_type": null,
+    "desktop_stage": "closed",
+    "desktop_holder_termination_verified": true,
+    "desktop_handle_closed": true,
+    "desktop_absence_cli_exit": 0,
+    "desktop_absence_native_code": 2,
+    "worker_tree_termination_verified": true,
+    "desktop_closed_verified": true,
+    "trace_driver_exit_code": 2
+  },
+  "restricted_review": "authenticated_version_3_bundle_opened_and_independently_reviewed",
+  "findings": [
+    "The debugger emitted the initial marker and target identity, but its operating-system symbol lookup could not resolve NtGlobalFlag in nt!_PEB.",
+    "The required sls readback acknowledgement was absent. The driver did not send g and stopped after the bounded initial wait with exit 2.",
+    "The aggregate initial_marker_observed field means complete acknowledgement, not literal marker presence.",
+    "All six normalized verifier hashes and four raw CRLF source hashes were independently matched to the exact verifier source."
+  ],
+  "limitations": [
+    "No product continuation or failing DLL initializer was observed.",
+    "Earlier uninstrumented initialization error 1114 remains unresolved.",
+    "No GUI geometry, animation, interaction or rendering acceptance is established."
+  ]
+}

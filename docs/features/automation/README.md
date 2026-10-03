@@ -56,3 +56,5 @@ Related: [Windows release supply chain](../releases/windows-release-supply-chain
 - [Hosted animator lifetime receipt](hosted-motion-runtime-37100814236.json), fourteen real wx cases and compiled negative; injected preferences and no pixels.
 - [Partial startup diagnostic](hosted-startup-creation-37100674583.json), encrypted output with verified teardown but matching local key unavailable.
 - [Additive review recipient recovery](hosted-gui-recipient-recovery.md).
+
+- [Authenticated startup diagnostic](hosted-startup-creation-37101357236.json), matching operating-system symbols unavailable, so execution never resumed; the product initializer remains unknown.
