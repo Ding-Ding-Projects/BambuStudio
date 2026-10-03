@@ -39,6 +39,37 @@ def require(value, message):
         raise RuntimeError(message)
 
 
+def require_vocabulary_getters(probe, title, original):
+    """Bind real Label getter observations to the visible native title."""
+    require(type(title.get("hwnd")) is int and title["hwnd"] > 0 and
+            type(title.get("top")) is int and title["top"] > 0 and
+            title.get("type") == 50020 and
+            title.get("name") == original and title.get("offscreen") is False,
+            "Vocabulary title identity is unavailable")
+    rows = [row for row in probe if row.get("kind") == "window" and
+            row.get("name") == "personal-vocabulary-title"]
+    require(len(rows) == 1, "Vocabulary native getter target is missing or ambiguous")
+    row = rows[0]
+    getters = row.get("native_getters")
+    screen = row.get("screen", {})
+    require(type(row.get("hwnd")) is int and row["hwnd"] == title["hwnd"] and
+            type(row.get("top")) is int and row["top"] == title["top"] and
+            row.get("on_screen") is True and row.get("label") == original and
+            all(type(screen.get(key)) is int for key in ("x", "y", "w", "h")) and
+            screen["w"] > 0 and screen["h"] > 0 and
+            title.get("rect") == [screen["x"], screen["y"], screen["x"] + screen["w"], screen["y"] + screen["h"]],
+            "Vocabulary native getter target differs from the captured title")
+    require(isinstance(getters, dict) and set(getters) == {
+                "schemaVersion", "getLabelTextEqualsGetLabel", "getUnwrappedLabelEqualsGetLabel"} and
+            type(getters.get("schemaVersion")) is int and
+            getters["schemaVersion"] == 1 and
+            getters.get("getLabelTextEqualsGetLabel") is True and
+            getters.get("getUnwrappedLabelEqualsGetLabel") is True,
+            "Vocabulary title native getters do not retain the original unwrapped text")
+    return {"hwnd": row["hwnd"], "top": row["top"], "rect": list(title["rect"]),
+            "getLabelMatchesOriginal": True, **getters}
+
+
 def minimum_observation_valid(row):
     if not isinstance(row, dict) or row.get("status") != "measured_minimum_contained":
         return False
@@ -747,7 +778,7 @@ class Driver:
         self.type(prefix + "-find-wording", self.label("Personal vocabulary"), search["top"])
         return search["top"]
 
-    def title_pixels(self, label):
+    def title_pixels(self, label, verify_getters=False):
         """Observe stable real pixels while requiring original native text.
 
         Equality/change is evidence of display persistence, not OCR or proof of
@@ -763,6 +794,7 @@ class Driver:
                     "Native title no longer exposes original wording")
             require(not self.candidates("Fixture wording alpha") and not self.candidates("Fixture wording beta"),
                     "Replacement wording leaked into native accessibility")
+            getters_before = require_vocabulary_getters(self.probe, title, self.label("Personal vocabulary")) if verify_getters else None
             top = next(r for r in self.probe if r.get("kind") == "toplevel" and r.get("hwnd") == title["top"])
             origin = top["rect"]
             rect = [title["rect"][0] - origin["x"], title["rect"][1] - origin["y"],
@@ -776,11 +808,20 @@ class Driver:
                 crop = image.crop(rect).convert("RGB")
                 signature = hashlib.sha256(str(crop.size).encode("ascii") + crop.tobytes()).hexdigest()
             if last == signature:
+                getters_after = None
+                if verify_getters:
+                    self.worker()
+                    after_title = self.one("Personal vocabulary", kind=50020)
+                    getters_after = require_vocabulary_getters(self.probe, after_title, self.label("Personal vocabulary"))
+                    require(getters_after == getters_before, "Vocabulary title identity or getters changed during capture")
                 name = self.capture(label + "-stable-title", title["top"], scratch_image)
                 self.images[-1]["captured_at_utc"] = captured_at
                 self.rows[-1]["display_title"] = {"capture": name, "crop": rect,
                     "pixel_sha256": signature, "stable_samples": 2, "attempts": attempt + 1,
                     "native_original_text": True, "exact_painted_text_review": "pending"}
+                if verify_getters:
+                    self.rows[-1]["display_title"]["native_getters"] = {
+                        "before_capture": getters_before, "after_capture": getters_after}
                 return signature
             last = signature
             time.sleep(0.25)
@@ -821,7 +862,7 @@ class Driver:
     def vocabulary(self):
         preferences = self.open_vocabulary("initial")
         target = self.one("Load JSON")
-        baseline = self.title_pixels("original")
+        baseline = self.title_pixels("original", verify_getters=True)
         previous = baseline
         # Native text must stay original. Only genuine captured pixels are used
         # for change/preservation checks; exact replacement text needs review.
@@ -830,10 +871,22 @@ class Driver:
             fixture = self.scratch / f"neutral-{index}.json"
             fixture.write_text(json.dumps({"schemaVersion": 1, "entries": {source: replacement}}), encoding="utf-8")
             self.upload_vocabulary(f"valid-{index}", target, fixture, preferences)
-            current = self.title_pixels(f"valid-{index}")
+            require(self.prose_status("Personal vocabulary is active on this device."),
+                    "Valid replacement did not reset the visible vocabulary status")
+            current = self.title_pixels(f"valid-{index}", verify_getters=True)
             require(current != previous and current != baseline, "Title pixels did not change for the replacement")
             previous = current
             target = self.one("Replace JSON")
+            if index == 0:
+                malformed = self.scratch / "neutral-malformed.json"
+                malformed.write_text('{"schemaVersion":1,"entries":', encoding="utf-8")
+                self.upload_vocabulary("malformed", target, malformed, preferences)
+                require(self.prose_status("The vocabulary file could not be applied. Use valid version 1 JSON within the supported size limits.")
+                        and self.candidates("Replace JSON"),
+                        "Malformed JSON did not visibly reject the input and preserve the active mapping")
+                require(self.title_pixels("malformed", verify_getters=True) == previous,
+                        "Malformed JSON changed the painted title")
+                target = self.one("Replace JSON")
         invalid = self.scratch / "neutral-invalid.json"
         invalid.write_text(json.dumps({"schemaVersion": 2, "entries": {source: "Invalid replacement"}}), encoding="utf-8")
         self.upload_vocabulary("invalid", target, invalid, preferences)
@@ -841,11 +894,11 @@ class Driver:
                 and self.candidates("Replace JSON")
                 and not self.candidates("Invalid replacement"),
                 "Invalid JSON did not visibly preserve the active mapping")
-        require(self.title_pixels("invalid") == previous, "Invalid JSON changed the painted title")
+        require(self.title_pixels("invalid", verify_getters=True) == previous, "Invalid JSON changed the painted title")
         self.click("clear-wording", self.one("Clear personal vocabulary"))
         require(self.candidates("Personal vocabulary") and self.candidates("Load JSON") and
                 not self.candidates("Fixture wording beta"), "Clear did not restore native original wording")
-        require(self.title_pixels("cleared") == baseline, "Clear did not restore original title pixels")
+        require(self.title_pixels("cleared", verify_getters=True) == baseline, "Clear did not restore original title pixels")
 
     def vocabulary_persistence(self):
         preferences = self.open_vocabulary("initial")

@@ -2721,6 +2721,7 @@ wxWindow *PreferencesDialog::create_appearance_tab()
     auto *wording_sizer = new wxBoxSizer(wxVERTICAL);
     wording->SetSizer(wording_sizer);
     auto *wording_title = new Label(wording, _L("Personal vocabulary"));
+    wording_title->SetName("personal-vocabulary-title");
     wording_sizer->Add(wording_title, 0, wxEXPAND | wxALL, FromDIP(12));
     auto *wording_description = new Label(wording,
         _L("Load a version 1 JSON file to change display wording on this device. Original data, logs and exports keep their original wording."),

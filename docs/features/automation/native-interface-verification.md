@@ -22,7 +22,7 @@ the exact release candidate. The checkout must be at that source commit.
 | Scope | Required observations | Limits |
 | --- | --- | --- |
 | `menus` | Empty-scene short context menu, literal search, no matches, regex matching, Tab to regex, Escape clear/dismiss, nested Add Primitive menu, parent focus restoration, layout measurements | Requires the actual native accessibility provider to expose menu rows and search fields. It never invokes a primitive action. |
-| `vocabulary` | Preferences opened through the Edit menu, native JSON picker, synthetic label load, replacement, visible invalid-file rejection, preservation of the valid mapping and clear | Original native accessibility text must remain unchanged. Stable real title pixels prove change/preservation/restoration; exact painted wording still requires image review. |
+| `vocabulary` | Preferences opened through the Edit menu, native JSON picker, synthetic label load, replacement, separate malformed-syntax and unsupported-version rejection, preservation of the valid mapping and clear | Original native accessibility text and the three real title Label getters must remain unchanged. Stable real title pixels prove change/preservation/restoration; exact painted wording still requires image review. |
 | `vocabulary-persistence` | Load a neutral mapping, observe it after a fresh process, clear it and verify original display after another fresh process | Uses generated neutral JSON only. Does not test exports or graceful application shutdown. |
 | `slice-controls` | Empty-model proof, visible disabled Slice and Print/Send controls, disabled clicks that open no dialog, named options buttons with real chevron labels, measured action layout | This is an empty-scene preflight, not proof of slicing or device continuation. |
 | `combined-print` | Native cube import, installed presets, real Slice and Print click, ready output on plate zero, existing Send print job dialog, Escape dismissal | No submit or printer selection. Missing presets, account requirements, version preflight or an unavailable dialog fail the scope. |
@@ -80,9 +80,13 @@ Decryption verifies integrity; it does not approve privacy or publication.
 Review every image before publishing it. No screenshot in this document is
 fabricated to stand in for that pending review.
 
-The vocabulary and persistence scopes retain 23 and 25 images respectively.
-The invalid fixture uses unsupported schema version 2 and must show the rejection
-message while leaving the valid replacement's title pixels unchanged. Each
+The vocabulary and persistence scopes retain 28 and 25 images respectively.
+After the first valid mapping, `neutral-malformed.json` contains an incomplete
+JSON object and must visibly reject while retaining that mapping's title pixels.
+A second valid replacement must restore the active status before the existing
+unsupported schema version 2 fixture is submitted. That separate rejection must
+retain the second mapping. Both files are generated neutral fixtures in the
+isolated scratch directory; no private vocabulary file is uploaded. Each
 display checkpoint waits for two identical title crops, with at most six
 observations, and retains the full raw image that produced the stable crop.
 Transient stability samples remain restricted scratch data; all per-input
@@ -90,6 +94,74 @@ captures and accepted stable images are retained in the encrypted bundle.
 Original native accessibility text is required throughout. Pixel differences
 and equality prove display changes and restoration, not the exact text content;
 human review of the retained images is still required.
+
+### Actual title getter observation
+
+The existing Preferences title `Label` has the stable name
+`personal-vocabulary-title`. When `BAMBU_AUTOMATION=1` and the existing layout
+probe is enabled, that concrete control additionally reports `native_getters`
+version 1. The native code calls `GetLabel()`, `GetLabelText()` and
+`GetUnwrappedLabel()` directly on the same `Label` instance. It emits only the
+two booleans `getLabelTextEqualsGetLabel` and
+`getUnwrappedLabelEqualsGetLabel`; the existing `label` field is already the
+real `GetLabel()` value. No display adapter, UI Automation name or cached
+Python text substitutes for those getter calls.
+
+The vocabulary scope requires exactly one named probe row, the same positive
+HWND and top-level handle as the visible accessibility title, matching screen
+geometry, original native label text and both exact boolean results. It records
+matching getter observations immediately before and after each accepted stable
+title capture: baseline, first mapping, malformed rejection, replacement,
+unsupported-version rejection and clear. This adds no images beyond the 28-image
+flow. A wrapped or mnemonic-bearing title that does not satisfy exact equality
+fails the observation; no whitespace normalization invents equality. The current
+short unwrapped English title is the first intended hosted tuple. Other language,
+theme and size tuples remain separately unverified.
+
+This evidence applies only to the photographed title control. It does not prove
+all getter consumers, operational comparisons, logs, exports or other custom
+surfaces. The persistence scope retains its existing accessibility/pixel contract
+and is not silently upgraded to three-getter evidence. Rendering, logging,
+export and persistence implementations are unchanged.
+
+`scripts/md3/test_native_vocabulary_observation.py` contains nine source-isolated
+cases using the production getter predicate and vocabulary sequence. They reject
+missing/ambiguous controls, wrong HWND/geometry/original text, nonboolean getter
+results and incompatible schemas. A deliberate removal of the real unwrapped
+comparison exposes the same bad observation. Scripted observations also check
+both preservation branches, the successful status reset between them and the
+28-image count. These are orchestration contracts, not simulated native evidence.
+The existing hosted runtime workflow runs them before installation using only
+Python's standard library. Execute on the hosted runner only:
+
+```powershell
+python scripts/md3/test_native_vocabulary_observation.py -v
+```
+
+The same workflow accepts `vocabulary_contract_only=true` for a five-minute
+Windows job that checks out the dispatched workflow commit and runs only those
+nine source-isolated cases. It requires no release, installer, native build or
+product process. The receipt binds the exact checkout to `GITHUB_SHA`, the run
+and attempt, the driver and contract SHA-256 hashes, and the actual exit code.
+Only `receipt.json` and `output.txt` are retained. Dispatch after the candidate
+has been integrated and pushed:
+
+```powershell
+gh workflow run native-interface-runtime.yml --repo Ding-Ding-Projects/BambuStudio --ref feature/ui-integration -f vocabulary_contract_only=true
+```
+
+This opt-in route ignores release and interaction parameters and always checks
+the dispatched source; it does not use `expected_source_commit` to select a
+different checkout. Combining it with `provision_resolution=true` fails a
+separate validation job before any display or product work. With the new switch
+omitted or false, the installed route still requires a valid release tag, exact
+source SHA and supported interaction scope before checkout or installation.
+Passing the source-only job does not verify native getters, rendered wording,
+the installed application or its startup.
+
+No local tests, native builds or product execution were performed for this
+extension. Native compilation, the nine hosted contracts and real installed
+interaction remain pending.
 
 The persistence scope stops the owned process, verifies teardown, starts a
 different process with the same isolated profile, and requires the mapped title
