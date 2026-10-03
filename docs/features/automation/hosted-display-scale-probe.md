@@ -140,12 +140,11 @@ restoration requires disposal of the hosted runner, never a successful result.
 The helper's thread uses per-monitor awareness for coordinate conversion only;
 this does not provision a scale and is never accepted as scale evidence.
 
-This helper supports standalone control measurement only. It intentionally has
-no general action-script parameter: integrating a product action remains separate
-work after standalone provisioning is verified. It launches no product and proves
-no product-window DPI, pixels, layout, or capture review. The installed runtime
-must independently measure its actual window DPI while the requested scale is
-active; that action wrapper is not implemented here.
+The default helper supports standalone control measurement. It has no general
+action-script parameter. The explicit native-runtime integration below uses only
+the fixed installed-product driver after the requested selection and Settings DPI
+are verified in the current invocation. Standalone measurement proves no product
+window DPI, pixels, layout or capture review.
 
 Every helper process starts suspended and is assigned to a non-breakaway Windows
 job before its first instruction. A zero active-process count proves termination
@@ -196,9 +195,19 @@ limitation. Receipts explicitly record the route and `foreground_input_atomic`
 as false. A changed desktop, obscured point, missing foreground ownership or
 unobserved semantic transition produces unavailable evidence, never success.
 
-## Prepared native-runtime integration, not enabled
+Post-input ownership uses a fresh observation of the unique Scale combo's current
+physical rectangle, retaining the original Settings process identity and owned
+root. A bounded three-second read-only convergence accommodates legitimate layout
+movement after DPI changes; it never reuses the selected option's obsolete point
+or sends another input. Expanded-option diagnostics publish only counts within
+the predefined 100/125/150/200 domain: observed, visible and enabled, matching
+selection container, and unavailable container observations. A zero count does
+not establish that a scale is unsupported; virtualization and display limits
+still require their own evidence.
 
-`run-scaled-native-interface.py` is an unwired fixed adapter for the existing
+## Opt-in native-runtime integration, verification pending
+
+`run-scaled-native-interface.py` is a fixed adapter for the existing
 native driver. Its bounded request rejects unknown and duplicate fields and
 contains predefined choices and hashes rather than executable or script paths.
 All paths derive from the current hosted invocation and reject reparse points.
@@ -214,6 +223,35 @@ This access restriction is not a hostile same-user or privileged-code sandbox.
 The hosted lifecycle script now has six bounded cases, including real positive
 membership queries and negative assignment, termination, configuration and owner
 security access attempts. Source preparation does not mean these new checks have
-passed. The adapter has no caller until those checks and standalone scaling are
-verified. Product execution under a provisioned scale and pixel review remain
-unverified.
+passed. Product execution under a provisioned scale and pixel review remain
+unverified until the exact hosted candidate supplies those results.
+
+`Verify-HostedNativeInterface.ps1 -ProvisionDisplayScale` opts in for 125%, 150%
+or 200%; the existing 100% route is unchanged and rejects that switch. Installation,
+package digest verification and the pinned tooling bootstrap finish before scale
+mutation. The verifier creates a fresh, bounded, hash-bound request under
+`RUNNER_TEMP`. A contained validation-only adapter pass checks it before Settings
+input, then the fixed adapter repeats validation before launching the product.
+No request field selects arbitrary executables, scripts or filesystem locations.
+
+The scale worker invokes the adapter only after it observes the requested
+selection and measures the expected Settings-window DPI. The adapter's named
+non-breakaway Job has a 1,800-second deadline; the enclosing unnamed scale-worker
+Job allows 1,920 seconds, followed by separately bounded 60-second recovery.
+Request validation allows 20 seconds. The enclosing workflow must exceed these
+bounds plus installation, bootstrap, termination grace periods and encryption.
+Timeout is always failure, even if an earlier runtime receipt says success.
+
+Native acceptance requires zero adapter exit, verified complete-tree termination,
+fresh request and runtime hashes, exact source/release/run/scope/tuple bindings,
+actual holder and product membership, the native driver's per-window DPI and
+owned process/desktop teardown checks, and independent restoration success.
+Restoration finishes before the existing encryption step runs. If containment is
+uncertain, the verifier withholds evidence reading and encryption, records disposal
+as required, and never accepts a leftover runtime receipt. Successful encryption
+still leaves pixels pending independent review. The request, adapter receipt,
+random Job name and internal lifecycle files remain private and are never uploaded.
+
+Do not dispatch the product-scale matrix until the separate lifecycle and
+standalone provisioning checks pass for the intended implementation. The opt-in
+hook's presence is not a completed scale-matrix verdict.
