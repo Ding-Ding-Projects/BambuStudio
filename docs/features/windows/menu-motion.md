@@ -64,9 +64,40 @@ A still image cannot establish timing, frame scheduling or lifetime behavior.
 The target uses its checked-in native design references. Material Designer
 creation/export tools were unavailable in this task, and local application
 execution was prohibited. No prototype or source preview replaces the required
-hosted temporal and layout evidence. Remaining canvas hover/filter and panel
-transitions belong to subsequent bounded slices; whole-interface motion is not
-complete.
+hosted temporal and layout evidence. Actual native page-content composition
+remains unresolved; decorative selection feedback is not a content crossfade.
+Whole-interface motion is not complete.
+
+## Canvas row and filter decoration
+
+Canvas menu rows now retain their final text, shortcut, icon, background and focus
+paint immediately. An independent 100 ms rail changes length inside spare left
+padding. The shared custom selectable covers submenu headers and vertical menu
+items. Explicit production hooks also cover canvas combo options, Assembly Export
+rows and the filtered font list. A row without sufficient visible spare padding
+skips decoration rather than covering content or widening the clip rectangle.
+No click, dismissal, filtering, selection, layout or hitbox waits for animation.
+
+One wrapper-owned map retains at most 128 decorations. Keys contain the nearest
+popup window and popup identifier, current child window, actual submitted item
+identifier and decoration kind. The owning ImGui context is checked before use.
+Repeated submissions in a frame do not advance twice; unseen entries expire at
+render. Hover reversal samples the current value before choosing the new target.
+Saved or operating-system reduction settles immediately. Only visible active
+interpolation requests an extra frame; no timer or asynchronous callback is added.
+
+Search feedback uses the existing separator strip and a signature of the current
+query plus accepted visible mask and unavailable state. Actual result changes can
+restart that decoration; repeated worker polling with unchanged results cannot.
+All result semantics and final content colors remain unchanged. The Assembly
+Export hook saves its submitted item identity before a tooltip can replace the
+last-item metadata.
+
+These caller hooks and temporal behavior are source-only and require hosted
+compilation and genuine intermediate captures. In particular, verify font-preview
+padding, nested and child popup identities, live reduction, hover reversal,
+asynchronous regex completion, hidden-item expiry and idle frame settlement.
+No new executed test or rendered coverage is claimed by this change.
 
 The hosted pure policy executable includes 33 additional outcomes using the actual
 menu filter paint function, bringing its total to 59. They verify exact content

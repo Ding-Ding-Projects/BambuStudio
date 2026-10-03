@@ -247,10 +247,91 @@ std::vector<bool> ImGuiWrapper::menu_search(const char* stable_id,
         else ImGui::TextWrapped("%s: %zu / %zu", into_u8(PersonalVocabulary::display(PersonalVocabulary::remember(_L("Results")))).c_str(), count, items.size());
     }
     ImGui::Separator();
+    std::string paint_signature = signature;
+    paint_signature += state.unavailable ? "\n!" : "\n=";
+    for (bool visible : state.visible) paint_signature += visible ? '1' : '0';
+    const ImVec2 separator_min = ImGui::GetItemRectMin();
+    const ImVec2 separator_max = ImGui::GetItemRectMax();
+    const float feedback = ImGui::IsItemVisible() ? menu_decoration_progress(id, 1, true, paint_signature) : 0.0f;
+    if (feedback > 0.0f && separator_max.x > separator_min.x && separator_max.y > separator_min.y)
+        ImGui::GetWindowDrawList()->AddRectFilled(separator_min,
+            ImVec2(separator_min.x + (separator_max.x - separator_min.x) * feedback, separator_max.y),
+            ImGui::GetColorU32(ImGuiCol_HeaderActive));
     ImGui::PopID();
     if (move_to_results && std::find(state.visible.begin(), state.visible.end(), true) != state.visible.end())
         ImGui::SetKeyboardFocusHere();
     return state.visible;
+}
+
+float ImGuiWrapper::menu_decoration_progress(ImGuiID item, unsigned kind, bool active,
+                                            const std::string &signature)
+{
+#if ENABLE_ENHANCED_IMGUI_SLIDER_FLOAT
+    auto *context = ImGui::GetCurrentContext();
+    if (!context || context != m_owned_motion_context) return 0.0f;
+    auto *window = ImGui::GetCurrentWindow();
+    if (!window->Active || window->Hidden || window->SkipItems) return 0.0f;
+    auto *popup = window;
+    for (unsigned depth = 0; popup && !(popup->Flags & ImGuiWindowFlags_Popup) && depth < 64; ++depth) {
+        if (!(popup->Flags & ImGuiWindowFlags_ChildWindow)) return 0.0f;
+        popup = popup->ParentWindow;
+    }
+    if (!popup || !(popup->Flags & ImGuiWindowFlags_Popup) || popup->Hidden) return 0.0f;
+    const MenuDecorationKey key{popup->ID, popup->PopupId, window->ID, item, kind};
+    auto found = m_menu_decoration.find(key);
+    if (found == m_menu_decoration.end()) {
+        if (m_menu_decoration.size() >= 128) return 0.0f;
+        found = m_menu_decoration.emplace(key, MenuDecorationMotion{}).first;
+    }
+    auto &motion = found->second;
+    if (motion.frame == context->FrameCount) return motion.value;
+    const double now = context->Time;
+    const bool fresh = motion.frame < context->FrameCount - 1 || now < motion.started;
+    const auto sample = [&]() {
+        const float t = float(MD3::Motion::easeStandard(std::clamp((now - motion.started) / 0.1, 0.0, 1.0)));
+        return motion.from + (motion.target - motion.from) * t;
+    };
+    motion.value = fresh ? 0.0f : sample();
+    const float target = active ? 1.0f : 0.0f;
+    if (fresh || motion.target != target || motion.signature != signature) {
+        motion.from = kind == 1 ? 0.0f : motion.value;
+        motion.value = motion.from;
+        motion.target = target;
+        motion.signature = signature;
+        motion.started = now;
+    }
+    motion.frame = context->FrameCount;
+    if (MD3::Motion::reduced()) {
+        motion.from = motion.value = motion.target;
+        motion.started = now - 1.0;
+    } else if (now - motion.started < 0.1 && motion.from != motion.target) {
+        set_requires_extra_frame();
+    }
+    return motion.value;
+#else
+    (void)item; (void)kind; (void)active; (void)signature;
+    return 0.0f;
+#endif
+}
+
+void ImGuiWrapper::menu_row_decoration(const ImVec2 &content_min, const ImVec2 &content_max, bool active,
+                                     ImGuiID item_id)
+{
+    auto *context = ImGui::GetCurrentContext();
+    if (!context || context != m_owned_motion_context) return;
+    auto *window = ImGui::GetCurrentWindow();
+    const float padding = window->WindowPadding.x;
+    const float left = content_min.x - padding * 0.4f;
+    const float width = std::min(padding * 0.2f, std::max(1.0f, m_style_scaling));
+    // Never widen clipping, cover content, or request motion for an absent strip.
+    if (padding < 2.0f || left < window->ClipRect.Min.x || left + width > content_min.x ||
+        content_max.y <= content_min.y || content_max.y <= window->ClipRect.Min.y ||
+        content_min.y >= window->ClipRect.Max.y) return;
+    const float value = menu_decoration_progress(item_id ? item_id : ImGui::GetItemID(), 0, active);
+    if (value <= 0.0f) return;
+    window->DrawList->AddRectFilled(ImVec2(left, content_min.y),
+        ImVec2(left + width, content_min.y + (content_max.y - content_min.y) * value),
+        ImGui::GetColorU32(ImGuiCol_Text));
 }
 
 static const std::map<const wchar_t, std::string> font_icons = {
@@ -645,7 +726,7 @@ bool button_with_pos(ImTextureID user_texture_id, const ImVec2 &size, const ImVe
 
 ImGuiWrapper::ImGuiWrapper()
 {
-    ImGui::CreateContext();
+    m_owned_motion_context = ImGui::CreateContext();
 
     init_input();
     init_style();
@@ -1000,6 +1081,10 @@ void ImGuiWrapper::render()
     }
     for (auto it = m_tooltip_motion.begin(); it != m_tooltip_motion.end();) {
         if (it->second.frame != context.FrameCount) it = m_tooltip_motion.erase(it);
+        else ++it;
+    }
+    for (auto it = m_menu_decoration.begin(); it != m_menu_decoration.end();) {
+        if (it->second.frame != context.FrameCount) it = m_menu_decoration.erase(it);
         else ++it;
     }
 #endif
@@ -1767,6 +1852,8 @@ bool ImGuiWrapper::combo(const wxString& label, const std::vector<std::string>& 
             if (ImGui::Selectable(canvas_menu_label(options[i].c_str()).c_str(), i == selection)) {
                 selection_out = i;
             }
+            menu_row_decoration(ImGui::GetItemRectMin(), ImGui::GetItemRectMax(),
+                                ImGui::IsItemHovered() || ImGui::IsItemFocused());
             ImGui::PopID();
         }
 
@@ -1991,6 +2078,10 @@ static bool selectable(const char* label, bool selected, ImGuiSelectableFlags fl
     ImGui::RenderTextClipped(text_min, text_max, marked_label.c_str(), NULL, &label_size, style.SelectableTextAlign, &bb);
     if (flags & ImGuiSelectableFlags_Disabled) ImGui::PopStyleColor();
     if (hovered || selected) ImGui::PopStyleColor();
+
+    if (auto *owner = wxGetApp().imgui())
+        owner->menu_row_decoration(text_min, text_max,
+            !(flags & ImGuiSelectableFlags_Disabled) && (hovered || ImGui::IsItemFocused()));
 
     if (out_hovered) *out_hovered = hovered;
 

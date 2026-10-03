@@ -6031,6 +6031,7 @@ void AssemblyStepsUtils::render_export_menu_popup(const char* popup_id, float sc
                 ImGui::CloseCurrentPopup();
             }
 
+            const ImGuiID decoration_id = ImGui::GetItemID();
             const bool hovered = ImGui::IsItemHovered() || ImGui::IsItemFocused();
             if (hovered) {
                 const ImU32 bg = md3_u32(MD3::Role::SurfaceContainerHigh, m_is_dark);
@@ -6042,6 +6043,8 @@ void AssemblyStepsUtils::render_export_menu_popup(const char* popup_id, float sc
             const ImVec2 text_size = ImGui::CalcTextSize(label.c_str());
             draw_list->AddText(ImVec2(row_pos.x + row_pad_x, row_pos.y + (row_height - text_size.y) * 0.5f),
                                ImGui::GetColorU32(ImGuiCol_Text), label.c_str());
+            m_imgui->menu_row_decoration(ImVec2(row_pos.x + row_pad_x, row_pos.y),
+                ImVec2(row_pos.x + row_content_w, row_pos.y + row_height), hovered, decoration_id);
             ImGui::PopID();
         };
 
