@@ -62,7 +62,9 @@ physical print is authorized. Retain final device selection and confirmation.
   measured 120 DPI, restored 100%/96 DPI and verified complete termination.
   The overall run failed: 150% and 200% expanded the selector but observed only
   100%/125% options and stopped at match_option. Their restoration was verified.
-  A bounded read-only supported-display-mode diagnostic is independently reviewed and awaiting hosted execution.
+  Read-only run 37089435143 passed: one active 1024x768 display and 13 supported
+  modes up to 1920x1080, with verified termination. Higher-scale availability
+  at that resolution remains an experiment, not a verified result.
 - Combined build 37085334409 failed on incomplete wxGLCanvas in AutomationBridge.
   The reviewed one-line include repair is preserved through f8de85ce2 and
   is being compiled in run 37088514258. Newer run 37088918536 targets f2f29fd4e.

@@ -16,6 +16,7 @@
 - [ ] Repair the static wxWidgets focused-target link configuration and ambiguous preview `ImGuiWrapper::begin` call, then verify the combined candidate.
 - [x] Pass complete focused run `37085341046` at `6bc6656ef`, including native services, seven cancellation-observation tests and three fixture-path tests; installed behavior remains unverified.
 - [x] Privately review 84 encrypted Settings controls from `37085955337` and identify the exact scale selector; this establishes discovery only.
+- [x] Observe one active hosted monitor and 13 supported modes up to 1920x1080 in read-only run `37089435143`; this proves capabilities only.
 - [ ] Complete actual higher-DPI provisioning and restoration: standalone 125%/120 DPI passed in `37088755758`; 150%/200% remain unavailable. Product DPI and rendered behavior are separate, still unverified requirements.
 - [ ] Capture the observed native minimum frame/client tuple and separately verify interactive minimum tracking.
 

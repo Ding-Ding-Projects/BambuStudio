@@ -11,8 +11,9 @@ exact named-Job membership and five rejected access rights, without Settings inp
 Repaired standalone run `37088755758` passed 125% selection, measured 120 DPI,
 restoration to 100%/96 DPI and complete worker termination. The overall run failed:
 150% and 200% expanded the selector but found no matching options. Only 100% and
-125% were observed. Both failed jobs restored the original scale. A read-only
-monitor-mode capability probe is independently reviewed and awaiting hosted execution.
+125% were observed. Both failed jobs restored the original scale. Read-only capability run `37089435143` passed: one active 1024x768 display,
+13 supported modes up to 1920x1080, and verified worker termination.
+Supported mode is not proof that higher scale options are available.
 This does not establish target application DPI or visible behavior.
 
 Candidate `f2f29fd4e81ea119e5557d20766f13132bbe2c83` is preserved on
