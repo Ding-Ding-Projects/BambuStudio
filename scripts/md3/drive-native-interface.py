@@ -39,6 +39,26 @@ def require(value, message):
         raise RuntimeError(message)
 
 
+def minimum_observation_valid(row):
+    if not isinstance(row, dict) or row.get("status") != "measured_minimum_contained":
+        return False
+    value, minimum = row.get("native_input_target", {}), row.get("minimum_outer", {})
+    outer, work, client = value.get("outer"), value.get("work_area"), value.get("client")
+    if not (isinstance(outer, list) and len(outer) == 4 and isinstance(work, list) and len(work) == 4
+            and isinstance(client, list) and len(client) == 2 and
+            all(type(v) is int for v in outer + work + client) and
+            all(type(minimum.get(k)) is int for k in ("w", "h"))):
+        return False
+    return (type(row.get("main_hwnd")) is int and row["main_hwnd"] > 0 and
+            value.get("captured_hwnd") == row["main_hwnd"] and value.get("capture_geometry_verified") is True and
+            value.get("dpi") == 192 and value.get("contained") is True and
+            outer[2] - outer[0] == minimum["w"] and outer[3] - outer[1] == minimum["h"] and
+            400 <= minimum["w"] <= 4000 and 300 <= minimum["h"] <= 4000 and
+            work[0] <= outer[0] < outer[2] <= work[2] and work[1] <= outer[1] < outer[3] <= work[3] and
+            0 < client[0] <= minimum["w"] and 0 < client[1] <= minimum["h"] and
+            row.get("interactive_resize_clamp") == "unverified")
+
+
 def cancel_anchor(observation, action):
     """Bind real cancel input to an uncancelled request and its next epoch."""
     for key in ("nativeGeneration", "requestGeneration", "modelRevision",
@@ -287,6 +307,62 @@ def native_worker(request_path: Path, output: Path):
         cheap("win_send_keys", hwnd=hwnd, keys=request["keys"])
     elif operation == "text":
         cheap("type_text", hwnd=hwnd, text=request["text"])
+    elif operation == "minimum-observe":
+        class MonitorInfo(ctypes.Structure):
+            _fields_ = [("size", wintypes.DWORD), ("monitor", wintypes.RECT),
+                        ("work", wintypes.RECT), ("flags", wintypes.DWORD)]
+        user.MonitorFromWindow.argtypes = [wintypes.HWND, wintypes.DWORD]
+        user.MonitorFromWindow.restype = wintypes.HANDLE
+        user.GetMonitorInfoW.argtypes = [wintypes.HANDLE, ctypes.POINTER(MonitorInfo)]
+        user.GetWindowRect.argtypes = [wintypes.HWND, ctypes.POINTER(wintypes.RECT)]
+        user.GetClientRect.argtypes = [wintypes.HWND, ctypes.POINTER(wintypes.RECT)]
+        user.GetDpiForWindow.argtypes = [wintypes.HWND]
+        info = MonitorInfo()
+        info.size = ctypes.sizeof(info)
+        monitor = user.MonitorFromWindow(hwnd, 0)
+        require(monitor and user.GetMonitorInfoW(monitor, ctypes.byref(info)), "Monitor unavailable")
+        width, height = request["size"]
+        require(type(width) is int and type(height) is int and 400 <= width <= 4000 and
+                300 <= height <= 4000 and width <= info.work.right - info.work.left and
+                height <= info.work.bottom - info.work.top and user.GetDpiForWindow(hwnd) == 192,
+                "Measured minimum does not fit the actual work area")
+        require(user.SetWindowPos(hwnd, None, info.work.left, info.work.top, width, height,
+                                  0x0004 | 0x0010), "Minimum observation resize failed")
+        time.sleep(0.2)
+        frame, client = wintypes.RECT(), wintypes.RECT()
+        require(user.GetWindowRect(hwnd, ctypes.byref(frame)) and
+                user.GetClientRect(hwnd, ctypes.byref(client)) and
+                user.MonitorFromWindow(hwnd, 0) == monitor and user.GetDpiForWindow(hwnd) == 192,
+                "Minimum observation identity or geometry changed")
+        fresh = MonitorInfo()
+        fresh.size = ctypes.sizeof(fresh)
+        require(user.GetMonitorInfoW(monitor, ctypes.byref(fresh)) and
+                [fresh.work.left, fresh.work.top, fresh.work.right, fresh.work.bottom] ==
+                [info.work.left, info.work.top, info.work.right, info.work.bottom] and
+                frame.right - frame.left == width and frame.bottom - frame.top == height and
+                info.work.left <= frame.left < frame.right <= info.work.right and
+                info.work.top <= frame.top < frame.bottom <= info.work.bottom and
+                client.right > 0 and client.bottom > 0, "Minimum frame is not fully contained")
+        native_input_target = {"outer": [frame.left, frame.top, frame.right, frame.bottom],
+                               "client": [client.right, client.bottom],
+                               "work_area": [info.work.left, info.work.top, info.work.right, info.work.bottom],
+                               "dpi": 192, "contained": True}
+        result = cheap("screenshot", hwnd=hwnd, output_path=request["capture_path"])
+        captured_at = datetime.now(timezone.utc).isoformat()
+        require(result.get("rendered_ok") is True, "Minimum capture did not render")
+        after_frame, after_client = wintypes.RECT(), wintypes.RECT()
+        require(user.GetWindowRect(hwnd, ctypes.byref(after_frame)) and
+                user.GetClientRect(hwnd, ctypes.byref(after_client)) and
+                user.GetMonitorInfoW(monitor, ctypes.byref(fresh)) and
+                user.MonitorFromWindow(hwnd, 0) == monitor and user.GetDpiForWindow(hwnd) == 192 and
+                [after_frame.left, after_frame.top, after_frame.right, after_frame.bottom] == native_input_target["outer"] and
+                [after_client.right, after_client.bottom] == native_input_target["client"] and
+                [fresh.work.left, fresh.work.top, fresh.work.right, fresh.work.bottom] == native_input_target["work_area"],
+                "Minimum capture geometry changed")
+        user.GetWindowThreadProcessId(hwnd, ctypes.byref(actual))
+        require(actual.value == pid, "Minimum capture owner changed")
+        native_input_target.update(captured_hwnd=hwnd, capture_geometry_verified=True,
+                                   captured_at_utc=captured_at)
     elif operation == "resize":
         width, height = request["size"]
         require(400 <= width <= 4000 and 300 <= height <= 4000, "Invalid native frame size")
@@ -508,6 +584,8 @@ class Driver:
         return self.record(label, "text", hwnd=top, text=text, capture_hwnd=top)
 
     def exact_client(self):
+        if self.args.scope == "minimum-observe":
+            return
         if self.args.viewport == "measured-minimum":
             self.measured_minimum()
             return
@@ -522,6 +600,29 @@ class Driver:
             self.worker("resize", size=[frame["width"] + requested[0] - client["w"],
                                          frame["height"] + requested[1] - client["h"]])
         raise RuntimeError("Actual client size did not reach the requested viewport")
+
+    def minimum_observe(self):
+        self.worker()
+        root = next(r for r in self.probe if r.get("kind") == "window" and
+                    r.get("hwnd") == self.app.main and r.get("depth") == 0)
+        minimum = dict(root["min"])
+        image = self.scratch / "measured-native-minimum.png"
+        require(not image.exists(), "Minimum capture must be fresh")
+        self.worker("minimum-observe", size=[minimum["w"], minimum["h"]], capture_path=str(image))
+        observed = self.last_input["native_input_target"]
+        after = next(r for r in self.probe if r.get("kind") == "window" and
+                     r.get("hwnd") == self.app.main and r.get("depth") == 0)
+        require(after["min"] == minimum, "Native minimum changed during observation")
+        row = {"operation": "measured-native-minimum", "main_hwnd": self.app.main,
+               "native_input_target": observed, "minimum_outer": minimum,
+               "interactive_resize_clamp": "unverified", "status": "measured_minimum_contained"}
+        require(minimum_observation_valid(row), "Invalid minimum observation receipt")
+        row["capture"] = self.capture("measured-native-minimum", self.app.main, stable_source=image)
+        require(self.images[-1]["pixels"] == [minimum["w"], minimum["h"]],
+                "Minimum capture dimensions differ from the measured frame")
+        self.images[-1]["captured_at_utc"] = observed["captured_at_utc"]
+        self.images[-1]["hwnd"] = self.app.main
+        self.rows.append(row)
 
     def minimum_resize(self):
         from minimum_resize import run_minimum_resize
@@ -1013,7 +1114,7 @@ def main():
         parser.add_argument("--" + name, type=Path, required=True)
     parser.add_argument("--source-commit", required=True)
     parser.add_argument("--release-tag", required=True)
-    parser.add_argument("--scope", choices=("menus", "vocabulary", "vocabulary-persistence", "slice-controls", "combined-print", "combined-send", "cancellation", "minimum-resize", "startup-diagnostic"), required=True)
+    parser.add_argument("--scope", choices=("menus", "vocabulary", "vocabulary-persistence", "slice-controls", "combined-print", "combined-send", "cancellation", "minimum-resize", "minimum-observe", "startup-diagnostic"), required=True)
     parser.add_argument("--verifier-commit")
     parser.add_argument("--minimum-job-name")
     parser.add_argument("--language", choices=behavior.MODES, default="en")
@@ -1026,6 +1127,9 @@ def main():
              and args.language == "en" and args.theme == "light" and args.scale == 1.0
              and args.viewport == "1200x800" and not args.minimum_job_name)
             or (not diagnostic and args.verifier_commit is None), "Unsupported diagnostic tuple")
+    if args.scope == "minimum-observe":
+        require(args.scale == 2 and args.viewport == "measured-minimum" and args.language == "en"
+                and args.theme == "light", "Unsupported minimum observation tuple")
     if args.scope == "minimum-resize":
         require(args.scale == 1 and args.viewport == "measured-minimum" and
                 re.fullmatch(r"Local\\BambuNativeScale-[0-9a-f]{64}", args.minimum_job_name or ""),
@@ -1066,7 +1170,8 @@ def main():
             status = "diagnostic_completed"
         else:
             drive.exact_client()
-            drive.record("native-ready")
+            if args.scope != "minimum-observe":
+                drive.record("native-ready")
             getattr(drive, args.scope.replace("-", "_"))()
             status = "runtime_verified"
     except Exception as exc:

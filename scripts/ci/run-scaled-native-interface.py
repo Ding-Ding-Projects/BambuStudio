@@ -73,7 +73,7 @@ def main():
               "language", "theme", "viewport", "scale_percent", "exe_sha256", "cli_sha256",
               "install_sha256", "driver_sha256", "adapter_sha256", "verifier_sha256",
               "python_sha256", "cheap_sha256", "helper_sha256", "containment_sha256", "job_name",
-              "resolution", "minimum_sha256", "display_mode_sha256"}
+              "resolution", "minimum_sha256", "display_mode_sha256", "navigation_sha256", "refresh_page"}
     require(isinstance(request, dict) and set(request) == fields)
     require(type(request["schema"]) is int and request["schema"] == 1)
     require(type(request["scale_percent"]) is int and request["scale_percent"] in (100, 125, 150, 200))
@@ -84,14 +84,18 @@ def main():
     require(re.fullmatch(r"md3-v[0-9]{1,12}", request["release_tag"]))
     require(request["run_id"] == run_id and request["job_name"] == job_name)
     require(request["scope"] in ("menus", "vocabulary", "vocabulary-persistence", "slice-controls",
-                                  "combined-print", "combined-send", "cancellation", "minimum-resize"))
+                                  "combined-print", "combined-send", "cancellation", "minimum-resize", "minimum-observe"))
     require(request["language"] in ("en", "yue_HK", "bilingual_en_yue_HK"))
     require(request["theme"] in ("light", "dark"))
     require(request["viewport"] in ("1200x800", "1000x600", "measured-minimum"))
     minimum = request["scope"] == "minimum-resize"
+    observe = request["scope"] == "minimum-observe"
+    require(request["refresh_page"] == ("acknowledged-roundtrip" if observe else "none"))
     require((minimum and request["resolution"] == "1920x1080" and request["scale_percent"] == 100
              and request["viewport"] == "measured-minimum") or
-            (not minimum and request["resolution"] == "unchanged" and request["scale_percent"] in (125, 150, 200)))
+            (observe and request["resolution"] == "1600x1200" and request["scale_percent"] == 200
+             and request["viewport"] == "measured-minimum" and request["language"] == "en" and request["theme"] == "light") or
+            (not minimum and not observe and request["resolution"] == "unchanged" and request["scale_percent"] in (125, 150, 200)))
     for key in fields:
         if key.endswith("_sha256"):
             require(re.fullmatch(r"[0-9a-f]{64}", request[key]))
@@ -115,7 +119,7 @@ def main():
     paths = {"exe": exe, "cli": cli, "install": install_path, "driver": driver_path,
              "adapter": Path(__file__), "verifier": verifier_path, "python": python, "cheap": cheap,
              "helper": here / "Invoke-HostedDisplayScale.ps1", "containment": here / "HostedScaleProcess.cs",
-             "minimum": here.parent / "md3" / "minimum_resize.py", "display_mode": here / "HostedDisplayMode.cs"}
+             "navigation": here / "Invoke-HostedDisplayScaleNavigation.ps1", "minimum": here.parent / "md3" / "minimum_resize.py", "display_mode": here / "HostedDisplayMode.cs"}
     for key, path in paths.items():
         require(digest(plain_path(path)) == request[key + "_sha256"])
     request_hash = digest(request_path)
@@ -221,6 +225,16 @@ def main():
                                                   "scale": request["scale_percent"] / 100.0,
                                                   "viewport": request["viewport"]})
         require(digest(request_path) == request_hash)
+        if observe:
+            operations = runtime.get("operations", [])
+            require(len(operations) == 1 and operations[0].get("operation") == "measured-native-minimum"
+                    and driver.minimum_observation_valid(operations[0]) and len(runtime.get("captures", [])) == 1)
+            image = runtime["captures"][0]
+            measured = operations[0]
+            require(image.get("file") == measured.get("capture") and image.get("native_dpi") == 192
+                    and image.get("hwnd") == measured["main_hwnd"]
+                    and image.get("pixels") == [measured["minimum_outer"]["w"], measured["minimum_outer"]["h"]]
+                    and image.get("captured_at_utc") == measured["native_input_target"]["captured_at_utc"])
         if minimum:
             operations = [row for row in runtime.get("operations", [])
                           if row.get("operation") == "interactive-minimum-resize"]

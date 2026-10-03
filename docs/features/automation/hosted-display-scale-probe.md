@@ -732,3 +732,32 @@ supervisor. They reject unsupported combined tuples, absent or mismatched
 restoration evidence, a changed request digest, and an incomplete started marker
 before accepting the supported tuple and matching restoration state. The total
 is now nine cases; their hosted verdict remains pending.
+# Native minimum observation at 200%
+
+The installed runtime has a separate `minimum-observe` scope restricted to
+English, light appearance, 200%, and `measured-minimum`. It requires resolution
+provisioning and selects only the previously observed 1600x1200 display mode.
+The fixed Colors-to-Display round trip must be positively acknowledged before
+scale selection and product launch. The strict invocation binds the navigation
+helper hash, requested resolution and refresh mode in addition to the existing
+source, package, installation and containment identities. Settings diagnostics
+and their account-bearing captures remain unavailable in native runtime mode.
+
+At 192 DPI the source minimum formula predicts a 1520x980 outer frame. The
+runtime does not substitute that prediction for measurement: it reads the
+product's `GetMinSize`, checks the actual monitor work area, places the measured
+outer frame inside it, and verifies the outer rectangle, positive client size,
+unchanged minimum, full containment and actual HWND DPI. An oversized or changed
+minimum is unavailable. One genuine product capture is encrypted through the
+existing evidence envelope. This is not a 1200x800 client result, an interactive
+resize-clamp result, or completion of the normal/minimum display matrix.
+
+The baseline and `minimum-resize` routes retain their existing contracts.
+Only interactive resizing creates the input-recovery marker; the observation
+scope retains named non-breakaway containment, native teardown and independent
+display restoration. Unknown navigation continues to require disposal and
+blocks scale input while allowing identity-bound original-mode recovery.
+
+Source-isolated hosted coverage adds nine receipt-predicate outcomes and
+extends the existing fourteen-case lifecycle suite's native-tuple case. These
+changes have not yet been executed against the installed product.
