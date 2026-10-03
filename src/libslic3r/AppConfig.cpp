@@ -99,6 +99,9 @@ void AppConfig::reset()
 // Override missing or keys with their defaults.
 void AppConfig::set_defaults()
 {
+    // Unknown settings from newer or edited profiles use the system default.
+    if (get("motion_preference") != "system" && get("motion_preference") != "reduced")
+        set("motion_preference", "system");
     if (m_mode == EAppMode::Editor) {
 #ifdef SUPPORT_AUTO_CENTER
         // Reset the empty fields to defaults.

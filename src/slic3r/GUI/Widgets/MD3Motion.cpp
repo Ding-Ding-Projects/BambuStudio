@@ -1,4 +1,6 @@
 #include "MD3Motion.hpp"
+#include "../GUI_App.hpp"
+#include "libslic3r/AppConfig.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -15,12 +17,15 @@ namespace MD3 { namespace Motion {
 
 bool reduced()
 {
+    bool system_reduced = false;
 #ifdef _WIN32
     BOOL animate = TRUE;
     if (::SystemParametersInfoW(SPI_GETCLIENTAREAANIMATION, 0, &animate, 0))
-        return animate == FALSE;
+        system_reduced = animate == FALSE;
 #endif
-    return false;
+    const auto *app = dynamic_cast<Slic3r::GUI::GUI_App*>(wxTheApp);
+    const std::string preference = app && app->app_config ? app->app_config->get("motion_preference") : "system";
+    return reduce_motion(preference, system_reduced);
 }
 
 namespace {
@@ -82,6 +87,7 @@ void Anim::Stop()
     ++m_run->generation;
     m_run->tick = nullptr;
     m_run->done = nullptr;
+    m_run->owner_lost = nullptr;
 }
 
 void Anim::Finish(const std::shared_ptr<Run>& run, uint64_t generation)
@@ -89,24 +95,33 @@ void Anim::Finish(const std::shared_ptr<Run>& run, uint64_t generation)
     wxTimer::Stop();
     auto tick = run->tick;
     auto done = run->done;
+    auto owner_lost = run->owner_lost;
     run->tick = nullptr;
     run->done = nullptr;
+    run->owner_lost = nullptr;
     if (tick) tick(1.0);
-    if (run->alive && run->generation == generation && done) done();
+    if (!run->alive || run->generation != generation) return;
+    if (run->owner_bound && !run->owner) {
+        if (owner_lost) owner_lost();
+    } else if (done) done();
 }
 
 void Anim::Play(int duration_ms, std::function<void(double)> tick,
-                std::function<void()> done, double (*curve)(double))
+                std::function<void()> done, double (*curve)(double),
+                wxWindow *owner, std::function<void()> owner_lost)
 {
     Stop();
     auto run = m_run;
     const auto generation = run->generation;
     run->tick = std::move(tick);
     run->done = std::move(done);
+    run->owner = owner;
+    run->owner_bound = owner != nullptr;
+    run->owner_lost = std::move(owner_lost);
     run->curve = curve != nullptr ? curve : &easeStandard;
     run->duration = std::max(1, duration_ms);
     run->started = std::chrono::steady_clock::now();
-    if (reduced() || run->duration <= kFrameMs) {
+    if (owner_action(run->owner_bound, !!run->owner, owner && owner->IsShownOnScreen(), reduced()) == OwnerAction::Settle || run->duration <= kFrameMs) {
         Finish(run, generation);
         return;
     }
@@ -121,10 +136,19 @@ void Anim::Notify()
 {
     auto run = m_run;
     const auto generation = run->generation;
+    const auto action = owner_action(run->owner_bound, !!run->owner,
+        run->owner && run->owner->IsShownOnScreen(), reduced());
+    if (action == OwnerAction::Cancel) {
+        auto cleanup = run->owner_lost;
+        Stop();
+        // This callback may destroy the animator. No member access follows it.
+        if (cleanup) cleanup();
+        return;
+    }
     const auto elapsed = std::chrono::duration<double, std::milli>(
         std::chrono::steady_clock::now() - run->started).count();
     const double t = std::clamp(elapsed / run->duration, 0.0, 1.0);
-    if (t >= 1.0 || reduced()) {
+    if (t >= 1.0 || action == OwnerAction::Settle) {
         Finish(run, generation);
         return;
     }
@@ -164,6 +188,8 @@ void FadeIn(wxWindow *window, int duration_ms)
         },
         // Deferred delete: done() can fire synchronously from inside Play()
         // (reduced motion), so the Anim must never delete itself re-entrantly.
+        [anim]() { wxTheApp->CallAfter([anim]() { delete anim; }); },
+        &easeStandard, window,
         [anim]() { wxTheApp->CallAfter([anim]() { delete anim; }); });
 
     // wxTimer::Start can fail (no event loop yet, timer exhaustion). Without
