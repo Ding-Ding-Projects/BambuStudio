@@ -273,6 +273,13 @@ reads the current display mode and enumerates at most 512 supported modes with
 `EnumDisplaySettings`. It also observes a unique Settings resolution combo whose
 selected numeric dimensions match the current mode. Process start identities,
 monitor identity and the current mode are checked again before acceptance.
+`QueryDisplayConfig(QDC_ONLY_ACTIVE_PATHS)` must prove exactly one active display
+target before and after the observation. Multiple targets, including cloned
+targets, remain unavailable rather than assuming Settings selected the monitor
+containing its own window. Resolution candidates must share the exact observed
+Scale root. Display-path identities remain private. The numeric `fields` mask
+accompanies each mode; orientation is null unless `DM_DISPLAYORIENTATION` is set,
+and stability checks distinguish absent orientation from a measured zero.
 The public receipt contains only fixed status values, numeric dimensions, bit
 depth, refresh frequency, orientation, counts and a primary-monitor flag. Device
 names, process/window identities, UI labels and raw exceptions are never emitted.

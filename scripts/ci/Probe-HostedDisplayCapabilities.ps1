@@ -37,7 +37,7 @@ if ($Mode -eq 'supervisor') {
             }
             $worker = Get-Content -LiteralPath $workerPath -Raw | ConvertFrom-Json -AsHashtable
             foreach ($key in @('status','reason','current_mode','supported_modes','mode_enumeration_complete',
-                'monitor_width','monitor_height','primary_monitor','resolution_combo_matches','resolution_selection')) {
+                'monitor_width','monitor_height','primary_monitor','active_display_target_count','resolution_combo_matches','resolution_selection')) {
                 if ($worker.ContainsKey($key)) { $receipt[$key] = $worker[$key] }
             }
             if ($result.Code -ne 0 -and $receipt.status -eq 'observed') { $receipt.status='unavailable'; $receipt.reason='worker_exit_mismatch' }
@@ -68,11 +68,46 @@ public static class DisplayCapabilityNative {
     // DEVMODEW display union offsets and complete native structure size.
     [StructLayout(LayoutKind.Explicit,CharSet=CharSet.Unicode,Size=220)] public struct MODE {
         [FieldOffset(68)] public ushort Size;
+        [FieldOffset(72)] public uint Fields;
         [FieldOffset(84)] public uint Orientation;
         [FieldOffset(168)] public uint BitsPerPixel;
         [FieldOffset(172)] public uint Width;
         [FieldOffset(176)] public uint Height;
         [FieldOffset(184)] public uint Frequency;
+    }
+    // Only active paths are queried. The private adapter/target identities are
+    // retained in memory solely to reject topology changes between observations.
+    [StructLayout(LayoutKind.Explicit,Size=72)] public struct PATH {
+        [FieldOffset(0)] public uint SourceLow;
+        [FieldOffset(4)] public int SourceHigh;
+        [FieldOffset(8)] public uint SourceId;
+        [FieldOffset(20)] public uint TargetLow;
+        [FieldOffset(24)] public int TargetHigh;
+        [FieldOffset(28)] public uint TargetId;
+        [FieldOffset(68)] public uint Flags;
+    }
+    [StructLayout(LayoutKind.Explicit,Size=64)] public struct MODEINFO {
+        [FieldOffset(0)] public uint Type;
+    }
+    [DllImport("user32.dll")] static extern int GetDisplayConfigBufferSizes(uint flags,out uint paths,out uint modes);
+    [DllImport("user32.dll")] static extern int QueryDisplayConfig(uint flags,ref uint paths,[Out] PATH[] pathArray,ref uint modes,[Out] MODEINFO[] modeArray,IntPtr topology);
+    public static bool SingleActiveTarget(out string identity,out uint count) {
+        identity=null; count=0;
+        for(int attempt=0; attempt<2; attempt++) {
+            uint paths,modes;
+            if(GetDisplayConfigBufferSizes(2,out paths,out modes)!=0 || paths==0 || paths>64 || modes==0 || modes>256) return false;
+            var pathArray=new PATH[paths]; var modeArray=new MODEINFO[modes];
+            int result=QueryDisplayConfig(2,ref paths,pathArray,ref modes,modeArray,IntPtr.Zero);
+            if(result==122) continue; // Configuration changed; retry once within fixed bounds.
+            if(result!=0) return false;
+            count=paths;
+            if(paths!=1 || (pathArray[0].Flags & 1)==0) return false;
+            PATH path=pathArray[0];
+            identity=path.SourceLow+":"+path.SourceHigh+":"+path.SourceId+":"+
+                path.TargetLow+":"+path.TargetHigh+":"+path.TargetId;
+            return true;
+        }
+        return false;
     }
     [DllImport("user32.dll")] public static extern IntPtr MonitorFromWindow(IntPtr window,uint flags);
     [DllImport("user32.dll",CharSet=CharSet.Unicode)] public static extern bool GetMonitorInfo(IntPtr monitor,ref MONITOR info);
@@ -141,9 +176,16 @@ public static class DisplayCapabilityNative {
     $receipt.monitor_width = $info.Bounds.Right - $info.Bounds.Left
     $receipt.monitor_height = $info.Bounds.Bottom - $info.Bounds.Top
     $receipt.primary_monitor = ($info.Flags -band 1) -ne 0
+    $stage = 'single_active_display_target'
+    [string]$displayIdentity = $null
+    [uint32]$displayCount = 0
+    $single = [DisplayCapabilityNative]::SingleActiveTarget([ref]$displayIdentity,[ref]$displayCount)
+    $receipt.active_display_target_count = if ($displayCount -gt 0) { $displayCount } else { $null }
+    if (-not $single) { throw 'Unique active display target unavailable.' }
     function Mode-Values($Value) {
         return @{width=[int]$Value.Width; height=[int]$Value.Height; bits_per_pixel=[int]$Value.BitsPerPixel
-            frequency_hz=[int]$Value.Frequency; orientation=[int]$Value.Orientation}
+            frequency_hz=[int]$Value.Frequency; fields=[uint32]$Value.Fields
+            orientation=$(if ($Value.Fields -band 0x80) { [int]$Value.Orientation } else { $null })}
     }
     $stage = 'current_display_mode'
     $current = [DisplayCapabilityNative+MODE]::new(); $current.Size = 220
@@ -156,7 +198,8 @@ public static class DisplayCapabilityNative {
     for ($index=0; $index -lt 512; $index++) {
         $modeValue = [DisplayCapabilityNative+MODE]::new(); $modeValue.Size=220
         if (-not [DisplayCapabilityNative]::EnumDisplaySettings($info.Device,$index,[ref]$modeValue)) { $complete=$true; break }
-        $key = "$($modeValue.Width):$($modeValue.Height):$($modeValue.BitsPerPixel):$($modeValue.Frequency):$($modeValue.Orientation)"
+        $orientation = if ($modeValue.Fields -band 0x80) { "$($modeValue.Orientation)" } else { 'unknown' }
+        $key = "$($modeValue.Width):$($modeValue.Height):$($modeValue.BitsPerPixel):$($modeValue.Frequency):$orientation"
         if ($seen.Add($key)) { $modes.Add((Mode-Values $modeValue)) }
     }
     $receipt.supported_modes = $modes.ToArray()
@@ -165,7 +208,8 @@ public static class DisplayCapabilityNative {
     $resolutionCandidates = [Collections.Generic.List[object]]::new()
     foreach ($row in $rows) {
         $value = $row.element.Current
-        if ($value.ControlType -ne [Windows.Automation.ControlType]::ComboBox -or
+        if (-not $row.top.Equals($scales[0].top) -or [IntPtr]$row.top.Current.NativeWindowHandle -ne $window -or
+            $value.ControlType -ne [Windows.Automation.ControlType]::ComboBox -or
             -not $value.IsEnabled -or $value.IsOffscreen) { continue }
         try {
             $pattern = $row.element.GetCurrentPattern([Windows.Automation.SelectionPattern]::Pattern)
@@ -180,6 +224,10 @@ public static class DisplayCapabilityNative {
     }
     Assert-Owners
     $stage = 'stable_monitor_observation'
+    [string]$afterIdentity = $null
+    [uint32]$afterCount = 0
+    if (-not [DisplayCapabilityNative]::SingleActiveTarget([ref]$afterIdentity,[ref]$afterCount) -or
+        $afterCount -ne 1 -or $afterIdentity -cne $displayIdentity) { throw 'Active display target changed.' }
     [void][DisplayCapabilityNative]::GetWindowThreadProcessId($window,[ref]$nativePid)
     $after = [DisplayCapabilityNative+MODE]::new(); $after.Size=220
     if (-not $owners.ContainsKey([int]$nativePid) -or
@@ -187,7 +235,8 @@ public static class DisplayCapabilityNative {
         -not [DisplayCapabilityNative]::EnumDisplaySettings($info.Device,-1,[ref]$after) -or
         $after.Width -ne $current.Width -or $after.Height -ne $current.Height -or
         $after.BitsPerPixel -ne $current.BitsPerPixel -or $after.Frequency -ne $current.Frequency -or
-        $after.Orientation -ne $current.Orientation) { throw 'Monitor mode changed during observation.' }
+        ($after.Fields -band 0x80) -ne ($current.Fields -band 0x80) -or
+        (($current.Fields -band 0x80) -and $after.Orientation -ne $current.Orientation)) { throw 'Monitor mode changed during observation.' }
     $receipt.resolution_combo_matches = $resolutionCandidates.Count
     if ($resolutionCandidates.Count -eq 1) { $receipt.resolution_selection = $resolutionCandidates[0] }
     if (-not $complete) { $receipt.reason='display_mode_limit_reached' }
