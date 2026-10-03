@@ -28,7 +28,10 @@ function Save-HostedScaleDiagnostic([ValidateSet('before_selector','expanded_sel
                 (Desktop-Name $thread) -cne 'Default' -or -not [ScaleNative]::IsWindowVisible($root)) { throw 'Diagnostic root unavailable.' }
             $bounds = [ScaleNative+RECT]::new()
             if (-not [ScaleNative]::GetWindowRect($root,[ref]$bounds) -or
-                $bounds.Right -le $bounds.Left -or $bounds.Bottom -le $bounds.Top) { throw 'Diagnostic bounds unavailable.' }
+                $bounds.Right -le $bounds.Left -or $bounds.Bottom -le $bounds.Top -or
+                ([long]$bounds.Right-$bounds.Left) -gt 8192 -or ([long]$bounds.Bottom-$bounds.Top) -gt 8192) {
+                throw 'Diagnostic bounds unavailable.'
+            }
             return @($bounds.Left,$bounds.Top,$bounds.Right,$bounds.Bottom)
         }
         $bounds = Read-DiagnosticOwner
