@@ -558,6 +558,8 @@ ParamTooltip::ParamTooltip() : wxPopupWindow(wxGetApp().mainframe, wxBORDER_NONE
     // the shadow at the new size but the pre-move position and leave a smear during a switch.
     // wxEVT_SHOW stays as the catch-all that also hides the shadow on a click-outside dismiss.
     Bind(wxEVT_SHOW, [this](wxShowEvent &e) {
+        if (e.IsShown()) m_entrance.Show(this, MD3::Motion::short2);
+        else m_entrance.Stop();
         update_shadow(e.IsShown());
         e.Skip();
     });

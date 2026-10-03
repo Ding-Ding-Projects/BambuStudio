@@ -78,8 +78,27 @@ jobs:
             if ($LASTEXITCODE -ne 0 -or (git -C $toolRoot rev-parse HEAD) -cne 'e6e42f2066d539256d6480401d7cef867f2b8dfe') { throw 'Pinned tool identity mismatch.' }
             python -m pip install --disable-pip-version-check --quiet --timeout 15 --retries 1 $toolRoot
             if ($LASTEXITCODE -ne 0) { throw 'Pinned tool unavailable.' }
-            $env:LLCU_CHEAP=(Get-Command lowlevel-computer-use-cheap -CommandType Application).Path
-            $python=(Get-Command python -CommandType Application).Path
+            function Get-ContractExecutable([object] $Candidate, [string] $Name) {
+              if ($Candidate -isnot [string] -or [string]::IsNullOrWhiteSpace($Candidate) -or
+                  -not [IO.Path]::IsPathFullyQualified($Candidate) -or
+                  [IO.Path]::GetFileName($Candidate) -ine $Name) { throw 'Contract executable selection invalid.' }
+              $file=Get-Item -LiteralPath $Candidate -ErrorAction Stop
+              if ($file -isnot [IO.FileInfo] -or $file.FullName -ine $Candidate) { throw 'Contract executable path invalid.' }
+              return $file.FullName
+            }
+            $pythonCommands=@(Get-Command python.exe -CommandType Application -All -ErrorAction Stop)
+            $cheapCommands=@(Get-Command lowlevel-computer-use-cheap.exe -CommandType Application -All -ErrorAction Stop)
+            $receipt.executable_selection=@{python_count=$pythonCommands.Count;cheap_count=$cheapCommands.Count;validated=$false;invalid_cases=0}
+            if ($pythonCommands.Count -eq 0 -or $cheapCommands.Count -eq 0) { throw 'Contract executable unavailable.' }
+            $python=Get-ContractExecutable $pythonCommands[0].Path 'python.exe'
+            $env:LLCU_CHEAP=Get-ContractExecutable $cheapCommands[0].Path 'lowlevel-computer-use-cheap.exe'
+            $receipt.executable_selection.validated=$true
+            foreach ($candidate in @(@{value=@($python,$python)},@{value=($python+' '+$python)},@{value=('"'+$python+'"')},@{value='python.exe'})) {
+              $rejected=$false
+              try { $null=Get-ContractExecutable $candidate.value 'python.exe' } catch { $rejected=$true }
+              if (-not $rejected) { throw 'Malformed executable contract failed.' }
+              $receipt.executable_selection.invalid_cases++
+            }
             # CreateProcess inherits the process directory, not PowerShell's runspace location.
             $holderScript=(Resolve-Path -LiteralPath (Join-Path $env:GITHUB_WORKSPACE 'scripts/md3/startup_desktop_holder.py') -ErrorAction Stop).ProviderPath
             $actual=[HostedScaleProcess]::Run($python,[string[]]@($holderScript,'--absence-contract'),15,$false)
