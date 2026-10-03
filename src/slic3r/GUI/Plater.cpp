@@ -3,6 +3,7 @@
 #include "Widgets/LinkLabel.hpp"
 #include "Widgets/ProgressBar.hpp"
 #include "Widgets/MD3Menu.hpp"
+#include "Widgets/MD3Motion.hpp"
 #include "Widgets/TabStrip.hpp"
 #include "PerfTrace.hpp"
 #include <array>
@@ -240,6 +241,63 @@ static const std::pair<unsigned int, unsigned int> THUMBNAIL_SIZE_3MF = { 512, 5
 
 namespace Slic3r {
 namespace GUI {
+
+// The rail lives in the existing left padding, outside the label and controls.
+// Expansion, scrolling and layout are committed by the caller before feedback.
+class FilamentDisclosureHeader final : public StaticBox
+{
+public:
+    explicit FilamentDisclosureHeader(wxWindow *parent)
+        : StaticBox(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL | wxBORDER_NONE)
+    {
+        Bind(wxEVT_SHOW, [this](wxShowEvent &event) {
+            if (event.GetEventObject() == this && !event.IsShown()) settle();
+            event.Skip();
+        });
+    }
+    ~FilamentDisclosureHeader() override { m_motion.Stop(); }
+
+    void SetExpanded(bool expanded, bool animate = true)
+    {
+        if (m_expanded == expanded && animate) return;
+        m_expanded = expanded;
+        const double from = m_extent;
+        const double to = expanded ? 1.0 : 0.0;
+        m_motion.Stop();
+        if (!animate || !IsShownOnScreen() || !IsEnabled() || MD3::Motion::reduced()) {
+            m_extent = to;
+            Refresh(false);
+            return;
+        }
+        m_motion.Play(MD3::Motion::short2, [this, from, to](double t) {
+            if (!IsEnabled() || MD3::Motion::reduced()) settle();
+            else m_extent = from + (to - from) * t;
+            if (IsShownOnScreen()) Refresh(false);
+        }, nullptr, &MD3::Motion::easeStandard, this);
+    }
+
+protected:
+    void doRender(wxDC &dc) override
+    {
+        StaticBox::doRender(dc);
+        if (!IsEnabled() || MD3::Motion::reduced()) settle();
+        const wxSize size = GetClientSize();
+        const int inset = FromDIP(3), width = FromDIP(2);
+        const int available = size.y - 2 * inset;
+        if (size.x < inset + width || available <= 0) return;
+        const int rest = std::min(FromDIP(4), available);
+        const int height = rest + static_cast<int>((available - rest) * m_extent + 0.5);
+        dc.SetPen(*wxTRANSPARENT_PEN);
+        dc.SetBrush(wxBrush(StateColor::semantic(MD3::Role::Primary)));
+        dc.DrawRectangle(inset, (size.y - height) / 2, width, height);
+    }
+
+private:
+    void settle() { m_motion.Stop(); m_extent = m_expanded ? 1.0 : 0.0; }
+    bool m_expanded = true;
+    double m_extent = 1.0;
+    MD3::Motion::Anim m_motion;
+};
 
 // Flag to pre-select optimization mode when opening HelioInputDialog from simulation results
 static bool g_helio_pre_select_optimization = false;
@@ -826,7 +884,7 @@ struct Sidebar::priv
 
     //wxComboBox *                m_comboBox_print_preset;
     wxStaticLine *              m_staticline1;
-    StaticBox* m_panel_filament_title;
+    FilamentDisclosureHeader* m_panel_filament_title;
     // Filament section header: the literal shared MD3 SectionHeader (Label.hpp)
     // replaces the former ScalableButton 'filament' icon + wxStaticText label
     // pair; trailing Sync AMS / purge / flush buttons stay in the same title
@@ -3418,7 +3476,7 @@ Sidebar::Sidebar(Plater *parent)
 
     {
     // add filament title
-    p->m_panel_filament_title = new StaticBox(p->scrolled, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL | wxBORDER_NONE);
+    p->m_panel_filament_title = new FilamentDisclosureHeader(p->scrolled);
     p->m_panel_filament_title->SetBackgroundColor(title_bg);
     p->m_panel_filament_title->SetBackgroundColor2(title_bg);
     p->m_panel_filament_title->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &e) {
@@ -3434,6 +3492,7 @@ Sidebar::Sidebar(Plater *parent)
             p->m_filament_area_wrapper->Hide();
         }
         update_scroll_body();
+        p->m_panel_filament_title->SetExpanded(p->filament_expanded);
         e.Skip();
     });
     p->m_panel_filament_title->Bind(wxEVT_SIZE, [this](wxSizeEvent &event) {
@@ -3465,6 +3524,7 @@ Sidebar::Sidebar(Plater *parent)
             p->m_filament_area_wrapper->Hide();
         }
         update_scroll_body();
+        p->m_panel_filament_title->SetExpanded(p->filament_expanded);
         e.Skip();
     });
     bSizer39->Add(p->m_filament_header, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT, FromDIP(10));
@@ -6428,6 +6488,7 @@ void Sidebar::sync_ams_list(bool is_from_big_sync_btn)
     p->filament_expanded = true;
     p->m_filament_area_wrapper->Show(p->active_prepare_section == "ink");
     recalc_filament_scroll_sizes();
+    p->m_panel_filament_title->SetExpanded(true);
     // BBS:Synchronized consumables information
     // auto calculation of flushing volumes
     for (int i = 0; i < p->combos_filament.size(); ++i) {
