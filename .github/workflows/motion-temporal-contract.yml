@@ -7,6 +7,8 @@ on:
       - '.github/workflows/motion-temporal-contract.yml'
       - 'scripts/md3/motion_temporal.py'
       - 'scripts/md3/test_motion_temporal.py'
+      - 'scripts/md3/temporal_checkbox.py'
+      - 'scripts/md3/test_temporal_checkbox.py'
   workflow_dispatch:
     inputs:
       source_commit:
@@ -41,9 +43,9 @@ jobs:
               $source -cne $env:GITHUB_SHA -or $source -cne $env:EXPECTED_SOURCE_COMMIT) { throw 'Exact source identity mismatch.' }
           New-Item -ItemType Directory -Path temporal-contract | Out-Null
           $receipt = @{schema=1;source_commit=$source;run_id=$env:GITHUB_RUN_ID;run_attempt=$env:GITHUB_RUN_ATTEMPT;
-            status='failed';expected_cases=18;exit_code=$null;product_started=$false;gui_started=$false;
+            status='failed';expected_cases=25;exit_code=$null;product_started=$false;gui_started=$false;
             installation_performed=$false;capture_performed=$false;files=@{}}
-          foreach ($path in @('.github/workflows/motion-temporal-contract.yml','scripts/md3/motion_temporal.py','scripts/md3/test_motion_temporal.py')) {
+          foreach ($path in @('.github/workflows/motion-temporal-contract.yml','scripts/md3/motion_temporal.py','scripts/md3/test_motion_temporal.py','scripts/md3/temporal_checkbox.py','scripts/md3/test_temporal_checkbox.py')) {
             $receipt.files[$path] = (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash.ToLowerInvariant()
           }
           $runner = @'
@@ -85,18 +87,23 @@ jobs:
           try:
               root = Path.cwd()
               sys.path.insert(0, str(root / "scripts/md3"))
-              spec = importlib.util.spec_from_file_location("temporal_contract", root / "scripts/md3/test_motion_temporal.py")
-              module = importlib.util.module_from_spec(spec)
-              spec.loader.exec_module(module)
-              suite = unittest.defaultTestLoader.loadTestsFromModule(module)
+              suite = unittest.TestSuite()
+              for name, expected in (("test_motion_temporal", 18), ("test_temporal_checkbox", 7)):
+                  spec = importlib.util.spec_from_file_location(name, root / ("scripts/md3/" + name + ".py"))
+                  module = importlib.util.module_from_spec(spec)
+                  spec.loader.exec_module(module)
+                  group = unittest.defaultTestLoader.loadTestsFromModule(module)
+                  if group.countTestCases() != expected:
+                      raise RuntimeError("Unexpected module inventory")
+                  suite.addTests(group)
               count = suite.countTestCases()
               stage = "inventory"
-              if count != 18:
+              if count != 25:
                   raise RuntimeError("Unexpected contract inventory")
               stage = "execute"
               result = Result()
               suite.run(result)
-              code = 0 if result.wasSuccessful() and result.testsRun == 18 and len(rows) == 18 and all(row["status"] == "passed" for row in rows) else 1
+              code = 0 if result.wasSuccessful() and result.testsRun == 25 and len(rows) == 25 and len({row["case"] for row in rows}) == 25 and all(row["status"] == "passed" for row in rows) else 1
               stage = "complete"
           except Exception:
               code = 2

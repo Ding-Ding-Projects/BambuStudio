@@ -149,6 +149,20 @@ the unchanged contracts. A dispatch 404 is not a contract execution result.
 
 ## Installed checkbox scope
 
+The focused `motion-temporal-contract.yml` job now loads both actual contract
+modules, requiring exactly 18 temporal-helper cases and seven checkbox-predicate
+cases. All 25 must execute successfully with distinct per-case identifiers and no
+skips. The receipt hashes the workflow and both helper/test pairs. Automatic
+activation includes those five exact paths on the integration branch; manual
+dispatch retains exact source equality. The five-minute bound and product-free,
+installation-free route are unchanged. Module imports use standard Python modules;
+the MCP and native interaction functions are not invoked by these contracts.
+
+This is a new combined contract inventory. Earlier run `37102495898` was queued
+for the previous 18-case inventory at the time of this change, and cannot establish
+execution of the seven new predicates. Neither inventory proves installed UI
+behavior, real provider availability or temporal capture.
+
 `native-interface-runtime.yml` accepts `temporal-checkbox` only with English,
 light theme, 100% scale and the normal 1200x800 viewport, without display or
 resolution provisioning. A matching immutable release and source are required.
