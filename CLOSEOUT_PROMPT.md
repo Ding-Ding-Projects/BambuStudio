@@ -1,5 +1,71 @@
 # Native interface continuation
 
+## Latest preserved diagnostic candidate
+
+Source de733332b0cadce9508f29581fa09c3c3758afb7 includes independently reviewed
+fixed stage/count/boolean startup observations. Owning source d05f396a8928c0f75294f26e8fa62324255642e2
+and integration source are pushed and verified. No acceptance predicate, strict
+symbol rule, containment check or deadline was weakened. No local product execution.
+
+Changed hosted contract run 37103710012 and diagnostic run 37103711674 are queued,
+both verified at de733332b0cadce9508f29581fa09c3c3758afb7. A bounded 55-minute
+observer was started; its eventual result must be read before claiming a verdict.
+An older combined source 6c5e619aaa63b00944951d5caaf30b9d1c415185 completed its
+product build in run 37099792250 and waits publication. That does not validate
+the current motion changes. The 414e combined run37103221827 remains queued.
+
+Latest verified allowance: 24% remaining. New features remain frozen. No active
+implementation worker remains. Next meaningful work requires a changed hosted
+verdict or the new authenticated diagnostic. Do not relaunch unchanged checks.
+No final main result, release completion, archive or deletion is claimed.
+
+
+## Verified priority update, 2026-10-03 UTC
+
+The current priority is a green combined hosted result. New feature work is
+frozen, including the unimplemented asynchronous STL and native page-content
+composition proposals. The latest account reading reports 25% remaining;
+start preservation-first closeout at 10% or less. No active goal is recorded.
+
+Preserved integration source: 414e7d8139060bf4d64cf4d0644dcb7ddcb7cf63.
+The matching combined build is run 37103221827, queued at the last observation.
+Earlier combined runs 37103084994 and 37101358049 are also queued. No concrete
+queue cause is exposed. Do not cancel existing runs or infer a quota cause.
+Main remains ce883543177ef7df46fa5b798dcc5c7f3d2f8020.
+
+Hosted temporal contracts passed: run 37102495898 has 18 distinct passing cases
+at fa1cd3eb579e23ed7e5af01a0a6ab00a6ac47d13; run 37103221335 has 25 at
+414e7d8139060bf4d64cf4d0644dcb7ddcb7cf63. Original case hashes, counts and all
+three/five source hashes were checked against their exact CRLF checkout bytes.
+The receipts below retain that representation explicitly. Neither run starts
+the product, installs it, captures it or proves rendered motion.
+
+Startup contract run 37102256371 passed at e50f5dac1074055e02be230bfdc5dd98d829e5e6.
+The matching diagnostic 37102257995 completed transport successfully but its
+driver exited 2. Two independent authenticated reviews verified all six source
+hashes and the 6382-byte private log hash. Exact OS symbols and sls readback now
+succeed. No g continuation or initializer exception was observed. The report
+omits the individual ownership/timing stage that prevented acceptance. A bounded
+fixed-stage/count/boolean diagnostic repair is in progress, preserving all
+ownership predicates, strict symbols, containment and deadlines. The original
+initialization error 1114 remains unresolved; no product fix is inferred.
+
+Next: independently review that narrow diagnostic repair, preserve it, execute
+its affected hosted contracts and one changed diagnostic, and follow existing
+combined build verdicts. Installed vocabulary, actual cancellation, Slice and
+Print/Send, context menus, temporal pixels, minimum geometry and the full measured
+language/theme/DPI matrix remain unverified. No physical printing or transfer.
+All product execution remains hosted-only. No archive, deletion, main integration
+or final green-main claim has occurred.
+
+Evidence: docs/features/automation/hosted-temporal-contracts-37102495898.json,
+docs/features/automation/hosted-temporal-contracts-37103221335.json and
+docs/features/automation/hosted-startup-creation-37102257995.json.
+
+Earlier entries below are historical observations; this update supersedes their
+queued-state and current-source statements.
+
+
 ## Current continuation, 2026-10-03 UTC
 
 Preserved integration source is c7aefb4b84f31a4bc2519d8052ac78b3ccaa3a17.

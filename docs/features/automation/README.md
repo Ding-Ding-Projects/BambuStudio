@@ -60,3 +60,6 @@ Related: [Windows release supply chain](../releases/windows-release-supply-chain
 - [Authenticated startup diagnostic](hosted-startup-creation-37101357236.json), matching operating-system symbols unavailable, so execution never resumed; the product initializer remains unknown.
 
 - [Native verification at c7aefb4b8](hosted-native-interface-37101358501.json), including 59 motion-policy checks and repaired catalog compilation; installed rendering remains unverified.
+
+- [Temporal contracts, 18 cases](hosted-temporal-contracts-37102495898.json) and [combined 25 cases](hosted-temporal-contracts-37103221335.json): exact source-byte and result hashes verified; no product execution.
+- [Strict-symbol startup diagnostic](hosted-startup-creation-37102257995.json): symbols acknowledged, continuation unobserved, driver exit 2.

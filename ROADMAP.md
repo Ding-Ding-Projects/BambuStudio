@@ -12,6 +12,9 @@
 
 ## Native interface completeness and slicing actions
 
+- [x] Pass 25 pure temporal-observation contracts at `414e7d81` in hosted run `37103221335`, with exact result and five source hashes verified; rendered animation remains excluded.
+- [ ] Resolve startup ownership/timing observation after strict symbols succeeded in run `37102257995`; prioritize green combined verification before further feature work.
+
 - [x] Verify standalone 150%/144 DPI provisioning and original display restoration in run `37096062899` at `54ff825c0`; 13 lifecycle cases passed. Product rendering remains unverified.
 - [x] Pass 46 canvas checks, 68 preview geometry/timing checks, 55 source tests and eight slicing contracts at `4436c7f91` on hosted run `37056354867`; this does not establish native-service or rendered correctness.
 - [ ] Repair the static wxWidgets focused-target link configuration and ambiguous preview `ImGuiWrapper::begin` call, then verify the combined candidate.
