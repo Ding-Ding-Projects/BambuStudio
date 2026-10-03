@@ -6,7 +6,8 @@ param(
     [Parameter(Mandatory)][ValidatePattern('^[0-9a-f]{40}$')][string] $ExpectedSourceCommit,
     [Parameter(Mandatory)][ValidatePattern('^[^/]+/[^/]+$')][string] $Repository,
     [Parameter(Mandatory)][string] $OutputDirectory,
-    [Parameter(Mandatory)][ValidateSet('menus','vocabulary','vocabulary-persistence','slice-controls','combined-print','combined-send','cancellation','minimum-resize')][string] $Scope,
+    [Parameter(Mandatory)][ValidateSet('menus','vocabulary','vocabulary-persistence','slice-controls','combined-print','combined-send','cancellation','minimum-resize','startup-diagnostic')][string] $Scope,
+    [ValidatePattern('^[0-9a-f]{40}$')][string] $ExpectedVerifierCommit,
     [ValidateSet('en','yue_HK','bilingual_en_yue_HK')][string] $Language = 'en',
     [ValidateSet('light','dark')][string] $Theme = 'light',
     [ValidateSet('1','1.25','1.5','2')][string] $Scale = '1',
@@ -19,7 +20,17 @@ Set-StrictMode -Version Latest
 if ($env:GITHUB_ACTIONS -ne 'true' -or $env:RUNNER_ENVIRONMENT -ne 'github-hosted' -or $env:RUNNER_OS -ne 'Windows') {
     throw 'Automation verification requires a disposable GitHub-hosted Windows runner.'
 }
-if ((& git rev-parse HEAD).Trim() -cne $ExpectedSourceCommit) { throw 'Verifier source SHA mismatch.' }
+$startupDiagnostic = $Scope -ceq 'startup-diagnostic'
+if ($startupDiagnostic) {
+    if (-not $ExpectedVerifierCommit -or $ProvisionDisplayScale -or $ProvisionResolution -or
+        $Language -cne 'en' -or $Theme -cne 'light' -or $Scale -cne '1' -or $Viewport -cne '1200x800' -or
+        $Tag -cne 'md3-v190' -or $ExpectedSourceCommit -cne '35d1074faea221fa4f289f1db1e0ee428a90d701') {
+        throw 'Unsupported fixed startup diagnostic tuple.'
+    }
+} elseif ($ExpectedVerifierCommit) { throw 'Separate verifier identity is restricted to startup diagnostics.' }
+$checkout = & git rev-parse HEAD
+$requiredCheckout = if ($startupDiagnostic) { $ExpectedVerifierCommit } else { $ExpectedSourceCommit }
+if ($LASTEXITCODE -ne 0 -or $checkout.Trim() -cne $requiredCheckout) { throw 'Verifier source SHA mismatch.' }
 if ($ProvisionDisplayScale -and $Scale -eq '1') { throw 'The baseline 100% route does not use scale provisioning.' }
 if ($ProvisionResolution -and ($Scope -ne 'minimum-resize' -or $Scale -ne '1' -or
     $Viewport -ne 'measured-minimum' -or $ProvisionDisplayScale)) {
@@ -40,6 +51,7 @@ if (-not $output.StartsWith($tempRoot, [StringComparison]::OrdinalIgnoreCase) -o
 $raw = Join-Path $env:RUNNER_TEMP ('native-interface-restricted-' + $env:GITHUB_RUN_ID)
 [void](New-Item -ItemType Directory -Path $raw)
 $receipt = [ordered]@{schema=2; protocol='bambu-automation-v2'; source_commit=$ExpectedSourceCommit; release_tag=$Tag; run_id=$env:GITHUB_RUN_ID; status='failed'; hardware='unverified_no_printer_commands'; capture='not_started'; exe_sha256=$null; cli_sha256=$null}
+if ($startupDiagnostic) { $receipt.diagnostic_only = $true }
 $evidenceSafeToRead = $true
 try {
     $installReceipt = Join-Path $raw 'install.json'
@@ -150,6 +162,9 @@ try {
         $evidenceSafeToRead = $minimumRun.Terminated
         $driverExit = $minimumRun.Code
         if (-not $evidenceSafeToRead -or $driverExit -ne 0) { throw 'Contained minimum proof unavailable.' }
+    } elseif ($startupDiagnostic) {
+        & $python "$PSScriptRoot/../md3/drive-native-interface.py" --exe $exe --cli $cli --install-receipt $installReceipt --source-commit $ExpectedSourceCommit --release-tag $Tag --output $raw --scope startup-diagnostic --verifier-commit $ExpectedVerifierCommit
+        $driverExit = $LASTEXITCODE
     } else {
         & $python "$PSScriptRoot/../md3/drive-native-interface.py" --exe $exe --cli $cli --install-receipt $installReceipt --source-commit $ExpectedSourceCommit --release-tag $Tag --output $raw --scope $Scope --language $Language --theme $Theme --scale $Scale --viewport $Viewport
         $driverExit = $LASTEXITCODE
@@ -174,7 +189,14 @@ try {
     $receipt.runtime = $driver.status
     $receipt.capture = 'encrypted_pending_pixel_review'
     if ($driverExit -ne 0) { throw 'Native interface runtime checks failed; restricted diagnostics retained.' }
-    $receipt.status = 'runtime_verified_capture_pending_review_hardware_unverified'
+    if ($startupDiagnostic) {
+        if ($driver.diagnostic_only -ne $true -or $driver.status -cne 'diagnostic_completed' -or
+            $driver.verifier_binding.source_commit -cne $ExpectedVerifierCommit -or
+            @($driver.operations).Count -ne 0 -or @($driver.captures).Count -ne 0 -or $driver.teardown_verified -ne $true) {
+            throw 'Startup diagnostic binding or teardown mismatch.'
+        }
+        $receipt.status = 'failed' # Diagnostic completion never satisfies a product verification gate.
+    } else { $receipt.status = 'runtime_verified_capture_pending_review_hardware_unverified' }
 } catch {
     # Never publish subprocess output, host paths, profile contents or native error messages.
     $receipt.status = 'failed'
