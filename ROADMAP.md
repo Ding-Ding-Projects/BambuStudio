@@ -36,7 +36,8 @@
 
 ## Native motion and responsiveness
 
-- [ ] Extend shared native transitions with real elapsed-time animation and reduced-motion support.
+- [ ] Extend shared native transitions with real elapsed-time animation and reduced-motion support; policy/lifetime foundation c309da8a is source-reviewed and integrated, hosted verification pending.
+- [ ] Animate native control states and tab indicators, panels/dialogs/tooltips, root/nested/canvas menus, notifications and progress; preserve immediate semantics and reduced-motion behavior.
 - [ ] Move practical blocking I/O from UI handlers into lifetime-safe background operations.
 - [ ] Complete independent defect review and hosted regression evidence for motion and asynchronous paths.
 - [ ] Verify the final integrated `main` revision with green hosted checks.

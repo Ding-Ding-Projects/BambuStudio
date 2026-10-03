@@ -2,7 +2,7 @@
 
 ## Current continuation, 2026-10-03 UTC
 
-Preserved integration source is fe20b56379b0af533be629747f7d710ba24f00d3.
+Preserved integration source is ea14642554989ad56fa9cd4529198887b277b949.
 Main remains ce883543177ef7df46fa5b798dcc5c7f3d2f8020. No incomplete task source
 is eligible for completed-main cleanup. No archive or deletion occurred.
 
@@ -29,8 +29,14 @@ md3-v190 / 35d1074faea221fa4f289f1db1e0ee428a90d701. Worker-tree termination
 was verified; desktop closure was not. Evidence was withheld. Independent
 source review found the wrapper incorrectly required a nonzero CLI exit for
 normal JSON absence responses, and separate one-shot invocations could not
-retain desktop ownership. Repair is in progress using the pinned persistent
-lifecycle route, without weakening evidence requirements. The exact response
+retain desktop ownership. Persistent lifecycle repair 90b8b8d9453842dc4022a0954766e20dff4932a3 passed
+two independent source reviews and is integrated at 0b079632b. Hosted lifecycle
+run 37099135961 failed after nine Python cases and four desktop rejections: the actual
+absence contract did not pass. No product started. Child exit/stage were not retained;
+a working-directory mismatch remains unproved. Reviewed repair 398dffea resolves
+absolute helper paths and retains fixed numeric classifications. It is integrated
+at ea1464255. Changed product-free run 37100209956 is queued and must pass before
+a changed startup diagnostic. Evidence requirements remain unchanged. The exact response
 from this failed attempt was not retained and must not be reconstructed.
 See docs/features/automation/hosted-startup-creation-37098366121.json.
 
@@ -55,6 +61,30 @@ installed MCP, menus, vocabulary/persistence, Slice and Print, Slice and Send,
 cancellation and the full language/theme/size/scale matrix. All product compilation,
 tests, installation, slicing and UI execution remain hosted-only. Preserve final
 printer confirmation; no physical printing or transfer is authorized.
+
+Latest user steering explicitly requires animations and transitions throughout
+the GUI, with Astra implementation and independent review. Existing motion is
+partial. Shared policy/lifetime foundation c309da8a and persisted system/reduced
+preference passed two independent source reviews and are integrated at ea1464255.
+Hosted run 37100211528 is queued, including seventeen pure policy outcomes and
+native compilation. Those outcomes do not prove real timers or rendered transitions. Remaining slices are
+native state/tab indicators; panels/dialogs/tooltips; native and canvas menus;
+notifications/progress. Preserve immediate semantic state, cancellation and input,
+interruptibility, reduced motion and hidden-owner lifetime safety. No universal
+motion coverage or smoothness claim is made. Material Designer creation/export
+tools are unavailable and local GUI execution is prohibited; reuse checked-in
+references and retain a target-owned motion inventory plus later hosted temporal
+and clipping evidence.
+
+Two newly confirmed menu source defects are repaired on the integration branch:
+assembly Export search/builder, bounded layout and keyboard rows at 866bd20b;
+canvas regex Whole word parity at ba8b0a0e. Both had two independent source reviews.
+The latter calls an actual production evaluator and includes a real-worker parity
+case that cannot pass through fail-open visibility. Hosted native verification
+37099796194 is queued at 6c5e619aaa63b00944951d5caaf30b9d1c415185. Compilation,
+actual assembly/preview interaction and visible motion remain pending. The existing
+menus flow still lacks direct builder interaction and full native/canvas invoker
+coverage. Do not silently treat the two original menu fixtures as exhaustive.
 
 Before completion: integrate completed verified work into main, push and prove
 its exact remote SHA, obtain the combined result for that actual candidate,
