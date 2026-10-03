@@ -147,6 +147,50 @@ def desktop_lookup_observation(observation, thread, get_desktop, get_information
     return name.value
 
 
+def thread_desktop_observation(observation, thread, expected_pid, open_thread, process_id,
+                               exit_code, close_handle, last_error, desktop_name):
+    """Hold the exact live target thread through its existing desktop observation."""
+    from ctypes import wintypes
+    observation["stage"] = "target_thread_open"
+    handle = open_thread(0x0800, False, thread)  # THREAD_QUERY_LIMITED_INFORMATION
+    error = last_error() if not handle else None
+    observation["thread_handle_present"] = bool(handle)
+    observation["thread_open_error"] = error
+    if not handle:
+        raise ValueError("Target thread unavailable")
+    try:
+        observation["stage"] = "target_thread_process"
+        pid = process_id(handle)
+        error = last_error() if not pid else None
+        observation["thread_process_query_success"] = bool(pid)
+        observation["thread_process_error"] = error
+        if not pid:
+            raise ValueError("Target thread process unavailable")
+        observation["thread_process_matches"] = pid == expected_pid
+        if not observation["thread_process_matches"]:
+            raise ValueError("Target thread process mismatch")
+        observation["stage"] = "target_thread_exit_state"
+        code = wintypes.DWORD()
+        ok = exit_code(handle, ctypes.byref(code))
+        error = last_error() if not ok else None
+        observation["thread_exit_query_success"] = bool(ok)
+        observation["thread_exit_error"] = error
+        if not ok:
+            raise ValueError("Target thread exit state unavailable")
+        observation["thread_alive"] = code.value == 259  # STILL_ACTIVE
+        if not observation["thread_alive"]:
+            raise ValueError("Target thread is not active")
+        return desktop_name(thread)
+    finally:
+        ok = close_handle(handle)
+        error = last_error() if not ok else None
+        observation["thread_handle_closed"] = bool(ok)
+        observation["thread_close_error"] = error
+        if not ok:
+            observation["stage"] = "target_thread_close"
+            raise ValueError("Target thread handle cleanup unavailable")
+
+
 def creation_ownership_observation(observation, target, debugger_pid, inventory, member,
                                    desktop_name, expected_desktop):
     """Preserve short-circuit ownership checks, recording no native identities."""
@@ -207,6 +251,13 @@ def creation_trace(args) -> int:
     kernel.OpenProcess.restype = wintypes.HANDLE
     kernel.IsProcessInJob.argtypes = [wintypes.HANDLE, wintypes.HANDLE, ctypes.POINTER(wintypes.BOOL)]
     kernel.CloseHandle.argtypes = [wintypes.HANDLE]
+    kernel.CloseHandle.restype = wintypes.BOOL
+    kernel.OpenThread.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.DWORD]
+    kernel.OpenThread.restype = wintypes.HANDLE
+    kernel.GetProcessIdOfThread.argtypes = [wintypes.HANDLE]
+    kernel.GetProcessIdOfThread.restype = wintypes.DWORD
+    kernel.GetExitCodeThread.argtypes = [wintypes.HANDLE, ctypes.POINTER(wintypes.DWORD)]
+    kernel.GetExitCodeThread.restype = wintypes.BOOL
     user.GetThreadDesktop.argtypes = [wintypes.DWORD]
     user.GetThreadDesktop.restype = wintypes.HANDLE
     user.GetUserObjectInformationW.argtypes = [wintypes.HANDLE, ctypes.c_int, ctypes.c_void_p,
@@ -250,7 +301,12 @@ def creation_trace(args) -> int:
           "continuation_written": False, "desktop_handle_present": None,
           "desktop_handle_error": None, "desktop_information_success": None,
           "desktop_information_error": None, "desktop_required_bytes": None,
-          "desktop_required_bytes_capped": None}
+          "desktop_required_bytes_capped": None,
+          "thread_handle_present": None, "thread_open_error": None,
+          "thread_process_query_success": None, "thread_process_error": None,
+          "thread_process_matches": None, "thread_exit_query_success": None,
+          "thread_exit_error": None, "thread_alive": None,
+          "thread_handle_closed": None, "thread_close_error": None}
     report["creation_observation"] = observation
     try:
         if not job or not member(os.getpid()) or desktop_name() != args.desktop:
@@ -290,7 +346,10 @@ def creation_trace(args) -> int:
                 observation["acknowledgement_observed"] = True
                 if not creation_ownership_observation(observation, target, debugger.pid,
                         lambda: owned_process_inventory(process_snapshot(), exe=str(exe), datadir=str(profile),
-                            launched_at=launched, launch_pid=debugger.pid), member, desktop_name, args.desktop):
+                            launched_at=launched, launch_pid=debugger.pid), member,
+                        lambda thread: thread_desktop_observation(observation, thread, target[0],
+                            kernel.OpenThread, kernel.GetProcessIdOfThread, kernel.GetExitCodeThread,
+                            kernel.CloseHandle, ctypes.get_last_error, desktop_name), args.desktop):
                     raise ValueError("Debug target ownership unavailable")
                 report["initial_marker_observed"] = True
                 report["job_membership_verified"] = True

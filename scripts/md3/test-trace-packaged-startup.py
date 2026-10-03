@@ -121,6 +121,63 @@ class CdbAttachmentContract(unittest.TestCase):
                              if failing_stage == "handle" else "target_desktop_name")
 
     def test_creation_route_never_attaches_or_skips_initial_break(self):
+        import ctypes
+        from ctypes import wintypes
+        for scenario in ("open_false", "pid_false", "pid_mismatch", "exit_false",
+                         "exited", "desktop_exception", "close_false", "success"):
+            observed, calls = {}, []
+            def open_thread(access, inherit, tid):
+                calls.append("open")
+                self.assertEqual((access, inherit, tid), (0x0800, False, 456))
+                return 0 if scenario == "open_false" else 7
+            def process_id(handle):
+                calls.append("pid")
+                self.assertEqual(handle, 7)
+                return 0 if scenario == "pid_false" else 124 if scenario == "pid_mismatch" else 123
+            def exit_code(handle, code):
+                calls.append("exit")
+                self.assertEqual(handle, 7)
+                ctypes.cast(code, ctypes.POINTER(wintypes.DWORD))[0] = 0 if scenario == "exited" else 259
+                return scenario != "exit_false"
+            def desktop(tid):
+                calls.append("desktop")
+                self.assertNotIn("close", calls)
+                self.assertEqual(tid, 456)
+                observed["stage"] = "target_thread_desktop_handle"
+                if scenario == "desktop_exception":
+                    raise RuntimeError("private native detail")
+                return "owned"
+            def close(handle):
+                calls.append("close")
+                self.assertEqual(handle, 7)
+                return scenario != "close_false"
+            def error():
+                calls.append("error")
+                return 5
+            args = (observed, 456, 123, open_thread, process_id, exit_code, close, error, desktop)
+            if scenario == "success":
+                self.assertEqual(driver.thread_desktop_observation(*args), "owned")
+            else:
+                with self.assertRaises(RuntimeError if scenario == "desktop_exception" else ValueError):
+                    driver.thread_desktop_observation(*args)
+            expected = {
+                "open_false": ["open", "error"],
+                "pid_false": ["open", "pid", "error", "close"],
+                "pid_mismatch": ["open", "pid", "close"],
+                "exit_false": ["open", "pid", "exit", "error", "close"],
+                "exited": ["open", "pid", "exit", "close"],
+                "desktop_exception": ["open", "pid", "exit", "desktop", "close"],
+                "close_false": ["open", "pid", "exit", "desktop", "close", "error"],
+                "success": ["open", "pid", "exit", "desktop", "close"],
+            }
+            self.assertEqual(calls, expected[scenario])
+            self.assertNotIn("owned", observed.values())
+            if scenario != "open_false":
+                self.assertEqual(observed["thread_handle_closed"], scenario != "close_false")
+            if scenario == "desktop_exception":
+                self.assertEqual(observed["stage"], "target_thread_desktop_handle")
+            if scenario == "close_false":
+                self.assertEqual(observed["stage"], "target_thread_close")
         cache = r"C:\owned cache\symbols"
         command = driver.creation_arguments("cdb.exe", "product.exe", "profile", "fixed.txt", cache)
         self.assertEqual(command[-3:], ["product.exe", "--datadir", "profile"])
