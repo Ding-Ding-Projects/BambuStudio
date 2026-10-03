@@ -32,6 +32,35 @@ function Record-Pass([string] $Name) { $cases.Add(@{name=$Name; status='passed'}
 try {
     # Compile and exercise the checked-in implementation, not a test copy.
     Add-Type -Path (Join-Path $PSScriptRoot 'HostedScaleProcess.cs')
+    $stage = 'display_mode_public_layout_contract'
+    Add-Type -Path (Join-Path $PSScriptRoot 'HostedDisplayMode.cs')
+    function New-ModeContractFixture([uint16] $Size, [uint16] $Extra = 0, [uint32] $Fields = 0x207c00a0) {
+        $bytes = [byte[]]::new(220)
+        [BitConverter]::GetBytes($Size).CopyTo($bytes,68)
+        [BitConverter]::GetBytes($Extra).CopyTo($bytes,70)
+        [BitConverter]::GetBytes($Fields).CopyTo($bytes,72)
+        [BitConverter]::GetBytes([uint32]32).CopyTo($bytes,168)
+        [BitConverter]::GetBytes([uint32]1024).CopyTo($bytes,172)
+        [BitConverter]::GetBytes([uint32]768).CopyTo($bytes,176)
+        [BitConverter]::GetBytes([uint32]64).CopyTo($bytes,184)
+        return ,$bytes
+    }
+    # Reject incomplete/unknown layouts and private data before proving both
+    # supported public layouts. No native display API is called by this case.
+    foreach ($invalid in @((New-ModeContractFixture 187), (New-ModeContractFixture 189),
+        (New-ModeContractFixture 220 1), (New-ModeContractFixture 188 0 0x207c00a1),
+        (New-ModeContractFixture 188 0 0x203c00a0))) {
+        $rejected = $false
+        try { [void][HostedDisplayMode]::Width($invalid) } catch { $rejected = $true }
+        Require-Result $rejected
+    }
+    foreach ($publicSize in @(188,220)) {
+        $valid = New-ModeContractFixture $publicSize
+        $preserved = [Convert]::ToBase64String($valid)
+        Require-Result ([HostedDisplayMode]::Width($valid) -eq 1024 -and [HostedDisplayMode]::Height($valid) -eq 768)
+        Require-Result ([Convert]::ToBase64String($valid) -ceq $preserved -and [BitConverter]::ToUInt16($valid,68) -eq $publicSize)
+    }
+    Record-Pass $stage
     $writer = Join-Path $scratch 'writer.ps1'
     @'
 param([int] $Size)
@@ -153,7 +182,7 @@ exit 0
         [string[]]@('-NoProfile','-File',$membership,'-JobName',$jobName), 10, $true, $jobName)
     Require-Result ($result.Terminated -and $result.Code -eq 0 -and $result.Output -ceq '{"ok":true}')
     Record-Pass $stage
-    $success = $cases.Count -eq 6
+    $success = $cases.Count -eq 7
 } catch {
     # Neither exception text nor benign child payloads enter public logs.
     $cases.Add(@{name=$stage; status='failed'})
@@ -173,10 +202,10 @@ exit 0
     }
     $passed = @($cases | Where-Object status -eq 'passed').Count
     @{schema=1; status=$(if ($success -and $cleanupVerified) {'passed'} else {'failed'})
-      passed=$passed; expected=6; cases=$cases.ToArray(); cleanup_verified=$cleanupVerified
+      passed=$passed; expected=7; cases=$cases.ToArray(); cleanup_verified=$cleanupVerified
       elapsed_ms=$timer.ElapsedMilliseconds; settings_mutated=$false
     } | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $output 'receipt.json') -Encoding utf8
 }
-if ($success -and $cleanupVerified) { Write-Host 'Hosted scale lifecycle checks passed: 6/6'; exit 0 }
+if ($success -and $cleanupVerified) { Write-Host 'Hosted scale lifecycle checks passed: 7/7'; exit 0 }
 Write-Host 'Hosted scale lifecycle checks failed; inspect the fixed receipt.'
 exit 2
