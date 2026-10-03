@@ -26,6 +26,7 @@ import threading
 import time
 
 from recapture import cheap
+from startup_diagnostics import collect_startup
 
 HERE = Path(__file__).resolve().parent
 spec = importlib.util.spec_from_file_location("packaged_behavior", HERE / "drive-packaged-behavior.py")
@@ -1072,6 +1073,8 @@ def main():
                 "scale": args.scale, "viewport": args.viewport},
             "operations": drive.rows if drive else [], "captures": drive.images if drive else [],
             "viewport_observations": drive.viewport_observations if drive else [],
+            "startup_diagnostics": collect_startup(drive.app if drive else app,
+                teardown=teardown, operations=len(drive.rows) if drive else 0),
             "capture_method": "lowlevel-computer-use-cheap owned window; persistent compatibility MCP desktop handoff" if args.scope == "minimum-resize" else "lowlevel-computer-use-cheap hidden desktop",
             "privacy": "restricted_pixel_review_pending", "hardware": "unverified_no_printer_commands",
             "teardown_verified": teardown, "failure": failure}
