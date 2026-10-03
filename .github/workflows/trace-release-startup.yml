@@ -10,6 +10,10 @@ on:
       - 'scripts/md3/test-trace-packaged-startup.py'
   workflow_dispatch:
     inputs:
+      contract_only:
+        description: Validate diagnostic contracts without installation or debugging
+        type: boolean
+        default: false
       from_creation:
         description: Fixed v190 loader diagnosis from process creation
         type: boolean
@@ -31,10 +35,54 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  trace:
-    if: github.ref == 'refs/heads/codex/hosted-startup-stack' || (github.event_name == 'workflow_dispatch' && inputs.from_creation)
+  contract:
+    if: github.event_name == 'workflow_dispatch' && inputs.contract_only
     runs-on: windows-2025
-    timeout-minutes: 90
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.12'
+      - name: Check fixed creation contracts
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          if ($env:RUNNER_ENVIRONMENT -cne 'github-hosted' -or $env:RUNNER_OS -cne 'Windows') { throw 'Hosted Windows is required.' }
+          $source=git rev-parse HEAD
+          if ($LASTEXITCODE -ne 0 -or $source -cne $env:GITHUB_SHA) { throw 'Source identity mismatch.' }
+          New-Item -ItemType Directory -Force diagnostic/contract | Out-Null
+          $receipt=@{schema=1;source_commit=$source;run_id=$env:GITHUB_RUN_ID;status='failed';python_cases=7;desktop_rejections=0;product_started=$false;files=@{}}
+          foreach ($path in @('scripts/md3/trace-packaged-startup.py','scripts/md3/test-trace-packaged-startup.py','scripts/ci/HostedScaleProcess.cs')) {
+            $receipt.files[$path]=(Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash.ToLowerInvariant()
+          }
+          try {
+            python scripts/md3/test-trace-packaged-startup.py
+            if ($LASTEXITCODE -ne 0) { throw 'Python contract failed.' }
+            Add-Type -Path scripts/ci/HostedScaleProcess.cs
+            $name='Local\BambuNativeScale-' + ('a' * 64)
+            foreach ($desktop in @('WinSta0\Default','WinSta0\startup-loader-x-1','Other\startup-loader-1-1','WinSta0\startup-loader-1-1 extra')) {
+              $result=[HostedScaleProcess]::RunNamedOnDesktop('not-launched.exe',@(),1,$false,$name,$desktop)
+              if (-not $result.Terminated -or $result.ProcessStage -ne [HostedScaleProcess+Stage]::InvalidName) { throw 'Invalid desktop contract failed.' }
+              $receipt.desktop_rejections++
+            }
+            $receipt.status='passed'
+          } finally {
+            $receipt | ConvertTo-Json -Depth 5 | Set-Content diagnostic/contract/receipt.json -Encoding utf8
+          }
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        if: always()
+        with:
+          name: startup-creation-contract-${{ github.run_id }}-${{ github.run_attempt }}
+          path: diagnostic/contract/receipt.json
+          if-no-files-found: warn
+  trace:
+    if: (github.ref == 'refs/heads/codex/hosted-startup-stack' || (github.event_name == 'workflow_dispatch' && inputs.from_creation)) && !inputs.contract_only
+    runs-on: windows-2025
+    timeout-minutes: ${{ inputs.from_creation && 25 || 90 }}
     defaults:
       run:
         shell: pwsh
@@ -60,7 +108,7 @@ jobs:
 
       - name: Trace exact installed release process
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN || secrets.ORG_TOKEN || github.token }}
           TRACE_TAG: ${{ inputs.tag || 'md3-v125' }}
           TRACE_SOURCE_COMMIT: ${{ inputs.source_commit || 'c5df6199e1a83b1c94be12e999c0b322fded8730' }}
           TRACE_FROM_CREATION: ${{ inputs.from_creation }}
