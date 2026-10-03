@@ -22,6 +22,7 @@ from datetime import datetime, timezone
 
 from PIL import Image, ImageStat
 from recapture import cheap
+from startup_diagnostics import collect_startup
 from hosted_process import owned_process_inventory, process_snapshot
 
 # Reuse the established holder, process identity proof and native profile encoding.
@@ -389,7 +390,8 @@ def main():
                   "captures": drive.images, "capture_method": "lowlevel-computer-use-cheap hidden desktop",
                   "privacy": "isolated_profile_public_cube_only_restricted_pixel_review_pending",
                   "hardware": "unverified_no_printer_mutations", "teardown_verified": teardown,
-                  "failure": failure}
+                  "failure": failure,
+                  "startup_diagnostics": collect_startup(app, teardown=teardown, operations=len(drive.rows))}
         (args.output / "runtime.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
     return 0 if status == "runtime_verified" and teardown else 1
 
