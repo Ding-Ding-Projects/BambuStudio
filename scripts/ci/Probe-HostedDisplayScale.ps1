@@ -110,11 +110,68 @@ try {
         [Windows.Automation.AutomationElement]::ProcessIdProperty, [int]$settings[0].Id)
     $windows = [Windows.Automation.AutomationElement]::RootElement.FindAll(
         [Windows.Automation.TreeScope]::Children, $condition)
-    if ($windows.Count -ne 1) { Write-Summary 'settings_window_missing_or_ambiguous'; exit 2 }
+    $selected = $null
+    $selection = 'direct_process_root'
+    $frameRootCount = 0
+    $matchedRootCount = $windows.Count
+    $discoveryCount = 0
+    $discoveryLimited = $false
+    $walker = [Windows.Automation.TreeWalker]::ControlViewWalker
+    if ($windows.Count -eq 1) {
+        $selected = $windows[0]
+    } elseif ($windows.Count -gt 1) {
+        Write-Summary 'settings_window_missing_or_ambiguous'; exit 2
+    } else {
+        # Packaged Settings can be hosted below an ApplicationFrameHost root.
+        # Match only a live same-session frame host and the exact Settings PID;
+        # never select by a window title or inventory another process's labels.
+        $selection = 'frame_host_process_descendant'
+        $frames = @(Get-Process -Name ApplicationFrameHost -ErrorAction SilentlyContinue |
+            Where-Object { $_.SessionId -eq $session })
+        $matches = [Collections.Generic.List[object]]::new()
+        foreach ($frame in $frames) {
+            $frameCondition = [Windows.Automation.PropertyCondition]::new(
+                [Windows.Automation.AutomationElement]::ProcessIdProperty, [int]$frame.Id)
+            $roots = [Windows.Automation.AutomationElement]::RootElement.FindAll(
+                [Windows.Automation.TreeScope]::Children, $frameCondition)
+            $frameRootCount += $roots.Count
+            foreach ($frameRoot in $roots) {
+                $pending = [Collections.Generic.Queue[object]]::new()
+                $pending.Enqueue($frameRoot)
+                while ($pending.Count -gt 0 -and $discoveryCount -lt 1000) {
+                    $candidate = $pending.Dequeue()
+                    $discoveryCount++
+                    if ($candidate.Current.ProcessId -eq $settings[0].Id) {
+                        $matches.Add($candidate)
+                        # This is the process-owned subtree root. Its children
+                        # must not count as additional independent surfaces.
+                        continue
+                    }
+                    $childElement = $walker.GetFirstChild($candidate)
+                    while ($null -ne $childElement) {
+                        if (($pending.Count + $discoveryCount) -ge 1000) {
+                            $discoveryLimited = $true
+                            break
+                        }
+                        $pending.Enqueue($childElement)
+                        $childElement = $walker.GetNextSibling($childElement)
+                    }
+                    if ($discoveryLimited) { break }
+                }
+                if ($pending.Count -gt 0) { $discoveryLimited = $true }
+                if ($discoveryLimited) { break }
+            }
+            if ($discoveryLimited) { break }
+        }
+        $matchedRootCount = $matches.Count
+        # An incomplete traversal cannot prove uniqueness.
+        if ($discoveryLimited) { Write-Summary 'settings_host_discovery_limit'; exit 2 }
+        if ($matches.Count -ne 1) { Write-Summary 'settings_host_descendant_missing_or_ambiguous'; exit 2 }
+        $selected = $matches[0]
+    }
     $rows = [Collections.Generic.List[object]]::new()
     $queue = [Collections.Generic.Queue[object]]::new()
-    $queue.Enqueue($windows[0])
-    $walker = [Windows.Automation.TreeWalker]::ControlViewWalker
+    $queue.Enqueue($selected)
     while ($queue.Count -gt 0 -and $rows.Count -lt 1000) {
         $element = $queue.Dequeue()
         $current = $element.Current
@@ -131,7 +188,12 @@ try {
         }
     }
     # UI labels may contain profile details. Never print or persist plaintext.
-    $plain = [Text.Encoding]::UTF8.GetBytes((@{ schema = 1; controls = $rows.ToArray() } |
+    $plain = [Text.Encoding]::UTF8.GetBytes((@{ schema = 1; controls = $rows.ToArray()
+        selection = @{ method = $selection; direct_root_count = $windows.Count
+            frame_root_count = $frameRootCount; matched_root_count = $matchedRootCount
+            discovery_element_count = $discoveryCount; settings_pid = $settings[0].Id
+            selected_process_id = $selected.Current.ProcessId; session_id = $session }
+    } |
         ConvertTo-Json -Depth 8 -Compress))
     $key = [Security.Cryptography.RandomNumberGenerator]::GetBytes(32)
     $nonce = [Security.Cryptography.RandomNumberGenerator]::GetBytes(12)
