@@ -2300,3 +2300,17 @@ observation; exact native cause remains unproved. Minimum-resize source is prese
 187e55fa1518e7f66b636f9f29c2e7d8c149350d; it must not run at the known 1024x768
 mode, which cannot fit the required above-minimum starting frame. No interactive
 clamp, product DPI or current-candidate pixel proof is claimed.
+
+## Display diagnostic continuation, 2026-10-03 02:49 UTC
+
+Run 37090623816 failed all three resolution-enabled jobs before display mutation
+at capture_original_resolution. The phase alone did not distinguish a failed
+enumeration from an invalid returned header. Candidate
+596075b89b4dda30001c6076386204e653964c2e has two independent source reviews
+and records enum success, buffer capacity, returned size and extra-data count
+as bounded nullable values. Acceptance and restoration are unchanged.
+The next diagnostic uses only 125% because this pre-input path is shared.
+The full matrix remains required after the root cause is established.
+Product builds 37088514258 and 37088918536 remain in progress; no current
+combined package or rendered correctness verdict exists.
+Current account allowance is 50% remaining. No cleanup or deletion occurred.

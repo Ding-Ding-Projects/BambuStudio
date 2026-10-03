@@ -18,6 +18,11 @@ on:
         description: Observe scaling at the supported 1920x1080 mode and restore the original mode
         type: boolean
         default: false
+      scale_selection:
+        description: Use one scale for shared-path diagnosis or all scales for verification
+        type: choice
+        default: all
+        options: [all, '125', '150', '200']
 permissions:
   contents: read
 jobs:
@@ -49,7 +54,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        scale: [125, 150, 200]
+        scale: ${{ fromJSON(inputs.scale_selection == '125' && '[125]' || inputs.scale_selection == '150' && '[150]' || inputs.scale_selection == '200' && '[200]' || '[125,150,200]') }}
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
         with:
