@@ -20,8 +20,12 @@ streams and absent profile log directory. Productmd3-v190 remains bound to
 35d1074faea221fa4f289f1db1e0ee428a90d701. Two independent reviews accepted
 494f9bf3bd214d0a2243cc1af57e186bdab98519: diagnostic-only copied child TEMP/TMP,
 invocation-bound fixed launcher trace,64KiB limit, encrypted after verified
-teardown. Integrated atfb4ceb829; changed hostedrun37096825183 is queued. Its
-independent11-file verifier manifest is prepared. No cause is proved yet.
+teardown. Integrated at fb4ceb829. Hosted run 37096825183 failed. Its independent
+eleven-file verifier manifest passed authenticated opening. The isolated trace
+proves Mesa loaded, then LoadLibraryExW(BambuStudio.dll) returned native error
+1114 before the entry point. The failing module or initializer remains unknown.
+See docs/features/automation/hosted-startup-diagnostic-37096825183.json.
+A bounded debugger observation from process creation is under source review.
 
 Completed hosted checks include native-services37085341046, MCP37054493889 and
 18-case cancellation contract37095515540. Combined37056354867 failed overall.

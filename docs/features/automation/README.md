@@ -34,3 +34,6 @@ Related: [Windows release supply chain](../releases/windows-release-supply-chain
 - [Hosted 200% display receipt](hosted-display-resolution-37096376814.json),
   14 passing lifecycle cases, measured192 DPI at1600x1200, and original-state
   restoration. Product rendering remains independently unverified.
+- [Bounded launcher diagnosis](hosted-startup-diagnostic-37096825183.json),
+  native initialization error 1114 after Mesa loaded, before the product entry point;
+  the failing module remains unidentified and no runtime success is claimed.

@@ -1,0 +1,24 @@
+{
+  "schema": 1,
+  "run_id": "37096825183",
+  "run_url": "https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37096825183",
+  "source_commit": "35d1074faea221fa4f289f1db1e0ee428a90d701",
+  "release_tag": "md3-v190",
+  "verifier_commit": "fb4ceb829e0ab12f0da22f82beaeefd6f8ec59f3",
+  "verifier_manifest_files": 11,
+  "verification": "Authenticated administrative opening passed; product startup failed",
+  "launcher_trace": {
+    "bytes": 262,
+    "sha256": "9c640ca779dd7772ed973146fc736d98e9bf8390fbac06700d546352894c7df9",
+    "system_opengl_unloaded": true,
+    "mesa_loaded": true,
+    "failing_call": "LoadLibraryExW(BambuStudio.dll)",
+    "native_error": 1114,
+    "process_exit_code": 4294967295
+  },
+  "limitations": [
+    "The failing module or initialization routine is not identified.",
+    "No product interaction, capture or successful runtime verdict exists.",
+    "Raw trace and machine paths remain private encrypted evidence."
+  ]
+}
