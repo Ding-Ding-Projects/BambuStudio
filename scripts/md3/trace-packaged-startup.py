@@ -13,7 +13,7 @@ import subprocess
 import threading
 import time
 from datetime import datetime, timezone
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 
 from hosted_process import owned_process_inventory, process_snapshot
 
@@ -93,7 +93,25 @@ def cdb_arguments(cdb: str, pid: int, script: str, log: str, symbols: str) -> li
 
 
 def creation_arguments(cdb: str, exe: str, profile: str, script: str, symbols: str) -> list[str]:
-    return [cdb, "-y", symbols, "-cf", script, exe, "--datadir", profile]
+    # The caller creates this private cache exclusively. Never accept a symbol
+    # expression, UNC share or inherited search path as the cache argument.
+    cache = PureWindowsPath(symbols)
+    if (not cache.is_absolute() or len(cache.drive) != 2 or cache.drive[1] != ":"
+            or any(ord(char) < 32 or char in '*;"' for char in symbols)
+            or ".." in cache.parts):
+        raise ValueError("A local absolute symbol cache is required")
+    symbol_path = "srv*" + symbols + "*https://msdl.microsoft.com/download/symbols"
+    return [cdb, "-sins", "-ses", "-y", symbol_path, "-cf", script, exe, "--datadir", profile]
+
+
+def creation_commands() -> str:
+    # Strict PDB matching is enforced by CDB, not an independent PDB hash check.
+    # Keep the target stopped until the caller validates identity and readback.
+    return ('.echo TRACE_CREATION_INITIAL\n.printf "TRACE_TARGET %u %u\\n", @$tpid, @$tid\n'
+            '.symopt- 0x40\n.reload /f ntdll.dll\nlmv m ntdll\n'
+            '!gflag +sls\n!gflag\n'
+            'sxe -c ".echo TRACE_EXCEPTION; .lastevent; k 24; gn" av\n'
+            'sxe -c ".echo TRACE_PROCESS_EXIT; .lastevent; q" epr\n')
 
 
 def creation_acknowledgement(text: str):
@@ -126,9 +144,7 @@ def creation_trace(args) -> int:
         path.mkdir()
     commands = scratch / "initial.txt"
     # No software breakpoint, registry mutation or arbitrary command input.
-    commands.write_text('.echo TRACE_CREATION_INITIAL\n.printf "TRACE_TARGET %u %u\\n", @$tpid, @$tid\n!gflag +sls\n!gflag\n'
-        'sxe -c ".echo TRACE_EXCEPTION; .lastevent; k 24; gn" av\n'
-        'sxe -c ".echo TRACE_PROCESS_EXIT; .lastevent; q" epr\n', encoding="ascii")
+    commands.write_text(creation_commands(), encoding="ascii")
     kernel = ctypes.WinDLL("kernel32", use_last_error=True)
     user = ctypes.WinDLL("user32", use_last_error=True)
     kernel.OpenJobObjectW.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.LPCWSTR]
@@ -168,6 +184,8 @@ def creation_trace(args) -> int:
         "requested_tuple": {"language": "en", "theme": "light", "scale": 1, "viewport": [1200,800]},
         "measured_tuple": None, "images": [], "restricted_logs": [],
         "execution_class": "instrumented_from_creation_separate_from_baseline",
+        "symbol_route": "fixed_microsoft_server_fresh_local_cache",
+        "symbol_identity": "debugger_enforced_exact_matching_not_independent_pdb_hash",
         "status": "unavailable", "initial_marker_observed": False, "job_membership_verified": False}
     try:
         if not job or not member(os.getpid()) or desktop_name() != args.desktop:

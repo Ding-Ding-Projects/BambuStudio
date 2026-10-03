@@ -244,6 +244,29 @@ The command file uses `!gflag +sls` and fixed exception/exit observations. It do
 not use software breakpoints, executable patches, registry flags or arbitrary
 commands. The ordinary attachment route remains separate.
 
+The creation route uses a fresh private symbol cache and the fixed Microsoft
+symbol server at `https://msdl.microsoft.com/download/symbols`. CDB receives
+`-sins` to ignore inherited symbol/image search paths and `-ses` for exact
+symbol matching. Its fixed command file disables `SYMOPT_LOAD_ANYTHING`, forces
+`ntdll.dll` symbol loading, retains `lmv m ntdll` privately, then performs the
+existing loader-flag write/readback. This is debugger-enforced matching of module
+and PDB identity, not an independent PDB hash verification. The cache argument
+cannot supply a second server, UNC share or symbol-path expression. No cache or
+raw module paths are uploaded.
+
+Symbol download and loading share the existing 90-second observation deadline
+and 120-second containment deadline. Missing or mismatched symbols do not relax
+the acknowledgement: without the emitted loader-flag readback, the worker never
+sends `g`. Run `37101357236` established this missing-symbol boundary, not a
+failing DLL initializer: its initial marker was present but `!gflag` could not
+resolve `NtGlobalFlag` in `nt!_PEB`, so the target was never continued. The new
+route and extended nine-case hosted command contract remain unexecuted.
+
+The supported search path and matching options are documented in Microsoft's
+[symbol paths](https://learn.microsoft.com/en-us/windows-hardware/drivers/debugger/symbol-path)
+and [symbol options](https://learn.microsoft.com/en-us/windows-hardware/drivers/debugger/symbol-options)
+references. No hardcoded PEB offset or ignored symbol mismatch is used.
+
 Debugger output is drained with a 1-MiB retained-byte cap; overflow stops the
 diagnostic. Observation lasts at most 90 seconds inside a 120-second Job
 supervisor. Only proven whole-tree termination and desktop closure permit the
