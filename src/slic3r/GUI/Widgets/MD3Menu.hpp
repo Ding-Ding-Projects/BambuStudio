@@ -23,6 +23,7 @@
 
 #include "MD3MenuModel.hpp"
 #include "PopupWindow.hpp"
+#include "MD3DialogChrome.hpp"
 
 class SearchField;
 
@@ -137,6 +138,7 @@ private:
 
     std::function<void()> m_close_cb;
 
+    MD3TransientEntrance m_entrance;
     int m_radius { 12 };
 };
 

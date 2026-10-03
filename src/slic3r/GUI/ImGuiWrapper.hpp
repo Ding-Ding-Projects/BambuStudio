@@ -84,6 +84,9 @@ class ImGuiWrapper
     std::shared_ptr<RegexBuilderBridgeState> m_search_builder_state;
     std::map<ImGuiID, std::shared_ptr<CanvasMenuSearchState>> m_menu_search_states;
     bool m_menu_search_escape_held = false;
+    struct PopupMotion { double started = 0.0; int frame = -1; };
+    std::map<std::pair<ImGuiID, ImGuiID>, PopupMotion> m_popup_motion;
+    void *m_popup_motion_context = nullptr;
 #if ENABLE_ENHANCED_IMGUI_SLIDER_FLOAT
     bool m_requires_extra_frame{ false };
 #endif // ENABLE_ENHANCED_IMGUI_SLIDER_FLOAT

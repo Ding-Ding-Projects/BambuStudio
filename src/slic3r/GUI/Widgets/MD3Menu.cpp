@@ -174,6 +174,10 @@ private:
     int m_selected { -1 };
     int m_offset_y { 0 };
 
+    MD3::Motion::Anim m_hover_motion;
+    MD3::Motion::Anim m_filter_motion;
+    std::vector<double> m_hover_weights;
+    double m_filter_progress = 1.0;
     wxTimer m_hover_timer;
     int     m_pending_submenu { -1 };
 };
@@ -388,12 +392,23 @@ MD3MenuList::MD3MenuList(MD3MenuPopup *popup, const std::vector<MD3::Menu::Item>
 
 MD3MenuList::~MD3MenuList()
 {
+    m_hover_motion.Stop();
+    m_filter_motion.Stop();
     m_hover_timer.Stop();
 }
 
 void MD3MenuList::SetVisible(std::vector<int> visible)
 {
+    const bool changed = m_visible != visible;
+    m_hover_motion.Stop();
+    m_hover_weights.assign(visible.size(), 0.0);
     m_visible = std::move(visible);
+    if (changed) {
+        m_filter_motion.Play(MD3::Motion::short2, [this](double t) {
+            m_filter_progress = t;
+            Refresh(false);
+        }, nullptr, &MD3::Motion::easeStandard, this);
+    }
     m_secondary_inline.assign(m_visible.size(), false);
     m_hover    = -1;
     m_selected = -1;
@@ -685,7 +700,15 @@ void MD3MenuList::setHover(int vis_index)
 {
     if (m_hover == vis_index)
         return;
+    const auto starts = m_hover_weights;
     m_hover = vis_index;
+    m_hover_motion.Play(MD3::Motion::short2, [this, starts, vis_index](double t) {
+        for (size_t i = 0; i < m_hover_weights.size(); ++i) {
+            const double from = i < starts.size() ? starts[i] : 0.0;
+            m_hover_weights[i] = from + ((int(i) == vis_index ? 1.0 : 0.0) - from) * t;
+        }
+        Refresh(false);
+    }, nullptr, &MD3::Motion::easeStandard, this);
     updateTooltip(vis_index);
     Refresh();
 
@@ -796,9 +819,9 @@ void MD3MenuList::paintRow(wxDC &dc, int vis, const wxRect &r, const wxColour &s
         dc.SetBrush(wxBrush(StateColor::semantic(MD3::Role::SecondaryContainer)));
         dc.DrawRectangle(r);
         fg = fg_muted = StateColor::semantic(MD3::Role::OnSecondaryContainer);
-    } else if (hovered) {
+    } else if (it->enabled && (hovered || (vis < int(m_hover_weights.size()) && m_hover_weights[vis] > 0.0))) {
         dc.SetPen(*wxTRANSPARENT_PEN);
-        dc.SetBrush(wxBrush(blend(on_surface, surface, 0.08)));
+        dc.SetBrush(wxBrush(blend(on_surface, surface, 0.08 * (MD3::Motion::reduced() ? (hovered ? 1.0 : 0.0) : (vis < int(m_hover_weights.size()) ? m_hover_weights[vis] : 0.0)))));
         dc.DrawRectangle(r);
     }
     if (!it->enabled) {
@@ -807,6 +830,12 @@ void MD3MenuList::paintRow(wxDC &dc, int vis, const wxRect &r, const wxColour &s
         fg_muted = blend(fg_muted, under, 0.38);
     }
 
+    if (!MD3::Motion::reduced() && m_filter_progress < 1.0) {
+        const double opacity = 0.6 + 0.4 * m_filter_progress;
+        const wxColour under = selected ? StateColor::semantic(MD3::Role::SecondaryContainer) : surface;
+        fg = blend(fg, under, opacity);
+        fg_muted = blend(fg_muted, under, opacity);
+    }
     // Leading slot: bitmap, check mark or radio glyph.
     const int    slot = FromDIP(kLeadingSlot);
     const wxRect slot_rect(r.x + pad, r.y + (r.height - slot) / 2, slot, slot);
@@ -907,6 +936,7 @@ MD3MenuPopup::MD3MenuPopup(wxWindow *owner, wxMenu *menu, MD3MenuPopup *parent_p
 
 MD3MenuPopup::~MD3MenuPopup()
 {
+    m_entrance.Stop();
     // A root destroyed without ever closing (owner torn down under it) must
     // still release its blocking caller.
     if (!m_parent && !m_finalized) {
@@ -1016,7 +1046,7 @@ void MD3MenuPopup::Popup(wxWindow *focus)
         wxGetApp().set_side_menu_popup_status(true);
     wxWindow *target = focus ? focus : (m_search ? static_cast<wxWindow *>(m_search->GetTextCtrl()) : m_list);
     PopupWindow::Popup(target);
-    MD3::Motion::FadeIn(this, MD3::Motion::short2);
+    m_entrance.Show(this, MD3::Motion::short2);
     if (target)
         target->SetFocus();
 }
@@ -1027,6 +1057,7 @@ void MD3MenuPopup::Dismiss()
     // focus loss caused by the child opening must not close us.
     if (IsSubmenuShown() || (m_search && m_search->IsBuilderShown()))
         return;
+    m_entrance.Stop();
     PopupWindow::Dismiss();
 }
 
@@ -1036,6 +1067,7 @@ void MD3MenuPopup::OnDismiss()
         return;
     if (m_closed)
         return;
+    m_entrance.Stop();
     m_closed = true;
     if (m_parent) {
         MD3MenuPopup *parent = m_parent;
