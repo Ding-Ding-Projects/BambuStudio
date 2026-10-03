@@ -168,3 +168,34 @@ session identities. Internal `child-*.pending*` lifecycle markers are also exclu
 from publication. The helper forwards no raw child output or UI labels. A source
 syntax parse is not hosted execution; standalone provisioning remains unverified
 until its selection, native DPI and restoration receipts pass independent review.
+
+Selection diagnostics retain a fixed failure-stage name independently from the
+restoration failure-stage name. The helper observes the combo's read-only
+`ExpandCollapsePattern` for at most three seconds after input and requires an
+expanded state before resolving an option. Fixed scalar observations record the
+input target category, cheap exit and termination verdict, expansion state and
+matching option count. Successful restoration cannot replace those observations.
+These receipts distinguish an input acknowledgement from an observed transition;
+they do not establish that posted mouse messages changed Display Settings.
+
+## Prepared native-runtime integration, not enabled
+
+`run-scaled-native-interface.py` is an unwired fixed adapter for the existing
+native driver. Its bounded request rejects unknown and duplicate fields and
+contains predefined choices and hashes rather than executable or script paths.
+All paths derive from the current hosted invocation and reject reparse points.
+The adapter preserves the driver's actual window-DPI checks and owned process
+and desktop teardown. It additionally queries actual holder and product PIDs
+against the exact named Job, including product PIDs adopted after restart.
+
+The optional `HostedScaleProcess.RunNamed` entry point creates a fresh random
+256-bit Job name with query-only SID and OWNER RIGHTS entries. The existing
+unnamed entry point is unchanged. Query handles are short-lived and closed in
+`finally`; explicit termination and zero-active-process proof remain mandatory.
+This access restriction is not a hostile same-user or privileged-code sandbox.
+The hosted lifecycle script now has six bounded cases, including real positive
+membership queries and negative assignment, termination, configuration and owner
+security access attempts. Source preparation does not mean these new checks have
+passed. The adapter has no caller until those checks and standalone scaling are
+verified. Product execution under a provisioned scale and pixel review remain
+unverified.
