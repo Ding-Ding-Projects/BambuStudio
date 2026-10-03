@@ -10,6 +10,27 @@ from pathlib import Path
 import stat
 from datetime import datetime, timezone
 
+VERIFIER_FILES = (
+    ".github/workflows/hosted-startup-diagnostic.yml",
+    "scripts/ci/Verify-HostedNativeInterface.ps1",
+    "scripts/ci/Verify-HostedSquirrelInstall.ps1",
+    "scripts/md3/drive-native-interface.py", "scripts/md3/startup_diagnostics.py",
+    "scripts/md3/drive-packaged-behavior.py", "scripts/md3/hosted_launch_holder.py",
+    "scripts/md3/hosted_process.py", "scripts/md3/behavior_contract.py",
+    "scripts/md3/recapture.py", "scripts/md3/hosted-automation-public-v1.pem",
+)
+
+
+def verifier_binding(source: str) -> dict:
+    root = Path(__file__).resolve().parents[2]
+    files = {}
+    for name in VERIFIER_FILES:
+        # Normalize checkout line endings so independent Git-object manifests
+        # and Windows checkouts identify the same committed source bytes.
+        data = _read(root / name, 2097152).replace(b"\r\n", b"\n")
+        files[name] = hashlib.sha256(data).hexdigest()
+    return {"source_commit": source, "hash_format": "sha256-lf-v1", "files": files}
+
 
 def _hash_file(path: Path) -> str:
     digest = hashlib.sha256()

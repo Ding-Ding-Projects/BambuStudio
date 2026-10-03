@@ -26,7 +26,7 @@ import threading
 import time
 
 from recapture import cheap
-from startup_diagnostics import collect_startup
+from startup_diagnostics import collect_startup, verifier_binding
 
 HERE = Path(__file__).resolve().parent
 spec = importlib.util.spec_from_file_location("packaged_behavior", HERE / "drive-packaged-behavior.py")
@@ -1013,13 +1013,19 @@ def main():
         parser.add_argument("--" + name, type=Path, required=True)
     parser.add_argument("--source-commit", required=True)
     parser.add_argument("--release-tag", required=True)
-    parser.add_argument("--scope", choices=("menus", "vocabulary", "vocabulary-persistence", "slice-controls", "combined-print", "combined-send", "cancellation", "minimum-resize"), required=True)
+    parser.add_argument("--scope", choices=("menus", "vocabulary", "vocabulary-persistence", "slice-controls", "combined-print", "combined-send", "cancellation", "minimum-resize", "startup-diagnostic"), required=True)
+    parser.add_argument("--verifier-commit")
     parser.add_argument("--minimum-job-name")
     parser.add_argument("--language", choices=behavior.MODES, default="en")
     parser.add_argument("--theme", choices=("light", "dark"), default="light")
     parser.add_argument("--scale", type=float, choices=(1.0, 1.25, 1.5, 2.0), default=1.0)
     parser.add_argument("--viewport", choices=("1200x800", "1000x600", "measured-minimum"), default="1200x800")
     args = parser.parse_args()
+    diagnostic = args.scope == "startup-diagnostic"
+    require((diagnostic and args.verifier_commit and behavior.SHA.fullmatch(args.verifier_commit)
+             and args.language == "en" and args.theme == "light" and args.scale == 1.0
+             and args.viewport == "1200x800" and not args.minimum_job_name)
+            or (not diagnostic and args.verifier_commit is None), "Unsupported diagnostic tuple")
     if args.scope == "minimum-resize":
         require(args.scale == 1 and args.viewport == "measured-minimum" and
                 re.fullmatch(r"Local\\BambuNativeScale-[0-9a-f]{64}", args.minimum_job_name or ""),
@@ -1031,6 +1037,14 @@ def main():
     require(behavior.SHA.fullmatch(args.source_commit) and re.fullmatch(r"md3-v\d+", args.release_tag), "Malformed source identity")
     install = json.loads(args.install_receipt.read_text(encoding="utf-8-sig"))
     behavior.validate_installation(install, args.exe, args.source_commit, args.release_tag)
+    diagnostic_binding = None
+    if diagnostic:
+        checkout = subprocess.run(["git", "rev-parse", "HEAD"], cwd=HERE.parent.parent,
+                                  capture_output=True, text=True, timeout=10,
+                                  creationflags=subprocess.CREATE_NO_WINDOW)
+        require(checkout.returncode == 0 and checkout.stdout.strip() == args.verifier_commit,
+                "Diagnostic verifier source mismatch")
+        diagnostic_binding = verifier_binding(args.verifier_commit)
     root = Path(os.environ["RUNNER_TEMP"]).resolve()
     require(args.output.resolve().is_relative_to(root), "Evidence output escapes temporary root")
     scratch = Path(tempfile.mkdtemp(prefix="native-interface-owned-", dir=root))
@@ -1047,10 +1061,13 @@ def main():
     try:
         drive = Driver(args, app, scratch)
         app.start(timeout=240)
-        drive.exact_client()
-        drive.record("native-ready")
-        getattr(drive, args.scope.replace("-", "_"))()
-        status = "runtime_verified"
+        if diagnostic:
+            status = "diagnostic_completed"
+        else:
+            drive.exact_client()
+            drive.record("native-ready")
+            getattr(drive, args.scope.replace("-", "_"))()
+            status = "runtime_verified"
     except Exception as exc:
         failure = f"{type(exc).__name__}: {exc}"
     finally:
@@ -1068,6 +1085,7 @@ def main():
             "install_receipt_sha256": behavior.sha256(args.install_receipt), "scope": args.scope,
             "package_asset_sha256": install.get("asset_sha256"),
             "driver_sha256": behavior.sha256(Path(__file__)),
+            "diagnostic_only": diagnostic, "verifier_binding": diagnostic_binding,
             "minimum_helper_sha256": behavior.sha256(HERE / "minimum_resize.py") if args.scope == "minimum-resize" else None,
             "requested_tuple": {"language": args.language, "theme": args.theme,
                 "scale": args.scale, "viewport": args.viewport},
@@ -1079,7 +1097,7 @@ def main():
             "privacy": "restricted_pixel_review_pending", "hardware": "unverified_no_printer_commands",
             "teardown_verified": teardown, "failure": failure}
         (args.output / "runtime.json").write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
-    return 0 if status == "runtime_verified" else 1
+    return 0 if status in ("runtime_verified", "diagnostic_completed") and teardown else 1
 
 
 if __name__ == "__main__":

@@ -8,7 +8,9 @@ param(
     [Parameter(Mandatory)][ValidatePattern('^[0-9a-f]{40}$')][string] $ExpectedCommit,
     [Parameter(Mandatory)][ValidatePattern('^md3-v\d+$')][string] $ExpectedTag,
     [Parameter(Mandatory)][ValidatePattern('^[0-9a-f]{64}$')][string] $ExpectedExeSha256,
-    [Parameter(Mandatory)][ValidatePattern('^[0-9a-f]{64}$')][string] $ExpectedCliSha256
+    [Parameter(Mandatory)][ValidatePattern('^[0-9a-f]{64}$')][string] $ExpectedCliSha256,
+    [ValidatePattern('^[0-9a-f]{40}$')][string] $ExpectedVerifierCommit,
+    [string] $ExpectedVerifierManifestPath
 )
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
@@ -21,6 +23,24 @@ function Read-BoundedJson([string] $Path) {
     $file = Get-Item -LiteralPath $Path
     Assert-True ($file.Length -gt 0 -and $file.Length -le 1048576) 'Evidence JSON exceeds its bound.'
     return [IO.File]::ReadAllText($file.FullName) | ConvertFrom-Json -Depth 32
+}
+function Assert-UniqueJson($Element) {
+    if ($Element.ValueKind -eq [Text.Json.JsonValueKind]::Object) {
+        $names = [Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+        foreach ($property in $Element.EnumerateObject()) {
+            Assert-True ($names.Add($property.Name)) 'Diagnostic JSON contains duplicate fields.'
+            Assert-UniqueJson $property.Value
+        }
+    } elseif ($Element.ValueKind -eq [Text.Json.JsonValueKind]::Array) {
+        foreach ($item in $Element.EnumerateArray()) { Assert-UniqueJson $item }
+    }
+}
+function Assert-DiagnosticJson([string] $Text) {
+    $document = [Text.Json.JsonDocument]::Parse($Text)
+    try {
+        Assert-True ($document.RootElement.ValueKind -eq [Text.Json.JsonValueKind]::Object) 'Diagnostic JSON root is not an object.'
+        Assert-UniqueJson $document.RootElement
+    } finally { $document.Dispose() }
 }
 $final = [IO.Path]::GetFullPath($OutputDirectory)
 $parent = [IO.Path]::GetDirectoryName($final)
@@ -111,6 +131,51 @@ try {
     Assert-True ($install.status -ceq 'verified' -and $install.source_commit -ceq $ExpectedCommit -and $install.release_tag -ceq $ExpectedTag -and $install.installed_exe_sha256 -ceq $ExpectedExeSha256) 'Decrypted installation identity mismatch.'
     Assert-True ($runtime.run_id -ceq $ExpectedRunId -and $runtime.source_commit -ceq $ExpectedCommit -and $runtime.release_tag -ceq $ExpectedTag -and $runtime.exe_sha256 -ceq $ExpectedExeSha256 -and $runtime.cli_sha256 -ceq $ExpectedCliSha256) 'Decrypted runtime identity mismatch.'
     Assert-True ($runtime.status -ceq $receipt.runtime) 'Decrypted runtime verdict differs from the receipt.'
+    $diagnosticProperty = $runtime.PSObject.Properties['diagnostic_only']
+    $diagnosticScope = $runtime.PSObject.Properties['scope']
+    $receiptDiagnostic = $receipt.PSObject.Properties['diagnostic_only']
+    if (($null -ne $receiptDiagnostic -and $receiptDiagnostic.Value -eq $true) -or
+        ($null -ne $diagnosticProperty -and $diagnosticProperty.Value -eq $true) -or
+        ($null -ne $diagnosticScope -and $diagnosticScope.Value -ceq 'startup-diagnostic')) {
+        Assert-True ($ExpectedVerifierCommit -and $ExpectedVerifierManifestPath) 'Diagnostic evidence requires an independent verifier identity and manifest.'
+        Assert-DiagnosticJson ([Text.Encoding]::UTF8.GetString($validated['runtime.json']).TrimStart([char]0xFEFF))
+        Assert-True ($runtime.diagnostic_only -is [bool] -and $runtime.diagnostic_only -eq $true -and
+            $runtime.scope -is [string] -and $runtime.scope -ceq 'startup-diagnostic' -and
+            $runtime.status -is [string] -and $runtime.status -cin @('failed','diagnostic_completed') -and
+            $receipt.status -ceq 'failed' -and $receipt.diagnostic_only -is [bool] -and $receipt.diagnostic_only -eq $true -and
+            $runtime.operations -is [array] -and $runtime.operations.Count -eq 0 -and
+            $runtime.captures -is [array] -and $runtime.captures.Count -eq 0) 'Diagnostic evidence claims product interaction or success.'
+        # This independently prepared manifest must come from the exact expected
+        # verifier Git revision, never from the downloaded evidence itself.
+        $expectedFile = Get-Item -LiteralPath $ExpectedVerifierManifestPath
+        Assert-True (-not $expectedFile.PSIsContainer -and $expectedFile.Length -gt 0 -and
+            $expectedFile.Length -le 65536 -and -not ($expectedFile.Attributes -band [IO.FileAttributes]::ReparsePoint)) 'Expected verifier manifest is unavailable.'
+        $expectedText = [IO.File]::ReadAllText($expectedFile.FullName)
+        Assert-DiagnosticJson $expectedText
+        $expected = $expectedText | ConvertFrom-Json
+        $actual = $runtime.verifier_binding
+        $paths = @('.github/workflows/hosted-startup-diagnostic.yml', 'scripts/ci/Verify-HostedNativeInterface.ps1',
+            'scripts/ci/Verify-HostedSquirrelInstall.ps1', 'scripts/md3/drive-native-interface.py',
+            'scripts/md3/startup_diagnostics.py', 'scripts/md3/drive-packaged-behavior.py',
+            'scripts/md3/hosted_launch_holder.py', 'scripts/md3/hosted_process.py',
+            'scripts/md3/behavior_contract.py', 'scripts/md3/recapture.py', 'scripts/md3/hosted-automation-public-v1.pem')
+        foreach ($record in @($expected,$actual)) {
+            Assert-True ($record -is [pscustomobject] -and @($record.PSObject.Properties).Count -eq 3 -and
+                $record.source_commit -is [string] -and $record.source_commit -ceq $ExpectedVerifierCommit -and
+                $record.hash_format -is [string] -and $record.hash_format -ceq 'sha256-lf-v1' -and $record.files -is [pscustomobject] -and
+                @($record.files.PSObject.Properties).Count -eq $paths.Count) 'Verifier manifest schema or source mismatch.'
+            foreach ($path in $paths) {
+                $value = $record.files.PSObject.Properties[$path]
+                Assert-True ($null -ne $value -and $value.Value -is [string] -and
+                    $value.Value -cmatch '^[0-9a-f]{64}$') 'Verifier manifest hash is missing or invalid.'
+            }
+        }
+        foreach ($path in $paths) {
+            Assert-True ($actual.files.PSObject.Properties[$path].Value -ceq $expected.files.PSObject.Properties[$path].Value) 'Authenticated verifier file differs from expected source.'
+        }
+    } elseif ($ExpectedVerifierCommit -or $ExpectedVerifierManifestPath) {
+        throw 'Separate verifier expectations cannot be applied to ordinary runtime evidence.'
+    }
     $captureNames = @()
     foreach ($image in @($runtime.captures)) {
         Assert-True ($image.file -cmatch '^\d{3}-[a-z0-9-]+\.png$' -and $inventory.ContainsKey($image.file) -and $captureNames -cnotcontains $image.file) 'Runtime capture inventory is inconsistent.'
