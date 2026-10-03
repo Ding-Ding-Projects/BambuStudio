@@ -41,3 +41,9 @@ Related: [Windows release supply chain](../releases/windows-release-supply-chain
 - [Focused minimum, lifecycle and debugger contracts](hosted-focused-contracts-20261003.json),
   exact hosted receipts for 9 minimum cases, 14 lifecycle cases and 7 plus 4
   debugger preflight outcomes. Product startup and rendered behavior remain unverified.
+
+- [Vocabulary observation contract](hosted-vocabulary-contract-37098551711.json),
+  nine hosted cases with deliberate comparison mutation; rendered wording is unverified.
+- [Startup-creation attempt](hosted-startup-creation-37098366121.json),
+  worker termination verified but desktop closure unverified, so encrypted evidence
+  was withheld. The product initializer remains unidentified.

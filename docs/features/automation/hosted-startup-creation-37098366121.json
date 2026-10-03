@@ -1,0 +1,32 @@
+{
+  "schema": 1,
+  "url": "https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37098366121",
+  "receipt_sha256": "f7365a8e2ef6866f85204b74dafcd769b3632e692c9a1d2047e4036a7c700b0d",
+  "receipt": {
+    "schema": 1,
+    "status": "failed",
+    "run_id": "37098366121",
+    "run_attempt": "1",
+    "release_tag": "md3-v190",
+    "source_commit": "35d1074faea221fa4f289f1db1e0ee428a90d701",
+    "verification_commit": "23cf74f62ace65b6529e250f64bfeea037db7ba2",
+    "installed_exe_sha256": "8fab11fc9adcae579e14ec8895b6e53ab1f769494bc2bc807db1b0b654e210ec",
+    "cdb_sha256": "31789c2c2645d5fdafb1621c47b0db8bc2fbca47b510a0e4e6fdede0479ce105",
+    "debugger_source": "signed hosted Windows SDK",
+    "execution_class": "instrumented_from_creation; separate from uninstrumented baseline",
+    "evidence_meaning": "partial diagnostic transport only; no measured GUI geometry or behavior verdict",
+    "project_symbols": "matching_project_symbols_unavailable; module_offsets_only",
+    "evidence_status": "not_started",
+    "failure_type": "RuntimeException",
+    "worker_tree_termination_verified": true,
+    "desktop_closed_verified": false
+  },
+  "exact_failure": "Creation diagnostic teardown unverified; evidence withheld.",
+  "encrypted_output_available": false,
+  "initializer_identified": false,
+  "limitations": [
+    "Worker-tree termination was verified; desktop closure was not.",
+    "The diagnostic produced no accepted loader or rendered evidence.",
+    "The responsible product initializer remains unknown."
+  ]
+}

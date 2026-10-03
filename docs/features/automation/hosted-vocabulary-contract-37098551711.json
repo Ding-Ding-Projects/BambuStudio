@@ -1,0 +1,28 @@
+{
+  "schema": 1,
+  "run_id": "37098551711",
+  "url": "https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37098551711",
+  "source_commit": "fe20b56379b0af533be629747f7d710ba24f00d3",
+  "execution": "github-hosted-windows",
+  "status": "passed",
+  "observed_cases": 9,
+  "elapsed_seconds": 0.656,
+  "receipt_sha256": "496bf2ca3697f9a65991ea6d289880d82c4731e33eac56e7f17799b157bcebb7",
+  "receipt": {
+    "schema": 1,
+    "sourceCommit": "fe20b56379b0af533be629747f7d710ba24f00d3",
+    "runId": "37098551711",
+    "runAttempt": "1",
+    "execution": "github-hosted-windows",
+    "status": "passed",
+    "exitCode": 0,
+    "expectedCases": 9,
+    "productExecuted": false,
+    "driverSha256": "c9cd6cd710f009509b01897a73403cad0c8cfe32f3e2f9d803b2f7bb39ab1c24",
+    "contractSha256": "9aa22c159cbad1c181cb955aed4a31eca1ee847b9bb9bffdc0a4be8649383da3"
+  },
+  "includes_removed_comparison_negative_regression": true,
+  "installed_product_interaction": "unverified",
+  "rendered_wording": "unverified",
+  "canonical_private_payload_uploaded": false
+}
