@@ -275,6 +275,59 @@ function Assert-HostedForeground([IntPtr] $Root, [int] $X, [int] $Y) {
         throw 'Foreground input point is obscured or changed.'
     }
 }
+function Observe-ForegroundAfterInput([IntPtr] $Root) {
+    # A successful scale change can move the clicked option and the entire
+    # Settings layout. Reusing that old coordinate would test obsolete geometry.
+    # Observe only: no activation, input, or change to the original owned root.
+    $deadline = [DateTime]::UtcNow.AddSeconds(3)
+    do {
+        try {
+            $started = [DateTime]::UtcNow
+            $state = Read-Scale @(Read-Controls)
+            $current = $state.combo.element.Current
+            $rect = $current.BoundingRectangle
+            $currentRoot = [ScaleNative]::GetAncestor([IntPtr]$state.combo.top.Current.NativeWindowHandle,2)
+            if ($currentRoot -ne $Root -or $current.ProcessId -ne $settingsId -or
+                -not $current.IsEnabled -or $current.IsOffscreen -or $rect.IsEmpty -or
+                $rect.Width -le 0 -or $rect.Height -le 0) { throw 'Post-input Settings geometry unavailable.' }
+            $x = [int][Math]::Floor($rect.X + $rect.Width / 2)
+            $y = [int][Math]::Floor($rect.Y + $rect.Height / 2)
+            Assert-HostedForeground $Root $x $y
+            $fresh = $state.combo.element.Current
+            if ($fresh.ProcessId -ne $settingsId -or -not $fresh.IsEnabled -or $fresh.IsOffscreen -or
+                -not $fresh.BoundingRectangle.Equals($rect) -or ([DateTime]::UtcNow - $started).TotalMilliseconds -gt 500) {
+                throw 'Post-input Settings observation expired.'
+            }
+            $script:Observation.post_input_fresh_combo_owned = $true
+            return
+        } catch {
+            $script:Observation.post_input_fresh_combo_owned = $false
+            Start-Sleep -Milliseconds 150
+        }
+    } while ([DateTime]::UtcNow -lt $deadline)
+    throw 'Post-input foreground ownership did not converge.'
+}
+function Observe-AllowedOptionDomain($Rows, $Combo) {
+    $domain = @{}
+    foreach ($percent in @(100,125,150,200)) {
+        $counts = @{observed=0; visible_enabled=0; matching_container=0; container_unavailable=0}
+        foreach ($row in $Rows) {
+            $current = $row.element.Current
+            if ($current.ControlType -ne [Windows.Automation.ControlType]::ListItem -or
+                $current.Name -cnotmatch ('^' + $percent + '%( \(Recommended\))?$')) { continue }
+            $counts.observed++
+            if ($current.IsEnabled -and -not $current.IsOffscreen) { $counts.visible_enabled++ }
+            try {
+                $item = $row.element.GetCurrentPattern([Windows.Automation.SelectionItemPattern]::Pattern)
+                if ($item.Current.SelectionContainer.Equals($Combo.element)) { $counts.matching_container++ }
+            } catch { $counts.container_unavailable++ }
+        }
+        $domain["scale_$percent"] = $counts
+    }
+    # This records only predefined numeric-domain counts, never raw labels or
+    # identities. An absent virtualized item remains unavailable, not unsupported.
+    $script:Observation.allowed_option_domain = $domain
+}
 function Click-Control($Entry) {
     $script:Stage = 'validate_input'
     if (Test-UncertainChildren) { throw 'Input blocked by unverified child termination.' }
@@ -339,7 +392,7 @@ function Click-Control($Entry) {
     if ($reply.ok -ne $true) { throw 'Cheap input rejected.' }
     if ($InputRoute -eq 'hosted-foreground') {
         $script:Stage = 'observe_foreground_after_input'
-        Assert-HostedForeground $root $x $y
+        Observe-ForegroundAfterInput $root
     }
 }
 function Set-Scale([int] $Percent) {
@@ -367,6 +420,7 @@ function Set-Scale([int] $Percent) {
         $script:Stage = 'match_option'
         $rows = @(Read-Controls)
         $state = Read-Scale $rows
+        Observe-AllowedOptionDomain $rows $state.combo
         $options = @($rows | Where-Object {
             $_.element.Current.ControlType -eq [Windows.Automation.ControlType]::ListItem -and
             $_.element.Current.Name -cmatch ('^' + $Percent + '%( \(Recommended\))?$') -and
@@ -462,7 +516,7 @@ try {
     $receipt.restoration_observations = $script:Observation.Clone()
     $receipt.child_termination_uncertain = Test-UncertainChildren
     $receipt.disposal_required = $receipt.child_termination_uncertain -or -not $receipt.restored
-    $receipt | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $output ($Mode + '.json')) -Encoding utf8
+    $receipt | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $output ($Mode + '.json')) -Encoding utf8
 }
 if ($receipt.restored -and ($Mode -eq 'restore' -or $receipt.status -eq 'selected_and_measured')) { exit 0 }
 exit 2

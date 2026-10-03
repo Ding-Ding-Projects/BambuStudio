@@ -195,6 +195,16 @@ limitation. Receipts explicitly record the route and `foreground_input_atomic`
 as false. A changed desktop, obscured point, missing foreground ownership or
 unobserved semantic transition produces unavailable evidence, never success.
 
+Post-input ownership uses a fresh observation of the unique Scale combo's current
+physical rectangle, retaining the original Settings process identity and owned
+root. A bounded three-second read-only convergence accommodates legitimate layout
+movement after DPI changes; it never reuses the selected option's obsolete point
+or sends another input. Expanded-option diagnostics publish only counts within
+the predefined 100/125/150/200 domain: observed, visible and enabled, matching
+selection container, and unavailable container observations. A zero count does
+not establish that a scale is unsupported; virtualization and display limits
+still require their own evidence.
+
 ## Opt-in native-runtime integration, verification pending
 
 `run-scaled-native-interface.py` is a fixed adapter for the existing
