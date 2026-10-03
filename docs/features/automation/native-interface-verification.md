@@ -100,6 +100,36 @@ through process termination; it does not claim graceful application shutdown.
 
 ## Failure and recovery
 
+### Isolated startup diagnosis
+
+The separate `hosted-startup-diagnostic.yml` workflow diagnoses startup of the
+fixed `md3-v190` package from product commit
+`35d1074faea221fa4f289f1db1e0ee428a90d701` using an independently identified
+current verifier. It runs only on a disposable hosted Windows runner, with a
+20-minute job limit. The fixed `startup-diagnostic` scope launches and stops the
+owned application without feature input, screenshots, display provisioning or
+minimum-size interaction. Normal verification still requires the verifier
+checkout to match the product source exactly.
+
+The diagnostic authenticates the product release, installer and executable
+identities separately from the verifier commit. Encrypted `runtime.json` also
+binds all 11 fixed verifier files listed by `startup_diagnostics.VERIFIER_FILES`,
+using `sha256-lf-v1` hashes after CRLF-to-LF normalization. To open this evidence,
+the administrative reader additionally requires `-ExpectedVerifierCommit` and
+`-ExpectedVerifierManifestPath`. Prepare that manifest independently from the
+exact verifier commit, never from the downloaded evidence. Its fields are
+`source_commit`, scalar `hash_format` and `files`, with every fixed path mapped
+to its SHA-256. The reader compares every entry before creating private output.
+
+Bounded startup receipt and stdout/stderr data remain inside encrypted evidence
+and are collected only after verified teardown with zero recorded operations.
+Only the fixed receipt, envelope and ciphertext are uploaded. A completed
+diagnostic retains public product status `failed` and `diagnostic_only=true`;
+it cannot satisfy installed feature, cancellation, vocabulary or visual checks.
+Run [37095786787](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37095786787)
+was queued at this documentation checkpoint. No startup result or cause is
+claimed here; the earlier zero-operation failures remain unresolved.
+
 An absent, ambiguous or disabled target fails the affected scope. Provider
 timeouts, truncated observations, incorrect process ownership, missing original
 labels, unexpected confirmation state and layout overflow remain failures.
