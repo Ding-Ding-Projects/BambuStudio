@@ -123,3 +123,18 @@ They require no product installation or MCP server. They do not replace the
 controlled hosted four-frame trial, exact process/desktop teardown evidence,
 encrypted frame review, or the separate composition capability proof. No local
 execution was performed when adding this helper.
+
+The dedicated manual `motion-temporal-contract.yml` workflow runs only these
+18 product-free cases on a hosted Windows runner with pinned checkout/setup
+actions and Python 3.12. Its required `source_commit` must equal both the checked
+out revision and the workflow's `GITHUB_SHA`; dispatching a different revision
+fails before execution. No package, product, GUI, MCP server or capture is started,
+and no installation step runs. The job has a five-minute limit.
+
+The workflow retains only fixed `receipt.json` and `cases.json` outputs. They bind
+run/attempt, exact source, workflow/helper/test hashes, actual Python version,
+discovered and recorded counts, each executed case's status and elapsed time,
+and the process exit code. Skips and unexpected inventory changes cannot pass.
+Exceptions and traceback bodies are not copied into the result files. A passing
+contract run establishes only the exercised predicates and asynchronous task
+lifetime, never actual MCP shutdown, achieved capture cadence or rendered motion.
