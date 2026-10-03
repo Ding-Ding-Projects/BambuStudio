@@ -70,6 +70,34 @@ $source = $result.Output.Trim()
     Require-Result ($sourceProcessObservation.terminated -and $sourceProcessObservation.exit_code -eq 0 -and
         $sourceProcessObservation.source_format_valid -and $sourceProcessObservation.checkout_matches_run)
     Record-Pass $stage
+    $stage = 'diagnostic_control_geometry'
+    $geometryTokens = $null; $geometryErrors = $null
+    $geometryAst = [Management.Automation.Language.Parser]::ParseFile(
+        (Join-Path $PSScriptRoot '../md3/Open-HostedScaleDiagnostic.ps1'),[ref]$geometryTokens,[ref]$geometryErrors)
+    Require-Result ($geometryErrors.Count -eq 0)
+    foreach ($name in @('Require','Is-SerializedEmptyRectangle','Rect','Control-Rectangle')) {
+        $definitions = @($geometryAst.FindAll({ param($node)
+            $node -is [Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -ceq $name
+        }, $true))
+        Require-Result ($definitions.Count -eq 1)
+        . ([scriptblock]::Create($definitions[0].Extent.Text))
+    }
+    $emptyRect = @('Infinity','Infinity','-Infinity','-Infinity')
+    $invalidGeometry = @(
+        @{rect=$emptyRect; offscreen=$false},
+        @{rect=@([double]::PositiveInfinity,0,1,1); offscreen=$true},
+        @{rect=@('unknown',0,1,1); offscreen=$true})
+    foreach ($fixture in $invalidGeometry) {
+        $rejected = $false
+        try { [void](Control-Rectangle $fixture.rect $fixture.offscreen) } catch { $rejected = $true }
+        Require-Result $rejected
+    }
+    $frameRejected = $false
+    try { Rect $emptyRect } catch { $frameRejected = $true }
+    Require-Result $frameRejected
+    Require-Result (Control-Rectangle @(0,0,100,100) $false)
+    Require-Result (-not (Control-Rectangle $emptyRect $true))
+    Record-Pass $stage
     $stage = 'minimum_resolution_tuple_contract'
     # Load only these exact production function definitions. Do not dot-source
     # the supervisor, which would initialize Settings or change display state.
@@ -270,7 +298,7 @@ exit 0
         [string[]]@('-NoProfile','-File',$membership,'-JobName',$jobName), 10, $true, $jobName)
     Require-Result ($result.Terminated -and $result.Code -eq 0 -and $result.Output -ceq '{"ok":true}')
     Record-Pass $stage
-    $success = $cases.Count -eq 10
+    $success = $cases.Count -eq 11
 } catch {
     # Neither exception text nor benign child payloads enter public logs.
     $cases.Add(@{name=$stage; status='failed'})
@@ -290,12 +318,12 @@ exit 0
     }
     $passed = @($cases | Where-Object status -eq 'passed').Count
     @{schema=1; status=$(if ($success -and $cleanupVerified) {'passed'} else {'failed'})
-      passed=$passed; expected=10; cases=$cases.ToArray(); cleanup_verified=$cleanupVerified
+      passed=$passed; expected=11; cases=$cases.ToArray(); cleanup_verified=$cleanupVerified
       source_process_observation=$sourceProcessObservation
       source_supervisor_observation=$sourceSupervisorObservation
       elapsed_ms=$timer.ElapsedMilliseconds; settings_mutated=$false
     } | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $output 'receipt.json') -Encoding utf8
 }
-if ($success -and $cleanupVerified) { Write-Host 'Hosted scale lifecycle checks passed: 10/10'; exit 0 }
+if ($success -and $cleanupVerified) { Write-Host 'Hosted scale lifecycle checks passed: 11/11'; exit 0 }
 Write-Host 'Hosted scale lifecycle checks failed; inspect the fixed receipt.'
 exit 2

@@ -2447,3 +2447,27 @@ scalar, absolute, existing literal file before creation. The hosted case uses
 the same functions to reject arrays, joined paths, quoted paths and relative
 names, then queries the real checkout SHA. Launch recovery remains pending;
 array coercion is a hypothesis, not an established original cause.
+
+## Verified source launch and private diagnostic opening, 2026-10-03 UTC
+
+Run 37093959893 passed 10/10 cases in 12982 ms at b546820867f01602807775275a6ef3e1f6cce793.
+The former lookup returned three candidates. Production rejected four malformed
+path shapes, launched one valid executable and matched the actual checkout SHA.
+Both processes completed normally; cleanup was verified and Settings untouched.
+Original red/green receipt hashes are retained in
+docs/features/automation/hosted-source-query-b5468208.json.
+
+Run 37094061673 still failed 200% selection at match_option, but both encrypted
+captures completed and the original scale/resolution and process trees were
+restored. Reader validation exposed an exact empty rectangle on offscreen UIA
+controls. Reviewed repair a115faf0861e38fa0be8da646d87195672bdad3d permits that
+exact sentinel only as unavailable optional offscreen-control geometry; frame
+and PNG bounds remain strict. Both encrypted captures opened successfully with
+authenticated source/run/phase bindings. The first records 16 unavailable control
+rectangles. The new eleven-case hosted geometry contract remains pending.
+
+The first genuine pixel review found a collapsed 100% selector and visible
+1920x1080 resolution. A visible account identity prevents publication of the
+unredacted original. Expanded-state review remains pending. These are Settings
+diagnostics, not installed application evidence. Main integration and cleanup
+remain incomplete; no physical printer command was sent.

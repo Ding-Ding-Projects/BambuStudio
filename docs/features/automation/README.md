@@ -21,3 +21,6 @@ Related: [Windows release supply chain](../releases/windows-release-supply-chain
 - [Hosted display resolution receipt](hosted-display-resolution-37091384649.json),
   seven passing contracts plus measured 1920x1080/125% provisioning and full
   restoration; application DPI and pixels are excluded.
+- [Contained source-query receipts](hosted-source-query-b5468208.json), the failed
+  creation case and repaired 10/10 hosted result, with original receipt hashes;
+  no Settings mutation or application-rendering proof is claimed.

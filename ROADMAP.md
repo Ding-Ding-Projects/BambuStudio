@@ -18,7 +18,8 @@
 - [x] Privately review 84 encrypted Settings controls from `37085955337` and identify the exact scale selector; this establishes discovery only.
 - [x] Observe one active hosted monitor and 13 supported modes up to 1920x1080 in read-only run `37089435143`; this proves capabilities only.
 - [x] Verify fixed 1920x1080 provisioning, 125%/120 DPI selection, original 1024x768 and 100%/96 DPI restoration, and contained termination in standalone run `37091384649`; hosted contracts passed 7/7.
-- [ ] Complete actual 150%/200% provisioning and restoration. Runs `37091590432` and `37091591864` are pending at the proven fixed-resolution source. Product DPI and rendered behavior remain separately unverified.
+- [x] Verify literal source-executable resolution and nested containment in run `37093959893`: 10/10 cases passed in 12982 ms, including four malformed path rejections and an actual checkout-SHA match. Settings was untouched.
+- [ ] Complete actual 150%/200% provisioning and restoration. Runs `37091590432` and `37091591864` failed selection and restored their original display. Run `37094061673` produced encrypted diagnostic images but still observed no 200% option; both images passed private integrity opening, while expanded-state pixel review remains pending. Unredacted images remain private. Product DPI and rendered behavior remain separately unverified.
 - [ ] Capture the observed native minimum frame/client tuple and separately verify interactive minimum tracking.
 
 - [ ] Add local personal-vocabulary JSON import, replace and clear with bounded validation, local persistence and original-wording restoration.

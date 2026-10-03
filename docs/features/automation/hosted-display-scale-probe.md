@@ -578,6 +578,51 @@ staging directory is retained privately on failure. Integrity verification does
 not authorize publication or establish visible scale behavior. This administrative
 helper has not been executed locally by its implementation lane.
 
+The first administrative opening of `before_selector` from run `37094061673`
+reported only the reader's generic validation failure and published no output.
+The reader now reports one fixed phase distinguishing envelope parsing/binding,
+authentication, protected custody, inventory structure, PNG verification and
+atomic output. Phase values are source literals; no input value, exception text,
+private identity, key material or control label is included. All validation and
+output conditions are unchanged. This diagnostic change requires independent
+review before an administrative retry; the original ciphertext remains intact,
+and pixel review is still unverified.
+
+The reviewed phase-reporting reader reached `control_rectangle` on its first
+changed administrative attempt and wrote no output. Rectangle rejection now
+distinguishes wrong shape, nonnumeric type, nonfinite number, excessive magnitude
+and the exact serialized WPF empty-rectangle sentinel using fixed phase values.
+These observations still reject every previously rejected rectangle; the sentinel
+is not accepted as measured geometry. No actual coordinates or control identity
+are printed. A second reviewed attempt is required to identify that shape before
+considering any format-compatibility change.
+
+The second changed administrative attempt identified `rectangle_serialized_empty`.
+The reader now treats only that exact four-string sentinel on an authenticated
+control with `offscreen=true` as unavailable optional geometry. An onscreen empty
+rectangle, arbitrary strings, numeric nonfinite values and excessive finite
+coordinates remain rejected. Capture-frame and PNG bounds retain their strict
+finite requirements. No coordinates are invented and no ciphertext or AAD is
+rewritten; the private inventory retains its original rectangle values.
+
+The integrity receipt records `unavailable_control_rectangles` and the fixed
+reason `offscreen_uia_empty` when applicable. This is explicitly unavailable
+geometry, not a measured rectangle or pixel verdict. A focused hosted lifecycle
+case extracts the actual reader functions and exercises onscreen-empty,
+nonfinite, arbitrary-string and frame-empty negatives before finite-control and
+offscreen-empty positives. The hosted total becomes eleven. Those checks and
+the separately authorized third changed administrative opening remain pending.
+
+The third changed administrative opening using reader commit
+`a115faf0861e38fa0be8da646d87195672bdad3d` subsequently verified integrity of
+run `37094061673`'s `before_selector` evidence, bound to source
+`b546820867f01602807775275a6ef3e1f6cce793`. It recorded sixteen unavailable
+offscreen empty control rectangles and wrote the validated private output to a
+new directory. Original ciphertext and authenticated data were preserved.
+Pixel and privacy review remain unverified, publication is not authorized, and
+the eleven-case hosted contract has not yet run. No product or test execution
+occurred locally during this administrative opening.
+
 Two additional hosted lifecycle cases load the exact production tuple and
 input-recovery functions from the parsed source, without executing the display
 supervisor. They reject unsupported combined tuples, absent or mismatched
