@@ -4,7 +4,12 @@ on:
   push:
     branches: [feature/ui-integration]
     paths: [.github/workflows/native-interface-verification.yml]
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      cancellation_only:
+        description: Run only the source-isolated cancellation observation contract
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -12,8 +17,58 @@ permissions:
 # Explicitly requested hosted-only verification for this interface change.
 # Registration pushes do not run an incomplete cross-branch candidate.
 jobs:
+  cancellation-contract:
+    if: github.event_name == 'workflow_dispatch' && inputs.cancellation_only
+    runs-on: windows-2025
+    timeout-minutes: 5
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.12'
+      - name: Verify cancellation observation contract
+        run: |
+          if ($env:RUNNER_ENVIRONMENT -ne 'github-hosted' -or $env:RUNNER_OS -ne 'Windows') {
+            throw 'Cancellation contract requires a disposable hosted Windows runner.'
+          }
+          $source = git rev-parse HEAD
+          if ($LASTEXITCODE -ne 0 -or $source -cne $env:GITHUB_SHA) { throw 'Checkout identity does not match this run.' }
+          New-Item -ItemType Directory -Force artifacts/cancellation-contract | Out-Null
+          $receipt = [ordered]@{
+            schema = 1; sourceCommit = $source; runId = $env:GITHUB_RUN_ID; runAttempt = $env:GITHUB_RUN_ATTEMPT
+            execution = 'github-hosted-windows'; status = 'running'; exitCode = $null; expectedCases = 18
+            driverSha256 = (Get-FileHash scripts/md3/drive-native-interface.py -Algorithm SHA256).Hash.ToLowerInvariant()
+            contractSha256 = (Get-FileHash scripts/md3/test_native_cancel_observation.py -Algorithm SHA256).Hash.ToLowerInvariant()
+          }
+          $receipt | ConvertTo-Json | Set-Content artifacts/cancellation-contract/receipt.json -Encoding utf8
+          $testExit = $null
+          try {
+            python scripts/md3/test_native_cancel_observation.py -v 2>&1 |
+              Tee-Object -FilePath artifacts/cancellation-contract/output.txt
+            $testExit = $LASTEXITCODE
+          } finally {
+            $receipt.exitCode = $testExit
+            $receipt.status = if ($null -ne $testExit -and $testExit -eq 0) { 'passed' } else { 'failed' }
+            $receipt | ConvertTo-Json | Set-Content artifacts/cancellation-contract/receipt.json -Encoding utf8
+          }
+          if ($null -eq $testExit -or $testExit -ne 0) { throw 'Cancellation observation contract failed.' }
+      - name: Retain cancellation contract records
+        if: ${{ always() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: cancellation-contract-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            artifacts/cancellation-contract/receipt.json
+            artifacts/cancellation-contract/output.txt
+          if-no-files-found: warn
+          retention-days: 14
   focused:
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' && !inputs.cancellation_only
     runs-on: windows-2025
     timeout-minutes: 20
     defaults:
@@ -92,7 +147,7 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
   native-services:
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' && !inputs.cancellation_only
     runs-on: windows-latest
     timeout-minutes: 30
     defaults:
