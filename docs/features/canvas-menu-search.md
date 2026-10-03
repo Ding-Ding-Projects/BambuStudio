@@ -80,3 +80,10 @@ assembly's disabled button separately. Capture normal and minimum dimensions,
 the supported languages/themes and measured display scales. Do not report an
 export as completed from merely selecting or filtering a row. No local build,
 test or UI execution was performed; compilation and this fixture remain pending.
+
+Motion remains a separate open requirement for this popup. The repair retains
+the existing ImGui popup lifecycle and shared search-header behavior, but this
+call site has no explicit opening, closing or filtered-row transition hook.
+No animation or reduced-motion result is claimed. The GUI-wide motion audit
+must establish the appropriate shared implementation and verify this popup's
+opening, dismissal and filter-state transitions on the built application.
