@@ -15,7 +15,8 @@
 - [x] Pass 46 canvas checks, 68 preview geometry/timing checks, 55 source tests and eight slicing contracts at `4436c7f91` on hosted run `37056354867`; this does not establish native-service or rendered correctness.
 - [ ] Repair the static wxWidgets focused-target link configuration and ambiguous preview `ImGuiWrapper::begin` call, then verify the combined candidate.
 - [x] Pass complete focused run `37085341046` at `6bc6656ef`, including native services, seven cancellation-observation tests and three fixture-path tests; installed behavior remains unverified.
-- [ ] Verify Settings process-subtree discovery and actual higher-DPI provisioning; first run `37085520686` found no unique top-level Settings window.
+- [x] Privately review 84 encrypted Settings controls from `37085955337` and identify the exact scale selector; this establishes discovery only.
+- [ ] Verify actual higher-DPI provisioning and restoration, beginning with lifecycle run `37087664020`; product DPI and rendered behavior remain separate requirements.
 - [ ] Capture the observed native minimum frame/client tuple and separately verify interactive minimum tracking.
 
 - [ ] Add local personal-vocabulary JSON import, replace and clear with bounded validation, local persistence and original-wording restoration.

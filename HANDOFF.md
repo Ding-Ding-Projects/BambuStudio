@@ -2,6 +2,24 @@
 
 ## Active interface extension, 2026-10-02
 
+Candidate `d25e7ddc821f4f5e279758d76449b19bcf087ae3` is preserved on
+`feature/ui-integration`; remote `main` still points to
+`ce883543177ef7df46fa5b798dcc5c7f3d2f8020`. Hosted display-scale run
+`37087664020` passed five process-containment regressions but failed all three
+125%, 150% and 200% provisioning attempts. Each reported unavailable selection
+evidence, verified termination and restoration to 100%/96 DPI, and no uncertain
+child. Fixed-stage diagnosis is pending. No higher scale is verified.
+Discovery run `37085955337` produced 84 encrypted Settings controls, privately
+reviewed with the existing automation recipient. The exact scale selector was
+identified; the discovery job intentionally did not change display settings.
+Earlier encrypted discovery `37085765463` remains unreviewed because its
+original recipient's private key is unavailable here. No key was replaced.
+The minimum-viewport driver now measures the native frame constraint and binds
+its receipt to the following normal capture without exceeding the 32-file
+encrypted manifest. Interactive minimum tracking remains unverified.
+Product execution while a higher scale is active still needs a separately
+reviewed adapter. No local product or helper execution is authorized.
+
 Hosted run `37085341046` passed both jobs at `6bc6656efc001fdf27d2ea22e7a64824bd80a1c5`.
 Native results: 16 language cases/199 assertions, three personal-vocabulary
 cases/45 assertions, four archive cases/103 assertions, zero failures/errors.
@@ -39,7 +57,8 @@ and never enter logs or exports.
 Managed verification for MCP source `ce61d22e390e4bf69938730434f1e494fa34f7a9`
 passed 27 checks with zero failures or skips at `2026-10-02T19:31:19Z` in
 [run 37054493889](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37054493889).
-Native compilation and installed runtime verification remain pending.
+Native compilation and release publication passed for that MCP-only revision;
+installed MCP interaction remains unverified after the fixture-path failure.
 All product execution continues exclusively on hosted Windows runners.
 
 Focused run `37055936191` at `cb5981a5977f56a10174f72bad7945100004a355`
@@ -2259,3 +2278,4 @@ diagnostics were a cascade.
   handoff refresh, `git ls-remote origin refs/heads/main` was verified at the same SHA.
 
 </details>
+
