@@ -290,3 +290,43 @@ for a later bounded investigation, not proof that 150% or 200% scaling is offere
 Missing or ambiguous resolution observations and incomplete mode enumeration
 remain unavailable. Any future resolution change needs its own supported input,
 exact original-state preservation and verified resolution-plus-scale restoration.
+
+## Fixed larger-resolution interval, standalone verification pending
+
+The scale helper's explicit `-ProvisionResolution` option is standalone-only and
+requires `-InputRoute hosted-foreground`. Combining it with `-NativeRuntime` is
+rejected before input. It requests only a freshly enumerated 1920×1080, 32-bit
+mode at the current refresh frequency and observed orientation. Unsupported or
+ambiguous variants remain unavailable. No arbitrary dimensions or action hook
+are accepted.
+
+Before `CDS_TEST` or a mode change, the worker atomically preserves the original
+scale/DPI and complete validated 220-byte `DEVMODEW`, together with the private
+device and single active source/target identity. A nonzero `dmDriverExtra`, unknown
+display-field bits or unsupported structure size is rejected instead of silently
+discarding fields. The target preserves valid placement, orientation, display
+flags and fixed-output semantics. `ChangeDisplaySettingsEx` first uses `CDS_TEST`
+and then flags zero for a dynamic nonpersistent change. It never uses a null mode,
+registry persistence, custom scaling, restart or sign-out.
+
+The current mode is reread after the attempt, including a nonzero return. Every
+documented valid requested field must match; padding and unspecified orientation
+are not interpreted as observations. The worker records any automatic scale/DPI
+change caused by resolution before attempting the requested predefined scale.
+The active display identity is rechecked before mode changes and scale input.
+
+Restoration independently attempts original scale and exact original mode, so a
+UIA failure cannot skip a safe identity-bound mode restore. Final acceptance
+requires the original mode plus a fresh original-scale/DPI observation. Recovery
+inspects the current mode first and is idempotent after a partially completed
+restore; its mode restore runs before UIA initialization so missing Settings
+cannot prevent that attempt. Unknown child termination or changed display
+identity blocks mutations and requires disposal. The resolution worker allows
+180 seconds and independent recovery 90 seconds, after complete worker-tree
+termination. Existing scale-only and product-adapter deadlines are unchanged.
+
+Only fixed numeric dimensions, native return codes and verification booleans are
+added to public receipts. The exact mode bytes and device/path identities remain
+in private `original.json`, excluded from uploads. A verified larger resolution
+does not by itself prove that 150% or 200% is offered; the existing scale probe
+must still observe the option, selected value, actual Settings DPI and restoration.
