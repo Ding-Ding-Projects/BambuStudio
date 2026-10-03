@@ -9,6 +9,7 @@
 #include "Label.hpp"
 #include "MaterialIcon.hpp"
 #include "MD3Motion.hpp"
+#include "MenuMotionPaint.hpp"
 #include "MD3Tokens.hpp"
 #include "SearchField.hpp"
 #include "StateColor.hpp"
@@ -830,11 +831,14 @@ void MD3MenuList::paintRow(wxDC &dc, int vis, const wxRect &r, const wxColour &s
         fg_muted = blend(fg_muted, under, 0.38);
     }
 
-    if (!MD3::Motion::reduced() && m_filter_progress < 1.0) {
-        const double opacity = 0.6 + 0.4 * m_filter_progress;
+    const auto filter_paint = MD3::Motion::menu_filter_paint(fg, fg_muted, m_filter_progress, MD3::Motion::reduced());
+    fg = filter_paint.foreground;
+    fg_muted = filter_paint.secondary;
+    if (filter_paint.edge_opacity > 0.0) {
         const wxColour under = selected ? StateColor::semantic(MD3::Role::SecondaryContainer) : surface;
-        fg = blend(fg, under, opacity);
-        fg_muted = blend(fg_muted, under, opacity);
+        dc.SetPen(*wxTRANSPARENT_PEN);
+        dc.SetBrush(wxBrush(blend(StateColor::semantic(MD3::Role::Primary), under, filter_paint.edge_opacity)));
+        dc.DrawRectangle(r.x, r.y, std::max(1, FromDIP(2)), r.height);
     }
     // Leading slot: bitmap, check mark or radio glyph.
     const int    slot = FromDIP(kLeadingSlot);

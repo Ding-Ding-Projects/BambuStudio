@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <cstring>
 #include <vector>
+#include <set>
 #include <cmath>
 #include <stdexcept>
 #include <future>
@@ -942,17 +943,28 @@ void ImGuiWrapper::render()
         ~VertexRestore() { for (const auto &entry : colors) entry.first->col = entry.second; }
     } restore;
     const bool reduced = MD3::Motion::reduced();
+    std::set<ImDrawList *> visited_lists;
     for (auto *window : context.Windows) {
-        if (!window->Active || window->Hidden || !(window->Flags & ImGuiWindowFlags_Popup) ||
-            (window->Flags & ImGuiWindowFlags_Modal)) continue;
-        const auto key = std::make_pair(window->ID, window->PopupId);
+        if (!window->Active || window->Hidden) continue;
+        // A child list shares its nearest popup's timeline, including modal
+        // popups. Stop at an ordinary top-level window: no blanket child fade.
+        ImGuiWindow *owner = window;
+        int depth = 0;
+        while (owner && !(owner->Flags & ImGuiWindowFlags_Popup)) {
+            if (!(owner->Flags & ImGuiWindowFlags_ChildWindow) ||
+                !owner->Active || owner->Hidden || ++depth > 64) { owner = nullptr; break; }
+            owner = owner->ParentWindow;
+        }
+        if (!owner || !owner->Active || owner->Hidden) continue;
+        if (visited_lists.size() >= 1024 || !visited_lists.insert(window->DrawList).second) continue;
+        const auto key = std::make_pair(owner->ID, owner->PopupId);
         auto found = m_popup_motion.find(key);
         if (found == m_popup_motion.end()) {
             // An unusual popup flood remains fully visible without retaining
             // unbounded state or creating extra animation work.
             if (m_popup_motion.size() >= 128) continue;
             found = m_popup_motion.emplace(key, PopupMotion{context.Time, context.FrameCount}).first;
-        } else if (window->Appearing && found->second.frame != context.FrameCount) {
+        } else if (owner->Appearing && found->second.frame != context.FrameCount) {
             found->second.started = context.Time;
         }
         auto &motion = found->second;
