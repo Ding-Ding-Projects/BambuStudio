@@ -16,6 +16,11 @@ on:
         type: boolean
         default: false
 
+      motion_runtime_only:
+        description: Run the production animator with a real wx event loop
+        type: boolean
+        default: false
+
 permissions:
   contents: read
 
@@ -23,14 +28,14 @@ permissions:
 # Registration pushes do not run an incomplete cross-branch candidate.
 jobs:
   invalid-selection:
-    if: github.event_name == 'workflow_dispatch' && inputs.cancellation_only && inputs.minimum_observation_only
+    if: github.event_name == 'workflow_dispatch' && ((inputs.cancellation_only && inputs.minimum_observation_only) || (inputs.motion_runtime_only && (inputs.cancellation_only || inputs.minimum_observation_only)))
     runs-on: windows-2025
     timeout-minutes: 1
     steps:
       - shell: pwsh
         run: throw 'Choose only one focused contract.'
   cancellation-contract:
-    if: github.event_name == 'workflow_dispatch' && inputs.cancellation_only && !inputs.minimum_observation_only
+    if: github.event_name == 'workflow_dispatch' && inputs.cancellation_only && !inputs.minimum_observation_only && !inputs.motion_runtime_only
     runs-on: windows-2025
     timeout-minutes: 5
     defaults:
@@ -80,7 +85,7 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
   minimum-observation-contract:
-    if: github.event_name == 'workflow_dispatch' && inputs.minimum_observation_only && !inputs.cancellation_only
+    if: github.event_name == 'workflow_dispatch' && inputs.minimum_observation_only && !inputs.cancellation_only && !inputs.motion_runtime_only
     runs-on: windows-2025
     timeout-minutes: 5
     defaults:
@@ -129,8 +134,106 @@ jobs:
             artifacts/minimum-observation-contract/output.txt
           if-no-files-found: warn
           retention-days: 14
+  motion-runtime:
+    if: github.event_name == 'workflow_dispatch' && inputs.motion_runtime_only && !inputs.cancellation_only && !inputs.minimum_observation_only
+    runs-on: windows-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with:
+          persist-credentials: false
+      - uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756
+        with:
+          arch: x64
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.13'
+      - name: Restore existing native dependency prefix
+        uses: actions/cache/restore@caa296126883cff596d87d8935842f9db880ef25
+        with:
+          path: ${{ github.workspace }}/deps/build/BambuStudio_dep
+          key: windows-latest-cache-bambustudio_deps-build-${{ hashFiles('deps/**') }}
+          fail-on-cache-miss: true
+      - name: Configure and compile only the motion fixtures
+        run: |
+          if ($env:RUNNER_ENVIRONMENT -ne 'github-hosted' -or $env:RUNNER_OS -ne 'Windows') { throw 'Motion verification requires a disposable hosted Windows runner.' }
+          $source = git rev-parse HEAD
+          if ($LASTEXITCODE -ne 0 -or $source -cne $env:GITHUB_SHA) { throw 'Checkout identity mismatch.' }
+          $prefix = Join-Path $env:GITHUB_WORKSPACE 'deps/build/BambuStudio_dep/usr/local'
+          if (-not (Test-Path -LiteralPath $prefix -PathType Container)) { throw 'Native dependency prefix is unavailable.' }
+          if (-not (Get-Command pkg-config.exe -ErrorAction SilentlyContinue)) {
+            choco install pkgconfiglite --version=0.28.0 --yes --no-progress
+            if ($LASTEXITCODE -ne 0) { throw 'pkg-config provisioning failed.' }
+          }
+          New-Item -ItemType Directory -Force artifacts/motion-runtime | Out-Null
+          $python = (Get-Command python.exe -CommandType Application -All -ErrorAction Stop | Select-Object -First 1).Path
+          cmake -S . -B motion-build -G Ninja -DSLIC3R_BUILD_TESTS=ON -DSLIC3R_MSVC_PDB=OFF -DBBL_RELEASE_TO_PUBLIC=1 -DBBL_INTERNAL_TESTING=0 "-DCMAKE_PREFIX_PATH=$prefix" "-DPython3_EXECUTABLE=$python" -DCMAKE_BUILD_TYPE=Release
+          if ($LASTEXITCODE -ne 0) { throw 'Motion configuration failed.' }
+          cmake --build motion-build --config Release --parallel 4 --target motion_runtime_test motion_runtime_stop_mutation
+          if ($LASTEXITCODE -ne 0) { throw 'Motion compilation failed.' }
+      - name: Observe real wx timer lifetime and reject a broken cancellation
+        timeout-minutes: 3
+        run: |
+          $prefix = Join-Path $env:GITHUB_WORKSPACE 'deps/build/BambuStudio_dep/usr/local'
+          $dllPaths = @(Get-ChildItem -LiteralPath $prefix -Filter '*.dll' -File -Recurse | ForEach-Object DirectoryName | Sort-Object -Unique)
+          $env:PATH = ($dllPaths -join ';') + ';' + $env:PATH
+          Add-Type -Path scripts/ci/HostedScaleProcess.cs
+          $out = (Resolve-Path -LiteralPath artifacts/motion-runtime).ProviderPath
+          $receipt = [ordered]@{
+            schema=1; sourceCommit=$env:GITHUB_SHA; runId=$env:GITHUB_RUN_ID; runAttempt=$env:GITHUB_RUN_ATTEMPT
+            execution='github-hosted-windows'; status='failed'; expectedCases=14; files=@{}; processes=@{}
+            preferenceAcquisition='injected'; pixelEvidence=$false; negativeRejected=$false
+          }
+          foreach ($path in @('src/slic3r/GUI/Widgets/MD3Motion.cpp','src/slic3r/GUI/Widgets/MD3MotionPreference.cpp','src/slic3r/GUI/Widgets/MD3Motion.hpp','src/slic3r/GUI/Widgets/MD3MotionPolicy.hpp','tests/native_gui/motion_runtime.cpp','tests/native_gui/CMakeLists.txt','scripts/ci/HostedScaleProcess.cs','.github/workflows/native-interface-verification.yml')) {
+            $receipt.files[$path] = (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash.ToLowerInvariant()
+          }
+          try {
+            foreach ($entry in @(@{target='motion_runtime_stop_mutation'; label='negative'},@{target='motion_runtime_test'; label='production'})) {
+              $exes = @(Get-ChildItem motion-build -Filter "$($entry.target).exe" -File -Recurse)
+              if ($exes.Count -ne 1) { throw 'Expected exactly one fixture executable.' }
+              $json = Join-Path $out "$($entry.label).json"
+              $csv = Join-Path $out "$($entry.label).csv"
+              $result = [HostedScaleProcess]::Run($exes[0].FullName,[string[]]@($json,$csv),45,$false)
+              $receipt.processes[$entry.label] = @{
+                terminated=$result.Terminated; exitCode=$result.Code; stage=[int]$result.ProcessStage
+                executableSha256=(Get-FileHash -LiteralPath $exes[0].FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+              }
+              if (-not $result.Terminated) { throw 'Fixture process ownership is uncertain.' }
+              if (-not (Test-Path -LiteralPath $json -PathType Leaf) -or (Get-Item -LiteralPath $json).Length -gt 4096) { throw 'Fixture receipt is missing or oversized.' }
+              $observed = Get-Content -LiteralPath $json -Raw | ConvertFrom-Json
+              if ($observed.schema -ne 1 -or $observed.desktopRestored -cne $true -or $observed.desktopClosed -cne $true) { throw 'Fixture desktop teardown was not verified.' }
+              if ($entry.label -eq 'negative') {
+                if ($result.Code -ne 1 -or $observed.passed -cne $false -or $observed.cases -ne 1 -or $observed.phase -cne 'explicit_stop') { throw 'The cancellation mutation did not fail at the intended assertion.' }
+                $receipt.negativeRejected = $true
+              } else {
+                if ($result.Code -ne 0 -or $observed.passed -cne $true -or $observed.cases -ne 14 -or $observed.phase -cne 'teardown') { throw 'Production motion lifetime checks failed.' }
+              }
+              if (-not (Test-Path -LiteralPath $csv -PathType Leaf) -or (Get-Item -LiteralPath $csv).Length -gt 131072) { throw 'Temporal record is missing or oversized.' }
+              $receipt.files["$($entry.label).json"] = (Get-FileHash -LiteralPath $json -Algorithm SHA256).Hash.ToLowerInvariant()
+              $receipt.files["$($entry.label).csv"] = (Get-FileHash -LiteralPath $csv -Algorithm SHA256).Hash.ToLowerInvariant()
+            }
+            $receipt.status = 'passed'
+          } finally {
+            $receipt | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $out 'receipt.json') -Encoding utf8
+          }
+      - name: Retain fixed motion observations
+        if: ${{ always() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: motion-runtime-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            artifacts/motion-runtime/receipt.json
+            artifacts/motion-runtime/negative.json
+            artifacts/motion-runtime/negative.csv
+            artifacts/motion-runtime/production.json
+            artifacts/motion-runtime/production.csv
+          if-no-files-found: warn
+          retention-days: 14
   focused:
-    if: github.event_name == 'workflow_dispatch' && !inputs.cancellation_only && !inputs.minimum_observation_only
+    if: github.event_name == 'workflow_dispatch' && !inputs.cancellation_only && !inputs.minimum_observation_only && !inputs.motion_runtime_only
     runs-on: windows-2025
     timeout-minutes: 20
     defaults:
@@ -216,7 +319,7 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
   native-services:
-    if: github.event_name == 'workflow_dispatch' && !inputs.cancellation_only && !inputs.minimum_observation_only
+    if: github.event_name == 'workflow_dispatch' && !inputs.cancellation_only && !inputs.minimum_observation_only && !inputs.motion_runtime_only
     runs-on: windows-latest
     timeout-minutes: 30
     defaults:
