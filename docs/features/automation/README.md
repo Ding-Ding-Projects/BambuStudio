@@ -58,3 +58,5 @@ Related: [Windows release supply chain](../releases/windows-release-supply-chain
 - [Additive review recipient recovery](hosted-gui-recipient-recovery.md).
 
 - [Authenticated startup diagnostic](hosted-startup-creation-37101357236.json), matching operating-system symbols unavailable, so execution never resumed; the product initializer remains unknown.
+
+- [Native verification at c7aefb4b8](hosted-native-interface-37101358501.json), including 59 motion-policy checks and repaired catalog compilation; installed rendering remains unverified.

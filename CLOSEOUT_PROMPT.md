@@ -119,7 +119,7 @@ Current source follow-up: c7aefb4b8 includes reviewed checkbox/slider emphasis,
 disclosure rails, regex-builder/modal/child-list entrances and semantic menu
 contrast preservation. The earlier filter blend reduced shortcut contrast to
 2.993:1 in source arithmetic; repaired paint keeps final semantic colors and
-animates decoration. Fifty-nine pure outcomes remain pending. Run37100211528
+animates decoration. Fifty-nine pure outcomes passed in hosted run37101358501 at c7aefb4b8. Run37100211528
 failed catalog counts (7709 metadata versus7712 entries); reviewed coverage
 repair e70638618 is included in new native run37101358501. Combined package
 run37101358049 is queued at the same source. No current installed pixels or
@@ -148,3 +148,18 @@ emitted, but required sls readback was absent; no g command was sent. Exit 2
 follows the bounded 90-second acknowledgement wait, not an observed product
 initializer. Matching operating-system symbol repair is assigned separately.
 The prior natural initialization error 1114 remains unresolved.
+
+Hosted native run37101358501 passed focused and native-services jobs at
+c7aefb4b84f31a4bc2519d8052ac78b3ccaa3a17: 59 motion-policy outcomes, 7712
+validated translations, language16/199, vocabulary3/45, archive4/103, print5/28
+and canvas regex1/19 (cases/assertions). This is not installed GUI evidence.
+Reviewed assembly-frame entrance plus updated inventory are integrated at
+3c4f53bb5b26f9a1081e32d715580ef0a239be76. The unconnected temporal helper
+is integrated at82c029c3d6ded039d6eebf936de5378ca998f877, after two independent
+source reviews. Its18 source-defined contracts have not yet run.
+
+Menu-builder1ae08 has a confirmed reachability defect: Test pattern is below
+the bounded scroll viewport. Do not dispatch that flow unchanged. The separate
+9aa64b7 duplicate entrance removal passed two source reviews. Matching-symbol
+repair161b2ca65 is preserved on the motion branch, with second review pending.
+All local operations remain source/admin only. No main integration or deletion.
