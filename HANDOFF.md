@@ -2355,3 +2355,18 @@ Higher-scale attempts did not pass: 37091590432 stopped at validate_foreground
 before input; 37091591864 expanded the selector but found no 200% option. Both
 verified 1920x1080 and restored the original resolution and 100%/96 DPI, with
 contained termination. These observations do not prove unsupported scales.
+
+## Hosted contracts and publication queue, 2026-10-03 UTC
+
+Run 37091873727 passed 9/9 contracts in 12288 ms at85ca11b4f865f4a9d01e584426a3d958cca8919b,
+with verified cleanup and no Settings mutation. Combined installed minimum
+interaction and pixels remain pending.
+Build 37088514258 passed compilation, packaging and upload, but its publication
+job111113206485 was canceled because a higher-priority waiting request entered
+the same concurrency group. Its completed installer artifact11262825115 remains
+available; no redundant product rebuild is required for publication recovery.
+Reviewed repair072c51cc7040c1d5d04ea875a6142ae6cb41f250 sets queue:max, preserving
+up to100 pending jobs with running-job cancellation still disabled. Additional
+arrivals beyond that bound are canceled. Historical reruns retain their original
+workflow and are not repaired retroactively. Do not rerun the old single-pending
+release while another pending publisher would be replaced.

@@ -23,10 +23,29 @@ latest now (or is that same commit rebuilt). An older build that finishes late i
 non-latest. The branch may have moved on while the build ran; the latest release, and the update
 feed installed copies read from it, still move forward.
 
-GitHub keeps at most one release job waiting behind the running one. When another build finishes
-while one is waiting, GitHub cancels the waiting (older) release job, so after a burst of pushes the
-newest build is released and the builds in between have no release of their own; their build jobs
-still run to completion and their results stay in the workflow run.
+The release concurrency group uses `queue: max` with `cancel-in-progress: false`: one release job
+runs while up to 100 jobs wait. New arrivals beyond that limit are canceled. Waiting jobs are
+processed in FIFO order by when they entered the concurrency queue, not by workflow dispatch or
+source-commit order. The existing latest-release comparison remains necessary. See the
+[GitHub concurrency documentation](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-workflow-concurrency).
+
+Previously, the default single pending slot could cancel a waiting release even though
+`cancel-in-progress: false` protected the running job. Run `37088514258` built and uploaded its
+installer successfully, but publication job `111113206485` was canceled before any steps ran.
+Its annotation reported: "Canceling since a higher priority waiting request for
+windows-release-Ding-Ding-Projects/BambuStudio exists".
+
+For an affected historical run, first confirm its build succeeded, its installer artifact has not
+expired, and no release publication attempt is already active. Retry only the unsuccessful jobs
+with `gh run rerun RUN_ID --failed`, or select the canceled publication job explicitly with
+`gh run rerun --job JOB_ID`. Do not rerun the successful build merely to recover publication.
+The release job downloads that run's existing installer artifact and retains its original source
+identity and tag-allocation/idempotence checks. Re-runs use the original workflow revision, so
+this queue change does not protect a historical re-run's old single pending slot. Coordinate its
+retry when the release queue is clear, then verify the resulting release, source and asset hashes,
+and terminal job state. GitHub permits re-runs within 30 days of the initial run, with at most 50
+attempts; artifact availability is a separate requirement. See
+[Re-running workflows and jobs](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/re-run-workflows-and-jobs).
 
 ## Windows build and package boundary
 
