@@ -8,30 +8,29 @@ reviewed and preserved in `f8de85ce237b127adb7bc6d033696e6afbf6adbf`; build
 `37088514258` is the new compilation candidate. No matching package exists yet.
 Lifecycle-only run `37088232776` passed six of six cases in 11340 ms, including
 exact named-Job membership and five rejected access rights, without Settings input.
-Foreground scale run `37088408895` selected 125% and measured 120 Settings DPI,
-but its initial restoration observation failed after geometry moved. Separate
-recovery verified 100%/96 DPI. Its 150% and 200% jobs expanded the selector but
-found zero matching visible options. All final supervisor receipts verified
-termination and restoration; the overall run failed. Further bounded geometry
-and option-inventory work is required. No product DPI or pixel claim follows.
+Repaired standalone run `37088755758` passed 125% selection, measured 120 DPI,
+restoration to 100%/96 DPI and complete worker termination. The overall run failed:
+150% and 200% expanded the selector but found no matching options. Only 100% and
+125% were observed. Both failed jobs restored the original scale. A read-only
+monitor-mode capability probe is independently reviewed and awaiting hosted execution.
+This does not establish target application DPI or visible behavior.
 
-Candidate `d25e7ddc821f4f5e279758d76449b19bcf087ae3` is preserved on
+Candidate `f2f29fd4e81ea119e5557d20766f13132bbe2c83` is preserved on
 `feature/ui-integration`; remote `main` still points to
-`ce883543177ef7df46fa5b798dcc5c7f3d2f8020`. Hosted display-scale run
-`37087664020` passed five process-containment regressions but failed all three
-125%, 150% and 200% provisioning attempts. Each reported unavailable selection
-evidence, verified termination and restoration to 100%/96 DPI, and no uncertain
-child. Fixed-stage diagnosis is pending. No higher scale is verified.
+`ce883543177ef7df46fa5b798dcc5c7f3d2f8020`. Build `37088918536` includes the
+optional product-under-scale adapter and fixed Settings launch. Installation and
+bootstrap precede mutation; named-Job membership, native teardown and restoration
+must all pass. Product execution awaits a matching package. No local product or
+helper execution is authorized.
+
 Discovery run `37085955337` produced 84 encrypted Settings controls, privately
 reviewed with the existing automation recipient. The exact scale selector was
-identified; the discovery job intentionally did not change display settings.
-Earlier encrypted discovery `37085765463` remains unreviewed because its
-original recipient's private key is unavailable here. No key was replaced.
-The minimum-viewport driver now measures the native frame constraint and binds
-its receipt to the following normal capture without exceeding the 32-file
-encrypted manifest. Interactive minimum tracking remains unverified.
-Product execution while a higher scale is active still needs a separately
-reviewed adapter. No local product or helper execution is authorized.
+identified; discovery did not change display settings. Earlier encrypted discovery
+`37085765463` remains unreviewed because its original recipient's private key is
+unavailable here. No key was replaced.
+The minimum-viewport driver measures the native frame constraint and binds its
+receipt to the following normal capture without exceeding the 32-file encrypted
+manifest. Interactive minimum tracking remains unverified.
 
 Hosted run `37085341046` passed both jobs at `6bc6656efc001fdf27d2ea22e7a64824bd80a1c5`.
 Native results: 16 language cases/199 assertions, three personal-vocabulary
