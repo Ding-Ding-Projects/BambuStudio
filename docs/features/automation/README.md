@@ -74,3 +74,4 @@ Related: [Windows release supply chain](../releases/windows-release-supply-chain
 - [Exact-thread diagnostic](hosted-startup-creation-37139898854.json): ownership and closure passed, desktop handle unavailable, no continuation; historical-package diagnosis is held.
 
 - [Production build and package receipt](hosted-production-build-37139881377.json): exact `75770f71` source, successful native build and Squirrel package job, API-reported installer archive identity; publication and installed behavior remain pending.
+- [Integration readiness](integration-readiness.md): independent default-branch changes, predicted conflicts, ownership preservation and the resulting exact-source acceptance requirements.

@@ -37,8 +37,16 @@ All product compilation, checks, packaging, installation, slicing and UI executi
 remain on hosted Windows runners. New feature work is frozen. No physical printing
 or transfer is included. Installed vocabulary, menus, animation, combined actions,
 cancellation and the complete measured display matrix remain unverified.
-`main` remains `ce883543177ef7df46fa5b798dcc5c7f3d2f8020`. No final green-main
-result, archive or deletion is claimed. Earlier sections below are historical.
+`main` advanced independently to `0c967a55786c07ef639a2cbefbe922b619c157d3`.
+A read-only comparison predicts three conflicts at the future integration:
+`CLOSEOUT_PROMPT.md` and `src/slic3r/GUI/Widgets/MD3DialogChrome.cpp/.hpp`.
+Preserve both the candidate's entrance motion ownership and main's caption title
+following/SyncTitle. HANDOFF, README and ROADMAP also require factual reconciliation.
+The eventual combined product requires its own hosted build and installed evidence,
+including title changes across show/hide/reopen and stacked Plate Settings geometry.
+See [integration readiness](docs/features/automation/integration-readiness.md).
+No actual merge, final green-main result, archive or deletion is claimed.
+Earlier sections below are historical.
 
 ## Active repair update, 2026-10-03
 

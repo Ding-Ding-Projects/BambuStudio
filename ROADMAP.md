@@ -13,6 +13,7 @@
 ## Native interface completeness and slicing actions
 
 - [x] Compile the const state-color lookup repair through the actual production job `111252033608` in run `37139881377` at `75770f71`; packaging also passed. Complete workflow publication and installed behavior remain pending.
+- [ ] Reconcile the independently advanced `main` at `0c967a557` without losing entrance motion or caption title following; verify the final combined source and stacked Plate Settings geometry. Three predicted conflict paths and acceptance scope are recorded in `docs/features/automation/integration-readiness.md`.
 - [x] Classify native desktop lookup results without weakening ownership acceptance: hosted contracts `37139896660` passed and authenticated diagnostic `37139898854` at `75770f71` observed null `GetThreadDesktop` with native code 0, verified exact thread ownership and teardown, and no continuation. Product startup remains unverified.
 
 - [x] Pass 25 pure temporal-observation contracts at `414e7d81` in hosted run `37103221335`, with exact result and five source hashes verified; rendered animation remains excluded.

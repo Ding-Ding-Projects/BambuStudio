@@ -13,8 +13,11 @@ captures before accepting visible behavior.
 ## Preserved source and exact evidence
 
 - Integration branch: `feature/ui-integration`. Source before this evidence-only
-  update: `5193f9706fb5d35756b26e568b743fa544f65b71`, pushed and verified.
-- Main: `ce883543177ef7df46fa5b798dcc5c7f3d2f8020`. Completed-main integration and
+  update: `538378cb66cb09310212594bbfa07d9c2b6d860f`, pushed and verified.
+- Main: `0c967a55786c07ef639a2cbefbe922b619c157d3`, fetched and independently
+  inspected after another task added stacked plate rows and caption title following.
+  The common ancestor remains `ce883543177ef7df46fa5b798dcc5c7f3d2f8020`.
+  Completed-main integration and
   the final combined-main result remain outstanding.
 - Const repair: `e8c1614d150b62366d6c02f72c020ee0131c6e3b`, integrated at `335a73234`.
   Only the declaration and definition of `StateColor::colorForStates(int)` gain
@@ -58,7 +61,14 @@ captures before accepting visible behavior.
    measured 100/125/150/200% display coverage. Standalone display provisioning
    evidence does not establish product layout or the minimum-size contract.
 5. Integrate only completed verified task-owned work, push main, verify its remote
-   SHA and obtain the final combined verdict. Before deletion, inventory every
+   SHA and obtain the final combined verdict. A read-only comparison with the new
+   main predicts conflicts in this record and `MD3DialogChrome.cpp/.hpp`. Preserve
+   both entrance show/hide ownership and caption title following/SyncTitle.
+   Reconcile HANDOFF, README and ROADMAP even where they combine textually.
+   The older package cannot verify these combined product changes. Include title
+   updates, show/hide/reopen and stacked Plate Settings geometry in the resulting
+   exact-source hosted acceptance. See `docs/features/automation/integration-readiness.md`.
+   Before deletion, inventory every
    branch, checkout and stash, create/read back the complete eligible archive,
    record bytes/entries, and prove ownership, inactivity and merged ancestry.
    Active, incomplete, unmerged or uncertain candidates remain retained.

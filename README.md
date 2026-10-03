@@ -16,6 +16,7 @@ All builds and runtime verification for this work run on GitHub Actions; impleme
 is not a claim of verified physical-printer behavior.
 Current compiler and startup evidence is summarized in the [continuation record](CLOSEOUT_PROMPT.md).
 The managed checks and current native build/package job have passed; release publication and installed UI evidence remain pending.
+The independently advanced default branch also needs semantic reconciliation and exact-source verification, as recorded in [integration readiness](docs/features/automation/integration-readiness.md).
 
 Bambu Studio is a cutting-edge, feature-rich slicing software.  
 It contains project-based workflows, systematically optimized slicing algorithms, and an easy-to-use graphic interface, bringing users an incredibly smooth printing experience.
