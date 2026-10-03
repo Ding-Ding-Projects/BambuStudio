@@ -9,6 +9,11 @@ on:
         description: Verify changed process containment without repeating scale input
         type: boolean
         default: false
+      input_route:
+        description: Explicit input route on the disposable hosted desktop
+        type: choice
+        default: background
+        options: [background, hosted-foreground]
 permissions:
   contents: read
 jobs:
@@ -72,8 +77,9 @@ jobs:
         shell: pwsh
         env:
           SCALE_PERCENT: ${{ matrix.scale }}
+          SCALE_INPUT_ROUTE: ${{ inputs.input_route }}
         run: |
-          & scripts/ci/Invoke-HostedDisplayScale.ps1 -ScalePercent ([int]$env:SCALE_PERCENT) -OutputDirectory "$env:RUNNER_TEMP/scale-proof" -CheapExecutable $env:LLCU_CHEAP
+          & scripts/ci/Invoke-HostedDisplayScale.ps1 -ScalePercent ([int]$env:SCALE_PERCENT) -OutputDirectory "$env:RUNNER_TEMP/scale-proof" -CheapExecutable $env:LLCU_CHEAP -InputRoute $env:SCALE_INPUT_ROUTE
       - name: Retain bounded public receipts only
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
