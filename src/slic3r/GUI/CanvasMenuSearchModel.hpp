@@ -6,9 +6,27 @@
 #include <chrono>
 #include <algorithm>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace Slic3r::GUI {
+
+// The builder and native search field apply whole-word matching only in plain
+// mode. Regex authors supply their own boundaries; evaluate the pattern as typed.
+inline std::pair<std::vector<bool>, BoundedRegex::Status> canvas_menu_regex_matches(
+    const std::wstring& pattern, const std::vector<std::wstring>& subjects,
+    const RegexBuilderValues& values)
+{
+    BoundedRegex::Options options;
+    options.case_sensitive = values.case_sensitive;
+    options.multiline = values.multiline;
+    std::vector<bool> mask(subjects.size(), true);
+    BoundedRegex::SearchPass pass(pattern, options);
+    for (size_t i = 0; i < subjects.size() && !pass.circuit_open(); ++i)
+        mask[i] = pass.evaluate(subjects[i]).allows_candidate();
+    if (pass.circuit_open()) std::fill(mask.begin(), mask.end(), true);
+    return std::make_pair(std::move(mask), pass.circuit_open() ? pass.circuit_status() : BoundedRegex::Status::Valid);
+}
 
 inline std::string canvas_menu_search_key(const RegexBuilderValues& values,
                                           const std::vector<std::string>& items)
