@@ -65,3 +65,6 @@ Related: [Windows release supply chain](../releases/windows-release-supply-chain
 - [Strict-symbol startup diagnostic](hosted-startup-creation-37102257995.json): symbols acknowledged, continuation unobserved, driver exit 2.
 
 - [Separated ownership-stage evidence](hosted-startup-creation-37103711674.json): target identity and membership pass; desktop lookup remains unavailable, with no continuation.
+
+- [Native lookup contract receipt](hosted-startup-contracts-37139070022.json): nine Python cases and contained lifecycle checks passed.
+- [Native handle observation](hosted-startup-creation-37139071425.json): null handle/native code 0, name query unreached, no continuation.

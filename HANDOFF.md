@@ -1,5 +1,28 @@
 # Bambu Studio handoff
 
+## Latest bounded startup observation
+
+Hosted contract37139070022 passed at9c18092a021133451fe83bfecf58c9543a1d08d9:
+nine Python cases, four invalid desktops, four invalid executable selections,
+actual absence and persistent lifecycle verified. Four source hashes match.
+Diagnostic37139071425 authenticated at that verifier: GetThreadDesktop returned
+null with native code0. The name query did not run. Target identity and both Job
+memberships passed, no continuation was written, and teardown was verified.
+Four exact CRLF source hashes and the6382-byte restricted log hash match.
+
+Reviewed thread-binding source53a2a0b22eb72f452267aa476a6fdd7b6caec405 adds a
+limited-query handle, exact thread-to-process equality and successful active-state
+observation before the existing desktop query. It holds and closes the handle
+through every path. Desktop equality and continuation requirements stay unchanged.
+New assertions and the changed diagnostic remain pending hosted execution.
+After this bounded observation, prioritize the current matching package runtime;
+do not expand historical-package diagnosis through speculative changes.
+
+Combined product build37138948887 at68dabac8f16b83065c0e58a05e687a0708f3ecde
+is still compiling. This remains the decisive production-compile evidence for
+the two-qualifier const repair. No final green-main verdict or current UI proof.
+
+
 ## Active repair update, 2026-10-03
 
 The allowance has been restored; the latest verified account reading is 99%
