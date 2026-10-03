@@ -8,8 +8,12 @@ inverse-surface accent; the preview slider uses its existing theme's primary
 accent. No generic popup fade is applied to these tooltips.
 
 The wrapper owns bounded context-local timelines, with at most 128 entries.
-Identity combines the invoking window/item and displayed content. Manual items
-without an ImGui item ID also bind their observed item rectangle. This prevents
+Identity combines the invoking window/item and displayed content. Registered items
+without an ImGui item ID also bind their observed item rectangle. Manual slider
+hover regions instead pass an explicit slider, route and actual tick identity
+through the tooltip renderer. This covers existing ticks, hovered layer time,
+simulation play/pause and simulation speed, none of which register an item before
+their tooltip. This prevents
 the recycled internal tooltip window from sharing the preceding item's timeline.
 Appearing windows, changed content, a frame gap, or reversed context time restart
 the decoration. Context changes clear state, and entries not used in the current

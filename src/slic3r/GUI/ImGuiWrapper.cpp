@@ -1578,7 +1578,7 @@ void ImGuiWrapper::tooltip(const char *label, float wrap_width)
 ImGuiID ImGuiWrapper::tooltip_source_id() const
 {
     // Tooltip windows are recycled. Bind the timeline to the invoking window
-    // and item, including the real item rectangle for manual zero-ID items.
+    // and registered item, including its rectangle when the item has no ID.
     const ImGuiID owner = ImGui::GetCurrentWindow()->ID;
     const ImGuiID item = ImGui::GetItemID();
     if (item != 0)

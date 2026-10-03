@@ -165,8 +165,8 @@ protected:
     bool draw_tick_action_icon(ImTextureID texture_id, const ImVec2 &icon_pos, const ImVec2 &icon_size, ImRect *out_hit = nullptr);
     void draw_ticks(const ImRect& slideable_region);
     void draw_tick_on_mouse_position(const ImRect& slideable_region);
-    void show_tooltip(const TickCode& tick); //menu
-    void show_tooltip(const std::string tooltip); //menu
+    void show_tooltip(const TickCode& tick, ImGuiID source); //menu
+    void show_tooltip(const std::string tooltip, ImGuiID source = 0); //menu
     bool vertical_slider(const char* str_id, int* higher_value, int* lower_value,
         std::string& higher_label, std::string& lower_label,
         int v_min, int v_max, const ImVec2& size,
