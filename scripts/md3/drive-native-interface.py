@@ -126,7 +126,10 @@ def native_worker(request_path: Path, output: Path):
         require(actual.value == pid, "Keyboard focus left the owned process")
     cancel_observation = None
     native_input_target = None
-    if operation == "cancel-current":
+    if operation in ("minimum-geometry", "minimum-drag"):
+        from minimum_resize import native_minimum_operation
+        native_input_target = native_minimum_operation(request, user)
+    elif operation == "cancel-current":
         def read_workflow():
             result = subprocess.run([request["cli"], "command", "project_inspect", "--json",
                 "--workspace", request["workspace"], "--instance", str(pid)], capture_output=True,
@@ -436,6 +439,10 @@ class Driver:
             self.worker("resize", size=[frame["width"] + requested[0] - client["w"],
                                          frame["height"] + requested[1] - client["h"]])
         raise RuntimeError("Actual client size did not reach the requested viewport")
+
+    def minimum_resize(self):
+        from minimum_resize import run_minimum_resize
+        run_minimum_resize(self)
 
     def measured_minimum(self):
         """Observe the product's outer constraint, never substitute a client size."""
@@ -929,12 +936,19 @@ def main():
         parser.add_argument("--" + name, type=Path, required=True)
     parser.add_argument("--source-commit", required=True)
     parser.add_argument("--release-tag", required=True)
-    parser.add_argument("--scope", choices=("menus", "vocabulary", "vocabulary-persistence", "slice-controls", "combined-print", "combined-send", "cancellation"), required=True)
+    parser.add_argument("--scope", choices=("menus", "vocabulary", "vocabulary-persistence", "slice-controls", "combined-print", "combined-send", "cancellation", "minimum-resize"), required=True)
+    parser.add_argument("--minimum-job-name")
     parser.add_argument("--language", choices=behavior.MODES, default="en")
     parser.add_argument("--theme", choices=("light", "dark"), default="light")
     parser.add_argument("--scale", type=float, choices=(1.0, 1.25, 1.5, 2.0), default=1.0)
     parser.add_argument("--viewport", choices=("1200x800", "1000x600", "measured-minimum"), default="1200x800")
     args = parser.parse_args()
+    if args.scope == "minimum-resize":
+        require(args.scale == 1 and args.viewport == "measured-minimum" and
+                re.fullmatch(r"Local\\BambuNativeScale-[0-9a-f]{64}", args.minimum_job_name or ""),
+                "Interactive minimum proof requires its contained baseline invocation")
+    else:
+        require(args.minimum_job_name is None, "Unexpected minimum containment identity")
     require(os.environ.get("GITHUB_ACTIONS") == "true" and os.environ.get("RUNNER_ENVIRONMENT") == "github-hosted"
             and os.environ.get("RUNNER_OS") == "Windows", "Only disposable hosted Windows execution is authorized")
     require(behavior.SHA.fullmatch(args.source_commit) and re.fullmatch(r"md3-v\d+", args.release_tag), "Malformed source identity")
@@ -977,11 +991,12 @@ def main():
             "install_receipt_sha256": behavior.sha256(args.install_receipt), "scope": args.scope,
             "package_asset_sha256": install.get("asset_sha256"),
             "driver_sha256": behavior.sha256(Path(__file__)),
+            "minimum_helper_sha256": behavior.sha256(HERE / "minimum_resize.py") if args.scope == "minimum-resize" else None,
             "requested_tuple": {"language": args.language, "theme": args.theme,
                 "scale": args.scale, "viewport": args.viewport},
             "operations": drive.rows if drive else [], "captures": drive.images if drive else [],
             "viewport_observations": drive.viewport_observations if drive else [],
-            "capture_method": "lowlevel-computer-use-cheap hidden desktop",
+            "capture_method": "lowlevel-computer-use-cheap owned window; persistent compatibility MCP desktop handoff" if args.scope == "minimum-resize" else "lowlevel-computer-use-cheap hidden desktop",
             "privacy": "restricted_pixel_review_pending", "hardware": "unverified_no_printer_commands",
             "teardown_verified": teardown, "failure": failure}
         (args.output / "runtime.json").write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
