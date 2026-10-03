@@ -144,9 +144,24 @@ def main():
             os.environ.get("RUNNER_ENVIRONMENT") == "github-hosted" and os.environ.get("RUNNER_OS") == "Windows")
     if sys.argv[1:] == ["--absence-contract"]:
         desktop = "startup-missing-" + os.urandom(16).hex()
-        result = subprocess.run([os.environ["LLCU_CHEAP"], "list_headless_windows", "--name", desktop],
-                                stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, timeout=10)
-        require(len(result.stdout) <= 65536 and absent_response(result.returncode, json.loads(result.stdout), desktop))
+        # Fixed exit codes expose the failing phase without exposing tool output.
+        try:
+            result = subprocess.run([os.environ["LLCU_CHEAP"], "list_headless_windows", "--name", desktop],
+                                    stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, timeout=10)
+        except subprocess.TimeoutExpired:
+            return 21
+        except Exception:
+            return 20
+        if len(result.stdout) > 65536:
+            return 22
+        if result.returncode != 0:
+            return 23
+        try:
+            response = json.loads(result.stdout)
+        except (ValueError, UnicodeError):
+            return 24
+        if not isinstance(response, dict) or not absent_response(result.returncode, response, desktop):
+            return 25
         print("Pinned desktop absence contract passed: exit=0, ok=false, native=2")
         return 0
     parser = argparse.ArgumentParser()

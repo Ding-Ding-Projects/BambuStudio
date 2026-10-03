@@ -527,3 +527,19 @@ named Job runs the actual persistent create/list/close session, confirms that
 an independent CLI sees the held desktop, then requires absence after server
 shutdown. That explicit contract mode launches no worker or product. These
 changed checks and the repaired lifecycle remain hosted-unverified.
+
+Run `37099135961` passed the nine Python cases and four invalid-desktop
+checks, then failed the actual absence contract before lifecycle or product
+execution. Its receipt did not retain the child exit code or phase, so the
+cause is unresolved. Both contained contract calls now use the resolved
+absolute helper path from the verified checkout, rather than relying on the
+inherited process working directory. This removes a path ambiguity without
+claiming that the earlier working directory was observed.
+
+The receipt now retains termination, numeric process stage, native error and
+exit code for each contained call. The absence helper uses fixed exit codes:
+20 for CLI launch failure, 21 for timeout, 22 for oversized output, 23 for a
+nonzero CLI exit, 24 for invalid JSON and 25 for a semantic absence mismatch.
+Zero still requires the original exact absence predicate. Raw CLI output and
+exception text remain discarded. The changed product-free hosted contract
+must pass before another product diagnostic; no local execution was performed.
