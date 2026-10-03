@@ -370,3 +370,17 @@ device validation, monitor binding, and mode validation. The source-device name
 structure must measure exactly 84 bytes before its API call. No exception text,
 device name, handle or private recovery bytes enter these diagnostics. The cause
 remains unverified until a bounded hosted observation supplies the finer phase.
+
+Run `37090623816` narrowed the unavailable capture to
+`mode_size_and_driver_extra`. The next diagnostic records only the last inspected
+buffer length and numeric `dmSize`/`dmDriverExtra` fields. Null means no sufficiently
+large structure was inspected; these values may describe the earlier selection
+when recovery fails before another mode read. The original 220-byte, zero-extra
+acceptance contract remains unchanged. `EnumDisplaySettingsW` receives an
+initialized `dmSize` and zero additional capacity; the documented driver-extra
+capacity contract does not justify accepting or restoring truncated private data.
+The last enum-success boolean also distinguishes a failed read: previously a
+null result passed to the shared validator overwrote the enum phase with the
+size/extra phase. Null now has its own `mode_read_returned_null` phase. The earlier
+phase therefore did not establish that either returned header field was invalid.
+No mode-format repair is claimed before these observations exist.
