@@ -1,5 +1,20 @@
 # Hosted native interface verification
 
+The startup diagnostic from run `37103711674` reached the target desktop lookup
+after acknowledgement, unique target identity and both job membership checks.
+Its null desktop comparison means the lookup raised before comparison, not that
+a different desktop was observed. The lookup now records separate fixed phases
+for `GetThreadDesktop` and `GetUserObjectInformationW`, handle presence, query
+success and immediately captured numeric native errors on failed returns only.
+Required bytes are capped at 65,536 with an explicit cap flag. Names, handles,
+thread identifiers and exception text are not added to these observations.
+The exact desktop equality, initial acknowledgement, ownership checks and
+90/120-second deadlines remain required before continuation. The existing nine
+hosted contract cases now include actual observation-function outcomes for a
+null handle, failed information query, success, capped length and exceptions at
+both native boundaries. These additions have not been executed locally and
+require hosted verification. No failing DLL initializer has been identified.
+
 `scripts/ci/Verify-HostedNativeInterface.ps1` installs a published Squirrel
 package on a disposable GitHub-hosted Windows runner, binds it to the requested
 source commit, and runs one native interface scope. The implementation is
