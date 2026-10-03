@@ -9,6 +9,9 @@ public static class HostedDisplayMode
     // Fixed phase names and numeric native results only, never device identities.
     public static string DiagnosticStage { get; private set; } = "not_entered";
     public static int? DiagnosticCode { get; private set; }
+    public static int? DiagnosticBufferBytes { get; private set; }
+    public static int? DiagnosticModeSize { get; private set; }
+    public static int? DiagnosticDriverExtra { get; private set; }
     static void Stage(string stage) { DiagnosticStage=stage; DiagnosticCode=null; }
     const uint Allowed=0x207c00a0, Required=0x007c0000;
     public sealed class State { public string Device, Identity; public byte[] Original; }
@@ -52,6 +55,9 @@ public static class HostedDisplayMode
     public static int Height(byte[] bytes) { Validate(bytes); return checked((int)U(bytes,176)); }
     static void Validate(byte[] bytes) {
         Stage("mode_size_and_driver_extra");
+        DiagnosticBufferBytes=bytes==null ? (int?)null : bytes.Length;
+        DiagnosticModeSize=bytes!=null && bytes.Length>=72 ? (int?)BitConverter.ToUInt16(bytes,68) : null;
+        DiagnosticDriverExtra=bytes!=null && bytes.Length>=72 ? (int?)BitConverter.ToUInt16(bytes,70) : null;
         Require(bytes!=null && bytes.Length==220 && BitConverter.ToUInt16(bytes,68)==220 && BitConverter.ToUInt16(bytes,70)==0);
         uint fields=U(bytes,72);
         Stage("mode_valid_fields");

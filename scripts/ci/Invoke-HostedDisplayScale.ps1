@@ -572,7 +572,9 @@ try {
     # Copy before recovery, so successful restoration cannot overwrite the
     # failed selection's observations. Only fixed keys and scalar values leave.
     if ($ProvisionResolution) {
-        $receipt.resolution_selection_diagnostic = @{stage=[HostedDisplayMode]::DiagnosticStage; code=[HostedDisplayMode]::DiagnosticCode}
+        $receipt.resolution_selection_diagnostic = @{stage=[HostedDisplayMode]::DiagnosticStage; code=[HostedDisplayMode]::DiagnosticCode
+            last_mode_buffer_bytes=[HostedDisplayMode]::DiagnosticBufferBytes; last_mode_size=[HostedDisplayMode]::DiagnosticModeSize
+            last_driver_extra_bytes=[HostedDisplayMode]::DiagnosticDriverExtra}
     }
     $receipt.selection_observations = $script:Observation.Clone()
     $script:Observation = @{}
@@ -613,7 +615,9 @@ try {
         }
     }
     if ($ProvisionResolution) {
-        $receipt.resolution_restoration_diagnostic = @{stage=[HostedDisplayMode]::DiagnosticStage; code=[HostedDisplayMode]::DiagnosticCode}
+        $receipt.resolution_restoration_diagnostic = @{stage=[HostedDisplayMode]::DiagnosticStage; code=[HostedDisplayMode]::DiagnosticCode
+            last_mode_buffer_bytes=[HostedDisplayMode]::DiagnosticBufferBytes; last_mode_size=[HostedDisplayMode]::DiagnosticModeSize
+            last_driver_extra_bytes=[HostedDisplayMode]::DiagnosticDriverExtra}
     }
     $receipt.restoration_observations = $script:Observation.Clone()
     $receipt.child_termination_uncertain = Test-UncertainChildren
