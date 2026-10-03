@@ -121,3 +121,16 @@ The full matrix remains required after the root cause is established.
 Product builds 37088514258 and 37088918536 remain in progress; no current
 combined package or rendered correctness verdict exists.
 Current account allowance is 50% remaining. No cleanup or deletion occurred.
+
+## Observed mode-header compatibility repair, 2026-10-03 02:54 UTC
+
+Run 37091086128 failed before mutation and established the exact mismatch:
+enumeration succeeded, allocation 220 bytes, returned dmSize 188, extra data 0.
+Two independent source reviews accepted 8cb9889507c593db9e11ef1afcb8af823abfc09e.
+Only known public sizes 188 and 220 are admitted; the complete allocation and
+actual returned header remain unchanged. Every consumed field ends by byte 188.
+Identity, valid-field, nonpersistent change and recovery checks are unchanged.
+The existing hosted lifecycle suite now expects seven cases, including five
+invalid fixtures and both supported-layout preservation checks. Hosted results
+and real resolution application/restoration remain pending. The next attempt
+uses only 125%; broader scale and installed UI claims remain unverified.

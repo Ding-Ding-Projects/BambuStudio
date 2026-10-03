@@ -60,7 +60,10 @@ public static class HostedDisplayMode
         DiagnosticModeSize=bytes!=null && bytes.Length>=72 ? (int?)BitConverter.ToUInt16(bytes,68) : null;
         DiagnosticDriverExtra=bytes!=null && bytes.Length>=72 ? (int?)BitConverter.ToUInt16(bytes,70) : null;
         if(bytes==null) { Stage("mode_read_returned_null"); Require(false); }
-        Require(bytes!=null && bytes.Length==220 && BitConverter.ToUInt16(bytes,68)==220 && BitConverter.ToUInt16(bytes,70)==0);
+        // The hosted driver returns the legacy public display layout (188)
+        // into our 220-byte allocation. Every accepted field ends by byte 188.
+        // Retain the returned header and complete buffer, including on restore.
+        Require(bytes.Length==220 && (DiagnosticModeSize==188 || DiagnosticModeSize==220) && DiagnosticDriverExtra==0);
         uint fields=U(bytes,72);
         Stage("mode_valid_fields");
         Require((fields & ~Allowed)==0 && (fields & Required)==Required);

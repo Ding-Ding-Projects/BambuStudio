@@ -383,4 +383,17 @@ The last enum-success boolean also distinguishes a failed read: previously a
 null result passed to the shared validator overwrote the enum phase with the
 size/extra phase. Null now has its own `mode_read_returned_null` phase. The earlier
 phase therefore did not establish that either returned header field was invalid.
-No mode-format repair is claimed before these observations exist.
+Run `37091086128` subsequently measured enumeration success, a 220-byte buffer,
+returned `dmSize=188` and `dmDriverExtra=0`. The helper now accepts only the known
+188-byte and 220-byte public layouts in that complete 220-byte allocation. Every
+accepted display field ends at or before byte 188. The actual returned `dmSize`
+and all buffer bytes are retained for recovery and passed back unchanged; the
+helper never promotes the header to 220 or clears private-data capacity. Unknown
+sizes, nonzero extra data, unknown valid-field bits and missing required fields
+remain rejected. Native identity, test/apply and restoration checks are unchanged.
+
+The existing hosted lifecycle script exercises the actual helper's validation:
+five unsupported header/field cases must fail before both known layouts pass,
+and successful inspection must preserve the complete bytes and returned size.
+This case performs no native display calls. Hosted contract results and actual
+mode application/restoration remain pending; no local execution was performed.
