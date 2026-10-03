@@ -2,390 +2,42 @@
 
 ## Current continuation, 2026-10-03 UTC
 
-Preserved integration source is 91dc1720bb4a795868c2d02655dae771d6842d49.
-Run 37096062899 passed 13 lifecycle cases in 13126 ms and selected 150%,
-measuring 144 DPI at 1920x1080. Original 1024x768 and 100%/96 DPI were restored;
-worker/recovery termination was verified with no recovery uncertainty. Exact
-receipt hashes are in docs/features/automation/hosted-display-resolution-37096062899.json.
-Private images precede selection and contain account identity, so remain
-unpublished. They do not establish product rendering.
+Preserved integration source is fb4ceb829e0ab12f0da22f82beaeefd6f8ec59f3.
+Main remains ce883543177ef7df46fa5b798dcc5c7f3d2f8020. All nine linked/primary
+working trees were clean at the latest inventory, with no stash. No task source
+is eligible for completed-main cleanup yet.
 
-Startup diagnostic 37096346917, verifier e5b003ee5d24fd9ac76f9f68b9657d90842e94a8,
-again confirmed natural exit 0xFFFFFFFF, empty streams and no profile log
-folder. Independent eleven-file manifest validation passed. Two source reviews
-identified an existing earlier launcher trace outside the profile; isolated,
-bounded encrypted collection is being implemented. No particular native loader
-failure is established and no speculative product repair is made.
+Hosted display150 run37096062899 passed13 lifecycle cases in13126ms and measured
+144DPI at1920x1080. Display200 run37096376814 passed14 cases in13681ms and measured
+192DPI at1600x1200. Both restored original1024x768 and100%/96DPI, with verified
+worker/recovery termination and no uncertainty. Original receipt hashes are in
+both matching docs/features/automation/hosted-display-resolution-<run>.json files.
+Private images precede selection and contain account identity. They show complete
+available options, not postselection DPI or product rendering. Keep them private.
 
-Run 37096376814 is the single 1600x1200/200% diagnostic at 91dc1720b;
-lifecycle passed and provisioning is pending. Release md3-v192 exists at
-7bd7420c7972aa186d246c76c93265600d8cd2ee with five uploaded assets, but does
-not change the observed launcher path. This is not runtime acceptance.
-Main remains ce883543177ef7df46fa5b798dcc5c7f3d2f8020. Product execution stays
-hosted only. No final integration, product matrix, physical printer operation
-or deletion is complete. Earlier sections describe historical observations.
+Startup diagnostic37096346917 again confirmed natural exit0xFFFFFFFF, empty
+streams and absent profile log directory. Productmd3-v190 remains bound to
+35d1074faea221fa4f289f1db1e0ee428a90d701. Two independent reviews accepted
+494f9bf3bd214d0a2243cc1af57e186bdab98519: diagnostic-only copied child TEMP/TMP,
+invocation-bound fixed launcher trace,64KiB limit, encrypted after verified
+teardown. Integrated atfb4ceb829; changed hostedrun37096825183 is queued. Its
+independent11-file verifier manifest is prepared. No cause is proved yet.
 
-## Latest verified state, 2026-10-03 UTC
+Completed hosted checks include native-services37085341046, MCP37054493889 and
+18-case cancellation contract37095515540. Combined37056354867 failed overall.
+Build37092713387 observation expired with publication pending; do not resume
+polling that unchanged operation. Separately observed releasedmd3-v192 targets
+7bd7420c7972aa186d246c76c93265600d8cd2ee, with five uploaded assets. It has no
+launcher delta that would justify repeating the same startup observation.
 
-Display run 37095764151 at 67eada8bda7b2fd6d5a589547004eea8415d559f passed
-13/13 lifecycle cases in 14127 ms, then failed 200% selection. Both observed
-navigation destinations were acknowledged. The fresh selector exposed 150%
-but no 200% option. Original resolution and 96 DPI were restored, both process
-trees terminated and recovery uncertainty was false. Both encrypted images
-passed administrative integrity opening and two independent pixel reviews.
-The complete popup shows 100%, 125%, 150% and 175%, without a menu scrollbar
-or clipped option. Visible account identity prevents publication. One targeted
-150% run 37096062899 is pending at 54ff825c0b2c8c2e005e9b46435a8ceb5e15bc46.
-Startup-only diagnostic 37095786787 at verifier 3467c83155b4a3881a306eeb5ac9060bdb381ea2
-failed against the separately bound md3-v190 product. Independent 11-file
-manifest validation succeeded before private opening. The evidence confirms
-natural early exit 4294967295 (0xFFFFFFFF), completed holder teardown and empty
-stdout/stderr. Cause remains unknown. Bounded task-owned profile-log collection
-is the next diagnostic; no product repair has been inferred from the exit alone.
+Next: read authenticated isolated launcher evidence, repair only an established
+cause, connect measured high-DPI provisioning to native-runtime with independent
+review, then run installed menus/vocabulary/persistence/combined actions/cancel
+and the language/theme/minimum matrix against exact package identities. Keep
+physical printer confirmation; no print or transfer is authorized. Product
+compilation, tests, installation, slicing and UI execution remain hosted-only.
 
-The one-hour observation limit for combined build 37092713387 expired at
-2026-10-03T04:17:36Z. Its final observed state was publication pending after
-successful build/package jobs. Leave it intact; no final release verdict is
-claimed and polling this expired observation lane has stopped.
-
-Hosted run 37095515540 passed all 18 cancellation-observation cases in 0.172 s
-at 18d6f1c3f60ec8d34d70829d3ca7e056edf244fa, including a deliberate mutation
-of the production epoch comparison. This validates the stronger driver contract,
-not installed cancellation. Reviewed startup collector acb80bee433966b6b655711fdae81e8475ae1970
-is integrated in 2f8ce41c18c7f5fb0984ac4ec9187649130ea04a. Its first hosted
-diagnostic execution remains pending. Main and cleanup are unchanged.
-
-Installed baseline runs 37094960913 (MCP), 37094962319 (vocabulary), and
-37094963874 (cancellation) failed after validated Squirrel installation at
-35d1074faea221fa4f289f1db1e0ee428a90d701. Their authenticated private runtime
-receipts report the same startup ownership exception before any interaction or
-capture, with verified teardown. This does not establish a feature defect.
-Bounded encrypted startup diagnostics are being added without relaxing ownership
-or timeouts. Cancellation evidence also needs independently reviewed correlation
-with the post-cancel native epoch and a newly accepted completion event.
-
-Read-only Colors discovery 37095094318 at 99ace4b670af24d34c1ba6761b59256ae5e71cb6
-returned 130 controls, no display mutation and verified teardown. Its deliberate
-unavailable exit is not a provisioning success. Reader 5211a57bd68320856f90d297b02ad146b13f4a2f
-authenticated the private inventory against exact run, source, destination and
-probe hash. Positive destination recognition remains under review.
-
-Hosted lifecycle run [37094628859](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37094628859)
-passed 11/11 cases in 13615 ms at `b282a05c14c54c8063f31f38b2605bbd8b9206b6`.
-The receipt confirms `cleanup_verified=true` and `settings_mutated=false`.
-This includes the actual diagnostic-reader geometry contract and is not product
-interaction evidence. The original receipt hash and full fixed receipt are in
-`docs/features/automation/hosted-source-query-b5468208.json`.
-
-Two independent private pixel reviews inspected both authenticated Settings
-captures from run `37094061673`, source `b546820867f01602807775275a6ef3e1f6cce793`,
-using reader `a115faf0861e38fa0be8da646d87195672bdad3d`. The before-selector image
-shows 100% selected and 1920x1080 resolution. The expanded image shows a complete,
-uncut two-row popup with only 100% and 125%, no visible scrollbar, and no partial
-next row. The observed popup reports no scrolling. The current observed page
-cannot supply 150% or 200%; this does not establish universal platform support
-limits or prove why those options are absent. Both images are 816x641 and each
-has 16 unavailable offscreen-control rectangles, never invented coordinates.
-
-Both originals visibly contain an account identity and remain private;
-publication is not authorized. No canonical private vocabulary payload was
-uploaded. These are Settings diagnostics, not installed product pixels, minimum
-resize proof, or a completed language/theme/scale matrix. Product verification,
-main integration and deletion remain incomplete. No physical printer action was
-performed. Historical sections below retain their earlier observation states;
-this section supersedes their pending lifecycle and expanded-image review status.
-
-The non-draft release `md3-v190` targets tag/source
-`35d1074faea221fa4f289f1db1e0ee428a90d701`, with all five assets uploaded.
-`Setup.exe` is 770881024 bytes, SHA-256
-`22cc03323daf30af64d5d426d5494bf53fe928c3d7c28a9e0367d3bd7c6575c3`.
-The three installed runs above failed at shared startup before interaction.
-Dispatch used `b282a05c1`,
-but the workflow explicitly checks out the expected verifier source `35d1074fa`.
-This package does not contain the minimum-resize scope, which awaits a newer
-matching package. Uploaded release assets are not installed verification success.
-
-Next: retain the private originals and exact bindings, investigate only a reviewed
-bounded route for the absent scale options, and run installed product verification
-only against a matching source/package identity on hosted Windows runners. Do not
-infer product success or cleanup eligibility from the eleven-case result.
-
-
-## Objective and execution boundary
-
-Finish BambuStudio MCP support, responsive native motion, complete searchable
-context menus with regex builders, layout repairs, cancellation correctness,
-Slice and Print, Slice and Send, and local personal-vocabulary flows.
-All implementation and independent review workers use gpt-6-astra.
-All product compilation, tests, packaging, installation, slicing and UI execution
-remain exclusively on GitHub-hosted Windows runners. No printer transfer or
-physical print is authorized. Retain final device selection and confirmation.
-
-## Preserved state
-
-- Integration branch: feature/ui-integration, source candidate
-  d804d3f8b7babc7fe040654b218d82642eacd1e3, verified on the remote.
-- Remote main: ce883543177ef7df46fa5b798dcc5c7f3d2f8020.
-- Runtime lane: 991bf094206699164fb0d9c915140117cd748dcf, preserved through integration
-  and included in integration. Contended worker observations are unknown,
-  never falsely idle. Cancel targeting uses current generation and fresh bounds.
-- Preview lane: c8b9e62d47e92c8a327eda4593ed6fac60b07ccf, included in integration.
-  Measured-minimum receipts share the following genuine capture, preserving
-  the encrypted manifest limit. Interactive minimum tracking is still pending.
-- Scale helper: 338a7f6fa5b01e18e2dcc52c9664780679af7495, included in integration.
-  Suspended-start nonbreakaway process containment and bounded output have
-  independent source review. The optional product-under-scale adapter and workflow are implemented and source-reviewed,
-  with installation/bootstrap before fixed Settings launch and scale mutation.
-  Product execution remains pending a matching package.
-
-## Verified evidence and limits
-
-- MCP run 37054493889 passed and published md3-v187 for
-  ce61d22e390e4bf69938730434f1e494fa34f7a9. This is the earlier MCP-only build.
-- Installed MCP run 37084928659 verified installation but failed at fixture
-  lookup before MCP interaction. The normalized fixture-path repair is included
-  in the current candidate and needs installed execution on a matching package.
-- Focused run 37085341046 passed at
-  6bc6656efc001fdf27d2ea22e7a64824bd80a1c5: language 16 cases/199 assertions,
-  personal vocabulary 3 cases/45 assertions, archive 4 cases/103 assertions,
-  sequential/concurrent persistence, canvas 46 checks, preview 68 checks,
-  print 5 cases/28 assertions, source 55, lifecycle 8, cancellation helper 7,
-  fixture-path helper 3. These do not establish rendered correctness.
-- Discovery run 37085955337 yielded 84 encrypted Settings controls, privately
-  decrypted and reviewed. The exact scale selector is identified, but discovery
-  deliberately changes no display setting. Its nonzero terminal status is not
-  a successful provisioning verdict.
-- Older encrypted discovery 37085765463 remains unreviewed because its private
-  recipient key is unavailable here. The current route reuses the established
-  automation recipient; no private key or vocabulary payload is published.
-- Hosted lifecycle job 111101187721 in run 37087664020 passed all five cases
-  in 9918 ms with cleanup_verified=true and settings_mutated=false. Cases cover
-  oversized output, recovery after overflow, a descendant surviving parent exit,
-  recovery after descendant termination, and exact 64 KiB output acceptance.
-- Diagnostic run 37088002537 localized posted-input failure: helper success
-  did not expand Settings; all jobs stopped at observe_expanded and restored.
-- Lifecycle-only run 37088232776 passed six of six cases in 11340 ms, including
-  exact named-Job membership and five rejected access rights. Cleanup was verified
-  and no Settings mutation occurred.
-- Foreground run 37088408895 reached 125%/120 DPI but initial restoration
-  observation used obsolete geometry; separate recovery verified 100%/96 DPI.
-- Repaired standalone run 37088755758 passed its 125% job with selected 125%,
-  measured 120 DPI, restored 100%/96 DPI and verified complete termination.
-  The overall run failed: 150% and 200% expanded the selector but observed only
-  100%/125% options and stopped at match_option. Their restoration was verified.
-  Read-only run 37089435143 passed: one active 1024x768 display and 13 supported
-  modes up to 1920x1080, with verified termination. Higher-scale availability
-  at that resolution remains an experiment, not a verified result.
-- Combined build 37085334409 failed on incomplete wxGLCanvas in AutomationBridge.
-  The reviewed one-line include repair is preserved through f8de85ce2 and
-  is being compiled in run 37088514258. Newer run 37088918536 targets f2f29fd4e.
-  No combined package or installed current-candidate verdict exists yet.
-
-## Next actions
-
-1. Inspect supported hosted display modes and resolution evidence before further
-   150%/200% input; do not repeat the unchanged missing-option attempt.
-2. Execute the reviewed fixed product-under-scale hook only with a matching
-   package and proven scale. Require exact request
-   validation, actual target DPI, owned native teardown, process containment and
-   restoration; timeout cannot accept a stale success receipt.
-3. Use an exact matching release/source/package hash for installed MCP and native
-   menu, vocabulary, persistence, combined-action and cancellation flows.
-4. Review genuine encrypted captures across English, Cantonese and bilingual,
-   light/dark, normal/minimum sizes and measured 100/125/150/200% scales.
-5. Integrate only completed verified work into main, verify the remote SHA and
-   final hosted verdict, update feature documentation and public progress.
-6. Before cleanup, inventory every branch, checkout and stash, preserve owned
-   recoverable work, create and read back a dated archive in the dynamically
-   resolved backup location, and prove every inactive clean task-owned candidate
-   is an ancestor of remote main. No archive or deletion has occurred yet.
-
-## Remaining boundaries
-
-No active goal exists. The last account reading had 53% weekly allowance
-remaining; refresh at meaningful milestones and preserve first at 10% or less.
-Status Hub delivery is unavailable through the established route. Projects
-access is unavailable and does not block implementation. Issue 53 and Discussion
-54 carry progress; the wiki is preserved at 900af852f2f87f07d3bba815edf6ae973f7d769b and records
-the measured-scale and compile-repair update. Main integration, final green CI, full rendered matrix
-and authorized cleanup are unfinished.
-
-The fixed 1920x1080 standalone provisioning helper is independently reviewed at
-5d3a42fd32e29a77e2cc3df683eac3c50ed01993. Its hosted apply/scale/restore verdict
-failed in 37090148387 before mutation at capture_original_resolution for all
-three scale jobs. Fixed-phase diagnostic 24c1340e is reviewed for a changed
-observation; exact native cause remains unproved. Minimum-resize source is preserved on feature/preview-layout at
-187e55fa1518e7f66b636f9f29c2e7d8c149350d; it must not run at the known 1024x768
-mode, which cannot fit the required above-minimum starting frame. No interactive
-clamp, product DPI or current-candidate pixel proof is claimed.
-
-## Display diagnostic continuation, 2026-10-03 02:49 UTC
-
-Run 37090623816 failed all three resolution-enabled jobs before display mutation
-at capture_original_resolution. The phase alone did not distinguish a failed
-enumeration from an invalid returned header. Candidate
-596075b89b4dda30001c6076386204e653964c2e has two independent source reviews
-and records enum success, buffer capacity, returned size and extra-data count
-as bounded nullable values. Acceptance and restoration are unchanged.
-The next diagnostic uses only 125% because this pre-input path is shared.
-The full matrix remains required after the root cause is established.
-Product builds 37088514258 and 37088918536 remain in progress; no current
-combined package or rendered correctness verdict exists.
-Current account allowance is 50% remaining. No cleanup or deletion occurred.
-
-## Observed mode-header compatibility repair, 2026-10-03 02:54 UTC
-
-Run 37091086128 failed before mutation and established the exact mismatch:
-enumeration succeeded, allocation 220 bytes, returned dmSize 188, extra data 0.
-Two independent source reviews accepted 8cb9889507c593db9e11ef1afcb8af823abfc09e.
-Only known public sizes 188 and 220 are admitted; the complete allocation and
-actual returned header remain unchanged. Every consumed field ends by byte 188.
-Identity, valid-field, nonpersistent change and recovery checks are unchanged.
-The existing hosted lifecycle suite now expects seven cases, including five
-invalid fixtures and both supported-layout preservation checks. Hosted results
-and real resolution application/restoration remain pending. The next attempt
-uses only 125%; broader scale and installed UI claims remain unverified.
-
-## Verified standalone resolution, 2026-10-03 UTC
-
-Run 37091384649 passed at 7bd7420c7972aa186d246c76c93265600d8cd2ee.
-Seven hosted contracts passed in 11738 ms. The standalone probe measured
-1920x1080 and 125%/120 DPI, then restored 1024x768 and 100%/96 DPI.
-Both worker trees terminated; supervisor restoration was verified and disposal
-was not required. The checked-in bounded receipts retain original-byte hashes.
-This is not application-rendering proof. Runs 37091590432 and 37091591864
-now observe 150% and 200% separately at the same source.
-The minimum-resize combination is being implemented with a durable input-state
-marker: process termination cannot stand in for button release or desktop
-restoration. Native product build 37088514258 has reached Squirrel packaging.
-
-## Restricted minimum-resize integration, 2026-10-03 UTC
-
-Candidate 25b8668f0a848f04c8eff9f3241adb59d2132f33 has two independent
-source acceptances. Fixed 1920x1080 provisioning is restricted to minimum-resize,
-scale 1 and measured-minimum. Durable invocation-bound input markers block both
-normal and independent recovery until button, frame, desktop and native teardown
-proof agree. Process exit alone cannot clear uncertainty. The hosted contract
-source now expects nine cases; execution and installed interaction remain pending.
-The workflow opt-in defaults false and preserves earlier baseline invocations.
-
-Higher-scale attempts did not pass: 37091590432 stopped at validate_foreground
-before input; 37091591864 expanded the selector but found no 200% option. Both
-verified 1920x1080 and restored the original resolution and 100%/96 DPI, with
-contained termination. These observations do not prove unsupported scales.
-
-## Hosted contracts and publication queue, 2026-10-03 UTC
-
-Run 37091873727 passed 9/9 contracts in 12288 ms at85ca11b4f865f4a9d01e584426a3d958cca8919b,
-with verified cleanup and no Settings mutation. Combined installed minimum
-interaction and pixels remain pending.
-Build 37088514258 passed compilation, packaging and upload, but its publication
-job111113206485 was canceled because a higher-priority waiting request entered
-the same concurrency group. Its completed installer artifact11262825115 remains
-available; no redundant product rebuild is required for publication recovery.
-Reviewed repair072c51cc7040c1d5d04ea875a6142ae6cb41f250 sets queue:max, preserving
-up to100 pending jobs with running-job cancellation still disabled. Additional
-arrivals beyond that bound are canceled. Historical reruns retain their original
-workflow and are not repaired retroactively. Do not rerun the old single-pending
-release while another pending publisher would be replaced.
-
-## Encrypted scale-option diagnosis, 2026-10-03 UTC
-
-Two independent source reviews accepted5c80f0c58457b95e358dd76a56ad8a76f0aab5cd.
-An explicit standalone-only diagnostic opt-in captures the owned Settings HWND
-before selector input and after expansion. Positive dimensions up to8192 are
-checked before bitmap allocation and again afterward. Bounded read-only control
-geometry and pixels use the established recipient encryption with authenticated
-source/run/phase/dimension/helper/tool/image bindings. Only four named encrypted
-files join the fixed public receipt upload inventory; no raw PNG or native
-identity is uploaded. Actual rendering, decryption and interpretation are pending.
-
-## Diagnostic reader and capture observability, 2026-10-03 UTC
-
-Run 37092218449 restored the display after the 200% match_option failure,
-but both capture phases returned unavailable. No encrypted files were produced.
-Reviewed source 546d376d2b25595f31595a295c38b55505638812 adds fixed diagnostic
-stage codes and a bounded administrative reader. The reader requires PowerShell
-7.5, preserves authenticated timestamp strings, rejects nonobject roots and
-scalar coercion, uses existing DPAPI custody, and verifies exact source/run/phase,
-AAD, ciphertext and image identity before exclusive output creation. Two
-independent source reviews accepted the corrected candidate. No decryption or
-pixel review has occurred. A changed hosted diagnostic is the next step.
-
-Build 37088918536 also lost its waiting publisher to the old queue rule;
-compilation and packaging succeeded and its uploaded package remains preserved.
-The matching 35d1074fa publisher 37089433015 was still in metadata validation at
-the latest observation. Source inspection identifies serial per-file attribution
-without intermediate progress or a short timeout, but cannot identify the live
-suboperation. A pending publisher is not a successful installed runtime result.
-Main integration, final combined runtime evidence and archive/cleanup remain open.
-
-## Source-identity observation refinement, 2026-10-03 UTC
-
-Run 37092723192 passed 9/9 lifecycle contracts in 12007 ms, then both diagnostic
-captures stopped at source_identity before capture. The 200% option was still
-unobserved; resolution, scale and both contained process trees were restored.
-No encrypted images exist for this run. Source 4e0ce0b7f627aacee3a91f1732ef48c3b30732a5
-has two independent source acceptances for fixed substage and bounded scalar
-observations. The underlying identity cause remains unproved. No raw output,
-paths, environment values or exceptions enter the public receipt.
-
-Publisher 37089433015 remained in metadata validation at 03:20:24 UTC; its
-one-hour observation limit expired with publication unverified, without canceling
-or rerunning it. Build 37092713387 for 7fb8a6a328772f04a159c0c989f2146aada152d4
-passed automation contracts and was compiling at its latest observation.
-All nine BambuStudio worktrees were clean and no stash existed at inventory.
-All source tips remain retained; none is eligible for completed-main cleanup.
-
-## Focused contained-source reproduction, 2026-10-03 UTC
-
-Run 37093133090 stopped both diagnostic phases at source_process_exit. Directory
-and run identity were valid; termination was verified, output was empty and the
-helper returned -1. This does not prove that Git itself exited with that value.
-Scale and resolution restoration remained verified. No encrypted images exist.
-
-Reviewed candidate 68998d535c2ec0197627b0882f187262f998fc80 adds fixed process
-stages and an immediate numeric CreateProcess diagnostic, preserving all existing
-containment, deadlines and acceptance. A tenth hosted lifecycle case reproduces
-the nested contained source query and checks actual output against the run SHA.
-The next attempt uses lifecycle_only and does not open Settings. Both independent
-source lenses accepted this diagnostic change; execution and cause remain pending.
-
-## Literal executable repair, 2026-10-03 UTC
-
-Focused run 37093668005 failed its first case in 5002 ms: outer execution
-completed with code 0 and stage 18, while inner creation stopped at stage 6
-with native result 123, code -1 and empty output. Cleanup was verified and
-Settings was untouched. This identifies invalid-name rejection at creation,
-not the precise original malformed value.
-
-Two independent reviews accepted 1477bd43b99a62047e5449555d8098d7b7ef4069.
-Production now selects one exact git.exe ApplicationInfo.Path and requires a
-scalar, absolute, existing literal file before creation. The hosted case uses
-the same functions to reject arrays, joined paths, quoted paths and relative
-names, then queries the real checkout SHA. Launch recovery remains pending;
-array coercion is a hypothesis, not an established original cause.
-
-## Verified source launch and private diagnostic opening, 2026-10-03 UTC
-
-Run 37093959893 passed 10/10 cases in 12982 ms at b546820867f01602807775275a6ef3e1f6cce793.
-The former lookup returned three candidates. Production rejected four malformed
-path shapes, launched one valid executable and matched the actual checkout SHA.
-Both processes completed normally; cleanup was verified and Settings untouched.
-Original red/green receipt hashes are retained in
-docs/features/automation/hosted-source-query-b5468208.json.
-
-Run 37094061673 still failed 200% selection at match_option, but both encrypted
-captures completed and the original scale/resolution and process trees were
-restored. Reader validation exposed an exact empty rectangle on offscreen UIA
-controls. Reviewed repair a115faf0861e38fa0be8da646d87195672bdad3d permits that
-exact sentinel only as unavailable optional offscreen-control geometry; frame
-and PNG bounds remain strict. Both encrypted captures opened successfully with
-authenticated source/run/phase bindings. The first records 16 unavailable control
-rectangles. The eleven-case hosted geometry contract subsequently passed in run 37094628859, as recorded above.
-
-The first genuine pixel review found a collapsed 100% selector and visible
-1920x1080 resolution. A visible account identity prevents publication of the
-unredacted original. Both independent expanded-state reviews are now complete, as recorded above. These are Settings
-diagnostics, not installed application evidence. Main integration and cleanup
-remain incomplete; no physical printer command was sent.
+Before final main acceptance: integrate verified work, prove remote main, obtain
+its actual combined result, update public records, and archive before deleting
+only inactive clean owned ancestor-proven candidates. No main integration,
+complete product matrix, final green verdict, archive or deletion is claimed.

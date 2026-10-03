@@ -31,3 +31,6 @@ Related: [Windows release supply chain](../releases/windows-release-supply-chain
 - [Hosted 150% display receipt](hosted-display-resolution-37096062899.json),
   13 passing lifecycle cases, measured 144 DPI at 1920x1080, and verified
   restoration to the original 1024x768 and 96 DPI. Application rendering is excluded.
+- [Hosted 200% display receipt](hosted-display-resolution-37096376814.json),
+  14 passing lifecycle cases, measured192 DPI at1600x1200, and original-state
+  restoration. Product rendering remains independently unverified.
