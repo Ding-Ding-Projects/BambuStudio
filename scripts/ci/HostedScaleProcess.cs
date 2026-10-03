@@ -6,6 +6,8 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Security.Principal;
+using System.Text.RegularExpressions;
 using Microsoft.Win32.SafeHandles;
 
 public static class HostedScaleProcess
@@ -31,6 +33,9 @@ public static class HostedScaleProcess
         public long A,B,C,D; public uint Faults, Total, Active, Terminated;
     }
     [DllImport("kernel32.dll", CharSet=CharSet.Unicode)] static extern IntPtr CreateJobObject(IntPtr a,string n);
+    [DllImport("kernel32.dll", CharSet=CharSet.Unicode, SetLastError=true)] static extern IntPtr CreateJobObject(ref SA a,string n);
+    [DllImport("advapi32.dll", CharSet=CharSet.Unicode, SetLastError=true)] static extern bool ConvertStringSecurityDescriptorToSecurityDescriptor(string text,uint revision,out IntPtr descriptor,out uint size);
+    [DllImport("kernel32.dll")] static extern IntPtr LocalFree(IntPtr memory);
     [DllImport("kernel32.dll")] static extern bool SetInformationJobObject(IntPtr j,int c,ref Extended e,uint n);
     [DllImport("kernel32.dll")] static extern bool QueryInformationJobObject(IntPtr j,int c,out Accounting a,uint n,IntPtr r);
     [DllImport("kernel32.dll")] static extern bool AssignProcessToJobObject(IntPtr j,IntPtr p);
@@ -70,6 +75,20 @@ public static class HostedScaleProcess
         b.Append('\\',slashes*2); return b.Append('"').ToString();
     }
     public static Result Run(string executable,string[] args,int seconds,bool capture) {
+        return RunCore(executable,args,seconds,capture,null);
+    }
+    // The existing unnamed-job entry point retains its behavior. This separate
+    // entry point permits a fixed child adapter to prove actual PID membership.
+    // The caller generates 256 random bits per invocation and never publishes
+    // the name. Other users receive no access; the current SID receives only
+    // JOB_OBJECT_QUERY through an explicitly protected DACL, not termination,
+    // assignment or attribute-changing rights. The creator keeps its handle.
+    public static Result RunNamed(string executable,string[] args,int seconds,bool capture,string jobName) {
+        if(jobName==null || !Regex.IsMatch(jobName,@"\ALocal\\BambuNativeScale-[0-9a-f]{64}\z"))
+            return new Result { Terminated=true };
+        return RunCore(executable,args,seconds,capture,jobName);
+    }
+    static Result RunCore(string executable,string[] args,int seconds,bool capture,string jobName) {
         var result=new Result();
         IntPtr job=IntPtr.Zero, read=IntPtr.Zero, write=IntPtr.Zero, nul=IntPtr.Zero;
         IntPtr attributes=IntPtr.Zero, inherited=IntPtr.Zero;
@@ -78,7 +97,22 @@ public static class HostedScaleProcess
         PI pi=new PI(); bool created=false, assigned=false;
         Task reader=null; int overflow=0; byte[] bytes=null;
         try {
-            job=CreateJobObject(IntPtr.Zero,null);
+            if(jobName==null) job=CreateJobObject(IntPtr.Zero,null);
+            else {
+                IntPtr descriptor=IntPtr.Zero;
+                try {
+                    string sid;
+                    using(var identity=WindowsIdentity.GetCurrent()) sid=identity.User.Value;
+                    uint size;
+                    if(!ConvertStringSecurityDescriptorToSecurityDescriptor(
+                        "D:P(A;;0x0004;;;"+sid+")",1,out descriptor,out size)) throw new Exception();
+                    var security=new SA { Length=Marshal.SizeOf<SA>(), Descriptor=descriptor, Inherit=0 };
+                    job=CreateJobObject(ref security,jobName);
+                    // Never adopt a pre-existing object, even when its name and
+                    // access rights happen to fit the current request.
+                    if(job==IntPtr.Zero || Marshal.GetLastWin32Error()==183) throw new Exception();
+                } finally { if(descriptor!=IntPtr.Zero) LocalFree(descriptor); }
+            }
             if(job==IntPtr.Zero) throw new Exception();
             var limit=new Extended(); limit.Basic.Flags=0x2000; // KILL_ON_JOB_CLOSE, no breakaway.
             if(!SetInformationJobObject(job,9,ref limit,(uint)Marshal.SizeOf<Extended>())) throw new Exception();
