@@ -10,7 +10,8 @@ param(
     [ValidateSet('en','yue_HK','bilingual_en_yue_HK')][string] $Language = 'en',
     [ValidateSet('light','dark')][string] $Theme = 'light',
     [ValidateSet('1','1.25','1.5','2')][string] $Scale = '1',
-    [ValidateSet('1200x800','1000x600','measured-minimum')][string] $Viewport = '1200x800'
+    [ValidateSet('1200x800','1000x600','measured-minimum')][string] $Viewport = '1200x800',
+    [switch] $ProvisionDisplayScale
 )
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
@@ -18,6 +19,7 @@ if ($env:GITHUB_ACTIONS -ne 'true' -or $env:RUNNER_ENVIRONMENT -ne 'github-hoste
     throw 'Automation verification requires a disposable GitHub-hosted Windows runner.'
 }
 if ((& git rev-parse HEAD).Trim() -cne $ExpectedSourceCommit) { throw 'Verifier source SHA mismatch.' }
+if ($ProvisionDisplayScale -and $Scale -eq '1') { throw 'The baseline 100% route does not use scale provisioning.' }
 if (-not (Test-Path -LiteralPath "$PSScriptRoot/../md3/hosted-automation-public-v1.pem" -PathType Leaf)) {
     throw 'Dedicated automation evidence recipient is missing; initialize and commit its public PEM before hosted verification.'
 }
@@ -30,6 +32,7 @@ if (-not $output.StartsWith($tempRoot, [StringComparison]::OrdinalIgnoreCase) -o
 $raw = Join-Path $env:RUNNER_TEMP ('native-interface-restricted-' + $env:GITHUB_RUN_ID)
 [void](New-Item -ItemType Directory -Path $raw)
 $receipt = [ordered]@{schema=2; protocol='bambu-automation-v2'; source_commit=$ExpectedSourceCommit; release_tag=$Tag; run_id=$env:GITHUB_RUN_ID; status='failed'; hardware='unverified_no_printer_commands'; capture='not_started'; exe_sha256=$null; cli_sha256=$null}
+$evidenceSafeToRead = $true
 try {
     $installReceipt = Join-Path $raw 'install.json'
     & "$PSScriptRoot/Verify-HostedSquirrelInstall.ps1" -Tag $Tag -Repository $Repository -ExpectedCommit $ExpectedSourceCommit -OutputPath $installReceipt -CiExecutionApproved
@@ -69,8 +72,62 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Pinned headless dependencies could not be installed.' }
     $env:LLCU_CHEAP = Join-Path $venv 'Scripts/lowlevel-computer-use-cheap.exe'
     if (-not (Test-Path -LiteralPath $env:LLCU_CHEAP -PathType Leaf)) { throw 'Cheap headless executable missing.' }
-    & $python "$PSScriptRoot/../md3/drive-native-interface.py" --exe $exe --cli $cli --install-receipt $installReceipt --source-commit $ExpectedSourceCommit --release-tag $Tag --output $raw --scope $Scope --language $Language --theme $Theme --scale $Scale --viewport $Viewport
-    $driverExit = $LASTEXITCODE
+    if ($ProvisionDisplayScale) {
+        # Installation and dependency bootstrap precede any display mutation.
+        # Only this fixed driver request enters the contained scale interval.
+        $scalePercent = @{ '1.25'=125; '1.5'=150; '2'=200 }[$Scale]
+        $requestPath = Join-Path $env:RUNNER_TEMP ('native-scale-request-' + $env:GITHUB_RUN_ID + '.json')
+        $adapterReceiptPath = Join-Path $env:RUNNER_TEMP ('native-scale-adapter-' + $env:GITHUB_RUN_ID + '.json')
+        $scaleOutput = Join-Path $env:RUNNER_TEMP ('native-scale-' + $env:GITHUB_RUN_ID)
+        foreach ($freshPath in @($requestPath,$adapterReceiptPath,$scaleOutput,(Join-Path $raw 'runtime.json'))) {
+            if (Test-Path -LiteralPath $freshPath) { throw 'Scaled native invocation must be fresh.' }
+        }
+        $request = [ordered]@{schema=1; request_id=[Guid]::NewGuid().ToString('N'); source_commit=$ExpectedSourceCommit
+            release_tag=$Tag; run_id=$env:GITHUB_RUN_ID; scope=$Scope; language=$Language; theme=$Theme
+            viewport=$Viewport; scale_percent=$scalePercent; exe_sha256=$receipt.exe_sha256; cli_sha256=$receipt.cli_sha256
+            job_name=('Local\BambuNativeScale-' + [Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(32)).ToLowerInvariant())}
+        $boundFiles = @{install=$installReceipt; driver="$PSScriptRoot/../md3/drive-native-interface.py"
+            adapter="$PSScriptRoot/run-scaled-native-interface.py"; verifier=$PSCommandPath
+            python=$python; cheap=$env:LLCU_CHEAP; helper="$PSScriptRoot/Invoke-HostedDisplayScale.ps1"
+            containment="$PSScriptRoot/HostedScaleProcess.cs"}
+        foreach ($entry in $boundFiles.GetEnumerator()) {
+            $request[$entry.Key + '_sha256'] = (Get-FileHash -LiteralPath $entry.Value -Algorithm SHA256).Hash.ToLowerInvariant()
+        }
+        # The adapter rejects unknown/duplicate fields, unsafe paths and hashes
+        # before Settings input, and repeats those checks before product launch.
+        [IO.File]::WriteAllText($requestPath, ($request | ConvertTo-Json -Compress), [Text.UTF8Encoding]::new($false))
+        $requestHash = (Get-FileHash -LiteralPath $requestPath -Algorithm SHA256).Hash.ToLowerInvariant()
+        $evidenceSafeToRead = $false
+        & "$PSScriptRoot/Invoke-HostedDisplayScale.ps1" -ScalePercent $scalePercent -OutputDirectory $scaleOutput -CheapExecutable $env:LLCU_CHEAP -InputRoute hosted-foreground -NativeRuntime
+        $driverExit = $LASTEXITCODE
+        $scaleSupervisor = Get-Content -LiteralPath (Join-Path $scaleOutput 'supervisor.json') -Raw | ConvertFrom-Json
+        $evidenceSafeToRead = $scaleSupervisor.worker_termination_verified -eq $true -and
+            $scaleSupervisor.recovery_termination_verified -eq $true -and $scaleSupervisor.child_termination_uncertain -eq $false
+        $receipt.scale_provisioning = [ordered]@{requested_percent=$scalePercent; status=$scaleSupervisor.status
+            worker_termination_verified=$scaleSupervisor.worker_termination_verified
+            recovery_termination_verified=$scaleSupervisor.recovery_termination_verified
+            restoration_verified=$scaleSupervisor.restoration_verified; disposal_required=$scaleSupervisor.disposal_required
+            input_route=$scaleSupervisor.input_route; foreground_input_atomic=$false}
+        if ($driverExit -ne 0 -or -not $evidenceSafeToRead -or
+            $scaleSupervisor.status -cne 'verified_settings_scale_and_restoration' -or
+            $scaleSupervisor.requested_scale -ne $scalePercent -or $scaleSupervisor.native_runtime_requested -ne $true -or
+            $scaleSupervisor.restoration_verified -ne $true -or $scaleSupervisor.disposal_required -ne $false) {
+            throw 'Native scale interval did not finish and restore successfully.'
+        }
+        $adapterFile = Get-Item -LiteralPath $adapterReceiptPath
+        if ($adapterFile.Length -le 0 -or $adapterFile.Length -gt 8192 -or
+            ($adapterFile.Attributes -band [IO.FileAttributes]::ReparsePoint)) { throw 'Native adapter receipt unavailable.' }
+        $adapter = Get-Content -LiteralPath $adapterReceiptPath -Raw | ConvertFrom-Json
+        if ($adapter.status -cne 'runtime_and_membership_verified' -or
+            $adapter.request_id -cne $request.request_id -or $adapter.request_sha256 -cne $requestHash -or
+            $adapter.holder_membership_count -lt 1 -or $adapter.product_membership_count -lt 1 -or
+            $adapter.runtime_sha256 -cne (Get-FileHash -LiteralPath (Join-Path $raw 'runtime.json') -Algorithm SHA256).Hash.ToLowerInvariant()) {
+            throw 'Fresh native adapter evidence binding failed.'
+        }
+    } else {
+        & $python "$PSScriptRoot/../md3/drive-native-interface.py" --exe $exe --cli $cli --install-receipt $installReceipt --source-commit $ExpectedSourceCommit --release-tag $Tag --output $raw --scope $Scope --language $Language --theme $Theme --scale $Scale --viewport $Viewport
+        $driverExit = $LASTEXITCODE
+    }
     $driver = Get-Content -LiteralPath (Join-Path $raw 'runtime.json') -Raw | ConvertFrom-Json
     $receipt.scope = $Scope
     $receipt.requested_tuple = @{language=$Language; theme=$Theme; scale=$Scale; viewport=$Viewport}
@@ -88,6 +145,15 @@ try {
     $receipt.failure = 'Install, bootstrap, packaged runtime or evidence verification failed; inspect restricted evidence.'
     throw 'Hosted native interface verification failed.'
 } finally {
+    if (-not $evidenceSafeToRead) {
+        # A writer with unverified containment may still mutate evidence. Do not
+        # read, zip or encrypt that directory, and do not accept an old receipt.
+        $receipt.status = 'failed'
+        $receipt.capture = 'withheld_unverified_containment'
+        $receipt.disposal_required = $true
+        $receipt | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $output 'receipt.json') -Encoding utf8
+        throw 'Native evidence withheld because containment is unverified.'
+    }
     # Encrypt only explicitly produced evidence, using the existing restricted-review recipient.
     $zipPath = Join-Path $env:RUNNER_TEMP ('native-interface-evidence-' + $env:GITHUB_RUN_ID + '.zip')
     $rsa = [Security.Cryptography.RSA]::Create()

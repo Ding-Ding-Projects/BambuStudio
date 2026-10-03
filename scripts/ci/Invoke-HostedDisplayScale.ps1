@@ -4,6 +4,7 @@ param(
     [Parameter(Mandatory)][string] $OutputDirectory,
     [Parameter(Mandatory)][string] $CheapExecutable,
     [ValidateSet('background','hosted-foreground')][string] $InputRoute = 'background',
+    [switch] $NativeRuntime,
     [ValidateSet('supervisor','run','restore')][string] $Mode = 'supervisor'
 )
 $ErrorActionPreference = 'Stop'
@@ -20,6 +21,10 @@ if (-not $output.StartsWith($tempRoot, [StringComparison]::OrdinalIgnoreCase)) {
 if (-not (Test-Path -LiteralPath $CheapExecutable -PathType Leaf)) { throw 'Cheap input executable unavailable.' }
 $pwsh = (Get-Process -Id $PID).Path
 $originalPath = Join-Path $output 'original.json'
+$nativeRequestPath = Join-Path $env:RUNNER_TEMP ('native-scale-request-' + $env:GITHUB_RUN_ID + '.json')
+$nativeReceiptPath = Join-Path $env:RUNNER_TEMP ('native-scale-adapter-' + $env:GITHUB_RUN_ID + '.json')
+$nativeAdapter = Join-Path $PSScriptRoot 'run-scaled-native-interface.py'
+$nativePython = Join-Path $env:RUNNER_TEMP ('automation-python-' + $env:GITHUB_RUN_ID + '/Scripts/python.exe')
 Add-Type -Path (Join-Path $PSScriptRoot 'HostedScaleProcess.cs')
 $script:ChildTerminationUncertain = $false
 
@@ -31,14 +36,18 @@ function Test-UncertainChildren {
 # Each child starts suspended, enters a non-breakaway kill-on-close job, then
 # runs. Only a zero active-process count proves the complete tree has stopped.
 # Non-JSON streams go to NUL. Cheap JSON is capped at 64 KiB with a bounded drain.
-function Invoke-BoundedProcess([string] $Executable, [string[]] $Arguments, [int] $Seconds, [bool] $Capture = $false) {
+function Invoke-BoundedProcess([string] $Executable, [string[]] $Arguments, [int] $Seconds, [bool] $Capture = $false, [string] $JobName = '') {
     if (Test-UncertainChildren) { throw 'Child termination is unverified.' }
     $pending = Join-Path $output ('child-' + $Mode + '-' + [Guid]::NewGuid().ToString('N') + '.pending')
     # Durable state must precede creation. An interrupted worker leaves this
     # marker, which blocks later input and recovery instead of assuming exit.
     [IO.File]::WriteAllText($pending, 'pending')
     try {
-        $result = [HostedScaleProcess]::Run([IO.Path]::GetFullPath($Executable), $Arguments, $Seconds, $Capture)
+        if ($JobName) {
+            $result = [HostedScaleProcess]::RunNamed([IO.Path]::GetFullPath($Executable), $Arguments, $Seconds, $Capture, $JobName)
+        } else {
+            $result = [HostedScaleProcess]::Run([IO.Path]::GetFullPath($Executable), $Arguments, $Seconds, $Capture)
+        }
         if ($result.Terminated) {
             # Rename preserves the durable termination proof and clears pending
             # atomically. This contains no child output, labels, or arguments.
@@ -53,15 +62,42 @@ function Invoke-BoundedProcess([string] $Executable, [string[]] $Arguments, [int
     }
 }
 
+function Read-NativeRequest {
+    # The fixed adapter performs the complete strict schema, duplicate, path and
+    # hash validation before any Settings input. These fields are only used to
+    # invoke that validator and must never select an executable or script.
+    $file = Get-Item -LiteralPath $nativeRequestPath
+    if ($file.Length -le 0 -or $file.Length -gt 8192 -or ($file.Attributes -band [IO.FileAttributes]::ReparsePoint)) {
+        throw 'Native request unavailable.'
+    }
+    $request = Get-Content -LiteralPath $nativeRequestPath -Raw | ConvertFrom-Json
+    if ($request.job_name -cnotmatch '^Local\\BambuNativeScale-[0-9a-f]{64}$' -or
+        $request.scale_percent -ne $ScalePercent -or $request.run_id -cne $env:GITHUB_RUN_ID -or
+        $ScalePercent -eq 100 -or $InputRoute -cne 'hosted-foreground' -or
+        $output -ine [IO.Path]::GetFullPath((Join-Path $env:RUNNER_TEMP ('native-scale-' + $env:GITHUB_RUN_ID))) -or
+        [IO.Path]::GetFullPath($CheapExecutable) -ine [IO.Path]::GetFullPath((Join-Path (Split-Path $nativePython) 'lowlevel-computer-use-cheap.exe'))) {
+        throw 'Native request binding unavailable.'
+    }
+    return $request
+}
+
 if ($Mode -eq 'supervisor') {
     if (Test-Path -LiteralPath $output) { throw 'Output directory must be new.' }
     [void](New-Item -ItemType Directory -Path $output)
     $run = @{ terminated = $false; code = -1 }
     $recovery = @{ terminated = $true; code = 0 }
     try {
+        if ($NativeRuntime) {
+            $nativeRequest = Read-NativeRequest
+            $run = Invoke-BoundedProcess $nativePython @($nativeAdapter,'--validate-request',$nativeRequest.job_name) 20
+            if (-not $run.terminated -or $run.code -ne 0) { throw 'Native request validation failed.' }
+        }
+        $run = @{ terminated = $false; code = -1 }
         $arguments = @('-NoProfile','-File',$PSCommandPath,'-ScalePercent',"$ScalePercent",
             '-OutputDirectory',$output,'-CheapExecutable',$CheapExecutable,'-InputRoute',$InputRoute,'-Mode','run')
-        $run = Invoke-BoundedProcess $pwsh $arguments 120
+        $seconds = 120
+        if ($NativeRuntime) { $arguments += '-NativeRuntime'; $seconds = 1920 }
+        $run = Invoke-BoundedProcess $pwsh $arguments $seconds
     } catch {} finally {
         # The durable original state exists before the first input. Recovery is
         # isolated too, and never races an unterminated first worker.
@@ -80,6 +116,7 @@ if ($Mode -eq 'supervisor') {
         @{schema=1; status=$(if ($success) {'verified_settings_scale_and_restoration'} else {'unavailable'})
           requested_scale=$ScalePercent; worker_termination_verified=$run.terminated
           input_route=$InputRoute; foreground_input_atomic=$false
+          native_runtime_requested=[bool]$NativeRuntime
           recovery_termination_verified=$recovery.terminated; restoration_verified=$restored
           child_termination_uncertain=$uncertain; process_containment='suspended_start_nonbreakaway_job'
           target_application_dpi='requires_independent_runtime_measurement'
@@ -381,6 +418,27 @@ try {
         $receipt.selected_scale = $selected.percent
         $receipt.measured_settings_dpi = $selected.dpi
         $receipt.status = 'selected_and_measured'
+        if ($NativeRuntime) {
+            # Product execution is unreachable until this invocation has both
+            # observed the selected value and measured the requested native DPI.
+            $script:Stage = 'native_runtime'
+            $nativeRequest = Read-NativeRequest
+            $requestHash = (Get-FileHash -LiteralPath $nativeRequestPath -Algorithm SHA256).Hash.ToLowerInvariant()
+            $nativeResult = Invoke-BoundedProcess $nativePython @($nativeAdapter,'--job-name',$nativeRequest.job_name) 1800 $false $nativeRequest.job_name
+            $receipt.native_runtime_termination_verified = $nativeResult.terminated
+            if (-not $nativeResult.terminated -or $nativeResult.code -ne 0) { throw 'Contained native runtime unavailable.' }
+            $nativeFile = Get-Item -LiteralPath $nativeReceiptPath
+            if ($nativeFile.Length -le 0 -or $nativeFile.Length -gt 8192 -or
+                ($nativeFile.Attributes -band [IO.FileAttributes]::ReparsePoint)) { throw 'Native receipt unavailable.' }
+            $nativeEvidence = Get-Content -LiteralPath $nativeReceiptPath -Raw | ConvertFrom-Json
+            if ($nativeEvidence.status -cne 'runtime_and_membership_verified' -or
+                $nativeEvidence.request_id -cne $nativeRequest.request_id -or
+                $nativeEvidence.request_sha256 -cne $requestHash -or
+                $nativeEvidence.holder_membership_count -lt 1 -or $nativeEvidence.product_membership_count -lt 1) {
+                throw 'Native runtime receipt binding failed.'
+            }
+            $receipt.action = 'native_runtime_and_membership_verified'
+        }
     }
 } catch {
     $receipt.status = 'unavailable'

@@ -58,7 +58,8 @@ def main():
     require(os.environ.get("GITHUB_ACTIONS") == "true"
             and os.environ.get("RUNNER_ENVIRONMENT") == "github-hosted"
             and os.environ.get("RUNNER_OS") == "Windows")
-    require(len(sys.argv) == 3 and sys.argv[1] == "--job-name")
+    require(len(sys.argv) == 3 and sys.argv[1] in ("--job-name", "--validate-request"))
+    validate_only = sys.argv[1] == "--validate-request"
     job_name = sys.argv[2]
     require(re.fullmatch(r"Local\\BambuNativeScale-[0-9a-f]{64}", job_name))
     run_id = os.environ.get("GITHUB_RUN_ID", "")
@@ -71,7 +72,7 @@ def main():
     fields = {"schema", "request_id", "source_commit", "release_tag", "run_id", "scope",
               "language", "theme", "viewport", "scale_percent", "exe_sha256", "cli_sha256",
               "install_sha256", "driver_sha256", "adapter_sha256", "verifier_sha256",
-              "python_sha256", "cheap_sha256", "job_name"}
+              "python_sha256", "cheap_sha256", "helper_sha256", "containment_sha256", "job_name"}
     require(isinstance(request, dict) and set(request) == fields)
     require(type(request["schema"]) is int and request["schema"] == 1)
     require(type(request["scale_percent"]) is int and request["scale_percent"] in (100, 125, 150, 200))
@@ -107,9 +108,12 @@ def main():
     exe = plain_path(version_root / "bambu-studio.exe", version_root)
     cli = plain_path(version_root / "automation" / "bambu-automation.exe", version_root)
     paths = {"exe": exe, "cli": cli, "install": install_path, "driver": driver_path,
-             "adapter": Path(__file__), "verifier": verifier_path, "python": python, "cheap": cheap}
+             "adapter": Path(__file__), "verifier": verifier_path, "python": python, "cheap": cheap,
+             "helper": here / "Invoke-HostedDisplayScale.ps1", "containment": here / "HostedScaleProcess.cs"}
     for key, path in paths.items():
         require(digest(path) == request[key + "_sha256"])
+    if validate_only:
+        return 0  # No product launch, UI access, Job query or receipt mutation.
 
     native = ctypes.WinDLL("kernel32", use_last_error=True)
     native.OpenJobObjectW.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.LPCWSTR]
