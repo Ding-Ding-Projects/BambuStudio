@@ -815,16 +815,7 @@ class Driver:
 
         original = [r["name"] for r in self.menu_items(top)]
         require(original, "Menu has no native rows")
-        click("literal-focus", "Search menu", kind=50004)
-        literal = original[0].split("\t")[0].split(" · ")[0]
-        text("literal-match", literal)
-        require(any(r["name"] == original[0] for r in self.menu_items(top)), "Literal row disappeared")
-        click("literal-clear", "Clear")
-        require(self.one("Search menu", kind=50004, top=top).get("value") == "" and
-                [r["name"] for r in self.menu_items(top)] == original, "Clear did not restore menu")
-        text("no-match", "zz_fixture_no_match_927")
-        require(not self.menu_items(top) and self.candidates("No matches.", top=top), "Missing no-match state")
-        key("no-match-escape", ["esc"])
+        # Literal/no-match interactions remain in the unchanged menus scope.
         click("enable-regex", "Regex mode")
         click("open-builder", "Regex builder")
         patterns = self.candidates("Regex pattern", kind=50004)
@@ -836,26 +827,63 @@ class Driver:
         require(self.one("Regex pattern", kind=50004, top=builder).get("value") == "^fixture$" and
                 self.one("Search menu", kind=50004, top=top).get("value") == "^fixture$",
                 "Builder pattern did not synchronize to the owning menu")
-        click("show-sample", "Test pattern", builder)
-        click("sample-focus", "Sample text", builder, 50004)
-        text("sample-match", "fixture", builder)
-        results = self.one("Match results", kind=50004, top=builder).get("value", "")
-        require(self.one("Sample text", kind=50004, top=builder).get("value") == "fixture" and
-                results.strip().endswith("fixture") and
-                self.candidates("Valid pattern \u2014 1 match", top=builder), "Builder sample did not match exactly once")
-        click("pattern-focus", "Regex pattern", builder, 50004)
         key("pattern-select", ["ctrl", "a"], builder)
         text("invalid-pattern", "[", builder)
         require(self.one("Regex pattern", kind=50004, top=builder).get("value") == "[" and
-                self.candidates("Unbalanced [ ] character set", top=builder) and
-                self.one("Match results", kind=50004, top=builder).get("value") == "",
+                self.candidates("Unbalanced [ ] character set", top=builder),
                 "Invalid pattern was not rejected by the rendered builder")
         key("invalid-select", ["ctrl", "a"], builder)
         text("valid-recovery", "^fixture$", builder)
         require(self.one("Regex pattern", kind=50004, top=builder).get("value") == "^fixture$" and
-                self.one("Match results", kind=50004, top=builder).get("value", "").strip().endswith("fixture") and
-                self.candidates("Valid pattern \u2014 1 match", top=builder) and
+                self.candidates("Valid pattern", top=builder) and
                 not self.candidates("Unbalanced [ ] character set", top=builder), "Builder did not recover")
+
+        navigation_count = 0
+        def in_scroll(row):
+            views = [r for r in self.probe if r.get("kind") == "window" and r.get("top") == builder
+                     and r.get("type") == "MD3ScrolledWindow" and r.get("on_screen")]
+            require(len(views) == 1, "Builder scroll viewport is missing or ambiguous")
+            view = views[0]
+            screen, client = view["screen"], view["client"]
+            left, upper, right, bottom = row["rect"]
+            return (screen["x"] <= left < right <= screen["x"] + client["w"] and
+                    screen["y"] <= upper < bottom <= screen["y"] + client["h"])
+
+        def navigate(label, name, keys, limit, kind=None):
+            nonlocal navigation_count
+            for attempt in range(limit + 1):
+                targets = self.candidates(name, kind=kind, top=builder)
+                focused = [r for r in self.native if r["focused"]]
+                require(len(focused) == 1 and focused[0]["top"] == builder and
+                        not focused[0]["offscreen"], "Builder traversal lost unique visible focus")
+                frames = [r for r in self.probe if r.get("kind") == "toplevel" and r.get("hwnd") == builder]
+                require(len(frames) == 1, "Builder frame geometry is unavailable")
+                frame = frames[0]["rect"]
+                left, upper, right, bottom = focused[0]["rect"]
+                require(frame["x"] <= left < right <= frame["x"] + frame["w"] and
+                        frame["y"] <= upper < bottom <= frame["y"] + frame["h"],
+                        "Builder traversal focus is outside its actual frame")
+                if len(targets) == 1 and targets[0]["focused"] and in_scroll(targets[0]):
+                    return targets[0]
+                require(attempt < limit, "Builder traversal did not expose the requested control")
+                key(label + "-" + str(attempt + 1), keys, builder)
+                navigation_count += 1
+
+        # wxScrolledWindow's normal child-focus path must actually reveal each
+        # destination. No scroll-pattern invocation or guessed wheel input.
+        navigate("test-back-tab", "Test pattern", ["shift", "tab"], 6)
+        click("show-sample", "Test pattern", builder)
+        navigate("sample-tab", "Sample text", ["tab"], 2, 50004)
+        text("sample-match", "fixture", builder)
+        sample = self.one("Sample text", kind=50004, top=builder)
+        results = self.one("Match results", kind=50004, top=builder)
+        require(in_scroll(sample) and in_scroll(results) and sample.get("value") == "fixture" and
+                results.get("value", "").strip().endswith("fixture"), "Visible builder sample did not match")
+        # Status belongs to the upper page and may now be scrolled away. Preserve
+        # its semantic read separately; the image claim is sample/results only.
+        statuses = [r for r in self.native if r["top"] == builder and r["type"] == 50020 and
+                    r["name"] == self.label("Valid pattern \u2014 1 match")]
+        require(len(statuses) == 1, "Builder sample status is missing or ambiguous")
         key("builder-escape", ["esc"], builder)
         require(not self.candidates("Regex pattern", kind=50004, top=builder) and
                 any(r["focused"] and r["top"] == top for r in self.native),
@@ -873,7 +901,7 @@ class Driver:
             self.key("parent-dismiss", ["esc"], root)
             require(not self.candidates("Search menu", kind=50004, top=root) and
                     any(r["focused"] and r["top"] == self.app.main for r in self.native), "Parent did not dismiss")
-        require(len(self.images) == len(self.rows) == (27 if nested else 22),
+        require(len(self.images) == len(self.rows) == (20 if nested else 15) + navigation_count,
                 "Menu builder action/capture inventory is incomplete")
         require(not any(row for step in self.rows for row in step.get("overflow", [])
                         if row["top"] in (root, top, builder)), "Menu builder controls overflow measured bounds")

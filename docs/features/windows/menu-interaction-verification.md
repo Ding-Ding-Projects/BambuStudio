@@ -3,20 +3,34 @@
 The installed native driver provides independent `menu-builder-root` and
 `menu-builder-nested` scopes. The existing `menus` scope remains unchanged.
 Separate invocations preserve the encrypted envelope's 30-image limit: the root
-scope requires 22 observations and the nested scope requires 27, including the
-initial ready observation. Every native input has its own subsequent capture.
+scope requires 15 fixed observations and the nested scope requires 20, including
+the initial ready observation, plus at most eight focus-navigation inputs. Every
+native input has its own subsequent capture, so neither scope exceeds 28 images.
 
-Both scopes open the empty Prepare canvas context menu and exercise a matching
-literal query, visible Clear control, no-match query and Escape recovery. They
-enable regex mode, open the actual Regex builder popup, require keyboard focus
+Both scopes open the empty Prepare canvas context menu. Literal matching,
+no-match and Escape recovery remain in the unchanged `menus` scope. The builder
+scopes enable regex mode, open the actual Regex builder popup, require keyboard focus
 in its empty pattern entry, and type `^fixture$`. The owning menu must expose
-that exact query. The Test pattern control opens the sample section; typing
-`fixture` must produce the actual one-match status and result text.
+that exact query.
 
 The driver selects the pattern with native Ctrl+A, types an invalid `[` pattern,
-requires the rendered unbalanced-set status and empty results, then replaces it
-with the valid pattern and requires recovery. Modifier input is not assumed to
-work: the actual entry value is checked after each replacement. Builder Escape
+requires the rendered unbalanced-set status, then replaces it with the valid
+pattern and requires the visible valid status before leaving the upper controls.
+Modifier input is not assumed to work: the actual entry value is checked after
+each replacement. This sequence does not claim clearing a previously populated
+sample result on invalid input.
+
+At most six genuine Shift+Tab inputs seek the exact Test pattern control, and
+at most two Tab inputs seek Sample text after the actual disclosure click. Each
+step requires one visible focused control within the original builder frame;
+each destination must also fit the current measured scroll viewport. The normal
+wxScrolledWindow child-focus behavior must actually reveal the destination, or
+the scope is unavailable. No fixed tab count is assumed to succeed. The Test
+pattern control opens the sample section; typing `fixture` must produce visible
+sample and result fields fully inside that viewport. The one-match status is
+read semantically from the same builder, because its upper label may now be
+scrolled away; the corresponding image proves only sample/results visibility.
+Builder Escape
 must close only the builder and return focus to its menu. Clear restores the
 original row inventory; menu Escape returns focus to the invoking surface.
 
@@ -32,7 +46,8 @@ Inputs use the existing owned hidden-desktop native route. UI Automation reads
 identify exact visible controls and inspect values; no UI Automation mutation,
 application command injection or generated image substitutes for interaction.
 Missing, ambiguous, offscreen or disabled controls stop the scope. The driver
-does not scroll blindly to find a sample field. Native DPI checks, measured
+does not scroll blindly to find a sample field. Focus traversal uses ordinary
+native keys, without UI Automation scroll or focus mutation. Native DPI checks, measured
 overflow checks, isolated profile, process teardown and encrypted transport
 remain mandatory. Raw labels, queries, geometry and images stay in the existing
 restricted evidence bundle until privacy and genuine-pixel review.
