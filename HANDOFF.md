@@ -2340,3 +2340,18 @@ now observe 150% and 200% separately at the same source.
 The minimum-resize combination is being implemented with a durable input-state
 marker: process termination cannot stand in for button release or desktop
 restoration. Native product build 37088514258 has reached Squirrel packaging.
+
+## Restricted minimum-resize integration, 2026-10-03 UTC
+
+Candidate 25b8668f0a848f04c8eff9f3241adb59d2132f33 has two independent
+source acceptances. Fixed 1920x1080 provisioning is restricted to minimum-resize,
+scale 1 and measured-minimum. Durable invocation-bound input markers block both
+normal and independent recovery until button, frame, desktop and native teardown
+proof agree. Process exit alone cannot clear uncertainty. The hosted contract
+source now expects nine cases; execution and installed interaction remain pending.
+The workflow opt-in defaults false and preserves earlier baseline invocations.
+
+Higher-scale attempts did not pass: 37091590432 stopped at validate_foreground
+before input; 37091591864 expanded the selector but found no 200% option. Both
+verified 1920x1080 and restored the original resolution and 100%/96 DPI, with
+contained termination. These observations do not prove unsupported scales.

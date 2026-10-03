@@ -14,7 +14,9 @@ if ($env:GITHUB_ACTIONS -cne 'true' -or $env:RUNNER_ENVIRONMENT -cne 'github-hos
     $env:RUNNER_OS -cne 'Windows' -or -not $env:RUNNER_TEMP) {
     throw 'Disposable hosted Windows execution is required.'
 }
-if ($ProvisionResolution -and $NativeRuntime) { throw 'Resolution provisioning is standalone-only until verified.' }
+if ($ProvisionResolution -and $NativeRuntime -and $ScalePercent -ne 100) {
+    throw 'Combined resolution and native execution requires the baseline minimum tuple.'
+}
 if ($ProvisionResolution -and $InputRoute -cne 'hosted-foreground') { throw 'Resolution provisioning requires the disposable foreground route.' }
 $tempRoot = [IO.Path]::GetFullPath($env:RUNNER_TEMP).TrimEnd('\') + '\'
 $output = [IO.Path]::GetFullPath($OutputDirectory)
@@ -36,6 +38,25 @@ $script:ChildTerminationUncertain = $false
 function Test-UncertainChildren {
     return $script:ChildTerminationUncertain -or
         @(Get-ChildItem -LiteralPath $output -File | Where-Object Name -Match '^child-(run|restore)-.*\.pending$').Count -gt 0
+}
+
+function Test-UncertainInput {
+    # This is independent of Job termination. An interrupted drag can leave a
+    # held button or a different input desktop after every child has exited.
+    $started = Join-Path $output 'native-input.started'
+    if (-not (Test-Path -LiteralPath $started)) { return $false }
+    try {
+        $requestFile = Get-Item -LiteralPath $nativeRequestPath
+        if ($requestFile.Length -le 0 -or $requestFile.Length -gt 8192 -or
+            ($requestFile.Attributes -band [IO.FileAttributes]::ReparsePoint)) { return $true }
+        $hash = (Get-FileHash -LiteralPath $nativeRequestPath -Algorithm SHA256).Hash.ToLowerInvariant()
+        foreach ($path in @($started,(Join-Path $output 'native-input.restored'))) {
+            $file = Get-Item -LiteralPath $path
+            if ($file.Length -ne 64 -or ($file.Attributes -band [IO.FileAttributes]::ReparsePoint) -or
+                [IO.File]::ReadAllText($path) -cne $hash) { return $true }
+        }
+        return $false
+    } catch { return $true }
 }
 
 # Each child starts suspended, enters a non-breakaway kill-on-close job, then
@@ -67,6 +88,15 @@ function Invoke-BoundedProcess([string] $Executable, [string[]] $Arguments, [int
     }
 }
 
+function Test-NativeTuple($Request, [int] $Percent, [bool] $Resolution) {
+    if ($Resolution) {
+        return $Request.resolution -ceq '1920x1080' -and $Request.scope -ceq 'minimum-resize' -and
+            $Request.viewport -ceq 'measured-minimum' -and $Percent -eq 100
+    }
+    return $Request.resolution -ceq 'unchanged' -and $Request.scope -cne 'minimum-resize' -and
+        $Percent -in @(125,150,200)
+}
+
 function Read-NativeRequest {
     # The fixed adapter performs the complete strict schema, duplicate, path and
     # hash validation before any Settings input. These fields are only used to
@@ -78,10 +108,13 @@ function Read-NativeRequest {
     $request = Get-Content -LiteralPath $nativeRequestPath -Raw | ConvertFrom-Json
     if ($request.job_name -cnotmatch '^Local\\BambuNativeScale-[0-9a-f]{64}$' -or
         $request.scale_percent -ne $ScalePercent -or $request.run_id -cne $env:GITHUB_RUN_ID -or
-        $ScalePercent -eq 100 -or $InputRoute -cne 'hosted-foreground' -or
+        ($ScalePercent -eq 100 -and -not $ProvisionResolution) -or $InputRoute -cne 'hosted-foreground' -or
         $output -ine [IO.Path]::GetFullPath((Join-Path $env:RUNNER_TEMP ('native-scale-' + $env:GITHUB_RUN_ID))) -or
         [IO.Path]::GetFullPath($CheapExecutable) -ine [IO.Path]::GetFullPath((Join-Path (Split-Path $nativePython) 'lowlevel-computer-use-cheap.exe'))) {
         throw 'Native request binding unavailable.'
+    }
+    if (-not (Test-NativeTuple $request $ScalePercent ([bool]$ProvisionResolution))) {
+        throw 'Native resolution tuple binding unavailable.'
     }
     return $request
 }
@@ -119,12 +152,12 @@ if ($Mode -eq 'supervisor') {
             '-OutputDirectory',$output,'-CheapExecutable',$CheapExecutable,'-InputRoute',$InputRoute,'-Mode','run')
         $seconds = 120
         if ($NativeRuntime) { $arguments += '-NativeRuntime'; $seconds = 1920 }
-        if ($ProvisionResolution) { $arguments += '-ProvisionResolution'; $seconds = 180 }
+        if ($ProvisionResolution) { $arguments += '-ProvisionResolution'; if (-not $NativeRuntime) { $seconds = 180 } }
         $run = Invoke-BoundedProcess $pwsh $arguments $seconds
     } catch {} finally {
         # The durable original state exists before the first input. Recovery is
         # isolated too, and never races an unterminated first worker.
-        if ($run.terminated -and -not (Test-UncertainChildren) -and (Test-Path -LiteralPath $originalPath)) {
+        if ($run.terminated -and -not (Test-UncertainChildren) -and -not (Test-UncertainInput) -and (Test-Path -LiteralPath $originalPath)) {
             try {
                 $recoveryArguments = @('-NoProfile','-File',$PSCommandPath,
                     '-ScalePercent',"$ScalePercent",'-OutputDirectory',$output,
@@ -133,11 +166,12 @@ if ($Mode -eq 'supervisor') {
                 if ($ProvisionResolution) { $recoveryArguments += '-ProvisionResolution'; $recoverySeconds = 90 }
                 $recovery = Invoke-BoundedProcess $pwsh $recoveryArguments $recoverySeconds
             } catch { $recovery = @{ terminated = $false; code = -1 } }
-        } elseif (-not $run.terminated -or (Test-UncertainChildren)) {
+        } elseif (-not $run.terminated -or (Test-UncertainChildren) -or (Test-UncertainInput)) {
             $recovery = @{ terminated = $false; code = -1 }
         }
         $uncertain = Test-UncertainChildren
-        $restored = $recovery.terminated -and $recovery.code -eq 0 -and -not $uncertain
+        $inputUncertain = Test-UncertainInput
+        $restored = $recovery.terminated -and $recovery.code -eq 0 -and -not $uncertain -and -not $inputUncertain
         $success = $run.terminated -and $run.code -eq 0 -and $restored
         @{schema=1; status=$(if ($success) {'verified_settings_scale_and_restoration'} else {'unavailable'})
           requested_scale=$ScalePercent; worker_termination_verified=$run.terminated
@@ -146,11 +180,21 @@ if ($Mode -eq 'supervisor') {
           resolution_provisioning_requested=[bool]$ProvisionResolution
           recovery_termination_verified=$recovery.terminated; restoration_verified=$restored
           child_termination_uncertain=$uncertain; process_containment='suspended_start_nonbreakaway_job'
+          input_recovery_uncertain=$inputUncertain
           target_application_dpi='requires_independent_runtime_measurement'
-          disposal_required=(-not $run.terminated -or -not $restored -or $uncertain)
+          disposal_required=(-not $run.terminated -or -not $restored -or $uncertain -or $inputUncertain)
         } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $output 'supervisor.json') -Encoding utf8
     }
     if ($success) { exit 0 }; exit 2
+}
+
+if ($Mode -eq 'restore' -and (Test-UncertainInput)) {
+    # Do not initialize UIA, change modes, or send Settings input when a native
+    # desktop handoff or button release has not been proved restored.
+    @{schema=1; status='unavailable'; restored=$false; disposal_required=$true
+      input_recovery_uncertain=$true; failure_stage='native_input_recovery_unverified'} |
+        ConvertTo-Json | Set-Content -LiteralPath (Join-Path $output 'restore.json') -Encoding utf8
+    exit 2
 }
 
 if ($ProvisionResolution -and $Mode -eq 'restore') {
@@ -372,7 +416,7 @@ function Observe-AllowedOptionDomain($Rows, $Combo) {
 }
 function Click-Control($Entry) {
     $script:Stage = 'validate_input'
-    if (Test-UncertainChildren) { throw 'Input blocked by unverified child termination.' }
+    if ((Test-UncertainChildren) -or (Test-UncertainInput)) { throw 'Input blocked by unverified child or input recovery.' }
     if ($ProvisionResolution) { [HostedDisplayMode]::AssertBinding($script:ResolutionState) }
     $started = [DateTime]::UtcNow
     $current = $Entry.element.Current
@@ -440,7 +484,7 @@ function Click-Control($Entry) {
     }
 }
 function Set-Scale([int] $Percent) {
-    if (Test-UncertainChildren) { throw 'Scale change blocked by unverified child termination.' }
+    if ((Test-UncertainChildren) -or (Test-UncertainInput)) { throw 'Scale change blocked by unverified child or input recovery.' }
     if ($ProvisionResolution) { [HostedDisplayMode]::AssertBinding($script:ResolutionState) }
     $script:Stage = 'resolve_combo'
     $rows = @(Read-Controls)
@@ -549,9 +593,19 @@ try {
             $script:Stage = 'native_runtime'
             $nativeRequest = Read-NativeRequest
             $requestHash = (Get-FileHash -LiteralPath $nativeRequestPath -Algorithm SHA256).Hash.ToLowerInvariant()
+            if ($ProvisionResolution) {
+                # Create before launching any product. Only the fixed adapter
+                # can publish matching restored evidence after the complete
+                # minimum operation and native teardown have both succeeded.
+                $started = Join-Path $output 'native-input.started'
+                $stream = [IO.File]::Open($started,[IO.FileMode]::CreateNew,[IO.FileAccess]::Write,[IO.FileShare]::None)
+                try { $bytes = [Text.Encoding]::ASCII.GetBytes($requestHash); $stream.Write($bytes,0,$bytes.Length); $stream.Flush($true) }
+                finally { $stream.Dispose() }
+            }
             $nativeResult = Invoke-BoundedProcess $nativePython @($nativeAdapter,'--job-name',$nativeRequest.job_name) 1800 $false $nativeRequest.job_name
             $receipt.native_runtime_termination_verified = $nativeResult.terminated
             if (-not $nativeResult.terminated -or $nativeResult.code -ne 0) { throw 'Contained native runtime unavailable.' }
+            if (Test-UncertainInput) { throw 'Native input restoration is unverified.' }
             $nativeFile = Get-Item -LiteralPath $nativeReceiptPath
             if ($nativeFile.Length -le 0 -or $nativeFile.Length -gt 8192 -or
                 ($nativeFile.Attributes -band [IO.FileAttributes]::ReparsePoint)) { throw 'Native receipt unavailable.' }
@@ -578,7 +632,7 @@ try {
     }
     $receipt.selection_observations = $script:Observation.Clone()
     $script:Observation = @{}
-    if ($null -ne $original -and -not (Test-UncertainChildren)) {
+    if ($null -ne $original -and -not (Test-UncertainChildren) -and -not (Test-UncertainInput)) {
         try {
             $restored = Set-Scale ([int]$original.scale)
             $receipt.restored = $restored.percent -eq $original.scale -and $restored.dpi -eq $original.dpi
@@ -621,7 +675,8 @@ try {
     }
     $receipt.restoration_observations = $script:Observation.Clone()
     $receipt.child_termination_uncertain = Test-UncertainChildren
-    $receipt.disposal_required = $receipt.child_termination_uncertain -or -not $receipt.restored
+    $receipt.input_recovery_uncertain = Test-UncertainInput
+    $receipt.disposal_required = $receipt.child_termination_uncertain -or $receipt.input_recovery_uncertain -or -not $receipt.restored
     $receipt | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $output ($Mode + '.json')) -Encoding utf8
 }
 if ($receipt.restored -and ($Mode -eq 'restore' -or $receipt.status -eq 'selected_and_measured')) { exit 0 }

@@ -72,7 +72,8 @@ def main():
     fields = {"schema", "request_id", "source_commit", "release_tag", "run_id", "scope",
               "language", "theme", "viewport", "scale_percent", "exe_sha256", "cli_sha256",
               "install_sha256", "driver_sha256", "adapter_sha256", "verifier_sha256",
-              "python_sha256", "cheap_sha256", "helper_sha256", "containment_sha256", "job_name"}
+              "python_sha256", "cheap_sha256", "helper_sha256", "containment_sha256", "job_name",
+              "resolution", "minimum_sha256", "display_mode_sha256"}
     require(isinstance(request, dict) and set(request) == fields)
     require(type(request["schema"]) is int and request["schema"] == 1)
     require(type(request["scale_percent"]) is int and request["scale_percent"] in (100, 125, 150, 200))
@@ -83,10 +84,14 @@ def main():
     require(re.fullmatch(r"md3-v[0-9]{1,12}", request["release_tag"]))
     require(request["run_id"] == run_id and request["job_name"] == job_name)
     require(request["scope"] in ("menus", "vocabulary", "vocabulary-persistence", "slice-controls",
-                                  "combined-print", "combined-send", "cancellation"))
+                                  "combined-print", "combined-send", "cancellation", "minimum-resize"))
     require(request["language"] in ("en", "yue_HK", "bilingual_en_yue_HK"))
     require(request["theme"] in ("light", "dark"))
     require(request["viewport"] in ("1200x800", "1000x600", "measured-minimum"))
+    minimum = request["scope"] == "minimum-resize"
+    require((minimum and request["resolution"] == "1920x1080" and request["scale_percent"] == 100
+             and request["viewport"] == "measured-minimum") or
+            (not minimum and request["resolution"] == "unchanged" and request["scale_percent"] in (125, 150, 200)))
     for key in fields:
         if key.endswith("_sha256"):
             require(re.fullmatch(r"[0-9a-f]{64}", request[key]))
@@ -109,9 +114,22 @@ def main():
     cli = plain_path(version_root / "automation" / "bambu-automation.exe", version_root)
     paths = {"exe": exe, "cli": cli, "install": install_path, "driver": driver_path,
              "adapter": Path(__file__), "verifier": verifier_path, "python": python, "cheap": cheap,
-             "helper": here / "Invoke-HostedDisplayScale.ps1", "containment": here / "HostedScaleProcess.cs"}
+             "helper": here / "Invoke-HostedDisplayScale.ps1", "containment": here / "HostedScaleProcess.cs",
+             "minimum": here.parent / "md3" / "minimum_resize.py", "display_mode": here / "HostedDisplayMode.cs"}
     for key, path in paths.items():
-        require(digest(path) == request[key + "_sha256"])
+        require(digest(plain_path(path)) == request[key + "_sha256"])
+    request_hash = digest(request_path)
+    scale_output = plain_path(root / f"native-scale-{run_id}", root)
+    started_path = plain_path(scale_output / "native-input.started", root)
+    restored_path = plain_path(scale_output / "native-input.restored", root)
+    restored_temp = plain_path(scale_output / "native-input.restored.tmp", root)
+    if minimum:
+        require(not restored_path.exists() and not restored_temp.exists())
+        if validate_only:
+            require(not started_path.exists())
+        else:
+            require(started_path.is_file() and started_path.stat().st_size == 64
+                    and started_path.read_text(encoding="ascii") == request_hash)
     if validate_only:
         return 0  # No product launch, UI access, Job query or receipt mutation.
 
@@ -190,6 +208,8 @@ def main():
                     "--release-tag", request["release_tag"], "--output", str(raw), "--scope", request["scope"],
                     "--language", request["language"], "--theme", request["theme"], "--scale", scale,
                     "--viewport", request["viewport"]]
+        if minimum:
+            sys.argv += ["--minimum-job-name", job_name]
         require(driver.main() == 0)
         runtime = read_json(runtime_path, 33554432)
         require(not membership_failed and seen_holders and seen_products)
@@ -200,6 +220,24 @@ def main():
         require(runtime.get("requested_tuple") == {"language": request["language"], "theme": request["theme"],
                                                   "scale": request["scale_percent"] / 100.0,
                                                   "viewport": request["viewport"]})
+        require(digest(request_path) == request_hash)
+        if minimum:
+            operations = [row for row in runtime.get("operations", [])
+                          if row.get("operation") == "interactive-minimum-resize"]
+            require(len(operations) == 1 and operations[0].get("status") == "interactive_clamp_observed")
+            operation = operations[0]
+            require(all(operation.get(key) is True for key in ("frame_restored", "input_desktop_restored",
+                        "mouse_release_verified", "final_button_up_verified", "server_exit_verified")))
+            require(operation.get("disposal_required") is False)
+            require(runtime.get("minimum_helper_sha256") == request["minimum_sha256"])
+            # The started marker is never removed. Restoration is a separate
+            # atomic, invocation-bound proof, never inferred from Job exit.
+            require(started_path.read_text(encoding="ascii") == request_hash and not restored_path.exists())
+            with restored_temp.open("x", encoding="ascii") as stream:
+                stream.write(request_hash)
+                stream.flush()
+                os.fsync(stream.fileno())
+            os.replace(restored_temp, restored_path)
         result["runtime_sha256"] = digest(runtime_path)
         result["status"] = "runtime_and_membership_verified"
         code = 0
