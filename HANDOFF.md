@@ -2291,3 +2291,10 @@ diagnostics were a cascade.
   handoff refresh, `git ls-remote origin refs/heads/main` was verified at the same SHA.
 
 </details>
+
+The fixed 1920x1080 standalone provisioning helper is independently reviewed at
+5d3a42fd32e29a77e2cc3df683eac3c50ed01993. Its hosted apply/scale/restore verdict
+is pending. Minimum-resize source is preserved on feature/preview-layout at
+187e55fa1518e7f66b636f9f29c2e7d8c149350d; it must not run at the known 1024x768
+mode, which cannot fit the required above-minimum starting frame. No interactive
+clamp, product DPI or current-candidate pixel proof is claimed.

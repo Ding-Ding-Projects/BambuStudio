@@ -91,10 +91,17 @@ physical print is authorized. Retain final device selection and confirmation.
 
 ## Remaining boundaries
 
-No active goal exists. The last account reading had 64% weekly allowance
+No active goal exists. The last account reading had 59% weekly allowance
 remaining; refresh at meaningful milestones and preserve first at 10% or less.
 Status Hub delivery is unavailable through the established route. Projects
 access is unavailable and does not block implementation. Issue 53 and Discussion
 54 carry progress; the wiki is preserved at 900af852f2f87f07d3bba815edf6ae973f7d769b and records
 the measured-scale and compile-repair update. Main integration, final green CI, full rendered matrix
 and authorized cleanup are unfinished.
+
+The fixed 1920x1080 standalone provisioning helper is independently reviewed at
+5d3a42fd32e29a77e2cc3df683eac3c50ed01993. Its hosted apply/scale/restore verdict
+is pending. Minimum-resize source is preserved on feature/preview-layout at
+187e55fa1518e7f66b636f9f29c2e7d8c149350d; it must not run at the known 1024x768
+mode, which cannot fit the required above-minimum starting frame. No interactive
+clamp, product DPI or current-candidate pixel proof is claimed.

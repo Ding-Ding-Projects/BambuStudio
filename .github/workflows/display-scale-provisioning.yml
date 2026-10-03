@@ -14,6 +14,10 @@ on:
         type: choice
         default: background
         options: [background, hosted-foreground]
+      provision_resolution:
+        description: Observe scaling at the supported 1920x1080 mode and restore the original mode
+        type: boolean
+        default: false
 permissions:
   contents: read
 jobs:
@@ -78,8 +82,16 @@ jobs:
         env:
           SCALE_PERCENT: ${{ matrix.scale }}
           SCALE_INPUT_ROUTE: ${{ inputs.input_route }}
+          PROVISION_RESOLUTION: ${{ inputs.provision_resolution }}
         run: |
-          & scripts/ci/Invoke-HostedDisplayScale.ps1 -ScalePercent ([int]$env:SCALE_PERCENT) -OutputDirectory "$env:RUNNER_TEMP/scale-proof" -CheapExecutable $env:LLCU_CHEAP -InputRoute $env:SCALE_INPUT_ROUTE
+          $scaleArguments = @{
+            ScalePercent = [int]$env:SCALE_PERCENT
+            OutputDirectory = "$env:RUNNER_TEMP/scale-proof"
+            CheapExecutable = $env:LLCU_CHEAP
+            InputRoute = $env:SCALE_INPUT_ROUTE
+          }
+          if ($env:PROVISION_RESOLUTION -eq 'true') { $scaleArguments.ProvisionResolution = $true }
+          & scripts/ci/Invoke-HostedDisplayScale.ps1 @scaleArguments
       - name: Retain bounded public receipts only
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
