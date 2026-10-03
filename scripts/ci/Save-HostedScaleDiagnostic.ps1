@@ -4,16 +4,36 @@ function Save-HostedScaleDiagnostic([ValidateSet('before_selector','expanded_sel
     if (-not $DiagnosticEvidence -or $NativeRuntime -or $Mode -cne 'run' -or $script:DiagnosticResults.ContainsKey($Phase)) { return }
     $script:DiagnosticResults[$Phase] = @{status='unavailable'; stage='initialize'}
     $diagnosticStage = 'initialize'
+    $sourceObservation = @{terminated=$null; exit_code=$null; output_is_string=$null; output_length=$null
+        source_format_valid=$null; run_id_present=$null; run_id_format_valid=$null; script_directory_present=$null}
     $png = Join-Path $env:RUNNER_TEMP ('scale-diagnostic-' + [Guid]::NewGuid().ToString('N') + '.png')
     $plain = $null; $key = $null; $rsa = $null
     try {
         if ((Test-UncertainChildren) -or (Test-UncertainInput)) { throw 'Diagnostic containment unavailable.' }
-        $diagnosticStage = 'source_identity'
+        $diagnosticStage = 'source_command_lookup'
         $git = (Get-Command git -CommandType Application).Source
+        $diagnosticStage = 'source_directory'
+        $sourceObservation.script_directory_present = [bool](Test-Path -LiteralPath $PSScriptRoot -PathType Container)
+        if (-not $sourceObservation.script_directory_present) { throw 'Diagnostic source directory unavailable.' }
+        $diagnosticStage = 'source_process'
         $sourceRead = Invoke-BoundedProcess $git @('-C',$PSScriptRoot,'rev-parse','HEAD') 5 $true
+        $sourceObservation.terminated = [bool]$sourceRead.terminated
+        $sourceObservation.exit_code = [int]$sourceRead.code
+        $diagnosticStage = 'source_output_type'
+        $sourceObservation.output_is_string = $sourceRead.stdout -is [string]
+        if (-not $sourceObservation.output_is_string) { throw 'Diagnostic source output unavailable.' }
+        $sourceObservation.output_length = $sourceRead.stdout.Length
+        $diagnosticStage = 'source_output_trim'
         $source = $sourceRead.stdout.Trim()
-        if (-not $sourceRead.terminated -or $sourceRead.code -ne 0 -or $source -cnotmatch '^[0-9a-f]{40}$' -or
-            $env:GITHUB_RUN_ID -cnotmatch '^\d{1,20}$') { throw 'Diagnostic source unavailable.' }
+        $sourceObservation.source_format_valid = $source -cmatch '^[0-9a-f]{40}$'
+        $sourceObservation.run_id_present = -not [string]::IsNullOrEmpty($env:GITHUB_RUN_ID)
+        $sourceObservation.run_id_format_valid = [bool]($env:GITHUB_RUN_ID -cmatch '^\d{1,20}$')
+        $diagnosticStage = 'source_process_exit'
+        if (-not $sourceRead.terminated -or $sourceRead.code -ne 0) { throw 'Diagnostic source process unavailable.' }
+        $diagnosticStage = 'source_output_format'
+        if (-not $sourceObservation.source_format_valid) { throw 'Diagnostic source unavailable.' }
+        $diagnosticStage = 'source_run_binding'
+        if (-not $sourceObservation.run_id_format_valid) { throw 'Diagnostic run unavailable.' }
         $diagnosticStage = 'settings_controls'
         $rows = @(Read-Controls)
         $state = Read-Scale $rows
@@ -124,9 +144,9 @@ function Save-HostedScaleDiagnostic([ValidateSet('before_selector','expanded_sel
             wrapped_key=[Convert]::ToBase64String($wrapped); nonce=[Convert]::ToBase64String($nonce); tag=[Convert]::ToBase64String($tag)
             ciphertext_sha256=[Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($cipher)).ToLowerInvariant()
         } | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $output ($Phase + '.envelope.json')) -Encoding utf8
-        $script:DiagnosticResults[$Phase] = @{status='encrypted_pending_pixel_review'; stage='complete'}
+        $script:DiagnosticResults[$Phase] = @{status='encrypted_pending_pixel_review'; stage='complete'; source_observation=$sourceObservation}
     } catch {
-        $script:DiagnosticResults[$Phase] = @{status='unavailable'; stage=$diagnosticStage}
+        $script:DiagnosticResults[$Phase] = @{status='unavailable'; stage=$diagnosticStage; source_observation=$sourceObservation}
     } finally {
         if ($null -ne $plain) { [Array]::Clear($plain,0,$plain.Length) }
         if ($null -ne $key) { [Array]::Clear($key,0,$key.Length) }

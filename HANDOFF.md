@@ -2401,3 +2401,20 @@ the latest observation. Source inspection identifies serial per-file attribution
 without intermediate progress or a short timeout, but cannot identify the live
 suboperation. A pending publisher is not a successful installed runtime result.
 Main integration, final combined runtime evidence and archive/cleanup remain open.
+
+## Source-identity observation refinement, 2026-10-03 UTC
+
+Run 37092723192 passed 9/9 lifecycle contracts in 12007 ms, then both diagnostic
+captures stopped at source_identity before capture. The 200% option was still
+unobserved; resolution, scale and both contained process trees were restored.
+No encrypted images exist for this run. Source 4e0ce0b7f627aacee3a91f1732ef48c3b30732a5
+has two independent source acceptances for fixed substage and bounded scalar
+observations. The underlying identity cause remains unproved. No raw output,
+paths, environment values or exceptions enter the public receipt.
+
+Publisher 37089433015 remained in metadata validation at 03:20:24 UTC; its
+one-hour observation limit expired with publication unverified, without canceling
+or rerunning it. Build 37092713387 for 7fb8a6a328772f04a159c0c989f2146aada152d4
+passed automation contracts and was compiling at its latest observation.
+All nine BambuStudio worktrees were clean and no stash existed at inventory.
+All source tips remain retained; none is eligible for completed-main cleanup.
