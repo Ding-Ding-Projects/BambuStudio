@@ -409,7 +409,7 @@ def native_worker(request_path: Path, output: Path):
                              "native_input_target": native_input_target})
         return
     comtypes.client.GetModule("UIAutomationCore.dll")
-    from comtypes.gen.UIAutomationClient import CUIAutomation, IUIAutomation, IUIAutomationValuePattern
+    from comtypes.gen.UIAutomationClient import CUIAutomation, IUIAutomation, IUIAutomationValuePattern, IUIAutomationTogglePattern
     automation = comtypes.client.CreateObject(CUIAutomation, interface=IUIAutomation)
     walker = automation.RawViewWalker
     rows = []
@@ -440,6 +440,12 @@ def native_worker(request_path: Path, output: Path):
                     try:
                         pattern = element.GetCurrentPattern(10002).QueryInterface(IUIAutomationValuePattern)
                         row["value"] = str(pattern.CurrentValue)[:1024]
+                    except COMError:
+                        pass
+                if row["hwnd"] > 0 and row["name"] in ("Case sensitive", "Regex mode"):
+                    try:
+                        toggle = element.GetCurrentPattern(10015).QueryInterface(IUIAutomationTogglePattern)
+                        row["toggle"] = int(toggle.CurrentToggleState)
                     except COMError:
                         pass
                 rows.append(row)
@@ -745,6 +751,10 @@ class Driver:
         require(not any(row for step in self.rows if step["operation"].startswith(prefix + "-")
                         for row in step["overflow"] if row["top"] == top),
                 "Menu controls overflow their measured layout")
+
+    def temporal_checkbox(self):
+        from temporal_checkbox import run
+        run(self)
 
     def menus(self):
         self.click("prepare", self.one("Prepare"))
@@ -1303,14 +1313,26 @@ def main():
         parser.add_argument("--" + name, type=Path, required=True)
     parser.add_argument("--source-commit", required=True)
     parser.add_argument("--release-tag", required=True)
-    parser.add_argument("--scope", choices=("menus", "menu-builder-root", "menu-builder-nested", "vocabulary", "vocabulary-persistence", "slice-controls", "combined-print", "combined-send", "cancellation", "minimum-resize", "minimum-observe", "startup-diagnostic"), required=True)
+    parser.add_argument("--scope", choices=("menus", "temporal-checkbox", "menu-builder-root", "menu-builder-nested", "vocabulary", "vocabulary-persistence", "slice-controls", "combined-print", "combined-send", "cancellation", "minimum-resize", "minimum-observe", "startup-diagnostic"), required=True)
     parser.add_argument("--verifier-commit")
     parser.add_argument("--minimum-job-name")
+    parser.add_argument("--temporal-job-name")
+    parser.add_argument("--temporal-package", type=Path)
+    parser.add_argument("--temporal-tools", type=Path)
     parser.add_argument("--language", choices=behavior.MODES, default="en")
     parser.add_argument("--theme", choices=("light", "dark"), default="light")
     parser.add_argument("--scale", type=float, choices=(1.0, 1.25, 1.5, 2.0), default=1.0)
     parser.add_argument("--viewport", choices=("1200x800", "1000x600", "measured-minimum"), default="1200x800")
     args = parser.parse_args()
+    temporal_scope = args.scope == "temporal-checkbox"
+    if temporal_scope:
+        require((args.language, args.theme, args.scale, args.viewport) == ("en", "light", 1.0, "1200x800")
+                and re.fullmatch(r"Local\\BambuNativeScale-[0-9a-f]{64}", args.temporal_job_name or "")
+                and args.temporal_package and args.temporal_tools, "Unsupported temporal tuple")
+        from minimum_resize import job_member
+        job_member(args.temporal_job_name, os.getpid())
+    else:
+        require(not any((args.temporal_job_name, args.temporal_package, args.temporal_tools)), "Unexpected temporal binding")
     diagnostic = args.scope == "startup-diagnostic"
     require((diagnostic and args.verifier_commit and behavior.SHA.fullmatch(args.verifier_commit)
              and args.language == "en" and args.theme == "light" and args.scale == 1.0
@@ -1349,12 +1371,12 @@ def main():
     os.environ["BAMBU_AUTOMATION_ROOTS"] = str(scratch)
     app = behavior.HostedApp(str(args.exe), str(profile), "bsnative-" + str(os.getpid()), str(probe))
     app.isolated_launcher_trace = diagnostic
-    app.holder_lifetime = 1800
+    app.holder_lifetime = 110 if temporal_scope else 1800
     drive = None
     status, failure, teardown = "failed", None, False
     try:
         drive = Driver(args, app, scratch)
-        app.start(timeout=240)
+        app.start(timeout=25 if temporal_scope else 240)
         if diagnostic:
             status = "diagnostic_completed"
         else:
@@ -1384,6 +1406,7 @@ def main():
             "minimum_helper_sha256": behavior.sha256(HERE / "minimum_resize.py") if args.scope == "minimum-resize" else None,
             "requested_tuple": {"language": args.language, "theme": args.theme,
                 "scale": args.scale, "viewport": args.viewport},
+            "temporal": getattr(drive, "temporal", None),
             "operations": drive.rows if drive else [], "captures": drive.images if drive else [],
             "viewport_observations": drive.viewport_observations if drive else [],
             "startup_diagnostics": collect_startup(drive.app if drive else app,

@@ -6,7 +6,7 @@ param(
     [Parameter(Mandatory)][ValidatePattern('^[0-9a-f]{40}$')][string] $ExpectedSourceCommit,
     [Parameter(Mandatory)][ValidatePattern('^[^/]+/[^/]+$')][string] $Repository,
     [Parameter(Mandatory)][string] $OutputDirectory,
-    [Parameter(Mandatory)][ValidateSet('menus','menu-builder-root','menu-builder-nested','vocabulary','vocabulary-persistence','slice-controls','combined-print','combined-send','cancellation','minimum-resize','minimum-observe','startup-diagnostic')][string] $Scope,
+    [Parameter(Mandatory)][ValidateSet('menus','temporal-checkbox','menu-builder-root','menu-builder-nested','vocabulary','vocabulary-persistence','slice-controls','combined-print','combined-send','cancellation','minimum-resize','minimum-observe','startup-diagnostic')][string] $Scope,
     [ValidatePattern('^[0-9a-f]{40}$')][string] $ExpectedVerifierCommit,
     [ValidateSet('en','yue_HK','bilingual_en_yue_HK')][string] $Language = 'en',
     [ValidateSet('light','dark')][string] $Theme = 'light',
@@ -20,6 +20,8 @@ Set-StrictMode -Version Latest
 if ($env:GITHUB_ACTIONS -ne 'true' -or $env:RUNNER_ENVIRONMENT -ne 'github-hosted' -or $env:RUNNER_OS -ne 'Windows') {
     throw 'Automation verification requires a disposable GitHub-hosted Windows runner.'
 }
+$temporalScope = $Scope -ceq 'temporal-checkbox'
+if ($temporalScope -and ($Language -cne 'en' -or $Theme -cne 'light' -or $Scale -cne '1' -or $Viewport -cne '1200x800' -or $ProvisionDisplayScale -or $ProvisionResolution)) { throw 'Unsupported temporal checkbox tuple.' }
 $startupDiagnostic = $Scope -ceq 'startup-diagnostic'
 if ($startupDiagnostic) {
     if (-not $ExpectedVerifierCommit -or $ProvisionDisplayScale -or $ProvisionResolution -or
@@ -155,6 +157,35 @@ try {
             $adapter.runtime_sha256 -cne (Get-FileHash -LiteralPath (Join-Path $raw 'runtime.json') -Algorithm SHA256).Hash.ToLowerInvariant()) {
             throw 'Fresh native adapter evidence binding failed.'
         }
+    } elseif ($temporalScope) {
+        Add-Type -Path "$PSScriptRoot/HostedScaleProcess.cs"
+        $temporalJob = 'Local\BambuNativeScale-' + [Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(32)).ToLowerInvariant()
+        $pending = Join-Path $output 'temporal.pending'
+        $pendingBytes = [Text.Encoding]::UTF8.GetBytes((@{source=$ExpectedSourceCommit;run=$env:GITHUB_RUN_ID;attempt=$env:GITHUB_RUN_ATTEMPT;job=$temporalJob} | ConvertTo-Json -Compress))
+        $pendingStream = [IO.FileStream]::new($pending,[IO.FileMode]::CreateNew,[IO.FileAccess]::Write,[IO.FileShare]::None)
+        try { $pendingStream.Write($pendingBytes,0,$pendingBytes.Length); $pendingStream.Flush($true) }
+        finally { $pendingStream.Dispose() }
+        $arguments = @((Join-Path $PSScriptRoot '../md3/drive-native-interface.py'),'--exe',$exe,'--cli',$cli,
+            '--install-receipt',$installReceipt,'--source-commit',$ExpectedSourceCommit,'--release-tag',$Tag,
+            '--output',$raw,'--scope',$Scope,'--language',$Language,'--theme',$Theme,'--scale',$Scale,
+            '--viewport',$Viewport,'--temporal-job-name',$temporalJob,'--temporal-package',$packages[0].FullName,
+            '--temporal-tools',$toolRoot)
+        $evidenceSafeToRead = $false
+        $contained = [HostedScaleProcess]::RunNamed($python,$arguments,120,$false,$temporalJob)
+        $driverExit = $contained.Code
+        $receipt.temporal_containment = @{tree_terminated=$contained.Terminated; exit_code=$contained.Code; deadline_seconds=120}
+        if (-not $contained.Terminated) { throw 'Temporal tree termination is unverified.' }
+        $runtimePath = Join-Path $raw 'runtime.json'
+        if (-not (Test-Path -LiteralPath $runtimePath -PathType Leaf) -or (Get-Item -LiteralPath $runtimePath).Length -gt 33554432 -or
+            ((Get-Item -LiteralPath $runtimePath).Attributes -band [IO.FileAttributes]::ReparsePoint)) { throw 'Temporal lifecycle receipt unavailable.' }
+        $temporalRuntime = Get-Content -LiteralPath $runtimePath -Raw | ConvertFrom-Json
+        if ($temporalRuntime.source_commit -cne $ExpectedSourceCommit -or $temporalRuntime.scope -cne 'temporal-checkbox' -or
+            $temporalRuntime.teardown_verified -ne $true -or $null -eq $temporalRuntime.temporal -or
+            $temporalRuntime.temporal.disposal_required -ne $false) { throw 'Temporal desktop or input lifecycle is unverified.' }
+        $evidenceSafeToRead = $true
+        Move-Item -LiteralPath $pending -Destination (Join-Path $output 'temporal.finished')
+        if ($driverExit -ne 0 -or $temporalRuntime.temporal.semantic_transition_verified -ne $true -or
+            $temporalRuntime.temporal.status -cne 'observed') { throw 'Temporal cadence or checkbox semantics were not observed.' }
     } elseif ($Scope -eq 'minimum-resize') {
         $receipt.disposal_required = $true
         Add-Type -Path "$PSScriptRoot/HostedScaleProcess.cs"
