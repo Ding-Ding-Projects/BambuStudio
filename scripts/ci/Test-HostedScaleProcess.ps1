@@ -34,6 +34,40 @@ function Record-Pass([string] $Name) { $cases.Add(@{name=$Name; status='passed'}
 try {
     # Compile and exercise the checked-in implementation, not a test copy.
     Add-Type -Path (Join-Path $PSScriptRoot 'HostedScaleProcess.cs')
+    $stage = 'owned_page_marker_contract'
+    # This definitions-only helper does not initialize UIA or navigate. Exercise
+    # the actual predicates with synthetic metadata, never synthetic UI input.
+    . (Join-Path $PSScriptRoot 'Invoke-HostedDisplayScaleNavigation.ps1')
+    $pageRows = @(
+        @{id='SystemSettings_Personalize_Color_ColorMode_ComboBox'; type='ControlType.ComboBox'; enabled=$true; offscreen=$false; patterns=@('SelectionPatternIdentifiers.Pattern','ExpandCollapsePatternIdentifiers.Pattern')},
+        @{id='SystemSettings_Personalize_Color_AccentColorMode_ComboBox'; type='ControlType.ComboBox'; enabled=$true; offscreen=$false; patterns=@('SelectionPatternIdentifiers.Pattern','ExpandCollapsePatternIdentifiers.Pattern')},
+        @{id='SystemSettings_Personalize_Color_EnableTransparency_ToggleSwitch'; type='ControlType.Button'; enabled=$true; offscreen=$false; patterns=@('TogglePatternIdentifiers.Pattern')})
+    Require-Result (-not (Test-ColorsPageMarkers @($pageRows[0],$pageRows[1])))
+    Require-Result (-not (Test-ColorsPageMarkers @($pageRows + $pageRows[0])))
+    foreach ($change in @(@{type='ControlType.Text'},@{enabled=$false},@{offscreen=$true},@{patterns=@()},@{enabled='true'})) {
+        $badRows = @($pageRows | ForEach-Object { $_.Clone() })
+        foreach ($key in $change.Keys) { $badRows[0][$key]=$change[$key] }
+        Require-Result (-not (Test-ColorsPageMarkers $badRows))
+    }
+    Require-Result (Test-ColorsPageMarkers $pageRows)
+    Require-Result (Test-PageRefreshScope $true $false $true $true 'hosted-foreground')
+    foreach ($case in @(@($true,$true,$true,'hosted-foreground'),@($false,$false,$true,'hosted-foreground'),
+        @($false,$true,$false,'hosted-foreground'),@($false,$true,$true,'background'))) {
+        Require-Result (-not (Test-PageRefreshScope $true $case[0] $case[1] $case[2] $case[3]))
+    }
+    Require-Result (Test-PageRefreshScope $false $true $false $false 'background')
+    Record-Pass $stage
+    $stage = 'navigation_uncertainty_contract'
+    Require-Result (-not (Test-UncertainNavigation))
+    $navigationMarker = Join-Path $output 'navigation.pending'
+    [IO.File]::WriteAllText($navigationMarker,'pending')
+    Require-Result (Test-UncertainNavigation)
+    # A stopped launcher does not clear navigation uncertainty.
+    [IO.File]::WriteAllText((Join-Path $output 'navigation.launcher-stopped'),'stopped')
+    Require-Result (Test-UncertainNavigation)
+    Move-Item -LiteralPath $navigationMarker -Destination (Join-Path $output 'navigation.returned')
+    Require-Result (-not (Test-UncertainNavigation))
+    Record-Pass $stage
     $stage = 'nested_source_identity'
     # Reproduce the diagnostic's nested contained Git call without Settings.
     # Only fixed numeric/boolean observations leave this disposable child.
@@ -298,7 +332,7 @@ exit 0
         [string[]]@('-NoProfile','-File',$membership,'-JobName',$jobName), 10, $true, $jobName)
     Require-Result ($result.Terminated -and $result.Code -eq 0 -and $result.Output -ceq '{"ok":true}')
     Record-Pass $stage
-    $success = $cases.Count -eq 11
+    $success = $cases.Count -eq 13
 } catch {
     # Neither exception text nor benign child payloads enter public logs.
     $cases.Add(@{name=$stage; status='failed'})
@@ -318,12 +352,12 @@ exit 0
     }
     $passed = @($cases | Where-Object status -eq 'passed').Count
     @{schema=1; status=$(if ($success -and $cleanupVerified) {'passed'} else {'failed'})
-      passed=$passed; expected=11; cases=$cases.ToArray(); cleanup_verified=$cleanupVerified
+      passed=$passed; expected=13; cases=$cases.ToArray(); cleanup_verified=$cleanupVerified
       source_process_observation=$sourceProcessObservation
       source_supervisor_observation=$sourceSupervisorObservation
       elapsed_ms=$timer.ElapsedMilliseconds; settings_mutated=$false
     } | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $output 'receipt.json') -Encoding utf8
 }
-if ($success -and $cleanupVerified) { Write-Host 'Hosted scale lifecycle checks passed: 11/11'; exit 0 }
+if ($success -and $cleanupVerified) { Write-Host 'Hosted scale lifecycle checks passed: 13/13'; exit 0 }
 Write-Host 'Hosted scale lifecycle checks failed; inspect the fixed receipt.'
 exit 2

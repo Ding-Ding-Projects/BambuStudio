@@ -7,6 +7,7 @@ param(
     [switch] $NativeRuntime,
     [switch] $ProvisionResolution,
     [switch] $DiagnosticEvidence,
+    [switch] $RefreshSettingsPage,
     [ValidateSet('supervisor','run','restore')][string] $Mode = 'supervisor'
 )
 $ErrorActionPreference = 'Stop'
@@ -30,6 +31,11 @@ if (-not $output.StartsWith($tempRoot, [StringComparison]::OrdinalIgnoreCase)) {
 if (-not (Test-Path -LiteralPath $CheapExecutable -PathType Leaf)) { throw 'Cheap input executable unavailable.' }
 $pwsh = (Get-Process -Id $PID).Path
 $originalPath = Join-Path $output 'original.json'
+. (Join-Path $PSScriptRoot 'Invoke-HostedDisplayScaleNavigation.ps1')
+if (-not (Test-PageRefreshScope $RefreshSettingsPage $NativeRuntime $ProvisionResolution $DiagnosticEvidence $InputRoute)) {
+    throw 'Page refresh requires standalone foreground resolution diagnostics.'
+}
+$script:NavigationObservation = @{requested=[bool]$RefreshSettingsPage; colors_acknowledged=$false; display_acknowledged=$false}
 $nativeRequestPath = Join-Path $env:RUNNER_TEMP ('native-scale-request-' + $env:GITHUB_RUN_ID + '.json')
 $nativeReceiptPath = Join-Path $env:RUNNER_TEMP ('native-scale-adapter-' + $env:GITHUB_RUN_ID + '.json')
 $nativeAdapter = Join-Path $PSScriptRoot 'run-scaled-native-interface.py'
@@ -159,6 +165,7 @@ if ($Mode -eq 'supervisor') {
         if ($NativeRuntime) { $arguments += '-NativeRuntime'; $seconds = 1920 }
         if ($ProvisionResolution) { $arguments += '-ProvisionResolution'; if (-not $NativeRuntime) { $seconds = 180 } }
         if ($DiagnosticEvidence) { $arguments += '-DiagnosticEvidence' }
+        if ($RefreshSettingsPage) { $arguments += '-RefreshSettingsPage' }
         $run = Invoke-BoundedProcess $pwsh $arguments $seconds
     } catch {} finally {
         # The durable original state exists before the first input. Recovery is
@@ -177,7 +184,8 @@ if ($Mode -eq 'supervisor') {
         }
         $uncertain = Test-UncertainChildren
         $inputUncertain = Test-UncertainInput
-        $restored = $recovery.terminated -and $recovery.code -eq 0 -and -not $uncertain -and -not $inputUncertain
+        $navigationUncertain = Test-UncertainNavigation
+        $restored = $recovery.terminated -and $recovery.code -eq 0 -and -not $uncertain -and -not $inputUncertain -and -not $navigationUncertain
         $success = $run.terminated -and $run.code -eq 0 -and $restored
         @{schema=1; status=$(if ($success) {'verified_settings_scale_and_restoration'} else {'unavailable'})
           requested_scale=$ScalePercent; worker_termination_verified=$run.terminated
@@ -187,8 +195,9 @@ if ($Mode -eq 'supervisor') {
           recovery_termination_verified=$recovery.terminated; restoration_verified=$restored
           child_termination_uncertain=$uncertain; process_containment='suspended_start_nonbreakaway_job'
           input_recovery_uncertain=$inputUncertain
+          navigation_recovery_uncertain=$navigationUncertain; page_refresh_requested=[bool]$RefreshSettingsPage
           target_application_dpi='requires_independent_runtime_measurement'
-          disposal_required=(-not $run.terminated -or -not $restored -or $uncertain -or $inputUncertain)
+          disposal_required=(-not $run.terminated -or -not $restored -or $uncertain -or $inputUncertain -or $navigationUncertain)
         } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $output 'supervisor.json') -Encoding utf8
     }
     if ($success) { exit 0 }; exit 2
@@ -218,6 +227,15 @@ if ($ProvisionResolution -and $Mode -eq 'restore') {
         ConvertTo-Json | Set-Content -LiteralPath (Join-Path $output 'restore.json') -Encoding utf8
 }
 
+if ($Mode -eq 'restore' -and (Test-UncertainNavigation)) {
+    # Broker navigation remains unknown even after every launcher has exited.
+    # Independent mode recovery above is safe; no further URI or scale input is.
+    @{schema=1; status='unavailable'; restored=$false; disposal_required=$true
+      resolution_restored=([bool]$ProvisionResolution -and $earlyModeRestored)
+      navigation_recovery_uncertain=$true; failure_stage='navigation_return_unverified'} |
+        ConvertTo-Json | Set-Content -LiteralPath (Join-Path $output 'restore.json') -Encoding utf8
+    exit 2
+}
 Add-Type -AssemblyName UIAutomationClient
 Add-Type -AssemblyName UIAutomationTypes
 Add-Type @'
@@ -424,7 +442,7 @@ function Observe-AllowedOptionDomain($Rows, $Combo) {
 }
 function Click-Control($Entry) {
     $script:Stage = 'validate_input'
-    if ((Test-UncertainChildren) -or (Test-UncertainInput)) { throw 'Input blocked by unverified child or input recovery.' }
+    if ((Test-UncertainChildren) -or (Test-UncertainInput) -or (Test-UncertainNavigation)) { throw 'Input blocked by unverified child, input or navigation recovery.' }
     if ($ProvisionResolution) { [HostedDisplayMode]::AssertBinding($script:ResolutionState) }
     $started = [DateTime]::UtcNow
     $current = $Entry.element.Current
@@ -492,7 +510,7 @@ function Click-Control($Entry) {
     }
 }
 function Set-Scale([int] $Percent) {
-    if ((Test-UncertainChildren) -or (Test-UncertainInput)) { throw 'Scale change blocked by unverified child or input recovery.' }
+    if ((Test-UncertainChildren) -or (Test-UncertainInput) -or (Test-UncertainNavigation)) { throw 'Scale change blocked by unverified child, input or navigation recovery.' }
     if ($ProvisionResolution) { [HostedDisplayMode]::AssertBinding($script:ResolutionState) }
     $script:Stage = 'resolve_combo'
     $rows = @(Read-Controls)
@@ -568,6 +586,11 @@ try {
         }
     } else {
         $before = Read-Scale @(Read-Controls)
+        if ($RefreshSettingsPage) {
+            $navigationRoot = [ScaleNative]::GetAncestor([IntPtr]$before.combo.top.Current.NativeWindowHandle,2)
+            [uint32]$navigationOwner = 0
+            [void][ScaleNative]::GetWindowThreadProcessId($navigationRoot,[ref]$navigationOwner)
+        }
         if ($before.dpi -ne (96 * $before.percent / 100)) { throw 'Original Settings DPI does not match its selection.' }
         $original = @{scale=$before.percent; dpi=$before.dpi; settings_pid=$settingsId; settings_start=$settingsStart; session=$session}
         if ($ProvisionResolution) {
@@ -597,6 +620,7 @@ try {
             $receipt.scale_after_resolution = $afterResolution.percent
             $receipt.settings_dpi_after_resolution = $afterResolution.dpi
         }
+        if ($RefreshSettingsPage) { Invoke-OwnedSettingsPageRefresh $navigationRoot $navigationOwner }
         $selected = Set-Scale $ScalePercent
         $receipt.selected_scale = $selected.percent
         $receipt.measured_settings_dpi = $selected.dpi
@@ -648,6 +672,7 @@ try {
     $script:Observation = @{}
     if ($null -ne $original -and -not (Test-UncertainChildren) -and -not (Test-UncertainInput)) {
         try {
+            if (Test-UncertainNavigation) { $script:Stage='navigation_return_unverified'; throw 'Navigation recovery remains unverified.' }
             $restored = Set-Scale ([int]$original.scale)
             $receipt.restored = $restored.percent -eq $original.scale -and $restored.dpi -eq $original.dpi
             $receipt.original_scale = $original.scale
@@ -672,7 +697,7 @@ try {
             # Reobserve scale after restoring resolution, because a mode change
             # may itself affect the offered/selected scale. Both must match.
             $receipt.restored = $false
-            if ($receipt.resolution_restored -and -not (Test-UncertainChildren)) {
+            if ($receipt.resolution_restored -and -not (Test-UncertainChildren) -and -not (Test-UncertainNavigation)) {
                 try {
                     [HostedDisplayMode]::AssertBinding($script:ResolutionState)
                     $finalScale = Read-Scale @(Read-Controls)
@@ -691,7 +716,9 @@ try {
     if ($DiagnosticEvidence) { $receipt.diagnostic_evidence = $script:DiagnosticResults.Clone() }
     $receipt.child_termination_uncertain = Test-UncertainChildren
     $receipt.input_recovery_uncertain = Test-UncertainInput
-    $receipt.disposal_required = $receipt.child_termination_uncertain -or $receipt.input_recovery_uncertain -or -not $receipt.restored
+    $receipt.navigation_recovery_uncertain = Test-UncertainNavigation
+    $receipt.page_refresh = $script:NavigationObservation.Clone()
+    $receipt.disposal_required = $receipt.child_termination_uncertain -or $receipt.input_recovery_uncertain -or $receipt.navigation_recovery_uncertain -or -not $receipt.restored
     $receipt | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $output ($Mode + '.json')) -Encoding utf8
 }
 if ($receipt.restored -and ($Mode -eq 'restore' -or $receipt.status -eq 'selected_and_measured')) { exit 0 }
