@@ -11,6 +11,7 @@
 - [Checkbox and slider emphasis](choice-motion.md)
 - [Disclosure feedback](disclosure-motion.md)
 - [Hosted animation lifetime verification](motion-verification.md)
+- [Assembly export progress entrance and pending verification](assembly-export-motion.md)
 - [English, Hong Kong Cantonese, and bilingual modes](language-modes.md)
 - [Funny levels and dialog emojis](funny-levels-and-dialog-emojis.md)
 - [Ink terminology (filament → ink, AMS → Ink Dispenser)](ink-terminology.md)

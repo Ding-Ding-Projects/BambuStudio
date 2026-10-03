@@ -9,11 +9,13 @@ runtime evidence.
 
 | Slice | Existing implementation | Remaining transitions and states |
 | --- | --- | --- |
-| Shared policy/lifetime | MD3Motion durations, easing, interruptible Anim and FadeIn; saved system/reduced preference in this unit | Hosted policy execution, restart persistence, live interruption, hidden/destroyed owners |
-| Native state and tabs | Button/StaticBox registered state colors; horizontal TabStrip underline and vertical selection pill; SwitchButton knob | Hosted temporal, destruction, reduced/hidden and layout proof; unconverted controls, Tabbook/Notebook and tab content changes |
-| Panels/dialogs/tooltips | MD3DialogChrome and appearance/search popovers have entrances | Repeated show, dismissal, panel expansion/collapse, ParamTooltip and MarkdownTip transitions |
-| ImGui menus and states | Shared menu search and popup layout; native MD3Menu already has entrance fades | Root/nested ImGui entrances/dismissal, result changes, hover/focus/press; owner- and ID-scoped state |
-| Notifications/loading | NotificationManager fades, ProgressBar pulses, FanControl/CameraHUD animate | Shared reduced-motion policy, progress changes, loading completion/cancellation and idle scheduling |
+| Shared policy/lifetime | Saved system/reduced preference, interruptible weak-owner Anim, hidden settlement and destroyed-owner cancellation; hosted pure 59-outcome policy/paint contract passed | Preference persistence and actual installed surface behavior |
+| Native state and tabs | StateHandler color interpolation, Button/StaticBox paint routing, TabStrip underline/pill, Notebook/TabButton selection feedback, SwitchButton knob | Actual page-content transitions, temporal contrast, interruption, theme/DPI and installed lifetime evidence |
+| Choices | CheckBox decorative selection emphasis and Slider focus/drag halo, with immediate values and input geometry | Installed raster cost, rapid input, capture loss, hidden/reduced settlement and genuine temporal evidence |
+| Panels/dialogs/tooltips | Owned captioned-dialog, CommandPalette and ParamTooltip entrances; filament/monitor disclosure rails; RegexBuilderPopup owns its entrance | Full panel-content motion, repeat/reverse/hide/destruction evidence and composited native opacity capability |
+| Assembly export frame | Separate reviewed source candidate `92813f71ef3809442bdceb32ca92f54187462a0f` owns reveal/hide/destruction through MD3TransientEntrance | Candidate compilation and real export fixture, no-activation, cancellation and composited-opacity verification |
+| ImGui menus and states | Root/modal/nearest-popup child draw lists share bounded context/ID entrance timelines; native MD3Menu owns entrance and decorative hover/filter feedback with full-contrast semantic text | Canvas tooltip entrance, canvas hover/filter feedback, genuine temporal evidence and runtime state bounds |
+| Notifications/loading | NotificationManager and ProgressBar now consult shared reduced/hidden behavior; existing FanControl/CameraHUD activity signals remain | Installed completion/cancellation, idle scheduling and full reduced-motion coverage of remaining activity indicators |
 
 Semantic state changes remain immediate: disabled controls stop accepting input,
 selection and cancellation take effect, and destruction releases ownership
@@ -31,5 +33,52 @@ hash, not just a final still. Cover rapid reversal, repeated opening, destructio
 mid-transition, hidden/minimized state, theme/DPI changes and system/application
 reduced-motion changes. Stop frame scheduling after convergence.
 
-All five slices remain incomplete until their hosted evidence is reviewed.
-Source now includes the shared preference/owner-policy foundation and bounded native state-color/tab-indicator slice. Neither source coverage nor pure arithmetic checks establish rendered motion coverage.
+## Evidence and reachability boundaries
+
+The source inventory above is grounded in integrated revision
+`c7aefb4b84f31a4bc2519d8052ac78b3ccaa3a17`, with the separately reviewed
+`9aa64b75bf327d4268782df6e45fb0d9a10cb359` correction removing SearchField's
+duplicate external RegexBuilderPopup fade. The assembly frame candidate is
+separate and is not claimed integrated by this document.
+
+Hosted run [37100814236](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37100814236)
+passed 14 real wx event-loop cases with 95 assertions for the fixture at
+`a266dbbf53096ca41dcaeda6533f4e57ddcbb2d1`. This is actual animator lifetime
+evidence, not installed full-GUI or rendered-motion coverage. Hosted run
+[37101358501](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37101358501)
+at `c7aefb4b84f31a4bc2519d8052ac78b3ccaa3a17` passed the 59-outcome pure
+policy/paint contract; its log states `Motion policy checks passed: 59` and
+records 7,712 validated translations. These results do not establish product
+pixels. No universal pixel verdict exists. Source review, pure arithmetic,
+event-loop assertions and installed temporal pixels are distinct evidence layers.
+
+`MarkdownTip::ShowTip` returns false under `NDEBUG`; no external ShowTip/AttachTo/
+DetachFrom caller exists in the inspected release source. Its remaining Reload,
+Recreate and ExitTip calls do not create the singleton. This legacy surface is
+not applicable to the currently reachable release, not an implemented entrance.
+See [content ownership](../docs/features/windows/content-motion.md).
+
+## Concrete remaining implementation scopes
+
+- Page content: `Notebook.hpp::DoShowPage` and `Tabbook.hpp::DoShowPage` retain
+  NONE/zero native effects. MainFrame Home/Device/Project/Calibration, Monitor
+  Status/Storage/Firmware and Auxiliary project pages are actual callers.
+  Select one paint-owned panel or loaded web document for a bounded transition;
+  selected-tab feedback is not page-content motion. Heavy canvas composition
+  requires a separate renderer-owned design.
+- Canvas tooltips: `ImGuiWrapper::tooltip` and `IMSlider::show_tooltip` use
+  independent BeginTooltip windows, outside the current popup-ancestor timeline.
+  Preview simulation controls reach the latter. Use a separate bounded tooltip
+  identity and preserve readable semantic text.
+- Canvas hover/filter: `menu_search` updates visibility and selectable paint
+  changes hover color immediately. Add only bounded item-owned decorative
+  feedback; never delay results, callbacks or move hitboxes.
+- Busy notice responsiveness: `BusyInfo` in MsgDialog.cpp forces a paint before
+  callers in Plater's replace/reload paths block the event loop. A timer alone
+  cannot animate this interval. Nonblocking work ownership is a separate scope,
+  not a reason to claim a cosmetic timer as a completed transition.
+
+Immediate selection, cancellation, validation and dismissal semantics are
+intentional. Reduced motion intentionally settles visuals without intermediate
+movement. Neither exemption excuses missing full-motion feedback elsewhere.
+All remaining installed and rendered evidence stays explicitly pending.
