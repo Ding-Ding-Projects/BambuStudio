@@ -490,6 +490,24 @@ No exception strings or native values are added. The actual cause remains unknow
 until a changed hosted observation supplies that phase; this instrumentation does
 not relax capture acceptance or alter input, containment or restoration.
 
+Run `37092723192` at `7fb8a6a328772f04a159c0c989f2146aada152d4`
+stopped both observations at `source_identity`, before capture. Its nine lifecycle
+contracts passed, and scale, resolution and process restoration were verified.
+That stage alone does not identify a directory, executable, child exit, output
+type or run-binding defect. The contained process inherits its parent's environment
+and native current directory; the source query supplies an explicit `git -C`
+directory. Neither environment identity nor the source commit is substituted.
+
+Source observation now separates command lookup, directory existence, contained
+execution, output type, trimming, child exit, source format and run binding into
+fixed stages. Its public metadata contains only nullable booleans, the numeric
+exit code and the output character count (bounded by the existing 64-KiB capture).
+The source text, executable and directory paths, environment values, stderr and
+exception messages remain unpublished. Exact lowercase 40-character source
+identity, numeric run identity, successful exit and complete child termination
+are still required. This diagnostic refinement is unverified until a changed
+hosted observation establishes the narrower cause; it is not a source-identity fix.
+
 #### Administrative diagnostic opening
 
 `scripts/md3/Open-HostedScaleDiagnostic.ps1` opens this format using the existing
