@@ -260,3 +260,33 @@ random Job name and internal lifecycle files remain private and are never upload
 Do not dispatch the product-scale matrix until the separate lifecycle and
 standalone provisioning checks pass for the intended implementation. The opt-in
 hook's presence is not a completed scale-matrix verdict.
+
+## Read-only hosted display capability observation
+
+`Probe-HostedDisplayCapabilities.ps1 -OutputDirectory <new RUNNER_TEMP child>`
+requires an already opened Display Settings surface on a disposable hosted
+Windows machine. An unnamed non-breakaway Job contains its read-only worker for
+45 seconds, with the existing bounded termination proof. Upload only `receipt.json`.
+
+The worker binds the unique observed Settings Scale root to its actual monitor,
+reads the current display mode and enumerates at most 512 supported modes with
+`EnumDisplaySettings`. It also observes a unique Settings resolution combo whose
+selected numeric dimensions match the current mode. Process start identities,
+monitor identity and the current mode are checked again before acceptance.
+`QueryDisplayConfig(QDC_ONLY_ACTIVE_PATHS)` must prove exactly one active display
+target before and after the observation. Multiple targets, including cloned
+targets, remain unavailable rather than assuming Settings selected the monitor
+containing its own window. Resolution candidates must share the exact observed
+Scale root. Display-path identities remain private. The numeric `fields` mask
+accompanies each mode; orientation is null unless `DM_DISPLAYORIENTATION` is set,
+and stability checks distinguish absent orientation from a measured zero.
+The public receipt contains only fixed status values, numeric dimensions, bit
+depth, refresh frequency, orientation, counts and a primary-monitor flag. Device
+names, process/window identities, UI labels and raw exceptions are never emitted.
+
+This diagnostic sends no input, expands no control, changes no resolution or
+scale, and writes no registry settings. A larger supported resolution is evidence
+for a later bounded investigation, not proof that 150% or 200% scaling is offered.
+Missing or ambiguous resolution observations and incomplete mode enumeration
+remain unavailable. Any future resolution change needs its own supported input,
+exact original-state preservation and verified resolution-plus-scale restoration.
