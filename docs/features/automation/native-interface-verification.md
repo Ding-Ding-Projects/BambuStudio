@@ -14,7 +14,13 @@ There are no retries, target function calls or substituted parent-desktop proofs
 The existing nine hosted cases include actual helper paths for unavailable
 handles, unavailable or mismatched owners, failed exit queries, exited threads,
 desktop exceptions, close failure and success, including call/cleanup ordering.
-These additions remain hosted-unverified; no local execution was performed.
+These additions passed hosted contract run `37139896660` at verifier
+`75770f71f59358514df9d5af42b38402e538116c`. The changed diagnostic
+`37139898854` authenticated exact thread ownership, contextual exit-state evidence
+and closure, but still obtained a null desktop handle with native code 0. The
+name query and continuation were not reached. Teardown was verified. No local
+execution was performed. Further historical-package diagnosis is held until
+current-package runtime evidence is available.
 
 `STILL_ACTIVE` (259) is contextual exit-code evidence while the target remains
 at the acknowledged initial debugger break with no continuation written. It is

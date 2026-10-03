@@ -1,27 +1,36 @@
 # Bambu Studio handoff
 
-## Latest bounded startup observation
+## Current verification, 2026-10-03 UTC
 
-Hosted contract37139070022 passed at9c18092a021133451fe83bfecf58c9543a1d08d9:
-nine Python cases, four invalid desktops, four invalid executable selections,
-actual absence and persistent lifecycle verified. Four source hashes match.
-Diagnostic37139071425 authenticated at that verifier: GetThreadDesktop returned
-null with native code0. The name query did not run. Target identity and both Job
-memberships passed, no continuation was written, and teardown was verified.
-Four exact CRLF source hashes and the6382-byte restricted log hash match.
+The two-qualifier const repair is preserved in integration source
+`68dabac8f16b83065c0e58a05e687a0708f3ecde`. Combined run
+[37138948887](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37138948887)
+is still compiling at the last observation. Its managed automation job passed
+27 of 27 cases; this does not establish native compilation, installation or UI behavior.
+Later verifier source `75770f71f59358514df9d5af42b38402e538116c` has the same
+product C++ source and a separate combined run, `37139881377`, also pending.
 
-Reviewed thread-binding source53a2a0b22eb72f452267aa476a6fdd7b6caec405 adds a
-limited-query handle, exact thread-to-process equality and successful active-state
-observation before the existing desktop query. It holds and closes the handle
-through every path. Desktop equality and continuation requirements stay unchanged.
-New assertions and the changed diagnostic remain pending hosted execution.
-After this bounded observation, prioritize the current matching package runtime;
-do not expand historical-package diagnosis through speculative changes.
+At that verifier, hosted contracts `37139896660` passed nine Python cases,
+four invalid-desktop cases, four invalid-executable cases, actual absence and
+persistent lifecycle checks. Four exact CRLF source hashes were independently verified.
+Authenticated diagnostic `37139898854` completed encrypted transport, but its driver
+exited 2. Exact-thread opening, process equality, exit-code observation and handle
+closure passed. `GetThreadDesktop` returned null with immediate native code 0;
+the name query was not reached and no continuation was written. Four source hashes
+and the 6,382-byte restricted log hash independently matched. Debugger stop,
+owned-process cleanup and named-desktop closure were verified.
 
-Combined product build37138948887 at68dabac8f16b83065c0e58a05e687a0708f3ecde
-is still compiling. This remains the decisive production-compile evidence for
-the two-qualifier const repair. No final green-main verdict or current UI proof.
+`STILL_ACTIVE` is contextual exit-code evidence at the initial debugger break,
+not unconditional liveness proof. No failing initializer has been identified.
+Further diagnosis of historical package `md3-v190` is held. The next runtime step
+requires the current candidate's matching package and immutable release tag.
 
+All product compilation, checks, packaging, installation, slicing and UI execution
+remain on hosted Windows runners. New feature work is frozen. No physical printing
+or transfer is included. Installed vocabulary, menus, animation, combined actions,
+cancellation and the complete measured display matrix remain unverified.
+`main` remains `ce883543177ef7df46fa5b798dcc5c7f3d2f8020`. No final green-main
+result, archive or deletion is claimed. Earlier sections below are historical.
 
 ## Active repair update, 2026-10-03
 

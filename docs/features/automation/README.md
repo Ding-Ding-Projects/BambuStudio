@@ -68,3 +68,7 @@ Related: [Windows release supply chain](../releases/windows-release-supply-chain
 
 - [Native lookup contract receipt](hosted-startup-contracts-37139070022.json): nine Python cases and contained lifecycle checks passed.
 - [Native handle observation](hosted-startup-creation-37139071425.json): null handle/native code 0, name query unreached, no continuation.
+
+- [Current managed automation receipt](hosted-verification-37138948887.json): 27 passing cases at `68dabac8f`; the combined native build remains separate.
+- [Exact-thread contracts](hosted-startup-contracts-37139896660.json): nine Python cases and contained lifecycle checks passed at `75770f71`.
+- [Exact-thread diagnostic](hosted-startup-creation-37139898854.json): ownership and closure passed, desktop handle unavailable, no continuation; historical-package diagnosis is held.

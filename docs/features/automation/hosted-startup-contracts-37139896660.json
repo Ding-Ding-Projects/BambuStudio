@@ -1,0 +1,45 @@
+{
+  "schema": 1,
+  "url": "https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37139896660",
+  "receipt_sha256": "436c2e049554d35d554ba2a3f7caf5a228d95165a017e787da21b6f2ecc506f0",
+  "verified_source_hashes": 4,
+  "source_byte_representation": "CRLF-checkout",
+  "receipt": {
+    "executable_selection": {
+      "python_count": 2,
+      "cheap_count": 1,
+      "invalid_cases": 4,
+      "validated": true
+    },
+    "run_id": "37139896660",
+    "lifecycle_process": {
+      "exit_code": 0,
+      "native_error": null,
+      "terminated": true,
+      "stage": 18
+    },
+    "absence_process": {
+      "exit_code": 0,
+      "native_error": null,
+      "terminated": true,
+      "stage": 18
+    },
+    "python_cases": 9,
+    "desktop_rejections": 4,
+    "files": {
+      "scripts/ci/HostedScaleProcess.cs": "8081405a3e3030dae2ad8bac1f4cd1f6e9aebbae160c06a693462a8e892b8e03",
+      "scripts/md3/test-trace-packaged-startup.py": "57db7b746f05ac841f65c66050580be938dc95faf43b79d2b29fa87d8b5f22ad",
+      "scripts/md3/startup_desktop_holder.py": "d62f0c1bd573140d934fd781c4d12713d22763ef73bb452d6c0936728e9f8b9d",
+      "scripts/md3/trace-packaged-startup.py": "a7222cef889b051b85b8ee9a8b05f7106d0aed80b2c60d7e9820d8e2b6956e01"
+    },
+    "product_started": false,
+    "persistent_lifecycle_verified": true,
+    "schema": 1,
+    "status": "passed",
+    "source_commit": "75770f71f59358514df9d5af42b38402e538116c",
+    "actual_absence_verified": true
+  },
+  "limitations": [
+    "Product-free contract and lifecycle evidence; not product startup."
+  ]
+}
