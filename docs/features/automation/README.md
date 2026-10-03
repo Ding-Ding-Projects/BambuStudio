@@ -51,3 +51,8 @@ Related: [Windows release supply chain](../releases/windows-release-supply-chain
 - [Startup contract failure receipts](hosted-startup-contracts-20261003.json), exact retained outcomes before product launch; the later receipt identifies native process creation failure without establishing its command-value cause.
 
 - [Persistent startup desktop lifecycle](hosted-startup-lifecycle-37100483720.json), verified real absence and persistent create/list/close with contained termination; no product execution.
+
+- [Native verification at 6c5e619aaa](hosted-native-interface-37099796194.json), including actual canvas regex parity, excludes later motion.
+- [Hosted animator lifetime receipt](hosted-motion-runtime-37100814236.json), fourteen real wx cases and compiled negative; injected preferences and no pixels.
+- [Partial startup diagnostic](hosted-startup-creation-37100674583.json), encrypted output with verified teardown but matching local key unavailable.
+- [Additive review recipient recovery](hosted-gui-recipient-recovery.md).

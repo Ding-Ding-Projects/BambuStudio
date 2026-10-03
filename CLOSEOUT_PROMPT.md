@@ -2,7 +2,7 @@
 
 ## Current continuation, 2026-10-03 UTC
 
-Preserved integration source is 7f63c689e4d3eb11de3232e11aa2fb6c21339d07.
+Preserved integration source is c7aefb4b84f31a4bc2519d8052ac78b3ccaa3a17.
 Main remains ce883543177ef7df46fa5b798dcc5c7f3d2f8020. No incomplete task source
 is eligible for completed-main cleanup. No archive or deletion occurred.
 
@@ -43,8 +43,11 @@ product-free run 37100483720 passed at that source: nine Python, four desktop
 rejections, four invalid executable forms, actual absence and persistent lifecycle
 verified, both contained exits zero and termination verified. Two Python matches
 were observed on this runner; previous malformed arguments remain unobserved.
-Actual from-creation diagnostic 37100674583 is running at verifier d3359fbdf,
-targeting fixed md3-v190. Product startup remains unresolved. Evidence requirements remain unchanged. The exact response
+Actual from-creation diagnostic 37100674583 completed with partial encrypted
+output and verified teardown at verifier d3359fbdf, targeting fixed md3-v190.
+Driver exit was 2. The matching local protected key is unavailable, so contents
+remain unopened. Additive v3 recovery 8da54ff78 preserves all old recipients;
+new diagnostic 37101357236 is queued at c7aefb4b8. Product startup remains unresolved. Evidence requirements remain unchanged. The exact response
 from this failed attempt was not retained and must not be reconstructed.
 See docs/features/automation/hosted-startup-creation-37098366121.json.
 
@@ -80,8 +83,11 @@ at 8a2750717, alongside transient entrance 20280c50e. The combined pure policy
 count is now 26, pending hosted execution. Those outcomes do not prove real timers
 or rendered transitions. Reviewed native/canvas menu 4e3acd093 and selection-feedback 7317abf75 are
 integrated at 7f63c689e. Real wx event-loop fixture 0a5acd666 is integrated at
-a266dbbf5 and hosted run 37100814236 is queued for fourteen actual cases plus
-the required compiled Stop mutation. Preference acquisition is injected in this
+a266dbbf5. Hosted run 37100814236 passed fourteen actual cases with 95 assertions
+and rejected the compiled Stop mutation specifically at explicit_stop (exit 1,
+one completed case, 22 assertions). Both contained processes terminated and
+both desktops restored/closed. Two independent receipt/hash/chronology reviews
+accepted the retained outputs; executable bytes were not uploaded. Preference acquisition is injected in this
 fixture; actual saved settings, OS lookup and product pixels remain outside it.
 Further reachable modal/child-list/regex-builder transitions and adversarial
 coverage/correctness reviews continue in separate owned lanes. Remaining slices are
@@ -107,3 +113,14 @@ Before completion: integrate completed verified work into main, push and prove
 its exact remote SHA, obtain the combined result for that actual candidate,
 update public records, verify the dated complete archive, then remove only
 inactive clean task-owned candidates whose tips are ancestors of pushed main.
+
+Current source follow-up: c7aefb4b8 includes reviewed checkbox/slider emphasis,
+disclosure rails, regex-builder/modal/child-list entrances and semantic menu
+contrast preservation. The earlier filter blend reduced shortcut contrast to
+2.993:1 in source arithmetic; repaired paint keeps final semantic colors and
+animates decoration. Fifty-nine pure outcomes remain pending. Run37100211528
+failed catalog counts (7709 metadata versus7712 entries); reviewed coverage
+repair e70638618 is included in new native run37101358501. Combined package
+run37101358049 is queued at the same source. No current installed pixels or
+final-main verdict exist. Menu-builder interaction scope and temporal capture
+planning continue; page-body transitions remain incomplete.

@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "url": "https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37100674583",
+  "receipt_sha256": "4e4a86627abad7ee199b59bf36aee6a3769b9d9148f700bb1691dfbe1ead64c0",
+  "receipt": {
+    "schema": 1,
+    "status": "instrumented_trace_partial_encrypted_pending_review",
+    "run_id": "37100674583",
+    "run_attempt": "1",
+    "release_tag": "md3-v190",
+    "source_commit": "35d1074faea221fa4f289f1db1e0ee428a90d701",
+    "verification_commit": "d3359fbdf491375e584c1547676638585d09d5fb",
+    "installed_exe_sha256": "8fab11fc9adcae579e14ec8895b6e53ab1f769494bc2bc807db1b0b654e210ec",
+    "cdb_sha256": "31789c2c2645d5fdafb1621c47b0db8bc2fbca47b510a0e4e6fdede0479ce105",
+    "debugger_source": "signed hosted Windows SDK",
+    "execution_class": "instrumented_from_creation; separate from uninstrumented baseline",
+    "evidence_meaning": "partial diagnostic transport only; no measured GUI geometry or behavior verdict",
+    "project_symbols": "matching_project_symbols_unavailable; module_offsets_only",
+    "evidence_status": "encrypted_partial_behavior_pending_restricted_review",
+    "failure_type": null,
+    "desktop_stage": "closed",
+    "desktop_holder_termination_verified": true,
+    "desktop_handle_closed": true,
+    "desktop_absence_cli_exit": 0,
+    "desktop_absence_native_code": 2,
+    "worker_tree_termination_verified": true,
+    "desktop_closed_verified": true,
+    "trace_driver_exit_code": 2
+  },
+  "restricted_review": "unavailable_matching_local_protected_key",
+  "limitations": [
+    "Hosted workflow succeeded in retaining partial encrypted diagnostic output with verified termination and desktop closure.",
+    "Trace driver returned 2; encrypted contents have not been opened or accepted.",
+    "The matching review key is unavailable locally. Preserve the bundle; additive versioned key recovery and a new diagnostic are required.",
+    "No product startup, initializer cause or rendered behavior is established."
+  ]
+}

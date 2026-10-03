@@ -36,6 +36,8 @@
 
 ## Native motion and responsiveness
 
+- [x] Pass fourteen real wx animation event-loop cases with 95 assertions and the specific compiled Stop mutation in hosted run `37100814236` at `a266dbbf5`; preference acquisition is injected and product pixels remain excluded.
+
 - [ ] Extend shared native transitions with real elapsed-time animation and reduced-motion support; policy/lifetime foundation c309da8a is source-reviewed and integrated, hosted verification pending.
 - [ ] Animate native control states and tab indicators, panels/dialogs/tooltips, root/nested/canvas menus, notifications and progress; preserve immediate semantics and reduced-motion behavior.
 - [ ] Move practical blocking I/O from UI handlers into lifetime-safe background operations.

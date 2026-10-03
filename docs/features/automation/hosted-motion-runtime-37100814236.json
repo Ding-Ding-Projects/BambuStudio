@@ -1,0 +1,94 @@
+{
+  "schema": 1,
+  "url": "https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37100814236",
+  "receipt": {
+    "schema": 1,
+    "sourceCommit": "a266dbbf53096ca41dcaeda6533f4e57ddcbb2d1",
+    "runId": "37100814236",
+    "runAttempt": "1",
+    "execution": "github-hosted-windows",
+    "status": "passed",
+    "expectedCases": 14,
+    "files": {
+      "tests/native_gui/CMakeLists.txt": "2d64540ea201115d2833fe3dad27444160d62711b6f00fa38e8ccf60470e9d6f",
+      "scripts/ci/HostedScaleProcess.cs": "8081405a3e3030dae2ad8bac1f4cd1f6e9aebbae160c06a693462a8e892b8e03",
+      "production.json": "a89c9bd22cb3ec695d323633bd15b4818bcfe848b48d967a00e9565125e4ce7d",
+      "production.csv": "3349b538feb212ffdc07b537a4a0ec41cce532381ccca1fd38693fe65b285161",
+      "src/slic3r/GUI/Widgets/MD3MotionPolicy.hpp": "f5bf43068aa171a1a5c10bd8ed954be859c9c651edd6a75ae4a18fe69e391db7",
+      "src/slic3r/GUI/Widgets/MD3MotionPreference.cpp": "0b594bc8d16f7a5ab631198812112234c14cb45f48b794fd6a0d9583b05c398c",
+      ".github/workflows/native-interface-verification.yml": "975cbabac379d0227ad94981db639764de0b8567e8439a609a05927f194b1577",
+      "src/slic3r/GUI/Widgets/MD3Motion.cpp": "084570e619f7d30e28cf7a4a55e3b9082d8b12fbed86ce8877c15d250165dd62",
+      "negative.csv": "3d0f7fa4d57adef55fb64cbb7773dd1a0efa1b0528b5f36777b6c6fda1e6199b",
+      "src/slic3r/GUI/Widgets/MD3Motion.hpp": "233fb6fac29d1f196ab7d25385fa72c3c72083b80a97b46f4f2b527b70a29209",
+      "tests/native_gui/motion_runtime.cpp": "66cb3c51aaab15edd68344bc980d19a40eac2357413ae4e3d68f9f141cea7e45",
+      "negative.json": "86c6fca6e3f3871b93b5aa17ff61776249bb6c2fb6717458d2e4f1d4391ea1d4"
+    },
+    "processes": {
+      "negative": {
+        "terminated": true,
+        "stage": 18,
+        "executableSha256": "c70024fd944912cf2bdb9b493096c08007798eed351a3b4116d15f4a6f512c16",
+        "exitCode": 1
+      },
+      "production": {
+        "terminated": true,
+        "stage": 18,
+        "executableSha256": "5782bc9708143ae5d710ef94dfb7533dba4d3a83e2c33e130cef4b132afdeeb8",
+        "exitCode": 0
+      }
+    },
+    "preferenceAcquisition": "injected",
+    "pixelEvidence": false,
+    "negativeRejected": true
+  },
+  "production": {
+    "schema": 1,
+    "passed": true,
+    "cases": 14,
+    "assertions": 95,
+    "phase": "teardown",
+    "desktopRestored": true,
+    "desktopClosed": true
+  },
+  "negative": {
+    "schema": 1,
+    "passed": false,
+    "cases": 1,
+    "assertions": 22,
+    "phase": "explicit_stop",
+    "desktopRestored": true,
+    "desktopClosed": true
+  },
+  "original_files": [
+    {
+      "name": "negative.csv",
+      "bytes": 237,
+      "sha256": "3d0f7fa4d57adef55fb64cbb7773dd1a0efa1b0528b5f36777b6c6fda1e6199b"
+    },
+    {
+      "name": "negative.json",
+      "bytes": 123,
+      "sha256": "86c6fca6e3f3871b93b5aa17ff61776249bb6c2fb6717458d2e4f1d4391ea1d4"
+    },
+    {
+      "name": "production.csv",
+      "bytes": 1418,
+      "sha256": "3349b538feb212ffdc07b537a4a0ec41cce532381ccca1fd38693fe65b285161"
+    },
+    {
+      "name": "production.json",
+      "bytes": 118,
+      "sha256": "a89c9bd22cb3ec695d323633bd15b4818bcfe848b48d967a00e9565125e4ce7d"
+    },
+    {
+      "name": "receipt.json",
+      "bytes": 2028,
+      "sha256": "b0329ff98211ba79bccf3e2bd1c940a96b63f78081b04133cd380620826a9351"
+    }
+  ],
+  "limitations": [
+    "Actual production animator with injected preference acquisition.",
+    "Saved preference persistence and OS accessibility lookup are excluded.",
+    "No installed control adapter, pixels, frame smoothness or full-interface completion is established."
+  ]
+}
