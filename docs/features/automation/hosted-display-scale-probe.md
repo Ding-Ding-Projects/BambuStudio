@@ -597,6 +597,22 @@ is not accepted as measured geometry. No actual coordinates or control identity
 are printed. A second reviewed attempt is required to identify that shape before
 considering any format-compatibility change.
 
+The second changed administrative attempt identified `rectangle_serialized_empty`.
+The reader now treats only that exact four-string sentinel on an authenticated
+control with `offscreen=true` as unavailable optional geometry. An onscreen empty
+rectangle, arbitrary strings, numeric nonfinite values and excessive finite
+coordinates remain rejected. Capture-frame and PNG bounds retain their strict
+finite requirements. No coordinates are invented and no ciphertext or AAD is
+rewritten; the private inventory retains its original rectangle values.
+
+The integrity receipt records `unavailable_control_rectangles` and the fixed
+reason `offscreen_uia_empty` when applicable. This is explicitly unavailable
+geometry, not a measured rectangle or pixel verdict. A focused hosted lifecycle
+case extracts the actual reader functions and exercises onscreen-empty,
+nonfinite, arbitrary-string and frame-empty negatives before finite-control and
+offscreen-empty positives. The hosted total becomes eleven. Those checks and
+the separately authorized third changed administrative opening remain pending.
+
 Two additional hosted lifecycle cases load the exact production tuple and
 input-recovery functions from the parsed source, without executing the display
 supervisor. They reject unsupported combined tuples, absent or mismatched

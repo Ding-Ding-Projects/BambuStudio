@@ -80,16 +80,28 @@ function Fields($Object, [string[]] $Names) {
 function Integer($Value, [long] $Minimum, [long] $Maximum) {
     Require (($Value -is [long] -or $Value -is [int]) -and $Value -ge $Minimum -and $Value -le $Maximum)
 }
+function Is-SerializedEmptyRectangle($Value) {
+    return ($Value -is [array] -and $Value.Count -eq 4 -and
+        $Value[0] -is [string] -and $Value[1] -is [string] -and
+        $Value[2] -is [string] -and $Value[3] -is [string] -and
+        $Value[0] -ceq 'Infinity' -and $Value[1] -ceq 'Infinity' -and
+        $Value[2] -ceq '-Infinity' -and $Value[3] -ceq '-Infinity')
+}
+function Control-Rectangle($Value, [bool] $Offscreen) {
+    if (Is-SerializedEmptyRectangle $Value) {
+        if (-not $Offscreen) { $script:validationPhase = 'onscreen_empty_rectangle'; Require $false }
+        return $false # Explicitly unavailable, never measured coordinates.
+    }
+    Rect $Value
+    return $true
+}
 function Rect($Value) {
     if ($Value -isnot [array] -or $Value.Count -ne 4) {
         $script:validationPhase = 'rectangle_shape'; Require $false
     }
     # Observe the exact serialized WPF Rect.Empty representation without
     # admitting it as measured geometry or publishing any coordinates.
-    if ($Value[0] -is [string] -and $Value[1] -is [string] -and
-        $Value[2] -is [string] -and $Value[3] -is [string] -and
-        $Value[0] -ceq 'Infinity' -and $Value[1] -ceq 'Infinity' -and
-        $Value[2] -ceq '-Infinity' -and $Value[3] -ceq '-Infinity') {
+    if (Is-SerializedEmptyRectangle $Value) {
         $script:validationPhase = 'rectangle_serialized_empty'; Require $false
     }
     foreach ($number in $Value) {
@@ -196,13 +208,14 @@ try {
         ($inventory.bounds[3]-$inventory.bounds[1]) -eq $inventory.binding.height)
     $validationPhase = 'control_count'
     Require ($inventory.controls -is [array] -and $inventory.controls.Count -le 1000)
+    $unavailableControlRectangles = 0
     foreach ($control in $inventory.controls) {
         $validationPhase = 'control_schema'
         Fields $control @('name','automation_id','type','enabled','offscreen','rect','patterns','scroll')
         foreach ($name in @('name','automation_id','type')) { Require ($control.$name -is [string] -and $control.$name.Length -le 2048) }
         Require ($control.enabled -is [bool] -and $control.offscreen -is [bool])
         $validationPhase = 'control_rectangle'
-        Rect $control.rect
+        if (-not (Control-Rectangle $control.rect $control.offscreen)) { $unavailableControlRectangles++ }
         $validationPhase = 'control_patterns'
         Require ($control.patterns -is [array] -and $control.patterns.Count -le 32)
         foreach ($pattern in $control.patterns) { Require ($pattern -is [string] -and $pattern.Length -le 256) }
@@ -244,6 +257,8 @@ try {
     $validation = @{schema=1; protocol='hosted-scale-diagnostic-v1'; run_id=$ExpectedRunId; source_commit=$ExpectedCommit; phase=$ExpectedPhase
         captured_at_utc=$inventory.binding.captured_at_utc; integrity='verified'; pixel_review='unverified'; privacy_review='unverified'
         publication='not_authorized'; png_sha256=$inventory.binding.png_sha256; width=$width; height=$height
+        unavailable_control_rectangles=$unavailableControlRectangles
+        unavailable_geometry_reason=$(if ($unavailableControlRectangles -gt 0) {'offscreen_uia_empty'} else {$null})
     } | ConvertTo-Json
     Write-NewFile (Join-Path $stage 'validation.json') ([Text.Encoding]::UTF8.GetBytes($validation))
     $validationPhase = 'output_publish'
