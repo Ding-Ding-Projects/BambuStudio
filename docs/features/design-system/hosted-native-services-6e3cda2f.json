@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "sourceCommit": "6e3cda2facd208a4d6521d0539ec0346aa8a8e50",
+  "runId": "37085064156",
+  "jobId": "111093505342",
+  "conclusion": "success",
+  "execution": "github-hosted-windows",
+  "language": {
+    "cases": 16,
+    "assertions": 199
+  },
+  "personalVocabulary": {
+    "cases": 3,
+    "assertions": 45
+  },
+  "profileArchive": {
+    "cases": 4,
+    "assertions": 103
+  },
+  "failures": 0,
+  "errors": 0,
+  "persistence": "all sequential and concurrent process phases passed",
+  "nativeDisplayContract": "passed",
+  "limitations": [
+    "No installed-interface pixel or input verification.",
+    "Newer driver changes are not covered."
+  ],
+  "records": [
+    {
+      "file": "language_mode_tests.xml",
+      "bytes": 2774,
+      "sha256": "1b94b3490ac1048feb4bac14f1082507721d3c46672261bf539cc273b8782a57"
+    },
+    {
+      "file": "personal_vocabulary_tests.xml",
+      "bytes": 771,
+      "sha256": "1688099c64f846d58e9587cd2c94a1f9468913fe750484eec7f971f5de18d1bc"
+    },
+    {
+      "file": "profile_archive_tests.xml",
+      "bytes": 902,
+      "sha256": "67d2b1f9a22ea3b89fe573272eacf22b4e2134279d609786314cfe0d4b6546ea"
+    },
+    {
+      "file": "run.json",
+      "bytes": 136,
+      "sha256": "cdef20c2287e0460c1d5e50f2549342a45ac7c31c9fb11ea9208eb40f554fac9"
+    }
+  ]
+}

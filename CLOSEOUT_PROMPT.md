@@ -42,6 +42,21 @@ This is not main and does not establish runtime correctness.
 
 ## Work in progress
 
+Runtime verification is implemented through 7c0913c2cdd87792d9d089bbd7719f6698d8fa87:
+original native label checks plus rendered vocabulary changes, restart and invalid
+input; synchronized optional worker observations; bounded actual cancel targeting;
+disabled overlap prevention and separately reported stale completion evidence.
+Independent review accepted the final freshness repair. Seven focused helper tests
+await hosted execution. Fixture-path repair c6a7d10e701d631679d2a355b2575eae18558d4d
+normalizes invocation paths before selecting the source root, with three tests
+covering both drivers. No actual printer submission is authorized.
+
+Run 37085064156 passed at 6e3cda2facd208a4d6521d0539ec0346aa8a8e50, including
+all focused native services and sequential/concurrent vocabulary persistence.
+Installed MCP run 37084928659 validated and installed md3-v187 but failed on the
+fixture lookup before exercising MCP. Its repair needs a new candidate runtime run.
+The installed-interface workflow is now wired for each bounded scope and tuple.
+
 The personal-wording owner is frozen after independent review.
 A separate feature/preview-layout candidate 35ce8dbcbf5d695425e64f652054790c332ee891
 repairs notification and preview geometry and passed independent source review.

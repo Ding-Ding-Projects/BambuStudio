@@ -30,6 +30,9 @@ jobs:
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
         with:
           node-version: '24'
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.12'
       - name: Record candidate and toolchain
         run: |
           New-Item -ItemType Directory -Force artifacts/native-interface | Out-Null
@@ -69,6 +72,13 @@ jobs:
           node tests/print_workflow/slice_lifecycle_source_tests.mjs 2>&1 |
             Tee-Object -FilePath artifacts/native-interface/slice-lifecycle.tap
           if ($LASTEXITCODE -ne 0) { throw 'Slice lifecycle source checks failed.' }
+      - name: Verify fresh cancellation observation selection
+        if: ${{ !cancelled() }}
+        run: |
+          python scripts/md3/test_native_cancel_observation.py -v
+          if ($LASTEXITCODE -ne 0) { throw 'Cancellation observation checks failed.' }
+          python scripts/md3/test_automation_fixture_paths.py -v
+          if ($LASTEXITCODE -ne 0) { throw 'Automation fixture path checks failed.' }
       - name: Retain safe verification records
         if: ${{ always() }}
         continue-on-error: true

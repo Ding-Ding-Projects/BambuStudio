@@ -2,6 +2,15 @@
 
 ## Active interface extension, 2026-10-02
 
+Hosted run `37085064156` passed both jobs at `6e3cda2facd208a4d6521d0539ec0346aa8a8e50`.
+Native results: 16 language cases/199 assertions, three personal-vocabulary
+cases/45 assertions, four archive cases/103 assertions, zero failures/errors.
+Sequential and concurrent vocabulary persistence phases and the native display
+source contract also passed. See `docs/features/design-system/hosted-native-services-6e3cda2f.json`.
+Installed MCP run `37084928659` verified Squirrel installation but failed before
+MCP interaction because its fixture path was not normalized before selecting
+the checkout root. The fixture repair awaits the next candidate.
+
 Resume evidence: MCP run `37054493889` completed successfully and published
 `md3-v187` for `ce61d22e390e4bf69938730434f1e494fa34f7a9`.
 Installed MCP verification is running as `37084928659`.
