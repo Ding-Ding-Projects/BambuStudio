@@ -239,3 +239,18 @@ containment, deadlines and acceptance. A tenth hosted lifecycle case reproduces
 the nested contained source query and checks actual output against the run SHA.
 The next attempt uses lifecycle_only and does not open Settings. Both independent
 source lenses accepted this diagnostic change; execution and cause remain pending.
+
+## Literal executable repair, 2026-10-03 UTC
+
+Focused run 37093668005 failed its first case in 5002 ms: outer execution
+completed with code 0 and stage 18, while inner creation stopped at stage 6
+with native result 123, code -1 and empty output. Cleanup was verified and
+Settings was untouched. This identifies invalid-name rejection at creation,
+not the precise original malformed value.
+
+Two independent reviews accepted 1477bd43b99a62047e5449555d8098d7b7ef4069.
+Production now selects one exact git.exe ApplicationInfo.Path and requires a
+scalar, absolute, existing literal file before creation. The hosted case uses
+the same functions to reject arrays, joined paths, quoted paths and relative
+names, then queries the real checkout SHA. Launch recovery remains pending;
+array coercion is a hypothesis, not an established original cause.

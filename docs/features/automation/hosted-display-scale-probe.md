@@ -532,6 +532,23 @@ are retained. This tenth case can run through `lifecycle_only` without opening
 Settings or changing display state. Its hosted verdict and the underlying cause
 remain pending; a full scaling attempt is not needed to obtain this observation.
 
+Focused run `37093668005` at `6234f224ad65d659c8243fbaa3941836525ecea7`
+reached inner process creation (stage 6), which returned native error 123
+(`ERROR_INVALID_NAME`). The outer process completed normally, cleanup was
+verified and Settings was not changed. This proves creation rejected a name;
+it does not alone establish which value was malformed or prove array coercion.
+
+The diagnostic now selects the first exact `git.exe` application in
+`Get-Command -All` precedence order and validates its `Path` as one nonempty,
+fully qualified string naming an existing literal `git.exe` file. Arrays,
+joined command paths, quoted paths and relative names cannot reach creation.
+The hosted nested case loads these same production resolver functions, checks
+four invalid candidates before the valid literal path, then requires the actual
+checkout query to succeed and match the run commit. Only the former selection's
+cardinality and the rejection count are added to its fixed receipt. No executable
+path is published, no source SHA is substituted, and process containment is
+unchanged. The path-selection repair still requires hosted verification.
+
 #### Administrative diagnostic opening
 
 `scripts/md3/Open-HostedScaleDiagnostic.ps1` opens this format using the existing

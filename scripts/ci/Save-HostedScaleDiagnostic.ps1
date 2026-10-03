@@ -1,5 +1,21 @@
 # Dot-sourced only by the hosted scale worker. Uses its existing ownership and
 # contained-process functions. No UIA mutation, activation, scrolling or input.
+function Get-HostedGitLiteralPath([object] $Candidate) {
+    # Do not let PowerShell stringify multiple command results into one filename.
+    if ($Candidate -isnot [string] -or [string]::IsNullOrWhiteSpace($Candidate) -or
+        -not [IO.Path]::IsPathFullyQualified($Candidate) -or
+        [IO.Path]::GetFileName($Candidate) -ine 'git.exe') { throw 'Git executable selection invalid.' }
+    $file = Get-Item -LiteralPath $Candidate -ErrorAction Stop
+    if ($file -isnot [IO.FileInfo] -or $file.FullName -ine $Candidate) { throw 'Git executable path invalid.' }
+    return $file.FullName
+}
+function Resolve-HostedGitExecutable {
+    # Get-Command can discover multiple applications. Select one actual command
+    # in its documented precedence order, then validate its scalar literal path.
+    $commands = @(Get-Command git.exe -CommandType Application -All -ErrorAction Stop)
+    if ($commands.Count -eq 0) { throw 'Git executable unavailable.' }
+    return Get-HostedGitLiteralPath $commands[0].Path
+}
 function Save-HostedScaleDiagnostic([ValidateSet('before_selector','expanded_selector')][string] $Phase) {
     if (-not $DiagnosticEvidence -or $NativeRuntime -or $Mode -cne 'run' -or $script:DiagnosticResults.ContainsKey($Phase)) { return }
     $script:DiagnosticResults[$Phase] = @{status='unavailable'; stage='initialize'}
@@ -11,7 +27,7 @@ function Save-HostedScaleDiagnostic([ValidateSet('before_selector','expanded_sel
     try {
         if ((Test-UncertainChildren) -or (Test-UncertainInput)) { throw 'Diagnostic containment unavailable.' }
         $diagnosticStage = 'source_command_lookup'
-        $git = (Get-Command git -CommandType Application).Source
+        $git = Resolve-HostedGitExecutable
         $diagnosticStage = 'source_directory'
         $sourceObservation.script_directory_present = [bool](Test-Path -LiteralPath $PSScriptRoot -PathType Container)
         if (-not $sourceObservation.script_directory_present) { throw 'Diagnostic source directory unavailable.' }

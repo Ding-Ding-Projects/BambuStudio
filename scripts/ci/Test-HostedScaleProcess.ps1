@@ -43,11 +43,19 @@ param([string] $SourceDirectory)
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 Add-Type -Path (Join-Path $SourceDirectory 'HostedScaleProcess.cs')
-$git = (Get-Command git -CommandType Application).Source
+. (Join-Path $SourceDirectory 'Save-HostedScaleDiagnostic.ps1')
+$legacySelectionCount = @((Get-Command git -CommandType Application).Source).Count
+$git = Resolve-HostedGitExecutable
+$rejected = 0
+foreach ($candidate in @(@($git,$git),($git+' '+$git),('"'+$git+'"'),'git.exe')) {
+    try { [void](Get-HostedGitLiteralPath $candidate) } catch { $rejected++ }
+}
+if ($rejected -ne 4 -or (Get-HostedGitLiteralPath $git) -cne $git) { exit 3 }
 $result = [HostedScaleProcess]::Run($git,[string[]]@('-C',$SourceDirectory,'rev-parse','HEAD'),5,$true)
 $source = $result.Output.Trim()
 @{terminated=$result.Terminated; exit_code=$result.Code; process_stage=[int]$result.ProcessStage
   native_error=$result.NativeError; output_length=$result.Output.Length
+  legacy_selection_count=$legacySelectionCount; invalid_paths_rejected=$rejected
   source_format_valid=[bool]($source -cmatch '^[0-9a-f]{40}$')
   checkout_matches_run=[bool]($source -ceq $env:GITHUB_SHA)
 } | ConvertTo-Json -Compress
