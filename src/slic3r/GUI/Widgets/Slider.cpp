@@ -125,9 +125,14 @@ bool Slider::Create(wxWindow *parent, int value, int minValue, int maxValue, boo
     Bind(wxEVT_KEY_DOWN, &Slider::onKey, this);
     Bind(wxEVT_SET_FOCUS, &Slider::onFocus, this);
     Bind(wxEVT_KILL_FOCUS, &Slider::onFocus, this);
-    Bind(wxEVT_MOUSE_CAPTURE_LOST, [this](wxMouseCaptureLostEvent &) { m_dragging = false; });
+    Bind(wxEVT_MOUSE_CAPTURE_LOST, [this](wxMouseCaptureLostEvent &) { m_dragging = false; settleHalo(); });
+    Bind(wxEVT_SHOW, [this](wxShowEvent &e) { if (!e.IsShown()) settleHalo(); e.Skip(); });
+    Bind(wxEVT_UPDATE_UI, [this](wxUpdateUIEvent &e) {
+        if (m_halo_motion.IsRunning() && (!IsEnabled() || MD3::Motion::reduced())) settleHalo();
+        e.Skip();
+    });
     Bind(wxEVT_SIZE, [this](wxSizeEvent &e) {
-        Refresh(false);
+        settleHalo();
         e.Skip();
     });
 
@@ -166,11 +171,12 @@ void Slider::SetVertical(bool vertical)
 void Slider::SetColorScheme(MD3::ColorScheme scheme)
 {
     m_scheme = scheme;
-    Refresh(false);
+    settleHalo();
 }
 
 void Slider::Rescale()
 {
+    settleHalo();
     InvalidateBestSize();
     Refresh(false);
 }
@@ -246,6 +252,7 @@ void Slider::onMouseDown(wxMouseEvent &evt)
 {
     SetFocus();
     m_dragging = true;
+    emphasizeHalo();
     if (!HasCapture())
         CaptureMouse();
     setValueInternal(valueFromPoint(evt.GetPosition()), true);
@@ -256,6 +263,7 @@ void Slider::onMouseUp(wxMouseEvent &evt)
 {
     if (m_dragging) {
         m_dragging = false;
+        settleHalo();
         if (HasCapture())
             ReleaseMouse();
     }
@@ -295,12 +303,34 @@ void Slider::onKey(wxKeyEvent &evt)
 void Slider::onFocus(wxFocusEvent &evt)
 {
     m_focused = (evt.GetEventType() == wxEVT_SET_FOCUS);
-    Refresh(false);
+    if (m_focused) emphasizeHalo(); else settleHalo();
 #if wxUSE_ACCESSIBILITY
     if (m_focused)
         wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_FOCUS, this, wxOBJID_CLIENT, wxACC_SELF);
 #endif
     evt.Skip();
+}
+
+void Slider::settleHalo()
+{
+    m_halo_motion.Stop();
+    m_halo_emphasis = 0.0;
+    Refresh(false);
+}
+
+void Slider::emphasizeHalo()
+{
+    m_halo_motion.Stop();
+    if (!IsEnabled() || !IsShownOnScreen() || MD3::Motion::reduced()) {
+        settleHalo();
+        return;
+    }
+    m_halo_color = MD3::resolve(MD3::Role::Primary, StateColor::isDarkMode(), m_scheme);
+    m_halo_background = GetBackgroundColour();
+    m_halo_motion.Play(MD3::Motion::short2, [this](double t) {
+        m_halo_emphasis = 1.0 - t;
+        Refresh(false);
+    }, nullptr, &MD3::Motion::easeStandard, this);
 }
 
 void Slider::paintEvent(wxPaintEvent &)
@@ -323,6 +353,8 @@ void Slider::render(wxDC &dc)
     const bool     dark     = StateColor::isDarkMode();
     const wxColour active   = MD3::resolve(MD3::Role::Primary, dark, m_scheme);
     const wxColour inactive = MD3::resolve(MD3::Role::OutlineVariant, dark);
+    if (m_halo_motion.IsRunning() &&
+        (active != m_halo_color || GetBackgroundColour() != m_halo_background)) settleHalo();
 
     const double td    = thumbDiameter();
     const int    tt    = trackThickness();
@@ -369,7 +401,10 @@ void Slider::render(wxDC &dc)
 
     // Focus / drag halo.
     if (m_focused || m_dragging) {
-        dc.SetBrush(wxBrush(wxColour(active.Red(), active.Green(), active.Blue(), 40)));
+        // The existing focus/drag indication is immediate. Only additional
+        // decorative emphasis decays; thumb/value/hit geometry never lags.
+        const double emphasis = IsEnabled() && !MD3::Motion::reduced() ? m_halo_emphasis : 0.0;
+        dc.SetBrush(wxBrush(wxColour(active.Red(), active.Green(), active.Blue(), 40 + int(std::lround(24 * emphasis)))));
         dc.DrawCircle((int) std::lround(cx), (int) std::lround(cy), (int) (td / 2.0) + FromDIP(kHaloPad));
     }
 

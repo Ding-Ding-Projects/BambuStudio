@@ -225,7 +225,7 @@ try {
     & (Join-Path $root 'scripts\md3\Capture-HostedReleaseGui.ps1') `
         -InstallReceipt $installReceipt -ExpectedCommit $ExpectedCommit `
         -VerificationCommit $verifier -Tag $Tag -BehaviorDirectory $behavior `
-        -CaptureScope diagnostic -OutputDirectory $encrypted
+        -CaptureScope diagnostic -RecipientVersion $(if ($FromCreation) { 3 } else { 2 }) -OutputDirectory $encrypted
     $capture = Get-Content -LiteralPath (Join-Path $encrypted 'receipt.json') -Raw | ConvertFrom-Json
     if (-not (Test-Path -LiteralPath (Join-Path $encrypted 'images.zip.aesgcm') -PathType Leaf) -or
         $capture.image_availability -cne 'encrypted_bundle_only' -or

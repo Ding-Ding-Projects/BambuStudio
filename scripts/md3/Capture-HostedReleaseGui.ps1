@@ -6,6 +6,7 @@ param(
     [Parameter(Mandatory)][ValidatePattern('^md3-v\d+$')][string] $Tag,
     [string] $BehaviorDirectory,
     [ValidateSet('diagnostic', 'behavior')][string] $CaptureScope = 'behavior',
+    [ValidateSet(2, 3)][int] $RecipientVersion = 2,
     [Parameter(Mandatory)][string] $OutputDirectory
 )
 
@@ -417,7 +418,7 @@ print(json.dumps(dataclasses.asdict(result), separators=(',', ':')))
         }
     }
     $aad = [System.Text.Encoding]::UTF8.GetBytes(($bindingLines -join "`n") + "`n")
-    $publicPath = Join-Path $PSScriptRoot 'hosted-gui-public-v2.pem'
+    $publicPath = Join-Path $PSScriptRoot "hosted-gui-public-v$RecipientVersion.pem"
     if (-not (Test-Path -LiteralPath $publicPath -PathType Leaf)) {
         throw 'The selected versioned public key is unavailable in this verifier checkout.'
     }

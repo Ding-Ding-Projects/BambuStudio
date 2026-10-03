@@ -3,6 +3,7 @@
 
 #include "../wxExtensions.hpp"
 #include "MD3Tokens.hpp"
+#include "MD3Motion.hpp"
 
 #include <wx/tglbtn.h>
 
@@ -16,6 +17,7 @@ class CheckBox : public wxBitmapToggleButton
 {
 public:
 	CheckBox(wxWindow * parent, int id = wxID_ANY);
+    ~CheckBox() override { m_selection_motion.Stop(); }
 
 public:
 	void SetValue(bool value) override;
@@ -68,6 +70,8 @@ protected:
 
 private:
 	void update();
+    void emphasizeSelection();
+    void settleSelection();
 
 	// Draw a single state to a DPI-correct, antialiased, transparent bitmap: the
 	// bare 20px (kCheckBoxPx) glyph, with an optional separate keyboard-focus
@@ -83,6 +87,8 @@ private:
 private:
     MD3::ColorScheme m_scheme = MD3::ColorScheme::Brand;
     bool m_half_checked = false;
+    MD3::Motion::Anim m_selection_motion;
+    double m_selection_emphasis = 0.0;
     // The Primary / OnSurfaceVariant tones the cached bitmaps were rasterised
     // with, refreshed by update(). A light/dark switch (or an Appearance accent
     // change) moves them behind the widget's back, so Retheme() compares rather
