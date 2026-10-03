@@ -4306,7 +4306,9 @@ void DevExtruderImage::doRender(wxDC &dc)
 FeedDirectionDialog::FeedDirectionDialog(wxWindow* parent,
                                         const int extruderNum,
                                         const std::string& printer_type)
-    : wxDialog(parent, wxID_ANY, "", wxDefaultPosition, wxDefaultSize),
+    // The window title is the fallback the caption shows until a tray is mapped; the kit caption
+    // follows SetTitle() from then on (MD3DialogCaption::SyncTitle).
+    : wxDialog(parent, wxID_ANY, _L("Confirm"), wxDefaultPosition, wxDefaultSize),
     m_extruder_num(extruderNum),
     m_printer_type(printer_type)
 {
@@ -4348,7 +4350,7 @@ FeedDirectionDialog::FeedDirectionDialog(wxWindow* parent,
 
     SetSizer(mainSizer);
     Layout();
-    MD3DialogCaption::Adopt(this, _L("Confirm"));
+    MD3DialogCaption::Adopt(this);
     Centre(wxBOTH);
 
     m_lastChecked = nullptr;
@@ -4389,6 +4391,7 @@ void FeedDirectionDialog::OnRadioClicked(wxCommandEvent& evt)
             m_load_extruder_id = 1;
             {
                 SetTitle(wxString::Format(_L("Load %s to ") + _L(DevPrinterConfigUtil::get_toolhead_display_name(m_printer_type, DEPUTY_EXTRUDER_ID, ToolHeadComponent::Extruder, ToolHeadNameCase::LowerCase)), m_filament_id));
+                MD3DialogCaption::SyncTitle(this);
             }
         }
         else if (clicked == m_rightRadio)
@@ -4398,6 +4401,7 @@ void FeedDirectionDialog::OnRadioClicked(wxCommandEvent& evt)
             m_load_extruder_id = 0;
             {
                 SetTitle(wxString::Format(_L("Load %s to ") + _L(DevPrinterConfigUtil::get_toolhead_display_name(m_printer_type, MAIN_EXTRUDER_ID, ToolHeadComponent::Extruder, ToolHeadNameCase::LowerCase)), m_filament_id));
+                MD3DialogCaption::SyncTitle(this);
             }
         }
     }
@@ -4457,6 +4461,7 @@ void FeedDirectionDialog::SetExtruderMapping(MachineObject* obj,
 
     m_filament_id = filamentID;
     SetTitle(wxString::Format(_L("Load %s to "), filamentID));
+    MD3DialogCaption::SyncTitle(this);
 
     std::vector<wxString> extruderMapping(extruderSlots.size());
     for (size_t i = 0; i < extruderSlots.size(); ++i) {

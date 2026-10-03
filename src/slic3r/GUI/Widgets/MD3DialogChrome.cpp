@@ -32,6 +32,7 @@ MD3DialogCaption::MD3DialogCaption(wxDialog *dialog, const wxString &title)
     SetBackgroundColour(bg);
     SetMinSize(wxSize(-1, FromDIP(kHeight)));
     SetName(title); // screen readers announce the dialog purpose
+    m_applied_title = title;
 
     auto *sizer = new wxBoxSizer(wxHORIZONTAL);
     m_title = new Label(this, Label::Head_14, wxEmptyString);
@@ -75,6 +76,36 @@ MD3DialogCaption::MD3DialogCaption(wxDialog *dialog, const wxString &title)
     };
     Bind(wxEVT_LEFT_DOWN, begin_drag);
     m_title->Bind(wxEVT_LEFT_DOWN, begin_drag);
+
+    // A caption that took the dialog's own title keeps following it (see Adopt):
+    // one string compare per idle tick.
+    Bind(wxEVT_IDLE, [this](wxIdleEvent &e) {
+        if (m_follow_title)
+            FollowDialogTitle();
+        e.Skip();
+    });
+}
+
+void MD3DialogCaption::FollowDialogTitle()
+{
+    if (m_dialog == nullptr || m_dialog->IsBeingDeleted())
+        return;
+    const wxString title = m_dialog->GetTitle();
+    if (title == m_applied_title)
+        return;
+    m_applied_title = title;
+    SetName(title);               // screen readers announce the new purpose
+    m_title->SetLabelText(title); // '&' renders literally, as in the constructor
+    Layout();
+}
+
+void MD3DialogCaption::SyncTitle(wxDialog *dialog)
+{
+    if (dialog == nullptr)
+        return;
+    for (wxWindow *child : dialog->GetChildren())
+        if (auto *caption = dynamic_cast<MD3DialogCaption *>(child))
+            caption->FollowDialogTitle();
 }
 
 void MD3DialogCaption::OnPaintClose(wxPaintEvent &)
@@ -117,6 +148,9 @@ void MD3DialogCaption::Adopt(wxDialog *dialog, const wxString &title)
 
     const wxString caption_title = title.empty() ? dialog->GetTitle() : title;
     auto *caption = new MD3DialogCaption(dialog, caption_title);
+    // Adopted from the dialog's own title: keep following it. An explicit
+    // literal is a deliberate caption and stays as given.
+    caption->m_follow_title = title.empty();
     wxSizer *old = dialog->GetSizer();
     auto *outer = new wxBoxSizer(wxVERTICAL);
     outer->Add(caption, 0, wxEXPAND);

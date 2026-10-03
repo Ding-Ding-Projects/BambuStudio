@@ -38,17 +38,31 @@ public:
     // present, is preserved so edge-resizing keeps working.
     static void Adopt(wxDialog *dialog, const wxString &title = wxString());
 
+    // Make every caption of `dialog` show the dialog's current window title.
+    // A dialog that calls SetTitle() after adoption changed the window text
+    // only; the strip kept its first title. A caption adopted with no title
+    // follows the title by itself, on idle; call this when the new title must
+    // show in the same paint as the change.
+    static void SyncTitle(wxDialog *dialog);
+
     // Caption strip height in device pixels, for owner-drawn dialogs that
     // paint content at absolute client coordinates.
     static int Height(wxWindow *ref);
 
 private:
     void OnPaintClose(wxPaintEvent &event);
+    void FollowDialogTitle();
 
     wxDialog *m_dialog { nullptr };
     Label    *m_title { nullptr };
     wxPanel  *m_close { nullptr };
     bool      m_close_hover { false };
+    // The title the strip was last given; compared instead of the label text,
+    // which the bilingual decorator may pair.
+    wxString  m_applied_title;
+    // True for a caption created from the dialog's own title (Adopt with no
+    // literal): it keeps following that title.
+    bool      m_follow_title { false };
 };
 
 #endif // slic3r_GUI_MD3DialogChrome_hpp_
