@@ -128,6 +128,31 @@ at this documentation checkpoint; its thirteen-case verdict and page round trip
 remain pending. This is one changed diagnostic hypothesis, not evidence of a
 cache cause, higher-scale availability, product DPI or completed matrix coverage.
 
+### One fixed taller-mode diagnostic
+
+The provisioning workflow now accepts only `resolution_mode=1920x1080` (the
+unchanged default) or `1600x1200`. The latter is restricted to standalone
+foreground execution with resolution provisioning, encrypted diagnostics and
+the observed page round trip all enabled. Native execution rejects the alternate
+mode before launch; the minimum-resize request and adapter remain 1920×1080 only.
+
+Read-only capability run `37089435143` enumerated 1600×1200 at 32 bits per pixel,
+64 Hz and orientation 0. Its 120 additional vertical pixels make it a distinct
+diagnostic condition, not evidence that 200% scaling is available. Every new
+attempt must freshly enumerate one compatible fixed target and preserve current
+frequency, orientation, display flags, placement and supported public fields.
+The existing test-only mode check, nonpersistent application, measured readback,
+durable original bytes and independent scale/mode restoration remain unchanged.
+Recovery selects the saved original mode, never a diagnostic target. Receipts
+derive selected dimensions from validated mode bytes after successful readback.
+
+Only one changed 200% experiment at 1600×1200 is planned. No arbitrary dimensions,
+display driver changes, registry changes, custom scaling or sign-out route is
+introduced. A focused hosted contract exercises the actual fixed-mode mapping
+and scope predicate, including rejection of alternate native/minimum execution.
+The hosted total is fourteen cases, pending execution. Neither this source change
+nor the earlier four-option selector establishes a 200% result.
+
 After private review identifies actual controls, implement a separate bounded
 Settings interaction using the predefined Scale selector. Record the original
 selection and display identity, select each supported value, and require actual

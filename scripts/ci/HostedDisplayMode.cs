@@ -151,14 +151,21 @@ public static class HostedDisplayMode
         }
         return true;
     }
-    public static byte[] Target(State state) {
+    public static int[] TargetDimensions(string mode) {
+        if(mode=="1920x1080") return new int[]{1920,1080};
+        if(mode=="1600x1200") return new int[]{1600,1200};
+        throw new InvalidOperationException("Unsupported fixed display mode.");
+    }
+    public static byte[] Target(State state) { return Target(state,"1920x1080"); }
+    public static byte[] Target(State state,string mode) {
+        var dimensions=TargetDimensions(mode);
         AssertBinding(state); Validate(state.Original);
         Require((U(state.Original,72) & 0x80)!=0); // Preserve an observed orientation, never invent one.
         byte[] selected=null; bool complete=false;
         for(int i=0;i<512;i++) {
             var candidate=Read(state.Device,i);
             if(candidate==null) { complete=true; break; }
-            if(U(candidate,172)!=1920 || U(candidate,176)!=1080 || U(candidate,168)!=32 ||
+            if(U(candidate,172)!=dimensions[0] || U(candidate,176)!=dimensions[1] || U(candidate,168)!=32 ||
                 U(candidate,184)!=U(state.Original,184) || (U(candidate,72) & 0x80)==0 ||
                 U(candidate,84)!=U(state.Original,84) || U(candidate,180)!=U(state.Original,180)) continue;
             // Preserve current placement and fixed-output semantics when the

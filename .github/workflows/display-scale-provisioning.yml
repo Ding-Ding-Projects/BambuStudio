@@ -15,9 +15,14 @@ on:
         default: background
         options: [background, hosted-foreground]
       provision_resolution:
-        description: Observe scaling at the supported 1920x1080 mode and restore the original mode
+        description: Observe scaling at the selected fixed mode and restore the original mode
         type: boolean
         default: false
+      resolution_mode:
+        description: Alternate mode is restricted to standalone encrypted page diagnostics
+        type: choice
+        default: '1920x1080'
+        options: ['1920x1080', '1600x1200']
       scale_selection:
         description: Use one scale for shared-path diagnosis or all scales for verification
         type: choice
@@ -88,11 +93,16 @@ jobs:
       - name: Open supported display settings
         shell: pwsh
         env:
+          RESOLUTION_MODE: ${{ inputs.resolution_mode }}
           REFRESH_SETTINGS_PAGE: ${{ inputs.refresh_settings_page }}
           PROVISION_RESOLUTION: ${{ inputs.provision_resolution }}
           DIAGNOSTIC_EVIDENCE: ${{ inputs.diagnostic_evidence }}
           SCALE_INPUT_ROUTE: ${{ inputs.input_route }}
         run: |
+          if ($env:RESOLUTION_MODE -cnotin @('1920x1080','1600x1200') -or
+              ($env:RESOLUTION_MODE -ceq '1600x1200' -and $env:REFRESH_SETTINGS_PAGE -ne 'true')) {
+            throw 'Unsupported fixed resolution diagnostic tuple.'
+          }
           if ($env:REFRESH_SETTINGS_PAGE -eq 'true' -and
               ($env:PROVISION_RESOLUTION -ne 'true' -or $env:DIAGNOSTIC_EVIDENCE -ne 'true' -or
                $env:SCALE_INPUT_ROUTE -cne 'hosted-foreground')) {
@@ -104,6 +114,7 @@ jobs:
         shell: pwsh
         env:
           SCALE_PERCENT: ${{ matrix.scale }}
+          RESOLUTION_MODE: ${{ inputs.resolution_mode }}
           SCALE_INPUT_ROUTE: ${{ inputs.input_route }}
           PROVISION_RESOLUTION: ${{ inputs.provision_resolution }}
           DIAGNOSTIC_EVIDENCE: ${{ inputs.diagnostic_evidence }}
@@ -114,6 +125,7 @@ jobs:
             OutputDirectory = "$env:RUNNER_TEMP/scale-proof"
             CheapExecutable = $env:LLCU_CHEAP
             InputRoute = $env:SCALE_INPUT_ROUTE
+            ResolutionMode = $env:RESOLUTION_MODE
           }
           if ($env:PROVISION_RESOLUTION -eq 'true') { $scaleArguments.ProvisionResolution = $true }
           if ($env:DIAGNOSTIC_EVIDENCE -eq 'true') { $scaleArguments.DiagnosticEvidence = $true }

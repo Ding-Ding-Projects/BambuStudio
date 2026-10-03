@@ -6,6 +6,7 @@ param(
     [ValidateSet('background','hosted-foreground')][string] $InputRoute = 'background',
     [switch] $NativeRuntime,
     [switch] $ProvisionResolution,
+    [ValidateSet('1920x1080','1600x1200')][string] $ResolutionMode = '1920x1080',
     [switch] $DiagnosticEvidence,
     [switch] $RefreshSettingsPage,
     [ValidateSet('supervisor','run','restore')][string] $Mode = 'supervisor'
@@ -36,6 +37,14 @@ if (-not (Test-PageRefreshScope $RefreshSettingsPage $NativeRuntime $ProvisionRe
     throw 'Page refresh requires standalone foreground resolution diagnostics.'
 }
 $script:NavigationObservation = @{requested=[bool]$RefreshSettingsPage; colors_acknowledged=$false; display_acknowledged=$false}
+function Test-ResolutionDiagnosticScope([string] $Resolution, [bool] $Native, [bool] $Provision,
+    [bool] $Diagnostic, [bool] $Refresh, [string] $Route) {
+    return $Resolution -ceq '1920x1080' -or ($Resolution -ceq '1600x1200' -and -not $Native -and
+        $Provision -and $Diagnostic -and $Refresh -and $Route -ceq 'hosted-foreground')
+}
+if (-not (Test-ResolutionDiagnosticScope $ResolutionMode $NativeRuntime $ProvisionResolution $DiagnosticEvidence $RefreshSettingsPage $InputRoute)) {
+    throw 'Alternate resolution requires standalone foreground page diagnostics.'
+}
 $nativeRequestPath = Join-Path $env:RUNNER_TEMP ('native-scale-request-' + $env:GITHUB_RUN_ID + '.json')
 $nativeReceiptPath = Join-Path $env:RUNNER_TEMP ('native-scale-adapter-' + $env:GITHUB_RUN_ID + '.json')
 $nativeAdapter = Join-Path $PSScriptRoot 'run-scaled-native-interface.py'
@@ -160,7 +169,8 @@ if ($Mode -eq 'supervisor') {
         }
         $run = @{ terminated = $false; code = -1 }
         $arguments = @('-NoProfile','-File',$PSCommandPath,'-ScalePercent',"$ScalePercent",
-            '-OutputDirectory',$output,'-CheapExecutable',$CheapExecutable,'-InputRoute',$InputRoute,'-Mode','run')
+            '-OutputDirectory',$output,'-CheapExecutable',$CheapExecutable,'-InputRoute',$InputRoute,'-Mode','run',
+            '-ResolutionMode',$ResolutionMode)
         $seconds = 120
         if ($NativeRuntime) { $arguments += '-NativeRuntime'; $seconds = 1920 }
         if ($ProvisionResolution) { $arguments += '-ProvisionResolution'; if (-not $NativeRuntime) { $seconds = 180 } }
@@ -192,6 +202,7 @@ if ($Mode -eq 'supervisor') {
           input_route=$InputRoute; foreground_input_atomic=$false
           native_runtime_requested=[bool]$NativeRuntime
           resolution_provisioning_requested=[bool]$ProvisionResolution
+          requested_resolution=$(if ($ProvisionResolution) {$ResolutionMode} else {'unchanged'})
           recovery_termination_verified=$recovery.terminated; restoration_verified=$restored
           child_termination_uncertain=$uncertain; process_containment='suspended_start_nonbreakaway_job'
           input_recovery_uncertain=$inputUncertain
@@ -570,6 +581,7 @@ function Set-Scale([int] $Percent) {
 }
 
 $receipt = @{schema=1; requested_scale=$ScalePercent; status='unavailable'; restored=$false
+    requested_resolution=$(if ($Mode -eq 'restore') {'original'} elseif ($ProvisionResolution) {$ResolutionMode} else {'unchanged'})
     input_method='cheap_mouse_click'; input_route=$InputRoute; foreground_input_atomic=$false
     isolation='disposable_hosted_machine'; uia='read_only'; action='unsupported_standalone_only'
     target_application_dpi='requires_independent_runtime_measurement'
@@ -607,14 +619,15 @@ try {
         Move-Item -LiteralPath ($originalPath + '.tmp') -Destination $originalPath
         if ($ProvisionResolution) {
             $script:Stage = 'provision_resolution'
-            $target = [HostedDisplayMode]::Target($script:ResolutionState)
+            $target = [HostedDisplayMode]::Target($script:ResolutionState,$ResolutionMode)
             $modeResult = [HostedDisplayMode]::Apply($script:ResolutionState,$target)
             $receipt.resolution_test_code = $modeResult.TestCode
             $receipt.resolution_apply_code = $modeResult.ApplyCode
             $receipt.resolution_already_current = $modeResult.AlreadyCurrent
             $receipt.resolution_verified = $modeResult.Verified
             if (-not $modeResult.Verified) { throw 'Requested resolution did not verify.' }
-            $receipt.selected_width = 1920; $receipt.selected_height = 1080
+            $receipt.selected_width = [HostedDisplayMode]::Width($target)
+            $receipt.selected_height = [HostedDisplayMode]::Height($target)
             $script:Stage = 'observe_scale_after_resolution'
             $afterResolution = Read-Scale @(Read-Controls)
             $receipt.scale_after_resolution = $afterResolution.percent
