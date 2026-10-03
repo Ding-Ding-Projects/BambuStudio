@@ -142,6 +142,18 @@ Log bytes and filenames remain inside encrypted `runtime.json`; the existing
 11-file verifier manifest already binds the changed collector. This is added
 diagnostic coverage, not evidence of a startup cause or a successful launch.
 
+The startup-only scope additionally requests an invocation-isolated launcher
+trace. The holder creates a new directory derived from its receipt filename and
+passes a copied Unicode child environment with only `TEMP` and `TMP` replaced.
+Neither the controller nor holder process environment is changed. The normal
+launch route keeps inherited environment behavior. The directory must be below
+the hosted temporary root, have no reparse ancestors and contain fewer than 220
+characters, matching the existing native launcher's trace-path limit.
+After verified teardown, the collector checks the private holder receipt's exact
+derived directory and reads only `bbs-launcher-trace.log`, capped at 64 KiB.
+Its contents remain encrypted; absent or invalid traces cannot establish a cause.
+No product rebuild is needed to observe this existing launcher diagnostic.
+
 An absent, ambiguous or disabled target fails the affected scope. Provider
 timeouts, truncated observations, incorrect process ownership, missing original
 labels, unexpected confirmation state and layout overflow remain failures.
