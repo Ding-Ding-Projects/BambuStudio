@@ -22,7 +22,7 @@ on:
         description: One bounded interaction flow
         required: false
         type: choice
-        options: [menus, menu-builder-root, menu-builder-nested, vocabulary, vocabulary-persistence, slice-controls, combined-print, combined-send, cancellation, minimum-resize, minimum-observe]
+        options: [menus, temporal-checkbox, menu-builder-root, menu-builder-nested, vocabulary, vocabulary-persistence, slice-controls, combined-print, combined-send, cancellation, minimum-resize, minimum-observe]
       language:
         required: true
         default: en
@@ -134,8 +134,12 @@ jobs:
           if ($env:RELEASE_TAG -cnotmatch '^md3-v\d+$' -or $env:SOURCE_SHA -cnotmatch '^[0-9a-f]{40}$') {
             throw 'A release tag and full lowercase source SHA are required.'
           }
-          if ($env:INTERACTION_SCOPE -cnotin @('menus', 'menu-builder-root', 'menu-builder-nested', 'vocabulary', 'vocabulary-persistence', 'slice-controls', 'combined-print', 'combined-send', 'cancellation', 'minimum-resize', 'minimum-observe')) {
+          if ($env:INTERACTION_SCOPE -cnotin @('menus', 'temporal-checkbox', 'menu-builder-root', 'menu-builder-nested', 'vocabulary', 'vocabulary-persistence', 'slice-controls', 'combined-print', 'combined-send', 'cancellation', 'minimum-resize', 'minimum-observe')) {
             throw 'A supported installed interaction scope is required.'
+          }
+          if ($env:INTERACTION_SCOPE -eq 'temporal-checkbox' -and
+              ($env:UI_SCALE -ne '1' -or $env:UI_VIEWPORT -ne '1200x800' -or $env:UI_LANGUAGE -ne 'en' -or $env:UI_THEME -ne 'light' -or $env:PROVISION_RESOLUTION -eq 'true')) {
+            throw 'Temporal checkbox requires the fixed baseline tuple.'
           }
           if ($env:INTERACTION_SCOPE -eq 'minimum-resize' -and
               ($env:UI_SCALE -ne '1' -or $env:UI_VIEWPORT -ne 'measured-minimum')) {
@@ -166,6 +170,10 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Native minimum observation contract failed.' }
           python scripts/md3/test_native_vocabulary_observation.py -v
           if ($LASTEXITCODE -ne 0) { throw 'Native vocabulary observation contract failed.' }
+          if ($env:INTERACTION_SCOPE -eq 'temporal-checkbox') {
+            python scripts/md3/test_temporal_checkbox.py -v
+            if ($LASTEXITCODE -ne 0) { throw 'Temporal checkbox acceptance contract failed.' }
+          }
       - name: Drive the installed native interface
         shell: pwsh
         run: |

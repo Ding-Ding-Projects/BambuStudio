@@ -63,3 +63,7 @@ it.
 The diagnostic candidate package does not replace the production release route.
 
 - [Personal vocabulary](personal-vocabulary.md): local display-only JSON mappings and restoration.
+
+- [Canvas tooltip decoration and explicit identities](tooltip-motion.md)
+- [Temporal capture boundaries and hosted contracts](motion-temporal-capture.md)
+- [Installed menu-builder interaction inventory](menu-interaction-verification.md)

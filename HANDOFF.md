@@ -2704,3 +2704,24 @@ the bounded scroll viewport. Do not dispatch that flow unchanged. The separate
 9aa64b7 duplicate entrance removal passed two source reviews. Matching-symbol
 repair161b2ca65 is preserved on the motion branch, with second review pending.
 All local operations remain source/admin only. No main integration or deletion.
+
+Latest integration23d01afd3d53a3f7d5dcc42db5885281730bca31 includes reviewed
+manual tooltip identities and decorative feedback. Assembly frame entrance and
+temporal helper are already preserved. Revised menu focus traversal33377f32
+and duplicate entrance removal9aa64b7 are integrated at e09035ff4 after two
+source reviews; maximum observations are23/28, not passed interaction results.
+
+Matching-symbol diagnostic repair161b2ca65 was independently integrated as
+e50f5dac1074055e02be230bfdc5dd98d829e5e6. Hosted contract37102256371 and
+from-creation diagnostic37102257995 target that exact source and are queued.
+A raw-SHA dispatch was rejected before starting; successful branch dispatches
+were checked against the intended head SHA. Temporal contract activation at
+fa1cd3eb579e23ed7e5af01a0a6ab00a6ac47d13 created run37102495898, queued.
+The prior manual attempt returned404 because the workflow was absent from
+the default branch. Do not duplicate the automatically activated run.
+
+Native child-page composition remains an explicit gap. Child AW_BLEND is
+unsupported, separate child painters prevent parent-only composition, and an
+opaque or translucent veil is not accepted as a content transition. Canvas
+hover/filter and BusyInfo responsiveness are receiving bounded source review.
+No local product execution, main integration, archive or deletion occurred.
