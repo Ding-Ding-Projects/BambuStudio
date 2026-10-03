@@ -146,3 +146,55 @@ paths. That event derives the expected revision from `github.sha`; manual events
 still require the explicit input to equal the checked-out workflow revision.
 An automatic activation run must not be followed by a duplicate manual run of
 the unchanged contracts. A dispatch 404 is not a contract execution result.
+
+## Installed checkbox scope
+
+`native-interface-runtime.yml` accepts `temporal-checkbox` only with English,
+light theme, 100% scale and the normal 1200x800 viewport, without display or
+resolution provisioning. A matching immutable release and source are required.
+The wrapper installs and verifies the package first, then starts the complete
+driver/product/helper tree suspended into the existing nonbreakaway named Job.
+The entire attempt has a 120-second deadline. A durable invocation marker is
+written before launch. Timeout is not an observation pass.
+
+The empty-scene root context menu is filtered by the literal `add primitive`.
+It must show exactly `Add Primitive`. The real Regex builder is then opened,
+regex mode must be off, and at most four native Tab inputs focus its actual
+`Case sensitive` checkbox. Read-only UIA TogglePattern state must be exactly
+off. Missing, ambiguous or unsupported accessibility data stops this scope.
+Every setup and dismissal input retains its normal image.
+
+The dedicated `temporal_checkbox.py` worker runs on the already owned desktop
+and calls the two-session temporal helper. It never enters the ordinary native
+worker's 22/25-second path. Both sessions are prepared before one real checkbox
+click. The ROI is the complete measured checkbox rectangle in the builder's
+client coordinates. Native focus, enabled state, HWND/PID and rectangle are
+checked before and after every capture through read-only native queries, without
+UIA traversal in the measured burst. The helper also verifies source, package,
+process start, executable, exact named Job membership, desktop, DPI, input child
+routing and unchanged builder geometry. The worker must exit within its separate
+35-second wait; the containing Job remains the final bound for a stuck worker.
+
+The same checkbox must become selected while the parent menu has no results and
+its real `No matches.` state. Pattern text must remain unchanged. Four original
+PNGs are copied byte-for-byte into the existing numbered-image envelope. Their
+transport intervals are observation bounds, never invented acquisition times.
+The private runtime record includes the verified import manifest and temporal
+receipt. Maximum scope inventory is 17 images (including all four burst frames),
+within the existing 30-image/32-file/64-MiB limits. Raw bindings and labels are
+never added to public receipts.
+
+The wrapper withholds encryption unless whole-Job termination, exact owned
+product teardown, desktop closure and input/session disposal are confirmed.
+Cadence misses with confirmed disposal retain encrypted genuine frames and fail
+acceptance. Reduced motion is not overridden: if it prevents an intermediate
+frame, that attempt is not observed. The full-strength checkbox glyph changes
+immediately; the edge is decorative. Pixel differences remain subject to review
+and do not prove layered opacity, motion semantics or unrelated controls.
+
+Seven product-free cases exercise the actual checkbox semantic predicate,
+including provider absence/indeterminate values, focus and geometry drift,
+unchanged results and a removed-geometry-comparison mutation. The hosted runtime
+workflow runs these before installation for this scope. Local execution was not
+performed; compilation, provider behavior, full containment and temporal pixels
+remain unverified until the hosted attempt and restricted evidence review.
