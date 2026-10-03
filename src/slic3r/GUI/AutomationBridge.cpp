@@ -12,6 +12,7 @@
 #include "BackgroundSlicingProcess.hpp"
 #include "libslic3r/Model.hpp"
 #include "nlohmann/json.hpp"
+#include <wx/glcanvas.h>
 #include <atomic>
 #include <chrono>
 #include <condition_variable>
