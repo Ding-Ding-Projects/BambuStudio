@@ -97,6 +97,8 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Native interaction driver parsing failed.' }
           python scripts/md3/test_native_minimum_observation.py
           if ($LASTEXITCODE -ne 0) { throw 'Native minimum observation contract failed.' }
+          python scripts/md3/test_native_vocabulary_observation.py -v
+          if ($LASTEXITCODE -ne 0) { throw 'Native vocabulary observation contract failed.' }
       - name: Drive the installed native interface
         shell: pwsh
         run: |
