@@ -1,3 +1,4 @@
+#requires -Version 7.5
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)][string] $BundlePath,
@@ -65,7 +66,7 @@ function Parse-Json([byte[]] $Bytes) {
     $options = [Text.Json.JsonDocumentOptions]::new(); $options.MaxDepth = 16
     $document = [Text.Json.JsonDocument]::Parse($text,$options)
     try { Check-JsonElement $document.RootElement } finally { $document.Dispose() }
-    return ($text | ConvertFrom-Json -Depth 16)
+    return ($text | ConvertFrom-Json -Depth 16 -DateKind String)
 }
 function Fields($Object, [string[]] $Names) {
     Require ($null -ne $Object -and $Object -is [pscustomobject])

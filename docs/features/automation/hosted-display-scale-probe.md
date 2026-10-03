@@ -484,7 +484,9 @@ still required before drawing conclusions about higher-scale availability.
 #### Administrative diagnostic opening
 
 `scripts/md3/Open-HostedScaleDiagnostic.ps1` opens this format using the existing
-current-user DPAPI automation key custody. Supply `-BundlePath`, `-EnvelopePath`,
+current-user DPAPI automation key custody. It requires PowerShell 7.5 or later
+and uses `ConvertFrom-Json -DateKind String` so authenticated UTC text is not
+implicitly converted to a date object before exact validation. Supply `-BundlePath`, `-EnvelopePath`,
 `-ExpectedRunId`, `-ExpectedCommit`, `-ExpectedPhase` and a new `-OutputDirectory`
 whose parent already exists. It never generates or replaces keys and never prints
 key material, native labels, private identities or output paths.
