@@ -116,9 +116,15 @@ CommandPalette::CommandPalette(MainFrame *frame)
     });
 
     // Borderless like every other kit dialog: no system border line. The palette has
-    // no caption strip, so only the chrome is finished here (DWM rounded corners and
-    // the entrance fade), after the sizing above.
+    // no caption strip, so its own show lifecycle owns the entrance.
     MD3DialogCaption::FinishChrome(this);
+    Bind(wxEVT_SHOW, [this](wxShowEvent &event) {
+        if (event.GetEventObject() == this) {
+            if (event.IsShown()) m_entrance.Show(this, MD3::Motion::medium1);
+            else m_entrance.Stop();
+        }
+        event.Skip();
+    });
 }
 
 void CommandPalette::ShowPalette(MainFrame *frame)
@@ -135,7 +141,7 @@ void CommandPalette::ShowPalette(MainFrame *frame)
         // apply_size() already placed a full-window palette over the frame.
         if (palette.size_choice() == PaletteIndex::PaletteSize::Card)
             palette.CenterOnParent();
-        // The entrance fade is played once, by FinishChrome() in the constructor.
+        // The actual show event schedules the entrance after native visibility.
         palette.ShowModal();
     }
     s_open = false;

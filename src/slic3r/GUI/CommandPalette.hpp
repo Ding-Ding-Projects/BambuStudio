@@ -8,6 +8,7 @@
 #include <wx/dialog.h>
 
 #include "CommandPaletteIndex.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 
 class SearchField;
 class Button;
@@ -88,6 +89,7 @@ private:
     std::vector<wxPanel *> m_rows;   // row panels parallel to m_visible
     int                 m_selected { -1 };
     PaletteIndex::PaletteSize m_size { PaletteIndex::PaletteSize::Card };
+    MD3TransientEntrance m_entrance;
 };
 
 } // namespace Slic3r::GUI

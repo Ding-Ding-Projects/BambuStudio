@@ -2,9 +2,27 @@
 #define slic3r_GUI_MD3DialogChrome_hpp_
 
 #include <wx/panel.h>
+#include "MD3Motion.hpp"
 
 class wxDialog;
 class Label;
+
+// One explicitly owned top-level entrance. Hide/reopen replaces the previous
+// run; no close action or input state waits for the visual transition.
+class MD3TransientEntrance : public wxEvtHandler
+{
+public:
+    ~MD3TransientEntrance() override;
+    void Show(wxWindow *owner, int duration_ms);
+    void Stop();
+private:
+    void Begin(int duration_ms);
+    void Restore();
+    MD3::Motion::Anim m_anim;
+    wxWeakRef<wxWindow> m_owner;
+    void *m_native_handle = nullptr;
+    uint64_t m_generation = 0;
+};
 
 // Material Design 3 dialog caption, replacing the native Windows title bar.
 //
@@ -25,7 +43,7 @@ class MD3DialogCaption : public wxPanel
 public:
     MD3DialogCaption(wxDialog *dialog, const wxString &title);
 
-    // One-call adoption: request rounded corners + play the entrance fade.
+    // Request rounded corners. Caption instances own show/reopen motion.
     // Call after the dialog's sizer is set (typically right before Show).
     static void FinishChrome(wxDialog *dialog);
 
@@ -44,11 +62,13 @@ public:
 
 private:
     void OnPaintClose(wxPaintEvent &event);
+    void OnDialogShow(wxShowEvent &event);
 
     wxDialog *m_dialog { nullptr };
     Label    *m_title { nullptr };
     wxPanel  *m_close { nullptr };
     bool      m_close_hover { false };
+    MD3TransientEntrance m_entrance;
 };
 
 #endif // slic3r_GUI_MD3DialogChrome_hpp_

@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "WindowShadow.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 
 class Label;
 class Button;
@@ -159,6 +160,7 @@ private:
     int      m_copy_step = 0;
 
     WindowShadow m_shadow; // soft drop shadow behind the card (Figma-spec defaults)
+    MD3TransientEntrance m_entrance;
 };
 
 } // namespace Slic3r::GUI
