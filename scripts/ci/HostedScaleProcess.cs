@@ -105,7 +105,9 @@ public static class HostedScaleProcess
                     using(var identity=WindowsIdentity.GetCurrent()) sid=identity.User.Value;
                     uint size;
                     if(!ConvertStringSecurityDescriptorToSecurityDescriptor(
-                        "D:P(A;;0x0004;;;"+sid+")",1,out descriptor,out size)) throw new Exception();
+                        // OWNER RIGHTS suppresses the owner's otherwise implicit
+                        // READ_CONTROL/WRITE_DAC grant on subsequently opened handles.
+                        "D:P(A;;0x0004;;;OW)(A;;0x0004;;;"+sid+")",1,out descriptor,out size)) throw new Exception();
                     var security=new SA { Length=Marshal.SizeOf<SA>(), Descriptor=descriptor, Inherit=0 };
                     job=CreateJobObject(ref security,jobName);
                     // Never adopt a pre-existing object, even when its name and
