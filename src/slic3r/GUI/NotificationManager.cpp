@@ -3118,7 +3118,7 @@ void NotificationManager::render_notifications(GLCanvas3D &canvas, float overlay
         ImGui::PushStyleColor(ImGuiCol_WindowBg, to_imvec4(MD3::resolve(MD3::Role::SurfaceContainer, m_is_dark)));
         ImGui::PushStyleColor(ImGuiCol_Text, to_imvec4(MD3::resolve(MD3::Role::OnSurface, m_is_dark)));
         ImGui::PushStyleColor(ImGuiCol_Button, to_imvec4(MD3::resolve(MD3::Role::PrimaryContainer, m_is_dark)));
-        if (imgui.begin("Notification overflow", ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize)) {
+        if (imgui.begin(std::string("Notification overflow"), ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize)) {
             m_overflow_rendered = true;
             m_overflow_min = ImGui::GetWindowPos();
             m_overflow_max = m_overflow_min + ImGui::GetWindowSize();
