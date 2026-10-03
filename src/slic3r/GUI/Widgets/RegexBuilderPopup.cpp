@@ -150,6 +150,13 @@ RegexBuilderPopup::RegexBuilderPopup(wxWindow *parent)
 {
     SetBackgroundStyle(wxBG_STYLE_PAINT);
     SetName(_L("Regex builder"));
+    Bind(wxEVT_SHOW, [this](wxShowEvent &event) {
+        if (event.GetEventObject() == this) {
+            if (event.IsShown()) m_entrance.Show(this, MD3::Motion::short2);
+            else m_entrance.Stop();
+        }
+        event.Skip();
+    });
     Bind(wxEVT_PAINT, [this](wxPaintEvent &) {
         wxAutoBufferedPaintDC dc(this);
         const wxSize sz = GetClientSize();
@@ -173,6 +180,18 @@ RegexBuilderPopup::RegexBuilderPopup(wxWindow *parent)
     // dismisses us at the exact moment focus enters m_pattern.
     // build() is deferred to the first Configure() so every child control is
     // created with the owning field's accent scheme already installed.
+}
+
+void RegexBuilderPopup::Dismiss()
+{
+    m_entrance.Stop();
+    PopupWindow::Dismiss();
+}
+
+void RegexBuilderPopup::OnDismiss()
+{
+    m_entrance.Stop();
+    PopupWindow::OnDismiss();
 }
 
 void RegexBuilderPopup::build()

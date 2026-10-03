@@ -12,6 +12,7 @@
 
 #include "MD3Tokens.hpp"
 #include "PopupWindow.hpp"
+#include "MD3DialogChrome.hpp"
 
 class Button;
 class CheckBox;
@@ -56,6 +57,9 @@ public:
     };
 
     explicit RegexBuilderPopup(wxWindow *parent);
+    ~RegexBuilderPopup() override { m_entrance.Stop(); }
+    void Dismiss() override;
+    void OnDismiss() override;
 
     // (Re)load state from the owning field. Call before Popup().
     void Configure(MD3::ColorScheme scheme, const wxString &pattern, bool regexOn,
@@ -139,6 +143,7 @@ private:
     bool             m_test_open = false;
     bool             m_syncing   = false; // guards field->popover sync against echo
 
+    MD3TransientEntrance m_entrance;
     Callbacks m_cb;
 };
 
