@@ -2381,3 +2381,23 @@ geometry and pixels use the established recipient encryption with authenticated
 source/run/phase/dimension/helper/tool/image bindings. Only four named encrypted
 files join the fixed public receipt upload inventory; no raw PNG or native
 identity is uploaded. Actual rendering, decryption and interpretation are pending.
+
+## Diagnostic reader and capture observability, 2026-10-03 UTC
+
+Run 37092218449 restored the display after the 200% match_option failure,
+but both capture phases returned unavailable. No encrypted files were produced.
+Reviewed source 546d376d2b25595f31595a295c38b55505638812 adds fixed diagnostic
+stage codes and a bounded administrative reader. The reader requires PowerShell
+7.5, preserves authenticated timestamp strings, rejects nonobject roots and
+scalar coercion, uses existing DPAPI custody, and verifies exact source/run/phase,
+AAD, ciphertext and image identity before exclusive output creation. Two
+independent source reviews accepted the corrected candidate. No decryption or
+pixel review has occurred. A changed hosted diagnostic is the next step.
+
+Build 37088918536 also lost its waiting publisher to the old queue rule;
+compilation and packaging succeeded and its uploaded package remains preserved.
+The matching 35d1074fa publisher 37089433015 was still in metadata validation at
+the latest observation. Source inspection identifies serial per-file attribution
+without intermediate progress or a short timeout, but cannot identify the live
+suboperation. A pending publisher is not a successful installed runtime result.
+Main integration, final combined runtime evidence and archive/cleanup remain open.

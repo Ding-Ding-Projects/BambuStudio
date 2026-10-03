@@ -2,16 +2,19 @@
 # contained-process functions. No UIA mutation, activation, scrolling or input.
 function Save-HostedScaleDiagnostic([ValidateSet('before_selector','expanded_selector')][string] $Phase) {
     if (-not $DiagnosticEvidence -or $NativeRuntime -or $Mode -cne 'run' -or $script:DiagnosticResults.ContainsKey($Phase)) { return }
-    $script:DiagnosticResults[$Phase] = 'unavailable'
+    $script:DiagnosticResults[$Phase] = @{status='unavailable'; stage='initialize'}
+    $diagnosticStage = 'initialize'
     $png = Join-Path $env:RUNNER_TEMP ('scale-diagnostic-' + [Guid]::NewGuid().ToString('N') + '.png')
     $plain = $null; $key = $null; $rsa = $null
     try {
         if ((Test-UncertainChildren) -or (Test-UncertainInput)) { throw 'Diagnostic containment unavailable.' }
+        $diagnosticStage = 'source_identity'
         $git = (Get-Command git -CommandType Application).Source
         $sourceRead = Invoke-BoundedProcess $git @('-C',$PSScriptRoot,'rev-parse','HEAD') 5 $true
         $source = $sourceRead.stdout.Trim()
         if (-not $sourceRead.terminated -or $sourceRead.code -ne 0 -or $source -cnotmatch '^[0-9a-f]{40}$' -or
             $env:GITHUB_RUN_ID -cnotmatch '^\d{1,20}$') { throw 'Diagnostic source unavailable.' }
+        $diagnosticStage = 'settings_controls'
         $rows = @(Read-Controls)
         $state = Read-Scale $rows
         $root = [ScaleNative]::GetAncestor([IntPtr]$state.combo.top.Current.NativeWindowHandle,2)
@@ -34,6 +37,7 @@ function Save-HostedScaleDiagnostic([ValidateSet('before_selector','expanded_sel
             }
             return @($bounds.Left,$bounds.Top,$bounds.Right,$bounds.Bottom)
         }
+        $diagnosticStage = 'owner_observation'
         $bounds = Read-DiagnosticOwner
         $observedAt = [DateTime]::UtcNow.ToString('o')
         $foregroundOwned = $false
@@ -42,6 +46,7 @@ function Save-HostedScaleDiagnostic([ValidateSet('before_selector','expanded_sel
             Assert-HostedForeground $root ([int][Math]::Floor($rect.X+$rect.Width/2)) ([int][Math]::Floor($rect.Y+$rect.Height/2))
             $foregroundOwned = $true
         } catch {} # Observation only, never activate an obscured window.
+        $diagnosticStage = 'control_inventory'
         $controls = [Collections.Generic.List[object]]::new()
         foreach ($row in $rows) {
             if (-not $row.top.Equals($state.combo.top)) { continue }
@@ -66,22 +71,29 @@ function Save-HostedScaleDiagnostic([ValidateSet('before_selector','expanded_sel
         }
         # Exact HWND capture, not a whole-desktop image. Refresh its
         # owner immediately before and after the contained cheap invocation.
+        $diagnosticStage = 'before_capture_owner'
         if (((Read-DiagnosticOwner) -join ',') -cne ($bounds -join ',')) { throw 'Diagnostic frame changed.' }
         $capturedAt = [DateTime]::UtcNow.ToString('o')
+        $diagnosticStage = 'cheap_capture'
         $capture = Invoke-BoundedProcess $CheapExecutable @('screenshot','--hwnd',"$($root.ToInt64())",'--output_path',$png) 15 $true
         if (-not $capture.terminated -or $capture.code -ne 0) { throw 'Diagnostic capture unavailable.' }
+        $diagnosticStage = 'capture_response_and_owner'
         $reply = $capture.stdout | ConvertFrom-Json
         if ($reply.ok -ne $true -or $reply.rendered_ok -ne $true -or
             ((Read-DiagnosticOwner) -join ',') -cne ($bounds -join ',')) { throw 'Diagnostic render or ownership unavailable.' }
+        $diagnosticStage = 'png_bounds'
         $file = Get-Item -LiteralPath $png
         if ($file.Length -le 24 -or $file.Length -gt 8388608 -or ($file.Attributes -band [IO.FileAttributes]::ReparsePoint)) { throw 'Diagnostic PNG exceeds bounds.' }
         $pixels = [IO.File]::ReadAllBytes($png)
+        $diagnosticStage = 'png_header'
         if ([Convert]::ToHexString($pixels[0..7]) -cne '89504E470D0A1A0A' -or
             [Text.Encoding]::ASCII.GetString($pixels,12,4) -cne 'IHDR') { throw 'Diagnostic PNG invalid.' }
         $width = [uint32]$pixels[16]*16777216 + [uint32]$pixels[17]*65536 + [uint32]$pixels[18]*256 + $pixels[19]
         $height = [uint32]$pixels[20]*16777216 + [uint32]$pixels[21]*65536 + [uint32]$pixels[22]*256 + $pixels[23]
+        $diagnosticStage = 'png_dimensions'
         if ($width -ne ($bounds[2]-$bounds[0]) -or $height -ne ($bounds[3]-$bounds[1]) -or
             $width -gt 8192 -or $height -gt 8192) { throw 'Diagnostic capture dimensions changed.' }
+        $diagnosticStage = 'serialize_payload'
         $binding = [ordered]@{protocol='hosted-scale-diagnostic-v1'; run_id=$env:GITHUB_RUN_ID; source_commit=$source; phase=$Phase
             captured_at_utc=$capturedAt; width=$width; height=$height; capture_method='cheap_exact_hwnd'
             png_sha256=[Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($pixels)).ToLowerInvariant()
@@ -94,6 +106,7 @@ function Save-HostedScaleDiagnostic([ValidateSet('before_selector','expanded_sel
             controls=$controls.ToArray(); png_base64=[Convert]::ToBase64String($pixels)} | ConvertTo-Json -Depth 10 -Compress))
         if ($plain.Length -gt 16777216) { throw 'Diagnostic envelope exceeds bounds.' }
         $aad = [Text.Encoding]::UTF8.GetBytes(($binding | ConvertTo-Json -Compress))
+        $diagnosticStage = 'encrypt_payload'
         $key = [Security.Cryptography.RandomNumberGenerator]::GetBytes(32)
         $nonce = [Security.Cryptography.RandomNumberGenerator]::GetBytes(12)
         $tag = [byte[]]::new(16); $cipher = [byte[]]::new($plain.Length)
@@ -102,16 +115,18 @@ function Save-HostedScaleDiagnostic([ValidateSet('before_selector','expanded_sel
         $wrapped = $rsa.Encrypt($key,[Security.Cryptography.RSAEncryptionPadding]::OaepSHA256)
         $aes = [Security.Cryptography.AesGcm]::new($key,16)
         try { $aes.Encrypt($nonce,$plain,$cipher,$tag,$aad) } finally { $aes.Dispose() }
+        $diagnosticStage = 'write_ciphertext'
         [IO.File]::WriteAllBytes((Join-Path $output ($Phase + '.aesgcm')),$cipher)
+        $diagnosticStage = 'write_envelope'
         @{schema=1; protocol='hosted-scale-diagnostic-v1'; recipient='hosted-automation-public-v1.pem'
             recipient_sha256=[Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($rsa.ExportSubjectPublicKeyInfo())).ToLowerInvariant()
             aad_base64=[Convert]::ToBase64String($aad); binding=$binding
             wrapped_key=[Convert]::ToBase64String($wrapped); nonce=[Convert]::ToBase64String($nonce); tag=[Convert]::ToBase64String($tag)
             ciphertext_sha256=[Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($cipher)).ToLowerInvariant()
         } | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $output ($Phase + '.envelope.json')) -Encoding utf8
-        $script:DiagnosticResults[$Phase] = 'encrypted_pending_pixel_review'
+        $script:DiagnosticResults[$Phase] = @{status='encrypted_pending_pixel_review'; stage='complete'}
     } catch {
-        $script:DiagnosticResults[$Phase] = 'unavailable'
+        $script:DiagnosticResults[$Phase] = @{status='unavailable'; stage=$diagnosticStage}
     } finally {
         if ($null -ne $plain) { [Array]::Clear($plain,0,$plain.Length) }
         if ($null -ne $key) { [Array]::Clear($key,0,$key.Length) }
