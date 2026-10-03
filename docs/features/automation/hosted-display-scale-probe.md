@@ -508,6 +508,30 @@ identity, numeric run identity, successful exit and complete child termination
 are still required. This diagnostic refinement is unverified until a changed
 hosted observation establishes the narrower cause; it is not a source-identity fix.
 
+Run `37093133090` at `73e60310b56fb7a35ea996b6260ce4129e97087f`
+reached `source_process_exit` in both phases: termination was verified, code was
+`-1`, output was an empty string, and run/directory checks passed. Code `-1` is
+also the process helper's default unavailable result, so it does not prove that
+Git itself returned that exit code. No source identity is replaced by an
+environment value.
+
+The helper now exposes a fixed numeric process stage and a nullable native error
+code (captured immediately only when `CreateProcessW` fails). Stage numbers are:
+0 initial, 1 job creation, 2 limits, 3 streams, 4 attributes, 5 command,
+6 process creation, 7 assignment, 8 reader setup, 9 resume, 10 observation,
+11 timeout, 12 output limit or reader exception, 13 exit query, 14 drain,
+15 drain timeout, 16 rejected drain, 17 decoding, 18 completed, 19 invalid name.
+Exceptions retain the last stage without exposing their text. Deadlines, output
+bounds, handle ownership, termination and success acceptance remain unchanged.
+
+The hosted-only lifecycle script adds a nested contained invocation of the exact
+`git -C <helper-directory> rev-parse HEAD` command before the other cases. It
+validates actual checkout output against the run commit without using that value
+as a substitute. Only fixed boolean/numeric inner and outer process observations
+are retained. This tenth case can run through `lifecycle_only` without opening
+Settings or changing display state. Its hosted verdict and the underlying cause
+remain pending; a full scaling attempt is not needed to obtain this observation.
+
 #### Administrative diagnostic opening
 
 `scripts/md3/Open-HostedScaleDiagnostic.ps1` opens this format using the existing

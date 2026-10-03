@@ -85,7 +85,8 @@ function Invoke-BoundedProcess([string] $Executable, [string[]] $Arguments, [int
         } else {
             $script:ChildTerminationUncertain = $true
         }
-        return @{ terminated=$result.Terminated; code=$result.Code; stdout=$result.Output }
+        return @{ terminated=$result.Terminated; code=$result.Code; stdout=$result.Output
+            process_stage=[int]$result.ProcessStage; native_error=$result.NativeError }
     } catch {
         $script:ChildTerminationUncertain = $true
         throw 'Child containment or receipt is unverified.'
