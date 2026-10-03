@@ -4,6 +4,7 @@
 #include <functional>
 #include <wx/frame.h>
 #include "slic3r/GUI/Widgets/ProgressBar.hpp"
+#include "slic3r/GUI/Widgets/MD3DialogChrome.hpp"
 #include <wx/string.h>
 
 class wxStaticText;
@@ -17,6 +18,7 @@ class AssemblyExportProgressWindow : public wxFrame
 {
 public:
     explicit AssemblyExportProgressWindow(wxWindow *parent);
+    ~AssemblyExportProgressWindow() override;
 
     void set_cancel_callback(std::function<void()> cb);
     void enable_cancel(bool enable);
@@ -33,6 +35,7 @@ private:
     Button       *m_cancel{nullptr};
     wxSize        m_shape_size;
     std::function<void()> m_cancel_cb;
+    MD3TransientEntrance m_entrance;
 };
 
 } // namespace GUI
