@@ -154,6 +154,39 @@ derived directory and reads only `bbs-launcher-trace.log`, capped at 64 KiB.
 Its contents remain encrypted; absent or invalid traces cannot establish a cause.
 No product rebuild is needed to observe this existing launcher diagnostic.
 
+### Instrumented loader diagnosis from creation
+
+The separate startup-trace workflow has an explicit `from_creation` mode fixed
+to the same v190 product and source. It retains signed Microsoft CDB discovery,
+with a five-minute debugger-bootstrap deadline, and authenticates the current
+verifier independently. This mode is diagnostic only and never supplies feature
+or rendered-interface evidence.
+
+The existing suspended-start Job helper has a narrowly validated desktop-aware
+entry point. A fixed worker begins on an owned hidden desktop only after Job
+assignment; CDB creates the installed product with its initial breakpoint kept.
+Before continuing, the worker requires an emitted initial marker, exact target
+PID/thread, loader-flag readback, live executable/profile/start identity, target
+desktop and membership of both debugger and product in the exact named Job.
+The command file uses `!gflag +sls` and fixed exception/exit observations. It does
+not use software breakpoints, executable patches, registry flags or arbitrary
+commands. The ordinary attachment route remains separate.
+
+Debugger output is drained with a 1-MiB retained-byte cap; overflow stops the
+diagnostic. Observation lasts at most 90 seconds inside a 120-second Job
+supervisor. Only proven whole-tree termination and desktop closure permit the
+wrapper to read and encrypt the bounded report and log. Unknown teardown
+withholds evidence. Product, verifier, debugger and changed helper identities
+are retained in the authenticated diagnostic transport; raw logs are never
+uploaded. Module-relative offsets without matching symbols do not identify a
+source routine, and loader error 1114 alone does not identify the failing module.
+The focused hosted command contract checks initial acknowledgement rejection and
+the absence of attachment/skip-initial flags. Source review and hosted execution
+remain required before relying on this new mode.
+
+Microsoft documents the [initial breakpoint](https://learn.microsoft.com/en-us/windows-hardware/drivers/debugger/initial-breakpoint)
+and the [process debugger flag extension](https://learn.microsoft.com/en-us/windows-hardware/drivers/debuggercmds/-gflag).
+
 An absent, ambiguous or disabled target fails the affected scope. Provider
 timeouts, truncated observations, incorrect process ownership, missing original
 labels, unexpected confirmation state and layout overflow remain failures.

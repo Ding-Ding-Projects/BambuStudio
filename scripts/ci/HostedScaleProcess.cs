@@ -93,7 +93,13 @@ public static class HostedScaleProcess
             return new Result { Terminated=true, ProcessStage=Stage.InvalidName };
         return RunCore(executable,args,seconds,capture,jobName);
     }
-    static Result RunCore(string executable,string[] args,int seconds,bool capture,string jobName) {
+    public static Result RunNamedOnDesktop(string executable,string[] args,int seconds,bool capture,string jobName,string desktop) {
+        if(jobName==null || !Regex.IsMatch(jobName,@"\ALocal\\BambuNativeScale-[0-9a-f]{64}\z") ||
+           desktop==null || !Regex.IsMatch(desktop,@"\AWinSta0\\startup-loader-[0-9]+-[0-9]+\z"))
+            return new Result { Terminated=true, ProcessStage=Stage.InvalidName };
+        return RunCore(executable,args,seconds,capture,jobName,desktop);
+    }
+    static Result RunCore(string executable,string[] args,int seconds,bool capture,string jobName,string desktop=null) {
         var result=new Result();
         IntPtr job=IntPtr.Zero, read=IntPtr.Zero, write=IntPtr.Zero, nul=IntPtr.Zero;
         IntPtr attributes=IntPtr.Zero, inherited=IntPtr.Zero;
@@ -145,7 +151,7 @@ public static class HostedScaleProcess
             if(capture) Marshal.WriteIntPtr(inherited,IntPtr.Size,write);
             if(!UpdateProcThreadAttribute(attributes,0,new IntPtr(0x20002),inherited,
                 new IntPtr(handleCount*IntPtr.Size),IntPtr.Zero,IntPtr.Zero)) throw new Exception();
-            var si=new SIX { Start=new SI { Size=Marshal.SizeOf<SIX>(), Flags=0x101, Show=0, Input=nul,
+            var si=new SIX { Start=new SI { Size=Marshal.SizeOf<SIX>(), Desktop=desktop, Flags=0x101, Show=0, Input=nul,
                 Output=capture ? write : nul, Error=nul }, Attributes=attributes };
             result.ProcessStage=Stage.Command;
             var command=new StringBuilder(Quote(executable));

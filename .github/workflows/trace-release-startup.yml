@@ -2,7 +2,7 @@ name: Trace published startup on hosted Windows
 
 on:
   push:
-    branches: [codex/hosted-startup-stack]
+    branches: [codex/hosted-startup-stack, feature/ui-integration]
     paths:
       - '.github/workflows/trace-release-startup.yml'
       - 'scripts/ci/Trace-HostedReleaseStartup.ps1'
@@ -10,6 +10,10 @@ on:
       - 'scripts/md3/test-trace-packaged-startup.py'
   workflow_dispatch:
     inputs:
+      from_creation:
+        description: Fixed v190 loader diagnosis from process creation
+        type: boolean
+        default: false
       tag:
         description: Published release tag
         required: true
@@ -28,7 +32,7 @@ concurrency:
 
 jobs:
   trace:
-    if: github.ref == 'refs/heads/codex/hosted-startup-stack'
+    if: github.ref == 'refs/heads/codex/hosted-startup-stack' || (github.event_name == 'workflow_dispatch' && inputs.from_creation)
     runs-on: windows-2025
     timeout-minutes: 90
     defaults:
@@ -59,7 +63,15 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TRACE_TAG: ${{ inputs.tag || 'md3-v125' }}
           TRACE_SOURCE_COMMIT: ${{ inputs.source_commit || 'c5df6199e1a83b1c94be12e999c0b322fded8730' }}
-        run: ./scripts/ci/Trace-HostedReleaseStartup.ps1 -Tag $env:TRACE_TAG -ExpectedCommit $env:TRACE_SOURCE_COMMIT
+          TRACE_FROM_CREATION: ${{ inputs.from_creation }}
+        run: |
+          $arguments = @{Tag=$env:TRACE_TAG; ExpectedCommit=$env:TRACE_SOURCE_COMMIT}
+          if ($env:TRACE_FROM_CREATION -eq 'true') {
+            $arguments.Tag='md3-v190'
+            $arguments.ExpectedCommit='35d1074faea221fa4f289f1db1e0ee428a90d701'
+            $arguments.FromCreation=$true
+          }
+          ./scripts/ci/Trace-HostedReleaseStartup.ps1 @arguments
 
       - name: Upload safe and encrypted diagnostic evidence
         if: ${{ always() }}
