@@ -481,6 +481,15 @@ fingerprint identifies existing custody without putting private keys on the host
 This is source preparation only; hosted capture, decryption and pixel review are
 still required before drawing conclusions about higher-scale availability.
 
+Run `37092218449` reported both diagnostic phases unavailable without encrypted
+outputs. The public `diagnostic_evidence` entries now contain a fixed `status`
+and fixed `stage` instead of a status string alone. Stages distinguish source
+identity, controls, owner observation, bounded inventory, capture invocation,
+response/ownership, PNG checks, serialization, encryption and envelope writes.
+No exception strings or native values are added. The actual cause remains unknown
+until a changed hosted observation supplies that phase; this instrumentation does
+not relax capture acceptance or alter input, containment or restoration.
+
 #### Administrative diagnostic opening
 
 `scripts/md3/Open-HostedScaleDiagnostic.ps1` opens this format using the existing
