@@ -83,7 +83,7 @@ def main():
     require(re.fullmatch(r"[0-9a-f]{40}", request["source_commit"]))
     require(re.fullmatch(r"md3-v[0-9]{1,12}", request["release_tag"]))
     require(request["run_id"] == run_id and request["job_name"] == job_name)
-    require(request["scope"] in ("menus", "vocabulary", "vocabulary-persistence", "slice-controls",
+    require(request["scope"] in ("menus", "menu-builder-root", "menu-builder-nested", "vocabulary", "vocabulary-persistence", "slice-controls",
                                   "combined-print", "combined-send", "cancellation", "minimum-resize", "minimum-observe"))
     require(request["language"] in ("en", "yue_HK", "bilingual_en_yue_HK"))
     require(request["theme"] in ("light", "dark"))

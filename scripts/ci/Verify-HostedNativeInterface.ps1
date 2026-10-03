@@ -6,7 +6,7 @@ param(
     [Parameter(Mandatory)][ValidatePattern('^[0-9a-f]{40}$')][string] $ExpectedSourceCommit,
     [Parameter(Mandatory)][ValidatePattern('^[^/]+/[^/]+$')][string] $Repository,
     [Parameter(Mandatory)][string] $OutputDirectory,
-    [Parameter(Mandatory)][ValidateSet('menus','vocabulary','vocabulary-persistence','slice-controls','combined-print','combined-send','cancellation','minimum-resize','minimum-observe','startup-diagnostic')][string] $Scope,
+    [Parameter(Mandatory)][ValidateSet('menus','menu-builder-root','menu-builder-nested','vocabulary','vocabulary-persistence','slice-controls','combined-print','combined-send','cancellation','minimum-resize','minimum-observe','startup-diagnostic')][string] $Scope,
     [ValidatePattern('^[0-9a-f]{40}$')][string] $ExpectedVerifierCommit,
     [ValidateSet('en','yue_HK','bilingual_en_yue_HK')][string] $Language = 'en',
     [ValidateSet('light','dark')][string] $Theme = 'light',
