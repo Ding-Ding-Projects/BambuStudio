@@ -273,6 +273,7 @@ class Driver:
         self.args, self.app, self.scratch = args, app, scratch
         self.sequence, self.rows, self.images = 0, [], []
         self.native, self.probe = [], []
+        self.viewport_observations = []
         self.translation = gettext.NullTranslations()
         if args.language == "yue_HK":
             catalog = args.exe.parent / "resources/i18n/yue_HK/BambuStudio.mo"
@@ -412,6 +413,9 @@ class Driver:
         return self.record(label, "text", hwnd=top, text=text, capture_hwnd=top)
 
     def exact_client(self):
+        if self.args.viewport == "measured-minimum":
+            self.measured_minimum()
+            return
         requested = tuple(map(int, self.args.viewport.split("x")))
         for _ in range(4):
             self.worker()
@@ -423,6 +427,55 @@ class Driver:
             self.worker("resize", size=[frame["width"] + requested[0] - client["w"],
                                          frame["height"] + requested[1] - client["h"]])
         raise RuntimeError("Actual client size did not reach the requested viewport")
+
+    def measured_minimum(self):
+        """Observe the product's outer constraint, never substitute a client size."""
+        def geometry():
+            self.worker()
+            top = next(r for r in self.probe if r.get("kind") == "toplevel" and
+                       r.get("hwnd") == self.app.main)
+            root = next(r for r in self.probe if r.get("kind") == "window" and
+                        r.get("hwnd") == self.app.main and r.get("depth") == 0)
+            frame = next(w for w in self.app.windows() if w["handle"] == self.app.main)
+            return {"minimum_outer": root["min"], "outer": [frame["width"], frame["height"]],
+                    "client": top["client"], "dpi": frame.get("dpi")}
+
+        before = geometry()
+        minimum = before["minimum_outer"]
+        size = [minimum["w"], minimum["h"]]
+        require(all(type(v) is int for v in size) and 401 <= size[0] <= 4000 and
+                301 <= size[1] <= 4000, "Measured outer minimum is outside the bounded resize range")
+        require(before["dpi"] == round(96 * self.args.scale), "Minimum observation DPI mismatch")
+        receipt = {"mode": "measured-minimum", "pid": self.app.pid, "before": before,
+                   "method": "SetWindowPos", "clamp_status": "not_observed",
+                   "interactive_resize_clamp": "unverified", "restored": False}
+        self.viewport_observations.append(receipt)
+        self.worker("resize", size=size)
+        at_minimum = geometry()
+        receipt["at_minimum"] = at_minimum
+        require(at_minimum["outer"] == size and at_minimum["minimum_outer"] == minimum and
+                at_minimum["dpi"] == before["dpi"] and
+                at_minimum["client"]["w"] > 0 and at_minimum["client"]["h"] > 0,
+                "Product outer minimum could not be measured at its exact size")
+        # A programmatic request is recorded honestly: some native frame paths
+        # enforce minimum tracking only during interactive resizing. Such a miss
+        # must not be relabelled as successful clamping or shrink the contract.
+        try:
+            receipt["below_request"] = [size[0] - 1, size[1] - 1]
+            self.worker("resize", size=receipt["below_request"])
+            below = geometry()
+            receipt["after_below_request"] = below
+            require(below["minimum_outer"] == minimum and below["dpi"] == before["dpi"],
+                    "Minimum constraint or DPI changed during measurement")
+            receipt["clamp_status"] = "observed_programmatic_clamp" if below["outer"] == size else "not_observed"
+        finally:
+            self.worker("resize", size=size)
+            restored = geometry()
+            receipt["after_restore"] = restored
+            receipt["restored"] = (restored["outer"] == size and
+                                   restored["minimum_outer"] == minimum and restored["dpi"] == before["dpi"])
+        require(receipt["restored"], "Measured minimum frame was not restored")
+        self.record("measured-minimum-restored")
 
     def menu_items(self, top):
         return [r for r in self.candidates(kind=50011, top=top)]
@@ -872,7 +925,7 @@ def main():
     parser.add_argument("--language", choices=behavior.MODES, default="en")
     parser.add_argument("--theme", choices=("light", "dark"), default="light")
     parser.add_argument("--scale", type=float, choices=(1.0, 1.25, 1.5, 2.0), default=1.0)
-    parser.add_argument("--viewport", choices=("1200x800", "1000x600"), default="1200x800")
+    parser.add_argument("--viewport", choices=("1200x800", "1000x600", "measured-minimum"), default="1200x800")
     args = parser.parse_args()
     require(os.environ.get("GITHUB_ACTIONS") == "true" and os.environ.get("RUNNER_ENVIRONMENT") == "github-hosted"
             and os.environ.get("RUNNER_OS") == "Windows", "Only disposable hosted Windows execution is authorized")
@@ -919,6 +972,7 @@ def main():
             "requested_tuple": {"language": args.language, "theme": args.theme,
                 "scale": args.scale, "viewport": args.viewport},
             "operations": drive.rows if drive else [], "captures": drive.images if drive else [],
+            "viewport_observations": drive.viewport_observations if drive else [],
             "capture_method": "lowlevel-computer-use-cheap hidden desktop",
             "privacy": "restricted_pixel_review_pending", "hardware": "unverified_no_printer_commands",
             "teardown_verified": teardown, "failure": failure}
