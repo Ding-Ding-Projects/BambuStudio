@@ -57,7 +57,8 @@ if ($null -ne $envelope.PSObject.Properties['key_id']) {
 }
 $knownKeys = @(
     [ordered]@{ version = 1; path = (Join-Path $PSScriptRoot 'hosted-gui-public-v1.pem') },
-    [ordered]@{ version = 2; path = (Join-Path $PSScriptRoot 'hosted-gui-public-v2.pem') }
+    [ordered]@{ version = 2; path = (Join-Path $PSScriptRoot 'hosted-gui-public-v2.pem') },
+    [ordered]@{ version = 3; path = (Join-Path $PSScriptRoot 'hosted-gui-public-v3.pem') }
 )
 $selectedKey = $null
 foreach ($known in $knownKeys) {
