@@ -80,16 +80,20 @@ jobs:
             if ($LASTEXITCODE -ne 0) { throw 'Pinned tool unavailable.' }
             $env:LLCU_CHEAP=(Get-Command lowlevel-computer-use-cheap -CommandType Application).Path
             $python=(Get-Command python -CommandType Application).Path
-            $actual=[HostedScaleProcess]::Run($python,[string[]]@('scripts/md3/startup_desktop_holder.py','--absence-contract'),15,$false)
+            # CreateProcess inherits the process directory, not PowerShell's runspace location.
+            $holderScript=(Resolve-Path -LiteralPath (Join-Path $env:GITHUB_WORKSPACE 'scripts/md3/startup_desktop_holder.py') -ErrorAction Stop).ProviderPath
+            $actual=[HostedScaleProcess]::Run($python,[string[]]@($holderScript,'--absence-contract'),15,$false)
+            $receipt.absence_process=@{terminated=$actual.Terminated;exit_code=$actual.Code;stage=[int]$actual.ProcessStage;native_error=$actual.NativeError}
             if (-not $actual.Terminated -or $actual.Code -ne 0) { throw 'Actual pinned desktop absence contract failed.' }
             $receipt.actual_absence_verified=$true
             $nonce=[Guid]::NewGuid().ToString('N')
             $holderRoot=Join-Path $env:RUNNER_TEMP ('startup-contract-' + $nonce)
             New-Item -ItemType Directory -Path $holderRoot | Out-Null
             $holderName='Local\BambuNativeScale-' + [Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(32)).ToLowerInvariant()
-            $holderArgs=[string[]]@('scripts/md3/startup_desktop_holder.py','--root',$holderRoot,'--nonce',$nonce,
+            $holderArgs=[string[]]@($holderScript,'--root',$holderRoot,'--nonce',$nonce,
               '--desktop',"startup-loader-$($env:GITHUB_RUN_ID)-$($env:GITHUB_RUN_ATTEMPT)",'--source',$source,'--job-name',$holderName,'--lifecycle-contract')
             $lifecycle=[HostedScaleProcess]::RunNamed($python,$holderArgs,60,$false,$holderName)
+            $receipt.lifecycle_process=@{terminated=$lifecycle.Terminated;exit_code=$lifecycle.Code;stage=[int]$lifecycle.ProcessStage;native_error=$lifecycle.NativeError}
             if (-not $lifecycle.Terminated -or $lifecycle.Code -ne 0) { throw 'Persistent desktop lifecycle contract failed.' }
             $receipt.persistent_lifecycle_verified=$true
             $receipt.status='passed'
