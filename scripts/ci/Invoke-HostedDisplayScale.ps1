@@ -91,6 +91,11 @@ if ($Mode -eq 'supervisor') {
             $nativeRequest = Read-NativeRequest
             $run = Invoke-BoundedProcess $nativePython @($nativeAdapter,'--validate-request',$nativeRequest.job_name) 20
             if (-not $run.terminated -or $run.code -ne 0) { throw 'Native request validation failed.' }
+            # Open only the fixed owned Settings surface after installation,
+            # bootstrap and strict request validation. Never force activation;
+            # the worker still requires observed foreground ownership.
+            $run = @{ terminated = $true; code = -1 }
+            Start-Process -FilePath 'ms-settings:display' -WindowStyle Hidden
         }
         $run = @{ terminated = $false; code = -1 }
         $arguments = @('-NoProfile','-File',$PSCommandPath,'-ScalePercent',"$ScalePercent",
