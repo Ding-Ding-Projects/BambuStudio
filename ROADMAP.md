@@ -12,6 +12,9 @@
 
 ## Native interface completeness and slicing actions
 
+- [x] Pass 46 canvas checks, 68 preview geometry/timing checks, 55 source tests and eight slicing contracts at `4436c7f91` on hosted run `37056354867`; this does not establish native-service or rendered correctness.
+- [ ] Repair the static wxWidgets focused-target link configuration and ambiguous preview `ImGuiWrapper::begin` call, then verify the combined candidate.
+
 - [ ] Add local personal-vocabulary JSON import, replace and clear with bounded validation, local persistence and original-wording restoration.
 - [ ] Provide search and an anchored regex builder in every reachable context menu, nested menu and chooser.
 - [ ] Repair empty search states, per-control query isolation, keyboard focus and Escape handling.
