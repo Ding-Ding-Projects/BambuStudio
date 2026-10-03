@@ -8,6 +8,7 @@ import hashlib
 import json
 import msvcrt
 import os
+import stat
 import sys
 import threading
 import time
@@ -99,7 +100,7 @@ def file_sha256(path: Path) -> str:
 
 def hold(exe: Path, datadir: Path, desktop: str, receipt_path: Path,
          stop_path: Path, stdout_path: Path, stderr_path: Path,
-         timeout: int) -> int:
+         timeout: int, isolated_launcher_trace: bool = False) -> int:
     user32 = ctypes.WinDLL("user32", use_last_error=True)
     kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
     user32.OpenDesktopW.argtypes = [wintypes.LPCWSTR, wintypes.DWORD,
@@ -137,6 +138,27 @@ def hold(exe: Path, datadir: Path, desktop: str, receipt_path: Path,
             "holder_finished_at_utc": None, "status": "starting"}
     stream_stats = {"stdout": {}, "stderr": {}}
     data["streams"] = stream_stats
+    child_environment = None
+    creation_flags = CREATE_NO_WINDOW
+    if isolated_launcher_trace:
+        trace_root = receipt_path.parent / (receipt_path.stem + "-launcher-temp")
+        for ancestor in (trace_root.parent, *trace_root.parent.parents):
+            info = ancestor.lstat()
+            if stat.S_ISLNK(info.st_mode) or getattr(info, "st_file_attributes", 0) & 0x400:
+                raise ValueError("Unsafe launcher trace parent")
+        runner_root = Path(os.environ["RUNNER_TEMP"]).resolve()
+        if (not trace_root.is_absolute() or not trace_root.resolve().is_relative_to(runner_root)
+                or not 1 <= len(str(trace_root)) < 220):
+            raise ValueError("Launcher trace directory unavailable")
+        trace_root.mkdir(exist_ok=False)
+        environment = {key: value for key, value in os.environ.items()
+                       if key.upper() not in {"TEMP", "TMP"}}
+        environment.update(TEMP=str(trace_root), TMP=str(trace_root))
+        block = "\0".join(key + "=" + value for key, value in
+                          sorted(environment.items(), key=lambda item: item[0].upper())) + "\0\0"
+        child_environment = ctypes.create_unicode_buffer(block)
+        creation_flags |= 0x00000400  # CREATE_UNICODE_ENVIRONMENT
+        data["launcher_trace_root"] = str(trace_root)
     handle = user32.OpenDesktopW(desktop, 0, False, GENERIC_ALL)
     if not handle:
         data["status"] = "desktop_open_failed"
@@ -175,7 +197,7 @@ def hold(exe: Path, datadir: Path, desktop: str, receipt_path: Path,
         command = ctypes.create_unicode_buffer(f'"{exe}" --datadir "{datadir}"')
         data["launch_started_at_utc"] = utc_now()
         ok = kernel32.CreateProcessW(str(exe), command, None, None, True,
-                                     CREATE_NO_WINDOW, None, str(exe.parent),
+                                     creation_flags, child_environment, str(exe.parent),
                                      ctypes.byref(startup), ctypes.byref(process))
         if not ok:
             data["status"] = "app_launch_failed"
@@ -261,6 +283,7 @@ def main() -> int:
     parser.add_argument("--stdout", type=Path, required=True)
     parser.add_argument("--stderr", type=Path, required=True)
     parser.add_argument("--timeout", type=int, default=300)
+    parser.add_argument("--isolated-launcher-trace", action="store_true")
     args = parser.parse_args()
     if (os.environ.get("GITHUB_ACTIONS") != "true"
             or os.environ.get("RUNNER_ENVIRONMENT") != "github-hosted"):
@@ -272,7 +295,7 @@ def main() -> int:
             or not args.exe.is_file() or not args.datadir.is_dir()):
         parser.error("Invalid or reused hosted launch inputs")
     return hold(args.exe, args.datadir, args.desktop, args.receipt, args.stop,
-                args.stdout, args.stderr, args.timeout)
+                args.stdout, args.stderr, args.timeout, args.isolated_launcher_trace)
 
 
 if __name__ == "__main__":

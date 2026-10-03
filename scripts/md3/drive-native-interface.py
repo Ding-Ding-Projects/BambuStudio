@@ -1055,6 +1055,7 @@ def main():
     os.environ["BAMBU_AUTOMATION"] = "1"
     os.environ["BAMBU_AUTOMATION_ROOTS"] = str(scratch)
     app = behavior.HostedApp(str(args.exe), str(profile), "bsnative-" + str(os.getpid()), str(probe))
+    app.isolated_launcher_trace = diagnostic
     app.holder_lifetime = 1800
     drive = None
     status, failure, teardown = "failed", None, False

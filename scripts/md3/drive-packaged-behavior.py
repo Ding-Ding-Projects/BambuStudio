@@ -141,6 +141,8 @@ class HostedApp(App):
                    f'--receipt "{self.holder_receipt_path}" --stop "{self.holder_stop_path}" '
                    f'--stdout "{self.holder_stdout_path}" --stderr "{self.holder_stderr_path}" '
                    f'--timeout {int(self.holder_lifetime)}')
+        if getattr(self, "isolated_launcher_trace", False):
+            command += ' --isolated-launcher-trace'
         self.helper_pid = cheap("launch_on_headless_desktop", name=self.desktop,
                                 command=command)["pid"]
         receipt_deadline = time.monotonic() + 20

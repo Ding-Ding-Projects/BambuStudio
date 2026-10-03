@@ -106,6 +106,31 @@ def _profile_logs(app, root: Path) -> dict:
         return {"status": "unavailable", "reason": "profile_log_validation_failed", "files": []}
 
 
+def _launcher_trace(app, receipt: dict, root: Path) -> dict:
+    if getattr(app, "isolated_launcher_trace", False) is not True:
+        return {"status": "not_requested"}
+    try:
+        directory = app.holder_receipt_path.parent / (app.holder_receipt_path.stem + "-launcher-temp")
+        if (receipt.get("launcher_trace_root") != str(directory) or not directory.is_absolute()
+                or not directory.resolve().is_relative_to(root) or not 1 <= len(str(directory)) < 220):
+            raise ValueError("Launcher trace binding mismatch")
+        for ancestor in (directory, *directory.parents):
+            info = ancestor.lstat()
+            if stat.S_ISLNK(info.st_mode) or getattr(info, "st_file_attributes", 0) & 0x400:
+                raise ValueError("Unsafe launcher trace directory")
+        path = directory / "bbs-launcher-trace.log"
+        try:
+            path.lstat()
+        except FileNotFoundError:
+            return {"status": "absent"}
+        data = _read(path, 65536)
+        return {"status": "preserved", "bytes": len(data),
+                "sha256": hashlib.sha256(data).hexdigest(),
+                "base64": base64.b64encode(data).decode("ascii")}
+    except Exception:
+        return {"status": "unavailable", "reason": "launcher_trace_validation_failed"}
+
+
 def collect_startup(app, *, teardown: bool, operations: int) -> dict:
     """Never print contents, broaden process ownership, or read live writer output."""
     states = {"not_started", "launch_pid_reported", "owned_window_available",
@@ -173,6 +198,7 @@ def collect_startup(app, *, teardown: bool, operations: int) -> dict:
                       holder_status="holder_stopped", holder_receipt=receipt,
                       holder_receipt_sha256=hashlib.sha256(receipt_bytes).hexdigest(), streams=streams)
         result["profile_logs"] = _profile_logs(app, root)
+        result["launcher_trace"] = _launcher_trace(app, receipt, root)
     except Exception:
         # Keep original runtime failure and never expose paths or stream contents.
         result["reason"] = "startup_diagnostics_unavailable"
