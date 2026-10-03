@@ -1,5 +1,6 @@
 #include <wx/window.h>
 #include "StateHandler.hpp"
+#include "StateMotionMath.hpp"
 
 wxDEFINE_EVENT(EVT_ENABLE_CHANGED, wxCommandEvent);
 
@@ -13,7 +14,46 @@ StateHandler::StateHandler(wxWindow * owner)
         states_ |= Focused;
 }
 
-StateHandler::~StateHandler() { owner_->RemoveEventHandler(this); }
+StateHandler::~StateHandler()
+{
+    motion_.Stop();
+    if (owner_) owner_->RemoveEventHandler(this);
+}
+
+wxColour StateHandler::colorFor(StateColor const &color, int states) const
+{
+    const wxColour target = color.colorForStates(states);
+    const auto found = from_colors_.find(&color);
+    if (found == from_colors_.end() || progress_ >= 1.0 || MD3::Motion::reduced() ||
+        !owner_ || !owner_->IsShownOnScreen() || !target.IsOk() || !found->second.IsOk()) return target;
+    const auto &from = found->second;
+    return wxColour(MD3::Motion::color_channel(from.Red(), target.Red(), progress_),
+                    MD3::Motion::color_channel(from.Green(), target.Green(), progress_),
+                    MD3::Motion::color_channel(from.Blue(), target.Blue(), progress_),
+                    MD3::Motion::color_channel(from.Alpha(), target.Alpha(), progress_));
+}
+
+wxColour StateHandler::colorFor(StateColor const &color) const
+{
+    motion_used_ = true;
+    return colorFor(color, states());
+}
+
+void StateHandler::transition(int previous_states)
+{
+    if (!owner_) return;
+    if (!motion_used_) { owner_->Refresh(); return; }
+    // Snapshot the currently painted colors before replacing the transition.
+    // Mid-flight reversals therefore start at the visible value, not an endpoint.
+    std::map<StateColor const *, wxColour> starts;
+    for (const auto *color : colors_) starts[color] = colorFor(*color, previous_states);
+    from_colors_ = std::move(starts);
+    progress_ = 0.0;
+    motion_.Play(MD3::Motion::short2, [this](double t) {
+        progress_ = t;
+        if (owner_) owner_->Refresh(false);
+    }, nullptr, &MD3::Motion::easeStandard, owner_.get());
+}
 
 void StateHandler::attach(StateColor const &color)
 {
@@ -79,7 +119,7 @@ void StateHandler::set_state(int state, int mask)
         if (parent_)
             parent_->changed(states_ | states2_);
         else
-            owner_->Refresh();
+            transition(old | states2_);
     }
 }
 
@@ -118,7 +158,7 @@ void StateHandler::changed(wxEvent &event)
         if (parent_)
             parent_->changed(states_ | states2_);
         else
-            owner_->Refresh();
+            transition(old | states2_);
     }
 }
 
@@ -131,6 +171,6 @@ void StateHandler::changed(int)
         if (parent_)
             parent_->changed(states_ | states2_);
         else
-            owner_->Refresh();
+            transition(old | states_);
     }
 }
