@@ -3,7 +3,12 @@ on:
   push:
     branches: [feature/ui-integration]
     paths: [.github/workflows/display-scale-provisioning.yml]
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      lifecycle_only:
+        description: Verify changed process containment without repeating scale input
+        type: boolean
+        default: false
 permissions:
   contents: read
 jobs:
@@ -28,7 +33,7 @@ jobs:
           if-no-files-found: warn
           retention-days: 7
   provision:
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' && !inputs.lifecycle_only
     needs: lifecycle
     runs-on: windows-2025
     timeout-minutes: 10
