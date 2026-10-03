@@ -122,6 +122,31 @@ def creation_acknowledgement(text: str):
     return tuple(map(int, targets[0]))
 
 
+def desktop_lookup_observation(observation, thread, get_desktop, get_information, last_error):
+    """Observe native return boundaries without publishing names or handles."""
+    from ctypes import wintypes
+    observation["stage"] = "target_thread_desktop_handle"
+    handle = get_desktop(thread)
+    error = last_error() if not handle else None
+    observation["desktop_handle_present"] = bool(handle)
+    observation["desktop_handle_error"] = error
+    if not handle:
+        raise ValueError("Target desktop handle unavailable")
+    name = ctypes.create_unicode_buffer(256)
+    needed = wintypes.DWORD()
+    observation["stage"] = "target_desktop_name"
+    ok = get_information(handle, 2, name, ctypes.sizeof(name), ctypes.byref(needed))
+    error = last_error() if not ok else None
+    observation["desktop_information_success"] = bool(ok)
+    observation["desktop_information_error"] = error
+    observation["desktop_required_bytes"] = min(int(needed.value), 65536)
+    observation["desktop_required_bytes_capped"] = needed.value > 65536
+    if not ok:
+        raise ValueError("Target desktop information unavailable")
+    observation["stage"] = "target_desktop"
+    return name.value
+
+
 def creation_ownership_observation(observation, target, debugger_pid, inventory, member,
                                    desktop_name, expected_desktop):
     """Preserve short-circuit ownership checks, recording no native identities."""
@@ -195,6 +220,9 @@ def creation_trace(args) -> int:
             if handle:
                 kernel.CloseHandle(handle)
     def desktop_name(thread=None):
+        if thread is not None:
+            return desktop_lookup_observation(observation, thread, user.GetThreadDesktop,
+                user.GetUserObjectInformationW, ctypes.get_last_error)
         name = ctypes.create_unicode_buffer(256)
         needed = wintypes.DWORD()
         if not user.GetUserObjectInformationW(user.GetThreadDesktop(thread or kernel.GetCurrentThreadId()),
@@ -219,7 +247,10 @@ def creation_trace(args) -> int:
     observation = {"stage": "worker_containment", "acknowledgement_observed": False,
         "observed_output_bytes": 0, "inventory_count": None, "target_pid_matches": None,
         "debugger_job_member": None, "target_job_member": None, "target_desktop_matches": None,
-        "continuation_written": False}
+          "continuation_written": False, "desktop_handle_present": None,
+          "desktop_handle_error": None, "desktop_information_success": None,
+          "desktop_information_error": None, "desktop_required_bytes": None,
+          "desktop_required_bytes_capped": None}
     report["creation_observation"] = observation
     try:
         if not job or not member(os.getpid()) or desktop_name() != args.desktop:

@@ -68,6 +68,57 @@ class CdbAttachmentContract(unittest.TestCase):
             driver.creation_ownership_observation(observation, (123, 456), 10,
                 unavailable_inventory, lambda pid: True, lambda thread: "owned", "owned")
         self.assertEqual(observation, {"stage": "inventory_query"})
+        # Exercise actual observation logic with native calls replaced, not processes.
+        import ctypes
+        from ctypes import wintypes
+        for handle, success, required in ((0, False, 0), (7, False, 1024),
+                                          (7, False, 100000), (7, True, 12)):
+            observed, calls = {}, []
+            def get_desktop(thread):
+                calls.append("handle")
+                self.assertEqual(thread, 456)
+                return handle
+            def get_information(native_handle, index, name, capacity, needed):
+                calls.append("information")
+                self.assertEqual((native_handle, index), (7, 2))
+                self.assertEqual(capacity, ctypes.sizeof(name))
+                ctypes.cast(needed, ctypes.POINTER(wintypes.DWORD))[0] = required
+                name.value = "owned"
+                return success
+            def last_error():
+                calls.append("error")
+                return 5
+            if handle and success:
+                self.assertEqual(driver.desktop_lookup_observation(observed, 456,
+                    get_desktop, get_information, last_error), "owned")
+                self.assertEqual(calls, ["handle", "information"])
+                self.assertEqual(observed["stage"], "target_desktop")
+                self.assertIsNone(observed["desktop_information_error"])
+            else:
+                with self.assertRaises(ValueError):
+                    driver.desktop_lookup_observation(observed, 456,
+                        get_desktop, get_information, last_error)
+                self.assertEqual(calls, ["handle", "information", "error"] if handle
+                                 else ["handle", "error"])
+                self.assertEqual(observed["stage"], "target_desktop_name" if handle
+                                 else "target_thread_desktop_handle")
+            if handle:
+                self.assertEqual(observed["desktop_required_bytes"], min(required, 65536))
+                self.assertEqual(observed["desktop_required_bytes_capped"], required > 65536)
+            self.assertNotIn("owned", observed.values())
+        for failing_stage in ("handle", "information"):
+            observed = {}
+            def get_desktop(thread):
+                if failing_stage == "handle":
+                    raise RuntimeError("private native detail")
+                return 7
+            def get_information(*args):
+                raise RuntimeError("private native detail")
+            with self.assertRaises(RuntimeError):
+                driver.desktop_lookup_observation(observed, 456, get_desktop,
+                    get_information, lambda: self.fail("No return, no native error read"))
+            self.assertEqual(observed["stage"], "target_thread_desktop_handle"
+                             if failing_stage == "handle" else "target_desktop_name")
 
     def test_creation_route_never_attaches_or_skips_initial_break(self):
         cache = r"C:\owned cache\symbols"
