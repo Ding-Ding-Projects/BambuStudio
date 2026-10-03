@@ -31,8 +31,8 @@ their timeline, and reduced motion immediately settles retained timelines.
 Builds without ENABLE_ENHANCED_IMGUI_SLIDER_FLOAT retain immediate rendering
 because their canvas does not consume that scheduling route. Modal windows,
 separate child draw lists, canvas result-list changes and hover layers remain
-outside this canvas entrance slice. Native regex-builder dialogs use their
-caption-owned transient entrance; this does not claim every builder uses it.
+outside this canvas entrance slice. RegexBuilderPopup is a separate native popup without the caption entrance
+controller; its entrance remains pending.
 
 ## Verification and remaining coverage
 
