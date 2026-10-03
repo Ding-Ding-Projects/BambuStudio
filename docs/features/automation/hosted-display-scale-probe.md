@@ -116,3 +116,39 @@ python scripts/md3/drive-native-interface.py --exe $exe --cli $cli --install-rec
 Repeat only on actually provisioned DPI and independently requested language and
 theme tuples. This source change was not executed locally. Hosted results,
 encrypted pixel review and interactive clamp evidence remain pending.
+
+## Bounded predefined-scale provisioning
+
+`scripts/ci/Invoke-HostedDisplayScale.ps1` is a separate hosted-only helper. It
+requires an already opened Display Settings surface and the existing pinned
+`lowlevel-computer-use-cheap` executable. UI Automation only reads the observed
+`SystemSettings_Display_Scaling_ItemSizeOverride_ComboBox`, its selected value,
+and supported predefined items. All input uses HWND-targeted cheap mouse clicks,
+after live process, session, desktop, enabled-state and geometry checks. Missing
+or ambiguous targets produce an unavailable result without speculative input.
+
+```powershell
+& scripts/ci/Invoke-HostedDisplayScale.ps1 -ScalePercent 125 -OutputDirectory "$env:RUNNER_TEMP/scale-125" -CheapExecutable $env:LLCU_CHEAP
+```
+
+Allowed percentages are 100, 125, 150 and 200. The helper saves the observed
+original selection before input, requires both the requested selection and
+`GetDpiForWindow` on the existing Settings frame, and restores the original
+selection and DPI in `finally`. A separate bounded recovery worker checks
+restoration after the first worker terminates. An unverified termination or
+restoration requires disposal of the hosted runner, never a successful result.
+The helper's thread uses per-monitor awareness for coordinate conversion only;
+this does not provision a scale and is never accepted as scale evidence.
+
+An optional `-ActionScript <script.ps1> -ActionTimeoutSeconds <seconds>` executes
+one bounded PowerShell action after selection and measurement, before restoring.
+The action must produce its own evidence and handle its owned process lifecycle.
+The standalone mode launches no product and proves no product-window DPI, pixels,
+layout, or capture review. The installed runtime must independently measure its
+actual window DPI while the requested scale is active.
+
+Only `supervisor.json`, `run.json` and `restore.json` are public-safe receipts.
+Never upload `original.json`: it is private recovery state containing process and
+session identities. The helper forwards no raw child output or UI labels. A source
+syntax parse is not hosted execution; standalone provisioning remains unverified
+until its selection, native DPI and restoration receipts pass independent review.
