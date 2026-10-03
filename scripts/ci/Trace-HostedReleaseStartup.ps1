@@ -1,7 +1,8 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)][ValidatePattern('^md3-v\d+$')][string] $Tag,
-    [Parameter(Mandatory)][ValidatePattern('^[0-9a-fA-F]{40}$')][string] $ExpectedCommit
+    [Parameter(Mandatory)][ValidatePattern('^[0-9a-fA-F]{40}$')][string] $ExpectedCommit,
+    [switch] $FromCreation
 )
 
 $ErrorActionPreference = 'Stop'
@@ -11,6 +12,9 @@ if ($env:GITHUB_ACTIONS -ne 'true' -or $env:RUNNER_ENVIRONMENT -ne 'github-hoste
     throw 'Startup tracing requires a disposable GitHub-hosted Windows runner.'
 }
 $root = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
+if ($FromCreation -and ($Tag -cne 'md3-v190' -or $ExpectedCommit -cne '35d1074faea221fa4f289f1db1e0ee428a90d701')) {
+    throw 'Creation tracing is restricted to the fixed diagnostic product.'
+}
 $out = Join-Path $root 'diagnostic\startup'
 New-Item -ItemType Directory -Force -Path $out | Out-Null
 $verifier = (& git rev-parse HEAD).Trim()
@@ -31,6 +35,10 @@ $summary = [ordered]@{
     project_symbols = 'unavailable_for_md3_v125; no newer PDB substitution'
     evidence_status = 'not_started'
     failure_type = $null
+}
+if ($FromCreation) {
+    $summary.execution_class = 'instrumented_from_creation; separate from uninstrumented baseline'
+    $summary.project_symbols = 'matching_project_symbols_unavailable; module_offsets_only'
 }
 
 function Find-TrustedCdb {
@@ -69,7 +77,12 @@ try {
         }
         $setup = Start-Process -FilePath $sdkSetup `
             -ArgumentList '/features OptionId.WindowsDesktopDebuggers /quiet /norestart' `
-            -PassThru -Wait -WindowStyle Hidden
+            -PassThru -WindowStyle Hidden
+        if (-not $setup.WaitForExit(300000)) {
+            $setup.Kill($true)
+            [void]$setup.WaitForExit(5000)
+            throw 'Debugger bootstrap exceeded its bounded deadline.'
+        }
         if ($setup.ExitCode -ne 0) { throw "Debugger-only SDK bootstrap exited $($setup.ExitCode); no restart was attempted." }
         $cdb = Find-TrustedCdb
         if (-not $cdb) { throw 'Microsoft debugger was absent after debugger-only SDK bootstrap.' }
@@ -103,11 +116,51 @@ try {
     $behavior = Join-Path $env:RUNNER_TEMP ("startup-trace-$($env:GITHUB_RUN_ID)-$($env:GITHUB_RUN_ATTEMPT)")
     $tuple = Join-Path $behavior 'en-light-1-1200x800'
     New-Item -ItemType Directory -Force -Path $tuple | Out-Null
-    & $python (Join-Path $root 'scripts\md3\trace-packaged-startup.py') `
-        --exe $exe --cdb $cdb --install-receipt $installReceipt `
-        --source-commit $ExpectedCommit --verification-commit $verifier `
-        --tag $Tag --output $tuple
-    $driverExit = $LASTEXITCODE
+    $driverArguments = @((Join-Path $root 'scripts\md3\trace-packaged-startup.py'),
+        '--exe',$exe,'--cdb',$cdb,'--install-receipt',$installReceipt,
+        '--source-commit',$ExpectedCommit,'--verification-commit',$verifier,'--tag',$Tag,'--output',$tuple)
+    if ($FromCreation) {
+        Add-Type -Path (Join-Path $root 'scripts/ci/HostedScaleProcess.cs')
+        $desktop = "startup-loader-$($env:GITHUB_RUN_ID)-$($env:GITHUB_RUN_ATTEMPT)"
+        $jobName = 'Local\BambuNativeScale-' + [Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(32)).ToLowerInvariant()
+        $created = $false
+        $terminated = $false
+        $closed = $false
+        try {
+            $response = & $env:LLCU_CHEAP create_headless_desktop --name $desktop 2>$null | ConvertFrom-Json
+            if ($LASTEXITCODE -ne 0 -or $response.ok -ne $true) { throw 'Owned diagnostic desktop unavailable.' }
+            $created = $true
+            $driverArguments += @('--from-creation','--job-name',$jobName,'--desktop',$desktop)
+            $result = [HostedScaleProcess]::RunNamedOnDesktop($python,[string[]]$driverArguments,120,$false,$jobName,"WinSta0\$desktop")
+            $terminated = $result.Terminated
+            $driverExit = $result.Code
+        } finally {
+            if ($created -and $terminated) {
+                $response = & $env:LLCU_CHEAP close_headless_desktop --name $desktop 2>$null | ConvertFrom-Json
+                if ($LASTEXITCODE -eq 0 -and $response.ok -eq $true) {
+                    $check = & $env:LLCU_CHEAP list_headless_windows --name $desktop 2>$null | ConvertFrom-Json
+                    $closed = $LASTEXITCODE -ne 0 -and ($check | ConvertTo-Json -Compress) -match [regex]::Escape("OpenDesktopW('$desktop')") -and
+                        ($check | ConvertTo-Json -Compress) -match 'GetLastError=2(?!\d)'
+                }
+            }
+            $summary.worker_tree_termination_verified = $terminated
+            $summary.desktop_closed_verified = $closed
+        }
+        if (-not $terminated -or -not $closed) { throw 'Creation diagnostic teardown unverified; evidence withheld.' }
+        $reportPath = Join-Path $tuple 'behavior-report.json'
+        $report = Get-Content -LiteralPath $reportPath -Raw | ConvertFrom-Json
+        $report | Add-Member -NotePropertyName owned_process_cleanup -NotePropertyValue 'verified' -Force
+        $report | Add-Member -NotePropertyName named_desktop_closed_verified -NotePropertyValue $true -Force
+        $report | Add-Member -NotePropertyName verifier_files_sha256 -NotePropertyValue @{
+            wrapper=(Get-FileHash -LiteralPath $PSCommandPath -Algorithm SHA256).Hash.ToLowerInvariant()
+            driver=(Get-FileHash -LiteralPath $driverArguments[0] -Algorithm SHA256).Hash.ToLowerInvariant()
+            containment=(Get-FileHash -LiteralPath (Join-Path $root 'scripts/ci/HostedScaleProcess.cs') -Algorithm SHA256).Hash.ToLowerInvariant()
+        } -Force
+        $report | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $reportPath -Encoding utf8
+    } else {
+        & $python @driverArguments
+        $driverExit = $LASTEXITCODE
+    }
 
     $encrypted = Join-Path $out 'encrypted'
     & (Join-Path $root 'scripts\md3\Capture-HostedReleaseGui.ps1') `

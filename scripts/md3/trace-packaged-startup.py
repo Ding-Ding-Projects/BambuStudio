@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 import argparse
+import ctypes
 import hashlib
 import importlib.util
 import json
 import os
 import re
 import subprocess
+import threading
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -90,13 +92,170 @@ def cdb_arguments(cdb: str, pid: int, script: str, log: str, symbols: str) -> li
     return [cdb, "-pd", "-y", symbols, "-logo", log, "-cf", script, "-p", str(pid)]
 
 
+def creation_arguments(cdb: str, exe: str, profile: str, script: str, symbols: str) -> list[str]:
+    return [cdb, "-y", symbols, "-cf", script, exe, "--datadir", profile]
+
+
+def creation_acknowledgement(text: str):
+    targets = re.findall(r"(?m)^TRACE_TARGET ([1-9]\d*) ([1-9]\d*)\s*$", text)
+    if (text.splitlines().count("TRACE_CREATION_INITIAL") != 1 or len(targets) != 1
+            or not re.search(r"(?im)^\s*sls\s*-\s*Show loader snaps\s*$", text)):
+        return None
+    return tuple(map(int, targets[0]))
+
+
+def creation_trace(args) -> int:
+    """Fixed instrumented startup, supervised externally by a nonbreakaway job."""
+    from ctypes import wintypes
+    if (args.tag != "md3-v190" or args.source_commit != "35d1074faea221fa4f289f1db1e0ee428a90d701"
+            or not re.fullmatch(r"Local\\BambuNativeScale-[0-9a-f]{64}", args.job_name or "")
+            or not re.fullmatch(r"startup-loader-[0-9]+-[0-9]+", args.desktop or "")):
+        raise ValueError("Unsupported loader diagnostic identity")
+    exe, cdb, output = Path(args.exe), Path(args.cdb), Path(args.output)
+    install = json.loads(Path(args.install_receipt).read_text(encoding="utf-8-sig"))
+    if (install.get("status") != "verified" or install.get("source_commit") != args.source_commit
+            or install.get("release_tag") != args.tag or sha256(exe) != install.get("installed_exe_sha256")):
+        raise ValueError("Installed diagnostic identity mismatch")
+    output.mkdir(parents=True, exist_ok=True)
+    if any(output.iterdir()):
+        raise ValueError("Diagnostic output must be fresh")
+    scratch = output / "private-work"
+    scratch.mkdir()
+    profile, symbols, temp = (scratch / name for name in ("profile", "symbols", "temp"))
+    for path in (profile, symbols, temp):
+        path.mkdir()
+    commands = scratch / "initial.txt"
+    # No software breakpoint, registry mutation or arbitrary command input.
+    commands.write_text('.echo TRACE_CREATION_INITIAL\n.printf "TRACE_TARGET %u %u\\n", @$tpid, @$tid\n!gflag +sls\n!gflag\n'
+        'sxe -c ".echo TRACE_EXCEPTION; .lastevent; k 24; gn" av\n'
+        'sxe -c ".echo TRACE_PROCESS_EXIT; .lastevent; q" epr\n', encoding="ascii")
+    kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+    user = ctypes.WinDLL("user32", use_last_error=True)
+    kernel.OpenJobObjectW.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.LPCWSTR]
+    kernel.OpenJobObjectW.restype = wintypes.HANDLE
+    kernel.OpenProcess.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.DWORD]
+    kernel.OpenProcess.restype = wintypes.HANDLE
+    kernel.IsProcessInJob.argtypes = [wintypes.HANDLE, wintypes.HANDLE, ctypes.POINTER(wintypes.BOOL)]
+    kernel.CloseHandle.argtypes = [wintypes.HANDLE]
+    user.GetThreadDesktop.argtypes = [wintypes.DWORD]
+    user.GetThreadDesktop.restype = wintypes.HANDLE
+    user.GetUserObjectInformationW.argtypes = [wintypes.HANDLE, ctypes.c_int, ctypes.c_void_p,
+                                               wintypes.DWORD, ctypes.POINTER(wintypes.DWORD)]
+    def member(pid):
+        handle = kernel.OpenProcess(0x1000, False, pid)
+        try:
+            yes = wintypes.BOOL()
+            return bool(handle and kernel.IsProcessInJob(handle, job, ctypes.byref(yes)) and yes.value)
+        finally:
+            if handle:
+                kernel.CloseHandle(handle)
+    def desktop_name(thread=None):
+        name = ctypes.create_unicode_buffer(256)
+        needed = wintypes.DWORD()
+        if not user.GetUserObjectInformationW(user.GetThreadDesktop(thread or kernel.GetCurrentThreadId()),
+                2, name, ctypes.sizeof(name), ctypes.byref(needed)):
+            raise ValueError("Worker desktop unavailable")
+        return name.value
+    job = kernel.OpenJobObjectW(4, False, args.job_name)
+    debugger = None
+    data = bytearray()
+    lock = threading.Lock()
+    overflow = threading.Event()
+    report = {"schema": 1, "scope": "diagnostic", "verdict": "blocked",
+        "source_commit": args.source_commit, "verification_commit": args.verification_commit,
+        "release_tag": args.tag, "hosted_run_id": os.environ["GITHUB_RUN_ID"],
+        "installed_exe_sha256": sha256(exe), "debugger_sha256": sha256(cdb),
+        "requested_tuple": {"language": "en", "theme": "light", "scale": 1, "viewport": [1200,800]},
+        "measured_tuple": None, "images": [], "restricted_logs": [],
+        "execution_class": "instrumented_from_creation_separate_from_baseline",
+        "status": "unavailable", "initial_marker_observed": False, "job_membership_verified": False}
+    try:
+        if not job or not member(os.getpid()) or desktop_name() != args.desktop:
+            raise ValueError("Worker containment unavailable")
+        env = {key: value for key, value in os.environ.items() if key.upper() not in {"TEMP","TMP"}}
+        env.update(TEMP=str(temp), TMP=str(temp))
+        launched = datetime.now(timezone.utc)
+        arguments = creation_arguments(str(cdb), str(exe), str(profile), str(commands), str(symbols))
+        command_line = subprocess.list2cmdline(arguments[:-3]) + f' "{exe}" --datadir "{profile}"'
+        debugger = subprocess.Popen(command_line,
+            stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+            cwd=exe.parent, env=env, creationflags=subprocess.CREATE_NO_WINDOW)
+        def drain():
+            try:
+                while True:
+                    block = debugger.stdout.read1(4096)
+                    if not block:
+                        break
+                    with lock:
+                        if len(data) + len(block) > 1048576:
+                            overflow.set()
+                            return
+                        data.extend(block)
+            except Exception:
+                overflow.set()
+        reader = threading.Thread(target=drain, daemon=True)
+        reader.start()
+        deadline = time.monotonic() + 90
+        while time.monotonic() < deadline and debugger.poll() is None and not overflow.is_set():
+            with lock:
+                text = bytes(data).decode("utf-8", errors="replace")
+            target = creation_acknowledgement(text)
+            if not report["initial_marker_observed"] and target:
+                rows = owned_process_inventory(process_snapshot(), exe=str(exe), datadir=str(profile),
+                    launched_at=launched, launch_pid=debugger.pid)
+                if (len(rows) != 1 or rows[0]["pid"] != target[0] or not member(debugger.pid)
+                        or not member(rows[0]["pid"]) or desktop_name(target[1]) != args.desktop):
+                    raise ValueError("Debug target ownership unavailable")
+                report["initial_marker_observed"] = True
+                report["job_membership_verified"] = True
+                debugger.stdin.write(b"g\n")
+                debugger.stdin.flush()
+            time.sleep(0.1)
+        if debugger.poll() is None:
+            raise ValueError("Debugger deadline or output limit")
+        reader.join(timeout=3)
+        if reader.is_alive() or overflow.is_set():
+            raise ValueError("Debugger output incomplete")
+        report["debugger_exit_code"] = debugger.returncode
+        report["status"] = "creation_trace_collected" if report["initial_marker_observed"] else "initial_observation_unavailable"
+    except Exception:
+        report["status"] = "unavailable"
+    finally:
+        if debugger and debugger.poll() is None:
+            debugger.kill()
+            try:
+                debugger.wait(timeout=3)
+            except subprocess.TimeoutExpired:
+                pass
+        report["debugger_stop_verified"] = debugger is None or debugger.poll() is not None
+        report["output_overflow"] = overflow.is_set()
+        # The supervisor must prove the entire job empty and desktop closed
+        # before moving these bounded bytes into the encrypted transport.
+        if report["debugger_stop_verified"] and not overflow.is_set() and data:
+            restricted = output / "restricted-logs"
+            restricted.mkdir()
+            raw = restricted / "cdb-loader.log"
+            with lock:
+                raw.write_bytes(bytes(data))
+            report["restricted_logs"] = [{"file": raw.name, "bytes": raw.stat().st_size, "sha256": sha256(raw)}]
+        if job:
+            kernel.CloseHandle(job)
+        (output / "behavior-report.json").write_text(json.dumps(report, indent=2)+"\n", encoding="utf-8")
+    return 0 if report["status"] == "creation_trace_collected" else 2
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     for name in ("exe", "cdb", "install-receipt", "source-commit", "verification-commit", "tag", "output"):
         parser.add_argument("--" + name, required=True)
+    parser.add_argument("--from-creation", action="store_true")
+    parser.add_argument("--job-name")
+    parser.add_argument("--desktop")
     args = parser.parse_args()
     if os.environ.get("GITHUB_ACTIONS") != "true" or os.environ.get("RUNNER_ENVIRONMENT") != "github-hosted":
         raise SystemExit("This trace requires a GitHub-hosted runner")
+    if args.from_creation:
+        return creation_trace(args)
     exe, cdb, output = Path(args.exe), Path(args.cdb), Path(args.output)
     install = json.loads(Path(args.install_receipt).read_text(encoding="utf-8-sig"))
     if (install.get("status") != "verified" or install.get("source_commit") != args.source_commit.lower()

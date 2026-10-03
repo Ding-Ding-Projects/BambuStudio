@@ -14,6 +14,22 @@ SPEC.loader.exec_module(driver)
 
 
 class CdbAttachmentContract(unittest.TestCase):
+    def test_creation_acknowledgement_needs_emitted_identity_and_flag(self):
+        good = "TRACE_CREATION_INITIAL\nTRACE_TARGET 123 456\n  sls - Show loader snaps\n"
+        self.assertEqual(driver.creation_acknowledgement(good), (123, 456))
+        for bad in (good.replace("TRACE_CREATION_INITIAL", "0:000> .echo TRACE_CREATION_INITIAL"),
+                    good.replace("  sls - Show loader snaps", ""),
+                    good.replace("123", "0"), good + "TRACE_TARGET 123 456\n",
+                    good + "TRACE_CREATION_INITIAL\n"):
+            self.assertIsNone(driver.creation_acknowledgement(bad))
+
+    def test_creation_route_never_attaches_or_skips_initial_break(self):
+        command = driver.creation_arguments("cdb.exe", "product.exe", "profile", "fixed.txt", "symbols")
+        self.assertEqual(command[-3:], ["product.exe", "--datadir", "profile"])
+        self.assertEqual(command[command.index("-cf") + 1], "fixed.txt")
+        for forbidden in ("-p", "-pd", "-g", "-G", "-pn", "-logo"):
+            self.assertNotIn(forbidden, command)
+
     def test_exact_pid_and_detach_are_required(self):
         command = driver.cdb_arguments("cdb.exe", 4912, "commands.txt", "restricted.log", "empty-symbols")
         self.assertEqual(command[-2:], ["-p", "4912"])
