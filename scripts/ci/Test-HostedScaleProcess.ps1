@@ -114,7 +114,46 @@ exit 0
     $json = $result.Output | ConvertFrom-Json
     Require-Result ($json.v.Length -eq 65528)
     Record-Pass $stage
-    $success = $cases.Count -eq 5
+
+    $stage = 'query_only_named_job_membership'
+    $membership = Join-Path $scratch 'membership.ps1'
+    @'
+param([string] $JobName)
+$ErrorActionPreference = 'Stop'
+Add-Type @"
+using System;
+using System.Runtime.InteropServices;
+public static class MembershipCheck {
+    [DllImport("kernel32.dll", CharSet=CharSet.Unicode, SetLastError=true)] public static extern IntPtr OpenJobObject(uint rights,bool inherit,string name);
+    [DllImport("kernel32.dll")] public static extern IntPtr GetCurrentProcess();
+    [DllImport("kernel32.dll")] public static extern bool IsProcessInJob(IntPtr process,IntPtr job,out bool member);
+    [DllImport("kernel32.dll")] public static extern bool CloseHandle(IntPtr handle);
+}
+"@
+$query = [MembershipCheck]::OpenJobObject(4,$false,$JobName)
+if ($query -eq [IntPtr]::Zero) { exit 3 }
+try {
+    [bool]$member = $false
+    if (-not [MembershipCheck]::IsProcessInJob([MembershipCheck]::GetCurrentProcess(),$query,[ref]$member) -or -not $member) { exit 4 }
+} finally { [void][MembershipCheck]::CloseHandle($query) }
+foreach ($right in @(0x40000,0x20000,0x2,0x1,0x8)) {
+    $unexpected = [MembershipCheck]::OpenJobObject($right,$false,$JobName)
+    $reason = [Runtime.InteropServices.Marshal]::GetLastWin32Error()
+    if ($unexpected -ne [IntPtr]::Zero) {
+        [void][MembershipCheck]::CloseHandle($unexpected)
+        exit 5
+    }
+    if ($reason -ne 5) { exit 6 }
+}
+[Console]::Out.Write('{"ok":true}')
+exit 0
+'@ | Set-Content -LiteralPath $membership -Encoding utf8
+    $jobName = 'Local\BambuNativeScale-' + [Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(32)).ToLowerInvariant()
+    $result = [HostedScaleProcess]::RunNamed($pwsh,
+        [string[]]@('-NoProfile','-File',$membership,'-JobName',$jobName), 10, $true, $jobName)
+    Require-Result ($result.Terminated -and $result.Code -eq 0 -and $result.Output -ceq '{"ok":true}')
+    Record-Pass $stage
+    $success = $cases.Count -eq 6
 } catch {
     # Neither exception text nor benign child payloads enter public logs.
     $cases.Add(@{name=$stage; status='failed'})
@@ -134,10 +173,10 @@ exit 0
     }
     $passed = @($cases | Where-Object status -eq 'passed').Count
     @{schema=1; status=$(if ($success -and $cleanupVerified) {'passed'} else {'failed'})
-      passed=$passed; expected=5; cases=$cases.ToArray(); cleanup_verified=$cleanupVerified
+      passed=$passed; expected=6; cases=$cases.ToArray(); cleanup_verified=$cleanupVerified
       elapsed_ms=$timer.ElapsedMilliseconds; settings_mutated=$false
     } | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $output 'receipt.json') -Encoding utf8
 }
-if ($success -and $cleanupVerified) { Write-Host 'Hosted scale lifecycle checks passed: 5/5'; exit 0 }
+if ($success -and $cleanupVerified) { Write-Host 'Hosted scale lifecycle checks passed: 6/6'; exit 0 }
 Write-Host 'Hosted scale lifecycle checks failed; inspect the fixed receipt.'
 exit 2
