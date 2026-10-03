@@ -6,7 +6,7 @@ param(
     [Parameter(Mandatory)][ValidatePattern('^[0-9a-f]{40}$')][string] $ExpectedSourceCommit,
     [Parameter(Mandatory)][ValidatePattern('^[^/]+/[^/]+$')][string] $Repository,
     [Parameter(Mandatory)][string] $OutputDirectory,
-    [Parameter(Mandatory)][ValidateSet('menus','vocabulary','vocabulary-persistence','slice-controls','combined-print','combined-send','cancellation')][string] $Scope,
+    [Parameter(Mandatory)][ValidateSet('menus','vocabulary','vocabulary-persistence','slice-controls','combined-print','combined-send','cancellation','minimum-resize')][string] $Scope,
     [ValidateSet('en','yue_HK','bilingual_en_yue_HK')][string] $Language = 'en',
     [ValidateSet('light','dark')][string] $Theme = 'light',
     [ValidateSet('1','1.25','1.5','2')][string] $Scale = '1',
@@ -20,6 +20,9 @@ if ($env:GITHUB_ACTIONS -ne 'true' -or $env:RUNNER_ENVIRONMENT -ne 'github-hoste
 }
 if ((& git rev-parse HEAD).Trim() -cne $ExpectedSourceCommit) { throw 'Verifier source SHA mismatch.' }
 if ($ProvisionDisplayScale -and $Scale -eq '1') { throw 'The baseline 100% route does not use scale provisioning.' }
+if ($Scope -eq 'minimum-resize' -and ($Scale -ne '1' -or $Viewport -ne 'measured-minimum' -or $ProvisionDisplayScale)) {
+    throw 'Interactive minimum proof currently requires baseline scale and measured-minimum viewport.'
+}
 if (-not (Test-Path -LiteralPath "$PSScriptRoot/../md3/hosted-automation-public-v1.pem" -PathType Leaf)) {
     throw 'Dedicated automation evidence recipient is missing; initialize and commit its public PEM before hosted verification.'
 }
@@ -124,6 +127,19 @@ try {
             $adapter.runtime_sha256 -cne (Get-FileHash -LiteralPath (Join-Path $raw 'runtime.json') -Algorithm SHA256).Hash.ToLowerInvariant()) {
             throw 'Fresh native adapter evidence binding failed.'
         }
+    } elseif ($Scope -eq 'minimum-resize') {
+        $receipt.disposal_required = $true
+        Add-Type -Path "$PSScriptRoot/HostedScaleProcess.cs"
+        $minimumJob = 'Local\BambuNativeScale-' + [Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(32)).ToLowerInvariant()
+        $minimumArguments = @("$PSScriptRoot/../md3/drive-native-interface.py",'--exe',$exe,'--cli',$cli,
+            '--install-receipt',$installReceipt,'--source-commit',$ExpectedSourceCommit,'--release-tag',$Tag,
+            '--output',$raw,'--scope',$Scope,'--language',$Language,'--theme',$Theme,'--scale',$Scale,
+            '--viewport',$Viewport,'--minimum-job-name',$minimumJob)
+        $evidenceSafeToRead = $false
+        $minimumRun = [HostedScaleProcess]::RunNamed($python,$minimumArguments,900,$false,$minimumJob)
+        $evidenceSafeToRead = $minimumRun.Terminated
+        $driverExit = $minimumRun.Code
+        if (-not $evidenceSafeToRead -or $driverExit -ne 0) { throw 'Contained minimum proof unavailable.' }
     } else {
         & $python "$PSScriptRoot/../md3/drive-native-interface.py" --exe $exe --cli $cli --install-receipt $installReceipt --source-commit $ExpectedSourceCommit --release-tag $Tag --output $raw --scope $Scope --language $Language --theme $Theme --scale $Scale --viewport $Viewport
         $driverExit = $LASTEXITCODE
@@ -133,6 +149,16 @@ try {
     $receipt.requested_tuple = @{language=$Language; theme=$Theme; scale=$Scale; viewport=$Viewport}
     $receipt.operation_count = @($driver.operations).Count
     $receipt.capture_count = @($driver.captures).Count
+    if ($Scope -eq 'minimum-resize') {
+        $minimumEvidence = @($driver.operations | Where-Object operation -eq 'interactive-minimum-resize')
+        if ($minimumEvidence.Count -ne 1 -or $minimumEvidence[0].status -ne 'interactive_clamp_observed' -or
+            $minimumEvidence[0].frame_restored -ne $true -or $minimumEvidence[0].input_desktop_restored -ne $true -or
+            $minimumEvidence[0].mouse_release_verified -ne $true -or $minimumEvidence[0].server_exit_verified -ne $true -or
+            $minimumEvidence[0].disposal_required -ne $false -or $driver.teardown_verified -ne $true) {
+            throw 'Interactive minimum restoration evidence unavailable.'
+        }
+        $receipt.disposal_required = $false
+    }
     # Native observations contain labels, paths and window identities. They stay
     # inside the encrypted runtime.json, never in this public-safe receipt.
     $receipt.runtime = $driver.status

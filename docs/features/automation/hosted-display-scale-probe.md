@@ -117,6 +117,36 @@ Repeat only on actually provisioned DPI and independently requested language and
 theme tuples. This source change was not executed locally. Hosted results,
 encrypted pixel review and interactive clamp evidence remain pending.
 
+### Dedicated interactive minimum scope, hosted verification pending
+
+The opt-in `minimum-resize` scope requires `measured-minimum` at 100% scale.
+Higher scales remain excluded until this baseline route has hosted evidence.
+The verifier contains the complete driver tree in a named non-breakaway Job
+with a 900-second deadline. The existing scopes keep their hidden-only route.
+
+This scope explicitly uses the pinned backend's compatibility MCP stdio server,
+through the official installed MCP 1.x client (at least 1.2.0). This is not a
+persistent mode of the cheap CLI. One server retains the original Default input
+desktop handle and safety banner across show/hide. The real pointer drag runs
+through the existing cheap CLI in the existing worker on the owned desktop.
+No direct sizing command or fabricated nonclient input message is used.
+
+Before input, the observer requires the same process/start identity, HWND,
+thread/input desktop, foreground frame, DPI, unobscured pointer path and a fresh
+`HTBOTTOMRIGHT` result from bounded read-only hit testing. The frame must start
+exactly 80 pixels above its measured outer minimum in both dimensions and must
+not be maximized. One diagonal drag targets 40 pixels below the minimum. Success
+requires real shrinkage, unchanged top-left and minimum, exact final outer size,
+96 DPI, and observed mouse-button release. Before/after images remain encrypted
+and require independent pixel review. This isolated scope adds only two images
+to its ready image, leaving the menu scope's capture budget unchanged.
+
+The original frame and input desktop are restored before the persistent server
+closes, and its exit is checked. Unknown button release blocks restoration input
+and desktop switching; the invocation fails and requires host disposal. Complete
+Job termination alone never substitutes for input-release or desktop-restoration
+evidence. This source implementation has not been executed locally or hosted.
+
 ## Bounded predefined-scale provisioning
 
 `scripts/ci/Invoke-HostedDisplayScale.ps1` is a separate hosted-only helper. It
