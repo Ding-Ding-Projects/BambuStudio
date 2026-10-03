@@ -18,7 +18,7 @@ on:
         description: One bounded interaction flow
         required: true
         type: choice
-        options: [menus, vocabulary, vocabulary-persistence, slice-controls, combined-print, combined-send, cancellation, minimum-resize]
+        options: [menus, vocabulary, vocabulary-persistence, slice-controls, combined-print, combined-send, cancellation, minimum-resize, minimum-observe]
       language:
         required: true
         default: en
@@ -40,7 +40,7 @@ on:
         type: choice
         options: [1200x800, 1000x600, measured-minimum]
       provision_resolution:
-        description: Provision fixed 1920x1080 only for minimum-resize at 100 percent
+        description: Provision fixed resolution for minimum-resize at 100 or minimum-observe at 200 percent
         type: boolean
         default: false
 
@@ -74,7 +74,8 @@ jobs:
               ($env:UI_SCALE -ne '1' -or $env:UI_VIEWPORT -ne 'measured-minimum')) {
             throw 'Interactive minimum sizing requires scale 1 and measured-minimum.'
           }
-          if ($env:PROVISION_RESOLUTION -eq 'true' -and
+          if ($env:INTERACTION_SCOPE -eq 'minimum-observe' -and ($env:PROVISION_RESOLUTION -ne 'true' -or $env:UI_SCALE -ne '2' -or $env:UI_VIEWPORT -ne 'measured-minimum' -or $env:UI_LANGUAGE -ne 'en' -or $env:UI_THEME -ne 'light')) { throw 'Unsupported minimum observation tuple.' }
+          if ($env:PROVISION_RESOLUTION -eq 'true' -and $env:INTERACTION_SCOPE -ne 'minimum-observe' -and
               ($env:INTERACTION_SCOPE -ne 'minimum-resize' -or $env:UI_SCALE -ne '1' -or $env:UI_VIEWPORT -ne 'measured-minimum')) {
             throw 'Fixed resolution is restricted to minimum-resize at scale 1 and measured-minimum.'
           }
@@ -94,6 +95,8 @@ jobs:
           if ($errors.Count -gt 0) { throw 'Installed-interface verifier parsing failed.' }
           python -m py_compile scripts/md3/drive-native-interface.py
           if ($LASTEXITCODE -ne 0) { throw 'Native interaction driver parsing failed.' }
+          python scripts/md3/test_native_minimum_observation.py
+          if ($LASTEXITCODE -ne 0) { throw 'Native minimum observation contract failed.' }
       - name: Drive the installed native interface
         shell: pwsh
         run: |

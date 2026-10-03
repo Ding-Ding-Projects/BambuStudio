@@ -17,7 +17,7 @@ if ($env:GITHUB_ACTIONS -cne 'true' -or $env:RUNNER_ENVIRONMENT -cne 'github-hos
     $env:RUNNER_OS -cne 'Windows' -or -not $env:RUNNER_TEMP) {
     throw 'Disposable hosted Windows execution is required.'
 }
-if ($ProvisionResolution -and $NativeRuntime -and $ScalePercent -ne 100) {
+if ($ProvisionResolution -and $NativeRuntime -and $ScalePercent -notin @(100,200)) {
     throw 'Combined resolution and native execution requires the baseline minimum tuple.'
 }
 if ($ProvisionResolution -and $InputRoute -cne 'hosted-foreground') { throw 'Resolution provisioning requires the disposable foreground route.' }
@@ -33,7 +33,8 @@ if (-not (Test-Path -LiteralPath $CheapExecutable -PathType Leaf)) { throw 'Chea
 $pwsh = (Get-Process -Id $PID).Path
 $originalPath = Join-Path $output 'original.json'
 . (Join-Path $PSScriptRoot 'Invoke-HostedDisplayScaleNavigation.ps1')
-if (-not (Test-PageRefreshScope $RefreshSettingsPage $NativeRuntime $ProvisionResolution $DiagnosticEvidence $InputRoute)) {
+$nativeObservation = $NativeRuntime -and $ProvisionResolution -and $ScalePercent -eq 200 -and $ResolutionMode -ceq '1600x1200' -and $RefreshSettingsPage -and -not $DiagnosticEvidence -and $InputRoute -ceq 'hosted-foreground'
+if (-not $nativeObservation -and -not (Test-PageRefreshScope $RefreshSettingsPage $NativeRuntime $ProvisionResolution $DiagnosticEvidence $InputRoute)) {
     throw 'Page refresh requires standalone foreground resolution diagnostics.'
 }
 $script:NavigationObservation = @{requested=[bool]$RefreshSettingsPage; colors_acknowledged=$false; display_acknowledged=$false}
@@ -42,7 +43,7 @@ function Test-ResolutionDiagnosticScope([string] $Resolution, [bool] $Native, [b
     return $Resolution -ceq '1920x1080' -or ($Resolution -ceq '1600x1200' -and -not $Native -and
         $Provision -and $Diagnostic -and $Refresh -and $Route -ceq 'hosted-foreground')
 }
-if (-not (Test-ResolutionDiagnosticScope $ResolutionMode $NativeRuntime $ProvisionResolution $DiagnosticEvidence $RefreshSettingsPage $InputRoute)) {
+if (-not $nativeObservation -and -not (Test-ResolutionDiagnosticScope $ResolutionMode $NativeRuntime $ProvisionResolution $DiagnosticEvidence $RefreshSettingsPage $InputRoute)) {
     throw 'Alternate resolution requires standalone foreground page diagnostics.'
 }
 $nativeRequestPath = Join-Path $env:RUNNER_TEMP ('native-scale-request-' + $env:GITHUB_RUN_ID + '.json')
@@ -109,11 +110,14 @@ function Invoke-BoundedProcess([string] $Executable, [string[]] $Arguments, [int
 }
 
 function Test-NativeTuple($Request, [int] $Percent, [bool] $Resolution) {
+    if ($Resolution -and $Request.scope -ceq 'minimum-observe') {
+        return $Request.resolution -ceq '1600x1200' -and $Request.viewport -ceq 'measured-minimum' -and $Percent -eq 200 -and $Request.language -ceq 'en' -and $Request.theme -ceq 'light' -and $Request.refresh_page -ceq 'acknowledged-roundtrip'
+    }
     if ($Resolution) {
         return $Request.resolution -ceq '1920x1080' -and $Request.scope -ceq 'minimum-resize' -and
             $Request.viewport -ceq 'measured-minimum' -and $Percent -eq 100
     }
-    return $Request.resolution -ceq 'unchanged' -and $Request.scope -cne 'minimum-resize' -and
+    return $Request.resolution -ceq 'unchanged' -and $Request.scope -notin @('minimum-resize','minimum-observe') -and
         $Percent -in @(125,150,200)
 }
 
@@ -136,6 +140,7 @@ function Read-NativeRequest {
     if (-not (Test-NativeTuple $request $ScalePercent ([bool]$ProvisionResolution))) {
         throw 'Native resolution tuple binding unavailable.'
     }
+    if (($request.refresh_page -ceq 'acknowledged-roundtrip') -ne [bool]$RefreshSettingsPage -or ($ProvisionResolution -and $request.resolution -cne $ResolutionMode)) { throw 'Native display route binding unavailable.' }
     return $request
 }
 function Read-ResolutionRecoveryState {
@@ -644,7 +649,7 @@ try {
             $script:Stage = 'native_runtime'
             $nativeRequest = Read-NativeRequest
             $requestHash = (Get-FileHash -LiteralPath $nativeRequestPath -Algorithm SHA256).Hash.ToLowerInvariant()
-            if ($ProvisionResolution) {
+            if ($nativeRequest.scope -ceq 'minimum-resize') {
                 # Create before launching any product. Only the fixed adapter
                 # can publish matching restored evidence after the complete
                 # minimum operation and native teardown have both succeeded.

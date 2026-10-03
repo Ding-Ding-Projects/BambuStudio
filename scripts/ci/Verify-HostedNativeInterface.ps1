@@ -6,7 +6,7 @@ param(
     [Parameter(Mandatory)][ValidatePattern('^[0-9a-f]{40}$')][string] $ExpectedSourceCommit,
     [Parameter(Mandatory)][ValidatePattern('^[^/]+/[^/]+$')][string] $Repository,
     [Parameter(Mandatory)][string] $OutputDirectory,
-    [Parameter(Mandatory)][ValidateSet('menus','vocabulary','vocabulary-persistence','slice-controls','combined-print','combined-send','cancellation','minimum-resize','startup-diagnostic')][string] $Scope,
+    [Parameter(Mandatory)][ValidateSet('menus','vocabulary','vocabulary-persistence','slice-controls','combined-print','combined-send','cancellation','minimum-resize','minimum-observe','startup-diagnostic')][string] $Scope,
     [ValidatePattern('^[0-9a-f]{40}$')][string] $ExpectedVerifierCommit,
     [ValidateSet('en','yue_HK','bilingual_en_yue_HK')][string] $Language = 'en',
     [ValidateSet('light','dark')][string] $Theme = 'light',
@@ -32,7 +32,9 @@ $checkout = & git rev-parse HEAD
 $requiredCheckout = if ($startupDiagnostic) { $ExpectedVerifierCommit } else { $ExpectedSourceCommit }
 if ($LASTEXITCODE -ne 0 -or $checkout.Trim() -cne $requiredCheckout) { throw 'Verifier source SHA mismatch.' }
 if ($ProvisionDisplayScale -and $Scale -eq '1') { throw 'The baseline 100% route does not use scale provisioning.' }
-if ($ProvisionResolution -and ($Scope -ne 'minimum-resize' -or $Scale -ne '1' -or
+$minimumObserve = $Scope -ceq 'minimum-observe'
+if ($minimumObserve -and (-not $ProvisionResolution -or -not $ProvisionDisplayScale -or $Scale -cne '2' -or $Viewport -cne 'measured-minimum' -or $Language -cne 'en' -or $Theme -cne 'light')) { throw 'Unsupported minimum observation tuple.' }
+if ($ProvisionResolution -and -not $minimumObserve -and ($Scope -ne 'minimum-resize' -or $Scale -ne '1' -or
     $Viewport -ne 'measured-minimum' -or $ProvisionDisplayScale)) {
     throw 'Fixed resolution provisioning requires only the baseline minimum-resize tuple.'
 }
@@ -105,13 +107,14 @@ try {
         $request = [ordered]@{schema=1; request_id=[Guid]::NewGuid().ToString('N'); source_commit=$ExpectedSourceCommit
             release_tag=$Tag; run_id=$env:GITHUB_RUN_ID; scope=$Scope; language=$Language; theme=$Theme
             viewport=$Viewport; scale_percent=$scalePercent; exe_sha256=$receipt.exe_sha256; cli_sha256=$receipt.cli_sha256
-            resolution=$(if ($ProvisionResolution) {'1920x1080'} else {'unchanged'})
+            refresh_page=$(if ($minimumObserve) {'acknowledged-roundtrip'} else {'none'})
+            resolution=$(if ($minimumObserve) {'1600x1200'} elseif ($ProvisionResolution) {'1920x1080'} else {'unchanged'})
             job_name=('Local\BambuNativeScale-' + [Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(32)).ToLowerInvariant())}
         $boundFiles = @{install=$installReceipt; driver="$PSScriptRoot/../md3/drive-native-interface.py"
             adapter="$PSScriptRoot/run-scaled-native-interface.py"; verifier=$PSCommandPath
             python=$python; cheap=$env:LLCU_CHEAP; helper="$PSScriptRoot/Invoke-HostedDisplayScale.ps1"
             containment="$PSScriptRoot/HostedScaleProcess.cs"; display_mode="$PSScriptRoot/HostedDisplayMode.cs"
-            minimum="$PSScriptRoot/../md3/minimum_resize.py"}
+            navigation="$PSScriptRoot/Invoke-HostedDisplayScaleNavigation.ps1"; minimum="$PSScriptRoot/../md3/minimum_resize.py"}
         foreach ($entry in $boundFiles.GetEnumerator()) {
             $request[$entry.Key + '_sha256'] = (Get-FileHash -LiteralPath $entry.Value -Algorithm SHA256).Hash.ToLowerInvariant()
         }
@@ -120,7 +123,7 @@ try {
         [IO.File]::WriteAllText($requestPath, ($request | ConvertTo-Json -Compress), [Text.UTF8Encoding]::new($false))
         $requestHash = (Get-FileHash -LiteralPath $requestPath -Algorithm SHA256).Hash.ToLowerInvariant()
         $evidenceSafeToRead = $false
-        & "$PSScriptRoot/Invoke-HostedDisplayScale.ps1" -ScalePercent $scalePercent -OutputDirectory $scaleOutput -CheapExecutable $env:LLCU_CHEAP -InputRoute hosted-foreground -NativeRuntime -ProvisionResolution:$ProvisionResolution
+        & "$PSScriptRoot/Invoke-HostedDisplayScale.ps1" -ScalePercent $scalePercent -OutputDirectory $scaleOutput -CheapExecutable $env:LLCU_CHEAP -InputRoute hosted-foreground -NativeRuntime -ProvisionResolution:$ProvisionResolution -ResolutionMode $(if ($minimumObserve) {'1600x1200'} else {'1920x1080'}) -RefreshSettingsPage:$minimumObserve
         $driverExit = $LASTEXITCODE
         $scaleSupervisor = Get-Content -LiteralPath (Join-Path $scaleOutput 'supervisor.json') -Raw | ConvertFrom-Json
         $evidenceSafeToRead = $scaleSupervisor.worker_termination_verified -eq $true -and
@@ -135,6 +138,9 @@ try {
             $scaleSupervisor.status -cne 'verified_settings_scale_and_restoration' -or
             $scaleSupervisor.requested_scale -ne $scalePercent -or $scaleSupervisor.native_runtime_requested -ne $true -or
             $scaleSupervisor.resolution_provisioning_requested -ne [bool]$ProvisionResolution -or
+            $scaleSupervisor.requested_resolution -cne $request.resolution -or
+            $scaleSupervisor.page_refresh_requested -ne $minimumObserve -or
+            $scaleSupervisor.navigation_recovery_uncertain -ne $false -or
             $scaleSupervisor.input_recovery_uncertain -ne $false -or
             $scaleSupervisor.restoration_verified -ne $true -or $scaleSupervisor.disposal_required -ne $false) {
             throw 'Native scale interval did not finish and restore successfully.'

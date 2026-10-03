@@ -161,6 +161,16 @@ $source = $result.Output.Trim()
     $tuple = @{resolution='unchanged'; scope='menus'; viewport='1200x800'}
     Require-Result (-not (Test-NativeTuple $tuple 100 $false))
     Require-Result (Test-NativeTuple $tuple 125 $false)
+    $tuple = @{resolution='1600x1200'; scope='minimum-observe'; viewport='measured-minimum';
+        language='en'; theme='light'; refresh_page='acknowledged-roundtrip'}
+    Require-Result (Test-NativeTuple $tuple 200 $true)
+    Require-Result (-not (Test-NativeTuple $tuple 150 $true))
+    Require-Result (-not (Test-NativeTuple $tuple 200 $false))
+    foreach ($entry in @(@('scope','menus'),@('resolution','1920x1080'),@('viewport','1200x800'),
+        @('language','yue_HK'),@('theme','dark'),@('refresh_page','none'))) {
+        $invalid = $tuple.Clone(); $invalid[$entry[0]] = $entry[1]
+        Require-Result (-not (Test-NativeTuple $invalid 200 $true))
+    }
     Record-Pass $stage
 
     $stage = 'minimum_input_recovery_contract'
