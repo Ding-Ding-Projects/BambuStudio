@@ -10,6 +10,11 @@ add_executable(personal_vocabulary_tests personal_vocabulary_tests.cpp
 add_executable(personal_vocabulary_probe personal_vocabulary_probe.cpp
     ${PROJECT_SOURCE_DIR}/src/slic3r/GUI/PersonalVocabulary.cpp)
 foreach(target personal_vocabulary_tests personal_vocabulary_probe)
+    if(SLIC3R_STATIC)
+        # Match libslic3r_gui and the static wxWidgets build's assertion ABI.
+        # This does not disable Catch2 assertions.
+        target_compile_definitions(${target} PRIVATE wxDEBUG_LEVEL=0)
+    endif()
     target_include_directories(${target} PRIVATE ${PROJECT_SOURCE_DIR}/src)
     target_link_libraries(${target} PRIVATE ${wxWidgets_LIBRARIES} PNG::PNG)
     set_property(TARGET ${target} PROPERTY FOLDER "tests")
