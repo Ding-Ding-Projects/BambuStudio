@@ -194,7 +194,8 @@ def main():
             require(runtime.get(key) == request[key])
         require(runtime.get("install_receipt_sha256") == request["install_sha256"])
         require(runtime.get("requested_tuple") == {"language": request["language"], "theme": request["theme"],
-                                                  "scale": scale, "viewport": request["viewport"]})
+                                                  "scale": request["scale_percent"] / 100.0,
+                                                  "viewport": request["viewport"]})
         result["runtime_sha256"] = digest(runtime_path)
         result["status"] = "runtime_and_membership_verified"
         code = 0
