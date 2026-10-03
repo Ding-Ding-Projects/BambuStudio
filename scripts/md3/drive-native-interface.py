@@ -770,6 +770,114 @@ class Driver:
                 "Nested Escape dismissed the parent menu")
         self.key("root-final-dismiss", ["esc"], root_search["top"])
 
+    def menu_builder_root(self):
+        self.menu_builder(False)
+
+    def menu_builder_nested(self):
+        self.menu_builder(True)
+
+    def menu_builder(self, nested):
+        """Separate scopes keep every real input inside the 30-image envelope."""
+        self.click("prepare", self.one("Prepare"))
+        canvases = [r for r in self.probe if r.get("on_screen") and "GLCanvas" in r.get("class", "")]
+        require(canvases, "Prepare has no observed scene canvas")
+        canvas = max(canvases, key=lambda r: r["screen"]["w"] * r["screen"]["h"])
+        rect = canvas["screen"]
+        self.record("open-context", "click", point=[rect["x"] + rect["w"] // 2,
+                    rect["y"] + rect["h"] // 2], button="right")
+        root = self.one("Search menu", kind=50004)["top"]
+        top = root
+        parent_query = self.label("Add Primitive") if nested else None
+        if nested:
+            self.click("parent-search", self.one("Search menu", kind=50004, top=root))
+            self.type("parent-query", parent_query, root)
+            self.click("open-nested", self.one("Add Primitive", kind=50011, top=root))
+            searches = [r for r in self.candidates("Search menu", kind=50004) if r["top"] != root]
+            require(len(searches) == 1, "Nested search is missing or ambiguous")
+            top = searches[0]["top"]
+
+        def preserved():
+            if nested:
+                require(self.one("Search menu", kind=50004, top=root).get("value") == parent_query,
+                        "Nested interaction changed the parent query")
+
+        def click(label, name, owner=top, kind=None):
+            self.click(label, self.one(name, kind=kind, top=owner))
+            preserved()
+
+        def key(label, keys, owner=top):
+            self.key(label, keys, owner)
+            preserved()
+
+        def text(label, value, owner=top):
+            self.type(label, value, owner)
+            preserved()
+
+        original = [r["name"] for r in self.menu_items(top)]
+        require(original, "Menu has no native rows")
+        click("literal-focus", "Search menu", kind=50004)
+        literal = original[0].split("\t")[0].split(" · ")[0]
+        text("literal-match", literal)
+        require(any(r["name"] == original[0] for r in self.menu_items(top)), "Literal row disappeared")
+        click("literal-clear", "Clear")
+        require(self.one("Search menu", kind=50004, top=top).get("value") == "" and
+                [r["name"] for r in self.menu_items(top)] == original, "Clear did not restore menu")
+        text("no-match", "zz_fixture_no_match_927")
+        require(not self.menu_items(top) and self.candidates("No matches.", top=top), "Missing no-match state")
+        key("no-match-escape", ["esc"])
+        click("enable-regex", "Regex mode")
+        click("open-builder", "Regex builder")
+        patterns = self.candidates("Regex pattern", kind=50004)
+        require(len(patterns) == 1 and patterns[0]["top"] not in (top, self.app.main),
+                "Builder pattern is missing or not in its own popup")
+        builder = patterns[0]["top"]
+        require(patterns[0]["focused"] and patterns[0].get("value") == "", "Builder did not focus empty pattern")
+        text("builder-pattern", "^fixture$", builder)
+        require(self.one("Regex pattern", kind=50004, top=builder).get("value") == "^fixture$" and
+                self.one("Search menu", kind=50004, top=top).get("value") == "^fixture$",
+                "Builder pattern did not synchronize to the owning menu")
+        click("show-sample", "Test pattern", builder)
+        click("sample-focus", "Sample text", builder, 50004)
+        text("sample-match", "fixture", builder)
+        results = self.one("Match results", kind=50004, top=builder).get("value", "")
+        require(self.one("Sample text", kind=50004, top=builder).get("value") == "fixture" and
+                results.strip().endswith("fixture") and
+                self.candidates("Valid pattern \u2014 1 match", top=builder), "Builder sample did not match exactly once")
+        click("pattern-focus", "Regex pattern", builder, 50004)
+        key("pattern-select", ["ctrl", "a"], builder)
+        text("invalid-pattern", "[", builder)
+        require(self.one("Regex pattern", kind=50004, top=builder).get("value") == "[" and
+                self.candidates("Unbalanced [ ] character set", top=builder) and
+                self.one("Match results", kind=50004, top=builder).get("value") == "",
+                "Invalid pattern was not rejected by the rendered builder")
+        key("invalid-select", ["ctrl", "a"], builder)
+        text("valid-recovery", "^fixture$", builder)
+        require(self.one("Regex pattern", kind=50004, top=builder).get("value") == "^fixture$" and
+                self.one("Match results", kind=50004, top=builder).get("value", "").strip().endswith("fixture") and
+                self.candidates("Valid pattern \u2014 1 match", top=builder) and
+                not self.candidates("Unbalanced [ ] character set", top=builder), "Builder did not recover")
+        key("builder-escape", ["esc"], builder)
+        require(not self.candidates("Regex pattern", kind=50004, top=builder) and
+                any(r["focused"] and r["top"] == top for r in self.native),
+                "Builder Escape did not restore focus to its menu")
+        click("builder-query-clear", "Clear")
+        require(self.one("Search menu", kind=50004, top=top).get("value") == "" and
+                [r["name"] for r in self.menu_items(top)] == original, "Builder clear did not restore menu")
+        key("menu-escape", ["esc"])
+        require(not self.candidates("Search menu", kind=50004, top=top) and
+                any(r["focused"] and r["top"] == (root if nested else self.app.main) for r in self.native),
+                "Menu Escape did not restore its invoking surface")
+        if nested:
+            self.key("parent-query-escape", ["esc"], root)
+            require(self.one("Search menu", kind=50004, top=root).get("value") == "", "Parent query did not clear")
+            self.key("parent-dismiss", ["esc"], root)
+            require(not self.candidates("Search menu", kind=50004, top=root) and
+                    any(r["focused"] and r["top"] == self.app.main for r in self.native), "Parent did not dismiss")
+        require(len(self.images) == len(self.rows) == (27 if nested else 22),
+                "Menu builder action/capture inventory is incomplete")
+        require(not any(row for step in self.rows for row in step.get("overflow", [])
+                        if row["top"] in (root, top, builder)), "Menu builder controls overflow measured bounds")
+
     def open_vocabulary(self, prefix):
         self.click(prefix + "-edit", self.one("Edit"))
         self.click(prefix + "-preferences", self.one("Preferences", kind=50011))
@@ -1167,7 +1275,7 @@ def main():
         parser.add_argument("--" + name, type=Path, required=True)
     parser.add_argument("--source-commit", required=True)
     parser.add_argument("--release-tag", required=True)
-    parser.add_argument("--scope", choices=("menus", "vocabulary", "vocabulary-persistence", "slice-controls", "combined-print", "combined-send", "cancellation", "minimum-resize", "minimum-observe", "startup-diagnostic"), required=True)
+    parser.add_argument("--scope", choices=("menus", "menu-builder-root", "menu-builder-nested", "vocabulary", "vocabulary-persistence", "slice-controls", "combined-print", "combined-send", "cancellation", "minimum-resize", "minimum-observe", "startup-diagnostic"), required=True)
     parser.add_argument("--verifier-commit")
     parser.add_argument("--minimum-job-name")
     parser.add_argument("--language", choices=behavior.MODES, default="en")

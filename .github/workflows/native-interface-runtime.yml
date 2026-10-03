@@ -22,7 +22,7 @@ on:
         description: One bounded interaction flow
         required: false
         type: choice
-        options: [menus, vocabulary, vocabulary-persistence, slice-controls, combined-print, combined-send, cancellation, minimum-resize, minimum-observe]
+        options: [menus, menu-builder-root, menu-builder-nested, vocabulary, vocabulary-persistence, slice-controls, combined-print, combined-send, cancellation, minimum-resize, minimum-observe]
       language:
         required: true
         default: en
@@ -134,7 +134,7 @@ jobs:
           if ($env:RELEASE_TAG -cnotmatch '^md3-v\d+$' -or $env:SOURCE_SHA -cnotmatch '^[0-9a-f]{40}$') {
             throw 'A release tag and full lowercase source SHA are required.'
           }
-          if ($env:INTERACTION_SCOPE -cnotin @('menus', 'vocabulary', 'vocabulary-persistence', 'slice-controls', 'combined-print', 'combined-send', 'cancellation', 'minimum-resize', 'minimum-observe')) {
+          if ($env:INTERACTION_SCOPE -cnotin @('menus', 'menu-builder-root', 'menu-builder-nested', 'vocabulary', 'vocabulary-persistence', 'slice-controls', 'combined-print', 'combined-send', 'cancellation', 'minimum-resize', 'minimum-observe')) {
             throw 'A supported installed interaction scope is required.'
           }
           if ($env:INTERACTION_SCOPE -eq 'minimum-resize' -and
