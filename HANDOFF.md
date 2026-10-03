@@ -46,6 +46,10 @@ The eventual combined product requires its own hosted build and installed eviden
 including title changes across show/hide/reopen and stacked Plate Settings geometry.
 See [integration readiness](docs/features/automation/integration-readiness.md).
 No actual merge, final green-main result, archive or deletion is claimed.
+The latest request to apply upstream updates was checked against the fetched
+`bambulab/BambuStudio` default `master` tip `da8b44ee34dd349f2ae0df3f1cbae366df482354`.
+It is already an ancestor of integration source `667ae19a1` and remote main
+`0c967a557`; both missing-commit counts are zero. No upstream product merge is needed.
 Earlier sections below are historical.
 
 ## Active repair update, 2026-10-03

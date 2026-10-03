@@ -1,5 +1,19 @@
 # Integration readiness after the default branch advanced
 
+## Requested upstream synchronization
+
+The latest request to apply upstream updates was checked against
+`https://github.com/bambulab/BambuStudio`, whose default branch is `master`.
+The fetched tip and a subsequent remote read both identify
+`da8b44ee34dd349f2ae0df3f1cbae366df482354`.
+`git merge-base --is-ancestor` returned 0 for that tip against both integration
+source `667ae19a1d2447b9e9b1e33d612611ec8e52b747` and remote main
+`0c967a55786c07ef639a2cbefbe922b619c157d3`. Both corresponding
+`git rev-list --count <source>..refs/remotes/upstream/master` results were 0.
+The current upstream history is already included, so no product merge or new
+build is justified by this synchronization request. This does not satisfy the
+separate pending installed acceptance or future default-branch integration.
+
 ## Scope and source identity
 
 Read-only review on 2026-10-03 compared integration source

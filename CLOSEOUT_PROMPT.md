@@ -13,12 +13,17 @@ captures before accepting visible behavior.
 ## Preserved source and exact evidence
 
 - Integration branch: `feature/ui-integration`. Source before this evidence-only
-  update: `538378cb66cb09310212594bbfa07d9c2b6d860f`, pushed and verified.
+  update: `667ae19a1d2447b9e9b1e33d612611ec8e52b747`, pushed and verified.
 - Main: `0c967a55786c07ef639a2cbefbe922b619c157d3`, fetched and independently
   inspected after another task added stacked plate rows and caption title following.
   The common ancestor remains `ce883543177ef7df46fa5b798dcc5c7f3d2f8020`.
   Completed-main integration and
   the final combined-main result remain outstanding.
+- Latest user request also asks to apply upstream updates. The fetched
+  `bambulab/BambuStudio` default `master` tip is
+  `da8b44ee34dd349f2ae0df3f1cbae366df482354`. Explicit ancestry checks succeed
+  against both the integration source and remote main; both missing-commit counts
+  are zero. No upstream product merge is needed at this observed tip.
 - Const repair: `e8c1614d150b62366d6c02f72c020ee0131c6e3b`, integrated at `335a73234`.
   Only the declaration and definition of `StateColor::colorForStates(int)` gain
   `const`; the algorithm and StateHandler const-reference semantics are unchanged.
