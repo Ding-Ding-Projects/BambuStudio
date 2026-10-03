@@ -139,7 +139,7 @@ $source = $result.Output.Trim()
     $ast = [Management.Automation.Language.Parser]::ParseFile(
         (Join-Path $PSScriptRoot 'Invoke-HostedDisplayScale.ps1'),[ref]$tokens,[ref]$parseErrors)
     Require-Result ($parseErrors.Count -eq 0)
-    foreach ($name in @('Test-NativeTuple','Test-UncertainInput')) {
+    foreach ($name in @('Test-NativeTuple','Test-UncertainInput','Test-ResolutionDiagnosticScope')) {
         $definitions = @($ast.FindAll({ param($node)
             $node -is [Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -ceq $name
         }, $true))
@@ -154,6 +154,9 @@ $source = $result.Output.Trim()
     $tuple.scope = 'minimum-resize'; $tuple.viewport = '1000x600'
     Require-Result (-not (Test-NativeTuple $tuple 100 $true))
     $tuple.viewport = 'measured-minimum'
+    $tuple.resolution = '1600x1200'
+    Require-Result (-not (Test-NativeTuple $tuple 100 $true))
+    $tuple.resolution = '1920x1080'
     Require-Result (Test-NativeTuple $tuple 100 $true)
     $tuple = @{resolution='unchanged'; scope='menus'; viewport='1200x800'}
     Require-Result (-not (Test-NativeTuple $tuple 100 $false))
@@ -184,6 +187,27 @@ $source = $result.Output.Trim()
     Record-Pass $stage
     $stage = 'display_mode_public_layout_contract'
     Add-Type -Path (Join-Path $PSScriptRoot 'HostedDisplayMode.cs')
+    $stage = 'fixed_alternate_resolution_contract'
+    foreach ($invalidMode in @('1920x1200','1600x1080','2000x1500','', $null)) {
+        $rejected = $false
+        try { [void][HostedDisplayMode]::TargetDimensions($invalidMode) } catch { $rejected=$true }
+        Require-Result $rejected
+    }
+    Require-Result (([HostedDisplayMode]::TargetDimensions('1920x1080') -join ',') -ceq '1920,1080')
+    Require-Result (([HostedDisplayMode]::TargetDimensions('1600x1200') -join ',') -ceq '1600,1200')
+    Require-Result (Test-ResolutionDiagnosticScope '1920x1080' $true $true $false $false 'hosted-foreground')
+    Require-Result (Test-ResolutionDiagnosticScope '1600x1200' $false $true $true $true 'hosted-foreground')
+    foreach ($case in @(
+        @('1600x1200',$true,$true,$true,$true,'hosted-foreground'),
+        @('1600x1200',$false,$false,$true,$true,'hosted-foreground'),
+        @('1600x1200',$false,$true,$false,$true,'hosted-foreground'),
+        @('1600x1200',$false,$true,$true,$false,'hosted-foreground'),
+        @('1600x1200',$false,$true,$true,$true,'background'),
+        @('1920x1200',$false,$true,$true,$true,'hosted-foreground'))) {
+        Require-Result (-not (Test-ResolutionDiagnosticScope $case[0] $case[1] $case[2] $case[3] $case[4] $case[5]))
+    }
+    Record-Pass $stage
+    $stage = 'display_mode_public_layout_contract'
     function New-ModeContractFixture([uint16] $Size, [uint16] $Extra = 0, [uint32] $Fields = 0x207c00a0) {
         $bytes = [byte[]]::new(220)
         [BitConverter]::GetBytes($Size).CopyTo($bytes,68)
@@ -332,7 +356,7 @@ exit 0
         [string[]]@('-NoProfile','-File',$membership,'-JobName',$jobName), 10, $true, $jobName)
     Require-Result ($result.Terminated -and $result.Code -eq 0 -and $result.Output -ceq '{"ok":true}')
     Record-Pass $stage
-    $success = $cases.Count -eq 13
+    $success = $cases.Count -eq 14
 } catch {
     # Neither exception text nor benign child payloads enter public logs.
     $cases.Add(@{name=$stage; status='failed'})
@@ -352,12 +376,12 @@ exit 0
     }
     $passed = @($cases | Where-Object status -eq 'passed').Count
     @{schema=1; status=$(if ($success -and $cleanupVerified) {'passed'} else {'failed'})
-      passed=$passed; expected=13; cases=$cases.ToArray(); cleanup_verified=$cleanupVerified
+      passed=$passed; expected=14; cases=$cases.ToArray(); cleanup_verified=$cleanupVerified
       source_process_observation=$sourceProcessObservation
       source_supervisor_observation=$sourceSupervisorObservation
       elapsed_ms=$timer.ElapsedMilliseconds; settings_mutated=$false
     } | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $output 'receipt.json') -Encoding utf8
 }
-if ($success -and $cleanupVerified) { Write-Host 'Hosted scale lifecycle checks passed: 13/13'; exit 0 }
+if ($success -and $cleanupVerified) { Write-Host 'Hosted scale lifecycle checks passed: 14/14'; exit 0 }
 Write-Host 'Hosted scale lifecycle checks failed; inspect the fixed receipt.'
 exit 2
