@@ -22,7 +22,8 @@ Related: [Windows release supply chain](../releases/windows-release-supply-chain
   seven passing contracts plus measured 1920x1080/125% provisioning and full
   restoration; application DPI and pixels are excluded.
 - [Contained source-query receipts](hosted-source-query-b5468208.json), the failed
-  creation case and repaired 10/10 and 11/11 hosted results, with original receipt hashes;
+  creation case and repaired 10/10, 11/11 and 13/13 hosted lifecycle results,
+  with original receipt hashes; the last provisioning job failed independently;
   no Settings mutation or application-rendering proof is claimed.
 - [Cancellation observation contract](hosted-cancellation-contract-37095515540.json),
   18 passing hosted cases including deliberate epoch-validation mutation;

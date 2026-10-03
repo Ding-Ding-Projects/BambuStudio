@@ -2,6 +2,27 @@
 
 ## Latest verified state, 2026-10-03 UTC
 
+Display run 37095764151 at 67eada8bda7b2fd6d5a589547004eea8415d559f passed
+13/13 lifecycle cases in 14127 ms, then failed 200% selection. Both observed
+navigation destinations were acknowledged. The fresh selector exposed 150%
+but no 200% option. Original resolution and 96 DPI were restored, both process
+trees terminated and recovery uncertainty was false. Both encrypted images
+passed administrative integrity opening and two independent pixel reviews.
+The complete popup shows 100%, 125%, 150% and 175%, without a menu scrollbar
+or clipped option. Visible account identity prevents publication. One targeted
+150% run 37096062899 is pending at 54ff825c0b2c8c2e005e9b46435a8ceb5e15bc46.
+Startup-only diagnostic 37095786787 at verifier 3467c83155b4a3881a306eeb5ac9060bdb381ea2
+failed against the separately bound md3-v190 product. Independent 11-file
+manifest validation succeeded before private opening. The evidence confirms
+natural early exit 4294967295 (0xFFFFFFFF), completed holder teardown and empty
+stdout/stderr. Cause remains unknown. Bounded task-owned profile-log collection
+is the next diagnostic; no product repair has been inferred from the exit alone.
+
+The one-hour observation limit for combined build 37092713387 expired at
+2026-10-03T04:17:36Z. Its final observed state was publication pending after
+successful build/package jobs. Leave it intact; no final release verdict is
+claimed and polling this expired observation lane has stopped.
+
 Hosted run 37095515540 passed all 18 cancellation-observation cases in 0.172 s
 at 18d6f1c3f60ec8d34d70829d3ca7e056edf244fa, including a deliberate mutation
 of the production epoch comparison. This validates the stronger driver contract,

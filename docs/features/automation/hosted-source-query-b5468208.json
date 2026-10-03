@@ -194,6 +194,95 @@
           "process_stage": 18
         }
       }
+    },
+    {
+      "run_id": "37095764151",
+      "source_commit": "67eada8bda7b2fd6d5a589547004eea8415d559f",
+      "scope": "lifecycle job only",
+      "result": "passed",
+      "overall_workflow_result": "failed_provisioning_200_option_unavailable",
+      "url": "https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37095764151",
+      "receipt_sha256": "a78da3d8c11e5a8b4ef0ed19a891439ca2dd5b1550399ff5a54bcf9d49a9df04",
+      "receipt": {
+        "cases": [
+          {
+            "status": "passed",
+            "name": "owned_page_marker_contract"
+          },
+          {
+            "status": "passed",
+            "name": "navigation_uncertainty_contract"
+          },
+          {
+            "status": "passed",
+            "name": "nested_source_identity"
+          },
+          {
+            "status": "passed",
+            "name": "diagnostic_control_geometry"
+          },
+          {
+            "status": "passed",
+            "name": "minimum_resolution_tuple_contract"
+          },
+          {
+            "status": "passed",
+            "name": "minimum_input_recovery_contract"
+          },
+          {
+            "status": "passed",
+            "name": "display_mode_public_layout_contract"
+          },
+          {
+            "status": "passed",
+            "name": "reject_oversized_output"
+          },
+          {
+            "status": "passed",
+            "name": "normal_output_after_overflow"
+          },
+          {
+            "status": "passed",
+            "name": "terminate_descendant_after_parent_exit"
+          },
+          {
+            "status": "passed",
+            "name": "normal_output_after_descendant_timeout"
+          },
+          {
+            "status": "passed",
+            "name": "accept_exact_output_limit"
+          },
+          {
+            "status": "passed",
+            "name": "query_only_named_job_membership"
+          }
+        ],
+        "expected": 13,
+        "schema": 1,
+        "source_supervisor_observation": {
+          "native_error": null,
+          "terminated": true,
+          "process_stage": 18,
+          "exit_code": 0
+        },
+        "source_process_observation": {
+          "checkout_matches_run": true,
+          "output_length": 41,
+          "process_stage": 18,
+          "exit_code": 0,
+          "source_format_valid": true,
+          "terminated": true,
+          "legacy_selection_count": 3,
+          "invalid_paths_rejected": 4,
+          "native_error": null
+        },
+        "elapsed_ms": 14127,
+        "settings_mutated": false,
+        "cleanup_verified": true,
+        "passed": 13,
+        "status": "passed"
+      }
     }
   ]
 }
