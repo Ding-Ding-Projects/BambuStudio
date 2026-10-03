@@ -229,6 +229,12 @@ def main():
             operations = runtime.get("operations", [])
             require(len(operations) == 1 and operations[0].get("operation") == "measured-native-minimum"
                     and driver.minimum_observation_valid(operations[0]) and len(runtime.get("captures", [])) == 1)
+            image = runtime["captures"][0]
+            measured = operations[0]
+            require(image.get("file") == measured.get("capture") and image.get("native_dpi") == 192
+                    and image.get("hwnd") == measured["main_hwnd"]
+                    and image.get("pixels") == [measured["minimum_outer"]["w"], measured["minimum_outer"]["h"]]
+                    and image.get("captured_at_utc") == measured["native_input_target"]["captured_at_utc"])
         if minimum:
             operations = [row for row in runtime.get("operations", [])
                           if row.get("operation") == "interactive-minimum-resize"]

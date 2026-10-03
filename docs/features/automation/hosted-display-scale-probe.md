@@ -758,6 +758,6 @@ scope retains named non-breakaway containment, native teardown and independent
 display restoration. Unknown navigation continues to require disposal and
 blocks scale input while allowing identity-bound original-mode recovery.
 
-Source-isolated hosted coverage adds seven receipt-predicate outcomes and
+Source-isolated hosted coverage adds nine receipt-predicate outcomes and
 extends the existing fourteen-case lifecycle suite's native-tuple case. These
 changes have not yet been executed against the installed product.

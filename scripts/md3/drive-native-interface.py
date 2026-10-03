@@ -49,7 +49,9 @@ def minimum_observation_valid(row):
             all(type(v) is int for v in outer + work + client) and
             all(type(minimum.get(k)) is int for k in ("w", "h"))):
         return False
-    return (value.get("dpi") == 192 and value.get("contained") is True and
+    return (type(row.get("main_hwnd")) is int and row["main_hwnd"] > 0 and
+            value.get("captured_hwnd") == row["main_hwnd"] and value.get("capture_geometry_verified") is True and
+            value.get("dpi") == 192 and value.get("contained") is True and
             outer[2] - outer[0] == minimum["w"] and outer[3] - outer[1] == minimum["h"] and
             400 <= minimum["w"] <= 4000 and 300 <= minimum["h"] <= 4000 and
             work[0] <= outer[0] < outer[2] <= work[2] and work[1] <= outer[1] < outer[3] <= work[3] and
@@ -345,6 +347,22 @@ def native_worker(request_path: Path, output: Path):
                                "client": [client.right, client.bottom],
                                "work_area": [info.work.left, info.work.top, info.work.right, info.work.bottom],
                                "dpi": 192, "contained": True}
+        result = cheap("screenshot", hwnd=hwnd, output_path=request["capture_path"])
+        captured_at = datetime.now(timezone.utc).isoformat()
+        require(result.get("rendered_ok") is True, "Minimum capture did not render")
+        after_frame, after_client = wintypes.RECT(), wintypes.RECT()
+        require(user.GetWindowRect(hwnd, ctypes.byref(after_frame)) and
+                user.GetClientRect(hwnd, ctypes.byref(after_client)) and
+                user.GetMonitorInfoW(monitor, ctypes.byref(fresh)) and
+                user.MonitorFromWindow(hwnd, 0) == monitor and user.GetDpiForWindow(hwnd) == 192 and
+                [after_frame.left, after_frame.top, after_frame.right, after_frame.bottom] == native_input_target["outer"] and
+                [after_client.right, after_client.bottom] == native_input_target["client"] and
+                [fresh.work.left, fresh.work.top, fresh.work.right, fresh.work.bottom] == native_input_target["work_area"],
+                "Minimum capture geometry changed")
+        user.GetWindowThreadProcessId(hwnd, ctypes.byref(actual))
+        require(actual.value == pid, "Minimum capture owner changed")
+        native_input_target.update(captured_hwnd=hwnd, capture_geometry_verified=True,
+                                   captured_at_utc=captured_at)
     elif operation == "resize":
         width, height = request["size"]
         require(400 <= width <= 4000 and 300 <= height <= 4000, "Invalid native frame size")
@@ -588,15 +606,23 @@ class Driver:
         root = next(r for r in self.probe if r.get("kind") == "window" and
                     r.get("hwnd") == self.app.main and r.get("depth") == 0)
         minimum = dict(root["min"])
-        row = self.record("measured-native-minimum", "minimum-observe",
-                          size=[minimum["w"], minimum["h"]])
+        image = self.scratch / "measured-native-minimum.png"
+        require(not image.exists(), "Minimum capture must be fresh")
+        self.worker("minimum-observe", size=[minimum["w"], minimum["h"]], capture_path=str(image))
+        observed = self.last_input["native_input_target"]
         after = next(r for r in self.probe if r.get("kind") == "window" and
                      r.get("hwnd") == self.app.main and r.get("depth") == 0)
         require(after["min"] == minimum, "Native minimum changed during observation")
-        row["minimum_outer"] = minimum
-        row["interactive_resize_clamp"] = "unverified"
-        row["status"] = "measured_minimum_contained"
+        row = {"operation": "measured-native-minimum", "main_hwnd": self.app.main,
+               "native_input_target": observed, "minimum_outer": minimum,
+               "interactive_resize_clamp": "unverified", "status": "measured_minimum_contained"}
         require(minimum_observation_valid(row), "Invalid minimum observation receipt")
+        row["capture"] = self.capture("measured-native-minimum", self.app.main, stable_source=image)
+        require(self.images[-1]["pixels"] == [minimum["w"], minimum["h"]],
+                "Minimum capture dimensions differ from the measured frame")
+        self.images[-1]["captured_at_utc"] = observed["captured_at_utc"]
+        self.images[-1]["hwnd"] = self.app.main
+        self.rows.append(row)
 
     def minimum_resize(self):
         from minimum_resize import run_minimum_resize
