@@ -257,8 +257,18 @@ jobs:
           $python = (Get-Command python.exe -ErrorAction Stop).Source
           cmake -S . -B focused-build -G Ninja -DSLIC3R_BUILD_TESTS=ON -DSLIC3R_MSVC_PDB=OFF -DBBL_RELEASE_TO_PUBLIC=1 -DBBL_INTERNAL_TESTING=0 "-DCMAKE_PREFIX_PATH=$prefix" "-DPython3_EXECUTABLE=$python" -DCMAKE_BUILD_TYPE=Release
           if ($LASTEXITCODE -ne 0) { throw 'Focused native service configuration failed.' }
-          cmake --build focused-build --config Release --parallel 4 --target personal_vocabulary_tests personal_vocabulary_probe language_mode_tests profile_archive_tests
+          cmake --build focused-build --config Release --parallel 4 --target personal_vocabulary_tests personal_vocabulary_probe language_mode_tests profile_archive_tests bounded_regex_tests
           if ($LASTEXITCODE -ne 0) { throw 'Focused native service compilation failed.' }
+      - name: Verify canvas regex whole-word parity with the real worker
+        timeout-minutes: 2
+        run: |
+          $prefix = Join-Path $env:GITHUB_WORKSPACE 'deps/build/BambuStudio_dep/usr/local'
+          $dllPaths = @(Get-ChildItem -LiteralPath $prefix -Filter '*.dll' -File -Recurse | ForEach-Object DirectoryName | Sort-Object -Unique)
+          $env:PATH = ($dllPaths -join ';') + ';' + $env:PATH
+          $executables = @(Get-ChildItem focused-build -Filter 'bounded_regex_tests.exe' -File -Recurse)
+          if ($executables.Count -ne 1) { throw 'Expected one bounded regex executable.' }
+          & $executables[0].FullName '[canvas_menu_parity]' --reporter junit --out artifacts/native-services/canvas-menu-parity.xml
+          if ($LASTEXITCODE -ne 0) { throw 'Canvas regex whole-word parity failed.' }
       - name: Exercise native parser display persistence and archive behavior
         run: |
           $prefix = Join-Path $env:GITHUB_WORKSPACE 'deps/build/BambuStudio_dep/usr/local'

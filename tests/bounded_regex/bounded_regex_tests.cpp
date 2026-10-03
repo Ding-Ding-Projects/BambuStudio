@@ -3,6 +3,7 @@
 #include "slic3r/GUI/Widgets/BoundedRegex.hpp"
 #include "slic3r/GUI/Widgets/BoundedRegexProtocol.hpp"
 #include "slic3r/GUI/Widgets/RegexBuilderBridgeState.hpp"
+#include "slic3r/GUI/CanvasMenuSearchModel.hpp"
 #include "slic3r/GUI/DeviceWeb/LatestRequestGate.hpp"
 
 #include <chrono>
@@ -117,6 +118,45 @@ TEST_CASE("counted repetition bounds parse each component independently", "[boun
 }
 
 #ifndef __APPLE__
+TEST_CASE("canvas regex preserves builder whole-word semantics", "[canvas_menu_parity]")
+{
+    use_test_worker();
+    Slic3r::GUI::RegexBuilderValues values;
+    values.regex_enabled = true;
+    values.pattern = "aus";
+    const std::vector<std::wstring> subjects{L"Add Pause", L"Jump to Layer"};
+    const std::vector<bool> substring{true, false};
+    // A fail-open worker result is not evidence of matching parity.
+    const Result builder = find_all(L"aus", subjects.front());
+    REQUIRE(builder.status == Status::Match);
+    for (bool whole_word : {false, true}) {
+        values.whole_word = whole_word;
+        const auto canvas = Slic3r::GUI::canvas_menu_regex_matches(L"aus", subjects, values);
+        REQUIRE(canvas.second == Status::Valid);
+        CHECK(canvas.first == substring);
+    }
+
+    // Plain mode still restricts partial words when the flag is enabled.
+    CHECK(plain_search(L"aus", subjects.front(), false, false));
+    CHECK_FALSE(plain_search(L"aus", subjects.front(), false, true));
+    CHECK(plain_search(L"Pause", subjects.front(), false, true));
+
+    for (bool whole_word : {false, true}) {
+        values.whole_word = whole_word;
+        const auto explicit_partial = Slic3r::GUI::canvas_menu_regex_matches(L"\\baus\\b", subjects, values);
+        REQUIRE(explicit_partial.second == Status::Valid);
+        CHECK(explicit_partial.first == std::vector<bool>({false, false}));
+        const auto explicit_word = Slic3r::GUI::canvas_menu_regex_matches(L"\\bPause\\b", subjects, values);
+        REQUIRE(explicit_word.second == Status::Valid);
+        CHECK(explicit_word.first == substring);
+    }
+
+    // The previous canvas-only rewrite demonstrably disagrees with the builder.
+    const auto previous_rewrite = Slic3r::GUI::canvas_menu_regex_matches(L"\\b(?:aus)\\b", subjects, values);
+    REQUIRE(previous_rewrite.second == Status::Valid);
+    CHECK(previous_rewrite.first != substring);
+}
+
 TEST_CASE("bounded regex distinguishes valid, invalid, match, and no-match states", "[bounded_regex]")
 {
     use_test_worker();

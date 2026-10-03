@@ -31,6 +31,31 @@ capture-group listing, and copy/export against the app's real regex engine.
 
 ## Reaching the builder
 
+### Canvas menu word-boundary parity
+
+Canvas menus evaluate the regex exactly as entered, through the production
+`canvas_menu_regex_matches` helper in `CanvasMenuSearchModel.hpp`. They do not
+add word boundaries when the plain-search **Whole word** flag is enabled.
+For example, regex `aus` matches **Add Pause** with that flag either off or on.
+Plain search `aus` still stops matching **Add Pause** when **Whole word** is on;
+regex `\baus\b` explicitly excludes it, while `\bPause\b` includes it.
+
+The compiled `[canvas_menu_parity]` case in
+`tests/bounded_regex/bounded_regex_tests.cpp` calls that same helper with the
+real bounded Boost.Regex worker. It requires successful worker startup and
+evaluation, so fail-open visibility cannot count as matching evidence. It
+also demonstrates that the previous automatic `\b(?:aus)\b` rewrite produces
+the wrong result for the substring case. The existing hosted
+`native-interface-verification.yml` native-services job builds
+`bounded_regex_tests` and executes only this tag for the new parity check,
+retaining `canvas-menu-parity.xml` beside the source/run receipt. The new
+case and application build remain unverified until that exact candidate is
+executed on a hosted Windows runner. This compiled check does not establish
+rendered menu, focus, or interaction behavior; installed-menu evidence is
+still required separately.
+
+### Search surfaces
+
 - Each `SearchField` shows a persistent trailing `.*` **regex toggle** (plain
   text stays the default; regex mode is a deliberate opt-in that also switches
   the entry to Roboto Mono) and a `tune` **builder button** that opens the

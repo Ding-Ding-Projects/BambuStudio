@@ -221,19 +221,10 @@ std::vector<bool> ImGuiWrapper::menu_search(const char* stable_id,
         std::vector<std::wstring> subjects;
         for (const auto& item : items) subjects.emplace_back(from_u8(item).ToStdWstring());
         auto pattern = from_u8(values.pattern).ToStdWstring();
-        if (values.whole_word) pattern = L"\\b(?:" + pattern + L")\\b";
-        BoundedRegex::Options options;
-        options.case_sensitive = values.case_sensitive;
-        options.multiline = values.multiline;
         state.begin_request();
         try {
-            state.pending = std::async(std::launch::async, [pattern = std::move(pattern), subjects = std::move(subjects), options]() {
-                std::vector<bool> mask(subjects.size(), true);
-                BoundedRegex::SearchPass pass(pattern, options);
-                for (size_t i = 0; i < subjects.size() && !pass.circuit_open(); ++i)
-                    mask[i] = pass.evaluate(subjects[i]).allows_candidate();
-                if (pass.circuit_open()) std::fill(mask.begin(), mask.end(), true);
-                return std::make_pair(std::move(mask), pass.circuit_open() ? pass.circuit_status() : BoundedRegex::Status::Valid);
+            state.pending = std::async(std::launch::async, [pattern = std::move(pattern), subjects = std::move(subjects), query = values]() {
+                return canvas_menu_regex_matches(pattern, subjects, query);
             });
         } catch (...) {
             state.accept_result(state.requested_signature, {}, BoundedRegex::Status::ProtocolError);
