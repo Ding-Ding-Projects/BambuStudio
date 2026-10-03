@@ -74,3 +74,33 @@ dimensions at each language, theme and DPI tuple. Verify a smaller requested
 frame clamps to that minimum and inspect the resulting content. Retain fixed
 client sizes as additional achievable tuples. This probe changes neither the
 product minimum nor the driver and supplies no layout verdict.
+
+### Measured minimum driver mode
+
+The native driver now accepts `--viewport measured-minimum`. It reads the actual
+main frame's existing layout-probe `GetMinSize` value, sizes the outer frame to
+that value, and retains its actual client dimensions and measured DPI. It does
+not modify the product constraint, infer an em value, or call a fixed 1000 by 600
+client rectangle the minimum. Each invocation and process restart adds a
+`viewport_observations` receipt.
+
+It also requests an outer frame one physical pixel smaller in both dimensions
+using the existing `SetWindowPos` route, records the resulting geometry, restores
+the original measured minimum in `finally`, and captures the restored surface.
+Only an exact return to the measured minimum earns `observed_programmatic_clamp`.
+Native interactive minimum tracking and programmatic resizing are not equivalent:
+if the programmatic request is not clamped, the diagnostic records `not_observed`
+without failing a correctly measured minimum tuple. Interactive verification
+remains pending. Even a programmatic clamp leaves
+`interactive_resize_clamp` explicitly `unverified`; it does not prove mouse-edge
+or keyboard resizing. Do not loosen the product minimum to make this probe pass.
+
+On the configured hosted Windows job, after installed-artifact validation:
+
+```powershell
+python scripts/md3/drive-native-interface.py --exe $exe --cli $cli --install-receipt $receipt --source-commit $commit --release-tag $tag --output $output --scope slice-controls --viewport measured-minimum --language en --theme light --scale 1.0
+```
+
+Repeat only on actually provisioned DPI and independently requested language and
+theme tuples. This source change was not executed locally. Hosted results,
+encrypted pixel review and interactive clamp evidence remain pending.

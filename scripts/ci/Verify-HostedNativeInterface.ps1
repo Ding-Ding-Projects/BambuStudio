@@ -10,7 +10,7 @@ param(
     [ValidateSet('en','yue_HK','bilingual_en_yue_HK')][string] $Language = 'en',
     [ValidateSet('light','dark')][string] $Theme = 'light',
     [ValidateSet('1','1.25','1.5','2')][string] $Scale = '1',
-    [ValidateSet('1200x800','1000x600')][string] $Viewport = '1200x800'
+    [ValidateSet('1200x800','1000x600','measured-minimum')][string] $Viewport = '1200x800'
 )
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
