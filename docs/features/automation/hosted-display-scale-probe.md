@@ -140,15 +140,27 @@ restoration requires disposal of the hosted runner, never a successful result.
 The helper's thread uses per-monitor awareness for coordinate conversion only;
 this does not provision a scale and is never accepted as scale evidence.
 
-An optional `-ActionScript <script.ps1> -ActionTimeoutSeconds <seconds>` executes
-one bounded PowerShell action after selection and measurement, before restoring.
-The action must produce its own evidence and handle its owned process lifecycle.
-The standalone mode launches no product and proves no product-window DPI, pixels,
-layout, or capture review. The installed runtime must independently measure its
-actual window DPI while the requested scale is active.
+This helper supports standalone control measurement only. It intentionally has
+no general action-script parameter: integrating a product action remains separate
+work after standalone provisioning is verified. It launches no product and proves
+no product-window DPI, pixels, layout, or capture review. The installed runtime
+must independently measure its actual window DPI while the requested scale is
+active; that action wrapper is not implemented here.
+
+Every helper process starts suspended and is assigned to a non-breakaway Windows
+job before its first instruction. A zero active-process count proves termination
+of the whole owned tree; direct process exit alone does not. A durable pending
+marker precedes each spawn and is renamed only after that proof. Any remaining
+pending marker blocks further input, restoration and recovery, and requires
+runner disposal. The job has kill-on-close semantics as a containment backstop,
+not a substitute for a termination verdict. Normal worker output and all standard
+error go to NUL. Only cheap JSON output is captured, capped at 64 KiB, with a
+bounded process deadline and a one-second final drain. No unbounded stream read
+or generic child-action output is retained.
 
 Only `supervisor.json`, `run.json` and `restore.json` are public-safe receipts.
 Never upload `original.json`: it is private recovery state containing process and
-session identities. The helper forwards no raw child output or UI labels. A source
+session identities. Internal `child-*.pending*` lifecycle markers are also excluded
+from publication. The helper forwards no raw child output or UI labels. A source
 syntax parse is not hosted execution; standalone provisioning remains unverified
 until its selection, native DPI and restoration receipts pass independent review.

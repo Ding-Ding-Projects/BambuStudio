@@ -3,8 +3,6 @@ param(
     [Parameter(Mandatory)][ValidateSet(100,125,150,200)][int] $ScalePercent,
     [Parameter(Mandatory)][string] $OutputDirectory,
     [Parameter(Mandatory)][string] $CheapExecutable,
-    [string] $ActionScript,
-    [ValidateRange(10,2400)][int] $ActionTimeoutSeconds = 60,
     [ValidateSet('supervisor','run','restore')][string] $Mode = 'supervisor'
 )
 $ErrorActionPreference = 'Stop'
@@ -19,40 +17,38 @@ if (-not $output.StartsWith($tempRoot, [StringComparison]::OrdinalIgnoreCase)) {
     throw 'Output must be within RUNNER_TEMP.'
 }
 if (-not (Test-Path -LiteralPath $CheapExecutable -PathType Leaf)) { throw 'Cheap input executable unavailable.' }
-if ($ActionScript -and -not (Test-Path -LiteralPath $ActionScript -PathType Leaf)) { throw 'Action script unavailable.' }
 $pwsh = (Get-Process -Id $PID).Path
 $originalPath = Join-Path $output 'original.json'
+Add-Type -Path (Join-Path $PSScriptRoot 'HostedScaleProcess.cs')
+$script:ChildTerminationUncertain = $false
 
-# Capture child output without forwarding provider text. All public diagnostics
-# are fixed strings. Every process has a bounded wait and verified termination.
-function Invoke-BoundedProcess([string] $Executable, [string[]] $Arguments, [int] $Seconds) {
-    $p = [Diagnostics.Process]::new()
-    $p.StartInfo = [Diagnostics.ProcessStartInfo]::new($Executable)
-    $p.StartInfo.UseShellExecute = $false
-    $p.StartInfo.CreateNoWindow = $true
-    $p.StartInfo.WindowStyle = [Diagnostics.ProcessWindowStyle]::Hidden
-    $p.StartInfo.RedirectStandardOutput = $true
-    $p.StartInfo.RedirectStandardError = $true
-    foreach ($arg in $Arguments) { [void]$p.StartInfo.ArgumentList.Add($arg) }
-    $started = $false
-    $terminated = $false
+function Test-UncertainChildren {
+    return $script:ChildTerminationUncertain -or
+        @(Get-ChildItem -LiteralPath $output -File | Where-Object Name -Match '^child-(run|restore)-.*\.pending$').Count -gt 0
+}
+
+# Each child starts suspended, enters a non-breakaway kill-on-close job, then
+# runs. Only a zero active-process count proves the complete tree has stopped.
+# Non-JSON streams go to NUL. Cheap JSON is capped at 64 KiB with a bounded drain.
+function Invoke-BoundedProcess([string] $Executable, [string[]] $Arguments, [int] $Seconds, [bool] $Capture = $false) {
+    if (Test-UncertainChildren) { throw 'Child termination is unverified.' }
+    $pending = Join-Path $output ('child-' + $Mode + '-' + [Guid]::NewGuid().ToString('N') + '.pending')
+    # Durable state must precede creation. An interrupted worker leaves this
+    # marker, which blocks later input and recovery instead of assuming exit.
+    [IO.File]::WriteAllText($pending, 'pending')
     try {
-        $started = $p.Start()
-        if (-not $started) { throw 'Child process unavailable.' }
-        $stdout = $p.StandardOutput.ReadToEndAsync()
-        $stderr = $p.StandardError.ReadToEndAsync()
-        $terminated = $p.WaitForExit($Seconds * 1000)
-        if (-not $terminated) {
-            $p.Kill($true)
-            $terminated = $p.WaitForExit(5000)
-            return @{ terminated = $terminated; code = -1; stdout = '' }
+        $result = [HostedScaleProcess]::Run([IO.Path]::GetFullPath($Executable), $Arguments, $Seconds, $Capture)
+        if ($result.Terminated) {
+            # Rename preserves the durable termination proof and clears pending
+            # atomically. This contains no child output, labels, or arguments.
+            Move-Item -LiteralPath $pending -Destination ($pending + '.stopped')
+        } else {
+            $script:ChildTerminationUncertain = $true
         }
-        return @{ terminated = $true; code = $p.ExitCode; stdout = $stdout.GetAwaiter().GetResult() }
-    } finally {
-        if ($started -and -not $terminated) {
-            try { if (-not $p.HasExited) { $p.Kill($true) }; [void]$p.WaitForExit(5000) } catch {}
-        }
-        $p.Dispose()
+        return @{ terminated=$result.Terminated; code=$result.Code; stdout=$result.Output }
+    } catch {
+        $script:ChildTerminationUncertain = $true
+        throw 'Child containment or receipt is unverified.'
     }
 }
 
@@ -63,29 +59,29 @@ if ($Mode -eq 'supervisor') {
     $recovery = @{ terminated = $true; code = 0 }
     try {
         $arguments = @('-NoProfile','-File',$PSCommandPath,'-ScalePercent',"$ScalePercent",
-            '-OutputDirectory',$output,'-CheapExecutable',$CheapExecutable,
-            '-ActionTimeoutSeconds',"$ActionTimeoutSeconds",'-Mode','run')
-        if ($ActionScript) { $arguments += @('-ActionScript',[IO.Path]::GetFullPath($ActionScript)) }
-        $run = Invoke-BoundedProcess $pwsh $arguments ($ActionTimeoutSeconds + 120)
+            '-OutputDirectory',$output,'-CheapExecutable',$CheapExecutable,'-Mode','run')
+        $run = Invoke-BoundedProcess $pwsh $arguments 120
     } catch {} finally {
         # The durable original state exists before the first input. Recovery is
         # isolated too, and never races an unterminated first worker.
-        if ($run.terminated -and (Test-Path -LiteralPath $originalPath)) {
+        if ($run.terminated -and -not (Test-UncertainChildren) -and (Test-Path -LiteralPath $originalPath)) {
             try {
                 $recovery = Invoke-BoundedProcess $pwsh @('-NoProfile','-File',$PSCommandPath,
                     '-ScalePercent',"$ScalePercent",'-OutputDirectory',$output,
                     '-CheapExecutable',$CheapExecutable,'-Mode','restore') 60
             } catch { $recovery = @{ terminated = $false; code = -1 } }
-        } elseif (-not $run.terminated) {
+        } elseif (-not $run.terminated -or (Test-UncertainChildren)) {
             $recovery = @{ terminated = $false; code = -1 }
         }
-        $restored = $recovery.terminated -and $recovery.code -eq 0
+        $uncertain = Test-UncertainChildren
+        $restored = $recovery.terminated -and $recovery.code -eq 0 -and -not $uncertain
         $success = $run.terminated -and $run.code -eq 0 -and $restored
         @{schema=1; status=$(if ($success) {'verified_settings_scale_and_restoration'} else {'unavailable'})
           requested_scale=$ScalePercent; worker_termination_verified=$run.terminated
           recovery_termination_verified=$recovery.terminated; restoration_verified=$restored
+          child_termination_uncertain=$uncertain; process_containment='suspended_start_nonbreakaway_job'
           target_application_dpi='requires_independent_runtime_measurement'
-          disposal_required=(-not $run.terminated -or -not $restored)
+          disposal_required=(-not $run.terminated -or -not $restored -or $uncertain)
         } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $output 'supervisor.json') -Encoding utf8
     }
     if ($success) { exit 0 }; exit 2
@@ -187,6 +183,7 @@ function Desktop-Name([uint32] $Thread) {
     return $buffer.ToString()
 }
 function Click-Control($Entry) {
+    if (Test-UncertainChildren) { throw 'Input blocked by unverified child termination.' }
     $started = [DateTime]::UtcNow
     $current = $Entry.element.Current
     if ($current.ProcessId -ne $settingsId -or -not $current.IsEnabled -or $current.IsOffscreen) { throw 'Input control changed.' }
@@ -222,12 +219,13 @@ function Click-Control($Entry) {
         throw 'Input observation expired.'
     }
     $result = Invoke-BoundedProcess $CheapExecutable @('mouse_click','--hwnd',"$($hwnd.ToInt64())",
-        '--x',"$($point.X)",'--y',"$($point.Y)",'--button','left') 10
+        '--x',"$($point.X)",'--y',"$($point.Y)",'--button','left') 10 $true
     if (-not $result.terminated -or $result.code -ne 0) { throw 'Cheap input unavailable.' }
     $reply = $result.stdout | ConvertFrom-Json
     if ($reply.ok -ne $true) { throw 'Cheap input rejected.' }
 }
 function Set-Scale([int] $Percent) {
+    if (Test-UncertainChildren) { throw 'Scale change blocked by unverified child termination.' }
     $rows = @(Read-Controls)
     $state = Read-Scale $rows
     if ($state.percent -ne $Percent) {
@@ -258,7 +256,7 @@ function Set-Scale([int] $Percent) {
 }
 
 $receipt = @{schema=1; requested_scale=$ScalePercent; status='unavailable'; restored=$false
-    input_method='cheap_mouse_click'; uia='read_only'; action='not_started'
+    input_method='cheap_mouse_click'; uia='read_only'; action='unsupported_standalone_only'
     target_application_dpi='requires_independent_runtime_measurement'}
 $original = $null
 try {
@@ -278,17 +276,12 @@ try {
         $selected = Set-Scale $ScalePercent
         $receipt.selected_scale = $selected.percent
         $receipt.measured_settings_dpi = $selected.dpi
-        if ($ActionScript) {
-            $action = Invoke-BoundedProcess $pwsh @('-NoProfile','-File',[IO.Path]::GetFullPath($ActionScript)) $ActionTimeoutSeconds
-            $receipt.action = if ($action.terminated -and $action.code -eq 0) {'succeeded'} else {'failed'}
-            if (-not $action.terminated -or $action.code -ne 0) { throw 'Bounded action failed.' }
-        } else { $receipt.action = 'standalone_measurement_only' }
         $receipt.status = 'selected_and_measured'
     }
 } catch {
     $receipt.status = 'unavailable'
 } finally {
-    if ($null -ne $original) {
+    if ($null -ne $original -and -not (Test-UncertainChildren)) {
         try {
             $restored = Set-Scale ([int]$original.scale)
             $receipt.restored = $restored.percent -eq $original.scale -and $restored.dpi -eq $original.dpi
@@ -296,6 +289,8 @@ try {
             $receipt.restored_settings_dpi = $restored.dpi
         } catch { $receipt.restored = $false }
     }
+    $receipt.child_termination_uncertain = Test-UncertainChildren
+    $receipt.disposal_required = $receipt.child_termination_uncertain -or -not $receipt.restored
     $receipt | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $output ($Mode + '.json')) -Encoding utf8
 }
 if ($receipt.restored -and ($Mode -eq 'restore' -or $receipt.status -eq 'selected_and_measured')) { exit 0 }
