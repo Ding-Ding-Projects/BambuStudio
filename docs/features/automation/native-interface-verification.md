@@ -130,6 +130,18 @@ Run [37095786787](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs
 was queued at this documentation checkpoint. No startup result or cause is
 claimed here; the earlier zero-operation failures remain unresolved.
 
+After the same verified holder identity and teardown checks, startup diagnostics
+also inspect only the isolated launch profile's immediate `log` directory.
+Collection rejects reparse ancestors, limits enumeration to 64 entries and
+accepts at most three native logger filenames: the launched PID's
+`studio_<timestamp>_<pid>[_enc[_cn|_dc]].log.<counter>` or
+`crash_<timestamp>_<counter>.log`. Each file is capped at 512 KiB and the total at
+1.5 MiB. Oversized or unsafe collections report unavailable without partial log
+contents. No configuration files or other profile directories are collected.
+Log bytes and filenames remain inside encrypted `runtime.json`; the existing
+11-file verifier manifest already binds the changed collector. This is added
+diagnostic coverage, not evidence of a startup cause or a successful launch.
+
 An absent, ambiguous or disabled target fails the affected scope. Provider
 timeouts, truncated observations, incorrect process ownership, missing original
 labels, unexpected confirmation state and layout overflow remain failures.

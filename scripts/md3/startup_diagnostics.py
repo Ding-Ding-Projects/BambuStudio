@@ -6,6 +6,7 @@ import hashlib
 import json
 import ntpath
 import os
+import re
 from pathlib import Path
 import stat
 from datetime import datetime, timezone
@@ -53,6 +54,56 @@ def _read(path: Path, limit: int) -> bytes:
         if len(data) > limit or len(data) != info.st_size:
             raise ValueError("Diagnostic changed during read")
     return data
+
+
+def _profile_logs(app, root: Path) -> dict:
+    """Read only the verified launch profile's immediate native log directory."""
+    try:
+        # HostedApp names its exact launch profile datadir, not profile_path.
+        profile = Path(app.datadir)
+        if not profile.is_absolute():
+            raise ValueError("Profile must be absolute")
+        for ancestor in (profile, *profile.parents):
+            info = ancestor.lstat()
+            if stat.S_ISLNK(info.st_mode) or getattr(info, "st_file_attributes", 0) & 0x400:
+                raise ValueError("Unsafe profile path")
+        if not profile.resolve().is_relative_to(root) or profile.resolve() == root:
+            raise ValueError("Profile escapes temporary root")
+        directory = profile / "log"
+        try:
+            info = directory.lstat()
+        except FileNotFoundError:
+            return {"status": "absent", "files": []}
+        if (not stat.S_ISDIR(info.st_mode) or stat.S_ISLNK(info.st_mode)
+                or getattr(info, "st_file_attributes", 0) & 0x400):
+            raise ValueError("Unsafe log directory")
+        # Exact native filename shapes from LogSink.cpp and BaseException.cpp.
+        stamp = r"[A-Za-z]{3}_[A-Za-z]{3}_\d{2}_\d{2}_\d{2}_\d{2}_"
+        studio = re.compile(r"studio_" + stamp + re.escape(str(app.launch_pid))
+                            + r"(?:_enc(?:_cn|_dc)?)?\.log\.\d{1,10}")
+        crash = re.compile(r"crash_" + stamp + r"\d{1,10}\.log")
+        candidates = []
+        with os.scandir(directory) as entries:
+            for index, entry in enumerate(entries):
+                if index >= 64:
+                    raise ValueError("Log enumeration bound exceeded")
+                if studio.fullmatch(entry.name) or crash.fullmatch(entry.name):
+                    candidates.append(Path(entry.path))
+                    if len(candidates) > 3:
+                        raise ValueError("Log count bound exceeded")
+        files, total = [], 0
+        for path in sorted(candidates):
+            data = _read(path, 524288)
+            total += len(data)
+            if total > 1572864:
+                raise ValueError("Log total bound exceeded")
+            files.append({"name": path.name, "bytes": len(data),
+                          "sha256": hashlib.sha256(data).hexdigest(),
+                          "base64": base64.b64encode(data).decode("ascii")})
+        return {"status": "preserved" if files else "no_matching_logs",
+                "bytes": total, "files": files}
+    except Exception:
+        return {"status": "unavailable", "reason": "profile_log_validation_failed", "files": []}
 
 
 def collect_startup(app, *, teardown: bool, operations: int) -> dict:
@@ -121,6 +172,7 @@ def collect_startup(app, *, teardown: bool, operations: int) -> dict:
                       natural_exit_observed_before_cleanup=bool(app.natural_exit_observed_before_cleanup),
                       holder_status="holder_stopped", holder_receipt=receipt,
                       holder_receipt_sha256=hashlib.sha256(receipt_bytes).hexdigest(), streams=streams)
+        result["profile_logs"] = _profile_logs(app, root)
     except Exception:
         # Keep original runtime failure and never expose paths or stream contents.
         result["reason"] = "startup_diagnostics_unavailable"
