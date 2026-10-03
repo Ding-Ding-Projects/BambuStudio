@@ -544,6 +544,14 @@ bool BackgroundSlicingProcess::start()
 	return true;
 }
 
+std::optional<bool> BackgroundSlicingProcess::automation_worker_running()
+{
+    std::unique_lock<std::mutex> lock(m_mutex, std::try_to_lock);
+    if (!lock.owns_lock()) return std::nullopt;
+    return m_state == STATE_STARTED || m_state == STATE_RUNNING ||
+           m_state == STATE_FINISHED || m_state == STATE_CANCELED;
+}
+
 // User cancellation is non-blocking. stop() remains the ownership barrier for
 // model mutation and destruction, and never detaches a worker using our data.
 bool BackgroundSlicingProcess::request_stop()

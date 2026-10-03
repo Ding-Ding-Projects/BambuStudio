@@ -23701,6 +23701,11 @@ void Plater::cancel_pending_print_after_slice()
     p->m_pending_slice_output.clear();
 }
 
+uint64_t Plater::automation_slice_native_generation() const
+{
+    return p ? p->background_process.automation_generation() : 0;
+}
+
 SliceWorkflowObservation Plater::automation_slice_workflow()
 {
     SliceWorkflowObservation result;
@@ -23710,7 +23715,9 @@ SliceWorkflowObservation Plater::automation_slice_workflow()
     result.native_generation = p->background_process.automation_generation();
     result.model_revision = get_active_snapshot_time();
     result.cancellation_requested = p->background_process.cancellation_requested();
-    result.worker_running = p->background_process.running();
+    const auto worker_running = p->background_process.automation_worker_running();
+    result.worker_state_known = worker_running.has_value();
+    if (worker_running) result.worker_running = *worker_running;
     switch (p->background_process.automation_outcome()) {
     case 0: result.outcome = "idle"; break;
     case 1: result.outcome = "running"; break;

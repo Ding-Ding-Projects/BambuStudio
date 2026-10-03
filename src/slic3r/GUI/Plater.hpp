@@ -117,7 +117,7 @@ struct SliceWorkflowContinuationObservation {
 };
 struct SliceWorkflowObservation {
     static constexpr size_t event_capacity = 16;
-    bool enabled{false}, cancellation_requested{false}, worker_running{false};
+    bool enabled{false}, cancellation_requested{false}, worker_running{false}, worker_state_known{false};
     uint64_t request_generation{0}, native_generation{0}, model_revision{0};
     uint64_t completion_sequence{0}, continuation_sequence{0};
     int processing_plate_index{-1};
@@ -659,6 +659,7 @@ public:
     void reslice();
     uint64_t automation_slice_request_generation() const { return m_automation_slice_request_generation; }
     SliceWorkflowObservation automation_slice_workflow();
+    uint64_t automation_slice_native_generation() const;
     void stop_helio_process();
     void feedback_helio_process(float rating, std::string commend);
     void record_slice_preset(std::string action);

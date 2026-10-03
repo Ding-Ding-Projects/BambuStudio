@@ -511,7 +511,7 @@ void Slic3r::GUI::NotificationManager::SlicingProgressNotification::render_cance
             const float right = std::min(button_pos.x + button_size.x, clip.Max.x);
             const float bottom = std::min(button_pos.y + button_size.y, clip.Max.y);
             m_cancel_target = {right > left && bottom > top, ImGui::GetFrameCount(),
-                               wxGetApp().plater()->automation_slice_workflow().native_generation, 0.0, left, top, std::max(0.0f, right - left), std::max(0.0f, bottom - top)};
+                               wxGetApp().plater()->automation_slice_native_generation(), 0.0, left, top, std::max(0.0f, right - left), std::max(0.0f, bottom - top)};
             m_cancel_render_time = std::chrono::steady_clock::now();
         }
         ImGui::SetCursorScreenPos(button_pos);

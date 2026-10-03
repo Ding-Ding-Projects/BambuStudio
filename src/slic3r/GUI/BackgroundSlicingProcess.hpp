@@ -6,6 +6,7 @@
 #include <string>
 #include <condition_variable>
 #include <mutex>
+#include <optional>
 
 #include <boost/thread.hpp>
 
@@ -174,6 +175,9 @@ public:
     uint64_t automation_generation() const { return m_automation_generation.load(); }
     // 0 idle/invalidated, 1 running, 2 completed, 3 failed, 4 cancelled.
     int automation_outcome() const { return m_automation_outcome.load(); }
+    // Never wait for a worker-owned lock on the UI thread. No value means the
+    // ownership state could not be observed, not that the worker is idle.
+    std::optional<bool> automation_worker_running();
 	// Cancel the background processing. Returns false if the background processing was not running.
 	// A stopped background processing may be restarted with start().
 	bool stop();

@@ -142,7 +142,7 @@ no printer submission route and does not change existing confirmation dialogs.
 | `modelRevision` | Active undo snapshot timestamp, an opaque revision identity, not wall-clock time or a content hash. |
 | `outcome` | `idle`, `running`, `completed`, `failed`, `cancelled`, or `unknown`, from the existing atomic background outcome. |
 | `cancellationRequested` | Existing asynchronous cancellation-request flag; it does not imply worker termination. |
-| `workerRunning` | Existing background ownership state: started, running, finished awaiting consumption, or cancelled awaiting consumption. False alone is not success. |
+| `workerStateKnown`, `workerRunning` | Nonblocking synchronized ownership observation. `workerRunning` is null when the existing worker mutex cannot be acquired immediately, never false by default. A known true includes started, running, finished awaiting consumption, or cancelled awaiting consumption. False alone is not success. |
 | `processingPlateIndex` | Index resolved against currently owned plates, or -1 when no current plate matches. |
 | `pending` | Action `none`/`print`/`send`, plate index, UI request and native generations, and equality against current and processing plate identities. No pointers are exported. |
 | `completionSequence`, `completionEvents` | Process-local monotonic sequence and the latest 16 actual completion-receiver entries, oldest first. Each includes event/current generations, status, accepted flag and rejection reason. |

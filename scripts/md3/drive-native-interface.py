@@ -90,6 +90,9 @@ def native_worker(request_path: Path, output: Path):
             response = json.loads(result.stdout)
             require(response.get("ok") is True, "Fresh cancellation observation rejected")
             w = response["result"].get("sliceWorkflow", {})
+            if w.get("workerStateKnown") is not True:
+                time.sleep(0.05)
+                continue
             require(w.get("nativeGeneration") == request["generation"] and
                     w.get("outcome") == "running" and w.get("workerRunning") is True and
                     w.get("pending", {}).get("action") == request["action"],
@@ -637,6 +640,9 @@ class Driver:
         require(w.get("schemaVersion") == 1 and w.get("enabled") is True and
                 w.get("diagnosticOnly") is True and w.get("eventCapacity") == 16,
                 "Versioned slice workflow observation unavailable")
+        require((w.get("workerStateKnown") is True and type(w.get("workerRunning")) is bool) or
+                (w.get("workerStateKnown") is False and w.get("workerRunning") is None),
+                "Unknown worker ownership was misrepresented as a known state")
         for events, sequence in (("completionEvents", "completionSequence"),
                                  ("continuationEvents", "continuationSequence")):
             rows, last = w.get(events), w.get(sequence)
@@ -705,11 +711,15 @@ class Driver:
             caption = "Slice and Print" if action == "print" else "Slice and Send"
             self.click(f"cancel-start-{attempt}", self.one(caption))
             observed = self.workflow()
+            ownership_deadline = time.monotonic() + 5
+            while observed["workerRunning"] is None and time.monotonic() < ownership_deadline:
+                time.sleep(0.05)
+                observed = self.workflow()
             trial = {"attempt": attempt + 1, "action": action, "before": baseline, "started": observed}
             trials.append(trial)
             self.rows[-1]["cancellation_trials"] = trials
             # A complete small job is not an in-flight cancellation test.
-            if observed["outcome"] != "running" or not observed["workerRunning"]:
+            if observed["outcome"] != "running" or observed["workerRunning"] is not True:
                 trial["status"] = "not_observed"
                 break
             require(observed["pending"]["action"] == action and
@@ -725,13 +735,13 @@ class Driver:
             deadline = time.monotonic() + 90
             while time.monotonic() < deadline:
                 finished = self.workflow()
-                if not finished["workerRunning"] and finished["outcome"] != "running":
+                if finished["workerRunning"] is False and finished["outcome"] != "running":
                     break
                 time.sleep(0.1)
             trial["finished"] = finished
             require(finished["modelRevision"] == initial["modelRevision"],
                     "Cancellation fixture model changed during the trial")
-            require(finished["outcome"] == "cancelled" and not finished["workerRunning"] and
+            require(finished["outcome"] == "cancelled" and finished["workerRunning"] is False and
                     finished["pending"]["action"] == "none" and
                     finished["continuationSequence"] == baseline["continuationSequence"],
                     "Explicit cancel did not finish without a continuation")
