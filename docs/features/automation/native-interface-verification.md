@@ -138,6 +138,27 @@ Python's standard library. Execute on the hosted runner only:
 python scripts/md3/test_native_vocabulary_observation.py -v
 ```
 
+The same workflow accepts `vocabulary_contract_only=true` for a five-minute
+Windows job that checks out the dispatched workflow commit and runs only those
+nine source-isolated cases. It requires no release, installer, native build or
+product process. The receipt binds the exact checkout to `GITHUB_SHA`, the run
+and attempt, the driver and contract SHA-256 hashes, and the actual exit code.
+Only `receipt.json` and `output.txt` are retained. Dispatch after the candidate
+has been integrated and pushed:
+
+```powershell
+gh workflow run native-interface-runtime.yml --repo Ding-Ding-Projects/BambuStudio --ref feature/ui-integration -f vocabulary_contract_only=true
+```
+
+This opt-in route ignores release and interaction parameters and always checks
+the dispatched source; it does not use `expected_source_commit` to select a
+different checkout. Combining it with `provision_resolution=true` fails a
+separate validation job before any display or product work. With the new switch
+omitted or false, the installed route still requires a valid release tag, exact
+source SHA and supported interaction scope before checkout or installation.
+Passing the source-only job does not verify native getters, rendered wording,
+the installed application or its startup.
+
 No local tests, native builds or product execution were performed for this
 extension. Native compilation, the nine hosted contracts and real installed
 interaction remain pending.

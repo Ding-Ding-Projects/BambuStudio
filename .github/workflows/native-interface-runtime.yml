@@ -6,17 +6,21 @@ on:
     paths: [.github/workflows/native-interface-runtime.yml]
   workflow_dispatch:
     inputs:
+      vocabulary_contract_only:
+        description: Run only the source-isolated vocabulary contract without installation
+        type: boolean
+        default: false
       release_tag:
         description: Immutable md3-vN release tag
-        required: true
+        required: false
         type: string
       expected_source_commit:
         description: Exact released source SHA including the driver
-        required: true
+        required: false
         type: string
       scope:
         description: One bounded interaction flow
-        required: true
+        required: false
         type: choice
         options: [menus, vocabulary, vocabulary-persistence, slice-controls, combined-print, combined-send, cancellation, minimum-resize, minimum-observe]
       language:
@@ -49,8 +53,68 @@ permissions:
   actions: read
 
 jobs:
+  invalid-selection:
+    if: github.event_name == 'workflow_dispatch' && inputs.vocabulary_contract_only && inputs.provision_resolution
+    runs-on: windows-2025
+    timeout-minutes: 1
+    steps:
+      - shell: pwsh
+        run: throw 'Source-only vocabulary verification cannot provision a display resolution.'
+  vocabulary-contract:
+    if: github.event_name == 'workflow_dispatch' && inputs.vocabulary_contract_only && !inputs.provision_resolution
+    runs-on: windows-2025
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.12'
+      - name: Verify vocabulary observation contract
+        run: |
+          if ($env:RUNNER_ENVIRONMENT -ne 'github-hosted' -or $env:RUNNER_OS -ne 'Windows') {
+            throw 'Vocabulary contract requires a disposable hosted Windows runner.'
+          }
+          $source = git rev-parse HEAD
+          if ($LASTEXITCODE -ne 0 -or $source -cne $env:GITHUB_SHA) { throw 'Checkout identity does not match this run.' }
+          New-Item -ItemType Directory -Force artifacts/vocabulary-contract | Out-Null
+          $receipt = [ordered]@{
+            schema = 1; sourceCommit = $source; runId = $env:GITHUB_RUN_ID; runAttempt = $env:GITHUB_RUN_ATTEMPT
+            execution = 'github-hosted-windows'; status = 'running'; exitCode = $null; expectedCases = 9
+            productExecuted = $false
+            driverSha256 = (Get-FileHash scripts/md3/drive-native-interface.py -Algorithm SHA256).Hash.ToLowerInvariant()
+            contractSha256 = (Get-FileHash scripts/md3/test_native_vocabulary_observation.py -Algorithm SHA256).Hash.ToLowerInvariant()
+          }
+          $receipt | ConvertTo-Json | Set-Content artifacts/vocabulary-contract/receipt.json -Encoding utf8
+          $testExit = $null
+          try {
+            python scripts/md3/test_native_vocabulary_observation.py -v 2>&1 |
+              Tee-Object -FilePath artifacts/vocabulary-contract/output.txt
+            $testExit = $LASTEXITCODE
+          } finally {
+            $receipt.exitCode = $testExit
+            $receipt.status = if ($null -ne $testExit -and $testExit -eq 0) { 'passed' } else { 'failed' }
+            $receipt | ConvertTo-Json | Set-Content artifacts/vocabulary-contract/receipt.json -Encoding utf8
+          }
+          if ($null -eq $testExit -or $testExit -ne 0) { throw 'Vocabulary observation contract failed.' }
+      - name: Retain vocabulary contract records
+        if: ${{ always() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: vocabulary-contract-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            artifacts/vocabulary-contract/receipt.json
+            artifacts/vocabulary-contract/output.txt
+          if-no-files-found: warn
+          retention-days: 14
   runtime:
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' && !inputs.vocabulary_contract_only
     runs-on: windows-2025
     timeout-minutes: 60
     env:
@@ -69,6 +133,9 @@ jobs:
         run: |
           if ($env:RELEASE_TAG -cnotmatch '^md3-v\d+$' -or $env:SOURCE_SHA -cnotmatch '^[0-9a-f]{40}$') {
             throw 'A release tag and full lowercase source SHA are required.'
+          }
+          if ($env:INTERACTION_SCOPE -cnotin @('menus', 'vocabulary', 'vocabulary-persistence', 'slice-controls', 'combined-print', 'combined-send', 'cancellation', 'minimum-resize', 'minimum-observe')) {
+            throw 'A supported installed interaction scope is required.'
           }
           if ($env:INTERACTION_SCOPE -eq 'minimum-resize' -and
               ($env:UI_SCALE -ne '1' -or $env:UI_VIEWPORT -ne 'measured-minimum')) {
