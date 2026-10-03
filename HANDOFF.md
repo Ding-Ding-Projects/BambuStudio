@@ -2,6 +2,19 @@
 
 ## Active interface extension, 2026-10-02
 
+Combined build `37085334409` failed on an incomplete `wxGLCanvas` type in
+`AutomationBridge.cpp`. The one-line defining-header repair is independently
+reviewed and preserved in `f8de85ce237b127adb7bc6d033696e6afbf6adbf`; build
+`37088514258` is the new compilation candidate. No matching package exists yet.
+Lifecycle-only run `37088232776` passed six of six cases in 11340 ms, including
+exact named-Job membership and five rejected access rights, without Settings input.
+Foreground scale run `37088408895` selected 125% and measured 120 Settings DPI,
+but its initial restoration observation failed after geometry moved. Separate
+recovery verified 100%/96 DPI. Its 150% and 200% jobs expanded the selector but
+found zero matching visible options. All final supervisor receipts verified
+termination and restoration; the overall run failed. Further bounded geometry
+and option-inventory work is required. No product DPI or pixel claim follows.
+
 Candidate `d25e7ddc821f4f5e279758d76449b19bcf087ae3` is preserved on
 `feature/ui-integration`; remote `main` still points to
 `ce883543177ef7df46fa5b798dcc5c7f3d2f8020`. Hosted display-scale run
@@ -37,7 +50,7 @@ checks, 68 preview checks, 55 source tests and eight slice lifecycle contracts
 in run `37056354867`. That run failed overall because the focused native targets
 did not match the static wxWidgets assertion configuration. Full build
 `37056348902` separately failed on an ambiguous `ImGuiWrapper::begin` call in
-`NotificationManager.cpp:3121`. Both source repairs are integrated on feature/ui-integration. Focused native linking passed; full package compilation remains in progress. These are compile
+`NotificationManager.cpp:3121`. Both source repairs are integrated on feature/ui-integration. Focused native linking passed; the later full-build failure and new repair are recorded above. These are compile
 and link failures, not installed-interface verdicts.
 
 The user extended this task to native transitions and practical asynchronous
@@ -2278,4 +2291,3 @@ diagnostics were a cascade.
   handoff refresh, `git ls-remote origin refs/heads/main` was verified at the same SHA.
 
 </details>
-
