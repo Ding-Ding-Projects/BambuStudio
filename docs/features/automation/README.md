@@ -49,3 +49,5 @@ Related: [Windows release supply chain](../releases/windows-release-supply-chain
   was withheld. The product initializer remains unidentified.
 
 - [Startup contract failure receipts](hosted-startup-contracts-20261003.json), exact retained outcomes before product launch; the later receipt identifies native process creation failure without establishing its command-value cause.
+
+- [Persistent startup desktop lifecycle](hosted-startup-lifecycle-37100483720.json), verified real absence and persistent create/list/close with contained termination; no product execution.

@@ -2,7 +2,7 @@
 
 ## Current continuation, 2026-10-03 UTC
 
-Preserved integration source is 8a275071732f58b181e2e298eec493754d9c899a.
+Preserved integration source is 7f63c689e4d3eb11de3232e11aa2fb6c21339d07.
 Main remains ce883543177ef7df46fa5b798dcc5c7f3d2f8020. No incomplete task source
 is eligible for completed-main cleanup. No archive or deletion occurred.
 
@@ -39,8 +39,12 @@ at ea1464255. Changed product-free run 37100209956 failed before Python started:
 CreateProcess stage 6 returned native code 123, exit sentinel -1, terminated true.
 The actual malformed executable value remains unobserved. Scalar executable repair
 9018b11e passed both source reviews and is integrated at f99dc5782. Changed
-product-free run 37100483720 is running at that source; it must pass before
-a changed startup diagnostic. Evidence requirements remain unchanged. The exact response
+product-free run 37100483720 passed at that source: nine Python, four desktop
+rejections, four invalid executable forms, actual absence and persistent lifecycle
+verified, both contained exits zero and termination verified. Two Python matches
+were observed on this runner; previous malformed arguments remain unobserved.
+Actual from-creation diagnostic 37100674583 is running at verifier d3359fbdf,
+targeting fixed md3-v190. Product startup remains unresolved. Evidence requirements remain unchanged. The exact response
 from this failed attempt was not retained and must not be reconstructed.
 See docs/features/automation/hosted-startup-creation-37098366121.json.
 
@@ -74,8 +78,13 @@ Hosted run 37100211528 is queued against that foundation. Additional reviewed
 control/tab motion 53c96f649 and notification/progress e83163284 are integrated
 at 8a2750717, alongside transient entrance 20280c50e. The combined pure policy
 count is now 26, pending hosted execution. Those outcomes do not prove real timers
-or rendered transitions. Menu/panel extensions and a genuine wx event-loop fixture
-are being implemented in separate owned lanes. Remaining slices are
+or rendered transitions. Reviewed native/canvas menu 4e3acd093 and selection-feedback 7317abf75 are
+integrated at 7f63c689e. Real wx event-loop fixture 0a5acd666 is integrated at
+a266dbbf5 and hosted run 37100814236 is queued for fourteen actual cases plus
+the required compiled Stop mutation. Preference acquisition is injected in this
+fixture; actual saved settings, OS lookup and product pixels remain outside it.
+Further reachable modal/child-list/regex-builder transitions and adversarial
+coverage/correctness reviews continue in separate owned lanes. Remaining slices are
 native state/tab indicators; panels/dialogs/tooltips; native and canvas menus;
 notifications/progress. Preserve immediate semantic state, cancellation and input,
 interruptibility, reduced motion and hidden-owner lifetime safety. No universal
