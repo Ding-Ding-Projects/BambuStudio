@@ -1,5 +1,36 @@
 # Bambu Studio handoff
 
+## Active repair update, 2026-10-03
+
+The allowance has been restored; the latest verified account reading is 99%
+remaining. The green combined result remains the priority and new features stay
+frozen. All product builds, tests, packaging, installation and UI execution remain
+on hosted Windows runners. No physical print or transfer is authorized.
+
+Combined run 37103897508 at 4409b3afd2051b6f3017d864e001c1145496db38 failed with
+C2662 at StateHandler.cpp:25: the const StateColor reference calls a non-const
+colorForStates(int). Independently reviewed repair e8c1614d150b62366d6c02f72c020ee0131c6e3b
+adds const only to that method's declaration and definition. Its algorithm is
+unchanged. The next combined build must compile this exact repaired candidate;
+pure motion contracts cannot replace production compilation evidence.
+
+Startup contracts 37103710012 passed at de733332b0cadce9508f29581fa09c3c3758afb7.
+Authenticated diagnostic 37103711674 from the same verifier transported evidence
+successfully but its driver exited 2. Four exact CRLF verifier hashes and the
+6381-byte restricted log hash independently match. Acknowledgement, unique target
+identity and debugger/target Job membership passed. The desktop lookup raised
+before its equality result was assigned; continuation was not written. It is an
+unavailable lookup, not an observed mismatch. The next bounded repair separates
+GetThreadDesktop and GetUserObjectInformationW observations without weakening
+ownership, deadlines or teardown. No product initializer cause is established.
+
+Evidence: docs/features/automation/hosted-startup-creation-37103711674.json.
+Installed interactions, temporal pixels and the complete measured display matrix
+remain pending. Main remains ce883543177ef7df46fa5b798dcc5c7f3d2f8020.
+No final green-main verdict, archive or deletion is claimed. Earlier entries below
+are historical observations and are superseded by this update where states differ.
+
+
 ## Latest preserved diagnostic candidate
 
 Source de733332b0cadce9508f29581fa09c3c3758afb7 includes independently reviewed

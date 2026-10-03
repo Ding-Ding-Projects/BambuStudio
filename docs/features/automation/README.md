@@ -63,3 +63,5 @@ Related: [Windows release supply chain](../releases/windows-release-supply-chain
 
 - [Temporal contracts, 18 cases](hosted-temporal-contracts-37102495898.json) and [combined 25 cases](hosted-temporal-contracts-37103221335.json): exact source-byte and result hashes verified; no product execution.
 - [Strict-symbol startup diagnostic](hosted-startup-creation-37102257995.json): symbols acknowledged, continuation unobserved, driver exit 2.
+
+- [Separated ownership-stage evidence](hosted-startup-creation-37103711674.json): target identity and membership pass; desktop lookup remains unavailable, with no continuation.
