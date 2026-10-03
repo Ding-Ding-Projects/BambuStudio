@@ -4,6 +4,7 @@ from __future__ import annotations
 import importlib.util
 import pathlib
 import unittest
+from startup_desktop_holder import absent_response
 
 
 MODULE = pathlib.Path(__file__).with_name("trace-packaged-startup.py")
@@ -14,6 +15,19 @@ SPEC.loader.exec_module(driver)
 
 
 class CdbAttachmentContract(unittest.TestCase):
+    def test_missing_desktop_is_a_semantic_zero_exit_response(self):
+        name = 'startup-loader-1-1'
+        response = {'ok': False, 'error': "OpenDesktopW('startup-loader-1-1') failed (GetLastError=2: missing)"}
+        self.assertTrue(absent_response(0, response, name))
+        self.assertFalse(absent_response(1, response, name))
+
+    def test_other_desktop_and_native_codes_never_prove_absence(self):
+        response = {'ok': False, 'error': "OpenDesktopW('startup-loader-1-1') failed (GetLastError=2: missing)"}
+        for bad in ({**response, 'ok': True}, {**response, 'ok': 0},
+                    {**response, 'error': response['error'].replace('=2:', '=20:')},
+                    {**response, 'error': response['error'].replace('=2:', '=5:')},
+                    {**response, 'error': response['error'].replace('1-1', '1-2')}):
+            self.assertFalse(absent_response(0, bad, 'startup-loader-1-1'))
     def test_creation_acknowledgement_needs_emitted_identity_and_flag(self):
         good = "TRACE_CREATION_INITIAL\nTRACE_TARGET 123 456\n  sls - Show loader snaps\n"
         self.assertEqual(driver.creation_acknowledgement(good), (123, 456))

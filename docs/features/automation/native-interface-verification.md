@@ -494,3 +494,36 @@ per-input capture and subsequent unchanged workflow identity remain required.
 
 These added regressions and native input changes are source-complete but have
 not been executed locally. Hosted results remain pending.
+
+### Startup diagnostic desktop lifetime
+
+Hosted trace run `37098366121` verified worker-tree termination but could not
+verify desktop closure, so it withheld all encrypted evidence. The pinned cheap
+CLI returns exit code zero when a tool normally returns an `ok:false` JSON
+response. Requiring a nonzero CLI exit for a missing desktop was incorrect.
+Separate one-shot calls also cannot retain a server-owned desktop handle.
+
+The creation diagnostic now uses a separate named, non-breakaway Job containing
+`startup_desktop_holder.py` and the pinned compatibility MCP stdio server. The
+official MCP client creates and closes the desktop in one persistent session.
+The holder requires an absent fresh name, exact server executable/command/start
+identity and actual Job membership. Exclusive, bounded records bind the random
+invocation nonce, desktop and verifier source. Only a release published after
+the worker Job reports zero remaining processes permits the same-session close.
+The holder must acknowledge `closed:true` and server exit, and its enclosing Job
+must also terminate successfully. An independent bounded cheap call must then
+report the exact missing desktop with native code 2 and `ok:false` at CLI exit 0.
+An unknown handshake, timeout, redirected record or incomplete teardown keeps
+evidence withheld. No visible desktop or input switch is introduced.
+
+The worker remains bounded at 120 seconds with its 90-second debugger interval.
+The auxiliary holder has a 165-second internal limit inside a 180-second Job;
+readiness is limited to 20 seconds and MCP calls to 15 seconds. Fixed public
+stage, process-termination, handle-close and absence-code fields localize a
+future failure without printing private responses or paths. The contract-only
+workflow now runs nine Python cases, four invalid-desktop checks and one real
+missing-name query through the exact pinned cheap CLI. A separate 60-second
+named Job runs the actual persistent create/list/close session, confirms that
+an independent CLI sees the held desktop, then requires absence after server
+shutdown. That explicit contract mode launches no worker or product. These
+changed checks and the repaired lifecycle remain hosted-unverified.

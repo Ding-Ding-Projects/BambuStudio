@@ -55,8 +55,8 @@ jobs:
           $source=git rev-parse HEAD
           if ($LASTEXITCODE -ne 0 -or $source -cne $env:GITHUB_SHA) { throw 'Source identity mismatch.' }
           New-Item -ItemType Directory -Force diagnostic/contract | Out-Null
-          $receipt=@{schema=1;source_commit=$source;run_id=$env:GITHUB_RUN_ID;status='failed';python_cases=7;desktop_rejections=0;product_started=$false;files=@{}}
-          foreach ($path in @('scripts/md3/trace-packaged-startup.py','scripts/md3/test-trace-packaged-startup.py','scripts/ci/HostedScaleProcess.cs')) {
+          $receipt=@{schema=1;source_commit=$source;run_id=$env:GITHUB_RUN_ID;status='failed';python_cases=9;desktop_rejections=0;actual_absence_verified=$false;product_started=$false;files=@{}}
+          foreach ($path in @('scripts/md3/trace-packaged-startup.py','scripts/md3/test-trace-packaged-startup.py','scripts/md3/startup_desktop_holder.py','scripts/ci/HostedScaleProcess.cs')) {
             $receipt.files[$path]=(Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash.ToLowerInvariant()
           }
           try {
@@ -71,6 +71,27 @@ jobs:
               if (-not $result.Terminated -or $result.ProcessStage -ne [HostedScaleProcess+Stage]::InvalidName) { throw 'Invalid desktop contract failed.' }
               $receipt.desktop_rejections++
             }
+            $toolRoot=Join-Path $env:RUNNER_TEMP 'startup-contract-lowlevel'
+            git clone --quiet --no-checkout https://github.com/Ding-Ding-Projects/lowlevel-computer-use-mcp.git $toolRoot
+            if ($LASTEXITCODE -ne 0) { throw 'Pinned tool fetch failed.' }
+            git -C $toolRoot checkout --quiet --detach e6e42f2066d539256d6480401d7cef867f2b8dfe
+            if ($LASTEXITCODE -ne 0 -or (git -C $toolRoot rev-parse HEAD) -cne 'e6e42f2066d539256d6480401d7cef867f2b8dfe') { throw 'Pinned tool identity mismatch.' }
+            python -m pip install --disable-pip-version-check --quiet --timeout 15 --retries 1 $toolRoot
+            if ($LASTEXITCODE -ne 0) { throw 'Pinned tool unavailable.' }
+            $env:LLCU_CHEAP=(Get-Command lowlevel-computer-use-cheap -CommandType Application).Path
+            $python=(Get-Command python -CommandType Application).Path
+            $actual=[HostedScaleProcess]::Run($python,[string[]]@('scripts/md3/startup_desktop_holder.py','--absence-contract'),15,$false)
+            if (-not $actual.Terminated -or $actual.Code -ne 0) { throw 'Actual pinned desktop absence contract failed.' }
+            $receipt.actual_absence_verified=$true
+            $nonce=[Guid]::NewGuid().ToString('N')
+            $holderRoot=Join-Path $env:RUNNER_TEMP ('startup-contract-' + $nonce)
+            New-Item -ItemType Directory -Path $holderRoot | Out-Null
+            $holderName='Local\BambuNativeScale-' + [Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(32)).ToLowerInvariant()
+            $holderArgs=[string[]]@('scripts/md3/startup_desktop_holder.py','--root',$holderRoot,'--nonce',$nonce,
+              '--desktop',"startup-loader-$($env:GITHUB_RUN_ID)-$($env:GITHUB_RUN_ATTEMPT)",'--source',$source,'--job-name',$holderName,'--lifecycle-contract')
+            $lifecycle=[HostedScaleProcess]::RunNamed($python,$holderArgs,60,$false,$holderName)
+            if (-not $lifecycle.Terminated -or $lifecycle.Code -ne 0) { throw 'Persistent desktop lifecycle contract failed.' }
+            $receipt.persistent_lifecycle_verified=$true
             $receipt.status='passed'
           } finally {
             $receipt | ConvertTo-Json -Depth 5 | Set-Content diagnostic/contract/receipt.json -Encoding utf8
