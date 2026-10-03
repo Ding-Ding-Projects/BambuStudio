@@ -2,6 +2,8 @@
 
 The layer slider add and edit menus, each filament submenu, SVG file actions,
 orientation method picker, ordinary canvas combo boxes, and filtered canvas combo boxes have local search.
+The reachable Assembly Export popup uses the same header for its three export
+formats and export-parameter action.
 The search header provides literal matching by default, an explicit regular
 expression toggle, the full anchored regex builder, and clear search. Narrow
 popups place these controls on a second row and cap popup size to the viewport.
@@ -52,3 +54,29 @@ No local product build, test, runtime or screenshot was executed.
   popup bounds, long labels, theme consistency and platform accessibility.
 
 These are pending verification requirements, not completed runtime evidence.
+
+## Assembly Export popup
+
+The Export button becomes enabled when the assembly contains at least one real
+Normal or FinalAssembly step. Its popup searches the four original localized
+labels in their original order: Export PDF, Export Markdown, Export MP4 and Set
+export file parameters. The visibility mask never renumbers these actions.
+PDF, Markdown and MP4 retain their original export callbacks; the final row
+retains the export-settings dialog. The Markdown explanation remains available
+on pointer hover or keyboard focus. Selecting a row still closes the popup.
+
+Search ownership includes the AssemblyStepsUtils instance and popup identity.
+The shared header supplies literal/regex matching, builder, clear and no-match
+status. Rows participate in keyboard navigation. Popup height follows the
+filtered content and search header, while the actual display bounds constrain
+its size and permit scrolling when content cannot fit. The existing disabled
+Export state and its guidance are unchanged.
+
+Required hosted fixture: load a real model and create at least one actual
+assembly step, then return to the overall assembly view where Export is enabled.
+Verify each row's retained identity, literal and regex filtering, no matches,
+clear, builder return, Down/Up navigation, Enter and Escape. Verify the empty
+assembly's disabled button separately. Capture normal and minimum dimensions,
+the supported languages/themes and measured display scales. Do not report an
+export as completed from merely selecting or filtering a row. No local build,
+test or UI execution was performed; compilation and this fixture remain pending.

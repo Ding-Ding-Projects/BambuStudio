@@ -5978,24 +5978,25 @@ void AssemblyStepsUtils::render_export_menu_popup(const char* popup_id, float sc
     const std::string labels[] = { _u8L("Export PDF"), _u8L("Export Markdown"), _u8L("Export MP4") };
     const ExportType types[] = { ExportType::PDF, ExportType::MarkDown, ExportType::MP4 };
     const std::string settings_label = _u8L("Set export file parameters");
+    const std::vector<std::string> searchable_labels{labels[0], labels[1], labels[2], settings_label};
     const std::string markdown_tooltip = _u8L("After exporting the Markdown document, you can edit it in third-party software such as Zettlr and then export it to PDF.");
     const float row_height = 28.0f * sc;
     const float row_spacing = 2.0f * sc;
     const float win_padding = 12.0f * sc;
     const float row_pad_x = 8.0f * sc;
     const float text_right_margin = 8.0f * sc;
-    // Export formats + "Set export file parameters" after Export MP4.
-    const int total_rows = kExportItemCount + 1;
-
     float max_text_width = 0.0f;
     for (int i = 0; i < kExportItemCount; ++i)
         max_text_width = std::max(max_text_width, ImGui::CalcTextSize(labels[i].c_str()).x);
     max_text_width = std::max(max_text_width, ImGui::CalcTextSize(settings_label.c_str()).x);
 
-    const float menu_width = std::max(128.0f * sc,
-        2.0f * win_padding + row_pad_x + max_text_width + text_right_margin);
-    const float menu_height = win_padding * 2.0f + row_height * total_rows + row_spacing * (total_rows - 1);
-    ImGui::SetNextWindowSize(ImVec2(menu_width, menu_height), ImGuiCond_Always);
+    const float available_width = std::max(1.0f, ImGui::GetIO().DisplaySize.x - 16.0f);
+    const float menu_width = std::min(available_width, std::max(ImGui::GetFontSize() * 19.0f,
+        2.0f * win_padding + row_pad_x + max_text_width + text_right_margin));
+    constrain_canvas_menu();
+    // Height follows the search controls, status and filtered rows. The display
+    // constraint enables scrolling instead of clipping a fixed four-row box.
+    ImGui::SetNextWindowSize(ImVec2(menu_width, 0.0f), ImGuiCond_Always);
 
     ImGui::PushStyleColor(ImGuiCol_PopupBg, md3_vec4(MD3::Role::SurfaceContainer, m_is_dark));
     ImGui::PushStyleColor(ImGuiCol_Border, md3_vec4(MD3::Role::OutlineVariant, m_is_dark));
@@ -6005,24 +6006,32 @@ void AssemblyStepsUtils::render_export_menu_popup(const char* popup_id, float sc
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(win_padding, win_padding));
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0f, 0.0f));
 
-    if (ImGui::BeginPopup(popup_id, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoMove)) {
+    if (ImGui::BeginPopup(popup_id, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize)) {
         if (ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem | ImGuiHoveredFlags_ChildWindows)) {
             ImGuiIO &io = ImGui::GetIO();
             io.WantCaptureMouse = true;
         }
 
+        ImGui::PushID(this);
+        ImGui::PushID(popup_id);
+        ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4.0f * sc, 4.0f * sc));
+        const auto visible = m_imgui->menu_search("assembly_export", searchable_labels);
+        ImGui::PopStyleVar();
         ImDrawList* draw_list = ImGui::GetWindowDrawList();
         auto draw_menu_row = [&](int id, const std::string &label, const std::function<void()> &on_click,
                                  const std::string *hover_tip = nullptr) {
             ImGui::PushID(id);
             ImVec2 row_pos = ImGui::GetCursorScreenPos();
             const float row_content_w = ImGui::GetContentRegionAvail().x;
-            if (ImGui::InvisibleButton("##assembly_export_item", ImVec2(row_content_w, row_height))) {
+            // Selectable participates in keyboard navigation while retaining
+            // the existing custom row painting and stable action identity.
+            if (ImGui::Selectable("##assembly_export_item", false, ImGuiSelectableFlags_DontClosePopups,
+                                  ImVec2(row_content_w, row_height))) {
                 on_click();
                 ImGui::CloseCurrentPopup();
             }
 
-            const bool hovered = ImGui::IsItemHovered();
+            const bool hovered = ImGui::IsItemHovered() || ImGui::IsItemFocused();
             if (hovered) {
                 const ImU32 bg = md3_u32(MD3::Role::SurfaceContainerHigh, m_is_dark);
                 draw_list->AddRectFilled(row_pos, ImVec2(row_pos.x + row_content_w, row_pos.y + row_height), bg, 4.0f * sc);
@@ -6037,11 +6046,15 @@ void AssemblyStepsUtils::render_export_menu_popup(const char* popup_id, float sc
         };
 
         for (int i = 0; i < kExportItemCount; ++i) {
+            if (!visible[i]) continue;
             const std::string *tip = (types[i] == ExportType::MarkDown) ? &markdown_tooltip : nullptr;
             draw_menu_row(i, labels[i], [this, t = types[i]]() { on_export(t); }, tip);
             ImGui::Dummy(ImVec2(0.0f, row_spacing));
         }
-        draw_menu_row(kExportItemCount, settings_label, [this]() { show_pdf_export_settings_dialog(); });
+        if (visible[kExportItemCount])
+            draw_menu_row(kExportItemCount, settings_label, [this]() { show_pdf_export_settings_dialog(); });
+        ImGui::PopID();
+        ImGui::PopID();
         ImGui::EndPopup();
     }
 
