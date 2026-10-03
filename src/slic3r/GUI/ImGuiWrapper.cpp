@@ -1,4 +1,5 @@
 #include "ImGuiWrapper.hpp"
+#include "Widgets/MD3Motion.hpp"
 
 #include <cstdio>
 #include <cstring>
@@ -928,6 +929,58 @@ void ImGuiWrapper::render()
         mac_ime_sync_active(view, ImGui::GetIO().WantTextInput);
 #endif
     ImGui::Render();
+#if ENABLE_ENHANCED_IMGUI_SLIDER_FLOAT
+    // Each wrapper/context owns its popup timeline. PopupId distinguishes the
+    // recycled internal window used by different menus at the same depth.
+    auto &context = *ImGui::GetCurrentContext();
+    if (m_popup_motion_context != &context) {
+        m_popup_motion.clear();
+        m_popup_motion_context = &context;
+    }
+    struct VertexRestore {
+        std::vector<std::pair<ImDrawVert *, ImU32>> colors;
+        ~VertexRestore() { for (const auto &entry : colors) entry.first->col = entry.second; }
+    } restore;
+    const bool reduced = MD3::Motion::reduced();
+    for (auto *window : context.Windows) {
+        if (!window->Active || window->Hidden || !(window->Flags & ImGuiWindowFlags_Popup) ||
+            (window->Flags & ImGuiWindowFlags_Modal)) continue;
+        const auto key = std::make_pair(window->ID, window->PopupId);
+        auto found = m_popup_motion.find(key);
+        if (found == m_popup_motion.end()) {
+            // An unusual popup flood remains fully visible without retaining
+            // unbounded state or creating extra animation work.
+            if (m_popup_motion.size() >= 128) continue;
+            found = m_popup_motion.emplace(key, PopupMotion{context.Time, context.FrameCount}).first;
+        } else if (window->Appearing && found->second.frame != context.FrameCount) {
+            found->second.started = context.Time;
+        }
+        auto &motion = found->second;
+        motion.frame = context.FrameCount;
+        if (reduced) { motion.started = context.Time - 1.0; continue; }
+        const double elapsed = context.Time - motion.started;
+        if (elapsed >= 0.1) continue;
+        if (window->DrawList->VtxBuffer.Size < 0 ||
+            size_t(window->DrawList->VtxBuffer.Size) > 262144 - restore.colors.size()) {
+            motion.started = context.Time - 1.0;
+            continue;
+        }
+        // Modify only paint alpha, never geometry, input or popup lifetime.
+        // Restore all original colors when this render call leaves its scope.
+        const double opacity = 0.6 + 0.4 * MD3::Motion::easeStandard(std::clamp(elapsed / 0.1, 0.0, 1.0));
+        for (auto &vertex : window->DrawList->VtxBuffer) {
+            restore.colors.emplace_back(&vertex, vertex.col);
+            const ImU32 alpha = (vertex.col >> IM_COL32_A_SHIFT) & 255;
+            vertex.col = (vertex.col & ~IM_COL32_A_MASK) |
+                (ImU32(std::lround(alpha * opacity)) << IM_COL32_A_SHIFT);
+        }
+        set_requires_extra_frame();
+    }
+    for (auto it = m_popup_motion.begin(); it != m_popup_motion.end();) {
+        if (it->second.frame != context.FrameCount) it = m_popup_motion.erase(it);
+        else ++it;
+    }
+#endif
     render_draw_data(ImGui::GetDrawData());
     m_new_frame_open = false;
 }
