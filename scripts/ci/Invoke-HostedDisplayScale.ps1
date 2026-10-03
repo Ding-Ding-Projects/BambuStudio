@@ -125,6 +125,8 @@ foreach ($process in (@($settings[0]) + $frames)) { $processStarts[$process.Id] 
 $walker = [Windows.Automation.TreeWalker]::ControlViewWalker
 $desktop = [Windows.Automation.AutomationElement]::RootElement
 $selectorId = 'SystemSettings_Display_Scaling_ItemSizeOverride_ComboBox'
+$script:Stage = 'read_original'
+$script:Observation = @{}
 
 function Read-Controls {
     $live = Get-Process -Id $settingsId
@@ -183,6 +185,7 @@ function Desktop-Name([uint32] $Thread) {
     return $buffer.ToString()
 }
 function Click-Control($Entry) {
+    $script:Stage = 'validate_input'
     if (Test-UncertainChildren) { throw 'Input blocked by unverified child termination.' }
     $started = [DateTime]::UtcNow
     $current = $Entry.element.Current
@@ -218,19 +221,40 @@ function Click-Control($Entry) {
         -not $fresh.BoundingRectangle.Equals($rect) -or ([DateTime]::UtcNow - $started).TotalMilliseconds -gt 500) {
         throw 'Input observation expired.'
     }
+    $script:Stage = 'cheap_spawn'
     $result = Invoke-BoundedProcess $CheapExecutable @('mouse_click','--hwnd',"$($hwnd.ToInt64())",
         '--x',"$($point.X)",'--y',"$($point.Y)",'--button','left') 10 $true
+    $script:Stage = 'cheap_result'
+    $script:Observation.cheap_terminated = [bool]$result.terminated
+    $script:Observation.cheap_exit = [int]$result.code
     if (-not $result.terminated -or $result.code -ne 0) { throw 'Cheap input unavailable.' }
     $reply = $result.stdout | ConvertFrom-Json
+    $script:Observation.cheap_ok = $reply.ok -eq $true
     if ($reply.ok -ne $true) { throw 'Cheap input rejected.' }
 }
 function Set-Scale([int] $Percent) {
     if (Test-UncertainChildren) { throw 'Scale change blocked by unverified child termination.' }
+    $script:Stage = 'resolve_combo'
     $rows = @(Read-Controls)
     $state = Read-Scale $rows
     if ($state.percent -ne $Percent) {
+        $script:Observation.input_target = 'scale_selector'
         Click-Control $state.combo
-        Start-Sleep -Milliseconds 250
+        $script:Stage = 'observe_expanded'
+        $expanded = $false
+        $expandDeadline = [DateTime]::UtcNow.AddSeconds(3)
+        do {
+            Start-Sleep -Milliseconds 150
+            $state = Read-Scale @(Read-Controls)
+            # Observation only. Input remains the HWND-targeted cheap route.
+            $expansion = $state.combo.element.GetCurrentPattern([Windows.Automation.ExpandCollapsePattern]::Pattern)
+            $expansionState = $expansion.Current.ExpandCollapseState
+            $script:Observation.expansion_state = [int]$expansionState
+            $expanded = $expansionState -eq [Windows.Automation.ExpandCollapseState]::Expanded
+        } while (-not $expanded -and [DateTime]::UtcNow -lt $expandDeadline)
+        $script:Observation.expansion_observed = $expanded
+        if (-not $expanded) { throw 'Scale selector expansion was not observed.' }
+        $script:Stage = 'match_option'
         $rows = @(Read-Controls)
         $state = Read-Scale $rows
         $options = @($rows | Where-Object {
@@ -238,14 +262,19 @@ function Set-Scale([int] $Percent) {
             $_.element.Current.Name -cmatch ('^' + $Percent + '%( \(Recommended\))?$') -and
             $_.element.Current.IsEnabled -and -not $_.element.Current.IsOffscreen
         })
+        $script:Observation.matching_option_count = $options.Count
         if ($options.Count -ne 1) { throw 'Unique predefined scale option unavailable.' }
+        $script:Stage = 'validate_container'
         # Pattern access is read-only, never Select, Invoke, Expand or SetValue.
         $itemPattern = $options[0].element.GetCurrentPattern([Windows.Automation.SelectionItemPattern]::Pattern)
         if (-not $itemPattern.Current.SelectionContainer.Equals($state.combo.element)) {
             throw 'Scale option belongs to another control.'
         }
+        $script:Stage = 'click_option'
+        $script:Observation.input_target = 'scale_option'
         Click-Control $options[0]
     }
+    $script:Stage = 'converge_dpi'
     $deadline = [DateTime]::UtcNow.AddSeconds(15)
     do {
         Start-Sleep -Milliseconds 300
@@ -257,7 +286,8 @@ function Set-Scale([int] $Percent) {
 
 $receipt = @{schema=1; requested_scale=$ScalePercent; status='unavailable'; restored=$false
     input_method='cheap_mouse_click'; uia='read_only'; action='unsupported_standalone_only'
-    target_application_dpi='requires_independent_runtime_measurement'}
+    target_application_dpi='requires_independent_runtime_measurement'
+    failure_stage=$null; restoration_failure_stage=$null}
 $original = $null
 try {
     if ($Mode -eq 'restore') {
@@ -280,15 +310,24 @@ try {
     }
 } catch {
     $receipt.status = 'unavailable'
+    $receipt.failure_stage = $script:Stage
 } finally {
+    # Copy before recovery, so successful restoration cannot overwrite the
+    # failed selection's observations. Only fixed keys and scalar values leave.
+    $receipt.selection_observations = $script:Observation.Clone()
+    $script:Observation = @{}
     if ($null -ne $original -and -not (Test-UncertainChildren)) {
         try {
             $restored = Set-Scale ([int]$original.scale)
             $receipt.restored = $restored.percent -eq $original.scale -and $restored.dpi -eq $original.dpi
             $receipt.original_scale = $original.scale
             $receipt.restored_settings_dpi = $restored.dpi
-        } catch { $receipt.restored = $false }
+        } catch {
+            $receipt.restored = $false
+            $receipt.restoration_failure_stage = $script:Stage
+        }
     }
+    $receipt.restoration_observations = $script:Observation.Clone()
     $receipt.child_termination_uncertain = Test-UncertainChildren
     $receipt.disposal_required = $receipt.child_termination_uncertain -or -not $receipt.restored
     $receipt | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $output ($Mode + '.json')) -Encoding utf8
