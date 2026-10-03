@@ -122,6 +122,35 @@ def creation_acknowledgement(text: str):
     return tuple(map(int, targets[0]))
 
 
+def creation_ownership_observation(observation, target, debugger_pid, inventory, member,
+                                   desktop_name, expected_desktop):
+    """Preserve short-circuit ownership checks, recording no native identities."""
+    observation["stage"] = "inventory_query"
+    rows = inventory()
+    observation["inventory_count"] = len(rows)
+    observation["stage"] = "inventory_cardinality"
+    if len(rows) != 1:
+        return False
+    observation["stage"] = "target_identity"
+    observation["target_pid_matches"] = rows[0]["pid"] == target[0]
+    if not observation["target_pid_matches"]:
+        return False
+    observation["stage"] = "debugger_membership"
+    observation["debugger_job_member"] = bool(member(debugger_pid))
+    if not observation["debugger_job_member"]:
+        return False
+    observation["stage"] = "target_membership"
+    observation["target_job_member"] = bool(member(rows[0]["pid"]))
+    if not observation["target_job_member"]:
+        return False
+    observation["stage"] = "target_desktop"
+    observation["target_desktop_matches"] = desktop_name(target[1]) == expected_desktop
+    if not observation["target_desktop_matches"]:
+        return False
+    observation["stage"] = "ownership_verified"
+    return True
+
+
 def creation_trace(args) -> int:
     """Fixed instrumented startup, supervised externally by a nonbreakaway job."""
     from ctypes import wintypes
@@ -187,6 +216,11 @@ def creation_trace(args) -> int:
         "symbol_route": "fixed_microsoft_server_fresh_local_cache",
         "symbol_identity": "debugger_enforced_exact_matching_not_independent_pdb_hash",
         "status": "unavailable", "initial_marker_observed": False, "job_membership_verified": False}
+    observation = {"stage": "worker_containment", "acknowledgement_observed": False,
+        "observed_output_bytes": 0, "inventory_count": None, "target_pid_matches": None,
+        "debugger_job_member": None, "target_job_member": None, "target_desktop_matches": None,
+        "continuation_written": False}
+    report["creation_observation"] = observation
     try:
         if not job or not member(os.getpid()) or desktop_name() != args.desktop:
             raise ValueError("Worker containment unavailable")
@@ -195,6 +229,7 @@ def creation_trace(args) -> int:
         launched = datetime.now(timezone.utc)
         arguments = creation_arguments(str(cdb), str(exe), str(profile), str(commands), str(symbols))
         command_line = subprocess.list2cmdline(arguments[:-3]) + f' "{exe}" --datadir "{profile}"'
+        observation["stage"] = "debugger_launch"
         debugger = subprocess.Popen(command_line,
             stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
             cwd=exe.parent, env=env, creationflags=subprocess.CREATE_NO_WINDOW)
@@ -214,28 +249,37 @@ def creation_trace(args) -> int:
         reader = threading.Thread(target=drain, daemon=True)
         reader.start()
         deadline = time.monotonic() + 90
+        observation["stage"] = "await_acknowledgement"
         while time.monotonic() < deadline and debugger.poll() is None and not overflow.is_set():
             with lock:
+                observation["observed_output_bytes"] = len(data)
                 text = bytes(data).decode("utf-8", errors="replace")
             target = creation_acknowledgement(text)
             if not report["initial_marker_observed"] and target:
-                rows = owned_process_inventory(process_snapshot(), exe=str(exe), datadir=str(profile),
-                    launched_at=launched, launch_pid=debugger.pid)
-                if (len(rows) != 1 or rows[0]["pid"] != target[0] or not member(debugger.pid)
-                        or not member(rows[0]["pid"]) or desktop_name(target[1]) != args.desktop):
+                observation["acknowledgement_observed"] = True
+                if not creation_ownership_observation(observation, target, debugger.pid,
+                        lambda: owned_process_inventory(process_snapshot(), exe=str(exe), datadir=str(profile),
+                            launched_at=launched, launch_pid=debugger.pid), member, desktop_name, args.desktop):
                     raise ValueError("Debug target ownership unavailable")
                 report["initial_marker_observed"] = True
                 report["job_membership_verified"] = True
+                observation["stage"] = "continuation_write"
                 debugger.stdin.write(b"g\n")
+                observation["stage"] = "continuation_flush"
                 debugger.stdin.flush()
+                observation["continuation_written"] = True
+                observation["stage"] = "await_debugger_exit"
             time.sleep(0.1)
         if debugger.poll() is None:
+            observation["stage"] = "output_limit" if overflow.is_set() else "debugger_deadline"
             raise ValueError("Debugger deadline or output limit")
+        observation["stage"] = "output_drain"
         reader.join(timeout=3)
         if reader.is_alive() or overflow.is_set():
             raise ValueError("Debugger output incomplete")
         report["debugger_exit_code"] = debugger.returncode
         report["status"] = "creation_trace_collected" if report["initial_marker_observed"] else "initial_observation_unavailable"
+        observation["stage"] = "debugger_exited"
     except Exception:
         report["status"] = "unavailable"
     finally:

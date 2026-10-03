@@ -37,6 +37,37 @@ class CdbAttachmentContract(unittest.TestCase):
                     good.replace("123", "0"), good + "TRACE_TARGET 123 456\n",
                     good + "TRACE_CREATION_INITIAL\n"):
             self.assertIsNone(driver.creation_acknowledgement(bad))
+        # Exercise the production short-circuit chain without native processes.
+        for rows, members, desktop, expected_stage, accepted in (
+                ([], [True, True], "owned", "inventory_cardinality", False),
+                ([{"pid": 123}, {"pid": 123}], [True, True], "owned", "inventory_cardinality", False),
+                ([{"pid": 124}], [True, True], "owned", "target_identity", False),
+                ([{"pid": 123}], [False, True], "owned", "debugger_membership", False),
+                ([{"pid": 123}], [True, False], "owned", "target_membership", False),
+                ([{"pid": 123}], [True, True], "other", "target_desktop", False),
+                ([{"pid": 123}], [True, True], "owned", "ownership_verified", True)):
+            observation, calls = {}, []
+            values = iter(members)
+            def member(pid):
+                calls.append(pid)
+                return next(values)
+            actual = driver.creation_ownership_observation(observation, (123, 456), 10,
+                lambda: rows, member, lambda thread: desktop, "owned")
+            self.assertEqual(actual, accepted)
+            self.assertEqual(observation["stage"], expected_stage)
+            self.assertEqual(observation["inventory_count"], len(rows))
+            expected_calls = [] if expected_stage in ("inventory_cardinality", "target_identity") else [10]
+            if expected_stage in ("target_membership", "target_desktop", "ownership_verified"):
+                expected_calls.append(123)
+            self.assertEqual(calls, expected_calls)
+            self.assertTrue(all(type(v) in (str, int, bool) for v in observation.values()))
+        observation = {}
+        def unavailable_inventory():
+            raise RuntimeError("private detail must not enter observations")
+        with self.assertRaises(RuntimeError):
+            driver.creation_ownership_observation(observation, (123, 456), 10,
+                unavailable_inventory, lambda pid: True, lambda thread: "owned", "owned")
+        self.assertEqual(observation, {"stage": "inventory_query"})
 
     def test_creation_route_never_attaches_or_skips_initial_break(self):
         cache = r"C:\owned cache\symbols"

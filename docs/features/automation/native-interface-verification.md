@@ -267,6 +267,29 @@ The supported search path and matching options are documented in Microsoft's
 and [symbol options](https://learn.microsoft.com/en-us/windows-hardware/drivers/debugger/symbol-options)
 references. No hardcoded PEB offset or ignored symbol mismatch is used.
 
+Run `37102257995`, verified by `e50f5dac1074055e02be230bfdc5dd98d829e5e6`,
+loaded matching `ntdll` symbols and emitted the loader-flag readback, but did not
+record successful ownership acknowledgement or continuation. Its final retained
+log cannot establish when those bytes became available during the deadline, and
+the aggregate receipt cannot identify which ownership condition was unavailable.
+It does not identify a failing DLL initializer.
+
+The diagnostic therefore records fixed stages around acknowledgement, inventory,
+target identity, debugger and target Job membership, target desktop, continuation
+write/flush and output drain. Nullable booleans distinguish unattempted checks
+from negative observations; counts contain only observed buffer bytes and matched
+inventory size. No PID, desktop name, profile, command line or exception text is
+added to these observations. `continuation_written` becomes true only after the
+existing write and flush return. It is not evidence that the target executed an
+initializer. The original short-circuit predicates, strict-symbol commands and
+90/120-second deadlines remain unchanged.
+
+The existing acknowledgement contract case additionally invokes the production
+ownership chain for empty/ambiguous inventory, wrong target, each failed Job
+membership, wrong desktop and complete success. It verifies short-circuit calls
+and an inventory exception's fixed stage. These new assertions remain pending
+hosted execution; the existing nine-case inventory is unchanged.
+
 Debugger output is drained with a 1-MiB retained-byte cap; overflow stops the
 diagnostic. Observation lasts at most 90 seconds inside a 120-second Job
 supervisor. Only proven whole-tree termination and desktop closure permit the
