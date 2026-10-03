@@ -27,6 +27,10 @@ on:
         description: Encrypt bounded owned Settings captures for standalone diagnosis
         type: boolean
         default: false
+      refresh_settings_page:
+        description: Diagnose offered scales after an observed Colors and Display round trip
+        type: boolean
+        default: false
 permissions:
   contents: read
 jobs:
@@ -83,7 +87,17 @@ jobs:
           "LLCU_CHEAP=$venv/Scripts/lowlevel-computer-use-cheap.exe" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
       - name: Open supported display settings
         shell: pwsh
+        env:
+          REFRESH_SETTINGS_PAGE: ${{ inputs.refresh_settings_page }}
+          PROVISION_RESOLUTION: ${{ inputs.provision_resolution }}
+          DIAGNOSTIC_EVIDENCE: ${{ inputs.diagnostic_evidence }}
+          SCALE_INPUT_ROUTE: ${{ inputs.input_route }}
         run: |
+          if ($env:REFRESH_SETTINGS_PAGE -eq 'true' -and
+              ($env:PROVISION_RESOLUTION -ne 'true' -or $env:DIAGNOSTIC_EVIDENCE -ne 'true' -or
+               $env:SCALE_INPUT_ROUTE -cne 'hosted-foreground')) {
+            throw 'Page refresh requires foreground resolution diagnostics.'
+          }
           Start-Process -FilePath 'ms-settings:display' -WindowStyle Hidden -ErrorAction Stop
           Start-Sleep -Seconds 5
       - name: Select observe and restore a predefined scale
@@ -93,6 +107,7 @@ jobs:
           SCALE_INPUT_ROUTE: ${{ inputs.input_route }}
           PROVISION_RESOLUTION: ${{ inputs.provision_resolution }}
           DIAGNOSTIC_EVIDENCE: ${{ inputs.diagnostic_evidence }}
+          REFRESH_SETTINGS_PAGE: ${{ inputs.refresh_settings_page }}
         run: |
           $scaleArguments = @{
             ScalePercent = [int]$env:SCALE_PERCENT
@@ -102,6 +117,7 @@ jobs:
           }
           if ($env:PROVISION_RESOLUTION -eq 'true') { $scaleArguments.ProvisionResolution = $true }
           if ($env:DIAGNOSTIC_EVIDENCE -eq 'true') { $scaleArguments.DiagnosticEvidence = $true }
+          if ($env:REFRESH_SETTINGS_PAGE -eq 'true') { $scaleArguments.RefreshSettingsPage = $true }
           & scripts/ci/Invoke-HostedDisplayScale.ps1 @scaleArguments
       - name: Retain bounded receipts and encrypted diagnostics
         if: always()
