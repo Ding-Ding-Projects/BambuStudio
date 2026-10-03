@@ -124,7 +124,7 @@ controlled hosted four-frame trial, exact process/desktop teardown evidence,
 encrypted frame review, or the separate composition capability proof. No local
 execution was performed when adding this helper.
 
-The dedicated manual `motion-temporal-contract.yml` workflow runs only these
+The dedicated `motion-temporal-contract.yml` workflow runs only these
 18 product-free cases on a hosted Windows runner with pinned checkout/setup
 actions and Python 3.12. Its required `source_commit` must equal both the checked
 out revision and the workflow's `GITHUB_SHA`; dispatching a different revision
@@ -138,3 +138,11 @@ and the process exit code. Skips and unexpected inventory changes cannot pass.
 Exceptions and traceback bodies are not copied into the result files. A passing
 contract run establishes only the exercised predicates and asynchronous task
 lifetime, never actual MCP shutdown, achieved capture cadence or rendered motion.
+
+Before this workflow exists on the default branch, GitHub's manual dispatch API
+can return HTTP 404. Activation therefore also supports pushes to
+`feature/ui-integration`, restricted to the workflow, helper and contract file
+paths. That event derives the expected revision from `github.sha`; manual events
+still require the explicit input to equal the checked-out workflow revision.
+An automatic activation run must not be followed by a duplicate manual run of
+the unchanged contracts. A dispatch 404 is not a contract execution result.

@@ -1,6 +1,12 @@
 name: Hosted temporal observation contracts
 
 on:
+  push:
+    branches: [feature/ui-integration]
+    paths:
+      - '.github/workflows/motion-temporal-contract.yml'
+      - 'scripts/md3/motion_temporal.py'
+      - 'scripts/md3/test_motion_temporal.py'
   workflow_dispatch:
     inputs:
       source_commit:
@@ -26,7 +32,7 @@ jobs:
       - name: Exercise product-free temporal contracts
         shell: pwsh
         env:
-          EXPECTED_SOURCE_COMMIT: ${{ inputs.source_commit }}
+          EXPECTED_SOURCE_COMMIT: ${{ github.event_name == 'push' && github.sha || inputs.source_commit }}
         run: |
           $ErrorActionPreference = 'Stop'
           if ($env:RUNNER_ENVIRONMENT -cne 'github-hosted' -or $env:RUNNER_OS -cne 'Windows') { throw 'Hosted Windows is required.' }
