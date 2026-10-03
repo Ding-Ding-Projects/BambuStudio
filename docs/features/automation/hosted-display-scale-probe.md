@@ -438,6 +438,49 @@ original display observations. No forced focus, synthetic resize message, or
 simulated DPI is introduced. Combined runtime and genuine capture evidence remain
 pending hosted verification; no local execution was performed.
 
+### Encrypted higher-scale capability diagnostics
+
+`Invoke-HostedDisplayScale.ps1 -DiagnosticEvidence` is an explicit opt-in for
+standalone `hosted-foreground` discovery. It is rejected with `NativeRuntime`
+and is not passed to recovery. It does not enable another input route, focus
+activation, scrolling, registry changes, or unsupported scale selection.
+
+At most two observations are attempted: `before_selector`, before the existing
+input checks, and `expanded_selector`, after expansion is actually observed but
+before requested-option matching. Each observation refreshes the exact Settings
+process/start identities, Default desktop and owned root. It records foreground
+ownership without forcing it. Bounded read-only UIA data includes control bounds,
+enabled/offscreen state, supported patterns and available ScrollPattern geometry.
+The subsequent input path resolves fresh geometry after capture and still applies
+all existing freshness, foreground, containment and restoration requirements.
+
+The existing cheap `screenshot --hwnd` route captures only that owned root. Native
+ownership and frame bounds must match immediately before and after capture; the
+bounded PNG must report successful rendering and match the frame dimensions.
+Images remain pending independent pixel review, including whether an expanded
+popup was rendered inside that root. Missing options are never inferred from an
+unreviewed image. No whole-desktop or unrelated-window capture is performed.
+
+Only encrypted evidence is saved inside the output directory. A temporary PNG
+outside it is read only after verified child termination and then removed; an
+uncertain child leaves the file private on the disposable machine and blocks
+further input/recovery through the existing child marker. PNG input is capped at
+8 MiB, the JSON envelope plaintext at 16 MiB, controls at 1,000, and labels at
+2,048 characters. Labels, identities, rectangles and image bytes exist only in
+the encrypted payload. Diagnostics never print native responses or exceptions.
+
+Upload only `before_selector.aesgcm`, `before_selector.envelope.json`,
+`expanded_selector.aesgcm`, `expanded_selector.envelope.json`, plus the existing
+fixed run/supervisor/restoration receipts. Missing files mean unavailable evidence.
+The envelopes use `hosted-scale-diagnostic-v1`, fresh AES-256-GCM keys/nonces,
+RSA-OAEP-SHA256 and the existing `hosted-automation-public-v1.pem` recipient.
+`aad_base64` supplies the exact authenticated bytes. The authenticated binding
+contains the actual source commit, run, fixed phase, capture UTC time, dimensions,
+PNG hash, cheap executable hash and both helper source hashes. The recipient
+fingerprint identifies existing custody without putting private keys on the host.
+This is source preparation only; hosted capture, decryption and pixel review are
+still required before drawing conclusions about higher-scale availability.
+
 Two additional hosted lifecycle cases load the exact production tuple and
 input-recovery functions from the parsed source, without executing the display
 supervisor. They reject unsupported combined tuples, absent or mismatched
