@@ -189,8 +189,23 @@ The driver makes at most three genuine requests, alternating Slice and Print
 and Slice and Send. Before each
 cancel click it re-reads the opt-in observation, requires a live matching native
 generation and pending action, then uses the real current rendered hit area.
-Afterward it waits at most 90 seconds for ownership release, requires the
-cancelled outcome and empty continuation, and retains the observations. Each
+That exact fresh input observation anchors native generation `G`, completion
+sequence `S`, request identity, model revision, current/processing plate and
+continuation sequence. Input requires `cancellationRequested=false`; counters
+must be unsigned 64-bit integer values, not booleans or floating-point values.
+The current `request_stop()` contract advances the cancellation epoch to `C=G+1`,
+so post-cancel observations must use `C`, retain request/model/plate identity,
+report `cancellationRequested=true`, clear the pending action and leave the
+continuation sequence unchanged. A generation at the maximum unsigned value
+cannot establish this next-epoch proof and is rejected before input.
+
+Afterward the driver waits at most 90 seconds for both ownership release and a
+new actual receiver entry with `sequence>S`, `accepted=true`, `rejection=none`,
+`status=cancelled` and `eventGeneration=currentGeneration=C`. The terminal
+observation must still belong to `C` and report known released ownership with
+the cancelled outcome. An outcome without a delivered accepted event, an old
+event, unknown ownership, sequence overwrite or identity drift cannot pass.
+The receipt retains the anchor, accepted event and terminal observation. Each
 subsequent trial uses the same imported model and a newer genuine slice request.
 The driver attempts the next action before waiting for the prior completion.
 The product intentionally disables both combined controls during worker ownership
@@ -198,8 +213,9 @@ The product intentionally disables both combined controls during worker ownershi
 rejects another request in `Plater::priv::on_action_slice_plate`. When the
 post-cancel observation still reports ownership, the driver requires the next
 control to be disabled, clicks its real area, and checks that request identity,
-pending action and continuation remain unchanged. Positive ownership before and
-after the click is required to count this overlap invariant. A completion during
+pending action and continuation remain unchanged. Both positive ownership
+observations must belong to the same cancellation epoch `C`, request, model and
+plate to count this overlap invariant. A completion during
 the click leaves that attempt `not_observed`.
 
 A naturally delivered old-generation completion is separately checked for
@@ -282,14 +298,27 @@ by unknown state, and a response arriving after the deadline cannot authorize
 input. The target age includes the observation transport time, and native input
 checks age again after resolving canvas ownership and geometry.
 
-`scripts/md3/test_native_cancel_observation.py` loads only `require` and
-`select_cancel_observation` from the driver's AST. It executes production
-selection logic with a deterministic observation clock, without importing native
-providers or loading an application. Seven cases cover unknown-only timeout,
+`scripts/md3/test_native_cancel_observation.py` loads the actual selector,
+cancellation anchor, epoch validator and completion waiter from the driver's AST,
+together with `require`. It executes production observation logic with a
+deterministic clock, without importing native providers or loading an application.
+The original seven cases cover unknown-only timeout,
 stale-then-unknown, invalid coordinate space followed by unknown, fresh success,
 read-deadline overrun, transport-age expiry, and changed generation. The tests
 check that the caller's input boundary is never reached for rejected selections.
 They do not claim native input delivery or real product execution evidence.
+
+Eleven additional cases cover the `G` to `G+1` transition; already-cancelled
+input and invalid counter types; generation/request/model/plate/continuation
+drift; a cancelled outcome without a receiver event; rejected, unsuccessful or
+wrong-generation events; pre-input events; delayed events and unknown ownership;
+unknown-only ownership; overwritten history; late responses; and a deliberate
+mutation of the actual epoch equality check. The mutation case first requires
+the real validator to reject a changed terminal generation, then proves that
+removing exactly that production comparison makes the same bad observation pass.
+This is a focused negative regression, not synthetic product-event injection.
+All 18 cases run through the existing hosted native-interface workflow command;
+no local execution was performed for this repair and hosted results are pending.
 
 Execute on the hosted verification runner only:
 

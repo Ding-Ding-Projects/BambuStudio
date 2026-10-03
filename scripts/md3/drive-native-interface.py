@@ -38,6 +38,82 @@ def require(value, message):
         raise RuntimeError(message)
 
 
+def cancel_anchor(observation, action):
+    """Bind real cancel input to an uncancelled request and its next epoch."""
+    for key in ("nativeGeneration", "requestGeneration", "modelRevision",
+                "completionSequence", "continuationSequence"):
+        value = observation.get(key)
+        require(type(value) is int and 0 <= value <= 2**64 - 1,
+                "Cancellation observation has an invalid counter: " + key)
+    generation = observation["nativeGeneration"]
+    pending = observation.get("pending", {})
+    require(0 < generation < 2**64 - 1 and observation["requestGeneration"] > 0 and
+            observation.get("workerStateKnown") is True and observation.get("workerRunning") is True and
+            observation.get("outcome") == "running" and observation.get("cancellationRequested") is False,
+            "Cancel input requires an uncancelled in-flight request")
+    require(action in ("print", "send") and pending.get("action") == action and
+            type(pending.get("requestGeneration")) is int and
+            pending["requestGeneration"] == observation["requestGeneration"] and
+            type(pending.get("nativeGeneration")) is int and pending["nativeGeneration"] == generation and
+            type(pending.get("plateIndex")) is int and pending["plateIndex"] == 0 and
+            type(observation.get("processingPlateIndex")) is int and observation["processingPlateIndex"] == 0 and
+            type(observation.get("currentPlate")) is int and observation["currentPlate"] == 0 and
+            pending.get("matchesCurrentPlate") is True and pending.get("matchesProcessingPlate") is True,
+            "Cancel input request or plate identity is inconsistent")
+    return {"inputGeneration": generation, "cancellationGeneration": generation + 1,
+            "requestGeneration": observation["requestGeneration"], "modelRevision": observation["modelRevision"],
+            "plateIndex": 0, "completionSequence": observation["completionSequence"],
+            "continuationSequence": observation["continuationSequence"], "action": action}
+
+
+def require_cancel_epoch(state, anchor):
+    """Reject drift; request_stop advances G to G+1 without creating a new request."""
+    for key in ("nativeGeneration", "requestGeneration", "modelRevision",
+                "completionSequence", "continuationSequence", "processingPlateIndex", "currentPlate"):
+        require(type(state.get(key)) is int and 0 <= state[key] <= 2**64 - 1,
+                "Cancellation epoch has an invalid counter: " + key)
+    require(state.get("nativeGeneration") == anchor["cancellationGeneration"] and
+            state["requestGeneration"] == anchor["requestGeneration"] and
+            state["modelRevision"] == anchor["modelRevision"] and
+            state["processingPlateIndex"] == state["currentPlate"] == anchor["plateIndex"] and
+            state.get("cancellationRequested") is True and state.get("pending", {}).get("action") == "none" and
+            state["continuationSequence"] == anchor["continuationSequence"],
+            "Cancellation epoch, request, model, plate or continuation changed")
+    require((state.get("workerStateKnown") is True and type(state.get("workerRunning")) is bool) or
+            (state.get("workerStateKnown") is False and state.get("workerRunning") is None),
+            "Cancellation ownership state is inconsistent")
+    sequence, events = state["completionSequence"], state.get("completionEvents")
+    require(anchor["completionSequence"] <= sequence <= anchor["completionSequence"] + 16 and
+            isinstance(events, list) and len(events) == min(16, sequence) and
+            all(type(e.get("sequence")) is int for e in events) and
+            [e["sequence"] for e in events] == list(range(sequence - len(events) + 1, sequence + 1)),
+            "Cancellation completion evidence is missing or overwritten")
+    require(state.get("outcome") in ("running", "cancelled"),
+            "Cancellation epoch ended with an unexpected outcome")
+
+
+def wait_cancel_completion(read_workflow, anchor, clock, sleep, timeout=90):
+    """Credit only a delivered accepted cancellation and released ownership."""
+    deadline = clock() + timeout
+    while clock() < deadline:
+        state = read_workflow()
+        if clock() >= deadline:
+            break
+        require_cancel_epoch(state, anchor)
+        accepted = [event for event in state["completionEvents"]
+                    if event["sequence"] > anchor["completionSequence"] and
+                    event.get("accepted") is True and event.get("rejection") == "none" and
+                    event.get("status") == "cancelled" and
+                    type(event.get("eventGeneration")) is int and
+                    type(event.get("currentGeneration")) is int and
+                    event["eventGeneration"] == event["currentGeneration"] == anchor["cancellationGeneration"]]
+        if (len(accepted) == 1 and state.get("workerStateKnown") is True and
+                state.get("workerRunning") is False and state["outcome"] == "cancelled"):
+            return state, accepted[0]
+        sleep(0.1)
+    raise RuntimeError("Accepted cancellation completion and ownership release were not observed before timeout")
+
+
 def select_cancel_observation(read_workflow, generation, action, clock, sleep, timeout=10):
     """Select a fresh read-only target; timeout never authorizes native input.
 
@@ -138,10 +214,16 @@ def native_worker(request_path: Path, output: Path):
                     "Fresh cancellation observation unavailable")
             response = json.loads(result.stdout)
             require(response.get("ok") is True, "Fresh cancellation observation rejected")
-            return response["result"].get("sliceWorkflow", {})
+            state = response["result"]
+            return {**state.get("sliceWorkflow", {}), "currentPlate": state.get("currentPlate")}
 
         w, target, observed_at = select_cancel_observation(read_workflow,
             request["generation"], request["action"], time.monotonic, time.sleep)
+        anchor = cancel_anchor(w, request["action"])
+        require(anchor["requestGeneration"] == request["request_generation"] and
+                anchor["modelRevision"] == request["model_revision"] and
+                anchor["continuationSequence"] == request["continuation_sequence"],
+                "Fresh cancel input no longer belongs to the requested trial")
         left, top, right, bottom = target["rect"]
         x, y = round((left + right) / 2), round((top + bottom) / 2)
         # Resolve the actual owned native child under the freshly observed point.
@@ -763,7 +845,7 @@ class Driver:
 
     def workflow(self, state=None):
         state = state or self.inspect("project_inspect")
-        w = state.get("sliceWorkflow", {})
+        w = {**state.get("sliceWorkflow", {}), "currentPlate": state.get("currentPlate")}
         require(w.get("schemaVersion") == 1 and w.get("enabled") is True and
                 w.get("diagnosticOnly") is True and w.get("eventCapacity") == 16,
                 "Versioned slice workflow observation unavailable")
@@ -856,15 +938,20 @@ class Driver:
                     "Combined request was not bound to the in-flight plate and generation")
             row = self.record(f"cancel-click-{attempt}", "cancel-current",
                 cli=str(self.args.cli), workspace=str(self.scratch),
-                generation=observed["nativeGeneration"], action=action)
+                generation=observed["nativeGeneration"], action=action,
+                request_generation=observed["requestGeneration"], model_revision=observed["modelRevision"],
+                continuation_sequence=baseline["continuationSequence"])
             trial["input_observation"] = self.last_input.get("cancel_observation")
             require(trial["input_observation"] is not None, "Cancel input has no fresh observation")
+            anchor = cancel_anchor(trial["input_observation"], action)
+            trial["cancellation_anchor"] = anchor
             # Do not wait for the old completion before trying the next action.
             # The product deliberately disables both controls while it owns work.
             next_caption = "Slice and Send" if action == "print" else "Slice and Print"
             next_control = self.one(next_caption)
             after_cancel = self.workflow()
             trial["after_cancel"] = after_cancel
+            require_cancel_epoch(after_cancel, anchor)
             trial["next_action"] = {"caption": next_caption, "enabled": next_control["enabled"]}
             if after_cancel["workerRunning"] is True:
                 require(not next_control["enabled"], "Combined action enabled while cancellation still owns the worker")
@@ -875,10 +962,7 @@ class Driver:
                             target_rect=next_control["rect"])
                 after_next = self.workflow()
                 trial["after_next_click"] = after_next
-                require(after_next["requestGeneration"] == observed["requestGeneration"] and
-                        after_next["continuationSequence"] == baseline["continuationSequence"] and
-                        after_next["pending"]["action"] == "none",
-                        "Disabled next-action click dispatched or armed a continuation")
+                require_cancel_epoch(after_next, anchor)
                 # Bracket the actual click with positive ownership observations.
                 # If completion raced the input, no disabled-window proof is claimed.
                 if after_next["workerRunning"] is True:
@@ -888,19 +972,11 @@ class Driver:
                     trial["next_action"]["status"] = "not_observed"
             else:
                 trial["next_action"]["status"] = "not_observed"
-            deadline = time.monotonic() + 90
-            while time.monotonic() < deadline:
-                finished = self.workflow()
-                if finished["workerRunning"] is False and finished["outcome"] != "running":
-                    break
-                time.sleep(0.1)
+            finished, completion = wait_cancel_completion(self.workflow, anchor, time.monotonic, time.sleep)
             trial["finished"] = finished
+            trial["accepted_completion"] = completion
             require(finished["modelRevision"] == initial["modelRevision"],
                     "Cancellation fixture model changed during the trial")
-            require(finished["outcome"] == "cancelled" and finished["workerRunning"] is False and
-                    finished["pending"]["action"] == "none" and
-                    finished["continuationSequence"] == baseline["continuationSequence"],
-                    "Explicit cancel did not finish without a continuation")
             trial["status"] = "cancelled_without_continuation"
             cancelled += 1
             self.worker()
