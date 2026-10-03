@@ -123,7 +123,7 @@ encrypted pixel review and interactive clamp evidence remain pending.
 requires an already opened Display Settings surface and the existing pinned
 `lowlevel-computer-use-cheap` executable. UI Automation only reads the observed
 `SystemSettings_Display_Scaling_ItemSizeOverride_ComboBox`, its selected value,
-and supported predefined items. All input uses HWND-targeted cheap mouse clicks,
+and supported predefined items. Default input uses HWND-targeted cheap mouse clicks,
 after live process, session, desktop, enabled-state and geometry checks. Missing
 or ambiguous targets produce an unavailable result without speculative input.
 
@@ -177,6 +177,24 @@ input target category, cheap exit and termination verdict, expansion state and
 matching option count. Successful restoration cannot replace those observations.
 These receipts distinguish an input acknowledgement from an observed transition;
 they do not establish that posted mouse messages changed Display Settings.
+
+The explicit `-InputRoute hosted-foreground` option instead uses the existing
+cheap absolute-coordinate mouse input on a wholly disposable GitHub-hosted
+Windows machine. It is unavailable on a local or personal desktop. It requires
+the actual input desktop and helper thread to be `WinSta0\Default`, Settings to
+already own the foreground root, and the target point to resolve to the same
+owned root and process. Live process start identities and fresh enabled UIA
+geometry are rechecked before input; foreground and point ownership are checked
+again afterward. No window is automatically activated. Expansion and selected
+value/DPI observations are still mandatory, and restoration repeats the same
+ownership checks. An uncertain child termination still prohibits restoration.
+
+This foreground route is deliberately non-atomic: another foreground change
+between the final check and the separate cheap CLI's input remains possible.
+The complete disposable-host scope, not an atomic HWND guarantee, bounds that
+limitation. Receipts explicitly record the route and `foreground_input_atomic`
+as false. A changed desktop, obscured point, missing foreground ownership or
+unobserved semantic transition produces unavailable evidence, never success.
 
 ## Prepared native-runtime integration, not enabled
 
