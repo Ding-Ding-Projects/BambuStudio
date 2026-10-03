@@ -31,25 +31,70 @@ if (-not $InventoryWorker) {
     if (Test-Path -LiteralPath $output) { throw 'Output directory must be new.' }
     [void](New-Item -ItemType Directory -Path $output)
     # Isolate UIA calls in a killable process: providers can hang inside native calls.
-    $start = [Diagnostics.ProcessStartInfo]::new((Get-Process -Id $PID).Path)
-    $start.UseShellExecute = $false
-    $start.CreateNoWindow = $true
-    $start.WindowStyle = [Diagnostics.ProcessWindowStyle]::Hidden
-    foreach ($argument in @('-NoProfile', '-File', $PSCommandPath, '-OutputDirectory', $output, '-InventoryWorker')) {
-        [void]$start.ArgumentList.Add($argument)
-    }
-    $child = [Diagnostics.Process]::Start($start)
+    $child = $null
+    $startAttempted = $false
+    $terminated = $false
+    $reason = 'inventory_parent_failed'
+    $termination = 'not_started'
     try {
-        if (-not $child.WaitForExit($TimeoutSeconds * 1000)) {
-            $child.Kill($true)
-            [void]$child.WaitForExit(5000)
-            Write-Summary 'uia_inventory_timeout'
-            exit 2
+        $start = [Diagnostics.ProcessStartInfo]::new((Get-Process -Id $PID).Path)
+        $start.UseShellExecute = $false
+        $start.CreateNoWindow = $true
+        $start.WindowStyle = [Diagnostics.ProcessWindowStyle]::Hidden
+        # Never forward raw child diagnostics. Native providers may include labels.
+        $start.RedirectStandardOutput = $true
+        $start.RedirectStandardError = $true
+        foreach ($argument in @('-NoProfile', '-File', $PSCommandPath, '-OutputDirectory', $output, '-InventoryWorker')) {
+            [void]$start.ArgumentList.Add($argument)
         }
-        if (-not (Test-Path -LiteralPath (Join-Path $output 'capability.json'))) {
-            Write-Summary 'inventory_worker_failed'
+        $child = [Diagnostics.Process]::new()
+        $child.StartInfo = $start
+        $startAttempted = $true
+        if (-not $child.Start()) { throw 'Worker did not start.' }
+        $terminated = $child.WaitForExit($TimeoutSeconds * 1000)
+        if ($terminated) {
+            $termination = 'observed_exit'
+            $reason = if (Test-Path -LiteralPath (Join-Path $output 'capability.json')) {
+                'inventory_worker_exited'
+            } else { 'inventory_worker_failed' }
+        } else {
+            $reason = 'uia_inventory_timeout'
         }
-    } finally { $child.Dispose() }
+    } catch {
+        $reason = 'inventory_spawn_or_wait_exception'
+    } finally {
+        if ($startAttempted -and -not $terminated) {
+            try {
+                if (-not $child.HasExited) { $child.Kill($true) }
+                $terminated = $child.WaitForExit(5000)
+                $termination = if ($terminated) { 'observed_exit_after_stop' } else { 'termination_timeout' }
+            } catch {
+                $termination = 'termination_exception'
+                # A kill can race a normal exit. Credit only an actual observation.
+                try {
+                    $terminated = $child.HasExited
+                    if ($terminated) { $termination = 'observed_exit_after_exception' }
+                } catch { $terminated = $false }
+            }
+        }
+        $teardownVerified = (-not $startAttempted) -or $terminated
+        # Parent never writes capability.json: an unkillable worker might still
+        # own that path. This separate receipt is authoritative for termination.
+        try {
+            [ordered]@{
+                schema = 1; status = 'unavailable'; reason = $reason
+                worker_termination = $termination; teardown_verified = $teardownVerified
+                inventory_stable = $terminated; provisioned = $false
+                completed = $teardownVerified
+                disposal_required = -not $teardownVerified
+            } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $output 'supervisor.json') -Encoding utf8
+        } catch {
+            [Console]::Error.WriteLine('supervisor_receipt_unavailable')
+        }
+        if ($null -ne $child) {
+            try { $child.Dispose() } catch { [Console]::Error.WriteLine('process_handle_disposal_failed') }
+        }
+    }
     # Inventory is never a successful scale-provisioning verdict.
     exit 2
 }

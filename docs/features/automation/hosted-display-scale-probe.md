@@ -31,6 +31,17 @@ Use the existing private recipient custody route to decrypt and review the
 inventory. The existing image-archive decoder is not compatible with this JSON
 envelope without an explicit format adapter. Never upload decrypted inventory.
 
+Always read the separate parent-owned `supervisor.json` first. It records actual
+worker exit observation and `teardown_verified`. Spawn, wait and termination
+exceptions produce fixed reason codes without raw diagnostics. A stop request
+alone never proves termination: the parent waits up to another five seconds.
+If termination cannot be observed, `completed` and `inventory_stable` remain
+false, `disposal_required` is true, and the worker-owned files must not be treated
+as final evidence. The parent never overwrites `capability.json`, preventing a
+receipt race with a worker still running. Dispose of the hosted machine through
+its normal job lifecycle in that case; no successful teardown is claimed. A
+missing supervisor receipt also makes all inventory unavailable for acceptance.
+
 ## Next provisioning step
 
 After private review identifies actual controls, implement a separate bounded
