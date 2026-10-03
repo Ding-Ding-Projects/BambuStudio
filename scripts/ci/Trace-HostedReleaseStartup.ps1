@@ -126,21 +126,79 @@ try {
         $created = $false
         $terminated = $false
         $closed = $false
+        $nonce=[Guid]::NewGuid().ToString('N')
+        $holderRoot=Join-Path $env:RUNNER_TEMP ('startup-desktop-' + $nonce)
+        New-Item -ItemType Directory -Path $holderRoot -ErrorAction Stop | Out-Null
+        $holderName='Local\BambuNativeScale-' + [Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(32)).ToLowerInvariant()
+        $holderScript=Join-Path $root 'scripts/md3/startup_desktop_holder.py'
+        $holderArgs=[string[]]@($holderScript,'--root',$holderRoot,'--nonce',$nonce,'--desktop',$desktop,'--source',$verifier,'--job-name',$holderName)
+        $summary.desktop_stage='holder_start'
+        $summary.desktop_holder_termination_verified=$false
+        $summary.desktop_handle_closed=$false
+        $summary.desktop_absence_cli_exit=$null
+        $summary.desktop_absence_native_code=$null
+        $holderJob=Start-ThreadJob -ArgumentList $python,$holderArgs,$holderName,(Join-Path $root 'scripts/ci/HostedScaleProcess.cs') -ScriptBlock {
+            param($executable,$arguments,$name,$helper)
+            $ErrorActionPreference='Stop'
+            Add-Type -Path $helper
+            [HostedScaleProcess]::RunNamed($executable,[string[]]$arguments,180,$false,$name)
+        }
+        function Read-HolderRecord([string] $Name) {
+            $path=Join-Path $holderRoot $Name
+            if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw 'Desktop holder record absent.' }
+            for ($part=$path; -not [string]::IsNullOrEmpty($part); $part=[IO.Path]::GetDirectoryName($part)) {
+                if ((Get-Item -LiteralPath $part).Attributes -band [IO.FileAttributes]::ReparsePoint) { throw 'Desktop holder record is redirected.' }
+            }
+            if ((Get-Item -LiteralPath $path).Length -gt 2048) { throw 'Desktop holder record exceeds bound.' }
+            $record=Get-Content -LiteralPath $path -Raw | ConvertFrom-Json
+            if ($record.nonce -cne $nonce -or $record.desktop -cne $desktop -or $record.source -cne $verifier) { throw 'Desktop holder record identity mismatch.' }
+            return $record
+        }
         try {
-            $response = & $env:LLCU_CHEAP create_headless_desktop --name $desktop 2>$null | ConvertFrom-Json
-            if ($LASTEXITCODE -ne 0 -or $response.ok -ne $true) { throw 'Owned diagnostic desktop unavailable.' }
+            $summary.desktop_stage='holder_ready'
+            $readyDeadline=[DateTime]::UtcNow.AddSeconds(20)
+            while (-not (Test-Path -LiteralPath (Join-Path $holderRoot 'ready.json'))) {
+                if ([DateTime]::UtcNow -ge $readyDeadline -or $holderJob.State -notin @('Running','NotStarted')) { throw 'Desktop holder readiness unavailable.' }
+                Start-Sleep -Milliseconds 100
+            }
+            $ready=Read-HolderRecord 'ready.json'
+            if ($ready.created -ne $true) { throw 'Owned diagnostic desktop unavailable.' }
             $created = $true
+            $summary.desktop_stage='worker'
             $driverArguments += @('--from-creation','--job-name',$jobName,'--desktop',$desktop)
             $result = [HostedScaleProcess]::RunNamedOnDesktop($python,[string[]]$driverArguments,120,$false,$jobName,"WinSta0\$desktop")
             $terminated = $result.Terminated
             $driverExit = $result.Code
         } finally {
             if ($created -and $terminated) {
-                $response = & $env:LLCU_CHEAP close_headless_desktop --name $desktop 2>$null | ConvertFrom-Json
-                if ($LASTEXITCODE -eq 0 -and $response.ok -eq $true) {
-                    $check = & $env:LLCU_CHEAP list_headless_windows --name $desktop 2>$null | ConvertFrom-Json
-                    $closed = $LASTEXITCODE -ne 0 -and ($check | ConvertTo-Json -Compress) -match [regex]::Escape("OpenDesktopW('$desktop')") -and
-                        ($check | ConvertTo-Json -Compress) -match 'GetLastError=2(?!\d)'
+                $summary.desktop_stage='release_holder'
+                $release=@{nonce=$nonce;desktop=$desktop;source=$verifier;worker_tree_termination_verified=$true} | ConvertTo-Json -Compress
+                $pending=Join-Path $holderRoot 'release.pending'
+                $stream=[IO.File]::Open($pending,[IO.FileMode]::CreateNew,[IO.FileAccess]::Write,[IO.FileShare]::None)
+                try { $bytes=[Text.Encoding]::UTF8.GetBytes($release); $stream.Write($bytes); $stream.Flush($true) } finally { $stream.Dispose() }
+                [IO.File]::Move($pending,(Join-Path $holderRoot 'release.json'))
+            }
+            $summary.desktop_stage='holder_exit'
+            $finished=Wait-Job -Job $holderJob -Timeout 190
+            if ($null -ne $finished -and $holderJob.State -eq 'Completed') {
+                $holderResult=Receive-Job -Job $holderJob -ErrorAction SilentlyContinue
+                $summary.desktop_holder_termination_verified=$holderResult.Terminated -eq $true
+                if ($created -and $terminated -and $holderResult.Terminated -eq $true -and $holderResult.Code -eq 0) {
+                    $record=Read-HolderRecord 'closed.json'
+                    $summary.desktop_handle_closed=$record.handle_closed -eq $true -and $record.server_exit_verified -eq $true
+                    if ($summary.desktop_handle_closed) {
+                        $summary.desktop_stage='observe_absence'
+                        $absence=[HostedScaleProcess]::Run($env:LLCU_CHEAP,[string[]]@('list_headless_windows','--name',$desktop),10,$true)
+                        $summary.desktop_absence_cli_exit=$absence.Code
+                        if ($absence.Terminated -and $absence.Code -eq 0) {
+                            try {
+                                $check=$absence.Output | ConvertFrom-Json
+                                $closed=$check.ok -is [bool] -and $check.ok -eq $false -and $check.error -is [string] -and
+                                    $check.error -match ('^' + [regex]::Escape("OpenDesktopW('$desktop') failed (GetLastError=2:") + '[^\r\n]*\)$')
+                            } catch { $closed=$false }
+                        }
+                        if ($closed) { $summary.desktop_absence_native_code=2; $summary.desktop_stage='closed' }
+                    }
                 }
             }
             $summary.worker_tree_termination_verified = $terminated
@@ -155,6 +213,7 @@ try {
             wrapper=(Get-FileHash -LiteralPath $PSCommandPath -Algorithm SHA256).Hash.ToLowerInvariant()
             driver=(Get-FileHash -LiteralPath $driverArguments[0] -Algorithm SHA256).Hash.ToLowerInvariant()
             containment=(Get-FileHash -LiteralPath (Join-Path $root 'scripts/ci/HostedScaleProcess.cs') -Algorithm SHA256).Hash.ToLowerInvariant()
+            desktop_holder=(Get-FileHash -LiteralPath $holderScript -Algorithm SHA256).Hash.ToLowerInvariant()
         } -Force
         $report | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $reportPath -Encoding utf8
     } else {
