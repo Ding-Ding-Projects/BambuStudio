@@ -117,6 +117,8 @@ protected:
     void trigger_primary_action();
 };
 
+class ConnectionDisclosureBanner;
+
 class SideTools : public wxPanel
 {
 public:
@@ -131,7 +133,7 @@ private:
     Label* m_st_txt_error_desc{ nullptr };
     Label* m_st_txt_extra_info{ nullptr };
     wxWindow* m_side_error_panel{ nullptr };
-    Button* m_connection_info{ nullptr };
+    ConnectionDisclosureBanner* m_connection_info{ nullptr };
     LinkLabel* m_hyperlink{ nullptr };
     ScalableButton* m_more_button{ nullptr };
     ScalableBitmap      m_more_err_open;
