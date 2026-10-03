@@ -127,6 +127,8 @@ def validate_catalog(
 
     translated = len(pairs) - 1
     coverage = json.loads(coverage_path.read_text(encoding="utf-8"))
+    if not isinstance(coverage, dict):
+        raise CatalogError("coverage.json must contain a JSON object")
     if coverage.get("translated_messages") != translated:
         raise CatalogError(
             f"coverage.json translated_messages is {coverage.get('translated_messages')}, catalog has {translated}"
@@ -211,8 +213,16 @@ def main() -> int:
         else:
             args.output.parent.mkdir(parents=True, exist_ok=True)
             args.output.write_bytes(compiled)
-    except (CatalogError, OSError, json.JSONDecodeError) as exc:
+    except (CatalogError, OSError, UnicodeError, json.JSONDecodeError) as exc:
         print(f"error: {exc}", file=sys.stderr)
+        if str(exc).startswith("coverage.json") and any(
+            detail in str(exc) for detail in ("translated_messages is", "category counts", "agent_drafted_messages is")
+        ):
+            print(
+                f"hint: run {SCRIPT_DIR / 'refresh_coverage.py'} with the same catalog and validation options, "
+                "then commit coverage.json together with the PO catalog.",
+                file=sys.stderr,
+            )
         return 1
 
     action = "checked" if args.check else "wrote"
