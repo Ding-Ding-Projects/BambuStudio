@@ -9,6 +9,7 @@
 #include "ImGuiWrapper.hpp"
 #include "BilingualDecorator.hpp"
 #include "Widgets/StateColor.hpp"
+#include "Widgets/MD3Motion.hpp"
 #include "wxExtensions.hpp"
 #include "ObjectDataViewModel.hpp"
 #include "GUI_ObjectList.hpp"
@@ -1343,6 +1344,13 @@ bool NotificationManager::PopNotification::update_state(bool paused, const int64
 	}
 	// Timers when fading
 	if (m_state == EState::FadingOut && !paused) {
+        // Preserve the readable lifetime and hover/overflow pause above. Only
+        // the decorative fade is skipped, never the user's cancellation action.
+        if (MD3::Motion::reduced()) {
+            m_current_fade_opacity = 0.0f;
+            m_state = EState::Finished;
+            return true;
+        }
 		int64_t curr_time		= now - m_fading_start;
 		int64_t next_render		= FADING_OUT_TIMEOUT - delta;
 		m_current_fade_opacity	= std::clamp(1.0f - 0.001f * static_cast<float>(curr_time) / FADING_OUT_DURATION, 0.0f, 1.0f);
@@ -3232,10 +3240,14 @@ bool NotificationManager::update_notifications(GLCanvas3D& canvas)
 	}
 
 	// request next frame in future
-	if (next_render < max)
+	const auto *surface = canvas.get_wxglcanvas();
+	const bool visible_surface = surface && !surface->IsBeingDeleted() && surface->IsShownOnScreen();
+	if (next_render < max && visible_surface)
 		canvas.schedule_extra_frame(int(next_render));
 
-	return request_render;
+	// The caller also turns this return value into a dirty canvas. Keep semantic
+	// state updates above, but do not sustain hidden rendering through that route.
+	return request_render && visible_surface;
 }
 
 void NotificationManager::sort_notifications()

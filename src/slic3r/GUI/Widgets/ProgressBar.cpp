@@ -4,6 +4,7 @@
 #include <wx/dcclient.h>
 #include <wx/dcgraph.h>
 #include "Label.hpp"
+#include "MD3Motion.hpp"
 #include <algorithm>
 
 
@@ -37,6 +38,7 @@ ProgressBar::ProgressBar(wxWindow *parent, wxWindowID id, int max, const wxPoint
     create(parent, id, pos, temp_size);
     m_pulse_timer.SetOwner(this);
     Bind(wxEVT_TIMER, &ProgressBar::onPulseTick, this, m_pulse_timer.GetId());
+    Bind(wxEVT_SHOW, &ProgressBar::onShow, this);
 }
 
 void ProgressBar::SetRange(int range)
@@ -54,15 +56,35 @@ void ProgressBar::Pulse()
         m_indeterminate = true;
         m_pulse_phase   = 0.0;
     }
-    if (!m_pulse_timer.IsRunning())
-        m_pulse_timer.Start(40);
+    syncPulseTimer();
     Refresh();
+}
+
+bool ProgressBar::syncPulseTimer()
+{
+    const bool reduced = MD3::Motion::reduced();
+    if (reduced) m_pulse_phase = 0.5; // A stable segment, never a completion percentage.
+    if (!m_indeterminate || m_disable || !IsEnabled() || IsBeingDeleted() || !IsShownOnScreen() || reduced) {
+        m_pulse_timer.Stop();
+        return false;
+    }
+    if (!m_pulse_timer.IsRunning() && !m_pulse_timer.Start(40))
+        m_pulse_phase = 0.5; // Timer unavailability must not leave an empty indicator.
+    return m_pulse_timer.IsRunning();
+}
+
+void ProgressBar::onShow(wxShowEvent &evt)
+{
+    if (!evt.IsShown()) m_pulse_timer.Stop();
+    else syncPulseTimer();
+    evt.Skip();
 }
 
 void ProgressBar::onPulseTick(wxTimerEvent &)
 {
-    if (!m_indeterminate || !IsShownOnScreen()) {
-        m_pulse_timer.Stop();
+    if (!syncPulseTimer()) {
+        // A preference change can stop a live sweep. Paint its stable state once.
+        if (!IsBeingDeleted() && IsShownOnScreen()) Refresh();
         return;
     }
     m_pulse_phase += 0.02;
@@ -71,7 +93,12 @@ void ProgressBar::onPulseTick(wxTimerEvent &)
 }
 
 
-ProgressBar::~ProgressBar() {}
+ProgressBar::~ProgressBar()
+{
+    m_pulse_timer.Stop();
+    Unbind(wxEVT_TIMER, &ProgressBar::onPulseTick, this, m_pulse_timer.GetId());
+    Unbind(wxEVT_SHOW, &ProgressBar::onShow, this);
+}
 
 
 void ProgressBar::create(wxWindow *parent, wxWindowID id, const wxPoint &pos,  wxSize &size)
@@ -177,6 +204,8 @@ void ProgressBar::ShowNumber(bool shown)
 
 void ProgressBar::Disable(wxString text)
 {
+    m_indeterminate = false;
+    m_pulse_timer.Stop();
     if (m_disable) return;
     m_disable_text = text;
     m_disable = true;
@@ -229,7 +258,9 @@ void ProgressBar::SetMinSize(const wxSize &size)
 
 void ProgressBar::paintEvent(wxPaintEvent &evt)
 {
-
+    // Ancestor show/hide and preference changes are observed on real paints;
+    // no polling timer is retained merely to wait for visibility or preferences.
+    syncPulseTimer();
     wxPaintDC dc(this);
     render(dc);
 }
@@ -336,14 +367,14 @@ void ProgressBar::doRender(wxDC &dc)
         dc.DrawText(m_disable_text, pt);
 
     } else if (m_indeterminate) {
-        // Indeterminate: a 30% Primary segment sweeping left to right.
+        // Indeterminate: a Primary segment, stationary under reduced motion.
         const double seg  = std::max(size.x * 0.3, m_radius * 2.0);
         const double span = size.x + seg;
         const double x    = m_pulse_phase * span - seg;
         dc.SetPen(wxPen(m_progress_colour, 1));
         dc.SetBrush(wxBrush(m_progress_colour));
         if (m_radius == 0) {
-            dc.DrawRectangle(x, 0, seg, size.y);
+            dc.DrawRectangle(x, 0, seg, barHeight);
         } else {
             dc.DrawRoundedRectangle(x, 0, seg, barHeight, drawRadius);
         }
