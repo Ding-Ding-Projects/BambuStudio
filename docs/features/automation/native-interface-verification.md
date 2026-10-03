@@ -16,6 +16,12 @@ handles, unavailable or mismatched owners, failed exit queries, exited threads,
 desktop exceptions, close failure and success, including call/cleanup ordering.
 These additions remain hosted-unverified; no local execution was performed.
 
+`STILL_ACTIVE` (259) is contextual exit-code evidence while the target remains
+at the acknowledged initial debugger break with no continuation written. It is
+not a general proof of thread liveness: a terminated thread can itself return
+259 as its exit code. The `thread_alive` field records this contextual comparison
+only and must not replace debugger-state, desktop, ownership or teardown proof.
+
 The startup diagnostic from run `37103711674` reached the target desktop lookup
 after acknowledgement, unique target identity and both job membership checks.
 Its null desktop comparison means the lookup raised before comparison, not that
