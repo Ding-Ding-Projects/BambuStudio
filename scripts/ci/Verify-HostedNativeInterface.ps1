@@ -11,7 +11,8 @@ param(
     [ValidateSet('light','dark')][string] $Theme = 'light',
     [ValidateSet('1','1.25','1.5','2')][string] $Scale = '1',
     [ValidateSet('1200x800','1000x600','measured-minimum')][string] $Viewport = '1200x800',
-    [switch] $ProvisionDisplayScale
+    [switch] $ProvisionDisplayScale,
+    [switch] $ProvisionResolution
 )
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
@@ -20,6 +21,10 @@ if ($env:GITHUB_ACTIONS -ne 'true' -or $env:RUNNER_ENVIRONMENT -ne 'github-hoste
 }
 if ((& git rev-parse HEAD).Trim() -cne $ExpectedSourceCommit) { throw 'Verifier source SHA mismatch.' }
 if ($ProvisionDisplayScale -and $Scale -eq '1') { throw 'The baseline 100% route does not use scale provisioning.' }
+if ($ProvisionResolution -and ($Scope -ne 'minimum-resize' -or $Scale -ne '1' -or
+    $Viewport -ne 'measured-minimum' -or $ProvisionDisplayScale)) {
+    throw 'Fixed resolution provisioning requires only the baseline minimum-resize tuple.'
+}
 if ($Scope -eq 'minimum-resize' -and ($Scale -ne '1' -or $Viewport -ne 'measured-minimum' -or $ProvisionDisplayScale)) {
     throw 'Interactive minimum proof currently requires baseline scale and measured-minimum viewport.'
 }
@@ -75,10 +80,10 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Pinned headless dependencies could not be installed.' }
     $env:LLCU_CHEAP = Join-Path $venv 'Scripts/lowlevel-computer-use-cheap.exe'
     if (-not (Test-Path -LiteralPath $env:LLCU_CHEAP -PathType Leaf)) { throw 'Cheap headless executable missing.' }
-    if ($ProvisionDisplayScale) {
+    if ($ProvisionDisplayScale -or $ProvisionResolution) {
         # Installation and dependency bootstrap precede any display mutation.
         # Only this fixed driver request enters the contained scale interval.
-        $scalePercent = @{ '1.25'=125; '1.5'=150; '2'=200 }[$Scale]
+        $scalePercent = @{ '1'=100; '1.25'=125; '1.5'=150; '2'=200 }[$Scale]
         $requestPath = Join-Path $env:RUNNER_TEMP ('native-scale-request-' + $env:GITHUB_RUN_ID + '.json')
         $adapterReceiptPath = Join-Path $env:RUNNER_TEMP ('native-scale-adapter-' + $env:GITHUB_RUN_ID + '.json')
         $scaleOutput = Join-Path $env:RUNNER_TEMP ('native-scale-' + $env:GITHUB_RUN_ID)
@@ -88,11 +93,13 @@ try {
         $request = [ordered]@{schema=1; request_id=[Guid]::NewGuid().ToString('N'); source_commit=$ExpectedSourceCommit
             release_tag=$Tag; run_id=$env:GITHUB_RUN_ID; scope=$Scope; language=$Language; theme=$Theme
             viewport=$Viewport; scale_percent=$scalePercent; exe_sha256=$receipt.exe_sha256; cli_sha256=$receipt.cli_sha256
+            resolution=$(if ($ProvisionResolution) {'1920x1080'} else {'unchanged'})
             job_name=('Local\BambuNativeScale-' + [Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(32)).ToLowerInvariant())}
         $boundFiles = @{install=$installReceipt; driver="$PSScriptRoot/../md3/drive-native-interface.py"
             adapter="$PSScriptRoot/run-scaled-native-interface.py"; verifier=$PSCommandPath
             python=$python; cheap=$env:LLCU_CHEAP; helper="$PSScriptRoot/Invoke-HostedDisplayScale.ps1"
-            containment="$PSScriptRoot/HostedScaleProcess.cs"}
+            containment="$PSScriptRoot/HostedScaleProcess.cs"; display_mode="$PSScriptRoot/HostedDisplayMode.cs"
+            minimum="$PSScriptRoot/../md3/minimum_resize.py"}
         foreach ($entry in $boundFiles.GetEnumerator()) {
             $request[$entry.Key + '_sha256'] = (Get-FileHash -LiteralPath $entry.Value -Algorithm SHA256).Hash.ToLowerInvariant()
         }
@@ -101,12 +108,13 @@ try {
         [IO.File]::WriteAllText($requestPath, ($request | ConvertTo-Json -Compress), [Text.UTF8Encoding]::new($false))
         $requestHash = (Get-FileHash -LiteralPath $requestPath -Algorithm SHA256).Hash.ToLowerInvariant()
         $evidenceSafeToRead = $false
-        & "$PSScriptRoot/Invoke-HostedDisplayScale.ps1" -ScalePercent $scalePercent -OutputDirectory $scaleOutput -CheapExecutable $env:LLCU_CHEAP -InputRoute hosted-foreground -NativeRuntime
+        & "$PSScriptRoot/Invoke-HostedDisplayScale.ps1" -ScalePercent $scalePercent -OutputDirectory $scaleOutput -CheapExecutable $env:LLCU_CHEAP -InputRoute hosted-foreground -NativeRuntime -ProvisionResolution:$ProvisionResolution
         $driverExit = $LASTEXITCODE
         $scaleSupervisor = Get-Content -LiteralPath (Join-Path $scaleOutput 'supervisor.json') -Raw | ConvertFrom-Json
         $evidenceSafeToRead = $scaleSupervisor.worker_termination_verified -eq $true -and
             $scaleSupervisor.recovery_termination_verified -eq $true -and $scaleSupervisor.child_termination_uncertain -eq $false
         $receipt.scale_provisioning = [ordered]@{requested_percent=$scalePercent; status=$scaleSupervisor.status
+            resolution_requested=[bool]$ProvisionResolution; input_recovery_uncertain=$scaleSupervisor.input_recovery_uncertain
             worker_termination_verified=$scaleSupervisor.worker_termination_verified
             recovery_termination_verified=$scaleSupervisor.recovery_termination_verified
             restoration_verified=$scaleSupervisor.restoration_verified; disposal_required=$scaleSupervisor.disposal_required
@@ -114,6 +122,8 @@ try {
         if ($driverExit -ne 0 -or -not $evidenceSafeToRead -or
             $scaleSupervisor.status -cne 'verified_settings_scale_and_restoration' -or
             $scaleSupervisor.requested_scale -ne $scalePercent -or $scaleSupervisor.native_runtime_requested -ne $true -or
+            $scaleSupervisor.resolution_provisioning_requested -ne [bool]$ProvisionResolution -or
+            $scaleSupervisor.input_recovery_uncertain -ne $false -or
             $scaleSupervisor.restoration_verified -ne $true -or $scaleSupervisor.disposal_required -ne $false) {
             throw 'Native scale interval did not finish and restore successfully.'
         }

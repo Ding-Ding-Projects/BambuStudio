@@ -321,11 +321,12 @@ Missing or ambiguous resolution observations and incomplete mode enumeration
 remain unavailable. Any future resolution change needs its own supported input,
 exact original-state preservation and verified resolution-plus-scale restoration.
 
-## Fixed larger-resolution interval, standalone verification pending
+## Fixed larger-resolution interval
 
-The scale helper's explicit `-ProvisionResolution` option is standalone-only and
-requires `-InputRoute hosted-foreground`. Combining it with `-NativeRuntime` is
-rejected before input. It requests only a freshly enumerated 1920×1080, 32-bit
+The scale helper's explicit `-ProvisionResolution` option requires
+`-InputRoute hosted-foreground`. Its only native-runtime combination is the
+baseline minimum tuple described below; other combinations are rejected before
+input. It requests only a freshly enumerated 1920×1080, 32-bit
 mode at the current refresh frequency and observed orientation. Unsupported or
 ambiguous variants remain unavailable. No arbitrary dimensions or action hook
 are accepted.
@@ -351,7 +352,8 @@ requires the original mode plus a fresh original-scale/DPI observation. Recovery
 inspects the current mode first and is idempotent after a partially completed
 restore; its mode restore runs before UIA initialization so missing Settings
 cannot prevent that attempt. Unknown child termination or changed display
-identity blocks mutations and requires disposal. The resolution worker allows
+identity or uncertain native input recovery blocks mutations and requires disposal.
+The standalone resolution worker allows
 180 seconds and independent recovery 90 seconds, after complete worker-tree
 termination. Existing scale-only and product-adapter deadlines are unchanged.
 
@@ -397,3 +399,48 @@ five unsupported header/field cases must fail before both known layouts pass,
 and successful inspection must preserve the complete bytes and returned size.
 This case performs no native display calls. Hosted contract results and actual
 mode application/restoration remain pending; no local execution was performed.
+
+### Fixed-resolution baseline minimum proof
+
+The standalone resolution run `37091384649` passed its seven lifecycle cases and
+observed 1920 by 1080 at 125% with Settings DPI 120. It restored the original
+1024 by 768 mode and 100%/96 DPI, with both worker trees terminated and no disposal
+requirement. That evidence does not prove the product's interactive minimum.
+
+`Verify-HostedNativeInterface.ps1 -ProvisionResolution` now selects one bounded
+combination: `minimum-resize`, `measured-minimum`, and scale `1`. Combining that
+switch with scale provisioning or another scope is rejected. Installation and
+package/hash validation finish before display mutation. The fixed request binds
+the 1920 by 1080 choice and the display-mode and minimum-helper source hashes,
+alongside the existing package, executable, driver, and containment identities.
+The adapter passes its exact named Job to the minimum helper. Settings must first
+report 100% and DPI 96; the product's existing independent DPI and real-drag
+checks remain mandatory. The native worker keeps its 1920-second outer limit,
+1800-second adapter limit, and independent 90-second display recovery limit.
+
+Before launching the product, the worker durably creates `native-input.started`
+containing the request digest. Only the fixed adapter can publish the matching
+`native-input.restored` receipt after the exact minimum operation, button-up,
+frame restoration, original input-desktop restoration, server exit, and native
+teardown evidence all pass. The minimum helper reobserves button-up on `Default`
+after the persistent server exits. These private files are outside the public
+upload and encrypted product evidence inventories. The started marker is never
+removed, and a Job reaching zero processes cannot supply restoration evidence.
+
+An interrupted adapter, missing or mismatched restored receipt, or uncertain
+button/desktop state blocks both the worker's restoration and the independent
+recovery worker before mode changes or Settings input. The fixed supervisor
+receipt reports `input_recovery_uncertain` and requires disposal. This is
+deliberately conservative even if interruption occurred before the first drag.
+Successful input recovery permits the existing original-scale and original-mode
+restoration; final acceptance still requires complete tree termination and all
+original display observations. No forced focus, synthetic resize message, or
+simulated DPI is introduced. Combined runtime and genuine capture evidence remain
+pending hosted verification; no local execution was performed.
+
+Two additional hosted lifecycle cases load the exact production tuple and
+input-recovery functions from the parsed source, without executing the display
+supervisor. They reject unsupported combined tuples, absent or mismatched
+restoration evidence, a changed request digest, and an incomplete started marker
+before accepting the supported tuple and matching restoration state. The total
+is now nine cases; their hosted verdict remains pending.

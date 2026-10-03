@@ -32,6 +32,56 @@ function Record-Pass([string] $Name) { $cases.Add(@{name=$Name; status='passed'}
 try {
     # Compile and exercise the checked-in implementation, not a test copy.
     Add-Type -Path (Join-Path $PSScriptRoot 'HostedScaleProcess.cs')
+    $stage = 'minimum_resolution_tuple_contract'
+    # Load only these exact production function definitions. Do not dot-source
+    # the supervisor, which would initialize Settings or change display state.
+    $tokens = $null; $parseErrors = $null
+    $ast = [Management.Automation.Language.Parser]::ParseFile(
+        (Join-Path $PSScriptRoot 'Invoke-HostedDisplayScale.ps1'),[ref]$tokens,[ref]$parseErrors)
+    Require-Result ($parseErrors.Count -eq 0)
+    foreach ($name in @('Test-NativeTuple','Test-UncertainInput')) {
+        $definitions = @($ast.FindAll({ param($node)
+            $node -is [Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -ceq $name
+        }, $true))
+        Require-Result ($definitions.Count -eq 1)
+        . ([scriptblock]::Create($definitions[0].Extent.Text))
+    }
+    $tuple = @{resolution='1920x1080'; scope='minimum-resize'; viewport='measured-minimum'}
+    Require-Result (-not (Test-NativeTuple $tuple 125 $true))
+    Require-Result (-not (Test-NativeTuple $tuple 100 $false))
+    $tuple.scope = 'menus'
+    Require-Result (-not (Test-NativeTuple $tuple 100 $true))
+    $tuple.scope = 'minimum-resize'; $tuple.viewport = '1000x600'
+    Require-Result (-not (Test-NativeTuple $tuple 100 $true))
+    $tuple.viewport = 'measured-minimum'
+    Require-Result (Test-NativeTuple $tuple 100 $true)
+    $tuple = @{resolution='unchanged'; scope='menus'; viewport='1200x800'}
+    Require-Result (-not (Test-NativeTuple $tuple 100 $false))
+    Require-Result (Test-NativeTuple $tuple 125 $false)
+    Record-Pass $stage
+
+    $stage = 'minimum_input_recovery_contract'
+    $receiptOutput = $output
+    try {
+        $output = Join-Path $scratch 'input-state'
+        [void](New-Item -ItemType Directory -Path $output)
+        $nativeRequestPath = Join-Path $output 'request.json'
+        [IO.File]::WriteAllText($nativeRequestPath,'{"fixture":1}')
+        $requestDigest = (Get-FileHash -LiteralPath $nativeRequestPath -Algorithm SHA256).Hash.ToLowerInvariant()
+        Require-Result (-not (Test-UncertainInput)) # No product invocation yet.
+        [IO.File]::WriteAllText((Join-Path $output 'native-input.started'),$requestDigest)
+        Require-Result (Test-UncertainInput) # Job exit cannot clear this state.
+        [IO.File]::WriteAllText((Join-Path $output 'native-input.restored'),('0' * 64))
+        Require-Result (Test-UncertainInput)
+        [IO.File]::WriteAllText((Join-Path $output 'native-input.restored'),$requestDigest)
+        [IO.File]::WriteAllText($nativeRequestPath,'{"fixture":2}')
+        Require-Result (Test-UncertainInput) # Evidence from another invocation.
+        [IO.File]::WriteAllText($nativeRequestPath,'{"fixture":1}')
+        Require-Result (-not (Test-UncertainInput))
+        [IO.File]::WriteAllText((Join-Path $output 'native-input.started'),'')
+        Require-Result (Test-UncertainInput)
+    } finally { $output = $receiptOutput }
+    Record-Pass $stage
     $stage = 'display_mode_public_layout_contract'
     Add-Type -Path (Join-Path $PSScriptRoot 'HostedDisplayMode.cs')
     function New-ModeContractFixture([uint16] $Size, [uint16] $Extra = 0, [uint32] $Fields = 0x207c00a0) {
@@ -182,7 +232,7 @@ exit 0
         [string[]]@('-NoProfile','-File',$membership,'-JobName',$jobName), 10, $true, $jobName)
     Require-Result ($result.Terminated -and $result.Code -eq 0 -and $result.Output -ceq '{"ok":true}')
     Record-Pass $stage
-    $success = $cases.Count -eq 7
+    $success = $cases.Count -eq 9
 } catch {
     # Neither exception text nor benign child payloads enter public logs.
     $cases.Add(@{name=$stage; status='failed'})
@@ -202,10 +252,10 @@ exit 0
     }
     $passed = @($cases | Where-Object status -eq 'passed').Count
     @{schema=1; status=$(if ($success -and $cleanupVerified) {'passed'} else {'failed'})
-      passed=$passed; expected=7; cases=$cases.ToArray(); cleanup_verified=$cleanupVerified
+      passed=$passed; expected=9; cases=$cases.ToArray(); cleanup_verified=$cleanupVerified
       elapsed_ms=$timer.ElapsedMilliseconds; settings_mutated=$false
     } | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $output 'receipt.json') -Encoding utf8
 }
-if ($success -and $cleanupVerified) { Write-Host 'Hosted scale lifecycle checks passed: 7/7'; exit 0 }
+if ($success -and $cleanupVerified) { Write-Host 'Hosted scale lifecycle checks passed: 9/9'; exit 0 }
 Write-Host 'Hosted scale lifecycle checks failed; inspect the fixed receipt.'
 exit 2

@@ -257,6 +257,14 @@ def run_minimum_resize(drive):
         asyncio.run(exercise())
         require(receipt["frame_restored"] and receipt["input_desktop_restored"] and
                 receipt["server_exit_verified"], "Minimum proof restoration or server shutdown unverified")
+        # Reobserve on the original input desktop after the persistent server
+        # exits. A vanished process alone says nothing about a held mouse button.
+        user = ctypes.WinDLL("user32", use_last_error=True)
+        user.GetAsyncKeyState.argtypes = [ctypes.c_int]
+        user.GetAsyncKeyState.restype = ctypes.c_short
+        require(input_desktop() == "Default" and not (user.GetAsyncKeyState(1) & 0x8000),
+                "Final input desktop or mouse release unverified")
+        receipt["final_button_up_verified"] = True
         receipt["disposal_required"] = False
         drive.viewport_observations[-1]["interactive_resize_clamp"] = "observed_in_dedicated_scope"
         drive.viewport_observations[-1]["interactive_operation"] = receipt["operation"]
