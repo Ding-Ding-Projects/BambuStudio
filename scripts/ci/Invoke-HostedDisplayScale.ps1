@@ -574,7 +574,7 @@ try {
     if ($ProvisionResolution) {
         $receipt.resolution_selection_diagnostic = @{stage=[HostedDisplayMode]::DiagnosticStage; code=[HostedDisplayMode]::DiagnosticCode
             last_mode_buffer_bytes=[HostedDisplayMode]::DiagnosticBufferBytes; last_mode_size=[HostedDisplayMode]::DiagnosticModeSize
-            last_driver_extra_bytes=[HostedDisplayMode]::DiagnosticDriverExtra}
+            last_driver_extra_bytes=[HostedDisplayMode]::DiagnosticDriverExtra; last_enum_succeeded=[HostedDisplayMode]::DiagnosticEnumSucceeded}
     }
     $receipt.selection_observations = $script:Observation.Clone()
     $script:Observation = @{}
@@ -617,7 +617,7 @@ try {
     if ($ProvisionResolution) {
         $receipt.resolution_restoration_diagnostic = @{stage=[HostedDisplayMode]::DiagnosticStage; code=[HostedDisplayMode]::DiagnosticCode
             last_mode_buffer_bytes=[HostedDisplayMode]::DiagnosticBufferBytes; last_mode_size=[HostedDisplayMode]::DiagnosticModeSize
-            last_driver_extra_bytes=[HostedDisplayMode]::DiagnosticDriverExtra}
+            last_driver_extra_bytes=[HostedDisplayMode]::DiagnosticDriverExtra; last_enum_succeeded=[HostedDisplayMode]::DiagnosticEnumSucceeded}
     }
     $receipt.restoration_observations = $script:Observation.Clone()
     $receipt.child_termination_uncertain = Test-UncertainChildren

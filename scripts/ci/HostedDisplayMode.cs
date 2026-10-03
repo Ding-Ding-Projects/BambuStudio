@@ -12,6 +12,7 @@ public static class HostedDisplayMode
     public static int? DiagnosticBufferBytes { get; private set; }
     public static int? DiagnosticModeSize { get; private set; }
     public static int? DiagnosticDriverExtra { get; private set; }
+    public static bool? DiagnosticEnumSucceeded { get; private set; }
     static void Stage(string stage) { DiagnosticStage=stage; DiagnosticCode=null; }
     const uint Allowed=0x207c00a0, Required=0x007c0000;
     public sealed class State { public string Device, Identity; public byte[] Original; }
@@ -58,6 +59,7 @@ public static class HostedDisplayMode
         DiagnosticBufferBytes=bytes==null ? (int?)null : bytes.Length;
         DiagnosticModeSize=bytes!=null && bytes.Length>=72 ? (int?)BitConverter.ToUInt16(bytes,68) : null;
         DiagnosticDriverExtra=bytes!=null && bytes.Length>=72 ? (int?)BitConverter.ToUInt16(bytes,70) : null;
+        if(bytes==null) { Stage("mode_read_returned_null"); Require(false); }
         Require(bytes!=null && bytes.Length==220 && BitConverter.ToUInt16(bytes,68)==220 && BitConverter.ToUInt16(bytes,70)==0);
         uint fields=U(bytes,72);
         Stage("mode_valid_fields");
@@ -73,7 +75,8 @@ public static class HostedDisplayMode
         try {
             Marshal.Copy(new byte[220],0,memory,220); Marshal.WriteInt16(memory,68,220);
             Stage("enum_display_settings");
-            if(!EnumDisplaySettings(device,index,memory)) return null;
+            DiagnosticEnumSucceeded=EnumDisplaySettings(device,index,memory);
+            if(DiagnosticEnumSucceeded!=true) return null;
             var bytes=new byte[220]; Marshal.Copy(memory,bytes,0,220); Validate(bytes); return bytes;
         } finally { Marshal.FreeHGlobal(memory); }
     }
