@@ -23,6 +23,10 @@ on:
         type: choice
         default: all
         options: [all, '125', '150', '200']
+      diagnostic_evidence:
+        description: Encrypt bounded owned Settings captures for standalone diagnosis
+        type: boolean
+        default: false
 permissions:
   contents: read
 jobs:
@@ -88,6 +92,7 @@ jobs:
           SCALE_PERCENT: ${{ matrix.scale }}
           SCALE_INPUT_ROUTE: ${{ inputs.input_route }}
           PROVISION_RESOLUTION: ${{ inputs.provision_resolution }}
+          DIAGNOSTIC_EVIDENCE: ${{ inputs.diagnostic_evidence }}
         run: |
           $scaleArguments = @{
             ScalePercent = [int]$env:SCALE_PERCENT
@@ -96,8 +101,9 @@ jobs:
             InputRoute = $env:SCALE_INPUT_ROUTE
           }
           if ($env:PROVISION_RESOLUTION -eq 'true') { $scaleArguments.ProvisionResolution = $true }
+          if ($env:DIAGNOSTIC_EVIDENCE -eq 'true') { $scaleArguments.DiagnosticEvidence = $true }
           & scripts/ci/Invoke-HostedDisplayScale.ps1 @scaleArguments
-      - name: Retain bounded public receipts only
+      - name: Retain bounded receipts and encrypted diagnostics
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
@@ -106,5 +112,9 @@ jobs:
             ${{ runner.temp }}/scale-proof/supervisor.json
             ${{ runner.temp }}/scale-proof/run.json
             ${{ runner.temp }}/scale-proof/restore.json
+            ${{ runner.temp }}/scale-proof/before_selector.aesgcm
+            ${{ runner.temp }}/scale-proof/before_selector.envelope.json
+            ${{ runner.temp }}/scale-proof/expanded_selector.aesgcm
+            ${{ runner.temp }}/scale-proof/expanded_selector.envelope.json
           if-no-files-found: warn
           retention-days: 7

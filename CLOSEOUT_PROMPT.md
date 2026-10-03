@@ -177,3 +177,14 @@ up to100 pending jobs with running-job cancellation still disabled. Additional
 arrivals beyond that bound are canceled. Historical reruns retain their original
 workflow and are not repaired retroactively. Do not rerun the old single-pending
 release while another pending publisher would be replaced.
+
+## Encrypted scale-option diagnosis, 2026-10-03 UTC
+
+Two independent source reviews accepted5c80f0c58457b95e358dd76a56ad8a76f0aab5cd.
+An explicit standalone-only diagnostic opt-in captures the owned Settings HWND
+before selector input and after expansion. Positive dimensions up to8192 are
+checked before bitmap allocation and again afterward. Bounded read-only control
+geometry and pixels use the established recipient encryption with authenticated
+source/run/phase/dimension/helper/tool/image bindings. Only four named encrypted
+files join the fixed public receipt upload inventory; no raw PNG or native
+identity is uploaded. Actual rendering, decryption and interpretation are pending.

@@ -6,6 +6,7 @@ param(
     [ValidateSet('background','hosted-foreground')][string] $InputRoute = 'background',
     [switch] $NativeRuntime,
     [switch] $ProvisionResolution,
+    [switch] $DiagnosticEvidence,
     [ValidateSet('supervisor','run','restore')][string] $Mode = 'supervisor'
 )
 $ErrorActionPreference = 'Stop'
@@ -18,6 +19,9 @@ if ($ProvisionResolution -and $NativeRuntime -and $ScalePercent -ne 100) {
     throw 'Combined resolution and native execution requires the baseline minimum tuple.'
 }
 if ($ProvisionResolution -and $InputRoute -cne 'hosted-foreground') { throw 'Resolution provisioning requires the disposable foreground route.' }
+if ($DiagnosticEvidence -and ($NativeRuntime -or $InputRoute -cne 'hosted-foreground')) {
+    throw 'Diagnostic evidence is limited to standalone disposable foreground discovery.'
+}
 $tempRoot = [IO.Path]::GetFullPath($env:RUNNER_TEMP).TrimEnd('\') + '\'
 $output = [IO.Path]::GetFullPath($OutputDirectory)
 if (-not $output.StartsWith($tempRoot, [StringComparison]::OrdinalIgnoreCase)) {
@@ -153,6 +157,7 @@ if ($Mode -eq 'supervisor') {
         $seconds = 120
         if ($NativeRuntime) { $arguments += '-NativeRuntime'; $seconds = 1920 }
         if ($ProvisionResolution) { $arguments += '-ProvisionResolution'; if (-not $NativeRuntime) { $seconds = 180 } }
+        if ($DiagnosticEvidence) { $arguments += '-DiagnosticEvidence' }
         $run = Invoke-BoundedProcess $pwsh $arguments $seconds
     } catch {} finally {
         # The durable original state exists before the first input. Recovery is
@@ -258,6 +263,8 @@ $desktop = [Windows.Automation.AutomationElement]::RootElement
 $selectorId = 'SystemSettings_Display_Scaling_ItemSizeOverride_ComboBox'
 $script:Stage = 'read_original'
 $script:Observation = @{}
+$script:DiagnosticResults = @{}
+if ($DiagnosticEvidence) { . (Join-Path $PSScriptRoot 'Save-HostedScaleDiagnostic.ps1') }
 
 function Read-Controls {
     $live = Get-Process -Id $settingsId
@@ -490,6 +497,11 @@ function Set-Scale([int] $Percent) {
     $rows = @(Read-Controls)
     $state = Read-Scale $rows
     if ($state.percent -ne $Percent) {
+        if ($DiagnosticEvidence -and $Mode -eq 'run') {
+            Save-HostedScaleDiagnostic 'before_selector'
+            # Diagnostic capture can take time. Resolve fresh input geometry after it.
+            $state = Read-Scale @(Read-Controls)
+        }
         $script:Observation.input_target = 'scale_selector'
         Click-Control $state.combo
         $script:Stage = 'observe_expanded'
@@ -506,6 +518,7 @@ function Set-Scale([int] $Percent) {
         } while (-not $expanded -and [DateTime]::UtcNow -lt $expandDeadline)
         $script:Observation.expansion_observed = $expanded
         if (-not $expanded) { throw 'Scale selector expansion was not observed.' }
+        if ($DiagnosticEvidence -and $Mode -eq 'run') { Save-HostedScaleDiagnostic 'expanded_selector' }
         $script:Stage = 'match_option'
         $rows = @(Read-Controls)
         $state = Read-Scale $rows
@@ -674,6 +687,7 @@ try {
             last_driver_extra_bytes=[HostedDisplayMode]::DiagnosticDriverExtra; last_enum_succeeded=[HostedDisplayMode]::DiagnosticEnumSucceeded}
     }
     $receipt.restoration_observations = $script:Observation.Clone()
+    if ($DiagnosticEvidence) { $receipt.diagnostic_evidence = $script:DiagnosticResults.Clone() }
     $receipt.child_termination_uncertain = Test-UncertainChildren
     $receipt.input_recovery_uncertain = Test-UncertainInput
     $receipt.disposal_required = $receipt.child_termination_uncertain -or $receipt.input_recovery_uncertain -or -not $receipt.restored
