@@ -24,3 +24,6 @@ Related: [Windows release supply chain](../releases/windows-release-supply-chain
 - [Contained source-query receipts](hosted-source-query-b5468208.json), the failed
   creation case and repaired 10/10 and 11/11 hosted results, with original receipt hashes;
   no Settings mutation or application-rendering proof is claimed.
+- [Cancellation observation contract](hosted-cancellation-contract-37095515540.json),
+  18 passing hosted cases including deliberate epoch-validation mutation;
+  this verifies evidence rules, not an installed cancellation interaction.

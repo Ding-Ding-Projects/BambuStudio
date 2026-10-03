@@ -2,6 +2,13 @@
 
 ## Latest verified state, 2026-10-03 UTC
 
+Hosted run 37095515540 passed all 18 cancellation-observation cases in 0.172 s
+at 18d6f1c3f60ec8d34d70829d3ca7e056edf244fa, including a deliberate mutation
+of the production epoch comparison. This validates the stronger driver contract,
+not installed cancellation. Reviewed startup collector acb80bee433966b6b655711fdae81e8475ae1970
+is integrated in 2f8ce41c18c7f5fb0984ac4ec9187649130ea04a. Its first hosted
+diagnostic execution remains pending. Main and cleanup are unchanged.
+
 Installed baseline runs 37094960913 (MCP), 37094962319 (vocabulary), and
 37094963874 (cancellation) failed after validated Squirrel installation at
 35d1074faea221fa4f289f1db1e0ee428a90d701. Their authenticated private runtime
