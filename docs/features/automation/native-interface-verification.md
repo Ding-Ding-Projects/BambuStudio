@@ -27,7 +27,7 @@ the exact release candidate. The checkout must be at that source commit.
 | `slice-controls` | Empty-model proof, visible disabled Slice and Print/Send controls, disabled clicks that open no dialog, named options buttons with real chevron labels, measured action layout | This is an empty-scene preflight, not proof of slicing or device continuation. |
 | `combined-print` | Native cube import, installed presets, real Slice and Print click, ready output on plate zero, existing Send print job dialog, Escape dismissal | No submit or printer selection. Missing presets, account requirements, version preflight or an unavailable dialog fail the scope. |
 | `combined-send` | Native cube import, installed presets, real Slice and Send click, ready output on plate zero, existing Send to Printer storage dialog, Escape dismissal | No transfer or physical printing. It verifies the confirmation boundary only. |
-| `cancellation` | Up to three actual combined requests followed by native clicks on the freshly rendered cancel target | Requires in-flight identity, cancellation without continuation, and an actually delivered stale completion rejected by the receiver. A timing miss returns nonzero with `not_observed`, never success. |
+| `cancellation` | Up to three actual combined requests followed by native clicks on the freshly rendered cancel target | Requires in-flight cancellation without continuation and either an observed disabled next-action overlap window or an actually rejected stale completion. The two evidence types remain separate; a timing miss returns nonzero. |
 
 The real-cube scopes copy the same checked-in STL used by `drive-automation.py`.
 They use the packaged companion only for the read-only `project_inspect` and
@@ -192,15 +192,29 @@ generation and pending action, then uses the real current rendered hit area.
 Afterward it waits at most 90 seconds for ownership release, requires the
 cancelled outcome and empty continuation, and retains the observations. Each
 subsequent trial uses the same imported model and a newer genuine slice request.
-A successful cancellation scope additionally requires an actual old-generation
-completion at the receiver, with `accepted=false` and `stale_generation`.
+The driver attempts the next action before waiting for the prior completion.
+The product intentionally disables both combined controls during worker ownership
+(`MainFrame::update_slice_print_status`, `enable_output`) and independently
+rejects another request in `Plater::priv::on_action_slice_plate`. When the
+post-cancel observation still reports ownership, the driver requires the next
+control to be disabled, clicks its real area, and checks that request identity,
+pending action and continuation remain unchanged. Positive ownership before and
+after the click is required to count this overlap invariant. A completion during
+the click leaves that attempt `not_observed`.
+
+A naturally delivered old-generation completion is separately checked for
+`accepted=false` and `stale_generation`. A successful cancellation scope needs
+explicit cancellation plus either that actual rejection or the observed disabled
+overlap invariant. The receipt always reports stale completion as `not_observed`
+when only the disabled-control invariant was observed.
 Neither injected events nor fabricated delayed work are used. A machine that
-does not produce that timing window returns `not_observed` and a nonzero exit.
+produces neither evidence window returns `not_observed` and a nonzero exit.
 A missed click, changed generation, truncated event history, unavailable target,
 failed slice, or hanging worker cannot be labelled a pass. A confirmation reached
 because slicing finished too quickly is dismissed with Escape only.
 
-These checks cover same-plate cancellation/retry and observed stale completion.
+These checks cover same-plate cancellation/retry and whichever overlap or stale
+completion evidence the receipt explicitly records.
 They do not yet prove model/config edits, plate switching, application closure
 during active work, every platform scheduler interleaving, or cancellation of a
 noninterruptible kernel. They do not submit a print or transfer to hardware.
@@ -220,3 +234,40 @@ Required hosted review, currently pending:
 
 No local build, test, native execution or capture was used to prepare this
 extension. Source review and whitespace checks are not runtime verification.
+
+## Synchronized ownership repair evidence
+
+The earlier diagnostic called `BackgroundSlicingProcess::running()`, which reads
+plain `m_state`. The worker writes `m_state` under `m_mutex` when starting,
+finishing, cancelling and exiting. Repeated UI diagnostics therefore introduced
+an unsynchronized reader. `automation_worker_running()` now acquires that same
+mutex with `std::try_to_lock`, returns `std::nullopt` on contention, and evaluates
+the state only while the RAII lock is held. It does not wait, notify, schedule,
+change state or alter the existing worker lifecycle. Existing scheduler accessors
+are unchanged by this diagnostic repair. Paint now reads only the existing atomic
+native generation through `automation_slice_native_generation()`.
+
+The serialized contract uses `workerStateKnown=false` with `workerRunning=null`
+for contention. Native observations reject inconsistent known/null pairs; the
+cancellation driver only treats exact `true` as owned and exact `false` as
+released. Unknown results receive bounded retries, never idle/success credit.
+This includes the native helper's fresh pre-click check and the post-cancel
+ownership-release loop. A helper clears its candidate rectangle before each
+attempt, so an unknown observation cannot reuse an earlier target.
+
+Focused hosted regression requirements, not executed locally:
+
+- Hold the actual background mutex from another thread while requesting the
+  diagnostic: it must return unknown without waiting for release. Release it,
+  then verify the subsequent known state matches the worker lifecycle.
+- Run repeated `project_inspect` reads during actual slicing and cancellation;
+  ensure each unknown worker state is serialized as null and never counted as
+  release or a successful disabled-window observation.
+- During actual cancellation, retain per-input images and bracket a disabled
+  next-action click with known ownership reads, or report that window unobserved.
+- Keep stale-event rejection and disabled overlap evidence separate. A disabled
+  control result never substitutes for a claim that a stale completion occurred.
+
+The first requirement still needs a native test fixture that owns the real
+mutex; no public bridge command exposes or holds it. Source lock-lifetime
+inspection is evidence for the repair, not an executed concurrency regression.

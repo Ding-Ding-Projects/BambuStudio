@@ -81,7 +81,9 @@ def native_worker(request_path: Path, output: Path):
     cancel_observation = None
     if operation == "cancel-current":
         deadline = time.monotonic() + 10
+        target = {}
         while time.monotonic() < deadline:
+            target = {}
             result = subprocess.run([request["cli"], "command", "project_inspect", "--json",
                 "--workspace", request["workspace"], "--instance", str(pid)], capture_output=True,
                 text=True, timeout=5, creationflags=subprocess.CREATE_NO_WINDOW)
@@ -704,7 +706,7 @@ class Driver:
     def cancellation(self):
         self.load_slice_fixture(stress=True)
         initial = self.workflow()
-        trials, cancelled = [], 0
+        trials, cancelled, disabled_invariants = [], 0, 0
         for attempt in range(3):
             baseline = self.workflow()
             action = "print" if attempt % 2 == 0 else "send"
@@ -732,6 +734,34 @@ class Driver:
                 generation=observed["nativeGeneration"], action=action)
             trial["input_observation"] = self.last_input.get("cancel_observation")
             require(trial["input_observation"] is not None, "Cancel input has no fresh observation")
+            # Do not wait for the old completion before trying the next action.
+            # The product deliberately disables both controls while it owns work.
+            next_caption = "Slice and Send" if action == "print" else "Slice and Print"
+            next_control = self.one(next_caption)
+            after_cancel = self.workflow()
+            trial["after_cancel"] = after_cancel
+            trial["next_action"] = {"caption": next_caption, "enabled": next_control["enabled"]}
+            if after_cancel["workerRunning"] is True:
+                require(not next_control["enabled"], "Combined action enabled while cancellation still owns the worker")
+                left, top, right, bottom = next_control["rect"]
+                require(right > left and bottom > top, "Disabled next action has no visible target")
+                self.record(f"cancel-next-disabled-{attempt}", "click", hwnd=next_control["top"],
+                            point=[(left + right) // 2, (top + bottom) // 2])
+                after_next = self.workflow()
+                trial["after_next_click"] = after_next
+                require(after_next["requestGeneration"] == observed["requestGeneration"] and
+                        after_next["continuationSequence"] == baseline["continuationSequence"] and
+                        after_next["pending"]["action"] == "none",
+                        "Disabled next-action click dispatched or armed a continuation")
+                # Bracket the actual click with positive ownership observations.
+                # If completion raced the input, no disabled-window proof is claimed.
+                if after_next["workerRunning"] is True:
+                    disabled_invariants += 1
+                    trial["next_action"]["status"] = "disabled_while_worker_owned"
+                else:
+                    trial["next_action"]["status"] = "not_observed"
+            else:
+                trial["next_action"]["status"] = "not_observed"
             deadline = time.monotonic() + 90
             while time.monotonic() < deadline:
                 finished = self.workflow()
@@ -756,19 +786,22 @@ class Driver:
                  and e["eventGeneration"] < e["currentGeneration"]]
         require(all(not e["accepted"] and e["rejection"] == "stale_generation" for e in stale),
                 "An old completion was accepted by the current receiver")
-        # A natural stale event is required, never injected or inferred from
-        # the absence of a dialog. A timing miss remains explicitly unverified.
+        # A natural stale event is reported separately from an actually observed
+        # disabled overlap invariant. Neither is inferred from an idle dialog.
         self.rows.append({"operation": "cancellation-result", "trials": trials,
             "explicit_cancel_count": cancelled, "stale_events": stale,
-            "status": "observed" if cancelled and stale else "not_observed"})
+            "disabled_overlap_count": disabled_invariants,
+            "stale_completion_status": "observed" if stale else "not_observed",
+            "overlap_status": "prevented_by_disabled_control" if disabled_invariants else "not_observed",
+            "status": "observed" if cancelled and (stale or disabled_invariants) else "not_observed"})
         # If a timing miss reached a confirmation, dismiss it without submission.
         self.worker()
         for window in self.app.windows():
             if window["class"] == "#32770" and any(self.label(title) in window.get("title", "")
                     for title in ("Send print job", "Send to Printer storage")):
                 self.key("timing-miss-dismiss", ["esc"], window["handle"])
-        require(cancelled > 0 and bool(stale),
-                "Bounded native trials did not observe both explicit cancel and a rejected stale completion")
+        require(cancelled > 0 and (bool(stale) or disabled_invariants > 0),
+                "Bounded trials observed neither a disabled overlap window nor rejected stale completion")
 
 
 def main():
