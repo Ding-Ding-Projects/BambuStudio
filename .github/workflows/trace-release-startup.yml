@@ -60,6 +60,8 @@ jobs:
             $receipt.files[$path]=(Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash.ToLowerInvariant()
           }
           try {
+            python -m pip install --disable-pip-version-check --quiet --timeout 15 --retries 1 'Pillow==11.3.0'
+            if ($LASTEXITCODE -ne 0) { throw 'Pinned contract import dependency is unavailable.' }
             python scripts/md3/test-trace-packaged-startup.py
             if ($LASTEXITCODE -ne 0) { throw 'Python contract failed.' }
             Add-Type -Path scripts/ci/HostedScaleProcess.cs
