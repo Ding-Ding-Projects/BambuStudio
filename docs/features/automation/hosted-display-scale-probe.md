@@ -578,6 +578,16 @@ staging directory is retained privately on failure. Integrity verification does
 not authorize publication or establish visible scale behavior. This administrative
 helper has not been executed locally by its implementation lane.
 
+The first administrative opening of `before_selector` from run `37094061673`
+reported only the reader's generic validation failure and published no output.
+The reader now reports one fixed phase distinguishing envelope parsing/binding,
+authentication, protected custody, inventory structure, PNG verification and
+atomic output. Phase values are source literals; no input value, exception text,
+private identity, key material or control label is included. All validation and
+output conditions are unchanged. This diagnostic change requires independent
+review before an administrative retry; the original ciphertext remains intact,
+and pixel review is still unverified.
+
 Two additional hosted lifecycle cases load the exact production tuple and
 input-recovery functions from the parsed source, without executing the display
 supervisor. They reject unsupported combined tuples, absent or mismatched

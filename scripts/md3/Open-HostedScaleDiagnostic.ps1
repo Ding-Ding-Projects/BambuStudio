@@ -106,65 +106,91 @@ function Same-Binding($Left,$Right) {
     foreach ($property in $Left.PSObject.Properties) { Require ($property.Value -ceq $Right.($property.Name)) }
 }
 $rsa = $null; $privateBytes = $null; $key = $null; $plain = $null; $pixels = $null; $stage = $null
+$validationPhase = 'output_boundary'
 try {
     $final = Plain-Path $OutputDirectory
     $parent = [IO.Path]::GetDirectoryName($final)
     Require ((Test-Path -LiteralPath $parent -PathType Container) -and -not (Test-Path -LiteralPath $final))
+    $validationPhase = 'envelope_parse'
     $envelope = Parse-Json (Read-Bounded $EnvelopePath 32768)
+    $validationPhase = 'envelope_schema'
     Fields $envelope @('schema','protocol','recipient','recipient_sha256','aad_base64','binding','wrapped_key','nonce','tag','ciphertext_sha256')
     foreach ($name in @('protocol','recipient','recipient_sha256','aad_base64','wrapped_key','nonce','tag','ciphertext_sha256')) {
         Require ($envelope.$name -is [string])
     }
     Integer $envelope.schema 1 1
     Require ($envelope.protocol -ceq 'hosted-scale-diagnostic-v1' -and $envelope.recipient -ceq 'hosted-automation-public-v1.pem')
+    $validationPhase = 'envelope_binding'
     Binding $envelope.binding
+    $validationPhase = 'envelope_hash_fields'
     foreach ($name in @('recipient_sha256','ciphertext_sha256')) { Require ($envelope.$name -cmatch '^[0-9a-f]{64}$') }
+    $validationPhase = 'aad_decode'
     $aad = [Convert]::FromBase64String($envelope.aad_base64)
     Require ($aad.Length -gt 0 -and $aad.Length -le 8192)
+    $validationPhase = 'aad_parse'
     $authenticatedBinding = Parse-Json $aad
+    $validationPhase = 'aad_binding'
     Same-Binding $authenticatedBinding $envelope.binding
+    $validationPhase = 'ciphertext_hash'
     $cipher = Read-Bounded $BundlePath 16777216
     Require ((Hash-Bytes $cipher) -ceq $envelope.ciphertext_sha256)
+    $validationPhase = 'encryption_parameters'
     $nonce = [Convert]::FromBase64String($envelope.nonce); $tag = [Convert]::FromBase64String($envelope.tag)
     $wrapped = [Convert]::FromBase64String($envelope.wrapped_key)
     Require ($nonce.Length -eq 12 -and $tag.Length -eq 16 -and $wrapped.Length -le 1024)
+    $validationPhase = 'recipient_public_binding'
     $rsa = [Security.Cryptography.RSA]::Create()
     $rsa.ImportFromPem([Text.Encoding]::UTF8.GetString((Read-Bounded (Join-Path $PSScriptRoot 'hosted-automation-public-v1.pem') 16384)))
     $keyId = Hash-Bytes ($rsa.ExportSubjectPublicKeyInfo())
     Require ($keyId -ceq $envelope.recipient_sha256 -and $wrapped.Length -eq ($rsa.KeySize/8))
+    $validationPhase = 'protected_custody'
     $privatePath = Join-Path $env:LOCALAPPDATA ("BambuStudio/HostedAutomationEvidence/keys/$keyId.dpapi")
     $privateBytes = [Security.Cryptography.ProtectedData]::Unprotect((Read-Bounded $privatePath 32768),$null,[Security.Cryptography.DataProtectionScope]::CurrentUser)
+    $validationPhase = 'private_recipient_binding'
     $read = 0; $rsa.ImportPkcs8PrivateKey($privateBytes,[ref]$read)
     Require ($read -eq $privateBytes.Length -and (Hash-Bytes ($rsa.ExportSubjectPublicKeyInfo())) -ceq $keyId)
+    $validationPhase = 'key_unwrap'
     $key = $rsa.Decrypt($wrapped,[Security.Cryptography.RSAEncryptionPadding]::OaepSHA256)
     Require ($key.Length -eq 32)
+    $validationPhase = 'authenticated_decryption'
     $plain = [byte[]]::new($cipher.Length)
     $aes = [Security.Cryptography.AesGcm]::new($key,16)
     try { $aes.Decrypt($nonce,$cipher,$tag,$plain,$aad) } finally { $aes.Dispose() }
+    $validationPhase = 'inventory_parse'
     $inventory = Parse-Json $plain
+    $validationPhase = 'inventory_schema'
     Fields $inventory @('schema','binding','observed_at_utc','settings_pid','settings_start','owned_root','bounds',
         'foreground_owned','settings_dpi','selected_percent','controls','png_base64')
     Integer $inventory.schema 1 1
+    $validationPhase = 'inventory_binding'
     Same-Binding $inventory.binding $authenticatedBinding
+    $validationPhase = 'inventory_timestamps'
     Require ($inventory.observed_at_utc -is [string] -and $inventory.observed_at_utc -cmatch '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{7}Z$')
     $observed = Timestamp $inventory.observed_at_utc
     Require ($observed -le (Timestamp $inventory.binding.captured_at_utc))
+    $validationPhase = 'inventory_identity_and_scale'
     Integer $inventory.settings_pid 1 4294967295; Integer $inventory.settings_start 1 ([long]::MaxValue)
     Integer $inventory.owned_root 1 ([long]::MaxValue); Integer $inventory.settings_dpi 96 192
     Integer $inventory.selected_percent 100 200
     Require ($inventory.foreground_owned -is [bool] -and $inventory.selected_percent -in @(100,125,150,200))
+    $validationPhase = 'inventory_frame'
     Rect $inventory.bounds
     Require (($inventory.bounds[2]-$inventory.bounds[0]) -eq $inventory.binding.width -and
         ($inventory.bounds[3]-$inventory.bounds[1]) -eq $inventory.binding.height)
+    $validationPhase = 'control_count'
     Require ($inventory.controls -is [array] -and $inventory.controls.Count -le 1000)
     foreach ($control in $inventory.controls) {
+        $validationPhase = 'control_schema'
         Fields $control @('name','automation_id','type','enabled','offscreen','rect','patterns','scroll')
         foreach ($name in @('name','automation_id','type')) { Require ($control.$name -is [string] -and $control.$name.Length -le 2048) }
         Require ($control.enabled -is [bool] -and $control.offscreen -is [bool])
+        $validationPhase = 'control_rectangle'
         Rect $control.rect
+        $validationPhase = 'control_patterns'
         Require ($control.patterns -is [array] -and $control.patterns.Count -le 32)
         foreach ($pattern in $control.patterns) { Require ($pattern -is [string] -and $pattern.Length -le 256) }
         if ($null -ne $control.scroll) {
+            $validationPhase = 'control_scroll'
             Fields $control.scroll @('horizontal','vertical','horizontal_percent','vertical_percent','horizontal_view','vertical_view')
             Require ($control.scroll.horizontal -is [bool] -and $control.scroll.vertical -is [bool])
             foreach ($name in @('horizontal_percent','vertical_percent','horizontal_view','vertical_view')) {
@@ -174,22 +200,27 @@ try {
             }
         }
     }
+    $validationPhase = 'png_decode_and_hash'
     Require ($inventory.png_base64 -is [string] -and $inventory.png_base64.Length -le 11184812)
     $pixels = [Convert]::FromBase64String($inventory.png_base64)
     Require ($pixels.Length -ge 45 -and $pixels.Length -le 8388608 -and (Hash-Bytes $pixels) -ceq $inventory.binding.png_sha256)
+    $validationPhase = 'png_header'
     Require ([Convert]::ToHexString($pixels[0..7]) -ceq '89504E470D0A1A0A' -and
         [Convert]::ToHexString($pixels[8..11]) -ceq '0000000D' -and [Text.Encoding]::ASCII.GetString($pixels,12,4) -ceq 'IHDR')
+    $validationPhase = 'png_dimensions_and_end'
     $width = [uint32]$pixels[16]*16777216+[uint32]$pixels[17]*65536+[uint32]$pixels[18]*256+$pixels[19]
     $height = [uint32]$pixels[20]*16777216+[uint32]$pixels[21]*65536+[uint32]$pixels[22]*256+$pixels[23]
     Require ($width -eq $inventory.binding.width -and $height -eq $inventory.binding.height)
     Require ([Convert]::ToHexString($pixels[($pixels.Length-12)..($pixels.Length-1)]) -ceq '0000000049454E44AE426082')
     # All authentication, bindings and bounded structure checks precede writes.
+    $validationPhase = 'output_staging'
     [void](Plain-Path $final)
     Require (-not (Test-Path -LiteralPath $final))
     $stage = Join-Path $parent ('.scale-diagnostic-stage-' + [Guid]::NewGuid().ToString('N'))
     Require (-not (Test-Path -LiteralPath $stage))
     [void][IO.Directory]::CreateDirectory($stage)
     [void](Plain-Path $stage)
+    $validationPhase = 'output_files'
     Write-NewFile (Join-Path $stage 'capture.png') $pixels
     $inventory.PSObject.Properties.Remove('png_base64')
     Write-NewFile (Join-Path $stage 'private-inventory.json') ([Text.Encoding]::UTF8.GetBytes(($inventory | ConvertTo-Json -Depth 16)))
@@ -198,11 +229,13 @@ try {
         publication='not_authorized'; png_sha256=$inventory.binding.png_sha256; width=$width; height=$height
     } | ConvertTo-Json
     Write-NewFile (Join-Path $stage 'validation.json') ([Text.Encoding]::UTF8.GetBytes($validation))
+    $validationPhase = 'output_publish'
     [void](Plain-Path $final); Require (-not (Test-Path -LiteralPath $final))
     [IO.Directory]::Move($stage,$final); $stage = $null
     Write-Host 'Scale diagnostic integrity verified. Pixel and privacy review remain unverified; publication is not authorized.'
 } catch {
-    throw 'Scale diagnostic validation or protected-key access failed; no output was published.'
+    # This variable is assigned fixed literals only, never exception or input data.
+    throw ('Scale diagnostic opening failed at fixed phase: ' + $validationPhase + '. No output was published.')
 } finally {
     if ($null -ne $rsa) { $rsa.Dispose() }
     foreach ($bytes in @($privateBytes,$key,$plain,$pixels)) {
