@@ -2,6 +2,21 @@
 
 ## Latest verified state, 2026-10-03 UTC
 
+Installed baseline runs 37094960913 (MCP), 37094962319 (vocabulary), and
+37094963874 (cancellation) failed after validated Squirrel installation at
+35d1074faea221fa4f289f1db1e0ee428a90d701. Their authenticated private runtime
+receipts report the same startup ownership exception before any interaction or
+capture, with verified teardown. This does not establish a feature defect.
+Bounded encrypted startup diagnostics are being added without relaxing ownership
+or timeouts. Cancellation evidence also needs independently reviewed correlation
+with the post-cancel native epoch and a newly accepted completion event.
+
+Read-only Colors discovery 37095094318 at 99ace4b670af24d34c1ba6761b59256ae5e71cb6
+returned 130 controls, no display mutation and verified teardown. Its deliberate
+unavailable exit is not a provisioning success. Reader 5211a57bd68320856f90d297b02ad146b13f4a2f
+authenticated the private inventory against exact run, source, destination and
+probe hash. Positive destination recognition remains under review.
+
 Hosted lifecycle run [37094628859](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37094628859)
 passed 11/11 cases in 13615 ms at `b282a05c14c54c8063f31f38b2605bbd8b9206b6`.
 The receipt confirms `cleanup_verified=true` and `settings_mutated=false`.
@@ -31,8 +46,8 @@ The non-draft release `md3-v190` targets tag/source
 `35d1074faea221fa4f289f1db1e0ee428a90d701`, with all five assets uploaded.
 `Setup.exe` is 770881024 bytes, SHA-256
 `22cc03323daf30af64d5d426d5494bf53fe928c3d7c28a9e0367d3bd7c6575c3`.
-Installed verification is pending: MCP run `37094960913`, vocabulary run
-`37094962319`, and cancellation run `37094963874`. Dispatch uses `b282a05c1`,
+The three installed runs above failed at shared startup before interaction.
+Dispatch used `b282a05c1`,
 but the workflow explicitly checks out the expected verifier source `35d1074fa`.
 This package does not contain the minimum-resize scope, which awaits a newer
 matching package. Uploaded release assets are not installed verification success.
