@@ -1153,6 +1153,8 @@ void IMSlider::draw_tick_on_mouse_position(const ImRect& slideable_region) {
 }
 
 void IMSlider::show_tooltip(const std::string tooltip) {
+    ImGuiWrapper &imgui = *wxGetApp().imgui();
+    const ImGuiID source = imgui.tooltip_source_id();
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 6 * m_scale, 3 * m_scale });
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, { 3 * m_scale });
     ImGui::PushStyleColor(ImGuiCol_PopupBg, preview_color(MD3::Role::SurfaceContainer, m_is_dark));
@@ -1160,6 +1162,7 @@ void IMSlider::show_tooltip(const std::string tooltip) {
     ImGui::PushStyleColor(ImGuiCol_Text, preview_color(MD3::Role::OnSurface, m_is_dark));
     ImGui::BeginTooltip();
     ImGui::TextUnformatted(tooltip.c_str());
+    imgui.tooltip_decoration(source, tooltip.c_str(), ImGui::GetColorU32(preview_color(MD3::Role::Primary, m_is_dark)));
     ImGui::EndTooltip();
     ImGui::PopStyleColor(3);
     ImGui::PopStyleVar(2);

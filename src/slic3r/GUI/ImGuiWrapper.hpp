@@ -87,6 +87,8 @@ class ImGuiWrapper
     struct PopupMotion { double started = 0.0; int frame = -1; };
     std::map<std::pair<ImGuiID, ImGuiID>, PopupMotion> m_popup_motion;
     void *m_popup_motion_context = nullptr;
+    std::map<std::pair<ImGuiID, ImGuiID>, PopupMotion> m_tooltip_motion;
+    void *m_tooltip_motion_context = nullptr;
 #if ENABLE_ENHANCED_IMGUI_SLIDER_FLOAT
     bool m_requires_extra_frame{ false };
 #endif // ENABLE_ENHANCED_IMGUI_SLIDER_FLOAT
@@ -212,6 +214,9 @@ public:
     void tooltip(const char *label, float wrap_width);
     void tooltip(const std::string &label, float wrap_width);
     void tooltip(const wxString &label, float wrap_width);
+    // Read source identity before BeginTooltip; decorate after its text item.
+    ImGuiID tooltip_source_id() const;
+    void tooltip_decoration(ImGuiID source_id, const char *content, ImU32 color);
     void filament_group(const std::string &filament_type, const char *hex_color, unsigned char filament_id, float align_width);
 
     // text size and is_multi_line

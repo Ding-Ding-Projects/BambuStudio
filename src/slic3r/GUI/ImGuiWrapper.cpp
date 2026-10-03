@@ -992,6 +992,16 @@ void ImGuiWrapper::render()
         if (it->second.frame != context.FrameCount) it = m_popup_motion.erase(it);
         else ++it;
     }
+    // No tooltip owns a timer. Forget hidden identities at the end of the same
+    // frame, so a later appearance starts a new decorative transition.
+    if (m_tooltip_motion_context != &context) {
+        m_tooltip_motion.clear();
+        m_tooltip_motion_context = &context;
+    }
+    for (auto it = m_tooltip_motion.begin(); it != m_tooltip_motion.end();) {
+        if (it->second.frame != context.FrameCount) it = m_tooltip_motion.erase(it);
+        else ++it;
+    }
 #endif
     render_draw_data(ImGui::GetDrawData());
     m_new_frame_open = false;
@@ -1554,13 +1564,76 @@ void ImGuiWrapper::text_wrapped(const wxString &label, float wrap_width)
 void ImGuiWrapper::tooltip(const char *label, float wrap_width)
 {
     const std::string display = bilingual_stacked_utf8(label);
+    const ImGuiID source = tooltip_source_id();
     ImGui::BeginTooltip();
     ImGui::PushTextWrapPos(wrap_width);
     ImGui::PushStyleColor(ImGuiCol_Text, md3_imgui_color(MD3::Role::InverseOn)); // tooltip plate is InverseSurface
     ImGui::TextUnformatted(display.c_str());
+    tooltip_decoration(source, display.c_str(), ImGui::GetColorU32(md3_imgui_color(MD3::Role::InversePrimary)));
     ImGui::PopStyleColor(1);
     ImGui::PopTextWrapPos();
     ImGui::EndTooltip();
+}
+
+ImGuiID ImGuiWrapper::tooltip_source_id() const
+{
+    // Tooltip windows are recycled. Bind the timeline to the invoking window
+    // and item, including the real item rectangle for manual zero-ID items.
+    const ImGuiID owner = ImGui::GetCurrentWindow()->ID;
+    const ImGuiID item = ImGui::GetItemID();
+    if (item != 0)
+        return ImHashData(&item, sizeof(item), owner);
+    const ImVec2 bounds[] = {ImGui::GetItemRectMin(), ImGui::GetItemRectMax()};
+    return ImHashData(bounds, sizeof(bounds), owner);
+}
+
+void ImGuiWrapper::tooltip_decoration(ImGuiID source_id, const char *content, ImU32 color)
+{
+#if ENABLE_ENHANCED_IMGUI_SLIDER_FLOAT
+    auto *window = ImGui::GetCurrentWindow();
+    auto &context = *ImGui::GetCurrentContext();
+    if (!(window->Flags & ImGuiWindowFlags_Tooltip) || !window->Active ||
+        window->Hidden || window->SkipItems || !content || !*content)
+        return;
+    if (m_tooltip_motion_context != &context) {
+        m_tooltip_motion.clear();
+        m_tooltip_motion_context = &context;
+    }
+    const auto key = std::make_pair(source_id, ImHashStr(content));
+    auto found = m_tooltip_motion.find(key);
+    if (found == m_tooltip_motion.end()) {
+        if (m_tooltip_motion.size() >= 128) return;
+        found = m_tooltip_motion.emplace(key, PopupMotion{context.Time, context.FrameCount - 1}).first;
+    }
+    auto &motion = found->second;
+    if (motion.frame == context.FrameCount) return;
+    if (motion.frame < context.FrameCount - 1 || window->Appearing || context.Time < motion.started)
+        motion.started = context.Time;
+    motion.frame = context.FrameCount;
+    const bool reduced = MD3::Motion::reduced();
+    if (reduced) motion.started = context.Time - 1.0;
+    const double elapsed = std::max(0.0, context.Time - motion.started);
+    const double progress = reduced ? 1.0 : MD3::Motion::easeStandard(std::clamp(elapsed / 0.1, 0.0, 1.0));
+
+    // Paint inside existing padding, outside the text item. Never change text
+    // alpha, the tooltip plate, layout, hitboxes, or hover/dismissal timing.
+    const ImVec2 text_min = ImGui::GetItemRectMin();
+    const ImVec2 text_max = ImGui::GetItemRectMax();
+    const float padding = window->WindowPadding.x;
+    // This ImGui version clips content at half the padding. Use only the
+    // remaining inner half, so decoration stays visible without widening clips.
+    const float width = std::min(padding * 0.2f, std::max(1.0f, m_style_scaling));
+    const float left = text_min.x - padding * 0.4f;
+    const float height = text_max.y - text_min.y;
+    if (padding < 2.0f || width <= 0.0f || height <= 0.0f) return;
+    const float length = std::min(height, 2.0f + float(progress) * std::max(0.0f, height - 2.0f));
+    window->DrawList->AddRectFilled(ImVec2(left, text_min.y), ImVec2(left + width, text_min.y + length), color);
+    if (!reduced && elapsed < 0.1) set_requires_extra_frame();
+#else
+    (void) source_id;
+    (void) content;
+    (void) color;
+#endif
 }
 
 void ImGuiWrapper::tooltip(const std::string &label, float wrap_width) {
