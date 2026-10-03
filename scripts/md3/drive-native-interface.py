@@ -38,6 +38,52 @@ def require(value, message):
         raise RuntimeError(message)
 
 
+def select_cancel_observation(read_workflow, generation, action, clock, sleep, timeout=10):
+    """Select a fresh read-only target; timeout never authorizes native input.
+
+    Clock/read injection lets focused tests exercise this exact selection path
+    without loading Windows providers or substituting the application interface.
+    """
+    deadline = clock() + timeout
+    target, observation, observed_at = None, None, None
+    fresh_observation = False
+    while clock() < deadline:
+        target, observation, observed_at = None, None, None
+        read_started = clock()
+        candidate = read_workflow()
+        now = clock()
+        if now >= deadline:
+            break
+        if candidate.get("workerStateKnown") is not True:
+            sleep(0.05)
+            continue
+        require(candidate.get("nativeGeneration") == generation and
+                candidate.get("outcome") == "running" and candidate.get("workerRunning") is True and
+                candidate.get("pending", {}).get("action") == action,
+                "In-flight generation ended before cancellation input")
+        rendered = candidate.get("cancelTarget", {})
+        age = rendered.get("ageMs")
+        if (rendered.get("visible") is True and isinstance(age, (int, float)) and
+                0 <= age and age + (now - read_started) * 1000 <= 500 and
+                rendered.get("nativeGeneration") == generation and
+                rendered.get("coordinateSpace") == "screen-pixels"):
+            rect, canvas = rendered.get("rect"), rendered.get("canvasRect")
+            require(isinstance(rect, list) and len(rect) == 4 and
+                    isinstance(canvas, list) and len(canvas) == 4,
+                    "Rendered cancel target geometry unavailable")
+            left, top, right, bottom = rect
+            cl, ct, cr, cb = canvas
+            require(cl <= left < right <= cr and ct <= top < bottom <= cb,
+                    "Rendered cancel target is outside the canvas")
+            target, observation, observed_at = rendered, candidate, read_started
+            fresh_observation = True
+            break
+        sleep(0.05)
+    require(fresh_observation and target is not None,
+            "Rendered cancel target was not freshly observed within the bounded interval")
+    return observation, target, observed_at
+
+
 def native_worker(request_path: Path, output: Path):
     """Run on the owned desktop, including the cheap CLI's keyboard targeting.
 
@@ -79,11 +125,9 @@ def native_worker(request_path: Path, output: Path):
         user.GetWindowThreadProcessId(hwnd, ctypes.byref(actual))
         require(actual.value == pid, "Keyboard focus left the owned process")
     cancel_observation = None
+    native_input_target = None
     if operation == "cancel-current":
-        deadline = time.monotonic() + 10
-        target = {}
-        while time.monotonic() < deadline:
-            target = {}
+        def read_workflow():
             result = subprocess.run([request["cli"], "command", "project_inspect", "--json",
                 "--workspace", request["workspace"], "--instance", str(pid)], capture_output=True,
                 text=True, timeout=5, creationflags=subprocess.CREATE_NO_WINDOW)
@@ -91,26 +135,11 @@ def native_worker(request_path: Path, output: Path):
                     "Fresh cancellation observation unavailable")
             response = json.loads(result.stdout)
             require(response.get("ok") is True, "Fresh cancellation observation rejected")
-            w = response["result"].get("sliceWorkflow", {})
-            if w.get("workerStateKnown") is not True:
-                time.sleep(0.05)
-                continue
-            require(w.get("nativeGeneration") == request["generation"] and
-                    w.get("outcome") == "running" and w.get("workerRunning") is True and
-                    w.get("pending", {}).get("action") == request["action"],
-                    "In-flight generation ended before cancellation input")
-            target = w.get("cancelTarget", {})
-            if (target.get("visible") and target.get("ageMs", 501) <= 500 and
-                    target.get("nativeGeneration") == request["generation"]):
-                break
-            time.sleep(0.05)
-        require(target.get("visible") is True and target.get("coordinateSpace") == "screen-pixels",
-                "Rendered cancel target was not observed within the bounded interval")
+            return response["result"].get("sliceWorkflow", {})
+
+        w, target, observed_at = select_cancel_observation(read_workflow,
+            request["generation"], request["action"], time.monotonic, time.sleep)
         left, top, right, bottom = target["rect"]
-        cl, ct, cr, cb = target["canvasRect"]
-        require(cl <= left < right <= cr and ct <= top < bottom <= cb and
-                target.get("nativeGeneration") == request["generation"],
-                "Rendered cancel target identity or bounds changed")
         x, y = round((left + right) / 2), round((top + bottom) / 2)
         # Resolve the actual owned native child under the freshly observed point.
         # Sending canvas input to a top-level frame would not exercise the control.
@@ -137,9 +166,34 @@ def native_worker(request_path: Path, output: Path):
                 "Rendered cancel target does not match the native canvas")
         point = wintypes.POINT(x, y)
         require(user.ScreenToClient(hwnd, ctypes.byref(point)), "Cancel coordinate conversion failed")
+        require(target["ageMs"] + (time.monotonic() - observed_at) * 1000 <= 500,
+                "Rendered cancel target expired before native input")
         cheap("mouse_click", hwnd=hwnd, x=point.x, y=point.y, button="left")
         cancel_observation = w
-    elif operation == "click":
+    elif operation in ("click", "click-disabled-control"):
+        if operation == "click-disabled-control":
+            # Resolve by actual native geometry, including disabled children.
+            # CWP_SKIPDISABLED would incorrectly send input to the parent.
+            user.ChildWindowFromPointEx.argtypes = [wintypes.HWND, wintypes.POINT, wintypes.UINT]
+            user.ChildWindowFromPointEx.restype = wintypes.HWND
+            for _ in range(32):
+                point = wintypes.POINT(*request["point"])
+                require(user.ScreenToClient(hwnd, ctypes.byref(point)), "Control coordinate conversion failed")
+                child = user.ChildWindowFromPointEx(hwnd, point, 0x0001 | 0x0004)
+                if not child or child == hwnd:
+                    break
+                hwnd = child
+            user.GetWindowThreadProcessId(hwnd, ctypes.byref(actual))
+            require(actual.value == pid, "Disabled input target left the owned process")
+            user.GetWindowRect.argtypes = [wintypes.HWND, ctypes.POINTER(wintypes.RECT)]
+            user.IsWindowEnabled.argtypes = [wintypes.HWND]
+            bounds = wintypes.RECT()
+            require(user.GetWindowRect(hwnd, ctypes.byref(bounds)), "Native control geometry unavailable")
+            rect = [bounds.left, bounds.top, bounds.right, bounds.bottom]
+            require(all(abs(a - b) <= 1 for a, b in zip(rect, request["target_rect"])) and
+                    not user.IsWindowEnabled(hwnd),
+                    "Disabled native child does not match the observed control")
+            native_input_target = {"hwnd": hwnd, "pid": pid, "rect": rect, "enabled": False}
         point = wintypes.POINT(*request["point"])
         require(user.ScreenToClient(hwnd, ctypes.byref(point)), "No client coordinate conversion")
         cheap("mouse_click", hwnd=hwnd, x=point.x, y=point.y, button=request.get("button", "left"))
@@ -158,7 +212,8 @@ def native_worker(request_path: Path, output: Path):
     if operation != "observe":
         # A click can create or destroy a top level. The controller re-enumerates
         # owned windows before a separate observation, without replaying input.
-        atomic_json(output, {"pid": pid, "rows": [], "cancel_observation": cancel_observation})
+        atomic_json(output, {"pid": pid, "rows": [], "cancel_observation": cancel_observation,
+                             "native_input_target": native_input_target})
         return
     comtypes.client.GetModule("UIAutomationCore.dll")
     from comtypes.gen.UIAutomationClient import CUIAutomation, IUIAutomation, IUIAutomationValuePattern
@@ -337,6 +392,8 @@ class Driver:
                "elapsed_ms": round((time.monotonic() - started) * 1000), "tuple": header,
                "before_focus": before_focus, "native": [r for r in self.native if not r["offscreen"]], "overflow": overflow,
                "capture": self.capture(label, image_handle)}
+        if operation != "observe" and self.last_input.get("native_input_target") is not None:
+            row["native_input_target"] = self.last_input["native_input_target"]
         self.rows.append(row)
         return row
 
@@ -745,8 +802,9 @@ class Driver:
                 require(not next_control["enabled"], "Combined action enabled while cancellation still owns the worker")
                 left, top, right, bottom = next_control["rect"]
                 require(right > left and bottom > top, "Disabled next action has no visible target")
-                self.record(f"cancel-next-disabled-{attempt}", "click", hwnd=next_control["top"],
-                            point=[(left + right) // 2, (top + bottom) // 2])
+                self.record(f"cancel-next-disabled-{attempt}", "click-disabled-control", hwnd=next_control["top"],
+                            point=[(left + right) // 2, (top + bottom) // 2],
+                            target_rect=next_control["rect"])
                 after_next = self.workflow()
                 trial["after_next_click"] = after_next
                 require(after_next["requestGeneration"] == observed["requestGeneration"] and

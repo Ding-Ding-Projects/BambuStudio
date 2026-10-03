@@ -271,3 +271,38 @@ Focused hosted regression requirements, not executed locally:
 The first requirement still needs a native test fixture that owns the real
 mutex; no public bridge command exposes or holds it. Source lock-lifetime
 inspection is evidence for the repair, not an executed concurrency regression.
+
+## Fresh target timeout regression
+
+`select_cancel_observation` is the exact selection helper called by the native
+cancel-input path. It initializes an empty target and a false freshness flag,
+clears candidates on every iteration, and returns only after a complete valid
+observation sets that flag. Unknown-only observations, an expired target followed
+by unknown state, and a response arriving after the deadline cannot authorize
+input. The target age includes the observation transport time, and native input
+checks age again after resolving canvas ownership and geometry.
+
+`scripts/md3/test_native_cancel_observation.py` loads only `require` and
+`select_cancel_observation` from the driver's AST. It executes production
+selection logic with a deterministic observation clock, without importing native
+providers or loading an application. Seven cases cover unknown-only timeout,
+stale-then-unknown, invalid coordinate space followed by unknown, fresh success,
+read-deadline overrun, transport-age expiry, and changed generation. The tests
+check that the caller's input boundary is never reached for rejected selections.
+They do not claim native input delivery or real product execution evidence.
+
+Execute on the hosted verification runner only:
+
+```powershell
+python scripts/md3/test_native_cancel_observation.py -v
+```
+
+The disabled next-action path now resolves the actual native child beneath the
+observed control point, including disabled children. It requires the child's
+owning process, native screen rectangle and disabled state to match the observed
+control before the low-level click. A missing native child or differing geometry
+fails the observation; no parent-window input is substituted. The retained
+per-input capture and subsequent unchanged workflow identity remain required.
+
+These added regressions and native input changes are source-complete but have
+not been executed locally. Hosted results remain pending.
