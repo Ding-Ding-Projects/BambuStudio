@@ -123,7 +123,7 @@ encrypted pixel review and interactive clamp evidence remain pending.
 requires an already opened Display Settings surface and the existing pinned
 `lowlevel-computer-use-cheap` executable. UI Automation only reads the observed
 `SystemSettings_Display_Scaling_ItemSizeOverride_ComboBox`, its selected value,
-and supported predefined items. All input uses HWND-targeted cheap mouse clicks,
+and supported predefined items. Default input uses HWND-targeted cheap mouse clicks,
 after live process, session, desktop, enabled-state and geometry checks. Missing
 or ambiguous targets produce an unavailable result without speculative input.
 
@@ -168,3 +168,52 @@ session identities. Internal `child-*.pending*` lifecycle markers are also exclu
 from publication. The helper forwards no raw child output or UI labels. A source
 syntax parse is not hosted execution; standalone provisioning remains unverified
 until its selection, native DPI and restoration receipts pass independent review.
+
+Selection diagnostics retain a fixed failure-stage name independently from the
+restoration failure-stage name. The helper observes the combo's read-only
+`ExpandCollapsePattern` for at most three seconds after input and requires an
+expanded state before resolving an option. Fixed scalar observations record the
+input target category, cheap exit and termination verdict, expansion state and
+matching option count. Successful restoration cannot replace those observations.
+These receipts distinguish an input acknowledgement from an observed transition;
+they do not establish that posted mouse messages changed Display Settings.
+
+The explicit `-InputRoute hosted-foreground` option instead uses the existing
+cheap absolute-coordinate mouse input on a wholly disposable GitHub-hosted
+Windows machine. It is unavailable on a local or personal desktop. It requires
+the actual input desktop and helper thread to be `WinSta0\Default`, Settings to
+already own the foreground root, and the target point to resolve to the same
+owned root and process. Live process start identities and fresh enabled UIA
+geometry are rechecked before input; foreground and point ownership are checked
+again afterward. No window is automatically activated. Expansion and selected
+value/DPI observations are still mandatory, and restoration repeats the same
+ownership checks. An uncertain child termination still prohibits restoration.
+
+This foreground route is deliberately non-atomic: another foreground change
+between the final check and the separate cheap CLI's input remains possible.
+The complete disposable-host scope, not an atomic HWND guarantee, bounds that
+limitation. Receipts explicitly record the route and `foreground_input_atomic`
+as false. A changed desktop, obscured point, missing foreground ownership or
+unobserved semantic transition produces unavailable evidence, never success.
+
+## Prepared native-runtime integration, not enabled
+
+`run-scaled-native-interface.py` is an unwired fixed adapter for the existing
+native driver. Its bounded request rejects unknown and duplicate fields and
+contains predefined choices and hashes rather than executable or script paths.
+All paths derive from the current hosted invocation and reject reparse points.
+The adapter preserves the driver's actual window-DPI checks and owned process
+and desktop teardown. It additionally queries actual holder and product PIDs
+against the exact named Job, including product PIDs adopted after restart.
+
+The optional `HostedScaleProcess.RunNamed` entry point creates a fresh random
+256-bit Job name with query-only SID and OWNER RIGHTS entries. The existing
+unnamed entry point is unchanged. Query handles are short-lived and closed in
+`finally`; explicit termination and zero-active-process proof remain mandatory.
+This access restriction is not a hostile same-user or privileged-code sandbox.
+The hosted lifecycle script now has six bounded cases, including real positive
+membership queries and negative assignment, termination, configuration and owner
+security access attempts. Source preparation does not mean these new checks have
+passed. The adapter has no caller until those checks and standalone scaling are
+verified. Product execution under a provisioned scale and pixel review remain
+unverified.

@@ -3,6 +3,7 @@ param(
     [Parameter(Mandatory)][ValidateSet(100,125,150,200)][int] $ScalePercent,
     [Parameter(Mandatory)][string] $OutputDirectory,
     [Parameter(Mandatory)][string] $CheapExecutable,
+    [ValidateSet('background','hosted-foreground')][string] $InputRoute = 'background',
     [ValidateSet('supervisor','run','restore')][string] $Mode = 'supervisor'
 )
 $ErrorActionPreference = 'Stop'
@@ -59,7 +60,7 @@ if ($Mode -eq 'supervisor') {
     $recovery = @{ terminated = $true; code = 0 }
     try {
         $arguments = @('-NoProfile','-File',$PSCommandPath,'-ScalePercent',"$ScalePercent",
-            '-OutputDirectory',$output,'-CheapExecutable',$CheapExecutable,'-Mode','run')
+            '-OutputDirectory',$output,'-CheapExecutable',$CheapExecutable,'-InputRoute',$InputRoute,'-Mode','run')
         $run = Invoke-BoundedProcess $pwsh $arguments 120
     } catch {} finally {
         # The durable original state exists before the first input. Recovery is
@@ -68,7 +69,7 @@ if ($Mode -eq 'supervisor') {
             try {
                 $recovery = Invoke-BoundedProcess $pwsh @('-NoProfile','-File',$PSCommandPath,
                     '-ScalePercent',"$ScalePercent",'-OutputDirectory',$output,
-                    '-CheapExecutable',$CheapExecutable,'-Mode','restore') 60
+                    '-CheapExecutable',$CheapExecutable,'-InputRoute',$InputRoute,'-Mode','restore') 60
             } catch { $recovery = @{ terminated = $false; code = -1 } }
         } elseif (-not $run.terminated -or (Test-UncertainChildren)) {
             $recovery = @{ terminated = $false; code = -1 }
@@ -78,6 +79,7 @@ if ($Mode -eq 'supervisor') {
         $success = $run.terminated -and $run.code -eq 0 -and $restored
         @{schema=1; status=$(if ($success) {'verified_settings_scale_and_restoration'} else {'unavailable'})
           requested_scale=$ScalePercent; worker_termination_verified=$run.terminated
+          input_route=$InputRoute; foreground_input_atomic=$false
           recovery_termination_verified=$recovery.terminated; restoration_verified=$restored
           child_termination_uncertain=$uncertain; process_containment='suspended_start_nonbreakaway_job'
           target_application_dpi='requires_independent_runtime_measurement'
@@ -107,6 +109,12 @@ public static class ScaleNative {
   [DllImport("user32.dll")] public static extern uint GetDpiForWindow(IntPtr h);
   [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr h,out RECT r);
   [DllImport("user32.dll")] public static extern IntPtr SetThreadDpiAwarenessContext(IntPtr c);
+  [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
+  [DllImport("user32.dll")] public static extern IntPtr GetAncestor(IntPtr h,uint flags);
+  [DllImport("user32.dll")] public static extern IntPtr WindowFromPoint(POINT p);
+  [DllImport("user32.dll")] public static extern IntPtr OpenInputDesktop(uint flags,bool inherit,uint access);
+  [DllImport("user32.dll")] public static extern bool CloseDesktop(IntPtr h);
+  [DllImport("user32.dll")] public static extern IntPtr GetProcessWindowStation();
 }
 '@
 # Coordinate conversion must use the physical pixels returned by UIA. This
@@ -184,6 +192,52 @@ function Desktop-Name([uint32] $Thread) {
     }
     return $buffer.ToString()
 }
+function Object-Name([IntPtr] $Handle) {
+    $buffer = [Text.StringBuilder]::new(256)
+    [uint32]$needed = 0
+    if ($Handle -eq [IntPtr]::Zero -or
+        -not [ScaleNative]::GetUserObjectInformation($Handle,2,$buffer,512,[ref]$needed)) {
+        throw 'Interactive desktop identity unavailable.'
+    }
+    return $buffer.ToString()
+}
+function Assert-HostedForeground([IntPtr] $Root, [int] $X, [int] $Y) {
+    # This opt-in route is scoped to a wholly disposable hosted machine. The
+    # separate CLI cannot atomically bind foreground input to an HWND. These
+    # checks detect changed ownership; they do not remove that scheduling race.
+    if ($env:GITHUB_ACTIONS -cne 'true' -or $env:RUNNER_ENVIRONMENT -cne 'github-hosted' -or
+        $env:RUNNER_OS -cne 'Windows' -or $InputRoute -cne 'hosted-foreground') {
+        throw 'Disposable foreground input unavailable.'
+    }
+    if ((Object-Name ([ScaleNative]::GetProcessWindowStation())) -cne 'WinSta0' -or
+        (Desktop-Name ([ScaleNative]::GetCurrentThreadId())) -cne 'Default') {
+        throw 'Owned interactive desktop unavailable.'
+    }
+    $inputDesktop = [ScaleNative]::OpenInputDesktop(0,$false,1)
+    try {
+        if ((Object-Name $inputDesktop) -cne 'Default') { throw 'Input desktop changed.' }
+    } finally { if ($inputDesktop -ne [IntPtr]::Zero) { [void][ScaleNative]::CloseDesktop($inputDesktop) } }
+    foreach ($processId in $allowed) {
+        $live = Get-Process -Id $processId
+        if ($live.SessionId -ne $session -or $live.StartTime.ToUniversalTime().Ticks -ne $processStarts[$processId]) {
+            throw 'Foreground owner identity changed.'
+        }
+    }
+    if ($Root -eq [IntPtr]::Zero -or [ScaleNative]::GetForegroundWindow() -ne $Root) {
+        throw 'Settings is not the foreground target.'
+    }
+    [uint32]$rootPid = 0
+    [void][ScaleNative]::GetWindowThreadProcessId($Root,[ref]$rootPid)
+    if ($allowed -notcontains [int]$rootPid) { throw 'Foreground root owner changed.' }
+    $point = [ScaleNative+POINT]::new(); $point.X=$X; $point.Y=$Y
+    $hit = [ScaleNative]::WindowFromPoint($point)
+    [uint32]$hitPid = 0
+    $thread = [ScaleNative]::GetWindowThreadProcessId($hit,[ref]$hitPid)
+    if ($hit -eq [IntPtr]::Zero -or [ScaleNative]::GetAncestor($hit,2) -ne $Root -or
+        $allowed -notcontains [int]$hitPid -or (Desktop-Name $thread) -cne 'Default') {
+        throw 'Foreground input point is obscured or changed.'
+    }
+}
 function Click-Control($Entry) {
     $script:Stage = 'validate_input'
     if (Test-UncertainChildren) { throw 'Input blocked by unverified child termination.' }
@@ -193,6 +247,7 @@ function Click-Control($Entry) {
     $rect = $current.BoundingRectangle
     if ($rect.IsEmpty -or $rect.Width -le 0 -or $rect.Height -le 0) { throw 'Input bounds unavailable.' }
     $hwnd = [IntPtr]$Entry.top.Current.NativeWindowHandle
+    $root = [ScaleNative]::GetAncestor($hwnd,2)
     [uint32]$nativePid = 0
     $thread = [ScaleNative]::GetWindowThreadProcessId($hwnd,[ref]$nativePid)
     if ($allowed -notcontains [int]$nativePid -or
@@ -221,9 +276,23 @@ function Click-Control($Entry) {
         -not $fresh.BoundingRectangle.Equals($rect) -or ([DateTime]::UtcNow - $started).TotalMilliseconds -gt 500) {
         throw 'Input observation expired.'
     }
+    if ($InputRoute -eq 'hosted-foreground') {
+        $script:Stage = 'validate_foreground'
+        Assert-HostedForeground $root $x $y
+        $fresh = $Entry.element.Current
+        if (-not $fresh.IsEnabled -or $fresh.IsOffscreen -or $fresh.ProcessId -ne $settingsId -or
+            -not $fresh.BoundingRectangle.Equals($rect) -or ([DateTime]::UtcNow - $started).TotalMilliseconds -gt 500) {
+            throw 'Foreground input observation expired.'
+        }
+    }
     $script:Stage = 'cheap_spawn'
-    $result = Invoke-BoundedProcess $CheapExecutable @('mouse_click','--hwnd',"$($hwnd.ToInt64())",
-        '--x',"$($point.X)",'--y',"$($point.Y)",'--button','left') 10 $true
+    if ($InputRoute -eq 'hosted-foreground') {
+        $result = Invoke-BoundedProcess $CheapExecutable @('mouse_click','--x',"$x",'--y',"$y",
+            '--button','left','--instant_move','true','--confirm_focus_disruption','true') 10 $true
+    } else {
+        $result = Invoke-BoundedProcess $CheapExecutable @('mouse_click','--hwnd',"$($hwnd.ToInt64())",
+            '--x',"$($point.X)",'--y',"$($point.Y)",'--button','left') 10 $true
+    }
     $script:Stage = 'cheap_result'
     $script:Observation.cheap_terminated = [bool]$result.terminated
     $script:Observation.cheap_exit = [int]$result.code
@@ -231,6 +300,10 @@ function Click-Control($Entry) {
     $reply = $result.stdout | ConvertFrom-Json
     $script:Observation.cheap_ok = $reply.ok -eq $true
     if ($reply.ok -ne $true) { throw 'Cheap input rejected.' }
+    if ($InputRoute -eq 'hosted-foreground') {
+        $script:Stage = 'observe_foreground_after_input'
+        Assert-HostedForeground $root $x $y
+    }
 }
 function Set-Scale([int] $Percent) {
     if (Test-UncertainChildren) { throw 'Scale change blocked by unverified child termination.' }
@@ -285,7 +358,8 @@ function Set-Scale([int] $Percent) {
 }
 
 $receipt = @{schema=1; requested_scale=$ScalePercent; status='unavailable'; restored=$false
-    input_method='cheap_mouse_click'; uia='read_only'; action='unsupported_standalone_only'
+    input_method='cheap_mouse_click'; input_route=$InputRoute; foreground_input_atomic=$false
+    isolation='disposable_hosted_machine'; uia='read_only'; action='unsupported_standalone_only'
     target_application_dpi='requires_independent_runtime_measurement'
     failure_stage=$null; restoration_failure_stage=$null}
 $original = $null
