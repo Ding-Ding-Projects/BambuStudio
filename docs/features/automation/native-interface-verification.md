@@ -1,5 +1,21 @@
 # Hosted native interface verification
 
+Run `37139071425` returned a null target desktop handle with native code zero;
+the desktop-name query was not reached. The next bounded observation opens the
+exact acknowledged thread with `THREAD_QUERY_LIMITED_INFORMATION`, checks its
+process against the already accepted target PID, and requires a successful
+`GetExitCodeThread` result of `STILL_ACTIVE`. The owned thread handle remains open
+through the existing desktop query and is closed in `finally`. Failed open,
+process query, exit query or close returns record only immediate numeric native
+codes and fixed stages. Success, identity, alive and closure fields are booleans;
+no thread IDs, process IDs or handle values are added to these observations.
+Desktop equality remains mandatory and unavailable lookup still prevents `g`.
+There are no retries, target function calls or substituted parent-desktop proofs.
+The existing nine hosted cases include actual helper paths for unavailable
+handles, unavailable or mismatched owners, failed exit queries, exited threads,
+desktop exceptions, close failure and success, including call/cleanup ordering.
+These additions remain hosted-unverified; no local execution was performed.
+
 The startup diagnostic from run `37103711674` reached the target desktop lookup
 after acknowledgement, unique target identity and both job membership checks.
 Its null desktop comparison means the lookup raised before comparison, not that
