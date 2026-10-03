@@ -1,5 +1,25 @@
 # Native interface continuation
 
+## Latest preserved diagnostic candidate
+
+Source de733332b0cadce9508f29581fa09c3c3758afb7 includes independently reviewed
+fixed stage/count/boolean startup observations. Owning source d05f396a8928c0f75294f26e8fa62324255642e2
+and integration source are pushed and verified. No acceptance predicate, strict
+symbol rule, containment check or deadline was weakened. No local product execution.
+
+Changed hosted contract run 37103710012 and diagnostic run 37103711674 are queued,
+both verified at de733332b0cadce9508f29581fa09c3c3758afb7. A bounded 55-minute
+observer was started; its eventual result must be read before claiming a verdict.
+An older combined source 6c5e619aaa63b00944951d5caaf30b9d1c415185 completed its
+product build in run 37099792250 and waits publication. That does not validate
+the current motion changes. The 414e combined run37103221827 remains queued.
+
+Latest verified allowance: 24% remaining. New features remain frozen. No active
+implementation worker remains. Next meaningful work requires a changed hosted
+verdict or the new authenticated diagnostic. Do not relaunch unchanged checks.
+No final main result, release completion, archive or deletion is claimed.
+
+
 ## Verified priority update, 2026-10-03 UTC
 
 The current priority is a green combined hosted result. New feature work is
