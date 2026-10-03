@@ -7,7 +7,8 @@ Existing submenu/search-builder dismissal exclusions remain unchanged. There is
 no exit delay and no postponed command callback.
 
 The native list interpolates its hover layer for 100 ms and refreshes changed
-filter results from 60% to full text/icon opacity over 100 ms. Filtering changes
+filter results with a fading decorative leading edge over 100 ms. Text, shortcuts
+and essential glyph colors remain exact at every progress value. Filtering changes
 the actual result list, selection and geometry immediately. Reversal starts at
 the current hover weights. Keyboard selection remains immediately highlighted.
 Reduced motion paints final state; hidden owners settle and destroyed owners
@@ -31,8 +32,9 @@ their timeline, and reduced motion immediately settles retained timelines.
 Builds without ENABLE_ENHANCED_IMGUI_SLIDER_FLOAT retain immediate rendering
 because their canvas does not consume that scheduling route. Canvas result-list changes and hover layers remain outside this entrance slice.
 Modal popups, including the slider's Custom G-code and Jump to Layer dialogs and
-the measurement distance popup, now share this route. Their modal blocking and
-dim background remain immediate. Active child draw lists inherit the nearest
+the measurement distance popup, now share this route. Their modal input blocking remains immediate. The modal draw list also contains
+its dim-background rectangle, so that paint participates in the entrance on top
+of ImGui's existing DimBgRatio fade. Active child draw lists inherit the nearest
 active visible popup ancestor's timeline through ParentWindow. A nested popup
 owns a distinct timeline. The walk stops at ordinary non-child windows, hidden
 ancestors or depth 64; it never fades arbitrary page content. A child appearing
@@ -65,3 +67,9 @@ execution was prohibited. No prototype or source preview replaces the required
 hosted temporal and layout evidence. Remaining canvas hover/filter and panel
 transitions belong to subsequent bounded slices; whole-interface motion is not
 complete.
+
+The hosted pure policy executable includes 33 additional outcomes using the actual
+menu filter paint function, bringing its total to 59. They verify exact content
+colors across four progress values and both reduction states, caption contrast
+at least 4.5:1, and rejection of the former 60% blend below that threshold.
+These checks remain pending execution and are source-color arithmetic, not pixels.
