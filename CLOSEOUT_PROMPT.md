@@ -13,7 +13,7 @@ physical print is authorized. Retain final device selection and confirmation.
 ## Preserved state
 
 - Integration branch: feature/ui-integration, source candidate
-  f2f29fd4e81ea119e5557d20766f13132bbe2c83, verified on the remote.
+  d804d3f8b7babc7fe040654b218d82642eacd1e3, verified on the remote.
 - Remote main: ce883543177ef7df46fa5b798dcc5c7f3d2f8020.
 - Runtime lane: 991bf094206699164fb0d9c915140117cd748dcf, preserved through integration
   and included in integration. Contended worker observations are unknown,
@@ -91,7 +91,7 @@ physical print is authorized. Retain final device selection and confirmation.
 
 ## Remaining boundaries
 
-No active goal exists. The last account reading had 59% weekly allowance
+No active goal exists. The last account reading had 53% weekly allowance
 remaining; refresh at meaningful milestones and preserve first at 10% or less.
 Status Hub delivery is unavailable through the established route. Projects
 access is unavailable and does not block implementation. Issue 53 and Discussion
@@ -101,7 +101,9 @@ and authorized cleanup are unfinished.
 
 The fixed 1920x1080 standalone provisioning helper is independently reviewed at
 5d3a42fd32e29a77e2cc3df683eac3c50ed01993. Its hosted apply/scale/restore verdict
-is pending. Minimum-resize source is preserved on feature/preview-layout at
+failed in 37090148387 before mutation at capture_original_resolution for all
+three scale jobs. Fixed-phase diagnostic 24c1340e is reviewed for a changed
+observation; exact native cause remains unproved. Minimum-resize source is preserved on feature/preview-layout at
 187e55fa1518e7f66b636f9f29c2e7d8c149350d; it must not run at the known 1024x768
 mode, which cannot fit the required above-minimum starting frame. No interactive
 clamp, product DPI or current-candidate pixel proof is claimed.

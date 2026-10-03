@@ -18,7 +18,7 @@ on:
         description: One bounded interaction flow
         required: true
         type: choice
-        options: [menus, vocabulary, vocabulary-persistence, slice-controls, combined-print, combined-send, cancellation]
+        options: [menus, vocabulary, vocabulary-persistence, slice-controls, combined-print, combined-send, cancellation, minimum-resize]
       language:
         required: true
         default: en
@@ -64,6 +64,10 @@ jobs:
         run: |
           if ($env:RELEASE_TAG -cnotmatch '^md3-v\d+$' -or $env:SOURCE_SHA -cnotmatch '^[0-9a-f]{40}$') {
             throw 'A release tag and full lowercase source SHA are required.'
+          }
+          if ($env:INTERACTION_SCOPE -eq 'minimum-resize' -and
+              ($env:UI_SCALE -ne '1' -or $env:UI_VIEWPORT -ne 'measured-minimum')) {
+            throw 'Interactive minimum sizing requires scale 1 and measured-minimum.'
           }
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
         with:

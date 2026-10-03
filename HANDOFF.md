@@ -16,7 +16,7 @@ restoration to 100%/96 DPI and complete worker termination. The overall run fail
 Supported mode is not proof that higher scale options are available.
 This does not establish target application DPI or visible behavior.
 
-Candidate `f2f29fd4e81ea119e5557d20766f13132bbe2c83` is preserved on
+Candidate `d804d3f8b7babc7fe040654b218d82642eacd1e3` is preserved on
 `feature/ui-integration`; remote `main` still points to
 `ce883543177ef7df46fa5b798dcc5c7f3d2f8020`. Build `37088918536` includes the
 optional product-under-scale adapter and fixed Settings launch. Installation and
@@ -2294,7 +2294,9 @@ diagnostics were a cascade.
 
 The fixed 1920x1080 standalone provisioning helper is independently reviewed at
 5d3a42fd32e29a77e2cc3df683eac3c50ed01993. Its hosted apply/scale/restore verdict
-is pending. Minimum-resize source is preserved on feature/preview-layout at
+failed in 37090148387 before mutation at capture_original_resolution for all
+three scale jobs. Fixed-phase diagnostic 24c1340e is reviewed for a changed
+observation; exact native cause remains unproved. Minimum-resize source is preserved on feature/preview-layout at
 187e55fa1518e7f66b636f9f29c2e7d8c149350d; it must not run at the known 1024x768
 mode, which cannot fit the required above-minimum starting frame. No interactive
 clamp, product DPI or current-candidate pixel proof is claimed.
