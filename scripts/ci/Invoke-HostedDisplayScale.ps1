@@ -94,6 +94,7 @@ if ($Mode -eq 'supervisor') {
             # Open only the fixed owned Settings surface after installation,
             # bootstrap and strict request validation. Never force activation;
             # the worker still requires observed foreground ownership.
+            $run = @{ terminated = $true; code = -1 }
             Start-Process -FilePath 'ms-settings:display' -WindowStyle Hidden
         }
         $run = @{ terminated = $false; code = -1 }
