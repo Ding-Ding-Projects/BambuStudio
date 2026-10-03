@@ -134,3 +134,16 @@ The existing hosted lifecycle suite now expects seven cases, including five
 invalid fixtures and both supported-layout preservation checks. Hosted results
 and real resolution application/restoration remain pending. The next attempt
 uses only 125%; broader scale and installed UI claims remain unverified.
+
+## Verified standalone resolution, 2026-10-03 UTC
+
+Run 37091384649 passed at 7bd7420c7972aa186d246c76c93265600d8cd2ee.
+Seven hosted contracts passed in 11738 ms. The standalone probe measured
+1920x1080 and 125%/120 DPI, then restored 1024x768 and 100%/96 DPI.
+Both worker trees terminated; supervisor restoration was verified and disposal
+was not required. The checked-in bounded receipts retain original-byte hashes.
+This is not application-rendering proof. Runs 37091590432 and 37091591864
+now observe 150% and 200% separately at the same source.
+The minimum-resize combination is being implemented with a durable input-state
+marker: process termination cannot stand in for button release or desktop
+restoration. Native product build 37088514258 has reached Squirrel packaging.

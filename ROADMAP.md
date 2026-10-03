@@ -17,7 +17,8 @@
 - [x] Pass complete focused run `37085341046` at `6bc6656ef`, including native services, seven cancellation-observation tests and three fixture-path tests; installed behavior remains unverified.
 - [x] Privately review 84 encrypted Settings controls from `37085955337` and identify the exact scale selector; this establishes discovery only.
 - [x] Observe one active hosted monitor and 13 supported modes up to 1920x1080 in read-only run `37089435143`; this proves capabilities only.
-- [ ] Complete actual higher-DPI provisioning and restoration: standalone 125%/120 DPI passed in `37088755758`; 150%/200% remain unavailable. Product DPI and rendered behavior are separate, still unverified requirements.
+- [x] Verify fixed 1920x1080 provisioning, 125%/120 DPI selection, original 1024x768 and 100%/96 DPI restoration, and contained termination in standalone run `37091384649`; hosted contracts passed 7/7.
+- [ ] Complete actual 150%/200% provisioning and restoration. Runs `37091590432` and `37091591864` are pending at the proven fixed-resolution source. Product DPI and rendered behavior remain separately unverified.
 - [ ] Capture the observed native minimum frame/client tuple and separately verify interactive minimum tracking.
 
 - [ ] Add local personal-vocabulary JSON import, replace and clear with bounded validation, local persistence and original-wording restoration.

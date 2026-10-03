@@ -17,3 +17,7 @@ client for protocol negotiation and tool discovery. A Postman collection is not
 provided because it would duplicate the protocol client and does not cover stdio.
 
 Related: [Windows release supply chain](../releases/windows-release-supply-chain.md).
+
+- [Hosted display resolution receipt](hosted-display-resolution-37091384649.json),
+  seven passing contracts plus measured 1920x1080/125% provisioning and full
+  restoration; application DPI and pixels are excluded.
