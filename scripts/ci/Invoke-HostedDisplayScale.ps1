@@ -5,6 +5,7 @@ param(
     [Parameter(Mandatory)][string] $CheapExecutable,
     [ValidateSet('background','hosted-foreground')][string] $InputRoute = 'background',
     [switch] $NativeRuntime,
+    [switch] $ProvisionResolution,
     [ValidateSet('supervisor','run','restore')][string] $Mode = 'supervisor'
 )
 $ErrorActionPreference = 'Stop'
@@ -13,6 +14,8 @@ if ($env:GITHUB_ACTIONS -cne 'true' -or $env:RUNNER_ENVIRONMENT -cne 'github-hos
     $env:RUNNER_OS -cne 'Windows' -or -not $env:RUNNER_TEMP) {
     throw 'Disposable hosted Windows execution is required.'
 }
+if ($ProvisionResolution -and $NativeRuntime) { throw 'Resolution provisioning is standalone-only until verified.' }
+if ($ProvisionResolution -and $InputRoute -cne 'hosted-foreground') { throw 'Resolution provisioning requires the disposable foreground route.' }
 $tempRoot = [IO.Path]::GetFullPath($env:RUNNER_TEMP).TrimEnd('\') + '\'
 $output = [IO.Path]::GetFullPath($OutputDirectory)
 if (-not $output.StartsWith($tempRoot, [StringComparison]::OrdinalIgnoreCase)) {
@@ -26,6 +29,8 @@ $nativeReceiptPath = Join-Path $env:RUNNER_TEMP ('native-scale-adapter-' + $env:
 $nativeAdapter = Join-Path $PSScriptRoot 'run-scaled-native-interface.py'
 $nativePython = Join-Path $env:RUNNER_TEMP ('automation-python-' + $env:GITHUB_RUN_ID + '/Scripts/python.exe')
 Add-Type -Path (Join-Path $PSScriptRoot 'HostedScaleProcess.cs')
+if ($ProvisionResolution) { Add-Type -Path (Join-Path $PSScriptRoot 'HostedDisplayMode.cs') }
+$script:ResolutionState = $null
 $script:ChildTerminationUncertain = $false
 
 function Test-UncertainChildren {
@@ -80,6 +85,18 @@ function Read-NativeRequest {
     }
     return $request
 }
+function Read-ResolutionRecoveryState {
+    $file = Get-Item -LiteralPath $originalPath
+    if ($file.Length -le 0 -or $file.Length -gt 16384 -or ($file.Attributes -band [IO.FileAttributes]::ReparsePoint)) {
+        throw 'Resolution recovery state unavailable.'
+    }
+    $saved = Get-Content -LiteralPath $originalPath -Raw | ConvertFrom-Json
+    if ($saved.scale -notin @(100,125,150,200) -or $saved.dpi -ne (96 * $saved.scale / 100)) {
+        throw 'Original scale recovery state unavailable.'
+    }
+    return [HostedDisplayMode]::Recover($saved.resolution.device,$saved.resolution.identity,
+        [Convert]::FromBase64String($saved.resolution.mode))
+}
 
 if ($Mode -eq 'supervisor') {
     if (Test-Path -LiteralPath $output) { throw 'Output directory must be new.' }
@@ -102,15 +119,19 @@ if ($Mode -eq 'supervisor') {
             '-OutputDirectory',$output,'-CheapExecutable',$CheapExecutable,'-InputRoute',$InputRoute,'-Mode','run')
         $seconds = 120
         if ($NativeRuntime) { $arguments += '-NativeRuntime'; $seconds = 1920 }
+        if ($ProvisionResolution) { $arguments += '-ProvisionResolution'; $seconds = 180 }
         $run = Invoke-BoundedProcess $pwsh $arguments $seconds
     } catch {} finally {
         # The durable original state exists before the first input. Recovery is
         # isolated too, and never races an unterminated first worker.
         if ($run.terminated -and -not (Test-UncertainChildren) -and (Test-Path -LiteralPath $originalPath)) {
             try {
-                $recovery = Invoke-BoundedProcess $pwsh @('-NoProfile','-File',$PSCommandPath,
+                $recoveryArguments = @('-NoProfile','-File',$PSCommandPath,
                     '-ScalePercent',"$ScalePercent",'-OutputDirectory',$output,
-                    '-CheapExecutable',$CheapExecutable,'-InputRoute',$InputRoute,'-Mode','restore') 60
+                    '-CheapExecutable',$CheapExecutable,'-InputRoute',$InputRoute,'-Mode','restore')
+                $recoverySeconds = 60
+                if ($ProvisionResolution) { $recoveryArguments += '-ProvisionResolution'; $recoverySeconds = 90 }
+                $recovery = Invoke-BoundedProcess $pwsh $recoveryArguments $recoverySeconds
             } catch { $recovery = @{ terminated = $false; code = -1 } }
         } elseif (-not $run.terminated -or (Test-UncertainChildren)) {
             $recovery = @{ terminated = $false; code = -1 }
@@ -122,6 +143,7 @@ if ($Mode -eq 'supervisor') {
           requested_scale=$ScalePercent; worker_termination_verified=$run.terminated
           input_route=$InputRoute; foreground_input_atomic=$false
           native_runtime_requested=[bool]$NativeRuntime
+          resolution_provisioning_requested=[bool]$ProvisionResolution
           recovery_termination_verified=$recovery.terminated; restoration_verified=$restored
           child_termination_uncertain=$uncertain; process_containment='suspended_start_nonbreakaway_job'
           target_application_dpi='requires_independent_runtime_measurement'
@@ -129,6 +151,21 @@ if ($Mode -eq 'supervisor') {
         } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $output 'supervisor.json') -Encoding utf8
     }
     if ($success) { exit 0 }; exit 2
+}
+
+if ($ProvisionResolution -and $Mode -eq 'restore') {
+    # Recover mode independently before UIA initialization. Missing Settings or
+    # a UIA exception cannot skip an otherwise safe identity-bound mode restore.
+    # Apply first observes current mode, making interrupted recovery idempotent.
+    $earlyModeRestored = $false
+    try {
+        if (Test-UncertainChildren) { throw 'Uncertain child blocks mode recovery.' }
+        $script:ResolutionState = Read-ResolutionRecoveryState
+        $earlyModeRestored = [HostedDisplayMode]::Apply($script:ResolutionState,$script:ResolutionState.Original).Verified
+    } catch {}
+    @{schema=1; status='unavailable'; restored=$false; resolution_restored=$earlyModeRestored
+      disposal_required=$true; failure_stage='scale_recovery_pending'} |
+        ConvertTo-Json | Set-Content -LiteralPath (Join-Path $output 'restore.json') -Encoding utf8
 }
 
 Add-Type -AssemblyName UIAutomationClient
@@ -336,6 +373,7 @@ function Observe-AllowedOptionDomain($Rows, $Combo) {
 function Click-Control($Entry) {
     $script:Stage = 'validate_input'
     if (Test-UncertainChildren) { throw 'Input blocked by unverified child termination.' }
+    if ($ProvisionResolution) { [HostedDisplayMode]::AssertBinding($script:ResolutionState) }
     $started = [DateTime]::UtcNow
     $current = $Entry.element.Current
     if ($current.ProcessId -ne $settingsId -or -not $current.IsEnabled -or $current.IsOffscreen) { throw 'Input control changed.' }
@@ -374,6 +412,7 @@ function Click-Control($Entry) {
     if ($InputRoute -eq 'hosted-foreground') {
         $script:Stage = 'validate_foreground'
         Assert-HostedForeground $root $x $y
+        if ($ProvisionResolution) { [HostedDisplayMode]::AssertBinding($script:ResolutionState) }
         $fresh = $Entry.element.Current
         if (-not $fresh.IsEnabled -or $fresh.IsOffscreen -or $fresh.ProcessId -ne $settingsId -or
             -not $fresh.BoundingRectangle.Equals($rect) -or ([DateTime]::UtcNow - $started).TotalMilliseconds -gt 500) {
@@ -402,6 +441,7 @@ function Click-Control($Entry) {
 }
 function Set-Scale([int] $Percent) {
     if (Test-UncertainChildren) { throw 'Scale change blocked by unverified child termination.' }
+    if ($ProvisionResolution) { [HostedDisplayMode]::AssertBinding($script:ResolutionState) }
     $script:Stage = 'resolve_combo'
     $rows = @(Read-Controls)
     $state = Read-Scale $rows
@@ -465,14 +505,40 @@ try {
         if ($saved.settings_pid -ne $settingsId -or $saved.settings_start -ne $settingsStart -or
             $saved.session -ne $session -or $saved.scale -notin @(100,125,150,200)) { throw 'Restoration identity changed.' }
         $original = $saved
+        if ($ProvisionResolution -and $null -eq $script:ResolutionState) {
+            $script:ResolutionState = Read-ResolutionRecoveryState
+        }
     } else {
         $before = Read-Scale @(Read-Controls)
         if ($before.dpi -ne (96 * $before.percent / 100)) { throw 'Original Settings DPI does not match its selection.' }
         $original = @{scale=$before.percent; dpi=$before.dpi; settings_pid=$settingsId; settings_start=$settingsStart; session=$session}
+        if ($ProvisionResolution) {
+            $script:Stage = 'capture_original_resolution'
+            $script:ResolutionState = [HostedDisplayMode]::Capture([IntPtr]$before.combo.top.Current.NativeWindowHandle)
+            $original.resolution = @{device=$script:ResolutionState.Device; identity=$script:ResolutionState.Identity
+                mode=[Convert]::ToBase64String($script:ResolutionState.Original)}
+            $receipt.original_width = [HostedDisplayMode]::Width($script:ResolutionState.Original)
+            $receipt.original_height = [HostedDisplayMode]::Height($script:ResolutionState.Original)
+        }
         # This is private recovery state, excluded from public upload. Publish
         # atomically before any input so the supervisor can restore after timeout.
-        $original | ConvertTo-Json | Set-Content -LiteralPath ($originalPath + '.tmp') -Encoding utf8
+        $original | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath ($originalPath + '.tmp') -Encoding utf8
         Move-Item -LiteralPath ($originalPath + '.tmp') -Destination $originalPath
+        if ($ProvisionResolution) {
+            $script:Stage = 'provision_resolution'
+            $target = [HostedDisplayMode]::Target($script:ResolutionState)
+            $modeResult = [HostedDisplayMode]::Apply($script:ResolutionState,$target)
+            $receipt.resolution_test_code = $modeResult.TestCode
+            $receipt.resolution_apply_code = $modeResult.ApplyCode
+            $receipt.resolution_already_current = $modeResult.AlreadyCurrent
+            $receipt.resolution_verified = $modeResult.Verified
+            if (-not $modeResult.Verified) { throw 'Requested resolution did not verify.' }
+            $receipt.selected_width = 1920; $receipt.selected_height = 1080
+            $script:Stage = 'observe_scale_after_resolution'
+            $afterResolution = Read-Scale @(Read-Controls)
+            $receipt.scale_after_resolution = $afterResolution.percent
+            $receipt.settings_dpi_after_resolution = $afterResolution.dpi
+        }
         $selected = Set-Scale $ScalePercent
         $receipt.selected_scale = $selected.percent
         $receipt.measured_settings_dpi = $selected.dpi
@@ -516,6 +582,31 @@ try {
         } catch {
             $receipt.restored = $false
             $receipt.restoration_failure_stage = $script:Stage
+        }
+        if ($ProvisionResolution) {
+            # Keep this independent of the scale/UIA attempt above. Never let a
+            # failed UI observation skip restoring a known owned display mode.
+            $receipt.resolution_restored = $false
+            if (-not (Test-UncertainChildren)) {
+                try {
+                    $modeRestore = [HostedDisplayMode]::Apply($script:ResolutionState,$script:ResolutionState.Original)
+                    $receipt.resolution_restore_test_code = $modeRestore.TestCode
+                    $receipt.resolution_restore_apply_code = $modeRestore.ApplyCode
+                    $receipt.resolution_restore_already_current = $modeRestore.AlreadyCurrent
+                    $receipt.resolution_restored = $modeRestore.Verified -and [HostedDisplayMode]::OriginalCurrent($script:ResolutionState)
+                } catch {}
+            }
+            # Reobserve scale after restoring resolution, because a mode change
+            # may itself affect the offered/selected scale. Both must match.
+            $receipt.restored = $false
+            if ($receipt.resolution_restored -and -not (Test-UncertainChildren)) {
+                try {
+                    [HostedDisplayMode]::AssertBinding($script:ResolutionState)
+                    $finalScale = Read-Scale @(Read-Controls)
+                    $receipt.restored = $finalScale.percent -eq $original.scale -and $finalScale.dpi -eq $original.dpi
+                    $receipt.restored_settings_dpi = $finalScale.dpi
+                } catch {}
+            }
         }
     }
     $receipt.restoration_observations = $script:Observation.Clone()
