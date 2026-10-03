@@ -239,7 +239,7 @@ def main():
     for directory in (workspace, profile, probe):
         directory.mkdir()
     behavior.seed_profile(profile, "en", "light")
-    fixture = Path(__file__).parents[2] / "tests/automation-fixtures/cube.stl"
+    fixture = Path(__file__).resolve().parents[2] / "tests/automation-fixtures/cube.stl"
     shutil.copyfile(fixture, workspace / "cube.stl")
     os.environ["BAMBU_AUTOMATION"] = "1"
     os.environ["BAMBU_AUTOMATION_ROOTS"] = str(workspace)
