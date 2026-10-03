@@ -99,6 +99,12 @@ void Anim::Finish(const std::shared_ptr<Run>& run, uint64_t generation)
     run->tick = nullptr;
     run->done = nullptr;
     run->owner_lost = nullptr;
+    // The initial tick may destroy its owner before timer startup fails.
+    // Never invoke even the final visual callback after that owner is gone.
+    if (run->owner_bound && !run->owner) {
+        if (owner_lost) owner_lost();
+        return;
+    }
     if (tick) tick(1.0);
     if (!run->alive || run->generation != generation) return;
     if (run->owner_bound && !run->owner) {
