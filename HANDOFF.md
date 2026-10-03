@@ -2,13 +2,21 @@
 
 ## Current verification, 2026-10-03 UTC
 
-The two-qualifier const repair is preserved in integration source
-`68dabac8f16b83065c0e58a05e687a0708f3ecde`. Combined run
-[37138948887](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37138948887)
-is still compiling at the last observation. Its managed automation job passed
-27 of 27 cases; this does not establish native compilation, installation or UI behavior.
-Later verifier source `75770f71f59358514df9d5af42b38402e538116c` has the same
-product C++ source and a separate combined run, `37139881377`, also pending.
+Production compilation and packaging passed in run
+[37139881377](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37139881377)
+at exact source `75770f71f59358514df9d5af42b38402e538116c`. Build job
+`111252033608` completed successfully at `2026-10-03T18:13:49Z`, including
+native compilation, Cantonese catalog, imported DLLs, Squirrel creation, package
+validation and installer upload. This verifies the two-qualifier const repair
+through the real production build. The complete workflow remains pending release
+publication in its existing non-canceling serial queue.
+
+Earlier run `37138948887` at `68dabac8f16b83065c0e58a05e687a0708f3ecde`
+also completed its native build and packaging job and waits publication. Its
+managed automation job passed 27/27 cases. No installed behavior is implied.
+The first observation ended after 55 minutes; the later candidate observation
+ended at `2026-10-03T18:15:45Z` with publication pending. Do not restart the same
+bounded observation unchanged. Resume upon a terminal result or matching release.
 
 At that verifier, hosted contracts `37139896660` passed nine Python cases,
 four invalid-desktop cases, four invalid-executable cases, actual absence and
