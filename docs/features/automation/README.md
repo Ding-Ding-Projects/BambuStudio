@@ -37,3 +37,7 @@ Related: [Windows release supply chain](../releases/windows-release-supply-chain
 - [Bounded launcher diagnosis](hosted-startup-diagnostic-37096825183.json),
   native initialization error 1114 after Mesa loaded, before the product entry point;
   the failing module remains unidentified and no runtime success is claimed.
+
+- [Focused minimum, lifecycle and debugger contracts](hosted-focused-contracts-20261003.json),
+  exact hosted receipts for 9 minimum cases, 14 lifecycle cases and 7 plus 4
+  debugger preflight outcomes. Product startup and rendered behavior remain unverified.

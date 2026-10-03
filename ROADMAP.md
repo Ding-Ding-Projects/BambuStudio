@@ -23,6 +23,7 @@
 - [x] Pass 11/11 hosted lifecycle cases in 13615 ms at `b282a05c14c54c8063f31f38b2605bbd8b9206b6` in run `37094628859`, including diagnostic control geometry, with verified cleanup and no Settings mutation; this is not product UI evidence.
 - [x] Pass 18 cancellation-observation contract cases in hosted run `37095515540` at `18d6f1c3f60ec8d34d70829d3ca7e056edf244fa`, including deliberate production epoch-validation mutation; installed cancellation remains unverified.
 - [x] Verify standalone150%/144 DPI at1920x1080 in run `37096062899` and200%/192 DPI at1600x1200 in run `37096376814`, with original display restoration; lifecycle13/13 and14/14 passed. Private preselection images confirm offered options, not product rendering.
+- [x] Pass nine minimum-observation contracts and fourteen lifecycle cases at `e23e708d6`, then seven Python and four native desktop-rejection cases at `23cf74f62`; exact receipts are retained, product behavior remains unverified.
 - [ ] Capture the observed native minimum frame/client tuple and separately verify interactive minimum tracking.
 
 - [ ] Add local personal-vocabulary JSON import, replace and clear with bounded validation, local persistence and original-wording restoration.

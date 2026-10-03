@@ -1,0 +1,144 @@
+{
+  "schema": 1,
+  "execution": "github-hosted-windows",
+  "runs": [
+    {
+      "scope": "minimum_observation",
+      "run_id": "37097667386",
+      "source_commit": "e23e708d694b2d843f759d9eb828930806afa001",
+      "url": "https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37097667386",
+      "receipt_sha256": "34dd512c45f5489028b397ac482402d0ffbd586bdf505a81f734617da6f377af",
+      "receipt": {
+        "schema": 1,
+        "sourceCommit": "e23e708d694b2d843f759d9eb828930806afa001",
+        "runId": "37097667386",
+        "runAttempt": "1",
+        "execution": "github-hosted-windows",
+        "status": "passed",
+        "exitCode": 0,
+        "expectedCases": 9,
+        "driverSha256": "3be9a7e98892d3542b6aeb33ac52feb2280119af6675eeb770e05481ad85f1c2",
+        "contractSha256": "d4032bd7b43aaeb3b2b28ffa2c65e6d6d266ddafedf7eaf35c76322dd882d85d"
+      }
+    },
+    {
+      "scope": "display_lifecycle",
+      "run_id": "37097668663",
+      "source_commit": "e23e708d694b2d843f759d9eb828930806afa001",
+      "url": "https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37097668663",
+      "receipt_sha256": "7c1076007f169a8f1a94a16f3a02e3f1c35df37727eaff4675388735844342a2",
+      "receipt": {
+        "expected": 14,
+        "cases": [
+          {
+            "status": "passed",
+            "name": "owned_page_marker_contract"
+          },
+          {
+            "status": "passed",
+            "name": "navigation_uncertainty_contract"
+          },
+          {
+            "status": "passed",
+            "name": "nested_source_identity"
+          },
+          {
+            "status": "passed",
+            "name": "diagnostic_control_geometry"
+          },
+          {
+            "status": "passed",
+            "name": "minimum_resolution_tuple_contract"
+          },
+          {
+            "status": "passed",
+            "name": "minimum_input_recovery_contract"
+          },
+          {
+            "status": "passed",
+            "name": "fixed_alternate_resolution_contract"
+          },
+          {
+            "status": "passed",
+            "name": "display_mode_public_layout_contract"
+          },
+          {
+            "status": "passed",
+            "name": "reject_oversized_output"
+          },
+          {
+            "status": "passed",
+            "name": "normal_output_after_overflow"
+          },
+          {
+            "status": "passed",
+            "name": "terminate_descendant_after_parent_exit"
+          },
+          {
+            "status": "passed",
+            "name": "normal_output_after_descendant_timeout"
+          },
+          {
+            "status": "passed",
+            "name": "accept_exact_output_limit"
+          },
+          {
+            "status": "passed",
+            "name": "query_only_named_job_membership"
+          }
+        ],
+        "source_supervisor_observation": {
+          "process_stage": 18,
+          "native_error": null,
+          "terminated": true,
+          "exit_code": 0
+        },
+        "cleanup_verified": true,
+        "schema": 1,
+        "elapsed_ms": 12326,
+        "source_process_observation": {
+          "legacy_selection_count": 3,
+          "invalid_paths_rejected": 4,
+          "source_format_valid": true,
+          "process_stage": 18,
+          "terminated": true,
+          "exit_code": 0,
+          "native_error": null,
+          "output_length": 41,
+          "checkout_matches_run": true
+        },
+        "status": "passed",
+        "passed": 14,
+        "settings_mutated": false
+      }
+    },
+    {
+      "scope": "startup_creation_contract",
+      "run_id": "37097740908",
+      "source_commit": "23cf74f62ace65b6529e250f64bfeea037db7ba2",
+      "url": "https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37097740908",
+      "receipt_sha256": "d493ee8a89f0a63610d821ac04116ced8df155c11a56bed35b40f5b5770f4c7c",
+      "receipt": {
+        "run_id": "37097740908",
+        "product_started": false,
+        "python_cases": 7,
+        "schema": 1,
+        "source_commit": "23cf74f62ace65b6529e250f64bfeea037db7ba2",
+        "files": {
+          "scripts/ci/HostedScaleProcess.cs": "8081405a3e3030dae2ad8bac1f4cd1f6e9aebbae160c06a693462a8e892b8e03",
+          "scripts/md3/test-trace-packaged-startup.py": "86628bd11fead7ac9f103953b338da9b7471930f1fb4c45fc50488f704c56742",
+          "scripts/md3/trace-packaged-startup.py": "67a3dbedcff9bc26841bb43c2d890197df0a115fb7f660ea5a58e06b240e8070"
+        },
+        "desktop_rejections": 4,
+        "status": "passed"
+      }
+    }
+  ],
+  "product_execution": false,
+  "rendered_behavior": "unverified",
+  "limitations": [
+    "Each result binds only to its recorded source.",
+    "The later diagnostic helper change is not covered by the earlier lifecycle result.",
+    "These contracts do not establish native startup, rendered minimum sizing, or vocabulary replacement."
+  ]
+}
