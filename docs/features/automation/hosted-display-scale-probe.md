@@ -481,6 +481,33 @@ fingerprint identifies existing custody without putting private keys on the host
 This is source preparation only; hosted capture, decryption and pixel review are
 still required before drawing conclusions about higher-scale availability.
 
+#### Administrative diagnostic opening
+
+`scripts/md3/Open-HostedScaleDiagnostic.ps1` opens this format using the existing
+current-user DPAPI automation key custody. Supply `-BundlePath`, `-EnvelopePath`,
+`-ExpectedRunId`, `-ExpectedCommit`, `-ExpectedPhase` and a new `-OutputDirectory`
+whose parent already exists. It never generates or replaces keys and never prints
+key material, native labels, private identities or output paths.
+
+Before any output write it rejects duplicate or unknown JSON fields, unsupported
+protocol/schema/recipient, source/run/phase mismatches, malformed authenticated
+bindings, excessive lengths, invalid timestamps, mismatched ciphertext/PNG hashes,
+unexpected control structures and inconsistent PNG/header/frame dimensions.
+Ciphertext/plaintext is capped at 16 MiB, envelope at 32 KiB, PNG at 8 MiB, controls
+at 1,000 and labels at 2,048 characters. Input reads use bounded buffers and reject
+reparse ancestors. The GCM tag authenticates the exact AAD bytes, whose parsed
+binding must agree with both envelope and decrypted inventory.
+
+After validation, exclusive files are written into a new sibling staging directory
+and renamed atomically into the new output. Existing output is never overwritten.
+The three fixed files are `capture.png`, `private-inventory.json` and
+`validation.json`. Only the last is public-safe metadata; pixels and inventory
+remain private pending separate review. Original authenticated capture timestamps
+are preserved, never inferred from filenames or modification times. An incomplete
+staging directory is retained privately on failure. Integrity verification does
+not authorize publication or establish visible scale behavior. This administrative
+helper has not been executed locally by its implementation lane.
+
 Two additional hosted lifecycle cases load the exact production tuple and
 input-recovery functions from the parsed source, without executing the display
 supervisor. They reject unsupported combined tuples, absent or mismatched
