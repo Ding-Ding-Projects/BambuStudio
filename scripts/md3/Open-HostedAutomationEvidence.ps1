@@ -162,7 +162,7 @@ try {
         foreach ($record in @($expected,$actual)) {
             Assert-True ($record -is [pscustomobject] -and @($record.PSObject.Properties).Count -eq 3 -and
                 $record.source_commit -is [string] -and $record.source_commit -ceq $ExpectedVerifierCommit -and
-                $record.hash_format -ceq 'sha256-lf-v1' -and $record.files -is [pscustomobject] -and
+                $record.hash_format -is [string] -and $record.hash_format -ceq 'sha256-lf-v1' -and $record.files -is [pscustomobject] -and
                 @($record.files.PSObject.Properties).Count -eq $paths.Count) 'Verifier manifest schema or source mismatch.'
             foreach ($path in $paths) {
                 $value = $record.files.PSObject.Properties[$path]
