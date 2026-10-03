@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "run_id": "37102257995",
+  "url": "https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37102257995",
+  "verification_commit": "e50f5dac1074055e02be230bfdc5dd98d829e5e6",
+  "source_commit": "35d1074faea221fa4f289f1db1e0ee428a90d701",
+  "release_tag": "md3-v190",
+  "workflow_conclusion": "success",
+  "trace_driver_exit_code": 2,
+  "restricted_review": "authenticated bundle independently reviewed by two reviewers",
+  "normalized_verifier_hashes_verified": 6,
+  "private_log_bytes": 6382,
+  "private_log_sha256": "a31a4d6b0c547dc6f46173ff78abe86a8c8d1bd755a4eaf8f36ce2881e8dcd42",
+  "findings": [
+    "Exact operating-system symbols and sls readback succeeded.",
+    "One emitted initial marker and target pair were observed.",
+    "No continuation or initializer exception was observed.",
+    "Individual ownership acceptance and timing stages are not retained.",
+    "Owned-process teardown and desktop closure are verified."
+  ],
+  "limitations": [
+    "Transport success is not product startup success.",
+    "Original initialization error 1114 remains unresolved.",
+    "No rendered UI or interaction acceptance."
+  ]
+}
