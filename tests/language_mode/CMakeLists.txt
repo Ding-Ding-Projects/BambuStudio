@@ -18,6 +18,12 @@ else()
 endif()
 include(${wxWidgets_USE_FILE})
 
+if(SLIC3R_STATIC)
+    # Match libslic3r_gui and the static wxWidgets build's assertion ABI.
+    # This does not disable Catch2 assertions.
+    target_compile_definitions(language_mode_tests PRIVATE wxDEBUG_LEVEL=0)
+endif()
+
 target_include_directories(language_mode_tests PRIVATE ${PROJECT_SOURCE_DIR}/src)
 if(WIN32)
     # Match the production catalog output, including the generated Cantonese

@@ -2,6 +2,17 @@
 
 ## Active interface extension, 2026-10-02
 
+Resume evidence: MCP run `37054493889` completed successfully and published
+`md3-v187` for `ce61d22e390e4bf69938730434f1e494fa34f7a9`.
+Installed MCP verification is running as `37084928659`.
+Combined candidate `4436c7f91edd4a09fc491018035adfd6235c2f68` passed 46 canvas
+checks, 68 preview checks, 55 source tests and eight slice lifecycle contracts
+in run `37056354867`. That run failed overall because the focused native targets
+did not match the static wxWidgets assertion configuration. Full build
+`37056348902` separately failed on an ambiguous `ImGuiWrapper::begin` call in
+`NotificationManager.cpp:3121`. Both repairs are in progress. These are compile
+and link failures, not installed-interface verdicts.
+
 The user extended this task to native transitions and practical asynchronous
 work, complete Material Design 3 context menus and search/regex builders,
 clipped or hidden text, unexpected slicing cancellation, adjacent Slice and Print

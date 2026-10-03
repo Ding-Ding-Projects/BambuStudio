@@ -15,7 +15,8 @@ run only on GitHub-hosted Windows runners. No local product execution occurred.
 
 - MCP: ce61d22e390e4bf69938730434f1e494fa34f7a9 on feature/mcp-integration.
   Run 37054493889 passed 27 managed checks with zero failures or skips;
-  native compilation and installed runtime are still pending.
+  native compilation and release publication passed. Release md3-v187 binds
+  that source; installed runtime run 37084928659 is pending.
 - Shared menus and profile recovery: 45f1101542c239d14713a3ff705da281a9dbc0d4,
   followed by profile reservation and corrupt-archive checks in
   13ce9d652220a489c965561aea313d92a859430c. Independent source review accepted
@@ -44,7 +45,8 @@ This is not main and does not establish runtime correctness.
 The personal-wording owner is frozen after independent review.
 A separate feature/preview-layout candidate 35ce8dbcbf5d695425e64f652054790c332ee891
 repairs notification and preview geometry and passed independent source review.
-It is pushed and merged into the integration candidate, with 68 checks pending.
+It is pushed and merged into the integration candidate. Its 68 checks passed
+in hosted run 37056354867, alongside 46 canvas checks and 55 source tests.
 A feature/ui-runtime-verification lane implements genuine
 hosted menu, vocabulary and slice-control interactions using the existing
 restricted evidence route. The parent owns focused hosted workflow wiring,
@@ -62,8 +64,12 @@ Run 37055936191 passed the focused job but failed native-service compilation:
 the Cantonese catalog requires reviewed-category metadata on new entries, and
 PersonalVocabulary.cpp:231 selected std::apply through argument-dependent lookup.
 Both are repaired and independently reviewed at
-c68cf438413b99633eb376ad89c2d4688dc95d20. A new hosted run is required;
-the previous run is not green.
+c68cf438413b99633eb376ad89c2d4688dc95d20. The next run 37056354867 passed
+focused checks but failed linking wxWidgets assertion symbols. Repair
+fd0067052fc75c0f7395b5f343f06cfd818bf3a9 matches the production static ABI.
+Full build 37056348902 also failed on an ambiguous preview begin overload;
+59d5c0b34b873a12048774799cf414bf9ab2700c selects the intended string overload.
+Both repairs are integrated on the candidate and await hosted verification.
 The focused job also passed 49 source tests with zero failures.
 The focused native-service job requires the dependency prefix produced by the
 existing native build and fails explicitly on a cache miss. It builds generated
@@ -79,5 +85,4 @@ Integrate completed verified work into main, push and verify its remote SHA,
 and obtain the final hosted verdict. Retain all worktrees until their tips
 are proven ancestors of remote main and a complete verified external backup
 exists. No cleanup has run. Status Hub enrollment remains unavailable, and no
-status delivery is claimed. Current MCP observation limit is 20:29:56 UTC;
-a pending run is never a successful verdict.
+status delivery is claimed. A pending run is never a successful verdict.
