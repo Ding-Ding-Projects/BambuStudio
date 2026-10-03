@@ -6,6 +6,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Win32.SafeHandles;
 
 public static class HostedScaleProcess
 {
@@ -17,6 +18,7 @@ public static class HostedScaleProcess
         public short Show, ReservedSize; public IntPtr Reserved2, Input, Output, Error;
     }
     [StructLayout(LayoutKind.Sequential)] struct PI { public IntPtr Process, Thread; public uint Pid, Tid; }
+    [StructLayout(LayoutKind.Sequential)] struct SIX { public SI Start; public IntPtr Attributes; }
     [StructLayout(LayoutKind.Sequential)] struct Limits {
         public long ProcessTime, JobTime; public uint Flags;
         public UIntPtr MinSet, MaxSet; public uint Active; public UIntPtr Affinity; public uint Priority, Scheduling;
@@ -42,8 +44,11 @@ public static class HostedScaleProcess
     [DllImport("kernel32.dll")] static extern bool SetHandleInformation(IntPtr h,uint m,uint f);
     [DllImport("kernel32.dll", CharSet=CharSet.Unicode)] static extern IntPtr CreateFile(string n,uint a,uint s,ref SA sa,uint d,uint f,IntPtr t);
     [DllImport("kernel32.dll", CharSet=CharSet.Unicode, SetLastError=true)] static extern bool CreateProcess(
-        string app,StringBuilder cmd,IntPtr pa,IntPtr ta,bool inherit,uint flags,IntPtr env,string cwd,ref SI si,out PI pi);
-    [DllImport("kernel32.dll")] static extern bool ReadFile(IntPtr h,byte[] b,uint n,out uint read,IntPtr o);
+        string app,StringBuilder cmd,IntPtr pa,IntPtr ta,bool inherit,uint flags,IntPtr env,string cwd,ref SIX si,out PI pi);
+    [DllImport("kernel32.dll")] static extern bool ReadFile(SafeFileHandle h,byte[] b,uint n,out uint read,IntPtr o);
+    [DllImport("kernel32.dll")] static extern bool InitializeProcThreadAttributeList(IntPtr list,int count,int flags,ref IntPtr size);
+    [DllImport("kernel32.dll")] static extern bool UpdateProcThreadAttribute(IntPtr list,uint flags,IntPtr key,IntPtr value,IntPtr size,IntPtr previous,IntPtr returned);
+    [DllImport("kernel32.dll")] static extern void DeleteProcThreadAttributeList(IntPtr list);
 
     static bool Empty(IntPtr job) {
         Accounting a;
@@ -67,6 +72,9 @@ public static class HostedScaleProcess
     public static Result Run(string executable,string[] args,int seconds,bool capture) {
         var result=new Result();
         IntPtr job=IntPtr.Zero, read=IntPtr.Zero, write=IntPtr.Zero, nul=IntPtr.Zero;
+        IntPtr attributes=IntPtr.Zero, inherited=IntPtr.Zero;
+        bool attributesReady=false;
+        SafeFileHandle readerHandle=null;
         PI pi=new PI(); bool created=false, assigned=false;
         Task reader=null; int overflow=0; byte[] bytes=null;
         try {
@@ -78,19 +86,37 @@ public static class HostedScaleProcess
             nul=CreateFile("NUL",0xC0000000,3,ref sa,3,0,IntPtr.Zero);
             if(nul==new IntPtr(-1)) throw new Exception();
             if(capture && (!CreatePipe(out read,out write,ref sa,4096) || !SetHandleInformation(read,1,0))) throw new Exception();
-            var si=new SI { Size=Marshal.SizeOf<SI>(), Flags=0x101, Show=0, Input=nul,
-                Output=capture ? write : nul, Error=nul };
+            IntPtr attributeSize=IntPtr.Zero;
+            InitializeProcThreadAttributeList(IntPtr.Zero,1,0,ref attributeSize);
+            if(attributeSize==IntPtr.Zero) throw new Exception();
+            attributes=Marshal.AllocHGlobal(attributeSize);
+            if(!InitializeProcThreadAttributeList(attributes,1,0,ref attributeSize)) throw new Exception();
+            attributesReady=true;
+            // Explicitly inherit only the intended standard streams. NUL is
+            // shared by stdin/stderr and by stdout when output is discarded.
+            int handleCount=capture ? 2 : 1;
+            inherited=Marshal.AllocHGlobal(handleCount*IntPtr.Size);
+            Marshal.WriteIntPtr(inherited,nul);
+            if(capture) Marshal.WriteIntPtr(inherited,IntPtr.Size,write);
+            if(!UpdateProcThreadAttribute(attributes,0,new IntPtr(0x20002),inherited,
+                new IntPtr(handleCount*IntPtr.Size),IntPtr.Zero,IntPtr.Zero)) throw new Exception();
+            var si=new SIX { Start=new SI { Size=Marshal.SizeOf<SIX>(), Flags=0x101, Show=0, Input=nul,
+                Output=capture ? write : nul, Error=nul }, Attributes=attributes };
             var command=new StringBuilder(Quote(executable));
             foreach(var arg in args) command.Append(' ').Append(Quote(arg));
             // The first instruction cannot run before containment is installed.
-            if(!CreateProcess(executable,command,IntPtr.Zero,IntPtr.Zero,true,0x08000004,
+            if(!CreateProcess(executable,command,IntPtr.Zero,IntPtr.Zero,true,0x08080004,
                 IntPtr.Zero,null,ref si,out pi)) throw new Exception();
             created=true;
             if(!AssignProcessToJobObject(job,pi.Process)) throw new Exception();
             assigned=true;
             if(capture) {
                 CloseHandle(write); write=IntPtr.Zero;
-                IntPtr pipe=read;
+                // Transfer ownership before scheduling. Neither process timeout
+                // nor drain timeout may close a handle a queued reader will use.
+                readerHandle=new SafeFileHandle(read,true);
+                read=IntPtr.Zero;
+                SafeFileHandle pipe=readerHandle;
                 reader=Task.Run(() => {
                     try {
                         using(var stream=new MemoryStream()) {
@@ -102,6 +128,7 @@ public static class HostedScaleProcess
                             bytes=stream.ToArray();
                         }
                     } catch { Interlocked.Exchange(ref overflow,1); }
+                    finally { pipe.Dispose(); }
                 });
             }
             if(ResumeThread(pi.Thread)==uint.MaxValue) throw new Exception();
@@ -132,6 +159,13 @@ public static class HostedScaleProcess
             if(job!=IntPtr.Zero) CloseHandle(job);
             if(write!=IntPtr.Zero) CloseHandle(write);
             if(read!=IntPtr.Zero) CloseHandle(read);
+            // Task.Run throwing is the sole case where ownership was transferred
+            // but no reader exists. Otherwise the reader alone disposes its pipe,
+            // including after a bounded drain timeout returns unavailable.
+            if(reader==null && readerHandle!=null) readerHandle.Dispose();
+            if(attributesReady) DeleteProcThreadAttributeList(attributes);
+            if(attributes!=IntPtr.Zero) Marshal.FreeHGlobal(attributes);
+            if(inherited!=IntPtr.Zero) Marshal.FreeHGlobal(inherited);
             if(nul!=IntPtr.Zero && nul!=new IntPtr(-1)) CloseHandle(nul);
             if(pi.Thread!=IntPtr.Zero) CloseHandle(pi.Thread);
             if(pi.Process!=IntPtr.Zero) CloseHandle(pi.Process);

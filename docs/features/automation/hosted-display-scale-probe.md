@@ -157,6 +157,10 @@ not a substitute for a termination verdict. Normal worker output and all standar
 error go to NUL. Only cheap JSON output is captured, capped at 64 KiB, with a
 bounded process deadline and a one-second final drain. No unbounded stream read
 or generic child-action output is retained.
+The pipe reader exclusively owns a `SafeFileHandle` until its task finishes,
+including when the bounded drain returns unavailable. Process teardown never
+closes a raw pipe handle underneath a queued or active read. Extended startup
+attributes restrict inheritance to the intended standard-stream handles.
 
 Only `supervisor.json`, `run.json` and `restore.json` are public-safe receipts.
 Never upload `original.json`: it is private recovery state containing process and
