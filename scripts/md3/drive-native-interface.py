@@ -395,6 +395,15 @@ class Driver:
                "capture": self.capture(label, image_handle)}
         if operation != "observe" and self.last_input.get("native_input_target") is not None:
             row["native_input_target"] = self.last_input["native_input_target"]
+        # Reuse the ready/restart observation immediately after exact_client().
+        # A duplicate image would overflow the menu scope's 30-image envelope.
+        if self.viewport_observations:
+            viewport = self.viewport_observations[-1]
+            if viewport.get("restored") and "capture" not in viewport:
+                require(operation == "observe" and image_handle == self.app.main,
+                        "Minimum geometry must bind to the next main-frame observation")
+                viewport["capture"] = row["capture"]
+                viewport["capture_operation"] = label
         self.rows.append(row)
         return row
 
@@ -475,7 +484,6 @@ class Driver:
             receipt["restored"] = (restored["outer"] == size and
                                    restored["minimum_outer"] == minimum and restored["dpi"] == before["dpi"])
         require(receipt["restored"], "Measured minimum frame was not restored")
-        self.record("measured-minimum-restored")
 
     def menu_items(self, top):
         return [r for r in self.candidates(kind=50011, top=top)]

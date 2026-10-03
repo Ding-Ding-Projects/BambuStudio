@@ -87,6 +87,12 @@ client rectangle the minimum. Each invocation and process restart adds a
 It also requests an outer frame one physical pixel smaller in both dimensions
 using the existing `SetWindowPos` route, records the resulting geometry, restores
 the original measured minimum in `finally`, and captures the restored surface.
+The minimum receipt references the immediately following existing ready or
+restart main-frame capture, without adding a duplicate image. The menu scope
+retains exactly 30 images: one ready observation, five outer menu interactions,
+and twelve interactions for each of the root and nested menu checks. The driver
+limit remains 30, fitting the wrapper's 32-entry manifest with `runtime.json`
+and the installation receipt. No per-input image is removed.
 Only an exact return to the measured minimum earns `observed_programmatic_clamp`.
 Native interactive minimum tracking and programmatic resizing are not equivalent:
 if the programmatic request is not clamped, the diagnostic records `not_observed`
