@@ -38,6 +38,28 @@ model application, callbacks or methods that acquire it again. Do not acquire by
 calling `stop()`, which can wait, or treat cancellation requested as cancellation
 completed. The first design does not settle `STATE_FINISHED` or `STATE_CANCELED`.
 
+### Independent refutation: start exclusion is insufficient
+
+Source review identified additional mutation paths that the proposed start flag
+does not cover:
+
+- `BackgroundSlicingProcess.hpp:138`, `set_current_plate`, directly assigns
+  `m_current_plate` without the mutex or a generation increment. Comparing the
+  final pointer misses a plate switch away and back during import.
+- `BackgroundSlicingProcess.cpp:159`, `select_technology`, can call `reset()` and
+  replace `m_print`. A reservation must not survive that change as valid ownership.
+- `BackgroundSlicingProcess.cpp:609`, `reset`, increments the native generation
+  and invalidates steps outside the proposed reservation contract.
+
+Consequently, checking only `start()` is not sufficient. Before implementation,
+define owner-owned reservation state with explicit invalidation on every relevant
+plate, technology, reset and model mutation path. Release must neither abandon a
+flag permanently nor enqueue a callback carrying a raw owner after destruction.
+Invalidation must be monotonic so an away-and-back transition cannot restore a
+stale request's validity. This is an unresolved design requirement, not an API
+provided by the current source. A complete mutation revision or equivalent
+validated-state contract remains necessary in addition to this ownership work.
+
 ## Target validation remains unresolved
 
 The GUI completion must validate its weak owner, current operation identity, exact
