@@ -1,5 +1,48 @@
 # Bambu Studio handoff
 
+## Latest verified state, 2026-10-03 UTC
+
+Hosted lifecycle run [37094628859](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37094628859)
+passed 11/11 cases in 13615 ms at `b282a05c14c54c8063f31f38b2605bbd8b9206b6`.
+The receipt confirms `cleanup_verified=true` and `settings_mutated=false`.
+This includes the actual diagnostic-reader geometry contract and is not product
+interaction evidence. The original receipt hash and full fixed receipt are in
+`docs/features/automation/hosted-source-query-b5468208.json`.
+
+Two independent private pixel reviews inspected both authenticated Settings
+captures from run `37094061673`, source `b546820867f01602807775275a6ef3e1f6cce793`,
+using reader `a115faf0861e38fa0be8da646d87195672bdad3d`. The before-selector image
+shows 100% selected and 1920x1080 resolution. The expanded image shows a complete,
+uncut two-row popup with only 100% and 125%, no visible scrollbar, and no partial
+next row. The observed popup reports no scrolling. The current observed page
+cannot supply 150% or 200%; this does not establish universal platform support
+limits or prove why those options are absent. Both images are 816x641 and each
+has 16 unavailable offscreen-control rectangles, never invented coordinates.
+
+Both originals visibly contain an account identity and remain private;
+publication is not authorized. No canonical private vocabulary payload was
+uploaded. These are Settings diagnostics, not installed product pixels, minimum
+resize proof, or a completed language/theme/scale matrix. Product verification,
+main integration and deletion remain incomplete. No physical printer action was
+performed. Historical sections below retain their earlier observation states;
+this section supersedes their pending lifecycle and expanded-image review status.
+
+The non-draft release `md3-v190` targets tag/source
+`35d1074faea221fa4f289f1db1e0ee428a90d701`, with all five assets uploaded.
+`Setup.exe` is 770881024 bytes, SHA-256
+`22cc03323daf30af64d5d426d5494bf53fe928c3d7c28a9e0367d3bd7c6575c3`.
+Installed verification is pending: MCP run `37094960913`, vocabulary run
+`37094962319`, and cancellation run `37094963874`. Dispatch uses `b282a05c1`,
+but the workflow explicitly checks out the expected verifier source `35d1074fa`.
+This package does not contain the minimum-resize scope, which awaits a newer
+matching package. Uploaded release assets are not installed verification success.
+
+Next: retain the private originals and exact bindings, investigate only a reviewed
+bounded route for the absent scale options, and run installed product verification
+only against a matching source/package identity on hosted Windows runners. Do not
+infer product success or cleanup eligibility from the eleven-case result.
+
+
 ## Active interface extension, 2026-10-02
 
 Combined build `37085334409` failed on an incomplete `wxGLCanvas` type in
@@ -2464,10 +2507,10 @@ controls. Reviewed repair a115faf0861e38fa0be8da646d87195672bdad3d permits that
 exact sentinel only as unavailable optional offscreen-control geometry; frame
 and PNG bounds remain strict. Both encrypted captures opened successfully with
 authenticated source/run/phase bindings. The first records 16 unavailable control
-rectangles. The new eleven-case hosted geometry contract remains pending.
+rectangles. The eleven-case hosted geometry contract subsequently passed in run 37094628859, as recorded above.
 
 The first genuine pixel review found a collapsed 100% selector and visible
 1920x1080 resolution. A visible account identity prevents publication of the
-unredacted original. Expanded-state review remains pending. These are Settings
+unredacted original. Both independent expanded-state reviews are now complete, as recorded above. These are Settings
 diagnostics, not installed application evidence. Main integration and cleanup
 remain incomplete; no physical printer command was sent.

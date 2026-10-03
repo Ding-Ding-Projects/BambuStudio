@@ -115,6 +115,85 @@
         "schema": 1,
         "settings_mutated": false
       }
+    },
+    {
+      "run_id": "37094628859",
+      "source_commit": "b282a05c14c54c8063f31f38b2605bbd8b9206b6",
+      "result": "passed",
+      "url": "https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37094628859",
+      "receipt_sha256": "5b97d76c56915194c3c3897e6248446e9b3c4f39fa4d51f78aed44f2cf7cf4ff",
+      "receipt": {
+        "status": "passed",
+        "expected": 11,
+        "elapsed_ms": 13615,
+        "source_supervisor_observation": {
+          "exit_code": 0,
+          "native_error": null,
+          "process_stage": 18,
+          "terminated": true
+        },
+        "cleanup_verified": true,
+        "schema": 1,
+        "passed": 11,
+        "settings_mutated": false,
+        "cases": [
+          {
+            "status": "passed",
+            "name": "nested_source_identity"
+          },
+          {
+            "status": "passed",
+            "name": "diagnostic_control_geometry"
+          },
+          {
+            "status": "passed",
+            "name": "minimum_resolution_tuple_contract"
+          },
+          {
+            "status": "passed",
+            "name": "minimum_input_recovery_contract"
+          },
+          {
+            "status": "passed",
+            "name": "display_mode_public_layout_contract"
+          },
+          {
+            "status": "passed",
+            "name": "reject_oversized_output"
+          },
+          {
+            "status": "passed",
+            "name": "normal_output_after_overflow"
+          },
+          {
+            "status": "passed",
+            "name": "terminate_descendant_after_parent_exit"
+          },
+          {
+            "status": "passed",
+            "name": "normal_output_after_descendant_timeout"
+          },
+          {
+            "status": "passed",
+            "name": "accept_exact_output_limit"
+          },
+          {
+            "status": "passed",
+            "name": "query_only_named_job_membership"
+          }
+        ],
+        "source_process_observation": {
+          "source_format_valid": true,
+          "terminated": true,
+          "legacy_selection_count": 3,
+          "output_length": 41,
+          "exit_code": 0,
+          "checkout_matches_run": true,
+          "invalid_paths_rejected": 4,
+          "native_error": null,
+          "process_stage": 18
+        }
+      }
     }
   ]
 }
