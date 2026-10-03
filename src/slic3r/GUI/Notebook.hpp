@@ -7,6 +7,7 @@
 #include <wx/sizer.h>
 
 #include "Widgets/MD3Tokens.hpp"
+#include "Widgets/MD3Motion.hpp"
 
 #include <functional>
 #include <utility>
@@ -23,7 +24,7 @@ class ButtonsListCtrl : public wxControl
 public:
     // BBS
     ButtonsListCtrl(wxWindow* parent, wxBoxSizer* side_tools = NULL);
-    ~ButtonsListCtrl() {}
+    ~ButtonsListCtrl() override { m_selection_motion.Stop(); }
 
     void OnPaint(wxPaintEvent&);
     void SetSelection(int sel);
@@ -56,6 +57,8 @@ private:
     // above the data-scheme scope: its active indicator/label accent is pinned to
     // ColorScheme::Brand in StyleButton/OnPaint and never follows this value.
     MD3::ColorScheme                m_color_scheme{MD3::ColorScheme::Brand};
+    MD3::Motion::Anim               m_selection_motion;
+    double                         m_selection_emphasis = 1.0;
     //ModeSizer*                      m_mode_sizer {nullptr};
 };
 

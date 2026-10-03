@@ -3,6 +3,7 @@
 
 #include "wxExtensions.hpp"
 #include "Widgets/StaticBox.hpp"
+#include "Widgets/MD3Motion.hpp"
 
 class TabButton : public StaticBox
 {
@@ -21,9 +22,12 @@ class TabButton : public StaticBox
     // that Primary for the host workspace (Brand / Preview / Device).
     bool             m_selected = false;
     MD3::ColorScheme m_scheme   = MD3::ColorScheme::Brand;
+    MD3::Motion::Anim m_selection_motion;
+    double m_selection_emphasis = 1.0;
 
 public:
     TabButton();
+    ~TabButton() override { m_selection_motion.Stop(); }
 
     TabButton(wxWindow *parent, wxString text, ScalableBitmap &icon, long style = 0, int iconSize = 0);
 

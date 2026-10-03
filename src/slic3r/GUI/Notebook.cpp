@@ -7,6 +7,7 @@
 #include "Widgets/Button.hpp"
 #include "Widgets/MaterialIcon.hpp"
 #include "Widgets/StateColor.hpp"
+#include "Widgets/StateMotionMath.hpp"
 
 //BBS set font size
 #include "Widgets/Label.hpp"
@@ -156,7 +157,12 @@ void ButtonsListCtrl::OnPaint(wxPaintEvent&)
                      std::max(1, button_rect.width - 2 * inset),
                      indicator_height * 2);
     dc.SetPen(*wxTRANSPARENT_PEN);
-    dc.SetBrush(wxBrush(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Brand)));
+    const auto primary = StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Brand);
+    const double emphasis = MD3::Motion::reduced() ? 1.0 : m_selection_emphasis;
+    dc.SetBrush(wxBrush(wxColour(
+        MD3::Motion::color_channel(surface.Red(), primary.Red(), emphasis),
+        MD3::Motion::color_channel(surface.Green(), primary.Green(), emphasis),
+        MD3::Motion::color_channel(surface.Blue(), primary.Blue(), emphasis))));
     dc.DrawRoundedRectangle(indicator, indicator_height);
 }
 
@@ -297,6 +303,12 @@ void ButtonsListCtrl::SetSelection(int sel)
 
     m_selection = sel;
     StyleButton(m_pageButtons[m_selection], true);
+    // Selection and page dispatch are immediate. Only the existing marker's
+    // color gains emphasis; neither the page nor its hitboxes move.
+    m_selection_motion.Play(MD3::Motion::short2, [this](double t) {
+        m_selection_emphasis = MD3::Motion::interpolate(0.65, 1.0, t);
+        Refresh(false);
+    }, nullptr, &MD3::Motion::easeStandard, this);
     Refresh(false);
 }
 
