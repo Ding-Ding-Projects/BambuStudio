@@ -65,7 +65,10 @@ function Parse-Json([byte[]] $Bytes) {
     $text = $utf8.GetString($Bytes).TrimStart([char]0xFEFF)
     $options = [Text.Json.JsonDocumentOptions]::new(); $options.MaxDepth = 16
     $document = [Text.Json.JsonDocument]::Parse($text,$options)
-    try { Check-JsonElement $document.RootElement } finally { $document.Dispose() }
+    try {
+        Require ($document.RootElement.ValueKind -eq [Text.Json.JsonValueKind]::Object)
+        Check-JsonElement $document.RootElement
+    } finally { $document.Dispose() }
     return ($text | ConvertFrom-Json -Depth 16 -DateKind String)
 }
 function Fields($Object, [string[]] $Names) {
@@ -87,6 +90,8 @@ function Rect($Value) {
 function Binding($Value) {
     Fields $Value @('protocol','run_id','source_commit','phase','captured_at_utc','width','height','capture_method',
         'png_sha256','cheap_sha256','helper_sha256','diagnostic_sha256')
+    foreach ($name in @('protocol','run_id','source_commit','phase','captured_at_utc','capture_method',
+        'png_sha256','cheap_sha256','helper_sha256','diagnostic_sha256')) { Require ($Value.$name -is [string]) }
     Require ($Value.protocol -ceq 'hosted-scale-diagnostic-v1' -and $Value.run_id -ceq $ExpectedRunId -and
         $Value.source_commit -ceq $ExpectedCommit -and $Value.phase -ceq $ExpectedPhase -and $Value.capture_method -ceq 'cheap_exact_hwnd')
     Integer $Value.width 1 8192; Integer $Value.height 1 8192
@@ -107,6 +112,9 @@ try {
     Require ((Test-Path -LiteralPath $parent -PathType Container) -and -not (Test-Path -LiteralPath $final))
     $envelope = Parse-Json (Read-Bounded $EnvelopePath 32768)
     Fields $envelope @('schema','protocol','recipient','recipient_sha256','aad_base64','binding','wrapped_key','nonce','tag','ciphertext_sha256')
+    foreach ($name in @('protocol','recipient','recipient_sha256','aad_base64','wrapped_key','nonce','tag','ciphertext_sha256')) {
+        Require ($envelope.$name -is [string])
+    }
     Integer $envelope.schema 1 1
     Require ($envelope.protocol -ceq 'hosted-scale-diagnostic-v1' -and $envelope.recipient -ceq 'hosted-automation-public-v1.pem')
     Binding $envelope.binding
@@ -143,6 +151,7 @@ try {
     Require ($observed -le (Timestamp $inventory.binding.captured_at_utc))
     Integer $inventory.settings_pid 1 4294967295; Integer $inventory.settings_start 1 ([long]::MaxValue)
     Integer $inventory.owned_root 1 ([long]::MaxValue); Integer $inventory.settings_dpi 96 192
+    Integer $inventory.selected_percent 100 200
     Require ($inventory.foreground_owned -is [bool] -and $inventory.selected_percent -in @(100,125,150,200))
     Rect $inventory.bounds
     Require (($inventory.bounds[2]-$inventory.bounds[0]) -eq $inventory.binding.width -and
