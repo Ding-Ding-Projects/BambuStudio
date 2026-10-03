@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "run_id": "37103711674",
+  "url": "https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37103711674",
+  "verification_commit": "de733332b0cadce9508f29581fa09c3c3758afb7",
+  "source_commit": "35d1074faea221fa4f289f1db1e0ee428a90d701",
+  "release_tag": "md3-v190",
+  "workflow_conclusion": "success",
+  "trace_driver_exit_code": 2,
+  "restricted_review": "authenticated bundle reviewed; four exact CRLF verifier hashes independently matched",
+  "verifier_files_sha256": {
+    "wrapper": "240383d2e450d05f7423d4f95c3313e271d07c57988acff3ae0a63f156cd0a06",
+    "containment": "8081405a3e3030dae2ad8bac1f4cd1f6e9aebbae160c06a693462a8e892b8e03",
+    "desktop_holder": "d62f0c1bd573140d934fd781c4d12713d22763ef73bb452d6c0936728e9f8b9d",
+    "driver": "78b16af34f9304bf5be0c02ae45c0bd0a81796ed4ef6f1a334cd1d9e35988dca"
+  },
+  "source_byte_representation": "CRLF-checkout",
+  "creation_observation": {
+    "stage": "target_desktop",
+    "acknowledgement_observed": true,
+    "observed_output_bytes": 6381,
+    "inventory_count": 1,
+    "target_pid_matches": true,
+    "debugger_job_member": true,
+    "target_job_member": true,
+    "target_desktop_matches": null,
+    "continuation_written": false
+  },
+  "private_log_bytes": 6381,
+  "private_log_sha256": "68d6d196045ad07241e2875a354388959695c7fe966d6fbfb79694d63672cd8d",
+  "debugger_stop_verified": true,
+  "owned_process_cleanup": "verified",
+  "named_desktop_closed_verified": true,
+  "limitations": [
+    "Desktop lookup raised before comparison; a mismatch was not observed.",
+    "GetThreadDesktop and GetUserObjectInformationW native outcomes remain unclassified.",
+    "No continuation, initializer diagnosis, installed interaction or rendered acceptance."
+  ]
+}

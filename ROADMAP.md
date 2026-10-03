@@ -12,6 +12,9 @@
 
 ## Native interface completeness and slicing actions
 
+- [ ] Verify const state-color lookup repair through the exact combined hosted build after run `37103897508` failed with C2662.
+- [ ] Classify native desktop lookup results without weakening ownership acceptance after run `37103711674` stopped before continuation.
+
 - [x] Pass 25 pure temporal-observation contracts at `414e7d81` in hosted run `37103221335`, with exact result and five source hashes verified; rendered animation remains excluded.
 - [ ] Resolve startup ownership/timing observation after strict symbols succeeded in run `37102257995`; prioritize green combined verification before further feature work.
 
