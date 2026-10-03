@@ -76,7 +76,7 @@ async def hold(args):
     from mcp.client.stdio import stdio_client
     sdk = re.fullmatch(r"1\.(\d+)\.(\d+)", version("mcp"))
     require(sdk and int(sdk[1]) >= 2)
-    root = plain(args.root.resolve())
+    root = plain(args.root.absolute()).resolve()
     root.relative_to(Path(os.environ["RUNNER_TEMP"]).resolve())
     require(root.is_dir())
     binding = {"nonce": args.nonce, "desktop": args.desktop, "source": args.source}
