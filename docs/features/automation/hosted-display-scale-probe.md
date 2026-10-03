@@ -120,7 +120,7 @@ encrypted pixel review and interactive clamp evidence remain pending.
 ## Bounded predefined-scale provisioning
 
 `scripts/ci/Invoke-HostedDisplayScale.ps1` is a separate hosted-only helper. It
-requires an already opened Display Settings surface and the existing pinned
+requires an already opened Display Settings surface for standalone use and the existing pinned
 `lowlevel-computer-use-cheap` executable. UI Automation only reads the observed
 `SystemSettings_Display_Scaling_ItemSizeOverride_ComboBox`, its selected value,
 and supported predefined items. Default input uses HWND-targeted cheap mouse clicks,
@@ -231,7 +231,12 @@ or 200%; the existing 100% route is unchanged and rejects that switch. Installat
 package digest verification and the pinned tooling bootstrap finish before scale
 mutation. The verifier creates a fresh, bounded, hash-bound request under
 `RUNNER_TEMP`. A contained validation-only adapter pass checks it before Settings
-input, then the fixed adapter repeats validation before launching the product.
+input, then the supervisor opens the fixed `ms-settings:display` URI with hidden
+launch configuration immediately before starting the contained scale worker.
+No arbitrary URI or forced foreground activation is supported. The worker still
+requires observed Settings identity and foreground ownership. Standalone jobs
+continue to open their own Settings surface. The fixed adapter repeats request
+validation before launching the product.
 No request field selects arbitrary executables, scripts or filesystem locations.
 
 The scale worker invokes the adapter only after it observes the requested
