@@ -58,7 +58,7 @@ Windows 桌面應用程式上發現嘅每一個版面裁剪缺陷，包括佢嘅
 | CJ-033 | 打印板設定嘅四個下拉選單（側邊欄拉闊咗） | en-light-comfortable，報告嚟自 2026-07-30 建置嘅安裝版本；而家嘅發佈版本係同一段程式碼，側邊欄 580 px | 「Textured PEI Plate」畫成「Textured P...」，雖然成行仲有位 | 無論成行幾闊都係固定 12 em；下拉選單而家跟成行咁闊 | 856d92a2c | pending | pending | fixed-unverified |
 | CJ-034 | 預覽圖例側欄嘅時間估算卡同檢視模式下拉選單 | en-light-comfortable，報告嚟自 2026-07-30 建置嘅安裝版本；而家嘅發佈版本係同一段程式碼 | 張卡左邊嘅外框同圓角被切走，張卡同下拉選單都去到側欄一半就收尾 | 張卡嘅範圍由最闊嗰行左邊 6 px 開始，喺視窗裁剪範圍出面；下拉選單用咗 ImGui 預設嘅項目闊度，即係視窗嘅 65% | 856d92a2c | pending | pending | fixed-unverified |
 | CJ-035 | 打印板設定嘅打印板類型下拉選單（預設側邊欄闊度） | en-light-comfortable，側邊欄 344 DIP（由原始碼計出嚟，未有擷圖） | 預設闊度下「Textured PEI Plate」仍然用省略號收尾 | 喺 20 em 嘅標籤欄隔籬，成行淨返嘅位唔多過 12 em 嘅最細闊度；而家呢頁用 14 em 標籤欄（較長嘅標籤會轉行），剩返大約 17 em | e4a6c1ccb | pending | pending | fixed-unverified |
-| CJ-036 | 打印板設定嘅打印板類型下拉選單，預設側邊欄闊度下最長嘅兩個打印板名 | en-light-comfortable，側邊欄 344 DIP（由原始碼計出嚟，未有擷圖） | 「Smooth PEI Plate / High Temp Plate」同「Bambu Cool Plate SuperTack」仍然用省略號收尾；打開清單會完整顯示 | 佢哋分別要大約 21 同 26.5 em，就算用 14 em 標籤欄，最窄側邊欄成行都唔夠位 | pending | pending | pending | open |
+| CJ-036 | 打印板設定嘅打印板類型下拉選單，預設側邊欄闊度下最長嘅兩個打印板名 | en-light-comfortable，側邊欄 344 DIP（由原始碼計出嚟，未有擷圖） | 「Smooth PEI Plate / High Temp Plate」同「Bambu Cool Plate SuperTack」仍然用省略號收尾；打開清單會完整顯示 | 佢哋分別要大約 21 同 26.5 em，就算用 14 em 標籤欄，最窄側邊欄成行都唔夠位；呢頁而家將每一行下拉選單上下排：標籤自己一行，下拉選單喺下一行用成行闊度（344 DIP 下大約 31 em） | 6994caf6f | pending | pending | fixed-unverified |
 | CJ-037 | 匯出對話框（物件清單、偏好設定、打印統計）嘅格式清單 | en-light-comfortable | 格式欄顯示「CSV (.csv...ommended」同「TSV (.tsv...ommended」，太長嘅說明喺中間被切 | 格式欄得 150 px，啲名要大約 175 px；精確度欄得一個字，卻有 110 px | 108259a2a | dialog-export-object-list--en-light-comfortable--md3-v180.png | pending | fixed-unverified |
 <!-- clipping-inventory:end -->
 

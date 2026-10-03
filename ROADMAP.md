@@ -59,7 +59,7 @@
 ## Preview overlays and sidebar defects (issue #51)
 
 - [ ] Notifications, the slicing card and the error banner keep clear of the legend dock; the status chip starts right of the plate strip; the All Plates Stats tile draws an opaque glyph and label; the view-mode combo and the time estimation card span the dock; the Ink Grouping card is sized from its content; the Objects list has no native header or frame (`856d92a2c`, [preview overlays](docs/features/gcode-preview/preview-overlays.md)). Compiled by run [36747308882](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36747308882) and published as `md3-v177` (package `2.8.4635`). Unticked until the Preview tab is captured from a release after slicing, in English, Cantonese and bilingual mode.
-- [ ] Plate type shows its whole name at the default sidebar width (clipping inventory CJ-035): the dropdowns now follow the row width, which fixes a wide sidebar only.
+- [ ] Plate type shows its whole name at the default sidebar width (clipping inventory CJ-035, CJ-036): the dropdowns follow the row width (`e4a6c1ccb`) and the Plate Settings rows stack their label over a row-wide dropdown (`6994caf6f`), so the two longest plate names fit at 344 DIP. In source, checked by `ui-md3/tests/plate-settings-stacked-rows.test.mjs`; unticked until a release is captured.
 - [x] Two reported items were already fixed in current releases (the dropdown arrows of the Slice and Print buttons, the gap under Plate Settings): the report came from an installation built on 2026-07-30.
 
 ## Ink wording (owner request, 2026-09-30)
@@ -72,7 +72,7 @@
 
 - [ ] Seven more native control groups on the kit (dialog captions, message boxes and frames, single-line editors, image and swatch tiles, printer connection and lookup, the Parameter Table grid and search popups, ScalableButton). In source; unticked until a release is captured.
 - [ ] "Don't show again" on the sync prompt and the new-ink prompt, reset by Reset all warning dialogs. In source.
-- [ ] Show the material type TPU-AMS as "TPU for Ink Dispenser" wherever it is displayed, keeping the stored value (owner's choice). Started; saved as `preserve/tpu-display-rename-20260930`, not merged.
+- [ ] Show the material type TPU-AMS as "TPU for Ink Dispenser" wherever it is displayed, keeping the stored value (owner's choice). Merged in `2adc83c`; in source, unticked until a release is read back.
 
 ## Installer shortcuts (issue #52)
 
@@ -135,7 +135,7 @@ until captures from a released build exist.
 - [x] Units and separators show as themselves ("°C", "mm³", the What's new " · "), and paired section headers show whole ("SETTINGS · 設定"); both seen on `md3-v154` Temperature calibration, fixed in `32a36b134` (clipping inventory CJ-025). Verified on `md3-v158` in bilingual, Cantonese and English mode.
 - [x] What's new date fields show their whole hint "YYYY-MM-DD / DD/MM/YYYY", and the preset chips move to a line of their own when the date row does not fit (clipping inventory CJ-027, seen on `md3-v158`, fixed in `1af648025`). Verified on `md3-v162` in English and bilingual mode; the chips start at the left of their own line (`3f304dded` makes the code say so).
 - [x] Model Creator keeps every row at full size and its key buttons whole in every language mode: its form scrolls inside the dialog (clipping inventory CJ-028, fixed in `13dd18236`, verified on `md3-v165`: Add or replace key, Test key and Clear key whole, where `md3-v162` cut two and lost the third; no finding in three modes).
-- [ ] Model Creator's four footer buttons show in the captures: on `md3-v162` and `md3-v165` they capture as blank boxes although the layout probe measures each at its full minimum (clipping inventory CJ-030, cause not found).
+- [ ] Model Creator's four footer buttons show in the captures: on `md3-v162` and `md3-v165` they capture as blank boxes although the layout probe measures each at its full minimum (clipping inventory CJ-030). Cause found and fixed in `108259a2a`: they were never repainted after the dialog's last layout. Unticked until a release capture shows them.
 - [x] Smart home's Close button gets its full width in English and Cantonese mode (clipping inventory CJ-029, fixed in `e5faf503d`: a kit Button's first-paint style now lays its parent out again when it widens the button; verified on `md3-v165`: 70 px in English and 64 px in Cantonese, where `md3-v162` drew 59 px).
 - [x] The layout probe measures placeholder hints against their field, so a cut hint is reported by the sweep rather than found by eye (CJ-027 passed a nine-dialog sweep with no finding). Implemented with its contract test (`ui-md3/tests/layout-probe-hint.test.mjs`): the record carries `hint`, `hint_width` and `hint_clipped`, and the sweep and the report count `hint_clipped`. Verified on `md3-v162`: every bilingual sweep dump carries the fields, 354 hints measured, none cut.
 - [x] An empty message stays empty in Cantonese mode instead of becoming the catalog header: settings fields without a unit show their number, and nothing shows "Project-Id-Version: ..." (clipping inventory CJ-022, seen on `md3-v151`, fixed in `c591f1b39`). Verified on `md3-v157`: the auto-fill row has no description, and the Prepare dump shows the "10" and "1" boxes 89 px wide (0 px on `md3-v151`) with no label carrying the header (8 on `md3-v151`).
@@ -512,9 +512,11 @@ captures are a separate box and stay unticked until they exist from the real bui
   10 popover-style/complex windows flagged for designed treatment (FilamentPicker shaped
   popover, fan/humidity popups, CommandPalette overlay, SettingsDialog frame, ParamsDialog,
   BedShapeDialog build_dialog, ObjectTableDialog positioning, ZUserLogin webview,
-  RecenterDialog done with paint offset) and 7 dead classes. Follow-ups: FeedDirectionDialog
-  caption doesn't track its dynamic `SetTitle` (shows static "Confirm");
-  ManualNozzleCountDialog title literal "Set nozzle count" was never localized upstream.
+  RecenterDialog done with paint offset) and 7 dead classes. Follow-ups closed: the kit caption
+  follows a dialog's `SetTitle` since `ad910deb2` (FeedDirectionDialog no longer shows a static
+  "Confirm"; DeviceErrorDialog, ParamsDialog and ExtrusionCalibration gain the same), and the
+  ManualNozzleCountDialog title "Set nozzle count" is in the template and the Cantonese catalog
+  (`bbl/i18n/yue_HK/BambuStudio_yue_HK.po`), so it was never an untranslated literal.
 - Motion: dialogs, palette, popovers and SlideToConfirm animate now; toast enter/exit is
   ImGui-native already — remaining candidate is tab/page fade-through (needs compositing).
 - The ObjColor compare-panel greys are tokenized (SurfaceContainer roles); SyncAms itself was

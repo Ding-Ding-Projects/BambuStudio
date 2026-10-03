@@ -485,6 +485,36 @@ past the end of the buffer. The handoff record is [#49](https://github.com/Ding-
   install ([record](docs/features/windows/app-updates.md#shortcuts-and-install-events)). In source; the next
   release run is the first real install of it.
 
+## Plate settings stacked rows and the caption title follow (2026-10-03)
+
+- **Stacked plate settings rows (clipping inventory CJ-036, issue #51 item 3), `6994caf6f`.** Full record:
+  [`docs/features/gcode-preview/preview-overlays.md`](docs/features/gcode-preview/preview-overlays.md). An options
+  group can opt its single row-wide option rows into a stacked layout (`OptionsGroup::stack_full_width_label`):
+  the label takes a line of its own and the field the next line, row-wide. The Plate Settings page sets it, so
+  the two longest plate names (about 21 and 26.5 em) fit the dropdown at the default 344 DIP sidebar, where the
+  row beside a 14 em label left about 17 em. `OG_CustomCtrl` computes row heights before the fields exist, so a
+  stacked row measures its real field in `CtrlLine::update_visibility` (after `Page::activate` built it) and on
+  rescale; label, buttons and field centre in their own band, and `label_band` is zero for every other row.
+  - Checked: `ui-md3/tests/plate-settings-stacked-rows.test.mjs` (7 checks, 6 seen failing on the previous
+    source; removing the Tab flag line or the init fallback turns it red) and `native-controls.test.mjs`;
+    `node --test ui-md3/tests/*.test.mjs` 427 of 432 on this host (the dim-sum online check needs `gh`, the
+    offline render needs a Chrome sandbox).
+  - Not checked: no compile on this host (Linux); the hosted build on the push is the compile check. No capture
+    of the stacked rows exists; CJ-036 is `fixed-unverified`.
+- **Kit caption follows the dialog title, `ad910deb2`.** Full record:
+  [`docs/features/design-system/native-controls.md`](docs/features/design-system/native-controls.md#dialog-captions-follow-their-title).
+  A caption adopted with no literal follows the dialog title on idle, comparing against the title it last applied;
+  `MD3DialogCaption::SyncTitle` applies it in the same paint. `FeedDirectionDialog` adopts without the `Confirm`
+  literal (the window title carries it until a tray is mapped) and syncs after its three `SetTitle` calls;
+  `DeviceErrorDialog`, `ParamsDialog` and `ExtrusionCalibration` gain the idle follow with no change.
+  - Checked: `ui-md3/tests/dialog-caption-title-sync.test.mjs` (2 checks, both seen failing before; the old
+    literal turns it red), `lane-dialog-caption`, `dialog-header-includes`, `lane-message-boxes-frames`,
+    `md3-conversion-contracts`.
+  - Not checked: no compile here; the load dialog needs a two-extruder printer to capture.
+- **Records trued up.** README clipping counts (37 rows: 25 verified, 12 fixed in source, none open), the parity
+  register header (the Status column is current), ROADMAP (CJ-035/036, the TPU rename merged in `2adc83c`, the
+  CJ-030 cause in `108259a2a`, the two dialog follow-ups), and the issue #24 item below.
+
 ## Branch and worktree cleanup (2026-09-29)
 
 - `0d883d9fe` records 21 older `codex/*` branches as merged with `-s ours`: `git cherry` showed every one of their
@@ -1685,7 +1715,7 @@ Items 1 and 2 of the previous list are **done** (see §5.4). What remains, in pr
    outstanding. Do not mark the row done from static review alone; use
    `CODEX_HANDOFF_BAMBUSTUDIO_MD3.md` and `ACCEPTANCE_MATRIX_BAMBUSTUDIO_MD3.md`.
 4. **Issue #24 — 8 verified `ui-md3` defects** (4 accessibility, 1 clipping, 3 search/regex).
-   Left unfixed on purpose: a concurrent session owned that tree. Check whether it still does.
+   Fixed in `8f4dba64e` (recorded above); nothing left here.
 5. **Verify and deliver "Add my printers to Home Assistant"** (issue #16) — see §7.1.
 6. **Issue #15 is waiting on the user**, not on you: whether app-data secrets are redacted,
    committed with disclosure, or encrypted. Do not start it by guessing.

@@ -70,6 +70,16 @@ review-status: agent-drafted
 - 冇任何建置會顯示得到嘅原生類別：SLA 壓縮檔匯入嘅檔案揀選器（匯入冇選單項目）、`wxExtensions` 入面嘅剔選清單下拉彈出
   （冇人呼叫），同從來冇建構過嘅監察基礎面板同佢嘅分割器。
 
+## 對話框標題列跟住標題行
+
+套件標題列（`MD3DialogCaption`）取代咗原生標題列，但係佢淨係喺 `Adopt` 嗰刻讀一次對話框嘅標題。對話框之後再叫
+`SetTitle`，改到嘅只係無框視窗下冇人見到嘅視窗文字，標題列照舊顯示第一個標題：「裝載到噴嘴」對話框（`FeedDirectionDialog`）
+本應寫 `Load <tray> to left nozzle`，但係一直寫住 `Confirm`；`DeviceErrorDialog`、`ParamsDialog` 同 `ExtrusionCalibration`
+都係咁樣改標題。由 `ad910deb2` 起，由對話框自己嘅標題採用嘅標題列（`Adopt` 唔傳字串）會跟住個標題行：閒置時將對話框標題
+同上次套用嘅標題比較（唔係同標籤文字比較，因為雙語裝飾器可能已經配對咗佢），唔同就更新標籤同無障礙名稱。
+`MD3DialogCaption::SyncTitle(dialog)` 可以即時喺同一次繪製套用改變；「裝載到噴嘴」對話框每次 `SetTitle` 之後都會叫佢。
+採用時傳咗字串嘅標題列係特登揀嘅標題，照舊唔郁。
+
 ## 驗證
 
 - `node --test ui-md3/tests/native-controls.test.mjs` 會拒絕 GUI 入面任何地方嘅原生分頁控件、報告清單、待辦清單、月曆、提示視窗、
@@ -79,4 +89,6 @@ review-status: agent-drafted
   留位嘅程式碼而家幫套件捲動列留位。
 - 版面探針會幫每個視窗記低佢顯示緊 Windows 捲動列定係套件捲動列（`scrollbars`：`native_v`、`native_h`、`kit_v`、`kit_h`），
   所以一個發佈版本嘅探針轉儲會列出畫面上仲有嘅每一條 Windows 捲動列。
-- 仲未喺發佈版本度逐個用過呢啲介面。
+- `node --test ui-md3/tests/dialog-caption-title-sync.test.mjs` 會檢查由對話框標題採用嘅標題列會跟住佢行、`SyncTitle` 會去到
+  對話框每一個標題列，同埋「裝載到噴嘴」對話框採用時唔傳字串、每次 `SetTitle` 之後都會同步。
+- 仲未喺發佈版本度逐個用過呢啲介面；標題列嘅改動要有雙噴嘴打印機嘅裝載對話框先睇到。

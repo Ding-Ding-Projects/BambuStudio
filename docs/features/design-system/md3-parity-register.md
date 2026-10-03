@@ -28,7 +28,7 @@ overwhelmingly three things:
 
 - Each **surface** section below has one table of gaps. Columns, in order:
   **ID · Legacy element · Kit ref · Native anchor · Required change · Size · Risk · Status**.
-- Every gap is **Status = open**. Close a row only when the change is implemented and verified
+- Every gap starts as **Status = open**; the Status column is current. Close a row only when the change is implemented and verified
   in-app, in **light + dark**, and — where relevant — in the **Preview (purple)** and
   **Device (teal)** contextual schemes.
 - **ID** is a stable handle; cite it in commits/PRs.
@@ -39,7 +39,7 @@ overwhelmingly three things:
 - **De-duplication.** Where two surfaces named the *same native anchor and the same change*, the gap
   is kept as one row in the **most specific** surface and removed from the other. Both the surviving
   row and the removed row carry a **Merge note**. Four such merges were applied (see the notes under
-  the affected tables); the register holds **128** unique open gaps consolidated from **132** raw
+  the affected tables); the register holds **128** unique gaps (all open at audit time) consolidated from **132** raw
   audit findings.
 - The **Wave plan** sequences the open gaps into parallelizable implementation waves with disjoint
   file ownership per parallel group. The **Coverage** section quotes each auditor's coverage note

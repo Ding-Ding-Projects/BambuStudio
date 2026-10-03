@@ -86,6 +86,19 @@ system font, whatever the theme. Each now has a kit counterpart.
   menu entry), the check-list combo popup in `wxExtensions` (no caller), and the monitor base panel
   with its splitter (never constructed).
 
+## Dialog captions follow their title
+
+The kit caption (`MD3DialogCaption`) replaced the native title bar, but it read the dialog's title once, when
+`Adopt` ran. A dialog that called `SetTitle` afterwards changed the window text nobody sees under a borderless
+frame and kept its first title on the strip: the Load-to-nozzle dialog (`FeedDirectionDialog`) showed `Confirm`
+where `Load <tray> to left nozzle` belonged, and `DeviceErrorDialog`, `ParamsDialog` and `ExtrusionCalibration`
+retitle themselves the same way. Since `ad910deb2` a caption adopted from the dialog's own title (an `Adopt`
+call with no literal) follows that title: on idle it compares the dialog title with the title it last applied,
+not with the label text, which the bilingual decorator may have paired, and updates the label and the accessible
+name when they differ. `MD3DialogCaption::SyncTitle(dialog)` applies the change in the same paint for a dialog
+that wants it visible at once; the Load-to-nozzle dialog calls it after each of its `SetTitle` calls. A caption
+adopted with an explicit literal is a deliberate caption and stays as given.
+
 ## Verification
 
 - `node --test ui-md3/tests/native-controls.test.mjs` refuses a native tab control, report list,
@@ -98,4 +111,8 @@ system font, whatever the theme. Each now has a kit counterpart.
 - The layout probe records, for every window, whether it shows a Windows scrollbar or a kit one
   (`scrollbars`: `native_v`, `native_h`, `kit_v`, `kit_h`), so a probe dump of a released build
   lists every Windows scrollbar still on screen.
-- A released build has not been driven through these surfaces yet.
+- `node --test ui-md3/tests/dialog-caption-title-sync.test.mjs` checks that a caption adopted from the dialog
+  title follows it, that `SyncTitle` reaches every caption of the dialog, and that the Load-to-nozzle dialog
+  adopts without a literal and syncs after each `SetTitle`.
+- A released build has not been driven through these surfaces yet; the caption change needs a two-extruder
+  printer's load dialog to be seen.

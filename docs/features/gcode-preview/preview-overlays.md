@@ -76,10 +76,13 @@ because ImGui skips its items then and the cursor does not advance.
   a search field. `GUI_App::UpdateDVCDarkUI` now accepts a table without a header and adds the system frame only
   to a table that left its border at the default.
 - **Plate settings dropdowns.** Plate type, print sequence and the two ink sequence dropdowns take the width of
-  their row instead of a fixed 12 em face, so a wider sidebar shows more of a long value such as
-  `Textured PEI Plate` or `Smooth PEI Plate / High Temp Plate`. At the default sidebar width the row leaves no
-  more than those 12 em, which stay as the minimum, so a long plate name still ends in an ellipsis there. The
-  dropdown list is measured again when its face changes width.
+  their row instead of a fixed 12 em face, and since `6994caf6f` each of those rows stacks: the label takes a
+  line of its own across the row and the dropdown the next line, row-wide (`OptionsGroup::stack_full_width_label`,
+  set by the Plate Settings page only). At the default 344 DIP sidebar that gives the dropdown about 31 em, so
+  `Smooth PEI Plate / High Temp Plate` (about 21 em) and `Bambu Cool Plate SuperTack` (about 26.5 em) show whole
+  (clipping inventory CJ-035 and CJ-036); a wider sidebar shows more, and 12 em stays the minimum. The option
+  panel computes row heights before the fields exist, so a stacked row measures its real dropdown once the page
+  activates and on every rescale. The dropdown list is measured again when its face changes width.
 
 ## What was not a defect
 
@@ -98,7 +101,7 @@ because ImGui skips its items then and the cursor does not advance.
 ## Verification
 
 - Source checks: `ui-md3/tests/preview-overlays.test.mjs` (notification geometry, pill, tile contrast, dock span,
-  card sizing) and `ui-md3/tests/native-controls.test.mjs` (Objects list, plate dropdowns). Each new check was seen
+  card sizing) and `ui-md3/tests/native-controls.test.mjs` (Objects list, plate dropdowns) and `ui-md3/tests/plate-settings-stacked-rows.test.mjs` (the stacked row: its height, the field band, the label room). Each new check was seen
   failing on the previous source and passing on the change.
 - The application is built only by the hosted Windows workflow. Captures of the Preview tab after slicing, in
   English, Hong Kong Cantonese and bilingual mode, are recorded on the issue once a release carries the change.
