@@ -1,6 +1,4 @@
 #include "MD3Motion.hpp"
-#include "../GUI_App.hpp"
-#include "libslic3r/AppConfig.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -14,19 +12,6 @@
 #endif
 
 namespace MD3 { namespace Motion {
-
-bool reduced()
-{
-    bool system_reduced = false;
-#ifdef _WIN32
-    BOOL animate = TRUE;
-    if (::SystemParametersInfoW(SPI_GETCLIENTAREAANIMATION, 0, &animate, 0))
-        system_reduced = animate == FALSE;
-#endif
-    const auto *app = dynamic_cast<Slic3r::GUI::GUI_App*>(wxTheApp);
-    const std::string preference = app && app->app_config ? app->app_config->get("motion_preference") : "system";
-    return reduce_motion(preference, system_reduced);
-}
 
 namespace {
 double bezierCoordinate(double t, double a, double b, double c, double d)

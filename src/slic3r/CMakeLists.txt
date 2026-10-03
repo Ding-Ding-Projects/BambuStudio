@@ -805,6 +805,7 @@ list(APPEND SLIC3R_GUI_SOURCES
     GUI/Widgets/MD3ColorPicker.cpp
     GUI/Widgets/MD3ColorPicker.hpp
     GUI/Widgets/MD3Motion.cpp
+    GUI/Widgets/MD3MotionPreference.cpp
     GUI/Widgets/MD3Motion.hpp
     GUI/Widgets/MD3DialogChrome.cpp
     GUI/Widgets/MD3DialogChrome.hpp
