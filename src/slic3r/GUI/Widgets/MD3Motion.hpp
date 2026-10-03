@@ -7,6 +7,9 @@
 #include <memory>
 
 #include <wx/timer.h>
+#include <wx/window.h>
+#include <wx/weakref.h>
+#include "MD3MotionPolicy.hpp"
 
 class wxWindow;
 
@@ -25,7 +28,7 @@ constexpr int medium1 = 250; // component-level moves (slider snap-back)
 constexpr int medium2 = 300; // container transforms
 constexpr int long2   = 500; // large surface transitions
 
-// True when the OS requests reduced motion; animations then jump to 1.0.
+// True when the saved preference or OS requests reduced motion.
 bool reduced();
 
 // Easing — md.sys.motion.easing.standard / .emphasized (decelerate flavour).
@@ -42,10 +45,15 @@ public:
     ~Anim() override;
     void Stop(); // Cancels callbacks and timer, on the UI thread.
 
+    // Optional owner binding settles hidden owners and cancels destroyed owners
+    // at the next timer tick. owner_lost is resource cleanup only, never a user
+    // action or completion event. Existing semantic state must change before Play.
     void Play(int duration_ms,
               std::function<void(double)> tick,
               std::function<void()> done = nullptr,
-              double (*curve)(double) = &easeStandard);
+              double (*curve)(double) = &easeStandard,
+              wxWindow *owner = nullptr,
+              std::function<void()> owner_lost = nullptr);
 
     void Notify() override;
 
@@ -58,6 +66,9 @@ private:
         int duration = 1;
         uint64_t generation = 0;
         bool alive = true;
+        wxWeakRef<wxWindow> owner;
+        bool owner_bound = false;
+        std::function<void()> owner_lost;
     };
     // Callback destruction leaves this detached state safe to inspect.
     std::shared_ptr<Run> m_run = std::make_shared<Run>();

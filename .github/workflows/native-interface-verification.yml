@@ -163,6 +163,13 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Canvas search model compilation failed.' }
           & artifacts/native-interface/canvas-menu.exe
           if ($LASTEXITCODE -ne 0) { throw 'Canvas search model checks failed.' }
+      - name: Compile and exercise shared motion policy
+        if: ${{ !cancelled() }}
+        run: |
+          cl /nologo /std:c++17 /EHsc /I src tests/native_gui/motion_policy.cpp /Fe:artifacts/native-interface/motion-policy.exe
+          if ($LASTEXITCODE -ne 0) { throw 'Motion policy compilation failed.' }
+          & artifacts/native-interface/motion-policy.exe | Tee-Object artifacts/native-interface/motion-policy.txt
+          if ($LASTEXITCODE -ne 0) { throw 'Motion policy checks failed.' }
       - name: Compile and exercise preview geometry and deferred timing
         if: ${{ !cancelled() }}
         run: |

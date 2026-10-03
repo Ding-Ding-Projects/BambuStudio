@@ -2822,6 +2822,10 @@ wxWindow *PreferencesDialog::create_general_tab()
 
     std::vector<wxString> Units         = {_L("Metric") + " (mm, g)", _L("Imperial") + " (in, oz)"};
     auto                  item_currency = create_item_combobox(_L("Units"), scrolled, _L("Units"), "use_inches", Units, {"0", "1"});
+    auto item_motion = create_item_combobox(
+        _L("Interface motion"), scrolled,
+        _L("Reduce motion settles supported transitions immediately. System follows your operating system preference."),
+        "motion_preference", {_L("System"), _L("Reduce motion")}, {"system", "reduced"});
 
     // Theme (dark mode) now lives in the Appearance section's Theme
     // SegmentedControl (bound to dark_color_mode), so the legacy Windows-only
@@ -2921,6 +2925,7 @@ wxWindow *PreferencesDialog::create_general_tab()
     sizer->Add(item_dialog_emojis, flags);
     sizer->Add(item_region, flags);
     sizer->Add(item_currency, flags);
+    sizer->Add(item_motion, flags);
     sizer->Add(item_auto_flush, flags);
     sizer->Add(item_sidebar_dock, flags);
     sizer->Add(item_single_instance, flags);

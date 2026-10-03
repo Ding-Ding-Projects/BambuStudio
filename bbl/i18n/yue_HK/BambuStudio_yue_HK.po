@@ -37676,3 +37676,21 @@ msgstr "無法匯入備份。"
 #. review-status: agent-drafted
 msgid "Next notifications"
 msgstr "下一批通知"
+
+#: src/slic3r/GUI/Preferences.cpp
+#. reviewed-category: settings
+#. review-status: agent-drafted
+msgid "Interface motion"
+msgstr "介面動畫"
+
+#: src/slic3r/GUI/Preferences.cpp
+#. reviewed-category: settings
+#. review-status: agent-drafted
+msgid "Reduce motion"
+msgstr "減少動畫"
+
+#: src/slic3r/GUI/Preferences.cpp
+#. reviewed-category: accessibility
+#. review-status: agent-drafted
+msgid "Reduce motion settles supported transitions immediately. System follows your operating system preference."
+msgstr "減少動畫會即時完成已支援嘅過場效果。系統選項會跟隨作業系統嘅偏好設定。"
