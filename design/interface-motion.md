@@ -10,7 +10,7 @@ runtime evidence.
 | Slice | Existing implementation | Remaining transitions and states |
 | --- | --- | --- |
 | Shared policy/lifetime | MD3Motion durations, easing, interruptible Anim and FadeIn; saved system/reduced preference in this unit | Hosted policy execution, restart persistence, live interruption, hidden/destroyed owners |
-| Native state and tabs | StateHandler, TabStrip, Tabbook, Notebook; SwitchButton already animates its knob | Hover/focus/pressed/disabled visual interpolation, active indicators and tab content changes |
+| Native state and tabs | Button/StaticBox registered state colors; horizontal TabStrip underline and vertical selection pill; SwitchButton knob | Hosted temporal, destruction, reduced/hidden and layout proof; unconverted controls, Tabbook/Notebook and tab content changes |
 | Panels/dialogs/tooltips | MD3DialogChrome and appearance/search popovers have entrances | Repeated show, dismissal, panel expansion/collapse, ParamTooltip and MarkdownTip transitions |
 | ImGui menus and states | Shared menu search and popup layout; native MD3Menu already has entrance fades | Root/nested ImGui entrances/dismissal, result changes, hover/focus/press; owner- and ID-scoped state |
 | Notifications/loading | NotificationManager fades, ProgressBar pulses, FanControl/CameraHUD animate | Shared reduced-motion policy, progress changes, loading completion/cancellation and idle scheduling |
@@ -32,4 +32,4 @@ mid-transition, hidden/minimized state, theme/DPI changes and system/application
 reduced-motion changes. Stop frame scheduling after convergence.
 
 All five slices remain incomplete until their hosted evidence is reviewed.
-This first unit implements only the shared preference and owner-policy foundation.
+Source now includes the shared preference/owner-policy foundation and bounded native state-color/tab-indicator slice. Neither source coverage nor pure arithmetic checks establish rendered motion coverage.

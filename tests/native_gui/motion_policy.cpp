@@ -1,4 +1,5 @@
 #include "slic3r/GUI/Widgets/MD3MotionPolicy.hpp"
+#include "slic3r/GUI/Widgets/StateMotionMath.hpp"
 #include <iostream>
 
 int main()
@@ -17,6 +18,15 @@ int main()
         !check(owner_action(true, true, true, false) == OwnerAction::Animate) ||
         !check(owner_action(false, false, false, false) == OwnerAction::Animate) ||
         !check(owner_action(false, false, false, true) == OwnerAction::Settle)) return 1;
+    if (!check(interpolate(10, 30, 0) == 10) ||
+        !check(interpolate(10, 30, 1) == 30) ||
+        !check(interpolate(10, 30, -1) == 10) ||
+        !check(interpolate(10, 30, 2) == 30) ||
+        !check(interpolate(interpolate(0, 100, .25), 0, .5) == 12.5) ||
+        !check(color_channel(255, 0, .5) == 128) ||
+        !check(color_channel(0, 255, .5) == 128) ||
+        !check(color_channel(255, 0, 1) == 0) ||
+        !check(color_channel(0, 255, 1) == 255)) return 1;
     std::cout << "Motion policy checks passed: " << checks << "\n";
     return 0;
 }

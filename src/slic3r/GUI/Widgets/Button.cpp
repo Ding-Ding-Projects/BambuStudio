@@ -854,7 +854,7 @@ void Button::render(wxDC& dc)
             pt.y += (rcContent.height - szIcon.y) / 2;
         if (drawGlyph)
             MaterialIcon::draw(dc, m_glyph_cp, glyph_px,
-                               (glyph_color.count() > 0 ? glyph_color : text_color).colorForStates(states), pt);
+                               state_handler.colorFor(glyph_color.count() > 0 ? glyph_color : text_color), pt);
         else
             dc.DrawBitmap(icon.bmp(), pt);
         //BBS norrow size between text and icon
@@ -877,7 +877,7 @@ void Button::render(wxDC& dc)
             }
             pt.y += (rcContent.height - textSize.y) / 2;
         }
-        dc.SetTextForeground(text_color.colorForStates(states));
+        dc.SetTextForeground(state_handler.colorFor(text_color));
         dc.DrawText(text, pt);
     }
 
@@ -891,13 +891,13 @@ void Button::render(wxDC& dc)
         // hover and disabled fills are covered by the same rule. An empty or
         // fully transparent background_color means the plain window background
         // is what shows through under the ring.
-        wxColour interior = background_color.count() > 0 ? background_color.colorForStates(states)
+        wxColour interior = background_color.count() > 0 ? state_handler.colorFor(background_color)
                                                          : GetBackgroundColour();
         if (!interior.IsOk() || interior.Alpha() == 0)
             interior = GetBackgroundColour();
         dc.SetBrush(*wxTRANSPARENT_BRUSH);
         dc.SetPen(wxPen(focusRingColor(StateColor::semantic(MD3::Role::Primary, m_scheme),
-                                       text_color.colorForStates(states), interior),
+                                       state_handler.colorFor(text_color), interior),
                         std::max(FromDIP(2), 1)));
         dc.DrawRoundedRectangle(focus_rect, std::max(0.0, radius - inset));
     }
@@ -909,7 +909,7 @@ void Button::renderWhiteCorners(wxDC& dc)
     int r = static_cast<int>(radius);
     wxColor parent_bg_color = StaticBox::GetParentBackgroundColor(GetParent());
     int states = state_handler.states();
-    wxColor bg_color = background_color.colorForStates(states);
+    wxColor bg_color = state_handler.colorFor(background_color);
 
     auto drawWhiteCorners = [&](wxDC &dc) {
         dc.SetPen(*wxTRANSPARENT_PEN);

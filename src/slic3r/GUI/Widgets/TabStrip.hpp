@@ -1,5 +1,6 @@
 #ifndef slic3r_GUI_TabStrip_hpp_
 #define slic3r_GUI_TabStrip_hpp_
+#include "MD3Motion.hpp"
 
 // Shared browser-style tab strip (Material Design 3), generalised from the
 // project tab bar so every tabbed surface -- project tabs, the Preferences
@@ -197,6 +198,7 @@ private:
     void OnGroupHeaderPressed(int group_id);
 
     // Layout / paint.
+    wxRect IndicatorRect() const;
     void Relayout();
     void SyncButtons(); // one button per model tab, in model order
     void OnPaint(wxPaintEvent &evt);
@@ -231,6 +233,8 @@ private:
     Button *                             m_search_btn   = nullptr;
     std::vector<int>                     m_overflowed;        // model indices in the overflow menu
     int                                  m_focus_index = -1;  // model index carrying keyboard focus
+    MD3::Motion::Anim                    m_indicator_motion;
+    wxRect                               m_indicator_rect;
     bool                                 m_loading     = false;
 
 #if wxUSE_ACCESSIBILITY
