@@ -110,6 +110,10 @@ public:
     const wxString  icon;
     const wxString  title;
     size_t			label_width = 20 ;// {200};
+    // A single full_width option whose value needs more room than the row leaves beside its
+    // label: the label takes a line of its own across the row and the field the next line,
+    // row-wide. Opt-in per group (the Plate Settings page); off, the field sits beside the label.
+    bool            stack_full_width_label { false };
     wxSizer*		sizer {nullptr};
 	OG_CustomCtrl*  custom_ctrl{ nullptr };
 	int				ctrl_horiz_alignment{ wxALIGN_LEFT};

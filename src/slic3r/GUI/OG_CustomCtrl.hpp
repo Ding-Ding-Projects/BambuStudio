@@ -46,6 +46,10 @@ class OG_CustomCtrl :public wxPanel
         bool draw_mode_bitmap       { true };
         bool is_visible             { true };
         bool is_focused             { false };
+        // Stacked row (OptionsGroup::stack_full_width_label): the height of the label line at the
+        // top of the row, including its gap; the buttons and the field sit in the band below it.
+        // Zero for every other row, so the row's height is one band.
+        wxCoord label_band          { 0 };
 
         CtrlLine(   wxCoord         height,
                     OG_CustomCtrl*  ctrl,
@@ -69,6 +73,12 @@ class OG_CustomCtrl :public wxPanel
         bool    is_separator() const { return og_line.is_separator(); }
         void    ensure_rects_size(size_t size);
         void    update_multi_variant_height();
+        // A labelled single row-wide option in a group that stacks: label above, field below.
+        bool    is_stacked() const;
+        // Height from the label line and the field window. init_ctrl_lines runs before
+        // build_field, so the field may not exist yet; then the field line is one text line
+        // until update_visibility measures the real window.
+        void    update_stacked_height();
 
         std::vector<wxRect> rects_undo_icon;
         std::vector<wxRect> rects_undo_to_sys_icon;
@@ -112,6 +122,9 @@ public:
 
     wxPoint get_pos(const Line& line, Field* field = nullptr);
     int     get_height(const Line& line);
+    // The label band of a stacked row (0 for every other row): the field band starts this far
+    // below the row top.
+    int     get_label_band(const Line& line);
 
     void    update_line_height_for_field(const t_config_option_key &opt_id);
     void    recalculate_and_refresh();

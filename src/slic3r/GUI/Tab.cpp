@@ -4146,17 +4146,14 @@ void TabPrintPlate::build()
     m_config->option("other_layers_sequence_choice", true);
 
     auto page = add_options_page(L("Plate Settings"), "empty");
-    // A 14 em label column instead of the usual 20 em: the plate names are the long values here, and a
-    // label wider than the column wraps onto a second line (the row grows) instead of being cut. At the
-    // default sidebar width this leaves the dropdowns about 17 em, enough for "Textured PEI Plate" and the
-    // Cantonese plate names.
+    // The four dropdown rows stack: the label takes a line of its own and the dropdown the next
+    // line, row-wide, so "Smooth PEI Plate / High Temp Plate" and "Bambu Cool Plate SuperTack"
+    // (about 21 and 26.5 em) show whole at the default 344 DIP sidebar, where beside a label the
+    // row left about 17 em (clipping inventory CJ-035, CJ-036). The 14 em label column still
+    // sizes the checkbox row, whose label stays beside it. A dropdown keeps the 12 em minimum of
+    // the row-wide path, and the option panel repaints on resize, so a wider sidebar shows more.
     auto optgroup = page->new_optgroup("", wxEmptyString, 14);
-    // The dropdowns take the width of the row (the full_width path the option
-    // panel already resizes on every paint), so a wider sidebar shows more of
-    // the value, for example "Textured PEI Plate" or "Smooth PEI Plate / High
-    // Temp Plate", instead of a fixed 12 em face that ended in an ellipsis at
-    // every width. At the narrowest sidebar the row leaves no more than those
-    // 12 em, which the option panel keeps as the minimum.
+    optgroup->stack_full_width_label = true;
     auto append_select = [&optgroup](const std::string &key, const std::string &path = std::string()) {
         Option option = optgroup->get_option(key);
         option.opt.full_width = true;

@@ -116,10 +116,21 @@ void OG_CustomCtrl::init_ctrl_lines()
                 height = label_sz.y * (label_sz.GetWidth() > int(opt_group->label_width * m_em_unit) ? 2 : 1) + m_v_gap;
             }
             ctrl_lines.emplace_back(CtrlLine(height, this, line, false, opt_group->staticbox));
+            if (ctrl_lines.back().is_stacked())
+                ctrl_lines.back().update_stacked_height();
         }
         else
             assert(false);
     }
+}
+
+int OG_CustomCtrl::get_label_band(const Line& line)
+{
+    for (auto ctrl_line : ctrl_lines)
+        if (&ctrl_line.og_line == &line)
+            return ctrl_line.label_band;
+
+    return 0;
 }
 
 int OG_CustomCtrl::get_height(const Line& line)
@@ -212,7 +223,7 @@ wxPoint OG_CustomCtrl::get_pos(const Line& line, Field* field_in/* = nullptr*/)
             }
 
             wxString label = line.label;
-            if (opt_group->label_width != 0)
+            if (opt_group->label_width != 0 && !ctrl_line.is_stacked())
                 add_label_width(ctrl_line, label, opt_group->label_width * m_em_unit);
 
             int blinking_button_width = m_bmp_blinking_sz.GetWidth() + m_h_gap;
@@ -571,6 +582,10 @@ void OG_CustomCtrl::correct_window_position(wxWindow* win, const Line& line, Fie
         if (line.get_options().size() > 1)
             line_height = (line_height - m_v_gap + m_v_gap2) / line.get_options().size();
     }
+    // A stacked row: the window sits in the band under the label line.
+    const int label_band = get_label_band(line);
+    pos.y += label_band;
+    line_height -= label_band;
     pos.y += std::max(0, int(0.5 * (line_height - win->GetSize().y)));
     win->SetPosition(pos);
 };
@@ -842,6 +857,12 @@ void OG_CustomCtrl::CtrlLine::msw_rescale()
             }
         }
 
+        if (is_stacked()) {
+            update_stacked_height();
+            correct_items_positions();
+            return;
+        }
+
         wxSize label_sz = ctrl->GetTextExtent(og_line.label);
         if (ctrl->opt_group->split_multi_line) { // BBS
             const std::vector<Option> &option_set = og_line.get_options();
@@ -857,6 +878,28 @@ void OG_CustomCtrl::CtrlLine::msw_rescale()
     correct_items_positions();
 }
 
+bool OG_CustomCtrl::CtrlLine::is_stacked() const
+{
+    if (!ctrl->opt_group->stack_full_width_label || ctrl->opt_group->label_width == 0 ||
+        draw_just_act_buttons || og_line.is_separator() || og_line.label.IsEmpty() || og_line.widget != nullptr)
+        return false;
+    // The same shape render() and get_pos() treat as "a single option with nothing beside it".
+    const std::vector<Option>& option_set = og_line.get_options();
+    return option_set.size() == 1 && option_set.front().opt.full_width &&
+           option_set.front().opt.sidetext.empty() && option_set.front().side_widget == nullptr &&
+           og_line.get_extra_widgets().empty();
+}
+
+void OG_CustomCtrl::CtrlLine::update_stacked_height()
+{
+    // The label line and the field line each keep the row's usual padding around them.
+    label_band = ctrl->GetTextExtent(og_line.label).y + ctrl->m_v_gap;
+    Field* field = ctrl->opt_group->get_field(og_line.get_options().front().opt_id);
+    const int field_h = (field && field->getWindow()) ? field->getWindow()->GetSize().GetHeight()
+                                                      : ctrl->GetTextExtent(og_line.label).y;
+    height = label_band + field_h + ctrl->m_v_gap;
+}
+
 void OG_CustomCtrl::CtrlLine::update_visibility(ConfigOptionMode mode)
 {
     if (og_line.is_separator())
@@ -868,6 +911,11 @@ void OG_CustomCtrl::CtrlLine::update_visibility(ConfigOptionMode mode)
 
     if (draw_just_act_buttons)
         return;
+
+    // The fields exist by now (Page::activate builds them before this), so a stacked row can
+    // measure its real field instead of the text-line fallback init_ctrl_lines() used.
+    if (is_stacked())
+        update_stacked_height();
 
     if (og_line.near_label_widget_win)
         og_line.near_label_widget_win->Show(is_visible);
@@ -1021,6 +1069,9 @@ void OG_CustomCtrl::CtrlLine::render(wxDC& dc, wxCoord h_pos, wxCoord v_pos)
     if (og_line.near_label_widget_win)
         h_pos += og_line.near_label_widget_win->GetSize().x + ctrl->m_h_gap;
 
+    // Where the row's content starts; a stacked row's field line starts here again, under the label.
+    const wxCoord row_start = h_pos;
+
     const std::vector<Option>& option_set = og_line.get_options();
 
     wxString label = og_line.label;
@@ -1047,8 +1098,17 @@ void OG_CustomCtrl::CtrlLine::render(wxDC& dc, wxCoord h_pos, wxCoord v_pos)
         is_url_string = !suppress_hyperlinks && !og_line.label_path.empty();
         // BBS
         wxCoord indent = og_line.subline ? lround(1.5 * ctrl->m_em_unit) : 0;
-        h_pos = draw_text(dc, wxPoint(h_pos + indent, v_pos), label /* + ":" */, text_clr, icon_pos + ctrl->opt_group->label_width * ctrl->m_em_unit - h_pos, is_url_string, true);
-        h_pos -= indent;
+        if (label_band > 0) {
+            // A stacked row: the label takes the row, less the margin the row-wide field keeps
+            // below it, and the buttons and the field start a new line at the row start.
+            const int label_room = std::max(ctrl->GetSize().x - ctrl->m_em_unit * 3 - (h_pos + indent), int(ctrl->opt_group->label_width * ctrl->m_em_unit));
+            draw_text(dc, wxPoint(h_pos + indent, v_pos), label, text_clr, label_room, is_url_string, true);
+            h_pos = row_start;
+            v_pos += label_band;
+        } else {
+            h_pos = draw_text(dc, wxPoint(h_pos + indent, v_pos), label /* + ":" */, text_clr, icon_pos + ctrl->opt_group->label_width * ctrl->m_em_unit - h_pos, is_url_string, true);
+            h_pos -= indent;
+        }
     }
 
     // If there's a widget, build it and set result to the correct position.
@@ -1185,8 +1245,11 @@ wxCoord OG_CustomCtrl::CtrlLine::draw_text(wxDC &dc, wxPoint pos, const wxString
         if (ctrl->opt_group->split_multi_line && !is_main) { // BBS
             const std::vector<Option> &option_set = og_line.get_options();
             pos.y = pos.y + lround(((height - ctrl->m_v_gap + ctrl->m_v_gap2) / option_set.size() - size.y) / 2);
+        } else if (is_main && label_band > 0) {
+            // The label line of a stacked row: centred in its own band at the top of the row.
+            pos.y = pos.y + lround((label_band - size.y) / 2);
         } else {
-            pos.y = pos.y + lround((height - size.y) / 2);
+            pos.y = pos.y + lround((height - label_band - size.y) / 2);
         }
         if (width > 0)
             rect_label = wxRect(pos, wxSize(size.x, size.y));
@@ -1224,7 +1287,7 @@ wxPoint OG_CustomCtrl::CtrlLine::draw_blinking_bmp(wxDC& dc, wxPoint pos, bool i
 {
     wxBitmap bmp_blinking = create_scaled_bitmap(is_blinking ? "blank_16" : "empty", ctrl);
     wxCoord h_pos = pos.x;
-    wxCoord v_pos = pos.y + lround((height - get_bitmap_size(bmp_blinking).GetHeight()) / 2);
+    wxCoord v_pos = pos.y + lround((height - label_band - get_bitmap_size(bmp_blinking).GetHeight()) / 2);
 
     dc.DrawBitmap(bmp_blinking, h_pos, v_pos);
 
@@ -1247,7 +1310,7 @@ wxCoord OG_CustomCtrl::CtrlLine::draw_act_bmps(wxDC& dc, wxPoint pos, const wxBi
             else
                 pos.y += lround((height - get_bitmap_size(bmp_undo).GetHeight()) / 2);
         } else {
-            pos.y += lround((height - get_bitmap_size(bmp_undo).GetHeight()) / 2);
+            pos.y += lround((height - label_band - get_bitmap_size(bmp_undo).GetHeight()) / 2);
         }
     }
 #endif
