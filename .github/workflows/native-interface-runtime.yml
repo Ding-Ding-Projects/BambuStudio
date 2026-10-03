@@ -38,7 +38,7 @@ on:
         required: true
         default: 1200x800
         type: choice
-        options: [1200x800, 1000x600]
+        options: [1200x800, 1000x600, measured-minimum]
 
 permissions:
   contents: read

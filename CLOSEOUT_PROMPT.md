@@ -16,7 +16,7 @@ run only on GitHub-hosted Windows runners. No local product execution occurred.
 - MCP: ce61d22e390e4bf69938730434f1e494fa34f7a9 on feature/mcp-integration.
   Run 37054493889 passed 27 managed checks with zero failures or skips;
   native compilation and release publication passed. Release md3-v187 binds
-  that source; installed runtime run 37084928659 is pending.
+  that source; installed runtime run 37084928659 failed at fixture lookup after installation.
 - Shared menus and profile recovery: 45f1101542c239d14713a3ff705da281a9dbc0d4,
   followed by profile reservation and corrupt-archive checks in
   13ce9d652220a489c965561aea313d92a859430c. Independent source review accepted
@@ -47,7 +47,7 @@ original native label checks plus rendered vocabulary changes, restart and inval
 input; synchronized optional worker observations; bounded actual cancel targeting;
 disabled overlap prevention and separately reported stale completion evidence.
 Independent review accepted the final freshness repair. Seven focused helper tests
-await hosted execution. Fixture-path repair c6a7d10e701d631679d2a355b2575eae18558d4d
+passed hosted run 37085341046. Fixture-path repair c6a7d10e701d631679d2a355b2575eae18558d4d
 normalizes invocation paths before selecting the source root, with three tests
 covering both drivers. No actual printer submission is authorized.
 
@@ -101,3 +101,18 @@ and obtain the final hosted verdict. Retain all worktrees until their tips
 are proven ancestors of remote main and a complete verified external backup
 exists. No cleanup has run. Status Hub enrollment remains unavailable, and no
 status delivery is claimed. A pending run is never a successful verdict.
+
+## Latest hosted continuation
+
+Complete focused run 37085341046 passed at 6bc6656efc001fdf27d2ea22e7a64824bd80a1c5,
+including native services and the cancellation/fixture helper regressions.
+Full builds 37085054069, 37085334409 and 37085511192 remain in progress.
+Discovery source e2ae01e626d58c214a94c1ea35fb86d76ac6e4d5 is pushed and verified.
+Display discovery 37085520686 returned settings_window_missing_or_ambiguous:
+worker teardown verified, no display mutation, no accepted inventory or DPI proof.
+Independently reviewed repairs afac0a3a558d2b64520cb197a714bf715ddcf916 and
+bf9cc46fd162f19781175e704fc095981fa81eca are integrated on the task branch:
+exact-PID Settings discovery beneath frame hosts and measured-minimum frame/client
+observations. Both need hosted execution. Interactive minimum tracking remains
+unverified. Main remains ce883543177ef7df46fa5b798dcc5c7f3d2f8020.
+No archive or deletion occurred. Preserve active incomplete branches and worktrees.

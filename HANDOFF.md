@@ -2,24 +2,24 @@
 
 ## Active interface extension, 2026-10-02
 
-Hosted run `37085064156` passed both jobs at `6e3cda2facd208a4d6521d0539ec0346aa8a8e50`.
+Hosted run `37085341046` passed both jobs at `6bc6656efc001fdf27d2ea22e7a64824bd80a1c5`.
 Native results: 16 language cases/199 assertions, three personal-vocabulary
 cases/45 assertions, four archive cases/103 assertions, zero failures/errors.
 Sequential and concurrent vocabulary persistence phases and the native display
-source contract also passed. See `docs/features/design-system/hosted-native-services-6e3cda2f.json`.
+source contract also passed. See `docs/features/design-system/hosted-native-services-6bc6656e.json`.
 Installed MCP run `37084928659` verified Squirrel installation but failed before
 MCP interaction because its fixture path was not normalized before selecting
-the checkout root. The fixture repair awaits the next candidate.
+the checkout root. The fixture repair and seven cancellation-observation regressions passed hosted verification; installed execution awaits the new package.
 
 Resume evidence: MCP run `37054493889` completed successfully and published
 `md3-v187` for `ce61d22e390e4bf69938730434f1e494fa34f7a9`.
-Installed MCP verification is running as `37084928659`.
+Installed MCP verification `37084928659` failed at fixture lookup as recorded above.
 Combined candidate `4436c7f91edd4a09fc491018035adfd6235c2f68` passed 46 canvas
 checks, 68 preview checks, 55 source tests and eight slice lifecycle contracts
 in run `37056354867`. That run failed overall because the focused native targets
 did not match the static wxWidgets assertion configuration. Full build
 `37056348902` separately failed on an ambiguous `ImGuiWrapper::begin` call in
-`NotificationManager.cpp:3121`. Both repairs are in progress. These are compile
+`NotificationManager.cpp:3121`. Both source repairs are integrated on feature/ui-integration. Focused native linking passed; full package compilation remains in progress. These are compile
 and link failures, not installed-interface verdicts.
 
 The user extended this task to native transitions and practical asynchronous

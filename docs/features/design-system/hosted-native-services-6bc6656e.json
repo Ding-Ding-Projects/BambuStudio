@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "sourceCommit": "6bc6656efc001fdf27d2ea22e7a64824bd80a1c5",
+  "runId": "37085341046",
+  "jobId": "111094357878",
+  "conclusion": "success",
+  "execution": "github-hosted-windows",
+  "language": {
+    "cases": 16,
+    "assertions": 199
+  },
+  "personalVocabulary": {
+    "cases": 3,
+    "assertions": 45
+  },
+  "profileArchive": {
+    "cases": 4,
+    "assertions": 103
+  },
+  "failures": 0,
+  "errors": 0,
+  "persistence": "all sequential and concurrent process phases passed",
+  "nativeDisplayContract": "passed",
+  "limitations": [
+    "No installed-interface pixel or input verification.",
+    "Later display-scale discovery changes are not covered."
+  ],
+  "records": [
+    {
+      "file": "language_mode_tests.xml",
+      "bytes": 2773,
+      "sha256": "92ebe95d47f2d84eb5bb9114562d06dc62dee23d6048df8469f1c28307f4986c"
+    },
+    {
+      "file": "personal_vocabulary_tests.xml",
+      "bytes": 771,
+      "sha256": "bf7b356a543cf0dbc0674f09acb770601439a905ee99778fb75d1fb18c37c566"
+    },
+    {
+      "file": "profile_archive_tests.xml",
+      "bytes": 901,
+      "sha256": "893e0ea8296cb1a5d54a2e3ee5c5b77c82a6fa48ae474414c99824b6683cfec1"
+    },
+    {
+      "file": "run.json",
+      "bytes": 136,
+      "sha256": "37cfd22a30c6ee6bf051ccbaec9d9d5313766192febf49403fc6f2050525d456"
+    }
+  ]
+}
