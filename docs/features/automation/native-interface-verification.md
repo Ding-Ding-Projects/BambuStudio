@@ -543,3 +543,16 @@ nonzero CLI exit, 24 for invalid JSON and 25 for a semantic absence mismatch.
 Zero still requires the original exact absence predicate. Raw CLI output and
 exception text remain discarded. The changed product-free hosted contract
 must pass before another product diagnostic; no local execution was performed.
+
+The changed run `37100209956` stopped earlier than helper execution: process
+stage 6 (`Create`) reported native error 123, with the unstarted exit-code
+sentinel -1 and verified termination. Python did not start, so none of the
+helper's phase codes ran. The actual executable value and lookup cardinality
+were not recorded, and array coercion is not an established cause. The contract
+workflow now selects the first exact `.exe` application in command precedence
+order and validates a scalar, fully qualified, literal existing file before
+passing Python or the cheap CLI to containment. It records only lookup counts,
+validation status and four negative outcomes for array, joined, quoted and
+relative paths. These checks exercise the same resolver used by both real
+contained calls. Production startup retains its existing fixed virtual-environment
+paths. The changed hosted contract remains pending.
