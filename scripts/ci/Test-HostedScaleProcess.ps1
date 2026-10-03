@@ -18,6 +18,8 @@ $cases = [Collections.Generic.List[object]]::new()
 $stage = 'compile_actual_helper'
 $cleanupVerified = $true
 $success = $false
+$sourceProcessObservation = $null
+$sourceSupervisorObservation = $null
 $descendantIdentity = Join-Path $scratch 'descendant.json'
 $timer = [Diagnostics.Stopwatch]::StartNew()
 
@@ -32,6 +34,34 @@ function Record-Pass([string] $Name) { $cases.Add(@{name=$Name; status='passed'}
 try {
     # Compile and exercise the checked-in implementation, not a test copy.
     Add-Type -Path (Join-Path $PSScriptRoot 'HostedScaleProcess.cs')
+    $stage = 'nested_source_identity'
+    # Reproduce the diagnostic's nested contained Git call without Settings.
+    # Only fixed numeric/boolean observations leave this disposable child.
+    $sourceChild = Join-Path $scratch 'source-identity.ps1'
+    @'
+param([string] $SourceDirectory)
+$ErrorActionPreference = 'Stop'
+Set-StrictMode -Version Latest
+Add-Type -Path (Join-Path $SourceDirectory 'HostedScaleProcess.cs')
+$git = (Get-Command git -CommandType Application).Source
+$result = [HostedScaleProcess]::Run($git,[string[]]@('-C',$SourceDirectory,'rev-parse','HEAD'),5,$true)
+$source = $result.Output.Trim()
+@{terminated=$result.Terminated; exit_code=$result.Code; process_stage=[int]$result.ProcessStage
+  native_error=$result.NativeError; output_length=$result.Output.Length
+  source_format_valid=[bool]($source -cmatch '^[0-9a-f]{40}$')
+  checkout_matches_run=[bool]($source -ceq $env:GITHUB_SHA)
+} | ConvertTo-Json -Compress
+'@ | Set-Content -LiteralPath $sourceChild -Encoding utf8
+    $sourceResult = Run-Child $sourceChild @($PSScriptRoot) 20
+    $sourceSupervisorObservation = @{terminated=$sourceResult.Terminated; exit_code=$sourceResult.Code
+        process_stage=[int]$sourceResult.ProcessStage; native_error=$sourceResult.NativeError}
+    $cleanupVerified = $sourceResult.Terminated
+    Require-Result ($sourceResult.Terminated -and $sourceResult.Code -eq 0)
+    $sourceProcessObservation = $sourceResult.Output | ConvertFrom-Json
+    $cleanupVerified = $cleanupVerified -and $sourceProcessObservation.terminated
+    Require-Result ($sourceProcessObservation.terminated -and $sourceProcessObservation.exit_code -eq 0 -and
+        $sourceProcessObservation.source_format_valid -and $sourceProcessObservation.checkout_matches_run)
+    Record-Pass $stage
     $stage = 'minimum_resolution_tuple_contract'
     # Load only these exact production function definitions. Do not dot-source
     # the supervisor, which would initialize Settings or change display state.
@@ -232,7 +262,7 @@ exit 0
         [string[]]@('-NoProfile','-File',$membership,'-JobName',$jobName), 10, $true, $jobName)
     Require-Result ($result.Terminated -and $result.Code -eq 0 -and $result.Output -ceq '{"ok":true}')
     Record-Pass $stage
-    $success = $cases.Count -eq 9
+    $success = $cases.Count -eq 10
 } catch {
     # Neither exception text nor benign child payloads enter public logs.
     $cases.Add(@{name=$stage; status='failed'})
@@ -252,10 +282,12 @@ exit 0
     }
     $passed = @($cases | Where-Object status -eq 'passed').Count
     @{schema=1; status=$(if ($success -and $cleanupVerified) {'passed'} else {'failed'})
-      passed=$passed; expected=9; cases=$cases.ToArray(); cleanup_verified=$cleanupVerified
+      passed=$passed; expected=10; cases=$cases.ToArray(); cleanup_verified=$cleanupVerified
+      source_process_observation=$sourceProcessObservation
+      source_supervisor_observation=$sourceSupervisorObservation
       elapsed_ms=$timer.ElapsedMilliseconds; settings_mutated=$false
     } | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $output 'receipt.json') -Encoding utf8
 }
-if ($success -and $cleanupVerified) { Write-Host 'Hosted scale lifecycle checks passed: 9/9'; exit 0 }
+if ($success -and $cleanupVerified) { Write-Host 'Hosted scale lifecycle checks passed: 10/10'; exit 0 }
 Write-Host 'Hosted scale lifecycle checks failed; inspect the fixed receipt.'
 exit 2

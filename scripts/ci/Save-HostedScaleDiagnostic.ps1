@@ -4,7 +4,7 @@ function Save-HostedScaleDiagnostic([ValidateSet('before_selector','expanded_sel
     if (-not $DiagnosticEvidence -or $NativeRuntime -or $Mode -cne 'run' -or $script:DiagnosticResults.ContainsKey($Phase)) { return }
     $script:DiagnosticResults[$Phase] = @{status='unavailable'; stage='initialize'}
     $diagnosticStage = 'initialize'
-    $sourceObservation = @{terminated=$null; exit_code=$null; output_is_string=$null; output_length=$null
+    $sourceObservation = @{terminated=$null; exit_code=$null; process_stage=$null; native_error=$null; output_is_string=$null; output_length=$null
         source_format_valid=$null; run_id_present=$null; run_id_format_valid=$null; script_directory_present=$null}
     $png = Join-Path $env:RUNNER_TEMP ('scale-diagnostic-' + [Guid]::NewGuid().ToString('N') + '.png')
     $plain = $null; $key = $null; $rsa = $null
@@ -19,6 +19,8 @@ function Save-HostedScaleDiagnostic([ValidateSet('before_selector','expanded_sel
         $sourceRead = Invoke-BoundedProcess $git @('-C',$PSScriptRoot,'rev-parse','HEAD') 5 $true
         $sourceObservation.terminated = [bool]$sourceRead.terminated
         $sourceObservation.exit_code = [int]$sourceRead.code
+        $sourceObservation.process_stage = [int]$sourceRead.process_stage
+        $sourceObservation.native_error = $sourceRead.native_error
         $diagnosticStage = 'source_output_type'
         $sourceObservation.output_is_string = $sourceRead.stdout -is [string]
         if (-not $sourceObservation.output_is_string) { throw 'Diagnostic source output unavailable.' }

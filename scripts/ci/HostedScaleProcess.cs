@@ -12,7 +12,12 @@ using Microsoft.Win32.SafeHandles;
 
 public static class HostedScaleProcess
 {
-    public sealed class Result { public bool Terminated; public int Code = -1; public string Output = ""; }
+    // Fixed diagnostic stages only. Never include exception text or child data.
+    public enum Stage { Initial, Job, Limits, Streams, Attributes, Command, Create,
+        Assign, Reader, Resume, Observe, Timeout, OutputLimit, ExitQuery,
+        Drain, DrainTimeout, DrainRejected, Decode, Complete, InvalidName }
+    public sealed class Result { public bool Terminated; public int Code = -1; public string Output = "";
+        public Stage ProcessStage; public int? NativeError; }
     [StructLayout(LayoutKind.Sequential)] struct SA { public int Length; public IntPtr Descriptor; public int Inherit; }
     [StructLayout(LayoutKind.Sequential, CharSet=CharSet.Unicode)] struct SI {
         public int Size; public string Reserved, Desktop, Title;
@@ -85,7 +90,7 @@ public static class HostedScaleProcess
     // assignment or attribute-changing rights. The creator keeps its handle.
     public static Result RunNamed(string executable,string[] args,int seconds,bool capture,string jobName) {
         if(jobName==null || !Regex.IsMatch(jobName,@"\ALocal\\BambuNativeScale-[0-9a-f]{64}\z"))
-            return new Result { Terminated=true };
+            return new Result { Terminated=true, ProcessStage=Stage.InvalidName };
         return RunCore(executable,args,seconds,capture,jobName);
     }
     static Result RunCore(string executable,string[] args,int seconds,bool capture,string jobName) {
@@ -97,6 +102,7 @@ public static class HostedScaleProcess
         PI pi=new PI(); bool created=false, assigned=false;
         Task reader=null; int overflow=0; byte[] bytes=null;
         try {
+            result.ProcessStage=Stage.Job;
             if(jobName==null) job=CreateJobObject(IntPtr.Zero,null);
             else {
                 IntPtr descriptor=IntPtr.Zero;
@@ -116,12 +122,15 @@ public static class HostedScaleProcess
                 } finally { if(descriptor!=IntPtr.Zero) LocalFree(descriptor); }
             }
             if(job==IntPtr.Zero) throw new Exception();
+            result.ProcessStage=Stage.Limits;
             var limit=new Extended(); limit.Basic.Flags=0x2000; // KILL_ON_JOB_CLOSE, no breakaway.
             if(!SetInformationJobObject(job,9,ref limit,(uint)Marshal.SizeOf<Extended>())) throw new Exception();
+            result.ProcessStage=Stage.Streams;
             var sa=new SA { Length=Marshal.SizeOf<SA>(), Inherit=1 };
             nul=CreateFile("NUL",0xC0000000,3,ref sa,3,0,IntPtr.Zero);
             if(nul==new IntPtr(-1)) throw new Exception();
             if(capture && (!CreatePipe(out read,out write,ref sa,4096) || !SetHandleInformation(read,1,0))) throw new Exception();
+            result.ProcessStage=Stage.Attributes;
             IntPtr attributeSize=IntPtr.Zero;
             InitializeProcThreadAttributeList(IntPtr.Zero,1,0,ref attributeSize);
             if(attributeSize==IntPtr.Zero) throw new Exception();
@@ -138,15 +147,21 @@ public static class HostedScaleProcess
                 new IntPtr(handleCount*IntPtr.Size),IntPtr.Zero,IntPtr.Zero)) throw new Exception();
             var si=new SIX { Start=new SI { Size=Marshal.SizeOf<SIX>(), Flags=0x101, Show=0, Input=nul,
                 Output=capture ? write : nul, Error=nul }, Attributes=attributes };
+            result.ProcessStage=Stage.Command;
             var command=new StringBuilder(Quote(executable));
             foreach(var arg in args) command.Append(' ').Append(Quote(arg));
             // The first instruction cannot run before containment is installed.
+            result.ProcessStage=Stage.Create;
             if(!CreateProcess(executable,command,IntPtr.Zero,IntPtr.Zero,true,0x08080004,
-                IntPtr.Zero,null,ref si,out pi)) throw new Exception();
+                IntPtr.Zero,null,ref si,out pi)) {
+                result.NativeError=Marshal.GetLastWin32Error(); throw new Exception();
+            }
             created=true;
+            result.ProcessStage=Stage.Assign;
             if(!AssignProcessToJobObject(job,pi.Process)) throw new Exception();
             assigned=true;
             if(capture) {
+                result.ProcessStage=Stage.Reader;
                 CloseHandle(write); write=IntPtr.Zero;
                 // Transfer ownership before scheduling. Neither process timeout
                 // nor drain timeout may close a handle a queued reader will use.
@@ -167,22 +182,30 @@ public static class HostedScaleProcess
                     finally { pipe.Dispose(); }
                 });
             }
+            result.ProcessStage=Stage.Resume;
             if(ResumeThread(pi.Thread)==uint.MaxValue) throw new Exception();
             var deadline=Stopwatch.StartNew();
+            result.ProcessStage=Stage.Observe;
             while(!Empty(job) && deadline.ElapsedMilliseconds < seconds*1000L && Volatile.Read(ref overflow)==0) Thread.Sleep(20);
             if(!Empty(job) || Volatile.Read(ref overflow)!=0) {
+                result.ProcessStage=Volatile.Read(ref overflow)!=0 ? Stage.OutputLimit : Stage.Timeout;
                 TerminateJobObject(job,2); result.Terminated=WaitEmpty(job,5000); return result;
             }
             result.Terminated=true;
             uint code;
+            result.ProcessStage=Stage.ExitQuery;
             if(!GetExitCodeProcess(pi.Process,out code) || code==259) return result;
             if(capture) {
                 // A descendant holding a pipe cannot extend this deadline. The
                 // process-tree verdict is separate from output acceptance.
-                if(!reader.Wait(1000) || Volatile.Read(ref overflow)!=0 || bytes==null) return result;
+                result.ProcessStage=Stage.Drain;
+                if(!reader.Wait(1000)) { result.ProcessStage=Stage.DrainTimeout; return result; }
+                if(Volatile.Read(ref overflow)!=0 || bytes==null) { result.ProcessStage=Stage.DrainRejected; return result; }
+                result.ProcessStage=Stage.Decode;
                 result.Output=Encoding.UTF8.GetString(bytes);
             }
             result.Code=unchecked((int)code);
+            result.ProcessStage=Stage.Complete;
             return result;
         } catch {
             if(assigned) { TerminateJobObject(job,2); result.Terminated=WaitEmpty(job,5000); }

@@ -2418,3 +2418,17 @@ or rerunning it. Build 37092713387 for 7fb8a6a328772f04a159c0c989f2146aada152d4
 passed automation contracts and was compiling at its latest observation.
 All nine BambuStudio worktrees were clean and no stash existed at inventory.
 All source tips remain retained; none is eligible for completed-main cleanup.
+
+## Focused contained-source reproduction, 2026-10-03 UTC
+
+Run 37093133090 stopped both diagnostic phases at source_process_exit. Directory
+and run identity were valid; termination was verified, output was empty and the
+helper returned -1. This does not prove that Git itself exited with that value.
+Scale and resolution restoration remained verified. No encrypted images exist.
+
+Reviewed candidate 68998d535c2ec0197627b0882f187262f998fc80 adds fixed process
+stages and an immediate numeric CreateProcess diagnostic, preserving all existing
+containment, deadlines and acceptance. A tenth hosted lifecycle case reproduces
+the nested contained source query and checks actual output against the run SHA.
+The next attempt uses lifecycle_only and does not open Settings. Both independent
+source lenses accepted this diagnostic change; execution and cause remain pending.
