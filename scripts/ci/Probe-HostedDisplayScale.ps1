@@ -201,13 +201,14 @@ try {
     $cipher = [byte[]]::new($plain.Length)
     $rsa = [Security.Cryptography.RSA]::Create()
     try {
-        $rsa.ImportFromPem([IO.File]::ReadAllText((Join-Path $PSScriptRoot '../md3/hosted-gui-public-v2.pem')))
+        $rsa.ImportFromPem([IO.File]::ReadAllText((Join-Path $PSScriptRoot '../md3/hosted-automation-public-v1.pem')))
         $wrapped = $rsa.Encrypt($key, [Security.Cryptography.RSAEncryptionPadding]::OaepSHA256)
         $aes = [Security.Cryptography.AesGcm]::new($key, 16)
         try { $aes.Encrypt($nonce, $plain, $cipher, $tag) } finally { $aes.Dispose() }
         [IO.File]::WriteAllBytes((Join-Path $output 'settings-inventory.json.aesgcm'), $cipher)
-        @{ schema = 1; algorithm = 'AES-256-GCM/RSA-OAEP-SHA256'; aad = 'none'
-            recipient = 'hosted-gui-public-v2.pem'; wrapped_key = [Convert]::ToBase64String($wrapped)
+        @{ schema = 2; protocol = 'display-scale-inventory-v2'
+            algorithm = 'AES-256-GCM/RSA-OAEP-SHA256'; aad = 'none'
+            recipient = 'hosted-automation-public-v1.pem'; wrapped_key = [Convert]::ToBase64String($wrapped)
             nonce = [Convert]::ToBase64String($nonce); tag = [Convert]::ToBase64String($tag)
             ciphertext_sha256 = [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($cipher)).ToLowerInvariant()
         } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $output 'envelope.json') -Encoding utf8

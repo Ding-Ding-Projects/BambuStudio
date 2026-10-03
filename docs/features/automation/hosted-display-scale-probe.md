@@ -24,9 +24,15 @@ control records are retained. This is a bounded inventory, not completeness
 evidence. The probe always exits 2 because no scale was provisioned. Publish
 `capability.json` as the fixed public summary. UIA names and automation IDs stay
 inside `settings-inventory.json.aesgcm`, encrypted with AES-256-GCM and the existing
-`hosted-gui-public-v2.pem` RSA recipient using OAEP-SHA256. The separate envelope
+`hosted-automation-public-v1.pem` RSA recipient using OAEP-SHA256. The separate envelope
 records the nonce, authentication tag, wrapped key and ciphertext SHA-256; it uses
 no associated data. Raw provider text and exception messages are never logged.
+The envelope uses schema 2 and protocol `display-scale-inventory-v2` to distinguish
+this inventory from the native-runtime encryption protocol and the earlier
+schema-1 GUI-recipient inventories. The existing recipient is reused without
+rotation or replacement. Before dispatch, verify that its matching protected
+private custody is available. Earlier inventories remain preserved with their
+original recipients; changing this probe does not make them decryptable.
 Use the existing private recipient custody route to decrypt and review the
 inventory. The existing image-archive decoder is not compatible with this JSON
 envelope without an explicit format adapter. Never upload decrypted inventory.
