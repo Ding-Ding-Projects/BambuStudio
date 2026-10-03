@@ -81,10 +81,27 @@ function Integer($Value, [long] $Minimum, [long] $Maximum) {
     Require (($Value -is [long] -or $Value -is [int]) -and $Value -ge $Minimum -and $Value -le $Maximum)
 }
 function Rect($Value) {
-    Require ($Value -is [array] -and $Value.Count -eq 4)
+    if ($Value -isnot [array] -or $Value.Count -ne 4) {
+        $script:validationPhase = 'rectangle_shape'; Require $false
+    }
+    # Observe the exact serialized WPF Rect.Empty representation without
+    # admitting it as measured geometry or publishing any coordinates.
+    if ($Value[0] -is [string] -and $Value[1] -is [string] -and
+        $Value[2] -is [string] -and $Value[3] -is [string] -and
+        $Value[0] -ceq 'Infinity' -and $Value[1] -ceq 'Infinity' -and
+        $Value[2] -ceq '-Infinity' -and $Value[3] -ceq '-Infinity') {
+        $script:validationPhase = 'rectangle_serialized_empty'; Require $false
+    }
     foreach ($number in $Value) {
-        Require (($number -is [long] -or $number -is [int] -or $number -is [double]) -and
-            [double]::IsFinite([double]$number) -and [Math]::Abs([double]$number) -le 1000000)
+        if ($number -isnot [long] -and $number -isnot [int] -and $number -isnot [double]) {
+            $script:validationPhase = 'rectangle_number_type'; Require $false
+        }
+        if (-not [double]::IsFinite([double]$number)) {
+            $script:validationPhase = 'rectangle_nonfinite'; Require $false
+        }
+        if ([Math]::Abs([double]$number) -gt 1000000) {
+            $script:validationPhase = 'rectangle_bound'; Require $false
+        }
     }
 }
 function Binding($Value) {

@@ -588,6 +588,15 @@ output conditions are unchanged. This diagnostic change requires independent
 review before an administrative retry; the original ciphertext remains intact,
 and pixel review is still unverified.
 
+The reviewed phase-reporting reader reached `control_rectangle` on its first
+changed administrative attempt and wrote no output. Rectangle rejection now
+distinguishes wrong shape, nonnumeric type, nonfinite number, excessive magnitude
+and the exact serialized WPF empty-rectangle sentinel using fixed phase values.
+These observations still reject every previously rejected rectangle; the sentinel
+is not accepted as measured geometry. No actual coordinates or control identity
+are printed. A second reviewed attempt is required to identify that shape before
+considering any format-compatibility change.
+
 Two additional hosted lifecycle cases load the exact production tuple and
 input-recovery functions from the parsed source, without executing the display
 supervisor. They reject unsupported combined tuples, absent or mismatched
