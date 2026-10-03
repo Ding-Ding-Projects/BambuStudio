@@ -103,4 +103,6 @@ The hosted pure policy executable includes 33 additional outcomes using the actu
 menu filter paint function, bringing its total to 59. They verify exact content
 colors across four progress values and both reduction states, caption contrast
 at least 4.5:1, and rejection of the former 60% blend below that threshold.
-These checks remain pending execution and are source-color arithmetic, not pixels.
+The existing 59 outcomes passed in hosted run `37101358501` at
+`c7aefb4b84f31a4bc2519d8052ac78b3ccaa3a17`. They are source-color arithmetic,
+not pixels, and do not verify the later canvas row/filter decoration added above.
