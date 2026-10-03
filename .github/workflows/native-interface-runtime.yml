@@ -48,7 +48,7 @@ jobs:
   runtime:
     if: github.event_name == 'workflow_dispatch'
     runs-on: windows-2025
-    timeout-minutes: 40
+    timeout-minutes: 60
     env:
       GH_TOKEN: ${{ secrets.RELEASE_TOKEN || secrets.ORG_TOKEN || github.token }}
       RELEASE_TAG: ${{ inputs.release_tag }}
@@ -84,7 +84,19 @@ jobs:
       - name: Drive the installed native interface
         shell: pwsh
         run: |
-          & scripts/ci/Verify-HostedNativeInterface.ps1 -Tag $env:RELEASE_TAG -ExpectedSourceCommit $env:SOURCE_SHA -Repository $env:GITHUB_REPOSITORY -OutputDirectory "$env:RUNNER_TEMP/native-interface-safe" -Scope $env:INTERACTION_SCOPE -Language $env:UI_LANGUAGE -Theme $env:UI_THEME -Scale $env:UI_SCALE -Viewport $env:UI_VIEWPORT
+          $runtimeArguments = @{
+            Tag = $env:RELEASE_TAG
+            ExpectedSourceCommit = $env:SOURCE_SHA
+            Repository = $env:GITHUB_REPOSITORY
+            OutputDirectory = "$env:RUNNER_TEMP/native-interface-safe"
+            Scope = $env:INTERACTION_SCOPE
+            Language = $env:UI_LANGUAGE
+            Theme = $env:UI_THEME
+            Scale = $env:UI_SCALE
+            Viewport = $env:UI_VIEWPORT
+          }
+          if ($env:UI_SCALE -ne '1') { $runtimeArguments.ProvisionDisplayScale = $true }
+          & scripts/ci/Verify-HostedNativeInterface.ps1 @runtimeArguments
       - name: Retain safe receipt and encrypted evidence
         if: always()
         continue-on-error: true
