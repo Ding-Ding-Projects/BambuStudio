@@ -63,10 +63,12 @@ unknown, to support later private identification of a genuine destination marker
 Control count remains capped at 1,000; labels are capped at 2,048 characters,
 patterns at 32 with 256 characters each, and plaintext at 4 MiB.
 
-This is preparation for one positive destination observation, not a Settings
-refresh or proof that scale choices were cached. No refresh implementation or
-navigation-completion predicate is inferred from requested URI or absent Scale
-controls. Hosted execution and private review of this new inventory are pending.
+Discovery alone does not refresh Settings or prove that scale choices were
+cached. No navigation-completion predicate is inferred from a requested URI or
+absent Scale controls. Run `37095094318` at
+`99ace4b670af24d34c1ba6761b59256ae5e71cb6` subsequently produced an authenticated
+Colors inventory, opened with the expected run, source, destination and probe
+hash. Private review identified the three page-specific controls used below.
 The fixed URIs are documented in Microsoft's
 [Settings launch reference](https://learn.microsoft.com/en-us/windows/apps/develop/launch/launch-settings).
 
@@ -82,6 +84,49 @@ its normal job lifecycle in that case; no successful teardown is claimed. A
 missing supervisor receipt also makes all inventory unavailable for acceptance.
 
 ## Next provisioning step
+
+### Opt-in observed page round trip
+
+The provisioning workflow's `refresh_settings_page` input defaults to `false`.
+It is accepted only with `input_route=hosted-foreground`,
+`provision_resolution=true` and `diagnostic_evidence=true`; native product
+execution cannot use this option. After the supported 1920×1080 mode is measured,
+the helper launches only the fixed `ms-settings:colors` URI, observes that page,
+then launches only `ms-settings:display` and observes its return. It does not
+click Colors controls, capture Colors pixels, force foreground activation or
+accept launcher exit as navigation completion.
+
+The positive Colors predicate requires exactly one visible, enabled control for
+each observed automation ID:
+
+| Automation ID | Type | Required read-only patterns |
+| --- | --- | --- |
+| `SystemSettings_Personalize_Color_ColorMode_ComboBox` | `ControlType.ComboBox` | Selection, ExpandCollapse |
+| `SystemSettings_Personalize_Color_AccentColorMode_ComboBox` | `ControlType.ComboBox` | Selection, ExpandCollapse |
+| `SystemSettings_Personalize_Color_EnableTransparency_ToggleSwitch` | `ControlType.Button` | Toggle |
+
+Both destinations require two positive observations within separate ten-second
+intervals. The original Settings/root PID, process start times, session, root
+handle, input desktop and display identity remain bound throughout. Display
+return additionally requires a unique Scale selector and fresh geometry with
+verified foreground and point ownership. Runtime-ID changes or missing controls
+alone are not accepted as evidence of a rebuilt page.
+
+Before navigation, `navigation.pending` is created exclusively, flushed, and
+bound to the durable original-state hash. Only positively observed Display
+return with the same hash can rename it to `navigation.returned`. An unresolved
+acknowledgement blocks all later scale input and URI retries, including recovery,
+and requires disposal. Independent identity-bound original-resolution recovery
+still runs when child termination and native input recovery are known. A stopped
+launcher or empty process job cannot clear navigation uncertainty.
+
+Source commit `5c12f8dd2e6fdbab4de6b134dededec57a6f31ed` received two independent
+source reviews. Two focused cases exercise the actual marker/scope predicates
+and persistent uncertainty, bringing the hosted lifecycle contract to thirteen
+cases. Run `37095764151` at `3467c83155b4a3881a306eeb5ac9060bdb381ea2` is queued
+at this documentation checkpoint; its thirteen-case verdict and page round trip
+remain pending. This is one changed diagnostic hypothesis, not evidence of a
+cache cause, higher-scale availability, product DPI or completed matrix coverage.
 
 After private review identifies actual controls, implement a separate bounded
 Settings interaction using the predefined Scale selector. Record the original
