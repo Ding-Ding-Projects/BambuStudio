@@ -2,7 +2,7 @@
 
 ## Current continuation, 2026-10-03 UTC
 
-Preserved integration source is ea14642554989ad56fa9cd4529198887b277b949.
+Preserved integration source is 8a275071732f58b181e2e298eec493754d9c899a.
 Main remains ce883543177ef7df46fa5b798dcc5c7f3d2f8020. No incomplete task source
 is eligible for completed-main cleanup. No archive or deletion occurred.
 
@@ -35,7 +35,11 @@ run 37099135961 failed after nine Python cases and four desktop rejections: the 
 absence contract did not pass. No product started. Child exit/stage were not retained;
 a working-directory mismatch remains unproved. Reviewed repair 398dffea resolves
 absolute helper paths and retains fixed numeric classifications. It is integrated
-at ea1464255. Changed product-free run 37100209956 is queued and must pass before
+at ea1464255. Changed product-free run 37100209956 failed before Python started:
+CreateProcess stage 6 returned native code 123, exit sentinel -1, terminated true.
+The actual malformed executable value remains unobserved. Scalar executable repair
+9018b11e passed both source reviews and is integrated at f99dc5782. Changed
+product-free run 37100483720 is running at that source; it must pass before
 a changed startup diagnostic. Evidence requirements remain unchanged. The exact response
 from this failed attempt was not retained and must not be reconstructed.
 See docs/features/automation/hosted-startup-creation-37098366121.json.
@@ -66,8 +70,12 @@ Latest user steering explicitly requires animations and transitions throughout
 the GUI, with Astra implementation and independent review. Existing motion is
 partial. Shared policy/lifetime foundation c309da8a and persisted system/reduced
 preference passed two independent source reviews and are integrated at ea1464255.
-Hosted run 37100211528 is queued, including seventeen pure policy outcomes and
-native compilation. Those outcomes do not prove real timers or rendered transitions. Remaining slices are
+Hosted run 37100211528 is queued against that foundation. Additional reviewed
+control/tab motion 53c96f649 and notification/progress e83163284 are integrated
+at 8a2750717, alongside transient entrance 20280c50e. The combined pure policy
+count is now 26, pending hosted execution. Those outcomes do not prove real timers
+or rendered transitions. Menu/panel extensions and a genuine wx event-loop fixture
+are being implemented in separate owned lanes. Remaining slices are
 native state/tab indicators; panels/dialogs/tooltips; native and canvas menus;
 notifications/progress. Preserve immediate semantic state, cancellation and input,
 interruptibility, reduced motion and hidden-owner lifetime safety. No universal

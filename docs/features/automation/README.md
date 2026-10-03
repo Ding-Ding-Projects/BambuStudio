@@ -47,3 +47,5 @@ Related: [Windows release supply chain](../releases/windows-release-supply-chain
 - [Startup-creation attempt](hosted-startup-creation-37098366121.json),
   worker termination verified but desktop closure unverified, so encrypted evidence
   was withheld. The product initializer remains unidentified.
+
+- [Startup contract failure receipts](hosted-startup-contracts-20261003.json), exact retained outcomes before product launch; the later receipt identifies native process creation failure without establishing its command-value cause.
