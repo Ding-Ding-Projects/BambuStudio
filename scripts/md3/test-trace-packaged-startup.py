@@ -33,14 +33,29 @@ class CdbAttachmentContract(unittest.TestCase):
         self.assertEqual(driver.creation_acknowledgement(good), (123, 456))
         for bad in (good.replace("TRACE_CREATION_INITIAL", "0:000> .echo TRACE_CREATION_INITIAL"),
                     good.replace("  sls - Show loader snaps", ""),
+                    good.replace("  sls - Show loader snaps", "Could not find NtGlobalFlag in nt!_PEB"),
                     good.replace("123", "0"), good + "TRACE_TARGET 123 456\n",
                     good + "TRACE_CREATION_INITIAL\n"):
             self.assertIsNone(driver.creation_acknowledgement(bad))
 
     def test_creation_route_never_attaches_or_skips_initial_break(self):
-        command = driver.creation_arguments("cdb.exe", "product.exe", "profile", "fixed.txt", "symbols")
+        cache = r"C:\owned cache\symbols"
+        command = driver.creation_arguments("cdb.exe", "product.exe", "profile", "fixed.txt", cache)
         self.assertEqual(command[-3:], ["product.exe", "--datadir", "profile"])
         self.assertEqual(command[command.index("-cf") + 1], "fixed.txt")
+        self.assertIn("-sins", command)
+        self.assertIn("-ses", command)
+        self.assertEqual(command[command.index("-y") + 1],
+                         "srv*" + cache + "*https://msdl.microsoft.com/download/symbols")
+        for bad in ("symbols", r"\\other\share\symbols", r"C:\cache*https://other.invalid",
+                    r"C:\cache;C:\other", 'C:\\cache"', "C:\\cache\n", r"C:\cache\..\other"):
+            with self.assertRaises(ValueError):
+                driver.creation_arguments("cdb.exe", "product.exe", "profile", "fixed.txt", bad)
+        lines = driver.creation_commands().splitlines()
+        self.assertEqual(lines[2:7], [".symopt- 0x40", ".reload /f ntdll.dll", "lmv m ntdll",
+                                     "!gflag +sls", "!gflag"])
+        self.assertNotIn("g", lines)
+        self.assertNotIn(".reload /i", driver.creation_commands())
         for forbidden in ("-p", "-pd", "-g", "-G", "-pn", "-logo"):
             self.assertNotIn(forbidden, command)
 
