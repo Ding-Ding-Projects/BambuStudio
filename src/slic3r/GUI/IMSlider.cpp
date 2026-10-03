@@ -38,6 +38,16 @@ static ImU32 preview_color(MD3::Role role, bool dark, unsigned char alpha = 255)
 }
 
 
+// Manual hover regions do not register an ImGui item. Bind their decoration to
+// the actual slider, route and tick instead of the preceding item's identity.
+static ImGuiID slider_tooltip_source(const IMSlider *slider, const char *route, int tick = 0)
+{
+    ImGui::PushID(slider);
+    const ImGuiID route_id = ImGui::GetID(route);
+    ImGui::PopID();
+    return ImHashData(&tick, sizeof(tick), route_id);
+}
+
 static int m_tick_value = -1;
 static ImVec4 m_tick_rect;
 
@@ -711,7 +721,7 @@ bool IMSlider::horizontal_slider(const char* str_id, int* value, int v_min, int 
             if (hov) window->DrawList->AddCircleFilled(play_c, play_d * 0.5f, play_hover);
             const bool playing = m_play_state == Play::Playing;
             draw_glyph(play_c, playing ? (unsigned) MaterialIcon::Pause : (unsigned) MaterialIcon::PlayArrow, play_icon_px, play_fg);
-            if (hov) show_tooltip(playing ? _u8L("Pause print simulation") : _u8L("Play print simulation"));
+            if (hov) show_tooltip(playing ? _u8L("Pause print simulation") : _u8L("Play print simulation"), slider_tooltip_source(this, "simulation_play"));
             if (hov && context.IO.MouseClicked[0]) {
                 if (playing) {
                     m_play_state = Play::Paused;
@@ -741,7 +751,7 @@ bool IMSlider::horizontal_slider(const char* str_id, int* value, int v_min, int 
             const ImVec2 lbl_sz = ImGui::CalcTextSize(speed_label);
             window->DrawList->AddText(ImVec2(chip_left + chip_pad + chip_icon_px + chip_gap, center_y - lbl_sz.y * 0.5f), counter_clr, speed_label);
             if (mono_c) imgui.pop_mono_font();
-            if (hov) show_tooltip(_u8L("Simulation speed"));
+            if (hov) show_tooltip(_u8L("Simulation speed"), slider_tooltip_source(this, "simulation_speed"));
             if (hov && context.IO.MouseClicked[0]) {
                 m_play_speed = m_play_speed >= 1000.0f ? 1.0f : m_play_speed * 10.0f;
                 set_as_dirty();
@@ -1058,7 +1068,7 @@ void IMSlider::draw_ticks(const ImRect& slideable_region) {
             ImRect right_hover_box = ImRect({ slideable_region.Max.x, tick_hover_box.Min.y }, tick_hover_box.Max);
             ImGui::RenderFrame(right_hover_box.Min, right_hover_box.Max, tick_hover_box_clr, false);
 
-            show_tooltip(*tick_it);
+            show_tooltip(*tick_it, slider_tooltip_source(this, "existing_tick", tick_it->tick));
             m_tick_value = tick_it->tick;
             m_tick_rect = ImVec4(tick_hover_box.Min.x, tick_hover_box.Min.y, tick_hover_box.Max.x, tick_hover_box.Max.y);
         }
@@ -1149,10 +1159,12 @@ void IMSlider::draw_tick_on_mouse_position(const ImRect& slideable_region) {
 
     // draw layer time
     std::string label = get_label(tick, ltEstimatedTime);
-    show_tooltip(label);
+    show_tooltip(label, slider_tooltip_source(this, "hovered_layer", tick));
 }
 
-void IMSlider::show_tooltip(const std::string tooltip) {
+void IMSlider::show_tooltip(const std::string tooltip, ImGuiID source) {
+    ImGuiWrapper &imgui = *wxGetApp().imgui();
+    if (source == 0) source = imgui.tooltip_source_id();
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 6 * m_scale, 3 * m_scale });
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, { 3 * m_scale });
     ImGui::PushStyleColor(ImGuiCol_PopupBg, preview_color(MD3::Role::SurfaceContainer, m_is_dark));
@@ -1160,12 +1172,13 @@ void IMSlider::show_tooltip(const std::string tooltip) {
     ImGui::PushStyleColor(ImGuiCol_Text, preview_color(MD3::Role::OnSurface, m_is_dark));
     ImGui::BeginTooltip();
     ImGui::TextUnformatted(tooltip.c_str());
+    imgui.tooltip_decoration(source, tooltip.c_str(), ImGui::GetColorU32(preview_color(MD3::Role::Primary, m_is_dark)));
     ImGui::EndTooltip();
     ImGui::PopStyleColor(3);
     ImGui::PopStyleVar(2);
 }
 
-void IMSlider::show_tooltip(const TickCode& tick){
+void IMSlider::show_tooltip(const TickCode& tick, ImGuiID source){
     // Use previous layer's complete time as current layer's tick time,
     // since ticks are added at the beginning of current layer
     std::string time_str = "";
@@ -1181,16 +1194,16 @@ void IMSlider::show_tooltip(const TickCode& tick){
     case CustomGCode::ColorChange:
         break;
     case CustomGCode::PausePrint:
-        show_tooltip(_u8L("Pause:") + " \"" + gcode_type(PausePrint) + "\"" + time_str);
+        show_tooltip(_u8L("Pause:") + " \"" + gcode_type(PausePrint) + "\"" + time_str, source);
         break;
     case CustomGCode::ToolChange:
-        show_tooltip(_u8L("Change Filament") + time_str);
+        show_tooltip(_u8L("Change Filament") + time_str, source);
         break;
     case CustomGCode::Template:
-        show_tooltip(_u8L("Custom Template:") + " \"" + gcode_type(Template) + "\"" + time_str);
+        show_tooltip(_u8L("Custom Template:") + " \"" + gcode_type(Template) + "\"" + time_str, source);
         break;
     case CustomGCode::Custom:
-        show_tooltip(_u8L("Custom G-code:") + " \"" + tick.extra + "\"" + time_str);
+        show_tooltip(_u8L("Custom G-code:") + " \"" + tick.extra + "\"" + time_str, source);
         break;
     default:
         break;
