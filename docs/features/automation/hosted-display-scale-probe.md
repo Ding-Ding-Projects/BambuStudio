@@ -613,6 +613,16 @@ nonfinite, arbitrary-string and frame-empty negatives before finite-control and
 offscreen-empty positives. The hosted total becomes eleven. Those checks and
 the separately authorized third changed administrative opening remain pending.
 
+The third changed administrative opening using reader commit
+`a115faf0861e38fa0be8da646d87195672bdad3d` subsequently verified integrity of
+run `37094061673`'s `before_selector` evidence, bound to source
+`b546820867f01602807775275a6ef3e1f6cce793`. It recorded sixteen unavailable
+offscreen empty control rectangles and wrote the validated private output to a
+new directory. Original ciphertext and authenticated data were preserved.
+Pixel and privacy review remain unverified, publication is not authorized, and
+the eleven-case hosted contract has not yet run. No product or test execution
+occurred locally during this administrative opening.
+
 Two additional hosted lifecycle cases load the exact production tuple and
 input-recovery functions from the parsed source, without executing the display
 supervisor. They reject unsupported combined tuples, absent or mismatched
