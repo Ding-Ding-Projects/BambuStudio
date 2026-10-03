@@ -1,6 +1,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)][string] $OutputDirectory,
+    [ValidateSet('display','colors')][string] $Destination = 'display',
     [ValidateRange(5, 90)][int] $TimeoutSeconds = 45,
     [switch] $InventoryWorker
 )
@@ -23,6 +24,7 @@ function Write-Summary([string] $Reason, [int] $Count = 0) {
         run_id = $env:GITHUB_RUN_ID; requested_dpi = @(96, 120, 144, 192)
         selected_scale = $null; measured_target_dpi = $null; provisioned = $false
         settings_element_count = $Count; display_mutated = $false
+        requested_destination = $Destination; navigation_completion = 'unverified'
         restoration = 'not_required_no_display_mutation'
     } | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $output 'capability.json') -Encoding utf8
 }
@@ -44,7 +46,7 @@ if (-not $InventoryWorker) {
         # Never forward raw child diagnostics. Native providers may include labels.
         $start.RedirectStandardOutput = $true
         $start.RedirectStandardError = $true
-        foreach ($argument in @('-NoProfile', '-File', $PSCommandPath, '-OutputDirectory', $output, '-InventoryWorker')) {
+        foreach ($argument in @('-NoProfile', '-File', $PSCommandPath, '-OutputDirectory', $output, '-Destination', $Destination, '-InventoryWorker')) {
             [void]$start.ArgumentList.Add($argument)
         }
         $child = [Diagnostics.Process]::new()
@@ -85,6 +87,7 @@ if (-not $InventoryWorker) {
                 schema = 1; status = 'unavailable'; reason = $reason
                 worker_termination = $termination; teardown_verified = $teardownVerified
                 inventory_stable = $terminated; provisioned = $false
+                requested_destination = $Destination; navigation_completion = 'unverified'
                 completed = $teardownVerified
                 disposal_required = -not $teardownVerified
             } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $output 'supervisor.json') -Encoding utf8
@@ -104,6 +107,7 @@ try {
     $settings = @(Get-Process -Name SystemSettings -ErrorAction SilentlyContinue |
         Where-Object { $_.SessionId -eq $session })
     if ($settings.Count -ne 1) { Write-Summary 'settings_process_missing_or_ambiguous'; exit 2 }
+    $settingsStart = $settings[0].StartTime.ToUniversalTime().Ticks
     Add-Type -AssemblyName UIAutomationClient
     Add-Type -AssemblyName UIAutomationTypes
     $condition = [Windows.Automation.PropertyCondition]::new(
@@ -111,6 +115,8 @@ try {
     $windows = [Windows.Automation.AutomationElement]::RootElement.FindAll(
         [Windows.Automation.TreeScope]::Children, $condition)
     $selected = $null
+    $ownedRoot = $null
+    $ownedRootStart = $null
     $selection = 'direct_process_root'
     $frameRootCount = 0
     $matchedRootCount = $windows.Count
@@ -119,6 +125,8 @@ try {
     $walker = [Windows.Automation.TreeWalker]::ControlViewWalker
     if ($windows.Count -eq 1) {
         $selected = $windows[0]
+        $ownedRoot = $windows[0]
+        $ownedRootStart = $settingsStart
     } elseif ($windows.Count -gt 1) {
         Write-Summary 'settings_window_missing_or_ambiguous'; exit 2
     } else {
@@ -142,7 +150,7 @@ try {
                     $candidate = $pending.Dequeue()
                     $discoveryCount++
                     if ($candidate.Current.ProcessId -eq $settings[0].Id) {
-                        $matches.Add($candidate)
+                        $matches.Add(@{element=$candidate; root=$frameRoot; start=$frame.StartTime.ToUniversalTime().Ticks})
                         # This is the process-owned subtree root. Its children
                         # must not count as additional independent surfaces.
                         continue
@@ -167,34 +175,70 @@ try {
         # An incomplete traversal cannot prove uniqueness.
         if ($discoveryLimited) { Write-Summary 'settings_host_discovery_limit'; exit 2 }
         if ($matches.Count -ne 1) { Write-Summary 'settings_host_descendant_missing_or_ambiguous'; exit 2 }
-        $selected = $matches[0]
+        $selected = $matches[0].element
+        $ownedRoot = $matches[0].root
+        $ownedRootStart = $matches[0].start
     }
+    $rootPid = $ownedRoot.Current.ProcessId
+    $rootHandle = $ownedRoot.Current.NativeWindowHandle
+    if ($rootHandle -eq 0) { Write-Summary 'settings_root_handle_unavailable'; exit 2 }
+    function Assert-InventoryIdentity {
+        $liveSettings = Get-Process -Id $settings[0].Id
+        $liveRoot = Get-Process -Id $rootPid
+        if ($liveSettings.SessionId -ne $session -or $liveSettings.StartTime.ToUniversalTime().Ticks -ne $settingsStart -or
+            $liveRoot.SessionId -ne $session -or $liveRoot.StartTime.ToUniversalTime().Ticks -ne $ownedRootStart -or
+            $ownedRoot.Current.ProcessId -ne $rootPid -or $ownedRoot.Current.NativeWindowHandle -ne $rootHandle -or
+            $selected.Current.ProcessId -ne $settings[0].Id) { throw 'Inventory identity changed.' }
+    }
+    Assert-InventoryIdentity
     $rows = [Collections.Generic.List[object]]::new()
     $queue = [Collections.Generic.Queue[object]]::new()
     $queue.Enqueue($selected)
     while ($queue.Count -gt 0 -and $rows.Count -lt 1000) {
         $element = $queue.Dequeue()
         $current = $element.Current
+        if ($current.ProcessId -ne $settings[0].Id) { throw 'Inventory control owner changed.' }
+        if ($current.Name.Length -gt 2048 -or $current.AutomationId.Length -gt 2048) { throw 'Inventory label exceeds bounds.' }
+        $patterns = @($element.GetSupportedPatterns() | ForEach-Object { $_.ProgrammaticName })
+        if ($patterns.Count -gt 32) { throw 'Inventory pattern count exceeds bounds.' }
+        foreach ($pattern in $patterns) { if ($pattern.Length -gt 256) { throw 'Inventory pattern exceeds bounds.' } }
+        $selectedState = $null
+        try {
+            $selectionItem = $element.GetCurrentPattern([Windows.Automation.SelectionItemPattern]::Pattern)
+            $selectedState = [bool]$selectionItem.Current.IsSelected
+        } catch {} # Unsupported patterns remain unknown, never inferred.
         $rows.Add([ordered]@{
             name = $current.Name; automation_id = $current.AutomationId
             type = $current.ControlType.ProgrammaticName; enabled = $current.IsEnabled
             offscreen = $current.IsOffscreen
-            patterns = @($element.GetSupportedPatterns() | ForEach-Object { $_.ProgrammaticName })
+            patterns = $patterns; selected = $selectedState
         })
         $next = $walker.GetFirstChild($element)
         while ($null -ne $next -and ($queue.Count + $rows.Count) -lt 1000) {
             $queue.Enqueue($next)
             $next = $walker.GetNextSibling($next)
         }
+        if ($null -ne $next) { throw 'Inventory traversal exceeds bounds.' }
+    }
+    if ($queue.Count -gt 0) { throw 'Inventory traversal exceeds bounds.' }
+    Assert-InventoryIdentity
+    $capturedAt = [DateTime]::UtcNow.ToString('o')
+    if ($env:GITHUB_RUN_ID -cnotmatch '^\d{1,20}$' -or $env:GITHUB_SHA -cnotmatch '^[0-9a-f]{40}$') {
+        throw 'Inventory workflow binding unavailable.'
     }
     # UI labels may contain profile details. Never print or persist plaintext.
     $plain = [Text.Encoding]::UTF8.GetBytes((@{ schema = 1; controls = $rows.ToArray()
+        binding = @{requested_destination=$Destination; navigation_completion='unverified'; run_id=$env:GITHUB_RUN_ID
+            workflow_source_commit=$env:GITHUB_SHA; observed_at_utc=$capturedAt
+            probe_sha256=(Get-FileHash -LiteralPath $PSCommandPath -Algorithm SHA256).Hash.ToLowerInvariant()}
         selection = @{ method = $selection; direct_root_count = $windows.Count
             frame_root_count = $frameRootCount; matched_root_count = $matchedRootCount
             discovery_element_count = $discoveryCount; settings_pid = $settings[0].Id
+            settings_start_ticks = $settingsStart; root_pid=$rootPid; root_start_ticks=$ownedRootStart; root_hwnd=$rootHandle
             selected_process_id = $selected.Current.ProcessId; session_id = $session }
     } |
         ConvertTo-Json -Depth 8 -Compress))
+    if ($plain.Length -gt 4194304) { throw 'Inventory plaintext exceeds bounds.' }
     $key = [Security.Cryptography.RandomNumberGenerator]::GetBytes(32)
     $nonce = [Security.Cryptography.RandomNumberGenerator]::GetBytes(12)
     $tag = [byte[]]::new(16)

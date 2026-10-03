@@ -5,6 +5,11 @@ on:
     paths: [.github/workflows/display-scale-discovery.yml]
   workflow_dispatch:
     inputs:
+      destination:
+        description: Fixed Settings destination for encrypted read-only discovery
+        type: choice
+        default: display
+        options: [display, colors]
       capabilities_only:
         description: Observe numeric monitor modes and current resolution without input
         type: boolean
@@ -20,22 +25,31 @@ jobs:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
         with:
           persist-credentials: false
-      - name: Open the supported display settings surface
+      - name: Open the fixed supported settings surface
         shell: pwsh
+        env:
+          SETTINGS_DESTINATION: ${{ inputs.destination }}
         run: |
           if ($env:RUNNER_ENVIRONMENT -ne 'github-hosted' -or $env:RUNNER_OS -ne 'Windows') {
             throw 'Display discovery requires a disposable hosted Windows session.'
           }
+          $uri = switch -CaseSensitive ($env:SETTINGS_DESTINATION) {
+            'display' { 'ms-settings:display' }
+            'colors' { 'ms-settings:colors' }
+            default { throw 'Unsupported discovery destination.' }
+          }
           try {
-            Start-Process -FilePath 'ms-settings:display' -WindowStyle Hidden -ErrorAction Stop
+            Start-Process -FilePath $uri -WindowStyle Hidden -ErrorAction Stop
             Start-Sleep -Seconds 5
           } catch {
-            Write-Host 'Display Settings launch was unavailable; discovery will record the missing surface.'
+            Write-Host 'Settings launch was unavailable; discovery will record the missing surface.'
           }
       - name: Inventory actual settings controls without changing scale
         shell: pwsh
+        env:
+          SETTINGS_DESTINATION: ${{ inputs.destination }}
         run: |
-          & scripts/ci/Probe-HostedDisplayScale.ps1 -OutputDirectory "$env:RUNNER_TEMP/display-scale-probe"
+          & scripts/ci/Probe-HostedDisplayScale.ps1 -OutputDirectory "$env:RUNNER_TEMP/display-scale-probe" -Destination $env:SETTINGS_DESTINATION
           # The probe deliberately exits 2: discovery is not scale provisioning.
       - name: Require an authoritative supervisor receipt
         if: always()
@@ -74,7 +88,10 @@ jobs:
           persist-credentials: false
       - name: Open the supported display settings surface
         shell: pwsh
+        env:
+          SETTINGS_DESTINATION: ${{ inputs.destination }}
         run: |
+          if ($env:SETTINGS_DESTINATION -cne 'display') { throw 'Numeric display capabilities require the display destination.' }
           if ($env:RUNNER_ENVIRONMENT -ne 'github-hosted' -or $env:RUNNER_OS -ne 'Windows') {
             throw 'Display observation requires a disposable hosted Windows session.'
           }

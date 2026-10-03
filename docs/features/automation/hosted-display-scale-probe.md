@@ -5,7 +5,7 @@ scale setter or a passing matrix test. It runs only on disposable GitHub-hosted
 Windows workers and writes beneath `RUNNER_TEMP`. No local execution was used to
 prepare it. Hosted execution and private inventory review remain pending.
 
-The invoking workflow must first open the real Display Settings page in its
+The invoking workflow must first open the requested supported Settings page in its
 owned interactive session and desktop using its supported hosted UI route.
 The probe does not launch Settings, alter the display, select a control, sign
 out, or restart anything. It requires one `SystemSettings` process in its session
@@ -36,6 +36,39 @@ original recipients; changing this probe does not make them decryptable.
 Use the existing private recipient custody route to decrypt and review the
 inventory. The existing image-archive decoder is not compatible with this JSON
 envelope without an explicit format adapter. Never upload decrypted inventory.
+
+### Optional Colors destination discovery
+
+The discovery workflow accepts only the fixed `destination` choices `display`
+(unchanged default) and `colors`. It maps these to the documented
+`ms-settings:display` and `ms-settings:colors` URIs, respectively. Numeric display
+capability discovery rejects `colors` before launching Settings. The probe's
+`-Destination` parameter records requested intent only and cannot launch a URI.
+No Colors control is clicked, selected, changed or captured as an image.
+Protocol activation is asynchronous: launcher completion and the initial delay
+do not prove the requested page was reached. Both public receipts explicitly
+retain `navigation_completion=unverified`. Hidden launch is restricted to the
+owned disposable hosted desktop; it is not a promise that protocol activation
+creates an invisible page.
+
+The encrypted inventory now includes requested destination, workflow run/source
+identity, observation time, helper hash, exact Settings/root process start times,
+session and root handle. The source field is labelled `workflow_source_commit`,
+not an independently queried checkout identity. These values are authenticated
+inside the existing GCM plaintext and never copied into plaintext diagnostics.
+Process/start/session/root identities are rechecked before and after inventory;
+foreign-process controls or incomplete bounded traversal make it unavailable.
+Selection-item state is observed read-only where supported and otherwise remains
+unknown, to support later private identification of a genuine destination marker.
+Control count remains capped at 1,000; labels are capped at 2,048 characters,
+patterns at 32 with 256 characters each, and plaintext at 4 MiB.
+
+This is preparation for one positive destination observation, not a Settings
+refresh or proof that scale choices were cached. No refresh implementation or
+navigation-completion predicate is inferred from requested URI or absent Scale
+controls. Hosted execution and private review of this new inventory are pending.
+The fixed URIs are documented in Microsoft's
+[Settings launch reference](https://learn.microsoft.com/en-us/windows/apps/develop/launch/launch-settings).
 
 Always read the separate parent-owned `supervisor.json` first. It records actual
 worker exit observation and `teardown_verified`. Spawn, wait and termination
