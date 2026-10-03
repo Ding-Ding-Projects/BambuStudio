@@ -330,3 +330,13 @@ added to public receipts. The exact mode bytes and device/path identities remain
 in private `original.json`, excluded from uploads. A verified larger resolution
 does not by itself prove that 150% or 200% is offered; the existing scale probe
 must still observe the option, selected value, actual Settings DPI and restoration.
+
+Run `37090148387` stopped at `capture_original_resolution` before mode or scale
+provisioning. That coarse phase does not identify which native observation was
+unavailable. The helper now records separate selection and restoration native
+diagnostics using fixed phase names and numeric API return codes only. They
+distinguish topology, source-device structure and lookup, attached-primary
+device validation, monitor binding, and mode validation. The source-device name
+structure must measure exactly 84 bytes before its API call. No exception text,
+device name, handle or private recovery bytes enter these diagnostics. The cause
+remains unverified until a bounded hosted observation supplies the finer phase.
