@@ -6,6 +6,10 @@ using System.Threading;
 
 public static class HostedDisplayMode
 {
+    // Fixed phase names and numeric native results only, never device identities.
+    public static string DiagnosticStage { get; private set; } = "not_entered";
+    public static int? DiagnosticCode { get; private set; }
+    static void Stage(string stage) { DiagnosticStage=stage; DiagnosticCode=null; }
     const uint Allowed=0x207c00a0, Required=0x007c0000;
     public sealed class State { public string Device, Identity; public byte[] Original; }
     public sealed class Outcome { public int? TestCode, ApplyCode; public bool Verified, AlreadyCurrent; }
@@ -47,10 +51,14 @@ public static class HostedDisplayMode
     public static int Width(byte[] bytes) { Validate(bytes); return checked((int)U(bytes,172)); }
     public static int Height(byte[] bytes) { Validate(bytes); return checked((int)U(bytes,176)); }
     static void Validate(byte[] bytes) {
+        Stage("mode_size_and_driver_extra");
         Require(bytes!=null && bytes.Length==220 && BitConverter.ToUInt16(bytes,68)==220 && BitConverter.ToUInt16(bytes,70)==0);
         uint fields=U(bytes,72);
+        Stage("mode_valid_fields");
         Require((fields & ~Allowed)==0 && (fields & Required)==Required);
+        Stage("mode_dimensions_and_depth");
         Require(U(bytes,168)==32 && U(bytes,172)>0 && U(bytes,172)<=8192 && U(bytes,176)>0 && U(bytes,176)<=8192);
+        Stage("mode_frequency_and_orientation");
         Require(U(bytes,184)>0 && U(bytes,184)<=1000);
         if((fields & 0x80)!=0) Require(U(bytes,84)<=3);
     }
@@ -58,6 +66,7 @@ public static class HostedDisplayMode
         IntPtr memory=Marshal.AllocHGlobal(220);
         try {
             Marshal.Copy(new byte[220],0,memory,220); Marshal.WriteInt16(memory,68,220);
+            Stage("enum_display_settings");
             if(!EnumDisplaySettings(device,index,memory)) return null;
             var bytes=new byte[220]; Marshal.Copy(memory,bytes,0,220); Validate(bytes); return bytes;
         } finally { Marshal.FreeHGlobal(memory); }
@@ -65,22 +74,33 @@ public static class HostedDisplayMode
     static State Active() {
         for(int attempt=0;attempt<2;attempt++) {
             uint paths,modes;
-            Require(GetDisplayConfigBufferSizes(2,out paths,out modes)==0 && paths>0 && paths<=64 && modes>0 && modes<=256);
+            Stage("display_config_buffer_sizes");
+            int bufferResult=GetDisplayConfigBufferSizes(2,out paths,out modes); DiagnosticCode=bufferResult;
+            Require(bufferResult==0 && paths>0 && paths<=64 && modes>0 && modes<=256);
             var p=new PATH[paths]; var m=new MODEINFO[modes];
+            Stage("query_active_display_config");
             int result=QueryDisplayConfig(2,ref paths,p,ref modes,m,IntPtr.Zero);
+            DiagnosticCode=result;
             if(result==122) continue;
-            Require(result==0 && paths==1 && (p[0].Flags & 1)!=0);
+            Require(result==0); Stage("single_active_display_path");
+            Require(paths==1 && (p[0].Flags & 1)!=0);
+            Stage("source_device_structure_size");
+            Require(Marshal.SizeOf<SOURCE>()==84);
             var source=new SOURCE { Type=1,Size=(uint)Marshal.SizeOf<SOURCE>(),Low=p[0].SourceLow,High=p[0].SourceHigh,Id=p[0].SourceId };
-            Require(DisplayConfigGetDeviceInfo(ref source)==0 && !String.IsNullOrEmpty(source.Name));
+            Stage("source_device_info");
+            int sourceResult=DisplayConfigGetDeviceInfo(ref source); DiagnosticCode=sourceResult;
+            Require(sourceResult==0 && !String.IsNullOrEmpty(source.Name));
+            Stage("enumerate_source_display_device");
             bool found=false;
             for(uint i=0;i<64;i++) {
                 var d=new DEVICE { Size=(uint)Marshal.SizeOf<DEVICE>() };
                 if(!EnumDisplayDevices(null,i,ref d,0)) break;
                 if(String.Equals(d.Name,source.Name,StringComparison.OrdinalIgnoreCase)) {
+                    Stage("source_device_attached_primary");
                     Require((d.Flags & 5)==5 && (d.Flags & 8)==0); found=true; break;
                 }
             }
-            Require(found);
+            Stage("source_device_match"); Require(found);
             return new State { Device=source.Name, Identity=p[0].SourceLow+":"+p[0].SourceHigh+":"+p[0].SourceId+":"+
                 p[0].TargetLow+":"+p[0].TargetHigh+":"+p[0].TargetId };
         }
@@ -88,6 +108,7 @@ public static class HostedDisplayMode
     }
     public static State Capture(IntPtr window) {
         var state=Active();
+        Stage("settings_monitor_binding");
         IntPtr monitor=MonitorFromWindow(window,0);
         var info=new MONITOR { Size=(uint)Marshal.SizeOf<MONITOR>() };
         Require(monitor!=IntPtr.Zero && GetMonitorInfo(monitor,ref info) && (info.Flags & 1)!=0 &&
@@ -101,7 +122,9 @@ public static class HostedDisplayMode
         AssertBinding(state); return state;
     }
     public static void AssertBinding(State state) {
+        Stage("recovery_state_present");
         Require(state!=null); var active=Active();
+        Stage("stable_display_binding");
         Require(String.Equals(active.Device,state.Device,StringComparison.OrdinalIgnoreCase) && active.Identity==state.Identity);
     }
     static readonly uint[] Bits={0x20,0x80,0x40000,0x80000,0x100000,0x200000,0x400000,0x20000000};

@@ -571,6 +571,9 @@ try {
 } finally {
     # Copy before recovery, so successful restoration cannot overwrite the
     # failed selection's observations. Only fixed keys and scalar values leave.
+    if ($ProvisionResolution) {
+        $receipt.resolution_selection_diagnostic = @{stage=[HostedDisplayMode]::DiagnosticStage; code=[HostedDisplayMode]::DiagnosticCode}
+    }
     $receipt.selection_observations = $script:Observation.Clone()
     $script:Observation = @{}
     if ($null -ne $original -and -not (Test-UncertainChildren)) {
@@ -608,6 +611,9 @@ try {
                 } catch {}
             }
         }
+    }
+    if ($ProvisionResolution) {
+        $receipt.resolution_restoration_diagnostic = @{stage=[HostedDisplayMode]::DiagnosticStage; code=[HostedDisplayMode]::DiagnosticCode}
     }
     $receipt.restoration_observations = $script:Observation.Clone()
     $receipt.child_termination_uncertain = Test-UncertainChildren
