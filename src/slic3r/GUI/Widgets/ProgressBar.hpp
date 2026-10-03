@@ -81,7 +81,9 @@ protected:
     bool         m_indeterminate = false;
     double       m_pulse_phase   = 0.0;
     wxTimer      m_pulse_timer;
+    bool         syncPulseTimer();
     void         onPulseTick(wxTimerEvent &evt);
+    void         onShow(wxShowEvent &evt);
     void         paintEvent(wxPaintEvent &evt);
     void         mouseMove(wxMouseEvent &evt);
     void         mouseLeave(wxMouseEvent &evt);
