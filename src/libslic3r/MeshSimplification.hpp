@@ -32,6 +32,13 @@ bool simplify_mesh(indexed_triangle_set &mesh,
                    std::function<void()> throw_on_cancel = {},
                    std::function<void(int)> progress = {});
 
+// Maps nondegenerate axes to the original local bounds, independently per axis.
+// Originally flat axes are moved to their original plane. Returns false without
+// mutation when bounds are undefined/nonfinite or a nonzero original extent
+// cannot be restored because the reduced axis collapsed. Float coordinates may
+// introduce rounding; volume, angles and geometric error can change on scaling.
+bool retain_mesh_extents(indexed_triangle_set &mesh, const BoundingBoxf3 &original);
+
 } // namespace Slic3r
 
 #endif
