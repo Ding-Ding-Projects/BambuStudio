@@ -127,5 +127,3 @@ bool HistorySearchStore::clear(bool include_pinned) {
     auto rows=m_records; rows.erase(std::remove_if(rows.begin(),rows.end(),[&](const SearchRecord &r){return include_pinned || !r.pinned;}),rows.end()); return save(rows);
 }
 }}
-
-

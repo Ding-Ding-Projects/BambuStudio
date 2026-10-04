@@ -50,4 +50,3 @@ TEST_CASE("Failed persistence does not report a submitted search", "[history_sea
     HistorySearchStore store((file.path/"history.json").u8string());SearchRecord r;r.query="cube";
     CHECK_FALSE(store.submit(r));CHECK(store.records().empty());
 }
-
