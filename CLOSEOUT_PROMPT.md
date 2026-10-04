@@ -1,21 +1,27 @@
-# Closeout handoff: open UI defects (2026-10-03)
+# Responsive model import implementation checkpoint
 
-Objective: fix the tracked open UI defects of this repository and land them on `main`: the plate type dropdown that still cut the two longest plate names at the default sidebar width (clipping inventory CJ-036, issue #51 item 3), the kit dialog caption that ignored a title set after adoption (ROADMAP follow-up), and the stale status counts in the README, roadmap, parity register and handoff.
+Objective: keep interactive model import responsive and optionally simplify meshes with at least 1,000,000 triangles before scene attachment. The current user requested preservation and closeout before the work was verified.
 
-State: three commits on `main`, written on a Linux host with no MSVC toolchain.
+Working branch: `codex/bambu-import-simplify`. Baseline: `0c967a557`. Shared-service commits: `3d4a75298` and `83df3dd9f`. No implementation from this lane has been merged or pushed by this worker.
 
-- `6994caf6f` Stack the plate settings label over its row-wide dropdown (`OptionsGroup::stack_full_width_label`, `OG_CustomCtrl` label band, `TabPrintPlate::build`; new `ui-md3/tests/plate-settings-stacked-rows.test.mjs`).
-- `ad910deb2` Let the kit caption follow a dialog title set after adoption (`MD3DialogCaption::SyncTitle`, idle follow for captions adopted without a literal; `FeedDirectionDialog` adopts without the `Confirm` literal; new `ui-md3/tests/dialog-caption-title-sync.test.mjs`).
-- The docs commit that carries this file: clipping inventory CJ-036 to `fixed-unverified`, feature articles in both languages, README counts, parity register header, ROADMAP lines, HANDOFF section.
+Implemented source, not yet compiled:
 
-Verification: `node --test ui-md3/tests/*.test.mjs` 427 of 432 on this host; the misses are the dim-sum online check (needs an authenticated `gh`) and the offline render (Chromium cannot open its DevTools port in this sandbox). Both new test files were seen failing on the previous source and go red again when one line of the fix is removed. Not compiled locally: the hosted build triggered by the push is the compile check. No capture exists yet for the stacked rows or the load dialog's title; CJ-036 stays `fixed-unverified` until a release is captured at 344 DIP in English, Cantonese and bilingual mode.
+- Shared quadric simplification service used by the manual tool and new import job. Inclusive threshold 1,000,000, default maximum error 0.001, all five existing detail choices available.
+- General > Model import stores the opt-out and detail level. Only absent keys migrate to enabled and the highest detail. Command-palette settings entries and reset keys were added.
+- STL, OLTP, OBJ, STEP/STP, GLB/GLTF, FBX and AMF interactive drop/file-dialog routes queue a native ImportJob. Parsing, hull preparation and eligible simplification operate on detached models. STEP prompts are dispatched to the UI thread. Synchronous vector callers keep their result contract.
+- The detached batch is dropped on cancellation before finalization. Original meshes/hulls are retained immutably for a recovery notification and command-palette action, with pointer-identity matching to avoid overwriting later mesh edits. Restoration has an undo snapshot.
+- Mesh reduction skips textures, painting, cut objects and modifier relationships. Per-axis extent restoration preserves local bounding dimensions within float rounding, but can change angles, volume and deviation beyond the engine error setting. Collapsed dimensions are skipped rather than published.
+- Saved 3MF parsing and hull computation use a detached future while the existing modal UI owner polls progress/cancellation. Configuration, plate changes and prompts remain on the UI thread. Saved-project automatic simplification is skipped with status copy.
 
-Evidence: issue #51 (start comment 5972780505, finish comment to follow with the build run), `docs/features/gcode-preview/preview-overlays.md`, `docs/features/design-system/native-controls.md`, `docs/features/design-system/clipping-inventory.md`.
+Verified evidence: `git diff --check` passed. Six standalone Catch cases were authored for threshold/default settings, engine reduction, cancellation and extent handling. They have not run. No native compile, runtime interaction, screenshot, installer, release or CI verification occurred for this candidate.
 
-Blockers: none in source. The hosted Windows build and a Windows capture host are needed for the compile verdict and the captures.
+Remaining work before claiming completion:
 
-Next safe steps: read the hosted build verdict for the push; if red, fix and push again. When a release exists, capture Plate Settings at the default sidebar width in the three language modes and the load dialog on a two-extruder printer, post them on issue #51, and move CJ-036 to `verified`.
+- Compile the exact candidate using the supported Windows toolchain and run `mesh_simplification_tests`, command-palette checks, focused import tests and the appropriate native regression targets.
+- Prove cancellation during parsing, reduction, STEP prompts and finalization in the real built UI. Existing readers and hull computation have cooperative cancellation granularity rather than interruption inside every primitive.
+- The existing UI scene/texture continuation is still synchronous and unbounded. Implement or prove bounded publication and rollback for cancellation or an exception after publication begins, especially multi-file textured imports and mixed archive batches.
+- Review saved-project async lifetime, plate/preset cleanup on exceptions, unit conversion, assembly transforms, originals recovery after subsequent edits and undo behavior.
+- Add complete localized catalogs and direct feature documentation for new copy. Runtime layout, all language modes, scale/theme evidence and model-size/interaction measurements remain pending.
+- The parent owns integration, preservation pushes, remote proof, release work and task cleanup. Keep this unfinished lane isolated. Do not publish its output as verified.
 
-## 廣東話摘要
-
-目標：修好呢個倉庫記錄在案嘅介面問題，推上 `main`：預設側邊欄闊度下仍然切走最長兩個打印板名嘅打印板類型下拉選單（裁剪清單 CJ-036，issue #51 第 3 項）、換咗標題之後唔跟住改嘅套件對話框標題列，同埋 README、roadmap、parity register 同 handoff 入面過時嘅數字。`main` 上有三個 commit：`6994caf6f`（打印板設定行上下排）、`ad910deb2`（標題列跟住標題）同帶住呢個檔案嘅文件 commit。本機 node 測試 432 個通過 427 個，其餘要 `gh` 或者 Chrome sandbox。呢部機冇 MSVC，推送之後嘅託管建置先係編譯檢查；亦未有擷圖，CJ-036 要等 release 擷圖先可以轉做 verified。
+Next safe action: compile the pinned candidate, repair compiler findings in a separate owned change, then complete the import publication/cancellation contract and its real runtime evidence. Preserve source files and unrelated work. No physical printer or local host power actions are authorized by this checkpoint.

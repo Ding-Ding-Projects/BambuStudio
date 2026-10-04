@@ -2885,6 +2885,22 @@ wxWindow *PreferencesDialog::create_general_tab()
     sizer->Add(item_downloads, flags);
     sizer->Add(item_external_editor, flags);
     sizer->Add(item_external_editor_path, flags);
+
+    auto title_model_import = create_item_title(_L("Model import"), scrolled, _L("Model import"));
+    auto item_auto_simplify_import = create_item_checkbox(
+        _L("Automatically simplify large imported models"), scrolled,
+        _L("Simplify meshes with at least 1,000,000 triangles before adding them to the scene. Source files are unchanged. Saved projects and meshes with painting or protected metadata keep their original geometry."),
+        50, "auto_simplify_import");
+    auto item_auto_simplify_detail = create_item_combobox(
+        _L("Import simplification detail"), scrolled,
+        _L("Uses the same detail levels as the manual Simplify tool. Extra high is the default."),
+        "auto_simplify_import_detail",
+        {_L("Extra high"), _L("High"), _L("Medium"), _L("Low"), _L("Extra low")},
+        {"0.001", "0.01", "0.1", "0.5", "1"});
+    sizer->Add(title_model_import, wxSizerFlags().Expand().Border(wxTOP, FromDIP(24)));
+    sizer->AddSpacer(FromDIP(8));
+    sizer->Add(item_auto_simplify_import, flags);
+    sizer->Add(item_auto_simplify_detail, flags);
     scrolled->SetSizer(sizer);
     scrolled->FitInside();
     return scrolled;
@@ -3524,6 +3540,8 @@ void PreferencesDialog::on_reset_preferences()
         "3d_middle_tooltip_offset_y",
         "toolbar_style",
         "show_shells_in_preview",
+        "auto_simplify_import",
+        "auto_simplify_import_detail",
         "enable_step_mesh_setting",
         "import_single_svg_and_split",
         "gamma_correct_in_import_obj",

@@ -231,6 +231,10 @@ void CommandPalette::collect_entries()
                          _L("Find any print / filament / printer parameter"),
                          [this]() { wxGetApp().sidebar().search(); }});
 
+    m_entries.push_back({MaterialIcon::Undo, _L("Restore original imported geometry"),
+                         _L("Restore unchanged meshes reduced by automatic model import simplification"),
+                         []() { if (auto* plater = wxGetApp().plater()) plater->restore_import_originals(); }});
+
     // --- Every Preferences setting (teleport rows) --------------------------
     // Selecting one opens Preferences on the owning page, scrolls the row into
     // view, focuses its control and flashes it. The developer page only exists

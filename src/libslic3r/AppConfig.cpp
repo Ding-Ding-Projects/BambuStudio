@@ -117,6 +117,12 @@ void AppConfig::set_defaults()
             set_bool("show_drop_project_dialog", true);
 #endif
 
+        // Only absence migrates to the new default. Explicit opt-out survives.
+        if (get("auto_simplify_import").empty())
+            set_bool("auto_simplify_import", true);
+        if (get("auto_simplify_import_detail").empty())
+            set("auto_simplify_import_detail", "0.001");
+
         if (get("drop_project_action").empty())
             set_bool("drop_project_action", true);
 

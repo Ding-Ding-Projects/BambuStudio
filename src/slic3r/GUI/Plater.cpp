@@ -1,4 +1,5 @@
 #include "Plater.hpp"
+#include "Jobs/ImportJob.hpp"
 #include "Widgets/MD3ScrolledWindow.hpp"
 #include "Widgets/LinkLabel.hpp"
 #include "Widgets/ProgressBar.hpp"
@@ -8575,6 +8576,11 @@ public:
     // UIThreadWorker can be used as a replacement for BoostThreadWorker if
     // no additional worker threads are desired (useful for debugging or profiling)
     PlaterWorker<BoostThreadWorker> m_worker;
+    struct ImportedOriginalMesh {
+        std::shared_ptr<const TriangleMesh> reduced, original, original_hull;
+    };
+    std::vector<ImportedOriginalMesh> m_import_original_meshes;
+
     // Jobs defined inside the group class will be managed so that only one can
     // run at a time. Also, the background process will be stopped if a job is
     // started. It is up the the plater to ensure that the background slicing
@@ -8809,7 +8815,7 @@ public:
     // BBS: backup & restore
     using LoadProgressCallback = std::function<bool(int, const wxString&)>;
     std::vector<size_t> load_files(const std::vector<fs::path>& input_files, LoadStrategy strategy, bool ask_multi = false,
-                                   bool *successful_3mf_loaded = nullptr);
+                                   bool *successful_3mf_loaded = nullptr, PreparedImport* prepared = nullptr);
     std::vector<size_t> load_model_objects(const ModelObjectPtrs& model_objects, bool allow_negative_z = false,
                                            bool split_object = false, LoadProgressCallback progress_callback = {});
 
@@ -11702,7 +11708,7 @@ void read_binary_stl(const std::string& filename, std::string& model_id, std::st
 
 // BBS: backup & restore
 std::vector<size_t> Plater::priv::load_files(const std::vector<fs::path>& input_files, LoadStrategy strategy, bool ask_multi,
-                                             bool *successful_3mf_loaded)
+                                             bool *successful_3mf_loaded, PreparedImport* prepared)
 {
     if (successful_3mf_loaded != nullptr)
         *successful_3mf_loaded = false;
@@ -11740,7 +11746,7 @@ std::vector<size_t> Plater::priv::load_files(const std::vector<fs::path>& input_
     BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << boost::format(": load_model %1%, load_config %2%, input_files size %3%")%load_model %load_config %input_files.size();
 
     const auto loading = _L("Loading") + dots;
-    ProgressDialog dlg(loading, "", 100, find_toplevel_parent(q), wxPD_AUTO_HIDE | wxPD_CAN_ABORT | wxPD_APP_MODAL);
+    ProgressDialog dlg(loading, "", 100, find_toplevel_parent(q), wxPD_AUTO_HIDE | (prepared ? 0 : wxPD_CAN_ABORT) | wxPD_APP_MODAL);
     wxBusyCursor busy;
 
     auto *new_model = (!load_model || one_by_one) ? nullptr : new Slic3r::Model();
@@ -11833,7 +11839,18 @@ std::vector<size_t> Plater::priv::load_files(const std::vector<fs::path>& input_
         bool is_project_file = false;
         BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << boost::format(": is_project_file %1%, type_3mf %2%") % is_project_file % type_3mf;
         try {
-            if (type_3mf) {
+            if (prepared) {
+                auto& file = prepared->files.at(i);
+                model = std::move(file.model);
+                imperial_units = imperial_units || file.imperial_units;
+                designer_model_id = file.designer_model_id;
+                designer_country_code = file.designer_country_code;
+                makerlab_region = file.makerlab_region;
+                makerlab_name = file.makerlab_name;
+                makerlab_id = file.makerlab_id;
+                if (designer_model_id.empty() && boost::algorithm::iends_with(path.string(), ".stl"))
+                    read_binary_stl(path.string(), designer_model_id, designer_country_code, makerlab_name, makerlab_region, makerlab_id);
+            } else if (type_3mf) {
                 DynamicPrintConfig config;
                 Semver             file_version;
                 En3mfType          en_3mf_file_type = En3mfType::From_BBS;
@@ -11849,20 +11866,50 @@ std::vector<size_t> Plater::priv::load_files(const std::vector<fs::path>& input_
                     // Used to store color group mapping information in standard 3MF files
                     std::map<int, std::vector<std::string>> color_group_map;
                     VolumeColorInfoMap volume_color_data;
-                    model = Slic3r::Model::read_from_archive(path.string(), &config_loaded, &config_substitutions, en_3mf_file_type, strategy, &plate_data, &project_presets,
-                                                             &file_version,
-                                                             [this, &dlg, real_filename, &progress_percent, &file_percent, stage_percent, input_files_ratio, total_files, i,
-                                                              &is_user_cancel](int import_stage, int current, int total, bool &cancel) {
-                                                                 bool     cont = true;
-                                                                 float percent_float = (100.0f * (float)i / (float)total_files) + input_files_ratio * ((float)stage_percent[import_stage] + (float)current * (float)(stage_percent[import_stage + 1] - stage_percent[import_stage]) /(float) total) / (float)total_files;
-                                                                 BOOST_LOG_TRIVIAL(trace) << "load_3mf_file: percent(float)=" << percent_float << ", stage = " << import_stage << ", curr = " << current << ", total = " << total;
-                                                                 progress_percent = (int)percent_float;
-                                                                 wxString msg  = wxString::Format(_L("Loading file: %s"), from_path(real_filename));
-                                                                 cont          = dlg.Update(progress_percent, msg);
-                                                                 cancel        = !cont;
-                                                                 if (cancel)
-                                                                     is_user_cancel = cancel;
-                                                             }, nullptr, &color_group_map, &volume_color_data);
+                    // Keep archive parsing and hull preparation detached too.
+                    // This synchronous API retains its return contract while
+                    // the modal progress owner pumps UI events and cancellation.
+                    std::atomic<bool> archive_cancel{false};
+                    std::atomic<int> archive_percent{0};
+                    const std::string archive_path = path.string();
+                    const LoadStrategy archive_strategy = strategy;
+                    auto archive_future = std::async(std::launch::async, [&config_loaded, &config_substitutions,
+                        &en_3mf_file_type, &plate_data, &project_presets, &file_version,
+                        &color_group_map, &volume_color_data, &archive_cancel, &archive_percent,
+                        archive_path, archive_strategy, stage_percent]() {
+                        Model detached = Model::read_from_archive(archive_path, &config_loaded, &config_substitutions,
+                            en_3mf_file_type, archive_strategy, &plate_data, &project_presets, &file_version,
+                            [&](int stage, int current, int total, bool& cancel) {
+                                cancel = archive_cancel.load();
+                                const int safe_stage = std::clamp(stage, 0, static_cast<int>(IMPORT_STAGE_MAX) - 1);
+                                const int percent = stage_percent[safe_stage] + (total > 0 ?
+                                    current * (stage_percent[safe_stage + 1] - stage_percent[safe_stage]) / total : 0);
+                                archive_percent.store(std::clamp(percent, 0, 100));
+                            }, nullptr, &color_group_map, &volume_color_data);
+                        for (auto* object : detached.objects)
+                            for (auto* volume : object->volumes) {
+                                if (archive_cancel.load()) return Model{};
+                                volume->calculate_convex_hull();
+                            }
+                        return detached;
+                    });
+                    while (archive_future.wait_for(std::chrono::milliseconds(20)) != std::future_status::ready) {
+                        const int percent = static_cast<int>(100.f * i / total_files +
+                            input_files_ratio * archive_percent.load() / total_files);
+                        if (!dlg.Update(percent, wxString::Format(_L("Loading file: %s"), from_path(real_filename)))) {
+                            archive_cancel.store(true);
+                            is_user_cancel = true;
+                        }
+                    }
+                    model = archive_future.get();
+                    if (is_user_cancel) {
+                        release_PlateData_list(plate_data);
+                        for (auto* preset : project_presets) delete preset;
+                        q->skip_thumbnail_invalid = false;
+                        return empty_result;
+                    }
+                    if (load_config && wxGetApp().app_config->get_bool("auto_simplify_import"))
+                        notification_manager->push_notification(_u8L("Automatic simplification skipped this saved project. Original geometry and project metadata were preserved."));
                     BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << ":" << __LINE__
                                             << boost::format(", plate_data.size %1%, project_preset.size %2%, is_bbs_3mf %3%, file_version %4% \n") % plate_data.size() %
                                                    project_presets.size() % (en_3mf_file_type == En3mfType::From_BBS) % file_version.to_string();
@@ -24702,6 +24749,10 @@ void Plater::add_model(bool imperial_units, std::string fname)
 
     auto strategy = LoadStrategy::LoadModel;
     if (imperial_units) strategy = strategy | LoadStrategy::ImperialUnits;
+    if (fname.empty() && ImportJob::supports(paths)) {
+        load_files_async(paths, strategy, ask_multi, snapshot_label);
+        return;
+    }
     if (!load_files(paths, strategy, ask_multi).empty()) {
 
         if (get_project_name() == _L("Untitled") && paths.size() > 0) {
@@ -25543,6 +25594,132 @@ void Plater::force_update_all_plate_thumbnails()
     }
 }
 
+bool Plater::load_files_async(const std::vector<fs::path>& paths, LoadStrategy strategy,
+                             bool ask_multi, const std::string& snapshot_label)
+{
+    if (!ImportJob::supports(paths) || !(strategy & LoadStrategy::LoadModel) ||
+        (strategy & LoadStrategy::LoadConfig) || (strategy & LoadStrategy::Restore))
+        return false;
+    if (!p->m_worker.is_idle() || is_any_job_running() || is_background_process_slicing()) {
+        p->notification_manager->push_notification(_u8L("Finish or cancel the current operation before importing models."));
+        return false;
+    }
+    ImportJobOptions options;
+    auto* settings = wxGetApp().app_config;
+    options.auto_simplify = settings->get_bool("auto_simplify_import");
+    options.gamma_correct = settings->get_bool("gamma_correct_in_import_obj");
+    const std::string detail = settings->get("auto_simplify_import_detail");
+    // Accept only existing tool choices. Invalid persisted values fall back to
+    // the highest detail rather than silently reducing geometry more heavily.
+    if (detail == "0.01") options.simplification.max_error = 0.01f;
+    else if (detail == "0.1") options.simplification.max_error = 0.1f;
+    else if (detail == "0.5") options.simplification.max_error = 0.5f;
+    else if (detail == "1") options.simplification.max_error = 1.f;
+    options.step_linear = string_to_double_decimal_point(settings->get("linear_defletion"));
+    if (options.step_linear <= 0) options.step_linear = 0.003;
+    options.step_angle = string_to_double_decimal_point(settings->get("angle_defletion"));
+    if (options.step_angle <= 0) options.step_angle = 0.5;
+    options.step_split = settings->get_bool("is_split_compound");
+    const bool show_step_settings = settings->get_bool("enable_step_mesh_setting");
+    const double linear = options.step_linear, angle = options.step_angle;
+    const bool split = options.step_split;
+    options.step_settings = [show_step_settings, linear, angle, split](Step& file, double& out_linear, double& out_angle, bool& out_split) {
+        if (show_step_settings) {
+            StepMeshDialog dialog(nullptr, file, linear, angle);
+            if (dialog.ShowModal() != wxID_OK) return -1;
+            out_linear = dialog.get_linear_defletion();
+            out_angle = dialog.get_angle_defletion();
+            out_split = dialog.get_split_compound_value();
+        } else {
+            out_linear = linear; out_angle = angle; out_split = split;
+        }
+        return 1;
+    };
+    options.step_encoding_warning = [](int utf8) {
+        if (!utf8) show_info(nullptr, _L("Name of components inside step file is not UTF8 format!") + "\n\n" +
+                            _L("The name may show garbage characters!"), _L("Attention!"));
+    };
+    options.step_shell_warning = [](const std::vector<std::string>& names) {
+        wxString message = _L("The following shells are not closed and may cause issues:") + "\n\n";
+        for (const auto& name : names) message += wxString::FromUTF8(name) + "\n";
+        show_info(nullptr, message, _L("Unclosed Shell Warning"));
+    };
+    options.reading_text = _u8L("Reading model files in the background...");
+    options.simplifying_text = _u8L("Simplifying large imported models...");
+    options.preparing_text = _u8L("Preparing model geometry...");
+    return p->m_worker.push(std::make_unique<ImportJob>(paths, std::move(options),
+        [this, paths, strategy, ask_multi, snapshot_label](PreparedImport&& prepared) {
+            // finalize runs on the UI thread, after the entire detached batch
+            // succeeds. Cancellation before this point cannot change the scene.
+            std::vector<priv::ImportedOriginalMesh> originals;
+            for (size_t file = 0; file < prepared.files.size(); ++file) {
+                const auto& reduced_model = prepared.files[file].model;
+                const auto& original_model = prepared.originals[file];
+                for (size_t object = 0; object < reduced_model.objects.size(); ++object) {
+                    const auto& reduced_volumes = reduced_model.objects[object]->volumes;
+                    const auto& original_volumes = original_model.objects[object]->volumes;
+                    for (size_t volume = 0; volume < reduced_volumes.size(); ++volume) {
+                        const auto* reduced = reduced_volumes[volume];
+                        const auto* original = original_volumes[volume];
+                        if (reduced->get_mesh_shared_ptr() != original->get_mesh_shared_ptr())
+                            originals.push_back({reduced->get_mesh_shared_ptr(), original->get_mesh_shared_ptr(), original->get_convex_hull_shared_ptr()});
+                    }
+                }
+            }
+            Plater::TakeSnapshot snapshot(this, snapshot_label);
+            const auto loaded = p->load_files(paths, strategy, ask_multi, nullptr, &prepared);
+            if (loaded.empty()) return;
+            p->m_import_original_meshes.insert(p->m_import_original_meshes.end(), originals.begin(), originals.end());
+            if (!originals.empty())
+                p->notification_manager->push_notification(NotificationType::CustomNotification,
+                    NotificationManager::NotificationLevel::WarningNotificationLevel,
+                    _u8L("Large imported meshes were simplified. Original files are unchanged."),
+                    _u8L("Restore original geometry"), [this](wxEvtHandler*) {
+                        restore_import_originals(); return true;
+                    });
+            if (prepared.skipped_volumes > 0)
+                p->notification_manager->push_notification(_u8L("Automatic simplification skipped meshes with painting, textures or protected metadata. Original geometry was preserved."));
+            if (get_project_name() == _L("Untitled"))
+                p->set_project_filename(wxString::FromUTF8(paths.front().string()));
+            wxGetApp().mainframe->update_title();
+            statistics_burial_data(paths.front().string());
+        }));
+}
+
+void Plater::restore_import_originals()
+{
+    if (!p->m_worker.is_idle() || is_background_process_slicing()) return;
+    bool snapshot_taken = false;
+    for (size_t object = 0; object < model().objects.size(); ++object) {
+        auto* live = model().objects[object];
+        bool restored = false;
+        for (auto* volume : live->volumes) {
+            // Pointer identity prevents overwriting a mesh edited since import,
+            // or a later project that happens to reuse an object-list index.
+            const auto found = std::find_if(p->m_import_original_meshes.begin(), p->m_import_original_meshes.end(),
+                [volume](const auto& original) { return volume->get_mesh_shared_ptr() == original.reduced; });
+            if (found == p->m_import_original_meshes.end()) continue;
+            if (!snapshot_taken) {
+                take_snapshot(_u8L("Restore original imported geometry"));
+                snapshot_taken = true;
+            }
+            auto original_mesh = found->original;
+            volume->set_mesh(original_mesh);
+            volume->set_convex_hull_shared_ptr(found->original_hull);
+            volume->invalidate_convex_hull_2d();
+            volume->set_new_unique_id();
+            restored = true;
+        }
+        if (restored) {
+            live->invalidate_bounding_box();
+            changed_mesh(static_cast<int>(object));
+        }
+    }
+    p->notification_manager->push_notification(snapshot_taken ?
+        _u8L("Original imported geometry restored. Undo can restore the simplified meshes.") :
+        _u8L("No unchanged simplified imports are available to restore."));
+}
+
 // BBS: backup
 std::vector<size_t> Plater::load_files(const std::vector<fs::path>& input_files, LoadStrategy strategy, bool ask_multi,
                                        bool *successful_3mf_loaded) {
@@ -26079,6 +26256,10 @@ bool Plater::load_files(const wxArrayString& filenames)
     if (normal_paths.size() == 1 && amf_files_count == 1) { loadfiles_type = LoadFilesType::Single3MF; };
     if (normal_paths.size() == 1 && amf_files_count == 0) { loadfiles_type = LoadFilesType::SingleOther; };
 
+    if (ImportJob::supports(normal_paths))
+        return load_files_async(normal_paths, LoadStrategy::LoadModel,
+                                normal_paths.size() > 1, snapshot_label);
+
     auto first_file = std::vector<fs::path>{};
     auto tmf_file   = std::vector<fs::path>{};
     auto other_file = std::vector<fs::path>{};
@@ -26299,6 +26480,11 @@ void Plater::add_file()
     if (paths.size() > 1 && amf_files_count == 0) { loadfiles_type = LoadFilesType::MultipleOther; }
     if (paths.size() == 1 && amf_files_count == 1) { loadfiles_type = LoadFilesType::Single3MF; };
     if (paths.size() == 1 && amf_files_count == 0) { loadfiles_type = LoadFilesType::SingleOther; };
+
+    if (ImportJob::supports(paths)) {
+        load_files_async(paths, LoadStrategy::LoadModel, paths.size() > 1, snapshot_label);
+        return;
+    }
 
     auto first_file = std::vector<fs::path>{};
     auto tmf_file   = std::vector<fs::path>{};
