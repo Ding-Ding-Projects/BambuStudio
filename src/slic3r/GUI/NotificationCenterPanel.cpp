@@ -1,3 +1,4 @@
+#include "HumanDate.hpp"
 #include "NotificationCenterPanel.hpp"
 #include "Widgets/MD3DataView.hpp"
 
@@ -351,7 +352,7 @@ wxString NotificationCenterPanel::level_label(int level)
 wxString NotificationCenterPanel::format_time(std::int64_t timestamp_ms) const
 {
     wxDateTime dt(static_cast<time_t>(timestamp_ms / 1000));
-    return dt.FormatISODate() + " " + dt.FormatISOTime();
+    return HumanDate::date_time(dt, true);
 }
 
 NotificationHistory::Filter NotificationCenterPanel::current_filter() const

@@ -1,3 +1,4 @@
+#include "HumanDate.hpp"
 #include "MultiTaskManagerPage.hpp"
 #include "Widgets/MD3ScrolledWindow.hpp"
 #include "I18N.hpp"
@@ -1332,41 +1333,7 @@ void CloudTaskManagerPage::refresh_user_device(bool clear)
 
 std::string CloudTaskManagerPage::utc_time_to_date(std::string utc_time)
 {
-    /*std::tm timeInfo = {};
-    std::istringstream iss(utc_time);
-    iss >> std::get_time(&timeInfo, "%Y-%m-%dT%H:%M:%SZ");
-
-    std::chrono::system_clock::time_point tp = std::chrono::system_clock::from_time_t(std::mktime(&timeInfo));
-    std::time_t localTime = std::chrono::system_clock::to_time_t(tp);
-    std::tm* localTimeInfo = std::localtime(&localTime);
-
-    std::stringstream ss;
-    ss << std::put_time(localTimeInfo, "%Y-%m-%d %H:%M:%S");
-    return ss.str();*/
-    std::string send_time;
-
-
-    std::tm timeInfo = {};
-    std::istringstream iss(utc_time);
-    iss >> std::get_time(&timeInfo, "%Y-%m-%dT%H:%M:%SZ");
-
-    std::chrono::system_clock::time_point tp = std::chrono::system_clock::from_time_t(std::mktime(&timeInfo));
-    std::time_t utcTime = std::chrono::system_clock::to_time_t(tp);
-
-
-    wxDateTime::TimeZone tz(wxDateTime::Local);
-    long offset = tz.GetOffset();
-
-
-    std::time_t localTime = utcTime + offset;
-
-    std::tm* localTimeInfo = std::localtime(&localTime);
-    std::stringstream ss;
-    ss << std::put_time(localTimeInfo, "%Y-%m-%d %H:%M:%S");
-    send_time =  ss.str();
-
-
-    return send_time;
+    return HumanDate::date_time(HumanDate::utc_stamp(wxString::FromUTF8(utc_time)), true).ToStdString();
 }
 
 

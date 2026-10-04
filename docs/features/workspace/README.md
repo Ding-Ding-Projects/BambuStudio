@@ -4,6 +4,9 @@ Project- and workflow-level features of the native application: how projects are
 opened, tracked, versioned, and how the app communicates with the user while
 work is in progress.
 
+- [Readable dates](readable-dates.md): full month names, localized date text,
+  viewer-local timestamps, and truthful compiled-build information.
+
 - [Non-blocking notifications](non-blocking-notifications.md) — informational,
   warning, and error messages surface as corner toasts instead of modal dialogs;
   decision dialogs stay modal.

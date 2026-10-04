@@ -1,3 +1,4 @@
+#include "HumanDate.hpp"
 #include "MainFrame.hpp"
 #include "Export/ExportDatasets.hpp"
 #include "Export/ExportDialog.hpp"
@@ -6006,18 +6007,16 @@ void MainFrame::get_recent_projects(boost::property_tree::wptree &tree, int imag
             {
                 bool use_12h_format = wxGetApp().app_config->get("use_12h_time_format") == "true";
 
-                // Format date and time: YYYY-MM-DD HH:MM[:SS][AM/PM]
+                // Preserve the user's clock format while rendering an unambiguous date.
                 std::wstringstream time_stream;
-                time_stream << std::setw(4) << std::setfill(L'0') << (local_tm->tm_year + 1900) << L"-"
-                        << std::setw(2) << std::setfill(L'0') << (local_tm->tm_mon + 1) << L"-"
-                        << std::setw(2) << std::setfill(L'0') << local_tm->tm_mday << L" "
-                        << from_u8(Slic3r::format_time_hm(local_tm, use_12h_format));
+                time_stream << HumanDate::format(wxDateTime(t)).ToStdWstring() << L" "
+                            << from_u8(Slic3r::format_time_hm(local_tm, use_12h_format));
                 item.put(L"time", time_stream.str());
 
             }
             else
             {
-                std::wstring time = wxDateTime(t).FormatISOCombined(' ').ToStdWstring();
+                std::wstring time = HumanDate::date_time(wxDateTime(t), true).ToStdWstring();
                 item.put(L"time", time);
             }
             if (i <= images) {

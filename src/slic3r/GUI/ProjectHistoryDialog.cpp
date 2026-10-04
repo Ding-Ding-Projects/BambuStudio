@@ -1,3 +1,4 @@
+#include "HumanDate.hpp"
 #include "ProjectHistoryDialog.hpp"
 #include "Widgets/MD3DataView.hpp"
 
@@ -905,7 +906,7 @@ wxString ProjectHistoryDialog::format_timestamp(const std::chrono::system_clock:
 {
     const std::time_t value = std::chrono::system_clock::to_time_t(timestamp);
     wxDateTime date(value);
-    return date.IsValid() ? date.Format("%Y-%m-%d %H:%M") : _L("Unknown time");
+    return date.IsValid() ? HumanDate::date_time(date) : _L("Unknown time");
 }
 
 wxString ProjectHistoryDialog::format_size(std::uint64_t bytes)

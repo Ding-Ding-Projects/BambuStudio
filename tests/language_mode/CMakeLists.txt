@@ -1,5 +1,6 @@
 add_executable(language_mode_tests
     language_mode_tests_main.cpp
+    human_date_tests.cpp
     funny_level_tests.cpp
     bilingual_registry_tests.cpp
     ${PROJECT_SOURCE_DIR}/src/slic3r/GUI/LanguageMode.cpp

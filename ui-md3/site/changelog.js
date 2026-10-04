@@ -256,7 +256,7 @@
             '<select class="select cal-month" aria-label="Month">' +
               Array.from({ length: 12 }, function (unused, index) {
                 return '<option value="' + index + '"' + (index === cursor.month ? ' selected' : '') + '>' +
-                  new Date(2000, index, 1).toLocaleDateString(undefined, { month: 'long' }) + '</option>';
+                  global.BambuHumanDate.monthName(index, site.languageMode()) + '</option>';
               }).join('') +
             '</select>' +
             '<select class="select cal-year" aria-label="Year">' +
@@ -277,9 +277,7 @@
               var isEdge = iso === stateValue.from || iso === stateValue.to;
               // The visible number stays short; the accessible name carries the
               // full date and the selection state, which a class cannot convey.
-              var label = date.toLocaleDateString(undefined, {
-                dateStyle: 'full', timeZone: 'UTC'
-              });
+              var label = site.formatDate(iso);
               return '<button type="button" class="cal-day' + (inRange ? ' inrange' : '') +
                 (isEdge ? ' edge' : '') + '" data-iso="' + iso + '"' +
                 ' aria-label="' + label + '" aria-pressed="' + (inRange || isEdge) + '"' +
@@ -430,7 +428,7 @@
         '# Bambu Studio MD3 — changelog',
         '',
         '- Source: ' + data.repository + ' GitHub Releases',
-        '- Range exported: ' + (stateValue.from || 'first release') + ' to ' + (stateValue.to || 'latest release'),
+        '- Range exported: ' + (stateValue.from ? site.formatDate(stateValue.from) : 'first release') + ' to ' + (stateValue.to ? site.formatDate(stateValue.to) : 'latest release'),
         '- Search: ' + (stateValue.query ? '`' + stateValue.query + '`' : 'none'),
         '- Releases in this export: ' + releases.length + ' of ' + data.releases.length,
         '- Change categories are derived from each commit subject’s leading verb.',
@@ -460,7 +458,7 @@
     }
 
     function formatDate(iso) {
-      return String(iso || '').slice(0, 10);
+      return site.formatDate(iso);
     }
 
     site.applyCopy(panel);

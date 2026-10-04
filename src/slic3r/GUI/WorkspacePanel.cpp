@@ -1,3 +1,4 @@
+#include "HumanDate.hpp"
 #include "WorkspacePanel.hpp"
 #include "Widgets/MD3DataView.hpp"
 
@@ -288,7 +289,7 @@ void WorkspacePanel::create_ui()
                                       wxDV_SINGLE | wxDV_ROW_LINES | wxBORDER_NONE);
     m_agenda->AppendTextColumn(_L("Planned print"), wxDATAVIEW_CELL_INERT, FromDIP(200), wxALIGN_LEFT, wxDATAVIEW_COL_RESIZABLE);
     m_agenda->AppendTextColumn(_L("Printer"), wxDATAVIEW_CELL_INERT, FromDIP(140), wxALIGN_LEFT, wxDATAVIEW_COL_RESIZABLE);
-    m_agenda->AppendTextColumn(_L("Start (UTC)"), wxDATAVIEW_CELL_INERT, FromDIP(160), wxALIGN_LEFT, wxDATAVIEW_COL_RESIZABLE);
+    m_agenda->AppendTextColumn(_L("Start (local time)"), wxDATAVIEW_CELL_INERT, FromDIP(160), wxALIGN_LEFT, wxDATAVIEW_COL_RESIZABLE);
     m_agenda->AppendTextColumn(_L("Status"), wxDATAVIEW_CELL_INERT, FromDIP(180), wxALIGN_LEFT, wxDATAVIEW_COL_RESIZABLE);
     wxGetApp().UpdateDVCDarkUI(m_agenda);
     md3_style_data_view(m_agenda);
@@ -341,7 +342,7 @@ void WorkspacePanel::refresh_checklist()
     m_checklist->Clear();
     for (const auto &item : m_workspace.checklist) {
         wxString label = display(item.text);
-        if (!item.due_date.empty()) label += "  [" + display(item.due_date) + "]";
+        if (!item.due_date.empty()) label += "  [" + HumanDate::format(HumanDate::calendar(display(item.due_date))) + "]";
         if (!item.due_date.empty()) {
             const auto resolved = Workspace::resolve_local_time(m_workspace.time_zone, item.due_date + " " +
                 (m_workspace.deadline_reminder_hour < 10 ? "0" : "") +
@@ -360,6 +361,7 @@ void WorkspacePanel::refresh_checklist()
 void WorkspacePanel::refresh_calendar()
 {
     m_agenda->DeleteAllItems();
+    int date_width = std::max(FromDIP(160), m_agenda->GetTextExtent(_L("Start (local time)")).x + FromDIP(24));
     const wxDateTime selected = m_month->GetDate();
     const auto slots = Workspace::month_slots(m_workspace, selected.GetYear(), static_cast<int>(selected.GetMonth()) + 1, 0);
     for (std::size_t index = 0; index < slots.size(); ++index) {
@@ -373,7 +375,9 @@ void WorkspacePanel::refresh_calendar()
         wxVector<wxVariant> row;
         row.push_back(wxVariant(display(slot.title)));
         row.push_back(wxVariant(display(slot.printer_id)));
-        row.push_back(wxVariant(wxDateTime(static_cast<time_t>(slot.start_utc)).ToUTC().FormatISOCombined(' ')));
+        const wxString start_label = HumanDate::date_time(wxDateTime(static_cast<time_t>(slot.start_utc)));
+        date_width = std::max(date_width, m_agenda->GetTextExtent(start_label).x + FromDIP(24));
+        row.push_back(wxVariant(start_label));
         row.push_back(wxVariant(state));
         // The row keeps the slot's index in m_workspace.slots for the actions below.
         const auto position = std::find_if(m_workspace.slots.begin(), m_workspace.slots.end(),

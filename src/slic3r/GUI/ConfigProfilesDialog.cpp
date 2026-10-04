@@ -1,3 +1,4 @@
+#include "HumanDate.hpp"
 #include "ConfigProfilesDialog.hpp"
 #include "Widgets/MD3DataView.hpp"
 
@@ -539,7 +540,7 @@ void ConfigProfilesDialog::on_history(wxCommandEvent &)
     for (const auto &v : versions.versions) {
         const wxDateTime when(std::chrono::system_clock::to_time_t(v.committed_at));
         choices.Add(wxString::Format("%s  |  %s  |  %s",
-                                     when.Format("%Y-%m-%d %H:%M"),
+                                     HumanDate::date_time(when),
                                      wxString::FromUTF8(v.message),
                                      wxString::FromUTF8(v.commit_id.substr(0, 12))));
     }
@@ -608,7 +609,7 @@ void ConfigProfilesDialog::on_prefs_history(wxCommandEvent &)
     for (const auto &v : versions.versions) {
         const wxDateTime when(std::chrono::system_clock::to_time_t(v.committed_at));
         choices.Add(wxString::Format("%s  |  %s  |  %s",
-                                     when.Format("%Y-%m-%d %H:%M"),
+                                     HumanDate::date_time(when),
                                      wxString::FromUTF8(v.message),
                                      wxString::FromUTF8(v.commit_id.substr(0, 12))));
     }

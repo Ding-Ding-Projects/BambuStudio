@@ -1,3 +1,4 @@
+#include "HumanDate.hpp"
 #include "MediaPlayCtrl.h"
 #include "Widgets/Button.hpp"
 #include "Widgets/MaterialIcon.hpp"
@@ -986,10 +987,7 @@ void MediaPlayCtrl::start_device_image_flow()
         std::string mode_str = mode_to_string(mode);
         // Generate watermark text at image fetch time, not at paint time
         time_t fetch_time = time(nullptr);
-        std::tm *local_tm = std::localtime(&fetch_time);
-        char time_buf[32];
-        strftime(time_buf, sizeof(time_buf), "%Y-%m-%d %H:%M:%S", local_tm);
-        wxString watermark = _L("Printer Preview") + wxString::Format("  %s", time_buf);
+        wxString watermark = _L("Printer Preview") + "  " + HumanDate::date_time(wxDateTime(fetch_time), true);
         CallAfter([this, image_token, img = std::move(image), request_machine, mode_str, watermark]() {
             if (image_token.expired())
                 return;
