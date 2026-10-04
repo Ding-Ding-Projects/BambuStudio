@@ -1,35 +1,42 @@
-# Independent settings draft continuation
+# Continuation: Independent settings drafts
 
-## Objective and current steering
+Status: unfinished preservation at the owner's requested closeout on 4 October 2026. No new implementation should start during this closeout.
 
-Implement independent settings drafts on the Prepare and Preferences tab strips. The maintainer requested preservation-first closeout before implementation and verification finished. This document is a continuation handoff, not a completion claim.
+Branch: `codex/bambu-draft-tabs`. Source checkpoint: `5010d13b6325abf5015e426252a2d13bad193553`. Base: `0c967a55786c07ef639a2cbefbe922b619c157d3`. The commit containing this document is the preservation tip; discover it with `git rev-parse HEAD`.
 
 ## Implemented source
 
-- `SettingsDraftStore.hpp/.cpp`: owned draft/baseline configurations, duplicate independence, target and baseline checks, versioned bounded persistence, credential exclusion, stored search and scroll state.
-- `SettingsDraftPanel.hpp/.cpp`: detached typed `ConfigOptionsGroup` editor, searchable page/type picker, new and duplicate drafts, changed-draft close protection, guarded diff confirmation, detached Save as preset without selection, a supplementary conflict-checked Undo Apply action.
-- Prepare and Preferences host wiring and CMake source registration.
-- `SettingsDraftUndo.hpp/.cpp`, `UndoRedo.hpp`, and bounded Plater snapshot methods: generic snapshot attachment carrying all three complete edited configurations through the existing Undo/Redo timeline.
-- Dedicated feature documentation, state inventory, and `settings_drafts_tests` target.
+Read the source diff and the dedicated feature documentation. This branch is not integrated into main and is not a verified release.
 
-## Verified and unverified state
+- `CLOSEOUT_PROMPT.md`
+- `design/settings-drafts.md`
+- `docs/features/settings-drafts.md`
+- `src/slic3r/CMakeLists.txt`
+- `src/slic3r/GUI/Plater.cpp`
+- `src/slic3r/GUI/Preferences.cpp`
+- `src/slic3r/GUI/SettingsDraftPanel.cpp`
+- `src/slic3r/GUI/SettingsDraftPanel.hpp`
+- `src/slic3r/GUI/SettingsDraftStore.cpp`
+- `src/slic3r/GUI/SettingsDraftStore.hpp`
+- `src/slic3r/GUI/SettingsDraftUndo.cpp`
+- `src/slic3r/GUI/SettingsDraftUndo.hpp`
+- `src/slic3r/Utils/UndoRedo.hpp`
+- `tests/CMakeLists.txt`
+- `tests/settings_drafts/CMakeLists.txt`
+- `tests/settings_drafts/settings_drafts_tests.cpp`
 
-`git diff --check` passed. Backend tests were written but have not been compiled or run. No application build, runtime interaction, screenshots, installer verification, or release occurred in this lane. No push or default-branch integration occurred in this lane.
+## Verification
 
-The undo child initially wrote its four bounded files into the primary checkout. The exact diff and new files were transferred to this isolated lane. The primary originals remain retained for parent-owned preservation and recovery. This lane did not reset or remove the primary changes. The parent has asked that the four copied undo-seam files remain unchanged pending its byte proof.
+Source boundary and whitespace checks passed. Authored native tests were not compiled or executed.
 
-## Required repairs and next steps
+## Required continuation
 
-- Replace Undo payload filename identity with the stable project-tab identity already used by draft creation. Verify Save As and project switching semantics.
-- Include configuration attachments in Undo stack memory accounting. Review generation, snapshot association, stale-target handling, and complete Undo/Redo restoration with real interactions.
-- Connect `LocalConfigHistory` recording for draft edits and pre/post Apply, and expose a safe draft restore callback. The adapter currently lives in the separate history lane.
-- Verify duplicate activation. `TabStrip::AddTab(..., activate=true)` sets model activation but does not emit the host activation event.
-- Verify active-draft close fallback and Preferences startup restoration. Current page closure and layout loading require runtime checks.
-- Review empty/vector/unsupported typed option controls, option labels and searching, narrow layout, themes, localization, accessibility, and corrupt-persistence feedback.
-- Handle unsupported removed-option deltas explicitly. The store can return `removed_keys`; the panel currently applies only the cloned delta.
-- Compile the exact integrated candidate and run `settings_drafts_tests`, then complete the required built application checks before asserting success.
-- Integrate documentation indexes, roadmap, README, handoff, issue evidence, and deployment records through the parent task.
+Undo must bind stable project-tab identity rather than filename and include attachments in memory accounting. Connect LocalConfigHistory recording/restoration. Fix duplicate host activation and removed-key handling. Verify close/restart, supported field controls, conflicts, no-activation Save as preset, localization, accessibility and layout.
 
-## Preservation boundary
+Build the reconciled candidate through the supported Windows one-click route in an isolated, pinned build tree. Keep physical printer actions and host power changes out of scope. Preserve unrelated branches. Do not delete this branch or its checkout until completed work is verified, integrated and proved on remote main.
 
-Work is preserved on `codex/bambu-draft-tabs`. The parent owns pushes, integration, release, and cleanup. Do not delete or reset the primary recovery files or this branch without complete preservation and ancestry evidence. No host power action, physical printer command, private-source publication, or purchase is authorized by this handoff.
+The preservation commit deliberately uses [skip ci] to avoid starting new release workflows during the requested closeout. No hosted result, compiled application, screenshot, installer, or release is claimed by that marker. Required verification remains outstanding.
+
+## 廣東話交接
+
+呢條分支只係保存未完成工作，唔代表已經編譯、驗證、合併或者發佈。上面列明已做嘅檢查同未完成項目。下一次先讀返差異，再修好接駁同執行原生驗證；唔好將保存當成完成。
