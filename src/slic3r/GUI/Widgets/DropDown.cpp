@@ -1,4 +1,5 @@
 #include "DropDown.hpp"
+#include <wx/weakref.h>
 #include "Label.hpp"
 #include "StateColor.hpp"
 #include "MaterialIcon.hpp"
@@ -87,8 +88,9 @@ void DropDown::Create(wxWindow *parent, long style)
 #endif
 }
 
-void DropDown::Invalidate(bool clear)
+void DropDown::Invalidate(bool clear, bool items_changed)
 {
+    if (items_changed) ++item_revision;
     if (clear) {
         selection = hover_item = -1;
         offset = wxPoint();
@@ -762,9 +764,7 @@ void DropDown::mouseReleased(wxMouseEvent& event)
 
         if (hover_item >= 0 && (subDropDown == nullptr || subDropDown->group.empty())) { // not moved
             sendDropDownEvent();
-            if (mainDropDown)
-                mainDropDown->hover_item = -1; // To Dismiss mainDropDown
-            DismissAndNotify();
+            return; // an action may destroy this popup and its owning row
         } else if (subDropDown)
             subDropDown->Popup(subDropDown);
     }
@@ -861,13 +861,26 @@ void DropDown::mouseWheelMoved(wxMouseEvent &event)
 void DropDown::sendDropDownEvent()
 {
     int index = hoverIndex();
-    if (index < 0 || (items[index].style & DD_ITEM_STYLE_DISABLED))
+    if (index < 0 || static_cast<size_t>(index) >= items.size() || (items[index].style & DD_ITEM_STYLE_DISABLED))
         return;
-    wxCommandEvent event(wxEVT_COMBOBOX, GetId());
-    event.SetEventObject(this);
+    // Snapshot before dismissal resets hover state. No access to this after
+    // dispatch: selection handlers can destroy the combo and its owning row.
+    DropDown *root = mainDropDown ? mainDropDown : this;
+    wxWeakRef<DropDown> target(root);
+    wxCommandEvent event(wxEVT_COMBOBOX, root->GetId());
+    event.SetEventObject(root);
     event.SetInt(index);
     event.SetString(items[index].text);
-    GetEventHandler()->ProcessEvent(event);
+    event.SetClientData(items[index].data);
+    event.SetExtraLong(static_cast<long>(root->item_revision));
+    if (root->subDropDown && root->subDropDown->IsShown()) {
+        root->subDropDown->hover_item = -1;
+        root->subDropDown->DismissAndNotify();
+    }
+    if (target)
+        target->DismissAndNotify();
+    if (target)
+        target->GetEventHandler()->ProcessEvent(event);
 }
 
 void DropDown::Dismiss()

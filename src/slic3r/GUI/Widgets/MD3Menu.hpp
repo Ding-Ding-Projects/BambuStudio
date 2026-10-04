@@ -59,9 +59,11 @@ public:
     int  Result() const { return m_result; }
     // Check state after activation, for Check / Radio items (false otherwise).
     bool ResultChecked() const { return m_result_checked; }
+    bool ResultCheckable() const { return m_result_kind_checkable; }
+    wxMenu *ResultMenu() const { return m_result_menu.get(); }
 
-    // Called exactly once when the root menu has fully closed, after any
-    // wxEVT_MENU event was delivered.
+    // Called exactly once when the root menu has fully closed. Blocking entry
+    // points dispatch commands only after this callback exits their event loop.
     void SetCloseCallback(std::function<void()> cb) { m_close_cb = std::move(cb); }
     // When true (default) activation sends wxEVT_MENU through the owning
     // wxMenu; PopupMenuSelection turns this off.
@@ -132,7 +134,7 @@ private:
     wxRect  m_anchor_rect;
     bool    m_anchor_is_row { false };
     bool    m_result_kind_checkable { false }; // Check / Radio item activated
-    wxMenu *m_result_menu { nullptr };         // wxMenu owning the activated item
+    wxWeakRef<wxMenu> m_result_menu;         // wxMenu owning the activated item
     bool m_send_events { true };
     bool m_closed { false };
     bool m_finalized { false };

@@ -1,21 +1,65 @@
-# Closeout handoff: open UI defects (2026-10-03)
+# Native lifecycle continuation
 
-Objective: fix the tracked open UI defects of this repository and land them on `main`: the plate type dropdown that still cut the two longest plate names at the default sidebar width (clipping inventory CJ-036, issue #51 item 3), the kit dialog caption that ignored a title set after adoption (ROADMAP follow-up), and the stale status counts in the README, roadmap, parity register and handoff.
+## Objective and current state
 
-State: three commits on `main`, written on a Linux host with no MSVC toolchain.
+Repair Prepare filament-removal ownership and printer-selection callback lifetime.
+Work is isolated on `codex/bambu-native-lifecycle`, based on commit
+`0c967a55786c07ef639a2cbefbe922b619c157d3`.
 
-- `6994caf6f` Stack the plate settings label over its row-wide dropdown (`OptionsGroup::stack_full_width_label`, `OG_CustomCtrl` label band, `TabPrintPlate::build`; new `ui-md3/tests/plate-settings-stacked-rows.test.mjs`).
-- `ad910deb2` Let the kit caption follow a dialog title set after adoption (`MD3DialogCaption::SyncTitle`, idle follow for captions adopted without a literal; `FeedDirectionDialog` adopts without the `Confirm` literal; new `ui-md3/tests/dialog-caption-title-sync.test.mjs`).
-- The docs commit that carries this file: clipping inventory CJ-036 to `fixed-unverified`, feature articles in both languages, README counts, parity register header, ROADMAP lines, HANDOFF section.
+Implemented changes:
 
-Verification: `node --test ui-md3/tests/*.test.mjs` 427 of 432 on this host; the misses are the dim-sum online check (needs an authenticated `gh`) and the offline render (Chromium cannot open its DevTools port in this sandbox). Both new test files were seen failing on the previous source and go red again when one line of the fix is removed. Not compiled locally: the hosted build triggered by the push is the compile check. No capture exists yet for the stacked rows or the load dialog's title; CJ-036 stays `fixed-unverified` until a release is captured at 344 DIP in English, Cantonese and bilingual mode.
+- Blocking Material menus leave the popup callback stack and nested event loop
+  before command dispatch. Command menu/check state and temporary appearance
+  actions are snapshotted, and dispatch uses surviving tracked targets.
+- Dropdown selections snapshot identity, dismiss child/root surfaces, and reject
+  delivery after owner destruction or structural item replacement. Measurement,
+  bitmap and flag invalidation preserve valid selections.
+- The visible printer card opens its hidden item model explicitly, including
+  keyboard activation. Missing model variants and canceled preset changes stop
+  subsequent configuration and plate mutations.
+- Filament row menus resolve current configuration slots. Deletion confirms a
+  fixed target, rejects changed slot lists/flags during confirmation, protects
+  the last physical filament, and lets parent destruction own sibling teardown.
 
-Evidence: issue #51 (start comment 5972780505, finish comment to follow with the build run), `docs/features/gcode-preview/preview-overlays.md`, `docs/features/design-system/native-controls.md`, `docs/features/design-system/clipping-inventory.md`.
+## Verification
 
-Blockers: none in source. The hosted Windows build and a Windows capture host are needed for the compile verdict and the captures.
+The actual production dropdown dispatch, invalidation and combo-adapter bodies
+compiled with the existing MSVC toolchain against deterministic lifecycle doubles.
+Result: **16 assertions passed in 8 test cases**. Disabling the generation check
+produced the expected stale-row failure before restoration. Supplementary source
+contracts passed **7 tests**. `git diff --check` passed.
 
-Next safe steps: read the hosted build verdict for the push; if red, fix and push again. When a release exists, capture Plate Settings at the default sidebar width in the three language modes and the load dialog on a two-extruder printer, post them on issue #51, and move CJ-036 to `verified`.
+No full application compile, native wxWidgets interaction, screenshot evidence,
+installer verification, release or deployment has been completed for this change.
+The body-double tests establish callback behavior, not a platform popup verdict.
+A read-only independent review found and corrected overly broad generation
+invalidation. Remaining native backend behavior must be independently verified.
 
-## 廣東話摘要
+## Changed files
 
-目標：修好呢個倉庫記錄在案嘅介面問題，推上 `main`：預設側邊欄闊度下仍然切走最長兩個打印板名嘅打印板類型下拉選單（裁剪清單 CJ-036，issue #51 第 3 項）、換咗標題之後唔跟住改嘅套件對話框標題列，同埋 README、roadmap、parity register 同 handoff 入面過時嘅數字。`main` 上有三個 commit：`6994caf6f`（打印板設定行上下排）、`ad910deb2`（標題列跟住標題）同帶住呢個檔案嘅文件 commit。本機 node 測試 432 個通過 427 個，其餘要 `gh` 或者 Chrome sandbox。呢部機冇 MSVC，推送之後嘅託管建置先係編譯檢查；亦未有擷圖，CJ-036 要等 release 擷圖先可以轉做 verified。
+- `src/slic3r/GUI/Plater.cpp`
+- `src/slic3r/GUI/PresetComboBoxes.cpp`
+- `src/slic3r/GUI/Widgets/ComboBox.cpp` and `.hpp`
+- `src/slic3r/GUI/Widgets/DropDown.cpp` and `.hpp`
+- `src/slic3r/GUI/Widgets/MD3Menu.cpp` and `.hpp`
+- `tests/sidebar_filament_combos/CMakeLists.txt`
+- `tests/sidebar_filament_combos/dropdown_lifecycle_tests.cpp`
+- `ui-md3/tests/native-lifecycle.test.mjs`
+- `docs/features/prepare/native-lifecycle.md`
+- `CLOSEOUT_PROMPT.md`
+
+## Next safe steps
+
+The coordinating task preserves this branch remotely, integrates it only under
+its reviewed recovery plan, and runs the full native build against a fixed commit.
+Run `dropdown_lifecycle_tests`, `md3_menu_tests` and
+`sidebar_filament_combo_bounds_contract` through the configured native build.
+Reproduce P1S/H2C switching with clean/modified presets, save/discard/cancel,
+mouse/keyboard openings, rapid reselection and physical/mixed filament removal.
+Collect native focus/capture/owned-window evidence and a UI-thread stack for any
+remaining freeze. Preserve all unrelated work; do not infer a runtime root cause
+from source or deterministic doubles alone.
+
+The user requested immediate preservation and cleanup after the account showed
+8% remaining. Implementation stopped. This record is a continuation handoff,
+not a claim that the application repair, release or wider goal is complete.

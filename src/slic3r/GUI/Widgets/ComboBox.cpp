@@ -83,7 +83,13 @@ ComboBox::ComboBox(wxWindow *parent,
     if (auto scroll = GetScrollParent(this))
         scroll->Bind(wxEVT_MOVE, &ComboBox::onMove, this);
     drop.Bind(wxEVT_COMBOBOX, [this](wxCommandEvent &e) {
-        SetSelection(e.GetInt());
+        const int index = e.GetInt();
+        // A close notification may rebuild items. Reject a stale selection.
+        if (static_cast<unsigned long>(e.GetExtraLong()) != drop.item_revision ||
+            index < 0 || static_cast<size_t>(index) >= items.size() ||
+            items[index].text != e.GetString() || items[index].data != e.GetClientData())
+            return;
+        SetSelection(index);
         e.SetEventObject(this);
         e.SetId(GetId());
         GetEventHandler()->ProcessEvent(e);
@@ -307,14 +313,14 @@ int ComboBox::Append(const wxString &text, const wxBitmap &bitmap, const wxStrin
     item.style = style;
     items.push_back(item);
     SetClientDataType(wxClientData_Void);
-    drop.Invalidate();
+    drop.Invalidate(false, true);
     return items.size() - 1;
 }
 
 int ComboBox::SetItems(const std::vector<DropDown::Item>& the_items)
 {
     items = the_items;
-    drop.Invalidate();
+    drop.Invalidate(false, true);
     return items.size() - 1;
 }
 
@@ -322,14 +328,14 @@ void ComboBox::DoClear()
 {
     applyDropChevron();
     items.clear();
-    drop.Invalidate(true);
+    drop.Invalidate(true, true);
 }
 
 void ComboBox::DoDeleteOneItem(unsigned int pos)
 {
     if (pos >= items.size()) return;
     items.erase(items.begin() + pos);
-    drop.Invalidate(true);
+    drop.Invalidate(true, true);
 }
 
 unsigned int ComboBox::GetCount() const { return items.size(); }
@@ -348,7 +354,7 @@ void ComboBox::SetString(unsigned int n, wxString const &value)
 {
     if (n >= items.size()) return;
     items[n].text = value;
-    drop.Invalidate();
+    drop.Invalidate(false, true);
     if (n == drop.GetSelection()) SetLabel(value);
 }
 
@@ -384,7 +390,7 @@ int ComboBox::DoInsertItems(const wxArrayStringsAdapter &items,
         this->items.insert(this->items.begin() + pos, item);
         ++pos;
     }
-    drop.Invalidate(true);
+    drop.Invalidate(true, true);
     return pos - 1;
 }
 
@@ -392,17 +398,25 @@ void *ComboBox::DoGetItemClientData(unsigned int n) const { return n < items.siz
 
 void ComboBox::DoSetItemClientData(unsigned int n, void *data)
 {
-    if (n < items.size())
+    if (n < items.size() && items[n].data != data) {
         items[n].data = data;
+        drop.Invalidate(false, true);
+    }
 }
 
 void ComboBox::mouseDown(wxMouseEvent &event)
 {
-    if (!IsEnabled()) { return; } /*on mac, the event may triggered even disabled*/
+    OpenDropDown();
+}
 
-    SetFocus();
+void ComboBox::OpenDropDown(wxWindow *focus_owner)
+{
+    if (!IsEnabled()) return;
+    wxWindow *focus = focus_owner ? focus_owner : this;
+    if (focus->IsShown() && focus->IsEnabled())
+        focus->SetFocus();
     if (drop_down) {
-        drop.Hide();
+        drop.DismissAndNotify();
     } else if (drop.HasDismissLongTime()) {
         drop.autoPosition();
         drop_down = true;
