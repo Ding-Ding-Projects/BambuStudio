@@ -1,5 +1,20 @@
 # Roadmap
 
+## Responsive workflows and local history (issue 56, 4 October 2026)
+
+Preserved on separate branches; paused at the owner's request. See [the continuation record](CLOSEOUT_PROMPT.md). All feature checkboxes remain open because native acceptance evidence is incomplete.
+
+- [ ] Menu lifetimes and printer switching: preserve implementation, complete the named gaps and native acceptance checks.
+- [ ] Independent settings drafts: preserve implementation, complete the named gaps and native acceptance checks.
+- [ ] Prepare scroll ownership: preserve implementation, complete the named gaps and native acceptance checks.
+- [ ] Readable date formatting: preserve implementation, complete the named gaps and native acceptance checks.
+- [ ] Detached import and automatic simplification: preserve implementation, complete the named gaps and native acceptance checks.
+- [ ] Quiet workflow defaults: preserve implementation, complete the named gaps and native acceptance checks.
+- [ ] Camera continuity and digital view controls: preserve implementation, complete the named gaps and native acceptance checks.
+- [ ] Unified local history and printer incidents: preserve implementation, complete the named gaps and native acceptance checks.
+- [ ] Reconcile candidates, build the exact native application, verify all required visual/interaction tuples, and deliver the unsigned Squirrel release.
+- [ ] Integrate completed work into main and remove only archived, fully merged, remotely proved task-owned candidates.
+
 ## Official-source reapplication
 
 - [x] Prove the diagnostic candidate reached remote `main` at `acd4c0489fc2952e62b27315cd93502484fe6ca2` and the hook-copying repair reached remote `main` at `73d50e270fa10da2015f17240c652e7cf872cd4b`.

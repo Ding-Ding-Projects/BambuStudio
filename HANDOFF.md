@@ -1,3 +1,9 @@
+# Current handoff: 4 October 2026
+
+The responsive-workflow task is paused by owner request after preservation. Read [the current continuation record](CLOSEOUT_PROMPT.md) for all eight source and preservation tips, focused test counts, known gaps and build state. New feature code is not integrated or released. The older entries below are historical evidence, not the current status of this task.
+
+## Historical handoff record
+
 # Official-source reapplication handoff
 
 ## Current state

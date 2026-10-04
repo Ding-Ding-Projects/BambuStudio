@@ -18,6 +18,8 @@ configured on any other system. Cross-platform builds remain available upstream 
 
 ## Current development work
 
+The responsive-workflow and local-history task is preserved on eight separate branches and paused at the owner's request. Its feature code is not yet integrated or released. The [current continuation record](CLOSEOUT_PROMPT.md) lists exact source tips, focused checks and remaining native verification.
+
 The source branch for the next Windows release reconciles upstream Bambu Studio
 2.8.4.57, with the fixes of upstream 2.8.4.61 merged on 2026-09-29, with this fork's native UI. It adds remembered dual-nozzle grouping,
 quick swaps and a Slice and print setup action, LAN printer farm routing,
