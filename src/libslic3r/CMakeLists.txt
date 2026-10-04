@@ -362,6 +362,8 @@ set(lisbslic3r_sources
     PNGReadWrite.cpp
     QuadricEdgeCollapse.cpp
     QuadricEdgeCollapse.hpp
+    MeshSimplification.cpp
+    MeshSimplification.hpp
     Semver.cpp
     ShortEdgeCollapse.cpp
     ShortEdgeCollapse.hpp
