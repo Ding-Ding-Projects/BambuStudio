@@ -216,6 +216,9 @@ set(SLIC3R_GUI_SOURCES
     GUI/GCodeViewer.cpp
     GUI/ImageDPIFrame.cpp
     GUI/ImageDPIFrame.hpp
+    GUI/SettingsDraftUndo.cpp
+    GUI/SettingsDraftStore.cpp
+    GUI/SettingsDraftPanel.cpp
     GUI/Preferences.cpp
     GUI/Preferences.hpp
     GUI/AMSSetting.cpp

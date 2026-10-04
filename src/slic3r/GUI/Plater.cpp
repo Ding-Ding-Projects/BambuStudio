@@ -1,9 +1,11 @@
 #include "Plater.hpp"
+#include "SettingsDraftUndo.hpp"
 #include "Widgets/MD3ScrolledWindow.hpp"
 #include "Widgets/LinkLabel.hpp"
 #include "Widgets/ProgressBar.hpp"
 #include "Widgets/MD3Menu.hpp"
 #include "Widgets/TabStrip.hpp"
+#include "SettingsDraftPanel.hpp"
 #include "PerfTrace.hpp"
 #include <array>
 #include <boost/format/format_fwd.hpp>
@@ -814,6 +816,7 @@ struct Sidebar::priv
     wxPanel* m_panel_print_content;
     wxBoxSizer *sizer_params;
     TabStrip *m_prepare_tabs = nullptr;
+    SettingsDraftPanel *m_draft_panel = nullptr;
     std::string active_prepare_section = "ink";
 
     // Filament-switch status affordance between the dual-extruder columns.
@@ -4376,6 +4379,8 @@ Sidebar::Sidebar(Plater *parent)
     prepare_tabs_options.strip_name = _L("Prepare sections");
     prepare_tabs_options.default_edge = MD3::Tabs::DockEdge::Left;
     prepare_tabs_options.vertical_width_dip = PREPARE_SECTION_RAIL_WIDTH;
+    prepare_tabs_options.show_new_button = true;
+    prepare_tabs_options.close_mode = TabStrip::CloseMode::Close;
     p->m_prepare_tabs = new TabStrip(this, prepare_tabs_options);
     // Load before adding defaults: AddTab persists, so the opposite order
     // would overwrite the user's saved dock and tab arrangement.
@@ -4383,7 +4388,7 @@ Sidebar::Sidebar(Plater *parent)
     std::vector<std::string> stale_tabs;
     for (int i = 0; i < p->m_prepare_tabs->Count(); ++i) {
         const std::string &id = p->m_prepare_tabs->GetModel().at(i).id;
-        if (id != "ink" && id != "process" && id != "objects")
+        if (id != "ink" && id != "process" && id != "objects" && id.find("draft:") != 0)
             stale_tabs.push_back(id);
     }
     for (const std::string &id : stale_tabs)
@@ -4396,7 +4401,9 @@ Sidebar::Sidebar(Plater *parent)
             p->m_prepare_tabs->SetTitle(tab.first, tab.second);
     }
     p->m_prepare_tabs->Bind(EVT_TABSTRIP_ACTIVATE, [this](wxCommandEvent &e) {
-        apply_prepare_section(std::string(e.GetString().ToUTF8()));
+        const auto id = std::string(e.GetString().ToUTF8());
+        if (p->m_draft_panel && p->m_draft_panel->Activate(id)) return;
+        apply_prepare_section(id);
     });
     p->m_prepare_tabs->Bind(EVT_TABSTRIP_DOCK_CHANGED, [this](wxCommandEvent &) {
         place_prepare_strip();
@@ -4411,13 +4418,21 @@ Sidebar::Sidebar(Plater *parent)
     sidebar_border->SetLineColour(outline);
     auto *content_row = new wxBoxSizer(wxHORIZONTAL);
     content_row->Add(p->scrolled, 1, wxEXPAND);
+    p->m_draft_panel = new SettingsDraftPanel(this, p->m_prepare_tabs, [this](bool draft) {
+        p->scrolled->Show(!draft); p->m_draft_panel->Show(draft);
+        if (auto *plater = dynamic_cast<Plater *>(GetParent()))
+            plater->request_sidebar_width(draft ? FromDIP(ADVANCED_SIDEBAR_WIDTH) + section_strip_width() : 0);
+        Layout();
+    });
+    content_row->Add(p->m_draft_panel, 1, wxEXPAND);
     content_row->Add(sidebar_border, 0, wxEXPAND);
     m_prepare_layout = new wxBoxSizer(wxHORIZONTAL);
     m_prepare_layout->Add(content_row, 1, wxEXPAND);
     SetSizer(m_prepare_layout);
     place_prepare_strip();
     const std::string saved_section = p->m_prepare_tabs->ActiveId();
-    apply_prepare_section(saved_section.empty() ? "ink" : saved_section);
+    if (!p->m_draft_panel->Activate(saved_section))
+        apply_prepare_section(saved_section.empty() ? "ink" : saved_section);
 
     //wxGetApp().CallAfter([this]() {
     //    p->update_right_extruder_group_color();
@@ -8983,6 +8998,7 @@ public:
 
     void undo();
     void redo();
+    size_t m_settings_undo_generation = 0;
     void undo_redo_to(size_t time_to_load);
 
     // BBS: backup
@@ -22884,6 +22900,11 @@ void Plater::priv::take_snapshot(const std::string& snapshot_name, const UndoRed
     UndoRedo::SnapshotData snapshot_data;
     snapshot_data.snapshot_type      = snapshot_type;
     snapshot_data.printer_technology = this->printer_technology;
+    if (snapshot_type == UndoRedo::SnapshotType::ProjectSeparator)
+        ++m_settings_undo_generation;
+    if (m_undo_redo_stack_active == &m_undo_redo_stack_main && wxGetApp().preset_bundle)
+        snapshot_data.attachment = SettingsDraftUndoState::capture(*wxGetApp().preset_bundle,
+            std::string(get_project_filename().ToUTF8().data()), m_settings_undo_generation);
     if (this->view3D->is_layers_editing_enabled())
         snapshot_data.flags |= UndoRedo::SnapshotData::VARIABLE_LAYER_EDITING_ACTIVE;
     if (this->sidebar->obj_list()->is_selected(itSettings)) {
@@ -23028,6 +23049,12 @@ bool Plater::priv::up_to_date(bool saved, bool backup)
 
 void Plater::priv::undo_redo_to(std::vector<UndoRedo::Snapshot>::const_iterator it_snapshot)
 {
+    const auto settings_state = std::dynamic_pointer_cast<const SettingsDraftUndoState>(it_snapshot->snapshot_data.attachment);
+    const std::string settings_project_filename(get_project_filename().ToUTF8().data());
+    // Reject a stale target before changing either the model or the preset state.
+    if (settings_state && (!wxGetApp().preset_bundle ||
+        !settings_state->matches(*wxGetApp().preset_bundle, settings_project_filename, m_settings_undo_generation)))
+        return;
     // Make sure that no updating function calls take_snapshot until we are done.
     SuppressSnapshots snapshot_supressor(q);
 
@@ -23062,6 +23089,9 @@ void Plater::priv::undo_redo_to(std::vector<UndoRedo::Snapshot>::const_iterator 
     unsigned int new_flags = it_snapshot->snapshot_data.flags;
     UndoRedo::SnapshotData top_snapshot_data;
     top_snapshot_data.printer_technology = this->printer_technology;
+    if (m_undo_redo_stack_active == &m_undo_redo_stack_main && wxGetApp().preset_bundle)
+        top_snapshot_data.attachment = SettingsDraftUndoState::capture(*wxGetApp().preset_bundle,
+            settings_project_filename, m_settings_undo_generation);
     if (this->view3D->is_layers_editing_enabled())
         top_snapshot_data.flags |= UndoRedo::SnapshotData::VARIABLE_LAYER_EDITING_ACTIVE;
     if (this->sidebar->obj_list()->is_selected(itSettings)) {
@@ -23093,6 +23123,15 @@ void Plater::priv::undo_redo_to(std::vector<UndoRedo::Snapshot>::const_iterator 
         this->undo_redo_stack().undo(model, get_current_canvas3D()->get_canvas_type() == GLCanvas3D::CanvasAssembleView ? assemble_view->get_canvas3d()->get_selection() : this->view3D->get_canvas3d()->get_selection(), get_current_canvas3D()->get_canvas_type() == GLCanvas3D::CanvasAssembleView ? assemble_view->get_canvas3d()->get_gizmos_manager() : this->view3D->get_canvas3d()->get_gizmos_manager(), this->partplate_list, top_snapshot_data, it_snapshot->timestamp) :
         this->undo_redo_stack().redo(model, get_current_canvas3D()->get_canvas_type() == GLCanvas3D::CanvasAssembleView ? assemble_view->get_canvas3d()->get_gizmos_manager() : this->view3D->get_canvas3d()->get_gizmos_manager(), this->partplate_list, it_snapshot->timestamp);
     if (history_state_changed) {
+        if (settings_state && settings_state->restore(*wxGetApp().preset_bundle,
+                settings_project_filename, m_settings_undo_generation)) {
+            for (const auto type : { Preset::TYPE_PRINT, Preset::TYPE_FILAMENT, Preset::TYPE_PRINTER })
+                if (Tab* tab = wxGetApp().get_tab(type)) {
+                    tab->update_dirty();
+                    tab->reload_config();
+                    tab->update();
+                }
+        }
         if (printer_technology_changed) {
             // Switch to the other printer technology. Switch to the last printer active for that particular technology.
             AppConfig *app_config = wxGetApp().app_config;

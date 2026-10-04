@@ -32,6 +32,7 @@
 #include "Widgets/SearchField.hpp"
 #include "Widgets/Slider.hpp"
 #include "Widgets/TabStrip.hpp"
+#include "SettingsDraftPanel.hpp"
 #include "Widgets/MD3ColorPicker.hpp"
 #include "Widgets/MD3DialogChrome.hpp"
 #include "Widgets/StaticBox.hpp"
@@ -1613,8 +1614,8 @@ void PreferencesDialog::create()
     strip_opts.surface_name    = _L("Preferences");
     strip_opts.strip_name      = _L("Settings sections");
     strip_opts.default_edge    = MD3::Tabs::DockEdge::Left;
-    strip_opts.close_mode      = TabStrip::CloseMode::Hide; // "close" hides a section; restore from the overflow menu
-    strip_opts.show_new_button = false;
+    strip_opts.close_mode      = TabStrip::CloseMode::Close; // "close" hides a section; restore from the overflow menu
+    strip_opts.show_new_button = true;
     m_tabbar = new TabStrip(this, strip_opts);
     m_book   = new wxSimplebook(this, wxID_ANY);
 
@@ -1653,6 +1654,13 @@ void PreferencesDialog::create()
     add_tab("developer", _L("Developer Tools"), create_developer_tab());
 #endif
 
+    auto *draft_panel = new SettingsDraftPanel(m_book, m_tabbar, [this](bool draft) {
+        if (draft) m_book->SetSelection(m_book->GetPageCount() - 1);
+        else if (m_book->GetSelection() == int(m_book->GetPageCount() - 1)) m_book->SetSelection(0);
+    });
+    m_book->AddPage(draft_panel, _L("Settings draft"));
+    draft_panel->Show();
+
     // Apply the saved layout, then show whichever section the strip made
     // active (the saved one, or the first displayed section).
     m_tabbar->LoadLayout();
@@ -1662,7 +1670,8 @@ void PreferencesDialog::create()
         if (page < 0 && !m_page_ids.empty())
             m_tabbar->Activate(m_page_ids[0], /*emit*/ false);
     }
-    m_tabbar->Bind(EVT_TABSTRIP_ACTIVATE, [this](wxCommandEvent &e) {
+    m_tabbar->Bind(EVT_TABSTRIP_ACTIVATE, [this, draft_panel](wxCommandEvent &e) {
+        if (draft_panel->Activate(std::string(e.GetString().ToUTF8()))) return;
         const int page = page_for_id(std::string(e.GetString().ToUTF8()));
         if (page >= 0 && page != m_book->GetSelection())
             m_book->SetSelection(page);
