@@ -460,8 +460,12 @@ void AppConfig::set_defaults()
     }
 
     if (get("liveview", "auto_stop_liveview").empty()) {
-        set("liveview", "auto_stop_liveview", true);
+        set("liveview", "auto_stop_liveview", false);
     }
+
+    // New and migrated profiles monitor continuously unless explicitly disabled.
+    for (const char *key : {"autoplay", "keep_liveview", "auto_retry"})
+        if (get("liveview", key).empty()) set("liveview", key, true);
 
     if (get("backup_interval").empty()) {
         set("backup_interval", "10");

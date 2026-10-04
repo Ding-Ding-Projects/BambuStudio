@@ -1182,7 +1182,7 @@ wxBoxSizer *PreferencesDialog::create_item_checkbox(wxString title, wxWindow *pa
     if (param == "privacyuse") {
         checkbox->SetValue((app_config->get("firstguide", param) == "true") ? true : false);
     } else if (param == "auto_stop_liveview") {
-        checkbox->SetValue((app_config->get("liveview", param) == "true") ? false : true);
+        checkbox->SetValue(app_config->get("liveview", "keep_liveview") != "false");
     } else {
         checkbox->SetValue((app_config->get(param) == "true") ? true : false);
     }
@@ -1227,7 +1227,8 @@ wxBoxSizer *PreferencesDialog::create_item_checkbox(wxString title, wxWindow *pa
             app_config->save();
         }
         else if (param == "auto_stop_liveview") {
-            app_config->set("liveview", param, !checkbox->GetValue());
+            app_config->set("liveview", "keep_liveview", checkbox->GetValue());
+            app_config->save();
         }
         else {
             app_config->set_bool(param, checkbox->GetValue());
@@ -2907,8 +2908,8 @@ wxWindow *PreferencesDialog::create_user_tab()
                                                                 "use_12h_time_format", time_labels, time_values);
 
     auto item_auto_stop_liveview =
-        create_item_checkbox(_L("Keep liveview when printing."), scrolled,
-                             _L("By default, Liveview will pause after 15 minutes of inactivity on the computer. Check this box to disable this feature during printing."), 50,
+        create_item_checkbox(_L("Keep liveview active"), scrolled,
+                             _L("Keep the camera streaming while idle, on other tabs, or minimized. This does not enable recording."), 50,
                              "auto_stop_liveview");
 
     auto item_auto_transfer = create_item_checkbox(_L("Automatically transfer modified value when switching process and filament presets"), scrolled,
