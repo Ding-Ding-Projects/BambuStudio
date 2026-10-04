@@ -1,4 +1,17 @@
 #include "ProjectHistoryDialog.hpp"
+#include "PreferencesHistory.hpp"
+#include "PrinterHistory.hpp"
+#include "LocalConfigHistory.hpp"
+#include "HistorySearchStore.hpp"
+#include "Widgets/TabStrip.hpp"
+#include "libslic3r/Utils.hpp"
+#include <nlohmann/json.hpp>
+#include <fstream>
+#include <wx/choice.h>
+#include <wx/textctrl.h>
+#include <wx/wfstream.h>
+#include <wx/zipstrm.h>
+#include <wx/wrapsizer.h>
 #include "Widgets/MD3DataView.hpp"
 
 #include "Export/ExportDatasets.hpp"
@@ -133,7 +146,7 @@ void set_wrapped_tooltip(Label *label, const wxString &text)
 } // namespace
 
 ProjectHistoryDialog::ProjectHistoryDialog(wxWindow *parent, Plater *plater)
-    : DPIDialog(parent, wxID_ANY, _L("Version history"), wxDefaultPosition, wxDefaultSize,
+    : DPIDialog(parent, wxID_ANY, _L("Local history"), wxDefaultPosition, wxDefaultSize,
                 // MD3 caption strip instead of the native title bar.
                 wxRESIZE_BORDER | wxBORDER_NONE)
     , m_plater(plater)
@@ -176,14 +189,14 @@ std::filesystem::path ProjectHistoryDialog::release_restored_snapshot()
 void ProjectHistoryDialog::create_ui()
 {
     auto *root = new wxBoxSizer(wxVERTICAL);
-    root->Add(new MD3DialogCaption(this, _L("Version history")), 0, wxEXPAND);
+    root->Add(new MD3DialogCaption(this, _L("Local history")), 0, wxEXPAND);
 
-    m_title_label = new Label(this, Label::Head_24, _L("Version history"));
+    m_title_label = new Label(this, Label::Head_24, _L("Local history"));
     root->Add(m_title_label, 0, wxLEFT | wxRIGHT | wxTOP, FromDIP(24));
 
     // TRN: Subtitle in the project Version history dialog.
     m_subtitle_label = new Label(this, Label::Body_14,
-        _L("Browse complete project snapshots saved automatically in a private local Git repository."));
+        _L("Browse project, settings, draft and printer history saved on this device. No history is uploaded."));
     root->Add(m_subtitle_label, 0, wxLEFT | wxRIGHT | wxTOP, FromDIP(24));
 
     m_info_card = new StaticBox(this);
@@ -222,6 +235,15 @@ void ProjectHistoryDialog::create_ui()
     root->Add(m_failure_card, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(24));
     m_failure_card->Hide();
 
+    TabStrip::Options options;
+    options.surface_key = "local-history"; options.surface_name = _L("Local history"); options.strip_name = _L("History views");
+    options.default_edge = MD3::Tabs::DockEdge::Top; options.allow_close = false;
+    auto *tabs = new TabStrip(this, options);
+    tabs->AddTab("timeline", _L("Timeline")); tabs->AddTab("table", _L("Table")); tabs->AddTab("graph", _L("Git graph"));
+    tabs->AddTab("compare", _L("Compare")); tabs->AddTab("searches", _L("Past searches"));
+    tabs->LoadLayout(); tabs->Activate("timeline", false);
+    tabs->Bind(EVT_TABSTRIP_ACTIVATE, [this](wxCommandEvent &event) { set_view(event.GetString().ToStdString()); });
+    root->Add(tabs, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(24));
     m_list_card = new StaticBox(this);
     auto *list_sizer = new wxBoxSizer(wxVERTICAL);
     // TRN: Placeholder of the search field filtering the version list.
@@ -237,6 +259,26 @@ void ProjectHistoryDialog::create_ui()
         update_selection();
     });
     list_sizer->Add(m_search_field, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(8));
+    auto *filters = new wxFlexGridSizer(2, 4, FromDIP(6), FromDIP(8));
+    filters->AddGrowableCol(1); filters->AddGrowableCol(3);
+    m_category_filter = new wxChoice(m_list_card, wxID_ANY);
+    for (const auto &name : {_L("All categories"), _L("Project"), _L("Preferences"), _L("Preset"), _L("Draft"), _L("Printer")}) m_category_filter->Append(name);
+    m_category_filter->SetSelection(0);
+    m_status_filter = new wxChoice(m_list_card, wxID_ANY);
+    for (const auto &name : {_L("All statuses"), _L("Active"), _L("Unknown"), _L("Resolved")}) m_status_filter->Append(name);
+    m_status_filter->SetSelection(0);
+    m_device_filter = new wxTextCtrl(m_list_card, wxID_ANY); m_device_filter->SetHint(_L("Device identifier"));
+    m_store_filter = new wxChoice(m_list_card, wxID_ANY); m_store_filter->Append(_L("Current project")); m_store_filter->SetSelection(0);
+    m_from_filter = new wxTextCtrl(m_list_card, wxID_ANY); m_from_filter->SetHint(_L("From YYYY-MM-DD"));
+    m_to_filter = new wxTextCtrl(m_list_card, wxID_ANY); m_to_filter->SetHint(_L("Through YYYY-MM-DD"));
+    for (auto *control : std::vector<wxWindow*>{m_category_filter, m_status_filter, m_device_filter, m_store_filter, m_from_filter, m_to_filter}) {
+        filters->Add(control, 1, wxEXPAND);
+        control->Bind(wxEVT_TEXT, [this](wxCommandEvent &) { populate_versions(); update_selection(); });
+        control->Bind(wxEVT_CHOICE, [this](wxCommandEvent &) { populate_versions(); update_selection(); });
+    }
+    m_submit_button = new Button(m_list_card, _L("Search")); m_submit_button->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { submit_search(); });
+    filters->Add(m_submit_button, 0, wxEXPAND); list_sizer->Add(filters, 0, wxEXPAND | wxALL, FromDIP(8));
+    m_search_field->GetTextCtrl()->Bind(wxEVT_KEY_DOWN, [this](wxKeyEvent &event) { if (event.GetKeyCode() == WXK_RETURN || event.GetKeyCode() == WXK_NUMPAD_ENTER) submit_search(); else event.Skip(); });
     m_version_list = new MD3DataViewListCtrl(m_list_card, wxID_ANY, wxDefaultPosition, wxDefaultSize,
                                             wxDV_SINGLE | wxBORDER_NONE);
     m_version_list->AppendTextColumn(_L("Commit"), wxDATAVIEW_CELL_INERT, FromDIP(104), wxALIGN_LEFT,
@@ -253,6 +295,17 @@ void ProjectHistoryDialog::create_ui()
     md3_style_data_view(m_version_list);
     list_sizer->Add(m_version_list, 1, wxEXPAND | wxALL, FromDIP(8));
 
+    m_detail = new wxTextCtrl(m_list_card, wxID_ANY, wxEmptyString, wxDefaultPosition, FromDIP(wxSize(400, 120)), wxTE_MULTILINE | wxTE_READONLY);
+    m_detail->Hide(); list_sizer->Add(m_detail, 1, wxEXPAND | wxALL, FromDIP(8));
+    auto *history_actions = new wxWrapSizer(wxHORIZONTAL);
+    m_compare_button = new Button(m_list_card, _L("Compare selected")); m_pin_button = new Button(m_list_card, _L("Pin / unpin search"));
+    m_rerun_button = new Button(m_list_card, _L("Run selected search")); m_delete_button = new Button(m_list_card, _L("Delete search")); m_clear_button = new Button(m_list_card, _L("Clear unpinned searches"));
+    m_compare_button->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { compare_selection(); }); m_pin_button->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { pin_selection(); });
+    m_rerun_button->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { rerun_search(); }); m_delete_button->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { delete_search(); });
+    m_clear_button->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { clear_searches(); });
+    for (Button *button : {m_compare_button, m_pin_button, m_rerun_button, m_delete_button, m_clear_button}) history_actions->Add(button, 0, wxALL, FromDIP(4));
+    list_sizer->Add(history_actions, 0, wxEXPAND | wxALL, FromDIP(4));
+    for (Button *button : {m_pin_button, m_rerun_button, m_delete_button, m_clear_button}) button->Hide();
     // This line is where every failure lands, and a libgit2 error carries its
     // message plus an absolute repository path, far more than one line holds at
     // the dialog's minimum width. Wrap it instead of clipping the actual cause
@@ -378,33 +431,27 @@ void ProjectHistoryDialog::apply_theme()
 
 void ProjectHistoryDialog::refresh_versions()
 {
-    if (m_pending != PendingOperation::None)
-        return;
-    if (m_manager == nullptr) {
-        show_error(_L("Version history is unavailable because its local repository could not be initialized."));
-        return;
-    }
-    if (m_project_identity.empty()) {
-        show_error(_L("Version history is unavailable for this project."));
-        return;
-    }
-
-    m_version_list->DeleteAllItems();
-    m_versions.clear();
-    m_list_truncated = false;
-    m_load_all_button->Hide();
-    set_busy(PendingOperation::List, _L("Loading versions..."));
-    try {
-        m_list_future = m_manager->list_versions(
-            m_project_identity, m_show_all ? 0 : HISTORY_INITIAL_LIMIT + 1);
-        m_poll_timer.Start(HISTORY_POLL_INTERVAL_MS);
-    } catch (const std::exception &exception) {
-        m_pending = PendingOperation::None;
-        show_error(wxString::Format(_L("Could not load version history: %s"), wxString::FromUTF8(exception.what())));
-    } catch (...) {
-        m_pending = PendingOperation::None;
-        show_error(_L("Could not load version history."));
-    }
+    if (m_pending != PendingOperation::None) return;
+    const int row = m_version_list->GetSelectedRow();
+    if (row >= 0 && static_cast<std::size_t>(row) < m_filtered_rows.size()) m_selected_id = m_versions[m_filtered_rows[row]].commit_id;
+    set_busy(PendingOperation::List, _L("Loading local history..."));
+    const auto identity = m_project_identity; auto *manager = m_manager;
+    const auto config_sources = LocalConfigHistory::sources(); const auto limit = m_show_all ? 0 : HISTORY_INITIAL_LIMIT;
+    auto *prefs = PreferencesHistory::manager(); const auto prefs_identity = PreferencesHistory::identity();
+    auto *printer = PrinterHistory::instance().manager(); const auto printer_identity = PrinterHistory::instance().identity();
+    m_aggregate_future = std::async(std::launch::async, [identity, manager, config_sources, limit, prefs, prefs_identity, printer, printer_identity]() {
+        Aggregate result;
+        auto append = [&result, limit](ProjectHistoryManager *store, const std::filesystem::path &key, const std::string &category, const std::string &name) {
+            if (!store || key.empty()) return;
+            auto listed = store->list_versions(key, limit).get();
+            if (!listed.ok()) { if (listed.error.code != ProjectHistoryErrorCode::NotFound && result.project.error.ok()) result.project.error = listed.error; return; }
+            for (auto &version : listed.versions) { result.versions.push_back(std::move(version)); result.origins.push_back({category, name, "", "", "", key, store}); }
+        };
+        append(manager, identity, "project", "Current project"); append(prefs, prefs_identity, "preferences", "Preferences");
+        append(printer, printer_identity, "printer_transition", "Printer transitions");
+        for (const auto &source : config_sources) append(LocalConfigHistory::manager(), source.identity, source.category, source.name);
+        return result;
+    }); m_poll_timer.Start(HISTORY_POLL_INTERVAL_MS);
 }
 
 void ProjectHistoryDialog::refresh_retained_failures()
@@ -466,6 +513,8 @@ void ProjectHistoryDialog::begin_restore()
         return;
     const std::size_t selected_version = m_filtered_rows[selected_row];
 
+    const Origin origin=m_origins[selected_version];
+    if(origin.category!="project"&&origin.category!="preferences"){set_status(_L("Printer records are evidence. Draft and preset versions are restored through their guarded editors."));return;}
     MessageDialog confirmation(
         this,
         _L("Restore the selected version in the editor?\n\nThe project file will not be overwritten. The restored state will be recorded as a new version."),
@@ -482,7 +531,8 @@ void ProjectHistoryDialog::begin_restore()
     set_busy(PendingOperation::Restore, _L("Preparing selected version..."));
     m_close_button->Enable(false);
     try {
-        m_restore_future = m_manager->restore_version(m_project_identity, m_versions[selected_version].commit_id, destination);
+        m_restore_future = origin.manager->restore_version(origin.identity, m_versions[selected_version].commit_id, destination);
+        m_restore_category = origin.category;
         m_poll_timer.Start(HISTORY_POLL_INTERVAL_MS);
     } catch (const std::exception &exception) {
         m_pending = PendingOperation::None;
@@ -500,35 +550,32 @@ void ProjectHistoryDialog::begin_restore()
 void ProjectHistoryDialog::poll_operation(wxTimerEvent &)
 {
     using namespace std::chrono_literals;
-
-    if (m_pending == PendingOperation::List && m_list_future.valid() && m_list_future.wait_for(0ms) == std::future_status::ready) {
-        m_poll_timer.Stop();
-        try {
-            finish_list(m_list_future.get());
-        } catch (const std::exception &exception) {
-            m_pending = PendingOperation::None;
-            show_error(wxString::Format(_L("Could not load version history: %s"), wxString::FromUTF8(exception.what())));
-        } catch (...) {
-            m_pending = PendingOperation::None;
-            show_error(_L("Could not load version history."));
-        }
-    } else if (m_pending == PendingOperation::Restore && m_restore_future.valid() &&
-               m_restore_future.wait_for(0ms) == std::future_status::ready) {
-        m_poll_timer.Stop();
-        try {
-            finish_restore(m_restore_future.get());
-        } catch (const std::exception &exception) {
-            m_pending = PendingOperation::None;
-            m_close_button->Enable(true);
-            cleanup_restore_temp();
-            show_error(wxString::Format(_L("Could not restore the selected version: %s"), wxString::FromUTF8(exception.what())));
-        } catch (...) {
-            m_pending = PendingOperation::None;
-            m_close_button->Enable(true);
-            cleanup_restore_temp();
-            show_error(_L("Could not restore the selected version."));
-        }
+    if (m_compare_future.valid() && m_compare_future.wait_for(0ms) == std::future_status::ready) {
+        try { m_detail->SetValue(m_compare_future.get()); } catch (...) { m_detail->SetValue(_L("Could not compare these versions.")); }
+        m_compare_button->Enable(true); Layout();
     }
+    if (m_pending == PendingOperation::List && m_aggregate_future.valid() && m_aggregate_future.wait_for(0ms) == std::future_status::ready) {
+        try {
+            auto result = m_aggregate_future.get(); m_origins = std::move(result.origins); result.project.versions = std::move(result.versions);
+            for (const auto &incident : PrinterHistory::instance().entries()) {
+                ProjectHistoryVersion version; version.commit_id = "incident-" + std::to_string(incident.id);
+                version.message = incident.code + ": " + incident.description;
+                version.committed_at = std::chrono::system_clock::time_point(std::chrono::milliseconds(incident.first_seen_ms));
+                result.project.versions.push_back(version);
+                std::string detail = "Code: " + incident.code + "\nSeverity: " + std::to_string(incident.severity) + "\nFirst seen: " + wxDateTime(static_cast<time_t>(incident.first_seen_ms / 1000)).FormatISOCombined().ToStdString() + "\nLast seen: " + wxDateTime(static_cast<time_t>(incident.last_seen_ms / 1000)).FormatISOCombined().ToStdString() + "\nState: " + incident.state;
+                if (incident.resolved_ms) detail += "\nResolved: " + wxDateTime(static_cast<time_t>(incident.resolved_ms / 1000)).FormatISOCombined().ToStdString();
+                m_origins.push_back({"printer", incident.category, incident.device_id, incident.state, detail, {}, nullptr});
+            }
+            std::vector<std::size_t> order(result.project.versions.size()); for (std::size_t i=0;i<order.size();++i) order[i]=i;
+            std::stable_sort(order.begin(),order.end(),[&result](auto a,auto b){return result.project.versions[a].committed_at > result.project.versions[b].committed_at;});
+            auto versions=std::move(result.project.versions);auto origins=std::move(m_origins);
+            for(auto index:order){result.project.versions.push_back(std::move(versions[index]));m_origins.push_back(std::move(origins[index]));}
+            finish_list(std::move(result.project));
+        } catch(const std::exception &error){m_pending=PendingOperation::None;show_error(wxString::FromUTF8(error.what()));}
+    } else if (m_pending == PendingOperation::Restore && m_restore_future.valid() && m_restore_future.wait_for(0ms) == std::future_status::ready) {
+        try { finish_restore(m_restore_future.get()); } catch (...) { m_pending=PendingOperation::None;cleanup_restore_temp();show_error(_L("Could not restore the selected version.")); }
+    }
+    if(m_pending==PendingOperation::None && !m_compare_future.valid())m_poll_timer.Stop();
 }
 
 void ProjectHistoryDialog::finish_list(ProjectHistoryListResult result)
@@ -538,7 +585,7 @@ void ProjectHistoryDialog::finish_list(ProjectHistoryListResult result)
     m_close_button->Enable(true);
     refresh_retained_failures();
 
-    if (!result.ok()) {
+    if (!result.ok() && result.versions.empty()) {
         if (result.error.code == ProjectHistoryErrorCode::NotFound) {
             show_empty_state();
             return;
@@ -548,9 +595,8 @@ void ProjectHistoryDialog::finish_list(ProjectHistoryListResult result)
     }
 
     m_versions = std::move(result.versions);
-    m_list_truncated = !m_show_all && m_versions.size() > HISTORY_INITIAL_LIMIT;
-    if (m_list_truncated)
-        m_versions.resize(HISTORY_INITIAL_LIMIT);
+    m_list_truncated = !m_show_all && m_versions.size() >= HISTORY_INITIAL_LIMIT;
+
     m_load_all_button->Show(m_list_truncated);
     m_load_all_button->Enable(m_list_truncated);
     if (m_versions.empty()) {
@@ -558,9 +604,13 @@ void ProjectHistoryDialog::finish_list(ProjectHistoryListResult result)
         return;
     }
 
-    populate_versions();
-    update_history_status();
-    m_restore_button->Enable(false);
+    const wxString selected_store=m_store_filter->GetStringSelection(); m_store_filter->Clear();
+    std::vector<std::string> stores;
+    for(const auto &origin:m_origins)if(origin.manager && std::find(stores.begin(),stores.end(),origin.name)==stores.end()){stores.push_back(origin.name);m_store_filter->Append(wxString::FromUTF8(origin.name));}
+    if(!stores.empty()){m_store_filter->SetSelection(0);const int index=m_store_filter->FindString(selected_store);if(index!=wxNOT_FOUND)m_store_filter->SetSelection(index);}
+    populate_versions();update_history_status();update_selection();
+    if(!result.ok())show_error(wxString::FromUTF8(result.error.message));
+    const auto error=PrinterHistory::instance().last_error();if(!error.empty())show_error(wxString::FromUTF8(error));
     Layout();
 }
 
@@ -576,39 +626,42 @@ void ProjectHistoryDialog::finish_restore(ProjectHistoryRestoreResult result)
         return;
     }
 
+    if(m_restore_category=="preferences"){std::string error;if(!PreferencesHistory::apply_snapshot(result.restored_path,error)){cleanup_restore_temp();show_error(wxString::FromUTF8(error));return;}cleanup_restore_temp();refresh_versions();return;}
     m_restored_snapshot = std::move(result.restored_path);
     EndModal(wxID_APPLY);
 }
 
 void ProjectHistoryDialog::populate_versions()
 {
-    m_version_list->DeleteAllItems();
-    m_filtered_rows.clear();
-    const wxString query = m_search_field != nullptr ? m_search_field->GetValue() : wxString{};
-    const bool regex      = m_search_field != nullptr && m_search_field->IsRegexEnabled();
-    const bool case_sense = m_search_field != nullptr && m_search_field->IsCaseSensitive();
-    const bool whole_word = m_search_field != nullptr && m_search_field->IsWholeWord();
-    const bool multiline  = m_search_field != nullptr && m_search_field->IsMultiline();
-    SearchField::MatchPass match_pass(query, regex, case_sense, whole_word, multiline);
-    for (std::size_t i = 0; i < m_versions.size(); ++i) {
-        const ProjectHistoryVersion &version = m_versions[i];
-        const std::string short_id = version.commit_id.substr(0, std::min<std::size_t>(12, version.commit_id.size()));
-        const wxString commit    = wxString::FromUTF8(short_id);
-        const wxString message   = display_message(version.message);
-        const wxString timestamp = format_timestamp(version.committed_at);
-        if (!query.IsEmpty()) {
-            const wxString haystack = commit + " " + message + " " + timestamp;
-            if (!match_pass.matches(haystack))
-                continue;
-        }
-        wxVector<wxVariant> row;
-        row.push_back(wxVariant(commit));
-        row.push_back(wxVariant(message));
-        row.push_back(wxVariant(timestamp));
-        row.push_back(wxVariant(format_size(version.snapshot_size)));
-        m_version_list->AppendItem(row);
-        m_filtered_rows.push_back(i);
+    if(m_view=="searches"){populate_searches();return;}
+    const int selected=m_version_list->GetSelectedRow();
+    if(selected>=0 && static_cast<std::size_t>(selected)<m_filtered_rows.size())m_selected_id=m_versions[m_filtered_rows[selected]].commit_id;
+    m_version_list->DeleteAllItems();m_filtered_rows.clear();
+    SearchField::MatchPass matcher(m_search_field->GetValue(),m_search_field->IsRegexEnabled(),m_search_field->IsCaseSensitive(),m_search_field->IsWholeWord(),m_search_field->IsMultiline());
+    static const char *categories[]={"","project","preferences","preset","draft","printer"};static const char *states[]={"","active","unknown","resolved"};
+    const int category=std::max(0,m_category_filter->GetSelection()),status=std::max(0,m_status_filter->GetSelection());
+    const wxString from_text=m_from_filter->GetValue(),to_text=m_to_filter->GetValue();wxDateTime from,to;
+    if((!from_text.empty()&&!from.ParseISODate(from_text))||(!to_text.empty()&&!to.ParseISODate(to_text))||(from.IsValid()&&to.IsValid()&&from>to)){set_status(_L("Enter valid dates in YYYY-MM-DD order, with From before Through."));return;}
+    wxString graph;
+    for(std::size_t i=0;i<m_versions.size()&&i<m_origins.size();++i){
+        const auto &version=m_versions[i];const auto &origin=m_origins[i];
+        if(category && origin.category!=categories[category] && !(category==5&&origin.category=="printer_transition"))continue;
+        if(status && origin.status!=states[status])continue;
+        if(!m_device_filter->GetValue().empty()&&wxString::FromUTF8(origin.device).Find(m_device_filter->GetValue())==wxNOT_FOUND)continue;
+        const wxDateTime when(std::chrono::system_clock::to_time_t(version.committed_at));
+        if(from.IsValid()&&when.GetDateOnly()<from.GetDateOnly())continue;if(to.IsValid()&&when.GetDateOnly()>to.GetDateOnly())continue;
+        if(m_view=="graph"&&(!origin.manager||wxString::FromUTF8(origin.name)!=m_store_filter->GetStringSelection()))continue;
+        const wxString id=wxString::FromUTF8(version.commit_id.substr(0,12));const wxString timestamp=format_timestamp(version.committed_at);
+        const wxString message=wxString::FromUTF8(origin.category+" / "+origin.name+" / "+origin.status)+" : "+display_message(version.message);
+        if(!matcher.matches(id+" "+message+" "+timestamp+" "+wxString::FromUTF8(origin.device)))continue;
+        wxVector<wxVariant> row;row.push_back(wxVariant(m_view=="timeline"?timestamp:id));row.push_back(wxVariant(message));row.push_back(wxVariant(m_view=="timeline"?id:timestamp));
+        row.push_back(wxVariant(origin.category=="printer"?wxString::FromUTF8(origin.status):format_size(version.snapshot_size)));
+        m_version_list->AppendItem(row);m_filtered_rows.push_back(i);
+        if(version.commit_id==m_selected_id)m_version_list->SelectRow(static_cast<unsigned>(m_filtered_rows.size()-1));
+        if(m_view=="graph"){graph+="o "+wxString::FromUTF8(version.commit_id)+"  "+display_message(version.message)+"\n";for(const auto &parent:version.parent_ids)graph+="|  -> "+wxString::FromUTF8(parent)+"\n";if(version.parent_ids.empty())graph+=_L("Root commit")+"\n";}
     }
+    if(m_view=="graph")m_detail->SetValue(graph.empty()?_L("No versions in the selected store."):graph);
+    update_history_status();
 }
 
 void ProjectHistoryDialog::update_history_status()
@@ -643,7 +696,7 @@ void ProjectHistoryDialog::update_responsive_layout()
     // wxStaticText::Wrap() mutates its rendered label. Restore the localized
     // source before every wrap so repeated resizes do not accumulate breaks.
     m_subtitle_label->SetLabel(
-        _L("Browse complete project snapshots saved automatically in a private local Git repository."));
+        _L("Browse project, settings, draft and printer history saved on this device. No history is uploaded."));
     m_subtitle_label->Wrap(content_width);
     m_safety_label->SetLabel(
         _L("Restoring adds a new version. It never overwrites the project file or rewinds Git history."));
@@ -679,7 +732,7 @@ void ProjectHistoryDialog::update_window_constraints(bool initialize_size)
                          std::min(desired_min.GetHeight(), available.GetHeight()));
     SetMinSize(minimum);
 
-    const wxSize target = initialize_size ? FromDIP(wxSize(820, 560)) : GetSize();
+    const wxSize target = initialize_size ? FromDIP(wxSize(980, 760)) : GetSize();
     const wxSize bounded(std::max(minimum.GetWidth(), std::min(target.GetWidth(), available.GetWidth())),
                          std::max(minimum.GetHeight(), std::min(target.GetHeight(), available.GetHeight())));
     if (initialize_size || bounded != GetSize())
@@ -757,18 +810,11 @@ void ProjectHistoryDialog::show_error(const wxString &message)
 
 void ProjectHistoryDialog::update_selection()
 {
-    const int selected_row = m_version_list->GetSelectedRow();
-    const bool has_selection = selected_row != wxNOT_FOUND && static_cast<std::size_t>(selected_row) < m_filtered_rows.size();
-    m_restore_button->Enable(m_pending == PendingOperation::None && has_selection);
-    if (has_selection) {
-        // Showing the complete object name here makes the abbreviated table id
-        // unambiguous without forcing an excessively wide first column. Commit
-        // ids are technical values, so render them in the MD3 mono face.
-        m_status_label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
-        m_status_label->SetFont(Label::Mono_13);
-        set_status(_L("Selected commit: ") + wxString::FromUTF8(m_versions[m_filtered_rows[selected_row]].commit_id));
-    } else if (!m_versions.empty())
-        update_history_status();
+    if(m_view=="searches"){m_restore_button->Enable(false);return;}
+    const int row=m_version_list->GetSelectedRow();const bool selected=row>=0&&static_cast<std::size_t>(row)<m_filtered_rows.size();bool can_restore=false;
+    if(selected){const auto index=m_filtered_rows[row];const auto &origin=m_origins[index];m_selected_id=m_versions[index].commit_id;can_restore=origin.category=="project"||origin.category=="preferences";
+        if(m_view!="graph"&&m_view!="compare")set_status(wxString::FromUTF8(origin.category+" / "+origin.name+"\n"+m_versions[index].commit_id+"\n"+origin.detail));}
+    m_restore_button->Enable(m_pending==PendingOperation::None&&selected&&can_restore);m_compare_button->Enable(selected&&!m_compare_future.valid());
 }
 
 void ProjectHistoryDialog::cleanup_restore_temp()
@@ -951,9 +997,166 @@ wxString ProjectHistoryDialog::display_message(const std::string &message)
 
 void ProjectHistoryDialog::on_export(wxCommandEvent &)
 {
-    const wxString saved_project = m_plater != nullptr ? m_plater->get_project_filename(".3mf") : wxString{};
-    const wxString project_name  = saved_project.empty() ? _L("Untitled project") : wxFileName(saved_project).GetFullName();
-    ExportDialog::run(this, Export::project_history_dataset(m_versions, project_name.ToUTF8().data()));
+    Export::Dataset dataset;dataset.name="Local history";dataset.schema_id="bambustudio.local-history";dataset.file_stem="local-history";
+    using V=Export::Value;dataset.columns={{"id",V::Type::String},{"category",V::Type::String},{"description",V::Type::String},{"date",V::Type::String},{"status",V::Type::String}};
+    if(m_view=="searches"){for(const auto &record:HistorySearchStore::instance().records())dataset.rows.push_back({V::from_string(record.id),V::from_string("search"),V::from_string(record.query),V::from_string(wxDateTime(static_cast<time_t>(record.submitted_at/1000)).FormatISOCombined().ToStdString()),V::from_string(record.pinned?"pinned":"recent")});}
+    else for(auto index:m_filtered_rows){const auto &origin=m_origins[index];const auto &version=m_versions[index];dataset.rows.push_back({V::from_string(version.commit_id),V::from_string(origin.category),V::from_string(version.message),V::from_string(wxDateTime(std::chrono::system_clock::to_time_t(version.committed_at)).FormatISOCombined().ToStdString()),V::from_string(origin.status)});}
+    ExportDialog::run(this,dataset);
+}
+
+
+void ProjectHistoryDialog::set_view(const std::string &view)
+{
+    if (view != "timeline" && view != "table" && view != "graph" && view != "compare" && view != "searches") return;
+    m_view = view;
+    const bool searches = view == "searches";
+    m_detail->Show(view == "graph" || view == "compare");
+    for (Button *button : {m_pin_button, m_rerun_button, m_delete_button, m_clear_button}) button->Show(searches);
+    m_compare_button->Show(!searches);
+    m_restore_button->Show(!searches);
+    m_version_list->GetColumn(0)->SetTitle(searches ? _L("Pinned") : view == "timeline" ? _L("Time") : _L("Commit"));
+    m_version_list->GetColumn(1)->SetTitle(searches ? _L("Search and filters") : _L("Category / description"));
+    m_version_list->GetColumn(2)->SetTitle(searches ? _L("Submitted") : view == "timeline" ? _L("Commit") : _L("Time"));
+    m_version_list->GetColumn(3)->SetTitle(searches ? _L("View") : _L("Size / state"));
+    populate_versions(); update_selection(); Layout();
+}
+
+void ProjectHistoryDialog::submit_search()
+{
+    SearchRecord record;
+    record.query = m_search_field->GetValue().ToUTF8().data(); record.regex = m_search_field->IsRegexEnabled();
+    record.case_sensitive = m_search_field->IsCaseSensitive(); record.whole_word = m_search_field->IsWholeWord(); record.multiline = m_search_field->IsMultiline();
+    record.view = m_view == "searches" ? "timeline" : m_view;
+    record.category = std::to_string(m_category_filter->GetSelection()); record.status = std::to_string(m_status_filter->GetSelection());
+    record.device = m_device_filter->GetValue().ToUTF8().data(); record.from = m_from_filter->GetValue().ToUTF8().data(); record.to = m_to_filter->GetValue().ToUTF8().data();
+    wxDateTime from, to;
+    if ((!record.from.empty() && !from.ParseISODate(wxString::FromUTF8(record.from))) || (!record.to.empty() && !to.ParseISODate(wxString::FromUTF8(record.to))) || (from.IsValid() && to.IsValid() && from > to)) {
+        set_status(_L("Enter valid dates in YYYY-MM-DD order, with From before Through.")); return;
+    }
+    if (record.query.empty() && record.device.empty() && record.from.empty() && record.to.empty() && record.category == "0" && record.status == "0") {
+        populate_versions(); return;
+    }
+    if (!HistorySearchStore::instance().submit(record)) { set_status(_L("This search was not saved. Check the query for sensitive data or check local storage.")); return; }
+    populate_versions(); update_selection();
+}
+
+void ProjectHistoryDialog::populate_searches()
+{
+    m_version_list->DeleteAllItems(); m_search_ids.clear();
+    SearchField::MatchPass match(m_search_field->GetValue(), m_search_field->IsRegexEnabled(), m_search_field->IsCaseSensitive(), m_search_field->IsWholeWord(), m_search_field->IsMultiline());
+    const auto &records = HistorySearchStore::instance().records();
+    for (auto it = records.rbegin(); it != records.rend(); ++it) {
+        const auto &record = *it;
+        const wxString description = wxString::FromUTF8(record.query + " [" + record.category + "/" + record.device + "/" + record.status + "] " + record.from + ".." + record.to);
+        if (!match.matches(description)) continue;
+        wxVector<wxVariant> row;
+        row.push_back(wxVariant(record.pinned ? _L("Pinned") : _L("Recent")));
+        row.push_back(wxVariant(description));
+        row.push_back(wxVariant(format_timestamp(std::chrono::system_clock::time_point(std::chrono::milliseconds(record.submitted_at)))));
+        row.push_back(wxVariant(wxString::FromUTF8(record.view)));
+        m_version_list->AppendItem(row); m_search_ids.push_back(record.id);
+    }
+    set_status(_L("The last 100 submitted searches are retained. Pinned searches remain until explicitly deleted."));
+}
+
+void ProjectHistoryDialog::pin_selection()
+{
+    const int row = m_version_list->GetSelectedRow();
+    if (row < 0 || static_cast<std::size_t>(row) >= m_search_ids.size()) return;
+    const auto id = m_search_ids[row];
+    for (const auto &record : HistorySearchStore::instance().records()) if (record.id == id) {
+        if (!HistorySearchStore::instance().set_pinned(id, !record.pinned)) set_status(_L("Could not save this pinned search."));
+        else populate_searches(); return;
+    }
+}
+
+void ProjectHistoryDialog::rerun_search()
+{
+    const int row = m_version_list->GetSelectedRow(); if (row < 0 || static_cast<std::size_t>(row) >= m_search_ids.size()) return;
+    const auto id = m_search_ids[row];
+    for (const auto &stored : HistorySearchStore::instance().records()) if (stored.id == id) {
+        const auto record = stored;
+        m_search_field->SetValue(wxString::FromUTF8(record.query)); m_search_field->SetRegexEnabled(record.regex);
+        m_search_field->SetCaseSensitive(record.case_sensitive); m_search_field->SetWholeWord(record.whole_word); m_search_field->SetMultiline(record.multiline);
+        long category = 0, status = 0;
+        wxString::FromUTF8(record.category).ToLong(&category); wxString::FromUTF8(record.status).ToLong(&status);
+        m_category_filter->SetSelection(category >= 0 && category < m_category_filter->GetCount() ? static_cast<int>(category) : 0);
+        m_status_filter->SetSelection(status >= 0 && status < m_status_filter->GetCount() ? static_cast<int>(status) : 0);
+        m_device_filter->ChangeValue(wxString::FromUTF8(record.device)); m_from_filter->ChangeValue(wxString::FromUTF8(record.from)); m_to_filter->ChangeValue(wxString::FromUTF8(record.to));
+        set_view(record.view); return;
+    }
+}
+void ProjectHistoryDialog::delete_search()
+{
+    const int row = m_version_list->GetSelectedRow(); if (row < 0 || static_cast<std::size_t>(row) >= m_search_ids.size()) return;
+    if (HistorySearchStore::instance().remove(m_search_ids[row])) populate_searches(); else set_status(_L("Could not delete the saved search."));
+}
+void ProjectHistoryDialog::clear_searches()
+{
+    if (HistorySearchStore::instance().clear(false)) populate_searches(); else set_status(_L("Could not clear submitted searches."));
+}
+
+namespace {
+std::string history_payload_summary(const std::filesystem::path &path, const std::string &category)
+{
+    if (category == "preferences") {
+        nlohmann::json values; std::string error;
+        if (!PreferencesHistory::read_snapshot(path, values, error)) return "Legacy or unsupported snapshot: content excluded.\n";
+        return values.dump(2);
+    }
+    if (category == "preset" || category == "draft") return nlohmann::json(LocalConfigHistory::read_snapshot(path)).dump(2);
+    if (category == "printer_transition") {
+        // Incident content is schema-bounded at its writer. Only lifecycle
+        // fields are displayed, never arbitrary ledger properties.
+        if (std::filesystem::file_size(path) > 4 * 1024 * 1024) return "Snapshot exceeds comparison limits.";
+        std::ifstream in(path); auto value = nlohmann::json::parse(in);
+        std::string summary;
+        if (value.contains("entries") && value["entries"].is_array()) for (const auto &entry : value["entries"]) {
+            for (const char *key : {"id", "code", "severity", "state", "first_seen_ms", "last_seen_ms", "resolved_ms"}) if (entry.contains(key)) summary += std::string(key) + ": " + entry[key].dump() + " ";
+            summary += "\n";
+        }
+        return summary;
+    }
+    wxFileInputStream file(wxString(path.wstring())); wxZipInputStream zip(file);
+    std::size_t objects = 0, vertices = 0, triangles = 0, model_files = 0;
+    std::unique_ptr<wxZipEntry> entry;
+    std::uint64_t expanded = 0;
+    while ((entry.reset(zip.GetNextEntry()), entry)) {
+        if (!entry->GetName().EndsWith(".model")) continue;
+        constexpr std::size_t limit = 64 * 1024 * 1024;
+        std::string xml; char buffer[16384];
+        while (zip.IsOk() && !zip.Eof()) { zip.Read(buffer, sizeof(buffer)); const auto count = zip.LastRead(); expanded += count; if (expanded > limit) return "Geometry summary exceeds comparison limits."; xml.append(buffer, count); if (!count) break; }
+        auto count_tags = [&xml](const char *tag) { std::size_t count=0, at=0; while ((at=xml.find(tag, at)) != std::string::npos) { ++count; at += std::char_traits<char>::length(tag); } return count; };
+        objects += count_tags("<object "); vertices += count_tags("<vertex "); triangles += count_tags("<triangle "); ++model_files;
+    }
+    return "Geometry summary\nModel parts: " + std::to_string(model_files) + "\nObjects: " + std::to_string(objects) + "\nVertices: " + std::to_string(vertices) + "\nTriangles: " + std::to_string(triangles) + "\n";
+}
+}
+void ProjectHistoryDialog::compare_selection()
+{
+    const int row = m_version_list->GetSelectedRow(); if (row < 0 || static_cast<std::size_t>(row) >= m_filtered_rows.size() || m_compare_future.valid()) return;
+    const auto selected = m_filtered_rows[row];
+    if (m_compare_id.empty()) { m_compare_id = m_versions[selected].commit_id; m_compare_index = selected; set_status(_L("Comparison base selected. Select another entry and press Compare selected.")); return; }
+    if (m_compare_index >= m_versions.size() || m_versions[m_compare_index].commit_id != m_compare_id) { m_compare_id.clear(); set_status(_L("History changed. Select a comparison base again.")); return; }
+    const auto before = m_versions[m_compare_index], after = m_versions[selected];
+    const auto before_source = m_origins[m_compare_index], after_source = m_origins[selected];
+    m_compare_id.clear();
+    if (before_source.category != after_source.category || before_source.identity != after_source.identity || before_source.device != after_source.device) { set_status(_L("Choose two entries from the same history store or printer.")); return; }
+    set_view("compare"); m_compare_button->Enable(false);
+    if (before_source.category == "printer") { m_detail->SetValue(wxString::FromUTF8("Before\n" + before.message + "\n" + before_source.detail + "\n\nAfter\n" + after.message + "\n" + after_source.detail)); m_compare_button->Enable(true); return; }
+    if (!before_source.manager) return;
+    m_compare_future = std::async(std::launch::async, [before, after, before_source]() {
+        const auto root = std::filesystem::path(data_dir()) / "history_compare";
+        static std::atomic<unsigned long long> sequence{0};
+        const auto temporary = root / (std::to_string(std::chrono::system_clock::now().time_since_epoch().count()) + "-" + std::to_string(++sequence));
+        std::filesystem::create_directories(temporary);
+        struct Cleanup { std::filesystem::path path; ~Cleanup() { std::error_code ec; std::filesystem::remove_all(path, ec); } } cleanup{temporary};
+        const auto left = before_source.manager->restore_version(before_source.identity, before.commit_id, temporary / "before.3mf").get();
+        const auto right = before_source.manager->restore_version(before_source.identity, after.commit_id, temporary / "after.3mf").get();
+        if (!left.ok() || !right.ok()) return _L("Could not read the selected versions for comparison.");
+        const auto a=history_payload_summary(left.restored_path,before_source.category), b=history_payload_summary(right.restored_path,before_source.category);
+        return wxString::FromUTF8("Before: " + before.commit_id + "\n" + a + "\n\nAfter: " + after.commit_id + "\n" + b + (a==b ? "\nNo summary differences." : "\nSummary differs."));
+    }); m_poll_timer.Start(HISTORY_POLL_INTERVAL_MS);
 }
 
 void ProjectHistoryDialog::on_dpi_changed(const wxRect &suggested_rect)

@@ -863,6 +863,12 @@ list(APPEND SLIC3R_GUI_SOURCES
     GUI/Export/ExportDialog.hpp
     GUI/StopPrintGate.cpp
     GUI/StopPrintGate.hpp
+    GUI/PrinterHistory.cpp
+    GUI/PrinterHistory.hpp
+    GUI/HistorySearchStore.cpp
+    GUI/HistorySearchStore.hpp
+    GUI/LocalConfigHistory.cpp
+    GUI/LocalConfigHistory.hpp
     GUI/PreferencesHistory.cpp
     GUI/PreferencesHistory.hpp
     GUI/PrinterWatch.cpp
