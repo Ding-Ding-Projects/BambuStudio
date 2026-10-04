@@ -1824,11 +1824,7 @@ void GUI_App::post_init()
         //this->check_updates(false);
         //BOOST_LOG_TRIVIAL(info) << "after check_updates";
         CallAfter([this] {
-            bool cw_showed = this->config_wizard_startup();
-
-            // Dim sum surprise: one launch in ten, never on a first run, never
-            // over a wizard, a startup error, a modal dialog or a CLI-opened file.
-            DimSumSurprise::maybe_show_after_startup(cw_showed);
+            this->config_wizard_startup();
 
             std::string http_url = get_http_url(app_config->get_country_code());
             std::string language = GUI::into_u8(current_language_code_safe());
@@ -4290,18 +4286,9 @@ bool GUI_App::on_init_inner()
 
 void GUI_App::notify_new_rfid_filament(const std::string& ams_id, const std::string& slot_id)
 {
-    // This is the one place a pending badge becomes visible, on the native slot and on the Web
-    // page alike. "Don't show again" on the new-ink prompt turns it off for both.
-    if (is_new_filament_prompt_hidden())
-        return;
-
-    // The Web AMS panel tracks the hint on its own, so record it before the
-    // classic monitor check: the Web page may be up while the monitor is not.
-    DevicePageAmsControlWebVM::NotifyNewRfidFilament(ams_id, slot_id);
-
-    if (!mainframe || !mainframe->m_monitor) return;
-    auto* sp = mainframe->m_monitor->get_status_panel();
-    if (sp) sp->show_ams_filament_hint(ams_id, slot_id);
+    // Recording continues in the sync service without an unsolicited badge or dialog.
+    (void) ams_id;
+    (void) slot_id;
 }
 
 void GUI_App::open_new_official_filament_hint(const std::string& ams_id, const std::string& slot_id)
@@ -6452,7 +6439,8 @@ void GUI_App::check_new_version(bool show_tips, int by_user)
                     CallAfter([this, tag, name, by_user]() { this->start_auto_update(tag, name, by_user); });
                     return;
                 }
-                CallAfter([this, by_user]() { GUI::wxGetApp().request_new_version(by_user); });
+                if (by_user != 0)
+                    CallAfter([this, by_user]() { GUI::wxGetApp().request_new_version(by_user); });
             }
             catch (...) {
                 if (show_tips) this->no_new_version();
@@ -6471,7 +6459,7 @@ void GUI_App::start_auto_update(const std::string &tag, const std::string &name,
     if (!squirrel_update_exe(update_exe)) {
         // Not an installed copy after all: keep the manual route.
         BOOST_LOG_TRIVIAL(info) << "auto update: no Update.exe next to this copy, offering the download instead of updating to " << tag;
-        request_new_version(by_user);
+        if (by_user != 0) request_new_version(by_user);
         return;
     }
 
@@ -6506,13 +6494,9 @@ void GUI_App::start_auto_update(const std::string &tag, const std::string &name,
             if (is_closing())
                 return;
             if (updated) {
-                push_auto_update_ready_notification(tag);
-            } else if (by_user != 0 || m_auto_update_fallback_tag != tag) {
-                // The reason is in the log. The user still hears about the new version through the
-                // download dialog, as on a copy without automatic updates, so a broken update
-                // (a release without the update files, a blocked download) never hides a release.
-                // The six-hourly re-check shows it once per release; a manual check always does.
-                m_auto_update_fallback_tag = tag;
+                if (by_user != 0) push_auto_update_ready_notification(tag);
+            } else if (by_user != 0) {
+                // A requested update may offer its manual download fallback.
                 request_new_version(by_user);
             }
         });
@@ -6521,7 +6505,7 @@ void GUI_App::start_auto_update(const std::string &tag, const std::string &name,
     // Squirrel is a Windows installer: keep the download dialog everywhere else.
     (void) tag;
     (void) name;
-    request_new_version(by_user);
+    if (by_user != 0) request_new_version(by_user);
 #endif
 }
 
@@ -9302,7 +9286,8 @@ void GUI_App::check_updates(const bool verbose)
 
 void GUI_App::check_config_updates_from_updater()
 {
-    check_updates(false);
+    // Background synchronization must not interrupt work with a preset offer.
+    // Explicit Check for updates retains check_updates(true).
 }
 
 void GUI_App::check_config_updates_from_menu()

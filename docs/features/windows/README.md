@@ -1,5 +1,7 @@
 # Windows features
 
+- [Quiet workflow and manual help](quiet-workflow.md)
+
 - [Windows-only platform policy](windows-only-platform.md)
 - [Native Material Design 3 UI](md3-native-ui.md)
 - [Keyboard, assistive, and responsive GUI accessibility](gui-accessibility.md)

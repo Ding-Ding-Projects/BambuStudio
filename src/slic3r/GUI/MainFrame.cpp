@@ -3371,38 +3371,7 @@ wxBoxSizer* MainFrame::create_side_tools(wxWindow* parent)
 
             if (slice && model_fits && !validate_error) {
                 std::string printer_model = wxGetApp().preset_bundle->printers.get_edited_preset().config.opt_string("printer_model");
-                std::unordered_set<std::string> printer_models = {"Bambu Lab H2D", "Bambu Lab H2D Pro", "Bambu Lab H2C"};
-                int extruder_count = wxGetApp().preset_bundle->get_printer_extruder_count();
-                if (extruder_count > 1 && printer_models.count(printer_model)) {
-                    const std::string slice_video_key = dual_extruder_first_slice_video_app_config_key(printer_model);
-                    const std::string slice_video_val = wxGetApp().app_config->get(slice_video_key);
-                    if (slice_video_val.empty() || slice_video_val == "true" || slice_video_val == "1") {
-                        MessageDialog dlg(this, _L("This is your first time slicing with the dual extruder machine.\nWould you like to watch a quick tutorial video?"), _L("First Guide"), wxYES_NO);
-                        auto  res = dlg.ShowModal();
-                        if (res == wxID_YES) {
-                            play_dual_extruder_slice_video();
-                            slice = false;
-                        }
-                        wxGetApp().app_config->set(slice_video_key, "false");
-                    }
-
-                    if ((wxGetApp().app_config->get("play_tpu_printing_video") == "true")) {
-                        auto used_filaments = curr_plate->get_extruders();
-                        std::transform(used_filaments.begin(), used_filaments.end(), used_filaments.begin(), [](auto i) {return i - 1; });
-                        auto full_config = wxGetApp().preset_bundle->full_config();
-                        auto filament_types = full_config.option<ConfigOptionStrings>("filament_type")->values;
-                        if (std::any_of(used_filaments.begin(), used_filaments.end(), [filament_types](int idx) { return filament_types[idx] == "TPU"; })) {
-                            MessageDialog dlg(this, _L("This is your first time printing tpu filaments with the dual extruder machine.\nWould you like to watch a quick tutorial video?"), _L("First Guide"), wxYES_NO);
-                            auto  res = dlg.ShowModal();
-                            if (res == wxID_YES) {
-                                play_dual_extruder_print_tpu_video();
-                                slice = false;
-                            }
-                            wxGetApp().app_config->set("play_tpu_printing_video", "false");
-                        }
-                    }
-                }
-
+                // Slicing starts directly; tutorials remain available through Help.
                 if (printer_model == "Bambu Lab H2S") {
                     if ((wxGetApp().app_config->get("prompt_for_brittle_filaments") == "true") ) {
                         auto used_filaments = curr_plate->get_extruders();
@@ -4210,6 +4179,10 @@ static wxMenu* generate_help_menu()
     append_menu_item(helpMenu, wxID_ANY, _L("Keyboard Shortcuts") + sep + "& Shift+?", _L("Show the list of the keyboard shortcuts"),
                      [](wxCommandEvent &) { wxGetApp().keyboard_shortcuts(); });
 #endif
+    append_menu_item(helpMenu, wxID_ANY, _L("Dual-extruder slicing tutorial"), _L("Open the slicing tutorial video"),
+        [](wxCommandEvent&) { play_dual_extruder_slice_video(); });
+    append_menu_item(helpMenu, wxID_ANY, _L("Dual-extruder TPU tutorial"), _L("Open the TPU printing tutorial video"),
+        [](wxCommandEvent&) { play_dual_extruder_print_tpu_video(); });
     // Show Beginner's Tutorial
     append_menu_item(helpMenu, wxID_ANY, _L("Setup Wizard"), _L("Setup Wizard"), [](wxCommandEvent &) {wxGetApp().ShowUserGuide();});
 

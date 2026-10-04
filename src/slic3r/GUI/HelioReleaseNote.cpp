@@ -702,30 +702,7 @@ void HelioStatementDialog::create_pat_page()
     run_optimization_button->SetCornerRadius(FromDIP(18)); // kit pill (height/2); Helio dark palette preserved
     run_optimization_button->SetToolTip(_L("You're nearly there! Now that Helio is activated, your first optimization run for faster, more reliable printing takes only minutes! (Now referred to as 'Enhance' or 'Enhancement')"));
     run_optimization_button->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent& e) {
-        // Set tutorial flag for first-time users
-        wxGetApp().app_config->set("helio_first_time_tutorial", "active");
-        wxGetApp().app_config->save();
-        
-        // Close this dialog
         EndModal(wxID_OK);
-        
-        // Show first tutorial popup (don't open Helio dialog immediately - let user follow tutorial steps)
-        if (wxGetApp().plater() && wxGetApp().plater()->get_notification_manager()) {
-            wxString tutorial_msg = _L("Add an object to the build plate, select a material and printer that Helio supports, then slice.");
-            tutorial_msg += "\n\n";
-            wxString hypertext = _L("Supported printers and materials");
-            std::string url = "https://wiki.helioadditive.com/en/supportedprinters";
-            wxGetApp().plater()->get_notification_manager()->push_notification(
-                NotificationType::CustomNotification,
-                NotificationManager::NotificationLevel::HintNotificationLevel,
-                into_u8(tutorial_msg),
-                into_u8(hypertext),
-                [url](wxEvtHandler*) {
-                    wxLaunchDefaultBrowser(url);
-                    return false;
-                }
-            );
-        }
     });
     run_optimization_button->Bind(wxEVT_ENTER_WINDOW, [this](auto& e) { SetCursor(wxCURSOR_HAND); });
     run_optimization_button->Bind(wxEVT_LEAVE_WINDOW, [this](auto& e) { SetCursor(wxCURSOR_ARROW); });

@@ -1,3 +1,6 @@
+> [!NOTE]
+> Automatic startup presentation has been removed. The descriptions below document the retired feature. See [quiet workflow](../windows/quiet-workflow.md) for current behavior.
+
 # Dim sum surprise
 
 On ten percent of eligible repeat visits, one dim sum dish appears in a non-blocking card at the
