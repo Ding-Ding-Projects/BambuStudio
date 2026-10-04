@@ -51,7 +51,12 @@ public:
     WXLRESULT MSWWindowProc(WXUINT msg, WXWPARAM wParam, WXLPARAM lParam) override;
 #endif
 
+    void SetRevealOwner(MD3ScrolledWindow *owner);
+    void RevealChild(wxWindow *child);
+    bool ShouldScrollToChildOnFocus(wxWindow *child) override;
+
 private:
+    MD3ScrolledWindow *m_reveal_owner = nullptr;
     MD3ScrollBars m_bars { this };
 };
 

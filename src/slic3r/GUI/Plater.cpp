@@ -1283,9 +1283,14 @@ static void update_sidebar_scroll_body(wxScrolledWindow *sw)
     // the client area and re-enters this helper through the sidebar's own
     // EVT_SIZE handler. When content sits near a scrollbar threshold the two
     // can ping-pong, so let the outermost pass win instead of recursing.
-    static bool in_update = false;
-    if (in_update) return;
-    in_update = true;
+    // Guard per surface, so updating another sidebar is never suppressed.
+    static std::set<wxScrolledWindow*> updating;
+    if (!updating.insert(sw).second) return;
+    struct LayoutGuard {
+        std::set<wxScrolledWindow*> &active;
+        wxScrolledWindow *window;
+        ~LayoutGuard() { active.erase(window); }
+    } guard{updating, sw};
 
     const wxSize client = sw->GetClientSize();
     if (client.x > 0 && client.y > 0) {
@@ -1308,10 +1313,17 @@ static void update_sidebar_scroll_body(wxScrolledWindow *sw)
         // and the scrollbar reaches it. (FitInside() is still the wrong tool:
         // it pins the virtual width to the content min width, see the note in
         // update_process_segment.)
-        sw->GetSizer()->SetDimension(wxPoint(0, 0), virt);
+        // SetVirtualSize may reserve a bar strip synchronously. Re-read the
+        // viewport before laying out and retain the current scroll anchor.
+        const wxSize settled_client = sw->GetClientSize();
+        const wxSize settled(std::max(content.x, settled_client.x), std::max(content.y, settled_client.y));
+        if (settled != virt) sw->SetVirtualSize(settled);
+        int unit_x, unit_y;
+        sw->GetScrollPixelsPerUnit(&unit_x, &unit_y);
+        const wxPoint anchor = sw->GetViewStart();
+        sw->GetSizer()->SetDimension(wxPoint(-anchor.x * unit_x, -anchor.y * unit_y), settled);
     }
 
-    in_update = false;
 }
 
 void Sidebar::priv::show_preset_comboboxes()
@@ -4223,6 +4235,7 @@ Sidebar::Sidebar(Plater *parent)
         scrolled_sizer->Add(p->m_process_simple_bar, 0, wxEXPAND);
 
         params_panel->Reparent(p->scrolled);
+        params_panel->set_scroll_reveal_owner(static_cast<MD3ScrolledWindow*>(p->scrolled));
         // Advanced-tree floor height: inside the scrollable body the full tree
         // keeps a usable minimum (its own internal scroller handles the rest)
         // instead of being crushed to nothing at short window heights.
@@ -4233,7 +4246,6 @@ Sidebar::Sidebar(Plater *parent)
         scrolled_sizer->Add(params_panel, 0, wxEXPAND);
         params_panel->set_host_height_changed([this]() {
             if (p->scrolled) {
-                p->scrolled->Layout();
                 update_scroll_body();
             }
         });
