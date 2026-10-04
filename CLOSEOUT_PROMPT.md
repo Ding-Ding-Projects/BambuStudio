@@ -1,65 +1,39 @@
-# Native lifecycle continuation
+# Continuation: Menu lifetimes and printer switching
 
-## Objective and current state
+Status: unfinished preservation at the owner's requested closeout on 4 October 2026. No new implementation should start during this closeout.
 
-Repair Prepare filament-removal ownership and printer-selection callback lifetime.
-Work is isolated on `codex/bambu-native-lifecycle`, based on commit
-`0c967a55786c07ef639a2cbefbe922b619c157d3`.
+Branch: `codex/bambu-native-lifecycle`. Source checkpoint: `4e4d192b9cdb0ca222b8c9da768fa24586f1822f`. Base: `0c967a55786c07ef639a2cbefbe922b619c157d3`. The commit containing this document is the preservation tip; discover it with `git rev-parse HEAD`.
 
-Implemented changes:
+## Implemented source
 
-- Blocking Material menus leave the popup callback stack and nested event loop
-  before command dispatch. Command menu/check state and temporary appearance
-  actions are snapshotted, and dispatch uses surviving tracked targets.
-- Dropdown selections snapshot identity, dismiss child/root surfaces, and reject
-  delivery after owner destruction or structural item replacement. Measurement,
-  bitmap and flag invalidation preserve valid selections.
-- The visible printer card opens its hidden item model explicitly, including
-  keyboard activation. Missing model variants and canceled preset changes stop
-  subsequent configuration and plate mutations.
-- Filament row menus resolve current configuration slots. Deletion confirms a
-  fixed target, rejects changed slot lists/flags during confirmation, protects
-  the last physical filament, and lets parent destruction own sibling teardown.
+Read the source diff and the dedicated feature documentation. This branch is not integrated into main and is not a verified release.
 
-## Verification
-
-The actual production dropdown dispatch, invalidation and combo-adapter bodies
-compiled with the existing MSVC toolchain against deterministic lifecycle doubles.
-Result: **16 assertions passed in 8 test cases**. Disabling the generation check
-produced the expected stale-row failure before restoration. Supplementary source
-contracts passed **7 tests**. `git diff --check` passed.
-
-No full application compile, native wxWidgets interaction, screenshot evidence,
-installer verification, release or deployment has been completed for this change.
-The body-double tests establish callback behavior, not a platform popup verdict.
-A read-only independent review found and corrected overly broad generation
-invalidation. Remaining native backend behavior must be independently verified.
-
-## Changed files
-
+- `CLOSEOUT_PROMPT.md`
+- `docs/features/prepare/native-lifecycle.md`
 - `src/slic3r/GUI/Plater.cpp`
 - `src/slic3r/GUI/PresetComboBoxes.cpp`
-- `src/slic3r/GUI/Widgets/ComboBox.cpp` and `.hpp`
-- `src/slic3r/GUI/Widgets/DropDown.cpp` and `.hpp`
-- `src/slic3r/GUI/Widgets/MD3Menu.cpp` and `.hpp`
+- `src/slic3r/GUI/Widgets/ComboBox.cpp`
+- `src/slic3r/GUI/Widgets/ComboBox.hpp`
+- `src/slic3r/GUI/Widgets/DropDown.cpp`
+- `src/slic3r/GUI/Widgets/DropDown.hpp`
+- `src/slic3r/GUI/Widgets/MD3Menu.cpp`
+- `src/slic3r/GUI/Widgets/MD3Menu.hpp`
 - `tests/sidebar_filament_combos/CMakeLists.txt`
 - `tests/sidebar_filament_combos/dropdown_lifecycle_tests.cpp`
 - `ui-md3/tests/native-lifecycle.test.mjs`
-- `docs/features/prepare/native-lifecycle.md`
-- `CLOSEOUT_PROMPT.md`
 
-## Next safe steps
+## Verification
 
-The coordinating task preserves this branch remotely, integrates it only under
-its reviewed recovery plan, and runs the full native build against a fixed commit.
-Run `dropdown_lifecycle_tests`, `md3_menu_tests` and
-`sidebar_filament_combo_bounds_contract` through the configured native build.
-Reproduce P1S/H2C switching with clean/modified presets, save/discard/cancel,
-mouse/keyboard openings, rapid reselection and physical/mixed filament removal.
-Collect native focus/capture/owned-window evidence and a UI-thread stack for any
-remaining freeze. Preserve all unrelated work; do not infer a runtime root cause
-from source or deterministic doubles alone.
+Production-body lifetime doubles: 16 assertions in 8 cases; source contracts: 7/7; stale-generation mutation failed as expected, restored version passed.
 
-The user requested immediate preservation and cleanup after the account showed
-8% remaining. Implementation stopped. This record is a continuation handoff,
-not a claim that the application repair, release or wider goal is complete.
+## Required continuation
+
+Full native build, wx popup dispatch, both Ink deletion paths, canceled/missing presets, P1S/H2C and multi-plate runtime reproduction remain unverified.
+
+Build the reconciled candidate through the supported Windows one-click route in an isolated, pinned build tree. Keep physical printer actions and host power changes out of scope. Preserve unrelated branches. Do not delete this branch or its checkout until completed work is verified, integrated and proved on remote main.
+
+The preservation commit deliberately uses [skip ci] to avoid starting new release workflows during the requested closeout. No hosted result, compiled application, screenshot, installer, or release is claimed by that marker. Required verification remains outstanding.
+
+## 廣東話交接
+
+呢條分支只係保存未完成工作，唔代表已經編譯、驗證、合併或者發佈。上面列明已做嘅檢查同未完成項目。下一次先讀返差異，再修好接駁同執行原生驗證；唔好將保存當成完成。
