@@ -1,27 +1,42 @@
-# Responsive model import implementation checkpoint
+# Continuation: Detached import and automatic simplification
 
-Objective: keep interactive model import responsive and optionally simplify meshes with at least 1,000,000 triangles before scene attachment. The current user requested preservation and closeout before the work was verified.
+Status: unfinished preservation at the owner's requested closeout on 4 October 2026. No new implementation should start during this closeout.
 
-Working branch: `codex/bambu-import-simplify`. Baseline: `0c967a557`. Shared-service commits: `3d4a75298` and `83df3dd9f`. No implementation from this lane has been merged or pushed by this worker.
+Branch: `codex/bambu-import-simplify`. Source checkpoint: `33dad3b7ed58071eb4c7c8e8301b29dcfdaa71d7`. Base: `0c967a55786c07ef639a2cbefbe922b619c157d3`. The commit containing this document is the preservation tip; discover it with `git rev-parse HEAD`.
 
-Implemented source, not yet compiled:
+## Implemented source
 
-- Shared quadric simplification service used by the manual tool and new import job. Inclusive threshold 1,000,000, default maximum error 0.001, all five existing detail choices available.
-- General > Model import stores the opt-out and detail level. Only absent keys migrate to enabled and the highest detail. Command-palette settings entries and reset keys were added.
-- STL, OLTP, OBJ, STEP/STP, GLB/GLTF, FBX and AMF interactive drop/file-dialog routes queue a native ImportJob. Parsing, hull preparation and eligible simplification operate on detached models. STEP prompts are dispatched to the UI thread. Synchronous vector callers keep their result contract.
-- The detached batch is dropped on cancellation before finalization. Original meshes/hulls are retained immutably for a recovery notification and command-palette action, with pointer-identity matching to avoid overwriting later mesh edits. Restoration has an undo snapshot.
-- Mesh reduction skips textures, painting, cut objects and modifier relationships. Per-axis extent restoration preserves local bounding dimensions within float rounding, but can change angles, volume and deviation beyond the engine error setting. Collapsed dimensions are skipped rather than published.
-- Saved 3MF parsing and hull computation use a detached future while the existing modal UI owner polls progress/cancellation. Configuration, plate changes and prompts remain on the UI thread. Saved-project automatic simplification is skipped with status copy.
+Read the source diff and the dedicated feature documentation. This branch is not integrated into main and is not a verified release.
 
-Verified evidence: `git diff --check` passed. Six standalone Catch cases were authored for threshold/default settings, engine reduction, cancellation and extent handling. They have not run. No native compile, runtime interaction, screenshot, installer, release or CI verification occurred for this candidate.
+- `CLOSEOUT_PROMPT.md`
+- `src/libslic3r/AppConfig.cpp`
+- `src/libslic3r/CMakeLists.txt`
+- `src/libslic3r/MeshSimplification.cpp`
+- `src/libslic3r/MeshSimplification.hpp`
+- `src/slic3r/CMakeLists.txt`
+- `src/slic3r/GUI/CommandPalette.cpp`
+- `src/slic3r/GUI/CommandPaletteIndex.cpp`
+- `src/slic3r/GUI/Gizmos/GLGizmoSimplify.cpp`
+- `src/slic3r/GUI/Jobs/ImportJob.cpp`
+- `src/slic3r/GUI/Jobs/ImportJob.hpp`
+- `src/slic3r/GUI/Plater.cpp`
+- `src/slic3r/GUI/Plater.hpp`
+- `src/slic3r/GUI/Preferences.cpp`
+- `tests/libslic3r/CMakeLists.txt`
+- `tests/libslic3r/test_mesh_simplification.cpp`
 
-Remaining work before claiming completion:
+## Verification
 
-- Compile the exact candidate using the supported Windows toolchain and run `mesh_simplification_tests`, command-palette checks, focused import tests and the appropriate native regression targets.
-- Prove cancellation during parsing, reduction, STEP prompts and finalization in the real built UI. Existing readers and hull computation have cooperative cancellation granularity rather than interruption inside every primitive.
-- The existing UI scene/texture continuation is still synchronous and unbounded. Implement or prove bounded publication and rollback for cancellation or an exception after publication begins, especially multi-file textured imports and mixed archive batches.
-- Review saved-project async lifetime, plate/preset cleanup on exceptions, unit conversion, assembly transforms, originals recovery after subsequent edits and undo behavior.
-- Add complete localized catalogs and direct feature documentation for new copy. Runtime layout, all language modes, scale/theme evidence and model-size/interaction measurements remain pending.
-- The parent owns integration, preservation pushes, remote proof, release work and task cleanup. Keep this unfinished lane isolated. Do not publish its output as verified.
+Source boundary and whitespace checks passed. Six native Catch cases were authored but not run. Source is not compiled.
 
-Next safe action: compile the pinned candidate, repair compiler findings in a separate owned change, then complete the import publication/cancellation contract and its real runtime evidence. Preserve source files and unrelated work. No physical printer or local host power actions are authorized by this checkpoint.
+## Required continuation
+
+Scene and texture publication remain synchronous/unbounded. Prove transactional cancellation and exception rollback after publication starts. Reader/hull cancellation is coarse. Archive parsing uses a modal polling owner. Extent rescaling can alter angles, volume and deviation beyond the simplifier error setting. Review that tradeoff, saved metadata and recoverable originals. Finish localization, documentation and measured native responsiveness.
+
+Build the reconciled candidate through the supported Windows one-click route in an isolated, pinned build tree. Keep physical printer actions and host power changes out of scope. Preserve unrelated branches. Do not delete this branch or its checkout until completed work is verified, integrated and proved on remote main.
+
+The preservation commit deliberately uses [skip ci] to avoid starting new release workflows during the requested closeout. No hosted result, compiled application, screenshot, installer, or release is claimed by that marker. Required verification remains outstanding.
+
+## 廣東話交接
+
+呢條分支只係保存未完成工作，唔代表已經編譯、驗證、合併或者發佈。上面列明已做嘅檢查同未完成項目。下一次先讀返差異，再修好接駁同執行原生驗證；唔好將保存當成完成。
