@@ -23,8 +23,16 @@
   var copy = {
     'automation.heading': { en: ['MCP and CLI automation'], yue: ['MCP 及 CLI 自動化'] },
     'automation.body': {
-      en: ['In development: stdio and authenticated HTTP tools for projects, headless slicing, and configured printers. Builds and verification run on GitHub Actions. Physical-printer verification is tracked separately.'],
-      yue: ['開發中：透過 stdio 及已驗證身份的 HTTP 工具操作專案、背景切片及已設定的打印機。編譯及驗證都在 GitHub Actions 執行，真機驗證另外記錄。']
+      en: [
+        'In development: stdio and authenticated HTTP tools for projects, headless slicing, and configured printers. Builds and verification run on GitHub Actions. Physical-printer verification is tracked separately.',
+        'Automation is still in development: stdio and authenticated HTTP tools handle projects, headless slicing, and configured printers. GitHub Actions handles builds and verification; the physical printers keep their own verification queue.',
+        'Still on the workbench: stdio and authenticated HTTP tools for projects, headless slicing, and configured printers. GitHub Actions does the building and verification. Physical printers do not take the computer’s word for it: their verification is tracked separately.'
+      ],
+      yue: [
+        '開發中：透過 stdio 及已驗證身份的 HTTP 工具操作專案、背景切片及已設定的打印機。編譯及驗證都在 GitHub Actions 執行，真機驗證另外記錄。',
+        '自動化仲喺開發中：stdio 同已驗證身份嘅 HTTP 工具處理專案、背景切片同已設定嘅打印機。GitHub Actions 負責編譯同驗證；真機驗證有自己條隊，另外記錄。',
+        '仲喺工作枱上：stdio 同已驗證身份嘅 HTTP 工具用嚟處理專案、背景切片同已設定嘅打印機。GitHub Actions 做編譯同驗證；真機唔會聽電腦講兩句就當過關，驗證要另外記錄。'
+      ]
     },
     'automation.guide': { en: ['Read setup and verification status'], yue: ['閱讀設定方法及驗證狀態'] },
     /* ---------------------------------------------------------------- shell */
