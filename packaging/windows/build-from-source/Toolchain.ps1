@@ -3,8 +3,9 @@
     Detect / bootstrap the Windows build toolchain for a from-source Bambu Studio MD3 build.
 .DESCRIPTION
     Dot-sourced by Build-FromSource.ps1. For each tool: probe first, install only if
-    missing. Prefer winget; fall back to the pinned official vendor installer, always
-    silent. The mode choice on the installer page is the user's consent; no per-tool
+    missing. Prefer winget except for Visual Studio, whose vendor bootstrapper uses
+    an explicit project-owned instance path. Vendor installers run silently. The
+    mode choice on the installer page is the user's consent; no per-tool
     prompt is shown. Initialize-Toolchain throws on any tool that cannot be made
     present (the caller maps that to exit code 10).
 #>
@@ -75,7 +76,7 @@ function Test-NodeLts {
 }
 
 function Test-CMakeVersion {
-    param([string] $CMakePath)
+    param([string] $CMakePath, [version] $MinimumVersion = $script:MinimumCMakeVersion)
 
     if ([string]::IsNullOrWhiteSpace($CMakePath)) {
         $cmake = Get-Command cmake -ErrorAction SilentlyContinue
@@ -93,7 +94,7 @@ function Test-CMakeVersion {
         $match = [regex]::Match([string]$firstLine, '^cmake version\s+(\d+\.\d+(?:\.\d+)?)')
         if (-not $match.Success) { return $false }
         $version = [version]$match.Groups[1].Value
-        return ($version -ge $script:MinimumCMakeVersion -and
+        return ($version -ge $MinimumVersion -and
             $version -lt $script:MaximumCMakeVersionExclusive)
     } catch {
         return $false
@@ -147,8 +148,44 @@ function Get-WindowsSdkVersion {
     return $latest
 }
 
-function Get-VisualStudio2022Path {
-    param([string] $VsWherePath)
+function Test-VisualStudioMSBuild {
+    param([Parameter(Mandatory)][string] $Path, [int] $TimeoutMilliseconds = 15000)
+    $process = New-Object System.Diagnostics.Process
+    $process.StartInfo.FileName = $Path
+    $process.StartInfo.Arguments = '-nologo -version'
+    $process.StartInfo.UseShellExecute = $false
+    $process.StartInfo.CreateNoWindow = $true
+    $process.StartInfo.RedirectStandardOutput = $true
+    $process.StartInfo.RedirectStandardError = $true
+    try {
+        $null = $process.Start()
+        $stdout = $process.StandardOutput.ReadToEndAsync()
+        $stderr = $process.StandardError.ReadToEndAsync()
+        if (-not $process.WaitForExit($TimeoutMilliseconds)) {
+            $process.Kill()
+            return [pscustomobject]@{ Succeeded = $false; Reason = 'MSBuild startup/version probe timed out after 15 seconds.' }
+        }
+        if (-not $stdout.Wait(1000) -or -not $stderr.Wait(1000)) {
+            return [pscustomobject]@{ Succeeded = $false; Reason = 'MSBuild probe output did not complete.' }
+        }
+        if ($process.ExitCode -ne 0) {
+            $detail = (($stderr.Result -split '\r?\n' | Select-Object -First 1) -join '').Trim()
+            return [pscustomobject]@{ Succeeded = $false; Reason = "MSBuild startup/version probe exited $($process.ExitCode): $detail" }
+        }
+        if ($stdout.Result -notmatch '(?m)^\d+\.\d+\.\d+(?:\.\d+)?\s*$') {
+            return [pscustomobject]@{ Succeeded = $false; Reason = 'MSBuild startup/version probe returned no numeric version.' }
+        }
+        return [pscustomobject]@{ Succeeded = $true; Reason = '' }
+    } catch {
+        return [pscustomobject]@{ Succeeded = $false; Reason = "MSBuild startup/version probe could not run: $($_.Exception.Message)" }
+    } finally {
+        $process.Dispose()
+    }
+}
+
+function Get-VisualStudioInstance {
+    [CmdletBinding()]
+    param([string] $VsWherePath, [string] $VersionRange = '[17.0,19.0)')
 
     $vswhere = $VsWherePath
     if ([string]::IsNullOrWhiteSpace($vswhere)) {
@@ -156,38 +193,74 @@ function Get-VisualStudio2022Path {
     }
     if (-not (Test-Path -LiteralPath $vswhere -PathType Leaf)) { return $null }
 
-    $installPath = & $vswhere -latest -products * `
-        -version '[17.0,18.0)' `
+    # Enumerate every candidate: a stale newest registration must not hide a
+    # usable older instance. Keep the product and path from the same record.
+    # Registration completeness is not file presence. An interrupted IDE setup
+    # may still contain a usable compiler, including an installed preview toolset.
+    $output = & $vswhere -all -prerelease -products * -sort `
+        -version $VersionRange `
         -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 `
-        -property installationPath 2>$null
-    if (-not $installPath) { return $null }
-
-    $installPath = @($installPath)[0]
-    foreach ($required in @(
-        (Join-Path $installPath 'Common7\Tools\VsDevCmd.bat'),
-        (Join-Path $installPath 'MSBuild\Current\Bin\MSBuild.exe')
-    )) {
-        if (-not (Test-Path -LiteralPath $required -PathType Leaf)) { return $null }
+        -format json -utf8 2>$null
+    if ($LASTEXITCODE -ne 0 -or -not $output) { return $null }
+    try { $instances = @((($output -join "`n") | ConvertFrom-Json)) }
+    catch { return $null }
+    foreach ($instance in $instances) {
+        if (-not $instance.PSObject.Properties['installationPath'] -or
+            -not $instance.PSObject.Properties['productId'] -or
+            -not $instance.PSObject.Properties['installationVersion']) { continue }
+        $version = $null
+        if ([string]$instance.installationVersion -notmatch '^\d+\.\d+\.\d+\.\d+$' -or
+            -not [version]::TryParse([string]$instance.installationVersion, [ref]$version) -or
+            $version.Major -notin @(17, 18)) { continue }
+        $installPath = [string]$instance.installationPath
+        if ([string]::IsNullOrWhiteSpace($installPath) -or
+            [string]$instance.productId -notmatch '^Microsoft\.VisualStudio\.Product\.(BuildTools|Community|Professional|Enterprise)$') { continue }
+        $requiredFiles = @(
+            (Join-Path $installPath 'Common7\Tools\VsDevCmd.bat'),
+            (Join-Path $installPath 'MSBuild\Current\Bin\MSBuild.exe'),
+            (Join-Path $installPath 'VC\Auxiliary\Build\Microsoft.VCToolsVersion.default.txt')
+        )
+        if (@($requiredFiles | Where-Object { -not (Test-Path -LiteralPath $_ -PathType Leaf) }).Count) { continue }
+        $toolVersion = (Get-Content -LiteralPath $requiredFiles[2] -Raw).Trim()
+        if ($toolVersion -notmatch '^\d+\.\d+\.\d+$') { continue }
+        if (-not (Test-Path -LiteralPath (Join-Path $installPath "VC\Tools\MSVC\$toolVersion\bin\Hostx64\x64\cl.exe") -PathType Leaf)) { continue }
+        # CMake's x64 Visual Studio generator invokes this executable. A working
+        # cl.exe alone cannot compensate for a broken managed MSBuild runtime.
+        $msbuildPath = Join-Path $installPath 'MSBuild\Current\Bin\amd64\MSBuild.exe'
+        if (-not (Test-Path -LiteralPath $msbuildPath -PathType Leaf)) { continue }
+        $probe = Test-VisualStudioMSBuild -Path $msbuildPath
+        if (-not $probe.Succeeded) {
+            Write-Warning "Skipping Visual Studio instance '$installPath' ($($instance.installationVersion)): $($probe.Reason)"
+            continue
+        }
+        return $instance
     }
-    return $installPath
+    return $null
+}
+
+function Get-VisualStudioPath {
+    param([string] $VsWherePath, [string] $VersionRange = '[17.0,19.0)')
+    $instance = Get-VisualStudioInstance -VsWherePath $VsWherePath -VersionRange $VersionRange
+    if ($null -eq $instance) { return $null }
+    return [string]$instance.installationPath
+}
+
+function Get-VisualStudioProduct {
+    param([string] $VsWherePath, [string] $VersionRange = '[17.0,19.0)')
+    $instance = Get-VisualStudioInstance -VsWherePath $VsWherePath -VersionRange $VersionRange
+    if ($null -eq $instance) { return $null }
+    return ([string]$instance.productId).Substring('Microsoft.VisualStudio.Product.'.Length)
+}
+
+# Preserve version-specific callers without silently changing their contract.
+function Get-VisualStudio2022Path {
+    param([string] $VsWherePath)
+    return Get-VisualStudioPath -VsWherePath $VsWherePath -VersionRange '[17.0,18.0)'
 }
 
 function Get-VisualStudio2022Product {
     param([string] $VsWherePath)
-
-    $vswhere = $VsWherePath
-    if ([string]::IsNullOrWhiteSpace($vswhere)) {
-        $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
-    }
-    if (-not (Test-Path -LiteralPath $vswhere -PathType Leaf)) { return $null }
-
-    $productId = & $vswhere -latest -products * -version '[17.0,18.0)' `
-        -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 `
-        -property productId 2>$null
-    $match = [regex]::Match([string](@($productId)[0]),
-        '^Microsoft\.VisualStudio\.Product\.(BuildTools|Community|Professional|Enterprise)$')
-    if (-not $match.Success) { return $null }
-    return $match.Groups[1].Value
+    return Get-VisualStudioProduct -VsWherePath $VsWherePath -VersionRange '[17.0,18.0)'
 }
 
 function Get-SafeRelativePath {
@@ -383,7 +456,7 @@ function Test-VisualCppBuildTools {
         [string] $VsWherePath,
         [string[]] $WindowsSdkRoots
     )
-    return (-not [string]::IsNullOrWhiteSpace((Get-VisualStudio2022Path -VsWherePath $VsWherePath)) -and
+    return (-not [string]::IsNullOrWhiteSpace((Get-VisualStudioPath -VsWherePath $VsWherePath)) -and
         $null -ne (Get-WindowsSdkVersion -Roots $WindowsSdkRoots))
 }
 
@@ -395,35 +468,39 @@ function Install-VisualCppBuildTools {
     # Desktop SDK at or above MinimumWindowsSdkVersion.
     $addSet = @(
         '--add', 'Microsoft.VisualStudio.Workload.VCTools',
+        '--add', 'Microsoft.VisualStudio.Component.VC.Tools.x86.x64',
         '--add', 'Microsoft.VisualStudio.Component.Windows11SDK.26100',
         '--add', 'Microsoft.VisualStudio.Component.VC.CMake.Project'
     )
 
-    $winget = Get-Winget
-    if ($winget) {
-        $override = ($addSet + @('--quiet', '--wait', '--norestart')) -join ' '
-        & winget install --id Microsoft.VisualStudio.2022.BuildTools @script:WingetArgs `
-            --override $override
-        Update-SessionPath
-        if ($LASTEXITCODE -eq 0 -and (Test-VisualCppBuildTools)) { return }
-    }
+    # An implicit bootstrapper target (including winget's) can select a stale
+    # registration owned by another application. Explicitly select our own
+    # stable installation path; never uninstall or repair that other instance.
+    # Major 18 on Stable is distinct from a stale major 17 Release registration.
+    $installPath = Join-Path $env:LOCALAPPDATA 'BambuStudioMD3\toolchain\BuildTools2026'
+    Write-BuildLog "Installing Visual Studio 2026 Build Tools at '$installPath'. Elevation may be required."
 
     Invoke-SilentInstaller `
-        -Url 'https://aka.ms/vs/17/release/vs_BuildTools.exe' `
+        -Url 'https://aka.ms/vs/stable/vs_buildtools.exe' `
         -FileName 'vs_BuildTools.exe' `
-        -Arguments ($addSet + @('--quiet', '--wait', '--norestart')) `
+        -Arguments ($addSet + @('--installPath', "`"$installPath`"", '--nickname', 'BambuMD3', '--quiet', '--wait', '--norestart')) `
         -WorkDir $WorkDir `
         -TrustedPublishers $script:VisualStudioTrustedPublishers
 
     if (-not (Test-VisualCppBuildTools)) {
-        throw 'Visual Studio 2022 Build Tools (C++ workload) could not be installed.'
+        throw 'Visual Studio 2022 or 2026 Build Tools (C++ workload) could not be installed.'
     }
 }
 
 function Install-CMake {
     param([string] $WorkDir)
     # CMake may already have arrived via the VS "VC.CMake.Project" component.
-    if (Test-CMakeVersion) { return }
+    $minimumVersion = $script:MinimumCMakeVersion
+    $instance = Get-VisualStudioInstance
+    if ($null -ne $instance -and ([version]$instance.installationVersion).Major -eq 18) {
+        $minimumVersion = [version]'4.2.0'
+    }
+    if (Test-CMakeVersion -MinimumVersion $minimumVersion) { return }
 
     $winget = Get-Winget
     if ($winget) {
@@ -433,7 +510,7 @@ function Install-CMake {
             & winget install --id Kitware.CMake @script:WingetArgs
         }
         Update-SessionPath
-        if ($LASTEXITCODE -eq 0 -and (Test-CMakeVersion)) { return }
+        if ($LASTEXITCODE -eq 0 -and (Test-CMakeVersion -MinimumVersion $minimumVersion)) { return }
     }
 
     Invoke-SilentInstaller `
@@ -445,8 +522,8 @@ function Install-CMake {
         -ExpectedSha256 $script:CMakeFallbackSha256
 
     Update-SessionPath
-    if (-not (Test-CMakeVersion)) {
-        throw "CMake $($script:MinimumCMakeVersion) or newer, below $($script:MaximumCMakeVersionExclusive), could not be installed."
+    if (-not (Test-CMakeVersion -MinimumVersion $minimumVersion)) {
+        throw "CMake $minimumVersion or newer, below $($script:MaximumCMakeVersionExclusive), could not be installed."
     }
 }
 

@@ -153,7 +153,23 @@ IF DEFINED PS_VERSION (
     SET /A PS_VERSION_EXCEEDED=%PS_VERSION% + 1
 ) ELSE SET PS_VERSION=%PS_VERSION_SUPPORTED%
 SET MSVC_FILTER=-products Microsoft.VisualStudio.Product.%PS_PRODUCT% -version "[%PS_VERSION%,%PS_VERSION_EXCEEDED%)"
+IF DEFINED BAMBU_VS_INSTALLATION_PATH (
+    REM Validate through the environment before expanding a path into CMD syntax.
+    REM Only a registered instance of the selected supported major/product is accepted.
+    powershell.exe -NoProfile -Command "$ErrorActionPreference='Stop'; $p=$env:BAMBU_VS_INSTALLATION_PATH; $v=$env:BAMBU_VS_INSTALLATION_VERSION; if ($env:PS_VERSION -notin @('17','18') -or -not [IO.Path]::IsPathRooted($p) -or @($p.ToCharArray() | Where-Object { [int]$_ -lt 32 -or [int]$_ -in @(34,37,33,38,60,62,94,124) }).Count) { exit 1 }; if ($env:PS_VERSION -eq '18' -and $v -notmatch '^18\.[0-9]+\.[0-9]+\.[0-9]+$') { exit 1 }; $records=@((& $env:VSWHERE -all -prerelease -products ('Microsoft.VisualStudio.Product.'+$env:PS_PRODUCT) -version ('['+$env:PS_VERSION+','+$env:PS_VERSION_EXCEEDED+')') -format json | ConvertFrom-Json)); if ($LASTEXITCODE -ne 0 -or -not @($records | Where-Object { $_.installationPath -eq $p -and ($env:PS_VERSION -ne '18' -or $_.installationVersion -eq $v) }).Count) { exit 1 }; foreach ($f in @('Common7\Tools\VsDevCmd.bat','MSBuild\Current\Bin\MSBuild.exe')) { if (-not [IO.File]::Exists([IO.Path]::Combine($p,$f))) { exit 1 } }"
+    IF ERRORLEVEL 1 (
+        @ECHO ERROR: BAMBU_VS_INSTALLATION_PATH is not a safe, usable instance of the selected Visual Studio product/version. 1>&2
+        GOTO :HELP
+    )
+    GOTO :SELECT_EXPLICIT_MSVC
+)
 FOR /F "tokens=* USEBACKQ" %%I IN (`^""%VSWHERE%" %MSVC_FILTER% -nologo -property installationPath^"`) DO SET MSVC_DIR=%%I
+GOTO :CHECK_MSVC_PATH
+:SELECT_EXPLICIT_MSVC
+SET "MSVC_DIR=%BAMBU_VS_INSTALLATION_PATH%"
+:CHECK_MSVC_PATH
+SET "MSVC_INSTANCE=%MSVC_DIR%"
+IF DEFINED BAMBU_VS_INSTALLATION_PATH IF "%PS_VERSION%" EQU "18" SET "MSVC_INSTANCE=%MSVC_DIR%,version=%BAMBU_VS_INSTALLATION_VERSION%"
 IF NOT EXIST "%MSVC_DIR%" (
     @ECHO ERROR: Compatible Visual Studio installation not found. 1>&2
     GOTO :HELP
@@ -439,7 +455,7 @@ IF %PS_VERSION% GEQ 18 IF %PS_CMAKE_VERSION_CODE% LSS 402 (
     SET PS_CMAKE_GENERATOR=
     GOTO :EOF
 )
-SET PS_CMAKE_GENERATOR_ARGS=-G "%PS_CMAKE_GENERATOR%" -A %PS_ARCH% -DCMAKE_GENERATOR_INSTANCE="%MSVC_DIR%"
+SET PS_CMAKE_GENERATOR_ARGS=-G "%PS_CMAKE_GENERATOR%" -A %PS_ARCH% -DCMAKE_GENERATOR_INSTANCE="%MSVC_INSTANCE%"
 IF DEFINED PS_WINSDK SET PS_CMAKE_GENERATOR_ARGS=%PS_CMAKE_GENERATOR_ARGS% -DCMAKE_SYSTEM_VERSION=%PS_WINSDK%
 GOTO :EOF
 

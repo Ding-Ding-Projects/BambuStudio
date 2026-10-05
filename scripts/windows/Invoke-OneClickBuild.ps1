@@ -248,7 +248,7 @@ function Initialize-LocalToolchain {
     # its detection helpers stay visible to every later phase, not only this one.
 
     if ($Plan) {
-        Write-BuildLog "PLAN: bootstrap Git, Visual Studio 2022 C++ tools, Windows SDK, and CMake."
+        Write-BuildLog "PLAN: bootstrap Git, Visual Studio 2022/2026 C++ tools, Windows SDK, and CMake."
     } else {
         $bootstrapDir = Join-Path $env:LOCALAPPDATA 'codingmachineedge\BambuStudioMD3-BuildTools'
         if (-not (Test-Path -LiteralPath $bootstrapDir)) {
@@ -288,14 +288,16 @@ function Initialize-LocalToolchain {
     }
 
     if (-not $Plan) {
-        $vsProduct = Get-VisualStudio2022Product
-        $vsPath = Get-VisualStudio2022Path
+        $vsInstance = Get-VisualStudioInstance
+        $vsProduct = if ($null -ne $vsInstance) { ([string]$vsInstance.productId).Substring('Microsoft.VisualStudio.Product.'.Length) } else { '' }
+        $vsPath = if ($null -ne $vsInstance) { [string]$vsInstance.installationPath } else { '' }
         $sdkVersion = Get-WindowsSdkVersion
         if ([string]::IsNullOrWhiteSpace($vsProduct) -or
             [string]::IsNullOrWhiteSpace($vsPath) -or $null -eq $sdkVersion) {
-            throw 'Visual Studio 2022 C++ tools or a complete Windows SDK could not be detected.'
+            throw 'Visual Studio 2022/2026 C++ tools or a complete Windows SDK could not be detected.'
         }
         Write-BuildLog "Toolchain ready: Visual Studio product=$vsProduct; SDK=$sdkVersion."
+        Write-BuildLog "Visual Studio selection: path='$vsPath'; version=$($vsInstance.installationVersion); prerelease=$($vsInstance.isPrerelease); registrationComplete=$($vsInstance.isComplete). Required compiler files were checked separately."
         return $vsProduct
     }
     return 'BuildTools'
@@ -425,7 +427,8 @@ function Get-ProductVersion {
 }
 
 function Resolve-CMakeExecutable {
-    param([Parameter(Mandatory)][string] $VisualStudioPath)
+    param([Parameter(Mandatory)][string] $VisualStudioPath,
+        [version] $MinimumVersion = [version]'3.21.0')
     # Never trust whichever cmake happens to be first on PATH. On this host that
     # was a MinGW (WinLibs) CMake whose curl has no Windows certificate store, so
     # every ExternalProject download failed with "certificate signer not trusted"
@@ -449,6 +452,7 @@ function Resolve-CMakeExecutable {
     )
     foreach ($candidate in $candidates) {
         if (-not (Test-Path -LiteralPath $candidate -PathType Leaf)) { continue }
+        if (-not (Test-CMakeVersion -CMakePath $candidate -MinimumVersion $MinimumVersion)) { continue }
         $probeOut = Join-Path $env:TEMP 'bambu-cmake-tls-probe.zip'
         & $candidate "-DOUT=$probeOut" -P $probeScript 2>&1 | Out-Null
         $ok = ($LASTEXITCODE -eq 0)
@@ -467,16 +471,17 @@ function Resolve-BuildToolchain {
     # product id WITHOUT `-products *`, and vswhere hides Build Tools by default,
     # so a machine with only VS Build Tools was reported as having no Visual
     # Studio at all (verified 2026-09-05). We ask for every product explicitly.
-    $vsPath = Get-VisualStudio2022Path
-    if ([string]::IsNullOrWhiteSpace($vsPath)) {
-        throw 'No Visual Studio 2022 C++ toolset was found by vswhere (-products *).'
+    $instance = Get-VisualStudioInstance
+    if ($null -eq $instance) {
+        throw 'No usable Visual Studio 2022/2026 C++ toolset was found by vswhere (-products *).'
     }
-    $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
-    $version = [string](@(& $vswhere -path $vsPath -property installationVersion 2>$null)[0])
+    $vsPath = [string]$instance.installationPath
+    $version = [string]$instance.installationVersion
     if ($version -notmatch '^(\d+)\.') {
         throw "vswhere returned an unusable installation version '$version' for '$vsPath'."
     }
     $major = [int]$Matches[1]
+    $minimumCMake = if ($major -eq 18) { [version]'4.2.0' } else { [version]'3.21.0' }
     $generator = switch ($major) {
         16 { 'Visual Studio 16 2019' }
         17 { 'Visual Studio 17 2022' }
@@ -491,10 +496,11 @@ function Resolve-BuildToolchain {
     }
     return [pscustomobject]@{
         VisualStudioPath = $vsPath
+        GeneratorInstance = if ($major -eq 18) { "$vsPath,version=$version" } else { $vsPath }
         Generator        = $generator
         SdkVersion       = [string]$sdkVersion
         SdkIncludePath   = $sdkInclude
-        CMake            = (Resolve-CMakeExecutable -VisualStudioPath $vsPath)
+        CMake            = (Resolve-CMakeExecutable -VisualStudioPath $vsPath -MinimumVersion $minimumCMake)
     }
 }
 
@@ -535,6 +541,7 @@ function Invoke-DependencyBuild {
     Invoke-RepositoryCommand "Configuring dependencies ($($Toolchain.Generator))..." {
         & $Toolchain.CMake -S (Join-Path $script:RepositoryRoot 'deps') -B $buildDirectory `
             -G $Toolchain.Generator -A x64 `
+            "-DCMAKE_GENERATOR_INSTANCE=$($Toolchain.GeneratorInstance)" `
             "-DDESTDIR=$Destination" -DCMAKE_BUILD_TYPE=Release -DDEP_DEBUG=OFF
     }
     Invoke-RepositoryCommand "Building dependencies (parallel $jobs)..." {
@@ -579,6 +586,7 @@ function Invoke-ApplicationBuild {
         Invoke-RepositoryCommand "Configuring Bambu Studio ($($Toolchain.Generator))..." {
             & $Toolchain.CMake -S $script:RepositoryRoot -B $buildDirectory `
                 -G $Toolchain.Generator -A x64 `
+                "-DCMAKE_GENERATOR_INSTANCE=$($Toolchain.GeneratorInstance)" `
                 -DSLIC3R_MSVC_PDB=OFF -DBBL_RELEASE_TO_PUBLIC=1 -DBBL_INTERNAL_TESTING=0 `
                 -DSLIC3R_BUILD_TESTS=OFF `
                 "-DCMAKE_PREFIX_PATH=$prefixPath" "-DCMAKE_INSTALL_PREFIX=$InstallPrefix" `

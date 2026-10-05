@@ -234,11 +234,16 @@ try {
     Set-Status -State 'running' -Phase 'toolchain' -Step 'Installing developer tools' -PctHint 6
     try {
         Initialize-Toolchain -WorkDir $toolsDir
-        $vsProduct = Get-VisualStudio2022Product
-        if ([string]::IsNullOrWhiteSpace($vsProduct)) {
-            throw 'The installed Visual Studio 2022 product could not be identified.'
+        $vsInstance = Get-VisualStudioInstance
+        if ($null -eq $vsInstance) {
+            throw 'The installed Visual Studio 2022/2026 product could not be identified.'
         }
-        Write-BuildLog "Using Visual Studio 2022 product '$vsProduct'."
+        $vsProduct = ([string]$vsInstance.productId).Substring('Microsoft.VisualStudio.Product.'.Length)
+        $vsMajor = ([version]$vsInstance.installationVersion).Major
+        $env:BAMBU_VS_INSTALLATION_PATH = [string]$vsInstance.installationPath
+        $env:BAMBU_VS_INSTALLATION_VERSION = [string]$vsInstance.installationVersion
+        Write-BuildLog "Using Visual Studio major $vsMajor product '$vsProduct'."
+        Write-BuildLog "Visual Studio selection: path='$($vsInstance.installationPath)'; version=$($vsInstance.installationVersion); prerelease=$($vsInstance.isPrerelease); registrationComplete=$($vsInstance.isComplete). Required compiler files were checked separately."
     } catch {
         Write-BuildLog "Toolchain bootstrap failed: $($_.Exception.Message)"
         Exit-Build -Code 10 -Phase 'toolchain' -Step 'Toolchain bootstrap failed'
@@ -285,8 +290,8 @@ try {
     # 5. Build with a bounded opencode repair loop.
     $installDir = $PayloadOut
     $phases = @(
-        @{ Phase = 'deps';           Label = 'Compiling dependencies';   Pct = 40; Action = { & cmd /c "build_win.bat -v 17 -p $vsProduct -c Release -d `"$depsDir`" -s deps" } },
-        @{ Phase = 'app';            Label = 'Compiling the application'; Pct = 70; Action = { & cmd /c "build_win.bat -v 17 -p $vsProduct -c Release -s app" } },
+        @{ Phase = 'deps';           Label = 'Compiling dependencies';   Pct = 40; Action = { & cmd /c "build_win.bat -v $vsMajor -p $vsProduct -c Release -d `"$depsDir`" -s deps" } },
+        @{ Phase = 'app';            Label = 'Compiling the application'; Pct = 70; Action = { & cmd /c "build_win.bat -v $vsMajor -p $vsProduct -c Release -s app" } },
         @{ Phase = 'install-target'; Label = 'Staging the payload';       Pct = 88; Action = {
                 & cmake --install build --config Release --prefix $installDir
             } }
