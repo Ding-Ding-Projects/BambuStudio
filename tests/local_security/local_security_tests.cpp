@@ -1,9 +1,13 @@
 #include "libslic3r/LocalSecurity/LocalSecurity.hpp"
+#include "libslic3r/LocalSecurity/Authenticator.hpp"
+#include "libslic3r/LocalSecurity/ElementLock.hpp"
+#include "libslic3r/LocalSecurity/SupportTickets.hpp"
 #include <algorithm>
 #include <array>
 #include <iostream>
 #include <map>
 #include <functional>
+#include <fstream>
 
 using namespace Slic3r::LocalSecurity;
 namespace {
@@ -120,6 +124,48 @@ void encryption() {
     auto other=random_secret(32);rejects([&]{decrypt_snapshot(other,encrypted,"record.1");},"wrong key rejected");
     rejects([&]{decrypt_snapshot(key,encrypted,"record.2");},"record substitution rejected");
     encrypted[14]^=1;rejects([&]{decrypt_snapshot(key,encrypted,"record.1");},"tamper rejected");
+    Secret maximum(std::vector<unsigned char>(1024*1024,0x5a));auto full=encrypt_snapshot(key,maximum,"maximum");check(decrypt_snapshot(key,full,"maximum").size()==maximum.size(),"maximum snapshot decrypts");
+    Secret empty;check(decrypt_snapshot(key,encrypt_snapshot(key,empty,"empty"),"empty").size()==0,"empty snapshot decrypts");
+}
+void authenticator() {
+    MemoryVault vault;unsigned recorded=0;bool history_available=true;
+    AuthenticatorStore store(vault,[&](IdentityAction,const std::string& id,const Secret& snapshot){
+        if(!history_available)throw Failure(Error::History);
+        check(valid_stable_id(id)&&snapshot.size()>0,"history receives stable identity and snapshot");++recorded;
+    });
+    check(store.list().empty(),"authenticator honest empty state");
+    auto make=[] {Enrollment e;e.issuer="Example";e.account="user@example.test";e.secret=Secret("12345678901234567890");return e;};
+    auto e=make();auto current=totp(e.secret,e.parameters,59).current;
+    rejects([&]{store.add(make(),"000000",59);},"pairing wrong code rejected");check(store.list().empty()&&recorded==0,"unconfirmed pairing writes nothing");
+    history_available=false;rejects([&]{store.add(make(),current,59);},"history failure surfaced");check(store.list().empty(),"history failure preserves live state");history_available=true;
+    auto first=store.add(make(),current,59);auto second=store.add(make(),current,59);
+    check(store.list().size()==2&&first!=second,"independent stable entry IDs");
+    AuthenticatorStore restarted(vault,[&](IdentityAction,const std::string&,const Secret&){++recorded;});
+    check(restarted.code(first,59).current==current,"authenticator vault restart");
+    store.rename(first,"Changed issuer","another@example.test","Personal");auto entry=store.list().front();
+    check(entry.id==first&&entry.issuer=="Changed issuer"&&entry.group=="Personal","rename preserves stable identity");
+    check(store.code(first,59).current==current,"rename preserves secret");
+    store.move(first,1);check(store.list()[1].id==first,"reorder persisted");
+    auto exported=store.export_redacted();check(exported.find("Secrets and generated codes omitted.")!=std::string::npos,"export declares omitted fields");
+    check(exported.find(current)==std::string::npos&&exported.find("12345678901234567890")==std::string::npos&&exported.find("GEZDGNBV")==std::string::npos,"export excludes secret and codes");
+    store.remove(first);check(store.list().size()==1&&store.list()[0].id==second,"remove only selected entry");
+    rejects([&]{store.code(first,59);},"removed entry unavailable");
+    rejects([&]{AuthenticatorStore invalid(vault,{});},"history callback required");
+}
+void element_locks() {
+    MemoryVault vault;unsigned recorded=0;auto history=[&](IdentityAction action,const std::string&,const Secret& snapshot){check(action==IdentityAction::LockCreated&&snapshot.size()==5,"lock history excludes credentials");++recorded;};
+    auto now=Time{}+std::chrono::hours(1);ElementLock first(vault,"element.one",history);
+    check(!first.configured()&&first.allows_action(now),"unconfigured element permitted");
+    LockEnrollment enrollment;enrollment.settings={Policy::PasswordPinTotp,Duration::Minutes,1};enrollment.pin=Secret("123456");enrollment.password=Secret("test password answer");
+    Enrollment otp;otp.secret=Secret("12345678901234567890");enrollment.confirmation_code=totp(otp.secret,otp.parameters,59).current;enrollment.otp=std::move(otp);
+    first.create(std::move(enrollment),59);check(recorded==1&&first.configured()&&!first.allows_action(now),"created element blocks actions");
+    check(!first.submit(Secret("test password answer"),now,59)&&first.expected(now)==Factor::Pin,"backend password factor");
+    check(!first.submit(Secret("123456"),now,59)&&first.expected(now)==Factor::Totp,"backend PIN factor");
+    check(first.submit(Secret("287082"),now,59)&&first.allows_action(now),"backend OTP completes ordered policy");
+    first.relock();first.submit(Secret("test password answer"),now,59);first.submit(Secret("123456"),now,59);
+    check(!first.submit(Secret("287082"),now,59)&&!first.allows_action(now),"used OTP step cannot replay");
+    ElementLock restarted(vault,"element.one",history);check(restarted.configured()&&!restarted.allows_action(now),"configured element relocks on restart");
+    ElementLock other(vault,"element.two",history);check(other.allows_action(now),"lock credentials do not inherit");
 }
 void native_vault() {
 #ifdef _WIN32
@@ -131,8 +177,33 @@ void native_vault() {
     } catch(...) {vault->erase(id);throw;}
 #endif
 }
+void support_tickets() {
+    MemoryVault vault;auto folder=std::filesystem::temp_directory_path()/("local-ticket-test-"+new_stable_id());SupportTickets tickets(vault,folder);
+    check(tickets.list().empty(),"support honest empty state");
+    auto id=tickets.create(TicketCategory::ForgottenAnswer,5,"Forgot local answer");
+    check(tickets.list().size()==1&&tickets.list()[0].id==id,"ticket created and listed");
+    SupportTickets restart(vault,folder);check(restart.list()[0].stage==TicketStage::Created,"ticket persists across restart");
+    tickets.advance(id);check(tickets.list()[0].stage==TicketStage::Reviewed,"ticket advances to review");tickets.advance(id);check(tickets.list()[0].stage==TicketStage::Resolution,"ticket advances to resolution");
+    const auto file=folder/"local_security"/"support-tickets-v1.enc";std::ifstream input(file,std::ios::binary);std::string bytes((std::istreambuf_iterator<char>(input)),std::istreambuf_iterator<char>());input.close();
+    check(bytes.find("Forgot local answer")==std::string::npos,"ticket description encrypted on disk");
+    check(tickets.export_text().find("Nothing was sent.")!=std::string::npos,"ticket export states local boundary");
+    rejects([&]{tickets.create(TicketCategory::LocalReset,0,"invalid severity");},"ticket severity bounded");
+    rejects([&]{tickets.create(TicketCategory::LocalReset,1,std::string(161,'a'));},"ticket description bounded");
+    tickets.remove(id);check(tickets.list().empty(),"ticket removal persisted");
+    std::filesystem::remove(file);std::filesystem::remove(file.parent_path());std::filesystem::remove(folder);
+    check(tickets.list().empty(),"folder reset removes tickets");
+}
+void application_vault() {
+#ifdef _WIN32
+    auto folder=std::filesystem::temp_directory_path()/("local-vault-test-"+new_stable_id());auto first=make_application_vault(folder);Secret value("test scoped value");first->write("test-record",value);
+    auto same=make_application_vault(folder);check(same->read("test-record").has_value(),"application marker survives restart");
+    auto marker=folder/"local_security"/"instance-v1";std::filesystem::remove(marker);auto reset=make_application_vault(folder);
+    check(!reset->read("test-record").has_value(),"removed marker yields fresh namespace");first->erase("test-record");
+    std::filesystem::remove(marker);std::filesystem::remove(marker.parent_path());std::filesystem::remove(folder);
+#endif
+}
 }
 int main() {
-    try { rfc_vectors();parsing();credentials();locks();encryption();native_vault();std::cout<<"PASS "<<checks<<" local security behavioral checks\n";return 0; }
+    try { rfc_vectors();parsing();credentials();locks();encryption();authenticator();element_locks();support_tickets();native_vault();application_vault();std::cout<<"PASS "<<checks<<" local security behavioral checks\n";return 0; }
     catch(const std::exception& e) { std::cerr<<"FAIL after "<<checks<<" checks: "<<e.what()<<'\n';return 1; }
 }
