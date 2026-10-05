@@ -1,0 +1,4 @@
+add_executable(feature_services_tests presentation_routes_tests.cpp)
+target_compile_features(feature_services_tests PRIVATE cxx_std_17)
+target_include_directories(feature_services_tests PRIVATE ${PROJECT_SOURCE_DIR}/src)
+add_test(NAME feature_services_tests COMMAND feature_services_tests)

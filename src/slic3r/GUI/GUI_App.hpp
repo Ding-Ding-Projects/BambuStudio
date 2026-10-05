@@ -93,6 +93,8 @@ class ObjectList;
 class ObjectLayers;
 class Plater;
 class AutomationBridge;
+namespace PersonalModes { class SchoolRuntime; }
+namespace FeatureServices { class NarratorEnvironment; }
 class ParamsPanel;
 class NotificationManager;
 struct GUI_InitParams;
@@ -339,6 +341,8 @@ private:
     //BBS
     std::atomic<bool> m_is_closing {false};
     std::unique_ptr<AutomationBridge> m_automation_bridge;
+    std::unique_ptr<PersonalModes::SchoolRuntime> m_school_runtime;
+    std::unique_ptr<FeatureServices::NarratorEnvironment> m_narrator_environment;
     Slic3r::DeviceManager* m_device_manager { nullptr };
     Slic3r::UserManager* m_user_manager { nullptr };
     Slic3r::TaskManager* m_task_manager { nullptr };

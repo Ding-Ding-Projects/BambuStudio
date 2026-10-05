@@ -1,5 +1,8 @@
 #include "Preferences.hpp"
 #include "PersonalVocabulary.hpp"
+#include "TtsNarrator.hpp"
+#include "PersonalModes/SchoolMode.hpp"
+#include "FeatureServices/PresentationRoutes.hpp"
 #include "Widgets/MD3ScrolledWindow.hpp"
 #include "Export/ExportDatasets.hpp"
 #include "Export/ExportDialog.hpp"
@@ -1841,6 +1844,7 @@ static wxWindow *first_focusable_control(wxSizer *sizer)
 
 bool PreferencesDialog::teleport_to_setting(const std::string &key)
 {
+    if (!FeatureServices::presentation_setting_available(key, PersonalModes::school_presentation_suppressed.load())) return false;
     if (key.empty()) return false;
     if (m_search_rows.empty()) build_search_index();
     const SearchRow *target = nullptr;
@@ -2717,6 +2721,7 @@ wxWindow *PreferencesDialog::create_appearance_tab()
     sizer->Add(name_actions, flags);
     refresh_name_status();
 
+    if (!PersonalModes::school_presentation_suppressed.load()) {
     auto *wording = new StaticBox(scrolled);
     auto *wording_sizer = new wxBoxSizer(wxVERTICAL);
     wording->SetSizer(wording_sizer);
@@ -2749,6 +2754,7 @@ wxWindow *PreferencesDialog::create_appearance_tab()
         scrolled->FitInside();
     };
     wording_load->Bind(wxEVT_BUTTON, [this, refresh_wording](wxCommandEvent &) {
+        if (PersonalModes::school_presentation_suppressed.load()) return;
         wxFileDialog picker(this, _L("Load personal vocabulary"), wxEmptyString, wxEmptyString,
             _L("JSON files (*.json)|*.json"), wxFD_OPEN | wxFD_FILE_MUST_EXIST);
         if (picker.ShowModal() != wxID_OK) return;
@@ -2756,11 +2762,13 @@ wxWindow *PreferencesDialog::create_appearance_tab()
         refresh_wording(!applied);
     });
     wording_clear->Bind(wxEVT_BUTTON, [refresh_wording](wxCommandEvent &) {
+        if (PersonalModes::school_presentation_suppressed.load()) return;
         refresh_wording(!PersonalVocabulary::clear());
     });
     sizer->Add(wording, 0, wxEXPAND | wxALL, FromDIP(16));
     register_option_row("personal_vocabulary", nullptr, wording);
     refresh_wording(false);
+    }
 
     sizer->AddSpacer(FromDIP(20));
     scrolled->SetSizer(sizer);
@@ -2805,17 +2813,20 @@ wxWindow *PreferencesDialog::create_general_tab()
             continue;
         language_choices.emplace_back(id, language_display_name(info));
     }
-    auto item_language = create_item_language_mode_combobox(
+    wxBoxSizer *item_language = nullptr, *item_funny_en = nullptr, *item_funny_yue = nullptr, *item_dialog_emojis = nullptr;
+    if (!PersonalModes::school_presentation_suppressed.load()) {
+    item_language = create_item_language_mode_combobox(
         _L("Language"), scrolled, _L("Language"), "language", language_choices);
 
     // Per-language funny levels and the dialog emoji toggle sit directly under
     // the language picker; all three persist in AppConfig and apply live.
-    auto item_funny_en  = create_item_funny_level_slider(scrolled, I18N::FUNNY_LEVEL_ENGLISH_KEY, false);
-    auto item_funny_yue = create_item_funny_level_slider(scrolled, I18N::FUNNY_LEVEL_CANTONESE_KEY, true);
-    auto item_dialog_emojis = create_item_checkbox(
+    item_funny_en  = create_item_funny_level_slider(scrolled, I18N::FUNNY_LEVEL_ENGLISH_KEY, false);
+    item_funny_yue = create_item_funny_level_slider(scrolled, I18N::FUNNY_LEVEL_CANTONESE_KEY, true);
+    item_dialog_emojis = create_item_checkbox(
         funny_row_label("Show emojis in dialogs and message boxes"), scrolled,
         funny_row_label("Adds one decorative emoji to a dialog headline. Buttons, action labels and field labels never carry one."),
         50, I18N::DIALOG_EMOJIS_KEY);
+    }
 
     std::vector<wxString> Regions     = {_L("Asia-Pacific"), _L("Chinese Mainland"), _L("Europe"), _L("North America"), _L("Others")};
     auto                  item_region = create_item_region_combobox(_L("Login Region"), scrolled, _L("Login Region"), Regions);
@@ -2919,10 +2930,10 @@ wxWindow *PreferencesDialog::create_general_tab()
     sizer->AddSpacer(FromDIP(8));
     auto flags = wxSizerFlags().Expand().Border(wxTOP, FromDIP(4));
 
-    sizer->Add(item_language, flags);
-    sizer->Add(item_funny_en, flags);
-    sizer->Add(item_funny_yue, flags);
-    sizer->Add(item_dialog_emojis, flags);
+    if (item_language) sizer->Add(item_language, flags);
+    if (item_funny_en) sizer->Add(item_funny_en, flags);
+    if (item_funny_yue) sizer->Add(item_funny_yue, flags);
+    if (item_dialog_emojis) sizer->Add(item_dialog_emojis, flags);
     sizer->Add(item_region, flags);
     sizer->Add(item_currency, flags);
     sizer->Add(item_motion, flags);
@@ -3161,6 +3172,71 @@ wxWindow *PreferencesDialog::create_other_tab()
     sizer->Add(item_max_recent_count, flags);
     sizer->Add(item_auto_backup, flags);
     sizer->Add(item_gcodes_warning, flags);
+
+    // Speech preferences use stable platform IDs. A missing selected voice is
+    // retained, while the effective fallback is disclosed separately.
+    sizer->Add(create_item_title(_L("Narrator"), scrolled,
+        _L("Local speech is serialized. Voice network capability is unknown.")), flags);
+    sizer->Add(create_item_checkbox(_L("Enable narrator"), scrolled,
+        _L("Off by default. Speak application events using installed voices."), 50, "narrator_enabled"), flags);
+    sizer->Add(create_item_checkbox(_L("Quiet narration"), scrolled,
+        _L("Pause local speech without changing saved voice choices. An active screen reader also pauses narration."), 50, "narrator_quiet"), flags);
+    std::vector<wxString> speech_languages{_L("English")};
+    std::vector<std::string> speech_values{"en"};
+    if (!PersonalModes::school_presentation_suppressed.load()) {
+        speech_languages.push_back(_L("Cantonese")); speech_values.push_back("yue");
+        speech_languages.push_back(_L("Both languages")); speech_values.push_back("both");
+    }
+    sizer->Add(create_item_combobox(_L("Narration language"), scrolled,
+        _L("Independent of the interface language. Both speaks English first."),
+        "narrator_language", speech_languages, speech_values, {}, [](int) {}), flags);
+    const auto installed_voices = TtsNarrator::voices();
+    for (bool cantonese : {false, true}) {
+        if (cantonese && PersonalModes::school_presentation_suppressed.load()) continue;
+        const std::string voice_key = cantonese ? "narrator_voice_yue" : "narrator_voice_en";
+        std::vector<wxString> labels{_L("Automatic voice")};
+        std::vector<std::string> values{""};
+        for (const auto& voice : installed_voices) {
+            if (!(cantonese ? voice.cantonese : voice.english)) continue;
+            labels.emplace_back(voice.name);
+            values.push_back(wxString(voice.id).ToUTF8().data());
+        }
+        const auto selected = app_config->get(voice_key);
+        if (!selected.empty() && std::find(values.begin(), values.end(), selected) == values.end()) {
+            labels.push_back(_L("Selected voice is not installed")); values.push_back(selected);
+        }
+        auto* status = new Label(scrolled, wxEmptyString);
+        status->SetName(cantonese ? _L("Effective Cantonese voice") : _L("Effective English voice"));
+        auto refresh_status = [status, cantonese](int) {
+            const auto effective = TtsNarrator::voice_status(cantonese);
+            wxString text = !effective.available ? _L("No installed voice can speak this language.") :
+                _L("Effective voice:") + " " + wxString(effective.effective_name);
+            if (effective.selected_missing) text += "\n" + _L("Selected voice is missing; the saved choice is kept.");
+            text += "\n" + _L("Voice network capability is unknown.");
+            status->SetLabel(text);
+            status->Wrap(status->FromDIP(420));
+            status->GetParent()->Layout();
+        };
+        sizer->Add(create_item_combobox(cantonese ? _L("Cantonese voice") : _L("English voice"), scrolled,
+            _L("Choose an installed voice. Missing selections remain saved."), voice_key, labels, values, {}, refresh_status), flags);
+        sizer->Add(status, flags);
+        refresh_status(0);
+        std::vector<wxString> number_labels;
+        std::vector<std::string> number_values;
+        for (int n = -10; n <= 10; ++n) { number_labels.push_back(wxString::Format("%d", n)); number_values.push_back(std::to_string(n)); }
+        sizer->Add(create_item_combobox(cantonese ? _L("Cantonese speech rate") : _L("English speech rate"), scrolled,
+            _L("Platform range: -10 to 10. Normal delivery: 0."), cantonese ? "narrator_rate_yue" : "narrator_rate_en",
+            number_labels, number_values, {}, [](int) {}), flags);
+        sizer->Add(create_item_combobox(cantonese ? _L("Cantonese speech pitch") : _L("English speech pitch"), scrolled,
+            _L("Platform range: -10 to 10. Normal delivery: 0."), cantonese ? "narrator_pitch_yue" : "narrator_pitch_en",
+            number_labels, number_values, {}, [](int) {}), flags);
+    }
+    const auto mirror = TtsNarrator::external_mirror_status();
+    auto* mirror_status = new Label(scrolled, mirror == TtsNarrator::ExternalMirrorStatus::Unconfigured ?
+        _L("External speech mirror is not configured.") :
+        _L("External speech mirror is configured. Playback completion is unavailable; local serialization does not cover external playback."));
+    mirror_status->Wrap(FromDIP(420));
+    sizer->Add(mirror_status, flags);
 
     // ---- Online Models (visible only when has_model_mall()) ----
     auto title_modelmall   = create_item_title(_L("Online Models"), scrolled, _L("Online Models"));

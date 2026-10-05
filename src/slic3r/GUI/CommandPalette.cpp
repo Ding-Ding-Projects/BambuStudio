@@ -5,6 +5,8 @@
 #include "Appearance/ElementStyle.hpp"
 
 #include "GUI_App.hpp"
+#include "PersonalModes/SchoolMode.hpp"
+#include "FeatureServices/PresentationRoutes.hpp"
 #include "I18N.hpp"
 #include "MainFrame.hpp"
 #include "Notebook.hpp"
@@ -242,6 +244,7 @@ void CommandPalette::collect_entries()
     // view, focuses its control and flashes it. The developer page only exists
     // in non-public builds, so its rows are skipped there.
     for (const PaletteIndex::PreferenceEntry &p : PaletteIndex::preference_entries()) {
+        if (!FeatureServices::presentation_setting_available(p.key, PersonalModes::school_presentation_suppressed.load())) continue;
 #if BBL_RELEASE_TO_PUBLIC
         if (p.page == PaletteIndex::PageDeveloper)
             continue;
@@ -251,7 +254,10 @@ void CommandPalette::collect_entries()
         const wxString desc  = wxString(p.desc).IsEmpty() ? _L("Setting") + " (" + p.key + ")" : _(p.desc);
         const std::string key = p.key;
         m_entries.push_back({MaterialIcon::Settings, title, desc,
-                             [key]() { wxGetApp().open_preferences(key); }});
+                             [key]() {
+                                 if (FeatureServices::presentation_setting_available(key, PersonalModes::school_presentation_suppressed.load()))
+                                     wxGetApp().open_preferences(key);
+                             }, key == "narrator_enabled" ? Rich::Narrator : Rich::None});
     }
 
     // --- Documentation articles (docs/features) -----------------------------
@@ -377,6 +383,17 @@ wxPanel *CommandPalette::make_row(const Entry &entry, int index)
 void CommandPalette::add_rich_controls(wxPanel *row, wxBoxSizer *sizer, Rich rich)
 {
     AppConfig *cfg = wxGetApp().app_config;
+    if (rich == Rich::Narrator) {
+        auto *control = new SwitchButton(row);
+        control->SetName(_L("Enable narrator"));
+        control->SetValue(cfg->get("narrator_enabled") == "true");
+        control->Bind(wxEVT_TOGGLEBUTTON, [cfg, control](wxCommandEvent&) {
+            cfg->set("narrator_enabled", control->GetValue() ? "true" : "false");
+            cfg->save();
+        });
+        sizer->Add(control, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(10));
+        return;
+    }
     if (rich == Rich::Theme || rich == Rich::Density) {
         auto *seg = new MultiSwitchButton(row);
         if (rich == Rich::Theme) {

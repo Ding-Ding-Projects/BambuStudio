@@ -110,6 +110,9 @@
 #include "PrinterWatch.hpp"
 #include "DimSumSurprise.hpp"
 #include "TtsNarrator.hpp"
+#include "PersonalModes/SchoolRuntime.hpp"
+#include "PersonalVocabulary.hpp"
+#include "FeatureServices/NarratorEnvironment.hpp"
 #include "HomeAssistant.hpp"
 #include "GLCanvas3D.hpp"
 #include "EncodedFilament.hpp"
@@ -1592,6 +1595,9 @@ void GUI_App::post_init()
     // TTS narrator (opt-in, off by default): printer state changes + errors,
     // with optional Home Assistant speakers and alert lights.
     TtsNarrator::install();
+    m_narrator_environment = std::make_unique<FeatureServices::NarratorEnvironment>([this] {
+        return app_config && app_config->get("narrator_quiet") == "true";
+    });
 
     // Funny level disclosure (non-blocking snackbar, recorded so it fires once).
     show_funny_level_disclosure_once();
@@ -3349,6 +3355,23 @@ void GUI_App::UnRegisterMacPowerCallBack()
 
 bool GUI_App::OnInit()
 {
+    // Establish shared presentation before the first translated window, including
+    // diagnostic startup surfaces. The service fails closed on unreadable records.
+    m_school_runtime = std::make_unique<PersonalModes::SchoolRuntime>(
+        [this](const PersonalModes::SchoolRecord&, PersonalModes::RecordStatus) {
+            if (!app_config || !mainframe) return;
+            CallAfter([this] {
+                if (is_closing() || !app_config || !mainframe) return;
+                I18N::enable_bilingual_decorator(false);
+                I18N::configure_language_mode(app_config->get("language"), from_u8(localization_dir()));
+                const bool bilingual = !PersonalModes::school_presentation_suppressed.load() &&
+                    I18N::language_mode_profile().is_bilingual();
+                I18N::BilingualRegistry::instance().reset(bilingual);
+                I18N::enable_bilingual_decorator(bilingual);
+                PersonalVocabulary::refresh();
+                mainframe->Refresh();
+            });
+        });
 #ifdef _WIN32
     // Before any window or GL context: a Mesa pair beside the exe needs the
     // llvmpipe environment or the process exits within seconds (see
@@ -3380,6 +3403,9 @@ bool GUI_App::OnInit()
 
 int GUI_App::OnExit()
 {
+    m_school_runtime.reset();
+    m_narrator_environment.reset();
+    TtsNarrator::shutdown();
     if (m_automation_bridge) {
         m_automation_bridge->stop();
         m_automation_bridge.reset();
