@@ -5886,13 +5886,16 @@ void Sidebar::change_filament(size_t from_id, size_t to_id)
 {
     if (from_id == static_cast<size_t>(kSidebarContextMenuFilamentId))
         from_id = p->m_menu_filament_id;
-    if (from_id == size_t(-1))
-        from_id = p->combos_filament.size() - 1;
+    if (from_id == size_t(-1)) {
+        if (p->combos_filament.empty()) return;
+        from_id = static_cast<size_t>(p->combos_filament.back()->get_filament_idx());
+    }
 
     if (from_id == to_id)
         return;
 
     auto& pb = *wxGetApp().preset_bundle;
+    if (from_id >= pb.filament_presets.size() || to_id >= pb.filament_presets.size()) return;
     bool from_is_physical = !pb.is_mixed_filament(from_id);
     bool to_is_mixed = pb.is_mixed_filament(to_id);
 
@@ -5930,10 +5933,15 @@ void Sidebar::change_filament(size_t from_id, size_t to_id)
 
 void Sidebar::edit_filament()
 {
-    p->editing_filament = -1;
-    if (p->m_menu_filament_id >= 0 && p->m_menu_filament_id < p->combos_filament.size()
-            && p->combos_filament[p->m_menu_filament_id]->switch_to_tab())
-        p->editing_filament = p->m_menu_filament_id; // sync with TabPresetComboxBox's m_filament_idx
+    if (p->m_menu_filament_id < 0) return;
+    for (auto *combo : p->combos_filament) {
+        const int config_slot = combo->get_filament_idx();
+        if (config_slot != p->m_menu_filament_id) continue;
+        wxWeakRef<Sidebar> self(this);
+        if (combo->switch_to_tab() && self)
+            self->p->editing_filament = config_slot;
+        return; // switching may rebuild the row list, so do not advance it
+    }
 }
 
 void Sidebar::add_custom_filament(wxColour new_col, const std::string& preset_name, bool /*skip_preset_validation*/) {

@@ -31,6 +31,10 @@ those same siblings for destruction again.
 Deferred row-title layout work is queued on the sidebar itself, so destroying
 the sidebar also removes its pending callbacks. Row rebuilding uses physical
 slot mappings for every deletion, including interleaved mixed slots.
+Edit finds the physical row by its current configuration slot. An interleaved
+mixed slot therefore cannot turn a valid physical Edit action into an out-of-range
+row lookup. Canceled or stale Edit selections preserve the current editor, and
+successful switching stops iteration before a rebuilt row list is visited.
 
 ## Verification and limits
 
@@ -44,6 +48,9 @@ also compile production menu focus/finalization bodies to exercise destruction
 during focus restoration, platform dismissal and the close callback, along with
 single close delivery and suppressed popup-stack dispatch. The deterministic
 tests do not substitute for native wxWidgets backend interaction.
+The production Edit body is also compiled by this target for interleaved slot
+identity, cancellation, stale slot selection and row rebuilding. Those added
+cases await the hosted build after local compilation was disabled for this task.
 
 `node --test ui-md3/tests/native-lifecycle.test.mjs` supplies supplementary source
 contracts and deliberate negative mutations. The full native build and real

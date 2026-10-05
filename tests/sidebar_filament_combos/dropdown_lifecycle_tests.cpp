@@ -85,6 +85,43 @@ struct MD3MenuPopup : PopupWindow {
 #include "menu_restoreInvokerFocus.inc"
 #include "menu_finalizeClose.inc"
 
+struct FilamentCombo {
+    int config_slot, switches = 0; bool accepted = true;
+    std::function<void()> on_switch;
+    int get_filament_idx() const { return config_slot; }
+    bool switch_to_tab() { ++switches; auto cb = on_switch; if (cb) cb(); return accepted; }
+};
+struct Sidebar : Lifetime {
+    struct State {
+        int m_menu_filament_id = -1, editing_filament = 0;
+        std::vector<FilamentCombo *> combos_filament;
+    } state;
+    State *p = &state;
+    void edit_filament();
+};
+#include "sidebar_edit.inc"
+
+TEST_CASE("filament edit resolves interleaved physical config slots", "[native-lifecycle]") {
+    FilamentCombo first{0}, second{2}; Sidebar sidebar;
+    sidebar.p->combos_filament = {&first, &second}; sidebar.p->m_menu_filament_id = 2;
+    sidebar.edit_filament();
+    REQUIRE(first.switches == 0); REQUIRE(second.switches == 1);
+    REQUIRE(sidebar.p->editing_filament == 2);
+}
+TEST_CASE("canceled and stale filament edits preserve current editor", "[native-lifecycle]") {
+    FilamentCombo first{0}, second{2}; second.accepted = false; Sidebar sidebar;
+    sidebar.p->combos_filament = {&first, &second}; sidebar.p->m_menu_filament_id = 2;
+    sidebar.edit_filament(); REQUIRE(sidebar.p->editing_filament == 0);
+    sidebar.p->m_menu_filament_id = 1; sidebar.edit_filament();
+    REQUIRE(sidebar.p->editing_filament == 0); REQUIRE(second.switches == 1);
+}
+TEST_CASE("filament switching can rebuild rows without advancing invalid iterator", "[native-lifecycle]") {
+    FilamentCombo first{0}, second{2}; Sidebar sidebar;
+    sidebar.p->combos_filament = {&first, &second}; sidebar.p->m_menu_filament_id = 2;
+    second.on_switch = [&] { sidebar.p->combos_filament.clear(); };
+    sidebar.edit_filament(); REQUIRE(sidebar.p->editing_filament == 2);
+}
+
 TEST_CASE("menu focus destroying popup preserves close notification", "[native-lifecycle]") {
     wxWindow owner; wxMenu menu; auto *popup = new MD3MenuPopup;
     int closes = 0, sends = 0;
