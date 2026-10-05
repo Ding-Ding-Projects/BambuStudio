@@ -22444,3 +22444,11 @@ msgstr ""
 
 #~ msgid "tree"
 #~ msgstr "tree"
+
+#: src/slic3r/GUI/Plater.cpp
+msgid "Large imported meshes were simplified. Dimensions and volume may change; original files are unchanged."
+msgstr "Великі імпортовані сітки спрощено. Розміри й об’єм можуть змінитися; оригінальні файли залишаються без змін."
+
+#: src/slic3r/GUI/Plater.cpp
+msgid "Import canceled"
+msgstr "Імпорт скасовано"

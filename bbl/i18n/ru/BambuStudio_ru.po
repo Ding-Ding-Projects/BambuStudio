@@ -20858,3 +20858,11 @@ msgstr ""
 
 #~ msgid "Guide"
 #~ msgstr "Инстр."
+
+#: src/slic3r/GUI/Plater.cpp
+msgid "Large imported meshes were simplified. Dimensions and volume may change; original files are unchanged."
+msgstr "Большие импортированные сетки упрощены. Размеры и объём могут измениться; исходные файлы остаются без изменений."
+
+#: src/slic3r/GUI/Plater.cpp
+msgid "Import canceled"
+msgstr "Импорт отменён"

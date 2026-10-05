@@ -23876,3 +23876,11 @@ msgstr ""
 
 #~ msgid "⌥+Mouse wheel"
 #~ msgstr "⌥+Kółko myszy"
+
+#: src/slic3r/GUI/Plater.cpp
+msgid "Large imported meshes were simplified. Dimensions and volume may change; original files are unchanged."
+msgstr "Duże zaimportowane siatki zostały uproszczone. Wymiary i objętość mogą się zmienić; oryginalne pliki pozostają niezmienione."
+
+#: src/slic3r/GUI/Plater.cpp
+msgid "Import canceled"
+msgstr "Import anulowany"

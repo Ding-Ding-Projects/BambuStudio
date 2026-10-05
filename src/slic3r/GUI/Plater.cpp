@@ -13388,6 +13388,8 @@ std::vector<size_t> Plater::priv::load_model_objects(const ModelObjectPtrs& mode
     if (!update_load_progress(0, _L("Importing model to project...")))
         return obj_idxs;
     for (ModelObject *model_object : model_objects) {
+        if (!update_load_progress(5, _L("Importing model to project...")))
+            return obj_idxs;
         auto *object = model.add_object(*model_object);
         object->sort_volumes(true);
         std::string object_name = object->name.empty() ? fs::path(object->input_file).filename().string() : object->name;
@@ -13412,6 +13414,8 @@ std::vector<size_t> Plater::priv::load_model_objects(const ModelObjectPtrs& mode
 
         //BBS: when the object is too large, let the user choose whether to scale it down
         for (size_t i = 0; i < object->instances.size(); ++i) {
+            if (!update_load_progress(20, _L("Placing model on the bed...")))
+                return obj_idxs;
             ModelInstance* instance = object->instances[i];
             const Vec3d size = object->instance_bounding_box(i).size();
             const Vec3d ratio = size.cwiseQuotient(bed_size);
@@ -13442,17 +13446,25 @@ std::vector<size_t> Plater::priv::load_model_objects(const ModelObjectPtrs& mode
         object->ensure_on_bed(allow_negative_z);
         if (!update_load_progress(35, _L("Placing model on the bed...")))
             return obj_idxs;
-        if (!split_object) {
-            //BBS initial assemble transformation
-            for (ModelObject* model_object : model.objects) {
-                //BBS initialize assemble transformation
-                for (int i = 0; i < model_object->instances.size(); i++) {
-                    if (!model_object->instances[i]->is_assemble_initialized()) {
-                        model_object->instances[i]->set_assemble_transformation(model_object->instances[i]->get_transformation());
-                    }
-                }
-                // BBS: also initialize per-volume assemble transformation so the assembly view can render new volumes correctly even before any explicit per-volume edit.
-                q->ensure_model_object_volume_assemble_initialized(model_object);
+    }
+
+    if (!split_object) {
+        // Initialize the scene once, not once for every newly imported object.
+        // Existing objects may still need initialization after project migration.
+        for (ModelObject* object : model.objects) {
+            for (auto* instance : object->instances) {
+                if (!update_load_progress(40, _L("Placing model on the bed...")))
+                    return obj_idxs;
+                if (!instance->is_assemble_initialized())
+                    instance->set_assemble_transformation(instance->get_transformation());
+            }
+            for (auto* volume : object->volumes) {
+                if (!update_load_progress(45, _L("Placing model on the bed...")))
+                    return obj_idxs;
+                if (volume == nullptr || !volume->is_model_part()) continue;
+                volume->ensure_part_guid();
+                if (!volume->is_assemble_initialized())
+                    volume->set_assemble_transformation(volume->get_transformation());
             }
         }
     }
@@ -13481,6 +13493,8 @@ std::vector<size_t> Plater::priv::load_model_objects(const ModelObjectPtrs& mode
 #else
     // BBS: find an empty cell to put the copied object
     for (auto& instance : new_instances) {
+        if (!update_load_progress(60, _L("Placing model on the bed...")))
+            return obj_idxs;
         auto offset = instance->get_offset();
         auto start_point = this->bed.build_volume().bounding_volume2d().center();
         bool plate_empty = partplate_list.get_curr_plate()->empty();
@@ -13509,13 +13523,18 @@ std::vector<size_t> Plater::priv::load_model_objects(const ModelObjectPtrs& mode
     if (!update_load_progress(75, _L("Updating object list...")))
         return obj_idxs;
 
-    if (obj_idxs.size() > 1) {
-        std::vector<size_t> obj_idxs_1 (obj_idxs.begin(), obj_idxs.end() - 1);
-
+    if (progress_callback) {
+        for (size_t row = 0; row < obj_idxs.size(); ++row) {
+            if (!update_load_progress(75 + static_cast<int>(15 * row / std::max<size_t>(1, obj_idxs.size())),
+                                      _L("Updating object list...")))
+                return obj_idxs;
+            wxGetApp().obj_list()->add_object_to_list(obj_idxs[row], row + 1 == obj_idxs.size());
+        }
+    } else if (obj_idxs.size() > 1) {
+        std::vector<size_t> obj_idxs_1(obj_idxs.begin(), obj_idxs.end() - 1);
         wxGetApp().obj_list()->add_objects_to_list(obj_idxs_1, false);
-        wxGetApp().obj_list()->add_object_to_list(obj_idxs[obj_idxs.size() - 1]);
-    }
-    else
+        wxGetApp().obj_list()->add_object_to_list(obj_idxs.back());
+    } else
         wxGetApp().obj_list()->add_objects_to_list(obj_idxs);
 
     BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << ":" << __LINE__ << boost::format(", after add_objects_to_list");
@@ -13524,8 +13543,11 @@ std::vector<size_t> Plater::priv::load_model_objects(const ModelObjectPtrs& mode
     update();
     // Update InfoItems in ObjectList after update() to use of a correct value of the GLCanvas3D::is_sinking(),
     // which is updated after a view3D->reload_scene(false, flags & (unsigned int)UpdateParams::FORCE_FULL_SCREEN_REFRESH) call
-    for (const size_t idx : obj_idxs)
+    for (const size_t idx : obj_idxs) {
+        if (!update_load_progress(95, _L("Updating object list...")))
+            return obj_idxs;
         wxGetApp().obj_list()->update_info_items(idx);
+    }
 
     object_list_changed();
 
