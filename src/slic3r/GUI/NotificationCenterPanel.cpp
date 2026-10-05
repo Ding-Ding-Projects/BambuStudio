@@ -1,4 +1,5 @@
 #include "HumanDate.hpp"
+#include "Export/ExportDialog.hpp"
 #include "NotificationCenterPanel.hpp"
 #include "Widgets/MD3DataView.hpp"
 
@@ -11,21 +12,16 @@
 #include "Widgets/MD3Tokens.hpp"
 #include "Widgets/MaterialIcon.hpp"
 #include "Widgets/SearchField.hpp"
-#include "Widgets/SlideToConfirm.hpp"
 #include "Widgets/SuperConfirmGate.hpp"
 #include "Widgets/StateColor.hpp"
-#include "Widgets/StaticBox.hpp"
 
 #include <algorithm>
-#include <fstream>
 
 #include <boost/log/trivial.hpp>
-#include <boost/nowide/fstream.hpp>
 
 #include <wx/dataview.h>
 #include <wx/datetime.h>
 #include <wx/display.h>
-#include <wx/filedlg.h>
 #include <wx/sizer.h>
 #include <wx/variant.h>
 
@@ -243,28 +239,6 @@ void NotificationCenterPanel::build_ui()
     bulk_row->Add(m_delete_button, 0);
     root->Add(bulk_row, 0, wxEXPAND | wxTOP, FromDIP(8));
 
-    // --- Delete gate (hidden until requested) ----------------------------
-    // Bulk delete is gated by SuperConfirmGate (on_delete_requested); this
-    // inline slide card is kept only as the no-anchor fallback surface.
-    m_delete_card = new StaticBox(this);
-    auto *gate_sizer = new wxBoxSizer(wxVERTICAL);
-    m_delete_label = new Label(m_delete_card, Label::Body_13, wxEmptyString);
-    gate_sizer->Add(m_delete_label, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(12));
-    // TRN: Instruction on the slide-to-confirm control guarding bulk delete; second string is shown once the slide completes.
-    m_delete_gate = new SlideToConfirm(m_delete_card, _L("Slide to delete these entries permanently"), _L("Deleting…"));
-    m_delete_gate->SetDangerStyle(true);
-    m_delete_gate->SetOnConfirm([this] { on_delete_confirmed(); });
-    gate_sizer->Add(m_delete_gate, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(12));
-    // TRN: Cancel the pending bulk delete in the notification centre.
-    m_delete_cancel_button = new Button(m_delete_card, _L("Cancel"));
-    m_delete_cancel_button->SetVariant(Button::Variant::Text);
-    m_delete_cancel_button->SetButtonSize(Button::Size::Small);
-    m_delete_cancel_button->Bind(wxEVT_BUTTON, &NotificationCenterPanel::on_delete_cancelled, this);
-    gate_sizer->Add(m_delete_cancel_button, 0, wxALIGN_RIGHT | wxALL, FromDIP(8));
-    m_delete_card->SetSizer(gate_sizer);
-    m_delete_card->Hide();
-    root->Add(m_delete_card, 0, wxEXPAND | wxTOP, FromDIP(8));
-
     update_level_chips();
 }
 
@@ -274,9 +248,6 @@ void NotificationCenterPanel::apply_theme()
     const wxColour list      = StateColor::semantic(MD3::Role::SurfaceContainerLowest);
     const wxColour text      = StateColor::semantic(MD3::Role::OnSurface);
     const wxColour secondary = StateColor::semantic(MD3::Role::OnSurfaceVariant);
-    const wxColour error_bg  = StateColor::semantic(MD3::Role::ErrorContainer);
-    const wxColour error_fg  = StateColor::semantic(MD3::Role::OnErrorContainer);
-    const wxColour outline   = StateColor::semantic(MD3::Role::OutlineVariant);
 
     SetBackgroundColour(surface);
     for (Label *label : {m_status_label, m_empty_label}) {
@@ -287,14 +258,6 @@ void NotificationCenterPanel::apply_theme()
         m_list->SetBackgroundColour(list);
         m_list->SetForegroundColour(text);
     }
-    if (m_delete_card != nullptr) {
-        m_delete_card->SetBackgroundColorNormal(error_bg);
-        m_delete_card->SetBorderColorNormal(outline);
-        m_delete_card->SetBorderWidth(1);
-        m_delete_card->SetCornerRadius(FromDIP(MD3::Metrics::active().radius));
-        m_delete_label->SetBackgroundColour(error_bg);
-        m_delete_label->SetForegroundColour(error_fg);
-    }
     Refresh();
 }
 
@@ -303,8 +266,6 @@ void NotificationCenterPanel::on_dpi_changed(const wxRect &suggested_rect)
     MD3Dialog::on_dpi_changed(suggested_rect);
     if (m_search != nullptr)
         m_search->Rescale();
-    if (m_delete_gate != nullptr)
-        m_delete_gate->Rescale();
     Layout();
 }
 
@@ -562,17 +523,6 @@ void NotificationCenterPanel::update_bulk_buttons()
     m_export_button->SetToolTip(m_matches.empty() ? _L("Nothing matches the current filter")
                                                   : (any ? _L("Export the selected notifications")
                                                          : _L("Export every notification matching the current filter")));
-    // A pending delete gate whose selection vanished (auto-refresh, filter
-    // change) is withdrawn rather than left armed against nothing.
-    if (m_delete_card->IsShown() && !any)
-        hide_delete_gate();
-}
-
-void NotificationCenterPanel::hide_delete_gate()
-{
-    m_delete_gate->Reset();
-    m_delete_card->Hide();
-    Layout();
 }
 
 void NotificationCenterPanel::update_level_chips()
@@ -625,46 +575,20 @@ void NotificationCenterPanel::on_export(wxCommandEvent &)
     if (ids.empty())
         ids = m_matches;
 
-    // Format is chosen through the file-type filter; the wildcard order maps
-    // onto ExportFormat below.
-    wxFileDialog dialog(this, _L("Export notifications"), wxEmptyString, "notification-history",
-                        "JSON (*.json)|*.json|CSV (*.csv)|*.csv|Markdown (*.md)|*.md|Plain text (*.txt)|*.txt",
-                        wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
-    if (dialog.ShowModal() != wxID_OK)
-        return;
-    const NotificationHistory::ExportFormat formats[] = {
-        NotificationHistory::ExportFormat::Json, NotificationHistory::ExportFormat::Csv,
-        NotificationHistory::ExportFormat::Markdown, NotificationHistory::ExportFormat::PlainText};
-    const int index = std::max(0, std::min(3, dialog.GetFilterIndex()));
-    const NotificationHistory::ExportFormat format = formats[index];
-
-    wxString path = dialog.GetPath();
-    const wxString ext = wxString(".") + NotificationHistory::export_extension(format);
-    if (!path.Lower().EndsWith(ext))
-        path += ext;
-
-    const std::string payload = m_manager->history().export_entries(ids, format, current_filter());
-    boost::nowide::ofstream out(path.ToUTF8().data(), std::ios::binary | std::ios::trunc);
-    const bool ok = static_cast<bool>(out) && static_cast<bool>(out << payload);
-    if (ok) {
-        // TRN: %1$d exported entries; %2$s file path.
-        m_manager->push_notification(NotificationType::CustomNotification, NotificationManager::NotificationLevel::RegularNotificationLevel,
-            wxString::Format(_L("Exported %d notifications to %s"), static_cast<int>(ids.size()), path).ToUTF8().data());
-    } else {
-        // TRN: %s is the file path the export could not write.
-        m_manager->push_notification(NotificationType::CustomNotification, NotificationManager::NotificationLevel::ErrorNotificationLevel,
-            wxString::Format(_L("Could not write the export to %s. Check the folder is writable and try again."), path).ToUTF8().data());
-    }
+    // Capture the current filtered data before opening a modal format picker.
+    // The shared dialog owns destination confirmation, archives and editor handoff.
+    ExportDialog::run(this, m_manager->history().export_dataset(ids, current_filter()));
 }
 
 void NotificationCenterPanel::on_delete_requested(wxCommandEvent &)
 {
-    const std::size_t selected = m_selection.count_within(m_matches);
+    if (m_manager == nullptr)
+        return;
+    const auto reviewed_ids = m_manager->history().reviewed_selection(m_selection, m_matches);
+    const std::size_t selected = reviewed_ids.size();
     if (selected == 0)
         return;
-    // Bulk delete goes through the shared two-key super confirmation gate,
-    // anchored to the delete button; the inline slide card stays as the
-    // fallback surface only when the gate cannot anchor (see hide_delete_gate).
+    // The shared two-key confirmation owns all authorization and cancellation.
     SuperConfirmGate::Spec spec;
     // TRN: Title of the confirmation gate for deleting notification history entries.
     spec.action = _L("Delete notification entries");
@@ -672,41 +596,31 @@ void NotificationCenterPanel::on_delete_requested(wxCommandEvent &)
     spec.consequence = wxString::Format(
         _L("Permanently delete %d notification entries from the history. This cannot be undone; the export button above keeps a copy first."),
         static_cast<int>(selected));
-    for (std::uint64_t id : m_matches)
-        if (m_selection.contains(id))
-            if (const auto *e = m_manager ? m_manager->history().find(id) : nullptr)
-                spec.affected.push_back(from_u8(e->title.empty() ? e->text : e->title));
+    for (std::uint64_t id : reviewed_ids)
+        if (const auto *e = m_manager->history().find(id))
+            spec.affected.push_back(from_u8(e->title.empty() ? e->text : e->title));
     spec.affected_count = static_cast<int>(selected);
     SuperConfirmGate::Show(m_delete_button, spec,
-                           [this]() { on_delete_confirmed(); },
+                           [this, reviewed_ids]() { on_delete_confirmed(reviewed_ids); },
                            [this]() { m_delete_button->SetFocus(); });
 }
 
-void NotificationCenterPanel::on_delete_cancelled(wxCommandEvent &)
+void NotificationCenterPanel::on_delete_confirmed(const std::set<std::uint64_t> &reviewed_ids)
 {
-    hide_delete_gate();
-    m_delete_button->SetFocus();
-}
-
-void NotificationCenterPanel::on_delete_confirmed()
-{
-    if (m_manager == nullptr)
+    if (m_manager == nullptr || reviewed_ids.empty())
         return;
-    std::set<std::uint64_t> ids;
-    for (std::uint64_t id : m_matches)
-        if (m_selection.contains(id))
-            ids.insert(id);
-    // Deleting a live toast's record also closes the toast so the two never disagree.
-    m_manager->dismiss_history_entries(ids);
-    const std::size_t removed = m_manager->history().erase(ids);
-    m_selection.clear();
-    m_delete_gate->Reset();
-    m_delete_card->Hide();
+    // The current search and selection cannot expand this authorization.
+    // Records removed by retention or another view are counted as unavailable.
+    m_manager->dismiss_history_entries(reviewed_ids);
+    const std::size_t removed = m_manager->history().erase(reviewed_ids);
+    for (const auto id : reviewed_ids)
+        m_selection.set(id, false);
     RefreshNow();
     m_delete_button->SetFocus();
-    // TRN: %d is the number of history entries removed.
+    // TRN: First count is removed records; second is reviewed records already absent.
     m_manager->push_notification(NotificationType::CustomNotification, NotificationManager::NotificationLevel::RegularNotificationLevel,
-        wxString::Format(_L("Deleted %d notification entries from the history"), static_cast<int>(removed)).ToUTF8().data());
+        wxString::Format(_L("Deleted %d notification entries from the history; %d reviewed entries were already unavailable."),
+                         static_cast<int>(removed), static_cast<int>(reviewed_ids.size() - removed)).ToUTF8().data());
 }
 
 } } // namespace Slic3r::GUI

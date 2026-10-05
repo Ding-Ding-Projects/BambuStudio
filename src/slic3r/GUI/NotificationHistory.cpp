@@ -622,4 +622,37 @@ bool NotificationHistory::load(const std::filesystem::path &file, std::string *e
     return from_json(buf.str(), error);
 }
 
+std::set<std::uint64_t> NotificationHistory::reviewed_selection(
+    const Selection &selection, const std::vector<std::uint64_t> &matches) const
+{
+    std::set<std::uint64_t> result;
+    for (const auto id : matches)
+        if (selection.contains(id) && find(id)) result.insert(id);
+    return result;
+}
+
+Export::Dataset NotificationHistory::export_dataset(const std::vector<std::uint64_t> &ids, const Filter &filter) const
+{
+    using Export::Value;
+    Export::Dataset dataset;
+    dataset.name = "Notification history: " + filter.describe();
+    dataset.schema_id = "bambustudio.notification_history.export";
+    dataset.file_stem = "notification-history";
+    dataset.kind = Export::DatasetKind::Tabular;
+    dataset.columns = {{"id", Value::Type::String}, {"timestamp_ms", Value::Type::Integer},
+        {"level", Value::Type::Integer}, {"level_name"}, {"type_name"}, {"title"}, {"text"},
+        {"dismissed", Value::Type::Bool}, {"dismissed_ms", Value::Type::Integer},
+        {"seen", Value::Type::Bool}, {"action"}, {"filter"}, {"recorded_count", Value::Type::Integer}};
+    for (const auto id : ids) {
+        const auto *e = find(id);
+        if (!e) continue;
+        dataset.rows.push_back({Value::from_string(std::to_string(e->id)), Value::from_int(e->timestamp_ms),
+            Value::from_int(e->level), Value::from_string(e->level_name), Value::from_string(e->type_name),
+            Value::from_string(e->title), Value::from_string(e->text), Value::from_bool(e->dismissed),
+            Value::from_int(e->dismissed_ms), Value::from_bool(e->seen), Value::from_string(e->action),
+            Value::from_string(filter.describe()), Value::from_int(static_cast<long long>(size()))});
+    }
+    return dataset;
+}
+
 } } // namespace Slic3r::GUI

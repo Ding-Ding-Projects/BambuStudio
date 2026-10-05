@@ -1,3 +1,4 @@
+#include "Export/ExportDialog.hpp"
 #include "HumanDate.hpp"
 #include "ChangelogDialog.hpp"
 #include "Widgets/MD3ScrolledWindow.hpp"
@@ -600,7 +601,7 @@ void ChangelogDialog::build_ui()
     m_copy_button->Bind(wxEVT_BUTTON, &ChangelogDialog::on_copy, this);
     m_export_button = new Button(this, _L("Export") + dots);
     m_export_button->SetVariant(Button::Variant::Outlined);
-    m_export_button->SetToolTip(_L("Save the shown changes as Markdown or plain text"));
+    m_export_button->SetToolTip(_L("Export the shown changes in a chosen format or archive"));
     m_export_button->Bind(wxEVT_BUTTON, &ChangelogDialog::on_export, this);
     m_close_button = new Button(this, _L("Close"), "", 0, 0, wxID_CANCEL);
     m_close_button->SetVariant(Button::Variant::Filled);
@@ -1003,27 +1004,15 @@ void ChangelogDialog::on_export(wxCommandEvent &)
 {
     if (!m_document)
         return;
-    wxString default_name = "bambu-studio-changelog";
-    if (m_range.from) default_name += "-" + wxString::FromUTF8(m_range.from->to_iso());
-    if (m_range.to)   default_name += "-" + wxString::FromUTF8(m_range.to->to_iso());
-    wxFileDialog dialog(this, _L("Export changelog"), wxEmptyString, default_name + ".md",
-                        _L("Markdown") + " (*.md)|*.md|" + _L("Plain text") + " (*.txt)|*.txt",
-                        wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
-    if (dialog.ShowModal() != wxID_OK)
-        return;
-    const bool  markdown = dialog.GetFilterIndex() == 0;
-    wxString    path     = dialog.GetPath();
-    const std::string text = export_text(markdown ? Changelog::ExportFormat::Markdown : Changelog::ExportFormat::PlainText);
-
-    std::ofstream out(path.ToStdWstring(), std::ios::binary | std::ios::trunc);
-    out << text;
-    if (!out) {
-        show_toast(wxString::Format(_L("The changelog could not be written to %s."), path), true);
-        return;
-    }
-    show_toast(wxString::Format(_L("Exported %zu versions and %zu changes (%s) to %s."),
-                                m_filtered.size(), Changelog::count_entries(m_filtered),
-                                wxString::FromUTF8(m_range.describe()), path));
+    Export::Dataset dataset;
+    dataset.name = "Changelog: " + m_range.describe();
+    dataset.schema_id = "bambustudio.changelog.filtered";
+    dataset.kind = Export::DatasetKind::Prose;
+    dataset.prose_title = "Bambu Studio changelog";
+    dataset.prose = export_text(Changelog::ExportFormat::Markdown);
+    dataset.file_stem = "bambu-studio-changelog";
+    // This immutable snapshot includes the exact date/search range and full SHAs.
+    ExportDialog::run(this, std::move(dataset));
 }
 
 } // namespace Slic3r::GUI
