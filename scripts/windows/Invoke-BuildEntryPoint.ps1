@@ -56,8 +56,17 @@ if (-not $planOnly -and -not $principal.IsInRole([Security.Principal.WindowsBuil
     $command = '$handoff = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String(' +
         "'" + $encodedData + "'" + ')) | ConvertFrom-Json; $entryArguments = @($handoff.arguments); & $handoff.entry @entryArguments; exit $LASTEXITCODE'
     $encodedCommand = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($command))
-    $processPolicy = Get-ExecutionPolicy -Scope Process
-    $policyArguments = if ($processPolicy -eq 'Undefined') { '' } else { ' -ExecutionPolicy ' + [string]$processPolicy }
+    # Windows PowerShell stores its process-only override here. Reading it
+    # avoids optional Security-module autoload and never changes persistent policy.
+    $processPolicy = [Environment]::GetEnvironmentVariable('PSExecutionPolicyPreference', 'Process')
+    $policyArguments = ''
+    if (-not [string]::IsNullOrWhiteSpace($processPolicy)) {
+        $knownPolicies = @('AllSigned', 'Bypass', 'RemoteSigned', 'Restricted', 'Unrestricted', 'Undefined', 'Default')
+        if ($processPolicy -notin $knownPolicies) {
+            throw 'The process execution-policy override is not a recognized value.'
+        }
+        if ($processPolicy -ne 'Undefined') { $policyArguments = ' -ExecutionPolicy ' + $processPolicy }
+    }
     try {
         Write-Host 'Administrator approval is required before the build bootstrap starts.'
         $hostExecutable = Join-Path $PSHOME 'powershell.exe'
