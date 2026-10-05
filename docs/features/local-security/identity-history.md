@@ -27,7 +27,8 @@ Each event writes one AES-256-GCM encrypted blob and an append-only commit whose
 parent is the previous event. Authentication binds the ciphertext to the version,
 action, identity ID, and random event ID. Commit metadata contains only those
 redacted fields and a fixed local author. Deleted identities retain their historical
-events. There is no rewrite, prune, export, network synchronization, or restore API.
+events. There is no rewrite, prune, network synchronization, or restore API. Metadata-only
+export is described below; snapshot and label plaintext are never exported.
 
 Every `read` independently verifies the history credential. Results contain at
 most 16 snapshots, each at most 1 MiB, and offset cannot exceed 10,000. Reads walk
@@ -81,5 +82,46 @@ redacted raw object metadata, snapshot confidentiality, independent credentials,
 replacement, read bounds, invalid input, missing and incorrect keys, unavailable
 vaults, head-anchor mismatch, interrupted anchor writes, and attempt throttling.
 It uses a memory-only fake vault and an isolated temporary bare repository. These
-source tests are not evidence of successful execution until a real toolchain run
-records its exit status and check count.
+tests compiled and executed through MSVC 19.51 against libgit2 1.9.3 produced by
+the repository's pinned dependency recipe: `PASS 57 identity history checks`.
+That service result does not prove the native history panel or full packaged flow.
+
+## Metadata, labels, and redacted export
+
+`read_metadata(answer, offset, count)` uses the same independent credential and
+page limits as `read`, but returns `IdentityHistoryMetadata` without decrypting
+snapshot contents. Rows contain the revision, stable identity, allowlisted action,
+commit timestamp in UTC seconds, recorded timezone offset in minutes, format
+version, and pruning state. The timestamp is the commit's recorded timestamp,
+not capture provenance or a trusted external clock. Existing `read` results expose
+the same fields while retaining their move-only snapshot.
+
+`append_label(answer, identity, label)` appends an encrypted `Labelled` event for
+that stable identity. Labels must contain valid UTF-8, have 1 to 256 bytes, and
+exclude ASCII and C1 control characters. `read_label(answer, revision)` traverses
+at most 10,000 anchored events and returns the encrypted label's plaintext in a
+move-only `Secret` only when the selected event is a label. It cannot return an
+ordinary identity snapshot under this API. Labels are chronological events; they
+do not overwrite commit messages or automatically replace earlier labels.
+
+`export_redacted(answer, offset, count)` returns bounded JSON containing only the
+metadata page. It intentionally excludes labels, snapshots, ciphertext, keys,
+credential records, payload lengths, and payload-derived hashes. No filesystem
+write or destination selection occurs in this function. `redacted_diff(before,
+after)` reports only whether the rows have the same identity and whether the
+allowlisted action changed. It is not a semantic diff of identity contents.
+
+### Retention remains unavailable
+
+All currently written events remain format version 1 and report `pruned=false`.
+The metadata fields are explicit state, not a claim that retention exists. This
+slice does not provision per-event keys, produce tombstones, remove keys, or accept
+a synthetic authorization boolean. Version 2 retention needs a bounded encrypted
+key store outside the bare repository, atomic replacement and interruption
+recovery, native two-key authorization, and executed integration tests before it
+can be enabled. Existing version 1 events remain readable with the original key.
+
+Future active-key removal must not be described as forensic erasure: older vault
+state, backups, filesystem journals, and external copies may retain recoverable
+material. The append-only graph must remain intact and an explicit authorized
+pruning event must record the application-level loss of decryption capability.

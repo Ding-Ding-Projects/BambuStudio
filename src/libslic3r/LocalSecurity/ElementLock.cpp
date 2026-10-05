@@ -13,7 +13,7 @@ Secret otp_record(const Enrollment& e){
 }
 }
 ElementLock::ElementLock(Vault& vault,std::string id,RecordIdentityMutation history):m_vault(vault),m_id(std::move(id)),m_history(std::move(history)){
-    require(valid_stable_id(m_id)&&m_id.size()<=100&&bool(m_history));auto existing=m_vault.read(account("config"));
+    require(m_id.size()==32&&std::all_of(m_id.begin(),m_id.end(),[](char c){return (c>='0'&&c<='9')||(c>='a'&&c<='f');})&&bool(m_history));auto existing=m_vault.read(account("config"));
     if(existing){auto s=settings(*existing);for(auto f:factors(s.policy)){auto value=m_vault.read(account(f==Factor::Pin?"pin":f==Factor::Password?"password":"totp"));require(value.has_value(),Error::Missing);}m_session=std::make_unique<LockSession>(s);}
 }
 std::string ElementLock::account(const char* suffix) const{return "bambustudio.element-lock."+m_id+"."+suffix;}

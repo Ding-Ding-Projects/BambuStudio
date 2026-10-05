@@ -3,12 +3,30 @@
 #include <filesystem>
 
 namespace Slic3r::LocalSecurity {
-enum class HistoryAction { Created, Renamed, CredentialChanged, Removed, Restored };
+enum class HistoryAction { Created, Renamed, CredentialChanged, Removed, Restored, Labelled };
 struct IdentityHistoryEntry {
     std::string revision;
     std::string identity;
     HistoryAction action;
     Secret snapshot;
+    std::int64_t committed_at_utc_seconds = 0;
+    int utc_offset_minutes = 0;
+    unsigned format_version = 1;
+    bool pruned = false;
+};
+struct IdentityHistoryMetadata {
+    std::string revision;
+    std::string identity;
+    HistoryAction action;
+    std::int64_t committed_at_utc_seconds = 0;
+    int utc_offset_minutes = 0;
+    unsigned format_version = 1;
+    bool pruned = false;
+};
+struct IdentityHistoryRedactedDiff {
+    bool same_identity = false;
+    bool action_changed = false;
+    // No snapshot contents, sizes, labels, or secret-derived hashes.
 };
 // The caller supplies the application's stable, private data directory, never a
 // project path. Do not expose this location through export or sync operations.
@@ -28,11 +46,23 @@ public:
     // has a hard ceiling; callers cannot select arbitrary object IDs or paths.
     std::vector<IdentityHistoryEntry> read(const Secret& history_answer,
                                          unsigned offset = 0, unsigned count = 10);
+    std::vector<IdentityHistoryMetadata> read_metadata(const Secret& history_answer,
+                                                      unsigned offset = 0, unsigned count = 10);
+    // Labels are UTF-8 text of at most 256 bytes, encrypted like snapshots.
+    // They are events for the stable identity, not mutable commit messages.
+    std::string append_label(const Secret& history_answer, const std::string& identity, const Secret& label);
+    Secret read_label(const Secret& history_answer, const std::string& revision);
+    // Exports metadata only. Payloads and labels are excluded by construction.
+    std::string export_redacted(const Secret& history_answer, unsigned offset = 0, unsigned count = 10);
+    static IdentityHistoryRedactedDiff redacted_diff(const IdentityHistoryMetadata&, const IdentityHistoryMetadata&);
     void replace_credential(const Secret& old_answer, CredentialKind, const Secret& new_answer);
     static constexpr const char* credential_account = "org.dingding.bambu.identity-history.credential.v1";
     static constexpr const char* key_account = "org.dingding.bambu.identity-history.key.v1";
     static constexpr const char* anchor_account = "org.dingding.bambu.identity-history.anchor.v1";
 private:
+    std::string append_impl(HistoryAction, const std::string&, const Secret&, const Secret* authorization);
+    std::vector<IdentityHistoryEntry> read_impl(const Secret&, unsigned offset, unsigned count,
+                                              bool decrypt_payload, const std::string& revision = {});
     struct Impl;
     std::unique_ptr<Impl> m_impl;
 };

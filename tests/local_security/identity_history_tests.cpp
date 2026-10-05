@@ -94,6 +94,35 @@ void missing_repository(){
     rejects([&]{history.read(answer);},"missing repository fails closed");
     rejects([&]{history.initialize(CredentialKind::Password,answer);},"missing repository does not re-key");
 }
+void metadata_and_labels(){
+    Fixture f;IdentityHistory history(f.root,f.vault);Secret answer("history-password-123"),wrong("incorrect-password");
+    history.initialize(CredentialKind::Password,answer);
+    const auto identity=new_stable_id();Secret payload("private seed-bearing snapshot"),label("Before account rename");
+    const auto revision=history.append(HistoryAction::Created,identity,payload);
+    auto rows=history.read_metadata(answer);
+    check(rows.size()==1&&rows[0].revision==revision&&rows[0].identity==identity,"metadata page identity");
+    check(rows[0].committed_at_utc_seconds>0&&rows[0].format_version==1&&!rows[0].pruned,"timestamp and honest v1 state");
+    check(history.read(answer)[0].committed_at_utc_seconds==rows[0].committed_at_utc_seconds,"timestamp consistent across read surfaces");
+    const auto label_revision=history.append_label(answer,identity,label);
+    auto decrypted=history.read_label(answer,label_revision);
+    check(decrypted.size()==label.size()&&std::equal(label.data(),label.data()+label.size(),decrypted.data()),"encrypted label roundtrip");
+    auto labelled_rows=history.read_metadata(answer);
+    check(labelled_rows[0].action==HistoryAction::Labelled&&labelled_rows[1].revision==revision,"label appends without rewriting snapshot");
+    auto diff=IdentityHistory::redacted_diff(labelled_rows[1],labelled_rows[0]);
+    check(diff.same_identity&&diff.action_changed,"redacted diff contains only enum and identity comparisons");
+    const auto exported=history.export_redacted(answer);
+    check(exported.find("private seed-bearing snapshot")==std::string::npos&&exported.find("Before account rename")==std::string::npos,"export excludes snapshots and labels");
+    check(exported.find(label_revision)!=std::string::npos&&exported.find("committed_at_utc_seconds")!=std::string::npos,"export has revision and timestamp");
+    rejects([&]{history.read_metadata(wrong);},"metadata still authenticated");
+    rejects([&]{history.append_label(wrong,identity,label);},"label authentication required");
+    rejects([&]{history.export_redacted(wrong);},"export authentication required");
+    rejects([&]{history.read_label(answer,revision);},"ordinary snapshot cannot be returned as label");
+    rejects([&]{history.read_label(answer,"../config");},"label rejects path as revision");
+    rejects([&]{history.append_label(answer,identity,Secret("bad\nlabel"));},"label control characters rejected");
+    rejects([&]{history.append_label(answer,identity,Secret(std::vector<unsigned char>{0xc0,0x80}));},"overlong UTF-8 label rejected");
+    rejects([&]{history.append_label(answer,identity,Secret(std::string(257,'a')));},"oversized label rejected");
+    check(history.read_metadata(answer).size()==2,"rejected label appends leave history intact");
+}
 void throttling(){
     Fixture f;IdentityHistory history(f.root,f.vault);Secret answer("history-password-123"),wrong("incorrect-password");
     history.initialize(CredentialKind::Password,answer);
@@ -102,4 +131,4 @@ void throttling(){
     check(limited,"attempt budget enforces wait");
 }
 }
-int main(){try{behavior();interrupted_transaction();missing_repository();throttling();std::cout<<"PASS "<<checks<<" identity history checks\n";return 0;}catch(const std::exception&){std::cerr<<"FAIL identity history checks\n";return 1;}}
+int main(){try{behavior();interrupted_transaction();missing_repository();metadata_and_labels();throttling();std::cout<<"PASS "<<checks<<" identity history checks\n";return 0;}catch(const std::exception&){std::cerr<<"FAIL identity history checks\n";return 1;}}

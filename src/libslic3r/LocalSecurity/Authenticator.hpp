@@ -3,7 +3,7 @@
 #include <functional>
 
 namespace Slic3r::LocalSecurity {
-enum class IdentityAction { AuthenticatorAdded, AuthenticatorChanged, AuthenticatorRemoved, AuthenticatorReordered, DisplayNameChanged, LockCreated };
+enum class IdentityAction { AuthenticatorAdded, AuthenticatorChanged, AuthenticatorRemoved, AuthenticatorReordered, DisplayNameChanged, LockCreated, AuthenticatorRestored };
 // The implementation must synchronously append an encrypted snapshot and throw
 // on failure. A UI must never substitute a no-op history callback.
 using RecordIdentityMutation = std::function<void(IdentityAction, const std::string&, const Secret&)>;
@@ -22,6 +22,9 @@ public:
     void remove(const std::string& id);
     void rename(const std::string& id, std::string issuer, std::string account, std::string group);
     void move(const std::string& id, int direction);
+    // Called only by the authenticated history dispatcher for an authenticator
+    // identity. Validates a complete historical entry before recording/restoring.
+    void restore_entry(const std::string& id, const Secret& snapshot);
     TotpCode code(const std::string& id, std::uint64_t seconds);
     // Redacted metadata only; no secret export route is exposed by this API.
     std::string export_redacted();

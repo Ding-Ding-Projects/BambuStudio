@@ -29,6 +29,10 @@ failure. Never pass an empty or no-op sink.
 The sink maps `AuthenticatorAdded` to `HistoryAction::Created`,
 `AuthenticatorChanged` and `AuthenticatorReordered` to `Renamed`,
 `AuthenticatorRemoved` to `Removed`, and `DisplayNameChanged` to `Renamed`.
+Map `AuthenticatorRestored` to `Restored`. The authenticated dispatcher calls
+`AuthenticatorStore::restore_entry(identity, snapshot)` only for identities it
+knows belong to that store. It validates the complete historical entry, retains
+the original identity, and records restoration through the same history sink.
 The same original generated 32-character hexadecimal identity follows a record
 through every change. `LockCreated` records only its five-byte policy/duration
 configuration, with no credential material. Each rendered element needs its own
@@ -51,6 +55,7 @@ All entrypoints are in `Slic3r::GUI::LocalSecurityUI`:
 | `AuthenticatorPanel(parent, shared_store, hooks)` | Register a normal browser-style destination and its command-palette route. |
 | `LockWizard::Open(anchor, shared_lock, target_name, recovery_folder, hooks)` | Supply the exact anchor, target and actual application-data folder; intercept every protected action. |
 | `SupportTicketsPanel(parent, shared_store, data_dir, hooks)` | Register Help, lock-setting and forgotten-answer routes to this destination. |
+| `IdentityHistoryPanel(parent, shared_history, hooks, restore_dispatcher)` | Register protected history and its typed live-state restore owner. |
 
 `Hooks::text` resolves current language and tone. `factual_text` resolves language
 without tone changes and owns the support disclosure. `notify` routes errors to
@@ -60,6 +65,11 @@ excludes the supplied controls from history, logs, diagnostics, analytics and
 captures. Those callbacks are required. `export_text` connects to the existing
 format-aware export workflow; its absence is visible and disables export.
 `open_support` opens the actual registered support destination.
+`record_label`, `record_tooltip` and `record_name` preserve original public source
+copy for live language changes. Static labels and actions carry their source;
+input values and generated facts are never replaced through that route. Dynamic
+status text stays component-owned. Masked fields receive only an accessible-name
+source, never a replacement value.
 
 The native surfaces use the existing `SearchField`, `TextInput`, `Button`, `Label`,
 and dialog-chrome components. All three local searches have their own anchored
@@ -98,11 +108,13 @@ No network code exists in the support service or these components.
 
 ## Verification and remaining work
 
-The standalone Windows C++17/OpenSSL build passes **219 behavioral assertions**
-with `-Wall -Wextra -Werror`. Coverage includes the prior standard vectors and
+The Windows C++17/OpenSSL core now passes **223 behavioral assertions** under
+MSVC. The preceding GCC unit passed 219 with `-Wall -Wextra -Werror`.
+Coverage includes the prior standard vectors and
 credential/lock checks, persisted authenticator changes, backend factor verification,
 OTP replay rejection, encrypted support-ticket lifecycle, real native vault
-round trips, marker restart/reset semantics, and zero/maximum-size AES-GCM snapshots.
+round trips, marker restart/reset semantics, zero/maximum-size AES-GCM snapshots,
+history-compatible element identities and validated authenticator restoration.
 
 The isolated mutation driver is intentionally fail-closed. GCC encountered an
 internal compiler error in three bounded attempts. Switching to the verified MSVC
@@ -121,17 +133,20 @@ python tests/local_security/negative_regression.py --msvc --compiler cl --openss
 An existing compatible import library may instead be passed with
 `--openssl-library`. The driver never installs or replaces shared dependencies.
 
-The separate libgit2 history driver has not compiled or run. No working libgit2
-development installation or full native GUI build route was available in this lane.
-The native components also remain uncompiled and have no built interaction,
+The separate libgit2 history driver compiled with the supported pinned libgit2
+1.9.3 recipe and stable MSVC 19.51 toolchain, passing **57 identity history checks**.
+The new QR matrix also passed independent ZXing decoding and exact parameter
+comparison using public synthetic material only.
+The native panels remain uncompiled and have no built interaction,
 accessibility, localization or layout captures.
 
 Outstanding before feature completion: full shell/action interception, localized
-copy and live language/tone updates, QR generation and image/clipboard/camera import,
-parameter controls for manual enrollment, history manager browse/search/diff/restore/
-label/retention/export, atomic live-state/history reconciliation, durable cross-process
+copy and live language/tone updates, rendered QR proof and packaged image/clipboard/
+camera import, parameter controls for manual enrollment, history-manager built
+verification and retention, atomic live-state/history reconciliation, durable cross-process
 attempt throttling, unlock-ladder UI, dynamic anchor tracking, complete bulk actions
 and filtered multi-format export, per-element context-menu integration, and genuine
 built verification across supported themes, languages, viewports and scales.
 
-Related articles: [service overview](README.md), [encrypted identity history](identity-history.md).
+Related articles: [service overview](README.md), [encrypted identity history](identity-history.md),
+[pairing and import packaging](qr-pairing.md).

@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <cstring>
 #include <mutex>
+#include <sstream>
+#include <locale>
 #ifdef _WIN32
 #ifndef NOMINMAX
 #define NOMINMAX
@@ -45,17 +47,35 @@ std::string action_name(HistoryAction a) {
     case HistoryAction::CredentialChanged:return "credential-changed";
     case HistoryAction::Removed:return "removed";
     case HistoryAction::Restored:return "restored";
+    case HistoryAction::Labelled:return "labelled";
     }
     throw Failure(Error::InvalidInput);
 }
 HistoryAction parse_action(const std::string& a) {
-    for(auto candidate : {HistoryAction::Created,HistoryAction::Renamed,HistoryAction::CredentialChanged,HistoryAction::Removed,HistoryAction::Restored})
+    for(auto candidate : {HistoryAction::Created,HistoryAction::Renamed,HistoryAction::CredentialChanged,HistoryAction::Removed,HistoryAction::Restored,HistoryAction::Labelled})
         if(action_name(candidate)==a)return candidate;
     throw Failure(Error::Corrupt);
 }
 // Stable IDs are random hex identifiers; user-visible labels are never accepted.
 bool identity_id(const std::string& id) {
     return id.size()==32 && std::all_of(id.begin(),id.end(),[](char c){return (c>='0'&&c<='9')||(c>='a'&&c<='f');});
+}
+bool valid_label(const Secret& label) {
+    if(label.size()==0||label.size()>256)return false;
+    const auto* data=label.data();
+    for(std::size_t i=0;i<label.size();) {
+        const unsigned lead=data[i++];
+        if(lead<0x80){if(lead<0x20||lead==0x7f)return false;continue;}
+        unsigned continuation=0,value=0,minimum=0;
+        if(lead>=0xc2&&lead<=0xdf){continuation=1;value=lead&31;minimum=0x80;}
+        else if(lead>=0xe0&&lead<=0xef){continuation=2;value=lead&15;minimum=0x800;}
+        else if(lead>=0xf0&&lead<=0xf4){continuation=3;value=lead&7;minimum=0x10000;}
+        else return false;
+        if(continuation>label.size()-i)return false;
+        while(continuation--){const unsigned next=data[i++];if((next&0xc0)!=0x80)return false;value=(value<<6)|(next&63);}
+        if(value<minimum||value>0x10ffff||(value>=0xd800&&value<=0xdfff)||(value>=0x80&&value<=0x9f))return false;
+    }
+    return true;
 }
 class FileLock {
 #ifdef _WIN32
@@ -153,10 +173,15 @@ void IdentityHistory::initialize(CredentialKind kind,const Secret& answer) {
     Repo repo(raw,git_repository_free);m_impl->vault.write(anchor_account,Secret(empty_anchor));
 }
 std::string IdentityHistory::append(HistoryAction action,const std::string& identity,const Secret& snapshot) {
+    return append_impl(action,identity,snapshot,nullptr);
+}
+std::string IdentityHistory::append_impl(HistoryAction action,const std::string& identity,const Secret& snapshot,const Secret* authorization) {
     require(identity_id(identity)&&snapshot.size()<=maximum_snapshot,Error::InvalidInput);
+    if(action==HistoryAction::Labelled)require(valid_label(snapshot),Error::InvalidInput);
     const auto metadata="v1."+action_name(action)+"."+identity+"."+new_stable_id();
     std::lock_guard<std::mutex> guard(history_mutex);safe_directory(m_impl->data);
     FileLock lock(m_impl->data/"identity-history-v1.lock");
+    if(authorization)m_impl->authenticate(*authorization);
     auto repo=m_impl->open();auto key=m_impl->key();auto parent=m_impl->head(repo.get());
     require(Credentials(m_impl->vault).metadata(credential_account).configured,Error::Missing);
     const auto encrypted=encrypt_snapshot(key,snapshot,metadata);
@@ -179,14 +204,17 @@ std::string IdentityHistory::append(HistoryAction action,const std::string& iden
     const auto revision=oid_text(&commit_id);m_impl->vault.write(anchor_account,Secret(revision));return revision;
 }
 std::vector<IdentityHistoryEntry> IdentityHistory::read(const Secret& answer,unsigned offset,unsigned count) {
+    return read_impl(answer,offset,count,true);
+}
+std::vector<IdentityHistoryEntry> IdentityHistory::read_impl(const Secret& answer,unsigned offset,unsigned count,bool decrypt_payload,const std::string& revision) {
     require(count>0&&count<=16&&offset<=10000,Error::InvalidInput);
     std::lock_guard<std::mutex> guard(history_mutex);safe_directory(m_impl->data);
     FileLock lock(m_impl->data/"identity-history-v1.lock");m_impl->authenticate(answer);
     auto repo=m_impl->open();auto key=m_impl->key();auto current=m_impl->head(repo.get());
     std::vector<IdentityHistoryEntry> output;
-    for(unsigned index=0;current&&index<offset+count;++index) {
+    for(unsigned index=0;current&&index<(revision.empty()?offset+count:10000u);++index) {
         require(git_commit_parentcount(current.get())<=1,Error::Corrupt);
-        if(index>=offset) {
+        if(index>=offset&&(revision.empty()||oid_text(git_commit_id(current.get()))==revision)) {
             const char* raw=git_commit_message(current.get());require(raw!=nullptr,Error::Corrupt);
             const auto length=std::strlen(raw);require(length<=160,Error::Corrupt);
             const std::string message(raw,length);const auto first=message.find('.',3),second=message.find('.',first==std::string::npos?message.size():first+1);
@@ -206,14 +234,58 @@ std::vector<IdentityHistoryEntry> IdentityHistory::read(const Secret& answer,uns
             git_blob* raw_blob=nullptr;ok(git_blob_lookup(&raw_blob,repo.get(),git_tree_entry_id(entry)));Blob blob(raw_blob,git_blob_free);
             require(git_blob_rawsize(blob.get())==size,Error::Corrupt);
             const auto* bytes=static_cast<const unsigned char*>(git_blob_rawcontent(blob.get()));
-            auto plain=decrypt_snapshot(key,std::vector<unsigned char>(bytes,bytes+size),message);
-            output.push_back({oid_text(git_commit_id(current.get())),identity,action,std::move(plain)});
+            Secret plain;
+            if(decrypt_payload) {
+                plain=decrypt_snapshot(key,std::vector<unsigned char>(bytes,bytes+size),message);
+                if(action==HistoryAction::Labelled)require(valid_label(plain),Error::Corrupt);
+            }
+            const auto committed=git_commit_time(current.get());
+            const auto offset_minutes=git_commit_time_offset(current.get());
+            require(offset_minutes>=-1440&&offset_minutes<=1440,Error::Corrupt);
+            output.push_back({oid_text(git_commit_id(current.get())),identity,action,std::move(plain),
+                              static_cast<std::int64_t>(committed),offset_minutes,1,false});
+            if(!revision.empty())break;
         }
         if(git_commit_parentcount(current.get())==0)break;
         bounded_object(repo.get(),git_commit_parent_id(current.get(),0),GIT_OBJECT_COMMIT,8192);
         git_commit* raw_parent=nullptr;ok(git_commit_parent(&raw_parent,current.get(),0));current.reset(raw_parent);
     }
     return output;
+}
+std::vector<IdentityHistoryMetadata> IdentityHistory::read_metadata(const Secret& answer,unsigned offset,unsigned count) {
+    auto entries=read_impl(answer,offset,count,false);
+    std::vector<IdentityHistoryMetadata> result;
+    for(const auto& entry:entries)result.push_back({entry.revision,entry.identity,entry.action,
+        entry.committed_at_utc_seconds,entry.utc_offset_minutes,entry.format_version,entry.pruned});
+    return result;
+}
+std::string IdentityHistory::append_label(const Secret& answer,const std::string& identity,const Secret& label) {
+    require(valid_label(label),Error::InvalidInput);
+    return append_impl(HistoryAction::Labelled,identity,label,&answer);
+}
+Secret IdentityHistory::read_label(const Secret& answer,const std::string& revision) {
+    require(revision.size()==GIT_OID_HEXSZ&&std::all_of(revision.begin(),revision.end(),[](char c){
+        return (c>='0'&&c<='9')||(c>='a'&&c<='f');}),Error::InvalidInput);
+    auto entries=read_impl(answer,0,1,true,revision);
+    require(entries.size()==1&&entries.front().action==HistoryAction::Labelled,Error::Missing);
+    return std::move(entries.front().snapshot);
+}
+IdentityHistoryRedactedDiff IdentityHistory::redacted_diff(const IdentityHistoryMetadata& before,const IdentityHistoryMetadata& after) {
+    return {before.identity==after.identity,before.action!=after.action};
+}
+std::string IdentityHistory::export_redacted(const Secret& answer,unsigned offset,unsigned count) {
+    const auto entries=read_metadata(answer,offset,count);
+    std::ostringstream out;out.imbue(std::locale::classic());out<<"{\"schema\":1,\"offset\":"<<offset<<",\"events\":[";
+    bool first=true;
+    for(const auto& entry:entries) {
+        if(!first)out<<',';first=false;
+        // Every string is generated hexadecimal or an allowlisted action.
+        out<<"{\"revision\":\""<<entry.revision<<"\",\"identity\":\""<<entry.identity
+           <<"\",\"action\":\""<<action_name(entry.action)<<"\",\"committed_at_utc_seconds\":"
+           <<entry.committed_at_utc_seconds<<",\"utc_offset_minutes\":"<<entry.utc_offset_minutes
+           <<",\"format_version\":"<<entry.format_version<<",\"pruned\":"<<(entry.pruned?"true":"false")<<'}';
+    }
+    out<<"]}";return out.str();
 }
 void IdentityHistory::replace_credential(const Secret& old_answer,CredentialKind kind,const Secret& new_answer) {
     std::lock_guard<std::mutex> guard(history_mutex);safe_directory(m_impl->data);

@@ -74,6 +74,12 @@ void AuthenticatorStore::move(const std::string& id,int direction){
     std::vector<unsigned char> order;for(const auto& item:all)order.insert(order.end(),item.begin(),item.end());m_record(IdentityAction::AuthenticatorReordered,id,Secret(std::move(order)));store_ids(all);
 }
 TotpCode AuthenticatorStore::code(const std::string& id,std::uint64_t seconds){auto raw=read_record(id);auto e=unpack(raw,nullptr);return totp(e.secret,e.parameters,seconds);}
+void AuthenticatorStore::restore_entry(const std::string& id,const Secret& snapshot){
+    (void)key(id);std::string group;auto enrollment=unpack(snapshot,&group);auto validated=pack(enrollment,group);auto all=ids();
+    bool present=std::find(all.begin(),all.end(),id)!=all.end();require(present||all.size()<maximum_entries);
+    m_record(IdentityAction::AuthenticatorRestored,id,validated);m_vault.write(key(id),validated);
+    if(!present){all.push_back(id);store_ids(all);}
+}
 std::string AuthenticatorStore::export_redacted(){
     std::string result="Secrets and generated codes omitted.\nIssuer,Account,Group,Algorithm,Digits,Period\n";
     for(const auto& e:list()){const char* a=e.parameters.algorithm==Algorithm::Sha1?"SHA1":e.parameters.algorithm==Algorithm::Sha256?"SHA256":"SHA512";result+=csv(e.issuer)+","+csv(e.account)+","+csv(e.group)+","+a+","+std::to_string(e.parameters.digits)+","+std::to_string(e.parameters.period)+"\n";}return result;

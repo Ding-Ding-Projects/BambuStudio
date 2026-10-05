@@ -75,7 +75,7 @@ cmake --build build/local-security --config Release
 ctest --test-dir build/local-security -C Release --output-on-failure
 ```
 
-Verification currently covers 219 behavioral assertions, including all eighteen
+Core verification currently covers 223 behavioral assertions, including all eighteen
 RFC 6238 eight-digit vectors and their six-digit truncations, the ten RFC 4226
 vectors, malformed imports, vault errors, generation changes, all policies,
 factor ordering, expiry, independent locks, wait-skip limits, tampering, and a

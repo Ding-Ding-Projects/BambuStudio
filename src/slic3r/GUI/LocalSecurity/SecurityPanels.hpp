@@ -26,6 +26,14 @@ struct Hooks {
     std::function<void(wxWindow*, const std::string&)> register_surface;
     // Exclude secret/code controls from history, logs, diagnostics and capture.
     std::function<void(wxWindow*)> register_sensitive;
+    std::function<void(wxWindow*, const char*)> record_label;
+    std::function<void(wxWindow*, const char*)> record_tooltip;
+    std::function<void(wxWindow*, const char*)> record_name;
+    // Populate only when a bundled, isolated decoder route is verified. Results
+    // remain in memory; the callbacks must not log paths, pixels or payloads.
+    std::function<std::optional<LocalSecurity::Secret>(const std::filesystem::path&)> decode_qr_file;
+    std::function<std::optional<LocalSecurity::Secret>()> decode_qr_clipboard;
+    std::function<void(std::function<void(std::optional<LocalSecurity::Secret>)>)> scan_qr_camera;
 };
 
 class AuthenticatorPanel final : public wxPanel {

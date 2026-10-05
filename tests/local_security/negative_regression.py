@@ -16,6 +16,11 @@ parser.add_argument('--msvc', action='store_true')
 parser.add_argument('--openssl-include', type=pathlib.Path)
 parser.add_argument('--openssl-library', type=pathlib.Path)
 parser.add_argument('--openssl-dll', type=pathlib.Path)
+parser.add_argument('--qr-only', action='store_true')
+parser.add_argument('--core-only', action='store_true')
+parser.add_argument('--history-only', action='store_true')
+parser.add_argument('--libgit2-prefix', type=pathlib.Path)
+parser.add_argument('--qr-python-packages', type=pathlib.Path)
 args = parser.parse_args()
 root = pathlib.Path(__file__).resolve().parents[2]
 source = root / 'src/libslic3r/LocalSecurity'
@@ -63,7 +68,8 @@ with tempfile.TemporaryDirectory(prefix='local-security-negative-') as directory
             runtime_environment['PATH'] = str(dll.parent) + os.pathsep + runtime_environment.get('PATH', '')
         if not library:
             parser.error('--msvc requires --openssl-library or --openssl-dll')
-    for name, old, new in [('baseline', '', '')] + mutations + [('restored', '', '')]:
+    cases = [] if args.qr_only or args.history_only else [('baseline', '', '')] if args.core_only else [('baseline', '', '')] + mutations + [('restored', '', '')]
+    for name, old, new in cases:
         if old and base.count(old) != 1:
             raise RuntimeError('Mutation boundary is not unique: ' + name)
         candidate = temp / 'LocalSecurity.cpp'
@@ -88,4 +94,39 @@ with tempfile.TemporaryDirectory(prefix='local-security-negative-') as directory
         if (result.returncode == 0) != expected_success:
             raise RuntimeError('Behavioral verdict did not detect mutation: ' + name)
         print(('GREEN ' if expected_success else 'RED ') + name, flush=True)
-print('PASS 12 isolated negative mutations; baseline and restored source passed', flush=True)
+        if args.core_only:
+            print(result.stdout.strip(), flush=True)
+    if args.history_only:
+        if not args.msvc or not args.libgit2_prefix:
+            parser.error('--history-only requires --msvc and --libgit2-prefix')
+        binary = temp / 'identity-history-tests.exe'
+        command = [args.compiler, '/nologo', '/std:c++17', '/EHsc', '/utf-8', '/MD',
+                   '/I' + str(root / 'src'), '/I' + str(args.openssl_include),
+                   '/I' + str(args.libgit2_prefix / 'include'), '/Fo' + str(temp) + os.sep,
+                   '/Fe' + str(binary), str(source / 'LocalSecurity.cpp'), str(source / 'IdentityHistory.cpp'),
+                   str(root / 'tests/local_security/identity_history_tests.cpp'), str(library),
+                   str(args.libgit2_prefix / 'lib/libgit2package.lib'), 'advapi32.lib', 'ws2_32.lib', 'secur32.lib']
+        built = subprocess.run(command, capture_output=True, text=True, timeout=120)
+        if built.returncode:
+            raise RuntimeError('History driver did not compile:\n' + built.stdout + built.stderr)
+        tested = subprocess.run([str(binary)], capture_output=True, text=True, timeout=120, env=runtime_environment)
+        print(tested.stdout.strip(), flush=True)
+        if tested.returncode:
+            raise RuntimeError('History driver failed:\n' + tested.stderr)
+    elif args.qr_only:
+        if not args.msvc or not args.qr_python_packages:
+            parser.error('--qr-only requires --msvc and --qr-python-packages')
+        binary = temp / 'pairing-qr-fixture.exe'
+        command = [args.compiler, '/nologo', '/std:c++17', '/EHsc', '/utf-8', '/MD',
+                   '/I' + str(root / 'src'), '/I' + str(args.openssl_include),
+                   '/Fo' + str(temp) + os.sep, '/Fe' + str(binary), str(source / 'LocalSecurity.cpp'),
+                   str(root / 'src/slic3r/GUI/LocalSecurity/PairingQr.cpp'),
+                   str(root / 'src/slic3r/GUI/third_party/qrcodegen.cpp'),
+                   str(root / 'tests/local_security/qr_pairing_fixture.cpp'), str(library), 'advapi32.lib']
+        result = subprocess.run(command, capture_output=True, text=True, timeout=120)
+        if result.returncode:
+            raise RuntimeError('QR fixture did not compile:\n' + result.stdout + result.stderr)
+        subprocess.run([sys.executable, str(root / 'tests/local_security/verify_pairing_qr.py'), str(binary),
+                        '--python-packages', str(args.qr_python_packages)], check=True, timeout=60, env=runtime_environment)
+    elif not args.core_only:
+        print('PASS 12 isolated negative mutations; baseline and restored source passed', flush=True)

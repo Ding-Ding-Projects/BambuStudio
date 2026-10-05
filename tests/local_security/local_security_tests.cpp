@@ -148,13 +148,17 @@ void authenticator() {
     store.move(first,1);check(store.list()[1].id==first,"reorder persisted");
     auto exported=store.export_redacted();check(exported.find("Secrets and generated codes omitted.")!=std::string::npos,"export declares omitted fields");
     check(exported.find(current)==std::string::npos&&exported.find("12345678901234567890")==std::string::npos&&exported.find("GEZDGNBV")==std::string::npos,"export excludes secret and codes");
+    Secret saved(vault.records.at("bambustudio.authenticator.entry."+first));
     store.remove(first);check(store.list().size()==1&&store.list()[0].id==second,"remove only selected entry");
     rejects([&]{store.code(first,59);},"removed entry unavailable");
+    store.restore_entry(first,saved);check(store.list().size()==2&&store.code(first,59).current==current,"restore preserves original identity and code");
+    rejects([&]{store.restore_entry(first,Secret("invalid snapshot"));},"restore validates snapshot before mutation");
     rejects([&]{AuthenticatorStore invalid(vault,{});},"history callback required");
 }
 void element_locks() {
     MemoryVault vault;unsigned recorded=0;auto history=[&](IdentityAction action,const std::string&,const Secret& snapshot){check(action==IdentityAction::LockCreated&&snapshot.size()==5,"lock history excludes credentials");++recorded;};
-    auto now=Time{}+std::chrono::hours(1);ElementLock first(vault,"element.one",history);
+    auto now=Time{}+std::chrono::hours(1);ElementLock first(vault,"11111111111111111111111111111111",history);
+    rejects([&]{ElementLock invalid(vault,"display-label",history);},"element identity agrees with history contract");
     check(!first.configured()&&first.allows_action(now),"unconfigured element permitted");
     LockEnrollment enrollment;enrollment.settings={Policy::PasswordPinTotp,Duration::Minutes,1};enrollment.pin=Secret("123456");enrollment.password=Secret("test password answer");
     Enrollment otp;otp.secret=Secret("12345678901234567890");enrollment.confirmation_code=totp(otp.secret,otp.parameters,59).current;enrollment.otp=std::move(otp);
@@ -164,8 +168,8 @@ void element_locks() {
     check(first.submit(Secret("287082"),now,59)&&first.allows_action(now),"backend OTP completes ordered policy");
     first.relock();first.submit(Secret("test password answer"),now,59);first.submit(Secret("123456"),now,59);
     check(!first.submit(Secret("287082"),now,59)&&!first.allows_action(now),"used OTP step cannot replay");
-    ElementLock restarted(vault,"element.one",history);check(restarted.configured()&&!restarted.allows_action(now),"configured element relocks on restart");
-    ElementLock other(vault,"element.two",history);check(other.allows_action(now),"lock credentials do not inherit");
+    ElementLock restarted(vault,"11111111111111111111111111111111",history);check(restarted.configured()&&!restarted.allows_action(now),"configured element relocks on restart");
+    ElementLock other(vault,"22222222222222222222222222222222",history);check(other.allows_action(now),"lock credentials do not inherit");
 }
 void native_vault() {
 #ifdef _WIN32

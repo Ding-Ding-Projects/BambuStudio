@@ -1,4 +1,5 @@
 #include "SecurityPanels.hpp"
+#include "PairingQr.hpp"
 #include "../Widgets/Button.hpp"
 #include "../Widgets/Label.hpp"
 #include "../Widgets/TextInput.hpp"
@@ -15,34 +16,49 @@
 #include <wx/dataobj.h>
 #include <wx/display.h>
 #include <wx/utils.h>
+#include <wx/dcbuffer.h>
+#include <wx/filedlg.h>
 #include <chrono>
 #include <algorithm>
 
 namespace Slic3r::GUI::LocalSecurityUI {
 using namespace Slic3r::LocalSecurity;
 namespace {
-void require_hooks(const Hooks& h){if(!h.text||!h.factual_text||!h.notify||!h.register_surface||!h.register_sensitive)throw Failure(Error::InvalidInput);}
+void require_hooks(const Hooks& h){if(!h.text||!h.factual_text||!h.notify||!h.register_surface||!h.register_sensitive||!h.record_label||!h.record_tooltip||!h.record_name)throw Failure(Error::InvalidInput);}
 std::uint64_t seconds(){return static_cast<std::uint64_t>(std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count());}
 Time now(){return std::chrono::steady_clock::now();}
 wxString text(const Hooks& h,const char* value){return h.text(value);}
+Label* source_label(wxWindow* parent,const Hooks& h,const char* value,long style=0){auto label=new Label(parent,text(h,value),style);h.record_label(label,value);return label;}
 std::string utf8(const wxString& value){auto b=value.ToUTF8();return std::string(b.data(),b.length());}
 Secret secret(wxTextCtrl* control){auto b=control->GetValue().ToUTF8();Secret answer(std::string_view(b.data(),b.length()));control->ChangeValue({});return answer;}
 wxTextCtrl* field(wxWindow* parent,wxSizer* sizer,const Hooks& h,const char* label,bool hidden=false){
-    sizer->Add(new Label(parent,text(h,label)),0,wxEXPAND|wxBOTTOM,parent->FromDIP(4));
-    auto box=new TextInput(parent,{}, {},{},wxDefaultPosition,wxDefaultSize,hidden?(wxTE_PASSWORD|wxTE_PROCESS_ENTER):0);auto entry=box->GetTextCtrl();entry->SetName(text(h,label));entry->SetMaxLength(hidden?8192:256);if(hidden){h.register_sensitive(box);h.register_sensitive(entry);}sizer->Add(box,0,wxEXPAND|wxBOTTOM,parent->FromDIP(8));return entry;
+    sizer->Add(source_label(parent,h,label),0,wxEXPAND|wxBOTTOM,parent->FromDIP(4));
+    auto box=new TextInput(parent,{}, {},{},wxDefaultPosition,wxDefaultSize,hidden?(wxTE_PASSWORD|wxTE_PROCESS_ENTER):0);auto entry=box->GetTextCtrl();entry->SetName(text(h,label));h.record_name(entry,label);entry->SetMaxLength(hidden?8192:256);if(hidden){h.register_sensitive(box);h.register_sensitive(entry);}sizer->Add(box,0,wxEXPAND|wxBOTTOM,parent->FromDIP(8));return entry;
 }
 Button* action(wxWindow* parent,wxSizer* sizer,const Hooks& h,const char* title,std::function<void()> fn){
     auto button=new Button(parent,text(h,title));button->SetVariant(Button::Variant::Outlined);button->SetButtonSize(Button::Size::Large);button->SetName(text(h,title));
+    h.record_label(button,title);h.record_name(button,title);
     button->Bind(wxEVT_BUTTON,[fn=std::move(fn)](wxCommandEvent&){fn();});sizer->Add(button,0,wxEXPAND|wxBOTTOM,parent->FromDIP(6));return button;
 }
 SearchField* search(wxWindow* parent,wxSizer* sizer,const Hooks& h,const char* title,std::function<void()> filter){
-    auto result=new SearchField(parent,text(h,title));result->GetTextCtrl()->SetName(text(h,title));result->SetOnQuery([filter](const wxString&){filter();});result->SetOnRegexToggle([filter](bool){filter();});sizer->Add(result,0,wxEXPAND|wxBOTTOM,parent->FromDIP(8));return result;
+    auto result=new SearchField(parent,text(h,title));result->GetTextCtrl()->SetName(text(h,title));h.record_name(result->GetTextCtrl(),title);result->SetOnQuery([filter](const wxString&){filter();});result->SetOnRegexToggle([filter](bool){filter();});sizer->Add(result,0,wxEXPAND|wxBOTTOM,parent->FromDIP(8));return result;
 }
 void register_all(wxWindow* window,const Hooks& h,const std::string& root){
     h.register_surface(window,root);unsigned i=0;for(auto child:window->GetChildren())register_all(child,h,root+"."+std::to_string(i++));
 }
 void copy(const wxString& value){if(!wxTheClipboard->Open())throw Failure(Error::Unavailable);bool ok=wxTheClipboard->SetData(new wxTextDataObject(value));wxTheClipboard->Close();if(!ok)throw Failure(Error::Unavailable);}
 wxString failure(const Hooks& h,const Failure& e){return text(h,e.what());}
+class PairingQrView final:public wxPanel {
+    std::optional<PairingQr> m_qr;
+public:
+    PairingQrView(wxWindow* parent,const Hooks& hooks):wxPanel(parent){
+        SetBackgroundStyle(wxBG_STYLE_PAINT);SetMinSize(FromDIP(wxSize(300,300)));SetName(text(hooks,"Registration QR code. The manual setup key is available beside it."));hooks.register_sensitive(this);
+        Bind(wxEVT_PAINT,[this](wxPaintEvent&){wxAutoBufferedPaintDC dc(this);dc.SetBackground(*wxWHITE_BRUSH);dc.Clear();if(!m_qr)return;auto size=GetClientSize();const int count=static_cast<int>(m_qr->modules+8);int scale=std::min(size.x,size.y)/count;if(scale<2)return;int ox=(size.x-count*scale)/2+4*scale,oy=(size.y-count*scale)/2+4*scale;dc.SetPen(*wxTRANSPARENT_PEN);dc.SetBrush(*wxBLACK_BRUSH);for(unsigned y=0;y<m_qr->modules;++y)for(unsigned x=0;x<m_qr->modules;++x)if(m_qr->module(x,y))dc.DrawRectangle(ox+static_cast<int>(x)*scale,oy+static_cast<int>(y)*scale,scale,scale);});
+        Hide();
+    }
+    void Reveal(const Enrollment& e){m_qr=PairingQr::encode(e);Show();Refresh();}
+    void Clear(){m_qr.reset();Hide();Refresh();}
+};
 }
 
 AuthenticatorPanel::AuthenticatorPanel(wxWindow* parent,std::shared_ptr<AuthenticatorStore> store,Hooks hooks)
@@ -65,7 +81,13 @@ AuthenticatorPanel::AuthenticatorPanel(wxWindow* parent,std::shared_ptr<Authenti
     action(scroll,body,m_hooks,"Confirm and add authenticator",[this]{safely([this]{auto uri=m_uri->GetValue().ToUTF8();auto enrollment=parse_otpauth(std::string_view(uri.data(),uri.length()));auto code=secret(m_confirmation);m_store->add(std::move(enrollment),std::string_view(reinterpret_cast<const char*>(code.data()),code.size()),seconds());m_uri->ChangeValue({});RefreshEntries();});});
     auto manual=field(scroll,body,m_hooks,"Manual base32 secret",true);manual->SetMaxLength(1024);
     action(scroll,body,m_hooks,"Add manual SHA-1 / 6-digit / 30-second entry",[this,manual,issuer,account]{safely([&]{auto value=manual->GetValue().ToUTF8();Enrollment e;e.secret=decode_base32(std::string_view(value.data(),value.length()));e.issuer=utf8(issuer->GetValue());e.account=utf8(account->GetValue());auto code=secret(m_confirmation);m_store->add(std::move(e),std::string_view(reinterpret_cast<const char*>(code.data()),code.size()),seconds());manual->ChangeValue({});RefreshEntries();});});
-    body->Add(new Label(scroll,text(m_hooks,"Image, clipboard-image and camera QR import are unavailable in this build. Use a pairing URI or manual base32 entry."),LB_AUTO_WRAP),0,wxEXPAND|wxBOTTOM,FromDIP(8));
+    auto accept_import=[this](std::optional<Secret> payload){if(!payload)return;auto enrollment=parse_otpauth(std::string_view(reinterpret_cast<const char*>(payload->data()),payload->size()));auto uri=pairing_uri(enrollment);m_uri->ChangeValue(wxString::FromUTF8(uri));m_status->SetLabel(text(m_hooks,"QR parameters loaded locally. Enter a current code to confirm before saving."));};
+    auto file_import=action(scroll,body,m_hooks,"Import QR from image",[this,accept_import]{safely([&]{if(!m_hooks.decode_qr_file)throw Failure(Error::Unavailable);wxFileDialog picker(this,text(m_hooks,"Select a QR image"),{}, {},"PNG or JPEG (*.png;*.jpg;*.jpeg)|*.png;*.jpg;*.jpeg",wxFD_OPEN|wxFD_FILE_MUST_EXIST);if(picker.ShowModal()==wxID_OK)accept_import(m_hooks.decode_qr_file(std::filesystem::path(picker.GetPath().ToStdWstring())));});});
+    if(!m_hooks.decode_qr_file){file_import->Enable(false);file_import->SetToolTip(text(m_hooks,"The bundled isolated QR image decoder is unavailable. Use a pairing URI or manual entry."));}
+    auto clipboard_import=action(scroll,body,m_hooks,"Import QR from clipboard image",[this,accept_import]{safely([&]{if(!m_hooks.decode_qr_clipboard)throw Failure(Error::Unavailable);accept_import(m_hooks.decode_qr_clipboard());});});
+    if(!m_hooks.decode_qr_clipboard){clipboard_import->Enable(false);clipboard_import->SetToolTip(text(m_hooks,"The bundled isolated clipboard-image decoder is unavailable."));}
+    auto camera_import=action(scroll,body,m_hooks,"Scan QR with camera",[this]{if(!m_hooks.scan_qr_camera)return;wxWeakRef<AuthenticatorPanel> self(this);m_hooks.scan_qr_camera([self](std::optional<Secret> payload){if(!self||!payload)return;self->safely([&]{auto e=parse_otpauth(std::string_view(reinterpret_cast<const char*>(payload->data()),payload->size()));self->m_uri->ChangeValue(wxString::FromUTF8(pairing_uri(e)));self->m_status->SetLabel(text(self->m_hooks,"Camera parameters loaded locally. Confirm with a current code before saving."));});});});
+    if(!m_hooks.scan_qr_camera){camera_import->Enable(false);camera_import->SetToolTip(text(m_hooks,"No verified local camera decoder is registered."));}
     auto export_button=action(scroll,body,m_hooks,"Export redacted entries",[this]{safely([this]{if(!m_hooks.export_text)throw Failure(Error::Unavailable);m_hooks.export_text(text(m_hooks,"Authenticator entries"),m_store->export_redacted());});});
     if(!m_hooks.export_text){export_button->Enable(false);export_button->SetToolTip(text(m_hooks,"The shared export service is unavailable."));}
     action(scroll,body,m_hooks,"Remove selected entries",[this]{safely([this]{wxArrayInt selected_rows;m_list->GetSelections(selected_rows);if(selected_rows.empty())throw Failure(Error::InvalidInput);std::vector<std::string> ids;SuperConfirmGate::Spec spec;spec.action=text(m_hooks,"Remove authenticator entries");spec.consequence=text(m_hooks,"Selected authenticator entries will be removed from this device. Their encrypted history is retained.");for(auto row:selected_rows){ids.push_back(m_visible.at(row));spec.affected.push_back(m_list->GetString(row));}wxWeakRef<AuthenticatorPanel> self(this);SuperConfirmGate::Show(m_list,spec,[self,ids]{if(self)self->safely([&]{for(const auto& id:ids)self->m_store->remove(id);self->RefreshEntries();});});});});
@@ -103,6 +125,12 @@ LockWizard::LockWizard(wxWindow* anchor,std::shared_ptr<ElementLock> lock,wxStri
         const char* policies[]={"PIN","Password","PIN plus password","Password plus TOTP","PIN plus TOTP","Password plus PIN plus TOTP"};
         std::vector<wxRadioButton*> options;for(unsigned i=0;i<6;++i){auto b=new wxRadioButton(scroll,wxID_ANY,text(m_hooks,policies[i]),wxDefaultPosition,wxDefaultSize,i==0?wxRB_GROUP:0);body->Add(b,0,wxEXPAND|wxBOTTOM,FromDIP(6));options.push_back(b);}options[0]->SetValue(true);
         auto pin=field(scroll,body,m_hooks,"New PIN (4 to 32 digits)",true);auto password=field(scroll,body,m_hooks,"New password (8 to 1024 UTF-8 bytes)",true);auto otp=field(scroll,body,m_hooks,"TOTP pairing URI for this element",true);auto confirm=field(scroll,body,m_hooks,"Current TOTP code to confirm",true);
+        auto generated=std::make_shared<std::optional<Enrollment>>();auto qr=new PairingQrView(scroll,m_hooks);body->Add(qr,0,wxEXPAND|wxBOTTOM,FromDIP(8));
+        auto manual_key=field(scroll,body,m_hooks,"One-time manual setup key",false);manual_key->SetEditable(false);manual_key->Hide();m_hooks.register_sensitive(manual_key);
+        body->Add(new Label(scroll,text(m_hooks,"Generated pairing uses SHA-1, six digits and a 30-second period. The QR and manual key are registration-only and are never saved as images."),LB_AUTO_WRAP),0,wxEXPAND|wxBOTTOM,FromDIP(8));
+        action(scroll,body,m_hooks,"Generate a local pairing secret",[this,generated,otp,qr,manual_key,target]{safely([&]{Enrollment e;e.issuer="Bambu Studio";e.account=utf8(target);if(e.account.size()>256)e.account="Local element";e.secret=random_secret(20);*generated=std::move(e);otp->ChangeValue(wxString::FromUTF8(pairing_uri(**generated)));qr->Clear();manual_key->ChangeValue({});manual_key->Hide();m_status->SetLabel(text(m_hooks,"A new secret was generated locally. Reveal the QR or manual key, pair it, then type a current code before creating the lock."));Layout();});});
+        action(scroll,body,m_hooks,"Reveal registration QR and manual key",[this,generated,qr,manual_key,scroll]{safely([&]{if(!*generated)throw Failure(Error::Missing);qr->Reveal(**generated);manual_key->ChangeValue(wxString::FromUTF8(encode_base32((**generated).secret)));manual_key->Show();scroll->Layout();scroll->FitInside();});});
+        action(scroll,body,m_hooks,"Hide registration QR and manual key",[qr,manual_key,scroll]{qr->Clear();manual_key->ChangeValue({});manual_key->Hide();scroll->Layout();scroll->FitInside();});
         const char* durations[]={"This surface only","A set number of minutes","Until the application closes"};std::vector<wxRadioButton*> duration;for(unsigned i=0;i<3;++i){auto b=new wxRadioButton(scroll,wxID_ANY,text(m_hooks,durations[i]),wxDefaultPosition,wxDefaultSize,i==0?wxRB_GROUP:0);body->Add(b,0,wxEXPAND|wxBOTTOM,FromDIP(6));duration.push_back(b);}duration[0]->SetValue(true);
         auto minutes=new wxSpinCtrl(scroll,wxID_ANY,"5",wxDefaultPosition,wxDefaultSize,wxSP_ARROW_KEYS,1,1440,5);minutes->SetName(text(m_hooks,"Unlock minutes"));body->Add(minutes,0,wxEXPAND|wxBOTTOM,FromDIP(8));
         auto disclosure=new wxCheckBox(scroll,wxID_ANY,text(m_hooks,"This is a toy lock, and the recovery folder is shown above."));body->Add(disclosure,0,wxEXPAND|wxBOTTOM,FromDIP(8));
