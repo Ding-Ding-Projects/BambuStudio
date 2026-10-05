@@ -19,3 +19,7 @@ Draft history excludes sensitive and device-identity options through the existin
 ## Build and delivery status
 
 Source implementation only. A native build and packaging remain the coordinating release lane's responsibility. No functional, runtime, visual or installer-execution result is claimed here. The coordinating lane must record its exact integrated source commit and release assets before issue closure.
+
+## Production build continuation
+
+The production compiler reported `SettingsDraftPanel.cpp` C2065 for the unsupported `wxEVT_SCROLLWIN` identifier. The draft scroll-position observer now binds the eight supported specific wxWidgets scroll-window events with its existing deferred callback and editor-generation check. Native build retry is pending in the coordinating lane; no tests or screenshots were run for this repair.
