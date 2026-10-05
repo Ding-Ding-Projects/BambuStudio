@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Detect / bootstrap the Windows build toolchain for a from-source Bambu Studio MD3 build.
 .DESCRIPTION
@@ -510,6 +510,19 @@ function Install-CMake {
         $minimumVersion = [version]'4.2.0'
     }
     if (Test-CMakeVersion -MinimumVersion $minimumVersion) { return }
+    if ($null -ne $instance) {
+        $bundledCMake = Join-Path ([string]$instance.installationPath) 'Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe'
+        if ([IO.File]::Exists($bundledCMake) -and
+            (Test-CMakeVersion -CMakePath $bundledCMake -MinimumVersion $minimumVersion)) {
+            # Discover this inside the elevated producer, rather than depending
+            # on a process-only PATH edit made before the RunAs handoff.
+            $bundledDirectory = [IO.Path]::GetDirectoryName($bundledCMake)
+            $env:Path = $bundledDirectory + ';' + $env:Path
+            Update-SessionPath
+            Write-BuildLog "Using supported Visual Studio bundled CMake at '$bundledCMake'."
+            return
+        }
+    }
 
     $winget = Get-Winget
     if ($winget) {
