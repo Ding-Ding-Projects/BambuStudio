@@ -1,6 +1,6 @@
 ---
 translation-of: README.md
-source-sha256: 47e4ddf761b2eae5210c2163139caf7d6dfe5c2d53e16ec5327181a82a9c9a78
+source-sha256: 0b8d20f82cacf0279e8ad2f6ebbbb44b1a2db354e5bb2e584556c214893c7c4d
 review-status: agent-drafted
 ---
 
@@ -9,6 +9,8 @@ review-status: agent-drafted
 # 準備工作區
 
 呢個類別記錄本地準備工作區功能。
+
+- [原生選單同打印機選擇嘅生命週期](native-lifecycle.yue_HK.md) 涵蓋彈出視窗擁有權、取消選擇同實體耗材槽身份。
 
 - [準備側邊欄選項卡](sidebar-tabs.md) 描述墨水、流程同埋物件導航及佢嘅待機打包二進制檢查。
 
