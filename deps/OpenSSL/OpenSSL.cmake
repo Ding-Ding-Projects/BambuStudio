@@ -20,12 +20,14 @@ if(WIN32)
     # Only installation destinations are overridden; compiled provider/config
     # directories continue to come from OpenSSL's Windows Configure defaults.
     set(_prefix_line "")
+    set(_openssldir_line "")
     set(_install_cmd ${CMAKE_COMMAND} -E env "_CL_=$ENV{_CL_} ${_bambu_path_flags}"
         nmake install_sw "INSTALLTOP=${DESTDIR}/usr/local"
         "ENGINESDIR=${DESTDIR}/usr/local/lib/engines-3"
         "MODULESDIR=${DESTDIR}/usr/local/lib/ossl-modules")
 else()
     set(_prefix_line "--prefix=${DESTDIR}/usr/local")
+    set(_openssldir_line "--openssldir=${DESTDIR}/usr/local")
     if(APPLE)
         set(_conf_cmd export MACOSX_DEPLOYMENT_TARGET=${CMAKE_OSX_DEPLOYMENT_TARGET} && ./Configure -mmacosx-version-min=${CMAKE_OSX_DEPLOYMENT_TARGET} )
     else()
@@ -61,7 +63,7 @@ ExternalProject_Add(dep_OpenSSL
     URL_HASH ${url_hash}
     DOWNLOAD_DIR ${DEP_DOWNLOAD_DIR}/OpenSSL
 	CONFIGURE_COMMAND ${_conf_cmd} ${_cross_arch}
-        "--openssldir=${DESTDIR}/usr/local"
+        ${_openssldir_line}
         ${_prefix_line}
         ${_cross_comp_prefix_line}
         no-shared
