@@ -74,7 +74,7 @@ enum class FunnyLanguage { English, Cantonese };
 
 inline constexpr int FUNNY_LEVEL_MIN     = 1;
 inline constexpr int FUNNY_LEVEL_MAX     = 5;
-inline constexpr int FUNNY_LEVEL_DEFAULT = 2;
+inline constexpr int FUNNY_LEVEL_DEFAULT = 5;
 
 // AppConfig keys shared by the Preferences dialog, GUI_App and the tests.
 inline constexpr const char *FUNNY_LEVEL_ENGLISH_KEY   = "funny_level_en";
