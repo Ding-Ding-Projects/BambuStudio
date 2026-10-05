@@ -1,0 +1,8 @@
+add_executable(personal_modes_tests personal_modes_tests.cpp)
+target_compile_features(personal_modes_tests PRIVATE cxx_std_17)
+target_include_directories(personal_modes_tests PRIVATE ${PROJECT_SOURCE_DIR}/src)
+if(WIN32)
+    target_compile_definitions(personal_modes_tests PRIVATE NOMINMAX)
+    target_link_libraries(personal_modes_tests PRIVATE ole32 oleaut32 uuid)
+endif()
+add_test(NAME personal_modes_tests COMMAND personal_modes_tests)
