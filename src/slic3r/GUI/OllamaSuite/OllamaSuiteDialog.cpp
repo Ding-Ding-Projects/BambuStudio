@@ -28,6 +28,7 @@
 namespace Slic3r::GUI {
 namespace {
 using namespace Slic3r::OllamaSuite;
+using Model = Slic3r::OllamaSuite::Model;
 wxString u8(const std::string &s) { return wxString::FromUTF8(s.c_str()); }
 std::string utf8(const wxString &s) { auto bytes=s.ToUTF8(); return bytes ? std::string(bytes.data(),bytes.length()) : std::string(); }
 class SuiteDialog final : public wxDialog {
