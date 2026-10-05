@@ -944,17 +944,17 @@ endif()
 
 # Build the offline documentation from the current articles, not an old snapshot.
 file(GLOB_RECURSE SLIC3R_DOCS_INPUTS CONFIGURE_DEPENDS
-    "${PROJECT_SOURCE_DIR}/docs/features/*"
-    "${PROJECT_SOURCE_DIR}/docs/screenshots/*")
+    "${TOP_LEVEL_PROJECT_DIR}/docs/features/*"
+    "${TOP_LEVEL_PROJECT_DIR}/docs/screenshots/*")
 set(SLIC3R_DOCS_BUNDLE "${SLIC3R_RESOURCES_DIR}/docs/bundle.json")
 add_custom_command(
     OUTPUT "${SLIC3R_DOCS_BUNDLE}" "${SLIC3R_DOCS_BUNDLE}.stamp"
     COMMAND ${CMAKE_COMMAND}
-        "-DDOCS_SOURCE=${PROJECT_SOURCE_DIR}/docs"
+        "-DDOCS_SOURCE=${TOP_LEVEL_PROJECT_DIR}/docs"
         "-DDOCS_OUTPUT=${SLIC3R_RESOURCES_DIR}/docs"
-        -P "${PROJECT_SOURCE_DIR}/cmake/modules/BundleDocs.cmake"
+        -P "${TOP_LEVEL_PROJECT_DIR}/cmake/modules/BundleDocs.cmake"
     COMMAND ${CMAKE_COMMAND} -E touch "${SLIC3R_DOCS_BUNDLE}.stamp"
-    DEPENDS ${SLIC3R_DOCS_INPUTS} "${PROJECT_SOURCE_DIR}/cmake/modules/BundleDocs.cmake"
+    DEPENDS ${SLIC3R_DOCS_INPUTS} "${TOP_LEVEL_PROJECT_DIR}/cmake/modules/BundleDocs.cmake"
     COMMENT "Bundling offline feature documentation"
     VERBATIM
 )
