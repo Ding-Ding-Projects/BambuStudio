@@ -12,6 +12,9 @@
 #include <filesystem>
 #include <functional>
 #include <vector>
+#include <thread>
+#include <atomic>
+#include <wx/timer.h>
 
 #include <wx/string.h>
 
@@ -74,6 +77,26 @@ private:
     void on_browse(wxCommandEvent &event);
     void on_locate_seven_zip(wxCommandEvent &event);
     void on_export(wxCommandEvent &event);
+    void finish_export(const Export::ExportOutcome &outcome);
+    void poll_export(wxTimerEvent &event);
+    void cancel_export();
+    struct AsyncExport {
+        std::shared_ptr<Export::ExportControl> control = std::make_shared<Export::ExportControl>();
+        Export::ExportOutcome outcome;
+        std::atomic<bool> finished{false};
+    };
+    struct OwnedExportJob {
+        Export::ExportJob value;
+        ~OwnedExportJob() {
+            auto &text = value.archive.password;
+            volatile char *p = text.empty() ? nullptr : &text[0];
+            for (std::size_t i = 0; i < text.size(); ++i) p[i] = 0;
+        }
+    };
+    std::shared_ptr<AsyncExport> m_async;
+    std::thread m_worker;
+    wxTimer m_export_timer;
+
 
     Label *add_option(wxWindow *parent, wxSizer *sizer, const wxString &label, wxWindow *control, const wxString &tooltip);
 

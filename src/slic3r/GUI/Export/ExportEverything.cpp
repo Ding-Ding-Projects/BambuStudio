@@ -1124,7 +1124,7 @@ std::optional<std::string> sanitize_archive_path(const std::string &candidate)
     return p;
 }
 
-ArchiveResult write_zip(const fs::path &archive_path, const std::vector<ArchiveEntry> &entries)
+ArchiveResult write_zip(const fs::path &archive_path, const std::vector<ArchiveEntry> &entries, const std::shared_ptr<ExportControl> &control)
 {
     ArchiveResult r;
     r.archive_path = archive_path;
@@ -1141,9 +1141,19 @@ ArchiveResult write_zip(const fs::path &archive_path, const std::vector<ArchiveE
             r.error = "Refused unsafe archive member path: " + e.relative_path;
             return r;
         }
-        if (!mz_zip_writer_add_mem(&zip, name->c_str(), e.data.data(), e.data.size(), MZ_DEFAULT_LEVEL)) {
+        struct Input { const std::string &bytes; const std::shared_ptr<ExportControl> &control; } input{e.data, control};
+        const auto read = [](void *opaque, mz_uint64 offset, void *buffer, size_t size) -> size_t {
+            const auto &input = *static_cast<Input *>(opaque);
+            if ((input.control && input.control->cancelled()) || offset >= input.bytes.size()) return 0;
+            const auto count = std::min(size, input.bytes.size() - static_cast<std::size_t>(offset));
+            std::memcpy(buffer, input.bytes.data() + static_cast<std::size_t>(offset), count);
+            return count;
+        };
+        if (!mz_zip_writer_add_read_buf_callback(&zip, name->c_str(), read, &input, e.data.size(), nullptr,
+                                                nullptr, 0, MZ_DEFAULT_LEVEL, nullptr, 0, nullptr, 0) ||
+            (control && control->cancelled())) {
             mz_zip_writer_end(&zip);
-            r.error = "miniz: could not add " + *name;
+            r.error = control && control->cancelled() ? "Export cancelled." : "miniz: could not add " + *name;
             return r;
         }
     }
@@ -1160,7 +1170,10 @@ ArchiveResult write_zip(const fs::path &archive_path, const std::vector<ArchiveE
         r.error = "Cannot write " + archive_path.string();
         return r;
     }
-    out.write(static_cast<const char *>(buffer), static_cast<std::streamsize>(size));
+    for (std::size_t offset = 0; offset < size; offset += 65536) {
+        if (control && control->cancelled()) { out.close(); mz_zip_writer_end(&zip); r.error = "Export cancelled."; return r; }
+        out.write(static_cast<const char *>(buffer) + offset, static_cast<std::streamsize>(std::min<std::size_t>(65536, size - offset)));
+    }
     out.close();
     mz_zip_writer_end(&zip); // also frees `buffer`
     if (!out) { r.error = "Write failed for " + archive_path.string(); return r; }
@@ -1320,9 +1333,10 @@ std::wstring widen(const std::string &utf8)
 
 // Run argv with the given working directory, hidden, and return the exit code
 // (or -1 when the process could not be started).
-int run_process(const std::vector<std::string> &argv, const fs::path &working_dir, std::string &error, const std::string &password = {})
+int run_process(const std::vector<std::string> &argv, const fs::path &working_dir, std::string &error, const std::string &password = {}, const std::shared_ptr<ExportControl> &control = {})
 {
 #ifdef _WIN32
+    if (control && control->cancelled()) { error = "Export cancelled."; return -1; }
     struct Handle {
         HANDLE value = nullptr;
         ~Handle() { if (value && value != INVALID_HANDLE_VALUE) CloseHandle(value); }
@@ -1388,10 +1402,16 @@ int run_process(const std::vector<std::string> &argv, const fs::path &working_di
         error = "Could not start contained archive process"; return -1;
     }
     input.close(); sink.close();
-    if (WaitForSingleObject(process.value, 300000) != WAIT_OBJECT_0) {
-        TerminateJobObject(job.value, 1);
-        WaitForSingleObject(process.value, 5000);
-        error = "Archive process did not complete within five minutes"; return -1;
+    const auto deadline = std::chrono::steady_clock::now() + std::chrono::minutes(5);
+    for (;;) {
+        const DWORD wait = WaitForSingleObject(process.value, 50);
+        if (wait == WAIT_OBJECT_0) break;
+        if (wait == WAIT_FAILED || (control && control->cancelled()) || std::chrono::steady_clock::now() >= deadline) {
+            TerminateJobObject(job.value, 1);
+            WaitForSingleObject(process.value, 5000);
+            error = control && control->cancelled() ? "Export cancelled." : "Archive process did not complete within five minutes";
+            return -1;
+        }
     }
     DWORD code = 0;
     if (!GetExitCodeProcess(process.value, &code)) { error = "Archive process status unavailable"; return -1; }
@@ -1480,7 +1500,7 @@ SevenZipLocation find_seven_zip(const fs::path &override)
 }
 
 ArchiveResult write_seven_zip(const fs::path &archive_path, const std::vector<ArchiveEntry> &entries,
-                              const ArchiveOptions &o, const SevenZipLocation &seven_zip)
+                              const ArchiveOptions &o, const SevenZipLocation &seven_zip, const std::shared_ptr<ExportControl> &control)
 {
     ArchiveResult r;
     r.archive_path = archive_path;
@@ -1553,7 +1573,8 @@ ArchiveResult write_seven_zip(const fs::path &archive_path, const std::vector<Ar
     shown.push_back("*");
     r.command_line = join_command(shown);
 
-    const int code = run_process(argv, staging, err, o.password);
+    if (control) control->phase = ExportPhase::Compressing;
+    const int code = run_process(argv, staging, err, o.password, control);
     if (code < 0) { r.error = "Could not start 7-Zip: " + err; return r; }
     if (code != 0 && code != 1) {
         r.error = "7-Zip exited with code " + std::to_string(code) + " (" + seven_zip_exit_text(code) + ")";
@@ -1569,12 +1590,13 @@ ArchiveResult write_seven_zip(const fs::path &archive_path, const std::vector<Ar
         r.error = "7-Zip returned success without a readable archive."; return r;
     }
     if (!o.password.empty()) {
+        if (control) control->phase = ExportPhase::Verifying;
         const std::vector<std::string> check{seven_zip.executable.u8string(), "t", "-sccUTF-8", "-bso0", "-bse0", fs::absolute(actual).u8string()};
-        if (run_process(check, staging, err, o.password) != 0) {
+        if (run_process(check, staging, err, o.password, control) != 0) {
             r.error = "Encrypted archive verification failed. Export is not complete."; return r;
         }
         const std::vector<std::string> listing{seven_zip.executable.u8string(), "l", "-bso0", "-bse0", fs::absolute(actual).u8string()};
-        const int listing_code = run_process(listing, staging, err);
+        const int listing_code = run_process(listing, staging, err, {}, control);
         if (listing_code != 2 && listing_code != 255) {
             r.error = "Password-free header verification returned code " + std::to_string(listing_code) + ". Export is not verified."; return r;
         }
@@ -1593,80 +1615,206 @@ std::vector<fs::path> planned_output_paths(const ExportJob &job)
     if (job.output_path.empty()) return {};
     std::vector<fs::path> paths{fs::absolute(job.output_path).lexically_normal()};
     if (job.archive.format == ArchiveFormat::None) {
-        const auto serialized = serialize(job.dataset, job.format, job.serialize_options);
-        if (serialized.sidecar_name)
-            paths.push_back(paths.front().parent_path() / fs::u8path(paths.front().filename().u8string() + "." + *serialized.sidecar_name));
+        const bool tabular_header = (job.format == Format::CSV || job.format == Format::TSV) && job.serialize_options.include_schema_header;
+        if (tabular_header || job.format == Format::Protobuf)
+            paths.push_back(paths.front().parent_path() / fs::u8path(paths.front().filename().u8string() +
+                (job.format == Format::Protobuf ? ".schema.proto" : ".meta.json")));
     }
     return paths;
+}
+
+namespace {
+using OutputStamp = ExportTargetSnapshot;
+OutputStamp output_stamp(const fs::path &path)
+{
+    std::error_code ec;
+    const auto status = fs::symlink_status(path, ec);
+    if (ec && ec != std::errc::no_such_file_or_directory) throw std::runtime_error("Cannot inspect output");
+    if (fs::is_symlink(status) || (fs::exists(status) && !fs::is_regular_file(status))) throw std::runtime_error("Output is not a regular file");
+    if (!fs::exists(status)) return {};
+    OutputStamp result{true, fs::file_size(path), fs::last_write_time(path)};
+#ifdef _WIN32
+    HANDLE handle = CreateFileW(path.c_str(), FILE_READ_ATTRIBUTES, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                                nullptr, OPEN_EXISTING, FILE_FLAG_OPEN_REPARSE_POINT, nullptr);
+    if (handle == INVALID_HANDLE_VALUE) throw std::runtime_error("Cannot identify output");
+    BY_HANDLE_FILE_INFORMATION info{};
+    const bool known = GetFileInformationByHandle(handle, &info) != 0;
+    CloseHandle(handle);
+    if (!known || (info.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT)) throw std::runtime_error("Output identity unavailable");
+    result.identity = (static_cast<std::uint64_t>(info.nFileIndexHigh) << 32) | info.nFileIndexLow;
+    result.volume = info.dwVolumeSerialNumber;
+#endif
+    return result;
+}
+bool same_stamp(const OutputStamp &a, const OutputStamp &b) { return a.exists == b.exists && (!a.exists || (a.size == b.size && a.time == b.time && a.identity == b.identity && a.volume == b.volume)); }
+// Atomic no-replace publication. Neither a concurrent new file nor a link can
+// be silently replaced. Temporary files and targets share a filesystem.
+bool move_no_replace(const fs::path &from, const fs::path &to)
+{
+#ifdef _WIN32
+    return MoveFileExW(from.c_str(), to.c_str(), MOVEFILE_WRITE_THROUGH) != 0;
+#else
+    std::error_code ec;
+    fs::create_hard_link(from, to, ec);
+    if (ec) return false;
+    fs::remove(from, ec);
+    return !ec;
+#endif
+}
+}
+
+std::optional<ExportTargetSnapshot> inspect_output_target(const fs::path &path)
+{
+    try {
+        const auto absolute = fs::absolute(path).lexically_normal();
+        auto snapshot = output_stamp(absolute);
+        snapshot.path = absolute;
+        return snapshot;
+    } catch (...) { return std::nullopt; }
 }
 
 ExportOutcome run_export(const ExportJob &job)
 {
     ExportOutcome outcome;
-    outcome.loss = compute_loss_report(job.dataset, job.format);
-    if (!job.archive.password.empty() && job.archive.format != ArchiveFormat::SevenZip) {
-        outcome.error = "Encryption is not supported for this output type. No export was written.";
-        return outcome;
-    }
-    if (job.output_path.empty()) { outcome.error = "No output path"; return outcome; }
-
-    for (const auto &path : planned_output_paths(job)) {
-        std::error_code ec;
-        const auto status = fs::symlink_status(path, ec);
-        if (ec && ec != std::errc::no_such_file_or_directory) { outcome.error = "Cannot inspect export target."; return outcome; }
-        if (fs::is_symlink(status) || (fs::exists(status) && !fs::is_regular_file(status))) {
-            outcome.error = "Export target must be a regular file, not a link or directory."; return outcome;
+    const auto control = job.control ? job.control : std::make_shared<ExportControl>();
+    auto cancelled = [&]() {
+        if (!control->cancelled()) return false;
+        outcome.cancelled = true;
+        outcome.error = "Export cancelled. Existing output was preserved.";
+        return true;
+    };
+    if (cancelled()) return outcome;
+    try {
+        outcome.loss = compute_loss_report(job.dataset, job.format);
+        if (job.output_path.empty()) { outcome.error = "No output path"; return outcome; }
+        if (!job.archive.password.empty() && job.archive.format != ArchiveFormat::SevenZip) {
+            outcome.error = "Encryption is not supported for this output type. No export was written."; return outcome;
         }
-        if (!fs::exists(status)) continue;
-        const bool approved = std::any_of(job.overwrite_approved_paths.begin(), job.overwrite_approved_paths.end(),
-            [&path](const fs::path &candidate) { return fs::absolute(candidate).lexically_normal() == path; });
-        if (!approved) { outcome.error = "Existing export target needs explicit overwrite confirmation."; return outcome; }
-    }
-    Serialized s = serialize(job.dataset, job.format, job.serialize_options);
-
-    const std::string stem = !job.dataset.file_stem.empty() ? job.dataset.file_stem : std::string("export");
-    const std::string data_name = job.archive.format == ArchiveFormat::None ? job.output_path.filename().string()
-                                                                             : stem + "." + format_extension(job.format);
-    const std::string sidecar_name = data_name + "." + (s.sidecar_name ? *s.sidecar_name : std::string("meta.json"));
-
-    if (job.archive.format == ArchiveFormat::None) {
-        std::error_code ec;
-        fs::create_directories(job.output_path.parent_path(), ec);
-        std::ofstream out(job.output_path, std::ios::binary | std::ios::trunc);
-        if (!out) { outcome.error = "Cannot write " + job.output_path.string(); return outcome; }
-        out.write(s.body.data(), static_cast<std::streamsize>(s.body.size()));
-        out.close();
-        if (!out) { outcome.error = "Write failed for " + job.output_path.string(); return outcome; }
-        outcome.members.push_back(data_name);
-        if (s.sidecar_name) {
-            fs::path      side = job.output_path.parent_path() / sidecar_name;
-            std::ofstream so(side, std::ios::binary | std::ios::trunc);
-            if (!so) { outcome.error = "Cannot write " + side.string(); return outcome; }
-            so.write(s.sidecar_body.data(), static_cast<std::streamsize>(s.sidecar_body.size()));
-            so.close();
-            if (!so) { outcome.error = "Export sidecar write failed."; return outcome; }
-            outcome.members.push_back(sidecar_name);
+        const auto final_path = fs::absolute(job.output_path).lexically_normal();
+        fs::create_directories(final_path.parent_path());
+        std::vector<fs::path> targets = planned_output_paths(job);
+        std::vector<OutputStamp> original;
+        for (const auto &path : targets) {
+            const auto stamp = output_stamp(path);
+            if (!job.destination_snapshots.empty()) {
+                const auto captured = std::find_if(job.destination_snapshots.begin(), job.destination_snapshots.end(),
+                    [&path](const auto &snapshot) { return snapshot.path == path; });
+                if (captured == job.destination_snapshots.end() || !same_stamp(*captured, stamp)) {
+                    outcome.error = "Export destination changed after confirmation. Nothing was replaced."; return outcome;
+                }
+            }
+            if (stamp.exists) {
+                const bool approved = std::any_of(job.overwrite_approved_paths.begin(), job.overwrite_approved_paths.end(),
+                    [&path](const fs::path &p) { return fs::absolute(p).lexically_normal() == path; });
+                if (!approved || job.archive.format == ArchiveFormat::SevenZip) {
+                    outcome.error = "Existing output requires exact confirmation; archives require a new name."; return outcome;
+                }
+            }
+            original.push_back(stamp);
         }
-        outcome.ok           = true;
-        outcome.written_path = job.output_path;
-        return outcome;
+        if (cancelled()) return outcome;
+        fs::path stage;
+        std::random_device rd;
+        for (unsigned attempt = 0; attempt < 16; ++attempt) {
+            auto candidate = final_path.parent_path() / (".export-stage-" + std::to_string(rd()) + "-" + std::to_string(rd()));
+            if (fs::create_directory(candidate)) { stage = candidate; break; }
+        }
+        if (stage.empty()) { outcome.error = "Cannot reserve export staging directory."; return outcome; }
+        struct Cleanup {
+            fs::path path; bool preserve = false;
+            ~Cleanup() { if (!preserve) { std::error_code ec; fs::remove_all(path, ec); } }
+        } cleanup{stage};
+        control->phase = ExportPhase::Serializing;
+        const auto serialized = serialize(job.dataset, job.format, job.serialize_options);
+        if (cancelled()) return outcome;
+        control->phase = ExportPhase::Writing;
+        const std::string stem = job.dataset.file_stem.empty() ? "export" : job.dataset.file_stem;
+        const std::string data_name = job.archive.format == ArchiveFormat::None ? final_path.filename().u8string() : stem + "." + format_extension(job.format);
+        const std::string side_name = data_name + "." + (serialized.sidecar_name ? *serialized.sidecar_name : "meta.json");
+        std::vector<fs::path> staged;
+        if (job.archive.format == ArchiveFormat::None) {
+            auto write = [&](const std::string &name, const std::string &bytes) {
+                auto path = stage / fs::u8path(name);
+                std::ofstream stream(path, std::ios::binary);
+                for (std::size_t offset = 0; offset < bytes.size(); offset += 65536) {
+                    if (control->cancelled()) return false;
+                    stream.write(bytes.data() + offset, static_cast<std::streamsize>(std::min<std::size_t>(65536, bytes.size() - offset)));
+                    if (!stream) return false;
+                }
+                stream.close();
+                if (!stream) return false;
+                staged.push_back(path); outcome.members.push_back(name); return true;
+            };
+            if (!write(data_name, serialized.body) || (serialized.sidecar_name && !write(side_name, serialized.sidecar_body))) {
+                if (!cancelled()) outcome.error = "Could not stage export output."; return outcome;
+            }
+        } else {
+            std::vector<ArchiveEntry> entries{{data_name, serialized.body}};
+            if (serialized.sidecar_name) entries.push_back({side_name, serialized.sidecar_body});
+            for (const auto &entry : entries) outcome.members.push_back(entry.relative_path);
+            const auto archive_path = stage / final_path.filename();
+            ArchiveResult archive = job.archive.format == ArchiveFormat::Zip ? write_zip(archive_path, entries, control) :
+                write_seven_zip(archive_path, entries, job.archive, find_seven_zip(job.seven_zip_override), control);
+            if (!archive.ok) { if (!cancelled()) outcome.error = archive.error; return outcome; }
+            // The temporary destination is implementation detail, not user-facing provenance.
+            if (job.archive.format == ArchiveFormat::SevenZip) outcome.command_line = join_command(seven_zip_switches(job.archive, true));
+            if (job.archive.format == ArchiveFormat::SevenZip && !job.archive.split_volume.empty()) {
+                targets.clear(); original.clear();
+                for (const auto &entry : fs::directory_iterator(stage)) {
+                    if (!entry.is_regular_file()) continue;
+                    const auto name = entry.path().filename().u8string();
+                    if (name.rfind(final_path.filename().u8string() + ".", 0) != 0) continue;
+                    staged.push_back(entry.path()); targets.push_back(final_path.parent_path() / entry.path().filename());
+                }
+                std::sort(staged.begin(), staged.end()); std::sort(targets.begin(), targets.end());
+                for (const auto &target : targets) {
+                    const auto stamp = output_stamp(target);
+                    if (stamp.exists) { outcome.error = "A split archive output already exists. Choose a new name."; return outcome; }
+                    original.push_back(stamp);
+                }
+            } else staged.push_back(archive_path);
+        }
+        if (cancelled()) return outcome;
+        if (staged.empty() || staged.size() != targets.size()) { outcome.error = "Export output inventory did not match."; return outcome; }
+        for (std::size_t i = 0; i < targets.size(); ++i)
+            if (!same_stamp(original[i], output_stamp(targets[i]))) { outcome.error = "Export destination changed while the export was running. Nothing was replaced."; return outcome; }
+        if (!control->begin_publication()) { cancelled(); return outcome; }
+        control->phase = ExportPhase::Publishing;
+        // Cancellation is sealed for this short publication transaction. Existing
+        // outputs remain recoverable until every staged member is published.
+        cleanup.preserve = true;
+        outcome.error = "Export publication did not complete. Recovery files retained at " + stage.u8string();
+        std::vector<OutputStamp> incoming;
+        for (const auto &path : staged) incoming.push_back(output_stamp(path));
+        std::vector<fs::path> backups(targets.size());
+        std::size_t published = 0;
+        bool complete = true;
+        for (std::size_t i = 0; i < targets.size(); ++i) {
+            if (original[i].exists) {
+                backups[i] = stage / ("previous-" + std::to_string(i));
+                if (!move_no_replace(targets[i], backups[i]) || !same_stamp(original[i], output_stamp(backups[i]))) { complete = false; break; }
+            }
+            if (!move_no_replace(staged[i], targets[i])) { complete = false; break; }
+            ++published;
+        }
+        if (!complete) {
+            // Keep every backup if another writer now owns a path. Never remove
+            // or overwrite that writer's file to make rollback appear successful.
+            cleanup.preserve = true;
+            for (std::size_t i = 0; i < published; ++i)
+                if (same_stamp(incoming[i], output_stamp(targets[i]))) move_no_replace(targets[i], stage / ("incomplete-" + std::to_string(i)));
+            for (std::size_t i = 0; i < backups.size(); ++i)
+                if (!backups[i].empty()) move_no_replace(backups[i], targets[i]);
+            outcome.error = "Export publication collided with another writer. Recovery files retained at " + stage.u8string();
+            control->state = ExportControl::State::Finished; return outcome;
+        }
+        cleanup.preserve = false;
+        outcome.error.clear();
+        outcome.ok = true; outcome.written_path = targets.front();
+        control->phase = ExportPhase::Finished; control->state = ExportControl::State::Finished;
+    } catch (...) {
+        if (!cancelled() && outcome.error.empty()) outcome.error = "Export could not complete safely. No successful output was recorded.";
     }
-
-    std::vector<ArchiveEntry> entries;
-    entries.push_back({data_name, s.body});
-    if (s.sidecar_name) entries.push_back({sidecar_name, s.sidecar_body});
-    for (const ArchiveEntry &e : entries) outcome.members.push_back(e.relative_path);
-
-    ArchiveResult ar;
-    if (job.archive.format == ArchiveFormat::Zip) {
-        ar = write_zip(job.output_path, entries);
-    } else {
-        ar = write_seven_zip(job.output_path, entries, job.archive, find_seven_zip(job.seven_zip_override));
-        outcome.command_line = ar.command_line;
-    }
-    outcome.ok           = ar.ok;
-    outcome.error        = ar.error;
-    outcome.written_path = ar.archive_path;
     return outcome;
 }
 

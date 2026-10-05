@@ -10,6 +10,10 @@
 #include <filesystem>
 #include <fstream>
 #include <string>
+#include <thread>
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
 using namespace Slic3r::GUI::Export;
 namespace fs = std::filesystem;
@@ -590,4 +594,107 @@ TEST_CASE("Overwrite authorization is exact and includes sidecars", "[export][pr
     CHECK_FALSE(run_export(job).ok);
     std::ifstream other(job.output_path); std::string text; std::getline(other, text);
     CHECK(text == "preserve");
+}
+
+
+TEST_CASE("Cancellation before publication preserves primary and sidecar", "[export][cancellation]")
+{
+    TempDir tmp;
+    ExportJob job;
+    job.dataset = tabular_fixture(); job.format = Format::CSV;
+    job.output_path = tmp.path() / "rows.csv";
+    REQUIRE(run_export(job).ok);
+    job.overwrite_approved_paths = planned_output_paths(job);
+    const auto before = fs::file_size(job.output_path);
+    job.control = std::make_shared<ExportControl>();
+    REQUIRE(job.control->request_cancel());
+    const auto result = run_export(job);
+    CHECK_FALSE(result.ok); CHECK(result.cancelled);
+    CHECK(fs::file_size(job.output_path) == before);
+    CHECK(fs::exists(tmp.path() / "rows.csv.meta.json"));
+    ExportControl publication;
+    REQUIRE(publication.begin_publication());
+    CHECK_FALSE(publication.request_cancel());
+}
+
+TEST_CASE("A changed destination is not overwritten by an asynchronous export", "[export][cancellation]")
+{
+    TempDir tmp;
+    ExportJob job;
+    job.dataset = structured_fixture();
+    job.dataset.root.set("payload", Value::from_string(std::string(16000000, 'a')));
+    job.output_path = tmp.path() / "output.json";
+    { std::ofstream out(job.output_path); out << "before"; }
+    job.overwrite_approved_paths = {job.output_path};
+    job.control = std::make_shared<ExportControl>();
+    ExportOutcome outcome;
+    std::thread worker([&] { outcome = run_export(job); });
+    const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+    while (job.control->phase != ExportPhase::Serializing && std::chrono::steady_clock::now() < deadline)
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    const bool observed = job.control->phase == ExportPhase::Serializing;
+    if (observed) { std::ofstream out(job.output_path); out << "another writer"; }
+    worker.join();
+    REQUIRE(observed);
+    CHECK_FALSE(outcome.ok);
+    std::ifstream in(job.output_path); std::string text; std::getline(in, text);
+    CHECK(text == "another writer");
+}
+
+TEST_CASE("Cancellation terminates only the owned archive child", "[export][cancellation]")
+{
+#ifdef _WIN32
+    const char *helper = std::getenv("EXPORT_TEST_CHILD");
+    if (!helper) { WARN("Set EXPORT_TEST_CHILD to the compiled archive_test_child.exe for child-process cancellation coverage"); return; }
+    TempDir tmp;
+    ExportJob job;
+    job.dataset = structured_fixture(); job.archive.format = ArchiveFormat::SevenZip;
+    job.output_path = tmp.path() / "cancelled.7z"; job.seven_zip_override = helper;
+    job.control = std::make_shared<ExportControl>();
+    ExportOutcome outcome;
+    std::thread worker([&] { outcome = run_export(job); });
+    DWORD pid = 0;
+    const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+    while (!pid && std::chrono::steady_clock::now() < deadline) {
+        for (const auto &entry : fs::recursive_directory_iterator(tmp.path()))
+            if (entry.path().filename() == "child.pid") { std::ifstream in(entry.path()); in >> pid; }
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+    HANDLE child = pid ? OpenProcess(SYNCHRONIZE, FALSE, pid) : nullptr;
+    const auto start = std::chrono::steady_clock::now();
+    const bool accepted = job.control->request_cancel();
+    worker.join();
+    CHECK(accepted); REQUIRE(pid != 0);
+    CHECK(outcome.cancelled); CHECK_FALSE(outcome.ok);
+    CHECK_FALSE(fs::exists(job.output_path));
+    CHECK(std::chrono::steady_clock::now() - start < std::chrono::seconds(5));
+    if (child) { CHECK(WaitForSingleObject(child, 0) == WAIT_OBJECT_0); CloseHandle(child); }
+#endif
+}
+
+
+TEST_CASE("ZIP cancellation never publishes a partially compressed output", "[export][cancellation]")
+{
+    TempDir tmp;
+    auto control = std::make_shared<ExportControl>();
+    REQUIRE(control->request_cancel());
+    const auto result = write_zip(tmp.path() / "partial.zip", {{"large", std::string(100000, 'a')}}, control);
+    CHECK_FALSE(result.ok);
+    CHECK_FALSE(fs::exists(tmp.path() / "partial.zip"));
+}
+
+
+TEST_CASE("Confirmation snapshot cannot overwrite a newly replaced destination", "[export][cancellation]")
+{
+    TempDir tmp;
+    ExportJob job;
+    job.dataset = structured_fixture(); job.output_path = tmp.path() / "output.json";
+    { std::ofstream out(job.output_path); out << "confirmed original"; }
+    job.overwrite_approved_paths = {job.output_path};
+    const auto captured = inspect_output_target(job.output_path);
+    REQUIRE(captured.has_value()); job.destination_snapshots = {*captured};
+    { std::ofstream out(job.output_path); out << "new unconfirmed content"; }
+    CHECK_FALSE(run_export(job).ok);
+    std::ifstream in(job.output_path); std::string text; std::getline(in, text);
+    CHECK(text == "new unconfirmed content");
 }
