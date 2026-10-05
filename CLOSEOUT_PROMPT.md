@@ -202,3 +202,5 @@ driver and evidence reader. Continue through the existing supported release rout
 - [Native lifecycle](docs/integration/continuations/native-lifecycle.md), source `67a8822a5489b464cce066742333bbe9ebe7c3d7`, integrated for combined verification; native acceptance remains pending.
 
 - [Settings drafts](docs/integration/continuations/draft-tabs.md), source `8cd7f8dc`, integrated for combined verification; named functional gaps and native acceptance remain pending.
+
+- [Sidebar scrolling](docs/integration/continuations/sidebar-scroll.md), source `b7c71450`, reconciled; native wheel/input acceptance remains pending.

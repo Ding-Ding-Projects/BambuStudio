@@ -1,0 +1,38 @@
+import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+import test from 'node:test';
+const root = new URL('../../src/slic3r/GUI/', import.meta.url);
+const read = file => readFile(new URL(file, root), 'utf8');
+const scroller = await read('Widgets/MD3ScrolledWindow.cpp');
+const params = await read('ParamsPanel.cpp');
+const plater = await read('Plater.cpp');
+test('embedded settings delegate reveal and disable both inner axes', () => {
+    assert.match(plater, /params_panel->set_scroll_reveal_owner/);
+    assert.match(scroller, /SetScrollRate\(0, 0\)/);
+    assert.match(scroller, /EnableScrolling\(false, false\)/);
+    assert.match(scroller, /m_reveal_owner->RevealChild\(child\)/);
+    assert.match(params, /RevealChild\(win\)/);
+});
+test('standalone preset pages keep a bounded viewport', () => {
+    assert.match(params, /if \(!m_host_height_changed\) \{[\s\S]*?FitInside\(\);[\s\S]*?return;/);
+});
+test('body layout retains its scroll origin and settles reserved strips', () => {
+    assert.match(plater, /wxPoint\(-anchor.x \* unit_x, -anchor.y \* unit_y\)/);
+    assert.match(plater, /settled_client = sw->GetClientSize\(\)/);
+    assert.match(plater, /updating.insert\(sw\).second/);
+});
+// Execute the actual scalar algorithm after mechanical C++ syntax conversion.
+// This verifies arithmetic, not wx event delivery or rendered geometry.
+const body = scroller.match(/auto reveal = \[\]\([^]*?\) \{([^]*?)\n    \};/)[1]
+    .replace(/\/\/[^\n]*/g, '')
+    .replace(/(?:const )?int /g, 'let ')
+    .replace(/std::max/g, 'Math.max')
+    .replace(/return \(pixels \+ \(delta > 0 \? unit - 1 : 0\)\) \/ unit;/, 'return Math.trunc((pixels + (delta > 0 ? unit - 1 : 0)) / unit);');
+const reveal = new Function('position', 'extent', 'visible', 'unit', 'start', body);
+test('reveal reaches final rows, oversized targets, and leading edges', () => {
+    assert.equal(reveal(510, 20, 500, 8, 0), 4);
+    assert.equal(reveal(-24, 20, 500, 8, 10), 7);
+    assert.equal(reveal(50, 600, 500, 8, 0), 7);
+    assert.equal(reveal(20, 30, 500, 8, 12), 12);
+    assert.equal(reveal(510, 20, 500, 0, 12), 12);
+});

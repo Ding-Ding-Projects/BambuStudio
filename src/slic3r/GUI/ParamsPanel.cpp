@@ -378,47 +378,7 @@ ParamsPanel::ParamsPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, c
         }
         void EnsureVisible(wxWindow* win)
         {
-            const wxRect viewRect(m_targetWindow->GetClientRect());
-            const wxRect winRect(m_targetWindow->ScreenToClient(win->GetScreenPosition()), win->GetSize());
-            if (viewRect.Contains(winRect)) {
-                return;
-            }
-            if (winRect.GetWidth() > viewRect.GetWidth() || winRect.GetHeight() > viewRect.GetHeight()) {
-                return;
-            }
-            int stepx, stepy;
-            GetScrollPixelsPerUnit(&stepx, &stepy);
-
-            int startx, starty;
-            GetViewStart(&startx, &starty);
-            // first in vertical direction:
-            if (stepy > 0) {
-                int diff = 0;
-
-                if (winRect.GetTop() < 0) {
-                    diff = winRect.GetTop();
-                } else if (winRect.GetBottom() > viewRect.GetHeight()) {
-                    diff = winRect.GetBottom() - viewRect.GetHeight() + 1;
-                    // round up to next scroll step if we can't get exact position,
-                    // so that the window is fully visible:
-                    diff += stepy - 1;
-                }
-                starty = (starty * stepy + diff) / stepy;
-            }
-            // then horizontal:
-            if (stepx > 0) {
-                int diff = 0;
-                if (winRect.GetLeft() < 0) {
-                    diff = winRect.GetLeft();
-                } else if (winRect.GetRight() > viewRect.GetWidth()) {
-                    diff = winRect.GetRight() - viewRect.GetWidth() + 1;
-                    // round up to next scroll step if we can't get exact position,
-                    // so that the window is fully visible:
-                    diff += stepx - 1;
-                }
-                startx = (startx * stepx + diff) / stepx;
-            }
-            Scroll(startx, starty);
+            RevealChild(win);
         }
     };
 
@@ -652,11 +612,22 @@ void ParamsPanel::OnToggled(wxCommandEvent& event)
     event.Skip();
 }
 
+void ParamsPanel::set_scroll_reveal_owner(MD3ScrolledWindow *owner)
+{
+    static_cast<MD3ScrolledWindow*>(m_page_view)->SetRevealOwner(owner);
+}
+
 // This is special, DO NOT call it from outer except from Tab
 void ParamsPanel::fit_page_to_content()
 {
     if (!m_page_view || !m_page_sizer)
         return;
+    if (!m_host_height_changed) {
+        m_page_view->SetMinSize(wxSize(-1, -1));
+        m_page_view->FitInside();
+        Layout();
+        return;
+    }
     const int content = m_page_sizer->GetMinSize().y + FromDIP(12);
     m_page_view->SetMinSize(wxSize(-1, content));
     m_page_view->SetVirtualSize(wxSize(-1, content));

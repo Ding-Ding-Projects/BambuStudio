@@ -1,6 +1,7 @@
 #include "MD3ScrolledWindow.hpp"
 
 #include <cstdlib>
+#include <algorithm>
 
 MD3ScrolledWindow::MD3ScrolledWindow() = default;
 
@@ -21,6 +22,48 @@ MD3ScrolledWindow::~MD3ScrolledWindow()
 bool MD3ScrolledWindow::Create(wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSize &size, long style, const wxString &name)
 {
     return wxScrolledWindow::Create(parent, id, pos, size, style, name);
+}
+
+void MD3ScrolledWindow::SetRevealOwner(MD3ScrolledWindow *owner)
+{
+    m_reveal_owner = owner;
+    if (owner) {
+        Scroll(0, 0);
+        SetScrollRate(0, 0);
+        EnableScrolling(false, false);
+        ShowScrollbars(wxSHOW_SB_NEVER, wxSHOW_SB_NEVER);
+    }
+}
+
+void MD3ScrolledWindow::RevealChild(wxWindow *child)
+{
+    if (!child || child == this || !IsDescendant(child)) return;
+    if (m_reveal_owner) {
+        m_reveal_owner->RevealChild(child);
+        return;
+    }
+    const wxRect viewport(GetClientRect());
+    const wxRect target(ScreenToClient(child->GetScreenPosition()), child->GetSize());
+    int sx, sy;
+    GetScrollPixelsPerUnit(&sx, &sy);
+    const wxPoint start = GetViewStart();
+    auto reveal = [](int position, int extent, int visible, int unit, int start) {
+        if (unit <= 0 || visible <= 0) return start;
+        // Treat axes independently: a wide group must not suppress vertical reveal.
+        // Oversized targets expose their leading edge instead of being ignored.
+        int delta = position < 0 ? position :
+            (extent > visible ? position : std::max(0, position + extent - visible));
+        const int pixels = std::max(0, start * unit + delta);
+        return (pixels + (delta > 0 ? unit - 1 : 0)) / unit;
+    };
+    Scroll(reveal(target.x, target.width, viewport.width, sx, start.x),
+           reveal(target.y, target.height, viewport.height, sy, start.y));
+}
+
+bool MD3ScrolledWindow::ShouldScrollToChildOnFocus(wxWindow *child)
+{
+    RevealChild(child);
+    return false;
 }
 
 #ifdef __WXMSW__
