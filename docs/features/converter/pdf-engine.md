@@ -53,7 +53,7 @@ successful verified result.
 The manifest embeds the unmodified Apache-2.0 `LICENSE.txt` and `NOTICE.md` from the
 official qpdf source archive (SHA-256
 `8a58af5b6141319287c1883bec8bd1bd545b7567b7fc5e6ce5d25a1c85f36397`).
-The zlib 1.3.2#2 and libjpeg-turbo 3.2.0#1 notices come from the matching release's
+The zlib 1.3.2#2, libjpeg-turbo 3.2.0#1, and embedded OpenSSL 3.6.4#1 notices come from the matching release's
 `vcpkg.zip` (SHA-256
 `82005252fee032135d07c85ad7626a38f26fb253c1e098d1d185f315bea15ebb`),
 `installed/x64-windows-static/share` copyright records. These archives were used to
