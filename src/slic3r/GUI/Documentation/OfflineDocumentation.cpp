@@ -111,6 +111,7 @@ class Reader final : public MD3Dialog {
         index->Set(labels);
         lastChecked = -1;
         if (filtered.empty()) view->SetPage("<p>" + _L("No matching documentation articles.") + "</p>");
+        else if (!current.empty()) render();
     }
     void render() {
         const auto* article = find(current);
@@ -132,7 +133,8 @@ class Reader final : public MD3Dialog {
         const auto fg = MD3::resolve(MD3::Role::OnSurface, dark).GetAsString(wxC2S_HTML_SYNTAX);
         const auto link = MD3::resolve(MD3::Role::Primary, dark).GetAsString(wxC2S_HTML_SYNTAX);
         view->SetPage("<html><body bgcolor=\"" + bg + "\" text=\"" + fg + "\" link=\"" + link + "\">" + body + "</body></html>");
-        if (current.Contains('#')) view->ScrollToAnchor(current.AfterFirst('#'));
+        if (current.Contains('#') && !view->ScrollToAnchor(current.AfterFirst('#')))
+            SetHeaderSubtitle(_L("The requested heading is unavailable in the selected article language."));
         back->Enable(!history.empty());
     }
 public:
@@ -243,6 +245,10 @@ public:
     }
     static Options options() { Options value; value.resizable = true; return value; }
     bool open(wxString route, bool remember = true) {
+        if (route.Contains(".yue_HK.md") && language == 0) {
+            language = 1;
+            languages->SelectItem(language);
+        }
         route.Replace(".yue_HK.md", ".md");
         const auto* article = find(route);
         if (!article) return false;

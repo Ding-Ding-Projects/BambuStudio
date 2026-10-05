@@ -13,6 +13,12 @@ class BundleTests(unittest.TestCase):
         self.assertEqual(bundle.resolve('windows/index.md', '../prepare/README.md#start', {'prepare/README.md'}), 'prepare/README.md#start')
         self.assertEqual(bundle.resolve('windows/index.md', '#start', {'windows/index.md'}), 'windows/index.md#start')
 
+    def test_unknown_heading_is_not_an_actionable_link(self):
+        available = {'article.md': {'start'}}
+        self.assertIsNone(bundle.resolve('article.md', '#missing', available))
+        self.assertEqual(bundle.resolve('article.md', '#start', available), 'article.md#start')
+        self.assertEqual(bundle.headings('# Start\n```\n# Hidden\n```\n## Start'), ['start', 'start-1'])
+
     def test_untrusted_routes_are_not_actionable(self):
         for target in ('../../secret.md', '%2e%2e/%2e%2e/secret.md', 'file:///etc/passwd', 'https://example.com', '//example.com/x', 'C:/secret.md', '%5csecret.md', 'missing.md'):
             with self.subTest(target=target):
@@ -97,6 +103,20 @@ class BundleTests(unittest.TestCase):
         self.assertIn('src="memory:documentation-', rendered)
         self.assertNotIn('src="https:', rendered)
         self.assertIn(('a.md', 'https://example.com/a.png', 'image'), rejected)
+
+    def test_checkout_line_endings_do_not_change_bundle(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = pathlib.Path(temp)
+            docs = root / 'docs/features'
+            docs.mkdir(parents=True)
+            source = docs / 'article.md'
+            source.write_bytes(b'# Article\n\nContent\n')
+            lf = bundle.build(root)
+            source.write_bytes(b'# Article\r\n\r\nContent\r\n')
+            self.assertEqual(lf, bundle.build(root))
+            bundle.write_or_check(root, {'output.hpp': 'line\n'}, False)
+            (root / 'output.hpp').write_bytes(b'line\r\n')
+            bundle.write_or_check(root, {'output.hpp': 'line\n'}, True)
 
 if __name__ == '__main__':
     unittest.main()
