@@ -53,16 +53,27 @@ remove that boundary to interpret “automatically” as silent credential trans
 
 The companion integration lives in a separate repository,
 [`Ding-Ding-Projects/ha-bambulab`](https://github.com/Ding-Ding-Projects/ha-bambulab).
-It is not modified in this lane. The recorded companion-license decision belongs
-to that repository's owner; this pass neither invents a license nor asserts that
-its external acceptance is resolved.
+It is not modified or bundled anew in this lane. Its
+[license decision](https://github.com/Ding-Ding-Projects/ha-bambulab/issues/1)
+records a failing HACS repository-license validation check, with the previously
+published integration package and functional evidence recorded separately.
+That decision remains open for the companion owner's authorized distribution
+terms and HACS validation. It does not identify a missing Bambu Studio handover
+capability and does not block delivery of Bambu Studio's existing integration
+client source. This pass grants no new companion redistribution rights, invents
+no license, and makes no claim that HACS validation passed.
 
 The latest substantive issue handoff lists real Home Assistant Path A/Path B,
 native bilingual capture and physical-printer acceptance as outstanding. These
 are skipped verification or external acceptance, not newly identified missing
-Bambu Studio implementation. Issue 16 remains ineligible for an unrestricted
-end-to-end completion claim until those separate criteria are satisfied or the
-maintainer explicitly records a narrower implementation-delivery closure.
+Bambu Studio implementation. On October 5, the maintainer explicitly selected
+the narrower delivery criterion: complete implementation, delivery to `main`,
+and release delivery replace native, hardware and screenshot acceptance for
+this pass. Issue 16 is therefore eligible for closure under that selected
+criterion once the coordinating task proves the main-branch and release
+delivery. Closure under that criterion does not claim live Home Assistant,
+native bilingual rendering or physical-printer verification. The companion
+license decision remains open independently and is not waived by this choice.
 
 ## Safety and remaining work
 
