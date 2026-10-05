@@ -152,7 +152,7 @@ class MainFrame : public DPIFrame
     bool can_reslice() const;
 
     // BBS
-    wxBoxSizer* create_side_tools(wxWindow* parent);
+    wxSizer* create_side_tools(wxWindow* parent);
     void        update_prepare_action_bar_style();
 
     // BBS: session file-tabs orchestration (ProjectTabBar). The app keeps ONE live
@@ -364,6 +364,7 @@ public:
     void        select_tab(size_t tab = size_t(-1));
     void        request_select_tab(TabPosition pos);
     bool        request_slice_and_print();
+    bool        request_slice_and_send();
     int         get_calibration_curr_tab();
     void        select_view(const std::string& direction);
     void        view_zoom_to_fit() const;
@@ -441,7 +442,7 @@ public:
     // BBS
     //wxBookCtrlBase*       m_tabpanel { nullptr };
     Notebook*             m_tabpanel{ nullptr };
-    wxBoxSizer*           m_side_tools{ nullptr };
+    wxSizer*              m_side_tools{ nullptr };
     wxPanel*              m_prepare_action_bar{ nullptr };
     wxPanel*              m_prepare_action_bar_divider{ nullptr };
     wxSizerItem*          m_prepare_left_sidebar_spacer{ nullptr };
@@ -462,6 +463,8 @@ public:
     mutable int m_slice_select{ eSliceAll };
     SideButton* m_slice_btn{ nullptr };
     SideButton* m_slice_print_btn{ nullptr };
+    SideButton* m_slice_send_btn{ nullptr };
+    bool m_starting_slice{false};
     SideButton* m_slice_option_btn{ nullptr };
     SideButton* m_print_btn{ nullptr };
     SideButton* m_print_option_btn{ nullptr };

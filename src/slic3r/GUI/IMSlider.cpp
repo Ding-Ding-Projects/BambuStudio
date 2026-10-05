@@ -33,10 +33,20 @@ static const ImVec2 ONE_LAYER_BUTTON_SIZE  = ImVec2(28.0f, 28.0f);
 
 static ImU32 preview_color(MD3::Role role, bool dark, unsigned char alpha = 255)
 {
-    const wxColour &color = MD3::resolve(role, dark, MD3::ColorScheme::Preview);
+    const wxColour &color = MD3::resolve(role, dark, MD3::ColorScheme::Brand);
     return IM_COL32(color.Red(), color.Green(), color.Blue(), alpha);
 }
 
+
+// Manual hover regions do not register an ImGui item. Bind their decoration to
+// the actual slider, route and tick instead of the preceding item's identity.
+static ImGuiID slider_tooltip_source(const IMSlider *slider, const char *route, int tick = 0)
+{
+    ImGui::PushID(slider);
+    const ImGuiID route_id = ImGui::GetID(route);
+    ImGui::PopID();
+    return ImHashData(&tick, sizeof(tick), route_id);
+}
 
 static int m_tick_value = -1;
 static ImVec4 m_tick_rect;
@@ -711,7 +721,7 @@ bool IMSlider::horizontal_slider(const char* str_id, int* value, int v_min, int 
             if (hov) window->DrawList->AddCircleFilled(play_c, play_d * 0.5f, play_hover);
             const bool playing = m_play_state == Play::Playing;
             draw_glyph(play_c, playing ? (unsigned) MaterialIcon::Pause : (unsigned) MaterialIcon::PlayArrow, play_icon_px, play_fg);
-            if (hov) show_tooltip(playing ? _u8L("Pause print simulation") : _u8L("Play print simulation"));
+            if (hov) show_tooltip(playing ? _u8L("Pause print simulation") : _u8L("Play print simulation"), slider_tooltip_source(this, "simulation_play"));
             if (hov && context.IO.MouseClicked[0]) {
                 if (playing) {
                     m_play_state = Play::Paused;
@@ -741,7 +751,7 @@ bool IMSlider::horizontal_slider(const char* str_id, int* value, int v_min, int 
             const ImVec2 lbl_sz = ImGui::CalcTextSize(speed_label);
             window->DrawList->AddText(ImVec2(chip_left + chip_pad + chip_icon_px + chip_gap, center_y - lbl_sz.y * 0.5f), counter_clr, speed_label);
             if (mono_c) imgui.pop_mono_font();
-            if (hov) show_tooltip(_u8L("Simulation speed"));
+            if (hov) show_tooltip(_u8L("Simulation speed"), slider_tooltip_source(this, "simulation_speed"));
             if (hov && context.IO.MouseClicked[0]) {
                 m_play_speed = m_play_speed >= 1000.0f ? 1.0f : m_play_speed * 10.0f;
                 set_as_dirty();
@@ -1058,7 +1068,7 @@ void IMSlider::draw_ticks(const ImRect& slideable_region) {
             ImRect right_hover_box = ImRect({ slideable_region.Max.x, tick_hover_box.Min.y }, tick_hover_box.Max);
             ImGui::RenderFrame(right_hover_box.Min, right_hover_box.Max, tick_hover_box_clr, false);
 
-            show_tooltip(*tick_it);
+            show_tooltip(*tick_it, slider_tooltip_source(this, "existing_tick", tick_it->tick));
             m_tick_value = tick_it->tick;
             m_tick_rect = ImVec4(tick_hover_box.Min.x, tick_hover_box.Min.y, tick_hover_box.Max.x, tick_hover_box.Max.y);
         }
@@ -1149,10 +1159,12 @@ void IMSlider::draw_tick_on_mouse_position(const ImRect& slideable_region) {
 
     // draw layer time
     std::string label = get_label(tick, ltEstimatedTime);
-    show_tooltip(label);
+    show_tooltip(label, slider_tooltip_source(this, "hovered_layer", tick));
 }
 
-void IMSlider::show_tooltip(const std::string tooltip) {
+void IMSlider::show_tooltip(const std::string tooltip, ImGuiID source) {
+    ImGuiWrapper &imgui = *wxGetApp().imgui();
+    if (source == 0) source = imgui.tooltip_source_id();
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 6 * m_scale, 3 * m_scale });
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, { 3 * m_scale });
     ImGui::PushStyleColor(ImGuiCol_PopupBg, preview_color(MD3::Role::SurfaceContainer, m_is_dark));
@@ -1160,12 +1172,13 @@ void IMSlider::show_tooltip(const std::string tooltip) {
     ImGui::PushStyleColor(ImGuiCol_Text, preview_color(MD3::Role::OnSurface, m_is_dark));
     ImGui::BeginTooltip();
     ImGui::TextUnformatted(tooltip.c_str());
+    imgui.tooltip_decoration(source, tooltip.c_str(), ImGui::GetColorU32(preview_color(MD3::Role::Primary, m_is_dark)));
     ImGui::EndTooltip();
     ImGui::PopStyleColor(3);
     ImGui::PopStyleVar(2);
 }
 
-void IMSlider::show_tooltip(const TickCode& tick){
+void IMSlider::show_tooltip(const TickCode& tick, ImGuiID source){
     // Use previous layer's complete time as current layer's tick time,
     // since ticks are added at the beginning of current layer
     std::string time_str = "";
@@ -1181,16 +1194,16 @@ void IMSlider::show_tooltip(const TickCode& tick){
     case CustomGCode::ColorChange:
         break;
     case CustomGCode::PausePrint:
-        show_tooltip(_u8L("Pause:") + " \"" + gcode_type(PausePrint) + "\"" + time_str);
+        show_tooltip(_u8L("Pause:") + " \"" + gcode_type(PausePrint) + "\"" + time_str, source);
         break;
     case CustomGCode::ToolChange:
-        show_tooltip(_u8L("Change Filament") + time_str);
+        show_tooltip(_u8L("Change Filament") + time_str, source);
         break;
     case CustomGCode::Template:
-        show_tooltip(_u8L("Custom Template:") + " \"" + gcode_type(Template) + "\"" + time_str);
+        show_tooltip(_u8L("Custom Template:") + " \"" + gcode_type(Template) + "\"" + time_str, source);
         break;
     case CustomGCode::Custom:
-        show_tooltip(_u8L("Custom G-code:") + " \"" + tick.extra + "\"" + time_str);
+        show_tooltip(_u8L("Custom G-code:") + " \"" + tick.extra + "\"" + time_str, source);
         break;
     default:
         break;
@@ -1727,113 +1740,98 @@ void IMSlider::render_menu() {
 
 void IMSlider::render_add_menu()
 {
-    int extruder_num = m_extruder_colors.size();
-
-    if (m_show_menu)
-        ImGui::OpenPopup("slider_add_menu_popup");
-    if (ImGui::BeginPopup("slider_add_menu_popup")) {
-        bool menu_item_enable = m_draw_mode != dmSequentialFffPrint;
+    const int extruder_num = int(m_extruder_colors.size());
+    if (m_show_menu) ImGui::OpenPopup("slider_add_menu_popup");
+    constrain_canvas_menu();
+    if (!ImGui::BeginPopup("slider_add_menu_popup")) return;
+    auto& imgui = *wxGetApp().imgui();
+    const bool enabled = m_draw_mode != dmSequentialFffPrint;
+    const bool has_template = !gcode_type(Template).empty();
+    std::vector<std::string> labels{_u8L("Add Pause"), _u8L("Add Custom G-code"),
+        _u8L("Jump to Layer")};
+    if (has_template) labels.push_back(_u8L("Add Custom Template"));
+    if (extruder_num > 1) labels.push_back(_u8L("Change Filament"));
+    ImGui::PushID(this);
+    const auto visible = imgui.menu_search("slider_add", labels);
+    ImGui::PopID();
+    auto item = [&](size_t index, bool active, const char* hint) {
+        if (!visible[index]) return false;
         bool hovered = false;
-        {
-            if (menu_item_with_icon(_u8L("Add Pause").c_str(), "", ImVec2(0, 0), 0, false, menu_item_enable, &hovered)) {
-                add_code_as_tick(PausePrint);
-            }
-            if (hovered) { show_tooltip(_u8L("Insert a pause command at the beginning of this layer.")); }
-
-
-            if (menu_item_with_icon(_u8L("Add Custom G-code").c_str(), "", ImVec2(0, 0), 0, false, menu_item_enable, &hovered)) {
-                m_show_custom_gcode_window = true;
-            }
-            if (hovered) { show_tooltip(_u8L("Insert custom G-code at the beginning of this layer.")); }
-
-            if (!gcode_type(Template).empty()) {
-                if (menu_item_with_icon(_u8L("Add Custom Template").c_str(), "", ImVec2(0, 0), 0, false, menu_item_enable, &hovered)) {
-                    add_code_as_tick(Template);
-                }
-                if (hovered) { show_tooltip(_u8L("Insert template custom G-code at the beginning of this layer.")); }
-            }
-
-            if (menu_item_with_icon(_u8L("Jump to Layer").c_str(), "")) {
-                m_show_go_to_layer_dialog = true;
-            }
+        const bool selected = menu_item_with_icon(labels[index].c_str(), "", ImVec2(0, 0), 0, false, active, &hovered);
+        if (hovered && hint) show_tooltip(hint);
+        return selected;
+    };
+    if (item(0, enabled, _u8L("Insert a pause command at the beginning of this layer.").c_str())) add_code_as_tick(PausePrint);
+    if (item(1, enabled, _u8L("Insert custom G-code at the beginning of this layer.").c_str())) m_show_custom_gcode_window = true;
+    // Preserve the original action order even though the optional row is last in the mask.
+    if (has_template && item(3, enabled, _u8L("Insert template custom G-code at the beginning of this layer.").c_str())) add_code_as_tick(Template);
+    if (item(2, true, nullptr)) m_show_go_to_layer_dialog = true;
+    if (extruder_num > 1 && visible.back() && begin_menu(labels.back().c_str(), m_can_change_color)) {
+        std::vector<std::string> filaments;
+        for (int i = 0; i < extruder_num; ++i) filaments.push_back(_u8L("Filament ") + std::to_string(i + 1));
+        ImGui::PushID(this);
+        const auto matches = imgui.menu_search("slider_add_filament", filaments);
+        ImGui::PopID();
+        for (int i = 0; i < extruder_num; ++i) {
+            if (!matches[i]) continue;
+            const auto rgba = decode_color_to_float_array(m_extruder_colors[i]);
+            const ImU32 color = rgba[3] == 0 ? 0 : IM_COL32(rgba[0] * 255.0f, rgba[1] * 255.0f, rgba[2] * 255.0f, rgba[3] * 255.0f);
+            bool hovered = false;
+            if (menu_item_with_icon(filaments[i].c_str(), "", ImVec2(14, 14) * m_scale, color, false, true, &hovered)) add_code_as_tick(ToolChange, i + 1);
+            if (hovered) show_tooltip(_u8L("Change filament at the beginning of this layer."));
         }
-
-        //BBS render this menu item only when extruder_num > 1
-        if (extruder_num > 1) {
-            if (!m_can_change_color) {
-                begin_menu(_u8L("Change Filament").c_str(), false);
-            }
-            else if (begin_menu(_u8L("Change Filament").c_str())) {
-                for (int i = 0; i < extruder_num; i++) {
-                    std::array<float, 4> rgba     = decode_color_to_float_array(m_extruder_colors[i]);
-                    ImU32                icon_clr = IM_COL32(rgba[0] * 255.0f, rgba[1] * 255.0f, rgba[2] * 255.0f, rgba[3] * 255.0f);
-                    if (rgba[3] == 0)
-                        icon_clr = 0;
-                    if (menu_item_with_icon((_u8L("Filament ") + std::to_string(i + 1)).c_str(), "", ImVec2(14, 14) * m_scale, icon_clr, false, true, &hovered)) add_code_as_tick(ToolChange, i + 1);
-                    if (hovered) { show_tooltip(_u8L("Change filament at the beginning of this layer.")); }
-                }
-                end_menu();
-            }
-        }
-
-        ImGui::EndPopup();
+        end_menu();
     }
+    ImGui::EndPopup();
 }
 
 void IMSlider::render_edit_menu(const TickCode& tick)
 {
-    if (m_show_menu)
-        ImGui::OpenPopup("slider_edit_menu_popup");
-    if (ImGui::BeginPopup("slider_edit_menu_popup")) {
-        switch (tick.type)
-        {
-        case CustomGCode::PausePrint:
-            if (menu_item_with_icon(_u8L("Delete Pause").c_str(), "")) {
-                delete_tick(tick);
-            }
-            break;
-        case CustomGCode::Template:
-            if (!gcode_type(Template).empty()) {
-                if (menu_item_with_icon(_u8L("Delete Custom Template").c_str(), "")) {
-                    delete_tick(tick);
-                }
-            }
-            break;
-        case CustomGCode::Custom:
-            if (menu_item_with_icon(_u8L("Edit Custom G-code").c_str(), "")) {
-                m_show_custom_gcode_window = true;
-            }
-            if (menu_item_with_icon(_u8L("Delete Custom G-code").c_str(), "")) {
-                delete_tick(tick);
-            }
-            break;
-        case CustomGCode::ToolChange: {
-            int extruder_num = m_extruder_colors.size();
-            if (extruder_num > 1) {
-                if (!m_can_change_color) {
-                    begin_menu(_u8L("Change Filament").c_str(), false);
-                }
-                else if (begin_menu(_u8L("Change Filament").c_str())) {
-                    for (int i = 0; i < extruder_num; i++) {
-                        std::array<float, 4> rgba = decode_color_to_float_array(m_extruder_colors[i]);
-                        ImU32                icon_clr = IM_COL32(rgba[0] * 255.0f, rgba[1] * 255.0f, rgba[2] * 255.0f, rgba[3] * 255.0f);
-                        if (menu_item_with_icon((_u8L("Filament ") + std::to_string(i + 1)).c_str(), "", ImVec2(14, 14) * m_scale, icon_clr)) add_code_as_tick(ToolChange, i + 1);
-                    }
-                    end_menu();
-                }
-                if (menu_item_with_icon(_u8L("Delete Filament Change").c_str(), "")) {
-                    delete_tick(tick);
-                }
-            }
-            break;
-        }
-        case CustomGCode::ColorChange:
-        case CustomGCode::Unknown:
-        default:
-            break;
-        }
-        ImGui::EndPopup();
+    if (m_show_menu) ImGui::OpenPopup("slider_edit_menu_popup");
+    constrain_canvas_menu();
+    if (!ImGui::BeginPopup("slider_edit_menu_popup")) return;
+    auto& imgui = *wxGetApp().imgui();
+    std::vector<std::string> labels;
+    switch (tick.type) {
+    case CustomGCode::PausePrint: labels = {_u8L("Delete Pause")}; break;
+    case CustomGCode::Template:
+        if (!gcode_type(Template).empty()) labels = {_u8L("Delete Custom Template")};
+        break;
+    case CustomGCode::Custom: labels = {_u8L("Edit Custom G-code"), _u8L("Delete Custom G-code")}; break;
+    case CustomGCode::ToolChange:
+        if (m_extruder_colors.size() > 1) labels.push_back(_u8L("Change Filament"));
+        // Deleting a stale change remains possible after the printer becomes single-filament.
+        labels.push_back(_u8L("Delete Filament Change"));
+        break;
+    default: break;
     }
+    ImGui::PushID(this);
+    const auto visible = imgui.menu_search("slider_edit", labels);
+    ImGui::PopID();
+    for (size_t i = 0; i < labels.size(); ++i) {
+        if (!visible[i]) continue;
+        if (tick.type == CustomGCode::ToolChange && i == 0 && labels.size() == 2) {
+            if (begin_menu(labels[i].c_str(), m_can_change_color)) {
+                std::vector<std::string> filaments;
+                for (size_t n = 0; n < m_extruder_colors.size(); ++n) filaments.push_back(_u8L("Filament ") + std::to_string(n + 1));
+                ImGui::PushID(this);
+                const auto matches = imgui.menu_search("slider_edit_filament", filaments);
+                ImGui::PopID();
+                for (size_t n = 0; n < filaments.size(); ++n) {
+                    if (!matches[n]) continue;
+                    const auto rgba = decode_color_to_float_array(m_extruder_colors[n]);
+                    const ImU32 color = rgba[3] == 0 ? 0 : IM_COL32(rgba[0] * 255.0f, rgba[1] * 255.0f, rgba[2] * 255.0f, rgba[3] * 255.0f);
+                    if (menu_item_with_icon(filaments[n].c_str(), "", ImVec2(14, 14) * m_scale, color)) add_code_as_tick(ToolChange, int(n + 1));
+                }
+                end_menu();
+            }
+        } else if (menu_item_with_icon(labels[i].c_str(), "")) {
+            if (tick.type == CustomGCode::Custom && i == 0) m_show_custom_gcode_window = true;
+            else delete_tick(tick);
+            break; // The referenced tick may have been erased by the action.
+        }
+    }
+    ImGui::EndPopup();
 }
 
 void IMSlider::on_change_color_mode(bool is_dark) {

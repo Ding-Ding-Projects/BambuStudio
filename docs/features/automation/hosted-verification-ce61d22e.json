@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "sourceCommit": "ce61d22e390e4bf69938730434f1e494fa34f7a9",
+  "runId": "37054493889",
+  "jobId": "110995738359",
+  "runUrl": "https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37054493889",
+  "finishedAt": "2026-10-02T19:31:19.8977523+00:00",
+  "execution": "github-hosted-windows",
+  "total": 27,
+  "passed": 27,
+  "failed": 0,
+  "skipped": 0,
+  "files": [
+    { "path": "automation/BambuAutomation.Tests/BoundaryTests.cs", "cases": 24, "outcome": "passed" },
+    { "path": "automation/BambuAutomation.Tests/TransportTests.cs", "cases": 3, "outcome": "passed" }
+  ],
+  "testResultSha256": "337c0ac4f5b5e7ae14d9383c15beccb081ded3b0f76d6848a5cdb5be54b7dc8b",
+  "nativeRuntime": "not_verified_by_this_receipt",
+  "physicalPrinters": "unverified",
+  "localProductExecution": false
+}

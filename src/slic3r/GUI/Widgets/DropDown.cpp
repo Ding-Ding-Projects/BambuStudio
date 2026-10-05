@@ -1,9 +1,14 @@
+#include "../PersonalVocabulary.hpp"
 #include "DropDown.hpp"
 #include "Label.hpp"
 #include "StateColor.hpp"
 #include "MaterialIcon.hpp"
+#include "SearchField.hpp"
+#include "MD3MenuModel.hpp"
+#include "../I18N.hpp"
 
 #include <cstdio>
+#include <algorithm>
 #include <wx/display.h>
 #include <wx/dcbuffer.h>
 #include <wx/dcgraph.h>
@@ -80,6 +85,10 @@ void DropDown::Create(wxWindow *parent, long style)
 
     // BBS set default font
     SetFont(Label::Body_14);
+    m_search = new SearchField(this, _L("Search menu"));
+    m_search->SetOnQuery([this](const wxString &) { applyFilter(); });
+    m_search->SetOnRegexToggle([this](bool) { applyFilter(); });
+    Bind(wxEVT_CHAR_HOOK, &DropDown::onCharHook, this);
 #ifdef __WXOSX__
     // PopupWindow releases mouse on idle, which may cause various problems,
     //  such as losting mouse move, and dismissing soon on first LEFT_DOWN event.
@@ -178,7 +187,114 @@ void DropDown::SetAlignIcon(bool align) { align_icon = align; }
 void DropDown::Rescale()
 {
     radius    = FromDIP(18);
+    if (m_search) m_search->Rescale();
     need_sync = true;
+}
+
+int DropDown::headerHeight() const { return FromDIP(60); }
+int DropDown::viewportHeight() const { return std::max(0, GetClientSize().y - headerHeight()); }
+
+void DropDown::Popup(wxWindow *)
+{
+    need_sync = true;
+    autoPosition();
+    PopupWindow::Popup(m_search->GetTextCtrl());
+    m_search->GetTextCtrl()->SetFocus();
+}
+
+void DropDown::rebuildRows()
+{
+    m_visible.clear();
+    SearchField::MatchPass match(m_search->GetValue(), m_search->IsRegexEnabled(),
+        m_search->IsCaseSensitive(), m_search->IsWholeWord(), m_search->IsMultiline());
+    std::set<wxString> groups;
+    for (int i = 0; i < static_cast<int>(items.size()); ++i) {
+        const auto &item = items[i];
+        if (!group.IsEmpty() && item.group != group) continue;
+        if (!m_search->GetValue().IsEmpty() &&
+            !match.matches(item.text + " " + item.group + " " + item.alias + " " + item.tip)) continue;
+        if (group.IsEmpty() && !item.group.IsEmpty()) {
+            if (groups.insert(item.group).second) m_visible.push_back(-i - 2);
+        } else {
+            m_visible.push_back(i);
+        }
+    }
+    count = m_visible.size();
+}
+
+void DropDown::applyFilter()
+{
+    if (subDropDown && subDropDown->IsShown()) {
+        subDropDown->Hide();
+        subDropDown->group.clear();
+    }
+    offset = wxPoint();
+    hover_item = -1;
+    need_sync = true;
+    autoPosition();
+    SetName(count == 0 ? _L("No matches.") : wxString::Format(_L("%d results"), static_cast<int>(count)));
+    Refresh();
+}
+
+void DropDown::activateHover()
+{
+    const int index = hoverIndex();
+    if (index < -1 && subDropDown) {
+        subDropDown->group = items[-index - 2].group;
+        subDropDown->Popup();
+    } else if (index >= 0 && !(items[index].style & (DD_ITEM_STYLE_DISABLED | DD_ITEM_STYLE_SPLIT_ITEM))) {
+        sendDropDownEvent();
+        if (mainDropDown) {
+            Hide();
+            mainDropDown->DismissAndNotify();
+        } else {
+            DismissAndNotify();
+        }
+    }
+}
+
+void DropDown::onCharHook(wxKeyEvent &event)
+{
+    if (m_search->IsBuilderShown()) { event.Skip(); return; }
+    if (event.GetKeyCode() == WXK_ESCAPE) {
+        if (!m_search->GetValue().IsEmpty()) m_search->Clear();
+        else if (mainDropDown) { Hide(); mainDropDown->m_search->GetTextCtrl()->SetFocus(); }
+        else DismissAndNotify();
+        return;
+    }
+    if (event.GetKeyCode() == WXK_TAB) {
+        std::vector<wxWindow *> stops{m_search->GetTextCtrl()};
+        for (wxWindow *child : m_search->GetChildren())
+            if (child != m_search->GetTextCtrl() && child->IsShown() && child->IsEnabled() && child->AcceptsFocusFromKeyboard())
+                stops.push_back(child);
+        const auto current = std::find(stops.begin(), stops.end(), wxWindow::FindFocus());
+        const size_t index = current == stops.end() ? stops.size() - 1 : static_cast<size_t>(current - stops.begin());
+        stops[event.ShiftDown() ? (index + stops.size() - 1) % stops.size() : (index + 1) % stops.size()]->SetFocus();
+        return;
+    }
+    if (event.GetKeyCode() == WXK_UP || event.GetKeyCode() == WXK_DOWN) {
+        const int delta = event.GetKeyCode() == WXK_UP ? -1 : 1;
+        for (size_t n = 0; n < count; ++n) {
+            hover_item = hover_item < 0 ? (delta > 0 ? 0 : static_cast<int>(count) - 1)
+                : (hover_item + delta + static_cast<int>(count)) % static_cast<int>(count);
+            const int index = hoverIndex();
+            if (index < -1 || (index >= 0 && !(items[index].style & (DD_ITEM_STYLE_DISABLED | DD_ITEM_STYLE_SPLIT_ITEM)))) break;
+        }
+        if (hover_item >= 0) {
+            offset.y = std::min(offset.y, -hover_item * rowSize.y);
+            offset.y = std::max(offset.y, viewportHeight() - (hover_item + 1) * rowSize.y);
+            offset.y = std::clamp(offset.y, std::min(0, viewportHeight() - static_cast<int>(count) * rowSize.y), 0);
+        }
+        Refresh();
+        return;
+    }
+    wxWindow *focus = wxWindow::FindFocus();
+    if ((event.GetKeyCode() == WXK_RETURN || event.GetKeyCode() == WXK_NUMPAD_ENTER) &&
+        (focus == this || focus == m_search->GetTextCtrl())) {
+        activateHover();
+        return;
+    }
+    event.Skip();
 }
 
 bool DropDown::HasDismissLongTime()
@@ -273,7 +389,6 @@ static void _DrawSplitItem(const wxWindow* w, wxDC& dc, wxString split_text, wxP
  */
 void DropDown::render(wxDC &dc)
 {
-    if (items.size() == 0) return;
     // Clear the buffer to the themed surface colour first so the rounded-corner
     // triangles left outside DrawRoundedRectangle are clean, not uninitialised.
     dc.SetBackground(wxBrush(StateColor::darkModeColorFor(GetBackgroundColour())));
@@ -302,10 +417,18 @@ void DropDown::render(wxDC &dc)
     const int row_radius = FromDIP(8);
     const int inset_x    = FromDIP(4);
     const int inset_y    = FromDIP(1);
-    wxRect rcContent = {{0, offset.y}, rowSize};
+    const int header = headerHeight();
+    wxDCClipper content_clip(dc, wxRect(0, header, size.x, std::max(0, size.y - header)));
+    if (m_visible.empty()) {
+        dc.SetFont(GetFont());
+        dc.SetTextForeground(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+        dc.DrawLabel(_L("No matches."), wxRect(0, header, size.x, viewportHeight()), wxALIGN_CENTER);
+        return;
+    }
+    wxRect rcContent = {{0, offset.y + header}, rowSize};
 
     // hover pane (skip the selected row -- its own fill takes over below)
-    if (hover_item >= 0 && hover_item != selected_item && (states & StateColor::Hovered) &&
+    if (hover_item >= 0 && hover_item != selected_item && ((states & StateColor::Hovered) || wxWindow::FindFocus() == m_search->GetTextCtrl()) &&
         (hover_index < 0 || !(items[hover_index].style & (DD_ITEM_STYLE_SPLIT_ITEM | DD_ITEM_STYLE_DISABLED)))) {
         wxRect rc = rcContent;
         rc.y += rowSize.y * hover_item;
@@ -340,10 +463,11 @@ void DropDown::render(wxDC &dc)
     }
 
     // draw position bar -- rounded OutlineVariant thumb (drops the Grey300 fill)
-    if (rowSize.y * count > size.y) {
-        int    height = rowSize.y * count;
-        wxRect rect = {size.x - 6, -offset.y * size.y / height, 4,
-                       size.y * size.y / height};
+    if (rowSize.y * count > static_cast<size_t>(viewportHeight())) {
+        const int height = rowSize.y * static_cast<int>(count);
+        const int viewport = viewportHeight();
+        wxRect rect = {size.x - FromDIP(6), header - offset.y * viewport / height, FromDIP(4),
+                       std::max(FromDIP(12), viewport * viewport / height)};
         wxColour thumb = StateColor::semantic(MD3::Role::OutlineVariant);
         dc.SetPen(wxPen(thumb));
         dc.SetBrush(wxBrush(thumb));
@@ -373,29 +497,16 @@ void DropDown::render(wxDC &dc)
         rcContent.width -= szBmp.x + 5;
     }
 
-    std::set<wxString> groups;
-    // draw texts & icons
+    // Every visible row retains its original item identity.
     int index = 0;
-    for (int i = 0; i < items.size(); ++i) {
+    for (int row : m_visible) {
+        const int i = row < -1 ? -row - 2 : row;
         auto &item = items[i];
         int states2 = states;
         bool is_dimmed = (item.style & DD_ITEM_STYLE_DIMMED) != 0;
         if ((item.style & DD_ITEM_STYLE_DISABLED) != 0)
             states2 &= ~StateColor::Enabled;
-        // Skip by group
-        if (group.IsEmpty()) {
-            if (!item.group.IsEmpty()) {
-                if (groups.find(item.group) != groups.end())
-                    continue;
-                groups.insert(item.group);
-                if (!item.group.IsEmpty()) {
-                    states2 |= StateColor::Enabled;
-                }
-            }
-        } else {
-            if (item.group != group)
-                continue;
-        }
+        if (row < -1) states2 |= StateColor::Enabled;
         bool is_hover = index == hover_item;
         ++index;
         if (rcContent.GetBottom() < 0) {
@@ -442,13 +553,14 @@ void DropDown::render(wxDC &dc)
         auto text = group.IsEmpty()
                         ? (item.group.IsEmpty() ? item.text : item.group)
                         : strip_brand_prefix(item.text, group);
+        text = Slic3r::GUI::PersonalVocabulary::display(text);
         if (!text_off && !text.IsEmpty() && !icon_fills_row) {
             wxSize tSize = dc.GetMultiLineTextExtent(text);
             if (pt.x + tSize.x > rcContent.GetRight()) {
                 if (is_hover && item.tip.IsEmpty())
                     SetToolTip(text);
                 text = wxControl::Ellipsize(text, dc, wxELLIPSIZE_END,
-                                            rcContent.GetRight() - pt.x);
+                                            std::max(1, rcContent.GetRight() - pt.x));
             }
             pt.y += (rcContent.height - textSize.y) / 2;
             dc.SetFont(GetFont());
@@ -472,100 +584,28 @@ void DropDown::render(wxDC &dc)
 
 int DropDown::hoverIndex()
 {
-    if (hover_item < 0)
-        return -1;
-    if (count == items.size()) {
-        // Fast path assumes "count == items.size() implies no grouping folded any rows".
-        // That's true when items are truly flat, but a group with exactly one member
-        // makes count and items.size() coincide by accident — in that case we'd need to
-        // encode the group-header row as -i-2, not return it as a positive index. Only
-        // keep the shortcut when the top-level view actually has no group headers.
-        bool any_grouped_at_top_level = false;
-        if (group.IsEmpty()) {
-            for (const auto &item : items)
-                if (!item.group.IsEmpty()) { any_grouped_at_top_level = true; break; }
-        }
-        if (!any_grouped_at_top_level)
-            return hover_item;
-    }
-    int index = -1;
-    std::set<wxString> groups;
-    for (int i = 0; i < items.size(); ++i) {
-        auto &item = items[i];
-        // Skip by group
-        if (group.IsEmpty()) {
-            if (!item.group.IsEmpty()) {
-                if (groups.find(item.group) == groups.end())
-                    groups.insert(item.group);
-                else
-                    continue;
-            }
-        } else {
-            if (item.group != group)
-                continue;
-        }
-        if (++index == hover_item)
-            return (item.group.IsEmpty() || !group.IsEmpty()) ? i : -i - 2;
-    }
-    return -1;
+    return hover_item >= 0 && hover_item < static_cast<int>(m_visible.size()) ? m_visible[hover_item] : -1;
 }
 
 int DropDown::selectedItem()
 {
-    if (selection < 0)
-        return -1;
-    if (count == items.size())
-        return selection;
-    auto & sel = items[selection];
-    if (group.IsEmpty() ? !sel.group.IsEmpty() : sel.group != group)
-        return -1;
-    if (selection == 0)
-        return 0;
-    int                index = 0;
-    std::set<wxString> groups;
-    for (size_t i = 0; i < selection; ++i) {
-        auto &item = items[i];
-        // Skip by group
-        if (group.IsEmpty()) {
-            if (!item.group.IsEmpty()) {
-                if (groups.find(item.group) == groups.end())
-                    groups.insert(item.group);
-                else
-                    continue;
-            }
-        } else {
-            if (item.group != group)
-                continue;
-        }
-        ++index;
-    }
-    return index;
+    const auto it = std::find(m_visible.begin(), m_visible.end(), selection);
+    return selection >= 0 && it != m_visible.end() ? static_cast<int>(it - m_visible.begin()) : -1;
 }
 
 void DropDown::messureSize()
 {
     if (!need_sync) return;
+    rebuildRows();
     textSize = wxSize();
     iconSize = wxSize();
-    count = 0;
     wxClientDC dc(GetParent() ? GetParent() : this);
     dc.SetFont(GetFont());
     std::set<wxString> groups;
-    for (size_t i = 0; i < items.size(); ++i) {
+    for (int row : m_visible) {
+        const int i = row < -1 ? -row - 2 : row;
         auto &item = items[i];
-        // Skip by group
-        if (group.IsEmpty()) {
-            if (!item.group.IsEmpty()) {
-                if (groups.find(item.group) == groups.end())
-                    groups.insert(item.group);
-                else
-                    continue;
-            }
-        } else {
-            if (item.group != group)
-                continue;
-        }
-        ++count;
+        if (row < -1) groups.insert(item.group);
         wxSize size1;
         if (!text_off) {
             auto strip_brand_prefix = [](const wxString &text, const wxString &grp) -> wxString {
@@ -579,6 +619,7 @@ void DropDown::messureSize()
             auto text = group.IsEmpty()
                         ? (item.group.IsEmpty() ? item.text : item.group)
                         : strip_brand_prefix(item.text, group);
+        text = Slic3r::GUI::PersonalVocabulary::display(text);
             size1 = dc.GetMultiLineTextExtent(text);
             if (group.IsEmpty() && !item.group.IsEmpty())
                 size1.x += 5 + arrow_bitmap.GetBmpWidth();
@@ -596,7 +637,8 @@ void DropDown::messureSize()
                     size1.x += size2.x + (text_off ? 0 : 5);
             }
         }
-        if (size1.x > textSize.x) textSize = size1;
+        textSize.x = std::max(textSize.x, size1.x);
+        textSize.y = std::max(textSize.y, size1.y);
     }
     if (!align_icon) iconSize.x = 0;
     wxSize szContent = textSize;
@@ -609,27 +651,27 @@ void DropDown::messureSize()
     }
     if (iconSize.x > 0) szContent.x += iconSize.x + (text_off ? 0 : 5);
     if (iconSize.y > szContent.y) szContent.y = iconSize.y;
-    szContent.y += 10;
+    szContent.y = std::max(szContent.y + 10, FromDIP(40));
     if (count > (size_t)max_visible_rows) szContent.x += 6;
     if (GetParent() && group.IsEmpty()) {
         auto x = GetParent()->GetSize().x;
         if (x > 0 && (!use_content_width || x > szContent.x))
             szContent.x = x;
     }
+    szContent.x = std::max(szContent.x, FromDIP(320));
     rowSize = szContent;
     if (limit_max_content_width) {
         wxSize parent_size = GetParent()->GetSize();
-        const int max_w = std::min(
-            static_cast<int>(parent_size.x * 1.5),
-            GetParent()->FromDIP(400)
-        );
+        const int max_w = std::max(FromDIP(320), std::min(
+            static_cast<int>(parent_size.x * 1.5), GetParent()->FromDIP(400)));
         if (rowSize.x > max_w) {
             rowSize.x = max_w;
             szContent  = rowSize;
         }
     }
     szContent.y *= std::min((size_t)max_visible_rows, std::max(count, (size_t) 1));
-    szContent.y += items.size() > (size_t)max_visible_rows ? rowSize.y / 2 : 0;
+    szContent.y += count > (size_t)max_visible_rows ? rowSize.y / 2 : 0;
+    szContent.y += headerHeight();
     wxWindow::SetSize(szContent);
 #ifdef __WXGTK__
     // Gtk has a wrapper window for popup widget
@@ -672,50 +714,21 @@ void DropDown::messureSize()
 void DropDown::autoPosition()
 {
     messureSize();
-    wxPoint pos;
-    wxSize  off;
+    int display_index = wxDisplay::GetFromWindow(GetParent());
+    if (display_index == wxNOT_FOUND) display_index = 0;
+    const wxRect display = wxDisplay(static_cast<unsigned>(display_index)).GetClientArea();
+    MD3::Menu::Placement placement;
     if (mainDropDown) {
-        pos = mainDropDown->ClientToScreen(wxPoint(0, 0));
-        off = mainDropDown->GetSize();
-        pos.x += 6;
-        pos.y += mainDropDown->hover_item * mainDropDown->rowSize.y + mainDropDown->offset.y;
-        off.x -= 12;
-        off.y = 0;
+        const auto at = mainDropDown->ClientToScreen(wxPoint(0, mainDropDown->headerHeight() +
+            mainDropDown->hover_item * mainDropDown->rowSize.y + mainDropDown->offset.y));
+        placement = MD3::Menu::place_submenu(wxRect(at, mainDropDown->rowSize), GetSize(), display);
     } else {
-        pos = GetParent()->ClientToScreen(wxPoint(0, 0));
-        off = GetParent()->GetSize();
-        pos.y -= 6;
-        off.x = 0;
-        off.y += 12;
+        placement = MD3::Menu::place_root(GetParent()->GetScreenRect(), GetSize(), display);
     }
-    wxPoint old = GetPosition();
-    wxSize size = GetSize();
-    Position(pos, off);
-    if (old != GetPosition()) {
-        size = rowSize;
-        size.y *= std::min((size_t)max_visible_rows, count);
-        size.y += count > (size_t)max_visible_rows ? rowSize.y / 2 : 0;
-        if (size != GetSize()) {
-            wxWindow::SetSize(size);
-            offset = wxPoint();
-            Position(pos, off);
-        }
-    }
-    if (GetPosition().y > pos.y) {
-        // may exceed
-        auto drect = wxDisplay(GetParent()).GetGeometry();
-        if (GetPosition().y + size.y + 10 > drect.GetBottom()) {
-            if (use_content_width && count <= (size_t)max_visible_rows) size.x += 6;
-            size.y = drect.GetBottom() - GetPosition().y - 10;
-            wxWindow::SetSize(size);
-            if (selection >= 0) {
-                if (offset.y + rowSize.y * (selection + 1) > size.y)
-                    offset.y = size.y - rowSize.y * (selection + 1);
-                else if (offset.y + rowSize.y * selection < 0)
-                    offset.y = -rowSize.y * selection;
-            }
-        }
-    }
+    SetSize(placement.rect);
+    rowSize.x = placement.rect.width;
+    m_search->SetSize(FromDIP(8), FromDIP(8), std::max(1, placement.rect.width - FromDIP(16)), FromDIP(44));
+    offset.y = std::clamp(offset.y, std::min(0, viewportHeight() - static_cast<int>(count) * rowSize.y), 0);
 }
 
 void DropDown::mouseDown(wxMouseEvent& event)
@@ -723,6 +736,7 @@ void DropDown::mouseDown(wxMouseEvent& event)
     // Receivce unexcepted LEFT_DOWN on Mac after OnDismiss
     if (!IsShown())
         return;
+    if (event.GetY() < headerHeight()) return;
     // force calc hover item again
     mouseMove(event);
     pressedDown = true;
@@ -793,13 +807,14 @@ void DropDown::mouseMove(wxMouseEvent &event)
 #endif
     if (pressedDown) {
         wxPoint pt2 = offset + pt - dragStart;
-        wxSize  size = GetSize();
+        wxSize size(GetSize().x, viewportHeight());
         dragStart    = pt;
         if (pt2.y > 0)
             pt2.y = 0;
         else if (pt2.y + rowSize.y * int(count) < size.y)
             pt2.y = size.y - rowSize.y * int(count);
-        if (pt2.y != offset.y) {
+        pt2.y = std::clamp(pt2.y, std::min(0, size.y - rowSize.y * static_cast<int>(count)), 0);
+    if (pt2.y != offset.y) {
             offset = pt2;
             hover_item = -1; // moved
         } else {
@@ -807,7 +822,7 @@ void DropDown::mouseMove(wxMouseEvent &event)
         }
     }
     if (rowSize.y > 0 && (!pressedDown || hover_item >= 0)) {
-        int hover = (pt.y - offset.y) / rowSize.y;
+        int hover = pt.y < headerHeight() ? -1 : (pt.y - headerHeight() - offset.y) / rowSize.y;
         if (hover >= (int) count) hover = -1;
         if (hover == hover_item) return;
         hover_item = hover;
@@ -836,18 +851,19 @@ void DropDown::mouseMove(wxMouseEvent &event)
 void DropDown::mouseWheelMoved(wxMouseEvent &event)
 {
     auto delta = event.GetWheelRotation();
-    wxSize  size  = GetSize();
+    wxSize size(GetSize().x, viewportHeight());
     wxPoint pt2   = offset + wxPoint{0, delta};
     if (pt2.y > 0)
         pt2.y = 0;
     else if (pt2.y + rowSize.y * int(count) < size.y)
         pt2.y = size.y - rowSize.y * int(count);
+    pt2.y = std::clamp(pt2.y, std::min(0, size.y - rowSize.y * static_cast<int>(count)), 0);
     if (pt2.y != offset.y) {
         offset = pt2;
     } else {
         return;
     }
-    int hover = (event.GetPosition().y - offset.y) / rowSize.y;
+    int hover = event.GetY() < headerHeight() ? -1 : (event.GetY() - headerHeight() - offset.y) / rowSize.y;
     if (hover >= (int) count) hover = -1;
     if (hover != hover_item) {
         hover_item = hover;
@@ -861,7 +877,7 @@ void DropDown::mouseWheelMoved(wxMouseEvent &event)
 void DropDown::sendDropDownEvent()
 {
     int index = hoverIndex();
-    if (index < 0 || (items[index].style & DD_ITEM_STYLE_DISABLED))
+    if (index < 0 || (items[index].style & (DD_ITEM_STYLE_DISABLED | DD_ITEM_STYLE_SPLIT_ITEM)))
         return;
     wxCommandEvent event(wxEVT_COMBOBOX, GetId());
     event.SetEventObject(this);
@@ -872,6 +888,7 @@ void DropDown::sendDropDownEvent()
 
 void DropDown::Dismiss()
 {
+    if (m_search && m_search->IsBuilderShown()) return;
     if (subDropDown && subDropDown->IsShown())
         return;
     PopupWindow::Dismiss();
@@ -879,6 +896,7 @@ void DropDown::Dismiss()
 
 void DropDown::OnDismiss()
 {
+    if (m_search && m_search->IsBuilderShown()) return;
     if (mainDropDown) {
 
         const wxPoint& mouse_pos = wxGetMousePosition();
@@ -896,6 +914,7 @@ void DropDown::OnDismiss()
         return;
     dismissTime = boost::posix_time::microsec_clock::universal_time();
     hover_item  = -1;
+    if (GetParent() && GetParent()->IsShown() && GetParent()->IsEnabled()) GetParent()->SetFocus();
     wxCommandEvent e(EVT_DISMISS);
     GetEventHandler()->ProcessEvent(e);
 }

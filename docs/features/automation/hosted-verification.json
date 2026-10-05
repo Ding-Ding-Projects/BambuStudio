@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "sourceCommit": "65dc4577fb29f2d00fd525a1de11e370784c5b3e",
+  "runId": "37045639569",
+  "runUrl": "https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37045639569",
+  "finishedAt": "2026-10-02T14:11:48.9018721-04:00",
+  "execution": "github-hosted-windows",
+  "total": 24,
+  "passed": 24,
+  "failed": 0,
+  "skipped": 0,
+  "files": [
+    {
+      "path": "automation/BambuAutomation.Tests/BoundaryTests.cs",
+      "cases": 22,
+      "outcome": "passed"
+    },
+    {
+      "path": "automation/BambuAutomation.Tests/TransportTests.cs",
+      "cases": 2,
+      "outcome": "passed"
+    }
+  ],
+  "testResultSha256": "2a62aca4a649e1333f2d9ba135c02a1b651a25c120b21e4a8237f5e3a3315436",
+  "nativeRuntime": "not_verified_by_this_receipt",
+  "physicalPrinters": "unverified",
+  "localProductExecution": false,
+  "nativePackaging": {
+    "jobId": "110966508477",
+    "outcome": "success",
+    "checks": [
+      "native compilation",
+      "payload DLL validation",
+      "companion staging",
+      "Squirrel creation",
+      "package contract"
+    ]
+  },
+  "releaseObservation": {
+    "jobId": "110986759894",
+    "state": "in_progress",
+    "step": "Validate Squirrel release assets and prepare metadata",
+    "observedAt": "2026-10-02T19:10:35Z",
+    "observationLimitReached": true
+  }
+}

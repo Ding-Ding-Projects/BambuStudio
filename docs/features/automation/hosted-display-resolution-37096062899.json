@@ -1,0 +1,342 @@
+{
+  "schema": 1,
+  "run_id": "37096062899",
+  "source_commit": "54ff825c0b2c8c2e005e9b46435a8ceb5e15bc46",
+  "run_url": "https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37096062899",
+  "scope": "Standalone display provisioning and restoration, not application rendering",
+  "limitations": [
+    "Settings measured 144 DPI. Application DPI and rendered behavior remain unverified.",
+    "Private captures precede scale selection, and contain account identity. They are not published.",
+    "Foreground focus verification and input are not atomic; restricted to disposable hosted machines.",
+    "Recovery-only receipt status is unavailable, with restored and resolution_restored true."
+  ],
+  "receipts": {
+    "display-scale-lifecycle-37096062899/receipt.json": {
+      "sha256": "5f3df46ef98f6fd2bb4293e9489a8f898d44126f27ce1994e0c54b0b87c327d5",
+      "bytes": 1794,
+      "value": {
+        "cases": [
+          {
+            "status": "passed",
+            "name": "owned_page_marker_contract"
+          },
+          {
+            "status": "passed",
+            "name": "navigation_uncertainty_contract"
+          },
+          {
+            "status": "passed",
+            "name": "nested_source_identity"
+          },
+          {
+            "status": "passed",
+            "name": "diagnostic_control_geometry"
+          },
+          {
+            "status": "passed",
+            "name": "minimum_resolution_tuple_contract"
+          },
+          {
+            "status": "passed",
+            "name": "minimum_input_recovery_contract"
+          },
+          {
+            "status": "passed",
+            "name": "display_mode_public_layout_contract"
+          },
+          {
+            "status": "passed",
+            "name": "reject_oversized_output"
+          },
+          {
+            "status": "passed",
+            "name": "normal_output_after_overflow"
+          },
+          {
+            "status": "passed",
+            "name": "terminate_descendant_after_parent_exit"
+          },
+          {
+            "status": "passed",
+            "name": "normal_output_after_descendant_timeout"
+          },
+          {
+            "status": "passed",
+            "name": "accept_exact_output_limit"
+          },
+          {
+            "status": "passed",
+            "name": "query_only_named_job_membership"
+          }
+        ],
+        "elapsed_ms": 13126,
+        "status": "passed",
+        "schema": 1,
+        "passed": 13,
+        "source_supervisor_observation": {
+          "native_error": null,
+          "exit_code": 0,
+          "process_stage": 18,
+          "terminated": true
+        },
+        "settings_mutated": false,
+        "cleanup_verified": true,
+        "source_process_observation": {
+          "process_stage": 18,
+          "native_error": null,
+          "exit_code": 0,
+          "terminated": true,
+          "checkout_matches_run": true,
+          "invalid_paths_rejected": 4,
+          "source_format_valid": true,
+          "output_length": 41,
+          "legacy_selection_count": 3
+        },
+        "expected": 13
+      }
+    },
+    "display-scale-150-37096062899/run.json": {
+      "sha256": "ca18d89a72749a82f21150c9f21dff68e6903b8eb7cd48eb762d86dcd64306c2",
+      "bytes": 4719,
+      "value": {
+        "original_width": 1024,
+        "child_termination_uncertain": false,
+        "scale_after_resolution": 100,
+        "resolution_restore_test_code": 0,
+        "action": "unsupported_standalone_only",
+        "selected_height": 1080,
+        "resolution_restore_apply_code": 0,
+        "requested_scale": 150,
+        "settings_dpi_after_resolution": 96,
+        "restoration_failure_stage": null,
+        "failure_stage": null,
+        "original_height": 768,
+        "measured_settings_dpi": 144,
+        "restored": true,
+        "diagnostic_evidence": {
+          "before_selector": {
+            "source_observation": {
+              "output_length": 41,
+              "source_format_valid": true,
+              "terminated": true,
+              "process_stage": 18,
+              "output_is_string": true,
+              "native_error": null,
+              "exit_code": 0,
+              "run_id_format_valid": true,
+              "run_id_present": true,
+              "script_directory_present": true
+            },
+            "stage": "complete",
+            "status": "encrypted_pending_pixel_review"
+          },
+          "expanded_selector": {
+            "source_observation": {
+              "output_length": 41,
+              "source_format_valid": true,
+              "terminated": true,
+              "process_stage": 18,
+              "output_is_string": true,
+              "native_error": null,
+              "exit_code": 0,
+              "run_id_format_valid": true,
+              "run_id_present": true,
+              "script_directory_present": true
+            },
+            "stage": "complete",
+            "status": "encrypted_pending_pixel_review"
+          }
+        },
+        "resolution_restored": true,
+        "schema": 1,
+        "input_method": "cheap_mouse_click",
+        "restored_settings_dpi": 96,
+        "resolution_test_code": 0,
+        "foreground_input_atomic": false,
+        "selected_width": 1920,
+        "navigation_recovery_uncertain": false,
+        "resolution_already_current": false,
+        "resolution_restoration_diagnostic": {
+          "last_driver_extra_bytes": 0,
+          "stage": "stable_display_binding",
+          "code": null,
+          "last_mode_size": 188,
+          "last_enum_succeeded": true,
+          "last_mode_buffer_bytes": 220
+        },
+        "target_application_dpi": "requires_independent_runtime_measurement",
+        "input_recovery_uncertain": false,
+        "selection_observations": {
+          "cheap_ok": true,
+          "expansion_observed": true,
+          "cheap_exit": 0,
+          "expansion_state": 1,
+          "allowed_option_domain": {
+            "scale_200": {
+              "matching_container": 0,
+              "observed": 0,
+              "container_unavailable": 0,
+              "visible_enabled": 0
+            },
+            "scale_100": {
+              "matching_container": 1,
+              "observed": 1,
+              "container_unavailable": 0,
+              "visible_enabled": 1
+            },
+            "scale_150": {
+              "matching_container": 1,
+              "observed": 1,
+              "container_unavailable": 0,
+              "visible_enabled": 1
+            },
+            "scale_125": {
+              "matching_container": 1,
+              "observed": 1,
+              "container_unavailable": 0,
+              "visible_enabled": 1
+            }
+          },
+          "cheap_terminated": true,
+          "input_target": "scale_option",
+          "matching_option_count": 1,
+          "post_input_fresh_combo_owned": true
+        },
+        "selected_scale": 150,
+        "restoration_observations": {
+          "cheap_ok": true,
+          "expansion_observed": true,
+          "cheap_exit": 0,
+          "expansion_state": 1,
+          "allowed_option_domain": {
+            "scale_200": {
+              "matching_container": 0,
+              "observed": 0,
+              "container_unavailable": 0,
+              "visible_enabled": 0
+            },
+            "scale_100": {
+              "matching_container": 1,
+              "observed": 1,
+              "container_unavailable": 0,
+              "visible_enabled": 1
+            },
+            "scale_150": {
+              "matching_container": 1,
+              "observed": 1,
+              "container_unavailable": 0,
+              "visible_enabled": 1
+            },
+            "scale_125": {
+              "matching_container": 1,
+              "observed": 1,
+              "container_unavailable": 0,
+              "visible_enabled": 1
+            }
+          },
+          "cheap_terminated": true,
+          "input_target": "scale_option",
+          "matching_option_count": 1,
+          "post_input_fresh_combo_owned": true
+        },
+        "resolution_restore_already_current": false,
+        "original_scale": 100,
+        "input_route": "hosted-foreground",
+        "resolution_verified": true,
+        "isolation": "disposable_hosted_machine",
+        "page_refresh": {
+          "requested": true,
+          "display_acknowledged": true,
+          "colors_acknowledged": true
+        },
+        "resolution_apply_code": 0,
+        "uia": "read_only",
+        "status": "selected_and_measured",
+        "disposal_required": false,
+        "resolution_selection_diagnostic": {
+          "last_driver_extra_bytes": 0,
+          "stage": "stable_display_binding",
+          "code": null,
+          "last_mode_size": 188,
+          "last_enum_succeeded": true,
+          "last_mode_buffer_bytes": 220
+        }
+      }
+    },
+    "display-scale-150-37096062899/restore.json": {
+      "sha256": "970d88d09044a0ad5c46ff376a873c8e739a96b1e13102a025b71df8ea3aa0ed",
+      "bytes": 1509,
+      "value": {
+        "original_scale": 100,
+        "selection_observations": {},
+        "resolution_restoration_diagnostic": {
+          "last_mode_size": 188,
+          "last_enum_succeeded": true,
+          "code": null,
+          "last_driver_extra_bytes": 0,
+          "stage": "stable_display_binding",
+          "last_mode_buffer_bytes": 220
+        },
+        "requested_scale": 150,
+        "restoration_failure_stage": null,
+        "page_refresh": {
+          "display_acknowledged": false,
+          "requested": false,
+          "colors_acknowledged": false
+        },
+        "navigation_recovery_uncertain": false,
+        "resolution_selection_diagnostic": {
+          "last_mode_size": 188,
+          "last_enum_succeeded": true,
+          "code": null,
+          "last_driver_extra_bytes": 0,
+          "stage": "mode_frequency_and_orientation",
+          "last_mode_buffer_bytes": 220
+        },
+        "failure_stage": null,
+        "status": "unavailable",
+        "uia": "read_only",
+        "target_application_dpi": "requires_independent_runtime_measurement",
+        "resolution_restore_apply_code": null,
+        "foreground_input_atomic": false,
+        "restored_settings_dpi": 96,
+        "isolation": "disposable_hosted_machine",
+        "resolution_restored": true,
+        "input_method": "cheap_mouse_click",
+        "disposal_required": false,
+        "action": "unsupported_standalone_only",
+        "resolution_restore_test_code": null,
+        "input_recovery_uncertain": false,
+        "restoration_observations": {},
+        "restored": true,
+        "resolution_restore_already_current": true,
+        "input_route": "hosted-foreground",
+        "child_termination_uncertain": false,
+        "schema": 1
+      }
+    },
+    "display-scale-150-37096062899/supervisor.json": {
+      "sha256": "448966ee973d10d6e7b635005a5d64ce22f4a5b6fe7519260f261ee9a0318701",
+      "bytes": 702,
+      "value": {
+        "worker_termination_verified": true,
+        "schema": 1,
+        "input_route": "hosted-foreground",
+        "restoration_verified": true,
+        "foreground_input_atomic": false,
+        "status": "verified_settings_scale_and_restoration",
+        "input_recovery_uncertain": false,
+        "navigation_recovery_uncertain": false,
+        "resolution_provisioning_requested": true,
+        "process_containment": "suspended_start_nonbreakaway_job",
+        "disposal_required": false,
+        "child_termination_uncertain": false,
+        "target_application_dpi": "requires_independent_runtime_measurement",
+        "recovery_termination_verified": true,
+        "page_refresh_requested": true,
+        "native_runtime_requested": false,
+        "requested_scale": 150
+      }
+    }
+  }
+}

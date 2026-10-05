@@ -1,4 +1,5 @@
 #include "SlicingProgressNotification.hpp"
+#include "PreviewLayout.hpp"
 #include "GLCanvas3D.hpp"
 #include "Plater.hpp"
 #include "GCodeViewer.hpp"
@@ -214,6 +215,7 @@ bool  NotificationManager::SlicingProgressNotification::update_state(bool paused
 
 void NotificationManager::SlicingProgressNotification::render(GLCanvas3D& canvas, float initial_y, bool move_from_overlay, float overlay_width, float right_margin)
 {
+    if (m_observe_cancel) m_cancel_canvas = &canvas;
 	if (m_state == EState::Unknown || m_state == PopNotification::EState::Hovered)
 		init();
 
@@ -237,32 +239,39 @@ void NotificationManager::SlicingProgressNotification::render(GLCanvas3D& canvas
 
 	Size cnv_size = canvas.get_canvas_size();
 
-	//m_window_width = 600.f * scale;
-	//if (m_sp_state == SlicingProgressNotification::SlicingProgressState::SP_COMPLETED || m_sp_state == SlicingProgressNotification::SlicingProgressState::SP_CANCELLED)
-	//	m_window_width = m_line_height * 25;
-	const ImVec2 progress_child_window_padding = ImVec2(15.f, 0.f) * scale;
-	const ImVec2 dailytips_child_window_padding = m_dailytips_panel->is_expanded() ? ImVec2(15.f, 10.f) * scale : ImVec2(15.f, 0.f) * scale;
-	const ImVec2 bottom_padding = ImVec2(0.f, 0.f) * scale;
-	const float  progress_panel_width = (m_window_width - 2 * progress_child_window_padding.x);
-	const float  progress_panel_height = (58.0f * scale);
-	const float  dailytips_panel_width = (m_window_width - 2 * dailytips_child_window_padding.x);
-	const float  gcodeviewer_height = wxGetApp().plater()->get_preview_canvas3D()->get_gcode_viewer().get_legend_height();
-	//const float  dailytips_panel_height = std::min(380.0f * scale, std::max(90.0f, (cnv_size.get_height() - gcodeviewer_height - progress_panel_height - dailytips_child_window_padding.y - initial_y - m_line_height * 4)));
-	const float  dailytips_panel_height = 380.0f * scale;
-
-	float right_gap = right_margin + (move_from_overlay ? overlay_width + m_line_height * 5 : 0);
-	// In Preview right_margin carries the layer slider column and, while it is
-	// expanded, the legend dock, so the card sits beside them rather than under
-	// the dock. A canvas too narrow for that keeps the card on the canvas and
-	// lifts it in front instead of pushing it off the left edge.
-	const float widest_gap = std::max(0.0f, (float)cnv_size.get_width() - m_window_width);
-	const bool  over_dock  = right_gap > widest_gap;
-	right_gap = std::min(right_gap, widest_gap);
-	m_window_pos = ImVec2((float)cnv_size.get_width() - right_gap - m_window_width, (float)cnv_size.get_height() - m_top_y);
-	imgui.set_next_window_pos(m_window_pos.x, m_window_pos.y, ImGuiCond_Always, 0.0f, 0.0f);
-	m_window_height = progress_panel_height + m_dailytips_panel->get_size().y + progress_child_window_padding.y + dailytips_child_window_padding.y + bottom_padding.y;
-	m_top_y = initial_y + m_window_height;
-	ImGui::SetNextWindowSizeConstraints(ImVec2(m_window_width, m_window_height), ImVec2(m_window_width, m_window_height));
+    const auto column = PreviewLayout::notification_column(float(cnv_size.get_width()), scale,
+        m_line_height * 25.0f, right_margin + (move_from_overlay ? overlay_width + m_line_height * 5 : 0));
+    m_window_width = column.width;
+    const ImVec2 progress_child_window_padding = ImVec2(15.f, 0.f) * scale;
+    const ImVec2 dailytips_child_window_padding = ImVec2(15.f, 10.f) * scale;
+    const float progress_panel_width = std::max(1.0f, m_window_width - 2 * progress_child_window_padding.x);
+    const float status_icon_width = m_sp_state == SlicingProgressState::SP_COMPLETED ? 44.0f * scale : 0.0f;
+    const float status_width = std::max(1.0f, progress_panel_width - 46.0f * scale - status_icon_width);
+    const float status_height = ImGui::CalcTextSize(m_text1.c_str(), nullptr, false, status_width).y;
+    const float progress_panel_height = std::max(58.0f * scale, status_height + m_line_height + 18.0f * scale);
+    const float dailytips_panel_width = std::max(1.0f, m_window_width - 2 * dailytips_child_window_padding.x - ImGui::GetStyle().ScrollbarSize - 2.0f * ImGui::GetStyle().WindowPadding.x);
+    // Keep the tips' internal layout intact and scroll its viewport when necessary.
+    // The collapsed controller is 58 logical pixels, as in DailyTipsPanel.
+    const float tips_content_height = (m_dailytips_panel->is_expanded() ? 380.0f : 58.0f) * scale;
+    const float dailytips_panel_height = std::min(tips_content_height,
+        PreviewLayout::tips_height(m_stack_top - m_stack_bottom, 0.0f, progress_panel_height,
+                                   2.0f * dailytips_child_window_padding.y, scale));
+    m_window_height = progress_panel_height + dailytips_panel_height + 2.0f * dailytips_child_window_padding.y;
+    if (!fit_to_stack(initial_y)) {
+        ImGui::PopStyleVar(2);
+        ImGui::PopStyleColor(1);
+        restore_default_theme();
+        if (fading_pop) ImGui::PopStyleColor(3);
+        return;
+    }
+    const bool over_dock = column.right < right_margin;
+    m_window_pos = ImVec2(float(cnv_size.get_width()) - column.right - m_window_width,
+                         float(cnv_size.get_height()) - m_top_y);
+    imgui.set_next_window_pos(m_window_pos.x, m_window_pos.y, ImGuiCond_Always, 0.0f, 0.0f);
+    ImGui::SetNextWindowSizeConstraints(ImVec2(m_window_width, m_window_height), ImVec2(m_window_width, m_window_height));
+    m_rendered_win_min = m_window_pos;
+    m_rendered_win_max = m_window_pos + ImVec2(m_window_width, m_window_height);
+    m_rendered_this_frame = true;
 
 	// name of window indentifies window - has to be unique string
 	if (m_id == 0)
@@ -303,9 +312,9 @@ void NotificationManager::SlicingProgressNotification::render(GLCanvas3D& canvas
 				ImVec2 button_size = ImVec2(38.f, 38.f) * scale;
 				ImVec2 button_pos = child_window_pos + ImVec2(progress_panel_width - button_size.x, (progress_panel_height - button_size.y) / 2.0f);
 				float  margin_x = 8.0f * scale;
-				ImVec2 progress_bar_pos = child_window_pos + ImVec2(0, progress_panel_height / 2.0f);
+				ImVec2 progress_bar_pos = child_window_pos + ImVec2(0, status_height + 10.0f * scale);
 				ImVec2 progress_bar_size = ImVec2(progress_panel_width - button_size.x - margin_x, 4.0f * scale);
-				ImVec2 text_pos = ImVec2(progress_bar_pos.x, progress_bar_pos.y - m_line_height * 1.2f);
+				ImVec2 text_pos = child_window_pos + ImVec2(0.0f, 6.0f * scale);
 
 				render_text(text_pos);
 				render_close_button(button_pos, button_size);
@@ -322,15 +331,16 @@ void NotificationManager::SlicingProgressNotification::render(GLCanvas3D& canvas
 			ImGui::GetCurrentWindow()->DrawList->AddLine(separator_min, separator_max, md3_notif_u32(MD3::Role::OutlineVariant, m_is_dark, (int)(255 * m_current_fade_opacity)));
 
 			child_name = "##DailyTipsPanel" + std::to_string(parent_window->ID);
-			ImVec2 dailytips_pos = ImGui::GetCursorScreenPos() + dailytips_child_window_padding;
-			ImVec2 dailytips_size = ImVec2(dailytips_panel_width, dailytips_panel_height);
-			m_dailytips_panel->set_position(dailytips_pos);
-			m_dailytips_panel->set_size(dailytips_size);
-			m_dailytips_panel->set_fade_opacity(m_current_fade_opacity);
-			ImGui::SetNextWindowPos(dailytips_pos);
-			if (ImGui::BeginChild(child_name.c_str(), ImVec2(dailytips_panel_width, dailytips_panel_height), false, child_window_flags)) {
-				render_dailytips_panel(dailytips_pos, dailytips_size);
-			}
+            const ImVec2 dailytips_pos = ImGui::GetCursorScreenPos() + dailytips_child_window_padding;
+            ImGui::SetNextWindowPos(dailytips_pos);
+            if (ImGui::BeginChild(child_name.c_str(), ImVec2(dailytips_panel_width + ImGui::GetStyle().ScrollbarSize + 2.0f * ImGui::GetStyle().WindowPadding.x, dailytips_panel_height), false)) {
+                const ImVec2 content_pos = ImGui::GetCursorScreenPos();
+                const ImVec2 content_size(dailytips_panel_width, tips_content_height);
+                m_dailytips_panel->set_position(content_pos);
+                m_dailytips_panel->set_size(content_size);
+                m_dailytips_panel->set_fade_opacity(m_current_fade_opacity);
+                render_dailytips_panel(content_pos, content_size);
+            }
 			ImGui::EndChild();
 		}
 
@@ -355,15 +365,14 @@ void Slic3r::GUI::NotificationManager::SlicingProgressNotification::render_text(
 	ImGuiWrapper& imgui = *wxGetApp().imgui();
 	float scale = imgui.get_font_size() / 15.0f;
 	ImVec2 icon_size = ImVec2(38.f, 38.f) * scale;
-	// The status stays on one line: the progress bar and the percentage sit right
-	// below it. In bilingual mode the Cantonese joins that line when it fits before
-	// the close or cancel button at the right edge; otherwise the line stays English.
-	auto draw_status_line = [this, scale]() {
-		const float button_width = (38.f + 8.f) * scale;
-		const float max_width = ImGui::GetWindowPos().x + ImGui::GetWindowWidth() - ImGui::GetCursorScreenPos().x - button_width;
-		const std::string line = ImGuiWrapper::bilingual_compact(m_text1.substr(0, m_endlines[0]), std::max(max_width, 1.0f));
-		ImGui::Text("%s", line.c_str());
-	};
+    // Keep the full localized status, including both lines in bilingual mode.
+    // The caller measured this exact wrap width before positioning the progress card.
+    auto draw_status_line = [this, scale]() {
+        const float right = ImGui::GetWindowSize().x - 46.0f * scale;
+        ImGui::PushTextWrapPos(std::max(ImGui::GetCursorPosX() + 1.0f, right));
+        ImGui::TextUnformatted(m_text1.c_str());
+        ImGui::PopTextWrapPos();
+    };
 	if (m_sp_state == SlicingProgressState::SP_COMPLETED) {
 		// complete icon
 		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(.0f, .0f, .0f, .0f));
@@ -380,20 +389,16 @@ void Slic3r::GUI::NotificationManager::SlicingProgressNotification::render_text(
 		ImGui::PopStyleColor(5);
 
 		// complete text
-		imgui.push_bold_font();
-		ImGui::SetCursorScreenPos(ImVec2(pos.x + icon_size.x + ImGui::CalcTextSize(" ").x, pos.y + (icon_size.y - m_line_height) / 2));
+		ImGui::SetCursorScreenPos(ImVec2(pos.x + 44.0f * scale, pos.y));
 		draw_status_line();
-		imgui.pop_bold_font();
 		return;
 	}
 	if (m_sp_state == SlicingProgressState::SP_CANCELLED) {
-		imgui.push_bold_font();
-		ImGui::SetCursorScreenPos(ImVec2(pos.x + ImGui::CalcTextSize(" ").x, pos.y + (icon_size.y - m_line_height) / 2));
+		ImGui::SetCursorScreenPos(ImVec2(pos.x, pos.y));
 		draw_status_line();
-		imgui.pop_bold_font();
 	}
 	if(m_sp_state == SlicingProgressState::SP_PROGRESS)	{
-		//one line text
+		// Wrapped progress status.
 		ImGui::SetCursorScreenPos(pos);
 		draw_status_line();
 	}
@@ -470,6 +475,21 @@ void NotificationManager::SlicingProgressNotification::on_show_dailytips()
 	wxGetApp().plater()->get_dailytips()->open();
 }
 
+NotificationManager::RenderedCancelTarget
+NotificationManager::SlicingProgressNotification::automation_cancel_target(const GLCanvas3D& canvas) const
+{
+    if (!m_observe_cancel || m_cancel_canvas != &canvas || !m_rendered_this_frame ||
+        m_state == EState::Hidden || m_state == EState::Finished || m_state == EState::ClosePending ||
+        m_sp_state != SlicingProgressState::SP_PROGRESS || !m_cancel_callback ||
+        !m_cancel_target.visible || !ImGui::GetCurrentContext() ||
+        m_cancel_target.frame != ImGui::GetFrameCount()) return {};
+    auto result = m_cancel_target;
+    result.age_ms = std::chrono::duration<double, std::milli>(
+        std::chrono::steady_clock::now() - m_cancel_render_time).count();
+    if (result.age_ms > 500.0) return {};
+    return result;
+}
+
 void Slic3r::GUI::NotificationManager::SlicingProgressNotification::render_cancel_button(const ImVec2& pos, const ImVec2& size)
 {
 	if (m_sp_state == SlicingProgressState::SP_PROGRESS) {
@@ -483,10 +503,21 @@ void Slic3r::GUI::NotificationManager::SlicingProgressNotification::render_cance
 
 		ImVec2 button_size = size;
 		ImVec2 button_pos = pos;
-		ImGui::SetCursorScreenPos(button_pos);
+        if (m_observe_cancel && wxGetApp().plater()) {
+            // The intersection is the same visible hit area used by ImGui input.
+            const ImRect clip = ImGui::GetCurrentWindow()->ClipRect;
+            const float left = std::max(button_pos.x, clip.Min.x);
+            const float top = std::max(button_pos.y, clip.Min.y);
+            const float right = std::min(button_pos.x + button_size.x, clip.Max.x);
+            const float bottom = std::min(button_pos.y + button_size.y, clip.Max.y);
+            m_cancel_target = {right > left && bottom > top, ImGui::GetFrameCount(),
+                               wxGetApp().plater()->automation_slice_native_generation(), 0.0, left, top, std::max(0.0f, right - left), std::max(0.0f, bottom - top)};
+            m_cancel_render_time = std::chrono::steady_clock::now();
+        }
+        ImGui::SetCursorScreenPos(button_pos);
 
-		std::wstring button_text;
-		button_text = ImGui::CancelButton;
+        std::wstring button_text;
+        button_text = ImGui::CancelButton;
 		if (ImGui::IsMouseHoveringRect(button_pos, button_pos + button_size, true))
 		{
 			button_text = ImGui::CancelHoverButton;

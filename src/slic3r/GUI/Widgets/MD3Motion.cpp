@@ -13,28 +13,41 @@
 
 namespace MD3 { namespace Motion {
 
-bool reduced()
+namespace {
+double bezierCoordinate(double t, double a, double b, double c, double d)
 {
-#ifdef _WIN32
-    BOOL animate = TRUE;
-    if (::SystemParametersInfoW(SPI_GETCLIENTAREAANIMATION, 0, &animate, 0))
-        return animate == FALSE;
-#endif
-    return false;
+    const double s = 1.0 - t;
+    return s*s*s*a + 3.0*s*s*t*b + 3.0*s*t*t*c + t*t*t*d;
 }
+
+double bezierAtX(double x, double x0, double y0, double x1, double y1,
+                 double x2, double y2, double x3, double y3)
+{
+    double lo = 0.0, hi = 1.0;
+    for (int i = 0; i < 32; ++i) {
+        const double mid = (lo + hi) * 0.5;
+        if (bezierCoordinate(mid, x0, x1, x2, x3) < x) lo = mid;
+        else hi = mid;
+    }
+    return bezierCoordinate((lo + hi) * 0.5, y0, y1, y2, y3);
+}
+} // namespace
 
 double easeStandard(double t)
 {
-    // cubic-bezier(0.2, 0, 0, 1) flavour: fast start, long decelerate tail.
-    t = std::clamp(t, 0.0, 1.0);
-    return 1.0 - std::pow(1.0 - t, 3.0);
+    if (t <= 0.0) return 0.0;
+    if (t >= 1.0) return 1.0;
+    return bezierAtX(t, 0, 0, 0.2, 0, 0, 1, 1, 1);
 }
 
 double easeEmphasized(double t)
 {
-    // A stronger settle for large moves: quintic decelerate.
-    t = std::clamp(t, 0.0, 1.0);
-    return 1.0 - std::pow(1.0 - t, 5.0);
+    if (t <= 0.0) return 0.0;
+    if (t >= 1.0) return 1.0;
+    // Material's emphasized path uses two connected cubic segments.
+    if (t <= 0.166666)
+        return bezierAtX(t, 0, 0, 0.05, 0, 0.133333, 0.06, 0.166666, 0.4);
+    return bezierAtX(t, 0.166666, 0.4, 0.208333, 0.82, 0.25, 1, 1, 1);
 }
 
 namespace {
@@ -47,35 +60,92 @@ constexpr int kFrameMs = 16; // ~60fps
 constexpr int kEntranceFloorAlpha = 64; // 25%
 } // namespace
 
-void Anim::Play(int duration_ms, std::function<void(double)> tick,
-                std::function<void()> done, double (*curve)(double))
+Anim::~Anim()
 {
     Stop();
-    m_tick     = std::move(tick);
-    m_done     = std::move(done);
-    m_curve    = curve != nullptr ? curve : &easeStandard;
-    m_elapsed  = 0;
-    m_duration = std::max(1, duration_ms);
-    if (reduced() || m_duration <= kFrameMs) {
-        if (m_tick) m_tick(1.0);
-        if (m_done) m_done();
+    m_run->alive = false;
+}
+
+void Anim::Stop()
+{
+    wxTimer::Stop();
+    ++m_run->generation;
+    m_run->tick = nullptr;
+    m_run->done = nullptr;
+    m_run->owner_lost = nullptr;
+}
+
+void Anim::Finish(const std::shared_ptr<Run>& run, uint64_t generation)
+{
+    wxTimer::Stop();
+    auto tick = run->tick;
+    auto done = run->done;
+    auto owner_lost = run->owner_lost;
+    run->tick = nullptr;
+    run->done = nullptr;
+    run->owner_lost = nullptr;
+    // The initial tick may destroy its owner before timer startup fails.
+    // Never invoke even the final visual callback after that owner is gone.
+    if (run->owner_bound && !run->owner) {
+        if (owner_lost) owner_lost();
         return;
     }
-    if (m_tick) m_tick(0.0);
-    Start(kFrameMs);
+    if (tick) tick(1.0);
+    if (!run->alive || run->generation != generation) return;
+    if (run->owner_bound && !run->owner) {
+        if (owner_lost) owner_lost();
+    } else if (done) done();
+}
+
+void Anim::Play(int duration_ms, std::function<void(double)> tick,
+                std::function<void()> done, double (*curve)(double),
+                wxWindow *owner, std::function<void()> owner_lost)
+{
+    Stop();
+    auto run = m_run;
+    const auto generation = run->generation;
+    run->tick = std::move(tick);
+    run->done = std::move(done);
+    run->owner = owner;
+    run->owner_bound = owner != nullptr;
+    run->owner_lost = std::move(owner_lost);
+    run->curve = curve != nullptr ? curve : &easeStandard;
+    run->duration = std::max(1, duration_ms);
+    run->started = std::chrono::steady_clock::now();
+    if (owner_action(run->owner_bound, !!run->owner, owner && owner->IsShownOnScreen(), reduced()) == OwnerAction::Settle || run->duration <= kFrameMs) {
+        Finish(run, generation);
+        return;
+    }
+    auto first_tick = run->tick;
+    if (first_tick) first_tick(0.0);
+    // A callback can restart or destroy the animator.
+    if (!run->alive || run->generation != generation) return;
+    if (!Start(kFrameMs)) Finish(run, generation);
 }
 
 void Anim::Notify()
 {
-    m_elapsed += kFrameMs;
-    const double t = double(m_elapsed) / double(m_duration);
-    if (t >= 1.0) {
+    auto run = m_run;
+    const auto generation = run->generation;
+    const auto action = owner_action(run->owner_bound, !!run->owner,
+        run->owner && run->owner->IsShownOnScreen(), reduced());
+    if (action == OwnerAction::Cancel) {
+        auto cleanup = run->owner_lost;
         Stop();
-        if (m_tick) m_tick(1.0);
-        if (m_done) m_done();
+        // This callback may destroy the animator. No member access follows it.
+        if (cleanup) cleanup();
         return;
     }
-    if (m_tick) m_tick(m_curve(t));
+    const auto elapsed = std::chrono::duration<double, std::milli>(
+        std::chrono::steady_clock::now() - run->started).count();
+    const double t = std::clamp(elapsed / run->duration, 0.0, 1.0);
+    if (t >= 1.0 || action == OwnerAction::Settle) {
+        Finish(run, generation);
+        return;
+    }
+    auto tick = run->tick;
+    const double eased = run->curve(t);
+    if (tick) tick(eased);
 }
 
 void FadeIn(wxWindow *window, int duration_ms)
@@ -109,6 +179,8 @@ void FadeIn(wxWindow *window, int duration_ms)
         },
         // Deferred delete: done() can fire synchronously from inside Play()
         // (reduced motion), so the Anim must never delete itself re-entrantly.
+        [anim]() { wxTheApp->CallAfter([anim]() { delete anim; }); },
+        &easeStandard, window,
         [anim]() { wxTheApp->CallAfter([anim]() { delete anim; }); });
 
     // wxTimer::Start can fail (no event loop yet, timer exhaustion). Without

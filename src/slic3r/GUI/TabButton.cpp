@@ -1,5 +1,6 @@
 #include "TabButton.hpp"
 #include "Widgets/Label.hpp"
+#include "Widgets/StateMotionMath.hpp"
 
 #include <wx/dcclient.h>
 #include <wx/dcgraph.h>
@@ -106,6 +107,14 @@ void TabButton::SetSelected(bool selected)
     if (m_selected == selected)
         return;
     m_selected = selected;
+    m_selection_motion.Stop();
+    m_selection_emphasis = 1.0;
+    if (selected) {
+        m_selection_motion.Play(MD3::Motion::short2, [this](double t) {
+            m_selection_emphasis = MD3::Motion::interpolate(0.65, 1.0, t);
+            Refresh(false);
+        }, nullptr, &MD3::Motion::easeStandard, this);
+    }
     Refresh();
 }
 
@@ -211,7 +220,13 @@ void TabButton::render(wxDC &dc)
             bar_h = 1;
         wxRect indicator(size.x - thick, inset, thick * 2, bar_h);
         dc.SetPen(*wxTRANSPARENT_PEN);
-        dc.SetBrush(wxBrush(StateColor::semantic(MD3::Role::Primary, m_scheme)));
+        const auto primary = StateColor::semantic(MD3::Role::Primary, m_scheme);
+        const auto surface = GetBackgroundColour();
+        const double emphasis = MD3::Motion::reduced() ? 1.0 : m_selection_emphasis;
+        dc.SetBrush(wxBrush(wxColour(
+            MD3::Motion::color_channel(surface.Red(), primary.Red(), emphasis),
+            MD3::Motion::color_channel(surface.Green(), primary.Green(), emphasis),
+            MD3::Motion::color_channel(surface.Blue(), primary.Blue(), emphasis))));
         dc.DrawRoundedRectangle(indicator, thick);
     }
 }

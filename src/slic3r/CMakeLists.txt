@@ -238,6 +238,8 @@ set(SLIC3R_GUI_SOURCES
     GUI/GUI_Init.hpp
     GUI/GUI_Preview.cpp
     GUI/GUI_Preview.hpp
+    GUI/AutomationBridge.cpp
+    GUI/AutomationBridge.hpp
     GUI/GUI_App.cpp
     GUI/GUI_App.hpp
     GUI/GUI_Utils.cpp
@@ -803,6 +805,7 @@ list(APPEND SLIC3R_GUI_SOURCES
     GUI/Widgets/MD3ColorPicker.cpp
     GUI/Widgets/MD3ColorPicker.hpp
     GUI/Widgets/MD3Motion.cpp
+    GUI/Widgets/MD3MotionPreference.cpp
     GUI/Widgets/MD3Motion.hpp
     GUI/Widgets/MD3DialogChrome.cpp
     GUI/Widgets/MD3DialogChrome.hpp
@@ -837,6 +840,8 @@ list(APPEND SLIC3R_GUI_SOURCES
     GUI/LayoutProbe.cpp
     GUI/LayoutProbe.hpp
     GUI/LanguageMode.cpp
+    GUI/PersonalVocabulary.cpp
+    GUI/PersonalVocabulary.hpp
     GUI/LanguageMode.hpp
     GUI/BilingualRegistry.cpp
     GUI/BilingualRegistry.hpp
@@ -848,6 +853,8 @@ list(APPEND SLIC3R_GUI_SOURCES
     GUI/ProjectHistoryDialog.hpp
     GUI/ChangelogDialog.cpp
     GUI/ChangelogDialog.hpp
+    GUI/ConfigProfileArchive.cpp
+    GUI/ConfigProfileArchive.hpp
     GUI/ConfigProfilesDialog.cpp
     GUI/ConfigProfilesDialog.hpp
     GUI/CommandPalette.cpp

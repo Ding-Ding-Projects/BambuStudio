@@ -3,6 +3,15 @@
 - [Windows-only platform policy](windows-only-platform.md)
 - [Native Material Design 3 UI](md3-native-ui.md)
 - [Keyboard, assistive, and responsive GUI accessibility](gui-accessibility.md)
+- [Interface motion preference and transition foundation](interface-motion.md)
+- [Owned dialog and tooltip entrances](transient-motion.md)
+- [Notification and progress motion](notification-motion.md)
+- [Native and canvas menu motion](menu-motion.md)
+- [Content ownership and selection feedback](content-motion.md)
+- [Checkbox and slider emphasis](choice-motion.md)
+- [Disclosure feedback](disclosure-motion.md)
+- [Hosted animation lifetime verification](motion-verification.md)
+- [Assembly export progress entrance and pending verification](assembly-export-motion.md)
 - [English, Hong Kong Cantonese, and bilingual modes](language-modes.md)
 - [Funny levels and dialog emojis](funny-levels-and-dialog-emojis.md)
 - [Ink terminology (filament → ink, AMS → Ink Dispenser)](ink-terminology.md)
@@ -52,3 +61,9 @@ it.
 - [Exact hosted verification status](../../reapplication/verification-status.md)
 
 The diagnostic candidate package does not replace the production release route.
+
+- [Personal vocabulary](personal-vocabulary.md): local display-only JSON mappings and restoration.
+
+- [Canvas tooltip decoration and explicit identities](tooltip-motion.md)
+- [Temporal capture boundaries and hosted contracts](motion-temporal-capture.md)
+- [Installed menu-builder interaction inventory](menu-interaction-verification.md)

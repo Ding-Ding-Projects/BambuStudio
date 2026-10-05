@@ -59,3 +59,30 @@
   immediately.
 - Language modes: all user-facing strings are in the curated `yue_HK`
   catalog (`compile_translation.py --check` green, 494 entries).
+
+
+## Recovery safety update
+
+Archive import rejects parent traversal, absolute paths, alternate-stream syntax,
+and destinations outside the new profile directory. It refuses to overwrite an
+existing extracted file and reports output stream errors. Preference recovery
+preserves an existing recovery file instead of deleting it before copying.
+
+Closing during a background operation keeps the dialog alive and responsive until
+the future is consumed. A failed operation remains visible for inspection. Hosted
+Windows interaction verification is still required for this update.
+
+
+Concurrent import safety uses an atomic directory reservation followed by
+exclusive file creation. A second instance cannot share the first instance's
+chosen destination. ZIP entry CRC/length and final directory EOF are checked
+before reporting success. Failure removes only files and empty directories
+created by that invocation, preserving pre-existing and unrecorded additions.
+Reserved device names, trailing dots/spaces, drive prefixes and alternate-stream
+names are rejected before output creation.
+
+The production extractor is exercised by `profile_archive_tests`: fresh and
+pre-existing destinations, two concurrent imports, traversal and duplicate paths,
+non-ZIP input, a truncated end record and corrupted CRC payload. Build and run this
+target on the hosted Windows verification runner. These tests were written but
+not executed locally; a hosted result is still required.

@@ -1,3 +1,4 @@
+#include "StateMotionMath.hpp"
 #include "TabStrip.hpp"
 
 #include "../BilingualDecorator.hpp"
@@ -122,6 +123,7 @@ class TabStripButton : public wxWindow
 {
 public:
     TabStripButton(TabStrip *strip, const std::string &id);
+    ~TabStripButton() override { m_selection_motion.Stop(); }
 
     const std::string &Id() const { return m_id; }
     void SetTitle(const wxString &t);
@@ -156,6 +158,8 @@ private:
     wxString    m_title;
     Button *    m_close = nullptr;
 
+    MD3::Motion::Anim m_selection_motion;
+    double   m_selection = 0.0;
     bool     m_active  = false;
     bool     m_dirty   = false;
     bool     m_pinned  = false;
@@ -227,8 +231,19 @@ void TabStripButton::SetActive(bool a)
 {
     if (m_active == a)
         return;
+    const double start = MD3::Motion::reduced() ? (m_active ? 1.0 : 0.0) : m_selection;
     m_active = a;
     UpdateColors();
+    if (Vertical()) {
+        const double target = a ? 1.0 : 0.0;
+        m_selection_motion.Play(MD3::Motion::short2, [this, start, target](double t) {
+            m_selection = MD3::Motion::interpolate(start, target, t);
+            Refresh(false);
+        }, nullptr, &MD3::Motion::easeStandard, this);
+    } else {
+        m_selection_motion.Stop();
+        m_selection = a ? 1.0 : 0.0;
+    }
 }
 
 void TabStripButton::SetDirty(bool d)
@@ -340,10 +355,13 @@ void TabStripButton::OnPaint(wxPaintEvent &)
     wxColour fg;
     if (vertical) {
         // NavItem pill: selected -> SecondaryContainer, hover -> SurfaceContainerHigh.
-        wxColour pill;
-        bool     draw_pill = false;
-        if (m_active) { pill = StateColor::semantic(MD3::Role::SecondaryContainer); draw_pill = true; }
-        else if (m_hover) { pill = StateColor::semantic(MD3::Role::SurfaceContainerHigh); draw_pill = true; }
+        const double selection = MD3::Motion::reduced() ? (m_active ? 1.0 : 0.0) : m_selection;
+        const wxColour resting = StateColor::semantic(m_hover ? MD3::Role::SurfaceContainerHigh : MD3::Role::SurfaceContainerLow);
+        const wxColour selected = StateColor::semantic(MD3::Role::SecondaryContainer);
+        const wxColour pill(MD3::Motion::color_channel(resting.Red(), selected.Red(), selection),
+                            MD3::Motion::color_channel(resting.Green(), selected.Green(), selection),
+                            MD3::Motion::color_channel(resting.Blue(), selected.Blue(), selection));
+        const bool draw_pill = m_active || m_hover || selection > 0.0;
         if (draw_pill) {
             dc.SetPen(*wxTRANSPARENT_PEN);
             dc.SetBrush(wxBrush(pill));
@@ -770,6 +788,7 @@ TabStrip::TabStrip(wxWindow *parent, const Options &options)
 
 TabStrip::~TabStrip()
 {
+    m_indicator_motion.Stop();
     auto &r = registry();
     r.erase(std::remove(r.begin(), r.end(), this), r.end());
 }
@@ -833,6 +852,7 @@ void TabStrip::Activate(const std::string &id, bool emit)
     const MD3::Tabs::Tab *t = m_model.find(id);
     if (!t)
         return;
+    const wxRect previous_indicator = IndicatorRect();
     bool changed = false;
     if (t->hidden) {
         m_model.set_hidden(id, false);
@@ -849,6 +869,18 @@ void TabStrip::Activate(const std::string &id, bool emit)
     else {
         Relayout();
         SaveLayout();
+    }
+    const wxRect target_indicator = IndicatorRect();
+    if (!IsVertical() && !previous_indicator.IsEmpty() && !target_indicator.IsEmpty() &&
+        previous_indicator != target_indicator) {
+        m_indicator_motion.Play(MD3::Motion::medium1, [this, previous_indicator, target_indicator](double t) {
+            m_indicator_rect = wxRect(
+                int(std::lround(MD3::Motion::interpolate(previous_indicator.x, target_indicator.x, t))),
+                target_indicator.y,
+                int(std::lround(MD3::Motion::interpolate(previous_indicator.width, target_indicator.width, t))),
+                target_indicator.height);
+            Refresh(false);
+        }, nullptr, &MD3::Motion::easeStandard, this);
     }
     if (emit) {
         wxCommandEvent evt(EVT_TABSTRIP_ACTIVATE);
@@ -1641,8 +1673,21 @@ void TabStrip::SyncButtons()
         m_focus_index = m_model.active_index();
 }
 
+wxRect TabStrip::IndicatorRect() const
+{
+    if (m_indicator_motion.IsRunning() && !MD3::Motion::reduced() && IsShownOnScreen())
+        return m_indicator_rect;
+    const int active = m_model.active_index();
+    if (IsVertical() || active < 0 || active >= int(m_buttons.size()) || !m_buttons[active]->IsShown())
+        return {};
+    return m_buttons[active]->GetRect();
+}
+
 void TabStrip::Relayout()
 {
+    // Structural geometry changes settle immediately. Activation snapshots the
+    // painted rectangle before layout and starts a new visual-only transition.
+    m_indicator_motion.Stop();
     const bool vertical = IsVertical();
     if (vertical) {
         const int rail_width = m_options.vertical_width_dip > 0 ? m_options.vertical_width_dip : kRailWidth;
@@ -1822,7 +1867,7 @@ void TabStrip::OnPaint(wxPaintEvent &)
     if (!vertical) {
         const int ai = m_model.active_index();
         if (ai >= 0 && ai < int(m_buttons.size()) && m_buttons[ai]->IsShown()) {
-            const wxRect r     = m_buttons[ai]->GetRect();
+            const wxRect r     = IndicatorRect();
             const int    inset = FromDIP(active_indicator_inset);
             const int    ih    = FromDIP(active_indicator_h);
             dc.SetBrush(wxBrush(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Brand)));

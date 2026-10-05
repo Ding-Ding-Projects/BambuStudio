@@ -13,23 +13,25 @@ fires.
   a chevron for submenu rows, an 8 % state layer on hover and a secondary-container fill for the
   keyboard selection. Disabled rows keep their label at reduced emphasis. Separators are 1 px lines
   with 8 dp padding and collapse when filtering would leave them leading, trailing or doubled.
-- **Search field.** A menu with six or more actionable rows carries the shared `SearchField` pill at
+- **Search field.** Every menu, including a one-item menu and every nested menu, carries the shared `SearchField` pill at
   the top, with the regex builder behind its `.*` toggle exactly as every other search surface.
   Typing filters the rows locally; the actions behind the rows never change. A submenu row stays
   visible when any of its descendants match. Typing while the list has focus redirects into the
-  search field. The filament row menu opts into the same field even with fewer than six rows, so
-  Edit, Delete, Decompose Color and Merge with are searchable on every open.
+  search field. Each level retains its own query. Empty results show "No matches.";
+  no minimum item count hides the search or regex builder.
 - **Shortcuts.** Each row shows the shortcut registered on its `wxMenuItem` (parsed from the
   accelerator, falling back to the `\t` suffix of the label) so the menu documents the faster route
   to every command it lists. Screen readers receive it through `GetKeyboardShortcut`, not as extra
   label text.
 - **Submenus.** Open to the right of the parent row, top aligned, flipping to the left at the
   display edge; hover opens after 200 ms (immediately under reduced motion), Right or Enter opens,
-  Left or Escape closes one level. A parent refuses to dismiss while a child is open.
+  Left closes one level. Escape first clears a nonempty query, then closes one level.
+  A parent refuses to dismiss while a child is open.
 - **Bounds.** The surface never covers its anchor: placement tries below, above, right and left
   before clamping into the display, and a menu taller than the free height scrolls inside its card.
 - **Keyboard and focus.** Up/Down/Home/End/PageUp/PageDown move over actionable rows, Enter or Space
-  activate, Escape or an outside click dismiss, Tab and Shift+Tab cycle through the search input,
+  activate, Escape clears a nonempty query before dismissing, an outside click dismisses,
+  and Tab and Shift+Tab cycle through the search input,
   its visible regex, builder and clear controls, then the menu list; focus returns
   to whatever had it when the menu opened. Mnemonics (`&E`) activate only while the search field is
   empty.
@@ -43,13 +45,13 @@ fires.
 ## Configuration
 
 There is no setting; the widget replaces the native popup everywhere. Constants in `MD3Menu.hpp`:
-`kSearchThreshold` (6 rows), `kSubmenuHoverDelayMs` (200), `kDrawShadow` (false: frame-only
+`kSubmenuHoverDelayMs` (200), `kDrawShadow` (false: frame-only
 elevation until a layered-window shadow lands).
 
 Entry points for code: `MD3::PopupMenu(owner, menu, screen_pos)` (blocking, sends events),
 `MD3::PopupMenuSelection(owner, menu, screen_pos)` (blocking, returns the id, sends nothing),
-`MD3::PopupMenuBelow(anchor, menu, show_search)` (anchored under a button; the optional flag forces
-the shared search field). `Plater::PopupMenu` routes through the
+`MD3::PopupMenuBelow(anchor, menu, show_search)` (anchored under a button; the legacy optional
+flag remains source-compatible, while search is always present). `Plater::PopupMenu` routes through the
 first, so the object list, preset combo boxes, the 3D scene and the ink rows all share one surface.
 The tray icon's `wxTaskBarIcon::CreatePopupMenu` is the one deliberate exception: the shell owns
 that popup.
@@ -70,6 +72,11 @@ The widget evaluates the search pattern through the shared bounded regex engine;
 query leaves the process.
 
 ## Verification
+
+The every-menu search update is implemented in the combined candidate. Its current
+English/Cantonese/bilingual, theme, display-scale and minimum-size interaction matrix
+is pending hosted installed verification. Historical captures below do not verify
+the new candidate or its new Escape behavior.
 
 - `tests/md3_menu` (Catch2): label/shortcut split, snapshot kinds and `UpdateUI` enable state,
   filter separator collapsing and submenu retention, `place_root` never intersecting the anchor or

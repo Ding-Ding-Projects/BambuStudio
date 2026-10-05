@@ -4,6 +4,7 @@
 #include <string>
 #include <map>
 #include <memory>
+#include <tuple>
 
 #include <imgui/imgui.h>
 
@@ -28,6 +29,7 @@ namespace Slic3r {
 namespace GUI {
 
 class RegexBuilderBridgeState;
+struct CanvasMenuSearchState;
 
 // Opens the full wx regex builder for an ImGui-owned search field. The shared
 // bridge state keeps callbacks lifetime-safe and carries edits back on the next
@@ -47,6 +49,8 @@ bool button_with_pos(ImTextureID   user_texture_id,
                      const ImVec4 &bg_col        = ImVec4(0, 0, 0, 0),
                      const ImVec4 &tint_col      = ImVec4(1, 1, 1, 1),
                      const ImVec2 &margin        = ImVec2(0, 0));
+std::string canvas_menu_label(const char* original);
+void constrain_canvas_menu();
 bool begin_menu(const char *label, bool enabled = true);
 void end_menu();
 bool menu_item_with_icon(const char *label, const char *shortcut, ImVec2 icon_size = ImVec2(0, 0), ImU32 icon_color = 0, bool selected = false, bool enabled = true, bool* hovered = nullptr);
@@ -79,6 +83,24 @@ class ImGuiWrapper
     std::string m_search_pattern;
     std::string m_search_exported_pattern;
     std::shared_ptr<RegexBuilderBridgeState> m_search_builder_state;
+    std::map<ImGuiID, std::shared_ptr<CanvasMenuSearchState>> m_menu_search_states;
+    bool m_menu_search_escape_held = false;
+    struct PopupMotion { double started = 0.0; int frame = -1; };
+    std::map<std::pair<ImGuiID, ImGuiID>, PopupMotion> m_popup_motion;
+    void *m_popup_motion_context = nullptr;
+    std::map<std::pair<ImGuiID, ImGuiID>, PopupMotion> m_tooltip_motion;
+    void *m_tooltip_motion_context = nullptr;
+    void *m_owned_motion_context = nullptr;
+    struct MenuDecorationMotion {
+        double started = 0.0;
+        float from = 0.0f, value = 0.0f, target = 0.0f;
+        int frame = -1;
+        std::string signature;
+    };
+    using MenuDecorationKey = std::tuple<ImGuiID, ImGuiID, ImGuiID, ImGuiID, unsigned>;
+    std::map<MenuDecorationKey, MenuDecorationMotion> m_menu_decoration;
+    float menu_decoration_progress(ImGuiID item, unsigned kind, bool active,
+                                   const std::string &signature = {});
 #if ENABLE_ENHANCED_IMGUI_SLIDER_FLOAT
     bool m_requires_extra_frame{ false };
 #endif // ENABLE_ENHANCED_IMGUI_SLIDER_FLOAT
@@ -139,6 +161,12 @@ public:
 	void set_next_window_size(float x, float y, ImGuiCond cond);
 
     /* BBL style widgets */
+    // Draw inside an open popup; use an untranslated stable ID.
+    std::vector<bool> menu_search(const char* stable_id, const std::vector<std::string>& items, bool focus = false);
+    // Decorative paint only, in spare padding before the supplied content.
+    void menu_row_decoration(const ImVec2 &content_min, const ImVec2 &content_max, bool active,
+                             ImGuiID item_id = 0);
+
     bool bbl_combo_with_filter(const char* label, const std::string& preview_value, const std::vector<std::string>& all_items, std::vector<int>* filtered_items_idx, bool* is_filtered, float item_height = 0.0f);
     bool bbl_input_double(const wxString &label, const double &value, const std::string &format = "%0.2f");
     bool bbl_slider_float(const std::string &label, float* v, float v_min, float v_max, const char* format = "%.3f", float power = 1.0f, bool clamp = true, const wxString& tooltip = {});
@@ -201,6 +229,9 @@ public:
     void tooltip(const char *label, float wrap_width);
     void tooltip(const std::string &label, float wrap_width);
     void tooltip(const wxString &label, float wrap_width);
+    // Read source identity before BeginTooltip; decorate after its text item.
+    ImGuiID tooltip_source_id() const;
+    void tooltip_decoration(ImGuiID source_id, const char *content, ImU32 color);
     void filament_group(const std::string &filament_type, const char *hex_color, unsigned char filament_id, float align_width);
 
     // text size and is_multi_line

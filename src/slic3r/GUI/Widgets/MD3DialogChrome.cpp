@@ -24,6 +24,68 @@ constexpr int kCloseHit  = 44; // a11y minimum touch target
 constexpr int kGlyphPx   = 20;
 } // namespace
 
+MD3TransientEntrance::~MD3TransientEntrance() { Stop(); }
+
+void MD3TransientEntrance::Restore()
+{
+#ifdef _WIN32
+    // Only remove the layered style installed by this exact run.
+    if (m_owner && m_native_handle && m_owner->GetHWND() == m_native_handle) {
+        const auto hwnd = static_cast<HWND>(m_native_handle);
+        if (::IsWindow(hwnd)) {
+            ::SetLayeredWindowAttributes(hwnd, 0, 255, LWA_ALPHA);
+            ::SetWindowLongPtrW(hwnd, GWL_EXSTYLE,
+                ::GetWindowLongPtrW(hwnd, GWL_EXSTYLE) & ~WS_EX_LAYERED);
+        }
+    }
+#endif
+    m_native_handle = nullptr;
+}
+
+void MD3TransientEntrance::Stop()
+{
+    ++m_generation;
+    m_anim.Stop();
+    Restore();
+    m_owner = nullptr;
+}
+
+void MD3TransientEntrance::Show(wxWindow *owner, int duration_ms)
+{
+    Stop();
+    m_owner = owner;
+    const auto generation = m_generation;
+    // wxEVT_SHOW can precede native visibility. Only the visual entrance is
+    // deferred; Show, focus, modal state and every action retain their ordering.
+    CallAfter([this, generation, duration_ms]() {
+        if (generation == m_generation && m_owner && m_owner->IsShownOnScreen())
+            Begin(duration_ms);
+    });
+}
+
+void MD3TransientEntrance::Begin(int duration_ms)
+{
+#ifdef _WIN32
+    if (!m_owner || MD3::Motion::reduced()) return;
+    const auto hwnd = static_cast<HWND>(m_owner->GetHWND());
+    if (!hwnd || (::GetWindowLongPtrW(hwnd, GWL_STYLE) & WS_CHILD)) return;
+    const auto style = ::GetWindowLongPtrW(hwnd, GWL_EXSTYLE);
+    if (style & WS_EX_LAYERED) return;
+    ::SetLastError(0);
+    if (!::SetWindowLongPtrW(hwnd, GWL_EXSTYLE, style | WS_EX_LAYERED) && ::GetLastError()) return;
+    m_native_handle = hwnd;
+    if (!::SetLayeredWindowAttributes(hwnd, 0, 64, LWA_ALPHA)) { Restore(); return; }
+    m_anim.Play(duration_ms, [this](double t) {
+        if (!m_owner || m_owner->GetHWND() != m_native_handle) return;
+        const auto h = static_cast<HWND>(m_native_handle);
+        ::SetLayeredWindowAttributes(h, 0, static_cast<BYTE>(64 + 191 * t), LWA_ALPHA);
+    }, [this]() { Restore(); }, &MD3::Motion::easeStandard, m_owner.get(),
+       [this]() { m_native_handle = nullptr; });
+#else
+    (void) duration_ms;
+#endif
+}
+
 MD3DialogCaption::MD3DialogCaption(wxDialog *dialog, const wxString &title)
     : wxPanel(dialog, wxID_ANY)
     , m_dialog(dialog)
@@ -84,6 +146,7 @@ MD3DialogCaption::MD3DialogCaption(wxDialog *dialog, const wxString &title)
             FollowDialogTitle();
         e.Skip();
     });
+    dialog->Bind(wxEVT_SHOW, &MD3DialogCaption::OnDialogShow, this);
 }
 
 void MD3DialogCaption::FollowDialogTitle()
@@ -106,6 +169,15 @@ void MD3DialogCaption::SyncTitle(wxDialog *dialog)
     for (wxWindow *child : dialog->GetChildren())
         if (auto *caption = dynamic_cast<MD3DialogCaption *>(child))
             caption->FollowDialogTitle();
+}
+
+void MD3DialogCaption::OnDialogShow(wxShowEvent &event)
+{
+    if (event.GetEventObject() == m_dialog) {
+        if (event.IsShown()) m_entrance.Show(m_dialog, MD3::Motion::medium1);
+        else m_entrance.Stop();
+    }
+    event.Skip();
 }
 
 void MD3DialogCaption::OnPaintClose(wxPaintEvent &)
@@ -181,5 +253,4 @@ void MD3DialogCaption::FinishChrome(wxDialog *dialog)
     ::DwmSetWindowAttribute((HWND) dialog->GetHWND(), DWMWA_WINDOW_CORNER_PREFERENCE_,
                             &pref, sizeof(pref));
 #endif
-    MD3::Motion::FadeIn(dialog, MD3::Motion::medium1);
 }

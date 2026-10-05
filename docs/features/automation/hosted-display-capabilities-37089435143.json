@@ -1,0 +1,148 @@
+{
+  "schema": 1,
+  "source_commit": "35d1074faea221fa4f289f1db1e0ee428a90d701",
+  "run_id": 37089435143,
+  "run_url": "https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37089435143",
+  "workflow": ".github/workflows/display-scale-discovery.yml",
+  "job": "capabilities",
+  "input": {
+    "capabilities_only": true
+  },
+  "original_receipt_sha256": "89334ef607b30a560cf9ed8a7919a7fdb345e6e4534ddd1e4d1f9c3f55e70790",
+  "receipt": {
+    "read_only": true,
+    "reason": "numeric_capabilities_observed",
+    "status": "observed",
+    "active_display_target_count": 1,
+    "monitor_width": 1024,
+    "current_mode": {
+      "frequency_hz": 64,
+      "width": 1024,
+      "height": 768,
+      "orientation": 0,
+      "bits_per_pixel": 32,
+      "fields": 544997536
+    },
+    "resolution_selection": {
+      "height": 768,
+      "width": 1024
+    },
+    "monitor_height": 768,
+    "supported_modes": [
+      {
+        "frequency_hz": 64,
+        "width": 640,
+        "height": 480,
+        "orientation": 0,
+        "bits_per_pixel": 32,
+        "fields": 8126592
+      },
+      {
+        "frequency_hz": 64,
+        "width": 800,
+        "height": 600,
+        "orientation": 0,
+        "bits_per_pixel": 32,
+        "fields": 8126592
+      },
+      {
+        "frequency_hz": 64,
+        "width": 1024,
+        "height": 768,
+        "orientation": 0,
+        "bits_per_pixel": 32,
+        "fields": 8126592
+      },
+      {
+        "frequency_hz": 64,
+        "width": 1152,
+        "height": 864,
+        "orientation": 0,
+        "bits_per_pixel": 32,
+        "fields": 8126592
+      },
+      {
+        "frequency_hz": 64,
+        "width": 1280,
+        "height": 720,
+        "orientation": 0,
+        "bits_per_pixel": 32,
+        "fields": 8126592
+      },
+      {
+        "frequency_hz": 64,
+        "width": 1280,
+        "height": 800,
+        "orientation": 0,
+        "bits_per_pixel": 32,
+        "fields": 8126592
+      },
+      {
+        "frequency_hz": 64,
+        "width": 1280,
+        "height": 1024,
+        "orientation": 0,
+        "bits_per_pixel": 32,
+        "fields": 8126592
+      },
+      {
+        "frequency_hz": 64,
+        "width": 1366,
+        "height": 768,
+        "orientation": 0,
+        "bits_per_pixel": 32,
+        "fields": 8126592
+      },
+      {
+        "frequency_hz": 64,
+        "width": 1440,
+        "height": 900,
+        "orientation": 0,
+        "bits_per_pixel": 32,
+        "fields": 8126592
+      },
+      {
+        "frequency_hz": 64,
+        "width": 1600,
+        "height": 900,
+        "orientation": 0,
+        "bits_per_pixel": 32,
+        "fields": 8126592
+      },
+      {
+        "frequency_hz": 64,
+        "width": 1600,
+        "height": 1200,
+        "orientation": 0,
+        "bits_per_pixel": 32,
+        "fields": 8126592
+      },
+      {
+        "frequency_hz": 64,
+        "width": 1680,
+        "height": 1050,
+        "orientation": 0,
+        "bits_per_pixel": 32,
+        "fields": 8126592
+      },
+      {
+        "frequency_hz": 64,
+        "width": 1920,
+        "height": 1080,
+        "orientation": 0,
+        "bits_per_pixel": 32,
+        "fields": 8126592
+      }
+    ],
+    "mode_enumeration_complete": true,
+    "resolution_combo_matches": 1,
+    "process_termination_verified": true,
+    "primary_monitor": true,
+    "schema": 1,
+    "disposal_required": false
+  },
+  "limits": [
+    "Read-only Settings and monitor observation, not application DPI or rendered proof.",
+    "Supported resolution does not prove availability of 150% or 200% scaling."
+  ]
+}

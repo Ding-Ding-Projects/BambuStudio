@@ -1,0 +1,102 @@
+{
+  "schema": 1,
+  "run_id": "37101358501",
+  "url": "https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37101358501",
+  "source_commit": "c7aefb4b84f31a4bc2519d8052ac78b3ccaa3a17",
+  "status": "passed",
+  "jobs": [
+    "focused",
+    "native-services"
+  ],
+  "xml_results": [
+    {
+      "suite": "print-workflow",
+      "cases": 5,
+      "assertions": 28,
+      "failures": 0
+    },
+    {
+      "suite": "canvas-menu-parity",
+      "cases": 1,
+      "assertions": 19,
+      "failures": 0
+    },
+    {
+      "suite": "language_mode_tests",
+      "cases": 16,
+      "assertions": 199,
+      "failures": 0
+    },
+    {
+      "suite": "personal_vocabulary_tests",
+      "cases": 3,
+      "assertions": 45,
+      "failures": 0
+    },
+    {
+      "suite": "profile_archive_tests",
+      "cases": 4,
+      "assertions": 103,
+      "failures": 0
+    }
+  ],
+  "motion_policy_checks": 59,
+  "catalog_translations": 7712,
+  "files": [
+    {
+      "path": "hosted.log",
+      "sha256": "3499399361517655d7e32bc31790cafaec6cb2bf62fc889223c836d5b7d28f86",
+      "bytes": 560129
+    },
+    {
+      "path": "native-interface-c7aefb4b84f31a4bc2519d8052ac78b3ccaa3a17/print-workflow.xml",
+      "sha256": "49b489138f60d5112b67b9480a0f2e3d4fcd15d77d5aa8d76825ae786b0f45e8",
+      "bytes": 1076
+    },
+    {
+      "path": "native-interface-c7aefb4b84f31a4bc2519d8052ac78b3ccaa3a17/run.json",
+      "sha256": "be588d3e4d09bcf97bd592531739296a4c8f73a85c0bbe8a9472dc793b83ca4d",
+      "bytes": 136
+    },
+    {
+      "path": "native-interface-c7aefb4b84f31a4bc2519d8052ac78b3ccaa3a17/slice-lifecycle.tap",
+      "sha256": "d988b3835e47e768f440cbd16ef88e3a39d50ce3ce299159eb57e28cdafeb8f7",
+      "bytes": 867
+    },
+    {
+      "path": "native-interface-c7aefb4b84f31a4bc2519d8052ac78b3ccaa3a17/source-contracts.tap",
+      "sha256": "907d97e9f192978f5a79da8257c5faff29a46cbc401a7d07034430034b9b297c",
+      "bytes": 11731
+    },
+    {
+      "path": "native-services-c7aefb4b84f31a4bc2519d8052ac78b3ccaa3a17/canvas-menu-parity.xml",
+      "sha256": "2ccdea001f41f1b834c2e0b1c2071dc7bd695a0fc712f1fbc3f84151dcb8c5b2",
+      "bytes": 515
+    },
+    {
+      "path": "native-services-c7aefb4b84f31a4bc2519d8052ac78b3ccaa3a17/language_mode_tests.xml",
+      "sha256": "a71b33516ce028f08f6a0167b2dd9fbfd97adc6ee0f5f797a5acde8ed43ab737",
+      "bytes": 2773
+    },
+    {
+      "path": "native-services-c7aefb4b84f31a4bc2519d8052ac78b3ccaa3a17/personal_vocabulary_tests.xml",
+      "sha256": "caba8d1bf6f31e778714e271b2e6a3c65e2fc728b3916ea587f086740bddeddf",
+      "bytes": 771
+    },
+    {
+      "path": "native-services-c7aefb4b84f31a4bc2519d8052ac78b3ccaa3a17/profile_archive_tests.xml",
+      "sha256": "719ee04120483accf1337a032a79dcb914d4ac28801554d3c4dd1509d62f2d5e",
+      "bytes": 903
+    },
+    {
+      "path": "native-services-c7aefb4b84f31a4bc2519d8052ac78b3ccaa3a17/run.json",
+      "sha256": "be588d3e4d09bcf97bd592531739296a4c8f73a85c0bbe8a9472dc793b83ca4d",
+      "bytes": 136
+    }
+  ],
+  "limitations": [
+    "Focused compilation and contracts only; no installed GUI or rendered motion acceptance.",
+    "Real event-loop fixture is a separate run at a266dbbf53096ca41dcaeda6533f4e57ddcbb2d1.",
+    "The 59 policy outcomes do not constitute a compiled old-menu-paint red/green regression."
+  ]
+}

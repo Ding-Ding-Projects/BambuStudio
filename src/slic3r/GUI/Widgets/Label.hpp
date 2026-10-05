@@ -50,6 +50,8 @@ protected:
 	wxSize DoGetBestClientSize() const override;
 
 private:
+    wxString PersonalDisplayText() const;
+    void OnPersonalVocabularyPaint(wxPaintEvent &event);
 	/**
 	 * \brief Break the text at \p width and push the result to the base control.
 	 *

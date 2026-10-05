@@ -7,6 +7,7 @@
 #include "I18N.hpp"
 #include "Jobs/ProgressIndicator.hpp"
 #include "NotificationHistory.hpp"
+#include "PreviewLayout.hpp"
 
 #include <libslic3r/ObjectID.hpp>
 #include <libslic3r/Technologies.hpp>
@@ -370,6 +371,16 @@ public:
 	// finds ExportFinished notification and closes it if it was to removable device
 	void device_ejected();
 	// renders notifications in queue and deletes expired ones
+    // Read-only rendered target, in physical canvas pixels. Invalid targets
+    // contain no rectangle and must never be used to synthesize an action.
+    struct RenderedCancelTarget {
+        bool visible{false};
+        int frame{-1};
+        unsigned long long generation{0};
+        double age_ms{0};
+        float x{0}, y{0}, width{0}, height{0};
+    };
+    RenderedCancelTarget automation_slice_cancel_target(const GLCanvas3D& canvas) const;
     void render_notifications(GLCanvas3D &canvas, float overlay_width, float bottom_margin, float right_margin);
 	// finds and closes all notifications of given type
 	void close_notification_of_type(const NotificationType type);
@@ -535,7 +546,9 @@ private:
         }
         // Cleared by the manager for notifications it skips so their stale rect
         // does not keep blocking input.
-        void                   set_not_rendered() { m_rendered_this_frame = false; }
+        virtual void           set_not_rendered() { m_rendered_this_frame = false; }
+        void set_stack_bounds(float bottom, float top) { m_stack_bottom = bottom; m_stack_top = top; m_stack_deferred = false; }
+        bool stack_deferred() const { return m_stack_deferred; }
 		void				   set_hovered() { if (m_state != EState::Finished && m_state != EState::ClosePending && m_state != EState::Hidden && m_state != EState::Unknown) m_state = EState::Hovered; }
 		// set start of notification to now. Used by delayed notifications
 		void                   reset_timer() { m_notification_start = canvas_timestamp_now(); m_state = EState::Shown; }
@@ -549,6 +562,12 @@ private:
         void          set_history(NotificationHistory* history, std::uint64_t id) { m_history = history; m_history_id = id; }
         std::uint64_t history_id() const { return m_history_id; }
 	protected:
+        bool fit_to_stack(float initial_y);
+        float m_stack_bottom{0.0f};
+        float m_stack_top{100000.0f};
+        bool m_stack_deferred{false};
+        PreviewLayout::DeferredTimer m_deferred_timer;
+        float m_wrapped_width{0.0f};
 		// Call after every size change
 		virtual void init();
 		// Calculetes correct size but not se it in imgui!
@@ -955,6 +974,10 @@ private:
 	bool m_is_dark = false;
 	// Notification-centre history (see history()). Loaded from and saved to
 	// m_history_path on every change; a failed save is logged, never thrown.
+    size_t m_notification_page{0};
+    bool m_overflow_rendered{false};
+    ImVec2 m_overflow_min{0.0f, 0.0f};
+    ImVec2 m_overflow_max{0.0f, 0.0f};
 	NotificationHistory   m_history;
 	std::string           m_history_path;
 	void record_history_push(PopNotification* notification);

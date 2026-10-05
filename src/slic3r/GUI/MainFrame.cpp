@@ -1,3 +1,4 @@
+#include <wx/wrapsizer.h>
 #include "MainFrame.hpp"
 #include "Export/ExportDatasets.hpp"
 #include "Export/ExportDialog.hpp"
@@ -2075,6 +2076,15 @@ void MainFrame::update_prepare_action_bar_content()
     if (wxSizer *sizer = m_prepare_action_bar->GetSizer())
         sizer->Layout();
     m_prepare_action_bar->Layout();
+    // Wrapped action rows grow vertically instead of truncating primary actions.
+    if (m_side_tools) {
+        const int height = std::max(FromDIP(MD3::Metrics::prepare_actions_height),
+                                   m_side_tools->CalcMin().GetHeight() + FromDIP(12));
+        if (m_prepare_action_bar->GetMinSize().GetHeight() != height) {
+            m_prepare_action_bar->SetMinSize(wxSize(-1, height));
+            if (m_main_sizer) m_main_sizer->Layout();
+        }
+    }
     m_prepare_action_bar->Refresh(false);
 
     // wx zero-sizes a starved child in silence, so a lost primary action leaves
@@ -2107,7 +2117,7 @@ void MainFrame::update_prepare_action_bar_style()
     const int divider_height = std::max(1, FromDIP(1));
 
     m_prepare_action_bar->SetMinSize(wxSize(-1, bar_height));
-    m_prepare_action_bar->SetMaxSize(wxSize(-1, bar_height));
+    m_prepare_action_bar->SetMaxSize(wxDefaultSize);
     const wxColour bar_bg = StateColor::semantic(MD3::Role::SurfaceContainerLow);
     m_prepare_action_bar->SetBackgroundColour(bar_bg);
 
@@ -2220,9 +2230,8 @@ void MainFrame::init_tabpanel()
     // width changes: the sidebar hooks below fire on sidebar events, and a
     // fixed-width sidebar does not resize when the frame is merely made
     // narrower. Re-running the content pass here cannot re-enter, because it
-    // only lays the bar's children out - the bar's height is pinned by
-    // Set{Min,Max}Size in update_prepare_action_bar_style() and its width comes
-    // from m_main_sizer. The width guard keeps an interactive drag from
+    // only lays the bar's children out; wrapped rows can increase its height
+    // while its width comes from m_main_sizer. The width guard keeps an interactive drag from
     // re-running it for events that carry no new width.
     m_prepare_action_bar->Bind(wxEVT_SIZE, [this, last_width = -1](wxSizeEvent &event) mutable {
         event.Skip();
@@ -2764,6 +2773,15 @@ bool MainFrame::request_slice_and_print()
     return true;
 }
 
+bool MainFrame::request_slice_and_send()
+{
+    if (!m_slice_send_btn || !m_slice_send_btn->IsEnabled()) return false;
+    wxCommandEvent event(wxEVT_BUTTON, m_slice_send_btn->GetId());
+    event.SetEventObject(m_slice_send_btn);
+    wxPostEvent(m_slice_send_btn, event);
+    return true;
+}
+
 bool MainFrame::can_save_as() const
 {
     return (m_plater != nullptr) &&
@@ -3062,11 +3080,11 @@ bool MainFrame::can_reslice() const
     return (m_plater != nullptr) && !m_plater->model().objects.empty();
 }
 
-wxBoxSizer* MainFrame::create_side_tools(wxWindow* parent)
+wxSizer* MainFrame::create_side_tools(wxWindow* parent)
 {
     enable_multi_machine = wxGetApp().is_enable_multi_machine();
     int em = em_unit();
-    wxBoxSizer* sizer = new wxBoxSizer(wxHORIZONTAL);
+    wxSizer* sizer = new wxWrapSizer(wxHORIZONTAL, wxREMOVE_LEADING_SPACES);
 
     m_prepare_plate_button = new Button(parent, _L("Plate 1"), "", wxNO_BORDER);
     m_prepare_add_plate_button = new Button(parent, "+", "", wxNO_BORDER);
@@ -3225,32 +3243,35 @@ wxBoxSizer* MainFrame::create_side_tools(wxWindow* parent)
     auto print_panel = new wxPanel(parent,wxID_ANY,wxDefaultPosition,wxDefaultSize,wxTRANSPARENT_WINDOW);
 
     m_slice_btn = new SideButton(slice_panel, _L("Slice plate"), "");
-    m_slice_print_btn = new SideButton(slice_panel, _L("Slice and print"), "");
-    // The kit has no dropdown carets, so the legacy raster 'sidebutton_dropdown'
-    // glyph is dropped; the options segment survives as a functional pill (its
-    // Material Symbol 'arrow_drop_down' is deferred to the icon wave). Since that
-    // leaves no visible text, give each segment a localized accessible name.
-    m_slice_option_btn = new SideButton(slice_panel, "", "");
+    m_slice_print_btn = new SideButton(parent, _L("Slice and Print"), "");
+    m_slice_send_btn = new SideButton(parent, _L("Slice and Send"), "");
+    m_slice_print_btn->SetName(_L("Slice and Print"));
+    m_slice_send_btn->SetName(_L("Slice and Send"));
+    m_slice_print_btn->SetToolTip(_L("Slice this plate, then choose a printer and confirm printing."));
+    m_slice_send_btn->SetToolTip(_L("Slice this plate, then send it to a printer without starting a print."));
+    // A text chevron remains visible even when the optional symbol font is
+    // unavailable. Accessible names describe the action instead of the glyph.
+    m_slice_option_btn = new SideButton(slice_panel, wxString::FromUTF8("\xE2\x96\xBE"), "");
     m_slice_option_btn->SetName(_L("Slice options"));
     m_print_btn = new SideButton(print_panel, _L("Print plate"), "");
-    m_print_option_btn = new SideButton(print_panel, "", "");
+    m_print_option_btn = new SideButton(print_panel, wxString::FromUTF8("\xE2\x96\xBE"), "");
     m_print_option_btn->SetName(_L("Print options"));
 
-    // Logical split-button traversal follows the visible reading order: main
-    // action first, then its adjacent options segment. The controls were created
-    // in the reverse order for the legacy sizer, so repair the native tab chain.
+    // Keyboard traversal matches main action, then its adjacent options.
     m_slice_option_btn->MoveAfterInTabOrder(m_slice_btn);
     m_print_option_btn->MoveAfterInTabOrder(m_print_btn);
+    m_slice_print_btn->MoveAfterInTabOrder(slice_panel);
+    m_slice_send_btn->MoveAfterInTabOrder(m_slice_print_btn);
+    print_panel->MoveAfterInTabOrder(m_slice_send_btn);
 
     auto slice_sizer = new wxBoxSizer(wxHORIZONTAL);
-    slice_sizer->Add(m_slice_option_btn, 0, wxRIGHT | wxALIGN_CENTER_VERTICAL, FromDIP(1));
     slice_sizer->Add(m_slice_btn, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, FromDIP(1));
-    slice_sizer->Add(m_slice_print_btn, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, FromDIP(8));
+    slice_sizer->Add(m_slice_option_btn, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, FromDIP(1));
     slice_panel->SetSizer(slice_sizer);
 
     auto print_sizer = new wxBoxSizer(wxHORIZONTAL);
-    print_sizer->Add(m_print_option_btn, 0, wxRIGHT | wxALIGN_CENTER_VERTICAL, FromDIP(1));
     print_sizer->Add(m_print_btn, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, FromDIP(1));
+    print_sizer->Add(m_print_option_btn, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, FromDIP(1));
     print_panel->SetSizer(print_sizer);
 
     update_side_button_style();
@@ -3261,10 +3282,10 @@ wxBoxSizer* MainFrame::create_side_tools(wxWindow* parent)
     // self-gates on MaterialIcon::available(): the label alone shows when absent.
     m_slice_btn->SetLeadingGlyph(MaterialIcon::DeployedCode);
     m_print_btn->SetLeadingGlyph(MaterialIcon::Print);
-    // The options segments have no text: the expand_more chevron is their only
-    // content, so the split button reads as a split button instead of a sliver.
-    m_slice_option_btn->SetLeadingGlyph(MaterialIcon::ExpandMore);
-    m_print_option_btn->SetLeadingGlyph(MaterialIcon::ExpandMore);
+    // Combined actions retain the same semantic colors and leading symbols.
+    m_slice_print_btn->SetLeadingGlyph(MaterialIcon::Print);
+    m_slice_send_btn->SetLeadingGlyph(MaterialIcon::Send);
+
     m_slice_option_btn->Enable();
     m_print_option_btn->Enable();
     sizer->Add(m_prepare_plate_button, 0, wxALIGN_CENTER_VERTICAL);
@@ -3280,6 +3301,8 @@ wxBoxSizer* MainFrame::create_side_tools(wxWindow* parent)
     sizer->Add(FromDIP(6), 0, 0, 0, 0);
     sizer->Add(slice_panel, 0, wxALIGN_CENTER_VERTICAL);
     sizer->Add(FromDIP(8), 0, 0, 0, 0);
+    sizer->Add(m_slice_print_btn, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(8));
+    sizer->Add(m_slice_send_btn, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(8));
     sizer->Add(print_panel, 0, wxALIGN_CENTER_VERTICAL);
     sizer->Add(FromDIP(4), 0, 0, 0, 0);
 
@@ -3340,7 +3363,14 @@ wxBoxSizer* MainFrame::create_side_tools(wxWindow* parent)
         });
 #endif
 
-    auto start_slice = [this](bool print_after_slice) {
+    auto start_slice = [this](int output_action) {
+            if (!m_plater || m_starting_slice || m_plater->is_background_process_slicing()) return;
+            struct StartingSliceScope {
+                bool& active;
+                explicit StartingSliceScope(bool& value) : active(value) { active = true; }
+                ~StartingSliceScope() { active = false; }
+            } starting_slice(m_starting_slice);
+            const bool print_after_slice = output_action != 0;
             m_plater->cancel_pending_print_after_slice();
             if (!wxGetApp().check_slice_version_policy()) return;
 
@@ -3423,18 +3453,20 @@ wxBoxSizer* MainFrame::create_side_tools(wxWindow* parent)
 
 
                 if (slice) {
-                    if (print_after_slice)
-                        wxPostEvent(m_plater, SimpleEvent(EVT_GLTOOLBAR_SLICE_AND_PRINT_PLATE));
-                    else if (m_slice_select == eSliceAll)
-                        wxPostEvent(m_plater, SimpleEvent(EVT_GLTOOLBAR_SLICE_ALL));
-                    else if (m_slice_select == eSlicePlate)
-                        wxPostEvent(m_plater, SimpleEvent(EVT_GLTOOLBAR_SLICE_PLATE));
-                    this->m_tabpanel->SetSelection(tpPreview);
+                    const wxEventType action_type = output_action == 2 ? wxEventType(EVT_GLTOOLBAR_SLICE_AND_SEND_PLATE) :
+                        print_after_slice ? wxEventType(EVT_GLTOOLBAR_SLICE_AND_PRINT_PLATE) :
+                        m_slice_select == eSliceAll ? wxEventType(EVT_GLTOOLBAR_SLICE_ALL) : wxEventType(EVT_GLTOOLBAR_SLICE_PLATE);
+                    SimpleEvent slice_event(action_type);
+                    // Preview may auto-slice on entry. Establish this request first,
+                    // otherwise its automatic run races the queued explicit action.
+                    m_plater->GetEventHandler()->ProcessEvent(slice_event);
+                    // The action handler selects Preview with no_slice=true.
                 }
             }
         };
-    m_slice_btn->Bind(wxEVT_BUTTON, [start_slice](wxCommandEvent &) { start_slice(false); });
-    m_slice_print_btn->Bind(wxEVT_BUTTON, [start_slice](wxCommandEvent &) { start_slice(true); });
+    m_slice_btn->Bind(wxEVT_BUTTON, [start_slice](wxCommandEvent &) { start_slice(0); });
+    m_slice_print_btn->Bind(wxEVT_BUTTON, [start_slice](wxCommandEvent &) { start_slice(1); });
+    m_slice_send_btn->Bind(wxEVT_BUTTON, [start_slice](wxCommandEvent &) { start_slice(2); });
 
     m_print_btn->Bind(wxEVT_BUTTON, [this](wxCommandEvent& event)
         {
@@ -3969,9 +4001,11 @@ void MainFrame::update_side_button_style()
 
     style_outlined(m_slice_btn);
     style_outlined(m_slice_print_btn);
+    style_outlined(m_slice_send_btn);
     style_outlined(m_slice_option_btn);
     layout_main(m_slice_btn);
     layout_main(m_slice_print_btn);
+    layout_main(m_slice_send_btn);
     layout_option(m_slice_option_btn);
 
     style_filled(m_print_btn);
@@ -3982,9 +4016,7 @@ void MainFrame::update_side_button_style()
 
 void MainFrame::update_slice_print_status(SlicePrintEventType event, bool can_slice, bool can_print)
 {
-    if (m_plater && !m_plater->is_background_process_slicing() &&
-        (event == eEventObjectUpdate || event == eEventPlateUpdate))
-        m_plater->cancel_pending_print_after_slice();
+    // Status refreshes are observations, never cancellation requests.
     bool enable_print = true, enable_slice = true;
 
     if (!can_slice)
@@ -4017,7 +4049,13 @@ void MainFrame::update_slice_print_status(SlicePrintEventType event, bool can_sl
     // tooltip; the tooltip is cleared as soon as printing becomes possible.
     m_print_btn->SetToolTip(enable_print ? wxString() : print_disabled_reason);
     m_slice_btn->Enable(enable_slice);
-    m_slice_print_btn->Enable(enable_slice);
+    const auto* output_plate = m_plater->get_partplate_list().get_curr_plate();
+    const bool enable_output = !m_plater->is_background_process_slicing() && output_plate &&
+        !m_plater->only_gcode_mode() && !m_plater->using_exported_file() &&
+        !m_plater->sidebar().has_broken_mixed_filament() &&
+        (output_plate->can_slice() || output_plate->is_slice_result_ready_for_print());
+    m_slice_print_btn->Enable(enable_output);
+    m_slice_send_btn->Enable(enable_output);
     m_slice_enable = enable_slice;
     m_print_enable = enable_print;
 
@@ -4074,6 +4112,7 @@ void MainFrame::on_dpi_changed(const wxRect& suggested_rect)
     update_side_button_style();
     m_slice_btn->Rescale();
     m_slice_print_btn->Rescale();
+    m_slice_send_btn->Rescale();
     m_print_btn->Rescale();
     m_slice_option_btn->Rescale();
     m_print_option_btn->Rescale();

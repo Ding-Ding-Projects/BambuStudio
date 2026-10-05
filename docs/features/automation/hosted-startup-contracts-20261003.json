@@ -1,0 +1,57 @@
+{
+  "schema": 1,
+  "runs": [
+    {
+      "url": "https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37099135961",
+      "receipt_sha256": "82b858bf79b36115b4e9b08bf29fb42be55927e612f923b4314dcbebaf414182",
+      "receipt": {
+        "files": {
+          "scripts/ci/HostedScaleProcess.cs": "8081405a3e3030dae2ad8bac1f4cd1f6e9aebbae160c06a693462a8e892b8e03",
+          "scripts/md3/test-trace-packaged-startup.py": "bfaf8717038c935564ce5a9c67c00b920db3c6c1ea78ed0ca8b2699f4744774a",
+          "scripts/md3/trace-packaged-startup.py": "67a3dbedcff9bc26841bb43c2d890197df0a115fb7f660ea5a58e06b240e8070",
+          "scripts/md3/startup_desktop_holder.py": "a0169c071e66ddcbb7b4c21756b23e205049772be2b994e461b7c8e32f7f86f6"
+        },
+        "actual_absence_verified": false,
+        "desktop_rejections": 4,
+        "run_id": "37099135961",
+        "python_cases": 9,
+        "schema": 1,
+        "status": "failed",
+        "source_commit": "0b079632ba70be4818d6147d80efd449b9482477",
+        "product_started": false
+      }
+    },
+    {
+      "url": "https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37100209956",
+      "receipt_sha256": "79542c1384e1a7577ba229608ee8e0c1051396ea438d7ffebf09cd206a80d995",
+      "receipt": {
+        "absence_process": {
+          "exit_code": -1,
+          "native_error": 123,
+          "terminated": true,
+          "stage": 6
+        },
+        "product_started": false,
+        "schema": 1,
+        "status": "failed",
+        "desktop_rejections": 4,
+        "run_id": "37100209956",
+        "actual_absence_verified": false,
+        "source_commit": "ea14642554989ad56fa9cd4529198887b277b949",
+        "python_cases": 9,
+        "files": {
+          "scripts/md3/startup_desktop_holder.py": "d62f0c1bd573140d934fd781c4d12713d22763ef73bb452d6c0936728e9f8b9d",
+          "scripts/ci/HostedScaleProcess.cs": "8081405a3e3030dae2ad8bac1f4cd1f6e9aebbae160c06a693462a8e892b8e03",
+          "scripts/md3/trace-packaged-startup.py": "67a3dbedcff9bc26841bb43c2d890197df0a115fb7f660ea5a58e06b240e8070",
+          "scripts/md3/test-trace-packaged-startup.py": "bfaf8717038c935564ce5a9c67c00b920db3c6c1ea78ed0ca8b2699f4744774a"
+        }
+      }
+    }
+  ],
+  "interpretation": [
+    "Both runs failed before product launch.",
+    "The second receipt identifies native CreateProcess failure: stage 6, code 123, terminated true; exit -1 is the containment sentinel, not a Python result.",
+    "No actual command cardinality or prior child directory was recorded. Neither hypothesis is established.",
+    "Persistent desktop lifecycle and installed product startup remain unverified."
+  ]
+}

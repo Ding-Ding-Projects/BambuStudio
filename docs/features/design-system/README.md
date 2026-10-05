@@ -3,6 +3,10 @@
 This category documents how the native wxWidgets/OpenGL application consumes the vendored Material
 Design 3 design system.
 
+- [Current native interface audit](native-interface-audit-2026-10-02.md): active menu,
+  motion, personal-vocabulary and slicing-action requirements, with explicit pending
+  hosted verification and privacy boundaries.
+
 - [Vendored Material Design 3 design system](md3-design-system.md) — token source of truth, the
   ground-up color/type/metric migration, contextual schemes, fonts, failure modes, and the parity
   audit result.

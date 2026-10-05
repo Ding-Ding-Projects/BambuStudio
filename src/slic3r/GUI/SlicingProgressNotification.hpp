@@ -1,6 +1,8 @@
 #ifndef slic3r_GUI_SlicingProgressNotification_hpp_
 #define slic3r_GUI_SlicingProgressNotification_hpp_
 
+#include <chrono>
+#include <cstdlib>
 #include "DailyTips.hpp"
 #include "NotificationManager.hpp"
 
@@ -49,6 +51,12 @@ public:
     void				set_fff(bool b) { m_is_fff = b; }
     void                set_export_possible(bool b) { m_export_possible = b; }
     void                on_change_color_mode(bool is_dark) override;
+    RenderedCancelTarget automation_cancel_target(const GLCanvas3D& canvas) const;
+    void set_not_rendered() override {
+        PopNotification::set_not_rendered();
+        m_cancel_target = {};
+        m_cancel_canvas = nullptr;
+    }
 protected:
     void        init() override;
     void        render(GLCanvas3D& canvas, float initial_y, bool move_from_overlay, float overlay_width, float right_margin) override;
@@ -65,6 +73,13 @@ protected:
     int		    get_duration() override;
 
 protected:
+    const bool m_observe_cancel{[] {
+        const char* enabled = std::getenv("BAMBU_AUTOMATION");
+        return enabled && enabled[0] == '1' && enabled[1] == '\0';
+    }()};
+    const GLCanvas3D*       m_cancel_canvas{nullptr};
+    RenderedCancelTarget    m_cancel_target;
+    std::chrono::steady_clock::time_point m_cancel_render_time;
     ImVec2                  m_window_pos;
     float                   m_percentage{ 0.0f };
     int64_t                 m_before_complete_start;

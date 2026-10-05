@@ -46,6 +46,31 @@ Set-StrictMode -Version Latest
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 Add-Type -AssemblyName System.IO.Compression
 
+# Every supported package includes the same automation companion. Build it on
+# the hosted path if the caller has not staged this exact source already.
+$automationIdentity = Join-Path $PayloadDirectory 'automation/build-identity.json'
+$automationExe = Join-Path $PayloadDirectory 'automation/bambu-automation.exe'
+$automationCurrent = $false
+if ((Test-Path -LiteralPath $automationIdentity -PathType Leaf) -and
+    (Test-Path -LiteralPath $automationExe -PathType Leaf)) {
+    $identity = Get-Content -LiteralPath $automationIdentity -Raw | ConvertFrom-Json
+    $automationCurrent = $identity.sourceCommit -eq $SourceCommit.ToLowerInvariant() -and
+        $identity.sha256 -eq (Get-FileHash -LiteralPath $automationExe -Algorithm SHA256).Hash.ToLowerInvariant()
+}
+if (-not $automationCurrent) {
+    $sourceRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
+    $checkoutCommit = & git -C $sourceRoot rev-parse HEAD
+    if ($LASTEXITCODE -ne 0 -or $checkoutCommit.Trim() -cne $SourceCommit.ToLowerInvariant()) {
+        throw 'Automation staging checkout does not match the package source commit.'
+    }
+    & (Join-Path $PSScriptRoot 'Stage-Automation.ps1') -PayloadDirectory $PayloadDirectory
+}
+$identity = Get-Content -LiteralPath $automationIdentity -Raw | ConvertFrom-Json
+if ($identity.sourceCommit -cne $SourceCommit.ToLowerInvariant() -or
+    $identity.sha256 -cne (Get-FileHash -LiteralPath $automationExe -Algorithm SHA256).Hash.ToLowerInvariant()) {
+    throw 'Staged automation does not match the package source identity and executable hash.'
+}
+
 $script:SquirrelPackageSha256 = '923e18abb4fd50b5a4878a39dbcd042ed3f7eb68fc0f82c0955cd5380c921ac7'
 $script:SquirrelPackageUri = "https://api.nuget.org/v3-flatcontainer/squirrel.windows/$SquirrelVersion/squirrel.windows.$SquirrelVersion.nupkg"
 $script:TempPrefix = 'BambuStudio-Squirrel-'

@@ -503,8 +503,19 @@ void write_window(boost::nowide::ofstream &out, wxWindow *w, wxWindow *top, int 
         << ",\"clipped_by_parent\":" << (clipped_by_parent ? "true" : "false")
         << ",\"starved\":" << (starved ? "true" : "false")
         << ",\"zero_sized\":" << (zero_sized ? "true" : "false")
-        << ",\"sizer\":" << sizer_json
-        << "}\n";
+        << ",\"sizer\":" << sizer_json;
+    // This opt-in observation reads the real title control, never the display
+    // adapter. Only equality results are added; no mapped text is serialized.
+    if (env_value("BAMBU_AUTOMATION") == "1" && w->GetName() == "personal-vocabulary-title") {
+        if (const auto *title = dynamic_cast<const ::Label *>(w)) {
+            const wxString native_label = title->GetLabel();
+            out << ",\"native_getters\":{\"schemaVersion\":1"
+                << ",\"getLabelTextEqualsGetLabel\":" << (title->GetLabelText() == native_label ? "true" : "false")
+                << ",\"getUnwrappedLabelEqualsGetLabel\":" << (title->GetUnwrappedLabel() == native_label ? "true" : "false")
+                << "}";
+        }
+    }
+    out << "}\n";
 
     // wxAuiToolBar tools are not windows, so the caption bar's brand tile, menu
     // tools, palette and window controls would otherwise be unaddressable;

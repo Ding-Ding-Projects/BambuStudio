@@ -1,0 +1,45 @@
+{
+  "schema": 1,
+  "url": "https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37100483720",
+  "receipt_sha256": "b0621cd4abb20e18d3c866a93ae58aabf4cc710537e8a3c736bd92a5b12f117e",
+  "receipt": {
+    "source_commit": "f99dc57822548357f4eed7c66e3e607c7747fd46",
+    "product_started": false,
+    "run_id": "37100483720",
+    "python_cases": 9,
+    "absence_process": {
+      "exit_code": 0,
+      "native_error": null,
+      "terminated": true,
+      "stage": 18
+    },
+    "actual_absence_verified": true,
+    "persistent_lifecycle_verified": true,
+    "executable_selection": {
+      "cheap_count": 1,
+      "validated": true,
+      "invalid_cases": 4,
+      "python_count": 2
+    },
+    "schema": 1,
+    "status": "passed",
+    "desktop_rejections": 4,
+    "lifecycle_process": {
+      "exit_code": 0,
+      "native_error": null,
+      "terminated": true,
+      "stage": 18
+    },
+    "files": {
+      "scripts/md3/trace-packaged-startup.py": "67a3dbedcff9bc26841bb43c2d890197df0a115fb7f660ea5a58e06b240e8070",
+      "scripts/md3/test-trace-packaged-startup.py": "bfaf8717038c935564ce5a9c67c00b920db3c6c1ea78ed0ca8b2699f4744774a",
+      "scripts/ci/HostedScaleProcess.cs": "8081405a3e3030dae2ad8bac1f4cd1f6e9aebbae160c06a693462a8e892b8e03",
+      "scripts/md3/startup_desktop_holder.py": "d62f0c1bd573140d934fd781c4d12713d22763ef73bb452d6c0936728e9f8b9d"
+    }
+  },
+  "limitations": [
+    "Product was not started.",
+    "Two Python matches are observed on this runner; the actual executable argument in earlier failed runs was not retained.",
+    "This establishes diagnostic desktop ownership and teardown, not installed product or rendered behavior."
+  ]
+}

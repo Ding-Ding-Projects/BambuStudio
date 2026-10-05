@@ -1,0 +1,116 @@
+name: Discover hosted display scale controls
+on:
+  push:
+    branches: [feature/ui-integration]
+    paths: [.github/workflows/display-scale-discovery.yml]
+  workflow_dispatch:
+    inputs:
+      destination:
+        description: Fixed Settings destination for encrypted read-only discovery
+        type: choice
+        default: display
+        options: [display, colors]
+      capabilities_only:
+        description: Observe numeric monitor modes and current resolution without input
+        type: boolean
+        default: false
+permissions:
+  contents: read
+jobs:
+  discover:
+    if: github.event_name == 'workflow_dispatch' && !inputs.capabilities_only
+    runs-on: windows-2025
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with:
+          persist-credentials: false
+      - name: Open the fixed supported settings surface
+        shell: pwsh
+        env:
+          SETTINGS_DESTINATION: ${{ inputs.destination }}
+        run: |
+          if ($env:RUNNER_ENVIRONMENT -ne 'github-hosted' -or $env:RUNNER_OS -ne 'Windows') {
+            throw 'Display discovery requires a disposable hosted Windows session.'
+          }
+          $uri = switch -CaseSensitive ($env:SETTINGS_DESTINATION) {
+            'display' { 'ms-settings:display' }
+            'colors' { 'ms-settings:colors' }
+            default { throw 'Unsupported discovery destination.' }
+          }
+          try {
+            Start-Process -FilePath $uri -WindowStyle Hidden -ErrorAction Stop
+            Start-Sleep -Seconds 5
+          } catch {
+            Write-Host 'Settings launch was unavailable; discovery will record the missing surface.'
+          }
+      - name: Inventory actual settings controls without changing scale
+        shell: pwsh
+        env:
+          SETTINGS_DESTINATION: ${{ inputs.destination }}
+        run: |
+          & scripts/ci/Probe-HostedDisplayScale.ps1 -OutputDirectory "$env:RUNNER_TEMP/display-scale-probe" -Destination $env:SETTINGS_DESTINATION
+          # The probe deliberately exits 2: discovery is not scale provisioning.
+      - name: Require an authoritative supervisor receipt
+        if: always()
+        shell: pwsh
+        run: |
+          $receipt = Join-Path $env:RUNNER_TEMP 'display-scale-probe/supervisor.json'
+          if (-not (Test-Path -LiteralPath $receipt)) {
+            throw 'Display inventory unavailable: supervisor receipt missing.'
+          }
+          $state = Get-Content -LiteralPath $receipt -Raw | ConvertFrom-Json
+          if ($state.teardown_verified -ne $true -or $state.inventory_stable -ne $true) {
+            throw 'Display inventory unavailable: worker termination was not verified.'
+          }
+          Write-Host 'Worker termination verified. Scale provisioning remains unavailable.'
+      - name: Retain fixed capability state and encrypted inventory
+        if: always()
+        continue-on-error: true
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: display-scale-discovery-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/display-scale-probe/capability.json
+            ${{ runner.temp }}/display-scale-probe/supervisor.json
+            ${{ runner.temp }}/display-scale-probe/*.aesgcm
+            ${{ runner.temp }}/display-scale-probe/envelope.json
+          if-no-files-found: warn
+          retention-days: 7
+
+  capabilities:
+    if: github.event_name == 'workflow_dispatch' && inputs.capabilities_only
+    runs-on: windows-2025
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with:
+          persist-credentials: false
+      - name: Open the supported display settings surface
+        shell: pwsh
+        env:
+          SETTINGS_DESTINATION: ${{ inputs.destination }}
+        run: |
+          if ($env:SETTINGS_DESTINATION -cne 'display') { throw 'Numeric display capabilities require the display destination.' }
+          if ($env:RUNNER_ENVIRONMENT -ne 'github-hosted' -or $env:RUNNER_OS -ne 'Windows') {
+            throw 'Display observation requires a disposable hosted Windows session.'
+          }
+          try {
+            Start-Process -FilePath 'ms-settings:display' -WindowStyle Hidden -ErrorAction Stop
+            Start-Sleep -Seconds 5
+          } catch {
+            Write-Host 'Display Settings launch was unavailable; observation will record the missing surface.'
+          }
+      - name: Observe numeric display capabilities without input
+        shell: pwsh
+        run: |
+          & scripts/ci/Probe-HostedDisplayCapabilities.ps1 -OutputDirectory "$env:RUNNER_TEMP/display-capabilities"
+      - name: Retain only the fixed public capability receipt
+        if: always()
+        continue-on-error: true
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: display-capabilities-${{ github.run_id }}
+          path: ${{ runner.temp }}/display-capabilities/receipt.json
+          if-no-files-found: warn
+          retention-days: 7

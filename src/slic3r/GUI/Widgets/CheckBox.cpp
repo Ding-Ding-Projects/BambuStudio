@@ -32,14 +32,18 @@ CheckBox::CheckBox(wxWindow *parent, int id)
 		m_seeded_background = parent->GetBackgroundColour();
 		SetBackgroundColour(m_seeded_background);
 	}
-	Bind(wxEVT_TOGGLEBUTTON, [this](auto& e) { m_half_checked = false; update(); e.Skip(); });
+	Bind(wxEVT_TOGGLEBUTTON, [this](auto& e) { m_half_checked = false; emphasizeSelection(); e.Skip(); });
+    Bind(wxEVT_SHOW, [this](wxShowEvent &e) { if (!e.IsShown()) settleSelection(); e.Skip(); });
 	// The glyph is rasterised into the button's bitmaps, so no repaint can recolor
 	// it: GUI_App::UpdateDarkUI only remaps a window's fg/bg colours (and only for
 	// the wxButton subclasses it special-cases, and this is a wxBitmapToggleButton
 	// i.e. wxAnyButton), and the in-app light/dark toggle never emits
 	// wxEVT_SYS_COLOUR_CHANGED. Re-check the live tones on idle instead; Retheme()
 	// is two colour compares while nothing has moved.
-	Bind(wxEVT_UPDATE_UI, [this](wxUpdateUIEvent &e) { Retheme(); e.Skip(); });
+	Bind(wxEVT_UPDATE_UI, [this](wxUpdateUIEvent &e) {
+        if (m_selection_motion.IsRunning() && (!IsEnabled() || MD3::Motion::reduced())) settleSelection();
+        Retheme(); e.Skip();
+    });
 #ifdef __WXOSX__ // State not fully implement on MacOS
     Bind(wxEVT_SET_FOCUS, &CheckBox::updateBitmap, this);
     Bind(wxEVT_KILL_FOCUS, &CheckBox::updateBitmap, this);
@@ -55,14 +59,40 @@ void CheckBox::SetValue(bool value)
 {
     if (wxBitmapToggleButton::GetValue() != value) {
         wxBitmapToggleButton::SetValue(value);
-        update();
+        emphasizeSelection();
     }
 }
 
 void CheckBox::SetHalfChecked(bool value)
 {
+    if (m_half_checked == value) return;
 	m_half_checked = value;
-	update();
+	emphasizeSelection();
+}
+
+void CheckBox::settleSelection()
+{
+    m_selection_motion.Stop();
+    m_selection_emphasis = 0.0;
+    update();
+}
+
+void CheckBox::emphasizeSelection()
+{
+    m_selection_motion.Stop();
+    if (!IsEnabled() || !IsShownOnScreen() || MD3::Motion::reduced()) {
+        settleSelection();
+        return;
+    }
+    m_selection_motion.Play(MD3::Motion::short2, [this](double t) {
+        if (m_baked_fill != StateColor::semantic(MD3::Role::Primary, m_scheme) ||
+            m_baked_outline != StateColor::semantic(MD3::Role::OnSurfaceVariant)) {
+            settleSelection();
+            return;
+        }
+        m_selection_emphasis = 1.0 - t;
+        update();
+    }, nullptr, &MD3::Motion::easeStandard, this);
 }
 
 void CheckBox::SetColorScheme(MD3::ColorScheme scheme)
@@ -70,11 +100,13 @@ void CheckBox::SetColorScheme(MD3::ColorScheme scheme)
     if (m_scheme == scheme)
         return;
     m_scheme = scheme;
-    update();
+    settleSelection();
 }
 
 void CheckBox::Rescale()
 {
+    m_selection_motion.Stop();
+    m_selection_emphasis = 0.0;
     SetSize(wxSize(deviceSide(), deviceSide()));
     SetMinSize(wxSize(deviceSide(), deviceSide()));
 	update();
@@ -96,7 +128,7 @@ void CheckBox::Retheme()
         m_seeded_background = parent->GetBackgroundColour();
         SetBackgroundColour(m_seeded_background);
     }
-    update();
+    settleSelection();
     Refresh();
 }
 
@@ -195,7 +227,8 @@ wxBitmap CheckBox::renderBitmap(bool checked, bool half, bool disabled, bool foc
     if (scale <= 0.0)
         scale = 1.0;
     const wxBitmap glyph = RenderGlyphBitmap(kCheckBoxPx, scale, checked, half, disabled, m_scheme);
-    if (!focus)
+    const double emphasis = !disabled && !MD3::Motion::reduced() ? m_selection_emphasis : 0.0;
+    if (!focus && emphasis <= 0.0)
         return glyph;
 
     // Keyboard-focus variant (distinct from the resting bitmap): the 20px glyph
@@ -211,15 +244,30 @@ wxBitmap CheckBox::renderBitmap(bool checked, bool half, bool disabled, bool foc
         mdc.SetBackground(*wxTRANSPARENT_BRUSH);
         mdc.Clear();
         wxGraphicsContext *gc = wxGraphicsContext::Create(mdc);
+        if (!gc) {
+            mdc.SelectObject(wxNullBitmap);
+            return glyph;
+        }
         if (gc) {
             gc->SetAntialiasMode(wxANTIALIAS_DEFAULT);
             gc->DrawBitmap(glyph, 0, 0, glyph.GetWidth(), glyph.GetHeight());
-            const double inset = std::max(0.5, 0.75 * scale);
-            const double penW  = std::max(1.0, 1.5 * scale);
-            const wxColour ring = StateColor::semantic(MD3::Role::Primary, m_scheme);
-            gc->SetBrush(*wxTRANSPARENT_BRUSH);
-            gc->SetPen(wxPen(ring, penW));
-            gc->DrawRoundedRectangle(inset, inset, devBox - 2 * inset, devBox - 2 * inset, 5.0 * scale);
+            // Decorative outer edge only: never fade the check/bar or outline.
+            if (emphasis > 0.0) {
+                const wxColour primary = StateColor::semantic(MD3::Role::Primary, m_scheme);
+                gc->SetBrush(*wxTRANSPARENT_BRUSH);
+                const int edge_width = std::max(1, int(std::lround(scale)));
+                gc->SetPen(wxPen(withAlpha(primary, int(std::lround(96 * emphasis))), edge_width));
+                const double edge = edge_width / 2.0;
+                gc->DrawRoundedRectangle(edge, edge, devBox - 2 * edge, devBox - 2 * edge, 3.0 * scale);
+            }
+            if (focus) {
+                const double inset = std::max(0.5, 0.75 * scale);
+                const double penW  = std::max(1.0, 1.5 * scale);
+                const wxColour ring = StateColor::semantic(MD3::Role::Primary, m_scheme);
+                gc->SetBrush(*wxTRANSPARENT_BRUSH);
+                gc->SetPen(wxPen(ring, penW));
+                gc->DrawRoundedRectangle(inset, inset, devBox - 2 * inset, devBox - 2 * inset, 5.0 * scale);
+            }
             delete gc; // flush before the bitmap is read
         }
         mdc.SelectObject(wxNullBitmap);

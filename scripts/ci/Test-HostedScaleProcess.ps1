@@ -1,0 +1,397 @@
+[CmdletBinding()]
+param([Parameter(Mandatory)][string] $OutputDirectory)
+$ErrorActionPreference = 'Stop'
+Set-StrictMode -Version Latest
+if ($env:GITHUB_ACTIONS -cne 'true' -or $env:RUNNER_ENVIRONMENT -cne 'github-hosted' -or
+    $env:RUNNER_OS -cne 'Windows' -or -not $env:RUNNER_TEMP) {
+    throw 'Lifecycle checks require disposable hosted Windows execution.'
+}
+$tempRoot = [IO.Path]::GetFullPath($env:RUNNER_TEMP).TrimEnd('\') + '\'
+$output = [IO.Path]::GetFullPath($OutputDirectory)
+if (-not $output.StartsWith($tempRoot, [StringComparison]::OrdinalIgnoreCase) -or
+    (Test-Path -LiteralPath $output)) { throw 'Lifecycle output must be a new RUNNER_TEMP child.' }
+[void](New-Item -ItemType Directory -Path $output)
+$scratch = Join-Path $output 'private-children'
+[void](New-Item -ItemType Directory -Path $scratch)
+$pwsh = (Get-Process -Id $PID).Path
+$cases = [Collections.Generic.List[object]]::new()
+$stage = 'compile_actual_helper'
+$cleanupVerified = $true
+$success = $false
+$sourceProcessObservation = $null
+$sourceSupervisorObservation = $null
+$descendantIdentity = Join-Path $scratch 'descendant.json'
+$timer = [Diagnostics.Stopwatch]::StartNew()
+
+function Require-Result([bool] $Condition) {
+    if (-not $Condition) { throw 'Lifecycle assertion failed.' }
+}
+function Run-Child([string] $Script, [string[]] $Values, [int] $Seconds = 8) {
+    return [HostedScaleProcess]::Run($pwsh, [string[]](@('-NoProfile','-File',$Script) + $Values), $Seconds, $true)
+}
+function Record-Pass([string] $Name) { $cases.Add(@{name=$Name; status='passed'}) }
+
+try {
+    # Compile and exercise the checked-in implementation, not a test copy.
+    Add-Type -Path (Join-Path $PSScriptRoot 'HostedScaleProcess.cs')
+    $stage = 'owned_page_marker_contract'
+    # This definitions-only helper does not initialize UIA or navigate. Exercise
+    # the actual predicates with synthetic metadata, never synthetic UI input.
+    . (Join-Path $PSScriptRoot 'Invoke-HostedDisplayScaleNavigation.ps1')
+    $pageRows = @(
+        @{id='SystemSettings_Personalize_Color_ColorMode_ComboBox'; type='ControlType.ComboBox'; enabled=$true; offscreen=$false; patterns=@('SelectionPatternIdentifiers.Pattern','ExpandCollapsePatternIdentifiers.Pattern')},
+        @{id='SystemSettings_Personalize_Color_AccentColorMode_ComboBox'; type='ControlType.ComboBox'; enabled=$true; offscreen=$false; patterns=@('SelectionPatternIdentifiers.Pattern','ExpandCollapsePatternIdentifiers.Pattern')},
+        @{id='SystemSettings_Personalize_Color_EnableTransparency_ToggleSwitch'; type='ControlType.Button'; enabled=$true; offscreen=$false; patterns=@('TogglePatternIdentifiers.Pattern')})
+    Require-Result (-not (Test-ColorsPageMarkers @($pageRows[0],$pageRows[1])))
+    Require-Result (-not (Test-ColorsPageMarkers @($pageRows + $pageRows[0])))
+    foreach ($change in @(@{type='ControlType.Text'},@{enabled=$false},@{offscreen=$true},@{patterns=@()},@{enabled='true'})) {
+        $badRows = @($pageRows | ForEach-Object { $_.Clone() })
+        foreach ($key in $change.Keys) { $badRows[0][$key]=$change[$key] }
+        Require-Result (-not (Test-ColorsPageMarkers $badRows))
+    }
+    Require-Result (Test-ColorsPageMarkers $pageRows)
+    Require-Result (Test-PageRefreshScope $true $false $true $true 'hosted-foreground')
+    foreach ($case in @(@($true,$true,$true,'hosted-foreground'),@($false,$false,$true,'hosted-foreground'),
+        @($false,$true,$false,'hosted-foreground'),@($false,$true,$true,'background'))) {
+        Require-Result (-not (Test-PageRefreshScope $true $case[0] $case[1] $case[2] $case[3]))
+    }
+    Require-Result (Test-PageRefreshScope $false $true $false $false 'background')
+    Record-Pass $stage
+    $stage = 'navigation_uncertainty_contract'
+    Require-Result (-not (Test-UncertainNavigation))
+    $navigationMarker = Join-Path $output 'navigation.pending'
+    [IO.File]::WriteAllText($navigationMarker,'pending')
+    Require-Result (Test-UncertainNavigation)
+    # A stopped launcher does not clear navigation uncertainty.
+    [IO.File]::WriteAllText((Join-Path $output 'navigation.launcher-stopped'),'stopped')
+    Require-Result (Test-UncertainNavigation)
+    Move-Item -LiteralPath $navigationMarker -Destination (Join-Path $output 'navigation.returned')
+    Require-Result (-not (Test-UncertainNavigation))
+    Record-Pass $stage
+    $stage = 'nested_source_identity'
+    # Reproduce the diagnostic's nested contained Git call without Settings.
+    # Only fixed numeric/boolean observations leave this disposable child.
+    $sourceChild = Join-Path $scratch 'source-identity.ps1'
+    @'
+param([string] $SourceDirectory)
+$ErrorActionPreference = 'Stop'
+Set-StrictMode -Version Latest
+Add-Type -Path (Join-Path $SourceDirectory 'HostedScaleProcess.cs')
+. (Join-Path $SourceDirectory 'Save-HostedScaleDiagnostic.ps1')
+$legacySelectionCount = @((Get-Command git -CommandType Application).Source).Count
+$git = Resolve-HostedGitExecutable
+$rejected = 0
+foreach ($candidate in @(@($git,$git),($git+' '+$git),('"'+$git+'"'),'git.exe')) {
+    try { [void](Get-HostedGitLiteralPath $candidate) } catch { $rejected++ }
+}
+if ($rejected -ne 4 -or (Get-HostedGitLiteralPath $git) -cne $git) { exit 3 }
+$result = [HostedScaleProcess]::Run($git,[string[]]@('-C',$SourceDirectory,'rev-parse','HEAD'),5,$true)
+$source = $result.Output.Trim()
+@{terminated=$result.Terminated; exit_code=$result.Code; process_stage=[int]$result.ProcessStage
+  native_error=$result.NativeError; output_length=$result.Output.Length
+  legacy_selection_count=$legacySelectionCount; invalid_paths_rejected=$rejected
+  source_format_valid=[bool]($source -cmatch '^[0-9a-f]{40}$')
+  checkout_matches_run=[bool]($source -ceq $env:GITHUB_SHA)
+} | ConvertTo-Json -Compress
+'@ | Set-Content -LiteralPath $sourceChild -Encoding utf8
+    $sourceResult = Run-Child $sourceChild @($PSScriptRoot) 20
+    $sourceSupervisorObservation = @{terminated=$sourceResult.Terminated; exit_code=$sourceResult.Code
+        process_stage=[int]$sourceResult.ProcessStage; native_error=$sourceResult.NativeError}
+    $cleanupVerified = $sourceResult.Terminated
+    Require-Result ($sourceResult.Terminated -and $sourceResult.Code -eq 0)
+    $sourceProcessObservation = $sourceResult.Output | ConvertFrom-Json
+    $cleanupVerified = $cleanupVerified -and $sourceProcessObservation.terminated
+    Require-Result ($sourceProcessObservation.terminated -and $sourceProcessObservation.exit_code -eq 0 -and
+        $sourceProcessObservation.source_format_valid -and $sourceProcessObservation.checkout_matches_run)
+    Record-Pass $stage
+    $stage = 'diagnostic_control_geometry'
+    $geometryTokens = $null; $geometryErrors = $null
+    $geometryAst = [Management.Automation.Language.Parser]::ParseFile(
+        (Join-Path $PSScriptRoot '../md3/Open-HostedScaleDiagnostic.ps1'),[ref]$geometryTokens,[ref]$geometryErrors)
+    Require-Result ($geometryErrors.Count -eq 0)
+    foreach ($name in @('Require','Is-SerializedEmptyRectangle','Rect','Control-Rectangle')) {
+        $definitions = @($geometryAst.FindAll({ param($node)
+            $node -is [Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -ceq $name
+        }, $true))
+        Require-Result ($definitions.Count -eq 1)
+        . ([scriptblock]::Create($definitions[0].Extent.Text))
+    }
+    $emptyRect = @('Infinity','Infinity','-Infinity','-Infinity')
+    $invalidGeometry = @(
+        @{rect=$emptyRect; offscreen=$false},
+        @{rect=@([double]::PositiveInfinity,0,1,1); offscreen=$true},
+        @{rect=@('unknown',0,1,1); offscreen=$true})
+    foreach ($fixture in $invalidGeometry) {
+        $rejected = $false
+        try { [void](Control-Rectangle $fixture.rect $fixture.offscreen) } catch { $rejected = $true }
+        Require-Result $rejected
+    }
+    $frameRejected = $false
+    try { Rect $emptyRect } catch { $frameRejected = $true }
+    Require-Result $frameRejected
+    Require-Result (Control-Rectangle @(0,0,100,100) $false)
+    Require-Result (-not (Control-Rectangle $emptyRect $true))
+    Record-Pass $stage
+    $stage = 'minimum_resolution_tuple_contract'
+    # Load only these exact production function definitions. Do not dot-source
+    # the supervisor, which would initialize Settings or change display state.
+    $tokens = $null; $parseErrors = $null
+    $ast = [Management.Automation.Language.Parser]::ParseFile(
+        (Join-Path $PSScriptRoot 'Invoke-HostedDisplayScale.ps1'),[ref]$tokens,[ref]$parseErrors)
+    Require-Result ($parseErrors.Count -eq 0)
+    foreach ($name in @('Test-NativeTuple','Test-UncertainInput','Test-ResolutionDiagnosticScope')) {
+        $definitions = @($ast.FindAll({ param($node)
+            $node -is [Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -ceq $name
+        }, $true))
+        Require-Result ($definitions.Count -eq 1)
+        . ([scriptblock]::Create($definitions[0].Extent.Text))
+    }
+    $tuple = @{resolution='1920x1080'; scope='minimum-resize'; viewport='measured-minimum'}
+    Require-Result (-not (Test-NativeTuple $tuple 125 $true))
+    Require-Result (-not (Test-NativeTuple $tuple 100 $false))
+    $tuple.scope = 'menus'
+    Require-Result (-not (Test-NativeTuple $tuple 100 $true))
+    $tuple.scope = 'minimum-resize'; $tuple.viewport = '1000x600'
+    Require-Result (-not (Test-NativeTuple $tuple 100 $true))
+    $tuple.viewport = 'measured-minimum'
+    $tuple.resolution = '1600x1200'
+    Require-Result (-not (Test-NativeTuple $tuple 100 $true))
+    $tuple.resolution = '1920x1080'
+    Require-Result (Test-NativeTuple $tuple 100 $true)
+    $tuple = @{resolution='unchanged'; scope='menus'; viewport='1200x800'}
+    Require-Result (-not (Test-NativeTuple $tuple 100 $false))
+    Require-Result (Test-NativeTuple $tuple 125 $false)
+    $tuple = @{resolution='1600x1200'; scope='minimum-observe'; viewport='measured-minimum';
+        language='en'; theme='light'; refresh_page='acknowledged-roundtrip'}
+    Require-Result (Test-NativeTuple $tuple 200 $true)
+    Require-Result (-not (Test-NativeTuple $tuple 150 $true))
+    Require-Result (-not (Test-NativeTuple $tuple 200 $false))
+    foreach ($entry in @(@('scope','menus'),@('resolution','1920x1080'),@('viewport','1200x800'),
+        @('language','yue_HK'),@('theme','dark'),@('refresh_page','none'))) {
+        $invalid = $tuple.Clone(); $invalid[$entry[0]] = $entry[1]
+        Require-Result (-not (Test-NativeTuple $invalid 200 $true))
+    }
+    Record-Pass $stage
+
+    $stage = 'minimum_input_recovery_contract'
+    $receiptOutput = $output
+    try {
+        $output = Join-Path $scratch 'input-state'
+        [void](New-Item -ItemType Directory -Path $output)
+        $nativeRequestPath = Join-Path $output 'request.json'
+        [IO.File]::WriteAllText($nativeRequestPath,'{"fixture":1}')
+        $requestDigest = (Get-FileHash -LiteralPath $nativeRequestPath -Algorithm SHA256).Hash.ToLowerInvariant()
+        Require-Result (-not (Test-UncertainInput)) # No product invocation yet.
+        [IO.File]::WriteAllText((Join-Path $output 'native-input.started'),$requestDigest)
+        Require-Result (Test-UncertainInput) # Job exit cannot clear this state.
+        [IO.File]::WriteAllText((Join-Path $output 'native-input.restored'),('0' * 64))
+        Require-Result (Test-UncertainInput)
+        [IO.File]::WriteAllText((Join-Path $output 'native-input.restored'),$requestDigest)
+        [IO.File]::WriteAllText($nativeRequestPath,'{"fixture":2}')
+        Require-Result (Test-UncertainInput) # Evidence from another invocation.
+        [IO.File]::WriteAllText($nativeRequestPath,'{"fixture":1}')
+        Require-Result (-not (Test-UncertainInput))
+        [IO.File]::WriteAllText((Join-Path $output 'native-input.started'),'')
+        Require-Result (Test-UncertainInput)
+    } finally { $output = $receiptOutput }
+    Record-Pass $stage
+    $stage = 'display_mode_public_layout_contract'
+    Add-Type -Path (Join-Path $PSScriptRoot 'HostedDisplayMode.cs')
+    $stage = 'fixed_alternate_resolution_contract'
+    foreach ($invalidMode in @('1920x1200','1600x1080','2000x1500','', $null)) {
+        $rejected = $false
+        try { [void][HostedDisplayMode]::TargetDimensions($invalidMode) } catch { $rejected=$true }
+        Require-Result $rejected
+    }
+    Require-Result (([HostedDisplayMode]::TargetDimensions('1920x1080') -join ',') -ceq '1920,1080')
+    Require-Result (([HostedDisplayMode]::TargetDimensions('1600x1200') -join ',') -ceq '1600,1200')
+    Require-Result (Test-ResolutionDiagnosticScope '1920x1080' $true $true $false $false 'hosted-foreground')
+    Require-Result (Test-ResolutionDiagnosticScope '1600x1200' $false $true $true $true 'hosted-foreground')
+    foreach ($case in @(
+        @('1600x1200',$true,$true,$true,$true,'hosted-foreground'),
+        @('1600x1200',$false,$false,$true,$true,'hosted-foreground'),
+        @('1600x1200',$false,$true,$false,$true,'hosted-foreground'),
+        @('1600x1200',$false,$true,$true,$false,'hosted-foreground'),
+        @('1600x1200',$false,$true,$true,$true,'background'),
+        @('1920x1200',$false,$true,$true,$true,'hosted-foreground'))) {
+        Require-Result (-not (Test-ResolutionDiagnosticScope $case[0] $case[1] $case[2] $case[3] $case[4] $case[5]))
+    }
+    Record-Pass $stage
+    $stage = 'display_mode_public_layout_contract'
+    function New-ModeContractFixture([uint16] $Size, [uint16] $Extra = 0, [uint32] $Fields = 0x207c00a0) {
+        $bytes = [byte[]]::new(220)
+        [BitConverter]::GetBytes($Size).CopyTo($bytes,68)
+        [BitConverter]::GetBytes($Extra).CopyTo($bytes,70)
+        [BitConverter]::GetBytes($Fields).CopyTo($bytes,72)
+        [BitConverter]::GetBytes([uint32]32).CopyTo($bytes,168)
+        [BitConverter]::GetBytes([uint32]1024).CopyTo($bytes,172)
+        [BitConverter]::GetBytes([uint32]768).CopyTo($bytes,176)
+        [BitConverter]::GetBytes([uint32]64).CopyTo($bytes,184)
+        return ,$bytes
+    }
+    # Reject incomplete/unknown layouts and private data before proving both
+    # supported public layouts. No native display API is called by this case.
+    foreach ($invalid in @((New-ModeContractFixture 187), (New-ModeContractFixture 189),
+        (New-ModeContractFixture 220 1), (New-ModeContractFixture 188 0 0x207c00a1),
+        (New-ModeContractFixture 188 0 0x203c00a0))) {
+        $rejected = $false
+        try { [void][HostedDisplayMode]::Width($invalid) } catch { $rejected = $true }
+        Require-Result $rejected
+    }
+    foreach ($publicSize in @(188,220)) {
+        $valid = New-ModeContractFixture $publicSize
+        $preserved = [Convert]::ToBase64String($valid)
+        Require-Result ([HostedDisplayMode]::Width($valid) -eq 1024 -and [HostedDisplayMode]::Height($valid) -eq 768)
+        Require-Result ([Convert]::ToBase64String($valid) -ceq $preserved -and [BitConverter]::ToUInt16($valid,68) -eq $publicSize)
+    }
+    Record-Pass $stage
+    $writer = Join-Path $scratch 'writer.ps1'
+    @'
+param([int] $Size)
+if ($Size -eq 0) { [Console]::Out.Write('{"ok":true}'); exit 0 }
+# UTF-8 ASCII only: six prefix bytes, Size-8 content bytes, two suffix bytes.
+[Console]::Out.Write('{"v":"' + ('a' * ($Size - 8)) + '"}')
+'@ | Set-Content -LiteralPath $writer -Encoding utf8
+
+    $stage = 'reject_oversized_output'
+    $result = Run-Child $writer @('65537')
+    Require-Result ($result.Terminated -and $result.Code -ne 0 -and $result.Output -eq '')
+    Record-Pass $stage
+
+    $stage = 'normal_output_after_overflow'
+    $result = Run-Child $writer @('0')
+    Require-Result ($result.Terminated -and $result.Code -eq 0 -and $result.Output -ceq '{"ok":true}')
+    Record-Pass $stage
+
+    $sleeper = Join-Path $scratch 'sleeper.ps1'
+    @'
+param([string] $Identity, [int] $ParentPid, [long] $ParentStart)
+$self = Get-Process -Id $PID
+@{pid=$PID; start_ticks=$self.StartTime.ToUniversalTime().Ticks} | ConvertTo-Json |
+    Set-Content -LiteralPath ($Identity + '.tmp') -Encoding utf8
+Move-Item -LiteralPath ($Identity + '.tmp') -Destination $Identity
+$deadline = [DateTime]::UtcNow.AddSeconds(3)
+do {
+    $parent = Get-Process -Id $ParentPid -ErrorAction SilentlyContinue
+    if ($null -eq $parent -or $parent.StartTime.ToUniversalTime().Ticks -ne $ParentStart) {
+        [IO.File]::WriteAllText($Identity + '.parent-exited', 'observed')
+        break
+    }
+    Start-Sleep -Milliseconds 20
+} while ([DateTime]::UtcNow -lt $deadline)
+Start-Sleep -Seconds 30
+'@ | Set-Content -LiteralPath $sleeper -Encoding utf8
+    $spawner = Join-Path $scratch 'spawner.ps1'
+    @'
+param([string] $Sleeper, [string] $Identity)
+$start = [Diagnostics.ProcessStartInfo]::new((Get-Process -Id $PID).Path)
+$start.UseShellExecute = $false
+$start.CreateNoWindow = $true
+$start.WindowStyle = [Diagnostics.ProcessWindowStyle]::Hidden
+foreach ($arg in @('-NoProfile','-File',$Sleeper,'-Identity',$Identity,'-ParentPid',"$PID",
+    '-ParentStart',"$((Get-Process -Id $PID).StartTime.ToUniversalTime().Ticks)")) {
+    [void]$start.ArgumentList.Add($arg)
+}
+$child = [Diagnostics.Process]::Start($start)
+$deadline = [DateTime]::UtcNow.AddSeconds(3)
+while (-not (Test-Path -LiteralPath $Identity) -and [DateTime]::UtcNow -lt $deadline) {
+    Start-Sleep -Milliseconds 20
+}
+if (-not (Test-Path -LiteralPath $Identity)) { exit 2 }
+[Console]::Out.Write('{"ok":true}')
+$child.Dispose()
+# Exit normally while the owned descendant continues holding its inherited
+# streams. Direct process exit and a valid JSON body must not prove completion.
+exit 0
+'@ | Set-Content -LiteralPath $spawner -Encoding utf8
+
+    $stage = 'terminate_descendant_after_parent_exit'
+    $result = Run-Child $spawner @('-Sleeper',$sleeper,'-Identity',$descendantIdentity) 5
+    Require-Result ($result.Terminated -and $result.Code -ne 0 -and $result.Output -eq '' -and
+        (Test-Path -LiteralPath $descendantIdentity) -and
+        (Test-Path -LiteralPath ($descendantIdentity + '.parent-exited')))
+    $identity = Get-Content -LiteralPath $descendantIdentity -Raw | ConvertFrom-Json
+    $live = Get-Process -Id ([int]$identity.pid) -ErrorAction SilentlyContinue
+    Require-Result ($null -eq $live -or $live.StartTime.ToUniversalTime().Ticks -ne $identity.start_ticks)
+    Record-Pass $stage
+
+    $stage = 'normal_output_after_descendant_timeout'
+    $result = Run-Child $writer @('0')
+    Require-Result ($result.Terminated -and $result.Code -eq 0 -and $result.Output -ceq '{"ok":true}')
+    Record-Pass $stage
+
+    $stage = 'accept_exact_output_limit'
+    $result = Run-Child $writer @('65536')
+    Require-Result ($result.Terminated -and $result.Code -eq 0 -and
+        [Text.Encoding]::UTF8.GetByteCount($result.Output) -eq 65536)
+    $json = $result.Output | ConvertFrom-Json
+    Require-Result ($json.v.Length -eq 65528)
+    Record-Pass $stage
+
+    $stage = 'query_only_named_job_membership'
+    $membership = Join-Path $scratch 'membership.ps1'
+    @'
+param([string] $JobName)
+$ErrorActionPreference = 'Stop'
+Add-Type @"
+using System;
+using System.Runtime.InteropServices;
+public static class MembershipCheck {
+    [DllImport("kernel32.dll", CharSet=CharSet.Unicode, SetLastError=true)] public static extern IntPtr OpenJobObject(uint rights,bool inherit,string name);
+    [DllImport("kernel32.dll")] public static extern IntPtr GetCurrentProcess();
+    [DllImport("kernel32.dll")] public static extern bool IsProcessInJob(IntPtr process,IntPtr job,out bool member);
+    [DllImport("kernel32.dll")] public static extern bool CloseHandle(IntPtr handle);
+}
+"@
+$query = [MembershipCheck]::OpenJobObject(4,$false,$JobName)
+if ($query -eq [IntPtr]::Zero) { exit 3 }
+try {
+    [bool]$member = $false
+    if (-not [MembershipCheck]::IsProcessInJob([MembershipCheck]::GetCurrentProcess(),$query,[ref]$member) -or -not $member) { exit 4 }
+} finally { [void][MembershipCheck]::CloseHandle($query) }
+foreach ($right in @(0x40000,0x20000,0x2,0x1,0x8)) {
+    $unexpected = [MembershipCheck]::OpenJobObject($right,$false,$JobName)
+    $reason = [Runtime.InteropServices.Marshal]::GetLastWin32Error()
+    if ($unexpected -ne [IntPtr]::Zero) {
+        [void][MembershipCheck]::CloseHandle($unexpected)
+        exit 5
+    }
+    if ($reason -ne 5) { exit 6 }
+}
+[Console]::Out.Write('{"ok":true}')
+exit 0
+'@ | Set-Content -LiteralPath $membership -Encoding utf8
+    $jobName = 'Local\BambuNativeScale-' + [Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(32)).ToLowerInvariant()
+    $result = [HostedScaleProcess]::RunNamed($pwsh,
+        [string[]]@('-NoProfile','-File',$membership,'-JobName',$jobName), 10, $true, $jobName)
+    Require-Result ($result.Terminated -and $result.Code -eq 0 -and $result.Output -ceq '{"ok":true}')
+    Record-Pass $stage
+    $success = $cases.Count -eq 14
+} catch {
+    # Neither exception text nor benign child payloads enter public logs.
+    $cases.Add(@{name=$stage; status='failed'})
+} finally {
+    # A broken containment implementation must not leave a known test child.
+    # Match both PID and start time; never kill by a generic process name.
+    if (Test-Path -LiteralPath $descendantIdentity) {
+        try {
+            $identity = Get-Content -LiteralPath $descendantIdentity -Raw | ConvertFrom-Json
+            $live = Get-Process -Id ([int]$identity.pid) -ErrorAction SilentlyContinue
+            if ($null -ne $live -and $live.StartTime.ToUniversalTime().Ticks -eq $identity.start_ticks) {
+                $success = $false
+                $live.Kill($true)
+                $cleanupVerified = $live.WaitForExit(5000)
+            }
+        } catch { $cleanupVerified = $false; $success = $false }
+    }
+    $passed = @($cases | Where-Object status -eq 'passed').Count
+    @{schema=1; status=$(if ($success -and $cleanupVerified) {'passed'} else {'failed'})
+      passed=$passed; expected=14; cases=$cases.ToArray(); cleanup_verified=$cleanupVerified
+      source_process_observation=$sourceProcessObservation
+      source_supervisor_observation=$sourceSupervisorObservation
+      elapsed_ms=$timer.ElapsedMilliseconds; settings_mutated=$false
+    } | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $output 'receipt.json') -Encoding utf8
+}
+if ($success -and $cleanupVerified) { Write-Host 'Hosted scale lifecycle checks passed: 14/14'; exit 0 }
+Write-Host 'Hosted scale lifecycle checks failed; inspect the fixed receipt.'
+exit 2

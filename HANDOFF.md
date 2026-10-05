@@ -6,6 +6,513 @@ The responsive-workflow task is paused by owner request after preservation. Read
 
 # Official-source reapplication handoff
 
+## Historical interface integration record
+
+The following source and verification history predates the current reconciliation. Its earlier task restrictions and pending states are historical, not current authorization or current verification.
+
+# Bambu Studio handoff
+
+## Current verification, 2026-10-03 UTC
+
+Production compilation and packaging passed in run
+[37139881377](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37139881377)
+at exact source `75770f71f59358514df9d5af42b38402e538116c`. Build job
+`111252033608` completed successfully at `2026-10-03T18:13:49Z`, including
+native compilation, Cantonese catalog, imported DLLs, Squirrel creation, package
+validation and installer upload. This verifies the two-qualifier const repair
+through the real production build. The complete workflow remains pending release
+publication in its existing non-canceling serial queue.
+
+Earlier run `37138948887` at `68dabac8f16b83065c0e58a05e687a0708f3ecde`
+also completed its native build and packaging job and waits publication. Its
+managed automation job passed 27/27 cases. No installed behavior is implied.
+The first observation ended after 55 minutes; the later candidate observation
+ended at `2026-10-03T18:15:45Z` with publication pending. Do not restart the same
+bounded observation unchanged. Resume upon a terminal result or matching release.
+
+At that verifier, hosted contracts `37139896660` passed nine Python cases,
+four invalid-desktop cases, four invalid-executable cases, actual absence and
+persistent lifecycle checks. Four exact CRLF source hashes were independently verified.
+Authenticated diagnostic `37139898854` completed encrypted transport, but its driver
+exited 2. Exact-thread opening, process equality, exit-code observation and handle
+closure passed. `GetThreadDesktop` returned null with immediate native code 0;
+the name query was not reached and no continuation was written. Four source hashes
+and the 6,382-byte restricted log hash independently matched. Debugger stop,
+owned-process cleanup and named-desktop closure were verified.
+
+`STILL_ACTIVE` is contextual exit-code evidence at the initial debugger break,
+not unconditional liveness proof. No failing initializer has been identified.
+Further diagnosis of historical package `md3-v190` is held. The next runtime step
+requires the current candidate's matching package and immutable release tag.
+
+All product compilation, checks, packaging, installation, slicing and UI execution
+remain on hosted Windows runners. New feature work is frozen. No physical printing
+or transfer is included. Installed vocabulary, menus, animation, combined actions,
+cancellation and the complete measured display matrix remain unverified.
+`main` advanced independently to `0c967a55786c07ef639a2cbefbe922b619c157d3`.
+A read-only comparison predicts three conflicts at the future integration:
+`CLOSEOUT_PROMPT.md` and `src/slic3r/GUI/Widgets/MD3DialogChrome.cpp/.hpp`.
+Preserve both the candidate's entrance motion ownership and main's caption title
+following/SyncTitle. HANDOFF, README and ROADMAP also require factual reconciliation.
+The eventual combined product requires its own hosted build and installed evidence,
+including title changes across show/hide/reopen and stacked Plate Settings geometry.
+See [integration readiness](docs/features/automation/integration-readiness.md).
+No actual merge, final green-main result, archive or deletion is claimed.
+The latest request to apply upstream updates was checked against the fetched
+`bambulab/BambuStudio` default `master` tip `da8b44ee34dd349f2ae0df3f1cbae366df482354`.
+It is already an ancestor of integration source `667ae19a1` and remote main
+`0c967a557`; both missing-commit counts are zero. No upstream product merge is needed.
+Earlier sections below are historical.
+
+## Active repair update, 2026-10-03
+
+The allowance has been restored; the latest verified account reading is 99%
+remaining. The green combined result remains the priority and new features stay
+frozen. All product builds, tests, packaging, installation and UI execution remain
+on hosted Windows runners. No physical print or transfer is authorized.
+
+Combined run 37103897508 at 4409b3afd2051b6f3017d864e001c1145496db38 failed with
+C2662 at StateHandler.cpp:25: the const StateColor reference calls a non-const
+colorForStates(int). Independently reviewed repair e8c1614d150b62366d6c02f72c020ee0131c6e3b
+adds const only to that method's declaration and definition. Its algorithm is
+unchanged. The next combined build must compile this exact repaired candidate;
+pure motion contracts cannot replace production compilation evidence.
+
+Startup contracts 37103710012 passed at de733332b0cadce9508f29581fa09c3c3758afb7.
+Authenticated diagnostic 37103711674 from the same verifier transported evidence
+successfully but its driver exited 2. Four exact CRLF verifier hashes and the
+6381-byte restricted log hash independently match. Acknowledgement, unique target
+identity and debugger/target Job membership passed. The desktop lookup raised
+before its equality result was assigned; continuation was not written. It is an
+unavailable lookup, not an observed mismatch. The next bounded repair separates
+GetThreadDesktop and GetUserObjectInformationW observations without weakening
+ownership, deadlines or teardown. No product initializer cause is established.
+
+Evidence: docs/features/automation/hosted-startup-creation-37103711674.json.
+Installed interactions, temporal pixels and the complete measured display matrix
+remain pending. Main remains ce883543177ef7df46fa5b798dcc5c7f3d2f8020.
+No final green-main verdict, archive or deletion is claimed. Earlier entries below
+are historical observations and are superseded by this update where states differ.
+
+
+## Latest preserved diagnostic candidate
+
+Source de733332b0cadce9508f29581fa09c3c3758afb7 includes independently reviewed
+fixed stage/count/boolean startup observations. Owning source d05f396a8928c0f75294f26e8fa62324255642e2
+and integration source are pushed and verified. No acceptance predicate, strict
+symbol rule, containment check or deadline was weakened. No local product execution.
+
+Changed hosted contract run 37103710012 and diagnostic run 37103711674 are queued,
+both verified at de733332b0cadce9508f29581fa09c3c3758afb7. A bounded 55-minute
+observer was started; its eventual result must be read before claiming a verdict.
+An older combined source 6c5e619aaa63b00944951d5caaf30b9d1c415185 completed its
+product build in run 37099792250 and waits publication. That does not validate
+the current motion changes. The 414e combined run37103221827 remains queued.
+
+Latest verified allowance: 24% remaining. New features remain frozen. No active
+implementation worker remains. Next meaningful work requires a changed hosted
+verdict or the new authenticated diagnostic. Do not relaunch unchanged checks.
+No final main result, release completion, archive or deletion is claimed.
+
+
+## Verified priority update, 2026-10-03 UTC
+
+The current priority is a green combined hosted result. New feature work is
+frozen, including the unimplemented asynchronous STL and native page-content
+composition proposals. The latest account reading reports 25% remaining;
+start preservation-first closeout at 10% or less. No active goal is recorded.
+
+Preserved integration source: 414e7d8139060bf4d64cf4d0644dcb7ddcb7cf63.
+The matching combined build is run 37103221827, queued at the last observation.
+Earlier combined runs 37103084994 and 37101358049 are also queued. No concrete
+queue cause is exposed. Do not cancel existing runs or infer a quota cause.
+Main remains ce883543177ef7df46fa5b798dcc5c7f3d2f8020.
+
+Hosted temporal contracts passed: run 37102495898 has 18 distinct passing cases
+at fa1cd3eb579e23ed7e5af01a0a6ab00a6ac47d13; run 37103221335 has 25 at
+414e7d8139060bf4d64cf4d0644dcb7ddcb7cf63. Original case hashes, counts and all
+three/five source hashes were checked against their exact CRLF checkout bytes.
+The receipts below retain that representation explicitly. Neither run starts
+the product, installs it, captures it or proves rendered motion.
+
+Startup contract run 37102256371 passed at e50f5dac1074055e02be230bfdc5dd98d829e5e6.
+The matching diagnostic 37102257995 completed transport successfully but its
+driver exited 2. Two independent authenticated reviews verified all six source
+hashes and the 6382-byte private log hash. Exact OS symbols and sls readback now
+succeed. No g continuation or initializer exception was observed. The report
+omits the individual ownership/timing stage that prevented acceptance. A bounded
+fixed-stage/count/boolean diagnostic repair is in progress, preserving all
+ownership predicates, strict symbols, containment and deadlines. The original
+initialization error 1114 remains unresolved; no product fix is inferred.
+
+Next: independently review that narrow diagnostic repair, preserve it, execute
+its affected hosted contracts and one changed diagnostic, and follow existing
+combined build verdicts. Installed vocabulary, actual cancellation, Slice and
+Print/Send, context menus, temporal pixels, minimum geometry and the full measured
+language/theme/DPI matrix remain unverified. No physical printing or transfer.
+All product execution remains hosted-only. No archive, deletion, main integration
+or final green-main claim has occurred.
+
+Evidence: docs/features/automation/hosted-temporal-contracts-37102495898.json,
+docs/features/automation/hosted-temporal-contracts-37103221335.json and
+docs/features/automation/hosted-startup-creation-37102257995.json.
+
+Earlier entries below are historical observations; this update supersedes their
+queued-state and current-source statements.
+
+
+## Current continuation, 2026-10-03 UTC
+
+Preserved integration source is c7aefb4b84f31a4bc2519d8052ac78b3ccaa3a17.
+Main remains ce883543177ef7df46fa5b798dcc5c7f3d2f8020. No incomplete task source
+is eligible for completed-main cleanup. No archive or deletion occurred.
+
+Hosted minimum-observation run 37097667386 passed 9 cases at e23e708d694b2d843f759d9eb828930806afa001.
+Hosted lifecycle run 37097668663 passed 14 cases in 12,326 ms at that same source,
+with verified cleanup and no Settings mutation. Startup-creation preflight
+37097740908 passed 7 Python cases and 4 actual invalid-desktop rejections at
+23cf74f62ace65b6529e250f64bfeea037db7ba2, without starting the product.
+Exact original receipts and hashes are retained in
+`docs/features/automation/hosted-focused-contracts-20261003.json`.
+These results do not establish rendered behavior or carry forward across changes.
+
+Standalone 150% run 37096062899 measured 144 DPI at 1920x1080; standalone 200%
+run 37096376814 measured 192 DPI at 1600x1200. Both restored original 1024x768
+and 100%/96 DPI with verified containment. Their private preselection images
+show available choices, not the resulting product DPI or rendering, and contain
+account identity. Do not publish them. Product minimum observation remains pending.
+
+Authenticated launcher evidence from 37096825183 proves Mesa loaded, followed
+by LoadLibraryExW(BambuStudio.dll) error 1114 before the product entry point.
+The responsible initializer is unknown. From-creation debugger run 37098366121
+failed at verifier 23cf74f62ace65b6529e250f64bfeea037db7ba2, targeting fixed
+md3-v190 / 35d1074faea221fa4f289f1db1e0ee428a90d701. Worker-tree termination
+was verified; desktop closure was not. Evidence was withheld. Independent
+source review found the wrapper incorrectly required a nonzero CLI exit for
+normal JSON absence responses, and separate one-shot invocations could not
+retain desktop ownership. Persistent lifecycle repair 90b8b8d9453842dc4022a0954766e20dff4932a3 passed
+two independent source reviews and is integrated at 0b079632b. Hosted lifecycle
+run 37099135961 failed after nine Python cases and four desktop rejections: the actual
+absence contract did not pass. No product started. Child exit/stage were not retained;
+a working-directory mismatch remains unproved. Reviewed repair 398dffea resolves
+absolute helper paths and retains fixed numeric classifications. It is integrated
+at ea1464255. Changed product-free run 37100209956 failed before Python started:
+CreateProcess stage 6 returned native code 123, exit sentinel -1, terminated true.
+The actual malformed executable value remains unobserved. Scalar executable repair
+9018b11e passed both source reviews and is integrated at f99dc5782. Changed
+product-free run 37100483720 passed at that source: nine Python, four desktop
+rejections, four invalid executable forms, actual absence and persistent lifecycle
+verified, both contained exits zero and termination verified. Two Python matches
+were observed on this runner; previous malformed arguments remain unobserved.
+Actual from-creation diagnostic 37100674583 completed with partial encrypted
+output and verified teardown at verifier d3359fbdf, targeting fixed md3-v190.
+Driver exit was 2. The matching local protected key is unavailable, so contents
+remain unopened. Additive v3 recovery 8da54ff78 preserves all old recipients;
+new diagnostic 37101357236 is queued at c7aefb4b8. Product startup remains unresolved. Evidence requirements remain unchanged. The exact response
+from this failed attempt was not retained and must not be reconstructed.
+See docs/features/automation/hosted-startup-creation-37098366121.json.
+
+Two independent reviews accepted vocabulary source 065bf15868da0f639ac24c4844f4d49a3247559f
+and contract-only follow-up 5f93c75737d9f125df80cd853333f6fede593fbd. The owning
+branch was pushed and verified before integration. Malformed JSON preserves
+alpha, replacement clears rejection status, unsupported schema preserves beta,
+and clearing restores baseline. Three actual original title getters are bound
+to the captured title identity. Hosted run 37098551711 passed all nine contracts in 0.656 seconds at fe20b5637,
+including deliberate removed-comparison regression. The 28 genuine captures,
+actual installed getter observations and painted wording remain pending. No canonical private vocabulary payload was uploaded.
+
+Earlier native-services 37085341046 and MCP 37054493889 passed. Combined
+37056354867 failed overall. Cancellation contract 37095515540 passed 18 cases;
+real cancellation and combined actions remain unverified. Observation of build
+37092713387 expired; do not resume polling it. No final combined main verdict exists.
+
+Next: verify repaired persistent desktop ownership and teardown on hosted Windows,
+obtain authenticated loader evidence, repair only a supported product cause,
+then build a matching package and verify
+installed MCP, menus, vocabulary/persistence, Slice and Print, Slice and Send,
+cancellation and the full language/theme/size/scale matrix. All product compilation,
+tests, installation, slicing and UI execution remain hosted-only. Preserve final
+printer confirmation; no physical printing or transfer is authorized.
+
+Latest user steering explicitly requires animations and transitions throughout
+the GUI, with Astra implementation and independent review. Existing motion is
+partial. Shared policy/lifetime foundation c309da8a and persisted system/reduced
+preference passed two independent source reviews and are integrated at ea1464255.
+Hosted run 37100211528 is queued against that foundation. Additional reviewed
+control/tab motion 53c96f649 and notification/progress e83163284 are integrated
+at 8a2750717, alongside transient entrance 20280c50e. The combined pure policy
+count is now 26, pending hosted execution. Those outcomes do not prove real timers
+or rendered transitions. Reviewed native/canvas menu 4e3acd093 and selection-feedback 7317abf75 are
+integrated at 7f63c689e. Real wx event-loop fixture 0a5acd666 is integrated at
+a266dbbf5. Hosted run 37100814236 passed fourteen actual cases with 95 assertions
+and rejected the compiled Stop mutation specifically at explicit_stop (exit 1,
+one completed case, 22 assertions). Both contained processes terminated and
+both desktops restored/closed. Two independent receipt/hash/chronology reviews
+accepted the retained outputs; executable bytes were not uploaded. Preference acquisition is injected in this
+fixture; actual saved settings, OS lookup and product pixels remain outside it.
+Further reachable modal/child-list/regex-builder transitions and adversarial
+coverage/correctness reviews continue in separate owned lanes. Remaining slices are
+native state/tab indicators; panels/dialogs/tooltips; native and canvas menus;
+notifications/progress. Preserve immediate semantic state, cancellation and input,
+interruptibility, reduced motion and hidden-owner lifetime safety. No universal
+motion coverage or smoothness claim is made. Material Designer creation/export
+tools are unavailable and local GUI execution is prohibited; reuse checked-in
+references and retain a target-owned motion inventory plus later hosted temporal
+and clipping evidence.
+
+Two newly confirmed menu source defects are repaired on the integration branch:
+assembly Export search/builder, bounded layout and keyboard rows at 866bd20b;
+canvas regex Whole word parity at ba8b0a0e. Both had two independent source reviews.
+The latter calls an actual production evaluator and includes a real-worker parity
+case that cannot pass through fail-open visibility. Hosted native verification
+37099796194 is queued at 6c5e619aaa63b00944951d5caaf30b9d1c415185. Compilation,
+actual assembly/preview interaction and visible motion remain pending. The existing
+menus flow still lacks direct builder interaction and full native/canvas invoker
+coverage. Do not silently treat the two original menu fixtures as exhaustive.
+
+Before completion: integrate completed verified work into main, push and prove
+its exact remote SHA, obtain the combined result for that actual candidate,
+update public records, verify the dated complete archive, then remove only
+inactive clean task-owned candidates whose tips are ancestors of pushed main.
+
+## Latest verified state, 2026-10-03 UTC
+
+Display run 37095764151 at 67eada8bda7b2fd6d5a589547004eea8415d559f passed
+13/13 lifecycle cases in 14127 ms, then failed 200% selection. Both observed
+navigation destinations were acknowledged. The fresh selector exposed 150%
+but no 200% option. Original resolution and 96 DPI were restored, both process
+trees terminated and recovery uncertainty was false. Both encrypted images
+passed administrative integrity opening and two independent pixel reviews.
+The complete popup shows 100%, 125%, 150% and 175%, without a menu scrollbar
+or clipped option. Visible account identity prevents publication. One targeted
+150% run 37096062899 is pending at 54ff825c0b2c8c2e005e9b46435a8ceb5e15bc46.
+Startup-only diagnostic 37095786787 at verifier 3467c83155b4a3881a306eeb5ac9060bdb381ea2
+failed against the separately bound md3-v190 product. Independent 11-file
+manifest validation succeeded before private opening. The evidence confirms
+natural early exit 4294967295 (0xFFFFFFFF), completed holder teardown and empty
+stdout/stderr. Cause remains unknown. Bounded task-owned profile-log collection
+is the next diagnostic; no product repair has been inferred from the exit alone.
+
+The one-hour observation limit for combined build 37092713387 expired at
+2026-10-03T04:17:36Z. Its final observed state was publication pending after
+successful build/package jobs. Leave it intact; no final release verdict is
+claimed and polling this expired observation lane has stopped.
+
+Hosted run 37095515540 passed all 18 cancellation-observation cases in 0.172 s
+at 18d6f1c3f60ec8d34d70829d3ca7e056edf244fa, including a deliberate mutation
+of the production epoch comparison. This validates the stronger driver contract,
+not installed cancellation. Reviewed startup collector acb80bee433966b6b655711fdae81e8475ae1970
+is integrated in 2f8ce41c18c7f5fb0984ac4ec9187649130ea04a. Its first hosted
+diagnostic execution remains pending. Main and cleanup are unchanged.
+
+Installed baseline runs 37094960913 (MCP), 37094962319 (vocabulary), and
+37094963874 (cancellation) failed after validated Squirrel installation at
+35d1074faea221fa4f289f1db1e0ee428a90d701. Their authenticated private runtime
+receipts report the same startup ownership exception before any interaction or
+capture, with verified teardown. This does not establish a feature defect.
+Bounded encrypted startup diagnostics are being added without relaxing ownership
+or timeouts. Cancellation evidence also needs independently reviewed correlation
+with the post-cancel native epoch and a newly accepted completion event.
+
+Read-only Colors discovery 37095094318 at 99ace4b670af24d34c1ba6761b59256ae5e71cb6
+returned 130 controls, no display mutation and verified teardown. Its deliberate
+unavailable exit is not a provisioning success. Reader 5211a57bd68320856f90d297b02ad146b13f4a2f
+authenticated the private inventory against exact run, source, destination and
+probe hash. Positive destination recognition remains under review.
+
+Hosted lifecycle run [37094628859](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37094628859)
+passed 11/11 cases in 13615 ms at `b282a05c14c54c8063f31f38b2605bbd8b9206b6`.
+The receipt confirms `cleanup_verified=true` and `settings_mutated=false`.
+This includes the actual diagnostic-reader geometry contract and is not product
+interaction evidence. The original receipt hash and full fixed receipt are in
+`docs/features/automation/hosted-source-query-b5468208.json`.
+
+Two independent private pixel reviews inspected both authenticated Settings
+captures from run `37094061673`, source `b546820867f01602807775275a6ef3e1f6cce793`,
+using reader `a115faf0861e38fa0be8da646d87195672bdad3d`. The before-selector image
+shows 100% selected and 1920x1080 resolution. The expanded image shows a complete,
+uncut two-row popup with only 100% and 125%, no visible scrollbar, and no partial
+next row. The observed popup reports no scrolling. The current observed page
+cannot supply 150% or 200%; this does not establish universal platform support
+limits or prove why those options are absent. Both images are 816x641 and each
+has 16 unavailable offscreen-control rectangles, never invented coordinates.
+
+Both originals visibly contain an account identity and remain private;
+publication is not authorized. No canonical private vocabulary payload was
+uploaded. These are Settings diagnostics, not installed product pixels, minimum
+resize proof, or a completed language/theme/scale matrix. Product verification,
+main integration and deletion remain incomplete. No physical printer action was
+performed. Historical sections below retain their earlier observation states;
+this section supersedes their pending lifecycle and expanded-image review status.
+
+The non-draft release `md3-v190` targets tag/source
+`35d1074faea221fa4f289f1db1e0ee428a90d701`, with all five assets uploaded.
+`Setup.exe` is 770881024 bytes, SHA-256
+`22cc03323daf30af64d5d426d5494bf53fe928c3d7c28a9e0367d3bd7c6575c3`.
+The three installed runs above failed at shared startup before interaction.
+Dispatch used `b282a05c1`,
+but the workflow explicitly checks out the expected verifier source `35d1074fa`.
+This package does not contain the minimum-resize scope, which awaits a newer
+matching package. Uploaded release assets are not installed verification success.
+
+Next: retain the private originals and exact bindings, investigate only a reviewed
+bounded route for the absent scale options, and run installed product verification
+only against a matching source/package identity on hosted Windows runners. Do not
+infer product success or cleanup eligibility from the eleven-case result.
+
+
+## Active interface extension, 2026-10-02
+
+Combined build `37085334409` failed on an incomplete `wxGLCanvas` type in
+`AutomationBridge.cpp`. The one-line defining-header repair is independently
+reviewed and preserved in `f8de85ce237b127adb7bc6d033696e6afbf6adbf`; build
+`37088514258` is the new compilation candidate. No matching package exists yet.
+Lifecycle-only run `37088232776` passed six of six cases in 11340 ms, including
+exact named-Job membership and five rejected access rights, without Settings input.
+Repaired standalone run `37088755758` passed 125% selection, measured 120 DPI,
+restoration to 100%/96 DPI and complete worker termination. The overall run failed:
+150% and 200% expanded the selector but found no matching options. Only 100% and
+125% were observed. Both failed jobs restored the original scale. Read-only capability run `37089435143` passed: one active 1024x768 display,
+13 supported modes up to 1920x1080, and verified worker termination.
+Supported mode is not proof that higher scale options are available.
+This does not establish target application DPI or visible behavior.
+
+Candidate `d804d3f8b7babc7fe040654b218d82642eacd1e3` is preserved on
+`feature/ui-integration`; remote `main` still points to
+`ce883543177ef7df46fa5b798dcc5c7f3d2f8020`. Build `37088918536` includes the
+optional product-under-scale adapter and fixed Settings launch. Installation and
+bootstrap precede mutation; named-Job membership, native teardown and restoration
+must all pass. Product execution awaits a matching package. No local product or
+helper execution is authorized.
+
+Discovery run `37085955337` produced 84 encrypted Settings controls, privately
+reviewed with the existing automation recipient. The exact scale selector was
+identified; discovery did not change display settings. Earlier encrypted discovery
+`37085765463` remains unreviewed because its original recipient's private key is
+unavailable here. No key was replaced.
+The minimum-viewport driver measures the native frame constraint and binds its
+receipt to the following normal capture without exceeding the 32-file encrypted
+manifest. Interactive minimum tracking remains unverified.
+
+Hosted run `37085341046` passed both jobs at `6bc6656efc001fdf27d2ea22e7a64824bd80a1c5`.
+Native results: 16 language cases/199 assertions, three personal-vocabulary
+cases/45 assertions, four archive cases/103 assertions, zero failures/errors.
+Sequential and concurrent vocabulary persistence phases and the native display
+source contract also passed. See `docs/features/design-system/hosted-native-services-6bc6656e.json`.
+Installed MCP run `37084928659` verified Squirrel installation but failed before
+MCP interaction because its fixture path was not normalized before selecting
+the checkout root. The fixture repair and seven cancellation-observation regressions passed hosted verification; installed execution awaits the new package.
+
+Resume evidence: MCP run `37054493889` completed successfully and published
+`md3-v187` for `ce61d22e390e4bf69938730434f1e494fa34f7a9`.
+Installed MCP verification `37084928659` failed at fixture lookup as recorded above.
+Combined candidate `4436c7f91edd4a09fc491018035adfd6235c2f68` passed 46 canvas
+checks, 68 preview checks, 55 source tests and eight slice lifecycle contracts
+in run `37056354867`. That run failed overall because the focused native targets
+did not match the static wxWidgets assertion configuration. Full build
+`37056348902` separately failed on an ambiguous `ImGuiWrapper::begin` call in
+`NotificationManager.cpp:3121`. Both source repairs are integrated on feature/ui-integration. Focused native linking passed; the later full-build failure and new repair are recorded above. These are compile
+and link failures, not installed-interface verdicts.
+
+The user extended this task to native transitions and practical asynchronous
+work, complete Material Design 3 context menus and search/regex builders,
+clipped or hidden text, unexpected slicing cancellation, adjacent Slice and Print
+and Slice and Send actions, and local personal-vocabulary JSON controls.
+The combined candidate on `feature/ui-integration` contains shared controls,
+canvas menus, slicing actions and personal vocabulary. It is incomplete and not
+runtime verified. Independent source review accepted the native getter and
+concurrent-cache repairs in `26526edc1f43996d7b467962b63ee0471742ab1f`.
+The generated language-catalog dependency is corrected in
+`29fdc865c5e554cb76ad9ca7a544d6911f7e5e21`. Isolated Astra lanes continue preview
+layout review and hosted UI interaction automation. Personal vocabulary must remain local,
+validate a bounded versioned schema, restore original wording when cleared,
+and never enter logs or exports.
+
+Managed verification for MCP source `ce61d22e390e4bf69938730434f1e494fa34f7a9`
+passed 27 checks with zero failures or skips at `2026-10-02T19:31:19Z` in
+[run 37054493889](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37054493889).
+Native compilation and release publication passed for that MCP-only revision;
+installed MCP interaction remains unverified after the fixture-path failure.
+All product execution continues exclusively on hosted Windows runners.
+
+Focused run `37055936191` at `cb5981a5977f56a10174f72bad7945100004a355`
+passed 46 canvas checks, 49 source tests, eight slice lifecycle contracts and
+five print-workflow cases with 28 assertions. Its native-service job failed:
+new Cantonese entries lacked required reviewed-category metadata and an
+unqualified `apply` call in PersonalVocabulary.cpp selected `std::apply`.
+Both repairs are independently reviewed in c68cf438413b99633eb376ad89c2d4688dc95d20.
+They await a new hosted run. The prior run is failed overall; no native-service or
+installed-interface success is claimed.
+
+## MCP automation implementation, 2026-10-02
+
+Task: [issue #53](https://github.com/Ding-Ding-Projects/BambuStudio/issues/53), with
+[rolling progress #54](https://github.com/Ding-Ding-Projects/BambuStudio/discussions/54).
+Implementation is on `feature/mcp-integration`. It is not yet integrated into
+`main`. Verification below records exact source identities rather than treating
+the branch's moving tip as tested.
+
+The native bridge is opt-in and exposes current-user named-pipe project, model,
+preset, settings, slicing, export, printer and job operations. A self-contained
+companion under `automation/` provides 20 typed MCP tools through stdio and
+authenticated Streamable HTTP, plus the same JSON CLI service. Native slicing
+uses generation, plate and revision identities. Printer starts use the native
+task manager with a durable intent journal and an immutable staging-file lease.
+Current print-start support is restricted to a verified single nozzle and one
+external-spool filament; AMS and dual-nozzle mappings fail explicitly.
+
+Builds, tests, packaging, installation and application execution for this task
+run only on GitHub-hosted Windows runners. No local product execution occurred.
+The first focused run, `37038981051`, failed compilation on nullable HTTP Host
+handling. The next run, `37040259653`, compiled and passed 22 cases but exposed
+an incorrect child-process startup path in both transport checks. Both defects
+are repaired. At `65dc4577fb29f2d00fd525a1de11e370784c5b3e`, the managed job in
+[`37045639569`](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37045639569)
+passed all 24 checks: 22 in `BoundaryTests.cs` and 2 in `TransportTests.cs`.
+Self-contained publication and documentation parsing also passed. Native compilation,
+payload checks, Squirrel creation, and package-contract validation passed in job
+`110966508477`. At the one-hour observation boundary, release job `110986759894`
+was still validating release assets and metadata (last observation 2026-10-02T19:10:35Z).
+The preceding candidate passed native
+compilation and Squirrel packaging, but reached its one-hour observation limit
+with release validation still running. The two superseded native runs were
+canceled because their older release dependency did not include the red MCP
+verdict; current release publication requires both native and managed jobs.
+
+A dedicated automation recipient and strict schema-v2 evidence reader preserve
+historical GUI recipients. Only the public PEM is tracked. Protected review
+material remains local. Administrative cryptographic initialization is distinct
+from product execution; no application or product test ran locally.
+
+Additional source changes implement explicit native plate selection, binary STL
+export, and a completed native slice reference for printer submission. The
+companion adds concurrent-client and actual MCP cancellation coverage. The
+hosted driver now checks the nested native capability inventory and includes
+unsaved-work protection, STL validation, running headless cancellation and
+native exit/recovery. These additions are not covered by the earlier 24-case
+verdict and require new hosted verification.
+
+The current user also requested application-wide transitions, practical
+asynchronous execution, a defect hunt, and a green final default-branch run.
+That additional UI work is isolated on `feature/ui-motion-responsiveness`.
+
+Remaining work: terminal hosted release result; packaged runtime verification
+against the exact released SHA; hosted evidence parser and strict-reader use;
+genuine capture review; documentation completion; default-branch
+integration and remote proof. No physical printer operation has been verified.
+The earlier one-hour observation window ended without canceling the hosted run.
+The subsequent continuation revalidated the live run and started a new bounded
+observation window ending at 20:19:37 UTC. No pending release is treated as
+successful. All task work remains retained and no cleanup
+has run. The wiki is published at `f0dc140038ae19d0487f74a4b4ba0a64b265485b`.
+See [automation documentation](docs/features/automation/mcp-and-cli.md) for the
+transport, security, setup and operation contract.
+
+## Earlier handoff, retained as historical context
+
+The following record predates this MCP task. Its timestamps, releases and
+verification claims describe that earlier work and are not current MCP evidence.
+
 ## Current state
 
 At 2026-09-28 08:40 UTC, `main` is at `e4fc4be11c0e87a9600f1257b92e4bc6c64acac7`, confirmed with
@@ -2175,3 +2682,237 @@ diagnostics were a cascade.
   handoff refresh, `git ls-remote origin refs/heads/main` was verified at the same SHA.
 
 </details>
+
+The fixed 1920x1080 standalone provisioning helper is independently reviewed at
+5d3a42fd32e29a77e2cc3df683eac3c50ed01993. Its hosted apply/scale/restore verdict
+failed in 37090148387 before mutation at capture_original_resolution for all
+three scale jobs. Fixed-phase diagnostic 24c1340e is reviewed for a changed
+observation; exact native cause remains unproved. Minimum-resize source is preserved on feature/preview-layout at
+187e55fa1518e7f66b636f9f29c2e7d8c149350d; it must not run at the known 1024x768
+mode, which cannot fit the required above-minimum starting frame. No interactive
+clamp, product DPI or current-candidate pixel proof is claimed.
+
+## Display diagnostic continuation, 2026-10-03 02:49 UTC
+
+Run 37090623816 failed all three resolution-enabled jobs before display mutation
+at capture_original_resolution. The phase alone did not distinguish a failed
+enumeration from an invalid returned header. Candidate
+596075b89b4dda30001c6076386204e653964c2e has two independent source reviews
+and records enum success, buffer capacity, returned size and extra-data count
+as bounded nullable values. Acceptance and restoration are unchanged.
+The next diagnostic uses only 125% because this pre-input path is shared.
+The full matrix remains required after the root cause is established.
+Product builds 37088514258 and 37088918536 remain in progress; no current
+combined package or rendered correctness verdict exists.
+Current account allowance is 50% remaining. No cleanup or deletion occurred.
+
+## Observed mode-header compatibility repair, 2026-10-03 02:54 UTC
+
+Run 37091086128 failed before mutation and established the exact mismatch:
+enumeration succeeded, allocation 220 bytes, returned dmSize 188, extra data 0.
+Two independent source reviews accepted 8cb9889507c593db9e11ef1afcb8af823abfc09e.
+Only known public sizes 188 and 220 are admitted; the complete allocation and
+actual returned header remain unchanged. Every consumed field ends by byte 188.
+Identity, valid-field, nonpersistent change and recovery checks are unchanged.
+The existing hosted lifecycle suite now expects seven cases, including five
+invalid fixtures and both supported-layout preservation checks. Hosted results
+and real resolution application/restoration remain pending. The next attempt
+uses only 125%; broader scale and installed UI claims remain unverified.
+
+## Verified standalone resolution, 2026-10-03 UTC
+
+Run 37091384649 passed at 7bd7420c7972aa186d246c76c93265600d8cd2ee.
+Seven hosted contracts passed in 11738 ms. The standalone probe measured
+1920x1080 and 125%/120 DPI, then restored 1024x768 and 100%/96 DPI.
+Both worker trees terminated; supervisor restoration was verified and disposal
+was not required. The checked-in bounded receipts retain original-byte hashes.
+This is not application-rendering proof. Runs 37091590432 and 37091591864
+now observe 150% and 200% separately at the same source.
+The minimum-resize combination is being implemented with a durable input-state
+marker: process termination cannot stand in for button release or desktop
+restoration. Native product build 37088514258 has reached Squirrel packaging.
+
+## Restricted minimum-resize integration, 2026-10-03 UTC
+
+Candidate 25b8668f0a848f04c8eff9f3241adb59d2132f33 has two independent
+source acceptances. Fixed 1920x1080 provisioning is restricted to minimum-resize,
+scale 1 and measured-minimum. Durable invocation-bound input markers block both
+normal and independent recovery until button, frame, desktop and native teardown
+proof agree. Process exit alone cannot clear uncertainty. The hosted contract
+source now expects nine cases; execution and installed interaction remain pending.
+The workflow opt-in defaults false and preserves earlier baseline invocations.
+
+Higher-scale attempts did not pass: 37091590432 stopped at validate_foreground
+before input; 37091591864 expanded the selector but found no 200% option. Both
+verified 1920x1080 and restored the original resolution and 100%/96 DPI, with
+contained termination. These observations do not prove unsupported scales.
+
+## Hosted contracts and publication queue, 2026-10-03 UTC
+
+Run 37091873727 passed 9/9 contracts in 12288 ms at85ca11b4f865f4a9d01e584426a3d958cca8919b,
+with verified cleanup and no Settings mutation. Combined installed minimum
+interaction and pixels remain pending.
+Build 37088514258 passed compilation, packaging and upload, but its publication
+job111113206485 was canceled because a higher-priority waiting request entered
+the same concurrency group. Its completed installer artifact11262825115 remains
+available; no redundant product rebuild is required for publication recovery.
+Reviewed repair072c51cc7040c1d5d04ea875a6142ae6cb41f250 sets queue:max, preserving
+up to100 pending jobs with running-job cancellation still disabled. Additional
+arrivals beyond that bound are canceled. Historical reruns retain their original
+workflow and are not repaired retroactively. Do not rerun the old single-pending
+release while another pending publisher would be replaced.
+
+## Encrypted scale-option diagnosis, 2026-10-03 UTC
+
+Two independent source reviews accepted5c80f0c58457b95e358dd76a56ad8a76f0aab5cd.
+An explicit standalone-only diagnostic opt-in captures the owned Settings HWND
+before selector input and after expansion. Positive dimensions up to8192 are
+checked before bitmap allocation and again afterward. Bounded read-only control
+geometry and pixels use the established recipient encryption with authenticated
+source/run/phase/dimension/helper/tool/image bindings. Only four named encrypted
+files join the fixed public receipt upload inventory; no raw PNG or native
+identity is uploaded. Actual rendering, decryption and interpretation are pending.
+
+## Diagnostic reader and capture observability, 2026-10-03 UTC
+
+Run 37092218449 restored the display after the 200% match_option failure,
+but both capture phases returned unavailable. No encrypted files were produced.
+Reviewed source 546d376d2b25595f31595a295c38b55505638812 adds fixed diagnostic
+stage codes and a bounded administrative reader. The reader requires PowerShell
+7.5, preserves authenticated timestamp strings, rejects nonobject roots and
+scalar coercion, uses existing DPAPI custody, and verifies exact source/run/phase,
+AAD, ciphertext and image identity before exclusive output creation. Two
+independent source reviews accepted the corrected candidate. No decryption or
+pixel review has occurred. A changed hosted diagnostic is the next step.
+
+Build 37088918536 also lost its waiting publisher to the old queue rule;
+compilation and packaging succeeded and its uploaded package remains preserved.
+The matching 35d1074fa publisher 37089433015 was still in metadata validation at
+the latest observation. Source inspection identifies serial per-file attribution
+without intermediate progress or a short timeout, but cannot identify the live
+suboperation. A pending publisher is not a successful installed runtime result.
+Main integration, final combined runtime evidence and archive/cleanup remain open.
+
+## Source-identity observation refinement, 2026-10-03 UTC
+
+Run 37092723192 passed 9/9 lifecycle contracts in 12007 ms, then both diagnostic
+captures stopped at source_identity before capture. The 200% option was still
+unobserved; resolution, scale and both contained process trees were restored.
+No encrypted images exist for this run. Source 4e0ce0b7f627aacee3a91f1732ef48c3b30732a5
+has two independent source acceptances for fixed substage and bounded scalar
+observations. The underlying identity cause remains unproved. No raw output,
+paths, environment values or exceptions enter the public receipt.
+
+Publisher 37089433015 remained in metadata validation at 03:20:24 UTC; its
+one-hour observation limit expired with publication unverified, without canceling
+or rerunning it. Build 37092713387 for 7fb8a6a328772f04a159c0c989f2146aada152d4
+passed automation contracts and was compiling at its latest observation.
+All nine BambuStudio worktrees were clean and no stash existed at inventory.
+All source tips remain retained; none is eligible for completed-main cleanup.
+
+## Focused contained-source reproduction, 2026-10-03 UTC
+
+Run 37093133090 stopped both diagnostic phases at source_process_exit. Directory
+and run identity were valid; termination was verified, output was empty and the
+helper returned -1. This does not prove that Git itself exited with that value.
+Scale and resolution restoration remained verified. No encrypted images exist.
+
+Reviewed candidate 68998d535c2ec0197627b0882f187262f998fc80 adds fixed process
+stages and an immediate numeric CreateProcess diagnostic, preserving all existing
+containment, deadlines and acceptance. A tenth hosted lifecycle case reproduces
+the nested contained source query and checks actual output against the run SHA.
+The next attempt uses lifecycle_only and does not open Settings. Both independent
+source lenses accepted this diagnostic change; execution and cause remain pending.
+
+## Literal executable repair, 2026-10-03 UTC
+
+Focused run 37093668005 failed its first case in 5002 ms: outer execution
+completed with code 0 and stage 18, while inner creation stopped at stage 6
+with native result 123, code -1 and empty output. Cleanup was verified and
+Settings was untouched. This identifies invalid-name rejection at creation,
+not the precise original malformed value.
+
+Two independent reviews accepted 1477bd43b99a62047e5449555d8098d7b7ef4069.
+Production now selects one exact git.exe ApplicationInfo.Path and requires a
+scalar, absolute, existing literal file before creation. The hosted case uses
+the same functions to reject arrays, joined paths, quoted paths and relative
+names, then queries the real checkout SHA. Launch recovery remains pending;
+array coercion is a hypothesis, not an established original cause.
+
+## Verified source launch and private diagnostic opening, 2026-10-03 UTC
+
+Run 37093959893 passed 10/10 cases in 12982 ms at b546820867f01602807775275a6ef3e1f6cce793.
+The former lookup returned three candidates. Production rejected four malformed
+path shapes, launched one valid executable and matched the actual checkout SHA.
+Both processes completed normally; cleanup was verified and Settings untouched.
+Original red/green receipt hashes are retained in
+docs/features/automation/hosted-source-query-b5468208.json.
+
+Run 37094061673 still failed 200% selection at match_option, but both encrypted
+captures completed and the original scale/resolution and process trees were
+restored. Reader validation exposed an exact empty rectangle on offscreen UIA
+controls. Reviewed repair a115faf0861e38fa0be8da646d87195672bdad3d permits that
+exact sentinel only as unavailable optional offscreen-control geometry; frame
+and PNG bounds remain strict. Both encrypted captures opened successfully with
+authenticated source/run/phase bindings. The first records 16 unavailable control
+rectangles. The eleven-case hosted geometry contract subsequently passed in run 37094628859, as recorded above.
+
+The first genuine pixel review found a collapsed 100% selector and visible
+1920x1080 resolution. A visible account identity prevents publication of the
+unredacted original. Both independent expanded-state reviews are now complete, as recorded above. These are Settings
+diagnostics, not installed application evidence. Main integration and cleanup
+remain incomplete; no physical printer command was sent.
+
+Current source follow-up: c7aefb4b8 includes reviewed checkbox/slider emphasis,
+disclosure rails, regex-builder/modal/child-list entrances and semantic menu
+contrast preservation. The earlier filter blend reduced shortcut contrast to
+2.993:1 in source arithmetic; repaired paint keeps final semantic colors and
+animates decoration. Fifty-nine pure outcomes passed in hosted run37101358501 at c7aefb4b8. Run37100211528
+failed catalog counts (7709 metadata versus7712 entries); reviewed coverage
+repair e70638618 is included in new native run37101358501. Combined package
+run37101358049 is queued at the same source. No current installed pixels or
+final-main verdict exist. Menu-builder interaction scope and temporal capture
+planning continue; page-body transitions remain incomplete.
+
+Independent authenticated review of run 37101357236 found the debugger unable
+to resolve NtGlobalFlag in nt!_PEB. The initial marker and target identity were
+emitted, but required sls readback was absent; no g command was sent. Exit 2
+follows the bounded 90-second acknowledgement wait, not an observed product
+initializer. Matching operating-system symbol repair is assigned separately.
+The prior natural initialization error 1114 remains unresolved.
+
+Hosted native run37101358501 passed focused and native-services jobs at
+c7aefb4b84f31a4bc2519d8052ac78b3ccaa3a17: 59 motion-policy outcomes, 7712
+validated translations, language16/199, vocabulary3/45, archive4/103, print5/28
+and canvas regex1/19 (cases/assertions). This is not installed GUI evidence.
+Reviewed assembly-frame entrance plus updated inventory are integrated at
+3c4f53bb5b26f9a1081e32d715580ef0a239be76. The unconnected temporal helper
+is integrated at82c029c3d6ded039d6eebf936de5378ca998f877, after two independent
+source reviews. Its18 source-defined contracts have not yet run.
+
+Menu-builder1ae08 has a confirmed reachability defect: Test pattern is below
+the bounded scroll viewport. Do not dispatch that flow unchanged. The separate
+9aa64b7 duplicate entrance removal passed two source reviews. Matching-symbol
+repair161b2ca65 is preserved on the motion branch, with second review pending.
+All local operations remain source/admin only. No main integration or deletion.
+
+Latest integration23d01afd3d53a3f7d5dcc42db5885281730bca31 includes reviewed
+manual tooltip identities and decorative feedback. Assembly frame entrance and
+temporal helper are already preserved. Revised menu focus traversal33377f32
+and duplicate entrance removal9aa64b7 are integrated at e09035ff4 after two
+source reviews; maximum observations are23/28, not passed interaction results.
+
+Matching-symbol diagnostic repair161b2ca65 was independently integrated as
+e50f5dac1074055e02be230bfdc5dd98d829e5e6. Hosted contract37102256371 and
+from-creation diagnostic37102257995 target that exact source and are queued.
+A raw-SHA dispatch was rejected before starting; successful branch dispatches
+were checked against the intended head SHA. Temporal contract activation at
+fa1cd3eb579e23ed7e5af01a0a6ab00a6ac47d13 created run37102495898, queued.
+The prior manual attempt returned404 because the workflow was absent from
+the default branch. Do not duplicate the automatically activated run.
+
+Native child-page composition remains an explicit gap. Child AW_BLEND is
+unsupported, separate child painters prevent parent-only composition, and an
+opaque or translucent veil is not accepted as a content transition. Canvas
+hover/filter and BusyInfo responsiveness are receiving bounded source review.
+No local product execution, main integration, archive or deletion occurred.

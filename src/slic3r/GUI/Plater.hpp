@@ -2,6 +2,8 @@
 #define slic3r_Plater_hpp_
 
 #include <memory>
+#include <array>
+#include <cstdint>
 #include <optional>
 #include <utility>
 #include <vector>
@@ -99,11 +101,42 @@ using t_optgroups = std::vector <std::shared_ptr<ConfigOptionsGroup>>;
 class Plater;
 enum class ActionButtonType : int;
 
+// Process-local diagnostic observations. No model names, paths or pointer
+// identities cross the automation boundary. All records are written on the UI
+// thread and retain only the most recent events, without allocating in handlers.
+struct SliceWorkflowCompletionObservation {
+    uint64_t sequence{0}, event_generation{0}, current_generation{0};
+    const char* status{"idle"};
+    const char* rejection{"none"};
+    bool accepted{false};
+};
+struct SliceWorkflowContinuationObservation {
+    uint64_t sequence{0}, request_generation{0}, native_generation{0};
+    int plate_index{-1};
+    const char* action{"none"};
+};
+struct SliceWorkflowObservation {
+    static constexpr size_t event_capacity = 16;
+    bool enabled{false}, cancellation_requested{false}, worker_running{false}, worker_state_known{false};
+    uint64_t request_generation{0}, native_generation{0}, model_revision{0};
+    uint64_t completion_sequence{0}, continuation_sequence{0};
+    int processing_plate_index{-1};
+    const char* outcome{"idle"};
+    const char* pending_action{"none"};
+    int pending_plate_index{-1};
+    uint64_t pending_request_generation{0}, pending_native_generation{0};
+    bool pending_matches_current_plate{false}, pending_matches_processing_plate{false};
+    size_t completion_count{0}, continuation_count{0};
+    std::array<SliceWorkflowCompletionObservation, event_capacity> completions{};
+    std::array<SliceWorkflowContinuationObservation, event_capacity> continuations{};
+};
+
 #define EVT_PUBLISHING_START        1
 #define EVT_PUBLISHING_STOP         2
 
 //BBS: add EVT_SLICING_UPDATE declare here
 wxDECLARE_EVENT(EVT_SLICING_UPDATE, Slic3r::SlicingStatusEvent);
+wxDECLARE_EVENT(EVT_GLTOOLBAR_SLICE_AND_SEND_PLATE, SimpleEvent);
 wxDECLARE_EVENT(EVT_PUBLISH,        wxCommandEvent);
 wxDECLARE_EVENT(EVT_OPEN_PLATESETTINGSDIALOG,        wxCommandEvent);
 
@@ -608,6 +641,7 @@ public:
     void export_core_3mf();
     static TriangleMesh combine_mesh_fff(const ModelObject& mo, int instance_id, std::function<void(const std::string&)> notify_func = {});
     void export_stl(bool extended = false, bool selection_only = false, bool multi_stls = false);
+    bool automation_export_plate_stl(const std::filesystem::path& destination, int plate_index);
     //BBS: remove amf
     //void export_amf();
     //BBS add extra param for exporting 3mf silence
@@ -623,6 +657,9 @@ public:
     bool has_toolpaths_to_export() const;
     void export_toolpaths_to_obj() const;
     void reslice();
+    uint64_t automation_slice_request_generation() const { return m_automation_slice_request_generation; }
+    SliceWorkflowObservation automation_slice_workflow();
+    uint64_t automation_slice_native_generation() const;
     void stop_helio_process();
     void feedback_helio_process(float rating, std::string commend);
     void record_slice_preset(std::string action);
@@ -1177,6 +1214,7 @@ private:
     bool m_exported_file { false };
     bool skip_thumbnail_invalid { false };
     bool m_loading_project {false };
+    uint64_t m_automation_slice_request_generation{0};
     bool m_new_project_and_check_state{false};
     std::string m_preview_only_filename;
     int m_valid_plates_count { 0 };

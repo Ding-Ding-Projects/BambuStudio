@@ -42,6 +42,7 @@ class ConfigProfilesDialog final : public DPIDialog
 public:
     explicit ConfigProfilesDialog(wxWindow *parent);
     ~ConfigProfilesDialog() override;
+    void EndModal(int retCode) override;
 
 protected:
     void on_dpi_changed(const wxRect &suggested_rect) override;
@@ -68,6 +69,8 @@ private:
     void on_snapshot(wxCommandEvent &event);
     void on_history(wxCommandEvent &event);
     void on_prefs_history(wxCommandEvent &event);
+    void show_profile_history(ProfileRow row, ProjectHistoryListResult versions);
+    void show_preferences_history(ProjectHistoryListResult versions);
 
     const ProfileRow *selected_profile() const;
     std::filesystem::path profiles_root() const;
@@ -81,8 +84,12 @@ private:
     std::unique_ptr<ProjectHistoryManager> m_history;
     std::future<wxString>                  m_busy_future; // empty string = success, else error text
     std::function<void(wxString)>          m_busy_done;
+    std::future<ProjectHistoryListResult>  m_list_future;
+    std::function<void(ProjectHistoryListResult)> m_list_done;
     wxTimer                                m_poll_timer;
     bool                                   m_busy { false };
+    bool                                   m_close_requested { false };
+    int                                    m_close_result { wxID_CANCEL };
 
     Label              *m_title_label { nullptr };
     Label              *m_subtitle_label { nullptr };

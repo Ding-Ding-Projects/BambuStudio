@@ -29,6 +29,11 @@ AssemblyExportProgressWindow::AssemblyExportProgressWindow(wxWindow *parent)
     : wxFrame(parent, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize,
               wxFRAME_NO_TASKBAR | wxFRAME_SHAPED | wxBORDER_NONE | wxSTAY_ON_TOP)
 {
+    Bind(wxEVT_SHOW, [this](wxShowEvent &event) {
+        if (event.GetEventObject() == this && !event.IsShown())
+            m_entrance.Stop();
+        event.Skip();
+    });
     SetFont(wxGetApp().normal_font());
     const wxColour surface = StateColor::semantic(MD3::Role::SurfaceContainerHigh);
     SetBackgroundColour(surface);
@@ -73,6 +78,11 @@ AssemblyExportProgressWindow::AssemblyExportProgressWindow(wxWindow *parent)
     SetSizer(root_sizer);
     Fit();
     apply_shape();
+}
+
+AssemblyExportProgressWindow::~AssemblyExportProgressWindow()
+{
+    m_entrance.Stop();
 }
 
 // Cuts the rounded dialog silhouette out of the window, the same mask-bitmap to
@@ -140,8 +150,13 @@ void AssemblyExportProgressWindow::update_progress(const wxString &message, int 
     Fit();
     apply_shape();
     position_near_anchor(anchor);
-    if (!IsShown())
+    if (!IsShown()) {
         ShowWithoutActivating();
+        // Start only on a real reveal, never on each progress update. The
+        // controller defers native opacity until visibility is established.
+        if (IsShown())
+            m_entrance.Show(this, MD3::Motion::short2);
+    }
     Raise();
 }
 

@@ -1,0 +1,148 @@
+name: Verify hosted predefined display scaling
+on:
+  push:
+    branches: [feature/ui-integration]
+    paths: [.github/workflows/display-scale-provisioning.yml]
+  workflow_dispatch:
+    inputs:
+      lifecycle_only:
+        description: Verify changed process containment without repeating scale input
+        type: boolean
+        default: false
+      input_route:
+        description: Explicit input route on the disposable hosted desktop
+        type: choice
+        default: background
+        options: [background, hosted-foreground]
+      provision_resolution:
+        description: Observe scaling at the selected fixed mode and restore the original mode
+        type: boolean
+        default: false
+      resolution_mode:
+        description: Alternate mode is restricted to standalone encrypted page diagnostics
+        type: choice
+        default: '1920x1080'
+        options: ['1920x1080', '1600x1200']
+      scale_selection:
+        description: Use one scale for shared-path diagnosis or all scales for verification
+        type: choice
+        default: all
+        options: [all, '125', '150', '200']
+      diagnostic_evidence:
+        description: Encrypt bounded owned Settings captures for standalone diagnosis
+        type: boolean
+        default: false
+      refresh_settings_page:
+        description: Diagnose offered scales after an observed Colors and Display round trip
+        type: boolean
+        default: false
+permissions:
+  contents: read
+jobs:
+  lifecycle:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: windows-2025
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with:
+          persist-credentials: false
+      - name: Exercise process containment and output limits
+        shell: pwsh
+        run: |
+          & scripts/ci/Test-HostedScaleProcess.ps1 -OutputDirectory "$env:RUNNER_TEMP/scale-lifecycle"
+      - name: Retain fixed lifecycle receipt only
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: display-scale-lifecycle-${{ github.run_id }}
+          path: ${{ runner.temp }}/scale-lifecycle/receipt.json
+          if-no-files-found: warn
+          retention-days: 7
+  provision:
+    if: github.event_name == 'workflow_dispatch' && !inputs.lifecycle_only
+    needs: lifecycle
+    runs-on: windows-2025
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        scale: ${{ fromJSON(inputs.scale_selection == '125' && '[125]' || inputs.scale_selection == '150' && '[150]' || inputs.scale_selection == '200' && '[200]' || '[125,150,200]') }}
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.12'
+      - name: Prepare pinned native input tooling
+        shell: pwsh
+        run: |
+          $toolCommit = 'e6e42f2066d539256d6480401d7cef867f2b8dfe'
+          $toolRoot = Join-Path $env:RUNNER_TEMP 'scale-lowlevel'
+          git clone --quiet --no-checkout https://github.com/Ding-Ding-Projects/lowlevel-computer-use-mcp.git $toolRoot
+          if ($LASTEXITCODE -ne 0) { throw 'Headless tooling fetch failed.' }
+          git -C $toolRoot checkout --quiet --detach $toolCommit
+          if ($LASTEXITCODE -ne 0 -or (git -C $toolRoot rev-parse HEAD).Trim() -cne $toolCommit) { throw 'Headless tooling identity mismatch.' }
+          $venv = Join-Path $env:RUNNER_TEMP 'scale-python'
+          python -m venv $venv
+          if ($LASTEXITCODE -ne 0) { throw 'Job-local environment creation failed.' }
+          & "$venv/Scripts/python.exe" -m pip install --disable-pip-version-check --quiet $toolRoot
+          if ($LASTEXITCODE -ne 0) { throw 'Headless tooling installation failed.' }
+          "LLCU_CHEAP=$venv/Scripts/lowlevel-computer-use-cheap.exe" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+      - name: Open supported display settings
+        shell: pwsh
+        env:
+          RESOLUTION_MODE: ${{ inputs.resolution_mode }}
+          REFRESH_SETTINGS_PAGE: ${{ inputs.refresh_settings_page }}
+          PROVISION_RESOLUTION: ${{ inputs.provision_resolution }}
+          DIAGNOSTIC_EVIDENCE: ${{ inputs.diagnostic_evidence }}
+          SCALE_INPUT_ROUTE: ${{ inputs.input_route }}
+        run: |
+          if ($env:RESOLUTION_MODE -cnotin @('1920x1080','1600x1200') -or
+              ($env:RESOLUTION_MODE -ceq '1600x1200' -and $env:REFRESH_SETTINGS_PAGE -ne 'true')) {
+            throw 'Unsupported fixed resolution diagnostic tuple.'
+          }
+          if ($env:REFRESH_SETTINGS_PAGE -eq 'true' -and
+              ($env:PROVISION_RESOLUTION -ne 'true' -or $env:DIAGNOSTIC_EVIDENCE -ne 'true' -or
+               $env:SCALE_INPUT_ROUTE -cne 'hosted-foreground')) {
+            throw 'Page refresh requires foreground resolution diagnostics.'
+          }
+          Start-Process -FilePath 'ms-settings:display' -WindowStyle Hidden -ErrorAction Stop
+          Start-Sleep -Seconds 5
+      - name: Select observe and restore a predefined scale
+        shell: pwsh
+        env:
+          SCALE_PERCENT: ${{ matrix.scale }}
+          RESOLUTION_MODE: ${{ inputs.resolution_mode }}
+          SCALE_INPUT_ROUTE: ${{ inputs.input_route }}
+          PROVISION_RESOLUTION: ${{ inputs.provision_resolution }}
+          DIAGNOSTIC_EVIDENCE: ${{ inputs.diagnostic_evidence }}
+          REFRESH_SETTINGS_PAGE: ${{ inputs.refresh_settings_page }}
+        run: |
+          $scaleArguments = @{
+            ScalePercent = [int]$env:SCALE_PERCENT
+            OutputDirectory = "$env:RUNNER_TEMP/scale-proof"
+            CheapExecutable = $env:LLCU_CHEAP
+            InputRoute = $env:SCALE_INPUT_ROUTE
+            ResolutionMode = $env:RESOLUTION_MODE
+          }
+          if ($env:PROVISION_RESOLUTION -eq 'true') { $scaleArguments.ProvisionResolution = $true }
+          if ($env:DIAGNOSTIC_EVIDENCE -eq 'true') { $scaleArguments.DiagnosticEvidence = $true }
+          if ($env:REFRESH_SETTINGS_PAGE -eq 'true') { $scaleArguments.RefreshSettingsPage = $true }
+          & scripts/ci/Invoke-HostedDisplayScale.ps1 @scaleArguments
+      - name: Retain bounded receipts and encrypted diagnostics
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: display-scale-${{ matrix.scale }}-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/scale-proof/supervisor.json
+            ${{ runner.temp }}/scale-proof/run.json
+            ${{ runner.temp }}/scale-proof/restore.json
+            ${{ runner.temp }}/scale-proof/before_selector.aesgcm
+            ${{ runner.temp }}/scale-proof/before_selector.envelope.json
+            ${{ runner.temp }}/scale-proof/expanded_selector.aesgcm
+            ${{ runner.temp }}/scale-proof/expanded_selector.envelope.json
+          if-no-files-found: warn
+          retention-days: 7

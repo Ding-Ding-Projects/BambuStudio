@@ -1,0 +1,136 @@
+name: Hosted temporal observation contracts
+
+on:
+  push:
+    branches: [feature/ui-integration]
+    paths:
+      - '.github/workflows/motion-temporal-contract.yml'
+      - 'scripts/md3/motion_temporal.py'
+      - 'scripts/md3/test_motion_temporal.py'
+      - 'scripts/md3/temporal_checkbox.py'
+      - 'scripts/md3/test_temporal_checkbox.py'
+  workflow_dispatch:
+    inputs:
+      source_commit:
+        description: Exact workflow and contract source SHA
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    runs-on: windows-2025
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.12'
+      - name: Exercise product-free temporal contracts
+        shell: pwsh
+        env:
+          EXPECTED_SOURCE_COMMIT: ${{ github.event_name == 'push' && github.sha || inputs.source_commit }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ($env:RUNNER_ENVIRONMENT -cne 'github-hosted' -or $env:RUNNER_OS -cne 'Windows') { throw 'Hosted Windows is required.' }
+          $source = git rev-parse HEAD
+          if ($LASTEXITCODE -ne 0 -or $env:EXPECTED_SOURCE_COMMIT -cnotmatch '^[0-9a-f]{40}$' -or
+              $source -cne $env:GITHUB_SHA -or $source -cne $env:EXPECTED_SOURCE_COMMIT) { throw 'Exact source identity mismatch.' }
+          New-Item -ItemType Directory -Path temporal-contract | Out-Null
+          $receipt = @{schema=1;source_commit=$source;run_id=$env:GITHUB_RUN_ID;run_attempt=$env:GITHUB_RUN_ATTEMPT;
+            status='failed';expected_cases=25;exit_code=$null;product_started=$false;gui_started=$false;
+            installation_performed=$false;capture_performed=$false;files=@{}}
+          foreach ($path in @('.github/workflows/motion-temporal-contract.yml','scripts/md3/motion_temporal.py','scripts/md3/test_motion_temporal.py','scripts/md3/temporal_checkbox.py','scripts/md3/test_temporal_checkbox.py')) {
+            $receipt.files[$path] = (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash.ToLowerInvariant()
+          }
+          $runner = @'
+          import importlib.util
+          import json
+          from pathlib import Path
+          import sys
+          import time
+          import unittest
+
+          rows = []
+          class Result(unittest.TestResult):
+              def startTest(self, test):
+                  super().startTest(test)
+                  self.started = time.monotonic_ns()
+              def record(self, test, status):
+                  rows.append({"case": test.id(), "status": status,
+                               "elapsed_ns": time.monotonic_ns() - self.started})
+              def addSuccess(self, test):
+                  super().addSuccess(test)
+                  self.record(test, "passed")
+              def addFailure(self, test, error):
+                  super().addFailure(test, error)
+                  self.record(test, "failed")
+              def addError(self, test, error):
+                  super().addError(test, error)
+                  self.record(test, "error")
+              def addSkip(self, test, reason):
+                  super().addSkip(test, reason)
+                  self.record(test, "skipped")
+              def addExpectedFailure(self, test, error):
+                  super().addExpectedFailure(test, error)
+                  self.record(test, "expected_failure")
+              def addUnexpectedSuccess(self, test):
+                  super().addUnexpectedSuccess(test)
+                  self.record(test, "unexpected_success")
+
+          code, count, stage = 2, 0, "load"
+          try:
+              root = Path.cwd()
+              sys.path.insert(0, str(root / "scripts/md3"))
+              suite = unittest.TestSuite()
+              for name, expected in (("test_motion_temporal", 18), ("test_temporal_checkbox", 7)):
+                  spec = importlib.util.spec_from_file_location(name, root / ("scripts/md3/" + name + ".py"))
+                  module = importlib.util.module_from_spec(spec)
+                  spec.loader.exec_module(module)
+                  group = unittest.defaultTestLoader.loadTestsFromModule(module)
+                  if group.countTestCases() != expected:
+                      raise RuntimeError("Unexpected module inventory")
+                  suite.addTests(group)
+              count = suite.countTestCases()
+              stage = "inventory"
+              if count != 25:
+                  raise RuntimeError("Unexpected contract inventory")
+              stage = "execute"
+              result = Result()
+              suite.run(result)
+              code = 0 if result.wasSuccessful() and result.testsRun == 25 and len(rows) == 25 and len({row["case"] for row in rows}) == 25 and all(row["status"] == "passed" for row in rows) else 1
+              stage = "complete"
+          except Exception:
+              code = 2
+          finally:
+              Path("temporal-contract/cases.json").write_text(json.dumps({"schema": 1, "stage": stage,
+                  "discovered_cases": count, "recorded_cases": len(rows), "exit_code": code,
+                  "python_version": sys.version.split()[0], "cases": rows}, indent=2) + "\n", encoding="utf-8")
+          raise SystemExit(code)
+          '@
+          $runnerPath = Join-Path $env:RUNNER_TEMP 'motion-temporal-contract-runner.py'
+          try {
+            [IO.File]::WriteAllText($runnerPath, $runner, [Text.UTF8Encoding]::new($false))
+            python $runnerPath
+            $receipt.exit_code = $LASTEXITCODE
+            if ($LASTEXITCODE -ne 0) { throw 'Temporal contract failed; inspect fixed per-case results.' }
+            $receipt.status = 'passed'
+          } finally {
+            if (Test-Path -LiteralPath temporal-contract/cases.json) {
+              $receipt.cases_sha256 = (Get-FileHash -LiteralPath temporal-contract/cases.json -Algorithm SHA256).Hash.ToLowerInvariant()
+            }
+            $receipt | ConvertTo-Json -Depth 5 | Set-Content temporal-contract/receipt.json -Encoding utf8
+          }
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        if: always()
+        with:
+          name: motion-temporal-contract-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            temporal-contract/receipt.json
+            temporal-contract/cases.json
+          if-no-files-found: warn

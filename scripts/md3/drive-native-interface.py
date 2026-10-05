@@ -1,0 +1,1433 @@
+#!/usr/bin/env python3
+"""Exercise installed native controls using the cheap hidden-desktop input route.
+
+One bounded scope per invocation keeps evidence compatible with the existing
+automation recipient and reader. Application commands and layout probes are
+read-only; interaction uses native input. Raw evidence requires pixel review.
+"""
+from __future__ import annotations
+
+import argparse
+import ctypes
+from ctypes import wintypes
+from datetime import datetime, timezone
+import gettext
+import hashlib
+import importlib.util
+import json
+import os
+from pathlib import Path
+import re
+import shutil
+import subprocess
+import sys
+import tempfile
+import threading
+import time
+
+from recapture import cheap
+from startup_diagnostics import collect_startup, verifier_binding
+
+HERE = Path(__file__).resolve().parent
+spec = importlib.util.spec_from_file_location("packaged_behavior", HERE / "drive-packaged-behavior.py")
+behavior = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(behavior)
+
+
+def require(value, message):
+    if not value:
+        raise RuntimeError(message)
+
+
+def require_vocabulary_getters(probe, title, original):
+    """Bind real Label getter observations to the visible native title."""
+    require(type(title.get("hwnd")) is int and title["hwnd"] > 0 and
+            type(title.get("top")) is int and title["top"] > 0 and
+            title.get("type") == 50020 and
+            title.get("name") == original and title.get("offscreen") is False,
+            "Vocabulary title identity is unavailable")
+    rows = [row for row in probe if row.get("kind") == "window" and
+            row.get("name") == "personal-vocabulary-title"]
+    require(len(rows) == 1, "Vocabulary native getter target is missing or ambiguous")
+    row = rows[0]
+    getters = row.get("native_getters")
+    screen = row.get("screen", {})
+    require(type(row.get("hwnd")) is int and row["hwnd"] == title["hwnd"] and
+            type(row.get("top")) is int and row["top"] == title["top"] and
+            row.get("on_screen") is True and row.get("label") == original and
+            all(type(screen.get(key)) is int for key in ("x", "y", "w", "h")) and
+            screen["w"] > 0 and screen["h"] > 0 and
+            title.get("rect") == [screen["x"], screen["y"], screen["x"] + screen["w"], screen["y"] + screen["h"]],
+            "Vocabulary native getter target differs from the captured title")
+    require(isinstance(getters, dict) and set(getters) == {
+                "schemaVersion", "getLabelTextEqualsGetLabel", "getUnwrappedLabelEqualsGetLabel"} and
+            type(getters.get("schemaVersion")) is int and
+            getters["schemaVersion"] == 1 and
+            getters.get("getLabelTextEqualsGetLabel") is True and
+            getters.get("getUnwrappedLabelEqualsGetLabel") is True,
+            "Vocabulary title native getters do not retain the original unwrapped text")
+    return {"hwnd": row["hwnd"], "top": row["top"], "rect": list(title["rect"]),
+            "getLabelMatchesOriginal": True, **getters}
+
+
+def minimum_observation_valid(row):
+    if not isinstance(row, dict) or row.get("status") != "measured_minimum_contained":
+        return False
+    value, minimum = row.get("native_input_target", {}), row.get("minimum_outer", {})
+    outer, work, client = value.get("outer"), value.get("work_area"), value.get("client")
+    if not (isinstance(outer, list) and len(outer) == 4 and isinstance(work, list) and len(work) == 4
+            and isinstance(client, list) and len(client) == 2 and
+            all(type(v) is int for v in outer + work + client) and
+            all(type(minimum.get(k)) is int for k in ("w", "h"))):
+        return False
+    return (type(row.get("main_hwnd")) is int and row["main_hwnd"] > 0 and
+            value.get("captured_hwnd") == row["main_hwnd"] and value.get("capture_geometry_verified") is True and
+            value.get("dpi") == 192 and value.get("contained") is True and
+            outer[2] - outer[0] == minimum["w"] and outer[3] - outer[1] == minimum["h"] and
+            400 <= minimum["w"] <= 4000 and 300 <= minimum["h"] <= 4000 and
+            work[0] <= outer[0] < outer[2] <= work[2] and work[1] <= outer[1] < outer[3] <= work[3] and
+            0 < client[0] <= minimum["w"] and 0 < client[1] <= minimum["h"] and
+            row.get("interactive_resize_clamp") == "unverified")
+
+
+def cancel_anchor(observation, action):
+    """Bind real cancel input to an uncancelled request and its next epoch."""
+    for key in ("nativeGeneration", "requestGeneration", "modelRevision",
+                "completionSequence", "continuationSequence"):
+        value = observation.get(key)
+        require(type(value) is int and 0 <= value <= 2**64 - 1,
+                "Cancellation observation has an invalid counter: " + key)
+    generation = observation["nativeGeneration"]
+    pending = observation.get("pending", {})
+    require(0 < generation < 2**64 - 1 and observation["requestGeneration"] > 0 and
+            observation.get("workerStateKnown") is True and observation.get("workerRunning") is True and
+            observation.get("outcome") == "running" and observation.get("cancellationRequested") is False,
+            "Cancel input requires an uncancelled in-flight request")
+    require(action in ("print", "send") and pending.get("action") == action and
+            type(pending.get("requestGeneration")) is int and
+            pending["requestGeneration"] == observation["requestGeneration"] and
+            type(pending.get("nativeGeneration")) is int and pending["nativeGeneration"] == generation and
+            type(pending.get("plateIndex")) is int and pending["plateIndex"] == 0 and
+            type(observation.get("processingPlateIndex")) is int and observation["processingPlateIndex"] == 0 and
+            type(observation.get("currentPlate")) is int and observation["currentPlate"] == 0 and
+            pending.get("matchesCurrentPlate") is True and pending.get("matchesProcessingPlate") is True,
+            "Cancel input request or plate identity is inconsistent")
+    return {"inputGeneration": generation, "cancellationGeneration": generation + 1,
+            "requestGeneration": observation["requestGeneration"], "modelRevision": observation["modelRevision"],
+            "plateIndex": 0, "completionSequence": observation["completionSequence"],
+            "continuationSequence": observation["continuationSequence"], "action": action}
+
+
+def require_cancel_epoch(state, anchor):
+    """Reject drift; request_stop advances G to G+1 without creating a new request."""
+    for key in ("nativeGeneration", "requestGeneration", "modelRevision",
+                "completionSequence", "continuationSequence", "processingPlateIndex", "currentPlate"):
+        require(type(state.get(key)) is int and 0 <= state[key] <= 2**64 - 1,
+                "Cancellation epoch has an invalid counter: " + key)
+    require(state.get("nativeGeneration") == anchor["cancellationGeneration"] and
+            state["requestGeneration"] == anchor["requestGeneration"] and
+            state["modelRevision"] == anchor["modelRevision"] and
+            state["processingPlateIndex"] == state["currentPlate"] == anchor["plateIndex"] and
+            state.get("cancellationRequested") is True and state.get("pending", {}).get("action") == "none" and
+            state["continuationSequence"] == anchor["continuationSequence"],
+            "Cancellation epoch, request, model, plate or continuation changed")
+    require((state.get("workerStateKnown") is True and type(state.get("workerRunning")) is bool) or
+            (state.get("workerStateKnown") is False and state.get("workerRunning") is None),
+            "Cancellation ownership state is inconsistent")
+    sequence, events = state["completionSequence"], state.get("completionEvents")
+    require(anchor["completionSequence"] <= sequence <= anchor["completionSequence"] + 16 and
+            isinstance(events, list) and len(events) == min(16, sequence) and
+            all(type(e.get("sequence")) is int for e in events) and
+            [e["sequence"] for e in events] == list(range(sequence - len(events) + 1, sequence + 1)),
+            "Cancellation completion evidence is missing or overwritten")
+    require(state.get("outcome") in ("running", "cancelled"),
+            "Cancellation epoch ended with an unexpected outcome")
+
+
+def wait_cancel_completion(read_workflow, anchor, clock, sleep, timeout=90):
+    """Credit only a delivered accepted cancellation and released ownership."""
+    deadline = clock() + timeout
+    while clock() < deadline:
+        state = read_workflow()
+        if clock() >= deadline:
+            break
+        require_cancel_epoch(state, anchor)
+        accepted = [event for event in state["completionEvents"]
+                    if event["sequence"] > anchor["completionSequence"] and
+                    event.get("accepted") is True and event.get("rejection") == "none" and
+                    event.get("status") == "cancelled" and
+                    type(event.get("eventGeneration")) is int and
+                    type(event.get("currentGeneration")) is int and
+                    event["eventGeneration"] == event["currentGeneration"] == anchor["cancellationGeneration"]]
+        if (len(accepted) == 1 and state.get("workerStateKnown") is True and
+                state.get("workerRunning") is False and state["outcome"] == "cancelled"):
+            return state, accepted[0]
+        sleep(0.1)
+    raise RuntimeError("Accepted cancellation completion and ownership release were not observed before timeout")
+
+
+def select_cancel_observation(read_workflow, generation, action, clock, sleep, timeout=10):
+    """Select a fresh read-only target; timeout never authorizes native input.
+
+    Clock/read injection lets focused tests exercise this exact selection path
+    without loading Windows providers or substituting the application interface.
+    """
+    deadline = clock() + timeout
+    target, observation, observed_at = None, None, None
+    fresh_observation = False
+    while clock() < deadline:
+        target, observation, observed_at = None, None, None
+        read_started = clock()
+        candidate = read_workflow()
+        now = clock()
+        if now >= deadline:
+            break
+        if candidate.get("workerStateKnown") is not True:
+            sleep(0.05)
+            continue
+        require(candidate.get("nativeGeneration") == generation and
+                candidate.get("outcome") == "running" and candidate.get("workerRunning") is True and
+                candidate.get("pending", {}).get("action") == action,
+                "In-flight generation ended before cancellation input")
+        rendered = candidate.get("cancelTarget", {})
+        age = rendered.get("ageMs")
+        if (rendered.get("visible") is True and isinstance(age, (int, float)) and
+                0 <= age and age + (now - read_started) * 1000 <= 500 and
+                rendered.get("nativeGeneration") == generation and
+                rendered.get("coordinateSpace") == "screen-pixels"):
+            rect, canvas = rendered.get("rect"), rendered.get("canvasRect")
+            require(isinstance(rect, list) and len(rect) == 4 and
+                    isinstance(canvas, list) and len(canvas) == 4,
+                    "Rendered cancel target geometry unavailable")
+            left, top, right, bottom = rect
+            cl, ct, cr, cb = canvas
+            require(cl <= left < right <= cr and ct <= top < bottom <= cb,
+                    "Rendered cancel target is outside the canvas")
+            target, observation, observed_at = rendered, candidate, read_started
+            fresh_observation = True
+            break
+        sleep(0.05)
+    require(fresh_observation and target is not None,
+            "Rendered cancel target was not freshly observed within the bounded interval")
+    return observation, target, observed_at
+
+
+def native_worker(request_path: Path, output: Path):
+    """Run on the owned desktop, including the cheap CLI's keyboard targeting.
+
+    UIA patterns are never invoked. In particular there is no ValuePattern setter,
+    InvokePattern, menu command dispatch, WM_SETTEXT or application test command.
+    """
+    import comtypes.client
+    from comtypes import COMError
+    request = json.loads(request_path.read_text(encoding="utf-8"))
+    user = ctypes.WinDLL("user32", use_last_error=True)
+    user.SetProcessDpiAwarenessContext.argtypes = [wintypes.HANDLE]
+    user.SetProcessDpiAwarenessContext(wintypes.HANDLE(-4))
+    user.GetThreadDpiAwarenessContext.restype = wintypes.HANDLE
+    user.GetAwarenessFromDpiAwarenessContext.argtypes = [wintypes.HANDLE]
+    require(user.GetAwarenessFromDpiAwarenessContext(user.GetThreadDpiAwarenessContext()) == 2,
+            "Native observer is not per-monitor DPI aware")
+    user.GetWindowThreadProcessId.argtypes = [wintypes.HWND, ctypes.POINTER(wintypes.DWORD)]
+    user.ScreenToClient.argtypes = [wintypes.HWND, ctypes.POINTER(wintypes.POINT)]
+    user.SetWindowPos.argtypes = [wintypes.HWND, wintypes.HWND, ctypes.c_int, ctypes.c_int,
+                                  ctypes.c_int, ctypes.c_int, wintypes.UINT]
+    hwnd, pid = int(request["hwnd"]), int(request["pid"])
+    actual = wintypes.DWORD()
+    user.GetWindowThreadProcessId(hwnd, ctypes.byref(actual))
+    require(actual.value == pid and pid > 0, "Native input target is not owned")
+    operation = request["operation"]
+    if operation in ("keys", "text"):
+        class GUIThreadInfo(ctypes.Structure):
+            _fields_ = [("cbSize", wintypes.DWORD), ("flags", wintypes.DWORD),
+                ("hwndActive", wintypes.HWND), ("hwndFocus", wintypes.HWND),
+                ("hwndCapture", wintypes.HWND), ("hwndMenuOwner", wintypes.HWND),
+                ("hwndMoveSize", wintypes.HWND), ("hwndCaret", wintypes.HWND), ("rcCaret", wintypes.RECT)]
+        info = GUIThreadInfo()
+        info.cbSize = ctypes.sizeof(info)
+        user.GetGUIThreadInfo.argtypes = [wintypes.DWORD, ctypes.POINTER(GUIThreadInfo)]
+        thread = user.GetWindowThreadProcessId(hwnd, ctypes.byref(actual))
+        require(user.GetGUIThreadInfo(thread, ctypes.byref(info)) and info.hwndFocus,
+                "Native keyboard focus unavailable")
+        hwnd = info.hwndFocus
+        user.GetWindowThreadProcessId(hwnd, ctypes.byref(actual))
+        require(actual.value == pid, "Keyboard focus left the owned process")
+    cancel_observation = None
+    native_input_target = None
+    if operation in ("minimum-geometry", "minimum-drag"):
+        from minimum_resize import native_minimum_operation
+        native_input_target = native_minimum_operation(request, user)
+    elif operation == "cancel-current":
+        def read_workflow():
+            result = subprocess.run([request["cli"], "command", "project_inspect", "--json",
+                "--workspace", request["workspace"], "--instance", str(pid)], capture_output=True,
+                text=True, timeout=5, creationflags=subprocess.CREATE_NO_WINDOW)
+            require(result.returncode == 0 and len(result.stdout) <= 1048576,
+                    "Fresh cancellation observation unavailable")
+            response = json.loads(result.stdout)
+            require(response.get("ok") is True, "Fresh cancellation observation rejected")
+            state = response["result"]
+            return {**state.get("sliceWorkflow", {}), "currentPlate": state.get("currentPlate")}
+
+        w, target, observed_at = select_cancel_observation(read_workflow,
+            request["generation"], request["action"], time.monotonic, time.sleep)
+        anchor = cancel_anchor(w, request["action"])
+        require(anchor["requestGeneration"] == request["request_generation"] and
+                anchor["modelRevision"] == request["model_revision"] and
+                anchor["continuationSequence"] == request["continuation_sequence"],
+                "Fresh cancel input no longer belongs to the requested trial")
+        left, top, right, bottom = target["rect"]
+        x, y = round((left + right) / 2), round((top + bottom) / 2)
+        # Resolve the actual owned native child under the freshly observed point.
+        # Sending canvas input to a top-level frame would not exercise the control.
+        user.ChildWindowFromPointEx.argtypes = [wintypes.HWND, wintypes.POINT, wintypes.UINT]
+        user.ChildWindowFromPointEx.restype = wintypes.HWND
+        for _ in range(32):
+            point = wintypes.POINT(x, y)
+            require(user.ScreenToClient(hwnd, ctypes.byref(point)), "Cancel coordinate conversion failed")
+            child = user.ChildWindowFromPointEx(hwnd, point, 0x0001 | 0x0002 | 0x0004)
+            if not child or child == hwnd:
+                break
+            hwnd = child
+        user.GetWindowThreadProcessId(hwnd, ctypes.byref(actual))
+        require(actual.value == pid, "Rendered cancel target left the owned process")
+        # wxWidgets may register a generic native class name for GLCanvas.
+        # Match its actual client geometry instead of guessing a class string.
+        user.GetClientRect.argtypes = [wintypes.HWND, ctypes.POINTER(wintypes.RECT)]
+        user.ClientToScreen.argtypes = [wintypes.HWND, ctypes.POINTER(wintypes.POINT)]
+        bounds, origin = wintypes.RECT(), wintypes.POINT(0, 0)
+        require(user.GetClientRect(hwnd, ctypes.byref(bounds)) and
+                user.ClientToScreen(hwnd, ctypes.byref(origin)), "Canvas geometry unavailable")
+        actual_rect = [origin.x, origin.y, origin.x + bounds.right, origin.y + bounds.bottom]
+        require(all(abs(a - b) <= 1 for a, b in zip(actual_rect, target["canvasRect"])),
+                "Rendered cancel target does not match the native canvas")
+        point = wintypes.POINT(x, y)
+        require(user.ScreenToClient(hwnd, ctypes.byref(point)), "Cancel coordinate conversion failed")
+        require(target["ageMs"] + (time.monotonic() - observed_at) * 1000 <= 500,
+                "Rendered cancel target expired before native input")
+        cheap("mouse_click", hwnd=hwnd, x=point.x, y=point.y, button="left")
+        cancel_observation = w
+    elif operation in ("click", "click-disabled-control"):
+        if operation == "click-disabled-control":
+            # Resolve by actual native geometry, including disabled children.
+            # CWP_SKIPDISABLED would incorrectly send input to the parent.
+            user.ChildWindowFromPointEx.argtypes = [wintypes.HWND, wintypes.POINT, wintypes.UINT]
+            user.ChildWindowFromPointEx.restype = wintypes.HWND
+            for _ in range(32):
+                point = wintypes.POINT(*request["point"])
+                require(user.ScreenToClient(hwnd, ctypes.byref(point)), "Control coordinate conversion failed")
+                child = user.ChildWindowFromPointEx(hwnd, point, 0x0001 | 0x0004)
+                if not child or child == hwnd:
+                    break
+                hwnd = child
+            user.GetWindowThreadProcessId(hwnd, ctypes.byref(actual))
+            require(actual.value == pid, "Disabled input target left the owned process")
+            user.GetWindowRect.argtypes = [wintypes.HWND, ctypes.POINTER(wintypes.RECT)]
+            user.IsWindowEnabled.argtypes = [wintypes.HWND]
+            bounds = wintypes.RECT()
+            require(user.GetWindowRect(hwnd, ctypes.byref(bounds)), "Native control geometry unavailable")
+            rect = [bounds.left, bounds.top, bounds.right, bounds.bottom]
+            require(all(abs(a - b) <= 1 for a, b in zip(rect, request["target_rect"])) and
+                    not user.IsWindowEnabled(hwnd),
+                    "Disabled native child does not match the observed control")
+            native_input_target = {"hwnd": hwnd, "pid": pid, "rect": rect, "enabled": False}
+        point = wintypes.POINT(*request["point"])
+        require(user.ScreenToClient(hwnd, ctypes.byref(point)), "No client coordinate conversion")
+        cheap("mouse_click", hwnd=hwnd, x=point.x, y=point.y, button=request.get("button", "left"))
+    elif operation == "keys":
+        cheap("win_send_keys", hwnd=hwnd, keys=request["keys"])
+    elif operation == "text":
+        cheap("type_text", hwnd=hwnd, text=request["text"])
+    elif operation == "minimum-observe":
+        class MonitorInfo(ctypes.Structure):
+            _fields_ = [("size", wintypes.DWORD), ("monitor", wintypes.RECT),
+                        ("work", wintypes.RECT), ("flags", wintypes.DWORD)]
+        user.MonitorFromWindow.argtypes = [wintypes.HWND, wintypes.DWORD]
+        user.MonitorFromWindow.restype = wintypes.HANDLE
+        user.GetMonitorInfoW.argtypes = [wintypes.HANDLE, ctypes.POINTER(MonitorInfo)]
+        user.GetWindowRect.argtypes = [wintypes.HWND, ctypes.POINTER(wintypes.RECT)]
+        user.GetClientRect.argtypes = [wintypes.HWND, ctypes.POINTER(wintypes.RECT)]
+        user.GetDpiForWindow.argtypes = [wintypes.HWND]
+        info = MonitorInfo()
+        info.size = ctypes.sizeof(info)
+        monitor = user.MonitorFromWindow(hwnd, 0)
+        require(monitor and user.GetMonitorInfoW(monitor, ctypes.byref(info)), "Monitor unavailable")
+        width, height = request["size"]
+        require(type(width) is int and type(height) is int and 400 <= width <= 4000 and
+                300 <= height <= 4000 and width <= info.work.right - info.work.left and
+                height <= info.work.bottom - info.work.top and user.GetDpiForWindow(hwnd) == 192,
+                "Measured minimum does not fit the actual work area")
+        require(user.SetWindowPos(hwnd, None, info.work.left, info.work.top, width, height,
+                                  0x0004 | 0x0010), "Minimum observation resize failed")
+        time.sleep(0.2)
+        frame, client = wintypes.RECT(), wintypes.RECT()
+        require(user.GetWindowRect(hwnd, ctypes.byref(frame)) and
+                user.GetClientRect(hwnd, ctypes.byref(client)) and
+                user.MonitorFromWindow(hwnd, 0) == monitor and user.GetDpiForWindow(hwnd) == 192,
+                "Minimum observation identity or geometry changed")
+        fresh = MonitorInfo()
+        fresh.size = ctypes.sizeof(fresh)
+        require(user.GetMonitorInfoW(monitor, ctypes.byref(fresh)) and
+                [fresh.work.left, fresh.work.top, fresh.work.right, fresh.work.bottom] ==
+                [info.work.left, info.work.top, info.work.right, info.work.bottom] and
+                frame.right - frame.left == width and frame.bottom - frame.top == height and
+                info.work.left <= frame.left < frame.right <= info.work.right and
+                info.work.top <= frame.top < frame.bottom <= info.work.bottom and
+                client.right > 0 and client.bottom > 0, "Minimum frame is not fully contained")
+        native_input_target = {"outer": [frame.left, frame.top, frame.right, frame.bottom],
+                               "client": [client.right, client.bottom],
+                               "work_area": [info.work.left, info.work.top, info.work.right, info.work.bottom],
+                               "dpi": 192, "contained": True}
+        result = cheap("screenshot", hwnd=hwnd, output_path=request["capture_path"])
+        captured_at = datetime.now(timezone.utc).isoformat()
+        require(result.get("rendered_ok") is True, "Minimum capture did not render")
+        after_frame, after_client = wintypes.RECT(), wintypes.RECT()
+        require(user.GetWindowRect(hwnd, ctypes.byref(after_frame)) and
+                user.GetClientRect(hwnd, ctypes.byref(after_client)) and
+                user.GetMonitorInfoW(monitor, ctypes.byref(fresh)) and
+                user.MonitorFromWindow(hwnd, 0) == monitor and user.GetDpiForWindow(hwnd) == 192 and
+                [after_frame.left, after_frame.top, after_frame.right, after_frame.bottom] == native_input_target["outer"] and
+                [after_client.right, after_client.bottom] == native_input_target["client"] and
+                [fresh.work.left, fresh.work.top, fresh.work.right, fresh.work.bottom] == native_input_target["work_area"],
+                "Minimum capture geometry changed")
+        user.GetWindowThreadProcessId(hwnd, ctypes.byref(actual))
+        require(actual.value == pid, "Minimum capture owner changed")
+        native_input_target.update(captured_hwnd=hwnd, capture_geometry_verified=True,
+                                   captured_at_utc=captured_at)
+    elif operation == "resize":
+        width, height = request["size"]
+        require(400 <= width <= 4000 and 300 <= height <= 4000, "Invalid native frame size")
+        require(user.SetWindowPos(hwnd, None, 0, 0, width, height, 0x0002 | 0x0004 | 0x0010),
+                "Native frame resize failed")
+    elif operation != "observe":
+        raise RuntimeError("Unsupported native operation")
+    time.sleep(0.2)
+    if operation != "observe":
+        # A click can create or destroy a top level. The controller re-enumerates
+        # owned windows before a separate observation, without replaying input.
+        atomic_json(output, {"pid": pid, "rows": [], "cancel_observation": cancel_observation,
+                             "native_input_target": native_input_target})
+        return
+    comtypes.client.GetModule("UIAutomationCore.dll")
+    from comtypes.gen.UIAutomationClient import CUIAutomation, IUIAutomation, IUIAutomationValuePattern, IUIAutomationTogglePattern
+    automation = comtypes.client.CreateObject(CUIAutomation, interface=IUIAutomation)
+    walker = automation.RawViewWalker
+    rows = []
+    # Every root was enumerated from the exact installation, profile and launch.
+    for root_handle in request["roots"]:
+        root_pid = wintypes.DWORD()
+        user.GetWindowThreadProcessId(root_handle, ctypes.byref(root_pid))
+        require(root_pid.value == pid, "Observation root ownership changed")
+        root = automation.ElementFromHandle(root_handle)
+        stack = [(root, 0, None)]
+        while stack:
+            element, depth, parent = stack.pop()
+            require(len(rows) < 4000 and depth <= 32, "Native accessibility tree exceeds bound")
+            try:
+                if element.CurrentProcessId != pid:
+                    continue
+                rect = element.CurrentBoundingRectangle
+                row = {"id": len(rows), "parent": parent, "top": root_handle,
+                       "hwnd": int(element.CurrentNativeWindowHandle),
+                       "name": str(element.CurrentName)[:512],
+                       "automation_id": str(element.CurrentAutomationId)[:128],
+                       "type": int(element.CurrentControlType),
+                       "enabled": bool(element.CurrentIsEnabled),
+                       "offscreen": bool(element.CurrentIsOffscreen),
+                       "focused": bool(element.CurrentHasKeyboardFocus),
+                       "rect": [rect.left, rect.top, rect.right, rect.bottom]}
+                if row["type"] == 50004:
+                    try:
+                        pattern = element.GetCurrentPattern(10002).QueryInterface(IUIAutomationValuePattern)
+                        row["value"] = str(pattern.CurrentValue)[:1024]
+                    except COMError:
+                        pass
+                if row["hwnd"] > 0 and row["name"] in ("Case sensitive", "Regex mode"):
+                    try:
+                        toggle = element.GetCurrentPattern(10015).QueryInterface(IUIAutomationTogglePattern)
+                        row["toggle"] = int(toggle.CurrentToggleState)
+                    except COMError:
+                        pass
+                rows.append(row)
+                children = []
+                child = walker.GetFirstChildElement(element)
+                while child:
+                    require(len(children) < 1000, "Native child count exceeds bound")
+                    children.append(child)
+                    child = walker.GetNextSiblingElement(child)
+                stack.extend((child, depth + 1, row["id"]) for child in reversed(children))
+            except COMError:
+                raise RuntimeError("Native accessibility tree changed during observation")
+    atomic_json(output, {"pid": pid, "rows": rows})
+
+
+def atomic_json(path, value):
+    temporary = path.with_suffix(".pending")
+    temporary.write_text(json.dumps(value), encoding="utf-8")
+    os.replace(temporary, path)
+
+
+class Driver:
+    def __init__(self, args, app, scratch):
+        self.args, self.app, self.scratch = args, app, scratch
+        self.sequence, self.rows, self.images = 0, [], []
+        self.native, self.probe = [], []
+        self.viewport_observations = []
+        self.translation = gettext.NullTranslations()
+        if args.language == "yue_HK":
+            catalog = args.exe.parent / "resources/i18n/yue_HK/BambuStudio.mo"
+            require(catalog.is_file(), "Installed Cantonese catalog is missing")
+            with catalog.open("rb") as stream:
+                self.translation = gettext.GNUTranslations(stream)
+
+    def label(self, english):
+        return self.translation.gettext(english)
+
+    def worker(self, operation="observe", hwnd=None, **values):
+        windows = self.app.windows()
+        require(any(w["handle"] == self.app.main for w in windows), "Owned main frame disappeared")
+        self.sequence += 1
+        request = self.scratch / f"input-{self.sequence}.json"
+        output = self.scratch / f"observe-{self.sequence}.json"
+        request.write_text(json.dumps({"pid": self.app.pid, "hwnd": hwnd or self.app.main,
+            "roots": [w["handle"] for w in windows], "operation": operation, **values}), encoding="utf-8")
+        command = subprocess.list2cmdline([sys.executable, str(Path(__file__).resolve()),
+            "--native-request", str(request), "--native-output", str(output)])
+        cheap("launch_on_headless_desktop", name=self.app.desktop, command=command)
+        deadline = time.monotonic() + 25
+        while time.monotonic() < deadline and not output.exists():
+            time.sleep(0.1)
+        require(output.exists(), "Owned native observation timed out")
+        data = json.loads(output.read_text(encoding="utf-8"))
+        require("error" not in data, "Native helper failed: " + str(data.get("error")))
+        require(data.get("pid") == self.app.pid and isinstance(data.get("rows"), list),
+                "Native observation identity mismatch")
+        if operation != "observe":
+            self.last_input = data
+            return self.worker()
+        self.native = data["rows"]
+        self.probe = self.app.probe()
+        header = behavior.probe_header(self.probe, self.args.language, self.args.theme, self.args.scale)
+        require(next(r for r in self.probe if r.get("kind") == "header").get("pid") == self.app.pid,
+                "Layout observation identity mismatch")
+        return header
+
+    def candidates(self, name=None, kind=None, top=None):
+        def matches(row):
+            text = row["name"].replace("&", "").strip()
+            text = text.split("\t")[0].rstrip(".\u2026 ")
+            expected = self.label(name) if name is not None else None
+            if expected is not None:
+                expected = expected.rstrip(".\u2026 ")
+            return (not row["offscreen"] and (kind is None or row["type"] == kind)
+                    and (top is None or row["top"] == top)
+                    and (expected is None or text == expected or text.startswith(expected + "\n")
+                         or text.startswith(expected + " · ") or text.startswith(expected + "\t")))
+        return [row for row in self.native if matches(row)]
+
+    def prose_status(self, name):
+        # Auto-wrapped native text inserts layout whitespace. Normalize only
+        # prose status text, never menu, button or editable-control identity.
+        expected = re.sub(r"\s+", "", self.label(name))
+        return any(not row["offscreen"] and row["type"] == 50020 and
+                   re.sub(r"\s+", "", row["name"]) == expected for row in self.native)
+
+    def one(self, name=None, kind=None, top=None):
+        rows = self.candidates(name, kind, top)
+        require(len(rows) == 1, "Native target missing or ambiguous: " + str(name))
+        return rows[0]
+
+    def filename_entry(self, top):
+        # The hosted OS image is English even when the product locale changes.
+        # Do not translate the operating system's common-dialog control names.
+        rows = [r for r in self.native if not r["offscreen"] and r["top"] == top
+                and r["type"] == 50004 and r["name"].replace("&", "").strip() == "File name:"]
+        require(len(rows) == 1 and rows[0].get("value", "") == "",
+                "Native filename field is unavailable, ambiguous, or not empty")
+        return rows[0]
+
+    def capture(self, label, hwnd=None, stable_source=None):
+        require(len(self.images) < 30, "Scope exceeds encrypted capture inventory bound")
+        handle = hwnd or self.app.main
+        windows = self.app.windows()
+        frame = next((w for w in windows if w["handle"] == handle), None)
+        require(frame is not None, "Capture target is not an owned top-level window")
+        require(frame.get("dpi") == round(96 * self.args.scale), "Actual window DPI differs from requested scale")
+        name = f"{len(self.images):03d}-{label}.png"
+        path = self.args.output / name
+        if stable_source is None:
+            result = cheap("screenshot", hwnd=handle, output_path=str(path))
+        else:
+            shutil.copyfile(stable_source, path)
+            result = {"rendered_ok": True}
+        require(result.get("rendered_ok") is True, "Native capture did not confirm rendering")
+        from PIL import Image
+        with Image.open(path) as image:
+            image.verify()
+        with Image.open(path) as image:
+            require(image.width >= 80 and image.height >= 40 and
+                    any(low != high for low, high in image.convert("RGB").getextrema()),
+                    "Native capture is blank or too small")
+            dimensions = [image.width, image.height]
+        self.images.append({"file": name, "sha256": behavior.sha256(path),
+            "bytes": path.stat().st_size, "captured_at_utc": datetime.now(timezone.utc).isoformat(),
+            "pixels": dimensions, "native_dpi": frame.get("dpi"),
+            "privacy": "restricted_pixel_review_pending"})
+        return name
+
+    def record(self, label, operation="observe", hwnd=None, capture_hwnd=None, **values):
+        before_focus = [r["name"] for r in self.native if r["focused"]]
+        started = time.monotonic()
+        header = self.worker(operation, hwnd, **values)
+        # No raw labels or paths are copied to the public receipt by the wrapper.
+        overflow = [{key: r.get(key) for key in ("top", "name", "label", "rect", "client", "text_width",
+                     "text_clipped", "hint_clipped", "clipped_by_parent", "starved", "zero_sized")}
+                    for r in self.probe if r.get("kind") == "window" and r.get("on_screen") and
+                    any(r.get(key) for key in ("text_clipped", "hint_clipped", "clipped_by_parent", "starved", "zero_sized"))]
+        live_handles = {w["handle"] for w in self.app.windows()}
+        focused_tops = {r["top"] for r in self.native if r["focused"] and r["top"] in live_handles}
+        image_handle = next(iter(focused_tops)) if len(focused_tops) == 1 else (
+            capture_hwnd if capture_hwnd in live_handles else self.app.main)
+        row = {"operation": label, "input": operation, "status": "observed",
+               "elapsed_ms": round((time.monotonic() - started) * 1000), "tuple": header,
+               "before_focus": before_focus, "native": [r for r in self.native if not r["offscreen"]], "overflow": overflow,
+               "capture": self.capture(label, image_handle)}
+        if operation != "observe" and self.last_input.get("native_input_target") is not None:
+            row["native_input_target"] = self.last_input["native_input_target"]
+        # Reuse the ready/restart observation immediately after exact_client().
+        # A duplicate image would overflow the menu scope's 30-image envelope.
+        if self.viewport_observations:
+            viewport = self.viewport_observations[-1]
+            if viewport.get("restored") and "capture" not in viewport:
+                require(operation == "observe" and image_handle == self.app.main,
+                        "Minimum geometry must bind to the next main-frame observation")
+                viewport["capture"] = row["capture"]
+                viewport["capture_operation"] = label
+        self.rows.append(row)
+        return row
+
+    def click(self, label, target, button="left"):
+        require(target["enabled"], "Native target is disabled")
+        left, top, right, bottom = target["rect"]
+        require(right > left and bottom > top, "Native target has no measurable area")
+        return self.record(label, "click", hwnd=target["top"],
+                           point=[(left + right) // 2, (top + bottom) // 2], button=button,
+                           capture_hwnd=target["top"])
+
+    def key(self, label, keys, top=None):
+        return self.record(label, "keys", hwnd=top, keys=keys, capture_hwnd=top)
+
+    def type(self, label, text, top):
+        return self.record(label, "text", hwnd=top, text=text, capture_hwnd=top)
+
+    def exact_client(self):
+        if self.args.scope == "minimum-observe":
+            return
+        if self.args.viewport == "measured-minimum":
+            self.measured_minimum()
+            return
+        requested = tuple(map(int, self.args.viewport.split("x")))
+        for _ in range(4):
+            self.worker()
+            top = next(r for r in self.probe if r.get("kind") == "toplevel" and r.get("hwnd") == self.app.main)
+            client = top["client"]
+            if (client["w"], client["h"]) == requested:
+                return
+            frame = next(w for w in self.app.windows() if w["handle"] == self.app.main)
+            self.worker("resize", size=[frame["width"] + requested[0] - client["w"],
+                                         frame["height"] + requested[1] - client["h"]])
+        raise RuntimeError("Actual client size did not reach the requested viewport")
+
+    def minimum_observe(self):
+        self.worker()
+        root = next(r for r in self.probe if r.get("kind") == "window" and
+                    r.get("hwnd") == self.app.main and r.get("depth") == 0)
+        minimum = dict(root["min"])
+        image = self.scratch / "measured-native-minimum.png"
+        require(not image.exists(), "Minimum capture must be fresh")
+        self.worker("minimum-observe", size=[minimum["w"], minimum["h"]], capture_path=str(image))
+        observed = self.last_input["native_input_target"]
+        after = next(r for r in self.probe if r.get("kind") == "window" and
+                     r.get("hwnd") == self.app.main and r.get("depth") == 0)
+        require(after["min"] == minimum, "Native minimum changed during observation")
+        row = {"operation": "measured-native-minimum", "main_hwnd": self.app.main,
+               "native_input_target": observed, "minimum_outer": minimum,
+               "interactive_resize_clamp": "unverified", "status": "measured_minimum_contained"}
+        require(minimum_observation_valid(row), "Invalid minimum observation receipt")
+        row["capture"] = self.capture("measured-native-minimum", self.app.main, stable_source=image)
+        require(self.images[-1]["pixels"] == [minimum["w"], minimum["h"]],
+                "Minimum capture dimensions differ from the measured frame")
+        self.images[-1]["captured_at_utc"] = observed["captured_at_utc"]
+        self.images[-1]["hwnd"] = self.app.main
+        self.rows.append(row)
+
+    def minimum_resize(self):
+        from minimum_resize import run_minimum_resize
+        run_minimum_resize(self)
+
+    def measured_minimum(self):
+        """Observe the product's outer constraint, never substitute a client size."""
+        def geometry():
+            self.worker()
+            top = next(r for r in self.probe if r.get("kind") == "toplevel" and
+                       r.get("hwnd") == self.app.main)
+            root = next(r for r in self.probe if r.get("kind") == "window" and
+                        r.get("hwnd") == self.app.main and r.get("depth") == 0)
+            frame = next(w for w in self.app.windows() if w["handle"] == self.app.main)
+            return {"minimum_outer": root["min"], "outer": [frame["width"], frame["height"]],
+                    "client": top["client"], "dpi": frame.get("dpi")}
+
+        before = geometry()
+        minimum = before["minimum_outer"]
+        size = [minimum["w"], minimum["h"]]
+        require(all(type(v) is int for v in size) and 401 <= size[0] <= 4000 and
+                301 <= size[1] <= 4000, "Measured outer minimum is outside the bounded resize range")
+        require(before["dpi"] == round(96 * self.args.scale), "Minimum observation DPI mismatch")
+        receipt = {"mode": "measured-minimum", "pid": self.app.pid, "before": before,
+                   "method": "SetWindowPos", "clamp_status": "not_observed",
+                   "interactive_resize_clamp": "unverified", "restored": False}
+        self.viewport_observations.append(receipt)
+        self.worker("resize", size=size)
+        at_minimum = geometry()
+        receipt["at_minimum"] = at_minimum
+        require(at_minimum["outer"] == size and at_minimum["minimum_outer"] == minimum and
+                at_minimum["dpi"] == before["dpi"] and
+                at_minimum["client"]["w"] > 0 and at_minimum["client"]["h"] > 0,
+                "Product outer minimum could not be measured at its exact size")
+        # A programmatic request is recorded honestly: some native frame paths
+        # enforce minimum tracking only during interactive resizing. Such a miss
+        # must not be relabelled as successful clamping or shrink the contract.
+        try:
+            receipt["below_request"] = [size[0] - 1, size[1] - 1]
+            self.worker("resize", size=receipt["below_request"])
+            below = geometry()
+            receipt["after_below_request"] = below
+            require(below["minimum_outer"] == minimum and below["dpi"] == before["dpi"],
+                    "Minimum constraint or DPI changed during measurement")
+            receipt["clamp_status"] = "observed_programmatic_clamp" if below["outer"] == size else "not_observed"
+        finally:
+            self.worker("resize", size=size)
+            restored = geometry()
+            receipt["after_restore"] = restored
+            receipt["restored"] = (restored["outer"] == size and
+                                   restored["minimum_outer"] == minimum and restored["dpi"] == before["dpi"])
+        require(receipt["restored"], "Measured minimum frame was not restored")
+
+    def menu_items(self, top):
+        return [r for r in self.candidates(kind=50011, top=top)]
+
+    def menu_checks(self, prefix, search, restored_top):
+        top = search["top"]
+        original = [r["name"] for r in self.menu_items(top)]
+        require(original, "Menu has no native accessible items")
+        self.click(prefix + "-search", search)
+        self.key(prefix + "-tab", ["tab"], top)
+        require(any(r["focused"] and r["name"] == self.label("Regex mode") for r in self.native),
+                "Tab did not reach the native regex control")
+        self.click(prefix + "-search-return", self.one("Search menu", kind=50004, top=top))
+        require(any(r["focused"] and r["type"] == 50004 and r["top"] == top for r in self.native),
+                "Search entry did not recover native keyboard focus")
+        self.type(prefix + "-literal-match", original[0].split("\t")[0].split(" · ")[0], top)
+        require(self.menu_items(top) and len(self.menu_items(top)) <= len(original),
+                "Literal search did not preserve a matching item")
+        self.key(prefix + "-literal-clear", ["esc"], top)
+        self.type(prefix + "-no-match", "zz_fixture_no_match_927", top)
+        require(not self.menu_items(top) and self.candidates("No matches.", top=top),
+                "No-match state was not exposed by the actual menu")
+        self.key(prefix + "-clear-escape", ["esc"], top)
+        require([r["name"] for r in self.menu_items(top)] == original,
+                "First Escape did not restore the menu items")
+        self.click(prefix + "-regex", self.one("Regex mode", top=top))
+        search = self.one("Search menu", kind=50004, top=top)
+        self.click(prefix + "-regex-search", search)
+        self.type(prefix + "-regex-match", "^.*$", top)
+        require([r["name"] for r in self.menu_items(top)] == original,
+                "Regex match changed the complete menu inventory")
+        self.key(prefix + "-regex-clear", ["esc"], top)
+        self.key(prefix + "-dismiss", ["esc"], top)
+        require(not self.candidates("Search menu", kind=50004, top=top), "Second Escape did not dismiss menu")
+        require(any(r["focused"] and r["top"] == restored_top for r in self.native),
+                "Menu dismissal did not restore keyboard focus to its invoking surface")
+        require(not any(row for step in self.rows if step["operation"].startswith(prefix + "-")
+                        for row in step["overflow"] if row["top"] == top),
+                "Menu controls overflow their measured layout")
+
+    def temporal_checkbox(self):
+        from temporal_checkbox import run
+        run(self)
+
+    def menus(self):
+        self.click("prepare", self.one("Prepare"))
+        # An empty scene's context menu is the short root menu. No model is added.
+        canvases = [r for r in self.probe if r.get("on_screen") and "GLCanvas" in r.get("class", "")]
+        require(canvases, "Prepare has no observed scene canvas")
+        canvas = max(canvases, key=lambda r: r["screen"]["w"] * r["screen"]["h"])
+        rect = canvas["screen"]
+        self.record("open-context", "click", point=[rect["x"] + rect["w"] // 2,
+                    rect["y"] + rect["h"] // 2], button="right")
+        search = self.one("Search menu", kind=50004)
+        require(1 <= len(self.menu_items(search["top"])) <= 5,
+                "Short context menu fixture did not expose one to five rows")
+        self.menu_checks("root", search, self.app.main)
+        self.record("reopen-context", "click", point=[rect["x"] + rect["w"] // 2,
+                    rect["y"] + rect["h"] // 2], button="right")
+        root_search = self.one("Search menu", kind=50004)
+        self.click("open-nested", self.one("Add Primitive", kind=50011))
+        searches = [r for r in self.candidates("Search menu", kind=50004) if r["top"] != root_search["top"]]
+        require(len(searches) == 1, "Nested menu search did not appear")
+        self.menu_checks("nested", searches[0], root_search["top"])
+        require(self.candidates("Search menu", kind=50004, top=root_search["top"]),
+                "Nested Escape dismissed the parent menu")
+        self.key("root-final-dismiss", ["esc"], root_search["top"])
+
+    def menu_builder_root(self):
+        self.menu_builder(False)
+
+    def menu_builder_nested(self):
+        self.menu_builder(True)
+
+    def menu_builder(self, nested):
+        """Separate scopes keep every real input inside the 30-image envelope."""
+        self.click("prepare", self.one("Prepare"))
+        canvases = [r for r in self.probe if r.get("on_screen") and "GLCanvas" in r.get("class", "")]
+        require(canvases, "Prepare has no observed scene canvas")
+        canvas = max(canvases, key=lambda r: r["screen"]["w"] * r["screen"]["h"])
+        rect = canvas["screen"]
+        self.record("open-context", "click", point=[rect["x"] + rect["w"] // 2,
+                    rect["y"] + rect["h"] // 2], button="right")
+        root = self.one("Search menu", kind=50004)["top"]
+        top = root
+        parent_query = self.label("Add Primitive") if nested else None
+        if nested:
+            self.click("parent-search", self.one("Search menu", kind=50004, top=root))
+            self.type("parent-query", parent_query, root)
+            self.click("open-nested", self.one("Add Primitive", kind=50011, top=root))
+            searches = [r for r in self.candidates("Search menu", kind=50004) if r["top"] != root]
+            require(len(searches) == 1, "Nested search is missing or ambiguous")
+            top = searches[0]["top"]
+
+        def preserved():
+            if nested:
+                require(self.one("Search menu", kind=50004, top=root).get("value") == parent_query,
+                        "Nested interaction changed the parent query")
+
+        def click(label, name, owner=top, kind=None):
+            self.click(label, self.one(name, kind=kind, top=owner))
+            preserved()
+
+        def key(label, keys, owner=top):
+            self.key(label, keys, owner)
+            preserved()
+
+        def text(label, value, owner=top):
+            self.type(label, value, owner)
+            preserved()
+
+        original = [r["name"] for r in self.menu_items(top)]
+        require(original, "Menu has no native rows")
+        # Literal/no-match interactions remain in the unchanged menus scope.
+        click("enable-regex", "Regex mode")
+        click("open-builder", "Regex builder")
+        patterns = self.candidates("Regex pattern", kind=50004)
+        require(len(patterns) == 1 and patterns[0]["top"] not in (top, self.app.main),
+                "Builder pattern is missing or not in its own popup")
+        builder = patterns[0]["top"]
+        require(patterns[0]["focused"] and patterns[0].get("value") == "", "Builder did not focus empty pattern")
+        text("builder-pattern", "^fixture$", builder)
+        require(self.one("Regex pattern", kind=50004, top=builder).get("value") == "^fixture$" and
+                self.one("Search menu", kind=50004, top=top).get("value") == "^fixture$",
+                "Builder pattern did not synchronize to the owning menu")
+        key("pattern-select", ["ctrl", "a"], builder)
+        text("invalid-pattern", "[", builder)
+        require(self.one("Regex pattern", kind=50004, top=builder).get("value") == "[" and
+                self.candidates("Unbalanced [ ] character set", top=builder),
+                "Invalid pattern was not rejected by the rendered builder")
+        key("invalid-select", ["ctrl", "a"], builder)
+        text("valid-recovery", "^fixture$", builder)
+        require(self.one("Regex pattern", kind=50004, top=builder).get("value") == "^fixture$" and
+                self.candidates("Valid pattern", top=builder) and
+                not self.candidates("Unbalanced [ ] character set", top=builder), "Builder did not recover")
+
+        navigation_count = 0
+        def in_scroll(row):
+            views = [r for r in self.probe if r.get("kind") == "window" and r.get("top") == builder
+                     and r.get("type") == "MD3ScrolledWindow" and r.get("on_screen")]
+            require(len(views) == 1, "Builder scroll viewport is missing or ambiguous")
+            view = views[0]
+            screen, client = view["screen"], view["client"]
+            left, upper, right, bottom = row["rect"]
+            return (screen["x"] <= left < right <= screen["x"] + client["w"] and
+                    screen["y"] <= upper < bottom <= screen["y"] + client["h"])
+
+        def navigate(label, name, keys, limit, kind=None):
+            nonlocal navigation_count
+            for attempt in range(limit + 1):
+                targets = self.candidates(name, kind=kind, top=builder)
+                focused = [r for r in self.native if r["focused"]]
+                require(len(focused) == 1 and focused[0]["top"] == builder and
+                        not focused[0]["offscreen"], "Builder traversal lost unique visible focus")
+                frames = [r for r in self.probe if r.get("kind") == "toplevel" and r.get("hwnd") == builder]
+                require(len(frames) == 1, "Builder frame geometry is unavailable")
+                frame = frames[0]["rect"]
+                left, upper, right, bottom = focused[0]["rect"]
+                require(frame["x"] <= left < right <= frame["x"] + frame["w"] and
+                        frame["y"] <= upper < bottom <= frame["y"] + frame["h"],
+                        "Builder traversal focus is outside its actual frame")
+                if len(targets) == 1 and targets[0]["focused"] and in_scroll(targets[0]):
+                    return targets[0]
+                require(attempt < limit, "Builder traversal did not expose the requested control")
+                key(label + "-" + str(attempt + 1), keys, builder)
+                navigation_count += 1
+
+        # wxScrolledWindow's normal child-focus path must actually reveal each
+        # destination. No scroll-pattern invocation or guessed wheel input.
+        navigate("test-back-tab", "Test pattern", ["shift", "tab"], 6)
+        click("show-sample", "Test pattern", builder)
+        navigate("sample-tab", "Sample text", ["tab"], 2, 50004)
+        text("sample-match", "fixture", builder)
+        sample = self.one("Sample text", kind=50004, top=builder)
+        results = self.one("Match results", kind=50004, top=builder)
+        require(in_scroll(sample) and in_scroll(results) and sample.get("value") == "fixture" and
+                results.get("value", "").strip().endswith("fixture"), "Visible builder sample did not match")
+        # Status belongs to the upper page and may now be scrolled away. Preserve
+        # its semantic read separately; the image claim is sample/results only.
+        statuses = [r for r in self.native if r["top"] == builder and r["type"] == 50020 and
+                    r["name"] == self.label("Valid pattern \u2014 1 match")]
+        require(len(statuses) == 1, "Builder sample status is missing or ambiguous")
+        key("builder-escape", ["esc"], builder)
+        require(not self.candidates("Regex pattern", kind=50004, top=builder) and
+                any(r["focused"] and r["top"] == top for r in self.native),
+                "Builder Escape did not restore focus to its menu")
+        click("builder-query-clear", "Clear")
+        require(self.one("Search menu", kind=50004, top=top).get("value") == "" and
+                [r["name"] for r in self.menu_items(top)] == original, "Builder clear did not restore menu")
+        key("menu-escape", ["esc"])
+        require(not self.candidates("Search menu", kind=50004, top=top) and
+                any(r["focused"] and r["top"] == (root if nested else self.app.main) for r in self.native),
+                "Menu Escape did not restore its invoking surface")
+        if nested:
+            self.key("parent-query-escape", ["esc"], root)
+            require(self.one("Search menu", kind=50004, top=root).get("value") == "", "Parent query did not clear")
+            self.key("parent-dismiss", ["esc"], root)
+            require(not self.candidates("Search menu", kind=50004, top=root) and
+                    any(r["focused"] and r["top"] == self.app.main for r in self.native), "Parent did not dismiss")
+        require(len(self.images) == len(self.rows) == (20 if nested else 15) + navigation_count,
+                "Menu builder action/capture inventory is incomplete")
+        require(not any(row for step in self.rows for row in step.get("overflow", [])
+                        if row["top"] in (root, top, builder)), "Menu builder controls overflow measured bounds")
+
+    def open_vocabulary(self, prefix):
+        self.click(prefix + "-edit", self.one("Edit"))
+        self.click(prefix + "-preferences", self.one("Preferences", kind=50011))
+        search = self.one("Search settings", kind=50004)
+        self.click(prefix + "-search", search)
+        self.type(prefix + "-find-wording", self.label("Personal vocabulary"), search["top"])
+        return search["top"]
+
+    def title_pixels(self, label, verify_getters=False):
+        """Observe stable real pixels while requiring original native text.
+
+        Equality/change is evidence of display persistence, not OCR or proof of
+        the exact painted replacement. Full raw images remain review-required.
+        """
+        from PIL import Image
+        last = None
+        scratch_image = self.scratch / (label + "-stability.png")
+        for attempt in range(6):
+            self.worker()
+            title = self.one("Personal vocabulary", kind=50020)
+            require(title["name"] == self.label("Personal vocabulary"),
+                    "Native title no longer exposes original wording")
+            require(not self.candidates("Fixture wording alpha") and not self.candidates("Fixture wording beta"),
+                    "Replacement wording leaked into native accessibility")
+            getters_before = require_vocabulary_getters(self.probe, title, self.label("Personal vocabulary")) if verify_getters else None
+            top = next(r for r in self.probe if r.get("kind") == "toplevel" and r.get("hwnd") == title["top"])
+            origin = top["rect"]
+            rect = [title["rect"][0] - origin["x"], title["rect"][1] - origin["y"],
+                    title["rect"][2] - origin["x"], title["rect"][3] - origin["y"]]
+            rendered = cheap("screenshot", hwnd=title["top"], output_path=str(scratch_image))
+            require(rendered.get("rendered_ok") is True, "Title stability capture did not render")
+            captured_at = datetime.now(timezone.utc).isoformat()
+            with Image.open(scratch_image) as image:
+                require(0 <= rect[0] < rect[2] <= image.width and 0 <= rect[1] < rect[3] <= image.height,
+                        "Observed title leaves its captured surface")
+                crop = image.crop(rect).convert("RGB")
+                signature = hashlib.sha256(str(crop.size).encode("ascii") + crop.tobytes()).hexdigest()
+            if last == signature:
+                getters_after = None
+                if verify_getters:
+                    self.worker()
+                    after_title = self.one("Personal vocabulary", kind=50020)
+                    getters_after = require_vocabulary_getters(self.probe, after_title, self.label("Personal vocabulary"))
+                    require(getters_after == getters_before, "Vocabulary title identity or getters changed during capture")
+                name = self.capture(label + "-stable-title", title["top"], scratch_image)
+                self.images[-1]["captured_at_utc"] = captured_at
+                self.rows[-1]["display_title"] = {"capture": name, "crop": rect,
+                    "pixel_sha256": signature, "stable_samples": 2, "attempts": attempt + 1,
+                    "native_original_text": True, "exact_painted_text_review": "pending"}
+                if verify_getters:
+                    self.rows[-1]["display_title"]["native_getters"] = {
+                        "before_capture": getters_before, "after_capture": getters_after}
+                return signature
+            last = signature
+            time.sleep(0.25)
+        raise RuntimeError("Title pixels did not stabilize within six bounded observations")
+
+    def upload_vocabulary(self, prefix, target, fixture, preferences):
+        self.click(prefix + "-load", target)
+        dialogs = [w for w in self.app.windows() if w["class"] == "#32770" and w["handle"] != preferences]
+        require(len(dialogs) == 1, "File picker is missing or ambiguous")
+        dialog = dialogs[0]["handle"]
+        self.click(prefix + "-filename-focus", self.filename_entry(dialog))
+        require(any(r["focused"] and r["type"] == 50004 and r["top"] == dialog for r in self.native),
+                "File picker filename edit did not receive focus")
+        self.type(prefix + "-filename", str(fixture), dialog)
+        self.key(prefix + "-filename-submit", ["enter"], dialog)
+
+    def restart(self, label):
+        previous = self.app
+        old_pid = previous.pid
+        previous.stop()
+        require(previous.owned_teardown_verified and previous.desktop_closed_verified,
+                "Prior native instance teardown is unverified")
+        probe = self.scratch / (label + "-probe")
+        probe.mkdir()
+        self.app = behavior.HostedApp(previous.exe, previous.datadir,
+                                      "bsnative-" + str(os.getpid()) + "-" + label, str(probe))
+        self.app.holder_lifetime = 1800
+        # Reuse the same isolated profile and existing local display cache. Never
+        # seed, copy or reconstruct a vocabulary file between these processes.
+        self.app.start(timeout=240)
+        require(self.app.pid != old_pid, "Fresh process identity was not observed")
+        self.exact_client()
+        row = self.record(label)
+        row["restart"] = {"previous_pid": old_pid, "new_pid": self.app.pid,
+                          "previous_teardown_verified": True,
+                          "launch_started_utc": str(self.app.launch_started)}
+
+    def vocabulary(self):
+        preferences = self.open_vocabulary("initial")
+        target = self.one("Load JSON")
+        baseline = self.title_pixels("original", verify_getters=True)
+        previous = baseline
+        # Native text must stay original. Only genuine captured pixels are used
+        # for change/preservation checks; exact replacement text needs review.
+        source = self.label("Personal vocabulary")
+        for index, replacement in enumerate(("Fixture wording alpha", "Fixture wording beta")):
+            fixture = self.scratch / f"neutral-{index}.json"
+            fixture.write_text(json.dumps({"schemaVersion": 1, "entries": {source: replacement}}), encoding="utf-8")
+            self.upload_vocabulary(f"valid-{index}", target, fixture, preferences)
+            require(self.prose_status("Personal vocabulary is active on this device."),
+                    "Valid replacement did not reset the visible vocabulary status")
+            current = self.title_pixels(f"valid-{index}", verify_getters=True)
+            require(current != previous and current != baseline, "Title pixels did not change for the replacement")
+            previous = current
+            target = self.one("Replace JSON")
+            if index == 0:
+                malformed = self.scratch / "neutral-malformed.json"
+                malformed.write_text('{"schemaVersion":1,"entries":', encoding="utf-8")
+                self.upload_vocabulary("malformed", target, malformed, preferences)
+                require(self.prose_status("The vocabulary file could not be applied. Use valid version 1 JSON within the supported size limits.")
+                        and self.candidates("Replace JSON"),
+                        "Malformed JSON did not visibly reject the input and preserve the active mapping")
+                require(self.title_pixels("malformed", verify_getters=True) == previous,
+                        "Malformed JSON changed the painted title")
+                target = self.one("Replace JSON")
+        invalid = self.scratch / "neutral-invalid.json"
+        invalid.write_text(json.dumps({"schemaVersion": 2, "entries": {source: "Invalid replacement"}}), encoding="utf-8")
+        self.upload_vocabulary("invalid", target, invalid, preferences)
+        require(self.prose_status("The vocabulary file could not be applied. Use valid version 1 JSON within the supported size limits.")
+                and self.candidates("Replace JSON")
+                and not self.candidates("Invalid replacement"),
+                "Invalid JSON did not visibly preserve the active mapping")
+        require(self.title_pixels("invalid", verify_getters=True) == previous, "Invalid JSON changed the painted title")
+        self.click("clear-wording", self.one("Clear personal vocabulary"))
+        require(self.candidates("Personal vocabulary") and self.candidates("Load JSON") and
+                not self.candidates("Fixture wording beta"), "Clear did not restore native original wording")
+        require(self.title_pixels("cleared", verify_getters=True) == baseline, "Clear did not restore original title pixels")
+
+    def vocabulary_persistence(self):
+        preferences = self.open_vocabulary("initial")
+        baseline = self.title_pixels("original")
+        fixture = self.scratch / "neutral-persistence.json"
+        fixture.write_text(json.dumps({"schemaVersion": 1,
+            "entries": {self.label("Personal vocabulary"): "Fixture wording beta"}}), encoding="utf-8")
+        self.upload_vocabulary("valid", self.one("Load JSON"), fixture, preferences)
+        mapped = self.title_pixels("loaded")
+        require(mapped != baseline and self.candidates("Replace JSON"), "Title replacement did not become active")
+        self.restart("restart-loaded")
+        self.open_vocabulary("restored")
+        require(self.candidates("Replace JSON") and self.title_pixels("restored") == mapped,
+                "Mapped title pixels did not survive a fresh native process")
+        self.click("clear-wording", self.one("Clear personal vocabulary"))
+        require(self.candidates("Load JSON") and self.title_pixels("cleared") == baseline,
+                "Clear did not restore original title pixels")
+        self.restart("restart-cleared")
+        self.open_vocabulary("cleared")
+        require(self.candidates("Personal vocabulary") and self.candidates("Load JSON")
+                and self.prose_status("Original wording is active.") and self.title_pixels("restarted-clear") == baseline,
+                "Clear did not persist across a fresh native process")
+
+    def slice_controls(self):
+        self.click("prepare", self.one("Prepare"))
+        state = behavior.model_snapshot(self.probe, pid=self.app.pid,
+            profile_tag=Path(self.app.datadir).name, main_hwnd=self.app.main)
+        require(state is not None and state["object_count"] == 0, "Empty project preflight was not observed")
+        controls = [self.one(label) for label in ("Slice and Print", "Slice and Send")]
+        require(all(not row["enabled"] for row in controls),
+                "Empty project unexpectedly enables a combined action; no action was sent")
+        # Disabled-control click preflight cannot send anything to a device. Never
+        # add a model, select a printer, or submit a device confirmation here.
+        for index, row in enumerate(controls):
+            before = {w["handle"] for w in self.app.windows()}
+            left, top, right, bottom = row["rect"]
+            require(right > left and bottom > top, "Combined action has no measurable area")
+            self.record(f"disabled-action-{index}", "click", hwnd=row["top"],
+                        point=[(left + right) // 2, (top + bottom) // 2])
+            require(not self.one(("Slice and Print", "Slice and Send")[index])["enabled"],
+                    "Disabled combined action changed state")
+            require({w["handle"] for w in self.app.windows()} == before, "Disabled action opened a dialog")
+        for label in ("Slice options", "Print options"):
+            self.one(label)
+            glyphs = [r for r in self.probe if r.get("on_screen") and r.get("name") == self.label(label)]
+            require(len(glyphs) == 1 and glyphs[0].get("label") == "\u25be", "Options control has no visible chevron")
+        relevant = [r for r in self.probe if r.get("on_screen") and
+                    any(self.label(label) in str(r.get("label", "")) for label in
+                        ("Slice and Print", "Slice and Send", "Slice plate", "Print plate"))]
+        require(len(relevant) >= 2 and not any(r.get(key) for r in relevant for key in
+                ("text_clipped", "clipped_by_parent", "starved", "zero_sized")),
+                "Combined action layout overflows")
+
+    def inspect(self, operation):
+        require(operation in ("project_inspect", "presets_list"), "Only read-only native commands are permitted")
+        self.app.windows()  # Refresh exact process ownership immediately before attaching.
+        result = subprocess.run([str(self.args.cli), "command", operation, "--json", "--workspace",
+            str(self.scratch), "--instance", str(self.app.pid)], capture_output=True, text=True,
+            timeout=30, creationflags=subprocess.CREATE_NO_WINDOW)
+        require(len(result.stdout) <= 1048576 and result.returncode == 0, "Native read-only observation failed")
+        data = json.loads(result.stdout)
+        require(data.get("ok") is True, "Native read-only observation was rejected")
+        return data["result"]
+
+    def load_slice_fixture(self, stress=False):
+        self.click("prepare", self.one("Prepare"))
+        presets = self.inspect("presets_list")
+        require(all(presets.get(key) for key in ("printer", "print", "filament")),
+                "Required bundled presets unavailable; combined action remains unverified")
+        before = self.inspect("project_inspect")
+        require(before.get("objects") == [], "Combined action fixture requires an empty project")
+        fixture = self.scratch / "cube.stl"
+        source = HERE.parents[1] / "tests/automation-fixtures/cube.stl"
+        if stress:
+            # Same closed cube geometry, scaled to 200 mm to widen the real
+            # cancellation window without artificial sleeps in product code.
+            fixture.write_text(re.sub(r"(?m)^vertex ([^\n]+)",
+                lambda m: "vertex " + " ".join(str(float(v) * 20) for v in m[1].split()),
+                source.read_text(encoding="utf-8")), encoding="utf-8")
+        else:
+            shutil.copyfile(source, fixture)
+        self.click("open-file", self.one("File"))
+        self.click("open-import", self.one("Import", kind=50011))
+        self.click("import-cube", self.one("Import 3MF/STL/STEP/SVG/OBJ/AMF", kind=50011))
+        dialogs = [w for w in self.app.windows() if w["class"] == "#32770"]
+        require(len(dialogs) == 1, "Model import picker is missing or ambiguous")
+        picker = dialogs[0]["handle"]
+        self.click("import-filename-focus", self.filename_entry(picker))
+        require(any(r["focused"] and r["type"] == 50004 and r["top"] == picker for r in self.native),
+                "Import filename edit did not receive focus")
+        self.type("import-filename", str(fixture), picker)
+        self.key("import-submit", ["enter"], picker)
+        imported = self.inspect("project_inspect")
+        require(len(imported.get("objects", [])) == 1 and imported.get("currentPlate") == 0,
+                "Native import did not produce the requested cube on plate zero")
+        require(imported.get("plates") and imported["plates"][0].get("sliceReady") is False,
+                "Fixture unexpectedly has reusable slice output")
+        self.rows[-1]["fixture_sha256"] = behavior.sha256(fixture)
+
+    def workflow(self, state=None):
+        state = state or self.inspect("project_inspect")
+        w = {**state.get("sliceWorkflow", {}), "currentPlate": state.get("currentPlate")}
+        require(w.get("schemaVersion") == 1 and w.get("enabled") is True and
+                w.get("diagnosticOnly") is True and w.get("eventCapacity") == 16,
+                "Versioned slice workflow observation unavailable")
+        require((w.get("workerStateKnown") is True and type(w.get("workerRunning")) is bool) or
+                (w.get("workerStateKnown") is False and w.get("workerRunning") is None),
+                "Unknown worker ownership was misrepresented as a known state")
+        for events, sequence in (("completionEvents", "completionSequence"),
+                                 ("continuationEvents", "continuationSequence")):
+            rows, last = w.get(events), w.get(sequence)
+            require(isinstance(last, int) and isinstance(rows, list) and len(rows) == min(16, last)
+                    and [r.get("sequence") for r in rows] == list(range(last - len(rows) + 1, last + 1)),
+                    "Slice event history is incomplete or not monotonic")
+        return w
+
+    def combined(self, action):
+        self.load_slice_fixture()
+        before = self.workflow()
+        caption = "Slice and Print" if action == "print" else "Slice and Send"
+        title = "Send print job" if action == "print" else "Send to Printer storage"
+        self.click("combined-start", self.one(caption))
+        deadline = time.monotonic() + 300
+        observations, confirmation = [], None
+        while time.monotonic() < deadline:
+            state = self.inspect("project_inspect")
+            observations.append({"slicing": state.get("slicing"), "plates": state.get("plates"),
+                                 "currentPlate": state.get("currentPlate"), "sliceWorkflow": self.workflow(state)})
+            self.worker()
+            confirmation = next((w for w in self.app.windows() if w["class"] == "#32770"
+                                 and self.label(title) in w.get("title", "")), None)
+            if confirmation:
+                break
+            time.sleep(1)
+        self.rows[-1]["native_slice_observations"] = observations
+        require(confirmation is not None, "Expected device confirmation unavailable after slicing; printer/account or preflight state requires review")
+        state = self.inspect("project_inspect")
+        require(state.get("slicing") is False and state.get("currentPlate") == 0 and
+                state.get("plates") and state["plates"][0].get("sliceReady") is True,
+                "Device confirmation opened without ready output for the requested plate")
+        workflow = self.workflow(state)
+        require(workflow["completionSequence"] - before["completionSequence"] <= 16 and
+                workflow["continuationSequence"] - before["continuationSequence"] <= 16,
+                "Combined-action evidence was overwritten in the bounded history")
+        dispatched = [r for r in workflow["continuationEvents"] if r["sequence"] > before["continuationSequence"]]
+        require(len(dispatched) == 1 and dispatched[0]["action"] == action and
+                dispatched[0]["plateIndex"] == 0 and
+                dispatched[0]["requestGeneration"] == workflow["requestGeneration"] > before["requestGeneration"] and
+                dispatched[0]["nativeGeneration"] == workflow["nativeGeneration"] > before["nativeGeneration"] and
+                workflow["pending"]["action"] == "none" and workflow["outcome"] == "completed" and
+                any(e["accepted"] and e["status"] == "completed" and
+                    e["eventGeneration"] == workflow["nativeGeneration"] for e in workflow["completionEvents"]),
+                "Confirmation lacks successful current-generation continuation evidence")
+        self.record("combined-confirmation", capture_hwnd=confirmation["handle"])
+        # No Enter or submit click is sent to a printer dialog. Escape may only
+        # dismiss it; a dialog that ignores Escape produces an unverified result.
+        self.key("combined-confirmation-cancel", ["esc"], confirmation["handle"])
+        require(not any(w["handle"] == confirmation["handle"] and w.get("visible", True)
+                        for w in self.app.windows()), "Device confirmation did not dismiss with Escape")
+
+    def combined_print(self):
+        self.combined("print")
+
+    def combined_send(self):
+        self.combined("send")
+
+    def cancellation(self):
+        self.load_slice_fixture(stress=True)
+        initial = self.workflow()
+        trials, cancelled, disabled_invariants = [], 0, 0
+        for attempt in range(3):
+            baseline = self.workflow()
+            action = "print" if attempt % 2 == 0 else "send"
+            caption = "Slice and Print" if action == "print" else "Slice and Send"
+            self.click(f"cancel-start-{attempt}", self.one(caption))
+            observed = self.workflow()
+            ownership_deadline = time.monotonic() + 5
+            while observed["workerRunning"] is None and time.monotonic() < ownership_deadline:
+                time.sleep(0.05)
+                observed = self.workflow()
+            trial = {"attempt": attempt + 1, "action": action, "before": baseline, "started": observed}
+            trials.append(trial)
+            self.rows[-1]["cancellation_trials"] = trials
+            # A complete small job is not an in-flight cancellation test.
+            if observed["outcome"] != "running" or observed["workerRunning"] is not True:
+                trial["status"] = "not_observed"
+                break
+            require(observed["pending"]["action"] == action and
+                    observed["pending"]["nativeGeneration"] == observed["nativeGeneration"] and
+                    observed["pending"]["requestGeneration"] == observed["requestGeneration"] and
+                    observed["pending"]["plateIndex"] == 0,
+                    "Combined request was not bound to the in-flight plate and generation")
+            row = self.record(f"cancel-click-{attempt}", "cancel-current",
+                cli=str(self.args.cli), workspace=str(self.scratch),
+                generation=observed["nativeGeneration"], action=action,
+                request_generation=observed["requestGeneration"], model_revision=observed["modelRevision"],
+                continuation_sequence=baseline["continuationSequence"])
+            trial["input_observation"] = self.last_input.get("cancel_observation")
+            require(trial["input_observation"] is not None, "Cancel input has no fresh observation")
+            anchor = cancel_anchor(trial["input_observation"], action)
+            trial["cancellation_anchor"] = anchor
+            # Do not wait for the old completion before trying the next action.
+            # The product deliberately disables both controls while it owns work.
+            next_caption = "Slice and Send" if action == "print" else "Slice and Print"
+            next_control = self.one(next_caption)
+            after_cancel = self.workflow()
+            trial["after_cancel"] = after_cancel
+            require_cancel_epoch(after_cancel, anchor)
+            trial["next_action"] = {"caption": next_caption, "enabled": next_control["enabled"]}
+            if after_cancel["workerRunning"] is True:
+                require(not next_control["enabled"], "Combined action enabled while cancellation still owns the worker")
+                left, top, right, bottom = next_control["rect"]
+                require(right > left and bottom > top, "Disabled next action has no visible target")
+                self.record(f"cancel-next-disabled-{attempt}", "click-disabled-control", hwnd=next_control["top"],
+                            point=[(left + right) // 2, (top + bottom) // 2],
+                            target_rect=next_control["rect"])
+                after_next = self.workflow()
+                trial["after_next_click"] = after_next
+                require_cancel_epoch(after_next, anchor)
+                # Bracket the actual click with positive ownership observations.
+                # If completion raced the input, no disabled-window proof is claimed.
+                if after_next["workerRunning"] is True:
+                    disabled_invariants += 1
+                    trial["next_action"]["status"] = "disabled_while_worker_owned"
+                else:
+                    trial["next_action"]["status"] = "not_observed"
+            else:
+                trial["next_action"]["status"] = "not_observed"
+            finished, completion = wait_cancel_completion(self.workflow, anchor, time.monotonic, time.sleep)
+            trial["finished"] = finished
+            trial["accepted_completion"] = completion
+            require(finished["modelRevision"] == initial["modelRevision"],
+                    "Cancellation fixture model changed during the trial")
+            trial["status"] = "cancelled_without_continuation"
+            cancelled += 1
+            self.worker()
+        final = self.workflow()
+        require(final["completionSequence"] - initial["completionSequence"] <= 16 and
+                final["continuationSequence"] - initial["continuationSequence"] <= 16,
+                "Cancellation evidence was overwritten in the bounded history")
+        stale = [e for e in final["completionEvents"] if e["sequence"] > initial["completionSequence"]
+                 and e["eventGeneration"] < e["currentGeneration"]]
+        require(all(not e["accepted"] and e["rejection"] == "stale_generation" for e in stale),
+                "An old completion was accepted by the current receiver")
+        # A natural stale event is reported separately from an actually observed
+        # disabled overlap invariant. Neither is inferred from an idle dialog.
+        self.rows.append({"operation": "cancellation-result", "trials": trials,
+            "explicit_cancel_count": cancelled, "stale_events": stale,
+            "disabled_overlap_count": disabled_invariants,
+            "stale_completion_status": "observed" if stale else "not_observed",
+            "overlap_status": "prevented_by_disabled_control" if disabled_invariants else "not_observed",
+            "status": "observed" if cancelled and (stale or disabled_invariants) else "not_observed"})
+        # If a timing miss reached a confirmation, dismiss it without submission.
+        self.worker()
+        for window in self.app.windows():
+            if window["class"] == "#32770" and any(self.label(title) in window.get("title", "")
+                    for title in ("Send print job", "Send to Printer storage")):
+                self.key("timing-miss-dismiss", ["esc"], window["handle"])
+        require(cancelled > 0 and (bool(stale) or disabled_invariants > 0),
+                "Bounded trials observed neither a disabled overlap window nor rejected stale completion")
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    for name in ("exe", "cli", "install-receipt", "output"):
+        parser.add_argument("--" + name, type=Path, required=True)
+    parser.add_argument("--source-commit", required=True)
+    parser.add_argument("--release-tag", required=True)
+    parser.add_argument("--scope", choices=("menus", "temporal-checkbox", "menu-builder-root", "menu-builder-nested", "vocabulary", "vocabulary-persistence", "slice-controls", "combined-print", "combined-send", "cancellation", "minimum-resize", "minimum-observe", "startup-diagnostic"), required=True)
+    parser.add_argument("--verifier-commit")
+    parser.add_argument("--minimum-job-name")
+    parser.add_argument("--temporal-job-name")
+    parser.add_argument("--temporal-package", type=Path)
+    parser.add_argument("--temporal-tools", type=Path)
+    parser.add_argument("--language", choices=behavior.MODES, default="en")
+    parser.add_argument("--theme", choices=("light", "dark"), default="light")
+    parser.add_argument("--scale", type=float, choices=(1.0, 1.25, 1.5, 2.0), default=1.0)
+    parser.add_argument("--viewport", choices=("1200x800", "1000x600", "measured-minimum"), default="1200x800")
+    args = parser.parse_args()
+    temporal_scope = args.scope == "temporal-checkbox"
+    if temporal_scope:
+        require((args.language, args.theme, args.scale, args.viewport) == ("en", "light", 1.0, "1200x800")
+                and re.fullmatch(r"Local\\BambuNativeScale-[0-9a-f]{64}", args.temporal_job_name or "")
+                and args.temporal_package and args.temporal_tools, "Unsupported temporal tuple")
+        from minimum_resize import job_member
+        job_member(args.temporal_job_name, os.getpid())
+    else:
+        require(not any((args.temporal_job_name, args.temporal_package, args.temporal_tools)), "Unexpected temporal binding")
+    diagnostic = args.scope == "startup-diagnostic"
+    require((diagnostic and args.verifier_commit and behavior.SHA.fullmatch(args.verifier_commit)
+             and args.language == "en" and args.theme == "light" and args.scale == 1.0
+             and args.viewport == "1200x800" and not args.minimum_job_name)
+            or (not diagnostic and args.verifier_commit is None), "Unsupported diagnostic tuple")
+    if args.scope == "minimum-observe":
+        require(args.scale == 2 and args.viewport == "measured-minimum" and args.language == "en"
+                and args.theme == "light", "Unsupported minimum observation tuple")
+    if args.scope == "minimum-resize":
+        require(args.scale == 1 and args.viewport == "measured-minimum" and
+                re.fullmatch(r"Local\\BambuNativeScale-[0-9a-f]{64}", args.minimum_job_name or ""),
+                "Interactive minimum proof requires its contained baseline invocation")
+    else:
+        require(args.minimum_job_name is None, "Unexpected minimum containment identity")
+    require(os.environ.get("GITHUB_ACTIONS") == "true" and os.environ.get("RUNNER_ENVIRONMENT") == "github-hosted"
+            and os.environ.get("RUNNER_OS") == "Windows", "Only disposable hosted Windows execution is authorized")
+    require(behavior.SHA.fullmatch(args.source_commit) and re.fullmatch(r"md3-v\d+", args.release_tag), "Malformed source identity")
+    install = json.loads(args.install_receipt.read_text(encoding="utf-8-sig"))
+    behavior.validate_installation(install, args.exe, args.source_commit, args.release_tag)
+    diagnostic_binding = None
+    if diagnostic:
+        checkout = subprocess.run(["git", "rev-parse", "HEAD"], cwd=HERE.parent.parent,
+                                  capture_output=True, text=True, timeout=10,
+                                  creationflags=subprocess.CREATE_NO_WINDOW)
+        require(checkout.returncode == 0 and checkout.stdout.strip() == args.verifier_commit,
+                "Diagnostic verifier source mismatch")
+        diagnostic_binding = verifier_binding(args.verifier_commit)
+    root = Path(os.environ["RUNNER_TEMP"]).resolve()
+    require(args.output.resolve().is_relative_to(root), "Evidence output escapes temporary root")
+    scratch = Path(tempfile.mkdtemp(prefix="native-interface-owned-", dir=root))
+    profile, probe = scratch / "profile", scratch / "probe"
+    profile.mkdir()
+    probe.mkdir()
+    behavior.seed_profile(profile, args.language, args.theme)
+    os.environ["BAMBU_AUTOMATION"] = "1"
+    os.environ["BAMBU_AUTOMATION_ROOTS"] = str(scratch)
+    app = behavior.HostedApp(str(args.exe), str(profile), "bsnative-" + str(os.getpid()), str(probe))
+    app.isolated_launcher_trace = diagnostic
+    app.holder_lifetime = 110 if temporal_scope else 1800
+    drive = None
+    status, failure, teardown = "failed", None, False
+    try:
+        drive = Driver(args, app, scratch)
+        app.start(timeout=25 if temporal_scope else 240)
+        if diagnostic:
+            status = "diagnostic_completed"
+        else:
+            drive.exact_client()
+            if args.scope != "minimum-observe":
+                drive.record("native-ready")
+            getattr(drive, args.scope.replace("-", "_"))()
+            status = "runtime_verified"
+    except Exception as exc:
+        failure = f"{type(exc).__name__}: {exc}"
+    finally:
+        try:
+            final_app = drive.app if drive else app
+            final_app.stop()
+            teardown = bool(final_app.owned_teardown_verified and final_app.desktop_closed_verified)
+        except Exception as exc:
+            failure = failure or f"{type(exc).__name__}: {exc}"
+        if not teardown:
+            status = "failed"
+        report = {"schema": 1, "status": status, "source_commit": args.source_commit,
+            "release_tag": args.release_tag, "run_id": os.environ["GITHUB_RUN_ID"],
+            "exe_sha256": behavior.sha256(args.exe), "cli_sha256": behavior.sha256(args.cli),
+            "install_receipt_sha256": behavior.sha256(args.install_receipt), "scope": args.scope,
+            "package_asset_sha256": install.get("asset_sha256"),
+            "driver_sha256": behavior.sha256(Path(__file__)),
+            "diagnostic_only": diagnostic, "verifier_binding": diagnostic_binding,
+            "minimum_helper_sha256": behavior.sha256(HERE / "minimum_resize.py") if args.scope == "minimum-resize" else None,
+            "requested_tuple": {"language": args.language, "theme": args.theme,
+                "scale": args.scale, "viewport": args.viewport},
+            "temporal": getattr(drive, "temporal", None),
+            "operations": drive.rows if drive else [], "captures": drive.images if drive else [],
+            "viewport_observations": drive.viewport_observations if drive else [],
+            "startup_diagnostics": collect_startup(drive.app if drive else app,
+                teardown=teardown, operations=len(drive.rows) if drive else 0),
+            "capture_method": "lowlevel-computer-use-cheap owned window; persistent compatibility MCP desktop handoff" if args.scope == "minimum-resize" else "lowlevel-computer-use-cheap hidden desktop",
+            "privacy": "restricted_pixel_review_pending", "hardware": "unverified_no_printer_commands",
+            "teardown_verified": teardown, "failure": failure}
+        (args.output / "runtime.json").write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+    return 0 if status in ("runtime_verified", "diagnostic_completed") and teardown else 1
+
+
+if __name__ == "__main__":
+    if len(sys.argv) == 5 and sys.argv[1] == "--native-request" and sys.argv[3] == "--native-output":
+        watchdog = threading.Timer(22, lambda: os._exit(3))
+        watchdog.daemon = True
+        watchdog.start()
+        try:
+            native_worker(Path(sys.argv[2]), Path(sys.argv[4]))
+        except Exception as exc:
+            atomic_json(Path(sys.argv[4]), {"error": type(exc).__name__})
+        finally:
+            watchdog.cancel()
+    else:
+        raise SystemExit(main())

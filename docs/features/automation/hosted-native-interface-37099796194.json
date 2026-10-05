@@ -1,0 +1,91 @@
+{
+  "schema": 1,
+  "run_id": "37099796194",
+  "url": "https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37099796194",
+  "source_commit": "6c5e619aaa63b00944951d5caaf30b9d1c415185",
+  "status": "passed",
+  "jobs": [
+    "native-services",
+    "focused"
+  ],
+  "xml_results": [
+    {
+      "suite": "canvas-menu-parity",
+      "cases": 1,
+      "assertions": 19
+    },
+    {
+      "suite": "language_mode",
+      "cases": 16,
+      "assertions": 199
+    },
+    {
+      "suite": "personal_vocabulary",
+      "cases": 3,
+      "assertions": 45
+    },
+    {
+      "suite": "profile_archive",
+      "cases": 4,
+      "assertions": 103
+    },
+    {
+      "suite": "print-workflow",
+      "cases": 5,
+      "assertions": 28
+    }
+  ],
+  "source_contracts": 55,
+  "slicing_source_contracts": 8,
+  "files": [
+    {
+      "path": "native-interface-6c5e619aaa63b00944951d5caaf30b9d1c415185/print-workflow.xml",
+      "sha256": "6120461443d8fb4d8c9cfc32cc8ea8fb097447a85df7a224aceec35e6a2abec6",
+      "bytes": 1077
+    },
+    {
+      "path": "native-interface-6c5e619aaa63b00944951d5caaf30b9d1c415185/run.json",
+      "sha256": "44575687535138556a2a02e553bcd4314ca0ab021dd6c859cd426fdaf68d8a72",
+      "bytes": 136
+    },
+    {
+      "path": "native-interface-6c5e619aaa63b00944951d5caaf30b9d1c415185/slice-lifecycle.tap",
+      "sha256": "d988b3835e47e768f440cbd16ef88e3a39d50ce3ce299159eb57e28cdafeb8f7",
+      "bytes": 867
+    },
+    {
+      "path": "native-interface-6c5e619aaa63b00944951d5caaf30b9d1c415185/source-contracts.tap",
+      "sha256": "39f1fb68f1425bd598812eeaae85bbe59b2ba9666bf1187ac73340f4e8ee50f1",
+      "bytes": 11732
+    },
+    {
+      "path": "native-services-6c5e619aaa63b00944951d5caaf30b9d1c415185/canvas-menu-parity.xml",
+      "sha256": "282fccbb75f8117b91ebc9b78e1dc198556575b1a610b00bb52cfa0d0fef984a",
+      "bytes": 516
+    },
+    {
+      "path": "native-services-6c5e619aaa63b00944951d5caaf30b9d1c415185/language_mode_tests.xml",
+      "sha256": "2280c810e1818c616b23800e2ff5fe85cebab55eea3ae8efd8ae014739f186ae",
+      "bytes": 2772
+    },
+    {
+      "path": "native-services-6c5e619aaa63b00944951d5caaf30b9d1c415185/personal_vocabulary_tests.xml",
+      "sha256": "c279397a1250ff9018ff60134a16c723c221cedb36ea7608c5c976f2eadcea13",
+      "bytes": 771
+    },
+    {
+      "path": "native-services-6c5e619aaa63b00944951d5caaf30b9d1c415185/profile_archive_tests.xml",
+      "sha256": "c7c8634c95519401c40c6582743e0dea78f1c79b3c0c9a3abded109ff88fc026",
+      "bytes": 903
+    },
+    {
+      "path": "native-services-6c5e619aaa63b00944951d5caaf30b9d1c415185/run.json",
+      "sha256": "44575687535138556a2a02e553bcd4314ca0ab021dd6c859cd426fdaf68d8a72",
+      "bytes": 136
+    }
+  ],
+  "limitations": [
+    "Exact earlier menu source only; subsequent motion changes are excluded.",
+    "No installed product interaction, screenshot or physical hardware behavior is established."
+  ]
+}

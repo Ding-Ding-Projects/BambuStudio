@@ -1,0 +1,44 @@
+{
+  "schema": 1,
+  "run_id": "37139071425",
+  "url": "https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37139071425",
+  "verification_commit": "9c18092a021133451fe83bfecf58c9543a1d08d9",
+  "source_commit": "35d1074faea221fa4f289f1db1e0ee428a90d701",
+  "release_tag": "md3-v190",
+  "workflow_conclusion": "success",
+  "trace_driver_exit_code": 2,
+  "source_byte_representation": "CRLF-checkout",
+  "independently_verified_source_hashes": 4,
+  "verifier_files_sha256": {
+    "desktop_holder": "d62f0c1bd573140d934fd781c4d12713d22763ef73bb452d6c0936728e9f8b9d",
+    "wrapper": "240383d2e450d05f7423d4f95c3313e271d07c57988acff3ae0a63f156cd0a06",
+    "driver": "198d94fc423a891a1612653cc8c5612db3dbb36795ce9b262e4320cc04678fd1",
+    "containment": "8081405a3e3030dae2ad8bac1f4cd1f6e9aebbae160c06a693462a8e892b8e03"
+  },
+  "creation_observation": {
+    "stage": "target_thread_desktop_handle",
+    "acknowledgement_observed": true,
+    "observed_output_bytes": 6382,
+    "inventory_count": 1,
+    "target_pid_matches": true,
+    "debugger_job_member": true,
+    "target_job_member": true,
+    "target_desktop_matches": null,
+    "continuation_written": false,
+    "desktop_handle_present": false,
+    "desktop_handle_error": 0,
+    "desktop_information_success": null,
+    "desktop_information_error": null,
+    "desktop_required_bytes": null,
+    "desktop_required_bytes_capped": null
+  },
+  "private_log_bytes": 6382,
+  "private_log_sha256": "75f5ea63060e63a96a52f690adda0f4dd80d587276a72b765973cd8ccb4087cb",
+  "debugger_stop_verified": true,
+  "owned_process_cleanup": "verified",
+  "named_desktop_closed_verified": true,
+  "limitations": [
+    "GetThreadDesktop returned null with native code 0; no information query ran.",
+    "No continuation, initializer diagnosis or rendered acceptance."
+  ]
+}

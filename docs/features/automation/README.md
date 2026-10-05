@@ -1,0 +1,77 @@
+# Automation
+
+The bundled automation companion exposes the running Bambu Studio instance and
+isolated headless slicing through MCP and a matching command-line interface.
+
+- [MCP and CLI setup](mcp-and-cli.md)
+- [Command and transport reference](../../../automation/README.md)
+- [Hosted native interface verification](native-interface-verification.md),
+  parameterized native-input scopes with encrypted evidence and explicit gaps.
+- [Hosted managed verification receipt](hosted-verification.json), 24 passing
+  cases at the recorded source SHA, with native runtime and hardware excluded.
+- [Expanded managed verification receipt](hosted-verification-ce61d22e.json),
+  27 passing cases at `ce61d22e`, with native runtime and hardware excluded.
+
+The HTTP surface implements MCP rather than a general REST API. Use an MCP
+client for protocol negotiation and tool discovery. A Postman collection is not
+provided because it would duplicate the protocol client and does not cover stdio.
+
+Related: [Windows release supply chain](../releases/windows-release-supply-chain.md).
+
+- [Hosted display resolution receipt](hosted-display-resolution-37091384649.json),
+  seven passing contracts plus measured 1920x1080/125% provisioning and full
+  restoration; application DPI and pixels are excluded.
+- [Contained source-query receipts](hosted-source-query-b5468208.json), the failed
+  creation case and repaired 10/10, 11/11 and 13/13 hosted lifecycle results,
+  with original receipt hashes; the last provisioning job failed independently;
+  no Settings mutation or application-rendering proof is claimed.
+- [Cancellation observation contract](hosted-cancellation-contract-37095515540.json),
+  18 passing hosted cases including deliberate epoch-validation mutation;
+  this verifies evidence rules, not an installed cancellation interaction.
+- [Hosted 150% display receipt](hosted-display-resolution-37096062899.json),
+  13 passing lifecycle cases, measured 144 DPI at 1920x1080, and verified
+  restoration to the original 1024x768 and 96 DPI. Application rendering is excluded.
+- [Hosted 200% display receipt](hosted-display-resolution-37096376814.json),
+  14 passing lifecycle cases, measured192 DPI at1600x1200, and original-state
+  restoration. Product rendering remains independently unverified.
+- [Bounded launcher diagnosis](hosted-startup-diagnostic-37096825183.json),
+  native initialization error 1114 after Mesa loaded, before the product entry point;
+  the failing module remains unidentified and no runtime success is claimed.
+
+- [Focused minimum, lifecycle and debugger contracts](hosted-focused-contracts-20261003.json),
+  exact hosted receipts for 9 minimum cases, 14 lifecycle cases and 7 plus 4
+  debugger preflight outcomes. Product startup and rendered behavior remain unverified.
+
+- [Vocabulary observation contract](hosted-vocabulary-contract-37098551711.json),
+  nine hosted cases with deliberate comparison mutation; rendered wording is unverified.
+- [Startup-creation attempt](hosted-startup-creation-37098366121.json),
+  worker termination verified but desktop closure unverified, so encrypted evidence
+  was withheld. The product initializer remains unidentified.
+
+- [Startup contract failure receipts](hosted-startup-contracts-20261003.json), exact retained outcomes before product launch; the later receipt identifies native process creation failure without establishing its command-value cause.
+
+- [Persistent startup desktop lifecycle](hosted-startup-lifecycle-37100483720.json), verified real absence and persistent create/list/close with contained termination; no product execution.
+
+- [Native verification at 6c5e619aaa](hosted-native-interface-37099796194.json), including actual canvas regex parity, excludes later motion.
+- [Hosted animator lifetime receipt](hosted-motion-runtime-37100814236.json), fourteen real wx cases and compiled negative; injected preferences and no pixels.
+- [Partial startup diagnostic](hosted-startup-creation-37100674583.json), encrypted output with verified teardown but matching local key unavailable.
+- [Additive review recipient recovery](hosted-gui-recipient-recovery.md).
+
+- [Authenticated startup diagnostic](hosted-startup-creation-37101357236.json), matching operating-system symbols unavailable, so execution never resumed; the product initializer remains unknown.
+
+- [Native verification at c7aefb4b8](hosted-native-interface-37101358501.json), including 59 motion-policy checks and repaired catalog compilation; installed rendering remains unverified.
+
+- [Temporal contracts, 18 cases](hosted-temporal-contracts-37102495898.json) and [combined 25 cases](hosted-temporal-contracts-37103221335.json): exact source-byte and result hashes verified; no product execution.
+- [Strict-symbol startup diagnostic](hosted-startup-creation-37102257995.json): symbols acknowledged, continuation unobserved, driver exit 2.
+
+- [Separated ownership-stage evidence](hosted-startup-creation-37103711674.json): target identity and membership pass; desktop lookup remains unavailable, with no continuation.
+
+- [Native lookup contract receipt](hosted-startup-contracts-37139070022.json): nine Python cases and contained lifecycle checks passed.
+- [Native handle observation](hosted-startup-creation-37139071425.json): null handle/native code 0, name query unreached, no continuation.
+
+- [Current managed automation receipt](hosted-verification-37138948887.json): 27 passing cases at `68dabac8f`; native compilation and packaging are recorded separately below.
+- [Exact-thread contracts](hosted-startup-contracts-37139896660.json): nine Python cases and contained lifecycle checks passed at `75770f71`.
+- [Exact-thread diagnostic](hosted-startup-creation-37139898854.json): ownership and closure passed, desktop handle unavailable, no continuation; historical-package diagnosis is held.
+
+- [Production build and package receipt](hosted-production-build-37139881377.json): exact `75770f71` source, successful native build and Squirrel package job, API-reported installer archive identity; publication and installed behavior remain pending.
+- [Integration readiness](integration-readiness.md): independent default-branch changes, predicted conflicts, ownership preservation and the resulting exact-source acceptance requirements.

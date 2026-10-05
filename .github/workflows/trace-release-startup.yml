@@ -2,7 +2,7 @@ name: Trace published startup on hosted Windows
 
 on:
   push:
-    branches: [codex/hosted-startup-stack]
+    branches: [codex/hosted-startup-stack, feature/ui-integration]
     paths:
       - '.github/workflows/trace-release-startup.yml'
       - 'scripts/ci/Trace-HostedReleaseStartup.ps1'
@@ -10,6 +10,14 @@ on:
       - 'scripts/md3/test-trace-packaged-startup.py'
   workflow_dispatch:
     inputs:
+      contract_only:
+        description: Validate diagnostic contracts without installation or debugging
+        type: boolean
+        default: false
+      from_creation:
+        description: Fixed v190 loader diagnosis from process creation
+        type: boolean
+        default: false
       tag:
         description: Published release tag
         required: true
@@ -27,10 +35,100 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  trace:
-    if: github.ref == 'refs/heads/codex/hosted-startup-stack'
+  contract:
+    if: github.event_name == 'workflow_dispatch' && inputs.contract_only
     runs-on: windows-2025
-    timeout-minutes: 90
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.12'
+      - name: Check fixed creation contracts
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          if ($env:RUNNER_ENVIRONMENT -cne 'github-hosted' -or $env:RUNNER_OS -cne 'Windows') { throw 'Hosted Windows is required.' }
+          $source=git rev-parse HEAD
+          if ($LASTEXITCODE -ne 0 -or $source -cne $env:GITHUB_SHA) { throw 'Source identity mismatch.' }
+          New-Item -ItemType Directory -Force diagnostic/contract | Out-Null
+          $receipt=@{schema=1;source_commit=$source;run_id=$env:GITHUB_RUN_ID;status='failed';python_cases=9;desktop_rejections=0;actual_absence_verified=$false;product_started=$false;files=@{}}
+          foreach ($path in @('scripts/md3/trace-packaged-startup.py','scripts/md3/test-trace-packaged-startup.py','scripts/md3/startup_desktop_holder.py','scripts/ci/HostedScaleProcess.cs')) {
+            $receipt.files[$path]=(Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash.ToLowerInvariant()
+          }
+          try {
+            python -m pip install --disable-pip-version-check --quiet --timeout 15 --retries 1 'Pillow==11.3.0'
+            if ($LASTEXITCODE -ne 0) { throw 'Pinned contract import dependency is unavailable.' }
+            python scripts/md3/test-trace-packaged-startup.py
+            if ($LASTEXITCODE -ne 0) { throw 'Python contract failed.' }
+            Add-Type -Path scripts/ci/HostedScaleProcess.cs
+            $name='Local\BambuNativeScale-' + ('a' * 64)
+            foreach ($desktop in @('WinSta0\Default','WinSta0\startup-loader-x-1','Other\startup-loader-1-1','WinSta0\startup-loader-1-1 extra')) {
+              $result=[HostedScaleProcess]::RunNamedOnDesktop('not-launched.exe',@(),1,$false,$name,$desktop)
+              if (-not $result.Terminated -or $result.ProcessStage -ne [HostedScaleProcess+Stage]::InvalidName) { throw 'Invalid desktop contract failed.' }
+              $receipt.desktop_rejections++
+            }
+            $toolRoot=Join-Path $env:RUNNER_TEMP 'startup-contract-lowlevel'
+            git clone --quiet --no-checkout https://github.com/Ding-Ding-Projects/lowlevel-computer-use-mcp.git $toolRoot
+            if ($LASTEXITCODE -ne 0) { throw 'Pinned tool fetch failed.' }
+            git -C $toolRoot checkout --quiet --detach e6e42f2066d539256d6480401d7cef867f2b8dfe
+            if ($LASTEXITCODE -ne 0 -or (git -C $toolRoot rev-parse HEAD) -cne 'e6e42f2066d539256d6480401d7cef867f2b8dfe') { throw 'Pinned tool identity mismatch.' }
+            python -m pip install --disable-pip-version-check --quiet --timeout 15 --retries 1 $toolRoot
+            if ($LASTEXITCODE -ne 0) { throw 'Pinned tool unavailable.' }
+            function Get-ContractExecutable([object] $Candidate, [string] $Name) {
+              if ($Candidate -isnot [string] -or [string]::IsNullOrWhiteSpace($Candidate) -or
+                  -not [IO.Path]::IsPathFullyQualified($Candidate) -or
+                  [IO.Path]::GetFileName($Candidate) -ine $Name) { throw 'Contract executable selection invalid.' }
+              $file=Get-Item -LiteralPath $Candidate -ErrorAction Stop
+              if ($file -isnot [IO.FileInfo] -or $file.FullName -ine $Candidate) { throw 'Contract executable path invalid.' }
+              return $file.FullName
+            }
+            $pythonCommands=@(Get-Command python.exe -CommandType Application -All -ErrorAction Stop)
+            $cheapCommands=@(Get-Command lowlevel-computer-use-cheap.exe -CommandType Application -All -ErrorAction Stop)
+            $receipt.executable_selection=@{python_count=$pythonCommands.Count;cheap_count=$cheapCommands.Count;validated=$false;invalid_cases=0}
+            if ($pythonCommands.Count -eq 0 -or $cheapCommands.Count -eq 0) { throw 'Contract executable unavailable.' }
+            $python=Get-ContractExecutable $pythonCommands[0].Path 'python.exe'
+            $env:LLCU_CHEAP=Get-ContractExecutable $cheapCommands[0].Path 'lowlevel-computer-use-cheap.exe'
+            $receipt.executable_selection.validated=$true
+            foreach ($candidate in @(@{value=@($python,$python)},@{value=($python+' '+$python)},@{value=('"'+$python+'"')},@{value='python.exe'})) {
+              $rejected=$false
+              try { $null=Get-ContractExecutable $candidate.value 'python.exe' } catch { $rejected=$true }
+              if (-not $rejected) { throw 'Malformed executable contract failed.' }
+              $receipt.executable_selection.invalid_cases++
+            }
+            # CreateProcess inherits the process directory, not PowerShell's runspace location.
+            $holderScript=(Resolve-Path -LiteralPath (Join-Path $env:GITHUB_WORKSPACE 'scripts/md3/startup_desktop_holder.py') -ErrorAction Stop).ProviderPath
+            $actual=[HostedScaleProcess]::Run($python,[string[]]@($holderScript,'--absence-contract'),15,$false)
+            $receipt.absence_process=@{terminated=$actual.Terminated;exit_code=$actual.Code;stage=[int]$actual.ProcessStage;native_error=$actual.NativeError}
+            if (-not $actual.Terminated -or $actual.Code -ne 0) { throw 'Actual pinned desktop absence contract failed.' }
+            $receipt.actual_absence_verified=$true
+            $nonce=[Guid]::NewGuid().ToString('N')
+            $holderRoot=Join-Path $env:RUNNER_TEMP ('startup-contract-' + $nonce)
+            New-Item -ItemType Directory -Path $holderRoot | Out-Null
+            $holderName='Local\BambuNativeScale-' + [Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(32)).ToLowerInvariant()
+            $holderArgs=[string[]]@($holderScript,'--root',$holderRoot,'--nonce',$nonce,
+              '--desktop',"startup-loader-$($env:GITHUB_RUN_ID)-$($env:GITHUB_RUN_ATTEMPT)",'--source',$source,'--job-name',$holderName,'--lifecycle-contract')
+            $lifecycle=[HostedScaleProcess]::RunNamed($python,$holderArgs,60,$false,$holderName)
+            $receipt.lifecycle_process=@{terminated=$lifecycle.Terminated;exit_code=$lifecycle.Code;stage=[int]$lifecycle.ProcessStage;native_error=$lifecycle.NativeError}
+            if (-not $lifecycle.Terminated -or $lifecycle.Code -ne 0) { throw 'Persistent desktop lifecycle contract failed.' }
+            $receipt.persistent_lifecycle_verified=$true
+            $receipt.status='passed'
+          } finally {
+            $receipt | ConvertTo-Json -Depth 5 | Set-Content diagnostic/contract/receipt.json -Encoding utf8
+          }
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        if: always()
+        with:
+          name: startup-creation-contract-${{ github.run_id }}-${{ github.run_attempt }}
+          path: diagnostic/contract/receipt.json
+          if-no-files-found: warn
+  trace:
+    if: (github.ref == 'refs/heads/codex/hosted-startup-stack' || (github.event_name == 'workflow_dispatch' && inputs.from_creation)) && !inputs.contract_only
+    runs-on: windows-2025
+    timeout-minutes: ${{ inputs.from_creation && 25 || 90 }}
     defaults:
       run:
         shell: pwsh
@@ -56,10 +154,18 @@ jobs:
 
       - name: Trace exact installed release process
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN || secrets.ORG_TOKEN || github.token }}
           TRACE_TAG: ${{ inputs.tag || 'md3-v125' }}
           TRACE_SOURCE_COMMIT: ${{ inputs.source_commit || 'c5df6199e1a83b1c94be12e999c0b322fded8730' }}
-        run: ./scripts/ci/Trace-HostedReleaseStartup.ps1 -Tag $env:TRACE_TAG -ExpectedCommit $env:TRACE_SOURCE_COMMIT
+          TRACE_FROM_CREATION: ${{ inputs.from_creation }}
+        run: |
+          $arguments = @{Tag=$env:TRACE_TAG; ExpectedCommit=$env:TRACE_SOURCE_COMMIT}
+          if ($env:TRACE_FROM_CREATION -eq 'true') {
+            $arguments.Tag='md3-v190'
+            $arguments.ExpectedCommit='35d1074faea221fa4f289f1db1e0ee428a90d701'
+            $arguments.FromCreation=$true
+          }
+          ./scripts/ci/Trace-HostedReleaseStartup.ps1 @arguments
 
       - name: Upload safe and encrypted diagnostic evidence
         if: ${{ always() }}

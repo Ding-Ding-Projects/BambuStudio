@@ -6,6 +6,8 @@
 #include "Label.hpp"
 #include "StateColor.hpp"
 #include "MaterialIcon.hpp"
+#include "MD3Motion.hpp"
+#include <algorithm>
 #include "../GUI_App.hpp"
 #include "../wxExtensions.hpp"
 #include "../I18N.hpp"
@@ -13,6 +15,66 @@
 #include "../GUI.hpp"
 
 namespace Slic3r { namespace GUI {
+
+// The banner owns the rail in its existing left sizer margin. The chevron
+// button and all semantic content retain their existing paint and geometry.
+class ConnectionDisclosureBanner final : public Button
+{
+public:
+    explicit ConnectionDisclosureBanner(wxWindow *parent)
+        : Button(parent, wxEmptyString)
+    {
+        Bind(wxEVT_SHOW, [this](wxShowEvent &event) {
+            if (event.GetEventObject() == this && !event.IsShown()) settle();
+            event.Skip();
+        });
+    }
+    ~ConnectionDisclosureBanner() override { m_motion.Stop(); }
+
+    void SetDisclosure(bool available, bool expanded, bool animate = true)
+    {
+        if (m_available == available && m_expanded == expanded && animate) return;
+        m_available = available;
+        m_expanded = expanded;
+        const double from = m_extent;
+        const double to = expanded ? 1.0 : 0.0;
+        m_motion.Stop();
+        if (!available || !animate || !IsShownOnScreen() || !IsEnabled() || MD3::Motion::reduced()) {
+            m_extent = to;
+            Refresh(false);
+            return;
+        }
+        m_motion.Play(MD3::Motion::short2, [this, from, to](double t) {
+            if (!IsEnabled() || MD3::Motion::reduced()) settle();
+            else m_extent = from + (to - from) * t;
+            if (IsShownOnScreen()) Refresh(false);
+        }, nullptr, &MD3::Motion::easeStandard, this);
+    }
+
+protected:
+    void doRender(wxDC &dc) override
+    {
+        StaticBox::doRender(dc);
+        if (!IsEnabled() || MD3::Motion::reduced()) settle();
+        if (!m_available) return;
+        const wxSize size = GetClientSize();
+        const int inset = FromDIP(2), width = FromDIP(2);
+        const int available = size.y - 2 * FromDIP(6);
+        if (size.x < inset + width || available <= 0) return;
+        const int rest = std::min(FromDIP(4), available);
+        const int height = rest + static_cast<int>((available - rest) * m_extent + 0.5);
+        dc.SetPen(*wxTRANSPARENT_PEN);
+        dc.SetBrush(wxBrush(StateColor::semantic(MD3::Role::OnSurfaceVariant, MD3::ColorScheme::Device)));
+        dc.DrawRectangle(inset, (size.y - height) / 2, width, height);
+    }
+
+private:
+    void settle() { m_motion.Stop(); m_extent = m_expanded ? 1.0 : 0.0; }
+    bool m_available = false;
+    bool m_expanded = false;
+    double m_extent = 0.0;
+    MD3::Motion::Anim m_motion;
+};
 
 // Build a monochrome icon as a Material Symbols glyph rendered at a logical px
 // in colour, degrading to the legacy raster (fallback_name) when the icon face
@@ -381,7 +443,7 @@ SideTools::SideTools(wxWindow *parent, wxWindowID id, const wxPoint &pos, const 
 
     m_side_tools = new SideToolsPanel(this, wxID_ANY);
 
-    m_connection_info = new Button(this, wxEmptyString);
+    m_connection_info = new ConnectionDisclosureBanner(this);
     m_connection_info->SetBackgroundColor(ThemeColor::Warning);
     m_connection_info->SetBorderColor(ThemeColor::Warning);
     m_connection_info->SetTextColor(ThemeColor::White);
@@ -414,7 +476,7 @@ SideTools::SideTools(wxWindow *parent, wxWindowID id, const wxPoint &pos, const 
     m_more_button->Bind(wxEVT_ENTER_WINDOW, [this](auto& e) {SetCursor(wxCURSOR_HAND); });
     m_more_button->Bind(wxEVT_LEAVE_WINDOW, [this](auto& e) {SetCursor(wxCURSOR_ARROW); });
     m_more_button->Bind(wxEVT_LEFT_DOWN, [this](auto& e) {
-        if (!m_more_err_state) {
+        if (!m_side_error_panel->IsShown()) {
             m_more_button->SetBitmap(m_more_err_close.bmp());
             Freeze();
             m_side_error_panel->Show();
@@ -432,7 +494,7 @@ SideTools::SideTools(wxWindow *parent, wxWindowID id, const wxPoint &pos, const 
             m_tabpanel->Layout();
             Thaw();
         }
-
+        m_connection_info->SetDisclosure(true, m_more_err_state);
         });
 
     connection_sizer_H->Add(m_hyperlink, 0, wxALIGN_CENTER | wxALL, 5);
@@ -684,6 +746,15 @@ void SideTools::show_status(int status)
             m_side_tools->set_current_printer_signal(WifiSignal::NONE);
         }
     }
+    // Status changes may hide the details independently of the disclosure.
+    // Repeated status updates must not interrupt an unchanged transition.
+    const bool expanded = m_side_error_panel->IsShown();
+    if (m_more_err_state != expanded) {
+        m_more_err_state = expanded;
+        m_more_button->SetBitmap(expanded ? m_more_err_close.bmp() : m_more_err_open.bmp());
+        m_connection_info->SetDisclosure(m_more_button->IsShown(), expanded, false);
+    }
+    m_connection_info->SetDisclosure(m_more_button->IsShown(), expanded);
     Layout();
     Fit();
 }

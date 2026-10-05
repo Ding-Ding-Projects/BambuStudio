@@ -21,6 +21,12 @@
   'use strict';
 
   var copy = {
+    'automation.heading': { en: ['MCP and CLI automation'], yue: ['MCP 及 CLI 自動化'] },
+    'automation.body': {
+      en: ['In development: stdio and authenticated HTTP tools for projects, headless slicing, and configured printers. Builds and verification run on GitHub Actions. Physical-printer verification is tracked separately.'],
+      yue: ['開發中：透過 stdio 及已驗證身份的 HTTP 工具操作專案、背景切片及已設定的打印機。編譯及驗證都在 GitHub Actions 執行，真機驗證另外記錄。']
+    },
+    'automation.guide': { en: ['Read setup and verification status'], yue: ['閱讀設定方法及驗證狀態'] },
     /* ---------------------------------------------------------------- shell */
     'shell.brand': { en: ['Bambu Studio'], yue: ['Bambu Studio'] },
     'shell.tagline': { en: ['Material Design 3'], yue: ['Material Design 3'] },

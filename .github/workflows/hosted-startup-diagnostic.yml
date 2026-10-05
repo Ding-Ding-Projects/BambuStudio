@@ -1,0 +1,41 @@
+name: Diagnose installed startup without feature input
+on:
+  push:
+    branches: [feature/ui-integration]
+    paths: [.github/workflows/hosted-startup-diagnostic.yml]
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  startup:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: windows-2025
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ secrets.RELEASE_TOKEN || secrets.ORG_TOKEN || github.token }}
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.12'
+      - name: Observe startup of the fixed installed package
+        shell: pwsh
+        run: |
+          & scripts/ci/Verify-HostedNativeInterface.ps1 -Tag md3-v190 `
+            -ExpectedSourceCommit 35d1074faea221fa4f289f1db1e0ee428a90d701 `
+            -ExpectedVerifierCommit $env:GITHUB_SHA -Repository $env:GITHUB_REPOSITORY `
+            -OutputDirectory "$env:RUNNER_TEMP/startup-diagnostic-safe" -Scope startup-diagnostic
+      - name: Retain fixed receipt and encrypted diagnostic evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: startup-diagnostic-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/startup-diagnostic-safe/receipt.json
+            ${{ runner.temp }}/startup-diagnostic-safe/evidence.aesgcm
+            ${{ runner.temp }}/startup-diagnostic-safe/envelope.json
+          if-no-files-found: warn
+          retention-days: 7

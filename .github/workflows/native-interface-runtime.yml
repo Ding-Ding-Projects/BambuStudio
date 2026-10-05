@@ -1,0 +1,205 @@
+name: Verify installed native interface
+
+on:
+  push:
+    branches: [feature/ui-integration]
+    paths: [.github/workflows/native-interface-runtime.yml]
+  workflow_dispatch:
+    inputs:
+      vocabulary_contract_only:
+        description: Run only the source-isolated vocabulary contract without installation
+        type: boolean
+        default: false
+      release_tag:
+        description: Immutable md3-vN release tag
+        required: false
+        type: string
+      expected_source_commit:
+        description: Exact released source SHA including the driver
+        required: false
+        type: string
+      scope:
+        description: One bounded interaction flow
+        required: false
+        type: choice
+        options: [menus, temporal-checkbox, menu-builder-root, menu-builder-nested, vocabulary, vocabulary-persistence, slice-controls, combined-print, combined-send, cancellation, minimum-resize, minimum-observe]
+      language:
+        required: true
+        default: en
+        type: choice
+        options: [en, yue_HK, bilingual_en_yue_HK]
+      theme:
+        required: true
+        default: light
+        type: choice
+        options: [light, dark]
+      scale:
+        required: true
+        default: '1'
+        type: choice
+        options: ['1', '1.25', '1.5', '2']
+      viewport:
+        required: true
+        default: 1200x800
+        type: choice
+        options: [1200x800, 1000x600, measured-minimum]
+      provision_resolution:
+        description: Provision fixed resolution for minimum-resize at 100 or minimum-observe at 200 percent
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  invalid-selection:
+    if: github.event_name == 'workflow_dispatch' && inputs.vocabulary_contract_only && inputs.provision_resolution
+    runs-on: windows-2025
+    timeout-minutes: 1
+    steps:
+      - shell: pwsh
+        run: throw 'Source-only vocabulary verification cannot provision a display resolution.'
+  vocabulary-contract:
+    if: github.event_name == 'workflow_dispatch' && inputs.vocabulary_contract_only && !inputs.provision_resolution
+    runs-on: windows-2025
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.12'
+      - name: Verify vocabulary observation contract
+        run: |
+          if ($env:RUNNER_ENVIRONMENT -ne 'github-hosted' -or $env:RUNNER_OS -ne 'Windows') {
+            throw 'Vocabulary contract requires a disposable hosted Windows runner.'
+          }
+          $source = git rev-parse HEAD
+          if ($LASTEXITCODE -ne 0 -or $source -cne $env:GITHUB_SHA) { throw 'Checkout identity does not match this run.' }
+          New-Item -ItemType Directory -Force artifacts/vocabulary-contract | Out-Null
+          $receipt = [ordered]@{
+            schema = 1; sourceCommit = $source; runId = $env:GITHUB_RUN_ID; runAttempt = $env:GITHUB_RUN_ATTEMPT
+            execution = 'github-hosted-windows'; status = 'running'; exitCode = $null; expectedCases = 9
+            productExecuted = $false
+            driverSha256 = (Get-FileHash scripts/md3/drive-native-interface.py -Algorithm SHA256).Hash.ToLowerInvariant()
+            contractSha256 = (Get-FileHash scripts/md3/test_native_vocabulary_observation.py -Algorithm SHA256).Hash.ToLowerInvariant()
+          }
+          $receipt | ConvertTo-Json | Set-Content artifacts/vocabulary-contract/receipt.json -Encoding utf8
+          $testExit = $null
+          try {
+            python scripts/md3/test_native_vocabulary_observation.py -v 2>&1 |
+              Tee-Object -FilePath artifacts/vocabulary-contract/output.txt
+            $testExit = $LASTEXITCODE
+          } finally {
+            $receipt.exitCode = $testExit
+            $receipt.status = if ($null -ne $testExit -and $testExit -eq 0) { 'passed' } else { 'failed' }
+            $receipt | ConvertTo-Json | Set-Content artifacts/vocabulary-contract/receipt.json -Encoding utf8
+          }
+          if ($null -eq $testExit -or $testExit -ne 0) { throw 'Vocabulary observation contract failed.' }
+      - name: Retain vocabulary contract records
+        if: ${{ always() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: vocabulary-contract-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            artifacts/vocabulary-contract/receipt.json
+            artifacts/vocabulary-contract/output.txt
+          if-no-files-found: warn
+          retention-days: 14
+  runtime:
+    if: github.event_name == 'workflow_dispatch' && !inputs.vocabulary_contract_only
+    runs-on: windows-2025
+    timeout-minutes: 60
+    env:
+      GH_TOKEN: ${{ secrets.RELEASE_TOKEN || secrets.ORG_TOKEN || github.token }}
+      RELEASE_TAG: ${{ inputs.release_tag }}
+      SOURCE_SHA: ${{ inputs.expected_source_commit }}
+      INTERACTION_SCOPE: ${{ inputs.scope }}
+      UI_LANGUAGE: ${{ inputs.language }}
+      UI_THEME: ${{ inputs.theme }}
+      UI_SCALE: ${{ inputs.scale }}
+      UI_VIEWPORT: ${{ inputs.viewport }}
+      PROVISION_RESOLUTION: ${{ inputs.provision_resolution }}
+    steps:
+      - name: Validate immutable identities
+        shell: pwsh
+        run: |
+          if ($env:RELEASE_TAG -cnotmatch '^md3-v\d+$' -or $env:SOURCE_SHA -cnotmatch '^[0-9a-f]{40}$') {
+            throw 'A release tag and full lowercase source SHA are required.'
+          }
+          if ($env:INTERACTION_SCOPE -cnotin @('menus', 'temporal-checkbox', 'menu-builder-root', 'menu-builder-nested', 'vocabulary', 'vocabulary-persistence', 'slice-controls', 'combined-print', 'combined-send', 'cancellation', 'minimum-resize', 'minimum-observe')) {
+            throw 'A supported installed interaction scope is required.'
+          }
+          if ($env:INTERACTION_SCOPE -eq 'temporal-checkbox' -and
+              ($env:UI_SCALE -ne '1' -or $env:UI_VIEWPORT -ne '1200x800' -or $env:UI_LANGUAGE -ne 'en' -or $env:UI_THEME -ne 'light' -or $env:PROVISION_RESOLUTION -eq 'true')) {
+            throw 'Temporal checkbox requires the fixed baseline tuple.'
+          }
+          if ($env:INTERACTION_SCOPE -eq 'minimum-resize' -and
+              ($env:UI_SCALE -ne '1' -or $env:UI_VIEWPORT -ne 'measured-minimum')) {
+            throw 'Interactive minimum sizing requires scale 1 and measured-minimum.'
+          }
+          if ($env:INTERACTION_SCOPE -eq 'minimum-observe' -and ($env:PROVISION_RESOLUTION -ne 'true' -or $env:UI_SCALE -ne '2' -or $env:UI_VIEWPORT -ne 'measured-minimum' -or $env:UI_LANGUAGE -ne 'en' -or $env:UI_THEME -ne 'light')) { throw 'Unsupported minimum observation tuple.' }
+          if ($env:PROVISION_RESOLUTION -eq 'true' -and $env:INTERACTION_SCOPE -ne 'minimum-observe' -and
+              ($env:INTERACTION_SCOPE -ne 'minimum-resize' -or $env:UI_SCALE -ne '1' -or $env:UI_VIEWPORT -ne 'measured-minimum')) {
+            throw 'Fixed resolution is restricted to minimum-resize at scale 1 and measured-minimum.'
+          }
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with:
+          ref: ${{ inputs.expected_source_commit }}
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.12'
+      - name: Parse the installed-interface verifier
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $errors = $null
+          [void][System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path scripts/ci/Verify-HostedNativeInterface.ps1), [ref]$tokens, [ref]$errors)
+          if ($errors.Count -gt 0) { throw 'Installed-interface verifier parsing failed.' }
+          python -m py_compile scripts/md3/drive-native-interface.py
+          if ($LASTEXITCODE -ne 0) { throw 'Native interaction driver parsing failed.' }
+          python scripts/md3/test_native_minimum_observation.py
+          if ($LASTEXITCODE -ne 0) { throw 'Native minimum observation contract failed.' }
+          python scripts/md3/test_native_vocabulary_observation.py -v
+          if ($LASTEXITCODE -ne 0) { throw 'Native vocabulary observation contract failed.' }
+          if ($env:INTERACTION_SCOPE -eq 'temporal-checkbox') {
+            python scripts/md3/test_temporal_checkbox.py -v
+            if ($LASTEXITCODE -ne 0) { throw 'Temporal checkbox acceptance contract failed.' }
+          }
+      - name: Drive the installed native interface
+        shell: pwsh
+        run: |
+          $runtimeArguments = @{
+            Tag = $env:RELEASE_TAG
+            ExpectedSourceCommit = $env:SOURCE_SHA
+            Repository = $env:GITHUB_REPOSITORY
+            OutputDirectory = "$env:RUNNER_TEMP/native-interface-safe"
+            Scope = $env:INTERACTION_SCOPE
+            Language = $env:UI_LANGUAGE
+            Theme = $env:UI_THEME
+            Scale = $env:UI_SCALE
+            Viewport = $env:UI_VIEWPORT
+          }
+          if ($env:UI_SCALE -ne '1') { $runtimeArguments.ProvisionDisplayScale = $true }
+          if ($env:PROVISION_RESOLUTION -eq 'true') { $runtimeArguments.ProvisionResolution = $true }
+          & scripts/ci/Verify-HostedNativeInterface.ps1 @runtimeArguments
+      - name: Retain safe receipt and encrypted evidence
+        if: always()
+        continue-on-error: true
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: native-interface-runtime-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/native-interface-safe/receipt.json
+            ${{ runner.temp }}/native-interface-safe/evidence.aesgcm
+            ${{ runner.temp }}/native-interface-safe/envelope.json
+          if-no-files-found: warn
+          retention-days: 7

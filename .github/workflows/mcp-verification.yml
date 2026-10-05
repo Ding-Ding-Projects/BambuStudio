@@ -1,0 +1,58 @@
+name: MCP focused hosted verification
+
+on:
+  workflow_call: {}
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+# Focused verification was explicitly requested for this feature. It does not
+# change the repository's unrelated build or release dependencies.
+jobs:
+  protocol-and-cli:
+    runs-on: windows-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1
+        with:
+          dotnet-version: '10.0.x'
+      - name: Run focused automation contracts
+        run: |
+          dotnet test automation/BambuAutomation.Tests/BambuAutomation.Tests.csproj -c Release --logger 'trx;LogFileName=automation.trx' --results-directory artifacts/automation-tests
+          if ($LASTEXITCODE -ne 0) { throw 'Focused automation verification failed.' }
+      - name: Parse automation documentation integration
+        run: |
+          node --check ui-md3/site/views.js
+          if ($LASTEXITCODE -ne 0) { throw 'Site view syntax is invalid.' }
+          node --check ui-md3/site/copy.js
+          if ($LASTEXITCODE -ne 0) { throw 'Site copy syntax is invalid.' }
+          python -m py_compile scripts/md3/drive-automation.py
+          if ($LASTEXITCODE -ne 0) { throw 'Hosted automation driver syntax is invalid.' }
+      - name: Publish self-contained companion
+        run: ./scripts/windows/Stage-Automation.ps1 -PayloadDirectory artifacts/automation-payload
+      - name: Record source and run identity
+        if: always()
+        run: |
+          New-Item -ItemType Directory -Force artifacts/automation-tests | Out-Null
+          [ordered]@{sourceCommit=$env:GITHUB_SHA;runId=$env:GITHUB_RUN_ID;runAttempt=$env:GITHUB_RUN_ATTEMPT;hardwareVerified=$false} |
+            ConvertTo-Json | Set-Content artifacts/automation-tests/run.json -Encoding utf8
+      - name: Upload focused evidence
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: automation-verification-${{ github.sha }}
+          path: artifacts/automation-tests/
+          if-no-files-found: error
+      - name: Upload companion
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: automation-companion-${{ github.sha }}
+          path: artifacts/automation-payload/
+          if-no-files-found: error

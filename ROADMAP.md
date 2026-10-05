@@ -15,6 +15,59 @@ Preserved on separate branches; paused at the owner's request. See [the continua
 - [ ] Reconcile candidates, build the exact native application, verify all required visual/interaction tuples, and deliver the unsigned Squirrel release.
 - [ ] Integrate completed work into main and remove only archived, fully merged, remotely proved task-owned candidates.
 
+## MCP and CLI automation
+
+- [x] Pass 24 hosted managed checks, including actual stdio/HTTP exchanges, at `cd13252c5` in run `37040835823`; this does not verify native runtime or physical printers.
+- [ ] Bundle stdio and authenticated Streamable HTTP MCP with a shared CLI.
+- [ ] Expose validated live-project and configured-printer operations through a same-user native bridge.
+- [ ] Support isolated headless slicing, progress, cancellation, and export.
+- [ ] Verify protocol, CLI, native bridge, slicing, and simulated-printer behavior on hosted Windows runners.
+- [ ] Verify the exact installed release and record physical-printer limitations separately.
+- [ ] Verify explicit native plate selection, model STL export, completed slice references, concurrent clients, and running-job cancellation.
+
+## Native interface completeness and slicing actions
+
+- [x] Compile the const state-color lookup repair through the actual production job `111252033608` in run `37139881377` at `75770f71`; packaging also passed. Complete workflow publication and installed behavior remain pending.
+- [ ] Reconcile the independently advanced `main` at `0c967a557` without losing entrance motion or caption title following; verify the final combined source and stacked Plate Settings geometry. Three predicted conflict paths and acceptance scope are recorded in `docs/features/automation/integration-readiness.md`.
+- [x] Check the requested upstream updates: fetched default `master` tip `da8b44ee34dd349f2ae0df3f1cbae366df482354` is already an ancestor of both integration source `667ae19a1` and remote main `0c967a557`, with zero missing commits. No product merge was necessary.
+- [x] Classify native desktop lookup results without weakening ownership acceptance: hosted contracts `37139896660` passed and authenticated diagnostic `37139898854` at `75770f71` observed null `GetThreadDesktop` with native code 0, verified exact thread ownership and teardown, and no continuation. Product startup remains unverified.
+
+- [x] Pass 25 pure temporal-observation contracts at `414e7d81` in hosted run `37103221335`, with exact result and five source hashes verified; rendered animation remains excluded.
+- [ ] Resolve startup ownership/timing observation after strict symbols succeeded in run `37102257995`; prioritize green combined verification before further feature work.
+
+- [x] Verify standalone 150%/144 DPI provisioning and original display restoration in run `37096062899` at `54ff825c0`; 13 lifecycle cases passed. Product rendering remains unverified.
+- [x] Pass 46 canvas checks, 68 preview geometry/timing checks, 55 source tests and eight slicing contracts at `4436c7f91` on hosted run `37056354867`; this does not establish native-service or rendered correctness.
+- [ ] Repair the static wxWidgets focused-target link configuration and ambiguous preview `ImGuiWrapper::begin` call, then verify the combined candidate.
+- [x] Pass complete focused run `37085341046` at `6bc6656ef`, including native services, seven cancellation-observation tests and three fixture-path tests; installed behavior remains unverified.
+- [x] Privately review 84 encrypted Settings controls from `37085955337` and identify the exact scale selector; this establishes discovery only.
+- [x] Observe one active hosted monitor and 13 supported modes up to 1920x1080 in read-only run `37089435143`; this proves capabilities only.
+- [x] Verify fixed 1920x1080 provisioning, 125%/120 DPI selection, original 1024x768 and 100%/96 DPI restoration, and contained termination in standalone run `37091384649`; hosted contracts passed 7/7.
+- [x] Verify literal source-executable resolution and nested containment in run `37093959893`: 10/10 cases passed in 12982 ms, including four malformed path rejections and an actual checkout-SHA match. Settings was untouched.
+- [x] Pass 11/11 hosted lifecycle cases in 13615 ms at `b282a05c14c54c8063f31f38b2605bbd8b9206b6` in run `37094628859`, including diagnostic control geometry, with verified cleanup and no Settings mutation; this is not product UI evidence.
+- [x] Pass 18 cancellation-observation contract cases in hosted run `37095515540` at `18d6f1c3f60ec8d34d70829d3ca7e056edf244fa`, including deliberate production epoch-validation mutation; installed cancellation remains unverified.
+- [x] Verify standalone150%/144 DPI at1920x1080 in run `37096062899` and200%/192 DPI at1600x1200 in run `37096376814`, with original display restoration; lifecycle13/13 and14/14 passed. Private preselection images confirm offered options, not product rendering.
+- [x] Pass nine minimum-observation contracts and fourteen lifecycle cases at `e23e708d6`, then seven Python and four native desktop-rejection cases at `23cf74f62`; exact receipts are retained, product behavior remains unverified.
+- [ ] Capture the observed native minimum frame/client tuple and separately verify interactive minimum tracking.
+
+- [ ] Add local personal-vocabulary JSON import, replace and clear with bounded validation, local persistence and original-wording restoration.
+- [ ] Provide search and an anchored regex builder in every reachable context menu, nested menu and chooser.
+- [ ] Repair empty search states, per-control query isolation, keyboard focus and Escape handling.
+- [ ] Verify hidden and clipped text at normal/minimum dimensions across language, theme and display-scale combinations.
+- [ ] Diagnose unintended slicing cancellation while preserving explicit cancellation and stale-result protection.
+- [ ] Add Slice and Print and Slice and Send beside Print, bound to a successful current plate result.
+- [ ] Complete independent Astra review and hosted native interaction evidence.
+
+## Native motion and responsiveness
+
+- [x] Pass fourteen real wx animation event-loop cases with 95 assertions and the specific compiled Stop mutation in hosted run `37100814236` at `a266dbbf5`; preference acquisition is injected and product pixels remain excluded.
+
+- [ ] Extend shared native transitions with real elapsed-time animation and reduced-motion support; policy/lifetime foundation c309da8a is source-reviewed and integrated, hosted verification pending.
+- [ ] Animate native control states and tab indicators, panels/dialogs/tooltips, root/nested/canvas menus, notifications and progress; preserve immediate semantics and reduced-motion behavior.
+- [ ] Move practical blocking I/O from UI handlers into lifetime-safe background operations.
+- [ ] Complete independent defect review and hosted regression evidence for motion and asynchronous paths.
+- [ ] Verify the final integrated `main` revision with green hosted checks.
+
+
 ## Official-source reapplication
 
 - [x] Prove the diagnostic candidate reached remote `main` at `acd4c0489fc2952e62b27315cd93502484fe6ca2` and the hook-copying repair reached remote `main` at `73d50e270fa10da2015f17240c652e7cf872cd4b`.

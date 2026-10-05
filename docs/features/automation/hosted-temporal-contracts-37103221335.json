@@ -1,0 +1,35 @@
+{
+  "schema": 1,
+  "run_id": "37103221335",
+  "run_url": "https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37103221335",
+  "source_commit": "414e7d8139060bf4d64cf4d0644dcb7ddcb7cf63",
+  "conclusion": "success",
+  "expected_cases": 25,
+  "observed_passed_cases": 25,
+  "source_hashes_verified": 5,
+  "source_byte_representations": {
+    ".github/workflows/motion-temporal-contract.yml": "CRLF-checkout",
+    "scripts/md3/test_motion_temporal.py": "CRLF-checkout",
+    "scripts/md3/test_temporal_checkbox.py": "CRLF-checkout",
+    "scripts/md3/temporal_checkbox.py": "CRLF-checkout",
+    "scripts/md3/motion_temporal.py": "CRLF-checkout"
+  },
+  "cases_sha256": "c1f92daea8e9389eb180730e4f71f1ee9c982e02c3bb539864f64f13843f7f97",
+  "receipt_sha256": "5e3c8fd5ffcef53ff4566c8576aa2e00c6811bad55bca584a0b12b13070f21c2",
+  "cases_bytes": 4256,
+  "receipt_bytes": 995,
+  "files": {
+    ".github/workflows/motion-temporal-contract.yml": "932bfb6956c54dc78f316e08db1076142bf07b9f765dc23413029e0286d58d41",
+    "scripts/md3/test_motion_temporal.py": "a5d8808f8b37d79312677ed43d55a5614da999197809f79931123f4a6dae2e16",
+    "scripts/md3/test_temporal_checkbox.py": "0f8cc778c9ec5070c1ed5eebaaf7cda7e7e449e488ca8f5ddd2083ca0a460c30",
+    "scripts/md3/temporal_checkbox.py": "7092eb4399c35dcf1adfca611f8272036d1060bcfd91d51207652db5723ee04e",
+    "scripts/md3/motion_temporal.py": "26b492f76ef82aa2748806d5449f16bee1abee9542c50a6da1a05d8c6ca0dd71"
+  },
+  "product_started": false,
+  "gui_started": false,
+  "installation_performed": false,
+  "capture_performed": false,
+  "limits": [
+    "Pure contract results only; no installed product or rendered animation evidence."
+  ]
+}

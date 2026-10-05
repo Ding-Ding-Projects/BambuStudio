@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 1,
+  "sourceCommit": "75770f71f59358514df9d5af42b38402e538116c",
+  "runId": "37139881377",
+  "runUrl": "https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37139881377",
+  "observedAt": "2026-10-03T18:15:12.683Z",
+  "workflowStatus": "pending",
+  "workflowConclusion": "",
+  "buildJob": {
+    "id": 111252033608,
+    "name": "Build Windows / Build Deps / Build BambuStudio / Build BambuStudio",
+    "conclusion": "success",
+    "startedAt": "2026-10-03T17:16:45Z",
+    "completedAt": "2026-10-03T18:13:49Z",
+    "steps": [
+      {
+        "name": "Build slicer Win",
+        "status": "completed",
+        "conclusion": "success",
+        "startedAt": "2026-10-03T17:18:25Z",
+        "completedAt": "2026-10-03T18:05:39Z"
+      },
+      {
+        "name": "Verify installed Cantonese catalog",
+        "status": "completed",
+        "conclusion": "success",
+        "startedAt": "2026-10-03T18:05:39Z",
+        "completedAt": "2026-10-03T18:05:40Z"
+      },
+      {
+        "name": "Verify the payload carries every DLL the app imports",
+        "status": "completed",
+        "conclusion": "success",
+        "startedAt": "2026-10-03T18:05:40Z",
+        "completedAt": "2026-10-03T18:05:41Z"
+      },
+      {
+        "name": "Create Windows Squirrel installer",
+        "status": "completed",
+        "conclusion": "success",
+        "startedAt": "2026-10-03T18:08:08Z",
+        "completedAt": "2026-10-03T18:12:19Z"
+      },
+      {
+        "name": "Validate Squirrel Windows package contract",
+        "status": "completed",
+        "conclusion": "success",
+        "startedAt": "2026-10-03T18:12:19Z",
+        "completedAt": "2026-10-03T18:12:22Z"
+      },
+      {
+        "name": "Upload Windows installer",
+        "status": "completed",
+        "conclusion": "success",
+        "startedAt": "2026-10-03T18:12:53Z",
+        "completedAt": "2026-10-03T18:13:41Z"
+      }
+    ]
+  },
+  "installerArtifact": {
+    "id": 11281486108,
+    "name": "BambuStudio_Windows_V02.08.04.61_installer",
+    "sizeBytes": 1542022595,
+    "digest": "sha256:d6973e970b968b8fff1f5342ba5cad9a8cf440509d5d85374f817f6697299668",
+    "expired": false
+  },
+  "limitations": [
+    "Successful production compilation and packaging only.",
+    "Release publication remains queued; the complete workflow has no final verdict.",
+    "Installer execution, product startup, rendered behavior and physical hardware are not verified by this receipt.",
+    "The archive digest and byte count are service metadata, not independent verification of downloaded archive bytes."
+  ],
+  "observationEndedAt": "2026-10-03T18:15:45Z"
+}

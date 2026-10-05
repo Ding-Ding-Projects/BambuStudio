@@ -65,3 +65,22 @@ switches it off as well. Internal builds may switch it on for debugging (`#if !B
 
 Window title bars keep the system menu of Windows (Alt+Space); it belongs to the window frame rather
 than to the app's content.
+
+
+## Search and recovery update
+
+Every native Material menu and shared combo popup now exposes its own search field
+and guided regular-expression builder, including one-item menus and nested groups.
+Filtering preserves command IDs and original combo item indices. An empty result
+shows "No matches."; Escape clears a nonempty query before closing the popup.
+Tab reaches the query, regex toggle, builder and clear control. A popup remains
+open while its builder is visible. Oversized builder contents scroll within the
+display work area.
+
+The shared motion curves use the Material standard cubic and emphasized two-part
+path. Elapsed time and reduced-motion handling remain owned by the shared animator.
+
+Verification status: source changes only. Hosted Windows builds and interaction
+coverage are required for normal/minimum sizes, English/Cantonese/bilingual modes,
+light/dark themes, and 100/125/150/200 percent scaling. This update does not claim
+that matrix has run.

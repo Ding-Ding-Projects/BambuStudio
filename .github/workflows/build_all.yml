@@ -84,16 +84,21 @@ jobs:
       os: windows-latest
       build-deps-only: false
 
+  automation_contracts:
+    name: Verify automation contracts
+    uses: ./.github/workflows/mcp-verification.yml
+
   release_windows:
     name: Publish Windows release
     # ref_type guard is redundant with the branches-only push trigger above but
     # keeps the release loop impossible even if the trigger is later widened.
     if: ${{ github.event_name != 'pull_request' && github.ref_type != 'tag' }}
-    needs: build_windows
+    needs: [build_windows, automation_contracts]
     runs-on: windows-latest
     concurrency:
       group: windows-release-${{ github.repository }}
       cancel-in-progress: false
+      queue: max
     permissions:
       artifact-metadata: write
       attestations: write

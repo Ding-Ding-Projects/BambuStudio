@@ -142,6 +142,13 @@ void StaticBox::onHoverEnter(wxMouseEvent &evt)
     if (!m_interactive || !IsEnabled())
         return;
     m_hover_active = true;
+    if (MD3::Motion::reduced() || !IsShownOnScreen()) {
+        m_hover_timer.Stop();
+        m_hover_anim = IsShownOnScreen() ? 1.0 : 0.0;
+        if (IsShownOnScreen()) m_hover_timer.Start(HOVER_WATCH_MS);
+        Refresh(false);
+        return;
+    }
     if (!m_hover_timer.IsRunning() || m_hover_timer.GetInterval() != HOVER_TICK_MS)
         m_hover_timer.Start(HOVER_TICK_MS);
 }
@@ -156,12 +163,27 @@ void StaticBox::onHoverLeave(wxMouseEvent &evt)
     if (GetScreenRect().Contains(wxGetMousePosition()))
         return;
     m_hover_active = false;
+    if (MD3::Motion::reduced() || !IsShownOnScreen()) {
+        m_hover_timer.Stop();
+        m_hover_anim = 0.0;
+        Refresh(false);
+        return;
+    }
     if (!m_hover_timer.IsRunning() || m_hover_timer.GetInterval() != HOVER_TICK_MS)
         m_hover_timer.Start(HOVER_TICK_MS);
 }
 
 void StaticBox::onHoverTick(wxTimerEvent &)
 {
+    if (!IsShownOnScreen() || !IsEnabled() || MD3::Motion::reduced()) {
+        m_hover_timer.Stop();
+        m_hover_active = IsShownOnScreen() && IsEnabled() && GetScreenRect().Contains(wxGetMousePosition());
+        m_hover_anim = m_hover_active ? 1.0 : 0.0;
+        // Reduced motion retains only the existing visible child-exit watchdog.
+        if (m_hover_active) m_hover_timer.Start(HOVER_WATCH_MS);
+        Refresh(false);
+        return;
+    }
     // While fully promoted, poll containment so a pointer that left via a child
     // (no parent LEAVE) still demotes the border.
     if (m_hover_active && m_hover_anim >= 1.0 && !GetScreenRect().Contains(wxGetMousePosition()))
@@ -375,14 +397,14 @@ void StaticBox::doRender(wxDC& dc)
                     rc.y += d;
                     rc.height -= d;
                 }
-                wxColour border_draw = border_color.colorForStates(states);
+                wxColour border_draw = state_handler.colorFor(border_color);
                 if (m_interactive) {
                     // Ease the resting OutlineVariant toward the hover Primary by
                     // the animation factor. Both endpoints are resolved live so
                     // the promotion tracks the current theme + scheme.
                     const wxColour rest = StateColor::semantic(m_rest_border_role, m_scheme);
                     const wxColour hov  = StateColor::semantic(m_hover_border_role, m_scheme);
-                    const double   t    = m_hover_anim;
+                    const double   t    = MD3::Motion::reduced() ? (IsEnabled() && GetScreenRect().Contains(wxGetMousePosition()) ? 1.0 : 0.0) : m_hover_anim;
                     border_draw = wxColour(
                         rest.Red()   + static_cast<int>((hov.Red()   - rest.Red())   * t + 0.5),
                         rest.Green() + static_cast<int>((hov.Green() - rest.Green()) * t + 0.5),
@@ -390,10 +412,10 @@ void StaticBox::doRender(wxDC& dc)
                 }
                 dc.SetPen(wxPen(border_draw, border_width, border_style));
             } else {
-                dc.SetPen(wxPen(background_color.colorForStates(states)));
+                dc.SetPen(wxPen(state_handler.colorFor(background_color)));
             }
             if (background_color.count() > 0)
-                dc.SetBrush(wxBrush(background_color.colorForStates(states)));
+                dc.SetBrush(wxBrush(state_handler.colorFor(background_color)));
             else
                 dc.SetBrush(wxBrush(GetBackgroundColour()));
             if (radius == 0) {
@@ -405,8 +427,8 @@ void StaticBox::doRender(wxDC& dc)
         }
     }
     else {
-        wxColor start = background_color.colorForStates(states);
-        wxColor stop = background_color2.colorForStates(states);
+        wxColor start = state_handler.colorFor(background_color);
+        wxColor stop = state_handler.colorFor(background_color2);
         int r = start.Red(), g = start.Green(), b = start.Blue();
         int dr = (int) stop.Red() - r, dg = (int) stop.Green() - g, db = (int) stop.Blue() - b;
         int lr = 0, lg = 0, lb = 0;

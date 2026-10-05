@@ -1,0 +1,66 @@
+#ifndef slic3r_PreviewLayout_hpp_
+#define slic3r_PreviewLayout_hpp_
+
+#include <algorithm>
+#include <cstdint>
+
+namespace Slic3r { namespace GUI { namespace PreviewLayout {
+// Accumulate each deferred interval exactly once, independently of redraws.
+class DeferredTimer {
+public:
+    void reset(bool deferred, std::int64_t now)
+    {
+        m_deferred = deferred;
+        m_since = now;
+        m_pending = 0;
+    }
+    void set_deferred(bool deferred, std::int64_t now)
+    {
+        if (deferred == m_deferred) return;
+        if (m_deferred) m_pending += std::max<std::int64_t>(0, now - m_since);
+        m_since = now;
+        m_deferred = deferred;
+    }
+    std::int64_t consume(std::int64_t now)
+    {
+        std::int64_t elapsed = m_pending;
+        m_pending = 0;
+        if (m_deferred) {
+            elapsed += std::max<std::int64_t>(0, now - m_since);
+            m_since = std::max(m_since, now);
+        }
+        return elapsed;
+    }
+private:
+    bool m_deferred{false};
+    std::int64_t m_since{0};
+    std::int64_t m_pending{0};
+};
+
+struct Column { float width; float right; };
+inline Column notification_column(float canvas_width, float scale, float desired, float right)
+{
+    const float margin = std::min(16.0f * scale, std::max(0.0f, canvas_width / 8.0f));
+    const float beside_width = canvas_width - std::max(right, margin) - margin;
+    const float preferred = beside_width >= std::min(280.0f * scale, desired)
+        ? std::min(desired, beside_width) : desired;
+    const float width = std::max(1.0f, std::min(preferred, canvas_width - 2.0f * margin));
+    return {width, std::clamp(right, margin, std::max(margin, canvas_width - width - margin))};
+}
+struct StackItem { float height; bool deferred; };
+inline StackItem stack_item(float wanted, float initial, float bottom, float top)
+{
+    const float height = std::clamp(wanted, 1.0f, std::max(1.0f, top - bottom));
+    return {height, initial + height > top + 0.5f};
+}
+inline float tips_height(float canvas_height, float initial, float header, float padding, float scale)
+{
+    return std::clamp(canvas_height - initial - header - padding - 16.0f * scale,
+                      1.0f, std::max(1.0f, 380.0f * scale));
+}
+inline bool inline_link_fits(float width, float title, float link, float spacing)
+{
+    return title + link + spacing <= width;
+}
+}}}
+#endif

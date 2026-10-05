@@ -3,6 +3,21 @@
 
 ![image](https://user-images.githubusercontent.com/106916061/179006347-497d24c0-9bd6-45b7-8c49-d5cc8ecfe5d7.png)
 # BambuStudio
+
+MCP and command-line automation is being implemented for live projects, headless
+slicing, and configured printers. See [setup and verification status](docs/features/automation/mcp-and-cli.md).
+
+The current interface work also includes [local personal wording](docs/features/windows/personal-vocabulary.md),
+[separate slicing actions](docs/features/windows/print-actions.md), and
+[searchable canvas menus](docs/features/canvas-menu-search.md). These changes are
+under hosted verification; the [audit register](docs/features/design-system/native-interface-audit-2026-10-02.md)
+records remaining runtime and layout evidence rather than claiming completion.
+All builds and runtime verification for this work run on GitHub Actions; implementation
+is not a claim of verified physical-printer behavior.
+Current compiler and startup evidence is summarized in the [continuation record](CLOSEOUT_PROMPT.md).
+The managed checks and current native build/package job have passed; release publication and installed UI evidence remain pending.
+The independently advanced default branch also needs semantic reconciliation and exact-source verification, as recorded in [integration readiness](docs/features/automation/integration-readiness.md).
+
 Bambu Studio is a cutting-edge, feature-rich slicing software.  
 It contains project-based workflows, systematically optimized slicing algorithms, and an easy-to-use graphic interface, bringing users an incredibly smooth printing experience.
 

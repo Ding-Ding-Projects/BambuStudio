@@ -1,3 +1,4 @@
+#include "../PersonalVocabulary.hpp"
 #include "Button.hpp"
 #include "../I18N.hpp"
 #include "Label.hpp"
@@ -102,6 +103,7 @@ public:
             *name = m_button->GetToolTipText();
         if (name->IsEmpty())
             *name = configured_name;
+        *name = Slic3r::GUI::PersonalVocabulary::display(*name);
         return wxACC_OK;
     }
 
@@ -219,6 +221,12 @@ bool Button::Create(wxWindow* parent, wxString text, wxString icon, long style, 
     //BBS set default font
     SetFont(Label::Body_14);
     wxWindow::SetLabel(text);
+    Slic3r::GUI::PersonalVocabulary::observe(this, [this] {
+        messureSize();
+        InvalidateBestSize();
+        if (GetParent()) GetParent()->Layout();
+        Refresh();
+    });
     if (!icon.IsEmpty()) {
         //BBS set button icon default size to 20
         this->active_icon = ScalableBitmap(this, icon.ToStdString(), iconSize > 0 ? iconSize : 20);
@@ -785,7 +793,7 @@ void Button::render(wxDC& dc)
     // HiDPI; must stay in sync with the value used by messureSize().
     int spacing = FromDIP(8);
     // Wrap text
-    auto text = GetLabel();
+    auto text = Slic3r::GUI::PersonalVocabulary::display(GetLabel());
     m_label_truncated = false;
     if (vertical && textSize.x + padding.x * 2 > size.x) {
         Label::split_lines(dc, size.x - padding.x * 2, text, text, 2);
@@ -846,7 +854,7 @@ void Button::render(wxDC& dc)
             pt.y += (rcContent.height - szIcon.y) / 2;
         if (drawGlyph)
             MaterialIcon::draw(dc, m_glyph_cp, glyph_px,
-                               (glyph_color.count() > 0 ? glyph_color : text_color).colorForStates(states), pt);
+                               state_handler.colorFor(glyph_color.count() > 0 ? glyph_color : text_color), pt);
         else
             dc.DrawBitmap(icon.bmp(), pt);
         //BBS norrow size between text and icon
@@ -869,7 +877,7 @@ void Button::render(wxDC& dc)
             }
             pt.y += (rcContent.height - textSize.y) / 2;
         }
-        dc.SetTextForeground(text_color.colorForStates(states));
+        dc.SetTextForeground(state_handler.colorFor(text_color));
         dc.DrawText(text, pt);
     }
 
@@ -883,13 +891,13 @@ void Button::render(wxDC& dc)
         // hover and disabled fills are covered by the same rule. An empty or
         // fully transparent background_color means the plain window background
         // is what shows through under the ring.
-        wxColour interior = background_color.count() > 0 ? background_color.colorForStates(states)
+        wxColour interior = background_color.count() > 0 ? state_handler.colorFor(background_color)
                                                          : GetBackgroundColour();
         if (!interior.IsOk() || interior.Alpha() == 0)
             interior = GetBackgroundColour();
         dc.SetBrush(*wxTRANSPARENT_BRUSH);
         dc.SetPen(wxPen(focusRingColor(StateColor::semantic(MD3::Role::Primary, m_scheme),
-                                       text_color.colorForStates(states), interior),
+                                       state_handler.colorFor(text_color), interior),
                         std::max(FromDIP(2), 1)));
         dc.DrawRoundedRectangle(focus_rect, std::max(0.0, radius - inset));
     }
@@ -901,7 +909,7 @@ void Button::renderWhiteCorners(wxDC& dc)
     int r = static_cast<int>(radius);
     wxColor parent_bg_color = StaticBox::GetParentBackgroundColor(GetParent());
     int states = state_handler.states();
-    wxColor bg_color = background_color.colorForStates(states);
+    wxColor bg_color = state_handler.colorFor(background_color);
 
     auto drawWhiteCorners = [&](wxDC &dc) {
         dc.SetPen(*wxTRANSPARENT_PEN);
@@ -955,7 +963,7 @@ void Button::renderWhiteCorners(wxDC& dc)
 void Button::messureSize()
 {
     wxClientDC dc(this);
-    dc.GetTextExtent(GetLabel(), &textSize.width, &textSize.height);
+    dc.GetTextExtent(Slic3r::GUI::PersonalVocabulary::display(GetLabel()), &textSize.width, &textSize.height);
     wxFontMetrics fm = dc.GetFontMetrics();
     textSize.height = fm.ascent + fm.descent;
     wxSize szContent = textSize.GetSize();

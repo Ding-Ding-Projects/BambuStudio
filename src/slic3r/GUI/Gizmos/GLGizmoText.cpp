@@ -3016,6 +3016,8 @@ void GLGizmoText::draw_font_list()
                     ImGui::CloseCurrentPopup();
                 }
             }
+            m_imgui->menu_row_decoration(ImGui::GetItemRectMin(), ImGui::GetItemRectMax(),
+                                        ImGui::IsItemHovered() || ImGui::IsItemFocused());
             // tooltip as full name of font face
             if (ImGui::IsItemHovered())
                 tooltip_name = wx_face_name;

@@ -7,8 +7,7 @@
 // wxEVT_UPDATE_UI enable rules, submenus). MD3MenuPopup renders it as an
 // owner-drawn floating surface: SurfaceContainer fill, 1px OutlineVariant
 // frame, radius 12, 24dp leading icon/check slot, body-s labels, caption
-// shortcuts, hover state layer, keyboard selection, a search field once the
-// menu is long enough, nested submenus, and a wxWindowAccessible tree so a
+// shortcuts, hover state layer, keyboard selection, a local search field and anchored regex builder on every menu, nested submenus, and a wxWindowAccessible tree so a
 // screen reader sees a menu popup with menu items.
 //
 // The row model, filtering and placement arithmetic live in MD3MenuModel.hpp
@@ -24,6 +23,7 @@
 
 #include "MD3MenuModel.hpp"
 #include "PopupWindow.hpp"
+#include "MD3DialogChrome.hpp"
 
 class SearchField;
 
@@ -34,8 +34,6 @@ class MD3MenuList;
 class MD3MenuPopup : public PopupWindow
 {
 public:
-    // Number of actionable rows at which the search field appears.
-    static constexpr int kSearchThreshold = 6;
     // Frame-only elevation: the drop shadow is not painted (transient popup
     // HWNDs have square corners, so a painted shadow would show its box).
     static constexpr bool kDrawShadow = false;
@@ -140,6 +138,7 @@ private:
 
     std::function<void()> m_close_cb;
 
+    MD3TransientEntrance m_entrance;
     int m_radius { 12 };
 };
 

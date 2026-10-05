@@ -3,7 +3,6 @@
 #include "Label.hpp"
 #include "StateColor.hpp"
 #include "MaterialIcon.hpp"
-#include "MD3Motion.hpp"
 #include "RegexBuilderPopup.hpp"
 #include "BoundedRegex.hpp"
 #include "Button.hpp"
@@ -249,6 +248,11 @@ void SearchField::SetMultiline(bool on)
         m_on_regex_toggle(m_regex);
 }
 
+bool SearchField::IsBuilderShown() const
+{
+    return m_builder_popup && m_builder_popup->IsShown();
+}
+
 void SearchField::openBuilder()
 {
     if (m_on_builder)
@@ -293,8 +297,6 @@ void SearchField::openBuilder()
                             : ClientToScreen(wxPoint(0, GetSize().y + FromDIP(4)));
     popup->Position(pos, wxSize(0, 0));
     popup->PopupAndFocusPattern();
-    // M3 entrance: quick fade (jumps to opaque under OS reduced motion).
-    MD3::Motion::FadeIn(popup, MD3::Motion::short2);
 }
 
 bool SearchField::textMatches(const wxString &query, const wxString &candidate, bool regex,

@@ -3,6 +3,7 @@
 #include "Widgets/LinkLabel.hpp"
 #include "Widgets/ProgressBar.hpp"
 #include "Widgets/MD3Menu.hpp"
+#include "Widgets/MD3Motion.hpp"
 #include "Widgets/TabStrip.hpp"
 #include "PerfTrace.hpp"
 #include <array>
@@ -10,6 +11,8 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
+#include <cstdlib>
+#include <string_view>
 #include <cctype>
 #include <cmath>
 #include <limits>
@@ -239,6 +242,63 @@ static const std::pair<unsigned int, unsigned int> THUMBNAIL_SIZE_3MF = { 512, 5
 namespace Slic3r {
 namespace GUI {
 
+// The rail lives in the existing left padding, outside the label and controls.
+// Expansion, scrolling and layout are committed by the caller before feedback.
+class FilamentDisclosureHeader final : public StaticBox
+{
+public:
+    explicit FilamentDisclosureHeader(wxWindow *parent)
+        : StaticBox(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL | wxBORDER_NONE)
+    {
+        Bind(wxEVT_SHOW, [this](wxShowEvent &event) {
+            if (event.GetEventObject() == this && !event.IsShown()) settle();
+            event.Skip();
+        });
+    }
+    ~FilamentDisclosureHeader() override { m_motion.Stop(); }
+
+    void SetExpanded(bool expanded, bool animate = true)
+    {
+        if (m_expanded == expanded && animate) return;
+        m_expanded = expanded;
+        const double from = m_extent;
+        const double to = expanded ? 1.0 : 0.0;
+        m_motion.Stop();
+        if (!animate || !IsShownOnScreen() || !IsEnabled() || MD3::Motion::reduced()) {
+            m_extent = to;
+            Refresh(false);
+            return;
+        }
+        m_motion.Play(MD3::Motion::short2, [this, from, to](double t) {
+            if (!IsEnabled() || MD3::Motion::reduced()) settle();
+            else m_extent = from + (to - from) * t;
+            if (IsShownOnScreen()) Refresh(false);
+        }, nullptr, &MD3::Motion::easeStandard, this);
+    }
+
+protected:
+    void doRender(wxDC &dc) override
+    {
+        StaticBox::doRender(dc);
+        if (!IsEnabled() || MD3::Motion::reduced()) settle();
+        const wxSize size = GetClientSize();
+        const int inset = FromDIP(3), width = FromDIP(2);
+        const int available = size.y - 2 * inset;
+        if (size.x < inset + width || available <= 0) return;
+        const int rest = std::min(FromDIP(4), available);
+        const int height = rest + static_cast<int>((available - rest) * m_extent + 0.5);
+        dc.SetPen(*wxTRANSPARENT_PEN);
+        dc.SetBrush(wxBrush(StateColor::semantic(MD3::Role::Primary)));
+        dc.DrawRectangle(inset, (size.y - height) / 2, width, height);
+    }
+
+private:
+    void settle() { m_motion.Stop(); m_extent = m_expanded ? 1.0 : 0.0; }
+    bool m_expanded = true;
+    double m_extent = 1.0;
+    MD3::Motion::Anim m_motion;
+};
+
 // Flag to pre-select optimization mode when opening HelioInputDialog from simulation results
 static bool g_helio_pre_select_optimization = false;
 
@@ -260,7 +320,8 @@ static bool has_importable_texture(const Slic3r::TexturedMesh& textured_mesh)
 
 wxDEFINE_EVENT(EVT_SCHEDULE_BACKGROUND_PROCESS,     SimpleEvent);
 wxDEFINE_EVENT(EVT_SLICING_UPDATE,                  SlicingStatusEvent);
-wxDEFINE_EVENT(EVT_SLICING_COMPLETED,               wxCommandEvent);
+wxDEFINE_EVENT(EVT_SLICING_COMPLETED,               SlicingStageCompletedEvent);
+wxDEFINE_EVENT(EVT_GLTOOLBAR_SLICE_AND_SEND_PLATE, SimpleEvent);
 wxDEFINE_EVENT(EVT_PROCESS_COMPLETED,               SlicingProcessCompletedEvent);
 wxDEFINE_EVENT(EVT_EXPORT_BEGAN,                    wxCommandEvent);
 wxDEFINE_EVENT(EVT_EXPORT_FINISHED,                 wxCommandEvent);
@@ -823,7 +884,7 @@ struct Sidebar::priv
 
     //wxComboBox *                m_comboBox_print_preset;
     wxStaticLine *              m_staticline1;
-    StaticBox* m_panel_filament_title;
+    FilamentDisclosureHeader* m_panel_filament_title;
     // Filament section header: the literal shared MD3 SectionHeader (Label.hpp)
     // replaces the former ScalableButton 'filament' icon + wxStaticText label
     // pair; trailing Sync AMS / purge / flush buttons stay in the same title
@@ -3415,7 +3476,7 @@ Sidebar::Sidebar(Plater *parent)
 
     {
     // add filament title
-    p->m_panel_filament_title = new StaticBox(p->scrolled, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL | wxBORDER_NONE);
+    p->m_panel_filament_title = new FilamentDisclosureHeader(p->scrolled);
     p->m_panel_filament_title->SetBackgroundColor(title_bg);
     p->m_panel_filament_title->SetBackgroundColor2(title_bg);
     p->m_panel_filament_title->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &e) {
@@ -3431,6 +3492,7 @@ Sidebar::Sidebar(Plater *parent)
             p->m_filament_area_wrapper->Hide();
         }
         update_scroll_body();
+        p->m_panel_filament_title->SetExpanded(p->filament_expanded);
         e.Skip();
     });
     p->m_panel_filament_title->Bind(wxEVT_SIZE, [this](wxSizeEvent &event) {
@@ -3462,6 +3524,7 @@ Sidebar::Sidebar(Plater *parent)
             p->m_filament_area_wrapper->Hide();
         }
         update_scroll_body();
+        p->m_panel_filament_title->SetExpanded(p->filament_expanded);
         e.Skip();
     });
     bSizer39->Add(p->m_filament_header, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT, FromDIP(10));
@@ -6425,6 +6488,7 @@ void Sidebar::sync_ams_list(bool is_from_big_sync_btn)
     p->filament_expanded = true;
     p->m_filament_area_wrapper->Show(p->active_prepare_section == "ink");
     recalc_filament_scroll_sizes();
+    p->m_panel_filament_title->SetExpanded(true);
     // BBS:Synchronized consumables information
     // auto calculation of flushing volumes
     for (int i = 0; i < p->combos_filament.size(); ++i) {
@@ -8527,15 +8591,40 @@ public:
     PartPlateList partplate_list;
     //BBS: add a flag to ignore cancel event
     bool m_ignore_event{false};
+    bool m_shutting_down{false};
     bool m_slice_all{false};
     // True only for a project created here, never for imported 3MF settings.
     bool m_fresh_project_mapping_preference_owned{false};
     bool m_is_slicing {false};
     // A one-shot request belongs to one explicit slice and one unchanged plate.
     uint64_t m_slice_request_generation{0};
-    uint64_t m_print_after_slice_generation{0};
-    PartPlate *m_print_after_slice_plate{nullptr};
-    int m_print_after_slice_index{-1};
+    PrintWorkflowState::PendingSliceOutput m_pending_slice_output;
+    const bool m_slice_observation_enabled{[] {
+        const char* enabled = std::getenv("BAMBU_AUTOMATION");
+        return enabled && enabled[0] == '1' && enabled[1] == '\0';
+    }()};
+    uint64_t m_slice_completion_sequence{0}, m_slice_continuation_sequence{0};
+    std::array<SliceWorkflowCompletionObservation, SliceWorkflowObservation::event_capacity> m_slice_completions{};
+    std::array<SliceWorkflowContinuationObservation, SliceWorkflowObservation::event_capacity> m_slice_continuations{};
+    void observe_slice_completion(const SlicingProcessCompletedEvent& event, uint64_t current_generation,
+                                  const char* rejection) noexcept
+    {
+        if (!m_slice_observation_enabled) return;
+        const uint64_t sequence = ++m_slice_completion_sequence;
+        m_slice_completions[(sequence - 1) % m_slice_completions.size()] = {
+            sequence, event.generation(), current_generation,
+            event.success() ? "completed" : event.cancelled() ? "cancelled" : "failed",
+            rejection, std::string_view(rejection) == "none"};
+    }
+    void observe_slice_continuation(PrintWorkflowState::SliceOutputAction action,
+                                    const PrintWorkflowState::PendingSliceOutput& request) noexcept
+    {
+        if (!m_slice_observation_enabled || action == PrintWorkflowState::SliceOutputAction::None) return;
+        const uint64_t sequence = ++m_slice_continuation_sequence;
+        m_slice_continuations[(sequence - 1) % m_slice_continuations.size()] = {
+            sequence, request.request_generation, request.native_generation, request.plate_index,
+            action == PrintWorkflowState::SliceOutputAction::Print ? "print" : "send"};
+    }
     bool m_reused_finished_slice_result{false};
     bool m_is_publishing {false};
     int m_is_RightClickInLeftUI{-1};
@@ -9056,7 +9145,7 @@ public:
     void on_select_bed_type(wxCommandEvent&);
     void on_select_preset(wxCommandEvent&);
     void on_slicing_update(SlicingStatusEvent&);
-    void on_slicing_completed(wxCommandEvent&);
+    void on_slicing_completed(SlicingStageCompletedEvent&);
     void on_process_completed(SlicingProcessCompletedEvent&);
     // report mesh stats + GPU/OpenGL info for one sliced plate
     void track_slice_mesh_stat();
@@ -9862,6 +9951,7 @@ Plater::priv::priv(Plater *q, MainFrame *main_frame)
         q->Bind(EVT_GLVIEWTOOLBAR_PREVIEW, [q](SimpleEvent&) { q->select_view_3D("Preview", false); });
         q->Bind(EVT_GLTOOLBAR_SLICE_PLATE, &priv::on_action_slice_plate, this);
         q->Bind(EVT_GLTOOLBAR_SLICE_AND_PRINT_PLATE, &priv::on_action_slice_plate, this);
+        q->Bind(EVT_GLTOOLBAR_SLICE_AND_SEND_PLATE, &priv::on_action_slice_plate, this);
         q->Bind(EVT_GLTOOLBAR_SLICE_ALL, &priv::on_action_slice_all, this);
         q->Bind(EVT_GLTOOLBAR_PRINT_PLATE, &priv::on_action_print_plate, this);
         q->Bind(EVT_PRINT_FROM_SDCARD_VIEW, &priv::on_action_print_plate_from_sdcard, this);
@@ -10108,6 +10198,9 @@ Plater::priv::priv(Plater *q, MainFrame *main_frame)
 
 Plater::priv::~priv()
 {
+    m_shutting_down = true;
+    m_pending_slice_output.clear();
+    background_process.reset();
     shutdown_project_history();
     if (config != nullptr)
         delete config;
@@ -14073,6 +14166,11 @@ bool Plater::priv::reset(bool apply_presets_change)
     // model or filename until the outgoing history boundary is immutable.
     if (!reset_project_history_session())
         return false;
+    m_pending_slice_output.clear();
+    m_is_slicing = false;
+    m_slice_all = false;
+    // Join ownership before reinit() can destroy the old plates and Print.
+    background_process.reset();
     Plater::TakeSnapshot snapshot(q, "Reset Project", UndoRedo::SnapshotType::ProjectSeparator);
 
     clear_warnings();
@@ -14504,6 +14602,10 @@ unsigned int Plater::priv::update_background_process(bool force_validation, bool
         view3D->get_canvas3d()->reset_sequential_print_clearance();
 
     if (invalidated == Print::APPLY_STATUS_INVALIDATED) {
+        // Initial validation belongs to the requested slice. Later invalidation
+        // supersedes its output intent, even if background processing restarts.
+        if (m_pending_slice_output.native_generation != 0)
+            m_pending_slice_output.clear();
         //BBS: update current plater's slicer result to invalid
         this->background_process.get_current_plate()->update_slice_result_valid_state(false);
 
@@ -14606,7 +14708,7 @@ unsigned int Plater::priv::update_background_process(bool force_validation, bool
             // The background processing was killed and it will not be restarted.
             // Post the "canceled" callback message, so that it will be processed after any possible pending status bar update messages.
             SlicingProcessCompletedEvent evt(EVT_PROCESS_COMPLETED, 0,
-                SlicingProcessCompletedEvent::Cancelled, nullptr);
+                SlicingProcessCompletedEvent::Cancelled, nullptr, background_process.automation_generation());
             BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << boost::format(" %1%, post an EVT_PROCESS_COMPLETED to main, status %2%")%__LINE__ %evt.status();
             wxQueueEvent(q, evt.Clone());
         }
@@ -16111,6 +16213,11 @@ void Plater::priv::on_select_preset(wxCommandEvent &evt)
 
 void Plater::priv::on_slicing_update(SlicingStatusEvent &evt)
 {
+    if (m_shutting_down) return;
+    if (!evt.status.is_helio &&
+        (background_process.cancellation_requested() || !PrintWorkflowState::is_current_slice_event(evt.generation, background_process.automation_generation()) ||
+         evt.plate != background_process.get_current_plate() || evt.plate != partplate_list.get_curr_plate()))
+        return;
     if (evt.status.is_helio && !helio_background_process.is_action_current(evt.generation)) {
         return;
     }
@@ -16199,8 +16306,11 @@ void Plater::priv::on_slicing_update(SlicingStatusEvent &evt)
     BOOST_LOG_TRIVIAL(debug) << __FUNCTION__ << boost::format("exit.");
 }
 
-void Plater::priv::on_slicing_completed(wxCommandEvent & evt)
+void Plater::priv::on_slicing_completed(SlicingStageCompletedEvent & evt)
 {
+    if (m_shutting_down || background_process.cancellation_requested() ||
+        !PrintWorkflowState::is_current_slice_event(evt.generation, background_process.automation_generation()))
+        return;
     BOOST_LOG_TRIVIAL(debug) << __FUNCTION__ << boost::format(": event_type %1%, string %2%") % evt.GetEventType() % evt.GetString();
     //BBS: add slice project logic
     if (m_slice_all && (m_cur_slice_plate < (partplate_list.get_plate_count() - 1))) {
@@ -16351,13 +16461,20 @@ void Plater::priv::track_slice_mesh_stat()
 //BBS: add project slice logic
 void Plater::priv::on_process_completed(SlicingProcessCompletedEvent &evt)
 {
+    const auto current_generation = background_process.automation_generation();
+    const bool current_event = PrintWorkflowState::is_current_slice_event(evt.generation(), current_generation);
+    // Record actual delivered events before every early rejection. Diagnostics
+    // neither dispatch events nor change the workflow's acceptance decision.
+    observe_slice_completion(evt, current_generation, m_shutting_down ? "shutting_down" :
+        !current_event ? "stale_generation" : m_ignore_event ? "ignored" : "none");
+    // Reject before stop(): an old queued cancellation must never stop a newer run.
+    if (m_shutting_down || !current_event)
+        return;
     BOOST_LOG_TRIVIAL(debug) << __FUNCTION__ << boost::format(": enter, m_ignore_event %1%, status %2%")%m_ignore_event %evt.status();
     //BBS:ignore cancel event for some special case
     if (m_ignore_event)
     {
-        m_print_after_slice_plate = nullptr;
-        m_print_after_slice_index = -1;
-        m_print_after_slice_generation = 0;
+        m_pending_slice_output.clear();
         m_ignore_event = false;
         BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << boost::format(": ignore this event %1%") % evt.status();
         return;
@@ -16579,22 +16696,18 @@ void Plater::priv::on_process_completed(SlicingProcessCompletedEvent &evt)
             }
         }
         q->SetDropTarget(new PlaterDropTarget(q));
-        const bool same_plate = m_print_after_slice_plate != nullptr &&
-            partplate_list.get_curr_plate_index() == m_print_after_slice_index &&
-            partplate_list.get_curr_plate() == m_print_after_slice_plate &&
-            background_process.get_current_plate() == m_print_after_slice_plate;
-        const bool continue_to_setup = PrintWorkflowState::may_open_print_setup(
-            m_print_after_slice_generation, m_slice_request_generation, same_plate,
-            !has_error && !evt.cancelled() && evt.success(),
-            same_plate && m_print_after_slice_plate->has_printable_instances() &&
-            m_print_after_slice_plate->is_slice_result_ready_for_print());
-        // Clear before the modal setup. A stale request must never survive it.
-        m_print_after_slice_plate = nullptr;
-        m_print_after_slice_index = -1;
-        m_print_after_slice_generation = 0;
-        if (continue_to_setup) {
+        auto* selected_plate = partplate_list.get_curr_plate();
+        const auto requested_output = m_pending_slice_output;
+        const auto action = m_pending_slice_output.consume(m_slice_request_generation,
+            background_process.automation_generation(), selected_plate, partplate_list.get_curr_plate_index(),
+            background_process.get_current_plate(), !has_error && !evt.cancelled() && evt.success(),
+            selected_plate && selected_plate->has_printable_instances() && selected_plate->is_slice_result_ready_for_print());
+        observe_slice_continuation(action, requested_output);
+        if (action == PrintWorkflowState::SliceOutputAction::Print) {
             SimpleEvent print_event(EVT_GLTOOLBAR_PRINT_PLATE);
             on_action_print_plate(print_event);
+        } else if (action == PrintWorkflowState::SliceOutputAction::Send) {
+            on_action_send_to_printer(false);
         }
     }
     else
@@ -16669,14 +16782,15 @@ void Plater::priv::on_action_open_project(SimpleEvent&)
 void Plater::priv::on_action_slice_plate(SimpleEvent& event)
 {
     if (q != nullptr) {
+        if (m_is_slicing || background_process.running() || m_inside_post_process_script_modal)
+            return;
         ++m_slice_request_generation;
-        m_print_after_slice_plate = nullptr;
-        m_print_after_slice_index = -1;
-        m_print_after_slice_generation = 0;
-        if (event.GetEventType() == EVT_GLTOOLBAR_SLICE_AND_PRINT_PLATE) {
-            m_print_after_slice_plate = partplate_list.get_curr_plate();
-            m_print_after_slice_index = partplate_list.get_curr_plate_index();
-            m_print_after_slice_generation = m_slice_request_generation;
+        m_pending_slice_output.clear();
+        if (event.GetEventType() == EVT_GLTOOLBAR_SLICE_AND_PRINT_PLATE ||
+            event.GetEventType() == EVT_GLTOOLBAR_SLICE_AND_SEND_PLATE) {
+            m_pending_slice_output.arm(event.GetEventType() == EVT_GLTOOLBAR_SLICE_AND_SEND_PLATE ?
+                PrintWorkflowState::SliceOutputAction::Send : PrintWorkflowState::SliceOutputAction::Print,
+                partplate_list.get_curr_plate(), partplate_list.get_curr_plate_index(), m_slice_request_generation);
         }
         BOOST_LOG_TRIVIAL(debug) << __FUNCTION__ << ":received slice plate event\n";
         //BBS update extruder params and speed table before slicing
@@ -16706,21 +16820,20 @@ void Plater::priv::on_action_slice_plate(SimpleEvent& event)
         }
 
         q->reslice();
+        m_pending_slice_output.native_generation = background_process.automation_generation();
         if (!m_is_slicing) {
-            const bool reuse_for_print = m_print_after_slice_generation == m_slice_request_generation &&
-                m_print_after_slice_plate != nullptr &&
-                m_print_after_slice_plate == partplate_list.get_curr_plate() &&
-                m_print_after_slice_plate == background_process.get_current_plate() &&
-                m_print_after_slice_index == partplate_list.get_curr_plate_index() &&
-                m_reused_finished_slice_result &&
-                m_print_after_slice_plate->has_printable_instances() &&
-                m_print_after_slice_plate->is_slice_result_ready_for_print();
-            m_print_after_slice_plate = nullptr;
-            m_print_after_slice_index = -1;
-            m_print_after_slice_generation = 0;
-            if (reuse_for_print) {
+            auto* selected_plate = partplate_list.get_curr_plate();
+            const auto requested_output = m_pending_slice_output;
+            const auto action = m_pending_slice_output.consume(m_slice_request_generation,
+                background_process.automation_generation(), selected_plate, partplate_list.get_curr_plate_index(),
+                background_process.get_current_plate(), m_reused_finished_slice_result,
+                selected_plate && selected_plate->has_printable_instances() && selected_plate->is_slice_result_ready_for_print());
+            observe_slice_continuation(action, requested_output);
+            if (action == PrintWorkflowState::SliceOutputAction::Print) {
                 SimpleEvent print_event(EVT_GLTOOLBAR_PRINT_PLATE);
                 on_action_print_plate(print_event);
+            } else if (action == PrintWorkflowState::SliceOutputAction::Send) {
+                on_action_send_to_printer(false);
             }
         }
         q->select_view_3D("Preview");
@@ -19164,10 +19277,10 @@ void Plater::priv::on_helio_input_dlg(SimpleEvent &a)
 void Plater::priv::on_action_slice_all(SimpleEvent&)
 {
     if (q != nullptr) {
+        if (m_is_slicing || background_process.running() || m_inside_post_process_script_modal)
+            return;
         ++m_slice_request_generation;
-        m_print_after_slice_plate = nullptr;
-        m_print_after_slice_index = -1;
-        m_print_after_slice_generation = 0;
+        m_pending_slice_output.clear();
         BOOST_LOG_TRIVIAL(debug) << __FUNCTION__ << ":received slice project event\n";
         //BBS update extruder params and speed table before slicing
         const Slic3r::DynamicPrintConfig& config = wxGetApp().preset_bundle->full_config();
@@ -19975,6 +20088,7 @@ void Plater::priv::init_notification_manager()
     notification_manager->init();
 
     auto cancel_callback = [this]() {
+        q->cancel_pending_print_after_slice();
         bool res1;
         bool res2;
 
@@ -19988,12 +20102,10 @@ void Plater::priv::init_notification_manager()
             notification_manager->set_slicing_progress_hidden();
         }
 
-        if (this->background_process.idle())
-            res2 = false;
-        else {
-            this->background_process.stop();
-            res2 = true;
-        }
+        res2 = this->background_process.request_stop();
+        if (res2)
+            notification_manager->set_slicing_progress_percentage(_u8L("Canceling slicing..."),
+                float(partplate_list.get_curr_plate()->get_slicing_percent()) / 100.0f, false);
 
         return res1 || res2;
     };
@@ -23647,9 +23759,56 @@ int Plater::new_project(bool skip_confirm, bool silent, const wxString &project_
 void Plater::cancel_pending_print_after_slice()
 {
     if (!p) return;
-    p->m_print_after_slice_plate = nullptr;
-    p->m_print_after_slice_index = -1;
-    p->m_print_after_slice_generation = 0;
+    p->m_pending_slice_output.clear();
+}
+
+uint64_t Plater::automation_slice_native_generation() const
+{
+    return p ? p->background_process.automation_generation() : 0;
+}
+
+SliceWorkflowObservation Plater::automation_slice_workflow()
+{
+    SliceWorkflowObservation result;
+    if (!p || !p->m_slice_observation_enabled) return result;
+    result.enabled = true;
+    result.request_generation = p->m_slice_request_generation;
+    result.native_generation = p->background_process.automation_generation();
+    result.model_revision = get_active_snapshot_time();
+    result.cancellation_requested = p->background_process.cancellation_requested();
+    const auto worker_running = p->background_process.automation_worker_running();
+    result.worker_state_known = worker_running.has_value();
+    if (worker_running) result.worker_running = *worker_running;
+    switch (p->background_process.automation_outcome()) {
+    case 0: result.outcome = "idle"; break;
+    case 1: result.outcome = "running"; break;
+    case 2: result.outcome = "completed"; break;
+    case 3: result.outcome = "failed"; break;
+    case 4: result.outcome = "cancelled"; break;
+    default: result.outcome = "unknown"; break;
+    }
+    auto* processing = p->background_process.get_current_plate();
+    // Resolve only by equality against currently owned plates. Never dereference
+    // an old pending or processing identity to obtain an index.
+    for (auto* plate : p->partplate_list.get_plate_list())
+        if (plate == processing) result.processing_plate_index = plate->get_index();
+    const auto& pending = p->m_pending_slice_output;
+    result.pending_action = pending.action == PrintWorkflowState::SliceOutputAction::Print ? "print" :
+        pending.action == PrintWorkflowState::SliceOutputAction::Send ? "send" : "none";
+    result.pending_plate_index = pending.plate_index;
+    result.pending_request_generation = pending.request_generation;
+    result.pending_native_generation = pending.native_generation;
+    result.pending_matches_current_plate = pending.plate && pending.plate == p->partplate_list.get_curr_plate();
+    result.pending_matches_processing_plate = pending.plate && pending.plate == processing;
+    result.completion_sequence = p->m_slice_completion_sequence;
+    result.continuation_sequence = p->m_slice_continuation_sequence;
+    result.completion_count = static_cast<size_t>(std::min<uint64_t>(result.completion_sequence, result.event_capacity));
+    result.continuation_count = static_cast<size_t>(std::min<uint64_t>(result.continuation_sequence, result.event_capacity));
+    for (size_t i = 0; i < result.completion_count; ++i)
+        result.completions[i] = p->m_slice_completions[(result.completion_sequence - result.completion_count + i) % result.event_capacity];
+    for (size_t i = 0; i < result.continuation_count; ++i)
+        result.continuations[i] = p->m_slice_continuations[(result.continuation_sequence - result.continuation_count + i) % result.event_capacity];
+    return result;
 }
 
 bool Plater::try_sync_preset_with_connected_printer(int& nozzle_diameter)
@@ -27334,6 +27493,39 @@ TriangleMesh Plater::combine_mesh_fff(const ModelObject& mo, int instance_id, st
 }
 
 // BBS export with/without boolean, however, stil merge mesh
+// Silent automation shares the native export mesh transforms and STL writer.
+// Negative volumes require the interactive boolean choice, so reject them here.
+bool Plater::automation_export_plate_stl(const std::filesystem::path& destination, int plate_index)
+{
+    if (printer_technology() != ptFFF || plate_index < 0 || plate_index >= p->partplate_list.get_plate_count())
+        return false;
+    PartPlate* plate = p->partplate_list.get_plate_list()[plate_index];
+    TriangleMesh combined;
+    bool have_instances = false;
+    for (size_t obj_index = 0; obj_index < p->model.objects.size(); ++obj_index) {
+        const ModelObject* object = p->model.objects[obj_index];
+        for (size_t instance_index = 0; instance_index < object->instances.size(); ++instance_index) {
+            if (!plate->contain_instance(static_cast<int>(obj_index), static_cast<int>(instance_index)))
+                continue;
+            have_instances = true;
+            TriangleMesh instance_mesh;
+            for (const ModelVolume* volume : object->volumes) {
+                if (volume->type() == ModelVolumeType::NEGATIVE_VOLUME)
+                    return false;
+                if (!volume->is_model_part())
+                    continue;
+                TriangleMesh mesh(volume->mesh());
+                mesh.transform(volume->get_matrix(), true);
+                instance_mesh.merge(mesh);
+            }
+            instance_mesh.transform(object->instances[instance_index]->get_matrix(), true);
+            combined.merge(instance_mesh);
+        }
+    }
+    if (!have_instances || combined.empty())
+        return false;
+    return Slic3r::store_stl(destination.u8string().c_str(), &combined, true);
+}
 void Plater::export_stl(bool extended, bool selection_only, bool multi_stls)
 {
     if (p->model.objects.empty()) { return; }
@@ -28035,6 +28227,7 @@ void plater_save_post_process_script_choice(bool skip)
 //BBS: add multiple plate reslice logic
 void Plater::reslice()
 {
+    ++m_automation_slice_request_generation;
     p->m_reused_finished_slice_result = false;
     BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << boost::format(", Line %1%: enter, process_completed_with_error=%2%")%__LINE__ %p->process_completed_with_error;
     // Nested wx event dispatch during PostProcessScriptDialog::ShowModal() can re-enter reslice(); ignore the inner call.
@@ -28212,7 +28405,7 @@ void Plater::reslice()
         if (p->m_slice_all && (p->m_cur_slice_plate < p->partplate_list.get_plate_count())) {
             BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << boost::format(": in slicing all, plate %1% is invalid, skip to next") % p->m_cur_slice_plate;
             SlicingProcessCompletedEvent evt(EVT_PROCESS_COMPLETED, 0,
-                SlicingProcessCompletedEvent::Finished, nullptr);
+                SlicingProcessCompletedEvent::Finished, nullptr, p->background_process.automation_generation());
             wxQueueEvent(this, evt.Clone());
             p->m_is_slicing = true;
             this->SetDropTarget(nullptr);
@@ -28225,7 +28418,7 @@ void Plater::reslice()
         //slice next
         BOOST_LOG_TRIVIAL(warning) << __FUNCTION__ << boost::format(": in slicing all, current plate %1% already sliced, skip to next") % p->m_cur_slice_plate ;
         SlicingProcessCompletedEvent evt(EVT_PROCESS_COMPLETED, 0,
-            SlicingProcessCompletedEvent::Finished, nullptr);
+            SlicingProcessCompletedEvent::Finished, nullptr, p->background_process.automation_generation());
         // Post the "complete" callback message, so that it will slice the next plate soon
         wxQueueEvent(this, evt.Clone());
         p->m_is_slicing = true;
@@ -28456,7 +28649,7 @@ int Plater::start_next_slice()
     if (!p->partplate_list.get_curr_plate()->has_printable_instances()) {
         BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << boost::format(": plate %1% is empty, skip") % p->partplate_list.get_curr_plate_index();
         SlicingProcessCompletedEvent evt(EVT_PROCESS_COMPLETED, 0,
-                SlicingProcessCompletedEvent::Finished, nullptr);
+                SlicingProcessCompletedEvent::Finished, nullptr, p->background_process.automation_generation());
         wxQueueEvent(this, evt.Clone());
         return 0;
     }
@@ -28473,7 +28666,7 @@ int Plater::start_next_slice()
         BOOST_LOG_TRIVIAL(warning) << __FUNCTION__ << boost::format(": found invalidated apply in update_background_process.");
         BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << boost::format(": plate %1% cannot slice, skip") % p->partplate_list.get_curr_plate_index();
         SlicingProcessCompletedEvent evt(EVT_PROCESS_COMPLETED, 0,
-                SlicingProcessCompletedEvent::Finished, nullptr);
+                SlicingProcessCompletedEvent::Finished, nullptr, p->background_process.automation_generation());
         wxQueueEvent(this, evt.Clone());
         return 0;
     }
@@ -28484,7 +28677,7 @@ int Plater::start_next_slice()
     {
         //slice next
         SlicingProcessCompletedEvent evt(EVT_PROCESS_COMPLETED, 0,
-                SlicingProcessCompletedEvent::Finished, nullptr);
+                SlicingProcessCompletedEvent::Finished, nullptr, p->background_process.automation_generation());
         // Post the "complete" callback message, so that it will slice the next plate soon
         wxQueueEvent(this, evt.Clone());
     }
@@ -31225,7 +31418,7 @@ void Plater::set_bed_position(Vec2d& pos)
 //BBS: is the background process slicing currently
 bool Plater::is_background_process_slicing() const
 {
-    return p->m_is_slicing;
+    return p->m_is_slicing || p->background_process.running();
 }
 
 // returns the state enum. The header file could not be imported here so the return type is int.

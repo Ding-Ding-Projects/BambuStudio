@@ -1,0 +1,349 @@
+{
+  "schema": 1,
+  "run_id": "37096376814",
+  "source_commit": "91dc1720bb4a795868c2d02655dae771d6842d49",
+  "run_url": "https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37096376814",
+  "scope": "Standalone display provisioning and restoration, not application rendering",
+  "limitations": [
+    "Settings measured 192 DPI. Application DPI and rendered behavior remain unverified.",
+    "Private captures precede scale selection and contain account identity; they remain unpublished.",
+    "Foreground focus verification and input are not atomic; restricted to disposable hosted machines.",
+    "Recovery-only receipt status is unavailable, with restored and resolution_restored true."
+  ],
+  "receipts": {
+    "display-scale-lifecycle-37096376814/receipt.json": {
+      "sha256": "9fe8a8e42a7061c36999e771c6f58853f11e14a79ddc5654296776acc37f3338",
+      "bytes": 1889,
+      "value": {
+        "source_process_observation": {
+          "invalid_paths_rejected": 4,
+          "process_stage": 18,
+          "exit_code": 0,
+          "output_length": 41,
+          "legacy_selection_count": 3,
+          "source_format_valid": true,
+          "terminated": true,
+          "native_error": null,
+          "checkout_matches_run": true
+        },
+        "status": "passed",
+        "source_supervisor_observation": {
+          "exit_code": 0,
+          "native_error": null,
+          "process_stage": 18,
+          "terminated": true
+        },
+        "schema": 1,
+        "cases": [
+          {
+            "name": "owned_page_marker_contract",
+            "status": "passed"
+          },
+          {
+            "name": "navigation_uncertainty_contract",
+            "status": "passed"
+          },
+          {
+            "name": "nested_source_identity",
+            "status": "passed"
+          },
+          {
+            "name": "diagnostic_control_geometry",
+            "status": "passed"
+          },
+          {
+            "name": "minimum_resolution_tuple_contract",
+            "status": "passed"
+          },
+          {
+            "name": "minimum_input_recovery_contract",
+            "status": "passed"
+          },
+          {
+            "name": "fixed_alternate_resolution_contract",
+            "status": "passed"
+          },
+          {
+            "name": "display_mode_public_layout_contract",
+            "status": "passed"
+          },
+          {
+            "name": "reject_oversized_output",
+            "status": "passed"
+          },
+          {
+            "name": "normal_output_after_overflow",
+            "status": "passed"
+          },
+          {
+            "name": "terminate_descendant_after_parent_exit",
+            "status": "passed"
+          },
+          {
+            "name": "normal_output_after_descendant_timeout",
+            "status": "passed"
+          },
+          {
+            "name": "accept_exact_output_limit",
+            "status": "passed"
+          },
+          {
+            "name": "query_only_named_job_membership",
+            "status": "passed"
+          }
+        ],
+        "elapsed_ms": 13681,
+        "settings_mutated": false,
+        "cleanup_verified": true,
+        "passed": 14,
+        "expected": 14
+      }
+    },
+    "display-scale-200-37096376814/run.json": {
+      "sha256": "f61a9e91eb234809e98f9b5058da6b367e3b32140f5413b58ea8a24caab97fa9",
+      "bytes": 4759,
+      "value": {
+        "input_recovery_uncertain": false,
+        "resolution_restore_apply_code": 0,
+        "disposal_required": false,
+        "isolation": "disposable_hosted_machine",
+        "navigation_recovery_uncertain": false,
+        "resolution_selection_diagnostic": {
+          "last_enum_succeeded": true,
+          "stage": "stable_display_binding",
+          "last_driver_extra_bytes": 0,
+          "code": null,
+          "last_mode_buffer_bytes": 220,
+          "last_mode_size": 188
+        },
+        "resolution_restoration_diagnostic": {
+          "last_enum_succeeded": true,
+          "stage": "stable_display_binding",
+          "last_driver_extra_bytes": 0,
+          "code": null,
+          "last_mode_buffer_bytes": 220,
+          "last_mode_size": 188
+        },
+        "original_height": 768,
+        "resolution_restore_already_current": false,
+        "original_width": 1024,
+        "diagnostic_evidence": {
+          "before_selector": {
+            "stage": "complete",
+            "source_observation": {
+              "script_directory_present": true,
+              "native_error": null,
+              "output_is_string": true,
+              "exit_code": 0,
+              "run_id_format_valid": true,
+              "terminated": true,
+              "source_format_valid": true,
+              "output_length": 41,
+              "process_stage": 18,
+              "run_id_present": true
+            },
+            "status": "encrypted_pending_pixel_review"
+          },
+          "expanded_selector": {
+            "stage": "complete",
+            "source_observation": {
+              "script_directory_present": true,
+              "native_error": null,
+              "output_is_string": true,
+              "exit_code": 0,
+              "run_id_format_valid": true,
+              "terminated": true,
+              "source_format_valid": true,
+              "output_length": 41,
+              "process_stage": 18,
+              "run_id_present": true
+            },
+            "status": "encrypted_pending_pixel_review"
+          }
+        },
+        "input_route": "hosted-foreground",
+        "settings_dpi_after_resolution": 96,
+        "restoration_observations": {
+          "expansion_state": 1,
+          "matching_option_count": 1,
+          "cheap_exit": 0,
+          "allowed_option_domain": {
+            "scale_150": {
+              "container_unavailable": 0,
+              "visible_enabled": 1,
+              "matching_container": 1,
+              "observed": 1
+            },
+            "scale_100": {
+              "container_unavailable": 0,
+              "visible_enabled": 1,
+              "matching_container": 1,
+              "observed": 1
+            },
+            "scale_200": {
+              "container_unavailable": 0,
+              "visible_enabled": 1,
+              "matching_container": 1,
+              "observed": 1
+            },
+            "scale_125": {
+              "container_unavailable": 0,
+              "visible_enabled": 1,
+              "matching_container": 1,
+              "observed": 1
+            }
+          },
+          "post_input_fresh_combo_owned": true,
+          "cheap_terminated": true,
+          "cheap_ok": true,
+          "input_target": "scale_option",
+          "expansion_observed": true
+        },
+        "requested_scale": 200,
+        "selected_height": 1200,
+        "selected_width": 1600,
+        "foreground_input_atomic": false,
+        "restored": true,
+        "restored_settings_dpi": 96,
+        "resolution_restore_test_code": 0,
+        "page_refresh": {
+          "display_acknowledged": true,
+          "colors_acknowledged": true,
+          "requested": true
+        },
+        "selected_scale": 200,
+        "requested_resolution": "1600x1200",
+        "action": "unsupported_standalone_only",
+        "status": "selected_and_measured",
+        "schema": 1,
+        "selection_observations": {
+          "expansion_state": 1,
+          "matching_option_count": 1,
+          "cheap_ok": true,
+          "cheap_exit": 0,
+          "allowed_option_domain": {
+            "scale_150": {
+              "container_unavailable": 0,
+              "visible_enabled": 1,
+              "matching_container": 1,
+              "observed": 1
+            },
+            "scale_100": {
+              "container_unavailable": 0,
+              "visible_enabled": 1,
+              "matching_container": 1,
+              "observed": 1
+            },
+            "scale_200": {
+              "container_unavailable": 0,
+              "visible_enabled": 1,
+              "matching_container": 1,
+              "observed": 1
+            },
+            "scale_125": {
+              "container_unavailable": 0,
+              "visible_enabled": 1,
+              "matching_container": 1,
+              "observed": 1
+            }
+          },
+          "cheap_terminated": true,
+          "post_input_fresh_combo_owned": true,
+          "input_target": "scale_option",
+          "expansion_observed": true
+        },
+        "resolution_apply_code": 0,
+        "original_scale": 100,
+        "resolution_verified": true,
+        "child_termination_uncertain": false,
+        "resolution_restored": true,
+        "uia": "read_only",
+        "measured_settings_dpi": 192,
+        "target_application_dpi": "requires_independent_runtime_measurement",
+        "resolution_already_current": false,
+        "scale_after_resolution": 100,
+        "input_method": "cheap_mouse_click",
+        "failure_stage": null,
+        "resolution_test_code": 0,
+        "restoration_failure_stage": null
+      }
+    },
+    "display-scale-200-37096376814/restore.json": {
+      "sha256": "d518e60f5bf4af9b46b224190f364fe3c2b59b6da36a14938f18ff858534c2c0",
+      "bytes": 1548,
+      "value": {
+        "status": "unavailable",
+        "action": "unsupported_standalone_only",
+        "isolation": "disposable_hosted_machine",
+        "resolution_restore_test_code": null,
+        "foreground_input_atomic": false,
+        "restoration_failure_stage": null,
+        "resolution_selection_diagnostic": {
+          "last_enum_succeeded": true,
+          "last_mode_buffer_bytes": 220,
+          "code": null,
+          "last_driver_extra_bytes": 0,
+          "stage": "mode_frequency_and_orientation",
+          "last_mode_size": 188
+        },
+        "schema": 1,
+        "navigation_recovery_uncertain": false,
+        "resolution_restored": true,
+        "resolution_restore_apply_code": null,
+        "resolution_restoration_diagnostic": {
+          "last_enum_succeeded": true,
+          "last_mode_buffer_bytes": 220,
+          "code": null,
+          "last_driver_extra_bytes": 0,
+          "stage": "stable_display_binding",
+          "last_mode_size": 188
+        },
+        "failure_stage": null,
+        "input_route": "hosted-foreground",
+        "target_application_dpi": "requires_independent_runtime_measurement",
+        "requested_resolution": "original",
+        "uia": "read_only",
+        "input_method": "cheap_mouse_click",
+        "page_refresh": {
+          "display_acknowledged": false,
+          "requested": false,
+          "colors_acknowledged": false
+        },
+        "child_termination_uncertain": false,
+        "restoration_observations": {},
+        "input_recovery_uncertain": false,
+        "disposal_required": false,
+        "restored_settings_dpi": 96,
+        "restored": true,
+        "selection_observations": {},
+        "resolution_restore_already_current": true,
+        "original_scale": 100,
+        "requested_scale": 200
+      }
+    },
+    "display-scale-200-37096376814/supervisor.json": {
+      "sha256": "d316f58b54fc0052bffb0b251acffa3657cf5f934de5ab401861322b27b4a3e9",
+      "bytes": 742,
+      "value": {
+        "navigation_recovery_uncertain": false,
+        "target_application_dpi": "requires_independent_runtime_measurement",
+        "schema": 1,
+        "requested_scale": 200,
+        "page_refresh_requested": true,
+        "input_route": "hosted-foreground",
+        "restoration_verified": true,
+        "process_containment": "suspended_start_nonbreakaway_job",
+        "resolution_provisioning_requested": true,
+        "recovery_termination_verified": true,
+        "status": "verified_settings_scale_and_restoration",
+        "foreground_input_atomic": false,
+        "disposal_required": false,
+        "child_termination_uncertain": false,
+        "requested_resolution": "1600x1200",
+        "native_runtime_requested": false,
+        "input_recovery_uncertain": false,
+        "worker_termination_verified": true
+      }
+    }
+  }
+}

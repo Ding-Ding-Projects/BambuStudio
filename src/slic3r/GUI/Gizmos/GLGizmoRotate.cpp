@@ -786,9 +786,14 @@ GLGizmoRotate3D::RotoptimzeWindow::RotoptimzeWindow(ImGuiWrapper *   imgui,
 
     ImGui::PushItemWidth(max_text_w);
 
-    if (ImGui::BeginCombo("", RotoptimizeJob::get_method_name(state.method_id).c_str())) {
-        for (size_t i = 0; i < RotoptimizeJob::get_methods_count(); ++i) {
-            if (ImGui::Selectable(RotoptimizeJob::get_method_name(i).c_str())) {
+    constrain_canvas_menu();
+    if (ImGui::BeginCombo("##orientation_method", RotoptimizeJob::get_method_name(state.method_id).c_str())) {
+        std::vector<std::string> methods;
+        for (size_t i = 0; i < RotoptimizeJob::get_methods_count(); ++i) methods.push_back(RotoptimizeJob::get_method_name(i));
+        const auto visible = imgui->menu_search("orientation_methods", methods);
+        for (size_t i = 0; i < methods.size(); ++i) {
+            if (!visible[i]) continue;
+            if (ImGui::Selectable(canvas_menu_label(methods[i].c_str()).c_str())) {
                 state.method_id = i;
 #ifdef SUPPORT_SLA_AUTO_ROTATE
                 wxGetApp().app_config->set("sla_auto_rotate",

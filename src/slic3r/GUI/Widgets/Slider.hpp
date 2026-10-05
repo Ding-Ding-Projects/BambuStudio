@@ -6,6 +6,7 @@
 #include <wx/window.h>
 
 #include "MD3Tokens.hpp"
+#include "MD3Motion.hpp"
 
 // Shared Material Design 3 slider (kit: selection/Slider.prompt.md).
 //
@@ -33,7 +34,7 @@ public:
            const wxPoint &pos      = wxDefaultPosition,
            const wxSize & size     = wxDefaultSize);
 
-    ~Slider() override = default;
+    ~Slider() override { m_halo_motion.Stop(); }
 
     bool Create(wxWindow *     parent,
                 int            value    = 0,
@@ -83,6 +84,8 @@ private:
     void onWheel(wxMouseEvent &evt);
     void onKey(wxKeyEvent &evt);
     void onFocus(wxFocusEvent &evt);
+    void emphasizeHalo();
+    void settleHalo();
 
     int  thumbDiameter() const;      // device px
     int  trackThickness() const;     // device px
@@ -96,6 +99,10 @@ private:
     bool             m_vertical = false;
     bool             m_dragging = false;
     bool             m_focused  = false;
+    MD3::Motion::Anim m_halo_motion;
+    double           m_halo_emphasis = 0.0;
+    wxColour         m_halo_color;
+    wxColour         m_halo_background;
     MD3::ColorScheme m_scheme   = MD3::ColorScheme::Brand;
 
     std::function<void(int)> m_on_change;

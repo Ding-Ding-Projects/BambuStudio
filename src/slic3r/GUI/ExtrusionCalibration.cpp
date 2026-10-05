@@ -66,15 +66,12 @@ void ExtrusionCalibration::create()
     select_sizer->AddSpacer(FromDIP(4));
 
 
-#ifdef __APPLE__
-    m_comboBox_nozzle_dia = new wxComboBox(m_step_1_panel, wxID_ANY, wxEmptyString, wxDefaultPosition, EXTRUSION_CALIBRATION_BED_COMBOX, 0, nullptr, wxCB_READONLY);
-#else
     m_comboBox_nozzle_dia = new ComboBox(m_step_1_panel, wxID_ANY, wxEmptyString, wxDefaultPosition, EXTRUSION_CALIBRATION_BED_COMBOX, 0, nullptr, wxCB_READONLY);
-#endif
-    m_comboBox_nozzle_dia->AppendString(wxString::Format("%1.1f", 0.2));
-    m_comboBox_nozzle_dia->AppendString(wxString::Format("%1.1f", 0.4));
-    m_comboBox_nozzle_dia->AppendString(wxString::Format("%1.1f", 0.6));
-    m_comboBox_nozzle_dia->AppendString(wxString::Format("%1.1f", 0.8));
+
+    m_comboBox_nozzle_dia->Append(wxString::Format("%1.1f", 0.2));
+    m_comboBox_nozzle_dia->Append(wxString::Format("%1.1f", 0.4));
+    m_comboBox_nozzle_dia->Append(wxString::Format("%1.1f", 0.6));
+    m_comboBox_nozzle_dia->Append(wxString::Format("%1.1f", 0.8));
 
     select_sizer->Add(m_comboBox_nozzle_dia, 0, wxEXPAND);
     select_sizer->Add(0, EXTRUSION_CALIBRATION_WIDGET_GAP, 0, 0);
@@ -82,11 +79,8 @@ void ExtrusionCalibration::create()
     auto filament_sel_text = new Label(m_step_1_panel, _L("Filament"));
     select_sizer->Add(filament_sel_text, 0, wxALIGN_LEFT);
     select_sizer->AddSpacer(FromDIP(4));
-#ifdef __APPLE__
-    m_comboBox_filament = new wxComboBox(m_step_1_panel, wxID_ANY, wxEmptyString, wxDefaultPosition, EXTRUSION_CALIBRATION_BED_COMBOX, 0, nullptr, wxCB_READONLY);
-#else
     m_comboBox_filament = new ComboBox(m_step_1_panel, wxID_ANY, wxEmptyString, wxDefaultPosition, EXTRUSION_CALIBRATION_BED_COMBOX, 0, nullptr, wxCB_READONLY);
-#endif
+
     select_sizer->Add(m_comboBox_filament, 0, wxEXPAND);
     select_sizer->Add(0, EXTRUSION_CALIBRATION_WIDGET_GAP, 0, 0);
 
@@ -94,11 +88,8 @@ void ExtrusionCalibration::create()
     select_sizer->Add(bed_type_sel_text, 0, wxALIGN_LEFT);
     select_sizer->AddSpacer(FromDIP(4));
 
-#ifdef __APPLE__
-    m_comboBox_bed_type = new wxComboBox(m_step_1_panel, wxID_ANY, wxEmptyString, wxDefaultPosition, EXTRUSION_CALIBRATION_BED_COMBOX, 0, nullptr, wxCB_READONLY);
-#else
     m_comboBox_bed_type = new ComboBox(m_step_1_panel, wxID_ANY, wxEmptyString, wxDefaultPosition, EXTRUSION_CALIBRATION_BED_COMBOX, 0, nullptr, wxCB_READONLY);
-#endif
+
     select_sizer->Add(m_comboBox_bed_type, 0, wxEXPAND);
 
     // get bed type
@@ -107,7 +98,7 @@ void ExtrusionCalibration::create()
         for (auto item : *bed_type_def->enum_keys_map) {
             if (item.first == "Default Plate")
                 continue;
-            m_comboBox_bed_type->AppendString(_L(item.first));
+            m_comboBox_bed_type->Append(_L(item.first));
         }
     }
 

@@ -1,0 +1,249 @@
+{
+  "schema": 1,
+  "run_id": "37091384649",
+  "source_commit": "7bd7420c7972aa186d246c76c93265600d8cd2ee",
+  "run_url": "https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37091384649",
+  "scope": "Standalone display provisioning and restoration, not application rendering",
+  "limitations": [
+    "Application DPI and rendered pixels remain independently unverified.",
+    "Foreground focus verification and input are not atomic; this route is restricted to disposable hosted machines.",
+    "The recovery receipt status is unavailable because that invocation performs restoration only; its restored and resolution_restored fields are true."
+  ],
+  "receipts": {
+    "lifecycle/receipt.json": {
+      "sha256": "79bcb4a49c45d5df41743cb8a79fd5f0b07bd75fd5cc133f9e81adf8dc5e4be5",
+      "bytes": 818,
+      "value": {
+        "status": "passed",
+        "elapsed_ms": 11738,
+        "passed": 7,
+        "schema": 1,
+        "settings_mutated": false,
+        "expected": 7,
+        "cases": [
+          {
+            "name": "display_mode_public_layout_contract",
+            "status": "passed"
+          },
+          {
+            "name": "reject_oversized_output",
+            "status": "passed"
+          },
+          {
+            "name": "normal_output_after_overflow",
+            "status": "passed"
+          },
+          {
+            "name": "terminate_descendant_after_parent_exit",
+            "status": "passed"
+          },
+          {
+            "name": "normal_output_after_descendant_timeout",
+            "status": "passed"
+          },
+          {
+            "name": "accept_exact_output_limit",
+            "status": "passed"
+          },
+          {
+            "name": "query_only_named_job_membership",
+            "status": "passed"
+          }
+        ],
+        "cleanup_verified": true
+      }
+    },
+    "125/run.json": {
+      "sha256": "7cb059ea1810991a886ec376517eb224f0c0f051bd274f1839de7409f4f3e153",
+      "bytes": 3516,
+      "value": {
+        "input_method": "cheap_mouse_click",
+        "failure_stage": null,
+        "selected_scale": 125,
+        "status": "selected_and_measured",
+        "resolution_test_code": 0,
+        "input_route": "hosted-foreground",
+        "resolution_restored": true,
+        "restoration_observations": {
+          "allowed_option_domain": {
+            "scale_100": {
+              "visible_enabled": 1,
+              "container_unavailable": 0,
+              "matching_container": 1,
+              "observed": 1
+            },
+            "scale_125": {
+              "visible_enabled": 1,
+              "container_unavailable": 0,
+              "matching_container": 1,
+              "observed": 1
+            },
+            "scale_200": {
+              "visible_enabled": 0,
+              "container_unavailable": 0,
+              "matching_container": 0,
+              "observed": 0
+            },
+            "scale_150": {
+              "visible_enabled": 1,
+              "container_unavailable": 0,
+              "matching_container": 1,
+              "observed": 1
+            }
+          },
+          "cheap_ok": true,
+          "expansion_observed": true,
+          "cheap_terminated": true,
+          "expansion_state": 1,
+          "input_target": "scale_option",
+          "matching_option_count": 1,
+          "post_input_fresh_combo_owned": true,
+          "cheap_exit": 0
+        },
+        "resolution_verified": true,
+        "resolution_selection_diagnostic": {
+          "last_driver_extra_bytes": 0,
+          "code": null,
+          "stage": "stable_display_binding",
+          "last_mode_size": 188,
+          "last_enum_succeeded": true,
+          "last_mode_buffer_bytes": 220
+        },
+        "resolution_restore_already_current": false,
+        "measured_settings_dpi": 120,
+        "original_scale": 100,
+        "isolation": "disposable_hosted_machine",
+        "selection_observations": {
+          "allowed_option_domain": {
+            "scale_100": {
+              "visible_enabled": 1,
+              "container_unavailable": 0,
+              "matching_container": 1,
+              "observed": 1
+            },
+            "scale_125": {
+              "visible_enabled": 1,
+              "container_unavailable": 0,
+              "matching_container": 1,
+              "observed": 1
+            },
+            "scale_200": {
+              "visible_enabled": 0,
+              "container_unavailable": 0,
+              "matching_container": 0,
+              "observed": 0
+            },
+            "scale_150": {
+              "visible_enabled": 0,
+              "container_unavailable": 0,
+              "matching_container": 0,
+              "observed": 0
+            }
+          },
+          "cheap_ok": true,
+          "expansion_observed": true,
+          "cheap_terminated": true,
+          "expansion_state": 1,
+          "input_target": "scale_option",
+          "matching_option_count": 1,
+          "post_input_fresh_combo_owned": true,
+          "cheap_exit": 0
+        },
+        "action": "unsupported_standalone_only",
+        "settings_dpi_after_resolution": 96,
+        "uia": "read_only",
+        "requested_scale": 125,
+        "child_termination_uncertain": false,
+        "schema": 1,
+        "restored_settings_dpi": 96,
+        "target_application_dpi": "requires_independent_runtime_measurement",
+        "resolution_already_current": false,
+        "original_width": 1024,
+        "resolution_restore_apply_code": 0,
+        "original_height": 768,
+        "foreground_input_atomic": false,
+        "restored": true,
+        "resolution_restoration_diagnostic": {
+          "last_driver_extra_bytes": 0,
+          "code": null,
+          "stage": "stable_display_binding",
+          "last_mode_size": 188,
+          "last_enum_succeeded": true,
+          "last_mode_buffer_bytes": 220
+        },
+        "selected_height": 1080,
+        "selected_width": 1920,
+        "resolution_restore_test_code": 0,
+        "resolution_apply_code": 0,
+        "disposal_required": false,
+        "restoration_failure_stage": null,
+        "scale_after_resolution": 100
+      }
+    },
+    "125/restore.json": {
+      "sha256": "4faf59b4250cca6e96e7224e5f6a1c122bc4169bf4da70f4d72bf8b63ac6d548",
+      "bytes": 1306,
+      "value": {
+        "status": "unavailable",
+        "resolution_restore_already_current": true,
+        "child_termination_uncertain": false,
+        "action": "unsupported_standalone_only",
+        "input_route": "hosted-foreground",
+        "resolution_restored": true,
+        "resolution_restoration_diagnostic": {
+          "code": null,
+          "last_mode_buffer_bytes": 220,
+          "last_driver_extra_bytes": 0,
+          "last_enum_succeeded": true,
+          "last_mode_size": 188,
+          "stage": "stable_display_binding"
+        },
+        "restored_settings_dpi": 96,
+        "restoration_observations": {},
+        "resolution_restore_test_code": null,
+        "restoration_failure_stage": null,
+        "original_scale": 100,
+        "restored": true,
+        "foreground_input_atomic": false,
+        "failure_stage": null,
+        "uia": "read_only",
+        "input_method": "cheap_mouse_click",
+        "target_application_dpi": "requires_independent_runtime_measurement",
+        "resolution_restore_apply_code": null,
+        "schema": 1,
+        "requested_scale": 125,
+        "isolation": "disposable_hosted_machine",
+        "selection_observations": {},
+        "disposal_required": false,
+        "resolution_selection_diagnostic": {
+          "code": null,
+          "last_mode_buffer_bytes": 220,
+          "last_driver_extra_bytes": 0,
+          "last_enum_succeeded": true,
+          "last_mode_size": 188,
+          "stage": "mode_frequency_and_orientation"
+        }
+      }
+    },
+    "125/supervisor.json": {
+      "sha256": "289dfbe9440884e506d70d448389dc02a64ee064f4430120bb3a25e1d3df2f61",
+      "bytes": 586,
+      "value": {
+        "native_runtime_requested": false,
+        "resolution_provisioning_requested": true,
+        "input_route": "hosted-foreground",
+        "recovery_termination_verified": true,
+        "process_containment": "suspended_start_nonbreakaway_job",
+        "schema": 1,
+        "worker_termination_verified": true,
+        "disposal_required": false,
+        "foreground_input_atomic": false,
+        "requested_scale": 125,
+        "child_termination_uncertain": false,
+        "status": "verified_settings_scale_and_restoration",
+        "restoration_verified": true,
+        "target_application_dpi": "requires_independent_runtime_measurement"
+      }
+    }
+  }
+}

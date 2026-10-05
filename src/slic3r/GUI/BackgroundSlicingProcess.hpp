@@ -2,9 +2,11 @@
 #define slic3r_GUI_BackgroundSlicingProcess_hpp_
 
 #include <cstdint>
+#include <atomic>
 #include <string>
 #include <condition_variable>
 #include <mutex>
+#include <optional>
 
 #include <boost/thread.hpp>
 
@@ -54,14 +56,24 @@ public:
 class SlicingStatusEvent : public wxEvent
 {
 public:
-    SlicingStatusEvent(wxEventType eventType, int winid, const PrintBase::SlicingStatus &status, std::uint64_t in_generation = 0) :
-        wxEvent(winid, eventType), status(std::move(status)), generation(in_generation) {}
+    SlicingStatusEvent(wxEventType eventType, int winid, const PrintBase::SlicingStatus &status, std::uint64_t in_generation = 0, const void* in_plate = nullptr) :
+        wxEvent(winid, eventType), status(std::move(status)), generation(in_generation), plate(in_plate) {}
     virtual wxEvent *Clone() const { return new SlicingStatusEvent(*this); }
 
     PrintBase::SlicingStatus status;
     std::uint64_t generation;
+    const void* plate;
 };
 
+
+class SlicingStageCompletedEvent : public wxCommandEvent
+{
+public:
+    SlicingStageCompletedEvent(wxEventType type, std::uint64_t run_generation)
+        : wxCommandEvent(type), generation(run_generation) {}
+    wxEvent* Clone() const override { return new SlicingStageCompletedEvent(*this); }
+    std::uint64_t generation;
+};
 
 class SlicingProcessCompletedEvent : public wxEvent
 {
@@ -72,10 +84,11 @@ public:
 		Error
 	};
 
-	SlicingProcessCompletedEvent(wxEventType eventType, int winid, StatusType status, std::exception_ptr exception) :
-		wxEvent(winid, eventType), m_status(status), m_exception(exception) {}
+	SlicingProcessCompletedEvent(wxEventType eventType, int winid, StatusType status, std::exception_ptr exception, std::uint64_t generation = 0) :
+		wxEvent(winid, eventType), m_status(status), m_exception(exception), m_generation(generation) {}
 	virtual wxEvent* Clone() const { return new SlicingProcessCompletedEvent(*this); }
 
+	std::uint64_t generation() const { return m_generation; }
 	StatusType 	status()    const { return m_status; }
 	bool 		finished()  const { return m_status == Finished; }
 	bool 		success()   const { return m_status == Finished; }
@@ -94,6 +107,7 @@ public:
 private:
 	StatusType 			m_status;
 	std::exception_ptr 	m_exception;
+    std::uint64_t m_generation;
 };
 
 //BBS: move it to plater.hpp
@@ -157,9 +171,20 @@ public:
 
 	// Start the background processing. Returns false if the background processing was already running.
 	bool start();
+    // A generation changes for every new native run or invalidated workspace.
+    uint64_t automation_generation() const { return m_automation_generation.load(); }
+    // 0 idle/invalidated, 1 running, 2 completed, 3 failed, 4 cancelled.
+    int automation_outcome() const { return m_automation_outcome.load(); }
+    // Never wait for a worker-owned lock on the UI thread. No value means the
+    // ownership state could not be observed, not that the worker is idle.
+    std::optional<bool> automation_worker_running();
 	// Cancel the background processing. Returns false if the background processing was not running.
 	// A stopped background processing may be restarted with start().
 	bool stop();
+    // Request cancellation without waiting on a non-interruptible geometry step.
+    // Ownership remains with this worker until the completion event is consumed.
+    bool request_stop();
+    bool cancellation_requested() const { return m_cancel_requested.load(); }
 	// Cancel the background processing and reset the print. Returns false if the background processing was not running.
 	// Useful when the Model or configuration is being changed drastically.
 	bool reset();
@@ -283,16 +308,13 @@ private:
 	// Thread, on which the background processing is executed. The thread will always be present
 	// and ready to execute the slicing process.
 	boost::thread		 		m_thread;
-	// Threads orphaned by force-cancel (stop() timeout). They continue running until
-	// their computation finishes, then exit silently. Detached in the destructor.
-	std::vector<boost::thread>	m_orphaned_threads;
 	// Mutex and condition variable to synchronize m_thread with the UI thread.
 	std::mutex 		 			m_mutex;
 	std::condition_variable		m_condition;
-	State 						m_state = STATE_INITIAL;
-	// Incremented on force-cancel (stop() timeout). The background thread checks this
-	// after completing work; if it changed, the thread skips state/event updates.
-	unsigned int				m_task_generation = 0;
+	State m_state = STATE_INITIAL;
+    std::atomic<uint64_t> m_automation_generation{0};
+    std::atomic<int> m_automation_outcome{0};
+    std::atomic<bool> m_cancel_requested{false};
 
 	// For executing tasks from the background thread on UI thread synchronously (waiting for result) using wxWidgets CallAfter().
 	// When the background proces is canceled, the UITask has to be invalidated as well, so that it will not be
