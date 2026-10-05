@@ -25,7 +25,7 @@ Symbol transport has source review plus synthetic identity/encryption tests, not
 
 ## Remaining work
 
-1. Restore GitHub CLI authentication. The device flow expired without approval; no current valid device code is recorded.
+1. Restore GitHub CLI authentication. The device flow expired without approval; no current valid device code is recorded. A separate non-interactive Git Credential Manager preservation push was attempted and failed before transfer: `fatal: Cannot prompt because user interactivity has been disabled.` followed by `fatal: unable to get password from user`. Remote main still resolves to `d851ff9a7f80b92eecc09d31d04eccd941c4df75`; the task branch has no remote ref.
 2. Resolve the specifically rejected symbol-workflow commit operation without bypassing the approval boundary.
 3. Verify translation metadata, scan public-bound changes, preserve the candidate remotely and prove the remote ref.
 4. Dispatch the exact candidate through the existing Windows build/release workflow with encrypted symbols; collect its actual verdict and matching outputs.
