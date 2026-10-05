@@ -734,6 +734,11 @@ function Invoke-OneClickBuild {
                 -File (Join-Path $script:RepositoryRoot 'scripts\windows\Stage-ModelCreatorRenderers.ps1') `
                 -PayloadDirectory $payloadDirectory
         }
+        Invoke-RepositoryCommand 'Staging the automation companion...' {
+            & powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass `
+                -File (Join-Path $script:RepositoryRoot 'scripts\windows\Stage-Automation.ps1') `
+                -PayloadDirectory $payloadDirectory
+        }
 
         if ($BuildOnly) {
             Write-BuildLog "Build-only workflow completed; runnable payload: $application"
