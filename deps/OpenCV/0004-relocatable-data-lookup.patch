@@ -1,0 +1,46 @@
+--- a/modules/core/CMakeLists.txt
++++ b/modules/core/CMakeLists.txt
+@@ -177,7 +177,7 @@
+ set(OPENCV_DATA_CONFIG_FILE "${CMAKE_BINARY_DIR}/opencv_data_config.hpp")
+ set(OPENCV_DATA_CONFIG_STR "")
+ 
+-if(CMAKE_INSTALL_PREFIX)
++if(CMAKE_INSTALL_PREFIX AND NOT OPENCV_RELOCATABLE_DATA_LOOKUP)
+   set(OPENCV_DATA_CONFIG_STR "${OPENCV_DATA_CONFIG_STR}
+ #define OPENCV_INSTALL_PREFIX \"${CMAKE_INSTALL_PREFIX}\"
+ ")
+@@ -188,8 +188,12 @@
+ ")
+ endif()
+ 
++set(OPENCV_DATA_BUILD_ROOT "${CMAKE_BINARY_DIR}")
++if(OPENCV_RELOCATABLE_DATA_LOOKUP)
++  set(OPENCV_DATA_BUILD_ROOT "")
++endif()
+ set(OPENCV_DATA_CONFIG_STR "${OPENCV_DATA_CONFIG_STR}
+-#define OPENCV_BUILD_DIR \"${CMAKE_BINARY_DIR}\"
++#define OPENCV_BUILD_DIR \"${OPENCV_DATA_BUILD_ROOT}\"
+ ")
+ 
+ file(RELATIVE_PATH SOURCE_DIR_RELATIVE ${CMAKE_BINARY_DIR} ${CMAKE_SOURCE_DIR})
+--- a/modules/core/src/utils/datafile.cpp
++++ b/modules/core/src/utils/datafile.cpp
+@@ -283,7 +283,8 @@
+     cv::String cwd = utils::fs::getcwd();
+     cv::String build_dir(OPENCV_BUILD_DIR);
+     bool has_tested_build_directory = false;
+-    if (isSubDirectory(build_dir, cwd) || isSubDirectory(utils::fs::canonical(build_dir), utils::fs::canonical(cwd)))
++    if (!build_dir.empty() &&
++        (isSubDirectory(build_dir, cwd) || isSubDirectory(utils::fs::canonical(build_dir), utils::fs::canonical(cwd))))
+     {
+         CV_LOG_DEBUG(NULL, "utils::findDataFile(): the current directory is build sub-directory: " << cwd);
+         const char* build_subdirs[] = { OPENCV_DATA_BUILD_DIR_SEARCH_PATHS };
+@@ -341,7 +342,7 @@
+         CV_LOG_INFO(NULL, "Can't detect module binaries location");
+     }
+ 
+-    if (!has_tested_build_directory &&
++    if (!build_dir.empty() && !has_tested_build_directory &&
+         (isSubDirectory(build_dir, module_path) || isSubDirectory(utils::fs::canonical(build_dir), utils::fs::canonical(module_path)))
+     )
+     {
