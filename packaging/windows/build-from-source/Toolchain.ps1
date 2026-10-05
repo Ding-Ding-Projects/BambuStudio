@@ -28,6 +28,7 @@ $script:GitFallbackTag = 'v2.54.0.windows.1'
 # is mutable, so it is protected by its exact Authenticode publisher only.
 $script:GitFallbackSha256 = '2B96E7854F0520F0F6B709C21041D9801B1BE44D5E1A0D9FA621B2FBC40F1983'
 $script:NodeFallbackSha256 = '57456AA33FCD6FB6A9418E09227DE0B0CA604F7B2123566ACC66B555CB2F42E5'
+$script:NodePortableSha256 = '7C93E9D92BF68C07182B471AA187E35EE6CD08EF0F24AB060DFFF605FCC1C57C'
 $script:CMakeFallbackSha256 = '82DB53FCB8F38BE541A26093489F39D5ED79B71B53CD121FC32A022A6BF310B1'
 $script:GitTrustedPublishers = @('Johannes Schindelin')
 $script:NodeTrustedPublishers = @('OpenJS Foundation')
@@ -430,22 +431,30 @@ function Install-Node {
     param([string] $WorkDir)
     if (Test-NodeLts) { return }
 
-    $winget = Get-Winget
-    if ($winget) {
-        & winget install --id OpenJS.NodeJS.LTS @script:WingetArgs
-        Update-SessionPath
-        if ($LASTEXITCODE -eq 0 -and (Test-NodeLts)) { return }
+    # A project-local portable LTS installation can coexist with a newer global
+    # Node version and never contends with Windows Installer or downgrades it.
+    $portableRoot = Join-Path $WorkDir "node-v$($script:NodeFallbackVersion)-win-x64"
+    if (Test-NodeLts -NodePath (Join-Path $portableRoot 'node.exe') -NpmPath (Join-Path $portableRoot 'npm.cmd')) {
+        $env:PATH = "$portableRoot;$env:PATH"
+        return
     }
-
-    Invoke-SilentInstaller `
-        -Url "https://nodejs.org/dist/v$($script:NodeFallbackVersion)/node-v$($script:NodeFallbackVersion)-x64.msi" `
-        -FileName 'node-lts-x64.msi' `
-        -Arguments @('/qn', '/norestart') `
-        -WorkDir $WorkDir `
-        -TrustedPublishers $script:NodeTrustedPublishers `
-        -ExpectedSha256 $script:NodeFallbackSha256
-
-    Update-SessionPath
+    $archive = Join-Path $WorkDir "node-v$($script:NodeFallbackVersion)-win-x64.zip"
+    if (-not (Test-Path -LiteralPath $archive -PathType Leaf) -or
+        (Get-FileSha256 -Path $archive) -cne $script:NodePortableSha256) {
+        Invoke-WebRequest -Uri "https://nodejs.org/dist/v$($script:NodeFallbackVersion)/node-v$($script:NodeFallbackVersion)-win-x64.zip" `
+            -OutFile $archive -UseBasicParsing -TimeoutSec 120 -ErrorAction Stop
+    }
+    if ((Get-FileSha256 -Path $archive) -cne $script:NodePortableSha256) {
+        throw 'Portable Node.js archive checksum does not match the pinned publisher digest.'
+    }
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    $staging = Join-Path $WorkDir ('node-staging-' + [guid]::NewGuid().ToString('N'))
+    [IO.Compression.ZipFile]::ExtractToDirectory($archive, $staging)
+    if (Test-Path -LiteralPath $portableRoot) {
+        Move-Item -LiteralPath $portableRoot -Destination ($portableRoot + '.previous-' + [guid]::NewGuid().ToString('N'))
+    }
+    Move-Item -LiteralPath (Join-Path $staging "node-v$($script:NodeFallbackVersion)-win-x64") -Destination $portableRoot
+    $env:PATH = "$portableRoot;$env:PATH"
     if (-not (Test-NodeLts)) {
         throw 'Node.js LTS with npm could not be installed.'
     }
