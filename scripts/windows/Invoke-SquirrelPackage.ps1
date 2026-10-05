@@ -79,7 +79,7 @@ $script:TempPrefix = 'BambuStudio-Squirrel-'
 
 function Write-SquirrelLog {
     param([Parameter(Mandatory)][string] $Message)
-    Write-Host ('[{0}] {1}' -f (Get-Date).ToString('u'), $Message)
+    Write-Host ('[{0}] {1}' -f [DateTime]::UtcNow.ToString('u'), $Message)
 }
 
 function Get-Sha256Lower {
