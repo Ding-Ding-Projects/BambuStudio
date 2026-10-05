@@ -36,6 +36,7 @@ struct ProjectHistoryError
 struct ProjectHistoryVersion
 {
     std::string                           commit_id;
+    std::vector<std::string>              parent_ids;
     std::string                           message;
     std::string                           author_name;
     std::string                           author_email;

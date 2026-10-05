@@ -56,6 +56,7 @@
 #include "DeviceCore/DevPrintOptions.h"
 #include "DeviceCore/DevPrintTaskInfo.h"
 #include "DeviceCore/DevHMS.h"
+#include "PrinterHistory.hpp"
 #include "DeviceCore/DevUpgrade.h"
 
 #include "DeviceCore/DevMapping.h"
@@ -2387,6 +2388,7 @@ bool MachineObject::is_connected()
     std::chrono::system_clock::time_point curr_time = std::chrono::system_clock::now();
     auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(curr_time - last_update_time);
     if (diff.count() > DISCONNECT_TIMEOUT) {
+        GUI::PrinterHistory::instance().mark_unknown(get_dev_id());
         BOOST_LOG_TRIVIAL(trace) << "machine_object: dev_id=" << BBLCrossTalk::Crosstalk_DevId(get_dev_id()) <<", diff count = " << diff.count();
         return false;
     }
@@ -2394,7 +2396,9 @@ bool MachineObject::is_connected()
     if (!is_lan_mode_printer()) {
         NetworkAgent* m_agent = Slic3r::GUI::wxGetApp().getAgent();
         if (m_agent) {
-            return m_agent->is_server_connected();
+            const bool connected = m_agent->is_server_connected();
+            if (!connected) GUI::PrinterHistory::instance().mark_unknown(get_dev_id());
+            return connected;
         }
     }
     return true;
@@ -2408,7 +2412,10 @@ bool MachineObject::is_connecting()
 void MachineObject::set_online_state(bool on_off)
 {
     m_is_online = on_off;
-    if (!on_off) m_active_state = NotActive;
+    if (!on_off) {
+        m_active_state = NotActive;
+        GUI::PrinterHistory::instance().mark_unknown(get_dev_id());
+    }
 }
 
 bool MachineObject::is_info_ready(bool check_version) const
@@ -3085,6 +3092,23 @@ int MachineObject::parse_json(std::string tunnel, std::string payload, bool key_
                         if (jj["print_error"].is_number())
                             print_error = jj["print_error"].get<int>();
                     }
+                    if (!key_field_only && j_pre.contains("print") && j_pre["print"].contains("print_error") &&
+                        j_pre["print"]["print_error"].is_number_integer()) {
+                        const auto value = j_pre["print"]["print_error"].get<std::int64_t>();
+                        if (value >= 0 && value <= UINT32_MAX) {
+                            std::vector<GUI::PrinterIncidentObservation> observations;
+                            if (value != 0) {
+                                char code[16];
+                                std::snprintf(code, sizeof(code), "%08X", static_cast<unsigned>(value));
+                                GUI::PrinterIncidentObservation observation;
+                                observation.code = code; observation.severity = 2;
+                                observation.description = std::string("Print error ") + code;
+                                observation.category = "print_error";
+                                observations.push_back(std::move(observation));
+                            }
+                            GUI::PrinterHistory::instance().observe(get_dev_id(), observations, true, 0, "print_error");
+                        }
+                    }
 
                      DevStorage::ParseV1_0(jj, m_storage);
 
@@ -3475,7 +3499,11 @@ int MachineObject::parse_json(std::string tunnel, std::string payload, bool key_
 
 #pragma region hms
                     if (!key_field_only && jj.contains("hms")) {
-                        m_hms_system->ParseHMSItems(jj["hms"]);
+                        const bool fresh_hms = j_pre.contains("print") && j_pre["print"].contains("hms");
+                        const auto &incoming_print = j_pre["print"];
+                        const bool complete_hms = fresh_hms && (!incoming_print.contains("msg") ||
+                            (incoming_print["msg"].is_number_integer() && incoming_print["msg"].get<int>() == 0));
+                        m_hms_system->ParseHMSItems(fresh_hms ? incoming_print["hms"] : jj["hms"], fresh_hms, complete_hms);
                     }
 #pragma endregion
 

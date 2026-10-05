@@ -1,5 +1,7 @@
 //#include "D:/dev/bamboo_slicer/build_release/src/slic3r/CMakeFiles/libslic3r_gui.dir/Release/cmake_pch.hxx"
 #include "DevHMS.h"
+#include "../DeviceManager.hpp"
+#include "../PrinterHistory.hpp"
 
 namespace Slic3r
 {
@@ -39,30 +41,44 @@ std::string DevHMSItem::get_long_error_code() const
     return std::string(buf);
 }
 
-void DevHMS::ParseHMSItems(const json& hms_json)
+void DevHMS::ParseHMSItems(const json& hms_json, bool fresh_report, bool complete_report)
 {
-    m_hms_list.clear();
-
+    // Validate a complete candidate before replacing the display state or
+    // resolving history. A malformed packet must never imply recovery.
+    std::vector<DevHMSItem> items;
+    std::vector<GUI::PrinterIncidentObservation> observations;
     try
     {
-        if (hms_json.is_array())
+        if (!hms_json.is_array() || hms_json.size() > GUI::PrinterHistory::DEFAULT_MAX_ENTRIES)
+            return;
+        for (const auto &value : hms_json)
         {
-            for (auto it = hms_json.begin(); it != hms_json.end(); it++)
-            {
-                DevHMSItem item;
-                if ((*it).contains("attr") && (*it).contains("code"))
-                {
-                    unsigned attr = (*it)["attr"].get<unsigned>();
-                    unsigned code = (*it)["code"].get<unsigned>();
-                    item.parse_hms_info(attr, code);
-                }
-                m_hms_list.push_back(item);
-            }
+            if (!value.is_object() || !value.contains("attr") || !value.contains("code") ||
+                !value["attr"].is_number_integer() || !value["code"].is_number_integer() ||
+                (value["attr"].is_number_integer() && !value["attr"].is_number_unsigned() && value["attr"].get<std::int64_t>() < 0) ||
+                (value["code"].is_number_integer() && !value["code"].is_number_unsigned() && value["code"].get<std::int64_t>() < 0) ||
+                value["attr"].get<std::uint64_t>() > UINT32_MAX || value["code"].get<std::uint64_t>() > UINT32_MAX)
+                return;
+            DevHMSItem item;
+            item.parse_hms_info(value["attr"].get<unsigned>(), value["code"].get<unsigned>());
+            GUI::PrinterIncidentObservation observation;
+            observation.code = item.get_long_error_code();
+            observation.severity = static_cast<int>(item.get_level());
+            // Only persist text explicitly included in this telemetry. No
+            // dictionary request or device connection is initiated by history.
+            if (value.contains("description") && value["description"].is_string())
+                observation.description = value["description"].get<std::string>().substr(0, 4096);
+            if (observation.description.empty()) observation.description = "HMS " + observation.code;
+            observations.push_back(std::move(observation));
+            items.push_back(item);
         }
+        m_hms_list = std::move(items);
+        if (fresh_report && m_object)
+            GUI::PrinterHistory::instance().observe(m_object->get_dev_id(), observations, complete_report);
     }
     catch (const std::exception&)
     {
-        assert(false && "Parse HMS items failed");
+        // Keep the previous valid state; malformed telemetry is not a clear.
     }
 }
 }
