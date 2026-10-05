@@ -21,7 +21,22 @@ MD3ScrolledWindow::~MD3ScrolledWindow()
 
 bool MD3ScrolledWindow::Create(wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSize &size, long style, const wxString &name)
 {
-    return wxScrolledWindow::Create(parent, id, pos, size, style, name);
+    if (!wxScrolledWindow::Create(parent, id, pos, size, style, name))
+        return false;
+    Bind(wxEVT_MOUSEWHEEL, [this](wxMouseEvent &event) {
+        if (!m_reveal_owner) {
+            event.Skip();
+            return;
+        }
+        // The zero-rate embedded page cannot scroll. Route the original wheel
+        // delta, axis and modifiers to the sidebar's scroll helper instead.
+        wxMouseEvent forwarded(event);
+        forwarded.Skip(false);
+        forwarded.SetEventObject(m_reveal_owner);
+        forwarded.SetPosition(m_reveal_owner->ScreenToClient(ClientToScreen(event.GetPosition())));
+        m_reveal_owner->GetEventHandler()->ProcessEvent(forwarded);
+    });
+    return true;
 }
 
 void MD3ScrolledWindow::SetRevealOwner(MD3ScrolledWindow *owner)
