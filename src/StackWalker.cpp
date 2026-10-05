@@ -5,7 +5,7 @@
 #pragma comment(lib, "version.lib")
 #pragma comment( lib, "dbghelp.lib" )
 
-CStackWalker::CStackWalker(HANDLE hProcess, WORD wPID, LPCTSTR lpSymbolPath):
+CStackWalker::CStackWalker(HANDLE hProcess, DWORD wPID, LPCTSTR lpSymbolPath):
 	m_hProcess(hProcess),
 	m_wPID(wPID),
 	m_bSymbolLoaded(FALSE),
@@ -17,7 +17,7 @@ CStackWalker::CStackWalker(HANDLE hProcess, WORD wPID, LPCTSTR lpSymbolPath):
 		StringCchLength(lpSymbolPath, MAX_SYMBOL_PATH, &dwLength);
 		m_lpszSymbolPath = new TCHAR[dwLength + 1];
 		ZeroMemory(m_lpszSymbolPath, sizeof(TCHAR) * (dwLength + 1));
-		StringCchCopy(m_lpszSymbolPath, dwLength, lpSymbolPath);
+		StringCchCopy(m_lpszSymbolPath, dwLength + 1, lpSymbolPath);
 	}
 
 }
@@ -44,10 +44,11 @@ BOOL CStackWalker::LoadSymbol()
 		return m_bSymbolLoaded;
 	}
 
+	// Configure line loading before initialization, including custom search paths.
+	SymSetOptions(SymGetOptions() | SYMOPT_LOAD_LINES | SYMOPT_FAIL_CRITICAL_ERRORS);
 	if (NULL != m_lpszSymbolPath)
 	{
-		
-		m_bSymbolLoaded = SymInitialize(m_hProcess, textconv_helper::T2A_(m_lpszSymbolPath), FALSE);
+		m_bSymbolLoaded = SymInitialize(m_hProcess, textconv_helper::T2A_(m_lpszSymbolPath), TRUE);
 		return m_bSymbolLoaded;
 	}
 	
@@ -126,7 +127,7 @@ BOOL CStackWalker::LoadSymbol()
 	{
 		m_lpszSymbolPath = new TCHAR[sLength + 1];
 		ZeroMemory(m_lpszSymbolPath, sizeof(TCHAR) * (sLength + 1));
-		StringCchCopy(m_lpszSymbolPath, sLength, szSymbolPath);
+		StringCchCopy(m_lpszSymbolPath, sLength + 1, szSymbolPath);
 	}
 
 	if (NULL != m_lpszSymbolPath)
@@ -398,6 +399,7 @@ LPSTACKINFO CStackWalker::StackWalker(HANDLE hThread, const CONTEXT* context)
 	LPSTACKINFO pTail = pHead;
 
 	//获取当前线程的上下文环境
+	bool suspendedThread = false;
 	CONTEXT c = {0};
 	if (context == NULL)
 	{
@@ -412,7 +414,9 @@ LPSTACKINFO CStackWalker::StackWalker(HANDLE hThread, const CONTEXT* context)
 		else
 		{
 			//如果不是当前线程，需要停止目标线程，以便取出正确的堆栈信息
-			SuspendThread(hThread);
+			if (SuspendThread(hThread) == static_cast<DWORD>(-1))
+                return NULL;
+            suspendedThread = true;
 			memset(&c, 0, sizeof(CONTEXT));
 			c.ContextFlags = CONTEXT_FULL;
 			if (GetThreadContext(hThread, &c) == FALSE)
@@ -491,22 +495,32 @@ LPSTACKINFO CStackWalker::StackWalker(HANDLE hThread, const CONTEXT* context)
 			}else
 			{
 				//调用错误一般是487(地址无效或者没有访问的权限、在符号表中未找到指定地址的相关信息)
-				this->OutputString(_T("Call SymGetSymFromAddr64 ,Address %08x Error:%08x\r\n"), sf.AddrPC.Offset, GetLastError());
-				continue;
+				this->OutputString(_T("Call SymGetSymFromAddr64 ,Address %016llx Error:%08x\r\n"), sf.AddrPC.Offset, GetLastError());
 			}
 
-			if (SymGetLineFromAddr64(m_hProcess, sf.AddrPC.Offset, (DWORD*)&dwDisplayment, pLine))
+			DWORD lineDisplacement = 0;
+			if (SymGetLineFromAddr64(m_hProcess, sf.AddrPC.Offset, &lineDisplacement, pLine))
 			{
 				StringCchCopy(pCallStack->szFileName, MAX_PATH, textconv_helper::A2T_(pLine->FileName));
 				pCallStack->uFileNum = pLine->LineNumber;
 			}else
 			{
-				this->OutputString(_T("Call SymGetLineFromAddr64 ,Address %08x Error:%08x\r\n"), sf.AddrPC.Offset, GetLastError());
-				continue;
+				this->OutputString(_T("Call SymGetLineFromAddr64 ,Address %016llx Error:%08x\r\n"), sf.AddrPC.Offset, GetLastError());
 			}
 			
 			//这里为了将获取函数信息失败的情况与正常的情况一起输出，防止用户在查看时出现误解
-			this->OutputString(_T("%08llx:%s [%s][%ld]\r\n"), pCallStack->szFncAddr, pCallStack->undFullName, pCallStack->szFileName, pCallStack->uFileNum);
+			const TCHAR* functionName = pCallStack->undFullName[0] ? pCallStack->undFullName :
+                (pCallStack->szFncName[0] ? pCallStack->szFncName : _T("<unresolved>"));
+            IMAGEHLP_MODULE64 module = {};
+            module.SizeOfStruct = sizeof(module);
+            if (SymGetModuleInfo64(m_hProcess, sf.AddrPC.Offset, &module) &&
+                sf.AddrPC.Offset >= module.BaseOfImage)
+                this->OutputString(_T("%016llx:%s [%s][%ld] module=%s+0x%llx\r\n"),
+                    pCallStack->szFncAddr, functionName, pCallStack->szFileName, pCallStack->uFileNum,
+                    static_cast<LPCTSTR>(textconv_helper::A2T_(module.ModuleName)), sf.AddrPC.Offset - module.BaseOfImage);
+            else
+                this->OutputString(_T("%016llx:%s [%s][%ld] module=<unresolved>\r\n"),
+                    pCallStack->szFncAddr, functionName, pCallStack->szFileName, pCallStack->uFileNum);
 			if (NULL == pHead)
 			{
 				pHead = pCallStack;
@@ -516,11 +530,14 @@ LPSTACKINFO CStackWalker::StackWalker(HANDLE hThread, const CONTEXT* context)
 				pTail->pNext = pCallStack;
 				pTail = pCallStack;
 			}
-		}
+		}else
+            delete pCallStack;
 	}
 
-	delete[] pSym;
+	delete[] reinterpret_cast<BYTE*>(pSym);
 	delete pLine;
+    if (suspendedThread)
+        ResumeThread(hThread);
 
 	return pHead;
 }
