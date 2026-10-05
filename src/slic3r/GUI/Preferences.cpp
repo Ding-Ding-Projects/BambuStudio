@@ -10,6 +10,8 @@
 #include "Plater.hpp"
 #include "MsgDialog.hpp"
 #include "I18N.hpp"
+#include "Schedule/ScheduledSettings.hpp"
+#include "Schedule/ScheduledSettingsPanel.hpp"
 #include "BilingualRegistry.hpp"
 #include "UxProgramTermsDialog.hpp"
 #include "Widgets/StateColor.hpp"
@@ -1647,6 +1649,7 @@ void PreferencesDialog::create()
     // Sections are stable ids so the persisted strip layout (order / pins /
     // groups / hidden / dock edge) survives relabelling and reordering in code.
     add_tab("appearance", _L("Appearance"), create_appearance_tab());
+    add_tab("schedules", _L("Schedules"), create_schedules_tab());
     add_tab("general", _CTX(L_CONTEXT("General", "Preference"), "Preference"), create_general_tab());
     add_tab("user", _CTX(L_CONTEXT("User", "Preference"), "Preference"), create_user_tab());
     add_tab("3d", _CTX(L_CONTEXT("3D", "Preference"), "Preference"), create_3d_tab());
@@ -2966,6 +2969,14 @@ wxWindow *PreferencesDialog::create_general_tab()
     scrolled->SetSizer(sizer);
     scrolled->FitInside();
     return scrolled;
+}
+
+wxWindow *PreferencesDialog::create_schedules_tab()
+{
+    auto *panel = new Schedule::ScheduledSettingsPanel(m_book);
+    for (wxSizer *row : panel->search_rows())
+        register_option_row(Schedule::kDocumentConfigKey, row);
+    return panel;
 }
 
 wxWindow *PreferencesDialog::create_user_tab()
