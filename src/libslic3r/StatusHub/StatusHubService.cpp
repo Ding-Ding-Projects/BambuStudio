@@ -72,7 +72,9 @@ void StatusHubService::start(std::string repository_path)
 void StatusHubService::checkpoint()
 {
     std::lock_guard<std::mutex> lock(m_mutex);
-    if (!m_worker.joinable() || m_stop) return;
+    // stop() joins outside this mutex. Test its protected flag first so a
+    // concurrent checkpoint never reads the thread object during join().
+    if (m_stop || !m_worker.joinable()) return;
     m_requested = true; // One pending slot, not an unbounded queue.
     m_condition.notify_one();
 }
