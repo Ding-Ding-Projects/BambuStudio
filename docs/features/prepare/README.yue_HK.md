@@ -1,6 +1,6 @@
 ---
 translation-of: README.md
-source-sha256: 04ef4b970bdf4b21e7bf158be879af88d2d17b613b5605121bfd46c5db389afd
+source-sha256: 47e4ddf761b2eae5210c2163139caf7d6dfe5c2d53e16ec5327181a82a9c9a78
 review-status: agent-drafted
 ---
 
@@ -17,3 +17,5 @@ review-status: agent-drafted
 - [展示嘅每份流程設定，冇簡單 / 進階過濾](process-settings-full-tree.md) 描述當前完整樹、佢嘅橫向滾動背板同埋設定搜尋。
 
 冇 Postman 收集適用：呢個類別冇公開 HTTP API。
+
+- [準備設定捲動](scroll-ownership.yue_HK.md) 記錄捲動擁有權、滾輪與鍵盤路由、標題尺寸同待完成嘅執行驗證。
