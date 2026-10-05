@@ -36,6 +36,8 @@ int main(){try{
     source.url="https://example.com/settings";check(!allowed_address("127.0.0.1",source)&&!allowed_address("169.254.169.254",source)&&!allowed_address("10.0.0.1",source),"SSRF addresses");
     check(!allowed_address("::ffff:127.0.0.1",source)&&!allowed_address("fc00::1",source),"IPv6 SSRF");
     check(allowed_address("93.184.216.34",source),"public address");
+    check(!allowed_address("2002:7f00:1::",source)&&!allowed_address("2001::1",source),"IPv6 transition routes rejected");
+    check(!allowed_address("192.0.0.1",source)&&!allowed_address("198.51.100.1",source),"special purpose destinations rejected");
     source.kind=SourceKind::HomeAssistant;source.allow_private_network=true;check(allowed_address("192.168.1.2",source)&&!allowed_address("169.254.169.254",source),"explicit HA private consent");
     bool on=false;check(parse_home_state("{\"entity_id\":\"input_boolean.night\",\"state\":\"on\"}","input_boolean.night",on,err)&&on,"HA on");
     check(parse_home_state("{\"entity_id\":\"input_boolean.night\",\"state\":\"off\"}","input_boolean.night",on,err)&&!on,"HA off");

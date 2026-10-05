@@ -28,7 +28,7 @@ wxDateTime date(const SS::Date& d){return wxDateTime(wxDateTime::wxDateTime_t(d.
 std::string new_id(){static std::atomic_uint serial{0};return "rule-"+std::to_string(std::chrono::system_clock::now().time_since_epoch().count())+"-"+std::to_string(++serial);}
 }
 wxString Panel::tr(const char* en,const char* zh)const{auto text=m_translate?m_translate(en,zh):wxString::FromUTF8(en);m_copy[text]={en,zh};return text;}
-Panel::Panel(wxWindow* parent,SS::Service& service,Translate translate,Visible visible):wxPanel(parent),m_service(service),m_translate(std::move(translate)),m_visible(std::move(visible)),m_draft(service.schedule()){
+Panel::Panel(wxWindow* parent,SS::Service& service,Translate translate,Visible visible):wxPanel(parent),m_service(service),m_translate(std::move(translate)),m_visible(std::move(visible)),m_draft(service.schedule()),m_live_timer(this){
     SetName(tr("Scheduled settings","排程設定"));
     auto* root=new wxBoxSizer(wxVERTICAL);SetSizer(root);
     auto* scroll=new wxScrolledWindow(this,wxID_ANY);scroll->SetScrollRate(0,FromDIP(12));root->Add(scroll,1,wxEXPAND);
@@ -73,6 +73,26 @@ Panel::Panel(wxWindow* parent,SS::Service& service,Translate translate,Visible v
     button(p,ps,"Store credential","儲存憑證",[this]{auto secret=m_secret->GetValue().ToStdWstring();const bool ok=!m_selected.empty()&&SS::store_home_credential(m_selected,secret);std::fill(secret.begin(),secret.end(),wchar_t(0));m_secret->ChangeValue(wxEmptyString);show_status(ok?tr("Credential stored locally.","憑證已儲存喺本機。"):tr("Credential could not be stored.","未能儲存憑證。"));});
     button(p,ps,"Clear credential","清除憑證",[this]{const bool ok=!m_selected.empty()&&SS::remove_home_credential(m_selected);m_secret->ChangeValue(wxEmptyString);m_service.refresh();show_status(ok?tr("Credential cleared.","憑證已清除。"):tr("Credential could not be cleared.","未能清除憑證。"));});
     p=pages[3];ps=p->GetSizer();caption(p,ps,"Times use the selected timezone. Missing daylight-saving minutes never run; repeated minutes match both occurrences. Changing the system timezone is picked up at the next evaluation.","時間按所選時區計算。夏令時間跳過嘅分鐘唔會執行；重複嘅分鐘兩次都適用。系統時區變更會喺下次評估生效。");m_zone_search=new SearchField(p,tr("Search timezones","搜尋時區"));ps->Add(m_zone_search,0,wxEXPAND|wxALL,FromDIP(6));m_zones=new wxListBox(p,wxID_ANY,wxDefaultPosition,FromDIP(wxSize(300,180)));field(p,ps,m_zones,"Configured local timezone","設定嘅本地時區");m_zone_values=SS::timezones();zones_filter();m_zones->Bind(wxEVT_LISTBOX,[this](wxCommandEvent&){int n=m_zones->GetSelection();if(n!=wxNOT_FOUND&&size_t(n)<m_zone_indices.size())m_draft.timezone=m_zone_values[m_zone_indices[size_t(n)]].id;});
+    m_live=new wxStaticText(scroll,wxID_ANY);m_live->SetName(tr("Effective schedule source state","目前排程來源狀態"));content->Add(m_live,0,wxEXPAND|wxALL,FromDIP(6));
+    Bind(wxEVT_TIMER,[this](wxTimerEvent&){
+        const auto it=m_service.effective().sources.find(m_selected);const auto state=it==m_service.effective().sources.end()?SS::State::Inactive:it->second;
+        wxString status;
+        switch(state){
+        case SS::State::Local:status=tr("Local rule active","本機規則生效中");break;
+        case SS::State::Waiting:status=tr("Waiting for external source; local preferences remain active","等緊外部來源，本機偏好繼續生效");break;
+        case SS::State::Active:status=tr("External source validated and active","外部來源已驗證並生效");break;
+        case SS::State::Inactive:status=tr("Rule is inactive; other rules or base preferences apply","規則未生效，會用其他規則或原有偏好");break;
+        case SS::State::Offline:status=tr("Source is offline. Retry external sources when connected.","來源離線，連線後可重試外部來源。");break;
+        case SS::State::Invalid:status=tr("Source returned invalid settings. Correct the source and retry.","來源傳回無效設定，請修正來源再試。");break;
+        case SS::State::Unauthorized:status=tr("Source needs consent or a valid credential.","來源需要同意或有效憑證。");break;
+        case SS::State::RateLimited:status=tr("Source is rate limited. The bounded retry interval still applies.","來源限制請求次數，會按設定間隔重試。");break;
+        case SS::State::Stale:status=tr("Source response expired; local preferences restored.","來源回覆已過期，已恢復本機偏好。");break;
+        default:status=tr("External transport is unavailable in this build.","呢個版本未能使用外部連線。");break;
+        }
+        const auto zone=m_service.schedule().timezone;status+=tr("\nActive timezone: ","\n目前時區：")+(zone=="system"?tr("System local time","系統本地時間"):wxs(zone));
+        if(m_live->GetLabel()!=status){m_live->SetLabel(status);m_live->Wrap(FromDIP(540));Layout();}
+    },m_live_timer.GetId());m_live_timer.Start(1000);
+    m_url->Bind(wxEVT_TEXT,[this](wxCommandEvent& event){m_consent->SetValue(false);event.Skip();});m_entity->Bind(wxEVT_TEXT,[this](wxCommandEvent& event){m_consent->SetValue(false);event.Skip();});m_source->Bind(wxEVT_RADIOBOX,[this](wxCommandEvent& event){m_consent->SetValue(false);event.Skip();});
     m_status=new wxStaticText(scroll,wxID_ANY);m_status->SetName(tr("Schedule status","排程狀態"));content->Add(m_status,0,wxEXPAND|wxALL,FromDIP(6));auto* bottom=new wxWrapSizer(wxHORIZONTAL);content->Add(bottom,0,wxEXPAND);button(scroll,bottom,"Save schedules","儲存排程",[this]{save();});button(scroll,bottom,"Reload saved schedules","重新載入已儲存排程",[this]{m_draft=m_service.schedule();m_selected.clear();rebuild_rules();load_editor();zones_filter();});button(scroll,bottom,"Retry external sources","重試外部來源",[this]{m_service.refresh();show_status(tr("Refresh queued for the next evaluation.","已排隊，下次評估會更新。"));});
     m_rules->Bind(wxEVT_LISTBOX,[this](wxCommandEvent&){select_rule();});m_settings->Bind(wxEVT_LISTBOX,[this](wxCommandEvent&){setting_editor();});
     m_search->SetOnQuery([this](const wxString&){rebuild_rules();});m_search->SetOnRegexToggle([this](bool){rebuild_rules();});m_setting_search->SetOnQuery([this](const wxString&){settings_filter();});m_setting_search->SetOnRegexToggle([this](bool){settings_filter();});m_zone_search->SetOnQuery([this](const wxString&){zones_filter();});m_zone_search->SetOnRegexToggle([this](bool){zones_filter();});

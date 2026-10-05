@@ -167,13 +167,14 @@ bool allowed_address(const std::string& ip,const Source& s) {
     unsigned a,b,c,d;char tail;
     if(std::sscanf(ip.c_str(),"%u.%u.%u.%u%c",&a,&b,&c,&d,&tail)==4&&a<256&&b<256&&c<256&&d<256) {
         if(a==127)return s.loopback_development;
-        if(a==0||a>=224||(a==169&&b==254)||(a==100&&b>=64&&b<=127)||(a==198&&(b==18||b==19)))return false;
+        if(a==0||a>=224||(a==169&&b==254)||(a==100&&b>=64&&b<=127)||(a==198&&(b==18||b==19))||(a==192&&b==0)||(a==192&&b==88&&c==99)||(a==198&&b==51&&c==100)||(a==203&&b==0&&c==113))return false;
         const bool private_ip=a==10||(a==172&&b>=16&&b<=31)||(a==192&&b==168);
         return !private_ip||(s.kind==SourceKind::HomeAssistant&&s.allow_private_network);
     }
     // Conservative IPv6 acceptance: global unicast only, no embedded IPv4 or local addresses.
     std::string lower=ip;std::transform(lower.begin(),lower.end(),lower.begin(),[](unsigned char c){return char(std::tolower(c));});
     if(lower=="::1")return s.loopback_development;
+    if(lower.rfind("2002:",0)==0||lower.rfind("2001::",0)==0||lower.rfind("2001:0:",0)==0||lower.rfind("2001:db8:",0)==0)return false;
     return !lower.empty()&&(lower[0]=='2'||lower[0]=='3')&&lower.find(':')!=std::string::npos&&lower.find('.')==std::string::npos;
 }
 bool validate(const Schedule& s,const Registry& registry,std::string& error) {

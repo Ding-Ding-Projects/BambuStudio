@@ -49,6 +49,8 @@ private:
     wxTimePickerCtrl *m_start=nullptr,*m_end=nullptr;
     wxRadioBox *m_source=nullptr;
     wxStaticText* m_status=nullptr;
+    wxStaticText* m_live=nullptr;
+    wxTimer m_live_timer;
     wxPanel* m_value_host=nullptr;
     wxWindow* m_value=nullptr;
     std::vector<ScheduledSettings::Zone> m_zone_values;
