@@ -64,6 +64,28 @@ Json parse_json(const Bytes &data)
     };
     return Json::parse(data.begin(), data.end(), cb);
 }
+std::string format_json(const Bytes &source)
+{
+    // The parser validates structure, duplicate keys and bounds; formatting
+    // preserves every literal byte, including arbitrary-precision numbers and
+    // escape spelling, instead of reserializing through binary floating point.
+    std::string out;std::size_t depth=0;bool quoted=false,escaped=false;unsigned char previous=0;
+    const auto whitespace=[](unsigned char c){return c==' '||c=='\t'||c=='\r'||c=='\n';};
+    auto line=[&]{out+='\n';out.append(depth*2,' ');};
+    for(std::size_t i=0;i<source.size();++i){
+        const auto c=source[i];
+        if(quoted){out+=static_cast<char>(c);if(escaped)escaped=false;else if(c=='\\')escaped=true;else if(c=='"')quoted=false;continue;}
+        if(whitespace(c))continue;
+        if(c=='"'){quoted=true;out+='"';}
+        else if(c=='{'||c=='['){out+=static_cast<char>(c);++depth;std::size_t next=i+1;while(next<source.size()&&whitespace(source[next]))++next;if(next<source.size()&&source[next]!='}'&&source[next]!=']')line();}
+        else if(c=='}'||c==']'){--depth;if(previous!='{'&&previous!='[')line();out+=static_cast<char>(c);}
+        else if(c==','){out+=',';line();}
+        else if(c==':')out+=": ";
+        else out+=static_cast<char>(c);
+        previous=c;
+    }
+    out+='\n';return out;
+}
 unsigned unhex(unsigned char c)
 {
     if (c >= '0' && c <= '9') return c - '0';
@@ -304,16 +326,16 @@ std::vector<Adapter> catalog(const PackageProof &p)
     add("base64.decode", Category::Binary, "Base64 to binary", "bin", {Kind::Utf8,Kind::Json}, "Requires canonical RFC 4648 padding and no whitespace.", "Re-encode and compare");
     add("text.lf", Category::Text, "UTF-8 with LF line endings", "txt", {Kind::Utf8,Kind::Json}, "Changes CRLF and CR line endings to LF. Preserves UTF-8 bytes and BOM otherwise.", "UTF-8 validation and absence of CR");
     add("text.crlf", Category::Text, "UTF-8 with CRLF line endings", "txt", {Kind::Utf8,Kind::Json}, "Normalizes all line endings to CRLF. Preserves UTF-8 bytes and BOM otherwise.", "UTF-8 validation and canonical line endings");
-    add("json.pretty", Category::Structured, "JSON formatting", "json", {Kind::Json,Kind::Utf8}, "UTF-8, two-space indentation, LF. Rejects duplicate object keys; floating-point representation may change.", "Reparse and compare ordered values");
+    add("json.pretty", Category::Structured, "JSON formatting", "json", {Kind::Json,Kind::Utf8}, "UTF-8, two-space indentation, LF. Duplicate keys are rejected. Number literals, string escapes and object order are preserved exactly.", "Reparse and compare ordered values; preserve original literal bytes");
     for (auto sep : {std::string("csv"),std::string("tsv")}) {
-        add(sep + ".json", Category::Structured, sep == "csv" ? "CSV to JSON rows" : "TSV to JSON rows", "json", {Kind::Utf8}, "Every cell remains a string in an array of arrays. Quoted separators and line breaks are preserved. Ragged rows are rejected.", "Parse and compare every cell");
+        add(sep + ".json", Category::Structured, sep == "csv" ? "CSV to JSON rows" : "TSV to JSON rows", "json", {Kind::Utf8,Kind::Json}, "Every cell remains a string in an array of arrays. Quoted separators and line breaks are preserved. Ragged rows are rejected.", "Parse and compare every cell");
         add("json." + sep, Category::Structured, sep == "csv" ? "JSON rows to CSV" : "JSON rows to TSV", sep, {Kind::Json}, "Only rectangular arrays of string arrays are supported. Every field is quoted; UTF-8 with CRLF records.", "Reparse and compare every cell");
     }
     add("bmp.ppm", Category::Images, "24-bit BMP to PPM", "ppm", {Kind::Bmp}, "Only uncompressed bottom-up 24-bit BMP with a 40-byte header. Resolution metadata is omitted; RGB pixels are preserved.", "Reopen and compare dimensions and every pixel");
     add("ppm.bmp", Category::Images, "PPM to 24-bit BMP", "bmp", {Kind::Ppm}, "Only P6 8-bit RGB PPM without comments. RGB pixels are preserved; output has no color profile or resolution metadata.", "Reopen and compare dimensions and every pixel");
     add("zip.encode",Category::Archives,"File to ZIP (one entry)","zip",any,"Preserves every source byte in payload.bin. Original filename and filesystem timestamps are omitted. No encryption.","Reopen ZIP, verify CRC and compare extracted bytes");
     add("zip.decode",Category::Archives,"ZIP single-entry extraction","bin",{Kind::Zip},"Only one unencrypted regular entry, stored or deflated, at most 64 MiB. Absolute and traversal names are rejected; entry name is not used as a path.","Bounded extraction with CRC verification");
-    for (auto &a : r) a.lossy = a.id == "text.lf" || a.id == "text.crlf" || a.id == "json.pretty" || a.category == Category::Images;
+    for (auto &a : r) a.lossy = a.id == "text.lf" || a.id == "text.crlf" || a.category == Category::Images || a.id=="zip.encode";
     auto missing = [&](std::string id, Category c, std::string name, std::string reason) { r.push_back({std::move(id),c,std::move(name),"",{},false,false,false,std::move(reason),"","Unavailable"}); };
     for (const char *operation : {"inspect","split","merge","extract","reorder","rotate","metadata"})
     {
@@ -367,7 +389,7 @@ Conversion transform(const std::string &adapter, const Bytes &source)
             }
             check(valid_utf8(out), "output_validation");
         } else if (adapter == "json.pretty") {
-            const auto j = parse_json(source); out = bytes(j.dump(2) + "\n"); check(parse_json(out) == j, "output_validation");
+            const auto j = parse_json(source); out = bytes(format_json(source)); check(parse_json(out) == j, "output_validation");
         } else if (adapter == "csv.json" || adapter == "tsv.json") {
             const auto rows = parse_table(source, adapter == "csv.json" ? ',' : '\t');
             const Json j = rows; out = bytes(j.dump(2) + "\n"); check(parse_json(out) == j, "output_validation");
@@ -484,6 +506,7 @@ Queue::Queue(fs::path root) : m_root(std::move(root))
             auto j = parse_json(read_file(m_root / "queue.json",65536));
             check(j.at("version") == 1, "unsupported_queue_version");
             m_count = j.at("count").get<std::uint64_t>(); m_cursor = j.at("cursor").get<std::uint64_t>();
+            m_cancellation_generation=j.value("cancellation_generation",std::uint64_t(0));
             check(m_cursor >= 1 && m_cursor <= m_count + 1, "invalid_queue_cursor");
         }
         // At most one job can be active. Restart is always paused and requires
@@ -508,14 +531,14 @@ Queue::~Queue()
     if (m_lock) ::close(static_cast<int>(reinterpret_cast<intptr_t>(m_lock) - 1));
 #endif
 }
-void Queue::save_meta() { replace_record(m_root / "queue.json", Json{{"version",1},{"count",m_count},{"cursor",m_cursor},{"paused",m_paused}}.dump()); }
+void Queue::save_meta() { replace_record(m_root / "queue.json", Json{{"version",1},{"count",m_count},{"cursor",m_cursor},{"paused",m_paused},{"cancellation_generation",m_cancellation_generation}}.dump()); }
 void Queue::write(const Job &j)
 {
     check(j.additional_sources.size()==j.additional_sizes.size()&&j.additional_sources.size()==j.additional_modified.size(),"queue_source_identity_missing");
     Json sources=Json::array(); for(std::size_t i=0;i<j.additional_sources.size();++i) sources.push_back(Json{{"path",j.additional_sources[i].u8string()},{"size",j.additional_sizes[i]},{"modified",j.additional_modified[i]}});
     const auto record=Json{{"version",1},{"id",j.id},{"source",j.source.u8string()},{"destination",j.destination.u8string()},
         {"adapter",j.adapter},{"state",static_cast<unsigned>(j.state)},{"code",j.code},{"input_size",j.input_size},{"input_modified",j.input_modified},
-        {"options",j.options},{"additional_sources",sources}}.dump();
+        {"options",j.options},{"additional_sources",sources},{"cancellation_generation",j.cancellation_generation}}.dump();
     check(record.size()<=65536,"queue_record_limit"); replace_record(record_path(m_root,j.id),record);
 }
 Job Queue::read(std::uint64_t id) const
@@ -526,6 +549,8 @@ Job Queue::read(std::uint64_t id) const
     Job result{id,fs::u8path(j.at("source").get<std::string>()),fs::u8path(j.at("destination").get<std::string>()),j.at("adapter").get<std::string>(),
         static_cast<State>(state),j.at("code").get<std::string>(),j.at("input_size").get<std::uint64_t>(),j.at("input_modified").get<std::int64_t>()};
     result.options=j.value("options",std::string());
+    result.cancellation_generation=j.value("cancellation_generation",std::uint64_t(0));
+    if(result.state==State::Pending&&result.cancellation_generation<m_cancellation_generation){result.state=State::Cancelled;result.code="cancelled";}
     if(j.contains("additional_sources")) for(const auto &p:j["additional_sources"]) {result.additional_sources.push_back(fs::u8path(p.at("path").get<std::string>()));result.additional_sizes.push_back(p.at("size").get<std::uint64_t>());result.additional_modified.push_back(p.at("modified").get<std::int64_t>());}
     check(result.options.size()<=16384 && result.additional_sources.size()<=1000,"queue_record_limit");
     return result;
@@ -543,9 +568,18 @@ std::uint64_t Queue::enqueue(const fs::path &source, const fs::path &destination
     check(options.size()<=16384 && additional_sources.size()<=1000,"queue_record_limit");
     if(!options.empty()) parse_json(bytes(options));
     j.options=options;
+    j.cancellation_generation=m_cancellation_generation;
     std::uint64_t total=j.input_size;
     for(const auto &p:additional_sources) { check(fs::is_regular_file(fs::symlink_status(p)),"source_not_regular");const auto size=fs::file_size(p);check(size<=Limits::input_bytes-total,"input_limit");total+=size;j.additional_sources.push_back(fs::absolute(p));j.additional_sizes.push_back(size);j.additional_modified.push_back(modified(p)); }
     write(j); ++m_count; save_meta(); return j.id;
+}
+std::uint64_t Queue::record_rejected(const fs::path &source,const fs::path &destination,const std::string &adapter,const std::string &code)
+{
+    std::lock_guard<std::mutex> lock(m_mutex);
+    check(adapter.size()<64&&code.size()<96&&!code.empty()&&code.find_first_not_of("abcdefghijklmnopqrstuvwxyz_0123456789")==std::string::npos,"invalid_rejection_code");
+    check(m_count<UINT64_MAX-1,"queue_identifier_exhausted");
+    Job j{m_count+1,source,destination,adapter,State::Skipped,code};j.cancellation_generation=m_cancellation_generation;
+    write(j);++m_count;save_meta();return j.id;
 }
 std::vector<Job> Queue::page(std::uint64_t after, std::size_t count) const
 {
@@ -561,10 +595,12 @@ bool Queue::step(const Executor &executor, const std::atomic<bool> &cancel)
     {
         std::lock_guard<std::mutex> lock(m_mutex);
         if (m_paused || m_active || cancel.load()) return false;
+        std::size_t scanned=0;
         while (m_cursor <= m_count) {
             job = read(m_cursor);
             if (job.state == State::Pending) break;
             ++m_cursor;
+            if(++scanned==Limits::page_size){save_meta();return true;}
         }
         if (m_cursor > m_count) { save_meta(); return false; }
         job.state = State::Running; job.code = "running"; write(job); save_meta(); m_active = true;
@@ -594,7 +630,7 @@ void Queue::cancel_pending()
 {
     std::lock_guard<std::mutex> lock(m_mutex);
     m_paused = true;
-    for (auto id = m_cursor; id <= m_count; ++id) { auto j = read(id); if (j.state == State::Pending) { j.state = State::Cancelled; j.code = "cancelled"; write(j); } }
+    check(m_cancellation_generation<UINT64_MAX,"queue_generation_exhausted");++m_cancellation_generation;
     save_meta();
 }
 void Queue::retry(std::uint64_t id)
@@ -604,6 +640,6 @@ void Queue::retry(std::uint64_t id)
     check(j.state == State::Failed || j.state == State::Cancelled || j.state == State::RecoveryRequired, "retry_state_invalid");
     check(!fs::exists(j.destination), "retry_destination_exists");
     check(fs::file_size(j.source) == j.input_size && modified(j.source) == j.input_modified, "source_changed_since_admission");
-    j.state = State::Pending; j.code = "pending"; write(j); m_cursor = std::min(m_cursor,id); save_meta();
+    j.state = State::Pending; j.code = "pending"; j.cancellation_generation=m_cancellation_generation;write(j); m_cursor = std::min(m_cursor,id); save_meta();
 }
 } // namespace Slic3r::LocalConverter

@@ -84,6 +84,7 @@ struct Job {
     std::vector<std::filesystem::path> additional_sources;
     std::vector<std::uint64_t> additional_sizes;
     std::vector<std::int64_t> additional_modified;
+    std::uint64_t cancellation_generation = 0;
 };
 // One bounded JSON record per item; no vector of all queue paths. Queue roots
 // belong in the application's private local data directory, never in a log.
@@ -96,6 +97,7 @@ public:
     Queue &operator=(const Queue &) = delete;
     std::uint64_t enqueue(const std::filesystem::path &, const std::filesystem::path &, const std::string &,
                           const std::string &options = "", const std::vector<std::filesystem::path> &additional_sources = {});
+    std::uint64_t record_rejected(const std::filesystem::path &, const std::filesystem::path &, const std::string &, const std::string &code);
     std::vector<Job> page(std::uint64_t after, std::size_t count = Limits::page_size) const;
     bool step(const Executor &, const std::atomic<bool> &cancel);
     void pause(bool);
@@ -107,6 +109,7 @@ private:
     std::filesystem::path m_root;
     mutable std::mutex m_mutex;
     std::uint64_t m_count = 0, m_cursor = 1;
+    std::uint64_t m_cancellation_generation = 0;
     bool m_paused = true;
     bool m_active = false;
     void *m_lock = nullptr;

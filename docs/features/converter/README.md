@@ -17,7 +17,9 @@ conversion to/from JSON, 24-bit uncompressed BMP/P6 PPM conversion, single-entry
 ZIP creation/extraction, and the [PDF operations](pdf.md).
 
 Input detection uses bytes, not extensions. JSON rejects duplicate keys,
-excessive nesting and invalid encoding. Tabular conversion retains every cell
+excessive nesting and invalid encoding. Formatting preserves the original
+number literal and string escape bytes, including precision beyond binary
+floating point. Tabular conversion retains every cell
 as a string; ragged rows and non-string JSON cells are rejected. Image
 conversion accepts only the explicitly described bitmap variants and compares
 every RGB pixel after reopening. ZIP extraction accepts one unencrypted stored
@@ -71,7 +73,11 @@ folder discovery admits one file at a time. One conversion runs at a time,
 providing backpressure without collecting the complete queue in memory.
 
 Pause waits for the current file, resume processes pending records and cancel
-preserves completed outputs. Restart always pauses. A record interrupted while
+preserves completed outputs. Cancellation advances one durable generation
+number, so cancelling a million pending records does not rewrite a million
+files on the UI thread. Result paging interprets the saved generation, and
+retry records its explicit new generation. Rejected admissions receive their
+own stable per-file result. Restart always pauses. A record interrupted while
 running becomes `Recovery required`; it is never silently treated as completed
 or automatically rewritten. Explicit retry requires the destination to be
 absent and the admitted source identity to remain valid. Additional PDF merge
@@ -110,11 +116,17 @@ selected retry and visible-row export. PDF page indices are one-based.
 
 The standalone test project is `tests/local_converter` and can be configured
 with `LOCAL_CONVERTER_QPDF_SDK` pointing to the verified SDK. It builds three
-behavioral test executables and the real worker. The initial verified counts
-are 182 core assertions, 31 typed PDF assertions and 63 framed PDF assertions.
+behavioral test executables and the real worker. The verified counts
+are 196 core assertions, 31 typed PDF assertions and 63 framed PDF assertions.
 The core count includes actual hash-verified AppContainer conversion. The PDF
 request test accepts optional worker path and worker digest arguments to run
 all seven operations through the real sandbox.
+
+Deliberate source mutations verified that enabling an unproven adapter fails
+the availability assertion and removing the page limit fails the bounded-page
+assertion. Both mutations were restored and the restored implementation was
+recompiled before the passing run. Concurrency, cancellation before publication
+and a racing destination writer have behavioral coverage.
 
 The service-host execution context used during initial verification could not
 initialize system `USER32.dll` inside AppContainer (`1114`). The official qpdf
