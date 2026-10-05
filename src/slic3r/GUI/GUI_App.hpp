@@ -96,6 +96,7 @@ class AutomationBridge;
 namespace PersonalModes { class SchoolRuntime; }
 namespace FeatureServices { class NarratorEnvironment; }
 namespace FeatureServices { class SchoolCredentials; }
+namespace FeatureServices { class ScheduledPreferences; }
 class ParamsPanel;
 class NotificationManager;
 struct GUI_InitParams;
@@ -344,6 +345,7 @@ private:
     std::unique_ptr<AutomationBridge> m_automation_bridge;
     std::unique_ptr<PersonalModes::SchoolRuntime> m_school_runtime;
     std::unique_ptr<FeatureServices::SchoolCredentials> m_school_credentials;
+    std::unique_ptr<FeatureServices::ScheduledPreferences> m_scheduled_preferences;
     std::unique_ptr<FeatureServices::NarratorEnvironment> m_narrator_environment;
     Slic3r::DeviceManager* m_device_manager { nullptr };
     Slic3r::UserManager* m_user_manager { nullptr };
@@ -404,6 +406,7 @@ private:
 public:
     PersonalModes::SchoolRuntime* school_runtime() const { return m_school_runtime.get(); }
     FeatureServices::SchoolCredentials& school_credentials();
+    FeatureServices::ScheduledPreferences* scheduled_preferences() const { return m_scheduled_preferences.get(); }
     //try again when subscription fails
     void            on_start_subscribe_again(std::string dev_id);
     std::string     get_local_models_path();

@@ -8,10 +8,12 @@
 #include "PersonalModes/SchoolMode.hpp"
 #include "PersonalModes/SchoolRuntime.hpp"
 #include "FeatureServices/PresentationRoutes.hpp"
+#include "Documentation/OfflineDocumentation.hpp"
 #include "I18N.hpp"
 #include "MainFrame.hpp"
 #include "Notebook.hpp"
 #include "Plater.hpp"
+#include "NotificationManager.hpp"
 #include "Widgets/Button.hpp"
 #include "Widgets/Label.hpp"
 #include "Widgets/MaterialIcon.hpp"
@@ -264,15 +266,22 @@ void CommandPalette::collect_entries()
     }
 
     // --- Documentation articles (docs/features) -----------------------------
-    // Cantonese mode opens each article's Cantonese translation; bilingual mode
-    // opens the English article, and the translation links back to it.
-    const bool cantonese_docs =
-        I18N::language_mode_profile().kind == I18N::LanguageModeKind::CantoneseHongKong;
+    // The immutable native bundle resolves routes and language companions.
     for (const PaletteIndex::Article &a : PaletteIndex::documentation_articles()) {
-        const wxString url = PaletteIndex::article_url(a, cantonese_docs);
+        std::string path = a.path;
+        constexpr const char* prefix = "docs/features/";
+        if (path.compare(0, std::char_traits<char>::length(prefix), prefix) != 0) continue;
+        path.erase(0, std::char_traits<char>::length(prefix));
+        if (PersonalModes::school_presentation_suppressed.load() &&
+            (path.find("dim-sum") != std::string::npos || path.find("personal-vocabulary") != std::string::npos ||
+             path.find("language") != std::string::npos || path.find("funny") != std::string::npos)) continue;
         m_entries.push_back({MaterialIcon::MenuBook, _L("Documentation") + " / " + _(a.title),
                              wxString::FromUTF8(a.path),
-                             [url]() { wxGetApp().open_browser_with_warning_dialog(url); }});
+                             [this, path]() {
+                                 if (!Documentation::ShowOfflineDocumentation(m_frame, wxString::FromUTF8(path)) && wxGetApp().plater())
+                                     wxGetApp().plater()->get_notification_manager()->push_notification(
+                                         into_u8(_L("This article is not present in the installed documentation bundle.")));
+                             }});
     }
 
     // --- Per-element appearance editor + its presets --------------------------

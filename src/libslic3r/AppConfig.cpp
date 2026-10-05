@@ -92,6 +92,7 @@ std::string AppConfig::get_hms_host()
 
 void AppConfig::reset()
 {
+    m_effective.clear();
     m_storage.clear();
     set_defaults();
 };

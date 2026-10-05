@@ -115,6 +115,7 @@
 #include "FeatureServices/NarratorEnvironment.hpp"
 #include "FeatureServices/SchoolCredentials.hpp"
 #include "FeatureServices/SurfaceRegistry.hpp"
+#include "FeatureServices/ScheduledPreferences.hpp"
 #include "HomeAssistant.hpp"
 #include "GLCanvas3D.hpp"
 #include "EncodedFilament.hpp"
@@ -3371,6 +3372,7 @@ bool GUI_App::OnInit()
             if (!app_config || !mainframe) return;
             CallAfter([this] {
                 if (is_closing() || !app_config || !mainframe) return;
+                app_config->suppress_presentation(PersonalModes::school_presentation_suppressed.load());
                 I18N::enable_bilingual_decorator(false);
                 I18N::configure_language_mode(app_config->get("language"), from_u8(localization_dir()));
                 const bool bilingual = !PersonalModes::school_presentation_suppressed.load() &&
@@ -3401,6 +3403,7 @@ bool GUI_App::OnInit()
         const bool initialized = on_init_inner();
         if (initialized) {
             if (mainframe) FeatureServices::SurfaceRegistry::instance().register_surface(mainframe, "main-frame");
+            m_scheduled_preferences = std::make_unique<FeatureServices::ScheduledPreferences>(*app_config);
             m_automation_bridge = std::make_unique<AutomationBridge>(*this);
             m_automation_bridge->start();
         }
@@ -3414,6 +3417,7 @@ bool GUI_App::OnInit()
 
 int GUI_App::OnExit()
 {
+    m_scheduled_preferences.reset();
     m_school_credentials.reset();
     m_school_runtime.reset();
     m_narrator_environment.reset();
@@ -3858,6 +3862,7 @@ bool GUI_App::on_init_inner()
     // !!! Initialization of UI settings as a language, application color mode, fonts... have to be done before first UI action.
     // Like here, before the show InfoDialog in check_older_app_config()
 
+    app_config->suppress_presentation(PersonalModes::school_presentation_suppressed.load());
     // If load_language() fails, the application closes.
     load_language(wxString(), true);
 #ifdef _MSW_DARK_MODE
@@ -7910,7 +7915,8 @@ bool GUI_App::load_language(wxString language, bool initial)
     if (!mode_catalog_ready)
         BOOST_LOG_TRIVIAL(warning) << "Cantonese preview catalog is unavailable; falling back safely to English: "
                                    << into_u8(I18N::language_mode_service().cantonese_catalog_path());
-    if (custom_language_mode)
+    if (custom_language_mode && !PersonalModes::school_presentation_suppressed.load() &&
+        !app_config->has_effective_preference("language"))
         app_config->set("language", requested_profile.canonical_id);
 
     m_imgui->set_language(I18N::language_mode_profile().font_language);

@@ -82,10 +82,26 @@ registry metadata alone does not establish end-to-end protection.
 
 ## Verification and remaining work
 
+Scheduled settings now composes with a strictly typed in-memory preference overlay.
+Only current rule winners enter the overlay. The actual stored map and explicit
+`get_base` accessor never contain temporary values, and replacing an invalid map
+retains the prior valid map. Unknown and sensitive keys are rejected. The shared
+presentation restriction takes precedence over scheduled language, tone and
+narration language. The native schedule host reevaluates base settings and local
+time every second and uses real language, appearance, font and narrator consumers.
+It confirms a snapshot through the existing local history manager before publishing
+the schedule document. Timed-out snapshots remain recoverable and are not reported
+as an applied schedule. Full crash-transaction acceptance remains pending.
+
+Help and command-palette article routes now open the bundled native documentation
+reader. The bundle must be regenerated after final documentation integration.
+
 The portable presentation-route executable passed 24 behavioral assertions with
 both MinGW and MSVC 19.51.36260. These compile only the portable route adapter.
 The shared credential adapter passed 10 native behavioral assertions using the
 real credential implementation and a synthetic in-memory vault.
+The typed preference overlay passed 32 portable behavioral assertions. The real
+AppConfig integration test is registered but awaits the full native dependencies.
 Native GUI compilation, localization catalogs, runtime interaction and capture are
 pending; source controls are not release acceptance evidence.
 

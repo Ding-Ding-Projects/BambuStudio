@@ -886,6 +886,12 @@ list(APPEND SLIC3R_GUI_SOURCES
     GUI/OllamaSuite/NativeLaunchAdapter.cpp
     GUI/LocalConverter/LocalConverterPanel.cpp
     GUI/FeatureServices/SurfaceRegistry.cpp
+    GUI/Documentation/OfflineDocumentation.cpp
+    GUI/FeatureServices/ScheduledPreferences.cpp
+    GUI/ScheduledSettings/Panel.cpp
+    ../libslic3r/ScheduledSettings/Schedule.cpp
+    ../libslic3r/ScheduledSettings/Service.cpp
+    ../libslic3r/ScheduledSettings/Native.cpp
     ../libslic3r/OllamaSuite/OllamaCore.cpp
     ../libslic3r/OllamaSuite/LaunchProfiles.cpp
     ../libslic3r/OllamaSuite/PullBatch.cpp

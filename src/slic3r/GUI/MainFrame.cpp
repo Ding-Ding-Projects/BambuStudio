@@ -98,6 +98,8 @@
 #include "FeatureServices/PackageReceipts.hpp"
 #include "FeatureServices/ServiceWorkspace.hpp"
 #include "FeatureServices/SurfaceRegistry.hpp"
+#include "FeatureServices/ScheduledPreferences.hpp"
+#include "Documentation/OfflineDocumentation.hpp"
 #include <wx/stdpaths.h>
 #include "DailyTips.hpp"
 #include "FilamentGroupPopup.hpp"
@@ -4247,6 +4249,10 @@ static const wxString sep_space = "";
 static wxMenu* generate_help_menu()
 {
     wxMenu* helpMenu = new wxMenu();
+    append_menu_item(helpMenu, wxID_ANY, _L("Offline documentation") + dots,
+        _L("Read bundled feature guides without opening a browser"), [](wxCommandEvent&) {
+            Documentation::ShowOfflineDocumentation(wxGetApp().mainframe);
+        });
 #ifdef __WINDOWS__
     // shortcut key
     auto alt = GUI::shortkey_alt_prefix();
@@ -4510,6 +4516,14 @@ void MainFrame::init_menubar_as_editor()
                         std::filesystem::u8path(data_dir()) / "local-converter");
                 });
             }, "", nullptr, []() { return true; }, this);
+
+        append_menu_item(fileMenu, wxID_ANY, _L("Scheduled settings") + dots,
+            _L("Schedule presentation without replacing stored preferences"),
+            [this](wxCommandEvent&) {
+                auto* service = wxGetApp().scheduled_preferences();
+                if (service) open_service("scheduled-settings", _L("Scheduled settings"),
+                    [service](wxWindow* parent) { return service->create_panel(parent); });
+            }, "", nullptr, []() { return wxGetApp().scheduled_preferences() != nullptr; }, this);
 
         append_menu_item(fileMenu, wxID_ANY, _L("Config profiles & backup") + dots,
             _L("Export or import the complete data folder (secrets included, slide-to-confirm) and manage unlimited profiles with local Git snapshot history"),

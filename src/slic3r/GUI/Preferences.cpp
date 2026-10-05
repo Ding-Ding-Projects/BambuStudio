@@ -3298,7 +3298,7 @@ wxWindow *PreferencesDialog::create_other_tab()
     std::vector<wxString> speech_languages{_L("English")};
     std::vector<std::string> speech_values{"en"};
     if (!PersonalModes::school_presentation_suppressed.load()) {
-        speech_languages.push_back(_L("Cantonese")); speech_values.push_back("yue");
+        speech_languages.push_back(_L("Cantonese")); speech_values.push_back("yue_HK");
         speech_languages.push_back(_L("Both languages")); speech_values.push_back("both");
     }
     sizer->Add(create_item_combobox(_L("Narration language"), scrolled,
