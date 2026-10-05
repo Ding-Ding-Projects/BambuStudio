@@ -23,6 +23,7 @@ bool MD3ScrolledWindow::Create(wxWindow *parent, wxWindowID id, const wxPoint &p
 {
     if (!wxScrolledWindow::Create(parent, id, pos, size, style, name)) return false;
     Bind(wxEVT_MOUSEWHEEL, &MD3ScrolledWindow::OnMouseWheel, this);
+    Bind(wxEVT_CHAR, &MD3ScrolledWindow::OnChar, this);
     return true;
 }
 
@@ -39,6 +40,26 @@ void MD3ScrolledWindow::OnMouseWheel(wxMouseEvent &event)
     event.Skip();
 }
 
+void MD3ScrolledWindow::OnChar(wxKeyEvent &event)
+{
+    // Only background navigation belongs to the outer viewport. A focused
+    // text field or category control keeps its own editing/navigation keys.
+    if (m_reveal_owner && !m_reveal_owner->IsBeingDeleted() &&
+        wxWindow::FindFocus() == this && !event.HasAnyModifiers()) {
+        switch (event.GetKeyCode()) {
+        case WXK_PAGEUP: case WXK_PAGEDOWN: case WXK_HOME: case WXK_END:
+        case WXK_UP: case WXK_DOWN: case WXK_LEFT: case WXK_RIGHT: {
+            wxKeyEvent forwarded(event);
+            forwarded.SetEventObject(m_reveal_owner.get());
+            m_reveal_owner->GetEventHandler()->ProcessEvent(forwarded);
+            return;
+        }
+        default: break;
+        }
+    }
+    event.Skip();
+}
+
 void MD3ScrolledWindow::SetRevealOwner(MD3ScrolledWindow *owner)
 {
     if (owner == this || (owner && !owner->IsDescendant(this))) return;
@@ -47,6 +68,7 @@ void MD3ScrolledWindow::SetRevealOwner(MD3ScrolledWindow *owner)
         Scroll(0, 0);
         SetScrollRate(0, 0);
         EnableScrolling(false, false);
+        EnableKeyboardScrolling(false);
         ShowScrollbars(wxSHOW_SB_NEVER, wxSHOW_SB_NEVER);
     }
 }

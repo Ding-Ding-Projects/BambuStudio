@@ -58,6 +58,7 @@ public:
 
 private:
     void OnMouseWheel(wxMouseEvent &event);
+    void OnChar(wxKeyEvent &event);
     wxWeakRef<MD3ScrolledWindow> m_reveal_owner;
     MD3ScrollBars m_bars { this };
 };
