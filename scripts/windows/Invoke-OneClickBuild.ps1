@@ -836,42 +836,6 @@ function Invoke-OneClickBuild {
     }
 }
 
-# Elevate before acquiring a build mutex, opening a transcript, or installing
-# prerequisites. RunAs invokes the normal Windows consent prompt; cancellation
-# is a terminal launcher result, never an unattended approval substitute.
-if (-not $Plan) {
-    $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
-    $principal = [Security.Principal.WindowsPrincipal]::new($identity)
-    if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
-        $forwarded = @()
-        foreach ($entry in $PSBoundParameters.GetEnumerator()) {
-            if ($entry.Value -is [Management.Automation.SwitchParameter]) {
-                $switchValue = if ($entry.Value.IsPresent) { '$true' } else { '$false' }
-                $forwarded += ('-' + $entry.Key + ':' + $switchValue)
-            } else {
-                $forwarded += ('-' + $entry.Key + " '" + ([string]$entry.Value).Replace("'", "''") + "'")
-            }
-        }
-        $scriptLiteral = "'" + $PSCommandPath.Replace("'", "''") + "'"
-        $elevatedCommand = '& ' + $scriptLiteral + ' ' + ($forwarded -join ' ') + '; if ($?) { exit 0 } else { exit 1 }'
-        $encodedCommand = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($elevatedCommand))
-        try {
-            $hostExecutable = Join-Path $PSHOME 'powershell.exe'
-            if (-not (Test-Path -LiteralPath $hostExecutable -PathType Leaf)) {
-                $hostExecutable = Join-Path $PSHOME 'pwsh.exe'
-            }
-            Write-Host 'Administrator approval is required before the build bootstrap starts.'
-            $processPolicy = Get-ExecutionPolicy -Scope Process
-            $policyArguments = if ($processPolicy -eq 'Undefined') { '' } else { ' -ExecutionPolicy ' + [string]$processPolicy }
-            $elevated = Start-Process -FilePath $hostExecutable -Verb RunAs -WindowStyle Hidden -Wait -PassThru `
-                -ArgumentList ('-NoLogo -NoProfile' + $policyArguments + ' -EncodedCommand ' + $encodedCommand)
-            exit $elevated.ExitCode
-        } catch {
-            Write-Host ('Administrator launch did not complete: ' + $_.Exception.Message)
-            exit 1223
-        }
-    }
-}
 
 try {
     $script:BuildMutex = New-Object System.Threading.Mutex(

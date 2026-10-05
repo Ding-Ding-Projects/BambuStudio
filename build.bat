@@ -5,7 +5,7 @@ cd /d "%~dp0"
 rem Standard repository entry point: bootstrap prerequisites and build a runnable
 rem Release payload without packaging or launching the application.
 set "BAMBU_ONE_CLICK_NO_PAUSE=1"
-powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\windows\Invoke-OneClickBuild.ps1" -BuildMode Incremental -BuildOnly
+powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\windows\Invoke-BuildEntryPoint.ps1" -EntryPoint "%~f0" %*
 set "EXIT_CODE=%ERRORLEVEL%"
 if not "%SILENT%"=="1" if /I not "%~1"=="/s" if /I not "%~1"=="--silent" (
     echo.
