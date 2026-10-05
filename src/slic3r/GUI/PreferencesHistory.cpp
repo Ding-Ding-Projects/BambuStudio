@@ -10,6 +10,7 @@
 #include <fstream>
 #include <set>
 #include <atomic>
+#include <cmath>
 
 #include <wx/timer.h>
 
@@ -34,6 +35,35 @@ const std::set<std::string> &safe_keys()
         "hide_new_filament_prompt", "show_support_recommend_dialog", "gamma_correct_in_import_obj"
     };
     return keys;
+}
+
+bool valid_value(const std::string &key, const std::string &value)
+{
+    if (key == "ui_density") return value == "compact" || value == "comfortable";
+    if (key == "ui_font_scale") return value == "0.9" || value == "1.0" || value == "1.15";
+    if (key == "prepare_sidebar_dock") return value == "left" || value == "right" || value == "top" || value == "bottom";
+    if (key == "enable_assemble_view_preview") return value == "Auto" || value == "Open" || value == "Close";
+    if (key == "dark_color_mode") return value == "0" || value == "1";
+    if (key == "funny_level_en" || key == "funny_level_yue")
+        return value.size() == 1 && value[0] >= '1' && value[0] <= '5';
+    if (key == "max_recent_count" || key == "backup_interval" || key == "grabber_size_factor") {
+        try {
+            size_t used = 0; const double number = std::stod(value, &used);
+            const double minimum = key == "grabber_size_factor" ? 1.0 : 0.0;
+            const double maximum = key == "backup_interval" ? 86400 : key == "max_recent_count" ? 10000 : 2.5;
+            return used == value.size() && std::isfinite(number) && number >= minimum && number <= maximum &&
+                (key == "grabber_size_factor" || std::floor(number) == number);
+        } catch (...) { return false; }
+    }
+    static const std::set<std::string> boolean_keys = {
+        "use_inches", "use_12h_time_format", "reverse_mouse_wheel_zoom", "zoom_to_mouse", "canvas_drag_to_move",
+        "show_shells_in_preview", "show_assembly_bvh_bounds", "show_bed_heat_soak_area", "enable_lod", "enable_bvh",
+        "backup_switch", "single_instance", "auto_calculate_flush",
+        "hide_new_filament_prompt", "show_support_recommend_dialog", "gamma_correct_in_import_obj"
+    };
+    if (boolean_keys.count(key)) return value == "true" || value == "false" || value == "1" || value == "0";
+    // Other allowlisted textual presentation values are bounded by read_snapshot.
+    return true;
 }
 
 std::filesystem::path profiles_root()
@@ -151,7 +181,8 @@ bool read_snapshot(const std::filesystem::path &path, nlohmann::json &snapshot, 
         }
         for (auto it = parsed["settings"].begin(); it != parsed["settings"].end(); ++it) {
             if (safe_keys().count(it.key()) == 0 || !it.value().is_string() ||
-                it.value().get_ref<const std::string &>().size() > 4096) {
+                it.value().get_ref<const std::string &>().size() > 4096 ||
+                !valid_value(it.key(), it.value().get_ref<const std::string &>())) {
                 error = "Preferences snapshot contains unsupported settings.";
                 return false;
             }

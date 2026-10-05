@@ -1,3 +1,4 @@
+#include "ProjectTabBar.hpp"
 #include "Plater.hpp"
 #include "SettingsDraftUndo.hpp"
 #include "Jobs/ImportJob.hpp"
@@ -23078,7 +23079,7 @@ void Plater::priv::take_snapshot(const std::string& snapshot_name, const UndoRed
         ++m_settings_undo_generation;
     if (m_undo_redo_stack_active == &m_undo_redo_stack_main && wxGetApp().preset_bundle)
         snapshot_data.attachment = SettingsDraftUndoState::capture(*wxGetApp().preset_bundle,
-            std::string(get_project_filename().ToUTF8().data()), m_settings_undo_generation);
+            wxGetApp().mainframe && wxGetApp().mainframe->project_tabbar() ? wxGetApp().mainframe->project_tabbar()->ActiveId() : std::string(), m_settings_undo_generation);
     if (this->view3D->is_layers_editing_enabled())
         snapshot_data.flags |= UndoRedo::SnapshotData::VARIABLE_LAYER_EDITING_ACTIVE;
     if (this->sidebar->obj_list()->is_selected(itSettings)) {
@@ -23224,10 +23225,10 @@ bool Plater::priv::up_to_date(bool saved, bool backup)
 void Plater::priv::undo_redo_to(std::vector<UndoRedo::Snapshot>::const_iterator it_snapshot)
 {
     const auto settings_state = std::dynamic_pointer_cast<const SettingsDraftUndoState>(it_snapshot->snapshot_data.attachment);
-    const std::string settings_project_filename(get_project_filename().ToUTF8().data());
+    const std::string settings_project_id = wxGetApp().mainframe && wxGetApp().mainframe->project_tabbar() ? wxGetApp().mainframe->project_tabbar()->ActiveId() : std::string();
     // Reject a stale target before changing either the model or the preset state.
     if (settings_state && (!wxGetApp().preset_bundle ||
-        !settings_state->matches(*wxGetApp().preset_bundle, settings_project_filename, m_settings_undo_generation)))
+        !settings_state->matches(*wxGetApp().preset_bundle, settings_project_id, m_settings_undo_generation)))
         return;
     // Make sure that no updating function calls take_snapshot until we are done.
     SuppressSnapshots snapshot_supressor(q);
@@ -23265,7 +23266,7 @@ void Plater::priv::undo_redo_to(std::vector<UndoRedo::Snapshot>::const_iterator 
     top_snapshot_data.printer_technology = this->printer_technology;
     if (m_undo_redo_stack_active == &m_undo_redo_stack_main && wxGetApp().preset_bundle)
         top_snapshot_data.attachment = SettingsDraftUndoState::capture(*wxGetApp().preset_bundle,
-            settings_project_filename, m_settings_undo_generation);
+            settings_project_id, m_settings_undo_generation);
     if (this->view3D->is_layers_editing_enabled())
         top_snapshot_data.flags |= UndoRedo::SnapshotData::VARIABLE_LAYER_EDITING_ACTIVE;
     if (this->sidebar->obj_list()->is_selected(itSettings)) {
@@ -23298,7 +23299,7 @@ void Plater::priv::undo_redo_to(std::vector<UndoRedo::Snapshot>::const_iterator 
         this->undo_redo_stack().redo(model, get_current_canvas3D()->get_canvas_type() == GLCanvas3D::CanvasAssembleView ? assemble_view->get_canvas3d()->get_gizmos_manager() : this->view3D->get_canvas3d()->get_gizmos_manager(), this->partplate_list, it_snapshot->timestamp);
     if (history_state_changed) {
         if (settings_state && settings_state->restore(*wxGetApp().preset_bundle,
-                settings_project_filename, m_settings_undo_generation)) {
+                settings_project_id, m_settings_undo_generation)) {
             for (const auto type : { Preset::TYPE_PRINT, Preset::TYPE_FILAMENT, Preset::TYPE_PRINTER })
                 if (Tab* tab = wxGetApp().get_tab(type)) {
                     tab->update_dirty();

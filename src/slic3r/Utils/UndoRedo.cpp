@@ -1,4 +1,5 @@
 #include "UndoRedo.hpp"
+#include <set>
 
 #include <algorithm>
 #include <iostream>
@@ -572,6 +573,10 @@ public:
 		size_t memsize = 0;
 		for (const auto &object : m_objects)
 			memsize += object.second->memsize();
+        std::set<const SnapshotAttachment*> counted;
+        for (const auto &snapshot : m_snapshots)
+            if (snapshot.snapshot_data.attachment && counted.insert(snapshot.snapshot_data.attachment.get()).second)
+                memsize += snapshot.snapshot_data.attachment->memsize();
 		return memsize;
 	}
 
@@ -1244,6 +1249,7 @@ void StackImpl::release_least_recently_used()
                         // Drop products of <it + 1, it_last + 1>
                         mem_released += kvp.second->release_between_timestamps(it->timestamp, (it_last + 1)->timestamp);
                     m_snapshots.erase(it + 1, it_last + 1);
+                    current_memsize = this->memsize() + mem_released;
                     assert(current_memsize >= mem_released);
                     if (current_memsize >= mem_released)
                         current_memsize -= mem_released;
@@ -1277,6 +1283,7 @@ void StackImpl::release_least_recently_used()
 			current_memsize -= mem_released;
 		else
 			current_memsize = 0;
+        current_memsize = this->memsize();
 #ifdef SLIC3R_UNDOREDO_DEBUG
 		released = true;
 #endif

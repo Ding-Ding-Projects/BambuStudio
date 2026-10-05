@@ -4,7 +4,7 @@
 namespace Slic3r { namespace GUI {
 
 std::shared_ptr<const SettingsDraftUndoState> SettingsDraftUndoState::capture(
-    const PresetBundle& bundle, const std::string& filename, size_t generation)
+    const PresetBundle& bundle, const std::string& identity, size_t generation)
 {
     auto state = std::make_shared<SettingsDraftUndoState>();
     state->configs = { bundle.prints.get_edited_preset().config,
@@ -13,22 +13,32 @@ std::shared_ptr<const SettingsDraftUndoState> SettingsDraftUndoState::capture(
     state->preset_names = { bundle.prints.get_selected_preset_name(),
                            bundle.filaments.get_selected_preset_name(),
                            bundle.printers.get_selected_preset_name() };
-    state->project_filename = filename;
+    state->project_id = identity;
     state->project_generation = generation;
     return state;
 }
 
-bool SettingsDraftUndoState::matches(const PresetBundle& bundle, const std::string& filename, size_t generation) const
+size_t SettingsDraftUndoState::memsize() const
 {
-    return project_generation == generation && project_filename == filename &&
+    size_t bytes = sizeof(*this) + project_id.capacity();
+    for (const auto &name : preset_names) bytes += name.capacity();
+    for (const auto &config : configs)
+        for (const auto &key : config.keys())
+            bytes += key.capacity() + config.opt_serialize(key).size() + sizeof(ConfigOption) + 128;
+    return bytes;
+}
+
+bool SettingsDraftUndoState::matches(const PresetBundle& bundle, const std::string& identity, size_t generation) const
+{
+    return project_generation == generation && project_id == identity &&
            preset_names == std::array<std::string, 3>{ bundle.prints.get_selected_preset_name(),
                                                      bundle.filaments.get_selected_preset_name(),
                                                      bundle.printers.get_selected_preset_name() };
 }
 
-bool SettingsDraftUndoState::restore(PresetBundle& bundle, const std::string& filename, size_t generation) const
+bool SettingsDraftUndoState::restore(PresetBundle& bundle, const std::string& identity, size_t generation) const
 {
-    if (!matches(bundle, filename, generation))
+    if (!matches(bundle, identity, generation))
         return false;
     // Allocate all three copies before mutating live state, then use noexcept moves.
     auto restored = configs;
