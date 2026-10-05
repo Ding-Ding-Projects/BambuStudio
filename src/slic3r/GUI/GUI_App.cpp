@@ -114,6 +114,7 @@
 #include "PersonalVocabulary.hpp"
 #include "FeatureServices/NarratorEnvironment.hpp"
 #include "FeatureServices/SchoolCredentials.hpp"
+#include "FeatureServices/SurfaceRegistry.hpp"
 #include "HomeAssistant.hpp"
 #include "GLCanvas3D.hpp"
 #include "EncodedFilament.hpp"
@@ -3377,6 +3378,7 @@ bool GUI_App::OnInit()
                 I18N::BilingualRegistry::instance().reset(bilingual);
                 I18N::enable_bilingual_decorator(bilingual);
                 PersonalVocabulary::refresh();
+                FeatureServices::SurfaceRegistry::instance().refresh_presentation();
                 mainframe->Refresh();
             });
         });
@@ -3398,6 +3400,7 @@ bool GUI_App::OnInit()
     try {
         const bool initialized = on_init_inner();
         if (initialized) {
+            if (mainframe) FeatureServices::SurfaceRegistry::instance().register_surface(mainframe, "main-frame");
             m_automation_bridge = std::make_unique<AutomationBridge>(*this);
             m_automation_bridge->start();
         }

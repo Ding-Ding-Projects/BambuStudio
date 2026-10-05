@@ -51,6 +51,35 @@ the actual menu. The destination is linked to the native GUI target, not a
 browser page. Catalog authority completeness, native compilation and disabled
 operations remain governed by the suite's own outstanding-work inventory.
 
+## Local converter destination
+
+File, Local file converter opens a persistent panel in the Local tools workspace.
+The workspace uses the shared browser-style tab strip, including restored hidden
+tabs and dock placement. The existing command palette discovers the File command.
+The host reads at most 66 receipt bytes and accepts exactly 64 lowercase SHA-256
+digits with one optional newline. It passes the installed directory, exact worker
+path and digest into the converter's own executable and capability verification.
+
+The production CMake target builds the worker beside its broker implementation,
+hashes the linked worker, and installs the executable and receipt together.
+Configuration requires `LOCAL_CONVERTER_QPDF_SDK` with the verified qpdf C API
+headers. No PATH search substitutes for the SDK. The runtime still verifies its
+compiled DLL pins and executes the real sandbox capability probe before enabling
+PDF operations. Runtime staging of the complete qpdf bundle is separately required.
+The native destination and packaging integration have not yet passed a full build.
+
+## Live surfaces and sensitive controls
+
+The application registers its main frame and each native service root with the
+[surface registry](surface-registry.md). Shared-mode credential fields are marked
+sensitive before display. Their neutral accessible names and static action labels
+retain original message sources for live presentation refresh; values and the
+user-selected mode name are never translation sources. The registry integrates
+actual appearance adoption, weak-reference child discovery, sensitive-subtree
+permission checks, and native capture-affinity readback. Capture, export and
+history producers must consult the permission queries immediately before use;
+registry metadata alone does not establish end-to-end protection.
+
 ## Verification and remaining work
 
 The portable presentation-route executable passed 24 behavioral assertions with

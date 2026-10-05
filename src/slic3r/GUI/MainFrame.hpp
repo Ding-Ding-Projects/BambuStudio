@@ -59,6 +59,7 @@ class DeviceWebPage;
 // title bar and the workspace tabs; MainFrame orchestrates the switch/close/new flow.
 class ProjectTabBar;
 struct WorkspaceMemberSelection;
+namespace FeatureServices { class ServiceWorkspace; }
 
 enum QuickSlice
 {
@@ -361,6 +362,8 @@ public:
     // When tab == -1, will be selected last selected tab
     //BBS: GUI refactor
     void        select_tab(wxPanel* panel);
+    wxPanel*    open_service(const std::string& id, const wxString& title,
+                             const std::function<wxPanel*(wxWindow*)>& create);
     void        select_tab(size_t tab = size_t(-1));
     void        request_select_tab(TabPosition pos);
     bool        request_slice_and_print();
@@ -416,6 +419,7 @@ public:
     BBLTopbar*            m_topbar{ nullptr };
     // BBS: session file-tabs bar, inserted between the title bar and the workspace tabs.
     ProjectTabBar*        m_project_tabbar{ nullptr };
+    FeatureServices::ServiceWorkspace* m_service_workspace{ nullptr };
     wxBoxSizer*           m_project_dock_sizer{ nullptr }; // strip + workspace; orientation follows the dock edge
     void                  place_project_tabbar();          // (re)insert the strip per its dock edge
     ProjectTabBar*        project_tabbar() { return m_project_tabbar; }

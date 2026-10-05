@@ -4,6 +4,7 @@
 #include "PersonalModes/SchoolMode.hpp"
 #include "FeatureServices/PresentationRoutes.hpp"
 #include "FeatureServices/SchoolCredentials.hpp"
+#include "FeatureServices/SurfaceRegistry.hpp"
 #include "PersonalModes/SchoolRuntime.hpp"
 #include "Widgets/MD3ScrolledWindow.hpp"
 #include "Export/ExportDatasets.hpp"
@@ -2805,6 +2806,7 @@ wxWindow *PreferencesDialog::create_general_tab()
         for (auto* input : {old_answer, new_answer}) {
             input->GetTextCtrl()->SetMaxLength(256);
             input->GetTextCtrl()->SetName(input == old_answer ? _L("Current unlock credential") : _L("New unlock credential"));
+            FeatureServices::SurfaceRegistry::instance().register_sensitive(input);
         }
         auto* kind = new MultiSwitchButton(mode_box);
         kind->SetOptions({_L("Password"), _L("PIN")});
@@ -2877,6 +2879,18 @@ wxWindow *PreferencesDialog::create_general_tab()
         });
         sizer->Add(mode_box, 0, wxEXPAND | wxALL, FromDIP(16));
         register_option_row("school_mode", nullptr, mode_box);
+        FeatureServices::SurfaceRegistry::instance().register_surface(mode_box, "preferences/shared-presentation");
+        auto& surfaces = FeatureServices::SurfaceRegistry::instance();
+        surfaces.record_name(old_answer->GetTextCtrl(), "Current unlock credential");
+        surfaces.record_name(new_answer->GetTextCtrl(), "New unlock credential");
+        surfaces.record_name(mode_name->GetTextCtrl(), "Display name");
+        surfaces.record_name(kind, "Unlock credential type");
+        surfaces.record_label(enable, "Enable");
+        surfaces.record_label(unlock, "Unlock and disable");
+        surfaces.record_label(enroll, "Set unlock credential");
+        surfaces.record_label(replace, "Replace unlock credential");
+        surfaces.record_label(rename, "Rename");
+        surfaces.record_label(disclosure, "This is a presentation lock, not a security boundary. Deleting the shared local application-data record resets it. Credentials remain in the operating-system vault.");
         refresh(false);
         m_school_refresh_timer.SetOwner(this, wxWindow::NewControlId());
         Bind(wxEVT_TIMER, [refresh](wxTimerEvent&) { refresh(-1); }, m_school_refresh_timer.GetId());

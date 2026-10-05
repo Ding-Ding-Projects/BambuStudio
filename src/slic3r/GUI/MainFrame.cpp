@@ -94,6 +94,11 @@
 #include "ConfigWizard.hpp"
 #include "Widgets/WebView.hpp"
 #include "OllamaSuite/OllamaSuiteDialog.hpp"
+#include "LocalConverter/LocalConverterPanel.hpp"
+#include "FeatureServices/PackageReceipts.hpp"
+#include "FeatureServices/ServiceWorkspace.hpp"
+#include "FeatureServices/SurfaceRegistry.hpp"
+#include <wx/stdpaths.h>
 #include "DailyTips.hpp"
 #include "FilamentGroupPopup.hpp"
 #include "FilamentMapDialog.hpp"
@@ -4495,6 +4500,17 @@ void MainFrame::init_menubar_as_editor()
             [this](wxCommandEvent&) { show_ollama_suite(this, std::filesystem::u8path(data_dir())); }, "", nullptr,
             []() { return true; }, this);
 
+        append_menu_item(fileMenu, wxID_ANY, _L("Local file converter") + dots,
+            _L("Convert local files with verified bundled adapters"),
+            [this](wxCommandEvent&) {
+                open_service("converter", _L("Local file converter"), [](wxWindow* parent) {
+                    const auto root = std::filesystem::path(wxStandardPaths::Get().GetExecutablePath().ToStdWstring()).parent_path();
+                    return new LocalConverterPanel(parent, LocalConverter::PackageProof{
+                        root, root / "BambuStudio_converter_worker.exe", FeatureServices::converter_worker_hash(root)},
+                        std::filesystem::u8path(data_dir()) / "local-converter");
+                });
+            }, "", nullptr, []() { return true; }, this);
+
         append_menu_item(fileMenu, wxID_ANY, _L("Config profiles & backup") + dots,
             _L("Export or import the complete data folder (secrets included, slide-to-confirm) and manage unlimited profiles with local Git snapshot history"),
             [this](wxCommandEvent&) { ConfigProfilesDialog(this).ShowModal(); }, "", nullptr,
@@ -5781,6 +5797,22 @@ void MainFrame::select_tab(wxPanel* panel)
     /*if (page_idx != wxNOT_FOUND && m_layout == ESettingsLayout::Dlg)
         page_idx++;*/
     select_tab(size_t(page_idx));
+}
+
+wxPanel* MainFrame::open_service(const std::string& id, const wxString& title,
+    const std::function<wxPanel*(wxWindow*)>& create)
+{
+    if (!m_tabpanel) return nullptr;
+    if (!m_service_workspace) {
+        m_service_workspace = new FeatureServices::ServiceWorkspace(m_tabpanel);
+        m_tabpanel->AddPage(m_service_workspace, _L("Local tools"), "", "", false);
+    }
+    auto* result = m_service_workspace->open(id, title, create);
+    if (result) {
+        FeatureServices::SurfaceRegistry::instance().register_surface(result, "services/" + id);
+        select_tab(m_service_workspace);
+    }
+    return result;
 }
 
 //BBS
