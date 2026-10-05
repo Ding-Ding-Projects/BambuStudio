@@ -436,6 +436,8 @@ if (0)
     set(CMAKE_C_FLAGS "/MD /Od /Zi /DWIN32 /DTBB_USE_ASSERT")
 endif()
 
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules/ReleaseSourcePaths.cmake")
+
 # Find and configure boost
 if(SLIC3R_STATIC)
     # Use static boost libraries.
