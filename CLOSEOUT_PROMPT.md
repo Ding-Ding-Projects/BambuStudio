@@ -1,39 +1,40 @@
 # Current delivery continuation, 5 October 2026
 
-## Objective and current steering
+## Objective and actual production state
 
-Deliver the bounded BambuStudio issue inventory #16, #35, #36, #41, #43, #45, #46, #51, #53, #55 and #56 through the supported local native build and unsigned Squirrel packaging route. The maintainer selected completed implementation on main plus verified release delivery as the closure criteria. Tests, lint, type checks, static-analysis suites, reviews, audits, runtime interaction, installer execution and screenshots are intentionally not run in this pass. These criteria do not establish runtime, layout, security, physical-printer or transactional correctness.
+Deliver bounded issues #16, #35, #36, #41, #43, #45, #46, #51, #53, #55 and #56 through the supported local native build and unsigned Squirrel packaging route. No new license, physical print, runtime acceptance or screenshot is authorized by this delivery state.
 
-## Combined source and build
+Current source: `600b38a7d1955c694433a8f1b8c5aa39e35d36bc`. Production configure has advanced beyond the earlier path-with-spaces blockers. The Cantonese catalogue production target completed with 7,991 entries and the offline documentation bundle completed. Native GUI compilation is currently running; no successful final native compile, package or release verdict is claimed. Intended release `md3-v228` and package `2.8.4814` remain pending, including exact target and downloadable-asset proof.
 
-The combined implementation baseline is `0e8673b5b8ac27b34fd7595ba9886256bdbc6915`. It is superseded by current main candidate `0f6ad8c40616e28c892f5fe63625d8a70188e145`, which repairs FFmpeg paths with spaces. Fresh configure remains blocked because Strawberry Perl's `pkg-config` output still mishandles spaces; the build lane is implementing the correct route. No successful configure, native compile or new release verdict exists for this pass yet. Retain the earlier `0e8673b5b` snapshot as historical source identity, not the current build candidate. The documentation commit containing this update is separate from the pinned build source. Do not modify any active pinned build checkout. Exact remote main proof must be recorded by the coordinating task after its push; this document does not claim a push.
+No test, lint or verification suites were deliberately launched. The inherited DeviceWeb production command did attempt its `tsc -b` type stage once and failed because ancestor-workspace TypeScript resolution interfered before bundling. The production route now disables ancestor workspace discovery and invokes local Vite directly. This pass therefore does not claim zero attempted checks or any passing type-check verdict. Runtime interaction, installer execution and screenshots were not performed. The maintainer's selected closure criteria remain implementation on main plus verified release delivery, not runtime acceptance.
 
-| Lane | Integrated source | Record |
-| --- | --- | --- |
-| Surface | `9eac2b1e2` | `docs/integration/delivery-surface.md` |
-| Automation | `117ebb818` | `docs/integration/delivery-automation.md` |
-| Draft/history | `ae51d2e3` | `docs/integration/delivery-draft-history.md` |
-| Continuity | `a5443bc68` | `docs/integration/delivery-continuity.md` |
-| Import | `0f28099a` | `docs/integration/delivery-import.md` |
-| Build | `c0a406c98` | `docs/integration/delivery-build.md` |
+## Implemented source receipts and limits
 
-The eight preserved responsive-workflow source branches were reconciled before these repairs. Their original records are retained under `docs/integration/continuations/` and the historical block below. Those earlier source checks and captures bind to their original revisions, not the combined current source.
+| Delivered source | Receipt |
+| --- | --- |
+| Language and kit mapping, independent tone variants | `9eac2b1e2` |
+| Existing MCP/CLI and Home Assistant boundaries | `117ebb818` |
+| Draft identity, Undo accounting, history recording/restoration | `ae51d2e38`; supported scroll-event repair `4dcd01397` |
+| Non-blocking material advice and scroll ownership | `a5443bc68` |
+| Cooperative import and direct simplifier geometry | `058ebd261`, `50e2ceddc`, catalogue line-ending receipt `0f28099a7` |
+| Portable Node and isolated build cache | `c0a406c98`; FFmpeg spaces `0f6ad8c40`; local DeviceWeb production bundling `1eeef972f` |
+| Monotonic Squirrel package version floor | `63863c84a` |
+| Recovered native offline documentation browser | `0233ee533`, translation metadata `7ab78d3f6`, repository-root bundling repair `bfe8c7d27`, integrated `600b38a7d` |
+| Recovered scheduled settings | `8402906b0`, integrated `1770603c4` |
+| Recovered bulk actions on seven surfaces | `e8bddc2bc`, integrated `ab7b25f65`, placeholder repair `868ea7605` |
+| Correct UTC build/package producer timestamps | `8702cc52c`, integrated `6b351cefc` |
 
-## Limits and unfinished delivery
+The three recovered issue #36 modules are now implemented in the combined source: native offline documentation browsing, scheduled settings and shared bulk actions. Bulk scope is explicitly seven surfaces: object list, sidebar filament rows, user presets, project version history, notification centre, multi-machine manager and config profiles. It does not claim every application collection. Unsupported operations remain explicit: immutable history has no bulk delete and only single-version restore; account-owned devices have no rename/delete here; config profiles have no delete and launch stays single-row; project-state filament slots export with their project. Existing-file export collisions are skipped; bulk cancellation stops after the current item. See [bulk actions](docs/features/workspace/bulk-actions.md).
 
-- Import publication remains on the UI thread with cooperative cancellation. An indivisible reader, convex-hull calculation, object copy, texture application or final scene update can delay the next cancellation opportunity without a strict time bound. Rollback may itself fail under resource exhaustion. Original inputs remain unchanged and retained originals are available through the existing restore route. Do not claim transactional runtime acceptance or exact simplification dimensions, volume or deviation.
-- Issue #16's separately licensed companion is outside this delivery pending its separate license decision. No new license acceptance or companion delivery is claimed.
-- Build, packaging, new release publication, exact target/tag/downloadable-asset proof, eligible issue closure and safely archived cleanup remain pending.
-- Tests and screenshots are not merely pending operations for this speed pass: they are intentionally excluded. Record that omission in the release and each issue closure. Keep prior visual `fixed-unverified` findings factual.
-- Do not delete active, uncommitted, unmerged, unpushed, load-bearing or ownership-uncertain branches, checkouts or stashes. Cleanup requires a verified archive and exact ancestor proof against pushed main.
+Import cancellation remains cooperative on the UI thread. Indivisible reader, hull calculation, object copy, texture application or final scene update can delay the next cancellation opportunity without a strict time bound; rollback can itself fail under resource exhaustion. No transactional runtime acceptance or exact dimensions/volume/deviation guarantee is claimed. Issue #16's companion license/HACS decision remains separate; Bambu Studio client delivery neither grants redistribution rights nor claims that companion validation passed.
 
 ## Next safe steps
 
-1. Finish the correct `pkg-config` route and configure its superseding pinned candidate, then obtain that exact candidate's native compile verdict. Repair only directly required build problems in an isolated candidate if necessary.
-2. Produce the expected unsigned Squirrel installer, full package, update feed, hashes and project-declared metadata from the intended source. Coordinate publication so one intended release is created.
-3. Push completed source and current records to main, then verify its exact remote reference.
-4. Verify the unique non-draft release tag and target and all required downloadable assets. Close only issues whose scoped implementation and delivery are actually satisfied; leave #16's separate companion decision explicit.
-5. Archive the scoped cleanup inventory, read it back and prove inactive task candidates are ancestors of pushed main before removing them. Retain and report every unsafe candidate.
+1. Read the terminal production build result for the pinned candidate. Do not mutate the active build checkout. Repair only directly required build blockers in a superseding isolated candidate if needed.
+2. Produce and verify the expected unsigned Squirrel installer, full package, update feed, hashes and metadata. Intended release is md3-v228 and intended package is 2.8.4814, both pending.
+3. Push completed source and current records to main and prove its exact remote reference. This documentation commit records state before its own push, not evidence that it happened.
+4. Verify unique non-draft release target and required downloadable assets before closing eligible issues. State the inherited failed type-stage attempt and deliberately skipped suites, runtime and screenshots explicitly.
+5. Read back a complete archive and prove exact inactive task candidates are ancestors of pushed main before cleanup. Retain active, dirty, unmerged, unpushed, load-bearing and ownership-uncertain work.
 
 ## Historical continuation record
 

@@ -1,5 +1,5 @@
 > [!IMPORTANT]
-> Current delivery pass, 5 October 2026: the combined implementation baseline `0e8673b5b8ac27b34fd7595ba9886256bdbc6915` is superseded by the FFmpeg path-with-spaces repair at `0f6ad8c40616e28c892f5fe63625d8a70188e145` on main. Fresh local configure is blocked because Strawberry Perl's `pkg-config` output still mishandles spaces; the build lane is implementing the correct route. Native compilation and release delivery have no verdict yet. The maintainer selected implementation integration and verified release delivery as the closure criteria; tests and screenshots are intentionally not run. Runtime and physical-printer correctness remain unverified. Read [the current handoff](HANDOFF.md) and [continuation record](CLOSEOUT_PROMPT.md). Earlier reconstruction evidence remains in [the verification status](docs/reapplication/verification-status.md).
+> Current delivery source is `600b38a7d1955c694433a8f1b8c5aa39e35d36bc`. Production catalogue (7,991 entries) and offline docs bundling completed; native GUI compilation is running. Release `md3-v228` and package `2.8.4814` remain pending proof. No runtime or screenshot acceptance is claimed. The inherited TypeScript type stage was attempted once and failed; no verification suite was deliberately launched. Read the current handoff and continuation record below.
 
 ![image](https://user-images.githubusercontent.com/106916061/179006347-497d24c0-9bd6-45b7-8c49-d5cc8ecfe5d7.png)
 # BambuStudio
@@ -11,10 +11,10 @@ The current interface work also includes [local personal wording](docs/features/
 [separate slicing actions](docs/features/windows/print-actions.md), and
 [searchable canvas menus](docs/features/canvas-menu-search.md). These changes are
 under a local native build for the combined delivery; the [audit register](docs/features/design-system/native-interface-audit-2026-10-02.md)
-records historical runtime and layout evidence. Tests and screenshots are not run in this pass;
+records historical runtime and layout evidence. No test suite was deliberately launched, the inherited type stage failed, and screenshots are not produced in this pass;
 implementation is not a claim of verified physical-printer behavior.
 Current compiler and startup evidence is summarized in the [continuation record](CLOSEOUT_PROMPT.md).
-The current candidate is configure-blocked on the `pkg-config` path-with-spaces problem; native compilation, packaging and release publication remain pending.
+The earlier configure blockers are superseded. Production catalogue and documentation bundling completed; native GUI compilation is running. Packaging and release proof remain pending. The inherited DeviceWeb type stage attempted once and failed before bundling; no passing type-check result is claimed.
 Earlier managed-check results apply only to their recorded source revisions. The combined source includes the reconciled continuation lanes and bounded repairs listed in the current handoff.
 
 Bambu Studio is a cutting-edge, feature-rich slicing software.  
