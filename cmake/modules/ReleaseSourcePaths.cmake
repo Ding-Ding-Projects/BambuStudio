@@ -1,6 +1,6 @@
 # Compile diagnostics with logical source paths and embed only a PDB basename.
 # This is producer metadata, not post-link binary rewriting.
-if(MSVC AND CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+if(MSVC AND (CMAKE_C_COMPILER_ID STREQUAL "MSVC" OR CMAKE_CXX_COMPILER_ID STREQUAL "MSVC"))
     if(MSVC_VERSION LESS 1951)
         message(FATAL_ERROR "Release source-path mapping is enabled only for the inspected MSVC 19.51-or-newer baseline; older compiler compatibility has not been established.")
     endif()
