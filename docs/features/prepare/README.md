@@ -2,6 +2,8 @@
 
 This category documents native Prepare-workspace features.
 
+- [Native menu and printer selection lifecycle](native-lifecycle.md) covers popup ownership, canceled selections and physical filament slot identity.
+
 - [Prepare sidebar tabs](sidebar-tabs.md) describes the Ink, Process and Objects navigation and its pending packaged-binary checks.
 
 - [Dockable Prepare sidebar](dockable-sidebar.md) — user-selectable dock edge for the Prepare
