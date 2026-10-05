@@ -37696,9 +37696,13 @@ msgid "Reduce motion settles supported transitions immediately. System follows y
 msgstr "減少動畫會即時完成已支援嘅過場效果。系統選項會跟隨作業系統嘅偏好設定。"
 
 #: src/slic3r/GUI/Plater.cpp
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
 msgid "Large imported meshes were simplified. Dimensions and volume may change; original files are unchanged."
 msgstr "大型匯入網格已簡化。尺寸同體積可能會改變；原始檔案維持不變。"
 
 #: src/slic3r/GUI/Plater.cpp
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
 msgid "Import canceled"
 msgstr "匯入已取消"
