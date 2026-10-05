@@ -1,5 +1,6 @@
 #include "Widgets/MD3ScrolledWindow.hpp"
 #include "SettingsDraftPanel.hpp"
+#include "LocalConfigHistory.hpp"
 #include "GUI_App.hpp"
 #include "MainFrame.hpp"
 #include "ProjectTabBar.hpp"
@@ -23,9 +24,11 @@
 #include <wx/sizer.h>
 #include <wx/wrapsizer.h>
 #include <stdexcept>
+#include <algorithm>
 
 namespace Slic3r { namespace GUI {
 namespace {
+std::vector<SettingsDraftPanel*> draft_panels;
 Tab *live_tab(Preset::Type type) { return wxGetApp().get_tab(type); }
 wxString draft_title(Preset::Type type) {
     return type == Preset::TYPE_PRINT ? _L("Process draft") :
@@ -60,18 +63,42 @@ SettingsDraftPanel::SettingsDraftPanel(wxWindow *parent, TabStrip *strip, std::f
         m_store.erase(id); m_strip->RemoveTab(id); Persist();
         if (m_active == id) { m_active.clear(); m_show_page(false); }
     });
+    draft_panels.push_back(this);
     Hide();
+}
+SettingsDraftPanel::~SettingsDraftPanel() {
+    draft_panels.erase(std::remove(draft_panels.begin(), draft_panels.end(), this), draft_panels.end());
+}
+bool SettingsDraftPanel::RestoreHistory(const std::string &id, const DynamicPrintConfig &config) {
+    for (auto *panel : draft_panels) {
+        auto *draft = panel->m_store.find(id);
+        if (!draft || !(draft->target == panel->Target(draft->type))) continue;
+        // Restore only the detached editor. Applying it remains a separate action.
+        draft->config = LocalConfigHistory::merge_restored_config(draft->config, config);
+        panel->m_active = id;
+        panel->m_strip->Activate(id);
+        panel->Rebuild();
+        panel->m_show_page(true);
+        panel->Persist();
+        return true;
+    }
+    return false;
 }
 void SettingsDraftPanel::Persist() {
     if (wxGetApp().app_config) {
         wxGetApp().app_config->set("settings_drafts", m_storage_key, m_store.serialize());
         wxGetApp().app_config->save();
     }
-    if (!m_active.empty()) m_strip->SetDirty(m_active, m_store.dirty(m_active));
+    if (!m_active.empty()) {
+        m_strip->SetDirty(m_active, m_store.dirty(m_active));
+        if (const auto *draft = m_store.find(m_active))
+            LocalConfigHistory::record_config("draft", draft->id, "Edit settings draft", draft->config);
+    }
 }
 bool SettingsDraftPanel::Activate(const std::string &id) {
     if (!m_store.find(id)) { m_show_page(false); return false; }
-    m_active = id; Rebuild(); m_show_page(true); return true;
+    if (m_active != id) { m_active = id; Rebuild(); }
+    m_show_page(true); return true;
 }
 void SettingsDraftPanel::Rebuild() {
     ++m_view_generation;
@@ -196,10 +223,19 @@ void SettingsDraftPanel::Apply() {
     const DynamicPrintConfig before = *tab->get_config();
     wxGetApp().plater()->take_snapshot("Apply settings draft");
     try {
-        tab->load_config(confirmed.delta);
+        DynamicPrintConfig applied(before);
+        applied.apply(confirmed.delta);
+        for (const auto &key : confirmed.removed_keys) applied.erase(key);
+        *tab->get_config() = std::move(applied);
+        tab->update_dirty();
+        tab->reload_config();
+        tab->update();
         wxGetApp().plater()->on_config_change(wxGetApp().preset_bundle->full_config());
     } catch (...) {
-        tab->load_config(before);
+        *tab->get_config() = before;
+        tab->update_dirty();
+        tab->reload_config();
+        tab->update();
         wxGetApp().plater()->on_config_change(wxGetApp().preset_bundle->full_config());
         wxMessageBox(_L("Apply could not finish. Previous settings were restored."), _L("Apply draft"), wxOK | wxICON_ERROR, this);
         return;
@@ -219,7 +255,11 @@ void SettingsDraftPanel::UndoApply() {
         SettingsDraftStore::fingerprint(*tab->get_config()) != SettingsDraftStore::fingerprint(m_undo_after)) {
         wxMessageBox(_L("Undo Apply is unavailable because the target settings changed."), _L("Undo Apply"), wxOK, this); return;
     }
-    tab->load_config(m_undo_before);
+    wxGetApp().plater()->take_snapshot("Undo settings draft apply");
+    *tab->get_config() = m_undo_before;
+    tab->update_dirty();
+    tab->reload_config();
+    tab->update();
     wxGetApp().plater()->on_config_change(wxGetApp().preset_bundle->full_config());
     m_undo_type = Preset::TYPE_INVALID;
 }
@@ -244,6 +284,7 @@ void SettingsDraftPanel::SaveAs() {
     try {
         if (!detached.save(nullptr)) throw std::runtime_error("Unable to save preset");
         collection->load_preset(detached.file, name, detached.config, false);
+        LocalConfigHistory::record_config("preset", std::to_string(int(draft->type)) + ":" + name, "Save draft as preset", detached.config);
         wxMessageBox(_L("Preset saved. The live selection is unchanged."), _L("Save draft"), wxOK, this);
     } catch (...) { wxMessageBox(_L("The preset could not be saved. Your draft is retained."), _L("Save draft"), wxOK | wxICON_ERROR, this); }
 }

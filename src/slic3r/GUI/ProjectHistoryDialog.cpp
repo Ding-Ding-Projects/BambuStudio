@@ -9,6 +9,7 @@
 #include "libslic3r/Utils.hpp"
 #include <nlohmann/json.hpp>
 #include <fstream>
+#include <set>
 #include <wx/choice.h>
 #include <wx/textctrl.h>
 #include <wx/wfstream.h>
@@ -435,7 +436,7 @@ void ProjectHistoryDialog::refresh_versions()
 {
     if (m_pending != PendingOperation::None) return;
     const int row = m_version_list->GetSelectedRow();
-    if (row >= 0 && static_cast<std::size_t>(row) < m_filtered_rows.size()) m_selected_id = m_versions[m_filtered_rows[row]].commit_id;
+    if (row >= 0 && static_cast<std::size_t>(row) < m_filtered_rows.size()) { const auto index = m_filtered_rows[row]; m_selected_id = m_versions[index].commit_id; m_selected_store = m_origins[index].category + ":" + m_origins[index].identity.string() + ":" + m_origins[index].device; }
     set_busy(PendingOperation::List, _L("Loading local history..."));
     const auto identity = m_project_identity; auto *manager = m_manager;
     const auto config_sources = LocalConfigHistory::sources(); const auto limit = m_show_all ? 0 : HISTORY_INITIAL_LIMIT;
@@ -516,7 +517,7 @@ void ProjectHistoryDialog::begin_restore()
     const std::size_t selected_version = m_filtered_rows[selected_row];
 
     const Origin origin=m_origins[selected_version];
-    if(origin.category!="project"&&origin.category!="preferences"){set_status(_L("Printer records are evidence. Draft and preset versions are restored through their guarded editors."));return;}
+    if(origin.category!="project"&&origin.category!="preferences"&&origin.category!="preset"&&origin.category!="draft"){set_status(_L("Printer incident records cannot replace editor settings."));return;}
     MessageDialog confirmation(
         this,
         _L("Restore the selected version in the editor?\n\nThe project file will not be overwritten. The restored state will be recorded as a new version."),
@@ -535,6 +536,7 @@ void ProjectHistoryDialog::begin_restore()
     try {
         m_restore_future = origin.manager->restore_version(origin.identity, m_versions[selected_version].commit_id, destination);
         m_restore_category = origin.category;
+        m_restore_identity = origin.name;
         m_poll_timer.Start(HISTORY_POLL_INTERVAL_MS);
     } catch (const std::exception &exception) {
         m_pending = PendingOperation::None;
@@ -596,6 +598,10 @@ void ProjectHistoryDialog::finish_list(ProjectHistoryListResult result)
         return;
     }
 
+    // Previous row indices belong to the previous aggregate. Keep the captured
+    // stable source selection instead of reading those indices in the new list.
+    m_filtered_rows.clear();
+    m_version_list->DeleteAllItems();
     m_versions = std::move(result.versions);
     m_list_truncated = !m_show_all && m_versions.size() >= HISTORY_INITIAL_LIMIT;
 
@@ -629,6 +635,13 @@ void ProjectHistoryDialog::finish_restore(ProjectHistoryRestoreResult result)
     }
 
     if(m_restore_category=="preferences"){std::string error;if(!PreferencesHistory::apply_snapshot(result.restored_path,error)){cleanup_restore_temp();show_error(wxString::FromUTF8(error));return;}cleanup_restore_temp();refresh_versions();return;}
+    if (m_restore_category == "preset" || m_restore_category == "draft") {
+        std::string error;
+        const bool restored = LocalConfigHistory::restore_config(m_restore_category, m_restore_identity, result.restored_path, error);
+        cleanup_restore_temp();
+        if (!restored) { show_error(wxString::FromUTF8(error)); return; }
+        refresh_versions(); return;
+    }
     m_restored_snapshot = std::move(result.restored_path);
     EndModal(wxID_APPLY);
 }
@@ -637,7 +650,7 @@ void ProjectHistoryDialog::populate_versions()
 {
     if(m_view=="searches"){populate_searches();return;}
     const int selected=m_version_list->GetSelectedRow();
-    if(selected>=0 && static_cast<std::size_t>(selected)<m_filtered_rows.size())m_selected_id=m_versions[m_filtered_rows[selected]].commit_id;
+    if(selected>=0 && static_cast<std::size_t>(selected)<m_filtered_rows.size()){ const auto index = m_filtered_rows[selected]; m_selected_id=m_versions[index].commit_id; m_selected_store=m_origins[index].category+":"+m_origins[index].identity.string()+":"+m_origins[index].device; }
     m_version_list->DeleteAllItems();m_filtered_rows.clear();
     SearchField::MatchPass matcher(m_search_field->GetValue(),m_search_field->IsRegexEnabled(),m_search_field->IsCaseSensitive(),m_search_field->IsWholeWord(),m_search_field->IsMultiline());
     static const char *categories[]={"","project","preferences","preset","draft","printer"};static const char *states[]={"","active","unknown","resolved"};
@@ -659,7 +672,7 @@ void ProjectHistoryDialog::populate_versions()
         wxVector<wxVariant> row;row.push_back(wxVariant(m_view=="timeline"?timestamp:id));row.push_back(wxVariant(message));row.push_back(wxVariant(m_view=="timeline"?id:timestamp));
         row.push_back(wxVariant(origin.category=="printer"?wxString::FromUTF8(origin.status):format_size(version.snapshot_size)));
         m_version_list->AppendItem(row);m_filtered_rows.push_back(i);
-        if(version.commit_id==m_selected_id)m_version_list->SelectRow(static_cast<unsigned>(m_filtered_rows.size()-1));
+        if(version.commit_id==m_selected_id && origin.category+":"+origin.identity.string()+":"+origin.device==m_selected_store)m_version_list->SelectRow(static_cast<unsigned>(m_filtered_rows.size()-1));
         if(m_view=="graph"){graph+="o "+wxString::FromUTF8(version.commit_id)+"  "+display_message(version.message)+"\n";for(const auto &parent:version.parent_ids)graph+="|  -> "+wxString::FromUTF8(parent)+"\n";if(version.parent_ids.empty())graph+=_L("Root commit")+"\n";}
     }
     if(m_view=="graph")m_detail->SetValue(graph.empty()?_L("No versions in the selected store."):graph);
@@ -814,7 +827,7 @@ void ProjectHistoryDialog::update_selection()
 {
     if(m_view=="searches"){m_restore_button->Enable(false);return;}
     const int row=m_version_list->GetSelectedRow();const bool selected=row>=0&&static_cast<std::size_t>(row)<m_filtered_rows.size();bool can_restore=false;
-    if(selected){const auto index=m_filtered_rows[row];const auto &origin=m_origins[index];m_selected_id=m_versions[index].commit_id;can_restore=origin.category=="project"||origin.category=="preferences";
+    if(selected){const auto index=m_filtered_rows[row];const auto &origin=m_origins[index];m_selected_id=m_versions[index].commit_id;m_selected_store=origin.category+":"+origin.identity.string()+":"+origin.device;can_restore=origin.category=="project"||origin.category=="preferences"||origin.category=="preset"||origin.category=="draft";
         if(m_view!="graph"&&m_view!="compare")set_status(wxString::FromUTF8(origin.category+" / "+origin.name+"\n"+m_versions[index].commit_id+"\n"+origin.detail));}
     m_restore_button->Enable(m_pending==PendingOperation::None&&selected&&can_restore);m_compare_button->Enable(selected&&!m_compare_future.valid());
 }
@@ -1156,6 +1169,27 @@ void ProjectHistoryDialog::compare_selection()
         const auto left = before_source.manager->restore_version(before_source.identity, before.commit_id, temporary / "before.3mf").get();
         const auto right = before_source.manager->restore_version(before_source.identity, after.commit_id, temporary / "after.3mf").get();
         if (!left.ok() || !right.ok()) return _L("Could not read the selected versions for comparison.");
+        if (before_source.category == "preset" || before_source.category == "draft" || before_source.category == "preferences") {
+            std::map<std::string, std::string> a, b;
+            if (before_source.category == "preferences") {
+                nlohmann::json left_values, right_values; std::string error;
+                if (!PreferencesHistory::read_snapshot(left.restored_path, left_values, error) ||
+                    !PreferencesHistory::read_snapshot(right.restored_path, right_values, error))
+                    return _L("Unsupported settings snapshot.");
+                a = left_values["settings"].get<std::map<std::string, std::string>>();
+                b = right_values["settings"].get<std::map<std::string, std::string>>();
+            } else { a = LocalConfigHistory::read_snapshot(left.restored_path); b = LocalConfigHistory::read_snapshot(right.restored_path); }
+            std::set<std::string> keys;
+            for (const auto &value : a) keys.insert(value.first);
+            for (const auto &value : b) keys.insert(value.first);
+            std::string delta;
+            for (const auto &key : keys) {
+                const auto x = a.find(key), y = b.find(key);
+                if (x != a.end() && y != b.end() && x->second == y->second) continue;
+                delta += key + "\n  Before: " + (x == a.end() ? "(absent)" : x->second) + "\n  After: " + (y == b.end() ? "(removed)" : y->second) + "\n";
+            }
+            return wxString::FromUTF8("Before: " + before.commit_id + "\nAfter: " + after.commit_id + "\n\n" + (delta.empty() ? "No changed settings." : delta));
+        }
         const auto a=history_payload_summary(left.restored_path,before_source.category), b=history_payload_summary(right.restored_path,before_source.category);
         return wxString::FromUTF8("Before: " + before.commit_id + "\n" + a + "\n\nAfter: " + after.commit_id + "\n" + b + (a==b ? "\nNo summary differences." : "\nSummary differs."));
     }); m_poll_timer.Start(HISTORY_POLL_INTERVAL_MS);

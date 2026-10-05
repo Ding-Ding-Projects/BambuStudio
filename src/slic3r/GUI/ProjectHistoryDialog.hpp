@@ -111,7 +111,7 @@ private:
     std::vector<Origin> m_origins;
     std::future<Aggregate> m_aggregate_future;
     std::future<wxString> m_compare_future;
-    std::string m_view{"timeline"}, m_selected_id, m_compare_id, m_restore_category;
+    std::string m_view{"timeline"}, m_selected_id, m_compare_id, m_restore_category, m_restore_identity, m_selected_store;
     std::size_t m_compare_index{0};
     std::vector<std::string> m_search_ids;
     wxChoice *m_category_filter{nullptr}, *m_status_filter{nullptr}, *m_store_filter{nullptr};

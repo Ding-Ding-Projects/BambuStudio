@@ -25,3 +25,9 @@ Credential-like option keys are excluded from draft snapshots, persistence, comp
 ## Verification status
 
 `settings_drafts_tests` covers owned-copy isolation, duplicate independence, project/preset/revision conflict rejection, live-change rejection, missing-source persistence, transactional corruption handling, and credential exclusion. This change requires a real build and runtime verification of typed controls, both host strips, close confirmation, persistence, Apply, Save as preset, and complete Undo/Redo. Source review or a passing backend test does not establish those runtime results.
+
+## Local history delivery
+
+Draft edits are recorded as sanitized local settings versions. Select a draft version in the local history browser to restore it to the matching open detached draft. The project tab and preset target must still match. Apply remains a separate confirmed action. Preset saves also create local versions; restoring one requires selecting that exact preset and leaves the result editable rather than activating another preset. Settings comparisons show individual added, changed and removed keys.
+
+Undo settings attachments use stable project-tab identity, so filename changes do not invalidate an otherwise matching target. Their storage estimate participates in Undo memory eviction. This fast-delivery change has not run tests or screenshots.

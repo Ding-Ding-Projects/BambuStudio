@@ -17,13 +17,14 @@ struct SettingsDraftUndoState final : UndoRedo::SnapshotAttachment
 {
     std::array<DynamicPrintConfig, 3> configs;
     std::array<std::string, 3> preset_names;
-    std::string project_filename;
+    std::string project_id;
     size_t project_generation = 0;
+    size_t memsize() const override;
 
     static std::shared_ptr<const SettingsDraftUndoState> capture(
-        const PresetBundle& bundle, const std::string& filename, size_t generation);
-    bool matches(const PresetBundle& bundle, const std::string& filename, size_t generation) const;
-    bool restore(PresetBundle& bundle, const std::string& filename, size_t generation) const;
+        const PresetBundle& bundle, const std::string& identity, size_t generation);
+    bool matches(const PresetBundle& bundle, const std::string& identity, size_t generation) const;
+    bool restore(PresetBundle& bundle, const std::string& identity, size_t generation) const;
 };
 
 } // namespace GUI

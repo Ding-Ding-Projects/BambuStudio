@@ -53,6 +53,7 @@ enum class SnapshotType : unsigned char {
 struct SnapshotAttachment
 {
     virtual ~SnapshotAttachment() = default;
+    virtual size_t memsize() const { return sizeof(*this); }
 };
 
 struct SnapshotData

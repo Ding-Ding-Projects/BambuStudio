@@ -12,6 +12,8 @@ class SettingsDraftPanel : public wxPanel {
 public:
     SettingsDraftPanel(wxWindow *parent, TabStrip *strip, std::function<void(bool)> show_page);
     bool Activate(const std::string &id);
+    ~SettingsDraftPanel() override;
+    static bool RestoreHistory(const std::string &id, const DynamicPrintConfig &config);
 private:
     SettingsDraftStore m_store;
     TabStrip *m_strip;
