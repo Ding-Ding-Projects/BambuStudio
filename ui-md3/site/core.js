@@ -29,6 +29,13 @@
     fontScale: 100,
     fontWeight: 400,
     notifications: true,
+    narratorEnabled: false,
+    narratorPaused: false,
+    narratorLanguage: 'en',
+    narratorVoiceEn: '',
+    narratorVoiceYue: '',
+    narratorRate: 1,
+    narratorPitch: 1,
     tabOrder: [],
     tabPinned: [],
     tabGroups: {},
@@ -486,6 +493,7 @@
     if (history.length > HISTORY_LIMIT) history.length = HISTORY_LIMIT;
     persistHistory();
     emit(['notifications']);
+    if (global.BambuNarration) global.BambuNarration.narrate(kind, key, params);
     if (!get('notifications') && kind !== 'error' && kind !== 'warning') return record;
     renderToast(record);
     return record;
