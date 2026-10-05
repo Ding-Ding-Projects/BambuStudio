@@ -35,6 +35,8 @@ public:
              long            style     = 0);
 
     DropDown & GetDropDown() { return drop; }
+    // Open from a visible proxy when this hidden combo supplies the item model.
+    void OpenDropDown(wxWindow *focus_owner = nullptr);
 
     // When true, item icon is shown as icon_1 (secondary), preserving drop_down arrow.
     // Note: item bitmaps are set via raw wxBitmap (not ScalableBitmap), so they won't

@@ -948,12 +948,12 @@ PlaterPresetComboBox::PlaterPresetComboBox(wxWindow *parent, Preset::Type preset
 
 PlaterPresetComboBox::~PlaterPresetComboBox()
 {
-    if (edit_btn)
-        edit_btn->Destroy();
-
-    // BBS.
-    if (clr_picker)
-        clr_picker->Destroy();
+    // During parent-row destruction, wx owns sibling teardown. Scheduling the
+    // same children again from the combo destructor races that traversal.
+    if (GetParent() && !GetParent()->IsBeingDeleted()) {
+        if (edit_btn) edit_btn->Destroy();
+        if (clr_picker) clr_picker->Destroy();
+    }
 }
 
 static void run_wizard(ConfigWizard::StartPage sp)
