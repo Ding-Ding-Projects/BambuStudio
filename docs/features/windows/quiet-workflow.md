@@ -7,3 +7,5 @@ Background application checks and automatic installation remain available, but o
 The slicing progress card contains progress and its controls without an educational panel. Material and device diagnostics remain separate from promotional copy.
 
 Verification includes a source-boundary regression contract for retired automatic producers. Native build and runtime verification are recorded separately and are not implied by that contract.
+
+H2S brittle-filament guidance uses the existing non-blocking notification card. Its Wiki link opens only when selected and never cancels slicing. Saved first-use flags do not restore the former modal.
