@@ -7,6 +7,8 @@ public:
     explicit AutomationBridge(GUI_App& app);
     ~AutomationBridge();
     void start();
+    // Native consent UI only. Starts a restricted pipe without enabling generic automation.
+    void start_local_capabilities();
     void stop();
 private:
     struct State;

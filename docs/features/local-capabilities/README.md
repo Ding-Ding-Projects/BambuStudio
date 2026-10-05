@@ -1,9 +1,11 @@
 # Local browser capability boundary
 
-**Status: transport implementation only, not enabled in the installed application.**
-The companion's existing MCP service remains unchanged. No production code starts
-`LocalCapabilityHost`; no production native adapters or native pairing surface are
-registered yet. Passing boundary tests does not establish desktop/browser integration.
+**Status: typed transport and native registry implemented, shell integration pending.**
+The companion's existing MCP service remains unchanged. An explicit
+`local-capabilities --instance <native PID>` command composes the listener only after
+claiming a pending native approval. No production native feature callbacks or native
+pairing surface are registered in this change. Passing boundary tests does not
+establish installed desktop/browser integration.
 
 ## Boundary and protocol
 
@@ -56,14 +58,37 @@ the host does not abandon that task and permit overlapping native side effects.
 
 ## Native integration still required
 
-The current process separation is unresolved. `LocalCapabilityHost` is managed code;
-the installed UI is native C++. A reviewed current-user-only broker must convey a
-native-approved pairing decision to the managed host and dispatch only the typed
-operations above. It must bind the selected native process and its lifetime, marshal
-onto the GUI thread, check cancellation and weak-window lifetime before dispatch,
-and revoke on native close. Neither `DeviceWebBridge` nor generic MCP dispatch is
-an approved substitute. Do not start this listener until that broker, genuine native
-adapters, consent UI and independent review are complete.
+`LocalCapabilityHost` is managed code; the installed UI is native C++.
+`NativeCapabilityRegistry` and the existing current-user-only named pipe now carry
+the fixed `local_capabilities` operation. Its actions are `claim_pairing`,
+`publish_offer`, `status`, `revoke` and `invoke`. No action approves consent.
+The bridge marshals to the GUI thread and checks the finite native approval again
+on each invocation. `start_local_capabilities()` starts only this restricted
+operation unless ordinary automation was already separately enabled. It does not
+enable arbitrary slicer, file or printer operations.
+
+Shell integration must register real availability predicates and zero-argument typed
+callbacks, then show native origin/grant confirmation and call `approve_pairing`.
+Only afterwards may it call `start_local_capabilities()` and launch the exact verified
+bundled companion with its native PID. The companion claims the pending approval once,
+starts its loopback listener and publishes the nonce/endpoint back to the native
+offer callback. That callback needs a sensitive, noncapturable native surface.
+`NativeComposition.NativeAdapter` forwards only a fixed capability and approval ID.
+Credentials remain native. The companion checks native approval every second and
+revokes its listener on loss; native invocation checks expiry independently.
+
+Register `NativeCapabilityRegistry.cpp` in the native build. Shell callbacks must
+check weak-window lifetime, return immediately after opening a nonmodal destination,
+and never start long-running work. The local native queue expires after five seconds.
+Cancellation cannot undo a native action that already began, so a lost response is
+never automatically replayed. Rich converter jobs or model actions require a separately
+reviewed typed handle/job protocol with native cancellation and action-specific
+consent; these management actions do not satisfy browser-owned equivalents.
+
+The native owner must revoke before destroying callback owners. `AutomationBridge`
+teardown also revokes. Existing `DeviceWebBridge` remains untouched. Do not enable
+the installed feature until genuine callbacks, consent UI, exact bundled-launch
+identity, independent review and real native/browser acceptance are complete.
 
 The existing script/navigation bridge lacks a demonstrated reusable origin and
 pre-parse byte boundary for these new operations. This is an incomplete boundary
@@ -96,3 +121,10 @@ sequence replay, bounded rate/concurrency, revocation cancellation, genuine loop
 HTTP, Host rebinding, missing/foreign origin, oversized/duplicate/unknown requests,
 schema versions and CORS preflight. Its counting adapter is explicitly synthetic;
 it proves transport behavior only and returns no user state.
+
+`tests/local_capabilities/verify.ps1` also removes Host validation in a disposable
+copy, requires a failing result, restores it and requires success. The current
+managed result is 61 checks. The standalone C++17
+`tests/local_capabilities/native_registry_tests.cpp` verifies 28 registry/dispatch
+checks, including wrong-thread rejection and monotonic expiry. It uses a synthetic
+clock and synthetic registered callback, not the real desktop surfaces.

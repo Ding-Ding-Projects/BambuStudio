@@ -14,5 +14,7 @@
     <Using Include="Microsoft.Extensions.DependencyInjection" />
     <Using Include="Microsoft.Extensions.Logging" />
     <Compile Include="../../automation/BambuAutomation/LocalCapabilities/*.cs" Link="Production/%(Filename)%(Extension)" />
+    <Compile Include="../../automation/BambuAutomation/NativeBridge.cs" Link="Production/NativeBridge.cs" />
+    <Compile Include="../../automation/BambuAutomation/Contracts.cs" Link="Production/Contracts.cs" />
   </ItemGroup>
 </Project>

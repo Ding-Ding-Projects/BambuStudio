@@ -13,6 +13,9 @@ foreach ($relative in @('automation/BambuAutomation/LocalCapabilities', 'tests/l
         Where-Object { $_.Extension -in '.cs', '.csproj' } |
         ForEach-Object { Copy-Item -LiteralPath $_.FullName -Destination $directory }
 }
+foreach ($name in @('NativeBridge.cs','Contracts.cs')) {
+    Copy-Item -LiteralPath (Join-Path $root "automation/BambuAutomation/$name") -Destination (Join-Path $target 'automation/BambuAutomation')
+}
 $source = Join-Path $target 'automation/BambuAutomation/LocalCapabilities/LocalCapabilityHost.cs'
 $original = [IO.File]::ReadAllText($source)
 $needle = 'context.Request.Host.Value != authority'

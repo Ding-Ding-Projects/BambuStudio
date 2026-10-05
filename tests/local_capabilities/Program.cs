@@ -2,6 +2,8 @@ using BambuAutomation.LocalCapabilities;
 using System.Net;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
+using BambuAutomation;
 
 int checks = 0;
 void Check(bool condition) { ++checks; if (!condition) throw new Exception($"Check {checks} failed."); }
@@ -111,6 +113,20 @@ Check((await Send("/v1/invoke", invoke, bearer)).StatusCode == HttpStatusCode.Fo
 Check(adapter.Calls == 1);
 host.Revoke();
 Check((await Send("/v1/invoke", invoke, bearer)).StatusCode == HttpStatusCode.Forbidden);
+var bridge = new RecordingBridge();
+var nativeAdapter = new NativeComposition.NativeAdapter(bridge, 123, "approval", LocalCapability.SchoolState);
+var nativeResult = await nativeAdapter.InvokeAsync(CancellationToken.None);
+Check(nativeResult.School?.Enabled == true);
+Check(bridge.Instance == 123 && bridge.Operation == "local_capabilities");
+Check(bridge.Arguments?.Count == 3);
+Check(bridge.Arguments?["action"]?.GetValue<string>() == "invoke");
+Check(bridge.Arguments?["capability"]?.GetValue<string>() == "school.state");
+using(var cancelled = new CancellationTokenSource())
+{
+    cancelled.Cancel();
+    try { await nativeAdapter.InvokeAsync(cancelled.Token); throw new Exception("Expected cancellation."); }
+    catch(OperationCanceledException) { Check(bridge.Calls == 1); }
+}
 Console.WriteLine($"Local capability boundary: {checks} checks passed.");
 
 sealed class FakeClock : TimeProvider
@@ -129,4 +145,16 @@ sealed class CountingAdapter : ILocalCapabilityAdapter
     public int Calls { get; private set; }
     public Task<CapabilityResult> InvokeAsync(CancellationToken cancellationToken)
     { ++Calls; return Task.FromResult(new CapabilityResult(new SchoolSnapshot(false, "Example mode"))); }
+}
+sealed class RecordingBridge : INativeBridge
+{
+    public int Instance, Calls;
+    public string? Operation;
+    public JsonObject? Arguments;
+    public IReadOnlyList<int> Instances() => [];
+    public Task<JsonObject> InvokeAsync(int instance, string operation, JsonObject arguments, CancellationToken cancellationToken)
+    {
+        ++Calls; Instance = instance; Operation = operation; Arguments = arguments;
+        return Task.FromResult(new JsonObject { ["enabled"] = true, ["displayName"] = "Example mode" });
+    }
 }
