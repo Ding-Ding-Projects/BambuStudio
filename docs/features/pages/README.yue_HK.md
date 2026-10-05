@@ -16,6 +16,8 @@ review-status: agent-drafted
 
 ## 功能
 
+- [雙鑰匙破壞性確認](destructive-confirmation.yue_HK.md)：確切操作、兩個獨立鑰匙、完整滑桿、取消同單次執行。
+
 - [本機個人用字](personal-wording.yue_HK.md)：只留喺此瀏覽器嘅 JSON 載入、更換、驗證快取同清除。
 - [瀏覽器事件旁白](event-narration.yue_HK.md)：自選語言同聲音，順序播放，暫停同停止。
 - [專注介面調整同訊息裝飾](attention-and-message-decoration.yue_HK.md)：五個預設關閉嘅獨立調整，同可持續儲存嘅裝飾表情符號開關。

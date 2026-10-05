@@ -823,3 +823,12 @@ footer { border-top: 1px solid var(--md-outline-variant); padding: 28px 0 44px; 
 [data-low-stimulation=true]{--md-primary:var(--md-on-surface-variant)!important;}
 [data-low-stimulation=true] *,[data-low-stimulation=true] *::before,[data-low-stimulation=true] *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important;}
 .message-emoji{display:inline-block;align-self:flex-start;margin:4px;font-size:1.1em;line-height:1;}
+.site-confirmation{position:fixed;z-index:1600;box-sizing:border-box;overflow:auto;background:var(--md-sc-high);color:var(--md-on-surface);border:1px solid var(--md-outline);border-radius:24px;padding:20px;box-shadow:0 12px 40px #0005;}
+.site-confirmation h2,.site-confirmation p{overflow-wrap:anywhere;}
+.confirmation-stage{padding-block:12px;}
+.confirmation-stage label{display:flex;align-items:center;flex-wrap:wrap;gap:12px;min-height:44px;}
+.confirmation-stage input[type=checkbox]{width:24px;height:24px;margin:10px;}
+.confirmation-stage input[type=range],.confirmation-stage progress{width:100%;min-width:0;}
+.confirmation-stage progress{height:12px;accent-color:var(--md-primary);}
+.confirmation-complete{outline:3px solid var(--md-primary);}
+@media(prefers-reduced-motion:no-preference){.confirmation-complete{animation:confirmation-completion .35s ease-out;}@keyframes confirmation-completion{from{box-shadow:0 0 0 0 var(--md-primary);}to{box-shadow:0 0 0 12px transparent;}}}

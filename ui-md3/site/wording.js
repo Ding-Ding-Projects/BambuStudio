@@ -8,8 +8,9 @@
 
   // Parse before JSON.parse can discard duplicate object keys. Diagnostics are
   // deliberately generic: a rejected file must not leak any part of its data.
-  function parse(raw) {
-    if (typeof raw !== 'string' || new TextEncoder().encode(raw).length > LIMITS.bytes) throw new Error('size');
+  function parseJson(raw, maximumBytes, maximumDepth) {
+    if (!Number.isInteger(maximumBytes) || maximumBytes < 1 || maximumBytes > LIMITS.bytes || !Number.isInteger(maximumDepth) || maximumDepth < 1 || maximumDepth > 8) throw new Error('bounds');
+    if (typeof raw !== 'string' || new TextEncoder().encode(raw).length > maximumBytes) throw new Error('size');
     var offset = 0;
     function space() { while (/[ \t\r\n]/.test(raw.charAt(offset)) && offset < raw.length) offset++; }
     function string() {
@@ -22,9 +23,20 @@
       throw new Error('syntax');
     }
     function value(depth) {
-      if (depth > LIMITS.depth) throw new Error('depth');
+      if (depth > maximumDepth) throw new Error('depth');
       space();
       if (raw.charAt(offset) === '"') return string();
+      if (raw.charAt(offset) === '[') {
+        offset++; space(); var array = [];
+        if (raw.charAt(offset) === ']') { offset++; return array; }
+        while (offset < raw.length) {
+          array.push(value(depth + 1)); space();
+          var separator = raw.charAt(offset++);
+          if (separator === ']') return array;
+          if (separator !== ',') throw new Error('syntax');
+        }
+        throw new Error('syntax');
+      }
       if (raw.charAt(offset) === '{') {
         offset++;
         var object = Object.create(null);
@@ -53,6 +65,10 @@
     var result = value(0);
     space();
     if (offset !== raw.length) throw new Error('syntax');
+    return result;
+  }
+  function parse(raw) {
+    var result = parseJson(raw, LIMITS.bytes, LIMITS.depth);
     if (!result || Object.keys(result).sort().join(',') !== 'entries,schemaVersion' || result.schemaVersion !== 1) throw new Error('schema');
     if (!result.entries || typeof result.entries !== 'object' || Array.isArray(result.entries)) throw new Error('schema');
     var keys = Object.keys(result.entries);
@@ -146,5 +162,5 @@
     paint();
   }
   restore();
-  global.BambuWording = { LIMITS: LIMITS, parse: parse, load: load, clear: clear, restore: restore, replace: replace, mount: mount, status: function () { return { loaded: !!active, persistent: cached }; } };
+  global.BambuWording = { LIMITS: LIMITS, parse: parse, parseJson: parseJson, load: load, clear: clear, restore: restore, replace: replace, mount: mount, status: function () { return { loaded: !!active, persistent: cached }; } };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -773,56 +773,12 @@
    * this site reports through non-blocking notifications.
    */
   function confirmReset(opener) {
-    var scrim = doc.createElement('div');
-    scrim.className = 'scrim';
-    var dialog = doc.createElement('div');
-    dialog.className = 'dialog';
-    dialog.setAttribute('role', 'alertdialog');
-    dialog.setAttribute('aria-modal', 'true');
-    dialog.setAttribute('aria-labelledby', 'reset-title');
-    dialog.setAttribute('aria-describedby', 'reset-desc');
-    dialog.innerHTML =
-      '<h2 id="reset-title" data-copy="settings.reset"></h2>' +
-      '<p id="reset-desc" data-copy="settings.reset.desc"></p>' +
-      '<div class="dialog-actions">' +
-        '<button type="button" class="btn btn-outline" data-act="cancel" data-copy="settings.reset.cancel"></button>' +
-        '<button type="button" class="btn btn-danger" data-act="confirm" data-copy="settings.reset.confirm"></button>' +
-      '</div>';
-    scrim.appendChild(dialog);
-    doc.body.appendChild(scrim);
-    site.applyCopy(scrim);
-
-    function close() {
-      doc.body.removeChild(scrim);
-      doc.removeEventListener('keydown', onKey);
-      if (opener) opener.focus();
-    }
-    function onKey(event) {
-      if (event.key === 'Escape') close();
-      if (event.key === 'Tab') {
-        var focusable = dialog.querySelectorAll('button');
-        var first = focusable[0];
-        var last = focusable[focusable.length - 1];
-        if (event.shiftKey && doc.activeElement === first) {
-          event.preventDefault();
-          last.focus();
-        } else if (!event.shiftKey && doc.activeElement === last) {
-          event.preventDefault();
-          first.focus();
-        }
-      }
-    }
-    dialog.querySelector('[data-act="cancel"]').addEventListener('click', close);
-    dialog.querySelector('[data-act="confirm"]').addEventListener('click', function () {
-      site.resetAll();
-      site.applyAppearance();
-      close();
-      site.notify('success', 'notify.reset.done');
-      global.location.reload();
+    return global.BambuConfirmation.ask({
+      opener: opener,
+      actionKey: 'settings.reset.desc',
+      run: function () { site.resetAll(); site.applyAppearance(); },
+      onComplete: function () { site.notify('success', 'notify.reset.done'); global.location.reload(); }
     });
-    scrim.addEventListener('click', function (event) { if (event.target === scrim) close(); });
-    doc.addEventListener('keydown', onKey);
-    dialog.querySelector('[data-act="cancel"]').focus();
   }
 
   global.BambuControls = {

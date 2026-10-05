@@ -25,6 +25,9 @@ work.
 
 ## Features
 
+- [Two-key destructive confirmation](destructive-confirmation.md): action-specific keys, full-range
+  authorization slider, emergency cancellation and one-shot execution.
+
 - [Local personal wording](personal-wording.md): private per-visitor JSON import, replacement,
   cache validation and clear behavior, with explicit remaining integration and runtime proof.
 - [Browser event narration](event-narration.md): opt-in serialized speech, independent voice
