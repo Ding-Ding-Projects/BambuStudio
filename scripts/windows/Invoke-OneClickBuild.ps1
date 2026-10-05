@@ -318,10 +318,9 @@ function Initialize-LocalToolchain {
     if (-not $Plan) {
         Write-BuildLog "Using Python at $(Get-PythonInterpreterPath) for the catalog compilation."
     }
-    if (-not $BuildOnly) {
-        Install-WingetPackageIfMissing -DisplayName '.NET 10 SDK' -PackageId 'Microsoft.DotNet.SDK.10' `
-            -Probe { Test-DotNet10Sdk }
-    }
+    # Both routes stage the automation companion before BuildOnly returns.
+    Install-WingetPackageIfMissing -DisplayName '.NET 10 SDK' -PackageId 'Microsoft.DotNet.SDK.10' `
+        -Probe { Test-DotNet10Sdk }
 
     if (-not $Plan) {
         $vsInstance = Get-VisualStudioInstance
@@ -864,7 +863,7 @@ if (-not $Plan) {
             Write-Host 'Administrator approval is required before the build bootstrap starts.'
             $processPolicy = Get-ExecutionPolicy -Scope Process
             $policyArguments = if ($processPolicy -eq 'Undefined') { '' } else { ' -ExecutionPolicy ' + [string]$processPolicy }
-            $elevated = Start-Process -FilePath $hostExecutable -Verb RunAs -Wait -PassThru `
+            $elevated = Start-Process -FilePath $hostExecutable -Verb RunAs -WindowStyle Hidden -Wait -PassThru `
                 -ArgumentList ('-NoLogo -NoProfile' + $policyArguments + ' -EncodedCommand ' + $encodedCommand)
             exit $elevated.ExitCode
         } catch {
