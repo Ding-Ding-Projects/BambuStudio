@@ -2,10 +2,11 @@
 
 ## Current delivery pass, 5 October 2026
 
-Combined source: `0e8673b5b8ac27b34fd7595ba9886256bdbc6915`. Implementation integration and verified release delivery are the selected closure criteria. Tests, lint, type checks, static-analysis suites, runtime interaction, installer execution and screenshots are intentionally not run in this pass. Historical checkboxes below retain their original evidence scope and do not establish acceptance of this combined revision.
+Combined implementation baseline: `0e8673b5b8ac27b34fd7595ba9886256bdbc6915`. Current candidate on main: `0f6ad8c40616e28c892f5fe63625d8a70188e145`, which adds the FFmpeg path-with-spaces repair. Fresh configure is blocked on Strawberry Perl's `pkg-config` output still mishandling spaces; the build lane is implementing the correct route. Implementation integration and verified release delivery are the selected closure criteria. Tests, lint, type checks, static-analysis suites, runtime interaction, installer execution and screenshots are intentionally not run in this pass. Historical checkboxes below retain their original evidence scope and do not establish acceptance of this combined revision.
 
 - [x] Reconcile the preserved continuation source and integrate bounded surface, automation, draft/history, continuity, import and build repairs into the combined source revision.
-- [ ] Complete the local native build pinned to `0e8673b5b8ac27b34fd7595ba9886256bdbc6915`; it is running, with no terminal verdict yet.
+- [ ] Complete the correct `pkg-config` route and configure the superseding pinned candidate; no successful configure or native compile verdict exists yet.
+- [ ] Complete native compilation of that exact candidate.
 - [ ] Package the intended source through the supported unsigned Squirrel route.
 - [ ] Push completed delivery to `main` and prove the exact remote reference.
 - [ ] Verify the new unique non-draft release, intended target and every required downloadable asset before closing eligible issues.

@@ -6,7 +6,7 @@ Deliver the bounded BambuStudio issue inventory #16, #35, #36, #41, #43, #45, #4
 
 ## Combined source and build
 
-The combined implementation revision is `0e8673b5b8ac27b34fd7595ba9886256bdbc6915`. The local native build is running in a separate isolated checkout pinned to that exact revision. Do not change that checkout while the build runs. The documentation commit containing this update is separate from the pinned build source. No terminal native build verdict or new release for this pass exists yet. Exact remote main proof must be recorded by the coordinating task after its push; this document does not claim a push.
+The combined implementation baseline is `0e8673b5b8ac27b34fd7595ba9886256bdbc6915`. It is superseded by current main candidate `0f6ad8c40616e28c892f5fe63625d8a70188e145`, which repairs FFmpeg paths with spaces. Fresh configure remains blocked because Strawberry Perl's `pkg-config` output still mishandles spaces; the build lane is implementing the correct route. No successful configure, native compile or new release verdict exists for this pass yet. Retain the earlier `0e8673b5b` snapshot as historical source identity, not the current build candidate. The documentation commit containing this update is separate from the pinned build source. Do not modify any active pinned build checkout. Exact remote main proof must be recorded by the coordinating task after its push; this document does not claim a push.
 
 | Lane | Integrated source | Record |
 | --- | --- | --- |
@@ -29,7 +29,7 @@ The eight preserved responsive-workflow source branches were reconciled before t
 
 ## Next safe steps
 
-1. Read the terminal result of the native build pinned to `0e8673b5b8ac27b34fd7595ba9886256bdbc6915`; repair only directly required build problems in an isolated candidate if necessary.
+1. Finish the correct `pkg-config` route and configure its superseding pinned candidate, then obtain that exact candidate's native compile verdict. Repair only directly required build problems in an isolated candidate if necessary.
 2. Produce the expected unsigned Squirrel installer, full package, update feed, hashes and project-declared metadata from the intended source. Coordinate publication so one intended release is created.
 3. Push completed source and current records to main, then verify its exact remote reference.
 4. Verify the unique non-draft release tag and target and all required downloadable assets. Close only issues whose scoped implementation and delivery are actually satisfied; leave #16's separate companion decision explicit.

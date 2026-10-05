@@ -1,5 +1,5 @@
 > [!IMPORTANT]
-> Current delivery pass, 5 October 2026: the combined implementation is integrated at `0e8673b5b8ac27b34fd7595ba9886256bdbc6915`. Its local native build is running in an isolated checkout pinned to that revision. No new release exists for this pass yet. The maintainer selected implementation integration and verified release delivery as the closure criteria; tests and screenshots are intentionally not run. Runtime and physical-printer correctness remain unverified. Read [the current handoff](HANDOFF.md) and [continuation record](CLOSEOUT_PROMPT.md). Earlier reconstruction evidence remains in [the verification status](docs/reapplication/verification-status.md).
+> Current delivery pass, 5 October 2026: the combined implementation baseline `0e8673b5b8ac27b34fd7595ba9886256bdbc6915` is superseded by the FFmpeg path-with-spaces repair at `0f6ad8c40616e28c892f5fe63625d8a70188e145` on main. Fresh local configure is blocked because Strawberry Perl's `pkg-config` output still mishandles spaces; the build lane is implementing the correct route. Native compilation and release delivery have no verdict yet. The maintainer selected implementation integration and verified release delivery as the closure criteria; tests and screenshots are intentionally not run. Runtime and physical-printer correctness remain unverified. Read [the current handoff](HANDOFF.md) and [continuation record](CLOSEOUT_PROMPT.md). Earlier reconstruction evidence remains in [the verification status](docs/reapplication/verification-status.md).
 
 ![image](https://user-images.githubusercontent.com/106916061/179006347-497d24c0-9bd6-45b7-8c49-d5cc8ecfe5d7.png)
 # BambuStudio
@@ -14,7 +14,7 @@ under a local native build for the combined delivery; the [audit register](docs/
 records historical runtime and layout evidence. Tests and screenshots are not run in this pass;
 implementation is not a claim of verified physical-printer behavior.
 Current compiler and startup evidence is summarized in the [continuation record](CLOSEOUT_PROMPT.md).
-The current combined native build is running; packaging and release publication remain pending.
+The current candidate is configure-blocked on the `pkg-config` path-with-spaces problem; native compilation, packaging and release publication remain pending.
 Earlier managed-check results apply only to their recorded source revisions. The combined source includes the reconciled continuation lanes and bounded repairs listed in the current handoff.
 
 Bambu Studio is a cutting-edge, feature-rich slicing software.  
