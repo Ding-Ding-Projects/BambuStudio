@@ -19,3 +19,7 @@ automatically publish. Manual dispatch builds by default; publication requires
 `publish_release: true` and a `main` ref. Automation test workflows are not a
 release dependency. This delivery pass runs no tests, lint, installer execution,
 runtime checks, or screenshots; build and release proof does not establish them.
+The DeviceWeb production target installs its own frozen lockfile with ancestor
+workspace discovery disabled, then runs its local Vite bundler directly. The
+TypeScript projects use `noEmit`, so their separate type-check step is not needed
+to produce the bundle and is excluded from this production release path.

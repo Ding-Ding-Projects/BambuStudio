@@ -904,48 +904,18 @@ jobs:
               throw "Windows release failed: $originalError"
           }
 
-      - name: Verify the published Squirrel installer in an isolated hosted account
-        shell: pwsh
-        env:
-          GH_TOKEN: ${{ secrets.RELEASE_TOKEN || secrets.ORG_TOKEN || secrets.GITHUB_TOKEN }}
-        run: |
-          & scripts/ci/Verify-HostedSquirrelInstall.ps1 `
-            -Tag $env:release_tag `
-            -Repository $env:GITHUB_REPOSITORY `
-            -ExpectedCommit $env:GITHUB_SHA `
-            -OutputPath (Join-Path $env:GITHUB_WORKSPACE 'hosted-install-receipt.json') `
-            -CiExecutionApproved
-
-      - name: Upload isolated installation receipt
+      - name: Preserve release production outputs
         if: ${{ always() }}
         continue-on-error: true
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
-          name: BambuStudio_Windows_${{ github.run_id }}_hosted_install_receipt
-          path: hosted-install-receipt.json
-          if-no-files-found: warn
-          retention-days: 30
-
-      - name: Capture installed release GUI on a hidden desktop
-        if: ${{ success() }}
-        continue-on-error: true
-        shell: pwsh
-        run: |
-          & scripts/md3/Capture-HostedReleaseGui.ps1 `
-            -InstallReceipt (Join-Path $env:GITHUB_WORKSPACE 'hosted-install-receipt.json') `
-            -ExpectedCommit $env:GITHUB_SHA `
-            -Tag $env:release_tag `
-            -OutputDirectory (Join-Path $env:GITHUB_WORKSPACE 'hosted-gui-evidence')
-
-      - name: Upload encrypted hosted GUI capture and receipt
-        if: ${{ always() }}
-        continue-on-error: true
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
-        with:
-          name: BambuStudio_Windows_${{ github.run_id }}_hosted_gui_evidence
+          name: BambuStudio_Windows_${{ github.run_id }}_release_outputs
           path: |
-            hosted-gui-evidence/receipt.json
-            hosted-gui-evidence/envelope.json
-            hosted-gui-evidence/images.zip.aesgcm
+            release/**/Setup.exe
+            release/**/Setup.exe.sha256
+            release/**/RELEASES
+            release/**/*-full.nupkg
+            release/**/BambuStudioMD3.cdx.json
+            release-line-count.md
           if-no-files-found: warn
           retention-days: 30

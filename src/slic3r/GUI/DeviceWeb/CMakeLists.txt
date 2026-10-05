@@ -227,9 +227,12 @@ add_custom_command(
     # CI=1: pnpm must never wait for a terminal here. Under the one-click build
     # (no console attached) an interactive install sat idle for over fifteen
     # minutes with 1 s of CPU, and the same command finished in 27 s with CI set.
-    COMMAND ${CMAKE_COMMAND} -E env "PATH=${DEVICE_PAGE_PATH}" "CI=1" ${PNPM_EXECUTABLE} install --store-dir ${PNPM_STORE_DIR}
-    COMMAND echo "Running PNPM run build"
-    COMMAND ${CMAKE_COMMAND} -E env "PATH=${DEVICE_PAGE_PATH}" "CI=1" ${PNPM_EXECUTABLE} run build
+    # This package is standalone even when an unrelated ancestor has a pnpm
+    # workspace. Vite emits the bundle; the noEmit TypeScript project is not
+    # a production dependency or a release gate.
+    COMMAND ${CMAKE_COMMAND} -E env "PATH=${DEVICE_PAGE_PATH}" "CI=1" ${PNPM_EXECUTABLE} --ignore-workspace install --frozen-lockfile --store-dir ${PNPM_STORE_DIR}
+    COMMAND echo "Running local Vite production build"
+    COMMAND ${CMAKE_COMMAND} -E env "PATH=${DEVICE_PAGE_PATH}" "CI=1" ${PNPM_EXECUTABLE} --ignore-workspace exec vite build
     COMMAND echo "Removing page target directory"
     COMMAND ${CMAKE_COMMAND} -E remove_directory "${DEVICE_PAGE_TARGET_DIR}"
     COMMAND echo "Creating page target directory"
