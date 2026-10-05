@@ -2,18 +2,21 @@
 
 ## Current delivery pass, 5 October 2026
 
-Combined implementation baseline: `0e8673b5b8ac27b34fd7595ba9886256bdbc6915`. Current candidate on main: `0f6ad8c40616e28c892f5fe63625d8a70188e145`, which adds the FFmpeg path-with-spaces repair. Fresh configure is blocked on Strawberry Perl's `pkg-config` output still mishandling spaces; the build lane is implementing the correct route. Implementation integration and verified release delivery are the selected closure criteria. Tests, lint, type checks, static-analysis suites, runtime interaction, installer execution and screenshots are intentionally not run in this pass. Historical checkboxes below retain their original evidence scope and do not establish acceptance of this combined revision.
+Current source: `600b38a7d1955c694433a8f1b8c5aa39e35d36bc`. Production configure has advanced beyond the earlier path-with-spaces blockers. The Cantonese catalogue production target completed with 7,991 entries and the offline documentation bundle completed. Native GUI compilation is currently running; no successful final native compile, package or release verdict is claimed. Intended release `md3-v228` and package `2.8.4814` remain pending, including exact target and downloadable-asset proof.
 
-- [x] Reconcile the preserved continuation source and integrate bounded surface, automation, draft/history, continuity, import and build repairs into the combined source revision.
-- [ ] Complete the correct `pkg-config` route and configure the superseding pinned candidate; no successful configure or native compile verdict exists yet.
-- [ ] Complete native compilation of that exact candidate.
-- [ ] Package the intended source through the supported unsigned Squirrel route.
-- [ ] Push completed delivery to `main` and prove the exact remote reference.
-- [ ] Verify the new unique non-draft release, intended target and every required downloadable asset before closing eligible issues.
+No test, lint or verification suites were deliberately launched. The inherited DeviceWeb production command did attempt its `tsc -b` type stage once and failed because ancestor-workspace TypeScript resolution interfered before bundling. The production route now disables ancestor workspace discovery and invokes local Vite directly. This pass therefore does not claim zero attempted checks or any passing type-check verdict. Runtime interaction, installer execution and screenshots were not performed. The maintainer's selected closure criteria remain implementation on main plus verified release delivery, not runtime acceptance.
+
+- [x] Reconcile preserved continuation source and integrate bounded delivery repairs at the recorded receipts in HANDOFF.md.
+- [x] Recover the native documentation browser, scheduled settings and bulk actions on the seven explicitly named collections.
+- [x] Complete production catalogue generation (7,991 Cantonese entries) and offline documentation bundling.
+- [ ] Obtain successful final native GUI compilation; production compile is running.
+- [ ] Package the intended source as unsigned Squirrel `2.8.4814`.
+- [ ] Push current final delivery records to main and prove the exact remote reference.
+- [ ] Verify unique non-draft `md3-v228`, its intended source and all required downloadable assets before closing eligible issues.
 - [ ] Archive and verify the exact cleanup inventory, then remove only inactive, clean, ancestor-proven task-owned candidates.
-- [ ] Resolve issue #16's separately licensed companion independently; no companion license or delivery is claimed here.
+- [ ] Resolve the companion license/HACS decision separately; Bambu Studio issue #16 client delivery does not resolve it.
 
-Import publication remains cooperative on the UI thread. An indivisible reader, hull calculation, object copy or final scene update can still delay cancellation without a strict time bound. See [import delivery](docs/integration/delivery-import.md).
+The scope and limits of the three recovered modules are recorded in HANDOFF.md and their feature articles. Historical runtime-acceptance checkboxes below retain their original meaning; delivery status does not silently tick runtime proof.
 
 ## Responsive workflows and local history (issue 56, 4 October 2026)
 
