@@ -69,7 +69,9 @@ void pump_queue() {
     }
     s_last_suppressed = suppressed;
     if (s_quiet || s_screen_reader) {
-        if (s_backend_inflight) { voice().stop(); s_queue.cancel(); s_backend_inflight = false; }
+        s_queue.cancel();
+        if (s_backend_inflight) voice().stop();
+        s_backend_inflight = false;
         return;
     }
     const bool completed = !s_backend_inflight || voice().complete();
