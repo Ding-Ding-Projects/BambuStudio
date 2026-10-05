@@ -2799,23 +2799,11 @@ void NotificationManager::init_slicing_progress_notification(std::function<bool(
 }
 void NotificationManager::update_slicing_notif_dailytips(bool need_change)
 {
-	for (std::unique_ptr<PopNotification>& notification : m_pop_notifications) {
-		if (notification->get_type() == NotificationType::SlicingProgress) {
-			SlicingProgressNotification* spn = dynamic_cast<SlicingProgressNotification*>(notification.get());
-			if (need_change) {
-				wxGetApp().plater()->get_dailytips()->close();
-				std::string high_shrinkage_filament_names;
-				if (get_high_shrinkage_filament_names(high_shrinkage_filament_names))
-					spn->get_dailytips_panel()->retrieve_data_from_hint_database(HIGH_SHRINKAGE_FILAMENT_HINT_KEY, high_shrinkage_filament_names);
-				else
-					spn->get_dailytips_panel()->retrieve_data_from_hint_database(HintDataNavigation::Random);
-				wxGetApp().plater()->schedule_extra_frame(0);
-			}
-			return;
-		}
-	}
-	// Slicing progress notification was not found - init it thru plater so correct cancel callback function is appended
-	wxGetApp().plater()->init_notification_manager();
+    (void) need_change;
+    // Keep progress and cancellation, but never inject random tutorial content.
+    for (const auto& notification : m_pop_notifications)
+        if (notification->get_type() == NotificationType::SlicingProgress) return;
+    wxGetApp().plater()->init_notification_manager();
 }
 void NotificationManager::set_slicing_progress_began(bool is_helio)
 {

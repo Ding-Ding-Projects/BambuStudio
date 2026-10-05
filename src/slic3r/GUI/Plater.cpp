@@ -1143,21 +1143,10 @@ void Sidebar::priv::flush_printer_sync(bool restart)
 
 void Sidebar::priv::show_filament_switcher_dialog(bool is_ready, bool is_manual)
 {
-    if (is_ready) {
-        if (wxGetApp().app_config->get("show_fila_switch_tips") == "true") {
-            wxGetApp().app_config->set("show_fila_switch_tips", "false");
-            show_fila_switch_msg(true);
-        }
-    } else {
-        if (is_manual) {
-            fila_switch_warning_shown = true;
-            show_fila_switch_msg(false);
-        } else {
-            if (!fila_switch_warning_shown) {
-                fila_switch_warning_shown = true;
-                show_fila_switch_msg(false);
-            }
-        }
+    // Ready-state introductions are not shown automatically.
+    if (!is_ready && is_manual) {
+        fila_switch_warning_shown = true;
+        show_fila_switch_msg(false);
     }
 }
 
@@ -16746,19 +16735,6 @@ void Plater::priv::on_process_completed(SlicingProcessCompletedEvent &evt)
         if (exporting_status == ExportingStatus::EXPORTING_TO_LOCAL && !has_error)
             notification_manager->push_exporting_finished_notification(last_output_path, last_output_dir_path, false);
 
-        // Show tutorial popup after successful slicing (if Helio is enabled and tutorial is active)
-        if (!has_error && !evt.cancelled() && evt.success() && is_finished) {
-            if (wxGetApp().app_config->get("helio_enable") == "true" &&
-                wxGetApp().app_config->get("helio_first_time_tutorial") == "active") {
-                wxString tutorial_msg = _L("Great! Now click the Helio button to start optimization.");
-                notification_manager->push_notification(
-                    NotificationType::CustomNotification,
-                    NotificationManager::NotificationLevel::HintNotificationLevel,
-                    into_u8(tutorial_msg)
-                );
-            }
-        }
-
         // BBS, Generate calibration thumbnail for current plate
         if (!has_error && preview) {
             // generate calibration data
@@ -19207,16 +19183,6 @@ void Plater::priv::on_helio_process(const PartPlate* expected_plate)
         if (g_helio_pre_select_optimization) {
             dlg.set_initial_action(1); // Set to optimization mode
             g_helio_pre_select_optimization = false; // Reset flag
-        }
-
-        // Show tutorial popup when HelioInputDialog is shown (if tutorial is active)
-        if (wxGetApp().app_config->get("helio_first_time_tutorial") == "active") {
-            wxString tutorial_msg = _L("Click the Optimize/Enhance button to start your first optimization.");
-            notification_manager->push_notification(
-                NotificationType::CustomNotification,
-                NotificationManager::NotificationLevel::HintNotificationLevel,
-                into_u8(tutorial_msg)
-            );
         }
 
         // If user selected a reference material for unsupported filament, force "Slicer default" limits

@@ -4711,7 +4711,9 @@ void StatusPanel::update_ams(MachineObject *obj)
 
 void StatusPanel::show_ams_filament_hint(const std::string& ams_id, const std::string& slot_id)
 {
-    if (m_ams_control) m_ams_control->show_filament_hint(ams_id, slot_id);
+    (void) ams_id;
+    (void) slot_id;
+    // RFID recording does not create unsolicited slot badges.
 }
 
 void sGetSwitchInfo(MachineObject *obj, const std::string &ams_id, const std::string &slot_id, wxString &load_error_info, wxString &unload_error_info)

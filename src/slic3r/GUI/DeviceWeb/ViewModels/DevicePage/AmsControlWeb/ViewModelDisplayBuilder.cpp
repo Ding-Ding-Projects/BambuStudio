@@ -51,8 +51,7 @@ SchemaFormat::MenuActions build_menu_actions(const SchemaFormat::Tray& tray,
 
     actions.show_read = view_only || slot_state == SchemaValues::slot_state::brand;
     actions.show_edit = !actions.show_read;
-    actions.show_filament_mgr_hint =
-        filament_mgr_hint_slots().count({tray.ams_id, tray.slot_id}) > 0;
+    actions.show_filament_mgr_hint = false; // Recording is available in the manager without badges.
     return actions;
 }
 

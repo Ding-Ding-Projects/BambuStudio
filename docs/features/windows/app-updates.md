@@ -1,3 +1,6 @@
+> [!NOTE]
+> Background updates now stay quiet. Download offers, ready banners and fallback dialogs appear only after a manual update check. Older descriptions of automatic presentation below are historical. See [quiet workflow](quiet-workflow.md).
+
 # App updates from this fork's releases
 
 ## Behavior
