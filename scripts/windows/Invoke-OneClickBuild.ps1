@@ -100,6 +100,30 @@ function Get-SevenZipPath {
     return $null
 }
 
+function Initialize-WinGet {
+    if (Get-Command winget.exe -ErrorAction SilentlyContinue) { return }
+    Write-BuildLog 'Bootstrapping Windows Package Manager through the Microsoft WinGet client module...'
+    # Use Microsoft's supported bootstrap without changing repository trust,
+    # execution policy, antivirus settings, or host power state.
+    [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
+    Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Scope CurrentUser -Force | Out-Null
+    Install-Module -Name Microsoft.WinGet.Client -Repository PSGallery -Scope CurrentUser -Force -AllowClobber
+    Import-Module Microsoft.WinGet.Client -ErrorAction Stop
+    Repair-WinGetPackageManager -AllUsers
+    Update-SessionPath
+    if (-not (Get-Command winget.exe -ErrorAction SilentlyContinue)) {
+        throw 'The supported WinGet bootstrap did not produce an available winget.exe. Installation or registration is blocked on this host.'
+    }
+}
+
+function Test-DotNet10Sdk {
+    $dotnet = Get-Command dotnet.exe -ErrorAction SilentlyContinue
+    if ($null -eq $dotnet) { return $false }
+    $sdks = & $dotnet.Source --list-sdks 2>$null
+    if ($LASTEXITCODE -ne 0) { return $false }
+    return $null -ne ($sdks | Where-Object { $_ -match '^10\.\d+\.\d+\s+\[' } | Select-Object -First 1)
+}
+
 function Install-WingetPackageIfMissing {
     param(
         [Parameter(Mandatory)][string] $DisplayName,
@@ -116,7 +140,7 @@ function Install-WingetPackageIfMissing {
         return
     }
     if (-not (Get-Command winget.exe -ErrorAction SilentlyContinue)) {
-        throw "$DisplayName is missing and winget is unavailable. Install App Installer, then rerun."
+        Initialize-WinGet
     }
 
     Write-BuildLog "Installing $DisplayName ($PackageId)..."
@@ -262,6 +286,7 @@ function Initialize-LocalToolchain {
             New-Item -ItemType Directory -Path $bootstrapDir -Force | Out-Null
         }
         Update-SessionPath
+        Initialize-WinGet
         Install-Git -WorkDir $bootstrapDir
         Install-VisualCppBuildTools -WorkDir $bootstrapDir
         Install-CMake -WorkDir $bootstrapDir
@@ -292,6 +317,10 @@ function Initialize-LocalToolchain {
         -Probe { $null -ne (Get-PythonInterpreterPath) }
     if (-not $Plan) {
         Write-BuildLog "Using Python at $(Get-PythonInterpreterPath) for the catalog compilation."
+    }
+    if (-not $BuildOnly) {
+        Install-WingetPackageIfMissing -DisplayName '.NET 10 SDK' -PackageId 'Microsoft.DotNet.SDK.10' `
+            -Probe { Test-DotNet10Sdk }
     }
 
     if (-not $Plan) {
@@ -805,6 +834,43 @@ function Invoke-OneClickBuild {
     }
     finally {
         Pop-Location
+    }
+}
+
+# Elevate before acquiring a build mutex, opening a transcript, or installing
+# prerequisites. RunAs invokes the normal Windows consent prompt; cancellation
+# is a terminal launcher result, never an unattended approval substitute.
+if (-not $Plan) {
+    $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
+    $principal = [Security.Principal.WindowsPrincipal]::new($identity)
+    if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+        $forwarded = @()
+        foreach ($entry in $PSBoundParameters.GetEnumerator()) {
+            if ($entry.Value -is [Management.Automation.SwitchParameter]) {
+                $switchValue = if ($entry.Value.IsPresent) { '$true' } else { '$false' }
+                $forwarded += ('-' + $entry.Key + ':' + $switchValue)
+            } else {
+                $forwarded += ('-' + $entry.Key + " '" + ([string]$entry.Value).Replace("'", "''") + "'")
+            }
+        }
+        $scriptLiteral = "'" + $PSCommandPath.Replace("'", "''") + "'"
+        $elevatedCommand = '& ' + $scriptLiteral + ' ' + ($forwarded -join ' ') + '; if ($?) { exit 0 } else { exit 1 }'
+        $encodedCommand = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($elevatedCommand))
+        try {
+            $hostExecutable = Join-Path $PSHOME 'powershell.exe'
+            if (-not (Test-Path -LiteralPath $hostExecutable -PathType Leaf)) {
+                $hostExecutable = Join-Path $PSHOME 'pwsh.exe'
+            }
+            Write-Host 'Administrator approval is required before the build bootstrap starts.'
+            $processPolicy = Get-ExecutionPolicy -Scope Process
+            $policyArguments = if ($processPolicy -eq 'Undefined') { '' } else { ' -ExecutionPolicy ' + [string]$processPolicy }
+            $elevated = Start-Process -FilePath $hostExecutable -Verb RunAs -Wait -PassThru `
+                -ArgumentList ('-NoLogo -NoProfile' + $policyArguments + ' -EncodedCommand ' + $encodedCommand)
+            exit $elevated.ExitCode
+        } catch {
+            Write-Host ('Administrator launch did not complete: ' + $_.Exception.Message)
+            exit 1223
+        }
     }
 }
 
