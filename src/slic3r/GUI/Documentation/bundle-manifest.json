@@ -1,0 +1,1976 @@
+{
+  "schema": 1,
+  "text_hash_encoding": "UTF-8 without BOM; LF line endings",
+  "articles": [
+    {
+      "route": "api/home-assistant-printer-discovery.md",
+      "title": "Home Assistant printer-discovery API",
+      "sha256": "9b57bede3082d25e550d90b99973b51c473bfbc3909adfa20e04a88a88f5d48d"
+    },
+    {
+      "route": "api/home-assistant-printer-discovery.yue_HK.md",
+      "title": "Home Assistant 打印機發現 API",
+      "sha256": "7a6f634c9af42fb8460869e1886e2e462786d93c38a4c815805e4a02b25ee10b"
+    },
+    {
+      "route": "api/README.md",
+      "title": "HTTP/API features",
+      "sha256": "7322ba2da39498d3e999d801691a84da8f6830ea7fec18800aa42d54693507cb"
+    },
+    {
+      "route": "api/README.yue_HK.md",
+      "title": "HTTP/API 功能",
+      "sha256": "bb6b2d7504a42cb21da6cd79ab6e3a9533a5e793f6fd38043583c44ea4975def"
+    },
+    {
+      "route": "automation/hosted-display-scale-probe.md",
+      "title": "Hosted display-scale feasibility probe",
+      "sha256": "7bbe91946c3ac28a7962d8523062a72a416f2cd13691023a8c619a4fd0e71f78"
+    },
+    {
+      "route": "automation/hosted-gui-recipient-recovery.md",
+      "title": "Versioned hosted evidence recipient recovery",
+      "sha256": "27958fe703de154fff589812d90a8aed0fca121198d0c03503595f04e0814048"
+    },
+    {
+      "route": "automation/integration-readiness.md",
+      "title": "Integration readiness after the default branch advanced",
+      "sha256": "7ecbeb5dac9357adef0755669711ae1ae4c072147ed68de8a180fa864ad55bd1"
+    },
+    {
+      "route": "automation/mcp-and-cli.md",
+      "title": "MCP and command-line automation",
+      "sha256": "1a01bf95c2abcc4f5b722aad264224d4c0ba42fc3b064411ea780a6e0b9d7f5e"
+    },
+    {
+      "route": "automation/native-interface-verification.md",
+      "title": "Hosted native interface verification",
+      "sha256": "01a768f4d6e42fc918f4727e41306cb6acb09788aebc21d968ae25155e71bcad"
+    },
+    {
+      "route": "automation/README.md",
+      "title": "Automation",
+      "sha256": "4157b3c8814bf800a2249dba6e5b2530c0b4943c01fd357d9f17740e01015faa"
+    },
+    {
+      "route": "canvas-menu-search.md",
+      "title": "Canvas menu search",
+      "sha256": "cedf43e72584bac60aa486a2223628914017b2df479474c9dd56a923f763e67a"
+    },
+    {
+      "route": "converter/pdf-engine.md",
+      "title": "Bundled PDF engine",
+      "sha256": "03fe7924890cab70e7678333cdcca8dfedcdc16ecd7529bd1948ec07641cdaba"
+    },
+    {
+      "route": "design-system/clipping-inventory.md",
+      "title": "Layout clipping inventory",
+      "sha256": "1bcb4f3398e20aa5d4b503300c41b94b2908a8fb5fb78cb0d00ad9a9cf851fc4"
+    },
+    {
+      "route": "design-system/clipping-inventory.yue_HK.md",
+      "title": "版面裁剪紀錄簿",
+      "sha256": "702f9bb068201e2dbc31f61c2f1a379c6db8bc5ab7a451e67683bfb084ff4407"
+    },
+    {
+      "route": "design-system/context-menus.md",
+      "title": "Context menus",
+      "sha256": "3e7082895ef7f1bace2b10080819d57ae00f14584499b9a422715f558936c677"
+    },
+    {
+      "route": "design-system/context-menus.yue_HK.md",
+      "title": "右鍵選單",
+      "sha256": "074d0613be43b76483bd2599c6ae41f1b36767b54c2a44e979199a733604d3f9"
+    },
+    {
+      "route": "design-system/dialogs-and-pickers.md",
+      "title": "Dialogs and pickers",
+      "sha256": "396166bba69b6cc6de4454740d8761e1a903c0d0e3584c483abb7889fc73da29"
+    },
+    {
+      "route": "design-system/dialogs-and-pickers.yue_HK.md",
+      "title": "對話框同揀選器",
+      "sha256": "769f984110348edeb9e096281caa83aef97fbde47ca0fb24be09cb3827aabc98"
+    },
+    {
+      "route": "design-system/generated-visual-showcase.md",
+      "title": "Generated visual showcase",
+      "sha256": "dd04cdb745aa7644eac12f85740067a2dbeeb6be9d793116b74d262fcc0ebdfd"
+    },
+    {
+      "route": "design-system/generated-visual-showcase.yue_HK.md",
+      "title": "生成視覺展示",
+      "sha256": "1902a694d2fa13fd65611b67e19bc2c456ee1c666fe19653fee94fec658942a9"
+    },
+    {
+      "route": "design-system/gizmo-rail-svg-icons-completion.md",
+      "title": "Gizmo rail composite SVG completion",
+      "sha256": "f9d6fdd81848836ddec1cc8a498032cffc84ab381ebeb8cd731cb2109853b17b"
+    },
+    {
+      "route": "design-system/gizmo-rail-svg-icons-completion.yue_HK.md",
+      "title": "吉茲摩軌複合 SVG 完成",
+      "sha256": "ec4e7c1b0be520b684d90d89ab5394a6c45a026fbe9bd7ab3bdb6955fd12b614"
+    },
+    {
+      "route": "design-system/kit-widgets-2026-09.md",
+      "title": "Kit widgets added in the every-element sweep (2026-09-05)",
+      "sha256": "126c0d1b2d062453911ca741130513d49ac415f2d43069deee22ff85c770daef"
+    },
+    {
+      "route": "design-system/kit-widgets-2026-09.yue_HK.md",
+      "title": "喺每元素掃過中添加嘅工具組件（2026-09-05）",
+      "sha256": "cc8bb79bbd8c354e9922b58fd4213b423b9a38805fb1dfc21a45cb716ddf139a"
+    },
+    {
+      "route": "design-system/layout-probe.md",
+      "title": "Runtime layout probe",
+      "sha256": "52ec0f34fc8a6d9ddca8709e77ee009e31d0f6738699795e993e6bb4754d516f"
+    },
+    {
+      "route": "design-system/layout-probe.yue_HK.md",
+      "title": "執行時佈局探測器",
+      "sha256": "12d255015bbfb69cfba686a2fe2e7ed128754bc1c7c2e4eb5e2ea76db3a1a3e2"
+    },
+    {
+      "route": "design-system/md3-design-system.md",
+      "title": "Vendored Material Design 3 design system",
+      "sha256": "11a549b7fb27e84730eef706d560058c9758e984d5a74152dbe00ea1d03f7b95"
+    },
+    {
+      "route": "design-system/md3-design-system.yue_HK.md",
+      "title": "內建 Material Design 3 設計系統",
+      "sha256": "17600dcfdde103e6c74b70acf3c30b99cc052a0b1a26f213715e757dcf0e866c"
+    },
+    {
+      "route": "design-system/md3-parity-register.md",
+      "title": "MD3 parity register",
+      "sha256": "a208cc7c0f547cc918510c9d6011c9865c1b2f97147631910b3f6817b834e68c"
+    },
+    {
+      "route": "design-system/md3-parity-register.yue_HK.md",
+      "title": "MD3 統一登記冊",
+      "sha256": "21459af17f1965b71127348f5f3d6ac886b6ddcabbd8b465f8fe8d062b0988e2"
+    },
+    {
+      "route": "design-system/native-controls.md",
+      "title": "Native controls on the kit",
+      "sha256": "cfa0832ec813fb7b518a12f45e78c8e11b99ee8525d4fca153616fe43816e87c"
+    },
+    {
+      "route": "design-system/native-controls.yue_HK.md",
+      "title": "套件上嘅原生控件",
+      "sha256": "18d4df12be99d76c778c96c382747dcda6b53921085f30d643438adddc83725b"
+    },
+    {
+      "route": "design-system/native-interface-audit-2026-10-02.md",
+      "title": "Native interface audit and verification register",
+      "sha256": "f4fea981478e272e1d82abc6868c88234351e3d33f92df8fda1b9f48d31bd275"
+    },
+    {
+      "route": "design-system/README.md",
+      "title": "Design system",
+      "sha256": "dc3fd47a3b1f70910bbcff3dd703672f8cf365b16e1287f008c67eca8ff64201"
+    },
+    {
+      "route": "design-system/README.yue_HK.md",
+      "title": "設計系統",
+      "sha256": "3ebb9ba56f733122fa250318155eeb45d0e23a3eeb5c0f8e48aa5085ea19198d"
+    },
+    {
+      "route": "design-system/themed-surface-colors.md",
+      "title": "Themed surface colors on StaticBox cards",
+      "sha256": "5cf8393a660db723ee426cfbb3cbd184936cc22e4814cbab848543c79a6f7fe9"
+    },
+    {
+      "route": "design-system/themed-surface-colors.yue_HK.md",
+      "title": "StaticBox 卡片上嘅主題表面顏色",
+      "sha256": "c4e5c9236d937fd554a8a6f4a836034e980d2ba9806700c7c052034ebed7606b"
+    },
+    {
+      "route": "design-system/tooltips.md",
+      "title": "Tooltips",
+      "sha256": "24a63f327f1d410fea8e5c7e08019bffc1193c3f7f34a54e3c1a84f0f3acd398"
+    },
+    {
+      "route": "design-system/tooltips.yue_HK.md",
+      "title": "工具提示",
+      "sha256": "e9a674859e9541e732bca0c516e5b381404005ffa3681e9ab5b1787929fa8825"
+    },
+    {
+      "route": "device/farm-lan.md",
+      "title": "LAN printer farm",
+      "sha256": "fc9747318d0b16c3faa4b833381ae6b718f5be2ff3086240a91855ca51cf3afb"
+    },
+    {
+      "route": "device/farm-lan.yue_HK.md",
+      "title": "區域網絡打印機群組",
+      "sha256": "4b3936c2d9679ba369acdddc91d1268670dfb97e4c1e4348cce87d3387801543"
+    },
+    {
+      "route": "device/README.md",
+      "title": "Device features",
+      "sha256": "5624ae9c4393f55cea4e61bf012a5d419f194b3162b22cae40e6489d09bf965a"
+    },
+    {
+      "route": "device/README.yue_HK.md",
+      "title": "設備功能",
+      "sha256": "8d1fea491f8f92752e18edec41cac7d5eab1f264b8cf2340d5a8a937d2cf24f6"
+    },
+    {
+      "route": "documentation/offline-reader.md",
+      "title": "Native offline article browser",
+      "sha256": "ff9300100b7cccd427675882bba6181a29375f807c4bc5938afd15af5b6fe436"
+    },
+    {
+      "route": "documentation/README.md",
+      "title": "Offline documentation",
+      "sha256": "4c01ca44b0efbe5ed0d6008280238557be127894a1e4319a69c8a0ceb2b62f30"
+    },
+    {
+      "route": "gcode-preview/preview-overlays.md",
+      "title": "Preview overlays: who owns which part of the canvas",
+      "sha256": "a3116659f02ec2426d471f348dd7d825f38e1df173d2e8688c3abf84924db472"
+    },
+    {
+      "route": "gcode-preview/preview-overlays.yue_HK.md",
+      "title": "預覽浮層：畫布邊一忽歸邊個",
+      "sha256": "38352b1f77357cdda55a99252423542b22edbf2edbb0bf49a37e8327e361946d"
+    },
+    {
+      "route": "gcode-preview/README.md",
+      "title": "G-code preview",
+      "sha256": "a6a8ce1dcd248baeeb70fc3fd201ca6339dcb87b7f67289a8dc8301f15039efe"
+    },
+    {
+      "route": "gcode-preview/README.yue_HK.md",
+      "title": "G 碼預覽",
+      "sha256": "eea2f0c79c72efb9ea8e9418e3ec6190470e0c25dadc4a3256af4b54ad26971b"
+    },
+    {
+      "route": "gcode-preview/toolpath-legend.md",
+      "title": "Toolpath color-scheme legend",
+      "sha256": "9dd8c7417bfb5fb8b0ea0bc1104c33fb550f989ac62b41fa8f4dac30e5c725ef"
+    },
+    {
+      "route": "gcode-preview/toolpath-legend.yue_HK.md",
+      "title": "工具路徑色彩方案圖例",
+      "sha256": "6332021c2ced072fbb2c18c29dd40f4431c2169b15b5295677e96e9cb020e91a"
+    },
+    {
+      "route": "model-creator/README.md",
+      "title": "Native Model Creator",
+      "sha256": "5f684781950049d0de1e9e27a13027e3019792ee077536de38abe00e3be641fe"
+    },
+    {
+      "route": "model-creator/README.yue_HK.md",
+      "title": "原生模型創作者",
+      "sha256": "378bb6be5d2de1b4a3e19694e7bc0503c0eb3874c5a94584d60026b9eafbb4d9"
+    },
+    {
+      "route": "model-preview/makerworld-opengl-preview.md",
+      "title": "MakerWorld OpenGL preview",
+      "sha256": "4ee379ee3fba5ec7956521a4475924923e08b79cd859ee6937da6a3989b551be"
+    },
+    {
+      "route": "model-preview/makerworld-opengl-preview.yue_HK.md",
+      "title": "MakerWorld OpenGL 預覽",
+      "sha256": "8260a7b833da8b8233a3a3c6823a6fde3469b3ba3679db681cdc9bb51df75d86"
+    },
+    {
+      "route": "model-preview/README.md",
+      "title": "Model preview",
+      "sha256": "38d86c20c824b013cf6c69c5639788838223da6f16c39eeffb08103efbcd0390"
+    },
+    {
+      "route": "model-preview/README.yue_HK.md",
+      "title": "模型預覽",
+      "sha256": "d91c9873e15882fd14446245c8a25211ac679dcda2f0bedf336bda1c7a7c7b14"
+    },
+    {
+      "route": "pages/changelog-viewer.md",
+      "title": "Changelog viewer",
+      "sha256": "0b698364d4c33b69b3c589e26273ae6f5429e71c2230d7730cd99887c8286303"
+    },
+    {
+      "route": "pages/changelog-viewer.yue_HK.md",
+      "title": "更新日誌檢視器",
+      "sha256": "a93a31307b45fbffae45163d65c8ec435123d8a4090b4acb61ddb69d7920ed02"
+    },
+    {
+      "route": "pages/deployment-and-layout-gate.md",
+      "title": "Deployment and the layout gate",
+      "sha256": "376d92145d8d9b6b9c2e849b7d385a54f552abdfba6fe00f4d89f6245b98949e"
+    },
+    {
+      "route": "pages/deployment-and-layout-gate.yue_HK.md",
+      "title": "部署同佈局把關",
+      "sha256": "78d0ac885827ab480749e0496cfe6658d95482182281526c2d6849b6158c5ea8"
+    },
+    {
+      "route": "pages/dim-sum-surprise.md",
+      "title": "Dim sum surprise",
+      "sha256": "ea2cc2fc8b362560e28f7f63d3f5230601c319ef586a3dbfa63923a2b1132503"
+    },
+    {
+      "route": "pages/dim-sum-surprise.yue_HK.md",
+      "title": "點心驚喜",
+      "sha256": "59d4cde7f2517a10045eb66f531dc153a19e15f8d75844134b8c2d1d5a771d5a"
+    },
+    {
+      "route": "pages/language-and-funny-levels.md",
+      "title": "Language modes and funny levels",
+      "sha256": "6e3e2230212b8d049d788f6a0c4f46d6d349abedff6ae55d2cca0ad11d46eb29"
+    },
+    {
+      "route": "pages/language-and-funny-levels.yue_HK.md",
+      "title": "語言模式同有趣等級",
+      "sha256": "22abbb8f759bedc7d9dd38b8365dc7c11d770d7cb1bb838943fa7c96231f5a1e"
+    },
+    {
+      "route": "pages/notifications.md",
+      "title": "Notifications",
+      "sha256": "f3c3462bdb558cc43053b007c351b824ffa008c52966d79c40fd9c1c21f77077"
+    },
+    {
+      "route": "pages/notifications.yue_HK.md",
+      "title": "通知",
+      "sha256": "93b1b2d90eddce011fff09b72f3746a2f71724d0933253f20adbec0163273de5"
+    },
+    {
+      "route": "pages/README.md",
+      "title": "GitHub Pages site",
+      "sha256": "5d49ab519c0f3e05aefa037dc32b455515fe22227cda1c5e4e7ac2c23d84305e"
+    },
+    {
+      "route": "pages/README.yue_HK.md",
+      "title": "GitHub Pages 網站",
+      "sha256": "f51044d386e725d1232929fb8186b3fc3548abc8be86c3990afe872aa5e2b799"
+    },
+    {
+      "route": "pages/regex-builder.md",
+      "title": "Regex builder",
+      "sha256": "8889ea2f26911c5d44966eed44b47f31bcdb8696b9414e253abe93ea12e613ed"
+    },
+    {
+      "route": "pages/regex-builder.yue_HK.md",
+      "title": "Regex 構建器",
+      "sha256": "91d9a111b3114f9bd4c64e7a641868407245ad4cac4cd1e0140b1ef45a1c263c"
+    },
+    {
+      "route": "pages/settings-and-appearance.md",
+      "title": "Settings and appearance",
+      "sha256": "49a066ff5fe4512ebbb82cbddd06511a91ec15fdd6f30e8775afc623a38ca4ef"
+    },
+    {
+      "route": "pages/settings-and-appearance.yue_HK.md",
+      "title": "設定同外觀",
+      "sha256": "182d1449ea93f45acd3f387ff2a28808fdec50e509cdcb24b69d27f1f66c28cd"
+    },
+    {
+      "route": "pages/tabbed-navigation.md",
+      "title": "Tabbed navigation",
+      "sha256": "c9d6787463f50b4d4dbe6064713abe45a8d4f06d5489cae39937fb5d51ccc435"
+    },
+    {
+      "route": "pages/tabbed-navigation.yue_HK.md",
+      "title": "帶選項卡嘅導航",
+      "sha256": "702da17ff14cb913153a3c11fdebb2ec0ea72f2d70970ac32e46d70de7e7326c"
+    },
+    {
+      "route": "prepare/dockable-sidebar.md",
+      "title": "Dockable Prepare sidebar",
+      "sha256": "d59987c8960509fcfaef61d7d6946a78a0d4a16f2beaf7aae8fa165b488ea22b"
+    },
+    {
+      "route": "prepare/dockable-sidebar.yue_HK.md",
+      "title": "可停靠準備邊欄",
+      "sha256": "c22df2a4debb439f4486752fdcc94b3a99b4b188394bb6855347f0d1980e2f34"
+    },
+    {
+      "route": "prepare/process-settings-full-tree.md",
+      "title": "Every process setting shown, no Simple/Advanced filter",
+      "sha256": "6fbe23e5f1f8feb2cc252afbd3730cb0943e50d74b44a4f98858aef335dbdc8d"
+    },
+    {
+      "route": "prepare/process-settings-full-tree.yue_HK.md",
+      "title": "所有流程設定顯示、無簡單同埋進階篩選",
+      "sha256": "7dfb4f360b3d897cd89321055be3c3358f46236da8df7b35c9d6f228befb330a"
+    },
+    {
+      "route": "prepare/process-settings-sidebar.md",
+      "title": "Process settings in the Prepare sidebar",
+      "sha256": "073e8f2237b4fa6541c55eb7f93024028dc2b73bafa681575cc8ccc574a48784"
+    },
+    {
+      "route": "prepare/process-settings-sidebar.yue_HK.md",
+      "title": "準備邊欄中嘅流程設定",
+      "sha256": "3b3fd3fc2c05be08b1f6f20ce2216555b654e430b59e040c9b59997d1300d23b"
+    },
+    {
+      "route": "prepare/README.md",
+      "title": "Prepare workspace",
+      "sha256": "04ef4b970bdf4b21e7bf158be879af88d2d17b613b5605121bfd46c5db389afd"
+    },
+    {
+      "route": "prepare/README.yue_HK.md",
+      "title": "準備工作區",
+      "sha256": "05d9cb9f20eae02e3667d55b9edf70e78c8be3427746684c4083b93b1075335f"
+    },
+    {
+      "route": "prepare/sidebar-tabs.md",
+      "title": "Prepare sidebar tabs",
+      "sha256": "5632eb2f98df436b6c778727d8225e5c838a01587668d7b86d47ae9b84e56533"
+    },
+    {
+      "route": "prepare/sidebar-tabs.yue_HK.md",
+      "title": "準備邊欄標籤",
+      "sha256": "ca4f5eb47a70b4d489c25df1997a289c8e055ed1f320a67b4e2fcaf75c907dc3"
+    },
+    {
+      "route": "preview-constrained-layout.md",
+      "title": "Preview layout in constrained space",
+      "sha256": "4967beaad211c136851ea36e04a5116638fd8d5e1bf37a0ab48b745896835096"
+    },
+    {
+      "route": "releases/dependency-security-alerts.md",
+      "title": "Dependency security alerts",
+      "sha256": "225609462f78f6fe6bf808304451ad7f802d0c2ba3ae322e6a87d5e81172fbb1"
+    },
+    {
+      "route": "releases/dependency-security-alerts.yue_HK.md",
+      "title": "依賴套件安全警報",
+      "sha256": "551fc0ce27d83ebef554490af8d763298d1b6fa0dcb48f531e7c72dd666c9881"
+    },
+    {
+      "route": "releases/README.md",
+      "title": "Release features",
+      "sha256": "a515b87bac10479a1bf148baf39f3b5904d68c9a68e1b114ba970cb9b6dbe614"
+    },
+    {
+      "route": "releases/README.yue_HK.md",
+      "title": "發佈功能",
+      "sha256": "fc09b853a9b7ad962b591b6a929dea37487caf91692d24a0e7d259e1d50b2225"
+    },
+    {
+      "route": "releases/release-codenames.md",
+      "title": "Release codenames",
+      "sha256": "027d1576194100ea93493a63d1ab48ef5b9f53d44bdb0327d95d34322e12249a"
+    },
+    {
+      "route": "releases/release-codenames.yue_HK.md",
+      "title": "發佈代名",
+      "sha256": "04cda9e08c760a92c6197fdf6f65e88d04cfbd8bb7c32d421f6ef8b19bfe3e16"
+    },
+    {
+      "route": "releases/windows-build-from-source.md",
+      "title": "Build from source (Windows installer)",
+      "sha256": "8c25c0d2f3afbc1e0636197c6c9bbe629444075270768afcc642c01cb9029596"
+    },
+    {
+      "route": "releases/windows-build-from-source.yue_HK.md",
+      "title": "從源碼構建（Windows 安裝程式）",
+      "sha256": "7c0e1eb465d26c2526faf37619d7084e5a0659d73ea1cc33af8b4863b7f4f160"
+    },
+    {
+      "route": "releases/windows-native-installer.md",
+      "title": "Native Windows installer",
+      "sha256": "b40df8dd1c1494f6eae23bff4d20c34510b73328916c02a8284b7f54851754d4"
+    },
+    {
+      "route": "releases/windows-native-installer.yue_HK.md",
+      "title": "原生 Windows 安裝器",
+      "sha256": "da2dc8521b98de39b3d2343cbeccf25e1c184c053d8f42418dff1aaf37ffd844"
+    },
+    {
+      "route": "releases/windows-one-click-build.md",
+      "title": "One-click Windows build and installer",
+      "sha256": "903e3a561ba695a011367e8aeda26e3d903dc0633ebe46f17c3dacf21b488dc8"
+    },
+    {
+      "route": "releases/windows-one-click-build.yue_HK.md",
+      "title": "一鍵 Windows 構建和安裝程式",
+      "sha256": "34e1e4c5a1244e6747c1d653e1aaf56a4e2bdeec5c3e788e0dbc2a057053e5f2"
+    },
+    {
+      "route": "releases/windows-release-supply-chain.md",
+      "title": "Windows CI and release supply chain",
+      "sha256": "2b0d0013c957af19757ef0dcd1e668db54a5b8184999d5ad02b80c601e95da89"
+    },
+    {
+      "route": "releases/windows-release-supply-chain.yue_HK.md",
+      "title": "Windows CI 同埋 release 供應鏈",
+      "sha256": "045d8f44854146a4684f09514ed777a75a0b2cc09fd8d3b47ee1ba922d565e9a"
+    },
+    {
+      "route": "windows/ai-filament-scanner.md",
+      "title": "AI filament scanner",
+      "sha256": "928b8eef52c2ea5d9d4c91d03fc27b3423859bf5afaff835ac56da2112207636"
+    },
+    {
+      "route": "windows/ai-filament-scanner.yue_HK.md",
+      "title": "AI 墨水掃描器",
+      "sha256": "ef6b041a12839f78b8600062a63685a2cecb7acfdf2563012049c295e047b85d"
+    },
+    {
+      "route": "windows/ai-printer-watch.md",
+      "title": "AI printer watch (local models)",
+      "sha256": "0d6c135bf7c1780ba4c405d126e7f17ad26fd5dc16ef9c94c0ca29f9c634797b"
+    },
+    {
+      "route": "windows/ai-printer-watch.yue_HK.md",
+      "title": "AI 打印機監視（本地模型）",
+      "sha256": "1f79f63e813ba13b811b6df99615ae6a8fd10bc90261097ff882e4393b488210"
+    },
+    {
+      "route": "windows/app-updates.md",
+      "title": "App updates from this fork's releases",
+      "sha256": "548c046dd01bf043c23e20dbe7c3fb1a1fb7f1efa42ba6659648dfbf7de8d0db"
+    },
+    {
+      "route": "windows/app-updates.yue_HK.md",
+      "title": "來自呢個分叉發佈嘅應用程式更新",
+      "sha256": "53a4651b47ee81146dca60ff182efc81ce5b22cc58f2ab79a5d2ad99b22abb39"
+    },
+    {
+      "route": "windows/appearance-customization.md",
+      "title": "Appearance customization",
+      "sha256": "6ea9a1aa830e22cab425a50385c0f829dc359a7b1d450bf4faad1d3974cfff57"
+    },
+    {
+      "route": "windows/appearance-customization.yue_HK.md",
+      "title": "外觀自訂",
+      "sha256": "c79717a56f9b60eb67911b8d8c3b1cc02c57a84ea77ae1cdd459168178d8b147"
+    },
+    {
+      "route": "windows/appearance-editor.md",
+      "title": "Per-element appearance editor",
+      "sha256": "c616f3455244c402454dd25aa24ab04d294ab6e77dc0f33c961f1fc060870da3"
+    },
+    {
+      "route": "windows/appearance-editor.yue_HK.md",
+      "title": "逐個元素外觀編輯器",
+      "sha256": "526d596d735a68f4a4ddeb45e7c97df7f88b314c7610bf8fdce56f1a721def57"
+    },
+    {
+      "route": "windows/assembly-export-motion.md",
+      "title": "Assembly export progress entrance",
+      "sha256": "14db6b3a888b2b8df6750998ff7cb5ff2ff48e9a0f61dc3fd33d581ed33ccccc"
+    },
+    {
+      "route": "windows/async-stl-replacement-proposal.md",
+      "title": "Asynchronous STL replacement proposal",
+      "sha256": "2d4d26934152b830feccd762718c44758fa9bf3957b1ce7816d9362a29dd1c80"
+    },
+    {
+      "route": "windows/bulk-filament-actions.md",
+      "title": "Bulk filament actions",
+      "sha256": "09be54be6178480a15d0038d466b5db3472c74a00cc48227ada1de428ecaeb04"
+    },
+    {
+      "route": "windows/bulk-filament-actions.yue_HK.md",
+      "title": "批量墨水操作",
+      "sha256": "1dd803458b636797966375389e955e15c7734c560a22776c9483e7a82b53c6f1"
+    },
+    {
+      "route": "windows/changelog-viewer.md",
+      "title": "In-app changelog viewer (\"What's new\")",
+      "sha256": "593444650d0713f2ecdef8bc402a346a463c0a8554db242db6e8f736eb74975d"
+    },
+    {
+      "route": "windows/changelog-viewer.yue_HK.md",
+      "title": "應用內更新日誌查看器（「有咩新嘢」）",
+      "sha256": "5fc09e73aa7d037503326be8992d529ad68f2926f6106455df2a9d3447577d3b"
+    },
+    {
+      "route": "windows/choice-motion.md",
+      "title": "Checkbox and slider motion",
+      "sha256": "5510e2d3f00703fd3857d8aa3876119ee261aed5a3c7a07767a2d0b160dad36d"
+    },
+    {
+      "route": "windows/cloud-web-recovery.md",
+      "title": "Cloud web-page failure recovery",
+      "sha256": "f57ade84fe29c09c760008690f088950a06606c32c5ffe404541a8a195047d9a"
+    },
+    {
+      "route": "windows/cloud-web-recovery.yue_HK.md",
+      "title": "雲網頁失敗恢復",
+      "sha256": "1d3949af3cb764cc995a95f6862c5d0c843b074b17c4002e41ae4d7f9ef2d085"
+    },
+    {
+      "route": "windows/color-picker-translator.md",
+      "title": "Color picker translator (infinite picker)",
+      "sha256": "5c922862d0da956a96186c1c549803200e7c744a805783368555ea172e36fc58"
+    },
+    {
+      "route": "windows/color-picker-translator.yue_HK.md",
+      "title": "顏色選擇器翻譯器（無限選擇器）",
+      "sha256": "f954f84f6b90fdf2685064c62bf433726e1c1c351d7a705a40a95dc5d8d89194"
+    },
+    {
+      "route": "windows/command-palette.md",
+      "title": "Command palette (Ctrl+Shift+F)",
+      "sha256": "70bdf74401223d5f70f4c9da0e4dc9d9171cbe8a81237e269977b02dcf9263d7"
+    },
+    {
+      "route": "windows/command-palette.yue_HK.md",
+      "title": "命令調色盤（Ctrl+Shift+F）",
+      "sha256": "104a4a34b2c2f081425aed5b71f323af16ab3b3cc866e0e14e2ee6ed8e778dc0"
+    },
+    {
+      "route": "windows/content-motion.md",
+      "title": "Content transition ownership and pending coverage",
+      "sha256": "1c68330d6208328cd26e7a3832a28de0e63160cb992323724719a3eac0b57d00"
+    },
+    {
+      "route": "windows/dim-sum-surprise.md",
+      "title": "Dim sum startup surprise",
+      "sha256": "df975ce65331a67b5fa6ac1d55d2624909372ba6e47723db760482165c4cf72e"
+    },
+    {
+      "route": "windows/dim-sum-surprise.yue_HK.md",
+      "title": "點心啟動驚喜",
+      "sha256": "8512000fffd908174eb7091695205f1a7ac7dfa3f3ca108a0974033d22ab478f"
+    },
+    {
+      "route": "windows/disclosure-motion.md",
+      "title": "Disclosure state feedback",
+      "sha256": "dc7aeeab8d0bcd9b6bd28d1badc2357c0872400715c356ce2a2ac65822411783"
+    },
+    {
+      "route": "windows/funny-levels-and-dialog-emojis.md",
+      "title": "Funny levels and dialog emojis",
+      "sha256": "72c3a9ed3b6262642674eafcba8d91785d8ed345aae76636b0b2a1539b5ec353"
+    },
+    {
+      "route": "windows/funny-levels-and-dialog-emojis.yue_HK.md",
+      "title": "玩樂程度和對話框表情符號",
+      "sha256": "89e2f983cdceb0cc05b7ef7f8bd00434485be9e0d16525c0a5cab0d35312e712"
+    },
+    {
+      "route": "windows/gui-accessibility.md",
+      "title": "Keyboard, assistive, and responsive GUI accessibility",
+      "sha256": "d2ead29b074068a1d06e633ac099e5aa12c03d69fd1c5bf5aaf245448162046d"
+    },
+    {
+      "route": "windows/gui-accessibility.yue_HK.md",
+      "title": "鍵盤、輔助同埋回應式圖形用戶介面無障礙",
+      "sha256": "0a711209c3a7b6580579e71301ef23b53db843840d8974fe3671f44349f7e0b6"
+    },
+    {
+      "route": "windows/ink-terminology.md",
+      "title": "Ink terminology (filament → ink, AMS → Ink Dispenser)",
+      "sha256": "ec909157cd7dc36f644304cbb288a42f0acf26e6da0bf7533377f811934f7ed0"
+    },
+    {
+      "route": "windows/ink-terminology.yue_HK.md",
+      "title": "墨水術語（墨水 → 墨水、AMS → 墨水機）",
+      "sha256": "4afb3eb63d197d165b27833ca476e1c4f32898cd8c3c43413951591d4e706a8f"
+    },
+    {
+      "route": "windows/interface-motion.md",
+      "title": "Interface motion foundation",
+      "sha256": "c4a9aabb3845eeda4813bdb3d60acfd51825a90cc68f5ec6901032517f140f09"
+    },
+    {
+      "route": "windows/lan-farm-sending.md",
+      "title": "LAN farm sending and device eligibility",
+      "sha256": "69c3372b941cb69cdd9ad9fd8373dde7401a84e4be6d04d96f6d57a4bc6922a0"
+    },
+    {
+      "route": "windows/lan-farm-sending.yue_HK.md",
+      "title": "LAN 農場發送同裝置合格性",
+      "sha256": "42f2f376a87d494a52b60cce473df9ab0bd5c79dbe86c8c1ec024b1d0a8d9d29"
+    },
+    {
+      "route": "windows/language-modes.md",
+      "title": "English, Hong Kong Cantonese, and bilingual modes",
+      "sha256": "6a4025177b4629436b162a5ad19a052b2b81cc285fd07222881d44f0b1944b38"
+    },
+    {
+      "route": "windows/language-modes.yue_HK.md",
+      "title": "英文、香港粵語同雙語模式",
+      "sha256": "06d9fd198c4cc9fb1971ca7d3a611a23b6f44b68d62de4e2da1f11f7e19084c8"
+    },
+    {
+      "route": "windows/material-context-menus.md",
+      "title": "Material context menus",
+      "sha256": "46505612ee158cd37419eac0486b6a984372bdf527febee5044a8b81c283da31"
+    },
+    {
+      "route": "windows/material-context-menus.yue_HK.md",
+      "title": "物料脈絡選單",
+      "sha256": "272517d95eaa91806dd5a3cacd305582619a1a42331dcb238c444d27f9bcf7dc"
+    },
+    {
+      "route": "windows/md3-color-picker.md",
+      "title": "Material color picker & color translator",
+      "sha256": "7b91a21b11c207fc0002e591cee7a111a9e0f428cf6b41623e1d857122712e54"
+    },
+    {
+      "route": "windows/md3-color-picker.yue_HK.md",
+      "title": "Material 色譜選擇器 & 色譜轉譯器",
+      "sha256": "1bd4266efb6dc9991a94e5f6ecdf1c93dc412c260769ae4a606dadf67c19c61e"
+    },
+    {
+      "route": "windows/md3-native-ui.md",
+      "title": "Native Material Design 3 UI on Windows",
+      "sha256": "fe61c1f660051ccc6211e62217fe7e8217dd5526048dbd2b9c6208362a33776e"
+    },
+    {
+      "route": "windows/md3-native-ui.yue_HK.md",
+      "title": "Windows 上嘅本地 Material Design 3 UI",
+      "sha256": "63abdbd345ee510215daf64859e57ddaa53a50aa0c03a5ec09e863c21390e5fe"
+    },
+    {
+      "route": "windows/menu-interaction-verification.md",
+      "title": "Native menu builder interaction verification",
+      "sha256": "7fbbf6cc626d67d385d2adb6cfb851a325d67a091c301925716376ba809e8405"
+    },
+    {
+      "route": "windows/menu-motion.md",
+      "title": "Menu motion",
+      "sha256": "03117ed31c7dd3c70c2ee14febd490ad7902c80482640e99ee5c8f052a1ad5c9"
+    },
+    {
+      "route": "windows/motion-temporal-capture.md",
+      "title": "Restricted temporal window observations",
+      "sha256": "7d8d80e18204451005cbe654938f376421c5d8138ec58175f0e0572fa0b8819e"
+    },
+    {
+      "route": "windows/motion-verification.md",
+      "title": "Native motion lifetime verification",
+      "sha256": "5debff5e46ab44994a26cda4f0f6983439e75be392e279a1b49f76738d916131"
+    },
+    {
+      "route": "windows/native-visual-smoke.md",
+      "title": "Native Windows visual smoke test",
+      "sha256": "4db3bd125f9bfcac1cbb00d65f8da98430f7d24ab88e2ecbb0cd0bc541358850"
+    },
+    {
+      "route": "windows/native-visual-smoke.yue_HK.md",
+      "title": "本地 Windows 視覺煙霧測試",
+      "sha256": "f4366b52d0c3c8e2d44acd587eb3c06c562cee7bfb5d61f13fc41c9396e2aafe"
+    },
+    {
+      "route": "windows/notification-motion.md",
+      "title": "Notification and progress motion",
+      "sha256": "c219e01999c758797bfe487d4dc1f758bd5b547a16168b34958779151be9e10e"
+    },
+    {
+      "route": "windows/personal-vocabulary.md",
+      "title": "Personal vocabulary",
+      "sha256": "7fda420aacc18e221da22803e91685fa11beb504f516a621ff6cacab20b092ac"
+    },
+    {
+      "route": "windows/print-actions.md",
+      "title": "Plate print actions and material mapping",
+      "sha256": "de5a9332882a661ced8ed36f2dfb4babad3b968ba56b1a6103c5b04b25b42013"
+    },
+    {
+      "route": "windows/print-actions.yue_HK.md",
+      "title": "打印盤操作同材料映射",
+      "sha256": "51317d39affa6725aae0d4ec8f93b227c2abe56d046f10ff8bdd60a118580f2f"
+    },
+    {
+      "route": "windows/print-simulation.md",
+      "title": "Print simulation playback (feedrate-true)",
+      "sha256": "55c229ef082d11a2a978bb4ad0611064a5d13abc30e89751d2cfc6b8daa3fd2a"
+    },
+    {
+      "route": "windows/print-simulation.yue_HK.md",
+      "title": "打印模擬播放（進料速率真實）",
+      "sha256": "ee9b2ab3b66271a3ef1c9ae29c833155a52d1f5aaa133b85ef5c42ea5ecb7791"
+    },
+    {
+      "route": "windows/README.md",
+      "title": "Windows features",
+      "sha256": "aed1db0e35fe1c48ee1f9cc48a9f143c35a3f217dfcead3485d284b494548bc0"
+    },
+    {
+      "route": "windows/README.yue_HK.md",
+      "title": "Windows 功能",
+      "sha256": "0d04f0f4d5c5ee02ecd83081bbc2ad4f0a38f2aa59137e2b26cf9754bf100d29"
+    },
+    {
+      "route": "windows/regex-builder.md",
+      "title": "Regex builder",
+      "sha256": "95d7520997bb54e8715f6b504268986b1a46d13662142f84d7781d40275eb7de"
+    },
+    {
+      "route": "windows/regex-builder.yue_HK.md",
+      "title": "正則表達式構建器",
+      "sha256": "ff672ab6eba6472f1e617da4ec91bbf4f3323f8203462a9fed0d8b9512b068fb"
+    },
+    {
+      "route": "windows/release-splash-art.md",
+      "title": "Release splash art (fresh dim sum per release)",
+      "sha256": "68d802dee44277eaaa665ec5ad2011c7f4ce5deaf63e3e515fef02ae48c8eed4"
+    },
+    {
+      "route": "windows/release-splash-art.yue_HK.md",
+      "title": "發佈啟動畫面藝術（每個發佈新鮮點心）",
+      "sha256": "b71adad36a71a77ee525b7c5b06b7a184abb938e996ecf99b152b2cccb155606"
+    },
+    {
+      "route": "windows/renamable-app-name.md",
+      "title": "Renamable app name (display label only)",
+      "sha256": "93413647a42ac1de2d4da8aa129cde59cea4ad8d798f71baf89bd284bdd19405"
+    },
+    {
+      "route": "windows/renamable-app-name.yue_HK.md",
+      "title": "可重新命名嘅應用程式名稱（只係顯示標籤）",
+      "sha256": "15b8c31c31859a4e2bc4d743e40857c9526c1f751de549913226c98b107f40f4"
+    },
+    {
+      "route": "windows/sidebar-search.md",
+      "title": "Prepare sidebar search",
+      "sha256": "05b22b3d61217ad3862d7feb97d75e4a35bc375dca1a5cebd437e73c4c1beaef"
+    },
+    {
+      "route": "windows/sidebar-search.yue_HK.md",
+      "title": "準備側邊欄搜尋",
+      "sha256": "142fc3f5ec73107ddd4262f9d6d61a374819f979a9bea4e1ae016a62bf272be9"
+    },
+    {
+      "route": "windows/smart-home.md",
+      "title": "Smart home: printer handover, TTS narrator, and alert lights",
+      "sha256": "395aa57a3ef1ec5c75b54c7f930817f7ecf7ad923a3887a82e82a92b9536da07"
+    },
+    {
+      "route": "windows/smart-home.yue_HK.md",
+      "title": "智能家居：打印機移交、TTS 語音播報同警告燈",
+      "sha256": "72bb9cebbde5b39d182558bae892ecbd9b66a8368ec12ff7eb0e23fe7e049a8a"
+    },
+    {
+      "route": "windows/software-gl-fallback.md",
+      "title": "Software OpenGL fallback (Mesa llvmpipe)",
+      "sha256": "22a18772b3ccf82d1c8a088e8638df2ae3952e15e2a027a2bfddcc2b5a95cc8a"
+    },
+    {
+      "route": "windows/software-gl-fallback.yue_HK.md",
+      "title": "軟件 OpenGL 後備（Mesa llvmpipe）",
+      "sha256": "818b02d1329c85655abf27d00d767e4c3c46269b36c7f13c837a0dc10bee1458"
+    },
+    {
+      "route": "windows/splash-release-date.md",
+      "title": "Release date on the splash screen",
+      "sha256": "e155c4cb3cebe6146ea27d34ad83ae641708569d4f74db7f0e47b870d4f73533"
+    },
+    {
+      "route": "windows/splash-release-date.yue_HK.md",
+      "title": "啟動畫面上嘅發佈日期",
+      "sha256": "3d1c61db77f5a37f609f62bdb1f4168897b520a4bfe5ce8af6d39d4bae98c0b7"
+    },
+    {
+      "route": "windows/stop-print-interlock.md",
+      "title": "Stop-print safety interlock",
+      "sha256": "699152c89c7182700799da71941fd71480a249bc38ab6edd6b5b4ad03b067fbe"
+    },
+    {
+      "route": "windows/stop-print-interlock.yue_HK.md",
+      "title": "停止打印安全互鎖",
+      "sha256": "135adab2f2d08fcddd1c7a332d705aa81a9200dc96da45d45c3915965cb750f8"
+    },
+    {
+      "route": "windows/super-confirmation.md",
+      "title": "Destructive-action super confirmation",
+      "sha256": "246f3d446268e0a6ce80c05e0e6c1d0f9c6983162727f3b48007f1e0d77bc52e"
+    },
+    {
+      "route": "windows/super-confirmation.yue_HK.md",
+      "title": "破壞性動作超級確認",
+      "sha256": "23e44d0626ba1ddd2796ed08c63ada379676fcf42abaa8b39f1f8176c58d5ec1"
+    },
+    {
+      "route": "windows/tooltip-motion.md",
+      "title": "Canvas tooltip decorative motion",
+      "sha256": "f713f0f47f0856706ca91df478a8efdc0ee36c5a33081dacdce1533612a36815"
+    },
+    {
+      "route": "windows/transient-motion.md",
+      "title": "Tooltip and dialog entrance motion",
+      "sha256": "c6e80e5322e22541c171e726ce2a5fa003a91af9732b45708b2cd84689de13d0"
+    },
+    {
+      "route": "windows/windows-only-platform.md",
+      "title": "Windows-only platform policy",
+      "sha256": "53142ddf38e30eb0aa122a92b426eb59abeb1a7023f162d4acec53e64af480d3"
+    },
+    {
+      "route": "windows/windows-only-platform.yue_HK.md",
+      "title": "Windows 專用平台政策",
+      "sha256": "9a750fc843df0e50aad18d6ab50d070316ed902d8c0ac698dc31d5d533379b2a"
+    },
+    {
+      "route": "workspace/config-profiles-backup.md",
+      "title": "Config profiles & full-data backup",
+      "sha256": "8f9c3cbdc6e95f18906da1ad459848eae02441cde6ce9f85b36f40a0cb474c4f"
+    },
+    {
+      "route": "workspace/config-profiles-backup.yue_HK.md",
+      "title": "設定檔案同完整資料備份",
+      "sha256": "b40a76b55b0e594cab6a003ea25592baa5359bcf38a7db8bfb62be40a72e80ba"
+    },
+    {
+      "route": "workspace/export-everything.md",
+      "title": "Export everything, in every format",
+      "sha256": "1af8a6372f52d411ff1ada3686cafadb0b0deda5377a3e53bdc8111a25ecf789"
+    },
+    {
+      "route": "workspace/export-everything.yue_HK.md",
+      "title": "匯出每樣嘢，用每種格式",
+      "sha256": "48ed0327a79d9328c6783be1d17244be96955fc563e50bd50daf473cbcf1d886"
+    },
+    {
+      "route": "workspace/external-editor.md",
+      "title": "External editor",
+      "sha256": "8e46e044c9cc60783210d559e9bbc4e1a324dca0baded441ad9075bfa5200e06"
+    },
+    {
+      "route": "workspace/external-editor.yue_HK.md",
+      "title": "外部編輯器",
+      "sha256": "7a97a5221e2a5c4baad4c9c6f9646cbd1f5f8591ef91a4f8d544169afc670960"
+    },
+    {
+      "route": "workspace/fan-motion.md",
+      "title": "Device fan motion",
+      "sha256": "0a621b3445d1abe82deb778aaf2b8e1d523c25de50763c1ade239832332f6e76"
+    },
+    {
+      "route": "workspace/fan-motion.yue_HK.md",
+      "title": "裝置風扇運動",
+      "sha256": "f5e12aff573b673e488bea8494424da6ddc9bf599608b1ff756249693de68db8"
+    },
+    {
+      "route": "workspace/non-blocking-notifications.md",
+      "title": "Non-blocking notifications",
+      "sha256": "6492a29e9830f4f49371219e208172a791423a877370bbea5b77ea061c069a0b"
+    },
+    {
+      "route": "workspace/non-blocking-notifications.yue_HK.md",
+      "title": "非阻塞通知",
+      "sha256": "acc947d85adf0da56e29f21693ddea396b941471f36e9d53a7a4dcc2a0cdea28"
+    },
+    {
+      "route": "workspace/notification-center.md",
+      "title": "Notification centre",
+      "sha256": "79fccaadccad53d4753df9d934771375ee554dc89467b66793db7b0ee0c331b3"
+    },
+    {
+      "route": "workspace/notification-center.yue_HK.md",
+      "title": "通知中心",
+      "sha256": "eb34a86f9d89bf9a3e333f651c91aa62ddcd8a3ea92ffdb5c8006d7d67f26a52"
+    },
+    {
+      "route": "workspace/preferences-history.md",
+      "title": "Preferences auto-history",
+      "sha256": "23b1327b79e74cc26a9868f99c8bbe2e4cd70b47e2ee835865cc26655634ed15"
+    },
+    {
+      "route": "workspace/preferences-history.yue_HK.md",
+      "title": "偏好設定自動歷史記錄",
+      "sha256": "7e3afa6d9b9b6530c5c92cfae89ae1f4a8853eb83b12a5a0d489d1597d1b5e51"
+    },
+    {
+      "route": "workspace/project-tabs.md",
+      "title": "Browser-like project tabs",
+      "sha256": "b9bb90416eb43b3cd90a53815d84932c7a510681e22ae6d76b4b5792f868bc18"
+    },
+    {
+      "route": "workspace/project-tabs.yue_HK.md",
+      "title": "類瀏覽器項目標籤",
+      "sha256": "429bf747827a0ee8e03b49ed9ac4ad148c22ab4413d16edc5bfe4abd4a67b7e4"
+    },
+    {
+      "route": "workspace/project-version-history.md",
+      "title": "Project version history",
+      "sha256": "6f84b9da554756e909ed09fbd055aad459647a3002dfbc892fa4972ebf857d05"
+    },
+    {
+      "route": "workspace/project-version-history.yue_HK.md",
+      "title": "項目版本歷史",
+      "sha256": "11702edc366f051c753b2270d94859718b353d4fa58dcd21c56f6c0bd2c023de"
+    },
+    {
+      "route": "workspace/README.md",
+      "title": "Workspace",
+      "sha256": "f0f37d788c8843f9a8e4183e1481480719262d6f26a9ce477f433a8905670582"
+    },
+    {
+      "route": "workspace/README.yue_HK.md",
+      "title": "工作區",
+      "sha256": "43b708e517ef3ed0aeefadd6e85ae6b7098b6d6bb4f0f031aacc65b83c1a2304"
+    },
+    {
+      "route": "workspace/tabbed-settings.md",
+      "title": "Tabbed settings and the shared tab strip",
+      "sha256": "df17afbe2cccf15819e62025ab8aed93405183f4bda098969d43afc787b49975"
+    },
+    {
+      "route": "workspace/tabbed-settings.yue_HK.md",
+      "title": "帶選項卡嘅設定同埋共用嘅選項卡條",
+      "sha256": "c6281a891ab8c33217a983f1d8093ef92170f3f5b7b6edee8cc822dfa05a41bb"
+    },
+    {
+      "route": "workspace/workspace-bundles.md",
+      "title": "Workspace bundles and planning",
+      "sha256": "01baac55a73c10b996a2dafbcbd5bae4ea87f337404d8bfacb7da6636c76846e"
+    },
+    {
+      "route": "workspace/workspace-bundles.yue_HK.md",
+      "title": "工作空間套件和規劃",
+      "sha256": "15e45c9f93e48827d429b317cec5018a65efa7d546414eda894f8d5b60d241d8"
+    }
+  ],
+  "images": [
+    {
+      "name": "22c7b7164865747e372994d33e0f4d8da6def757a3bffe7520e059ac7adc981b.png",
+      "sha256": "22c7b7164865747e372994d33e0f4d8da6def757a3bffe7520e059ac7adc981b",
+      "bytes": 48609
+    },
+    {
+      "name": "2e7db2159be40c2fa6f494e1b8a29b5fef491717e395e978295e8c0116aac664.png",
+      "sha256": "2e7db2159be40c2fa6f494e1b8a29b5fef491717e395e978295e8c0116aac664",
+      "bytes": 19763
+    },
+    {
+      "name": "3c788d924cb54ab3ac76ef81ee0ccba3785cf581da8d58cf780ffe8910653bd8.png",
+      "sha256": "3c788d924cb54ab3ac76ef81ee0ccba3785cf581da8d58cf780ffe8910653bd8",
+      "bytes": 6572
+    },
+    {
+      "name": "81d754d3a4ac515962a7c2df609ec272395eca8d011bc6afc64265e4ff8b61f3.png",
+      "sha256": "81d754d3a4ac515962a7c2df609ec272395eca8d011bc6afc64265e4ff8b61f3",
+      "bytes": 9556
+    },
+    {
+      "name": "86a2ae466db00965c3a3d94c49cdca5bf2f22dc0c3641e06bd666b379bedcbdc.png",
+      "sha256": "86a2ae466db00965c3a3d94c49cdca5bf2f22dc0c3641e06bd666b379bedcbdc",
+      "bytes": 7306
+    },
+    {
+      "name": "cecb10fb5a84dc1ee6d8a3fc9d9952be22f285402db3bfefd07e3984fe7b41d0.png",
+      "sha256": "cecb10fb5a84dc1ee6d8a3fc9d9952be22f285402db3bfefd07e3984fe7b41d0",
+      "bytes": 1979
+    }
+  ],
+  "bundle_sha256": "95d8521301d7d0d2c5f83ad61168ab695c7bf71a363a5a42060b6ddf8dc4d327",
+  "unavailable_references": [
+    {
+      "source": "api/README.md",
+      "target": "../../postman/BambuStudio.postman_collection.json",
+      "kind": "link"
+    },
+    {
+      "source": "api/README.md",
+      "target": "postman/home-assistant-printer-discovery.postman_collection.json",
+      "kind": "link"
+    },
+    {
+      "source": "api/README.yue_HK.md",
+      "target": "../../postman/BambuStudio.postman_collection.json",
+      "kind": "link"
+    },
+    {
+      "source": "api/README.yue_HK.md",
+      "target": "postman/home-assistant-printer-discovery.postman_collection.json",
+      "kind": "link"
+    },
+    {
+      "source": "api/home-assistant-printer-discovery.md",
+      "target": "../../postman/BambuStudio.postman_collection.json",
+      "kind": "link"
+    },
+    {
+      "source": "api/home-assistant-printer-discovery.md",
+      "target": "../../screenshots/smart-home/",
+      "kind": "link"
+    },
+    {
+      "source": "api/home-assistant-printer-discovery.md",
+      "target": "https://github.com/Ding-Ding-Projects/BambuStudio/issues/16",
+      "kind": "link"
+    },
+    {
+      "source": "api/home-assistant-printer-discovery.md",
+      "target": "https://github.com/Ding-Ding-Projects/ha-bambulab",
+      "kind": "link"
+    },
+    {
+      "source": "api/home-assistant-printer-discovery.md",
+      "target": "postman/home-assistant-printer-discovery.postman_collection.json",
+      "kind": "link"
+    },
+    {
+      "source": "api/home-assistant-printer-discovery.yue_HK.md",
+      "target": "../../postman/BambuStudio.postman_collection.json",
+      "kind": "link"
+    },
+    {
+      "source": "api/home-assistant-printer-discovery.yue_HK.md",
+      "target": "../../screenshots/smart-home/",
+      "kind": "link"
+    },
+    {
+      "source": "api/home-assistant-printer-discovery.yue_HK.md",
+      "target": "https://github.com/Ding-Ding-Projects/BambuStudio/issues/16",
+      "kind": "link"
+    },
+    {
+      "source": "api/home-assistant-printer-discovery.yue_HK.md",
+      "target": "https://github.com/Ding-Ding-Projects/ha-bambulab",
+      "kind": "link"
+    },
+    {
+      "source": "api/home-assistant-printer-discovery.yue_HK.md",
+      "target": "postman/home-assistant-printer-discovery.postman_collection.json",
+      "kind": "link"
+    },
+    {
+      "source": "automation/README.md",
+      "target": "../../../automation/README.md",
+      "kind": "link"
+    },
+    {
+      "source": "automation/README.md",
+      "target": "hosted-cancellation-contract-37095515540.json",
+      "kind": "link"
+    },
+    {
+      "source": "automation/README.md",
+      "target": "hosted-display-resolution-37091384649.json",
+      "kind": "link"
+    },
+    {
+      "source": "automation/README.md",
+      "target": "hosted-display-resolution-37096062899.json",
+      "kind": "link"
+    },
+    {
+      "source": "automation/README.md",
+      "target": "hosted-display-resolution-37096376814.json",
+      "kind": "link"
+    },
+    {
+      "source": "automation/README.md",
+      "target": "hosted-focused-contracts-20261003.json",
+      "kind": "link"
+    },
+    {
+      "source": "automation/README.md",
+      "target": "hosted-motion-runtime-37100814236.json",
+      "kind": "link"
+    },
+    {
+      "source": "automation/README.md",
+      "target": "hosted-native-interface-37099796194.json",
+      "kind": "link"
+    },
+    {
+      "source": "automation/README.md",
+      "target": "hosted-native-interface-37101358501.json",
+      "kind": "link"
+    },
+    {
+      "source": "automation/README.md",
+      "target": "hosted-production-build-37139881377.json",
+      "kind": "link"
+    },
+    {
+      "source": "automation/README.md",
+      "target": "hosted-source-query-b5468208.json",
+      "kind": "link"
+    },
+    {
+      "source": "automation/README.md",
+      "target": "hosted-startup-contracts-20261003.json",
+      "kind": "link"
+    },
+    {
+      "source": "automation/README.md",
+      "target": "hosted-startup-contracts-37139070022.json",
+      "kind": "link"
+    },
+    {
+      "source": "automation/README.md",
+      "target": "hosted-startup-contracts-37139896660.json",
+      "kind": "link"
+    },
+    {
+      "source": "automation/README.md",
+      "target": "hosted-startup-creation-37098366121.json",
+      "kind": "link"
+    },
+    {
+      "source": "automation/README.md",
+      "target": "hosted-startup-creation-37100674583.json",
+      "kind": "link"
+    },
+    {
+      "source": "automation/README.md",
+      "target": "hosted-startup-creation-37101357236.json",
+      "kind": "link"
+    },
+    {
+      "source": "automation/README.md",
+      "target": "hosted-startup-creation-37102257995.json",
+      "kind": "link"
+    },
+    {
+      "source": "automation/README.md",
+      "target": "hosted-startup-creation-37103711674.json",
+      "kind": "link"
+    },
+    {
+      "source": "automation/README.md",
+      "target": "hosted-startup-creation-37139071425.json",
+      "kind": "link"
+    },
+    {
+      "source": "automation/README.md",
+      "target": "hosted-startup-creation-37139898854.json",
+      "kind": "link"
+    },
+    {
+      "source": "automation/README.md",
+      "target": "hosted-startup-diagnostic-37096825183.json",
+      "kind": "link"
+    },
+    {
+      "source": "automation/README.md",
+      "target": "hosted-startup-lifecycle-37100483720.json",
+      "kind": "link"
+    },
+    {
+      "source": "automation/README.md",
+      "target": "hosted-temporal-contracts-37102495898.json",
+      "kind": "link"
+    },
+    {
+      "source": "automation/README.md",
+      "target": "hosted-temporal-contracts-37103221335.json",
+      "kind": "link"
+    },
+    {
+      "source": "automation/README.md",
+      "target": "hosted-verification-37138948887.json",
+      "kind": "link"
+    },
+    {
+      "source": "automation/README.md",
+      "target": "hosted-verification-ce61d22e.json",
+      "kind": "link"
+    },
+    {
+      "source": "automation/README.md",
+      "target": "hosted-verification.json",
+      "kind": "link"
+    },
+    {
+      "source": "automation/README.md",
+      "target": "hosted-vocabulary-contract-37098551711.json",
+      "kind": "link"
+    },
+    {
+      "source": "automation/hosted-display-scale-probe.md",
+      "target": "https://learn.microsoft.com/en-us/windows/apps/develop/launch/launch-settings",
+      "kind": "link"
+    },
+    {
+      "source": "automation/hosted-display-scale-probe.md",
+      "target": "https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-changedisplaysettingsexa",
+      "kind": "link"
+    },
+    {
+      "source": "automation/hosted-display-scale-probe.md",
+      "target": "https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getdpiforwindow",
+      "kind": "link"
+    },
+    {
+      "source": "automation/hosted-display-scale-probe.md",
+      "target": "https://learn.microsoft.com/en-us/windows/win32/hidpi/high-dpi-desktop-application-development-on-windows",
+      "kind": "link"
+    },
+    {
+      "source": "automation/hosted-display-scale-probe.md",
+      "target": "https://support.microsoft.com/en-gb/accessibility/windows/make-text-and-apps-bigger",
+      "kind": "link"
+    },
+    {
+      "source": "automation/integration-readiness.md",
+      "target": "https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37149337544",
+      "kind": "link"
+    },
+    {
+      "source": "automation/mcp-and-cli.md",
+      "target": "../../../automation/README.md",
+      "kind": "link"
+    },
+    {
+      "source": "automation/mcp-and-cli.md",
+      "target": "https://github.com/Ding-Ding-Projects/BambuStudio/issues/53",
+      "kind": "link"
+    },
+    {
+      "source": "automation/native-interface-verification.md",
+      "target": "https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37095786787",
+      "kind": "link"
+    },
+    {
+      "source": "automation/native-interface-verification.md",
+      "target": "https://learn.microsoft.com/en-us/windows-hardware/drivers/debugger/initial-breakpoint",
+      "kind": "link"
+    },
+    {
+      "source": "automation/native-interface-verification.md",
+      "target": "https://learn.microsoft.com/en-us/windows-hardware/drivers/debugger/symbol-options",
+      "kind": "link"
+    },
+    {
+      "source": "automation/native-interface-verification.md",
+      "target": "https://learn.microsoft.com/en-us/windows-hardware/drivers/debugger/symbol-path",
+      "kind": "link"
+    },
+    {
+      "source": "automation/native-interface-verification.md",
+      "target": "https://learn.microsoft.com/en-us/windows-hardware/drivers/debuggercmds/-gflag",
+      "kind": "link"
+    },
+    {
+      "source": "converter/pdf-engine.md",
+      "target": "https://qpdf.readthedocs.io/en/12.4/cli.html",
+      "kind": "link"
+    },
+    {
+      "source": "design-system/README.md",
+      "target": "../../../ui-md3/design-system/",
+      "kind": "link"
+    },
+    {
+      "source": "design-system/README.yue_HK.md",
+      "target": "../../../ui-md3/design-system/",
+      "kind": "link"
+    },
+    {
+      "source": "design-system/md3-design-system.md",
+      "target": "../../../HANDOFF.md",
+      "kind": "link"
+    },
+    {
+      "source": "design-system/md3-design-system.md",
+      "target": "../../../ROADMAP.md",
+      "kind": "link"
+    },
+    {
+      "source": "design-system/md3-design-system.md",
+      "target": "../../../ui-md3/design-system/",
+      "kind": "link"
+    },
+    {
+      "source": "design-system/md3-design-system.yue_HK.md",
+      "target": "../../../HANDOFF.md",
+      "kind": "link"
+    },
+    {
+      "source": "design-system/md3-design-system.yue_HK.md",
+      "target": "../../../ROADMAP.md",
+      "kind": "link"
+    },
+    {
+      "source": "design-system/md3-design-system.yue_HK.md",
+      "target": "../../../ui-md3/design-system/",
+      "kind": "link"
+    },
+    {
+      "source": "design-system/md3-parity-register.md",
+      "target": "../../../ui-md3/design-system/",
+      "kind": "link"
+    },
+    {
+      "source": "design-system/md3-parity-register.md",
+      "target": "https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/33695532981",
+      "kind": "link"
+    },
+    {
+      "source": "design-system/md3-parity-register.md",
+      "target": "https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/33696115604",
+      "kind": "link"
+    },
+    {
+      "source": "design-system/md3-parity-register.yue_HK.md",
+      "target": "../../../ui-md3/design-system/",
+      "kind": "link"
+    },
+    {
+      "source": "design-system/md3-parity-register.yue_HK.md",
+      "target": "https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/33695532981",
+      "kind": "link"
+    },
+    {
+      "source": "design-system/md3-parity-register.yue_HK.md",
+      "target": "https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/33696115604",
+      "kind": "link"
+    },
+    {
+      "source": "design-system/native-interface-audit-2026-10-02.md",
+      "target": "hosted-verification-cb5981a5.json",
+      "kind": "link"
+    },
+    {
+      "source": "design-system/themed-surface-colors.md",
+      "target": "../../screenshots/version-history/history-dialog-dark--before-card-fix.png",
+      "kind": "link"
+    },
+    {
+      "source": "design-system/themed-surface-colors.md",
+      "target": "../../screenshots/version-history/history-dialog-dark.png",
+      "kind": "link"
+    },
+    {
+      "source": "design-system/themed-surface-colors.yue_HK.md",
+      "target": "../../screenshots/version-history/history-dialog-dark--before-card-fix.png",
+      "kind": "link"
+    },
+    {
+      "source": "design-system/themed-surface-colors.yue_HK.md",
+      "target": "../../screenshots/version-history/history-dialog-dark.png",
+      "kind": "link"
+    },
+    {
+      "source": "gcode-preview/README.md",
+      "target": "../model-preview/",
+      "kind": "link"
+    },
+    {
+      "source": "gcode-preview/README.yue_HK.md",
+      "target": "../model-preview/",
+      "kind": "link"
+    },
+    {
+      "source": "gcode-preview/preview-overlays.md",
+      "target": "https://github.com/Ding-Ding-Projects/BambuStudio/issues/51",
+      "kind": "link"
+    },
+    {
+      "source": "gcode-preview/preview-overlays.yue_HK.md",
+      "target": "https://github.com/Ding-Ding-Projects/BambuStudio/issues/51",
+      "kind": "link"
+    },
+    {
+      "source": "gcode-preview/toolpath-legend.md",
+      "target": "../../../src/slic3r/GUI/GCodeRenderer/BaseRenderer.cpp",
+      "kind": "link"
+    },
+    {
+      "source": "gcode-preview/toolpath-legend.yue_HK.md",
+      "target": "../../../src/slic3r/GUI/GCodeRenderer/BaseRenderer.cpp",
+      "kind": "link"
+    },
+    {
+      "source": "pages/README.md",
+      "target": "../../../ui-md3/landing.html",
+      "kind": "link"
+    },
+    {
+      "source": "pages/README.md",
+      "target": "../../../ui-md3/site/",
+      "kind": "link"
+    },
+    {
+      "source": "pages/README.md",
+      "target": "../../screenshots/pages/README.md",
+      "kind": "link"
+    },
+    {
+      "source": "pages/README.md",
+      "target": "https://github.com/Ding-Ding-Projects/dim-sum-photos",
+      "kind": "link"
+    },
+    {
+      "source": "pages/README.yue_HK.md",
+      "target": "../../../ui-md3/landing.html",
+      "kind": "link"
+    },
+    {
+      "source": "pages/README.yue_HK.md",
+      "target": "../../../ui-md3/site/",
+      "kind": "link"
+    },
+    {
+      "source": "pages/README.yue_HK.md",
+      "target": "../../screenshots/pages/README.md",
+      "kind": "link"
+    },
+    {
+      "source": "pages/README.yue_HK.md",
+      "target": "https://github.com/Ding-Ding-Projects/dim-sum-photos",
+      "kind": "link"
+    },
+    {
+      "source": "pages/changelog-viewer.md",
+      "target": "../../../ui-md3/scripts/build-changelog.mjs",
+      "kind": "link"
+    },
+    {
+      "source": "pages/changelog-viewer.md",
+      "target": "../../../ui-md3/site/changelog.data.js",
+      "kind": "link"
+    },
+    {
+      "source": "pages/changelog-viewer.md",
+      "target": "../../../ui-md3/site/changelog.js",
+      "kind": "link"
+    },
+    {
+      "source": "pages/changelog-viewer.md",
+      "target": "../../../ui-md3/tests/site.test.mjs",
+      "kind": "link"
+    },
+    {
+      "source": "pages/changelog-viewer.yue_HK.md",
+      "target": "../../../ui-md3/scripts/build-changelog.mjs",
+      "kind": "link"
+    },
+    {
+      "source": "pages/changelog-viewer.yue_HK.md",
+      "target": "../../../ui-md3/site/changelog.data.js",
+      "kind": "link"
+    },
+    {
+      "source": "pages/changelog-viewer.yue_HK.md",
+      "target": "../../../ui-md3/site/changelog.js",
+      "kind": "link"
+    },
+    {
+      "source": "pages/changelog-viewer.yue_HK.md",
+      "target": "../../../ui-md3/tests/site.test.mjs",
+      "kind": "link"
+    },
+    {
+      "source": "pages/deployment-and-layout-gate.md",
+      "target": "../../../.github/workflows/ui-md3-pages.yml",
+      "kind": "link"
+    },
+    {
+      "source": "pages/deployment-and-layout-gate.yue_HK.md",
+      "target": "../../../.github/workflows/ui-md3-pages.yml",
+      "kind": "link"
+    },
+    {
+      "source": "pages/dim-sum-surprise.md",
+      "target": "../../../ui-md3/site/dimsum.data.js",
+      "kind": "link"
+    },
+    {
+      "source": "pages/dim-sum-surprise.md",
+      "target": "../../../ui-md3/site/dimsum.js",
+      "kind": "link"
+    },
+    {
+      "source": "pages/dim-sum-surprise.md",
+      "target": "https://github.com/Ding-Ding-Projects/dim-sum-photos",
+      "kind": "link"
+    },
+    {
+      "source": "pages/dim-sum-surprise.md",
+      "target": "https://raw.githubusercontent.com/Ding-Ding-Projects/dim-sum-photos/main/catalog/index.json",
+      "kind": "link"
+    },
+    {
+      "source": "pages/dim-sum-surprise.yue_HK.md",
+      "target": "../../../ui-md3/site/dimsum.data.js",
+      "kind": "link"
+    },
+    {
+      "source": "pages/dim-sum-surprise.yue_HK.md",
+      "target": "../../../ui-md3/site/dimsum.js",
+      "kind": "link"
+    },
+    {
+      "source": "pages/dim-sum-surprise.yue_HK.md",
+      "target": "https://github.com/Ding-Ding-Projects/dim-sum-photos",
+      "kind": "link"
+    },
+    {
+      "source": "pages/dim-sum-surprise.yue_HK.md",
+      "target": "https://raw.githubusercontent.com/Ding-Ding-Projects/dim-sum-photos/main/catalog/index.json",
+      "kind": "link"
+    },
+    {
+      "source": "pages/language-and-funny-levels.md",
+      "target": "../../../ui-md3/site/copy.js",
+      "kind": "link"
+    },
+    {
+      "source": "pages/language-and-funny-levels.md",
+      "target": "../../../ui-md3/site/core.js",
+      "kind": "link"
+    },
+    {
+      "source": "pages/language-and-funny-levels.yue_HK.md",
+      "target": "../../../ui-md3/site/copy.js",
+      "kind": "link"
+    },
+    {
+      "source": "pages/language-and-funny-levels.yue_HK.md",
+      "target": "../../../ui-md3/site/core.js",
+      "kind": "link"
+    },
+    {
+      "source": "pages/notifications.md",
+      "target": "../../../ui-md3/site/boot.js",
+      "kind": "link"
+    },
+    {
+      "source": "pages/notifications.md",
+      "target": "../../../ui-md3/site/core.js",
+      "kind": "link"
+    },
+    {
+      "source": "pages/notifications.yue_HK.md",
+      "target": "../../../ui-md3/site/boot.js",
+      "kind": "link"
+    },
+    {
+      "source": "pages/notifications.yue_HK.md",
+      "target": "../../../ui-md3/site/core.js",
+      "kind": "link"
+    },
+    {
+      "source": "pages/regex-builder.md",
+      "target": "../../../ui-md3/site/regex.js",
+      "kind": "link"
+    },
+    {
+      "source": "pages/regex-builder.yue_HK.md",
+      "target": "../../../ui-md3/site/regex.js",
+      "kind": "link"
+    },
+    {
+      "source": "pages/settings-and-appearance.md",
+      "target": "../../../ui-md3/site/core.js",
+      "kind": "link"
+    },
+    {
+      "source": "pages/settings-and-appearance.md",
+      "target": "../../../ui-md3/site/settings.js",
+      "kind": "link"
+    },
+    {
+      "source": "pages/settings-and-appearance.yue_HK.md",
+      "target": "../../../ui-md3/site/core.js",
+      "kind": "link"
+    },
+    {
+      "source": "pages/settings-and-appearance.yue_HK.md",
+      "target": "../../../ui-md3/site/settings.js",
+      "kind": "link"
+    },
+    {
+      "source": "pages/tabbed-navigation.md",
+      "target": "../../../ui-md3/site/tabs.js",
+      "kind": "link"
+    },
+    {
+      "source": "pages/tabbed-navigation.yue_HK.md",
+      "target": "../../../ui-md3/site/tabs.js",
+      "kind": "link"
+    },
+    {
+      "source": "prepare/sidebar-tabs.md",
+      "target": "../../../design/prepare-sidebar-tabs.md",
+      "kind": "link"
+    },
+    {
+      "source": "prepare/sidebar-tabs.yue_HK.md",
+      "target": "../../../design/prepare-sidebar-tabs.md",
+      "kind": "link"
+    },
+    {
+      "source": "releases/dependency-security-alerts.md",
+      "target": "../../screenshots/md3-everything/README.md#release-md3-v171-checks-the-dependency-pin-release",
+      "kind": "link"
+    },
+    {
+      "source": "releases/dependency-security-alerts.md",
+      "target": "https://github.com/Ding-Ding-Projects/BambuStudio/issues/47",
+      "kind": "link"
+    },
+    {
+      "source": "releases/dependency-security-alerts.yue_HK.md",
+      "target": "../../screenshots/md3-everything/README.md#release-md3-v171-checks-the-dependency-pin-release",
+      "kind": "link"
+    },
+    {
+      "source": "releases/dependency-security-alerts.yue_HK.md",
+      "target": "https://github.com/Ding-Ding-Projects/BambuStudio/issues/47",
+      "kind": "link"
+    },
+    {
+      "source": "releases/release-codenames.md",
+      "target": "../../../.github/workflows/build_all.yml",
+      "kind": "link"
+    },
+    {
+      "source": "releases/release-codenames.md",
+      "target": "../../../scripts/ci/Test-ReleaseCodenames.ps1",
+      "kind": "link"
+    },
+    {
+      "source": "releases/release-codenames.yue_HK.md",
+      "target": "../../../.github/workflows/build_all.yml",
+      "kind": "link"
+    },
+    {
+      "source": "releases/release-codenames.yue_HK.md",
+      "target": "../../../scripts/ci/Test-ReleaseCodenames.ps1",
+      "kind": "link"
+    },
+    {
+      "source": "releases/windows-release-supply-chain.md",
+      "target": "https://docs.github.com/en/actions/how-tos/manage-workflow-runs/re-run-workflows-and-jobs",
+      "kind": "link"
+    },
+    {
+      "source": "releases/windows-release-supply-chain.md",
+      "target": "https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-workflow-concurrency",
+      "kind": "link"
+    },
+    {
+      "source": "releases/windows-release-supply-chain.md",
+      "target": "https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36631880242",
+      "kind": "link"
+    },
+    {
+      "source": "releases/windows-release-supply-chain.md",
+      "target": "https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36645906111",
+      "kind": "link"
+    },
+    {
+      "source": "releases/windows-release-supply-chain.md",
+      "target": "https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36739933076",
+      "kind": "link"
+    },
+    {
+      "source": "releases/windows-release-supply-chain.yue_HK.md",
+      "target": "https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36631880242",
+      "kind": "link"
+    },
+    {
+      "source": "releases/windows-release-supply-chain.yue_HK.md",
+      "target": "https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36645906111",
+      "kind": "link"
+    },
+    {
+      "source": "releases/windows-release-supply-chain.yue_HK.md",
+      "target": "https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36739933076",
+      "kind": "link"
+    },
+    {
+      "source": "windows/README.md",
+      "target": "../../reapplication/README.md",
+      "kind": "link"
+    },
+    {
+      "source": "windows/README.md",
+      "target": "../../reapplication/loader-adapters.md",
+      "kind": "link"
+    },
+    {
+      "source": "windows/README.md",
+      "target": "../../reapplication/verification-status.md",
+      "kind": "link"
+    },
+    {
+      "source": "windows/README.yue_HK.md",
+      "target": "../../reapplication/README.md",
+      "kind": "link"
+    },
+    {
+      "source": "windows/README.yue_HK.md",
+      "target": "../../reapplication/loader-adapters.md",
+      "kind": "link"
+    },
+    {
+      "source": "windows/README.yue_HK.md",
+      "target": "../../reapplication/verification-status.md",
+      "kind": "link"
+    },
+    {
+      "source": "windows/app-updates.md",
+      "target": "https://github.com/Ding-Ding-Projects/BambuStudio/issues/52",
+      "kind": "link"
+    },
+    {
+      "source": "windows/app-updates.yue_HK.md",
+      "target": "https://github.com/Ding-Ding-Projects/BambuStudio/issues/52",
+      "kind": "link"
+    },
+    {
+      "source": "windows/changelog-viewer.md",
+      "target": "../../../src/libslic3r/Changelog.cpp",
+      "kind": "link"
+    },
+    {
+      "source": "windows/changelog-viewer.md",
+      "target": "../../../src/slic3r/GUI/ChangelogDialog.cpp",
+      "kind": "link"
+    },
+    {
+      "source": "windows/changelog-viewer.md",
+      "target": "../../../ui-md3/scripts/build-changelog.mjs",
+      "kind": "link"
+    },
+    {
+      "source": "windows/changelog-viewer.yue_HK.md",
+      "target": "../../../src/libslic3r/Changelog.cpp",
+      "kind": "link"
+    },
+    {
+      "source": "windows/changelog-viewer.yue_HK.md",
+      "target": "../../../src/slic3r/GUI/ChangelogDialog.cpp",
+      "kind": "link"
+    },
+    {
+      "source": "windows/changelog-viewer.yue_HK.md",
+      "target": "../../../ui-md3/scripts/build-changelog.mjs",
+      "kind": "link"
+    },
+    {
+      "source": "windows/dim-sum-surprise.md",
+      "target": "../../../src/slic3r/GUI/DimSumSurprise.cpp",
+      "kind": "link"
+    },
+    {
+      "source": "windows/dim-sum-surprise.md",
+      "target": "../../../src/slic3r/GUI/DimSumSurpriseModel.hpp",
+      "kind": "link"
+    },
+    {
+      "source": "windows/dim-sum-surprise.md",
+      "target": "https://github.com/Ding-Ding-Projects/dim-sum-photos",
+      "kind": "link"
+    },
+    {
+      "source": "windows/dim-sum-surprise.yue_HK.md",
+      "target": "../../../src/slic3r/GUI/DimSumSurprise.cpp",
+      "kind": "link"
+    },
+    {
+      "source": "windows/dim-sum-surprise.yue_HK.md",
+      "target": "../../../src/slic3r/GUI/DimSumSurpriseModel.hpp",
+      "kind": "link"
+    },
+    {
+      "source": "windows/dim-sum-surprise.yue_HK.md",
+      "target": "https://github.com/Ding-Ding-Projects/dim-sum-photos",
+      "kind": "link"
+    },
+    {
+      "source": "windows/interface-motion.md",
+      "target": "../../../design/interface-motion.md",
+      "kind": "link"
+    },
+    {
+      "source": "windows/smart-home.md",
+      "target": "../../screenshots/smart-home/dialog-520x480-after-text-action-fix.png",
+      "kind": "link"
+    },
+    {
+      "source": "windows/smart-home.md",
+      "target": "../../screenshots/smart-home/dialog-520x480-before-text-action-fix.png",
+      "kind": "link"
+    },
+    {
+      "source": "windows/smart-home.md",
+      "target": "../../screenshots/smart-home/dialog-520x480-media-actions-after-fix.png",
+      "kind": "link"
+    },
+    {
+      "source": "windows/smart-home.md",
+      "target": "../../screenshots/smart-home/dialog-720x760-after-text-action-fix.png",
+      "kind": "link"
+    },
+    {
+      "source": "windows/smart-home.md",
+      "target": "../../screenshots/smart-home/dialog-720x760-before-text-action-fix.png",
+      "kind": "link"
+    },
+    {
+      "source": "windows/smart-home.md",
+      "target": "https://github.com/Ding-Ding-Projects/BambuStudio/issues/16",
+      "kind": "link"
+    },
+    {
+      "source": "windows/smart-home.md",
+      "target": "https://github.com/Ding-Ding-Projects/ha-bambulab",
+      "kind": "link"
+    },
+    {
+      "source": "windows/smart-home.yue_HK.md",
+      "target": "../../screenshots/smart-home/dialog-520x480-after-text-action-fix.png",
+      "kind": "link"
+    },
+    {
+      "source": "windows/smart-home.yue_HK.md",
+      "target": "../../screenshots/smart-home/dialog-520x480-before-text-action-fix.png",
+      "kind": "link"
+    },
+    {
+      "source": "windows/smart-home.yue_HK.md",
+      "target": "../../screenshots/smart-home/dialog-520x480-media-actions-after-fix.png",
+      "kind": "link"
+    },
+    {
+      "source": "windows/smart-home.yue_HK.md",
+      "target": "../../screenshots/smart-home/dialog-720x760-after-text-action-fix.png",
+      "kind": "link"
+    },
+    {
+      "source": "windows/smart-home.yue_HK.md",
+      "target": "../../screenshots/smart-home/dialog-720x760-before-text-action-fix.png",
+      "kind": "link"
+    },
+    {
+      "source": "windows/smart-home.yue_HK.md",
+      "target": "https://github.com/Ding-Ding-Projects/BambuStudio/issues/16",
+      "kind": "link"
+    },
+    {
+      "source": "windows/smart-home.yue_HK.md",
+      "target": "https://github.com/Ding-Ding-Projects/ha-bambulab",
+      "kind": "link"
+    },
+    {
+      "source": "windows/software-gl-fallback.md",
+      "target": "https://github.com/pal1000/mesa-dist-win",
+      "kind": "link"
+    },
+    {
+      "source": "windows/software-gl-fallback.yue_HK.md",
+      "target": "https://github.com/pal1000/mesa-dist-win",
+      "kind": "link"
+    },
+    {
+      "source": "windows/windows-only-platform.md",
+      "target": "https://github.com/bambulab/BambuStudio/releases/",
+      "kind": "link"
+    },
+    {
+      "source": "windows/windows-only-platform.yue_HK.md",
+      "target": "https://github.com/bambulab/BambuStudio/releases/",
+      "kind": "link"
+    },
+    {
+      "source": "workspace/project-version-history.md",
+      "target": "../../screenshots/version-history/crash-restore-prompt.png",
+      "kind": "link"
+    },
+    {
+      "source": "workspace/project-version-history.yue_HK.md",
+      "target": "../../screenshots/version-history/crash-restore-prompt.png",
+      "kind": "link"
+    }
+  ]
+}

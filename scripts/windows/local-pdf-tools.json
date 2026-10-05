@@ -1,0 +1,577 @@
+{
+  "schemaVersion": 1,
+  "engine": "qpdf",
+  "version": "12.4.2",
+  "platform": "windows-x64",
+  "repository": "qpdf/qpdf",
+  "tag": "v12.4.2",
+  "archive": "qpdf-12.4.2-msvc64.zip",
+  "archive_sha256": "db87077e683630c1217e0e8f9a20a9749d952ab676e881c3689187763a5de25d",
+  "archive_bytes": 28183147,
+  "files": [
+    {
+      "path": "concrt140.dll",
+      "archivePath": "qpdf-12.4.2-msvc64/bin/concrt140.dll",
+      "sha256": "54716f0738af891f283d213b5c8d11b25896bb8ee3097d301eae718560cf974e",
+      "bytes": 374200
+    },
+    {
+      "path": "msvcp140.dll",
+      "archivePath": "qpdf-12.4.2-msvc64/bin/msvcp140.dll",
+      "sha256": "7c26614e1d733892c2deac7e245ce115504b1d80592dd0a01b08e3e5a55f89ca",
+      "bytes": 643512
+    },
+    {
+      "path": "msvcp140_1.dll",
+      "archivePath": "qpdf-12.4.2-msvc64/bin/msvcp140_1.dll",
+      "sha256": "206c931bf90fdad8816de3b5e2ef80b2bcaa9406c89ecc05fe6fddffe251e982",
+      "bytes": 35768
+    },
+    {
+      "path": "msvcp140_2.dll",
+      "archivePath": "qpdf-12.4.2-msvc64/bin/msvcp140_2.dll",
+      "sha256": "d50d7883f20d1dc6191768d3746f52dd9cac89c346ffaed5be1f110c2f34a838",
+      "bytes": 274872
+    },
+    {
+      "path": "msvcp140_atomic_wait.dll",
+      "archivePath": "qpdf-12.4.2-msvc64/bin/msvcp140_atomic_wait.dll",
+      "sha256": "3d0cbfaa1bf3eecf5a3f4491d2960ee803cb994f30292c6adc4a07c498f60e2b",
+      "bytes": 57792
+    },
+    {
+      "path": "msvcp140_codecvt_ids.dll",
+      "archivePath": "qpdf-12.4.2-msvc64/bin/msvcp140_codecvt_ids.dll",
+      "sha256": "8a65c7596ef2e6938731f5a1058e7e40145b6d97967cc649231a076b9a608d78",
+      "bytes": 31160
+    },
+    {
+      "path": "qpdf.exe",
+      "archivePath": "qpdf-12.4.2-msvc64/bin/qpdf.exe",
+      "sha256": "1bdaf878f37eaffea1ea3c30591214c77636a0f2fc7432427516b6e22e36c0ff",
+      "bytes": 19456
+    },
+    {
+      "path": "qpdf30.dll",
+      "archivePath": "qpdf-12.4.2-msvc64/bin/qpdf30.dll",
+      "sha256": "8812952678de93e0750308a113aa650e9161af466f9770679ea9673adeb61041",
+      "bytes": 7448064
+    },
+    {
+      "path": "vcruntime140.dll",
+      "archivePath": "qpdf-12.4.2-msvc64/bin/vcruntime140.dll",
+      "sha256": "d1f4225df2cd877dbf130d5668a021dce3f94118455ff5ec952061c30afc9ce7",
+      "bytes": 178616
+    },
+    {
+      "path": "vcruntime140_1.dll",
+      "archivePath": "qpdf-12.4.2-msvc64/bin/vcruntime140_1.dll",
+      "sha256": "a7146c08f89fe5b04541ab507cdb59ff7b44534d4ba3c668a426c6450a03434e",
+      "bytes": 50112
+    }
+  ],
+  "sdkFiles": [
+    {
+      "path": "include/qpdf/auto_job_c_att.hh",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/auto_job_c_att.hh",
+      "sha256": "4c2b171ea00531db54720bf49a43f8b34481586ae7fb6cbf225099ee42bc5bb4",
+      "bytes": 569
+    },
+    {
+      "path": "include/qpdf/auto_job_c_copy_att.hh",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/auto_job_c_copy_att.hh",
+      "sha256": "50609012bff14fd82f0649185940d617d05d530cdc522185c7f3920a561ccb42",
+      "bytes": 303
+    },
+    {
+      "path": "include/qpdf/auto_job_c_enc.hh",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/auto_job_c_enc.hh",
+      "sha256": "28446f3c32153a52afa239ea40503e6cc8ac2c026813526a349e0cd4ae17ddd5",
+      "bytes": 853
+    },
+    {
+      "path": "include/qpdf/auto_job_c_global.hh",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/auto_job_c_global.hh",
+      "sha256": "7df0ff87d18d7fa6d57437960377509420b6b6eb9527b534996f86d3bd7a0ddc",
+      "bytes": 592
+    },
+    {
+      "path": "include/qpdf/auto_job_c_limits.hh",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/auto_job_c_limits.hh",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "include/qpdf/auto_job_c_main.hh",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/auto_job_c_main.hh",
+      "sha256": "7a50de4a051fe68bafdc1111af346e19f84589d9d5436a266e88872f4ebd6791",
+      "bytes": 4289
+    },
+    {
+      "path": "include/qpdf/auto_job_c_pages.hh",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/auto_job_c_pages.hh",
+      "sha256": "9f628e24f11c78775c0bb605045a10cb109acb2105b89deaffd1c0435c0a23be",
+      "bytes": 356
+    },
+    {
+      "path": "include/qpdf/auto_job_c_set_page_labels.hh",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/auto_job_c_set_page_labels.hh",
+      "sha256": "b3cc0f21029f6d89efa043dcdbfa183cb59325b6506001c18911614fe8e568ec",
+      "bytes": 177
+    },
+    {
+      "path": "include/qpdf/auto_job_c_uo.hh",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/auto_job_c_uo.hh",
+      "sha256": "3084b3e2e2d62941674fc8cc56987fc8bde40e3763e759faa58459c2ada4baf3",
+      "bytes": 456
+    },
+    {
+      "path": "include/qpdf/Buffer.hh",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/Buffer.hh",
+      "sha256": "ec2a9ee18aa352aee6dad002f2ce1590e1a44f22bd5f8019532952f5a6c889d7",
+      "bytes": 2863
+    },
+    {
+      "path": "include/qpdf/BufferInputSource.hh",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/BufferInputSource.hh",
+      "sha256": "42e52c983144142247944729b8e819e891cfd2c5d2c4d59f1475c3b18b0b1686",
+      "bytes": 2266
+    },
+    {
+      "path": "include/qpdf/ClosedFileInputSource.hh",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/ClosedFileInputSource.hh",
+      "sha256": "9cd69d69765dbd3db0f3745386d6f0aba69951ea12ccf0b16398653d37eb7b54",
+      "bytes": 2692
+    },
+    {
+      "path": "include/qpdf/Constants.h",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/Constants.h",
+      "sha256": "04b3907ac1abd016e3d1bbbd82be317fd6362ad13672a9972567fb0c1bf7f406",
+      "bytes": 10768
+    },
+    {
+      "path": "include/qpdf/DLL.h",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/DLL.h",
+      "sha256": "91a41bd530d100e89d1f50d5c3c51a5fa5388155e5d8cf9e7af3fb44a4b948b6",
+      "bytes": 4748
+    },
+    {
+      "path": "include/qpdf/FileInputSource.hh",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/FileInputSource.hh",
+      "sha256": "2ad4ce78f9787360e3e61dd56625aa812c3fd280ec450b87f4f52eb41579557e",
+      "bytes": 2124
+    },
+    {
+      "path": "include/qpdf/global.hh",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/global.hh",
+      "sha256": "ab11aed1b58a8ab34d0d993fd3b3c7600cfe768f9bef01f351ce38f0cde93535",
+      "bytes": 20779
+    },
+    {
+      "path": "include/qpdf/InputSource.hh",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/InputSource.hh",
+      "sha256": "235596a597b5d56ff64eadce8f118ef27d3cb010dfd3c0397c58d463f063d4ab",
+      "bytes": 3778
+    },
+    {
+      "path": "include/qpdf/JSON.hh",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/JSON.hh",
+      "sha256": "75f4f3c8ec9b93914195b204cf288b2f778481225d26e489abfc7c2a145bc8d0",
+      "bytes": 16517
+    },
+    {
+      "path": "include/qpdf/ObjectHandle.hh",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/ObjectHandle.hh",
+      "sha256": "5659a3f483e0b4df9d5381f0fda9397c2cd89ec25c2c569a8e04c1033ffc83ba",
+      "bytes": 5721
+    },
+    {
+      "path": "include/qpdf/PDFVersion.hh",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/PDFVersion.hh",
+      "sha256": "d413f4a9a2e5b28d1a5b44d11758d806d2116e845461bc2b34402b0ac1dc46b8",
+      "bytes": 2187
+    },
+    {
+      "path": "include/qpdf/Pipeline.hh",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/Pipeline.hh",
+      "sha256": "72162887d2c339e3aed6cb2f91f49cdc2d8aa762c0e7c985197f970839e99bbb",
+      "bytes": 4266
+    },
+    {
+      "path": "include/qpdf/Pl_Buffer.hh",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/Pl_Buffer.hh",
+      "sha256": "50abbae1e7bd31176f898333cddfa2e9ad9f28922dc9f214aecca7ece5e638fa",
+      "bytes": 2958
+    },
+    {
+      "path": "include/qpdf/Pl_Concatenate.hh",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/Pl_Concatenate.hh",
+      "sha256": "e15a5886ad8534f098fa9c6c8cad82a4a2f2bdbaefe83bfc122a896550c3b6e4",
+      "bytes": 2071
+    },
+    {
+      "path": "include/qpdf/Pl_Count.hh",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/Pl_Count.hh",
+      "sha256": "8fe22c357420a834ebe3b6036aaf567b30fa790ed8c6aa42097adf6d38f68653",
+      "bytes": 1758
+    },
+    {
+      "path": "include/qpdf/Pl_DCT.hh",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/Pl_DCT.hh",
+      "sha256": "2a29229d05dbc74f5d80ab1d199b2f7e0d733c50602d9ef9d00ec081f45c7b3c",
+      "bytes": 3156
+    },
+    {
+      "path": "include/qpdf/Pl_Discard.hh",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/Pl_Discard.hh",
+      "sha256": "bc48d0223cd0b03a3c770f7acd88627a82c42f7b6467c4756764ebef14436231",
+      "bytes": 1458
+    },
+    {
+      "path": "include/qpdf/Pl_Flate.hh",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/Pl_Flate.hh",
+      "sha256": "c765e118f67dd06ab5c6bf18cd77d3ac96eb80d5cc9820dcc9e0a4bd3f4a3a5f",
+      "bytes": 3901
+    },
+    {
+      "path": "include/qpdf/Pl_Function.hh",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/Pl_Function.hh",
+      "sha256": "d66601d7441b033270d9a7c19cfe9b7cc3fc63e3fa5de26a5fd14f790be3aa88",
+      "bytes": 2615
+    },
+    {
+      "path": "include/qpdf/Pl_OStream.hh",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/Pl_OStream.hh",
+      "sha256": "ef3d42a32df30b767a96ead9a043413d7d5469ed17b0610eb9fc260bb3b9ea1e",
+      "bytes": 1628
+    },
+    {
+      "path": "include/qpdf/Pl_QPDFTokenizer.hh",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/Pl_QPDFTokenizer.hh",
+      "sha256": "07d80d6bdfd886dcd8608ebc062c4d0f669100cb1bf4545588b04d38c60ad4e4",
+      "bytes": 2232
+    },
+    {
+      "path": "include/qpdf/Pl_RunLength.hh",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/Pl_RunLength.hh",
+      "sha256": "4e0b2037b64b69effe6bd4e72589a6429d02bd8c153b4f2a0df753121e41a068",
+      "bytes": 1892
+    },
+    {
+      "path": "include/qpdf/Pl_StdioFile.hh",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/Pl_StdioFile.hh",
+      "sha256": "86ae4ec57868dbabf7a36563b69005e8da40641ebe91ea82514517ccb9c2f33e",
+      "bytes": 1631
+    },
+    {
+      "path": "include/qpdf/Pl_String.hh",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/Pl_String.hh",
+      "sha256": "2479e920d448ed8c6ef07f0d85717ee0c9ac4c573ca5b930aebe962a83c956b5",
+      "bytes": 2115
+    },
+    {
+      "path": "include/qpdf/PointerHolder.hh",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/PointerHolder.hh",
+      "sha256": "7638df03176cda3a47f7e7eb64bd271f3ceb2f6750838198078512244168ccd3",
+      "bytes": 8556
+    },
+    {
+      "path": "include/qpdf/QIntC.hh",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/QIntC.hh",
+      "sha256": "2f4f8a160203b0ab8d12512be4af9dc7f19adb12c523f01806b6b9abb8c41465",
+      "bytes": 9222
+    },
+    {
+      "path": "include/qpdf/qpdf-c.h",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/qpdf-c.h",
+      "sha256": "b6e4ffb5f81e471e4f494ea86935eb1a679c87da1dd0520e762abce34bdb142f",
+      "bytes": 45350
+    },
+    {
+      "path": "include/qpdf/QPDF.hh",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/QPDF.hh",
+      "sha256": "91823bbfed23e610523e12cab92153c673f0b2b93462cab7bc746f01cfcdc690",
+      "bytes": 39213
+    },
+    {
+      "path": "include/qpdf/QPDFAcroFormDocumentHelper.hh",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/QPDFAcroFormDocumentHelper.hh",
+      "sha256": "5fdf36ac5b4fbc713869519a8f07757c315c95753f5958feadeda8bb8a6c1956",
+      "bytes": 12334
+    },
+    {
+      "path": "include/qpdf/QPDFAnnotationObjectHelper.hh",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/QPDFAnnotationObjectHelper.hh",
+      "sha256": "52aa6d5a1370d9fe27983ef441adc6288ad045e03815ad422f892cd970a5825c",
+      "bytes": 4297
+    },
+    {
+      "path": "include/qpdf/QPDFCryptoImpl.hh",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/QPDFCryptoImpl.hh",
+      "sha256": "0a950ff01edddddd4b2f429bc59a2ebc676231e15637812b694017e6c2e27acf",
+      "bytes": 3027
+    },
+    {
+      "path": "include/qpdf/QPDFCryptoProvider.hh",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/QPDFCryptoProvider.hh",
+      "sha256": "fc63b344658703b1a3be915f6ef31a6b9e4c68baadcef172b37645d8394f25eb",
+      "bytes": 3829
+    },
+    {
+      "path": "include/qpdf/QPDFDocumentHelper.hh",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/QPDFDocumentHelper.hh",
+      "sha256": "ba9e6c5b93fda9d261a1c5724ee5fe33339f267556fb7eb7bb296d23d90de517",
+      "bytes": 2066
+    },
+    {
+      "path": "include/qpdf/QPDFEFStreamObjectHelper.hh",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/QPDFEFStreamObjectHelper.hh",
+      "sha256": "a9bc391294b61ad460a8226d68a4989bef434f27f0aaaaa6349e8e5def672555",
+      "bytes": 4177
+    },
+    {
+      "path": "include/qpdf/QPDFEmbeddedFileDocumentHelper.hh",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/QPDFEmbeddedFileDocumentHelper.hh",
+      "sha256": "878098d1b6bd61696e16dc198ecd2995a6c2768b4d94aca9020e22add24c8580",
+      "bytes": 3512
+    },
+    {
+      "path": "include/qpdf/QPDFExc.hh",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/QPDFExc.hh",
+      "sha256": "7a9b5b43ac4d052475910bc4d31a0a9bd1b978ad30cb978c9051991867e24134",
+      "bytes": 2934
+    },
+    {
+      "path": "include/qpdf/QPDFFileSpecObjectHelper.hh",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/QPDFFileSpecObjectHelper.hh",
+      "sha256": "5376e700dd2574bfa42eabc122465f0c9207d6311ef7565f362a59702cc5d11f",
+      "bytes": 3906
+    },
+    {
+      "path": "include/qpdf/QPDFFormFieldObjectHelper.hh",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/QPDFFormFieldObjectHelper.hh",
+      "sha256": "fb9d1f12c4c74b0fb733196616cb94537fcabeace73d52a7afd5424de542e944",
+      "bytes": 8271
+    },
+    {
+      "path": "include/qpdf/qpdfjob-c.h",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/qpdfjob-c.h",
+      "sha256": "cb34bc12244e046840b0c836e773ce27ef9ad4f3e0b97ea596a3598551206075",
+      "bytes": 6697
+    },
+    {
+      "path": "include/qpdf/QPDFJob.hh",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/QPDFJob.hh",
+      "sha256": "19b3a731e794463b43a8f07f8716d519307b2cb4b1c9f50d73fb680df4448f65",
+      "bytes": 19139
+    },
+    {
+      "path": "include/qpdf/qpdflogger-c.h",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/qpdflogger-c.h",
+      "sha256": "f98a8982e3e6ebc3e7ef6c01c7f24218b280acea2a2a4697a1e53c6019443879",
+      "bytes": 3637
+    },
+    {
+      "path": "include/qpdf/QPDFLogger.hh",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/QPDFLogger.hh",
+      "sha256": "d10266ffdf970fa17cc5e17368feb2df182f8a5f6c33fe35f905fca7277b3d45",
+      "bytes": 6570
+    },
+    {
+      "path": "include/qpdf/QPDFMatrix.hh",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/QPDFMatrix.hh",
+      "sha256": "e5427ef340c5794027b919747df6bd44fd36f33fd5ed810f357da32895b8cb61",
+      "bytes": 2938
+    },
+    {
+      "path": "include/qpdf/QPDFNameTreeObjectHelper.hh",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/QPDFNameTreeObjectHelper.hh",
+      "sha256": "954ee4c1a024f59a53182f2a9cf8e266d16af96269f4b98fb25a8fb0ed23a3cd",
+      "bytes": 6475
+    },
+    {
+      "path": "include/qpdf/QPDFNumberTreeObjectHelper.hh",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/QPDFNumberTreeObjectHelper.hh",
+      "sha256": "2ffbad677b89582cabe425a42e4da6237055fcf41e1aa43732a3c5cb6de3153d",
+      "bytes": 7257
+    },
+    {
+      "path": "include/qpdf/QPDFObject.hh",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/QPDFObject.hh",
+      "sha256": "5a243a70a88f0cb03af81fe1ecc745018b9981def1523d97babec644a5f46eff",
+      "bytes": 1591
+    },
+    {
+      "path": "include/qpdf/QPDFObjectHandle.hh",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/QPDFObjectHandle.hh",
+      "sha256": "49be64aa5dc4da94ec24c893619908a8add317fe292072fdf2f213acb54ef999",
+      "bytes": 69631
+    },
+    {
+      "path": "include/qpdf/QPDFObjectHelper.hh",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/QPDFObjectHelper.hh",
+      "sha256": "f2dba00d2a792459e23fa695bf792e86caacf62310387cbe3715c900a6943c8d",
+      "bytes": 2355
+    },
+    {
+      "path": "include/qpdf/QPDFObjGen.hh",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/QPDFObjGen.hh",
+      "sha256": "796fef284b3ddb931cef74a09dfef8307effc8526369e6817cd45c87fb479227",
+      "bytes": 3785
+    },
+    {
+      "path": "include/qpdf/QPDFOutlineDocumentHelper.hh",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/QPDFOutlineDocumentHelper.hh",
+      "sha256": "2bf70658b6fbfb955e249a0193cc1fd3adec3bea88857cbcc92e788f6aa5b60b",
+      "bytes": 3250
+    },
+    {
+      "path": "include/qpdf/QPDFOutlineObjectHelper.hh",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/QPDFOutlineObjectHelper.hh",
+      "sha256": "51b93e351b6cb33819a0c137f109fb34184ea91a4bc71d69d9b75d631a80c876",
+      "bytes": 3744
+    },
+    {
+      "path": "include/qpdf/QPDFPageDocumentHelper.hh",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/QPDFPageDocumentHelper.hh",
+      "sha256": "24b4e82f2d44194c40dc04c4ab1ba7cd503ec1b9ff5bcb9d255b69caa215402e",
+      "bytes": 6161
+    },
+    {
+      "path": "include/qpdf/QPDFPageLabelDocumentHelper.hh",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/QPDFPageLabelDocumentHelper.hh",
+      "sha256": "cc8bfe710ef54dafbe71dc5a705bf79489d264f0db581abac97cf1fccb7d4307",
+      "bytes": 4210
+    },
+    {
+      "path": "include/qpdf/QPDFPageObjectHelper.hh",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/QPDFPageObjectHelper.hh",
+      "sha256": "2f0df4b47a37be932f8f77b6169b891511a6c7bfb1aa72e55c811767234110eb",
+      "bytes": 22159
+    },
+    {
+      "path": "include/qpdf/QPDFStreamFilter.hh",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/QPDFStreamFilter.hh",
+      "sha256": "d7ba1fdfdfa1e1a8c6d9404557dbeb8aa208a7c93931d4ed98f763658a3e8525",
+      "bytes": 3044
+    },
+    {
+      "path": "include/qpdf/QPDFSystemError.hh",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/QPDFSystemError.hh",
+      "sha256": "a9562e21bacc5a09ef4913283614a9c6596438d5627737ab3d676f44bf734395",
+      "bytes": 1914
+    },
+    {
+      "path": "include/qpdf/QPDFTokenizer.hh",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/QPDFTokenizer.hh",
+      "sha256": "1382ad74e399f2ff7cf81590013f6c77bf50f564e3c0decbed1c6e220e0f2ccc",
+      "bytes": 6931
+    },
+    {
+      "path": "include/qpdf/QPDFUsage.hh",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/QPDFUsage.hh",
+      "sha256": "ec6414cb4cfb22f6a43ba07dce973e3c959a6160f073f197fb359ccfa8fa50bf",
+      "bytes": 1240
+    },
+    {
+      "path": "include/qpdf/QPDFWriter.hh",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/QPDFWriter.hh",
+      "sha256": "ce8a04877793641929aa0c472f12dd3320ecd17b57aed395dba9c40ed0497ccd",
+      "bytes": 21734
+    },
+    {
+      "path": "include/qpdf/QPDFXRefEntry.hh",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/QPDFXRefEntry.hh",
+      "sha256": "fc89c061f0832fa1448f838bd484883fdaae89dbff13e88f54e983e11092d2c4",
+      "bytes": 2380
+    },
+    {
+      "path": "include/qpdf/QTC.hh",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/QTC.hh",
+      "sha256": "f3920033e23bbd8e98444c5220846975d1a2aa8614252adcbb971476a6be1036",
+      "bytes": 1612
+    },
+    {
+      "path": "include/qpdf/QUtil.hh",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/QUtil.hh",
+      "sha256": "e831197756fcce4a060b04ed1a07b27ecab67076094533b581bd98490f2029d1",
+      "bytes": 22492
+    },
+    {
+      "path": "include/qpdf/RandomDataProvider.hh",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/RandomDataProvider.hh",
+      "sha256": "0b6f8f9231688913b16d6a55f9b078424f41feb5bff1599ac0ed4c7655b40e34",
+      "bytes": 1485
+    },
+    {
+      "path": "include/qpdf/Types.h",
+      "archivePath": "qpdf-12.4.2-msvc64/include/qpdf/Types.h",
+      "sha256": "7dcecc58966e093c40ac81c0e45025af0de234b6a8f839369d27f8c02bbfad88",
+      "bytes": 1269
+    },
+    {
+      "path": "lib/qpdf.lib",
+      "archivePath": "qpdf-12.4.2-msvc64/lib/qpdf.lib",
+      "sha256": "d5869b5cc7c0804376b7eac10c8f0044f9572152a23194ab718694cb04ea74ec",
+      "bytes": 576156
+    }
+  ],
+  "licenses": [
+    {
+      "path": "licenses/qpdf-LICENSE.txt",
+      "text": "\n                                 Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n   1. Definitions.\n\n      \"License\" shall mean the terms and conditions for use, reproduction,\n      and distribution as defined by Sections 1 through 9 of this document.\n\n      \"Licensor\" shall mean the copyright owner or entity authorized by\n      the copyright owner that is granting the License.\n\n      \"Legal Entity\" shall mean the union of the acting entity and all\n      other entities that control, are controlled by, or are under common\n      control with that entity. For the purposes of this definition,\n      \"control\" means (i) the power, direct or indirect, to cause the\n      direction or management of such entity, whether by contract or\n      otherwise, or (ii) ownership of fifty percent (50%) or more of the\n      outstanding shares, or (iii) beneficial ownership of such entity.\n\n      \"You\" (or \"Your\") shall mean an individual or Legal Entity\n      exercising permissions granted by this License.\n\n      \"Source\" form shall mean the preferred form for making modifications,\n      including but not limited to software source code, documentation\n      source, and configuration files.\n\n      \"Object\" form shall mean any form resulting from mechanical\n      transformation or translation of a Source form, including but\n      not limited to compiled object code, generated documentation,\n      and conversions to other media types.\n\n      \"Work\" shall mean the work of authorship, whether in Source or\n      Object form, made available under the License, as indicated by a\n      copyright notice that is included in or attached to the work\n      (an example is provided in the Appendix below).\n\n      \"Derivative Works\" shall mean any work, whether in Source or Object\n      form, that is based on (or derived from) the Work and for which the\n      editorial revisions, annotations, elaborations, or other modifications\n      represent, as a whole, an original work of authorship. For the purposes\n      of this License, Derivative Works shall not include works that remain\n      separable from, or merely link (or bind by name) to the interfaces of,\n      the Work and Derivative Works thereof.\n\n      \"Contribution\" shall mean any work of authorship, including\n      the original version of the Work and any modifications or additions\n      to that Work or Derivative Works thereof, that is intentionally\n      submitted to Licensor for inclusion in the Work by the copyright owner\n      or by an individual or Legal Entity authorized to submit on behalf of\n      the copyright owner. For the purposes of this definition, \"submitted\"\n      means any form of electronic, verbal, or written communication sent\n      to the Licensor or its representatives, including but not limited to\n      communication on electronic mailing lists, source code control systems,\n      and issue tracking systems that are managed by, or on behalf of, the\n      Licensor for the purpose of discussing and improving the Work, but\n      excluding communication that is conspicuously marked or otherwise\n      designated in writing by the copyright owner as \"Not a Contribution.\"\n\n      \"Contributor\" shall mean Licensor and any individual or Legal Entity\n      on behalf of whom a Contribution has been received by Licensor and\n      subsequently incorporated within the Work.\n\n   2. Grant of Copyright License. Subject to the terms and conditions of\n      this License, each Contributor hereby grants to You a perpetual,\n      worldwide, non-exclusive, no-charge, royalty-free, irrevocable\n      copyright license to reproduce, prepare Derivative Works of,\n      publicly display, publicly perform, sublicense, and distribute the\n      Work and such Derivative Works in Source or Object form.\n\n   3. Grant of Patent License. Subject to the terms and conditions of\n      this License, each Contributor hereby grants to You a perpetual,\n      worldwide, non-exclusive, no-charge, royalty-free, irrevocable\n      (except as stated in this section) patent license to make, have made,\n      use, offer to sell, sell, import, and otherwise transfer the Work,\n      where such license applies only to those patent claims licensable\n      by such Contributor that are necessarily infringed by their\n      Contribution(s) alone or by combination of their Contribution(s)\n      with the Work to which such Contribution(s) was submitted. If You\n      institute patent litigation against any entity (including a\n      cross-claim or counterclaim in a lawsuit) alleging that the Work\n      or a Contribution incorporated within the Work constitutes direct\n      or contributory patent infringement, then any patent licenses\n      granted to You under this License for that Work shall terminate\n      as of the date such litigation is filed.\n\n   4. Redistribution. You may reproduce and distribute copies of the\n      Work or Derivative Works thereof in any medium, with or without\n      modifications, and in Source or Object form, provided that You\n      meet the following conditions:\n\n      (a) You must give any other recipients of the Work or\n          Derivative Works a copy of this License; and\n\n      (b) You must cause any modified files to carry prominent notices\n          stating that You changed the files; and\n\n      (c) You must retain, in the Source form of any Derivative Works\n          that You distribute, all copyright, patent, trademark, and\n          attribution notices from the Source form of the Work,\n          excluding those notices that do not pertain to any part of\n          the Derivative Works; and\n\n      (d) If the Work includes a \"NOTICE\" text file as part of its\n          distribution, then any Derivative Works that You distribute must\n          include a readable copy of the attribution notices contained\n          within such NOTICE file, excluding those notices that do not\n          pertain to any part of the Derivative Works, in at least one\n          of the following places: within a NOTICE text file distributed\n          as part of the Derivative Works; within the Source form or\n          documentation, if provided along with the Derivative Works; or,\n          within a display generated by the Derivative Works, if and\n          wherever such third-party notices normally appear. The contents\n          of the NOTICE file are for informational purposes only and\n          do not modify the License. You may add Your own attribution\n          notices within Derivative Works that You distribute, alongside\n          or as an addendum to the NOTICE text from the Work, provided\n          that such additional attribution notices cannot be construed\n          as modifying the License.\n\n      You may add Your own copyright statement to Your modifications and\n      may provide additional or different license terms and conditions\n      for use, reproduction, or distribution of Your modifications, or\n      for any such Derivative Works as a whole, provided Your use,\n      reproduction, and distribution of the Work otherwise complies with\n      the conditions stated in this License.\n\n   5. Submission of Contributions. Unless You explicitly state otherwise,\n      any Contribution intentionally submitted for inclusion in the Work\n      by You to the Licensor shall be under the terms and conditions of\n      this License, without any additional terms or conditions.\n      Notwithstanding the above, nothing herein shall supersede or modify\n      the terms of any separate license agreement you may have executed\n      with Licensor regarding such Contributions.\n\n   6. Trademarks. This License does not grant permission to use the trade\n      names, trademarks, service marks, or product names of the Licensor,\n      except as required for reasonable and customary use in describing the\n      origin of the Work and reproducing the content of the NOTICE file.\n\n   7. Disclaimer of Warranty. Unless required by applicable law or\n      agreed to in writing, Licensor provides the Work (and each\n      Contributor provides its Contributions) on an \"AS IS\" BASIS,\n      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or\n      implied, including, without limitation, any warranties or conditions\n      of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A\n      PARTICULAR PURPOSE. You are solely responsible for determining the\n      appropriateness of using or redistributing the Work and assume any\n      risks associated with Your exercise of permissions under this License.\n\n   8. Limitation of Liability. In no event and under no legal theory,\n      whether in tort (including negligence), contract, or otherwise,\n      unless required by applicable law (such as deliberate and grossly\n      negligent acts) or agreed to in writing, shall any Contributor be\n      liable to You for damages, including any direct, indirect, special,\n      incidental, or consequential damages of any character arising as a\n      result of this License or out of the use or inability to use the\n      Work (including but not limited to damages for loss of goodwill,\n      work stoppage, computer failure or malfunction, or any and all\n      other commercial damages or losses), even if such Contributor\n      has been advised of the possibility of such damages.\n\n   9. Accepting Warranty or Additional Liability. While redistributing\n      the Work or Derivative Works thereof, You may choose to offer,\n      and charge a fee for, acceptance of support, warranty, indemnity,\n      or other liability obligations and/or rights consistent with this\n      License. However, in accepting such obligations, You may act only\n      on Your own behalf and on Your sole responsibility, not on behalf\n      of any other Contributor, and only if You agree to indemnify,\n      defend, and hold each Contributor harmless for any liability\n      incurred by, or claims asserted against, such Contributor by reason\n      of your accepting any such warranty or additional liability.\n\n   END OF TERMS AND CONDITIONS\n\n   APPENDIX: How to apply the Apache License to your work.\n\n      To apply the Apache License to your work, attach the following\n      boilerplate notice, with the fields enclosed by brackets \"[]\"\n      replaced with your own identifying information. (Don't include\n      the brackets!)  The text should be enclosed in the appropriate\n      comment syntax for the file format. We also recommend that a\n      file or class name and description of purpose be included on the\n      same \"printed page\" as the copyright notice for easier\n      identification within third-party archives.\n\n   Copyright [yyyy] [name of copyright owner]\n\n   Licensed under the Apache License, Version 2.0 (the \"License\");\n   you may not use this file except in compliance with the License.\n   You may obtain a copy of the License at\n\n       http://www.apache.org/licenses/LICENSE-2.0\n\n   Unless required by applicable law or agreed to in writing, software\n   distributed under the License is distributed on an \"AS IS\" BASIS,\n   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n   See the License for the specific language governing permissions and\n   limitations under the License.\n",
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    },
+    {
+      "path": "licenses/qpdf-NOTICE.md",
+      "text": "qpdf is copyright (c) 2005-2021 Jay Berkenbilt, 2022-2026 Jay Berkenbilt and Manfred Holger\n\nLicensed under the Apache License, Version 2.0 (the \"License\"); you may not use this file except in compliance with the License. You may obtain a copy of the License at\n\n  http://www.apache.org/licenses/LICENSE-2.0\n\nUnless required by applicable law or agreed to in writing, software distributed under the License is distributed on an \"AS IS\" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.\n\nVersions of qpdf prior to version 7 were released under the terms of version 2.0 of the Artistic License. At your option, you may continue to consider qpdf to be licensed under those terms. Please see the manual for additional information.\n\nThe qpdf distribution includes a copy of [qtest](https://qtest.sourceforge.io), which is released under the terms of the [version 2.0 of the Artistic license](https://opensource.org/licenses/Artistic-2.0), which can be found at https://opensource.org/licenses/Artistic-2.0.\n\nThe Rijndael encryption implementation used as the basis for AES encryption and decryption support comes from Philip J. Erdelsky's public domain implementation.  The files `libqpdf/rijndael.cc` and `libqpdf/qpdf/rijndael.h` remain in the public domain.  They were obtained from\n* http://www.efgh.com/software/rijndael.htm\n* http://www.efgh.com/software/rijndael.txt\n\nThe embedded sha2 code comes from sphlib 3.0\n* http://www.saphir2.com/sphlib/\n\nThat code has the following license:\n  ```\n  Copyright (c) 2007-2011  Projet RNRT SAPHIR\n\n  Permission is hereby granted, free of charge, to any person obtaining\n  a copy of this software and associated documentation files (the\n  \"Software\"), to deal in the Software without restriction, including\n  without limitation the rights to use, copy, modify, merge, publish,\n  distribute, sublicense, and/or sell copies of the Software, and to\n  permit persons to whom the Software is furnished to do so, subject to\n  the following conditions:\n\n  The above copyright notice and this permission notice shall be included\n  in all copies or substantial portions of the Software.\n\n  THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND,\n  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF\n  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.\n  IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY\n  CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,\n  TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE\n  SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.\n  ```\n",
+      "sha256": "b207f65a9e5491195ded63b2941199b19a4d30148871f2742c88eae7bfc513a6"
+    },
+    {
+      "path": "licenses/zlib-copyright.txt",
+      "text": "Copyright notice:\n\n (C) 1995-2026 Jean-loup Gailly and Mark Adler\n\n  This software is provided 'as-is', without any express or implied\n  warranty.  In no event will the authors be held liable for any damages\n  arising from the use of this software.\n\n  Permission is granted to anyone to use this software for any purpose,\n  including commercial applications, and to alter it and redistribute it\n  freely, subject to the following restrictions:\n\n  1. The origin of this software must not be misrepresented; you must not\n     claim that you wrote the original software. If you use this software\n     in a product, an acknowledgment in the product documentation would be\n     appreciated but is not required.\n  2. Altered source versions must be plainly marked as such, and must not be\n     misrepresented as being the original software.\n  3. This notice may not be removed or altered from any source distribution.\n\n  Jean-loup Gailly        Mark Adler\n  jloup@gzip.org          madler@alumni.caltech.edu\n",
+      "sha256": "e32ff4e00d9d94930537635291da39e7e612703334bf6fde8c7f1686fe8a45a2"
+    },
+    {
+      "path": "licenses/libjpeg-turbo-copyright.txt",
+      "text": "libjpeg-turbo Licenses\n======================\n\nlibjpeg-turbo is covered by two compatible BSD-style open source licenses:\n\n- The IJG (Independent JPEG Group) License, which is listed in\n  [README.ijg](README.ijg)\n\n  This license applies to the libjpeg API library and associated programs,\n  including any code inherited from libjpeg and any modifications to that\n  code.\n\n- The Modified (3-clause) BSD License, which is listed below\n\n  This license applies to the TurboJPEG API library and associated programs,\n  [libspng](https://libspng.org) (which is used by cjpeg and djpeg), and the\n  build/test system.\n\n  * The TurboJPEG API library wraps the libjpeg API library, so in the context\n    of the overall TurboJPEG API library, both the terms of the IJG License and\n    the terms of the Modified (3-clause) BSD License apply.\n  * cjpeg and djpeg use libspng, so in the context of those programs, both the\n    terms of the IJG License and the terms of the Modified (3-clause) BSD\n    License apply.\n\n\nComponent Licenses\n==================\n\nSome of libjpeg-turbo's modules and internal dependencies are covered by less\nrestrictive licenses, but in the context of libjpeg-turbo as a whole, the terms\nof the less restrictive licenses are subsumed by either the IJG License or the\nModified BSD License.  (In other words, the terms of the less restrictive\nlicenses are satisfied if the terms of the IJG and Modified BSD Licenses are\nsatisfied.)\n\n- The libjpeg-turbo SIMD source code and zlib are covered by the\n  [zlib License](https://spdx.org/licenses/Zlib.html), which is subsumed by the\n  IJG License in the context of the cjpeg and djpeg programs and the libjpeg\n  API library.\n\n- Some of the libspng source code is covered by the\n  [PNG Reference Library License v2](https://spdx.org/licenses/libpng-2.0.html),\n  which is subsumed by the IJG License in the context of the cjpeg and djpeg\n  programs and the TurboJPEG API library.\n\n- Most of the libspng source code is covered by the\n  [Simplified (2-clause) BSD License](https://spdx.org/licenses/BSD-2-Clause.html),\n  which is subsumed by the Modified BSD License in the context of the cjpeg and\n  djpeg programs and the TurboJPEG API library.\n\n\nComplying with the libjpeg-turbo Licenses\n=========================================\n\nThis section provides a roll-up of the libjpeg-turbo licensing terms, to the\nbest of our understanding.  This is not a license in and of itself.  It is\nintended solely for clarification.\n\n1.  If you are distributing a modified version of the libjpeg-turbo source,\n    then:\n\n    1.  You cannot alter or remove any existing copyright or license notices\n        from the source.\n\n        **Origin**\n        - Clause 1 of the IJG License\n        - Clause 1 of the Modified BSD License\n\n    2.  You must add your own copyright notice to the header of each source\n        file you modified, so others can tell that you modified that file.  (If\n        there is not an existing copyright header in that file, then you can\n        simply add a notice stating that you modified the file.)\n\n        **Origin**\n        - Clause 1 of the IJG License\n\n    3.  You must include the IJG README file, and you must not alter any of the\n        copyright or license text in that file.\n\n        **Origin**\n        - Clause 1 of the IJG License\n\n2.  If you are distributing only libjpeg-turbo binaries without the source, or\n    if you are distributing an application that statically links with\n    libjpeg-turbo, then:\n\n    1.  Your product documentation must include a message stating:\n\n        This software is based in part on the work of the Independent JPEG\n        Group.\n\n        **Origin**\n        - Clause 2 of the IJG license\n\n    2.  If your binary distribution includes or uses the TurboJPEG API or\n        associated programs, cjpeg, or djpeg, then your product documentation\n        must include the text of the Modified BSD License (see below.)\n\n        **Origin**\n        - Clause 2 of the Modified BSD License\n\n3.  You cannot use the name of the IJG or The libjpeg-turbo Project or the\n    contributors thereof in advertising, publicity, etc.\n\n    **Origin**\n    - IJG License\n    - Clause 3 of the Modified BSD License\n\n4.  The authors and distributors do not warrant libjpeg-turbo to be free of\n    defects, nor do we accept any liability for undesirable consequences\n    resulting from your use of the software.\n\n    **Origin**\n    - IJG License\n    - Modified BSD License\n\n\nThe Modified (3-clause) BSD License\n===================================\n\nCopyright (C) 2009-2026 D. R. Commander<br>\nCopyright (C) 2018-2023 Randy <randy408@protonmail.com>\n\nRedistribution and use in source and binary forms, with or without\nmodification, are permitted provided that the following conditions are met:\n\n- Redistributions of source code must retain the above copyright notice,\n  this list of conditions and the following disclaimer.\n- Redistributions in binary form must reproduce the above copyright notice,\n  this list of conditions and the following disclaimer in the documentation\n  and/or other materials provided with the distribution.\n- Neither the name of the libjpeg-turbo Project nor the names of its\n  contributors may be used to endorse or promote products derived from this\n  software without specific prior written permission.\n\nTHIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\",\nAND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE\nIMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE\nARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT HOLDERS OR CONTRIBUTORS BE\nLIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR\nCONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF\nSUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS\nINTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN\nCONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)\nARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE\nPOSSIBILITY OF SUCH DAMAGE.\n",
+      "sha256": "ba6bceebcba0fdd35488477c2cca8c4632ce82c74dbfbc87d886ce6fc4433579"
+    }
+  ],
+  "components": [
+    {
+      "name": "qpdf",
+      "version": "12.4.2",
+      "license": "Apache-2.0",
+      "source": "https://github.com/qpdf/qpdf/releases/tag/v12.4.2"
+    },
+    {
+      "name": "zlib",
+      "version": "1.3.2#2",
+      "license": "Zlib",
+      "linkage": "embedded",
+      "provenance": "qpdf v12.4.2 vcpkg.zip SHA256 82005252fee032135d07c85ad7626a38f26fb253c1e098d1d185f315bea15ebb"
+    },
+    {
+      "name": "libjpeg-turbo",
+      "version": "3.2.0#1",
+      "license": "IJG AND BSD-3-Clause AND Zlib",
+      "linkage": "embedded",
+      "provenance": "qpdf v12.4.2 vcpkg.zip SHA256 82005252fee032135d07c85ad7626a38f26fb253c1e098d1d185f315bea15ebb"
+    },
+    {
+      "name": "Microsoft Visual C++ Runtime",
+      "version": "14.51.36247.0",
+      "license": "LicenseRef-Microsoft-Visual-Studio-Redistributable",
+      "source": "https://visualstudio.microsoft.com/license-terms/",
+      "provenance": "DLLs redistributed unchanged from the official qpdf MSVC binary archive; redistribution is subject to the applicable Microsoft license."
+    }
+  ],
+  "metadataFiles": [
+    {
+      "path": "sbom.cdx.json",
+      "text": "{\n  \"bomFormat\": \"CycloneDX\",\n  \"specVersion\": \"1.6\",\n  \"version\": 1,\n  \"metadata\": {\n    \"component\": {\n      \"type\": \"library\",\n      \"name\": \"qpdf-windows-x64-runtime\",\n      \"version\": \"12.4.2\"\n    }\n  },\n  \"components\": [\n    {\n      \"type\": \"library\",\n      \"name\": \"qpdf\",\n      \"version\": \"12.4.2\",\n      \"licenses\": [\n        {\n          \"expression\": \"Apache-2.0\"\n        }\n      ]\n    },\n    {\n      \"type\": \"library\",\n      \"name\": \"zlib\",\n      \"version\": \"1.3.2#2\",\n      \"licenses\": [\n        {\n          \"expression\": \"Zlib\"\n        }\n      ]\n    },\n    {\n      \"type\": \"library\",\n      \"name\": \"libjpeg-turbo\",\n      \"version\": \"3.2.0#1\",\n      \"licenses\": [\n        {\n          \"expression\": \"IJG AND BSD-3-Clause AND Zlib\"\n        }\n      ]\n    },\n    {\n      \"type\": \"library\",\n      \"name\": \"Microsoft Visual C++ Runtime\",\n      \"version\": \"14.51.36247.0\",\n      \"licenses\": [\n        {\n          \"license\": {\n            \"name\": \"Microsoft Visual Studio Redistributable\"\n          }\n        }\n      ]\n    },\n    {\n      \"type\": \"file\",\n      \"name\": \"concrt140.dll\",\n      \"hashes\": [\n        {\n          \"alg\": \"SHA-256\",\n          \"content\": \"54716f0738af891f283d213b5c8d11b25896bb8ee3097d301eae718560cf974e\"\n        }\n      ]\n    },\n    {\n      \"type\": \"file\",\n      \"name\": \"msvcp140.dll\",\n      \"hashes\": [\n        {\n          \"alg\": \"SHA-256\",\n          \"content\": \"7c26614e1d733892c2deac7e245ce115504b1d80592dd0a01b08e3e5a55f89ca\"\n        }\n      ]\n    },\n    {\n      \"type\": \"file\",\n      \"name\": \"msvcp140_1.dll\",\n      \"hashes\": [\n        {\n          \"alg\": \"SHA-256\",\n          \"content\": \"206c931bf90fdad8816de3b5e2ef80b2bcaa9406c89ecc05fe6fddffe251e982\"\n        }\n      ]\n    },\n    {\n      \"type\": \"file\",\n      \"name\": \"msvcp140_2.dll\",\n      \"hashes\": [\n        {\n          \"alg\": \"SHA-256\",\n          \"content\": \"d50d7883f20d1dc6191768d3746f52dd9cac89c346ffaed5be1f110c2f34a838\"\n        }\n      ]\n    },\n    {\n      \"type\": \"file\",\n      \"name\": \"msvcp140_atomic_wait.dll\",\n      \"hashes\": [\n        {\n          \"alg\": \"SHA-256\",\n          \"content\": \"3d0cbfaa1bf3eecf5a3f4491d2960ee803cb994f30292c6adc4a07c498f60e2b\"\n        }\n      ]\n    },\n    {\n      \"type\": \"file\",\n      \"name\": \"msvcp140_codecvt_ids.dll\",\n      \"hashes\": [\n        {\n          \"alg\": \"SHA-256\",\n          \"content\": \"8a65c7596ef2e6938731f5a1058e7e40145b6d97967cc649231a076b9a608d78\"\n        }\n      ]\n    },\n    {\n      \"type\": \"file\",\n      \"name\": \"qpdf.exe\",\n      \"hashes\": [\n        {\n          \"alg\": \"SHA-256\",\n          \"content\": \"1bdaf878f37eaffea1ea3c30591214c77636a0f2fc7432427516b6e22e36c0ff\"\n        }\n      ]\n    },\n    {\n      \"type\": \"file\",\n      \"name\": \"qpdf30.dll\",\n      \"hashes\": [\n        {\n          \"alg\": \"SHA-256\",\n          \"content\": \"8812952678de93e0750308a113aa650e9161af466f9770679ea9673adeb61041\"\n        }\n      ]\n    },\n    {\n      \"type\": \"file\",\n      \"name\": \"vcruntime140.dll\",\n      \"hashes\": [\n        {\n          \"alg\": \"SHA-256\",\n          \"content\": \"d1f4225df2cd877dbf130d5668a021dce3f94118455ff5ec952061c30afc9ce7\"\n        }\n      ]\n    },\n    {\n      \"type\": \"file\",\n      \"name\": \"vcruntime140_1.dll\",\n      \"hashes\": [\n        {\n          \"alg\": \"SHA-256\",\n          \"content\": \"a7146c08f89fe5b04541ab507cdb59ff7b44534d4ba3c668a426c6450a03434e\"\n        }\n      ]\n    }\n  ]\n}\n",
+      "sha256": "aabb32b9f72e0f9247d3292185fc29c0e13f95a12a01acee620ecc6eb42cc322"
+    }
+  ]
+}
