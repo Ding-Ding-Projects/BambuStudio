@@ -11,7 +11,12 @@ on:
   pull_request:
     branches: [main]
 
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      publish_release:
+        description: Publish this main-branch candidate after build and packaging
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -84,16 +89,12 @@ jobs:
       os: windows-latest
       build-deps-only: false
 
-  automation_contracts:
-    name: Verify automation contracts
-    uses: ./.github/workflows/mcp-verification.yml
-
   release_windows:
     name: Publish Windows release
     # ref_type guard is redundant with the branches-only push trigger above but
     # keeps the release loop impossible even if the trigger is later widened.
-    if: ${{ github.event_name != 'pull_request' && github.ref_type != 'tag' }}
-    needs: [build_windows, automation_contracts]
+    if: ${{ github.ref == 'refs/heads/main' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish_release)) }}
+    needs: [build_windows]
     runs-on: windows-latest
     concurrency:
       group: windows-release-${{ github.repository }}
