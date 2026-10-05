@@ -27,6 +27,9 @@ param(
 
     [switch] $BuildOnly,
 
+    # Optional prebuilt dependency destination, consumed without modification.
+    [string] $DependencyCacheDirectory = $env:BAMBU_DEPENDENCY_CACHE,
+
     # GitHub release number (the N in md3-v<N>) used for the Squirrel package
     # version. 0 means: read BAMBU_RELEASE_NUMBER, else ask gh for the latest
     # md3-v<N> release and use N+1, else fall back to the product version alone.
@@ -644,9 +647,19 @@ function Invoke-OneClickBuild {
         $toolchain = Resolve-BuildToolchain
         Write-BuildLog "Generator: $($toolchain.Generator); SDK include: $($toolchain.SdkIncludePath)"
 
-        Invoke-DependencyBuild -Toolchain $toolchain -Destination $dependencyDestination `
-            -Clean:$cleanDependencies
-        Normalize-PkgConfigFiles -DependencyDestination $dependencyDestination
+        if ([string]::IsNullOrWhiteSpace($DependencyCacheDirectory)) {
+            Invoke-DependencyBuild -Toolchain $toolchain -Destination $dependencyDestination `
+                -Clean:$cleanDependencies
+            Normalize-PkgConfigFiles -DependencyDestination $dependencyDestination
+        } else {
+            $dependencyDestination = [IO.Path]::GetFullPath($DependencyCacheDirectory)
+            foreach ($required in @('usr\local\include', 'usr\local\lib')) {
+                if (-not (Test-Path -LiteralPath (Join-Path $dependencyDestination $required) -PathType Container)) {
+                    throw "Prebuilt dependency cache is missing '$required'."
+                }
+            }
+            Write-BuildLog "Using read-only prebuilt dependencies at $dependencyDestination"
+        }
         Invoke-ApplicationBuild -Toolchain $toolchain -DependencyDestination $dependencyDestination `
             -InstallPrefix $payloadDirectory -Clean:$cleanApplication
 
