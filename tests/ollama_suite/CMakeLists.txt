@@ -1,0 +1,13 @@
+# Standalone focused tests need no GUI, model download or external service.
+cmake_minimum_required(VERSION 3.16)
+project(ollama_suite_tests LANGUAGES CXX)
+enable_testing()
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+get_filename_component(SUITE_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../.." ABSOLUTE)
+add_executable(ollama_core_tests test_core.cpp "${SUITE_ROOT}/src/libslic3r/OllamaSuite/OllamaCore.cpp")
+target_include_directories(ollama_core_tests PRIVATE "${SUITE_ROOT}/src")
+add_executable(ollama_launch_profiles_tests test_launch_profiles.cpp "${SUITE_ROOT}/src/libslic3r/OllamaSuite/LaunchProfiles.cpp")
+target_include_directories(ollama_launch_profiles_tests PRIVATE "${SUITE_ROOT}/src")
+add_test(NAME ollama_core COMMAND ollama_core_tests)
+add_test(NAME ollama_launch_profiles COMMAND ollama_launch_profiles_tests)
