@@ -37772,3 +37772,585 @@ msgstr "離線文件瀏覽器（F1）"
 #. review-status: agent-drafted
 msgid "The embedded web view is not available on this PC, so articles cannot be rendered here. The same documentation ships in the docs folder of the source repository."
 msgstr "這部電腦無法使用內嵌網頁檢視，因此未能在這裏顯示文章。相同文件亦可在原始碼專案的 docs 資料夾找到。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "Schedules"
+msgstr "排程"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "Schedule rules"
+msgstr "排程規則"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "Search rules"
+msgstr "搜尋規則"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "Add rule"
+msgstr "新增規則"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "New schedule rule"
+msgstr "新增排程規則"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "Edit schedule rule"
+msgstr "編輯排程規則"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "Save rule"
+msgstr "儲存規則"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "Rule name"
+msgstr "規則名稱"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "Rule is enabled"
+msgstr "規則已啟用"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "Dates (optional, inclusive)"
+msgstr "日期（可選，包括首尾日期）"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "Start date"
+msgstr "開始日期"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "End date"
+msgstr "結束日期"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "Time window (local time)"
+msgstr "時段（本機時間）"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "Every day"
+msgstr "每日"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "Value source"
+msgstr "設定值來源"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "This rule's own values"
+msgstr "呢條規則嘅設定值"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "A Home Assistant switch"
+msgstr "Home Assistant 開關"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "A settings API over HTTPS"
+msgstr "透過 HTTPS 嘅設定 API"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "Settings this rule changes"
+msgstr "呢條規則要更改嘅設定"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "No rules yet. Add one to change a setting on a schedule."
+msgstr "未有規則。新增規則，按排程更改設定。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "No rules match your search."
+msgstr "冇規則符合搜尋條件。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "Select a rule first."
+msgstr "請先選擇規則。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "Rules are checked every minute."
+msgstr "每分鐘檢查一次規則。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "Choose when the rule applies, where its values come from, and which settings it changes."
+msgstr "選擇規則生效時間、設定值來源同要更改嘅設定。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "Change %s"
+msgstr "更改 %s"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "Limit to a start date"
+msgstr "限制開始日期"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "Limit to an end date"
+msgstr "限制結束日期"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "Tick a setting to include it. Untouched settings keep your own value."
+msgstr "勾選要更改嘅設定；未勾選嘅設定會保留你嘅值。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "Change the language mode, theme, density, accent, font, text size, funny levels or app name at chosen times, from a settings API, or from a Home Assistant switch. When a rule ends, your own values come back. Later rules in the list win when two rules set the same setting."
+msgstr "按指定時間、設定 API 或 Home Assistant 開關，更改語言模式、主題、密度、重點色、字體、文字大小、搞笑程度或應用程式名稱。規則結束時會還原你嘅設定。兩條規則更改同一設定時，清單較後嘅規則優先。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "Times are your computer's local time, currently %s. Daylight-saving changes move the wall clock; a window spanning the change is an hour shorter or longer that night."
+msgstr "時間以電腦本機時區為準，目前係 %s。夏令時間轉換會改變鐘面時間；跨越轉換嘅時段會短或長一小時。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "Times are local (%s). When the clocks change, a window spanning the change is one hour shorter or longer that night."
+msgstr "時間以本機時區（%s）為準。夏令時間轉換嗰晚，跨越轉換嘅時段會短或長一小時。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "Inside the time window the API is read every minute. It must answer {\"schemaVersion\": 1, \"values\": {...}} with only the settings listed below; anything else is ignored. The values ticked below are the fallback for settings the API leaves out. Redirects and addresses with a user name or password are refused."
+msgstr "時段內每分鐘讀取一次 API。回覆必須係 {\"schemaVersion\": 1, \"values\": {...}}，只接受下面列出嘅設定；其他設定會忽略。API 冇提供嘅設定會用下面勾選嘅值。唔接受重新導向，亦唔接受帶有使用者名稱或密碼嘅地址。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "Inside the time window the switch is read every minute through the Home Assistant connection from Smart home. \"on\" applies the ticked values; \"off\" or no answer leaves your own settings in force."
+msgstr "時段內透過 Smart home 嘅 Home Assistant 連線，每分鐘讀取一次開關。\"on\" 會套用勾選嘅設定值；\"off\" 或冇回覆會保留你嘅設定。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "Delete the schedule rule \"%s\"?\nIts settings go back to your own values at the next check. The rule itself is not recoverable from this screen."
+msgstr "刪除排程規則「%s」？\n下次檢查時會還原你嘅設定。呢個畫面唔提供還原已刪規則嘅功能。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "Delete schedule rule"
+msgstr "刪除排程規則"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "Delete the selected rule"
+msgstr "刪除所選規則"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "Edit the selected rule"
+msgstr "編輯所選規則"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "Turn the selected rule on or off"
+msgstr "開啟或關閉所選規則"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "Move the rule earlier; later rules win conflicts"
+msgstr "將規則移前；設定有衝突時較後規則優先"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "Move the rule later; later rules win conflicts"
+msgstr "將規則移後；設定有衝突時較後規則優先"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "Already first"
+msgstr "已經係第一項"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "Already last"
+msgstr "已經係最後一項"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "Same start and end: the rule applies all day on the chosen days."
+msgstr "開始同結束時間相同：規則會喺所選日子全日生效。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "The end is earlier than the start, so the window crosses midnight. The weekday is the day the window starts."
+msgstr "結束時間早過開始時間，所以時段跨午夜。星期以時段開始嗰日為準。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "The window includes the start minute and ends just before the end minute."
+msgstr "時段包括開始嗰分鐘，喺結束嗰分鐘之前停止。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "The ticked values apply for the whole time window."
+msgstr "所勾選嘅設定值會喺整個時段生效。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "Where the values come from"
+msgstr "設定值來自邊度"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "Language mode"
+msgstr "語言模式"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "Funny level (English)"
+msgstr "搞笑程度（英文）"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "English"
+msgstr "英文"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "Cantonese (Hong Kong)"
+msgstr "廣東話（香港）"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "Bilingual: English and Cantonese"
+msgstr "雙語：英文同廣東話"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "Default (Roboto)"
+msgstr "預設（Roboto）"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "(not installed)"
+msgstr "（未安裝）"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "Evening dark mode"
+msgstr "晚間深色模式"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "Home Assistant entity id"
+msgstr "Home Assistant 實體 ID"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "Settings API address"
+msgstr "設定 API 地址"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "API address"
+msgstr "API 地址"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "Allow plain http:// to localhost (development only)"
+msgstr "允許本機使用 http://（只供開發）"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "Allow plain http:// to localhost for local development"
+msgstr "允許本機開發使用 http://"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "Currently controlling:"
+msgstr "目前控制："
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "Sets:"
+msgstr "設定："
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "(values come from the API)"
+msgstr "（設定值來自 API）"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "Last checked at"
+msgstr "上次檢查時間"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "Not checked yet"
+msgstr "未檢查"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "Too many rules."
+msgstr "規則太多。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "Settings are not available yet."
+msgstr "設定暫時未能使用。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "Scheduled settings: rule"
+msgstr "排程設定：規則"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "Your own settings stay in force until it answers."
+msgstr "來源回覆之前，會保留你嘅設定。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "active now"
+msgstr "目前生效"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "disabled"
+msgstr "已停用"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "in window, waiting for source"
+msgstr "喺時段內，等緊來源"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "waiting for its window"
+msgstr "等緊指定時段"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "waiting for the source to answer"
+msgstr "等緊來源回覆"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "source is read only inside the time window"
+msgstr "只會喺指定時段內讀取來源"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "could not read its source."
+msgstr "未能讀取來源。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "could not start the request"
+msgstr "未能開始要求"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "could not reach Home Assistant"
+msgstr "未能連接 Home Assistant"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "could not reach the server"
+msgstr "未能連接伺服器"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "unknown error"
+msgstr "未知錯誤"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "shutting down"
+msgstr "正在關閉"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "daylight saving time"
+msgstr "夏令時間"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "response too large"
+msgstr "回覆太大"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "response was not a Home Assistant state"
+msgstr "回覆唔係 Home Assistant 狀態"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "redirect refused"
+msgstr "唔接受重新導向"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "entity not found (HTTP 404)"
+msgstr "搵唔到實體（HTTP 404）"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "entity not found in the bounded query"
+msgstr "喺有限範圍查詢入面搵唔到實體"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "entity id must look like input_boolean.night_mode"
+msgstr "實體 ID 應該好似 input_boolean.night_mode"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "Home Assistant URL must be HTTPS or localhost"
+msgstr "Home Assistant 地址必須使用 HTTPS 或 localhost"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "Home Assistant is not connected (no URL or token in Smart home)"
+msgstr "Home Assistant 未連接（Smart home 未設定地址或存取權杖）"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "Home Assistant: entity state is"
+msgstr "Home Assistant：實體狀態係"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "Home Assistant: on"
+msgstr "Home Assistant：開啟"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "Home Assistant: off"
+msgstr "Home Assistant：關閉"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "API: could not start the request"
+msgstr "API：未能開始要求"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "API: ok"
+msgstr "API：正常"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "Days"
+msgstr "星期"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#. source-pending: src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp
+msgid "Until"
+msgstr "直到"

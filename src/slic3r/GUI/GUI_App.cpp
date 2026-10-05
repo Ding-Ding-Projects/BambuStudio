@@ -112,6 +112,7 @@
 #include "DimSumSurprise.hpp"
 #include "TtsNarrator.hpp"
 #include "HomeAssistant.hpp"
+#include "Schedule/ScheduledSettings.hpp"
 #include "GLCanvas3D.hpp"
 #include "EncodedFilament.hpp"
 
@@ -1569,6 +1570,7 @@ void GUI_App::post_init()
     // Automatic preferences history: every settings save records a debounced
     // Git snapshot of BambuStudio.conf (local only, beside the data dir).
     PreferencesHistory::install();
+    Schedule::Scheduler::instance().install();
 
     // AI printer watch (opt-in, local Ollama): periodic live-view summaries.
     PrinterWatch::install();
@@ -1980,6 +1982,7 @@ void GUI_App::shutdown()
     }
 
     if (m_is_recreating_gui) return;
+    Schedule::Scheduler::instance().shutdown();
     HomeAssistant::shutdown();
     set_closing(true);
     BOOST_LOG_TRIVIAL(info) << "GUI_App::shutdown exit";
@@ -3385,6 +3388,7 @@ int GUI_App::OnExit()
 
     // Stop Home Assistant workers while wx and AppConfig are still alive.
     // This is idempotent with the normal MainFrame -> GUI_App shutdown path.
+    Schedule::Scheduler::instance().shutdown();
     HomeAssistant::shutdown();
 #ifdef __APPLE__
     UnRegisterMacPowerCallBack();
