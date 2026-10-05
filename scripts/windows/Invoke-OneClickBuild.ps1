@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Bootstrap, compile, and package Bambu Studio for Windows with one command.
 .DESCRIPTION
@@ -33,7 +33,9 @@ param(
     # GitHub release number (the N in md3-v<N>) used for the Squirrel package
     # version. 0 means: read BAMBU_RELEASE_NUMBER, else ask gh for the latest
     # md3-v<N> release and use N+1, else fall back to the product version alone.
-    [int] $ReleaseNumber = 0
+    [int] $ReleaseNumber = 0,
+
+    [string] $PreviousPackageVersion = $env:BAMBU_PREVIOUS_PACKAGE_VERSION
 )
 
 $ErrorActionPreference = 'Stop'
@@ -423,6 +425,50 @@ function Resolve-ReleaseNumber {
     return (($numbers | Measure-Object -Maximum).Maximum + 1)
 }
 
+function Resolve-PreviousPackageVersion {
+    param([string] $Requested, [string] $Repository)
+    $floor = $null
+    if (-not [string]::IsNullOrWhiteSpace($Requested)) {
+        if ($Requested -notmatch '^\d+\.\d+\.\d+$') {
+            throw 'PreviousPackageVersion must contain exactly three numeric components.'
+        }
+        $floor = [version] $Requested
+    }
+    $gh = Get-Command gh -ErrorAction SilentlyContinue
+    $queried = $false
+    if ($null -ne $gh) {
+        $previousPreference = $ErrorActionPreference
+        $ErrorActionPreference = 'Continue'
+        try {
+            & $gh.Source auth status 1>$null 2>$null
+            if ($LASTEXITCODE -eq 0) {
+                $names = & $gh.Source api --paginate "repos/$Repository/releases?per_page=100" --jq '.[] | select(.draft == false) | .assets[].name' 2>$null
+                if ($LASTEXITCODE -eq 0) {
+                    $queried = $true
+                    foreach ($name in $names) {
+                        if ($name -match '^BambuStudioMD3-(\d+\.\d+\.\d+)-full\.nupkg$') {
+                            $published = [version] $matches[1]
+                            if ($null -eq $floor -or $published -gt $floor) { $floor = $published }
+                        }
+                    }
+                }
+            }
+        }
+        finally { $ErrorActionPreference = $previousPreference }
+    }
+    if (-not $queried) {
+        if ($null -eq $floor) {
+            throw 'Published package baseline is unavailable. Supply -PreviousPackageVersion (or BAMBU_PREVIOUS_PACKAGE_VERSION) for reproducible offline packaging.'
+        }
+        Write-Warning 'Published package baseline could not be queried; using the explicit package floor without claiming published-version verification.'
+    }
+    if ($null -eq $floor) {
+        Write-BuildLog 'No matching published full package was found; using the product/release version.'
+        return ''
+    }
+    return $floor.ToString(3)
+}
+
 function Get-ProductVersion {
     $content = Get-Content -LiteralPath (Join-Path $script:RepositoryRoot 'version.inc') -Raw
     if ($content -notmatch 'set\(SLIC3R_VERSION "([^"]+)"\)') {
@@ -710,6 +756,7 @@ function Invoke-OneClickBuild {
         }
 
         $releaseNumber = Resolve-ReleaseNumber -Requested $ReleaseNumber -Repository ($sourceRepo -replace '^https://github.com/|\.git$', '')
+        $previousPackageVersion = Resolve-PreviousPackageVersion -Requested $PreviousPackageVersion -Repository ($sourceRepo -replace '^https://github.com/|\.git$', '')
         Write-BuildLog "Squirrel package release number: $releaseNumber (0 = product version only)"
         $outputDirectory = Resolve-OutputDirectory -RequestedPath $OutputDirectory
         New-Item -ItemType Directory -Path $outputDirectory -Force | Out-Null
@@ -726,7 +773,7 @@ function Invoke-OneClickBuild {
             -File (Join-Path $script:RepositoryRoot 'scripts\windows\Invoke-SquirrelPackage.ps1') `
             -PayloadDirectory $payloadDirectory -OutputDirectory $outputDirectory `
             -ProductVersion $productVersion -SourceCommit $sourceCommit `
-            -Repository $sourceRepo -ReleaseNumber $releaseNumber -IconPath (Join-Path $script:RepositoryRoot 'resources\images\BambuStudio.ico')
+            -Repository $sourceRepo -ReleaseNumber $releaseNumber -PreviousPackageVersion $previousPackageVersion -IconPath (Join-Path $script:RepositoryRoot 'resources\images\BambuStudio.ico')
         Assert-LastExitCode 'Building the Squirrel.Windows release'
         if (-not (Test-Path -LiteralPath $installer -PathType Leaf)) {
             throw "Squirrel.Windows did not produce '$installer'."

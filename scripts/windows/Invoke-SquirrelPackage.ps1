@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Build an unsigned Squirrel.Windows package from an installed payload.
 
@@ -38,7 +38,9 @@ param(
     # published release carries a strictly increasing package version even
     # when the application version in version.inc is unchanged.
     [ValidateRange(0, 2147483647)]
-    [int] $ReleaseNumber = 0
+    [int] $ReleaseNumber = 0,
+
+    [string] $PreviousPackageVersion = $env:BAMBU_PREVIOUS_PACKAGE_VERSION
 )
 
 $ErrorActionPreference = 'Stop'
@@ -163,20 +165,33 @@ function Invoke-DownloadWithRetry {
 }
 
 function ConvertTo-SquirrelVersion {
-    param([Parameter(Mandatory)][string] $Version, [int] $ReleaseNumber = 0)
+    param([Parameter(Mandatory)][string] $Version, [int] $ReleaseNumber = 0,
+        [string] $PreviousPackageVersion = '')
     $parts = $Version.Trim().Split('.')
     if ($parts.Count -lt 2 -or $parts.Count -gt 4 -or ($parts | Where-Object { $_ -notmatch '^\d+$' })) {
         throw "Product version '$Version' is not a numeric Squirrel-compatible version."
     }
     $normalizedParts = @($parts | ForEach-Object { ([int] $_).ToString() })
-    if ($ReleaseNumber -gt 0) {
-        # Release-number form: major.minor.(patch*1000+N). Squirrel.Windows
-        # 2.0.1 throws on a fourth version part and orders prerelease labels
-        # as strings, so the release number is folded into the patch part.
-        $base = @($normalizedParts[0..([Math]::Min(2, $normalizedParts.Count - 1))])
-        while ($base.Count -lt 3) { $base += '0' }
-        return ('{0}.{1}.{2}' -f $base[0], $base[1], (([int] $base[2]) * 1000 + $ReleaseNumber))
+    $base = @($normalizedParts[0..([Math]::Min(2, $normalizedParts.Count - 1))])
+    while ($base.Count -lt 3) { $base += '0' }
+    $patch = [long] $base[2]
+    if ($ReleaseNumber -gt 0) { $patch = $patch * 1000L + $ReleaseNumber }
+    if ($patch -gt [int]::MaxValue) { throw 'Squirrel package patch component exceeds Int32 range.' }
+    $candidate = [version] ('{0}.{1}.{2}' -f $base[0], $base[1], $patch)
+    if (-not [string]::IsNullOrWhiteSpace($PreviousPackageVersion)) {
+        if ($PreviousPackageVersion -notmatch '^\d+\.\d+\.\d+$') {
+            throw 'PreviousPackageVersion must contain exactly three numeric components.'
+        }
+        $previous = [version] $PreviousPackageVersion
+        if ($candidate -le $previous) {
+            if ($previous.Build -eq [int]::MaxValue) {
+                throw 'Previous package patch component cannot be incremented safely.'
+            }
+            $candidate = [version] ('{0}.{1}.{2}' -f $previous.Major, $previous.Minor, ($previous.Build + 1))
+        }
+        return $candidate.ToString(3)
     }
+    if ($ReleaseNumber -gt 0) { return $candidate.ToString(3) }
     if ($normalizedParts.Count -eq 4) {
         return (($normalizedParts[0..2] -join '.') + '-build' + $normalizedParts[3])
     }
@@ -431,7 +446,7 @@ function Assert-SquirrelOutputs {
 $resolvedPayload = (Resolve-Path -LiteralPath $PayloadDirectory).Path
 $resolvedOutput = [IO.Path]::GetFullPath($OutputDirectory)
 $squirrelVersion = $SquirrelVersion.Trim()
-$normalizedVersion = ConvertTo-SquirrelVersion -Version $ProductVersion -ReleaseNumber $ReleaseNumber
+$normalizedVersion = ConvertTo-SquirrelVersion -Version $ProductVersion -ReleaseNumber $ReleaseNumber -PreviousPackageVersion $PreviousPackageVersion
 Write-SquirrelLog "Squirrel package version: $normalizedVersion (product version $ProductVersion, release number $ReleaseNumber)"
 $squirrelTool = Resolve-SquirrelTool -Version $squirrelVersion
 $temporaryRoot = Join-Path ([IO.Path]::GetTempPath()) ($script:TempPrefix + [guid]::NewGuid().ToString('N'))
