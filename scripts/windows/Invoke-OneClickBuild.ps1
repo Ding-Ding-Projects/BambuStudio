@@ -628,7 +628,9 @@ function Invoke-ApplicationBuild {
     $cacheMatches = (Test-Path -LiteralPath $appCache -PathType Leaf) -and
         ($null -ne (Select-String -LiteralPath $appCache -SimpleMatch `
             -Pattern "CMAKE_INSTALL_PREFIX:PATH=$expectedPrefix" -Quiet))
-    $forceConfigure = $env:BAMBU_RECONFIGURE -eq '1'
+    $pathPolicyCurrent = (Test-Path -LiteralPath $appCache -PathType Leaf) -and
+        (Select-String -LiteralPath $appCache -SimpleMatch -Pattern 'BAMBU_RELEASE_SOURCE_PATH_POLICY:INTERNAL=msvc-pathmap-v1' -Quiet)
+    $forceConfigure = ($env:BAMBU_RECONFIGURE -eq '1') -or -not $pathPolicyCurrent
     if ($Clean -or $forceConfigure -or -not $cacheMatches) {
         $python = Get-PythonInterpreterPath
         if ([string]::IsNullOrWhiteSpace($python)) {

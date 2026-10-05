@@ -23,6 +23,8 @@
 cmake_minimum_required(VERSION 3.5)
 project(BambuStudio-deps)
 
+include("${CMAKE_CURRENT_SOURCE_DIR}/../cmake/modules/ReleaseSourcePaths.cmake")
+
 include(ExternalProject)
 include(ProcessorCount)
 
@@ -147,6 +149,7 @@ function(bambustudio_add_cmake_project projectname)
             -DCMAKE_C_COMPILER:STRING=${CMAKE_C_COMPILER}
             -DCMAKE_CXX_COMPILER:STRING=${CMAKE_CXX_COMPILER}
             -DCMAKE_TOOLCHAIN_FILE:STRING=${CMAKE_TOOLCHAIN_FILE}
+            -DCMAKE_PROJECT_INCLUDE:FILEPATH=${PROJECT_SOURCE_DIR}/../cmake/modules/ReleaseSourcePaths.cmake
             -DBUILD_SHARED_LIBS:BOOL=OFF
             ${_cmake_osx_arch}
             "${_configs_line}"
