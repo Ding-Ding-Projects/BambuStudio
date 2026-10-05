@@ -1,6 +1,19 @@
-# Current handoff: 4 October 2026
+# Current handoff: 5 October 2026
 
-The responsive-workflow task is paused by owner request after preservation. Read [the current continuation record](CLOSEOUT_PROMPT.md) for all eight source and preservation tips, focused test counts, known gaps and build state. New feature code is not integrated or released. The older entries below are historical evidence, not the current status of this task.
+The previously preserved responsive-workflow source and bounded delivery repairs were integrated at baseline `0e8673b5b8ac27b34fd7595ba9886256bdbc6915`. Current candidate `0f6ad8c40616e28c892f5fe63625d8a70188e145` on main supersedes it with the FFmpeg path-with-spaces repair. Fresh configure found Strawberry Perl's `pkg-config` output still mishandling spaces; the build lane is implementing the correct route. No successful configure, native compile or new release verdict exists for this pass yet. The maintainer selected completed implementation on `main` plus verified release delivery as the issue-closure criteria. Tests, lint, type checks, static-analysis suites, runtime interaction, installer execution and screenshots are intentionally not run. This does not establish runtime, visual, hardware or transactional correctness.
+
+| Lane | Integrated source | Delivery record |
+| --- | --- | --- |
+| Surface language and kit mapping, independent tone variants | `9eac2b1e2` | [Surface](docs/integration/delivery-surface.md) |
+| MCP/CLI automation delivery | `117ebb818` | [Automation](docs/integration/delivery-automation.md) |
+| Stable draft identity, memory accounting and history integration | `ae51d2e3` | [Draft/history](docs/integration/delivery-draft-history.md) |
+| Scroll ownership, quiet guidance and native continuity | `a5443bc68` | [Continuity](docs/integration/delivery-continuity.md) |
+| Detached import cancellation and simplification | `0f28099a` | [Import](docs/integration/delivery-import.md) |
+| Local bootstrap and release wiring | `c0a406c98` | [Build](docs/integration/delivery-build.md) |
+
+Import publication remains on the UI thread, with cooperative cancellation at existing boundaries. An indivisible reader, hull calculation, object copy or final scene update can take an unbounded time before the next cancellation opportunity. Rollback itself may fail under resource exhaustion. Do not claim strict responsiveness or transactional runtime acceptance from this source delivery. Issue #16's separately licensed companion is excluded pending its separate license decision.
+
+Next: finish the `pkg-config` repair, configure and compile its superseding pinned candidate, produce the required unsigned Squirrel assets, push and prove `main`, verify the intended unique non-draft release and downloadable assets, then close only eligible scoped issues and process only safely archived and ancestor-proven cleanup candidates. Current delivery checklist remains pending release proof. [CLOSEOUT_PROMPT.md](CLOSEOUT_PROMPT.md) is the current continuation; older entries below preserve historical evidence and earlier restrictions.
 
 ## Historical handoff record
 

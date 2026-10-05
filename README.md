@@ -1,5 +1,5 @@
 > [!IMPORTANT]
-> Official-source reconstruction is in progress from Bambu Studio `v02.08.04.57`. The candidate source, hosted build identities, and unresolved project-opening verification are recorded in [the verification status](docs/reapplication/verification-status.md). No crash fix or new packaged behavior is claimed verified by this notice.
+> Current delivery pass, 5 October 2026: the combined implementation baseline `0e8673b5b8ac27b34fd7595ba9886256bdbc6915` is superseded by the FFmpeg path-with-spaces repair at `0f6ad8c40616e28c892f5fe63625d8a70188e145` on main. Fresh local configure is blocked because Strawberry Perl's `pkg-config` output still mishandles spaces; the build lane is implementing the correct route. Native compilation and release delivery have no verdict yet. The maintainer selected implementation integration and verified release delivery as the closure criteria; tests and screenshots are intentionally not run. Runtime and physical-printer correctness remain unverified. Read [the current handoff](HANDOFF.md) and [continuation record](CLOSEOUT_PROMPT.md). Earlier reconstruction evidence remains in [the verification status](docs/reapplication/verification-status.md).
 
 ![image](https://user-images.githubusercontent.com/106916061/179006347-497d24c0-9bd6-45b7-8c49-d5cc8ecfe5d7.png)
 # BambuStudio
@@ -10,13 +10,12 @@ slicing, and configured printers. See [setup and verification status](docs/featu
 The current interface work also includes [local personal wording](docs/features/windows/personal-vocabulary.md),
 [separate slicing actions](docs/features/windows/print-actions.md), and
 [searchable canvas menus](docs/features/canvas-menu-search.md). These changes are
-under hosted verification; the [audit register](docs/features/design-system/native-interface-audit-2026-10-02.md)
-records remaining runtime and layout evidence rather than claiming completion.
-All builds and runtime verification for this work run on GitHub Actions; implementation
-is not a claim of verified physical-printer behavior.
+under a local native build for the combined delivery; the [audit register](docs/features/design-system/native-interface-audit-2026-10-02.md)
+records historical runtime and layout evidence. Tests and screenshots are not run in this pass;
+implementation is not a claim of verified physical-printer behavior.
 Current compiler and startup evidence is summarized in the [continuation record](CLOSEOUT_PROMPT.md).
-The managed checks and current native build/package job have passed; release publication and installed UI evidence remain pending.
-The independently advanced default branch also needs semantic reconciliation and exact-source verification, as recorded in [integration readiness](docs/features/automation/integration-readiness.md).
+The current candidate is configure-blocked on the `pkg-config` path-with-spaces problem; native compilation, packaging and release publication remain pending.
+Earlier managed-check results apply only to their recorded source revisions. The combined source includes the reconciled continuation lanes and bounded repairs listed in the current handoff.
 
 Bambu Studio is a cutting-edge, feature-rich slicing software.  
 It contains project-based workflows, systematically optimized slicing algorithms, and an easy-to-use graphic interface, bringing users an incredibly smooth printing experience.
@@ -33,15 +32,15 @@ configured on any other system. Cross-platform builds remain available upstream 
 
 ## Current development work
 
-The responsive-workflow and local-history task is preserved on eight separate branches and paused at the owner's request. Its feature code is not yet integrated or released. The [current continuation record](CLOSEOUT_PROMPT.md) lists exact source tips, focused checks and remaining native verification.
+The previously preserved responsive-workflow and local-history source has been reconciled into the combined delivery revision. This pass adds bounded draft/history, continuity, import and automation repairs. Release delivery remains pending; see [the current continuation record](CLOSEOUT_PROMPT.md). Import cancellation remains cooperative and cannot interrupt an indivisible reader, hull calculation, object copy or final scene update. Issue #16's separately licensed companion remains a separate decision and is not included in this delivery.
 
 The source branch for the next Windows release reconciles upstream Bambu Studio
 2.8.4.57, with the fixes of upstream 2.8.4.61 merged on 2026-09-29, with this fork's native UI. It adds remembered dual-nozzle grouping,
 quick swaps and a Slice and print setup action, LAN printer farm routing,
 camera autoplay and fan feedback, a native Model Creator, portable multi-file
 workspaces with checklists and planning, and history embedded in saved 3MF
-files. These changes are still undergoing hosted build, packaging, runtime,
-and printer verification. The latest published installer link above remains the
+files. The current combined source is undergoing local build and packaging; runtime and
+printer verification are not performed in this pass. The latest published installer link above remains the
 last verified release until a newer release is confirmed. See the
 [roadmap](ROADMAP.md) and [handoff](HANDOFF.md) for exact state and limitations.
 

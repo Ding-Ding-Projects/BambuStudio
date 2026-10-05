@@ -1,8 +1,23 @@
 # Roadmap
 
+## Current delivery pass, 5 October 2026
+
+Combined implementation baseline: `0e8673b5b8ac27b34fd7595ba9886256bdbc6915`. Current candidate on main: `0f6ad8c40616e28c892f5fe63625d8a70188e145`, which adds the FFmpeg path-with-spaces repair. Fresh configure is blocked on Strawberry Perl's `pkg-config` output still mishandling spaces; the build lane is implementing the correct route. Implementation integration and verified release delivery are the selected closure criteria. Tests, lint, type checks, static-analysis suites, runtime interaction, installer execution and screenshots are intentionally not run in this pass. Historical checkboxes below retain their original evidence scope and do not establish acceptance of this combined revision.
+
+- [x] Reconcile the preserved continuation source and integrate bounded surface, automation, draft/history, continuity, import and build repairs into the combined source revision.
+- [ ] Complete the correct `pkg-config` route and configure the superseding pinned candidate; no successful configure or native compile verdict exists yet.
+- [ ] Complete native compilation of that exact candidate.
+- [ ] Package the intended source through the supported unsigned Squirrel route.
+- [ ] Push completed delivery to `main` and prove the exact remote reference.
+- [ ] Verify the new unique non-draft release, intended target and every required downloadable asset before closing eligible issues.
+- [ ] Archive and verify the exact cleanup inventory, then remove only inactive, clean, ancestor-proven task-owned candidates.
+- [ ] Resolve issue #16's separately licensed companion independently; no companion license or delivery is claimed here.
+
+Import publication remains cooperative on the UI thread. An indivisible reader, hull calculation, object copy or final scene update can still delay cancellation without a strict time bound. See [import delivery](docs/integration/delivery-import.md).
+
 ## Responsive workflows and local history (issue 56, 4 October 2026)
 
-Preserved on separate branches; paused at the owner's request. See [the continuation record](CLOSEOUT_PROMPT.md). All feature checkboxes remain open because native acceptance evidence is incomplete.
+Historical preservation record: these source branches have since been reconciled into the combined revision above. The original runtime-acceptance checkboxes remain open because that evidence was not produced; they are distinct from the selected delivery closure criteria. See [the current continuation record](CLOSEOUT_PROMPT.md).
 
 - [ ] Menu lifetimes and printer switching: preserve implementation, complete the named gaps and native acceptance checks.
 - [ ] Independent settings drafts: preserve implementation, complete the named gaps and native acceptance checks.

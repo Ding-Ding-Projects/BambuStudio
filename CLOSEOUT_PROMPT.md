@@ -1,3 +1,44 @@
+# Current delivery continuation, 5 October 2026
+
+## Objective and current steering
+
+Deliver the bounded BambuStudio issue inventory #16, #35, #36, #41, #43, #45, #46, #51, #53, #55 and #56 through the supported local native build and unsigned Squirrel packaging route. The maintainer selected completed implementation on main plus verified release delivery as the closure criteria. Tests, lint, type checks, static-analysis suites, reviews, audits, runtime interaction, installer execution and screenshots are intentionally not run in this pass. These criteria do not establish runtime, layout, security, physical-printer or transactional correctness.
+
+## Combined source and build
+
+The combined implementation baseline is `0e8673b5b8ac27b34fd7595ba9886256bdbc6915`. It is superseded by current main candidate `0f6ad8c40616e28c892f5fe63625d8a70188e145`, which repairs FFmpeg paths with spaces. Fresh configure remains blocked because Strawberry Perl's `pkg-config` output still mishandles spaces; the build lane is implementing the correct route. No successful configure, native compile or new release verdict exists for this pass yet. Retain the earlier `0e8673b5b` snapshot as historical source identity, not the current build candidate. The documentation commit containing this update is separate from the pinned build source. Do not modify any active pinned build checkout. Exact remote main proof must be recorded by the coordinating task after its push; this document does not claim a push.
+
+| Lane | Integrated source | Record |
+| --- | --- | --- |
+| Surface | `9eac2b1e2` | `docs/integration/delivery-surface.md` |
+| Automation | `117ebb818` | `docs/integration/delivery-automation.md` |
+| Draft/history | `ae51d2e3` | `docs/integration/delivery-draft-history.md` |
+| Continuity | `a5443bc68` | `docs/integration/delivery-continuity.md` |
+| Import | `0f28099a` | `docs/integration/delivery-import.md` |
+| Build | `c0a406c98` | `docs/integration/delivery-build.md` |
+
+The eight preserved responsive-workflow source branches were reconciled before these repairs. Their original records are retained under `docs/integration/continuations/` and the historical block below. Those earlier source checks and captures bind to their original revisions, not the combined current source.
+
+## Limits and unfinished delivery
+
+- Import publication remains on the UI thread with cooperative cancellation. An indivisible reader, convex-hull calculation, object copy, texture application or final scene update can delay the next cancellation opportunity without a strict time bound. Rollback may itself fail under resource exhaustion. Original inputs remain unchanged and retained originals are available through the existing restore route. Do not claim transactional runtime acceptance or exact simplification dimensions, volume or deviation.
+- Issue #16's separately licensed companion is outside this delivery pending its separate license decision. No new license acceptance or companion delivery is claimed.
+- Build, packaging, new release publication, exact target/tag/downloadable-asset proof, eligible issue closure and safely archived cleanup remain pending.
+- Tests and screenshots are not merely pending operations for this speed pass: they are intentionally excluded. Record that omission in the release and each issue closure. Keep prior visual `fixed-unverified` findings factual.
+- Do not delete active, uncommitted, unmerged, unpushed, load-bearing or ownership-uncertain branches, checkouts or stashes. Cleanup requires a verified archive and exact ancestor proof against pushed main.
+
+## Next safe steps
+
+1. Finish the correct `pkg-config` route and configure its superseding pinned candidate, then obtain that exact candidate's native compile verdict. Repair only directly required build problems in an isolated candidate if necessary.
+2. Produce the expected unsigned Squirrel installer, full package, update feed, hashes and project-declared metadata from the intended source. Coordinate publication so one intended release is created.
+3. Push completed source and current records to main, then verify its exact remote reference.
+4. Verify the unique non-draft release tag and target and all required downloadable assets. Close only issues whose scoped implementation and delivery are actually satisfied; leave #16's separate companion decision explicit.
+5. Archive the scoped cleanup inventory, read it back and prove inactive task candidates are ancestors of pushed main before removing them. Retain and report every unsafe candidate.
+
+## Historical continuation record
+
+The following block is retained as historical preservation and verification evidence. Its earlier pause, source gaps, build state and verification instructions have been superseded by the current delivery state and explicit exclusions above.
+
 # Current integration continuation, 5 October 2026
 
 The prior interface foundation and all eight approved responsive source branches are reconciled on `codex/bambu-complete-integration-20261005`. The eight-source ancestry checkpoint is `341e3b3420fb3bb3ef97331465a83578422c1e9b`; the commit containing this update additionally repairs the history detail scrollbar. See [the exact reconciliation record](docs/integration/responsive-reconciliation.md) for merge identities, checks, conflict decisions and incomplete acceptance. No default-branch integration, push, full native compile or release is claimed by this record.
