@@ -434,16 +434,26 @@ function Install-Node {
     # A project-local portable LTS installation can coexist with a newer global
     # Node version and never contends with Windows Installer or downgrades it.
     $portableRoot = Join-Path $WorkDir "node-v$($script:NodeFallbackVersion)-win-x64"
+    if (Test-NodeLts -NodePath (Join-Path $portableRoot 'node.exe') -NpmPath (Join-Path $portableRoot 'npm.cmd')) {
+        $env:PATH = "$portableRoot;$env:PATH"
+        return
+    }
     $archive = Join-Path $WorkDir "node-v$($script:NodeFallbackVersion)-win-x64.zip"
     if (-not (Test-Path -LiteralPath $archive -PathType Leaf) -or
-        (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash -cne $script:NodePortableSha256) {
+        (Get-FileSha256 -Path $archive) -cne $script:NodePortableSha256) {
         Invoke-WebRequest -Uri "https://nodejs.org/dist/v$($script:NodeFallbackVersion)/node-v$($script:NodeFallbackVersion)-win-x64.zip" `
             -OutFile $archive -UseBasicParsing -TimeoutSec 120 -ErrorAction Stop
     }
-    if ((Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash -cne $script:NodePortableSha256) {
+    if ((Get-FileSha256 -Path $archive) -cne $script:NodePortableSha256) {
         throw 'Portable Node.js archive checksum does not match the pinned publisher digest.'
     }
-    Expand-Archive -LiteralPath $archive -DestinationPath $WorkDir -Force
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    $staging = Join-Path $WorkDir ('node-staging-' + [guid]::NewGuid().ToString('N'))
+    [IO.Compression.ZipFile]::ExtractToDirectory($archive, $staging)
+    if (Test-Path -LiteralPath $portableRoot) {
+        Move-Item -LiteralPath $portableRoot -Destination ($portableRoot + '.previous-' + [guid]::NewGuid().ToString('N'))
+    }
+    Move-Item -LiteralPath (Join-Path $staging "node-v$($script:NodeFallbackVersion)-win-x64") -Destination $portableRoot
     $env:PATH = "$portableRoot;$env:PATH"
     if (-not (Test-NodeLts)) {
         throw 'Node.js LTS with npm could not be installed.'
