@@ -37708,45 +37708,67 @@ msgid "Import canceled"
 msgstr "匯入已取消"
 
 #: src/slic3r/GUI/DocsBrowserDialog.cpp
+#. reviewed-category: navigation
+#. review-status: agent-drafted
 msgid "Search articles"
 msgstr "搜尋文章"
 
 #: src/slic3r/GUI/DocsBrowserDialog.cpp
+#. reviewed-category: navigation
+#. review-status: agent-drafted
 msgid "Search documentation"
 msgstr "搜尋文件"
 
 #: src/slic3r/GUI/DocsBrowserDialog.cpp
+#. reviewed-category: navigation
+#. review-status: agent-drafted
 msgid "Documentation articles"
 msgstr "文件文章"
 
 #: src/slic3r/GUI/DocsBrowserDialog.cpp
+#. reviewed-category: navigation
+#. review-status: agent-drafted
 msgid "Forward"
 msgstr "前進"
 
 #: src/slic3r/GUI/DocsBrowserDialog.cpp
+#. reviewed-category: navigation
+#. review-status: agent-drafted
 msgid "Article"
 msgstr "文章"
 
 #: src/slic3r/GUI/DocsBrowserDialog.cpp
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
 msgid "No documentation bundle was found beside the application resources."
 msgstr "在程式資源旁找不到文件套件。"
 
 #: src/slic3r/GUI/DocsBrowserDialog.cpp
+#. reviewed-category: navigation
+#. review-status: agent-drafted
 msgid "%zu of %zu articles match"
 msgstr "%zu 篇文章符合搜尋，共 %zu 篇"
 
 #: src/slic3r/GUI/DocsBrowserDialog.cpp
+#. reviewed-category: navigation
+#. review-status: agent-drafted
 msgid "%zu articles, bundled offline"
 msgstr "%zu 篇已打包的離線文章"
 
 #: src/slic3r/GUI/DocsBrowserDialog.cpp
+#. reviewed-category: navigation
+#. review-status: agent-drafted
 msgid "Browse every feature article offline, inside the app"
 msgstr "在程式內離線瀏覽所有功能文章"
 
 #: src/slic3r/GUI/DocsBrowserDialog.cpp
+#. reviewed-category: navigation
+#. review-status: agent-drafted
 msgid "Offline documentation browser (F1)"
 msgstr "離線文件瀏覽器（F1）"
 
 #: src/slic3r/GUI/DocsBrowserDialog.cpp
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
 msgid "The embedded web view is not available on this PC, so articles cannot be rendered here. The same documentation ships in the docs folder of the source repository."
 msgstr "這部電腦無法使用內嵌網頁檢視，因此未能在這裏顯示文章。相同文件亦可在原始碼專案的 docs 資料夾找到。"
