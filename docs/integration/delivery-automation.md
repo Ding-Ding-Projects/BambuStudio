@@ -94,6 +94,12 @@ and numeric workflow identity. Neither route fabricates environment variables.
 The coordinating build lane must compile and package the repaired candidate;
 this source change does not claim that production has succeeded.
 
+`Invoke-OneClickBuild.ps1` stages the companion immediately after the Model
+Creator renderers and before either the build-only return or SBOM generation.
+The SBOM therefore inventories the companion actually delivered in the payload.
+The later Squirrel packaging step reuses the matching source-and-hash identity
+instead of adding an unlisted companion after the inventory was generated.
+
 No configured printer or Home Assistant instance was contacted or changed. No
 physical print was submitted, no user credential was read, and no new data
 collection was introduced. No build, workflow, general widget, history, Plater or
