@@ -1,3 +1,4 @@
+#include "Widgets/TextArea.hpp"
 #include "HumanDate.hpp"
 #include "ProjectHistoryDialog.hpp"
 #include "PreferencesHistory.hpp"
@@ -296,7 +297,7 @@ void ProjectHistoryDialog::create_ui()
     md3_style_data_view(m_version_list);
     list_sizer->Add(m_version_list, 1, wxEXPAND | wxALL, FromDIP(8));
 
-    m_detail = new wxTextCtrl(m_list_card, wxID_ANY, wxEmptyString, wxDefaultPosition, FromDIP(wxSize(400, 120)), wxTE_MULTILINE | wxTE_READONLY);
+    m_detail = new TextAreaEditor(m_list_card, wxID_ANY, wxEmptyString, wxDefaultPosition, FromDIP(wxSize(400, 120)), wxTE_MULTILINE | wxTE_READONLY);
     m_detail->Hide(); list_sizer->Add(m_detail, 1, wxEXPAND | wxALL, FromDIP(8));
     auto *history_actions = new wxWrapSizer(wxHORIZONTAL);
     m_compare_button = new Button(m_list_card, _L("Compare selected")); m_pin_button = new Button(m_list_card, _L("Pin / unpin search"));

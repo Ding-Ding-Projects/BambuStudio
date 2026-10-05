@@ -1,3 +1,9 @@
+# Current integration continuation, 5 October 2026
+
+The prior interface foundation and all eight approved responsive source branches are reconciled on `codex/bambu-complete-integration-20261005`. The eight-source ancestry checkpoint is `341e3b3420fb3bb3ef97331465a83578422c1e9b`; the commit containing this update additionally repairs the history detail scrollbar. See [the exact reconciliation record](docs/integration/responsive-reconciliation.md) for merge identities, checks, conflict decisions and incomplete acceptance. No default-branch integration, push, full native compile or release is claimed by this record.
+
+## Earlier continuation, preserved verbatim
+
 # Continuation: responsive workflows and local history
 
 Recorded 2026-10-04T22:18:27.172Z. The owner requested preservation and cleanup, then explicitly asked to pause the unfinished implementation goal after preservation. This record is a continuation handoff, not a completion or release claim. Tracking: [issue 56](https://github.com/Ding-Ding-Projects/BambuStudio/issues/56) and [discussion 57](https://github.com/Ding-Ding-Projects/BambuStudio/discussions/57).
