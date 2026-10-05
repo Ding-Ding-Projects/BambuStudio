@@ -302,7 +302,7 @@ TEST_CASE("Copy honours the funny level but never touches the dish name", "[DimS
 {
     // The absent-key default mirrors the shared language-mode default (2).
     REQUIRE(parse_funny_level("") == FUNNY_LEVEL_DEFAULT);
-    REQUIRE(FUNNY_LEVEL_DEFAULT == 2);
+    REQUIRE(FUNNY_LEVEL_DEFAULT == 5);
     REQUIRE(parse_funny_level("1") == 1);
     REQUIRE(parse_funny_level("5") == 5);
     REQUIRE(parse_funny_level("9") == 5);

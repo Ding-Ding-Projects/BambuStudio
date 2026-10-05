@@ -1,4 +1,4 @@
-param([string]$Compiler = 'g++', [switch]$Negative)
+param([string]$Compiler = 'g++', [switch]$Negative, [switch]$Msvc)
 $ErrorActionPreference = 'Stop'
 $root = (Resolve-Path (Join-Path $PSScriptRoot '../..')).Path
 $scratch = Join-Path ([IO.Path]::GetTempPath()) ('personal-modes-check-' + [guid]::NewGuid().ToString('N'))
@@ -9,7 +9,11 @@ try {
     Copy-Item -LiteralPath (Join-Path $root 'src/slic3r/GUI/PersonalModes') -Destination (Join-Path $scratch 'slic3r/GUI') -Recurse -Force
     $exe = Join-Path $scratch 'personal-modes-tests.exe'
     function Invoke-Check([bool]$ExpectedSuccess) {
-        & $Compiler '-std=c++17' '-DNOMINMAX' (Join-Path $PSScriptRoot 'personal_modes_tests.cpp') '-I' $scratch '-I' (Join-Path $root 'src') '-lole32' '-loleaut32' '-luuid' '-o' $exe
+        if ($Msvc) {
+            & cl '/nologo' '/std:c++17' '/EHsc' '/utf-8' '/DNOMINMAX' (Join-Path $PSScriptRoot 'personal_modes_tests.cpp') "/I$scratch" "/I$(Join-Path $root 'src')" "/Fe$exe" "/Fo$(Join-Path $scratch 'tests.obj')" '/link' 'ole32.lib' 'oleaut32.lib' 'uuid.lib'
+        } else {
+            & $Compiler '-std=c++17' '-DNOMINMAX' (Join-Path $PSScriptRoot 'personal_modes_tests.cpp') '-I' $scratch '-I' (Join-Path $root 'src') '-lole32' '-loleaut32' '-luuid' '-o' $exe
+        }
         if ($LASTEXITCODE -ne 0) { throw 'Compilation failed; no test verdict exists.' }
         & $exe
         $result = $LASTEXITCODE

@@ -41,7 +41,7 @@ TEST_CASE("Persisted funny levels parse with a compiled default and stable keys"
     REQUIRE(std::string(FUNNY_LEVEL_CANTONESE_KEY) == "funny_level_yue");
     REQUIRE(std::string(DIALOG_EMOJIS_KEY) == "dialog_emojis");
     REQUIRE(std::string(FUNNY_LEVEL_DISCLOSED_KEY) == "funny_level_disclosed");
-    REQUIRE(FUNNY_LEVEL_DEFAULT == 2);
+    REQUIRE(FUNNY_LEVEL_DEFAULT == 5);
 
     // Absent or malformed values fall back to the compiled default.
     REQUIRE(parse_funny_level("") == FUNNY_LEVEL_DEFAULT);

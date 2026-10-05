@@ -14,6 +14,7 @@ control or a workspace accommodation is already visible in the packaged applicat
 - [Attention accommodations](attention.md)
 - [Narration and voice selection](narration.md)
 - [Application integration checklist](integration.md)
+- [Funny-level defaults and existing preferences](funny-default.md)
 
 The services expose no HTTP API. A Postman collection does not apply.
 
@@ -29,8 +30,10 @@ copies that remove speech completion and presentation suppression checks. The sc
 requires the mutated executables to fail and the restored baseline to pass. Compiler
 failure is not accepted as a successful negative regression.
 
-The last completed baseline run passed 62 assertions. Three negative-regression
-attempts passed their baseline but the subsequent compiler invocation failed inside
-GCC 13.2 with `internal compiler error: Illegal instruction`. Those negative verdicts
-remain unverified. Full wxWidgets application compilation and built-interface
+The completed MSVC baseline run passed 62 assertions. Both deliberate behavioral
+mutations failed as required, and the restored source passed all 62 assertions again.
+Run the script with `-Msvc -Negative` from an initialized MSVC developer environment.
+Earlier GCC 13.2 attempts stopped inside the compiler with
+`internal compiler error: Illegal instruction`; they were not counted as negative
+regression verdicts. Full wxWidgets application compilation and built-interface
 interaction evidence remain pending. No capture or installer execution is claimed.
