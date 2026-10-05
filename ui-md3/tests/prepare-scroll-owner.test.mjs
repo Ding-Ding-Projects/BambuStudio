@@ -49,3 +49,22 @@ test('section switching settles extents before resetting and repainting', () => 
     const section = plater.split('void Sidebar::apply_prepare_section(')[1].split('\n}')[0];
     assert.match(section, /update_scroll_body\(\);\s*p->scrolled->Scroll\(0, 0\);\s*p->scrolled->Refresh\(\);/);
 });
+
+test('only focused embedded background forwards plain navigation keys', () => {
+    assert.match(scroller, /EnableKeyboardScrolling\(false\)/);
+    const handler = scroller.split('void MD3ScrolledWindow::OnChar(')[1].split('void MD3ScrolledWindow::SetRevealOwner')[0];
+    assert.match(handler, /wxWindow::FindFocus\(\) == this && !event.HasAnyModifiers\(\)/);
+    assert.match(handler, /case WXK_PAGEUP: case WXK_PAGEDOWN: case WXK_HOME: case WXK_END:/);
+    assert.match(handler, /case WXK_UP: case WXK_DOWN: case WXK_LEFT: case WXK_RIGHT:/);
+    assert.match(handler, /wxKeyEvent forwarded\(event\)/);
+    assert.match(handler, /default: break;/);
+    assert.match(handler, /event.Skip\(\)/);
+});
+test('embedded headers remeasure their natural height without constraining standalone pages', () => {
+    const fit = params.split('void ParamsPanel::fit_page_to_content()')[1].split('void ParamsPanel::set_active_tab')[0];
+    const standaloneReturn = fit.indexOf('return;', fit.indexOf('!m_host_height_changed'));
+    const measuredHeader = fit.indexOf('const int header_height = m_current_tab->GetSizer()->GetMinSize().y');
+    assert.ok(standaloneReturn >= 0 && measuredHeader > standaloneReturn);
+    assert.match(fit, /SetMinSize\(wxSize\(-1, header_height\)\)/);
+    assert.match(fit, /SetMaxSize\(wxSize\(-1, header_height\)\)/);
+});

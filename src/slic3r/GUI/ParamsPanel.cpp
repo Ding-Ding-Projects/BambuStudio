@@ -628,6 +628,15 @@ void ParamsPanel::fit_page_to_content()
         Layout();
         return;
     }
+    // Embedded tab headers must use their current natural height. A stale
+    // allocation survived category relayout (302 px for a 152 px header),
+    // leaving blank space before the first option in the outer viewport.
+    if (m_current_tab && m_current_tab->GetSizer()) {
+        const int header_height = m_current_tab->GetSizer()->GetMinSize().y;
+        m_current_tab->SetMinSize(wxSize(-1, header_height));
+        m_current_tab->SetMaxSize(wxSize(-1, header_height));
+        m_current_tab->InvalidateBestSize();
+    }
     const int content = m_page_sizer->GetMinSize().y + FromDIP(12);
     m_page_view->SetMinSize(wxSize(-1, content));
     m_page_view->SetVirtualSize(wxSize(-1, content));
