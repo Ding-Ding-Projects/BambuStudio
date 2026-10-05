@@ -2,6 +2,7 @@
 #include <curl/curl.h>
 #include <openssl/evp.h>
 #include <array>
+#include <algorithm>
 #include <iomanip>
 #include <memory>
 #include <sstream>
@@ -65,6 +66,18 @@ std::string identity(const std::string &s) {
 ApiResult LocalClient::execute(Operation op,const Json &payload,const std::atomic_bool &cancel,const std::function<bool(const Json &)> &on_chunk) const {
     ApiResult result;
     try {
+        if(op==Operation::Chat||op==Operation::Generate) {
+            // Enforce local capability at the transport boundary as well as in the UI.
+            auto tags=execute(Operation::Installed,Json::object(),cancel);
+            if(tags.state!=RuntimeState::Healthy) return tags;
+            const auto name=payload.at("model").get<std::string>(); auto installed=installed_models(tags.value);
+            auto found=std::find_if(installed.begin(),installed.end(),[&](const Model &m){return m.name==name;});
+            if(found==installed.end()) throw std::runtime_error("Model is not installed");
+            auto shown=execute(Operation::Show,{{"model",name}},cancel); if(shown.state!=RuntimeState::Healthy) return shown;
+            apply_details(*found,shown.value); const auto &o=payload.at("options");
+            auto messages=op==Operation::Chat?payload.at("messages"):Json::array({{{"role","user"},{"content",payload.at("prompt")}}});
+            chat_payload(*found,messages,o.at("temperature").get<double>(),o.at("num_ctx").get<std::uint64_t>(),o.at("num_predict").get<std::uint64_t>());
+        }
         auto r=request(op,payload); Transfer t; t.cancel=&cancel;
         Ndjson stream([&](const Json &j) {
             if(op==Operation::Pull && j.value("status",std::string())=="success") t.terminal=true;
@@ -82,7 +95,13 @@ ApiResult LocalClient::execute(Operation op,const Json &payload,const std::atomi
         if(code!=CURLE_OK||result.http_status<200||result.http_status>=300) { result.diagnostic=t.oversized?"Local API response exceeded the size bound.":"Local API request failed. Check runtime health, storage and compatibility in Troubleshooting."; return result; }
         if(r.streaming) {
             if(!stream.finish()||!t.terminal) { result.diagnostic="Stream ended without a successful terminal response. Partial output is retained as incomplete."; return result; }
-        } else if(!t.bytes.empty()) result.value=parse_json(t.bytes);
+        } else if(!t.bytes.empty()) {
+            result.value=parse_json(t.bytes);
+            if(op==Operation::Version) {
+                if(!result.value.contains("version")||!result.value.at("version").is_string()||result.value.at("version").get<std::string>().empty()||result.value.at("version").get<std::string>().size()>80) throw std::runtime_error("Invalid runtime version response");
+            }
+            if(op==Operation::Installed||op==Operation::Running) installed_models(result.value);
+        }
         else if(op!=Operation::Delete && op!=Operation::Copy) { result.diagnostic="Local API returned an empty response."; return result; }
         result.state=RuntimeState::Healthy; result.terminal=true; result.diagnostic="Operation completed by the local API.";
     } catch(...) { result.diagnostic="Local request or response failed validation. No response content was logged."; }
@@ -95,6 +114,16 @@ CatalogPage LocalClient::catalog_page(const std::string &path,const std::atomic_
     auto code=curl_easy_perform(c.get()); long status=0; curl_easy_getinfo(c.get(),CURLINFO_RESPONSE_CODE,&status);
     if(code!=CURLE_OK||status!=200) throw std::runtime_error("Official catalog unavailable, cancelled, redirected or oversized");
     return parse_catalog_html(path,t.bytes,identity(t.bytes),utc_now());
+}
+Model LocalClient::registry_metadata(const std::string &tag,const std::atomic_bool &cancel) const {
+    if(!valid_model(tag)||tag.find('/')!=std::string::npos||tag.find(':')==std::string::npos) throw std::runtime_error("Choose an exact official library tag");
+    auto colon=tag.find(':'); auto path="/v2/library/"+tag.substr(0,colon)+"/manifests/"+tag.substr(colon+1);
+    Transfer t; t.cancel=&cancel; auto c=connection("https://registry.ollama.ai"+path,t,30,false);
+    std::unique_ptr<curl_slist,HeaderDelete> headers(curl_slist_append(nullptr,"Accept: application/vnd.docker.distribution.manifest.v2+json"));
+    curl_easy_setopt(c.get(),CURLOPT_HTTPHEADER,headers.get());
+    auto code=curl_easy_perform(c.get()); long status=0; curl_easy_getinfo(c.get(),CURLINFO_RESPONSE_CODE,&status);
+    if(code!=CURLE_OK||status!=200) throw std::runtime_error("Official registry metadata unavailable");
+    Model m; m.name=tag; apply_manifest(m,parse_json(t.bytes),identity(t.bytes)); return m;
 }
 Hardware detect_hardware(const std::filesystem::path &destination) {
     Hardware h; h.measured_at=utc_now(); std::error_code ec; auto s=std::filesystem::space(destination,ec); if(!ec) h.free_disk=s.available;

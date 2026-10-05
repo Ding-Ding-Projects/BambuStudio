@@ -1,11 +1,14 @@
 #include "OllamaSuiteDialog.hpp"
 #include "OllamaClient.hpp"
+#include "NativeLaunchAdapter.hpp"
 #include "libslic3r/OllamaSuite/LaunchProfiles.hpp"
 #include "../I18N.hpp"
 #include "../Widgets/Button.hpp"
 #include "../Widgets/Label.hpp"
 #include "../Widgets/ListBox.hpp"
 #include "../Widgets/SearchField.hpp"
+#include "../Widgets/SuperConfirmGate.hpp"
+#include "../Widgets/TextInput.hpp"
 #include "../Widgets/TextArea.hpp"
 #include "../Widgets/TabStrip.hpp"
 #include "../Widgets/MD3DialogChrome.hpp"
@@ -15,6 +18,10 @@
 #include <wx/sizer.h>
 #include <wx/timer.h>
 #include <wx/wrapsizer.h>
+#include <wx/filedlg.h>
+#include <wx/base64.h>
+#include <fstream>
+#include <algorithm>
 #include <mutex>
 #include <thread>
 
@@ -29,6 +36,8 @@ class SuiteDialog final : public wxDialog {
         std::string status; std::vector<Model> installed; std::set<std::string> running;
         CatalogSnapshot catalog; std::optional<Model> selected; std::string response;
         Json messages=Json::array();
+        std::optional<ValidatedLaunchPlan> launch_plan;
+        std::string profile_preview;
     };
 public:
     SuiteDialog(wxWindow *parent,const std::filesystem::path &root)
@@ -48,21 +57,28 @@ public:
         m_tabs->Bind(EVT_TABSTRIP_DOCK_CHANGED,[this](wxCommandEvent &) { layout_tabs(); });
         m_tabs->LoadLayout(); m_tabs->Activate("models",false); layout_tabs();
         auto *stop=new Button(this,_L("Stop current operation")); stop->SetVariant(Button::Variant::Outlined);
-        stop->Bind(wxEVT_BUTTON,[this](wxCommandEvent &) { m_state.cancel=true; }); outer->Add(stop,0,wxALL|wxALIGN_RIGHT,FromDIP(12));
+        stop->Bind(wxEVT_BUTTON,[this](wxCommandEvent &) { m_state.cancel=true; if(m_launcher)m_launcher->request_cancel(); }); outer->Add(stop,0,wxALL|wxALIGN_RIGHT,FromDIP(12));
         SetSizer(outer); MD3DialogCaption::FinishChrome(this); CentreOnParent();
         Bind(wxEVT_TIMER,[this](wxTimerEvent &) { poll(); }); m_timer.Start(120);
         try { m_queue.recover(); if(std::filesystem::exists(m_root/"catalog.json")) m_state.catalog=load_catalog(read_json(m_root/"catalog.json")); }
         catch(...) { m_status->SetLabel(_L("Saved suite data is invalid or unavailable. Existing files were retained.")); }
         render_models(); render_queue();
     }
-    ~SuiteDialog() override { m_timer.Stop(); m_state.cancel=true; if(m_worker.joinable()) m_worker.join(); }
+    ~SuiteDialog() override { m_timer.Stop(); m_state.cancel=true; if(m_launcher)m_launcher->request_cancel(); if(m_worker.joinable()) m_worker.join(); }
 private:
     std::filesystem::path m_root; PullQueue m_queue; ChatStore m_history; WorkerState m_state;
     std::thread m_worker; wxTimer m_timer; Label *m_status=nullptr,*m_catalog_status=nullptr;
     TabStrip *m_tabs=nullptr; wxSimplebook *m_book=nullptr; wxBoxSizer *m_body=nullptr;
     std::vector<std::string> m_sections; SearchField *m_model_search=nullptr;
     ListBox *m_models=nullptr,*m_pulls=nullptr; TextArea *m_details=nullptr,*m_prompt=nullptr,*m_system=nullptr,*m_output=nullptr;
-    std::vector<Model> m_visible; std::size_t m_model_offset=0,m_queue_offset=0; ChatSession m_session;
+    std::vector<Model> m_visible; std::size_t m_model_offset=0,m_queue_offset=0,m_history_offset=0; ChatSession m_session;
+    SearchField *m_history_search=nullptr; ListBox *m_sessions=nullptr; TextInput *m_title=nullptr;
+    Button *m_attach=nullptr;
+    std::unique_ptr<NativeLaunchAdapter> m_launcher; std::vector<LaunchProfile> m_profiles;
+    Button *m_launch=nullptr;
+    TextArea *m_profile_preview=nullptr;
+    TextInput *m_temperature=nullptr,*m_context=nullptr,*m_predict=nullptr;
+    std::vector<ChatSession> m_history_rows; std::string m_attachment;
     std::pair<wxWindow *,wxBoxSizer *> section(const std::string &id,const wxString &name) {
         auto *panel=new MD3ScrolledWindow(m_book,wxID_ANY,wxDefaultPosition,wxDefaultSize,wxVSCROLL);
         panel->SetScrollRate(0,FromDIP(12)); auto *s=new wxBoxSizer(wxVERTICAL); panel->SetSizer(s);
@@ -91,10 +107,13 @@ private:
     void set_status(const std::string &s) { std::lock_guard<std::mutex> lock(m_state.mutex); m_state.status=s; m_state.changed=true; }
     void poll() {
         bool done=false; { std::lock_guard<std::mutex> lock(m_state.mutex); if(!m_state.changed) return; m_state.changed=false;
-            m_status->SetLabel(u8(m_state.status)); m_output->SetValue(u8(m_state.response)); done=!m_state.busy;
+            m_status->SetLabel(u8(m_state.status.substr(0,m_state.status.find('\n')))); m_output->SetValue(u8(m_state.response)); done=!m_state.busy;
+            if(!m_state.profile_preview.empty())m_profile_preview->SetValue(u8(m_state.profile_preview));
             if(done&&!m_state.messages.empty()) { m_session.messages=m_state.messages; m_state.messages=Json::array(); }
-            if(done&&m_state.selected) m_details->SetValue(u8(m_state.status)); }
-        if(done) { render_models(); render_queue(); } Layout();
+            if(done&&m_state.selected) m_details->SetValue(u8(m_state.status));
+            m_attach->Enable(done&&m_state.selected&&m_state.selected->capabilities_verified&&m_state.selected->local&&m_state.selected->capabilities.count("vision"));
+            m_launch->Enable(done&&m_state.launch_plan.has_value()); }
+        if(done) { render_models(); render_queue(); render_history(); } Layout();
     }
     void build_store() {
         auto [p,s]=section("models",_L("Models")); auto *buttons=new wxWrapSizer(wxHORIZONTAL);
@@ -128,6 +147,7 @@ private:
         std::lock_guard<std::mutex> lock(m_state.mutex); m_state.installed=std::move(models); m_state.running=std::move(names); m_state.selected.reset(); m_state.status="Local Ollama responded. Installed model inventory refreshed.";
     }); }
     void render_models() {
+        std::string selected; const auto selection=m_models->GetSelection(); if(selection>=0&&static_cast<std::size_t>(selection)<m_visible.size())selected=m_visible[selection].name;
         std::vector<Model> all; { std::lock_guard<std::mutex> lock(m_state.mutex); all=reconcile(m_state.catalog.models,m_state.installed,m_state.running);
             m_catalog_status->SetLabel(u8(m_state.catalog.reason.empty()?"No verified catalog is cached. Installed models remain available.":m_state.catalog.reason)+"\n"+u8(m_state.catalog.refreshed_at)); }
         SearchField::MatchPass match(m_model_search->GetValue(),m_model_search->IsRegexEnabled(),m_model_search->IsCaseSensitive(),m_model_search->IsWholeWord(),m_model_search->IsMultiline());
@@ -135,15 +155,21 @@ private:
         for(const auto &m:all) { std::string hay=m.name+" "+m.family+" "+m.quantization; for(const auto &c:m.capabilities) hay+=" "+c;
             if(!match.matches(u8(hay))) continue; if(offset++<m_model_offset) continue; if(rows.size()==100) break;
             rows.push_back(u8(m.name)+(m.installed?_L(" | installed"):_L(" | catalog, metadata unverified"))+(m.running?_L(" | running"):wxString())); m_visible.push_back(m); }
-        m_models->Set(rows);
+        m_models->Set(rows); for(std::size_t i=0;i<m_visible.size();++i)if(m_visible[i].name==selected)m_models->SetSelection(static_cast<int>(i));
     }
     void inspect_selected() {
         auto i=m_models->GetSelection(); if(i<0||static_cast<std::size_t>(i)>=m_visible.size()) return; auto m=m_visible[i];
-        if(!m.installed) { m_details->SetValue(_L("This exact catalog tag is not installed. Size and capability metadata are unverified; hardware fit is Unknown. Batch transfer remains unavailable until the full storage preflight can be proved.")); return; }
+        if(!m.installed) {
+            start([this,m=std::move(m)]() mutable { LocalClient client; m=client.registry_metadata(m.name,m_state.cancel);
+                std::lock_guard<std::mutex> lock(m_state.mutex); m_state.selected=m;
+                m_state.status=m.name+"\nVerified registry transfer bytes: "+std::to_string(*m.bytes)+"\nManifest: "+m.digest+"\nHardware fit: Unknown. Model runtime metadata is not installed.";
+                for(auto &entry:m_state.catalog.models) if(entry.name==m.name) entry=m;
+            }); return;
+        }
         start([this,m=std::move(m)]() mutable {
             LocalClient c; auto details=c.execute(Operation::Show,{{"model",m.name}},m_state.cancel);
             if(details.state!=RuntimeState::Healthy) { set_status(details.diagnostic); return; } apply_details(m,details.value);
-            const auto h=detect_hardware(m_root); auto verdict=fit(m,h,2048,{});
+            auto h=detect_hardware(m_root); h.free_disk.reset(); auto verdict=fit(m,h,2048,{});
             std::string summary=m.name+"\n"+fit_label(verdict.verdict)+"\n"; for(const auto &e:verdict.evidence) summary+=e+"\n";
             summary+="Capabilities:"; for(const auto &c:m.capabilities) summary+=" "+c;
             std::lock_guard<std::mutex> lock(m_state.mutex); m_state.selected=m; m_state.status=summary;
@@ -151,26 +177,71 @@ private:
     }
     void build_chat() {
         auto [p,s]=section("chat",_L("Chat")); note(p,s,_L("Choose an installed local completion model in Models. Messages remain on this computer. Ordinary exports omit message content and attachments."));
+        auto *parameters=new wxWrapSizer(wxHORIZONTAL);
+        m_temperature=new TextInput(p,"0.7",_L("Temperature, 0 to 2")); m_temperature->SetValCheckers({TextInputValChecker::CreateDoubleRangeChecker(0,2,false)});parameters->Add(m_temperature,0,wxALL,FromDIP(4));
+        m_context=new TextInput(p,"2048",_L("Context, 512 to 32768"));m_context->SetValCheckers({TextInputValChecker::CreateIntRangeChecker(512,32768)});parameters->Add(m_context,0,wxALL,FromDIP(4));
+        m_predict=new TextInput(p,"512",_L("Output limit, 1 to 4096"));m_predict->SetValCheckers({TextInputValChecker::CreateIntRangeChecker(1,4096)});parameters->Add(m_predict,0,wxALL,FromDIP(4));s->Add(parameters,0,wxEXPAND);
+        auto *presets=new wxWrapSizer(wxHORIZONTAL);
+        action(p,presets,_L("Recommended balanced settings"),[this]{m_temperature->GetTextCtrl()->SetValue("0.7");m_context->GetTextCtrl()->SetValue("2048");m_predict->GetTextCtrl()->SetValue("512");});
+        action(p,presets,_L("Conservative short reply"),[this]{m_temperature->GetTextCtrl()->SetValue("0.2");m_context->GetTextCtrl()->SetValue("512");m_predict->GetTextCtrl()->SetValue("128");});s->Add(presets,0,wxEXPAND);
         note(p,s,_L("System prompt")); m_system=new TextArea(p,wxString(),FromDIP(wxSize(-1,80))); m_system->GetTextCtrl()->SetMaxLength(8192); s->Add(m_system,0,wxEXPAND|wxALL,FromDIP(8));
         m_output=new TextArea(p,wxString(),FromDIP(wxSize(-1,210))); m_output->SetReadOnly(true); m_output->SetName("Local response"); s->Add(m_output,0,wxEXPAND|wxALL,FromDIP(8));
         m_prompt=new TextArea(p,wxString(),FromDIP(wxSize(-1,100))); m_prompt->GetTextCtrl()->SetMaxLength(32768); m_prompt->SetName("Message for selected local model"); s->Add(m_prompt,0,wxEXPAND|wxALL,FromDIP(8));
         auto *buttons=new wxWrapSizer(wxHORIZONTAL); action(p,buttons,_L("Send locally"),[this] { send(); });
-        auto *attach=action(p,buttons,_L("Attach image"),[]{}); attach->Enable(false); attach->SetToolTip(_L("Image transport validation exists, but a verified file-picker adapter is not yet connected. Use Models to inspect vision capability."));
+        m_attach=action(p,buttons,_L("Attach image"),[this] { attach_image(); }); m_attach->Enable(false); m_attach->SetToolTip(_L("Select a PNG or JPEG only after verifying vision capability in Models. Image bytes are sent locally and are omitted from saved history."));
         s->Add(buttons,0,wxEXPAND); note(p,s,_L("Default parameters: temperature 0.7, context 2048, output limit 512. These bounds are checked against the selected model. Stop cancels the active HTTP transfer."));
+        note(p,s,_L("Saved sessions"));
+        m_history_search=new SearchField(p,_L("Search saved sessions on this page")); s->Add(m_history_search,0,wxEXPAND|wxALL,FromDIP(8));
+        m_history_search->SetOnQuery([this](const wxString &){render_history();}); m_history_search->SetOnRegexToggle([this](bool){render_history();});
+        m_sessions=new ListBox(p,wxID_ANY,FromDIP(wxSize(-1,140))); s->Add(m_sessions,0,wxEXPAND|wxALL,FromDIP(8));
+        m_sessions->Bind(wxEVT_LISTBOX,[this](wxCommandEvent &) { auto i=m_sessions->GetSelection(); if(i<0||static_cast<std::size_t>(i)>=m_history_rows.size()) return;
+            std::lock_guard<std::mutex> lock(m_state.mutex); if(m_state.busy) return; m_session=m_history_rows[i]; m_title->GetTextCtrl()->SetValue(u8(m_session.title)); std::string visible;
+            for(const auto &m:m_session.messages) visible+=m.value("role",std::string())+": "+m.value("content",std::string())+"\n\n"; m_state.response=visible; m_output->SetValue(u8(visible)); });
+        m_title=new TextInput(p,wxString()); m_title->GetTextCtrl()->SetMaxLength(200); m_title->SetName("Session display name"); s->Add(m_title,0,wxEXPAND|wxALL,FromDIP(8));
+        auto *history_actions=new wxWrapSizer(wxHORIZONTAL);
+        action(p,history_actions,_L("Rename session"),[this] { try { std::lock_guard<std::mutex> lock(m_state.mutex); if(m_state.busy||m_session.id.empty()) return; m_session.title=utf8(m_title->GetTextCtrl()->GetValue()); m_history.save(m_session); } catch(...) { m_status->SetLabel(_L("Session rename could not be saved.")); } render_history(); });
+        action(p,history_actions,_L("Delete session"),[this] { { std::lock_guard<std::mutex> lock(m_state.mutex); if(m_state.busy||m_session.id.empty()) return; }
+            SuperConfirmGate::Spec spec; spec.action=_L("Delete session"); spec.consequence=_L("The selected local chat history will be permanently deleted. This cannot be undone."); spec.affected={u8(m_session.title)};
+            if(SuperConfirmGate::Run(m_sessions,spec)) { try { m_history.remove(m_session.id,true); m_session={}; m_output->Clear(); render_history(); } catch(...) { m_status->SetLabel(_L("Session deletion failed. Existing data was retained.")); } } });
+        action(p,history_actions,_L("Export redacted session"),[this] { if(m_session.id.empty()) return; wxFileDialog file(this,_L("Export redacted session"),wxString(),"session.json","JSON (*.json)|*.json",wxFD_SAVE|wxFD_OVERWRITE_PROMPT);
+            if(file.ShowModal()!=wxID_OK) return; try { const std::filesystem::path destination(file.GetPath().ToStdWstring());
+                if(std::filesystem::exists(destination)) { SuperConfirmGate::Spec spec; spec.action=_L("Replace export file"); spec.consequence=_L("The selected file will be replaced permanently."); spec.affected={file.GetFilename()}; if(!SuperConfirmGate::Run(m_sessions,spec)) return; }
+                atomic_json(destination,m_history.redacted_export(m_session)); m_status->SetLabel(_L("Redacted export saved. Message text, titles and attachments were omitted.")); } catch(...) { m_status->SetLabel(_L("Export could not be saved.")); } });
+        action(p,history_actions,_L("Previous sessions"),[this] { if(m_history_offset>=50) m_history_offset-=50; render_history(); });
+        action(p,history_actions,_L("Next sessions"),[this] { m_history_offset+=50; render_history(); }); s->Add(history_actions,0,wxEXPAND); render_history();
     }
+    void attach_image() {
+        { std::lock_guard<std::mutex> lock(m_state.mutex); if(m_state.busy||!m_state.selected||!m_state.selected->capabilities_verified||!m_state.selected->capabilities.count("vision")) { m_status->SetLabel(_L("Image attachments need a selected model with verified vision capability. Open Models and inspect a vision model.")); return; } }
+        wxFileDialog file(this,_L("Choose a local PNG or JPEG"),wxString(),wxString(),"PNG and JPEG (*.png;*.jpg;*.jpeg)|*.png;*.jpg;*.jpeg",wxFD_OPEN|wxFD_FILE_MUST_EXIST);
+        if(file.ShowModal()!=wxID_OK) return;
+        try { const std::filesystem::path path(file.GetPath().ToStdWstring()); const auto size=std::filesystem::file_size(path); if(size<8||size>768*1024) throw std::runtime_error("image bound");
+            std::ifstream in(path,std::ios::binary); std::string bytes(static_cast<std::size_t>(size),'\0'); in.read(bytes.data(),bytes.size()); if(!in||in.peek()!=std::char_traits<char>::eof()) throw std::runtime_error("image changed");
+            const bool png=bytes.compare(0,8,std::string("\x89PNG\r\n\x1a\n",8))==0; const bool jpeg=static_cast<unsigned char>(bytes[0])==0xff&&static_cast<unsigned char>(bytes[1])==0xd8&&static_cast<unsigned char>(bytes[2])==0xff;
+            if(!png&&!jpeg) throw std::runtime_error("image signature"); m_attachment=utf8(wxBase64Encode(bytes.data(),bytes.size())); m_status->SetLabel(_L("One image is attached for the next message only. Its filename is not sent or saved."));
+        } catch(...) { m_attachment.clear(); m_status->SetLabel(_L("Attachment rejected: select an unchanged PNG or JPEG no larger than 768 KiB.")); }
+    }
+    void render_history() { if(!m_sessions) return; try {
+        auto records=m_history.page(m_history_offset,50); std::vector<wxString> rows; m_history_rows.clear();
+        SearchField::MatchPass match(m_history_search->GetValue(),m_history_search->IsRegexEnabled(),m_history_search->IsCaseSensitive(),m_history_search->IsWholeWord(),m_history_search->IsMultiline());
+        for(auto &record:records) if(match.matches(u8(record.title+" "+record.model))) { rows.push_back(u8(record.title+" | "+record.model)); m_history_rows.push_back(std::move(record)); } m_sessions->Set(rows);
+    } catch(...) { m_status->SetLabel(_L("Saved sessions could not be read. Existing files were retained.")); } }
     void send() {
         Model m; { std::lock_guard<std::mutex> lock(m_state.mutex); if(m_state.busy||!m_state.selected||m_state.selected->name!=m_session.model) { m_status->SetLabel(_L("Finish the current operation, then select and inspect a model and choose Use selected model for chat.")); return; } m=*m_state.selected; m_state.response.clear(); }
         const auto prompt=utf8(m_prompt->GetValue()); if(prompt.empty()) return;
         auto session=m_session; if(session.messages.empty()&&!m_system->GetValue().empty()) session.messages.push_back({{"role","system"},{"content",utf8(m_system->GetValue())}});
         session.messages.push_back({{"role","user"},{"content",prompt}});
-        Json payload; try { payload=chat_payload(m,session.messages); } catch(...) { m_status->SetLabel(_L("Chat is unavailable: verify completion capability, context metadata, and message limits in Models.")); return; }
-        m_session=session; m_prompt->Clear(); start([this,payload,session]() mutable {
+        if(!m_attachment.empty()) session.messages.back()["images"]=Json::array({m_attachment});
+        Json payload; try { double temperature=0;unsigned long context=0,predict=0;
+            if(!m_temperature->GetTextCtrl()->GetValue().ToDouble(&temperature)||!m_context->GetTextCtrl()->GetValue().ToULong(&context)||!m_predict->GetTextCtrl()->GetValue().ToULong(&predict))throw std::runtime_error("invalid parameter");
+            payload=chat_payload(m,session.messages,temperature,context,predict); } catch(...) { m_status->SetLabel(_L("Chat is unavailable: verify completion capability, context metadata, and message limits in Models.")); return; }
+        m_session=session; m_prompt->Clear(); m_attachment.clear(); start([this,payload,session]() mutable {
             std::string answer; LocalClient c; auto result=c.execute(Operation::Chat,payload,m_state.cancel,[&](const Json &chunk) {
                 if(chunk.contains("message")&&chunk.at("message").contains("content")) {
                     auto part=chunk.at("message").at("content").get<std::string>(); if(part.size()>max_chat_bytes-answer.size()) return false; answer+=part;
                     std::lock_guard<std::mutex> lock(m_state.mutex); m_state.response=answer; m_state.status="Receiving a local response."; m_state.changed=true;
                 } return true;
             });
+            for(auto &message:session.messages) message.erase("images");
             if(result.state==RuntimeState::Healthy) { session.messages.push_back({{"role","assistant"},{"content",answer}}); m_history.save(session); }
             std::lock_guard<std::mutex> lock(m_state.mutex); m_state.messages=session.messages; m_state.status=result.diagnostic;
         });
@@ -185,8 +256,35 @@ private:
     void render_queue() { try { std::vector<wxString> rows; for(const auto &i:m_queue.page(m_queue_offset)) rows.push_back(u8(i.model)+" | "+u8(i.message.empty()?"queued":i.message)); m_pulls->Set(rows); } catch(...) { m_status->SetLabel(_L("Batch state could not be read. Existing files were retained.")); } }
     void build_profiles() {
         auto [p,s]=section("profiles",_L("Launch profiles")); note(p,s,_L("Launch profiles belong to this application. Ollama does not launch other programs. Profiles cannot accept shell commands, scripts, or arbitrary environment values."));
-        for(const auto &profile:LaunchProfileRegistry::prebuilt()) { note(p,s,u8(profile.name)); auto *b=action(p,s,_L("Register verified executable"),[]{}); b->Enable(false); b->SetToolTip(_L("A privileged file-picker verifier and contained process executor are not yet bundled. Profile launch remains unavailable.")); }
-        note(p,s,_L("The core validates executable identities and typed arguments, snapshots before mutation, and restores after failed launch or readiness. Actual launch requires the packaged executor and its runtime evidence."));
+        NativeLaunchPolicy policy;
+        policy.installed_model=[this](const std::string &tag) { LocalClient client; auto result=client.execute(Operation::Installed,Json::object(),m_state.cancel); if(result.state!=RuntimeState::Healthy)return false; auto installed=installed_models(result.value); return std::any_of(installed.begin(),installed.end(),[&](const Model &model){return model.name==tag;}); };
+        policy.hardware_fit=[this](const LaunchProfile &profile) { std::lock_guard<std::mutex> lock(m_state.mutex); if(!m_state.selected||m_state.selected->name!=profile.model_tag)return false;
+            auto hardware=detect_hardware(m_root); hardware.free_disk.reset();
+            auto verdict=fit(*m_state.selected,hardware,profile.context_length,{}); return verdict.verdict==Fit::RunsWell||verdict.verdict==Fit::WithLimits; };
+        m_launcher=std::make_unique<NativeLaunchAdapter>(std::move(policy)); m_profiles=LaunchProfileRegistry::prebuilt();
+        if(!m_launcher->available()) note(p,s,u8(m_launcher->unavailable_reason()));
+        for(std::size_t i=0;i<m_profiles.size();++i) {
+            note(p,s,u8(m_profiles[i].name)); if(!NativeLaunchDetail::supported_kind(m_profiles[i].kind))note(p,s,u8(NativeLaunchDetail::profile_unavailable_reason(m_profiles[i].kind)));auto *row=new wxWrapSizer(wxHORIZONTAL);
+            auto *executable=action(p,row,_L("Choose executable"),[this,i] { {std::lock_guard<std::mutex> lock(m_state.mutex);if(m_state.busy)return;m_state.launch_plan.reset();}
+                auto result=m_launcher->pick_executable(m_profiles[i].kind,GetHandle()); if(result.evidence)m_profiles[i].executable=result.evidence; if(!result.cancelled)m_status->SetLabel(u8(result.diagnostic)); });
+            executable->Enable(m_launcher->available()&&NativeLaunchDetail::supported_kind(m_profiles[i].kind));executable->SetToolTip(u8(NativeLaunchDetail::profile_unavailable_reason(m_profiles[i].kind)));
+            action(p,row,_L("Choose working folder"),[this,i] { {std::lock_guard<std::mutex> lock(m_state.mutex);if(m_state.busy)return;m_state.launch_plan.reset();}
+                auto result=m_launcher->pick_working_directory(GetHandle()); if(result.path)m_profiles[i].working_directory=*result.path; if(!result.cancelled)m_status->SetLabel(u8(result.diagnostic)); });
+            if(m_profiles[i].kind==LaunchKind::LlamaServer) action(p,row,_L("Choose local model file"),[this,i] { {std::lock_guard<std::mutex> lock(m_state.mutex);if(m_state.busy)return;m_state.launch_plan.reset();}
+                auto result=m_launcher->pick_model_file(GetHandle()); if(result.evidence)m_profiles[i].model_file=result.evidence; if(!result.cancelled)m_status->SetLabel(u8(result.diagnostic)); });
+            action(p,row,_L("Review preflight"),[this,i] { {std::lock_guard<std::mutex> lock(m_state.mutex);if(m_state.busy)return;if(m_state.selected)m_profiles[i].model_tag=m_state.selected->name;m_state.launch_plan.reset();}
+                auto profile=m_profiles[i]; start([this,profile] { auto result=LaunchProfileRegistry::prepare(profile,*m_launcher); std::string report;
+                    if(result.plan) { const auto &preview=result.plan->preview(); report="Launch preflight passed. Review exact local execution:\n"+preview.executable+"\nWorking folder: "+preview.working_directory+"\nArguments:"; for(const auto &arg:preview.arguments)report+="\n"+arg; report+="\nEnvironment keys:";for(const auto &[key,value]:preview.environment)report+=" "+key; }
+                    else {report="Launch blocked:\n";for(const auto &blocker:result.blockers)report+=blocker+"\n";}
+                    std::lock_guard<std::mutex> lock(m_state.mutex);m_state.launch_plan=std::move(result.plan);m_state.profile_preview=report;m_state.status=std::move(report);
+                }); }); s->Add(row,0,wxEXPAND);
+        }
+        m_profile_preview=new TextArea(p,_L("Choose the registered inputs, then review preflight. Exact launch details appear here before launch."),FromDIP(wxSize(-1,190)));m_profile_preview->SetReadOnly(true);s->Add(m_profile_preview,0,wxEXPAND|wxALL,FromDIP(8));
+        m_launch=action(p,s,_L("Launch reviewed profile"),[this] { std::optional<ValidatedLaunchPlan> plan; {std::lock_guard<std::mutex> lock(m_state.mutex);if(m_state.busy||!m_state.launch_plan)return;plan=m_state.launch_plan;m_state.launch_plan.reset();}
+            start([this,plan] {auto outcome=LaunchTransaction::run(*plan,*m_launcher,*m_launcher,30000);set_status(m_state.cancel.load()?"Launch cancelled. "+outcome.diagnostic:outcome.diagnostic);}); }); m_launch->Enable(false);
+        m_launch->SetToolTip(_L("Complete executable, folder, model and hardware preflight first. Unknown hardware evidence prevents launch."));
+        action(p,s,_L("Stop owned process and restore snapshot"),[this] {start([this] {set_status(m_launcher->recover_interrupted()?"Owned process stopped and saved profile state restored.":"No restorable snapshot was available, or recovery failed. Existing state was retained.");});});
+        note(p,s,_L("Registration requires an exact approved executable identity. Launch uses an owned process job and explicit arguments, and snapshots before mutation. Unknown hardware evidence blocks launch. Runtime evidence remains pending for this packaged adapter."));
     }
     void build_help() {
         auto [p,s]=section("help",_L("Troubleshooting"));
