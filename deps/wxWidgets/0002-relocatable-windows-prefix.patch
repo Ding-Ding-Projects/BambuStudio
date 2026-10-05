@@ -1,0 +1,53 @@
+--- a/build/cmake/setup.cmake
++++ b/build/cmake/setup.cmake
+@@ -71,7 +71,12 @@
+     endforeach()
+ endif()
+ 
+-set(wxINSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
++if(WIN32 AND wxBUILD_RELOCATABLE_INSTALL_PREFIX)
++    set(wxINSTALL_PREFIX "")
++    set(wxRELOCATABLE_INSTALL_PREFIX ON)
++else()
++    set(wxINSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
++endif()
+ 
+ check_include_files("stdlib.h;stdarg.h;string.h;float.h" STDC_HEADERS)
+ 
+--- a/build/cmake/setup.h.in
++++ b/build/cmake/setup.h.in
+@@ -16,6 +16,7 @@
+ 
+ /* the installation location prefix from configure */
+ #cmakedefine wxINSTALL_PREFIX "@wxINSTALL_PREFIX@"
++#cmakedefine wxRELOCATABLE_INSTALL_PREFIX
+ 
+ /* Define to `int' if <sys/types.h> doesn't define.  */
+ #cmakedefine gid_t int
+--- a/src/common/utilscmn.cpp
++++ b/src/common/utilscmn.cpp
+@@ -76,6 +76,11 @@
+ #include "wx/versioninfo.h"
+ #include "wx/math.h"
+ 
++#if defined(__WXMSW__) && defined(wxRELOCATABLE_INSTALL_PREFIX) && wxUSE_STDPATHS
++    #include "wx/stdpaths.h"
++    #include "wx/filename.h"
++#endif
++
+ #include <ctype.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+@@ -186,7 +191,11 @@
+     if ( wxGetEnv(wxT("WXPREFIX"), &prefix) )
+         return prefix;
+ 
+-#ifdef wxINSTALL_PREFIX
++#if defined(__WXMSW__) && defined(wxRELOCATABLE_INSTALL_PREFIX) && wxUSE_STDPATHS
++    // Packaged installations move independently of the build-machine prefix.
++    // WXPREFIX above remains the explicit override for custom data layouts.
++    return wxFileName(wxStandardPaths::Get().GetExecutablePath()).GetPath();
++#elif defined(wxINSTALL_PREFIX)
+     return wxT(wxINSTALL_PREFIX);
+ #else
+     return wxEmptyString;
