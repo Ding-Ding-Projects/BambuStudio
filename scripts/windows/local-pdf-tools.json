@@ -585,5 +585,33 @@
       "text": "{\n  \"bomFormat\": \"CycloneDX\",\n  \"specVersion\": \"1.6\",\n  \"version\": 1,\n  \"metadata\": {\n    \"component\": {\n      \"type\": \"library\",\n      \"name\": \"qpdf-windows-x64-runtime\",\n      \"version\": \"12.4.2\"\n    }\n  },\n  \"components\": [\n    {\n      \"type\": \"library\",\n      \"name\": \"qpdf\",\n      \"version\": \"12.4.2\",\n      \"licenses\": [\n        {\n          \"expression\": \"Apache-2.0\"\n        }\n      ]\n    },\n    {\n      \"type\": \"library\",\n      \"name\": \"zlib\",\n      \"version\": \"1.3.2#2\",\n      \"licenses\": [\n        {\n          \"expression\": \"Zlib\"\n        }\n      ]\n    },\n    {\n      \"type\": \"library\",\n      \"name\": \"libjpeg-turbo\",\n      \"version\": \"3.2.0#1\",\n      \"licenses\": [\n        {\n          \"expression\": \"IJG AND BSD-3-Clause AND Zlib\"\n        }\n      ]\n    },\n    {\n      \"type\": \"library\",\n      \"name\": \"Microsoft Visual C++ Runtime\",\n      \"version\": \"14.51.36247.0\",\n      \"licenses\": [\n        {\n          \"license\": {\n            \"name\": \"Microsoft Visual Studio Redistributable\"\n          }\n        }\n      ]\n    },\n    {\n      \"type\": \"file\",\n      \"name\": \"concrt140.dll\",\n      \"hashes\": [\n        {\n          \"alg\": \"SHA-256\",\n          \"content\": \"54716f0738af891f283d213b5c8d11b25896bb8ee3097d301eae718560cf974e\"\n        }\n      ]\n    },\n    {\n      \"type\": \"file\",\n      \"name\": \"msvcp140.dll\",\n      \"hashes\": [\n        {\n          \"alg\": \"SHA-256\",\n          \"content\": \"7c26614e1d733892c2deac7e245ce115504b1d80592dd0a01b08e3e5a55f89ca\"\n        }\n      ]\n    },\n    {\n      \"type\": \"file\",\n      \"name\": \"msvcp140_1.dll\",\n      \"hashes\": [\n        {\n          \"alg\": \"SHA-256\",\n          \"content\": \"206c931bf90fdad8816de3b5e2ef80b2bcaa9406c89ecc05fe6fddffe251e982\"\n        }\n      ]\n    },\n    {\n      \"type\": \"file\",\n      \"name\": \"msvcp140_2.dll\",\n      \"hashes\": [\n        {\n          \"alg\": \"SHA-256\",\n          \"content\": \"d50d7883f20d1dc6191768d3746f52dd9cac89c346ffaed5be1f110c2f34a838\"\n        }\n      ]\n    },\n    {\n      \"type\": \"file\",\n      \"name\": \"msvcp140_atomic_wait.dll\",\n      \"hashes\": [\n        {\n          \"alg\": \"SHA-256\",\n          \"content\": \"3d0cbfaa1bf3eecf5a3f4491d2960ee803cb994f30292c6adc4a07c498f60e2b\"\n        }\n      ]\n    },\n    {\n      \"type\": \"file\",\n      \"name\": \"msvcp140_codecvt_ids.dll\",\n      \"hashes\": [\n        {\n          \"alg\": \"SHA-256\",\n          \"content\": \"8a65c7596ef2e6938731f5a1058e7e40145b6d97967cc649231a076b9a608d78\"\n        }\n      ]\n    },\n    {\n      \"type\": \"file\",\n      \"name\": \"qpdf.exe\",\n      \"hashes\": [\n        {\n          \"alg\": \"SHA-256\",\n          \"content\": \"1bdaf878f37eaffea1ea3c30591214c77636a0f2fc7432427516b6e22e36c0ff\"\n        }\n      ]\n    },\n    {\n      \"type\": \"file\",\n      \"name\": \"qpdf30.dll\",\n      \"hashes\": [\n        {\n          \"alg\": \"SHA-256\",\n          \"content\": \"8812952678de93e0750308a113aa650e9161af466f9770679ea9673adeb61041\"\n        }\n      ]\n    },\n    {\n      \"type\": \"file\",\n      \"name\": \"vcruntime140.dll\",\n      \"hashes\": [\n        {\n          \"alg\": \"SHA-256\",\n          \"content\": \"d1f4225df2cd877dbf130d5668a021dce3f94118455ff5ec952061c30afc9ce7\"\n        }\n      ]\n    },\n    {\n      \"type\": \"file\",\n      \"name\": \"vcruntime140_1.dll\",\n      \"hashes\": [\n        {\n          \"alg\": \"SHA-256\",\n          \"content\": \"a7146c08f89fe5b04541ab507cdb59ff7b44534d4ba3c668a426c6450a03434e\"\n        }\n      ]\n    },\n    {\n      \"type\": \"library\",\n      \"name\": \"OpenSSL\",\n      \"version\": \"3.6.4#1\",\n      \"licenses\": [\n        {\n          \"expression\": \"Apache-2.0\"\n        }\n      ]\n    }\n  ]\n}\n",
       "sha256": "58a14cff8223f9039d499c43993b572f0b9335821bac0f9500d6a94efe34ea39"
     }
-  ]
+  ],
+  "nativeSource": {
+    "source": {
+      "archive": "qpdf-12.4.2.tar.gz",
+      "sha256": "8a58af5b6141319287c1883bec8bd1bd545b7567b7fc5e6ce5d25a1c85f36397",
+      "bytes": 19724355
+    },
+    "dependencies": {
+      "archive": "vcpkg.zip",
+      "sha256": "82005252fee032135d07c85ad7626a38f26fb253c1e098d1d185f315bea15ebb",
+      "bytes": 195951195
+    },
+    "compilerVersion": "14.51.36231",
+    "cmakeOptions": [
+      "-DCMAKE_BUILD_TYPE=Release",
+      "-DBUILD_STATIC_LIBS=OFF",
+      "-DBUILD_SHARED_LIBS=ON",
+      "-DUSE_IMPLICIT_CRYPTO=OFF",
+      "-DREQUIRE_CRYPTO_NATIVE=ON",
+      "-DREQUIRE_CRYPTO_OPENSSL=OFF",
+      "-DREQUIRE_CRYPTO_GNUTLS=OFF",
+      "-DDEFAULT_CRYPTO=native",
+      "-DBUILD_DOC=OFF",
+      "-DINSTALL_EXAMPLES=OFF",
+      "-DINSTALL_MANUAL=OFF",
+      "-DSTATIC_JPEG=ON",
+      "-DPKG_CONFIG_EXECUTABLE=PKG_CONFIG_EXECUTABLE-NOTFOUND"
+    ]
+  }
 }
