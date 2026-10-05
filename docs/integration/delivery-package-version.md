@@ -1,4 +1,4 @@
-# Delivery package version
+﻿# Delivery package version
 
 Squirrel compares package versions independently of the application version. Packaging accepts `-PreviousPackageVersion` with exactly three nonnegative numeric components supported by `System.Version`. `BAMBU_PREVIOUS_PACKAGE_VERSION` supplies the default. Invalid components or an exhausted patch component stop packaging.
 
@@ -15,3 +15,11 @@ For reproducible offline packaging, supply the last published package version ex
 If release discovery is unavailable and no explicit floor exists, the one-click package preparation stops rather than assuming no earlier package exists. With an explicit floor, offline preparation continues with a warning that published-version verification was unavailable. A successful lookup with no matching full packages uses the ordinary product/release candidate.
 
 This change was implemented under the requested speed mode. No tests, lint, static analysis, runtime checks, or screenshots were run. Package generation and published update delivery remain separate evidence duties.
+
+## Native invocation and failed-production evidence
+
+The producer quotes every native Squirrel argument with Windows CRT backslash and quote rules. Paths with spaces remain one argument, including the input package, release directory, and setup icon. No short-path alias is required.
+
+Squirrel runs inside its unique task-owned temporary workspace. Standard output and standard error are retained there as `squirrel.stdout.log` and `squirrel.stderr.log`, alongside the input package, generated output, and any tool-created working-directory logs. A failed packaging or tool-preparation operation reports its retained absolute directory and leaves it available for diagnosis. Successful packaging removes its temporary workspace only after output checks, final copies, and checksum creation succeed; the existing resolved-path and temporary-name safety checks still apply. Failed temporary material is not automatically reused or deleted by another invocation.
+
+The native argument and retention repair was not exercised with tests or a runtime invocation in this speed-mode implementation lane. Production packaging must establish its delivery verdict separately.
