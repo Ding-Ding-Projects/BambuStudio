@@ -13,7 +13,7 @@ This records the bounded delivery scope for issues #43, #45 and #51, with the su
 | Localized feature articles and changelog | `docs/features/**/*.yue_HK.md`, `resources/changelog/changelog.yue_HK.json`, `src/slic3r/GUI/ChangelogDialog.cpp`, `src/slic3r/GUI/CommandPalette.cpp` |
 | Independent website tone ladders | `ui-md3/site/copy.js` |
 
-The known source gap from the responsive reconciliation was the `automation.body` entry: both languages held one prose variant despite the independent tone controls. This delivery adds three distinct variants per language using the catalogue's existing level mapping. All variants retain development status, stdio and authenticated HTTP transport, the project/slicing/configured-printer scope, and separate physical-printer verification. No validation or rendered interaction was performed.
+The known source gap from the responsive reconciliation was the `automation.body` entry: both languages held one prose variant despite the independent tone controls. This delivery adds three distinct variants per language using the catalogue's existing level mapping. All variants retain development status, stdio and authenticated HTTP transport, the project/slicing/configured-printer scope, and separately tracked physical-printer acceptance. The former promise that builds and verification run on GitHub Actions is removed: product capability copy does not promise a particular build environment or imply verification occurred. No validation or rendered interaction was performed.
 
 ## Kit controls, issue #45
 
