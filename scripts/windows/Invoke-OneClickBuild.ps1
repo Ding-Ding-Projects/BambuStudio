@@ -50,7 +50,7 @@ $script:BuildMutexHeld = $false
 
 function Write-BuildLog {
     param([Parameter(Mandatory)][string] $Message)
-    Write-Host ('[{0}] {1}' -f (Get-Date).ToString('u'), $Message)
+    Write-Host ('[{0}] {1}' -f [DateTime]::UtcNow.ToString('u'), $Message)
 }
 
 function Assert-LastExitCode {

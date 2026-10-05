@@ -23,3 +23,7 @@ The DeviceWeb production target installs its own frozen lockfile with ancestor
 workspace discovery disabled, then runs its local Vite bundler directly. The
 TypeScript projects use `noEmit`, so their separate type-check step is not needed
 to produce the bundle and is excluded from this production release path.
+
+Build and package producer timestamps use UTC explicitly. Historical local logs
+from before this correction printed local clock values with a `Z` suffix and
+must not be used as UTC release-timing evidence without a validated offset.
