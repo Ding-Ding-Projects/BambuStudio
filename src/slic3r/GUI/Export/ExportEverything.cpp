@@ -29,6 +29,36 @@ namespace Slic3r::GUI::Export {
 
 namespace fs = std::filesystem;
 
+bool preset_export_allowed(const std::string &key, const std::string &value)
+{
+    static const std::vector<std::string> numeric_keys = {
+        "layer_height", "initial_layer_print_height", "wall_loops", "top_shell_layers", "bottom_shell_layers",
+        "sparse_infill_density", "nozzle_diameter", "filament_diameter", "filament_density", "filament_cost",
+        "nozzle_temperature", "nozzle_temperature_initial_layer", "outer_wall_speed", "inner_wall_speed",
+        "sparse_infill_speed", "travel_speed", "enable_support", "support_threshold_angle"};
+    return std::find(numeric_keys.begin(), numeric_keys.end(), key) != numeric_keys.end() &&
+        !value.empty() && value.size() <= 512 && value.find_first_not_of("0123456789+-.eE%;, ") == std::string::npos;
+}
+
+bool preference_export_allowed(const std::string &section, const std::string &key, const std::string &value)
+{
+    if (!section.empty()) return false;
+    static const std::vector<std::string> booleans = {
+        "autocenter", "background_processing", "single_instance", "use_inches",
+        "use_perspective_camera", "use_free_camera", "reverse_mouse_wheel_zoom",
+        "zoom_to_mouse", "canvas_drag_to_move", "show_shells_in_preview",
+        "enable_text_styles", "enable_lod", "show_hints", "show_3d_navigator",
+        "dark_color_mode", "sys_menu_enabled", "show_model_mesh", "show_model_shadow",
+        "show_build_edges", "show_daily_tips", "enable_sidebar_floatable"};
+    if (std::find(booleans.begin(), booleans.end(), key) != booleans.end())
+        return value == "0" || value == "1" || value == "true" || value == "false";
+    if (key == "motion_preference") return value == "system" || value == "reduced";
+    if (key == "prepare_sidebar_dock") return value == "left" || value == "right";
+    if (key == "language") return value == "en" || value == "en_US" || value == "zh_CN" || value == "zh_TW" || value == "zh_HK";
+    return false;
+}
+
+
 // ===========================================================================
 // Small helpers
 // ===========================================================================
@@ -184,6 +214,9 @@ Value header_value(const Dataset &d, const SerializeOptions &o)
     h.set("encoding", Value::from_string("UTF-8"));
     h.set("lineEnding", Value::from_string(line_ending_name(o.line_ending)));
     h.set("generator", Value::from_string(o.generator));
+    Value excluded = Value::make_array();
+    for (const auto &item : d.exclusions) excluded.push(Value::from_string(item));
+    h.set("exclusions", std::move(excluded));
     if (d.kind == DatasetKind::Tabular) {
         Value cols = Value::make_array();
         for (const Column &c : d.columns) {
@@ -376,7 +409,12 @@ LossReport compute_loss_report(const Dataset &d, Format f)
     auto lose = [&r](std::string s) { r.losses.push_back(std::move(s)); r.lossless = false; };
     auto note = [&r](std::string s) { r.notes.push_back(std::move(s)); };
 
+    for (const auto &excluded : d.exclusions) lose(excluded);
     switch (f) {
+    case Format::SQL: case Format::JavaScript: case Format::TypeScript: case Format::Python:
+    case Format::Go: case Format::Rust: case Format::JSONSchema: case Format::Protobuf:
+        note("Complete JSON snapshot embedded in the selected format; this is not a generated native object model.");
+        [[fallthrough]];
     case Format::JSON:
     case Format::JSONL:
         if (non_finite > 0)
@@ -999,6 +1037,38 @@ std::string serialize_html(const Dataset &d, const SerializeOptions &o)
 
 } // namespace
 
+static std::string serialize_source(const Dataset &d, Format f, const SerializeOptions &o)
+{
+    const std::string payload = serialize_json(d, o);
+    const std::string literal = "\"" + json_escape(payload) + "\"";
+    switch (f) {
+    case Format::SQL: {
+        // Standard SQL character escaping; hex UTF-8 avoids dialect-specific backslash rules.
+        static const char hex[] = "0123456789abcdef";
+        std::string bytes;
+        for (unsigned char c : payload) { bytes += hex[c >> 4]; bytes += hex[c & 15]; }
+        return "-- UTF-8 JSON bytes, preserving all fields and integer precision.\n"
+               "CREATE TABLE export_snapshot (document_utf8 BLOB NOT NULL);\n"
+               "INSERT INTO export_snapshot (document_utf8) VALUES (X'" + bytes + "');\n";
+    }
+    case Format::JavaScript: return "// UTF-8 JSON snapshot; parse with a lossless JSON reader for large integers.\nexport const json = " + literal + ";\n";
+    case Format::TypeScript: return "// UTF-8 JSON snapshot; parse with a lossless JSON reader for large integers.\nexport const json: string = " + literal + ";\n";
+    case Format::Python: return "# UTF-8 JSON snapshot. json.loads preserves integer precision.\nimport json\nsnapshot = json.loads(" + literal + ")\n";
+    case Format::Go: return "// UTF-8 JSON snapshot; use json.Decoder.UseNumber when decoding.\npackage snapshot\n\nconst JSON = " + literal + "\n";
+    case Format::Rust: return "// UTF-8 JSON snapshot, retained without numeric conversion.\npub const JSON: &str = " + literal + ";\n";
+    case Format::JSONSchema: {
+        Value schema = Value::make_object();
+        schema.set("$schema", Value::from_string("https://json-schema.org/draft/2020-12/schema"));
+        schema.set("description", Value::from_string("Exact snapshot constraint. The const member is the complete exported document, not a general dataset schema."));
+        Value doc = o.include_schema_header ? header_value(d, o) : data_value(d);
+        if (o.include_schema_header) doc.set("data", data_value(d));
+        schema.set("const", std::move(doc));
+        std::string out; emit_json(schema, out, 0, true); return out + "\n";
+    }
+    default: return {};
+    }
+}
+
 Serialized serialize(const Dataset &d, Format f, const SerializeOptions &o)
 {
     Serialized s;
@@ -1012,6 +1082,13 @@ Serialized serialize(const Dataset &d, Format f, const SerializeOptions &o)
     case Format::TSV: s = serialize_delimited(d, f, o); break;
     case Format::Markdown: s.body = serialize_markdown(d, o); break;
     case Format::HTML: s.body = serialize_html(d, o); break;
+    case Format::Protobuf:
+        s.body = "json_utf8: \"" + json_escape(serialize_json(d, o)) + "\"\n";
+        s.sidecar_name = "schema.proto";
+        s.sidecar_body = "syntax = \"proto3\";\npackage bambustudio.export;\nmessage ExportSnapshot { bytes json_utf8 = 1; }\n";
+        break;
+    case Format::SQL: case Format::JavaScript: case Format::TypeScript: case Format::Python:
+    case Format::Go: case Format::Rust: case Format::JSONSchema: s.body = serialize_source(d, f, o); break;
     }
     s.body = apply_line_ending(s.body, o.line_ending);
     if (s.sidecar_name) s.sidecar_body = apply_line_ending(s.sidecar_body, o.line_ending);
@@ -1116,7 +1193,8 @@ std::vector<std::string> seven_zip_switches(const ArchiveOptions &o, bool redact
     sw.push_back(o.threads > 0 ? "-mmt=" + std::to_string(o.threads) : std::string("-mmt=on"));
     if (!o.split_volume.empty()) sw.push_back("-v" + o.split_volume);
     if (!o.password.empty()) {
-        sw.push_back("-p" + (redact_password ? std::string("***") : o.password));
+        sw.push_back(redact_password ? "-p***" : "-p");
+        sw.push_back("-sccUTF-8");
         sw.push_back(o.encrypt_headers ? "-mhe=on" : "-mhe=off");
     }
     return sw;
@@ -1242,26 +1320,81 @@ std::wstring widen(const std::string &utf8)
 
 // Run argv with the given working directory, hidden, and return the exit code
 // (or -1 when the process could not be started).
-int run_process(const std::vector<std::string> &argv, const fs::path &working_dir, std::string &error)
+int run_process(const std::vector<std::string> &argv, const fs::path &working_dir, std::string &error, const std::string &password = {})
 {
 #ifdef _WIN32
-    std::wstring cmd = widen(join_command(argv));
-    STARTUPINFOW        si{};
-    PROCESS_INFORMATION pi{};
-    si.cb          = sizeof si;
-    si.dwFlags     = STARTF_USESHOWWINDOW;
-    si.wShowWindow = SW_HIDE;
-    std::wstring app = widen(argv.front());
-    std::wstring cwd = working_dir.wstring();
-    if (!CreateProcessW(app.c_str(), cmd.data(), nullptr, nullptr, FALSE, CREATE_NO_WINDOW, nullptr, cwd.c_str(), &si, &pi)) {
-        error = "CreateProcess failed with error " + std::to_string(GetLastError());
-        return -1;
+    struct Handle {
+        HANDLE value = nullptr;
+        ~Handle() { if (value && value != INVALID_HANDLE_VALUE) CloseHandle(value); }
+        void close() { if (value && value != INVALID_HANDLE_VALUE) CloseHandle(value); value = nullptr; }
+    } input, writer, sink, job, process, thread;
+    SECURITY_ATTRIBUTES security{sizeof(SECURITY_ATTRIBUTES), nullptr, TRUE};
+    if (!CreatePipe(&input.value, &writer.value, &security, 4096) ||
+        !SetHandleInformation(writer.value, HANDLE_FLAG_INHERIT, 0)) {
+        error = "Could not create private archive input pipe"; return -1;
     }
-    WaitForSingleObject(pi.hProcess, INFINITE);
+    // Bounded input fits the pipe before the child starts; no blocking writer thread.
+    std::string input_text = password.empty() ? std::string() : password + "\n" + password + "\n";
+    DWORD written = 0;
+    const bool sent = input_text.empty() ||
+        (WriteFile(writer.value, input_text.data(), static_cast<DWORD>(input_text.size()), &written, nullptr) && written == input_text.size());
+    if (!input_text.empty()) SecureZeroMemory(input_text.data(), input_text.size());
+    writer.close();
+    if (!sent) { error = "Could not supply private archive input"; return -1; }
+    sink.value = CreateFileW(L"NUL", GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, &security, OPEN_EXISTING, 0, nullptr);
+    if (sink.value == INVALID_HANDLE_VALUE) { error = "Could not isolate archive output"; return -1; }
+    job.value = CreateJobObjectW(nullptr, nullptr);
+    JOBOBJECT_EXTENDED_LIMIT_INFORMATION limits{};
+    limits.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
+    if (!job.value || !SetInformationJobObject(job.value, JobObjectExtendedLimitInformation, &limits, sizeof limits)) {
+        error = "Could not establish archive process ownership"; return -1;
+    }
+    SIZE_T size = 0;
+    InitializeProcThreadAttributeList(nullptr, 1, 0, &size);
+    std::vector<unsigned char> storage(size);
+    auto *attributes = reinterpret_cast<LPPROC_THREAD_ATTRIBUTE_LIST>(storage.data());
+    if (!InitializeProcThreadAttributeList(attributes, 1, 0, &size)) {
+        error = "Could not isolate archive handles"; return -1;
+    }
+    struct Attributes { LPPROC_THREAD_ATTRIBUTE_LIST value; ~Attributes() { DeleteProcThreadAttributeList(value); } } cleanup{attributes};
+    HANDLE inherited[] = {input.value, sink.value};
+    if (!UpdateProcThreadAttribute(attributes, 0, PROC_THREAD_ATTRIBUTE_HANDLE_LIST, inherited, sizeof inherited, nullptr, nullptr)) {
+        error = "Could not restrict archive handle inheritance"; return -1;
+    }
+    STARTUPINFOEXW si{};
+    si.StartupInfo.cb = sizeof si;
+    si.StartupInfo.dwFlags = STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW;
+    si.StartupInfo.wShowWindow = SW_HIDE;
+    si.StartupInfo.hStdInput = input.value;
+    si.StartupInfo.hStdOutput = si.StartupInfo.hStdError = sink.value;
+    si.lpAttributeList = attributes;
+    PROCESS_INFORMATION pi{};
+    std::wstring cmd = widen(join_command(argv));
+    const std::wstring app = widen(argv.front());
+    const std::wstring cwd = working_dir.wstring();
+    if (!CreateProcessW(app.c_str(), cmd.data(), nullptr, nullptr, TRUE,
+                        CREATE_NO_WINDOW | CREATE_SUSPENDED | EXTENDED_STARTUPINFO_PRESENT,
+                        nullptr, cwd.c_str(), &si.StartupInfo, &pi)) {
+        error = "Could not start archive process (code " + std::to_string(GetLastError()) + ")"; return -1;
+    }
+    process.value = pi.hProcess; thread.value = pi.hThread;
+    if (!AssignProcessToJobObject(job.value, process.value)) {
+        TerminateProcess(process.value, 1);
+        WaitForSingleObject(process.value, 5000);
+        error = "Could not contain archive process"; return -1;
+    }
+    if (ResumeThread(thread.value) == static_cast<DWORD>(-1)) {
+        TerminateJobObject(job.value, 1);
+        error = "Could not start contained archive process"; return -1;
+    }
+    input.close(); sink.close();
+    if (WaitForSingleObject(process.value, 300000) != WAIT_OBJECT_0) {
+        TerminateJobObject(job.value, 1);
+        WaitForSingleObject(process.value, 5000);
+        error = "Archive process did not complete within five minutes"; return -1;
+    }
     DWORD code = 0;
-    GetExitCodeProcess(pi.hProcess, &code);
-    CloseHandle(pi.hThread);
-    CloseHandle(pi.hProcess);
+    if (!GetExitCodeProcess(process.value, &code)) { error = "Archive process status unavailable"; return -1; }
     return static_cast<int>(code);
 #else
     std::string cmd = "cd " + quote_argument(working_dir.string()) + " && " + join_command(argv) + " >/dev/null 2>&1";
@@ -1351,6 +1484,29 @@ ArchiveResult write_seven_zip(const fs::path &archive_path, const std::vector<Ar
 {
     ArchiveResult r;
     r.archive_path = archive_path;
+    if (!o.password.empty()) {
+#ifndef _WIN32
+        r.error = "Encrypted 7z export requires the Windows private-input transport. No archive was written.";
+        return r;
+#endif
+        if (o.password.size() > 1024 || o.password.find_first_of("\r\n") != std::string::npos || o.password.find('\0') != std::string::npos) {
+            r.error = "Archive password must be a single line of at most 1024 UTF-8 bytes without NUL.";
+            return r;
+        }
+        if (!o.encrypt_headers) {
+            r.error = "Encrypted exports require encrypted headers to protect member names.";
+            return r;
+        }
+    }
+    if (!o.split_volume.empty()) {
+        const auto &volume = o.split_volume;
+        const auto digits = volume.find_first_not_of("0123456789");
+        if (digits == 0 || digits == std::string::npos || digits + 1 != volume.size() ||
+            std::string("bkmg").find(volume.back()) == std::string::npos ||
+            volume.find_first_not_of('0') == digits) {
+            r.error = "Split volume must be a positive integer followed by b, k, m or g."; return r;
+        }
+    }
     if (!seven_zip.found) {
         r.error = "7-Zip not found. Searched: " + seven_zip.searched;
         return r;
@@ -1377,33 +1533,53 @@ ArchiveResult write_seven_zip(const fs::path &archive_path, const std::vector<Ar
         if (!out) { r.error = "Write failed while staging " + *name; return r; }
     }
 
-    // 7-Zip appends volume suffixes itself (.7z.001) and refuses to overwrite a
-    // stale single-file archive with a split set, so clear the target first.
-    {
-        std::error_code ec;
-        fs::remove(archive_path, ec);
+    // Never destroy a previous output before the new operation succeeds.
+    std::error_code exists_error;
+    if (fs::exists(archive_path, exists_error) || fs::exists(fs::path(archive_path.string() + ".001"), exists_error) || exists_error) {
+        r.error = "Archive target already exists or cannot be inspected. Choose a new output name.";
+        return r;
     }
 
-    std::vector<std::string> argv{seven_zip.executable.string(), "a"};
+    std::vector<std::string> argv{seven_zip.executable.u8string(), "a"};
     for (const std::string &s : seven_zip_switches(o, false)) argv.push_back(s);
     argv.push_back("-r");
-    argv.push_back(fs::absolute(archive_path).string());
+    argv.push_back(fs::absolute(archive_path).u8string());
     argv.push_back("*");
 
-    std::vector<std::string> shown{seven_zip.executable.string(), "a"};
+    std::vector<std::string> shown{seven_zip.executable.u8string(), "a"};
     for (const std::string &s : seven_zip_switches(o, true)) shown.push_back(s);
     shown.push_back("-r");
-    shown.push_back(fs::absolute(archive_path).string());
+    shown.push_back(fs::absolute(archive_path).u8string());
     shown.push_back("*");
     r.command_line = join_command(shown);
 
-    const int code = run_process(argv, staging, err);
+    const int code = run_process(argv, staging, err, o.password);
     if (code < 0) { r.error = "Could not start 7-Zip: " + err; return r; }
     if (code != 0 && code != 1) {
         r.error = "7-Zip exited with code " + std::to_string(code) + " (" + seven_zip_exit_text(code) + ")";
         return r;
     }
-    if (code == 1) r.error = "7-Zip reported a warning (exit code 1); the archive was written.";
+    if (code == 1) {
+        r.error = "7-Zip reported incomplete output (exit code 1). Inspect the partial archive; export is not complete.";
+        return r;
+    }
+    const fs::path actual = o.split_volume.empty() ? archive_path : fs::path(archive_path.string() + ".001");
+    std::error_code verify_error;
+    if (!fs::is_regular_file(actual, verify_error) || verify_error) {
+        r.error = "7-Zip returned success without a readable archive."; return r;
+    }
+    if (!o.password.empty()) {
+        const std::vector<std::string> check{seven_zip.executable.u8string(), "t", "-sccUTF-8", "-bso0", "-bse0", fs::absolute(actual).u8string()};
+        if (run_process(check, staging, err, o.password) != 0) {
+            r.error = "Encrypted archive verification failed. Export is not complete."; return r;
+        }
+        const std::vector<std::string> listing{seven_zip.executable.u8string(), "l", "-bso0", "-bse0", fs::absolute(actual).u8string()};
+        const int listing_code = run_process(listing, staging, err);
+        if (listing_code != 2 && listing_code != 255) {
+            r.error = "Password-free header verification returned code " + std::to_string(listing_code) + ". Export is not verified."; return r;
+        }
+    }
+    r.archive_path = actual;
     r.ok = true;
     return r;
 }
@@ -1412,12 +1588,40 @@ ArchiveResult write_seven_zip(const fs::path &archive_path, const std::vector<Ar
 // One-shot export
 // ===========================================================================
 
+std::vector<fs::path> planned_output_paths(const ExportJob &job)
+{
+    if (job.output_path.empty()) return {};
+    std::vector<fs::path> paths{fs::absolute(job.output_path).lexically_normal()};
+    if (job.archive.format == ArchiveFormat::None) {
+        const auto serialized = serialize(job.dataset, job.format, job.serialize_options);
+        if (serialized.sidecar_name)
+            paths.push_back(paths.front().parent_path() / fs::u8path(paths.front().filename().u8string() + "." + *serialized.sidecar_name));
+    }
+    return paths;
+}
+
 ExportOutcome run_export(const ExportJob &job)
 {
     ExportOutcome outcome;
     outcome.loss = compute_loss_report(job.dataset, job.format);
+    if (!job.archive.password.empty() && job.archive.format != ArchiveFormat::SevenZip) {
+        outcome.error = "Encryption is not supported for this output type. No export was written.";
+        return outcome;
+    }
     if (job.output_path.empty()) { outcome.error = "No output path"; return outcome; }
 
+    for (const auto &path : planned_output_paths(job)) {
+        std::error_code ec;
+        const auto status = fs::symlink_status(path, ec);
+        if (ec && ec != std::errc::no_such_file_or_directory) { outcome.error = "Cannot inspect export target."; return outcome; }
+        if (fs::is_symlink(status) || (fs::exists(status) && !fs::is_regular_file(status))) {
+            outcome.error = "Export target must be a regular file, not a link or directory."; return outcome;
+        }
+        if (!fs::exists(status)) continue;
+        const bool approved = std::any_of(job.overwrite_approved_paths.begin(), job.overwrite_approved_paths.end(),
+            [&path](const fs::path &candidate) { return fs::absolute(candidate).lexically_normal() == path; });
+        if (!approved) { outcome.error = "Existing export target needs explicit overwrite confirmation."; return outcome; }
+    }
     Serialized s = serialize(job.dataset, job.format, job.serialize_options);
 
     const std::string stem = !job.dataset.file_stem.empty() ? job.dataset.file_stem : std::string("export");
@@ -1439,6 +1643,8 @@ ExportOutcome run_export(const ExportJob &job)
             std::ofstream so(side, std::ios::binary | std::ios::trunc);
             if (!so) { outcome.error = "Cannot write " + side.string(); return outcome; }
             so.write(s.sidecar_body.data(), static_cast<std::streamsize>(s.sidecar_body.size()));
+            so.close();
+            if (!so) { outcome.error = "Export sidecar write failed."; return outcome; }
             outcome.members.push_back(sidecar_name);
         }
         outcome.ok           = true;

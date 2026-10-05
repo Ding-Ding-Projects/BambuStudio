@@ -394,7 +394,7 @@ TEST_CASE("7-Zip switch mapping covers every option", "[export][archive][7z]")
     CHECK(has("-ms=512m"));
     CHECK(has("-mmt=4"));
     CHECK(has("-v100m"));
-    CHECK(has("-ps3cret pass"));
+    CHECK(has("-p"));
     CHECK(has("-mhe=on"));
     CHECK(!seven_zip_filenames_visible(o));
 
@@ -484,4 +484,110 @@ TEST_CASE("run_export writes a data file, a sidecar and a ZIP", "[export][job]")
         CHECK(out.command_line.find("-p***") != std::string::npos);
         CHECK(fs::exists(job.output_path));
     }
+}
+
+
+TEST_CASE("Preference export excludes unknown sections keys and invalid safe values", "[export][privacy]")
+{
+    CHECK(preference_export_allowed("", "dark_color_mode", "1"));
+    CHECK(preference_export_allowed("", "motion_preference", "reduced"));
+    CHECK_FALSE(preference_export_allowed("", "access_token", "example"));
+    CHECK_FALSE(preference_export_allowed("custom", "dark_color_mode", "1"));
+    CHECK_FALSE(preference_export_allowed("", "future_setting", "1"));
+    CHECK_FALSE(preference_export_allowed("", "dark_color_mode", "unexpected private text"));
+    CHECK_FALSE(preference_export_allowed("", "personal_vocabulary", "{}"));
+}
+
+TEST_CASE("Invalid encrypted output is rejected before staging spawning or overwriting", "[export][privacy]")
+{
+    TempDir tmp;
+    const auto target = tmp.path() / "keep.7z";
+    { std::ofstream out(target); out << "existing output"; }
+    ArchiveOptions options;
+    options.format = ArchiveFormat::SevenZip;
+    options.password.assign(1025, 'x'); // Synthetic in-memory marker, never a credential.
+    SevenZipLocation location;
+    location.found = true;
+    location.executable = tmp.path() / "must-not-run.exe";
+    const auto result = write_seven_zip(target, {{"data.json", "{}"}}, options, location);
+    CHECK_FALSE(result.ok);
+    CHECK(result.command_line.empty());
+    CHECK_FALSE(result.error.empty());
+    std::ifstream in(target); std::string text; std::getline(in, text);
+    CHECK(text == "existing output");
+    for (bool display : {false, true})
+        for (const auto &arg : seven_zip_switches(options, display))
+            CHECK(arg.find(options.password) == std::string::npos);
+}
+
+TEST_CASE("Source formats preserve JSON payloads and disclose exclusions", "[export][formats]")
+{
+    auto dataset = structured_fixture();
+    dataset.root.set("large", Value::from_int(9007199254740993LL));
+    dataset.exclusions.push_back("One private field omitted");
+    for (auto format : {Format::SQL, Format::JavaScript, Format::TypeScript, Format::Python, Format::Go, Format::Rust, Format::JSONSchema, Format::Protobuf}) {
+        const auto result = serialize(dataset, format);
+        CHECK_FALSE(result.body.empty());
+        CHECK_FALSE(compute_loss_report(dataset, format).lossless);
+        CHECK(format_from_extension(format_extension(format)) == format);
+        if (format != Format::SQL) CHECK(result.body.find("9007199254740993") != std::string::npos);
+    }
+}
+
+
+TEST_CASE("Encrypted archive verification uses real 7-Zip and rejects visible headers", "[export][privacy]")
+{
+#ifdef _WIN32
+    const auto location = find_seven_zip();
+    if (!location.found) { WARN("7-Zip integration unavailable on this host"); return; }
+    TempDir tmp;
+    ArchiveOptions options;
+    options.format = ArchiveFormat::SevenZip;
+    options.password = std::string(24, 'x') + "\xe6\xb8\xac";
+    const auto archive = write_seven_zip(tmp.path() / "private.7z", {{"private-name.txt", "round trip"}}, options, location);
+    INFO(archive.error);
+    REQUIRE(archive.ok); // Production path tests content and rejects no-password header listing.
+    CHECK(archive.command_line.find(options.password) == std::string::npos);
+    CHECK(archive.command_line.find("-p***") != std::string::npos);
+    options.encrypt_headers = false;
+    CHECK_FALSE(write_seven_zip(tmp.path() / "visible.7z", {{"name", "content"}}, options, location).ok);
+    CHECK_FALSE(fs::exists(tmp.path() / "visible.7z"));
+    options.encrypt_headers = true;
+    options.password += "\n";
+    CHECK_FALSE(write_seven_zip(tmp.path() / "newline.7z", {{"name", "content"}}, options, location).ok);
+    CHECK_FALSE(fs::exists(tmp.path() / "newline.7z"));
+#endif
+}
+
+
+TEST_CASE("Preset export excludes connection credentials and free form fields", "[export][privacy]")
+{
+    CHECK(preset_export_allowed("layer_height", "0.2"));
+    CHECK(preset_export_allowed("sparse_infill_density", "15%"));
+    CHECK_FALSE(preset_export_allowed("printhost_apikey", "example"));
+    CHECK_FALSE(preset_export_allowed("printhost_password", "example"));
+    CHECK_FALSE(preset_export_allowed("print_host", "https://example.invalid"));
+    CHECK_FALSE(preset_export_allowed("machine_start_gcode", "example"));
+    CHECK_FALSE(preset_export_allowed("layer_height", "private text"));
+}
+
+
+TEST_CASE("Overwrite authorization is exact and includes sidecars", "[export][privacy]")
+{
+    TempDir tmp;
+    ExportJob job;
+    job.dataset = tabular_fixture();
+    job.format = Format::CSV;
+    job.output_path = tmp.path() / "rows.csv";
+    REQUIRE(run_export(job).ok);
+    CHECK_FALSE(run_export(job).ok);
+    job.overwrite_approved_paths = {job.output_path};
+    CHECK_FALSE(run_export(job).ok);
+    job.overwrite_approved_paths = planned_output_paths(job);
+    CHECK(run_export(job).ok);
+    job.output_path = tmp.path() / "other.csv";
+    { std::ofstream other(job.output_path); other << "preserve"; }
+    CHECK_FALSE(run_export(job).ok);
+    std::ifstream other(job.output_path); std::string text; std::getline(other, text);
+    CHECK(text == "preserve");
 }

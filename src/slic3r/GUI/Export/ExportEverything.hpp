@@ -16,6 +16,10 @@
 
 namespace Slic3r::GUI::Export {
 
+// Only reviewed non-sensitive preference keys and bounded values are exportable.
+bool preset_export_allowed(const std::string &key, const std::string &value);
+bool preference_export_allowed(const std::string &section, const std::string &key, const std::string &value);
+
 // --- Capability matrix -----------------------------------------------------
 
 // What would be lost (or merely changed) when `dataset` is written as `format`.
@@ -68,7 +72,8 @@ struct ArchiveResult
 ArchiveResult write_zip(const std::filesystem::path &archive_path, const std::vector<ArchiveEntry> &entries);
 
 // Map the archive options to 7-Zip switches (without the "a", the archive
-// name or the file list). `redact_password` replaces the -p value with "***".
+// name or the file list). Password values never enter switches. The legacy
+// boolean selects display redaction; execution uses bare -p and private stdin.
 std::vector<std::string> seven_zip_switches(const ArchiveOptions &options, bool redact_password = false);
 
 // Human cost hints for the current options ("Ultra needs about 700 MiB RAM").
@@ -108,6 +113,8 @@ struct ExportJob
     // archive it is the .zip/.7z and the data file lives inside it.
     std::filesystem::path output_path;
     std::filesystem::path seven_zip_override;
+    // Explicitly confirmed exact existing targets. Empty means never overwrite.
+    std::vector<std::filesystem::path> overwrite_approved_paths;
 };
 
 struct ExportOutcome
@@ -120,6 +127,7 @@ struct ExportOutcome
     std::string              command_line;
 };
 
+std::vector<std::filesystem::path> planned_output_paths(const ExportJob &job);
 ExportOutcome run_export(const ExportJob &job);
 
 } // namespace Slic3r::GUI::Export

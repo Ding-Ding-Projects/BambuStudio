@@ -409,5 +409,51 @@ FoundEditor find_editor_or_default(const std::string &name)
     return FoundEditor{};
 }
 
+FoundEditor find_visual_studio_code()
+{
+    // Re-probe so installing Code while the dialog is open takes effect immediately.
+    try {
+        for (const auto &editor : detect_installed_editors())
+            if (editor.name == "Visual Studio Code" || editor.name == "Visual Studio Code (Insiders)") return editor;
+#ifdef _WIN32
+        for (const char *variable : {"LOCALAPPDATA", "ProgramFiles", "ProgramFiles(x86)"}) {
+            wxString base;
+            if (!wxGetEnv(variable, &base)) continue;
+            for (const char *relative : {"Programs/Microsoft VS Code/Code.exe", "Microsoft VS Code/Code.exe",
+                                        "Programs/Microsoft VS Code Insiders/Code - Insiders.exe", "Microsoft VS Code Insiders/Code - Insiders.exe"}) {
+                auto path = u8_to_path(std::string(base.ToUTF8().data())) / relative;
+                if (file_exists(path)) return {"Visual Studio Code", path_to_u8(path)};
+            }
+        }
+#endif
+    } catch (...) { }
+    return {};
+}
+
+VSCodeOpenResult open_export_in_visual_studio_code(const std::string &target_utf8)
+{
+    try {
+        boost::system::error_code ec;
+        auto target = boost::filesystem::absolute(u8_to_path(target_utf8), ec);
+        if (target_utf8.empty() || ec || !boost::filesystem::exists(target, ec) || ec)
+            return VSCodeOpenResult::InvalidTarget;
+        const auto editor = find_visual_studio_code();
+        if (editor.exe_path.empty()) return VSCodeOpenResult::NotInstalled;
+        // argv, never a shell string. A folder is a positional workspace root.
+        const wxString exe = wxString::FromUTF8(editor.exe_path);
+        const wxString path = wxString::FromUTF8(path_to_u8(target));
+#ifdef _WIN32
+        const wchar_t *args[] = {exe.wc_str(), L"--new-window", L"--", path.wc_str(), nullptr};
+        const long pid = wxExecute(const_cast<wchar_t **>(args), wxEXEC_ASYNC);
+#else
+        const auto exe_bytes = exe.ToUTF8();
+        const auto path_bytes = path.ToUTF8();
+        const char *args[] = {exe_bytes.data(), "--new-window", "--", path_bytes.data(), nullptr};
+        const long pid = wxExecute(const_cast<char **>(args), wxEXEC_ASYNC);
+#endif
+        return pid > 0 ? VSCodeOpenResult::Opened : VSCodeOpenResult::LaunchFailed;
+    } catch (...) { return VSCodeOpenResult::LaunchFailed; }
+}
+
 } // namespace GUI
 } // namespace Slic3r

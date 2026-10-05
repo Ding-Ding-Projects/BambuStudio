@@ -125,6 +125,8 @@ private:
     Label              *m_status_label{nullptr};
     Button             *m_cancel_button{nullptr};
     Button             *m_export_button{nullptr};
+    Button             *m_vscode_button{nullptr};
+    Button             *m_download_code_button{nullptr};
 
     std::vector<OptionRow> m_option_rows;
     std::vector<Label *>   m_option_labels;

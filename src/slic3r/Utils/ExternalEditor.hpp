@@ -29,6 +29,11 @@ std::vector<FoundEditor> get_available_editors();
 // members empty) when no editor is installed at all. Never throws.
 FoundEditor find_editor_or_default(const std::string &name);
 
+// Dedicated export handoff. Never substitutes an unrelated editor.
+FoundEditor find_visual_studio_code();
+enum class VSCodeOpenResult { Opened, NotInstalled, InvalidTarget, LaunchFailed };
+VSCodeOpenResult open_export_in_visual_studio_code(const std::string &target_utf8);
+
 } // namespace GUI
 } // namespace Slic3r
 
