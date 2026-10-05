@@ -1,0 +1,7 @@
+add_library(libslic3r_local_security STATIC LocalSecurity.cpp LocalSecurity.hpp)
+target_compile_features(libslic3r_local_security PUBLIC cxx_std_17)
+target_include_directories(libslic3r_local_security PUBLIC "${CMAKE_CURRENT_LIST_DIR}/../..")
+target_link_libraries(libslic3r_local_security PUBLIC OpenSSL::Crypto)
+if(WIN32)
+    target_link_libraries(libslic3r_local_security PRIVATE advapi32)
+endif()

@@ -1,0 +1,138 @@
+#include "libslic3r/LocalSecurity/LocalSecurity.hpp"
+#include <algorithm>
+#include <array>
+#include <iostream>
+#include <map>
+#include <functional>
+
+using namespace Slic3r::LocalSecurity;
+namespace {
+unsigned checks=0;
+void check(bool condition, const char* label) { ++checks; if(!condition)throw std::runtime_error(label); }
+void rejects(const std::function<void()>& fn,const char* label) {
+    bool rejected=false;try{fn();}catch(const Failure&){rejected=true;}check(rejected,label);
+}
+class MemoryVault : public Vault {
+public:
+    std::map<std::string,std::vector<unsigned char>> records;
+    bool unavailable=false;
+    std::optional<Secret> read(const std::string& id) override {
+        if(unavailable)throw Failure(Error::Unavailable);
+        auto it=records.find(id);if(it==records.end())return {};
+        return Secret(it->second);
+    }
+    void write(const std::string& id,const Secret& value) override {
+        if(unavailable)throw Failure(Error::Unavailable);
+        records[id]=std::vector<unsigned char>(value.data(),value.data()+value.size());
+    }
+    void erase(const std::string& id) override { if(unavailable)throw Failure(Error::Unavailable);records.erase(id); }
+};
+void rfc_vectors() {
+    const std::array<std::uint64_t,6> times{59,1111111109,1111111111,1234567890,2000000000,20000000000ULL};
+    const std::array<std::array<const char*,6>,3> expected{{
+        {{"94287082","07081804","14050471","89005924","69279037","65353130"}},
+        {{"46119246","68084774","67062674","91819424","90698825","77737706"}},
+        {{"90693936","25091201","99943326","93441116","38618901","47863826"}}
+    }};
+    const std::array<std::string,3> keys{"12345678901234567890","12345678901234567890123456789012","1234567890123456789012345678901234567890123456789012345678901234"};
+    for(unsigned a=0;a<3;++a)for(unsigned i=0;i<6;++i) {
+        Secret key(keys[a]);TotpParameters p{static_cast<Algorithm>(a),8,30};auto code=totp(key,p,times[i]);
+        check(code.current==expected[a][i],"RFC 6238 eight digit vector");
+        check(verify_totp(key,p,code.current,times[i],0).has_value(),"RFC verification");
+        p.digits=6;check(totp(key,p,times[i]).current==std::string(expected[a][i]).substr(2),"RFC truncated six digit vector");
+    }
+    const std::array<const char*,10> hotps{"755224","287082","359152","969429","338314","254676","287922","162583","399871","520489"};
+    Secret key(keys[0]);for(unsigned i=0;i<10;++i)check(hotp(key,i,Algorithm::Sha1,6)==hotps[i],"RFC 4226 vector");
+    check(totp(key,{},59).next==totp(key,{},60).current,"next code rollover");
+    check(totp(key,{},59).seconds_remaining==1 && totp(key,{},60).seconds_remaining==30,"countdown rollover");
+    check(verify_totp(key,{},totp(key,{},30).current,60).has_value(),"inside skew");
+    check(!verify_totp(key,{},totp(key,{},0).current,90).has_value(),"outside skew");
+    check(!verify_totp(key,{},"abcdef",60).has_value(),"non-numeric rejected");
+    rejects([&]{totp(key,{Algorithm::Sha1,6,0},0);},"zero period rejected");
+    rejects([&]{totp(key,{Algorithm::Sha1,9,30},0);},"oversized digits rejected");
+    rejects([&]{verify_totp(key,{},"123456",0,3);},"excess skew rejected");
+}
+void parsing() {
+    Secret raw("12345678901234567890");auto encoded=encode_base32(raw);auto decoded=decode_base32(encoded);
+    check(decoded.size()==raw.size() && std::equal(decoded.data(),decoded.data()+decoded.size(),raw.data()),"base32 roundtrip");
+    Enrollment e; e.issuer="Example issuer";e.account="someone@example.test";e.secret=Secret("12345678901234567890");e.parameters={Algorithm::Sha512,8,45};
+    auto parsed=parse_otpauth(pairing_uri(e));check(parsed.issuer==e.issuer&&parsed.account==e.account,"URI labels roundtrip");
+    check(parsed.parameters.algorithm==Algorithm::Sha512&&parsed.parameters.digits==8&&parsed.parameters.period==45,"URI parameters honored");
+    check(totp(parsed.secret,parsed.parameters,90).current==totp(e.secret,e.parameters,90).current,"URI secret roundtrip");
+    for(const char* bad:{"A","AAA","AAAAAA","MZ","MY=====","MY======A","M0",""})rejects([&]{decode_base32(bad);},"invalid base32");
+    rejects([&]{parse_otpauth("otpauth://hotp/test?secret=MY");},"HOTP import rejected");
+    rejects([&]{parse_otpauth("otpauth://totp/test?secret=MY&secret=MY");},"duplicate parameters rejected");
+    rejects([&]{parse_otpauth("otpauth://totp/one:test?secret=MY&issuer=two");},"issuer mismatch rejected");
+    rejects([&]{parse_otpauth("otpauth://totp/test?secret=MY&period=0");},"URI zero period rejected");
+    rejects([&]{parse_otpauth("otpauth://totp/test?secret=MY&algorithm=MD5");},"unsupported digest rejected");
+    check(!valid_stable_id("../secret")&&!valid_stable_id("renamed label")&&valid_stable_id(shared_mode_account),"account key validation");
+}
+void credentials() {
+    MemoryVault vault;Credentials c(vault);Secret pin("123456"),wrong("000000"),password("a-local-test-password");
+    check(!c.metadata("test.account").configured,"unconfigured metadata");
+    auto first=c.enroll("test.account",CredentialKind::Pin,pin);check(first.configured&&!first.generation.empty(),"enrollment metadata");
+    check(c.verify("test.account",pin)&&!c.verify("test.account",wrong),"correct and incorrect answers");
+    rejects([&]{c.enroll("test.account",CredentialKind::Pin,wrong);},"enroll does not overwrite");
+    rejects([&]{c.replace("test.account",wrong,CredentialKind::Password,password);},"replacement needs old answer");
+    auto second=c.replace("test.account",pin,CredentialKind::Password,password);check(second.generation!=first.generation,"replacement generation changes");
+    check(c.verify("test.account",password)&&!c.verify("test.account",pin),"old credential retired");
+    auto& bytes=vault.records.at("test.account");std::string record(bytes.begin(),bytes.end());
+    check(record.find("a-local-test-password")==std::string::npos&&record.find("123456")==std::string::npos,"record contains no plaintext answer");
+    rejects([&]{c.reset("test.account",pin);},"reset requires current answer");c.reset("test.account",password);
+    check(!c.metadata("test.account").configured,"reset removes record");
+    rejects([&]{c.verify("test.account",pin);},"missing vault record fails closed");
+    rejects([&]{c.enroll("bad.pin",CredentialKind::Pin,password);},"non-numeric PIN rejected");
+    vault.records["corrupt"]={1};rejects([&]{c.metadata("corrupt");},"corrupt credential rejected");
+    vault.unavailable=true;rejects([&]{c.enroll("unavailable",CredentialKind::Pin,pin);},"unavailable vault fails closed");
+}
+void locks() {
+    auto now=Time{}+std::chrono::hours(1);
+    const std::array<std::vector<Factor>,6> orders{{{Factor::Pin},{Factor::Password},{Factor::Pin,Factor::Password},{Factor::Password,Factor::Totp},{Factor::Pin,Factor::Totp},{Factor::Password,Factor::Pin,Factor::Totp}}};
+    for(unsigned p=0;p<6;++p) {
+        auto policy=static_cast<Policy>(p);check(factors(policy)==orders[p],"exact six factor policies");
+        LockSession lock({policy,Duration::Minutes,1});check(lock.locked(now),"locked at launch");
+        for(unsigned i=0;i<orders[p].size();++i) {
+            check(lock.expected(now)==orders[p][i],"ordered factor prompt");
+            check(lock.submit(orders[p][i],true,now)==(i+1==orders[p].size()),"all factors required");
+        }
+        check(!lock.locked(now)&&lock.locked(now+std::chrono::minutes(1)),"duration expires");
+    }
+    LockSession order({Policy::PasswordPinTotp,Duration::UntilExit,5});
+    check(!order.submit(Factor::Totp,true,now)&&order.expected(now)==Factor::Password,"wrong order fails closed");
+    order.submit(Factor::Password,true,now);check(order.expected(now+std::chrono::seconds(121))==Factor::Password,"partial attempt expires");
+    LockSession single({Policy::Pin,Duration::ThisSurface,5});single.submit(Factor::Pin,true,now);single.leave_surface();check(single.locked(now),"surface exit relocks");
+    LockSession one({Policy::Pin,Duration::UntilExit,5}),two({Policy::Pin,Duration::UntilExit,5});
+    one.submit(Factor::Pin,true,now);check(!one.locked(now)&&two.locked(now),"locks independent");one.relock();check(one.locked(now),"explicit relock");
+    for(unsigned round=0;round<4;++round) {
+        for(unsigned n=0;n<5;++n)one.submit(Factor::Pin,false,now);
+        check(one.attempts(now).remaining==0&&one.attempts(now).wait_seconds>0,"attempt budget enforced");
+        check(!one.submit(Factor::Pin,true,now)&&one.locked(now),"lockout blocks even correct answer");
+        check(one.clear_wait(now)==(round<3),"rolling skip cap");
+        check(one.locked(now),"skip does not authenticate");
+    }
+    check(one.attempts(now+std::chrono::hours(1)).remaining==5,"ordinary wait restores same budget");
+    rejects([&]{LockSession invalid({static_cast<Policy>(99),Duration::UntilExit,5});},"invalid policy rejected");
+}
+void encryption() {
+    auto key=random_secret(32);Secret plain("private snapshot fixture");auto encrypted=encrypt_snapshot(key,plain,"record.1");
+    auto restored=decrypt_snapshot(key,encrypted,"record.1");check(restored.size()==plain.size()&&std::equal(restored.data(),restored.data()+restored.size(),plain.data()),"AES-GCM roundtrip");
+    check(std::string(encrypted.begin(),encrypted.end()).find("private snapshot fixture")==std::string::npos,"snapshot not plaintext");
+    auto other=random_secret(32);rejects([&]{decrypt_snapshot(other,encrypted,"record.1");},"wrong key rejected");
+    rejects([&]{decrypt_snapshot(key,encrypted,"record.2");},"record substitution rejected");
+    encrypted[14]^=1;rejects([&]{decrypt_snapshot(key,encrypted,"record.1");},"tamper rejected");
+}
+void native_vault() {
+#ifdef _WIN32
+    auto vault=make_os_vault();const auto id="test.local-security."+new_stable_id();Secret fixture("non-production-test-record");
+    try {
+        check(!vault->read(id).has_value(),"native initial absence");vault->write(id,fixture);auto record=vault->read(id);
+        check(record.has_value()&&record->size()==fixture.size()&&std::equal(record->data(),record->data()+record->size(),fixture.data()),"native vault roundtrip");
+        vault->erase(id);check(!vault->read(id).has_value(),"native owned record erased");
+    } catch(...) {vault->erase(id);throw;}
+#endif
+}
+}
+int main() {
+    try { rfc_vectors();parsing();credentials();locks();encryption();native_vault();std::cout<<"PASS "<<checks<<" local security behavioral checks\n";return 0; }
+    catch(const std::exception& e) { std::cerr<<"FAIL after "<<checks<<" checks: "<<e.what()<<'\n';return 1; }
+}
