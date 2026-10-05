@@ -16,7 +16,7 @@ static std::string g_log_folder;
 static std::atomic<int> g_crash_log_count = 0;
 static std::mutex g_dump_mutex;
 
-CBaseException::CBaseException(HANDLE hProcess, WORD wPID, LPCTSTR lpSymbolPath, PEXCEPTION_POINTERS pEp):
+CBaseException::CBaseException(HANDLE hProcess, DWORD wPID, LPCTSTR lpSymbolPath, PEXCEPTION_POINTERS pEp):
 	CStackWalker(hProcess, wPID, lpSymbolPath)
 {
 	if (NULL != pEp)
@@ -85,7 +85,7 @@ void CBaseException::ShowLoadModules()
 	OutputString(_T("BaseAddress:\tSize:\tName\tPath\tSymbolPath\tVersion\r\n"));
 	while (NULL != pmi)
 	{
-		OutputString(_T("%08x\t%d\t%s\t%s\t%s\t%s\r\n"), (unsigned long)(pmi->ModuleAddress), pmi->dwModSize, pmi->szModuleName, pmi->szModulePath, pmi->szSymbolPath, pmi->szVersion);
+		OutputString(_T("%016llx\t%d\t%s\t%s\t%s\t%s\r\n"), static_cast<unsigned long long>(pmi->ModuleAddress), pmi->dwModSize, pmi->szModuleName, pmi->szModulePath, pmi->szSymbolPath, pmi->szVersion);
 		pmi = pmi->pNext;
 	}
 
@@ -282,7 +282,9 @@ BOOL CBaseException::GetLogicalAddress(
 	if ( !VirtualQuery( addr, &mbi, sizeof(mbi) ) )
 		return FALSE;
 
-	DWORD hMod = (DWORD)mbi.AllocationBase;
+	if (mbi.Type != MEM_IMAGE)
+        return FALSE;
+    const ULONG_PTR hMod = reinterpret_cast<ULONG_PTR>(mbi.AllocationBase);
 
 	if ( !GetModuleFileName( (HMODULE)hMod, szModule, len ) )
 		return FALSE;
@@ -294,18 +296,18 @@ BOOL CBaseException::GetLogicalAddress(
 	PIMAGE_NT_HEADERS pNtHdr = (PIMAGE_NT_HEADERS)(hMod + pDosHdr->e_lfanew);
 	PIMAGE_SECTION_HEADER pSection = IMAGE_FIRST_SECTION( pNtHdr );
 
-	DWORD rva = (DWORD)addr - hMod;
+	const ULONG_PTR rva = reinterpret_cast<ULONG_PTR>(addr) - hMod;
 
 	//计算当前地址在第几个节
 	for (unsigned i = 0; i < pNtHdr->FileHeader.NumberOfSections; i++, pSection++ )
 	{
 		DWORD sectionStart = pSection->VirtualAddress;
-		DWORD sectionEnd = sectionStart + max(pSection->SizeOfRawData, pSection->Misc.VirtualSize);
+		const ULONG_PTR sectionEnd = static_cast<ULONG_PTR>(sectionStart) + max(pSection->SizeOfRawData, pSection->Misc.VirtualSize);
 
-		if ( (rva >= sectionStart) && (rva <= sectionEnd) )
+		if ( (rva >= sectionStart) && (rva < sectionEnd) )
 		{
 			section = i+1;
-			offset = rva - sectionStart;
+			offset = static_cast<DWORD>(rva - sectionStart);
 			return TRUE;
 		}
 	}
@@ -346,15 +348,17 @@ void CBaseException::ShowExceptionInformation()
 	OutputString(_T("NumberParameters :%ld \n"), m_pEp->ExceptionRecord->NumberParameters);
 	for (int i = 0; i < m_pEp->ExceptionRecord->NumberParameters; i++)
 	{
-		OutputString(_T("Param %d :0x%x \n"), i, m_pEp->ExceptionRecord->ExceptionInformation[i]);
+		OutputString(_T("Param %d :0x%016llx \n"), i, static_cast<unsigned long long>(m_pEp->ExceptionRecord->ExceptionInformation[i]));
 	}
 	OutputString(_T("Context :%p \n"), m_pEp->ContextRecord);
     OutputString(_T("ContextFlag : 0x%x, EFlags: 0x%x \n"), m_pEp->ContextRecord->ContextFlags, m_pEp->ContextRecord->EFlags);
 
-	TCHAR szFaultingModule[MAX_PATH];
-	DWORD section, offset;
-	GetLogicalAddress(m_pEp->ExceptionRecord->ExceptionAddress, szFaultingModule, sizeof(szFaultingModule), section, offset );
-	OutputString( _T("Fault address:  0x%X 0x%X:0x%X %s\r\n"), m_pEp->ExceptionRecord->ExceptionAddress, section, offset, szFaultingModule );
+	TCHAR szFaultingModule[MAX_PATH] = {};
+	DWORD section = 0, offset = 0;
+	GetLogicalAddress(m_pEp->ExceptionRecord->ExceptionAddress, szFaultingModule, _countof(szFaultingModule), section, offset);
+	OutputString(_T("Fault address:  0x%016llx 0x%X:0x%X %s\r\n"),
+        static_cast<unsigned long long>(reinterpret_cast<ULONG_PTR>(m_pEp->ExceptionRecord->ExceptionAddress)),
+        section, offset, szFaultingModule[0] ? szFaultingModule : _T("<unresolved>"));
 
 	ShowRegistorInformation(m_pEp->ContextRecord);
 
