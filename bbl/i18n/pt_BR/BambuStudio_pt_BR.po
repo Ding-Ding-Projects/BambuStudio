@@ -23854,3 +23854,11 @@ msgstr ""
 
 #~ msgid "⌥+Left mouse button"
 #~ msgstr "+Botão esquerdo do mouse"
+
+#: src/slic3r/GUI/Plater.cpp
+msgid "Large imported meshes were simplified. Dimensions and volume may change; original files are unchanged."
+msgstr "As malhas grandes importadas foram simplificadas. As dimensões e o volume podem mudar; os arquivos originais permanecem inalterados."
+
+#: src/slic3r/GUI/Plater.cpp
+msgid "Import canceled"
+msgstr "Importação cancelada"

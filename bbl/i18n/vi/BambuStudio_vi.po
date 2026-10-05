@@ -19589,3 +19589,11 @@ msgstr ""
 
 #~ msgid "Tungsten carbide"
 #~ msgstr "Cacbua vonfram"
+
+#: src/slic3r/GUI/Plater.cpp
+msgid "Large imported meshes were simplified. Dimensions and volume may change; original files are unchanged."
+msgstr "Các lưới lớn được nhập đã được đơn giản hóa. Kích thước và thể tích có thể thay đổi; các tệp gốc không thay đổi."
+
+#: src/slic3r/GUI/Plater.cpp
+msgid "Import canceled"
+msgstr "Đã hủy nhập"

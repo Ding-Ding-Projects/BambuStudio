@@ -100,20 +100,17 @@ void ImportJob::process(Ctl& ctl)
                             ++m_result.skipped_volumes;
                         } else {
                             auto reduced = volume->mesh().its;
-                            const auto original_box = volume->mesh().bounding_box();
                             if (simplify_mesh(reduced, m_options.simplification, check_cancel, [&](int percent) {
                                 report(50 + static_cast<int>((volume_index * 40 + percent * 40 / 100) / std::max<size_t>(1, volume_count)),
                                        m_options.simplifying_text);
                             })) {
-                                if (retain_mesh_extents(reduced, original_box)) {
-                                    check_cancel();
-                                    volume->set_mesh(std::move(reduced));
-                                    volume->invalidate_convex_hull_2d();
-                                    changed = true;
-                                    ++m_result.simplified_volumes;
-                                } else {
-                                    ++m_result.skipped_volumes;
-                                }
+                                // Keep the quadric engine's error-limited coordinates.
+                                // Per-axis bounds rescaling would distort that result.
+                                check_cancel();
+                                volume->set_mesh(std::move(reduced));
+                                volume->invalidate_convex_hull_2d();
+                                changed = true;
+                                ++m_result.simplified_volumes;
                             }
                         }
                     }

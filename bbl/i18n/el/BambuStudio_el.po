@@ -19506,3 +19506,11 @@ msgstr ""
 #, c-format, boost-format
 #~ msgid "Speed of 100%% overhang wall which has 0 overlap with the lower layer."
 #~ msgstr "Ταχύτητα τοίχου πρόβολης 100%% που έχει 0 επικάλυψη με το κάτω στρώμα."
+
+#: src/slic3r/GUI/Plater.cpp
+msgid "Large imported meshes were simplified. Dimensions and volume may change; original files are unchanged."
+msgstr "Τα μεγάλα εισαγόμενα πλέγματα απλοποιήθηκαν. Οι διαστάσεις και ο όγκος μπορεί να αλλάξουν· τα αρχικά αρχεία παραμένουν αμετάβλητα."
+
+#: src/slic3r/GUI/Plater.cpp
+msgid "Import canceled"
+msgstr "Η εισαγωγή ακυρώθηκε"

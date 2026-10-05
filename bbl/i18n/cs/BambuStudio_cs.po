@@ -20330,3 +20330,11 @@ msgstr ""
 #~ msgstr ""
 #~ "Proč se chlazení liší\n"
 #~ "Vnější stěny a mosty chladnou nejrychleji, zatímco silné vnitřní části zůstávají teplejší—geometrie, proudění vzduchu a dráha nástroje mají vliv, což simulace vizualizuje."
+
+#: src/slic3r/GUI/Plater.cpp
+msgid "Large imported meshes were simplified. Dimensions and volume may change; original files are unchanged."
+msgstr "Velké importované sítě byly zjednodušeny. Rozměry a objem se mohou změnit; původní soubory zůstávají beze změny."
+
+#: src/slic3r/GUI/Plater.cpp
+msgid "Import canceled"
+msgstr "Import zrušen"

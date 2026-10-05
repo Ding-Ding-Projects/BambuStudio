@@ -27672,3 +27672,11 @@ msgstr "The backup could not be imported."
 #: src/slic3r/GUI/NotificationManager.cpp
 msgid "Next notifications"
 msgstr "Next notifications"
+
+#: src/slic3r/GUI/Plater.cpp
+msgid "Large imported meshes were simplified. Dimensions and volume may change; original files are unchanged."
+msgstr "Large imported meshes were simplified. Dimensions and volume may change; original files are unchanged."
+
+#: src/slic3r/GUI/Plater.cpp
+msgid "Import canceled"
+msgstr "Import canceled"

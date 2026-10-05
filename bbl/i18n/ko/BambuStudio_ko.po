@@ -21897,3 +21897,11 @@ msgstr ""
 #~ "Please input valid values:\n"
 #~ "start > 10 \\step >= 0\n"
 #~ "end > start + step)"
+
+#: src/slic3r/GUI/Plater.cpp
+msgid "Large imported meshes were simplified. Dimensions and volume may change; original files are unchanged."
+msgstr "가져온 대형 메시가 단순화되었습니다. 치수와 부피가 달라질 수 있으며 원본 파일은 변경되지 않습니다."
+
+#: src/slic3r/GUI/Plater.cpp
+msgid "Import canceled"
+msgstr "가져오기 취소됨"

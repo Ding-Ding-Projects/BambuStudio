@@ -27536,3 +27536,11 @@ msgstr ""
 
 #~ msgid "Start the application"
 #~ msgstr "啟動應用程式"
+
+#: src/slic3r/GUI/Plater.cpp
+msgid "Large imported meshes were simplified. Dimensions and volume may change; original files are unchanged."
+msgstr "已簡化匯入的大型網格。尺寸和體積可能改變；原始檔案維持不變。"
+
+#: src/slic3r/GUI/Plater.cpp
+msgid "Import canceled"
+msgstr "匯入已取消"

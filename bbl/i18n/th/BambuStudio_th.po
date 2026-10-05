@@ -19592,3 +19592,11 @@ msgstr ""
 #, c-format, boost-format
 #~ msgid " doesn't work at 100%% density "
 #~ msgstr " ใช้งานไม่ได้ที่ความหนาแน่น 100%% "
+
+#: src/slic3r/GUI/Plater.cpp
+msgid "Large imported meshes were simplified. Dimensions and volume may change; original files are unchanged."
+msgstr "ตาข่ายขนาดใหญ่ที่นำเข้าถูกทำให้ง่ายขึ้น ขนาดและปริมาตรอาจเปลี่ยนแปลง แต่ไฟล์ต้นฉบับไม่เปลี่ยนแปลง"
+
+#: src/slic3r/GUI/Plater.cpp
+msgid "Import canceled"
+msgstr "ยกเลิกการนำเข้าแล้ว"

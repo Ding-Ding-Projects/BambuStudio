@@ -23914,3 +23914,11 @@ msgstr ""
 #: resources/data/helio_hints.ini: [hint: First-Time-Right Reliability]
 msgid "First-Time-Right Reliability\nLess babysitting, more predictable output. Example: a small farm running PETG parts avoids 'fail at hour 6' surprises and keeps batches on schedule."
 msgstr ""
+
+#: src/slic3r/GUI/Plater.cpp
+msgid "Large imported meshes were simplified. Dimensions and volume may change; original files are unchanged."
+msgstr ""
+
+#: src/slic3r/GUI/Plater.cpp
+msgid "Import canceled"
+msgstr ""
