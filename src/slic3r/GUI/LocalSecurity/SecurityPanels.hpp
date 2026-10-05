@@ -7,6 +7,7 @@
 #include <wx/timer.h>
 #include <wx/weakref.h>
 #include <functional>
+#include "../Widgets/SuperConfirmState.hpp"
 
 class SearchField;
 class Label;
@@ -27,8 +28,14 @@ struct Hooks {
     // Exclude secret/code controls from history, logs, diagnostics and capture.
     std::function<void(wxWindow*)> register_sensitive;
     std::function<void(wxWindow*, const char*)> record_label;
+    // Fixed safety disclosures use a language-only renderer.
+    std::function<void(wxWindow*, const char*)> record_factual_label;
     std::function<void(wxWindow*, const char*)> record_tooltip;
     std::function<void(wxWindow*, const char*)> record_name;
+    // Forward the actual native two-key/full-slider state, never synthesized
+    // flags. The callback runs on the GUI thread only after authorization.
+    std::function<void(wxWindow*, const wxString&, const std::vector<wxString>&,
+                       std::function<void(SuperConfirm::State)>)> confirm_retention;
     // Populate only when a bundled, isolated decoder route is verified. Results
     // remain in memory; the callbacks must not log paths, pixels or payloads.
     std::function<std::optional<LocalSecurity::Secret>(const std::filesystem::path&)> decode_qr_file;
