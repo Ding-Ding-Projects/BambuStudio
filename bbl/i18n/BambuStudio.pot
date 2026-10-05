@@ -23922,3 +23922,679 @@ msgstr ""
 #: src/slic3r/GUI/Plater.cpp
 msgid "Import canceled"
 msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid " (%d hidden by the search)"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid " (%u hidden by the search)"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "%d of %d: %s"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "%d part(s), %d instance(s)"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "%d profiles selected"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "%d selected"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "%d selected / %d will change / %d skipped"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "%d selected / %d will rename / %d skipped"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "%s, %s"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "(%d hidden by the search)"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "(%d on other pages)"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "(cancelled)"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid ", %d failed"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid ", %d skipped"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "A complete zip of each profile's data folder is committed to that profile's local history. Nothing is deleted or overwritten."
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "A file with this name already exists"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Add %d new filament(s)"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "After"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Also deletes %1% filament and %2% process presets attached to this printer"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Another snapshot or transfer is still running"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Attaches a label to every selected version; labels never change or remove history"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Becomes"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Before"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Bulk action preview"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Bulk delete"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Bulk export"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Bulk export finished: %d exported, %d skipped, %d failed."
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Bulk rename"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Bulk rename objects"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Check every unchecked slot and uncheck the checked ones"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Choose a folder for the STL files"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Choose a folder for the exported versions"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Choose the folder to export the selected presets into"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Clears the selection"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Collision: %s"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Could not write %s"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Currently selected in the tab; another preset will be selected"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Delete objects"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Delete presets"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Deleted slots are removed from the project; objects and paint assigned to them move to another slot."
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Each object is removed from its plate together with all of its parts and instances. "
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Each object is written to its own STL file in %s. Existing files are never overwritten."
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Each preset is written as a .json file into %1%. Existing files are left untouched."
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Each version is written as its own .3mf named <project>-<commit>-<date>.3mf in the chosen folder. Nothing in the history changes."
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Enter valid dates in YYYY-MM-DD order, with From before Through."
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Export devices"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Export each selected object to its own STL file in a folder you choose"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Export list..."
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Export objects as STL"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Export presets"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Export selected devices"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Export selected..."
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Export the profile list"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Export versions"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Exported %d of %d devices to %s"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Exported %d of %d selected versions"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Exported %d presets, skipped %d, failed %d - %s"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Exported %d profiles to %s"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Exporting STL files"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Exporting presets"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Exporting versions"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Filter the preview"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Find"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Find (plain text; use the .* toggle or the builder for a regex with $1 back-references)"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Inherited by \"%1%\", which is not selected"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Invalid: %s"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Invert"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Invert the selection within the current matches (Ctrl+I)"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Invert the selection within the visible rows (Ctrl+I)"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Inverts the selection across every matching device"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Inverts the selection of the listed versions"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Item"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Label selected..."
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Label versions"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Labelled %d of %d selected versions"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Labelling versions"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Launch starts one instance on one profile: select a single row to launch it."
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Letters, digits, '.', '_' and '-' are kept; other characters become '-'. Labels never change history."
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Naming pattern"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "No longer in the history"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "None of the selected presets can be renamed: they are inherited by other presets or have unsaved changes."
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Nothing in the selection would change; every item is skipped for the reason shown"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Nothing would change with this pattern"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Opens the two-key confirmation before anything is deleted"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Outcome"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Pattern: {name} keeps the current name, {n} numbers from the start index, {i} from 0, {stem} and {ext} split a file name; {{ and }} are literal braces"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Preset no longer exists"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Project versions"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Record a complete snapshot of every selected profile, after a review"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Recorded %d snapshots, %d failed, %d skipped."
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Recording profile snapshots"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Rename presets"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Rename preview"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Rename selected..."
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Rename the selected objects with a pattern and a live before/after preview"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Rename the selected presets with a pattern or find/replace"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Renamed %d presets, refused %d, failed %d"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Renaming presets"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Replace with"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Review and delete the selected presets (Delete)"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Review and permanently remove the selected entries from the history (Delete)"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Review the selected objects, then delete them behind the two-key gate"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Select %s"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Select all %d loaded versions"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Select all %d presets"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Select all %d profiles"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Select all %d versions"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Select all matches"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Select every entry matching the filter, rendered or not (Ctrl+Shift+A)"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Select every object in the list"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Select every object the list shows (the list has no filter, so this equals Select all objects)"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Select every preset in this collection, including rows hidden by the search (Ctrl+Shift+A)"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Select every preset matching the current search (Ctrl+A)"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Select every profile matching the current search (Ctrl+A)"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Select every profile, including rows hidden by the search (Ctrl+Shift+A)"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Select every unselected object and unselect the selected ones"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Select the rows currently rendered (Ctrl+A)"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Select this page"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Select visible"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Select visible (%d)"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Select, delete, export or rename several user presets at once"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Selects every device card on this page"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Selects every device matching the search, on every page"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Selects every listed version"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Selects every loaded version, including ones hidden by the search. Load all versions to include older ones."
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Selects every version, including ones hidden by the search"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Skipped: %s"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Skipped: name would not change"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Snapshot profiles"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Snapshot selected"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Staged:"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Start another Bambu Studio instance on the selected profile"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Start {n} at"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "The data folder no longer exists"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "The export was cancelled before every object was written."
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "The label \"%s\" is attached to each version. History is never changed or removed."
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "The label is attached to %d selected versions"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "The preset files are removed from the user preset folder and cannot be recovered "
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "The run was cancelled."
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "The selected devices are written as CSV rows to %s. Devices are not changed."
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "The selected devices are written as a JSON list to %s. Devices are not changed."
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "The selected entries are removed from the history permanently. This cannot be undone; use Export first to keep a copy."
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "This profile is already running (it is the active one)."
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "This record has no snapshot store"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Two or more results collide; adjust the pattern so every new name is unique"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Will change"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Will rename"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Write each selected preset as a .json file into a folder you choose"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Write the profile list (name, data folder, last snapshot) as JSON or CSV"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Writes each selected version as its own .3mf file into a folder you choose"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Writes the selected devices (name, id, model, status, task, progress) to a JSON or CSV file"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "Zero-pad to digits"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "a file with this name already exists"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "add %d new filament(s)"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "another selected object exports to the same file name"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "appended after the last slot"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "at least one filament must remain"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "colour %s to %d slot(s)"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "delete %d slot(s)"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "deleted"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "device is no longer in the farm"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "file already exists"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "kept (at least one filament must remain); preset/colour still applied"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "not selected"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "preset \"%s\" to %d slot(s)"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "selected"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "the current selection cannot be deleted"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "the list entry is no longer valid"
+msgstr ""
+
+#: src/slic3r/GUI/Bulk
+msgid "the slot no longer exists"
+msgstr ""

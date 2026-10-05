@@ -37706,3 +37706,848 @@ msgstr "大型匯入網格已簡化。尺寸同體積可能會改變；原始檔
 #. review-status: agent-drafted
 msgid "Import canceled"
 msgstr "匯入已取消"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid " (%d hidden by the search)"
+msgstr "（%d 個被搜尋篩選隱藏）"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid " (%u hidden by the search)"
+msgstr "（%u 個被搜尋篩選隱藏）"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "%d of %d: %s"
+msgstr "第 %d 個，共 %d 個：%s"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "%d part(s), %d instance(s)"
+msgstr "%d 個部件，%d 個實例"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "%d profiles selected"
+msgstr "已選 %d 個設定檔"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "%d selected"
+msgstr "已選 %d 個"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "%d selected / %d will change / %d skipped"
+msgstr "已選 %d 個 / 將更改 %d 個 / 跳過 %d 個"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "%d selected / %d will rename / %d skipped"
+msgstr "已選 %d 個 / 將改名 %d 個 / 跳過 %d 個"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "%s, %s"
+msgstr "%s，%s"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "(%d hidden by the search)"
+msgstr "（%d 個被搜尋篩選隱藏）"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "(%d on other pages)"
+msgstr "（%d 個喺其他頁）"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "(cancelled)"
+msgstr "（已取消）"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid ", %d failed"
+msgstr "，%d 個失敗"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid ", %d skipped"
+msgstr "，跳過 %d 個"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "A complete zip of each profile's data folder is committed to that profile's local history. Nothing is deleted or overwritten."
+msgstr "每個設定檔嘅資料夾會完整壓縮並記錄到該設定檔嘅本機歷史，唔會刪除或覆寫資料。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "A file with this name already exists"
+msgstr "同名檔案已經存在"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Add %d new filament(s)"
+msgstr "新增 %d 個墨水"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "After"
+msgstr "之後"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Also deletes %1% filament and %2% process presets attached to this printer"
+msgstr "亦會刪除呢部打印機附帶嘅 %1% 個墨水預設同 %2% 個工序預設"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Another snapshot or transfer is still running"
+msgstr "另一個快照或傳送仍然進行中"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Attaches a label to every selected version; labels never change or remove history"
+msgstr "為每個所選版本加上標籤；標籤唔會更改或移除歷史"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Becomes"
+msgstr "改成"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Before"
+msgstr "之前"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Bulk action preview"
+msgstr "批量操作預覽"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Bulk delete"
+msgstr "批量刪除"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Bulk export"
+msgstr "批量匯出"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Bulk export finished: %d exported, %d skipped, %d failed."
+msgstr "批量匯出完成：已匯出 %d 個，跳過 %d 個，%d 個失敗。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Bulk rename"
+msgstr "批量改名"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Bulk rename objects"
+msgstr "批量為物件改名"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Check every unchecked slot and uncheck the checked ones"
+msgstr "勾選未選嘅插槽，取消已選嘅插槽"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Choose a folder for the STL files"
+msgstr "揀存放 STL 檔案嘅資料夾"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Choose a folder for the exported versions"
+msgstr "揀存放匯出版本嘅資料夾"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Choose the folder to export the selected presets into"
+msgstr "揀匯出所選預設嘅資料夾"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Clears the selection"
+msgstr "清除所選項目"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Collision: %s"
+msgstr "名稱衝突：%s"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Could not write %s"
+msgstr "無法寫入 %s"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Currently selected in the tab; another preset will be selected"
+msgstr "目前喺分頁中選用；將改用另一個預設"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Delete objects"
+msgstr "刪除物件"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Delete presets"
+msgstr "刪除預設"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Deleted slots are removed from the project; objects and paint assigned to them move to another slot."
+msgstr "已刪插槽會由項目移除；分配到嗰啲插槽嘅物件同塗色會轉到另一個插槽。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Each object is removed from its plate together with all of its parts and instances. "
+msgstr "每個物件會連同全部部件同實例由打印盤移除。 "
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Each object is written to its own STL file in %s. Existing files are never overwritten."
+msgstr "每個物件會喺 %s 寫成獨立 STL 檔案，唔會覆寫現有檔案。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Each preset is written as a .json file into %1%. Existing files are left untouched."
+msgstr "每個預設會喺 %1% 寫成 .json 檔案，現有檔案維持不變。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Each version is written as its own .3mf named <project>-<commit>-<date>.3mf in the chosen folder. Nothing in the history changes."
+msgstr "每個版本會喺所選資料夾寫成獨立 .3mf，名稱為 <project>-<commit>-<date>.3mf。歷史維持不變。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Enter valid dates in YYYY-MM-DD order, with From before Through."
+msgstr "請以 YYYY-MM-DD 格式輸入有效日期，起始日期要早過結束日期。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Export devices"
+msgstr "匯出裝置"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Export each selected object to its own STL file in a folder you choose"
+msgstr "將每個所選物件匯出成獨立 STL 檔案，存放喺所揀資料夾"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Export list..."
+msgstr "匯出清單..."
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Export objects as STL"
+msgstr "將物件匯出為 STL"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Export presets"
+msgstr "匯出預設"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Export selected devices"
+msgstr "匯出所選裝置"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Export selected..."
+msgstr "匯出所選項目..."
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Export the profile list"
+msgstr "匯出設定檔清單"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Export versions"
+msgstr "匯出版本"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Exported %d of %d devices to %s"
+msgstr "已匯出 %d 個裝置，共 %d 個，存放喺 %s"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Exported %d of %d selected versions"
+msgstr "已匯出 %d 個所選版本，共 %d 個"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Exported %d presets, skipped %d, failed %d - %s"
+msgstr "已匯出 %d 個預設，跳過 %d 個，%d 個失敗 - %s"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Exported %d profiles to %s"
+msgstr "已將 %d 個設定檔匯出到 %s"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Exporting STL files"
+msgstr "匯出緊 STL 檔案"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Exporting presets"
+msgstr "匯出緊預設"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Exporting versions"
+msgstr "匯出緊版本"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Filter the preview"
+msgstr "篩選預覽"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Find"
+msgstr "尋找"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Find (plain text; use the .* toggle or the builder for a regex with $1 back-references)"
+msgstr "尋找（純文字；用 .* 開關或建構器使用帶 $1 反向參照嘅正則表達式）"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Inherited by \"%1%\", which is not selected"
+msgstr "未選嘅「%1%」繼承緊呢個預設"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Invalid: %s"
+msgstr "無效：%s"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Invert"
+msgstr "反選"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Invert the selection within the current matches (Ctrl+I)"
+msgstr "反選目前符合篩選嘅項目 (Ctrl+I)"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Invert the selection within the visible rows (Ctrl+I)"
+msgstr "反選目前可見列 (Ctrl+I)"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Inverts the selection across every matching device"
+msgstr "反選全部符合搜尋嘅裝置"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Inverts the selection of the listed versions"
+msgstr "反選清單中嘅版本"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Item"
+msgstr "項目"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Label selected..."
+msgstr "標籤所選版本..."
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Label versions"
+msgstr "標籤版本"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Labelled %d of %d selected versions"
+msgstr "已標籤 %d 個所選版本，共 %d 個"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Labelling versions"
+msgstr "加緊版本標籤"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Launch starts one instance on one profile: select a single row to launch it."
+msgstr "啟動會喺一個設定檔開一個實例，請只選一列。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Letters, digits, '.', '_' and '-' are kept; other characters become '-'. Labels never change history."
+msgstr "保留英文字母、數字、'.'、'_' 同 '-'；其他字元會變成 '-'。標籤唔會更改歷史。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Naming pattern"
+msgstr "改名樣式"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "No longer in the history"
+msgstr "已經唔喺歷史入面"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "None of the selected presets can be renamed: they are inherited by other presets or have unsaved changes."
+msgstr "所選預設全部無法改名，因為有其他預設繼承緊，或者有未儲存嘅更改。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Nothing in the selection would change; every item is skipped for the reason shown"
+msgstr "所選項目唔會有更改；每項都因所列原因而跳過"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Nothing would change with this pattern"
+msgstr "呢個樣式唔會改動任何名稱"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Opens the two-key confirmation before anything is deleted"
+msgstr "刪除前開啟雙鍵確認"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Outcome"
+msgstr "結果"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Pattern: {name} keeps the current name, {n} numbers from the start index, {i} from 0, {stem} and {ext} split a file name; {{ and }} are literal braces"
+msgstr "樣式：{name} 保留目前名稱，{n} 由起始編號開始，{i} 由 0 開始，{stem} 同 {ext} 拆開檔名；{{ 同 }} 係原樣括號"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Preset no longer exists"
+msgstr "預設已經唔存在"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Project versions"
+msgstr "項目版本"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Record a complete snapshot of every selected profile, after a review"
+msgstr "確認後為每個所選設定檔記錄完整快照"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Recorded %d snapshots, %d failed, %d skipped."
+msgstr "已記錄 %d 個快照，%d 個失敗，跳過 %d 個。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Recording profile snapshots"
+msgstr "記錄緊設定檔快照"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Rename presets"
+msgstr "為預設改名"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Rename preview"
+msgstr "改名預覽"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Rename selected..."
+msgstr "為所選項目改名..."
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Rename the selected objects with a pattern and a live before/after preview"
+msgstr "用樣式為所選物件改名，並即時預覽前後名稱"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Rename the selected presets with a pattern or find/replace"
+msgstr "用樣式或尋找及取代為所選預設改名"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Renamed %d presets, refused %d, failed %d"
+msgstr "已為 %d 個預設改名，拒絕 %d 個，%d 個失敗"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Renaming presets"
+msgstr "為預設改緊名"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Replace with"
+msgstr "取代為"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Review and delete the selected presets (Delete)"
+msgstr "確認並刪除所選預設 (Delete)"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Review and permanently remove the selected entries from the history (Delete)"
+msgstr "確認並永久刪除所選歷史記錄 (Delete)"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Review the selected objects, then delete them behind the two-key gate"
+msgstr "確認所選物件，再經雙鍵確認刪除"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Select %s"
+msgstr "選取 %s"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Select all %d loaded versions"
+msgstr "選取已載入嘅全部 %d 個版本"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Select all %d presets"
+msgstr "選取全部 %d 個預設"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Select all %d profiles"
+msgstr "選取全部 %d 個設定檔"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Select all %d versions"
+msgstr "選取全部 %d 個版本"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Select all matches"
+msgstr "選取全部符合項目"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Select every entry matching the filter, rendered or not (Ctrl+Shift+A)"
+msgstr "選取全部符合篩選嘅記錄，包括未顯示嘅記錄 (Ctrl+Shift+A)"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Select every object in the list"
+msgstr "選取清單中全部物件"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Select every object the list shows (the list has no filter, so this equals Select all objects)"
+msgstr "選取清單中全部物件（清單冇篩選，所以等同選取全部物件）"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Select every preset in this collection, including rows hidden by the search (Ctrl+Shift+A)"
+msgstr "選取呢個集合全部預設，包括被搜尋隱藏嘅列 (Ctrl+Shift+A)"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Select every preset matching the current search (Ctrl+A)"
+msgstr "選取全部符合目前搜尋嘅預設 (Ctrl+A)"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Select every profile matching the current search (Ctrl+A)"
+msgstr "選取全部符合目前搜尋嘅設定檔 (Ctrl+A)"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Select every profile, including rows hidden by the search (Ctrl+Shift+A)"
+msgstr "選取全部設定檔，包括被搜尋隱藏嘅列 (Ctrl+Shift+A)"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Select every unselected object and unselect the selected ones"
+msgstr "選取未選嘅物件，取消已選嘅物件"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Select the rows currently rendered (Ctrl+A)"
+msgstr "選取目前顯示嘅列 (Ctrl+A)"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Select this page"
+msgstr "選取本頁"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Select visible"
+msgstr "選取可見項目"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Select visible (%d)"
+msgstr "選取可見項目 (%d)"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Select, delete, export or rename several user presets at once"
+msgstr "一次過選取、刪除、匯出或改名多個使用者預設"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Selects every device card on this page"
+msgstr "選取本頁全部裝置卡"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Selects every device matching the search, on every page"
+msgstr "選取每頁全部符合搜尋嘅裝置"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Selects every listed version"
+msgstr "選取清單中全部版本"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Selects every loaded version, including ones hidden by the search. Load all versions to include older ones."
+msgstr "選取全部已載入版本，包括被搜尋隱藏嘅版本。載入全部版本先可以包括更舊版本。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Selects every version, including ones hidden by the search"
+msgstr "選取全部版本，包括被搜尋隱藏嘅版本"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Skipped: %s"
+msgstr "已跳過：%s"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Skipped: name would not change"
+msgstr "已跳過：名稱維持不變"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Snapshot profiles"
+msgstr "建立設定檔快照"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Snapshot selected"
+msgstr "為所選設定檔建立快照"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Staged:"
+msgstr "準備套用："
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Start another Bambu Studio instance on the selected profile"
+msgstr "用所選設定檔開另一個 Bambu Studio 實例"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Start {n} at"
+msgstr "{n} 起始編號"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The data folder no longer exists"
+msgstr "資料夾已經唔存在"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The export was cancelled before every object was written."
+msgstr "未寫完全部物件，匯出已取消。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "The label \"%s\" is attached to each version. History is never changed or removed."
+msgstr "每個版本會加上「%s」標籤，唔會更改或移除歷史。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "The label is attached to %d selected versions"
+msgstr "標籤會加到 %d 個所選版本"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The preset files are removed from the user preset folder and cannot be recovered "
+msgstr "預設檔案會由使用者預設資料夾移除，而且無法復原 "
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The run was cancelled."
+msgstr "操作已取消。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "The selected devices are written as CSV rows to %s. Devices are not changed."
+msgstr "所選裝置會以 CSV 列寫入 %s，裝置維持不變。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "The selected devices are written as a JSON list to %s. Devices are not changed."
+msgstr "所選裝置會以 JSON 清單寫入 %s，裝置維持不變。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The selected entries are removed from the history permanently. This cannot be undone; use Export first to keep a copy."
+msgstr "所選記錄會由歷史永久移除，無法復原；請先匯出保留副本。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "This profile is already running (it is the active one)."
+msgstr "呢個設定檔已經運行中（係目前使用緊嗰個）。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "This record has no snapshot store"
+msgstr "呢筆記錄冇快照儲存庫"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Two or more results collide; adjust the pattern so every new name is unique"
+msgstr "有兩個或以上結果撞名；請調整樣式，令每個新名稱都唔重複"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Will change"
+msgstr "將會更改"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Will rename"
+msgstr "將會改名"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Write each selected preset as a .json file into a folder you choose"
+msgstr "將每個所選預設寫成 .json 檔案，存放喺所揀資料夾"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Write the profile list (name, data folder, last snapshot) as JSON or CSV"
+msgstr "將設定檔清單（名稱、資料夾、最新快照）寫成 JSON 或 CSV"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Writes each selected version as its own .3mf file into a folder you choose"
+msgstr "將每個所選版本寫成獨立 .3mf 檔案，存放喺所揀資料夾"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Writes the selected devices (name, id, model, status, task, progress) to a JSON or CSV file"
+msgstr "將所選裝置（名稱、識別碼、型號、狀態、工作、進度）寫入 JSON 或 CSV 檔案"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Zero-pad to digits"
+msgstr "補零至指定位數"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "a file with this name already exists"
+msgstr "同名檔案已經存在"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "add %d new filament(s)"
+msgstr "新增 %d 個墨水"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "another selected object exports to the same file name"
+msgstr "另一個所選物件會匯出成同一檔名"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "appended after the last slot"
+msgstr "加喺最後一個插槽後面"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "at least one filament must remain"
+msgstr "最少要保留一個墨水"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "colour %s to %d slot(s)"
+msgstr "將顏色 %s 套用到 %d 個插槽"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "delete %d slot(s)"
+msgstr "刪除 %d 個插槽"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "deleted"
+msgstr "已刪除"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "device is no longer in the farm"
+msgstr "裝置已經唔喺機群入面"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "file already exists"
+msgstr "檔案已經存在"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "kept (at least one filament must remain); preset/colour still applied"
+msgstr "保留（最少要留一個墨水）；仍然套用預設及顏色"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "not selected"
+msgstr "未選取"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "preset \"%s\" to %d slot(s)"
+msgstr "將預設「%s」套用到 %d 個插槽"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "selected"
+msgstr "已選取"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "the current selection cannot be deleted"
+msgstr "目前所選項目無法刪除"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "the list entry is no longer valid"
+msgstr "清單項目已經無效"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "the slot no longer exists"
+msgstr "插槽已經唔存在"

@@ -8,6 +8,8 @@
 #include <string>
 #include <vector>
 
+#include "Bulk/BulkSelection.hpp"
+
 namespace Slic3r { namespace GUI {
 
 // One recorded toast. Entries are append-only: a dismissal or an action only
@@ -92,36 +94,11 @@ public:
 
     // --- Selection -----------------------------------------------------------
     // Multi-select state expressed over entry ids so it survives a repopulate.
-    // "Page" is the slice of matches currently rendered; "all matches" is every
-    // id the filter yields, rendered or not. The two select-all variants are
+    // The model is the shared Bulk::BulkSelection (src/slic3r/GUI/Bulk/): "page"
+    // is the slice of matches currently rendered; "all matches" is every id
+    // the filter yields, rendered or not. The two select-all variants are
     // deliberately distinct so the UI can name which one it offers.
-    class Selection
-    {
-    public:
-        void toggle(std::uint64_t id);
-        void set(std::uint64_t id, bool on);
-        // Shift-click: select the inclusive range between `anchor` and `id` in
-        // `order` (newest-first list). Unknown anchor selects only `id`.
-        void select_range(const std::vector<std::uint64_t> &order, std::uint64_t anchor, std::uint64_t id);
-        void select_page(const std::vector<std::uint64_t> &page_ids);
-        void select_all_matches(const std::vector<std::uint64_t> &match_ids);
-        // Invert within `universe` (the current matches): selected ids in the
-        // universe become unselected and vice versa; ids outside are untouched.
-        void invert(const std::vector<std::uint64_t> &universe);
-        void clear() { m_ids.clear(); }
-        // Drop ids no longer present in `existing`.
-        void retain(const std::set<std::uint64_t> &existing);
-
-        bool        contains(std::uint64_t id) const { return m_ids.count(id) != 0; }
-        std::size_t size() const { return m_ids.size(); }
-        bool        empty() const { return m_ids.empty(); }
-        const std::set<std::uint64_t> &ids() const { return m_ids; }
-        // Count of selected ids that are inside `universe`.
-        std::size_t count_within(const std::vector<std::uint64_t> &universe) const;
-
-    private:
-        std::set<std::uint64_t> m_ids;
-    };
+    using Selection = Bulk::BulkSelection<std::uint64_t>;
 
     // --- Export --------------------------------------------------------------
     enum class ExportFormat { Json, Csv, Markdown, PlainText };

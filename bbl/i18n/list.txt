@@ -395,3 +395,5 @@ src/slic3r/GUI/MonitorBasePanel.cpp
 src/slic3r/GUI/HomeAssistant.cpp
 src/slic3r/GUI/PrinterWebView.cpp
 src/libslic3r/GCode/PostProcessor.cpp
+src/slic3r/GUI/Bulk/BulkActionPreviewDialog.cpp
+src/slic3r/GUI/Bulk/BulkRenameDialog.cpp
