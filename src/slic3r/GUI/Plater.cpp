@@ -11889,10 +11889,10 @@ std::vector<size_t> Plater::priv::load_files(const std::vector<fs::path>& input_
     BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << boost::format(": load_model %1%, load_config %2%, input_files size %3%")%load_model %load_config %input_files.size();
 
     const auto loading = _L("Loading") + dots;
-    ProgressDialog dlg(loading, "", 100, find_toplevel_parent(q), wxPD_AUTO_HIDE | (prepared ? 0 : wxPD_CAN_ABORT) | wxPD_APP_MODAL);
+    ProgressDialog dlg(loading, "", 100, find_toplevel_parent(q), wxPD_AUTO_HIDE | wxPD_CAN_ABORT | wxPD_APP_MODAL);
     wxBusyCursor busy;
 
-    auto *new_model = (!load_model || one_by_one) ? nullptr : new Slic3r::Model();
+    auto new_model = (!load_model || one_by_one) ? std::unique_ptr<Slic3r::Model>() : std::make_unique<Slic3r::Model>();
     std::vector<size_t> obj_idxs;
 
     std::string  designer_model_id;
@@ -12778,10 +12778,12 @@ std::vector<size_t> Plater::priv::load_files(const std::vector<fs::path>& input_
             if (type_3mf && !is_user_cancel)
                 completed_3mf_try = true;
         } catch (const ConfigurationError &e) {
+            if (prepared) throw;
             std::string message = GUI::format(_L("Failed loading file \"%1%\". An invalid configuration was found."), filename.string()) + "\n\n" + e.what();
             GUI::show_error(q, message);
             continue;
         } catch (const std::exception &e) {
+            if (prepared) throw;
             if (!is_user_cancel)
                 GUI::show_error(q, e.what());
             continue;
@@ -13044,10 +13046,10 @@ std::vector<size_t> Plater::priv::load_files(const std::vector<fs::path>& input_
             }
 
             const size_t prev_object_count = q->model().objects.size();
-            auto update_import_progress = [&dlg, &progress_percent](int percent, const wxString& msg) {
+            auto update_import_progress = [&dlg, &dlg_cont, &progress_percent](int percent, const wxString& msg) {
                 progress_percent = percent;
-                dlg.Update(percent, msg);
-                return true;
+                dlg_cont = dlg_cont && dlg.Update(percent, msg);
+                return dlg_cont;
             };
             if (!texture_import_result.painted.face_colors.empty()) {
                 std::vector<size_t> texture_object_idxs(model.objects.size());
@@ -13075,7 +13077,7 @@ std::vector<size_t> Plater::priv::load_files(const std::vector<fs::path>& input_
                 return update_import_progress(mapped_percent, msg);
             };
             LoadProgressCallback load_progress_callback;
-            if (!texture_import_result.painted.face_colors.empty())
+            if (prepared || !texture_import_result.painted.face_colors.empty())
                 load_progress_callback = object_progress_cb;
             auto loaded_idxs = load_model_objects(model.objects, is_project_file, false,
                                                   load_progress_callback);
@@ -13202,7 +13204,17 @@ std::vector<size_t> Plater::priv::load_files(const std::vector<fs::path>& input_
             if (msg_dlg.ShowModal() == wxID_YES) { new_model->convert_multipart_object(filaments_cnt); }
         }
 
-        auto loaded_idxs = load_model_objects(new_model->objects);
+        LoadProgressCallback batch_progress;
+        if (prepared)
+            batch_progress = [&dlg, &dlg_cont](int percent, const wxString& message) {
+                dlg_cont = dlg_cont && dlg.Update(percent, message);
+                return dlg_cont;
+            };
+        auto loaded_idxs = load_model_objects(new_model->objects, false, false, batch_progress);
+        if (!dlg_cont) {
+            q->skip_thumbnail_invalid = false;
+            return empty_result;
+        }
         obj_idxs.insert(obj_idxs.end(), loaded_idxs.begin(), loaded_idxs.end());
         if (import_obj_or_stl) {
             for (int i = 0; i < loaded_idxs.size(); i++) {
@@ -13212,7 +13224,7 @@ std::vector<size_t> Plater::priv::load_files(const std::vector<fs::path>& input_
     }
 
 
-    if (new_model) delete new_model;
+    new_model.reset();
 
     //BBS: translate old 3mf to correct positions
     if (translate_old) {
@@ -25879,14 +25891,43 @@ bool Plater::load_files_async(const std::vector<fs::path>& paths, LoadStrategy s
                     }
                 }
             }
-            Plater::TakeSnapshot snapshot(this, snapshot_label);
-            const auto loaded = p->load_files(paths, strategy, ask_multi, nullptr, &prepared);
-            if (loaded.empty()) return;
+            // Restore the model, plates, selection and project settings if
+            // publication is canceled or throws after touching the live scene.
+            size_t rollback_time = 0;
+            bool publication_started = false;
+            std::vector<size_t> loaded;
+            const auto old_import_path = m_3mf_path;
+            const auto old_skip_thumbnail_invalid = skip_thumbnail_invalid;
+            auto rollback = [&] {
+                undo_redo_to(rollback_time);
+                m_3mf_path = old_import_path;
+                skip_thumbnail_invalid = old_skip_thumbnail_invalid;
+                // Drop partial publication from redo without clearing prior history.
+                take_snapshot(_u8L("Import canceled"));
+            };
+            try {
+                {
+                    Plater::TakeSnapshot snapshot(this, snapshot_label);
+                    const auto& snapshots = p->undo_redo_stack().snapshots();
+                    if (snapshots.size() < 2)
+                        throw std::runtime_error("Cannot create import rollback snapshot");
+                    rollback_time = snapshots.at(snapshots.size() - 2).timestamp;
+                    publication_started = true;
+                    loaded = p->load_files(paths, strategy, ask_multi, nullptr, &prepared);
+                }
+            } catch (...) {
+                if (publication_started) rollback();
+                throw;
+            }
+            if (loaded.empty()) {
+                rollback();
+                return;
+            }
             p->m_import_original_meshes.insert(p->m_import_original_meshes.end(), originals.begin(), originals.end());
             if (!originals.empty())
                 p->notification_manager->push_notification(NotificationType::CustomNotification,
                     NotificationManager::NotificationLevel::WarningNotificationLevel,
-                    _u8L("Large imported meshes were simplified. Original files are unchanged."),
+                    _u8L("Large imported meshes were simplified. Dimensions and volume may change; original files are unchanged."),
                     _u8L("Restore original geometry"), [this](wxEvtHandler*) {
                         restore_import_originals(); return true;
                     });
