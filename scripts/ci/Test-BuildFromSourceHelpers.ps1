@@ -1,6 +1,7 @@
 [CmdletBinding()]
 param(
-    [string] $RepositoryRoot = ''
+    [string] $RepositoryRoot = '',
+    [switch] $ProbeHostCMake
 )
 
 $ErrorActionPreference = 'Stop'
@@ -12,6 +13,32 @@ function Assert-True {
         [Parameter(Mandatory)][string] $Message
     )
     if (-not $Condition) { throw $Message }
+}
+
+function Invoke-BoundedConfigureProbe {
+    param([string] $Executable, [string] $Arguments, [int] $TimeoutMilliseconds = 60000)
+    $process = New-Object System.Diagnostics.Process
+    $process.StartInfo.FileName = $Executable
+    $process.StartInfo.Arguments = $Arguments
+    $process.StartInfo.UseShellExecute = $false
+    $process.StartInfo.CreateNoWindow = $true
+    $process.StartInfo.RedirectStandardOutput = $true
+    $process.StartInfo.RedirectStandardError = $true
+    try {
+        $null = $process.Start()
+        $stdout = $process.StandardOutput.ReadToEndAsync()
+        $stderr = $process.StandardError.ReadToEndAsync()
+        $timedOut = -not $process.WaitForExit($TimeoutMilliseconds)
+        if ($timedOut -and -not $process.HasExited) {
+            # Keep the Process handle open while terminating this freshly
+            # launched fixture process and its children, never a stored PID.
+            & "$env:SystemRoot\System32\taskkill.exe" /PID $process.Id /T /F 2>&1 | Out-Null
+            if (-not $process.WaitForExit(5000)) { throw 'The owned configure probe did not exit after timeout teardown.' }
+        }
+        $output = if ($stdout.Wait(1000)) { $stdout.Result } else { '[stdout drain timed out]' }
+        $errorOutput = if ($stderr.Wait(1000)) { $stderr.Result } else { '[stderr drain timed out]' }
+        return [pscustomobject]@{ ExitCode = $process.ExitCode; TimedOut = $timedOut; Output = $output; ErrorOutput = $errorOutput }
+    } finally { $process.Dispose() }
 }
 
 if ([string]::IsNullOrWhiteSpace($RepositoryRoot)) {
@@ -46,8 +73,8 @@ Assert-True ($buildText.Contains('& cmake --install build --config Release --pre
     'Build-FromSource.ps1 must stage with cmake --install --prefix.'
 Assert-True (-not ($buildText -match 'cmake\s+--build[^\r\n]+CMAKE_INSTALL_PREFIX')) `
     'CMAKE_INSTALL_PREFIX must not be passed to cmake --build.'
-Assert-True (@([regex]::Matches($buildText, 'build_win\.bat -v 17 -p \$vsProduct -c Release')).Count -eq 2) `
-    'Dependency and application phases must both pin the detected Visual Studio 2022 product and Release.'
+Assert-True (@([regex]::Matches($buildText, 'build_win\.bat -v \$vsMajor -p \$vsProduct -c Release')).Count -eq 2) `
+    'Dependency and application phases must both pin the detected Visual Studio major, product, and Release.'
 Assert-True ($buildText.Contains("[ValidatePattern('^[0-9a-fA-F]{40}$')]") -and
     $buildText.Contains('& git checkout --detach $Tag')) `
     'Build-From-Source.ps1 must accept only a full source commit and check it out detached.'
@@ -106,6 +133,7 @@ try {
     $fakeNodeCurrent = Join-Path $testDir 'node-current.cmd'
     $fakeCMakeNew = Join-Path $testDir 'cmake-new.cmd'
     $fakeCMakeOld = Join-Path $testDir 'cmake-old.cmd'
+    $fakeCMake2022 = Join-Path $testDir 'cmake-2022.cmd'
     $fakeCMakeFuture = Join-Path $testDir 'cmake-future.cmd'
     Set-Content -LiteralPath $fakeNpm -Encoding Ascii -Value '@exit /b 0'
     Set-Content -LiteralPath $fakeNodeLts -Encoding Ascii -Value @('@echo off', 'echo maintenance-lts^|22.22.2^|x64', 'exit /b 0')
@@ -115,6 +143,7 @@ try {
     Set-Content -LiteralPath $fakeNodeCurrent -Encoding Ascii -Value @('@echo off', 'echo.', 'exit /b 0')
     Set-Content -LiteralPath $fakeCMakeNew -Encoding Ascii -Value @('@echo off', 'echo cmake version 4.4.0', 'exit /b 0')
     Set-Content -LiteralPath $fakeCMakeOld -Encoding Ascii -Value @('@echo off', 'echo cmake version 3.20.6', 'exit /b 0')
+    Set-Content -LiteralPath $fakeCMake2022 -Encoding Ascii -Value @('@echo off', 'echo cmake version 3.21.0', 'exit /b 0')
     Set-Content -LiteralPath $fakeCMakeFuture -Encoding Ascii -Value @('@echo off', 'echo cmake version 5.0.0', 'exit /b 0')
 
     Assert-True (Test-NodeLts -NodePath $fakeNodeLts -NpmPath $fakeNpm) `
@@ -133,6 +162,11 @@ try {
         'The CMake probe accepted a version below the minimum.'
     Assert-True (-not (Test-CMakeVersion -CMakePath $fakeCMakeFuture)) `
         'The CMake probe accepted an unsupported future major version.'
+    Assert-True (Test-CMakeVersion -CMakePath $fakeCMake2022) 'The VS 2022 CMake minimum must remain supported.'
+    Assert-True (-not (Test-CMakeVersion -CMakePath $fakeCMake2022 -MinimumVersion ([version]'4.2.0'))) `
+        'The VS 2026 route must reject CMake without its generator.'
+    Assert-True (Test-CMakeVersion -CMakePath $fakeCMakeNew -MinimumVersion ([version]'4.2.0')) `
+        'The VS 2026 route rejected a supported CMake version.'
 
     $trustedPublisher = @('Microsoft Corporation')
     Assert-True (Test-InstallerSignatureMetadata -Status 'Valid' `
@@ -187,18 +221,51 @@ try {
     $fakeVisualStudio = Join-Path $testDir 'VS2022-Community'
     foreach ($file in @(
         (Join-Path $fakeVisualStudio 'Common7\Tools\VsDevCmd.bat'),
-        (Join-Path $fakeVisualStudio 'MSBuild\Current\Bin\MSBuild.exe')
+        (Join-Path $fakeVisualStudio 'MSBuild\Current\Bin\MSBuild.exe'),
+        (Join-Path $fakeVisualStudio 'VC\Auxiliary\Build\Microsoft.VCToolsVersion.default.txt'),
+        (Join-Path $fakeVisualStudio 'VC\Tools\MSVC\14.44.35207\bin\Hostx64\x64\cl.exe')
     )) {
         New-Item -ItemType Directory -Path ([System.IO.Path]::GetDirectoryName($file)) -Force | Out-Null
         Set-Content -LiteralPath $file -Encoding Ascii -Value 'fixture'
     }
+    Set-Content -LiteralPath (Join-Path $fakeVisualStudio 'VC\Auxiliary\Build\Microsoft.VCToolsVersion.default.txt') -Encoding Ascii -Value '14.44.35207'
+    $fakeMsbuildDirectory = Join-Path $fakeVisualStudio 'MSBuild\Current\Bin\amd64'
+    New-Item -ItemType Directory -Path $fakeMsbuildDirectory -Force | Out-Null
+    $fakeMsbuild = Join-Path $fakeMsbuildDirectory 'MSBuild.exe'
+    Add-Type -OutputAssembly $fakeMsbuild -OutputType ConsoleApplication -TypeDefinition @'
+using System;
+using System.IO;
+public static class BootstrapMSBuildFixture {
+    public static int Main(string[] args) {
+        if (args.Length > 0 && args[0] == "--sleep") { System.Threading.Thread.Sleep(30000); }
+        string state = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "probe-state.txt");
+        if (File.Exists(state) && File.ReadAllText(state).Trim() == "broken") {
+            Console.Error.WriteLine("Fixture assembly startup failure");
+            return 7;
+        }
+        Console.WriteLine("17.14.0.0");
+        return 0;
+    }
+}
+'@
+    $boundedResult = Invoke-BoundedConfigureProbe -Executable $fakeMsbuild -Arguments '-nologo -version'
+    Assert-True (-not $boundedResult.TimedOut -and $boundedResult.ExitCode -eq 0 -and $boundedResult.Output -match '17.14.0.0') `
+        'The bounded configure runner lost a successful process exit or output.'
+    $boundedResult = Invoke-BoundedConfigureProbe -Executable $fakeMsbuild -Arguments '--sleep' -TimeoutMilliseconds 100
+    Assert-True $boundedResult.TimedOut 'The bounded configure runner did not terminate its sleeping fixture.'
     $fakeVsWhere = Join-Path $testDir 'vswhere.cmd'
+    $fakeInstancesFile = Join-Path $testDir 'instances.json'
+    $staleInstance = @{ installationPath = (Join-Path $testDir 'missing-unrelated-buildtools'); productId = 'Microsoft.VisualStudio.Product.BuildTools'; installationVersion = '17.14.37710.0' }
+    $validInstance = @{ installationPath = $fakeVisualStudio; productId = 'Microsoft.VisualStudio.Product.Community'; installationVersion = '17.12.12345.0'; isComplete = $false; isPrerelease = $true }
+    ConvertTo-Json -InputObject @($staleInstance, $validInstance) | Set-Content -LiteralPath $fakeInstancesFile -Encoding Ascii
     Set-Content -LiteralPath $fakeVsWhere -Encoding Ascii -Value @(
         '@echo off',
         'echo %* | findstr /L /C:"-products *" >nul || exit /b 7',
         'echo %* | findstr /C:"-requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64" >nul || exit /b 8',
-        'echo %* | findstr /C:"-property productId" >nul && (echo Microsoft.VisualStudio.Product.Community& exit /b 0)',
-        "echo $fakeVisualStudio"
+        'echo %* | findstr /C:"-latest" >nul && exit /b 9',
+        'echo %* | findstr /C:"-all" >nul || exit /b 10',
+        'echo %* | findstr /C:"-prerelease" >nul || exit /b 11',
+        ('type "{0}"' -f $fakeInstancesFile)
     )
     Assert-True ((Get-WindowsSdkVersion -Roots @($fakeSdkRoot)) -eq [version]$fakeSdkVersion) `
         'The Windows SDK probe rejected a complete supported fixture.'
@@ -208,6 +275,128 @@ try {
         'The Visual Studio product probe did not preserve the installed Community SKU.'
     Assert-True (Test-VisualCppBuildTools -VsWherePath $fakeVsWhere -WindowsSdkRoots @($fakeSdkRoot)) `
         'The combined Visual Studio C++ and Windows SDK fixture probe failed.'
+    Set-Content -LiteralPath (Join-Path $fakeMsbuildDirectory 'probe-state.txt') -Encoding Ascii -Value 'broken'
+    $brokenProbe = Test-VisualStudioMSBuild -Path $fakeMsbuild
+    Assert-True (-not $brokenProbe.Succeeded -and $brokenProbe.Reason -match 'exited 7') `
+        'The MSBuild probe accepted a process that failed during managed startup.'
+    $warningRecords = @()
+    Assert-True ($null -eq (Get-VisualStudioInstance -VsWherePath $fakeVsWhere -WarningVariable warningRecords)) `
+        'A registration with compiler files but broken MSBuild must not be selected.'
+    Assert-True (($warningRecords -join ' ') -match 'Fixture assembly startup failure') `
+        'The rejected MSBuild instance must retain its startup diagnosis.'
+    $alternateVisualStudio = Join-Path $testDir 'VS2022-Alternate'
+    Copy-Item -LiteralPath $fakeVisualStudio -Destination $alternateVisualStudio -Recurse
+    Set-Content -LiteralPath (Join-Path $alternateVisualStudio 'MSBuild\Current\Bin\amd64\probe-state.txt') -Encoding Ascii -Value 'working'
+    $alternateInstance = @{ installationPath = $alternateVisualStudio; productId = 'Microsoft.VisualStudio.Product.BuildTools'; installationVersion = '17.12.12344.0'; isComplete = $true; isPrerelease = $false }
+    ConvertTo-Json -InputObject @($validInstance, $alternateInstance) | Set-Content -LiteralPath $fakeInstancesFile -Encoding Ascii
+    Assert-True ((Get-VisualStudioInstance -VsWherePath $fakeVsWhere).installationPath -eq $alternateVisualStudio) `
+        'A broken MSBuild candidate must not hide a later usable instance.'
+    Set-Content -LiteralPath (Join-Path $fakeMsbuildDirectory 'probe-state.txt') -Encoding Ascii -Value 'working'
+    $validInstance.installationVersion = '18.0.12345.0'
+    ConvertTo-Json -InputObject @($staleInstance, $validInstance) | Set-Content -LiteralPath $fakeInstancesFile -Encoding Ascii
+    $selected = Get-VisualStudioInstance -VsWherePath $fakeVsWhere
+    Assert-True ($selected.installationPath -eq $fakeVisualStudio -and $selected.installationVersion -eq '18.0.12345.0' -and
+        $selected.isPrerelease -and -not $selected.isComplete) `
+        'The generic probe must preserve a usable VS 2026 preview path, version, and incomplete-registration receipt together.'
+    $validInstance.installationVersion = '17.12.12345.0'
+
+    ConvertTo-Json -InputObject @($staleInstance) | Set-Content -LiteralPath $fakeInstancesFile -Encoding Ascii
+    Assert-True ($null -eq (Get-VisualStudio2022Path -VsWherePath $fakeVsWhere)) `
+        'A missing registered instance must not count as an installed compiler.'
+    Assert-True ($null -eq (Get-VisualStudio2022Product -VsWherePath $fakeVsWhere)) `
+        'A stale instance must not supply a product identity.'
+    ConvertTo-Json -InputObject @($validInstance) | Set-Content -LiteralPath $fakeInstancesFile -Encoding Ascii
+    Set-Content -LiteralPath (Join-Path $fakeVisualStudio 'VC\Auxiliary\Build\Microsoft.VCToolsVersion.default.txt') -Encoding Ascii -Value '14.00.00000'
+    Assert-True ($null -eq (Get-VisualStudio2022Path -VsWherePath $fakeVsWhere)) `
+        'An instance whose default compiler is absent must not count as usable.'
+
+    # Execute the production CMD selection block, with disposable registrations
+    # and files, without entering compilation or installing any tools.
+    $batchText = (Get-Content -LiteralPath (Join-Path $RepositoryRoot 'build_win.bat') -Raw).Replace("`r`n", "`n")
+    $start = $batchText.IndexOf('IF DEFINED BAMBU_VS_INSTALLATION_PATH (')
+    $end = $batchText.IndexOf("`n:CHECK_MSVC_PATH`n")
+    Assert-True ($start -ge 0 -and $end -gt $start) 'The explicit CMD instance selection block is missing.'
+    $batchFixture = Join-Path $testDir 'select-instance.cmd'
+    $block = $batchText.Substring($start, $end - $start)
+    Set-Content -LiteralPath $batchFixture -Encoding Ascii -Value @(
+        '@echo off', 'setlocal disableDelayedExpansion', $block,
+        ':CHECK_MSVC_PATH', 'echo %MSVC_DIR%', 'exit /b 0', ':HELP', 'exit /b 1')
+    $environmentNames = @('BAMBU_VS_INSTALLATION_PATH', 'BAMBU_VS_INSTALLATION_VERSION', 'VSWHERE', 'PS_VERSION', 'PS_VERSION_EXCEEDED', 'PS_PRODUCT')
+    $oldEnvironment = @{}
+    foreach ($name in $environmentNames) { $oldEnvironment[$name] = [Environment]::GetEnvironmentVariable($name, 'Process') }
+    try {
+        $env:VSWHERE = $fakeVsWhere
+        $env:PS_PRODUCT = 'Community'
+        foreach ($major in @(17, 18)) {
+            $validInstance.installationVersion = "$major.0.12345.0"
+            ConvertTo-Json -InputObject @($validInstance) | Set-Content -LiteralPath $fakeInstancesFile -Encoding Ascii
+            # This fixture accepts the product filter used by the CMD contract.
+            Set-Content -LiteralPath $fakeVsWhere -Encoding Ascii -Value @(
+                '@echo off',
+                'echo %* | findstr /C:"-all" >nul || exit /b 10',
+                'echo %* | findstr /C:"-prerelease" >nul || exit /b 11',
+                ('type "{0}"' -f $fakeInstancesFile))
+            $env:PS_VERSION = [string]$major
+            $env:PS_VERSION_EXCEEDED = [string]($major + 1)
+            $env:BAMBU_VS_INSTALLATION_PATH = $fakeVisualStudio
+            $env:BAMBU_VS_INSTALLATION_VERSION = $validInstance.installationVersion
+            $selectionOutput = @(& cmd.exe /d /c ('call "' + $batchFixture + '" 2>&1'))
+            Assert-True ($LASTEXITCODE -eq 0 -and $selectionOutput -contains $fakeVisualStudio) `
+                "CMD rejected the exact VS $major fixture path."
+        }
+        foreach ($invalid in @((Join-Path $testDir 'absent'), 'relative-path', ($fakeVisualStudio + '" & echo INJECTION_EXECUTED & rem "'), ($fakeVisualStudio + "`ninvalid"))) {
+            $env:BAMBU_VS_INSTALLATION_PATH = $invalid
+            $selectionOutput = @(& cmd.exe /d /c ('call "' + $batchFixture + '" 2>&1'))
+            Assert-True ($LASTEXITCODE -ne 0 -and -not ($selectionOutput -match '^INJECTION_EXECUTED$')) `
+                'CMD accepted an invalid override or expanded it before validation.'
+        }
+        $env:BAMBU_VS_INSTALLATION_PATH = $fakeVisualStudio
+        foreach ($invalidVersion in @('18.0.99999.0', '18.0', '18.0.12345.0" & echo INJECTION_EXECUTED')) {
+            $env:BAMBU_VS_INSTALLATION_VERSION = $invalidVersion
+            $selectionOutput = @(& cmd.exe /d /c ('call "' + $batchFixture + '" 2>&1'))
+            Assert-True ($LASTEXITCODE -ne 0 -and -not ($selectionOutput -match '^INJECTION_EXECUTED$')) `
+                'CMD accepted a mismatched, incomplete, or unsafe instance version.'
+        }
+        $env:PS_VERSION = '19'
+        $env:BAMBU_VS_INSTALLATION_PATH = $fakeVisualStudio
+        $null = & cmd.exe /d /c ('call "' + $batchFixture + '" 2>&1')
+        Assert-True ($LASTEXITCODE -ne 0) 'CMD accepted an unsupported Visual Studio major override.'
+    } finally {
+        foreach ($name in $environmentNames) { [Environment]::SetEnvironmentVariable($name, $oldEnvironment[$name], 'Process') }
+    }
+
+    # Intercept the installer boundary. No download, installation, registration
+    # mutation, or elevation takes place in this regression fixture.
+    & {
+        $script:probeCount = 0
+        $script:capturedInstallerArguments = @()
+        $script:capturedInstallerUrl = ''
+        function Test-VisualCppBuildTools { $script:probeCount++; return ($script:probeCount -gt 1) }
+        function Get-Winget { throw 'Visual Studio bootstrap must not choose an implicit winget instance.' }
+        function Write-BuildLog { param($Message) }
+        function Invoke-SilentInstaller {
+            param($Url, $FileName, $Arguments, $WorkDir, $TrustedPublishers)
+            $script:capturedInstallerArguments = $Arguments
+            $script:capturedInstallerUrl = $Url
+        }
+        Install-VisualCppBuildTools -WorkDir $testDir
+        $arguments = $script:capturedInstallerArguments
+        $pathIndex = [array]::IndexOf($arguments, '--installPath')
+        Assert-True ($pathIndex -ge 0 -and $pathIndex + 1 -lt $arguments.Count) `
+            'The Visual Studio installer must receive an explicit installation path.'
+        $expectedPath = Join-Path $env:LOCALAPPDATA 'BambuStudioMD3\toolchain\BuildTools2026'
+        Assert-True ($arguments[$pathIndex + 1] -ceq ('"' + $expectedPath + '"')) `
+            'Visual Studio must use the quoted Bambu-owned path, preserving unrelated registrations.'
+        Assert-True ($arguments -contains '--norestart' -and $arguments -notcontains '--force') `
+            'Visual Studio bootstrap must not restart the host or force-close applications.'
+        Assert-True ($arguments -contains 'Microsoft.VisualStudio.Component.VC.Tools.x86.x64') `
+            'Visual Studio bootstrap must explicitly request the compiler, not only workload-required components.'
+        Assert-True ($script:capturedInstallerUrl -ceq 'https://aka.ms/vs/stable/vs_buildtools.exe') `
+            'The fallback must use Microsoft Stable, distinct from stale VS 2022 Release registrations.'
+        $nicknameIndex = [array]::IndexOf($arguments, '--nickname')
+        Assert-True ($nicknameIndex -ge 0 -and $arguments[$nicknameIndex + 1].Length -le 10) `
+            'The Visual Studio nickname must fit the documented ten-character limit.'
+    }
 
     $payloadDir = Join-Path $testDir 'payload'
     $nestedDir = Join-Path $payloadDir 'nested'
@@ -246,6 +435,29 @@ try {
             $_.TrimEnd('\') -ieq $registeredEntry.TrimEnd('\')
         }).Count -eq 1) `
             "PATH refresh did not append registry entry '$registeredEntry' exactly once."
+    }
+    if ($ProbeHostCMake) {
+        $instance = Get-VisualStudioInstance
+        Assert-True ($null -ne $instance) 'The requested host CMake probe requires a usable compiler instance.'
+        $major = ([version]$instance.installationVersion).Major
+        $generator = if ($major -eq 18) { 'Visual Studio 18 2026' } else { 'Visual Studio 17 2022' }
+        $minimumCMake = if ($major -eq 18) { '4.2' } else { '3.21' }
+        $generatorInstance = if ($major -eq 18) { "$($instance.installationPath),version=$($instance.installationVersion)" } else { [string]$instance.installationPath }
+        $cmake = Join-Path $instance.installationPath 'Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe'
+        Assert-True (Test-Path -LiteralPath $cmake -PathType Leaf) 'The host probe requires the selected instance bundled CMake.'
+        $probeSource = Join-Path $testDir 'cmake-probe'
+        New-Item -ItemType Directory -Path $probeSource | Out-Null
+        Set-Content -LiteralPath (Join-Path $probeSource 'CMakeLists.txt') -Encoding Ascii -Value @(
+            "cmake_minimum_required(VERSION $minimumCMake)", 'project(InstanceSelectionProbe NONE)')
+        Write-Host "Host CMake probe: generator='$generator'; path='$($instance.installationPath)'; version=$($instance.installationVersion); prerelease=$($instance.isPrerelease); registrationComplete=$($instance.isComplete)."
+        $arguments = '-S "{0}" -B "{1}" -G "{2}" -A x64 "-DCMAKE_GENERATOR_INSTANCE={3}"' -f `
+            $probeSource, (Join-Path $probeSource 'build'), $generator, $generatorInstance
+        $result = Invoke-BoundedConfigureProbe -Executable $cmake -Arguments $arguments
+        Write-Host $result.Output
+        Write-Host $result.ErrorOutput
+        Assert-True (-not $result.TimedOut) 'The host CMake configure probe exceeded its 60-second deadline.'
+        Assert-True ($result.ExitCode -eq 0) 'The bounded host CMake configure probe rejected the selected instance.'
+        Write-Host 'Host CMake configure-only probe passed; no application compilation or installer ran.'
     }
 }
 finally {
