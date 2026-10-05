@@ -32,6 +32,7 @@
 #include "GUI_Utils.hpp"
 #include "Widgets/Button.hpp"
 
+class MD3ScrolledWindow;
 class SwitchButton;
 class StaticBox;
 
@@ -185,6 +186,7 @@ class ParamsPanel : public wxPanel
         // scroller; then tell the host its height changed.
         void fit_page_to_content();
         void set_host_height_changed(std::function<void()> fn) { m_host_height_changed = std::move(fn); }
+        void set_scroll_reveal_owner(MD3ScrolledWindow *owner);
         std::function<void()> m_host_height_changed;
         wxPanel*    get_current_tab() { return m_current_tab; }
 
