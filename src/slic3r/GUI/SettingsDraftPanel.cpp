@@ -143,13 +143,21 @@ void SettingsDraftPanel::Rebuild() {
     filter(search->GetValue());
     const auto edited_id = m_active;
     const auto view_generation = m_view_generation;
-    scroll->Bind(wxEVT_SCROLLWIN, [this, scroll, edited_id, view_generation](wxScrollWinEvent &event) {
+    const auto remember_scroll = [this, scroll, edited_id, view_generation](wxScrollWinEvent &event) {
         event.Skip();
         CallAfter([this, scroll, edited_id, view_generation] {
             if (view_generation != m_view_generation || edited_id != m_active || !m_store.find(edited_id)) return;
             int x, y; scroll->GetViewStart(&x, &y); m_store.find(edited_id)->scroll_y = y; Persist();
         });
-    });
+    };
+    scroll->Bind(wxEVT_SCROLLWIN_TOP, remember_scroll);
+    scroll->Bind(wxEVT_SCROLLWIN_BOTTOM, remember_scroll);
+    scroll->Bind(wxEVT_SCROLLWIN_LINEUP, remember_scroll);
+    scroll->Bind(wxEVT_SCROLLWIN_LINEDOWN, remember_scroll);
+    scroll->Bind(wxEVT_SCROLLWIN_PAGEUP, remember_scroll);
+    scroll->Bind(wxEVT_SCROLLWIN_PAGEDOWN, remember_scroll);
+    scroll->Bind(wxEVT_SCROLLWIN_THUMBTRACK, remember_scroll);
+    scroll->Bind(wxEVT_SCROLLWIN_THUMBRELEASE, remember_scroll);
     GetSizer()->Add(scroll, 1, wxEXPAND);
     auto *actions = new wxWrapSizer(wxHORIZONTAL);
     auto button = [this, actions](const wxString &label, std::function<void()> action) {
