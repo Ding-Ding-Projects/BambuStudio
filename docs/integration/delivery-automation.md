@@ -77,6 +77,23 @@ license decision remains open independently and is not waived by this choice.
 
 ## Safety and remaining work
 
+### Local companion production staging
+
+`scripts/windows/Stage-Automation.ps1` supports both the hosted Windows route and
+the authorized local Windows production route. It requires the actual 64-bit
+Windows platform and an installed stable .NET 10 SDK. SDK selection uses a
+temporary `global.json` outside the checkout, so a newer installed preview does
+not silently become the production compiler. This host already has SDK
+`10.0.301`; no dependency installation was required for this repair.
+
+The identity retains schema version 1, source commit, executable hash, runtime
+and self-contained fields consumed by `Invoke-SquirrelPackage.ps1`. Additive
+`buildRoute` and `sdkVersion` identify the compiler route honestly. A local build
+records `workflowRun: null`; an actual hosted run requires the Windows runner
+and numeric workflow identity. Neither route fabricates environment variables.
+The coordinating build lane must compile and package the repaired candidate;
+this source change does not claim that production has succeeded.
+
 No configured printer or Home Assistant instance was contacted or changed. No
 physical print was submitted, no user credential was read, and no new data
 collection was introduced. No build, workflow, general widget, history, Plater or
