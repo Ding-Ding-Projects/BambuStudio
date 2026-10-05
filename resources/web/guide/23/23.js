@@ -550,7 +550,7 @@ function appendCustomRow(host, item)
   const row = $('<div>').addClass('CFilament_Item');
   $('<span>').addClass('CFilament_Name').attr('title', name).text(name).appendTo(row);
   $('<span>').addClass('CFilament_Type').text(DisplayInkWording(String(item.type || ''))).appendTo(row);
-  $('<span>').addClass('CFilament_Date').text(String(item.create_time || item.date || '').slice(0, 10)).appendTo(row);
+  $('<span>').addClass('CFilament_Date').text(BambuHumanDate.format(String(item.create_time || item.date || '').slice(0, 10))).appendTo(row);
   const edit = $('<button type="button">').addClass('CFilament_EditBtn')
     .attr('aria-label', GetCurrentPlainTextByKey('t128') + ' ' + name)
     .on('click', function() { CFEdit(id); });

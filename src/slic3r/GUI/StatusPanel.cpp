@@ -435,6 +435,10 @@ public:
         m_fade_timer.SetOwner(this, wxWindow::NewControlId());
 
         auto *root_sizer = new wxBoxSizer(wxVERTICAL);
+        m_zoom_hud = new CameraHUD(this);
+        m_zoom_hud->setting_chip()->Hide();
+        m_zoom_hud->fullscreen_chip()->Hide();
+        root_sizer->Add(m_zoom_hud, 0, wxEXPAND);
         m_video_host     = new wxPanel(this, wxID_ANY);
         m_video_host->SetBackgroundColour(*wxBLACK);
         m_video_sizer = new wxBoxSizer(wxVERTICAL);
@@ -547,6 +551,7 @@ public:
     void attach_media(wxMediaCtrl3 *media_ctrl)
     {
         m_media_ctrl = media_ctrl;
+        m_zoom_hud->AttachMedia(media_ctrl);
         m_saved_max_size = m_media_ctrl->GetMaxSize();
         m_media_ctrl->SetConstrainByAspectRatio(false);
         m_media_ctrl->SetMaxSize(wxDefaultSize);
@@ -566,6 +571,7 @@ public:
     void detach_media()
     {
         if (!m_media_ctrl) return;
+        m_zoom_hud->AttachMedia(nullptr);
         m_media_ctrl->Unbind(wxEVT_CHAR_HOOK, &CameraFullscreenFrame::on_char_hook, this);
         m_media_ctrl->Unbind(wxEVT_KEY_DOWN, &CameraFullscreenFrame::on_char_hook, this);
         m_media_ctrl->Unbind(wxEVT_MOTION, &CameraFullscreenFrame::on_mouse_motion, this);
@@ -774,6 +780,7 @@ private:
     wxWeakRef<wxWindow>          m_top_level;
     wxPanel                     *m_video_host{nullptr};
     wxBoxSizer                  *m_video_sizer{nullptr};
+    CameraHUD                   *m_zoom_hud{nullptr};
     wxMediaCtrl3                *m_media_ctrl{nullptr};
     wxSize                       m_saved_max_size{wxDefaultSize};
     CameraFullscreenCloseButton *m_close_button{nullptr};
@@ -2482,6 +2489,7 @@ wxBoxSizer *StatusBasePanel::create_monitoring_page()
     sizer->Add(m_camera_hud, 0, wxEXPAND | wxALL, 0);
 
     m_media_ctrl = new wxMediaCtrl3(this);
+    m_camera_hud->AttachMedia(m_media_ctrl);
     m_media_ctrl->SetMinSize(wxSize(PAGE_MIN_WIDTH, FromDIP(288)));
 
     m_media_play_ctrl = new MediaPlayCtrl(this, m_media_ctrl, wxDefaultPosition, wxSize(-1, FromDIP(40)));
@@ -4711,7 +4719,9 @@ void StatusPanel::update_ams(MachineObject *obj)
 
 void StatusPanel::show_ams_filament_hint(const std::string& ams_id, const std::string& slot_id)
 {
-    if (m_ams_control) m_ams_control->show_filament_hint(ams_id, slot_id);
+    (void) ams_id;
+    (void) slot_id;
+    // RFID recording does not create unsolicited slot badges.
 }
 
 void sGetSwitchInfo(MachineObject *obj, const std::string &ams_id, const std::string &slot_id, wxString &load_error_info, wxString &unload_error_info)

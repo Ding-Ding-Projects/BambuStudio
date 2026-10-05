@@ -120,6 +120,12 @@ void AppConfig::set_defaults()
             set_bool("show_drop_project_dialog", true);
 #endif
 
+        // Only absence migrates to the new default. Explicit opt-out survives.
+        if (get("auto_simplify_import").empty())
+            set_bool("auto_simplify_import", true);
+        if (get("auto_simplify_import_detail").empty())
+            set("auto_simplify_import_detail", "0.001");
+
         if (get("drop_project_action").empty())
             set_bool("drop_project_action", true);
 
@@ -342,9 +348,7 @@ void AppConfig::set_defaults()
         set_bool("show_build_edgets", false);
     }
 
-    if (get("show_daily_tips").empty()) {
-        set_bool("show_daily_tips", true);
-    }
+
 
     if (get("auto_calculate_flush").empty()){
         set("auto_calculate_flush","all");
@@ -463,8 +467,12 @@ void AppConfig::set_defaults()
     }
 
     if (get("liveview", "auto_stop_liveview").empty()) {
-        set("liveview", "auto_stop_liveview", true);
+        set("liveview", "auto_stop_liveview", false);
     }
+
+    // New and migrated profiles monitor continuously unless explicitly disabled.
+    for (const char *key : {"autoplay", "keep_liveview", "auto_retry"})
+        if (get("liveview", key).empty()) set("liveview", key, true);
 
     if (get("backup_interval").empty()) {
         set("backup_interval", "10");
@@ -521,26 +529,6 @@ void AppConfig::set_defaults()
     }
     if (get("is_split_compound").empty()) {
         set_bool("is_split_compound", false);
-    }
-    // Dual-extruder first-slice guide: per printer_model (H2D / H2D Pro / H2C); migrate legacy global play_slicing_video.
-    {
-        static const char* dual_extruder_slice_guide_models[] = { "Bambu Lab H2D", "Bambu Lab H2D Pro", "Bambu Lab H2C" };
-        const std::string  legacy_sv                            = get("play_slicing_video");
-        for (const char* model : dual_extruder_slice_guide_models) {
-            const std::string k = dual_extruder_first_slice_video_app_config_key(model);
-            if (get(k).empty()) {
-                if (!legacy_sv.empty())
-                    set(k, legacy_sv);
-                else
-                    set_bool(k, true);
-            }
-        }
-    }
-    if (get("show_fila_switch_tips").empty()) {
-        set_bool("show_fila_switch_tips", true);
-    }
-    if (get("play_tpu_printing_video").empty()) {
-        set_bool("play_tpu_printing_video", true);
     }
     if (get("show_wrapping_detect_dialog").empty()) {
         set_bool("show_wrapping_detect_dialog", true);

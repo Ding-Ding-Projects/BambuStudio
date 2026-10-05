@@ -31,6 +31,7 @@
 #include "libslic3r/I18N.hpp"
 #undef SLIC3R_ALLOW_LIBSLIC3R_I18N_IN_SLIC3R
 #include "slic3r/GUI/I18N.hpp"
+#include "HumanDate.hpp"
 
 #ifdef _WIN32
 #include "WindowsNativeVisualSmoke.hpp"
@@ -585,35 +586,18 @@ static void launch_squirrel_restart() {}
 
 #endif // _WIN32
 
-// The line under the splash title that says when this version was released:
-// the day the release host built it (the same workflow run publishes the
-// release, normally within the hour), shown in the user's time zone. Only a
-// public release build says "Released"; any other build says "Built". English
-// writes the date as "29 September 2026", Cantonese as "2026年9月29日", any
-// other language as the system's short date; bilingual mode stacks the English
-// and Cantonese lines. Empty when the build carries no UTC stamp.
+// A compiled timestamp is not verified release publication metadata.
+// Startup stays offline and reports Built for this exact binary.
 static wxString splash_release_date_text()
 {
-    const wxString stamp = wxString::FromUTF8(SLIC3R_BUILD_TIME_UTC); // 2026-09-28T23:55:52Z
-    wxDateTime when;
-    if (stamp.length() < 19 || !when.ParseISOCombined(stamp.Left(19), 'T'))
-        return wxString();
-    when.MakeFromUTC();
-
-    const wxString english_date = wxString::Format("%d %s %d", when.GetDay(),
-                                                   wxDateTime::GetEnglishMonthName(when.GetMonth()), when.GetYear());
-    // "%d年%d月%d日": year, month and day, the way Hong Kong writes a date.
-    const wxString cantonese_date = wxString::Format(wxString::FromUTF8("%d\xE5\xB9\xB4%d\xE6\x9C\x88%d\xE6\x97\xA5"),
-                                                     when.GetYear(), int(when.GetMonth()) + 1, when.GetDay());
-
-    const char *message = BBL_RELEASE_TO_PUBLIC ? L("Released %s") : L("Built %s");
-    const bool  standard = I18N::language_mode_profile().kind == I18N::LanguageModeKind::Standard;
-    const wxString english_copy = I18N::vocabulary(I18N::language_mode_service().english(wxString::FromUTF8(message)));
-    const I18N::FormattedLocalizedText text = I18N::translate_mode(message).format_each([&](const wxString &copy) {
-        // The English wording (also what Cantonese mode shows while the
-        // catalogue lacks the line) takes the English date, the Cantonese
-        // wording the Cantonese date.
-        const wxString date = standard ? when.FormatDate() : (copy == english_copy ? english_date : cantonese_date);
+    const wxDateTime when = HumanDate::utc_stamp(wxString::FromUTF8(SLIC3R_BUILD_TIME_UTC));
+    if (!when.IsValid()) return wxString();
+    const wxString english_copy = I18N::vocabulary(I18N::language_mode_service().english(wxString::FromUTF8(L("Built %s"))));
+    const auto text = I18N::translate_mode(L("Built %s")).format_each([&](const wxString &copy) {
+        const auto mode = I18N::language_mode_profile().kind;
+        const bool cantonese = mode == I18N::LanguageModeKind::CantoneseHongKong ||
+            (mode == I18N::LanguageModeKind::BilingualEnglishCantoneseHongKong && copy != english_copy);
+        const wxString date = cantonese ? HumanDate::cantonese(when) : HumanDate::english(when);
         return wxString::Format(copy, date);
     });
     return I18N::render_localized_text_stacked(text).label;
@@ -1825,11 +1809,7 @@ void GUI_App::post_init()
         //this->check_updates(false);
         //BOOST_LOG_TRIVIAL(info) << "after check_updates";
         CallAfter([this] {
-            bool cw_showed = this->config_wizard_startup();
-
-            // Dim sum surprise: one launch in ten, never on a first run, never
-            // over a wizard, a startup error, a modal dialog or a CLI-opened file.
-            DimSumSurprise::maybe_show_after_startup(cw_showed);
+            this->config_wizard_startup();
 
             std::string http_url = get_http_url(app_config->get_country_code());
             std::string language = GUI::into_u8(current_language_code_safe());
@@ -4300,18 +4280,9 @@ bool GUI_App::on_init_inner()
 
 void GUI_App::notify_new_rfid_filament(const std::string& ams_id, const std::string& slot_id)
 {
-    // This is the one place a pending badge becomes visible, on the native slot and on the Web
-    // page alike. "Don't show again" on the new-ink prompt turns it off for both.
-    if (is_new_filament_prompt_hidden())
-        return;
-
-    // The Web AMS panel tracks the hint on its own, so record it before the
-    // classic monitor check: the Web page may be up while the monitor is not.
-    DevicePageAmsControlWebVM::NotifyNewRfidFilament(ams_id, slot_id);
-
-    if (!mainframe || !mainframe->m_monitor) return;
-    auto* sp = mainframe->m_monitor->get_status_panel();
-    if (sp) sp->show_ams_filament_hint(ams_id, slot_id);
+    // Recording continues in the sync service without an unsolicited badge or dialog.
+    (void) ams_id;
+    (void) slot_id;
 }
 
 void GUI_App::open_new_official_filament_hint(const std::string& ams_id, const std::string& slot_id)
@@ -6462,7 +6433,8 @@ void GUI_App::check_new_version(bool show_tips, int by_user)
                     CallAfter([this, tag, name, by_user]() { this->start_auto_update(tag, name, by_user); });
                     return;
                 }
-                CallAfter([this, by_user]() { GUI::wxGetApp().request_new_version(by_user); });
+                if (by_user != 0)
+                    CallAfter([this, by_user]() { GUI::wxGetApp().request_new_version(by_user); });
             }
             catch (...) {
                 if (show_tips) this->no_new_version();
@@ -6481,7 +6453,7 @@ void GUI_App::start_auto_update(const std::string &tag, const std::string &name,
     if (!squirrel_update_exe(update_exe)) {
         // Not an installed copy after all: keep the manual route.
         BOOST_LOG_TRIVIAL(info) << "auto update: no Update.exe next to this copy, offering the download instead of updating to " << tag;
-        request_new_version(by_user);
+        if (by_user != 0) request_new_version(by_user);
         return;
     }
 
@@ -6516,13 +6488,9 @@ void GUI_App::start_auto_update(const std::string &tag, const std::string &name,
             if (is_closing())
                 return;
             if (updated) {
-                push_auto_update_ready_notification(tag);
-            } else if (by_user != 0 || m_auto_update_fallback_tag != tag) {
-                // The reason is in the log. The user still hears about the new version through the
-                // download dialog, as on a copy without automatic updates, so a broken update
-                // (a release without the update files, a blocked download) never hides a release.
-                // The six-hourly re-check shows it once per release; a manual check always does.
-                m_auto_update_fallback_tag = tag;
+                if (by_user != 0) push_auto_update_ready_notification(tag);
+            } else if (by_user != 0) {
+                // A requested update may offer its manual download fallback.
                 request_new_version(by_user);
             }
         });
@@ -6531,7 +6499,7 @@ void GUI_App::start_auto_update(const std::string &tag, const std::string &name,
     // Squirrel is a Windows installer: keep the download dialog everywhere else.
     (void) tag;
     (void) name;
-    request_new_version(by_user);
+    if (by_user != 0) request_new_version(by_user);
 #endif
 }
 
@@ -9312,7 +9280,8 @@ void GUI_App::check_updates(const bool verbose)
 
 void GUI_App::check_config_updates_from_updater()
 {
-    check_updates(false);
+    // Background synchronization must not interrupt work with a preset offer.
+    // Explicit Check for updates retains check_updates(true).
 }
 
 void GUI_App::check_config_updates_from_menu()

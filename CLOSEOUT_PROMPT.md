@@ -1,3 +1,9 @@
+# Current integration continuation, 5 October 2026
+
+The prior interface foundation and all eight approved responsive source branches are reconciled on `codex/bambu-complete-integration-20261005`. The eight-source ancestry checkpoint is `341e3b3420fb3bb3ef97331465a83578422c1e9b`; the commit containing this update additionally repairs the history detail scrollbar. See [the exact reconciliation record](docs/integration/responsive-reconciliation.md) for merge identities, checks, conflict decisions and incomplete acceptance. No default-branch integration, push, full native compile or release is claimed by this record.
+
+## Earlier continuation, preserved verbatim
+
 # Continuation: responsive workflows and local history
 
 Recorded 2026-10-04T22:18:27.172Z. The owner requested preservation and cleanup, then explicitly asked to pause the unfinished implementation goal after preservation. This record is a continuation handoff, not a completion or release claim. Tracking: [issue 56](https://github.com/Ding-Ding-Projects/BambuStudio/issues/56) and [discussion 57](https://github.com/Ding-Ding-Projects/BambuStudio/discussions/57).
@@ -196,3 +202,21 @@ Eight non-main checkout tips are not ancestors of remote main and remain retaine
 The prepublication native-verification route was assessed but not implemented: it
 would require coordinated authenticated source/identity changes across the installer,
 driver and evidence reader. Continue through the existing supported release route.
+
+## Adopted responsive continuation records
+
+- [Native lifecycle](docs/integration/continuations/native-lifecycle.md), source `67a8822a5489b464cce066742333bbe9ebe7c3d7`, integrated for combined verification; native acceptance remains pending.
+
+- [Settings drafts](docs/integration/continuations/draft-tabs.md), source `8cd7f8dc`, integrated for combined verification; named functional gaps and native acceptance remain pending.
+
+- [Sidebar scrolling](docs/integration/continuations/sidebar-scroll.md), source `b7c71450`, reconciled; native wheel/input acceptance remains pending.
+
+- [Readable dates](docs/integration/continuations/readable-dates.md), source `18e9728c`, reconciled; native formatting and visual acceptance remain pending. Combined scrollbar source check identified the draft panel native-scroller construction, now repaired to the existing shared scroller.
+
+- [Import and simplification](docs/integration/continuations/import-simplify.md), source `bf99b138`, reconciled; transactional publication, cancellation and native acceptance remain pending.
+
+- [Quiet workflow](docs/integration/continuations/quiet-prompts.md), source `ddb86c43`, reconciled; progress-card wrapping and stack geometry retained while automatic daily tips are removed. Native acceptance remains pending.
+
+- [Camera](docs/integration/continuations/camera.md), source `ba8abf2f`, reconciled. Standalone playback and geometry executables passed under the available GCC compiler; native media/backend interaction remains pending.
+
+- [Local history](docs/integration/continuations/local-history.md), source `768ec340`, reconciled; preset/draft hooks, comparison, restoration and native acceptance remain pending.

@@ -17,7 +17,7 @@ public:
     DevHMS(MachineObject* obj) : m_object(obj) {}
 
 public:
-    void                           ParseHMSItems(const json& hms_json);
+    void                           ParseHMSItems(const json& hms_json, bool fresh_report = false, bool complete_report = false);
     const std::vector<DevHMSItem>& GetHMSItems() const { return m_hms_list; };
 
 private:
@@ -68,14 +68,14 @@ public:
     bool has_read() const { return m_already_read; };
 
 protected:
-    friend void DevHMS::ParseHMSItems(const json& hms_json);
+    friend void DevHMS::ParseHMSItems(const json& hms_json, bool fresh_report, bool complete_report);
     bool parse_hms_info(unsigned attr, unsigned code);
 
 private:
-    ModuleID        m_module_id;
-    unsigned        m_module_num;
-    unsigned        m_part_id;
-    unsigned        m_reserved;
+    ModuleID        m_module_id = MODULE_UKNOWN;
+    unsigned        m_module_num = 0;
+    unsigned        m_part_id = 0;
+    unsigned        m_reserved = 0;
     HMSMessageLevel m_msg_level = HMS_UNKNOWN;
     int             m_msg_code = 0;
     bool            m_already_read = false;

@@ -28,7 +28,7 @@
       '<div class="regex-lab"></div>';
     var changelog = global.BAMBU_CHANGELOG || { releases: [] };
     var sample = changelog.releases.slice(0, 12).map(function (release) {
-      return release.tag + '  ' + release.name + '  ' + String(release.published).slice(0, 10);
+      return release.tag + '  ' + release.name + '  ' + site.formatDate(release.published);
     }).join('\n');
     global.BambuRegex.mountBuilder(panel.querySelector('.regex-lab'), {
       pattern: 'md3-v(\\d+)',

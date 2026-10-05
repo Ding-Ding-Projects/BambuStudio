@@ -8,10 +8,13 @@
 #include <wx/sizer.h>
 #include <wx/timer.h>
 #include <wx/window.h>
+#include <wx/weakref.h>
 
 #include "../wxExtensions.hpp" // ScalableBitmap
 #include "MaterialIcon.hpp"    // MaterialIcon::Glyph + draw helpers
 #include "MD3Tokens.hpp"       // MD3::Viewport::live
+
+class wxButton;
 
 namespace Slic3r { namespace GUI {
 
@@ -108,6 +111,7 @@ public:
     // current on-screen visibility, and the OS reduced-motion preference. Under
     // reduced motion the timer stops and the LIVE dot snaps to steady opacity.
     void SetLiveActive(bool live);
+    void AttachMedia(wxWindow *media);
 
     // Nozzle / bed temperature chips (kit camera-card temp readouts). Fed once
     // per refresh from StatusPanel::update_temp_ctrl; HideTemperatures() clears
@@ -137,6 +141,13 @@ public:
 private:
     void on_paint(wxPaintEvent &evt);
     void on_pulse(wxTimerEvent &evt);
+    void on_view_changed(wxCommandEvent &evt);
+    void change_zoom(double factor);
+    wxWeakRef<wxWindow> m_media;
+    CameraHUDChip *m_zoom_out{nullptr};
+    CameraHUDChip *m_zoom_in{nullptr};
+    CameraHUDChip *m_zoom_reset{nullptr};
+    wxButton *m_zoom_percent{nullptr};
 
     CameraHUDChip *    m_setting_chip{nullptr};
     CameraHUDChip *    m_fullscreen_chip{nullptr};

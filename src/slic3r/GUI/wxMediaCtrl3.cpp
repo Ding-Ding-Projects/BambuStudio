@@ -14,7 +14,7 @@
 #include <shellapi.h>
 #endif
 
-//wxDEFINE_EVENT(EVT_MEDIA_CTRL_STAT, wxCommandEvent);
+wxDEFINE_EVENT(EVT_MEDIA_CTRL_VIEW_CHANGED, wxCommandEvent);
 
 BEGIN_EVENT_TABLE(wxMediaCtrl3, wxWindow)
 
@@ -38,31 +38,83 @@ wxMediaCtrl3::wxMediaCtrl3(wxWindow *parent)
     m_render_timer.SetOwner(this);
     Bind(wxEVT_TIMER, &wxMediaCtrl3::OnRenderTimer, this);
     Bind(wxEVT_MOUSEWHEEL, &wxMediaCtrl3::mouseWheelEvent, this);
+    Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &evt) {
+        SetFocus();
+        if (GetZoom() > 1) { m_dragging = true; m_drag_point = evt.GetPosition(); CaptureMouse(); }
+        else evt.Skip();
+    });
+    Bind(wxEVT_LEFT_UP, [this](wxMouseEvent &evt) {
+        if (m_dragging) { m_dragging = false; if (HasCapture()) ReleaseMouse(); } evt.Skip();
+    });
+    Bind(wxEVT_MOUSE_CAPTURE_LOST, [this](wxMouseCaptureLostEvent &) { m_dragging = false; });
+    Bind(wxEVT_MOTION, [this](wxMouseEvent &evt) {
+        if (m_dragging && evt.LeftIsDown()) {
+            const wxPoint point = evt.GetPosition();
+            PanBy(point.x - m_drag_point.x, point.y - m_drag_point.y); m_drag_point = point;
+        } else evt.Skip();
+    });
+    Bind(wxEVT_CHAR_HOOK, [this](wxKeyEvent &evt) {
+        const int key = evt.GetKeyCode();
+        if (key == '+' || key == '=' || key == WXK_ADD || key == WXK_NUMPAD_ADD) SetZoom(GetZoom() * 1.1);
+        else if (key == '-' || key == WXK_SUBTRACT || key == WXK_NUMPAD_SUBTRACT) SetZoom(GetZoom() / 1.1);
+        else if (key == '0' || key == WXK_NUMPAD0) ResetCameraView();
+        else if (key == WXK_LEFT) PanBy(FromDIP(30), 0);
+        else if (key == WXK_RIGHT) PanBy(-FromDIP(30), 0);
+        else if (key == WXK_UP) PanBy(0, FromDIP(30));
+        else if (key == WXK_DOWN) PanBy(0, -FromDIP(30));
+        else evt.Skip();
+    });
+#if wxUSE_GESTURES
+    EnableTouchEvents(wxTOUCH_ZOOM_GESTURE);
+    Bind(wxEVT_GESTURE_ZOOM, [this](wxZoomGestureEvent &evt) {
+        if (evt.IsGestureStart()) m_gesture_start_zoom = GetZoom();
+        auto geometry = CameraGeometry(); const auto point = evt.GetPosition();
+        geometry.zoom_at(m_gesture_start_zoom * evt.GetZoomFactor(), point.x, point.y); SetCameraView(geometry.view);
+    });
+#endif
 }
 
+Slic3r::GUI::CameraViewGeometry wxMediaCtrl3::CameraGeometry()
+{
+    Slic3r::GUI::CameraViewGeometry geometry;
+    geometry.view = m_camera_view;
+    const auto size = GetClientSize(); geometry.width = size.x; geometry.height = size.y;
+    { std::lock_guard<std::mutex> lock(m_ui_mutex);
+      if (m_frame.IsOk()) { const auto frame = m_frame.GetSize(); geometry.image_width = frame.x; geometry.image_height = frame.y; } }
+    geometry.clamp(); return geometry;
+}
+void wxMediaCtrl3::NotifyCameraViewChanged()
+{
+    Refresh(false);
+    wxCommandEvent event(EVT_MEDIA_CTRL_VIEW_CHANGED, GetId());
+    event.SetEventObject(this); event.SetInt(wxRound(GetZoom() * 100)); ProcessWindowEvent(event);
+}
+void wxMediaCtrl3::SetCameraView(const Slic3r::GUI::CameraViewState &view)
+{
+    auto geometry = CameraGeometry(); geometry.view = view; geometry.clamp();
+    const auto &next = geometry.view;
+    if (next.zoom == m_camera_view.zoom && next.center_x == m_camera_view.center_x && next.center_y == m_camera_view.center_y) return;
+    m_camera_view = next; NotifyCameraViewChanged();
+}
+void wxMediaCtrl3::SetZoom(double zoom)
+{
+    auto geometry = CameraGeometry(); geometry.zoom_at(zoom, geometry.width / 2, geometry.height / 2); SetCameraView(geometry.view);
+}
+void wxMediaCtrl3::ZoomAt(double factor, const wxPoint &anchor)
+{
+    if (!std::isfinite(factor) || factor <= 0) return;
+    auto geometry = CameraGeometry(); geometry.zoom_at(GetZoom() * factor, anchor.x, anchor.y); SetCameraView(geometry.view);
+}
+void wxMediaCtrl3::PanBy(double dx, double dy)
+{
+    auto geometry = CameraGeometry(); geometry.pan(dx, dy); SetCameraView(geometry.view);
+}
 void wxMediaCtrl3::mouseWheelEvent(wxMouseEvent &evt)
 {
-    const int rotation = evt.GetWheelRotation();
-    if (rotation == 0) {
-        evt.Skip();
-        return;
-    }
-
-    // Digital zoom of the live view, 1x (fit) up to 5x, centred on the view.
-    const double factor = rotation > 0 ? 1.1 : 1.0 / 1.1;
-    double zoom = m_zoom * factor;
-
-    if (zoom < 1.0)
-        zoom = 1.0;
-    if (zoom > 5.0)
-        zoom = 5.0;
-
-    if (zoom != m_zoom) {
-        m_zoom = zoom;
-        Refresh();
-    }
+    if (!evt.GetWheelRotation() || evt.GetWheelAxis() != wxMOUSE_WHEEL_VERTICAL) { evt.Skip(); return; }
+    const int delta = evt.GetWheelDelta();
+    ZoomAt(std::pow(1.1, double(evt.GetWheelRotation()) / (delta > 0 ? delta : 120)), evt.GetPosition());
 }
-
 wxMediaCtrl3::~wxMediaCtrl3()
 {
     {
@@ -169,6 +221,7 @@ wxSize wxMediaCtrl3::DoGetBestSize() const
 
 static void adjust_frame_size(wxSize & frame, wxSize const & video, wxSize const & window)
 {
+    if (video.x <= 0 || video.y <= 0 || window.x <= 0 || window.y <= 0) { frame = wxDefaultSize; return; }
     if (video.x * window.y < video.y * window.x)
         frame = { video.x * window.y / video.y, window.y };
     else
@@ -235,23 +288,18 @@ void wxMediaCtrl3::paintEvent(wxPaintEvent &evt)
             delete gc;
         }
     } else {
-        // Base "contain" fit scale, then apply the digital zoom factor.
-        // At m_zoom == 1 this is identical to the normal fitted rendering.
-        double scale = 1.0;
-        if (size2.x != size.x || size2.y != size.y)
-            scale = (size.x * size2.y > size.y * size2.x)
-                ? double(size.y) / size2.y
-                : double(size.x) / size2.x;
-
-        const double effective_scale = scale * m_zoom;
-        dc.SetUserScale(effective_scale, effective_scale);
-
-        const int offset_x =
-            wxRound(size.x / 2.0 / effective_scale - size2.x / 2.0);
-        const int offset_y =
-            wxRound(size.y / 2.0 / effective_scale - size2.y / 2.0);
-
-        dc.DrawBitmap(current_frame, offset_x, offset_y);
+        auto geometry = CameraGeometry();
+        geometry.image_width = size2.x; geometry.image_height = size2.y; geometry.clamp();
+        m_camera_view = geometry.view;
+        const auto destination = geometry.rect();
+        if (destination.width > 0 && destination.height > 0) {
+            if (wxGraphicsContext *gc = wxGraphicsContext::Create(dc)) {
+                gc->SetInterpolationQuality(wxINTERPOLATION_BEST);
+                gc->Clip(0, 0, size.x, size.y);
+                gc->DrawBitmap(wxBitmap(current_frame), destination.x, destination.y, destination.width, destination.height);
+                delete gc;
+            }
+        }
     }
 
     // Draw watermark overlay when showing device preview image
@@ -353,6 +401,8 @@ void wxMediaCtrl3::DoSetSize(int x, int y, int width, int height, int sizeFlags)
     wxMediaCtrl_OnSize(this, m_video_size, width, height);
     std::unique_lock<std::mutex> lk(m_mutex);
     adjust_frame_size(m_frame_size, m_video_size, GetSize());
+    lk.unlock();
+    SetCameraView(m_camera_view);
     Refresh();
 }
 

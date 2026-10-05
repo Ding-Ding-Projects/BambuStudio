@@ -69,6 +69,7 @@ private:
     ScalableBitmap check_bitmap;
     ScalableBitmap arrow_bitmap;
 
+    unsigned long item_revision = 0;
     bool pressedDown = false;
     boost::posix_time::ptime dismissTime;
     wxPoint                  offset; // x not used
@@ -88,7 +89,7 @@ public:
     void Create(wxWindow * parent, long style = 0);
 
 public:
-    void Invalidate(bool clear = false);
+    void Invalidate(bool clear = false, bool items_changed = false);
 
     int GetSelection() const { return selection; }
 

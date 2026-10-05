@@ -545,6 +545,10 @@ public:
     bool load_svg(const wxArrayString &filenames, bool from_toolbar_or_file_menu = false);
     bool load_same_type_files(const wxArrayString &filenames);
     bool load_files(const wxArrayString& filenames);
+    // Acceptance means queued, not yet published. Vector overloads stay synchronous.
+    bool load_files_async(const std::vector<boost::filesystem::path>& input_files,
+                          LoadStrategy strategy, bool ask_multi, const std::string& snapshot_label);
+    void restore_import_originals();
     void statistics_burial_data_once(std::string json_str);//Upload to the cloud immediately
     void statistics_burial_data(std::string file_path);
     void statistics_burial_data_form_mw();

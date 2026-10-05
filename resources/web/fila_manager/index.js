@@ -743,7 +743,7 @@ function openDetail(id) {
     document.getElementById("det-v-param1").textContent = s.brand ? (s.brand + " " + (s.material_type||"") + " " + (s.series||"")) : "—";
     var alertMap = {0:"—", 10:"≦ 10g", 20:"≦ 20g", 30:"≦ 30g", 50:"≦ 50g"};
     document.getElementById("det-v-remain-alert").textContent = alertMap[s.remain_alert_pct] || "—";
-    document.getElementById("det-v-dry-date").textContent = s.dry_date || "—";
+    document.getElementById("det-v-dry-date").textContent = BambuHumanDate.format(s.dry_date) || "—";
     var dryMap = {0:"—", 7:"每周", 14:"每两周", 30:"每月", 60:"每两月"};
     document.getElementById("det-v-dry-reminder").textContent = dryMap[s.dry_reminder_days] || "—";
     var priceStr = "—";
@@ -1193,7 +1193,7 @@ document.addEventListener("DOMContentLoaded", function() {
             var d = new Date(now.getFullYear(), now.getMonth() - m, 1);
             var opt = document.createElement("option");
             opt.value = d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0");
-            opt.textContent = d.getFullYear() + "/" + (d.getMonth()+1);
+            opt.textContent = BambuHumanDate.monthYear(d.getFullYear(), d.getMonth());
             hmSel.appendChild(opt);
         }
         hmSel.addEventListener("change", function() { renderHeatmap(); });
@@ -1384,10 +1384,17 @@ function renderLineChart() {
     var now = new Date();
     ctx.textAlign = "center";
     ctx.fillStyle = labelColor;
+    var labelRight = -Infinity;
     data.forEach(function(v, i) {
         var d = new Date(now.getTime() - (days-1-i)*86400000);
         var x = pad.left + (chartW / (days-1)) * i;
-        ctx.fillText((d.getMonth()+1)+"/"+d.getDate(), x, h - 6);
+        var dateLabel = BambuHumanDate.format(d.toISOString());
+        var dateWidth = ctx.measureText(dateLabel).width;
+        var dateX = Math.max(dateWidth / 2, Math.min(w - dateWidth / 2, x));
+        if (dateX - dateWidth / 2 > labelRight + 8) {
+            ctx.fillText(dateLabel, dateX, h - 6);
+            labelRight = dateX + dateWidth / 2;
+        }
     });
 
     ctx.beginPath();
@@ -1441,11 +1448,18 @@ function renderBarChart() {
     var barW = Math.min(16, (groupW - 8) / types.length);
     var now = new Date();
     ctx.textAlign = "center";
+    var labelRight = -Infinity;
     barData.forEach(function(group, gi) {
         var gx = pad.left + groupW * gi + groupW / 2;
         var d = new Date(now.getTime() - (days-1-gi)*86400000);
         ctx.fillStyle = labelColor2;
-        ctx.fillText((d.getMonth()+1)+"/"+d.getDate(), gx, h - 6);
+        var dateLabel = BambuHumanDate.format(d.toISOString());
+        var dateWidth = ctx.measureText(dateLabel).width;
+        var dateX = Math.max(dateWidth / 2, Math.min(w - dateWidth / 2, gx));
+        if (dateX - dateWidth / 2 > labelRight + 8) {
+            ctx.fillText(dateLabel, dateX, h - 6);
+            labelRight = dateX + dateWidth / 2;
+        }
         var totalBarsW = barW * types.length + 2 * (types.length - 1);
         var startX = gx - totalBarsW / 2;
         group.forEach(function(v, bi) {

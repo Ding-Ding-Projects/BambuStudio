@@ -1,3 +1,6 @@
+> [!NOTE]
+> Automatic startup presentation has been removed. The descriptions below document the retired feature. See [quiet workflow](../windows/quiet-workflow.md) for current behavior.
+
 # Dim sum startup surprise
 
 On one launch in ten, the desktop app greets a returning user with a small card in the

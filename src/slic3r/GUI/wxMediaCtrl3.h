@@ -14,7 +14,9 @@
 #include "wx/timer.h"
 #include "../Utils/FrameBuffer.hpp"
 #include <atomic>
+#include "CameraViewGeometry.hpp"
 
+wxDECLARE_EVENT(EVT_MEDIA_CTRL_VIEW_CHANGED, wxCommandEvent);
 wxDECLARE_EVENT(EVT_MEDIA_CTRL_STAT, wxCommandEvent);
 wxDECLARE_EVENT(EVT_MEDIA_CTRL_FIRST_FRAME, wxCommandEvent);
 wxDECLARE_EVENT(EVT_MEDIA_CTRL_SESSION_END, wxCommandEvent);
@@ -87,6 +89,13 @@ public:
     void SetTrackChannel(const BambuLiveViewTrack::ChannelInfo& info);
 
     void UpdateSessionStat();
+    Slic3r::GUI::CameraViewState GetCameraView() const { return m_camera_view; }
+    void SetCameraView(const Slic3r::GUI::CameraViewState &view);
+    double GetZoom() const { return m_camera_view.zoom; }
+    void SetZoom(double zoom);
+    void ZoomAt(double factor, const wxPoint &anchor);
+    void PanBy(double dx, double dy);
+    void ResetCameraView() { SetCameraView({}); }
 
 protected:
     DECLARE_EVENT_TABLE()
@@ -126,7 +135,12 @@ private:
     wxSize m_frame_size = wxDefaultSize;
     PlayFrame m_frame;
     bool m_frame_is_default_bg = false; // whether m_frame currently holds the default background (guarded by m_ui_mutex)
-    double m_zoom = 1.0;   // digital zoom factor for the live view (mouse wheel)
+    Slic3r::GUI::CameraViewState m_camera_view;
+    Slic3r::GUI::CameraViewGeometry CameraGeometry();
+    void NotifyCameraViewChanged();
+    bool m_dragging = false;
+    wxPoint m_drag_point;
+    double m_gesture_start_zoom = 1.0;
     std::shared_ptr<wxURI> m_url;
     std::atomic<Bambu_Tunnel> m_tunnel{nullptr};
     std::mutex m_mutex;

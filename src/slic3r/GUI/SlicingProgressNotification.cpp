@@ -243,20 +243,12 @@ void NotificationManager::SlicingProgressNotification::render(GLCanvas3D& canvas
         m_line_height * 25.0f, right_margin + (move_from_overlay ? overlay_width + m_line_height * 5 : 0));
     m_window_width = column.width;
     const ImVec2 progress_child_window_padding = ImVec2(15.f, 0.f) * scale;
-    const ImVec2 dailytips_child_window_padding = ImVec2(15.f, 10.f) * scale;
     const float progress_panel_width = std::max(1.0f, m_window_width - 2 * progress_child_window_padding.x);
     const float status_icon_width = m_sp_state == SlicingProgressState::SP_COMPLETED ? 44.0f * scale : 0.0f;
     const float status_width = std::max(1.0f, progress_panel_width - 46.0f * scale - status_icon_width);
     const float status_height = ImGui::CalcTextSize(m_text1.c_str(), nullptr, false, status_width).y;
     const float progress_panel_height = std::max(58.0f * scale, status_height + m_line_height + 18.0f * scale);
-    const float dailytips_panel_width = std::max(1.0f, m_window_width - 2 * dailytips_child_window_padding.x - ImGui::GetStyle().ScrollbarSize - 2.0f * ImGui::GetStyle().WindowPadding.x);
-    // Keep the tips' internal layout intact and scroll its viewport when necessary.
-    // The collapsed controller is 58 logical pixels, as in DailyTipsPanel.
-    const float tips_content_height = (m_dailytips_panel->is_expanded() ? 380.0f : 58.0f) * scale;
-    const float dailytips_panel_height = std::min(tips_content_height,
-        PreviewLayout::tips_height(m_stack_top - m_stack_bottom, 0.0f, progress_panel_height,
-                                   2.0f * dailytips_child_window_padding.y, scale));
-    m_window_height = progress_panel_height + dailytips_panel_height + 2.0f * dailytips_child_window_padding.y;
+    m_window_height = progress_panel_height;
     if (!fit_to_stack(initial_y)) {
         ImGui::PopStyleVar(2);
         ImGui::PopStyleColor(1);
@@ -325,23 +317,7 @@ void NotificationManager::SlicingProgressNotification::render(GLCanvas3D& canvas
 			}
 			ImGui::EndChild();
 
-			// Separator Line
-			ImVec2 separator_min = ImVec2(ImGui::GetCursorScreenPos().x + progress_child_window_padding.x, ImGui::GetCursorScreenPos().y);
-			ImVec2 separator_max = ImVec2(ImGui::GetCursorScreenPos().x + progress_child_window_padding.x + progress_panel_width, ImGui::GetCursorScreenPos().y);
-			ImGui::GetCurrentWindow()->DrawList->AddLine(separator_min, separator_max, md3_notif_u32(MD3::Role::OutlineVariant, m_is_dark, (int)(255 * m_current_fade_opacity)));
 
-			child_name = "##DailyTipsPanel" + std::to_string(parent_window->ID);
-            const ImVec2 dailytips_pos = ImGui::GetCursorScreenPos() + dailytips_child_window_padding;
-            ImGui::SetNextWindowPos(dailytips_pos);
-            if (ImGui::BeginChild(child_name.c_str(), ImVec2(dailytips_panel_width + ImGui::GetStyle().ScrollbarSize + 2.0f * ImGui::GetStyle().WindowPadding.x, dailytips_panel_height), false)) {
-                const ImVec2 content_pos = ImGui::GetCursorScreenPos();
-                const ImVec2 content_size(dailytips_panel_width, tips_content_height);
-                m_dailytips_panel->set_position(content_pos);
-                m_dailytips_panel->set_size(content_size);
-                m_dailytips_panel->set_fade_opacity(m_current_fade_opacity);
-                render_dailytips_panel(content_pos, content_size);
-            }
-			ImGui::EndChild();
 		}
 
 		if (ImGui::IsMouseHoveringRect(ImGui::GetWindowPos(), ImGui::GetWindowPos() + ImGui::GetWindowSize(), true)) {

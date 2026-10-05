@@ -627,6 +627,12 @@ bool version_from_commit(git_repository *repository, git_commit *commit, Project
         return false;
     }
     version.commit_id = oid_buffer;
+    version.parent_ids.clear();
+    for (unsigned int index = 0; index < git_commit_parentcount(commit); ++index) {
+        char parent[GIT_OID_MAX_HEXSIZE + 1]{};
+        if (git_oid_tostr(parent, sizeof(parent), git_commit_parent_id(commit, index)) != nullptr)
+            version.parent_ids.emplace_back(parent);
+    }
 
     const char *message = git_commit_message(commit);
     version.message     = message != nullptr ? message : "";

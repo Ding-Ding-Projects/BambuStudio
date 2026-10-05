@@ -76,23 +76,25 @@ CameraPopup::CameraPopup(wxWindow *parent)
     top_sizer->Add(m_text_vcamera, 0, wxALIGN_CENTER_VERTICAL | wxALIGN_LEFT | wxALL, FromDIP(5));
     top_sizer->Add(m_switch_vcamera, 0, wxALIGN_CENTER_VERTICAL | wxALIGN_RIGHT | wxALL, FromDIP(5));
 
-#if !BBL_RELEASE_TO_PUBLIC
-    m_text_liveview_retry = new Label(m_panel, _L("Liveview Retry"));
-    m_text_liveview_retry->Wrap(-1);
-    m_text_liveview_retry->SetFont(Label::Head_14);
-    m_text_liveview_retry->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
-    m_switch_liveview_retry = new SwitchButton(m_panel);
-    bool auto_retry         = wxGetApp().app_config->get("liveview", "auto_retry") != "false";
-    m_switch_liveview_retry->SetValue(auto_retry);
-
-    top_sizer->Add(m_text_liveview_retry, 0, wxALIGN_CENTER_VERTICAL | wxALIGN_LEFT | wxALL, FromDIP(5));
-    top_sizer->Add(m_switch_liveview_retry, 0, wxALIGN_CENTER_VERTICAL | wxALIGN_RIGHT | wxALL, FromDIP(5));
-
-    m_switch_liveview_retry->Bind(wxEVT_TOGGLEBUTTON, [this](wxCommandEvent &e) {
-        wxGetApp().app_config->set("liveview", "auto_retry", e.IsChecked());
-        e.Skip();
-    });
-#endif
+    const auto add_monitor_option = [this, top_sizer](const wxString &title, const char *key, SwitchButton **control) {
+        auto *label = new Label(m_panel, title);
+        label->SetFont(Label::Head_14);
+        label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+        auto *toggle = new SwitchButton(m_panel);
+        toggle->SetName(title);
+        toggle->SetValue(wxGetApp().app_config->get("liveview", key) != "false");
+        top_sizer->Add(label, 0, wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(5));
+        top_sizer->Add(toggle, 0, wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(5));
+        const std::string setting(key);
+        toggle->Bind(wxEVT_TOGGLEBUTTON, [setting](wxCommandEvent &event) {
+            wxGetApp().app_config->set("liveview", setting, event.IsChecked());
+            wxGetApp().app_config->save();
+        });
+        *control = toggle;
+    };
+    add_monitor_option(_L("Start liveview automatically"), "autoplay", &m_switch_liveview_autoplay);
+    add_monitor_option(_L("Keep liveview active"), "keep_liveview", &m_switch_liveview_keepalive);
+    add_monitor_option(_L("Retry interrupted liveview"), "auto_retry", &m_switch_liveview_retry);
 
     //resolution
     m_text_resolution = new Label(m_panel, _L("Resolution"));
@@ -357,6 +359,9 @@ void CameraPopup::check_func_supported(MachineObject *obj2)
 
 void CameraPopup::update(bool vcamera_streaming)
 {
+    m_switch_liveview_autoplay->SetValue(wxGetApp().app_config->get("liveview", "autoplay") != "false");
+    m_switch_liveview_keepalive->SetValue(wxGetApp().app_config->get("liveview", "keep_liveview") != "false");
+    m_switch_liveview_retry->SetValue(wxGetApp().app_config->get("liveview", "auto_retry") != "false");
     if (!m_obj) return;
     m_switch_recording->SetValue(m_obj->camera_recording_when_printing);
     sync_resolution_setting(m_obj->camera_resolution);

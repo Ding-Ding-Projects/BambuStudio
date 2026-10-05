@@ -21,6 +21,8 @@ class wxCommandEvent;
 class wxDataViewEvent;
 class wxDataViewListCtrl;
 class wxSizeEvent;
+class wxChoice;
+class wxTextCtrl;
 
 namespace Slic3r::GUI {
 
@@ -68,6 +70,14 @@ private:
     void set_status(const wxString &message);
     void show_empty_state();
     void show_error(const wxString &message);
+    void set_view(const std::string &view);
+    void submit_search();
+    void populate_searches();
+    void compare_selection();
+    void pin_selection();
+    void rerun_search();
+    void delete_search();
+    void clear_searches();
     void update_selection();
     void cleanup_restore_temp();
 
@@ -92,6 +102,21 @@ private:
     ProjectHistoryManager        *m_manager{nullptr};
     std::filesystem::path         m_project_identity;
     std::vector<ProjectHistoryVersion> m_versions;
+    struct Origin {
+        std::string category, name, device, status, detail;
+        std::filesystem::path identity;
+        ProjectHistoryManager *manager{nullptr};
+    };
+    struct Aggregate { ProjectHistoryListResult project; std::vector<ProjectHistoryVersion> versions; std::vector<Origin> origins; };
+    std::vector<Origin> m_origins;
+    std::future<Aggregate> m_aggregate_future;
+    std::future<wxString> m_compare_future;
+    std::string m_view{"timeline"}, m_selected_id, m_compare_id, m_restore_category;
+    std::size_t m_compare_index{0};
+    std::vector<std::string> m_search_ids;
+    wxChoice *m_category_filter{nullptr}, *m_status_filter{nullptr}, *m_store_filter{nullptr};
+    wxTextCtrl *m_device_filter{nullptr}, *m_from_filter{nullptr}, *m_to_filter{nullptr}, *m_detail{nullptr};
+    Button *m_submit_button{nullptr}, *m_compare_button{nullptr}, *m_pin_button{nullptr}, *m_rerun_button{nullptr}, *m_delete_button{nullptr}, *m_clear_button{nullptr};
 
     std::future<ProjectHistoryListResult>    m_list_future;
     std::future<ProjectHistoryRestoreResult> m_restore_future;

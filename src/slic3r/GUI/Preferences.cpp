@@ -33,6 +33,7 @@
 #include "Widgets/SearchField.hpp"
 #include "Widgets/Slider.hpp"
 #include "Widgets/TabStrip.hpp"
+#include "SettingsDraftPanel.hpp"
 #include "Widgets/MD3ColorPicker.hpp"
 #include "Widgets/MD3DialogChrome.hpp"
 #include "Widgets/StaticBox.hpp"
@@ -1183,7 +1184,7 @@ wxBoxSizer *PreferencesDialog::create_item_checkbox(wxString title, wxWindow *pa
     if (param == "privacyuse") {
         checkbox->SetValue((app_config->get("firstguide", param) == "true") ? true : false);
     } else if (param == "auto_stop_liveview") {
-        checkbox->SetValue((app_config->get("liveview", param) == "true") ? false : true);
+        checkbox->SetValue(app_config->get("liveview", "keep_liveview") != "false");
     } else {
         checkbox->SetValue((app_config->get(param) == "true") ? true : false);
     }
@@ -1228,7 +1229,8 @@ wxBoxSizer *PreferencesDialog::create_item_checkbox(wxString title, wxWindow *pa
             app_config->save();
         }
         else if (param == "auto_stop_liveview") {
-            app_config->set("liveview", param, !checkbox->GetValue());
+            app_config->set("liveview", "keep_liveview", checkbox->GetValue());
+            app_config->save();
         }
         else {
             app_config->set_bool(param, checkbox->GetValue());
@@ -1614,8 +1616,8 @@ void PreferencesDialog::create()
     strip_opts.surface_name    = _L("Preferences");
     strip_opts.strip_name      = _L("Settings sections");
     strip_opts.default_edge    = MD3::Tabs::DockEdge::Left;
-    strip_opts.close_mode      = TabStrip::CloseMode::Hide; // "close" hides a section; restore from the overflow menu
-    strip_opts.show_new_button = false;
+    strip_opts.close_mode      = TabStrip::CloseMode::Close; // "close" hides a section; restore from the overflow menu
+    strip_opts.show_new_button = true;
     m_tabbar = new TabStrip(this, strip_opts);
     m_book   = new wxSimplebook(this, wxID_ANY);
 
@@ -1654,6 +1656,13 @@ void PreferencesDialog::create()
     add_tab("developer", _L("Developer Tools"), create_developer_tab());
 #endif
 
+    auto *draft_panel = new SettingsDraftPanel(m_book, m_tabbar, [this](bool draft) {
+        if (draft) m_book->SetSelection(m_book->GetPageCount() - 1);
+        else if (m_book->GetSelection() == int(m_book->GetPageCount() - 1)) m_book->SetSelection(0);
+    });
+    m_book->AddPage(draft_panel, _L("Settings draft"));
+    draft_panel->Show();
+
     // Apply the saved layout, then show whichever section the strip made
     // active (the saved one, or the first displayed section).
     m_tabbar->LoadLayout();
@@ -1663,7 +1672,8 @@ void PreferencesDialog::create()
         if (page < 0 && !m_page_ids.empty())
             m_tabbar->Activate(m_page_ids[0], /*emit*/ false);
     }
-    m_tabbar->Bind(EVT_TABSTRIP_ACTIVATE, [this](wxCommandEvent &e) {
+    m_tabbar->Bind(EVT_TABSTRIP_ACTIVATE, [this, draft_panel](wxCommandEvent &e) {
+        if (draft_panel->Activate(std::string(e.GetString().ToUTF8()))) return;
         const int page = page_for_id(std::string(e.GetString().ToUTF8()));
         if (page >= 0 && page != m_book->GetSelection())
             m_book->SetSelection(page);
@@ -2937,6 +2947,22 @@ wxWindow *PreferencesDialog::create_general_tab()
     sizer->Add(item_downloads, flags);
     sizer->Add(item_external_editor, flags);
     sizer->Add(item_external_editor_path, flags);
+
+    auto title_model_import = create_item_title(_L("Model import"), scrolled, _L("Model import"));
+    auto item_auto_simplify_import = create_item_checkbox(
+        _L("Automatically simplify large imported models"), scrolled,
+        _L("Simplify meshes with at least 1,000,000 triangles before adding them to the scene. Source files are unchanged. Saved projects and meshes with painting or protected metadata keep their original geometry."),
+        50, "auto_simplify_import");
+    auto item_auto_simplify_detail = create_item_combobox(
+        _L("Import simplification detail"), scrolled,
+        _L("Uses the same detail levels as the manual Simplify tool. Extra high is the default."),
+        "auto_simplify_import_detail",
+        {_L("Extra high"), _L("High"), _L("Medium"), _L("Low"), _L("Extra low")},
+        {"0.001", "0.01", "0.1", "0.5", "1"});
+    sizer->Add(title_model_import, wxSizerFlags().Expand().Border(wxTOP, FromDIP(24)));
+    sizer->AddSpacer(FromDIP(8));
+    sizer->Add(item_auto_simplify_import, flags);
+    sizer->Add(item_auto_simplify_detail, flags);
     scrolled->SetSizer(sizer);
     scrolled->FitInside();
     return scrolled;
@@ -2959,8 +2985,8 @@ wxWindow *PreferencesDialog::create_user_tab()
                                                                 "use_12h_time_format", time_labels, time_values);
 
     auto item_auto_stop_liveview =
-        create_item_checkbox(_L("Keep liveview when printing."), scrolled,
-                             _L("By default, Liveview will pause after 15 minutes of inactivity on the computer. Check this box to disable this feature during printing."), 50,
+        create_item_checkbox(_L("Keep liveview active"), scrolled,
+                             _L("Keep the camera streaming while idle, on other tabs, or minimized. This does not enable recording."), 50,
                              "auto_stop_liveview");
 
     auto item_auto_transfer = create_item_checkbox(_L("Automatically transfer modified value when switching process and filament presets"), scrolled,
@@ -3576,6 +3602,8 @@ void PreferencesDialog::on_reset_preferences()
         "3d_middle_tooltip_offset_y",
         "toolbar_style",
         "show_shells_in_preview",
+        "auto_simplify_import",
+        "auto_simplify_import_detail",
         "enable_step_mesh_setting",
         "import_single_svg_and_split",
         "gamma_correct_in_import_obj",

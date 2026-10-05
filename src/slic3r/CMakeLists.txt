@@ -216,6 +216,9 @@ set(SLIC3R_GUI_SOURCES
     GUI/GCodeViewer.cpp
     GUI/ImageDPIFrame.cpp
     GUI/ImageDPIFrame.hpp
+    GUI/SettingsDraftUndo.cpp
+    GUI/SettingsDraftStore.cpp
+    GUI/SettingsDraftPanel.cpp
     GUI/Preferences.cpp
     GUI/Preferences.hpp
     GUI/AMSSetting.cpp
@@ -449,6 +452,8 @@ set(SLIC3R_GUI_SOURCES
     GUI/UpdateDialogs.hpp
     GUI/Jobs/Job.hpp
     GUI/Jobs/Job.cpp
+    GUI/Jobs/ImportJob.hpp
+    GUI/Jobs/ImportJob.cpp
     GUI/Jobs/JobNew.hpp
     GUI/Jobs/Worker.hpp
     GUI/Jobs/BoostThreadWorker.hpp
@@ -870,6 +875,12 @@ list(APPEND SLIC3R_GUI_SOURCES
     GUI/Export/ExportDialog.hpp
     GUI/StopPrintGate.cpp
     GUI/StopPrintGate.hpp
+    GUI/PrinterHistory.cpp
+    GUI/PrinterHistory.hpp
+    GUI/HistorySearchStore.cpp
+    GUI/HistorySearchStore.hpp
+    GUI/LocalConfigHistory.cpp
+    GUI/LocalConfigHistory.hpp
     GUI/PreferencesHistory.cpp
     GUI/PreferencesHistory.hpp
     GUI/PrinterWatch.cpp

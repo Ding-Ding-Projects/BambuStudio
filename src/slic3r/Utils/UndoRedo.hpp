@@ -50,6 +50,11 @@ enum class SnapshotType : unsigned char {
 // is likely cheaper in term of both the runtime and memory allocation.
 // Also the SnapshotData is available without having to deserialize the snapshot from the Undo / Redo stack,
 // which may be handy sometimes.
+struct SnapshotAttachment
+{
+    virtual ~SnapshotAttachment() = default;
+};
+
 struct SnapshotData
 {
 	SnapshotType        snapshot_type;
@@ -57,6 +62,8 @@ struct SnapshotData
 	// Bitmap of Flags (see the Flags enum).
 	unsigned int        flags { 0 };
     int                 layer_range_idx { -1 };
+    // Optional domain-owned state follows the snapshot's lifetime and pruning.
+    std::shared_ptr<const SnapshotAttachment> attachment;
 
 	// Bitmask of various binary flags to be stored with the snapshot.
 	enum Flags {

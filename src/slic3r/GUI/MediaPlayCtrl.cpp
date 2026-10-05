@@ -1,4 +1,7 @@
+#include "HumanDate.hpp"
 #include "MediaPlayCtrl.h"
+#include "CameraPlaybackPolicy.hpp"
+#include <sstream>
 #include "Widgets/Button.hpp"
 #include "Widgets/MaterialIcon.hpp"
 #include "Widgets/CheckBox.hpp"
@@ -224,6 +227,13 @@ MediaPlayCtrl::MediaPlayCtrl(wxWindow *parent, wxMediaCtrl3 *media_ctrl, const w
     parent->Bind(wxEVT_SHOW, &MediaPlayCtrl::on_show_hide, this);
     parent->GetParent()->GetParent()->Bind(wxEVT_SHOW, &MediaPlayCtrl::on_show_hide, this);
 
+    m_media_window = m_media_ctrl;
+    m_retry_timer.SetOwner(this);
+    Bind(wxEVT_TIMER, &MediaPlayCtrl::on_retry_timer, this, m_retry_timer.GetId());
+    m_retry_timer.Start(1000);
+#ifndef __WXMAC__
+    m_media_ctrl->Bind(EVT_MEDIA_CTRL_VIEW_CHANGED, &MediaPlayCtrl::on_camera_view_changed, this);
+#endif
     m_lan_user = "bblp";
     m_lan_passwd = "bblp";
     m_image_transfer = std::make_shared<FileTransferObject>();
@@ -231,6 +241,12 @@ MediaPlayCtrl::MediaPlayCtrl(wxWindow *parent, wxMediaCtrl3 *media_ctrl, const w
 
 MediaPlayCtrl::~MediaPlayCtrl()
 {
+    m_retry_timer.Stop();
+#ifndef __WXMAC__
+    if (m_media_window.get()) m_media_ctrl->Unbind(EVT_MEDIA_CTRL_VIEW_CHANGED, &MediaPlayCtrl::on_camera_view_changed, this);
+#endif
+    save_camera_view();
+    ++m_callback_generation;
     {
         boost::unique_lock lock(m_mutex);
         m_tasks.push_back("<exit>");
@@ -277,8 +293,7 @@ void MediaPlayCtrl::SetMachineObject(MachineObject* obj)
     m_was_eligible = eligible;
     if (IsShownOnScreen() && !m_view_active) {
         m_view_active = true;
-        m_user_paused = false;
-        if (eligible)
+        if (eligible && autoplay_liveview() && !m_user_paused && !m_retry_blocked && m_failed_retry == 0)
             m_next_retry = wxDateTime::Now();
     }
     if (machine == m_machine) {
@@ -286,7 +301,7 @@ void MediaPlayCtrl::SetMachineObject(MachineObject* obj)
             ++m_callback_generation;
             m_next_retry = wxDateTime();
             Stop();
-        } else if (!was_eligible && eligible && !m_user_paused) {
+        } else if (!was_eligible && eligible && !m_user_paused && !m_retry_blocked && autoplay_liveview()) {
             // A reconnect starts a new playback attempt; ordinary telemetry does not.
             m_next_retry = wxDateTime::Now();
         }
@@ -309,7 +324,7 @@ void MediaPlayCtrl::SetMachineObject(MachineObject* obj)
                 m_play_timer = now + 1min;
 #if BBL_RELEASE_TO_PUBLIC
                 BOOST_LOG_TRIVIAL(info) << "MediaPlayCtrl playing..., idle: " << SecondsSinceLastInput() << "printIdle: " << m_print_idle;
-                if (SecondsSinceLastInput() >= 900) { // 15 min
+                if (!keep_liveview() && SecondsSinceLastInput() >= 900) { // 15 min
                     auto close = wxGetApp().app_config->get("liveview", "auto_stop_liveview") == "true";
                     if (close || obj == nullptr || !obj->is_in_printing()) {
                         m_next_retry = wxDateTime();
@@ -319,7 +334,7 @@ void MediaPlayCtrl::SetMachineObject(MachineObject* obj)
                 }
                 if (obj && obj->is_in_printing()) {
                     m_print_idle = 0;
-                } else if (++m_print_idle >= 5) {
+                } else if (!keep_liveview() && ++m_print_idle >= 5) {
                     m_next_retry = wxDateTime();
                     Stop(_L("Temporarily closed because there is no printing for a while."));
                 }
@@ -328,10 +343,13 @@ void MediaPlayCtrl::SetMachineObject(MachineObject* obj)
         }
         return;
     }
+    save_camera_view();
     m_machine = machine;
+    restore_camera_view();
     ++m_callback_generation;
     m_image_token = std::make_shared<int>(0);
     m_user_paused = false;
+    m_retry_blocked = false;
     BOOST_LOG_TRIVIAL(info) << "MediaPlayCtrl switch machine: " << BBLCrossTalk::Crosstalk_DevId(m_machine);
     m_disable_lan = false;
     m_failed_retry = 0;
@@ -346,7 +364,7 @@ void MediaPlayCtrl::SetMachineObject(MachineObject* obj)
     }
     if (m_last_state != MEDIASTATE_IDLE)
         Stop(" ");
-    if (eligible) // Try open 2 seconds later, to avoid state conflict
+    if (eligible && autoplay_liveview()) // Try open 2 seconds later, to avoid state conflict
         m_next_retry = wxDateTime::Now() + wxTimeSpan::Seconds(2);
     else {
         m_next_retry = wxDateTime();
@@ -452,11 +470,9 @@ void refresh_agora_url(char const* device, char const* dev_ver, char const* chan
 
 void MediaPlayCtrl::Play()
 {
-    if (m_user_paused)
+    if (!CameraPlaybackPolicy::may_start(m_user_paused, m_was_eligible, IsShownOnScreen(), keep_liveview()))
         return;
     if (!m_next_retry.IsValid() || wxDateTime::Now() < m_next_retry)
-        return;
-    if (!IsShownOnScreen())
         return;
     if (m_last_state != MEDIASTATE_IDLE) {
         return;
@@ -519,6 +535,8 @@ void MediaPlayCtrl::Play()
     // !m_lan_mode && !m_remote_proto && m_lan_proto == LVL_None (x)
 
     if (m_lan_proto <= MachineObject::LVL_Disable && (m_lan_mode || !m_remote_proto)) {
+        m_retry_blocked = true;
+        m_next_retry = wxDateTime();
         Stop(m_lan_proto == MachineObject::LVL_None
             ? _L("Problem occurred. Please update the printer firmware and try again.")
             : _L("LAN Only Liveview is off. Please turn on the liveview on printer screen."));
@@ -601,6 +619,7 @@ void MediaPlayCtrl::Stop(wxString const &msg, wxString const &msg2)
     int last_state = m_last_state;
 
     if (m_last_state != MEDIASTATE_IDLE) {
+        ++m_callback_generation;
         m_pending_start_liveview_json.clear();
         m_media_ctrl->InvalidateBestSize();
         m_button_play->SetGlyph(MaterialIcon::PlayArrow);
@@ -628,8 +647,9 @@ void MediaPlayCtrl::Stop(wxString const &msg, wxString const &msg2)
         } else
             SetStatus(_L("Video Stopped."), false);
         m_last_state = MEDIASTATE_IDLE;
+        m_retry_blocked = !CameraPlaybackPolicy::retryable(m_failed_code);
         bool auto_retry = wxGetApp().app_config->get("liveview", "auto_retry") != "false";
-        if (!auto_retry || m_failed_code >= 100 || m_failed_code == 1 || m_failed_code == -2) // not keep retry on local error or EOS
+        if (!auto_retry || !CameraPlaybackPolicy::retryable(m_failed_code) || m_user_paused)
             m_next_retry = wxDateTime();
     } else if (!msg.IsEmpty()) {
         SetStatus(msg, false);
@@ -693,24 +713,14 @@ void MediaPlayCtrl::Stop(wxString const &msg, wxString const &msg2)
     // Set idle image after video stops
     m_media_ctrl->SetIdleImage(from_u8(resources_dir() + "/images/liveview_bg.png"));
 
-    bool local = tunnel == "local" || tunnel == "rtsp" ||
-                 tunnel == "rtsps";
-    if (m_failed_code < 0 && last_state != wxMEDIASTATE_PLAYING && local && (m_failed_retry > 1 || m_user_triggered)) {
-        m_next_retry = wxDateTime(); // stop retry
-        if (wxGetApp().show_modal_ip_address_enter_dialog(false, _L("LAN Connection Failed (Failed to start liveview)"))) {
-            m_failed_retry = 0;
-            m_user_triggered = true;
-            if (m_last_user_play + wxTimeSpan::Minutes(5) < wxDateTime::Now()) {
-                m_last_failed_codes.clear();
-                m_last_user_play = wxDateTime::Now();
-            }
-            m_next_retry   = wxDateTime::Now();
-            return;
-        }
-    }
+    // Automatic retries stay inline rather than opening unattended dialogs.
     m_user_triggered = false;
-    if (m_next_retry.IsValid())
-        m_next_retry = wxDateTime::Now() + wxTimeSpan::Seconds(5 * m_failed_retry);
+    if (m_next_retry.IsValid()) {
+        const int delay = CameraPlaybackPolicy::retry_delay_seconds(m_failed_retry);
+        m_next_retry = wxDateTime::Now() + wxTimeSpan::Seconds(delay);
+        SetStatus(wxString::Format(_L("Connection interrupted. Retrying in %d seconds."), delay), false);
+    }
+
 }
 
 void MediaPlayCtrl::TogglePlay()
@@ -723,6 +733,7 @@ void MediaPlayCtrl::TogglePlay()
         m_next_retry = wxDateTime();
     } else {
         m_user_paused = false;
+        m_retry_blocked = false;
         m_failed_retry = 0;
         m_user_triggered = true;
         if (m_last_user_play + wxTimeSpan::Minutes(5) < wxDateTime::Now()) {
@@ -986,10 +997,7 @@ void MediaPlayCtrl::start_device_image_flow()
         std::string mode_str = mode_to_string(mode);
         // Generate watermark text at image fetch time, not at paint time
         time_t fetch_time = time(nullptr);
-        std::tm *local_tm = std::localtime(&fetch_time);
-        char time_buf[32];
-        strftime(time_buf, sizeof(time_buf), "%Y-%m-%d %H:%M:%S", local_tm);
-        wxString watermark = _L("Printer Preview") + wxString::Format("  %s", time_buf);
+        wxString watermark = _L("Printer Preview") + "  " + HumanDate::date_time(wxDateTime(fetch_time), true);
         CallAfter([this, image_token, img = std::move(image), request_machine, mode_str, watermark]() {
             if (image_token.expired())
                 return;
@@ -1253,24 +1261,69 @@ void MediaPlayCtrl::load()
     m_cond.notify_all();
 }
 
+bool MediaPlayCtrl::keep_liveview() const
+{
+    return wxGetApp().app_config->get("liveview", "keep_liveview") != "false";
+}
+
+bool MediaPlayCtrl::autoplay_liveview() const
+{
+    return wxGetApp().app_config->get("liveview", "autoplay") != "false";
+}
+
+void MediaPlayCtrl::on_retry_timer(wxTimerEvent &)
+{
+    if (m_isBeingDeleted) return;
+    if (m_camera_view_dirty) { save_camera_view(); m_camera_view_dirty = false; }
+    if ((m_last_state == MEDIASTATE_LOADING || m_last_state == MEDIASTATE_INITIALIZING) &&
+        std::chrono::system_clock::now() - m_play_timer >= 15s) {
+        m_failed_code = 2;
+        Stop(_L("Loading failed. Please check the network and try again."));
+    }
+    if (m_was_eligible) Play();
+}
+
+void MediaPlayCtrl::on_camera_view_changed(wxCommandEvent &evt)
+{
+    m_camera_view_dirty = true;
+    evt.Skip();
+}
+
+void MediaPlayCtrl::save_camera_view()
+{
+#ifndef __WXMAC__
+    if (m_machine.empty() || !m_media_window.get()) return;
+    const auto view = m_media_ctrl->GetCameraView();
+    std::ostringstream value;
+    value.imbue(std::locale::classic());
+    value << view.zoom << ' ' << view.center_x << ' ' << view.center_y;
+    wxGetApp().app_config->set("camera_view", m_machine, value.str());
+    wxGetApp().app_config->save();
+#endif
+}
+
+void MediaPlayCtrl::restore_camera_view()
+{
+#ifndef __WXMAC__
+    CameraViewState view;
+    std::istringstream value(wxGetApp().app_config->get("camera_view", m_machine));
+    value.imbue(std::locale::classic());
+    if (!(value >> view.zoom >> view.center_x >> view.center_y)) view = CameraViewState{};
+    m_media_ctrl->SetCameraView(view);
+#endif
+}
+
 void MediaPlayCtrl::on_show_hide(wxShowEvent &evt)
 {
     evt.Skip();
     if (m_isBeingDeleted) return;
-    if (IsShownOnScreen()) {
-        if (!m_view_active) {
-            m_view_active = true;
-            m_user_paused = false;
-            m_failed_retry = 0;
-            if (m_was_eligible)
-                m_next_retry = wxDateTime::Now() + wxTimeSpan::Seconds(2);
-        }
+    m_view_active = IsShownOnScreen();
+    if (m_view_active) {
+        if (!m_user_paused && !m_retry_blocked && autoplay_liveview() && !m_next_retry.IsValid() && m_was_eligible && m_failed_retry == 0)
+            m_next_retry = wxDateTime::Now() + wxTimeSpan::Seconds(2);
         Play();
         start_device_image_flow();
-    } else {
-        if (!m_view_active)
-            return;
-        m_view_active = false;
+    } else if (!keep_liveview()) {
         ++m_callback_generation;
         m_next_retry = wxDateTime();
         Stop();
