@@ -186,6 +186,8 @@ public:
     bool dialog_emojis() const { return m_dialog_emojis; }
 
     LocalizedText translate(const wxString &message, const wxString &context = wxString()) const;
+    // Independent speech tracks, without display-only private replacements.
+    LocalizedText narration(const wxString &message, const wxString &context = wxString()) const;
     LocalizedText translate_plural(const wxString &singular, const wxString &plural, unsigned int n,
                                    const wxString &context = wxString()) const;
 

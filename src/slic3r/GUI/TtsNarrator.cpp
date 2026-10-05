@@ -12,8 +12,12 @@
 #include <deque>
 #include <map>
 #include <string>
+#include <memory>
 
 #include <wx/timer.h>
+#include "PersonalModes/SpeechQueue.hpp"
+#include "PersonalModes/SapiVoice.hpp"
+#include "PersonalModes/SchoolMode.hpp"
 
 #ifdef _WIN32
 // SAPI is used through IDispatch late binding ("SAPI.SpVoice") instead of
@@ -27,80 +31,62 @@ namespace Slic3r { namespace GUI { namespace TtsNarrator {
 
 namespace {
 
-constexpr int kCooldownSec = 20;
-constexpr int kPollMs      = 3000;
+constexpr int kPollMs = 100;
+PersonalModes::SpeechQueue s_queue;
+std::unique_ptr<PersonalModes::SapiVoice> s_voice;
+std::vector<PersonalModes::VoiceInfo> s_voices;
+bool s_backend_inflight = false;
+bool s_quiet = false;
+bool s_screen_reader = false;
+bool s_delivery_failed = false;
+bool s_last_suppressed = true;
 
-struct QueuedLine
-{
-    wxString    line;
-    std::string category;
-};
-
-std::deque<QueuedLine> s_queue;
-std::map<std::string, std::chrono::steady_clock::time_point> s_last_spoken;
-bool s_speaking = false;
-
-#ifdef _WIN32
-IDispatch *voice()
-{
-    static IDispatch *s_voice = []() -> IDispatch * {
-        ::CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
-        CLSID clsid;
-        if (FAILED(::CLSIDFromProgID(L"SAPI.SpVoice", &clsid)))
-            return nullptr;
-        IDispatch *disp = nullptr;
-        if (FAILED(::CoCreateInstance(clsid, nullptr, CLSCTX_ALL, IID_IDispatch, (void **) &disp)))
-            return nullptr;
-        return disp;
-    }();
-    return s_voice;
+PersonalModes::SapiVoice& voice() {
+    if (!s_voice) s_voice = std::make_unique<PersonalModes::SapiVoice>();
+    return *s_voice;
 }
-#endif
 
-bool narrator_enabled()
-{
+bool narrator_enabled() {
     return wxGetApp().app_config->get("narrator_enabled") == "true";
 }
 
-void speak_local(const wxString &line)
-{
-#ifdef _WIN32
-    IDispatch *v = voice();
-    if (v == nullptr)
-        return;
-    DISPID dispid = 0;
-    OLECHAR *name = const_cast<OLECHAR *>(L"Speak");
-    if (FAILED(v->GetIDsOfNames(IID_NULL, &name, 1, LOCALE_USER_DEFAULT, &dispid)))
-        return;
-    // Flags 1|2 = SVSFlagsAsync | SVSFPurgeBeforeSpeak: one utterance at a
-    // time, a new line replaces a still-playing superseded one.
-    VARIANT args[2];
-    ::VariantInit(&args[0]);
-    ::VariantInit(&args[1]);
-    args[1].vt      = VT_BSTR;
-    args[1].bstrVal = ::SysAllocString(line.wc_str());
-    args[0].vt      = VT_I4;
-    args[0].lVal    = 1 | 2;
-    DISPPARAMS params { args, nullptr, 2, 0 };
-    v->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_METHOD, &params, nullptr, nullptr, nullptr);
-    ::SysFreeString(args[1].bstrVal);
-#else
-    (void) line;
-#endif
+void say_event(const wxString& source, const std::string& category) {
+    const auto tracks = I18N::language_mode_service().narration(source);
+    say_tracks(tracks.primary, tracks.secondary, category);
 }
 
-void pump_queue()
-{
-    if (s_queue.empty())
-        return;
-    QueuedLine next = std::move(s_queue.front());
-    s_queue.pop_front();
-    s_last_spoken[next.category] = std::chrono::steady_clock::now();
-    speak_local(next.line);
-    // Optional network speakers via Home Assistant (fire-and-forget).
-    HomeAssistant::speak_on_speakers(next.line);
+int number(const char* key) {
+    try { return std::clamp(std::stoi(wxGetApp().app_config->get(key)), -10, 10); }
+    catch (...) { return 0; }
 }
 
+void pump_queue() {
+    const bool suppressed = PersonalModes::school_presentation_suppressed.load();
+    if (suppressed && !s_last_suppressed) {
+        s_queue.cancel();
+        if (s_backend_inflight) voice().stop();
+        s_backend_inflight = false;
+    }
+    s_last_suppressed = suppressed;
+    if (s_quiet || s_screen_reader) {
+        if (s_backend_inflight) { voice().stop(); s_queue.cancel(); s_backend_inflight = false; }
+        return;
+    }
+    const bool completed = !s_backend_inflight || voice().complete();
+    if (!completed) return;
+    s_backend_inflight = false;
+    const auto next = s_queue.next(true, narrator_enabled(), false);
+    if (!next) return;
+    const bool cantonese = next->language == PersonalModes::SpeechLanguage::Cantonese;
+    const auto selected = wxString::FromUTF8(wxGetApp().app_config->get(cantonese ? "narrator_voice_yue" : "narrator_voice_en")).ToStdWstring();
+    const auto resolved = voice().resolve(s_voices, cantonese, selected);
+    if (!resolved.available) { s_delivery_failed = true; return; }
+    s_backend_inflight = voice().speak(next->text, resolved.effective_id,
+        number(cantonese ? "narrator_rate_yue" : "narrator_rate_en"), number(cantonese ? "narrator_pitch_yue" : "narrator_pitch_en"));
+    s_delivery_failed = !s_backend_inflight;
+    // Remote media playback has no completion acknowledgment. It must not be
+    // mirrored here, because that would invalidate serialized speech delivery.
+}
 // --- printer state watch ----------------------------------------------------
 
 class NarratorTimer : public wxTimer
@@ -109,6 +95,8 @@ public:
     void Notify() override
     {
         pump_queue();
+        if (++m_ticks % 30 != 0) return;
+        s_voices = voice().enumerate();
         if (!narrator_enabled())
             return;
         DeviceManager *manager = wxGetApp().getDeviceManager();
@@ -118,15 +106,15 @@ public:
         const std::string status = obj->print_status;
         if (!m_last_status.empty() && status != m_last_status) {
             // TRN: TTS lines for printer state changes.
-            if (status == "RUNNING")      say(_L("Printing started."), "state");
+            if (status == "RUNNING")      say_event("Printing started.", "state");
             else if (status == "FINISH") {
-                say(_L("Print finished."), "state");
+                say_event("Print finished.", "state");
                 if (wxGetApp().app_config->get("ha_flash_on_finish") == "true")
                     HomeAssistant::flash_lights(0, 200, 80); // green pulse
             }
-            else if (status == "PAUSE")   say(_L("Print paused."), "state");
+            else if (status == "PAUSE")   say_event("Print paused.", "state");
             else if (status == "FAILED") {
-                say(_L("Print failed."), "error");
+                say_event("Print failed.", "error");
                 if (wxGetApp().app_config->get("ha_flash_on_error") == "true")
                     HomeAssistant::flash_lights(230, 30, 30); // red flash
             }
@@ -135,8 +123,9 @@ public:
         const int error = obj->print_error;
         if (error != 0 && error != m_last_error) {
             // TRN: TTS line for a printer error; %06X is the hexadecimal error code.
-            say(wxString::Format(_L("Printer error %06X. Check the device screen for details."),
-                                 (unsigned) error), "error");
+            auto tracks = I18N::language_mode_service().narration("Printer error %06X. Check the device screen for details.");
+            say_tracks(wxString::Format(tracks.primary, (unsigned)error),
+                tracks.secondary.empty() ? wxString() : wxString::Format(tracks.secondary, (unsigned)error), "error");
             if (wxGetApp().app_config->get("ha_flash_on_error") == "true")
                 HomeAssistant::flash_lights(230, 30, 30);
         }
@@ -144,6 +133,7 @@ public:
     }
 
 private:
+    unsigned m_ticks = 0;
     std::string m_last_status;
     int         m_last_error { 0 };
 };
@@ -156,37 +146,62 @@ NarratorTimer *timer()
 
 } // namespace
 
-void say(const wxString &line, const std::string &category)
+void say_tracks(const wxString& english, const wxString& cantonese, const std::string& category, bool consent)
 {
-    if (!narrator_enabled())
-        return;
-    const bool is_error = category == "error";
-    if (!is_error) {
-        const auto it = s_last_spoken.find(category);
-        if (it != s_last_spoken.end() &&
-            std::chrono::steady_clock::now() - it->second < std::chrono::seconds(kCooldownSec))
-            return; // cooldown: narration stays infrequent
-    }
-    // Replace a superseded queued line of the same category rather than stack.
-    for (auto &queued : s_queue)
-        if (queued.category == category) {
-            queued.line = line;
-            return;
-        }
-    s_queue.push_back({line, category});
-    if (is_error)
-        pump_queue(); // error narration is never delayed
+    if (!consent && !narrator_enabled()) return;
+    PersonalModes::SpeechEvent event;
+    event.category = category;
+    event.explicit_consent = consent;
+    auto language = wxGetApp().app_config->get("narrator_language");
+    if (PersonalModes::school_presentation_suppressed.load()) language = "en";
+    if (language != "yue_HK" && !english.empty())
+        event.tracks.push_back({english.ToStdWstring(), PersonalModes::SpeechLanguage::English});
+    if ((language == "yue_HK" || language == "both") && !cantonese.empty())
+        event.tracks.push_back({cantonese.ToStdWstring(), PersonalModes::SpeechLanguage::Cantonese});
+    if (!s_queue.enqueue(std::move(event))) s_delivery_failed = true;
+    pump_queue();
 }
 
-void say_now(const wxString &line)
+void say(const wxString& line, const std::string& category)
 {
-    speak_local(line);
-    HomeAssistant::speak_on_speakers(line);
+    // Legacy callers provide one already-localized line. The owning producer
+    // should use say_tracks for language-independent event narration.
+    PersonalModes::SpeechEvent event;
+    if (!narrator_enabled()) return;
+    event.category = category;
+    const auto language = wxGetApp().app_config->get("language");
+    event.tracks.push_back({line.ToStdWstring(), language == "yue_HK" && !PersonalModes::school_presentation_suppressed.load()
+        ? PersonalModes::SpeechLanguage::Cantonese : PersonalModes::SpeechLanguage::English});
+    if (!s_queue.enqueue(std::move(event))) s_delivery_failed = true;
+    pump_queue();
 }
 
-void install()
+void say_now(const wxString& line)
 {
-    timer()->Start(kPollMs);
+    PersonalModes::SpeechEvent event;
+    event.category = "preview";
+    event.explicit_consent = true;
+    const auto language = wxGetApp().app_config->get("language");
+    event.tracks.push_back({line.ToStdWstring(), language == "yue_HK" && !PersonalModes::school_presentation_suppressed.load()
+        ? PersonalModes::SpeechLanguage::Cantonese : PersonalModes::SpeechLanguage::English});
+    if (!s_queue.enqueue(std::move(event))) s_delivery_failed = true;
+    pump_queue();
 }
 
+std::vector<PersonalModes::VoiceInfo> voices()
+{
+    s_voices = voice().enumerate();
+    return s_voices;
+}
+
+PersonalModes::VoiceStatus voice_status(bool cantonese)
+{
+    const auto key = cantonese ? "narrator_voice_yue" : "narrator_voice_en";
+    return voice().resolve(s_voices, cantonese, wxString::FromUTF8(wxGetApp().app_config->get(key)).ToStdWstring());
+}
+
+bool delivery_failed() { return s_delivery_failed; }
+void set_quiet(bool quiet, bool screen_reader_active) { s_quiet = quiet; s_screen_reader = screen_reader_active; pump_queue(); }
+void install() { s_voices = voice().enumerate(); timer()->Start(kPollMs); }
+void shutdown() { timer()->Stop(); s_queue.cancel(); if (s_voice) s_voice->stop(); s_voice.reset(); s_backend_inflight = false; }
 } } } // namespace Slic3r::GUI::TtsNarrator
