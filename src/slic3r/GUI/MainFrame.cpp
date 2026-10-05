@@ -84,6 +84,7 @@
 #include "libslic3r/Utils.hpp"
 #include <boost/filesystem.hpp>
 #include <atomic>
+#include <filesystem>
 #include "GUI_Factories.hpp"
 #include "GUI_ObjectList.hpp"
 #include "NotificationManager.hpp"

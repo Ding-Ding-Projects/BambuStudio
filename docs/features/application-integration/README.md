@@ -11,7 +11,9 @@ language, quiet switch, separate installed English and Cantonese voice choices, 
 per-language rate and pitch from -10 through 10, with 0 as normal delivery.
 Voice IDs persist rather than localized names. An absent saved voice stays saved;
 the status reports the effective fallback or that no voice is available. The
-platform does not expose reliable network-capability metadata, so it is reported
+platform inventory is reread every two seconds while Preferences is open, including
+an initially empty inventory. Selection handlers use the current stable-ID list.
+The platform does not expose reliable network-capability metadata, so it is reported
 as unknown. The external Home Assistant mirror discloses that its playback
 completion is unavailable and is not covered by local serialization.
 
@@ -51,7 +53,8 @@ operations remain governed by the suite's own outstanding-work inventory.
 
 ## Verification and remaining work
 
-The portable presentation-route executable passed 24 behavioral assertions.
+The portable presentation-route executable passed 24 behavioral assertions with
+both MinGW and MSVC 19.51.36260. These compile only the portable route adapter.
 The shared credential adapter passed 10 native behavioral assertions using the
 real credential implementation and a synthetic in-memory vault.
 Native GUI compilation, localization catalogs, runtime interaction and capture are
@@ -60,7 +63,7 @@ pending; source controls are not release acceptance evidence.
 - [ ] Compile and drive shared-mode enrollment, rename, enable, unlock and credential replacement controls; add a platform passkey choice and atomic recovery for interrupted credential/record updates.
 - [ ] Reconstruct every already-open translated surface on shared-mode changes without discarding active user work.
 - [ ] Audit all dim-sum producers, keyboard handlers, documentation routes and non-settings surfaces for live suppression.
-- [ ] Refresh installed voice choices when platform inventory changes while Preferences remains open.
+- [ ] Verify delayed voice enumeration and removal through the built native controls.
 - [ ] Record narrator changes in local history and exports through the shared history service.
 - [ ] Connect all five attention accommodations to actual workspace behavior.
 - [ ] Attach converter, authenticator, lock and Ollama destinations and packaged dependency proofs.

@@ -172,7 +172,7 @@ wxBoxSizer *PreferencesDialog::create_item_title(wxString title, wxWindow *paren
 wxBoxSizer *PreferencesDialog::create_item_combobox(wxString title, wxWindow *parent, wxString tooltip, std::string param,
                                                     const std::vector<wxString>& label_list, const std::vector<std::string>& value_list,
                                                     const std::vector<wxString>& tooltip_list, std::function<void(int)> callback,
-                                                    int title_width, int combox_width)
+                                                    int title_width, int combox_width, std::shared_ptr<std::vector<std::string>> live_values)
 {
     assert(label_list.size() == value_list.size());
 
@@ -235,8 +235,10 @@ wxBoxSizer *PreferencesDialog::create_item_combobox(wxString title, wxWindow *pa
     m_sizer_combox->Add(combobox, wxSizerFlags().CenterVertical().Border(wxRIGHT, FromDIP(ITEM_RIGHT_PADDING)));
 
     //// save config
-    combobox->GetDropDown().Bind(wxEVT_COMBOBOX, [this, param, value_list, callback](wxCommandEvent &e) {
-        app_config->set(param, value_list[e.GetSelection()]);
+    combobox->GetDropDown().Bind(wxEVT_COMBOBOX, [this, param, value_list, callback, live_values](wxCommandEvent &e) {
+        const auto& values = live_values ? *live_values : value_list;
+        if (e.GetSelection() < 0 || static_cast<std::size_t>(e.GetSelection()) >= values.size()) return;
+        app_config->set(param, values[e.GetSelection()]);
         app_config->save();
         if (callback) {
             callback(e.GetSelection());
@@ -2077,6 +2079,7 @@ void PreferencesDialog::reset_search_filter()
 PreferencesDialog::~PreferencesDialog()
 {
     m_school_refresh_timer.Stop();
+    m_narrator_inventory_timer.Stop();
     m_radio_group.DeleteContents(true);
     m_hash_selector.clear();
 }
@@ -3314,8 +3317,33 @@ wxWindow *PreferencesDialog::create_other_tab()
             status->Wrap(status->FromDIP(420));
             status->GetParent()->Layout();
         };
+        auto live_values = std::make_shared<std::vector<std::string>>(values);
+        const auto combo_index = m_combobox_list.size();
         sizer->Add(create_item_combobox(cantonese ? _L("Cantonese voice") : _L("English voice"), scrolled,
-            _L("Choose an installed voice. Missing selections remain saved."), voice_key, labels, values, {}, refresh_status), flags);
+            _L("Choose an installed voice. Missing selections remain saved."), voice_key, labels, values, {}, refresh_status,
+            0, 0, live_values), flags);
+        auto* voice_picker = m_combobox_list.at(combo_index);
+        m_narrator_inventory_refreshers.push_back([this, voice_picker, voice_key, cantonese, live_values, refresh_status] {
+            std::vector<wxString> refreshed_labels{_L("Automatic voice")};
+            std::vector<std::string> refreshed_values{""};
+            for (const auto& voice : TtsNarrator::voices()) {
+                if (!(cantonese ? voice.cantonese : voice.english)) continue;
+                refreshed_labels.emplace_back(voice.name);
+                refreshed_values.push_back(wxString(voice.id).ToUTF8().data());
+            }
+            const auto saved = app_config->get(voice_key);
+            if (!saved.empty() && std::find(refreshed_values.begin(), refreshed_values.end(), saved) == refreshed_values.end()) {
+                refreshed_labels.push_back(_L("Selected voice is not installed")); refreshed_values.push_back(saved);
+            }
+            if (refreshed_values != *live_values) {
+                voice_picker->Clear();
+                *live_values = std::move(refreshed_values);
+                for (const auto& label : refreshed_labels) voice_picker->Append(label);
+                const auto found = std::find(live_values->begin(), live_values->end(), saved);
+                voice_picker->SetSelection(found == live_values->end() ? 0 : static_cast<int>(found - live_values->begin()));
+            }
+            refresh_status(0);
+        });
         sizer->Add(status, flags);
         refresh_status(0);
         std::vector<wxString> number_labels;
@@ -3334,6 +3362,11 @@ wxWindow *PreferencesDialog::create_other_tab()
         _L("External speech mirror is configured. Playback completion is unavailable; local serialization does not cover external playback."));
     mirror_status->Wrap(FromDIP(420));
     sizer->Add(mirror_status, flags);
+    m_narrator_inventory_timer.SetOwner(this, wxWindow::NewControlId());
+    Bind(wxEVT_TIMER, [this](wxTimerEvent&) {
+        for (const auto& refresh : m_narrator_inventory_refreshers) refresh();
+    }, m_narrator_inventory_timer.GetId());
+    m_narrator_inventory_timer.Start(2000);
 
     // ---- Online Models (visible only when has_model_mall()) ----
     auto title_modelmall   = create_item_title(_L("Online Models"), scrolled, _L("Online Models"));

@@ -13,6 +13,8 @@
 #include <list>
 #include <map>
 #include <unordered_map>
+#include <memory>
+#include <functional>
 #include "Widgets/ComboBox.hpp"
 #include "Widgets/CheckBox.hpp"
 #include "Widgets/TextInput.hpp"
@@ -117,6 +119,8 @@ protected:
     std::unordered_map<wxStaticText *, wxColour> m_teleport_saved_colours; // pre-flash foregrounds
     wxTimer                                      m_teleport_timer;
     wxTimer                                      m_school_refresh_timer;
+    wxTimer                                      m_narrator_inventory_timer;
+    std::vector<std::function<void()>>             m_narrator_inventory_refreshers;
     void register_option_row(const std::string &key, wxSizer *sizer, wxWindow *window = nullptr);
     void clear_teleport_highlight();
     void on_teleport_timer(wxTimerEvent &);
@@ -172,7 +176,8 @@ public:
     wxBoxSizer *create_item_combobox(wxString title, wxWindow *parent, wxString tooltip, std::string param,
                                      const std::vector<wxString>& label_list, const std::vector<std::string>& value_list,
                                      const std::vector<wxString>& tooltip_list = {}, std::function<void(int)> callback = nullptr,
-                                     int title_width = 0, int combox_width = 0);
+                                     int title_width = 0, int combox_width = 0,
+                                     std::shared_ptr<std::vector<std::string>> live_values = {});
     wxBoxSizer *create_item_region_combobox(wxString title, wxWindow *parent, wxString tooltip, std::vector<wxString> vlist);
     wxBoxSizer *create_item_language_combobox(wxString title, wxWindow *parent, wxString tooltip, int padding_left, std::string param, std::vector<const wxLanguageInfo *> vlist);
     wxBoxSizer *create_item_language_mode_combobox(wxString title, wxWindow *parent, wxString tooltip, std::string param,
