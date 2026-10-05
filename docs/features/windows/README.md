@@ -1,5 +1,7 @@
 # Windows features
 
+- [Offline documentation browser (F1)](documentation-browser.md)
+
 - [Quiet workflow and manual help](quiet-workflow.md)
 
 - [Windows-only platform policy](windows-only-platform.md)

@@ -862,6 +862,8 @@ list(APPEND SLIC3R_GUI_SOURCES
     GUI/ConfigProfileArchive.hpp
     GUI/ConfigProfilesDialog.cpp
     GUI/ConfigProfilesDialog.hpp
+    GUI/DocsBrowserDialog.cpp
+    GUI/DocsBrowserDialog.hpp
     GUI/CommandPalette.cpp
     GUI/CommandPalette.hpp
     GUI/CommandPaletteIndex.cpp
@@ -927,6 +929,26 @@ add_library(libslic3r_gui STATIC ${SLIC3R_GUI_SOURCES})
 if (TARGET device_page_build)
     add_dependencies(libslic3r_gui device_page_build)
 endif()
+
+# Build the offline documentation from the current articles, not an old snapshot.
+file(GLOB_RECURSE SLIC3R_DOCS_INPUTS CONFIGURE_DEPENDS
+    "${PROJECT_SOURCE_DIR}/docs/features/*"
+    "${PROJECT_SOURCE_DIR}/docs/screenshots/*")
+set(SLIC3R_DOCS_BUNDLE "${SLIC3R_RESOURCES_DIR}/docs/bundle.json")
+add_custom_command(
+    OUTPUT "${SLIC3R_DOCS_BUNDLE}" "${SLIC3R_DOCS_BUNDLE}.stamp"
+    COMMAND ${CMAKE_COMMAND}
+        "-DDOCS_SOURCE=${PROJECT_SOURCE_DIR}/docs"
+        "-DDOCS_OUTPUT=${SLIC3R_RESOURCES_DIR}/docs"
+        -P "${PROJECT_SOURCE_DIR}/cmake/modules/BundleDocs.cmake"
+    COMMAND ${CMAKE_COMMAND} -E touch "${SLIC3R_DOCS_BUNDLE}.stamp"
+    DEPENDS ${SLIC3R_DOCS_INPUTS} "${PROJECT_SOURCE_DIR}/cmake/modules/BundleDocs.cmake"
+    COMMENT "Bundling offline feature documentation"
+    VERBATIM
+)
+add_custom_target(docs_bundle DEPENDS "${SLIC3R_DOCS_BUNDLE}" "${SLIC3R_DOCS_BUNDLE}.stamp")
+set_property(TARGET docs_bundle PROPERTY FOLDER "resources")
+add_dependencies(libslic3r_gui docs_bundle)
 
 #if (MSVC)
 #    target_compile_options(libslic3r_gui PRIVATE /Od /Zi)

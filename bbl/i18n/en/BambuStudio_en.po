@@ -27680,3 +27680,47 @@ msgstr "Large imported meshes were simplified. Dimensions and volume may change;
 #: src/slic3r/GUI/Plater.cpp
 msgid "Import canceled"
 msgstr "Import canceled"
+
+#: src/slic3r/GUI/DocsBrowserDialog.cpp
+msgid "Search articles"
+msgstr "Search articles"
+
+#: src/slic3r/GUI/DocsBrowserDialog.cpp
+msgid "Search documentation"
+msgstr "Search documentation"
+
+#: src/slic3r/GUI/DocsBrowserDialog.cpp
+msgid "Documentation articles"
+msgstr "Documentation articles"
+
+#: src/slic3r/GUI/DocsBrowserDialog.cpp
+msgid "Forward"
+msgstr "Forward"
+
+#: src/slic3r/GUI/DocsBrowserDialog.cpp
+msgid "Article"
+msgstr "Article"
+
+#: src/slic3r/GUI/DocsBrowserDialog.cpp
+msgid "No documentation bundle was found beside the application resources."
+msgstr "No documentation bundle was found beside the application resources."
+
+#: src/slic3r/GUI/DocsBrowserDialog.cpp
+msgid "%zu of %zu articles match"
+msgstr "%zu of %zu articles match"
+
+#: src/slic3r/GUI/DocsBrowserDialog.cpp
+msgid "%zu articles, bundled offline"
+msgstr "%zu articles, bundled offline"
+
+#: src/slic3r/GUI/DocsBrowserDialog.cpp
+msgid "Browse every feature article offline, inside the app"
+msgstr "Browse every feature article offline, inside the app"
+
+#: src/slic3r/GUI/DocsBrowserDialog.cpp
+msgid "Offline documentation browser (F1)"
+msgstr "Offline documentation browser (F1)"
+
+#: src/slic3r/GUI/DocsBrowserDialog.cpp
+msgid "The embedded web view is not available on this PC, so articles cannot be rendered here. The same documentation ships in the docs folder of the source repository."
+msgstr "The embedded web view is not available on this PC, so articles cannot be rendered here. The same documentation ships in the docs folder of the source repository."

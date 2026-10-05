@@ -23,6 +23,8 @@ namespace Slic3r::GUI::PaletteIndex {
 constexpr int kPaletteCommandId = wxID_HIGHEST + 90;
 // Ctrl+Shift+E: per-element appearance editor for the focused control.
 constexpr int kAppearanceEditorCommandId = wxID_HIGHEST + 91;
+// F1 opens the offline documentation browser.
+constexpr int kDocsCommandId = wxID_HIGHEST + 92;
 // Ctrl+Numpad1..6 fake the Ctrl+1..6 window-menu chords on Windows; the id
 // for Numpad N is kNumpadTabBaseId + N - 1 and selects workspace tab N - 1.
 constexpr int kNumpadTabBaseId  = wxID_HIGHEST + 1;
@@ -32,6 +34,8 @@ constexpr int kNumpadTabCount   = 6;
 // chord lives here so a later SetAcceleratorTable() can never clobber an
 // earlier one (which is exactly how Ctrl+F used to wipe the numpad entries).
 std::vector<wxAcceleratorEntry> main_frame_accelerators();
+bool is_docs_accelerator(const wxAcceleratorEntry &entry);
+const char *docs_shortcut_label();
 
 // True for the palette chord: Ctrl+Shift+F, the one global shortcut.
 bool is_palette_accelerator(const wxAcceleratorEntry &entry);
