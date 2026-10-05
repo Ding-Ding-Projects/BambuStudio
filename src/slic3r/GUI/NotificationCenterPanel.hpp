@@ -13,7 +13,6 @@
 class Button;
 class Label;
 class SearchField;
-class SlideToConfirm;
 class StaticBox;
 class wxDataViewEvent;
 class wxDataViewListCtrl;
@@ -35,7 +34,8 @@ class NotificationManager;
 // Shift+click ranges, Ctrl+click, Ctrl+A for the page, arrow keys); a selection
 // row whose two select-all actions are named "this page" versus "all matches";
 // a bulk row (dismiss, export honouring the active filter, delete behind a
-// SlideToConfirm gate); and an empty-state label when nothing matches.
+// two-key SuperConfirmGate via the shared bulk preview); and an empty-state
+// label when nothing matches.
 class NotificationCenterPanel : public MD3Dialog
 {
 public:
@@ -83,9 +83,7 @@ private:
     void on_dismiss_selected(wxCommandEvent &event);
     void on_export(wxCommandEvent &event);
     void on_delete_requested(wxCommandEvent &event);
-    void on_delete_cancelled(wxCommandEvent &event);
     void on_delete_confirmed();
-    void hide_delete_gate();
 
     NotificationManager *          m_manager{nullptr};
     NotificationHistory::Selection m_selection;
@@ -112,10 +110,6 @@ private:
     Button *             m_dismiss_button{nullptr};
     Button *             m_export_button{nullptr};
     Button *             m_delete_button{nullptr};
-    StaticBox *          m_delete_card{nullptr};
-    Label *              m_delete_label{nullptr};
-    SlideToConfirm *     m_delete_gate{nullptr};
-    Button *             m_delete_cancel_button{nullptr};
 };
 
 } } // namespace Slic3r::GUI

@@ -20,30 +20,39 @@
 #include "Export/ExportDatasets.hpp"
 #include "Export/ExportDialog.hpp"
 
+#include "Bulk/BulkActionPlan.hpp"
+#include "Bulk/BulkActionPreviewDialog.hpp"
 #include "GUI_App.hpp"
 #include "I18N.hpp"
 #include "MsgDialog.hpp"
+#include "NotificationManager.hpp"
 #include "Plater.hpp"
 #include "Widgets/Button.hpp"
 #include "Widgets/Label.hpp"
+#include "Widgets/MaterialIcon.hpp"
+#include "Widgets/MD3Dialog.hpp"
 #include "Widgets/MD3DialogChrome.hpp"
 #include "Widgets/MD3Tokens.hpp"
 #include "Widgets/SearchField.hpp"
 #include "Widgets/StateColor.hpp"
 #include "Widgets/StaticBox.hpp"
+#include "Widgets/TextInput.hpp"
 
 #include <algorithm>
 #include <atomic>
 #include <chrono>
 #include <ctime>
+#include <set>
 #include <system_error>
 
 #include <wx/dataview.h>
 #include <wx/datetime.h>
 #include <wx/dcclient.h>
+#include <wx/dirdlg.h>
 #include <wx/display.h>
 #include <wx/filename.h>
 #include <wx/sizer.h>
+#include <wx/textctrl.h>
 #include <wx/utils.h>
 #include <wx/variant.h>
 
@@ -146,6 +155,75 @@ void set_wrapped_tooltip(Label *label, const wxString &text)
         label->SetToolTip(wrapped);
 }
 
+std::string short_commit(const std::string &commit_id)
+{
+    return commit_id.substr(0, std::min<std::size_t>(12, commit_id.size()));
+}
+
+// One-line prompt for the label text used by "Label selected...". Built on the
+// shared MD3 shell so it matches every other dialog in the kit.
+class LabelPromptDialog final : public MD3Dialog
+{
+public:
+    LabelPromptDialog(wxWindow *parent, std::size_t version_count)
+        // TRN: Title of the prompt asking for a label to attach to project versions.
+        : MD3Dialog(parent, _L("Label versions"),
+                    // TRN: %d is how many project versions will receive the label.
+                    wxString::Format(_L("The label is attached to %d selected versions"), static_cast<int>(version_count)),
+                    MaterialIcon::History)
+    {
+        auto *content = GetContentSizer();
+        // TRN: Explains which characters a version label may contain.
+        auto *hint = new Label(this, Label::Body_13,
+                               _L("Letters, digits, '.', '_' and '-' are kept; other characters become '-'. Labels never change history."));
+        hint->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+        hint->Wrap(FromDIP(420));
+        content->Add(hint, 0, wxEXPAND);
+        // TRN: Field label of the version label prompt.
+        m_input = new TextInput(this, wxEmptyString, _L("Label"), "", wxDefaultPosition, wxSize(FromDIP(420), FromDIP(40)),
+                                wxTE_PROCESS_ENTER);
+        m_input->GetTextCtrl()->SetMaxLength(64);
+        m_input->GetTextCtrl()->Bind(wxEVT_TEXT_ENTER, [this](wxCommandEvent &) { accept(); });
+        m_input->GetTextCtrl()->Bind(wxEVT_TEXT, [this](wxCommandEvent &) { update_ok(); });
+        content->Add(m_input, 0, wxEXPAND | wxTOP, FromDIP(12));
+
+        auto *cancel = new Button(this, _L("Cancel"));
+        cancel->SetVariant(Button::Variant::Text);
+        cancel->SetButtonSize(Button::Size::Medium);
+        cancel->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { EndModal(wxID_CANCEL); });
+        AddFooterButton(cancel);
+        // TRN: Confirms the version label prompt.
+        m_ok = new Button(this, _L("Continue"));
+        m_ok->SetVariant(Button::Variant::Filled);
+        m_ok->SetButtonSize(Button::Size::Medium);
+        m_ok->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { accept(); });
+        AddFooterButton(m_ok);
+        update_ok();
+
+        Bind(wxEVT_CHAR_HOOK, [this](wxKeyEvent &e) {
+            if (e.GetKeyCode() == WXK_ESCAPE) EndModal(wxID_CANCEL); else e.Skip();
+        });
+        Layout();
+        Fit();
+        CenterOnParent();
+        UpdateShape();
+        wxGetApp().UpdateDlgDarkUI(this);
+        m_input->GetTextCtrl()->SetFocus();
+    }
+
+    wxString value() const { return m_input->GetTextCtrl()->GetValue().Strip(wxString::both); }
+
+private:
+    void update_ok() { m_ok->Enable(!value().IsEmpty()); }
+    void accept()
+    {
+        if (!value().IsEmpty()) EndModal(wxID_OK);
+    }
+
+    TextInput *m_input{nullptr};
+    Button *   m_ok{nullptr};
+};
+
 } // namespace
 
 ProjectHistoryDialog::ProjectHistoryDialog(wxWindow *parent, Plater *plater)
@@ -163,6 +241,7 @@ ProjectHistoryDialog::ProjectHistoryDialog(wxWindow *parent, Plater *plater)
     Bind(wxEVT_TIMER, &ProjectHistoryDialog::poll_operation, this, m_poll_timer.GetId());
     Bind(wxEVT_CLOSE_WINDOW, &ProjectHistoryDialog::on_close_window, this);
     Bind(wxEVT_SIZE, &ProjectHistoryDialog::on_size, this);
+    Bind(wxEVT_CHAR_HOOK, &ProjectHistoryDialog::on_char_hook, this);
 
     SetEscapeId(wxID_CANCEL);
     SetAffirmativeId(wxID_APPLY);
@@ -283,7 +362,8 @@ void ProjectHistoryDialog::create_ui()
     filters->Add(m_submit_button, 0, wxEXPAND); list_sizer->Add(filters, 0, wxEXPAND | wxALL, FromDIP(8));
     m_search_field->GetTextCtrl()->Bind(wxEVT_KEY_DOWN, [this](wxKeyEvent &event) { if (event.GetKeyCode() == WXK_RETURN || event.GetKeyCode() == WXK_NUMPAD_ENTER) submit_search(); else event.Skip(); });
     m_version_list = new MD3DataViewListCtrl(m_list_card, wxID_ANY, wxDefaultPosition, wxDefaultSize,
-                                            wxDV_SINGLE | wxBORDER_NONE);
+                                            wxDV_MULTIPLE | wxBORDER_NONE);
+    m_version_list->SetName(_L("Project versions"));
     m_version_list->AppendTextColumn(_L("Commit"), wxDATAVIEW_CELL_INERT, FromDIP(104), wxALIGN_LEFT,
                                      wxDATAVIEW_COL_RESIZABLE);
     m_version_list->AppendTextColumn(_L("Message"), wxDATAVIEW_CELL_INERT, FromDIP(280), wxALIGN_LEFT,
@@ -309,6 +389,40 @@ void ProjectHistoryDialog::create_ui()
     for (Button *button : {m_compare_button, m_pin_button, m_rerun_button, m_delete_button, m_clear_button}) history_actions->Add(button, 0, wxALL, FromDIP(4));
     list_sizer->Add(history_actions, 0, wxEXPAND | wxALL, FromDIP(4));
     for (Button *button : {m_pin_button, m_rerun_button, m_delete_button, m_clear_button}) button->Hide();
+    // Bulk selection strip: page/all/invert selection plus the bulk actions.
+    // There is deliberately no bulk delete here: the version history is
+    // append-only by design (a restore is recorded as a new version and nothing
+    // is ever removed), so there is no delete action to run in bulk.
+    auto *bulk_row = new wxBoxSizer(wxHORIZONTAL);
+    const auto make_bulk_button = [this](const wxString &text, Button::Variant variant) {
+        auto *button = new Button(m_list_card, text);
+        button->SetVariant(variant);
+        button->SetButtonSize(Button::Size::Small);
+        return button;
+    };
+    m_select_visible_button = make_bulk_button(_L("Select visible"), Button::Variant::Tonal);
+    m_select_all_button     = make_bulk_button(_L("Select all"), Button::Variant::Tonal);
+    m_invert_button         = make_bulk_button(_L("Invert"), Button::Variant::Tonal);
+    m_bulk_export_button         = make_bulk_button(_L("Export selected..."), Button::Variant::Outlined);
+    m_label_button          = make_bulk_button(_L("Label selected..."), Button::Variant::Outlined);
+    m_select_visible_button->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { select_visible(); });
+    m_select_all_button->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { select_all_loaded(); });
+    m_invert_button->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { invert_selection(); });
+    m_bulk_export_button->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { bulk_export(); });
+    m_label_button->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { bulk_label(); });
+    // TRN: Tooltip of the "Export selected..." bulk action in Version history.
+    m_bulk_export_button->SetToolTip(_L("Writes each selected version as its own .3mf file into a folder you choose"));
+    // TRN: Tooltip of the "Label selected..." bulk action in Version history.
+    m_label_button->SetToolTip(_L("Attaches a label to every selected version; labels never change or remove history"));
+    m_bulk_counts_label = new Label(m_list_card, Label::Body_12, wxEmptyString);
+    bulk_row->Add(m_select_visible_button, 0, wxRIGHT, FromDIP(6));
+    bulk_row->Add(m_select_all_button, 0, wxRIGHT, FromDIP(6));
+    bulk_row->Add(m_invert_button, 0, wxRIGHT, FromDIP(12));
+    bulk_row->Add(m_bulk_counts_label, 1, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(12));
+    bulk_row->Add(m_bulk_export_button, 0, wxRIGHT, FromDIP(6));
+    bulk_row->Add(m_label_button, 0);
+    list_sizer->Add(bulk_row, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(8));
+
     // This line is where every failure lands, and a libgit2 error carries its
     // message plus an absolute repository path, far more than one line holds at
     // the dialog's minimum width. Wrap it instead of clipping the actual cause
@@ -385,8 +499,9 @@ void ProjectHistoryDialog::apply_theme()
     // label with the surface it actually sits on, every time the theme changes.
     for (Label *label : {m_title_label, m_subtitle_label, m_safety_label})
         label->SetBackgroundColour(surface);
-    for (Label *label : {m_project_label, m_status_label})
+    for (Label *label : {m_project_label, m_status_label, m_bulk_counts_label})
         label->SetBackgroundColour(card);
+    m_bulk_counts_label->SetForegroundColour(secondary);
 
     for (StaticBox *box : {m_info_card, m_list_card}) {
         box->SetBackgroundColorNormal(card);
@@ -511,10 +626,13 @@ void ProjectHistoryDialog::begin_restore()
     if (m_pending != PendingOperation::None || m_manager == nullptr)
         return;
 
-    const int selected_row = m_version_list->GetSelectedRow();
-    if (selected_row == wxNOT_FOUND || static_cast<std::size_t>(selected_row) >= m_filtered_rows.size())
+    // Restore stays single-only: restoring several versions into the same
+    // project makes no sense, so exactly one selected version is required.
+    const std::vector<std::string> selected = selected_ids_in_order();
+    if (selected.size() != 1)
         return;
-    const std::size_t selected_version = m_filtered_rows[selected_row];
+    const std::size_t selected_version = bulk_index(selected.front());
+    if (selected_version >= m_versions.size()) return;
 
     const Origin origin=m_origins[selected_version];
     if(origin.category!="project"&&origin.category!="preferences"&&origin.category!="preset"&&origin.category!="draft"){set_status(_L("Printer incident records cannot replace editor settings."));return;}
@@ -608,10 +726,12 @@ void ProjectHistoryDialog::finish_list(ProjectHistoryListResult result)
     m_load_all_button->Show(m_list_truncated);
     m_load_all_button->Enable(m_list_truncated);
     if (m_versions.empty()) {
+        m_bulk.clear();
         show_empty_state();
         return;
     }
 
+    m_bulk.retain_listed(loaded_ids());
     const wxString selected_store=m_store_filter->GetStringSelection(); m_store_filter->Clear();
     std::vector<std::string> stores;
     for(const auto &origin:m_origins)if(origin.manager && std::find(stores.begin(),stores.end(),origin.name)==stores.end()){stores.push_back(origin.name);m_store_filter->Append(wxString::FromUTF8(origin.name));}
@@ -651,12 +771,13 @@ void ProjectHistoryDialog::populate_versions()
     if(m_view=="searches"){populate_searches();return;}
     const int selected=m_version_list->GetSelectedRow();
     if(selected>=0 && static_cast<std::size_t>(selected)<m_filtered_rows.size()){ const auto index = m_filtered_rows[selected]; m_selected_id=m_versions[index].commit_id; m_selected_store=m_origins[index].category+":"+m_origins[index].identity.string()+":"+m_origins[index].device; }
+    m_syncing_selection = true;
     m_version_list->DeleteAllItems();m_filtered_rows.clear();
     SearchField::MatchPass matcher(m_search_field->GetValue(),m_search_field->IsRegexEnabled(),m_search_field->IsCaseSensitive(),m_search_field->IsWholeWord(),m_search_field->IsMultiline());
     static const char *categories[]={"","project","preferences","preset","draft","printer"};static const char *states[]={"","active","unknown","resolved"};
     const int category=std::max(0,m_category_filter->GetSelection()),status=std::max(0,m_status_filter->GetSelection());
     const wxString from_text=m_from_filter->GetValue(),to_text=m_to_filter->GetValue();wxDateTime from,to;
-    if((!from_text.empty()&&!from.ParseISODate(from_text))||(!to_text.empty()&&!to.ParseISODate(to_text))||(from.IsValid()&&to.IsValid()&&from>to)){set_status(_L("Enter valid dates in YYYY-MM-DD order, with From before Through."));return;}
+    if((!from_text.empty()&&!from.ParseISODate(from_text))||(!to_text.empty()&&!to.ParseISODate(to_text))||(from.IsValid()&&to.IsValid()&&from>to)){set_status(_L("Enter valid dates in YYYY-MM-DD order, with From before Through."));m_syncing_selection = false;return;}
     wxString graph;
     for(std::size_t i=0;i<m_versions.size()&&i<m_origins.size();++i){
         const auto &version=m_versions[i];const auto &origin=m_origins[i];
@@ -667,16 +788,18 @@ void ProjectHistoryDialog::populate_versions()
         if(from.IsValid()&&when.GetDateOnly()<from.GetDateOnly())continue;if(to.IsValid()&&when.GetDateOnly()>to.GetDateOnly())continue;
         if(m_view=="graph"&&(!origin.manager||wxString::FromUTF8(origin.name)!=m_store_filter->GetStringSelection()))continue;
         const wxString id=wxString::FromUTF8(version.commit_id.substr(0,12));const wxString timestamp=format_timestamp(version.committed_at);
-        const wxString message=wxString::FromUTF8(origin.category+" / "+origin.name+" / "+origin.status)+" : "+display_message(version.message);
+        wxString message=wxString::FromUTF8(origin.category+" / "+origin.name+" / "+origin.status)+" : "+display_message(version.message);
+        for (const auto &label : version.labels) message = "[" + wxString::FromUTF8(label) + "] " + message;
         if(!matcher.matches(id+" "+message+" "+timestamp+" "+wxString::FromUTF8(origin.device)))continue;
         wxVector<wxVariant> row;row.push_back(wxVariant(m_view=="timeline"?timestamp:id));row.push_back(wxVariant(message));row.push_back(wxVariant(m_view=="timeline"?id:timestamp));
         row.push_back(wxVariant(origin.category=="printer"?wxString::FromUTF8(origin.status):format_size(version.snapshot_size)));
         m_version_list->AppendItem(row);m_filtered_rows.push_back(i);
-        if(version.commit_id==m_selected_id && origin.category+":"+origin.identity.string()+":"+origin.device==m_selected_store)m_version_list->SelectRow(static_cast<unsigned>(m_filtered_rows.size()-1));
+
         if(m_view=="graph"){graph+="o "+wxString::FromUTF8(version.commit_id)+"  "+display_message(version.message)+"\n";for(const auto &parent:version.parent_ids)graph+="|  -> "+wxString::FromUTF8(parent)+"\n";if(version.parent_ids.empty())graph+=_L("Root commit")+"\n";}
     }
     if(m_view=="graph")m_detail->SetValue(graph.empty()?_L("No versions in the selected store."):graph);
     update_history_status();
+    apply_bulk_to_list();
 }
 
 void ProjectHistoryDialog::update_history_status()
@@ -766,6 +889,7 @@ void ProjectHistoryDialog::set_busy(PendingOperation operation, const wxString &
     m_close_button->Enable(false);
     if (m_retry_failures_button != nullptr)
         m_retry_failures_button->Enable(false);
+    update_bulk_controls();
     Layout();
 }
 
@@ -802,6 +926,7 @@ void ProjectHistoryDialog::show_empty_state()
     m_load_all_button->Enable(false);
     m_restore_button->Enable(false);
     m_close_button->Enable(true);
+    update_bulk_controls();
     Layout();
 }
 
@@ -820,16 +945,314 @@ void ProjectHistoryDialog::show_error(const wxString &message)
     m_load_all_button->Enable(can_load_all && m_pending == PendingOperation::None);
     m_restore_button->Enable(false);
     m_close_button->Enable(m_pending == PendingOperation::None);
+    update_bulk_controls();
     Layout();
 }
 
 void ProjectHistoryDialog::update_selection()
 {
-    if(m_view=="searches"){m_restore_button->Enable(false);return;}
+    if(m_view=="searches"){m_restore_button->Enable(false);update_bulk_controls();return;}
     const int row=m_version_list->GetSelectedRow();const bool selected=row>=0&&static_cast<std::size_t>(row)<m_filtered_rows.size();bool can_restore=false;
     if(selected){const auto index=m_filtered_rows[row];const auto &origin=m_origins[index];m_selected_id=m_versions[index].commit_id;m_selected_store=origin.category+":"+origin.identity.string()+":"+origin.device;can_restore=origin.category=="project"||origin.category=="preferences"||origin.category=="preset"||origin.category=="draft";
         if(m_view!="graph"&&m_view!="compare")set_status(wxString::FromUTF8(origin.category+" / "+origin.name+"\n"+m_versions[index].commit_id+"\n"+origin.detail));}
     m_restore_button->Enable(m_pending==PendingOperation::None&&selected&&can_restore);m_compare_button->Enable(selected&&!m_compare_future.valid());
+    m_restore_button->Enable(m_restore_button->IsEnabled() && m_bulk.size() == 1);
+    update_bulk_controls();
+}
+
+std::string ProjectHistoryDialog::bulk_id(std::size_t index) const
+{
+    const auto &origin = m_origins[index];
+    return origin.category + "\n" + origin.identity.string() + "\n" + origin.device + "\n" + m_versions[index].commit_id;
+}
+
+std::size_t ProjectHistoryDialog::bulk_index(const std::string &id) const
+{
+    for (std::size_t index = 0; index < m_versions.size(); ++index)
+        if (bulk_id(index) == id) return index;
+    return m_versions.size();
+}
+
+std::vector<std::string> ProjectHistoryDialog::visible_ids() const
+{
+    std::vector<std::string> out;
+    out.reserve(m_filtered_rows.size());
+    for (const std::size_t index : m_filtered_rows)
+        out.push_back(bulk_id(index));
+    return out;
+}
+
+std::vector<std::string> ProjectHistoryDialog::loaded_ids() const
+{
+    std::vector<std::string> out;
+    out.reserve(m_versions.size());
+    for (std::size_t index = 0; index < m_versions.size(); ++index)
+        out.push_back(bulk_id(index));
+    return out;
+}
+
+std::vector<std::string> ProjectHistoryDialog::selected_ids_in_order() const { return m_bulk.ordered_within(loaded_ids()); }
+
+void ProjectHistoryDialog::sync_bulk_from_list()
+{
+    if (m_syncing_selection || m_view == "searches")
+        return;
+    // Only the visible rows are authoritative here: a filtered-out id keeps
+    // whatever state it had, so a search never silently drops a selection.
+    for (int row = 0; row < static_cast<int>(m_filtered_rows.size()); ++row)
+        m_bulk.set(bulk_id(m_filtered_rows[row]), m_version_list->IsRowSelected(row));
+}
+
+void ProjectHistoryDialog::apply_bulk_to_list()
+{
+    m_syncing_selection = true;
+    m_version_list->UnselectAll();
+    for (int row = 0; row < static_cast<int>(m_filtered_rows.size()); ++row)
+        if (m_bulk.contains(bulk_id(m_filtered_rows[row])))
+            m_version_list->SelectRow(row);
+    m_syncing_selection = false;
+}
+
+void ProjectHistoryDialog::select_visible()
+{
+    m_bulk.select_page(visible_ids());
+    apply_bulk_to_list();
+    update_selection();
+}
+
+void ProjectHistoryDialog::select_all_loaded()
+{
+    m_bulk.select_all_matches(loaded_ids());
+    apply_bulk_to_list();
+    update_selection();
+}
+
+void ProjectHistoryDialog::invert_selection()
+{
+    m_bulk.invert(visible_ids());
+    apply_bulk_to_list();
+    update_selection();
+}
+
+void ProjectHistoryDialog::update_bulk_controls()
+{
+    if (m_bulk_counts_label == nullptr)
+        return;
+    const bool idle    = m_pending == PendingOperation::None && m_view != "searches";
+    const int  visible = static_cast<int>(m_filtered_rows.size());
+    const int  loaded  = static_cast<int>(m_versions.size());
+    // TRN: Bulk selection button; %d is the number of versions currently listed.
+    m_select_visible_button->SetLabel(wxString::Format(_L("Select visible (%d)"), visible));
+    m_select_visible_button->SetToolTip(_L("Selects every listed version") + " (Ctrl+A)");
+    if (m_list_truncated) {
+        // TRN: %d is the number of versions loaded so far; older ones are not loaded yet.
+        m_select_all_button->SetLabel(wxString::Format(_L("Select all %d loaded versions"), loaded));
+        m_select_all_button->SetToolTip(
+            // TRN: Tooltip explaining that "Select all" stops at the loaded versions.
+            _L("Selects every loaded version, including ones hidden by the search. Load all versions to include older ones.") +
+            " (Ctrl+Shift+A)");
+    } else {
+        // TRN: Bulk selection button; %d is the total number of versions.
+        m_select_all_button->SetLabel(wxString::Format(_L("Select all %d versions"), loaded));
+        m_select_all_button->SetToolTip(_L("Selects every version, including ones hidden by the search") + " (Ctrl+Shift+A)");
+    }
+    m_invert_button->SetToolTip(_L("Inverts the selection of the listed versions") + " (Ctrl+I)");
+    const std::size_t selected = m_bulk.size();
+    const std::size_t hidden   = selected - m_bulk.count_within(visible_ids());
+    wxString counts = wxString::Format(_L("%d selected"), static_cast<int>(selected));
+    if (hidden > 0)
+        // TRN: %d selected versions are currently hidden by the search filter.
+        counts += " " + wxString::Format(_L("(%d hidden by the search)"), static_cast<int>(hidden));
+    m_bulk_counts_label->SetLabel(counts);
+    m_select_visible_button->Enable(idle && visible > 0);
+    m_select_all_button->Enable(idle && loaded > 0);
+    m_invert_button->Enable(idle && visible > 0);
+    m_bulk_export_button->Enable(idle && selected > 0);
+    m_label_button->Enable(idle && selected > 0);
+    m_list_card->Layout();
+}
+
+void ProjectHistoryDialog::notify(const wxString &text)
+{
+    if (m_plater != nullptr && m_plater->get_notification_manager() != nullptr)
+        m_plater->get_notification_manager()->push_notification(std::string(text.ToUTF8()));
+    m_status_label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+    m_status_label->SetFont(Label::Body_13);
+    set_status(text);
+}
+
+void ProjectHistoryDialog::bulk_export()
+{
+    if (m_pending != PendingOperation::None || m_view == "searches")
+        return;
+    const std::vector<std::string> selected = selected_ids_in_order();
+    if (selected.empty())
+        return;
+
+    // TRN: Title of the folder picker for exporting project versions.
+    wxDirDialog picker(this, _L("Choose a folder for the exported versions"), wxEmptyString,
+                       wxDD_DEFAULT_STYLE | wxDD_DIR_MUST_EXIST);
+    if (picker.ShowModal() != wxID_OK)
+        return;
+    const std::filesystem::path folder(picker.GetPath().ToStdWstring());
+
+    const wxString saved_project = m_plater != nullptr ? m_plater->get_project_filename(".3mf") : wxString{};
+    wxString       stem          = saved_project.empty() ? wxString("untitled") : wxFileName(saved_project).GetName();
+    if (stem.empty())
+        stem = "untitled";
+
+    struct ExportItem
+    {
+        std::string           commit_id;
+        std::filesystem::path destination;
+        std::size_t index;
+    };
+    std::vector<ExportItem> items;
+    Bulk::BulkActionPlan     plan;
+    plan.action = _u8L("Export versions");
+    plan.consequence =
+        _u8L("Each version is written as its own .3mf named <project>-<commit>-<date>.3mf in the chosen folder. Nothing in the history changes.");
+    for (const std::string &commit_id : selected) {
+        const std::size_t index = bulk_index(commit_id);
+        if (index >= m_versions.size()) continue;
+        const auto version_it = m_versions.begin() + index;
+        const auto &origin = m_origins[index];
+        if (origin.manager == nullptr) {
+            plan.items.push_back(Bulk::BulkItem::skipped(short_commit(version_it->commit_id), _u8L("This record has no snapshot store")));
+            continue;
+        }
+        const std::time_t seconds = std::chrono::system_clock::to_time_t(version_it->committed_at);
+        const wxDateTime  when(seconds);
+        const wxString    file_name = wxString::Format("%s-%llu-%s-%s.3mf", stem, static_cast<unsigned long long>(index), wxString::FromUTF8(short_commit(version_it->commit_id)),
+                                                       when.IsValid() ? when.Format("%Y%m%d-%H%M%S") : wxString("unknown-time"));
+        const std::filesystem::path destination = folder / std::filesystem::path(file_name.ToStdWstring());
+        const std::string           label       = std::string(file_name.ToUTF8());
+        const std::string           detail      = display_message(version_it->message).ToStdString(wxConvUTF8);
+        std::error_code             ec;
+        if (std::filesystem::exists(destination, ec)) {
+            plan.items.push_back(Bulk::BulkItem::skipped(label, _u8L("a file with this name already exists"), detail));
+            continue;
+        }
+        plan.items.push_back(Bulk::BulkItem::changed(label, detail));
+        items.push_back({version_it->commit_id, destination, index});
+    }
+    if (!Bulk::BulkActionPreviewDialog::Run(this, plan))
+        return;
+
+    std::vector<std::string> failures;
+    bool                     cancelled = false;
+    std::size_t              failed    = 0;
+    const std::size_t        done      = Bulk::BulkActionPreviewDialog::RunWithProgress(
+        this, _L("Exporting versions"), items.size(),
+        [&items](std::size_t i) { return wxString::FromUTF8(items[i].destination.filename().u8string()); },
+        [this, &items, &failures](std::size_t i) {
+            // The manager runs on its own worker; waiting here keeps the
+            // operations serialized while the progress dialog owns the UI.
+            std::future<ProjectHistoryRestoreResult> future =
+                m_origins[items[i].index].manager->restore_version(m_origins[items[i].index].identity, items[i].commit_id, items[i].destination);
+            const ProjectHistoryRestoreResult result = future.get();
+            if (!result.ok())
+                failures.push_back(items[i].destination.filename().u8string() + ": " + result.error.message);
+            return result.ok();
+        },
+        &cancelled, &failed);
+
+    // TRN: %1$d versions were exported out of %2$d selected.
+    wxString summary = wxString::Format(_L("Exported %d of %d selected versions"), static_cast<int>(done - failed),
+                                        static_cast<int>(selected.size()));
+    if (plan.skipped() > 0)
+        summary += wxString::Format(_L(", %d skipped"), static_cast<int>(plan.skipped()));
+    if (failed > 0)
+        summary += wxString::Format(_L(", %d failed"), static_cast<int>(failed));
+    if (cancelled)
+        summary += " " + _L("(cancelled)");
+    if (!failures.empty())
+        summary += "\n" + wxString::FromUTF8(failures.front());
+    notify(summary);
+}
+
+void ProjectHistoryDialog::bulk_label()
+{
+    if (m_pending != PendingOperation::None || m_view == "searches")
+        return;
+    const std::vector<std::string> selected = selected_ids_in_order();
+    if (selected.empty())
+        return;
+
+    LabelPromptDialog prompt(this, selected.size());
+    if (prompt.ShowModal() != wxID_OK)
+        return;
+    const std::string label = std::string(prompt.value().ToUTF8());
+
+    std::vector<std::size_t> items;
+    Bulk::BulkActionPlan plan;
+    plan.action = _u8L("Label versions");
+    // TRN: %s is the label text the user typed.
+    plan.consequence = std::string(wxString::Format(_L("The label \"%s\" is attached to each version. History is never changed or removed."),
+                                                    wxString::FromUTF8(label)).ToUTF8());
+    for (const std::string &commit_id : selected) {
+        const std::size_t index = bulk_index(commit_id);
+        if (index >= m_versions.size()) continue;
+        const auto version_it = m_versions.begin() + index;
+        const auto &origin = m_origins[index];
+        if (origin.manager == nullptr) {
+            plan.items.push_back(Bulk::BulkItem::skipped(short_commit(version_it->commit_id), _u8L("This record has no snapshot store")));
+            continue;
+        }
+        const std::string detail = display_message(version_it->message).ToStdString(wxConvUTF8);
+        plan.items.push_back(Bulk::BulkItem::changed(short_commit(version_it->commit_id), detail, label));
+        items.push_back(index);
+    }
+    if (!Bulk::BulkActionPreviewDialog::Run(this, plan))
+        return;
+
+    std::vector<std::string> failures;
+    bool                     cancelled = false;
+    std::size_t              failed    = 0;
+    const std::size_t        done      = Bulk::BulkActionPreviewDialog::RunWithProgress(
+        this, _L("Labelling versions"), items.size(),
+        [this, &items](std::size_t i) { return wxString::FromUTF8(short_commit(m_versions[items[i]].commit_id)); },
+        [this, &items, &label, &failures](std::size_t i) {
+            const auto index = items[i];
+            const auto &origin = m_origins[index];
+            std::future<ProjectHistoryLabelResult> future = origin.manager->label_version(origin.identity, m_versions[index].commit_id, label);
+            const ProjectHistoryLabelResult        result = future.get();
+            if (!result.ok())
+                failures.push_back(short_commit(m_versions[index].commit_id) + ": " + result.error.message);
+            return result.ok();
+        },
+        &cancelled, &failed);
+
+    // TRN: %1$d versions were labelled out of %2$d selected.
+    wxString summary = wxString::Format(_L("Labelled %d of %d selected versions"), static_cast<int>(done - failed),
+                                        static_cast<int>(selected.size()));
+    if (failed > 0)
+        summary += wxString::Format(_L(", %d failed"), static_cast<int>(failed));
+    if (cancelled)
+        summary += " " + _L("(cancelled)");
+    if (!failures.empty())
+        summary += "\n" + wxString::FromUTF8(failures.front());
+    notify(summary);
+    // Reload so the new labels show in the list; the selection survives.
+    refresh_versions();
+}
+
+void ProjectHistoryDialog::on_char_hook(wxKeyEvent &event)
+{
+    if (dynamic_cast<wxTextCtrl *>(wxWindow::FindFocus()) != nullptr || m_view == "searches") { event.Skip(); return; }
+    const bool ctrl  = event.ControlDown() || event.RawControlDown();
+    const bool shift = event.ShiftDown();
+    if (ctrl && !event.AltDown() && m_pending == PendingOperation::None && !m_versions.empty()) {
+        if (event.GetKeyCode() == 'A') {
+            if (shift) select_all_loaded(); else select_visible();
+            return;
+        }
+        if (event.GetKeyCode() == 'I' && !shift) {
+            invert_selection();
+            return;
+        }
+    }
+    event.Skip();
 }
 
 void ProjectHistoryDialog::cleanup_restore_temp()
@@ -884,7 +1307,11 @@ void ProjectHistoryDialog::on_close_window(wxCloseEvent &event)
     event.Skip();
 }
 
-void ProjectHistoryDialog::on_selection_changed(wxDataViewEvent &) { update_selection(); }
+void ProjectHistoryDialog::on_selection_changed(wxDataViewEvent &)
+{
+    sync_bulk_from_list();
+    update_selection();
+}
 
 void ProjectHistoryDialog::on_item_activated(wxDataViewEvent &)
 {
@@ -1198,12 +1625,9 @@ void ProjectHistoryDialog::compare_selection()
 void ProjectHistoryDialog::on_dpi_changed(const wxRect &suggested_rect)
 {
     (void) suggested_rect;
-    m_refresh_button->Rescale();
-    m_export_button->Rescale();
-    m_load_all_button->Rescale();
-    m_retry_failures_button->Rescale();
-    m_restore_button->Rescale();
-    m_close_button->Rescale();
+    for (Button *button : {m_refresh_button, m_load_all_button, m_retry_failures_button, m_restore_button, m_close_button,
+                           m_select_visible_button, m_select_all_button, m_invert_button, m_bulk_export_button, m_label_button})
+        button->Rescale();
     m_refresh_button->SetMinSize(FromDIP(wxSize(104, 40)));
     m_export_button->SetMinSize(FromDIP(wxSize(104, 40)));
     m_load_all_button->SetMinSize(FromDIP(wxSize(144, 36)));

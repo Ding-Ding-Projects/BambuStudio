@@ -53,6 +53,11 @@ private:
     void on_pick_preset();
     void on_pick_color();
     void set_all_rows(bool checked);
+    void invert_rows();
+    // Row click contract: a plain click toggles row `i`; a shift-click sets
+    // the whole run between the last clicked row (the anchor) and `i` to the
+    // value row `i` just took. The anchor moves to `i` afterwards.
+    void on_row_clicked(size_t i, bool shift);
     void sync_select_all_state();
     void update_staged_labels();
     void update_apply_enabled();
@@ -74,6 +79,8 @@ private:
     // Controls
     std::vector<CheckBox*> m_row_checks;
     CheckBox*  m_chk_select_all{nullptr};
+    Button*    m_btn_invert{nullptr};
+    int        m_anchor_row{-1};   // last clicked row, the shift-click range anchor
     Button*    m_btn_set_preset{nullptr};
     Label*     m_lbl_staged_preset{nullptr};
     Button*    m_btn_set_color{nullptr};

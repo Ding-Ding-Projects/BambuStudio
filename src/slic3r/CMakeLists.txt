@@ -64,6 +64,13 @@ set(SLIC3R_GUI_SOURCES
     GUI/Widgets/TextTabbar.hpp
     GUI/Widgets/TextInput.cpp
     GUI/Widgets/TextInput.hpp
+    GUI/Bulk/BulkSelection.hpp
+    GUI/Bulk/BulkRenamePattern.hpp
+    GUI/Bulk/BulkActionPlan.hpp
+    GUI/Bulk/BulkActionPreviewDialog.cpp
+    GUI/Bulk/BulkActionPreviewDialog.hpp
+    GUI/Bulk/BulkRenameDialog.cpp
+    GUI/Bulk/BulkRenameDialog.hpp
     GUI/Widgets/TempInput.cpp
     GUI/Widgets/TempInput.hpp
     GUI/Widgets/AMSControl.cpp
