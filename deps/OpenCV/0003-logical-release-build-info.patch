@@ -1,0 +1,14 @@
+diff --git a/cmake/OpenCVUtils.cmake b/cmake/OpenCVUtils.cmake
+--- a/cmake/OpenCVUtils.cmake
++++ b/cmake/OpenCVUtils.cmake
+@@ -945,5 +945,10 @@ set(OPENCV_BUILD_INFO_STR "" CACHE INTERNAL "")
+ function(ocv_output_status msg)
+   message(STATUS "${msg}")
++  # Keep configure diagnostics intact; embed logical release source paths.
++  # Compiler prefix mapping cannot transform generated string literals.
++  if(COMMAND bambu_release_logical_text)
++    bambu_release_logical_text(msg "${msg}")
++  endif()
+   string(REPLACE "\\" "\\\\" msg "${msg}")
+   string(REPLACE "\"" "\\\"" msg "${msg}")
+   string(REGEX REPLACE "^\n+|\n+$" "" msg "${msg}")

@@ -16,8 +16,16 @@ if(WIN32)
     set(_conf_cmd ${CMAKE_COMMAND} -E env "_CL_=$ENV{_CL_} ${_bambu_path_flags}" perl Configure )
     set(_cross_comp_prefix_line "")
     set(_make_cmd ${CMAKE_COMMAND} -E env "_CL_=$ENV{_CL_} ${_bambu_path_flags}" nmake)
-    set(_install_cmd ${CMAKE_COMMAND} -E env "_CL_=$ENV{_CL_} ${_bambu_path_flags}" nmake install_sw )
+    # Keep upstream runtime defaults independent of the private staging tree.
+    # Only installation destinations are overridden; compiled provider/config
+    # directories continue to come from OpenSSL's Windows Configure defaults.
+    set(_prefix_line "")
+    set(_install_cmd ${CMAKE_COMMAND} -E env "_CL_=$ENV{_CL_} ${_bambu_path_flags}"
+        nmake install_sw "INSTALLTOP=${DESTDIR}/usr/local"
+        "ENGINESDIR=${DESTDIR}/usr/local/lib/engines-3"
+        "MODULESDIR=${DESTDIR}/usr/local/lib/ossl-modules")
 else()
+    set(_prefix_line "--prefix=${DESTDIR}/usr/local")
     if(APPLE)
         set(_conf_cmd export MACOSX_DEPLOYMENT_TARGET=${CMAKE_OSX_DEPLOYMENT_TARGET} && ./Configure -mmacosx-version-min=${CMAKE_OSX_DEPLOYMENT_TARGET} )
     else()
@@ -54,7 +62,7 @@ ExternalProject_Add(dep_OpenSSL
     DOWNLOAD_DIR ${DEP_DOWNLOAD_DIR}/OpenSSL
 	CONFIGURE_COMMAND ${_conf_cmd} ${_cross_arch}
         "--openssldir=${DESTDIR}/usr/local"
-        "--prefix=${DESTDIR}/usr/local"
+        ${_prefix_line}
         ${_cross_comp_prefix_line}
         no-shared
         no-asm

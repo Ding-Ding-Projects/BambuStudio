@@ -14,6 +14,8 @@ if(MSVC AND (CMAKE_C_COMPILER_ID STREQUAL "MSVC" OR CMAKE_CXX_COMPILER_ID STREQU
         list(APPEND _bambu_roots "$ENV{USERPROFILE}")
         list(APPEND _bambu_labels "build/host")
     endif()
+    set(_bambu_embedded_roots)
+    set(_bambu_embedded_labels)
     # Emit the longest physical prefixes first, leaving the user-profile
     # fallback behind repository, child-project and generated-build roots.
     while(_bambu_roots)
@@ -34,13 +36,33 @@ if(MSVC AND (CMAKE_C_COMPILER_ID STREQUAL "MSVC" OR CMAKE_CXX_COMPILER_ID STREQU
         list(REMOVE_AT _bambu_labels ${_bambu_longest_index})
         file(TO_CMAKE_PATH "${_bambu_root}" _bambu_forward_root)
         file(TO_NATIVE_PATH "${_bambu_root}" _bambu_native_root)
+        list(APPEND _bambu_embedded_roots "${_bambu_native_root}")
+        list(APPEND _bambu_embedded_labels "${_bambu_label}")
         # Source/header strings can use either separator form, or mix them
         # after the matched prefix. Do not assume compiler normalization.
         string(APPEND _bambu_path_flags " /pathmap:\"${_bambu_native_root}=${_bambu_label}\"")
         if(NOT _bambu_forward_root STREQUAL _bambu_native_root)
+            list(APPEND _bambu_embedded_roots "${_bambu_forward_root}")
+            list(APPEND _bambu_embedded_labels "${_bambu_label}")
             string(APPEND _bambu_path_flags " /pathmap:\"${_bambu_forward_root}=${_bambu_label}\"")
         endif()
     endwhile()
+    # Generated diagnostic metadata is ordinary text, not a compiler macro.
+    # Producers call this before C-string escaping, preserving every field
+    # while substituting the same logical roots used by compilation.
+    function(bambu_release_logical_text output text)
+        set(_text "${text}")
+        list(LENGTH _bambu_embedded_roots _count)
+        if(_count GREATER 0)
+            math(EXPR _last "${_count} - 1")
+            foreach(_index RANGE ${_last})
+                list(GET _bambu_embedded_roots ${_index} _physical)
+                list(GET _bambu_embedded_labels ${_index} _logical)
+                string(REPLACE "${_physical}" "${_logical}" _text "${_text}")
+            endforeach()
+        endif()
+        set(${output} "${_text}" PARENT_SCOPE)
+    endfunction()
     string(APPEND CMAKE_C_FLAGS " ${_bambu_path_flags}")
     string(APPEND CMAKE_CXX_FLAGS " ${_bambu_path_flags}")
     foreach(_bambu_link_kind EXE SHARED MODULE)
