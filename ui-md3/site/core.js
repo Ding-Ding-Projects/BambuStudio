@@ -20,8 +20,8 @@
   }
 
   var DEFAULTS = {
-    funnyEn: 3,
-    funnyYue: 4,
+    funnyEn: 5,
+    funnyYue: 5,
     theme: 'dark',
     density: 'comfortable',
     accent: '#22c55e',
@@ -103,6 +103,7 @@
     return true;
   }
   function resetAll() {
+    if (global.BambuWording) global.BambuWording.clear();
     Object.keys(DEFAULTS).forEach(function (key) { state[key] = clone(DEFAULTS[key]); });
     try {
       global.localStorage.removeItem(STORAGE_KEY);
@@ -152,7 +153,8 @@
     var variants = entry[language] || entry.en || [];
     if (!variants.length) return '';
     var level = language === 'yue' ? get('funnyYue') : get('funnyEn');
-    return interpolate(variants[variantIndex(variants.length, level)], params);
+    var original = variants[variantIndex(variants.length, level)];
+    return interpolate(global.BambuWording ? global.BambuWording.replace(original) : original, params);
   }
 
   /** One key at an explicit language and level — used by the settings preview. */

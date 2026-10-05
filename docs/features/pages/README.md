@@ -25,6 +25,9 @@ work.
 
 ## Features
 
+- [Local personal wording](personal-wording.md): private per-visitor JSON import, replacement,
+  cache validation and clear behavior, with explicit remaining integration and runtime proof.
+
 - [Tabbed navigation](tabbed-navigation.md) — the strip, its overflow surface, reordering, pinning,
   grouping, the searchable tab list, and the measured layout algorithm behind them.
 - [Language modes and funny levels](language-and-funny-levels.md) — the copy catalog, the two

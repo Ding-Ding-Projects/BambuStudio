@@ -21,10 +21,20 @@
   'use strict';
 
   var copy = {
+    'wording.heading': { en: ['Personal wording'], yue: ['個人用字'] },
+    'wording.upload': { en: ['Load local wording JSON'], yue: ['載入本機用字 JSON'] },
+    'wording.replace': { en: ['Replace local wording JSON'], yue: ['更換本機用字 JSON'] },
+    'wording.clear': { en: ['Clear personal wording'], yue: ['清除個人用字'] },
+    'wording.explanation': { en: ['Default: no file. A validated file changes only shipped interface wording in this browser. It is never uploaded, exported, or added to history. URLs, code, release records and entered values stay exact. Clear restores the original wording.', 'Default: no file. Your validated wording stays in this browser, never in uploads, exports or history. URLs, code, release records and entered values keep their own shoes on. Clear restores the original wording.'], yue: ['預設：未載入檔案。驗證後只更改此瀏覽器嘅介面用字，唔會上傳、匯出或加入歷史。網址、程式碼、發行記錄同輸入值保持原樣；清除後即時還原。', '預設：未載入檔案。驗證後嘅個人用字只留喺此瀏覽器，唔會上傳、匯出或加入歷史。網址、程式碼、發行記錄同輸入值照舊行路；清除後即時還原。'] },
+    'wording.empty': { en: ['No wording file loaded; original wording is active.', 'No wording file loaded. The original wording still has the microphone.'], yue: ['未載入用字檔案，現時使用原有用字。', '未載入用字檔案，原有用字仲揸住支咪。'] },
+    'wording.loaded': { en: ['Validated wording is active and saved privately in this browser.'], yue: ['已驗證嘅用字已套用，並儲存於此瀏覽器嘅私人資料。'] },
+    'wording.session': { en: ['Validated wording is active for this visit; browser storage is unavailable.'], yue: ['已驗證嘅用字只於今次瀏覽生效；瀏覽器儲存未能使用。'] },
+    'wording.invalid': { en: ['File rejected: use schema version 1, unique string entries, and the documented size limits. The previous valid wording remains active.'], yue: ['檔案未獲接受：請使用第 1 版格式、唯一字串項目同文件列明嘅大小限制。之前有效嘅用字仍然生效。'] },
+    'wording.clearFailed': { en: ['Browser storage could not be cleared. Clear this page’s site data in browser settings to reset the wording.'], yue: ['未能清除瀏覽器儲存。請喺瀏覽器設定清除此網頁嘅資料，以重設用字。'] },
     'automation.heading': { en: ['MCP and CLI automation'], yue: ['MCP 及 CLI 自動化'] },
     'automation.body': {
-      en: ['In development: stdio and authenticated HTTP tools for projects, headless slicing, and configured printers. Builds and verification run on GitHub Actions. Physical-printer verification is tracked separately.'],
-      yue: ['開發中：透過 stdio 及已驗證身份的 HTTP 工具操作專案、背景切片及已設定的打印機。編譯及驗證都在 GitHub Actions 執行，真機驗證另外記錄。']
+      en: ['In development: stdio and authenticated HTTP tools for projects, headless slicing, and configured printers. Builds and verification run on GitHub Actions. Physical-printer verification is tracked separately.', 'Still in development: stdio and authenticated HTTP tools for projects, headless slicing, and configured printers. GitHub Actions handles builds and verification; physical printers still get their own report card.'],
+      yue: ['開發中：透過 stdio 及已驗證身份的 HTTP 工具操作專案、背景切片及已設定的打印機。編譯及驗證都在 GitHub Actions 執行，真機驗證另外記錄。', '仲開發緊：透過 stdio 及已驗證身份嘅 HTTP 工具操作專案、背景切片同已設定嘅打印機。GitHub Actions 負責編譯同驗證，真機另外有自己張成績表。']
     },
     'automation.guide': { en: ['Read setup and verification status'], yue: ['閱讀設定方法及驗證狀態'] },
     /* ---------------------------------------------------------------- shell */

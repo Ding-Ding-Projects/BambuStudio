@@ -235,6 +235,7 @@
 
     var groups = [
       { key: 'settings.group.language', build: buildLanguageGroup },
+      { key: 'wording.heading', build: function (host) { global.BambuWording.mount(host); } },
       { key: 'settings.group.appearance', build: buildAppearanceGroup },
       { key: 'settings.group.typography', build: buildTypographyGroup },
       { key: 'settings.group.elements', build: buildElementGroup },
