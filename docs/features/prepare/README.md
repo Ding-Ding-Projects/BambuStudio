@@ -10,4 +10,6 @@ This category documents native Prepare-workspace features.
 - [Every process setting shown, no Simple/Advanced filter](process-settings-full-tree.md)
   describes the current full tree, its horizontal-scroll backstop and settings search.
 
+- [Prepare settings scrolling](scroll-ownership.md) documents scroll ownership, wheel and keyboard routing, header sizing and pending runtime verification.
+
 No Postman collection is applicable: this category exposes no HTTP API.
