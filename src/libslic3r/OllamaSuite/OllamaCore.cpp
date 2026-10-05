@@ -75,6 +75,7 @@ Request request(Operation op, const Json &p) {
     case Operation::Copy: r = {"POST", "/api/copy", {}, false, 30}; break;
     case Operation::Chat: r = {"POST", "/api/chat", {}, true, 600}; break;
     case Operation::Generate: r = {"POST", "/api/generate", {}, true, 600}; break;
+    default: throw std::runtime_error("Unsupported local API operation");
     }
     if (r.method == "GET") { require(p.empty(), "GET payload is not permitted"); return r; }
     std::set<std::string> allowed = op == Operation::Copy ? std::set<std::string>{"source", "destination"} : std::set<std::string>{"model"};
@@ -159,6 +160,20 @@ void apply_details(Model &m, const Json &j) {
         const auto architecture = text(info, "general.architecture");
         if (!architecture.empty()) m.context_length = number(info, (architecture + ".context_length").c_str());
     }
+}
+void apply_manifest(Model &m, const Json &j, const std::string &sha) {
+    require(j.value("schemaVersion",0)==2 && j.value("mediaType",std::string())=="application/vnd.docker.distribution.manifest.v2+json", "Unsupported registry manifest");
+    require(sha.size()==64&&std::all_of(sha.begin(),sha.end(),[](char c){return (c>='0'&&c<='9')||(c>='a'&&c<='f');}),"Manifest identity missing");
+    require(j.contains("layers")&&j.at("layers").is_array()&&!j.at("layers").empty()&&j.at("layers").size()<=256,"Invalid registry layer inventory");
+    auto bytes=number(j.at("config"),"size"); require(bytes.has_value(),"Registry config size missing");
+    std::uint64_t total=*bytes; bool weights=false;
+    for(const auto &layer:j.at("layers")) {
+        auto size=number(layer,"size"); const auto digest=text(layer,"digest"); const auto type=text(layer,"mediaType");
+        require(size.has_value()&&digest.size()==71&&digest.compare(0,7,"sha256:")==0,"Registry layer lacks exact size or identity");
+        require(std::all_of(digest.begin()+7,digest.end(),[](char c){return (c>='0'&&c<='9')||(c>='a'&&c<='f');}),"Invalid registry layer identity");
+        total=plus(total,*size); if(type=="application/vnd.ollama.image.model"&&*size>0) weights=true;
+    }
+    require(weights,"Manifest has no verified local model weights"); m.bytes=total; m.digest="sha256:"+sha; m.local=true;
 }
 std::vector<Model> reconcile(const std::vector<Model> &catalog, const std::vector<Model> &installed, const std::set<std::string> &running) {
     std::map<std::string, Model> all;
@@ -269,14 +284,15 @@ CatalogSnapshot refresh_catalog(const CatalogFetcher &fetch, const std::atomic_b
             if (p.advertised_count) { auto [i, inserted] = expected.emplace(base,*p.advertised_count); require(inserted || i->second == *p.advertised_count, "Catalog changed during pagination"); }
         }
         for (const auto &[base, names] : actual) counts_verified = counts_verified && expected.count(base) && expected[base] == names.size();
-        s.complete = counts_verified && !families.empty() && !variants.empty();
+        s.traversal_complete = !families.empty() && !variants.empty(); s.authority_total_known = counts_verified;
+        s.complete = counts_verified && s.traversal_complete;
         s.reason = s.complete ? "Every advertised collection count reconciled across all pages." : "Official HTML has no verified total-count contract. Entries are discovered, not certified exhaustive.";
         if (s.complete) s.last_successful_refresh = s.refreshed_at;
     } catch (const std::exception &e) { s.reason = e.what(); s.complete = false; s.offline = true; }
     return s;
 }
 Json catalog_json(const CatalogSnapshot &s) {
-    Json j = {{"schema",1},{"complete",s.complete},{"offline",s.offline},{"refreshed_at",s.refreshed_at},{"last_successful_refresh",s.last_successful_refresh},{"reason",s.reason},{"models",Json::array()},{"pages",Json::array()}};
+    Json j = {{"schema",1},{"complete",s.complete},{"offline",s.offline},{"traversal_complete",s.traversal_complete},{"authority_total_known",s.authority_total_known},{"refreshed_at",s.refreshed_at},{"last_successful_refresh",s.last_successful_refresh},{"reason",s.reason},{"models",Json::array()},{"pages",Json::array()}};
     for (const auto &m : s.models) j["models"].push_back({{"name",m.name}});
     for (const auto &p : s.pages) j["pages"].push_back({{"path",p.path},{"response_identity",p.response_identity},{"fetched_at",p.fetched_at},{"names",p.names},{"next_pages",p.next_pages},{"advertised_count",p.advertised_count ? Json(*p.advertised_count) : Json(nullptr)}});
     return j;

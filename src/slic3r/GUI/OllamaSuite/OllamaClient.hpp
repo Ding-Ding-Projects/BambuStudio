@@ -11,6 +11,7 @@ public:
     ApiResult execute(Operation, const Json &, const std::atomic_bool &cancel,
                       const std::function<bool(const Json &)> &on_chunk = {}) const;
     CatalogPage catalog_page(const std::string &, const std::atomic_bool &cancel) const;
+    Model registry_metadata(const std::string &exact_tag, const std::atomic_bool &cancel) const;
 };
 Hardware detect_hardware(const std::filesystem::path &destination);
 }

@@ -42,6 +42,7 @@ struct Model {
     bool installed = false, running = false, capabilities_verified = false, local = true;
 };
 std::vector<Model> installed_models(const Json &response);
+void apply_manifest(Model &model, const Json &manifest, const std::string &response_sha256);
 void apply_details(Model &model, const Json &response);
 std::vector<Model> reconcile(const std::vector<Model> &catalog, const std::vector<Model> &installed,
                              const std::set<std::string> &running);
@@ -69,7 +70,7 @@ struct CatalogSnapshot {
     std::vector<Model> models;
     std::vector<CatalogPage> pages;
     std::string refreshed_at, last_successful_refresh, reason;
-    bool complete = false, offline = false;
+    bool complete = false, offline = false, traversal_complete = false, authority_total_known = false;
 };
 using CatalogFetcher = std::function<CatalogPage(const std::string &)>;
 CatalogSnapshot refresh_catalog(const CatalogFetcher &, const std::atomic_bool &cancel);

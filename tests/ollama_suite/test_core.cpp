@@ -14,6 +14,7 @@ int main() {
 try {
     check(valid_model("example:7b-q4"),"exact tag accepted"); check(!valid_model("https://host/model"),"URL rejected"); check(!valid_model("../../model"),"traversal rejected");
     check(!valid_model("model;run"),"shell syntax rejected"); check(request(Operation::Version).path=="/api/version","version route");
+    rejects([] { request(static_cast<Operation>(100)); },"unknown operation rejected");
     check(request(Operation::Pull,{{"model","example:tag"}}).streaming,"pull streaming required");
     rejects([] { request(Operation::Pull,{{"model","example"},{"insecure",true}}); },"unknown pull field rejected");
     rejects([] { parse_json(std::string(max_json_bytes+1,'x')); },"oversized response rejected");
@@ -26,6 +27,11 @@ try {
     Ndjson remote_error([](const Json &) { return true; }); std::string error="{\"error\":\"private payload\"}\n"; check(!remote_error.feed(error.data(),error.size())&&remote_error.error().find("private payload")==std::string::npos,"raw runtime error not reflected");
     auto models=installed_models({{"models",Json::array({{{"name","example:tag"},{"size",std::uint64_t(1000)},{"digest","abc"},{"details",{{"family","example"},{"parameter_size","1B"},{"quantization_level","Q4"}}}}})}});
     check(models.size()==1&&models[0].bytes==1000,"installed metadata parsed"); auto m=models[0];
+    Json manifest={{"schemaVersion",2},{"mediaType","application/vnd.docker.distribution.manifest.v2+json"},{"config",{{"size",std::uint64_t(32)}}},{"layers",Json::array({{{"mediaType","application/vnd.ollama.image.model"},{"digest","sha256:"+std::string(64,'a')},{"size",std::uint64_t(1000)}}})}};
+    Model catalog_model; catalog_model.name="example:tag"; apply_manifest(catalog_model,manifest,std::string(64,'b')); check(catalog_model.bytes==1032,"exact manifest bytes include config");
+    auto cloud_manifest=manifest; cloud_manifest["layers"][0]["mediaType"]="application/vnd.ollama.image.template";
+    rejects([&] { apply_manifest(catalog_model,cloud_manifest,std::string(64,'b')); },"manifest without local weights rejected");
+    auto bad_manifest=manifest; bad_manifest["layers"][0].erase("size"); rejects([&] { apply_manifest(catalog_model,bad_manifest,std::string(64,'b')); },"missing exact layer size rejected");
     apply_details(m,{{"capabilities",Json::array({"completion","vision"})},{"model_info",{{"general.architecture","example"},{"general.parameter_count",std::uint64_t(1000000)},{"example.context_length",std::uint64_t(4096)}}}});
     check(m.capabilities_verified&&m.context_length==4096,"capability evidence applied");
     auto merged=reconcile({Model{"other:tag"}},models,{"example:tag"}); check(merged.size()==2&&merged[0].running,"catalog and installed union retained");

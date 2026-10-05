@@ -7,9 +7,9 @@ Material Designer creation/export tools were not exposed to this implementation 
 | Section | Required states | Implementation |
 | --- | --- | --- |
 | Models | uninspected, unreachable, installed, running, metadata unavailable, catalog unverified, catalog offline | `OllamaSuiteDialog.cpp`, `OllamaClient.cpp` |
-| Chat | model unavailable, ready, streaming, stopped, incomplete, complete | `OllamaSuiteDialog.cpp`, `OllamaCore.cpp` |
+| Chat | model unavailable, ready, streaming, stopped, incomplete, complete, attached image, history, rename/delete/export | `OllamaSuiteDialog.cpp`, `OllamaCore.cpp` |
 | Batch pulls | empty, queued, interrupted, preflight unavailable | `OllamaSuiteDialog.cpp`, `OllamaCore.cpp` |
-| Launch profiles | predefined, registration unavailable, preflight blocked, snapshot/rollback | `OllamaSuiteDialog.cpp`, `LaunchProfiles.cpp` |
+| Launch profiles | predefined, semantic executable/model/folder registration, preflight blocked, reviewed, snapshot/rollback, cancelled | `OllamaSuiteDialog.cpp`, `LaunchProfiles.cpp`, `NativeLaunchAdapter.cpp` |
 | Troubleshooting | absent-or-stopped ambiguity, unhealthy API, storage shortage, offline catalog, unknown fit | bundled native text |
 
 The default client size is 960 by 760 DIP and the minimum is 640 by 560 DIP. Sections scroll independently. The shared tab strip owns ordering, grouping, discovery, persistence and dock direction. Buttons wrap in narrow layouts. Every selectable model uses the shared search matcher rather than a separate regex engine.
