@@ -75,7 +75,7 @@ cmake --build build/local-security --config Release
 ctest --test-dir build/local-security -C Release --output-on-failure
 ```
 
-Verification currently covers 175 behavioral assertions, including all eighteen
+Core verification currently covers 223 behavioral assertions, including all eighteen
 RFC 6238 eight-digit vectors and their six-digit truncations, the ten RFC 4226
 vectors, malformed imports, vault errors, generation changes, all policies,
 factor ordering, expiry, independent locks, wait-skip limits, tampering, and a
@@ -89,3 +89,7 @@ camera/image/clipboard import, history transactions and manager, localization,
 clock-skew reporting, and real rendered accessibility/layout verification are
 not established by these service tests. Missing evidence remains incomplete.
 No HTTP API exists, so a Postman collection is not applicable.
+
+See [native integration and remaining evidence](native-integration.md) and
+[encrypted identity history](identity-history.md) for the exact composition hooks
+and the separate unverified native UI/history scope.

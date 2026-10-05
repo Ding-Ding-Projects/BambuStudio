@@ -8,6 +8,7 @@
 #include <limits>
 #include <map>
 #include <sstream>
+#include <fstream>
 #include <openssl/crypto.h>
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
@@ -173,6 +174,36 @@ public:
 };
 }
 std::unique_ptr<Vault> make_os_vault() { return std::make_unique<OsVault>(); }
+std::unique_ptr<Vault> make_application_vault(const std::filesystem::path& data) {
+    require(data.is_absolute());
+    const auto folder=data/"local_security";
+    const auto marker=folder/"instance-v1";
+    std::filesystem::create_directories(folder);
+    require(!std::filesystem::is_symlink(folder),Error::Unavailable);
+    if(!std::filesystem::exists(marker)) {
+#ifdef _WIN32
+        auto id=new_stable_id();HANDLE file=CreateFileW(marker.c_str(),GENERIC_WRITE,0,nullptr,CREATE_NEW,FILE_ATTRIBUTE_NORMAL,nullptr);
+        if(file!=INVALID_HANDLE_VALUE){DWORD written=0;bool ok=WriteFile(file,id.data(),static_cast<DWORD>(id.size()),&written,nullptr)!=0&&written==id.size();if(ok)ok=FlushFileBuffers(file)!=0;CloseHandle(file);require(ok,Error::Unavailable);}
+        else require(GetLastError()==ERROR_FILE_EXISTS||GetLastError()==ERROR_ALREADY_EXISTS,Error::Unavailable);
+#else
+        throw Failure(Error::Unavailable);
+#endif
+    }
+    require(std::filesystem::is_regular_file(marker)&&!std::filesystem::is_symlink(marker)&&std::filesystem::file_size(marker)==32,Error::Corrupt);
+    std::ifstream input(marker,std::ios::binary);std::array<char,33> marker_bytes{};input.read(marker_bytes.data(),marker_bytes.size());
+    require(input.gcount()==32&&input.eof(),Error::Corrupt);std::string instance(marker_bytes.data(),32);
+    require(instance.size()==32&&valid_stable_id(instance),Error::Corrupt);
+    class Scoped final:public Vault {
+        std::string m_prefix;std::unique_ptr<Vault> m_native;
+        std::string name(const std::string& id){require(valid_stable_id(id)&&id.size()<=140);return m_prefix+id;}
+    public:
+        explicit Scoped(std::string id):m_prefix("app."+id+"."),m_native(make_os_vault()){}
+        std::optional<Secret> read(const std::string& id)override{return m_native->read(name(id));}
+        void write(const std::string& id,const Secret& value)override{m_native->write(name(id),value);}
+        void erase(const std::string& id)override{m_native->erase(name(id));}
+    };
+    return std::make_unique<Scoped>(std::move(instance));
+}
 CredentialMetadata Credentials::metadata(const std::string& account) {
     auto r = m_vault.read(account); if (!r) return {};
     validate_record(*r); return {true, hex(r->data()+54,16)};
@@ -286,7 +317,7 @@ std::vector<Factor> factors(Policy p) {
 }
 AttemptState AttemptBudget::state(Time now) {
     if(m_wait_until!=Time{} && now>=m_wait_until) {m_wait_until={};m_remaining=5;}
-    unsigned seconds=0; if(m_wait_until>now)seconds=static_cast<unsigned>(std::chrono::duration_cast<std::chrono::seconds>(m_wait_until-now).count()+1);
+    unsigned seconds=0; if(m_wait_until>now)seconds=static_cast<unsigned>(std::chrono::ceil<std::chrono::seconds>(m_wait_until-now).count());
     return {m_remaining,seconds};
 }
 void AttemptBudget::failed(Time now) {
@@ -336,7 +367,7 @@ std::vector<unsigned char> encrypt_snapshot(const Secret& key,const Secret& plai
 }
 Secret decrypt_snapshot(const Secret& key,const std::vector<unsigned char>& encrypted,std::string_view id) {
     require(key.size()==32&&encrypted.size()>=29&&encrypted.size()<=1024*1024+29&&encrypted[0]==1&&valid_stable_id(id),Error::Corrupt);
-    auto bytes=encrypted.size()-29;Secret out(std::vector<unsigned char>(bytes+16,0));
+    auto bytes=encrypted.size()-29;Secret out(std::vector<unsigned char>(bytes?bytes:1,0));
     std::unique_ptr<EVP_CIPHER_CTX,decltype(&EVP_CIPHER_CTX_free)> ctx(EVP_CIPHER_CTX_new(),EVP_CIPHER_CTX_free);require(bool(ctx),Error::Unavailable);
     int n=0,total=0;
     require(EVP_DecryptInit_ex(ctx.get(),EVP_aes_256_gcm(),nullptr,key.data(),encrypted.data()+1)==1,Error::Unavailable);

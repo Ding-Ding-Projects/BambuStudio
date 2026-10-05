@@ -8,6 +8,7 @@
 #include <string>
 #include <string_view>
 #include <vector>
+#include <filesystem>
 
 namespace Slic3r::LocalSecurity {
 
@@ -48,6 +49,11 @@ public:
 // Uses Windows Credential Manager, CRED_PERSIST_LOCAL_MACHINE. Other platforms
 // fail closed until a native backend is supplied. Never uses a plaintext fallback.
 std::unique_ptr<Vault> make_os_vault();
+// Product-local services use this factory. Its non-secret instance marker lives
+// inside application data. Deleting that folder starts a fresh vault namespace,
+// leaving inaccessible old credential records for explicit OS-level management.
+// Shared presentation credentials instead use make_os_vault().
+std::unique_ptr<Vault> make_application_vault(const std::filesystem::path& application_data);
 bool valid_stable_id(std::string_view id) noexcept;
 std::string new_stable_id();
 
