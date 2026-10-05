@@ -40,7 +40,7 @@ document alone is not that proof.
 
 | Requested behavior | Existing implementation |
 | --- | --- |
-| Collect accessible configured printers without manual credential re-entry | `SmartHomeDialog::collect_accessible_printers` in `src/slic3r/GUI/SmartHomeDialog.cpp` selects accessible local/account records, deduplicates serials and collects the required handover fields |
+| Collect accessible configured printers without manual credential re-entry | `accessible_printers()` in `src/slic3r/GUI/SmartHomeDialog.cpp` selects accessible local/account records, deduplicates serials and collects the required handover fields |
 | Path B, explicit service import | `SmartHomeDialog::add_printers_to_home_assistant` and `HomeAssistant.cpp` call `POST /api/services/bambu_lab/add_printer` in bounded four-wide waves |
 | Credential transfer disclosure | The explicit import action displays the existing confirmation before sending printer access codes |
 | Path A, temporary discovery | `SmartHomeDialog::set_discovery_sharing` and `HomeAssistantSharingService.cpp` provide off-by-default five-minute discovery, authenticated HTTP offers, expiration and shutdown |
