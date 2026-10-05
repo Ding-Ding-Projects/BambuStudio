@@ -196,3 +196,7 @@ Eight non-main checkout tips are not ancestors of remote main and remain retaine
 The prepublication native-verification route was assessed but not implemented: it
 would require coordinated authenticated source/identity changes across the installer,
 driver and evidence reader. Continue through the existing supported release route.
+
+## Adopted responsive continuation records
+
+- [Native lifecycle](docs/integration/continuations/native-lifecycle.md), source `67a8822a5489b464cce066742333bbe9ebe7c3d7`, integrated for combined verification; native acceptance remains pending.

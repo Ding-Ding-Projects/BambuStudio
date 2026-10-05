@@ -3205,15 +3205,21 @@ Sidebar::Sidebar(Plater *parent)
         p->panel_printer_preset->SetCornerRadius(FromDIP(MD3::Metrics::active().radius));
         p->panel_printer_preset->SetBackgroundColor(StateColor::semantic(MD3::Role::SurfaceContainerHighest));
         p->panel_printer_preset->SetBorderColor(panel_bd_col);
+        p->panel_printer_preset->SetName(_L("Printer preset"));
+        p->panel_printer_preset->Bind(wxEVT_KEY_DOWN, [this](wxKeyEvent &evt) {
+            if (evt.GetKeyCode() == WXK_RETURN || evt.GetKeyCode() == WXK_SPACE)
+                p->combo_printer->OpenDropDown(p->panel_printer_preset);
+            else
+                evt.Skip();
+        });
         p->panel_printer_preset->Bind(wxEVT_LEFT_DOWN, [this](auto & evt) {
-            p->combo_printer->wxEvtHandler::ProcessEvent(evt);
+            p->combo_printer->OpenDropDown(p->panel_printer_preset);
         });
 
         // Live preset combo, created FIRST so it stays the card's first child.
-        // It is hidden — the static identity labels replace its chrome — but
-        // remains fully wired: card clicks are forwarded to it, its DropDown
-        // pops from its geometry (kept in sync with the card below), and every
-        // update()/selection path is untouched.
+        // Its item model remains hidden behind the static identity labels. The
+        // visible card opens it explicitly and owns focus; popup geometry stays
+        // synchronized with the card below.
         PlaterPresetComboBox *combo_printer = new PlaterPresetComboBox(p->panel_printer_preset, Preset::TYPE_PRINTER);
         combo_printer->SetWindowStyle(combo_printer->GetWindowStyle() & ~wxALIGN_MASK | wxALIGN_LEFT);
         combo_printer->SetBorderWidth(0);
@@ -3235,7 +3241,7 @@ Sidebar::Sidebar(Plater *parent)
         p->image_printer    = new wxStaticBitmap(p->panel_printer_preset, wxID_ANY, wxNullBitmap, wxDefaultPosition, PRINTER_THUMBNAIL_SIZE, 0);
         update_printer_thumbnail();
         p->image_printer->Bind(wxEVT_LEFT_DOWN, [this](auto &evt) {
-            p->combo_printer->wxEvtHandler::ProcessEvent(evt);
+            p->combo_printer->OpenDropDown(p->panel_printer_preset);
         });
 
         // Static identity: name 13.5/600 ellipsized + status row (7px Primary
@@ -4767,9 +4773,12 @@ void Sidebar::init_filament_combo(PlaterPresetComboBox **combo, const int filame
     edit_btn->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerHighest));
 
     PlaterPresetComboBox* combobox = (*combo);
-    edit_btn->Bind(wxEVT_BUTTON, [this, edit_btn, filament_idx](wxCommandEvent) {
-        auto menu = p->plater->filament_action_menu(filament_idx);
-        p->m_menu_filament_id = filament_idx;
+    wxWeakRef<PlaterPresetComboBox> menu_combo(combobox);
+    edit_btn->Bind(wxEVT_BUTTON, [this, edit_btn, menu_combo](wxCommandEvent) {
+        if (!menu_combo) return;
+        const int config_slot = menu_combo->get_filament_idx();
+        auto menu = p->plater->filament_action_menu(config_slot);
+        p->m_menu_filament_id = config_slot;
         // Anchored below the button so the surface never covers its opener.
         MD3::PopupMenuBelow(edit_btn, menu, true);
     });
@@ -5696,6 +5705,12 @@ void Sidebar::on_filament_count_change(size_t num_filaments)
 
     auto& choices = combos_filament();
 
+    for (size_t row = 0; row < std::min(choices.size(), num_physical); ++row) {
+        choices[row]->set_filament_idx(static_cast<int>(physical_indices[row]));
+        choices[row]->update();
+        choices[row]->clr_picker->SetName(wxString::Format(_L("Ink %d color"), int(physical_indices[row]) + 1));
+    }
+
     if (num_physical == choices.size()) {
         // the ctor pre-creates one combo, so on startup with a single-filament project this guard is hit
         // before any layout pass has sized m_physical_scroll_area.
@@ -5758,6 +5773,9 @@ void Sidebar::on_filament_count_change(size_t num_filaments)
 void Sidebar::on_filaments_delete(size_t filament_id)
 {
     auto &choices = combos_filament();
+    const bool deleted_visible_index = filament_id < choices.size();
+    if (!deleted_visible_index)
+        on_filament_count_change(wxGetApp().preset_bundle->filament_presets.size());
 
     if (filament_id < choices.size()) {
         if (choices.size() == 1)
@@ -5765,10 +5783,8 @@ void Sidebar::on_filaments_delete(size_t filament_id)
 
         wxWindowUpdateLocker noUpdates_scrolled_panel(this);
 
-        // delete UI item (the trailing MD3 info-row owns the combo)
-        if (filament_id < p->combos_filament.size()) {
-            remove_unused_filament_combos(p->combos_filament.size() - 1);
-        }
+        // The deleted config slot need not equal its physical row index.
+        on_filament_count_change(wxGetApp().preset_bundle->filament_presets.size());
 
         auto sizer = p->m_panel_filament_title->GetSizer();
         if (p->m_flushing_volume_btn != nullptr && sizer != nullptr) {
@@ -5891,32 +5907,39 @@ static bool confirm_delete_used_filament(size_t filament_id, int replace_filamen
 
 void Sidebar::delete_filament(size_t filament_id, int replace_filament_id) {
     if (is_new_project_in_gcode3mf()) { return; }
-    if (p->combos_filament.size() <= 1) return;
+    if (wxGetApp().preset_bundle->filament_presets.size() <= 1) return;
     wxBusyCursor busy;
-    size_t filament_count = p->combos_filament.size() - 1;
     if (filament_id == static_cast<size_t>(kSidebarContextMenuFilamentId)) {
         filament_id = p->m_menu_filament_id;
     }
     if (filament_id == size_t(-1)) {
-        filament_id = filament_count;
+        if (p->combos_filament.empty()) return;
+        filament_id = static_cast<size_t>(p->combos_filament.back()->get_filament_idx());
     }
 
     size_t total_filaments = wxGetApp().preset_bundle->filament_presets.size();
-    if (filament_id > filament_count && filament_id >= total_filaments)
-        return;
-
-    bool is_mixed = (filament_id >= p->combos_filament.size());
+    if (filament_id >= total_filaments || replace_filament_id < -1 || replace_filament_id >= static_cast<int>(total_filaments) ||
+        replace_filament_id == static_cast<int>(filament_id)) return;
+    const auto *mixed_flags = wxGetApp().preset_bundle->project_config.option<ConfigOptionBools>("filament_is_mixed");
+    const bool is_mixed = mixed_flags && filament_id < mixed_flags->values.size() && mixed_flags->values[filament_id];
+    if (!is_mixed && p->combos_filament.size() <= 1) return;
+    const auto slots_before_confirm = wxGetApp().preset_bundle->filament_presets;
+    const auto mixed_before_confirm = mixed_flags ? mixed_flags->values : std::vector<unsigned char>{};
 
     if (!confirm_delete_used_filament(filament_id, replace_filament_id)) return;
+    if (slots_before_confirm != wxGetApp().preset_bundle->filament_presets) return;
+    const auto *current_mixed_flags = wxGetApp().preset_bundle->project_config.option<ConfigOptionBools>("filament_is_mixed");
+    if ((current_mixed_flags ? current_mixed_flags->values : std::vector<unsigned char>{}) != mixed_before_confirm) return;
 
     if (!is_mixed) {
         if (wxGetApp().preset_bundle->is_the_only_edited_filament(filament_id) || (filament_id == 0)) {
             wxGetApp().get_tab(Preset::TYPE_FILAMENT)->select_preset(wxGetApp().preset_bundle->filament_presets[0], false, "", true);
         }
 
-        if (p->editing_filament == filament_id || p->editing_filament >= filament_count) {
+        if (p->editing_filament == static_cast<int>(filament_id))
             p->editing_filament = -1;
-        }
+        else if (p->editing_filament > static_cast<int>(filament_id))
+            --p->editing_filament;
     }
 
     std::vector<unsigned char> is_mixed_snapshot;
@@ -8026,16 +8049,21 @@ void Sidebar::edit_mixed_filament(size_t panel_idx)
 
 void Sidebar::delete_filament_with_confirm(size_t filament_id)
 {
-    if (p->combos_filament.size() <= 1)
+    if (wxGetApp().preset_bundle->filament_presets.size() <= 1)
         return;
     size_t resolved = filament_id;
     if (resolved == static_cast<size_t>(kSidebarContextMenuFilamentId))
         resolved = p->m_menu_filament_id;
-    if (resolved == size_t(-1))
-        resolved = p->combos_filament.size() - 1;
+    if (resolved == size_t(-1)) {
+        if (p->combos_filament.empty()) return;
+        resolved = static_cast<size_t>(p->combos_filament.back()->get_filament_idx());
+    }
 
     wxString preset_name;
-    const auto &presets = wxGetApp().preset_bundle->filament_presets;
+    const auto presets = wxGetApp().preset_bundle->filament_presets;
+    const auto *mixed_flags = wxGetApp().preset_bundle->project_config.option<ConfigOptionBools>("filament_is_mixed");
+    const auto mixed_before_confirm = mixed_flags ? mixed_flags->values : std::vector<unsigned char>{};
+    if (resolved >= presets.size()) return;
     if (resolved < presets.size())
         preset_name = from_u8(presets[resolved]);
 
@@ -8045,10 +8073,15 @@ void Sidebar::delete_filament_with_confirm(size_t filament_id)
                           "assigned to it are moved to another slot.");
     // TRN %d is the 1-based filament slot number, %s the preset name.
     spec.affected.push_back(wxString::Format(_L("Slot %d: %s"), int(resolved) + 1, preset_name));
-    wxWindow *anchor = resolved < p->combos_filament.size() ? static_cast<wxWindow *>(p->combos_filament[resolved]) : nullptr;
+    wxWindow *anchor = this;
+    for (auto *choice : p->combos_filament)
+        if (choice->get_filament_idx() == static_cast<int>(resolved)) { anchor = choice; break; }
     if (!SuperConfirmGate::Run(anchor, spec))
         return;
-    delete_filament(filament_id);
+    if (presets != wxGetApp().preset_bundle->filament_presets) return;
+    const auto *current_mixed_flags = wxGetApp().preset_bundle->project_config.option<ConfigOptionBools>("filament_is_mixed");
+    if ((current_mixed_flags ? current_mixed_flags->values : std::vector<unsigned char>{}) != mixed_before_confirm) return;
+    delete_filament(resolved);
 }
 
 void Sidebar::delete_mixed_filament_at(size_t panel_idx)
@@ -9303,7 +9336,7 @@ public:
     // Call after plater and Canvas#D is initialized
     void init_notification_manager();
 
-    void update_objects_position_when_select_preset(const std::function<void()>& select_prest);
+    void update_objects_position_when_select_preset(const std::function<void()>& select_prest, const bool *selection_applied = nullptr);
 
     // Caching last value of show_action_buttons parameter for show_action_buttons(), so that a callback which does not know this state will not override it.
     //mutable bool    			ready_to_slice = { false };
@@ -16127,20 +16160,23 @@ void Plater::priv::on_select_preset(wxCommandEvent &evt)
             if (marker == PresetComboBox::LABEL_ITEM_PRINTER_MODELS) {
                 auto preset = wxGetApp().preset_bundle->get_similar_printer_preset(preset_name, {});
                 if (preset == nullptr) {
-                    MessageDialog dlg(this->sidebar, _L(""), _L(""));
-                    dlg.ShowModal();
+                    combo->update();
+                    return; // retain current selection when no variant matches
                 }
                 preset->is_visible = true; // force visible
                 preset_name = preset->name;
             }
             std::string old_preset_name = wxGetApp().preset_bundle->printers.get_edited_preset().name;
 
-            update_objects_position_when_select_preset([this, &preset_type, &preset_name]() {
+            bool selection_applied = false;
+            update_objects_position_when_select_preset([this, &preset_type, &preset_name, &selection_applied]() {
                 wxWindowUpdateLocker noUpdates2(sidebar->filament_panel());
-                wxGetApp().get_tab(preset_type)->select_preset(preset_name);
+                selection_applied = wxGetApp().get_tab(preset_type)->select_preset(preset_name);
+                if (!selection_applied) return;
                 // update plater with new config
                 q->on_config_change(wxGetApp().preset_bundle->full_config());
-            });
+            }, &selection_applied);
+            if (!selection_applied) return;
 
             // A fresh project's inherited plate modes may follow the selected
             // printer. Imported 3MF settings and explicit plate choices may not.
@@ -20116,7 +20152,7 @@ void Plater::priv::init_notification_manager()
 }
 
 
-void Plater::priv::update_objects_position_when_select_preset(const std::function<void()> &select_prest)
+void Plater::priv::update_objects_position_when_select_preset(const std::function<void()> &select_prest, const bool *selection_applied)
 {
     PartPlateList &old_plate_list = this->partplate_list;
     PartPlate     *old_plate      = old_plate_list.get_selected_plate();
@@ -20230,6 +20266,7 @@ void Plater::priv::update_objects_position_when_select_preset(const std::functio
     }
 #endif
     select_prest();
+    if (selection_applied && !*selection_applied) return;
 
     wxGetApp().obj_list()->update_object_list_by_printer_technology();
 

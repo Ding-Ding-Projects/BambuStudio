@@ -1109,17 +1109,16 @@ void MD3MenuPopup::finalizeClose()
     PopupWindow::OnDismiss();
     restoreInvokerFocus();
 
-    if (m_result != wxID_NONE && m_send_events && m_menu) {
-        // The activated item may live in a submenu; its own wxMenu owns the
-        // wxEVT_MENU bindings (append_menu_item binds on the submenu object),
-        // and wxMenuBase::SendEvent walks up to the invoking window afterwards.
-        wxMenu *source = m_result_menu ? m_result_menu : m_menu;
-        source->SendEvent(m_result, m_result_kind_checkable ? (m_result_checked ? 1 : 0) : -1);
-    }
-    if (m_close_cb) {
-        auto cb = std::move(m_close_cb);
-        cb();
-    }
+    // Snapshot before any external callback, which can destroy this popup.
+    const int result = m_result;
+    const int checked = m_result_kind_checkable ? (m_result_checked ? 1 : 0) : -1;
+    const bool send = m_send_events;
+    wxWeakRef<wxMenu> source = m_result_menu;
+    auto close = std::move(m_close_cb);
+    if (close) close();
+    if (result != wxID_NONE && send && source)
+        source->SendEvent(result, checked);
+    // No member access after command delivery.
 }
 
 void MD3MenuPopup::ActivateItem(const MD3::Menu::Item &item)
@@ -1385,23 +1384,29 @@ int run_blocking(wxWindow *owner, wxMenu *menu, const wxRect &anchor, bool send_
     if (!owner || !menu)
         return wxID_NONE;
 
-    wxMenuInvokingWindowSetter invoking(*menu, owner);
+    wxWeakRef<wxMenu> menu_ref(menu);
+    wxWeakRef<wxWindow> dispatch_owner(wxGetTopLevelParent(owner));
+    menu->SetInvokingWindow(dispatch_owner.get());
 
     // Every context menu offers "Edit appearance..." for the element it was
     // opened on: when the owner (or an ancestor) was adopted through
     // ElementStyle::apply and the menu does not already carry the item, it is
     // appended for this popup and removed again once the menu has closed.
     bool auto_edit_item = false;
+    std::string appearance_element;
+    wxWeakRef<wxWindow> appearance_anchor(owner);
     {
         const std::string element_id = Slic3r::GUI::ElementStyle::element_id_of(owner);
         if (!element_id.empty() && !menu->FindItem(Slic3r::GUI::AppearanceEditor::edit_appearance_item_id())) {
             Slic3r::GUI::AppearanceEditor::append_edit_appearance_item(*menu, element_id, owner);
             auto_edit_item = true;
+            appearance_element = element_id;
         }
     }
 
     auto *popup = new Slic3r::GUI::MD3MenuPopup(owner, menu, nullptr, show_search);
-    popup->SetSendEvents(send_events);
+    // Destructive handlers run only after this popup stack and loop unwind.
+    popup->SetSendEvents(false);
     wxWeakRef<Slic3r::GUI::MD3MenuPopup> popup_ref(popup);
 
     wxGUIEventLoop loop;
@@ -1438,13 +1443,33 @@ int run_blocking(wxWindow *owner, wxMenu *menu, const wxRect &anchor, bool send_
     if (owner_ref)
         owner_ref->Unbind(wxEVT_DESTROY, on_destroy);
 
+    // Owner destruction can exit the loop while surfaces are still shown.
+    if (popup_ref)
+        popup_ref->RequestEscape();
+
     int result = wxID_NONE;
+    bool checkable = false;
+    bool checked = false;
+    wxWeakRef<wxMenu> source;
     if (popup_ref) {
         result = popup_ref->Result();
+        checkable = popup_ref->ResultCheckable();
+        checked = popup_ref->ResultChecked();
+        source = popup_ref->ResultMenu();
+        popup_ref->SetCloseCallback({});
         popup_ref->Destroy();
     }
-    if (auto_edit_item)
-        Slic3r::GUI::AppearanceEditor::remove_edit_appearance_item(*menu);
+    if (auto_edit_item && menu_ref)
+        Slic3r::GUI::AppearanceEditor::remove_edit_appearance_item(*menu_ref);
+    if (send_events && result != wxID_NONE && dispatch_owner) {
+        if (auto_edit_item && result == Slic3r::GUI::AppearanceEditor::edit_appearance_item_id()) {
+            if (appearance_anchor)
+                Slic3r::GUI::AppearanceEditor::open_for(appearance_anchor.get(), appearance_element);
+        } else if (source && menu_ref) {
+            source->SetInvokingWindow(dispatch_owner.get());
+            source->SendEvent(result, checkable ? (checked ? 1 : 0) : -1);
+        }
+    }
     return result;
 }
 
