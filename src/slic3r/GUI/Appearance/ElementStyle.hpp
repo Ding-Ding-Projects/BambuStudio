@@ -26,6 +26,8 @@
 // and nlohmann::json so tests/appearance can exercise it without GUI_App; the
 // wxWindow adopter (ElementStyle::apply and friends) lives beside it.
 
+#include "StyleMetrics.hpp"
+
 #include <cstdint>
 #include <functional>
 #include <map>
@@ -206,6 +208,9 @@ public:
     // Numeric property (radius, padding, margin, border_width, letter_spacing,
     // line_height) or `base` when unset.
     static double   number_for(const std::string &id, const char *key, double base);
+
+    // Typed, finite, bounded geometry for owner-drawn widget paint/layout sites.
+    static StyleMetrics metrics_for(const std::string &id, const StyleMetrics &base = {});
 
     // --- Adopter -----------------------------------------------------------
     // Register `window` under `id`: remembers the window's current font and

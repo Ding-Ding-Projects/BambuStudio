@@ -9,6 +9,7 @@
 #include <wx/fontenum.h>
 #include <wx/log.h>
 #include <wx/settings.h>
+#include <wx/sizer.h>
 #include <wx/window.h>
 
 namespace Slic3r { namespace GUI {
@@ -721,7 +722,20 @@ double ElementStyle::number_for(const std::string &id, const char *key, double b
     if (id.empty() || !key)
         return base;
     nlohmann::json v = registry().resolve(id, key);
-    return v.is_number() ? v.get<double>() : base;
+    const double value = v.is_number() ? v.get<double>() : base;
+    return std::isfinite(value) ? value : base;
+}
+
+StyleMetrics ElementStyle::metrics_for(const std::string &id, const StyleMetrics &base)
+{
+    return StyleMetrics {
+        number_for(id, StyleProp::radius, base.radius),
+        number_for(id, StyleProp::border_width, base.border_width),
+        number_for(id, StyleProp::padding, base.padding),
+        number_for(id, StyleProp::margin, base.margin),
+        number_for(id, StyleProp::letter_spacing, base.letter_spacing),
+        number_for(id, StyleProp::line_height, base.line_height)
+    }.sanitized();
 }
 
 // ---------------------------------------------------------------------------
@@ -734,6 +748,10 @@ struct ElementStyle::Adopted
     wxColour    base_fg;
     wxColour    base_bg;
     int         token { 0 };
+    wxSizer    *base_sizer { nullptr }; // observed only while owned by the live window
+    int         base_border { 0 };
+    int         base_flags { 0 };
+    bool        margin_applied { false };
 };
 
 std::map<wxWindow *, std::shared_ptr<ElementStyle::Adopted>> &ElementStyle::adopted()
@@ -755,6 +773,32 @@ void ElementStyle::re_apply(wxWindow *window, Adopted &a)
         window->SetForegroundColour(fg);
     if (bg.IsOk() && bg != window->GetBackgroundColour())
         window->SetBackgroundColour(bg);
+    // Margin is layout, not paint. Capture the owning sizer's original flags
+    // once and restore them on reset. A reparented item starts a fresh baseline.
+    wxSizer *sizer = window->GetContainingSizer();
+    if (sizer) {
+        if (wxSizerItem *item = sizer->GetItem(window)) {
+            if (a.base_sizer != sizer) {
+                a.base_sizer = sizer;
+                a.base_border = item->GetBorder();
+                a.base_flags = item->GetFlag();
+                a.margin_applied = false;
+            }
+            const auto value = registry().resolve(a.id, StyleProp::margin);
+            if (value.is_number() && std::isfinite(value.get<double>())) {
+                item->SetBorder(window->FromDIP(static_cast<int>(std::lround(metrics_for(a.id).margin))));
+                item->SetFlag(a.base_flags | wxALL);
+                a.margin_applied = true;
+            } else if (a.margin_applied) {
+                item->SetBorder(a.base_border);
+                item->SetFlag(a.base_flags);
+                a.margin_applied = false;
+            }
+        }
+    } else {
+        a.base_sizer = nullptr;
+        a.margin_applied = false;
+    }
     window->InvalidateBestSize();
     if (wxWindow *parent = window->GetParent())
         parent->Layout();
