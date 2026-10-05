@@ -104,11 +104,22 @@ credential/lock checks, persisted authenticator changes, backend factor verifica
 OTP replay rejection, encrypted support-ticket lifecycle, real native vault
 round trips, marker restart/reset semantics, and zero/maximum-size AES-GCM snapshots.
 
-The isolated mutation driver is intentionally fail-closed. Its latest attempt
-proved the baseline green and three removed-policy cases red, then the compiler
-terminated with `internal compiler error: Illegal instruction` in its standard
-headers. Three attempts were made. The remaining cases and final restored verdict
-are **unverified**, not passed. The driver is retained for the repaired toolchain.
+The isolated mutation driver is intentionally fail-closed. GCC encountered an
+internal compiler error in three bounded attempts. Switching to the verified MSVC
+19.51 toolchain completed all twelve mutations: each deliberately broken copy
+failed its behavioral checks, while the baseline and restored source passed.
+The run used the existing OpenSSL headers and x64 DLL with a temporary MSVC import
+library generated only after checking every required C ABI export. This validates
+the services, not the final packaged dependency set.
+
+From a configured MSVC developer shell, the reproducible form is:
+
+```sh
+python tests/local_security/negative_regression.py --msvc --compiler cl --openssl-include <include-directory> --openssl-dll <matching-x64-crypto-dll>
+```
+
+An existing compatible import library may instead be passed with
+`--openssl-library`. The driver never installs or replaces shared dependencies.
 
 The separate libgit2 history driver has not compiled or run. No working libgit2
 development installation or full native GUI build route was available in this lane.
