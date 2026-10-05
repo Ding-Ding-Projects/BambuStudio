@@ -1,3 +1,17 @@
+# Current continuation, 5 October 2026
+
+Recorded 2026-10-05T13:28:45+00:00. The current task covers every required feature family on every native/browser surface and all eleven open issues. Verified remote `main`: `66e1aa06a55f33e6f687faa0146d26194ee87257`. The interface foundation and all eight responsive source branches are integrated; implementation and acceptance remain incomplete.
+
+Read [the current feature acceptance matrix](docs/integration/current-feature-state.md) first. It records source-only versus delivered state, exact observed parallel commits, all eleven open issues, missing implementation/test mappings and explicitly empty built/capture evidence. Earlier continuation records below are historical and do not override this state.
+
+Build attempt 2 is separately pinned to `66e1aa06a55f33e6f687faa0146d26194ee87257`. The coordinator reports successful Stable toolchain acquisition and dependency compilation in progress. No full native application, GUI acceptance, installer execution or new release is verified. Workflow `315782713` is confirmed `disabled_manually`; restore it before final release. Existing runs were not canceled. The isolated desktop-station support repair has child-process proof but remains outside this product baseline.
+
+Next: obtain the build verdict, reconcile independently reviewed parallel work, complete every acceptance row, drive the real built interface, then restore publishing and verify one release. Preserve all unfinished work and the eight original continuation records. No feature checkbox may become complete from source existence alone.
+
+廣東話：今次繼續完成所有指定功能同十一個追蹤項目，唔係已完成通知。來源已整合，實際介面、安裝同發佈驗收未完成。先睇功能矩陣同建置結果，再逐項補齊證據；正式發佈前恢復自動發佈流程。
+
+## Historical records retained below
+
 # Current integration continuation, 5 October 2026
 
 The prior interface foundation and all eight approved responsive source branches are reconciled on `codex/bambu-complete-integration-20261005`. The eight-source ancestry checkpoint is `341e3b3420fb3bb3ef97331465a83578422c1e9b`; the commit containing this update additionally repairs the history detail scrollbar. See [the exact reconciliation record](docs/integration/responsive-reconciliation.md) for merge identities, checks, conflict decisions and incomplete acceptance. No default-branch integration, push, full native compile or release is claimed by this record.

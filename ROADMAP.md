@@ -1,8 +1,19 @@
 # Roadmap
 
+## Current complete-feature acceptance, 5 October 2026
+
+- [x] Source-only reconciliation: integrate the interface foundation and eight responsive branches; exact ancestry is recorded in `docs/integration/responsive-reconciliation.md`. This does not certify feature behavior.
+- [ ] Complete all native and browser rows in [the feature matrix](docs/integration/current-feature-state.md), including implementation, localization, persistence, focused tests, built interaction and genuine captures.
+- [ ] Resolve all eleven tracked open issues with default-branch and acceptance evidence.
+- [ ] Obtain the terminal verdict for native build attempt 2 pinned to `66e1aa06a55f33e6f687faa0146d26194ee87257`; dependency compilation is in progress at the recorded coordinator observation.
+- [ ] Integrate reviewed parallel source work and complete the preserved responsive requirements.
+- [ ] Restore workflow `315782713` before the final coordinated release; do not cancel existing runs.
+- [ ] Verify full native GUI behavior, genuine Squirrel installation/update, one new release and its downloadable assets.
+
+
 ## Responsive workflows and local history (issue 56, 4 October 2026)
 
-Preserved on separate branches; paused at the owner's request. See [the continuation record](CLOSEOUT_PROMPT.md). All feature checkboxes remain open because native acceptance evidence is incomplete.
+All eight preserved source branches are integrated into the recorded main baseline. Their functional gaps and native acceptance remain incomplete. See [the current matrix](docs/integration/current-feature-state.md) and preserved continuation records.
 
 - [ ] Menu lifetimes and printer switching: preserve implementation, complete the named gaps and native acceptance checks.
 - [ ] Independent settings drafts: preserve implementation, complete the named gaps and native acceptance checks.
@@ -28,7 +39,7 @@ Preserved on separate branches; paused at the owner's request. See [the continua
 ## Native interface completeness and slicing actions
 
 - [x] Compile the const state-color lookup repair through the actual production job `111252033608` in run `37139881377` at `75770f71`; packaging also passed. Complete workflow publication and installed behavior remain pending.
-- [ ] Reconcile the independently advanced `main` at `0c967a557` without losing entrance motion or caption title following; verify the final combined source and stacked Plate Settings geometry. Three predicted conflict paths and acceptance scope are recorded in `docs/features/automation/integration-readiness.md`.
+- [ ] Verify the reconciled caption title-follow, entrance motion and stacked Plate Settings geometry in the real built candidate; source reconciliation is complete but rendered acceptance remains pending.
 - [x] Check the requested upstream updates: fetched default `master` tip `da8b44ee34dd349f2ae0df3f1cbae366df482354` is already an ancestor of both integration source `667ae19a1` and remote main `0c967a557`, with zero missing commits. No product merge was necessary.
 - [x] Classify native desktop lookup results without weakening ownership acceptance: hosted contracts `37139896660` passed and authenticated diagnostic `37139898854` at `75770f71` observed null `GetThreadDesktop` with native code 0, verified exact thread ownership and teardown, and no continuation. Product startup remains unverified.
 
