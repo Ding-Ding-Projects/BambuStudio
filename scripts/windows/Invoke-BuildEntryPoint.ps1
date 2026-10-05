@@ -71,9 +71,20 @@ if (-not $planOnly -and -not $principal.IsInRole([Security.Principal.WindowsBuil
         Write-Host 'Administrator approval is required before the build bootstrap starts.'
         $hostExecutable = Join-Path $PSHOME 'powershell.exe'
         if (-not [IO.File]::Exists($hostExecutable)) { $hostExecutable = Join-Path $PSHOME 'pwsh.exe' }
-        $child = Start-Process -FilePath $hostExecutable -Verb RunAs -WindowStyle Hidden -Wait -PassThru `
+        $child = Start-Process -FilePath $hostExecutable -Verb RunAs -WindowStyle Hidden -PassThru `
             -ArgumentList ('-NoLogo -NoProfile' + $policyArguments + ' -EncodedCommand ' + $encodedCommand)
-        exit $child.ExitCode
+        try {
+            # Pin the process handle before waiting. Start-Process -Wait uses
+            # descendant-job completion, which can include idle MSBuild servers.
+            # WaitForExit binds only to this exact elevated entry-point host.
+            $null = $child.Handle
+            $child.WaitForExit()
+            $child.Refresh()
+            $childExitCode = $child.ExitCode
+        } finally {
+            $child.Dispose()
+        }
+        exit $childExitCode
     } catch {
         Write-Host ('Administrator launch did not complete: ' + $_.Exception.Message)
         exit 1223
