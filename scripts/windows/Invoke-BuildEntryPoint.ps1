@@ -9,9 +9,45 @@ if ($allowed -notcontains $entry -or -not [IO.File]::Exists($entry)) {
     throw 'Elevation is limited to the supported repository entry points.'
 }
 $originalArguments = @($args | ForEach-Object { [string]$_ })
+# Bind script parameters explicitly. An array of strings cannot reproduce
+# named-parameter binding when splatted into an advanced PowerShell script.
+$parameterNames = @{
+    BuildMode = 'value'; OutputDirectory = 'value'; DependencyCacheDirectory = 'value'
+    ReleaseNumber = 'value'; PreviousPackageVersion = 'value'
+    Install = 'switch'; BootstrapOnly = 'switch'; Plan = 'switch'; BuildOnly = 'switch'
+}
+$producerParameters = @{}
+for ($index = 0; $index -lt $originalArguments.Count; $index++) {
+    $argument = $originalArguments[$index]
+    if ($argument -in @('/s', '--silent')) { continue }
+    if ($argument -notmatch '^-(\w+)(?::(.*))?$') {
+        throw "Unsupported build argument '$argument'. Use the named producer parameters."
+    }
+    $name = $Matches[1]
+    $inlineValue = if ($Matches.ContainsKey(2)) { $Matches[2] } else { $null }
+    if (-not $parameterNames.ContainsKey($name) -or $producerParameters.ContainsKey($name)) {
+        throw "Unknown or duplicate build parameter '$name'."
+    }
+    if ($parameterNames[$name] -eq 'switch') {
+        $value = $true
+        if ($null -ne $inlineValue) {
+            if ($inlineValue -match '^\$?true$') { $value = $true }
+            elseif ($inlineValue -match '^\$?false$') { $value = $false }
+            else { throw "Build switch '$name' requires true or false." }
+        }
+    } else {
+        if ($null -ne $inlineValue) { $value = $inlineValue }
+        else {
+            $index++
+            if ($index -ge $originalArguments.Count) { throw "Build parameter '$name' requires a value." }
+            $value = $originalArguments[$index]
+        }
+    }
+    $producerParameters[$name] = $value
+}
 $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
 $principal = [Security.Principal.WindowsPrincipal]::new($identity)
-$planOnly = $originalArguments -contains '-Plan'
+$planOnly = $producerParameters.ContainsKey('Plan') -and $producerParameters['Plan']
 if (-not $planOnly -and -not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
     # Serialize the complete argument array as data. The elevated host calls
     # the original entry point with an array, never an interpolated cmd /c string.
@@ -36,10 +72,8 @@ if (-not $planOnly -and -not $principal.IsInRole([Security.Principal.WindowsBuil
 }
 # Elevated re-entry reaches this producer branch exactly once. The root build
 # route stays build-only; both installer launchers retain packaging behavior.
-$buildArguments = @($originalArguments | Where-Object { $_ -notin @('/s', '--silent') })
 if ([IO.Path]::GetFileName($entry) -ieq 'build.bat') {
-    & (Join-Path $PSScriptRoot 'Invoke-OneClickBuild.ps1') -BuildOnly @buildArguments
-} else {
-    & (Join-Path $PSScriptRoot 'Invoke-OneClickBuild.ps1') @buildArguments
+    $producerParameters['BuildOnly'] = $true
 }
+& (Join-Path $PSScriptRoot 'Invoke-OneClickBuild.ps1') @producerParameters
 if ($?) { exit 0 } else { exit 1 }
