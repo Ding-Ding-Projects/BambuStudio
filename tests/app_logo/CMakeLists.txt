@@ -1,0 +1,7 @@
+cmake_minimum_required(VERSION 3.16)
+project(app_logo_core_tests LANGUAGES CXX)
+enable_testing()
+add_executable(app_logo_core_tests test_logo.cpp)
+target_compile_features(app_logo_core_tests PRIVATE cxx_std_17)
+target_include_directories(app_logo_core_tests PRIVATE ../../src)
+add_test(NAME app_logo_core COMMAND app_logo_core_tests)
