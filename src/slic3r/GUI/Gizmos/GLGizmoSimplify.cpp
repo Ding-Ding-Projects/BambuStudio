@@ -10,7 +10,7 @@
 #include "slic3r/GUI/Widgets/StateColor.hpp"
 #include "libslic3r/AppConfig.hpp"
 #include "libslic3r/Model.hpp"
-#include "libslic3r/QuadricEdgeCollapse.hpp"
+#include "libslic3r/MeshSimplification.hpp"
 
 #include <GL/glew.h>
 
@@ -104,12 +104,11 @@ void GLGizmoSimplify::add_simplify_suggestion_notification(
     std::vector<size_t> big_ids;
     big_ids.reserve(object_ids.size());
     auto is_big_object = [&objects](size_t object_id) {
-        const uint32_t triangles_to_suggest_simplify = 1000000;
         if (object_id >= objects.size()) return false; // out of object index
         ModelVolumePtrs &volumes = objects[object_id]->volumes;
         if (volumes.size() != 1) return false; // not only one volume
         size_t triangle_count = volumes.front()->mesh().its.indices.size();
-        if (triangle_count < triangles_to_suggest_simplify)
+        if (!should_simplify_mesh(triangle_count))
             return false; // small volume
         return true;
     };
@@ -535,7 +534,10 @@ void GLGizmoSimplify::process()
 
         // Start the actual calculation.
         try {
-            its_quadric_edge_collapse(*its, triangle_count, &max_error, throw_on_cancel, statusfn);
+            MeshSimplificationOptions options;
+            options.target_triangle_count = triangle_count;
+            options.max_error = max_error;
+            simplify_mesh(*its, options, throw_on_cancel, statusfn);
         } catch (SimplifyCanceledException &) {
             std::lock_guard lk(m_state_mutex);
             m_state.status = State::idle;

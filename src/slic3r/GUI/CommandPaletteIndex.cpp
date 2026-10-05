@@ -93,6 +93,8 @@ const std::vector<PreferenceEntry> &preference_entries()
         {"use_inches", L("Units"), L("Metric or imperial units"), PageGeneral},
         {"auto_calculate_flush", L("Auto Flush"), L("Auto calculate flush volumes"), PageGeneral},
         {"prepare_sidebar_dock", L("Prepare panel position"), L("Dock the Prepare panel on the left, right, top, or bottom"), PageGeneral},
+        {"auto_simplify_import", L("Automatically simplify large imported models"), L("Model import: simplify at 1,000,000 triangles before scene attachment"), PageGeneral},
+        {"auto_simplify_import_detail", L("Import simplification detail"), L("Extra high, High, Medium, Low or Extra low detail for automatic model import simplification"), PageGeneral},
         {"single_instance", L("Keep only one Bambu Studio instance"), "", PageGeneral},
         {"studio_enable_fila_manager", L("Filament Manager"), L("Take effect after restarting Studio"), PageGeneral},
         {"enable_multi_machine", L("Multi-device Management"), L("Take effect after restarting Studio"), PageGeneral},

@@ -65,3 +65,9 @@ endif()
 add_test(${_TEST_NAME}_tests ${_TEST_NAME}_tests ${CATCH_EXTRA_ARGS})
 add_test(deterministic_bbs_3mf_tests deterministic_bbs_3mf_tests "[deterministic]" ${CATCH_EXTRA_ARGS})
 add_test(crash_restore_tests crash_restore_tests "[crash_restore]" ${CATCH_EXTRA_ARGS})
+
+# Keep simplification regressions independent of the incompatible legacy suite.
+add_executable(mesh_simplification_tests test_mesh_simplification.cpp)
+target_link_libraries(mesh_simplification_tests test_common libslic3r)
+set_property(TARGET mesh_simplification_tests PROPERTY FOLDER "tests")
+add_test(mesh_simplification_tests mesh_simplification_tests "[mesh_simplification]" ${CATCH_EXTRA_ARGS})

@@ -452,6 +452,8 @@ set(SLIC3R_GUI_SOURCES
     GUI/UpdateDialogs.hpp
     GUI/Jobs/Job.hpp
     GUI/Jobs/Job.cpp
+    GUI/Jobs/ImportJob.hpp
+    GUI/Jobs/ImportJob.cpp
     GUI/Jobs/JobNew.hpp
     GUI/Jobs/Worker.hpp
     GUI/Jobs/BoostThreadWorker.hpp
