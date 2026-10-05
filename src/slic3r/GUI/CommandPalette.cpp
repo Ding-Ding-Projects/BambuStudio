@@ -6,6 +6,7 @@
 
 #include "GUI_App.hpp"
 #include "PersonalModes/SchoolMode.hpp"
+#include "PersonalModes/SchoolRuntime.hpp"
 #include "FeatureServices/PresentationRoutes.hpp"
 #include "I18N.hpp"
 #include "MainFrame.hpp"
@@ -250,7 +251,9 @@ void CommandPalette::collect_entries()
             continue;
 #endif
         const wxString page  = _(PaletteIndex::preference_page_names()[p.page]);
-        const wxString title = _L("Preferences") + " / " + page + " / " + _(p.title);
+        const wxString setting_title = std::string(p.key) == "school_mode" && wxGetApp().school_runtime() ?
+            wxString::FromUTF8(wxGetApp().school_runtime()->mode().record().display_name) : _(p.title);
+        const wxString title = _L("Preferences") + " / " + page + " / " + setting_title;
         const wxString desc  = wxString(p.desc).IsEmpty() ? _L("Setting") + " (" + p.key + ")" : _(p.desc);
         const std::string key = p.key;
         m_entries.push_back({MaterialIcon::Settings, title, desc,

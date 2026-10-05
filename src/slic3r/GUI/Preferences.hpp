@@ -116,6 +116,7 @@ protected:
     std::vector<OptionRow>                       m_option_rows;
     std::unordered_map<wxStaticText *, wxColour> m_teleport_saved_colours; // pre-flash foregrounds
     wxTimer                                      m_teleport_timer;
+    wxTimer                                      m_school_refresh_timer;
     void register_option_row(const std::string &key, wxSizer *sizer, wxWindow *window = nullptr);
     void clear_teleport_highlight();
     void on_teleport_timer(wxTimerEvent &);

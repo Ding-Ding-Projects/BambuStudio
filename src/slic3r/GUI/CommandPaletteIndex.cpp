@@ -128,6 +128,7 @@ const std::vector<PreferenceEntry> &preference_entries()
         {"show_assembly_bvh_bounds", L("Show assembly BVH primary bounds"), "", Page3D},
         {"camera_fullscreen_active_monitor_only", L("Open full screen camera view on active monitor only"), "", Page3D},
         // Other --------------------------------------------------------------
+        {"school_mode", L("Presentation mode"), L("Shared local presentation and unlock settings"), PageGeneral},
         {"narrator_enabled", L("Enable narrator"), L("Narrator"), PageOther},
         {"narrator_quiet", L("Quiet narration"), L("Pause local speech without changing saved voice choices"), PageOther},
         {"narrator_language", L("Narration language"), L("Independent of the interface language"), PageOther},

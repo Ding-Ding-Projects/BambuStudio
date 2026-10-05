@@ -31,13 +31,25 @@ again. Personal wording load and clear handlers also recheck availability.
 Base language, voice, and funny-level preferences remain stored. Watcher callbacks
 reset the bilingual registry and refresh observed personal-wording controls.
 
+General settings now exposes the shared mode's current display name, rename,
+enable, unlock, initial credential enrollment and replacement controls. PIN and
+password credentials use the native credential service and the one shared account.
+The attempt budget is owned by the application, not the Preferences dialog.
+Closing the dialog therefore does not replenish attempts. Credential input fields
+are masked and cleared immediately after submission, and no entered answer is
+persisted in application configuration. The control discloses the local-record
+deletion reset route and reports unavailable vault, watcher and record state.
+The chosen display name is used in the palette entry.
+
 ## Verification and remaining work
 
 The portable presentation-route executable passed 24 behavioral assertions.
+The shared credential adapter passed 10 native behavioral assertions using the
+real credential implementation and a synthetic in-memory vault.
 Native GUI compilation, localization catalogs, runtime interaction and capture are
 pending; source controls are not release acceptance evidence.
 
-- [ ] Complete authenticated shared-mode enrollment, rename, enable, unlock and credential replacement controls.
+- [ ] Compile and drive shared-mode enrollment, rename, enable, unlock and credential replacement controls; add a platform passkey choice and atomic recovery for interrupted credential/record updates.
 - [ ] Reconstruct every already-open translated surface on shared-mode changes without discarding active user work.
 - [ ] Audit all dim-sum producers, keyboard handlers, documentation routes and non-settings surfaces for live suppression.
 - [ ] Refresh installed voice choices when platform inventory changes while Preferences remains open.

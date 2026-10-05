@@ -952,6 +952,10 @@ target_link_libraries(libslic3r_gui libslic3r cereal imgui imguizmo minilzo GLEW
     ${HPDF_LIBRARY}
     ${wxWidgets_LIBRARIES} glfw libcurl OpenSSL::SSL OpenSSL::Crypto)
 target_link_libraries(libslic3r_gui libslic3r_workspace)
+if(NOT TARGET libslic3r_local_security)
+    add_subdirectory(${PROJECT_SOURCE_DIR}/src/libslic3r/LocalSecurity ${CMAKE_CURRENT_BINARY_DIR}/local_security)
+endif()
+target_link_libraries(libslic3r_gui libslic3r_local_security)
 #target_link_libraries(libslic3r_gui libslic3r cereal imgui imguizmo minilzo GLEW::GLEW OpenGL::GL hidapi libcurl OpenSSL::SSL OpenSSL::Crypto ${wxWidgets_LIBRARIES} glfw)
 
 if (MSVC)

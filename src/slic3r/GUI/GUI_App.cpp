@@ -113,6 +113,7 @@
 #include "PersonalModes/SchoolRuntime.hpp"
 #include "PersonalVocabulary.hpp"
 #include "FeatureServices/NarratorEnvironment.hpp"
+#include "FeatureServices/SchoolCredentials.hpp"
 #include "HomeAssistant.hpp"
 #include "GLCanvas3D.hpp"
 #include "EncodedFilament.hpp"
@@ -3353,6 +3354,13 @@ void GUI_App::UnRegisterMacPowerCallBack()
 }
 #endif
 
+FeatureServices::SchoolCredentials& GUI_App::school_credentials()
+{
+    if (!m_school_credentials)
+        m_school_credentials = std::make_unique<FeatureServices::SchoolCredentials>(m_school_runtime->mode());
+    return *m_school_credentials;
+}
+
 bool GUI_App::OnInit()
 {
     // Establish shared presentation before the first translated window, including
@@ -3403,6 +3411,7 @@ bool GUI_App::OnInit()
 
 int GUI_App::OnExit()
 {
+    m_school_credentials.reset();
     m_school_runtime.reset();
     m_narrator_environment.reset();
     TtsNarrator::shutdown();

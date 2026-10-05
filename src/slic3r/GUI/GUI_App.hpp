@@ -95,6 +95,7 @@ class Plater;
 class AutomationBridge;
 namespace PersonalModes { class SchoolRuntime; }
 namespace FeatureServices { class NarratorEnvironment; }
+namespace FeatureServices { class SchoolCredentials; }
 class ParamsPanel;
 class NotificationManager;
 struct GUI_InitParams;
@@ -342,6 +343,7 @@ private:
     std::atomic<bool> m_is_closing {false};
     std::unique_ptr<AutomationBridge> m_automation_bridge;
     std::unique_ptr<PersonalModes::SchoolRuntime> m_school_runtime;
+    std::unique_ptr<FeatureServices::SchoolCredentials> m_school_credentials;
     std::unique_ptr<FeatureServices::NarratorEnvironment> m_narrator_environment;
     Slic3r::DeviceManager* m_device_manager { nullptr };
     Slic3r::UserManager* m_user_manager { nullptr };
@@ -400,6 +402,8 @@ private:
     TryLoadLastMachine m_load_last_machine;
 
 public:
+    PersonalModes::SchoolRuntime* school_runtime() const { return m_school_runtime.get(); }
+    FeatureServices::SchoolCredentials& school_credentials();
     //try again when subscription fails
     void            on_start_subscribe_again(std::string dev_id);
     std::string     get_local_models_path();

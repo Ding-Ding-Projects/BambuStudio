@@ -3,6 +3,8 @@
 #include "TtsNarrator.hpp"
 #include "PersonalModes/SchoolMode.hpp"
 #include "FeatureServices/PresentationRoutes.hpp"
+#include "FeatureServices/SchoolCredentials.hpp"
+#include "PersonalModes/SchoolRuntime.hpp"
 #include "Widgets/MD3ScrolledWindow.hpp"
 #include "Export/ExportDatasets.hpp"
 #include "Export/ExportDialog.hpp"
@@ -2074,6 +2076,7 @@ void PreferencesDialog::reset_search_filter()
 
 PreferencesDialog::~PreferencesDialog()
 {
+    m_school_refresh_timer.Stop();
     m_radio_group.DeleteContents(true);
     m_hash_selector.clear();
 }
@@ -2782,6 +2785,100 @@ wxWindow *PreferencesDialog::create_general_tab()
     wxBoxSizer *sizer    = new wxBoxSizer(wxVERTICAL);
 
     auto title_basic = create_item_title(_L("General Settings"), scrolled, _L("General Settings"));
+
+    if (auto* runtime = wxGetApp().school_runtime()) {
+        auto* mode_box = new StaticBox(scrolled);
+        auto* mode_rows = new wxBoxSizer(wxVERTICAL);
+        mode_box->SetSizer(mode_rows);
+        auto* mode_title = new Label(mode_box, wxString::FromUTF8(runtime->mode().record().display_name));
+        auto* mode_status = new Label(mode_box, wxEmptyString, LB_AUTO_WRAP);
+        auto* mode_name = new TextInput(mode_box, wxString::FromUTF8(runtime->mode().record().display_name), _L("Display name"));
+        mode_name->GetTextCtrl()->SetMaxLength(128);
+        mode_name->GetTextCtrl()->SetName(_L("Display name"));
+        auto* old_answer = new TextInput(mode_box, wxEmptyString, _L("Current unlock credential"), wxEmptyString,
+            wxDefaultPosition, wxDefaultSize, wxTE_PASSWORD);
+        auto* new_answer = new TextInput(mode_box, wxEmptyString, _L("New unlock credential"), wxEmptyString,
+            wxDefaultPosition, wxDefaultSize, wxTE_PASSWORD);
+        for (auto* input : {old_answer, new_answer}) {
+            input->GetTextCtrl()->SetMaxLength(256);
+            input->GetTextCtrl()->SetName(input == old_answer ? _L("Current unlock credential") : _L("New unlock credential"));
+        }
+        auto* kind = new MultiSwitchButton(mode_box);
+        kind->SetOptions({_L("Password"), _L("PIN")});
+        kind->SetName(_L("Unlock credential type"));
+        kind->SetSelection(0);
+        auto* enable = new Button(mode_box, _L("Enable"));
+        auto* unlock = new Button(mode_box, _L("Unlock and disable"));
+        auto* enroll = new Button(mode_box, _L("Set unlock credential"));
+        auto* replace = new Button(mode_box, _L("Replace unlock credential"));
+        auto* rename = new Button(mode_box, _L("Rename"));
+        for (wxWindow* control : std::vector<wxWindow*>{mode_title, mode_status, mode_name, rename, kind, old_answer, new_answer,
+                                                      enroll, replace, enable, unlock})
+            mode_rows->Add(control, 0, wxEXPAND | wxALL, FromDIP(8));
+        auto* disclosure = new Label(mode_box,
+            _L("This is a presentation lock, not a security boundary. Deleting the shared local application-data record resets it. Credentials remain in the operating-system vault."), LB_AUTO_WRAP);
+        mode_rows->Add(disclosure, 0, wxEXPAND | wxALL, FromDIP(8));
+        auto last_failed = std::make_shared<bool>(false);
+        auto refresh = [runtime, mode_title, mode_status, enroll, replace, enable, unlock, scrolled, last_failed](int failed) {
+            if (failed >= 0) *last_failed = failed != 0;
+            mode_title->SetLabel(wxString::FromUTF8(runtime->mode().record().display_name));
+            wxString state = runtime->mode().suppressed() ? _L("Restricted presentation is active.") : _L("Normal presentation is active.");
+            if (runtime->mode().status() == PersonalModes::RecordStatus::Corrupt || runtime->mode().status() == PersonalModes::RecordStatus::Unavailable)
+                state += "\n" + _L("Shared record is unreadable. Restricted presentation remains active.");
+            state += "\n" + (runtime->native_watch_available() ? _L("Native monitoring is active.") : _L("Native monitoring is unavailable; polling is used."));
+            bool configured = false, available = true;
+            unsigned wait_seconds = 0;
+            try {
+                configured = wxGetApp().school_credentials().metadata().configured;
+                const auto attempts = wxGetApp().school_credentials().attempts();
+                wait_seconds = attempts.wait_seconds;
+                if (wait_seconds) state += "\n" + wxString::Format(_L("Try again in %u seconds."), wait_seconds);
+            }
+            catch (const LocalSecurity::Failure&) { available = false; state += "\n" + _L("Credential vault is unavailable."); }
+            enroll->Enable(available && !configured);
+            replace->Enable(available && configured && !wait_seconds);
+            enable->Enable(available && configured && !runtime->mode().record().enabled);
+            unlock->Enable(available && configured && runtime->mode().record().enabled && !wait_seconds);
+            if (*last_failed) state += "\n" + _L("The change was not applied. Check the credential, input limits and shared-record availability.");
+            mode_status->SetLabel(state);
+            scrolled->Layout(); scrolled->FitInside();
+        };
+        auto take_answer = [](TextInput* input) {
+            auto value = input->GetTextCtrl()->GetValue().ToUTF8();
+            LocalSecurity::Secret secret(std::string_view(value.data(), value.length()));
+            if (value.length()) std::fill_n(value.data(), value.length(), '\0');
+            input->GetTextCtrl()->ChangeValue(wxEmptyString);
+            return secret;
+        };
+        auto invoke = [refresh](const std::function<PersonalModes::RecordStatus()>& operation) {
+            try { refresh(operation() != PersonalModes::RecordStatus::Ready); }
+            catch (const LocalSecurity::Failure&) { refresh(true); }
+        };
+        rename->Bind(wxEVT_BUTTON, [runtime, mode_name, invoke](wxCommandEvent&) {
+            invoke([&] { return runtime->mode().rename(mode_name->GetTextCtrl()->GetValue().ToUTF8().data()); });
+        });
+        enable->Bind(wxEVT_BUTTON, [invoke](wxCommandEvent&) {
+            invoke([] { return wxGetApp().school_credentials().enable(); });
+        });
+        unlock->Bind(wxEVT_BUTTON, [old_answer, take_answer, invoke](wxCommandEvent&) {
+            auto answer = take_answer(old_answer);
+            invoke([&] { return wxGetApp().school_credentials().disable(answer); });
+        });
+        enroll->Bind(wxEVT_BUTTON, [new_answer, kind, take_answer, invoke](wxCommandEvent&) {
+            auto answer = take_answer(new_answer);
+            invoke([&] { return wxGetApp().school_credentials().enroll(kind->GetSelection() == 1 ? LocalSecurity::CredentialKind::Pin : LocalSecurity::CredentialKind::Password, answer); });
+        });
+        replace->Bind(wxEVT_BUTTON, [old_answer, new_answer, kind, take_answer, invoke](wxCommandEvent&) {
+            auto before = take_answer(old_answer); auto after = take_answer(new_answer);
+            invoke([&] { return wxGetApp().school_credentials().replace(before, kind->GetSelection() == 1 ? LocalSecurity::CredentialKind::Pin : LocalSecurity::CredentialKind::Password, after); });
+        });
+        sizer->Add(mode_box, 0, wxEXPAND | wxALL, FromDIP(16));
+        register_option_row("school_mode", nullptr, mode_box);
+        refresh(false);
+        m_school_refresh_timer.SetOwner(this, wxWindow::NewControlId());
+        Bind(wxEVT_TIMER, [refresh](wxTimerEvent&) { refresh(-1); }, m_school_refresh_timer.GetId());
+        m_school_refresh_timer.Start(1000);
+    }
 
     // Language list (same source as before).
     auto available_translations = wxTranslations::Get()->GetAvailableTranslations(SLIC3R_APP_KEY);
