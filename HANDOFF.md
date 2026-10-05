@@ -1,3 +1,7 @@
+# Reliability repair in progress: 5 October 2026
+
+Read [the current candidate handoff](CLOSEOUT_PROMPT.md) for reviewed source repairs, verification limits, the hosted-only build constraint and access blockers. No crash-resolution or release claim is made. The historical and paused-feature records below remain context.
+
 # Current handoff: 4 October 2026
 
 The responsive-workflow task is paused by owner request after preservation. Read [the current continuation record](CLOSEOUT_PROMPT.md) for all eight source and preservation tips, focused test counts, known gaps and build state. New feature code is not integrated or released. The older entries below are historical evidence, not the current status of this task.

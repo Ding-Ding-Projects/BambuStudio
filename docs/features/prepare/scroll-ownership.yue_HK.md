@@ -1,6 +1,6 @@
 ---
 translation-of: scroll-ownership.md
-source-sha256: 700f706599bf352a1c3fdd93bafcc9a04f12be93a5fa39b1a8f34c753451812a
+source-sha256: fbdfb71089ab1230f577e70f492e767efe0db0739801d561d7f58a072214aa45
 review-status: agent-drafted
 ---
 

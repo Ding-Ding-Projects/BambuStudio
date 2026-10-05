@@ -1,3 +1,13 @@
+# Current reliability repair
+
+- [ ] Verify Prepare section transitions, wheel/keyboard/search reveal and final-row access in the hosted candidate.
+- [ ] Verify native popup, canceled preset and interleaved filament-slot repairs in the hosted candidate.
+- [ ] Verify full-width crash diagnostics and encrypted matching symbol delivery through a completed hosted run.
+- [ ] Reproduce and eliminate the reported crash path, or retain the exact unresolved evidence.
+- [ ] Integrate verified work into main, verify delivery and complete task-owned preservation and cleanup.
+
+Source repairs and focused checks exist; these items remain unticked until their runtime and delivery requirements are satisfied.
+
 # Roadmap
 
 ## Responsive workflows and local history (issue 56, 4 October 2026)
