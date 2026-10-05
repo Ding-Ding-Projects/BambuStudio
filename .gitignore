@@ -56,6 +56,9 @@ _site/
 install-dir/
 install-dir-mesa/
 
+# Generated offline documentation and copied images.
+/resources/docs/
+
 # Compiled by the build (fork_catalogs in CMakeLists.txt) or by compile_translation.py; never tracked.
 resources/i18n/yue_HK/
 

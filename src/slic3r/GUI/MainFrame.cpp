@@ -49,6 +49,7 @@
 #include "ChangelogDialog.hpp"
 #include "ConfigProfilesDialog.hpp"
 #include "CommandPalette.hpp"
+#include "DocsBrowserDialog.hpp"
 #include "CommandPaletteIndex.hpp"
 #include "ModelCreator/ModelCreatorDialog.hpp"
 #include "Appearance/AppearanceEditorPopover.hpp"
@@ -385,6 +386,8 @@ DPIFrame(NULL, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, BORDERLESS_FRAME_
         // rows (theme / density / accent).
         Bind(wxEVT_MENU, [this](wxCommandEvent &) { CommandPalette::ShowPalette(this); },
              PaletteIndex::kPaletteCommandId);
+        Bind(wxEVT_MENU, [this](wxCommandEvent &) { DocsBrowserDialog::ShowArticle(this); },
+             PaletteIndex::kDocsCommandId);
         // Ctrl+Shift+E opens the per-element appearance editor beside the
         // focused control; the chord lives in the same single table.
         Bind(wxEVT_MENU, [](wxCommandEvent &) { AppearanceEditor::open_for_focused(); },
@@ -4212,6 +4215,9 @@ static wxMenu* generate_help_menu()
     append_menu_item(helpMenu, wxID_ANY, _L("Keyboard Shortcuts") + sep + "& Shift+?", _L("Show the list of the keyboard shortcuts"),
                      [](wxCommandEvent &) { wxGetApp().keyboard_shortcuts(); });
 #endif
+    append_menu_item(helpMenu, wxID_ANY, _L("Documentation") + sep + PaletteIndex::docs_shortcut_label(),
+        _L("Browse every feature article offline, inside the app"),
+        [](wxCommandEvent &) { DocsBrowserDialog::ShowArticle(wxGetApp().mainframe); });
     append_menu_item(helpMenu, wxID_ANY, _L("Dual-extruder slicing tutorial"), _L("Open the slicing tutorial video"),
         [](wxCommandEvent&) { play_dual_extruder_slice_video(); });
     append_menu_item(helpMenu, wxID_ANY, _L("Dual-extruder TPU tutorial"), _L("Open the TPU printing tutorial video"),

@@ -292,6 +292,8 @@ set(lisbslic3r_sources
     BlacklistedLibraryCheck.hpp
     LocalesUtils.cpp
     LocalesUtils.hpp
+    Markdown.cpp
+    Markdown.hpp
     Model.cpp
     Model.hpp
     ModelArrange.hpp

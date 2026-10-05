@@ -17,13 +17,21 @@ namespace Slic3r::GUI::PaletteIndex {
 std::vector<wxAcceleratorEntry> main_frame_accelerators()
 {
     std::vector<wxAcceleratorEntry> entries;
-    entries.reserve(kNumpadTabCount + 2);
+    entries.reserve(kNumpadTabCount + 3);
     for (int n = 1; n <= kNumpadTabCount; ++n)
         entries.emplace_back(wxACCEL_CTRL, WXK_NUMPAD0 + n, kNumpadTabBaseId + n - 1);
     entries.emplace_back(wxACCEL_CTRL | wxACCEL_SHIFT, 'F', kPaletteCommandId);
     entries.emplace_back(wxACCEL_CTRL | wxACCEL_SHIFT, 'E', kAppearanceEditorCommandId);
+    entries.emplace_back(wxACCEL_NORMAL, WXK_F1, kDocsCommandId);
     return entries;
 }
+
+bool is_docs_accelerator(const wxAcceleratorEntry &entry)
+{
+    return entry.GetFlags() == wxACCEL_NORMAL && entry.GetKeyCode() == WXK_F1 && entry.GetCommand() == kDocsCommandId;
+}
+
+const char *docs_shortcut_label() { return "F1"; }
 
 bool is_palette_accelerator(const wxAcceleratorEntry &entry)
 {
@@ -228,6 +236,7 @@ const std::vector<Article> &documentation_articles()
         {"docs/features/windows/appearance-customization.md", L("Appearance customization")},
         {"docs/features/windows/bulk-filament-actions.md", L("Bulk filament actions")},
         {"docs/features/windows/cloud-web-recovery.md", L("Cloud web-page failure recovery")},
+        {"docs/features/windows/documentation-browser.md", L("Offline documentation browser (F1)")},
         {"docs/features/windows/command-palette.md", L("Command palette (Ctrl+Shift+F)")},
         {"docs/features/windows/gui-accessibility.md", L("Keyboard, assistive, and responsive GUI accessibility")},
         {"docs/features/windows/ink-terminology.md", L("Ink terminology (filament \xE2\x86\x92 ink, AMS \xE2\x86\x92 Ink Dispenser)")},

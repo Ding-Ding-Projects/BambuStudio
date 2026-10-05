@@ -1,4 +1,5 @@
 #include "CommandPalette.hpp"
+#include "DocsBrowserDialog.hpp"
 #include "Widgets/MD3ScrolledWindow.hpp"
 
 #include "Appearance/AppearanceEditorPopover.hpp"
@@ -261,13 +262,14 @@ void CommandPalette::collect_entries()
     // --- Documentation articles (docs/features) -----------------------------
     // Cantonese mode opens each article's Cantonese translation; bilingual mode
     // opens the English article, and the translation links back to it.
-    const bool cantonese_docs =
-        I18N::language_mode_profile().kind == I18N::LanguageModeKind::CantoneseHongKong;
     for (const PaletteIndex::Article &a : PaletteIndex::documentation_articles()) {
-        const wxString url = PaletteIndex::article_url(a, cantonese_docs);
+        const std::string path = a.path;
         m_entries.push_back({MaterialIcon::MenuBook, _L("Documentation") + " / " + _(a.title),
                              wxString::FromUTF8(a.path),
-                             [url]() { wxGetApp().open_browser_with_warning_dialog(url); }});
+                             [this, path]() {
+                                 MainFrame *frame = m_frame;
+                                 frame->CallAfter([frame, path]() { DocsBrowserDialog::ShowArticle(frame, path); });
+                             }});
     }
 
     // --- Per-element appearance editor + its presets --------------------------
