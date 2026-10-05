@@ -6,6 +6,9 @@ Set `BAMBU_DEPENDENCY_CACHE` to an existing dependency destination containing
 Application build and install output remains inside the current checkout.
 An incompatible or incomplete cache causes configuration or compilation to stop;
 the caller must select a compatible cache or omit the variable for a local build.
+FFmpeg package flags quote their include and library paths so an isolated checkout
+under a directory containing spaces remains supported. Existing writable local
+caches receive the same normalization; external cache destinations stay read-only.
 
 Node.js LTS is installed from the fixed official portable archive, verified against
 the publisher SHA-256, into the user build-tools directory. This preserves an

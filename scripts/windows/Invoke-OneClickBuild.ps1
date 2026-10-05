@@ -226,6 +226,8 @@ function Normalize-PkgConfigFiles {
         $normalized = $content.Replace('prefix=./dist', "prefix=$prefix")
         $normalized = $normalized.Replace('libdir=./dist/lib', "libdir=$prefix/lib")
         $normalized = $normalized.Replace('includedir=./dist/include', "includedir=$prefix/include")
+        $normalized = $normalized.Replace('-I${includedir}', '-I"${includedir}"')
+        $normalized = $normalized.Replace('-L${libdir}', '-L"${libdir}"')
         if ($normalized -ne $content) {
             [System.IO.File]::WriteAllText(
                 $file.FullName,

@@ -9,5 +9,9 @@ foreach (_pkgconfig_file IN LISTS _pkgconfig_files)
     string(REPLACE "prefix=./dist" "prefix=${_prefix}" _content "${_content}")
     string(REPLACE "libdir=./dist/lib" "libdir=${_prefix}/lib" _content "${_content}")
     string(REPLACE "includedir=./dist/include" "includedir=${_prefix}/include" _content "${_content}")
+    # pkg-config tokenizes flags, so whitespace in a checkout prefix must stay
+    # inside a quoted path instead of becoming several unrelated arguments.
+    string(REPLACE "-I\${includedir}" "-I\"\${includedir}\"" _content "${_content}")
+    string(REPLACE "-L\${libdir}" "-L\"\${libdir}\"" _content "${_content}")
     file(WRITE "${_pkgconfig_file}" "${_content}")
 endforeach()
