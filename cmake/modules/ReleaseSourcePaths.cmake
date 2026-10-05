@@ -2,7 +2,7 @@
 # This is producer metadata, not post-link binary rewriting.
 if(MSVC AND CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     if(MSVC_VERSION LESS 1951)
-        message(FATAL_ERROR "Release source-path mapping requires MSVC 19.51 or newer.")
+        message(FATAL_ERROR "Release source-path mapping is enabled only for the inspected MSVC 19.51-or-newer baseline; older compiler compatibility has not been established.")
     endif()
     get_filename_component(_bambu_source_root "${CMAKE_CURRENT_LIST_DIR}/../.." ABSOLUTE)
     set(_bambu_path_flags "/experimental:deterministic")
@@ -19,8 +19,14 @@ if(MSVC AND CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     foreach(_bambu_index RANGE ${_bambu_last_root})
         list(GET _bambu_roots ${_bambu_index} _bambu_root)
         list(GET _bambu_labels ${_bambu_index} _bambu_label)
+        file(TO_CMAKE_PATH "${_bambu_root}" _bambu_forward_root)
         file(TO_NATIVE_PATH "${_bambu_root}" _bambu_native_root)
+        # Source/header strings can use either separator form, or mix them
+        # after the matched prefix. Do not assume compiler normalization.
         string(APPEND _bambu_path_flags " /pathmap:\"${_bambu_native_root}=${_bambu_label}\"")
+        if(NOT _bambu_forward_root STREQUAL _bambu_native_root)
+            string(APPEND _bambu_path_flags " /pathmap:\"${_bambu_forward_root}=${_bambu_label}\"")
+        endif()
     endforeach()
     string(APPEND CMAKE_C_FLAGS " ${_bambu_path_flags}")
     string(APPEND CMAKE_CXX_FLAGS " ${_bambu_path_flags}")
