@@ -1,4 +1,5 @@
 #include "slic3r/GUI/FeatureServices/PresentationRoutes.hpp"
+#include "slic3r/GUI/FeatureServices/PackageReceipts.hpp"
 #include <iostream>
 
 int main()
@@ -16,5 +17,15 @@ int main()
         if (!presentation_setting_available(key, true)) return 3;
         ++checks;
     }
-    std::cout << "PASS " << checks << " presentation route assertions\n";
+    using Slic3r::GUI::FeatureServices::parse_worker_hash;
+    const std::string valid(64, 'a');
+    for (const auto& bytes : {valid, valid + "\n"}) {
+        if (parse_worker_hash(bytes) != valid) return 4;
+        ++checks;
+    }
+    for (const auto& bytes : {std::string(), valid + "\r\n", valid + "\n\n", std::string(64, 'A'), std::string(64, 'g'), std::string(63, 'a'), std::string(66, 'a')}) {
+        if (!parse_worker_hash(bytes).empty()) return 5;
+        ++checks;
+    }
+    std::cout << "PASS " << checks << " presentation route and package receipt assertions\n";
 }
