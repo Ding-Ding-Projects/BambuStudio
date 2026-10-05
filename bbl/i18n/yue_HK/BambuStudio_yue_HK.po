@@ -38135,7 +38135,7 @@ msgstr "結果"
 #. reviewed-category: file-actions
 #. review-status: agent-drafted
 msgid "Pattern: {name} keeps the current name, {n} numbers from the start index, {i} from 0, {stem} and {ext} split a file name; {{ and }} are literal braces"
-msgstr "樣式：{name} 保留目前名稱，{n} 由起始編號開始，{i} 由 0 開始，{stem} 同 {ext} 拆開檔名；{{ 同 }} 係原樣括號"
+msgstr "樣式：{name} 保留目前名稱，{n} 由起始編號開始，{i} 由 0 開始，{stem} 同 {ext} 拆開檔名；{{ and }} 係原樣括號"
 
 #. reviewed-category: destructive-dirty-error-security
 #. review-status: agent-drafted
