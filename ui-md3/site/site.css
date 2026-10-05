@@ -832,3 +832,11 @@ footer { border-top: 1px solid var(--md-outline-variant); padding: 28px 0 44px; 
 .confirmation-stage progress{height:12px;accent-color:var(--md-primary);}
 .confirmation-complete{outline:3px solid var(--md-primary);}
 @media(prefers-reduced-motion:no-preference){.confirmation-complete{animation:confirmation-completion .35s ease-out;}@keyframes confirmation-completion{from{box-shadow:0 0 0 0 var(--md-primary);}to{box-shadow:0 0 0 12px transparent;}}}
+.schedule-form{display:flex;flex-wrap:wrap;gap:12px;width:100%;min-width:0;}
+.schedule-field{display:flex;flex-direction:column;gap:6px;min-width:0;flex:1 1 180px;}
+.schedule-field input:not([type=checkbox]){min-height:44px;max-width:100%;box-sizing:border-box;}
+.schedule-field input[type=checkbox]{width:24px;height:24px;margin:10px;}
+.schedule-weekdays,.schedule-values,.schedule-source,.schedule-target{display:flex;flex-wrap:wrap;gap:8px;width:100%;min-width:0;}
+.schedule-weekdays .schedule-field{flex:1 1 90px;}
+.schedule-rule{display:block;overflow-wrap:anywhere;padding-block:20px;border-bottom:1px solid var(--md-outline-variant);}
+.schedule-rule[hidden]{display:none!important;}

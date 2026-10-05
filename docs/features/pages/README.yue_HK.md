@@ -8,6 +8,8 @@ review-status: agent-drafted
 
 # GitHub Pages 網站
 
+- [訪客設定排程](scheduled-settings.yue_HK.md)，本機臨時設定同明確配對限制。
+
 發佈嘅網站 <https://ding-ding-projects.github.io/BambuStudio/> 係一個自我包含嘅靜態應用，構建自 [`ui-md3/landing.html`](../../../ui-md3/landing.html) 同埋 [`ui-md3/site/`](../../../ui-md3/site/) 中嘅模組。佢唔係一個帶滾動欄嘅行銷頁面：佢係一個瀏覽器風格嘅標籤表面，攜帶相同嘅責任如桌面應用 ， 三個語言模式、兩個有趣級別滑塊、每個搜尋欄後面嘅完整正則表達式構建器、非阻塞通知、一個完整更新日誌查看器同埋每元素外觀自訂。
 
 代碼、字體同埋介面藝術被提供自呢個儲存庫。冇離網腳本或樣式表、冇 CDN、冇分析、冇追蹤器同埋冇餅乾橫幅；偏好生活喺訪問者自己嘅瀏覽器同埋其他地方冇。喺一個合格嘅重複訪問上，dim-sum 驚喜使一個映像要求到一個已發佈 release 資産喺公開 [`Ding-Ding-Projects/dim-sum-photos`](https://github.com/Ding-Ding-Projects/dim-sum-photos) 目錄帶 `no-referrer` 政策。

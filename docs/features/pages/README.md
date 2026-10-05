@@ -1,5 +1,7 @@
 # GitHub Pages site
 
+- [Scheduled visitor settings](scheduled-settings.md), local-only typed overrides and explicit mediation limits.
+
 The published site at <https://ding-ding-projects.github.io/BambuStudio/> is a self-contained
 static application built from [`ui-md3/landing.html`](../../../ui-md3/landing.html) and the modules
 in [`ui-md3/site/`](../../../ui-md3/site/). It is not a marketing page with a scroll bar: it is a

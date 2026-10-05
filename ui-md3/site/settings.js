@@ -238,6 +238,7 @@
       { key: 'wording.heading', build: function (host) { global.BambuWording.mount(host); } },
       { key: 'narrator.heading', build: function (host) { global.BambuNarration.mount(host); } },
       { key: 'attention.heading', build: function (host) { global.BambuAttention.mount(host); } },
+      { key: 'schedule.heading', build: function (host) { global.BambuSchedule.mount(host); } },
       { key: 'settings.group.appearance', build: buildAppearanceGroup },
       { key: 'settings.group.typography', build: buildTypographyGroup },
       { key: 'settings.group.elements', build: buildElementGroup },
@@ -786,6 +787,7 @@
     mountThemeControls: mountThemeControls,
     mountAppearanceSearch: mountAppearanceSearch,
     availableFonts: availableFonts,
+    appearanceTargets: function () { return ELEMENT_TARGETS.concat(tabTargets()).map(function (target) { return { id: target.id, properties: target.properties.slice() }; }); },
     renderSettings: renderSettings
   };
 })(typeof window !== 'undefined' ? window : globalThis);

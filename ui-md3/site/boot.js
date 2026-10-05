@@ -211,6 +211,7 @@
       tabs: TABS
     });
     global.BambuSiteTabs = tabs;
+    if (global.BambuSchedule) global.BambuSchedule.start();
     if (global.BambuAttention) global.BambuAttention.start();
 
     site.subscribe(function (keys) {

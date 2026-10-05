@@ -44,6 +44,7 @@
     attentionMomentum: false,
     attentionNextAction: '',
     attentionSnoozeUntil: 0,
+    scheduledSettings: null,
     tabOrder: [],
     tabPinned: [],
     tabGroups: {},
@@ -108,12 +109,18 @@
   }
 
   function get(key) {
+    if (global.BambuSchedule) {
+      var override = global.BambuSchedule.override(key);
+      if (override !== undefined) return override;
+    }
     return state[key];
   }
   function set(key, value, options) {
     if (JSON.stringify(state[key]) === JSON.stringify(value)) return false;
+    var previous = state[key];
     state[key] = value;
-    writeStorage(state);
+    var persisted = writeStorage(state);
+    if (!persisted && options && options.requirePersistence) { state[key] = previous; throw new Error('Preference storage unavailable'); }
     if (!options || options.emit !== false) emit([key]);
     return true;
   }
@@ -130,6 +137,7 @@
   }
 
   function languageMode() {
+    if (global.BambuSchedule && global.BambuSchedule.override('languageMode') !== undefined) return global.BambuSchedule.override('languageMode');
     return i18n ? i18n.getActiveMode() : 'en';
   }
   function setLanguageMode(mode) {
@@ -345,6 +353,7 @@
   };
   // Latin faces are useless for Cantonese, so a CJK-capable stack always follows.
   var CJK_FALLBACK = "'Noto Sans HK','PingFang HK','Microsoft JhengHei','Microsoft YaHei',sans-serif";
+  var appliedElementProperties = {};
 
   function applyAppearance() {
     var root = global.document.documentElement;
@@ -375,8 +384,15 @@
     root.style.setProperty('--site-font-weight', String(get('fontWeight')));
 
     var elements = get('elementStyles') || {};
+    Object.keys(appliedElementProperties).forEach(function (element) {
+      appliedElementProperties[element].forEach(function (property) {
+        if (!elements[element] || elements[element][property] === undefined || elements[element][property] === null || elements[element][property] === '') root.style.removeProperty('--el-' + element + '-' + property);
+      });
+    });
+    appliedElementProperties = {};
     Object.keys(elements).forEach(function (element) {
       var values = elements[element] || {};
+      appliedElementProperties[element] = Object.keys(values);
       Object.keys(values).forEach(function (property) {
         if (values[property] === '' || values[property] === null) return;
         root.style.setProperty('--el-' + element + '-' + property, String(values[property]));
@@ -627,6 +643,7 @@
     LEVELS: LEVELS,
     DEFAULTS: DEFAULTS,
     get: get,
+    getBase: function (key) { return state[key]; },
     set: set,
     resetAll: resetAll,
     subscribe: subscribe,
