@@ -15,8 +15,8 @@ namespace Slic3r { namespace GUI { namespace TtsNarrator {
 //     queued line of the same category is REPLACED, never stacked;
 //   * per-category cooldown (default 20s) keeps narration infrequent;
 //   * error lines preserve facts and bypass cooldown;
-//   * output uses the selected local SAPI voice; remote media output requires
-//     a separate completion-aware transport and is not mirrored here.
+//   * local output uses the selected SAPI voice; the separately configured
+//     external mirror retains its existing fire-and-forget delivery contract.
 //
 // install() also arms the printer watch: the selected machine's print stage
 // and error code are polled and state CHANGES are narrated ("Printing
@@ -27,6 +27,8 @@ void say_tracks(const wxString& english, const wxString& cantonese, const std::s
 std::vector<PersonalModes::VoiceInfo> voices();
 PersonalModes::VoiceStatus voice_status(bool cantonese);
 bool delivery_failed();
+enum class ExternalMirrorStatus { Unconfigured, PlaybackCompletionUnavailable };
+ExternalMirrorStatus external_mirror_status();
 void set_quiet(bool quiet, bool screen_reader_active);
 
 // Queue a line under a category ("state", "error", "scan", ...). Categories

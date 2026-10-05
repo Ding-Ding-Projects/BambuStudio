@@ -79,6 +79,10 @@ void pump_queue() {
     s_backend_inflight = false;
     const auto next = s_queue.next(true, narrator_enabled(), false);
     if (!next) return;
+    // Preserve the user's separately configured external announcement mirror.
+    // Its service request acknowledges dispatch, not remote playback completion.
+    // Tracks contain source/localized copy, never the private display transform.
+    HomeAssistant::speak_on_speakers(wxString(next->text));
     const bool cantonese = next->language == PersonalModes::SpeechLanguage::Cantonese;
     const auto selected = wxString::FromUTF8(wxGetApp().app_config->get(cantonese ? "narrator_voice_yue" : "narrator_voice_en")).ToStdWstring();
     const auto resolved = voice().resolve(s_voices, cantonese, selected);
@@ -86,8 +90,6 @@ void pump_queue() {
     s_backend_inflight = voice().speak(next->text, resolved.effective_id,
         number(cantonese ? "narrator_rate_yue" : "narrator_rate_en"), number(cantonese ? "narrator_pitch_yue" : "narrator_pitch_en"));
     s_delivery_failed = !s_backend_inflight;
-    // Remote media playback has no completion acknowledgment. It must not be
-    // mirrored here, because that would invalidate serialized speech delivery.
 }
 // --- printer state watch ----------------------------------------------------
 
@@ -203,6 +205,11 @@ PersonalModes::VoiceStatus voice_status(bool cantonese)
 }
 
 bool delivery_failed() { return s_delivery_failed; }
+ExternalMirrorStatus external_mirror_status()
+{
+    return HomeAssistant::configured() && !wxGetApp().app_config->get("ha_speakers").empty()
+        ? ExternalMirrorStatus::PlaybackCompletionUnavailable : ExternalMirrorStatus::Unconfigured;
+}
 void set_quiet(bool quiet, bool screen_reader_active) { s_quiet = quiet; s_screen_reader = screen_reader_active; pump_queue(); }
 void install() { s_voices = voice().enumerate(); timer()->Start(kPollMs); }
 void shutdown() { timer()->Stop(); s_queue.cancel(); if (s_voice) s_voice->stop(); s_voice.reset(); s_backend_inflight = false; }

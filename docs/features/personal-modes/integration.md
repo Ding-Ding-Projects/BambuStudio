@@ -14,6 +14,7 @@ visible feature.
 - [ ] Supply all five `AttentionCallbacks`, persist `AttentionSettings`, register local history and export, drive activity and one-second ticks, and retain those accommodations under School and Kids presentation.
 - [ ] Add narrator enabled/language controls and separate English/Cantonese voice, rate and pitch controls. Persist stable IDs and show selected-missing, effective fallback, unavailable and unknown network capability state.
 - [ ] Bind quiet/reduced-sound and active screen-reader state through `TtsNarrator::set_quiet`; invoke `TtsNarrator::shutdown` before GUI teardown.
+- [ ] Label the configured Home Assistant route as an external mirror with unverified playback completion using `TtsNarrator::external_mirror_status()`. Do not present its dispatch as satisfying the local serialization guarantee.
 - [ ] Migrate remaining already-localized `say()` producers to `say_tracks()` so narration language is independent of the visible interface. Printer event producers already use independent tracks.
 - [ ] Localize every new control, explanation, status and disclosure, add it to settings/palette search, and give every new search its own adjacent anchored full regex builder.
 - [ ] Produce the controls through the approved design route, compile the real application, and capture behavior for language, suppression/restoration, keyboard operation, narrow layouts and high scales. Service tests do not establish those claims.

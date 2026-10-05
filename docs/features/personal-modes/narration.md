@@ -35,7 +35,20 @@ must be saved and recorded in local settings history by the owning controls.
 than interrupting speech. `set_quiet(quiet, screen_reader_active)` is the application
 hook for quiet hours, reduced sound and assistive-technology coexistence. `shutdown()`
 must run on the GUI thread before application destruction to stop the timer and
-release COM resources. Remote media players are no longer mirrored from this queue:
-the existing fire-and-forget transport cannot prove playback completion and would
-make a non-overlap claim false. A completion-aware remote adapter remains follow-up
-work if remote event narration is required.
+release COM resources.
+
+The existing Home Assistant announcement mirror remains available to users who
+configured `ha_speakers` and a connection. Each selected source-language track is
+forwarded through `HomeAssistant::speak_on_speakers`, even when its local SAPI voice
+is unavailable. Private display replacements are never applied before forwarding.
+Quiet and screen-reader-yield settings suppress dispatch to both routes.
+
+This is a separately configured external mirror with **unverified remote playback
+completion**, not part of the local non-overlap guarantee. The current Home Assistant
+adapter returns `void` after submitting a `tts.speak` service request, has no
+playback-completion callback, and does not observe per-player completion. Service
+dispatch cannot establish when remote speech ends; remote players may overlap or
+finish at different times. `external_mirror_status()` reports `Unconfigured` or
+`PlaybackCompletionUnavailable` for the owning settings/status control to label
+this distinction. It does not claim network delivery or playback success. Adding
+reliable per-player completion remains separate integration work.
