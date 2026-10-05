@@ -237,6 +237,7 @@
       { key: 'settings.group.language', build: buildLanguageGroup },
       { key: 'wording.heading', build: function (host) { global.BambuWording.mount(host); } },
       { key: 'narrator.heading', build: function (host) { global.BambuNarration.mount(host); } },
+      { key: 'attention.heading', build: function (host) { global.BambuAttention.mount(host); } },
       { key: 'settings.group.appearance', build: buildAppearanceGroup },
       { key: 'settings.group.typography', build: buildTypographyGroup },
       { key: 'settings.group.elements', build: buildElementGroup },
@@ -731,6 +732,7 @@
 
   function buildNotificationGroup(host) {
     toggle(host, 'settings.notify.enabled', 'settings.notify.desc', 'notifications');
+    toggle(host, 'settings.emoji', 'settings.emoji.desc', 'messageEmojis', function () { site.applyCopy(doc.body); });
   }
 
   function toggle(host, key, descKey, prefKey, onChange) {

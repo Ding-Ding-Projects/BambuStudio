@@ -36,6 +36,14 @@
     narratorVoiceYue: '',
     narratorRate: 1,
     narratorPitch: 1,
+    messageEmojis: true,
+    attentionFocus: false,
+    attentionLow: false,
+    attentionTime: false,
+    attentionOne: false,
+    attentionMomentum: false,
+    attentionNextAction: '',
+    attentionSnoozeUntil: 0,
     tabOrder: [],
     tabPinned: [],
     tabGroups: {},
@@ -274,6 +282,21 @@
         element.setAttribute(attribute, value);
       });
     });
+    applyMessageDecoration(scope);
+  }
+
+  function applyMessageDecoration(scope) {
+    var surfaces = [].slice.call(scope.querySelectorAll('.toast, [role="dialog"], [role="alertdialog"]'));
+    if (scope.matches && scope.matches('.toast, [role="dialog"], [role="alertdialog"]')) surfaces.push(scope);
+    surfaces.forEach(function (surface) {
+      var decoration = surface.querySelector('.message-emoji');
+      if (!get('messageEmojis')) { if (decoration) decoration.remove(); return; }
+      if (!decoration) {
+        decoration = global.document.createElement('span'); decoration.className = 'message-emoji'; decoration.setAttribute('aria-hidden', 'true');
+        decoration.textContent = surface.classList.contains('toast-error') || surface.classList.contains('toast-warning') ? '\u26a0\ufe0f' : surface.getAttribute('role') === 'alertdialog' ? '\ud83e\uddf9' : '\u2139\ufe0f';
+        surface.insertBefore(decoration, surface.firstChild);
+      }
+    });
   }
 
   function parseParams(raw) {
@@ -493,8 +516,8 @@
     if (history.length > HISTORY_LIMIT) history.length = HISTORY_LIMIT;
     persistHistory();
     emit(['notifications']);
-    if (global.BambuNarration) global.BambuNarration.narrate(kind, key, params);
-    if (!get('notifications') && kind !== 'error' && kind !== 'warning') return record;
+    if (global.BambuNarration && (!get('attentionLow') || kind === 'error' || kind === 'warning')) global.BambuNarration.narrate(kind, key, params);
+    if ((!get('notifications') || get('attentionLow')) && kind !== 'error' && kind !== 'warning') return record;
     renderToast(record);
     return record;
   }

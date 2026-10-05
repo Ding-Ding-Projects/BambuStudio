@@ -810,3 +810,16 @@ footer { border-top: 1px solid var(--md-outline-variant); padding: 28px 0 44px; 
 .chip-btn .copy-secondary,
 .menuitem .copy-secondary,
 .toast-action .copy-secondary { color: inherit; opacity: .82; }
+/* Independently enabled visitor accommodations. Text stays readable and every
+   dimmed item remains operable; the user can clear emphasis in one action. */
+.attention-bar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;padding-block:12px;}
+.attention-bar[hidden],.attention-bar [hidden]{display:none!important;}
+.attention-action{display:flex;flex-wrap:wrap;gap:8px;align-items:center;min-width:0;}
+.attention-current-action{overflow-wrap:anywhere;max-width:100%;}
+.attention-clock{margin:0;color:var(--md-on-surface);}
+.attention-focus-active .setting:not(.attention-current),.attention-focus-active .card:not(.attention-current),.attention-focus-active .screen-card:not(.attention-current){background:var(--md-surface);border-color:var(--md-outline-variant);}
+.attention-focus-active .card:not(.attention-current) img,.attention-focus-active .screen-card:not(.attention-current) img{opacity:.6;}
+.attention-current{outline:2px solid var(--md-primary);outline-offset:3px;}
+[data-low-stimulation=true]{--md-primary:var(--md-on-surface-variant)!important;}
+[data-low-stimulation=true] *,[data-low-stimulation=true] *::before,[data-low-stimulation=true] *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important;}
+.message-emoji{display:inline-block;align-self:flex-start;margin:4px;font-size:1.1em;line-height:1;}

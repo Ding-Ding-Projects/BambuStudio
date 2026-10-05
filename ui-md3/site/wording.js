@@ -11,7 +11,7 @@
   function parse(raw) {
     if (typeof raw !== 'string' || new TextEncoder().encode(raw).length > LIMITS.bytes) throw new Error('size');
     var offset = 0;
-    function space() { while (/\s/.test(raw.charAt(offset)) && offset < raw.length) offset++; }
+    function space() { while (/[ \t\r\n]/.test(raw.charAt(offset)) && offset < raw.length) offset++; }
     function string() {
       var start = offset++;
       while (offset < raw.length) {

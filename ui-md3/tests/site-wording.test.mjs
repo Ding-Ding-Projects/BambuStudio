@@ -53,6 +53,7 @@ test('duplicate keys, unsafe names, unknown fields and versions reject', () => {
     '{"schemaVersion":1,"entries":{"x":{"nested":{"too":{"deep":"y"}}}}}',
     '{"schemaVersion":1,"entries":{"x":"y"}} trailing',
     '{"schemaVersion":1,"entries":{"x":"y",}}'
+    , '\u00a0{"schemaVersion":1,"entries":{"x":"y"}}'
   ].forEach(raw => assert.throws(() => api.parse(raw)));
 });
 test('byte, count, key, value and control-character bounds reject', () => {

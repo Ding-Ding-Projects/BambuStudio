@@ -16,6 +16,10 @@ review-status: agent-drafted
 
 ## 功能
 
+- [本機個人用字](personal-wording.yue_HK.md)：只留喺此瀏覽器嘅 JSON 載入、更換、驗證快取同清除。
+- [瀏覽器事件旁白](event-narration.yue_HK.md)：自選語言同聲音，順序播放，暫停同停止。
+- [專注介面調整同訊息裝飾](attention-and-message-decoration.yue_HK.md)：五個預設關閉嘅獨立調整，同可持續儲存嘅裝飾表情符號開關。
+
 - [標籤導航](tabbed-navigation.md) ， 帶、佢嘅溢出表面、重新排列、釘選、分組、可搜尋標籤列表同埋測量佈局演算法背後。
 - [語言模式同埋有趣級別](language-and-funny-levels.md) ， 複製目錄、兩個獨立音調階同埋規則，分隔聲音來自事實。
 - [正則表達式構建器](regex-builder.md) ， 共用組件、佢嘅引擎同埋方言、引導構造控制同埋有界評估，保留一個失控模式離頁面。
