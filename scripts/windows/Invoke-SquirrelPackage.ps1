@@ -99,6 +99,15 @@ function Write-SquirrelLog {
     Write-Host ('[{0}] {1}' -f [DateTime]::UtcNow.ToString('u'), $Message)
 }
 
+function ConvertTo-WindowsNativeArgument {
+    param([Parameter(Mandatory)][AllowEmptyString()][string] $Value)
+    # Start-Process joins its argument array into one command line on Windows.
+    # Quote each value using the CRT backslash/quote rules, including trailing slashes.
+    $escaped = [regex]::Replace($Value, '(\\*)"', '$1$1\"')
+    $escaped = [regex]::Replace($escaped, '(\\+)$', '$1$1')
+    return '"' + $escaped + '"'
+}
+
 function Get-PeCertificateTable {
     param([Parameter(Mandatory)][string] $Path)
 
@@ -266,6 +275,7 @@ function Resolve-SquirrelTool {
 
     $temporaryRoot = Join-Path ([IO.Path]::GetTempPath()) ($script:TempPrefix + [guid]::NewGuid().ToString('N'))
     $archive = Join-Path $temporaryRoot "squirrel.windows.$Version.nupkg"
+    $toolResolved = $false
     try {
         New-Item -ItemType Directory -Path $temporaryRoot -Force | Out-Null
         Write-SquirrelLog "Downloading Squirrel.Windows $Version from NuGet..."
@@ -290,10 +300,14 @@ function Resolve-SquirrelTool {
         if (-not (Test-Path -LiteralPath $cached -PathType Leaf)) {
             throw "Squirrel.Windows extraction completed but '$cached' is missing."
         }
+        $toolResolved = $true
         return $cached
     }
     finally {
-        if (Test-Path -LiteralPath $temporaryRoot) {
+        if (-not $toolResolved -and (Test-Path -LiteralPath $temporaryRoot)) {
+            Write-Warning "Squirrel tool preparation failed; retained input and extraction at $temporaryRoot."
+        }
+        if ($toolResolved -and (Test-Path -LiteralPath $temporaryRoot)) {
             $resolved = [IO.Path]::GetFullPath($temporaryRoot)
             $temporaryRootPrefix = [IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd('\') + '\'
             $temporaryName = [IO.Path]::GetFileName($resolved)
@@ -454,6 +468,7 @@ $packageRoot = Join-Path $temporaryRoot 'package'
 $nupkgOutput = Join-Path $temporaryRoot 'nupkg'
 $releaseDirectory = Join-Path $temporaryRoot 'release'
 $finalDirectory = Join-Path $resolvedOutput 'squirrel'
+$packageCompleted = $false
 
 try {
     New-Item -ItemType Directory -Path $temporaryRoot,$nupkgOutput,$releaseDirectory,$finalDirectory -Force | Out-Null
@@ -463,7 +478,11 @@ try {
     }
     Write-SquirrelLog "Verified Squirrel input package: $nupkg"
     Write-SquirrelLog "Releasifying $nupkg with Squirrel.Windows $squirrelVersion..."
-    $squirrelProcess = Start-Process -FilePath $squirrelTool -ArgumentList @('--releasify', $nupkg, '--releaseDir', $releaseDirectory, '--no-msi', '--setupIcon', $IconPath) -WindowStyle Hidden -Wait -PassThru
+    $nativeArguments = @('--releasify', $nupkg, '--releaseDir', $releaseDirectory, '--no-msi', '--setupIcon', $IconPath) |
+        ForEach-Object { ConvertTo-WindowsNativeArgument -Value $_ }
+    $squirrelProcess = Start-Process -FilePath $squirrelTool -ArgumentList ($nativeArguments -join ' ') `
+        -WorkingDirectory $temporaryRoot -RedirectStandardOutput (Join-Path $temporaryRoot 'squirrel.stdout.log') `
+        -RedirectStandardError (Join-Path $temporaryRoot 'squirrel.stderr.log') -WindowStyle Hidden -Wait -PassThru
     $squirrelExitCode = $squirrelProcess.ExitCode
     if ($squirrelExitCode -ne 0) {
         throw "Squirrel.Windows releasify failed with exit code $squirrelExitCode."
@@ -482,9 +501,13 @@ try {
     Write-SquirrelLog "Squirrel full package: $(Join-Path $finalDirectory (Split-Path -Leaf $outputs.FullPackage))"
     Write-SquirrelLog "Squirrel Setup.exe SHA-256: $setupHash"
     Write-SquirrelLog "Squirrel delta packages: $($outputs.DeltaPackages.Count)"
+    $packageCompleted = $true
 }
 finally {
-    if (Test-Path -LiteralPath $temporaryRoot) {
+    if (-not $packageCompleted -and (Test-Path -LiteralPath $temporaryRoot)) {
+        Write-Warning "Squirrel packaging failed; retained input package, output, and process logs at $temporaryRoot. Final output directory: $finalDirectory."
+    }
+    if ($packageCompleted -and (Test-Path -LiteralPath $temporaryRoot)) {
         $resolved = [IO.Path]::GetFullPath($temporaryRoot)
         $temporaryRootPrefix = [IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd('\') + '\'
         $temporaryName = [IO.Path]::GetFileName($resolved)
