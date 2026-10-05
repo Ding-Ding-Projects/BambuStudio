@@ -1,4 +1,7 @@
 #include "CameraHUD.hpp"
+#include "../wxMediaCtrl3.h"
+#include <wx/button.h>
+#include <wx/menu.h>
 
 #include <algorithm>
 #include <cmath>
@@ -516,13 +519,62 @@ CameraHUD::CameraHUD(wxWindow *parent)
     m_status_slot = new wxBoxSizer(wxHORIZONTAL);
     hsizer->Add(m_status_slot, 0, wxALIGN_CENTER_VERTICAL);
 
+#ifndef __WXMAC__
+    auto *zoom_sizer = new wxBoxSizer(wxHORIZONTAL);
+    zoom_sizer->AddStretchSpacer();
+    m_zoom_out = new CameraHUDChip(this, MaterialIcon::Remove, "");
+    m_zoom_out->SetName(_L("Zoom out"));
+    m_zoom_out->SetToolTip(_L("Zoom out (-)"));
+    m_zoom_in = new CameraHUDChip(this, MaterialIcon::Add, "");
+    m_zoom_in->SetName(_L("Zoom in"));
+    m_zoom_in->SetToolTip(_L("Zoom in (+)"));
+    m_zoom_reset = new CameraHUDChip(this, MaterialIcon::Refresh, "");
+    m_zoom_reset->SetName(_L("Reset camera view"));
+    m_zoom_reset->SetToolTip(_L("Reset camera view (0)"));
+    m_zoom_percent = new wxButton(this, wxID_ANY, "100%", wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT);
+    m_zoom_percent->SetForegroundColour(Glyph());
+    m_zoom_percent->SetName(_L("Camera zoom percentage"));
+    m_zoom_percent->SetMinSize(wxSize(FromDIP(60), FromDIP(kChipDIP)));
+    m_zoom_percent->SetBackgroundColour(ChipBg());
+    m_zoom_percent->SetToolTip(_L("Choose camera zoom percentage"));
+    m_zoom_percent->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) {
+        wxMenu menu;
+        for (int percent : {100, 125, 150, 200, 300, 400, 500}) {
+            const int id = wxWindow::NewControlId();
+            menu.Append(id, wxString::Format("%d%%", percent));
+            menu.Bind(wxEVT_MENU, [this, percent](wxCommandEvent &) {
+                if (auto *media = m_media.get()) static_cast<wxMediaCtrl3 *>(media)->SetZoom(percent / 100.0);
+            }, id);
+        }
+        m_zoom_percent->PopupMenu(&menu);
+    });
+    zoom_sizer->Add(m_zoom_out, 0, wxALIGN_CENTER_VERTICAL);
+    zoom_sizer->Add(m_zoom_percent, 0, wxALIGN_CENTER_VERTICAL);
+    zoom_sizer->Add(m_zoom_in, 0, wxALIGN_CENTER_VERTICAL);
+    zoom_sizer->Add(m_zoom_reset, 0, wxALIGN_CENTER_VERTICAL);
+    m_zoom_out->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &) { change_zoom(1.0 / 1.2); });
+    m_zoom_in->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &) { change_zoom(1.2); });
+    m_zoom_reset->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &) {
+        if (auto *media = m_media.get()) static_cast<wxMediaCtrl3 *>(media)->ResetCameraView();
+    });
+#endif
+
     m_setting_chip    = new CameraHUDChip(this, MaterialIcon::Settings, "camera_setting");
     m_fullscreen_chip = new CameraHUDChip(this, MaterialIcon::Fullscreen, "camera_fullscreen");
     hsizer->Add(m_setting_chip, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(6));
     hsizer->Add(m_fullscreen_chip, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(6));
     hsizer->AddSpacer(FromDIP(12));
 
+#ifndef __WXMAC__
+    zoom_sizer->AddSpacer(FromDIP(12));
+    auto *bands = new wxBoxSizer(wxVERTICAL);
+    bands->Add(hsizer, 0, wxEXPAND);
+    bands->Add(zoom_sizer, 0, wxEXPAND);
+    SetSizer(bands);
+    SetMinSize(wxSize(-1, FromDIP(kHudHeight + kChipDIP)));
+#else
     SetSizer(hsizer);
+#endif
     Layout();
 
     Bind(wxEVT_PAINT, &CameraHUD::on_paint, this);
@@ -531,8 +583,42 @@ CameraHUD::CameraHUD(wxWindow *parent)
 
 CameraHUD::~CameraHUD()
 {
+    AttachMedia(nullptr);
     if (m_pulse_timer.IsRunning())
         m_pulse_timer.Stop();
+}
+
+void CameraHUD::AttachMedia(wxWindow *media)
+{
+#ifndef __WXMAC__
+    if (auto *old = m_media.get())
+        old->Unbind(EVT_MEDIA_CTRL_VIEW_CHANGED, &CameraHUD::on_view_changed, this);
+    m_media = media;
+    if (media) {
+        media->Bind(EVT_MEDIA_CTRL_VIEW_CHANGED, &CameraHUD::on_view_changed, this);
+        m_zoom_percent->SetLabel(wxString::Format("%d%%", int(static_cast<wxMediaCtrl3 *>(media)->GetZoom() * 100 + .5)));
+    }
+    for (auto *chip : {m_zoom_out, m_zoom_in, m_zoom_reset}) chip->Enable(media != nullptr);
+    m_zoom_percent->Enable(media != nullptr);
+#else
+    (void)media;
+#endif
+}
+
+void CameraHUD::on_view_changed(wxCommandEvent &evt)
+{
+    if (m_zoom_percent) m_zoom_percent->SetLabel(wxString::Format("%d%%", evt.GetInt()));
+    evt.Skip();
+}
+
+void CameraHUD::change_zoom(double factor)
+{
+#ifndef __WXMAC__
+    if (auto *media = m_media.get()) {
+        auto *camera = static_cast<wxMediaCtrl3 *>(media);
+        camera->SetZoom(camera->GetZoom() * factor);
+    }
+#endif
 }
 
 void CameraHUD::SetLiveActive(bool live)
@@ -619,7 +705,18 @@ bool CameraHUD::Enable(bool enable)
 void CameraHUD::msw_rescale()
 {
     SetBackgroundColour(CardBg());
+#ifndef __WXMAC__
+    SetMinSize(wxSize(-1, FromDIP(kHudHeight + kChipDIP)));
+    for (auto *chip : {m_zoom_out, m_zoom_in, m_zoom_reset})
+        if (chip) chip->msw_rescale();
+    if (m_zoom_percent) {
+        m_zoom_percent->SetMinSize(wxSize(FromDIP(60), FromDIP(kChipDIP)));
+        m_zoom_percent->SetForegroundColour(Glyph());
+        m_zoom_percent->SetBackgroundColour(ChipBg());
+    }
+#else
     SetMinSize(wxSize(-1, FromDIP(kHudHeight)));
+#endif
     if (m_badge_spacer)
         m_badge_spacer->SetMinSize(FromDIP(80), FromDIP(kHudHeight));
     if (m_setting_chip)

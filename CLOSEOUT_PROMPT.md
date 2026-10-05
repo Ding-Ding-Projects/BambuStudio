@@ -210,3 +210,5 @@ driver and evidence reader. Continue through the existing supported release rout
 - [Import and simplification](docs/integration/continuations/import-simplify.md), source `bf99b138`, reconciled; transactional publication, cancellation and native acceptance remain pending.
 
 - [Quiet workflow](docs/integration/continuations/quiet-prompts.md), source `ddb86c43`, reconciled; progress-card wrapping and stack geometry retained while automatic daily tips are removed. Native acceptance remains pending.
+
+- [Camera](docs/integration/continuations/camera.md), source `ba8abf2f`, reconciled. Standalone playback and geometry executables passed under the available GCC compiler; native media/backend interaction remains pending.

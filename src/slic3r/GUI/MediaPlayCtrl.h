@@ -18,6 +18,7 @@
 #endif
 
 #include <wx/panel.h>
+#include <wx/weakref.h>
 
 #include <boost/thread.hpp>
 #include <boost/thread/condition_variable.hpp>
@@ -78,6 +79,12 @@ protected:
 
 private:
     void load();
+    bool keep_liveview() const;
+    bool autoplay_liveview() const;
+    void on_retry_timer(wxTimerEvent &evt);
+    void save_camera_view();
+    void on_camera_view_changed(wxCommandEvent &evt);
+    void restore_camera_view();
 
     void start_device_image_flow();
 
@@ -103,6 +110,7 @@ private:
     std::shared_ptr<int> m_token = std::make_shared<int>(0);
 
     wxMediaCtrl3 * m_media_ctrl;
+    wxWeakRef<wxWindow> m_media_window;
     wxMediaState m_last_state = MEDIASTATE_IDLE;
     MachineObject* m_obj = nullptr;
     std::string m_machine;
@@ -121,8 +129,11 @@ private:
     bool m_view_active = false;
     bool m_was_eligible = false;
     bool m_user_paused = false;
+    bool m_retry_blocked = false;
     uint64_t m_callback_generation = 0;
     wxString m_url;
+    wxTimer m_retry_timer;
+    bool m_camera_view_dirty = false;
 
     std::deque<wxString> m_tasks;
     boost::mutex m_mutex;
