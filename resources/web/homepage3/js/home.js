@@ -964,17 +964,10 @@ function SendMsg_GetPrintHistory()
 	SendWXMessage( JSON.stringify(tSend) );
 }
 
-function convertTimeFormat(timeStr) 
+function convertTimeFormat(timeStr)
 {
-	const date = new Date(timeStr);  
-	const year = date.getFullYear(); // 取后两位年份
-    const day = date.getDate();
-    const month = date.getMonth() + 1;
-    const hours = date.getHours();
-    const minutes = date.getMinutes();
-    return `${year}/${month.toString().padStart(2, '0')}/${day.toString().padStart(2, '0')} ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+    return BambuHumanDate.formatLocal(timeStr, undefined, true);
 }
-
 
 //只更新HTML内容，不控制显示/隐藏
 function ShowPrintHistory( TaskList )

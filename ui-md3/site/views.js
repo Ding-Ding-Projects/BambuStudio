@@ -67,7 +67,7 @@
   }
 
   function formatDate(iso) {
-    return String(iso || '').slice(0, 10);
+    return site.formatDate(iso);
   }
 
   /* ------------------------------------------------------------ overview */

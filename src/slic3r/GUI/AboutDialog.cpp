@@ -1,3 +1,4 @@
+#include "HumanDate.hpp"
 #include "AboutDialog.hpp"
 #include "Widgets/StaticLine.hpp"
 #include "I18N.hpp"
@@ -374,7 +375,7 @@ AboutDialog::AboutDialog()
         wxString plugin_version = wxString::Format("Plugin Version: %s", wxGetApp().getAgent() ? wxGetApp().getAgent()->get_version() : "");
         vesizer->Add(make_version_badge(plugin_version, Label::Body_12), 0, wxALL | wxALIGN_CENTER_HORIZONTAL, FromDIP(5));
 
-        wxString build_time = wxString::Format("Build Time: %s", std::string(SLIC3R_BUILD_TIME));
+        wxString build_time = wxString::Format(_L("Built %s"), HumanDate::date_time(HumanDate::utc_stamp(wxString::FromUTF8(SLIC3R_BUILD_TIME_UTC))));
         vesizer->Add(make_version_badge(build_time, Label::Body_12), 0, wxALL | wxALIGN_CENTER_HORIZONTAL, FromDIP(5));
 #endif
         vesizer->Add(0, 0, 1, wxEXPAND, FromDIP(5));

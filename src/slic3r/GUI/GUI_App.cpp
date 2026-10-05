@@ -31,6 +31,7 @@
 #include "libslic3r/I18N.hpp"
 #undef SLIC3R_ALLOW_LIBSLIC3R_I18N_IN_SLIC3R
 #include "slic3r/GUI/I18N.hpp"
+#include "HumanDate.hpp"
 
 #ifdef _WIN32
 #include "WindowsNativeVisualSmoke.hpp"
@@ -585,35 +586,18 @@ static void launch_squirrel_restart() {}
 
 #endif // _WIN32
 
-// The line under the splash title that says when this version was released:
-// the day the release host built it (the same workflow run publishes the
-// release, normally within the hour), shown in the user's time zone. Only a
-// public release build says "Released"; any other build says "Built". English
-// writes the date as "29 September 2026", Cantonese as "2026年9月29日", any
-// other language as the system's short date; bilingual mode stacks the English
-// and Cantonese lines. Empty when the build carries no UTC stamp.
+// A compiled timestamp is not verified release publication metadata.
+// Startup stays offline and reports Built for this exact binary.
 static wxString splash_release_date_text()
 {
-    const wxString stamp = wxString::FromUTF8(SLIC3R_BUILD_TIME_UTC); // 2026-09-28T23:55:52Z
-    wxDateTime when;
-    if (stamp.length() < 19 || !when.ParseISOCombined(stamp.Left(19), 'T'))
-        return wxString();
-    when.MakeFromUTC();
-
-    const wxString english_date = wxString::Format("%d %s %d", when.GetDay(),
-                                                   wxDateTime::GetEnglishMonthName(when.GetMonth()), when.GetYear());
-    // "%d年%d月%d日": year, month and day, the way Hong Kong writes a date.
-    const wxString cantonese_date = wxString::Format(wxString::FromUTF8("%d\xE5\xB9\xB4%d\xE6\x9C\x88%d\xE6\x97\xA5"),
-                                                     when.GetYear(), int(when.GetMonth()) + 1, when.GetDay());
-
-    const char *message = BBL_RELEASE_TO_PUBLIC ? L("Released %s") : L("Built %s");
-    const bool  standard = I18N::language_mode_profile().kind == I18N::LanguageModeKind::Standard;
-    const wxString english_copy = I18N::vocabulary(I18N::language_mode_service().english(wxString::FromUTF8(message)));
-    const I18N::FormattedLocalizedText text = I18N::translate_mode(message).format_each([&](const wxString &copy) {
-        // The English wording (also what Cantonese mode shows while the
-        // catalogue lacks the line) takes the English date, the Cantonese
-        // wording the Cantonese date.
-        const wxString date = standard ? when.FormatDate() : (copy == english_copy ? english_date : cantonese_date);
+    const wxDateTime when = HumanDate::utc_stamp(wxString::FromUTF8(SLIC3R_BUILD_TIME_UTC));
+    if (!when.IsValid()) return wxString();
+    const wxString english_copy = I18N::vocabulary(I18N::language_mode_service().english(wxString::FromUTF8(L("Built %s"))));
+    const auto text = I18N::translate_mode(L("Built %s")).format_each([&](const wxString &copy) {
+        const auto mode = I18N::language_mode_profile().kind;
+        const bool cantonese = mode == I18N::LanguageModeKind::CantoneseHongKong ||
+            (mode == I18N::LanguageModeKind::BilingualEnglishCantoneseHongKong && copy != english_copy);
+        const wxString date = cantonese ? HumanDate::cantonese(when) : HumanDate::english(when);
         return wxString::Format(copy, date);
     });
     return I18N::render_localized_text_stacked(text).label;

@@ -1,3 +1,4 @@
+#include "HumanDate.hpp"
 #include "ImageGrid.h"
 #include "Printer/PrinterFileSystem.h"
 #include "wxExtensions.hpp"
@@ -566,7 +567,7 @@ wxRect Slic3r::GUI::ImageGrid::scrollBarRect(wxSize const &size) const
     return wxRect(size.x - SCROLLBAR_MARGIN, offset * size.y / total_height, SCROLLBAR_WIDTH, size.y * size.y / total_height);
 }
 
-static constexpr wchar_t const *TIME_FORMATS[] = {_T("%Y-%m-%d"), _T("%Y-%m"), _T("%Y")};
+
 
 /*
 * Here we do the actual rendering. I put it in a separate
@@ -640,8 +641,8 @@ void ImageGrid::render(wxDC& dc)
         dc.DrawRectangle({off.x, 0}, m_title_mask.GetSize());
         auto & file1 = m_file_sys->GetFile(start);
         auto & file2 = m_file_sys->GetFile(end - 1);
-        auto date1 = wxDateTime((time_t) file1.time).Format(_L(TIME_FORMATS[m_file_sys->GetGroupMode()]));
-        auto date2 = wxDateTime((time_t) file2.time).Format(_L(TIME_FORMATS[m_file_sys->GetGroupMode()]));
+        auto date1 = HumanDate::format(wxDateTime((time_t) file1.time));
+        auto date2 = HumanDate::format(wxDateTime((time_t) file2.time));
         dc.SetFont(Label::Head_16);
         dc.SetTextForeground(StateColor::semantic(MD3::Role::OnSurface));
         dc.DrawText(date1 + " - " + date2, wxPoint{off.x, 2});
@@ -716,7 +717,10 @@ void Slic3r::GUI::ImageGrid::renderContent1(wxDC &dc, wxPoint const &pt, int ind
         }
     } else {
         dc.SetTextForeground(*wxWHITE); // time text color
-        auto date = wxDateTime((time_t) file.time).Format(_L(TIME_FORMATS[m_file_sys->GetGroupMode()]));
+        const wxDateTime when((time_t) file.time);
+        auto date = m_file_sys->GetGroupMode() == PrinterFileSystem::G_MONTH
+            ? HumanDate::month_year(when) : m_file_sys->GetGroupMode() == PrinterFileSystem::G_YEAR
+            ? HumanDate::year(when) : HumanDate::format(when);
         dc.DrawText(date, pt + wxPoint{24, 16});
     }
     if (m_selecting && show_download_state_always)

@@ -22,6 +22,7 @@ globalThis.window = globalThis;
 globalThis.Worker = undefined;
 globalThis.location = { search: '', href: 'https://example.invalid/', hostname: 'example.invalid' };
 
+await import('../site/human-date.js');
 await import('../site/copy.js');
 await import('../site/changelog.data.js');
 await import('../site/dimsum.data.js');

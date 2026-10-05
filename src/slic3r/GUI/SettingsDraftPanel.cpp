@@ -1,3 +1,4 @@
+#include "Widgets/MD3ScrolledWindow.hpp"
 #include "SettingsDraftPanel.hpp"
 #include "GUI_App.hpp"
 #include "MainFrame.hpp"
@@ -84,7 +85,7 @@ void SettingsDraftPanel::Rebuild() {
                     0, wxEXPAND | wxALL, FromDIP(8));
     auto *search = new SearchField(this, _L("Search draft settings"));
     GetSizer()->Add(search, 0, wxEXPAND | wxALL, FromDIP(8));
-    auto *scroll = new wxScrolledWindow(this); scroll->SetScrollRate(0, FromDIP(12));
+    auto *scroll = new MD3ScrolledWindow(this); scroll->SetScrollRate(0, FromDIP(12));
     auto *rows = new wxBoxSizer(wxVERTICAL); scroll->SetSizer(rows);
     std::vector<std::pair<std::string, std::shared_ptr<ConfigOptionsGroup>>> fields;
     for (const auto &key : draft->config.keys()) {

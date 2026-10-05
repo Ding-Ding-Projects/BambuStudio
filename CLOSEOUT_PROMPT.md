@@ -204,3 +204,5 @@ driver and evidence reader. Continue through the existing supported release rout
 - [Settings drafts](docs/integration/continuations/draft-tabs.md), source `8cd7f8dc`, integrated for combined verification; named functional gaps and native acceptance remain pending.
 
 - [Sidebar scrolling](docs/integration/continuations/sidebar-scroll.md), source `b7c71450`, reconciled; native wheel/input acceptance remains pending.
+
+- [Readable dates](docs/integration/continuations/readable-dates.md), source `18e9728c`, reconciled; native formatting and visual acceptance remain pending. Combined scrollbar source check identified the draft panel native-scroller construction, now repaired to the existing shared scroller.

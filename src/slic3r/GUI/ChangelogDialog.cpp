@@ -1,3 +1,4 @@
+#include "HumanDate.hpp"
 #include "ChangelogDialog.hpp"
 #include "Widgets/MD3ScrolledWindow.hpp"
 
@@ -70,7 +71,7 @@ std::pair<MD3::Role, MD3::Role> category_roles(const std::string &category)
 
 wxString month_year_title(int year, int month)
 {
-    return wxString::Format("%s %d", wxDateTime::GetMonthName(static_cast<wxDateTime::Month>(month - 1)), year);
+    return HumanDate::month_year(wxDateTime(1, static_cast<wxDateTime::Month>(month - 1), year));
 }
 
 } // namespace
@@ -145,7 +146,7 @@ private:
 
         m_month_choice = new ComboBox(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, wxCB_READONLY);
         for (int m = 0; m < 12; ++m)
-            m_month_choice->Append(wxDateTime::GetMonthName(static_cast<wxDateTime::Month>(m)));
+            m_month_choice->Append(HumanDate::month_name(static_cast<wxDateTime::Month>(m)));
         m_month_choice->SetName(_L("Month"));
         m_month_choice->Bind(wxEVT_COMBOBOX, [this](wxCommandEvent &) {
             m_month = m_month_choice->GetSelection() + 1;
@@ -792,7 +793,7 @@ void ChangelogDialog::add_release_card(const Changelog::FilteredRelease &filtere
     body->Add(title, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(16));
 
     auto *meta_row = new wxBoxSizer(wxHORIZONTAL);
-    wxString meta = wxString::FromUTF8(release.date.to_iso()) + wxString::FromUTF8(" · ") + wxString::FromUTF8(release.tag);
+    wxString meta = HumanDate::format(HumanDate::utc_stamp(wxString::FromUTF8(release.published))) + wxString::FromUTF8(" · ") + wxString::FromUTF8(release.tag);
     if (release.prerelease)
         meta += wxString::FromUTF8(" · ") + _L("pre-release");
     auto *meta_label = new Label(card, Label::Body_12, meta);

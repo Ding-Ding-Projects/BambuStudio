@@ -590,7 +590,12 @@
     setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
   }
 
+  function formatDate(value, mode, includeTime) {
+    return global.BambuHumanDate.format(value, mode || languageMode(), includeTime);
+  }
+
   global.BambuSite = {
+    formatDate: formatDate,
     LEVELS: LEVELS,
     DEFAULTS: DEFAULTS,
     get: get,
