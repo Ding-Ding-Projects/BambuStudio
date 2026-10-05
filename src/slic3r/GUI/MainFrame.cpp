@@ -92,6 +92,7 @@
 #include "NetworkTestDialog.hpp"
 #include "ConfigWizard.hpp"
 #include "Widgets/WebView.hpp"
+#include "OllamaSuite/OllamaSuiteDialog.hpp"
 #include "DailyTips.hpp"
 #include "FilamentGroupPopup.hpp"
 #include "FilamentMapDialog.hpp"
@@ -4486,6 +4487,11 @@ void MainFrame::init_menubar_as_editor()
         append_menu_item(fileMenu, wxID_ANY, _L("Smart home") + dots,
             _L("Home Assistant speakers, media controls, TTS narrator and alert lights"),
             [this](wxCommandEvent&) { SmartHomeDialog(this).ShowModal(); }, "", nullptr,
+            []() { return true; }, this);
+
+        append_menu_item(fileMenu, wxID_ANY, _L("Local model suite") + dots,
+            _L("Inspect local Ollama models, catalog availability and guided tools"),
+            [this](wxCommandEvent&) { show_ollama_suite(this, std::filesystem::u8path(data_dir())); }, "", nullptr,
             []() { return true; }, this);
 
         append_menu_item(fileMenu, wxID_ANY, _L("Config profiles & backup") + dots,

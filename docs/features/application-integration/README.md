@@ -41,6 +41,14 @@ persisted in application configuration. The control discloses the local-record
 deletion reset route and reports unavailable vault, watcher and record state.
 The chosen display name is used in the palette entry.
 
+## Local model suite destination
+
+File, Local model suite opens the native Ollama suite with the application's
+fixed private data directory. The command palette discovers this command from
+the actual menu. The destination is linked to the native GUI target, not a
+browser page. Catalog authority completeness, native compilation and disabled
+operations remain governed by the suite's own outstanding-work inventory.
+
 ## Verification and remaining work
 
 The portable presentation-route executable passed 24 behavioral assertions.

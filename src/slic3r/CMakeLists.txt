@@ -881,6 +881,10 @@ list(APPEND SLIC3R_GUI_SOURCES
     GUI/FilamentScanner.hpp
     GUI/TtsNarrator.cpp
     GUI/TtsNarrator.hpp
+    GUI/OllamaSuite/OllamaSuiteDialog.cpp
+    GUI/OllamaSuite/OllamaClient.cpp
+    ../libslic3r/OllamaSuite/OllamaCore.cpp
+    ../libslic3r/OllamaSuite/LaunchProfiles.cpp
     GUI/HomeAssistant.cpp
     GUI/HomeAssistant.hpp
     GUI/HomeAssistantTaskExecutor.hpp
