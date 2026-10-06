@@ -24,6 +24,7 @@
 #include <sstream>
 
 #include <wx/dataview.h>
+#include <wx/containr.h>
 #include <wx/filedlg.h>
 // The generic calendar's header declares only the control: its base class,
 // styles and events come from <wx/calctrl.h>, which has to come first.
@@ -31,10 +32,12 @@
 #include <wx/generic/calctrlg.h>
 #include <wx/msgdlg.h>
 #include <wx/simplebook.h>
+#include <wx/scrolwin.h>
 #include <wx/sizer.h>
 #include <wx/stattext.h>
 #include <wx/stdpaths.h>
 #include <wx/textctrl.h>
+#include <wx/wrapsizer.h>
 
 namespace workspace_fs = std::filesystem;
 
@@ -145,40 +148,70 @@ WorkspacePanel::~WorkspacePanel()
 
 void WorkspacePanel::create_ui()
 {
-    // The Material surface, and kit controls throughout: the native tab control,
-    // report lists, check list and month calendar drew the Windows look.
+    const int padding = FromDIP(MD3::Metrics::active().padding);
+    const int gap = FromDIP(MD3::Metrics::active().gap);
     SetBackgroundColour(StateColor::semantic(MD3::Role::Surface));
     auto *root = new wxBoxSizer(wxVERTICAL);
-    auto *actions = new wxBoxSizer(wxHORIZONTAL);
-    const auto button = [this, actions](const wxString &label, void (WorkspacePanel::*action)()) {
+    auto *actions = new wxWrapSizer(wxHORIZONTAL);
+    const auto style_action = [this](Button *control, Button::Variant variant) {
+        control->SetVariant(variant);
+        control->SetButtonSize(MD3::Metrics::isCompact() ? Button::Size::Medium : Button::Size::Large);
+        control->SetName(control->GetLabel());
+        m_action_buttons.push_back(control);
+    };
+    const auto button = [this, actions, &style_action, gap](const wxString &label, void (WorkspacePanel::*action)()) {
         auto *control = new Button(this, label);
-        actions->Add(control, 0, wxALL, FromDIP(4));
+        style_action(control, action == &WorkspacePanel::choose_save ? Button::Variant::Filled : Button::Variant::Outlined);
+        m_spacing.emplace_back(actions->Add(control, 0, wxRIGHT | wxBOTTOM, gap), true);
         control->Bind(wxEVT_BUTTON, [this, action](wxCommandEvent &) { (this->*action)(); });
     };
     button(_L("New workspace"), &WorkspacePanel::create_new);
     button(_L("Open workspace"), &WorkspacePanel::choose_open);
     button(_L("Save workspace"), &WorkspacePanel::choose_save);
-    root->Add(actions, 0, wxEXPAND | wxALL, FromDIP(4));
+    m_spacing.emplace_back(root->Add(actions, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, padding), false);
 
     m_section_tabs = new TextTabbar(this, TextTabbar::Align::Left);
     m_sections = new wxSimplebook(this, wxID_ANY);
     m_sections->SetBackgroundColour(GetBackgroundColour());
-    // Pages take the panel's surface before their children copy it.
-    const auto make_page = [this]() {
-        auto *page = new wxPanel(m_sections);
-        page->SetBackgroundColour(GetBackgroundColour());
+    // Each real page retains its controls inside a card. The outer scroll owner
+    // keeps wrapped action rows reachable when their measured height grows.
+    const auto make_page = [this, padding]() {
+        auto *scroll = new wxScrolledWindow(m_sections, wxID_ANY, wxDefaultPosition, wxDefaultSize,
+                                             wxVSCROLL | wxTAB_TRAVERSAL);
+        scroll->SetScrollRate(0, FromDIP(16));
+        scroll->SetBackgroundColour(GetBackgroundColour());
+        auto *page = new wxNavigationEnabled<StaticBox>();
+        page->Create(scroll, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
+        page->SetBackgroundColor(MD3::Light::scLowest);
+        page->SetBorderColor(MD3::Light::outlineVariant);
+        auto *body = new wxBoxSizer(wxVERTICAL);
+        m_spacing.emplace_back(body->Add(page, 1, wxEXPAND | wxALL, padding), false);
+        scroll->SetSizer(body);
+        scroll->Bind(wxEVT_SIZE, [this](wxSizeEvent &event) { reflow(); event.Skip(); });
+        m_pages.push_back(scroll);
+        m_cards.push_back(page);
         return page;
     };
     const auto add_section = [this](wxWindow *page, const wxString &label) {
-        m_sections->AddPage(page, label);
+        m_sections->AddPage(page->GetParent(), label);
         m_section_tabs->AddTab(label);
+    };
+    const auto heading = [this, padding](wxWindow *page, wxSizer *sizer, const wxString &label) {
+        auto *title = new Label(page, ::Label::Head_16, label, LB_AUTO_WRAP);
+        title->SetMinSize(wxSize(1, -1));
+        m_headings.push_back(title);
+        m_spacing.emplace_back(sizer->Add(title, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, padding), false);
     };
     auto *overview_page = make_page();
     auto *overview_sizer = new wxBoxSizer(wxVERTICAL);
-    m_overview = new Label(overview_page, wxEmptyString);
-    overview_sizer->Add(m_overview, 0, wxALL, FromDIP(12));
+    heading(overview_page, overview_sizer, _L("Overview"));
+    m_overview = new Label(overview_page, wxEmptyString, LB_AUTO_WRAP);
+    m_overview->SetMinSize(wxSize(1, -1));
+    m_spacing.emplace_back(overview_sizer->Add(m_overview, 0, wxEXPAND | wxALL, padding), false);
+    auto *overview_actions = new wxWrapSizer(wxHORIZONTAL);
     auto *rename = new Button(overview_page, _L("Rename workspace"));
-    overview_sizer->Add(rename, 0, wxALL, FromDIP(8));
+    style_action(rename, Button::Variant::Tonal);
+    m_spacing.emplace_back(overview_actions->Add(rename, 0, wxRIGHT | wxBOTTOM, gap), true);
     rename->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) {
         wxString title = display(m_workspace.title);
         if (ask_text(this, _L("Workspace title"), _L("Name this workspace"), title)) {
@@ -186,13 +219,16 @@ void WorkspacePanel::create_ui()
         }
     });
     auto *preferences = new Button(overview_page, _L("Time zone and reminders"));
-    overview_sizer->Add(preferences, 0, wxALL, FromDIP(8));
+    style_action(preferences, Button::Variant::Outlined);
+    m_spacing.emplace_back(overview_actions->Add(preferences, 0, wxRIGHT | wxBOTTOM, gap), true);
     preferences->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { edit_preferences(); });
+    m_spacing.emplace_back(overview_sizer->Add(overview_actions, 0, wxEXPAND | wxALL, padding), false);
     overview_page->SetSizer(overview_sizer);
     add_section(overview_page, _L("Overview"));
 
     auto *files_page = make_page();
     auto *files_sizer = new wxBoxSizer(wxVERTICAL);
+    heading(files_page, files_sizer, _L("Files"));
     m_files = new MD3DataViewListCtrl(files_page, wxID_ANY, wxDefaultPosition, wxDefaultSize,
                                      wxDV_SINGLE | wxDV_ROW_LINES | wxBORDER_NONE);
     m_files->AppendTextColumn(_L("Member"), wxDATAVIEW_CELL_INERT, FromDIP(200), wxALIGN_LEFT, wxDATAVIEW_COL_RESIZABLE);
@@ -200,14 +236,18 @@ void WorkspacePanel::create_ui()
     m_files->AppendTextColumn(_L("Editable sources"), wxDATAVIEW_CELL_INERT, FromDIP(140), wxALIGN_LEFT, wxDATAVIEW_COL_RESIZABLE);
     wxGetApp().UpdateDVCDarkUI(m_files); // native header follows the theme
     md3_style_data_view(m_files);
-    files_sizer->Add(m_files, 1, wxEXPAND | wxALL, FromDIP(8));
-    auto *file_actions = new wxBoxSizer(wxHORIZONTAL);
+    m_files->SetMinSize(FromDIP(wxSize(1, 160)));
+    m_spacing.emplace_back(files_sizer->Add(m_files, 1, wxEXPAND | wxALL, padding), false);
+    auto *file_actions = new wxWrapSizer(wxHORIZONTAL);
     auto *add_project = new Button(files_page, _L("Add project 3MF"));
     auto *add_editable = new Button(files_page, _L("Add editable source"));
     auto *open_project = new Button(files_page, _L("Open selected project"));
-    file_actions->Add(add_project, 0, wxALL, FromDIP(4));
-    file_actions->Add(add_editable, 0, wxALL, FromDIP(4));
-    file_actions->Add(open_project, 0, wxALL, FromDIP(4));
+    style_action(add_project, Button::Variant::Tonal);
+    style_action(add_editable, Button::Variant::Outlined);
+    style_action(open_project, Button::Variant::Filled);
+    m_spacing.emplace_back(file_actions->Add(add_project, 0, wxRIGHT | wxBOTTOM, gap), true);
+    m_spacing.emplace_back(file_actions->Add(add_editable, 0, wxRIGHT | wxBOTTOM, gap), true);
+    m_spacing.emplace_back(file_actions->Add(open_project, 0, wxRIGHT | wxBOTTOM, gap), true);
     add_project->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { add_member(); });
     add_editable->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { add_source(); });
     open_project->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { open_selected_member(); });
@@ -217,15 +257,17 @@ void WorkspacePanel::create_ui()
         m_files->SelectRow(static_cast<unsigned>(row));
         open_selected_member();
     });
-    files_sizer->Add(file_actions, 0, wxALL, FromDIP(4));
+    m_spacing.emplace_back(files_sizer->Add(file_actions, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, padding), false);
     files_page->SetSizer(files_sizer);
     add_section(files_page, _L("Files"));
 
     auto *list_page = make_page();
     auto *list_sizer = new wxBoxSizer(wxVERTICAL);
+    heading(list_page, list_sizer, _L("Checklist"));
     m_checklist = new ListBox(list_page, wxID_ANY);
     m_checklist->EnableChecks();
-    list_sizer->Add(m_checklist, 1, wxEXPAND | wxALL, FromDIP(8));
+    m_checklist->SetMinSize(FromDIP(wxSize(1, 160)));
+    m_spacing.emplace_back(list_sizer->Add(m_checklist, 1, wxEXPAND | wxALL, padding), false);
     m_checklist->Bind(wxEVT_CHECKLISTBOX, [this](wxCommandEvent &event) {
         const int index = event.GetInt();
         if (index >= 0 && static_cast<std::size_t>(index) < m_workspace.checklist.size()) {
@@ -233,38 +275,46 @@ void WorkspacePanel::create_ui()
             m_dirty = true;
         }
     });
-    auto *list_actions = new wxBoxSizer(wxHORIZONTAL);
-    const auto list_button = [this, list_page, list_actions](const wxString &label, void (WorkspacePanel::*action)()) {
+    auto *list_actions = new wxWrapSizer(wxHORIZONTAL);
+    const auto list_button = [this, list_page, list_actions, &style_action, gap](const wxString &label, void (WorkspacePanel::*action)()) {
         auto *control = new Button(list_page, label);
-        list_actions->Add(control, 0, wxALL, FromDIP(4));
+        style_action(control, action == &WorkspacePanel::add_checklist ? Button::Variant::Filled : Button::Variant::Tonal);
+        m_spacing.emplace_back(list_actions->Add(control, 0, wxRIGHT | wxBOTTOM, gap), true);
         control->Bind(wxEVT_BUTTON, [this, action](wxCommandEvent &) { (this->*action)(); });
     };
     list_button(_L("Add"), &WorkspacePanel::add_checklist);
     list_button(_L("Edit / due date / link"), &WorkspacePanel::edit_checklist);
     auto *up = new Button(list_page, _L("Move up"));
     auto *down = new Button(list_page, _L("Move down"));
-    list_actions->Add(up, 0, wxALL, FromDIP(4));
-    list_actions->Add(down, 0, wxALL, FromDIP(4));
+    style_action(up, Button::Variant::Outlined);
+    style_action(down, Button::Variant::Outlined);
+    m_spacing.emplace_back(list_actions->Add(up, 0, wxRIGHT | wxBOTTOM, gap), true);
+    m_spacing.emplace_back(list_actions->Add(down, 0, wxRIGHT | wxBOTTOM, gap), true);
     up->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { move_checklist(-1); });
     down->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { move_checklist(1); });
     auto *json_button = new Button(list_page, _L("Export JSON"));
     auto *csv_button = new Button(list_page, _L("Export CSV"));
-    list_actions->Add(json_button, 0, wxALL, FromDIP(4));
-    list_actions->Add(csv_button, 0, wxALL, FromDIP(4));
+    style_action(json_button, Button::Variant::Outlined);
+    style_action(csv_button, Button::Variant::Outlined);
+    m_spacing.emplace_back(list_actions->Add(json_button, 0, wxRIGHT | wxBOTTOM, gap), true);
+    m_spacing.emplace_back(list_actions->Add(csv_button, 0, wxRIGHT | wxBOTTOM, gap), true);
     json_button->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { export_checklist(false); });
     csv_button->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { export_checklist(true); });
-    list_sizer->Add(list_actions, 0, wxALL, FromDIP(4));
+    m_spacing.emplace_back(list_sizer->Add(list_actions, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, padding), false);
     list_page->SetSizer(list_sizer);
     add_section(list_page, _L("Checklist"));
 
     auto *notes_page = make_page();
     auto *notes_sizer = new wxBoxSizer(wxVERTICAL);
+    heading(notes_page, notes_sizer, _L("Notes"));
     // m_notes stays a wxTextCtrl*: it points at the kit TextArea's native
     // editor, so every existing GetValue()/ChangeValue() caller below keeps
     // working unchanged. The wrapper itself is owned by notes_page's sizer.
     auto *notes_area = new TextArea(notes_page, wxEmptyString, wxDefaultSize, wxTE_MULTILINE);
+    notes_area->SetMinLines(8);
     m_notes = notes_area->GetTextCtrl();
-    notes_sizer->Add(notes_area, 1, wxEXPAND | wxALL, FromDIP(8));
+    m_notes->SetName(_L("Notes"));
+    m_spacing.emplace_back(notes_sizer->Add(notes_area, 1, wxEXPAND | wxALL, padding), false);
     m_notes->Bind(wxEVT_TEXT, [this](wxCommandEvent &) {
         m_workspace.notes = utf8(m_notes->GetValue()); m_dirty = true;
     });
@@ -273,6 +323,8 @@ void WorkspacePanel::create_ui()
 
     auto *calendar_page = make_page();
     auto *calendar_sizer = new wxBoxSizer(wxVERTICAL);
+    heading(calendar_page, calendar_sizer, _L("Calendar"));
+    m_calendar_columns = new wxBoxSizer(wxHORIZONTAL);
     // The generic calendar paints itself in the colours it is given; the native one
     // was the system month control. Sequential month selection draws its own month
     // header with arrows instead of a native choice and spin control.
@@ -283,7 +335,7 @@ void WorkspacePanel::create_ui()
     m_month->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_month->SetHeaderColours(StateColor::semantic(MD3::Role::OnSurfaceVariant), StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_month->SetHighlightColours(StateColor::semantic(MD3::Role::OnPrimary), StateColor::semantic(MD3::Role::Primary));
-    calendar_sizer->Add(m_month, 0, wxALL, FromDIP(8));
+    m_calendar_month_item = m_calendar_columns->Add(m_month, 0, wxRIGHT, gap);
     m_month->Bind(wxEVT_CALENDAR_SEL_CHANGED, [this](wxCalendarEvent &) { refresh_calendar(); });
     m_agenda = new MD3DataViewListCtrl(calendar_page, wxID_ANY, wxDefaultPosition, wxDefaultSize,
                                       wxDV_SINGLE | wxDV_ROW_LINES | wxBORDER_NONE);
@@ -293,11 +345,14 @@ void WorkspacePanel::create_ui()
     m_agenda->AppendTextColumn(_L("Status"), wxDATAVIEW_CELL_INERT, FromDIP(180), wxALIGN_LEFT, wxDATAVIEW_COL_RESIZABLE);
     wxGetApp().UpdateDVCDarkUI(m_agenda);
     md3_style_data_view(m_agenda);
-    calendar_sizer->Add(m_agenda, 1, wxEXPAND | wxALL, FromDIP(8));
-    auto *calendar_actions = new wxBoxSizer(wxHORIZONTAL);
-    const auto calendar_button = [this, calendar_page, calendar_actions](const wxString &label, void (WorkspacePanel::*action)()) {
+    m_agenda->SetMinSize(FromDIP(wxSize(1, 160)));
+    m_calendar_columns->Add(m_agenda, 1, wxEXPAND);
+    m_spacing.emplace_back(calendar_sizer->Add(m_calendar_columns, 1, wxEXPAND | wxALL, padding), false);
+    auto *calendar_actions = new wxWrapSizer(wxHORIZONTAL);
+    const auto calendar_button = [this, calendar_page, calendar_actions, &style_action, gap](const wxString &label, void (WorkspacePanel::*action)()) {
         auto *control = new Button(calendar_page, label);
-        calendar_actions->Add(control, 0, wxALL, FromDIP(4));
+        style_action(control, action == &WorkspacePanel::add_slot ? Button::Variant::Filled : Button::Variant::Outlined);
+        m_spacing.emplace_back(calendar_actions->Add(control, 0, wxRIGHT | wxBOTTOM, gap), true);
         control->Bind(wxEVT_BUTTON, [this, action](wxCommandEvent &) { (this->*action)(); });
     };
     calendar_button(_L("Add planned print"), &WorkspacePanel::add_slot);
@@ -305,16 +360,94 @@ void WorkspacePanel::create_ui()
     calendar_button(_L("Dismiss reminder"), &WorkspacePanel::dismiss_selected_slot);
     calendar_button(_L("Enable / disable"), &WorkspacePanel::toggle_selected_slot);
     calendar_button(_L("Export ICS"), &WorkspacePanel::export_calendar);
-    calendar_sizer->Add(calendar_actions, 0, wxALL, FromDIP(4));
+    m_spacing.emplace_back(calendar_sizer->Add(calendar_actions, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, padding), false);
     calendar_page->SetSizer(calendar_sizer);
     add_section(calendar_page, _L("Calendar"));
 
     m_section_tabs->Bind(wxEVT_CHOICE, [this](wxCommandEvent &event) { m_sections->SetSelection(event.GetInt()); });
     m_section_tabs->SetSelection(0);
     m_sections->SetSelection(0);
-    root->Add(m_section_tabs, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(4));
+    m_spacing.emplace_back(root->Add(m_section_tabs, 0, wxEXPAND | wxLEFT | wxRIGHT, padding), false);
     root->Add(m_sections, 1, wxEXPAND);
     SetSizer(root);
+    m_ui_ready = true;
+    Bind(wxEVT_SIZE, [this](wxSizeEvent &event) { reflow(); event.Skip(); });
+    Bind(wxEVT_DPI_CHANGED, [this](wxDPIChangedEvent &event) { refresh_appearance(); event.Skip(); });
+    Bind(wxEVT_SYS_COLOUR_CHANGED, [this](wxSysColourChangedEvent &event) { refresh_appearance(); event.Skip(); });
+    refresh_appearance();
+}
+
+void WorkspacePanel::refresh_appearance()
+{
+    SetBackgroundColour(StateColor::semantic(MD3::Role::Surface));
+    m_sections->SetBackgroundColour(GetBackgroundColour());
+    m_section_tabs->SetBackgroundColour(GetBackgroundColour());
+    for (auto *page : m_pages) {
+        page->SetBackgroundColour(GetBackgroundColour());
+        page->SetScrollRate(0, FromDIP(16));
+    }
+    for (auto *card : m_cards) {
+        card->SetDensity(MD3::Metrics::isCompact() ? StaticBox::Density::Compact : StaticBox::Density::Comfortable);
+        card->SyncWindowBackground();
+    }
+    for (const auto &spacing : m_spacing)
+        spacing.first->SetBorder(FromDIP(spacing.second ? MD3::Metrics::active().gap : MD3::Metrics::active().padding));
+    const wxFont body = MD3::Metrics::isCompact() ? ::Label::Body_13 : ::Label::Body_14;
+    for (auto *title : m_headings) {
+        title->SetFont(::Label::Head_16);
+        title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+        title->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
+    }
+    m_overview->SetFont(body);
+    m_overview->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+    m_overview->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
+    m_notes->SetFont(body);
+    m_checklist->SetFont(body);
+    for (auto *table : {m_files, m_agenda}) {
+        md3_style_data_view(table);
+        table->SetFont(body);
+        table->SetRowHeight(std::max(FromDIP(MD3::Metrics::active().row_height),
+                                    table->GetCharHeight() + FromDIP(MD3::Metrics::active().gap)));
+        table->SetMinSize(FromDIP(wxSize(1, 160)));
+    }
+    m_checklist->SetMinSize(FromDIP(wxSize(1, 160)));
+    m_month->SetFont(body);
+    m_month->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
+    m_month->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+    m_month->SetHeaderColours(StateColor::semantic(MD3::Role::OnSurfaceVariant), StateColor::semantic(MD3::Role::SurfaceContainerLowest));
+    m_month->SetHighlightColours(StateColor::semantic(MD3::Role::OnPrimary), StateColor::semantic(MD3::Role::Primary));
+    for (auto *control : m_action_buttons) {
+        control->SetButtonSize(MD3::Metrics::isCompact() ? Button::Size::Medium : Button::Size::Large);
+        control->Rescale();
+    }
+    m_section_tabs->Rescale();
+    reflow();
+    Refresh(false);
+}
+
+void WorkspacePanel::reflow()
+{
+    if (!m_ui_ready || m_reflowing || GetClientSize().x <= 0) return;
+    m_reflowing = true;
+    const int padding = FromDIP(MD3::Metrics::active().padding);
+    const int gap = FromDIP(MD3::Metrics::active().gap);
+    Layout();
+    const int calendar_width = m_month->GetParent()->GetClientSize().x - 2 * padding;
+    const int columns_min = m_month->GetBestSize().x + gap + FromDIP(360);
+    const bool stacked = calendar_width < columns_min;
+    m_calendar_columns->SetOrientation(stacked ? wxVERTICAL : wxHORIZONTAL);
+    m_calendar_month_item->SetFlag(stacked ? wxBOTTOM : wxRIGHT);
+    m_calendar_month_item->SetBorder(gap);
+    // SetLabel can change wrapped height without a size event. Refresh the
+    // Overview card's cached best size before recomputing its page extent.
+    auto *overview_card = m_overview->GetParent();
+    overview_card->InvalidateBestSize();
+    overview_card->Layout();
+    for (auto *page : m_pages) {
+        page->FitInside();
+        page->Layout();
+    }
+    m_reflowing = false;
 }
 
 void WorkspacePanel::refresh_overview()
@@ -322,6 +455,7 @@ void WorkspacePanel::refresh_overview()
     m_overview->SetLabel(display(m_workspace.title) + "\n" +
         wxString::Format(_L("%zu projects, %zu checklist items, %zu planned prints"),
                          m_workspace.members.size(), m_workspace.checklist.size(), m_workspace.slots.size()));
+    reflow();
 }
 
 void WorkspacePanel::refresh_files()
