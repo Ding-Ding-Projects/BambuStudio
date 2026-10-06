@@ -27791,7 +27791,7 @@ msgstr ""
 
 #: src/slic3r/GUI/Bulk
 msgid "Add %d new filament(s)"
-msgstr ""
+msgstr "Add %d new ink(s)"
 
 #: src/slic3r/GUI/Bulk
 msgid "After"
@@ -27799,7 +27799,7 @@ msgstr ""
 
 #: src/slic3r/GUI/Bulk
 msgid "Also deletes %1% filament and %2% process presets attached to this printer"
-msgstr ""
+msgstr "Also deletes %1% ink and %2% process presets attached to this printer"
 
 #: src/slic3r/GUI/Bulk
 msgid "Another snapshot or transfer is still running"
@@ -28339,7 +28339,7 @@ msgstr ""
 
 #: src/slic3r/GUI/Bulk
 msgid "add %d new filament(s)"
-msgstr ""
+msgstr "add %d new ink(s)"
 
 #: src/slic3r/GUI/Bulk
 msgid "another selected object exports to the same file name"
@@ -28351,7 +28351,7 @@ msgstr ""
 
 #: src/slic3r/GUI/Bulk
 msgid "at least one filament must remain"
-msgstr ""
+msgstr "at least one ink must remain"
 
 #: src/slic3r/GUI/Bulk
 msgid "colour %s to %d slot(s)"
@@ -28375,7 +28375,7 @@ msgstr ""
 
 #: src/slic3r/GUI/Bulk
 msgid "kept (at least one filament must remain); preset/colour still applied"
-msgstr ""
+msgstr "kept (at least one ink must remain); preset/colour still applied"
 
 #: src/slic3r/GUI/Bulk
 msgid "not selected"
@@ -28494,3 +28494,256 @@ msgstr ""
 #: src/slic3r/GUI/Widgets/SuperConfirmGate.cpp
 msgid "There is not enough space to show all confirmation controls. Review the details, then close this window and use a larger display area."
 msgstr "There is not enough space to show all confirmation controls. Review the details, then close this window and use a larger display area."
+
+msgid "Each object is removed from its plate together with all of its parts and instances. This is only recoverable through Undo."
+msgstr ""
+
+msgid "Start liveview automatically"
+msgstr ""
+
+msgid "Keep liveview active"
+msgstr ""
+
+msgid "Retry interrupted liveview"
+msgstr ""
+
+msgid "Dual-extruder slicing tutorial"
+msgstr ""
+
+msgid "Open the slicing tutorial video"
+msgstr ""
+
+msgid "Dual-extruder TPU tutorial"
+msgstr ""
+
+msgid "Open the TPU printing tutorial video"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Connection interrupted. Retrying in %d seconds."
+msgstr ""
+
+msgid "Automatic simplification skipped this saved project. Original geometry and project metadata were preserved."
+msgstr ""
+
+msgid "Finish or cancel the current operation before importing models."
+msgstr ""
+
+msgid "Reading model files in the background..."
+msgstr ""
+
+msgid "Simplifying large imported models..."
+msgstr ""
+
+msgid "Preparing model geometry..."
+msgstr ""
+
+msgid "Restore original geometry"
+msgstr ""
+
+msgid "Automatic simplification skipped meshes with painting, textures or protected metadata. Original geometry was preserved."
+msgstr ""
+
+msgid "Restore original imported geometry"
+msgstr ""
+
+msgid "Original imported geometry restored. Undo can restore the simplified meshes."
+msgstr ""
+
+msgid "No unchanged simplified imports are available to restore."
+msgstr ""
+
+msgid "Schedules"
+msgstr ""
+
+msgid "Settings draft"
+msgstr ""
+
+msgid "Interface motion"
+msgstr ""
+
+msgid "Reduce motion settles supported transitions immediately. System follows your operating system preference."
+msgstr ""
+
+msgid "Reduce motion"
+msgstr ""
+
+msgid "Model import"
+msgstr ""
+
+msgid "Automatically simplify large imported models"
+msgstr ""
+
+msgid "Simplify meshes with at least 1,000,000 triangles before adding them to the scene. Source files are unchanged. Saved projects and meshes with painting or protected metadata keep their original geometry."
+msgstr ""
+
+msgid "Import simplification detail"
+msgstr ""
+
+msgid "Uses the same detail levels as the manual Simplify tool. Extra high is the default."
+msgstr ""
+
+msgid "Keep the camera streaming while idle, on other tabs, or minimized. This does not enable recording."
+msgstr ""
+
+msgid "The preset files are removed from the user preset folder and cannot be recovered except from a config-profile snapshot. Deleting a custom printer also deletes the filament and process presets attached to it."
+msgstr "The preset files are removed from the user preset folder and cannot be recovered except from a config-profile snapshot. Deleting a custom printer also deletes the ink and process presets attached to it."
+
+msgid "Restore unchanged meshes reduced by automatic model import simplification"
+msgstr ""
+
+msgid "Local history"
+msgstr ""
+
+msgid "Browse project, settings, draft and printer history saved on this device. No history is uploaded."
+msgstr ""
+
+msgid "History views"
+msgstr ""
+
+msgid "Table"
+msgstr ""
+
+msgid "Git graph"
+msgstr ""
+
+msgid "Compare"
+msgstr ""
+
+msgid "Past searches"
+msgstr ""
+
+msgid "All categories"
+msgstr ""
+
+msgid "Draft"
+msgstr ""
+
+msgid "All statuses"
+msgstr ""
+
+msgid "Resolved"
+msgstr ""
+
+msgid "Device identifier"
+msgstr ""
+
+msgid "Current project"
+msgstr ""
+
+msgid "From YYYY-MM-DD"
+msgstr ""
+
+msgid "Through YYYY-MM-DD"
+msgstr ""
+
+msgid "Compare selected"
+msgstr ""
+
+msgid "Pin / unpin search"
+msgstr ""
+
+msgid "Run selected search"
+msgstr ""
+
+msgid "Delete search"
+msgstr ""
+
+msgid "Clear unpinned searches"
+msgstr ""
+
+msgid "Loading local history..."
+msgstr ""
+
+msgid "Printer incident records cannot replace editor settings."
+msgstr ""
+
+msgid "Could not compare these versions."
+msgstr ""
+
+msgid "Root commit"
+msgstr ""
+
+msgid "No versions in the selected store."
+msgstr ""
+
+msgid "Pinned"
+msgstr ""
+
+msgid "Search and filters"
+msgstr ""
+
+msgid "Category / description"
+msgstr ""
+
+msgid "Submitted"
+msgstr ""
+
+msgid "Size / state"
+msgstr ""
+
+msgid "This search was not saved. Check the query for sensitive data or check local storage."
+msgstr ""
+
+msgid "Recent"
+msgstr ""
+
+msgid "The last 100 submitted searches are retained. Pinned searches remain until explicitly deleted."
+msgstr ""
+
+msgid "Could not save this pinned search."
+msgstr ""
+
+msgid "Could not delete the saved search."
+msgstr ""
+
+msgid "Could not clear submitted searches."
+msgstr ""
+
+msgid "Comparison base selected. Select another entry and press Compare selected."
+msgstr ""
+
+msgid "History changed. Select a comparison base again."
+msgstr ""
+
+msgid "Choose two entries from the same history store or printer."
+msgstr ""
+
+msgid "Could not read the selected versions for comparison."
+msgstr ""
+
+msgid "Unsupported settings snapshot."
+msgstr ""
+
+msgid "Zoom out"
+msgstr ""
+
+msgid "Zoom out (-)"
+msgstr ""
+
+msgid "Zoom in"
+msgstr ""
+
+msgid "Zoom in (+)"
+msgstr ""
+
+msgid "Reset camera view"
+msgstr ""
+
+msgid "Reset camera view (0)"
+msgstr ""
+
+msgid "Camera zoom percentage"
+msgstr ""
+
+msgid "Choose camera zoom percentage"
+msgstr ""
+
+msgid "Start (local time)"
+msgstr ""
+
+msgid "Model import: simplify at 1,000,000 triangles before scene attachment"
+msgstr ""
+
+msgid "Extra high, High, Medium, Low or Extra low detail for automatic model import simplification"
+msgstr ""
