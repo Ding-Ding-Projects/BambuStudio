@@ -4594,8 +4594,9 @@ void Sidebar::apply_prepare_section(const std::string &section) const
     if (objects)
         p->refresh_manip_card();
     p->m_prepare_tabs->Activate(section, false);
-    p->scrolled->Scroll(0, 0);
     update_scroll_body();
+    p->scrolled->Scroll(0, 0);
+    p->scrolled->Refresh();
 }
 
 // Read-only-live refresh of the MD3 Object-manipulation grid card. Runs on the
@@ -5775,7 +5776,7 @@ void Sidebar::on_filament_count_change(size_t num_filaments)
         else
             sizer->Hide(p->m_flushing_volume_btn);
     }
-    wxGetApp().CallAfter([this]() {
+    CallAfter([this]() {
         p->adjust_filament_title_layout();
     });
 
@@ -5792,14 +5793,9 @@ void Sidebar::on_filament_count_change(size_t num_filaments)
 void Sidebar::on_filaments_delete(size_t filament_id)
 {
     auto &choices = combos_filament();
-    const bool deleted_visible_index = filament_id < choices.size();
-    if (!deleted_visible_index)
-        on_filament_count_change(wxGetApp().preset_bundle->filament_presets.size());
-
-    if (filament_id < choices.size()) {
-        if (choices.size() == 1)
-            choices[0]->GetDropDown().Invalidate();
-
+    if (choices.size() == 1)
+        choices[0]->GetDropDown().Invalidate();
+    {
         wxWindowUpdateLocker noUpdates_scrolled_panel(this);
 
         // The deleted config slot need not equal its physical row index.
@@ -5812,13 +5808,9 @@ void Sidebar::on_filaments_delete(size_t filament_id)
             else
                 sizer->Hide(p->m_flushing_volume_btn);
         }
-        wxGetApp().CallAfter([this]() {
+        CallAfter([this]() {
             p->adjust_filament_title_layout();
         });
-
-        for (size_t idx = filament_id ; idx < p->combos_filament.size(); ++idx) {
-            p->combos_filament[idx]->update();
-        }
     }
 
     recalc_filament_scroll_sizes();
@@ -5980,13 +5972,16 @@ void Sidebar::change_filament(size_t from_id, size_t to_id)
 {
     if (from_id == static_cast<size_t>(kSidebarContextMenuFilamentId))
         from_id = p->m_menu_filament_id;
-    if (from_id == size_t(-1))
-        from_id = p->combos_filament.size() - 1;
+    if (from_id == size_t(-1)) {
+        if (p->combos_filament.empty()) return;
+        from_id = static_cast<size_t>(p->combos_filament.back()->get_filament_idx());
+    }
 
     if (from_id == to_id)
         return;
 
     auto& pb = *wxGetApp().preset_bundle;
+    if (from_id >= pb.filament_presets.size() || to_id >= pb.filament_presets.size()) return;
     bool from_is_physical = !pb.is_mixed_filament(from_id);
     bool to_is_mixed = pb.is_mixed_filament(to_id);
 
@@ -6024,10 +6019,15 @@ void Sidebar::change_filament(size_t from_id, size_t to_id)
 
 void Sidebar::edit_filament()
 {
-    p->editing_filament = -1;
-    if (p->m_menu_filament_id >= 0 && p->m_menu_filament_id < p->combos_filament.size()
-            && p->combos_filament[p->m_menu_filament_id]->switch_to_tab())
-        p->editing_filament = p->m_menu_filament_id; // sync with TabPresetComboxBox's m_filament_idx
+    if (p->m_menu_filament_id < 0) return;
+    for (auto *combo : p->combos_filament) {
+        const int config_slot = combo->get_filament_idx();
+        if (config_slot != p->m_menu_filament_id) continue;
+        wxWeakRef<Sidebar> self(this);
+        if (combo->switch_to_tab() && self)
+            self->p->editing_filament = config_slot;
+        return; // switching may rebuild the row list, so do not advance it
+    }
 }
 
 void Sidebar::add_custom_filament(wxColour new_col, const std::string& preset_name, bool /*skip_preset_validation*/) {

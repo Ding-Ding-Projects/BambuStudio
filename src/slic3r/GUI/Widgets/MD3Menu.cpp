@@ -1092,9 +1092,11 @@ void MD3MenuPopup::restoreInvokerFocus()
     if (m_restoring_focus)
         return;
     m_restoring_focus = true;
+    wxWeakRef<MD3MenuPopup> self(this);
     if (m_invoker && m_invoker->IsShown() && m_invoker->IsEnabled())
         m_invoker->SetFocus();
-    m_restoring_focus = false;
+    if (self)
+        self->m_restoring_focus = false;
 }
 
 void MD3MenuPopup::finalizeClose()
@@ -1102,19 +1104,22 @@ void MD3MenuPopup::finalizeClose()
     if (m_finalized)
         return;
     m_finalized = true;
-    wxGetApp().set_side_menu_popup_status(false);
-    // Restore focus while the transient window is still alive; the base
-    // implementation can destroy it synchronously on some backends.
-    restoreInvokerFocus();
-    PopupWindow::OnDismiss();
-    restoreInvokerFocus();
-
-    // Snapshot before any external callback, which can destroy this popup.
+    // Focus and platform dismissal may synchronously destroy the surface.
+    // Capture all delivery state before either path invokes external handlers.
     const int result = m_result;
     const int checked = m_result_kind_checkable ? (m_result_checked ? 1 : 0) : -1;
     const bool send = m_send_events;
     wxWeakRef<wxMenu> source = m_result_menu;
     auto close = std::move(m_close_cb);
+    wxWeakRef<MD3MenuPopup> self(this);
+    wxGetApp().set_side_menu_popup_status(false);
+    // Restore focus while the transient window is still alive; the base
+    // implementation can destroy it synchronously on some backends.
+    restoreInvokerFocus();
+    if (self)
+        self->PopupWindow::OnDismiss();
+    if (self)
+        self->restoreInvokerFocus();
     if (close) close();
     if (result != wxID_NONE && send && source)
         source->SendEvent(result, checked);
@@ -1385,6 +1390,7 @@ int run_blocking(wxWindow *owner, wxMenu *menu, const wxRect &anchor, bool send_
         return wxID_NONE;
 
     wxWeakRef<wxMenu> menu_ref(menu);
+    wxWeakRef<wxWindow> previous_invoker(menu->GetInvokingWindow());
     wxWeakRef<wxWindow> dispatch_owner(wxGetTopLevelParent(owner));
     menu->SetInvokingWindow(dispatch_owner.get());
 
@@ -1466,10 +1472,15 @@ int run_blocking(wxWindow *owner, wxMenu *menu, const wxRect &anchor, bool send_
             if (appearance_anchor)
                 Slic3r::GUI::AppearanceEditor::open_for(appearance_anchor.get(), appearance_element);
         } else if (source && menu_ref) {
+            wxWeakRef<wxWindow> previous_source_invoker(source->GetInvokingWindow());
             source->SetInvokingWindow(dispatch_owner.get());
             source->SendEvent(result, checkable ? (checked ? 1 : 0) : -1);
+            if (source)
+                source->SetInvokingWindow(previous_source_invoker.get());
         }
     }
+    if (menu_ref)
+        menu_ref->SetInvokingWindow(previous_invoker.get());
     return result;
 }
 

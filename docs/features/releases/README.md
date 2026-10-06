@@ -3,6 +3,7 @@
 - [Native Windows installer](windows-native-installer.md)
 - [Build from source (Windows installer)](windows-build-from-source.md)
 - [One-click local Windows build and installer](windows-one-click-build.md)
+- [Encrypted native crash symbols](native-crash-symbols.md)
 - [Windows CI and release supply chain](windows-release-supply-chain.md)
 - [Release codenames](release-codenames.md) — the Hong Kong dish roster every release is named from
 - [Dependency security alerts](dependency-security-alerts.md): which package manifests reach users,

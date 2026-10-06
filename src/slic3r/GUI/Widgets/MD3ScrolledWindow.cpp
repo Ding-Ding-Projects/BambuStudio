@@ -21,31 +21,56 @@ MD3ScrolledWindow::~MD3ScrolledWindow()
 
 bool MD3ScrolledWindow::Create(wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSize &size, long style, const wxString &name)
 {
-    if (!wxScrolledWindow::Create(parent, id, pos, size, style, name))
-        return false;
-    Bind(wxEVT_MOUSEWHEEL, [this](wxMouseEvent &event) {
-        if (!m_reveal_owner) {
-            event.Skip();
-            return;
-        }
-        // The zero-rate embedded page cannot scroll. Route the original wheel
-        // delta, axis and modifiers to the sidebar's scroll helper instead.
+    if (!wxScrolledWindow::Create(parent, id, pos, size, style, name)) return false;
+    Bind(wxEVT_MOUSEWHEEL, &MD3ScrolledWindow::OnMouseWheel, this);
+    Bind(wxEVT_CHAR, &MD3ScrolledWindow::OnChar, this);
+    return true;
+}
+
+void MD3ScrolledWindow::OnMouseWheel(wxMouseEvent &event)
+{
+    if (m_reveal_owner && !m_reveal_owner->IsBeingDeleted()) {
+        // A zero-range nested scroll helper otherwise consumes the wheel.
+        // Preserve delta, axis and modifiers and deliver once to the owner.
         wxMouseEvent forwarded(event);
         forwarded.Skip(false);
-        forwarded.SetEventObject(m_reveal_owner);
+        forwarded.SetEventObject(m_reveal_owner.get());
         forwarded.SetPosition(m_reveal_owner->ScreenToClient(ClientToScreen(event.GetPosition())));
         m_reveal_owner->GetEventHandler()->ProcessEvent(forwarded);
-    });
-    return true;
+        return;
+    }
+    event.Skip();
+}
+
+void MD3ScrolledWindow::OnChar(wxKeyEvent &event)
+{
+    // Only background navigation belongs to the outer viewport. A focused
+    // text field or category control keeps its own editing/navigation keys.
+    if (m_reveal_owner && !m_reveal_owner->IsBeingDeleted() &&
+        wxWindow::FindFocus() == this && !event.HasAnyModifiers()) {
+        switch (event.GetKeyCode()) {
+        case WXK_PAGEUP: case WXK_PAGEDOWN: case WXK_HOME: case WXK_END:
+        case WXK_UP: case WXK_DOWN: case WXK_LEFT: case WXK_RIGHT: {
+            wxKeyEvent forwarded(event);
+            forwarded.SetEventObject(m_reveal_owner.get());
+            m_reveal_owner->GetEventHandler()->ProcessEvent(forwarded);
+            return;
+        }
+        default: break;
+        }
+    }
+    event.Skip();
 }
 
 void MD3ScrolledWindow::SetRevealOwner(MD3ScrolledWindow *owner)
 {
+    if (owner == this || (owner && !owner->IsDescendant(this))) return;
     m_reveal_owner = owner;
     if (owner) {
         Scroll(0, 0);
         SetScrollRate(0, 0);
         EnableScrolling(false, false);
+        EnableKeyboardScrolling(false);
         ShowScrollbars(wxSHOW_SB_NEVER, wxSHOW_SB_NEVER);
     }
 }

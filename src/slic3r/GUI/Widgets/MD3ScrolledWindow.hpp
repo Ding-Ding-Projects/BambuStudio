@@ -2,6 +2,7 @@
 #define slic3r_GUI_MD3ScrolledWindow_hpp_
 
 #include <wx/scrolwin.h>
+#include <wx/weakref.h>
 
 #include "MD3ScrollBars.hpp"
 
@@ -56,7 +57,9 @@ public:
     bool ShouldScrollToChildOnFocus(wxWindow *child) override;
 
 private:
-    MD3ScrolledWindow *m_reveal_owner = nullptr;
+    void OnMouseWheel(wxMouseEvent &event);
+    void OnChar(wxKeyEvent &event);
+    wxWeakRef<MD3ScrolledWindow> m_reveal_owner;
     MD3ScrollBars m_bars { this };
 };
 

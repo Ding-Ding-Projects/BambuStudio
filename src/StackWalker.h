@@ -219,7 +219,7 @@ typedef struct tagSTACKINFO
 class CStackWalker
 {
 public:
-	CStackWalker(HANDLE hProcess = GetCurrentProcess(), WORD wPID = GetCurrentProcessId(), LPCTSTR lpSymbolPath = NULL);
+	CStackWalker(HANDLE hProcess = GetCurrentProcess(), DWORD wPID = GetCurrentProcessId(), LPCTSTR lpSymbolPath = NULL);
 	~CStackWalker(void);
 	BOOL LoadSymbol();
 	LPMODULE_INFO GetLoadModules();
@@ -236,7 +236,7 @@ protected:
 	LPMODULE_INFO GetModulesPSAPI();
 protected:
 	HANDLE m_hProcess;
-	WORD m_wPID;
+	DWORD m_wPID;
 	LPTSTR m_lpszSymbolPath;
 	BOOL m_bSymbolLoaded;
 };

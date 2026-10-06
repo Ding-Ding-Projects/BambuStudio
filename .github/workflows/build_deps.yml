@@ -1,6 +1,14 @@
 on:
   workflow_call:
     inputs:
+      debug-symbols:
+        required: false
+        type: boolean
+        default: false
+      symbol-public-key:
+        required: false
+        type: string
+        default: ''
       cache-key:
         required: true
         type: string
@@ -87,3 +95,5 @@ jobs:
       cache-path: ${{ inputs.cache-path }}
       os: ${{ inputs.os }}
       arch: ${{ inputs.arch }}
+      debug-symbols: ${{ inputs.debug-symbols }}
+      symbol-public-key: ${{ inputs.symbol-public-key }}

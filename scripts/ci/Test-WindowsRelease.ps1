@@ -102,8 +102,12 @@ Assert-True ($releaseWorkflowText.Contains('name: Classify code changes')) `
     'Windows release workflow must classify every push before its build/release jobs.'
 Assert-True ($releaseWorkflowText.Contains("branches: ['**']")) `
     'Windows release workflow must trigger on every branch push without also matching release tags.'
-Assert-True ($releaseWorkflowText.Contains('workflow_dispatch: {}')) `
+Assert-True ($releaseWorkflowText -match '(?m)^  workflow_dispatch:\s*$') `
     'Windows release workflow must support manual dispatch.'
+Assert-True ($releaseWorkflowText -match '(?ms)^  workflow_dispatch:\s*\r?\n    inputs:\s*\r?\n      debug-symbols:\s*\r?\n(?:        [^\r\n]*\r?\n)*?        type: boolean\s*\r?\n        default: false\s*$') `
+    'Manual dispatch must expose debug-symbols as an opt-in boolean defaulting to false.'
+Assert-True ($releaseWorkflowText -match '(?ms)^      symbol-public-key:\s*\r?\n(?:        [^\r\n]*\r?\n)*?        type: string\s*\r?\n        default: ''''\s*$') `
+    'Manual dispatch must expose a public-key string with an empty default.'
 Assert-True ($releaseWorkflowText.Contains('\.md$')) `
     'Windows release workflow lacks its Markdown-only classification rule.'
 Assert-True ($releaseWorkflowText.Contains('$_.previous_filename')) `

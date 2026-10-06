@@ -12,6 +12,10 @@ destruction before delivering the chosen command. Submenu commands retain the
 menu that owns their bindings. Delivery uses a surviving top-level invoking
 window. The automatically inserted appearance command preserves its element and
 weak anchor separately before removing the temporary menu item.
+Close delivery state is captured before focus restoration or platform dismissal,
+both of which may synchronously destroy a popup. Weak references protect the
+remaining dismissal and delivery steps. Reused menus restore their previous
+invoking window after command delivery rather than retaining a temporary owner.
 
 Printer selection preserves the current printer when no matching model variant
 exists. Canceling the unsaved-preset dialog stops configuration application,
@@ -24,6 +28,13 @@ confirmation. Mixed-slot identity comes from project flags rather than the count
 of visible physical rows. The last physical filament remains protected. During
 row destruction the parent owns sibling teardown instead of the combo scheduling
 those same siblings for destruction again.
+Deferred row-title layout work is queued on the sidebar itself, so destroying
+the sidebar also removes its pending callbacks. Row rebuilding uses physical
+slot mappings for every deletion, including interleaved mixed slots.
+Edit finds the physical row by its current configuration slot. An interleaved
+mixed slot therefore cannot turn a valid physical Edit action into an out-of-range
+row lookup. Canceled or stale Edit selections preserve the current editor, and
+successful switching stops iteration before a rebuilt row list is visited.
 
 ## Verification and limits
 
@@ -32,8 +43,14 @@ adapter bodies against deterministic event and lifetime doubles. It covers
 root/submenu order, stale item generations, valid selection after measurement-only
 invalidation, disabled rows, invalid rows, owner
 destruction during closeup, child close destroying root, and selection destroying
-its popup. These tests validate callback order and ownership decisions. They do
-not substitute for native wxWidgets backend interaction.
+its popup. These tests validate callback order and ownership decisions. They
+also compile production menu focus/finalization bodies to exercise destruction
+during focus restoration, platform dismissal and the close callback, along with
+single close delivery and suppressed popup-stack dispatch. The deterministic
+tests do not substitute for native wxWidgets backend interaction.
+The production Edit body is also compiled by this target for interleaved slot
+identity, cancellation, stale slot selection and row rebuilding. Those added
+cases require a current native test result; historical build restrictions are not a current verification verdict.
 
 `node --test ui-md3/tests/native-lifecycle.test.mjs` supplies supplementary source
 contracts and deliberate negative mutations. The full native build and real
@@ -41,3 +58,5 @@ interaction evidence must separately cover P1S/H2C switching, repeated selection
 clean and modified presets, save/discard/cancel outcomes, and physical/mixed
 filament deletion. No runtime root cause or successful capture is implied by the
 source changes or the deterministic tests.
+
+Integration note: current source reconciliation preserves newer main behavior and callback lifetime protections. This record does not claim a current native runtime verdict; see the continuation handoff for actual verification.

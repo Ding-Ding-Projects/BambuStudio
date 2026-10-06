@@ -1,4 +1,5 @@
 #include "ComboBox.hpp"
+#include <wx/weakref.h>
 #include "Label.hpp"
 #include "StateColor.hpp"
 #include "MaterialIcon.hpp"
@@ -412,15 +413,18 @@ void ComboBox::mouseDown(wxMouseEvent &event)
 void ComboBox::OpenDropDown(wxWindow *focus_owner)
 {
     if (!IsEnabled()) return;
+    wxWeakRef<ComboBox> self(this);
     wxWindow *focus = focus_owner ? focus_owner : this;
     if (focus->IsShown() && focus->IsEnabled())
         focus->SetFocus();
+    if (!self || self->IsBeingDeleted()) return;
     if (drop_down) {
         drop.DismissAndNotify();
     } else if (drop.HasDismissLongTime()) {
         drop.autoPosition();
         drop_down = true;
         drop.Popup(&drop);
+        if (!self || self->IsBeingDeleted()) return;
         wxCommandEvent e(wxEVT_COMBOBOX_DROPDOWN);
         GetEventHandler()->ProcessEvent(e);
     }

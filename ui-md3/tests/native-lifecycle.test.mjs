@@ -26,6 +26,17 @@ function dropdownContract(source) {
 }
 test('blocking menu completes teardown before dispatch', () => menuContract(menu));
 test('menu contract fails when popup-stack dispatch returns', () => assert.throws(() => menuContract(menu.replace('popup->SetSendEvents(false);', 'popup->SetSendEvents(true);'))));
+function focusContract(source) {
+  const close = part(source, 'void MD3MenuPopup::finalizeClose()', 'void MD3MenuPopup::ActivateItem(');
+  const snapshot = close.indexOf('auto close = std::move(m_close_cb);');
+  const focus = close.indexOf('restoreInvokerFocus();');
+  assert.ok(snapshot >= 0 && focus >= 0 && snapshot < focus);
+  assert.ok(close.includes('self->PopupWindow::OnDismiss();'));
+  const run = part(source, 'int run_blocking(', 'wxRect point_anchor(');
+  assert.ok(run.includes('menu_ref->SetInvokingWindow(previous_invoker.get());'));
+}
+test('menu snapshots before focus callbacks and restores invoking window', () => focusContract(menu));
+test('focus contract rejects callback snapshot after restoration', () => assert.throws(() => focusContract(menu.replace('auto close = std::move(m_close_cb);', 'auto callback = std::move(m_close_cb);'))));
 test('dropdown snapshots before close and dispatches after close', () => dropdownContract(dropdown));
 test('dropdown contract rejects loss of surviving target', () => assert.throws(() => dropdownContract(dropdown.replace('wxWeakRef<DropDown> target(root);', 'auto target = root;'))));
 test('combo rejects rebuilt item generations', () => assert.ok(combo.includes('static_cast<unsigned long>(e.GetExtraLong()) != drop.item_revision')));
@@ -40,3 +51,14 @@ test('filament menu reads live config slot and deletion uses confirmed index', (
   assert.ok(deletion.includes('delete_filament(resolved);'));
   assert.ok(deletion.includes('if (presets != wxGetApp().preset_bundle->filament_presets) return;'));
 });
+function editSlotContract(source) {
+  const edit = part(source, 'void Sidebar::edit_filament()', 'void Sidebar::add_custom_filament(');
+  assert.ok(edit.includes('combo->get_filament_idx()'));
+  assert.ok(edit.includes('config_slot != p->m_menu_filament_id'));
+  assert.ok(edit.includes('if (combo->switch_to_tab() && self)'));
+  assert.ok(edit.includes('self->p->editing_filament = config_slot;'));
+  assert.ok(!edit.includes('p->combos_filament[p->m_menu_filament_id]'));
+  assert.ok(!edit.includes('p->editing_filament = -1;'));
+}
+test('filament edit resolves config slot and preserves canceled editor', () => editSlotContract(plater));
+test('filament edit contract rejects old row-index lookup', () => assert.throws(() => editSlotContract(plater.replace('config_slot != p->m_menu_filament_id', 'config_slot != 0'))));

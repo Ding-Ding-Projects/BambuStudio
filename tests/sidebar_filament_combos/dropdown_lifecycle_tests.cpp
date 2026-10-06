@@ -10,9 +10,10 @@
 // exercise callback order and destroyed owners, not platform popup behavior.
 struct Lifetime { std::shared_ptr<bool> alive = std::make_shared<bool>(true); ~Lifetime() { *alive = false; } };
 template<class T> class wxWeakRef {
-    T *pointer; std::weak_ptr<bool> alive;
+    T *pointer = nullptr; std::weak_ptr<bool> alive;
 public:
-    wxWeakRef(T *p) : pointer(p), alive(p->alive) {}
+    wxWeakRef() = default;
+    wxWeakRef(T *p) : pointer(p) { if (p) alive = p->alive; }
     explicit operator bool() const { auto a = alive.lock(); return a && *a; }
     T *operator->() const { return pointer; }
 };
@@ -54,6 +55,104 @@ struct ComboBox : Lifetime {
 #include "dropdown_invalidate.inc"
 void ComboBox::dispatch(wxCommandEvent &e) {
 #include "combo_dispatch.inc"
+}
+
+constexpr int wxID_NONE = -1;
+struct wxWindow : Lifetime {
+    std::function<void()> on_focus;
+    bool IsShown() const { return true; } bool IsEnabled() const { return true; }
+    void SetFocus() { auto cb = on_focus; if (cb) cb(); }
+};
+struct wxMenu : Lifetime {
+    std::function<void()> on_send;
+    void SendEvent(int, int) { auto cb = on_send; if (cb) cb(); }
+};
+struct PopupWindow : Lifetime {
+    std::function<void()> on_dismiss;
+    void OnDismiss() { auto cb = on_dismiss; if (cb) cb(); }
+};
+struct App { void set_side_menu_popup_status(bool) {} };
+App &wxGetApp() { static App app; return app; }
+struct MD3MenuPopup : PopupWindow {
+    bool m_restoring_focus = false, m_finalized = false, m_send_events = true;
+    bool m_result_kind_checkable = false, m_result_checked = false;
+    int m_result = 12;
+    wxWeakRef<wxWindow> m_invoker;
+    wxWeakRef<wxMenu> m_result_menu;
+    std::function<void()> m_close_cb;
+    void restoreInvokerFocus(); void finalizeClose();
+};
+#include "menu_restoreInvokerFocus.inc"
+#include "menu_finalizeClose.inc"
+
+struct FilamentCombo {
+    int config_slot, switches = 0; bool accepted = true;
+    std::function<void()> on_switch;
+    int get_filament_idx() const { return config_slot; }
+    bool switch_to_tab() { ++switches; auto cb = on_switch; if (cb) cb(); return accepted; }
+};
+struct Sidebar : Lifetime {
+    struct State {
+        int m_menu_filament_id = -1, editing_filament = 0;
+        std::vector<FilamentCombo *> combos_filament;
+    } state;
+    State *p = &state;
+    void edit_filament();
+};
+#include "sidebar_edit.inc"
+
+TEST_CASE("filament edit resolves interleaved physical config slots", "[native-lifecycle]") {
+    FilamentCombo first{0}, second{2}; Sidebar sidebar;
+    sidebar.p->combos_filament = {&first, &second}; sidebar.p->m_menu_filament_id = 2;
+    sidebar.edit_filament();
+    REQUIRE(first.switches == 0); REQUIRE(second.switches == 1);
+    REQUIRE(sidebar.p->editing_filament == 2);
+}
+TEST_CASE("canceled and stale filament edits preserve current editor", "[native-lifecycle]") {
+    FilamentCombo first{0}, second{2}; second.accepted = false; Sidebar sidebar;
+    sidebar.p->combos_filament = {&first, &second}; sidebar.p->m_menu_filament_id = 2;
+    sidebar.edit_filament(); REQUIRE(sidebar.p->editing_filament == 0);
+    sidebar.p->m_menu_filament_id = 1; sidebar.edit_filament();
+    REQUIRE(sidebar.p->editing_filament == 0); REQUIRE(second.switches == 1);
+}
+TEST_CASE("filament switching can rebuild rows without advancing invalid iterator", "[native-lifecycle]") {
+    FilamentCombo first{0}, second{2}; Sidebar sidebar;
+    sidebar.p->combos_filament = {&first, &second}; sidebar.p->m_menu_filament_id = 2;
+    second.on_switch = [&] { sidebar.p->combos_filament.clear(); };
+    sidebar.edit_filament(); REQUIRE(sidebar.p->editing_filament == 2);
+}
+
+TEST_CASE("menu focus destroying popup preserves close notification", "[native-lifecycle]") {
+    wxWindow owner; wxMenu menu; auto *popup = new MD3MenuPopup;
+    int closes = 0, sends = 0;
+    popup->m_invoker = &owner; popup->m_result_menu = &menu;
+    popup->m_close_cb = [&] { ++closes; };
+    owner.on_focus = [popup] { delete popup; };
+    menu.on_send = [&] { ++sends; };
+    popup->finalizeClose();
+    REQUIRE(closes == 1); REQUIRE(sends == 1);
+}
+TEST_CASE("platform dismissal destroying popup preserves close notification", "[native-lifecycle]") {
+    wxMenu menu; auto *popup = new MD3MenuPopup;
+    int closes = 0, sends = 0;
+    popup->m_result_menu = &menu; popup->m_close_cb = [&] { ++closes; };
+    popup->on_dismiss = [popup] { delete popup; };
+    menu.on_send = [&] { ++sends; };
+    popup->finalizeClose();
+    REQUIRE(closes == 1); REQUIRE(sends == 1);
+}
+TEST_CASE("menu destroyed during close suppresses command delivery", "[native-lifecycle]") {
+    auto *menu = new wxMenu; MD3MenuPopup popup; int sends = 0;
+    popup.m_result_menu = menu; menu->on_send = [&] { ++sends; };
+    popup.m_close_cb = [menu] { delete menu; };
+    popup.finalizeClose(); REQUIRE(sends == 0);
+}
+TEST_CASE("blocking menu closes without delivering inside popup stack", "[native-lifecycle]") {
+    wxMenu menu; MD3MenuPopup popup; int closes = 0, sends = 0;
+    popup.m_send_events = false; popup.m_result_menu = &menu;
+    popup.m_close_cb = [&] { ++closes; }; menu.on_send = [&] { ++sends; };
+    popup.finalizeClose(); popup.finalizeClose();
+    REQUIRE(closes == 1); REQUIRE(sends == 0);
 }
 
 TEST_CASE("dropdown closes before selection and preserves row identity", "[native-lifecycle]") {

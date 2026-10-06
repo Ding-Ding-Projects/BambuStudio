@@ -1,6 +1,14 @@
 on:
   workflow_call:
     inputs:
+      debug-symbols:
+        required: false
+        type: boolean
+        default: false
+      symbol-public-key:
+        required: false
+        type: string
+        default: ''
       cache-key:
         required: true
         type: string
@@ -131,7 +139,7 @@ jobs:
       # containing [cold build] asks for one.
       - name: Restore the build tree from the build cache release
         id: build_cache
-        if: inputs.os == 'windows-latest'
+        if: inputs.os == 'windows-latest' && !inputs.debug-symbols
         shell: pwsh
         env:
           GH_TOKEN: ${{ secrets.TOKEN_GITHUB }}
@@ -149,14 +157,25 @@ jobs:
         shell: pwsh
         env:
           SCCACHE_GHA_ENABLED: 'true'
+          DEBUG_SYMBOLS: ${{ inputs.debug-symbols }}
+          SYMBOL_PUBLIC_KEY: ${{ inputs.symbol-public-key }}
         run: |
           $ErrorActionPreference = 'Stop'
+          $symbolMode = $env:DEBUG_SYMBOLS -eq 'true'
+          if ($symbolMode) {
+              if ([string]::IsNullOrWhiteSpace($env:SYMBOL_PUBLIC_KEY)) { throw 'Symbol mode requires a public RSA PEM.' }
+              if ($env:SYMBOL_PUBLIC_KEY.Trim() -notmatch '\A-----BEGIN PUBLIC KEY-----\s+[A-Za-z0-9+/=\s]+-----END PUBLIC KEY-----\z') { throw 'Only a public SPKI PEM is accepted.' }
+              $rsa = [Security.Cryptography.RSA]::Create()
+              try { $rsa.ImportFromPem($env:SYMBOL_PUBLIC_KEY); if ($rsa.KeySize -lt 3072) { throw 'RSA key must be at least 3072 bits.' } }
+              finally { $rsa.Dispose() }
+              $env:CL = ($env:CL + ' /FS').Trim()
+              $env:SCCACHE_DISABLE = '1'
+          }
+          $pdbMode = if ($symbolMode) { 'ON' } else { 'OFF' }
           $configure = @(
             '-S', '.', '-B', 'build',
             '-G', 'Ninja',
-            '-DCMAKE_C_COMPILER_LAUNCHER=sccache',
-            '-DCMAKE_CXX_COMPILER_LAUNCHER=sccache',
-            '-DSLIC3R_MSVC_PDB=OFF',
+            "-DSLIC3R_MSVC_PDB=$pdbMode",
             '-DBBL_RELEASE_TO_PUBLIC=1',
             '-DBBL_INTERNAL_TESTING=0',
             '-DSLIC3R_BUILD_TESTS=OFF',
@@ -165,7 +184,12 @@ jobs:
             '-DCMAKE_BUILD_TYPE=Release',
             '-DWIN10SDK_PATH=C:/Program Files (x86)/Windows Kits/10/Include/10.0.22000.0'
           )
-          cmake @configure
+          if ($symbolMode) {
+              $configure += @('-DCMAKE_C_COMPILER_LAUNCHER=', '-DCMAKE_CXX_COMPILER_LAUNCHER=')
+          } else {
+              $configure += @('-DCMAKE_C_COMPILER_LAUNCHER=sccache', '-DCMAKE_CXX_COMPILER_LAUNCHER=sccache')
+          }
+          cmake @configure 2>&1 | Tee-Object -FilePath "$env:RUNNER_TEMP/native-configure.log"
           # A restored tree that will not configure is dropped, never trusted:
           # the build goes on from scratch, as it would have without a cache.
           if ($LASTEXITCODE -ne 0 -and '${{ steps.build_cache.outputs.state }}' -eq 'warm') {
@@ -177,7 +201,7 @@ jobs:
               throw "Configuring the production Windows build failed with exit code $LASTEXITCODE."
           }
 
-          cmake --build build --target device_page_build --config Release --parallel
+          cmake --build build --target device_page_build --config Release --parallel 2>&1 | Tee-Object -FilePath "$env:RUNNER_TEMP/native-device.log"
           if ($LASTEXITCODE -ne 0) {
               throw "Building DeviceWeb failed with exit code $LASTEXITCODE."
           }
@@ -185,7 +209,7 @@ jobs:
           # -k 0 keeps Ninja compiling past a failed object, so one failed
           # run lists every compile error instead of only the first; a
           # failure still fails this step and nothing is installed.
-          cmake --build build --target install --config Release --parallel -- -k 0
+          cmake --build build --target install --config Release --parallel -- -k 0 2>&1 | Tee-Object -FilePath "$env:RUNNER_TEMP/native-build.log"
           if ($LASTEXITCODE -ne 0) {
               throw "Building the production Windows installer payload failed with exit code $LASTEXITCODE."
           }
@@ -194,11 +218,54 @@ jobs:
           # spawns a fresh server whose zeroed counters say nothing.
           sccache --show-stats
 
+      - name: Retain sanitized native build diagnostics
+        if: always() && inputs.os == 'windows-latest'
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          $out = Join-Path $PWD 'diagnostic/native-build'
+          New-Item -ItemType Directory -Force -Path $out | Out-Null
+          foreach ($name in @('native-configure.log', 'native-device.log', 'native-build.log')) {
+              $path = Join-Path $env:RUNNER_TEMP $name
+              if (Test-Path -LiteralPath $path) {
+                  $text = [IO.File]::ReadAllText($path).Replace($env:GITHUB_WORKSPACE, '<workspace>').Replace($env:RUNNER_TEMP, '<runner-temp>')
+                  [IO.File]::WriteAllText((Join-Path $out $name), $text)
+              }
+          }
+          @{ source_sha = $env:GITHUB_SHA; run_id = $env:GITHUB_RUN_ID; job_status = '${{ job.status }}'; symbol_mode = '${{ inputs.debug-symbols }}' } | ConvertTo-Json | Set-Content (Join-Path $out 'run.json')
+
+      - name: Upload native build diagnostics
+        if: always() && inputs.os == 'windows-latest'
+        continue-on-error: true
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: native-build-diagnostics-${{ github.run_id }}-${{ github.run_attempt }}
+          path: diagnostic/native-build/*
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Encrypt native crash symbols
+        if: always() && inputs.os == 'windows-latest' && inputs.debug-symbols
+        shell: pwsh
+        env:
+          SYMBOL_PUBLIC_KEY: ${{ inputs.symbol-public-key }}
+        run: ./scripts/ci/Protect-NativeSymbols.ps1
+
+      - name: Upload encrypted native crash symbols
+        if: always() && inputs.os == 'windows-latest' && inputs.debug-symbols
+        continue-on-error: true
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: encrypted-native-symbols-${{ github.run_id }}-${{ github.run_attempt }}
+          path: diagnostic/native-symbols/*
+          if-no-files-found: warn
+          retention-days: 7
+
       # Only main builds write the cache, so every build starts from main's
       # tree. The tree is archived and uploaded in parts of at most 1.5 GB in
       # the background while the payload is packaged; the last step waits.
       - name: Start saving the build tree to the build cache release
-        if: inputs.os == 'windows-latest' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: inputs.os == 'windows-latest' && !inputs.debug-symbols && github.event_name == 'push' && github.ref == 'refs/heads/main'
         shell: pwsh
         env:
           GH_TOKEN: ${{ secrets.TOKEN_GITHUB }}
