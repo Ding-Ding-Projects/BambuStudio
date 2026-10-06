@@ -24,7 +24,7 @@
 - [ ] Complete shell focus/drag and confirmation repair reviews and native verification.
 - [ ] Finish the new design articles' Cantonese companions, indexes and accurate change receipts.
 - [x] Independently review and verify the catalog repair at `7a681fd0f`: eight focused tests and the terminology check pass without removing existing keys.
-- [ ] Reconcile the 50 documentation language findings, then rerun strict language integration.
+- [x] Reconcile the 50 documentation language findings and pass strict language integration after the independently tested PowerShell 5.1 empty-report repair.
 
 ## Build bootstrap repair, 6 October 2026
 

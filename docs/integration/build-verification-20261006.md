@@ -23,9 +23,14 @@ external-wait limit does not require a separate extension for local compilation.
 The catalog-consistency repair is independently reviewed and incorporated at
 `4147ca9eeb0004f7e18b4a2f5a8c6cb190975d21`. Eight focused tests and the terminology
 check pass. The next exact root producer pinned that source at
-`2026-10-06T11:04:22Z` and remains active. Documentation alignment still has
-50 known findings under repair in separate checkouts; no whole-language or
-successful native-build verdict is claimed.
+`2026-10-06T11:04:22Z` and remains active. All 50 documentation findings are
+reconciled: 143 articles and 1,296 changelog entries pass. The subsequent
+PowerShell 5.1 empty-report reader repair `0625de0d2` preserves strict rejection
+of real missing entries. Three production-AST cases pass independently on
+PowerShell 5.1.26100.9444, followed by the complete strict language check with
+`-RequireComplete`. That check passes for 8,102 native entries, 7,109 audited
+drafts, 212 DeviceWeb resources, 282 legacy keys, 334 keyed elements and all
+18 interface-language tests. No successful native-build verdict is claimed.
 The broader source integration selection now passes 29 checks; nine additional
 checks preserve the exact callers of the replaced raw scroll/table owners.
 The [tracked publication scan](public-boundary-scan-20261006.md)
@@ -38,9 +43,9 @@ The current work makes `build.bat` and `build-installer.bat` acquire missing sup
 
 The baseline production run read the unchanged source at `9a55b7aa1e900f85c2ded1389854beefabff159f` and terminated with exit 1 at `2026-10-06T06:49:14Z`. A second exact root run at `be5e1205dcdad8f372d2ba63f367dbd7977c29c4` exited 1 at `2026-10-06T07:41:56Z`. OpenCV completed; wxWidgets patch replay then failed. The third run at `dcadb944e8c8a796b7ec37dcb6904f2c62a27c84` completed those dependencies but exited 1 during application configuration at `2026-10-06T08:15:46Z`, without the terminal CMake diagnostic in its transcript.
 
-After repairing concurrent native stdout/stderr capture, the exact root run at `5e3f28274baec20ddae974aef24ac7dad4c54257` exited 1 at `2026-10-06T08:44:32Z`. The retained diagnostic identifies generated `OpenCASCADEConfig.cmake:46`: compiler `/pathmap` strings are not escaped for the generated CMake quoted string, producing `Invalid character escape '\U'`. The next source repair must preserve compiler path mappings and correct their configuration export. No generated installed file is accepted as the sole repair.
+After repairing concurrent native stdout/stderr capture, the exact root run at `5e3f28274baec20ddae974aef24ac7dad4c54257` exited 1 at `2026-10-06T08:44:32Z`. The retained diagnostic identifies generated `OpenCASCADEConfig.cmake:46`: compiler `/pathmap` strings were not escaped for the generated CMake quoted string, producing `Invalid character escape '\U'`. The delivered source-template repair preserves compiler path mappings and corrects their configuration export. Subsequent root configuration passed. No generated installed file was accepted as the sole repair.
 
-Verified remote `main` is `d4d4bb13bb66eddd53eda9849fd18ec3d5ff0d47`. Reviewed combined source before this documentation commit is `de774e2f5a14de2b53b59a7292beb73b03df9fa4`. The current exact root producer started at `2026-10-06T08:58:03Z` against `05dd932d4de51384742375cb277d51d19e97039f`, passed application configuration/generation and DeviceWeb, and began native C++ compilation at `2026-10-06T09:08:30Z`. It remains active. Its source is pinned while integration continues in a separate checkout.
+Verified remote `main` is `d4d4bb13bb66eddd53eda9849fd18ec3d5ff0d47`. The current exact root producer reads `4147ca9eeb0004f7e18b4a2f5a8c6cb190975d21`, pinned at `2026-10-06T11:04:22Z`. Configuration and DeviceWeb completed, and native C++ compilation began at `2026-10-06T11:09:39Z`. It remains active. Later reviewed documentation is preserved through `8059f13ddf5c388ceaed4b1f417d0ed88c6f394d` in a separate checkout and does not alter the running producer.
 
 Application launches, installer execution, physical printer actions, and manual release publication remain excluded. Source-based tests and design references do not override those limits. The broader redesign is incomplete and has no current rendered acceptance.
 

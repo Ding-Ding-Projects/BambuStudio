@@ -3,7 +3,7 @@
 ## Current source and verification boundary
 
 Verified remote `main` is `d4d4bb13bb66eddd53eda9849fd18ec3d5ff0d47`. Reviewed combined source before this
-record is `4147ca9eeb0004f7e18b4a2f5a8c6cb190975d21`. It includes the reviewed shell/tab drag and focus
+record is `a42c09977ae2d123b9a44dec7d590ab315ec2706`. It includes the reviewed shell/tab drag and focus
 repairs, selection controls and their allocated-size lifecycle, Appearance
 property-page reflow, humidity placement, calibration viewport/preset/result
 layout and wheel routing, and device-name validation ordering. Design records
@@ -80,9 +80,14 @@ PowerShell fixture assertions pass. The stricter language/terminology run expose
 missing Cantonese entries. Reviewed repair `7a681fd0f` is incorporated. All eight
 focused tests pass independently, as does the complete terminology check.
 Strict catalog validation accepts 8,102 translations; the existing 109
-source-pending exceptions remain unchanged. Strict language integration still
-reports 50 documentation findings, assigned to three bounded translation lanes.
-No passing whole-language verdict is claimed.
+source-pending exceptions remain unchanged. All 50 documentation findings are
+reconciled through reviewed translation units. The complete check passes for
+143 articles and 1,296 changelog entries. A subsequent PowerShell 5.1 empty-array
+reader defect is repaired at `0625de0d2`, with three actual production-AST cases
+passing independently on PowerShell 5.1.26100.9444. The complete strict language
+check with `-RequireComplete` now passes: 8,102 native entries, 7,109 audited
+drafts, 212 DeviceWeb resources, 282 legacy keys, 334 keyed elements and 18
+interface-language tests. This is source/catalog evidence, not native rendering.
 
 The [tracked publication scan](docs/integration/public-boundary-scan-20261006.md)
 inspected 11,556 UTF-8 files at `24aff6625`. All 142 lexical candidate files
