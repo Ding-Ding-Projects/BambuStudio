@@ -99,7 +99,7 @@ static void applyPresetHeaderAnatomy(wxWindow* panel, wxSizer* sizer)
     }
     if (sizer->GetItemCount() > 0) {
         auto* last = sizer->GetItem(sizer->GetItemCount() - 1);
-        if (last->IsSpacer()) last->SetSpacer(padding, 1);
+        if (last->IsSpacer()) last->SetMinSize(padding, 1);
     }
     sizer->SetMinSize(-1, panel->FromDIP(metrics.row_height) + 2 * gap);
 }
