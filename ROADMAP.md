@@ -1,5 +1,14 @@
 # Roadmap
 
+## Independent preparation while production runs
+
+- [x] Preserve the nine-boundary source-bound review queue and independently verify its live-regex restoration semantics.
+- [x] Repair the actual Cantonese companion index and verify the positive case plus six missing-link/article negative cases.
+- [ ] Finish the exact `cc059003d` root build and installer with source-bound package verification.
+- [ ] Resolve visible-launch scope and execute the genuine built review matrix; the queue is preparation only.
+
+
+
 ## Complete native interface refresh, 6 October 2026
 
 - [x] Preserve explicit composition contracts for 28 surface groups and retain all 1,204 existing feature-obligation truth states.

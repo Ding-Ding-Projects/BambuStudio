@@ -1,5 +1,11 @@
 # Current handoff: 6 October 2026
 
+## Latest independent progress
+
+Remote main is `a2f1fa9e89bd66aba7c754ecfa92887f07c9b3ee`; the immutable exact-main producer still compiles `cc059003d`. Reviewed design preparation is preserved at `5131fe2e6a63894ebff47f8c07dc879ddec7f87e`, including the nine-boundary queue, live-regex restoration correction and paired-article index checks. No native source changed in this batch. The current [continuation](CLOSEOUT_PROMPT.md) supersedes older source and pending-integration statements below.
+
+
+
 ## Current continuation boundary
 
 Both exact root entrypoints and independent package-byte verification passed at `a28944e3c14b2066ee63d14151c8aca23066d743`. The latest authoritative continuation is [CLOSEOUT_PROMPT.md](CLOSEOUT_PROMPT.md). Main remains `cc059003d`; the complete redesign still lacks current rendered acceptance. The local initial-shell route has both independently reviewed repairs combined at `b777219432f1df917fbd7638dd7f2105afc2ff1d`, plus the paired documentation correction in this update. All 26 non-window checks and read-only validation of the actual immutable build receipt pass. The source documentation inventory now has 144 paired articles; the earlier a28944e3c package contains 310 total Markdown articles and does not contain the two new local-review articles. The launch-scope clarification remains pending; no application or installer has been executed.
