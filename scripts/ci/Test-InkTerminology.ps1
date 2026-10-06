@@ -194,7 +194,7 @@ foreach ($entry in $producerRoots) {
 # every message the application can show that uses an old word must have a clean override.
 Write-Host 'Checking that every extracted message with an old word has an English override...'
 $overrideCheck = Join-Path $repoRoot 'scripts\i18n\check_ink_overrides.py'
-$python = if (Get-Command py -ErrorAction SilentlyContinue) { @('py', '-3') } else { @('python') }
+[string[]] $python = if (Get-Command py -ErrorAction SilentlyContinue) { @('py', '-3') } else { @('python') }
 $env:PYTHONIOENCODING = 'utf-8'
 $overrideOutput = & $python[0] @($python | Select-Object -Skip 1) $overrideCheck 2>&1
 $overrideExit = $LASTEXITCODE
