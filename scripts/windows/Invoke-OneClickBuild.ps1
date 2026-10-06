@@ -150,21 +150,15 @@ function Install-WingetPackageIfMissing {
     Update-SessionPath
     if (& $Probe) { return }
 
-    if ($installExitCode -ne 0) {
-        Write-BuildLog "Repairing a stale $DisplayName winget registration..."
-        & winget.exe uninstall --id $PackageId --exact --silent `
-            --accept-source-agreements
-        $uninstallExitCode = $LASTEXITCODE
-        if ($uninstallExitCode -ne 0) {
-            throw "Removing the stale $DisplayName registration failed with exit code $uninstallExitCode."
-        }
-        & winget.exe install --id $PackageId --exact --silent `
-            --accept-package-agreements --accept-source-agreements
-        Assert-LastExitCode "Reinstalling $DisplayName"
-        Update-SessionPath
-    }
+    # A failed install does not prove that a registration is stale. Preserve
+    # installed tools and allow one force-install retry without removal.
+    Write-BuildLog "Retrying $DisplayName without removing existing tools (first exit code $installExitCode)..."
+    & winget.exe install --id $PackageId --exact --silent --force `
+        --accept-package-agreements --accept-source-agreements
+    $retryExitCode = $LASTEXITCODE
+    Update-SessionPath
     if (-not (& $Probe)) {
-        throw "$DisplayName installation completed but the tool is still unavailable."
+        throw "$DisplayName is still unavailable after two non-destructive installation attempts (exit codes $installExitCode, $retryExitCode). Existing packages were preserved."
     }
 }
 
@@ -183,6 +177,29 @@ function Get-PythonInterpreterPath {
             if ((Test-Path -LiteralPath $path -PathType Leaf) -and $path -notlike '*\WindowsApps\*') {
                 return $path
             }
+        }
+    }
+    return $null
+}
+
+function Get-StrawberryPkgConfigPath {
+    # Locate the paired wrapper and interpreter independently of unrelated
+    # native pkg-config tools or the Perl shipped by Git for Windows.
+    $candidates = @()
+    foreach ($command in @(Get-Command pkg-config.bat, perl.exe -All -ErrorAction SilentlyContinue)) {
+        $candidates += Join-Path (Split-Path -Parent $command.Source) 'pkg-config.bat'
+    }
+    foreach ($root in @((Join-Path $env:SystemDrive 'Strawberry'), (Join-Path $env:ProgramFiles 'Strawberry'),
+            (Join-Path ${env:ProgramFiles(x86)} 'Strawberry'))) {
+        $candidates += Join-Path $root 'perl\bin\pkg-config.bat'
+    }
+    foreach ($candidate in ($candidates | Select-Object -Unique)) {
+        $bin = Split-Path -Parent $candidate
+        if ((Split-Path -Leaf $bin) -ine 'bin' -or
+            (Split-Path -Leaf (Split-Path -Parent $bin)) -ine 'perl') { continue }
+        if ((Test-Path -LiteralPath $candidate -PathType Leaf) -and
+            (Test-Path -LiteralPath (Join-Path $bin 'perl.exe') -PathType Leaf)) {
+            return $candidate
         }
     }
     return $null
@@ -207,7 +224,7 @@ function Set-StrawberryPerlFirst {
     $env:Path = (($front + $rest) -join ';')
     $perl = Get-Command perl.exe -ErrorAction SilentlyContinue
     if ($null -eq $perl -or $perl.Source -notlike "$perlBin*") {
-        throw "Strawberry Perl is not first on PATH after reordering (resolved '$($perl.Source)')."
+        throw 'Strawberry Perl is not first on PATH after reordering.'
     }
     # Strawberry Perl does not provide the C.UTF-8 locale inherited from some
     # build shells. Select a portable locale for this build process before
@@ -299,7 +316,7 @@ function Initialize-LocalToolchain {
     # probe and left pkg-config permanently missing (verified 2026-09-05).
     Install-WingetPackageIfMissing -DisplayName 'Strawberry Perl' `
         -PackageId 'StrawberryPerl.StrawberryPerl' `
-        -Probe { $null -ne (Get-Command pkg-config.exe, pkg-config.bat -ErrorAction SilentlyContinue) }
+        -Probe { $null -ne (Get-StrawberryPkgConfigPath) }
     if (-not $Plan) {
         # A package installed moments ago is only on the registry PATH, not on
         # this process's PATH, until the session path is refreshed.
@@ -307,7 +324,7 @@ function Initialize-LocalToolchain {
         $pkgConfig = Resolve-PkgConfigExecutable
         $env:PKG_CONFIG_EXECUTABLE = $pkgConfig
         Write-BuildLog "Using pkg-config at $pkgConfig."
-        Set-StrawberryPerlFirst -PkgConfigPath $pkgConfig
+        Set-StrawberryPerlFirst -PkgConfigPath (Get-StrawberryPkgConfigPath)
     }
 
     Install-WingetPackageIfMissing -DisplayName '7-Zip' -PackageId '7zip.7zip' `

@@ -95,5 +95,9 @@ if (-not $planOnly -and -not $principal.IsInRole([Security.Principal.WindowsBuil
 if ([IO.Path]::GetFileName($entry) -ieq 'build.bat') {
     $producerParameters['BuildOnly'] = $true
 }
+$global:LASTEXITCODE = 0
 & (Join-Path $PSScriptRoot 'Invoke-OneClickBuild.ps1') @producerParameters
-if ($?) { exit 0 } else { exit 1 }
+$producerSucceeded = $?
+$producerExitCode = $LASTEXITCODE
+if ($producerExitCode -ne 0) { exit $producerExitCode }
+if ($producerSucceeded) { exit 0 } else { exit 1 }

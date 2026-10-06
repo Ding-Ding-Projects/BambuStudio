@@ -1,6 +1,23 @@
 # Isolated delivery builds
 
 The supported commands remain `build.bat /s` and `build-installer.bat /s`.
+Both entrypoints retain the producer's exact nonzero exit result and forward
+named options, including output paths containing spaces. The first route forces
+build-only behavior; the installer route includes packaging by default.
+
+Strawberry detection requires its paired `perl/bin/pkg-config.bat` and `perl.exe`,
+independently of other pkg-config installations. The dependency build selects
+that Perl interpreter first and checks `Locale::Maketext::Simple` before compiling
+OpenSSL. A native pkg-config executable may still serve CMake independently.
+Missing tools get an initial winget install and at most one non-destructive
+force-install retry. Failed probes never trigger package removal. After both
+attempts, a missing tool stops with both exit codes and preserves existing tools.
+
+Focused script checks are `scripts/ci/Test-BootstrapRecovery.ps1` (nine behavioral
+assertions) and `scripts/ci/Test-BuildEntryPoint.ps1` (six assertions using a stub
+producer). They install nothing and do not compile, package, launch, or execute
+the application. These checks do not prove a fresh-machine build or installer.
+
 Set `BAMBU_DEPENDENCY_CACHE` to an existing dependency destination containing
 `usr/local/include` and `usr/local/lib` to reuse it without modifying it.
 Application build and install output remains inside the current checkout.
