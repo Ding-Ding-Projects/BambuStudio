@@ -18,284 +18,476 @@
   },
   "surfaces": [
     {
-      "id":"shell",
-      "zones":"46 title; 52 navigation; project tab row at measured height; expanding content; existing persistent status/provenance stays visible.",
-      "anatomy":"Separate the four-workflow capsule from secondary destinations with a density gap. Selected destination combines tonal pill, marker and semibold name. Title commands have independent hit areas; document identity and dirty state stay distinct from global navigation.",
-      "narrow":"Measure each complete localized name. Existing overflow owns only items that do not fit; selected destination remains represented. Never renumber page IDs or collapse all user tab controls into a decorative shell.",
-      "stateDelta":"Pinned/grouped/reordered tabs preserve their existing model; hover/focus changes paint only. Unsaved close keeps the existing confirmation. Maximized state retains visible restore action.",
-      "preserve":"Notebook IDs, pin/group/reorder/close rules, window controls and palette routing.",
-      "scopeIds":["native-shared-component-anatomy","shell-tab-callers"],
-      "sourceAnchors":["src/slic3r/GUI/MainFrame.cpp","src/slic3r/GUI/Notebook.cpp","src/slic3r/GUI/Widgets/TabStrip.cpp","src/slic3r/GUI/Tabbook.cpp"]
+      "id": "shell",
+      "zones": "46 title; 52 navigation; project tab row at measured height; expanding content; existing persistent status/provenance stays visible.",
+      "anatomy": "Separate the four-workflow capsule from secondary destinations with a density gap. Selected destination combines tonal pill, marker and semibold name. Title commands have independent hit areas; document identity and dirty state stay distinct from global navigation.",
+      "narrow": "Measure each complete localized name. Existing overflow owns only items that do not fit; selected destination remains represented. Never renumber page IDs or collapse all user tab controls into a decorative shell.",
+      "stateDelta": "Pinned/grouped/reordered tabs preserve their existing model; hover/focus changes paint only. Unsaved close keeps the existing confirmation. Maximized state retains visible restore action.",
+      "preserve": "Notebook IDs, pin/group/reorder/close rules, window controls and palette routing.",
+      "scopeIds": [
+        "native-shared-component-anatomy",
+        "shell-tab-callers"
+      ],
+      "sourceAnchors": [
+        "src/slic3r/GUI/MainFrame.cpp",
+        "src/slic3r/GUI/Notebook.cpp",
+        "src/slic3r/GUI/Widgets/TabStrip.cpp",
+        "src/slic3r/GUI/Tabbook.cpp"
+      ]
     },
     {
-      "id":"prepare",
-      "zones":"60/50 tool rail; expanding plate canvas; resizable344/312 inspector; measured plate list;66 minimum action region.",
-      "anatomy":"Inspector keeps printer/material/process context above its independent scroll body. Section heading plus compact description precedes field stacks. Object rows align icon/name/visibility/action columns, with tonal selection and a separate modification marker. Plate and nozzle cards show stable physical destinations.",
-      "narrow":"Wrap preset labels and move secondary actions through existing overflow. Inspector scroll must include the final setting and object row; retain splitter behavior. Controls never overlay the canvas hit targets.",
-      "stateDelta":"Empty plate exposes actual import/create routes. Selected object changes row and inspector heading, not row order. Slicing replaces only the initiating action region with progress/cancel. Stale result stays legible beside the next permitted action.",
-      "preserve":"Geometry, slicing, preset inheritance, undo, grouping solver and nozzle mapping.",
-      "scopeIds":["native-prepare-inspector-and-lists","field-and-preset-callers","native-renderer-tools-and-preview"],
-      "sourceAnchors":["src/slic3r/GUI/ParamsPanel.cpp","src/slic3r/GUI/OptionsGroup.cpp","src/slic3r/GUI/GUI_ObjectList.cpp","src/slic3r/GUI/PresetComboBoxes.cpp","src/slic3r/GUI/Plater.cpp","src/slic3r/GUI/Field.cpp","src/slic3r/GUI/Tab.cpp"]
+      "id": "prepare",
+      "zones": "60/50 tool rail; expanding plate canvas; resizable344/312 inspector; measured plate list;66 minimum action region.",
+      "anatomy": "Inspector keeps printer/material/process context above its independent scroll body. Section heading plus compact description precedes field stacks. Object rows align icon/name/visibility/action columns, with tonal selection and a separate modification marker. Plate and nozzle cards show stable physical destinations.",
+      "narrow": "Wrap preset labels and move secondary actions through existing overflow. Inspector scroll must include the final setting and object row; retain splitter behavior. Controls never overlay the canvas hit targets.",
+      "stateDelta": "Empty plate exposes actual import/create routes. Selected object changes row and inspector heading, not row order. Slicing replaces only the initiating action region with progress/cancel. Stale result stays legible beside the next permitted action.",
+      "preserve": "Geometry, slicing, preset inheritance, undo, grouping solver and nozzle mapping.",
+      "scopeIds": [
+        "native-prepare-inspector-and-lists",
+        "field-and-preset-callers",
+        "native-renderer-tools-and-preview"
+      ],
+      "sourceAnchors": [
+        "src/slic3r/GUI/ParamsPanel.cpp",
+        "src/slic3r/GUI/OptionsGroup.cpp",
+        "src/slic3r/GUI/GUI_ObjectList.cpp",
+        "src/slic3r/GUI/PresetComboBoxes.cpp",
+        "src/slic3r/GUI/Plater.cpp",
+        "src/slic3r/GUI/Field.cpp",
+        "src/slic3r/GUI/Tab.cpp"
+      ]
     },
     {
-      "id":"preview",
-      "zones":"Expanding renderer canvas, bounded legend/statistics inspector, existing side layer slider,58 minimum timeline with transport and range values.",
-      "anatomy":"Group display mode and color legend separately from numeric material/time statistics. Show layer/move values beside their actual sliders. Transport controls occupy one stable cluster; output continuation remains visually secondary to inspecting toolpaths.",
-      "narrow":"Legend scrolls in its own pane; statistics stack without hiding values. Timeline wraps its auxiliary labels above controls while preserving slider range and transport targets.",
-      "stateDelta":"Unsliced/stale states show why preview is unavailable without fake paths. Simulation uses existing play/pause state and readable progress. Export remains a real action with local progress.",
-      "preserve":"Toolpath colors as data, generation/plate identity, simulation, range values and exports.",
-      "scopeIds":["native-renderer-tools-and-preview","print-setup-callers"],
-      "sourceAnchors":["src/slic3r/GUI/GLCanvas3D.cpp","src/slic3r/GUI/GLToolbar.cpp","src/slic3r/GUI/ImGuiWrapper.cpp","src/slic3r/GUI/IMSlider.cpp","src/slic3r/GUI/Plater.cpp"]
+      "id": "preview",
+      "zones": "Expanding renderer canvas, bounded legend/statistics inspector, existing side layer slider,58 minimum timeline with transport and range values.",
+      "anatomy": "Group display mode and color legend separately from numeric material/time statistics. Show layer/move values beside their actual sliders. Transport controls occupy one stable cluster; output continuation remains visually secondary to inspecting toolpaths.",
+      "narrow": "Legend scrolls in its own pane; statistics stack without hiding values. Timeline wraps its auxiliary labels above controls while preserving slider range and transport targets.",
+      "stateDelta": "Unsliced/stale states show why preview is unavailable without fake paths. Simulation uses existing play/pause state and readable progress. Export remains a real action with local progress.",
+      "preserve": "Toolpath colors as data, generation/plate identity, simulation, range values and exports.",
+      "scopeIds": [
+        "native-renderer-tools-and-preview",
+        "print-setup-callers"
+      ],
+      "sourceAnchors": [
+        "src/slic3r/GUI/GLCanvas3D.cpp",
+        "src/slic3r/GUI/GLToolbar.cpp",
+        "src/slic3r/GUI/ImGuiWrapper.cpp",
+        "src/slic3r/GUI/IMSlider.cpp",
+        "src/slic3r/GUI/Plater.cpp"
+      ]
     },
     {
-      "id":"print",
-      "zones":"Measured page heading; two-thirds readiness/destination/continuation column; one-third summary column; stack when actual minimum widths no longer fit.",
-      "anatomy":"Readiness names the current plate and generation state. Destination card explains where the existing selection/mapping occurs and exposes the real output-options action. Summary uses actual plate/preset/time/material values. Retain separate existing slice, combined-output and output routes.",
-      "narrow":"Cards stack in semantic order and all actions wrap using their real best sizes. No artificial fixed card height. The final action remains reachable after wrapping.",
-      "stateDelta":"Missing/stale/slicing/incompatible states change explanation and real enable state. Opening the page never executes output. Existing final setup keeps printer choice, mapping and confirmation.",
-      "preserve":"Current WorkflowPrintState dispatch and original setup/confirmation semantics, including all-plate versus selected-plate distinctions.",
-      "scopeIds":["print-setup-callers"],
-      "sourceAnchors":["src/slic3r/GUI/WorkflowPrintPanel.cpp","src/slic3r/GUI/SelectMachine.cpp","src/slic3r/GUI/SelectMachinePop.cpp","src/slic3r/GUI/SendToPrinter.cpp"]
+      "id": "print",
+      "zones": "Measured page heading; two-thirds readiness/destination/continuation column; one-third summary column; stack when actual minimum widths no longer fit.",
+      "anatomy": "Readiness names the current plate and generation state. Destination card explains where the existing selection/mapping occurs and exposes the real output-options action. Summary uses actual plate/preset/time/material values. Retain separate existing slice, combined-output and output routes.",
+      "narrow": "Cards stack in semantic order and all actions wrap using their real best sizes. No artificial fixed card height. The final action remains reachable after wrapping.",
+      "stateDelta": "Missing/stale/slicing/incompatible states change explanation and real enable state. Opening the page never executes output. Existing final setup keeps printer choice, mapping and confirmation.",
+      "preserve": "Current WorkflowPrintState dispatch and original setup/confirmation semantics, including all-plate versus selected-plate distinctions.",
+      "scopeIds": [
+        "print-setup-callers"
+      ],
+      "sourceAnchors": [
+        "src/slic3r/GUI/WorkflowPrintPanel.cpp",
+        "src/slic3r/GUI/SelectMachine.cpp",
+        "src/slic3r/GUI/SelectMachinePop.cpp",
+        "src/slic3r/GUI/SendToPrinter.cpp"
+      ]
     },
     {
-      "id":"monitor",
-      "zones":"Printer identity and state header; flexible camera region; bounded telemetry/material/control column; existing storage/firmware navigation.",
-      "anatomy":"Camera HUD sits on its existing video surface with accessible play/stop controls. Temperature/fan cards separate requested, pending and confirmed values. AMS rows retain actual spool colors but use neutral frames and consistent labels. Destructive/physical actions remain visually distinct from readouts.",
-      "narrow":"Stack camera then telemetry. Wrap technical labels and units together. Camera viewport retains aspect ratio without moving controls offscreen; native and embedded panes get independent checks.",
-      "stateDelta":"Offline and stale telemetry show explicit state, not a live-looking zero. Fan pending uses separate feedback from confirmed motion. Manual camera stop is retained on the current visit; recovery does not silently issue hardware commands.",
-      "preserve":"Telemetry parsing, AMS identity, camera lifecycle, physical commands, storage and firmware callbacks.",
-      "scopeIds":["native-printer-monitor-and-farm","native-device-popups","embedded-composition-followup"],
-      "sourceAnchors":["src/slic3r/GUI/StatusPanel.cpp","src/slic3r/GUI/MonitorPage.cpp","src/slic3r/GUI/MediaPlayCtrl.cpp","src/slic3r/GUI/Widgets/FanControl.cpp","src/slic3r/GUI/Widgets/CameraHUD.cpp"]
+      "id": "monitor",
+      "zones": "Printer identity and state header; flexible camera region; bounded telemetry/material/control column; existing storage/firmware navigation.",
+      "anatomy": "Camera HUD sits on its existing video surface with accessible play/stop controls. Temperature/fan cards separate requested, pending and confirmed values. AMS rows retain actual spool colors but use neutral frames and consistent labels. Destructive/physical actions remain visually distinct from readouts.",
+      "narrow": "Stack camera then telemetry. Wrap technical labels and units together. Camera viewport retains aspect ratio without moving controls offscreen; native and embedded panes get independent checks.",
+      "stateDelta": "Offline and stale telemetry show explicit state, not a live-looking zero. Fan pending uses separate feedback from confirmed motion. Manual camera stop is retained on the current visit; recovery does not silently issue hardware commands.",
+      "preserve": "Telemetry parsing, AMS identity, camera lifecycle, physical commands, storage and firmware callbacks.",
+      "scopeIds": [
+        "native-printer-monitor-and-farm",
+        "native-device-popups",
+        "embedded-composition-followup"
+      ],
+      "sourceAnchors": [
+        "src/slic3r/GUI/StatusPanel.cpp",
+        "src/slic3r/GUI/MonitorPage.cpp",
+        "src/slic3r/GUI/MediaPlayCtrl.cpp",
+        "src/slic3r/GUI/Widgets/FanControl.cpp",
+        "src/slic3r/GUI/Widgets/CameraHUD.cpp"
+      ]
     },
     {
-      "id":"farm",
-      "zones":"Collection header/search, account/LAN grouping, responsive device cards or existing list, selection summary, transfer/task result region.",
-      "anatomy":"Each device shows name, connection, job state and real selection control in consistent positions. Saved offline rows stay visible. Bulk actions state selected count. Partial transfer results list each destination and recovery action rather than one aggregate success color.",
-      "narrow":"Reduce card columns at measured minima; use one scroll owner. Selection actions wrap but do not vanish. Long printer names wrap independently of connection badges.",
-      "stateDelta":"Discovery progress does not remove saved devices. Pairing/incompatibility explains disabled submission. Partial success retains unsuccessful destinations and actual retry paths.",
-      "preserve":"Device identities, account/LAN rules, multi-send eligibility, task results and cancellation.",
-      "scopeIds":["native-printer-monitor-and-farm"],
-      "sourceAnchors":["src/slic3r/GUI/MultiMachinePage.cpp","src/slic3r/GUI/MultiPrintJob.cpp"]
+      "id": "farm",
+      "zones": "Collection header/search, account/LAN grouping, responsive device cards or existing list, selection summary, transfer/task result region.",
+      "anatomy": "Each device shows name, connection, job state and real selection control in consistent positions. Saved offline rows stay visible. Bulk actions state selected count. Partial transfer results list each destination and recovery action rather than one aggregate success color.",
+      "narrow": "Reduce card columns at measured minima; use one scroll owner. Selection actions wrap but do not vanish. Long printer names wrap independently of connection badges.",
+      "stateDelta": "Discovery progress does not remove saved devices. Pairing/incompatibility explains disabled submission. Partial success retains unsuccessful destinations and actual retry paths.",
+      "preserve": "Device identities, account/LAN rules, multi-send eligibility, task results and cancellation.",
+      "scopeIds": [
+        "native-printer-monitor-and-farm"
+      ],
+      "sourceAnchors": [
+        "src/slic3r/GUI/MultiMachinePage.cpp",
+        "src/slic3r/GUI/MultiPrintJob.cpp"
+      ]
     },
     {
-      "id":"home-web",
-      "zones":"Existing navigation rail; clear start/open region; recent-project collection; separate learning/online content region; visible connection and provenance.",
-      "anatomy":"Use the existing document thumbnail, name, modified information and row actions as a single readable card. Separate local recents from remote content. Empty states offer real create/open, never fake sample documents. Retain product-owned cards without restyling third-party content.",
-      "narrow":"Cards reduce columns using their measured content. Existing rail can use its existing compact mode; keep names accessible. Each content collection retains its own scroll/search scope.",
-      "stateDelta":"Offline affects remote sections while local recent/open remains available. Loading is confined to the section still loading. Signed-out state keeps existing account action.",
-      "preserve":"Create/open, document identity, account bridge and all existing local/online routes.",
-      "scopeIds":["embedded-composition-followup"],
-      "sourceAnchors":["resources/web/homepage3/css/common.css","resources/web/homepage3/css/home.css","resources/web/homepage3/css/recent.css","resources/web/homepage3/css/online.css","resources/web/homepage3/css/left.css"]
+      "id": "home-web",
+      "zones": "Existing navigation rail; clear start/open region; recent-project collection; separate learning/online content region; visible connection and provenance.",
+      "anatomy": "Use the existing document thumbnail, name, modified information and row actions as a single readable card. Separate local recents from remote content. Empty states offer real create/open, never fake sample documents. Retain product-owned cards without restyling third-party content.",
+      "narrow": "Cards reduce columns using their measured content. Existing rail can use its existing compact mode; keep names accessible. Each content collection retains its own scroll/search scope.",
+      "stateDelta": "Offline affects remote sections while local recent/open remains available. Loading is confined to the section still loading. Signed-out state keeps existing account action.",
+      "preserve": "Create/open, document identity, account bridge and all existing local/online routes.",
+      "scopeIds": [
+        "embedded-composition-followup"
+      ],
+      "sourceAnchors": [
+        "resources/web/homepage3/css/common.css",
+        "resources/web/homepage3/css/home.css",
+        "resources/web/homepage3/css/recent.css",
+        "resources/web/homepage3/css/online.css",
+        "resources/web/homepage3/css/left.css"
+      ]
     },
     {
-      "id":"ink-web",
-      "zones":"Inventory toolbar/search; spool collection; selected-spool detail; existing edit/history actions and plugin/account state.",
-      "anatomy":"Spool rows align identity, material, remaining quantity and actual actions; material swatches keep data colors with a neutral boundary. Detail separates editable values from history. Custom-filament steps retain their existing inputs with label/support/validation stacks.",
-      "narrow":"Stack selected detail below inventory or use its current drawer route. Permit table scrolling where meaning needs columns; keep name and selection identifiable. Action groups wrap without covering quantities.",
-      "stateDelta":"Plugin missing/signed out shows the exact available recovery route. Invalid edits retain entered values. No-match is distinct from empty inventory; history remains readable offline where already supported.",
-      "preserve":"Spool IDs, amount units, assignments, save validation, plugin requirements and history semantics.",
-      "scopeIds":["embedded-composition-followup","native-device-popups"],
-      "sourceAnchors":["src/slic3r/GUI/DeviceWeb/device_page/src/styles.css","resources/web/fila_manager/index.css","resources/web/filament_create/style.css","resources/web/filament_create/edit_filament.css"]
+      "id": "ink-web",
+      "zones": "Inventory toolbar/search; spool collection; selected-spool detail; existing edit/history actions and plugin/account state.",
+      "anatomy": "Spool rows align identity, material, remaining quantity and actual actions; material swatches keep data colors with a neutral boundary. Detail separates editable values from history. Custom-filament steps retain their existing inputs with label/support/validation stacks.",
+      "narrow": "Stack selected detail below inventory or use its current drawer route. Permit table scrolling where meaning needs columns; keep name and selection identifiable. Action groups wrap without covering quantities.",
+      "stateDelta": "Plugin missing/signed out shows the exact available recovery route. Invalid edits retain entered values. No-match is distinct from empty inventory; history remains readable offline where already supported.",
+      "preserve": "Spool IDs, amount units, assignments, save validation, plugin requirements and history semantics.",
+      "scopeIds": [
+        "embedded-composition-followup",
+        "native-device-popups"
+      ],
+      "sourceAnchors": [
+        "src/slic3r/GUI/DeviceWeb/device_page/src/styles.css",
+        "resources/web/fila_manager/index.css",
+        "resources/web/filament_create/style.css",
+        "resources/web/filament_create/edit_filament.css"
+      ]
     },
     {
-      "id":"printer-web",
-      "zones":"Selected-device header, connection/readiness strip, existing control groups, telemetry body and local recovery region.",
-      "anatomy":"Group readouts by function and give each existing control a persistent name plus current value. Separate transport or destructive commands from telemetry cards. Keep native host chrome and embedded page backgrounds coherent without changing the bridge.",
-      "narrow":"Stack control groups, retain units with values, and keep confirmation/recovery reachable inside the embedded viewport.",
-      "stateDelta":"Loading, offline, unavailable and pending commands each retain text. Stale values cannot look freshly confirmed. Failure shows the actual recovery action.",
-      "preserve":"Selected printer, bridge messages, permissions, telemetry and physical-operation confirmations.",
-      "scopeIds":["embedded-composition-followup","native-printer-monitor-and-farm"],
-      "sourceAnchors":["src/slic3r/GUI/PrinterWebView.cpp","resources/web/device/css/home.css","resources/web/device/css/dark.css"]
+      "id": "printer-web",
+      "zones": "Selected-device header, connection/readiness strip, existing control groups, telemetry body and local recovery region.",
+      "anatomy": "Group readouts by function and give each existing control a persistent name plus current value. Separate transport or destructive commands from telemetry cards. Keep native host chrome and embedded page backgrounds coherent without changing the bridge.",
+      "narrow": "Stack control groups, retain units with values, and keep confirmation/recovery reachable inside the embedded viewport.",
+      "stateDelta": "Loading, offline, unavailable and pending commands each retain text. Stale values cannot look freshly confirmed. Failure shows the actual recovery action.",
+      "preserve": "Selected printer, bridge messages, permissions, telemetry and physical-operation confirmations.",
+      "scopeIds": [
+        "embedded-composition-followup",
+        "native-printer-monitor-and-farm"
+      ],
+      "sourceAnchors": [
+        "src/slic3r/GUI/PrinterWebView.cpp",
+        "resources/web/device/css/home.css",
+        "resources/web/device/css/dark.css"
+      ]
     },
     {
-      "id":"project",
-      "zones":"Existing online/local navigation; collection/detail content; workspace subnavigation for existing files/notes/checklist/calendar/history; stable project actions.",
-      "anatomy":"File rows show stable identity, type, actual state and actions. Notes use a readable editor area; checklist aligns checkbox/text/due state; calendar preserves date/time structure and distinct agenda form. Missing capabilities remain backlog, never inert tabs.",
-      "narrow":"Collection and detail stack at actual content minima. Calendar uses its existing agenda alternative where available; otherwise retain scrolling and all actions. Long file names wrap or expose full value through an existing accessible route.",
-      "stateDelta":"Missing member, unsaved note, overdue item, overlap warning and history conflict stay distinct. Planning never implies scheduling a physical print.",
-      "preserve":"Online project routes, file identity, project save/load, existing local workspace data and reminder semantics.",
-      "scopeIds":["native-project-preferences-and-setup","workspace-nested-content","embedded-composition-followup","native-auxiliary-readers-and-overlays"],
-      "sourceAnchors":["src/slic3r/GUI/Project.cpp","src/slic3r/GUI/WorkspacePanel.cpp","resources/web/model/model.css","resources/web/model_new/index.css","resources/web/model_new/css/editor.css","resources/web/model_new/css/gallery.css"]
+      "id": "project",
+      "zones": "Existing online/local navigation; collection/detail content; workspace subnavigation for existing files/notes/checklist/calendar/history; stable project actions.",
+      "anatomy": "File rows show stable identity, type, actual state and actions. Notes use a readable editor area; checklist aligns checkbox/text/due state; calendar preserves date/time structure and distinct agenda form. Missing capabilities remain backlog, never inert tabs.",
+      "narrow": "Collection and detail stack at actual content minima. Calendar uses its existing agenda alternative where available; otherwise retain scrolling and all actions. Long file names wrap or expose full value through an existing accessible route.",
+      "stateDelta": "Missing member, unsaved note, overdue item, overlap warning and history conflict stay distinct. Planning never implies scheduling a physical print.",
+      "preserve": "Online project routes, file identity, project save/load, existing local workspace data and reminder semantics.",
+      "scopeIds": [
+        "native-project-preferences-and-setup",
+        "workspace-nested-content",
+        "embedded-composition-followup",
+        "native-auxiliary-readers-and-overlays"
+      ],
+      "sourceAnchors": [
+        "src/slic3r/GUI/Project.cpp",
+        "src/slic3r/GUI/WorkspacePanel.cpp",
+        "resources/web/model/model.css",
+        "resources/web/model_new/index.css",
+        "resources/web/model_new/css/editor.css",
+        "resources/web/model_new/css/gallery.css"
+      ]
     },
     {
-      "id":"calibration",
-      "zones":"Existing method selector; persistent current-step heading; scoped input body; validation; previous/next/cancel footer; result/save region.",
-      "anatomy":"Use distinct method cards for actual calibration choices, then a readable form with label/value/unit/help rows. Results separate measurement from the proposed preset update. A step indicator reports actual progress rather than inventing a shorter flow.",
-      "narrow":"Inputs form one column and retain numeric units. Body scrolls independently of footer. Child pages must own their text-wrap decisions rather than inheriting the parent frame's apparent fit.",
-      "stateDelta":"Printer unavailable and invalid input explain the unmet condition. Busy keeps cancel when supported. Results name actual measurement and existing save route; failure preserves recoverable inputs.",
-      "preserve":"Calibration algorithms, ranges, printer choice, action timing, cancellation and result storage.",
-      "scopeIds":["native-project-preferences-and-setup","wizard-child-pages"],
-      "sourceAnchors":["src/slic3r/GUI/CalibrationPanel.cpp","src/slic3r/GUI/CalibrationWizard.cpp","src/slic3r/GUI/CalibrationWizardPresetPage.cpp","src/slic3r/GUI/CalibrationWizardCaliPage.cpp","src/slic3r/GUI/CalibrationWizardSavePage.cpp"]
+      "id": "calibration",
+      "zones": "Existing method selector; persistent current-step heading; scoped input body; validation; previous/next/cancel footer; result/save region.",
+      "anatomy": "Use distinct method cards for actual calibration choices, then a readable form with label/value/unit/help rows. Results separate measurement from the proposed preset update. A step indicator reports actual progress rather than inventing a shorter flow.",
+      "narrow": "Inputs form one column and retain numeric units. Body scrolls independently of footer. Child pages must own their text-wrap decisions rather than inheriting the parent frame's apparent fit.",
+      "stateDelta": "Printer unavailable and invalid input explain the unmet condition. Busy keeps cancel when supported. Results name actual measurement and existing save route; failure preserves recoverable inputs.",
+      "preserve": "Calibration algorithms, ranges, printer choice, action timing, cancellation and result storage.",
+      "scopeIds": [
+        "native-project-preferences-and-setup",
+        "wizard-child-pages"
+      ],
+      "sourceAnchors": [
+        "src/slic3r/GUI/CalibrationPanel.cpp",
+        "src/slic3r/GUI/CalibrationWizard.cpp",
+        "src/slic3r/GUI/CalibrationWizardPresetPage.cpp",
+        "src/slic3r/GUI/CalibrationWizardCaliPage.cpp",
+        "src/slic3r/GUI/CalibrationWizardSavePage.cpp"
+      ]
     },
     {
-      "id":"preferences",
-      "zones":"Measured230 nominal section navigation; local settings search; expanding section body; reachable existing apply/reset/close actions.",
-      "anatomy":"Group actual registered settings under16 bold headings. Each row has a persistent label, existing control, truthful default/provenance and disclosure for explanation. Multi-control rows wrap as one semantic group. No invented toggles for absent canonical features.",
-      "narrow":"Convert label/control rows to stacked layout when their measured minima collide. Use one content scroll owner, not a fixed label width that clips bilingual copy. Keep section navigation and action footer reachable.",
-      "stateDelta":"Modified/custom/invalid/locked states have separate markers and copy. Search focuses the actual setting, including other sections. Reset preserves the existing confirmation and restores only its actual scope.",
-      "preserve":"Every registered setting, current/default value, persistence, lock, reset and command-palette route.",
-      "scopeIds":["native-project-preferences-and-setup","native-shared-component-anatomy","field-and-preset-callers"],
-      "sourceAnchors":["src/slic3r/GUI/Preferences.cpp","src/slic3r/GUI/Widgets/SearchField.cpp","src/slic3r/GUI/Widgets/ComboBox.cpp","src/slic3r/GUI/Widgets/TextInput.cpp"]
+      "id": "preferences",
+      "zones": "Measured230 nominal section navigation; local settings search; expanding section body; reachable existing apply/reset/close actions.",
+      "anatomy": "Group actual registered settings under16 bold headings. Each row has a persistent label, existing control, truthful default/provenance and disclosure for explanation. Multi-control rows wrap as one semantic group. No invented toggles for absent canonical features.",
+      "narrow": "Convert label/control rows to stacked layout when their measured minima collide. Use one content scroll owner, not a fixed label width that clips bilingual copy. Keep section navigation and action footer reachable.",
+      "stateDelta": "Modified/custom/invalid/locked states have separate markers and copy. Search focuses the actual setting, including other sections. Reset preserves the existing confirmation and restores only its actual scope.",
+      "preserve": "Every registered setting, current/default value, persistence, lock, reset and command-palette route.",
+      "scopeIds": [
+        "native-project-preferences-and-setup",
+        "native-shared-component-anatomy",
+        "field-and-preset-callers"
+      ],
+      "sourceAnchors": [
+        "src/slic3r/GUI/Preferences.cpp",
+        "src/slic3r/GUI/Widgets/SearchField.cpp",
+        "src/slic3r/GUI/Widgets/ComboBox.cpp",
+        "src/slic3r/GUI/Widgets/TextInput.cpp"
+      ]
     },
     {
-      "id":"parameters",
-      "zones":"Printer/material/process category context, preset selector, actual simple/advanced/expert controls, independent parameter scroll body and modification/reset region.",
-      "anatomy":"Align option name, real editor, unit and reset marker; reserve a separate supporting line. Modified and inherited values are identifiable without relying on color. Existing compound values remain grouped rather than spread across unrelated cards.",
-      "narrow":"Stack long labels above editors and permit vertical expansion. Keep advanced values reachable; never hide them as a visual simplification or force a preset switch to fit.",
-      "stateDelta":"Search result, no-match, inherited/modified/custom, validation and comparison each retain actual value and reason. Merely rendering a custom state never writes it.",
-      "preserve":"Parameter names, ranges, presets, inheritance, advanced visibility, defaults and value callbacks.",
-      "scopeIds":["native-prepare-inspector-and-lists","field-and-preset-callers"],
-      "sourceAnchors":["src/slic3r/GUI/ParamsPanel.cpp","src/slic3r/GUI/OptionsGroup.cpp","src/slic3r/GUI/Field.cpp","src/slic3r/GUI/Tab.cpp"]
+      "id": "parameters",
+      "zones": "Printer/material/process category context, preset selector, actual simple/advanced/expert controls, independent parameter scroll body and modification/reset region.",
+      "anatomy": "Align option name, real editor, unit and reset marker; reserve a separate supporting line. Modified and inherited values are identifiable without relying on color. Existing compound values remain grouped rather than spread across unrelated cards.",
+      "narrow": "Stack long labels above editors and permit vertical expansion. Keep advanced values reachable; never hide them as a visual simplification or force a preset switch to fit.",
+      "stateDelta": "Search result, no-match, inherited/modified/custom, validation and comparison each retain actual value and reason. Merely rendering a custom state never writes it.",
+      "preserve": "Parameter names, ranges, presets, inheritance, advanced visibility, defaults and value callbacks.",
+      "scopeIds": [
+        "native-prepare-inspector-and-lists",
+        "field-and-preset-callers"
+      ],
+      "sourceAnchors": [
+        "src/slic3r/GUI/ParamsPanel.cpp",
+        "src/slic3r/GUI/OptionsGroup.cpp",
+        "src/slic3r/GUI/Field.cpp",
+        "src/slic3r/GUI/Tab.cpp"
+      ]
     },
     {
-      "id":"wizard",
-      "zones":"Stable actual-step navigation, page heading, one scrollable current-step region, persistent previous/next/cancel footer.",
-      "anatomy":"Printer/material selections use their existing cards with visible selected marker and full names. Privacy, network/plugin consent and association choices remain separate labelled groups. Footer actions preserve actual sequence and validation.",
-      "narrow":"Reduce selection columns, wrap full option labels and scroll only the body. Child embedded guide pages must fit their actual host client area, not a browser-size assumption.",
-      "stateDelta":"First run, validation, download/loading, cancellation, recovery and finish follow the existing flow. No skipped consent or fake completion screen.",
-      "preserve":"All steps, choices, plugin consent, file associations, cancellation and setup completion.",
-      "scopeIds":["native-project-preferences-and-setup","wizard-child-pages","embedded-composition-followup"],
-      "sourceAnchors":["src/slic3r/GUI/ConfigWizard.cpp","resources/web/guide/css/common.css","resources/web/guide/1/1.css","resources/web/guide/23/23.css"]
+      "id": "wizard",
+      "zones": "Stable actual-step navigation, page heading, one scrollable current-step region, persistent previous/next/cancel footer.",
+      "anatomy": "Printer/material selections use their existing cards with visible selected marker and full names. Privacy, network/plugin consent and association choices remain separate labelled groups. Footer actions preserve actual sequence and validation.",
+      "narrow": "Reduce selection columns, wrap full option labels and scroll only the body. Child embedded guide pages must fit their actual host client area, not a browser-size assumption.",
+      "stateDelta": "First run, validation, download/loading, cancellation, recovery and finish follow the existing flow. No skipped consent or fake completion screen.",
+      "preserve": "All steps, choices, plugin consent, file associations, cancellation and setup completion.",
+      "scopeIds": [
+        "native-project-preferences-and-setup",
+        "wizard-child-pages",
+        "embedded-composition-followup"
+      ],
+      "sourceAnchors": [
+        "src/slic3r/GUI/ConfigWizard.cpp",
+        "resources/web/guide/css/common.css",
+        "resources/web/guide/1/1.css",
+        "resources/web/guide/23/23.css"
+      ]
     },
     {
-      "id":"menus",
-      "zones":"Anchored opaque surface; existing local search/builder header; scrollable items; aligned icon/label/shortcut/submenu columns.",
-      "anatomy":"Use a tonal selected row plus explicit marker, separators for existing semantic groups, and truthful disabled explanation. Preserve action order. Nested surfaces align to their parent item and stay within display bounds.",
-      "narrow":"Measure the complete label and shortcut columns; scroll vertically instead of compressing rows. Use the existing overflow/dismissal route and retain keyboard equivalents.",
-      "stateDelta":"Filtered/no-match, disabled, submenu, focus and dismissal preserve the original target. Escape clears/closes through existing semantics and returns focus.",
-      "preserve":"Item IDs, callbacks, enable conditions, shortcut behavior, ordering and target-specific context.",
-      "scopeIds":["native-shared-component-anatomy","native-auxiliary-readers-and-overlays","shell-tab-callers"],
-      "sourceAnchors":["src/slic3r/GUI/Widgets/MD3Menu.cpp","src/slic3r/GUI/ImGuiWrapper.cpp","src/slic3r/GUI/MsgDialog.cpp","src/slic3r/GUI/Widgets/TabStripDialogs.cpp"]
+      "id": "menus",
+      "zones": "Anchored opaque surface; existing local search/builder header; scrollable items; aligned icon/label/shortcut/submenu columns.",
+      "anatomy": "Use a tonal selected row plus explicit marker, separators for existing semantic groups, and truthful disabled explanation. Preserve action order. Nested surfaces align to their parent item and stay within display bounds.",
+      "narrow": "Measure the complete label and shortcut columns; scroll vertically instead of compressing rows. Use the existing overflow/dismissal route and retain keyboard equivalents.",
+      "stateDelta": "Filtered/no-match, disabled, submenu, focus and dismissal preserve the original target. Escape clears/closes through existing semantics and returns focus.",
+      "preserve": "Item IDs, callbacks, enable conditions, shortcut behavior, ordering and target-specific context.",
+      "scopeIds": [
+        "native-shared-component-anatomy",
+        "native-auxiliary-readers-and-overlays",
+        "shell-tab-callers"
+      ],
+      "sourceAnchors": [
+        "src/slic3r/GUI/Widgets/MD3Menu.cpp",
+        "src/slic3r/GUI/ImGuiWrapper.cpp",
+        "src/slic3r/GUI/MsgDialog.cpp",
+        "src/slic3r/GUI/Widgets/TabStripDialogs.cpp"
+      ]
     },
     {
-      "id":"appearance-editor",
-      "zones":"Target identity and scope header; property tabs; real property editors; state selector; preview; existing reset/apply actions.",
-      "anatomy":"Separate color/font/spacing/shape/motion groups with consistent field stacks. Show target path and actual edited state. Unsupported property is an explicit explanation, not a disabled anonymous swatch. Reset scope stays visible.",
-      "narrow":"Property body scrolls; actual preview can shrink or use its existing disclosure without hiding action footer. Long target names wrap rather than changing target selection.",
-      "stateDelta":"Selected/hover/focus/disabled previews remain distinct. Invalid values keep the last valid state, and locked targets retain their existing unlock route.",
-      "preserve":"Target/property IDs, user overrides, state-specific edits, locks, history and reset semantics.",
-      "scopeIds":["native-auxiliary-readers-and-overlays","native-shared-component-anatomy"],
-      "sourceAnchors":["src/slic3r/GUI/Appearance/AppearanceEditorPopover.cpp"]
+      "id": "appearance-editor",
+      "zones": "Target identity and scope header; property tabs; real property editors; state selector; preview; existing reset/apply actions.",
+      "anatomy": "Separate color/font/spacing/shape/motion groups with consistent field stacks. Show target path and actual edited state. Unsupported property is an explicit explanation, not a disabled anonymous swatch. Reset scope stays visible.",
+      "narrow": "Property body scrolls; actual preview can shrink or use its existing disclosure without hiding action footer. Long target names wrap rather than changing target selection.",
+      "stateDelta": "Selected/hover/focus/disabled previews remain distinct. Invalid values keep the last valid state, and locked targets retain their existing unlock route.",
+      "preserve": "Target/property IDs, user overrides, state-specific edits, locks, history and reset semantics.",
+      "scopeIds": [
+        "native-auxiliary-readers-and-overlays",
+        "native-shared-component-anatomy"
+      ],
+      "sourceAnchors": [
+        "src/slic3r/GUI/Appearance/AppearanceEditorPopover.cpp"
+      ]
     },
     {
-      "id":"palette",
-      "zones":"Existing compact/full card; query/builder header; grouped scrollable results; shortcut/destination/support line.",
-      "anatomy":"Result rows separate command name from destination and shortcut. Actual rich setting controls occupy a stable trailing region with their own accessible identity. Selection marker is distinct from a setting value.",
-      "narrow":"Wrap support text; keep command and shortcut readable. Entering a rich control remains deliberate and cannot trap ordinary result navigation. Full mode uses available space without altering command scope.",
-      "stateDelta":"No-match, locked result, rich control editing and teleport preserve the exact command target. Dismissal returns focus and does not execute the highlighted result.",
-      "preserve":"Command registration, IDs, callbacks, shortcuts, current values, lock checks and teleport routes.",
-      "scopeIds":["native-auxiliary-readers-and-overlays"],
-      "sourceAnchors":["src/slic3r/GUI/CommandPalette.cpp"]
+      "id": "palette",
+      "zones": "Existing compact/full card; query/builder header; grouped scrollable results; shortcut/destination/support line.",
+      "anatomy": "Result rows separate command name from destination and shortcut. Actual rich setting controls occupy a stable trailing region with their own accessible identity. Selection marker is distinct from a setting value.",
+      "narrow": "Wrap support text; keep command and shortcut readable. Entering a rich control remains deliberate and cannot trap ordinary result navigation. Full mode uses available space without altering command scope.",
+      "stateDelta": "No-match, locked result, rich control editing and teleport preserve the exact command target. Dismissal returns focus and does not execute the highlighted result.",
+      "preserve": "Command registration, IDs, callbacks, shortcuts, current values, lock checks and teleport routes.",
+      "scopeIds": [
+        "native-auxiliary-readers-and-overlays"
+      ],
+      "sourceAnchors": [
+        "src/slic3r/GUI/CommandPalette.cpp"
+      ]
     },
     {
-      "id":"regex",
-      "zones":"Anchored query/engine header; guided/raw controls; result/capture table; replacement/explanation/diagnostic sections; apply/close actions.",
-      "anatomy":"Keep syntax in readable monospaced text, capabilities beside engine identity, and distinct invalid/no-match/timeout states. Match and capture columns align by index/name/value. Unsupported constructs explain the existing engine limit.",
-      "narrow":"Stack editor and results; bound long samples with local scrolling. Preserve the anchor and focus-return path. Constrained expansion uses the existing route rather than moving to another search field.",
-      "stateDelta":"Guided/raw, invalid, no-match, limits and replacement preview never overwrite another field's pattern. Evaluation remains bounded and applies only when existing semantics say it does.",
-      "preserve":"Engine, flags, isolated field state, snippets, validation, evaluation budget and apply/cancel behavior.",
-      "scopeIds":["native-auxiliary-readers-and-overlays"],
-      "sourceAnchors":["src/slic3r/GUI/Widgets/RegexBuilderPopup.cpp"]
+      "id": "regex",
+      "zones": "Anchored query/engine header; guided/raw controls; result/capture table; replacement/explanation/diagnostic sections; apply/close actions.",
+      "anatomy": "Keep syntax in readable monospaced text, capabilities beside engine identity, and distinct invalid/no-match/timeout states. Match and capture columns align by index/name/value. Unsupported constructs explain the existing engine limit.",
+      "narrow": "Stack editor and results; bound long samples with local scrolling. Preserve the anchor and focus-return path. Constrained expansion uses the existing route rather than moving to another search field.",
+      "stateDelta": "Guided/raw, invalid, no-match, limits and replacement preview never overwrite another field's pattern. Evaluation remains bounded and applies only when existing semantics say it does.",
+      "preserve": "Engine, flags, isolated field state, snippets, validation, evaluation budget and apply/cancel behavior.",
+      "scopeIds": [
+        "native-auxiliary-readers-and-overlays"
+      ],
+      "sourceAnchors": [
+        "src/slic3r/GUI/Widgets/RegexBuilderPopup.cpp"
+      ]
     },
     {
-      "id":"notifications",
-      "zones":"Existing local operation progress; nonblocking notice stack; history collection with filter and existing bulk actions.",
-      "anatomy":"Each notice has icon plus state text, factual message, optional real progress and action area. History separates current activity from dismissed records. Timestamps remain actual provenance, not newly generated decorative values.",
-      "narrow":"Wrap message before actions and keep cancel/recovery reachable. Bound stack height and preserve history access; notices must not cover primary action targets indefinitely.",
-      "stateDelta":"Progress, warning, failure, success and dismissal have explicit text. Busy progress never claims completion because an animation ended; quiet behavior remains unchanged.",
-      "preserve":"Event identity, timing, callbacks, cancellation, quiet settings and durable notification history.",
-      "scopeIds":["native-auxiliary-readers-and-overlays","native-notification-paint"],
-      "sourceAnchors":["src/slic3r/GUI/NotificationHistory.cpp","src/slic3r/GUI/NotificationManager.cpp"]
+      "id": "notifications",
+      "zones": "Existing local operation progress; nonblocking notice stack; history collection with filter and existing bulk actions.",
+      "anatomy": "Each notice has icon plus state text, factual message, optional real progress and action area. History separates current activity from dismissed records. Timestamps remain actual provenance, not newly generated decorative values.",
+      "narrow": "Wrap message before actions and keep cancel/recovery reachable. Bound stack height and preserve history access; notices must not cover primary action targets indefinitely.",
+      "stateDelta": "Progress, warning, failure, success and dismissal have explicit text. Busy progress never claims completion because an animation ended; quiet behavior remains unchanged.",
+      "preserve": "Event identity, timing, callbacks, cancellation, quiet settings and durable notification history.",
+      "scopeIds": [
+        "native-auxiliary-readers-and-overlays",
+        "native-notification-paint"
+      ],
+      "sourceAnchors": [
+        "src/slic3r/GUI/NotificationCenterPanel.cpp",
+        "src/slic3r/GUI/NotificationManager.cpp"
+      ]
     },
     {
-      "id":"history",
-      "zones":"Revision collection/filter, selected-revision metadata, actual difference region, restore preview and explicit actions.",
-      "anatomy":"Timeline rows align date, description and scope. Diff separates before/after clearly with readable monospaced technical text. Restore scope and excluded private material stay visible beside existing confirmation.",
-      "narrow":"Stack revision details under list or use existing drawer. Scroll long diffs locally and keep restore/export actions reachable without shrinking text.",
-      "stateDelta":"Empty, conflict, corrupt history, interrupted save and restore preview retain current valid data. An old revision is not marked restored until the real operation succeeds.",
-      "preserve":"Append-only records, actual diffs, identity, restoration, exports and credential exclusions.",
-      "scopeIds":["native-auxiliary-readers-and-overlays"],
-      "sourceAnchors":["src/slic3r/GUI/ProjectHistoryDialog.cpp"]
+      "id": "history",
+      "zones": "Revision collection/filter, selected-revision metadata, actual difference region, restore preview and explicit actions.",
+      "anatomy": "Timeline rows align date, description and scope. Diff separates before/after clearly with readable monospaced technical text. Restore scope and excluded private material stay visible beside existing confirmation.",
+      "narrow": "Stack revision details under list or use existing drawer. Scroll long diffs locally and keep restore/export actions reachable without shrinking text.",
+      "stateDelta": "Empty, conflict, corrupt history, interrupted save and restore preview retain current valid data. An old revision is not marked restored until the real operation succeeds.",
+      "preserve": "Append-only records, actual diffs, identity, restoration, exports and credential exclusions.",
+      "scopeIds": [
+        "native-auxiliary-readers-and-overlays"
+      ],
+      "sourceAnchors": [
+        "src/slic3r/GUI/ProjectHistoryDialog.cpp"
+      ]
     },
     {
-      "id":"documentation",
-      "zones":"Measured contents tree, local search, readable article column, existing back/forward and related-feature routes.",
-      "anatomy":"Article hierarchy uses actual headings, comfortable line length and selectable code blocks. Contents selection, search result and current article are separate states. Inline links preserve their exact destinations and platform behavior.",
-      "narrow":"Collapse through the existing contents disclosure if supported; otherwise retain bounded split scrolling. Code tables scroll locally. Article width never exceeds its reading region.",
-      "stateDelta":"Offline articles stay readable; no-match differs from unavailable article. External handoff shows the existing route, and navigation history retains its actual position.",
-      "preserve":"Offline content, links, search, history, external editor and feature help routing.",
-      "scopeIds":["native-auxiliary-readers-and-overlays","embedded-composition-followup"],
-      "sourceAnchors":["src/slic3r/GUI/DocsBrowserDialog.cpp","resources/web/homepage3/css/manual.css","resources/web/homepage3/css/wiki.css"]
+      "id": "documentation",
+      "zones": "Measured contents tree, local search, readable article column, existing back/forward and related-feature routes.",
+      "anatomy": "Article hierarchy uses actual headings, comfortable line length and selectable code blocks. Contents selection, search result and current article are separate states. Inline links preserve their exact destinations and platform behavior.",
+      "narrow": "Collapse through the existing contents disclosure if supported; otherwise retain bounded split scrolling. Code tables scroll locally. Article width never exceeds its reading region.",
+      "stateDelta": "Offline articles stay readable; no-match differs from unavailable article. External handoff shows the existing route, and navigation history retains its actual position.",
+      "preserve": "Offline content, links, search, history, external editor and feature help routing.",
+      "scopeIds": [
+        "native-auxiliary-readers-and-overlays",
+        "embedded-composition-followup"
+      ],
+      "sourceAnchors": [
+        "src/slic3r/GUI/DocsBrowserDialog.cpp",
+        "resources/web/homepage3/css/manual.css",
+        "resources/web/homepage3/css/wiki.css"
+      ]
     },
     {
-      "id":"changelog",
-      "zones":"Version/date collection, selected release body, local filter, existing copy/export actions.",
-      "anatomy":"Version identifier and exact date precede categorized change text. Current version marker is explicit; body uses readable heading/list/code treatment. No new timestamp or release status is invented.",
-      "narrow":"Stack selector and body if necessary; use bounded body scrolling and persistent reachable actions. Preserve full technical identifiers.",
-      "stateDelta":"No-match, empty source and offline content are distinct. Copy/export report their actual outcome without moving selection.",
-      "preserve":"Release provenance, content, version ordering, copy and export semantics.",
-      "scopeIds":["native-auxiliary-readers-and-overlays"],
-      "sourceAnchors":["src/slic3r/GUI/ChangelogDialog.cpp"]
+      "id": "changelog",
+      "zones": "Version/date collection, selected release body, local filter, existing copy/export actions.",
+      "anatomy": "Version identifier and exact date precede categorized change text. Current version marker is explicit; body uses readable heading/list/code treatment. No new timestamp or release status is invented.",
+      "narrow": "Stack selector and body if necessary; use bounded body scrolling and persistent reachable actions. Preserve full technical identifiers.",
+      "stateDelta": "No-match, empty source and offline content are distinct. Copy/export report their actual outcome without moving selection.",
+      "preserve": "Release provenance, content, version ordering, copy and export semantics.",
+      "scopeIds": [
+        "native-auxiliary-readers-and-overlays"
+      ],
+      "sourceAnchors": [
+        "src/slic3r/GUI/ChangelogDialog.cpp"
+      ]
     },
     {
-      "id":"import-export",
-      "zones":"Existing file/format choices, option group, destination browse/value pair, review/validation, local progress and result actions.",
-      "anatomy":"Show actual file names, format and destination as separate labelled values. Browse and typed path share one validation line. Overwrite scope stays explicit in the existing confirmation. Progress names the operation and real cancel behavior.",
-      "narrow":"Stack option rows and let paths wrap or scroll in their actual field. Keep destination browse and cancel reachable. No default size may cut off the final format option.",
-      "stateDelta":"Validation, conflict, progress, cancellation and partial failure preserve the actual selected files and previous valid state.",
-      "preserve":"Formats, serializer options, path validation, overwrite confirmation, cancellation and output semantics.",
-      "scopeIds":["native-auxiliary-readers-and-overlays","print-setup-callers"],
-      "sourceAnchors":["src/slic3r/GUI/Export/ExportDialog.cpp","src/slic3r/GUI/SendToPrinter.cpp"]
+      "id": "import-export",
+      "zones": "Existing file/format choices, option group, destination browse/value pair, review/validation, local progress and result actions.",
+      "anatomy": "Show actual file names, format and destination as separate labelled values. Browse and typed path share one validation line. Overwrite scope stays explicit in the existing confirmation. Progress names the operation and real cancel behavior.",
+      "narrow": "Stack option rows and let paths wrap or scroll in their actual field. Keep destination browse and cancel reachable. No default size may cut off the final format option.",
+      "stateDelta": "Validation, conflict, progress, cancellation and partial failure preserve the actual selected files and previous valid state.",
+      "preserve": "Formats, serializer options, path validation, overwrite confirmation, cancellation and output semantics.",
+      "scopeIds": [
+        "native-auxiliary-readers-and-overlays",
+        "print-setup-callers"
+      ],
+      "sourceAnchors": [
+        "src/slic3r/GUI/Export/ExportDialog.cpp",
+        "src/slic3r/GUI/SendToPrinter.cpp"
+      ]
     },
     {
-      "id":"model-creator",
-      "zones":"For existing implementation only: provider/model context, prompt/refinement editor, accepted preview, generation status and explicit add action.",
-      "anatomy":"Separate accepted geometry from a pending revision. Keep actual provider connection state and generation diagnostics near the editor. Unsupported or missing engine remains an inventory gap; do not create a decorative functional-looking panel.",
-      "narrow":"Stack editor and preview; bound technical diagnostics and retain cancel/add controls. Preview keeps actual geometry aspect and existing manipulation behavior.",
-      "stateDelta":"Disconnected, generating, cancelled, invalid and failed revisions retain the last accepted preview where the engine supports it. Only explicit existing add changes the plate.",
-      "preserve":"Provider behavior, credential boundaries, scene validation, generation limits and explicit acceptance.",
-      "scopeIds":["conditional-existing-tools"],
-      "sourceAnchors":["src/slic3r/GUI/MainFrame.cpp"]
+      "id": "model-creator",
+      "zones": "For existing implementation only: provider/model context, prompt/refinement editor, accepted preview, generation status and explicit add action.",
+      "anatomy": "Separate accepted geometry from a pending revision. Keep actual provider connection state and generation diagnostics near the editor. Unsupported or missing engine remains an inventory gap; do not create a decorative functional-looking panel.",
+      "narrow": "Stack editor and preview; bound technical diagnostics and retain cancel/add controls. Preview keeps actual geometry aspect and existing manipulation behavior.",
+      "stateDelta": "Disconnected, generating, cancelled, invalid and failed revisions retain the last accepted preview where the engine supports it. Only explicit existing add changes the plate.",
+      "preserve": "Provider behavior, credential boundaries, scene validation, generation limits and explicit acceptance.",
+      "scopeIds": [
+        "conditional-existing-tools"
+      ],
+      "sourceAnchors": [
+        "src/slic3r/GUI/MainFrame.cpp"
+      ]
     },
     {
-      "id":"smart-home",
-      "zones":"For existing configuration only: source identity, real mapping controls, validation, connection state and local fallback explanation.",
-      "anatomy":"Separate editable source fields from read-only connection evidence. Source status uses icon plus text. Keep fallback settings visibly identifiable and credentials out of descriptive previews.",
-      "narrow":"Stack labels/values; keep browse/select routes and validation adjacent. Long entity identifiers retain their complete value through actual controls.",
-      "stateDelta":"Inactive, offline, invalid and recovery states retain real base settings. No green connection state is drawn before existing validation confirms it.",
-      "preserve":"Source validation, bounded refresh, credentials, precedence and offline fallback. Missing adapters remain missing.",
-      "scopeIds":["conditional-existing-tools"],
-      "sourceAnchors":["src/slic3r/GUI/MainFrame.cpp"]
+      "id": "smart-home",
+      "zones": "For existing configuration only: source identity, real mapping controls, validation, connection state and local fallback explanation.",
+      "anatomy": "Separate editable source fields from read-only connection evidence. Source status uses icon plus text. Keep fallback settings visibly identifiable and credentials out of descriptive previews.",
+      "narrow": "Stack labels/values; keep browse/select routes and validation adjacent. Long entity identifiers retain their complete value through actual controls.",
+      "stateDelta": "Inactive, offline, invalid and recovery states retain real base settings. No green connection state is drawn before existing validation confirms it.",
+      "preserve": "Source validation, bounded refresh, credentials, precedence and offline fallback. Missing adapters remain missing.",
+      "scopeIds": [
+        "conditional-existing-tools"
+      ],
+      "sourceAnchors": [
+        "src/slic3r/GUI/MainFrame.cpp"
+      ]
     },
     {
-      "id":"schedules",
-      "zones":"Rule collection, enabled/active state columns, selected rule editor, timing/source/value groups and base-state summary.",
-      "anatomy":"Show actual timezone and precedence beside the rule. Weekday choices remain one coherent group; start/end values align but retain independent labels. Source status and active effect are distinct.",
-      "narrow":"Stack date/time/source groups, keeping native pickers reachable. Long rule names wrap without detaching enable controls or shifting actions.",
-      "stateDelta":"Empty, overlapping, inactive, active, invalid external source and restored-base states are explicit. A visual activation never writes new scheduling semantics.",
-      "preserve":"Rule IDs, dates, timezone/DST, precedence, external sources and base restoration.",
-      "scopeIds":["native-project-preferences-and-setup"],
-      "sourceAnchors":["src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp"]
+      "id": "schedules",
+      "zones": "Rule collection, enabled/active state columns, selected rule editor, timing/source/value groups and base-state summary.",
+      "anatomy": "Show actual timezone and precedence beside the rule. Weekday choices remain one coherent group; start/end values align but retain independent labels. Source status and active effect are distinct.",
+      "narrow": "Stack date/time/source groups, keeping native pickers reachable. Long rule names wrap without detaching enable controls or shifting actions.",
+      "stateDelta": "Empty, overlapping, inactive, active, invalid external source and restored-base states are explicit. A visual activation never writes new scheduling semantics.",
+      "preserve": "Rule IDs, dates, timezone/DST, precedence, external sources and base restoration.",
+      "scopeIds": [
+        "native-project-preferences-and-setup"
+      ],
+      "sourceAnchors": [
+        "src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp"
+      ]
     },
     {
-      "id":"confirmations",
-      "zones":"Exact action/affected-data summary; two separate existing key controls; full confirmation slider; always-reachable emergency cancel; actual result.",
-      "anatomy":"Each key has an independent labelled target and visible state. Slider instructions and progress remain factual. Cancel is visually stable and never competes with decorative motion. No secret or sensitive content appears in reference examples.",
-      "narrow":"Stack keys and slider without merging targets. Scroll only affected-data detail if needed, retaining all authorization controls and cancel.",
-      "stateDelta":"Untouched, one-key, both-key, partial-slider, authorized, cancel and operation result remain distinct. Motion cannot enable or trigger the action.",
-      "preserve":"Existing authorization state machine, both keys, full slider, Escape/cancel and exact affected-data scope.",
-      "scopeIds":["native-confirmation-and-dialogs"],
-      "sourceAnchors":["src/slic3r/GUI/Widgets/SuperConfirmGate.cpp","src/slic3r/GUI/MsgDialog.cpp"]
+      "id": "confirmations",
+      "zones": "Exact action/affected-data summary; two separate existing key controls; full confirmation slider; always-reachable emergency cancel; actual result.",
+      "anatomy": "Each key has an independent labelled target and visible state. Slider instructions and progress remain factual. Cancel is visually stable and never competes with decorative motion. No secret or sensitive content appears in reference examples.",
+      "narrow": "Stack keys and slider without merging targets. Scroll only affected-data detail if needed, retaining all authorization controls and cancel.",
+      "stateDelta": "Untouched, one-key, both-key, partial-slider, authorized, cancel and operation result remain distinct. Motion cannot enable or trigger the action.",
+      "preserve": "Existing authorization state machine, both keys, full slider, Escape/cancel and exact affected-data scope.",
+      "scopeIds": [
+        "native-confirmation-and-dialogs"
+      ],
+      "sourceAnchors": [
+        "src/slic3r/GUI/Widgets/SuperConfirmGate.cpp",
+        "src/slic3r/GUI/MsgDialog.cpp"
+      ]
     },
     {
-      "id":"canonical-tools",
-      "zones":"For each existing tool separately: real navigation, searchable collection, selected item/details, validation/progress and actual actions.",
-      "anatomy":"Converter, local assistant, authenticator, element locks and support use the shared collection/form anatomy without masquerading as one implemented tool. Secret-bearing content is never put in public references. Missing tools remain explicit feature backlog outside this visual-only scope.",
-      "narrow":"Each actual tool owns its measured layout, scroll and accessible controls. Do not substitute an overview card for a missing editor or recovery flow.",
-      "stateDelta":"Empty, locked, validation, progress and recovery use the actual engine state. No new credential, conversion, assistant or lock engine is authorized here.",
-      "preserve":"Actual security/data/credential boundaries, existing exports, actions and recovery semantics.",
-      "scopeIds":["conditional-existing-tools"],
-      "sourceAnchors":["src/slic3r/GUI/MainFrame.cpp"]
+      "id": "canonical-tools",
+      "zones": "For each existing tool separately: real navigation, searchable collection, selected item/details, validation/progress and actual actions.",
+      "anatomy": "Converter, local assistant, authenticator, element locks and support use the shared collection/form anatomy without masquerading as one implemented tool. Secret-bearing content is never put in public references. Missing tools remain explicit feature backlog outside this visual-only scope.",
+      "narrow": "Each actual tool owns its measured layout, scroll and accessible controls. Do not substitute an overview card for a missing editor or recovery flow.",
+      "stateDelta": "Empty, locked, validation, progress and recovery use the actual engine state. No new credential, conversion, assistant or lock engine is authorized here.",
+      "preserve": "Actual security/data/credential boundaries, existing exports, actions and recovery semantics.",
+      "scopeIds": [
+        "conditional-existing-tools"
+      ],
+      "sourceAnchors": [
+        "src/slic3r/GUI/MainFrame.cpp"
+      ]
     }
-  ]
+  ],
+  "latestSourceReview": "f3565c7580bebd38bcbf5c5f01e272fa5c4b6224"
 }

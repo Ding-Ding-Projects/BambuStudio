@@ -1138,54 +1138,513 @@
   "implementationScopeReference": "design/workflow-refresh/implementation-scopes.json",
   "sourceImplementationReceipts": [
     {
-      "commit": "f28dad52e0a848d613f661849a4fdd64f30c3a60",
-      "classification": "functional-workflow",
       "evidence": "source-only",
-      "scope": "Native Print workspace and existing action routing",
-      "runtimeStatus": "unverified",
-      "captureStatus": "missing"
-    },
-    {
-      "commit": "b69528b150ec03fd33db79f36be16c92812bdef0",
-      "classification": "localization",
-      "evidence": "source-only",
-      "scope": "Print and navigation localization plus workspace documentation",
-      "runtimeStatus": "unverified",
-      "captureStatus": "missing"
-    },
-    {
-      "commit": "624e2ed52e2fe7afcb91961fcaefe9bb201ba15e",
-      "classification": "mixed-navigation-behavior",
-      "evidence": "source-only",
-      "scope": "Measured Notebook navigation, stable page mapping and overflow API",
-      "runtimeStatus": "unverified",
-      "captureStatus": "missing"
-    },
-    {
-      "commit": "b748affe0f687f6cfbe6068a82d32988047f790a",
+      "scope": "Shared neutral roles and legacy theme-color compatibility",
       "classification": "appearance-only",
-      "evidence": "source-only",
-      "scope": "Shared native neutral palette and compatibility mapping",
       "runtimeStatus": "unverified",
-      "captureStatus": "missing"
+      "captureStatus": "missing",
+      "commit": "b748affe0f687f6cfbe6068a82d32988047f790a"
     },
     {
-      "scope": "Product-owned embedded neutral palette, focus and color-only transitions in 23 stylesheets",
-      "classification": "appearance-only",
       "evidence": "source-only",
+      "scope": "Button/card/search/menu state surfaces and density-aware shape",
+      "classification": "appearance-only",
+      "runtimeStatus": "unverified",
+      "captureStatus": "missing",
+      "commit": "df300fb9d93991751e840bdc586d2f770b47b9cf"
+    },
+    {
+      "evidence": "source-only",
+      "scope": "Measured TextInput parts, choice paint, field minima and preset header spacing",
+      "classification": "appearance-layout",
+      "runtimeStatus": "unverified",
+      "captureStatus": "missing",
+      "commit": "b88acafa95b88884b4e284a0de15d77f7934cfcb"
+    },
+    {
+      "evidence": "source-only",
+      "scope": "Inspector hierarchy, measured headers, object rows and preset treatment",
+      "classification": "appearance-layout",
+      "runtimeStatus": "unverified",
+      "captureStatus": "missing",
+      "commit": "7602228306b7dba316a2d7a91c1f2a195de0e43b"
+    },
+    {
+      "evidence": "source-only",
+      "scope": "Pair neutral preset focus fill with its own foreground",
+      "classification": "correctness-repair",
+      "runtimeStatus": "unverified",
+      "captureStatus": "missing",
+      "commit": "f107320e7c273254af6d35c130b699780bebf41c"
+    },
+    {
+      "evidence": "source-only",
+      "scope": "Native parent cards, settings rows, calibration surrounds and schedule shell",
+      "classification": "appearance-layout",
+      "runtimeStatus": "unverified",
+      "captureStatus": "missing",
+      "commit": "8b0b5e6da19d0ce877a3c5eb770de6945a516e77"
+    },
+    {
+      "evidence": "source-only",
+      "scope": "Restore card DPI lifecycle and nested settings row identity/search traversal",
+      "classification": "correctness-repair",
+      "runtimeStatus": "unverified",
+      "captureStatus": "missing",
+      "commit": "54810146717bbf4d531a17f4b6c471bd3300d190"
+    },
+    {
+      "evidence": "source-only",
+      "scope": "Viewport tool surfaces, ImGui overlays, transport and legend paint",
+      "classification": "appearance-only",
+      "runtimeStatus": "unverified",
+      "captureStatus": "missing",
+      "commit": "30031b21eedd58c56b83dc474465d47a3ccc8099"
+    },
+    {
+      "evidence": "source-only",
+      "scope": "Apply tooltip rounding through the actual ImGui style member",
+      "classification": "correctness-repair",
+      "runtimeStatus": "unverified",
+      "captureStatus": "missing",
+      "commit": "35a329da565a61b98f541166e51b85c44958add8"
+    },
+    {
+      "evidence": "source-only",
+      "scope": "Monitor hierarchy, print-option groups and device selection states",
+      "classification": "appearance-layout",
+      "runtimeStatus": "unverified",
+      "captureStatus": "missing",
+      "commit": "396992cfeb7f2e337b43d133a84562c04afd1e69"
+    },
+    {
+      "evidence": "source-only",
+      "scope": "Correct camera scaling and title-height lifecycle across DPI changes",
+      "classification": "correctness-repair",
+      "runtimeStatus": "unverified",
+      "captureStatus": "missing",
+      "commit": "c9178754f31b4b32421544e96b6e26977aed04fe"
+    },
+    {
+      "evidence": "source-only",
+      "scope": "Camera popup and HUD typography and hierarchy",
+      "classification": "appearance-layout",
+      "runtimeStatus": "unverified",
+      "captureStatus": "missing",
+      "commit": "e54de1a0ae7cd36cc1f1d734fea591dad7722ef3"
+    },
+    {
+      "evidence": "source-only",
+      "scope": "Fan and AMS mapping/material/settings popup hierarchy",
+      "classification": "appearance-layout",
+      "runtimeStatus": "unverified",
+      "captureStatus": "missing",
+      "commit": "c0aedba0991821d20ed2d6b6884cce80dfe9f02c"
+    },
+    {
+      "evidence": "source-only",
+      "scope": "Appearance, palette, regex, notification center, history, docs, changelog and export composition",
+      "classification": "appearance-layout",
+      "runtimeStatus": "unverified",
+      "captureStatus": "missing",
+      "commit": "83cf6a2677356c20664c073e8f04f818fc292e67"
+    },
+    {
+      "evidence": "source-only",
+      "scope": "Correct history label calls and preserve live palette accent swatches",
+      "classification": "correctness-repair",
+      "runtimeStatus": "unverified",
+      "captureStatus": "missing",
+      "commit": "e000d2da647aeddf4255455fd276d268abd3244a"
+    },
+    {
+      "evidence": "source-only",
+      "scope": "Bind constructor regression assertions to each real call boundary",
+      "classification": "verification-only",
+      "runtimeStatus": "unverified",
+      "captureStatus": "missing",
+      "commit": "71170bc334656d51af49d3ae682ae14320a110f5"
+    },
+    {
+      "evidence": "source-only",
+      "scope": "Bounded status rail, action paint and inverse progress track",
+      "classification": "appearance-only",
+      "runtimeStatus": "unverified",
+      "captureStatus": "missing",
+      "commit": "8cfce63ae05d7be03823b3eb9e4b86c4488245b1"
+    },
+    {
+      "evidence": "source-only",
+      "scope": "Five real nested workspace cards, wrapping actions and calendar/agenda reflow",
+      "classification": "appearance-layout",
+      "runtimeStatus": "unverified",
+      "captureStatus": "missing",
+      "commit": "7ef2efed0e58ba6def38adee061349afc106f533"
+    },
+    {
+      "evidence": "source-only",
+      "scope": "Relayout Overview content and scroll extent without waiting for a resize",
+      "classification": "correctness-repair",
+      "runtimeStatus": "unverified",
+      "captureStatus": "missing",
+      "commit": "a742702a7315a9e97a4d1a585ed739d82d97cdd5"
+    },
+    {
+      "evidence": "source-only",
+      "scope": "Child page hierarchy and wrapping action groups",
+      "classification": "appearance-layout",
+      "runtimeStatus": "unverified",
+      "captureStatus": "missing",
+      "commit": "d3821d9bcbbc6e90fb9b941013ab7b8039534c68"
+    },
+    {
+      "evidence": "source-only",
+      "scope": "Correct completion-label receivers in save panels",
+      "classification": "correctness-repair",
+      "runtimeStatus": "unverified",
+      "captureStatus": "missing",
+      "commit": "5568ae6ec28bb86cf481989da79d5582ca76dbfd"
+    },
+    {
+      "evidence": "source-only",
+      "scope": "ConfigWizardIndex state hierarchy and native step presentation",
+      "classification": "appearance-layout",
+      "runtimeStatus": "unverified",
+      "captureStatus": "missing",
+      "commit": "34fa40252bbb9b755fd22eb503280a045d8923ee"
+    },
+    {
+      "evidence": "source-only",
+      "scope": "Neutral roles, focus and color-only transitions in 23 product-owned stylesheets",
+      "classification": "appearance-only",
       "runtimeStatus": "unverified",
       "captureStatus": "missing",
       "commit": "a2be7df26cd5981da2c1e50d4c64c5e3a86609b9"
     },
     {
-      "scope": "Complete embedded interaction stylesheet assertions and article",
-      "classification": "verification-only",
       "evidence": "source-only",
+      "scope": "Require complete embedded interaction stylesheet contracts",
+      "classification": "verification-only",
       "runtimeStatus": "unverified",
       "captureStatus": "missing",
       "commit": "6faff372404390ba6cd9191c12e9fa5439ce375c"
+    },
+    {
+      "evidence": "source-only",
+      "scope": "Owned home/project/setup CSS composition across 13 additional stylesheets",
+      "classification": "appearance-layout",
+      "runtimeStatus": "unverified",
+      "captureStatus": "missing",
+      "commit": "8ecd2823f1529f183a806075f078932659fe295a"
+    },
+    {
+      "evidence": "source-only",
+      "scope": "Keep narrow thumbnails on the unchanged reveal handler's vertical axis",
+      "classification": "correctness-repair",
+      "runtimeStatus": "unverified",
+      "captureStatus": "missing",
+      "commit": "2a3528c451f3a5caccdfd7fd9e8d9d8964e4d4c8"
+    },
+    {
+      "evidence": "source-only",
+      "scope": "Stable workflow page projection, navigation API and measured overflow",
+      "classification": "functional-workflow",
+      "runtimeStatus": "unverified",
+      "captureStatus": "missing",
+      "commit": "624e2ed52e2fe7afcb91961fcaefe9bb201ba15e"
+    },
+    {
+      "evidence": "source-only",
+      "scope": "Appended Print review page and original physical-action continuation routes",
+      "classification": "functional-workflow",
+      "runtimeStatus": "unverified",
+      "captureStatus": "missing",
+      "commit": "f28dad52e0a848d613f661849a4fdd64f30c3a60"
+    },
+    {
+      "evidence": "source-only",
+      "scope": "Print/workflow catalog entries and paired documentation",
+      "classification": "localization",
+      "runtimeStatus": "unverified",
+      "captureStatus": "missing",
+      "commit": "b69528b150ec03fd33db79f36be16c92812bdef0"
+    },
+    {
+      "evidence": "source-only",
+      "scope": "Existing destination, mapping and review-dialog hierarchy with bounded body",
+      "classification": "appearance-layout",
+      "runtimeStatus": "unverified",
+      "captureStatus": "missing",
+      "commit": "f09f6af453b1ea2a694d81e382137afaba9cc6d7"
+    },
+    {
+      "evidence": "source-only",
+      "scope": "Refresh cached review body bounds on reopening before centering",
+      "classification": "correctness-repair",
+      "runtimeStatus": "unverified",
+      "captureStatus": "missing",
+      "commit": "6b4ebfa5a6207d66750a1a059124119229fa38cf"
     }
   ],
   "surfaceContractReference": "design/workflow-refresh/surface-contracts.json",
-  "compositionReviewBase": "be5e1205dcdad8f372d2ba63f367dbd7977c29c4"
+  "compositionReviewBase": "be5e1205dcdad8f372d2ba63f367dbd7977c29c4",
+  "sourceReview": {
+    "schemaVersion": 1,
+    "reviewedCandidate": "f3565c7580bebd38bcbf5c5f01e272fa5c4b6224",
+    "completionClaim": false,
+    "evidence": "source-incorporation-only",
+    "runtimeStatus": "unverified",
+    "captureStatus": "missing",
+    "parityStatus": "blocked",
+    "reversalRules": {
+      "appearance-only": "Potentially reversible as its own reviewed presentation unit. Check later consumers and companion fixes; never infer blanket permission from this classification.",
+      "appearance-layout": "Changes geometry, container ownership, wrapping or scroll behavior. Review dependent callers and subsequent lifecycle repairs; not a paint-only reversal.",
+      "functional-workflow": "Owns routing, API, dispatch or workflow behavior. Excluded from appearance-only reversal.",
+      "correctness-repair": "Preserves or restores behavior, compilation, identity or lifecycle after a presentation change. Retain with its dependent unit; never reverse independently to express an appearance preference.",
+      "verification-only": "No production appearance change. Retain or adapt the checks to the reviewed production state.",
+      "localization": "Localized functional copy and documentation. Preserve independently of visual preference."
+    },
+    "units": [
+      {
+        "commit": "b748affe0f687f6cfbe6068a82d32988047f790a",
+        "family": "native-palette",
+        "classification": "appearance-only",
+        "summary": "Shared neutral roles and legacy theme-color compatibility",
+        "article": "docs/features/design-system/native-workflow-navigation.md"
+      },
+      {
+        "commit": "df300fb9d93991751e840bdc586d2f770b47b9cf",
+        "family": "shared-controls",
+        "classification": "appearance-only",
+        "summary": "Button/card/search/menu state surfaces and density-aware shape",
+        "article": "docs/features/design-system/studio-atlas-shared-controls.md"
+      },
+      {
+        "commit": "b88acafa95b88884b4e284a0de15d77f7934cfcb",
+        "family": "fields-presets",
+        "classification": "appearance-layout",
+        "summary": "Measured TextInput parts, choice paint, field minima and preset header spacing",
+        "article": "docs/features/design-system/studio-atlas-fields-and-presets.md"
+      },
+      {
+        "commit": "7602228306b7dba316a2d7a91c1f2a195de0e43b",
+        "family": "prepare",
+        "classification": "appearance-layout",
+        "summary": "Inspector hierarchy, measured headers, object rows and preset treatment",
+        "article": "docs/features/design-system/prepare-inspector-atlas.md"
+      },
+      {
+        "commit": "f107320e7c273254af6d35c130b699780bebf41c",
+        "family": "prepare",
+        "classification": "correctness-repair",
+        "summary": "Pair neutral preset focus fill with its own foreground",
+        "companion": "7602228306b7dba316a2d7a91c1f2a195de0e43b",
+        "article": "docs/features/design-system/prepare-inspector-atlas.md"
+      },
+      {
+        "commit": "8b0b5e6da19d0ce877a3c5eb770de6945a516e77",
+        "family": "preferences-project-setup",
+        "classification": "appearance-layout",
+        "summary": "Native parent cards, settings rows, calibration surrounds and schedule shell",
+        "article": "docs/features/design-system/native-preferences-setup-atlas.md"
+      },
+      {
+        "commit": "54810146717bbf4d531a17f4b6c471bd3300d190",
+        "family": "preferences-project-setup",
+        "classification": "correctness-repair",
+        "summary": "Restore card DPI lifecycle and nested settings row identity/search traversal",
+        "companion": "8b0b5e6da19d0ce877a3c5eb770de6945a516e77",
+        "article": "docs/features/design-system/native-preferences-setup-atlas.md"
+      },
+      {
+        "commit": "30031b21eedd58c56b83dc474465d47a3ccc8099",
+        "family": "renderer-preview",
+        "classification": "appearance-only",
+        "summary": "Viewport tool surfaces, ImGui overlays, transport and legend paint",
+        "article": "docs/features/design-system/renderer-atlas.md"
+      },
+      {
+        "commit": "35a329da565a61b98f541166e51b85c44958add8",
+        "family": "renderer-preview",
+        "classification": "correctness-repair",
+        "summary": "Apply tooltip rounding through the actual ImGui style member",
+        "companion": "30031b21eedd58c56b83dc474465d47a3ccc8099",
+        "article": "docs/features/design-system/renderer-atlas.md"
+      },
+      {
+        "commit": "396992cfeb7f2e337b43d133a84562c04afd1e69",
+        "family": "native-monitor",
+        "classification": "appearance-layout",
+        "summary": "Monitor hierarchy, print-option groups and device selection states",
+        "article": "docs/features/design-system/monitor-atlas.md"
+      },
+      {
+        "commit": "c9178754f31b4b32421544e96b6e26977aed04fe",
+        "family": "native-monitor",
+        "classification": "correctness-repair",
+        "summary": "Correct camera scaling and title-height lifecycle across DPI changes",
+        "companion": "396992cfeb7f2e337b43d133a84562c04afd1e69",
+        "article": "docs/features/design-system/monitor-atlas.md"
+      },
+      {
+        "commit": "e54de1a0ae7cd36cc1f1d734fea591dad7722ef3",
+        "family": "native-device-popups",
+        "classification": "appearance-layout",
+        "summary": "Camera popup and HUD typography and hierarchy",
+        "article": "docs/features/design-system/device-popups-atlas.md"
+      },
+      {
+        "commit": "c0aedba0991821d20ed2d6b6884cce80dfe9f02c",
+        "family": "native-device-popups",
+        "classification": "appearance-layout",
+        "summary": "Fan and AMS mapping/material/settings popup hierarchy",
+        "article": "docs/features/design-system/device-popups-atlas.md"
+      },
+      {
+        "commit": "83cf6a2677356c20664c073e8f04f818fc292e67",
+        "family": "readers-overlays",
+        "classification": "appearance-layout",
+        "summary": "Appearance, palette, regex, notification center, history, docs, changelog and export composition",
+        "article": "docs/features/design-system/overlays-atlas.md"
+      },
+      {
+        "commit": "e000d2da647aeddf4255455fd276d268abd3244a",
+        "family": "readers-overlays",
+        "classification": "correctness-repair",
+        "summary": "Correct history label calls and preserve live palette accent swatches",
+        "companion": "83cf6a2677356c20664c073e8f04f818fc292e67",
+        "article": "docs/features/design-system/overlays-atlas.md"
+      },
+      {
+        "commit": "71170bc334656d51af49d3ae682ae14320a110f5",
+        "family": "readers-overlays",
+        "classification": "verification-only",
+        "summary": "Bind constructor regression assertions to each real call boundary",
+        "companion": "e000d2da647aeddf4255455fd276d268abd3244a",
+        "article": "docs/features/design-system/overlays-atlas.md"
+      },
+      {
+        "commit": "8cfce63ae05d7be03823b3eb9e4b86c4488245b1",
+        "family": "live-notifications",
+        "classification": "appearance-only",
+        "summary": "Bounded status rail, action paint and inverse progress track",
+        "article": "docs/features/design-system/live-notifications-atlas.md"
+      },
+      {
+        "commit": "7ef2efed0e58ba6def38adee061349afc106f533",
+        "family": "workspace",
+        "classification": "appearance-layout",
+        "summary": "Five real nested workspace cards, wrapping actions and calendar/agenda reflow",
+        "article": "docs/features/design-system/workspace-atlas.md"
+      },
+      {
+        "commit": "a742702a7315a9e97a4d1a585ed739d82d97cdd5",
+        "family": "workspace",
+        "classification": "correctness-repair",
+        "summary": "Relayout Overview content and scroll extent without waiting for a resize",
+        "companion": "7ef2efed0e58ba6def38adee061349afc106f533",
+        "article": "docs/features/design-system/workspace-atlas.md"
+      },
+      {
+        "commit": "d3821d9bcbbc6e90fb9b941013ab7b8039534c68",
+        "family": "calibration-children",
+        "classification": "appearance-layout",
+        "summary": "Child page hierarchy and wrapping action groups",
+        "article": "docs/features/design-system/calibration-children-atlas.md"
+      },
+      {
+        "commit": "5568ae6ec28bb86cf481989da79d5582ca76dbfd",
+        "family": "calibration-children",
+        "classification": "correctness-repair",
+        "summary": "Correct completion-label receivers in save panels",
+        "companion": "d3821d9bcbbc6e90fb9b941013ab7b8039534c68",
+        "article": "docs/features/design-system/calibration-children-atlas.md"
+      },
+      {
+        "commit": "34fa40252bbb9b755fd22eb503280a045d8923ee",
+        "family": "setup-index",
+        "classification": "appearance-layout",
+        "summary": "ConfigWizardIndex state hierarchy and native step presentation",
+        "article": "docs/features/design-system/setup-index-atlas.md"
+      },
+      {
+        "commit": "a2be7df26cd5981da2c1e50d4c64c5e3a86609b9",
+        "family": "embedded-palette",
+        "classification": "appearance-only",
+        "summary": "Neutral roles, focus and color-only transitions in 23 product-owned stylesheets",
+        "article": "docs/features/design-system/embedded-studio-atlas.md"
+      },
+      {
+        "commit": "6faff372404390ba6cd9191c12e9fa5439ce375c",
+        "family": "embedded-palette",
+        "classification": "verification-only",
+        "summary": "Require complete embedded interaction stylesheet contracts",
+        "companion": "a2be7df26cd5981da2c1e50d4c64c5e3a86609b9",
+        "article": "docs/features/design-system/embedded-studio-atlas.md"
+      },
+      {
+        "commit": "8ecd2823f1529f183a806075f078932659fe295a",
+        "family": "embedded-composition",
+        "classification": "appearance-layout",
+        "summary": "Owned home/project/setup CSS composition across 13 additional stylesheets",
+        "article": "docs/features/design-system/embedded-composition-atlas.md"
+      },
+      {
+        "commit": "2a3528c451f3a5caccdfd7fd9e8d9d8964e4d4c8",
+        "family": "embedded-composition",
+        "classification": "correctness-repair",
+        "summary": "Keep narrow thumbnails on the unchanged reveal handler's vertical axis",
+        "companion": "8ecd2823f1529f183a806075f078932659fe295a",
+        "article": "docs/features/design-system/embedded-composition-atlas.md"
+      },
+      {
+        "commit": "624e2ed52e2fe7afcb91961fcaefe9bb201ba15e",
+        "family": "workflow-navigation",
+        "classification": "functional-workflow",
+        "summary": "Stable workflow page projection, navigation API and measured overflow",
+        "article": "docs/features/design-system/native-workflow-navigation.md"
+      },
+      {
+        "commit": "f28dad52e0a848d613f661849a4fdd64f30c3a60",
+        "family": "print-workspace",
+        "classification": "functional-workflow",
+        "summary": "Appended Print review page and original physical-action continuation routes",
+        "article": "docs/features/workspace/print-preparation.md"
+      },
+      {
+        "commit": "b69528b150ec03fd33db79f36be16c92812bdef0",
+        "family": "print-workspace",
+        "classification": "localization",
+        "summary": "Print/workflow catalog entries and paired documentation",
+        "article": "docs/features/workspace/print-preparation.md"
+      },
+      {
+        "commit": "f09f6af453b1ea2a694d81e382137afaba9cc6d7",
+        "family": "print-setup",
+        "classification": "appearance-layout",
+        "summary": "Existing destination, mapping and review-dialog hierarchy with bounded body",
+        "article": "docs/features/workspace/print-setup-atlas.md"
+      },
+      {
+        "commit": "6b4ebfa5a6207d66750a1a059124119229fa38cf",
+        "family": "print-setup",
+        "classification": "correctness-repair",
+        "summary": "Refresh cached review body bounds on reopening before centering",
+        "companion": "f09f6af453b1ea2a694d81e382137afaba9cc6d7",
+        "article": "docs/features/workspace/print-setup-atlas.md"
+      }
+    ],
+    "notInReviewedCandidate": [
+      {
+        "commit": "44cba370a948dc6653189e8c835274d2db10d0ac",
+        "family": "shell-tabs",
+        "classification": "appearance-layout",
+        "status": "reported-source-unit-not-incorporated",
+        "reason": "Not an ancestor of the reviewed candidate. Reported title/history paint, project strips, nested books and tab dialogs are not claimed present here."
+      }
+    ],
+    "preservedOutsideDesign": "Build/bootstrap/packaging, diagnostics, source identity, dependency and AMS data/reading repairs are not appearance rollback candidates. Integration merge commits are not reversal handles: inspect and select the individual source unit with its companion repairs.",
+    "verificationLimit": "Local ancestry and exact changed-path inspection establish source incorporation only. Existing per-unit articles describe their own checks. No tests were silently promoted to native compilation, live interaction, captures or whole-application acceptance."
+  },
+  "reviewedSourceCandidate": "f3565c7580bebd38bcbf5c5f01e272fa5c4b6224"
 }
