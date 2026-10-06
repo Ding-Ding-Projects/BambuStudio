@@ -6,11 +6,11 @@
    the view starts at the top instead of overflowing above it where no scrollbar
    can reach (the previous height:100vh + align-items:center did exactly that). */
 :root {
-    --md-surface: #faf8fd;
+    --md-surface: #f7f9fc;
     --md-surface-container-lowest: #ffffff;
-    --md-on-surface: #1a1b1f;
-    --md-on-surface-variant: #44464e;
-    --md-outline-variant: #c5c6d0;
+    --md-on-surface: #172434;
+    --md-on-surface-variant: #46576a;
+    --md-outline-variant: #c4d0df;
     --md-shape-large: 16px;
     --md-font: "Roboto Flex", Roboto, "Segoe UI", system-ui, sans-serif;
 }
@@ -71,4 +71,20 @@ img {
     display: block;
     margin: 0 auto;
     border-radius: 12px;
+}
+
+/* Studio Atlas: paint-only interaction states. Existing geometry and actions remain owned by the view. */
+body :is(button, input, select, textarea, a[href], [role="button"], [tabindex]):focus-visible {
+  outline: 2px solid var(--md-on-surface);
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  body :is(button, input, select, textarea, [role="button"]) {
+    transition: background-color 100ms ease-out, border-color 100ms ease-out;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  body :is(button, input, select, textarea, a[href], [role="button"], [tabindex]) {
+    transition: none;
+  }
 }

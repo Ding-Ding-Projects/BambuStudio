@@ -50,18 +50,19 @@ enum class ColorScheme
 
 namespace Light {
 
-inline const wxColour surface{"#faf8fd"};
-inline const wxColour surfaceDim{"#dad9e0"};
-inline const wxColour surfaceBright{"#faf8fd"};
+inline const wxColour surface{"#f7f9fc"};
+inline const wxColour surfaceDim{"#d6e0ec"};
+inline const wxColour surfaceBright{"#fafcff"};
 inline const wxColour scLowest{"#ffffff"};
-inline const wxColour scLow{"#f4f2f9"};
-inline const wxColour sc{"#eeedf3"};
-inline const wxColour scHigh{"#e8e7ee"};
-inline const wxColour scHighest{"#e2e1e9"};
-inline const wxColour onSurface{"#1a1b1f"};
-inline const wxColour onSurfaceVariant{"#44464e"};
-inline const wxColour outline{"#75777f"};
-inline const wxColour outlineVariant{"#c5c6d0"};
+inline const wxColour scLow{"#eef2f7"};
+inline const wxColour sc{"#e7edf5"};
+inline const wxColour scHigh{"#dfe7f1"};
+inline const wxColour scHighest{"#d7e1ed"};
+inline const wxColour onSurface{"#172434"};
+inline const wxColour onSurfaceVariant{"#46576a"};
+// Slightly darker than the reference outline: at least 3:1 on the highest container.
+inline const wxColour outline{"#6d7e94"};
+inline const wxColour outlineVariant{"#c4d0df"};
 inline const wxColour primary{"#146c2e"};
 inline const wxColour onPrimary{"#ffffff"};
 inline const wxColour primaryContainer{"#a6f4b8"};
@@ -85,30 +86,22 @@ inline const wxColour shadow{0, 0, 0, 41}; // rgba(0,0,0,.16)
 
 namespace Dark {
 
-// HEX-ALIAS INVARIANT (dark-mode double-remap fix): no Dark:: tone below may
-// reuse a hex that is a light-side KEY in StateColor.cpp's gDarkColors table.
-// StateColor::darkModeColorFor() (applied by StateColor::colorForStates at
-// every paint AND by GUI_App::UpdateDarkUI on window fg/bg it revisits) maps
-// light keys to dark values; when a dark tone aliases a light key, a second
-// pass corrupts already-correct dark colours. That is exactly how OnSurface
-// text (#e8e7ee, aliasing light Grey300) collapsed to #2f3036 — near-invisible
-// dark-on-dark labels/fields all over dark mode. Three tones are therefore
-// nudged by one RGB step off the kit values (imperceptible, but hex-distinct):
-//   onSurface          #e8e7ee -> #e9e8ef (aliased ThemeColor::Grey300)
-//   onPrimaryContainer #a6f4b8 -> #a7f5b9 (aliased Light::primaryContainer)
-//   inversePrimary     #146c2e -> #156d2f (aliased ThemeColor::BrandGreen)
-inline const wxColour surface{"#1b1c21"};
-inline const wxColour surfaceDim{"#161619"};
-inline const wxColour surfaceBright{"#3b3c43"};
-inline const wxColour scLowest{"#131317"};
-inline const wxColour scLow{"#202127"};
-inline const wxColour sc{"#25262b"};
-inline const wxColour scHigh{"#2f3036"};
-inline const wxColour scHighest{"#393a41"};
-inline const wxColour onSurface{"#e9e8ef"};
-inline const wxColour onSurfaceVariant{"#cdced8"};
-inline const wxColour outline{"#94959f"};
-inline const wxColour outlineVariant{"#4a4c54"};
+// Dark roles must never alias a light key in StateColor's compatibility map.
+// Both paint-time state resolution and theme switching may apply that map, so
+// already-resolved dark colours must remain fixed points. Brand/error/inverse
+// roles retain their existing hand-tuned values; only the neutral ramp changes.
+inline const wxColour surface{"#151c25"};
+inline const wxColour surfaceDim{"#111821"};
+inline const wxColour surfaceBright{"#3b4c60"};
+inline const wxColour scLowest{"#101720"};
+inline const wxColour scLow{"#1a2430"};
+inline const wxColour sc{"#202d3b"};
+inline const wxColour scHigh{"#293849"};
+inline const wxColour scHighest{"#344557"};
+inline const wxColour onSurface{"#e8eff8"};
+inline const wxColour onSurfaceVariant{"#b9c8da"};
+inline const wxColour outline{"#899caf"};
+inline const wxColour outlineVariant{"#43566a"};
 inline const wxColour primary{"#8bd89b"};
 inline const wxColour onPrimary{"#00391a"};
 inline const wxColour primaryContainer{"#095228"};

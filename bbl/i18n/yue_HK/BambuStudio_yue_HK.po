@@ -39199,3 +39199,153 @@ msgstr "清單項目已經無效"
 #. review-status: agent-drafted
 msgid "the slot no longer exists"
 msgstr "插槽已經唔存在"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "No plate selected"
+msgstr "未選取打印板"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Time estimate unavailable until slicing completes"
+msgstr "切片完成後先有預計時間"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Material estimate unavailable until slicing completes"
+msgstr "切片完成後先有墨水用量估算"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Material"
+msgstr "墨水"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Printer preset"
+msgstr "打印機預設"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Wait for slicing to finish before sending output."
+msgstr "請等切片完成後先傳送輸出。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Add a model in Prepare or open a sliced file."
+msgstr "請喺「準備」加入模型，或者開啟已切片檔案。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "The selected output action is not available for the current plate."
+msgstr "目前打印板未能使用所選嘅輸出操作。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Print preparation"
+msgstr "打印準備"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Review before printing"
+msgstr "打印前檢視"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Review the selected plate and choose an output action. Opening this page does not slice or send a job."
+msgstr "檢視所選打印板，再選擇輸出操作。打開呢個頁面唔會切片或者傳送工作。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Plate readiness"
+msgstr "打印板準備狀態"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Slice and send"
+msgstr "切片並傳送"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Destination and mapping"
+msgstr "目的地同對應設定"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Printer destination and material mapping are reviewed in the selected action's existing confirmation flow."
+msgstr "打印機目的地同墨水對應會喺所選操作嘅原有確認流程入面檢視。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Output options"
+msgstr "輸出選項"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Continue deliberately"
+msgstr "確認後繼續"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "The selected action keeps its existing printer selection, validation, and confirmation steps."
+msgstr "所選操作會保留原有嘅打印機選擇、驗證同確認步驟。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Slicing and combined output actions use the same checks and confirmation flow as Prepare."
+msgstr "切片同合併輸出操作，會沿用「準備」嘅檢查同確認流程。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Monitor"
+msgstr "監察"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Print summary"
+msgstr "打印摘要"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Estimates describe the selected plate. The output action determines whether one or all plates are included."
+msgstr "估算只描述所選打印板；輸出操作決定處理一塊定全部打印板。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "No printable content"
+msgstr "未有可打印內容"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Slicing in progress"
+msgstr "切片中"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Slice required"
+msgstr "需要切片"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Ready for the selected output action"
+msgstr "可以進行所選輸出操作"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Output unavailable"
+msgstr "暫時未能輸出"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Return to Prepare to review the plate, material settings, or slicing progress."
+msgstr "返回「準備」檢視打印板、墨水設定或者切片進度。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Workspace navigation"
+msgstr "工作區導覽"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "More workspaces"
+msgstr "更多工作區"

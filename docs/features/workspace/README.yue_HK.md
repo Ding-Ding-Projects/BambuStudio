@@ -1,6 +1,6 @@
 ---
 translation-of: README.md
-source-sha256: f0f37d788c8843f9a8e4183e1481480719262d6f26a9ce477f433a8905670582
+source-sha256: 654e34d00ec05b2806282b139042b99f1d5bdcd227a694de2bafe904868728e2
 review-status: agent-drafted
 ---
 
@@ -47,6 +47,8 @@ review-status: agent-drafted
   去重）、附帶一個瀏覽器同恢復旁邊活躍檔案語意。
 - [設備風扇動作](fan-motion.md)──獨立遙測驅動部件同
   輔助風扇預覽附帶不同輸入同命令反饋。
+
+- [打印準備同工作流程導覽](print-preparation.yue_HK.md)：只讀取狀態嘅打印檢視、原有明確輸出同確認流程，以及保留嘅工作區入口。原生畫面驗證仍然未完成。
 
 ## Postman 集合
 

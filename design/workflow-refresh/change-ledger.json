@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "baselineCommit": "d048cfc3040a1566b78e03334f3871f1dd0144bb",
+  "authoringBaseCommit": "8610aeeb49297ecda6a25747be125d5e4034b30d",
+  "automaticRollback": false,
+  "entries": [
+    {
+      "preserve": "Unrelated build, packaging, AMS, printer and functional workflow commits",
+      "kind": "design-specification-only",
+      "summary": "Studio Atlas visual contract, state inventory, static references and source-inventory checks",
+      "commit": "1c859687cb878a5fbf698de631a04118df4d8a49",
+      "reviewRequired": true,
+      "runtimeBehaviorChanged": false,
+      "scope": [
+        "design/native-feature-delivery.json",
+        "design/native-feature-delivery.md",
+        "design/native-print-workflows.md",
+        "design/workflow-refresh.md",
+        "design/workflow-refresh/",
+        "ui-md3/tests/native-feature-delivery.test.mjs"
+      ]
+    },
+    {
+      "scope": [
+        "src/slic3r/GUI/Widgets/MD3Tokens.hpp",
+        "src/slic3r/GUI/Widgets/StateColor.cpp",
+        "src/slic3r/GUI/Widgets/StateColor.hpp",
+        "tests/native_navigation/neutral_palette.test.mjs",
+        "docs/features/design-system/native-workflow-navigation.md"
+      ],
+      "preserve": "Navigation API and overflow behavior in 624e2ed52e2fe7afcb91961fcaefe9bb201ba15e; all functional workflow, AMS, build and packaging changes",
+      "reviewRequired": true,
+      "reversalNote": "Inspect the later documentation context before reverting. Do not revert the parent navigation commit merely because this palette commit follows it.",
+      "functionalBehaviorChanged": false,
+      "kind": "appearance-only",
+      "commit": "b748affe0f687f6cfbe6068a82d32988047f790a",
+      "summary": "Shared native neutral palette and legacy color compatibility",
+      "runtimeVerification": "unverified"
+    }
+  ],
+  "registration": "The integration owner records each reviewed design-only commit after it exists, excluding functional workflow, AMS, build and packaging changes. This file cannot name its own enclosing commit without a later ledger update.",
+  "reversal": "Review git show for every listed commit, then use git revert in reverse dependency order. Never reset to the baseline or reverse mixed functional fixes without preserving them.",
+  "excludedFromAppearanceOnlyReversal": [
+    {
+      "commit": "624e2ed52e2fe7afcb91961fcaefe9bb201ba15e",
+      "reason": "Mixed visual navigation and functional SetWorkflowPages/overflow behavior. Requires semantic review preserving API callers; not a simple appearance-only reversal."
+    },
+    {
+      "commit": "f28dad52e0a848d613f661849a4fdd64f30c3a60",
+      "reason": "Functional Print workspace and action routing; preserve independently of visual preference."
+    },
+    {
+      "commit": "b69528b150ec03fd33db79f36be16c92812bdef0",
+      "reason": "Localization and functional workspace documentation; preserve independently of visual preference."
+    }
+  ]
+}

@@ -3,18 +3,18 @@
    or when body.dark is set, never merely because this file is linked. */
 @media (prefers-color-scheme: dark) {
     :root {
-        --md-surface: #1b1c21;
-        --md-surface-container-lowest: #141518;
-        --md-on-surface: #e3e2e8;
-        --md-on-surface-variant: #c4c6d0;
-        --md-outline-variant: #44464e;
+        --md-surface: #151c25;
+        --md-surface-container-lowest: #101720;
+        --md-on-surface: #e8eff8;
+        --md-on-surface-variant: #b9c8da;
+        --md-outline-variant: #43566a;
     }
 }
 
 body.dark {
-    --md-surface: #1b1c21;
-    --md-surface-container-lowest: #141518;
-    --md-on-surface: #e3e2e8;
-    --md-on-surface-variant: #c4c6d0;
-    --md-outline-variant: #44464e;
+    --md-surface: #151c25;
+    --md-surface-container-lowest: #101720;
+    --md-on-surface: #e8eff8;
+    --md-on-surface-variant: #b9c8da;
+    --md-outline-variant: #43566a;
 }
