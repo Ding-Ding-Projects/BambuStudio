@@ -176,7 +176,7 @@ int main(){
   if(!require(display_owner==1&&d.m_presentation_available,"hidden owner uses readable parent display"))return 1;
  }
  scale=100;
- for(auto value:{"127.0.0.1","192.168.50.2","0.0.0.0","255.255.255.255"})if(!require(input.isIp(value),"accepted address stays accepted"))return 1;
+ for(auto value:{"127.0.0.1","192.0.2.2","0.0.0.0","255.255.255.255"})if(!require(input.isIp(value),"accepted address stays accepted"))return 1;
  for(auto value:{"256.0.1.1","1.2.3.256","1-2.3.4","1.2.3.4extra"})if(!require(!input.isIp(value),"rejected address stays rejected"))return 1;
  printf("%d continuation owner assertions passed\n",checks);
 }
