@@ -4,8 +4,10 @@
 
 - [x] Preserve the nine-boundary source-bound review queue and independently verify its live-regex restoration semantics.
 - [x] Repair the actual Cantonese companion index and verify the positive case plus six missing-link/article negative cases.
+- [x] Implement and independently review bounded plans, tuple comparison and private evidence consistency validation, with all 55 declared states covered.
+- [x] Preserve the first visible startup failure and add independently reviewed target-exit observation before teardown; offline checks pass.
 - [ ] Finish the exact `cc059003d` root build and installer with source-bound package verification.
-- [ ] Resolve visible-launch scope and execute the genuine built review matrix; the queue is preparation only.
+- [ ] Diagnose startup using the observed target exit and execute the genuine built review matrix; visible inspection is authorized but the first target exited before inspection.
 
 
 
@@ -23,7 +25,7 @@
 ## Current review and build receipts, 6 October 2026
 
 - [x] Combine independently reviewed local inspection provenance and atomic containment repairs, pass 26 non-window checks and validate the actual immutable build receipt without launching.
-- [ ] Resolve the pending launch-scope clarification and perform genuine initial-shell inspection before expanding the nine built-review boundaries.
+- [ ] Complete genuine initial-shell inspection before expanding the nine built-review boundaries; the first authorized attempt produced no probe or screenshot.
 
 - [x] Deliver the OCCT export repair and pass application configuration on the exact root retry at `05dd932d4`.
 - [x] Deliver exact generated-route LF identity with eight disposable Git assertions at `d4d4bb13b`.

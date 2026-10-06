@@ -1,5 +1,5 @@
 > [!IMPORTANT]
-> Current status, 6 October 2026: both exact root build entrypoints passed at `a28944e3c14b2066ee63d14151c8aca23066d743`, and independent installer-byte verification passed. The entire native interface refresh remains under development and has no current rendered acceptance. Verified remote `main` remains `cc059003d362b87d53786152ee8c28621d9c2813`. Read the [current build and redesign report](docs/integration/build-verification-20261006.md).
+> Current status, 6 October 2026: both exact root build entrypoints and independent installer-byte verification passed at `a28944e3c14b2066ee63d14151c8aca23066d743`. The first authorized visible attempt exited before inspection, so there is no current screenshot or rendered acceptance. The exact-main build completed native staging but failed its source-state check; a proved metadata-only refresh preserved the entire index tree and its exact root retry is running. Verified remote `main` is `4e18b78b3f8a78ebd63f875fb4b06b28db433afb`. Read the [current continuation](CLOSEOUT_PROMPT.md).
 
 ![image](https://user-images.githubusercontent.com/106916061/179006347-497d24c0-9bd6-45b7-8c49-d5cc8ecfe5d7.png)
 # BambuStudio
@@ -14,7 +14,7 @@ under development for the combined delivery; the [audit register](docs/features/
 records historical runtime and layout evidence. Focused source and non-window geometry checks now cover the current redesign; they do not establish native runtime or screenshots.
 Implementation is not a claim of verified physical-printer behavior.
 Current compiler and startup evidence is summarized in the [continuation record](CLOSEOUT_PROMPT.md).
-The earlier production catalogue, documentation bundling and DeviceWeb observations belong to their dated source receipts. The latest build reached native GUI compilation after dependency completion. Packaging and release proof remain pending; no passing DeviceWeb type-check result is claimed.
+The earlier production catalogue, documentation bundling and DeviceWeb observations belong to their dated source receipts. Reviewed inspection preparation covers all 55 declared states; 38 preparation checks and 33 native-review checks pass offline. The initial startup cause remains unknown, and a reviewed target-exit diagnostic prepares the next attempt. Exact-main packaging remains pending; no passing DeviceWeb type-check result is claimed.
 Earlier managed-check results apply only to their recorded source revisions. The combined source includes the reconciled continuation lanes and bounded repairs listed in the current handoff.
 
 Bambu Studio is a cutting-edge, feature-rich slicing software.  

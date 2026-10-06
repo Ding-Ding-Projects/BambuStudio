@@ -1,3 +1,9 @@
+---
+translation-of: native-review-ledger.md
+source-sha256: a4c3ee7da33329b5f4ded9421cd5d4b96c049c9ad1c8f226e9315f5029f724d5
+review-status: agent-drafted
+---
+
 # 私人原生操作紀錄
 
 [English](native-review-ledger.md)

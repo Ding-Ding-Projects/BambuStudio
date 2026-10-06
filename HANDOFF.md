@@ -2,11 +2,15 @@
 
 ## Latest independent progress
 
-Remote main is `a2f1fa9e89bd66aba7c754ecfa92887f07c9b3ee`; the immutable exact-main producer still compiles `cc059003d`. Reviewed design preparation is preserved at `5131fe2e6a63894ebff47f8c07dc879ddec7f87e`, including the nine-boundary queue, live-regex restoration correction and paired-article index checks. No native source changed in this batch. The current [continuation](CLOSEOUT_PROMPT.md) supersedes older source and pending-integration statements below.
+Remote main is `4e18b78b3f8a78ebd63f875fb4b06b28db433afb`. The exact-main producer completed native staging but returned exit 1 for stale generated-file index metadata. Raw bytes equalled HEAD and the entire index tree remained unchanged after post-run refresh. The exact root retry started at `2026-10-06T16:36:39.3765008Z` and remains pending.
+
+Reviewed preparation and target-exit diagnostics are integrated at `f260b6fab51e23730a6e9d831df756566c104cd7`, with 38 preparation checks and 33 native-review checks passing offline. All 55 declared state pairs are covered; 147 paired articles and 1,296 changelog entries pass translation validation. The first authorized visible attempt started the owned target but it exited before inspection. Teardown was verified; no probe or screenshot exists. The reviewed helper now records its exact exit before teardown for the next diagnostic attempt.
+
+The later visible-desktop and screenshot requests supersede the older launch exclusion. The current [continuation](CLOSEOUT_PROMPT.md) is authoritative. Every older source identifier, pending-integration statement and no-launch statement below is a historical snapshot rather than current authorization or evidence.
 
 
 
-## Current continuation boundary
+## Historical continuation boundary
 
 Both exact root entrypoints and independent package-byte verification passed at `a28944e3c14b2066ee63d14151c8aca23066d743`. The latest authoritative continuation is [CLOSEOUT_PROMPT.md](CLOSEOUT_PROMPT.md). Main remains `cc059003d`; the complete redesign still lacks current rendered acceptance. The local initial-shell route has both independently reviewed repairs combined at `b777219432f1df917fbd7638dd7f2105afc2ff1d`, plus the paired documentation correction in this update. All 26 non-window checks and read-only validation of the actual immutable build receipt pass. The source documentation inventory now has 144 paired articles; the earlier a28944e3c package contains 310 total Markdown articles and does not contain the two new local-review articles. The launch-scope clarification remains pending; no application or installer has been executed.
 

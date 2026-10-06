@@ -1,3 +1,9 @@
+---
+translation-of: native-interaction-plan.md
+source-sha256: 7e31bcdc43dcfe462fe50e85c826526bb0e147eeac6e2e7d5e177dd137c6af5f
+review-status: agent-drafted
+---
+
 # 離線原生互動計劃
 
 `scripts/md3/review-interaction-plan.py` 只驗證
