@@ -4,14 +4,17 @@ else()
     set(library_build_type "Static")
 endif()
 
-if (BINARY_DIR_REL)
-    set(OCCT_DIRECTORY_FLAG --directory ${BINARY_DIR_REL}/dep_OCCT-prefix/src/dep_OCCT)
-endif ()
-
 bambustudio_add_cmake_project(OCCT
     URL https://github.com/Open-Cascade-SAS/OCCT/archive/refs/tags/V7_6_0.zip
     URL_HASH SHA256=28334f0e98f1b1629799783e9b4d21e05349d89e695809d7e6dfa45ea43e1dbc
-    PATCH_COMMAND git apply ${OCCT_DIRECTORY_FLAG} --verbose --ignore-space-change --whitespace=fix ${CMAKE_CURRENT_LIST_DIR}/0001-OCCT-fix.patch
+    PATCH_COMMAND ${CMAKE_COMMAND}
+        "-DPATCH_ROOT=${CMAKE_SOURCE_DIR}/.."
+        "-DPATCH_SOURCE=<SOURCE_DIR>"
+        "-DGIT_EXECUTABLE=${GIT_EXECUTABLE}"
+        -DPATCH_COUNT=2
+        "-DPATCH_1=${CMAKE_CURRENT_LIST_DIR}/0001-OCCT-fix.patch"
+        "-DPATCH_2=${CMAKE_CURRENT_LIST_DIR}/0002-OCCT-config-flag-quoting.patch"
+        -P "${CMAKE_SOURCE_DIR}/../cmake/modules/ApplyPatchesIdempotently.cmake"
     #DEPENDS dep_Boost
     #DEPENDS dep_FREETYPE
     CMAKE_ARGS
