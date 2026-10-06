@@ -1,0 +1,30 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1269,6 +1269,12 @@ endif()
+ 
+ # Configure and install cmake config file
++# Select a bracket delimiter absent from both exported flag strings.
++set (OCCT_FLAGS_BRACKET "=")
++while ("${CMAKE_C_FLAGS};${CMAKE_CXX_FLAGS}" MATCHES "\\]${OCCT_FLAGS_BRACKET}\\]")
++  string (APPEND OCCT_FLAGS_BRACKET "=")
++endwhile()
++
+ configure_file("${CMAKE_SOURCE_DIR}/adm/templates/OpenCASCADEConfig.cmake.in" "OpenCASCADEConfig.cmake" @ONLY)
+ install(FILES "${CMAKE_BINARY_DIR}/OpenCASCADEConfig.cmake" DESTINATION  "${INSTALL_DIR_CMAKE}")
+ 
+ # Configure cmake version file
+diff --git a/adm/templates/OpenCASCADEConfig.cmake.in b/adm/templates/OpenCASCADEConfig.cmake.in
+--- a/adm/templates/OpenCASCADEConfig.cmake.in
++++ b/adm/templates/OpenCASCADEConfig.cmake.in
+@@ -43,8 +43,8 @@ set (OpenCASCADE_RESOURCE_DIR "${OpenCASCADE_INSTALL_PREFIX}/@INSTALL_DIR_RESOURCE@")
+ 
+ # The C and C++ flags added by OpenCASCADE to the cmake-configured flags.
+-set (OpenCASCADE_C_FLAGS      "@CMAKE_C_FLAGS@")
+-set (OpenCASCADE_CXX_FLAGS    "@CMAKE_CXX_FLAGS@")
++set (OpenCASCADE_C_FLAGS      [@OCCT_FLAGS_BRACKET@[@CMAKE_C_FLAGS@]@OCCT_FLAGS_BRACKET@])
++set (OpenCASCADE_CXX_FLAGS    [@OCCT_FLAGS_BRACKET@[@CMAKE_CXX_FLAGS@]@OCCT_FLAGS_BRACKET@])
+ @SET_OpenCASCADE_LINKER_FLAGS@
+ 
+ # List of available OpenCASCADE modules.
+ set (OpenCASCADE_MODULES @OCCT_MODULES_ENABLED@)
