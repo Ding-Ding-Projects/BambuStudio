@@ -49,6 +49,17 @@ int main(int argc, char **argv)
         label->SetLabel("Changed rendered label");
         registry.refresh_presentation();
         require(label->GetLabel() == first, "refresh uses recorded source, never current rendering");
+        require(registry.record_label_renderer(label, "Factual source", [](const wxString &source) {
+            return wxString("Exact: ") + source;
+        }), "explicit factual renderer registration");
+        require(label->GetLabel() == "Exact: Factual source", "provided renderer owns final text");
+        label->SetLabel("Unrelated displayed wording");
+        registry.refresh_presentation();
+        require(label->GetLabel() == "Exact: Factual source", "factual renderer receives original source on refresh");
+        require(!registry.record_label_renderer(label, "Rejected replacement", {}), "empty renderer rejected");
+        require(label->GetLabel() == "Exact: Factual source", "invalid renderer leaves existing presentation unchanged");
+        registry.record_label(label, "Original message");
+        require(label->GetLabel() == first, "normal registration clears earlier factual renderer");
         registry.clear_label_source(label);
         label->SetLabel("2030-12-31 12:34 / code 42");
         registry.refresh_presentation();

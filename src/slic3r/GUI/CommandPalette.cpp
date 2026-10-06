@@ -328,6 +328,10 @@ void CommandPalette::collect_entries()
                         m_entries.push_back({glyph_for_menu(top), path + " / " + label,
                                              item->GetHelp(),
                                              [frame, id]() {
+                                                 frame->UpdateWindowUI(wxUPDATE_UI_RECURSE);
+                                                 auto* current_bar = frame->GetMenuBar();
+                                                 auto* current = current_bar ? current_bar->FindItem(id) : nullptr;
+                                                 if (!current || !current->IsEnabled()) return;
                                                  wxCommandEvent evt(wxEVT_MENU, id);
                                                  frame->GetEventHandler()->AddPendingEvent(evt);
                                              }});

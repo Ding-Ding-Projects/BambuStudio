@@ -100,6 +100,8 @@
 #include "FeatureServices/SurfaceRegistry.hpp"
 #include "FeatureServices/ScheduledPreferences.hpp"
 #include "Documentation/OfflineDocumentation.hpp"
+#include "StatusHub/StatusHubPanel.hpp"
+#include "libslic3r/StatusHub/StatusHubService.hpp"
 #include <wx/stdpaths.h>
 #include "DailyTips.hpp"
 #include "FilamentGroupPopup.hpp"
@@ -4249,6 +4251,11 @@ static const wxString sep_space = "";
 static wxMenu* generate_help_menu()
 {
     wxMenu* helpMenu = new wxMenu();
+    append_menu_item(helpMenu, wxID_ANY, _L("Status Hub") + dots,
+        _L("Inspect status delivery and enrollment state"), [](wxCommandEvent&) {
+            if (auto* frame = wxGetApp().mainframe)
+                frame->open_service("status-hub", _L("Status Hub"), [](wxWindow* parent) { return new StatusHubPanel(parent); });
+        });
     append_menu_item(helpMenu, wxID_ANY, _L("Offline documentation") + dots,
         _L("Read bundled feature guides without opening a browser"), [](wxCommandEvent&) {
             Documentation::ShowOfflineDocumentation(wxGetApp().mainframe);
@@ -4524,6 +4531,32 @@ void MainFrame::init_menubar_as_editor()
                 if (service) open_service("scheduled-settings", _L("Scheduled settings"),
                     [service](wxWindow* parent) { return service->create_panel(parent); });
             }, "", nullptr, []() { return wxGetApp().scheduled_preferences() != nullptr; }, this);
+
+        const auto open_security = [this](const std::string& destination, const wxString& title) {
+            try {
+                auto& services = wxGetApp().local_security();
+                open_service(destination, title, [&services, destination](wxWindow* parent) {
+                    if (destination == "authenticator") return services.authenticator(parent);
+                    if (destination == "identity-history") return services.history(parent);
+                    return services.support(parent);
+                });
+            } catch (...) {
+                if (auto* plate = wxGetApp().plater())
+                    plate->get_notification_manager()->push_notification(into_u8(_L("Local security is unavailable. No protected action was performed.")));
+            }
+        };
+        append_menu_item(fileMenu, wxID_ANY, _L("Authenticator") + dots,
+            _L("Manage local time-based authentication codes"),
+            [open_security](wxCommandEvent&) { open_security("authenticator", _L("Authenticator")); },
+            "", nullptr, [] { return true; }, this);
+        append_menu_item(fileMenu, wxID_ANY, _L("Identity history") + dots,
+            _L("Enroll an independent history password and inspect encrypted identity changes"),
+            [open_security](wxCommandEvent&) { open_security("identity-history", _L("Identity history")); },
+            "", nullptr, [] { return true; }, this);
+        append_menu_item(fileMenu, wxID_ANY, _L("Local support tickets") + dots,
+            _L("Manage local-only support records; nothing is sent anywhere"),
+            [open_security](wxCommandEvent&) { open_security("local-support", _L("Local support tickets")); },
+            "", nullptr, [] { return true; }, this);
 
         append_menu_item(fileMenu, wxID_ANY, _L("Config profiles & backup") + dots,
             _L("Export or import the complete data folder (secrets included, slide-to-confirm) and manage unlimited profiles with local Git snapshot history"),
@@ -5821,10 +5854,11 @@ wxPanel* MainFrame::open_service(const std::string& id, const wxString& title,
         m_service_workspace = new FeatureServices::ServiceWorkspace(m_tabpanel);
         m_tabpanel->AddPage(m_service_workspace, _L("Local tools"), "", "", false);
     }
-    auto* result = m_service_workspace->open(id, title, create);
+    FeatureServices::SurfaceRegistry::instance().register_surface(m_service_workspace, "service-workspace");
     if (result) {
         FeatureServices::SurfaceRegistry::instance().register_surface(result, "services/" + id);
         select_tab(m_service_workspace);
+        StatusHubService::instance().checkpoint();
     }
     return result;
 }

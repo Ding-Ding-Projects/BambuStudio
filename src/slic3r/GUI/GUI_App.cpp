@@ -116,6 +116,7 @@
 #include "FeatureServices/SchoolCredentials.hpp"
 #include "FeatureServices/SurfaceRegistry.hpp"
 #include "FeatureServices/ScheduledPreferences.hpp"
+#include "libslic3r/StatusHub/StatusHubService.hpp"
 #include "HomeAssistant.hpp"
 #include "GLCanvas3D.hpp"
 #include "EncodedFilament.hpp"
@@ -3356,7 +3357,7 @@ void GUI_App::UnRegisterMacPowerCallBack()
 }
 #endif
 
-FeatureServices::SchoolCredentials& GUI_App::school_credentials()
+FeatureServices::LocalSecurityServices& GUI_App::local_security()
 {
     if (!m_school_credentials)
         m_school_credentials = std::make_unique<FeatureServices::SchoolCredentials>(m_school_runtime->mode());
@@ -3404,6 +3405,7 @@ bool GUI_App::OnInit()
         if (initialized) {
             if (mainframe) FeatureServices::SurfaceRegistry::instance().register_surface(mainframe, "main-frame");
             m_scheduled_preferences = std::make_unique<FeatureServices::ScheduledPreferences>(*app_config);
+            StatusHubService::instance().start();
             m_automation_bridge = std::make_unique<AutomationBridge>(*this);
             m_automation_bridge->start();
         }
@@ -3417,8 +3419,9 @@ bool GUI_App::OnInit()
 
 int GUI_App::OnExit()
 {
+    StatusHubService::instance().stop();
     m_scheduled_preferences.reset();
-    m_school_credentials.reset();
+    m_local_security.reset();
     m_school_runtime.reset();
     m_narrator_environment.reset();
     TtsNarrator::shutdown();

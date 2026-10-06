@@ -28,6 +28,16 @@ It never translates the current rendered label back into another language.
 Vocabulary refresh observers reapply these originals after load and clear.
 `refresh_presentation()` also invalidates layout and reapplies appearance.
 
+For fixed factual disclosures, `record_label_renderer(window, original,
+renderer)` retains the explicit original and uses the provided stateless renderer
+on every refresh. Its result is final: the registry adds no tone or personal
+wording transform. The owner supplies the real factual translation function,
+without reading field values, inferring originals or synthesizing account state.
+An empty renderer is rejected without replacing the existing source. A later
+`record_label()` call restores the normal presentation path. Both registration
+forms reject sensitive surfaces and text entry controls. Dynamic code/date/status
+labels remain unrecorded.
+
 Original source registration is explicit. Text entry values, document content,
 filenames, custom-drawn controls, menus and list item contents are not inferred
 or rewritten. Their owning producer must provide its own source-aware adapter.

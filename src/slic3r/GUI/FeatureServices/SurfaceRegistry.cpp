@@ -67,6 +67,7 @@ struct SurfaceRegistry::Impl : wxEvtHandler {
         bool sensitive = false;
         bool has_label = false, has_tooltip = false, has_name = false;
         wxString label, tooltip, name;
+        LabelRenderer label_renderer;
     };
     struct Protection {
         wxWeakRef<wxWindow> window;
@@ -232,8 +233,11 @@ struct SurfaceRegistry::Impl : wxEvtHandler {
         if (entry.has_name)
             window->SetName(PersonalVocabulary::display(PersonalVocabulary::remember(I18N::translate(entry.name))));
         if (!entry.window || sensitive(window)) return;
-        if (entry.has_label && !wxDynamicCast(window, wxTextCtrl))
-            window->SetLabel(PersonalVocabulary::display(PersonalVocabulary::remember(I18N::translate(entry.label))));
+        if (entry.has_label && !wxDynamicCast(window, wxTextCtrl)) {
+            const auto rendered = entry.label_renderer ? entry.label_renderer(entry.label) :
+                PersonalVocabulary::display(PersonalVocabulary::remember(I18N::translate(entry.label)));
+            if (entry.window) window->SetLabel(rendered);
+        }
         if (entry.window && entry.has_tooltip)
             window->SetToolTip(PersonalVocabulary::display(PersonalVocabulary::remember(I18N::translate(entry.tooltip))));
         if (entry.window) { window->InvalidateBestSize(); window->Layout(); window->Refresh(); }
@@ -370,6 +374,7 @@ void SurfaceRegistry::register_sensitive(wxWindow *window)
     entry.sensitive = true;
     entry.label.clear(); entry.tooltip.clear();
     entry.has_label = entry.has_tooltip = false;
+    entry.label_renderer = {};
     m->sync();
 }
 std::string SurfaceRegistry::surface_id(wxWindow *window)
@@ -392,9 +397,24 @@ void SurfaceRegistry::record_label(wxWindow *window, const wxString &source)
     auto it = m->entries.find(window);
     if (it == m->entries.end() || !it->second.window || m->sensitive(window) || wxDynamicCast(window, wxTextCtrl)) return;
     it->second.label = source; it->second.has_label = true;
+    it->second.label_renderer = {};
     wxWeakRef<wxWindow> weak(window);
     PersonalVocabulary::observe(window, [this, weak] { if (weak) m->present(weak.get()); });
     m->present(window);
+}
+bool SurfaceRegistry::record_label_renderer(wxWindow *window, const wxString &source, LabelRenderer renderer)
+{
+    if (!renderer) return false;
+    m->sync();
+    auto it = m->entries.find(window);
+    if (it == m->entries.end() || !it->second.window || m->sensitive(window) || wxDynamicCast(window, wxTextCtrl)) return false;
+    it->second.label = source;
+    it->second.has_label = true;
+    it->second.label_renderer = std::move(renderer);
+    wxWeakRef<wxWindow> weak(window);
+    PersonalVocabulary::observe(window, [this, weak] { if (weak) m->present(weak.get()); });
+    m->present(window);
+    return true;
 }
 void SurfaceRegistry::record_tooltip(wxWindow *window, const wxString &source)
 {
@@ -423,6 +443,7 @@ void SurfaceRegistry::clear_label_source(wxWindow *window)
     if (it == m->entries.end()) return;
     it->second.label.clear();
     it->second.has_label = false;
+    it->second.label_renderer = {};
 }
 void SurfaceRegistry::refresh_presentation()
 {

@@ -102,8 +102,35 @@ The shared credential adapter passed 10 native behavioral assertions using the
 real credential implementation and a synthetic in-memory vault.
 The typed preference overlay passed 32 portable behavioral assertions. The real
 AppConfig integration test is registered but awaits the full native dependencies.
+An isolated mutation removing shared-mode precedence failed the same executable;
+restoring the original header returned all 32 assertions to passing. This evidence
+covers the portable overlay, not native window interaction.
 Native GUI compilation, localization catalogs, runtime interaction and capture are
 pending; source controls are not release acceptance evidence.
+
+## Security and status composition
+
+File menu destinations expose Authenticator, Identity history and Local support
+tickets in persistent native tool tabs. The command palette discovers these real
+menu items and refreshes enabled state immediately before dispatch. One application
+owner retains the product vault before the history and authenticator services.
+Authenticator changes synchronously append encrypted history snapshots and propagate
+history errors. Initial history enrollment remains explicit and independent. A
+restore passes the authenticated snapshot to the authenticator's schema validator
+and records a new restore event before applying live state.
+
+Static labels, factual disclosures, tooltips and neutral accessible names retain
+their original sources. Sensitive inputs and generated codes register exclusions.
+The workspace registers before constructing its children so original-source hooks
+work during construction. Explicit service exports use their reviewed datasets;
+they do not scrape a sensitive window. QR import adapters remain unavailable until
+a bundled isolated decoder is verified. Retention confirmation and element-action
+interception still need their actual shared-control integration.
+
+Help exposes the native Status Hub panel. Its service starts after successful GUI
+initialization, checkpoints when a local tool opens and stops at shutdown. An absent
+endpoint or enrollment is reported by that module, never replaced by an invented
+destination. No live delivery or inbox-action execution is claimed here.
 
 - [ ] Compile and drive shared-mode enrollment, rename, enable, unlock and credential replacement controls; add a platform passkey choice and atomic recovery for interrupted credential/record updates.
 - [ ] Reconstruct every already-open translated surface on shared-mode changes without discarding active user work.

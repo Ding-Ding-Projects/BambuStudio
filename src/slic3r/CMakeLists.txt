@@ -892,6 +892,8 @@ list(APPEND SLIC3R_GUI_SOURCES
     ../libslic3r/ScheduledSettings/Schedule.cpp
     ../libslic3r/ScheduledSettings/Service.cpp
     ../libslic3r/ScheduledSettings/Native.cpp
+    ../libslic3r/StatusHub/StatusHubService.cpp
+    GUI/StatusHub/StatusHubPanel.cpp
     ../libslic3r/OllamaSuite/OllamaCore.cpp
     ../libslic3r/OllamaSuite/LaunchProfiles.cpp
     ../libslic3r/OllamaSuite/PullBatch.cpp
@@ -966,6 +968,11 @@ target_link_libraries(libslic3r_gui libslic3r cereal imgui imguizmo minilzo GLEW
     ${HPDF_LIBRARY}
     ${wxWidgets_LIBRARIES} glfw libcurl OpenSSL::SSL OpenSSL::Crypto)
 target_link_libraries(libslic3r_gui libslic3r_workspace)
+if(NOT TARGET status_hub_client)
+    set(STATUS_HUB_CLIENT_BUILD_EXAMPLE OFF CACHE BOOL "Build Status Hub client example" FORCE)
+    add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../../libs/status-hub-client/cpp" "${CMAKE_CURRENT_BINARY_DIR}/status_hub_client")
+endif()
+target_link_libraries(libslic3r_gui status_hub_client)
 if(NOT TARGET libslic3r_local_security)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../libslic3r/LocalSecurity ${CMAKE_CURRENT_BINARY_DIR}/local_security)
 endif()

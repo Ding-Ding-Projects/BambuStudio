@@ -34,6 +34,11 @@ public:
     // Only explicit public message sources are translated. Never infer source
     // messages from a rendered label, text entry, filename or document content.
     void record_label(wxWindow *window, const wxString &source);
+    using LabelRenderer = std::function<wxString(const wxString &)>;
+    // Explicit original public source with a stateless renderer, for factual
+    // disclosures that must not pass through normal tone/wording transforms.
+    // The renderer owns the final text. Empty renderers are rejected.
+    bool record_label_renderer(wxWindow *window, const wxString &source, LabelRenderer renderer);
     void record_tooltip(wxWindow *window, const wxString &source);
     // Explicit neutral accessible name, including for sensitive inputs. The
     // source describes the field's purpose and must never contain its value.
