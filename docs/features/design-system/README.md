@@ -40,6 +40,25 @@ Design 3 design system.
   the web pages' notice bar and the Workspace panel's tabs, tables, checklist and calendar, the one
   Material style every table takes, and the kit scrollbar in every scrolled page, panel, list and table.
 
+## Studio Atlas implementation receipts
+
+These articles record bounded source changes and their verification limits. They do not establish complete native rendering or application-wide redesign acceptance.
+
+- [Shared controls](studio-atlas-shared-controls.md): button, card, search and menu anatomy with caller gaps.
+- [Fields and presets](studio-atlas-fields-and-presets.md): measured field geometry, validation colors and preset controls.
+- [Prepare inspector and lists](prepare-inspector-atlas.md): native inspector rows, sections and selection surfaces.
+- [Renderer surfaces](renderer-atlas.md): toolbars, tooltips, timeline and Preview legend painting.
+- [Native monitor](monitor-atlas.md): telemetry hierarchy, printer selection, camera footer and DPI corrections.
+- [Device popups](device-popups-atlas.md): camera, fan, mapping, material and AMS setting surfaces.
+- [Project, preferences and setup](native-preferences-setup-atlas.md): native page composition, card lifecycle and nested search.
+- [Workspace](workspace-atlas.md): the five existing subviews and content-triggered reflow.
+- [Setup index](setup-index-atlas.md): wizard step painting with preserved routing.
+- [Calibration child pages](calibration-children-atlas.md): step, preset, active and result surfaces.
+- [Readers and overlays](overlays-atlas.md): eight auxiliary native surfaces and explicit nested boundaries.
+- [Live notifications](live-notifications-atlas.md): renderer-owned notification cards and preserved action targets.
+- [Embedded palette](embedded-studio-atlas.md): product-owned stylesheet colors, focus and reduced-motion rules.
+- [Embedded composition](embedded-composition-atlas.md): nine entrypoints, fourteen imports and source verification limits.
+
 ## Design source
 
 The canonical in-repo design source is [`ui-md3/design-system/`](../../../ui-md3/design-system/).
