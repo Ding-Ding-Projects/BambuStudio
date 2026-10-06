@@ -1,3 +1,6 @@
+#include <wx/wrapsizer.h>
+#include "Widgets/MD3Tokens.hpp"
+#include "Widgets/StateColor.hpp"
 #include "CalibrationWizardPage.hpp"
 #include "Widgets/MD3ScrolledWindow.hpp"
 #include "I18N.hpp"
@@ -251,7 +254,7 @@ FilamentComboBox::FilamentComboBox(wxWindow* parent, int index, const wxPoint& p
     : wxPanel(parent, wxID_ANY, pos, size, wxTAB_TRAVERSAL)
     , m_index(index)
 {
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     wxBoxSizer* main_sizer = new wxBoxSizer(wxHORIZONTAL);
 
@@ -426,13 +429,13 @@ CaliPageCaption::CaliPageCaption(wxWindow* parent, CalibMode cali_mode,
 {
     init_bitmaps();
 
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     auto top_sizer = new wxBoxSizer(wxVERTICAL);
     auto caption_sizer = new wxBoxSizer(wxHORIZONTAL);
     m_prev_btn = new ScalableButton(this, wxID_ANY, "cali_page_caption_prev",
         wxEmptyString, wxDefaultSize, wxDefaultPosition, wxBU_EXACTFIT | wxNO_BORDER, true, 30);
-    m_prev_btn->SetBackgroundColour(*wxWHITE);
+    m_prev_btn->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     caption_sizer->Add(m_prev_btn, 0, wxALIGN_CENTER | wxRIGHT, FromDIP(10));
 
     wxString title = get_cali_mode_caption_string(cali_mode);
@@ -444,7 +447,7 @@ CaliPageCaption::CaliPageCaption(wxWindow* parent, CalibMode cali_mode,
     m_help_btn = new ScalableButton(this, wxID_ANY, "cali_page_caption_help",
         wxEmptyString, wxDefaultSize, wxDefaultPosition, wxBU_EXACTFIT | wxNO_BORDER, true, 30);
     m_help_btn->Hide();
-    m_help_btn->SetBackgroundColour(*wxWHITE);
+    m_help_btn->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     caption_sizer->Add(m_help_btn, 0, wxALIGN_CENTER);
 
     caption_sizer->AddStretchSpacer();
@@ -454,7 +457,7 @@ CaliPageCaption::CaliPageCaption(wxWindow* parent, CalibMode cali_mode,
     caption_sizer->Add(m_wiki_text, 0);
 
     top_sizer->Add(caption_sizer, 1, wxEXPAND);
-    top_sizer->AddSpacer(FromDIP(35));
+    top_sizer->AddSpacer(FromDIP(MD3::Metrics::active().padding));
     this->SetSizer(top_sizer);
     top_sizer->Fit(this);
 
@@ -545,27 +548,23 @@ CaliPageStepGuide::CaliPageStepGuide(wxWindow* parent, wxArrayString steps,
     : wxPanel(parent, id, pos, size, style),
     m_steps(steps)
 {
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     auto top_sizer = new wxBoxSizer(wxVERTICAL);
 
-    m_step_sizer = new wxBoxSizer(wxHORIZONTAL);
-    m_step_sizer->AddSpacer(FromDIP(90));
+    m_step_sizer = new wxWrapSizer(wxHORIZONTAL);
+    m_step_sizer->AddSpacer(FromDIP(MD3::Metrics::active().gap));
     for (int i = 0; i < m_steps.size(); i++) {
         Label* step_text = new Label(this, m_steps[i]);
-        step_text->SetForegroundColour(StateColor::semantic(MD3::Role::Outline));
+        step_text->SetFont(Label::Head_14);
+        step_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
         m_text_steps.push_back(step_text);
-        m_step_sizer->Add(step_text, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT, FromDIP(15));
-        if (i != m_steps.size() - 1) {
-            auto line = new wxPanel(this, wxID_ANY, wxDefaultPosition);
-            line->SetBackgroundColour(*wxBLACK);
-            m_step_sizer->Add(line, 1, wxALIGN_CENTER);
-        }
+        m_step_sizer->Add(step_text, 0, wxALL, FromDIP(MD3::Metrics::active().gap));
     }
-    m_step_sizer->AddSpacer(FromDIP(90));
+    m_step_sizer->AddSpacer(FromDIP(MD3::Metrics::active().gap));
 
     top_sizer->Add(m_step_sizer, 0, wxEXPAND);
-    top_sizer->AddSpacer(FromDIP(30));
+    top_sizer->AddSpacer(FromDIP(MD3::Metrics::active().gap));
     this->SetSizer(top_sizer);
     top_sizer->Fit(this);
 
@@ -575,9 +574,11 @@ CaliPageStepGuide::CaliPageStepGuide(wxWindow* parent, wxArrayString steps,
 void CaliPageStepGuide::set_steps(int index)
 {
     for (Label* text_step : m_text_steps) {
-        text_step->SetForegroundColour(StateColor::semantic(MD3::Role::Outline));
+        text_step->SetBackgroundColour(GetBackgroundColour());
+        text_step->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     }
-    m_text_steps[index]->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+    m_text_steps[index]->SetBackgroundColour(StateColor::semantic(MD3::Role::PrimaryContainer));
+    m_text_steps[index]->SetForegroundColour(StateColor::semantic(MD3::Role::OnPrimaryContainer));
 
     wxGetApp().UpdateDarkUIWin(this);
 }
@@ -590,19 +591,15 @@ void CaliPageStepGuide::set_steps_string(wxArrayString steps)
     m_text_steps.clear();
     m_step_sizer->Clear(true);
     m_steps = steps;
-    m_step_sizer->AddSpacer(FromDIP(90));
+    m_step_sizer->AddSpacer(FromDIP(MD3::Metrics::active().gap));
     for (int i = 0; i < m_steps.size(); i++) {
         Label* step_text = new Label(this, m_steps[i]);
-        step_text->SetForegroundColour(StateColor::semantic(MD3::Role::Outline));
+        step_text->SetFont(Label::Head_14);
+        step_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
         m_text_steps.push_back(step_text);
-        m_step_sizer->Add(step_text, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT, FromDIP(15));
-        if (i != m_steps.size() - 1) {
-            auto line = new wxPanel(this, wxID_ANY, wxDefaultPosition);
-            line->SetBackgroundColour(*wxBLACK);
-            m_step_sizer->Add(line, 1, wxALIGN_CENTER);
-        }
+        m_step_sizer->Add(step_text, 0, wxALL, FromDIP(MD3::Metrics::active().gap));
     }
-    m_step_sizer->AddSpacer(FromDIP(90));
+    m_step_sizer->AddSpacer(FromDIP(MD3::Metrics::active().gap));
 
     wxGetApp().UpdateDarkUIWin(this);
 
@@ -681,7 +678,7 @@ void PAPageHelpPanel::msw_rescale()
 void PAPageHelpPanel::create_pop_window()
 {
     m_pop_win = new PopupWindow(this);
-    m_pop_win->SetBackgroundColour(*wxWHITE);
+    m_pop_win->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     wxBoxSizer* pop_sizer = new wxBoxSizer(wxVERTICAL);
     m_pop_win->SetSizer(pop_sizer);
 
@@ -788,11 +785,10 @@ CaliPageActionPanel::CaliPageActionPanel(wxWindow* parent,
 
     }
 
-    auto top_sizer = new wxBoxSizer(wxHORIZONTAL);
+    auto top_sizer = new wxWrapSizer(wxHORIZONTAL);
 
-    top_sizer->Add(0, 0, 1, wxEXPAND, 0);
     for (int i = 0; i < m_action_btns.size(); i++) {
-        top_sizer->Add(m_action_btns[i], 0, wxALL, FromDIP(5));
+        top_sizer->Add(m_action_btns[i], 0, wxALL, FromDIP(MD3::Metrics::active().gap));
 
         m_action_btns[i]->Bind(wxEVT_BUTTON,
             [this, i](wxCommandEvent& evt) {
@@ -802,7 +798,6 @@ CaliPageActionPanel::CaliPageActionPanel(wxWindow* parent,
                 wxPostEvent(m_parent, event);
             });
     }
-    top_sizer->Add(0, 0, 1, wxEXPAND, 0);
 
     this->SetSizer(top_sizer);
     top_sizer->Fit(this);
@@ -863,7 +858,7 @@ void CaliPageActionPanel::msw_rescale()
 CaliPageSendingPanel::CaliPageSendingPanel(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style)
     : wxPanel(parent, id, pos, size, style)
 {
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     SetMinSize({ FromDIP(475), FromDIP(200) });
     SetMaxSize({ FromDIP(475), FromDIP(200) });
 
@@ -886,7 +881,7 @@ void CaliPageSendingPanel::create(wxWindow* parent)
     panel_sizer->Add(m_send_progress_bar->get_panel(), 0, wxEXPAND);
 
     m_sw_print_failed_info = new MD3ScrolledWindow(parent, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(380), FromDIP(125)), wxVSCROLL);
-    m_sw_print_failed_info->SetBackgroundColour(*wxWHITE);
+    m_sw_print_failed_info->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_sw_print_failed_info->SetScrollRate(0, 5);
     m_sw_print_failed_info->SetMinSize(wxSize(FromDIP(380), FromDIP(125)));
     m_sw_print_failed_info->SetMaxSize(wxSize(FromDIP(380), FromDIP(125)));
@@ -1014,7 +1009,7 @@ CalibrationWizardPage::CalibrationWizardPage(wxWindow* parent, wxWindowID id, co
     : wxPanel(parent, id, pos, size, style)
     , m_parent(parent)
 {
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     SetMinSize({ MIN_CALIBRATION_PAGE_WIDTH, -1 });
 }
 

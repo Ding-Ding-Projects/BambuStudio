@@ -1,3 +1,5 @@
+#include "Widgets/MD3Tokens.hpp"
+#include "Widgets/StateColor.hpp"
 #include "CalibrationWizardStartPage.hpp"
 #include "I18N.hpp"
 #include "Widgets/Label.hpp"
@@ -14,12 +16,14 @@ CalibrationStartPage::CalibrationStartPage(wxWindow* parent, wxWindowID id, cons
 void CalibrationStartPage::create_when(wxWindow* parent, wxString title, wxString content)
 {
     m_when_title = new Label(this, title);
-    m_when_title->SetFont(Label::Head_14);
+    m_when_title->SetFont(Label::Head_16);
+    m_when_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_when_title->Wrap(CALIBRATION_START_PAGE_TEXT_MAX_LENGTH);
     m_when_title->SetMinSize({CALIBRATION_START_PAGE_TEXT_MAX_LENGTH, -1});
 
     m_when_content = new Label(this, content);;
     m_when_content->SetFont(Label::Body_14);
+    m_when_content->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     m_when_content->Wrap(CALIBRATION_START_PAGE_TEXT_MAX_LENGTH);
     m_when_content->SetMinSize({CALIBRATION_START_PAGE_TEXT_MAX_LENGTH, -1});
 }
@@ -27,12 +31,14 @@ void CalibrationStartPage::create_when(wxWindow* parent, wxString title, wxStrin
 void CalibrationStartPage::create_about(wxWindow* parent, wxString title, wxString content)
 {
     m_about_title = new Label(this, title);
-    m_about_title->SetFont(Label::Head_14);
+    m_about_title->SetFont(Label::Head_16);
+    m_about_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_about_title->Wrap(CALIBRATION_START_PAGE_TEXT_MAX_LENGTH);
     m_about_title->SetMinSize({CALIBRATION_START_PAGE_TEXT_MAX_LENGTH, -1});
 
     m_about_content = new Label(this, content);
     m_about_content->SetFont(Label::Body_14);
+    m_about_content->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     m_about_content->Wrap(CALIBRATION_START_PAGE_TEXT_MAX_LENGTH);
     m_about_content->SetMinSize({CALIBRATION_START_PAGE_TEXT_MAX_LENGTH, -1});
 }
@@ -258,7 +264,8 @@ void CalibrationFlowRateStartPage::create_page(wxWindow* parent)
     m_top_sizer->AddSpacer(PRESET_GAP);
 
     auto auto_cali_title = new Label(parent, _L("Auto-Calibration"));
-    auto_cali_title->SetFont(Label::Head_14);
+    auto_cali_title->SetFont(Label::Head_16);
+    auto_cali_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     auto_cali_title->Wrap(CALIBRATION_START_PAGE_TEXT_MAX_LENGTH);
     auto_cali_title->SetMinSize({CALIBRATION_START_PAGE_TEXT_MAX_LENGTH, -1});
 
@@ -374,7 +381,8 @@ void CalibrationMaxVolumetricSpeedStartPage::create_page(wxWindow* parent)
     m_top_sizer->AddSpacer(PRESET_GAP);
 
     auto recommend_title = new Label(parent, _L("Max Volumetric Speed calibration is recommended when you print with:"));
-    recommend_title->SetFont(Label::Head_14);
+    recommend_title->SetFont(Label::Head_16);
+    recommend_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     recommend_title->Wrap(CALIBRATION_START_PAGE_TEXT_MAX_LENGTH);
     m_top_sizer->Add(recommend_title);
     auto recommend_text1 = new Label(parent, _L("material with significant thermal shrinkage/expansion, such as..."));
