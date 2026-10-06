@@ -2,6 +2,8 @@
 
 #include "ConfigWizard_private.hpp"
 #include "Widgets/MD3ScrolledWindow.hpp"
+#include "Widgets/MD3Tokens.hpp"
+#include "Widgets/StateColor.hpp"
 #include "Widgets/TextInput.hpp"
 #include "Widgets/LabeledCheckBox.hpp"
 
@@ -465,11 +467,11 @@ ConfigWizardPage::ConfigWizardPage(ConfigWizard *parent, wxString title, wxStrin
     auto *sizer = new wxBoxSizer(wxVERTICAL);
 
     auto *text = new Label(this, std::move(title), wxALIGN_LEFT);
-    const auto font = GetFont().MakeBold().Scaled(1.5);
+    const auto font = Label::Head_20;
     text->SetFont(font);
-    text->SetForegroundColour(*wxBLACK);
+    text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     sizer->Add(text, 0, wxALIGN_LEFT, 0);
-    sizer->AddSpacer(10);
+    sizer->AddSpacer(FromDIP(MD3::Metrics::active().gap));
 
     content = new wxBoxSizer(wxVERTICAL);
     sizer->Add(content, 1, wxEXPAND);
@@ -653,7 +655,7 @@ PageMaterials::PageMaterials(ConfigWizard *parent, Materials *materials, wxStrin
     , list_vendor(new StringList(this))
     , list_profile(new PresetList(this))
 {
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::Surface));
     append_spacer(VERTICAL_SPACING);
 
     const int em = parent->em_unit();
@@ -2664,7 +2666,7 @@ ConfigWizard::ConfigWizard(wxWindow *parent)
     , p(new priv(this))
 {
     this->SetFont(wxGetApp().normal_font());
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::Surface));
     p->load_vendors();
     //BBS: add bed exclude areas
     p->custom_config.reset(DynamicPrintConfig::new_from_defaults_keys({
@@ -2686,6 +2688,7 @@ ConfigWizard::ConfigWizard(wxWindow *parent)
     p->hscroll->SetSizer(p->hscroll_sizer);
 
     wxGetApp().UpdateDarkUI(p->hscroll);
+    p->hscroll->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     topsizer->Add(p->index, 0, wxEXPAND);
     topsizer->AddSpacer(INDEX_MARGIN);
@@ -2696,6 +2699,10 @@ ConfigWizard::ConfigWizard(wxWindow *parent)
     p->btn_finish = new Button(this,_L("Finish"));
     p->btn_finish->SetId(wxID_APPLY);
     p->btn_cancel = new Button(this, _L("Cancel"));   // Note: The label needs to be present, otherwise we get accelerator bugs on Mac
+    p->btn_prev->SetVariant(Button::Variant::Outlined);
+    p->btn_next->SetVariant(Button::Variant::Filled);
+    p->btn_finish->SetVariant(Button::Variant::Filled);
+    p->btn_cancel->SetVariant(Button::Variant::Text);
     p->btn_cancel->SetId(wxID_CANCEL);
     
     p->btnsizer->AddStretchSpacer();

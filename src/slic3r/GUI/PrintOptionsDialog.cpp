@@ -15,10 +15,6 @@
 #include "DeviceCore/DevFan.h"
 #include "Widgets/Label.hpp"
 
-static const wxColour STATIC_BOX_LINE_COL = ThemeColor::Grey400;
-static const wxColour STATIC_TEXT_CAPTION_COL = ThemeColor::TextSecondary;
-static const wxColour STATIC_TEXT_EXPLAIN_COL = ThemeColor::TextSecondary;
-
 namespace Slic3r { namespace GUI {
 
 static StateColor btn_bg_green(std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Disabled),
@@ -431,7 +427,7 @@ void PrintOptionsDialog::update_purify_air_at_print_end(MachineObject *obj_)
     text_purify_air->Show();
     m_cb_purify_air_at_print_end->Enable();
     purify_air_switch_board->Enable();
-    text_purify_air_context->SetForegroundColour(STATIC_TEXT_CAPTION_COL);
+    text_purify_air_context->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     text_purify_air->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
 
     if (obj_->GetFan()->GetAirDuctData().IsExaustFanExit())
@@ -965,7 +961,7 @@ wxBoxSizer* PrintOptionsDialog::create_settings_group(wxWindow* parent)
     // ai detections
     line_sizer = new wxBoxSizer(wxHORIZONTAL);
     text_ai_detections = new Label(ai_refine_panel, _L("AI Detections"));
-    text_ai_detections->SetFont(Label::Body_14);
+    text_ai_detections->SetFont(Label::Head_16);
     line_sizer->Add(FromDIP(5), 0, 0, 0);
     line_sizer->Add(text_ai_detections, 0, wxLEFT | wxRIGHT | wxDOWN | wxALIGN_CENTER_VERTICAL, FromDIP(2));
     ai_refine_sizer->Add(0, 0, 0, wxTOP, FromDIP(20));
@@ -974,7 +970,7 @@ wxBoxSizer* PrintOptionsDialog::create_settings_group(wxWindow* parent)
     line_sizer = new wxBoxSizer(wxHORIZONTAL);
     text_ai_detections_caption = new Label(ai_refine_panel, _L("Printer will send assistant message or pause printing if any of the following problem is detected."));
     text_ai_detections_caption->SetFont(Label::Body_12);
-    text_ai_detections_caption->SetForegroundColour(STATIC_TEXT_CAPTION_COL);
+    text_ai_detections_caption->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     text_ai_detections_caption->Wrap(FromDIP(400));
     line_sizer->Add(FromDIP(5), 0, 0, 0);
     line_sizer->Add(text_ai_detections_caption, 0,wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(2));
@@ -994,7 +990,7 @@ wxBoxSizer* PrintOptionsDialog::create_settings_group(wxWindow* parent)
     line_sizer                 = new wxBoxSizer(wxHORIZONTAL);
     text_ai_monitoring_caption = new Label(parent, _L("Pausing Sensitivity:"));
     text_ai_monitoring_caption->SetFont(Label::Body_12);
-    text_ai_monitoring_caption->SetForegroundColour(STATIC_TEXT_CAPTION_COL);
+    text_ai_monitoring_caption->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     text_ai_monitoring_caption->Wrap(-1);
 
     ai_monitoring_level_list = new ComboBox(parent, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(FromDIP(100), -1), 0, NULL, wxCB_READONLY);
@@ -1024,7 +1020,7 @@ wxBoxSizer* PrintOptionsDialog::create_settings_group(wxWindow* parent)
     line_sizer = new wxBoxSizer(wxHORIZONTAL);
     text_spaghetti_detection_caption0 = new Label(ai_refine_panel, _L("Detects spaghetti failure(scattered lose filament)."));
     text_spaghetti_detection_caption0->SetFont(Label::Body_12);
-    text_spaghetti_detection_caption0->SetForegroundColour(STATIC_TEXT_CAPTION_COL);
+    text_spaghetti_detection_caption0->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     text_spaghetti_detection_caption0->Wrap(-1);
     line_sizer->Add(FromDIP(30), 0, 0, 0);
     line_sizer->Add(text_spaghetti_detection_caption0, 0, wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(5));
@@ -1033,7 +1029,7 @@ wxBoxSizer* PrintOptionsDialog::create_settings_group(wxWindow* parent)
     line_sizer = new wxBoxSizer(wxHORIZONTAL);
     text_spaghetti_detection_caption1 = new Label(ai_refine_panel, _L("Pausing Sensitivity:"));
     text_spaghetti_detection_caption1->SetFont(Label::Body_12);
-    text_spaghetti_detection_caption1->SetForegroundColour(STATIC_TEXT_CAPTION_COL);
+    text_spaghetti_detection_caption1->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     text_spaghetti_detection_caption1->Wrap(-1);
 
     spaghetti_detection_level_list = new ComboBox(ai_refine_panel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(FromDIP(100), -1), 0, NULL, wxCB_READONLY);
@@ -1051,7 +1047,7 @@ wxBoxSizer* PrintOptionsDialog::create_settings_group(wxWindow* parent)
     ai_refine_sizer->Add(line_sizer, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(18));
 
    /* line1 = new StaticLine(parent, false);
-    line1->SetLineColour(STATIC_BOX_LINE_COL);
+    line1->SetLineColour(StateColor::semantic(MD3::Role::OutlineVariant));
     sizer->Add(line1, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(18));*/
     spaghetti_bottom_space = ai_refine_sizer->Add(0, 0, 0, wxTOP, FromDIP(12));
 
@@ -1068,7 +1064,7 @@ wxBoxSizer* PrintOptionsDialog::create_settings_group(wxWindow* parent)
     line_sizer                        = new wxBoxSizer(wxHORIZONTAL);
     text_purgechutepileup_detection_caption0 = new Label(ai_refine_panel, _L("Monitors if the waste is piled up in the purge chute."));
     text_purgechutepileup_detection_caption0->SetFont(Label::Body_12);
-    text_purgechutepileup_detection_caption0->SetForegroundColour(STATIC_TEXT_CAPTION_COL);
+    text_purgechutepileup_detection_caption0->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     text_purgechutepileup_detection_caption0->Wrap(-1);
     line_sizer->Add(FromDIP(30), 0, 0, 0);
     line_sizer->Add(text_purgechutepileup_detection_caption0, 0, wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(5));
@@ -1077,7 +1073,7 @@ wxBoxSizer* PrintOptionsDialog::create_settings_group(wxWindow* parent)
     line_sizer                        = new wxBoxSizer(wxHORIZONTAL);
     text_purgechutepileup_detection_caption1 = new Label(ai_refine_panel, _L("Pausing Sensitivity:"));
     text_purgechutepileup_detection_caption1->SetFont(Label::Body_12);
-    text_purgechutepileup_detection_caption1->SetForegroundColour(STATIC_TEXT_CAPTION_COL);
+    text_purgechutepileup_detection_caption1->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     text_purgechutepileup_detection_caption1->Wrap(-1);
 
     purgechutepileup_detection_level_list = new ComboBox(ai_refine_panel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(FromDIP(100), -1), 0, NULL, wxCB_READONLY);
@@ -1108,7 +1104,7 @@ wxBoxSizer* PrintOptionsDialog::create_settings_group(wxWindow* parent)
     line_sizer                               = new wxBoxSizer(wxHORIZONTAL);
     text_nozzleclumping_detection_caption0 = new Label(ai_refine_panel, _L("Checks if the nozzle is clumping by filaments or other foreign objects."));
     text_nozzleclumping_detection_caption0->SetFont(Label::Body_12);
-    text_nozzleclumping_detection_caption0->SetForegroundColour(STATIC_TEXT_CAPTION_COL);
+    text_nozzleclumping_detection_caption0->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     text_nozzleclumping_detection_caption0->Wrap(-1);
     line_sizer->Add(FromDIP(30), 0, 0, 0);
     line_sizer->Add(text_nozzleclumping_detection_caption0, 0, wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(5));
@@ -1118,7 +1114,7 @@ wxBoxSizer* PrintOptionsDialog::create_settings_group(wxWindow* parent)
     line_sizer                             = new wxBoxSizer(wxHORIZONTAL);
     text_nozzleclumping_detection_caption1 = new Label(ai_refine_panel, _L("Pausing Sensitivity:"));
     text_nozzleclumping_detection_caption1->SetFont(Label::Body_12);
-    text_nozzleclumping_detection_caption1->SetForegroundColour(STATIC_TEXT_CAPTION_COL);
+    text_nozzleclumping_detection_caption1->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     text_nozzleclumping_detection_caption1->Wrap(-1);
 
     nozzleclumping_detection_level_list = new ComboBox(ai_refine_panel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(FromDIP(100), -1), 0, NULL, wxCB_READONLY);
@@ -1149,7 +1145,7 @@ wxBoxSizer* PrintOptionsDialog::create_settings_group(wxWindow* parent)
     line_sizer                               = new wxBoxSizer(wxHORIZONTAL);
     text_airprinting_detection_caption0 = new Label(ai_refine_panel, _L("Detects air printing caused by nozzle clogging or filament grinding."));
     text_airprinting_detection_caption0->SetFont(Label::Body_12);
-    text_airprinting_detection_caption0->SetForegroundColour(STATIC_TEXT_CAPTION_COL);
+    text_airprinting_detection_caption0->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     text_airprinting_detection_caption0->Wrap(-1);
     line_sizer->Add(FromDIP(30), 0, 0, 0);
     line_sizer->Add(text_airprinting_detection_caption0, 0, wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(5));
@@ -1158,7 +1154,7 @@ wxBoxSizer* PrintOptionsDialog::create_settings_group(wxWindow* parent)
     line_sizer                               = new wxBoxSizer(wxHORIZONTAL);
     text_airprinting_detection_caption1 = new Label(ai_refine_panel, _L("Pausing Sensitivity:"));
     text_airprinting_detection_caption1->SetFont(Label::Body_12);
-    text_airprinting_detection_caption1->SetForegroundColour(STATIC_TEXT_CAPTION_COL);
+    text_airprinting_detection_caption1->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     text_airprinting_detection_caption1->Wrap(-1);
 
     airprinting_detection_level_list = new ComboBox(ai_refine_panel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(FromDIP(100), -1), 0, NULL, wxCB_READONLY);
@@ -1189,7 +1185,7 @@ wxBoxSizer* PrintOptionsDialog::create_settings_group(wxWindow* parent)
     text_fod_check_caption = new Label(ai_refine_panel, fod_check_caption_text);
     text_fod_check_caption->SetFont(Label::Body_12);
     text_fod_check_caption->Wrap(FromDIP(400));
-    text_fod_check_caption->SetForegroundColour(STATIC_TEXT_CAPTION_COL);
+    text_fod_check_caption->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     line_sizer->Add(FromDIP(30), 0, 0, 0);
     line_sizer->Add(text_fod_check_caption, 1, wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(5));
     ai_refine_sizer->Add(line_sizer, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(18));
@@ -1210,7 +1206,7 @@ wxBoxSizer* PrintOptionsDialog::create_settings_group(wxWindow* parent)
     text_displacement_detection_caption = new Label(ai_refine_panel, displacement_detection_caption_text);
     text_displacement_detection_caption->SetFont(Label::Body_12);
     text_displacement_detection_caption->Wrap(FromDIP(400));
-    text_displacement_detection_caption->SetForegroundColour(STATIC_TEXT_CAPTION_COL);
+    text_displacement_detection_caption->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     line_sizer->Add(FromDIP(30), 0, 0, 0);
     line_sizer->Add(text_displacement_detection_caption, 1, wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(5));
     ai_refine_sizer->Add(line_sizer, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(18));
@@ -1244,7 +1240,7 @@ wxBoxSizer* PrintOptionsDialog::create_settings_group(wxWindow* parent)
     text_plate_mark_caption = new Label(parent, caption_text);
     text_plate_mark_caption->Wrap(FromDIP(400));
     text_plate_mark_caption->SetFont(Label::Body_12);
-    text_plate_mark_caption->SetForegroundColour(STATIC_TEXT_CAPTION_COL);
+    text_plate_mark_caption->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     line_sizer->Add(FromDIP(38), 0, 0, 0);
     line_sizer->Add(text_plate_mark_caption, 1, wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(0));
 
@@ -1266,7 +1262,7 @@ wxBoxSizer* PrintOptionsDialog::create_settings_group(wxWindow* parent)
     line_sizer = new wxBoxSizer(wxHORIZONTAL);
     text_plate_build_caption = new Label(parent, _L("Ensures the build plate type and placement are correct."));
     text_plate_build_caption->SetFont(Label::Body_12);
-    text_plate_build_caption->SetForegroundColour(STATIC_TEXT_CAPTION_COL);
+    text_plate_build_caption->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     line_sizer->Add(FromDIP(5), 0, 0, 0);
     line_sizer->Add(text_plate_build_caption, 1, wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(5));
     sizer->Add(line_sizer, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(18));
@@ -1285,7 +1281,7 @@ wxBoxSizer* PrintOptionsDialog::create_settings_group(wxWindow* parent)
     text_plate_type_caption = new Label(parent, _L("Pauses printing when the detected build plate type does not match the selected one."));
     text_plate_type_caption->Wrap(FromDIP(400));
     text_plate_type_caption->SetFont(Label::Body_12);
-    text_plate_type_caption->SetForegroundColour(STATIC_TEXT_CAPTION_COL);
+    text_plate_type_caption->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     line_sizer->Add(FromDIP(38), 0, 0, 0);
     line_sizer->Add(text_plate_type_caption, 1, wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(0));
     sizer->Add(line_sizer, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(18));
@@ -1304,13 +1300,13 @@ wxBoxSizer* PrintOptionsDialog::create_settings_group(wxWindow* parent)
     text_plate_align_caption = new Label(parent, _L("Pauses printing when build plate misalignment is detected."));
     text_plate_align_caption->Wrap(FromDIP(400));
     text_plate_align_caption->SetFont(Label::Body_12);
-    text_plate_align_caption->SetForegroundColour(STATIC_TEXT_CAPTION_COL);
+    text_plate_align_caption->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     line_sizer->Add(FromDIP(38), 0, 0, 0);
     line_sizer->Add(text_plate_align_caption, 1, wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(0));
     sizer->Add(line_sizer, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(18));
 
     line2 = new StaticLine(parent, false);
-    line2->SetLineColour(STATIC_BOX_LINE_COL);
+    line2->SetLineColour(StateColor::semantic(MD3::Role::OutlineVariant));
     sizer->Add(line2, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(20));
     line2->Hide();
     sizer->Add(0, 0, 0, wxTOP, FromDIP(15));
@@ -1327,7 +1323,7 @@ wxBoxSizer* PrintOptionsDialog::create_settings_group(wxWindow* parent)
     line_sizer->Add(FromDIP(5), 0, 0, 0);
 
     line3 = new StaticLine(parent, false);
-    line3->SetLineColour(STATIC_BOX_LINE_COL);
+    line3->SetLineColour(StateColor::semantic(MD3::Role::OutlineVariant));
     sizer->Add(line3, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(20));
     line3->Hide();
     sizer->Add(0, 0, 0, wxTOP, FromDIP(15));
@@ -1339,7 +1335,7 @@ wxBoxSizer* PrintOptionsDialog::create_settings_group(wxWindow* parent)
     text_purify_air->SetFont(Label::Body_14);
     text_purify_air_context = new Label(parent, wxEmptyString);
     text_purify_air_context->SetFont(Label::Body_12);
-    text_purify_air_context->SetForegroundColour(STATIC_TEXT_CAPTION_COL);
+    text_purify_air_context->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
 
     purify_air_switch_board = new SwitchBoard(parent, _L("Internal Circulation"), _L("Exhaust"), wxSize(FromDIP(300), FromDIP(26)));
     purify_air_switch_board->Disable();
@@ -1378,7 +1374,7 @@ wxBoxSizer* PrintOptionsDialog::create_settings_group(wxWindow* parent)
     line_sizer->Add(m_cb_save_remote_print_file_to_storage, 0, wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(5));
     line_sizer->Add(text_save_remote_print_file_to_storage, 1, wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(5));
     text_save_remote_print_file_to_storage_explain = new Label(parent, _L("Save the printing files initiated from Bambu Studio, Bambu Handy and MakerWorld on External Storage"));
-    text_save_remote_print_file_to_storage_explain->SetForegroundColour(STATIC_TEXT_EXPLAIN_COL);
+    text_save_remote_print_file_to_storage_explain->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     text_save_remote_print_file_to_storage_explain->SetFont(Label::Body_12);
     text_save_remote_print_file_to_storage_explain->Wrap(FromDIP(400));
 
@@ -1399,7 +1395,7 @@ wxBoxSizer* PrintOptionsDialog::create_settings_group(wxWindow* parent)
     line_sizer->Add(FromDIP(5), 0, 0, 0);
 
     line5 = new StaticLine(parent, false);
-    line5->SetLineColour(STATIC_BOX_LINE_COL);
+    line5->SetLineColour(StateColor::semantic(MD3::Role::OutlineVariant));
     sizer->Add(line5, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(20));
     line5->Hide();
     /*sizer->Add(0, 0, 0, wxTOP, FromDIP(20));*/
@@ -1417,7 +1413,7 @@ wxBoxSizer* PrintOptionsDialog::create_settings_group(wxWindow* parent)
     line_sizer->Add(FromDIP(5), 0, 0, 0);
 
     line6 = new StaticLine(parent, false);
-    line6->SetLineColour(STATIC_BOX_LINE_COL);
+    line6->SetLineColour(StateColor::semantic(MD3::Role::OutlineVariant));
     sizer->Add(line6, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(20));
     line6->Hide();
     //sizer->Add(0, 0, 0, wxTOP, FromDIP(20));
@@ -1439,13 +1435,13 @@ wxBoxSizer* PrintOptionsDialog::create_settings_group(wxWindow* parent)
     text_nozzle_blob_caption = new Label(parent, nozzle_blob_caption_text);
     text_nozzle_blob_caption->SetFont(Label::Body_12);
     text_nozzle_blob_caption->Wrap(-1);
-    text_nozzle_blob_caption->SetForegroundColour(STATIC_TEXT_CAPTION_COL);
+    text_nozzle_blob_caption->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     line_sizer->Add(FromDIP(30), 0, 0, 0);
     line_sizer->Add(text_nozzle_blob_caption, 1, wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(0));
     sizer->Add(line_sizer, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(18));
 
     line7 = new StaticLine(parent, false);
-    line7->SetLineColour(STATIC_BOX_LINE_COL);
+    line7->SetLineColour(StateColor::semantic(MD3::Role::OutlineVariant));
     sizer->Add(line7, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(20));
 
     text_nozzle_blob->Hide();
@@ -1466,7 +1462,7 @@ wxBoxSizer* PrintOptionsDialog::create_settings_group(wxWindow* parent)
     text_smart_nozzle_blob_mode_desc = new Label(parent, smart_nozzle_blob_caption_text);
     text_smart_nozzle_blob_mode_desc->SetFont(Label::Body_12);
     text_smart_nozzle_blob_mode_desc->Wrap(FromDIP(400));
-    text_smart_nozzle_blob_mode_desc->SetForegroundColour(STATIC_TEXT_CAPTION_COL);
+    text_smart_nozzle_blob_mode_desc->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     // Align caption with the section title above (both use a 5px leading spacer + 5px
     // label left padding under the same 18px outer margin), per figma N1-9 #10100-23113.
     line_sizer->Add(FromDIP(5), 0, 0, 0);
@@ -1531,7 +1527,7 @@ wxBoxSizer* PrintOptionsDialog::create_settings_group(wxWindow* parent)
     Label* text_snapshot_caption = new Label(parent, _L("Automatically capture and upload print photos, showing defects during printing and the final result for remote viewing."));
     text_snapshot_caption->Wrap(FromDIP(400));
     text_snapshot_caption->SetFont(Label::Body_12);
-    text_snapshot_caption->SetForegroundColour(STATIC_TEXT_CAPTION_COL);
+    text_snapshot_caption->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     line_sizer->Add(FromDIP(38), 0, 0, 0);
     line_sizer->Add(text_snapshot_caption, 1, wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(0));
     m_snapshot_sizer->Add(line_sizer, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(18));
@@ -1699,7 +1695,7 @@ PrinterPartsDialog::PrinterPartsDialog(wxWindow* parent)
     nozzle_type->SetFont(Label::Body_14);
     nozzle_type->SetMinSize(wxSize(FromDIP(180), -1));
     nozzle_type->SetMaxSize(wxSize(FromDIP(180), -1));
-    nozzle_type->SetForegroundColour(STATIC_TEXT_CAPTION_COL);
+    nozzle_type->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     nozzle_type->Wrap(-1);
 
     nozzle_type_checkbox = new ComboBox(single_panel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(FromDIP(180), -1), 0, NULL, wxCB_READONLY);
@@ -1715,7 +1711,7 @@ PrinterPartsDialog::PrinterPartsDialog(wxWindow* parent)
     nozzle_diameter->SetFont(Label::Body_14);
     nozzle_diameter->SetMinSize(wxSize(FromDIP(180), -1));
     nozzle_diameter->SetMaxSize(wxSize(FromDIP(180), -1));
-    nozzle_diameter->SetForegroundColour(STATIC_TEXT_CAPTION_COL);
+    nozzle_diameter->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     nozzle_diameter->Wrap(-1);
 
     nozzle_diameter_checkbox = new ComboBox(single_panel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(FromDIP(180), -1), 0, NULL, wxCB_READONLY);
@@ -1730,7 +1726,7 @@ PrinterPartsDialog::PrinterPartsDialog(wxWindow* parent)
     nozzle_flow_type_label->SetFont(Label::Body_14);
     nozzle_flow_type_label->SetMinSize(wxSize(FromDIP(180), -1));
     nozzle_flow_type_label->SetMaxSize(wxSize(FromDIP(180), -1));
-    nozzle_flow_type_label->SetForegroundColour(STATIC_TEXT_CAPTION_COL);
+    nozzle_flow_type_label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     nozzle_flow_type_label->Wrap(-1);
 
     nozzle_flow_type_checkbox = new ComboBox(single_panel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(FromDIP(180), -1), 0, NULL, wxCB_READONLY);
@@ -1742,7 +1738,7 @@ PrinterPartsDialog::PrinterPartsDialog(wxWindow* parent)
     wxSizer* h_tips_sizer = new wxBoxSizer(wxHORIZONTAL);
     change_nozzle_tips = new Label(single_panel, _L("Please change the nozzle settings on the printer."));
     change_nozzle_tips->SetFont(Label::Body_13);
-    change_nozzle_tips->SetForegroundColour(STATIC_TEXT_CAPTION_COL);
+    change_nozzle_tips->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
 
     m_wiki_link = new Label(single_panel, _L("View wiki"));
     m_wiki_link->SetFont(Label::Body_13);
@@ -1795,18 +1791,18 @@ PrinterPartsDialog::PrinterPartsDialog(wxWindow* parent)
     wxBoxSizer *multiple_left_line_sizer = new wxBoxSizer(wxHORIZONTAL);
     auto multiple_left_nozzle_type = new Label(multiple_panel, _CTX(L_CONTEXT("Type", "Nozzle Type"), "Nozzle Type"));
     multiple_left_nozzle_type->SetFont(Label::Body_14);
-    multiple_left_nozzle_type->SetForegroundColour(STATIC_TEXT_CAPTION_COL);
+    multiple_left_nozzle_type->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
 
     multiple_left_nozzle_type_checkbox = new ComboBox(multiple_panel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(FromDIP(180), -1), 0, NULL, wxCB_READONLY);
 
     auto multiple_left_nozzle_diameter = new Label(multiple_panel, _CTX(L_CONTEXT("Diameter", "Nozzle Diameter"), "Nozzle Diameter"));
     multiple_left_nozzle_diameter->SetFont(Label::Body_14);
-    multiple_left_nozzle_diameter->SetForegroundColour(STATIC_TEXT_CAPTION_COL);
+    multiple_left_nozzle_diameter->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     multiple_left_nozzle_diameter_checkbox = new ComboBox(multiple_panel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(FromDIP(140), -1), 0, NULL, wxCB_READONLY);
 
     auto multiple_left_nozzle_flow = new Label(multiple_panel, _CTX(L_CONTEXT("Flow", "Nozzle Flow"), "Nozzle Flow"));
     multiple_left_nozzle_flow->SetFont(Label::Body_14);
-    multiple_left_nozzle_flow->SetForegroundColour(STATIC_TEXT_CAPTION_COL);
+    multiple_left_nozzle_flow->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     multiple_left_nozzle_flow_checkbox = new ComboBox(multiple_panel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(FromDIP(140), -1), 0, NULL, wxCB_READONLY);
 
     multiple_left_line_sizer->Add(multiple_left_nozzle_type, 0, wxALIGN_CENTER, 0);
@@ -1829,18 +1825,18 @@ PrinterPartsDialog::PrinterPartsDialog(wxWindow* parent)
     wxBoxSizer *multiple_right_line_sizer  = new wxBoxSizer(wxHORIZONTAL);
     auto        multiple_right_nozzle_type = new Label(multiple_panel, _CTX(L_CONTEXT("Type", "Nozzle Type"), "Nozzle Type"));
     multiple_right_nozzle_type->SetFont(Label::Body_14);
-    multiple_right_nozzle_type->SetForegroundColour(STATIC_TEXT_CAPTION_COL);
+    multiple_right_nozzle_type->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
 
     multiple_right_nozzle_type_checkbox = new ComboBox(multiple_panel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(FromDIP(180), -1), 0, NULL, wxCB_READONLY);
 
     auto multiple_right_nozzle_diameter = new Label(multiple_panel, _CTX(L_CONTEXT("Diameter", "Nozzle Diameter"), "Nozzle Diameter"));
     multiple_right_nozzle_diameter->SetFont(Label::Body_14);
-    multiple_right_nozzle_diameter->SetForegroundColour(STATIC_TEXT_CAPTION_COL);
+    multiple_right_nozzle_diameter->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     multiple_right_nozzle_diameter_checkbox = new ComboBox(multiple_panel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(FromDIP(140), -1), 0, NULL, wxCB_READONLY);
 
     auto multiple_right_nozzle_flow = new Label(multiple_panel, _CTX(L_CONTEXT("Flow", "Nozzle Flow"), "Nozzle Flow"));
     multiple_right_nozzle_flow->SetFont(Label::Body_14);
-    multiple_right_nozzle_flow->SetForegroundColour(STATIC_TEXT_CAPTION_COL);
+    multiple_right_nozzle_flow->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     multiple_right_nozzle_flow_checkbox = new ComboBox(multiple_panel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(FromDIP(140), -1), 0, NULL, wxCB_READONLY);
 
     multiple_right_line_sizer->Add(multiple_right_nozzle_type, 0, wxALIGN_CENTER, 0);
@@ -1857,7 +1853,7 @@ PrinterPartsDialog::PrinterPartsDialog(wxWindow* parent)
 
     multiple_change_nozzle_tips = new Label(multiple_panel, _L("Please change the nozzle settings on the printer."));
     multiple_change_nozzle_tips->SetFont(Label::Body_13);
-    multiple_change_nozzle_tips->SetForegroundColour(STATIC_TEXT_CAPTION_COL);
+    multiple_change_nozzle_tips->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
 
     multiple_wiki_link = new Label(multiple_panel, _L("View wiki"));
     multiple_wiki_link->SetFont(Label::Body_13);
