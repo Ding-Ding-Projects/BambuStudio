@@ -8,8 +8,10 @@
 
 #include "Widgets/MD3Tokens.hpp"
 #include "Widgets/MD3Motion.hpp"
+#include "NotebookNavigation.hpp"
 
 #include <functional>
+#include <memory>
 #include <utility>
 
 class ModeSizer;
@@ -28,6 +30,7 @@ public:
 
     void OnPaint(wxPaintEvent&);
     void SetSelection(int sel);
+    void SetWorkflowPages(int prepare, int preview, int print, int monitor);
     void SetColorScheme(MD3::ColorScheme scheme);
     void UpdateMode();
     void Rescale();
@@ -42,16 +45,20 @@ public:
 private:
     void ApplyTheme();
     void StyleButton(Button* button, bool selected);
+    void LayoutNavigation();
+    void ShowOverflow();
+    bool IsWorkflowPage(int page) const;
 
-    // BBS: use a box sizer so tabs can shrink (Chrome-style) when space is tight
-    wxBoxSizer*                     m_buttons_sizer;
-    wxBoxSizer*                     m_actions_sizer;
-    wxBoxSizer*                     m_sizer;
+    std::unique_ptr<wxBoxSizer>      m_side_tools;
+    Button*                         m_overflow_button = nullptr;
+    NotebookNavigation::Workflow    m_workflow{{-1, -1, -1, -1}};
+    std::vector<int>                m_overflow;
+    wxRect                          m_workflow_rect;
+    bool                            m_laying_out = false;
     // BBS: use Button
     std::vector<Button*>            m_pageButtons;
     std::vector<Button*>            m_actionButtons;
     int                             m_selection {-1};
-    int                             m_btn_margin;
     int                             m_line_margin;
     // Retained for API symmetry with the workspaces, but the tab bar is chrome
     // above the data-scheme scope: its active indicator/label accent is pinned to
@@ -281,6 +288,12 @@ public:
     void AddNavigationAction(const wxString &text, const std::string &bmp_name, std::function<void()> action)
     {
         GetBtnsListCtrl()->AddAction(text, bmp_name, std::move(action));
+    }
+
+    // Visual projection only. Page IDs, callbacks and palette indices stay put.
+    void SetWorkflowPages(int prepare, int preview, int print, int monitor)
+    {
+        GetBtnsListCtrl()->SetWorkflowPages(prepare, preview, print, monitor);
     }
 
     void UpdateMode()
