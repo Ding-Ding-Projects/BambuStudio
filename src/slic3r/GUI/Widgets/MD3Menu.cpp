@@ -810,6 +810,10 @@ void MD3MenuList::paintRow(wxDC &dc, int vis, const wxRect &r, const wxColour &s
 
     const bool selected = vis == m_selected;
     const bool hovered  = vis == m_hover && it->enabled;
+    // Inset only the state paint. RowRect remains the full accessible hit target.
+    wxRect state_rect = r;
+    state_rect.Deflate(FromDIP(4), FromDIP(2));
+    const int state_radius = FromDIP(MD3::Metrics::active().small_radius);
 
     const wxColour on_surface = ElementStyle::colour_for("menu.item", StyleProp::foreground,
                                                          StateColor::semantic(MD3::Role::OnSurface));
@@ -818,12 +822,18 @@ void MD3MenuList::paintRow(wxDC &dc, int vis, const wxRect &r, const wxColour &s
     if (selected) {
         dc.SetPen(*wxTRANSPARENT_PEN);
         dc.SetBrush(wxBrush(StateColor::semantic(MD3::Role::SecondaryContainer)));
-        dc.DrawRectangle(r);
+        dc.DrawRoundedRectangle(state_rect, state_radius);
         fg = fg_muted = StateColor::semantic(MD3::Role::OnSecondaryContainer);
+        // Retain a non-colour selection cue without reducing label space.
+        dc.SetBrush(wxBrush(StateColor::semantic(MD3::Role::Primary)));
+        const int marker = std::max(1, FromDIP(2));
+        dc.DrawRoundedRectangle(state_rect.x + FromDIP(2), r.y + FromDIP(8),
+            marker, std::max(0, r.height - FromDIP(16)), marker);
     } else if (it->enabled && (hovered || (vis < int(m_hover_weights.size()) && m_hover_weights[vis] > 0.0))) {
         dc.SetPen(*wxTRANSPARENT_PEN);
-        dc.SetBrush(wxBrush(blend(on_surface, surface, 0.08 * (MD3::Motion::reduced() ? (hovered ? 1.0 : 0.0) : (vis < int(m_hover_weights.size()) ? m_hover_weights[vis] : 0.0)))));
-        dc.DrawRectangle(r);
+        dc.SetBrush(wxBrush(blend(StateColor::semantic(MD3::Role::SurfaceContainerHigh), surface,
+            MD3::Motion::reduced() ? (hovered ? 1.0 : 0.0) : (vis < int(m_hover_weights.size()) ? m_hover_weights[vis] : 0.0))));
+        dc.DrawRoundedRectangle(state_rect, state_radius);
     }
     if (!it->enabled) {
         const wxColour under = selected ? StateColor::semantic(MD3::Role::SecondaryContainer) : surface;
@@ -920,7 +930,7 @@ MD3MenuPopup::MD3MenuPopup(wxWindow *owner, wxMenu *menu, MD3MenuPopup *parent_p
 {
     SetBackgroundStyle(wxBG_STYLE_PAINT);
     SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
-    m_radius = FromDIP(MD3::Metrics::radius_rail);
+    m_radius = FromDIP(MD3::Metrics::active().radius);
     Bind(wxEVT_PAINT, &MD3MenuPopup::paintEvent, this);
     Bind(wxEVT_CHAR_HOOK, &MD3MenuPopup::onCharHook, this);
     Bind(wxEVT_ERASE_BACKGROUND, [](wxEraseEvent &) {});
@@ -1361,7 +1371,7 @@ void MD3MenuPopup::paintEvent(wxPaintEvent &)
     dc2.SetBrush(wxBrush(surface));
     dc2.DrawRectangle(0, 0, size.x, size.y);
 
-    // SurfaceContainer fill inside a 1px OutlineVariant frame at radius 12.
+    // SurfaceContainer fill inside a density-shaped OutlineVariant frame.
     // kDrawShadow stays false: the elevation is expressed by the frame alone.
     dc2.SetPen(wxPen(StateColor::semantic(MD3::Role::OutlineVariant)));
     dc2.SetBrush(wxBrush(surface));

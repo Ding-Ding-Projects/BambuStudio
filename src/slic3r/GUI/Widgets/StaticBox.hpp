@@ -13,7 +13,7 @@ class StaticBox : public wxWindow
 public:
     // Corner-radius density for the base card primitive. Comfortable -> 16,
     // Compact -> 12 (ui-md3 containment/Card: r16/12 by density). The default
-    // stays Compact so existing call sites are unchanged.
+    // follows the active appearance density; explicit caller radii remain intact.
     enum class Density { Compact, Comfortable };
 
     StaticBox();
@@ -61,7 +61,7 @@ public:
     void SetDensity(Density density);
 
     // Interactive-card mode (ui-md3 containment/Card): promotes the resting
-    // OutlineVariant border to Primary on hover over ~0.15s, and shows a pointer
+    // OutlineVariant border to Primary on hover over 100 ms, and shows a pointer
     // cursor. The hover accent follows the scheme set via SetSchemeAccent().
     void SetInteractive(bool interactive);
 
@@ -88,7 +88,7 @@ protected:
 
 protected:
     double radius;
-    double m_default_radius_dip{MD3::Metrics::compact.radius};
+    double m_default_radius_dip{MD3::Metrics::active().radius};
     bool   m_uses_default_radius{true};
     int border_width = 1;
     wxPenStyle border_style = wxPENSTYLE_SOLID;
@@ -100,7 +100,7 @@ protected:
 
     // Interactive-card state. m_hover_anim is the resting(0) -> hover(1) border
     // promotion factor, eased by a short timer so the OutlineVariant -> Primary
-    // transition reads as ~0.15s rather than an instant swap.
+    // transition reads as 100 ms rather than an instant swap.
     bool             m_interactive{false};
     MD3::ColorScheme m_scheme{MD3::ColorScheme::Brand};
     MD3::Role        m_rest_border_role{MD3::Role::OutlineVariant};

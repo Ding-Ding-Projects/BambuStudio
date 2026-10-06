@@ -33,7 +33,7 @@ constexpr int kSearchPx  = 20; // leading search glyph
 constexpr int kClosePx   = 18; // clear glyph
 constexpr int kActionPx  = 40; // clear / tune / regex icon buttons: 2px inside the 44px pill so they never paint over its outline
 constexpr int kTunePx    = 20; // tune glyph
-constexpr int kRadius    = 22; // stadium corner radius
+constexpr int kRadius    = 16; // rounded field container, with unchanged input geometry
 constexpr int kMinWidth  = 220;
 constexpr int kMaxQueryLen = static_cast<int>(Slic3r::GUI::BoundedRegex::kMaxPatternCodeUnits);
 } // namespace
@@ -50,8 +50,8 @@ void SearchField::Create(wxWindow *parent, const wxString &placeholder, const wx
     m_placeholder = placeholder;
 
     StaticBox::Create(parent, wxID_ANY, pos, size, wxTAB_TRAVERSAL);
-    SetBackgroundColour(MD3::resolve(MD3::Role::SurfaceContainerHighest,
-                                     StateColor::isDarkMode()));
+    SetBackgroundColor(StateColor(MD3::resolve(MD3::Role::SurfaceContainerLow,
+                                     StateColor::isDarkMode())));
 
     m_text = new wxTextCtrl(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize,
                             wxBORDER_NONE | wxTE_PROCESS_ENTER);
@@ -373,12 +373,6 @@ wxString SearchField::colorSearchText(const wxColour &colour)
 void SearchField::Rescale()
 {
     applyTextCtrlTheme();
-    if (m_regex_button)
-        m_regex_button->Rescale();
-    if (m_tune_button)
-        m_tune_button->Rescale();
-    if (m_clear_button)
-        m_clear_button->Rescale();
     layoutText();
     Refresh();
 }
@@ -451,12 +445,16 @@ void SearchField::applyTextCtrlTheme()
     if (!m_text)
         return;
     const bool dark = StateColor::isDarkMode();
-    const wxColour background = MD3::resolve(MD3::Role::SurfaceContainerHighest, dark);
-    SetBackgroundColour(background);
+    const wxColour background = MD3::resolve(MD3::Role::SurfaceContainerLow, dark);
+    // The outer corner cutouts use the parent; child controls resolve the field
+    // interior through StaticBox::GetParentBackgroundColor.
+    SetBackgroundColor(StateColor(background));
     m_text->SetBackgroundColour(background);
     m_text->SetForegroundColour(MD3::resolve(MD3::Role::OnSurface, dark));
     m_text->SetFont(m_regex ? Label::Mono_13 : Label::Body_14);
     m_text->Refresh();
+    for (Button *button : {m_regex_button, m_tune_button, m_clear_button})
+        if (button) button->Rescale();
 }
 
 void SearchField::emit(const wxString &value)
@@ -491,18 +489,21 @@ void SearchField::doRender(wxDC &dc)
 
     const bool dark = StateColor::isDarkMode();
 
-    // Pill: SurfaceContainerHighest fill, Outline border promoted to Primary
-    // (scheme-aware) while focused. Radius + border width resolved live.
-    const wxColour bg     = MD3::resolve(MD3::Role::SurfaceContainerHighest, dark);
+    // Low-container field with an inset focus ring. The ring is paint-only:
+    // focusing never moves the entry or the regex/builder/clear hit targets.
+    const wxColour bg     = MD3::resolve(MD3::Role::SurfaceContainerLow, dark);
     const wxColour border = m_focused ? MD3::resolve(MD3::Role::Primary, dark, m_scheme)
                                       : MD3::resolve(MD3::Role::Outline, dark);
-    const int      bw     = std::max(1, FromDIP(1));
-    double         radius = FromDIP(kRadius) - bw;
+    const int      bw     = std::max(1, FromDIP(m_focused ? 2 : 1));
+    // The 40-DIP trailing targets begin 2 DIP inside this 44-DIP field. Keep
+    // the 2-DIP focus stroke entirely outside their rectangles (centre at 1).
+    const int      inset  = std::max(1, FromDIP(1));
+    double         radius = FromDIP(kRadius) - inset;
     if (radius < 0)
         radius = 0;
 
     wxRect rc(0, 0, sz.x, sz.y);
-    rc.Deflate(bw);
+    rc.Deflate(inset);
     dc.SetPen(wxPen(border, bw));
     dc.SetBrush(wxBrush(bg));
     dc.DrawRoundedRectangle(rc, radius);
