@@ -282,3 +282,17 @@
 	height: 20px;	
 	display: block;
 }
+
+
+/* Studio Atlas composition: full collection reflows; the mini strip keeps its route. */
+#RecentTitleBlock { gap: 12px; flex-wrap: wrap; padding: 12px 10px 20px; }
+#Recent_LEFT_Title, #Right_Title_Block { gap: 8px; flex-wrap: wrap; min-width: 0; }
+.Right_Title_Btn { margin-right: 0; min-height: 32px; box-sizing: border-box; }
+#FileList { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px; padding: 0 10px 20px; }
+#FileList > .FileItem { width: auto; margin: 0; min-width: 0; align-self: start; }
+.FileName { padding: 12px 16px 4px; font-size: 15px; line-height: 1.4; white-space: normal; word-break: normal; overflow-wrap: anywhere; }
+.FileDate { padding: 0 16px 14px; font-size: 13px; line-height: 1.4; }
+#recnet_context_menu { max-width: calc(100vw - 24px); box-sizing: border-box; padding: 8px; }
+.CT_Item { min-height: 36px; gap: 8px; box-sizing: border-box; }
+.CT_Text { height: auto; line-height: 1.4; white-space: normal; overflow-wrap: anywhere; }
+@media (max-width: 560px) { #FileList { grid-template-columns: minmax(0, 1fr); } }

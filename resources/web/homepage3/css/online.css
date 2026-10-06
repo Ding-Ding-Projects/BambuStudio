@@ -223,3 +223,16 @@
 {
 	background-color: var(--md-primary-container);
 }
+
+
+/* Studio Atlas composition: retain the existing model card count and show/hide rules. */
+#ContentBoard { padding: 0 24px 24px; min-width: 0; }
+.HotModel_Designer_Info { align-items: flex-start; gap: 8px; padding: 14px 16px 16px; }
+.HotModel_Right_1 { min-width: 0; }
+.HotModel_Name { font-size: 15px; line-height: 1.4; white-space: normal; overflow-wrap: anywhere; }
+.HotModel_Right_1_2 { gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+.HotModel_Author_HeadIcon { flex-shrink: 0; }
+.HotModel_Author_Name { min-width: 0; font-size: 13px; line-height: 1.5; }
+.searchInputArea, .searchInput { min-width: 0; }
+.searchBar:focus-within { outline: 2px solid var(--md-primary); outline-offset: 2px; }
+@media (max-width: 680px) { #ContentBoard { padding: 0 12px 16px; } }
