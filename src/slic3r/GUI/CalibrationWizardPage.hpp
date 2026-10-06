@@ -19,7 +19,7 @@
 namespace Slic3r { namespace GUI {
 
 
-#define MIN_CALIBRATION_PAGE_WIDTH         0
+#define MIN_CALIBRATION_PAGE_WIDTH         -1
 #define PRESET_GAP                         FromDIP(25)
 #define CALIBRATION_COMBOX_SIZE            wxSize(FromDIP(500), FromDIP(24))
 #define CALIBRATION_FILAMENT_COMBOX_SIZE   wxSize(FromDIP(250), FromDIP(24))

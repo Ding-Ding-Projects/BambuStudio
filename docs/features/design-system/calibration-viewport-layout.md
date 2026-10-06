@@ -43,3 +43,15 @@ Both deferred adapters first remember and release the previous explicit label mi
 兩個延後重排程序先記低並解除舊的最小高度，再換行、清除最佳大小快取、重新量度及設定新高度。咁樣視窗變闊或者文字縮短時，舊高度就唔會箍住新量度。舊高度只用嚟判斷需唔需要更新父容器版面。
 
 非視窗測試直接編譯兩個正式程序，文字模型會按內容換行，亦會模擬最佳大小受最小高度限制的行為。修正前四項全部失敗，修正後四項全部通過，涵蓋兩種標籤由窄變闊再變窄，以及文字縮短。呢個結果只證明量度次序，唔代表原生字體量度、畫面、焦點或捲動已驗證。
+
+## Intrinsic width correction
+
+The shared page minimum is unspecified (`-1`) rather than explicitly zero. This removes the inherited 1100-DIP floor while preserving the calculated minimum of fixed-width descendants. Only the labels that actually wrap use an explicit zero minimum width. An indivisible descendant wider than the client area therefore contributes to the outer virtual extent and remains horizontally reachable.
+
+`tests/calibration_minimum.test.mjs` compiles the actual page and advice initialization statements and their shared macro against a non-window model of wx effective-minimum and outer-scroll propagation. The fixture gives a fixed 600-DIP status control a 540-DIP page viewport, with real side padding, at 100%, 125%, 150%, and 200% scale. The previous source fails all four overflow cases and passes the bounded-label case (1/5); repaired source passes 5/5. This is a sizing-contract check, not native scrollbar or focus evidence. Result-table scroll ownership is still pending separate review.
+
+## 原有內容闊度修正
+
+共用頁面最小闊度改為未指定（`-1`），唔再明確設為零。咁樣可以移除 1100 DIP 限制，同時保留固定闊度子控制項計算出嚟的最小闊度。只有真正換行的標籤先用零最小闊度；比可用區域更闊的完整控制項會計入外層捲動範圍。
+
+測試直接編譯正式頁面及提示卡的初始化語句與共用常數，模擬有效最小闊度傳到外層捲動區的過程。四種顯示比例下，600 DIP 狀態控制項放入 540 DIP 頁面再加邊距，舊版四項溢出檢查全部失敗，只有有界標籤一項通過；修正版五項全部通過。呢個只係尺寸契約檢查，唔係原生捲動條或焦點證據。結果表格捲動容器仍待獨立審核。

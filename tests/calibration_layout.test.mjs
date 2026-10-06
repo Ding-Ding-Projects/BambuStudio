@@ -5,7 +5,7 @@ import {execFileSync} from 'node:child_process';
 const revision=process.argv.find(x=>x.startsWith('--baseline='))?.slice(11);
 const read=p=>revision?execFileSync('git',['show',revision+':src/slic3r/GUI/'+p],{encoding:'utf8'}):readFileSync('src/slic3r/GUI/'+p,'utf8');
 test('page minimum no longer imposes a viewport-independent 1100 DIP floor',()=>{
- assert.match(read('CalibrationWizardPage.hpp'),/#define MIN_CALIBRATION_PAGE_WIDTH\s+0\b/);
+ assert.match(read('CalibrationWizardPage.hpp'),/#define MIN_CALIBRATION_PAGE_WIDTH\s+-1\b/);
 });
 test('all ten instruction owners register for measured reflow and expand',()=>{
  const s=read('CalibrationWizardStartPage.cpp');
