@@ -51,6 +51,11 @@ try {
     $env:CMAKE_BUILD_PARALLEL_LEVEL = '7'
     $output = & $CMakePath -DNPROC=2 -P $probePath 2>&1
     Assert-True ($LASTEXITCODE -eq 0 -and "$output".Contains('WORKERS=2; ARG=/m:2')) 'Explicit NPROC must override environment and generate numbered MSBuild arguments.'
+    $openssl = Read-Source 'deps/OpenSSL/OpenSSL.cmake'
+    $opensslCount = $openssl.Substring(0, $openssl.IndexOf('if(DEFINED OPENSSL_ARCH)'))
+    ($countCode + "`n" + $opensslCount + "`nset(MSVC TRUE)`n" + $argumentsCode + '`nmessage(STATUS "WORKERS=${NPROC}; ARG=${_build_j}")'.Replace('`n', "`n")) | Set-Content $probePath
+    $output = & $CMakePath -DNPROC=2 -P $probePath 2>&1
+    Assert-True ($LASTEXITCODE -eq 0 -and "$output".Contains('WORKERS=2; ARG=/m:2')) 'OpenSSL include order must not overwrite the worker budget for later dependencies.'
     $output = & $CMakePath -P $probePath 2>&1
     Assert-True ($LASTEXITCODE -eq 0 -and "$output".Contains('WORKERS=7; ARG=/m:7')) 'Environment worker selection must remain supported for direct dependency configuration.'
     (Get-Content $probePath -Raw).Replace('set(MSVC TRUE)', 'set(MSVC FALSE)') | Set-Content $probePath
@@ -90,4 +95,4 @@ try {
     if (-not $fixture.StartsWith($tempRoot, [StringComparison]::OrdinalIgnoreCase)) { throw 'Fixture escaped temporary storage.' }
     Remove-Item -LiteralPath $fixture -Recurse -Force
 }
-Write-Host 'Dependency worker-budget checks passed (20 assertions; script-mode CMake and stub build only).'
+Write-Host 'Dependency worker-budget checks passed (21 assertions; script-mode CMake and stub build only).'

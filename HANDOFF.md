@@ -9,12 +9,16 @@ and downloaded OCCT added bare `/MP`, independently of the root `--parallel 2`.
 The isolated repair forwards a validated explicit `NPROC` budget, numbers nested
 MSBuild concurrency, serializes the outer dependency graph, and applies a
 process-only trailing `/MP1` compiler option with restoration in `finally`.
-Twenty script-mode/stub assertions cover validation, generated MSVC/non-MSVC
+Twenty-one script-mode/stub assertions cover validation, generated MSVC/non-MSVC
 arguments, environment precedence, root argument forwarding, and restoration on
 success and failure. The original source rejected by the new test was observed
 accepting invalid `BAMBU_BUILD_JOBS=0`. No active-build source was modified and no
 second build was started. Production evidence for the repaired concurrency route
 remains pending; the live baseline build is not evidence for the new source.
+An independent review then found OpenSSL's later include overwrote `NPROC`.
+Its secondary detection now preserves the validated existing budget. The actual
+OpenSSL detection block is exercised between root validation and subsequent
+generated MSBuild arguments; the prior source failed that include-order check.
 
 The bounded source repair starts at `9a55b7aa1e900f85c2ded1389854beefabff159f`.
 `Invoke-OneClickBuild.ps1` now detects paired Strawberry Perl tools independently

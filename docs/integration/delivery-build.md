@@ -18,7 +18,8 @@ it does not promise a limit on unrelated programs or every tool's helper threads
 Direct dependency configuration still accepts explicit `NPROC`, then a nonempty
 `CMAKE_BUILD_PARALLEL_LEVEL`, then detected processors. Non-MSVC generated build
 arguments retain their `-j<jobs>` form. `Test-DependencyParallelism.ps1` executes
-twenty focused assertions using script-mode CMake and a stub build, with no
+twenty-one focused assertions using script-mode CMake and a stub build, including
+the real OpenSSL include-order worker detection, with no
 native compilation or package production.
 
 Strawberry detection requires its paired `perl/bin/pkg-config.bat` and `perl.exe`,

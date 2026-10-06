@@ -1,6 +1,14 @@
 
 include(ProcessorCount)
-ProcessorCount(NPROC)
+if(NOT DEFINED NPROC)
+    ProcessorCount(NPROC)
+    if(NPROC EQUAL 0)
+        set(NPROC 1)
+    endif()
+endif()
+if(NOT "${NPROC}" MATCHES "^[1-9][0-9]*$")
+    message(FATAL_ERROR "NPROC must be a positive integer, received '${NPROC}'")
+endif()
 
 if(DEFINED OPENSSL_ARCH)
     set(_cross_arch ${OPENSSL_ARCH})
