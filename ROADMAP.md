@@ -59,7 +59,7 @@ No test, lint or verification suites were deliberately launched. The inherited D
 - [ ] Package the intended source as unsigned Squirrel `2.8.4814`.
 - [ ] Push current final delivery records to main and prove the exact remote reference.
 - [ ] Verify unique non-draft `md3-v228`, its intended source and all required downloadable assets before closing eligible issues.
-- [ ] Archive and verify the exact cleanup inventory, then remove only inactive, clean, ancestor-proven task-owned candidates.
+- [x] Archive and verify the exact cleanup inventory, then remove only inactive, clean, ancestor-proven task-owned candidates. See the 6 October closeout report: 21 local branches, 17 remote branches and nine directories removed.
 - [ ] Resolve the companion license/HACS decision separately; Bambu Studio issue #16 client delivery does not resolve it.
 
 The scope and limits of the three recovered modules are recorded in HANDOFF.md and their feature articles. Historical runtime-acceptance checkboxes below retain their original meaning; delivery status does not silently tick runtime proof.
