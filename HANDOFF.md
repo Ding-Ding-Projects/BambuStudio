@@ -2,6 +2,10 @@
 
 ## Current source and verification boundary
 
+Both exact root entrypoints passed for `a28944e3c14b2066ee63d14151c8aca23066d743`: `build.bat /s` returned 0 at `2026-10-06T13:04:12Z`; `build-installer.bat /s` returned 0 at `2026-10-06T13:18:59Z`. The installer invocation ran from `2026-10-06T13:05:30Z`, lasting 13 minutes 29 seconds. Independent byte verification passed for all 13,639 SBOM files against both staged and compressed bytes, all 310 bundled articles, both compiled catalogs, source/version metadata, RELEASES hashes/lengths and the unsigned PE boundary. The generated execution stub's executable section matches the pinned Squirrel template. No installer or application execution, visual acceptance or release publication is claimed.
+
+### Native-build milestone retained below
+
 Exact root `build.bat /s` succeeded with exit 0 at `2026-10-06T13:04:12Z` for `a28944e3c14b2066ee63d14151c8aca23066d743`. The observed run started at `2026-10-06T12:41:43Z`, lasting 22 minutes 29 seconds. Source was clean before and after. Native compilation/linking, pinned renderer staging and the automation companion completed. Exact `build-installer.bat /s` is now running against the same unchanged source; installer production and byte verification are still pending. No application launch, installed-copy behavior or rendered acceptance is claimed.
 
 ### Earlier producer results and incorporated repairs

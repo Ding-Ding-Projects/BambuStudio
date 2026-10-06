@@ -1,6 +1,13 @@
 # Windows build and redesign verification, 6 October 2026
 
-**Status: native root build passed; exact installer production is running. Application-runtime and rendered acceptance remain unverified.**
+**Status: both exact root entrypoints and independent package-byte verification passed. Application-runtime and rendered acceptance remain unverified.**
+
+## Successful installer production and byte verification
+
+Both exact root entrypoints passed for `a28944e3c14b2066ee63d14151c8aca23066d743`: `build.bat /s` returned 0 at `2026-10-06T13:04:12Z`; `build-installer.bat /s` returned 0 at `2026-10-06T13:18:59Z`. The installer invocation ran from `2026-10-06T13:05:30Z`, lasting 13 minutes 29 seconds. Independent byte verification passed for all 13,639 SBOM files against both staged and compressed bytes, all 310 bundled articles, both compiled catalogs, source/version metadata, RELEASES hashes/lengths and the unsigned PE boundary. The generated execution stub's executable section matches the pinned Squirrel template. No installer or application execution, visual acceptance or release publication is claimed.
+
+The [machine-readable byte report](package-byte-verification-20261006.json) records exact hashes and exclusions. `Setup.exe` is 772,747,776 bytes, SHA-256 `42f1a4fe732a937b4a7016db26d946f14bae85e9d1bc354cc39a99b522579435`. Full package `BambuStudioMD3-2.8.4814-full.nupkg` is 778,525,807 bytes, SHA-256 `629867b0d5854cafe249754d6b4fe644a70bb058f6d94f0ad46577584270432e`. Its 1,823,278,738 payload bytes match the SBOM; the one additional execution stub is separately accounted for. Package version `2.8.4814` and release sequence 229 are local package metadata, not a published release. A successful run on this existing host is not a fresh-machine bootstrap receipt.
+
 
 ## Successful exact native producer
 

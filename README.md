@@ -1,5 +1,5 @@
 > [!IMPORTANT]
-> Current status, 6 October 2026: exact root `build.bat /s` passed at `a28944e3c14b2066ee63d14151c8aca23066d743`; exact installer production is running. The entire native interface refresh remains under development and has no current rendered acceptance. Verified remote `main` remains `cc059003d362b87d53786152ee8c28621d9c2813`. Read the [current build and redesign report](docs/integration/build-verification-20261006.md).
+> Current status, 6 October 2026: both exact root build entrypoints passed at `a28944e3c14b2066ee63d14151c8aca23066d743`, and independent installer-byte verification passed. The entire native interface refresh remains under development and has no current rendered acceptance. Verified remote `main` remains `cc059003d362b87d53786152ee8c28621d9c2813`. Read the [current build and redesign report](docs/integration/build-verification-20261006.md).
 
 ![image](https://user-images.githubusercontent.com/106916061/179006347-497d24c0-9bd6-45b7-8c49-d5cc8ecfe5d7.png)
 # BambuStudio

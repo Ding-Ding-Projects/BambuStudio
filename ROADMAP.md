@@ -18,7 +18,8 @@
 - [x] Record the `4147ca9ee` root build exit 1 and independently verify both subsequent nozzle compiler repairs, including real-header negative cases.
 - [x] Complete exact `build.bat /s` with both nozzle repairs at `a28944e3c`: exit 0 at `2026-10-06T13:04:12Z`.
 - [x] Match the generated 310-article documentation bundle and both compiled catalogs against current source.
-- [ ] Complete exact installer production at the same candidate and independently verify its package bytes.
+- [x] Complete exact `build-installer.bat /s` at `a28944e3c`: exit 0 at `2026-10-06T13:18:59Z`.
+- [x] Independently verify all 13,639 SBOM files, bundled articles/catalogs, package metadata and unsigned installer bytes.
 - [ ] Complete real built language/theme/scale/focus/scroll evidence; current source checks do not establish it.
 
 - [x] Record exact root exit 1 at `5e3f28274` and the OCCT generated-config escaping diagnostic at `2026-10-06T08:44:32Z`.

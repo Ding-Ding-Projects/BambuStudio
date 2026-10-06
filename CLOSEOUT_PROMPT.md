@@ -12,6 +12,10 @@ Application launches, installer execution, physical printer actions and manual r
 
 ## Source and verification before this documentation commit
 
+Both exact root entrypoints passed for `a28944e3c14b2066ee63d14151c8aca23066d743`: `build.bat /s` returned 0 at `2026-10-06T13:04:12Z`; `build-installer.bat /s` returned 0 at `2026-10-06T13:18:59Z`. The installer invocation ran from `2026-10-06T13:05:30Z`, lasting 13 minutes 29 seconds. Independent byte verification passed for all 13,639 SBOM files against both staged and compressed bytes, all 310 bundled articles, both compiled catalogs, source/version metadata, RELEASES hashes/lengths and the unsigned PE boundary. The generated execution stub's executable section matches the pinned Squirrel template. No installer or application execution, visual acceptance or release publication is claimed.
+
+### Native-build milestone retained below
+
 Exact root `build.bat /s` succeeded with exit 0 at `2026-10-06T13:04:12Z` for `a28944e3c14b2066ee63d14151c8aca23066d743`. The observed run started at `2026-10-06T12:41:43Z`, lasting 22 minutes 29 seconds. Source was clean before and after. Native compilation/linking, pinned renderer staging and the automation companion completed. Exact `build-installer.bat /s` is now running against the same unchanged source; installer production and byte verification are still pending. No application launch, installed-copy behavior or rendered acceptance is claimed.
 
 ### Earlier results retained for recovery
@@ -37,12 +41,12 @@ The exact root build at `4147ca9eeb0004f7e18b4a2f5a8c6cb190975d21` ended with ex
 
 ## Preservation and remaining work
 
-The owning integration branch is `task/upstream-development-20261006`. Its latest remotely verified source before this documentation is `a28944e3c14b2066ee63d14151c8aca23066d743`; this new build-result record requires its own push proof. Individual active branches and linked checkouts remain retained. No branch/worktree deletion has been performed.
+The owning integration branch is `task/upstream-development-20261006`. Its latest remotely verified integration source before this documentation is `3ce3a350d0b29af9f10af388b9a2f67a1a04775d`. The local inspection lane is preserved separately at `415b213d126e9a2850f45d0a9c38c2c60d5327fe`; its transcript repair remains separate until reviewed. This new installer-result record requires its own push proof. Individual active branches and linked checkouts remain retained. No branch/worktree deletion has been performed.
 
-1. Let exact root `build-installer.bat /s` finish on the unchanged successful native candidate, then independently verify package bytes, source identities, catalogs and documentation. Catalog repair `7a681fd0f` and empty-report repair `0625de0d2` are reviewed; strict language and terminology checks pass. The raw scroll/table-owner repairs pass 29 integration and nine preservation checks. After the build terminates, reconcile later reviewed documentation/checker changes before packaging and retain valid caches.
+1. Preserve the verified native and package receipts. Complete independent review of the local inspection route and its two bounded repairs. Resolve the pending launch-scope clarification before any live inspection. Catalog repair `7a681fd0f` and empty-report repair `0625de0d2` are reviewed; strict language and terminology checks pass. The raw scroll/table-owner repairs pass 29 integration and nine preservation checks. After the build terminates, reconcile later reviewed documentation/checker changes before packaging and retain valid caches.
 2. Continue current documentation links/receipts and any concrete native compiler repairs; retain all actions, stable identities and authorization requirements. Default wheel-fixture discovery is complete at the source/non-window level.
 3. Complete the actual surface inventory and translated/indexed documentation without treating shared palette changes as whole-interface delivery.
-4. After native build success, run exact `build-installer.bat /s` and verify package bytes without executing the installer or application under the current boundary.
+4. Both exact entrypoints and independent package-byte checks now pass at `a28944e3c`; retain the source boundary and do not infer runtime success.
 5. Obtain a concrete permitted route for built visual acceptance before claiming appearance, accessibility, motion or layout completion.
 6. Integrate completed verified units into `main`, prove the remote ref, and retain incomplete work. Cleanup requires ownership, archive, preservation and ancestry proof.
 
