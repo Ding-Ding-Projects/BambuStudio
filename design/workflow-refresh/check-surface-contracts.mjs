@@ -49,7 +49,9 @@ assert.equal(review.reviewedCandidate, contracts.latestSourceReview);
 let handoff = fs.readFileSync(path.join(root, 'design/workflow-refresh.md'), 'utf8');
 if (process.env.NATIVE_DESIGN_STALE_COMPOSITION === '1') handoff += '\nShell/tab work is reported but absent';
 assert.ok(handoff.includes('reconciled against `' + review.reviewedCandidate + '`'), 'Composition summary candidate is stale');
-assert.ok(!handoff.includes('Shell/tab work is reported but absent'), 'Composition summary still excludes incorporated shell work');
+assert.ok(![handoff, scopes.verificationBoundary].some(text =>
+  /Shell\/tab (?:work is reported but absent|followup 44cba370 is not in this candidate)/.test(text)),
+  'Current composition or scope boundary still excludes incorporated shell work');
 assert.ok(!handoff.includes('confirmations remain separate'), 'Composition summary still excludes incorporated confirmation work');
 assert.ok(handoff.includes('Missing Model Creator, external-source or canonical-tool engines remain their existing incomplete feature obligations.'));
 const expectedFamilies = 'native-palette shared-controls fields-presets prepare preferences-project-setup renderer-preview native-monitor native-device-popups readers-overlays live-notifications workspace calibration-children setup-index embedded-palette embedded-composition workflow-navigation print-workspace print-setup shell-tabs confirmations selection-controls transform-inspector humidity-details appearance-properties device-name-editor gizmo-inspector-framing reader-details ams-drying nozzle-rack shared-list-rows print-continuations scroll-table-owner-adoption native-catalog'.split(' ');

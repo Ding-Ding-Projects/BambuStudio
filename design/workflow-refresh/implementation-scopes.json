@@ -306,7 +306,7 @@
       "reason": "Actual preview legend paint has separate renderer ownership and must be included explicitly; shared native colors alone cannot reach it."
     }
   ],
-  "verificationBoundary": "Recorded source units are incorporated at the reviewed candidate but remain partial at nested-control level. Shell/tab followup 44cba370 is not in this candidate. See the ranked remaining implementation map in workflow-refresh.md. Runtime, capture and parity states and all 1,204 obligations remain unchanged.",
+  "verificationBoundary": "Recorded source units are incorporated at the reviewed candidate but remain partial at nested-control level. Shell/tab followup 44cba370 is incorporated with its separately recorded drag and focus repairs. See the ranked remaining implementation map in workflow-refresh.md. Runtime, capture and parity states and all 1,204 obligations remain unchanged.",
   "reviewedCandidate": "4147ca9eeb0004f7e18b4a2f5a8c6cb190975d21",
   "incorporatedFollowupArticles": [
     {
