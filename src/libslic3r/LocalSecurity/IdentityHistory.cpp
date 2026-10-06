@@ -5,6 +5,12 @@
 #include <mutex>
 #include <sstream>
 #include <locale>
+#include <map>
+#include <set>
+#include <fstream>
+#include <openssl/hmac.h>
+#include <openssl/crypto.h>
+#include "slic3r/GUI/Widgets/SuperConfirmState.hpp"
 #ifdef _WIN32
 #ifndef NOMINMAX
 #define NOMINMAX
@@ -48,11 +54,12 @@ std::string action_name(HistoryAction a) {
     case HistoryAction::Removed:return "removed";
     case HistoryAction::Restored:return "restored";
     case HistoryAction::Labelled:return "labelled";
+    case HistoryAction::Pruned:return "pruned";
     }
     throw Failure(Error::InvalidInput);
 }
 HistoryAction parse_action(const std::string& a) {
-    for(auto candidate : {HistoryAction::Created,HistoryAction::Renamed,HistoryAction::CredentialChanged,HistoryAction::Removed,HistoryAction::Restored,HistoryAction::Labelled})
+    for(auto candidate : {HistoryAction::Created,HistoryAction::Renamed,HistoryAction::CredentialChanged,HistoryAction::Removed,HistoryAction::Restored,HistoryAction::Labelled,HistoryAction::Pruned})
         if(action_name(candidate)==a)return candidate;
     throw Failure(Error::Corrupt);
 }
@@ -121,11 +128,129 @@ void safe_directory(const std::filesystem::path& path) {
 #endif
     }
 }
+
+constexpr std::size_t maximum_keys=512, maximum_tombstones=4096, maximum_store=196608;
+constexpr const char* store_binding="identity-history-keys-v2";
+struct EventHeader {
+    std::string binding, identity, event;
+    HistoryAction action;
+    unsigned version;
+};
+EventHeader event_header(const git_commit* commit) {
+    const char* raw=git_commit_message(commit);require(raw!=nullptr,Error::Corrupt);
+    const std::string message(raw);require(message.size()<=160,Error::Corrupt);
+    require(message.rfind("v1.",0)==0||message.rfind("v2.",0)==0,Error::Corrupt);
+    const auto first=message.find('.',3),second=message.find('.',first==std::string::npos?message.size():first+1);
+    require(first!=std::string::npos&&second!=std::string::npos,Error::Corrupt);
+    EventHeader result{message,message.substr(first+1,second-first-1),message.substr(second+1),
+                       parse_action(message.substr(3,first-3)),message[1]=='1'?1u:2u};
+    require(identity_id(result.identity)&&identity_id(result.event),Error::Corrupt);
+    require(result.version==2||result.action!=HistoryAction::Pruned,Error::Corrupt);
+    return result;
+}
+struct KeyStore {
+    std::string head;
+    std::map<std::string,Secret> keys;
+    std::set<std::string> tombstones;
+};
+Secret store_mac(const Secret& master,const std::vector<unsigned char>& bytes) {
+    Secret result(std::vector<unsigned char>(32));unsigned length=0;
+    require(HMAC(EVP_sha256(),master.data(),static_cast<int>(master.size()),bytes.data(),bytes.size(),result.data(),&length)!=nullptr&&length==32,Error::Unavailable);
+    return result;
+}
+void regular_file(const std::filesystem::path& path) {
+    std::error_code ec;const auto status=std::filesystem::symlink_status(path,ec);
+    require(!ec&&std::filesystem::is_regular_file(status)&&!std::filesystem::is_symlink(status),Error::Corrupt);
+#ifdef _WIN32
+    const auto attrs=GetFileAttributesW(path.c_str());
+    require(attrs!=INVALID_FILE_ATTRIBUTES&&!(attrs&FILE_ATTRIBUTE_REPARSE_POINT),Error::Corrupt);
+#endif
+}
+std::vector<unsigned char> read_store_file(const std::filesystem::path& path) {
+    regular_file(path);
+    const auto size=std::filesystem::file_size(path);
+    require(size>=29&&size<=maximum_store,Error::Corrupt);
+    std::vector<unsigned char> bytes(static_cast<std::size_t>(size));
+    std::ifstream input(path,std::ios::binary);require(static_cast<bool>(input),Error::Unavailable);
+    input.read(reinterpret_cast<char*>(bytes.data()),static_cast<std::streamsize>(bytes.size()));
+    require(input.gcount()==static_cast<std::streamsize>(bytes.size())&&input.peek()==std::char_traits<char>::eof(),Error::Corrupt);
+    return bytes;
+}
+void atomic_store_file(const std::filesystem::path& path,const std::vector<unsigned char>& bytes) {
+    require(bytes.size()<=maximum_store,Error::InvalidInput);
+    const auto pending=std::filesystem::path(path.native()+std::filesystem::path(".pending").native());
+    require(!std::filesystem::exists(pending),Error::History);
+    if(std::filesystem::exists(path))regular_file(path);
+#ifdef _WIN32
+    HANDLE file=CreateFileW(pending.c_str(),GENERIC_WRITE,0,nullptr,CREATE_NEW,FILE_ATTRIBUTE_NORMAL|FILE_FLAG_WRITE_THROUGH,nullptr);
+    require(file!=INVALID_HANDLE_VALUE,Error::Unavailable);
+    DWORD written=0;
+    const bool saved=WriteFile(file,bytes.data(),static_cast<DWORD>(bytes.size()),&written,nullptr)&&written==bytes.size()&&FlushFileBuffers(file);
+    CloseHandle(file);require(saved,Error::Unavailable);
+    require(MoveFileExW(pending.c_str(),path.c_str(),MOVEFILE_REPLACE_EXISTING|MOVEFILE_WRITE_THROUGH)!=0,Error::Unavailable);
+#else
+    int file=::open(pending.c_str(),O_CREAT|O_EXCL|O_WRONLY|O_NOFOLLOW,0600);
+    require(file>=0,Error::Unavailable);
+    std::size_t written=0;bool saved=true;
+    while(written<bytes.size()) { const auto n=::write(file,bytes.data()+written,bytes.size()-written);if(n<=0){saved=false;break;}written+=static_cast<std::size_t>(n); }
+    if(saved)saved=::fsync(file)==0;::close(file);require(saved,Error::Unavailable);
+    require(::rename(pending.c_str(),path.c_str())==0,Error::Unavailable);
+    int directory=::open(path.parent_path().c_str(),O_RDONLY|O_DIRECTORY);
+    require(directory>=0,Error::Unavailable);const bool synced=::fsync(directory)==0;::close(directory);require(synced,Error::Unavailable);
+#endif
+}
+Secret serialize_store(const KeyStore& store) {
+    require(store.keys.size()<=maximum_keys&&store.tombstones.size()<=maximum_tombstones,Error::History);
+    require(store.head.empty()||store.head.size()==GIT_OID_HEXSZ,Error::Corrupt);
+    // Allocate once in the cleansing buffer: vector growth must not leave
+    // retired allocations containing copies of event keys.
+    Secret out(std::vector<unsigned char>(10+store.head.size()+store.keys.size()*64+store.tombstones.size()*32));
+    auto* bytes=out.data();std::memcpy(bytes,"IHKS",4);bytes[4]=2;bytes[5]=static_cast<unsigned char>(store.head.size());
+    std::size_t position=6;
+    if(!store.head.empty())std::memcpy(bytes+position,store.head.data(),store.head.size());position+=store.head.size();
+    auto put_count=[&](std::size_t count){bytes[position++]=static_cast<unsigned char>(count>>8);bytes[position++]=static_cast<unsigned char>(count);};
+    put_count(store.keys.size());put_count(store.tombstones.size());
+    for(const auto& item:store.keys) {
+        require(identity_id(item.first)&&item.second.size()==32&&store.tombstones.count(item.first)==0,Error::Corrupt);
+        std::memcpy(bytes+position,item.first.data(),32);position+=32;
+        std::memcpy(bytes+position,item.second.data(),32);position+=32;
+    }
+    for(const auto& id:store.tombstones){require(identity_id(id),Error::Corrupt);std::memcpy(bytes+position,id.data(),32);position+=32;}
+    require(position==out.size(),Error::Corrupt);return out;
+}
+KeyStore deserialize_store(const Secret& plain) {
+    require(plain.size()>=10&&std::memcmp(plain.data(),"IHKS",4)==0&&plain.data()[4]==2,Error::Corrupt);
+    const unsigned head_length=plain.data()[5];require(head_length==0||head_length==GIT_OID_HEXSZ,Error::Corrupt);
+    require(plain.size()>=10+head_length,Error::Corrupt);std::size_t position=6;
+    KeyStore result;result.head.assign(reinterpret_cast<const char*>(plain.data()+position),head_length);position+=head_length;
+    require(result.head.empty()||std::all_of(result.head.begin(),result.head.end(),[](char c){return (c>='0'&&c<='9')||(c>='a'&&c<='f');}),Error::Corrupt);
+    auto count=[&](){const auto n=unsigned(plain.data()[position])*256+plain.data()[position+1];position+=2;return n;};
+    const auto keys=count(),tombstones=count();require(keys<=maximum_keys&&tombstones<=maximum_tombstones,Error::Corrupt);
+    require(plain.size()==position+keys*64+tombstones*32,Error::Corrupt);
+    for(unsigned index=0;index<keys;++index) {
+        std::string id(reinterpret_cast<const char*>(plain.data()+position),32);position+=32;require(identity_id(id),Error::Corrupt);
+        Secret key(std::vector<unsigned char>(plain.data()+position,plain.data()+position+32));position+=32;
+        require(result.keys.emplace(id,std::move(key)).second,Error::Corrupt);
+    }
+    for(unsigned index=0;index<tombstones;++index) {
+        std::string id(reinterpret_cast<const char*>(plain.data()+position),32);position+=32;
+        require(identity_id(id)&&result.keys.count(id)==0&&result.tombstones.insert(id).second,Error::Corrupt);
+    }
+    return result;
+}
+IdentityHistoryMetadata metadata_row(const git_commit* commit,const EventHeader& header,const KeyStore& store) {
+    const auto offset=git_commit_time_offset(commit);require(offset>=-1440&&offset<=1440,Error::Corrupt);
+    const bool pruned=header.version==2&&store.tombstones.count(header.event)!=0;
+    if(header.version==2)require(pruned||store.keys.count(header.event)==1,Error::Missing);
+    return {oid_text(git_commit_id(commit)),header.identity,header.action,
+            static_cast<std::int64_t>(git_commit_time(commit)),offset,header.version,pruned};
+}
 }
 struct IdentityHistory::Impl {
     std::filesystem::path data, path;
     Vault& vault;
     AttemptBudget attempts;
+    const std::string owner=new_stable_id();
     explicit Impl(std::filesystem::path root,Vault& v):data(std::move(root)),path(data/"identity-history-v1.git"),vault(v) {
         require(data.is_absolute(),Error::InvalidInput); ok(git_libgit2_init());
     }
@@ -151,6 +276,78 @@ struct IdentityHistory::Impl {
         bounded_object(repo,&id,GIT_OBJECT_COMMIT,8192);
         git_commit* raw=nullptr;ok(git_commit_lookup(&raw,repo,&id));return Commit(raw,git_commit_free);
     }
+    std::string head_text(const Commit& current) { return current?oid_text(git_commit_id(current.get())):std::string(); }
+    KeyStore load_store(const Secret& master,const Commit& current) {
+        const auto file=data/"identity-history-keys-v2.enc";
+        require(!std::filesystem::exists(data/"identity-history-keys-v2.enc.pending"),Error::History);
+        const auto anchor=vault.read(key_store_anchor_account);
+        const bool exists=std::filesystem::exists(file);
+        if(!anchor&&!exists) {
+            require(!current||event_header(current.get()).version==1,Error::Missing);
+            KeyStore empty;empty.head=head_text(current);return empty;
+        }
+        require(anchor.has_value()&&exists,Error::Missing);
+        auto encrypted=read_store_file(file);auto mac=store_mac(master,encrypted);
+        require(anchor->size()==mac.size()&&CRYPTO_memcmp(anchor->data(),mac.data(),mac.size())==0,Error::Corrupt);
+        auto plain=decrypt_snapshot(master,encrypted,store_binding);auto store=deserialize_store(plain);
+        require(store.head==head_text(current),Error::Corrupt);return store;
+    }
+    void save_store(const Secret& master,const KeyStore& store) {
+        auto plain=serialize_store(store);auto encrypted=encrypt_snapshot(master,plain,store_binding);
+        auto mac=store_mac(master,encrypted);
+        atomic_store_file(data/"identity-history-keys-v2.enc",encrypted);
+        vault.write(key_store_anchor_account,mac);
+    }
+    std::vector<std::pair<IdentityHistoryMetadata,std::string>> selected(git_repository* repo,const Commit& head,const KeyStore& store,const std::vector<std::string>& revisions) {
+        require(!revisions.empty()&&revisions.size()<=16,Error::InvalidInput);
+        std::set<std::string> remaining;
+        for(const auto& id:revisions) {
+            require(id.size()==GIT_OID_HEXSZ&&std::all_of(id.begin(),id.end(),[](char c){return (c>='0'&&c<='9')||(c>='a'&&c<='f');}),Error::InvalidInput);
+            require(remaining.insert(id).second,Error::InvalidInput);
+        }
+        Commit current(nullptr,git_commit_free);
+        if(head){git_commit* copy=nullptr;ok(git_commit_dup(&copy,head.get()));current.reset(copy);}
+        std::vector<std::pair<IdentityHistoryMetadata,std::string>> result;
+        for(unsigned index=0;current&&index<10000&&!remaining.empty();++index) {
+            require(git_commit_parentcount(current.get())<=1,Error::Corrupt);
+            const auto revision=oid_text(git_commit_id(current.get()));
+            if(remaining.erase(revision)) {
+                const auto header=event_header(current.get());const auto row=metadata_row(current.get(),header,store);
+                require(row.format_version==2&&!row.pruned&&row.action!=HistoryAction::Pruned,Error::InvalidInput);
+                result.emplace_back(row,header.event);
+            }
+            if(git_commit_parentcount(current.get())==0)break;
+            bounded_object(repo,git_commit_parent_id(current.get(),0),GIT_OBJECT_COMMIT,8192);
+            git_commit* parent=nullptr;ok(git_commit_parent(&parent,current.get(),0));current.reset(parent);
+        }
+        require(remaining.empty(),Error::Missing);return result;
+    }
+    std::string write_event(git_repository* repo,const Commit& parent,const Secret& master,KeyStore& store,
+                            HistoryAction action,const std::string& identity,const Secret& snapshot) {
+        require(store.keys.size()<maximum_keys,Error::History);
+        const auto event=new_stable_id();require(store.keys.count(event)==0&&store.tombstones.count(event)==0,Error::History);
+        const auto metadata="v2."+action_name(action)+"."+identity+"."+event;
+        auto event_key=random_secret(32);const auto encrypted=encrypt_snapshot(event_key,snapshot,metadata);
+        store.keys.emplace(event,std::move(event_key));
+        git_oid blob_id{},tree_id{},commit_id{};ok(git_blob_create_frombuffer(&blob_id,repo,encrypted.data(),encrypted.size()));
+        git_treebuilder* raw_builder=nullptr;ok(git_treebuilder_new(&raw_builder,repo,nullptr));
+        Owner<git_treebuilder,git_treebuilder_free> builder(raw_builder,git_treebuilder_free);
+        ok(git_treebuilder_insert(nullptr,builder.get(),"snapshot.enc",&blob_id,GIT_FILEMODE_BLOB));ok(git_treebuilder_write(&tree_id,builder.get()));
+        git_tree* raw_tree=nullptr;ok(git_tree_lookup(&raw_tree,repo,&tree_id));Tree tree(raw_tree,git_tree_free);
+        git_signature* raw_signature=nullptr;ok(git_signature_now(&raw_signature,"Local identity history","local@invalid"));
+        Owner<git_signature,git_signature_free> signature(raw_signature,git_signature_free);
+        const git_commit* parents[]={parent.get()};
+        ok(git_commit_create(&commit_id,repo,nullptr,signature.get(),signature.get(),nullptr,metadata.c_str(),tree.get(),parent?1:0,parents));
+        store.head=oid_text(&commit_id);
+        // The store binds the next head before publication. Every interrupted
+        // boundary is detected by the store anchor, head anchor, or head binding.
+        save_store(master,store);
+        git_reference* raw_reference=nullptr;
+        if(parent)ok(git_reference_create_matching(&raw_reference,repo,history_ref,&commit_id,1,git_commit_id(parent.get()),"identity event"));
+        else ok(git_reference_create(&raw_reference,repo,history_ref,&commit_id,0,"identity event"));
+        Owner<git_reference,git_reference_free> reference(raw_reference,git_reference_free);
+        vault.write(anchor_account,Secret(store.head));return store.head;
+    }
     void authenticate(const Secret& answer) {
         const auto now=std::chrono::steady_clock::now();
         require(attempts.state(now).wait_seconds==0,Error::RateLimited);
@@ -165,7 +362,8 @@ void IdentityHistory::initialize(CredentialKind kind,const Secret& answer) {
     std::lock_guard<std::mutex> guard(history_mutex);safe_directory(m_impl->data);
     FileLock lock(m_impl->data/"identity-history-v1.lock");
     require(!std::filesystem::exists(m_impl->path),Error::History);
-    require(!m_impl->vault.read(key_account)&&!m_impl->vault.read(anchor_account)&&!m_impl->vault.read(credential_account),Error::History);
+    require(!m_impl->vault.read(key_account)&&!m_impl->vault.read(anchor_account)&&!m_impl->vault.read(credential_account)&&!m_impl->vault.read(key_store_anchor_account),Error::History);
+    require(!std::filesystem::exists(m_impl->data/"identity-history-keys-v2.enc")&&!std::filesystem::exists(m_impl->data/"identity-history-keys-v2.enc.pending"),Error::History);
     // Any interruption leaves explicit partial state, which is not auto-reset.
     Credentials credentials(m_impl->vault);credentials.enroll(credential_account,kind,answer);
     auto key=random_secret(32);m_impl->vault.write(key_account,key);
@@ -176,32 +374,16 @@ std::string IdentityHistory::append(HistoryAction action,const std::string& iden
     return append_impl(action,identity,snapshot,nullptr);
 }
 std::string IdentityHistory::append_impl(HistoryAction action,const std::string& identity,const Secret& snapshot,const Secret* authorization) {
-    require(identity_id(identity)&&snapshot.size()<=maximum_snapshot,Error::InvalidInput);
+    require(identity_id(identity)&&snapshot.size()<=maximum_snapshot&&action!=HistoryAction::Pruned,Error::InvalidInput);
     if(action==HistoryAction::Labelled)require(valid_label(snapshot),Error::InvalidInput);
-    const auto metadata="v1."+action_name(action)+"."+identity+"."+new_stable_id();
+    action_name(action);
     std::lock_guard<std::mutex> guard(history_mutex);safe_directory(m_impl->data);
     FileLock lock(m_impl->data/"identity-history-v1.lock");
     if(authorization)m_impl->authenticate(*authorization);
-    auto repo=m_impl->open();auto key=m_impl->key();auto parent=m_impl->head(repo.get());
+    auto repo=m_impl->open();auto master=m_impl->key();auto parent=m_impl->head(repo.get());
     require(Credentials(m_impl->vault).metadata(credential_account).configured,Error::Missing);
-    const auto encrypted=encrypt_snapshot(key,snapshot,metadata);
-    git_oid blob_id{},tree_id{},commit_id{};ok(git_blob_create_frombuffer(&blob_id,repo.get(),encrypted.data(),encrypted.size()));
-    git_treebuilder* raw_builder=nullptr;ok(git_treebuilder_new(&raw_builder,repo.get(),nullptr));
-    Owner<git_treebuilder,git_treebuilder_free> builder(raw_builder,git_treebuilder_free);
-    ok(git_treebuilder_insert(nullptr,builder.get(),"snapshot.enc",&blob_id,GIT_FILEMODE_BLOB));
-    ok(git_treebuilder_write(&tree_id,builder.get()));
-    git_tree* raw_tree=nullptr;ok(git_tree_lookup(&raw_tree,repo.get(),&tree_id));Tree tree(raw_tree,git_tree_free);
-    git_signature* raw_signature=nullptr;ok(git_signature_now(&raw_signature,"Local identity history","local@invalid"));
-    Owner<git_signature,git_signature_free> signature(raw_signature,git_signature_free);
-    const git_commit* parents[]={parent.get()};
-    ok(git_commit_create(&commit_id,repo.get(),nullptr,signature.get(),signature.get(),nullptr,metadata.c_str(),tree.get(),parent?1:0,parents));
-    git_reference* raw_reference=nullptr;
-    if(parent)ok(git_reference_create_matching(&raw_reference,repo.get(),history_ref,&commit_id,1,git_commit_id(parent.get()),"identity event"));
-    else ok(git_reference_create(&raw_reference,repo.get(),history_ref,&commit_id,0,"identity event"));
-    Owner<git_reference,git_reference_free> reference(raw_reference,git_reference_free);
-    // The repository and native vault cannot form one atomic transaction. If
-    // this write fails, the mismatch blocks subsequent reads and writes.
-    const auto revision=oid_text(&commit_id);m_impl->vault.write(anchor_account,Secret(revision));return revision;
+    auto store=m_impl->load_store(master,parent);
+    return m_impl->write_event(repo.get(),parent,master,store,action,identity,snapshot);
 }
 std::vector<IdentityHistoryEntry> IdentityHistory::read(const Secret& answer,unsigned offset,unsigned count) {
     return read_impl(answer,offset,count,true);
@@ -211,17 +393,13 @@ std::vector<IdentityHistoryEntry> IdentityHistory::read_impl(const Secret& answe
     std::lock_guard<std::mutex> guard(history_mutex);safe_directory(m_impl->data);
     FileLock lock(m_impl->data/"identity-history-v1.lock");m_impl->authenticate(answer);
     auto repo=m_impl->open();auto key=m_impl->key();auto current=m_impl->head(repo.get());
+    auto store=m_impl->load_store(key,current);
     std::vector<IdentityHistoryEntry> output;
     for(unsigned index=0;current&&index<(revision.empty()?offset+count:10000u);++index) {
         require(git_commit_parentcount(current.get())<=1,Error::Corrupt);
         if(index>=offset&&(revision.empty()||oid_text(git_commit_id(current.get()))==revision)) {
-            const char* raw=git_commit_message(current.get());require(raw!=nullptr,Error::Corrupt);
-            const auto length=std::strlen(raw);require(length<=160,Error::Corrupt);
-            const std::string message(raw,length);const auto first=message.find('.',3),second=message.find('.',first==std::string::npos?message.size():first+1);
-            require(message.rfind("v1.",0)==0&&first!=std::string::npos&&second!=std::string::npos,Error::Corrupt);
-            const auto action=parse_action(message.substr(3,first-3));
-            const auto identity=message.substr(first+1,second-first-1);
-            require(identity_id(identity)&&identity_id(message.substr(second+1)),Error::Corrupt);
+            const auto header=event_header(current.get());
+            const auto row=metadata_row(current.get(),header,store);
             bounded_object(repo.get(),git_commit_tree_id(current.get()),GIT_OBJECT_TREE,1024);
             git_tree* raw_tree=nullptr;ok(git_commit_tree(&raw_tree,current.get()));Tree tree(raw_tree,git_tree_free);
             require(git_tree_entrycount(tree.get())==1,Error::Corrupt);
@@ -235,15 +413,13 @@ std::vector<IdentityHistoryEntry> IdentityHistory::read_impl(const Secret& answe
             require(git_blob_rawsize(blob.get())==size,Error::Corrupt);
             const auto* bytes=static_cast<const unsigned char*>(git_blob_rawcontent(blob.get()));
             Secret plain;
-            if(decrypt_payload) {
-                plain=decrypt_snapshot(key,std::vector<unsigned char>(bytes,bytes+size),message);
-                if(action==HistoryAction::Labelled)require(valid_label(plain),Error::Corrupt);
+            if(decrypt_payload&&!row.pruned) {
+                const Secret& payload_key=header.version==1?key:store.keys.at(header.event);
+                plain=decrypt_snapshot(payload_key,std::vector<unsigned char>(bytes,bytes+size),header.binding);
+                if(header.action==HistoryAction::Labelled)require(valid_label(plain),Error::Corrupt);
             }
-            const auto committed=git_commit_time(current.get());
-            const auto offset_minutes=git_commit_time_offset(current.get());
-            require(offset_minutes>=-1440&&offset_minutes<=1440,Error::Corrupt);
-            output.push_back({oid_text(git_commit_id(current.get())),identity,action,std::move(plain),
-                              static_cast<std::int64_t>(committed),offset_minutes,1,false});
+            output.push_back({row.revision,row.identity,row.action,std::move(plain),
+                              row.committed_at_utc_seconds,row.utc_offset_minutes,row.format_version,row.pruned});
             if(!revision.empty())break;
         }
         if(git_commit_parentcount(current.get())==0)break;
@@ -251,6 +427,13 @@ std::vector<IdentityHistoryEntry> IdentityHistory::read_impl(const Secret& answe
         git_commit* raw_parent=nullptr;ok(git_commit_parent(&raw_parent,current.get(),0));current.reset(raw_parent);
     }
     return output;
+}
+IdentityHistoryEntry IdentityHistory::read_revision(const Secret& answer,const std::string& revision) {
+    require(revision.size()==GIT_OID_HEXSZ&&std::all_of(revision.begin(),revision.end(),[](char c){
+        return (c>='0'&&c<='9')||(c>='a'&&c<='f');}),Error::InvalidInput);
+    auto entries=read_impl(answer,0,1,true,revision);
+    require(entries.size()==1&&!entries.front().pruned,Error::Missing);
+    return std::move(entries.front());
 }
 std::vector<IdentityHistoryMetadata> IdentityHistory::read_metadata(const Secret& answer,unsigned offset,unsigned count) {
     auto entries=read_impl(answer,offset,count,false);
@@ -267,7 +450,7 @@ Secret IdentityHistory::read_label(const Secret& answer,const std::string& revis
     require(revision.size()==GIT_OID_HEXSZ&&std::all_of(revision.begin(),revision.end(),[](char c){
         return (c>='0'&&c<='9')||(c>='a'&&c<='f');}),Error::InvalidInput);
     auto entries=read_impl(answer,0,1,true,revision);
-    require(entries.size()==1&&entries.front().action==HistoryAction::Labelled,Error::Missing);
+    require(entries.size()==1&&entries.front().action==HistoryAction::Labelled&&!entries.front().pruned,Error::Missing);
     return std::move(entries.front().snapshot);
 }
 IdentityHistoryRedactedDiff IdentityHistory::redacted_diff(const IdentityHistoryMetadata& before,const IdentityHistoryMetadata& after) {
@@ -287,10 +470,46 @@ std::string IdentityHistory::export_redacted(const Secret& answer,unsigned offse
     }
     out<<"]}";return out.str();
 }
+HistoryPrunePreview IdentityHistory::preview_prune(const Secret& answer,const std::vector<std::string>& revisions) {
+    std::lock_guard<std::mutex> guard(history_mutex);safe_directory(m_impl->data);
+    FileLock lock(m_impl->data/"identity-history-v1.lock");m_impl->authenticate(answer);
+    auto repo=m_impl->open();auto master=m_impl->key();auto current=m_impl->head(repo.get());auto store=m_impl->load_store(master,current);
+    const auto chosen=m_impl->selected(repo.get(),current,store,revisions);
+    require(chosen.size()+store.tombstones.size()<=maximum_tombstones,Error::History);
+    HistoryPrunePreview preview;preview.m_owner=m_impl->owner;preview.m_head=m_impl->head_text(current);
+    for(const auto& item:chosen)preview.m_rows.push_back(item.first);
+    return preview;
+}
+std::string IdentityHistory::prune(const Secret& answer,const HistoryPrunePreview& preview,GUI::SuperConfirm::State& confirmation) {
+    std::lock_guard<std::mutex> guard(history_mutex);safe_directory(m_impl->data);
+    FileLock lock(m_impl->data/"identity-history-v1.lock");m_impl->authenticate(answer);
+    auto repo=m_impl->open();auto master=m_impl->key();auto current=m_impl->head(repo.get());auto store=m_impl->load_store(master,current);
+    require(preview.m_owner==m_impl->owner&&preview.m_head==m_impl->head_text(current),Error::InvalidInput);
+    std::vector<std::string> revisions;for(const auto& row:preview.m_rows)revisions.push_back(row.revision);
+    const auto chosen=m_impl->selected(repo.get(),current,store,revisions);
+    require(chosen.size()+store.tombstones.size()<=maximum_tombstones,Error::History);
+    require(confirmation.may_fire(),Error::Authentication);
+    // Consume the actual native gate state, never a caller-provided boolean.
+    confirmation=GUI::SuperConfirm::State{};confirmation.cancel();
+    std::string audit="prune-v2\n";
+    for(const auto& item:chosen) {
+        require(store.keys.erase(item.second)==1,Error::Missing);store.tombstones.insert(item.second);
+        audit+=item.first.revision+"\n";
+    }
+    return m_impl->write_event(repo.get(),current,master,store,HistoryAction::Pruned,new_stable_id(),Secret(audit));
+}
+IdentityHistoryCapacity IdentityHistory::capacity(const Secret& answer) {
+    std::lock_guard<std::mutex> guard(history_mutex);safe_directory(m_impl->data);
+    FileLock lock(m_impl->data/"identity-history-v1.lock");m_impl->authenticate(answer);
+    auto repo=m_impl->open();auto master=m_impl->key();auto current=m_impl->head(repo.get());auto store=m_impl->load_store(master,current);
+    return {static_cast<unsigned>(store.keys.size()),static_cast<unsigned>(store.tombstones.size()),
+            static_cast<unsigned>(maximum_keys),static_cast<unsigned>(maximum_tombstones)};
+}
 void IdentityHistory::replace_credential(const Secret& old_answer,CredentialKind kind,const Secret& new_answer) {
     std::lock_guard<std::mutex> guard(history_mutex);safe_directory(m_impl->data);
     FileLock lock(m_impl->data/"identity-history-v1.lock");m_impl->authenticate(old_answer);
     auto repo=m_impl->open();auto key=m_impl->key();auto current=m_impl->head(repo.get());
+    auto store=m_impl->load_store(key,current);
     Credentials(m_impl->vault).replace(credential_account,old_answer,kind,new_answer);
 }
 }

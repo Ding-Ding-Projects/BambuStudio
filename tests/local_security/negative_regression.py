@@ -19,6 +19,7 @@ parser.add_argument('--openssl-dll', type=pathlib.Path)
 parser.add_argument('--qr-only', action='store_true')
 parser.add_argument('--core-only', action='store_true')
 parser.add_argument('--history-only', action='store_true')
+parser.add_argument('--history-negative', action='store_true')
 parser.add_argument('--libgit2-prefix', type=pathlib.Path)
 parser.add_argument('--qr-python-packages', type=pathlib.Path)
 args = parser.parse_args()
@@ -68,7 +69,7 @@ with tempfile.TemporaryDirectory(prefix='local-security-negative-') as directory
             runtime_environment['PATH'] = str(dll.parent) + os.pathsep + runtime_environment.get('PATH', '')
         if not library:
             parser.error('--msvc requires --openssl-library or --openssl-dll')
-    cases = [] if args.qr_only or args.history_only else [('baseline', '', '')] if args.core_only else [('baseline', '', '')] + mutations + [('restored', '', '')]
+    cases = [] if args.qr_only or args.history_only or args.history_negative else [('baseline', '', '')] if args.core_only else [('baseline', '', '')] + mutations + [('restored', '', '')]
     for name, old, new in cases:
         if old and base.count(old) != 1:
             raise RuntimeError('Mutation boundary is not unique: ' + name)
@@ -96,23 +97,43 @@ with tempfile.TemporaryDirectory(prefix='local-security-negative-') as directory
         print(('GREEN ' if expected_success else 'RED ') + name, flush=True)
         if args.core_only:
             print(result.stdout.strip(), flush=True)
-    if args.history_only:
+    if args.history_only or args.history_negative:
         if not args.msvc or not args.libgit2_prefix:
-            parser.error('--history-only requires --msvc and --libgit2-prefix')
-        binary = temp / 'identity-history-tests.exe'
-        command = [args.compiler, '/nologo', '/std:c++17', '/EHsc', '/utf-8', '/MD',
-                   '/I' + str(root / 'src'), '/I' + str(args.openssl_include),
-                   '/I' + str(args.libgit2_prefix / 'include'), '/Fo' + str(temp) + os.sep,
-                   '/Fe' + str(binary), str(source / 'LocalSecurity.cpp'), str(source / 'IdentityHistory.cpp'),
-                   str(root / 'tests/local_security/identity_history_tests.cpp'), str(library),
-                   str(args.libgit2_prefix / 'lib/libgit2package.lib'), 'advapi32.lib', 'ws2_32.lib', 'secur32.lib']
-        built = subprocess.run(command, capture_output=True, text=True, timeout=120)
-        if built.returncode:
-            raise RuntimeError('History driver did not compile:\n' + built.stdout + built.stderr)
-        tested = subprocess.run([str(binary)], capture_output=True, text=True, timeout=120, env=runtime_environment)
-        print(tested.stdout.strip(), flush=True)
-        if tested.returncode:
-            raise RuntimeError('History driver failed:\n' + tested.stderr)
+            parser.error('History verification requires --msvc and --libgit2-prefix')
+        history = (source / 'IdentityHistory.cpp').read_text(encoding='utf-8')
+        history_cases = [('baseline', '', '')]
+        if args.history_negative:
+            history_cases += [
+                ('native-confirmation', 'require(confirmation.may_fire(),Error::Authentication);', ''),
+                ('preview-binding', 'require(preview.m_owner==m_impl->owner&&preview.m_head==m_impl->head_text(current),Error::InvalidInput);', ''),
+                ('legacy-retention', 'require(row.format_version==2&&!row.pruned&&row.action!=HistoryAction::Pruned,Error::InvalidInput);', 'require(!row.pruned&&row.action!=HistoryAction::Pruned,Error::InvalidInput);'),
+                ('restored', '', ''),
+            ]
+        for name, old, new in history_cases:
+            if old and history.count(old) != 1:
+                raise RuntimeError('History mutation boundary is not unique: ' + name)
+            candidate = temp / 'IdentityHistory.cpp'
+            candidate.write_text(history.replace(old, new, 1) if old else history, encoding='utf-8')
+            binary = temp / ('identity-history-' + name + '.exe')
+            command = [args.compiler, '/nologo', '/std:c++17', '/EHsc', '/utf-8', '/MD',
+                       '/I' + str(root / 'src'), '/I' + str(source), '/I' + str(args.openssl_include),
+                       '/I' + str(args.libgit2_prefix / 'include'), '/Fo' + str(temp) + os.sep,
+                       '/Fe' + str(binary), str(source / 'LocalSecurity.cpp'), str(candidate),
+                       str(root / 'tests/local_security/identity_history_tests.cpp'), str(library),
+                       str(args.libgit2_prefix / 'lib/libgit2package.lib'), 'advapi32.lib', 'ws2_32.lib', 'secur32.lib']
+            built = subprocess.run(command, capture_output=True, text=True, timeout=120)
+            if built.returncode:
+                raise RuntimeError('History candidate did not compile: ' + name + '\n' + built.stdout + built.stderr)
+            tested = subprocess.run([str(binary)], capture_output=True, text=True, timeout=120, env=runtime_environment)
+            expected_success = name in ('baseline', 'restored')
+            if (tested.returncode == 0) != expected_success:
+                raise RuntimeError('History behavioral verdict did not detect candidate: ' + name + '\n' + tested.stdout + tested.stderr)
+            if expected_success:
+                print(tested.stdout.strip(), flush=True)
+            if args.history_negative:
+                print(('GREEN ' if expected_success else 'RED ') + name, flush=True)
+        if args.history_negative:
+            print('PASS 3 isolated retention mutations; original source unchanged', flush=True)
     elif args.qr_only:
         if not args.msvc or not args.qr_python_packages:
             parser.error('--qr-only requires --msvc and --qr-python-packages')

@@ -1,6 +1,6 @@
 # Native local-security integration
 
-The service components and three native UI components are implemented. The native
+The service components and four native UI components are implemented. The native
 application has not yet compiled or driven these new controls. This article is an
 integration contract and an honest record of outstanding work, not a release claim.
 
@@ -68,11 +68,25 @@ format-aware export workflow; its absence is visible and disables export.
 `record_label`, `record_tooltip` and `record_name` preserve original public source
 copy for live language changes. Static labels and actions carry their source;
 input values and generated facts are never replaced through that route. Dynamic
-status text stays component-owned. Masked fields receive only an accessible-name
+status text stays component-owned. `record_factual_label` is required for the
+static history, toy-lock and support disclosures and must use a language-only
+renderer without tone changes. Masked fields receive only an accessible-name
 source, never a replacement value.
 
+`confirm_retention(anchor, consequence, revisions, callback)` is optional until the
+shared confirmation service is wired. It must forward a copy of the actual native
+`SuperConfirm::State` after both independent keys and the full slider authorize;
+it must never synthesize flags. The consumer creates an authenticated preview
+bound to the current head and exact selected revisions, displays their IDs and
+the factual consequence, then revalidates before consuming that state. Missing
+wiring disables removal explicitly. Active decryption access is removed, while
+metadata remains. Backups, vault copies and journals are outside this operation;
+no forensic-erasure promise is made. The native manager exposes bounded capacity
+and marks retained metadata whose payload access has been removed. Version-one
+payloads remain readable and cannot be pruned through this version-two action.
+
 The native surfaces use the existing `SearchField`, `TextInput`, `Button`, `Label`,
-and dialog-chrome components. All three local searches have their own anchored
+and dialog-chrome components. All four local searches have their own anchored
 regex builder. No callable design creation/export route or verified design handoff
 was available during implementation. Reuse of existing components is source-level
 implementation evidence only, not design-parity or rendered-layout evidence.
@@ -134,7 +148,9 @@ An existing compatible import library may instead be passed with
 `--openssl-library`. The driver never installs or replaces shared dependencies.
 
 The separate libgit2 history driver compiled with the supported pinned libgit2
-1.9.3 recipe and stable MSVC 19.51 toolchain, passing **57 identity history checks**.
+1.9.3 recipe and stable MSVC 19.51 toolchain, passing **118 identity history checks**.
+Three isolated retention mutations also produced the expected failures before
+the restored candidate passed all 118 checks.
 The new QR matrix also passed independent ZXing decoding and exact parameter
 comparison using public synthetic material only.
 The native panels remain uncompiled and have no built interaction,
@@ -143,7 +159,7 @@ accessibility, localization or layout captures.
 Outstanding before feature completion: full shell/action interception, localized
 copy and live language/tone updates, rendered QR proof and packaged image/clipboard/
 camera import, parameter controls for manual enrollment, history-manager built
-verification and retention, atomic live-state/history reconciliation, durable cross-process
+verification and native retention confirmation, atomic live-state/history reconciliation, durable cross-process
 attempt throttling, unlock-ladder UI, dynamic anchor tracking, complete bulk actions
 and filtered multi-format export, per-element context-menu integration, and genuine
 built verification across supported themes, languages, viewports and scales.
