@@ -18,3 +18,8 @@ target_link_libraries(appearance_tests test_common ${wxWidgets_LIBRARIES} PNG::P
 set_property(TARGET appearance_tests PROPERTY FOLDER "tests")
 
 add_test(appearance_tests appearance_tests "${CATCH_EXTRA_ARGS}")
+
+add_executable(style_metrics_tests style_metrics_standalone.cpp)
+target_include_directories(style_metrics_tests PRIVATE ${PROJECT_SOURCE_DIR}/src)
+target_compile_features(style_metrics_tests PRIVATE cxx_std_17)
+add_test(NAME style_metrics_tests COMMAND style_metrics_tests)

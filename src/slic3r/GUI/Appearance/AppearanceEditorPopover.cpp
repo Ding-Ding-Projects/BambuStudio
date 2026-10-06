@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <functional>
+#include <cmath>
 #include <set>
 
 #include <wx/dcbuffer.h>
@@ -188,6 +189,52 @@ private:
     double       m_value { 0.0 };
 };
 
+// A real owner-drawn preview. It renders the selected element's geometry,
+// colors and line height without modifying or truncating the source label.
+class AppearanceGeometryPreview final : public wxPanel
+{
+public:
+    AppearanceGeometryPreview(wxWindow *parent, const std::string &id)
+        : wxPanel(parent), m_id(id)
+    {
+        SetName(_L("Live shape and typography preview"));
+        SetMinSize(wxSize(FromDIP(240), FromDIP(108)));
+        SetBackgroundStyle(wxBG_STYLE_PAINT);
+        Bind(wxEVT_PAINT, [this](wxPaintEvent &) {
+            wxAutoBufferedPaintDC dc(this);
+            dc.SetBackground(wxBrush(GetParent()->GetBackgroundColour()));
+            dc.Clear();
+            const StyleMetrics m = ElementStyle::metrics_for(m_id, {12, 1, 8, 4, 0, 1});
+            wxRect box = GetClientRect();
+            box.Deflate(FromDIP(static_cast<int>(m.margin)));
+            if (box.width <= 0 || box.height <= 0) return;
+            const wxColour bg = ElementStyle::colour_for(m_id, StyleProp::background, role(MD3::Role::SurfaceContainer));
+            const wxColour border = ElementStyle::colour_for(m_id, StyleProp::border_color, role(MD3::Role::Outline));
+            const int width = FromDIP(static_cast<int>(std::lround(m.border_width)));
+            dc.SetPen(width ? wxPen(border, width) : *wxTRANSPARENT_PEN);
+            dc.SetBrush(wxBrush(bg));
+            const double radius = std::min<double>(FromDIP(static_cast<int>(m.radius)), std::min(box.width, box.height) / 2.0);
+            // Inset the outline so half its stroke cannot leave the owner.
+            box.Deflate((width + 1) / 2);
+            if (box.width <= 0 || box.height <= 0) return;
+            dc.DrawRoundedRectangle(box, radius);
+            box.Deflate(FromDIP(static_cast<int>(m.padding)));
+            if (box.width <= 0 || box.height <= 0) return;
+            wxDCClipper clip(dc, box);
+            dc.SetFont(ElementStyle::font_for(m_id, Label::Body_14));
+            dc.SetTextForeground(ElementStyle::colour_for(m_id, StyleProp::foreground, role(MD3::Role::OnSurface)));
+            dc.DrawText(_L("Live appearance preview"), box.GetTopLeft());
+            const int advance = static_cast<int>(std::ceil(m.line_advance(dc.GetCharHeight())));
+            dc.DrawText(_L("Second line"), box.x, box.y + advance);
+        });
+        m_subscription = ElementStyle::registry().subscribe([this](const std::string &) { Refresh(); });
+    }
+    ~AppearanceGeometryPreview() override { ElementStyle::registry().unsubscribe(m_subscription); }
+private:
+    const std::string &m_id; // editor retargeting updates the same stable string
+    int m_subscription = 0;
+};
+
 AppearanceEditorPopover *AppearanceEditorPopover::s_current = nullptr;
 
 // ---------------------------------------------------------------------------
@@ -261,6 +308,7 @@ void AppearanceEditorPopover::retarget(wxWindow *anchor, const std::string &elem
     m_id     = element_id;
     m_last_anchor_rect = wxRect();
     refresh_from_registry();
+    Refresh(); // redraw child previews against the newly selected element
     place();
 }
 
@@ -591,6 +639,12 @@ void AppearanceEditorPopover::build_typography(wxWindow *page)
     note->Wrap(FromDIP(kCardWidth - 2 * kPad));
     s->Add(note, 0, wxEXPAND);
 
+    // Explicit limitations are visible rather than accepting inert values.
+    auto *limits = new Label(page, Label::Body_11,
+        _L("Platform capabilities: variable font axes, oblique angle, underline style and color, double strikethrough, overline, small caps, superscript, subscript, outline, shadow, glow, word spacing, baseline offset, direction and paragraph alignment require a rich-text renderer. They are unavailable on this native element. Stored unknown properties are preserved during export and import."), LB_AUTO_WRAP);
+    limits->SetName(_L("Typography platform capabilities"));
+    limits->Wrap(FromDIP(kCardWidth - 2 * kPad));
+    s->Add(limits, 0, wxEXPAND | wxTOP, FromDIP(kRowGap));
     page->SetSizer(s);
 }
 
@@ -645,8 +699,9 @@ void AppearanceEditorPopover::build_shape(wxWindow *page)
     spin_row(m_radius, _L("Corner radius (px)"), StyleProp::radius, 64);
     spin_row(m_padding, _L("Padding (px)"), StyleProp::padding, 64);
     spin_row(m_margin, _L("Margin (px)"), StyleProp::margin, 64);
+    s->Add(new AppearanceGeometryPreview(page, m_id), 0, wxEXPAND | wxBOTTOM, FromDIP(kRowGap));
     auto *note = new Label(page, Label::Body_11,
-                           _L("Shape values are read by the Material widgets that paint their own frame (buttons, tabs, menus). Native controls keep the platform shape."),
+                           _L("Margin updates native sizer layout. The live preview renders radius, border, padding and line height. Other owner-drawn controls require an explicit renderer adapter; native controls retain platform shape."),
                            LB_AUTO_WRAP);
     note->SetForegroundColour(role(MD3::Role::OnSurfaceVariant));
     note->Wrap(FromDIP(kCardWidth - 2 * kPad));

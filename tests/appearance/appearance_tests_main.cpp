@@ -300,3 +300,23 @@ TEST_CASE("Listeners are told which id changed and can unsubscribe", "[appearanc
     CHECK(seen[0] == "a");
     CHECK(seen[1] == "*");
 }
+
+TEST_CASE("Typed paint metrics consume inherited overrides and reject unbounded geometry", "[appearance][metrics]")
+{
+    auto &reg = Slic3r::GUI::ElementStyle::registry();
+    reg.reset_all();
+    reg.set("metrics-test", StyleProp::radius, 999.0);
+    reg.set("metrics-test", StyleProp::padding, 18.0);
+    reg.set("metrics-test", StyleProp::border_width, -4.0);
+    reg.set("metrics-test", StyleProp::line_height, 2.0);
+    const auto m = Slic3r::GUI::ElementStyle::metrics_for("metrics-test/child");
+    CHECK(m.radius == 64);
+    CHECK(m.padding == 18);
+    CHECK(m.border_width == 0);
+    CHECK(m.line_advance(12) == 24);
+    reg.reset_element("metrics-test");
+    const auto reset = Slic3r::GUI::ElementStyle::metrics_for("metrics-test/child", {8, 1, 6, 4, 0, 1});
+    CHECK(reset.radius == 8);
+    CHECK(reset.padding == 6);
+    reg.reset_all();
+}
