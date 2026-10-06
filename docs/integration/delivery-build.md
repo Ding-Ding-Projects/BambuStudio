@@ -67,10 +67,19 @@ and a recorded content identity. That identity covers relevant committed source
 trees, every file in the selected dependency `usr/local` prefix, compiler and
 CMake bytes and paths, compiler/Visual Studio versions, generator instance, SDK
 selection, and source/install roots. Missing or changed identity causes a fresh
-configure. Content hashing adds a read of the selected dependency files at build
-startup; timestamps alone cannot prove their content. Ten fixture/stub assertions
+configure. Before reconfiguration, the producer verifies the exact owned build
+directory and the cache's source-directory receipt, then preserves only
+`CMakeCache.txt` under a unique `artifacts/windows/application-configurations/`
+history entry. CMake regenerates discovery without retaining the old dependency
+prefix, while object directories remain in place. An unrelated source receipt or
+reparse-point target stops this preservation. Content hashing adds a read of the selected dependency files at build
+startup; timestamps alone cannot prove their content. Fourteen fixture/stub assertions
 verify mismatched-prefix rejection and invalidation for source, dependency,
-compiler, and SDK changes. They perform no native build.
+compiler, and SDK changes, plus application compiler-cap restoration. Seven real
+configure-only assertions demonstrate libnoise discovery moving from prefix A to
+prefix B and prior-cache/object preservation, with no compiler or native build.
+The application production commands also use the process-only `/MP1` suffix,
+so root MSBuild concurrency is not multiplied by the application's bare `/MP`.
 An incompatible or incomplete cache causes configuration or compilation to stop;
 the caller must select a compatible cache or omit the variable for a local build.
 FFmpeg package flags quote their include and library paths so an isolated checkout

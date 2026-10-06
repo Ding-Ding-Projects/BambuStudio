@@ -736,6 +736,28 @@ function Test-ApplicationCacheIdentity {
     return $true
 }
 
+function Preserve-ApplicationConfiguration {
+    param([Parameter(Mandatory)][string] $BuildDirectory)
+    $owned = [IO.Path]::GetFullPath((Join-Path $script:RepositoryRoot 'build'))
+    $actual = [IO.Path]::GetFullPath($BuildDirectory)
+    if ($actual -ine $owned) { throw 'Application configuration preservation is limited to the owned build directory.' }
+    $cache = Join-Path $actual 'CMakeCache.txt'
+    if (-not (Test-Path -LiteralPath $cache -PathType Leaf)) { return }
+    if (((Get-Item -LiteralPath $actual).Attributes -band [IO.FileAttributes]::ReparsePoint) -or
+        ((Get-Item -LiteralPath $cache).Attributes -band [IO.FileAttributes]::ReparsePoint)) {
+        throw 'Application configuration preservation cannot operate through a reparse-point build directory.'
+    }
+    $sourceDirectoryReceipt = @(Select-String -LiteralPath $cache -Pattern '^CMAKE_HOME_DIRECTORY:INTERNAL=(.*)$')
+    if ($sourceDirectoryReceipt.Count -ne 1 -or
+        [IO.Path]::GetFullPath($sourceDirectoryReceipt[0].Matches[0].Groups[1].Value) -ine [IO.Path]::GetFullPath($script:RepositoryRoot)) {
+        throw 'The existing application cache does not prove ownership by this source directory; it was preserved in place.'
+    }
+    $history = Join-Path $script:RepositoryRoot ('artifacts\windows\application-configurations\' + [DateTime]::UtcNow.ToString('yyyyMMddTHHmmssZ') + '-' + [guid]::NewGuid().ToString('N'))
+    New-Item -ItemType Directory -Path $history -Force | Out-Null
+    [IO.File]::Move($cache, (Join-Path $history 'CMakeCache.txt'))
+    Write-BuildLog "Preserved prior application configuration at $history; generated objects remain in place."
+}
+
 function Invoke-ApplicationBuild {
     param(
         [Parameter(Mandatory)] $Toolchain,
@@ -768,6 +790,7 @@ function Invoke-ApplicationBuild {
         if ([string]::IsNullOrWhiteSpace($python)) {
             throw 'Python 3 is required to compile the English and Cantonese catalogs, and none was found.'
         }
+        Preserve-ApplicationConfiguration -BuildDirectory $buildDirectory
         Invoke-RepositoryCommand "Configuring Bambu Studio ($($Toolchain.Generator))..." {
             & $Toolchain.CMake -S $script:RepositoryRoot -B $buildDirectory `
                 -G $Toolchain.Generator -A x64 `
@@ -783,11 +806,18 @@ function Invoke-ApplicationBuild {
     } else {
         Write-BuildLog "Reusing the configured build tree at $buildDirectory (set BAMBU_RECONFIGURE=1 to force a configure; note it recompiles everything)."
     }
-    Invoke-RepositoryCommand 'Building the DeviceWeb page...' {
-        & $Toolchain.CMake --build $buildDirectory --target device_page_build --config Release --parallel $jobs
-    }
-    Invoke-RepositoryCommand "Building and installing Bambu Studio (parallel $jobs)..." {
-        & $Toolchain.CMake --build $buildDirectory --target install --config Release --parallel $jobs
+    $originalCompilerOptions = [Environment]::GetEnvironmentVariable('_CL_', 'Process')
+    $boundedCompilerOptions = Get-BoundedCompilerOptions -ExistingOptions $originalCompilerOptions
+    try {
+        [Environment]::SetEnvironmentVariable('_CL_', $boundedCompilerOptions, 'Process')
+        Invoke-RepositoryCommand 'Building the DeviceWeb page...' {
+            & $Toolchain.CMake --build $buildDirectory --target device_page_build --config Release --parallel $jobs
+        }
+        Invoke-RepositoryCommand "Building and installing Bambu Studio (parallel $jobs; compiler /MP1)..." {
+            & $Toolchain.CMake --build $buildDirectory --target install --config Release --parallel $jobs
+        }
+    } finally {
+        [Environment]::SetEnvironmentVariable('_CL_', $originalCompilerOptions, 'Process')
     }
 }
 

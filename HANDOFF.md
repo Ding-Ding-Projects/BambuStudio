@@ -6,9 +6,16 @@ Application configuration cache reuse now compares exact install/dependency
 prefixes and a recorded content identity covering relevant source trees, selected
 dependency file bytes, CMake/compiler bytes, toolchain versions and selections,
 and source/install roots. The former nonnull check treated Boolean false as a
-match. Ten focused fixture/stub assertions pass, with the old source observed
+match. Fourteen focused fixture/stub assertions pass, with the old source observed
 reusing a cache whose install prefix differed. Dependency content hashing adds
 an actual file read at startup. Production build evidence remains pending.
+Independent review identified retained CMake discovery entries after a prefix
+change. The producer now verifies ownership and preserves only the prior
+`CMakeCache.txt` before reconfiguration, leaving objects in place. Seven real
+configure-only assertions reproduce stale prefix A and prove refreshed imported
+libnoise location B, preserved cache/objects, and refusal of nonowned targets.
+The root application adds bare `/MP`; its build commands now inherit process-only
+`/MP1` with success/failure environment restoration. No real compile was run.
 
 Squirrel tool reuse now validates the retained pinned archive and all tool bytes.
 It uses a separate content-addressed owned cache, preserves legacy caches, and
