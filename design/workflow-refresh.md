@@ -144,4 +144,3 @@ The ranking below prioritizes the number of actual surface families reached, the
 All 56 checked-in SVG boards remain structural illustrations, not screenshots. They do not supply every state-specific reference, native reference-viewer route or real-product fixture. Native compilation and the genuine normal/minimum size, language, theme, density, display-scale, keyboard, focus, reduced-motion and temporal matrix remain separate work. Existing source checks and mathematical fixtures do not replace those results.
 
 The first eight ranks are concrete high-coverage continuations of existing surfaces. Ranks nine and ten require reachability/ownership inventory before implementation expands. No row authorizes changes to feature engines, printer commands, credentials, data persistence, callbacks or unrelated fixes.
-
