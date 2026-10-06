@@ -96,8 +96,17 @@ the raw transcript private or ignored, outside the public source record.
 Values above illustrate the schema, not a passing receipt. The source and tree must
 still match the clean producer. The exact root entrypoint, transcript and four payload
 files are hashed. The companion's own source and local-build identity must agree.
-The transcript must contain the source pin and a subsequent build-only completion
-for this payload. A later incomplete invocation cannot borrow an earlier completion.
+The validator selects the latest appended PowerShell transcript session, even if
+it stopped before the producer's start or source-pin line. That session must contain
+exactly one actual invocation start, the matching source pin, build-only completion
+for this payload, and terminal workflow success, in that order. Their producer UTC
+timestamps must be nondecreasing and inside the receipt's start/end interval.
+`Write-BuildLog` records whole seconds, so the receipt start is compared at that
+precision; local-time transcript header/footer values are not interpreted as UTC.
+Success must be followed only by the closed transcript footer. A later invocation
+with another source, a pre-pin interruption, or a freshly collected hash cannot
+borrow an earlier completion. Duplicate, untimestamped or out-of-order markers,
+out-of-interval times, missing terminal success and appended failure text are rejected.
 Successful completion must be less than 24 hours old; future or unfinished times,
 nonzero/unknown results, changed files, missing records and redirected file paths
 are rejected. Provenance is rechecked before launch and after inspection. This binds
@@ -143,3 +152,12 @@ foreign/ambiguous windows, partial startup, timeout, job assignment before resum
 owned teardown, complete-probe checks and separate capture verdicts. They do not start
 the product, use Lowlevel against a real window, validate a real build receipt or prove
 Windows containment at runtime. A live review remains pending.
+
+The transcript-binding repair ran 15 focused `ReceiptTests` methods without native
+execution. The old validator failed 16 assertions across the new negative cases;
+the repaired validator passes all 15 methods. Tests cover later different-source
+and pre-pin invocations, all four timestamp bounds, marker order, terminal closure,
+older sessions, UTF-8/BOM/UTF-16 and fractional observer times. A separate read-only
+compatibility check validated the existing immutable successful receipt for source
+`a28944e3c14b2066ee63d14151c8aca23066d743` through the complete repaired validator.
+That check launched nothing and establishes receipt compatibility, not UI acceptance.

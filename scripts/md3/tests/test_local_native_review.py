@@ -35,8 +35,10 @@ class ReceiptTests(unittest.TestCase):
                      "sha256": review.digest(self.payload / "automation/bambu-automation.exe")}
         (self.payload / "automation/build-identity.json").write_text(json.dumps(companion))
         self.transcript = self.root / "transcript.log"
-        self.transcript.write_text("Pinned build source: " + SOURCE + "\nBuild-only workflow completed; runnable payload: " + str(self.payload / "bambu-studio.exe"))
-        self.now = datetime.now(timezone.utc)
+        self.now = datetime.now(timezone.utc).replace(microsecond=0)
+        self.start = self.now - timedelta(minutes=2)
+        self.end = self.now - timedelta(minutes=1)
+        self.transcript.write_text(self.invocation())
         utc = lambda value: value.isoformat().replace("+00:00", "Z")
         self.receipt = {"schemaVersion": 1, "kind": "local-root-build", "invocationId": "fixture-only",
             "entrypoint": "build.bat", "arguments": ["/s"], "exitCode": 0,
@@ -52,6 +54,20 @@ class ReceiptTests(unittest.TestCase):
 
     def validate(self, receipt=None, git=None):
         return review.validate_receipt(receipt or self.receipt, self.root, SOURCE, self.now, git or self.git)
+
+    def invocation(self, source=SOURCE, start=None, end=None):
+        start, end = start or self.start, end or self.end
+        stamp = lambda value: value.strftime("[%Y-%m-%d %H:%M:%SZ] ")
+        return ("**********************\nWindows PowerShell transcript start\nStart time: 20261006080000\n"
+            + stamp(start) + "Bambu Studio one-click build started (mode=Incremental, install=False, plan=False).\n"
+            + stamp(start + timedelta(seconds=3)) + "Pinned build source: " + source + "\n"
+            + stamp(end) + "Build-only workflow completed; runnable payload: " + str(self.payload / "bambu-studio.exe") + "\n"
+            + stamp(end) + "One-click workflow completed successfully.\n"
+            + "**********************\nWindows PowerShell transcript end\nEnd time: 20261006080100\n**********************\n")
+
+    def rehash_transcript(self, text, encoding="utf-8"):
+        self.transcript.write_text(text, encoding=encoding)
+        self.receipt["transcript"]["sha256"] = review.digest(self.transcript)
 
     def test_complete_observer_receipt(self):
         self.assertEqual(self.validate(), self.payload / "bambu-studio.exe")
@@ -96,11 +112,75 @@ class ReceiptTests(unittest.TestCase):
         original = self.transcript.read_text()
         self.transcript.write_text(original + "\nPinned build source: " + SOURCE + "\nbuild failed")
         self.receipt["transcript"]["sha256"] = review.digest(self.transcript)
-        with self.assertRaisesRegex(ValueError, "completion evidence missing"):
+        with self.assertRaises(ValueError):
             self.validate()
         self.transcript.write_text(original)
         self.receipt["transcript"]["sha256"] = review.digest(self.transcript)
         self.validate()
+
+    def test_rehashed_later_different_source_invocation_is_rejected(self):
+        newer = self.invocation(source="c" * 40).split("Build-only workflow completed;")[0]
+        self.rehash_transcript(self.invocation() + newer)
+        with self.assertRaises(ValueError):
+            self.validate()
+
+    def test_rehashed_later_pre_pin_interruption_is_rejected(self):
+        later = self.invocation().split("Pinned build source:")[0]
+        for suffix in (later, "**********************\nWindows PowerShell transcript start\nStart time: 20261006080200\n",
+                       later.split("Windows PowerShell transcript start\n", 1)[1]):
+            with self.subTest(suffix=suffix):
+                self.rehash_transcript(self.invocation() + suffix)
+                with self.assertRaises(ValueError):
+                    self.validate()
+
+    def test_each_production_marker_must_be_inside_receipt_interval(self):
+        original = self.invocation()
+        markers = ("Bambu Studio one-click build started", "Pinned build source:",
+                   "Build-only workflow completed;", "One-click workflow completed successfully.")
+        for marker in markers:
+            for when in (self.start - timedelta(seconds=2), self.end + timedelta(seconds=2)):
+                with self.subTest(marker=marker, when=when):
+                    lines = original.splitlines()
+                    lines = [when.strftime("[%Y-%m-%d %H:%M:%SZ] ") + line.split("] ", 1)[1]
+                             if marker in line else line for line in lines]
+                    self.rehash_transcript("\n".join(lines))
+                    with self.assertRaises(ValueError):
+                        self.validate()
+
+    def test_terminal_success_and_closed_session_are_required(self):
+        original = self.invocation()
+        for altered in (original.replace("One-click workflow completed successfully.", "Build failed."),
+                        original + "Build failed with exit code 1\n",
+                        original.split("Windows PowerShell transcript end")[0]):
+            with self.subTest(altered=altered):
+                self.rehash_transcript(altered)
+                with self.assertRaises(ValueError):
+                    self.validate()
+
+    def test_marker_order_and_complete_latest_source_are_required(self):
+        lines = self.invocation().splitlines()
+        pin = next(i for i, line in enumerate(lines) if "Pinned build source:" in line)
+        completion = next(i for i, line in enumerate(lines) if "Build-only workflow completed;" in line)
+        lines[pin], lines[completion] = lines[completion], lines[pin]
+        for altered in ("\n".join(lines), self.invocation() + self.invocation(source="c" * 40)):
+            with self.subTest(altered=altered):
+                self.rehash_transcript(altered)
+                with self.assertRaises(ValueError):
+                    self.validate()
+
+    def test_previous_sessions_and_supported_encodings_preserve_valid_latest_receipt(self):
+        previous = self.invocation(source="c" * 40, start=self.start - timedelta(minutes=4),
+                                   end=self.start - timedelta(minutes=3))
+        for encoding in ("utf-8", "utf-8-sig", "utf-16"):
+            with self.subTest(encoding=encoding):
+                self.rehash_transcript(previous + self.invocation(), encoding)
+                self.assertEqual(self.validate(), self.payload / "bambu-studio.exe")
+
+    def test_second_precision_log_interval_accepts_fractional_observer_times(self):
+        receipt = deepcopy(self.receipt)
+        receipt["startedAtUtc"] = (self.start + timedelta(microseconds=1)).isoformat().replace("+00:00", "Z")
+        receipt["finishedAtUtc"] = (self.end + timedelta(microseconds=999999)).isoformat().replace("+00:00", "Z")
+        self.assertEqual(self.validate(receipt), self.payload / "bambu-studio.exe")
 
     def test_entrypoint_and_companion_are_bound(self):
         self.receipt["entrypointSha256"] = "0" * 64

@@ -79,6 +79,42 @@ def git(root, *args):
     return result.stdout.strip()
 
 
+def validate_build_transcript(text, start, end, expected_source, payload):
+    """Bind the latest appended producer invocation, not a matching older pin."""
+    lines = [line.strip() for line in text.splitlines()]
+    sessions = [i for i, line in enumerate(lines)
+                if re.fullmatch(r"(?:Windows )?PowerShell transcript start", line)]
+    require(sessions, "Transcript invocation start missing")
+    latest = lines[sessions[-1]:]
+    markers = ("Bambu Studio one-click build started", "Pinned build source:",
+               "Build-only workflow completed; runnable payload:", "One-click workflow completed successfully.")
+    records = []
+    for marker in markers:
+        matches = [(i, line) for i, line in enumerate(latest) if marker in line]
+        require(len(matches) == 1, "Latest invocation marker missing or repeated: " + marker)
+        index, line = matches[0]
+        logged = re.fullmatch(r"\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}Z)\] (.+)", line)
+        require(logged is not None, "Invocation marker lacks producer UTC timestamp")
+        moment = datetime.strptime(logged[1], "%Y-%m-%d %H:%M:%SZ").replace(tzinfo=timezone.utc)
+        # Write-BuildLog truncates to whole UTC seconds. Compare at that precision;
+        # transcript header/footer local-time fields are never treated as UTC.
+        require(start.replace(microsecond=0) <= moment <= end, "Invocation marker outside receipt interval")
+        records.append((index, moment, logged[2]))
+    require(all(a[0] < b[0] and a[1] <= b[1] for a, b in zip(records, records[1:])),
+            "Invocation markers are out of order")
+    require(re.fullmatch(r"Bambu Studio one-click build started \(mode=(?:Incremental|Clean), install=False, plan=False\)\.", records[0][2]),
+            "Transcript does not describe a real build-only invocation")
+    require(records[1][2] == "Pinned build source: " + expected_source, "Latest invocation source differs")
+    completion = "Build-only workflow completed; runnable payload: "
+    require(records[2][2].startswith(completion), "Build-only completion evidence missing")
+    require(Path(records[2][2][len(completion):]).resolve() == (payload / "bambu-studio.exe").resolve(),
+            "Transcript completed another payload")
+    require(records[3][2] == "One-click workflow completed successfully.", "Terminal success evidence missing")
+    tail = [line for line in latest[records[3][0] + 1:] if line and not re.fullmatch(r"\*+", line)]
+    require(len(tail) == 2 and re.fullmatch(r"(?:Windows )?PowerShell transcript end", tail[0])
+            and re.fullmatch(r"End time: \d{14}", tail[1]), "Latest invocation did not close successfully")
+
+
 def validate_receipt(receipt, root, expected_source, now=None, git_read=git):
     """An observer receipt is evidence, not a signature or a build invocation."""
     now = now or datetime.now(timezone.utc)
@@ -108,15 +144,10 @@ def validate_receipt(receipt, root, expected_source, now=None, git_read=git):
     raw = transcript.read_bytes()
     encoding = "utf-16" if raw.startswith((b"\xff\xfe", b"\xfe\xff")) else "utf-8-sig"
     text = raw.decode(encoding, errors="strict")
-    pin = "Pinned build source: " + expected_source
-    completion = "Build-only workflow completed; runnable payload: "
-    require(pin in text and completion in text[text.rfind(pin):], "Build completion evidence missing")
     payload = Path(receipt["payload"]["root"])
     require(payload.is_absolute() and payload.resolve() == (root / "install-dir").resolve(),
             "Payload is outside the recorded producer")
-    completed_path = text[text.rfind(completion) + len(completion):].splitlines()[0].strip()
-    require(Path(completed_path).resolve() == (payload / "bambu-studio.exe").resolve(),
-            "Transcript completed another payload")
+    validate_build_transcript(text, start, end, expected_source, payload)
     files = receipt["payload"]["files"]
     require(isinstance(files, dict) and set(files) == set(REQUIRED), "Required payload identities differ")
     for name in REQUIRED:
