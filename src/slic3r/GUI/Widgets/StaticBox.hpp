@@ -88,7 +88,7 @@ protected:
 
 protected:
     double radius;
-    double m_default_radius_dip{MD3::Metrics::active().radius};
+    double m_default_radius_dip{static_cast<double>(MD3::Metrics::active().radius)};
     bool   m_uses_default_radius{true};
     int border_width = 1;
     wxPenStyle border_style = wxPENSTYLE_SOLID;
