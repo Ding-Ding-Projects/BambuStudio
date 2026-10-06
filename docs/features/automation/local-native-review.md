@@ -5,7 +5,9 @@
 `scripts/md3/local-native-review.py` validates a completed local root build and
 can inspect its initial native shell. This is separate from the hosted installer
 driver. It neither changes the hosted restrictions nor manufactures an installation
-receipt. Its implementation has only non-window verification so far. Live execution
+receipt. An authorized visible attempt exited before inspection, and the driver at
+that revision did not retain the target's exit code. No startup cause is established.
+The exit-observation repair has only non-window verification. Further live execution
 still requires explicit authorization and a successful matching build.
 
 ## Scope and execution
@@ -45,6 +47,20 @@ worker watchdog then exits, closing only its owned job handles. A watchdog exit 
 missing worker report remains **unverified teardown**, not inferred success. Normal
 teardown terminates the owned job, waits for its process and observes zero active
 job processes. No process is selected or terminated by title or executable name.
+
+Before normal owned teardown, the driver performs a zero-timeout wait on the exact
+target process handle. `targetExit.status` is `exited` only when that handle is
+signaled and `GetExitCodeProcess` succeeds. The report retains the unsigned 32-bit
+`exitCode`, hexadecimal `exitCodeHex`, UTC observation time and
+`observedBeforeTeardown: true`. A real exit code of 259 is retained after the handle
+is signaled. A nonsignaled handle reports `active` without an exit code; this is a
+point-in-time observation, not a claim about what happens immediately afterward.
+An unavailable handle, unexpected wait result or failed query reports `unavailable`
+without inventing a code. Observation failure does not prevent owned teardown.
+If no session was returned, the target remains `not_observed`; an interrupted worker
+without valid evidence reports `unavailable`. The wrapper's `workerExitCode` and
+the termination code supplied by teardown never stand in for the target's result.
+The code is diagnostic evidence, not a diagnosis of the startup cause.
 
 The only desktop operations are window enumeration and optional exact-window
 capture. The existing `send-layout-probe.py` sends a read-only layout dump request;
@@ -122,7 +138,7 @@ there, not copied into tracked screenshots automatically:
 - `request.json`: the bounded worker request and explicit desktop selection.
 - `shell.jsonl`: native window, client, minimum/best-size and layout records.
 - `shell.png`: optional raw owned-window capture.
-- `review.json`: separate launch, probe, screenshot and teardown results.
+- `review.json`: separate launch, target-exit observation, probe, screenshot and teardown results.
 - `wrapper-failure.json`: an interrupted or incomplete worker, with unverified states.
 
 A probe is accepted only after its terminal `end` record, exact PID/tag, profile tuple,
@@ -151,7 +167,15 @@ They exercise negative provenance, source/payload drift, incomplete transcripts,
 foreign/ambiguous windows, partial startup, timeout, atomic job membership at creation,
 owned teardown, complete-probe checks and separate capture verdicts. They do not start
 the product, use Lowlevel against a real window, validate a real build receipt or prove
-Windows containment at runtime. A live review remains pending.
+Windows containment at runtime. A successful live review remains pending.
+
+The exit-observation repair passes all 32 methods in this focused file, including
+six new methods covering signaled zero/nonzero/259/high-bit exit codes, active and
+unavailable states, failed liveness queries, observation before teardown, and teardown
+after an observation exception. The old driver produces two missing-evidence errors
+in the new inspection regression. Worker timeout tests also ensure a wrapper result
+cannot become a target exit code. These checks launch no product and do not recover
+the missing exit code from the earlier visible attempt.
 
 The transcript-binding repair ran 15 focused `ReceiptTests` methods without native
 execution. The old validator failed 16 assertions across the new negative cases;

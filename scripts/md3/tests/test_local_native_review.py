@@ -349,6 +349,8 @@ class OwnershipTests(unittest.TestCase):
                     return outcome
                 result = review.dispatch_worker(args, root, call)
                 self.assertEqual(result["launch"]["status"], "unverified")
+                self.assertEqual(result["targetExit"]["status"], "unavailable")
+                self.assertNotIn("exitCode", result["targetExit"])
                 self.assertEqual(result["teardown"], "unverified")
                 self.assertTrue((root / "stop").exists())
 
@@ -363,6 +365,7 @@ class OwnershipTests(unittest.TestCase):
                 pid = 7
                 closed = 0
                 def alive(self): return False
+                def observe_target_exit(self): return {"status": "exited", "exitCode": 1}
                 def close(self): self.closed += 1; return True
             owned = Session()
             with patch.object(review, "validate_receipt", return_value=root / "app.exe"):
@@ -384,6 +387,7 @@ class OwnershipTests(unittest.TestCase):
             class Session:
                 pid = 7
                 def alive(self): return False
+                def observe_target_exit(self): return {"status": "exited", "exitCode": 1}
                 def close(self): raise OSError("mock")
             with patch.object(review, "validate_receipt", return_value=root / "app.exe"):
                 result = review.inspect_shell(args, {}, root, root / "app.exe", session_factory=lambda *a: Session())
@@ -400,6 +404,7 @@ class OwnershipTests(unittest.TestCase):
                 pid = 7
                 closed = False
                 def alive(self): return True
+                def observe_target_exit(self): return {"status": "active"}
                 def identity(self, hwnd): return {"pid": 7, "class": "wxWindowNR", "visible": True}
                 def close(self): self.closed = True; return True
             owned = Session()
@@ -416,6 +421,7 @@ class OwnershipTests(unittest.TestCase):
             self.assertEqual(result["probe"]["status"], "received")
             self.assertEqual(result["screenshot"]["status"], "not_attempted")
             self.assertEqual(result["runtimeAcceptance"], "unverified")
+            self.assertEqual(result["targetExit"], {"status": "active"})
             self.assertNotIn("failure", result)
             self.assertTrue(owned.closed)
 
@@ -440,6 +446,106 @@ class OwnershipTests(unittest.TestCase):
     def test_launcher_rejects_shell_metacharacters(self):
         with self.assertRaisesRegex(ValueError, "Unsafe launcher"):
             review.worker_command(Path("C:/temp/%EXPANSION%/request.json"))
+
+
+class ExitObservationTests(unittest.TestCase):
+    def session(self, wait=0, code=0, get_result=True):
+        owned = review.NativeSession.__new__(review.NativeSession)
+        owned.process, owned.pid = 22, 7
+        owned.k = MagicMock()
+        owned.k.WaitForSingleObject.return_value = wait
+        def get_exit(handle, result):
+            self.assertEqual(handle, owned.process)
+            result._obj.value = code
+            return get_result
+        owned.k.GetExitCodeProcess.side_effect = get_exit
+        return owned
+
+    def test_signaled_target_retains_unsigned_exit_code_including_259(self):
+        for code in (0, 1, 259, 0xC0000135, 0xFFFFFFFF):
+            with self.subTest(code=code):
+                owned = self.session(code=code)
+                result = owned.observe_target_exit()
+                self.assertEqual(result["status"], "exited")
+                self.assertEqual(result["exitCode"], code)
+                self.assertEqual(result["exitCodeHex"], f"0x{code:08X}")
+                self.assertTrue(result["observedBeforeTeardown"])
+                owned.k.WaitForSingleObject.assert_called_once_with(22, 0)
+                owned.k.GetExitCodeProcess.assert_called_once()
+
+    def test_active_target_has_no_exit_code(self):
+        owned = self.session(wait=258, code=259)
+        result = owned.observe_target_exit()
+        self.assertEqual(result["status"], "active")
+        self.assertNotIn("exitCode", result)
+        self.assertNotIn("exitCodeHex", result)
+        owned.k.WaitForSingleObject.assert_called_once_with(22, 0)
+        owned.k.GetExitCodeProcess.assert_not_called()
+
+    def test_unavailable_observation_never_invents_an_exit_code(self):
+        for scenario in ("wait_failed", "unexpected_wait", "query_failed", "query_exception", "missing_handle"):
+            with self.subTest(scenario=scenario):
+                owned = self.session()
+                if scenario == "wait_failed": owned.k.WaitForSingleObject.return_value = 0xFFFFFFFF
+                if scenario == "unexpected_wait": owned.k.WaitForSingleObject.return_value = 128
+                if scenario == "query_failed": owned.k.GetExitCodeProcess.side_effect = lambda *a: False
+                if scenario == "query_exception": owned.k.GetExitCodeProcess.side_effect = OSError("mock")
+                if scenario == "missing_handle": owned.process = None
+                result = owned.observe_target_exit()
+                self.assertEqual(result["status"], "unavailable")
+                self.assertNotIn("exitCode", result)
+                self.assertNotIn("exitCodeHex", result)
+                if scenario in ("wait_failed", "unexpected_wait", "missing_handle"):
+                    owned.k.GetExitCodeProcess.assert_not_called()
+
+    def test_failed_liveness_query_does_not_claim_target_exited(self):
+        owned = self.session(wait=0xFFFFFFFF)
+        with self.assertRaisesRegex(ValueError, "state unavailable"):
+            owned.alive()
+
+    def test_inspection_records_target_before_teardown_overwrites_its_code(self):
+        for wait, expected in ((0, "exited"), (0xFFFFFFFF, "unavailable")):
+            with self.subTest(expected=expected), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                receipt = root / "receipt.json"
+                receipt.write_text("{}")
+                args = argparse.Namespace(build_receipt=receipt, source_commit=SOURCE, producer=root,
+                                          lowlevel_cli=root / "cli.exe", capture=False)
+                owned = self.session(wait=wait, code=0xC0000135)
+                def close():
+                    owned.k.GetExitCodeProcess.side_effect = lambda *a: self.fail("Exit query after teardown")
+                    owned.process = None
+                    return True
+                owned.close = MagicMock(side_effect=close)
+                with patch.object(review, "validate_receipt", return_value=root / "app.exe"):
+                    result = review.inspect_shell(args, {}, root, root / "app.exe", lambda *a: owned,
+                                                  lambda *a, **kw: self.fail("No desktop call after target stops"))
+                self.assertEqual(result["targetExit"]["status"], expected)
+                if expected == "exited":
+                    self.assertEqual(result["targetExit"]["exitCode"], 0xC0000135)
+                else:
+                    self.assertNotIn("exitCode", result["targetExit"])
+                    self.assertIn("state unavailable", result["failure"])
+                self.assertEqual(json.loads((root / "review.json").read_text())["targetExit"], result["targetExit"])
+                self.assertEqual(result["teardown"], "verified")
+                owned.close.assert_called_once()
+
+    def test_observation_exception_still_closes_owned_session(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            receipt = root / "receipt.json"
+            receipt.write_text("{}")
+            args = argparse.Namespace(build_receipt=receipt, source_commit=SOURCE, producer=root,
+                                      lowlevel_cli=root / "cli.exe", capture=False)
+            owned = self.session()
+            owned.observe_target_exit = MagicMock(side_effect=OSError("mock"))
+            owned.close = MagicMock(return_value=True)
+            with patch.object(review, "validate_receipt", return_value=root / "app.exe"):
+                result = review.inspect_shell(args, {}, root, root / "app.exe", lambda *a: owned)
+            self.assertEqual(result["targetExit"]["status"], "unavailable")
+            self.assertNotIn("exitCode", result["targetExit"])
+            self.assertEqual(result["teardown"], "verified")
+            owned.close.assert_called_once()
 
 
 if __name__ == "__main__":
