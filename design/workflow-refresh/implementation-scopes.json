@@ -307,7 +307,7 @@
     }
   ],
   "verificationBoundary": "Recorded source units are incorporated at the reviewed candidate but remain partial at nested-control level. Shell/tab followup 44cba370 is not in this candidate. See the ranked remaining implementation map in workflow-refresh.md. Runtime, capture and parity states and all 1,204 obligations remain unchanged.",
-  "reviewedCandidate": "c7868b48536e8f8277d6872bd7d8def9d8463d02",
+  "reviewedCandidate": "a271602901c1b079a342dc9ea89edca57c5345c6",
   "incorporatedFollowupArticles": [
     {
       "family": "shell-tabs",
@@ -358,10 +358,10 @@
       "status": "source-incorporated-partial"
     }
   ],
-  "nextThreeSourceFamilies": [
+  "followupSurfaceFamilies": [
     {
       "id": "shared-list-rows",
-      "status": "untouched-source-visual-followup",
+      "status": "source-incorporated-partial",
       "sourceAnchors": [
         "src/slic3r/GUI/Widgets/ListBox.cpp",
         "src/slic3r/GUI/Widgets/ListBox.hpp"
@@ -376,11 +376,16 @@
           "needle": "m_font_list = new ListBox"
         }
       ],
-      "intent": "Redesign measured row anatomy, checkbox/text spacing and hover/selection/focus surfaces while preserving row identities, checking, keyboard selection and scroll ownership."
+      "intent": "Redesign measured row anatomy, checkbox/text spacing and hover/selection/focus surfaces while preserving row identities, checking, keyboard selection and scroll ownership.",
+      "unchangedAtCandidate": "c7868b48536e8f8277d6872bd7d8def9d8463d02",
+      "sourceUnits": [
+        "ed3cbc35d5d3a6b701a5eb7ebfdc69d137684d92",
+        "c8b269d6d5925262143c0a0e9d28c83fb788d1b6"
+      ]
     },
     {
       "id": "ams-drying-pages",
-      "status": "untouched-source-visual-followup",
+      "status": "source-incorporated-partial",
       "sourceAnchors": [
         "src/slic3r/GUI/AMSDryControl.cpp",
         "src/slic3r/GUI/AMSDryControl.hpp"
@@ -395,11 +400,16 @@
           "needle": "OpenAmsDryControlDialog(machine_obj, ams_id)"
         }
       ],
-      "intent": "Redesign existing humidity/status, settings, unavailable/error and guide composition. Preserve AMS/tray identity, capability routing, drying parameters, start/stop commands and confirmation paths."
+      "intent": "Redesign existing humidity/status, settings, unavailable/error and guide composition. Preserve AMS/tray identity, capability routing, drying parameters, start/stop commands and confirmation paths.",
+      "unchangedAtCandidate": "c7868b48536e8f8277d6872bd7d8def9d8463d02",
+      "sourceUnits": [
+        "fffdc0a9d22f4c230cc27e8930d740c6bc769945",
+        "2b6c799c30a92ee7758ba035d725da43829ea7d4"
+      ]
     },
     {
       "id": "nozzle-rack-details",
-      "status": "untouched-source-visual-followup",
+      "status": "source-incorporated-partial",
       "sourceAnchors": [
         "src/slic3r/GUI/DeviceTab/wgtDeviceNozzleRack.cpp",
         "src/slic3r/GUI/DeviceTab/wgtDeviceNozzleRack.h",
@@ -422,8 +432,13 @@
           "needle": "new wgtDeviceNozzleRackUpgradeDlg"
         }
       ],
-      "intent": "Redesign rack/toolhead cards, nozzle selection and update detail composition without changing nozzle indices, capability checks, update commands, data colors or selected state."
+      "intent": "Redesign rack/toolhead cards, nozzle selection and update detail composition without changing nozzle indices, capability checks, update commands, data colors or selected state.",
+      "unchangedAtCandidate": "c7868b48536e8f8277d6872bd7d8def9d8463d02",
+      "sourceUnits": [
+        "d31530a31780c10e7b4f44f85737f036504b7d5b"
+      ]
     }
   ],
-  "nextThreeSourceBoundary": "These owner files are unchanged between the design baseline and the reviewed candidate. This is direct styling coverage, not absence of functionality. Existing incomplete, missing, planned or placeholder feature obligations remain unchanged in the separate 1,204-row ledger; reachability and a proposed visual scope do not implement them."
+  "followupSourceBoundary": "The three previously prioritized families now have incorporated source units. Their historical unchanged-source observation is pinned separately to c7868b485. Actual nested coverage and all runtime evidence remain incomplete; the unchanged 1,204-row functional ledger is authoritative for missing/planned/placeholder obligations.",
+  "scopeFreeze": "Documentation reconciliation only at this immutable candidate. No new implementation scope is assigned."
 }
