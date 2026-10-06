@@ -1807,7 +1807,18 @@ void AmsHumidityTipPopup::layout_content()
 
 void AmsHumidityTipPopup::Popup(wxWindow *focus)
 {
+    const wxPoint requested = GetPosition();
     layout_content();
+    // Callers may Fit and position the heading-only minimum first. Retain their
+    // requested anchor, then clamp using the final measured viewport before show.
+    const int display = wxDisplay::GetFromWindow(GetParent() ? GetParent() : this);
+    if (display != wxNOT_FOUND) {
+        const wxRect area = wxDisplay(display).GetClientArea();
+        const wxSize size = GetSize();
+        const int x = std::clamp(requested.x, area.x, std::max(area.x, area.GetRight() + 1 - size.x));
+        const int y = std::clamp(requested.y, area.y, std::max(area.y, area.GetBottom() + 1 - size.y));
+        Move(x, y);
+    }
     PopupWindow::Popup(focus);
 }
 

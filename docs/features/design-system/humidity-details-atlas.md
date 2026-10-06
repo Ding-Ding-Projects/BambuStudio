@@ -25,3 +25,9 @@ Run `node --test ui-md3/tests/humidity-atlas.test.mjs`. Four checks cover unchan
 Using `ATLAS_SOURCE_REF=0f034f2fed3c2b913f4c308d0130cce9eeee763f` against the pre-change source produces two passes and two failures. Current source produces four passes. The preserved baseline must exist locally. These are source/model checks, not native compilation, event-loop or screenshot evidence.
 
 No application, browser, installer or printer was launched; no full build or hardware operation occurred. Native font metrics, bilingual label wrapping, scrollbar reachability, work-area position, keyboard dismissal, live density changes, theme changes and real DPI transitions remain unverified. Validate the actual reachable states at normal/minimum size in English, Cantonese and bilingual modes, both themes/densities and 100%, 125%, 150%, 200% scale before accepting rendered completion. Mapping, nozzle/material editors and the drying-command surface retain their independent ownership and evidence requirements.
+
+## Final placement correction
+
+Independent review found that callers could fit and position a heading-sized shell before `Popup` expanded its body. `AmsHumidityTipPopup::Popup` now preserves the requested origin, performs final measurement, and clamps the complete final rectangle to the same selected display work area before showing it. Neither caller changes. If the display cannot be identified, the existing fallback-size assumption remains and no verified placement is claimed.
+
+The new regression checks the real embedded caller's `Fit → Position → Popup` order and executes the production popup method against a heading-to-full-body growth model, including bottom/right overflow, negative requested origins and a display with a negative desktop origin. It failed on the prior implementation; all five humidity checks pass after repair. This is source/lifecycle-model evidence, not native popup-placement evidence.

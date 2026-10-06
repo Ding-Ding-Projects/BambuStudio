@@ -81,7 +81,8 @@ test('both popups bound a real scroll owner and refresh geometry after content o
     assert.match(layout, /SetClientSize\(width, height\);\s*Layout\(\);\s*m_body->FitInside\(\)/);
     assert.match(layout, /Wrap\(/);
   }
-  assert.match(body(classic, 'void AmsHumidityTipPopup::Popup('), /layout_content\(\);\s*PopupWindow::Popup\(focus\)/);
+  const popup = body(classic, 'void AmsHumidityTipPopup::Popup(');
+  assert.ok(popup.indexOf('layout_content();') < popup.indexOf('PopupWindow::Popup(focus)'));
   assert.match(body(classic, 'void AmsHumidityTipPopup::msw_rescale()'), /layout_content\(\)/);
   assert.match(body(percent, 'void uiAmsPercentHumidityDryPopup::UpdateContents()'), /LayoutReadouts\(\)/);
   assert.match(body(percent, 'void uiAmsPercentHumidityDryPopup::msw_rescale()'), /UpdateContents\(\)/);
@@ -90,4 +91,37 @@ test('both popups bound a real scroll owner and refresh geometry after content o
   assert.match(create, /root->Add\(m_body, 1, wxEXPAND\)/);
   const order = [...create.matchAll(/grid_sizer->Add\((\w+)/g)].map(m => m[1]);
   assert.deepEqual(order, ['m_humidity_header', 'm_humidity_label', 'm_temperature_header', 'm_temperature_label', 'left_dry_time_header', 'left_dry_time_label']);
+});
+
+test('actual Fit then Position then Popup sequence clamps the final measured rectangle', () => {
+  const caller = read('src/slic3r/GUI/DeviceWeb/ViewModels/DevicePage/AmsControlWeb/ViewModelActions.cpp');
+  const show = body(caller, 'void show_ams_level_humidity_tip(');
+  assert.ok(show.indexOf('popup->Fit()') < show.indexOf('popup->Position('));
+  assert.ok(show.indexOf('popup->Position(') < show.indexOf('popup->Popup()'));
+  let source = body(classic, 'void AmsHumidityTipPopup::Popup(')
+    .replace(/\/\/[^\n]*/g, '').replace(/const wx(?:Point|Size|Rect)\s+/g, 'const ')
+    .replace(/const int\s+/g, 'const ').replace(/wxDisplay::GetFromWindow/g, 'displayFor')
+    .replace(/wxDisplay\(display\)/g, 'displayObject(display)')
+    .replace(/std::clamp/g, 'clamp').replace(/std::max/g, 'Math.max')
+    .replace(/PopupWindow::Popup/g, 'showPopup');
+  const execute = new Function('GetPosition', 'layout_content', 'GetParent', 'displayFor', 'displayObject',
+    'GetSize', 'Move', 'showPopup', 'clamp', 'wxNOT_FOUND', 'focus', source);
+  for (const area of [{x: 0, y: 0, width: 1000, height: 700}, {x: -1200, y: 80, width: 1200, height: 800}]) {
+    area.GetRight = () => area.x + area.width - 1;
+    area.GetBottom = () => area.y + area.height - 1;
+    for (const request of [{x: area.x + area.width - 150, y: area.y + area.height - 80}, {x: area.x - 40, y: area.y - 30}]) {
+      // Caller Fit observes the heading-only minimum before it positions the popup.
+      let size = {x: 150, y: 80};
+      let position = {...request};
+      let shown = false;
+      execute(() => ({...position}), () => { size = {x: 740, y: 600}; }, () => ({}), () => 0,
+        () => ({GetClientArea: () => area}), () => size,
+        (x, y) => { position = {x, y}; }, () => { shown = true; },
+        (n, lo, hi) => Math.max(lo, Math.min(hi, n)), -1, null);
+      assert.ok(shown);
+      assert.ok(position.x >= area.x && position.y >= area.y);
+      assert.ok(position.x + size.x <= area.x + area.width);
+      assert.ok(position.y + size.y <= area.y + area.height);
+    }
+  }
 });
