@@ -92,6 +92,7 @@ std::string AppConfig::get_hms_host()
 
 void AppConfig::reset()
 {
+    m_effective.clear();
     m_storage.clear();
     set_defaults();
 };
@@ -99,6 +100,10 @@ void AppConfig::reset()
 // Override missing or keys with their defaults.
 void AppConfig::set_defaults()
 {
+    if (get("narrator_enabled").empty()) set("narrator_enabled", "false");
+    if (get("narrator_language").empty()) set("narrator_language", "en");
+    for (const auto* key : {"narrator_rate_en", "narrator_rate_yue", "narrator_pitch_en", "narrator_pitch_yue"})
+        if (get(key).empty()) set(key, "0");
     // Unknown settings from newer or edited profiles use the system default.
     if (get("motion_preference") != "system" && get("motion_preference") != "reduced")
         set("motion_preference", "system");

@@ -1,0 +1,5 @@
+if(NOT DEFINED WORKER OR NOT EXISTS "${WORKER}" OR NOT DEFINED RECEIPT)
+    message(FATAL_ERROR "Converter worker receipt requires the linked executable and explicit output path")
+endif()
+file(SHA256 "${WORKER}" worker_sha256)
+file(WRITE "${RECEIPT}" "${worker_sha256}")

@@ -11,6 +11,7 @@
 #include "libslic3r/Config.hpp"
 #include "libslic3r/Semver.hpp"
 #include "Calib.hpp"
+#include "EffectivePreferences.hpp"
 
 using namespace nlohmann;
 
@@ -75,6 +76,13 @@ public:
 	// Const accessor, it will return false if a section or a key does not exist.
 	bool get(const std::string &section, const std::string &key, std::string &value) const
 	{
+        if (section == "app") {
+            if (const auto effective = m_effective.read(key)) { value = *effective; return true; }
+        }
+        return get_base(section, key, value);
+    }
+    bool get_base(const std::string &section, const std::string &key, std::string &value) const
+	{
 		value.clear();
 		auto it = m_storage.find(section);
 		if (it == m_storage.end())
@@ -90,6 +98,11 @@ public:
 	std::string 		get(const std::string &key) const
 		{ std::string value; this->get("app", key, value); return value; }
     bool get_bool(const std::string &key) const { return this->get(key) == "true" || this->get(key) == "1"; }
+    std::string get_base(const std::string& key) const { std::string value; get_base("app", key, value); return value; }
+    bool replace_effective_preferences(const EffectivePreferences::Values& values) { return m_effective.replace(values); }
+    void clear_effective_preferences() { m_effective.clear(); }
+    void suppress_presentation(bool active) { m_effective.suppress_presentation(active); }
+    bool has_effective_preference(const std::string& key) const { return m_effective.contains(key); }
 	void			    set(const std::string &section, const std::string &key, const std::string &value)
 	{
 #ifndef NDEBUG
@@ -271,6 +284,7 @@ public:
 
 private:
 	static std::function<void()> s_save_observer;
+    EffectivePreferences::Overlay m_effective;
 
 	template<typename T>
 	bool get_3dmouse_device_numeric_value(const std::string &device_name, const char *parameter_name, T &out) const

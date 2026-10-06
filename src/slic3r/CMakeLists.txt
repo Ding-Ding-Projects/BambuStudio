@@ -901,6 +901,22 @@ list(APPEND SLIC3R_GUI_SOURCES
     GUI/FilamentScanner.hpp
     GUI/TtsNarrator.cpp
     GUI/TtsNarrator.hpp
+    GUI/OllamaSuite/OllamaSuiteDialog.cpp
+    GUI/OllamaSuite/OllamaClient.cpp
+    GUI/OllamaSuite/NativeLaunchAdapter.cpp
+    GUI/LocalConverter/LocalConverterPanel.cpp
+    GUI/FeatureServices/SurfaceRegistry.cpp
+    GUI/Documentation/OfflineDocumentation.cpp
+    GUI/FeatureServices/ScheduledPreferences.cpp
+    GUI/ScheduledSettings/Panel.cpp
+    ../libslic3r/ScheduledSettings/Schedule.cpp
+    ../libslic3r/ScheduledSettings/Service.cpp
+    ../libslic3r/ScheduledSettings/Native.cpp
+    ../libslic3r/StatusHub/StatusHubService.cpp
+    GUI/StatusHub/StatusHubPanel.cpp
+    ../libslic3r/OllamaSuite/OllamaCore.cpp
+    ../libslic3r/OllamaSuite/LaunchProfiles.cpp
+    ../libslic3r/OllamaSuite/PullBatch.cpp
     GUI/HomeAssistant.cpp
     GUI/HomeAssistant.hpp
     GUI/HomeAssistantTaskExecutor.hpp
@@ -997,10 +1013,61 @@ target_link_libraries(libslic3r_gui libslic3r cereal imgui imguizmo minilzo GLEW
     ${HPDF_LIBRARY}
     ${wxWidgets_LIBRARIES} glfw libcurl OpenSSL::SSL OpenSSL::Crypto)
 target_link_libraries(libslic3r_gui libslic3r_workspace)
+if(NOT TARGET status_hub_client)
+    set(STATUS_HUB_CLIENT_BUILD_EXAMPLE OFF CACHE BOOL "Build Status Hub client example" FORCE)
+    add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../../libs/status-hub-client/cpp" "${CMAKE_CURRENT_BINARY_DIR}/status_hub_client")
+endif()
+target_link_libraries(libslic3r_gui status_hub_client)
+if(NOT TARGET libslic3r_local_security)
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../libslic3r/LocalSecurity ${CMAKE_CURRENT_BINARY_DIR}/local_security)
+endif()
+target_link_libraries(libslic3r_gui libslic3r_local_security)
+
+# Compile the converter broker and contained worker from one implementation.
+# Headers come only from an explicitly supplied, verified SDK, never PATH.
+set(LOCAL_CONVERTER_QPDF_SDK "" CACHE PATH "Verified qpdf 12.4.2 SDK root")
+add_library(libslic3r_local_converter STATIC
+    ../libslic3r/LocalConverter/Converter.cpp
+    ../libslic3r/LocalConverter/ArchiveAdapter.cpp
+    ../libslic3r/LocalConverter/Worker.cpp)
+target_compile_features(libslic3r_local_converter PUBLIC cxx_std_17)
+target_include_directories(libslic3r_local_converter PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/..")
+target_link_libraries(libslic3r_local_converter PUBLIC miniz)
+if(LOCAL_CONVERTER_QPDF_SDK)
+    if(NOT EXISTS "${LOCAL_CONVERTER_QPDF_SDK}/include/qpdf/qpdf-c.h")
+        message(FATAL_ERROR "LOCAL_CONVERTER_QPDF_SDK does not contain the verified qpdf C API headers")
+    endif()
+    target_sources(libslic3r_local_converter PRIVATE
+        ../libslic3r/LocalConverter/PdfAdapter.cpp
+        ../libslic3r/LocalConverter/PdfRequest.cpp
+        ../libslic3r/LocalConverter/PdfPackage.cpp)
+    target_include_directories(libslic3r_local_converter PRIVATE "${LOCAL_CONVERTER_QPDF_SDK}/include")
+    target_compile_definitions(libslic3r_local_converter PUBLIC LOCAL_CONVERTER_WITH_PDF=1)
+else()
+    message(FATAL_ERROR "The native converter requires LOCAL_CONVERTER_QPDF_SDK from the verified qpdf bundle")
+endif()
+if(WIN32)
+    target_link_libraries(libslic3r_local_converter PUBLIC bcrypt userenv advapi32)
+endif()
+add_executable(BambuStudio_converter_worker ../libslic3r/LocalConverter/WorkerMain.cpp)
+target_link_libraries(BambuStudio_converter_worker PRIVATE libslic3r_local_converter)
+add_custom_command(TARGET BambuStudio_converter_worker POST_BUILD
+    COMMAND ${CMAKE_COMMAND}
+        "-DWORKER=$<TARGET_FILE:BambuStudio_converter_worker>"
+        "-DRECEIPT=$<TARGET_FILE_DIR:BambuStudio_converter_worker>/converter-worker.sha256"
+        -P "${CMAKE_CURRENT_SOURCE_DIR}/GUI/FeatureServices/WriteConverterReceipt.cmake"
+    VERBATIM)
+if(WIN32)
+    install(TARGETS BambuStudio_converter_worker RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}")
+    install(FILES "$<TARGET_FILE_DIR:BambuStudio_converter_worker>/converter-worker.sha256"
+        DESTINATION "${CMAKE_INSTALL_PREFIX}")
+endif()
+target_link_libraries(libslic3r_gui libslic3r_local_converter)
 #target_link_libraries(libslic3r_gui libslic3r cereal imgui imguizmo minilzo GLEW::GLEW OpenGL::GL hidapi libcurl OpenSSL::SSL OpenSSL::Crypto ${wxWidgets_LIBRARIES} glfw)
 
 if (MSVC)
-    target_link_libraries(libslic3r_gui Setupapi.lib dwmapi.lib Advapi32.lib)
+    target_link_libraries(libslic3r_gui Setupapi.lib dwmapi.lib Advapi32.lib ole32.lib oleaut32.lib
+        bcrypt.lib wintrust.lib shell32.lib uuid.lib ws2_32.lib winhttp.lib iphlpapi.lib user32.lib version.lib)
 elseif (CMAKE_SYSTEM_NAME STREQUAL "Linux")
     FIND_LIBRARY(WAYLAND_SERVER_LIBRARIES NAMES wayland-server)
     FIND_LIBRARY(WAYLAND_EGL_LIBRARIES    NAMES wayland-egl)

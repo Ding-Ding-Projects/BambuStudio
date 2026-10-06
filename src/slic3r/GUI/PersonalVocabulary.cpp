@@ -1,4 +1,5 @@
 #include "PersonalVocabulary.hpp"
+#include "PersonalModes/SchoolMode.hpp"
 
 #include <nlohmann/json.hpp>
 #include <algorithm>
@@ -226,6 +227,7 @@ wxString remember(const wxString &source)
 
 wxString display(const wxString &source)
 {
+    if (PersonalModes::school_presentation_suppressed.load()) return source;
     const auto value = source.ToStdWstring();
     { std::lock_guard<std::mutex> lock(source_mutex); if (!sources.count(value)) return source; }
     return Slic3r::GUI::PersonalVocabulary::apply(source, entries);

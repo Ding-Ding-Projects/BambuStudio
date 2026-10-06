@@ -1,4 +1,5 @@
 #include "LanguageMode.hpp"
+#include "PersonalModes/SchoolMode.hpp"
 #include "BilingualRegistry.hpp"
 #include "PersonalVocabulary.hpp"
 
@@ -545,7 +546,8 @@ bool LanguageModeService::configure(std::string_view language_mode_id, const wxS
         return catalog_file.GetFullPath();
     };
 
-    if (next_profile.uses_auxiliary_cantonese_catalog && !localization_root.empty()) {
+    // Narration chooses its language independently of the visible interface.
+    if (!localization_root.empty()) {
         next_catalog_path = catalog_path(LANGUAGE_MODE_CANTONESE_HONG_KONG);
         if (wxFileExists(next_catalog_path)) {
             next_catalog.reset(wxMsgCatalog::CreateFromFile(next_catalog_path,
@@ -554,7 +556,7 @@ bool LanguageModeService::configure(std::string_view language_mode_id, const wxS
     }
     // Only Cantonese mode makes yue_HK the main wx catalog, so only it needs a
     // separate handle on the English wording layer for untranslated strings.
-    if (next_profile.kind == LanguageModeKind::CantoneseHongKong && !localization_root.empty()) {
+    if (!localization_root.empty()) {
         const wxString english_path = catalog_path(LANGUAGE_MODE_ENGLISH);
         if (wxFileExists(english_path))
             next_english.reset(wxMsgCatalog::CreateFromFile(english_path, wxString::FromUTF8("BambuStudio-en")));
@@ -589,7 +591,7 @@ wxString LanguageModeService::english(const wxString &message, const wxString &c
     }
     // In Cantonese mode the main catalog is yue_HK, so without the English
     // handle the msgid is the best English there is.
-    if (m_profile.kind == LanguageModeKind::CantoneseHongKong)
+    if (m_profile.kind == LanguageModeKind::CantoneseHongKong || PersonalModes::school_presentation_suppressed.load())
         return message;
     return translate_standard(message, context);
 }
@@ -606,13 +608,14 @@ wxString LanguageModeService::english_plural(const wxString &singular, const wxS
         if (found != nullptr && !found->empty())
             return *found;
     }
-    if (m_profile.kind == LanguageModeKind::CantoneseHongKong)
+    if (m_profile.kind == LanguageModeKind::CantoneseHongKong || PersonalModes::school_presentation_suppressed.load())
         return untranslated_plural(singular, plural, n);
     return translate_standard_plural(singular, plural, n, context);
 }
 
 wxString LanguageModeService::finish(const wxString &message, const wxString &translated, const wxString &context) const
 {
+    if (PersonalModes::school_presentation_suppressed.load()) return vocabulary(english(message, context));
     if (m_profile.kind == LanguageModeKind::CantoneseHongKong && translated == message)
         return vocabulary(english(message, context));
     if (m_profile.kind == LanguageModeKind::BilingualEnglishCantoneseHongKong)
@@ -623,6 +626,7 @@ wxString LanguageModeService::finish(const wxString &message, const wxString &tr
 wxString LanguageModeService::finish_plural(const wxString &singular, const wxString &plural, unsigned int n,
                                             const wxString &translated, const wxString &context) const
 {
+    if (PersonalModes::school_presentation_suppressed.load()) return vocabulary(english_plural(singular, plural, n, context));
     if (m_profile.kind == LanguageModeKind::CantoneseHongKong && (translated == singular || translated == plural))
         return vocabulary(english_plural(singular, plural, n, context));
     if (m_profile.kind == LanguageModeKind::BilingualEnglishCantoneseHongKong)
@@ -655,6 +659,7 @@ const wxString *LanguageModeService::find_cantonese(const wxString &message, uns
 
 LocalizedText LanguageModeService::translate(const wxString &message, const wxString &context) const
 {
+    if (PersonalModes::school_presentation_suppressed.load()) return {vocabulary(english(message, context)), wxString()};
     if (m_profile.kind == LanguageModeKind::Standard)
         return { vocabulary(translate_standard(message, context)), wxString() };
 
@@ -679,9 +684,19 @@ LocalizedText LanguageModeService::translate(const wxString &message, const wxSt
     return result;
 }
 
+LocalizedText LanguageModeService::narration(const wxString& message, const wxString& context) const
+{
+    if (PersonalModes::school_presentation_suppressed.load()) return {english(message, context), {}};
+    const auto* en = funny_copy_variant(message, FunnyLanguage::English, m_funny_level_english);
+    const auto* yue = funny_copy_variant(message, FunnyLanguage::Cantonese, m_funny_level_cantonese);
+    if (!yue) yue = find_cantonese(message, UINT_MAX, context);
+    return {en ? *en : english(message, context), yue ? *yue : wxString()};
+}
+
 LocalizedText LanguageModeService::translate_plural(const wxString &singular, const wxString &plural,
                                                      unsigned int n, const wxString &context) const
 {
+    if (PersonalModes::school_presentation_suppressed.load()) return {vocabulary(english_plural(singular, plural, n, context)), wxString()};
     if (m_profile.kind == LanguageModeKind::Standard)
         return { vocabulary(translate_standard_plural(singular, plural, n, context)), wxString() };
 

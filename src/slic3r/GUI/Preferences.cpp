@@ -1,5 +1,11 @@
 #include "Preferences.hpp"
 #include "PersonalVocabulary.hpp"
+#include "TtsNarrator.hpp"
+#include "PersonalModes/SchoolMode.hpp"
+#include "FeatureServices/PresentationRoutes.hpp"
+#include "FeatureServices/SchoolCredentials.hpp"
+#include "FeatureServices/SurfaceRegistry.hpp"
+#include "PersonalModes/SchoolRuntime.hpp"
 #include "Widgets/MD3ScrolledWindow.hpp"
 #include "Export/ExportDatasets.hpp"
 #include "Export/ExportDialog.hpp"
@@ -170,7 +176,7 @@ wxBoxSizer *PreferencesDialog::create_item_title(wxString title, wxWindow *paren
 wxBoxSizer *PreferencesDialog::create_item_combobox(wxString title, wxWindow *parent, wxString tooltip, std::string param,
                                                     const std::vector<wxString>& label_list, const std::vector<std::string>& value_list,
                                                     const std::vector<wxString>& tooltip_list, std::function<void(int)> callback,
-                                                    int title_width, int combox_width)
+                                                    int title_width, int combox_width, std::shared_ptr<std::vector<std::string>> live_values)
 {
     assert(label_list.size() == value_list.size());
 
@@ -233,8 +239,10 @@ wxBoxSizer *PreferencesDialog::create_item_combobox(wxString title, wxWindow *pa
     m_sizer_combox->Add(combobox, wxSizerFlags().CenterVertical().Border(wxRIGHT, FromDIP(ITEM_RIGHT_PADDING)));
 
     //// save config
-    combobox->GetDropDown().Bind(wxEVT_COMBOBOX, [this, param, value_list, callback](wxCommandEvent &e) {
-        app_config->set(param, value_list[e.GetSelection()]);
+    combobox->GetDropDown().Bind(wxEVT_COMBOBOX, [this, param, value_list, callback, live_values](wxCommandEvent &e) {
+        const auto& values = live_values ? *live_values : value_list;
+        if (e.GetSelection() < 0 || static_cast<std::size_t>(e.GetSelection()) >= values.size()) return;
+        app_config->set(param, values[e.GetSelection()]);
         app_config->save();
         if (callback) {
             callback(e.GetSelection());
@@ -1854,6 +1862,7 @@ static wxWindow *first_focusable_control(wxSizer *sizer)
 
 bool PreferencesDialog::teleport_to_setting(const std::string &key)
 {
+    if (!FeatureServices::presentation_setting_available(key, PersonalModes::school_presentation_suppressed.load())) return false;
     if (key.empty()) return false;
     if (m_search_rows.empty()) build_search_index();
     const SearchRow *target = nullptr;
@@ -2083,6 +2092,8 @@ void PreferencesDialog::reset_search_filter()
 
 PreferencesDialog::~PreferencesDialog()
 {
+    m_school_refresh_timer.Stop();
+    m_narrator_inventory_timer.Stop();
     m_radio_group.DeleteContents(true);
     m_hash_selector.clear();
 }
@@ -2730,6 +2741,7 @@ wxWindow *PreferencesDialog::create_appearance_tab()
     sizer->Add(name_actions, flags);
     refresh_name_status();
 
+    if (!PersonalModes::school_presentation_suppressed.load()) {
     auto *wording = new StaticBox(scrolled);
     auto *wording_sizer = new wxBoxSizer(wxVERTICAL);
     wording->SetSizer(wording_sizer);
@@ -2762,6 +2774,7 @@ wxWindow *PreferencesDialog::create_appearance_tab()
         scrolled->FitInside();
     };
     wording_load->Bind(wxEVT_BUTTON, [this, refresh_wording](wxCommandEvent &) {
+        if (PersonalModes::school_presentation_suppressed.load()) return;
         wxFileDialog picker(this, _L("Load personal vocabulary"), wxEmptyString, wxEmptyString,
             _L("JSON files (*.json)|*.json"), wxFD_OPEN | wxFD_FILE_MUST_EXIST);
         if (picker.ShowModal() != wxID_OK) return;
@@ -2769,11 +2782,13 @@ wxWindow *PreferencesDialog::create_appearance_tab()
         refresh_wording(!applied);
     });
     wording_clear->Bind(wxEVT_BUTTON, [refresh_wording](wxCommandEvent &) {
+        if (PersonalModes::school_presentation_suppressed.load()) return;
         refresh_wording(!PersonalVocabulary::clear());
     });
     sizer->Add(wording, 0, wxEXPAND | wxALL, FromDIP(16));
     register_option_row("personal_vocabulary", nullptr, wording);
     refresh_wording(false);
+    }
 
     sizer->AddSpacer(FromDIP(20));
     scrolled->SetSizer(sizer);
@@ -2787,6 +2802,113 @@ wxWindow *PreferencesDialog::create_general_tab()
     wxBoxSizer *sizer    = new wxBoxSizer(wxVERTICAL);
 
     auto title_basic = create_item_title(_L("General Settings"), scrolled, _L("General Settings"));
+
+    if (auto* runtime = wxGetApp().school_runtime()) {
+        auto* mode_box = new StaticBox(scrolled);
+        auto* mode_rows = new wxBoxSizer(wxVERTICAL);
+        mode_box->SetSizer(mode_rows);
+        auto* mode_title = new Label(mode_box, wxString::FromUTF8(runtime->mode().record().display_name));
+        auto* mode_status = new Label(mode_box, wxEmptyString, LB_AUTO_WRAP);
+        auto* mode_name = new TextInput(mode_box, wxString::FromUTF8(runtime->mode().record().display_name), _L("Display name"));
+        mode_name->GetTextCtrl()->SetMaxLength(128);
+        mode_name->GetTextCtrl()->SetName(_L("Display name"));
+        auto* old_answer = new TextInput(mode_box, wxEmptyString, _L("Current unlock credential"), wxEmptyString,
+            wxDefaultPosition, wxDefaultSize, wxTE_PASSWORD);
+        auto* new_answer = new TextInput(mode_box, wxEmptyString, _L("New unlock credential"), wxEmptyString,
+            wxDefaultPosition, wxDefaultSize, wxTE_PASSWORD);
+        for (auto* input : {old_answer, new_answer}) {
+            input->GetTextCtrl()->SetMaxLength(256);
+            input->GetTextCtrl()->SetName(input == old_answer ? _L("Current unlock credential") : _L("New unlock credential"));
+            FeatureServices::SurfaceRegistry::instance().register_sensitive(input);
+        }
+        auto* kind = new MultiSwitchButton(mode_box);
+        kind->SetOptions({_L("Password"), _L("PIN")});
+        kind->SetName(_L("Unlock credential type"));
+        kind->SetSelection(0);
+        auto* enable = new Button(mode_box, _L("Enable"));
+        auto* unlock = new Button(mode_box, _L("Unlock and disable"));
+        auto* enroll = new Button(mode_box, _L("Set unlock credential"));
+        auto* replace = new Button(mode_box, _L("Replace unlock credential"));
+        auto* rename = new Button(mode_box, _L("Rename"));
+        for (wxWindow* control : std::vector<wxWindow*>{mode_title, mode_status, mode_name, rename, kind, old_answer, new_answer,
+                                                      enroll, replace, enable, unlock})
+            mode_rows->Add(control, 0, wxEXPAND | wxALL, FromDIP(8));
+        auto* disclosure = new Label(mode_box,
+            _L("This is a presentation lock, not a security boundary. Deleting the shared local application-data record resets it. Credentials remain in the operating-system vault."), LB_AUTO_WRAP);
+        mode_rows->Add(disclosure, 0, wxEXPAND | wxALL, FromDIP(8));
+        auto last_failed = std::make_shared<bool>(false);
+        auto refresh = [runtime, mode_title, mode_status, enroll, replace, enable, unlock, scrolled, last_failed](int failed) {
+            if (failed >= 0) *last_failed = failed != 0;
+            mode_title->SetLabel(wxString::FromUTF8(runtime->mode().record().display_name));
+            wxString state = runtime->mode().suppressed() ? _L("Restricted presentation is active.") : _L("Normal presentation is active.");
+            if (runtime->mode().status() == PersonalModes::RecordStatus::Corrupt || runtime->mode().status() == PersonalModes::RecordStatus::Unavailable)
+                state += "\n" + _L("Shared record is unreadable. Restricted presentation remains active.");
+            state += "\n" + (runtime->native_watch_available() ? _L("Native monitoring is active.") : _L("Native monitoring is unavailable; polling is used."));
+            bool configured = false, available = true;
+            unsigned wait_seconds = 0;
+            try {
+                configured = wxGetApp().school_credentials().metadata().configured;
+                const auto attempts = wxGetApp().school_credentials().attempts();
+                wait_seconds = attempts.wait_seconds;
+                if (wait_seconds) state += "\n" + wxString::Format(_L("Try again in %u seconds."), wait_seconds);
+            }
+            catch (const LocalSecurity::Failure&) { available = false; state += "\n" + _L("Credential vault is unavailable."); }
+            enroll->Enable(available && !configured);
+            replace->Enable(available && configured && !wait_seconds);
+            enable->Enable(available && configured && !runtime->mode().record().enabled);
+            unlock->Enable(available && configured && runtime->mode().record().enabled && !wait_seconds);
+            if (*last_failed) state += "\n" + _L("The change was not applied. Check the credential, input limits and shared-record availability.");
+            mode_status->SetLabel(state);
+            scrolled->Layout(); scrolled->FitInside();
+        };
+        auto take_answer = [](TextInput* input) {
+            auto value = input->GetTextCtrl()->GetValue().ToUTF8();
+            LocalSecurity::Secret secret(std::string_view(value.data(), value.length()));
+            if (value.length()) std::fill_n(value.data(), value.length(), '\0');
+            input->GetTextCtrl()->ChangeValue(wxEmptyString);
+            return secret;
+        };
+        auto invoke = [refresh](const std::function<PersonalModes::RecordStatus()>& operation) {
+            try { refresh(operation() != PersonalModes::RecordStatus::Ready); }
+            catch (const LocalSecurity::Failure&) { refresh(true); }
+        };
+        rename->Bind(wxEVT_BUTTON, [runtime, mode_name, invoke](wxCommandEvent&) {
+            invoke([&] { return runtime->mode().rename(mode_name->GetTextCtrl()->GetValue().ToUTF8().data()); });
+        });
+        enable->Bind(wxEVT_BUTTON, [invoke](wxCommandEvent&) {
+            invoke([] { return wxGetApp().school_credentials().enable(); });
+        });
+        unlock->Bind(wxEVT_BUTTON, [old_answer, take_answer, invoke](wxCommandEvent&) {
+            auto answer = take_answer(old_answer);
+            invoke([&] { return wxGetApp().school_credentials().disable(answer); });
+        });
+        enroll->Bind(wxEVT_BUTTON, [new_answer, kind, take_answer, invoke](wxCommandEvent&) {
+            auto answer = take_answer(new_answer);
+            invoke([&] { return wxGetApp().school_credentials().enroll(kind->GetSelection() == 1 ? LocalSecurity::CredentialKind::Pin : LocalSecurity::CredentialKind::Password, answer); });
+        });
+        replace->Bind(wxEVT_BUTTON, [old_answer, new_answer, kind, take_answer, invoke](wxCommandEvent&) {
+            auto before = take_answer(old_answer); auto after = take_answer(new_answer);
+            invoke([&] { return wxGetApp().school_credentials().replace(before, kind->GetSelection() == 1 ? LocalSecurity::CredentialKind::Pin : LocalSecurity::CredentialKind::Password, after); });
+        });
+        sizer->Add(mode_box, 0, wxEXPAND | wxALL, FromDIP(16));
+        register_option_row("school_mode", nullptr, mode_box);
+        FeatureServices::SurfaceRegistry::instance().register_surface(mode_box, "preferences/shared-presentation");
+        auto& surfaces = FeatureServices::SurfaceRegistry::instance();
+        surfaces.record_name(old_answer->GetTextCtrl(), "Current unlock credential");
+        surfaces.record_name(new_answer->GetTextCtrl(), "New unlock credential");
+        surfaces.record_name(mode_name->GetTextCtrl(), "Display name");
+        surfaces.record_name(kind, "Unlock credential type");
+        surfaces.record_label(enable, "Enable");
+        surfaces.record_label(unlock, "Unlock and disable");
+        surfaces.record_label(enroll, "Set unlock credential");
+        surfaces.record_label(replace, "Replace unlock credential");
+        surfaces.record_label(rename, "Rename");
+        surfaces.record_label(disclosure, "This is a presentation lock, not a security boundary. Deleting the shared local application-data record resets it. Credentials remain in the operating-system vault.");
+        refresh(false);
+        m_school_refresh_timer.SetOwner(this, wxWindow::NewControlId());
+        Bind(wxEVT_TIMER, [refresh](wxTimerEvent&) { refresh(-1); }, m_school_refresh_timer.GetId());
+        m_school_refresh_timer.Start(1000);
+    }
 
     // Language list (same source as before).
     auto available_translations = wxTranslations::Get()->GetAvailableTranslations(SLIC3R_APP_KEY);
@@ -2818,17 +2940,20 @@ wxWindow *PreferencesDialog::create_general_tab()
             continue;
         language_choices.emplace_back(id, language_display_name(info));
     }
-    auto item_language = create_item_language_mode_combobox(
+    wxBoxSizer *item_language = nullptr, *item_funny_en = nullptr, *item_funny_yue = nullptr, *item_dialog_emojis = nullptr;
+    if (!PersonalModes::school_presentation_suppressed.load()) {
+    item_language = create_item_language_mode_combobox(
         _L("Language"), scrolled, _L("Language"), "language", language_choices);
 
     // Per-language funny levels and the dialog emoji toggle sit directly under
     // the language picker; all three persist in AppConfig and apply live.
-    auto item_funny_en  = create_item_funny_level_slider(scrolled, I18N::FUNNY_LEVEL_ENGLISH_KEY, false);
-    auto item_funny_yue = create_item_funny_level_slider(scrolled, I18N::FUNNY_LEVEL_CANTONESE_KEY, true);
-    auto item_dialog_emojis = create_item_checkbox(
+    item_funny_en  = create_item_funny_level_slider(scrolled, I18N::FUNNY_LEVEL_ENGLISH_KEY, false);
+    item_funny_yue = create_item_funny_level_slider(scrolled, I18N::FUNNY_LEVEL_CANTONESE_KEY, true);
+    item_dialog_emojis = create_item_checkbox(
         funny_row_label("Show emojis in dialogs and message boxes"), scrolled,
         funny_row_label("Adds one decorative emoji to a dialog headline. Buttons, action labels and field labels never carry one."),
         50, I18N::DIALOG_EMOJIS_KEY);
+    }
 
     std::vector<wxString> Regions     = {_L("Asia-Pacific"), _L("Chinese Mainland"), _L("Europe"), _L("North America"), _L("Others")};
     auto                  item_region = create_item_region_combobox(_L("Login Region"), scrolled, _L("Login Region"), Regions);
@@ -2932,10 +3057,10 @@ wxWindow *PreferencesDialog::create_general_tab()
     sizer->AddSpacer(FromDIP(8));
     auto flags = wxSizerFlags().Expand().Border(wxTOP, FromDIP(4));
 
-    sizer->Add(item_language, flags);
-    sizer->Add(item_funny_en, flags);
-    sizer->Add(item_funny_yue, flags);
-    sizer->Add(item_dialog_emojis, flags);
+    if (item_language) sizer->Add(item_language, flags);
+    if (item_funny_en) sizer->Add(item_funny_en, flags);
+    if (item_funny_yue) sizer->Add(item_funny_yue, flags);
+    if (item_dialog_emojis) sizer->Add(item_dialog_emojis, flags);
     sizer->Add(item_region, flags);
     sizer->Add(item_currency, flags);
     sizer->Add(item_motion, flags);
@@ -3198,6 +3323,101 @@ wxWindow *PreferencesDialog::create_other_tab()
     sizer->Add(item_max_recent_count, flags);
     sizer->Add(item_auto_backup, flags);
     sizer->Add(item_gcodes_warning, flags);
+
+    // Speech preferences use stable platform IDs. A missing selected voice is
+    // retained, while the effective fallback is disclosed separately.
+    sizer->Add(create_item_title(_L("Narrator"), scrolled,
+        _L("Local speech is serialized. Voice network capability is unknown.")), flags);
+    sizer->Add(create_item_checkbox(_L("Enable narrator"), scrolled,
+        _L("Off by default. Speak application events using installed voices."), 50, "narrator_enabled"), flags);
+    sizer->Add(create_item_checkbox(_L("Quiet narration"), scrolled,
+        _L("Pause local speech without changing saved voice choices. An active screen reader also pauses narration."), 50, "narrator_quiet"), flags);
+    std::vector<wxString> speech_languages{_L("English")};
+    std::vector<std::string> speech_values{"en"};
+    if (!PersonalModes::school_presentation_suppressed.load()) {
+        speech_languages.push_back(_L("Cantonese")); speech_values.push_back("yue_HK");
+        speech_languages.push_back(_L("Both languages")); speech_values.push_back("both");
+    }
+    sizer->Add(create_item_combobox(_L("Narration language"), scrolled,
+        _L("Independent of the interface language. Both speaks English first."),
+        "narrator_language", speech_languages, speech_values, {}, [](int) {}), flags);
+    const auto installed_voices = TtsNarrator::voices();
+    for (bool cantonese : {false, true}) {
+        if (cantonese && PersonalModes::school_presentation_suppressed.load()) continue;
+        const std::string voice_key = cantonese ? "narrator_voice_yue" : "narrator_voice_en";
+        std::vector<wxString> labels{_L("Automatic voice")};
+        std::vector<std::string> values{""};
+        for (const auto& voice : installed_voices) {
+            if (!(cantonese ? voice.cantonese : voice.english)) continue;
+            labels.emplace_back(voice.name);
+            values.push_back(wxString(voice.id).ToUTF8().data());
+        }
+        const auto selected = app_config->get(voice_key);
+        if (!selected.empty() && std::find(values.begin(), values.end(), selected) == values.end()) {
+            labels.push_back(_L("Selected voice is not installed")); values.push_back(selected);
+        }
+        auto* status = new Label(scrolled, wxEmptyString);
+        status->SetName(cantonese ? _L("Effective Cantonese voice") : _L("Effective English voice"));
+        auto refresh_status = [status, cantonese](int) {
+            const auto effective = TtsNarrator::voice_status(cantonese);
+            wxString text = !effective.available ? _L("No installed voice can speak this language.") :
+                _L("Effective voice:") + " " + wxString(effective.effective_name);
+            if (effective.selected_missing) text += "\n" + _L("Selected voice is missing; the saved choice is kept.");
+            text += "\n" + _L("Voice network capability is unknown.");
+            status->SetLabel(text);
+            status->Wrap(status->FromDIP(420));
+            status->GetParent()->Layout();
+        };
+        auto live_values = std::make_shared<std::vector<std::string>>(values);
+        const auto combo_index = m_combobox_list.size();
+        sizer->Add(create_item_combobox(cantonese ? _L("Cantonese voice") : _L("English voice"), scrolled,
+            _L("Choose an installed voice. Missing selections remain saved."), voice_key, labels, values, {}, refresh_status,
+            0, 0, live_values), flags);
+        auto* voice_picker = m_combobox_list.at(combo_index);
+        m_narrator_inventory_refreshers.push_back([this, voice_picker, voice_key, cantonese, live_values, refresh_status] {
+            std::vector<wxString> refreshed_labels{_L("Automatic voice")};
+            std::vector<std::string> refreshed_values{""};
+            for (const auto& voice : TtsNarrator::voices()) {
+                if (!(cantonese ? voice.cantonese : voice.english)) continue;
+                refreshed_labels.emplace_back(voice.name);
+                refreshed_values.push_back(wxString(voice.id).ToUTF8().data());
+            }
+            const auto saved = app_config->get(voice_key);
+            if (!saved.empty() && std::find(refreshed_values.begin(), refreshed_values.end(), saved) == refreshed_values.end()) {
+                refreshed_labels.push_back(_L("Selected voice is not installed")); refreshed_values.push_back(saved);
+            }
+            if (refreshed_values != *live_values) {
+                voice_picker->Clear();
+                *live_values = std::move(refreshed_values);
+                for (const auto& label : refreshed_labels) voice_picker->Append(label);
+                const auto found = std::find(live_values->begin(), live_values->end(), saved);
+                voice_picker->SetSelection(found == live_values->end() ? 0 : static_cast<int>(found - live_values->begin()));
+            }
+            refresh_status(0);
+        });
+        sizer->Add(status, flags);
+        refresh_status(0);
+        std::vector<wxString> number_labels;
+        std::vector<std::string> number_values;
+        for (int n = -10; n <= 10; ++n) { number_labels.push_back(wxString::Format("%d", n)); number_values.push_back(std::to_string(n)); }
+        sizer->Add(create_item_combobox(cantonese ? _L("Cantonese speech rate") : _L("English speech rate"), scrolled,
+            _L("Platform range: -10 to 10. Normal delivery: 0."), cantonese ? "narrator_rate_yue" : "narrator_rate_en",
+            number_labels, number_values, {}, [](int) {}), flags);
+        sizer->Add(create_item_combobox(cantonese ? _L("Cantonese speech pitch") : _L("English speech pitch"), scrolled,
+            _L("Platform range: -10 to 10. Normal delivery: 0."), cantonese ? "narrator_pitch_yue" : "narrator_pitch_en",
+            number_labels, number_values, {}, [](int) {}), flags);
+    }
+    const auto mirror = TtsNarrator::external_mirror_status();
+    auto* mirror_status = new Label(scrolled, mirror == TtsNarrator::ExternalMirrorStatus::Unconfigured ?
+        _L("External speech mirror is not configured.") :
+        _L("External speech mirror is configured. Playback completion is unavailable; local serialization does not cover external playback."));
+    mirror_status->Wrap(FromDIP(420));
+    sizer->Add(mirror_status, flags);
+    m_narrator_inventory_timer.SetOwner(this, wxWindow::NewControlId());
+    Bind(wxEVT_TIMER, [this](wxTimerEvent&) {
+        for (const auto& refresh : m_narrator_inventory_refreshers) refresh();
+    }, m_narrator_inventory_timer.GetId());
+    m_narrator_inventory_timer.Start(2000);
 
     // ---- Online Models (visible only when has_model_mall()) ----
     auto title_modelmall   = create_item_title(_L("Online Models"), scrolled, _L("Online Models"));

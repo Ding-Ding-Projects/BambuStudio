@@ -6,10 +6,15 @@
 #include "Appearance/ElementStyle.hpp"
 
 #include "GUI_App.hpp"
+#include "PersonalModes/SchoolMode.hpp"
+#include "PersonalModes/SchoolRuntime.hpp"
+#include "FeatureServices/PresentationRoutes.hpp"
+#include "Documentation/OfflineDocumentation.hpp"
 #include "I18N.hpp"
 #include "MainFrame.hpp"
 #include "Notebook.hpp"
 #include "Plater.hpp"
+#include "NotificationManager.hpp"
 #include "Widgets/Button.hpp"
 #include "Widgets/Label.hpp"
 #include "Widgets/MaterialIcon.hpp"
@@ -247,28 +252,43 @@ void CommandPalette::collect_entries()
     // view, focuses its control and flashes it. The developer page only exists
     // in non-public builds, so its rows are skipped there.
     for (const PaletteIndex::PreferenceEntry &p : PaletteIndex::preference_entries()) {
+        if (!FeatureServices::presentation_setting_available(p.key, PersonalModes::school_presentation_suppressed.load())) continue;
 #if BBL_RELEASE_TO_PUBLIC
         if (p.page == PaletteIndex::PageDeveloper)
             continue;
 #endif
         const wxString page  = _(PaletteIndex::preference_page_names()[p.page]);
-        const wxString title = _L("Preferences") + " / " + page + " / " + _(p.title);
+        const wxString setting_title = std::string(p.key) == "school_mode" && wxGetApp().school_runtime() ?
+            wxString::FromUTF8(wxGetApp().school_runtime()->mode().record().display_name) : _(p.title);
+        const wxString title = _L("Preferences") + " / " + page + " / " + setting_title;
         const wxString desc  = wxString(p.desc).IsEmpty() ? _L("Setting") + " (" + p.key + ")" : _(p.desc);
         const std::string key = p.key;
         m_entries.push_back({MaterialIcon::Settings, title, desc,
-                             [key]() { wxGetApp().open_preferences(key); }});
+                             [key]() {
+                                 if (FeatureServices::presentation_setting_available(key, PersonalModes::school_presentation_suppressed.load()))
+                                     wxGetApp().open_preferences(key);
+                             }, key == "narrator_enabled" ? Rich::Narrator : Rich::None});
     }
 
     // --- Documentation articles (docs/features) -----------------------------
-    // Cantonese mode opens each article's Cantonese translation; bilingual mode
-    // opens the English article, and the translation links back to it.
+    // The immutable native bundle resolves routes and language companions.
     for (const PaletteIndex::Article &a : PaletteIndex::documentation_articles()) {
-        const std::string path = a.path;
+        std::string path = a.path;
+        constexpr const char* prefix = "docs/features/";
+        if (path.compare(0, std::char_traits<char>::length(prefix), prefix) != 0) continue;
+        path.erase(0, std::char_traits<char>::length(prefix));
+        if (PersonalModes::school_presentation_suppressed.load() &&
+            (path.find("dim-sum") != std::string::npos || path.find("personal-vocabulary") != std::string::npos ||
+             path.find("language") != std::string::npos || path.find("funny") != std::string::npos)) continue;
         m_entries.push_back({MaterialIcon::MenuBook, _L("Documentation") + " / " + _(a.title),
                              wxString::FromUTF8(a.path),
                              [this, path]() {
                                  MainFrame *frame = m_frame;
-                                 frame->CallAfter([frame, path]() { DocsBrowserDialog::ShowArticle(frame, path); });
+                                 frame->CallAfter([frame, path]() {
+                                     if (!Documentation::ShowOfflineDocumentation(frame, wxString::FromUTF8(path)) && wxGetApp().plater())
+                                         wxGetApp().plater()->get_notification_manager()->push_notification(
+                                             into_u8(_L("This article is not present in the installed documentation bundle.")));
+                                 });
                              }});
     }
 
@@ -316,6 +336,10 @@ void CommandPalette::collect_entries()
                         m_entries.push_back({glyph_for_menu(top), path + " / " + label,
                                              item->GetHelp(),
                                              [frame, id]() {
+                                                 frame->UpdateWindowUI(wxUPDATE_UI_RECURSE);
+                                                 auto* current_bar = frame->GetMenuBar();
+                                                 auto* current = current_bar ? current_bar->FindItem(id) : nullptr;
+                                                 if (!current || !current->IsEnabled()) return;
                                                  wxCommandEvent evt(wxEVT_MENU, id);
                                                  frame->GetEventHandler()->AddPendingEvent(evt);
                                              }});
@@ -383,6 +407,17 @@ wxPanel *CommandPalette::make_row(const Entry &entry, int index)
 void CommandPalette::add_rich_controls(wxPanel *row, wxBoxSizer *sizer, Rich rich)
 {
     AppConfig *cfg = wxGetApp().app_config;
+    if (rich == Rich::Narrator) {
+        auto *control = new SwitchButton(row);
+        control->SetName(_L("Enable narrator"));
+        control->SetValue(cfg->get("narrator_enabled") == "true");
+        control->Bind(wxEVT_TOGGLEBUTTON, [cfg, control](wxCommandEvent&) {
+            cfg->set("narrator_enabled", control->GetValue() ? "true" : "false");
+            cfg->save();
+        });
+        sizer->Add(control, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(10));
+        return;
+    }
     if (rich == Rich::Theme || rich == Rich::Density) {
         auto *seg = new MultiSwitchButton(row);
         if (rich == Rich::Theme) {
