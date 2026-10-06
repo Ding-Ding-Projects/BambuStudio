@@ -1,3 +1,4 @@
+#include <wx/wrapsizer.h>
 #include "Preferences.hpp"
 #include "PersonalVocabulary.hpp"
 #include "Widgets/MD3ScrolledWindow.hpp"
@@ -68,9 +69,9 @@ static constexpr int LANGUAGE_COMBOBOX_WIDTH = 260;
 static constexpr int INPUT_WIDTH          = 100;
 static constexpr int BTN_WIDTH            = 58; // small action button (reset / browse)
 static constexpr int BTN_HEIGHT           = 22;
-static constexpr int TITLE_PADDING        = 48;
-static constexpr int ITEM_LEFT_PADDING    = 48 + 16;
-static constexpr int ITEM_RIGHT_PADDING   = 24;
+static constexpr int TITLE_PADDING        = 16;
+static constexpr int ITEM_LEFT_PADDING    = 24;
+static constexpr int ITEM_RIGHT_PADDING   = 16;
 // Minimum settings-row height. Must exceed the 24px MD3 switch pill so
 // adjacent single-line toggle rows keep a visible gap (24 made the pills
 // touch — see the Other-tab Online Models pair in the screenshot matrix).
@@ -116,7 +117,7 @@ public:
         SetScrollRate(5, 5);
         // Content pane surface — driven by role so dark resolves via semantic()
         // instead of the legacy White->dark swap map.
-        SetBackgroundColour(StateColor::semantic(MD3::Role::Surface));
+        SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     }
 
     bool ShouldScrollToChildOnFocus(wxWindow* child) override { return false; }
@@ -1621,15 +1622,20 @@ void PreferencesDialog::create()
     strip_opts.close_mode      = TabStrip::CloseMode::Close; // "close" hides a section; restore from the overflow menu
     strip_opts.show_new_button = true;
     m_tabbar = new TabStrip(this, strip_opts);
-    m_book   = new wxSimplebook(this, wxID_ANY);
+    auto *content_card = new StaticBox(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
+    content_card->SetBackgroundColor(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
+    content_card->SetBorderColor(StateColor::semantic(MD3::Role::OutlineVariant));
+    content_card->SetCornerRadius(FromDIP(MD3::Metrics::active().radius));
+    m_book   = new wxSimplebook(content_card, wxID_ANY);
+    m_book->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     // Right-hand content pane: a top MD3 SearchField pill over the section book.
     auto *content_pane = new wxBoxSizer(wxVERTICAL);
-    m_search = new SearchField(this, _L("Search settings"));
+    m_search = new SearchField(content_card, _L("Search settings"));
     content_pane->Add(m_search, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(16));
     // Inline "no results" hint under the search pill; hidden until an active
     // query matches nothing (see apply_search_filter).
-    m_search_empty_hint = new Label(this, _L("No settings match your search."));
+    m_search_empty_hint = new Label(content_card, _L("No settings match your search."));
     m_search_empty_hint->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     m_search_empty_hint->SetFont(::Label::Body_13);
     m_search_empty_hint->Hide();
@@ -1639,7 +1645,8 @@ void PreferencesDialog::create()
     // Section strip + content pane. The strip's dock edge decides the row's
     // orientation and which side the strip sits on (see place_settings_strip).
     m_body_row = new wxBoxSizer(wxHORIZONTAL);
-    m_body_row->Add(content_pane, 1, wxEXPAND);
+    content_card->SetSizer(content_pane);
+    m_body_row->Add(content_card, 1, wxEXPAND | wxALL, FromDIP(MD3::Metrics::active().gap));
 
     auto add_tab = [this](const std::string &id, const wxString &label, wxWindow *page) {
         m_page_ids.push_back(id);
@@ -3418,7 +3425,7 @@ wxWindow *PreferencesDialog::create_developer_tab()
 // ============================================================================
 wxBoxSizer *PreferencesDialog::create_bottom_buttons()
 {
-    auto *row = new wxBoxSizer(wxHORIZONTAL);
+    auto *row = new wxWrapSizer(wxHORIZONTAL);
 
     auto *btn_reset_warnings            = new Button(this, _L("Reset all warning dialogs"));
     auto *btn_reset_prefs               = new Button(this, _L("Reset preferences"));
@@ -3436,6 +3443,8 @@ wxBoxSizer *PreferencesDialog::create_bottom_buttons()
         b->SetVariant(Button::Variant::Outlined);
         b->SetButtonSize(Button::Size::Small);
     }
+    btn_export_prefs->SetVariant(Button::Variant::Tonal);
+    btn_reset_prefs->SetVariant(Button::Variant::Text);
     btn_export_prefs->SetToolTip(_L("Export every preference section as JSON, YAML, TOML, XML, CSV, Markdown, HTML or an archive"));
     btn_export_prefs->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) {
         if (wxGetApp().app_config != nullptr)
@@ -3445,11 +3454,9 @@ wxBoxSizer *PreferencesDialog::create_bottom_buttons()
     btn_reset_warnings->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { on_reset_all_warnings(); });
     btn_reset_prefs->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { on_reset_preferences(); });
 
-    row->AddStretchSpacer();
     row->Add(btn_reset_warnings, 0, wxRIGHT, FromDIP(8));
     row->Add(btn_reset_prefs, 0, wxRIGHT, FromDIP(8));
     row->Add(btn_export_prefs, 0, 0, 0);
-    row->AddStretchSpacer();
     return row;
 }
 

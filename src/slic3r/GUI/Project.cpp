@@ -34,6 +34,8 @@
 #include "MainFrame.hpp"
 #include "GUI_Utils.hpp"
 #include "Widgets/Button.hpp"
+#include "Widgets/StaticBox.hpp"
+#include <wx/wrapsizer.h>
 #include <slic3r/GUI/Widgets/WebView.hpp>
 
 #include <boost/algorithm/string/predicate.hpp>
@@ -67,16 +69,23 @@ ProjectPanel::ProjectPanel(wxWindow *parent, wxWindowID id, const wxPoint &pos, 
 
     wxBoxSizer* main_sizer = new wxBoxSizer(wxVERTICAL);
 
-    auto *view_actions = new wxBoxSizer(wxHORIZONTAL);
+    // Studio Atlas separates destination actions from the working surface.
+    SetBackgroundColour(StateColor::semantic(MD3::Role::Surface));
+    auto *navigation = new StaticBox(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
+    navigation->SetBackgroundColor(StateColor::semantic(MD3::Role::SurfaceContainerLow));
+    navigation->SetBorderColor(StateColor::semantic(MD3::Role::OutlineVariant));
+    navigation->SetCornerRadius(FromDIP(MD3::Metrics::active().radius));
+    auto *view_actions = new wxWrapSizer(wxHORIZONTAL);
     // Kit Buttons in place of the stock wxButton pair, matching the rest of the MD3 widget kit.
     // Outlined is the kit's own default action-button variant.
-    auto *online_button = new Button(this, _L("Online projects"));
+    auto *online_button = new Button(navigation, _L("Online projects"));
     online_button->SetVariant(Button::Variant::Outlined);
-    auto *workspace_button = new Button(this, _L("Workspace"));
+    auto *workspace_button = new Button(navigation, _L("Workspace"));
     workspace_button->SetVariant(Button::Variant::Outlined);
     view_actions->Add(online_button, 0, wxALL, FromDIP(4));
     view_actions->Add(workspace_button, 0, wxALL, FromDIP(4));
-    main_sizer->Add(view_actions, 0, wxEXPAND | wxALL, FromDIP(4));
+    navigation->SetSizer(view_actions);
+    main_sizer->Add(navigation, 0, wxEXPAND | wxALL, FromDIP(MD3::Metrics::active().padding));
 
     m_browser = WebView::CreateWebView(this, m_project_home_url, "Project");
     m_workspace_panel = new WorkspacePanel(this);
