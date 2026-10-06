@@ -1,6 +1,14 @@
 # Isolated delivery builds
 
 The supported commands remain `build.bat /s` and `build-installer.bat /s`.
+OCCT exports its C and C++ compiler flags through bracket-quoted package config
+values. Its configure source chooses a closing delimiter absent from both flag
+strings, preserving embedded quotes, backslashes, spaces, literal variable text
+and bracket-shaped path segments. Both OCCT patches use the repeat-safe helper.
+Five actual-template configure/parse assertions demonstrate the old invalid
+`\U` escape, exact flag preservation, delimiter collision handling and replay.
+An existing installed config is refreshed through the supported dependency
+configure/install route, never by hand-editing that generated file alone.
 wx uses the same per-patch helper for its relocatable-prefix patch. A successful
 reverse check with the helper's documented whitespace options proves the whole
 patch already applied; a strict raw reverse check is a different contract and

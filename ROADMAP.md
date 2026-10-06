@@ -772,3 +772,6 @@ truth; the counts here are a snapshot.
 
 - [x] Disable MSBuild node reuse in the producer child environment, with five inherited-pipe/exit/environment assertions.
 - [ ] Verify the reviewed no-reuse producer through an exact root build; existing production pipe ownership remains inferred.
+
+- [x] Preserve OCCT compiler path maps in parseable generated package config, verified by five real-template assertions.
+- [ ] Regenerate/install the reviewed OCCT config through the exact root build and verify application configuration proceeds.

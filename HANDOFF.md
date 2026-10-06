@@ -3083,3 +3083,22 @@ setting is preserved. Five focused ownership assertions pass; the prior source
 fails the forwarding assertion. The existing 12 stream/exit/argument assertions
 remain green. No production process was killed, restarted or mutated. Parent
 review and an exact root retry remain necessary to verify this production route.
+
+## OCCT compiler flag config export, 2026-10-06
+
+The exact root run at 5e3f28274 ended with exit 1 at 2026-10-06T08:44:32Z.
+Recovered stderr identifies OpenCASCADEConfig.cmake lines 46/47: embedded quoted
+/pathmap values were substituted into quoted CMake set arguments, then native
+backslashes caused an invalid '\U' escape. The installed config and original
+OCCT template confirm this source boundary. This is distinct from wx replay.
+
+The new OCCT template patch uses bracket quoting with a delimiter selected at
+configure time to be absent from both raw flag strings. The compiler flags
+remain unchanged. The OCCT recipe routes its original and new patch through the
+existing forward/reverse helper. A read-only reverse check proves the original
+OCCT patch already applied to this host's source. Five disposable real-template
+configure/parse assertions pass: original generated config fails, repaired full
+config parses with exact C/C++ flag equality, bracket collisions grow the
+delimiter, and patch replay preserves bytes. No generated production file was
+edited and no production build was started. Parent review and exact root retry
+remain necessary to regenerate and install the corrected package config.
