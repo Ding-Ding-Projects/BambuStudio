@@ -1,3 +1,4 @@
+#include "PrepareInspectorLayout.hpp"
 #include "SelectMachinePop.hpp"
 #include "Widgets/MD3ScrolledWindow.hpp"
 #include "Widgets/LinkLabel.hpp"
@@ -59,10 +60,6 @@ MachineObjectPanel::MachineObjectPanel(wxWindow *parent, wxWindowID id, const wx
 {
     wxPanel::Create(parent, id, pos, wxDefaultSize, style, name);
 
-    SetSize(SELECT_MACHINE_ITEM_SIZE);
-    SetMinSize(SELECT_MACHINE_ITEM_SIZE);
-    SetMaxSize(SELECT_MACHINE_ITEM_SIZE);
-
     Bind(wxEVT_PAINT, &MachineObjectPanel::OnPaint, this);
 
     SetBackgroundColour(StateColor::darkModeColorFor(*wxWHITE));
@@ -77,6 +74,12 @@ MachineObjectPanel::MachineObjectPanel(wxWindow *parent, wxWindowID id, const wx
     m_printer_status_lock    = ScalableBitmap(this, "printer_status_lock", 16);
     m_printer_in_lan         = ScalableBitmap(this, "printer_in_lan", 16);
 
+    apply_row_layout();
+    Bind(wxEVT_DPI_CHANGED, [this](wxDPIChangedEvent& event) {
+        apply_row_layout();
+        if (GetParent()) GetParent()->Layout();
+        event.Skip();
+    });
     this->Bind(wxEVT_ENTER_WINDOW, &MachineObjectPanel::on_mouse_enter, this);
     this->Bind(wxEVT_LEAVE_WINDOW, &MachineObjectPanel::on_mouse_leave, this);
     this->Bind(wxEVT_LEFT_UP, &MachineObjectPanel::on_mouse_left_up, this);
@@ -100,6 +103,20 @@ MachineObjectPanel::MachineObjectPanel(wxWindow *parent, wxWindowID id, const wx
 
 }
 
+
+void MachineObjectPanel::apply_row_layout()
+{
+    SetFont(MD3::Metrics::isCompact() ? Label::Body_13 : Label::Body_14);
+    const int height = PrepareInspectorLayout::row_height(FromDIP(MD3::Metrics::active().row_height),
+        GetCharHeight(), FromDIP(18), FromDIP(8));
+    SetMinSize(wxSize(FromDIP(190), height));
+    SetMaxSize(wxSize(-1, height));
+    SetSize(wxSize(GetSize().x, height));
+    for (auto* bitmap : {&m_unbind_img, &m_edit_name_img, &m_select_unbind_img,
+            &m_printer_status_offline, &m_printer_status_busy, &m_printer_status_idle,
+            &m_printer_status_lock, &m_printer_in_lan}) bitmap->msw_rescale();
+    Refresh();
+}
 
 MachineObjectPanel::~MachineObjectPanel() {}
 
@@ -160,9 +177,16 @@ void MachineObjectPanel::render(wxDC &dc)
 
 void MachineObjectPanel::doRender(wxDC &dc)
 {
-    auto   left = 10;
+    auto   left = FromDIP(12);
     wxSize size = GetSize();
+    if (size.x <= FromDIP(4) || size.y <= FromDIP(4)) return;
+    dc.SetBackground(wxBrush(StateColor::semantic(MD3::Role::SurfaceContainerLowest)));
+    dc.Clear();
     dc.SetPen(*wxTRANSPARENT_PEN);
+    dc.SetBrush(wxBrush(StateColor::semantic(m_hover || m_focused
+        ? MD3::Role::PrimaryContainer : MD3::Role::SurfaceContainerLow)));
+    dc.DrawRoundedRectangle(FromDIP(2), FromDIP(2), size.x - FromDIP(4), size.y - FromDIP(4),
+        FromDIP(MD3::Metrics::active().small_radius));
 
     auto dwbitmap = m_printer_status_offline;
     if (m_state == PrinterState::IDLE) { dwbitmap = m_printer_status_idle; }
@@ -174,10 +198,10 @@ void MachineObjectPanel::doRender(wxDC &dc)
     // dc.DrawCircle(left, size.y / 2, 3);
     dc.DrawBitmap(dwbitmap.bmp(), wxPoint(left, (size.y - dwbitmap.GetBmpSize().y) / 2));
 
-    left += dwbitmap.GetBmpSize().x + 8;
-    dc.SetFont(Label::Body_13);
+    left += dwbitmap.GetBmpSize().x + FromDIP(8);
+    dc.SetFont(GetFont());
     dc.SetBackgroundMode(wxTRANSPARENT);
-    dc.SetTextForeground(StateColor::darkModeColorFor(SELECT_MACHINE_GREY900));
+    dc.SetTextForeground(StateColor::semantic(MD3::Role::OnSurface));
     wxString dev_name = "";
     if (m_info) {
         dev_name = from_u8(m_info->get_dev_name());
@@ -216,15 +240,17 @@ void MachineObjectPanel::doRender(wxDC &dc)
         dc.SetPen(wxPen(StateColor::semantic(MD3::Role::Primary), FromDIP(2)));
         dc.SetBrush(*wxTRANSPARENT_BRUSH);
         const int inset = FromDIP(2);
-        dc.DrawRectangle(inset, inset, size.x - 2 * inset, size.y - 2 * inset);
+        dc.DrawRoundedRectangle(inset, inset, size.x - 2 * inset, size.y - 2 * inset,
+            FromDIP(MD3::Metrics::active().small_radius));
     }
 
     if (m_hover || m_is_macos_special_version) {
 
         if (m_hover && !m_is_macos_special_version) {
-            dc.SetPen(SELECT_MACHINE_BRAND);
+            dc.SetPen(wxPen(StateColor::semantic(MD3::Role::Primary), FromDIP(1)));
             dc.SetBrush(*wxTRANSPARENT_BRUSH);
-            dc.DrawRectangle(0, 0, size.x, size.y);
+            dc.DrawRoundedRectangle(FromDIP(2), FromDIP(2), size.x - FromDIP(4), size.y - FromDIP(4),
+                FromDIP(MD3::Metrics::active().small_radius));
         }
 
         if (m_show_bind) {
@@ -387,13 +413,14 @@ SelectMachinePopup::SelectMachinePopup(wxWindow *parent)
 
     Freeze();
     wxBoxSizer *m_sizer_main = new wxBoxSizer(wxVERTICAL);
-    SetBackgroundColour(SELECT_MACHINE_GREY400);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
 
 
 
     m_scrolledWindow = new MD3ScrolledWindow(this, wxID_ANY, wxDefaultPosition, SELECT_MACHINE_LIST_SIZE, wxHSCROLL | wxVSCROLL);
     m_scrolledWindow->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
-    m_scrolledWindow->SetMinSize(SELECT_MACHINE_LIST_SIZE);
+    // The popup owns the viewport height; the list contents own its virtual extent.
+    m_scrolledWindow->SetMinSize(wxSize(FromDIP(212), FromDIP(120)));
     m_scrolledWindow->SetScrollRate(0, 5);
     auto m_sizxer_scrolledWindow = new wxBoxSizer(wxVERTICAL);
     m_scrolledWindow->SetSizer(m_sizxer_scrolledWindow);
@@ -436,7 +463,7 @@ SelectMachinePopup::SelectMachinePopup(wxWindow *parent)
     m_sizxer_scrolledWindow->Add(other_title, 0, wxEXPAND | wxLEFT, FromDIP(15));
     m_sizxer_scrolledWindow->Add(m_sizer_other_devices, 0, wxEXPAND, 0);
 
-    m_sizer_main->Add(m_scrolledWindow, 0, wxALL | wxEXPAND, FromDIP(2));
+    m_sizer_main->Add(m_scrolledWindow, 1, wxALL | wxEXPAND, FromDIP(8));
 
     SetSizer(m_sizer_main);
     Layout();
@@ -546,14 +573,15 @@ wxWindow *SelectMachinePopup::create_title_panel(wxString text)
     wxBoxSizer *m_sizer_title_own = new wxBoxSizer(wxHORIZONTAL);
 
     auto m_title_own = new Label(m_panel_title_own, text);
-    m_title_own->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+    m_title_own->SetFont(Label::Head_16);
+    m_title_own->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_title_own->Wrap(-1);
     m_sizer_title_own->Add(m_title_own, 0, wxALIGN_CENTER, 0);
 
     wxBoxSizer *m_sizer_line_own = new wxBoxSizer(wxHORIZONTAL);
 
     auto m_panel_line_own = new wxPanel(m_panel_title_own, wxID_ANY, wxDefaultPosition, wxSize(SELECT_MACHINE_ITEM_SIZE.x, FromDIP(1)), wxTAB_TRAVERSAL);
-    m_panel_line_own->SetBackgroundColour(SELECT_MACHINE_GREY400);
+    m_panel_line_own->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
 
     m_sizer_line_own->Add(m_panel_line_own, 0, wxALIGN_CENTER, 0);
     m_sizer_title_own->Add(0, 0, 0, wxLEFT, FromDIP(10));
