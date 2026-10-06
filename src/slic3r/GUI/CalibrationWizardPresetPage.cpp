@@ -506,10 +506,13 @@ void CaliPresetTipsPanel::queue_tips_reflow()
         {
             CalibrationLayout::ReflowPass pass(m_tips_reflow);
             if (width == 0 || !IsShown()) return;
+            const int previous_height = m_tips_text->GetMinSize().y;
+            m_tips_text->SetMinSize(wxSize(0, -1));
             m_tips_text->Wrap(width);
+            m_tips_text->InvalidateBestSize();
             const int height = m_tips_text->GetBestSize().y;
-            if (!CalibrationLayout::needs_height_update(m_tips_text->GetMinSize().y, height)) return;
             m_tips_text->SetMinSize(wxSize(0, height));
+            if (!CalibrationLayout::needs_height_update(previous_height, height)) return;
             Layout();
             // Keep the page and its outer scroll host aware of the new height.
             if (auto *page = GetParent()) {

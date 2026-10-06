@@ -1042,11 +1042,13 @@ void CalibrationWizardPage::queue_instruction_reflow()
             bool changed = false;
             for (Label *label : m_wrapped_labels) {
                 // Label::Wrap measures the original text, including native padding.
+                const int previous_height = label->GetMinSize().y;
+                label->SetMinSize(wxSize(0, -1));
                 label->Wrap(width);
                 label->InvalidateBestSize();
                 const int height = label->GetBestSize().y;
-                if (CalibrationLayout::needs_height_update(label->GetMinSize().y, height)) {
-                    label->SetMinSize(wxSize(0, height));
+                label->SetMinSize(wxSize(0, height));
+                if (CalibrationLayout::needs_height_update(previous_height, height)) {
                     changed = true;
                 }
             }

@@ -31,3 +31,15 @@ The single-extruder selector now wraps each complete slot row, preserving its ra
 單噴嘴選材區以完整材料列換行，每列的單選按鈕、核取方塊、選單索引及事件綁定一齊保留。兩層容器擴展至可用闊度；多噴嘴列次序不變。提示卡按自身闊度扣除原有左右各 20 DIP 邊距量度文字，再透過相同的非遞迴輔助程式更新頁面及捲動範圍。打印參數亦以完整組別換行。
 
 舊來源有一項通過、兩項失敗，現時三項全部通過。索引檢查比較整段材料列建立程序，只正規化兩個指定版面改動，並確認改錯噴嘴索引會被發現。原生畫面仍未驗證。
+
+## Height measurement correction
+
+Both deferred adapters first remember and release the previous explicit label minimum height, then wrap, invalidate the cached best size, measure, and install the new height. This prevents the previous minimum from clamping `GetBestSize()` when a wider viewport or shorter content needs fewer lines. The previous height is used only to decide whether parent layout needs refreshing.
+
+`tests/calibration_reflow.test.mjs` compiles the actual two production method bodies against a non-window label model that wraps character content and applies the wx-style best-size minimum clamp. Against `2ea14a5ea158e3311ad7680409243d51cd35b37a`, all four cases fail. The repaired methods pass all four: narrow-to-wide-to-narrow and shorter content for both instruction and advice labels. This proves the adapter ordering under that clamp, not native text metrics, rendering, focus or scrolling.
+
+## 文字高度量度修正
+
+兩個延後重排程序先記低並解除舊的最小高度，再換行、清除最佳大小快取、重新量度及設定新高度。咁樣視窗變闊或者文字縮短時，舊高度就唔會箍住新量度。舊高度只用嚟判斷需唔需要更新父容器版面。
+
+非視窗測試直接編譯兩個正式程序，文字模型會按內容換行，亦會模擬最佳大小受最小高度限制的行為。修正前四項全部失敗，修正後四項全部通過，涵蓋兩種標籤由窄變闊再變窄，以及文字縮短。呢個結果只證明量度次序，唔代表原生字體量度、畫面、焦點或捲動已驗證。
