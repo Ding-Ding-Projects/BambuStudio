@@ -369,6 +369,10 @@ function Invoke-LoggedNativeCommand {
     $info.CreateNoWindow = $true
     $info.RedirectStandardOutput = $true
     $info.RedirectStandardError = $true
+    # Reusable MSBuild nodes inherit these pipes and can keep EOF pending after
+    # CMake exits. Disable reuse only in this child's environment, including
+    # nested MSBuild processes, without changing the caller's environment.
+    $info.EnvironmentVariables['MSBUILDDISABLENODEREUSE'] = '1'
     $info.WorkingDirectory = (Get-Location).ProviderPath
     $info.Arguments = (($Arguments | ForEach-Object {
         $value = [regex]::Replace($_, '(\\*)"', '$1$1\"')
