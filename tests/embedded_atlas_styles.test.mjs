@@ -50,15 +50,78 @@ test('accent and status variables retain their exact values', () => {
   const values = css => [...css.matchAll(/(--(?:md-(?:primary|on-primary|secondary|on-secondary|error|on-error|inverse|accent|warning|info)|color-fm-(?:brand|selected|danger|warning)|color-brand)[\w-]*)\s*:\s*([^;]+);/g)].map(m => [m[1], m[2].trim()]);
   for (const p of files) assert.deepEqual(values(read(p)), values(execFileSync('git',['show',baseline+':'+p],{encoding:'utf8'})),p);
 });
-test('new interactions use only paint transitions and honor reduced motion', () => {
-  for (const p of files) {
-    const added = read(p).split('/* Studio Atlas:')[1];
-    if (!added) continue;
-    assert.match(added, /:focus-visible/);
-    assert.match(added, /prefers-reduced-motion: reduce/);
-    assert.match(added, /transition: none/);
-    assert.doesNotMatch(added, /!important|transition: all|transform:|opacity:|display:|height:|width:/);
+const interactionMarker = '/* Studio Atlas:';
+const interactionEntries = new Map([
+  ['resources/web/device/css/home.css', ['body', 'var(--md-on-surface)']],
+  ['resources/web/fila_manager/index.css', ['body', 'var(--md-primary)']],
+  ['resources/web/filament_create/style.css', ['body', 'var(--color-brand)']],
+  ['resources/web/guide/css/common.css', ['body', 'var(--md-primary)']],
+  ['resources/web/homepage3/css/common.css', ['body', 'var(--md-primary)']],
+  ['resources/web/login/css/login.css', ['body', 'var(--atlas-focus, #146c2e)']],
+  ['resources/web/model/model.css', ['body', 'var(--atlas-focus, #146c2e)']],
+  ['resources/web/model_new/index.css', ['body', 'var(--md-primary)']],
+  ['src/slic3r/GUI/DeviceWeb/device_page/src/styles.css', ['#root', 'var(--color-fm-brand)']],
+]);
+// Collapse formatting whitespace only. Do not erase selector combinators,
+// comments, punctuation or unknown trailing source to make a comparison pass.
+const normalizeInteraction = css => css.replace(/\s+/g, ' ').trim();
+function expectedInteraction([scope, focus]) {
+  const controls = scope + ' :is(button, input, select, textarea, a[href], [role="button"], [tabindex])';
+  return interactionMarker + ' paint-only interaction states. Existing geometry and actions remain owned by the view. */' +
+    '\n' + controls + ':focus-visible {\n  outline: 2px solid ' + focus + ';\n  outline-offset: 2px;\n}\n' +
+    '@media (prefers-reduced-motion: no-preference) {\n  ' + scope + ' :is(button, input, select, textarea, [role="button"]) {\n' +
+    '    transition: background-color 100ms ease-out, border-color 100ms ease-out;\n  }\n}\n' +
+    '@media (prefers-reduced-motion: reduce) {\n  ' + controls + ' {\n    transition: none;\n  }\n}';
+}
+function validateInteraction(path, css) {
+  const count = css.split(interactionMarker).length - 1;
+  const entry = interactionEntries.get(path);
+  assert.equal(count, entry ? 1 : 0, path + ': exact interaction marker count');
+  if (!entry) return;
+  const suffix = css.slice(css.indexOf(interactionMarker));
+  assert.equal(normalizeInteraction(suffix), normalizeInteraction(expectedInteraction(entry)), path + ': complete interaction suffix');
+}
+test('exactly nine declared entrypoints carry the complete interaction rules', () => {
+  assert.equal(interactionEntries.size, 9);
+  assert.equal(files.filter(p => !interactionEntries.has(p)).length, 14);
+  for (const p of interactionEntries.keys()) assert.ok(files.includes(p), p);
+  for (const p of files) validateInteraction(p, read(p));
+});
+test('removing each actual required interaction block is rejected', () => {
+  for (const p of interactionEntries.keys()) {
+    const css = read(p);
+    assert.throws(() => validateInteraction(p, css.slice(0, css.indexOf(interactionMarker))), {name:'AssertionError'}, p);
   }
+});
+test('duplicate markers and geometry after a second marker are rejected', () => {
+  for (const p of interactionEntries.keys()) {
+    const css = read(p);
+    for (const extra of [interactionMarker + ' duplicate */', interactionMarker + ' duplicate */\nbody { height : 1px; }'])
+      assert.throws(() => validateInteraction(p, css + '\n' + extra), {name:'AssertionError'}, p);
+  }
+});
+test('unknown suffix declarations, selectors, at-rules and trailing text are rejected', () => {
+  for (const p of interactionEntries.keys()) {
+    const original = read(p);
+    const offset = original.indexOf(interactionMarker);
+    const prefix = original.slice(0, offset);
+    const css = original.slice(offset);
+    const mutations = [
+      css + '\nbody { padding: 1px; }',
+      css.replace('outline-offset: 2px;', 'outline-offset: 2px;\n  height \t : 1px;'),
+      css.replace('outline-offset: 2px;', 'outline-offset: 2px; padding: 1px;'),
+      css.replace(':focus-visible', ':hover'),
+      css + '\n@media print { body { padding: 1px; } }',
+      css + '\ntrailing-text',
+      css.replace('100ms ease-out', '250ms ease-out'),
+    ];
+    for (const mutation of mutations) assert.throws(() => validateInteraction(p, prefix + mutation), {name:'AssertionError'}, p);
+  }
+});
+test('interaction blocks are rejected on each undeclared sheet', () => {
+  const extra = expectedInteraction(['body', 'var(--md-primary)']);
+  for (const p of files.filter(p => !interactionEntries.has(p)))
+    assert.throws(() => validateInteraction(p, read(p) + '\n' + extra), {name:'AssertionError'}, p);
 });
 function luminance(hex) { const c=hex.match(/../g).map(x=>parseInt(x,16)/255).map(v=>v<=.04045?v/12.92:((v+.055)/1.055)**2.4);return c[0]*.2126+c[1]*.7152+c[2]*.0722; }
 function contrast(a,b){const x=luminance(a),y=luminance(b);return (Math.max(x,y)+.05)/(Math.min(x,y)+.05);}

@@ -36,6 +36,21 @@ preserve accent/status variables, reject a deliberate geometry-change fixture,
 and check default text and field-outline contrast numerically. The baseline
 commit must be available locally for the history-based preservation check.
 
+The interaction inventory explicitly requires one complete block on nine entry
+stylesheets and no block on the other fourteen. The entire suffix must match the
+expected focus outline and the two reduced-motion media rules after formatting
+whitespace normalization. Unknown declarations, selectors, at-rules, trailing
+text and duplicate markers are rejected. Negative cases remove each required
+block, inject duplicate markers, add padding or whitespace-separated height
+declarations, and append geometry after a second marker.
+
+The original interaction check at `a2be7df26cd5981da2c1e50d4c64c5e3a86609b9`
+incorrectly accepted a missing block. Executing that original check against the
+device stylesheet with its block removed produced the expected red regression:
+`Missing expected exception (AssertionError)`. The strengthened suite passes
+9 of 9 tests, including rejection of those mutations. This correction changes
+the test and this article only; the production CSS is unchanged.
+
 These checks do not exercise the CSS cascade in the embedded engine, user-defined
 colors, forced-colors mode, keyboard interaction, translations, responsive layout,
 motion timing or rendering. The default-palette contrast calculation does not
