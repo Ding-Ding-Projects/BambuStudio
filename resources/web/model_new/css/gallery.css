@@ -107,7 +107,8 @@
 .bs-gallery-counter { line-height: 1.4; font-variant-numeric: tabular-nums; }
 @media (max-width: 720px) {
   .bs-gallery { padding: 10px; gap: 12px; }
-  .bs-gallery-thumbs { display: flex; gap: 10px; overflow-x: auto; padding: 4px; flex: 1 1 100%; }
-  .bs-gallery-thumb { flex: 0 0 100px; margin-bottom: 0; }
+  /* setActiveThumb reveals with scrollTop; keep the thumbnail stack vertical. */
+  .bs-gallery-thumbs { padding: 4px; flex: 1 1 100%; }
+  .bs-gallery-thumb { margin-bottom: 10px; }
   .bs-gallery-thumb img { height: 72px; }
 }
