@@ -20,7 +20,12 @@ headers. They do not substitute for the full native translation units.
 
 Local build authorization and bounded repair retries remain in effect. The
 external-wait limit does not require a separate extension for local compilation.
-The next candidate is awaiting the finite strict catalog-consistency repair.
+The catalog-consistency repair is independently reviewed and incorporated at
+`4147ca9eeb0004f7e18b4a2f5a8c6cb190975d21`. Eight focused tests and the terminology
+check pass. The next exact root producer pinned that source at
+`2026-10-06T11:04:22Z` and remains active. Documentation alignment still has
+50 known findings under repair in separate checkouts; no whole-language or
+successful native-build verdict is claimed.
 The broader source integration selection now passes 29 checks; nine additional
 checks preserve the exact callers of the replaced raw scroll/table owners.
 The [tracked publication scan](public-boundary-scan-20261006.md)
