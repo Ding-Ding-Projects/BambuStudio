@@ -1,3 +1,4 @@
+#include <wx/wrapsizer.h>
 #include "Widgets/MD3Tokens.hpp"
 #include "Widgets/StateColor.hpp"
 #include "CalibrationWizardStartPage.hpp"
@@ -6,7 +7,6 @@
 
 namespace Slic3r { namespace GUI {
 
-#define CALIBRATION_START_PAGE_TEXT_MAX_LENGTH FromDIP(1000)
 CalibrationStartPage::CalibrationStartPage(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style)
     :CalibrationWizardPage(parent, id, pos, size, style)
 {
@@ -18,14 +18,12 @@ void CalibrationStartPage::create_when(wxWindow* parent, wxString title, wxStrin
     m_when_title = new Label(this, title);
     m_when_title->SetFont(Label::Head_16);
     m_when_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
-    m_when_title->Wrap(CALIBRATION_START_PAGE_TEXT_MAX_LENGTH);
-    m_when_title->SetMinSize({CALIBRATION_START_PAGE_TEXT_MAX_LENGTH, -1});
+    register_wrapped_label(m_when_title);
 
     m_when_content = new Label(this, content);;
     m_when_content->SetFont(Label::Body_14);
     m_when_content->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
-    m_when_content->Wrap(CALIBRATION_START_PAGE_TEXT_MAX_LENGTH);
-    m_when_content->SetMinSize({CALIBRATION_START_PAGE_TEXT_MAX_LENGTH, -1});
+    register_wrapped_label(m_when_content);
 }
 
 void CalibrationStartPage::create_about(wxWindow* parent, wxString title, wxString content)
@@ -33,14 +31,12 @@ void CalibrationStartPage::create_about(wxWindow* parent, wxString title, wxStri
     m_about_title = new Label(this, title);
     m_about_title->SetFont(Label::Head_16);
     m_about_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
-    m_about_title->Wrap(CALIBRATION_START_PAGE_TEXT_MAX_LENGTH);
-    m_about_title->SetMinSize({CALIBRATION_START_PAGE_TEXT_MAX_LENGTH, -1});
+    register_wrapped_label(m_about_title);
 
     m_about_content = new Label(this, content);
     m_about_content->SetFont(Label::Body_14);
     m_about_content->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
-    m_about_content->Wrap(CALIBRATION_START_PAGE_TEXT_MAX_LENGTH);
-    m_about_content->SetMinSize({CALIBRATION_START_PAGE_TEXT_MAX_LENGTH, -1});
+    register_wrapped_label(m_about_content);
 }
 
 void CalibrationStartPage::create_bitmap(wxWindow* parent, const wxBitmap& before_img, const wxBitmap& after_img)
@@ -52,7 +48,7 @@ void CalibrationStartPage::create_bitmap(wxWindow* parent, const wxBitmap& befor
         m_after_bmp = new wxStaticBitmap(parent, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxDefaultSize, 0);
     m_after_bmp->SetBitmap(after_img);
     if (!m_images_sizer) {
-        m_images_sizer = new wxBoxSizer(wxHORIZONTAL);
+        m_images_sizer = new wxWrapSizer(wxHORIZONTAL);
         m_images_sizer->Add(m_before_bmp, 0, wxALL, 0);
         m_images_sizer->AddSpacer(FromDIP(20));
         m_images_sizer->Add(m_after_bmp, 0, wxALL, 0);
@@ -73,7 +69,7 @@ void CalibrationStartPage::create_bitmap(wxWindow* parent, std::string img) {
         m_bmp_intro = new wxStaticBitmap(parent, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxDefaultSize, 0);
     m_bmp_intro->SetBitmap(before_bmp);
     if (!m_images_sizer) {
-        m_images_sizer = new wxBoxSizer(wxHORIZONTAL);
+        m_images_sizer = new wxWrapSizer(wxHORIZONTAL);
         m_images_sizer->Add(m_bmp_intro, 0, wxALL, 0);
     }
 }
@@ -103,8 +99,8 @@ void CalibrationPAStartPage::create_page(wxWindow* parent)
 \n2. if the nozzle is worn out or replaced with a new one;\
 \n3. If the max volumetric speed or print temperature is changed in the filament setting."));
 
-    m_top_sizer->Add(m_when_title);
-    m_top_sizer->Add(m_when_content);
+    m_top_sizer->Add(m_when_title, 0, wxEXPAND);
+    m_top_sizer->Add(m_when_content, 0, wxEXPAND);
     m_top_sizer->AddSpacer(PRESET_GAP);
 
     if (wxGetApp().app_config->get_language_code() == "zh-cn") {
@@ -112,7 +108,7 @@ void CalibrationPAStartPage::create_page(wxWindow* parent)
     } else {
         create_bitmap(parent, "cali_page_before_pa", "cali_page_after_pa");
     }
-    m_top_sizer->Add(m_images_sizer, 0, wxALL, 0);
+    m_top_sizer->Add(m_images_sizer, 0, wxEXPAND, 0);
     m_top_sizer->AddSpacer(PRESET_GAP);
 
     m_help_panel = new PAPageHelpPanel(parent, false);
@@ -125,8 +121,8 @@ void CalibrationPAStartPage::create_page(wxWindow* parent)
 \n\nUsually the calibration is unnecessary. When you start a single color/material print, with the \"flow dynamics calibration\" option checked in the print start menu, the printer will follow the old way, calibrate the filament before the print; When you start a multi color/material print, the printer will use the default compensation parameter for the filament during every filament switch which will have a good result in most cases.\
 \n\nPlease note that there are a few cases that can make the calibration results unreliable, such as insufficient adhesion on the build plate. Improving adhesion can be achieved by washing the build plate or applying glue. For more information on this topic, please refer to our Wiki.\
 \n\nThe calibration results have about 10 percent jitter in our test, which may cause the result not exactly the same in each calibration. We are still investigating the root cause to do improvements with new updates."));
-    m_top_sizer->Add(m_about_title);
-    m_top_sizer->Add(m_about_content);
+    m_top_sizer->Add(m_about_title, 0, wxEXPAND);
+    m_top_sizer->Add(m_about_content, 0, wxEXPAND);
     m_top_sizer->AddSpacer(PRESET_GAP);
 
     m_action_panel = new CaliPageActionPanel(parent, CalibMode::Calib_PA_Line, CaliPageType::CALI_PAGE_START);
@@ -135,8 +131,7 @@ void CalibrationPAStartPage::create_page(wxWindow* parent)
 
 #ifdef __linux__
     wxGetApp().CallAfter([this]() {
-        m_when_content->SetMinSize(m_when_content->GetSize() + wxSize{ 0, wxWindow::GetCharHeight() });
-        m_about_content->SetMinSize(m_about_content->GetSize() + wxSize{ 0, wxWindow::GetCharHeight() });
+        queue_instruction_reflow();
         Layout();
         Fit();
         });
@@ -236,8 +231,8 @@ void CalibrationFlowRateStartPage::create_page(wxWindow* parent)
 \n3. Poor Surface Quality: The surface of your prints seems rough or uneven.\
 \n4. Weak Structural Integrity: Prints break easily or don't seem as sturdy as they should be."));
 
-    m_top_sizer->Add(m_when_title);
-    m_top_sizer->Add(m_when_content);
+    m_top_sizer->Add(m_when_title, 0, wxEXPAND);
+    m_top_sizer->Add(m_when_content, 0, wxEXPAND);
     m_top_sizer->AddSpacer(PRESET_GAP);
 
     if (wxGetApp().app_config->get_language_code() == "zh-cn") {
@@ -245,40 +240,37 @@ void CalibrationFlowRateStartPage::create_page(wxWindow* parent)
     } else {
         create_bitmap(parent, "cali_page_flow_introduction");
     }
-    m_top_sizer->Add(m_images_sizer, 0, wxALL, 0);
+    m_top_sizer->Add(m_images_sizer, 0, wxEXPAND, 0);
     m_top_sizer->AddSpacer(PRESET_GAP);
 
     auto extra_text = new Label(parent, _L("In addition, Flow Rate Calibration is crucial for foaming materials like LW-PLA used in RC planes. These materials expand greatly when heated, and calibration provides a useful reference flow rate."));
     extra_text->SetFont(Label::Body_14);
-    extra_text->Wrap(CALIBRATION_START_PAGE_TEXT_MAX_LENGTH);
-    extra_text->SetMinSize({CALIBRATION_START_PAGE_TEXT_MAX_LENGTH, -1});
-    m_top_sizer->Add(extra_text);
+    register_wrapped_label(extra_text);
+    m_top_sizer->Add(extra_text, 0, wxEXPAND);
     m_top_sizer->AddSpacer(PRESET_GAP);
 
     create_about(parent,
         _L("About this calibration"),
         _L("Flow Rate Calibration measures the ratio of expected to actual extrusion volumes. The default setting works well in Bambu Lab printers and official filaments as they were pre-calibrated and fine-tuned. For a regular filament, you usually won't need to perform a Flow Rate Calibration unless you still see the listed defects after you have done other calibrations. For more details, please check out the wiki article."));
 
-    m_top_sizer->Add(m_about_title);
-    m_top_sizer->Add(m_about_content);
+    m_top_sizer->Add(m_about_title, 0, wxEXPAND);
+    m_top_sizer->Add(m_about_content, 0, wxEXPAND);
     m_top_sizer->AddSpacer(PRESET_GAP);
 
     auto auto_cali_title = new Label(parent, _L("Auto-Calibration"));
     auto_cali_title->SetFont(Label::Head_16);
     auto_cali_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
-    auto_cali_title->Wrap(CALIBRATION_START_PAGE_TEXT_MAX_LENGTH);
-    auto_cali_title->SetMinSize({CALIBRATION_START_PAGE_TEXT_MAX_LENGTH, -1});
+    register_wrapped_label(auto_cali_title);
 
     auto auto_cali_content = new Label(this,
         _L("Auto Flow Rate Calibration utilizes Bambu Lab's Micro-Lidar technology, directly measuring the calibration patterns. However, please be advised that the efficacy and accuracy of this method may be compromised with specific types of materials. Particularly, filaments that are transparent or semi-transparent, sparkling-particled, or have a high-reflective finish may not be suitable for this calibration and can produce less-than-desirable results.\
 \n\nThe calibration results may vary between each calibration or filament. We are still improving the accuracy and compatibility of this calibration through firmware updates over time.\
 \n\nCaution: Flow Rate Calibration is an advanced process, to be attempted only by those who fully understand its purpose and implications. Incorrect usage can lead to sub-par prints or printer damage. Please make sure to carefully read and understand the process before doing it."));
     auto_cali_content->SetFont(Label::Body_14);
-    auto_cali_content->Wrap(CALIBRATION_START_PAGE_TEXT_MAX_LENGTH);
-    auto_cali_content->SetMinSize({CALIBRATION_START_PAGE_TEXT_MAX_LENGTH, -1});
+    register_wrapped_label(auto_cali_content);
 
-    m_top_sizer->Add(auto_cali_title);
-    m_top_sizer->Add(auto_cali_content);
+    m_top_sizer->Add(auto_cali_title, 0, wxEXPAND);
+    m_top_sizer->Add(auto_cali_content, 0, wxEXPAND);
     m_top_sizer->AddSpacer(PRESET_GAP);
 
     m_action_panel = new CaliPageActionPanel(parent, CalibMode::Calib_Flow_Rate, CaliPageType::CALI_PAGE_START);
@@ -287,9 +279,7 @@ void CalibrationFlowRateStartPage::create_page(wxWindow* parent)
 
 #ifdef __linux__
     wxGetApp().CallAfter([this, auto_cali_content, extra_text]() {
-        m_when_content->SetMinSize(m_when_content->GetSize() + wxSize{ 0, wxWindow::GetCharHeight() });
-        auto_cali_content->SetMinSize(auto_cali_content->GetSize() + wxSize{ 0, wxWindow::GetCharHeight() });
-        extra_text->SetMinSize(extra_text->GetSize() + wxSize{ 0, wxWindow::GetCharHeight() });
+        queue_instruction_reflow();
         Layout();
         Fit();
         });
@@ -376,23 +366,23 @@ void CalibrationMaxVolumetricSpeedStartPage::create_page(wxWindow* parent)
     m_top_sizer->Add(m_page_caption, 0, wxEXPAND, 0);
     create_when(parent, _L("When you need Max Volumetric Speed Calibration"), _L("Over-extrusion or under extrusion"));
 
-    m_top_sizer->Add(m_when_title);
-    m_top_sizer->Add(m_when_content);
+    m_top_sizer->Add(m_when_title, 0, wxEXPAND);
+    m_top_sizer->Add(m_when_content, 0, wxEXPAND);
     m_top_sizer->AddSpacer(PRESET_GAP);
 
     auto recommend_title = new Label(parent, _L("Max Volumetric Speed calibration is recommended when you print with:"));
     recommend_title->SetFont(Label::Head_16);
     recommend_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
-    recommend_title->Wrap(CALIBRATION_START_PAGE_TEXT_MAX_LENGTH);
-    m_top_sizer->Add(recommend_title);
+    register_wrapped_label(recommend_title);
+    m_top_sizer->Add(recommend_title, 0, wxEXPAND);
     auto recommend_text1 = new Label(parent, _L("material with significant thermal shrinkage/expansion, such as..."));
-    recommend_text1->Wrap(CALIBRATION_START_PAGE_TEXT_MAX_LENGTH);
+    register_wrapped_label(recommend_text1);
     recommend_text1->SetFont(Label::Body_14);
-    m_top_sizer->Add(recommend_text1);
+    m_top_sizer->Add(recommend_text1, 0, wxEXPAND);
     auto recommend_text2 = new Label(parent, _L("materials with inaccurate filament diameter"));
-    recommend_text2->Wrap(CALIBRATION_START_PAGE_TEXT_MAX_LENGTH);
+    register_wrapped_label(recommend_text2);
     recommend_text2->SetFont(Label::Body_14);
-    m_top_sizer->Add(recommend_text2);
+    m_top_sizer->Add(recommend_text2, 0, wxEXPAND);
 
     m_top_sizer->AddSpacer(PRESET_GAP);
 
@@ -402,7 +392,7 @@ void CalibrationMaxVolumetricSpeedStartPage::create_page(wxWindow* parent)
         create_bitmap(parent, "cali_page_before_pa", "cali_page_after_pa");
     }
 
-    m_top_sizer->Add(m_images_sizer, 0, wxALL, 0);
+    m_top_sizer->Add(m_images_sizer, 0, wxEXPAND, 0);
 
     m_top_sizer->AddSpacer(PRESET_GAP);
 

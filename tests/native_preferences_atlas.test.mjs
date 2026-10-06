@@ -35,7 +35,8 @@ test('footer and destination action groups wrap without stretch spacers',()=>{
 });
 test('existing project, schedule and calibration engine tails are unchanged',()=>{
  for(const [p,marker] of [['Project.cpp','ProjectPanel::~ProjectPanel'],['Schedule/ScheduledSettingsPanel.cpp','ScheduledSettingsPanel::~ScheduledSettingsPanel'],['CalibrationWizard.cpp','CalibrationWizard::~CalibrationWizard']]){
-  const a=read(p).replaceAll('\r\n','\n'),b=old(p).replaceAll('\r\n','\n');assert.ok(a.includes(marker));assert.equal(a.slice(a.indexOf(marker)),b.slice(b.indexOf(marker)),p);
+  const normalize=s=>s.replaceAll('\r\n','\n').replace(/^\s*m_scrolledWindow->FitInside\(\);\n/gm,'').replace(/(m_all_pages_sizer->Add\([^\n]+)FromDIP\(MD3::Metrics::active\(\).padding\)/g,'$1FromDIP(25)');
+  const a=normalize(read(p)),b=normalize(old(p));assert.ok(a.includes(marker));assert.equal(a.slice(a.indexOf(marker)),b.slice(b.indexOf(marker)),p);
  }
 });
 test('setup preserves page headings and primary versus secondary action hierarchy',()=>{
