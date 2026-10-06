@@ -19,3 +19,15 @@ This is source and helper evidence, not native rendering evidence. The applicati
 改變大小、顯示頁面及 DPI 變動會合併成延後重排。重排期間唔會遞迴排入自己；捲動條令可用闊度改變時，再量度一次。原有自動換行亦會處理文字更新。打印指令、步驟次序、校準數值、翻譯文字及儲存結果識別全部保留。
 
 舊版本三項來源檢查全部失敗，現時三項全部通過；直接使用正式版面輔助程式的非視窗 C++ 測試有五項通過。呢啲只係來源及輔助程式證據，唔代表原生畫面已驗證。今次冇完整編譯或啟動程式；最低客戶區大小、鍵盤操作、三種語言模式、兩種主題及四種顯示比例仍然要由原生畫面驗證。預設材料列及結果表格另有獨立修改單元。
+
+## Preset rows and advice
+
+The single-extruder selector now wraps each complete slot row, preserving its radio, checkbox, combo-box index and event bindings as one unit. Both containing panels expand so the wrapper receives actual available width. Multi-extruder row order is unchanged. The advice card expands, measures its client width minus its existing 20-DIP side padding, and refreshes the page and scroll host through the same non-recursive helper. Its printing-parameter groups wrap whole.
+
+`tests/calibration_presets_layout.test.mjs`: previous source has one pass and two failures; current source passes all three. The identity test compares the complete slot constructor body with only the two exact layout substitutions normalized, and rejects an altered extruder index. The production width/state helper remains covered by the five-case C++ fixture. Native rendering remains unverified.
+
+## 預設材料列及提示
+
+單噴嘴選材區以完整材料列換行，每列的單選按鈕、核取方塊、選單索引及事件綁定一齊保留。兩層容器擴展至可用闊度；多噴嘴列次序不變。提示卡按自身闊度扣除原有左右各 20 DIP 邊距量度文字，再透過相同的非遞迴輔助程式更新頁面及捲動範圍。打印參數亦以完整組別換行。
+
+舊來源有一項通過、兩項失敗，現時三項全部通過。索引檢查比較整段材料列建立程序，只正規化兩個指定版面改動，並確認改錯噴嘴索引會被發現。原生畫面仍未驗證。

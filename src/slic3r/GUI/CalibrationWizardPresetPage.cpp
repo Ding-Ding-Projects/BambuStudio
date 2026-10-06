@@ -1,3 +1,5 @@
+#include <wx/wrapsizer.h>
+#include <wx/scrolwin.h>
 #include "Widgets/MD3Tokens.hpp"
 #include "Widgets/StateColor.hpp"
 #include <regex>
@@ -432,23 +434,24 @@ CaliPresetTipsPanel::CaliPresetTipsPanel(
     create_panel(this);
 
     this->SetSizer(m_top_sizer);
-    m_top_sizer->Fit(this);
+    Bind(wxEVT_SIZE, [this](wxSizeEvent &event) { event.Skip(); queue_tips_reflow(); });
+    Bind(wxEVT_SHOW, [this](wxShowEvent &event) { event.Skip(); if (event.IsShown()) queue_tips_reflow(); });
+    Bind(wxEVT_DPI_CHANGED, [this](wxDPIChangedEvent &event) { event.Skip(); queue_tips_reflow(); });
+    queue_tips_reflow();
 }
 
 void CaliPresetTipsPanel::create_panel(wxWindow* parent)
 {
     m_top_sizer->AddSpacer(FromDIP(10));
 
-    auto preset_panel_tips = new Label(parent, _L("A test model will be printed. Please clear the build plate and place it back to the hot bed before calibration."));
-    preset_panel_tips->SetFont(Label::Body_14);
-    preset_panel_tips->Wrap(CALIBRATION_TEXT_MAX_LENGTH * 1.5f);
-    m_top_sizer->Add(preset_panel_tips, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(20));
+    m_tips_text = new Label(parent, _L("A test model will be printed. Please clear the build plate and place it back to the hot bed before calibration."));
+    m_tips_text->SetFont(Label::Body_14);
+    m_tips_text->SetMinSize(wxSize(0, -1));
+    m_top_sizer->Add(m_tips_text, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(20));
 
     m_top_sizer->AddSpacer(FromDIP(10));
 
-    auto info_sizer = new wxFlexGridSizer(0, 3, 0, FromDIP(10));
-    info_sizer->SetFlexibleDirection(wxBOTH);
-    info_sizer->SetNonFlexibleGrowMode(wxFLEX_GROWMODE_SPECIFIED);
+    auto info_sizer = new wxWrapSizer(wxHORIZONTAL);
 
     auto nozzle_temp_sizer = new wxBoxSizer(wxVERTICAL);
     auto nozzle_temp_text = new Label(parent, _L("Nozzle temperature"));
@@ -493,6 +496,32 @@ void CaliPresetTipsPanel::create_panel(wxWindow* parent)
     m_top_sizer->Add(info_sizer, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(20));
 
     m_top_sizer->AddSpacer(FromDIP(10));
+}
+
+void CaliPresetTipsPanel::queue_tips_reflow()
+{
+    if (!m_tips_reflow.request()) return;
+    CallAfter([this]() {
+        const int width = CalibrationLayout::content_width(GetClientSize().x, FromDIP(20));
+        {
+            CalibrationLayout::ReflowPass pass(m_tips_reflow);
+            if (width == 0 || !IsShown()) return;
+            m_tips_text->Wrap(width);
+            const int height = m_tips_text->GetBestSize().y;
+            if (!CalibrationLayout::needs_height_update(m_tips_text->GetMinSize().y, height)) return;
+            m_tips_text->SetMinSize(wxSize(0, height));
+            Layout();
+            // Keep the page and its outer scroll host aware of the new height.
+            if (auto *page = GetParent()) {
+                page->Layout();
+                if (auto *scroll = dynamic_cast<wxScrolledWindow *>(page->GetParent())) {
+                    scroll->Layout();
+                    scroll->FitInside();
+                }
+            }
+        }
+        if (CalibrationLayout::content_width(GetClientSize().x, FromDIP(20)) != width) queue_tips_reflow();
+    });
 }
 
 void CaliPresetTipsPanel::set_params(int nozzle_temp, int bed_temp, float max_volumetric)
@@ -987,7 +1016,7 @@ void CalibrationPresetPage::create_filament_list_panel(wxWindow* parent)
     // set default selelected
     m_filament_comboBox_list[0]->GetRadioBox()->SetValue(true);
 
-    panel_sizer->Add(m_single_ams_items_panel, 0);
+    panel_sizer->Add(m_single_ams_items_panel, 0, wxEXPAND);
 
     parent->SetSizer(panel_sizer);
     panel_sizer->Fit(parent);
@@ -1074,7 +1103,7 @@ wxSizer* CalibrationPresetPage::create_ams_items_sizer(wxPanel* ams_preview_pane
 wxSizer* CalibrationPresetPage::create_slot_items_sizer(wxPanel* slot_items_panel, FilamentComboBoxList& filament_comboBox_list, ExtruderRole extuder_role){
     wxSizer* slot_ams_items_sizer;
     if(extuder_role == ExtruderRole::SINGLE_EXTRUDER){
-        slot_ams_items_sizer = new wxFlexGridSizer(2, 2, FromDIP(10), CALIBRATION_FGSIZER_HGAP);
+        slot_ams_items_sizer = new wxWrapSizer(wxHORIZONTAL);
     }else if(extuder_role == ExtruderRole::MAIN_EXTRUDER || extuder_role == ExtruderRole::DEPUTY_EXTRUDER){
         slot_ams_items_sizer = new wxBoxSizer(wxVERTICAL);
     }
@@ -1117,7 +1146,7 @@ wxSizer* CalibrationPresetPage::create_slot_items_sizer(wxPanel* slot_items_pane
         filament_comboBox_sizer->Add(radio_btn, 0, wxALIGN_CENTER);
         filament_comboBox_sizer->Add(check_box, 0, wxALIGN_CENTER | wxRIGHT, FromDIP(8));
         filament_comboBox_sizer->Add(fcb, 0, wxALIGN_CENTER);
-        slot_ams_items_sizer->Add(filament_comboBox_sizer, 0);
+        slot_ams_items_sizer->Add(filament_comboBox_sizer, 0, wxRIGHT | wxBOTTOM, FromDIP(10));
 
         fcb->Bind(EVT_CALI_TRAY_CHANGED, &CalibrationPresetPage::on_select_tray, this);
 
@@ -1303,7 +1332,7 @@ void CalibrationPresetPage::create_page(wxWindow* parent)
     m_statictext_printer_msg->Hide();
 
     m_top_sizer->Add(m_selection_panel, 0);
-    m_top_sizer->Add(m_filament_list_panel, 0);
+    m_top_sizer->Add(m_filament_list_panel, 0, wxEXPAND);
     m_top_sizer->Add(m_multi_exutrder_filament_list_panel, 0);
     if (m_pa_cali_method_combox)
         m_top_sizer->Add(m_pa_cali_method_combox, 0);
@@ -1311,7 +1340,7 @@ void CalibrationPresetPage::create_page(wxWindow* parent)
     m_top_sizer->AddSpacer(FromDIP(15));
     m_top_sizer->Add(m_warning_panel, 0);
     m_top_sizer->Add(m_error_panel, 0);
-    m_top_sizer->Add(m_tips_panel, 0);
+    m_top_sizer->Add(m_tips_panel, 0, wxEXPAND);
     m_top_sizer->AddSpacer(PRESET_GAP);
     m_top_sizer->Add(m_sending_panel, 0, wxALIGN_CENTER);
     m_top_sizer->Add(m_statictext_printer_msg, 0, wxALIGN_CENTER_HORIZONTAL, 0);

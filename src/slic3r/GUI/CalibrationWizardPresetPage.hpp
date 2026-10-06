@@ -110,6 +110,9 @@ public:
     void set_params(int nozzle_temp, int bed_temp, float max_volumetric);
     void get_params(int& nozzle_temp, int& bed_temp, float& max_volumetric);
 protected:
+    void queue_tips_reflow();
+    Label* m_tips_text = nullptr;
+    CalibrationLayout::ReflowState m_tips_reflow;
     wxBoxSizer*     m_top_sizer;
     TextInput*      m_nozzle_temp;
     Label*   m_bed_temp;
