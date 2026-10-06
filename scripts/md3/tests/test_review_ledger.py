@@ -2,6 +2,7 @@
 from copy import deepcopy
 from datetime import timedelta
 import importlib.util
+import io
 import json
 from pathlib import Path
 import subprocess
@@ -214,6 +215,87 @@ class LedgerTests(unittest.TestCase):
         self.assertNotIn(str(self.root), result.stdout + result.stderr)
         self.assertEqual(json.loads(result.stderr)["runtimeAcceptance"], "unverified")
         self.assertFalse((self.root / "unused").exists())
+
+    def test_strict_json_rejects_nested_duplicates_and_nonfinite_numbers(self):
+        for raw in ('{"schemaVersion":0,"schemaVersion":1}',
+                    '{"privacy":{"status":"unreviewed","status":"reviewed-safe"}}',
+                    '{"value":NaN}', '{"value":Infinity}', '{"value":-Infinity}',
+                    '{"nested":[1e999]}'):
+            with self.subTest(raw=raw), self.assertRaises(ValueError):
+                ledger.strict_json(raw)
+        self.assertEqual(ledger.strict_json('{"value":1.25,"nested":[2]}'),
+                         {"value": 1.25, "nested": [2]})
+
+    def test_every_referenced_json_ingress_is_strict(self):
+        companion = self.build.payload / "automation/build-identity.json"
+        shell, post = self.root / "shell.jsonl", self.root / "post.jsonl"
+        originals = {path: path.read_text() for path in
+                     (companion, shell, post, self.build_path, self.review_path)}
+        document = deepcopy(self.document)
+        for ingress in ("build", "session", "companion", "initial-probe", "step-probe"):
+            for fragment in ('"duplicate":0,"duplicate":1,', '"nonfinite":NaN,', '"overflow":1e999,'):
+                with self.subTest(ingress=ingress, fragment=fragment):
+                    for path, content in originals.items():
+                        path.write_text(content)
+                    self.document = deepcopy(document)
+                    build = deepcopy(self.build.receipt)
+                    review = deepcopy(self.review)
+                    corrupt = lambda raw: "{" + fragment + raw[1:]
+                    if ingress == "companion":
+                        companion.write_text(corrupt(originals[companion]))
+                        build["payload"]["files"]["automation/build-identity.json"] = ledger.native.digest(companion)
+                    if ingress == "initial-probe":
+                        shell.write_text(corrupt(originals[shell]))
+                        review["probe"]["sha256"] = ledger.native.digest(shell)
+                    if ingress == "step-probe":
+                        post.write_text(corrupt(originals[post]))
+                        self.document["steps"][0]["post"]["probe"] = self.ref(post)
+                    build_text = json.dumps(build)
+                    self.build_path.write_text(corrupt(build_text) if ingress == "build" else build_text)
+                    self.document["buildReceipt"] = self.ref(self.build_path)
+                    review["buildReceiptSha256"] = self.document["buildReceipt"]["sha256"]
+                    self.document["steps"][0]["buildReceiptSha256"] = review["buildReceiptSha256"]
+                    review_text = json.dumps(review)
+                    self.review_path.write_text(corrupt(review_text) if ingress == "session" else review_text)
+                    self.document["session"]["review"] = self.ref(self.review_path)
+                    with self.assertRaisesRegex(ValueError, "Duplicate JSON key|Nonfinite JSON"):
+                        self.validate()
+
+    def test_read_is_bounded_even_if_file_grows_after_stat(self):
+        class TrackingStream(io.BytesIO):
+            def read(self, size=-1):
+                self.requested = size
+                return super().read(size)
+        stream = TrackingStream(b'{"a":1}' + b" " * 100)
+        with patch.object(ledger.native, "regular"), patch.object(Path, "open", return_value=stream):
+            with self.assertRaisesRegex(ValueError, "exceeds read bound"):
+                ledger.read_json(self.root / "grown.json", limit=8)
+        self.assertEqual(stream.requested, 9)
+        valid = TrackingStream(b'{"a":1}')
+        with patch.object(ledger.native, "regular"), patch.object(Path, "open", return_value=valid):
+            self.assertEqual(ledger.read_json(self.root / "bounded.json", limit=8), {"a": 1})
+        self.assertEqual(valid.requested, 9)
+
+    def test_initial_probe_and_step_probe_have_same_read_bound(self):
+        with patch.object(ledger, "bounded_read", wraps=ledger.bounded_read) as reads:
+            self.validate()
+        observed = {call.args[0]: call.args[1] for call in reads.call_args_list}
+        for name in ("shell.jsonl", "pre.jsonl", "post.jsonl"):
+            self.assertEqual(observed[self.root / name], 16 * 1024 * 1024)
+        path = self.root / "shell.jsonl"
+        with path.open("wb") as stream:
+            stream.truncate(ledger.PROBE_LIMIT + 1)
+        self.review["probe"]["sha256"] = ledger.native.digest(path)
+        self.review_path.write_text(json.dumps(self.review))
+        self.document["session"]["review"] = self.ref(self.review_path)
+        with self.assertRaisesRegex(ValueError, "exceeds size bound"):
+            self.validate()
+
+    def test_input_reader_rejects_duplicate_keys_before_validation(self):
+        path = self.root / "observations.json"
+        path.write_text('{"schemaVersion":0,' + json.dumps(self.document)[1:])
+        with self.assertRaisesRegex(ValueError, "Duplicate JSON key"):
+            ledger.read_json(path, ledger.PROBE_LIMIT)
 
 
 if __name__ == "__main__":

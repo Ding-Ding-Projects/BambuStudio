@@ -45,6 +45,17 @@ absolute regular files; symbolic links and reparse points are rejected. A file
 reference has exactly `path` and lowercase `sha256`. JSON input is bounded to 16 MiB,
 individual probes to 16 MiB, and PNGs to 64 MiB.
 
+Every JSON and NDJSON ingress rejects duplicate object keys at every nesting level,
+nonstandard `NaN`/`Infinity` constants and numeric exponent overflow to infinity.
+This includes the input ledger, build/session receipts, nested automation build
+identity and every initial/per-step probe. JSON readers request at most the limit
+plus one byte and reject that extra byte before decoding, so an earlier size check
+cannot authorize an unbounded read if a file grows. Build and companion JSON use
+1 MiB; input/session JSON and **all probes, including `shell.jsonl`, use 16 MiB**.
+The ledger's privately loaded native validator uses the same strict reader for its
+nested companion read; the shared launcher source is unchanged. Output serialization
+also rejects nonfinite values. Hash/size checks and final revalidation remain required.
+
 | Record | Required fields and meaning |
 | --- | --- |
 | Root | `schemaVersion: 1`, `kind: "local-native-interactions"`, `producer`, `sourceCommit`, `buildReceipt`, `session`, `steps` |

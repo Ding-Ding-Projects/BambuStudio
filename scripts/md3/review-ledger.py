@@ -6,6 +6,7 @@ import argparse
 from datetime import datetime, timezone
 import importlib.util
 import json
+import math
 from pathlib import Path
 import sys
 import tempfile
@@ -15,6 +16,56 @@ spec = importlib.util.spec_from_file_location("native_review", HERE / "local-nat
 native = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(native)
 require = native.require
+JSON_LIMIT = 1024 * 1024
+PROBE_LIMIT = 16 * 1024 * 1024
+
+
+def unique_object(pairs):
+    result = {}
+    for key, value in pairs:
+        require(key not in result, "Duplicate JSON key")
+        result[key] = value
+    return result
+
+
+def finite_float(value):
+    result = float(value)
+    require(math.isfinite(result), "Nonfinite JSON number")
+    return result
+
+
+def reject_constant(value):
+    raise ValueError("Nonfinite JSON constant")
+
+
+def strict_json(value):
+    return json.loads(value, object_pairs_hook=unique_object,
+                      parse_float=finite_float, parse_constant=reject_constant)
+
+
+def bounded_read(path, limit):
+    native.regular(path)
+    require(type(limit) is int and 0 < limit <= PROBE_LIMIT, "Invalid JSON read bound")
+    # The read itself is bounded. A prior stat cannot constrain a file that
+    # grows or is replaced after its metadata was inspected.
+    with path.open("rb") as stream:
+        raw = stream.read(limit + 1)
+    require(len(raw) <= limit, "JSON evidence exceeds read bound")
+    return raw.decode("utf-8-sig")
+
+
+def read_json(path, limit=JSON_LIMIT):
+    return strict_json(bounded_read(path, limit))
+
+
+def read_probe(path):
+    return [strict_json(line) for line in bounded_read(path, PROBE_LIMIT).splitlines()]
+
+
+# This module owns its separately loaded native validator instance. Route its
+# nested build-identity.json read through the same strict bounded reader; the
+# shared launcher source and other imports are not modified.
+native.read_json = read_json
 
 
 def fields(value, keys):
@@ -60,8 +111,8 @@ def snapshot(value, session, retained, earliest, now):
     fields(value["tuple"]["client"], "w h")
     require(all(type(value["tuple"]["client"][k]) is int for k in ("w", "h")), "Invalid client dimensions")
     require(value["tuple"]["motion"] in ("normal", "reduced"), "Observed motion policy is missing")
-    probe_path = reference(value["probe"], retained, session["root"], 16 * 1024 * 1024)
-    rows = [json.loads(line) for line in probe_path.read_text(encoding="utf-8").splitlines()]
+    probe_path = reference(value["probe"], retained, session["root"], PROBE_LIMIT)
+    rows = read_probe(probe_path)
     # Reuse the native version-1 initial profile contract. Other matrix tuples
     # need a separately reviewed native validator, not a looser ledger claim.
     geometry = native.validate_probe(rows, session["pid"], hwnd, session["id"])
@@ -91,7 +142,7 @@ def validate(document, now=None):
             document["kind"] == "local-native-interactions", "Unsupported interaction ledger")
     retained = {}
     build_path = reference(document["buildReceipt"], retained, limit=1024 * 1024)
-    build = native.read_json(build_path)
+    build = read_json(build_path)
     producer = Path(document["producer"])
     require(producer.is_absolute(), "Producer path must be absolute")
     native.validate_receipt(build, producer, document["sourceCommit"], now)
@@ -101,7 +152,7 @@ def validate(document, now=None):
     require(root.parent.resolve() == Path(tempfile.gettempdir()).resolve() and
             root.name.startswith("bambu-local-review-") and review_path.name == "review.json" and
             document["session"]["id"] == root.name, "Not an owned local review session")
-    review = native.read_json(review_path, 16 * 1024 * 1024)
+    review = read_json(review_path, PROBE_LIMIT)
     require(type(review.get("schemaVersion")) is int and review["schemaVersion"] == 1 and
             review.get("kind") == "local-initial-shell" and review.get("desktop") == "visible" and
             review.get("sourceCommit") == document["sourceCommit"] and
@@ -115,8 +166,8 @@ def validate(document, now=None):
             launch["shell"]["class"] == "wxWindowNR", "Owned native session was not observed")
     session = {"root": root, "id": root.name, "pid": launch["pid"]}
     require(review["probe"].get("status") == "received", "Initial native probe is missing")
-    initial_probe = reference({"path": str(root / "shell.jsonl"), "sha256": review["probe"]["sha256"]}, retained, root)
-    native.validate_probe([json.loads(line) for line in initial_probe.read_text(encoding="utf-8").splitlines()],
+    initial_probe = reference({"path": str(root / "shell.jsonl"), "sha256": review["probe"]["sha256"]}, retained, root, PROBE_LIMIT)
+    native.validate_probe(read_probe(initial_probe),
                           session["pid"], launch["shell"]["hwnd"], session["id"])
     steps = document["steps"]
     require(isinstance(steps, list) and len(steps) <= 1000, "Invalid step inventory")
@@ -163,7 +214,7 @@ def save(report, evidence_root):
     require(not any((parent / ".git").exists() for parent in (evidence_root.parent, *evidence_root.parent.parents)),
             "Output must remain outside repositories")
     evidence_root.mkdir(exist_ok=False)
-    (evidence_root / "ledger.json").write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+    (evidence_root / "ledger.json").write_text(json.dumps(report, ensure_ascii=False, indent=2, allow_nan=False), encoding="utf-8")
 
 
 def main():
@@ -172,7 +223,7 @@ def main():
     parser.add_argument("--evidence-root", required=True, type=Path,
                         help="New absolute bambu-ledger-* directory directly under the OS temp root")
     args = parser.parse_args()
-    report = validate(native.read_json(args.input, 16 * 1024 * 1024))
+    report = validate(read_json(args.input, PROBE_LIMIT))
     save(report, args.evidence_root)
     # No paths, profile data, semantic content or raw exception text on stdout.
     print(json.dumps({key: report[key] for key in ("status", "observedSteps", "runtimeAcceptance", "publication")}))

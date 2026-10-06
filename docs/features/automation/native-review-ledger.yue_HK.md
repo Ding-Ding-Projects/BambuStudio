@@ -37,6 +37,15 @@ $EvidenceRoot = Join-Path ([IO.Path]::GetTempPath()) ('bambu-ledger-' + [guid]::
 檔案，唔接受符號連結或者重新解析點。JSON 上限 16 MiB、探針每份 16 MiB、PNG 每張
 64 MiB。
 
+每個 JSON 同 NDJSON 輸入口都會拒絕任何層級嘅重複物件鍵、非標準 `NaN`／
+`Infinity` 常數，同指數溢位成無限大嘅數值，包括輸入紀錄、建置及工作階段收據、
+automation 建置身分，同初始及每步探針。JSON 讀取本身最多只要求上限加一個
+位元組，超額就喺解碼之前拒絕，唔會因為早前檔案大小檢查通過而無限讀取增長中嘅
+檔案。建置及 companion JSON 上限 1 MiB；輸入、工作階段 JSON 同**所有探針，
+包括 `shell.jsonl`，上限都係 16 MiB**。紀錄工具獨立載入嘅原生驗證器會用同一
+嚴格讀取器處理內層 companion；共用啟動器原始碼冇改動。輸出序列化亦會拒絕
+非有限數值。雜湊、大小檢查同最後重新核對仍然必須通過。
+
 | 紀錄 | 必要欄位 |
 | --- | --- |
 | 根物件 | `schemaVersion: 1`、`kind: "local-native-interactions"`、`producer`、`sourceCommit`、`buildReceipt`、`session`、`steps` |
