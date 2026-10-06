@@ -283,6 +283,7 @@ class NativeSession:
             "ResumeThread": ([w.HANDLE], w.DWORD), "TerminateProcess": ([w.HANDLE, w.UINT], w.BOOL),
             "TerminateJobObject": ([w.HANDLE, w.UINT], w.BOOL),
             "WaitForSingleObject": ([w.HANDLE, w.DWORD], w.DWORD),
+            "GetExitCodeProcess": ([w.HANDLE, ctypes.POINTER(w.DWORD)], w.BOOL),
             "QueryInformationJobObject": ([w.HANDLE, ctypes.c_int, ctypes.c_void_p, w.DWORD, ctypes.c_void_p], w.BOOL),
             "CloseHandle": ([w.HANDLE], w.BOOL)}
         for name, (arguments, result) in signatures.items():
@@ -351,7 +352,29 @@ class NativeSession:
             raise LaunchFailure(str(exc), teardown) from exc
 
     def alive(self):
-        return self.k.WaitForSingleObject(self.process, 0) == 258
+        state = self.k.WaitForSingleObject(self.process, 0)
+        require(state in (0, 258), "Owned process state unavailable")
+        return state == 258
+
+    def observe_target_exit(self):
+        """Observe the owned target without waiting or terminating it."""
+        result = {"status": "unavailable", "observedBeforeTeardown": True,
+                  "observedAtUtc": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")}
+        try:
+            require(self.process, "Owned process handle unavailable")
+            state = self.k.WaitForSingleObject(self.process, 0)
+            if state == 258:  # WAIT_TIMEOUT: do not interpret STILL_ACTIVE as an exit.
+                result["status"] = "active"
+                return result
+            require(state == 0, "Owned process state unavailable")
+            code = wt.DWORD()
+            require(self.k.GetExitCodeProcess(self.process, ctypes.byref(code)),
+                    "Owned process exit code unavailable")
+            # A signaled process may really have returned 259. Keep its DWORD intact.
+            result.update(status="exited", exitCode=code.value, exitCodeHex=f"0x{code.value:08X}")
+        except Exception as exc:
+            result["reason"] = str(exc)
+        return result
 
     def identity(self, hwnd):
         self.u.GetWindowThreadProcessId.argtypes = [wt.HWND, ctypes.POINTER(wt.DWORD)]
@@ -393,6 +416,7 @@ def inspect_shell(args, receipt, root, exe, session_factory=NativeSession, call=
     report = {"schemaVersion": 1, "kind": "local-initial-shell", "sourceCommit": args.source_commit,
         "buildReceiptSha256": digest(args.build_receipt), "driverSha256": digest(Path(__file__).resolve()),
         "desktop": "visible", "launch": {"status": "not_attempted"}, "probe": {"status": "not_attempted"},
+        "targetExit": {"status": "not_observed"},
         "screenshot": {"status": "not_attempted"}, "teardown": "not_attempted", "runtimeAcceptance": "unverified"}
     session = None
     try:
@@ -448,6 +472,13 @@ def inspect_shell(args, receipt, root, exe, session_factory=NativeSession, call=
             report["teardown"] = exc.teardown
     finally:
         if session is not None:
+            # Capture the target result before TerminateJobObject supplies its own code.
+            # Observation failure must never prevent owned teardown.
+            try:
+                report["targetExit"] = session.observe_target_exit()
+            except Exception:
+                report["targetExit"] = {"status": "unavailable", "observedBeforeTeardown": True,
+                                        "reason": "Target observation failed before teardown"}
             try:
                 report["teardown"] = "verified" if session.close() else "unverified"
             except Exception:
@@ -520,6 +551,7 @@ def dispatch_worker(args, root, call=cheap):
         (root / "stop").write_text("stop", encoding="ascii")
         report = {"schemaVersion": 1, "kind": "local-initial-shell", "sourceCommit": args.source_commit,
             "launch": {"status": "unverified"}, "probe": {"status": "unverified"},
+            "targetExit": {"status": "unavailable", "reason": "Worker target observation unavailable"},
             "screenshot": {"status": "unverified"}, "teardown": "unverified",
             "runtimeAcceptance": "unverified", "failure": "Worker interrupted, timed out or lacked valid evidence"}
         (root / "wrapper-failure.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
@@ -551,6 +583,7 @@ def main():
     root = Path(tempfile.mkdtemp(prefix="bambu-local-review-"))
     report = dispatch_worker(args, root)
     print(json.dumps({"evidenceDirectory": str(root), "launch": report["launch"]["status"],
+        "targetExit": report["targetExit"],
         "probe": report["probe"]["status"], "screenshot": report["screenshot"]["status"], "teardown": report["teardown"]}))
     return 0 if "failure" not in report and report["teardown"] == "verified" and report.get("workerExitCode") == 0 else 1
 
