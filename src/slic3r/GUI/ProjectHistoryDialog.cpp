@@ -840,13 +840,11 @@ void ProjectHistoryDialog::update_responsive_layout()
     // wxStaticText::Wrap() mutates its rendered label. Restore the localized
     // source before every wrap so repeated resizes do not accumulate breaks.
     m_subtitle_label->SetLabel(
-        _L("Browse project, settings, draft and printer history saved on this device. No history is uploaded."),
-        LB_AUTO_WRAP | wxST_NO_AUTORESIZE);
+        _L("Browse project, settings, draft and printer history saved on this device. No history is uploaded."));
     m_subtitle_label->SetMinSize(wxSize(0, -1));
     m_subtitle_label->Wrap(content_width);
     m_safety_label->SetLabel(
-        _L("Restoring adds a new version. It never overwrites the project file or rewinds Git history."),
-        LB_AUTO_WRAP | wxST_NO_AUTORESIZE);
+        _L("Restoring adds a new version. It never overwrites the project file or rewinds Git history."));
     m_safety_label->SetMinSize(wxSize(0, -1));
     m_safety_label->Wrap(content_width);
 

@@ -350,6 +350,7 @@ wxPanel *CommandPalette::make_row(const Entry &entry, int index)
     auto *sizer = new wxBoxSizer(wxHORIZONTAL);
 
     auto *icon = new wxPanel(row, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(36), FromDIP(36)));
+    m_icon_plates[row] = icon;
     icon->SetBackgroundColour(base);
     const std::uint32_t glyph = entry.glyph;
     icon->Bind(wxEVT_PAINT, [this, icon, glyph, index](wxPaintEvent &) {
@@ -455,6 +456,7 @@ void CommandPalette::rebuild_rows()
     const bool multiline  = m_search->IsMultiline();
 
     m_list->Freeze();
+    m_icon_plates.clear();
     m_list->GetSizer()->Clear(true);
     m_rows.clear();
     m_visible.clear();
@@ -491,13 +493,15 @@ void CommandPalette::select_row(int index)
     const wxColour base = StateColor::semantic(MD3::Role::SurfaceContainerLowest);
     const wxColour sel  = StateColor::semantic(MD3::Role::PrimaryContainer);
     // Match direct text/icon plates to the row, leaving embedded live controls in their own states.
-    auto paint_row = [](wxPanel *row, const wxColour &background, bool selected) {
+    auto paint_row = [this](wxPanel *row, const wxColour &background, bool selected) {
+        const auto icon = m_icon_plates.find(row);
+        wxPanel *icon_plate = icon == m_icon_plates.end() ? nullptr : icon->second;
         row->SetBackgroundColour(background);
         for (wxWindow *child : row->GetChildren()) {
             if (auto *label = dynamic_cast<Label *>(child)) {
                 label->SetBackgroundColour(background);
                 label->SetForegroundColour(StateColor::semantic(selected ? MD3::Role::OnPrimaryContainer : (label->GetFont().GetWeight() >= wxFONTWEIGHT_BOLD ? MD3::Role::OnSurface : MD3::Role::OnSurfaceVariant)));
-            } else if (child->GetClassInfo() == wxCLASSINFO(wxPanel)) {
+            } else if (child == icon_plate) {
                 child->SetBackgroundColour(background);
             }
         }

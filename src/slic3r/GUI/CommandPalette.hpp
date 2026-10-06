@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <functional>
+#include <map>
 #include <vector>
 
 #include <wx/dialog.h>
@@ -87,6 +88,7 @@ private:
     std::vector<Entry>  m_entries;
     std::vector<int>    m_visible;   // entry indices currently shown
     std::vector<wxPanel *> m_rows;   // row panels parallel to m_visible
+    std::map<wxPanel *, wxPanel *> m_icon_plates; // decorative plates only; excludes live accent swatches
     int                 m_selected { -1 };
     PaletteIndex::PaletteSize m_size { PaletteIndex::PaletteSize::Card };
     MD3TransientEntrance m_entrance;
