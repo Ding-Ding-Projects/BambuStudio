@@ -2,6 +2,8 @@
 
 ## Build bootstrap repair, 6 October 2026
 
+- [x] Stream native repository-command stdout into the transcript without weakening failures, with four echo/exit/exception fixture assertions.
+
 - [x] Make OpenCV partial patch sequences repeat-safe using forward/reverse proof, with nine Git/CMake fixture assertions.
 
 - [x] Compare application cache prefixes as exact values and bind configuration reuse to source/toolchain/dependency content, with fourteen fixture/stub assertions.

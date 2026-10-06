@@ -362,7 +362,9 @@ function Invoke-RepositoryCommand {
     )
     Write-BuildLog $Label
     if ($Plan) { return }
-    & $Command
+    # Route native stdout through the PowerShell host so Start-Transcript
+    # records it. Keep stderr handling and terminating exceptions unchanged.
+    & $Command | Out-Host
     Assert-LastExitCode $Label
 }
 

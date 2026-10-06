@@ -2,6 +2,13 @@
 
 ## Build bootstrap repair, 6 October 2026
 
+The producer command wrapper now streams native stdout through `Out-Host`.
+A Windows PowerShell 5.1 fixture reproduced console text missing from the old
+transcript, then verified the repaired transcript, exact native exit 7, and
+terminating PowerShell exception propagation. Four focused assertions pass.
+Stderr handling remains unchanged. This repairs future diagnostic capture; it
+does not retroactively prove wx's underlying baseline terminal cause.
+
 The baseline root build exited 1 at `2026-10-06T06:49:14Z`, after wx completed
 its install/done stamps. The transcript's terminal diagnostic is wx's umbrella
 MSB8066 custom-build code -1; the underlying diagnostic is not established by

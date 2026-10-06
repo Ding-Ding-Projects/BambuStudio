@@ -1,6 +1,12 @@
 # Isolated delivery builds
 
 The supported commands remain `build.bat /s` and `build-installer.bat /s`.
+Repository commands stream native stdout through `Out-Host` so the PowerShell
+transcript records their diagnostics. Native nonzero exit codes and terminating
+PowerShell exceptions retain their existing failure behavior; stderr is not
+suppressed or redirected. Four echo/exit/exception fixture assertions reproduce
+the old missing transcript text and verify the repaired output route. Missing
+historical output does not establish a production failure's underlying cause.
 OpenCV applies its four source patches independently through
 `cmake/modules/ApplyPatchesIdempotently.cmake`. A forward check permits an apply;
 a reverse check proves a patch already applied. Neither state stops with both
