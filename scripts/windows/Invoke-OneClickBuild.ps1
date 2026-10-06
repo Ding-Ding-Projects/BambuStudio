@@ -749,10 +749,10 @@ function Get-PinnedSourceCommit {
     $commit = (& git -C $script:RepositoryRoot rev-parse HEAD).Trim()
     Assert-LastExitCode 'Reading the source commit'
     if ($commit -notmatch '^[0-9a-fA-F]{40}$') { throw 'The build source commit is invalid.' }
-    $changes = @(& git -C $script:RepositoryRoot status --porcelain --untracked-files=no)
+    $changes = @(& git -C $script:RepositoryRoot status --porcelain --untracked-files=normal)
     Assert-LastExitCode 'Checking the build source state'
     if ($changes.Count -gt 0) {
-        throw 'The build requires clean tracked source so its payload can be bound to the pinned commit. Preserve source changes before building.'
+        throw 'The build requires clean source, including nonignored untracked files, so its payload can be bound to the pinned commit. Preserve source changes before building.'
     }
     return $commit.ToLowerInvariant()
 }
@@ -844,6 +844,7 @@ function Invoke-OneClickBuild {
         }
 
         if ($BuildOnly) {
+            Assert-PinnedBuildSource -SourceCommit $sourceCommit
             Write-BuildLog "Build-only workflow completed; runnable payload: $application"
             return
         }

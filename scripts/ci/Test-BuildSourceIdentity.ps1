@@ -19,11 +19,12 @@ $script:gitExit = 0
 function git { $global:LASTEXITCODE = $script:gitExit; if ($args -contains 'rev-parse') { return $script:head }; return $script:changes }
 Assert-True ((Get-PinnedSourceCommit) -eq ('a' * 40)) 'Clean source must produce its exact commit.'
 Assert-PinnedBuildSource -SourceCommit ('a' * 40)
-foreach ($case in @('changed-head', 'dirty', 'invalid-head', 'git-failed')) {
+foreach ($case in @('changed-head', 'dirty', 'untracked', 'invalid-head', 'git-failed')) {
     $script:head = 'a' * 40; $script:changes = @(); $script:gitExit = 0
     switch ($case) {
         'changed-head' { $script:head = 'b' * 40 }
         'dirty' { $script:changes = @(' M src/changed.cpp') }
+        'untracked' { $script:changes = @('?? resources/new-file.dat') }
         'invalid-head' { $script:head = 'invalid' }
         'git-failed' { $script:gitExit = 7 }
     }
@@ -35,4 +36,6 @@ $producer = $ast.Find({ param($node) $node -is [Management.Automation.Language.F
 Assert-True ($producer.IndexOf('$sourceCommit = Get-PinnedSourceCommit') -lt $producer.IndexOf('Invoke-DependencyBuild -Toolchain')) 'Source identity must be pinned before compilation.'
 Assert-True ($producer.Contains('Assert-PinnedBuildSource -SourceCommit $sourceCommit')) 'Packaging must assert the pinned source.'
 Assert-True (-not $producer.Contains('Tracked working-tree changes are included')) 'Dirty source must fail rather than merely warn.'
-Write-Host 'Pinned build-source checks passed (8 assertions; mocked Git only).'
+Assert-True ($source.Contains('--untracked-files=normal')) 'Nonignored untracked source must participate in the identity check.'
+Assert-True ($producer -match 'if \(\$BuildOnly\)\s*\{\s*Assert-PinnedBuildSource -SourceCommit \$sourceCommit') 'Build-only success must recheck source after payload staging.'
+Write-Host 'Pinned build-source checks passed (11 assertions; mocked Git only).'

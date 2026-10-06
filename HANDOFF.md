@@ -5,7 +5,8 @@
 The source producer now pins a clean tracked `HEAD` before compilation and
 reasserts it after compilation and before and after packaging. A moved commit,
 dirty tracked source, malformed commit, or failed Git read stops the producer.
-Eight focused mocked-Git assertions pass. Real candidate production remains
+Nonignored untracked files also stop production, and build-only success rechecks
+source after renderer/automation staging. Eleven focused mocked-Git assertions pass. Real candidate production remains
 pending; this source check cannot prove that production completed.
 
 Follow-up dependency concurrency diagnosis found two compiler groups with eight
