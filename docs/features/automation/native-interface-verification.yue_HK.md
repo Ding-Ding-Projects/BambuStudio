@@ -6,7 +6,7 @@ review-status: agent-drafted
 
 # 託管原生介面驗證
 
-執行 `37139071425` 傳回空的目標桌面控制代碼，原生代碼係零；未到桌面名稱查詢。下一個有界觀察會用 `THREAD_QUERY_LIMITED_INFORMATION` 開啟已確認的確切執行緒，將所屬程序同已接受的目標 PID 比對，並要求 `GetExitCodeThread` 成功傳回 `STILL_ACTIVE`。所擁有的執行緒控制代碼會一直保持開啟，直至現有桌面查詢完成，再喺 `finally` 關閉。開啟、程序查詢、退出查詢或關閉失敗時，只記錄即時數值原生代碼同固定階段。成功、身分、存活及關閉欄位都係布林值；呢啲觀察唔會新增執行緒 ID、程序 ID 或控制代碼值。桌面必須完全相同，查詢不可用仍然會阻止 `g`。冇重試、目標函式呼叫，亦唔會用父桌面證明代替。現有九項託管案例涵蓋真正輔助程式路徑：控制代碼不可用、擁有者不可用或不符、退出查詢失敗、執行緒已退出、桌面例外、關閉失敗及成功，包括呼叫同清理次序。新增部分已喺驗證器 `75770f71f59358514df9d5af42b38402e538116c` 的託管契約執行 `37139896660` 通過。修改後的診斷 `37139898854` 確認咗確切執行緒擁有權、指定情境下的退出狀態證據及關閉，但仍取得空桌面控制代碼，原生代碼係 0。名稱查詢同繼續執行都未到達。拆除已驗證。冇喺本機執行。進一步歷史套件診斷暫停，等候目前套件的執行證據。
+執行 `37139071425` 傳回空的目標桌面控制代碼，原生代碼係零；未到桌面名稱查詢。下一個有界觀察會用 `THREAD_QUERY_LIMITED_INFORMATION` 開啟已確認的確切執行緒，將所屬程序同已接受的目標 PID 比對，並要求 `GetExitCodeThread` 成功傳回 `STILL_ACTIVE`。所擁有的執行緒控制代碼會一直保持開啟，直至現有桌面查詢完成，再喺 `finally` 關閉。開啟、程序查詢、退出查詢或關閉失敗時，只記錄即時數值原生代碼同固定階段。成功、身分、存活及關閉欄位都係布林值；呢啲觀察唔會新增執行緒 ID、程序 ID 或控制代碼值。桌面必須完全相同，查詢不可用仍然會阻止 `g`。冇重試、目標函式呼叫，亦唔會用父桌面證明代替。現有九項託管案例涵蓋真正輔助程式路徑：控制代碼不可用、擁有者不可用或不符、退出查詢失敗、執行緒已退出、桌面例外、關閉失敗及成功，包括呼叫同清理次序。新增部分已喺託管契約執行 `37139896660` 通過，驗證器係 `75770f71f59358514df9d5af42b38402e538116c`。修改後的診斷 `37139898854` 確認咗確切執行緒擁有權、指定情境下的退出狀態證據及關閉，但仍取得空桌面控制代碼，原生代碼係 0。名稱查詢同繼續執行都未到達。拆除已驗證。冇喺本機執行。進一步歷史套件診斷暫停，等候目前套件的執行證據。
 
 `STILL_ACTIVE`（259）只係指定情境下的退出碼證據：目標仍停喺已確認的偵錯器初始中斷，亦未寫入繼續執行命令。佢唔係一般執行緒存活證明，因為已終止的執行緒亦可以用 259 作為退出碼。`thread_alive` 欄位只記錄呢個情境比較，唔可以取代偵錯器狀態、桌面、擁有權或拆除證明。
 
@@ -54,7 +54,7 @@ review-status: agent-drafted
 
 ### 真正標題 getter 觀察
 
-現有 Preferences 標題 `Label` 有穩定名稱 `personal-vocabulary-title`。當 `BAMBU_AUTOMATION=1` 而現有版面探測已啟用，該具體控制項另外報告 `native_getters` 版本 1。原生程式碼直接喺同一個 `Label` 實例呼叫 `GetLabel()`、`GetLabelText()` 同 `GetUnwrappedLabel()`。只輸出兩個布林值 `getLabelTextEqualsGetLabel` 同 `getUnwrappedLabelEqualsGetLabel`；現有 `label` 欄位本身已經係真正 `GetLabel()` 值。冇用顯示轉接器、UI Automation 名稱或快取 Python 文字代替 getter 呼叫。
+現有 Preferences 標題 `Label` 有穩定名稱 `personal-vocabulary-title`。當 `BAMBU_AUTOMATION=1` 而現有版面探測已啟用，該具體控制項另外報告 `native_getters` 版本 1。原生程式碼直接呼叫 `GetLabel()`、`GetLabelText()` 同 `GetUnwrappedLabel()`，全部喺同一個 `Label` 實例執行。只輸出兩個布林值 `getLabelTextEqualsGetLabel` 同 `getUnwrappedLabelEqualsGetLabel`；現有 `label` 欄位本身已經係真正 `GetLabel()` 值。冇用顯示轉接器、UI Automation 名稱或快取 Python 文字代替 getter 呼叫。
 
 用詞範圍要求恰好一列指定名稱的探測記錄，佢必須同可見無障礙標題有相同正值 HWND 及頂層控制代碼、相符螢幕幾何、原有原生標籤文字，以及兩個精確布林結果。每次接受穩定標題擷取之前同之後，都記錄相符 getter 觀察：基準、第一映射、語法錯誤拒絕、替換、不支援版本拒絕及清除。呢個唔會喺 28 張圖片流程以外加圖。已換行或帶快捷字母標記而唔符合完全相等的標題會令觀察失敗；唔會用空白正規化製造相等。目前短而未換行的英文標題係第一個預定託管組合。其他語言、主題及大小組合仍各自未驗證。
 
@@ -100,11 +100,11 @@ gh workflow run native-interface-runtime.yml --repo Ding-Ding-Projects/BambuStud
 
 建立路徑使用全新私人符號快取，同固定 Microsoft 符號伺服器 `https://msdl.microsoft.com/download/symbols`。CDB 接收 `-sins` 忽略繼承的符號／映像搜尋路徑，同 `-ses` 要求確切符號配對。固定命令檔停用 `SYMOPT_LOAD_ANYTHING`、強制載入 `ntdll.dll` 符號、私人保留 `lmv m ntdll`，再執行現有載入器旗標寫入／讀回。呢個係偵錯器強制模組同 PDB 身分配對，唔係獨立 PDB 雜湊驗證。快取參數唔可以提供第二個伺服器、UNC 共用或符號路徑運算式。唔上傳快取或原始模組路徑。
 
-符號下載同載入共用現有 90 秒觀察期限及 120 秒隔離期限。缺少或不符符號唔會放寬確認：冇輸出載入器旗標讀回，工作程序就絕唔發送 `g`。執行 `37101357236` 確立咗缺少符號的邊界，唔係失敗的 DLL 初始化函式：初始標記存在，但 `!gflag` 無法解析 `nt!_PEB` 的 `NtGlobalFlag`，所以目標從未繼續執行。新路徑同擴充後九項託管命令契約仍未執行。
+符號下載同載入共用現有 90 秒觀察期限及 120 秒隔離期限。缺少或不符符號唔會放寬確認：冇輸出載入器旗標讀回，工作程序就絕唔發送 `g`。執行 `37101357236` 確立咗缺少符號的邊界，唔係失敗的 DLL 初始化函式：初始標記存在，但 `!gflag` 無法解析 `NtGlobalFlag`（位於 `nt!_PEB`），所以目標從未繼續執行。新路徑同擴充後九項託管命令契約仍未執行。
 
 受支援搜尋路徑同配對選項見 Microsoft 的[符號路徑](https://learn.microsoft.com/en-us/windows-hardware/drivers/debugger/symbol-path)及[符號選項](https://learn.microsoft.com/en-us/windows-hardware/drivers/debugger/symbol-options)參考。冇硬編碼 PEB 位移，亦冇忽略符號不符。
 
-由 `e50f5dac1074055e02be230bfdc5dd98d829e5e6` 驗證的執行 `37102257995`，載入相符 `ntdll` 符號並輸出載入器旗標讀回，但冇記錄成功擁有權確認或繼續執行。最終保留日誌唔可以證明呢啲位元組喺期限內幾時可用，彙總收據亦無法指出邊個擁有權條件不可用。佢冇識別失敗的 DLL 初始化函式。
+執行 `37102257995`（由 `e50f5dac1074055e02be230bfdc5dd98d829e5e6` 驗證），載入相符 `ntdll` 符號並輸出載入器旗標讀回，但冇記錄成功擁有權確認或繼續執行。最終保留日誌唔可以證明呢啲位元組喺期限內幾時可用，彙總收據亦無法指出邊個擁有權條件不可用。佢冇識別失敗的 DLL 初始化函式。
 
 因此診斷喺確認、清單、目標身分、偵錯器及目標 Job 成員資格、目標桌面、繼續命令寫入／flush 及輸出排清周圍記錄固定階段。可空布林值區分未嘗試檢查同負面觀察；數量只包含已觀察緩衝位元組及配對清單大小。冇新增 PID、桌面名稱、設定檔、命令列或例外文字。`continuation_written` 只喺現有寫入同 flush 傳回之後先變 true，唔係目標已執行初始化函式的證據。原有短路判斷、嚴格符號命令及 90/120 秒期限保持不變。
 
@@ -184,7 +184,7 @@ Microsoft 記錄咗[初始中斷點](https://learn.microsoft.com/en-us/windows-h
 
 ## 同步擁有權修正證據
 
-較早診斷呼叫 `BackgroundSlicingProcess::running()`，佢讀取普通 `m_state`。工作執行緒喺開始、完成、取消及退出時，會持有 `m_mutex` 寫入 `m_state`。因此重複 UI 診斷引入咗未同步讀取者。`automation_worker_running()` 而家用 `std::try_to_lock` 取得同一互斥鎖，爭用時傳回 `std::nullopt`，只喺 RAII 鎖持有期間評估狀態。佢唔等候、通知、排程、變更狀態或改變現有工作執行緒生命週期。現有排程器存取函式唔受呢個診斷修正影響。繪製而家只透過 `automation_slice_native_generation()` 讀取現有原子原生世代。
+較早診斷呼叫 `BackgroundSlicingProcess::running()`，佢讀取普通 `m_state`。工作執行緒喺開始、完成、取消及退出時寫入 `m_state`，期間持有 `m_mutex`。因此重複 UI 診斷引入咗未同步讀取者。`automation_worker_running()` 而家用 `std::try_to_lock` 取得同一互斥鎖，爭用時傳回 `std::nullopt`，只喺 RAII 鎖持有期間評估狀態。佢唔等候、通知、排程、變更狀態或改變現有工作執行緒生命週期。現有排程器存取函式唔受呢個診斷修正影響。繪製而家只透過 `automation_slice_native_generation()` 讀取現有原子原生世代。
 
 序列化契約喺爭用時使用 `workerStateKnown=false` 同 `workerRunning=null`。原生觀察拒絕不一致的已知／null 配對；取消驅動程式只將確切 `true` 當成持有，確切 `false` 當成釋放。未知結果只獲有界重試，絕唔計作閒置或成功。呢個包括原生輔助程式的新鮮點擊前檢查，同取消後擁有權釋放迴圈。輔助程式每次嘗試之前都清除候選矩形，所以未知觀察唔可以重用舊目標。
 
