@@ -1,6 +1,6 @@
 ---
 translation-of: monitor-atlas.md
-source-sha256: 818fdc9a351e32c037b5b3e924d11061bf5b6bf284cfff64125ef8c312a167c4
+source-sha256: 00d9f64e730d6683a409892ebac461cd27b19e91b3b9349d6ca9c5aab94981e9
 review-status: agent-drafted
 ---
 
@@ -39,6 +39,6 @@ review-status: agent-drafted
 
 `ui-md3/tests/monitor-atlas-dpi.test.mjs` 執行由產品來源抽出嘅幾何表達式及方法內容。三項測試喺初版失敗，修正後通過，涵蓋 100%、125%、150%、200% 相機幾何、文字／DPI 雙向變化、字型／快取次序及真實建立／縮放入口。連八項 AMS，共十一項通過；唔係原生繪製證據。
 
-`StatusPanel::msw_rescale` 原有 Control 標題仍包含另一個雙重 `FromDIP(PAGE_TITLE_HEIGHT)`，呢次有限修正按要求保留作獨立審查，唔宣稱該路徑已正確。
+另一個獨立後續修正處理 `StatusPanel::msw_rescale` 原有 Control 標題雙重 `FromDIP(PAGE_TITLE_HEIGHT)`。建立同縮放共用 `layout_control_title`，更新標題字型／量度及按比例留白，清舊 sizer 下限，量度真實標題同操作控件，再更新面板／sizer 最小值及排版。專用檢查先喺舊雙重換算失敗，修正後四項監察 DPI 來源／模型檢查全通過。原標題文字、更多操作同回呼不變；獨立設定尺寸嘅更多圖示不在呢次標題高度修正內。
 
 完成畫面驗收前，監察、揀選、打印選項同相機頁尾須涵蓋英文／廣東話／雙語、明暗、兩密度、四比例、正常／最小尺寸。記錄文字／控件邊界、焦點／選取、DPI／主題切換、不可用／等待／確認遙測、來源版本、執行檔雜湊同真實擷圖。本文唔能夠取代呢啲證據。

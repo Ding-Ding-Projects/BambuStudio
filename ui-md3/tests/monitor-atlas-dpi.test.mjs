@@ -81,3 +81,26 @@ test('construction and DPI lifecycle share the measured title helper', () => {
   assert.doesNotMatch(rescale, /m_panel_printing_title->SetSize/);
   assert.match(rescale, /InvalidateBestSize\(\);\s*Layout\(\);/);
 });
+
+test('Control heading measures its whole sizer and clears stale DPI floors', () => {
+  const rescale = body(status, 'void StatusPanel::msw_rescale()');
+  assert.doesNotMatch(rescale, /FromDIP\(PAGE_TITLE_HEIGHT\)/);
+  const source = body(status, 'static void layout_control_title(');
+  assert.match(source, /label->SetFont\(Label::Head_16\);\s*label->InvalidateBestSize\(\)/);
+  assert.match(source, /sizer->SetMinSize\(wxDefaultSize\)/);
+  assert.match(source, /sizer->GetItem\(label\)->SetBorder\(panel->FromDIP\(8\)\)/);
+  const expression = source.match(/const int height = ([^;]+);/)[1]
+    .replace(/std::max/g, 'Math.max').replace(/panel->FromDIP/g, 'FromDIP')
+    .replace(/sizer->CalcMin\(\).y/g, 'measuredHeight');
+  const heightAt = new Function('FromDIP', 'measuredHeight', `return ${expression};`);
+  for (const scale of [1, 2, 1.25, 1]) {
+    const fromDIP = n => Math.round(n * scale);
+    for (const measuredHeight of [fromDIP(24), fromDIP(76)])
+      assert.equal(heightAt(fromDIP, measuredHeight), Math.max(fromDIP(40), measuredHeight));
+  }
+  assert.match(source, /panel->SetMinSize\(wxSize\(-1, height\)\)/);
+  assert.match(source, /panel->InvalidateBestSize\(\);\s*panel->Layout\(\)/);
+  assert.match(rescale, /layout_control_title\(m_panel_control_title, m_staticText_control\)/);
+  assert.match(body(status, 'wxBoxSizer *StatusBasePanel::create_machine_control_page('),
+    /layout_control_title\(m_panel_control_title, m_staticText_control\)/);
+});

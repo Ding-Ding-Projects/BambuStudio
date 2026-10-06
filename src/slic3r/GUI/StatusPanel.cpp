@@ -1226,6 +1226,21 @@ static void layout_printing_title(wxPanel *panel, Label *label)
     panel->Layout();
 }
 
+static void layout_control_title(wxPanel *panel, Label *label)
+{
+    label->SetFont(Label::Head_16);
+    label->InvalidateBestSize();
+    auto *sizer = panel->GetSizer();
+    sizer->GetItem(label)->SetBorder(panel->FromDIP(8));
+    // Recompute from the actual label and action controls, not a cached pixel floor.
+    sizer->SetMinSize(wxDefaultSize);
+    const int height = std::max(panel->FromDIP(40), sizer->CalcMin().y);
+    sizer->SetMinSize(wxSize(-1, height));
+    panel->SetMinSize(wxSize(-1, height));
+    panel->InvalidateBestSize();
+    panel->Layout();
+}
+
 void PrintingTaskPanel::create_panel(wxWindow *parent)
 {
     wxBoxSizer *sizer                 = new wxBoxSizer(wxVERTICAL);
@@ -2592,7 +2607,7 @@ wxBoxSizer *StatusBasePanel::create_machine_control_page(wxWindow *parent)
     bSizer_control_title->Add(m_more_btn, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(10));
 
     m_panel_control_title->SetSizer(bSizer_control_title);
-    m_panel_control_title->Layout();
+    layout_control_title(m_panel_control_title, m_staticText_control);
     bSizer_control_title->Fit(m_panel_control_title);
     bSizer_right->Add(m_panel_control_title, 0, wxALL | wxEXPAND, 0);
 
@@ -6960,7 +6975,7 @@ void StatusPanel::msw_rescale()
     m_project_task_panel->msw_rescale();
     // The camera HUD (and its chips) are rescaled by rescale_camera_icons() below.
     m_bmToggleBtn_timelapse->Rescale();
-    m_panel_control_title->SetSize(wxSize(-1, FromDIP(PAGE_TITLE_HEIGHT)));
+    layout_control_title(m_panel_control_title, m_staticText_control);
     // m_staticText_control->SetMinSize(wxSize(-1, PAGE_TITLE_HEIGHT));
     m_media_play_ctrl->msw_rescale();
     m_bpButton_xy->SetBitmap(m_bitmap_axis_home);
