@@ -20,8 +20,8 @@
   }
 
   var DEFAULTS = {
-    funnyEn: 3,
-    funnyYue: 4,
+    funnyEn: 5,
+    funnyYue: 5,
     theme: 'dark',
     density: 'comfortable',
     accent: '#22c55e',
@@ -29,6 +29,22 @@
     fontScale: 100,
     fontWeight: 400,
     notifications: true,
+    narratorEnabled: false,
+    narratorPaused: false,
+    narratorLanguage: 'en',
+    narratorVoiceEn: '',
+    narratorVoiceYue: '',
+    narratorRate: 1,
+    narratorPitch: 1,
+    messageEmojis: true,
+    attentionFocus: false,
+    attentionLow: false,
+    attentionTime: false,
+    attentionOne: false,
+    attentionMomentum: false,
+    attentionNextAction: '',
+    attentionSnoozeUntil: 0,
+    scheduledSettings: null,
     tabOrder: [],
     tabPinned: [],
     tabGroups: {},
@@ -93,16 +109,23 @@
   }
 
   function get(key) {
+    if (global.BambuSchedule) {
+      var override = global.BambuSchedule.override(key);
+      if (override !== undefined) return override;
+    }
     return state[key];
   }
   function set(key, value, options) {
     if (JSON.stringify(state[key]) === JSON.stringify(value)) return false;
+    var previous = state[key];
     state[key] = value;
-    writeStorage(state);
+    var persisted = writeStorage(state);
+    if (!persisted && options && options.requirePersistence) { state[key] = previous; throw new Error('Preference storage unavailable'); }
     if (!options || options.emit !== false) emit([key]);
     return true;
   }
   function resetAll() {
+    if (global.BambuWording) global.BambuWording.clear();
     Object.keys(DEFAULTS).forEach(function (key) { state[key] = clone(DEFAULTS[key]); });
     try {
       global.localStorage.removeItem(STORAGE_KEY);
@@ -114,6 +137,7 @@
   }
 
   function languageMode() {
+    if (global.BambuSchedule && global.BambuSchedule.override('languageMode') !== undefined) return global.BambuSchedule.override('languageMode');
     return i18n ? i18n.getActiveMode() : 'en';
   }
   function setLanguageMode(mode) {
@@ -152,7 +176,8 @@
     var variants = entry[language] || entry.en || [];
     if (!variants.length) return '';
     var level = language === 'yue' ? get('funnyYue') : get('funnyEn');
-    return interpolate(variants[variantIndex(variants.length, level)], params);
+    var original = variants[variantIndex(variants.length, level)];
+    return interpolate(global.BambuWording ? global.BambuWording.replace(original) : original, params);
   }
 
   /** One key at an explicit language and level — used by the settings preview. */
@@ -265,6 +290,21 @@
         element.setAttribute(attribute, value);
       });
     });
+    applyMessageDecoration(scope);
+  }
+
+  function applyMessageDecoration(scope) {
+    var surfaces = [].slice.call(scope.querySelectorAll('.toast, [role="dialog"], [role="alertdialog"]'));
+    if (scope.matches && scope.matches('.toast, [role="dialog"], [role="alertdialog"]')) surfaces.push(scope);
+    surfaces.forEach(function (surface) {
+      var decoration = surface.querySelector('.message-emoji');
+      if (!get('messageEmojis')) { if (decoration) decoration.remove(); return; }
+      if (!decoration) {
+        decoration = global.document.createElement('span'); decoration.className = 'message-emoji'; decoration.setAttribute('aria-hidden', 'true');
+        decoration.textContent = surface.classList.contains('toast-error') || surface.classList.contains('toast-warning') ? '\u26a0\ufe0f' : surface.getAttribute('role') === 'alertdialog' ? '\ud83e\uddf9' : '\u2139\ufe0f';
+        surface.insertBefore(decoration, surface.firstChild);
+      }
+    });
   }
 
   function parseParams(raw) {
@@ -313,6 +353,7 @@
   };
   // Latin faces are useless for Cantonese, so a CJK-capable stack always follows.
   var CJK_FALLBACK = "'Noto Sans HK','PingFang HK','Microsoft JhengHei','Microsoft YaHei',sans-serif";
+  var appliedElementProperties = {};
 
   function applyAppearance() {
     var root = global.document.documentElement;
@@ -343,8 +384,15 @@
     root.style.setProperty('--site-font-weight', String(get('fontWeight')));
 
     var elements = get('elementStyles') || {};
+    Object.keys(appliedElementProperties).forEach(function (element) {
+      appliedElementProperties[element].forEach(function (property) {
+        if (!elements[element] || elements[element][property] === undefined || elements[element][property] === null || elements[element][property] === '') root.style.removeProperty('--el-' + element + '-' + property);
+      });
+    });
+    appliedElementProperties = {};
     Object.keys(elements).forEach(function (element) {
       var values = elements[element] || {};
+      appliedElementProperties[element] = Object.keys(values);
       Object.keys(values).forEach(function (property) {
         if (values[property] === '' || values[property] === null) return;
         root.style.setProperty('--el-' + element + '-' + property, String(values[property]));
@@ -484,7 +532,8 @@
     if (history.length > HISTORY_LIMIT) history.length = HISTORY_LIMIT;
     persistHistory();
     emit(['notifications']);
-    if (!get('notifications') && kind !== 'error' && kind !== 'warning') return record;
+    if (global.BambuNarration && (!get('attentionLow') || kind === 'error' || kind === 'warning')) global.BambuNarration.narrate(kind, key, params);
+    if ((!get('notifications') || get('attentionLow')) && kind !== 'error' && kind !== 'warning') return record;
     renderToast(record);
     return record;
   }
@@ -599,6 +648,7 @@
     LEVELS: LEVELS,
     DEFAULTS: DEFAULTS,
     get: get,
+    getBase: function (key) { return state[key]; },
     set: set,
     resetAll: resetAll,
     subscribe: subscribe,

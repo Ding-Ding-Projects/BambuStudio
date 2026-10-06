@@ -276,6 +276,7 @@
     function maybeStart(catalogue) {
       if (startupAttempted) return Promise.resolve(false);
       startupAttempted = true;
+      if (site.get && site.get('attentionLow')) return Promise.resolve(false);
       if (!catalogue || !Array.isArray(catalogue.dishes) || !catalogue.dishes.length ||
           typeof catalogue.chance !== 'number' || catalogue.chance < 0 ||
           catalogue.chance > 1 || doc.hidden) {

@@ -1,5 +1,7 @@
 # GitHub Pages site
 
+- [Scheduled visitor settings](scheduled-settings.md), local-only typed overrides and explicit mediation limits.
+
 The published site at <https://ding-ding-projects.github.io/BambuStudio/> is a self-contained
 static application built from [`ui-md3/landing.html`](../../../ui-md3/landing.html) and the modules
 in [`ui-md3/site/`](../../../ui-md3/site/). It is not a marketing page with a scroll bar: it is a
@@ -24,6 +26,16 @@ or down. See [deployment and the layout gate](deployment-and-layout-gate.md) for
 work.
 
 ## Features
+
+- [Two-key destructive confirmation](destructive-confirmation.md): action-specific keys, full-range
+  authorization slider, emergency cancellation and one-shot execution.
+
+- [Local personal wording](personal-wording.md): private per-visitor JSON import, replacement,
+  cache validation and clear behavior, with explicit remaining integration and runtime proof.
+- [Browser event narration](event-narration.md): opt-in serialized speech, independent voice
+  choices, platform capability and network disclosure, pause and stop.
+- [Attention accommodations and message decoration](attention-and-message-decoration.md): five
+  independent off-by-default accommodations and a persisted decorative-message emoji switch.
 
 - [Tabbed navigation](tabbed-navigation.md) — the strip, its overflow surface, reordering, pinning,
   grouping, the searchable tab list, and the measured layout algorithm behind them.
