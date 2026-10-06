@@ -4687,26 +4687,13 @@ void StatusPanel::update_ams(MachineObject *obj)
     for (auto ams_it = amslist.begin(); ams_it != amslist.end(); ams_it++) {
         std::string ams_id = ams_it->first;
         try {
-            int ams_id_int = atoi(ams_id.c_str());
             for (auto tray_it = ams_it->second->GetTrays().begin(); tray_it != ams_it->second->GetTrays().end(); tray_it++) {
                 std::string tray_id     = tray_it->first;
-                int         tray_id_int = atoi(tray_id.c_str());
-                // new protocol
-                if (ams_id_int < 128) {
-                    if ((ams_it->second->GetAmsType() == DevAmsType::AMS_LITE && ams_it->second->IsAmsLiteMixed()) && ((obj->tray_reading_bits & (1 << (24 + tray_id_int))) == 0)) {
-                        m_ams_control->StopRridLoading(ams_id, tray_id);
-                    } else if ((obj->tray_reading_bits & (1 << (ams_id_int * 4 + tray_id_int))) == 0) {
-                        m_ams_control->StopRridLoading(ams_id, tray_id);
-                    } else {
-                        m_ams_control->PlayRridLoading(ams_id, tray_id);
-                    }
+                // Share the type-aware telemetry mapping with the device web view.
+                if (tray_it->second && tray_it->second->is_reading(obj->tray_reading_bits)) {
+                    m_ams_control->PlayRridLoading(ams_id, tray_id);
                 } else {
-                    int check_flag = (1 << (16 + ams_id_int - 128));
-                    if ((obj->tray_reading_bits & check_flag) != 0) {
-                        m_ams_control->PlayRridLoading(ams_id, tray_id);
-                    } else {
-                        m_ams_control->StopRridLoading(ams_id, tray_id);
-                    }
+                    m_ams_control->StopRridLoading(ams_id, tray_id);
                 }
             }
         } catch (...) {}

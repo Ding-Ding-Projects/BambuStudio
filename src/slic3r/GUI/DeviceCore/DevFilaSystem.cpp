@@ -1,4 +1,6 @@
 #include <nlohmann/json.hpp>
+#include <cstdint>
+#include <limits>
 #include "DevExtruderSystem.h"
 #include "DevFilaSystem.h"
 #include "DevFilaSwitch.h"
@@ -109,22 +111,34 @@ DevAmsSlotId DevAmsTray::get_ams_slot_id() const
 }
 
 static long long sGetAmsFlagBit(const DevAmsTray* tray) {
-    auto ams_slot_id = tray->get_ams_slot_id();
+    const auto ams_slot_id = tray->get_ams_slot_id();
+    const long long ams_id = ams_slot_id.first;
+    const long long slot_id = ams_slot_id.second;
     const auto& ams_type = tray->ams_type;
+    if (ams_id < 0 || slot_id < 0) return -1;
+
+    long long bit = -1;
     if (ams_type == DevAmsType::AMS || ams_type == DevAmsType::AMS_LITE || ams_type == DevAmsType::N3F) {
-        return ams_slot_id.first * 4 + ams_slot_id.second;
+        if (slot_id >= 4) return -1;
+        bit = ams_id * 4 + slot_id;
     } else if (ams_type == DevAmsType::N3S) {
-        return 16 + (ams_slot_id.first - 128) + ams_slot_id.second;
+        // AMS HT has one slot per unit, unlike four-slot AMS models.
+        if (ams_id < 128 || slot_id != 0) return -1;
+        bit = 16 + (ams_id - 128);
     } else if (ams_type == DevAmsType::AMS_LITE_MIXED) {
-        return 24 + ams_slot_id.second;
+        if (slot_id >= 4) return -1;
+        bit = 24 + slot_id;
     }
 
-    return -1;
+    // MachineObject stores this telemetry in a 32-bit long on Windows, and
+    // DevUtil takes a 32-bit int. Validate before its unsigned right shift.
+    return bit >= 0 && bit < std::numeric_limits<std::uint32_t>::digits ? bit : -1;
 }
 
 bool DevAmsTray::is_reading(long long tray_reading_bits) const
 {
-    return DevUtil::get_flag_bits(tray_reading_bits, sGetAmsFlagBit(this));
+    const auto bit = sGetAmsFlagBit(this);
+    return bit >= 0 && DevUtil::get_flag_bits(tray_reading_bits, bit);
 }
 
 bool DevAmsTray::is_unset_third_filament() const
