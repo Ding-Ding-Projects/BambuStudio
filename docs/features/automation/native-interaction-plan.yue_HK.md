@@ -34,6 +34,9 @@
 `States` 或 `States/anchors` 正面聲明及參考清單中。只接受標記後連續的狀態清單，
 不採用旁邊文字、排除說明或有條件的附加內容。因此 `workspace-inherited-details`
 不接受 `project/history`。它們是待檢查狀態，不是原生控制項識別碼，也不是已觀察的聲明。
+第 4 項明確列出 `calibration/results`、`calibration/save-result` 及
+`calibration/validation`，但仍需要真實校準結果及已選定的裝置／預設。
+接受觀察要求不會提供這些測試資料，亦不授權執行校準或儲存預設。
 只支援現有順序的九個邊界。
 
 ## 有限動作
@@ -79,5 +82,6 @@ Lowlevel 的 `win_send_keys` 接受明確的 `hwnd` 及 `keys`；指定的句柄
 & $python -m unittest discover -s scripts/md3/tests -p test_review_interaction_plan.py -v
 ```
 
-九項針對性測試包含九個邊界的實際已提交例子、被排除的工作區歷史組合、選單範圍、來源與雜湊不符、
+十項針對性測試包含九個邊界的實際已提交例子、全部 55 個明確聲明狀態的獨立清單
+（包括三個校準狀態）、被排除的工作區歷史組合、選單範圍、來源與雜湊不符、
 不明輸入及執行聲明、解析與時限，以及離線命令列。沒有啟動程式，亦沒有運行畫面證據。

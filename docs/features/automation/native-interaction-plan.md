@@ -42,6 +42,10 @@ boundary's explicit positive `States` or `States/anchors` declaration and the
 reference manifest. Only the contiguous state list immediately after that marker
 is accepted. Surrounding prose, exclusions and conditional additions are not state
 declarations. In particular, `workspace-inherited-details` excludes `project/history`.
+Entry 4 explicitly declares `calibration/results`, `calibration/save-result` and
+`calibration/validation`; its genuine-result and selected-device/preset requirements
+remain unchanged. Accepting an observation request does not supply those fixtures
+or authorize calibration or saving a preset.
 These are requested review
 states, never native control IDs or claims about current state. Only the existing
 nine ordered queue boundaries are supported. Reference boards remain references.
@@ -104,7 +108,9 @@ Native outer geometry never proves embedded DOM or OpenGL interior geometry.
 & $python -m unittest discover -s scripts/md3/tests -p test_review_interaction_plan.py -v
 ```
 
-Nine focused tests exercise actual committed examples from all nine boundaries,
-the excluded workspace-history pair, menu scope, source/hash mismatches, unknown input and execution claims, parser and
+Ten focused tests exercise actual committed examples from all nine boundaries,
+an independent inventory of all 55 explicitly declared states (including all three
+calibration states), the excluded workspace-history pair, menu scope, source/hash
+mismatches, unknown input and execution claims, parser and
 duration bounds, and the offline CLI. No application launch or runtime evidence is
 part of these tests.

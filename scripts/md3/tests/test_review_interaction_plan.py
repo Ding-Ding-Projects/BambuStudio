@@ -55,6 +55,37 @@ class ReviewPlanTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     self.validate(bad)
 
+    def test_every_explicit_declared_state(self):
+        # Independent inventory: do not derive the expected set with the parser
+        # being tested. Read current source so declaration edits are tested before
+        # commit; the CLI test separately verifies immutable committed reads.
+        inventory = {
+            "shared-control-callers": {"menus": "submenu disabled keyboard dismiss"},
+            "shell-nested-fit": {"shell": "project-tabs overflow pinned-tabs grouped-tabs minimum-size"},
+            "specialized-continuations": {"farm": "account", "confirmations": "untouched cancel", "monitor": "firmware"},
+            "dense-settings-subforms": {"preferences": "search no-match scheduled-settings",
+                "schedules": "empty rule-editor cross-midnight", "calibration": "results save-result validation"},
+            "device-nested-details": {"print": "mapping external-spool incompatible", "monitor": "connected offline"},
+            "reader-detail-variants": {"regex": "matches invalid no-match", "import-export": "format options validation",
+                "history": "project empty diff", "changelog": "dates search no-match"},
+            "workspace-inherited-details": {"project": "workspace empty files notes checklist calendar-month calendar-agenda"},
+            "embedded-alternate-flows": {"home-web": "signed-out empty offline",
+                "wizard": "region printer-selection filament-selection", "parameters": "material"},
+            "renderer-tool-interiors": {"prepare": "model-loaded object-selection"}}
+        expected = {boundary: {surface + "/" + state for surface, values in groups.items()
+                              for state in values.split()} for boundary, groups in inventory.items()}
+        contracts = {path: (ROOT / path).read_bytes() for path in plan_module.CONTRACTS}
+        self.assertEqual(plan_module.queue_states(contracts), expected)
+        self.assertEqual(sum(map(len, expected.values())), 55)
+        self.plan["contractSha256"] = {path: hashlib.sha256(raw).hexdigest() for path, raw in contracts.items()}
+        for boundary, states in expected.items():
+            for state in sorted(states):
+                with self.subTest(boundary=boundary, state=state):
+                    self.plan["steps"][0].update(boundary=boundary, state=state)
+                    result = plan_module.validate_plan(self.plan, self.source, contracts)
+                    self.assertEqual(result["execution"], "not_attempted")
+                    self.assertEqual(result["runtimeAcceptance"], "unverified")
+
     def test_excluded_workspace_history_is_not_a_positive_state(self):
         self.plan["steps"][0].update(boundary="workspace-inherited-details", state="project/history")
         with self.assertRaises(ValueError):
