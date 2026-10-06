@@ -1,80 +1,45 @@
-# Current continuation, 6 October 2026
+# Bambu Studio continuation, 6 October 2026
 
-## Independent progress during compilation
+## Objective and current authority
 
-The running producer remains pinned to `cc059003d362b87d53786152ee8c28621d9c2813`. The reviewed nine-boundary inspection queue, corrected live-regex restoration walkthrough and paired-article index checks are preserved separately at [`19d32db164955d4207f6dc89b64b65d13ebfe0d4`](https://github.com/Ding-Ding-Projects/BambuStudio/commit/19d32db164955d4207f6dc89b64b65d13ebfe0d4) on `task/upstream-development-20261006`. These preparation changes preserve native source and are not rendered acceptance. The full redraw remains outside this build-only verdict.
+Complete the native visual refresh while preserving existing functions and the Prepare, Preview, Print and Monitor workflow. Design implementation and review use explicitly selected gpt-6-astra workers. Appearance reversal is documented against d048cfc3040a1566b78e03334f3871f1dd0144bb while preserving functional and build repairs.
 
+Later visible-desktop and screenshot requests supersede the earlier build-only launch exclusion. The persisted goal text still contains that older exclusion and the available goal tool cannot edit its objective. Do not create a duplicate goal or wait for repeated authorization. Installer execution, physical printing and release publication remain excluded.
 
-The build objective is active and incomplete. See the
-[verification report](docs/integration/build-verification-20261006.md).
+## Active build
 
-## Objective and current direction
+Verified remote main is 4e18b78b3f8a78ebd63f875fb4b06b28db433afb, a documentation-only descendant of cc059003d362b87d53786152ee8c28621d9c2813. The exact root build begun at 2026-10-06T13:55:51Z completed native compilation, linking and staging, then returned exit 1 at its source-state check.
 
-Make the exact root `build.bat` and `build-installer.bat` succeed with supported
-automatic dependency setup, then independently verify unsigned Squirrel.Windows
-outputs, exact source identity, versions and hashes. Preserve the original
-`9a55b7aa1e900f85c2ded1389854beefabff159f` baseline and reviewed
-`d048cfc3040a1566b78e03334f3871f1dd0144bb` integration, both ancestors of current
-main candidate `cc059003d362b87d53786152ee8c28621d9c2813`.
+After termination, the generated routing file's raw and HEAD blobs both matched bc5e97ff6fcb9d164c3f1ecd84e9830ef29c68f9. Exact-path metadata refresh left the index tree unchanged at a53a2f5a401a4ac1869505cfc9e25391f4196098 and restored clean source status. No source content or guard changed. The failed transcript and recovery receipt remain with the producer.
 
-The latest design direction remains a complete new appearance for the entire
-application, preserving every function and feature. Design, implementation and
-review use `gpt-6-astra`. A selective design-reversal note remains documented.
-This larger objective is incomplete and must not be closed by build-only proof.
+The exact build.bat /s retry ran from 2026-10-06T16:36:39.3765008Z to 2026-10-06T16:43:57.0661669Z and returned exit 0. Its immutable receipt retains the actual supported dependency-cache arguments. The exact build-installer.bat /s invocation started at 2026-10-06T16:45:58.9532106Z with an explicit output directory and is running. Keep its source, index and branch fixed. Terminal installer success and independent package verification remain pending.
 
-## Exact source and production state
+## Reviewed preparation
 
-- Local main and the fetched and directly queried remote main matched
-  `cc059003d362b87d53786152ee8c28621d9c2813` before this report update.
-- The isolated `task/main-build-verification-20261006` checkout remains pinned
-  to that source. Its exact root build started at `2026-10-06T13:55:51Z`, using
-  the supported read-only `-DependencyCacheDirectory` route. Application build
-  and staging directories were absent before invocation. Native compilation is
-  active; no terminal success is claimed.
-- Generated `routeTree.gen.ts` has the exact committed bytes, but reused index
-  metadata retains a porcelain modification. The live source and index remain
-  unchanged. A disposable fixture proved single-file staging clears only that
-  metadata when whole-index-tree and raw-byte equality are checked. Genuine
-  content changes still fail the production source check. Wait for the terminal
-  result before considering production metadata recovery.
-- The separate redesign build source
-  `a28944e3c14b2066ee63d14151c8aca23066d743` passed both root entrypoints.
-  Independent verification matched all 13,639 SBOM files, 310 bundled articles,
-  compiled catalogs, source provenance, RELEASES contents and unsigned outputs.
-  Those receipts are candidate-specific and do not verify main.
-- The combined redesign and reviewed local inspection route remain preserved
-  at `e9dd8e0a7c0200f212cb777a4bc7d5918f2ccecc` on
-  `task/upstream-development-20261006`. Local inspection has 26 passing
-  non-window checks; nine built visual-review boundaries remain unverified.
-- The main-only report update belongs to `task/main-build-report-20261006`.
-  Its own commit identifier and verified remote reference will be supplied by
-  the delivery receipt, rather than fabricated inside the commit itself.
+Preparation is preserved on task/upstream-development-20261006 at remotely verified 1fa14f33a025e58f2a82ef4e21d4edeff027c6ea. Combined code is f260b6fab51e23730a6e9d831df756566c104cd7. This main-branch update contains documentation only; it does not integrate the unfinished redesign. Four source branches were pushed and read back before integration:
 
-## Next safe steps
+- Interaction plan: f3f9317f540b9c62f79ca358cea37c7edbd3c708.
+- Review tuples: 67d82bda20a9fb14f1939fe6d0395218d6019587.
+- Private evidence ledger: eff5072e4285c85fdf0edca87c20d8aee4da7855.
+- Target-exit diagnostics: 53ab20be12c948edb2a6174c6217cc31803f2cce.
 
-1. Observe the current exact-main build without mutating its source, index or
-   output directories. Preserve the real transcript and exit result.
-2. If the final source check rejects only the proved metadata state, verify raw
-   file and whole-index-tree identity, refresh only that exact file's metadata,
-   prove no staged change, and retry the same root command. Do not weaken the
-   source check or infer success from compilation alone.
-3. On actual build success, run the exact root installer entrypoint with the
-   same read-only dependency cache and an isolated output directory.
-4. Independently verify every package payload byte, SBOM entry, source identity,
-   version, feed row, hash and unsigned PE state. Installer execution is excluded.
-5. Update this record and the linked report, integrate completed repairs into
-   main and prove the remote reference. Retain incomplete redesign work.
+Independent reviews repaired excluded-state acceptance, missing conditional calibration coverage, reflected private paths, duplicate/nonfinite JSON acceptance and unbounded initial-probe reads. All 55 declared state pairs have explicit coverage. Combined verification passed 38 preparation checks and 33 native-review checks, all offline. Translation validation passed 147 paired articles and 1,296 changelog entries. These results do not prove rendering.
 
-## Boundaries and retained work
+## Actual visible attempt
 
-No application or browser launch, installer execution, physical printing, release
-or other manual publication is authorized by the current build goal. The later
-request for the complete redesign is retained; the explicit visual-verification
-scope clarification remains unanswered. No new screenshots or rendered success
-are claimed. Existing-host dependency reuse is not fresh-environment proof.
+The first authorized Lowlevel attempt used immutable a28944e3c14b2066ee63d14151c8aca23066d743 and frozen helper 19d32db164955d4207f6dc89b64b65d13ebfe0d4. Provenance validated and the owned target started, then exited before inspection. Teardown was verified. No probe or screenshot was produced. Original private review.json SHA-256: d5e0446088abb50e662b855cfbfb0aaf8c9606c4cc9bd28cce5b3b8127994d63.
 
-Use the existing isolated build-repair lane; allow at most three materially
-unchanged attempts per failure and one hour of observation per external
-operation. Preserve coherent work before the selected goal budget boundary.
-Do not mark the goal complete from a running process, successful candidate-only
-package or documentation delivery. No cleanup or release closure is claimed.
+The first driver did not retain the target exit code. A materially distinct retry using reviewed helper 1fa14f33 observed 4294967295 / 0xFFFFFFFF before verified teardown at 2026-10-06T16:43:57.890691Z. No probe or screenshot was produced. The latest private review SHA-256 is c1e0daa7ba512e540e42684dc79dddeeffe27f7090f2ceb44f99f46a6d2362bc. A shared launcher trace reports DLL initialization error 1114, but lacks per-process attribution. Static export/import inspection narrows the boundary without identifying the failing initializer. A process-specific diagnostic with matching symbols is being prepared; missing supported debugging tools are being obtained under the existing automatic prerequisite authorization.
+
+## Prior package evidence and remaining work
+
+Both root entrypoints passed at a28944e3c: build at 2026-10-06T13:04:12Z and installer at 2026-10-06T13:18:59Z. Independent verification matched 13,639 SBOM files, 310 bundled articles, both catalogs, source/version metadata and unsigned Squirrel bytes. Setup.exe has 772,747,776 bytes and SHA-256 42f1a4fe732a937b4a7016db26d946f14bae85e9d1bc354cc39a99b522579435. Later inspection helpers and articles are not in that installer. See docs/integration/package-byte-verification-20261006.json.
+
+1. Complete the active exact-main installer production and independent byte verification; the root build has passed.
+2. Diagnose startup through the reviewed visible route. Change product source only for a proved cause.
+3. Follow the nine-boundary review queue through real controls after startup works. Preserve hardware/account restrictions and never manufacture missing evidence.
+4. Integrate completed verified work into main and prove the remote ref; retain unfinished branches. Cleanup still requires ownership, archive, preservation and ancestry proof.
+
+The goal remains active and unfinished. All 1,204 obligation states and 56 structural boards retain their real evidence status. No current screenshot, complete visual acceptance, installed behavior or new release is claimed. Continue independent authorized work while producers run without changing their inputs or repeating unchanged checks.
+
+The current issue handoff is https://github.com/Ding-Ding-Projects/BambuStudio/issues/55#issuecomment-6021087940.

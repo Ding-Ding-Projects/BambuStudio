@@ -1,5 +1,5 @@
 > [!IMPORTANT]
-> Exact-main verification now targets `cc059003d362b87d53786152ee8c28621d9c2813`. Its isolated root build is running with a read-only dependency cache. The separate redesign candidate `a28944e3c14b2066ee63d14151c8aca23066d743` has passed both root entrypoints and independent package-byte verification; that result does not verify main. The complete redesign remains unfinished and preserved separately. No application launch, installer execution or new release is claimed. See the [current verification report](docs/integration/build-verification-20261006.md).
+> Current status, 6 October 2026: the exact-main root build at `cc059003d` passed at 16:43:57 UTC and the exact installer entrypoint is running. Reviewed redesign preparation is preserved separately at `1fa14f33a`; its 71 offline checks do not prove rendering. Two authorized visible attempts exited before inspection, so there is no current screenshot or complete visual acceptance. Read the [current continuation](CLOSEOUT_PROMPT.md).
 
 ![image](https://user-images.githubusercontent.com/106916061/179006347-497d24c0-9bd6-45b7-8c49-d5cc8ecfe5d7.png)
 # BambuStudio

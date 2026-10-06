@@ -1,5 +1,15 @@
 # Current handoff: 6 October 2026
 
+## Latest verified production and startup state
+
+The exact root build retry passed at `2026-10-06T16:43:57.0661669Z` for `cc059003d362b87d53786152ee8c28621d9c2813`. Post-run metadata-only recovery preserved the complete index tree after the preceding source-state failure. The exact root installer started at `2026-10-06T16:45:58.9532106Z` and is running; package verification remains pending.
+
+Reviewed preparation is preserved separately at `1fa14f33a025e58f2a82ef4e21d4edeff027c6ea`, with 38 preparation and 33 native-review checks passing offline, all 55 declared states covered and 147 translated articles current. Two authorized visible attempts exited before inspection. The latest actual target code is `0xFFFFFFFF`, observed before verified teardown. There is no probe or screenshot. A process-specific loader diagnostic is being prepared; its cause remains unproved.
+
+Later visible-desktop and screenshot requests supersede the older launch exclusion. Installer execution, physical printing and release publication remain excluded. The [current continuation](CLOSEOUT_PROMPT.md) and [issue handoff](https://github.com/Ding-Ding-Projects/BambuStudio/issues/55#issuecomment-6021087940) distinguish these results. The following older records retain historical source and verification states; they do not override this update.
+
+## Historical records
+
 ## Independent progress during compilation
 
 The running producer remains pinned to `cc059003d362b87d53786152ee8c28621d9c2813`. The reviewed nine-boundary inspection queue, corrected live-regex restoration walkthrough and paired-article index checks are preserved separately at [`19d32db164955d4207f6dc89b64b65d13ebfe0d4`](https://github.com/Ding-Ding-Projects/BambuStudio/commit/19d32db164955d4207f6dc89b64b65d13ebfe0d4) on `task/upstream-development-20261006`. These preparation changes preserve native source and are not rendered acceptance. The full redraw remains outside this build-only verdict.

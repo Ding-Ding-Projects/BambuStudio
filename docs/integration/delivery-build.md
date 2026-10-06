@@ -1,5 +1,7 @@
 # Isolated delivery builds
 
+The exact root retry at `cc059003d` passed on 6 October 2026 at 16:43:57 UTC after a proved metadata-only index refresh. Its complete index tree was unchanged. The exact installer invocation began at 16:45:58 UTC and remains pending. Actual arguments, immutable transcript and payload hashes are retained with the producer. This run proves the current host, not a fresh-machine bootstrap. See the [current production report](build-verification-20261006.md).
+
 The supported commands remain `build.bat /s` and `build-installer.bat /s`.
 Focused script regressions described below are separate, explicitly invoked
 local checks. Neither root production path runs test or lint suites. Terminal

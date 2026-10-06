@@ -1,5 +1,13 @@
 # Roadmap
 
+## Exact-main production and actual startup, 6 October 2026
+
+- [x] Complete the exact root build retry at cc059003d with unchanged source and an immutable invocation receipt.
+- [x] Preserve reviewed preparation at 1fa14f33a with 71 focused offline checks and all 55 declared states covered.
+- [ ] Complete the running exact-main installer and independent package verification.
+- [ ] Identify the failing startup initializer, then obtain a real shell and screenshots; two distinct attempts exited before inspection.
+- [ ] Complete visual verification and default-branch delivery of the retained redesign.
+
 ## Exact-main production verification, 6 October 2026
 
 - [x] Preserve independently reviewed inspection preparation and the six negative article/link checks on the redesign branch while the immutable main producer runs; no runtime acceptance is inferred.
