@@ -169,11 +169,6 @@
     },
     {
       "file": "src/slic3r/GUI/Widgets/TabStrip.cpp",
-      "name": "void TabStrip::OnKeyDown(",
-      "sha256": "725a35a1790a441798dbd3ecd65b2e93d32e7538f34012150f68a5b4be87c6a5"
-    },
-    {
-      "file": "src/slic3r/GUI/Widgets/TabStrip.cpp",
       "name": "void TabStrip::ShowStripMenu(",
       "sha256": "9d66b8ffc5d56845abddc2f78cb20f37644f0d784bbb49085642b44e8d9a0789"
     },
@@ -222,6 +217,10 @@
     {
       "name": "void TabStrip::OnTabDragEnd(",
       "reason": "Overflow drag uses visible neighbor identities. Covered by atlas_tab_drag_tests.cpp and the source projection checks."
+    },
+    {
+      "name": "void TabStrip::OnKeyDown(",
+      "reason": "Roving navigation and activation follow visible tabs plus the native overflow button. Covered by atlas_tab_focus_tests.cpp and native focus/accessibility source checks."
     }
   ]
 }

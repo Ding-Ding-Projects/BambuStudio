@@ -40,8 +40,15 @@ if (extract >= 0) {
     const operations = ['int add(Tab tab)', 'int index_of(', 'int pinned_count()', 'bool move(int from, int to)']
         .map(name => body(model, name)).join('\n');
     fs.writeFileSync(path.join(destination, 'atlas_tab_model_operations.inc'), operations);
+    const focus = strip.match(/constexpr int atlasOverflowFocus = -2;/)[0] + '\n'
+        + body(strip, 'std::vector<int> atlasFocusTargets(') + '\n'
+        + body(strip, 'enum class AtlasFocusAction') + ';\n'
+        + body(strip, 'AtlasFocusAction atlasFocusActivation(') + '\n'
+        + body(strip, 'int atlasReconcileFocus(') + '\n' + body(strip, 'int atlasStepFocus(');
+    fs.writeFileSync(path.join(destination, 'atlas_tab_focus.inc'), focus);
     console.log(`Production geometry SHA-256: ${digest(geometry)}`);
     console.log(`Production drag SHA-256: ${digest(drag)}; model operations SHA-256: ${digest(operations)}`);
+    console.log(`Production focus SHA-256: ${digest(focus)}`);
 }
 
 test('horizontal tab measurement includes complete bilingual names and independently scaled markers', () => {
@@ -84,6 +91,41 @@ function checkDragProjection(source) {
 test('drag insertion maps current shown controls through stable neighbor identities', () => checkDragProjection(strip));
 test('drag projection guard rejects counting hidden control rectangles', () => {
     assert.throws(() => checkDragProjection(strip.replace('!m_buttons[index]->IsShown()', 'false')));
+});
+function checkNativeFocus(source) {
+    const targets = body(source, 'std::vector<int> TabStrip::FocusTargets(');
+    assert(targets.includes('button->IsShown()'));
+    assert(targets.includes('atlasFocusTargets('));
+    const reconcile = body(source, 'void TabStrip::ReconcileFocus(');
+    assert(reconcile.includes('m_overflow_btn->SetFocus()'));
+    assert(reconcile.includes('else if (m_focus_index >= 0) SetFocus()'));
+    const keyboard = body(source, 'void TabStrip::OnKeyDown(');
+    assert(keyboard.includes('atlasStepFocus(focused, targets, step)'));
+    assert(keyboard.includes('targets.front() : targets.back()'));
+    assert(keyboard.includes('atlasFocusActivation(focused, targets)'));
+    assert(keyboard.includes('AtlasFocusAction::OpenOverflow) OpenOverflowMenu()'));
+    assert(source.includes('m_overflow_btn->Bind(wxEVT_KEY_DOWN, &TabStrip::OnKeyDown, this)'));
+    assert(body(source, 'void TabStrip::OpenOverflowMenu(').includes('ReconcileFocus(true)'));
+    assert(body(source, 'void TabStrip::Relayout(').includes('ReconcileFocus(focus_owned)'));
+}
+test('roving focus uses visible projection and actual overflow button focus with menu return', () => checkNativeFocus(strip));
+test('native focus guard rejects a paint-only overflow state', () => {
+    assert.throws(() => checkNativeFocus(strip.replace('m_overflow_btn->SetFocus()', 'm_overflow_btn->Refresh()')));
+});
+test('accessibility reports hidden tabs off-screen without stale geometry and exposes native overflow focus', () => {
+    const accessible = body(strip, 'class TabStripAccessible final');
+    const state = body(accessible, 'wxAccStatus GetState(');
+    assert(state.includes('wxACC_STATE_SYSTEM_INVISIBLE | wxACC_STATE_SYSTEM_OFFSCREEN'));
+    assert(state.indexOf('if (!tab_visible(i))') < state.indexOf('wxACC_STATE_SYSTEM_FOCUSABLE | wxACC_STATE_SYSTEM_SELECTABLE'));
+    const location = body(accessible, 'wxAccStatus GetLocation(');
+    assert(location.includes('if (!tab_visible(i)) { rect = wxRect(); return wxACC_OK; }'));
+    assert(location.includes('m_strip->m_overflow_btn->GetScreenRect()'));
+    const focus = body(accessible, 'wxAccStatus GetFocus(');
+    assert(focus.includes('m_strip->m_overflow_btn->HasFocus()'));
+    assert(focus.includes('*child = m_strip->m_overflow_btn->GetAccessible()'));
+    assert(focus.includes('if (!m_strip->HasFocus()) return wxACC_FALSE'));
+    assert(accessible.includes('wxROLE_SYSTEM_PUSHBUTTON'));
+    assert(accessible.includes('IsShownOnScreen()'));
 });
 test('tab state is immediate while selection motion honors the shared reduced-motion route', () => {
     const active = body(strip, 'void TabStripButton::SetActive(');

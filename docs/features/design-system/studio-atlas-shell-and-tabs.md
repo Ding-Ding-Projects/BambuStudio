@@ -45,7 +45,7 @@ cl /nologo /std:c++17 /EHsc /W4 /WX /I"%TEMP%/BambuStudio-atlas-shell-layout" te
 "%TEMP%/BambuStudio-atlas-shell-layout/atlas_shell_layout_tests.exe"
 ```
 
-The initial appearance unit passed eight source-contract tests with 44 unchanged function/identifier snapshots against `b88acafa95b88884b4e284a0de15d77f7934cfcb`. The overflow-drag repair below brings the source checks to ten and retains 43 unchanged snapshots. Its intentionally changed drag handler is explicitly listed in the fixture and covered by final model-order regressions. The initializer snapshot uses an explicit adjacent-function boundary because its conditional-compilation alternatives are unsuitable for a simple brace counter.
+The initial appearance unit passed eight source-contract tests with 44 unchanged function/identifier snapshots against `b88acafa95b88884b4e284a0de15d77f7934cfcb`. The overflow-drag repair brought the source checks to ten with 43 unchanged snapshots. The subsequent focus repair brings them to thirteen with 42 unchanged snapshots. The intentionally changed drag and keyboard handlers are explicitly listed in the fixture and covered by focused model-order and focus-projection regressions. The initializer snapshot uses an explicit adjacent-function boundary because its conditional-compilation alternatives are unsuitable for a simple brace counter.
 
 The standalone test compiles the exact extracted production allocation and title-budget helpers. Seven cases passed with 137,673 assertions. Cases cover empty strips, exact fits, reserved overflow space, oversized pinned destinations, tiny budgets, stable identity partitions across both pinned states and 100/125/150/200 percent scales, and title-command budgets. The assertion count includes exhaustive combinations; it is not a count of independent behaviors.
 
@@ -65,6 +65,25 @@ After the extraction command above, compile and run the additional focused regre
 cl /nologo /std:c++17 /EHsc /W4 /WX /I"%TEMP%/BambuStudio-atlas-shell-layout" tests/native_shared_controls/atlas_tab_drag_tests.cpp /Fe:"%TEMP%/BambuStudio-atlas-shell-layout/atlas_tab_drag_tests.exe" /Fo:"%TEMP%/BambuStudio-atlas-shell-layout/atlas_tab_drag_tests.obj"
 "%TEMP%/BambuStudio-atlas-shell-layout/atlas_tab_drag_tests.exe"
 ```
+
+### Visible focus and accessible overflow correction
+
+Width-hidden tabs previously remained in the roving keyboard sequence. The strip owned native focus while a hidden tab painter owned its only focus ring, and accessibility queries returned the hidden control's stale rectangle. The corrected focus projection contains only allocated, shown tab controls followed by the actual overflow button. Relayout reconciles a newly hidden focused tab to that button. Arrow keys wrap through this sequence, Home and End select its endpoints, and Enter or Space opens the existing overflow menu when its button is focused. An all-overflow strip retains that one reachable target.
+
+The overflow button receives native focus, so the shared button paints its actual focus ring. Keyboard activation is handled once, without a second activation on key release. Menu dismissal restores focus to the reconciled target, including cancellation and a selected destination that still cannot fit. When overflow disappears after growth, focus falls back to the visible active destination or the first visible tab. Relayout restores native focus only when the strip or overflow already owned it, preserving focus in unrelated controls. Activation, stable IDs, pinning, groups, reorder constraints and menu destination contents remain unchanged.
+
+Accessibility retains the model-displayed tab identities but reports unallocated tabs as invisible and off-screen, without focusable/focused state or a stale screen rectangle. The visible overflow child has a button role and delegates its state and default action to the actual button accessible object. Focus queries return that actual object when it owns native focus. These are source-level implementation facts; screen-reader output, native event delivery and focus pixels still require runtime verification.
+
+The standalone regression compiles the exact extracted production allocation and focus-projection helpers. Seven cases passed with 29 assertions covering wide-to-narrow focus reconciliation, End then Enter, arrow wrapping, menu selection/cancellation return targets, growth that removes overflow, all-overflow allocation and empty/stale targets. Deliberately retaining the hidden focus index in the temporary extracted helper produced six failed assertions and exit 1; restoring the production helper passed all 29 assertions. Source checks additionally reject replacing native overflow focus with paint-only feedback and inspect the hidden-tab accessibility projection. The fixture does not run wxWidgets, dispatch native input or prove rendered focus.
+
+After the same extraction command, compile and run the focused regression:
+
+```bat
+cl /nologo /std:c++17 /EHsc /W4 /WX /I"%TEMP%/BambuStudio-atlas-shell-layout" tests/native_shared_controls/atlas_tab_focus_tests.cpp /Fe:"%TEMP%/BambuStudio-atlas-shell-layout/atlas_tab_focus_tests.exe" /Fo:"%TEMP%/BambuStudio-atlas-shell-layout/atlas_tab_focus_tests.obj"
+"%TEMP%/BambuStudio-atlas-shell-layout/atlas_tab_focus_tests.exe"
+```
+
+The drag and focus corrections are separate behavioral fixes. Reverting the focus correction alone restores the invisible-focus defect; it is not a purely visual reversal.
 
 ## Reversal and remaining work
 

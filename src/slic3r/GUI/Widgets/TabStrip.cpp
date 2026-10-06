@@ -121,6 +121,42 @@ int atlasTabDragTarget(const std::string& dragged_id, int from,
     return previous < 0 ? from : previous + (previous < from ? 1 : 0);
 }
 
+constexpr int atlasOverflowFocus = -2;
+
+std::vector<int> atlasFocusTargets(const std::vector<int>& displayed, const std::vector<bool>& shown, bool overflow)
+{
+    std::vector<int> targets;
+    for (int index : displayed)
+        if (index >= 0 && index < int(shown.size()) && shown[index]) targets.push_back(index);
+    if (overflow) targets.push_back(atlasOverflowFocus);
+    return targets;
+}
+
+enum class AtlasFocusAction { None, ActivateTab, OpenOverflow };
+AtlasFocusAction atlasFocusActivation(int focused, const std::vector<int>& targets)
+{
+    if (std::find(targets.begin(), targets.end(), focused) == targets.end()) return AtlasFocusAction::None;
+    return focused == atlasOverflowFocus ? AtlasFocusAction::OpenOverflow : AtlasFocusAction::ActivateTab;
+}
+
+int atlasReconcileFocus(int current, int active, const std::vector<int>& targets)
+{
+    const auto contains = [&](int target) { return std::find(targets.begin(), targets.end(), target) != targets.end(); };
+    if (contains(current)) return current;
+    if (current >= 0 && contains(atlasOverflowFocus)) return atlasOverflowFocus;
+    if (contains(active)) return active;
+    return targets.empty() ? -1 : targets.front();
+}
+
+int atlasStepFocus(int current, const std::vector<int>& targets, int step)
+{
+    if (targets.empty()) return -1;
+    const auto found = std::find(targets.begin(), targets.end(), current);
+    const int position = found == targets.end() ? 0 : int(found - targets.begin());
+    const int count = int(targets.size());
+    return targets[((position + step) % count + count) % count];
+}
+
 const char *kConfigSection = "tab_strips";
 
 // Menu command ids, local to this widget.
@@ -687,13 +723,14 @@ public:
     wxAccStatus GetChildCount(int *count) override
     {
         if (!count) return wxACC_FAIL;
-        *count = int(m_strip->GetModel().displayed_indices().size());
+        *count = int(m_strip->GetModel().displayed_indices().size()) + (overflow_visible() ? 1 : 0);
         return wxACC_OK;
     }
     wxAccStatus GetChild(int child_id, wxAccessible **child) override
     {
         if (!child) return wxACC_FAIL;
         if (child_id == wxACC_SELF) { *child = this; return wxACC_OK; }
+        if (is_overflow(child_id)) { *child = m_strip->m_overflow_btn->GetAccessible(); return wxACC_OK; }
         if (model_index(child_id) < 0) return wxACC_FAIL;
         *child = nullptr;
         return wxACC_OK;
@@ -701,13 +738,16 @@ public:
     wxAccStatus GetRole(int child_id, wxAccRole *role) override
     {
         if (!role) return wxACC_FAIL;
-        *role = child_id == wxACC_SELF ? wxROLE_SYSTEM_PAGETABLIST : wxROLE_SYSTEM_PAGETAB;
+        if (child_id != wxACC_SELF && !is_overflow(child_id) && model_index(child_id) < 0) return wxACC_FAIL;
+        *role = child_id == wxACC_SELF ? wxROLE_SYSTEM_PAGETABLIST
+            : is_overflow(child_id) ? wxROLE_SYSTEM_PUSHBUTTON : wxROLE_SYSTEM_PAGETAB;
         return wxACC_OK;
     }
     wxAccStatus GetName(int child_id, wxString *name) override
     {
         if (!name) return wxACC_FAIL;
         if (child_id == wxACC_SELF) { *name = m_strip->GetOptions().strip_name; return wxACC_OK; }
+        if (is_overflow(child_id)) { *name = m_strip->m_overflow_btn->GetName(); return wxACC_OK; }
         const int i = model_index(child_id);
         if (i < 0) return wxACC_FAIL;
         const MD3::Tabs::Tab &t = m_strip->GetModel().at(i);
@@ -735,18 +775,26 @@ public:
             if (m_strip->HasFocus()) *state |= wxACC_STATE_SYSTEM_FOCUSED;
             return wxACC_OK;
         }
+        if (is_overflow(child_id))
+            return m_strip->m_overflow_btn->GetAccessible()->GetState(wxACC_SELF, state);
         const int i = model_index(child_id);
         if (i < 0) return wxACC_FAIL;
-        *state |= wxACC_STATE_SYSTEM_FOCUSABLE | wxACC_STATE_SYSTEM_SELECTABLE;
         if (i == m_strip->GetModel().active_index()) *state |= wxACC_STATE_SYSTEM_SELECTED;
-        if (m_strip->HasFocus() && i == m_strip->m_focus_index) *state |= wxACC_STATE_SYSTEM_FOCUSED;
+        if (!tab_visible(i)) {
+            *state |= wxACC_STATE_SYSTEM_INVISIBLE | wxACC_STATE_SYSTEM_OFFSCREEN;
+            return wxACC_OK;
+        }
+        *state |= wxACC_STATE_SYSTEM_FOCUSABLE | wxACC_STATE_SYSTEM_SELECTABLE;
+        if (m_strip->HasFocus() && i == m_strip->FocusedModelIndex()) *state |= wxACC_STATE_SYSTEM_FOCUSED;
         return wxACC_OK;
     }
     wxAccStatus GetLocation(wxRect &rect, int element_id) override
     {
         if (element_id == wxACC_SELF) return wxWindowAccessible::GetLocation(rect, element_id);
+        if (is_overflow(element_id)) { rect = m_strip->m_overflow_btn->GetScreenRect(); return wxACC_OK; }
         const int i = model_index(element_id);
         if (i < 0 || i >= int(m_strip->m_buttons.size())) return wxACC_FAIL;
+        if (!tab_visible(i)) { rect = wxRect(); return wxACC_OK; }
         rect = m_strip->m_buttons[i]->GetScreenRect();
         return wxACC_OK;
     }
@@ -754,11 +802,14 @@ public:
     {
         if (!action) return wxACC_FAIL;
         if (child_id == wxACC_SELF) return wxACC_NOT_IMPLEMENTED;
+        if (is_overflow(child_id)) return m_strip->m_overflow_btn->GetAccessible()->GetDefaultAction(wxACC_SELF, action);
+        if (model_index(child_id) < 0) return wxACC_FAIL;
         *action = _L("Switch");
         return wxACC_OK;
     }
     wxAccStatus DoDefaultAction(int child_id) override
     {
+        if (is_overflow(child_id)) { m_strip->OpenOverflowMenu(); return wxACC_OK; }
         const int i = model_index(child_id);
         if (i < 0) return wxACC_FAIL;
         m_strip->RequestActivate(m_strip->GetModel().at(i).id);
@@ -769,13 +820,26 @@ public:
         if (!child_id || !child) return wxACC_FAIL;
         *child = nullptr;
         *child_id = wxACC_SELF;
+        if (overflow_visible() && m_strip->m_overflow_btn->HasFocus()) {
+            *child_id = wxACC_SELF;
+            *child = m_strip->m_overflow_btn->GetAccessible();
+            return wxACC_OK;
+        }
+        if (!m_strip->HasFocus()) return wxACC_FALSE;
         const std::vector<int> disp = m_strip->GetModel().displayed_indices();
         for (int k = 0; k < int(disp.size()); ++k)
-            if (disp[k] == m_strip->m_focus_index) { *child_id = k + 1; break; }
+            if (tab_visible(disp[k]) && disp[k] == m_strip->FocusedModelIndex()) { *child_id = k + 1; break; }
         return wxACC_OK;
     }
 
 private:
+    bool overflow_visible() const { return m_strip->m_overflow_btn && m_strip->m_overflow_btn->IsShownOnScreen(); }
+    bool is_overflow(int child_id) const {
+        return overflow_visible() && child_id == int(m_strip->GetModel().displayed_indices().size()) + 1;
+    }
+    bool tab_visible(int index) const {
+        return index >= 0 && index < int(m_strip->m_buttons.size()) && m_strip->m_buttons[index]->IsShownOnScreen();
+    }
     int model_index(int child_id) const
     {
         const std::vector<int> disp = m_strip->GetModel().displayed_indices();
@@ -816,6 +880,17 @@ TabStrip::TabStrip(wxWindow *parent, const Options &options)
     m_overflow_btn = make_action(MaterialIcon::MoreHoriz, wxString::FromUTF8("\xE2\x80\xA6"), _L("More tabs"));
     m_overflow_btn->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { OpenOverflowMenu(); });
     m_overflow_btn->Hide();
+    m_overflow_btn->Bind(wxEVT_SET_FOCUS, [this](wxFocusEvent& event) {
+        m_focus_index = atlasOverflowFocus;
+        Refresh(false);
+        for (auto* button : m_buttons) button->Refresh(false);
+        event.Skip();
+    });
+    m_overflow_btn->Bind(wxEVT_KEY_DOWN, &TabStrip::OnKeyDown, this);
+    m_overflow_btn->Bind(wxEVT_KEY_UP, [](wxKeyEvent& event) {
+        const int key = event.GetKeyCode();
+        if (key != WXK_RETURN && key != WXK_NUMPAD_ENTER && key != WXK_SPACE) event.Skip();
+    });
     m_search_btn = make_action(MaterialIcon::Search, "?", _L("Search tabs"));
     m_search_btn->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { OpenStripSearch(); });
     if (options.show_new_button) {
@@ -1226,8 +1301,7 @@ void TabStrip::CloseOrHide(const std::string &id)
 // --- button callbacks --------------------------------------------------------
 void TabStrip::OnTabPressed(const std::string &id)
 {
-    SetFocus();
-    m_focus_index = m_model.index_of(id);
+    SetFocusedModelIndex(m_model.index_of(id));
     if (id != m_model.active())
         RequestActivate(id);
     else
@@ -1254,13 +1328,12 @@ void TabStrip::OnTabDragEnd(const std::string &id, const wxPoint &screen)
     const int target = atlasTabDragTarget(id, from, visible, vertical ? local.y : local.x,
         [this](const std::string& neighbor_id) { return m_model.index_of(neighbor_id); });
     MoveTab(from, target);
-    m_focus_index = m_model.index_of(id);
+    SetFocusedModelIndex(m_model.index_of(id));
 }
 
 void TabStrip::OnTabContext(const std::string &id, const wxPoint &screen, bool shift)
 {
-    SetFocus();
-    m_focus_index = m_model.index_of(id);
+    SetFocusedModelIndex(m_model.index_of(id));
     if (shift) {
         const int i = m_model.index_of(id);
         RequestAppearanceEditor(i >= 0 ? static_cast<wxWindow *>(m_buttons[i]) : this,
@@ -1279,34 +1352,47 @@ void TabStrip::OnGroupHeaderPressed(int group_id)
 }
 
 // --- focus / keyboard --------------------------------------------------------
+std::vector<int> TabStrip::FocusTargets() const
+{
+    std::vector<bool> shown;
+    for (const auto* button : m_buttons) shown.push_back(button->IsShown());
+    return atlasFocusTargets(m_model.displayed_indices(), shown, m_overflow_btn && m_overflow_btn->IsShown());
+}
+
 int TabStrip::FocusedModelIndex() const
 {
-    if (m_focus_index >= 0 && m_focus_index < m_model.size() && m_model.is_displayed(m_model.at(m_focus_index)))
-        return m_focus_index;
-    return m_model.active_index();
+    if (m_overflow_btn && m_overflow_btn->HasFocus()) return -1;
+    const int target = atlasReconcileFocus(m_focus_index, m_model.active_index(), FocusTargets());
+    return target >= 0 ? target : -1;
+}
+
+void TabStrip::ReconcileFocus(bool restore_native_focus)
+{
+    m_focus_index = atlasReconcileFocus(m_focus_index, m_model.active_index(), FocusTargets());
+    if (restore_native_focus) {
+        if (m_focus_index == atlasOverflowFocus) m_overflow_btn->SetFocus();
+        else if (m_focus_index >= 0) SetFocus();
+    }
+    Refresh(false);
+    for (auto* button : m_buttons) button->Refresh(false);
 }
 
 void TabStrip::SetFocusedModelIndex(int index)
 {
     m_focus_index = index;
-    Refresh(false);
-    for (auto *b : m_buttons)
-        b->Refresh(false);
+    ReconcileFocus(true);
 #if wxUSE_ACCESSIBILITY
+    if (m_focus_index == atlasOverflowFocus) return; // the real button emits its native focus event
     const std::vector<int> disp = m_model.displayed_indices();
     for (int k = 0; k < int(disp.size()); ++k)
-        if (disp[k] == index)
+        if (disp[k] == m_focus_index)
             wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_FOCUS, this, wxOBJID_CLIENT, k + 1);
 #endif
 }
 
 void TabStrip::OnFocus(wxFocusEvent &e)
 {
-    if (e.GetEventType() == wxEVT_SET_FOCUS && FocusedModelIndex() >= 0)
-        m_focus_index = FocusedModelIndex();
-    Refresh(false);
-    for (auto *b : m_buttons)
-        b->Refresh(false);
+    ReconcileFocus(e.GetEventType() == wxEVT_SET_FOCUS);
     e.Skip();
 }
 
@@ -1339,22 +1425,22 @@ void TabStrip::OnKeyDown(wxKeyEvent &e)
         if (key == 'W' && cur >= 0 && m_options.allow_close && !m_model.at(cur).pinned) { CloseOrHide(m_model.at(cur).id); return; }
         if (key == 'P' && cur >= 0) { SetPinned(m_model.at(cur).id, !m_model.at(cur).pinned); return; }
     }
+    const auto targets = FocusTargets();
+    const int focused = m_overflow_btn && m_overflow_btn->HasFocus() ? atlasOverflowFocus : m_focus_index;
     const int step = MD3::Tabs::arrow_step(m_model.edge(), key);
     if (step != 0) {
-        const int target = MD3::Tabs::step_displayed(m_model, cur, step);
-        if (target >= 0)
-            SetFocusedModelIndex(target);
+        const int target = atlasStepFocus(focused, targets, step);
+        if (target != -1) SetFocusedModelIndex(target);
         return;
     }
     if (key == WXK_HOME || key == WXK_END) {
-        const std::vector<int> disp = m_model.displayed_indices();
-        if (!disp.empty())
-            SetFocusedModelIndex(key == WXK_HOME ? disp.front() : disp.back());
+        if (!targets.empty()) SetFocusedModelIndex(key == WXK_HOME ? targets.front() : targets.back());
         return;
     }
     if (key == WXK_RETURN || key == WXK_NUMPAD_ENTER || key == WXK_SPACE) {
-        if (cur >= 0)
-            RequestActivate(m_model.at(cur).id);
+        const auto action = atlasFocusActivation(focused, targets);
+        if (action == AtlasFocusAction::OpenOverflow) OpenOverflowMenu();
+        else if (action == AtlasFocusAction::ActivateTab && cur >= 0) RequestActivate(m_model.at(cur).id);
         return;
     }
     if (key == WXK_DELETE && cur >= 0 && m_options.allow_close && !m_model.at(cur).pinned) {
@@ -1624,6 +1710,7 @@ void TabStrip::OpenOverflowMenu()
     const int sel = MD3::PopupMenuSelection(this, menu, wxPoint(anchor.x, anchor.GetBottom() + 1));
     if (sel >= ID_RESTORE_FIRST && sel < ID_RESTORE_FIRST + int(targets.size()))
         RequestActivate(targets[sel - ID_RESTORE_FIRST]);
+    ReconcileFocus(true);
 }
 
 // --- dialogs -----------------------------------------------------------------
@@ -1740,6 +1827,7 @@ void TabStrip::Relayout()
 {
     // Structural geometry changes settle immediately. Activation snapshots the
     // painted rectangle before layout and starts a new visual-only transition.
+    const bool focus_owned = HasFocus() || (m_overflow_btn && m_overflow_btn->HasFocus());
     m_indicator_motion.Stop();
     const bool vertical = IsVertical();
     // A strip's supported minimum includes search, optional new, and overflow targets.
@@ -1870,7 +1958,7 @@ void TabStrip::Relayout()
         a->Show();
         end -= actionGap;
     }
-    Refresh(false);
+    ReconcileFocus(focus_owned);
 }
 
 void TabStrip::OnSize(wxSizeEvent &e)
