@@ -36,6 +36,21 @@
       "commit": "b748affe0f687f6cfbe6068a82d32988047f790a",
       "summary": "Shared native neutral palette and legacy color compatibility",
       "runtimeVerification": "unverified"
+    },
+    {
+      "runtimeVerification": "unverified",
+      "scope": [
+        "23 product-owned CSS files listed by the commit",
+        "tests/embedded_atlas_styles.test.mjs",
+        "docs/features/design-system/embedded-studio-atlas.md"
+      ],
+      "preserve": "DOM, callbacks, geometry, typography metrics, bridges, device protocols and unrelated native workflow/build/AMS changes",
+      "commit": "a2be7df26cd5981da2c1e50d4c64c5e3a86609b9",
+      "reversalNote": "Review together with the subsequent verification-only correction 6faff372404390ba6cd9191c12e9fa5439ce375c. Preserve valid checks when possible; never leave a stylesheet assertion describing reverted styles.",
+      "reviewRequired": true,
+      "functionalBehaviorChanged": false,
+      "kind": "appearance-only",
+      "summary": "Product-owned embedded colors, focus outline and reduced-motion-aware color transitions"
     }
   ],
   "registration": "The integration owner records each reviewed design-only commit after it exists, excluding functional workflow, AMS, build and packaging changes. This file cannot name its own enclosing commit without a later ledger update.",
@@ -52,6 +67,19 @@
     {
       "commit": "b69528b150ec03fd33db79f36be16c92812bdef0",
       "reason": "Localization and functional workspace documentation; preserve independently of visual preference."
+    }
+  ],
+  "supportingVerificationUnits": [
+    {
+      "kind": "verification-only",
+      "appearanceUnit": "a2be7df26cd5981da2c1e50d4c64c5e3a86609b9",
+      "reversalNote": "Not a production appearance change. Review test/article alignment if reverting the associated CSS; do not treat it as a functional behavior rollback.",
+      "productionFilesChanged": false,
+      "scope": [
+        "tests/embedded_atlas_styles.test.mjs",
+        "docs/features/design-system/embedded-studio-atlas.md"
+      ],
+      "commit": "6faff372404390ba6cd9191c12e9fa5439ce375c"
     }
   ]
 }
