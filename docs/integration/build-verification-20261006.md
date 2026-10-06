@@ -1,8 +1,24 @@
 # Windows build and redesign verification, 6 October 2026
 
-**Status: in progress. Neither root production entrypoint has a successful result for the reconciled candidate yet. No new installer or application-runtime acceptance is claimed.**
+**Status: native root build passed; exact installer production is running. Application-runtime and rendered acceptance remain unverified.**
 
-## Latest production result
+## Successful exact native producer
+
+Exact root `build.bat /s` succeeded with exit 0 at `2026-10-06T13:04:12Z` for `a28944e3c14b2066ee63d14151c8aca23066d743`. The observed run started at `2026-10-06T12:41:43Z`, lasting 22 minutes 29 seconds. Source was clean before and after. Native compilation/linking, pinned renderer staging and the automation companion completed. Exact `build-installer.bat /s` is now running against the same unchanged source; installer production and byte verification are still pending. No application launch, installed-copy behavior or rendered acceptance is claimed.
+
+| Built item | SHA-256 |
+| --- | --- |
+| `bambu-studio.exe` | `4f71c93f61c071fd338884475f72eef49c4ff8dc0dfeceaa3ebc779b101d3750` |
+| `BambuStudio.dll` | `9469e21f6c41cd5b36323aa68e93e30949d40f7a569878837fd7f9eb6535c339` |
+| `automation/bambu-automation.exe` | `c960fad17e0bf90639d0d021cff7007b6977cd268b4b33a73b72f7e887ccad88` |
+| Generated documentation bundle | `e0ca774d4f8d5632da48ce2ebf06007f4d39713237b1765a99ac4a5122f50040` |
+| Compiled English catalog | `5aedb969453905d78e0a1768d791b40d21d3c1b31df9be7f8e3d3f4b4eff0037` |
+| Compiled Cantonese catalog | `96c12ddc299bc261ba0ef43a6893605a87b93c66e47b6a8bb9ca6912bb28458c` |
+
+The generated documentation bundle matches all 310 source Markdown articles including category indexes; the paired feature-article check separately covers 143 articles and 1,296 changelog entries. Both compiled catalogs match fresh source-derived reference bytes. These are generated/staged-byte checks; package copies remain to be checked. The full private invocation receipt and immutable transcript are retained in ignored local build evidence, not published here.
+
+
+## Preceding production result
 
 The exact root build at `4147ca9eeb0004f7e18b4a2f5a8c6cb190975d21` ended with exit 1 at `2026-10-06T12:30:40Z`, after 1 hour 26 minutes 18 seconds from source pinning. The earlier three compiler causes did not recur. The remaining diagnostics were the nozzle-card helpers declared on the wrong class and the nozzle status icon calling an unsupported Button member. Reviewed repairs `a913ae69cb250862e55143949043da964c527d04` and `7b70048ed946bf128463789a8f729bf1ac11c4b6` are incorporated in `e78328d15b6bcaf97d73568c26f70f64494735b9`. Independent real-header MSVC checks passed, with deliberate C2039 negative cases. Full native production verification remains pending. No source or index changed during the completed producer.
 

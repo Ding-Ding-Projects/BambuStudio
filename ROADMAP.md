@@ -16,7 +16,9 @@
 - [x] Deliver the OCCT export repair and pass application configuration on the exact root retry at `05dd932d4`.
 - [x] Deliver exact generated-route LF identity with eight disposable Git assertions at `d4d4bb13b`.
 - [x] Record the `4147ca9ee` root build exit 1 and independently verify both subsequent nozzle compiler repairs, including real-header negative cases.
-- [ ] Complete the exact native build with both nozzle repairs before installer production.
+- [x] Complete exact `build.bat /s` with both nozzle repairs at `a28944e3c`: exit 0 at `2026-10-06T13:04:12Z`.
+- [x] Match the generated 310-article documentation bundle and both compiled catalogs against current source.
+- [ ] Complete exact installer production at the same candidate and independently verify its package bytes.
 - [ ] Complete real built language/theme/scale/focus/scroll evidence; current source checks do not establish it.
 
 - [x] Record exact root exit 1 at `5e3f28274` and the OCCT generated-config escaping diagnostic at `2026-10-06T08:44:32Z`.

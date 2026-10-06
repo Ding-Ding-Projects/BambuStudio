@@ -12,6 +12,10 @@ Application launches, installer execution, physical printer actions and manual r
 
 ## Source and verification before this documentation commit
 
+Exact root `build.bat /s` succeeded with exit 0 at `2026-10-06T13:04:12Z` for `a28944e3c14b2066ee63d14151c8aca23066d743`. The observed run started at `2026-10-06T12:41:43Z`, lasting 22 minutes 29 seconds. Source was clean before and after. Native compilation/linking, pinned renderer staging and the automation companion completed. Exact `build-installer.bat /s` is now running against the same unchanged source; installer production and byte verification are still pending. No application launch, installed-copy behavior or rendered acceptance is claimed.
+
+### Earlier results retained for recovery
+
 The exact root build at `4147ca9eeb0004f7e18b4a2f5a8c6cb190975d21` ended with exit 1 at `2026-10-06T12:30:40Z`, after 1 hour 26 minutes 18 seconds from source pinning. The earlier three compiler causes did not recur. The remaining diagnostics were the nozzle-card helpers declared on the wrong class and the nozzle status icon calling an unsupported Button member. Reviewed repairs `a913ae69cb250862e55143949043da964c527d04` and `7b70048ed946bf128463789a8f729bf1ac11c4b6` are incorporated in `e78328d15b6bcaf97d73568c26f70f64494735b9`. Independent real-header MSVC checks passed, with deliberate C2039 negative cases. Full native production verification remains pending. No source or index changed during the completed producer.
 
 - Verified remote `main`: `cc059003d362b87d53786152ee8c28621d9c2813`.
@@ -33,9 +37,9 @@ The exact root build at `4147ca9eeb0004f7e18b4a2f5a8c6cb190975d21` ended with ex
 
 ## Preservation and remaining work
 
-The owning integration branch is `task/upstream-development-20261006`. Its latest remotely verified source before this documentation is `a913ae69cb250862e55143949043da964c527d04`; the Button repair and this documentation require their own push proof. Individual active branches and linked checkouts remain retained. No branch/worktree deletion has been performed.
+The owning integration branch is `task/upstream-development-20261006`. Its latest remotely verified source before this documentation is `a28944e3c14b2066ee63d14151c8aca23066d743`; this new build-result record requires its own push proof. Individual active branches and linked checkouts remain retained. No branch/worktree deletion has been performed.
 
-1. Reconcile the completed producer checkout with the reviewed nozzle repairs and documentation, then retry exact root `build.bat /s` without changing its source or index during execution. Catalog repair `7a681fd0f` and empty-report repair `0625de0d2` are reviewed; strict language and terminology checks pass. The raw scroll/table-owner repairs pass 29 integration and nine preservation checks. After the build terminates, reconcile later reviewed documentation/checker changes before packaging and retain valid caches.
+1. Let exact root `build-installer.bat /s` finish on the unchanged successful native candidate, then independently verify package bytes, source identities, catalogs and documentation. Catalog repair `7a681fd0f` and empty-report repair `0625de0d2` are reviewed; strict language and terminology checks pass. The raw scroll/table-owner repairs pass 29 integration and nine preservation checks. After the build terminates, reconcile later reviewed documentation/checker changes before packaging and retain valid caches.
 2. Continue current documentation links/receipts and any concrete native compiler repairs; retain all actions, stable identities and authorization requirements. Default wheel-fixture discovery is complete at the source/non-window level.
 3. Complete the actual surface inventory and translated/indexed documentation without treating shared palette changes as whole-interface delivery.
 4. After native build success, run exact `build-installer.bat /s` and verify package bytes without executing the installer or application under the current boundary.

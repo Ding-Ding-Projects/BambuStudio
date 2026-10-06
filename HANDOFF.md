@@ -2,6 +2,10 @@
 
 ## Current source and verification boundary
 
+Exact root `build.bat /s` succeeded with exit 0 at `2026-10-06T13:04:12Z` for `a28944e3c14b2066ee63d14151c8aca23066d743`. The observed run started at `2026-10-06T12:41:43Z`, lasting 22 minutes 29 seconds. Source was clean before and after. Native compilation/linking, pinned renderer staging and the automation companion completed. Exact `build-installer.bat /s` is now running against the same unchanged source; installer production and byte verification are still pending. No application launch, installed-copy behavior or rendered acceptance is claimed.
+
+### Earlier producer results and incorporated repairs
+
 The exact root build at `4147ca9eeb0004f7e18b4a2f5a8c6cb190975d21` ended with exit 1 at `2026-10-06T12:30:40Z`, after 1 hour 26 minutes 18 seconds from source pinning. The earlier three compiler causes did not recur. The remaining diagnostics were the nozzle-card helpers declared on the wrong class and the nozzle status icon calling an unsupported Button member. Reviewed repairs `a913ae69cb250862e55143949043da964c527d04` and `7b70048ed946bf128463789a8f729bf1ac11c4b6` are incorporated in `e78328d15b6bcaf97d73568c26f70f64494735b9`. Independent real-header MSVC checks passed, with deliberate C2039 negative cases. Full native production verification remains pending. No source or index changed during the completed producer.
 
 Verified remote `main` is `cc059003d362b87d53786152ee8c28621d9c2813`. Reviewed combined source before this
