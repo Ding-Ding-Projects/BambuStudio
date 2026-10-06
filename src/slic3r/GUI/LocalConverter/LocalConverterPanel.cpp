@@ -223,20 +223,21 @@ void LocalConverterPanel::admit(fs::path source,bool folder,std::vector<fs::path
     m_work=std::thread([this,source=std::move(source),destination=std::move(destination),adapter,folder,options=std::move(options),additional=std::move(additional)]{
         auto add=[&](const fs::path &path){
             if(m_cancel.load()) return;
+            fs::path target=destination/path.filename();target.replace_extension("."+adapter.extension);
+            auto rejected=[&](const char *code){++m_rejected;try{m_queue->record_rejected(path,target,adapter.id,code);}catch(...){}};
             try {
-                if(!fs::is_regular_file(fs::symlink_status(path))) { ++m_rejected; return; }
-                const auto size=fs::file_size(path); if(size>LC::Limits::input_bytes) {++m_rejected;return;}
+                if(!fs::is_regular_file(fs::symlink_status(path))) { rejected("source_not_regular"); return; }
+                const auto size=fs::file_size(path); if(size>LC::Limits::input_bytes) {rejected("input_limit");return;}
                 std::ifstream in(path,std::ios::binary); LC::Bytes data(static_cast<std::size_t>(size));
                 in.read(reinterpret_cast<char *>(data.data()),static_cast<std::streamsize>(size));
-                if(!in || in.peek()!=std::char_traits<char>::eof()) {++m_rejected;return;}
+                if(!in || in.peek()!=std::char_traits<char>::eof()) {rejected("source_unreadable_or_changed");return;}
                 const auto kind=LC::detect(data); m_preview_kind=static_cast<int>(kind);m_preview_bytes=size;
-                if(std::find(adapter.sources.begin(),adapter.sources.end(),kind)==adapter.sources.end()) {++m_rejected;return;}
-                fs::path target=destination/path.filename(); target.replace_extension("."+adapter.extension);
+                if(std::find(adapter.sources.begin(),adapter.sources.end(),kind)==adapter.sources.end()) {rejected("incompatible_source_signature");return;}
                 m_queue->enqueue(path,target,adapter.id,options,additional); ++m_admitted;
-            } catch (...) { ++m_rejected; }
+            } catch (...) { rejected("admission_preflight_failed"); }
         };
         try { if(folder) { for(const auto &entry:fs::recursive_directory_iterator(source,fs::directory_options::none)) { if(m_cancel.load()) break; if(entry.is_regular_file()) add(entry.path()); } } else add(source); }
-        catch (...) { ++m_rejected; }
+        catch (...) { ++m_rejected;try{m_queue->record_rejected(source,destination,adapter.id,"directory_discovery_incomplete");}catch(...){} }
         m_running=false;
     });
 }
