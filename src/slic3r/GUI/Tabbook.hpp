@@ -39,6 +39,8 @@ public:
     TabButton*                      pageButton;
 
 private:
+    void StyleButton(TabButton* button, bool selected);
+    bool m_custom_padding = false;
     wxWindow*                       m_parent;
     wxFlexGridSizer*                m_buttons_sizer;
     wxBoxSizer*                     m_sizer;
