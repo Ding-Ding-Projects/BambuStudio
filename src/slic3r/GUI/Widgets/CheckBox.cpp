@@ -168,7 +168,7 @@ wxBitmap CheckBox::RenderGlyphBitmap(int px, double scale, bool checked, bool ha
 
             const double inset = 1.0;
             const double side  = px - 2 * inset; // logical box, 1px breathing room
-            const double radius = 2.5;
+            const double radius = std::min(side / 2.0, px * 0.20);
 
             if (!checked && !half) {
                 // Unchecked: 2px rounded-square outline in OnSurfaceVariant.
@@ -194,8 +194,9 @@ wxBitmap CheckBox::RenderGlyphBitmap(int px, double scale, bool checked, bool ha
                     bool drawn = false;
                     if (MaterialIcon::available()) {
                         // The variable icon face must not reach GDI+ as a font
-                        // (heap corruption); composite a plain-GDI raster.
-                        const wxBitmap gb = MaterialIcon::bitmapPx(MaterialIcon::Check, px, fg, scale);
+                        // (memory corruption); composite a plain-GDI raster.
+                        const int mark_px = std::max(1, static_cast<int>(std::lround(px * 0.8)));
+                        const wxBitmap gb = MaterialIcon::bitmapPx(MaterialIcon::Check, mark_px, fg, scale);
                         const double   tw = gb.GetWidth() / scale, th = gb.GetHeight() / scale;
                         gc->DrawBitmap(gb, (px - tw) / 2, (px - th) / 2, tw, th);
                         drawn = true;

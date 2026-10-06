@@ -1,0 +1,206 @@
+{
+  "baseline": "8ce0ad44698d59ccf942518a56645b37d3f9b9eb",
+  "functions": [
+    {
+      "file": "SpinInput.cpp",
+      "name": "void SpinInput::Create(",
+      "sha256": "4c23ae2cb1325a3f6363a3e81bd1efdf3dc6b623677a582f149c1937c41a24ee"
+    },
+    {
+      "file": "SpinInput.cpp",
+      "name": "void SpinInput::SetValue(const wxString",
+      "sha256": "01a0eda7d18da38265381ec6b825a5e33dd4f55ff4150330b3b122fbc02141ea"
+    },
+    {
+      "file": "SpinInput.cpp",
+      "name": "void SpinInput::SetValue(int",
+      "sha256": "3bc7806b9eca81a33073fc6fb8250110c8ceec26b567a5f11582188e8f03eee9"
+    },
+    {
+      "file": "SpinInput.cpp",
+      "name": "int SpinInput::GetValue(",
+      "sha256": "f540ac09c9e3ef646a607e56a67e4cd86cb2c1d6ddd5abcafdd7174c99805038"
+    },
+    {
+      "file": "SpinInput.cpp",
+      "name": "void SpinInput::SetRange(",
+      "sha256": "b3a1d2371d791192cdd5e4ef030953a34edcceab5584a19f242ae4210b35dc61"
+    },
+    {
+      "file": "SpinInput.cpp",
+      "name": "void SpinInput::DoSetToolTipText(",
+      "sha256": "6968e449f98639da6ad7474b45d30ae78e3e891a89873270ebef8dfdf0161f74"
+    },
+    {
+      "file": "SpinInput.cpp",
+      "name": "bool SpinInput::Enable(",
+      "sha256": "77b06e074d2a7c37e5d255012588748cf524d95936695a3446d5615e359c3485"
+    },
+    {
+      "file": "SpinInput.cpp",
+      "name": "void SpinInput::onTimer(",
+      "sha256": "b54aa95dc8472baa92419cef0bf722ac0027252c048f242067b13004bc717ed2"
+    },
+    {
+      "file": "SpinInput.cpp",
+      "name": "void SpinInput::onTextChanged(",
+      "sha256": "4ac1ce3e0f8aeb1c5dc6d31da63b27400f7e31538e0e4f3add58019967a7603b"
+    },
+    {
+      "file": "SpinInput.cpp",
+      "name": "void SpinInput::onTextLostFocus(",
+      "sha256": "eb49f355a6753b0431c4732f212581fe7ec6d12235d4ce438da63221e16b61ff"
+    },
+    {
+      "file": "SpinInput.cpp",
+      "name": "void SpinInput::onTextEnter(",
+      "sha256": "7b12fbbde323c4528242eaa9e436e0b05f732599660a4ff50d99689ce13b4a72"
+    },
+    {
+      "file": "SpinInput.cpp",
+      "name": "void SpinInput::mouseWheelMoved(",
+      "sha256": "55a206c1b0b37e86ed15ff63dafeed9b9b4ef67b43a38fb3155ea0daad01c3e9"
+    },
+    {
+      "file": "SpinInput.cpp",
+      "name": "void SpinInput::keyPressed(",
+      "sha256": "dcff01f00734cbc071b2856e3af9ba07fed8f6247936685f923c8bdd928ae351"
+    },
+    {
+      "file": "SpinInput.cpp",
+      "name": "void SpinInput::sendSpinEvent(",
+      "sha256": "1fd71f0059d83c2547ff6f7342744796ffb764811ab3ae3c4ab1e19832c55470"
+    },
+    {
+      "file": "CheckBox.cpp",
+      "name": "CheckBox::CheckBox(",
+      "sha256": "5a36cb0abb343048502ba52b5f670328aa68b56b17c9bf282766a633e1e465c2"
+    },
+    {
+      "file": "CheckBox.cpp",
+      "name": "void CheckBox::SetValue(",
+      "sha256": "f84a88aef44afa836d5957e85f10bff3c629f887a160e65ae00a6bb7c90a9b15"
+    },
+    {
+      "file": "CheckBox.cpp",
+      "name": "void CheckBox::SetHalfChecked(",
+      "sha256": "d917321ef7faa222723d3ec4b52a20f53cf677fb49332f8bfc29fbe19d205815"
+    },
+    {
+      "file": "CheckBox.cpp",
+      "name": "void CheckBox::settleSelection(",
+      "sha256": "5a4af4730c50e0acf5fad5b9a07525b8d363c7e986912ecdec1a92542e909a21"
+    },
+    {
+      "file": "CheckBox.cpp",
+      "name": "void CheckBox::emphasizeSelection(",
+      "sha256": "b68b50a7b7917fa841f3be789313632e47bae632cfa4dbd1ac5f74b1c2253768"
+    },
+    {
+      "file": "CheckBox.cpp",
+      "name": "void CheckBox::SetColorScheme(",
+      "sha256": "03539b21bad1d29a7b0fe003635d794cb9d15a5fb7f0bac5dd670182a88b8deb"
+    },
+    {
+      "file": "CheckBox.cpp",
+      "name": "void CheckBox::Rescale(",
+      "sha256": "e1ae4dae9ade56f984e62ba81fbf43a6c92797c974b20dddeae79e90425b3125"
+    },
+    {
+      "file": "CheckBox.cpp",
+      "name": "void CheckBox::Retheme(",
+      "sha256": "bc8fa31de925d40ee7fc9dccaec7222ed9ad51ed6143612a30ed188f009d0744"
+    },
+    {
+      "file": "CheckBox.cpp",
+      "name": "int CheckBox::deviceSide(",
+      "sha256": "84225530cc914a75e52f170c2d3ea3ccd50871a02a9c5458e630df11bb29c9e1"
+    },
+    {
+      "file": "CheckBox.cpp",
+      "name": "wxBitmap CheckBox::renderBitmap(",
+      "sha256": "e1e5c56455f9d09102e21f65d9bf85f1f2c7e926f38ed31ddc060ff943de5133"
+    },
+    {
+      "file": "CheckBox.cpp",
+      "name": "void CheckBox::update(",
+      "sha256": "9830fb0ad09bd2d14c663b5a46a3a7d8bf8f52643f29f7743130a5da514ac319"
+    },
+    {
+      "file": "CheckBox.cpp",
+      "name": "bool CheckBox::Enable(",
+      "sha256": "598c7dfb2a6ca1f1cf9b514a732989f32ea6fbb17b0492f70f77276e3bc98ce0"
+    },
+    {
+      "file": "CheckBox.cpp",
+      "name": "wxBitmap CheckBox::DoGetBitmap(",
+      "sha256": "e349c9cdca6c75ada6b56e280bc3d0d46da002d34fd7e9d31604e0b33dd374e3"
+    },
+    {
+      "file": "CheckBox.cpp",
+      "name": "void CheckBox::updateBitmap(",
+      "sha256": "9531280945ee59a75d9c0d131f4b314905919c6c300f768ca2e9978f274642db"
+    },
+    {
+      "file": "SwitchButton.cpp",
+      "name": "SwitchButton::SwitchButton(",
+      "sha256": "e9ea73f948d89633b652d1883b61be9a7dbeb83466bcaaf63d54062966287231"
+    },
+    {
+      "file": "SwitchButton.cpp",
+      "name": "void SwitchButton::SetLabels(",
+      "sha256": "c612a8782b0a5d4f5c754a34a9ec126b01d8c00c034492d7e271721b042126bb"
+    },
+    {
+      "file": "SwitchButton.cpp",
+      "name": "void SwitchButton::DoSetToolTipText(",
+      "sha256": "fddeba08c0e9d218c12591e684b7444552a865ebabb366b7ed4dfb0b21bfe4e7"
+    },
+    {
+      "file": "SwitchButton.cpp",
+      "name": "void SwitchButton::SetTextColor(",
+      "sha256": "02a9fb21bc9d18a19365b6e5c12477c10de136ed5b5de5c5c9ce366071e0083e"
+    },
+    {
+      "file": "SwitchButton.cpp",
+      "name": "void SwitchButton::SetTextColor2(",
+      "sha256": "9006d58cd7c11dd3ef5c991a2ded782dd4f738f23c5f525e097397676a49f14f"
+    },
+    {
+      "file": "SwitchButton.cpp",
+      "name": "void SwitchButton::SetTrackColor(",
+      "sha256": "6af8d27514765f4ffeb47667d8755c77d8b681af9eb4fe042906876af953d85d"
+    },
+    {
+      "file": "SwitchButton.cpp",
+      "name": "void SwitchButton::SetThumbColor(",
+      "sha256": "8b615986f527ee63e013d471cb42e74ae4827374c3576d90b7c4160d3488bf59"
+    },
+    {
+      "file": "SwitchButton.cpp",
+      "name": "void SwitchButton::SetColorScheme(",
+      "sha256": "96c3711d07bdd97e4115a4af610509e19b42c23e2cc3c8992fa43689a2fa34da"
+    },
+    {
+      "file": "SwitchButton.cpp",
+      "name": "void SwitchButton::SetValue(",
+      "sha256": "1bb7088c611d6c4257b5639978a867108e6e71f034b7724e7009d4aa65086d09"
+    },
+    {
+      "file": "SwitchButton.cpp",
+      "name": "void SwitchButton::update(",
+      "sha256": "c261872d43ba22be34baad7f07c864d642bedf469ae93dfa0f9570a88058e34a"
+    },
+    {
+      "file": "SwitchButton.cpp",
+      "name": "void SwitchButton::startAnim(",
+      "sha256": "fece51c6099c916e07cce9504aac70f8d802c68219b04f80bdc7a3be6357ad31"
+    },
+    {
+      "file": "SwitchButton.cpp",
+      "name": "void SwitchButton::onAnimTick(",
+      "sha256": "b8dc5132a1e973f8f51fb00357330290086cba03a6d9de7e1369a52faa00aa6a"
+    }
+  ],
+  "otherClasses": "39a7aa21fb6b6a710f0c5de452d515859587eba22f0bcd34c4e9b77625be5604"
+}
