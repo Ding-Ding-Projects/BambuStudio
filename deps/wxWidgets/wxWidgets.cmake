@@ -26,7 +26,13 @@ endif ()
 bambustudio_add_cmake_project(wxWidgets
     GIT_REPOSITORY "https://github.com/bambulab/wxWidgets"
     GIT_TAG a9d946902685b9946d8775f07d2a73a9b5bef394
-    PATCH_COMMAND git apply --verbose --ignore-space-change --whitespace=fix ${CMAKE_CURRENT_LIST_DIR}/0002-relocatable-windows-prefix.patch
+    PATCH_COMMAND ${CMAKE_COMMAND}
+        "-DPATCH_ROOT=${CMAKE_SOURCE_DIR}/.."
+        "-DPATCH_SOURCE=<SOURCE_DIR>"
+        "-DGIT_EXECUTABLE=${GIT_EXECUTABLE}"
+        -DPATCH_COUNT=1
+        "-DPATCH_1=${CMAKE_CURRENT_LIST_DIR}/0002-relocatable-windows-prefix.patch"
+        -P "${CMAKE_CURRENT_LIST_DIR}/../../cmake/modules/ApplyPatchesIdempotently.cmake"
     DEPENDS ${PNG_PKG} ${ZLIB_PKG} ${EXPAT_PKG} ${TIFF_PKG} ${JPEG_PKG}
     CMAKE_ARGS
         -DCMAKE_POLICY_VERSION_MINIMUM=3.5

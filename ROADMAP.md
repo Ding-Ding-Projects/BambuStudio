@@ -2,6 +2,8 @@
 
 ## Build bootstrap repair, 6 October 2026
 
+- [x] Route wx relocatable-prefix replay through the existing per-patch proof, with ten actual nested-Git/template fixture assertions and preserved conflicts.
+
 - [x] Stream native repository-command stdout into the transcript without weakening failures, with four echo/exit/exception fixture assertions.
 
 - [x] Make OpenCV partial patch sequences repeat-safe using forward/reverse proof, with nine Git/CMake fixture assertions.

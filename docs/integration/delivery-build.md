@@ -1,6 +1,14 @@
 # Isolated delivery builds
 
 The supported commands remain `build.bat /s` and `build-installer.bat /s`.
+wx uses the same per-patch helper for its relocatable-prefix patch. A successful
+reverse check with the helper's documented whitespace options proves the whole
+patch already applied; a strict raw reverse check is a different contract and
+can fail on wx's LF template mixed with a CRLF patch. The recipe does not rewrite
+source or normalize patch transport. Ten fixture assertions use a real nested
+Git layout, the pinned wx source and attributes, path spaces, the actual mixed
+template shape, generated setup header, and partial/conflicting semantic states.
+Replay preserves bytes; incomplete or conflicting semantic changes stop intact.
 Repository commands stream native stdout through `Out-Host` so the PowerShell
 transcript records their diagnostics. Native nonzero exit codes and terminating
 PowerShell exceptions retain their existing failure behavior; stderr is not
