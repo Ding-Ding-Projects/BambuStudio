@@ -3,12 +3,12 @@
    by globalapi.js on a dark Studio theme and overrides these :root values. */
 :root
 {
-	--md-surface:#faf8fd;
-	--md-surface-dim:#dad9e0;
-	--md-sc:#eeedf3;
-	--md-on-surface:#1a1b1f;
-	--md-on-surface-variant:#44464e;
-	--md-outline-variant:#c5c6d0;
+	--md-surface: #f7f9fc;
+	--md-surface-dim: #d7e1ed;
+	--md-sc: #e7edf5;
+	--md-on-surface: #172434;
+	--md-on-surface-variant: #46576a;
+	--md-outline-variant: #c4d0df;
 	--md-primary:#146c2e;
 	--md-on-primary:#ffffff;
 	--md-font:'Roboto','system-ui','Segoe UI',Oxygen,Ubuntu,'Helvetica Neue',sans-serif;

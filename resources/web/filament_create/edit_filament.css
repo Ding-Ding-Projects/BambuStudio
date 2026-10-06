@@ -34,7 +34,7 @@ body {
 .ef-label {
     font-size: 14px;
     font-weight: 700;
-    color: #262E30;
+    color: #172434;
     white-space: nowrap;
 }
 
@@ -47,11 +47,11 @@ body {
     margin-left: auto;
     height: 28px;
     padding: 0 16px;
-    border: 1px solid #CECECE;
+    border: 1px solid #c4d0df;
     border-radius: 14px;
     background: #fff;
     font-size: 12px;
-    color: #262E30;
+    color: #172434;
     cursor: pointer;
     white-space: nowrap;
 }
@@ -65,7 +65,7 @@ body {
 .ef-list-container {
     width: 700px;
     overflow-y: auto;
-    border: 1px solid #EEEEEE;
+    border: 1px solid #c4d0df;
     border-radius: 8px;
     background: #F9F9F9;
     margin-top: 8px;
@@ -99,7 +99,7 @@ body {
     align-items: flex-start;
     width: 100%;
     padding: 10px 16px 10px 24px;
-    border-bottom: 1px solid #F5F5F5;
+    border-bottom: 1px solid #dfe7f1;
     gap: 12px;
     background: #fff;
     box-sizing: border-box;
@@ -112,7 +112,7 @@ body {
 .ef-item-printer {
     flex: 1;
     font-size: 13px;
-    color: #262E30;
+    color: #172434;
     word-break: break-word;
     min-width: 0;
     padding-top: 2px;
@@ -137,11 +137,11 @@ body {
 .ef-btn-action {
     height: 24px;
     padding: 0 12px;
-    border: 1px solid #CECECE;
+    border: 1px solid #c4d0df;
     border-radius: 12px;
     background: #fff;
     font-size: 12px;
-    color: #262E30;
+    color: #172434;
     cursor: pointer;
     white-space: nowrap;
 }
@@ -190,9 +190,9 @@ body {
     border-radius: 16px;
     background: transparent;
     border: 1px solid #999;
-    color: #262E30;
+    color: #172434;
     font-size: 13px;
     cursor: pointer;
 }
 
-.ef-btn-secondary:hover { background: #F8F8F8; }
+.ef-btn-secondary:hover { background: #eef2f7; }

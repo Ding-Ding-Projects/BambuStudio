@@ -3,18 +3,18 @@
    Values mirror ui-md3/design-system/tokens/colors.css. ---*/
 :root {
   color-scheme: light;
-  --md-surface: #faf8fd;
-  --md-surface-dim: #dad9e0;
-  --md-surface-bright: #faf8fd;
+  --md-surface: #f7f9fc;
+  --md-surface-dim: #d7e1ed;
+  --md-surface-bright: #f7f9fc;
   --md-sc-lowest: #ffffff;
-  --md-sc-low: #f4f2f9;
-  --md-sc: #eeedf3;
-  --md-sc-high: #e8e7ee;
-  --md-sc-highest: #e2e1e9;
-  --md-on-surface: #1a1b1f;
-  --md-on-surface-variant: #44464e;
-  --md-outline: #75777f;
-  --md-outline-variant: #c5c6d0;
+  --md-sc-low: #eef2f7;
+  --md-sc: #e7edf5;
+  --md-sc-high: #dfe7f1;
+  --md-sc-highest: #d7e1ed;
+  --md-on-surface: #172434;
+  --md-on-surface-variant: #46576a;
+  --md-outline: #6d7e94;
+  --md-outline-variant: #c4d0df;
   --md-inverse-surface: #2f3036;
   --md-inverse-on: #f1f0f7;
   --md-inverse-primary: #8bd89b;
@@ -318,5 +318,21 @@ hr {
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
+  }
+}
+
+/* Studio Atlas: paint-only interaction states. Existing geometry and actions remain owned by the view. */
+body :is(button, input, select, textarea, a[href], [role="button"], [tabindex]):focus-visible {
+  outline: 2px solid var(--md-primary);
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  body :is(button, input, select, textarea, [role="button"]) {
+    transition: background-color 100ms ease-out, border-color 100ms ease-out;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  body :is(button, input, select, textarea, a[href], [role="button"], [tabindex]) {
+    transition: none;
   }
 }

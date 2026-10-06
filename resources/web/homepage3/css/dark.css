@@ -1,18 +1,18 @@
 :root
 {
 	color-scheme: dark;
-	--md-surface: #1b1c21;
-	--md-surface-dim: #161619;
-	--md-surface-bright: #3b3c43;
-	--md-sc-lowest: #131317;
-	--md-sc-low: #202127;
-	--md-sc: #25262b;
-	--md-sc-high: #2f3036;
-	--md-sc-highest: #393a41;
-	--md-on-surface: #e8e7ee;
-	--md-on-surface-variant: #cdced8;
-	--md-outline: #94959f;
-	--md-outline-variant: #4a4c54;
+	--md-surface: #151c25;
+	--md-surface-dim: #101720;
+	--md-surface-bright: #344557;
+	--md-sc-lowest: #101720;
+	--md-sc-low: #1a2430;
+	--md-sc: #202d3b;
+	--md-sc-high: #293849;
+	--md-sc-highest: #344557;
+	--md-on-surface: #e8eff8;
+	--md-on-surface-variant: #b9c8da;
+	--md-outline: #899caf;
+	--md-outline-variant: #43566a;
 	--md-inverse-surface: #e3e2e9;
 	--md-inverse-on: #2f3036;
 	--md-inverse-primary: #146c2e;

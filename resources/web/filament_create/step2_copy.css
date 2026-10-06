@@ -148,7 +148,7 @@
     padding: 8px 12px;
     font-size: 13px;
     color: var(--color-text-main);
-    border-bottom: 1px solid #F5F5F5;
+    border-bottom: 1px solid #dfe7f1;
     gap: 4px;
 }
 .preset-row:last-child { border-bottom: none; }
@@ -175,7 +175,7 @@
     left: 8px;
     top: 50%;
     transform: translateY(-50%);
-    color: #CECECE;
+    color: #c4d0df;
     font-size: 14px;
     pointer-events: none;
 }
@@ -199,7 +199,7 @@
 
 /* Disabled next button */
 #btn-next:disabled {
-    background: #CECECE;
+    background: #c4d0df;
     cursor: not-allowed;
 }
-#btn-next:disabled:hover { background: #CECECE; }
+#btn-next:disabled:hover { background: #c4d0df; }
