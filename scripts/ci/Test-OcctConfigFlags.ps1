@@ -14,8 +14,8 @@ try {
     $probe = Join-Path $fixture 'probe.cmake'
     $code = @'
 cmake_minimum_required(VERSION 3.13)
-set(CMAKE_C_FLAGS [========[ /pathmap:"C:\Users\fixture\path with spaces]=]and]==]=source/OCCT" /pathmap:"C:/Users/fixture/path with spaces=source/OCCT" /DKEEP="${literal}" ]========])
-set(CMAKE_CXX_FLAGS [========[ /W4 /pathmap:"C:\Users\fixture\path with spaces]=]and]==]=source/OCCT" /MP ]========])
+set(CMAKE_C_FLAGS [========[ /pathmap:"C:\UnquotedFixture\path with spaces]=]and]==]=source/OCCT" /pathmap:"C:/UnquotedFixture/path with spaces=source/OCCT" /DKEEP="${literal}" ]========])
+set(CMAKE_CXX_FLAGS [========[ /W4 /pathmap:"C:\UnquotedFixture\path with spaces]=]and]==]=source/OCCT" /MP ]========])
 set(expected_c "${CMAKE_C_FLAGS}")
 set(expected_cxx "${CMAKE_CXX_FLAGS}")
 @DELIMITER_SETUP@
