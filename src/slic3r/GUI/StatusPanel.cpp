@@ -1213,7 +1213,7 @@ PrintingTaskPanel::~PrintingTaskPanel()
     }
 }
 
-static void layout_printing_title(wxPanel *panel, Label *label)
+static void layout_printing_title(wxPanel *panel, wxStaticText *label)
 {
     // Reapply the current heading font before measuring. Both minima are physical
     // pixels and must be replaced, including when moving to a lower-DPI display.
