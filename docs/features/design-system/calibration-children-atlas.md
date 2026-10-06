@@ -51,3 +51,19 @@ entire calibration surface contract.
 Keep this unit separately reversible from setup-index painting, calibration
 algorithms and printer behavior. The parent integration owns build and native
 verification receipts.
+
+## Completion-label receiver correction
+
+The initial visual commit `d3821d9bcbbc6e90fb9b941013ab7b8039534c68` used an
+undeclared local receiver for the foreground call in
+`CaliPASaveManualPanel::create_panel` and `CaliPASaveP1PPanel::create_panel`.
+The follow-up changes only those two production receivers to the declared and
+initialized `m_complete_text` members, retaining the four valid local receivers.
+
+`node --test tests/calibration_label_scope.test.mjs` reads each actual method
+scope and its owning class declarations. The original source produced six passes
+and exactly two failures; the corrected source passes all eight cases. Negative
+fixtures reject out-of-scope, later, undeclared and uninitialized receivers. This
+check retains foreground calls rather than removing them as visual statements.
+It is a focused source regression, not a complete C++ name resolver or proof of
+native compilation. No application build or launch was performed for this repair.

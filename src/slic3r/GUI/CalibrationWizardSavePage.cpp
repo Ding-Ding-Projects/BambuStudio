@@ -824,7 +824,7 @@ void CaliPASaveManualPanel::create_panel(wxWindow* parent)
     wxBoxSizer* complete_text_sizer = new wxBoxSizer(wxVERTICAL);
     m_complete_text = new Label(complete_text_panel, _L("Please find the best line on your plate"));
     m_complete_text->SetFont(Label::Head_16);
-    complete_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+    m_complete_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_complete_text->Wrap(CALIBRATION_TEXT_MAX_LENGTH);
     complete_text_sizer->Add(m_complete_text, 0);
     complete_text_panel->SetSizer(complete_text_sizer);
@@ -1009,7 +1009,7 @@ void CaliPASaveP1PPanel::create_panel(wxWindow* parent)
     wxBoxSizer* complete_text_sizer = new wxBoxSizer(wxVERTICAL);
     m_complete_text = new Label(complete_text_panel, _L("Please find the best line on your plate"));
     m_complete_text->SetFont(Label::Head_16);
-    complete_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+    m_complete_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_complete_text->Wrap(CALIBRATION_TEXT_MAX_LENGTH);
     complete_text_sizer->Add(m_complete_text, 0, wxEXPAND);
     complete_text_panel->SetSizer(complete_text_sizer);
