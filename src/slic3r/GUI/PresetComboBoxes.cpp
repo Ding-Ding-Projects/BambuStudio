@@ -1,3 +1,4 @@
+#include "PrepareInspectorLayout.hpp"
 #include "PresetComboBoxes.hpp"
 
 #include <cstddef>
@@ -123,6 +124,7 @@ PresetComboBox::PresetComboBox(wxWindow* parent, Preset::Type preset_type, const
 
     // parameters for an icon's drawing
     fill_width_height();
+    apply_inspector_style();
     Bind(wxEVT_COMBOBOX, &PresetComboBox::OnSelect, this);
 }
 
@@ -596,6 +598,35 @@ int PresetComboBox::selected_ams_filament() const
     return -1;
 }
 
+int PresetComboBox::inspector_row_height() const
+{
+    return PrepareInspectorLayout::row_height(FromDIP(MD3::Metrics::active().row_height),
+        GetCharHeight(), icon_height, FromDIP(6));
+}
+
+void PresetComboBox::apply_inspector_style()
+{
+    const auto& metrics = MD3::Metrics::active();
+    SetFont(MD3::Metrics::isCompact() ? Label::Body_13 : Label::Body_14);
+    SetDefaultCornerRadius(metrics.small_radius);
+    RescaleDefaultCornerRadius();
+    SetBackgroundColor(StateColor(
+        std::make_pair(MD3::resolve(MD3::Role::SurfaceContainerHigh, false), int(StateColor::Disabled)),
+        std::make_pair(MD3::resolve(MD3::Role::SurfaceContainerLow, false), int(StateColor::Hovered)),
+        std::make_pair(MD3::resolve(MD3::Role::SurfaceContainerLowest, false), int(StateColor::Normal))));
+    SetBorderColor(StateColor(
+        std::make_pair(MD3::resolve(MD3::Role::OutlineVariant, false), int(StateColor::Disabled)),
+        std::make_pair(MD3::resolve(MD3::Role::Primary, false), int(StateColor::Focused)),
+        std::make_pair(MD3::resolve(MD3::Role::Primary, false), int(StateColor::Hovered)),
+        std::make_pair(MD3::resolve(MD3::Role::Outline, false), int(StateColor::Normal))));
+    auto& menu = GetDropDown();
+    menu.SetFont(GetFont());
+    menu.Rescale();
+    menu.SetSelectorBackgroundColor(MD3::resolve(MD3::Role::PrimaryContainer, false));
+    menu.SetSelectorBorderColor(MD3::resolve(MD3::Role::Primary, false));
+    SetMinSize(wxSize(GetMinSize().x, inspector_row_height()));
+}
+
 void PresetComboBox::msw_rescale()
 {
     m_em_unit = em_unit(this);
@@ -609,6 +640,7 @@ void PresetComboBox::msw_rescale()
 
     // update the control to redraw the icons
     update();
+    apply_inspector_style();
 }
 
 void PresetComboBox::sys_color_changed()
@@ -1460,14 +1492,14 @@ void PlaterPresetComboBox::update()
     // Use this part of code just on Windows to avoid of some layout issues on Linux
     // Update control min size after rescale (changed Display DPI under MSW)
     if (GetMinWidth() != 10 * m_em_unit)
-        SetMinSize(wxSize(10 * m_em_unit, GetSize().GetHeight()));
+        SetMinSize(wxSize(10 * m_em_unit, (std::max)(GetSize().GetHeight(), inspector_row_height())));
 #endif //__WXMSW__
 }
 
 void PlaterPresetComboBox::msw_rescale()
 {
     PresetComboBox::msw_rescale();
-    SetMinSize({-1, 30 * m_em_unit / 10});
+    SetMinSize({-1, inspector_row_height()});
 
     if (clr_picker)
         clr_picker->SetSize(28 * m_em_unit / 10, 28 * m_em_unit / 10);
@@ -1792,7 +1824,7 @@ void TabPresetComboBox::msw_rescale()
 {
     PresetComboBox::msw_rescale();
     // BBS: new layout
-    wxSize sz = wxSize(20 * m_em_unit, 30 * m_em_unit / 10);
+    wxSize sz = wxSize(20 * m_em_unit, inspector_row_height());
     SetMinSize(sz);
     SetSize(sz);
 }

@@ -1,3 +1,4 @@
+#include "PrepareInspectorLayout.hpp"
 #include "libslic3r/libslic3r.h"
 #include "Widgets/MD3DataView.hpp"
 #include "libslic3r/PresetBundle.hpp"
@@ -95,23 +96,51 @@ static void take_snapshot(const std::string& snapshot_name)
         plater->take_snapshot(snapshot_name);
 }
 
+namespace {
+void style_object_inspector(ObjectList* list)
+{
+    const auto& metrics = MD3::Metrics::active();
+    list->SetFont(MD3::Metrics::isCompact() ? Label::Body_13 : Label::Body_14);
+    list->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
+    list->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+    list->SetAlternateRowColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
+    list->SetRowHeight(PrepareInspectorLayout::row_height(list->FromDIP(metrics.row_height),
+        list->GetCharHeight(), list->FromDIP(24), list->FromDIP(4)));
+}
+} // namespace
+
 class wxRenderer : public wxDelegateRendererNative
 {
 public:
     wxRenderer() : wxDelegateRendererNative(wxRendererNative::Get()) {}
-    // MD3 Objects card row anatomy (register objects-legacy-searchctrl-dataviewctrl):
-    // the selected row reads as a SecondaryContainer chip (kit selection role)
-    // instead of the OS highlight blue. Drawn as a rounded fill inset a hair from
-    // the row edges so the whole row (all columns) picks up the kit selection
-    // colour while the cell renderers (name glyph/text, filament, toggles) keep
-    // painting their content on top — selection, editing, DnD and context menus
-    // are untouched (this is purely the row's selection background). A row that is
-    // current/hovered but not selected still falls through to the generic path.
+    // Only the object hierarchy receives the Atlas selection marker. Other
+    // native views retain the existing selection treatment of this delegate.
     virtual void DrawItemSelectionRect(wxWindow *win,
                                        wxDC& dc,
                                        const wxRect& rect,
                                        int flags = 0) wxOVERRIDE
     {
+        wxWindow* owner = win;
+        while (owner && !dynamic_cast<ObjectList*>(owner)) owner = owner->GetParent();
+        if (owner && (flags & (wxCONTROL_SELECTED | wxCONTROL_CURRENT))) {
+            const bool selected = (flags & wxCONTROL_SELECTED) != 0;
+            wxRect r = rect;
+            r.Deflate(owner->FromDIP(2), owner->FromDIP(1));
+            if (r.width <= 0 || r.height <= 0) return;
+            const wxColour accent = StateColor::semantic(MD3::Role::Primary);
+            dc.SetPen(selected && (flags & wxCONTROL_FOCUSED)
+                ? wxPen(accent, owner->FromDIP(2)) : *wxTRANSPARENT_PEN);
+            dc.SetBrush(wxBrush(StateColor::semantic(selected ? MD3::Role::PrimaryContainer
+                                                              : MD3::Role::SurfaceContainerHigh)));
+            dc.DrawRoundedRectangle(r, owner->FromDIP(MD3::Metrics::active().small_radius));
+            if (selected) {
+                dc.SetPen(*wxTRANSPARENT_PEN);
+                dc.SetBrush(wxBrush(accent));
+                dc.DrawRoundedRectangle(r.x, r.y + owner->FromDIP(4), owner->FromDIP(3),
+                    (std::max)(1, r.height - owner->FromDIP(8)), owner->FromDIP(1));
+            }
+            return;
+        }
         if (flags & wxCONTROL_SELECTED) {
             const wxColour fill = StateColor::semantic(MD3::Role::SecondaryContainer);
             wxRect r = rect;
@@ -138,7 +167,7 @@ ObjectList::ObjectList(wxWindow* parent) :
 // ubuntu dark mode issue. https://github.com/bambulab/BambuStudio/issues/4943
     this->SetForegroundColour(*wxBLACK);
 #endif
-    SetFont(Label::sysFont(13));
+    style_object_inspector(this);
 #ifdef __WXMSW__
     static auto render = new wxRenderer;
     wxRendererNative::Set(render);
@@ -7166,6 +7195,7 @@ void ObjectList::update_item_error_icon(const int obj_idx, const int vol_idx) co
 void ObjectList::msw_rescale()
 {
     set_min_height();
+    style_object_inspector(this);
 
     const int em = wxGetApp().em_unit();
 
