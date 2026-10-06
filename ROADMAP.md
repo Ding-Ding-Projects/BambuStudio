@@ -1,5 +1,14 @@
 # Roadmap
 
+## Build bootstrap repair, 6 October 2026
+
+- [x] Detect paired Strawberry tools instead of accepting unrelated pkg-config.
+- [x] Preserve installed packages during bounded winget installation recovery.
+- [x] Preserve exact producer exit codes and verify both entrypoints with a stub producer.
+- [x] Run focused script regressions: nine bootstrap assertions and six forwarding assertions.
+- [ ] Complete the reconciled native build and installer production; script checks do not prove these outcomes.
+
+
 ## Current delivery pass, 5 October 2026
 
 Current source: `600b38a7d1955c694433a8f1b8c5aa39e35d36bc`. Production configure has advanced beyond the earlier path-with-spaces blockers. The Cantonese catalogue production target completed with 7,991 entries and the offline documentation bundle completed. Native GUI compilation is currently running; no successful final native compile, package or release verdict is claimed. Intended release `md3-v228` and package `2.8.4814` remain pending, including exact target and downloadable-asset proof.

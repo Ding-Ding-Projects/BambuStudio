@@ -1,5 +1,28 @@
 # Current handoff: 5 October 2026
 
+## Build bootstrap repair, 6 October 2026
+
+The bounded source repair starts at `9a55b7aa1e900f85c2ded1389854beefabff159f`.
+`Invoke-OneClickBuild.ps1` now detects paired Strawberry Perl tools independently
+of other pkg-config installations and preserves installed packages during a
+maximum of two winget installation attempts. `Invoke-BuildEntryPoint.ps1` retains
+the exact producer exit result. `Test-BootstrapRecovery.ps1` has nine passing
+behavioral assertions; `Test-BuildEntryPoint.ps1` has six passing assertions using
+a stub producer. The package-removal, unrelated-pkg-config, and exit-forwarding
+regressions were observed failing before their corresponding repairs.
+
+These checks perform no dependency installation, native compilation, packaging,
+runtime launch, installer execution, or publication. A separate primary build
+completed host bootstrap and started its native dependency superbuild at
+`2026-10-06T05:32:08Z` with parallelism two, as reported by the coordinating task.
+Its final build and package verdict remains pending and is not inferred from
+these script checks.
+
+The coordinating task verified upstream master
+`da8b44ee34dd349f2ae0df3f1cbae366df482354` is already an ancestor of main,
+with main/upstream comparison `1336/0`. No upstream integration was needed.
+
+
 Current source: `600b38a7d1955c694433a8f1b8c5aa39e35d36bc`. Production configure has advanced beyond the earlier path-with-spaces blockers. The Cantonese catalogue production target completed with 7,991 entries and the offline documentation bundle completed. Native GUI compilation is currently running; no successful final native compile, package or release verdict is claimed. Intended release `md3-v228` and package `2.8.4814` remain pending, including exact target and downloadable-asset proof.
 
 No test, lint or verification suites were deliberately launched. The inherited DeviceWeb production command did attempt its `tsc -b` type stage once and failed because ancestor-workspace TypeScript resolution interfered before bundling. The production route now disables ancestor workspace discovery and invokes local Vite directly. This pass therefore does not claim zero attempted checks or any passing type-check verdict. Runtime interaction, installer execution and screenshots were not performed. The maintainer's selected closure criteria remain implementation on main plus verified release delivery, not runtime acceptance.
