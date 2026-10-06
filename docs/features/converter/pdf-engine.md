@@ -78,3 +78,63 @@ These checks do not read user documents and do not prove application sandbox,
 installer inclusion, UI integration, or the entire PDF operation catalog.
 
 Official behavior reference: [Running qpdf](https://qpdf.readthedocs.io/en/12.4/cli.html).
+
+## Optional native-cryptography source build
+
+`Build-LocalPdfTools.ps1` builds the unmodified, checksum-pinned qpdf 12.4.2 source
+with its officially supported native cryptography provider. It takes zlib and JPEG
+from the same checksum-pinned upstream release dependency archive, outside the
+source tree, and explicitly disables automatic external crypto selection. No
+binary patching, AppContainer capability changes, or file ACL changes occur here.
+
+```powershell
+pwsh -NoProfile -File scripts/windows/Build-LocalPdfTools.ps1 `
+  -Destination artifacts/pdf-native-runtime -BuildRoot artifacts/pdf-native-build `
+  -SdkDestination artifacts/pdf-sdk -Offline
+```
+
+Both output and build directories must be fresh. Compiler discovery uses only the
+project-managed MSVC 14.51.36231 installation, with an explicit `-CompilerRoot`
+override for that same version. CMake and Ninja come from that installation. The
+helper uses Release mode, MSVC deterministic/path-mapping options, `/Brepro` at
+link time, normal C++ exception handling, and no source modifications. Private
+build/profile paths are scanned in UTF-8 and UTF-16 output before activation.
+Source/archive digests, compiler and build-tool hashes, build options, and actual
+output file digests appear in the generated manifest. Locally compiled output
+never inherits a claim that its binary hashes are vendor-provided.
+
+The source-build manifest is the input to the worker's compiled trusted pin
+header. Generate that header only after this build succeeds and before compiling
+the worker. Copy the complete verified runtime beside the worker at `tools/pdf`.
+To check a copied package against that completed build:
+
+```powershell
+pwsh -NoProfile -File scripts/windows/Install-LocalPdfTools.ps1 `
+  -Destination install-dir/tools/pdf -VerifyOnly `
+  -TrustedManifestPath artifacts/pdf-native-runtime/manifest.json
+```
+
+The trusted manifest must come from the completed controlled build, not from the
+untrusted destination being inspected. Supplying it never enables acquisition.
+Runtime verification still uses compiled pins, not this PowerShell option.
+
+The initial native-only build removes the official binary's eager USER32,
+WS2_32, and CRYPT32 imports. Native secure random uses ADVAPI32 cryptography;
+ADVAPI32 itself has delayed imports including USER32 on the inspected host.
+Therefore import inspection alone cannot prove the isolated worker operates.
+The native variant remains optional until real AppContainer PDF operation checks
+pass. Encrypted-document handling remains outside this adapter's supported scope.
+The helper records `restrictedWorkerVerified=false` because the build itself is
+not that runtime proof. The default official prebuilt acquisition path remains
+available for existing consumers.
+
+The optional native package checks run with
+`tests/local_pdf_package/verify-native.ps1 -RuntimeDirectory <completed-runtime>`.
+Seven groups cover provenance, clean copied-package verification and restoration,
+rejection of a trusted manifest in install mode, altered DLL rejection, altered
+manifest rejection, native-only crypto selection, and synthetic zero-page PDF
+creation followed by the expected structural-validation rejection and count query.
+`verify-reproducibility.ps1 -First <runtime-a> -Second <runtime-b>` requires distinct
+output directories and compares both binary hashes and build provenance. Two fresh
+builds verified byte-identical qpdf DLL/executable outputs with the declared compiler.
+These local checks do not substitute for isolated-worker or installer verification.

@@ -5,11 +5,16 @@ param(
     [string]$SdkDestination,
     [string]$CacheDirectory = (Join-Path $PSScriptRoot '../../artifacts/local-pdf-cache'),
     [switch]$VerifyOnly,
+    [string]$TrustedManifestPath,
     [switch]$Offline
 )
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 $manifestPath = Join-Path $PSScriptRoot 'local-pdf-tools.json'
+if ($TrustedManifestPath) {
+    if (!$VerifyOnly) { throw 'A completed native build manifest may only be used for package verification.' }
+    $manifestPath = [IO.Path]::GetFullPath($TrustedManifestPath)
+}
 $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
 function Get-SafeChild([string]$Root, [string]$Relative) {
     if ($Relative -notmatch '^[A-Za-z0-9_.-]+(/[A-Za-z0-9_.-]+)*$' -or $Relative.Split('/') -contains '..') { throw 'Invalid package path.' }
