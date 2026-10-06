@@ -1,5 +1,16 @@
 # Roadmap
 
+## Complete native interface refresh, 6 October 2026
+
+- [x] Preserve explicit composition contracts for 28 surface groups and retain all 1,204 existing feature-obligation truth states.
+- [x] Document reviewed appearance reversal without resetting user data or removing functional/build fixes.
+- [ ] Finish source implementation across shared controls, Prepare, renderer, Monitor, Preferences/setup and readers, including independently reviewed repairs.
+- [ ] Finish caller-owned fields, Print setup, device popups, live notifications, Workspace, calibration child pages, confirmations, shell tabs and embedded composition.
+- [ ] Compile the exact combined native source and produce the genuine unsigned Squirrel installer through both root entrypoints.
+- [ ] Verify package bytes, versions, source identity and hashes without executing an installer under the current scope.
+- [ ] Obtain authorized native interaction, screenshots and the complete language/theme/viewport/scale matrix before claiming visible completion.
+- [ ] Deliver completed changes to verified remote main and retain incomplete work safely.
+
 ## Build bootstrap repair, 6 October 2026
 
 - [x] Route wx relocatable-prefix replay through the existing per-patch proof, with ten actual nested-Git/template fixture assertions and preserved conflicts.
@@ -24,7 +35,7 @@
 - [ ] Complete the reconciled native build and installer production; script checks do not prove these outcomes.
 
 
-## Current delivery pass, 5 October 2026
+## Historical delivery pass, 5 October 2026
 
 Current source: `600b38a7d1955c694433a8f1b8c5aa39e35d36bc`. Production configure has advanced beyond the earlier path-with-spaces blockers. The Cantonese catalogue production target completed with 7,991 entries and the offline documentation bundle completed. Native GUI compilation is currently running; no successful final native compile, package or release verdict is claimed. Intended release `md3-v228` and package `2.8.4814` remain pending, including exact target and downloadable-asset proof.
 

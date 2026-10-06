@@ -1,5 +1,5 @@
 > [!IMPORTANT]
-> Current delivery source is `600b38a7d1955c694433a8f1b8c5aa39e35d36bc`. Production catalogue (7,991 entries) and offline docs bundling completed; native GUI compilation is running. Release `md3-v228` and package `2.8.4814` remain pending proof. No runtime or screenshot acceptance is claimed. The inherited TypeScript type stage was attempted once and failed; no verification suite was deliberately launched. Read the current handoff and continuation record below.
+> Current status, 6 October 2026: verified `main` contains build repairs through `6a2b2a7de24d0be435d6c94d479d28a14a5ce718`. The complete native interface refresh is under development on preserved task branches. The latest root build exited 1 during wxWidgets patch replay; its reviewed repair is ready for the next exact entrypoint run. Native GUI compilation, installer production and current screenshots remain unverified. Read the [current build and redesign report](docs/integration/build-verification-20261006.md).
 
 ![image](https://user-images.githubusercontent.com/106916061/179006347-497d24c0-9bd6-45b7-8c49-d5cc8ecfe5d7.png)
 # BambuStudio
@@ -10,11 +10,11 @@ slicing, and configured printers. See [setup and verification status](docs/featu
 The current interface work also includes [local personal wording](docs/features/windows/personal-vocabulary.md),
 [separate slicing actions](docs/features/windows/print-actions.md), and
 [searchable canvas menus](docs/features/canvas-menu-search.md). These changes are
-under a local native build for the combined delivery; the [audit register](docs/features/design-system/native-interface-audit-2026-10-02.md)
-records historical runtime and layout evidence. No test suite was deliberately launched, the inherited type stage failed, and screenshots are not produced in this pass;
-implementation is not a claim of verified physical-printer behavior.
+under development for the combined delivery; the [audit register](docs/features/design-system/native-interface-audit-2026-10-02.md)
+records historical runtime and layout evidence. Focused source and non-window geometry checks now cover the current redesign; they do not establish native runtime or screenshots.
+Implementation is not a claim of verified physical-printer behavior.
 Current compiler and startup evidence is summarized in the [continuation record](CLOSEOUT_PROMPT.md).
-The earlier configure blockers are superseded. Production catalogue and documentation bundling completed; native GUI compilation is running. Packaging and release proof remain pending. The inherited DeviceWeb type stage attempted once and failed before bundling; no passing type-check result is claimed.
+The earlier production catalogue, documentation bundling and DeviceWeb observations belong to their dated source receipts. The latest build remains in dependency recovery. Packaging and release proof remain pending; no passing DeviceWeb type-check result is claimed.
 Earlier managed-check results apply only to their recorded source revisions. The combined source includes the reconciled continuation lanes and bounded repairs listed in the current handoff.
 
 Bambu Studio is a cutting-edge, feature-rich slicing software.  
@@ -31,6 +31,10 @@ configured on any other system. Cross-platform builds remain available upstream 
 [Bambu Lab](https://github.com/bambulab/BambuStudio/releases/).
 
 ## Current development work
+
+The [Studio Atlas design](design/workflow-refresh.md) covers the whole native application and product-owned embedded views, retaining existing features and action semantics. It includes Prepare, Preview, Print, Monitor, settings, fields, dialogs and nested tools. Source implementation and independent review are ongoing; a shared palette alone does not complete a surface.
+
+**The design can be reverted if the maintainer dislikes it.** Review the [change ledger](design/workflow-refresh/change-ledger.json) and reverse only the appropriate appearance changes, preserving build, printer, AMS, slicing and data fixes. Mixed functional/presentation commits require selective review; resetting to the old baseline is not the reversal procedure.
 
 The previously preserved responsive-workflow and local-history source has been reconciled into the combined delivery revision. This pass adds bounded draft/history, continuity, import and automation repairs. Release delivery remains pending; see [the current continuation record](CLOSEOUT_PROMPT.md). Import cancellation remains cooperative and cannot interrupt an indivisible reader, hull calculation, object copy or final scene update. Issue #16's separately licensed companion remains a separate decision and is not included in this delivery.
 

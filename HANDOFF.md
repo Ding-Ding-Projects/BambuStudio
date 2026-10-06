@@ -1,4 +1,30 @@
-# Current handoff: 5 October 2026
+# Current handoff: 6 October 2026
+
+## Current source and verification boundary
+
+Verified remote `main` is `6a2b2a7de24d0be435d6c94d479d28a14a5ce718`.
+Reviewed source integration before this documentation commit is
+`61fc57bd63e7426056d6acb25a2ee2346c6d771d`. It incorporates shared control
+anatomy, Prepare, renderer, Monitor, Preferences/setup and the complete
+28-group design contract. These are source receipts, not native acceptance.
+Reader/overlay repair and further nested surfaces remain separate active work.
+
+The exact `build.bat /s` run at `be5e1205dcdad8f372d2ba63f367dbd7977c29c4`
+exited 1 at `2026-10-06T07:41:56Z`. OpenCV completed; wxWidgets then retried
+an already-applied patch through its old forward-only recipe. The reviewed
+repair uses the existing whitespace-aware forward/reverse helper without
+rewriting production source. Ten independently rerun nested-Git/template
+assertions passed against wx source `a9d946902685b9946d8775f07d2a73a9b5bef394`.
+The next production run must use the exact root entrypoint and retain caches.
+
+Independent source review found and repaired nested Preferences search-row
+identity, card DPI lifecycle, Monitor sizing and the tooltip style member.
+On combined source `5274e22fa8bbc8a3257d9b12b663117aef6d38ec`, the Preferences
+non-window production-method fixture passed 9 cases, and the Prepare checks
+passed 18 cases including 152 compiled geometry assertions. These do not
+compile the native GUI. Launch, installer execution, physical printing and
+manual release publication remain excluded. See the current integration report
+and `CLOSEOUT_PROMPT.md`; dated sections below retain historical evidence only.
 
 ## Build bootstrap repair, 6 October 2026
 
@@ -954,7 +980,7 @@ still to verify.
 - Privacy of the capture evidence (2026-09-29): capture profiles had lived under the Windows user
   profile, so two public Config profiles captures (`md3-v143`, `md3-v150`, added in `e92b7fa2d`) showed
   the account name in the data folder, and twelve layout dumps from 2026-09-06/07 recorded it in the
-  download folder field. The captures were taken again with a profile under `C:\Users\Public`, the
+  download folder field. The captures were taken again with a profile under `%PUBLIC%`, the
   dumps' folder value is redacted, `prepare-capture-datadirs.py` refuses a root inside the profile,
   and `ui-md3/tests/evidence-privacy.test.mjs` guards the text evidence. The old files remain in the
   repository history; removing them there needs a history rewrite and a force push, which has not
