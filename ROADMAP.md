@@ -4,7 +4,7 @@
 - [x] Verify both triggered hosted workflows for d12a00862633e50865d908dab26908ef892f3a43.
 - [x] Leave only the primary working directory registered, preserving dependency caches and exact archival tags.
 - [x] Open issue 60 with unfinished implementation and acceptance ownership.
-- [ ] Verify a lossless deduplicated backup replacement and retire superseded archives.
+- [x] Verify a lossless deduplicated backup replacement and retire the three superseded archives after independent restoration proof.
 - [ ] Resolve the two unregistered directory remnants without bypassing the rejected removal operation.
 - [ ] Complete current native compilation and product acceptance in issue 60; hosted green status is narrower evidence.
 

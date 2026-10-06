@@ -1,4 +1,4 @@
-Preservation and cleanup evidence is recorded in [the closeout report](docs/integration/closeout-20261006.md). No cleanup completion or new product acceptance is implied.
+All reviewed local source continuations are integrated, and only the primary working directory remains registered. The [closeout report](docs/integration/closeout-20261006.md) records passing hosted workflows, verified backup consolidation, and two retained directory remnants. [Issue 60](https://github.com/Ding-Ding-Projects/BambuStudio/issues/60) tracks unfinished native and website acceptance; source integration is not product acceptance.
 
 > [!IMPORTANT]
 > Current status, 6 October 2026: the exact-main root build at `cc059003d` passed at 16:43:57 UTC and the exact installer entrypoint is running. Reviewed redesign preparation is preserved separately at `1fa14f33a`; its 71 offline checks do not prove rendering. Two authorized visible attempts exited before inspection, so there is no current screenshot or complete visual acceptance. Read the [current continuation](CLOSEOUT_PROMPT.md).
