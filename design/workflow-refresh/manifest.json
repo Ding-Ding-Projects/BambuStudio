@@ -1,0 +1,1138 @@
+{
+  "schemaVersion": 1,
+  "designName": "Studio Atlas",
+  "kind": "static-source-reference",
+  "completionClaim": false,
+  "baselineCommit": "d048cfc3040a1566b78e03334f3871f1dd0144bb",
+  "framework": "wxWidgets native controls and renderer-owned OpenGL/ImGui; existing product-owned embedded views",
+  "referenceViewportDIP": [
+    1200,
+    800
+  ],
+  "themes": [
+    "light",
+    "dark"
+  ],
+  "workflowOrder": [
+    "prepare",
+    "preview",
+    "print",
+    "monitor"
+  ],
+  "preserveNumericPageIds": true,
+  "sourceKit": "ui-md3/design-system/readme.md",
+  "runtimeStatus": "unverified",
+  "captureStatus": "missing",
+  "referenceViewerStatus": "missing",
+  "productionFixtureStatus": "missing",
+  "parityStatus": "blocked",
+  "parityBlocker": "Application launches are prohibited. No reference-viewer or built-product route was exercised. Static boards specify structure, not rendered runtime evidence.",
+  "stateContract": "Each listed state requires its own built route, interactions, layout measurements and capture tuple before acceptance. Board references specify the shared composition only; state-specific pixels are not yet supplied.",
+  "tokens": {
+    "light": {
+      "surface": "#f7f9fc",
+      "lowest": "#ffffff",
+      "low": "#eef2f7",
+      "container": "#e7edf5",
+      "high": "#dfe7f1",
+      "highest": "#d7e1ed",
+      "text": "#172434",
+      "secondary": "#46576a",
+      "outline": "#718298",
+      "edge": "#c4d0df",
+      "primary": "#146c2e",
+      "onPrimary": "#ffffff",
+      "accent": "#a6f4b8",
+      "onAccent": "#00210c"
+    },
+    "dark": {
+      "surface": "#151c25",
+      "lowest": "#101720",
+      "low": "#1a2430",
+      "container": "#202d3b",
+      "high": "#293849",
+      "highest": "#344557",
+      "text": "#e8eff8",
+      "secondary": "#b9c8da",
+      "outline": "#899caf",
+      "edge": "#43566a",
+      "primary": "#8bd89b",
+      "onPrimary": "#00391a",
+      "accent": "#095228",
+      "onAccent": "#a7f5b9"
+    },
+    "comfortable": {
+      "gap": 12,
+      "padding": 16,
+      "row": 40,
+      "body": 14,
+      "rail": 60,
+      "sidebar": 344,
+      "radius": 16
+    },
+    "compact": {
+      "gap": 7,
+      "padding": 10,
+      "row": 32,
+      "body": 13,
+      "rail": 50,
+      "sidebar": 312,
+      "radius": 12
+    },
+    "motionMs": {
+      "feedback": 100,
+      "selection": 250,
+      "panel": 300,
+      "progress": 500,
+      "reduced": 0
+    }
+  },
+  "surfaces": [
+    {
+      "id": "shell",
+      "title": "Workspace",
+      "layout": "overview",
+      "anchor": "src/slic3r/GUI/MainFrame.cpp",
+      "states": [
+        "titlebar",
+        "workspace-navigation",
+        "project-tabs",
+        "secondary-destinations",
+        "overflow",
+        "grouped-tabs",
+        "pinned-tabs",
+        "reorder",
+        "search",
+        "unsaved-close",
+        "maximized",
+        "minimum-size"
+      ],
+      "sections": [
+        "Continue working",
+        "Prepare a plate",
+        "Review toolpaths",
+        "Choose print destination",
+        "Monitor activity"
+      ],
+      "preserve": "All numeric page identities, close/pin/group/reorder behavior, window controls, project routing and existing auxiliary destinations.",
+      "references": [
+        {
+          "path": "design/workflow-refresh/references/shell-light.svg",
+          "theme": "light"
+        },
+        {
+          "path": "design/workflow-refresh/references/shell-dark.svg",
+          "theme": "dark"
+        }
+      ]
+    },
+    {
+      "id": "prepare",
+      "title": "Prepare",
+      "layout": "canvas",
+      "anchor": "src/slic3r/GUI/Plater.cpp",
+      "states": [
+        "empty",
+        "model-loaded",
+        "object-selection",
+        "plate-selection",
+        "process-sidebar",
+        "printer-preset",
+        "filament-preset",
+        "object-list",
+        "grouping-menu",
+        "dual-nozzle",
+        "single-nozzle",
+        "swap-groups",
+        "slice-ready",
+        "slicing",
+        "slice-cancel",
+        "slice-error",
+        "stale-result",
+        "action-overflow"
+      ],
+      "sections": [
+        "Printer and plate",
+        "Filament assignments",
+        "Process settings",
+        "Objects",
+        "Slice and print"
+      ],
+      "preserve": "Real object/plate manipulation, presets, grouping, nozzle mapping, slicer generations, undo and all tool actions.",
+      "references": [
+        {
+          "path": "design/workflow-refresh/references/prepare-light.svg",
+          "theme": "light"
+        },
+        {
+          "path": "design/workflow-refresh/references/prepare-dark.svg",
+          "theme": "dark"
+        }
+      ]
+    },
+    {
+      "id": "preview",
+      "title": "Preview",
+      "layout": "canvas",
+      "anchor": "src/slic3r/GUI/MainFrame.cpp",
+      "states": [
+        "unsliced",
+        "sliced",
+        "stale",
+        "legend",
+        "layer-range",
+        "move-range",
+        "statistics",
+        "simulation-idle",
+        "simulation-playing",
+        "export",
+        "slicing-error"
+      ],
+      "sections": [
+        "Toolpath view",
+        "Color by feature",
+        "Layer range",
+        "Material and time",
+        "Continue to print"
+      ],
+      "preserve": "Actual toolpaths, legends, sliders, simulation, exports and selected plate identity.",
+      "references": [
+        {
+          "path": "design/workflow-refresh/references/preview-light.svg",
+          "theme": "light"
+        },
+        {
+          "path": "design/workflow-refresh/references/preview-dark.svg",
+          "theme": "dark"
+        }
+      ]
+    },
+    {
+      "id": "print",
+      "title": "Print",
+      "layout": "print",
+      "anchor": "src/slic3r/GUI/SelectMachine.cpp",
+      "states": [
+        "empty",
+        "unsliced",
+        "slicing",
+        "stale",
+        "ready",
+        "destination",
+        "offline-destination",
+        "mapping",
+        "external-spool",
+        "incompatible",
+        "setup",
+        "final-confirmation",
+        "submitting",
+        "cancel",
+        "partial-result",
+        "success",
+        "error"
+      ],
+      "sections": [
+        "Plate readiness",
+        "Destination and mapping",
+        "Print summary",
+        "Review print setup"
+      ],
+      "preserve": "Current generation and plate checks, existing setup and final print confirmation, real AMS checks and cancellation. Navigation never submits.",
+      "references": [
+        {
+          "path": "design/workflow-refresh/references/print-light.svg",
+          "theme": "light"
+        },
+        {
+          "path": "design/workflow-refresh/references/print-dark.svg",
+          "theme": "dark"
+        }
+      ]
+    },
+    {
+      "id": "monitor",
+      "title": "Monitor",
+      "layout": "monitor",
+      "anchor": "src/slic3r/GUI/StatusPanel.cpp",
+      "states": [
+        "offline",
+        "connecting",
+        "connected",
+        "idle",
+        "printing",
+        "paused",
+        "completed",
+        "camera-connecting",
+        "camera-playing",
+        "camera-stopped",
+        "camera-unavailable",
+        "fan-pending",
+        "fan-confirmed",
+        "fan-zero",
+        "telemetry-stale",
+        "storage",
+        "firmware",
+        "recovery"
+      ],
+      "sections": [
+        "Printer activity",
+        "Live camera",
+        "Temperatures and fans",
+        "Material system",
+        "Storage and firmware"
+      ],
+      "preserve": "Telemetry, camera stop/play/reconnect, physical commands, confirmations, storage and firmware workflows.",
+      "references": [
+        {
+          "path": "design/workflow-refresh/references/monitor-light.svg",
+          "theme": "light"
+        },
+        {
+          "path": "design/workflow-refresh/references/monitor-dark.svg",
+          "theme": "dark"
+        }
+      ]
+    },
+    {
+      "id": "farm",
+      "title": "Multi-device",
+      "layout": "collection",
+      "anchor": "src/slic3r/GUI/MultiMachinePage.cpp",
+      "states": [
+        "account",
+        "lan-discovery",
+        "saved-offline",
+        "paired",
+        "multi-select",
+        "six-selected",
+        "mapping-unavailable",
+        "sending",
+        "partial-transfer",
+        "task-list",
+        "empty",
+        "recovery"
+      ],
+      "sections": [
+        "Printers",
+        "Account and LAN",
+        "Selection summary",
+        "Transfer results",
+        "Tasks"
+      ],
+      "preserve": "Account and LAN identity, saved offline devices, real compatibility, multi-send and partial-result handling.",
+      "references": [
+        {
+          "path": "design/workflow-refresh/references/farm-light.svg",
+          "theme": "light"
+        },
+        {
+          "path": "design/workflow-refresh/references/farm-dark.svg",
+          "theme": "dark"
+        }
+      ]
+    },
+    {
+      "id": "home-web",
+      "title": "Home",
+      "layout": "overview",
+      "anchor": "src/slic3r/GUI/MainFrame.cpp",
+      "states": [
+        "loading",
+        "offline",
+        "content",
+        "empty",
+        "signed-out",
+        "recent-projects",
+        "create",
+        "open",
+        "recovery"
+      ],
+      "sections": [
+        "Start a project",
+        "Recent projects",
+        "Learning resources",
+        "Connection state"
+      ],
+      "preserve": "Existing web bridge, create/open routes, account flow and offline behavior; no seeded fake documents.",
+      "references": [
+        {
+          "path": "design/workflow-refresh/references/home-web-light.svg",
+          "theme": "light"
+        },
+        {
+          "path": "design/workflow-refresh/references/home-web-dark.svg",
+          "theme": "dark"
+        }
+      ]
+    },
+    {
+      "id": "ink-web",
+      "title": "Filament",
+      "layout": "collection",
+      "anchor": "src/slic3r/GUI/DeviceWeb/DeviceWebPage.cpp",
+      "states": [
+        "signed-out",
+        "plugin-missing",
+        "loading",
+        "spools",
+        "spool-detail",
+        "edit",
+        "history",
+        "filtered",
+        "empty",
+        "offline",
+        "recovery"
+      ],
+      "sections": [
+        "Filament inventory",
+        "Spool details",
+        "Assignments",
+        "Usage history",
+        "Import and export"
+      ],
+      "preserve": "Real spool identities, inventory edits, plugin requirements, assignments and history.",
+      "references": [
+        {
+          "path": "design/workflow-refresh/references/ink-web-light.svg",
+          "theme": "light"
+        },
+        {
+          "path": "design/workflow-refresh/references/ink-web-dark.svg",
+          "theme": "dark"
+        }
+      ]
+    },
+    {
+      "id": "printer-web",
+      "title": "Printer details",
+      "layout": "monitor",
+      "anchor": "src/slic3r/GUI/PrinterWebView.cpp",
+      "states": [
+        "loading",
+        "connected",
+        "offline",
+        "telemetry",
+        "control-pending",
+        "storage",
+        "firmware",
+        "empty",
+        "recovery"
+      ],
+      "sections": [
+        "Connection",
+        "Printer state",
+        "Telemetry",
+        "Available controls",
+        "Recovery"
+      ],
+      "preserve": "Existing embedded command bridge, selected printer, permissions and action confirmations.",
+      "references": [
+        {
+          "path": "design/workflow-refresh/references/printer-web-light.svg",
+          "theme": "light"
+        },
+        {
+          "path": "design/workflow-refresh/references/printer-web-dark.svg",
+          "theme": "dark"
+        }
+      ]
+    },
+    {
+      "id": "project",
+      "title": "Project",
+      "layout": "collection",
+      "anchor": "src/slic3r/GUI/Project.cpp",
+      "states": [
+        "online",
+        "workspace",
+        "empty",
+        "files",
+        "file-detail",
+        "notes",
+        "checklist",
+        "calendar-month",
+        "calendar-agenda",
+        "slot-editor",
+        "overlap-warning",
+        "history",
+        "missing-member",
+        "recovery"
+      ],
+      "sections": [
+        "Workspace files",
+        "Checklist and notes",
+        "Print calendar",
+        "Project history",
+        "Project details"
+      ],
+      "preserve": "Online project destination and local workspace identities, save/load, stable members, reminders and non-printing calendar.",
+      "references": [
+        {
+          "path": "design/workflow-refresh/references/project-light.svg",
+          "theme": "light"
+        },
+        {
+          "path": "design/workflow-refresh/references/project-dark.svg",
+          "theme": "dark"
+        }
+      ]
+    },
+    {
+      "id": "calibration",
+      "title": "Calibration",
+      "layout": "steps",
+      "anchor": "src/slic3r/GUI/CalibrationPanel.cpp",
+      "states": [
+        "selector",
+        "method",
+        "inputs",
+        "validation",
+        "printer-unavailable",
+        "progress",
+        "cancel",
+        "results",
+        "save-result",
+        "recovery"
+      ],
+      "sections": [
+        "Choose calibration",
+        "Review inputs",
+        "Run calibration",
+        "Inspect results",
+        "Save preset"
+      ],
+      "preserve": "Every existing calibration algorithm, range, printer selection, actual action and result-save route.",
+      "references": [
+        {
+          "path": "design/workflow-refresh/references/calibration-light.svg",
+          "theme": "light"
+        },
+        {
+          "path": "design/workflow-refresh/references/calibration-dark.svg",
+          "theme": "dark"
+        }
+      ]
+    },
+    {
+      "id": "preferences",
+      "title": "Preferences",
+      "layout": "settings",
+      "anchor": "src/slic3r/GUI/Preferences.cpp",
+      "states": [
+        "general",
+        "appearance",
+        "language",
+        "notifications",
+        "network",
+        "files",
+        "search",
+        "no-match",
+        "validation",
+        "reset",
+        "unsaved",
+        "locked",
+        "local-vocabulary",
+        "narrator",
+        "scheduled-settings",
+        "school-mode"
+      ],
+      "sections": [
+        "General",
+        "Appearance and motion",
+        "Language and narration",
+        "Files and network",
+        "Notifications and schedules"
+      ],
+      "preserve": "All registered settings and default provenance, saved values, search/palette paths, privacy and reset semantics. Listed missing features remain backlog.",
+      "references": [
+        {
+          "path": "design/workflow-refresh/references/preferences-light.svg",
+          "theme": "light"
+        },
+        {
+          "path": "design/workflow-refresh/references/preferences-dark.svg",
+          "theme": "dark"
+        }
+      ]
+    },
+    {
+      "id": "parameters",
+      "title": "Parameters",
+      "layout": "settings",
+      "anchor": "src/slic3r/GUI/ParamsPanel.cpp",
+      "states": [
+        "printer",
+        "material",
+        "process",
+        "preset",
+        "simple",
+        "advanced",
+        "expert",
+        "custom",
+        "modified",
+        "search",
+        "no-match",
+        "validation",
+        "reset",
+        "compare"
+      ],
+      "sections": [
+        "Printer",
+        "Filament",
+        "Process",
+        "Preset comparison",
+        "Modified values"
+      ],
+      "preserve": "Every real parameter, expert visibility, novice mapping, preset inheritance, validation and comparison.",
+      "references": [
+        {
+          "path": "design/workflow-refresh/references/parameters-light.svg",
+          "theme": "light"
+        },
+        {
+          "path": "design/workflow-refresh/references/parameters-dark.svg",
+          "theme": "dark"
+        }
+      ]
+    },
+    {
+      "id": "wizard",
+      "title": "Setup",
+      "layout": "steps",
+      "anchor": "src/slic3r/GUI/GUI_App.cpp",
+      "states": [
+        "welcome",
+        "region",
+        "privacy",
+        "network-plugin",
+        "printer-selection",
+        "filament-selection",
+        "association",
+        "validation",
+        "cancel",
+        "finish",
+        "recovery"
+      ],
+      "sections": [
+        "Welcome",
+        "Choose printers",
+        "Choose materials",
+        "Review preferences",
+        "Finish setup"
+      ],
+      "preserve": "All reachable setup steps, choices, plugin consent, file associations, cancellation and completion behavior.",
+      "references": [
+        {
+          "path": "design/workflow-refresh/references/wizard-light.svg",
+          "theme": "light"
+        },
+        {
+          "path": "design/workflow-refresh/references/wizard-dark.svg",
+          "theme": "dark"
+        }
+      ]
+    },
+    {
+      "id": "menus",
+      "title": "Menus and dialogs",
+      "layout": "overlay",
+      "anchor": "src/slic3r/GUI/Widgets/MD3Menu.cpp",
+      "states": [
+        "root",
+        "submenu",
+        "filtered",
+        "no-match",
+        "disabled",
+        "overflow",
+        "keyboard",
+        "appearance",
+        "element-lock",
+        "dismiss",
+        "confirmation",
+        "validation"
+      ],
+      "sections": [
+        "Local search and pattern builder",
+        "Actions and shortcuts",
+        "Nested choices",
+        "Disabled explanation",
+        "Focus return"
+      ],
+      "preserve": "Existing item order, identifiers, shortcuts, callbacks, enable rules and dismissal focus.",
+      "references": [
+        {
+          "path": "design/workflow-refresh/references/menus-light.svg",
+          "theme": "light"
+        },
+        {
+          "path": "design/workflow-refresh/references/menus-dark.svg",
+          "theme": "dark"
+        }
+      ]
+    },
+    {
+      "id": "appearance-editor",
+      "title": "Appearance editor",
+      "layout": "settings",
+      "anchor": "src/slic3r/GUI/Appearance/AppearanceEditorPopover.cpp",
+      "states": [
+        "target",
+        "properties",
+        "color",
+        "font",
+        "size",
+        "spacing",
+        "shape",
+        "motion",
+        "presets",
+        "reset",
+        "unsupported",
+        "state-selector",
+        "locked"
+      ],
+      "sections": [
+        "Selected element",
+        "Color and typography",
+        "Spacing and shape",
+        "Interaction states",
+        "Presets and reset"
+      ],
+      "preserve": "Target identity, property scope, state editing, user overrides, locks, history and original-value restoration.",
+      "references": [
+        {
+          "path": "design/workflow-refresh/references/appearance-editor-light.svg",
+          "theme": "light"
+        },
+        {
+          "path": "design/workflow-refresh/references/appearance-editor-dark.svg",
+          "theme": "dark"
+        }
+      ]
+    },
+    {
+      "id": "palette",
+      "title": "Command palette",
+      "layout": "overlay",
+      "anchor": "src/slic3r/GUI/CommandPalette.cpp",
+      "states": [
+        "card",
+        "full",
+        "query",
+        "rich-control",
+        "teleport",
+        "locked-result",
+        "no-match",
+        "keyboard",
+        "dismiss"
+      ],
+      "sections": [
+        "Search commands and settings",
+        "Live value controls",
+        "Destination and shortcut",
+        "Open exact setting"
+      ],
+      "preserve": "Registered command IDs, actual controls, shortcuts, lock checks, focus routing and current values.",
+      "references": [
+        {
+          "path": "design/workflow-refresh/references/palette-light.svg",
+          "theme": "light"
+        },
+        {
+          "path": "design/workflow-refresh/references/palette-dark.svg",
+          "theme": "dark"
+        }
+      ]
+    },
+    {
+      "id": "regex",
+      "title": "Pattern builder",
+      "layout": "settings",
+      "anchor": "src/slic3r/GUI/Widgets/RegexBuilderPopup.cpp",
+      "states": [
+        "guided",
+        "raw",
+        "invalid",
+        "matches",
+        "no-match",
+        "replacement",
+        "captures",
+        "explanation",
+        "snippets",
+        "unsupported-syntax",
+        "limits",
+        "cancel"
+      ],
+      "sections": [
+        "Pattern and engine",
+        "Guided construction",
+        "Match and capture table",
+        "Replacement preview",
+        "Diagnostics and limits"
+      ],
+      "preserve": "Real engine capabilities, bounded evaluation, isolated field state, pattern/flags synchronization and focus return.",
+      "references": [
+        {
+          "path": "design/workflow-refresh/references/regex-light.svg",
+          "theme": "light"
+        },
+        {
+          "path": "design/workflow-refresh/references/regex-dark.svg",
+          "theme": "dark"
+        }
+      ]
+    },
+    {
+      "id": "notifications",
+      "title": "Notifications",
+      "layout": "collection",
+      "anchor": "src/slic3r/GUI/NotificationHistory.cpp",
+      "states": [
+        "progress",
+        "success",
+        "warning",
+        "error",
+        "history",
+        "actions",
+        "dismiss",
+        "quiet",
+        "empty",
+        "bulk-selection",
+        "filter"
+      ],
+      "sections": [
+        "Current activity",
+        "Needs attention",
+        "History",
+        "Notification preferences"
+      ],
+      "preserve": "Existing event identity, action callbacks, local progress, cancel, notification history and quiet settings.",
+      "references": [
+        {
+          "path": "design/workflow-refresh/references/notifications-light.svg",
+          "theme": "light"
+        },
+        {
+          "path": "design/workflow-refresh/references/notifications-dark.svg",
+          "theme": "dark"
+        }
+      ]
+    },
+    {
+      "id": "history",
+      "title": "Version history",
+      "layout": "collection",
+      "anchor": "src/slic3r/GUI/ProjectHistoryDialog.cpp",
+      "states": [
+        "project",
+        "preferences",
+        "printer",
+        "search",
+        "diff",
+        "restore-preview",
+        "restore-confirm",
+        "export",
+        "empty",
+        "corrupt",
+        "save-interrupted"
+      ],
+      "sections": [
+        "Revision timeline",
+        "Selected revision",
+        "Changes",
+        "Restore preview",
+        "Export history"
+      ],
+      "preserve": "Append-only history, actual differences, restore confirmation, file identity and credential exclusion.",
+      "references": [
+        {
+          "path": "design/workflow-refresh/references/history-light.svg",
+          "theme": "light"
+        },
+        {
+          "path": "design/workflow-refresh/references/history-dark.svg",
+          "theme": "dark"
+        }
+      ]
+    },
+    {
+      "id": "documentation",
+      "title": "Help and documentation",
+      "layout": "reader",
+      "anchor": "src/slic3r/GUI/DocsBrowserDialog.cpp",
+      "states": [
+        "tree",
+        "article",
+        "search",
+        "no-match",
+        "links",
+        "offline",
+        "empty",
+        "history",
+        "external-editor"
+      ],
+      "sections": [
+        "Contents",
+        "Search documentation",
+        "Article",
+        "Related features",
+        "Reading history"
+      ],
+      "preserve": "Offline articles, category tree, links, search, navigation history and exact-feature help routes.",
+      "references": [
+        {
+          "path": "design/workflow-refresh/references/documentation-light.svg",
+          "theme": "light"
+        },
+        {
+          "path": "design/workflow-refresh/references/documentation-dark.svg",
+          "theme": "dark"
+        }
+      ]
+    },
+    {
+      "id": "changelog",
+      "title": "Changelog",
+      "layout": "reader",
+      "anchor": "src/slic3r/GUI/ChangelogDialog.cpp",
+      "states": [
+        "versions",
+        "dates",
+        "search",
+        "no-match",
+        "copy",
+        "export",
+        "empty",
+        "offline"
+      ],
+      "sections": [
+        "Versions",
+        "Release details",
+        "Changes",
+        "Copy and export"
+      ],
+      "preserve": "Actual release/version/date provenance and existing copy/export behavior.",
+      "references": [
+        {
+          "path": "design/workflow-refresh/references/changelog-light.svg",
+          "theme": "light"
+        },
+        {
+          "path": "design/workflow-refresh/references/changelog-dark.svg",
+          "theme": "dark"
+        }
+      ]
+    },
+    {
+      "id": "import-export",
+      "title": "Import and export",
+      "layout": "steps",
+      "anchor": "src/slic3r/GUI/Export/ExportDialog.cpp",
+      "states": [
+        "picker",
+        "format",
+        "options",
+        "validation",
+        "conflict",
+        "progress",
+        "cancel",
+        "success",
+        "recovery"
+      ],
+      "sections": [
+        "Choose files",
+        "Format and options",
+        "Review destination",
+        "Transfer progress",
+        "Result"
+      ],
+      "preserve": "Existing formats, path browse/validation parity, cancellation, overwrite confirmation and recovery.",
+      "references": [
+        {
+          "path": "design/workflow-refresh/references/import-export-light.svg",
+          "theme": "light"
+        },
+        {
+          "path": "design/workflow-refresh/references/import-export-dark.svg",
+          "theme": "dark"
+        }
+      ]
+    },
+    {
+      "id": "model-creator",
+      "title": "Model Creator",
+      "layout": "canvas",
+      "anchor": "src/slic3r/GUI/MainFrame.cpp",
+      "states": [
+        "disconnected",
+        "provider",
+        "credential-entry",
+        "prompt",
+        "generating",
+        "preview",
+        "refine",
+        "cancel",
+        "error",
+        "add"
+      ],
+      "sections": [
+        "Provider and model",
+        "Describe geometry",
+        "Accepted preview",
+        "Refinement",
+        "Add validated model"
+      ],
+      "preserve": "Explicit credential consent, structured scenes, bounded generation, prior accepted preview and explicit add. Missing implementation remains missing.",
+      "references": [
+        {
+          "path": "design/workflow-refresh/references/model-creator-light.svg",
+          "theme": "light"
+        },
+        {
+          "path": "design/workflow-refresh/references/model-creator-dark.svg",
+          "theme": "dark"
+        }
+      ]
+    },
+    {
+      "id": "smart-home",
+      "title": "External settings",
+      "layout": "settings",
+      "anchor": "src/slic3r/GUI/MainFrame.cpp",
+      "states": [
+        "configuration",
+        "source",
+        "credential-entry",
+        "validation",
+        "connected",
+        "inactive",
+        "offline",
+        "recovery"
+      ],
+      "sections": [
+        "Settings source",
+        "Entity and mapping",
+        "Connection status",
+        "Fallback settings"
+      ],
+      "preserve": "Existing source validation, local base settings, bounded refresh, credential vault and offline fallback.",
+      "references": [
+        {
+          "path": "design/workflow-refresh/references/smart-home-light.svg",
+          "theme": "light"
+        },
+        {
+          "path": "design/workflow-refresh/references/smart-home-dark.svg",
+          "theme": "dark"
+        }
+      ]
+    },
+    {
+      "id": "schedules",
+      "title": "Scheduled settings",
+      "layout": "collection",
+      "anchor": "src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp",
+      "states": [
+        "empty",
+        "rule-editor",
+        "weekdays",
+        "date-range",
+        "cross-midnight",
+        "source",
+        "active",
+        "inactive",
+        "error",
+        "restore",
+        "overlap"
+      ],
+      "sections": [
+        "Schedule rules",
+        "Rule timing",
+        "Source and values",
+        "Precedence",
+        "Base settings"
+      ],
+      "preserve": "Stable rule IDs, timezone/DST semantics, precedence, external source validation and base restoration.",
+      "references": [
+        {
+          "path": "design/workflow-refresh/references/schedules-light.svg",
+          "theme": "light"
+        },
+        {
+          "path": "design/workflow-refresh/references/schedules-dark.svg",
+          "theme": "dark"
+        }
+      ]
+    },
+    {
+      "id": "confirmations",
+      "title": "Confirm action",
+      "layout": "overlay",
+      "anchor": "src/slic3r/GUI/MainFrame.cpp",
+      "states": [
+        "untouched",
+        "one-key",
+        "both-keys",
+        "partial-slider",
+        "full-slider",
+        "cancel",
+        "authorized",
+        "action-result",
+        "recovery"
+      ],
+      "sections": [
+        "Affected data",
+        "First key",
+        "Second key",
+        "Confirmation slider",
+        "Emergency exit"
+      ],
+      "preserve": "Both independent keys, full slider, keyboard cancellation, exact affected data and action only after authorization.",
+      "references": [
+        {
+          "path": "design/workflow-refresh/references/confirmations-light.svg",
+          "theme": "light"
+        },
+        {
+          "path": "design/workflow-refresh/references/confirmations-dark.svg",
+          "theme": "dark"
+        }
+      ]
+    },
+    {
+      "id": "canonical-tools",
+      "title": "Application tools",
+      "layout": "collection",
+      "anchor": "src/slic3r/GUI/MainFrame.cpp",
+      "states": [
+        "converter",
+        "assistant",
+        "authenticator",
+        "locks",
+        "support",
+        "registration",
+        "empty",
+        "validation",
+        "progress",
+        "recovery"
+      ],
+      "sections": [
+        "File conversion",
+        "Local assistant",
+        "Authenticator",
+        "Element locks",
+        "Local support"
+      ],
+      "preserve": "Every canonical tool remains an explicit required feature, not a shipped capability inferred from this board. Secrets are excluded from references.",
+      "references": [
+        {
+          "path": "design/workflow-refresh/references/canonical-tools-light.svg",
+          "theme": "light"
+        },
+        {
+          "path": "design/workflow-refresh/references/canonical-tools-dark.svg",
+          "theme": "dark"
+        }
+      ]
+    }
+  ]
+}

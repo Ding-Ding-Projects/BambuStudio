@@ -5,6 +5,14 @@ product-owned embedded web views. The standalone documentation website is outsid
 this lane. The machine-readable record is [native-feature-delivery.json](native-feature-delivery.json).
 It is an acceptance backlog, not a claim that the application has every feature.
 
+The complete visual direction is now specified in [Studio Atlas](workflow-refresh.md),
+with an explicit [28-surface state manifest](workflow-refresh/manifest.json),
+56 deterministic light/dark structural boards, behavior-preservation rules and
+a design-only reversal ledger. These boards are static source references and
+do not change any implementation, runtime or capture verdict in this ledger.
+The current design baseline is `d048cfc3040a1566b78e03334f3871f1dd0144bb`;
+the original bounded source-audit provenance below remains historical.
+
 The bounded source audit used `9a55b7aa1e900f85c2ded1389854beefabff159f`. This lane
 starts from fetched main `3fa5dd4a48ba21e5b286f29035fb9b0e892abbe3`. Source modules
 are candidate reuse points. Their presence does not prove any particular surface,

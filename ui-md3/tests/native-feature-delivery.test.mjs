@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const input = JSON.parse(fs.readFileSync(path.join(root, 'design/native-feature-delivery.json'), 'utf8').replace(/^\uFEFF/, ''));
+const design = JSON.parse(fs.readFileSync(path.join(root, 'design/workflow-refresh/manifest.json'), 'utf8'));
 // Independent, hand-written obligations. Never derive either list from the ledger.
 const surfaces = 'shell prepare preview print monitor farm home-web ink-web printer-web project calibration preferences parameters wizard menus appearance-editor palette regex notifications history documentation changelog import-export model-creator smart-home schedules confirmations canonical-tools'.split(' ');
 const families = 'language funny-emoji personal-vocabulary school-mode narration scheduled-settings dim-sum material-design workflow-navigation motion appearance-editor color-picker logo-customization file-converter ollama-suite tabs element-locks support-tickets unlock-ladder authenticator adhd-modes local-history notifications guided-forms rich-controls regex-search command-palette offline-docs changelog external-editor exports bulk-actions super-confirmation overlay-panels progress-recovery download-handoff forge-publishing blank-editors collapse-filters front-provenance product-evidence completeness-parity display-name'.split(' ');
@@ -92,4 +93,79 @@ test('duplicate obligations and false completion fail', () => {
   const complete = structuredClone(input);
   complete.completionClaim = true;
   assert.throws(() => validate(complete), /does not establish product completion/);
+});
+
+function validateDesign(spec) {
+  assert.equal(spec.kind, 'static-source-reference');
+  assert.equal(spec.completionClaim, false);
+  assert.deepEqual(spec.surfaces.map(row => row.id).sort(), [...surfaces].sort(), 'missing design surface');
+  assert.equal(spec.baselineCommit, 'd048cfc3040a1566b78e03334f3871f1dd0144bb');
+  assert.deepEqual(spec.workflowOrder, ['prepare', 'preview', 'print', 'monitor']);
+  assert.equal(spec.preserveNumericPageIds, true);
+  assert.equal(spec.runtimeStatus, 'unverified');
+  assert.equal(spec.captureStatus, 'missing');
+  assert.equal(spec.referenceViewerStatus, 'missing');
+  assert.equal(spec.productionFixtureStatus, 'missing');
+  assert.equal(spec.parityStatus, 'blocked');
+  assert.deepEqual(spec.referenceViewportDIP, [1200, 800]);
+  assert.deepEqual(spec.themes, ['light', 'dark']);
+  for (const row of spec.surfaces) {
+    assert.ok(row.states.length >= 8, `${row.id}: unresolved state inventory`);
+    assert.equal(new Set(row.states).size, row.states.length, `${row.id}: duplicate state`);
+    assert.ok(row.preserve.length > 30, `${row.id}: no behavior preservation contract`);
+    assert.ok(fs.existsSync(path.join(root, row.anchor)), `${row.id}: missing implementation destination`);
+    assert.ok(row.sections.length >= 4, `${row.id}: missing composition`);
+    assert.equal(row.references.length, 2, `${row.id}: missing themed references`);
+    for (const theme of ['light', 'dark']) {
+      const ref = row.references.find(item => item.theme === theme);
+      assert.ok(ref, `${row.id}: missing ${theme} reference`);
+      assert.equal(ref.path, `design/workflow-refresh/references/${row.id}-${theme}.svg`);
+      const svg = fs.readFileSync(path.join(root, ref.path), 'utf8');
+      assert.ok(svg.includes('Not a screenshot or a working application.'), `${row.id}: misleading reference`);
+      assert.ok(svg.includes(`Reference: ${row.id}/${theme}`), `${row.id}: wrong board`);
+      assert.ok(!svg.includes('<image') && !svg.includes('<script'), `${row.id}: unexpected external content`);
+    }
+  }
+  const requiredStates = {
+    shell: ['secondary-destinations', 'overflow', 'pinned-tabs', 'reorder'],
+    prepare: ['dual-nozzle', 'single-nozzle', 'stale-result', 'slice-cancel'],
+    print: ['stale', 'mapping', 'final-confirmation', 'partial-result'],
+    monitor: ['camera-stopped', 'fan-pending', 'telemetry-stale'],
+    project: ['calendar-month', 'checklist', 'missing-member'],
+    preferences: ['local-vocabulary', 'narrator', 'school-mode'],
+    confirmations: ['one-key', 'both-keys', 'partial-slider', 'cancel'],
+    'canonical-tools': ['converter', 'assistant', 'authenticator', 'locks', 'support']
+  };
+  for (const [surface, required] of Object.entries(requiredStates)) {
+    const row = spec.surfaces.find(item => item.id === surface);
+    for (const state of required) assert.ok(row.states.includes(state), `${surface}: missing ${state}`);
+  }
+  assert.equal(spec.tokens.motionMs.reduced, 0);
+}
+
+test('complete visual design retains every named surface and honest evidence boundary', () => {
+  const spec = structuredClone(design);
+  if (process.env.NATIVE_DESIGN_REMOVE_SURFACE === '1') spec.surfaces.pop();
+  validateDesign(spec);
+});
+test('design cannot lose a surface, state, reference or stable page identity', () => {
+  const missingSurface = structuredClone(design);
+  missingSurface.surfaces.pop();
+  assert.throws(() => validateDesign(missingSurface), /missing design surface/);
+  const missingState = structuredClone(design);
+  missingState.surfaces.find(row => row.id === 'print').states = missingState.surfaces.find(row => row.id === 'print').states.filter(state => state !== 'final-confirmation');
+  assert.throws(() => validateDesign(missingState), /missing final-confirmation/);
+  const missingReference = structuredClone(design);
+  missingReference.surfaces[0].references.pop();
+  assert.throws(() => validateDesign(missingReference), /missing themed references/);
+  const changedIdentity = structuredClone(design);
+  changedIdentity.preserveNumericPageIds = false;
+  assert.throws(() => validateDesign(changedIdentity));
+});
+test('design references cannot be promoted into runtime or parity evidence', () => {
+  for (const key of ['runtimeStatus','captureStatus','referenceViewerStatus','productionFixtureStatus','parityStatus']) {
+    const spec = structuredClone(design);
+    spec[key] = 'verified';
+    assert.throws(() => validateDesign(spec));
+  }
 });

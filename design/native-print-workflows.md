@@ -1,5 +1,13 @@
 # Native print workflow state and implementation handoff
 
+The whole-application visual contract is [Studio Atlas](workflow-refresh.md).
+Its primary visual order is Prepare, Preview, Print, Monitor, with all auxiliary
+destinations retained. Existing numeric page identities remain unchanged: append
+the real Print page and project visual order through
+`Notebook::SetWorkflowPages(prepare, preview, print, monitor)`. That projection
+never changes callbacks, palette addressing, tab ownership or physical operations.
+The light/dark source reference boards are illustrative, not production captures.
+
 ## Scope and source
 
 This handoff covers the requested menus, dual-nozzle planning, slice and print continuation, fan and camera controls, LAN farm, Model Creator, project workspace, checklist, calendar, and portable file history. It describes production wxWidgets controls and the existing OpenGL/ImGui plate canvas. It does not treat a static reference as evidence that an interaction works.

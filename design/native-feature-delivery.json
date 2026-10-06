@@ -22704,5 +22704,13 @@
       "deviation": null,
       "nextAction": "Inspect and register this exact surface; shared module presence is not per-surface proof."
     }
-  ]
+  ],
+  "visualDesign": {
+    "completionClaim": false,
+    "captureStatus": "missing",
+    "specification": "design/workflow-refresh.md",
+    "baselineCommit": "d048cfc3040a1566b78e03334f3871f1dd0144bb",
+    "runtimeStatus": "unverified",
+    "manifest": "design/workflow-refresh/manifest.json"
+  }
 }
