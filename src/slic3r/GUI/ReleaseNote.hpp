@@ -252,6 +252,23 @@ public:
     ConfirmBeforeSendInfo(const wxString& txt, const wxString& url = wxEmptyString, InfoLevel lev = Normal) : text(txt), wiki_url(url), level(lev){}
 };
 
+// Owns only the inactive layout. The dialog owns its current sizer and windows.
+struct ContinuationDisclosureLayout {
+    ContinuationDisclosureLayout() = default;
+    ContinuationDisclosureLayout(const ContinuationDisclosureLayout&) = delete;
+    ContinuationDisclosureLayout& operator=(const ContinuationDisclosureLayout&) = delete;
+    wxSizer* normal_sizer{nullptr};
+    wxSizer* body_holder{nullptr};
+    wxSizer* readback_sizer{nullptr};
+    wxPanel* hidden_controls{nullptr};
+    Button* close{nullptr};
+    size_t body_index{0};
+    int body_proportion{0};
+    int body_flags{0};
+    int body_border{0};
+    ~ContinuationDisclosureLayout();
+};
+
 class ConfirmBeforeSendDialog : public MD3Dialog
 {
 public:
@@ -273,6 +290,7 @@ public:
     void update_text(wxString text);
     void update_text(std::vector<ConfirmBeforeSendInfo> texts, bool enable_warning_clr = true);
     void on_show();
+    bool Show(bool show = true) override;
     void on_hide();
     void update_btn_label(wxString ok_btn_text, wxString cancel_btn_text);
     void rescale();
@@ -287,6 +305,10 @@ public:
     ~ConfirmBeforeSendDialog();
 
 protected:
+    void fit_content();
+    bool m_fitting_content{false};
+    bool m_presentation_available{false};
+    ContinuationDisclosureLayout m_disclosure;
     // Modal dialog: header close mirrors the native [x] (on_hide() -> EndModal).
     void OnHeaderClose() override;
 
@@ -322,6 +344,7 @@ public:
     Label* m_tip4{ nullptr };
     InputIpAddressDialog(wxWindow* parent = nullptr);
     ~InputIpAddressDialog();
+    bool Show(bool show = true) override;
 
     MachineObject* m_obj{nullptr};
     wxPanel * ip_input_top_panel{ nullptr };
@@ -369,6 +392,12 @@ public:
     void on_dpi_changed(const wxRect& suggested_rect) override;
 
 protected:
+    void apply_form_layout();
+    void fit_content();
+    wxScrolledWindow* m_body{nullptr};
+    bool m_fitting_content{false};
+    bool m_presentation_available{false};
+    ContinuationDisclosureLayout m_disclosure;
     // The MD3 header close runs the same teardown as the native [x]: interrupt
     // the worker thread, stop the close timer, EndModal(wxID_CANCEL).
     void OnHeaderClose() override;
@@ -379,8 +408,17 @@ class SendFailedConfirm : public DPIDialog
 public:
     SendFailedConfirm(wxWindow *parent = nullptr);
     ~SendFailedConfirm(){};
+    bool Show(bool show = true) override;
 
-    //void on_ok(wxMouseEvent &evt);
+private:
+    void fit_content();
+    wxScrolledWindow* m_body{nullptr};
+    Button* m_button_retry{nullptr};
+    Button* m_button_input{nullptr};
+    bool m_fitting_content{false};
+    bool m_presentation_available{false};
+    ContinuationDisclosureLayout m_disclosure;
+public:
     void on_dpi_changed(const wxRect &suggested_rect) override;
 };
 
