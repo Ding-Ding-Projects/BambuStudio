@@ -1509,10 +1509,10 @@ void MainFrame::place_project_tabbar()
     const bool     strip_first = edge == DockEdge::Top || edge == DockEdge::Left;
     m_project_dock_sizer->SetOrientation(MD3::Tabs::is_vertical(edge) ? wxHORIZONTAL : wxVERTICAL);
     if (strip_first)
-        m_project_dock_sizer->Add(m_project_tabbar, 0, wxEXPAND);
+        m_project_dock_sizer->Add(m_project_tabbar, 0, wxEXPAND | wxALL, FromDIP(4));
     m_project_dock_sizer->Add(m_main_sizer, 1, wxEXPAND);
     if (!strip_first)
-        m_project_dock_sizer->Add(m_project_tabbar, 0, wxEXPAND);
+        m_project_dock_sizer->Add(m_project_tabbar, 0, wxEXPAND | wxALL, FromDIP(4));
     m_project_dock_sizer->Layout();
 }
 
@@ -4207,8 +4207,10 @@ void MainFrame::on_dpi_changed(const wxRect& suggested_rect)
 #endif
 
     // BBS: session file-tabs — re-fetch fonts + re-layout for the new DPI.
-    if (m_project_tabbar)
+    if (m_project_tabbar) {
         m_project_tabbar->Rescale();
+        place_project_tabbar();
+    }
 
     m_tabpanel->Rescale();
 
@@ -4301,6 +4303,7 @@ void MainFrame::on_sys_color_changed()
     if (m_topbar)
         m_topbar->Rescale();
     m_tabpanel->Rescale();
+    if (m_project_tabbar) m_project_tabbar->Rescale();
     update_prepare_action_bar_style();
     // Re-resolve the Slice/Print MD3 tokens for the new light/dark scheme; they
     // are captured by value, so without this they would keep the old-theme

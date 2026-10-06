@@ -175,10 +175,10 @@ public:
     bool AcceptsFocusFromKeyboard() const override { return IsShown() && IsThisEnabled(); }
 
     // Main-axis extent of one tab, DIP (44 for a vertical strip; horizontal
-    // tabs measure their label between the min / max widths below).
+    // tabs measure the complete localized label above the minimum width).
     static constexpr int kTabHeight   = 44;
     static constexpr int kTabMinWidth = 96;
-    static constexpr int kTabMaxWidth = 240;
+    static constexpr int kTabMaxWidth = 240; // retained compatibility hint, not a truncation limit
     static constexpr int kRailWidth   = 230; // vertical strip width (settings nav width)
     static constexpr int kBarHeight   = 52;  // horizontal strip height
 

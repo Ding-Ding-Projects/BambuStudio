@@ -18,6 +18,7 @@
 
 #include <algorithm>
 #include <cstdlib>
+#include <limits>
 
 #include <wx/control.h>
 #include <wx/dcbuffer.h>
@@ -43,7 +44,7 @@ constexpr int tab_h_padding        = 12;
 constexpr int rail_h_padding       = 10;
 constexpr int rail_v_padding       = 10;
 constexpr int item_gap_vertical    = 2;
-constexpr int item_gap_horizontal  = 0;
+constexpr int item_gap_horizontal  = 4;
 constexpr int chip_size            = 10;
 constexpr int chip_gap             = 6;
 constexpr int dot_size             = 6;
@@ -58,6 +59,43 @@ constexpr int active_indicator_h   = 3;
 constexpr int active_indicator_inset = 12;
 constexpr int drag_threshold       = 4;
 constexpr int bar_bottom_space     = 6;
+
+// Visual allocation only. Pinning still controls model order and close protection,
+// but no item may consume the separately reserved search/new/overflow targets.
+struct AtlasTabOverflow {
+    std::vector<int> visible, hidden;
+    bool needs_button = false;
+};
+
+AtlasTabOverflow atlasTabOverflow(const std::vector<int>& extents, const std::vector<bool>& pinned,
+                                  int available, int button_extent, int gap)
+{
+    AtlasTabOverflow result;
+    auto fit = [&](int budget) {
+        std::vector<int> visible;
+        int used = 0;
+        for (bool priority : {true, false}) {
+            for (int i = 0; i < int(extents.size()); ++i) {
+                if ((i < int(pinned.size()) && pinned[i]) != priority) continue;
+                const int need = extents[i] + (visible.empty() ? 0 : gap);
+                if (need <= budget - used) {
+                    used += need;
+                    visible.push_back(i);
+                }
+            }
+        }
+        std::sort(visible.begin(), visible.end());
+        return visible;
+    };
+    result.visible = fit(std::max(0, available));
+    if (result.visible.size() != extents.size()) {
+        result.needs_button = true;
+        result.visible = fit(std::max(0, available - button_extent - gap));
+    }
+    for (int i = 0; i < int(extents.size()); ++i)
+        if (!std::binary_search(result.visible.begin(), result.visible.end(), i)) result.hidden.push_back(i);
+    return result;
+}
 
 const char *kConfigSection = "tab_strips";
 
@@ -234,16 +272,11 @@ void TabStripButton::SetActive(bool a)
     const double start = MD3::Motion::reduced() ? (m_active ? 1.0 : 0.0) : m_selection;
     m_active = a;
     UpdateColors();
-    if (Vertical()) {
-        const double target = a ? 1.0 : 0.0;
-        m_selection_motion.Play(MD3::Motion::short2, [this, start, target](double t) {
-            m_selection = MD3::Motion::interpolate(start, target, t);
-            Refresh(false);
-        }, nullptr, &MD3::Motion::easeStandard, this);
-    } else {
-        m_selection_motion.Stop();
-        m_selection = a ? 1.0 : 0.0;
-    }
+    const double target = a ? 1.0 : 0.0;
+    m_selection_motion.Play(MD3::Motion::medium1, [this, start, target](double t) {
+        m_selection = MD3::Motion::interpolate(start, target, t);
+        Refresh(false);
+    }, nullptr, &MD3::Motion::easeStandard, this);
 }
 
 void TabStripButton::SetDirty(bool d)
@@ -285,18 +318,21 @@ void TabStripButton::Restyle()
 
 int TabStripButton::PreferredExtent(bool vertical)
 {
-    if (vertical)
-        return FromDIP(TabStrip::kTabHeight);
     wxClientDC dc(this);
-    dc.SetFont(::Label::Body_14);
-    wxCoord tw = 0, th = 0;
-    dc.GetTextExtent(m_title, &tw, &th);
-    int w = 2 * FromDIP(tab_h_padding) + tw + FromDIP(content_gap) + FromDIP(close_container);
-    if (m_grouped)
-        w += FromDIP(chip_size) + FromDIP(chip_gap);
-    if (m_dirty)
-        w += FromDIP(dot_size) + FromDIP(content_gap);
-    return std::max(FromDIP(TabStrip::kTabMinWidth), std::min(FromDIP(TabStrip::kTabMaxWidth), w));
+    wxFont label_font = vertical ? ::Label::Head_13 : ::Label::Body_14;
+    label_font.SetWeight(wxFONTWEIGHT_SEMIBOLD);
+    dc.SetFont(label_font);
+    const wxString title = I18N::fit_bilingual(dc, m_title, std::numeric_limits<int>::max());
+    const wxSize text = dc.GetTextExtent(title);
+    if (vertical)
+        return std::max(FromDIP(TabStrip::kTabHeight), text.y + FromDIP(12));
+    int w = 2 * FromDIP(tab_h_padding) + text.x;
+    if (m_close && m_close->IsShown())
+        w += std::max(FromDIP(close_container), m_close->GetMinSize().x) - FromDIP(4) + FromDIP(content_gap);
+    if (m_grouped) w += FromDIP(chip_size) + FromDIP(chip_gap);
+    if (m_pinned) w += 2 * FromDIP(3) + FromDIP(chip_gap);
+    if (m_dirty) w += FromDIP(dot_size) + FromDIP(content_gap);
+    return std::max(FromDIP(TabStrip::kTabMinWidth), w);
 }
 
 void TabStripButton::UpdateColors()
@@ -307,13 +343,18 @@ void TabStripButton::UpdateColors()
     SetBackgroundColour(base);
     if (m_close) {
         wxColour fill = base;
-        if (vertical && m_active)
-            fill = StateColor::semantic(MD3::Role::SecondaryContainer);
+        if (m_active)
+            fill = StateColor::semantic(MD3::Role::PrimaryContainer);
         else if (m_hover)
-            fill = StateColor::semantic(vertical ? MD3::Role::SurfaceContainerHigh : MD3::Role::SurfaceContainerLow);
-        StateColor closeBg(std::pair{StateColor::semantic(MD3::Role::SurfaceContainerHighest), (int) StateColor::Hovered},
+            fill = StateColor::semantic(MD3::Role::SurfaceContainerHigh);
+        StateColor closeBg(std::pair{StateColor::semantic(MD3::Role::SurfaceContainerHighest), (int) StateColor::Pressed},
+                           std::pair{StateColor::semantic(MD3::Role::SurfaceContainerHigh), (int) StateColor::Hovered},
                            std::pair{fill, (int) StateColor::Normal});
         m_close->SetBackgroundColor(closeBg);
+        m_close->SetTextColor(StateColor(
+            std::make_pair(StateColor::semantic(MD3::Role::OnSurface), (int) StateColor::Pressed),
+            std::make_pair(StateColor::semantic(MD3::Role::OnSurface), (int) StateColor::Hovered),
+            std::make_pair(StateColor::semantic(m_active ? MD3::Role::OnPrimaryContainer : MD3::Role::OnSurfaceVariant), (int) StateColor::Normal)));
     }
     Refresh(false);
 }
@@ -352,37 +393,29 @@ void TabStripButton::OnPaint(wxPaintEvent &)
     wxDC &dc = pdc;
 #endif
 
-    wxColour fg;
-    if (vertical) {
-        // NavItem pill: selected -> SecondaryContainer, hover -> SurfaceContainerHigh.
-        const double selection = MD3::Motion::reduced() ? (m_active ? 1.0 : 0.0) : m_selection;
-        const wxColour resting = StateColor::semantic(m_hover ? MD3::Role::SurfaceContainerHigh : MD3::Role::SurfaceContainerLow);
-        const wxColour selected = StateColor::semantic(MD3::Role::SecondaryContainer);
-        const wxColour pill(MD3::Motion::color_channel(resting.Red(), selected.Red(), selection),
-                            MD3::Motion::color_channel(resting.Green(), selected.Green(), selection),
-                            MD3::Motion::color_channel(resting.Blue(), selected.Blue(), selection));
-        const bool draw_pill = m_active || m_hover || selection > 0.0;
-        if (draw_pill) {
-            dc.SetPen(*wxTRANSPARENT_PEN);
-            dc.SetBrush(wxBrush(pill));
-            dc.DrawRoundedRectangle(0, 0, sz.x, sz.y, sz.y / 2.0);
-        }
-        fg = m_active ? StateColor::semantic(MD3::Role::OnSecondaryContainer) : StateColor::semantic(MD3::Role::OnSurfaceVariant);
-        dc.SetFont(m_active ? ::Label::Head_13 : ::Label::Body_13);
-    } else {
-        if (m_hover) {
-            dc.SetPen(*wxTRANSPARENT_PEN);
-            dc.SetBrush(wxBrush(StateColor::semantic(MD3::Role::SurfaceContainerLow)));
-            dc.DrawRectangle(0, 0, sz.x, sz.y);
-        }
-        fg = m_active ? StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Brand)
-                      : StateColor::semantic(MD3::Role::OnSurfaceVariant);
-        wxFont f = ::Label::Body_14;
-        if (m_active) {
-            f.SetWeight(wxFONTWEIGHT_SEMIBOLD);
-            f.SetNumericWeight(600);
-        }
-        dc.SetFont(f);
+    const double selection = MD3::Motion::reduced() ? (m_active ? 1.0 : 0.0) : m_selection;
+    const wxColour resting = StateColor::semantic(m_pressed ? MD3::Role::SurfaceContainerHighest
+        : m_hover ? MD3::Role::SurfaceContainerHigh : (vertical ? MD3::Role::SurfaceContainerLow : MD3::Role::Surface));
+    const wxColour selected = StateColor::semantic(MD3::Role::PrimaryContainer);
+    const wxColour fill(MD3::Motion::color_channel(resting.Red(), selected.Red(), selection),
+                        MD3::Motion::color_channel(resting.Green(), selected.Green(), selection),
+                        MD3::Motion::color_channel(resting.Blue(), selected.Blue(), selection));
+    wxRect surface = GetClientRect();
+    surface.Deflate(FromDIP(1), FromDIP(2));
+    if (surface.width > 0 && surface.height > 0 && (m_active || m_hover || m_pressed || selection > 0.0)) {
+        dc.SetPen(*wxTRANSPARENT_PEN);
+        dc.SetBrush(wxBrush(fill));
+        dc.DrawRoundedRectangle(surface, std::min(FromDIP(MD3::Metrics::active().small_radius), surface.height / 2));
+    }
+    const wxColour fg = StateColor::semantic(m_active ? MD3::Role::OnPrimaryContainer : MD3::Role::OnSurfaceVariant);
+    wxFont label_font = vertical ? ::Label::Body_13 : ::Label::Body_14;
+    if (m_active) label_font.SetWeight(wxFONTWEIGHT_SEMIBOLD);
+    dc.SetFont(label_font);
+    if (vertical && m_active) {
+        dc.SetPen(*wxTRANSPARENT_PEN);
+        dc.SetBrush(wxBrush(StateColor::semantic(MD3::Role::Primary)));
+        dc.DrawRoundedRectangle(FromDIP(3), FromDIP(10), FromDIP(3),
+            std::max(1, sz.y - FromDIP(20)), FromDIP(1));
     }
 
     const int pad = FromDIP(vertical ? 14 : tab_h_padding);
@@ -416,15 +449,13 @@ void TabStripButton::OnPaint(wxPaintEvent &)
     if (m_dirty) {
         const int d = FromDIP(dot_size);
         dc.SetPen(*wxTRANSPARENT_PEN);
-        dc.SetBrush(wxBrush(StateColor::semantic(MD3::Role::OnSurfaceVariant)));
+        dc.SetBrush(wxBrush(fg));
         dc.DrawCircle(right - d / 2, sz.y / 2, d / 2);
         right -= d + gap;
     }
 
-    // Title, ellipsized to the remaining room. Bilingual mode: "English ·
-    // 廣東話" when it fits the room the tab already has (kTabMinWidth/kTabMaxWidth
-    // stay computed from the English alone, see PreferredExtent); otherwise the
-    // title stays English and the tooltip carries "廣東話：...".
+    // Horizontal extents reserve the complete localized title. Vertical rails keep
+    // their explicit caller width and disclose any shortening through the tooltip.
     const int avail = std::max(0, right - x);
     wxString  note;
     const wxString title_text = I18N::fit_bilingual(dc, m_title, avail, &note);
@@ -444,7 +475,7 @@ void TabStripButton::OnPaint(wxPaintEvent &)
         const int pw    = std::max(1, FromDIP(2));
         dc.SetBrush(*wxTRANSPARENT_BRUSH);
         dc.SetPen(wxPen(StateColor::semantic(MD3::Role::Primary), pw));
-        const double radius = vertical ? (sz.y - 2 * inset) / 2.0 : FromDIP(6);
+        const double radius = std::max(0, std::min(FromDIP(MD3::Metrics::active().small_radius), (std::min(sz.x, sz.y) - 2 * inset) / 2));
         dc.DrawRoundedRectangle(inset, inset, sz.x - 2 * inset, sz.y - 2 * inset, radius);
     }
 }
@@ -452,6 +483,7 @@ void TabStripButton::OnPaint(wxPaintEvent &)
 void TabStripButton::OnLeftDown(wxMouseEvent &)
 {
     m_pressed      = true;
+    Refresh(false);
     m_dragging     = false;
     m_press_screen = wxGetMousePosition();
     if (!HasCapture())
@@ -475,6 +507,7 @@ void TabStripButton::OnLeftUp(wxMouseEvent &)
     const bool was_drag    = m_dragging;
     m_pressed  = false;
     m_dragging = false;
+    Refresh(false);
     if (HasCapture())
         ReleaseMouse();
     if (!was_pressed)
@@ -494,6 +527,7 @@ void TabStripButton::OnCaptureLost(wxMouseCaptureLostEvent &)
 {
     m_pressed  = false;
     m_dragging = false;
+    Refresh(false);
 }
 
 void TabStripButton::OnEnter(wxMouseEvent &e)
@@ -564,7 +598,7 @@ public:
         dc.SetFont(::Label::Head_12);
         wxCoord tw = 0, th = 0;
         dc.GetTextExtent(g ? g->name : wxString(), &tw, &th);
-        return std::min(FromDIP(160), tw + FromDIP(chip_size) + FromDIP(chip_gap) + FromDIP(18) + 2 * FromDIP(10));
+        return tw + FromDIP(chip_size + chip_gap + 18 + 4 + 20);
     }
     bool AcceptsFocus() const override { return false; }
 
@@ -1550,7 +1584,8 @@ void TabStrip::OpenOverflowMenu()
         if (const MD3::Tabs::Group *g = m_model.group(t.group_id))
             label << wxString::FromUTF8("  \xC2\xB7  ") << g->name;
         label << suffix;
-        menu.Append(id, label);
+        menu.AppendCheckItem(id, label);
+        menu.Check(id, m_model.active_index() == m_model.index_of(t.id));
         targets.push_back(t.id);
     };
     for (int i : m_overflowed)
@@ -1689,13 +1724,18 @@ void TabStrip::Relayout()
     // painted rectangle before layout and starts a new visual-only transition.
     m_indicator_motion.Stop();
     const bool vertical = IsVertical();
+    // A strip's supported minimum includes search, optional new, and overflow targets.
+    const int action_minimum = FromDIP((m_add_btn ? 3 : 2) * (action_container + content_gap));
     if (vertical) {
         const int rail_width = m_options.vertical_width_dip > 0 ? m_options.vertical_width_dip : kRailWidth;
-        SetMinSize(wxSize(FromDIP(rail_width), -1));
+        SetMinSize(wxSize(FromDIP(rail_width), action_minimum + 2 * FromDIP(rail_v_padding)));
         SetMaxSize(wxSize(FromDIP(rail_width), -1));
     } else {
-        SetMinSize(wxSize(-1, FromDIP(kBarHeight)));
-        SetMaxSize(wxSize(-1, FromDIP(kBarHeight)));
+        int measured_height = FromDIP(kBarHeight);
+        for (auto* button : m_buttons)
+            measured_height = std::max(measured_height, button->PreferredExtent(true) + FromDIP(bar_bottom_space));
+        SetMinSize(wxSize(action_minimum + FromDIP(bar_bottom_space), measured_height));
+        SetMaxSize(wxSize(-1, measured_height));
     }
     const wxSize sz = GetClientSize();
     if (sz.x <= 0 || sz.y <= 0)
@@ -1767,7 +1807,7 @@ void TabStrip::Relayout()
         extents.push_back(it.extent);
         pinned_b.push_back(it.pinned);
     }
-    const MD3::Tabs::OverflowResult ov = MD3::Tabs::compute_overflow(extents, pinned_b, available, actionPx + actionGap, gap);
+    const auto ov = atlasTabOverflow(extents, pinned_b, available, actionPx + actionGap, gap);
     m_overflowed.clear();
     for (int pos : ov.hidden) {
         items[pos].window->Hide();
@@ -1794,6 +1834,8 @@ void TabStrip::Relayout()
             m_overflow_btn->SetSize(padCross + (crossExtent - actionPx) / 2, cursor, actionPx, actionPx);
         else
             m_overflow_btn->SetSize(cursor, (crossExtent - actionPx) / 2, actionPx, actionPx);
+        const bool active_hidden = std::find(m_overflowed.begin(), m_overflowed.end(), m_model.active_index()) != m_overflowed.end();
+        m_overflow_btn->SetVariant(active_hidden ? Button::Variant::Tonal : Button::Variant::Text);
         m_overflow_btn->Show();
         m_overflow_btn->SetToolTip(wxString::Format(_L("More tabs (%d hidden)"), int(ov.hidden.size())));
     } else {
