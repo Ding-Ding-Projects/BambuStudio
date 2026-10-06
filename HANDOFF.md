@@ -2,6 +2,19 @@
 
 ## Build bootstrap repair, 6 October 2026
 
+The candidate `be5e1205dcdad8f372d2ba63f367dbd7977c29c4` root build exited 1
+at `2026-10-06T07:41:56Z`. OpenCV had completed; the exact later diagnostic is
+wx's forward-only relocatable-prefix patch failing in `build/cmake/setup.cmake`,
+`build/cmake/setup.h.in`, and `src/common/utilscmn.cpp`. The actual three-file
+diff matches all intended patch changes. A strict raw reverse check fails on the
+mixed-line-ending template, while the existing helper's documented whitespace
+reverse check proves the entire patch already applied. The minimum repair routes
+wx through that existing helper without changing it or normalizing transport.
+Ten real nested-Git/CMake-template fixture assertions pass, including old forward
+replay rejection, unchanged replay bytes, and preserved partial/conflicting
+semantic states. Production source remained untouched. This later exact failure
+does not retroactively establish the earlier baseline MSB8066 code -1 cause.
+
 The producer command wrapper now streams native stdout through `Out-Host`.
 A Windows PowerShell 5.1 fixture reproduced console text missing from the old
 transcript, then verified the repaired transcript, exact native exit 7, and
