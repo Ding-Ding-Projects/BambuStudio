@@ -1635,11 +1635,13 @@ void ConfigWizardIndex::on_paint(wxPaintEvent & evt)
     if (size.GetHeight() == 0 || size.GetWidth() == 0) { return; }
    
     wxPaintDC dc(this);
+    dc.SetBackground(wxBrush(StateColor::semantic(MD3::Role::SurfaceContainerLow)));
+    dc.Clear();
+    dc.SetFont(Label::Body_14);
     
     const auto bullet_w = bullet_black.bmp().GetSize().GetWidth();
     const auto bullet_h = bullet_black.bmp().GetSize().GetHeight();
     const int yoff_icon = bullet_h < em_h ? (em_h - bullet_h) / 2 : 0;
-    const int yoff_text = bullet_h > em_h ? (bullet_h - em_h) / 2 : 0;
     const int yinc = item_height();
    
     int index_width = 0;
@@ -1649,19 +1651,27 @@ void ConfigWizardIndex::on_paint(wxPaintEvent & evt)
         const Item& item = items[i];
         unsigned x = em_w/2 + item.indent * em_w;
 
-        if (i == item_active || (item_hover >= 0 && i == (size_t)item_hover)) {
-            dc.DrawBitmap(bullet_blue.bmp(), x, y + yoff_icon, false);
+        const bool active = i == item_active;
+        const bool hovered = item_hover >= 0 && i == (size_t)item_hover;
+        if (active || hovered) {
+            dc.SetPen(*wxTRANSPARENT_PEN);
+            dc.SetBrush(wxBrush(StateColor::semantic(active ? MD3::Role::PrimaryContainer : MD3::Role::SurfaceContainerHigh)));
+            dc.DrawRoundedRectangle(FromDIP(4), y, std::max(0, size.x - FromDIP(8)),
+                                    std::max(0, yinc - FromDIP(2)), FromDIP(MD3::Metrics::active().small_radius));
         }
-        else if (i < item_active)  { dc.DrawBitmap(bullet_black.bmp(), x, y + yoff_icon, false); }
-        else if (i > item_active)  { dc.DrawBitmap(bullet_white.bmp(), x, y + yoff_icon, false); }
+        // Paint the existing step identities with semantic state markers.
+        dc.SetPen(wxPen(StateColor::semantic(active || i < item_active ? MD3::Role::Primary : MD3::Role::Outline)));
+        dc.SetBrush(wxBrush(StateColor::semantic(active || i < item_active ? MD3::Role::Primary : MD3::Role::SurfaceContainerLow)));
+        dc.DrawCircle(x + bullet_w / 2, y + yoff_icon + bullet_h / 2,
+                      std::max(1, std::min(bullet_w, bullet_h) / 2 - FromDIP(1)));
 
         x += + bullet_w + em_w/2;
         const auto text_size = dc.GetTextExtent(item.label);
-        dc.SetTextForeground(wxGetApp().get_label_clr_default());
-        dc.DrawText(item.label, x, y + yoff_text);
+        dc.SetTextForeground(StateColor::semantic(active ? MD3::Role::OnPrimaryContainer : MD3::Role::OnSurface));
+        dc.DrawText(item.label, x, y + std::max(0, (yinc - text_size.y) / 2));
 
         y += yinc;
-        index_width = std::max(index_width, (int)x + text_size.x);
+        index_width = std::max(index_width, (int)x + text_size.x + FromDIP(MD3::Metrics::active().padding));
     }
     
     //draw logo
