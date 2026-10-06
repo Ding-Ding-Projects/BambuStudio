@@ -1,6 +1,6 @@
 ---
 translation-of: clipping-inventory.md
-source-sha256: ec45c98797298a118c0ae1502fc38fc3987039711f04b32126672aef3bbf0c30
+source-sha256: 1bcb4f3398e20aa5d4b503300c41b94b2908a8fb5fb78cb0d00ad9a9cf851fc4
 review-status: agent-drafted
 ---
 

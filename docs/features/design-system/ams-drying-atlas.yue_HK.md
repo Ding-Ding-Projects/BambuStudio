@@ -1,3 +1,9 @@
+---
+translation-of: ams-drying-atlas.md
+source-sha256: 6b684ced10ed6cc41ac3f6cf1cba1939bdcabf3480b74828437e6803736a6952
+review-status: agent-drafted
+---
+
 # AMS 烘乾控制：Studio Atlas
 
 原生 AMS 控制同嵌入式 `open_humidity` 路徑都會開啟 `AMSDryCtrWin`。設定、材料存放準備、啟動進度、烘乾中、暫時不可用原因同錯誤提示，繼續由原有裝置狀態控制。
@@ -15,3 +21,9 @@
 原有錯誤排列器有建立同切換顯示，但從未掛接到版面擁有者。今次將佢放入正常狀態垂直排列器頂部，兩個原有提示標籤一齊放喺控制項上方，錯誤狀態保留停止按鈕，亦沿用正常／不可用區域的父層顯示規則。狀態判斷、能力檢查同指令不變。
 
 非視窗擁有權測試直接編譯正式建立及狀態更新程序，舊版三項有兩項通過，錯誤提示可達性一項失敗；修正後三項全部通過，涵蓋初始隱藏、錯誤提示連停止操作可達，以及返回閒置。原有來源保留檢查六項繼續通過，原生畫面仍未驗證。
+
+## 證據識別
+
+來源比較基準係 `50715f4355e8b845042bd4809bac2da2ce5c40f4`，檢查係 `tests/ams_drying_atlas.test.mjs`（舊版 3/6，現版 6/6）同 `tests/ams_drying_buttons.test.mjs`（5/5，Danger 改成 Filled 後 4/5）。
+
+`tests/ams_drying_error_owner.test.mjs` 直接編譯 `create_right_panel` 同 `update_normal_state` 正式內容，舊版 `fffdc0a9d22f4c230cc27e8930d740c6bc769945` 為 2/3，修正後 3/3。以上唔代表原生畫面已驗證。

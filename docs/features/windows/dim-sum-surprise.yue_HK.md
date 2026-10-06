@@ -1,12 +1,15 @@
 ---
 translation-of: dim-sum-surprise.md
-source-sha256: df975ce65331a67b5fa6ac1d55d2624909372ba6e47723db760482165c4cf72e
+source-sha256: b8e4f35658e2f46e4086c9e285caadc4955662b5468756b83b0bbc47bd81008e
 review-status: agent-drafted
 ---
 
 > 英文原文：[Dim sum startup surprise](dim-sum-surprise.md)
 
 # 點心啟動驚喜
+
+> [!NOTE]
+> 自動啟動展示已移除。下面保留退役行為嘅歷史記錄；目前行為見[安靜工作流程](../windows/quiet-workflow.md)。
 
 喺十次啟動中一次、桌面應用問候一個返回用戶同埋一個細卡喺主視窗嘅右下角：一個香港點心菜餚嘅照片、佢嘅名稱喺英文同埋繁體中文、同埋一句圍繞佢。佢淡入後視窗已安定、絕唔帶焦點、同埋淡出再次。
 

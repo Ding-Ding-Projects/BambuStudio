@@ -1,6 +1,6 @@
 ---
 translation-of: windows-release-supply-chain.md
-source-sha256: 27598eefbbd44aedb8c66af14b30ce10e89bc53a8b30dcc9180ec4114a8f5ee4
+source-sha256: 2b0d0013c957af19757ef0dcd1e668db54a5b8184999d5ad02b80c601e95da89
 review-status: agent-drafted
 ---
 
@@ -16,7 +16,11 @@ review-status: agent-drafted
 
 發佈工作會一次執行一個，每一個都喺發佈前立即決定「最新版本」。預設分支構建會喺佢嘅提交比目前最新版本嘅提交更新時（或者係同一提交重新構建）變成最新版本。一個完成得遲嘅舊構建會喺佢嘅標題中帶住「(superseded main build)」發佈並保持非最新狀態，而其他分支嘅構建都保持非最新狀態。構建執行時分支可能已經向前移動；最新版本，同埋已安裝版本讀取嘅更新來源，仍然會向前移動。
 
-GitHub 最多只會留一個發佈工作喺執行緊嗰個後面等候。等候期間如果另一個構建完成，GitHub 會取消等緊嗰個（較舊嘅）發佈工作，所以一連串推送之後，只有最新嘅構建會發佈，中間嘅構建冇自己嘅發佈；佢哋嘅構建工作照樣會做完，結果亦會保留喺工作流程執行記錄入面。
+發佈並行控制使用 `queue: max` 同 `cancel-in-progress: false`：一個工作執行中，最多 100 個等候，超額請求會被取消。先入先出指加入佇列嘅次序，唔係派發或來源提交次序，所以仍然要比較最新來源。詳見 [GitHub 並行控制](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-workflow-concurrency)。
+
+舊有預設只保留一個等候工作，即使 `cancel-in-progress: false` 都一樣。例如執行 `37088514258` 已完成構建及上傳安裝器，但發佈工作 `111113206485` 未執行任何步驟就被取消，註記係 `Canceling since a higher priority waiting request for windows-release-Ding-Ding-Projects/BambuStudio exists`。
+
+復原歷史執行之前，先確認構建成功、安裝器未過期，而且冇同一執行嘅活動嘗試。用 `gh run rerun RUN_ID --failed` 或 `gh run rerun --job JOB_ID`，唔好重跑已成功嘅構建。重試沿用原有安裝器、來源及標籤冪等行為。歷史重試使用原工作流程版本，仍可能受舊單一等候規則影響；先協調清空佇列，再核對發佈、來源、資產雜湊同工作最終狀態。重試限原執行後 30 日內，最多 50 次嘗試，資產是否仍可取得要另外確認。詳見[重跑工作流程及工作](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/re-run-workflows-and-jobs)。
 
 ## Windows 構建同埋軟件包邊界
 
