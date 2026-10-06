@@ -8,6 +8,7 @@
 
 #include "MD3ScrollBars.hpp"
 #include "MD3Tokens.hpp"
+#include "MD3Motion.hpp"
 
 namespace Slic3r { namespace GUI {
 
@@ -20,6 +21,8 @@ namespace Slic3r { namespace GUI {
 // used wxListBox::Set/GetSelection keep working. Long rows ellipsize at the
 // end; the full text is the row's tooltip so nothing is unreachable. Its
 // scrollbar is the kit scrollbar (MD3ScrollBars), not the Windows one.
+// Rows use density minima and measured caller fonts. Keyboard focus has an
+// inset ring; hover paint uses owner-bound, reduced-motion-aware feedback.
 class ListBox : public wxVListBox
 {
 public:
@@ -43,6 +46,7 @@ public:
     void Check(unsigned index, bool checked = true);
     bool IsChecked(unsigned index) const { return index < m_checked.size() && m_checked[index] != 0; }
     void Rescale();
+    bool SetFont(const wxFont &font) override;
 
     // Whether the kit bar for orient (wxVERTICAL or wxHORIZONTAL) is shown.
     bool IsBarShown(int orient) const { return m_bars.IsShown(orient); }
@@ -69,11 +73,16 @@ private:
     void onKey(wxKeyEvent &evt);
     int  checkWidth() const;
     void toggle(size_t row);
+    void animateHover(int previous);
 
     std::vector<wxString> m_rows;
     int                   m_hover { -1 };
+    int                   m_previous_hover { -1 };
+    double                m_hover_progress { 1.0 };
+    MD3::Motion::Anim     m_hover_motion;
     std::vector<char>     m_checked;
     bool                  m_checks { false };
+    bool                  m_custom_font { false };
     MD3::ColorScheme      m_scheme { MD3::ColorScheme::Brand };
     MD3ScrollBars         m_bars { this };
 };
