@@ -154,8 +154,9 @@ scroll extent, popup placement and disabled-state contrast before advancing.
   and Cancel the draft. Expected: editor opens and closes with no new rule committed;
   empty/filter copy and scrolling remain readable. Do not enable a schedule or set
   an external endpoint. Inspect Preferences search/no-match and long setting labels.
-- **States/anchors:** `preferences/{search,no-match,scheduled-settings}` and
-  `schedules/{empty,rule-editor,cross-midnight}`; `src/slic3r/GUI/Preferences.cpp` and
+- **States/anchors:** `preferences/{search,no-match,scheduled-settings}`,
+  `schedules/{empty,rule-editor,cross-midnight}` and `calibration/{results,save-result,validation}`;
+  `src/slic3r/GUI/Preferences.cpp` and
   `src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp`.
 - `calibration/{results,save-result,validation}` belongs to
   `src/slic3r/GUI/CalibrationWizardSavePage.cpp`, constructed by
