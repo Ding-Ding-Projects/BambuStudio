@@ -174,7 +174,9 @@ try {
             "Compiled catalog '$mo' does not have the GNU MO little-endian magic value."
     }
 
-    $missing = @(Get-Content -LiteralPath $missingReport -Raw -Encoding utf8 | ConvertFrom-Json)
+    # Windows PowerShell 5.1 emits a JSON array as one pipeline object. Evaluate
+    # it first so @() enumerates its entries, including zero entries for [].
+    $missing = @((Get-Content -LiteralPath $missingReport -Raw -Encoding utf8 | ConvertFrom-Json))
     if ($missing.Count -gt 0) {
         $message = "$($missing.Count) English source messages have no Cantonese entry (first: '$($missing[0].msgid)')."
         Assert-True (-not $requireComplete) $message
