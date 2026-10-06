@@ -1,6 +1,6 @@
 ---
 translation-of: README.md
-source-sha256: b6ae6e6654ba745006f42799ee8f68b18b330d3c6a64039816392b13db0c7a29
+source-sha256: f32a336f60f4365d5508187e82568c86a01c94a1a6877a4572e75042c818f510
 review-status: agent-drafted
 ---
 
@@ -39,7 +39,7 @@ review-status: agent-drafted
 
 以下文章記錄限定範圍嘅來源改動及驗證限制，唔代表原生畫面或整個應用程式重設計已驗收。
 
-已納入嘅來源清單固定於 `a271602901c1b079a342dc9ea89edca57c5345c6`。
+已納入嘅來源清單固定於 `4147ca9eeb0004f7e18b4a2f5a8c6cb190975d21`。
 校準視窗文章內含粵語段落；外框分頁已有粵語版本，工作流程導覽仍連到現有英文文章。
 連線及傳送延續單元連同資訊可讀性及標題尺寸修正，現已納入原始碼，唔代表執行畫面已驗證。
 
@@ -74,6 +74,8 @@ review-status: agent-drafted
 - [AMS 乾燥](ams-drying-atlas.yue_HK.md)：狀態設定版面及錯誤說明接駁到可見容器。
 - [噴嘴架同熱端詳情](nozzle-rack-atlas.yue_HK.md)：噴嘴架選取卡片及量度更新資料列。
 - [打印及連線延續流程](../workspace/print-continuations-atlas.yue_HK.md)：可讀說明、連線表單及傳送失敗標題尺寸；測試地址修正獨立記錄，唔當成行為改動。
+- [工作流程及批次捲軸擁有者](atlas-scroll-owner-adoption.yue_HK.md)：採用現有套件捲動及表格擁有者，保留呼叫端模型同回呼。
+- [原生語言模式及目錄](../windows/language-modes.yue_HK.md)：原有英文粵語目錄覆蓋，本地化交付同實際文字排版驗收分開。
 
 ## 設計來源
 

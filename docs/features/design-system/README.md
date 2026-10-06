@@ -44,7 +44,7 @@ Design 3 design system.
 
 These articles record bounded source changes and their verification limits. They do not establish complete native rendering or application-wide redesign acceptance.
 
-The incorporated source inventory is pinned to `a271602901c1b079a342dc9ea89edca57c5345c6`.
+The incorporated source inventory is pinned to `4147ca9eeb0004f7e18b4a2f5a8c6cb190975d21`.
 Calibration viewport documentation includes Cantonese inline. Shell/tab now has a Cantonese
 companion; native-workflow navigation still has no separate companion. Connection/send
 continuations and their disclosure/caption repairs are now incorporated as source-only work.
@@ -80,6 +80,8 @@ continuations and their disclosure/caption repairs are now incorporated as sourc
 - [AMS drying](ams-drying-atlas.md): status/settings composition and reachable error disclosure attachment.
 - [Nozzle rack and hotend details](nozzle-rack-atlas.md): rack/selection cards and measured update rows.
 - [Print and connection continuations](../workspace/print-continuations-atlas.md): readable disclosure, connection form and send-failure caption fitting; fixture-only address correction remains separate from behavior.
+- [Workflow and bulk scrollbar owners](atlas-scroll-owner-adoption.md): existing kit scroll/table owners adopted without changing caller models or callbacks.
+- [Native language modes and catalogs](../windows/language-modes.md): existing English/Cantonese catalog coverage, with localization delivery separate from rendered text-fit acceptance.
 
 ## Design source
 

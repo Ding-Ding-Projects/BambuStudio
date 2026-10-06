@@ -82,7 +82,7 @@
       "commit": "6faff372404390ba6cd9191c12e9fa5439ce375c"
     }
   ],
-  "reviewedCandidate": "a271602901c1b079a342dc9ea89edca57c5345c6",
+  "reviewedCandidate": "4147ca9eeb0004f7e18b4a2f5a8c6cb190975d21",
   "incorporatedSourceUnits": [
     {
       "commit": "b748affe0f687f6cfbe6068a82d32988047f790a",
@@ -583,6 +583,22 @@
       "summary": "Use a reserved documentation address in the IPv4 fixture only",
       "article": "docs/features/workspace/print-continuations-atlas.md",
       "companion": "8b8d042ed6730e80c6baeef72b71851a0ac04018"
+    },
+    {
+      "commit": "334eb7fa466e79fc885bd8af0689f22e034f9d60",
+      "family": "scroll-table-owner-adoption",
+      "classification": "appearance-layout",
+      "summary": "Adopt existing kit scroll/table owners in six Schedule, Print, Workspace and bulk caller sites while retaining models and constructor contracts",
+      "article": "docs/features/design-system/atlas-scroll-owner-adoption.md",
+      "reversalNote": "A reviewed reversal restores raw scrollbar owners and scanner failures; preserve kit implementations, models, callbacks and unrelated correctness repairs."
+    },
+    {
+      "commit": "7a681fd0f15bc35364f06268df650e5bf28a82f3",
+      "family": "native-catalog",
+      "classification": "localization",
+      "summary": "Reconcile existing English/Cantonese catalog keys, translations, terminology overrides and coverage without changing feature labels or the extracted template",
+      "article": "docs/features/windows/language-modes.md",
+      "reversalNote": "Catalog delivery is not a visual rollback handle. Preserve localized content independently of appearance preference; no runtime text-fit or functional obligation is promoted."
     }
   ],
   "classificationRules": {

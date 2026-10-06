@@ -307,7 +307,7 @@
     }
   ],
   "verificationBoundary": "Recorded source units are incorporated at the reviewed candidate but remain partial at nested-control level. Shell/tab followup 44cba370 is not in this candidate. See the ranked remaining implementation map in workflow-refresh.md. Runtime, capture and parity states and all 1,204 obligations remain unchanged.",
-  "reviewedCandidate": "a271602901c1b079a342dc9ea89edca57c5345c6",
+  "reviewedCandidate": "4147ca9eeb0004f7e18b4a2f5a8c6cb190975d21",
   "incorporatedFollowupArticles": [
     {
       "family": "shell-tabs",
@@ -440,5 +440,98 @@
     }
   ],
   "followupSourceBoundary": "The three previously prioritized families now have incorporated source units. Their historical unchanged-source observation is pinned separately to c7868b485. Actual nested coverage and all runtime evidence remain incomplete; the unchanged 1,204-row functional ledger is authoritative for missing/planned/placeholder obligations.",
-  "scopeFreeze": "Documentation reconciliation only at this immutable candidate. No new implementation scope is assigned."
+  "scopeFreeze": "Source coverage reconciliation only. No further UI implementation is assigned before built review establishes a concrete gap at this immutable candidate.",
+  "remainingVisualCoverage": [
+    {
+      "id": "shared-control-callers",
+      "status": "awaiting-built-review",
+      "sourceAnchors": [
+        "src/slic3r/GUI/Widgets/SideMenuPopup.cpp",
+        "src/slic3r/GUI/Widgets/TextTabbar.cpp",
+        "src/slic3r/GUI/Widgets/Slider.cpp",
+        "src/slic3r/GUI/Field.cpp"
+      ],
+      "implementationAssigned": false
+    },
+    {
+      "id": "shell-nested-fit",
+      "status": "awaiting-built-review",
+      "sourceAnchors": [
+        "src/slic3r/GUI/Widgets/TabStrip.cpp",
+        "src/slic3r/GUI/Widgets/TabStripDialogs.cpp",
+        "src/slic3r/GUI/Tabbook.cpp"
+      ],
+      "implementationAssigned": false
+    },
+    {
+      "id": "specialized-continuations",
+      "status": "awaiting-built-review",
+      "sourceAnchors": [
+        "src/slic3r/GUI/BindDialog.cpp",
+        "src/slic3r/GUI/MsgDialog.cpp",
+        "src/slic3r/GUI/ReleaseNote.cpp"
+      ],
+      "implementationAssigned": false
+    },
+    {
+      "id": "dense-settings-subforms",
+      "status": "awaiting-built-review",
+      "sourceAnchors": [
+        "src/slic3r/GUI/Preferences.cpp",
+        "src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp",
+        "src/slic3r/GUI/CalibrationWizardSavePage.cpp"
+      ],
+      "implementationAssigned": false
+    },
+    {
+      "id": "device-nested-details",
+      "status": "awaiting-built-review",
+      "sourceAnchors": [
+        "src/slic3r/GUI/AmsMappingPopup.cpp",
+        "src/slic3r/GUI/AMSMaterialsSetting.cpp",
+        "src/slic3r/GUI/AMSSetting.cpp"
+      ],
+      "implementationAssigned": false
+    },
+    {
+      "id": "reader-detail-variants",
+      "status": "awaiting-built-review",
+      "sourceAnchors": [
+        "src/slic3r/GUI/Widgets/RegexBuilderPopup.cpp",
+        "src/slic3r/GUI/Export/ExportDialog.cpp",
+        "src/slic3r/GUI/ProjectHistoryDialog.cpp",
+        "src/slic3r/GUI/ChangelogDialog.cpp"
+      ],
+      "implementationAssigned": false
+    },
+    {
+      "id": "workspace-inherited-details",
+      "status": "awaiting-built-review",
+      "sourceAnchors": [
+        "src/slic3r/GUI/WorkspacePanel.cpp"
+      ],
+      "implementationAssigned": false
+    },
+    {
+      "id": "embedded-alternate-flows",
+      "status": "awaiting-built-review",
+      "sourceAnchors": [
+        "resources/web/filament_create/step2.css",
+        "resources/web/guide/1/1.css",
+        "resources/web/homepage3/css/home.css"
+      ],
+      "implementationAssigned": false
+    },
+    {
+      "id": "renderer-tool-interiors",
+      "status": "awaiting-built-review",
+      "sourceAnchors": [
+        "src/slic3r/GUI/GLCanvas3D.cpp",
+        "src/slic3r/GUI/Gizmos/GLGizmoBase.cpp",
+        "src/slic3r/GUI/Gizmos/GizmoObjectManipulation.cpp"
+      ],
+      "implementationAssigned": false
+    }
+  ],
+  "functionalGapBoundary": "These nine visual review boundaries refer to existing implementation destinations and do not authorize new engines or count missing/planned/placeholder features as delivered. The unchanged 1,204-row ledger retains every functional obligation and its evidence state."
 }
