@@ -3,6 +3,8 @@
 #include "GUI_App.hpp"
 #include "MainFrame.hpp"
 #include "Widgets/CheckBox.hpp"
+#include "Widgets/Label.hpp"
+#include <algorithm>
 
 #include "DeviceCore/DevManager.h"
 #include "DeviceCore/FarmDevicePolicy.hpp"
@@ -121,8 +123,11 @@ DevicePickItem::DevicePickItem(wxWindow* parent, MachineObject* obj)
 {
     SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
-    SetMinSize(wxSize(FromDIP(400), FromDIP(30)));
-    SetMaxSize(wxSize(FromDIP(400), FromDIP(30)));
+    SetFont(Label::Body_14);
+    // Reserve one stable row target, independent of selection and telemetry.
+    const int row_height = std::max(FromDIP(MD3::Metrics::active().row_height), GetCharHeight() + FromDIP(16));
+    SetMinSize(wxSize(FromDIP(400), row_height));
+    SetMaxSize(wxSize(FromDIP(400), row_height));
 
     Bind(wxEVT_PAINT, &DevicePickItem::paintEvent, this);
     Bind(wxEVT_ENTER_WINDOW, &DevicePickItem::OnEnterWindow, this);
@@ -147,7 +152,8 @@ void DevicePickItem::DrawTextWithEllipsis(wxDC& dc, const wxString& text, int ma
     wxFont font = dc.GetFont();
 
     wxSize textSize = dc.GetTextExtent(text);
-    dc.SetTextForeground(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+    dc.SetTextForeground(StateColor::semantic(state_selected == 1 ? MD3::Role::OnPrimaryContainer : MD3::Role::OnSurface,
+                                            MD3::ColorScheme::Device));
     int textWidth = textSize.GetWidth();
 
     if (textWidth > maxWidth) {
@@ -281,7 +287,16 @@ void DevicePickItem::render(wxDC& dc)
 void DevicePickItem::doRender(wxDC& dc)
 {
     wxSize size = GetSize();
-    dc.SetPen(wxPen(*wxBLACK));
+    dc.SetFont(GetFont());
+    dc.SetBackground(wxBrush(StateColor::semantic(MD3::Role::SurfaceContainerLowest)));
+    dc.Clear();
+    const auto row_role = state_selected == 1 ? MD3::Role::PrimaryContainer :
+                          m_hover ? MD3::Role::SurfaceContainerHigh : MD3::Role::SurfaceContainerLowest;
+    dc.SetPen(wxPen(StateColor::semantic(MD3::Role::OutlineVariant)));
+    dc.SetBrush(wxBrush(StateColor::semantic(row_role, MD3::ColorScheme::Device)));
+    const int inset = FromDIP(2);
+    dc.DrawRoundedRectangle(inset, inset, std::max(0, size.x - 2 * inset),
+                            std::max(0, size.y - 2 * inset), FromDIP(MD3::Metrics::active().small_radius));
 
     int left = FromDIP(PICK_LEFT_PADDING_LEFT);
 
@@ -300,10 +315,10 @@ void DevicePickItem::doRender(wxDC& dc)
 
     // a11y-focus: 2px Primary keyboard focus ring around the row.
     if (m_focused) {
-        dc.SetPen(wxPen(StateColor::semantic(MD3::Role::Primary), FromDIP(2)));
+        dc.SetPen(wxPen(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Device), FromDIP(2)));
         dc.SetBrush(*wxTRANSPARENT_BRUSH);
-        const int inset = FromDIP(1);
-        dc.DrawRectangle(inset, inset, size.x - 2 * inset, size.y - 2 * inset);
+        dc.DrawRoundedRectangle(inset, inset, std::max(0, size.x - 2 * inset),
+                                std::max(0, size.y - 2 * inset), FromDIP(MD3::Metrics::active().small_radius));
     }
 }
 void DevicePickItem::post_event(wxCommandEvent&& event)

@@ -97,9 +97,9 @@ static const int default_champer_temp_max = 60;
 
 /* Material 3 semantic colors. Resolve at use time so a live theme change gets
  * the correct light or dark role rather than a cached startup color. */
-static wxColour device_page_color() { return StateColor::semantic(MD3::Role::SurfaceDim); }
-static wxColour device_card_color() { return StateColor::semantic(MD3::Role::SurfaceContainerLow); }
-static wxColour device_title_color() { return StateColor::semantic(MD3::Role::SurfaceContainer); }
+static wxColour device_page_color() { return StateColor::semantic(MD3::Role::Surface); }
+static wxColour device_card_color() { return StateColor::semantic(MD3::Role::SurfaceContainerLowest); }
+static wxColour device_title_color() { return StateColor::semantic(MD3::Role::SurfaceContainerLow); }
 static wxColour device_divider_color() { return StateColor::semantic(MD3::Role::OutlineVariant); }
 static wxColour device_text_color() { return StateColor::semantic(MD3::Role::OnSurface); }
 static wxColour device_secondary_text_color() { return StateColor::semantic(MD3::Role::OnSurfaceVariant); }
@@ -327,11 +327,11 @@ static void recolor_device_surface_tree(wxWindow *window)
     if (auto *line = dynamic_cast<StaticLine *>(window)) line->SetLineColour(device_divider_color());
 
     const wxColour background = window->GetBackgroundColour();
-    if (is_semantic_color(background, MD3::Role::SurfaceContainerLow))
+    if (is_semantic_color(background, MD3::Role::SurfaceContainerLowest))
         window->SetBackgroundColour(device_card_color());
-    else if (is_semantic_color(background, MD3::Role::SurfaceContainer))
+    else if (is_semantic_color(background, MD3::Role::SurfaceContainerLow))
         window->SetBackgroundColour(device_title_color());
-    else if (is_semantic_color(background, MD3::Role::SurfaceDim))
+    else if (is_semantic_color(background, MD3::Role::Surface))
         window->SetBackgroundColour(device_page_color());
 
     const wxColour foreground = window->GetForegroundColour();
@@ -798,13 +798,12 @@ private:
     bool m_native_fullscreen{ false };
 };
 /* font and foreground colors */
-static const wxFont PAGE_TITLE_FONT = Label::Body_14;
 // static const wxFont GROUP_TITLE_FONT = Label::sysFont(17);
 
 static wxImage fail_image;
 
 /* size */
-#define PAGE_TITLE_HEIGHT FromDIP(36)
+#define PAGE_TITLE_HEIGHT FromDIP(40)
 #define PAGE_TITLE_TEXT_WIDTH FromDIP(200)
 #define PAGE_TITLE_LEFT_MARGIN FromDIP(17)
 #define GROUP_TITLE_LEFT_MARGIN FromDIP(15)
@@ -1224,10 +1223,11 @@ void PrintingTaskPanel::create_panel(wxWindow *parent)
 
     m_staticText_printing = new Label(m_panel_printing_title, _L("Printing Progress"));
     m_staticText_printing->Wrap(-1);
-    // m_staticText_printing->SetFont(PAGE_TITLE_FONT);
-    m_staticText_printing->SetForegroundColour(device_secondary_text_color());
+    m_staticText_printing->SetFont(Label::Head_16);
+    m_staticText_printing->SetForegroundColour(device_text_color());
 
     bSizer_printing_title->Add(m_staticText_printing, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, PAGE_TITLE_LEFT_MARGIN);
+    bSizer_printing_title->SetMinSize(wxSize(-1, std::max(PAGE_TITLE_HEIGHT, m_staticText_printing->GetBestSize().y + FromDIP(16))));
     bSizer_printing_title->Add(0, 0, 1, wxEXPAND, 0);
 
     m_panel_printing_title->SetSizer(bSizer_printing_title);
@@ -1769,7 +1769,7 @@ void PrintingTaskPanel::msw_rescale()
 {
     m_pausing_icon->Rescale();
     m_stopping_icon->Rescale();
-    m_panel_printing_title->SetSize(wxSize(-1, FromDIP(PAGE_TITLE_HEIGHT)));
+    m_panel_printing_title->SetSize(wxSize(-1, PAGE_TITLE_HEIGHT));
     m_printing_sizer->SetMinSize(wxSize(PAGE_MIN_WIDTH, -1));
     // m_staticText_printing->SetMinSize(wxSize(PAGE_TITLE_TEXT_WIDTH, PAGE_TITLE_HEIGHT));
     m_gauge_progress->SetHeight(PROGRESSBAR_HEIGHT);
@@ -2509,18 +2509,15 @@ wxBoxSizer *StatusBasePanel::create_machine_control_page(wxWindow *parent)
     wxBoxSizer *bSizer_right = new wxBoxSizer(wxVERTICAL);
 
     m_panel_control_title = new wxPanel(parent, wxID_ANY, wxDefaultPosition, wxSize(-1, PAGE_TITLE_HEIGHT), wxTAB_TRAVERSAL);
-    // Kit Device.jsx:48: the right column is a plain stack of cards with no
-    // 'Control' title strip and no Parts/Options/Safety/Calibration pill row. Blend
-    // the former device_title_color band into the SurfaceDim column; the strip now
-    // carries only a single trailing overflow menu (MoreHoriz IconButton).
+    // Atlas groups transport controls under a visible section heading. The
+    // existing overflow still owns all Parts/Options/Safety/Calibration routes.
     m_panel_control_title->SetBackgroundColour(device_page_color());
 
     wxBoxSizer *bSizer_control_title = new wxBoxSizer(wxHORIZONTAL);
     m_staticText_control             = new Label(m_panel_control_title, _L("Control"));
     m_staticText_control->Wrap(-1);
-    // m_staticText_control->SetFont(PAGE_TITLE_FONT);
-    m_staticText_control->SetForegroundColour(device_secondary_text_color());
-    m_staticText_control->Hide();
+    m_staticText_control->SetFont(Label::Head_16);
+    m_staticText_control->SetForegroundColour(device_text_color());
 
     // Invisible state-holder for the four action entry points. It is never added to
     // a sizer and stays Hidden, so its children never paint on screen; because a
@@ -2577,6 +2574,7 @@ wxBoxSizer *StatusBasePanel::create_machine_control_page(wxWindow *parent)
     if (MaterialIcon::available()) m_more_btn->SetGlyph(MaterialIcon::MoreHoriz, 20);
     m_more_btn->SetToolTip(_L("More options"));
 
+    bSizer_control_title->Add(m_staticText_control, 0, wxALIGN_CENTER_VERTICAL | wxLEFT | wxTOP | wxBOTTOM, FromDIP(8));
     bSizer_control_title->AddStretchSpacer(1);
     bSizer_control_title->Add(m_more_btn, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(10));
 
@@ -6824,8 +6822,8 @@ void StatusPanel::on_sys_color_changed()
         m_camera_hud->SetBackgroundColour(CameraHUD::CardBg());
         m_camera_hud->Refresh();
     }
-    m_staticText_control->SetForegroundColour(device_secondary_text_color());
-    // Keep the (title-strip-free) action row blended into the SurfaceDim column.
+    m_staticText_control->SetForegroundColour(device_text_color());
+    // Keep the control heading on the page surface after theme changes.
     if (m_panel_control_title) m_panel_control_title->SetBackgroundColour(device_page_color());
     StateColor card_background(device_card_color());
     StateColor card_border(device_divider_color());
