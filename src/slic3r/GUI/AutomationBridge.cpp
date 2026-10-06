@@ -1,4 +1,5 @@
 #include "AutomationBridge.hpp"
+#include "LocalCapabilities/NativeCapabilityDispatch.hpp"
 #include "GUI_App.hpp"
 #include "Plater.hpp"
 #include "GLCanvas3D.hpp"
@@ -49,6 +50,7 @@ std::string required(const Json& args, const char* key) {
 struct AutomationBridge::State : std::enable_shared_from_this<AutomationBridge::State> {
     GUI_App& app;
     std::atomic<bool> stopping{false}, busy{false};
+    bool local_capabilities_only{false};
     std::thread worker;
     std::vector<std::filesystem::path> roots;
     std::map<std::string, Json> starts;
@@ -198,6 +200,11 @@ struct AutomationBridge::State : std::enable_shared_from_this<AutomationBridge::
         return index;
     }
     Json execute(const std::string& op, const Json& a) {
+        if (op == "local_capabilities") {
+            try { return LocalCapabilities::dispatch(LocalCapabilities::registry(), a); }
+            catch (const LocalCapabilities::Rejected& error) { throw Rejected(error.what(), "Local capability request was rejected"); }
+        }
+        if (local_capabilities_only) throw Rejected("operation_unavailable", "This listener accepts only local capabilities");
 #ifdef _WIN32
         struct LeaseRelease { State* state; ~LeaseRelease() {for(auto h:state->path_leases) CloseHandle(h);state->path_leases.clear();} } leases{this};
 #endif
@@ -455,7 +462,8 @@ struct AutomationBridge::State : std::enable_shared_from_this<AutomationBridge::
             self->busy=false; pending->cv.notify_all();
         });
         std::unique_lock<std::mutex> lock(pending->mutex);
-        if(!pending->cv.wait_for(lock,std::chrono::seconds(30),[&]{return pending->phase==2 || stopping;})) {
+        const auto queue_timeout=std::chrono::seconds(request["operation"]=="local_capabilities"?5:30);
+        if(!pending->cv.wait_for(lock,queue_timeout,[&]{return pending->phase==2 || stopping;})) {
             int queued=0; bool expired=pending->phase.compare_exchange_strong(queued,3);
             if(expired) busy=false;
             return failure(id,expired?"queue_timeout":"operation_in_progress",expired?"Queued operation expired without execution":"Native operation began and is still executing; inspect state before retrying");
@@ -521,6 +529,8 @@ AutomationBridge::AutomationBridge(GUI_App& app) : m_state(std::make_shared<Stat
 AutomationBridge::~AutomationBridge() { stop(); }
 void AutomationBridge::start() {
 #ifdef _WIN32
+    if(m_state->worker.joinable() || m_state->stopping) return;
+    (void)LocalCapabilities::registry();
     const char* enabled=std::getenv("BAMBU_AUTOMATION"); if(!enabled || std::string(enabled)!="1") return;
     const char* roots=std::getenv("BAMBU_AUTOMATION_ROOTS"); if(roots) {
         std::string list(roots); size_t pos=0;
@@ -529,8 +539,17 @@ void AutomationBridge::start() {
     auto state=m_state; state->worker=std::thread([state]{state->serve();});
 #endif
 }
+void AutomationBridge::start_local_capabilities() {
+#ifdef _WIN32
+    (void)LocalCapabilities::registry();
+    if(m_state->worker.joinable() || m_state->stopping) return;
+    m_state->local_capabilities_only=true;
+    auto state=m_state; state->worker=std::thread([state]{state->serve();});
+#endif
+}
 void AutomationBridge::stop() {
     if(!m_state) return; m_state->stopping=true;
+    LocalCapabilities::registry().revoke();
     {std::lock_guard<std::mutex> lock(m_state->pending_mutex); for(auto& wake:m_state->wake_pending) wake();}
 #ifdef _WIN32
     {std::lock_guard<std::mutex> lock(m_state->pipe_mutex); if(m_state->pipe!=INVALID_HANDLE_VALUE) CancelIoEx(m_state->pipe,nullptr);}

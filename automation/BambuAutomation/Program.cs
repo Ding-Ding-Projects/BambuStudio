@@ -6,6 +6,15 @@ using ModelContextProtocol.Server;
 
 try
 {
+    if (args.Length > 0 && args[0] == "local-capabilities")
+    {
+        if (args.Length != 3 || args[1] != "--instance" || !int.TryParse(args[2], out var nativeInstance) || nativeInstance <= 0)
+            throw new CommandException("invalid_arguments", "Use local-capabilities --instance <native PID> after native pairing consent.");
+        using var lifetime = new CancellationTokenSource();
+        Console.CancelKeyPress += (_, eventArgs) => { eventArgs.Cancel = true; lifetime.Cancel(); };
+        await BambuAutomation.LocalCapabilities.NativeComposition.RunAsync(nativeInstance, lifetime.Token);
+        return 0;
+    }
     var options = Options.Parse(args);
     if (options.Help)
     {
@@ -111,6 +120,15 @@ try
         app.MapMcp("/mcp");
         await app.RunAsync();
     }
+    return 0;
+}
+catch (BambuAutomation.LocalCapabilities.CapabilityDenied)
+{
+    Console.Error.WriteLine("local_capability_unavailable");
+    return 1;
+}
+catch (OperationCanceledException)
+{
     return 0;
 }
 catch (CommandException exception)
