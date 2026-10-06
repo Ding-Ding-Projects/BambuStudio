@@ -326,6 +326,31 @@ class OwnershipTests(unittest.TestCase):
             with self.subTest(bad=bad), self.assertRaises(ValueError):
                 review.validate_probe(bad, 7, 20, "fixture")
 
+    def test_explicit_probe_tuple_preserves_default_and_measurement_checks(self):
+        for language in ("en", "yue_HK", "bilingual_en_yue_HK"):
+            for theme in ("light", "dark"):
+                for density in ("comfortable", "compact"):
+                    rows = probe()
+                    rows[0].update(language=language, dark=theme == "dark", density=density)
+                    expected = dict(expected_language=language, expected_theme=theme,
+                                    expected_density=density)
+                    self.assertEqual(review.validate_probe(rows, 7, 20, "fixture", **expected)["dpi_scale"], 1.25)
+                    if (language, theme, density) != ("en", "light", "comfortable"):
+                        with self.assertRaisesRegex(ValueError, "tuple mismatch"):
+                            review.validate_probe(rows, 7, 20, "fixture")
+                    for invalid in (True, 0, -1, float("inf"), float("nan")):
+                        bad = deepcopy(rows)
+                        bad[0]["dpi_scale"] = invalid
+                        with self.assertRaises(ValueError):
+                            review.validate_probe(bad, 7, 20, "fixture", **expected)
+                    for bad in (rows[:-1], probe(pid=8), probe(hwnd=99), probe(tag="old")):
+                        with self.assertRaises(ValueError):
+                            review.validate_probe(bad, 7, 20, "fixture", **expected)
+        for expected in ({"expected_language": "unknown"}, {"expected_theme": True},
+                         {"expected_density": "unknown"}):
+            with self.assertRaisesRegex(ValueError, "Unsupported expected"):
+                review.validate_probe(probe(), 7, 20, "fixture", **expected)
+
     def test_existing_profile_is_not_overwritten(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

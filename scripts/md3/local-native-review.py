@@ -205,14 +205,19 @@ def select_shell(windows, pid, native_identity):
     return matches[0] if matches else None
 
 
-def validate_probe(rows, pid, hwnd, tag):
+def validate_probe(rows, pid, hwnd, tag, *, expected_language="en", expected_theme="light",
+                   expected_density="comfortable"):
+    require(expected_language in ("en", "yue_HK", "bilingual_en_yue_HK") and
+            expected_theme in ("light", "dark") and
+            expected_density in ("comfortable", "compact"), "Unsupported expected native tuple")
     require(rows and rows[-1] == {"kind": "end"}, "Native probe is incomplete")
     headers = [r for r in rows if r.get("kind") == "header"]
     require(len(headers) == 1, "Native probe header is ambiguous")
     header = headers[0]
     require(header.get("pid") == pid and header.get("tag") == tag, "Native probe ownership mismatch")
-    require(header.get("language") == "en" and header.get("dark") is False and
-            header.get("density") == "comfortable", "Native profile tuple mismatch")
+    require(header.get("language") == expected_language and
+            header.get("dark") is (expected_theme == "dark") and
+            header.get("density") == expected_density, "Native profile tuple mismatch")
     scale = header.get("dpi_scale")
     require(type(scale) in (int, float) and math.isfinite(scale) and scale > 0, "Invalid measured DPI")
     frames = [r for r in rows if r.get("kind") == "toplevel" and r.get("hwnd") == hwnd]
