@@ -83,7 +83,7 @@ The 43 feature families and all 1,204 obligations in `native-feature-delivery.js
 5. Project, Calibration and Preferences: apply the same system to workspace files, notes/checklist/calendar, calibration sequences, all registered preference sections, parameter editors and setup wizard.
 6. Menus, dialogs and auxiliary tools: complete search/regex, palette, appearance editor, notification/history/docs/changelog, import/export, model creator, schedules, confirmations and canonical tool surfaces. Retain unfinished rows until these implementations exist.
 
-The complete incorporated-source inventory is `sourceReview` in [manifest.json](workflow-refresh/manifest.json), reconciled against `a271602901c1b079a342dc9ea89edca57c5345c6`. It records 67 exact source revisions across 31 families, including companion repairs, plus five documentation receipts. The six initial native scopes have incorporated source units with partial nested coverage. Product-owned embedded styling has both its 23-stylesheet paint unit and its 13-stylesheet composition unit. These source receipts do not establish full native compilation, rendered completion, geometry or runtime behavior. [implementation-scopes.json](workflow-refresh/implementation-scopes.json) and the ranked map below distinguish incorporated partial work and remaining callers. The introductory receipts below are historical milestones, not the complete current list.
+The complete incorporated-source inventory is `sourceReview` in [manifest.json](workflow-refresh/manifest.json), reconciled against `4147ca9eeb0004f7e18b4a2f5a8c6cb190975d21`. It records 69 exact source revisions across 33 families, including companion repairs, plus five documentation receipts. The six initial native scopes have incorporated source units with partial nested coverage. Product-owned embedded styling has both its 23-stylesheet paint unit and its 13-stylesheet composition unit. These source receipts do not establish full native compilation, rendered completion, geometry or runtime behavior. [implementation-scopes.json](workflow-refresh/implementation-scopes.json) and the ranked map below distinguish incorporated partial work and remaining callers. The introductory receipts below are historical milestones, not the complete current list.
 
 | Source revision | Source receipt | Evidence limit |
 | --- | --- | --- |
@@ -122,11 +122,11 @@ After launch authorization and a real build are available, use the required isol
 
 ## Remaining visual implementation coverage
 
-Reviewed source candidate: `a271602901c1b079a342dc9ea89edca57c5345c6`.
+Reviewed source candidate: `4147ca9eeb0004f7e18b4a2f5a8c6cb190975d21`.
 
-The source ledger records 67 exact units across 31 families, plus five documentation
-receipts: seven appearance-only, twenty-six appearance/layout, twenty-seven correctness
-repairs, two functional-workflow, four verification-only and one localization unit.
+The source ledger records 69 exact units across 33 families, plus five documentation
+receipts: seven appearance-only, twenty-seven appearance/layout, twenty-seven correctness
+repairs, two functional-workflow, four verification-only and two localization units.
 The formerly pending shell unit is now incorporated with its drag/focus repairs.
 Numeric input allocation, calibration viewport/preset measurement, humidity final
 placement and Appearance preset reflow are recorded as separate repairs. Transform
@@ -141,11 +141,15 @@ Connection/send continuation unit `b60bd4c8b8fa5eb0d3e5a9f706621e73f8a1a476` is 
 incorporated with readable-disclosure repair `8b8d042e`, caption fitting `ee4fc3ec`
 and fixture-only address correction `59405fc8`. The prior hold is retired by
 verified source ancestry, not by promoting runtime or functional-delivery evidence.
+The latest snapshot adds kit scroll/table-owner adoption `334eb7fa` across six
+Schedule, Print, Workspace and bulk caller sites, plus catalog reconciliation
+`7a681fd0f`. The former is appearance/layout integration, the latter localization;
+neither is a pure-paint reversal or evidence that a functional obligation is complete.
 This documentation-only reconciliation assigns no new implementation scope.
 
-The ranking below prioritizes the number of actual surface families reached, then continuation importance. It is a bounded visual-implementation map, not a fresh audit of all 1,204 canonical feature obligations. Every runtime, capture and parity verdict remains pending. A named source unit means source is incorporated, not that every nested control is finished.
+The nine rows below are the finite remaining whole-look review boundaries from the existing contracts and implementation destinations. They identify source coverage or native-proof gaps, not nine new implementation assignments. Built review must establish a concrete gap before further UI edits. Every runtime, capture and parity verdict remains pending. A named source unit means source is incorporated, not that every nested control is finished. Functional gaps are recorded separately below.
 
-| Rank | Remaining coverage boundary | Existing source and next bounded action |
+| Rank | Remaining visual coverage boundary | Existing source and built-review boundary |
 | --- | --- | --- |
 | 1 | Shared controls and caller anatomy used throughout the application | `SpinInput`, `CheckBox` and `SwitchButton` now have bounded source anatomy, including native numeric allocation repair. Their actual narrow callers still need validation. ListBox now has measured rows, focus paint and displaced-hover invalidation. Slider tracks, `SideMenuPopup`, `TextTabbar`, `LabeledCheckBox`, `ImageSwitchButton` and other toggle classes remain independently owned. Option-name/default/reset/inherited markers, persistent inline validation and full narrow field stacks remain caller-owned. Shared button tiers remain 36/42/44 DIP; the proposed 40/32 density contract has not universally landed. |
 | 2 | Shell, project tab strip, nested books and tab dialogs | Shell/title/history/TabStrip/Tabbook source and visible-neighbor drag plus focus/accessibility repairs are incorporated. Overflow remains layout behavior, not paint-only. Full wrapped vertical labels, extreme dialog fit, title-toolbar keyboard evidence and unrelated status owners remain separate. |
@@ -156,7 +160,11 @@ The ranking below prioritizes the number of actual surface families reached, the
 | 7 | Workspace's inherited detail surfaces | Five workspace subviews and stable-width Overview reflow are incorporated. Existing text-entry/file dialogs, checklist long-label shortening, tab overflow/keyboard and any missing local search/regex remain separate. No History subview exists in `WorkspacePanel`; history-bearing member save remains intact. Do not introduce a new history engine merely to fill the design board. |
 | 8 | Embedded entrypoint and alternate-flow composition | Both the 23-stylesheet paint unit and the 13-stylesheet composition unit are incorporated. The home mini-strip item-count policy, alternate filament-creation flows, JavaScript motion and the pre-existing setup-guide test mismatch remain. Trace actual native-host entrypoints and owned markup before any further CSS scope; preserve event targets, bridge protocols and third-party assets. |
 | 9 | Renderer detail beyond recorded paint | Toolbar/rail, overlays, Preview transport/legend, transform fields and the common floating-inspector frame for twelve paired callers are incorporated. Transform work preserves fifteen numeric inputs and their geometry, axis identity and data colors. Shared framing does not redesign each tool's interior controls. `GLCanvas3D.cpp`, tool interiors, canvas-specific panels and remaining tooltip layout still need individual ownership inventory. |
-| 10 | Existing-tool ownership that remains unknown | Model Creator, smart-home and canonical-tool groups retain unresolved implementation ownership. Trace actual reachable existing tools first. Missing engines remain feature backlog outside this visual-only task; a static board is not authority to add one or imply one exists. |
+
+The kit-owner adoption now covers the previously raw Schedule editor/panel, Print
+review, Workspace section-page factory and both bulk preview tables. Their models,
+constructor arguments and callbacks are preserved in the source receipt. This does
+not establish native scroll behavior or finish all nested control composition.
 
 ### Disposition of the three previously prioritized families
 
@@ -177,6 +185,8 @@ verifies both facts and the real call sites. No new source implementation is ass
 by this documentation unit; the candidate is ready for the integration owner's
 separate pinned native build process.
 
+### Separate functional-feature gaps
+
 The separate functional inventory still contains all 1,204 obligations with their
 existing evidence states. Missing, incomplete, planned and placeholder functions
 stay that way. Reachable controls, a new visual plan, a source receipt or an index
@@ -188,4 +198,4 @@ those gaps nor silently add new feature engines.
 
 All 56 checked-in SVG boards remain structural illustrations, not screenshots. They do not supply every state-specific reference, native reference-viewer route or real-product fixture. Native compilation and the genuine normal/minimum size, language, theme, density, display-scale, keyboard, focus, reduced-motion and temporal matrix remain separate work. Existing source checks and mathematical fixtures do not replace those results.
 
-The first eight ranks are concrete high-coverage continuations of existing surfaces. Ranks nine and ten require reachability/ownership inventory before implementation expands. No row authorizes changes to feature engines, printer commands, credentials, data persistence, callbacks or unrelated fixes.
+The nine visual boundaries have exact existing destinations in `implementation-scopes.json.remainingVisualCoverage`. They remain awaiting built review, with `implementationAssigned: false`. Missing Model Creator, external-source and canonical-tool capabilities remain functional backlog in the original ledger, not additional visual assignments. No row authorizes changes to feature engines, printer commands, credentials, data persistence, callbacks or unrelated fixes.

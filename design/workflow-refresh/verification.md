@@ -160,3 +160,32 @@ from the immutable candidate. No missing, incomplete or placeholder feature is
 promoted. Runtime, capture, viewer, fixture and parity states remain unchanged.
 Changed public-bound content and staged whitespace are checked before committing.
 No production build, launch, capture, hardware operation or publication is performed.
+
+## Owner-adoption and catalog reconciliation at 4147ca9ee
+
+The isolated ledger fast-forwarded to immutable candidate
+`4147ca9eeb0004f7e18b4a2f5a8c6cb190975d21`. Two reviewed source receipts are added:
+`334eb7fa466e79fc885bd8af0689f22e034f9d60` adopts the existing kit scroll/table owners
+at six caller sites and is classified appearance/layout; `7a681fd0f15bc35364f06268df650e5bf28a82f3`
+reconciles native catalogs and is classified localization. Neither is paint-only
+or a full-application behavior/visual acceptance receipt. Their own focused checks
+remain reported in their source records and are not rerun by this documentation unit.
+
+The ledger now holds 69 source units across 33 families and five documentation
+receipts. The original seven appearance-only units remain the only members of that
+class. Both design indexes link the actual paired owner-adoption article and existing
+language-mode documentation; no other article owned by another lane is edited.
+
+The focused receipt/index/ancestry checker passes. Its finite nine visual coverage
+boundaries point to existing owner files and are explicitly awaiting built review,
+with no new implementation assignment. Missing, incomplete, planned or placeholder
+functional features remain in the separate unchanged 1,204-row ledger. These are
+different completion questions and neither inventory can silently close the other.
+The in-memory `NATIVE_DESIGN_ASSIGN_VISUAL_SCOPE=1` mutation changes one boundary's
+assignment to true and is rejected with exit 1; the unmodified records pass.
+
+All 56 board files and all obligation rows remain byte-unchanged from this candidate.
+Runtime, fixture, viewer, capture and parity states are preserved. This reconciliation
+does not touch the primary checkout or its pinned build, and runs no application,
+capture, packaging or publication route. Public-boundary and whitespace checks apply
+only to the changed documentation and checker files before the separate commit.

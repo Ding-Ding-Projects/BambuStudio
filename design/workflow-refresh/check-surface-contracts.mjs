@@ -49,12 +49,14 @@ assert.equal(review.reviewedCandidate, contracts.latestSourceReview);
 let handoff = fs.readFileSync(path.join(root, 'design/workflow-refresh.md'), 'utf8');
 if (process.env.NATIVE_DESIGN_STALE_COMPOSITION === '1') handoff += '\nShell/tab work is reported but absent';
 assert.ok(handoff.includes('reconciled against `' + review.reviewedCandidate + '`'), 'Composition summary candidate is stale');
-assert.ok(!handoff.includes('Shell/tab work is reported but absent'), 'Composition summary still excludes incorporated shell work');
+assert.ok(![handoff, scopes.verificationBoundary].some(text =>
+  /Shell\/tab (?:work is reported but absent|followup 44cba370 is not in this candidate)/.test(text)),
+  'Current composition or scope boundary still excludes incorporated shell work');
 assert.ok(!handoff.includes('confirmations remain separate'), 'Composition summary still excludes incorporated confirmation work');
 assert.ok(handoff.includes('Missing Model Creator, external-source or canonical-tool engines remain their existing incomplete feature obligations.'));
-const expectedFamilies = 'native-palette shared-controls fields-presets prepare preferences-project-setup renderer-preview native-monitor native-device-popups readers-overlays live-notifications workspace calibration-children setup-index embedded-palette embedded-composition workflow-navigation print-workspace print-setup shell-tabs confirmations selection-controls transform-inspector humidity-details appearance-properties device-name-editor gizmo-inspector-framing reader-details ams-drying nozzle-rack shared-list-rows print-continuations'.split(' ');
+const expectedFamilies = 'native-palette shared-controls fields-presets prepare preferences-project-setup renderer-preview native-monitor native-device-popups readers-overlays live-notifications workspace calibration-children setup-index embedded-palette embedded-composition workflow-navigation print-workspace print-setup shell-tabs confirmations selection-controls transform-inspector humidity-details appearance-properties device-name-editor gizmo-inspector-framing reader-details ams-drying nozzle-rack shared-list-rows print-continuations scroll-table-owner-adoption native-catalog'.split(' ');
 if (process.env.NATIVE_DESIGN_REMOVE_RECEIPT === '1') review.units = review.units.filter(unit => unit.family !== 'workspace');
-assert.equal(review.units.length, 67, 'Missing incorporated source receipt');
+assert.equal(review.units.length, 69, 'Missing incorporated source receipt');
 assert.deepEqual([...new Set(review.units.map(unit => unit.family))].sort(), [...expectedFamilies].sort());
 assert.equal(review.completionClaim, false);
 assert.equal(review.runtimeStatus, 'unverified');
@@ -77,6 +79,8 @@ assert.equal(review.notInReviewedCandidate.length, 0, 'Formerly held units are n
 assert.equal(review.units.find(unit => unit.commit === '59405fc894f96525db8f8edc3e45a3839e3001fd')?.classification, 'verification-only');
 assert.ok(review.units.some(unit => unit.commit === 'b60bd4c8b8fa5eb0d3e5a9f706621e73f8a1a476'));
 assert.ok(!handoff.includes('remains held'), 'Current handoff retains a stale held status');
+assert.equal(review.units.find(unit => unit.commit === '334eb7fa466e79fc885bd8af0689f22e034f9d60')?.classification, 'appearance-layout');
+assert.equal(review.units.find(unit => unit.commit === '7a681fd0f15bc35364f06268df650e5bf28a82f3')?.classification, 'localization');
 assert.deepEqual(review.notInReviewedCandidate, reversal.notInReviewedCandidate);
 const pureAppearance = [
   'b748affe0f687f6cfbe6068a82d32988047f790a',
@@ -124,3 +128,11 @@ for (const row of scopes.followupSurfaceFamilies) {
 console.log(`Validated ${contracts.surfaces.length} explicit surface anatomy contracts and ${scopes.outsideAnchorFollowups.length} outside-anchor followups. Source inventory only; runtime and parity remain unverified.`);
 console.log(`Verified local ancestry for ${review.units.length} source receipts across ${expectedFamilies.length} families at ${review.reviewedCandidate}; no rendered acceptance.`);
 console.log('Verified five documentation receipts, both article indexes and three incorporated followup families; connection/send repairs are incorporated, runtime remains unverified.');
+assert.deepEqual(scopes.remainingVisualCoverage.map(row => row.id), 'shared-control-callers shell-nested-fit specialized-continuations dense-settings-subforms device-nested-details reader-detail-variants workspace-inherited-details embedded-alternate-flows renderer-tool-interiors'.split(' '));
+if (process.env.NATIVE_DESIGN_ASSIGN_VISUAL_SCOPE === '1') scopes.remainingVisualCoverage[0].implementationAssigned = true;
+for (const row of scopes.remainingVisualCoverage) {
+  assert.equal(row.status, 'awaiting-built-review');
+  assert.equal(row.implementationAssigned, false);
+  for (const file of row.sourceAnchors) assert.ok(fs.existsSync(path.join(root, file)), `Missing review destination ${file}`);
+}
+console.log('Nine finite visual review boundaries retain real destinations and no new implementation assignment.');
