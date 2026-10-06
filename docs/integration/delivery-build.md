@@ -1,6 +1,11 @@
 # Isolated delivery builds
 
 The supported commands remain `build.bat /s` and `build-installer.bat /s`.
+Focused script regressions described below are separate, explicitly invoked
+local checks. Neither root production path runs test or lint suites. Terminal
+build, package-byte and source-revision evidence is maintained in the
+[current verification report](build-verification-20261006.md); fixtures alone
+never establish successful production or installer execution.
 OCCT exports its C and C++ compiler flags through bracket-quoted package config
 values. Its configure source chooses a closing delimiter absent from both flag
 strings, preserving embedded quotes, backslashes, spaces, literal variable text

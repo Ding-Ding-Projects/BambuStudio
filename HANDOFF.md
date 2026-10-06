@@ -1,4 +1,34 @@
-# Current handoff: 5 October 2026
+# Current handoff: 6 October 2026
+
+## Exact-main verification
+
+The isolated `build.bat /s -DependencyCacheDirectory <verified-dependency-root>`
+invocation started at `2026-10-06T13:55:51Z`, pinned
+`cc059003d362b87d53786152ee8c28621d9c2813`, and remains active. Its application
+build and installation staging directories were absent before this invocation;
+only the existing supported dependency prefix is reused read-only. This proves
+neither a pristine operating-system bootstrap nor a successful terminal build.
+
+During compilation, generated `routeTree.gen.ts` has an empty content diff and
+raw blob identity `bc5e97ff6fcb9d164c3f1ecd84e9830ef29c68f9`, exactly matching
+the committed source. The reused checkout nevertheless reports a modification
+because its cached CRLF-era index metadata differs. The live source and index
+remain untouched. Record the actual terminal verdict before any metadata repair.
+
+The separate redesigned candidate `a28944e3c14b2066ee63d14151c8aca23066d743`
+passed `build.bat /s` at `13:04:12Z` and `build-installer.bat /s` at
+`13:18:59Z`. Independent verification matched all 13,639 SBOM files with staged
+and packaged bytes, including 310 bundled documentation articles. It also
+verified the unsigned Squirrel outputs, source identity, package metadata,
+RELEASES hashes and lengths. These results belong only to that candidate.
+The combined redesign and reviewed local inspection route are preserved at
+`e9dd8e0a7c0200f212cb777a4bc7d5918f2ccecc`; they have not been integrated into
+main. Appearance, layout, complete feature preservation and runtime behavior
+remain unverified. Application launch, installer execution, physical printing
+and manual publication remain excluded pending explicit scope resolution.
+
+See [the current report](docs/integration/build-verification-20261006.md).
+The records below are historical diagnostics, not current production state.
 
 ## Build bootstrap repair, 6 October 2026
 

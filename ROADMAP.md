@@ -1,5 +1,17 @@
 # Roadmap
 
+## Exact-main production verification, 6 October 2026
+
+- [x] Preserve the reviewed build repairs on main at `cc059003d362b87d53786152ee8c28621d9c2813` and verify the remote reference.
+- [x] Preserve the separate redesign candidate and its successful root-build, root-installer and package-byte receipts without treating them as main acceptance.
+- [ ] Finish the isolated exact-main root build started at `2026-10-06T13:55:51Z`; inspect the actual terminal source-identity result.
+- [ ] Run the exact-main root installer entrypoint and independently verify its complete unsigned Squirrel output set and source provenance.
+- [ ] Deliver the final exact-main evidence and continuation record with remote-reference proof.
+- [ ] Complete the full native redesign and permitted built visual review, preserving all existing behavior. This remains separate from build-only acceptance.
+
+Earlier delivery sections retain their dated evidence. A completed script check
+does not establish production, runtime, installer-execution or release success.
+
 ## Build bootstrap repair, 6 October 2026
 
 - [x] Route wx relocatable-prefix replay through the existing per-patch proof, with ten actual nested-Git/template fixture assertions and preserved conflicts.
@@ -24,7 +36,7 @@
 - [ ] Complete the reconciled native build and installer production; script checks do not prove these outcomes.
 
 
-## Current delivery pass, 5 October 2026
+## Historical delivery pass, 5 October 2026
 
 Current source: `600b38a7d1955c694433a8f1b8c5aa39e35d36bc`. Production configure has advanced beyond the earlier path-with-spaces blockers. The Cantonese catalogue production target completed with 7,991 entries and the offline documentation bundle completed. Native GUI compilation is currently running; no successful final native compile, package or release verdict is claimed. Intended release `md3-v228` and package `2.8.4814` remain pending, including exact target and downloadable-asset proof.
 

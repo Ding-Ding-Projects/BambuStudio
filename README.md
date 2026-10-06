@@ -1,5 +1,5 @@
 > [!IMPORTANT]
-> Current delivery source is `600b38a7d1955c694433a8f1b8c5aa39e35d36bc`. Production catalogue (7,991 entries) and offline docs bundling completed; native GUI compilation is running. Release `md3-v228` and package `2.8.4814` remain pending proof. No runtime or screenshot acceptance is claimed. The inherited TypeScript type stage was attempted once and failed; no verification suite was deliberately launched. Read the current handoff and continuation record below.
+> Exact-main verification now targets `cc059003d362b87d53786152ee8c28621d9c2813`. Its isolated root build is running with a read-only dependency cache. The separate redesign candidate `a28944e3c14b2066ee63d14151c8aca23066d743` has passed both root entrypoints and independent package-byte verification; that result does not verify main. The complete redesign remains unfinished and preserved separately. No application launch, installer execution or new release is claimed. See the [current verification report](docs/integration/build-verification-20261006.md).
 
 ![image](https://user-images.githubusercontent.com/106916061/179006347-497d24c0-9bd6-45b7-8c49-d5cc8ecfe5d7.png)
 # BambuStudio
@@ -14,7 +14,7 @@ under a local native build for the combined delivery; the [audit register](docs/
 records historical runtime and layout evidence. No test suite was deliberately launched, the inherited type stage failed, and screenshots are not produced in this pass;
 implementation is not a claim of verified physical-printer behavior.
 Current compiler and startup evidence is summarized in the [continuation record](CLOSEOUT_PROMPT.md).
-The earlier configure blockers are superseded. Production catalogue and documentation bundling completed; native GUI compilation is running. Packaging and release proof remain pending. The inherited DeviceWeb type stage attempted once and failed before bundling; no passing type-check result is claimed.
+The earlier configure blockers are superseded. Current build and package evidence is recorded against exact source revisions in the verification report. The inherited DeviceWeb type stage attempted once and failed before bundling during the older delivery pass; no passing type-check result is claimed.
 Earlier managed-check results apply only to their recorded source revisions. The combined source includes the reconciled continuation lanes and bounded repairs listed in the current handoff.
 
 Bambu Studio is a cutting-edge, feature-rich slicing software.  
