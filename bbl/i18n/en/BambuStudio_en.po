@@ -28490,3 +28490,7 @@ msgstr ""
 
 msgid "More workspaces"
 msgstr ""
+
+#: src/slic3r/GUI/Widgets/SuperConfirmGate.cpp
+msgid "There is not enough space to show all confirmation controls. Review the details, then close this window and use a larger display area."
+msgstr "There is not enough space to show all confirmation controls. Review the details, then close this window and use a larger display area."

@@ -39349,3 +39349,9 @@ msgstr "工作區導覽"
 #. review-status: agent-drafted
 msgid "More workspaces"
 msgstr "更多工作區"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+#: src/slic3r/GUI/Widgets/SuperConfirmGate.cpp
+msgid "There is not enough space to show all confirmation controls. Review the details, then close this window and use a larger display area."
+msgstr "畫面空間不足，未能顯示所有確認控制項。請先查看詳細資料，再關閉此視窗並使用較大的顯示範圍。"
