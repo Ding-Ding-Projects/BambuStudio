@@ -3046,3 +3046,22 @@ unsupported, separate child painters prevent parent-only composition, and an
 opaque or translucent veil is not accepted as a content transition. Canvas
 hover/filter and BusyInfo responsiveness are receiving bounded source review.
 No local product execution, main integration, archive or deletion occurred.
+
+## Native configure diagnostics, 2026-10-06
+
+The exact root build at dcadb944e8c8a796b7ec37dcb6904f2c62a27c84 ended with
+exit 1 at 2026-10-06T08:15:46Z during application configuration. wx patch,
+build, install and completion succeeded earlier in this run. The transcript
+contains "Configuring incomplete, errors occurred!" but no CMake Error text.
+The application's CMakeConfigureLog.yaml records successful package discovery,
+including assimp, and does not establish the terminal configure cause. Cache
+NOTFOUND entries alone are not evidence of a required-package failure.
+
+The isolated producer now concurrently drains both native streams into the
+transcript while preserving the exact process exit code and the caller's
+PowerShell error preference. The former direct-native fixture fails its stderr
+transcript assertion. The replacement passes 12 diagnostics assertions; existing
+worker-budget and application cache fixtures pass 21 and 14 assertions.
+These are fixture checks, not a production retry or a successful application
+build. The next owner must review the change and retry the exact root entrypoint
+to obtain the missing diagnostic before deciding any application repair.

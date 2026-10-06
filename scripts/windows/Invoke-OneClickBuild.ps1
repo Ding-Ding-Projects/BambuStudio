@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     Bootstrap, compile, and package Bambu Studio for Windows with one command.
 .DESCRIPTION
@@ -355,6 +355,52 @@ function Initialize-LocalToolchain {
     return 'BuildTools'
 }
 
+function Invoke-LoggedNativeCommand {
+    param(
+        [Parameter(Mandatory)][string] $FilePath,
+        [Parameter(Mandatory)][AllowEmptyCollection()][AllowEmptyString()][string[]] $Arguments
+    )
+    # Drain both pipes concurrently on the calling thread. PowerShell 5.1 treats
+    # redirected native stderr as ErrorRecord objects, which can terminate a
+    # pipeline under Stop before the actual process result is available.
+    $info = New-Object System.Diagnostics.ProcessStartInfo
+    $info.FileName = $FilePath
+    $info.UseShellExecute = $false
+    $info.CreateNoWindow = $true
+    $info.RedirectStandardOutput = $true
+    $info.RedirectStandardError = $true
+    $info.WorkingDirectory = (Get-Location).ProviderPath
+    $info.Arguments = (($Arguments | ForEach-Object {
+        $value = [regex]::Replace($_, '(\\*)"', '$1$1\"')
+        $value = [regex]::Replace($value, '(\\+)$', '$1$1')
+        '"' + $value + '"'
+    }) -join ' ')
+    $process = New-Object System.Diagnostics.Process
+    $process.StartInfo = $info
+    try {
+        if (-not $process.Start()) { throw "Could not start '$FilePath'." }
+        $reads = @($process.StandardOutput.ReadLineAsync(), $process.StandardError.ReadLineAsync())
+        $streams = @($process.StandardOutput, $process.StandardError)
+        while ($null -ne $reads[0] -or $null -ne $reads[1]) {
+            $progress = $false
+            for ($index = 0; $index -lt 2; $index++) {
+                if ($null -ne $reads[$index] -and $reads[$index].IsCompleted) {
+                    $line = $reads[$index].GetAwaiter().GetResult()
+                    if ($null -eq $line) { $reads[$index] = $null }
+                    else {
+                        Write-Host $line
+                        $reads[$index] = $streams[$index].ReadLineAsync()
+                    }
+                    $progress = $true
+                }
+            }
+            if (-not $progress) { Start-Sleep -Milliseconds 10 }
+        }
+        $process.WaitForExit()
+        $global:LASTEXITCODE = $process.ExitCode
+    } finally { $process.Dispose() }
+}
+
 function Invoke-RepositoryCommand {
     param(
         [Parameter(Mandatory)][string] $Label,
@@ -649,10 +695,7 @@ function Invoke-DependencyBuild {
     New-Item -ItemType Directory -Path $Destination -Force | Out-Null
     $jobs = Get-BuildParallelism
     Invoke-RepositoryCommand "Configuring dependencies ($($Toolchain.Generator))..." {
-        & $Toolchain.CMake -S (Join-Path $script:RepositoryRoot 'deps') -B $buildDirectory `
-            -G $Toolchain.Generator -A x64 `
-            "-DCMAKE_GENERATOR_INSTANCE=$($Toolchain.GeneratorInstance)" `
-            "-DDESTDIR=$Destination" "-DNPROC=$jobs" -DCMAKE_BUILD_TYPE=Release -DDEP_DEBUG=OFF
+        Invoke-LoggedNativeCommand -FilePath $Toolchain.CMake -Arguments @('-S', (Join-Path $script:RepositoryRoot 'deps'), '-B', $buildDirectory, '-G', $Toolchain.Generator, '-A', 'x64', "-DCMAKE_GENERATOR_INSTANCE=$($Toolchain.GeneratorInstance)", "-DDESTDIR=$Destination", "-DNPROC=$jobs", '-DCMAKE_BUILD_TYPE=Release', '-DDEP_DEBUG=OFF')
     }
     # Nested MSBuild owns the worker budget. Serializing external projects
     # prevents their individual budgets from multiplying. OCCT enables bare
@@ -663,7 +706,7 @@ function Invoke-DependencyBuild {
     try {
         [Environment]::SetEnvironmentVariable('_CL_', $boundedCompilerOptions, 'Process')
         Invoke-RepositoryCommand "Building dependencies (one project, at most $jobs workers; compiler /MP1)..." {
-            & $Toolchain.CMake --build $buildDirectory --config Release --parallel 1
+            Invoke-LoggedNativeCommand -FilePath $Toolchain.CMake -Arguments @('--build', $buildDirectory, '--config', 'Release', '--parallel', 1)
         }
     } finally {
         [Environment]::SetEnvironmentVariable('_CL_', $originalCompilerOptions, 'Process')
@@ -794,16 +837,7 @@ function Invoke-ApplicationBuild {
         }
         Preserve-ApplicationConfiguration -BuildDirectory $buildDirectory
         Invoke-RepositoryCommand "Configuring Bambu Studio ($($Toolchain.Generator))..." {
-            & $Toolchain.CMake -S $script:RepositoryRoot -B $buildDirectory `
-                -G $Toolchain.Generator -A x64 `
-                "-DCMAKE_GENERATOR_INSTANCE=$($Toolchain.GeneratorInstance)" `
-                -DSLIC3R_MSVC_PDB=OFF -DBBL_RELEASE_TO_PUBLIC=1 -DBBL_INTERNAL_TESTING=0 `
-                -DSLIC3R_BUILD_TESTS=OFF `
-                "-DCMAKE_PREFIX_PATH=$prefixPath" "-DCMAKE_INSTALL_PREFIX=$InstallPrefix" `
-                "-DBAMBU_APPLICATION_CACHE_ID:STRING=$cacheIdentity" `
-                -DCMAKE_CONFIGURATION_TYPES=Release -DCMAKE_BUILD_TYPE=Release `
-                "-DWIN10SDK_PATH=$($Toolchain.SdkIncludePath)" `
-                "-DPython3_EXECUTABLE=$python"
+            Invoke-LoggedNativeCommand -FilePath $Toolchain.CMake -Arguments @('-S', $script:RepositoryRoot, '-B', $buildDirectory, '-G', $Toolchain.Generator, '-A', 'x64', "-DCMAKE_GENERATOR_INSTANCE=$($Toolchain.GeneratorInstance)", '-DSLIC3R_MSVC_PDB=OFF', '-DBBL_RELEASE_TO_PUBLIC=1', '-DBBL_INTERNAL_TESTING=0', '-DSLIC3R_BUILD_TESTS=OFF', "-DCMAKE_PREFIX_PATH=$prefixPath", "-DCMAKE_INSTALL_PREFIX=$InstallPrefix", "-DBAMBU_APPLICATION_CACHE_ID:STRING=$cacheIdentity", '-DCMAKE_CONFIGURATION_TYPES=Release', '-DCMAKE_BUILD_TYPE=Release', "-DWIN10SDK_PATH=$($Toolchain.SdkIncludePath)", "-DPython3_EXECUTABLE=$python")
         }
     } else {
         Write-BuildLog "Reusing the configured build tree at $buildDirectory (set BAMBU_RECONFIGURE=1 to force a configure; note it recompiles everything)."
@@ -813,10 +847,10 @@ function Invoke-ApplicationBuild {
     try {
         [Environment]::SetEnvironmentVariable('_CL_', $boundedCompilerOptions, 'Process')
         Invoke-RepositoryCommand 'Building the DeviceWeb page...' {
-            & $Toolchain.CMake --build $buildDirectory --target device_page_build --config Release --parallel $jobs
+            Invoke-LoggedNativeCommand -FilePath $Toolchain.CMake -Arguments @('--build', $buildDirectory, '--target', 'device_page_build', '--config', 'Release', '--parallel', $jobs)
         }
         Invoke-RepositoryCommand "Building and installing Bambu Studio (parallel $jobs; compiler /MP1)..." {
-            & $Toolchain.CMake --build $buildDirectory --target install --config Release --parallel $jobs
+            Invoke-LoggedNativeCommand -FilePath $Toolchain.CMake -Arguments @('--build', $buildDirectory, '--target', 'install', '--config', 'Release', '--parallel', $jobs)
         }
     } finally {
         [Environment]::SetEnvironmentVariable('_CL_', $originalCompilerOptions, 'Process')
@@ -904,8 +938,7 @@ function Invoke-OneClickBuild {
         # install step so a partially staged payload from an interrupted run is
         # brought back into a complete state instead of being deleted blindly.
         Invoke-RepositoryCommand 'Staging the Release payload...' {
-            & $toolchain.CMake --install (Join-Path $script:RepositoryRoot 'build') `
-                --config Release --prefix $payloadDirectory
+            Invoke-LoggedNativeCommand -FilePath $toolchain.CMake -Arguments @('--install', (Join-Path $script:RepositoryRoot 'build'), '--config', 'Release', '--prefix', $payloadDirectory)
         }
         $application = Join-Path $payloadDirectory 'bambu-studio.exe'
         if (-not (Test-Path -LiteralPath $application -PathType Leaf)) {
@@ -919,14 +952,10 @@ function Invoke-OneClickBuild {
         $sevenZip = Get-SevenZipPath
         Add-MesaFallback -PayloadDirectory $payloadDirectory -SevenZip $sevenZip
         Invoke-RepositoryCommand 'Staging verified Model Creator renderers...' {
-            & powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass `
-                -File (Join-Path $script:RepositoryRoot 'scripts\windows\Stage-ModelCreatorRenderers.ps1') `
-                -PayloadDirectory $payloadDirectory
+            Invoke-LoggedNativeCommand -FilePath 'powershell.exe' -Arguments @('-NoLogo', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', (Join-Path $script:RepositoryRoot 'scripts\windows\Stage-ModelCreatorRenderers.ps1'), '-PayloadDirectory', $payloadDirectory)
         }
         Invoke-RepositoryCommand 'Staging the automation companion...' {
-            & powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass `
-                -File (Join-Path $script:RepositoryRoot 'scripts\windows\Stage-Automation.ps1') `
-                -PayloadDirectory $payloadDirectory
+            Invoke-LoggedNativeCommand -FilePath 'powershell.exe' -Arguments @('-NoLogo', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', (Join-Path $script:RepositoryRoot 'scripts\windows\Stage-Automation.ps1'), '-PayloadDirectory', $payloadDirectory)
         }
 
         if ($BuildOnly) {
@@ -958,11 +987,7 @@ function Invoke-OneClickBuild {
             -Commit $sourceCommit -Repository ($sourceRepo -replace '^https://github.com/|\.git$', '')
         Write-BuildLog 'Building the unsigned Squirrel.Windows release...'
         Assert-PinnedBuildSource -SourceCommit $sourceCommit
-        & powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass `
-            -File (Join-Path $script:RepositoryRoot 'scripts\windows\Invoke-SquirrelPackage.ps1') `
-            -PayloadDirectory $payloadDirectory -OutputDirectory $outputDirectory `
-            -ProductVersion $productVersion -SourceCommit $sourceCommit `
-            -Repository $sourceRepo -ReleaseNumber $releaseNumber -PreviousPackageVersion $previousPackageVersion -IconPath (Join-Path $script:RepositoryRoot 'resources\images\BambuStudio.ico')
+        Invoke-LoggedNativeCommand -FilePath 'powershell.exe' -Arguments @('-NoLogo', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', (Join-Path $script:RepositoryRoot 'scripts\windows\Invoke-SquirrelPackage.ps1'), '-PayloadDirectory', $payloadDirectory, '-OutputDirectory', $outputDirectory, '-ProductVersion', $productVersion, '-SourceCommit', $sourceCommit, '-Repository', $sourceRepo, '-ReleaseNumber', $releaseNumber, '-PreviousPackageVersion', $previousPackageVersion, '-IconPath', (Join-Path $script:RepositoryRoot 'resources\images\BambuStudio.ico'))
         Assert-LastExitCode 'Building the Squirrel.Windows release'
         Assert-PinnedBuildSource -SourceCommit $sourceCommit
         if (-not (Test-Path -LiteralPath $installer -PathType Leaf)) {

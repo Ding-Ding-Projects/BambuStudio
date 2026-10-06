@@ -766,3 +766,6 @@ truth; the counts here are a snapshot.
 - [x] Push the final updated `main` at `7281bd15da7cda27e8fff73bab253521a6027954` and verify the remote ref.
 
 </details>
+
+- [x] Capture both native producer streams concurrently with exact exit propagation, verified by 12 focused diagnostics assertions.
+- [ ] Retry the exact root build after review and establish the application configure cause from retained stderr; the 2026-10-06T08:15:46Z cause remains unproved.
