@@ -55,3 +55,11 @@ This is source and calculation evidence only. The application was not built or l
 ## Reversal
 
 This unit can be reverted as a separate appearance/layout commit. It introduces no settings migration or external caller API. Reverting it restores the earlier field geometry, preset spacing and choice paint while retaining navigation, workflow pages and printer behavior from earlier commits. Reverting unrelated navigation or workflow commits is not required. Subsequent caller changes must be reviewed before reversal if they begin relying on these measured minima.
+
+## Preset spacer compiler repair
+
+The native build reported C2039 because wxSizerItem has no SetSpacer member. applyPresetHeaderAnatomy now uses the installed wxSizerItem::SetMinSize(int, int) API. The real header writes m_minSize without replacing the item or its owned spacer; the inspected wx implementation retains that minimum in CalcMin and applies the allocated dimensions to the spacer during SetDimension. Existing parent-sizer ownership, DIP-derived padding, height 1 and density/DPI refresh calls are unchanged.
+
+In an initialized MSVC developer environment, run node tests/native_shared_controls/preset_spacer_compile.test.mjs --wx-root <installed-wx-prefix>. The check extracts the production spacer statement and compiles it against the actual installed wx/sizer.h and matching setup header. With --source-revision c1149eab941cb179f3333f994111899281627ffb --expect-missing-api it reproduces C2039 for SetSpacer; the corrected statement compiles successfully. No substitute wx class or compatibility method is used. The existing focused field/preset density-DPI lifecycle source check also passes.
+
+This verifies the repaired API call, not the full Tab.cpp translation unit, linked application, runtime spacer layout or rendered interface. No full build or application launch was performed by this repair lane.

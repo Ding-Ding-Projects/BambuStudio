@@ -1,6 +1,6 @@
 ---
 translation-of: studio-atlas-fields-and-presets.md
-source-sha256: 3de2216d76525419f48e95bce2aa8ae185b292d13d365a75fd71c185f79f2200
+source-sha256: 6c8dc6a4e1f1eabbfe110bca4c7609f806983d306b6af99a25c8d5a43fb62e20
 review-status: agent-drafted
 ---
 
@@ -61,3 +61,11 @@ cl /nologo /std:c++17 /EHsc /W4 /WX /I"%TEMP%/BambuStudio-atlas-field-layout" te
 ## 還原
 
 可獨立還原外觀／排版提交，冇設定遷移或外部 API。恢復舊欄位幾何、預設間距同選擇繪畫時，保留較早導覽、工作流及打印行為。唔需要還原其他導覽提交；若之後呼叫者依賴新最小值，還原前要另外審查。
+
+## 預設標頭間隔編譯修正
+
+原生建置報告 C2039，原因係 wxSizerItem 冇 SetSpacer 成員。applyPresetHeaderAnatomy 而家改用已安裝 wx 提供嘅 SetMinSize(int, int)。實際標頭只寫入 m_minSize，唔會取代項目或佢擁有嘅間隔；已檢視嘅 wx 實作喺 CalcMin 保留呢個最小尺寸，喺 SetDimension 將排版尺寸套用到原有間隔。父 sizer 擁有權、由 DIP 計算嘅內距、高度 1，同密度／DPI 更新呼叫都不變。
+
+喺已初始化嘅 MSVC 開發環境執行 node tests/native_shared_controls/preset_spacer_compile.test.mjs --wx-root <installed-wx-prefix>。檢查會抽取實際產品間隔陳述式，對住真正安裝嘅 wx/sizer.h 同配套設定標頭編譯。加上 --source-revision c1149eab941cb179f3333f994111899281627ffb --expect-missing-api 可重現 SetSpacer 嘅 C2039；修正後嘅陳述式編譯成功。冇用替代 wx 類別或假兼容方法。現有針對欄位／預設密度及 DPI 生命週期嘅源碼檢查亦通過。
+
+呢個結果只驗證修正後嘅 API 呼叫，唔代表完整 Tab.cpp 編譯單元、已連結應用程式、執行時間隔排版或實際介面已驗證。呢個修正工作冇做完整建置或啟動應用程式。
