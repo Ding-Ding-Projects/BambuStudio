@@ -37678,19 +37678,19 @@ msgid "Next notifications"
 msgstr "下一批通知"
 
 #: src/slic3r/GUI/Preferences.cpp
-#. reviewed-category: settings
+#. reviewed-category: preferences
 #. review-status: agent-drafted
 msgid "Interface motion"
 msgstr "介面動畫"
 
 #: src/slic3r/GUI/Preferences.cpp
-#. reviewed-category: settings
+#. reviewed-category: preferences
 #. review-status: agent-drafted
 msgid "Reduce motion"
 msgstr "減少動畫"
 
 #: src/slic3r/GUI/Preferences.cpp
-#. reviewed-category: accessibility
+#. reviewed-category: preferences
 #. review-status: agent-drafted
 msgid "Reduce motion settles supported transitions immediately. System follows your operating system preference."
 msgstr "減少動畫會即時完成已支援嘅過場效果。系統選項會跟隨作業系統嘅偏好設定。"
@@ -37753,7 +37753,7 @@ msgstr "%zu 篇文章符合搜尋，共 %zu 篇"
 #. reviewed-category: navigation
 #. review-status: agent-drafted
 msgid "%zu articles, bundled offline"
-msgstr "%zu 篇已打包的離線文章"
+msgstr "%zu 篇已打包嘅離線文章"
 
 #: src/slic3r/GUI/DocsBrowserDialog.cpp
 #. reviewed-category: navigation
@@ -37771,7 +37771,7 @@ msgstr "離線文件瀏覽器（F1）"
 #. reviewed-category: connection-offline
 #. review-status: agent-drafted
 msgid "The embedded web view is not available on this PC, so articles cannot be rendered here. The same documentation ships in the docs folder of the source repository."
-msgstr "這部電腦無法使用內嵌網頁檢視，因此未能在這裏顯示文章。相同文件亦可在原始碼專案的 docs 資料夾找到。"
+msgstr "呢部電腦用唔到內嵌網頁檢視，所以未能喺呢度顯示文章。相同文件亦隨原始碼儲存庫提供，可以喺 docs 資料夾搵到。"
 
 #. reviewed-category: preferences
 #. review-status: agent-drafted
@@ -39354,4 +39354,404 @@ msgstr "更多工作區"
 #. review-status: agent-drafted
 #: src/slic3r/GUI/Widgets/SuperConfirmGate.cpp
 msgid "There is not enough space to show all confirmation controls. Review the details, then close this window and use a larger display area."
-msgstr "畫面空間不足，未能顯示所有確認控制項。請先查看詳細資料，再關閉此視窗並使用較大的顯示範圍。"
+msgstr "畫面空間唔夠，未能顯示所有確認控制項。請先睇詳細資料，再關閉呢個視窗，改用較大嘅顯示範圍。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Each object is removed from its plate together with all of its parts and instances. This is only recoverable through Undo."
+msgstr "每個物件都會連同所有零件同實例一齊由打印板移除。只有「復原」先可以還原。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Start liveview automatically"
+msgstr "自動啟動即時畫面"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Keep liveview active"
+msgstr "保持即時畫面運作"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Retry interrupted liveview"
+msgstr "重試中斷咗嘅即時畫面"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Dual-extruder slicing tutorial"
+msgstr "雙擠出機切片教學"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Open the slicing tutorial video"
+msgstr "開啟切片教學影片"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Dual-extruder TPU tutorial"
+msgstr "雙擠出機 TPU 教學"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Open the TPU printing tutorial video"
+msgstr "開啟 TPU 打印教學影片"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Connection interrupted. Retrying in %d seconds."
+msgstr "連線中斷。%d 秒後重試。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Automatic simplification skipped this saved project. Original geometry and project metadata were preserved."
+msgstr "自動簡化已略過呢個已儲存項目。原有幾何形狀同項目中繼資料已保留。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Finish or cancel the current operation before importing models."
+msgstr "匯入模型前，請先完成或取消目前操作。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Reading model files in the background..."
+msgstr "正在背景讀取模型檔案..."
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Simplifying large imported models..."
+msgstr "正在簡化大型匯入模型..."
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Preparing model geometry..."
+msgstr "正在準備模型幾何形狀..."
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Restore original geometry"
+msgstr "還原原有幾何形狀"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Automatic simplification skipped meshes with painting, textures or protected metadata. Original geometry was preserved."
+msgstr "自動簡化已略過有塗色、紋理或受保護中繼資料嘅網格。原有幾何形狀已保留。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Restore original imported geometry"
+msgstr "還原匯入時嘅原有幾何形狀"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Original imported geometry restored. Undo can restore the simplified meshes."
+msgstr "已還原匯入時嘅原有幾何形狀。「復原」可以還原簡化後嘅網格。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "No unchanged simplified imports are available to restore."
+msgstr "冇未經改動嘅簡化匯入模型可以還原。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Settings draft"
+msgstr "設定草稿"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Model import"
+msgstr "模型匯入"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Automatically simplify large imported models"
+msgstr "自動簡化大型匯入模型"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Simplify meshes with at least 1,000,000 triangles before adding them to the scene. Source files are unchanged. Saved projects and meshes with painting or protected metadata keep their original geometry."
+msgstr "喺模型加入場景前，簡化至少有 1,000,000 個三角形嘅網格。來源檔案唔會改動。已儲存項目同有塗色或受保護中繼資料嘅網格會保留原有幾何形狀。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Import simplification detail"
+msgstr "匯入簡化細節"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Uses the same detail levels as the manual Simplify tool. Extra high is the default."
+msgstr "採用同手動「簡化」工具一樣嘅細節等級。預設為「極高」。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Keep the camera streaming while idle, on other tabs, or minimized. This does not enable recording."
+msgstr "閒置、切換到其他分頁或最小化時，仍然保持相機串流。呢個選項唔會啟用錄影。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The preset files are removed from the user preset folder and cannot be recovered except from a config-profile snapshot. Deleting a custom printer also deletes the filament and process presets attached to it."
+msgstr "預設檔案會由用戶預設資料夾移除，只有設定檔快照先可以還原。刪除自訂打印機亦會刪除附屬嘅墨水同工藝預設。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Restore unchanged meshes reduced by automatic model import simplification"
+msgstr "還原經模型匯入自動簡化縮減、而且未再改動嘅網格"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Local history"
+msgstr "本機歷史記錄"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Browse project, settings, draft and printer history saved on this device. No history is uploaded."
+msgstr "瀏覽儲存喺呢部裝置嘅項目、設定、草稿同打印機歷史記錄。歷史記錄唔會上傳。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "History views"
+msgstr "歷史記錄檢視"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Table"
+msgstr "表格"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Git graph"
+msgstr "Git 歷史圖"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Compare"
+msgstr "比較"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Past searches"
+msgstr "過往搜尋"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "All categories"
+msgstr "所有分類"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Draft"
+msgstr "草稿"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "All statuses"
+msgstr "所有狀態"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Resolved"
+msgstr "已解決"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Device identifier"
+msgstr "裝置識別碼"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Current project"
+msgstr "目前項目"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "From YYYY-MM-DD"
+msgstr "由 YYYY-MM-DD"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Through YYYY-MM-DD"
+msgstr "至 YYYY-MM-DD"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Compare selected"
+msgstr "比較所選項目"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Pin / unpin search"
+msgstr "固定／取消固定搜尋"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Run selected search"
+msgstr "執行所選搜尋"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Delete search"
+msgstr "刪除搜尋"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Clear unpinned searches"
+msgstr "清除未固定嘅搜尋"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Loading local history..."
+msgstr "正在載入本機歷史記錄..."
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Printer incident records cannot replace editor settings."
+msgstr "打印機事件記錄唔可以取代編輯器設定。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Could not compare these versions."
+msgstr "未能比較呢啲版本。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Root commit"
+msgstr "根提交"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "No versions in the selected store."
+msgstr "所選儲存區冇版本。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Pinned"
+msgstr "已固定"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Search and filters"
+msgstr "搜尋同篩選"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Category / description"
+msgstr "分類／描述"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Submitted"
+msgstr "已提交"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Size / state"
+msgstr "大小／狀態"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "This search was not saved. Check the query for sensitive data or check local storage."
+msgstr "呢次搜尋未有儲存。請檢查查詢有冇敏感資料，或者檢查本機儲存空間。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Recent"
+msgstr "最近"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "The last 100 submitted searches are retained. Pinned searches remain until explicitly deleted."
+msgstr "保留最近 100 次已提交搜尋。已固定搜尋會保留，直到你明確刪除。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Could not save this pinned search."
+msgstr "未能儲存呢個已固定搜尋。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Could not delete the saved search."
+msgstr "未能刪除已儲存搜尋。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Could not clear submitted searches."
+msgstr "未能清除已提交搜尋。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Comparison base selected. Select another entry and press Compare selected."
+msgstr "已選取比較基準。請選取另一項，再按「比較所選項目」。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "History changed. Select a comparison base again."
+msgstr "歷史記錄已改變。請重新選取比較基準。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Choose two entries from the same history store or printer."
+msgstr "請由同一歷史記錄儲存區或打印機選取兩項。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Could not read the selected versions for comparison."
+msgstr "未能讀取所選版本作比較。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Unsupported settings snapshot."
+msgstr "唔支援呢種設定快照。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Zoom out"
+msgstr "縮小"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Zoom out (-)"
+msgstr "縮小 (-)"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Zoom in"
+msgstr "放大"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Zoom in (+)"
+msgstr "放大 (+)"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Reset camera view"
+msgstr "重設相機視角"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Reset camera view (0)"
+msgstr "重設相機視角 (0)"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Camera zoom percentage"
+msgstr "相機縮放百分比"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Choose camera zoom percentage"
+msgstr "選擇相機縮放百分比"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Start (local time)"
+msgstr "開始（本地時間）"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Model import: simplify at 1,000,000 triangles before scene attachment"
+msgstr "模型匯入：網格達 1,000,000 個三角形時，先簡化再加入場景"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Extra high, High, Medium, Low or Extra low detail for automatic model import simplification"
+msgstr "模型匯入自動簡化嘅細節：極高、高、中、低或極低"
