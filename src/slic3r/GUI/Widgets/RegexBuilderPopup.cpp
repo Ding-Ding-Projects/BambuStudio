@@ -76,6 +76,19 @@ wxString clipForList(const wxString &text)
     return out;
 }
 
+// Content updates can change wrapped diagnostic height without a popup resize.
+void refreshDiagnosticLayout(wxScrolledWindow *scroll)
+{
+    if (!scroll || !scroll->GetSizer())
+        return;
+    const wxPoint view = scroll->GetViewStart();
+    for (int pass = 0; pass < 2; ++pass) {
+        scroll->Layout();
+        scroll->FitInside();
+    }
+    scroll->Scroll(view.x, view.y);
+}
+
 } // namespace
 
 // --- ChipGroup ---------------------------------------------------------------
@@ -258,14 +271,13 @@ void RegexBuilderPopup::build()
     pat_row->Add(m_copy, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(6));
     sizer->Add(pat_row, 0, wxLEFT | wxRIGHT | wxTOP, pad);
 
-    // Live validity line. Single-line (short friendly messages); the full text
-    // doubles as its own tooltip in case of ellipsization at narrow scale.
-    m_status = new Label(m_scroll, Label::Body_12, _L("Empty pattern matches everything"));
+    // Keep diagnostics readable independently of the editable pattern.
+    m_status = new Label(m_scroll, Label::Body_13, _L("Empty pattern matches everything"), LB_AUTO_WRAP | wxST_NO_AUTORESIZE);
     m_status->SetBackgroundColour(surface);
     m_status->SetForegroundColour(on_var);
-    // Full content width up front so longer validity messages never clip.
-    m_status->SetMinSize(wxSize(contentW, -1));
-    sizer->Add(m_status, 0, wxLEFT | wxRIGHT | wxTOP, pad);
+    m_status->SetMinSize(wxSize(0, -1));
+    m_status->Wrap(contentW);
+    sizer->Add(m_status, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, pad);
 
     // --- Flags ---------------------------------------------------------------
     sectionLabel(_L("Flags"));
@@ -416,9 +428,9 @@ void RegexBuilderPopup::build()
     // UnsavedChangesDialog). Multiline hints are unsupported on MSW, hence the
     // label above instead of a hint.
     m_sample = new TextAreaEditor(m_test_panel, wxID_ANY, wxEmptyString, wxDefaultPosition,
-                              wxSize(contentW, FromDIP(84)),
+                              wxSize(0, FromDIP(96)),
                               wxTE_MULTILINE | wxTE_RICH2 | wxBORDER_NONE);
-    m_sample->SetFont(Label::Body_13);
+    m_sample->SetFont(Label::Mono_13);
     m_sample->SetBackgroundColour(field_bg);
     m_sample->SetForegroundColour(on);
     m_sample->SetMaxLength(kMaxSampleLen);
@@ -427,7 +439,7 @@ void RegexBuilderPopup::build()
         evaluate();
         e.Skip();
     });
-    test_sizer->Add(m_sample, 0, wxTOP, gap / 2);
+    test_sizer->Add(m_sample, 0, wxEXPAND | wxTOP, gap / 2);
 
     auto *matches_lbl = new Label(m_test_panel, Label::Head_14, _L("Matches"));
     matches_lbl->SetBackgroundColour(surface);
@@ -435,16 +447,16 @@ void RegexBuilderPopup::build()
     test_sizer->Add(matches_lbl, 0, wxTOP, gap);
 
     m_results = new TextAreaEditor(m_test_panel, wxID_ANY, wxEmptyString, wxDefaultPosition,
-                               wxSize(contentW, FromDIP(110)),
+                               wxSize(0, FromDIP(144)),
                                wxTE_MULTILINE | wxTE_READONLY | wxBORDER_NONE);
-    m_results->SetFont(Label::Mono_11);
+    m_results->SetFont(Label::Mono_13);
     m_results->SetBackgroundColour(field_bg);
     m_results->SetForegroundColour(on);
     m_results->SetName(_L("Match results"));
-    test_sizer->Add(m_results, 0, wxTOP, gap / 2);
+    test_sizer->Add(m_results, 0, wxEXPAND | wxTOP, gap / 2);
 
     m_test_panel->SetSizer(test_sizer);
-    sizer->Add(m_test_panel, 0, wxLEFT | wxRIGHT, pad);
+    sizer->Add(m_test_panel, 0, wxEXPAND | wxLEFT | wxRIGHT, pad);
     sizer->Show(m_test_panel, false, true);
 
     sizer->AddSpacer(pad);
@@ -539,10 +551,11 @@ void RegexBuilderPopup::buildReference()
     oc_btn->SetColorScheme(m_scheme);
     oc_btn->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { openCodeHelp(); });
     sizer->Add(oc_btn, 0, wxLEFT | wxRIGHT | wxTOP, pad - FromDIP(4));
-    m_ref_status = new Label(m_ref_scroll, Label::Body_13, wxEmptyString);
+    m_ref_status = new Label(m_ref_scroll, Label::Body_13, wxEmptyString, LB_AUTO_WRAP | wxST_NO_AUTORESIZE);
+    m_ref_status->SetMinSize(wxSize(0, -1));
     m_ref_status->SetBackgroundColour(surface);
     m_ref_status->SetForegroundColour(on_var);
-    sizer->Add(m_ref_status, 0, wxLEFT | wxRIGHT | wxTOP, pad - FromDIP(8));
+    sizer->Add(m_ref_status, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, pad - FromDIP(8));
 
     sizer->AddSpacer(pad);
     m_ref_scroll->SetSizer(sizer);
@@ -590,6 +603,7 @@ void RegexBuilderPopup::openCodeHelp()
         m_ref_status->SetLabel(_L("Prompt copied. OpenCode was not found on PATH - paste the prompt into your assistant."));
     }
     m_ref_scroll->Layout();
+    refreshDiagnosticLayout(m_ref_scroll);
 }
 
 void RegexBuilderPopup::addSection(wxSizer *sizer, const wxString &title,
@@ -778,6 +792,7 @@ void RegexBuilderPopup::evaluate()
         m_status->SetLabel(text);
         m_status->SetToolTip(text);
         m_status->Refresh();
+        refreshDiagnosticLayout(m_scroll);
     };
 
     // Reset any previous match highlighting to the field's base style.

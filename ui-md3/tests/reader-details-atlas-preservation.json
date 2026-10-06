@@ -1,0 +1,51 @@
+{
+  "base": "b5c42ce78a8e021509bdc504e5a40ab62d9cd8e4",
+  "files": {
+    "src/slic3r/GUI/Widgets/RegexBuilderPopup.cpp": {
+      "methods": {
+        "void RegexBuilderPopup::Dismiss(": "9f500c5007bddc6b71b3a1871900324436ff4f3a1bdfbbf6fa24856f3df94895",
+        "void RegexBuilderPopup::OnDismiss(": "3a62046bae74c45dc7e005eef01c634a04611d39d0eee19c8c2829a814baee70",
+        "void RegexBuilderPopup::switchTab(": "1e4ea3bf89467639beb4b3626c3e5478c4ed64a777c1c58f951f756f1c92a51f",
+        "void RegexBuilderPopup::openCodeHelp(": "2e404340a479ba77c0da4824b0b3195384ed1b25fcfbb6901721b9645c844890",
+        "void RegexBuilderPopup::addSection(": "6b6c615635ed6acaf6d558b086bdf8d4cb9c9f2184c4542c12ff3edf888b4f2b",
+        "void RegexBuilderPopup::Configure(": "e3e3d2d35597f7570e15a64d9c9f5888d3b62aa22efadc60b33f3c2f54582f1c",
+        "void RegexBuilderPopup::SyncPattern(": "7efa9fcdeb2186ddc0daf9a2a019569c9c00ca7e3c9302a6c5212f49a178513a",
+        "wxString RegexBuilderPopup::GetPattern(": "3e2109e01a0e1e96b2f6d2e375c2041920ee38b91a1e9633227006a3c9b258d7",
+        "void RegexBuilderPopup::PopupAndFocusPattern(": "67b90a9cd11194a4702bf07bcd14ada952e15077f5113b277826d2d8c1bf7ef5",
+        "void RegexBuilderPopup::insertChip(": "970b9602b919382fbbd0beda907db548f10fd1e59480bd2a175b521108aa6eb3",
+        "void RegexBuilderPopup::addLiteral(": "82211b4a69b076f25c2faf38295a3c210eb950c591953e2248ffc6abe30e64d2",
+        "wxString RegexBuilderPopup::escapeLiteral(": "4ba1a96698afaf1ce881998e0bc3c66f2631d5fb42cf0c38d951218d3b05e71f",
+        "void RegexBuilderPopup::copyPattern(": "a058d88cb594b31014fe73424c5b679dc7c8b97a6be56e5bdb101d3e2799f00c",
+        "void RegexBuilderPopup::toggleTest(": "27f3134e397ffbc569b0e95ebbe410cd71f5d31a12ac386db65fc80e81949cd5",
+        "void RegexBuilderPopup::onPatternEdited(": "dda755f210a044174ec05766300203ab69ddc49d7d4b1ea26314e67377545e35",
+        "void RegexBuilderPopup::evaluate(": "2339775b949d7817997804b8180d3a0970586620ab234212f7ce41020289cdf2",
+        "void RegexBuilderPopup::fitPopup(": "a835714844133e348dc5305169cf0258a7167ae80c70a837334c6ff7452aedb4"
+      },
+      "callbacks": "c77ce6896b2ecb3ee0dc7ff75e3f9803f8f567330bf398912290835c18474173"
+    },
+    "src/slic3r/GUI/Export/ExportDialog.cpp": {
+      "methods": {
+        "bool ExportDialog::run(": "52de0c4769ebf70b046f2022eabe24124367bec30a6c125eb4b78597ca2a2a5a",
+        "void ExportDialog::apply_theme(": "b61200286a73d7ec55a67f828b3a24d8d2ca129652887affc7d808406d328242",
+        "void ExportDialog::populate_formats(": "0374f3b6384df21ff8e5fa8fe40821e4d917d72cf983b0086c25e2a43f326dc9",
+        "void ExportDialog::apply_search(": "194ca93f61d9245d63bb8514389b92798dfe2807742adf77a2cb0a09624b61eb",
+        "Format ExportDialog::selected_format(": "bce913868ed1d4b6571ff664b8b6b7e8fac11fb29dd778d0bde23e51276f1d77",
+        "ArchiveFormat ExportDialog::selected_archive(": "6381e7f125045368f7ebd0bde3693cc99d57651879a64425770eb1bddb103839",
+        "ArchiveOptions ExportDialog::archive_options(": "66cab1314beb0c0058810d39c434aea9a9056777876f7995dbed7b9cbf7d72ba",
+        "wxString ExportDialog::default_file_name(": "c850077b9b1eb79ba9d8b3815d9207b0e7c081265e94a8271319595f0f765cdf",
+        "void ExportDialog::update_format_details(": "47361a32e710b7b88eb67cf88c83187c1ebe0381f4bf2c7068fa41f3bec63918",
+        "void ExportDialog::update_archive_panel(": "00554d1cfc51bbcbc97a66e2aeb1ea0b3fad5fd95a88a7dc1beb7cc9602dea08",
+        "void ExportDialog::update_hints(": "2812939eff68f735c8be3a93dcadf61c580790400359f733f0ecda96174a59a4",
+        "void ExportDialog::update_output_path_extension(": "e341d5a043b328127e59fbac3a9914642836b2fd9b54115d297251fee6f59106",
+        "void ExportDialog::update_export_enabled(": "b9746bb36deff3cf9f07ea5d7c1f5dbe4d0959eff357a9634b685eb8c501da2b",
+        "void ExportDialog::set_status(": "d61770bb21732a83360293d01c4d4f1a7b33feb02803f8227266fdad099a8fdb",
+        "void ExportDialog::on_browse(": "ec4f744958022feb0917a1be2f256130729197da73555ed37ed5e56f747a94ea",
+        "void ExportDialog::on_locate_seven_zip(": "bd19c44b3351039f47120e66d4140bc1c24459ee6376f7e7b7688eeaed640291",
+        "void ExportDialog::on_export(": "e3d9a359928ae22712599fff0677515378e508f00a0d68ebc3480097fc4c24bd",
+        "void ExportDialog::on_dpi_changed(": "8cac6f4040539523c52d9118ed40c25fb15c39cb6de6d23415967c23748feb0c",
+        "void ExportDialog::on_sys_color_changed(": "7ccccfcd03e22c0a1bcfd282889fe765249bce43cf4463443b35835627e27e26"
+      },
+      "callbacks": "94a30c3b86b2b5d303ec4b5159cb0f851230e87e66ed93a9a8598e528efc7eff"
+    }
+  }
+}
