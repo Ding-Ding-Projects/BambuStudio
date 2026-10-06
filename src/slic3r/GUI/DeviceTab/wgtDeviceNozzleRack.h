@@ -59,8 +59,6 @@ public:
 
 private:
     void CreateGui();
-    void MeasureCard();
-    void UpdateCardPresentation();
 
 private:
     std::weak_ptr<DevNozzleRack> m_nozzle_rack;
@@ -218,6 +216,8 @@ public:
 
 private:
     void CreateGui();
+    void MeasureCard();
+    void UpdateCardPresentation();
 
     void SetNozzleStatus(NOZZLE_STATUS status, const wxString& str1, const wxString& str2, const std::string& color);
 
