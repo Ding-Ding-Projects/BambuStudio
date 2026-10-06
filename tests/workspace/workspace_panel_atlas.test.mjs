@@ -9,7 +9,9 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
 const file = 'src/slic3r/GUI/WorkspacePanel.cpp';
 const baselineCommit = '3c8fe2708ba03470c1b171e2fce12fcbdfaab0fc';
 const original = execFileSync('git', ['show', `${baselineCommit}:${file}`], { cwd: root, encoding: 'utf8' }).replace(/\r\n/g, '\n');
-const current = fs.readFileSync(path.join(root, file), 'utf8').replace(/\r\n/g, '\n');
+const current = (process.env.WORKSPACE_ATLAS_SOURCE_REVISION
+  ? execFileSync('git', ['show', `${process.env.WORKSPACE_ATLAS_SOURCE_REVISION}:${file}`], { cwd: root, encoding: 'utf8' })
+  : fs.readFileSync(path.join(root, file), 'utf8')).replace(/\r\n/g, '\n');
 
 // Small lexical scanner for these source boundaries, preserving strings and comments.
 function balanced(source, start, open, close) {
@@ -54,9 +56,15 @@ function visualOnly(source) {
   }
 }
 
-test('all thirty existing workspace behavior and lifetime methods remain unchanged', () => {
+test('thirty workspace methods retain behavior with only the Overview presentation hook allowed', () => {
   assert.equal(functionalMethods.length, 30);
-  for (const name of functionalMethods) assert.equal(method(current, name), method(original, name), name);
+  for (const name of functionalMethods) {
+    const observed = method(current, name);
+    // Permit only one trailing presentation call, never a rewritten label,
+    // dirty flag, data operation or callback hidden by a broad normalization.
+    const preserved = name === 'refresh_overview' ? observed.replace(/\n    reflow\(\);(?=\n})/, '') : observed;
+    assert.equal(preserved, method(original, name), name);
+  }
 });
 test('every existing workspace event callback is retained unchanged', () => {
   const candidate = process.env.WORKSPACE_ATLAS_MUTATE_CALLBACK === '1'
@@ -89,4 +97,48 @@ test('deliberate callback and visual-data mutations are rejected', () => {
   const brokenVisual = current.replace('void WorkspacePanel::reflow()\n{', 'void WorkspacePanel::reflow()\n{\n    m_workspace.notes.clear();');
   assert.notEqual(brokenVisual, current);
   assert.throws(() => visualOnly(brokenVisual), /must not change user data/);
+});
+
+function contentLayoutProtocol(source) {
+  const overview = method(source, 'refresh_overview');
+  assert.ok(overview.indexOf('reflow();') > overview.indexOf('m_overview->SetLabel('), 'Overview content must trigger reflow without a size event');
+  const layout = method(source, 'reflow');
+  const guard = layout.indexOf('if (!m_ui_ready || m_reflowing || GetClientSize().x <= 0) return;');
+  const invalidate = layout.indexOf('overview_card->InvalidateBestSize();');
+  const cardLayout = layout.indexOf('overview_card->Layout();');
+  const extent = layout.indexOf('page->FitInside();');
+  const pageLayout = layout.indexOf('page->Layout();');
+  assert.ok(guard >= 0 && invalidate > guard && cardLayout > invalidate && extent > cardLayout && pageLayout > extent,
+    'Guard, Overview invalidation/layout and scroll extent/layout must occur in order');
+  assert.ok(layout.includes('auto *overview_card = m_overview->GetParent();'));
+  return ['content', 'invalidate-card', 'layout-card', 'fit-page', 'layout-page'];
+}
+
+test('stable-width short-long-short content follows the actual source layout protocol', () => {
+  const protocol = contentLayoutProtocol(current);
+  // Source-derived lifecycle model only: no native widget or font measurement
+  // is claimed. Width never changes and no size event is supplied.
+  const model = { width: 20, labelHeight: 1, cachedCardHeight: 1, extent: 1 };
+  const heights = [];
+  for (const text of ['Short title', 'Long workspace title '.repeat(12), 'Short title']) {
+    for (const operation of protocol) {
+      if (operation === 'content') model.labelHeight = Math.ceil(text.length / model.width);
+      if (operation === 'invalidate-card') model.cachedCardHeight = null;
+      if (operation === 'layout-card') model.cachedCardHeight = model.labelHeight;
+      if (operation === 'fit-page') model.extent = model.cachedCardHeight;
+    }
+    heights.push(model.extent);
+  }
+  assert.ok(heights[1] > heights[0]);
+  assert.equal(heights[2], heights[0]);
+  assert.equal(model.width, 20);
+  // Rename and bundle-open/refresh routes must still reach this common hook.
+  assert.ok(bindings(current).some(binding => binding.includes('m_workspace.title = utf8(title); m_dirty = true; refresh_overview();')));
+  assert.ok(method(current, 'refresh_all').includes('refresh_overview();'));
+  assert.ok(method(current, 'open_bundle').includes('refresh_all();'));
+});
+
+test('removing the content hook or Overview layout invalidates the lifecycle contract', () => {
+  assert.throws(() => contentLayoutProtocol(current.replace('    reflow();\n}\n\nvoid WorkspacePanel::refresh_files', '}\n\nvoid WorkspacePanel::refresh_files')), /trigger reflow/);
+  assert.throws(() => contentLayoutProtocol(current.replace('    overview_card->Layout();', '')), /must occur in order/);
 });

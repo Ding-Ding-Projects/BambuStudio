@@ -28,7 +28,7 @@ Size events are ignored until all five control trees have been created. Reflow a
 
 ## Preserved behavior
 
-All thirty pre-existing behavior/lifetime method bodies are unchanged from the pinned baseline, including bundle open/save, staging ownership, member IDs, selected-member handoff, history-bearing member save/recovery, checklist edits and ordering, notes refresh, calendar dates and timezone handling, reminders, snooze/dismiss/enable, and JSON/CSV/ICS exports.
+Twenty-nine pre-existing behavior/lifetime method bodies are unchanged from the pinned baseline, including bundle open/save, staging ownership, member IDs, selected-member handoff, history-bearing member save/recovery, checklist edits and ordering, notes refresh, calendar dates and timezone handling, reminders, snooze/dismiss/enable, and JSON/CSV/ICS exports. `refresh_overview` retains its exact label assignment and adds only a trailing presentation-only `reflow()` call. The focused fixture permits that one hook, not arbitrary edits to the method.
 
 Every existing event binding and callback body is retained, including notes' immediate draft update and dirty flag, checklist completion, row activation, month selection and tab selection. The file and agenda column declarations, order and selection styles are unchanged. Every visible string reuses an existing translation key. The layout unit adds no new engine, file operation, persistence route, timer or printer action.
 
@@ -40,9 +40,15 @@ Run:
 node --test tests/workspace/workspace_panel_atlas.test.mjs
 ```
 
-The six source-preservation tests compare behavior and event boundaries against the pinned baseline, verify the five page identities and existing dispatch targets/table columns, reject user-data/date/draft mutation in visual lifecycle methods, and reject new translation keys. Deliberate negative fixtures alter the notes callback and inject a draft mutation into reflow; both must be rejected.
+The eight source-preservation tests compare behavior and event boundaries against the pinned baseline, verify the five page identities and existing dispatch targets/table columns, reject user-data/date/draft mutation in visual lifecycle methods, and reject new translation keys. Deliberate negative fixtures alter the notes callback and inject a draft mutation into reflow; both must be rejected.
 
 For a real failing test run, set `WORKSPACE_ATLAS_MUTATE_CALLBACK=1` for that command only. It changes an in-memory fixture, not the source file. The callback-preservation test must fail; clearing the override restores the passing run.
+
+### Stable-width Overview content lifecycle
+
+The initial appearance unit `7ef2efed0e58ba6def38adee061349afc106f533` omitted relayout after `refresh_overview` changed wrapped text. A rename or bundle-open refresh could therefore change the text height without a size event and leave the card or scroll extent stale. The repair calls guarded reflow after the unchanged label assignment. Reflow explicitly invalidates and lays out the Overview card before recomputing each page's scroll extent and laying out that page. The existing `m_ui_ready` and `m_reflowing` boundaries remain in effect.
+
+Setting `WORKSPACE_ATLAS_SOURCE_REVISION=7ef2efed0e58ba6def38adee061349afc106f533` runs the current checks against that original source without changing the working file: 6 passed, 2 failed, exit 1, including `Overview content must trigger reflow without a size event`. Clearing the override produces 8 passed, 0 failed. The new lifecycle case follows the verified source call order through a fixed-width short-to-long-to-short content-height model, with no size event. It also verifies that Rename and open/refresh paths reach the same hook. This is a deterministic source-derived protocol model, not native widget, font or pixel evidence. Actual wrapped labels and scroll behavior remain to be checked in the built application.
 
 These checks do not establish native compilation, event-loop lifetime, keyboard traversal through the new containers, screen-reader output, text fit, actual scrolling, motion, or visual parity. No application, installer or printer was launched and no screenshot was captured for this unit. The complete normal/minimum size, language, theme, density and display-scale matrix remains pending.
 

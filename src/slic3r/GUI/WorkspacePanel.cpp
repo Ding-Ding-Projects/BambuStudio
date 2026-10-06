@@ -438,9 +438,14 @@ void WorkspacePanel::reflow()
     m_calendar_columns->SetOrientation(stacked ? wxVERTICAL : wxHORIZONTAL);
     m_calendar_month_item->SetFlag(stacked ? wxBOTTOM : wxRIGHT);
     m_calendar_month_item->SetBorder(gap);
+    // SetLabel can change wrapped height without a size event. Refresh the
+    // Overview card's cached best size before recomputing its page extent.
+    auto *overview_card = m_overview->GetParent();
+    overview_card->InvalidateBestSize();
+    overview_card->Layout();
     for (auto *page : m_pages) {
-        page->Layout();
         page->FitInside();
+        page->Layout();
     }
     m_reflowing = false;
 }
@@ -450,6 +455,7 @@ void WorkspacePanel::refresh_overview()
     m_overview->SetLabel(display(m_workspace.title) + "\n" +
         wxString::Format(_L("%zu projects, %zu checklist items, %zu planned prints"),
                          m_workspace.members.size(), m_workspace.checklist.size(), m_workspace.slots.size()));
+    reflow();
 }
 
 void WorkspacePanel::refresh_files()
