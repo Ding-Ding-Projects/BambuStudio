@@ -29,6 +29,7 @@
 #include <wx/display.h>
 #include <wx/filedlg.h>
 #include <wx/sizer.h>
+#include <wx/wrapsizer.h>
 #include <wx/variant.h>
 
 namespace Slic3r { namespace GUI {
@@ -117,9 +118,9 @@ void NotificationCenterPanel::build_ui()
     m_search->SetOnQuery([this](const wxString &) { RefreshNow(); });
     m_search->SetOnRegexToggle([this](bool) { RefreshNow(); });
     m_search->SetName("notification_center_search");
-    root->Add(m_search, 0, wxEXPAND | wxBOTTOM, FromDIP(8));
+    root->Add(m_search, 0, wxEXPAND | wxBOTTOM, FromDIP(MD3::Metrics::active().gap));
 
-    auto *chips = new wxBoxSizer(wxHORIZONTAL);
+    auto *chips = new wxWrapSizer(wxHORIZONTAL);
     const wxString chip_labels[] = {
         // TRN: Level filter chips of the notification centre.
         _L("All levels"), _L("Info"), _L("Important"), _L("Warnings"), _L("Errors")};
@@ -134,9 +135,9 @@ void NotificationCenterPanel::build_ui()
             RefreshNow();
         });
         m_level_buttons[i] = chip;
-        chips->Add(chip, 0, wxRIGHT, FromDIP(6));
+        chips->Add(chip, 0, wxRIGHT | wxBOTTOM, FromDIP(6));
     }
-    chips->AddStretchSpacer(1);
+    // Filter groups wrap without consuming the list's minimum width.
     // TRN: Toggle chip: include dismissed toasts in the notification centre list.
     m_dismissed_chip = new Button(this, _L("Show dismissed"));
     m_dismissed_chip->SetVariant(Button::Variant::Tonal);
@@ -147,11 +148,12 @@ void NotificationCenterPanel::build_ui()
         update_level_chips();
         RefreshNow();
     });
-    chips->Add(m_dismissed_chip, 0);
-    root->Add(chips, 0, wxEXPAND | wxBOTTOM, FromDIP(8));
+    chips->Add(m_dismissed_chip, 0, wxBOTTOM, FromDIP(6));
+    root->Add(chips, 0, wxEXPAND | wxBOTTOM, FromDIP(MD3::Metrics::active().gap));
 
     // --- Status line -----------------------------------------------------
-    m_status_label = new Label(this, Label::Body_13, wxEmptyString);
+    m_status_label = new Label(this, Label::Body_13, wxEmptyString, LB_AUTO_WRAP | wxST_NO_AUTORESIZE);
+    m_status_label->SetMinSize(wxSize(0, -1));
     root->Add(m_status_label, 0, wxEXPAND | wxBOTTOM, FromDIP(6));
 
     // --- List ------------------------------------------------------------
@@ -173,12 +175,14 @@ void NotificationCenterPanel::build_ui()
     root->Add(m_list, 1, wxEXPAND);
 
     // TRN: Empty state of the notification centre.
-    m_empty_label = new Label(this, Label::Body_13, _L("No notifications match. New toasts will appear here as they are shown."));
+    m_empty_label = new Label(this, Label::Body_13, _L("No notifications match. New toasts will appear here as they are shown."),
+                              LB_AUTO_WRAP | wxST_NO_AUTORESIZE);
+    m_empty_label->SetMinSize(wxSize(0, -1));
     m_empty_label->Hide();
     root->Add(m_empty_label, 0, wxEXPAND | wxTOP | wxBOTTOM, FromDIP(12));
 
     // --- Selection row ---------------------------------------------------
-    auto *selection_row = new wxBoxSizer(wxHORIZONTAL);
+    auto *selection_row = new wxWrapSizer(wxHORIZONTAL);
     m_select_page_button = new Button(this, wxEmptyString);
     m_select_page_button->SetVariant(Button::Variant::Text);
     m_select_page_button->SetButtonSize(Button::Size::Small);
@@ -208,7 +212,7 @@ void NotificationCenterPanel::build_ui()
     m_clear_button->Bind(wxEVT_BUTTON, &NotificationCenterPanel::on_clear_selection, this);
     selection_row->Add(m_clear_button, 0, wxRIGHT, FromDIP(4));
 
-    selection_row->AddStretchSpacer(1);
+    // Paging stays in the same wrapping selection group.
     m_load_more_button = new Button(this, wxEmptyString);
     m_load_more_button->SetVariant(Button::Variant::Text);
     m_load_more_button->SetButtonSize(Button::Size::Small);
@@ -218,7 +222,7 @@ void NotificationCenterPanel::build_ui()
     root->Add(selection_row, 0, wxEXPAND | wxTOP, FromDIP(8));
 
     // --- Bulk action row -------------------------------------------------
-    auto *bulk_row = new wxBoxSizer(wxHORIZONTAL);
+    auto *bulk_row = new wxWrapSizer(wxHORIZONTAL);
     // TRN: Bulk action: close the selected toasts and mark them dismissed.
     m_dismiss_button = new Button(this, _L("Dismiss selected"));
     m_dismiss_button->SetVariant(Button::Variant::Tonal);
@@ -235,7 +239,7 @@ void NotificationCenterPanel::build_ui()
     m_export_button->Bind(wxEVT_BUTTON, &NotificationCenterPanel::on_export, this);
     bulk_row->Add(m_export_button, 0, wxRIGHT, FromDIP(6));
 
-    bulk_row->AddStretchSpacer(1);
+    // Destructive action stays last and retains its distinct danger variant.
     // TRN: Bulk action: permanently delete the selected history entries (opens the confirmation gate).
     m_delete_button = new Button(this, _L("Delete selected…"));
     m_delete_button->SetVariant(Button::Variant::Danger);

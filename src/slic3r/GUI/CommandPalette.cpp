@@ -56,8 +56,11 @@ CommandPalette::CommandPalette(MainFrame *frame)
                wxBORDER_NONE)
     , m_frame(frame)
 {
-    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
+    SetBackgroundColour(StateColor::semantic(MD3::Role::Surface));
     auto *root = new wxBoxSizer(wxVERTICAL);
+    auto *title = new Label(this, Label::Head_20, _L("Command palette"));
+    title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+    root->Add(title, 0, wxLEFT | wxRIGHT | wxTOP, FromDIP(MD3::Metrics::active().padding));
 
     // Header: the search pill plus the size toggle (bounded card <-> full
     // window). The toggle is a real IconButton with an accessible name, so it
@@ -75,7 +78,7 @@ CommandPalette::CommandPalette(MainFrame *frame)
         m_search->GetTextCtrl()->SetFocus();
     });
     header->Add(m_size_button, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(8));
-    root->Add(header, 0, wxEXPAND | wxALL, FromDIP(12));
+    root->Add(header, 0, wxEXPAND | wxALL, FromDIP(MD3::Metrics::active().padding));
 
     m_list = new MD3ScrolledWindow(this, wxID_ANY, wxDefaultPosition,
                                   wxSize(FromDIP(kWidth), FromDIP(kListHeight)),
@@ -181,7 +184,7 @@ void CommandPalette::apply_size(PaletteIndex::PaletteSize size, bool persist)
         SetSize(wxRect(origin, area.GetSize()));
     } else {
         const int header_h = m_search != nullptr ? m_search->GetSize().GetHeight() : FromDIP(40);
-        SetClientSize(FromDIP(kWidth), FromDIP(kListHeight) + header_h + FromDIP(36));
+        SetClientSize(FromDIP(kWidth), FromDIP(kListHeight) + header_h + FromDIP(68));
         if (IsShown())
             CenterOnParent();
     }
@@ -330,39 +333,50 @@ wxPanel *CommandPalette::make_row(const Entry &entry, int index)
 {
     const wxColour on     = StateColor::semantic(MD3::Role::OnSurface);
     const wxColour on_var = StateColor::semantic(MD3::Role::OnSurfaceVariant);
-    const wxColour base   = StateColor::semantic(MD3::Role::SurfaceContainerLow);
+    const wxColour base   = StateColor::semantic(MD3::Role::SurfaceContainerLowest);
 
     auto *row = new wxPanel(m_list, wxID_ANY);
     row->SetBackgroundColour(base);
     row->SetMinSize(wxSize(-1, FromDIP(kRowHeight)));
+    row->Bind(wxEVT_PAINT, [this, row, index](wxPaintEvent &) {
+        wxPaintDC dc(row);
+        if (m_selected == index) {
+            dc.SetPen(*wxTRANSPARENT_PEN);
+            dc.SetBrush(wxBrush(StateColor::semantic(MD3::Role::Primary)));
+            dc.DrawRoundedRectangle(FromDIP(2), FromDIP(8), FromDIP(3),
+                                    std::max(FromDIP(8), row->GetClientSize().y - FromDIP(16)), FromDIP(1));
+        }
+    });
     auto *sizer = new wxBoxSizer(wxHORIZONTAL);
 
     auto *icon = new wxPanel(row, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(36), FromDIP(36)));
     icon->SetBackgroundColour(base);
     const std::uint32_t glyph = entry.glyph;
-    icon->Bind(wxEVT_PAINT, [icon, glyph](wxPaintEvent &) {
+    icon->Bind(wxEVT_PAINT, [this, icon, glyph, index](wxPaintEvent &) {
         wxPaintDC dc(icon);
         if (MaterialIcon::available()) {
             const int px = icon->FromDIP(22);
             const wxSize gs = MaterialIcon::measure(dc, glyph, px);
-            MaterialIcon::draw(dc, glyph, px, StateColor::semantic(MD3::Role::OnSurfaceVariant),
+            MaterialIcon::draw(dc, glyph, px, StateColor::semantic(m_selected == index ? MD3::Role::OnPrimaryContainer : MD3::Role::OnSurfaceVariant),
                                wxPoint((icon->GetSize().x - gs.x) / 2, (icon->GetSize().y - gs.y) / 2));
         }
     });
     sizer->Add(icon, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(10));
 
     auto *text_col = new wxBoxSizer(wxVERTICAL);
-    auto *title = new Label(row, Label::Body_14, entry.title);
+    auto *title = new Label(row, Label::Head_14, entry.title, LB_AUTO_WRAP | wxST_NO_AUTORESIZE);
+    title->SetMinSize(wxSize(0, -1));
     title->SetBackgroundColour(base);
     title->SetForegroundColour(on);
-    text_col->Add(title, 0);
+    text_col->Add(title, 0, wxEXPAND);
     if (!entry.desc.IsEmpty()) {
-        auto *desc = new Label(row, Label::Body_12, entry.desc);
+        auto *desc = new Label(row, Label::Body_13, entry.desc, LB_AUTO_WRAP | wxST_NO_AUTORESIZE);
+        desc->SetMinSize(wxSize(0, -1));
         desc->SetBackgroundColour(base);
         desc->SetForegroundColour(on_var);
-        text_col->Add(desc, 0, wxTOP, FromDIP(1));
+        text_col->Add(desc, 0, wxEXPAND | wxTOP, FromDIP(4));
     }
-    sizer->Add(text_col, 1, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(10));
+    sizer->Add(text_col, 1, wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(MD3::Metrics::active().gap));
 
     if (entry.rich != Rich::None)
         add_rich_controls(row, sizer, entry.rich);
@@ -474,13 +488,25 @@ void CommandPalette::select_row(int index)
     if (m_rows.empty())
         return;
     index = std::max(0, std::min(index, static_cast<int>(m_rows.size()) - 1));
-    const wxColour base = StateColor::semantic(MD3::Role::SurfaceContainerLow);
-    const wxColour sel  = StateColor::semantic(MD3::Role::SurfaceContainerHighest);
+    const wxColour base = StateColor::semantic(MD3::Role::SurfaceContainerLowest);
+    const wxColour sel  = StateColor::semantic(MD3::Role::PrimaryContainer);
+    // Match direct text/icon plates to the row, leaving embedded live controls in their own states.
+    auto paint_row = [](wxPanel *row, const wxColour &background, bool selected) {
+        row->SetBackgroundColour(background);
+        for (wxWindow *child : row->GetChildren()) {
+            if (auto *label = dynamic_cast<Label *>(child)) {
+                label->SetBackgroundColour(background);
+                label->SetForegroundColour(StateColor::semantic(selected ? MD3::Role::OnPrimaryContainer : (label->GetFont().GetWeight() >= wxFONTWEIGHT_BOLD ? MD3::Role::OnSurface : MD3::Role::OnSurfaceVariant)));
+            } else if (child->GetClassInfo() == wxCLASSINFO(wxPanel)) {
+                child->SetBackgroundColour(background);
+            }
+        }
+        row->Refresh();
+    };
     if (m_selected >= 0 && m_selected < static_cast<int>(m_rows.size()))
-        m_rows[m_selected]->SetBackgroundColour(base), m_rows[m_selected]->Refresh();
+        paint_row(m_rows[m_selected], base, false);
     m_selected = index;
-    m_rows[m_selected]->SetBackgroundColour(sel);
-    m_rows[m_selected]->Refresh();
+    paint_row(m_rows[m_selected], sel, true);
     // Keep the selection visible. A row index is NOT a scroll unit: every row
     // carries its divider, so multiplying the index by the row height loses a
     // hairline per row until the highlight sits below the viewport entirely and
