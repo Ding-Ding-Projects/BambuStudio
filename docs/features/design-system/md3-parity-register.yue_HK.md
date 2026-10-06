@@ -1,6 +1,6 @@
 ---
 translation-of: md3-parity-register.md
-source-sha256: a208cc7c0f547cc918510c9d6011c9865c1b2f97147631910b3f6817b834e68c
+source-sha256: 1e0d0b842c0682f1973eaab4c6624e7c219bf2da25572e07ba2beb4b71fbe899
 review-status: agent-drafted
 ---
 
@@ -549,4 +549,4 @@ Audited the entire GUI icon/asset pipeline in src/slic3r/GUI (worktree bambu-stu
 
 ---
 
-*登記從 132 個原始審計發現（10 個表面）在 4 個交叉表面合併後整合成 128 個獨特開放缺口。關閉列嘅真實來源：上面嘅表面表；排序：分波計劃；範圍邊界：逐字涵蓋備註。*
+*登記從 132 個原始審計發現（10 個表面），經四次跨介面合併後，整合成 128 個獨立記錄嘅缺口。每個缺口嘅現時狀態以上面介面表嘅狀態欄為準；次序見分波計劃，範圍邊界見逐字涵蓋備註。*
