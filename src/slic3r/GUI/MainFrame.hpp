@@ -55,6 +55,9 @@ class MainFrame;
 class ParamsDialog;
 class FilamentGroupPopup;
 class DeviceWebPage;
+class WorkflowPrintPanel;
+struct WorkflowPrintSummary;
+namespace WorkflowPrint { enum class Action; }
 // BBS: session file-tabs (see ProjectTabBar.hpp). One project bar sits between the
 // title bar and the workspace tabs; MainFrame orchestrates the switch/close/new flow.
 class ProjectTabBar;
@@ -363,6 +366,7 @@ public:
     void        select_tab(wxPanel* panel);
     void        select_tab(size_t tab = size_t(-1));
     void        request_select_tab(TabPosition pos);
+    void        show_print_preparation();
     bool        request_slice_and_print();
     bool        request_slice_and_send();
     int         get_calibration_curr_tab();
@@ -423,6 +427,10 @@ public:
     Plater*               m_plater { nullptr };
     //BBS: GUI refactor
     MonitorPanel*         m_monitor{ nullptr };
+    WorkflowPrintPanel*   m_workflow_print{ nullptr };
+    WorkflowPrintSummary workflow_print_summary();
+    void update_workflow_print_summary();
+    void run_workflow_print_action(WorkflowPrint::Action action, wxWindow* anchor);
 
     //AuxiliaryPanel*       m_auxiliary{ nullptr };
     MultiMachinePage*     m_multi_machine{ nullptr };

@@ -260,6 +260,9 @@ set(SLIC3R_GUI_SOURCES
     GUI/IconManager.hpp
     GUI/MainFrame.cpp
     GUI/MainFrame.hpp
+    GUI/WorkflowPrintPanel.cpp
+    GUI/WorkflowPrintPanel.hpp
+    GUI/WorkflowPrintState.hpp
     GUI/PerfTrace.cpp
     GUI/PerfTrace.hpp
     GUI/BBLTopbar.cpp

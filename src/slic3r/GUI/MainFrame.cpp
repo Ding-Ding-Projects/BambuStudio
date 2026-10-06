@@ -1,6 +1,7 @@
 #include <wx/wrapsizer.h>
 #include "HumanDate.hpp"
 #include "MainFrame.hpp"
+#include "WorkflowPrintPanel.hpp"
 #include "Export/ExportDatasets.hpp"
 #include "Export/ExportDialog.hpp"
 #include "libslic3r/GCode/GCodeProcessor.hpp"
@@ -840,6 +841,7 @@ DPIFrame(NULL, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, BORDERLESS_FRAME_
             m_plater->apply_background_progress();
             m_print_enable = get_enable_print_status();
             m_print_btn->Enable(m_print_enable);
+            update_workflow_print_summary();
             if (m_print_enable) {
                 wxPostEvent(m_plater, SimpleEvent(EVT_GLTOOLBAR_PRINT_PLATE));
             }
@@ -1167,6 +1169,7 @@ void MainFrame::update_layout()
         m_plater->Reparent(m_tabpanel);
         m_tabpanel->InsertPage(tp3DEditor, m_plater, _L("Prepare"), std::string("tab_3d_active"), std::string("tab_3d_active"), false);
         m_tabpanel->InsertPage(tpPreview, m_plater, _L("Preview"), std::string("tab_preview_active"), std::string("tab_preview_active"), false);
+        m_tabpanel->SetWorkflowPages(tp3DEditor, tpPreview, m_tabpanel->FindPage(m_workflow_print), tpMonitor);
         m_main_sizer->Add(m_tabpanel, 1, wxEXPAND | wxTOP, 0);
         m_main_sizer->Add(m_prepare_action_bar, 0, wxEXPAND);
         show_option(m_tabpanel->GetSelection() == tp3DEditor || m_tabpanel->GetSelection() == tpPreview);
@@ -1922,6 +1925,113 @@ void MainFrame::reconcile_initial_project_tab()
     update_title();
 }
 
+WorkflowPrintSummary MainFrame::workflow_print_summary()
+{
+    WorkflowPrintSummary summary;
+    summary.output_label = m_print_btn ? m_print_btn->GetLabel() : _L("Print");
+    summary.slice_label = m_slice_btn ? m_slice_btn->GetLabel() : _L("Slice plate");
+    summary.plate = _L("No plate selected");
+    summary.estimate = _L("Time estimate unavailable until slicing completes");
+    summary.material = _L("Material estimate unavailable until slicing completes");
+    if (!m_plater || !m_print_btn || !m_slice_btn) return summary;
+
+    auto& plates = m_plater->get_partplate_list();
+    auto* plate = plates.get_plate_count() > 0 ? plates.get_curr_plate() : nullptr;
+    const bool imported = m_plater->only_gcode_mode() || m_plater->using_exported_file();
+    auto& state = summary.availability;
+    state.has_content = imported || (plate && !plate->empty());
+    state.slicing = m_plater->is_background_process_slicing();
+    state.slice_ready = imported || (plate && plate->is_slice_result_valid());
+    state.slice_enabled = plate && m_slice_btn->IsEnabled() && get_enable_slice_status();
+    state.combined_enabled = m_slice_print_btn && m_slice_send_btn &&
+                             m_slice_print_btn->IsEnabled() && m_slice_send_btn->IsEnabled() &&
+                             !state.slicing && !imported && plate &&
+                             !m_plater->sidebar().has_broken_mixed_filament() &&
+                             (plate->can_slice() || plate->is_slice_result_ready_for_print());
+    if (plate) {
+        // Preserve transient can_print=false from the existing status update,
+        // while rechecking the current output mode and plate at activation.
+        const bool ready = get_enable_print_status(summary.disabled_reason);
+        state.output_enabled = ready && m_print_btn->IsEnabled();
+        // An all-plates action can be ready while the selected plate is empty.
+        // The card below deliberately continues to identify the selected plate.
+        state.has_content = state.has_content || state.output_enabled;
+        state.slice_ready = state.slice_ready || state.output_enabled;
+        summary.plate = plate->get_plate_name().empty()
+            ? wxString::Format(_L("Plate %d"), plates.get_curr_plate_index() + 1)
+            : from_u8(plate->get_plate_name());
+        if (state.slice_ready) {
+            if (auto* result = plate->get_slice_result(); result && !result->print_statistics.modes.empty()) {
+                const float seconds = result->print_statistics.modes.front().time;
+                if (seconds > 0.0f)
+                    summary.estimate = _L("Estimated time") + ": " + from_u8(short_time(get_time_dhms(seconds)));
+            }
+            if (auto* print = plate->fff_print()) {
+                const auto& statistics = print->print_statistics();
+                if (statistics.total_weight > 0.0 || statistics.total_used_filament > 0.0)
+                    summary.material = _L("Material") + ": " + wxString::Format("%.1f g / %.2f m",
+                        statistics.total_weight, statistics.total_used_filament / 1000.0);
+            }
+        }
+    }
+    if (wxGetApp().preset_bundle)
+        summary.printer = _L("Printer preset") + ": " +
+                          from_u8(wxGetApp().preset_bundle->printers.get_edited_preset().name);
+    if (state.slicing)
+        summary.disabled_reason = _L("Wait for slicing to finish before sending output.");
+    else if (!state.has_content)
+        summary.disabled_reason = _L("Add a model in Prepare or open a sliced file.");
+    else if (!state.output_enabled && summary.disabled_reason.empty())
+        summary.disabled_reason = m_print_btn->GetToolTipText().empty()
+            ? _L("The selected output action is not available for the current plate.")
+            : m_print_btn->GetToolTipText();
+    return summary;
+}
+
+void MainFrame::update_workflow_print_summary()
+{
+    if (m_workflow_print && m_workflow_print->IsShown())
+        m_workflow_print->RefreshSummary();
+}
+
+void MainFrame::show_print_preparation()
+{
+    if (m_tabpanel && m_workflow_print) {
+        const int page = m_tabpanel->FindPage(m_workflow_print);
+        if (page != wxNOT_FOUND) select_tab(static_cast<size_t>(page));
+    }
+}
+
+void MainFrame::run_workflow_print_action(WorkflowPrint::Action action, wxWindow* anchor)
+{
+    using A = WorkflowPrint::Action;
+    if (action == A::Prepare || action == A::Preview || action == A::Monitor) {
+        // Use the same request path as a navigation button, including preview-only
+        // confirmation, version checks, and notebook page-changing validation.
+        const int page = action == A::Prepare ? tp3DEditor : action == A::Preview ? tpPreview : tpMonitor;
+        wxCommandEvent event(wxCUSTOMEVT_NOTEBOOK_SEL_CHANGED, page);
+        event.SetEventObject(m_tabpanel);
+        m_tabpanel->GetEventHandler()->ProcessEvent(event);
+        return;
+    }
+    SideButton* source = nullptr;
+    switch (action) {
+    case A::Output: source = m_print_btn; break;
+    case A::OutputOptions: source = m_print_option_btn; break;
+    case A::Slice: source = m_slice_btn; break;
+    case A::SliceAndPrint: source = m_slice_print_btn; break;
+    case A::SliceAndSend: source = m_slice_send_btn; break;
+    default: return;
+    }
+    if (!source || !source->IsEnabled()) return;
+    // Process synchronously. The original callbacks still own validation,
+    // pending continuations, explicit output dispatch and final confirmation.
+    wxCommandEvent event(wxEVT_BUTTON, source->GetId());
+    event.SetEventObject(anchor ? anchor : source);
+    source->GetEventHandler()->ProcessEvent(event);
+    update_workflow_print_summary();
+}
+
 void MainFrame::show_option(bool show)
 {
     if (!m_prepare_action_bar)
@@ -1976,6 +2086,7 @@ void style_prepare_estimate(wxStaticText *time_line, wxStaticText *detail_line)
 
 void MainFrame::update_prepare_action_bar_content()
 {
+    update_workflow_print_summary();
     if (!m_prepare_action_bar || !m_plater)
         return;
 
@@ -2383,6 +2494,10 @@ void MainFrame::init_tabpanel()
 
         //else if (panel == m_param_panel)
         //    m_param_panel->OnActivate();
+        else if (panel == m_workflow_print) {
+            // Review is observational. Do not select Preview, which can initiate slicing.
+            update_workflow_print_summary();
+        }
         else if (panel == m_monitor) {
             //monitor
             NetworkAgent* agent = GUI::wxGetApp().getAgent();
@@ -2476,7 +2591,7 @@ void MainFrame::init_tabpanel()
         //BBS add pages
     m_monitor = new MonitorPanel(m_tabpanel, wxID_ANY, wxDefaultPosition, wxDefaultSize);
     m_monitor->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceDim));
-    m_tabpanel->AddPage(m_monitor, _L("Device"), std::string("tab_monitor_active"), std::string("tab_monitor_active"), false);
+    m_tabpanel->AddPage(m_monitor, _L("Monitor"), std::string("tab_monitor_active"), std::string("tab_monitor_active"), false);
 
     m_printer_view = new PrinterWebView(m_tabpanel);
     Bind(EVT_LOAD_PRINTER_URL, [this](wxCommandEvent &evt) {
@@ -2507,6 +2622,13 @@ void MainFrame::init_tabpanel()
         m_web_device = new DeviceWebPage(m_tabpanel);
         m_tabpanel->AddPage(m_web_device, _L("Filament"), std::string("tab_filament_active"), std::string("tab_filament_active"), false);
     }
+
+    // Append review so existing page IDs and palette destinations stay stable.
+    m_workflow_print = new WorkflowPrintPanel(m_tabpanel,
+        [this]() { return workflow_print_summary(); },
+        [this](WorkflowPrint::Action action, wxWindow* anchor) { run_workflow_print_action(action, anchor); });
+    m_workflow_print->Hide();
+    m_tabpanel->AddPage(m_workflow_print, _L("Print"), "tab_monitor_active", "tab_monitor_active", false);
 
     // Settings is a navigation action rather than a synthetic notebook page.
     // This preserves every established TabPosition/page index while matching
@@ -2542,7 +2664,7 @@ void MainFrame::show_device(bool bBBLPrinter) {
         m_printer_view->Show(false);
         m_monitor->Show(false);
         m_tabpanel->RemovePage(tpMonitor);
-        m_tabpanel->InsertPage(tpMonitor, m_monitor, _L("Device"),
+        m_tabpanel->InsertPage(tpMonitor, m_monitor, _L("Monitor"),
                              std::string("tab_monitor_active"),
                              std::string("tab_monitor_active"), false);
     }
@@ -2551,11 +2673,13 @@ void MainFrame::show_device(bool bBBLPrinter) {
         m_printer_view->Show(false);
         m_monitor->Show(false);
         m_tabpanel->RemovePage(tpMonitor);
-        m_tabpanel->InsertPage(tpMonitor, m_printer_view, _L("Device"),
+        m_tabpanel->InsertPage(tpMonitor, m_printer_view, _L("Monitor"),
                           std::string("tab_monitor_active"),
                           std::string("tab_monitor_active"), false);
     }
   }
+  // Re-register the visual role after replacing the monitor page in place.
+  m_tabpanel->SetWorkflowPages(tp3DEditor, tpPreview, m_tabpanel->FindPage(m_workflow_print), tpMonitor);
 }
 
 
@@ -3444,6 +3568,7 @@ wxSizer* MainFrame::create_side_tools(wxWindow* parent)
                 // check valid of print
                 m_print_enable = get_enable_print_status();
                 m_print_btn->Enable(m_print_enable);
+                update_workflow_print_summary();
                 if (m_print_enable) {
                     if (m_print_select == ePrintAll)
                         wxPostEvent(m_plater, SimpleEvent(EVT_GLTOOLBAR_PRINT_ALL));
@@ -3529,6 +3654,7 @@ wxSizer* MainFrame::create_side_tools(wxWindow* parent)
                     m_print_select = eExportGcode;
                     m_print_enable = get_enable_print_status();
                     m_print_btn->Enable(m_print_enable);
+                    update_workflow_print_summary();
                     this->Layout();
                     p->Dismiss();
                     });
@@ -3541,6 +3667,7 @@ wxSizer* MainFrame::create_side_tools(wxWindow* parent)
                     m_print_select = eSendGcode;
                     m_print_enable = get_enable_print_status();
                     m_print_btn->Enable(m_print_enable);
+                    update_workflow_print_summary();
                     this->Layout();
                     p->Dismiss();
                     });
@@ -3553,6 +3680,7 @@ wxSizer* MainFrame::create_side_tools(wxWindow* parent)
                     m_print_select = eUploadGcode;
                     m_print_enable = get_enable_print_status();
                     m_print_btn->Enable(m_print_enable);
+                    update_workflow_print_summary();
                     this->Layout();
                     p->Dismiss();
                     });*/
@@ -3580,6 +3708,7 @@ wxSizer* MainFrame::create_side_tools(wxWindow* parent)
                     m_print_select = ePrintPlate;
                     m_print_enable = get_enable_print_status();
                     m_print_btn->Enable(m_print_enable);
+                    update_workflow_print_summary();
                     this->Layout();
                     p->Dismiss();
                     });
@@ -3591,6 +3720,7 @@ wxSizer* MainFrame::create_side_tools(wxWindow* parent)
                     m_print_select = ePrintAll;
                     m_print_enable = get_enable_print_status();
                     m_print_btn->Enable(m_print_enable);
+                    update_workflow_print_summary();
                     this->Layout();
                     p->Dismiss();
                     });
@@ -3600,6 +3730,7 @@ wxSizer* MainFrame::create_side_tools(wxWindow* parent)
                     m_print_select = eSendToPrinter;
                     m_print_enable = get_enable_print_status();
                     m_print_btn->Enable(m_print_enable);
+                    update_workflow_print_summary();
                     this->Layout();
                     p->Dismiss();
                     });
@@ -3611,6 +3742,7 @@ wxSizer* MainFrame::create_side_tools(wxWindow* parent)
                     m_print_select = eSendToPrinterAll;
                     m_print_enable = get_enable_print_status();
                     m_print_btn->Enable(m_print_enable);
+                    update_workflow_print_summary();
                     this->Layout();
                     p->Dismiss();
                     });
@@ -3620,6 +3752,7 @@ wxSizer* MainFrame::create_side_tools(wxWindow* parent)
                     m_print_select = eExportSlicedFile;
                     m_print_enable = get_enable_print_status();
                     m_print_btn->Enable(m_print_enable);
+                    update_workflow_print_summary();
                     this->Layout();
                     p->Dismiss();
                     });
@@ -3629,6 +3762,7 @@ wxSizer* MainFrame::create_side_tools(wxWindow* parent)
                     m_print_select = eExportAllSlicedFile;
                     m_print_enable = get_enable_print_status();
                     m_print_btn->Enable(m_print_enable);
+                    update_workflow_print_summary();
                     this->Layout();
                     p->Dismiss();
                     });
@@ -3651,6 +3785,7 @@ wxSizer* MainFrame::create_side_tools(wxWindow* parent)
                         m_print_select = eSendMultiApp;
                         m_print_enable = get_enable_print_status();
                         m_print_btn->Enable(m_print_enable);
+                        update_workflow_print_summary();
                         this->Layout();
                         p->Dismiss();
                     });
@@ -3665,6 +3800,7 @@ wxSizer* MainFrame::create_side_tools(wxWindow* parent)
                         m_print_select = ePrintMultiMachine;
                         m_print_enable = get_enable_print_status();
                         m_print_btn->Enable(m_print_enable);
+                        update_workflow_print_summary();
                         this->Layout();
                         p->Dismiss();
                         });
@@ -3672,7 +3808,8 @@ wxSizer* MainFrame::create_side_tools(wxWindow* parent)
                 }
             }
 
-            p->Popup(m_print_option_btn);
+            auto* anchor = dynamic_cast<wxWindow*>(event.GetEventObject());
+            p->Popup(anchor ? anchor : m_print_option_btn);
         }
     );
 
@@ -4096,6 +4233,7 @@ void MainFrame::on_dpi_changed(const wxRect& suggested_rect)
     m_param_panel->msw_rescale();
     m_project->msw_rescale();
     m_monitor->msw_rescale();
+    if (m_workflow_print) m_workflow_print->Rescale();
     if (m_multi_machine)
         m_multi_machine->msw_rescale();
     m_calibration->msw_rescale();
@@ -4183,6 +4321,7 @@ void MainFrame::on_sys_color_changed()
         tab->sys_color_changed();
     wxGetApp().plate_tab->sys_color_changed();
 
+    if (m_workflow_print) m_workflow_print->ApplyTheme();
     MenuFactory::sys_color_changed(m_menubar);
 
     // update DiffPresetDialog from here, we're friends
@@ -5904,6 +6043,7 @@ void MainFrame::set_print_button_to_default(PrintSelectType select_type)
         if (m_print_enable)
             m_print_enable = get_enable_print_status();
         m_print_btn->Enable(m_print_enable);
+        update_workflow_print_summary();
         this->Layout();
     } else if (select_type == PrintSelectType::eSendGcode) {
         m_print_btn->SetLabel(_L("Print"));
@@ -5911,6 +6051,7 @@ void MainFrame::set_print_button_to_default(PrintSelectType select_type)
         if (m_print_enable)
             m_print_enable = get_enable_print_status() && can_send_gcode();
         m_print_btn->Enable(m_print_enable);
+        update_workflow_print_summary();
         this->Layout();
     } else {
         //unsupport
