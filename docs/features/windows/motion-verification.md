@@ -60,7 +60,7 @@ numeric output hashes. Only five fixed JSON/CSV files are retained. No account
 identity, desktop name, local path, raw process output, or screenshot is included.
 
 ```powershell
-gh workflow run native-interface-verification.yml --ref feature/ui-integration -f motion_runtime_only=true
+gh workflow run native-interface-verification.yml --ref main -f motion_runtime_only=true
 ```
 
 The other contract-only switches must be false. Default workflow behavior is

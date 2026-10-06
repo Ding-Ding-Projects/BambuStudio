@@ -1,17 +1,6 @@
 name: Official Windows baseline diagnostic
 
 on:
-  push:
-    branches:
-      - codex/official-native-reapply
-    paths:
-      - '.github/workflows/official-windows-baseline.yml'
-      - 'scripts/ci/Invoke-OfficialBaseline.ps1'
-      - 'deps/**'
-      - 'src/**'
-      - 'resources/**'
-      - 'CMakeLists.txt'
-      - 'version.inc'
   workflow_dispatch:
 
 permissions:
@@ -23,7 +12,7 @@ concurrency:
 
 jobs:
   build:
-    if: github.ref == 'refs/heads/codex/official-native-reapply'
+    if: github.event_name == 'workflow_dispatch'
     runs-on: windows-2025
     timeout-minutes: 360
     defaults:

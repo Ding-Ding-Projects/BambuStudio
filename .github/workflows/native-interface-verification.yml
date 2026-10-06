@@ -2,7 +2,7 @@ name: Focused native interface verification
 
 on:
   push:
-    branches: [feature/ui-integration]
+    branches: [main]
     paths: [.github/workflows/native-interface-verification.yml]
   workflow_dispatch:
     inputs:

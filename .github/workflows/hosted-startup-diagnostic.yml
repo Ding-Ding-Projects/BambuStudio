@@ -1,7 +1,7 @@
 name: Diagnose installed startup without feature input
 on:
   push:
-    branches: [feature/ui-integration]
+    branches: [main]
     paths: [.github/workflows/hosted-startup-diagnostic.yml]
   workflow_dispatch: {}
 permissions:

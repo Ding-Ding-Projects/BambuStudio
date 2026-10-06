@@ -6,6 +6,8 @@ All reviewed local continuation tips are now ancestors of pushed main `d12a00862
 
 Only the primary working directory remains registered. Across both cleanup phases, 41 local source branches and 35 remote source branches were removed after preservation and ancestry proof. Twenty archival tags preserve the expanded phase's exact source tips. Two workflow-bearing branches, `feature/mcp-integration` and `feature/ui-integration`, remain because existing workflow wiring references them. Their linked directories are gone. Remote-only continuations outside the reviewed local inventory remain untouched.
 
+Update, 6 October 2026: the workflows that referenced `feature/mcp-integration` and `feature/ui-integration` now trigger on `main`, so workflow wiring no longer requires either branch.
+
 All 31 linked working-directory registrations were removed. Twenty-nine directories were fully removed; two unregistered remnants remain. The local-mediation directory has long-path leftovers, and automatic approval review rejected its subsequent PowerShell recursive removal with `blocked by policy`. The PDF-package directory removal returned `Directory not empty`, and its subsequent exact PowerShell removal was also rejected by automatic approval review with `blocked by policy`. Neither remnant is represented as deleted. The native dependency cache was preserved in the primary directory before its owning linked directory was removed.
 
 Focused verification passed 23 JavaScript checks: 11 native lifecycle, eight scroll-owner and four notification consumer-contract checks. The native reviewed-selection executable also passed retention, missing-target and filtered-export checks. The final native build attempt through `build.bat` exited 1 before bootstrap with `Administrator approval is required before the build bootstrap starts.` This does not invalidate the successful hosted workflows, but it leaves current native compilation and runtime acceptance unverified.
@@ -1234,6 +1236,8 @@ past the end of the buffer. The handoff record is [#49](https://github.com/Ding-
 - Kept on purpose:
   - `main` and the four branches that workflows trigger on (`codex/official-feature-reapply`,
     `codex/official-native-reapply`, `codex/hosted-startup-stack`, `codex/hosted-behavior-verifier`);
+    - Update, 6 October 2026: no workflow triggers on or is gated to these four branches any more. Their
+      workflows now run only by manual dispatch from `main`.
   - `codex/workspace-core`, `codex/workspace-history-repair` and `codex/print-setup-quick-swap` (local only): each
     has one commit whose content `main` may hold in a later form, so its author should review it before it is merged
     or deleted;

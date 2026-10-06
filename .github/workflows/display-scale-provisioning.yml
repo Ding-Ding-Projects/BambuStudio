@@ -1,7 +1,7 @@
 name: Verify hosted predefined display scaling
 on:
   push:
-    branches: [feature/ui-integration]
+    branches: [main]
     paths: [.github/workflows/display-scale-provisioning.yml]
   workflow_dispatch:
     inputs:
