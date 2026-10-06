@@ -100,7 +100,7 @@ for (const receipt of review.documentationReceipts) {
 }
 const indexDirectory = 'docs/features/design-system';
 let englishIndex = fs.readFileSync(path.join(root, indexDirectory, 'README.md'), 'utf8');
-const cantoneseIndex = fs.readFileSync(path.join(root, indexDirectory, 'README.yue_HK.md'), 'utf8');
+let cantoneseIndex = fs.readFileSync(path.join(root, indexDirectory, 'README.yue_HK.md'), 'utf8');
 const indexHash = createHash('sha256').update(englishIndex.replaceAll('\r\n', '\n')).digest('hex');
 assert.ok(cantoneseIndex.includes(`source-sha256: ${indexHash}`), 'Cantonese index source hash is stale');
 if (process.env.NATIVE_DESIGN_REMOVE_INDEX_LINK === '1') englishIndex = englishIndex.replaceAll('studio-atlas-selection-controls.md', 'missing-selection-article.md');
@@ -111,8 +111,18 @@ for (const article of new Set(review.units.map(unit => unit.article))) {
   assert.ok(englishIndex.includes(`](${relative})`), `Missing incorporated article link: ${relative}`);
   assert.ok(cantoneseIndex.includes(`](${cantoneseTarget})`), `Missing Cantonese index source link: ${cantoneseTarget}`);
 }
-assert.ok(cantoneseIndex.includes('calibration-viewport-layout.md'));
-assert.ok(!cantoneseIndex.includes('calibration-viewport-layout.yue_HK.md'), 'Do not invent a separate calibration viewport companion');
+// These published companions are required, not optional English fallbacks.
+if (process.env.NATIVE_DESIGN_REMOVE_CANTONESE_INDEX_LINK === '1')
+  cantoneseIndex = cantoneseIndex.replaceAll('calibration-viewport-layout.yue_HK.md', 'missing-calibration-companion.md');
+for (const stem of ['calibration-viewport-layout', 'native-workflow-navigation']) {
+  for (const [suffix, index] of [['.md', englishIndex], ['.yue_HK.md', cantoneseIndex]]) {
+    const file = stem + suffix;
+    const exists = fs.existsSync(path.join(root, indexDirectory, file)) &&
+      process.env.NATIVE_DESIGN_MISSING_PAIRED_ARTICLE !== file;
+    assert.ok(exists, 'Missing paired source article: ' + file);
+    assert.ok(index.includes('](' + file + ')'), 'Missing paired index source link: ' + file);
+  }
+}
 assert.deepEqual(scopes.followupSurfaceFamilies.map(row => row.id), ['shared-list-rows', 'ams-drying-pages', 'nozzle-rack-details']);
 for (const row of scopes.followupSurfaceFamilies) {
   assert.equal(row.status, 'source-incorporated-partial');

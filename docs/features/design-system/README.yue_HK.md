@@ -1,6 +1,6 @@
 ---
 translation-of: README.md
-source-sha256: f32a336f60f4365d5508187e82568c86a01c94a1a6877a4572e75042c818f510
+source-sha256: 55deec9a01ee953e42464d96cbc2d5c179ea3b5f6a03d182306864f50c621993
 review-status: agent-drafted
 ---
 
@@ -40,7 +40,7 @@ review-status: agent-drafted
 以下文章記錄限定範圍嘅來源改動及驗證限制，唔代表原生畫面或整個應用程式重設計已驗收。
 
 已納入嘅來源清單固定於 `4147ca9eeb0004f7e18b4a2f5a8c6cb190975d21`。
-校準視窗文章內含粵語段落；外框分頁已有粵語版本，工作流程導覽仍連到現有英文文章。
+校準視窗、外框分頁同工作流程導覽都有獨立粵語版本。
 連線及傳送延續單元連同資訊可讀性及標題尺寸修正，現已納入原始碼，唔代表執行畫面已驗證。
 
 - [共用控件](studio-atlas-shared-controls.yue_HK.md)：按鈕、卡片、搜尋、選單結構同呼叫者缺口。
@@ -57,10 +57,10 @@ review-status: agent-drafted
 - [即時通知](live-notifications-atlas.yue_HK.md)：渲染器通知卡同原操作目標。
 - [內嵌配色](embedded-studio-atlas.yue_HK.md)：產品樣式顏色、焦點及減少動態規則。
 - [內嵌頁面組合](embedded-composition-atlas.yue_HK.md)：九個入口、十四個匯入及來源驗證限制。
-- [工作流程導覽同配色](native-workflow-navigation.md)：固定頁面識別、視覺投影及獨立配色撤回範圍，目前為英文。
+- [工作流程導覽同配色](native-workflow-navigation.yue_HK.md)：固定頁面識別、視覺投影及獨立配色撤回範圍。
 - [外框同分頁](studio-atlas-shell-and-tabs.yue_HK.md)：量度配置、可見鄰近分頁拖放識別及焦點輔助功能修正。
 - [數值及選擇控制項](studio-atlas-selection-controls.yue_HK.md)：數值配置生命週期、核取圖形及切換分段。
-- [校準視窗同預設](calibration-viewport-layout.md)：說明提示量度、完整預設列及原有捲動範圍，英文同粵語放喺同一篇。
+- [校準視窗同預設](calibration-viewport-layout.yue_HK.md)：說明提示量度、完整預設列及原有捲動範圍。
 - [確認同訊息對話框](confirmations-atlas.yue_HK.md)：捲動詳情、固定授權控制項及空間不足時只可取消嘅行為。
 - [濕度詳情](humidity-details-atlas.yue_HK.md)：量度圖例及數值列，連同最終彈出位置修正。
 - [變形檢查器](transform-inspector-atlas.yue_HK.md)：欄位狀態繪畫同層次，保留輸入及項目幾何。

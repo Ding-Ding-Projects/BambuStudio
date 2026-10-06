@@ -45,8 +45,8 @@ Design 3 design system.
 These articles record bounded source changes and their verification limits. They do not establish complete native rendering or application-wide redesign acceptance.
 
 The incorporated source inventory is pinned to `4147ca9eeb0004f7e18b4a2f5a8c6cb190975d21`.
-Calibration viewport documentation includes Cantonese inline. Shell/tab now has a Cantonese
-companion; native-workflow navigation still has no separate companion. Connection/send
+Calibration viewport, shell/tab and native-workflow navigation documentation all have separate
+Cantonese companions. Connection/send
 continuations and their disclosure/caption repairs are now incorporated as source-only work.
 
 - [Shared controls](studio-atlas-shared-controls.md): button, card, search and menu anatomy with caller gaps.
@@ -66,7 +66,7 @@ continuations and their disclosure/caption repairs are now incorporated as sourc
 - [Workflow navigation and palette](native-workflow-navigation.md): stable page identities, visual projection and independent palette reversal.
 - [Shell and tabs](studio-atlas-shell-and-tabs.md): measured allocation, visible-neighbor drag identities and focus/accessibility repairs.
 - [Numeric and selection controls](studio-atlas-selection-controls.md): numeric allocation lifecycle, checkbox glyphs and switch segments.
-- [Calibration viewport and presets](calibration-viewport-layout.md): measured instruction/advice text, complete preset rows and intrinsic scroll extents; English and Cantonese in one article.
+- [Calibration viewport and presets](calibration-viewport-layout.md): measured instruction/advice text, complete preset rows and intrinsic scroll extents; a separate Cantonese companion is available.
 - [Confirmations and message dialogs](confirmations-atlas.md): scrolling details, persistent authorization controls and cancel-only insufficient-space behavior.
 - [Humidity details](humidity-details-atlas.md): measured legend/value rows and final popup placement repair.
 - [Transform inspector](transform-inspector-atlas.md): field state paint and hierarchy with unchanged input and item geometry.
