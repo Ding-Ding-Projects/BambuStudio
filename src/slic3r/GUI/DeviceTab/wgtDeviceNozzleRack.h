@@ -59,6 +59,8 @@ public:
 
 private:
     void CreateGui();
+    void MeasureCard();
+    void UpdateCardPresentation();
 
 private:
     std::weak_ptr<DevNozzleRack> m_nozzle_rack;

@@ -736,24 +736,25 @@ wgtDeviceNozzleRackNozzleItem::wgtDeviceNozzleRackNozzleItem(wxWindow* parent, i
 void wgtDeviceNozzleRackNozzleItem::CreateGui()
 {
     // Background
-    SetCornerRadius(FromDIP(5));
-    SetBackgroundColor(*wxWHITE);
+    SetDensity(StaticBox::Density::Compact);
+    SetBackgroundColor(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     // Top H
     wxSizer *top_h_sizer = new wxBoxSizer(wxHORIZONTAL);
 
     m_nozzle_label_id = new Label(this);
-    m_nozzle_label_id->SetFont(Label::Body_12);
-    m_nozzle_label_id->SetBackgroundColour(*wxWHITE);
+    m_nozzle_label_id->SetFont(Label::Head_14);
+    m_nozzle_label_id->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+    m_nozzle_label_id->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_nozzle_label_id->SetLabel(wxString::Format("%d", m_nozzle_id + 1));
 
     m_status             = NOZZLE_STATUS::NOZZLE_EMPTY;
     m_nozzle_empty_image = new ScalableBitmap(this, "dev_rack_nozzle_empty", 46);
     m_nozzle_icon = new wxStaticBitmap(this, wxID_ANY, m_nozzle_empty_image->bmp(), wxDefaultPosition, WX_DIP_SIZE_46);
-    m_nozzle_icon->SetBackgroundColour(*wxWHITE);
+    m_nozzle_icon->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     m_nozzle_selected_bitmap = new wxStaticBitmap(this, wxID_ANY, wxNullBitmap, wxDefaultPosition, WX_DIP_SIZE(20, 20));
-    m_nozzle_selected_bitmap->SetBackgroundColour(*wxWHITE);
+    m_nozzle_selected_bitmap->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     top_h_sizer->Add(m_nozzle_label_id, 0, wxTOP | wxLEFT, FromDIP(6));
     top_h_sizer->AddStretchSpacer(1);
@@ -767,20 +768,20 @@ void wgtDeviceNozzleRackNozzleItem::CreateGui()
     wxSizer* label_h_sizer = new wxBoxSizer(wxHORIZONTAL);
     m_nozzle_label_1 = new Label(this);
     m_nozzle_label_1->SetFont(Label::Body_12);
-    m_nozzle_label_1->SetBackgroundColour(*wxWHITE);
+    m_nozzle_label_1->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_nozzle_label_1->SetLabel(_L("Empty"));
 
     label_h_sizer->Add(m_nozzle_label_1, 0, wxALIGN_LEFT);
 
     // Kit icon Button with the Error glyph in the Error role; focusable, with a role.
     m_nozzle_status_icon = new Button(this, "", "", 0, 0);
-    m_nozzle_status_icon->SetIconButton(Button::IconShape::Circle, FromDIP(20));
+    m_nozzle_status_icon->SetIconButton(Button::IconShape::Circle, 20);
     m_nozzle_status_icon->SetGlyph(MaterialIcon::Error, FromDIP(14));
     m_nozzle_status_icon->SetGlyphColor(StateColor(std::make_pair(StateColor::semantic(MD3::Role::Error), (int) StateColor::Normal)));
     m_nozzle_status_icon->Bind(wxEVT_BUTTON, &wgtDeviceNozzleRackNozzleItem::OnBtnNozzleStatus, this);
     m_nozzle_status_icon->Bind(wxEVT_ENTER_WINDOW, [this](auto&) { SetCursor(wxCURSOR_HAND); });
     m_nozzle_status_icon->Bind(wxEVT_LEAVE_WINDOW, [this](auto&) { SetCursor(wxCURSOR_ARROW); });
-    m_nozzle_status_icon->SetBackgroundColour(*wxWHITE);
+    m_nozzle_status_icon->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_nozzle_status_icon->Show(false);
 
     label_h_sizer->Add(m_nozzle_status_icon, 0, wxALIGN_CENTER | wxLEFT, FromDIP(2));
@@ -788,19 +789,17 @@ void wgtDeviceNozzleRackNozzleItem::CreateGui()
 
     m_nozzle_label_2 = new Label(this);
     m_nozzle_label_2->SetFont(Label::Body_12);
-    m_nozzle_label_2->SetBackgroundColour(*wxWHITE);
+    m_nozzle_label_2->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     bottom_v->Add(m_nozzle_label_2, 0, wxALIGN_CENTER_HORIZONTAL);
 
     // Main sizer
     wxSizer* main_sizer = new wxBoxSizer(wxVERTICAL);
     main_sizer->Add(top_h_sizer, 0, wxEXPAND);
-    main_sizer->Add(bottom_v, 0, wxALIGN_CENTER_HORIZONTAL);
+    main_sizer->Add(bottom_v, 0, wxALIGN_CENTER_HORIZONTAL | wxALL, FromDIP(8));
     SetSizer(main_sizer);
 
-    SetMinSize(WGT_RACK_NOZZLE_SIZE);
-    SetMaxSize(WGT_RACK_NOZZLE_SIZE);
-    SetSize(WGT_RACK_NOZZLE_SIZE);
-    Layout();
+    UpdateCardPresentation();
+    MeasureCard();
 };
 
 void wgtDeviceNozzleRackNozzleItem::SetSelected(bool selected)
@@ -824,6 +823,7 @@ void wgtDeviceNozzleRackNozzleItem::SetSelected(bool selected)
             SetBorderColor(StateColor::semantic(MD3::Role::Outline));
         }
 
+        UpdateCardPresentation();
         Refresh();
     }
 }
@@ -906,7 +906,7 @@ void wgtDeviceNozzleRackNozzleItem::SetNozzleStatus(NOZZLE_STATUS status, const 
     m_nozzle_label_2->SetLabel(str2);
 
     if (update_layout) {
-        Layout();
+        MeasureCard();
     }
 }
 
@@ -975,6 +975,7 @@ void wgtDeviceNozzleRackNozzleItem::Rescale()
         break;
     }
     };
+    MeasureCard();
 };
 
 void wgtDeviceNozzleRackNozzleItem::EnableSelect()
@@ -1012,6 +1013,27 @@ void wgtDeviceNozzleRackNozzleItem::OnItemSelected(wxMouseEvent& evt)
 }
 
 
+void wgtDeviceNozzleRackNozzleItem::MeasureCard()
+{
+    m_nozzle_label_id->SetFont(Label::Head_14);
+    m_nozzle_label_1->SetFont(Label::Body_12);
+    m_nozzle_label_2->SetFont(Label::Body_12);
+    SetMinSize(wxDefaultSize);
+    InvalidateBestSize();
+    const wxSize content = GetSizer()->CalcMin();
+    SetMinSize(wxSize(std::max(FromDIP(88), content.x), std::max(FromDIP(100), content.y)));
+    Layout();
+}
+
+void wgtDeviceNozzleRackNozzleItem::UpdateCardPresentation()
+{
+    const auto fill = StateColor::semantic(m_is_disabled ? MD3::Role::SurfaceContainerHigh :
+        (m_is_selected ? MD3::Role::SecondaryContainer : MD3::Role::SurfaceContainerLowest), MD3::ColorScheme::Device);
+    SetBackgroundColor(fill);
+    SetBorderColor(StateColor::semantic(m_is_selected ? MD3::Role::Primary : MD3::Role::OutlineVariant, MD3::ColorScheme::Device));
+    for (wxWindow* child : GetChildren()) child->SetBackgroundColour(fill);
+}
+
 void wgtDeviceNozzleRackNozzleItem::SetDisable(bool disabled)
 {
     if (m_is_disabled == disabled) {
@@ -1020,15 +1042,7 @@ void wgtDeviceNozzleRackNozzleItem::SetDisable(bool disabled)
 
     m_is_disabled = disabled;
 
-    auto bg_clr = disabled ? StateColor::darkModeColorFor("#E5E7EB") : StateColor::darkModeColorFor(*wxWHITE);
-    m_nozzle_icon->SetBackgroundColour(bg_clr);
-    m_nozzle_label_id->SetBackgroundColour(bg_clr);
-    m_nozzle_label_1->SetBackgroundColour(bg_clr);
-    m_nozzle_status_icon->SetBackgroundColour(bg_clr);
-    m_nozzle_label_2->SetBackgroundColour(bg_clr);
-    m_nozzle_selected_bitmap->SetBackgroundColour(bg_clr);
-
-    SetBackgroundColor(bg_clr);
+    UpdateCardPresentation();
     Refresh();
 };
 
