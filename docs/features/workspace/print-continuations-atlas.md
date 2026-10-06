@@ -33,14 +33,35 @@ outlined reconnect action. Both use the shared medium button sizing and normal D
 lifecycle instead of fixed 24-pixel action heights.
 
 A file-local fitter wraps text before measuring height. It reserves the actual header,
-footer, nonclient frame and 12-DIP upper/lower work-area margins, then bounds only the body
-viewport. A second pass accounts for a vertical scrollbar. The full content remains in the
-scrollable virtual area. A reentry flag bounds nested layout. Nonpositive available height
-produces a zero-height body rather than arithmetic underflow or an impossible body minimum.
-The fixed header and actions still require a usable display area; arbitrarily small displays
-and unmeasured extreme custom fonts are not claimed supported.
+footer, nonclient frame and 12-DIP upper/lower work-area margins, then bounds the body
+viewport. A second pass accounts for a vertical scrollbar. Continuation is available only
+when the measured disclosure has a readable floor (up to three lines plus padding, at
+least 64 DIP for longer content) and the normal dialog width fits the work area.
 
-The fitter runs when content changes and before presentation. Address-entry status updates,
+If the work area is unknown or normal controls leave insufficient disclosure space, the
+owner enters disclosure-only mode. It moves the actual scroll body into a temporary layout
+with a Close action. The body retains its full content and both-axis scrolling; no copied
+summary replaces the disclosure. The Close tooltip reuses the existing insufficient-space
+explanation. Header/footer controls move beneath a hidden parent, preserving their own
+visibility state. The Close action invokes the owner's existing cancellation/teardown route.
+
+Requested capability is independent of presentation availability. A local button adapter
+records every caller Enable/Disable request, even a repeated Disable while presentation
+already disabled the native control. Confirmation, nozzle update, connection, retry and
+reconnect handlers also check availability before dispatch. Growth or reopening restores
+the original sizer and remeasures before restoring only the capabilities still requested.
+Changes to visibility or disabled state made during readback survive restoration.
+
+The dialog owns the active sizer; the noncopyable layout state owns only the inactive one.
+The body is detached before insertion into either layout. Windows retain one wx parent,
+and restoration reparents the normal controls before returning to their original sizer.
+A reentry flag bounds nested layout. On extremely tiny displays the readback reserves most
+of the remaining client height for disclosure and a smaller area for Close. This is a
+non-authorizing fallback, not a claim that arbitrary physical pixels can render readable
+text or a full-size button. Actual focus and pixel behavior still require native evidence.
+
+The fitter runs when content changes and before presentation, and from the production move
+and display-change event bindings. Address-entry status updates,
 serial-number fallback and DPI changes use it as well. Hidden dialogs use their parent's
 display work area. Existing centering remains, while the old extra 50-DIP upward offset in
 address entry is removed so it does not move an otherwise bounded dialog toward the edge.
@@ -50,21 +71,31 @@ waits for animation, and no new animation or opening-time network operation is a
 ## Preservation and focused evidence
 
 `ui-md3/tests/print-continuations-atlas.test.mjs` passes three tests. It compiles the actual
-production body fitter and address validator against non-window geometry doubles, exercising
-129 assertions across 100/125/150/200% scaling, both density paddings, and 360/600/1000-DIP
-work-area heights. It covers scrollbar-adjusted wrapping, retained content, nested layout,
-hidden-parent display selection, nonpositive space and existing complete-address decisions.
-Removing the actual production work-area clamp makes the executable fail the height assertion.
+production layout adapter, button capability adapter, owner fit/show methods, confirmation
+and failed-send action callbacks, cancellation callbacks, and address validator. The exact
+connection-handler entry checks run with their unchanged networking suffix replaced by an
+observation counter, so the fixture cannot connect to a printer.
 
-The reviewed baseline ledger checks 17 action/state function bodies and five action callbacks.
-Only the explicitly named `Fit()` to `fit_content()` presentation substitution is normalized.
+Its 166 owner assertions cover tiny/unknown work areas, shrink-grow-shrink, cached reopening,
+caller disable and visibility changes during readback, production move/display-change
+bindings, live cancellation, direct-event
+rejection, restored retry results, and 100/125/150/200% scaling with both density paddings.
+The doubles enforce one containing sizer per window. They are source-bound lifecycle
+observations, not proof of native ownership, scrolling, focus, cancellation pixels or fonts.
+The previous `b60bd4c8b8fa5eb0d3e5a9f706621e73f8a1a476` source fails the same owner fixture at
+`exhausted disclosure disables confirmation`; the repaired source passes. Removing the
+production work-area clamp also turns that assertion red.
+
+The baseline ledger checks 17 action/state function bodies and five action callbacks.
+Normalization permits only the named presentation-fit substitution and exact availability
+checks. The button capability adapter is compiled separately with the owner lifecycle.
 Changing the Retry modal result is rejected by the same comparison. Connection workers,
 validation conditions, result codes, cancellation, event payloads and final physical-action
-confirmation remain authoritative. The tests do not send a command or connect to a printer.
+confirmation remain authoritative after the presentation check. No hardware command ran.
 
 ## Limits, configuration and privacy
 
-There are no new strings, settings, persistence fields or catalog changes. Existing theme,
+There are no new translation keys, settings, persistence fields or catalog changes. Existing theme,
 density, language and reduced-motion settings remain the configuration route. Existing
 validation and connection failures keep their original messages and recovery choices.
 No access code, address, serial number or account data is added to diagnostics or documentation.

@@ -1,6 +1,7 @@
 #include "ReleaseNote.hpp"
 #include "PrintSetupLayout.hpp"
 #include <wx/display.h>
+#include <functional>
 #include "Widgets/MD3ScrolledWindow.hpp"
 #include "I18N.hpp"
 #include "GCodeViewer.hpp"
@@ -1104,14 +1105,120 @@ void PrintErrorDialog::rescale()
      }
 }
 
-namespace {
-// Fit only the scroll viewport. The real header and footer remain outside it.
-// No model state, event dispatch or transport work belongs in this function.
-void fit_continuation_body(wxDialog* dialog, wxScrolledWindow* body, int preferred_width,
-                           int preferred_height, bool& fitting)
+ContinuationDisclosureLayout::~ContinuationDisclosureLayout()
 {
-    if (fitting || !body || !body->GetSizer() || !dialog->GetSizer()) return;
+    // The active sizer is deleted by wxDialog. Sizers never own the windows.
+    delete (normal_sizer ? normal_sizer : readback_sizer);
+}
+
+namespace {
+// Preserve requests even when an unavailable presentation already disabled the
+// native control. A caller's repeated Disable() is still a new capability input.
+class ContinuationButton : public Button {
+public:
+    using Button::Button;
+    bool Enable(bool enabled = true) override
+    {
+        m_requested = enabled;
+        return Button::Enable(enabled && m_available);
+    }
+    void SetPresentationAvailable(bool available)
+    {
+        m_available = available;
+        Button::Enable(m_requested && available);
+    }
+private:
+    bool m_requested{true};
+    bool m_available{true};
+};
+
+void set_continuation_action_available(Button* button, bool available)
+{
+    static_cast<ContinuationButton*>(button)->SetPresentationAvailable(available);
+}
+
+void restore_continuation_layout(wxDialog* dialog, wxScrolledWindow* body, ContinuationDisclosureLayout& state)
+{
+    if (!state.normal_sizer) return;
+    state.readback_sizer->Detach(body);
+    state.body_holder->Insert(state.body_index, body, state.body_proportion, state.body_flags, state.body_border);
+    std::vector<wxWindow*> controls;
+    for (auto* child : state.hidden_controls->GetChildren()) controls.push_back(child);
+    for (auto* child : controls) child->Reparent(dialog);
+    state.close->Hide();
+    dialog->SetSizer(state.normal_sizer, false);
+    state.normal_sizer = nullptr;
+    body->SetScrollRate(0, dialog->FromDIP(8));
+}
+
+void show_continuation_readback(wxDialog* dialog, wxScrolledWindow* body, ContinuationDisclosureLayout& state,
+                               const wxSize& available, const std::function<void()>& cancel)
+{
+    if (!state.readback_sizer) {
+        state.hidden_controls = new wxPanel(dialog);
+        state.hidden_controls->Hide();
+        state.close = new Button(dialog, _L("Close"));
+        state.close->SetVariant(Button::Variant::Outlined);
+        state.close->SetButtonSize(Button::Size::Medium);
+        state.close->SetToolTip(_L("There is not enough space to show all confirmation controls. Review the details, then close this window and use a larger display area."));
+        state.close->Bind(wxEVT_BUTTON, [cancel](wxCommandEvent&) { cancel(); });
+        state.readback_sizer = new wxBoxSizer(wxVERTICAL);
+        state.readback_sizer->Add(state.close, 0, wxEXPAND);
+    }
+    state.normal_sizer = dialog->GetSizer();
+    state.body_holder = body->GetContainingSizer();
+    const auto* item = state.body_holder->GetItem(body);
+    state.body_proportion = item->GetProportion();
+    state.body_flags = item->GetFlag();
+    state.body_border = item->GetBorder();
+    state.body_index = 0;
+    for (auto* entry : state.body_holder->GetChildren()) {
+        if (entry == item) break;
+        ++state.body_index;
+    }
+    state.body_holder->Detach(body);
+    // A hidden parent preserves each control's own Show/Enable state, including
+    // caller changes made while disclosure-only mode is active.
+    std::vector<wxWindow*> controls;
+    for (auto* child : dialog->GetChildren()) {
+        if (child != body && child != state.close && child != state.hidden_controls) controls.push_back(child);
+    }
+    for (auto* child : controls) child->Reparent(state.hidden_controls);
+    state.readback_sizer->Insert(0, body, 1, wxEXPAND);
+    body->SetMinSize(wxSize(0, 0));
+    body->SetScrollRate(dialog->FromDIP(8), dialog->FromDIP(8));
+    state.close->Rescale();
+    const wxSize best = state.close->GetBestSize();
+    state.close->SetMinSize(wxSize((std::min)(best.x, available.x),
+        (std::min)(best.y, (std::max)(1, available.y / 3))));
+    state.close->Show();
+    dialog->SetSizer(state.readback_sizer, false);
+    dialog->SetMinSize(wxSize(0, 0));
+    dialog->SetClientSize(available);
+    dialog->Layout();
+    body->FitInside();
+}
+
+void bind_continuation_refresh(wxDialog* dialog, const std::function<void()>& fit)
+{
+    dialog->Bind(wxEVT_MOVE, [dialog, fit](wxMoveEvent& event) {
+        if (dialog->IsShown()) fit();
+        event.Skip();
+    });
+    dialog->Bind(wxEVT_DISPLAY_CHANGED, [dialog, fit](wxDisplayChangedEvent& event) {
+        if (dialog->IsShown()) fit();
+        event.Skip();
+    });
+}
+
+// Presentation availability is separate from the caller's action capability.
+bool fit_continuation_body(wxDialog* dialog, wxScrolledWindow* body, int preferred_width,
+                           int preferred_height, bool& fitting, ContinuationDisclosureLayout& state,
+                           const std::function<void()>& cancel)
+{
+    if (fitting || !body || !body->GetSizer() || !dialog->GetSizer()) return false;
     fitting = true;
+    restore_continuation_layout(dialog, body, state);
     const int padding = dialog->FromDIP(MD3::Metrics::active().padding);
     const auto wrap_labels = [body, padding](int width) {
         for (auto* child : body->GetChildren()) {
@@ -1131,20 +1238,32 @@ void fit_continuation_body(wxDialog* dialog, wxScrolledWindow* body, int preferr
     wxWindow* owner = !dialog->IsShown() && dialog->GetParent() ? dialog->GetParent() : dialog;
     const int index = wxDisplay::GetFromWindow(owner);
     const wxDisplay display(index == wxNOT_FOUND ? 0 : index);
+    const auto work = display.GetClientArea();
     const int nonclient = (std::max)(0, dialog->GetSize().y - dialog->GetClientSize().y);
+    const int nonclient_width = (std::max)(0, dialog->GetSize().x - dialog->GetClientSize().x);
+    bool available = work.width > 0 && work.height > 0;
     for (int pass = 0; pass < 2; ++pass) {
         wrap_labels(body->GetClientSize().x);
         const int content = body->GetSizer()->CalcMin().y;
         body->SetMinSize(wxSize(preferred_width, 0));
         const int chrome = dialog->GetSizer()->CalcMin().y + nonclient;
         const int height = PrintSetupLayout::bounded_body_height(content, preferred_height,
-            display.GetClientArea().height, chrome, dialog->FromDIP(12));
+            work.height, chrome, dialog->FromDIP(12));
+        const int readable = (std::min)(content, (std::max)(dialog->FromDIP(64), body->GetCharHeight() * 3 + 2 * padding));
+        available = available && height >= readable;
         body->SetMinSize(wxSize(preferred_width, height));
         dialog->Fit();
         dialog->Layout();
         body->FitInside();
     }
+    available = available && dialog->GetSize().x <= work.width - 2 * dialog->FromDIP(12);
+    if (!available) {
+        const int width = work.width > 0 ? (std::max)(1, work.width - nonclient_width - 2 * dialog->FromDIP(12)) : preferred_width;
+        const int height = work.height > 0 ? (std::max)(1, work.height - nonclient - 2 * dialog->FromDIP(12)) : preferred_height;
+        show_continuation_readback(dialog, body, state, wxSize(width, height), cancel);
+    }
     fitting = false;
+    return available;
 }
 } // namespace
 
@@ -1196,7 +1315,7 @@ ConfirmBeforeSendDialog::ConfirmBeforeSendDialog(wxWindow* parent, wxWindowID id
         // Footer left edge; buttons cluster right.
         GetFooterSizer()->Insert(0, show_again_row, 0, wxALIGN_CENTER_VERTICAL);
     }
-    m_button_ok = new Button(this, _L("Confirm"));
+    m_button_ok = new ContinuationButton(this, _L("Confirm"));
     m_button_ok->SetBackgroundColor(btn_bg_green);
     m_button_ok->SetBorderColor(StateColor::semantic(MD3::Role::Primary));
     m_button_ok->SetTextColor(StateColor::semantic(MD3::Role::OnPrimary));
@@ -1204,6 +1323,7 @@ ConfirmBeforeSendDialog::ConfirmBeforeSendDialog(wxWindow* parent, wxWindowID id
     m_button_ok->SetButtonSize(Button::Size::Medium);
 
     m_button_ok->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent& e) {
+        if (!m_presentation_available || !m_button_ok->IsEnabled() || !m_button_ok->IsShown()) return;
         wxCommandEvent evt(EVT_SECONDARY_CHECK_CONFIRM, GetId());
         e.SetEventObject(this);
         GetEventHandler()->ProcessEvent(evt);
@@ -1229,7 +1349,7 @@ ConfirmBeforeSendDialog::ConfirmBeforeSendDialog(wxWindow* parent, wxWindowID id
     else
         m_button_cancel->Show();
 
-    m_button_update_nozzle = new Button(this, _L("Confirm and Update Nozzle"));
+    m_button_update_nozzle = new ContinuationButton(this, _L("Confirm and Update Nozzle"));
     m_button_update_nozzle->SetBackgroundColor(btn_bg_white);
     m_button_update_nozzle->SetBorderColor(StateColor::semantic(MD3::Role::Outline));
     m_button_update_nozzle->SetTextColor(StateColor::semantic(MD3::Role::OnSurface));
@@ -1237,6 +1357,7 @@ ConfirmBeforeSendDialog::ConfirmBeforeSendDialog(wxWindow* parent, wxWindowID id
     m_button_update_nozzle->SetButtonSize(Button::Size::Medium);
 
     m_button_update_nozzle->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent& e) {
+        if (!m_presentation_available || !m_button_update_nozzle->IsEnabled() || !m_button_update_nozzle->IsShown()) return;
         wxCommandEvent evt(EVT_UPDATE_NOZZLE);
         e.SetEventObject(this);
         GetEventHandler()->ProcessEvent(evt);
@@ -1260,6 +1381,7 @@ ConfirmBeforeSendDialog::ConfirmBeforeSendDialog(wxWindow* parent, wxWindowID id
 
     CenterOnParent();
     wxGetApp().UpdateDlgDarkUI(this);
+    bind_continuation_refresh(this, [this] { fit_content(); });
 }
 
 void ConfirmBeforeSendDialog::update_text(wxString text)
@@ -1438,7 +1560,20 @@ void ConfirmBeforeSendDialog::rescale()
 
 void ConfirmBeforeSendDialog::fit_content()
 {
-    fit_continuation_body(this, m_vebview_release_note, FromDIP(480), FromDIP(480), m_fitting_content);
+    if (m_fitting_content) return;
+    m_presentation_available = fit_continuation_body(this, m_vebview_release_note, FromDIP(480), FromDIP(480), m_fitting_content, m_disclosure, [this] {
+        wxCommandEvent event(EVT_SECONDARY_CHECK_CANCEL);
+        GetEventHandler()->ProcessEvent(event);
+        on_hide();
+    });
+    set_continuation_action_available(m_button_ok, m_presentation_available);
+    set_continuation_action_available(m_button_update_nozzle, m_presentation_available);
+}
+
+bool ConfirmBeforeSendDialog::Show(bool show)
+{
+    if (show) fit_content();
+    return MD3Dialog::Show(show);
 }
 
 static void nop_deleter(InputIpAddressDialog*) {}
@@ -1611,7 +1746,7 @@ InputIpAddressDialog::InputIpAddressDialog(wxWindow *parent)
     m_img_help = new wxStaticBitmap(m_body, wxID_ANY, create_scaled_bitmap("input_access_code_x1_en", this, 198), wxDefaultPosition, wxSize(FromDIP(355), -1), 0);
 
     // Connect CTA: filled Primary pill, moved to the kit footer below.
-    m_button_ok = new Button(this, _L("Connect"));
+    m_button_ok = new ContinuationButton(this, _L("Connect"));
     m_button_ok->SetBackgroundColor(StateColor::semantic(MD3::Role::Primary));
     m_button_ok->SetBorderColor(StateColor::semantic(MD3::Role::Primary));
     m_button_ok->SetTextColor(StateColor::semantic(MD3::Role::OnPrimary));
@@ -1731,6 +1866,7 @@ InputIpAddressDialog::InputIpAddressDialog(wxWindow *parent)
         on_cancel();
         closeTimer->Stop();
     });
+    bind_continuation_refresh(this, [this] { fit_content(); });
 }
 
 void InputIpAddressDialog::switch_input_panel(int index)
@@ -1851,6 +1987,7 @@ bool InputIpAddressDialog::isIp(std::string ipstr)
 
 void InputIpAddressDialog::on_ok(wxMouseEvent& evt)
 {
+    if (!m_presentation_available || !m_button_ok->IsEnabled()) return;
     if (!m_need_input_sn) {
         on_send_retry();
         return;
@@ -1885,6 +2022,7 @@ void InputIpAddressDialog::on_ok(wxMouseEvent& evt)
 
 void InputIpAddressDialog::on_send_retry()
 {
+    if (!m_presentation_available || !m_button_ok->IsEnabled()) return;
     m_test_right_msg->Hide();
     m_test_wrong_msg->Hide();
     m_img_step3->Hide();
@@ -2208,7 +2346,9 @@ void InputIpAddressDialog::apply_form_layout()
 
 void InputIpAddressDialog::fit_content()
 {
-    fit_continuation_body(this, m_body, FromDIP(440), FromDIP(520), m_fitting_content);
+    if (m_fitting_content) return;
+    m_presentation_available = fit_continuation_body(this, m_body, FromDIP(440), FromDIP(520), m_fitting_content, m_disclosure, [this] { OnHeaderClose(); });
+    set_continuation_action_available(m_button_ok, m_presentation_available);
 }
 
 bool InputIpAddressDialog::Show(bool show)
@@ -2248,19 +2388,21 @@ bool InputIpAddressDialog::Show(bool show)
 
      wxBoxSizer *button_sizer = new wxBoxSizer(wxHORIZONTAL);
 
-     m_button_retry = new Button(this, _L("Retry"));
+     m_button_retry = new ContinuationButton(this, _L("Retry"));
      m_button_retry->SetVariant(Button::Variant::Filled);
      m_button_retry->SetButtonSize(Button::Size::Medium);
 
      m_button_retry->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &e) {
+         if (!m_presentation_available || !m_button_retry->IsEnabled() || !m_button_retry->IsShown()) return;
          EndModal(wxYES);
      });
 
-     m_button_input = new Button(this, _L("reconnect"));
+     m_button_input = new ContinuationButton(this, _L("reconnect"));
      m_button_input->SetVariant(Button::Variant::Outlined);
      m_button_input->SetButtonSize(Button::Size::Medium);
 
      m_button_input->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &e) {
+         if (!m_presentation_available || !m_button_input->IsEnabled() || !m_button_input->IsShown()) return;
          EndModal(wxAPPLY);
      });
 
@@ -2283,14 +2425,18 @@ bool InputIpAddressDialog::Show(bool show)
      wxGetApp().UpdateDlgDarkUI(this);
      MD3DialogCaption::Adopt(this);
      CentreOnParent();
- }
+     bind_continuation_refresh(this, [this] { fit_content(); });
+}
 
 void SendFailedConfirm::fit_content()
 {
+    if (m_fitting_content) return;
     m_button_retry->Rescale();
     m_button_input->Rescale();
     m_body->SetScrollRate(0, FromDIP(8));
-    fit_continuation_body(this, m_body, FromDIP(480), FromDIP(360), m_fitting_content);
+    m_presentation_available = fit_continuation_body(this, m_body, FromDIP(480), FromDIP(360), m_fitting_content, m_disclosure, [this] { EndModal(wxID_CANCEL); });
+    set_continuation_action_available(m_button_retry, m_presentation_available);
+    set_continuation_action_available(m_button_input, m_presentation_available);
 }
 
 void SendFailedConfirm::on_dpi_changed(const wxRect &suggested_rect)
