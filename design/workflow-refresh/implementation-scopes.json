@@ -307,7 +307,7 @@
     }
   ],
   "verificationBoundary": "Recorded source units are incorporated at the reviewed candidate but remain partial at nested-control level. Shell/tab followup 44cba370 is not in this candidate. See the ranked remaining implementation map in workflow-refresh.md. Runtime, capture and parity states and all 1,204 obligations remain unchanged.",
-  "reviewedCandidate": "432eb0f7f2147de49479654d0f94f1929f192fa2",
+  "reviewedCandidate": "c7868b48536e8f8277d6872bd7d8def9d8463d02",
   "incorporatedFollowupArticles": [
     {
       "family": "shell-tabs",
@@ -357,5 +357,73 @@
       "article": "docs/features/design-system/appearance-property-pages-atlas.md",
       "status": "source-incorporated-partial"
     }
-  ]
+  ],
+  "nextThreeSourceFamilies": [
+    {
+      "id": "shared-list-rows",
+      "status": "untouched-source-visual-followup",
+      "sourceAnchors": [
+        "src/slic3r/GUI/Widgets/ListBox.cpp",
+        "src/slic3r/GUI/Widgets/ListBox.hpp"
+      ],
+      "reachableFrom": [
+        {
+          "path": "src/slic3r/GUI/WorkspacePanel.cpp",
+          "needle": "m_checklist = new ListBox"
+        },
+        {
+          "path": "src/slic3r/GUI/Appearance/AppearanceEditorPopover.cpp",
+          "needle": "m_font_list = new ListBox"
+        }
+      ],
+      "intent": "Redesign measured row anatomy, checkbox/text spacing and hover/selection/focus surfaces while preserving row identities, checking, keyboard selection and scroll ownership."
+    },
+    {
+      "id": "ams-drying-pages",
+      "status": "untouched-source-visual-followup",
+      "sourceAnchors": [
+        "src/slic3r/GUI/AMSDryControl.cpp",
+        "src/slic3r/GUI/AMSDryControl.hpp"
+      ],
+      "reachableFrom": [
+        {
+          "path": "src/slic3r/GUI/Widgets/AMSControl.cpp",
+          "needle": "m_ams_dry_ctr_win->ShowModal()"
+        },
+        {
+          "path": "src/slic3r/GUI/DeviceWeb/ViewModels/DevicePage/AmsControlWeb/ViewModelActions.cpp",
+          "needle": "OpenAmsDryControlDialog(machine_obj, ams_id)"
+        }
+      ],
+      "intent": "Redesign existing humidity/status, settings, unavailable/error and guide composition. Preserve AMS/tray identity, capability routing, drying parameters, start/stop commands and confirmation paths."
+    },
+    {
+      "id": "nozzle-rack-details",
+      "status": "untouched-source-visual-followup",
+      "sourceAnchors": [
+        "src/slic3r/GUI/DeviceTab/wgtDeviceNozzleRack.cpp",
+        "src/slic3r/GUI/DeviceTab/wgtDeviceNozzleRack.h",
+        "src/slic3r/GUI/DeviceTab/wgtDeviceNozzleSelect.cpp",
+        "src/slic3r/GUI/DeviceTab/wgtDeviceNozzleSelect.h",
+        "src/slic3r/GUI/DeviceTab/wgtDeviceNozzleRackUpdate.cpp",
+        "src/slic3r/GUI/DeviceTab/wgtDeviceNozzleRackUpdate.h"
+      ],
+      "reachableFrom": [
+        {
+          "path": "src/slic3r/GUI/StatusPanel.cpp",
+          "needle": "m_panel_nozzle_rack = new wgtDeviceNozzleRack(parent)"
+        },
+        {
+          "path": "src/slic3r/GUI/AmsMappingPopup.cpp",
+          "needle": "new wgtDeviceNozzleRackSelect(m_scrolled_window)"
+        },
+        {
+          "path": "src/slic3r/GUI/DeviceTab/wgtDeviceNozzleRack.cpp",
+          "needle": "new wgtDeviceNozzleRackUpgradeDlg"
+        }
+      ],
+      "intent": "Redesign rack/toolhead cards, nozzle selection and update detail composition without changing nozzle indices, capability checks, update commands, data colors or selected state."
+    }
+  ],
+  "nextThreeSourceBoundary": "These owner files are unchanged between the design baseline and the reviewed candidate. This is direct styling coverage, not absence of functionality. Existing incomplete, missing, planned or placeholder feature obligations remain unchanged in the separate 1,204-row ledger; reachability and a proposed visual scope do not implement them."
 }

@@ -44,9 +44,10 @@ Design 3 design system.
 
 These articles record bounded source changes and their verification limits. They do not establish complete native rendering or application-wide redesign acceptance.
 
-The incorporated source inventory is pinned to `432eb0f7f2147de49479654d0f94f1929f192fa2`.
-Calibration viewport documentation includes Cantonese inline. Shell/tab and native-workflow
-navigation articles currently have no separate Cantonese companion.
+The incorporated source inventory is pinned to `c7868b48536e8f8277d6872bd7d8def9d8463d02`.
+Calibration viewport documentation includes Cantonese inline. Shell/tab now has a Cantonese
+companion; native-workflow navigation still has no separate companion. Connection/send
+continuation unit `b60bd4c8` is held outside this snapshot for a disclosure-availability repair.
 
 - [Shared controls](studio-atlas-shared-controls.md): button, card, search and menu anatomy with caller gaps.
 - [Fields and presets](studio-atlas-fields-and-presets.md): measured field geometry, validation colors and preset controls.
@@ -72,6 +73,9 @@ navigation articles currently have no separate Cantonese companion.
 - [Appearance property pages](appearance-property-pages-atlas.md): stacked property/reset groups and same-size preset-content reflow.
 - [Print preparation](../workspace/print-preparation.md): real Print workspace and existing action continuations.
 - [Print setup](../workspace/print-setup-atlas.md): destination/mapping review composition and reopening bounds.
+- [Device-name editor](../workspace/device-name-editor-atlas.md): measured validation, action hierarchy and wrapping-before-fit correction.
+- [Common floating inspector framing](gizmo-inspector-framing-atlas.md): shared plate/heading paint across twelve existing tool callers.
+- [Regex diagnostics and export details](reader-details-atlas.md): diagnostic content reflow and measured export disclosure rows.
 
 ## Design source
 
