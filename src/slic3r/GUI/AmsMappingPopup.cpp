@@ -857,8 +857,6 @@ AmsMapingPopup::AmsMapingPopup(wxWindow *parent, bool use_in_sync_dialog) :
 
      auto title_panel = new wxPanel(this, wxID_ANY);
      title_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
-     title_panel->SetSize(wxSize(-1, FromDIP(30)));
-     title_panel->SetMinSize(wxSize(-1, FromDIP(30)));
 
      m_scrolled_window = new MD3ScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL | wxHSCROLL);
      m_scrolled_window->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
@@ -869,8 +867,8 @@ AmsMapingPopup::AmsMapingPopup(wxWindow *parent, bool use_in_sync_dialog) :
 
      m_title_text = new Label(title_panel, _L("AMS Slots"));
      m_title_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
-     m_title_text->SetFont(::Label::Body_16);
-     title_sizer_v->Add(m_title_text, 0, wxALIGN_LEFT | wxLEFT,  FromDIP(15));
+     m_title_text->SetFont(::Label::Head_16);
+     title_sizer_v->Add(m_title_text, 0, wxALIGN_LEFT | wxALL, FromDIP(12));
      title_sizer_h->Add(title_sizer_v, 1, wxALIGN_CENTER, 5);
      title_panel->SetSizer(title_sizer_h);
      title_panel->Layout();
@@ -1597,6 +1595,7 @@ AmsMapingTipPopup::AmsMapingTipPopup(wxWindow *parent)
     wxBoxSizer *sizer_enable_ams = new wxBoxSizer(wxVERTICAL);
 
     m_title_enable_ams = new Label(m_panel_enable_ams, _L("Enable AMS"));
+    m_title_enable_ams->SetFont(::Label::Head_15);
     m_title_enable_ams->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_title_enable_ams->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_title_enable_ams->Wrap(-1);
@@ -1605,9 +1604,9 @@ AmsMapingTipPopup::AmsMapingTipPopup(wxWindow *parent)
     m_tip_enable_ams = new Label(m_panel_enable_ams, _L("Print with filaments in the AMS"));
     m_tip_enable_ams->SetMinSize(wxSize(FromDIP(200), FromDIP(50)));
     m_tip_enable_ams->Wrap(FromDIP(200));
-    m_tip_enable_ams->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+    m_tip_enable_ams->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     m_tip_enable_ams->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
-    sizer_enable_ams->Add(m_tip_enable_ams, 0, wxTOP, 8);
+    sizer_enable_ams->Add(m_tip_enable_ams, 0, wxTOP, FromDIP(8));
 
     wxBoxSizer *sizer_enable_ams_img;
     sizer_enable_ams_img = new wxBoxSizer(wxVERTICAL);
@@ -1633,6 +1632,7 @@ AmsMapingTipPopup::AmsMapingTipPopup(wxWindow *parent)
     sizer_disable_ams = new wxBoxSizer(wxVERTICAL);
 
     m_title_disable_ams = new Label(m_panel_disable_ams, _L("Disable AMS"));
+    m_title_disable_ams->SetFont(::Label::Head_15);
     m_title_disable_ams->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_title_disable_ams->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_title_disable_ams->Wrap(-1);
@@ -1641,7 +1641,7 @@ AmsMapingTipPopup::AmsMapingTipPopup(wxWindow *parent)
     m_tip_disable_ams = new Label(m_panel_disable_ams, _L("Print with the filament mounted on the back of chassis"));
     m_tip_disable_ams->SetMinSize(wxSize(FromDIP(200), FromDIP(50)));
     m_tip_disable_ams->Wrap(FromDIP(200));
-    m_tip_disable_ams->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+    m_tip_disable_ams->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     m_tip_disable_ams->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     sizer_disable_ams->Add(m_tip_disable_ams, 0, wxTOP, FromDIP(8));
 
