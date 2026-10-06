@@ -1653,7 +1653,7 @@ void ImGuiWrapper::tooltip(const char *label, float wrap_width)
     // Explicitly pair the opaque plate and text, independent of the calling tool.
     ImGui::PushStyleColor(ImGuiCol_PopupBg, md3_imgui_color(MD3::Role::InverseSurface));
     ImGui::PushStyleColor(ImGuiCol_Border, md3_imgui_color(MD3::Role::InversePrimary));
-    ImGui::PushStyleVar(ImGuiStyleVar_PopupRounding, static_cast<float>(MD3::Metrics::active().small_radius) * m_style_scaling);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, static_cast<float>(MD3::Metrics::active().small_radius) * m_style_scaling);
     ImGui::BeginTooltip();
     ImGui::PushTextWrapPos(wrap_width);
     ImGui::PushStyleColor(ImGuiCol_Text, md3_imgui_color(MD3::Role::InverseOn)); // tooltip plate is InverseSurface

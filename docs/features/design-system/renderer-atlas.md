@@ -28,3 +28,9 @@ All eight checks passed: six overlay/geometry source checks and two translated-c
 An initial overlay run lacked its SVG fixture in the sparse checkout. Restoring the existing resources/images read scope allowed the same check to pass. The separate native wx tooltip source suite could not load scripts/md3/check-tooltips.py, which is outside the assigned sparse scope; that suite was not a verification of the changed ImGui tooltip and remains unrun successfully here.
 
 No full build, application launch, hardware interaction, installer execution or screenshot capture was performed. Native compilation, actual hover and focus states, user-seed contrast, bilingual text fit, reduced-motion behavior and light/dark comfortable/compact rendering at supported scales still require the parent task's built-artifact verification. Source checks do not establish those results.
+
+## Tooltip rounding follow-up
+
+The initial tooltip override used PopupRounding, but the vendored ImGui tooltip flags do not include Popup. Its actual rounding selection therefore reads WindowRounding. The wrapper now overrides WindowRounding before BeginTooltip and restores the existing single style entry after EndTooltip.
+
+The focused renderer-tooltip-rounding.test.mjs check evaluates the vendored flag and rounding expressions using symbolic style values, then compares that selected member with the wrapper override and checks the single push/pop lifetime. It was observed failing against the original PopupRounding override and passing after this correction. This is source-contract evidence, not native compilation or rendered corner evidence.
