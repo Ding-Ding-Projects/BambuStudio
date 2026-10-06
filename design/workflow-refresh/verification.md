@@ -43,3 +43,13 @@ The manifest records exact source revisions for the Print workspace (`f28dad52e0
 ## Remaining proof
 
 Runtime implementation for the full surface set, no-function-loss interaction coverage, exact state fixtures, reference-viewer implementation, native text/control geometry, embedded-view layout probes, actual font metrics, keyboard/screen-reader behavior, temporal motion, localization, all supported size/scale tuples, and paired visual differences remain pending. Fonts are locally resolved by a future viewer, so byte-deterministic SVG generation alone does not establish pixel-deterministic rendering. The source boards must not be filed as production screenshot evidence.
+
+## Composition review at the combined source candidate
+
+The subsequent review started from `be5e1205dcdad8f372d2ba63f367dbd7977c29c4` in an isolated checkout. It adds `surface-contracts.json` with 28 independent surface contracts, each naming zones, anatomy, narrow-layout behavior, state changes, preserved functions, exact source anchors and ownership scopes. The implementation map records six active native scopes and ten outside-anchor followups. These counts describe assigned work and specification coverage, not completed components.
+
+`node design/workflow-refresh/check-surface-contracts.mjs` passed. With `NATIVE_DESIGN_REMOVE_ANATOMY=1`, the checker deliberately removed the confirmation surface from an in-memory fixture and exited 1 with `Missing explicit surface anatomy`. Removing the override restored a passing result. The existing `ui-md3/tests/native-feature-delivery.test.mjs` suite passed 9 of 9 cases against the refined manifest. All referenced source paths exist at the reviewed baseline.
+
+The original feature ledger is byte-for-byte unchanged relative to that baseline, including all 1,204 obligation truth states. The 56 structural boards are also unchanged: this refinement changes the detailed textual contract and ownership/evidence metadata, not their renderer input geometry or colors. The generic boards remain incomplete as exact state-specific design references, and no regeneration or new visual acceptance is claimed.
+
+Source receipts `a2be7df26cd5981da2c1e50d4c64c5e3a86609b9` and `6faff372404390ba6cd9191c12e9fa5439ce375c` are recorded separately. The first changes appearance in 23 embedded stylesheets while preserving geometry, typography metrics and callbacks; the second corrects source verification and its article without changing production CSS. Neither establishes embedded composition or runtime rendering. Reversal review distinguishes those units from functional navigation and Print work.

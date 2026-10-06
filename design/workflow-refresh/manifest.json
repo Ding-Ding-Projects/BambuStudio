@@ -1168,6 +1168,24 @@
       "scope": "Shared native neutral palette and compatibility mapping",
       "runtimeStatus": "unverified",
       "captureStatus": "missing"
+    },
+    {
+      "scope": "Product-owned embedded neutral palette, focus and color-only transitions in 23 stylesheets",
+      "classification": "appearance-only",
+      "evidence": "source-only",
+      "runtimeStatus": "unverified",
+      "captureStatus": "missing",
+      "commit": "a2be7df26cd5981da2c1e50d4c64c5e3a86609b9"
+    },
+    {
+      "scope": "Complete embedded interaction stylesheet assertions and article",
+      "classification": "verification-only",
+      "evidence": "source-only",
+      "runtimeStatus": "unverified",
+      "captureStatus": "missing",
+      "commit": "6faff372404390ba6cd9191c12e9fa5439ce375c"
     }
-  ]
+  ],
+  "surfaceContractReference": "design/workflow-refresh/surface-contracts.json",
+  "compositionReviewBase": "be5e1205dcdad8f372d2ba63f367dbd7977c29c4"
 }
