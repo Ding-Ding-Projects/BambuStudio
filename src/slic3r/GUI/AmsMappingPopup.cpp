@@ -1694,15 +1694,16 @@ AmsHumidityTipPopup::AmsHumidityTipPopup(wxWindow* parent)
     close_img = ScalableBitmap(this, "hum_popup_close", 24);
 
     m_staticText = new Label(this, _L("Current AMS humidity"));
-    m_staticText->SetFont(::Label::Head_24);
+    m_staticText->SetFont(::Label::Head_20);
+    m_body = new MD3ScrolledWindow(this, wxID_ANY);
+    m_body->SetScrollRate(0, FromDIP(10));
+    m_body->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
 
-    humidity_level_list = new AmsHumidityLevelList(this);
-    curr_humidity_img = new wxStaticBitmap(this, wxID_ANY, create_scaled_bitmap("hum_level1_light", this, 132), wxDefaultPosition, wxSize(FromDIP(132), FromDIP(132)), 0);
+    humidity_level_list = new AmsHumidityLevelList(m_body);
+    curr_humidity_img = new wxStaticBitmap(m_body, wxID_ANY, create_scaled_bitmap("hum_level1_light", this, 132), wxDefaultPosition, wxSize(FromDIP(132), FromDIP(132)), 0);
 
-    m_staticText_note = new Label(this, _L("Please change the desiccant when it is too wet. The indicator may not represent accurately in following cases : when the lid is open or the desiccant pack is changed. it take hours to absorb the moisture, low temperatures also slow down the process."));
-    m_staticText_note->SetMinSize(wxSize(FromDIP(680), -1));
-    m_staticText_note->SetMaxSize(wxSize(FromDIP(680), -1));
-    m_staticText_note->Wrap(FromDIP(680));
+    m_staticText_note = new Label(m_body, _L("Please change the desiccant when it is too wet. The indicator may not represent accurately in following cases : when the lid is open or the desiccant pack is changed. it take hours to absorb the moisture, low temperatures also slow down the process."));
+    m_staticText_note->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
 
 
     Bind(wxEVT_LEFT_UP, [this](auto& e) {
@@ -1725,19 +1726,15 @@ AmsHumidityTipPopup::AmsHumidityTipPopup(wxWindow* parent)
         }
         });
 
-    main_sizer->Add(0, 0, 0, wxTOP, FromDIP(24));
-    main_sizer->Add(m_staticText, 0, wxALIGN_CENTER, 0);
-    main_sizer->Add(0, 0, 0, wxEXPAND | wxTOP, FromDIP(28));
-    main_sizer->Add(curr_humidity_img, 0, wxALIGN_CENTER|wxLEFT|wxRIGHT, FromDIP(35));
-    main_sizer->Add(0, 0, 0, wxEXPAND | wxTOP, FromDIP(15));
-    main_sizer->Add(humidity_level_list, 0, wxALIGN_CENTER|wxLEFT|wxRIGHT, FromDIP(35));
-    main_sizer->Add(0, 0, 0, wxEXPAND | wxTOP, FromDIP(6));
-    main_sizer->Add(m_staticText_note, 0, wxALIGN_CENTER, 0);
-    main_sizer->Add(0, 0, 0, wxEXPAND | wxTOP, FromDIP(5));
-    main_sizer->Add(0, 0, 0, wxEXPAND | wxTOP, FromDIP(25));
+    auto *body_sizer = new wxBoxSizer(wxVERTICAL);
+    body_sizer->Add(curr_humidity_img, 0, wxALIGN_CENTER | wxALL, FromDIP(16));
+    body_sizer->Add(humidity_level_list, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT, FromDIP(16));
+    body_sizer->Add(m_staticText_note, 0, wxEXPAND | wxALL, FromDIP(16));
+    m_body->SetSizer(body_sizer);
+    main_sizer->Add(m_staticText, 0, wxALL, FromDIP(16));
+    main_sizer->Add(m_body, 1, wxEXPAND);
     SetSizer(main_sizer);
-    Layout();
-    Fit();
+    layout_content();
 
     Bind(wxEVT_PAINT, &AmsHumidityTipPopup::paintEvent, this);
     wxGetApp().UpdateDarkUIWin(this);
@@ -1770,8 +1767,48 @@ void AmsHumidityTipPopup::msw_rescale()
     // the list
     humidity_level_list->msw_rescale();
 
+    layout_content();
     // refresh
     Refresh();
+}
+
+void AmsHumidityTipPopup::layout_content()
+{
+    const int display = wxDisplay::GetFromWindow(GetParent() ? GetParent() : this);
+    const wxSize work = display == wxNOT_FOUND ? wxSize(FromDIP(800), FromDIP(600)) : wxDisplay(display).GetClientArea().GetSize();
+    const int padding = FromDIP(MD3::Metrics::active().padding);
+    const int width = std::max(1, std::min(FromDIP(740), work.x - FromDIP(32)));
+    const int content_width = std::max(1, width - 2 * padding - wxSystemSettings::GetMetric(wxSYS_VSCROLL_X, this));
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
+    m_body->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
+    m_staticText->SetFont(::Label::Head_20);
+    m_staticText->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+    m_staticText->Wrap(std::max(1, width - FromDIP(100)));
+    m_staticText_note->SetFont(MD3::Metrics::active().font_size <= 13 ? ::Label::Body_13 : ::Label::Body_14);
+    m_staticText_note->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+    m_staticText_note->SetBackgroundColour(m_body->GetBackgroundColour());
+    m_staticText_note->SetMinSize(wxDefaultSize);
+    m_staticText_note->Wrap(content_width);
+    m_staticText_note->InvalidateBestSize();
+    humidity_level_list->set_available_width(content_width);
+    curr_humidity_img->SetMinSize(wxSize(FromDIP(132), FromDIP(132)));
+    for (auto *item : m_body->GetSizer()->GetChildren()) item->SetBorder(padding);
+    GetSizer()->GetItem(m_staticText)->SetBorder(padding);
+    m_body->SetMinSize(wxSize(-1, 1));
+    m_body->FitInside();
+    const int heading_height = std::max(FromDIP(64), m_staticText->GetBestSize().y + 2 * padding);
+    GetSizer()->GetItem(m_staticText)->SetMinSize(wxSize(-1, heading_height - 2 * padding));
+    const int height = std::max(1, std::min(heading_height + m_body->GetSizer()->CalcMin().y, work.y - FromDIP(32)));
+    SetMinSize(wxDefaultSize);
+    SetClientSize(width, height);
+    Layout();
+    m_body->FitInside();
+}
+
+void AmsHumidityTipPopup::Popup(wxWindow *focus)
+{
+    layout_content();
+    PopupWindow::Popup(focus);
 }
 
 
@@ -2605,10 +2642,7 @@ AmsHumidityLevelList::AmsHumidityLevelList(wxWindow* parent)
     SetDoubleBuffered(true);
 #endif //__WINDOWS__
 
-    SetSize(wxSize(FromDIP(680), FromDIP(104)));
-    SetMinSize(wxSize(FromDIP(680), FromDIP(104)));
-    SetMaxSize(wxSize(FromDIP(680), FromDIP(104)));
-    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
 
     background_img = ScalableBitmap(this, "humidity_list_background", 104);
 
@@ -2618,6 +2652,7 @@ AmsHumidityLevelList::AmsHumidityLevelList(wxWindow* parent)
     }
 
     Bind(wxEVT_PAINT, &AmsHumidityLevelList::paintEvent, this);
+    set_available_width(FromDIP(680));
     wxGetApp().UpdateDarkUI(this);
 }
 
@@ -2635,6 +2670,7 @@ void AmsHumidityLevelList::msw_rescale()
         hum_level_img_dark[i].msw_rescale();
     }
 
+    set_available_width(GetSize().x);
     Refresh();
 }
 
@@ -2665,37 +2701,52 @@ void AmsHumidityLevelList::render(wxDC& dc)
 #endif
 }
 
-void AmsHumidityLevelList::doRender(wxDC& dc)
+static int humidity_legend_columns(int width, int icon_width, int gap)
 {
-    dc.DrawBitmap(background_img.bmp(), 0,0);
-
-    auto width_center = GetSize().x / 2;
-    auto left = width_center - FromDIP(27) - FromDIP(46) * 2 - FromDIP(54) * 2;
-
-
-    //dry / wet
-    dc.SetTextForeground(wxColour("#989898"));
-    dc.SetFont(::Label::Head_20);
-
-    auto font_top = GetSize().y - dc.GetTextExtent(_L("DRY")).GetHeight();
-    dc.DrawText(_L("DRY"), wxPoint(FromDIP(38), font_top / 2));
-    dc.DrawText(_L("WET"), wxPoint(( GetSize().x - FromDIP(38) -  dc.GetTextExtent(_L("DRY")).GetWidth()), font_top / 2));
-
-
-    //level list
-
-    for (int i = 0; i < hum_level_img_light.size(); i++) {
-        if (wxGetApp().dark_mode()) {
-            dc.DrawBitmap(hum_level_img_dark[i].bmp(), left, (GetSize().y - FromDIP(54)) / 2);
-        }
-        else {
-             dc.DrawBitmap(hum_level_img_light[i].bmp(), left, (GetSize().y - FromDIP(54)) / 2);
-        }
-
-        left += FromDIP(46) + FromDIP(54);
-    }
+    return std::clamp((width + gap) / std::max(1, icon_width + gap), 1, 5);
 }
 
+void AmsHumidityLevelList::set_available_width(int width)
+{
+    SetFont(::Label::Head_14);
+    const int gap = FromDIP(MD3::Metrics::active().gap);
+    const int icon_width = hum_level_img_light.front().GetBmpWidth();
+    const int icon_height = hum_level_img_light.front().GetBmpHeight();
+    width = std::max(icon_width, width);
+    const int columns = humidity_legend_columns(width, icon_width, gap);
+    const int rows = (5 + columns - 1) / columns;
+    const int text_height = std::max(GetTextExtent(_L("DRY")).y, GetTextExtent(_L("WET")).y);
+    const wxSize size(width, 2 * text_height + gap + rows * (icon_height + gap));
+    SetMinSize(size);
+    SetMaxSize(size);
+    SetSize(size);
+    InvalidateBestSize();
+}
+
+void AmsHumidityLevelList::doRender(wxDC& dc)
+{
+    dc.SetBackground(wxBrush(StateColor::semantic(MD3::Role::SurfaceContainerLow)));
+    dc.Clear();
+    dc.SetFont(::Label::Head_14);
+    dc.SetTextForeground(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+    const wxSize dry = dc.GetTextExtent(_L("DRY"));
+    const wxSize wet = dc.GetTextExtent(_L("WET"));
+    const int text_height = std::max(dry.y, wet.y);
+    // Separate lines retain both translated endpoints even when paired labels grow.
+    dc.DrawText(_L("DRY"), wxPoint(0, 0));
+    dc.DrawText(_L("WET"), wxPoint(std::max(0, GetSize().x - wet.x), text_height));
+    const int gap = FromDIP(MD3::Metrics::active().gap);
+    const int icon_width = hum_level_img_light.front().GetBmpWidth();
+    const int icon_height = hum_level_img_light.front().GetBmpHeight();
+    const int columns = humidity_legend_columns(GetSize().x, icon_width, gap);
+    for (int i = 0; i < hum_level_img_light.size(); ++i) {
+        const int row_count = std::min(columns, 5 - (i / columns) * columns);
+        const int row_width = row_count * icon_width + (row_count - 1) * gap;
+        const int x = (GetSize().x - row_width) / 2 + (i % columns) * (icon_width + gap);
+        const int y = 2 * text_height + gap + (i / columns) * (icon_height + gap);
+        dc.DrawBitmap(wxGetApp().dark_mode() ? hum_level_img_dark[i].bmp() : hum_level_img_light[i].bmp(), x, y);
+    }
+}
 DevIconLabel::DevIconLabel(wxWindow* parent, const wxString& icon, const wxString& label)
     : wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize)
 {

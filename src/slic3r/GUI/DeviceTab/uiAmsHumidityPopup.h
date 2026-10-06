@@ -11,6 +11,7 @@
 #include "slic3r/GUI/Widgets/PopupWindow.hpp"
 
 #include "slic3r/GUI/wxExtensions.hpp"
+#include <wx/scrolwin.h>
 
 //Previous defintions
 class wxGrid;
@@ -51,6 +52,9 @@ private:
     void Create();
 
 private:
+    void LayoutReadouts();
+    wxScrolledWindow *m_body{nullptr};
+    wxFlexGridSizer *m_readouts{nullptr};
     /*owner ams id*/
     std::string m_ams_id;
 
