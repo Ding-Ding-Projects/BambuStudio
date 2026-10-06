@@ -15,7 +15,8 @@ and final `DeviceManager::modify_device_name` dispatch remain unchanged.
 leading/trailing spaces, and names longer than 32 characters. Its existing message strings,
 UTF-8 conversion, selected device identity and modal result are preserved. No extra command
 is dispatched by layout or opening. The text field retains `wxTE_PROCESS_ENTER`, the
-existing Confirm binding is unchanged, and this pass adds no key or focus handlers.
+Confirm presentation wrapper calls the existing validator exactly once. It fits only when
+the dialog remains shown after validation. This pass adds no key or focus handlers.
 The existing Escape/close route remains with the same dialog base and caption.
 
 ## Layout
@@ -26,22 +27,37 @@ at the trailing edge and lets the shared button measure its translated label ins
 pinning it to 72 by 24 DIP. Its normal radius/DPI lifecycle remains active.
 
 Validation occupies a separate full-width row using the semantic error foreground. The
-existing validation handler wraps its actual message and requests layout. A presentation
-size listener responds to a growing validation label by comparing the full dialog sizer's
-measured minimum with its client area, growing either dimension if necessary. It does not
-shrink the active dialog when a message clears. A reentry flag bounds nested size events.
-The original centering call is retained; validation growth does not recenter the dialog.
+label disables native automatic resizing, so `SetLabel` cannot synchronously fit its
+intermediate unwrapped width before the existing validator reaches `Wrap`. The editor's
+allocated width remains the wrapping reference; the dialog width never comes from a raw
+validation string. The previous size-event listener is removed.
+
+After validation, a presentation-only fitter wraps the original message against the
+allocated content width, measures its wrapped height, and reserves the actual caption,
+field, footer and 12-DIP display margins. A vertical scroll area retains the full message
+when the display work area cannot hold it. Two bounded passes account for the scrollbar's
+width, and a reentry flag prevents nested fitting. Nonpositive available space produces a
+zero-height validation viewport rather than arithmetic underflow or a forced body minimum.
+The fixed field/footer still require a usable display area; an arbitrarily tiny display is
+not claimed supported. The original centering call is retained, and validation fitting
+does not recenter the dialog.
 
 ## Verification and limits
 
-`device-name-layout.test.mjs` compiles the actual production `fit_validation_content`
-method against observable size/sizer doubles. Its 48 assertions cover two density floors,
-100/125/150/200% scaling, synthetic measured long/bilingual footer and validation extents,
-large field fonts, no unnecessary resize, nested callback reentry, and absent-sizer handling.
-Deleting the growth operation fails the same executable's content-fit assertion. These
-measurements are test inputs, not a claim that native fonts were rendered.
+`device-name-layout.test.mjs` compiles the actual `Label::SetLabel`, `on_edit_name`,
+confirmation wrapper and `fit_validation_content` definitions. Observable native-control
+doubles model the synchronous automatic-size event, and synthetic long translated-message
+metrics exercise the real SetLabel, event, Wrap and fit order. Its 26 assertions cover
+100/125/150/200% scaling, stable dialog width, wrapping before fitting, work-area height
+bounds, retained scrollable content, nested fitting protection, invalid-name rejection,
+and exactly one valid-name dispatch followed by modal close without another fit.
 
-Source comparison against `6b4ebfa5a6207d66750a1a059124119229fa38cf` confirms six bodies
+Running the same test against `5b77527856e266aa952392f88d031da05f67c715` fails at
+`SetLabel must not widen the dialog before Wrap`; the repaired source passes. These
+measurements are test inputs, not rendered native-font evidence. The test uses the real
+production methods rather than supplying their final measured sizes alone.
+
+Source comparison against `5b77527856e266aa952392f88d031da05f67c715` confirms six bodies
 unchanged: validation/rename dispatch, selected-device setup, mouse edit routing, keyboard
 routing, primary activation, and the popup's user-device event bindings.
 

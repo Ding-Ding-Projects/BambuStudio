@@ -249,6 +249,8 @@ public:
 private:
     void apply_form_layout();
     void fit_validation_content();
+    void on_confirm(wxCommandEvent& event);
+    wxScrolledWindow* m_validation_view{nullptr};
     wxBoxSizer* m_form_sizer{nullptr};
     bool m_fitting_content{false};
 
