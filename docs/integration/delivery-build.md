@@ -9,11 +9,17 @@ source or normalize patch transport. Ten fixture assertions use a real nested
 Git layout, the pinned wx source and attributes, path spaces, the actual mixed
 template shape, generated setup header, and partial/conflicting semantic states.
 Replay preserves bytes; incomplete or conflicting semantic changes stop intact.
-Repository commands stream native stdout through `Out-Host` so the PowerShell
-transcript records their diagnostics. Native nonzero exit codes and terminating
-PowerShell exceptions retain their existing failure behavior; stderr is not
-suppressed or redirected. Four echo/exit/exception fixture assertions reproduce
-the old missing transcript text and verify the repaired output route. Missing
+Native production commands use `Invoke-LoggedNativeCommand`, which redirects and
+concurrently drains stdout and stderr through the PowerShell host. Both streams
+reach `Start-Transcript`, including native error text under PowerShell 5.1. The
+helper leaves `ErrorActionPreference` unchanged, propagates startup exceptions,
+and records the real process exit code for the existing exit check. It does not
+convert ordinary native stderr into a terminating PowerShell error. Arbitrary
+PowerShell exceptions still propagate through `Invoke-RepositoryCommand`.
+Twelve fixture assertions cover both streams, exit 7, concurrent output exceeding
+pipe capacity, empty arguments, spaces, quotes, trailing backslashes and Unicode.
+The former direct-native route fails the stderr transcript assertion. Cross-stream
+ordering is not guaranteed; each stream preserves its own line order. Missing
 historical output does not establish a production failure's underlying cause.
 OpenCV applies its four source patches independently through
 `cmake/modules/ApplyPatchesIdempotently.cmake`. A forward check permits an apply;

@@ -31,6 +31,7 @@ try {
     function Get-PythonInterpreterPath { return 'fixture-python' }
     function Write-BuildLog { param($Message) }
     function Invoke-RepositoryCommand { param($Label, $Command) & $Command }
+    function Invoke-LoggedNativeCommand { param($FilePath, $Arguments) & $FilePath @Arguments }
     $script:calls = @()
     $script:suffixes = @()
     function fake-cmake { $script:calls += ,@($args); $script:suffixes += $env:_CL_; $global:LASTEXITCODE = 0 }

@@ -71,6 +71,7 @@ try {
     Import-TestFunction 'Invoke-DependencyBuild'
     function Get-BuildParallelism { return 2 }
     function Invoke-RepositoryCommand { param($Label, $Command) & $Command }
+    function Invoke-LoggedNativeCommand { param($FilePath, $Arguments) & $FilePath @Arguments }
     function Write-BuildLog { param($Message) }
     $script:calls = @()
     $script:suffixes = @()
