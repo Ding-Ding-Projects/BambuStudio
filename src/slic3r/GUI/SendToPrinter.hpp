@@ -103,7 +103,7 @@ private:
     wxPanel*                            m_rename_normal_panel{ nullptr };
     wxPanel*                            m_line_materia{ nullptr };
     wxBoxSizer*                         m_storage_sizer{ nullptr };
-    wxPanel*                            m_storage_panel{ nullptr };
+    StaticBox*                          m_storage_panel{ nullptr };
     wxPanel *                           m_connecting_panel{nullptr};
     wxSimplebook*                       m_simplebook{ nullptr };
     wxStaticText*                       m_statictext_finish{ nullptr };
@@ -221,6 +221,7 @@ public:
     // Reflect the live connection status on the printer card's leading-dot label.
     void update_printer_card_status(PrintDialogStatus status);
     void Enable_Send_Button(bool en);
+    void apply_review_style();
     void on_dpi_changed(const wxRect& suggested_rect) override;
     void update_user_machine_list();
     void show_print_failed_info(bool show, int code = 0, wxString description = wxEmptyString, wxString extra = wxEmptyString);

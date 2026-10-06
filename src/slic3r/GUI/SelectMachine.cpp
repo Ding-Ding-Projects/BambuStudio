@@ -1,3 +1,5 @@
+#include "PrintSetupLayout.hpp"
+#include "PrepareInspectorLayout.hpp"
 #include "SelectMachine.hpp"
 #include "Widgets/MD3ScrolledWindow.hpp"
 #include "Widgets/LinkLabel.hpp"
@@ -272,7 +274,7 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
         e.Skip();
     });*/
 
-    m_basic_panel = new wxPanel(m_scroll_area, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
+    m_basic_panel = new StaticBox(m_scroll_area, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
     m_basic_panel->SetBackgroundColour(ThemeColor::White);
     m_basicl_sizer = new wxBoxSizer(wxHORIZONTAL);
 
@@ -480,7 +482,9 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     m_basicl_sizer->Add(0, 0, 0, wxLEFT, FromDIP(8));
     m_basicl_sizer->Add(sizer_basic_right_info, 0, wxLEFT, 0);
 
-    m_basic_panel->SetSizer(m_basicl_sizer);
+    auto basic_card_sizer = new wxBoxSizer(wxVERTICAL);
+    basic_card_sizer->Add(m_basicl_sizer, 0, wxEXPAND | wxALL, FromDIP(12));
+    m_basic_panel->SetSizer(basic_card_sizer);
     m_basic_panel->Layout();
 
 
@@ -488,8 +492,8 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     wxBoxSizer* sizer_split_filament = new wxBoxSizer(wxHORIZONTAL);
 
     auto m_stext_filament_title = new Label(m_scroll_area, _L("Filament"));
-    m_stext_filament_title->SetFont(::Label::Head_13);
-    m_stext_filament_title->SetForegroundColour(ThemeColor::TextSecondary);
+    m_stext_filament_title->SetFont(::Label::Head_16);
+    m_stext_filament_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
 
     auto m_split_line_filament = new wxPanel(m_scroll_area, wxID_ANY, wxDefaultPosition, wxSize(-1, 1), wxTAB_TRAVERSAL);
     m_split_line_filament->SetBackgroundColour(ThemeColor::Grey250);
@@ -702,7 +706,7 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     sizer_split_options->Add(0, 0, 0, wxEXPAND, 0);
     sizer_split_options->Add(m_split_options_line, 1, wxALIGN_CENTER, 0);
 
-    m_options_other = new wxPanel(m_scroll_area);
+    m_options_other = new StaticBox(m_scroll_area, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
 
 
     auto option_timelapse = new PrintOption(m_options_other, _L("Timelapse"), wxEmptyString, ops_no_auto, "timelapse");
@@ -858,7 +862,9 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     m_checkbox_list_order.push_back(option_flow_dynamics_cali);
     m_checkbox_list_order.push_back(option_nozzle_offset_cali_cali);
 
-    m_options_other->SetSizer(options_sizer);
+    auto options_card_sizer = new wxBoxSizer(wxVERTICAL);
+    options_card_sizer->Add(options_sizer, 0, wxEXPAND | wxALL, FromDIP(12));
+    m_options_other->SetSizer(options_card_sizer);
     m_options_other->Layout();
     m_options_other->Fit();
 
@@ -888,9 +894,7 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
         std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
     m_button_ensure = new Button(m_panel_prepare, _L("Send"));
     m_button_ensure->SetVariant(Button::Variant::Filled);
-    m_button_ensure->SetMinSize(SELECT_MACHINE_DIALOG_BUTTON_SIZE2);
-    m_button_ensure->SetMinSize(SELECT_MACHINE_DIALOG_BUTTON_SIZE2);
-    m_button_ensure->SetCornerRadius(FromDIP(4));
+    m_button_ensure->SetButtonSize(Button::Size::Large);
     m_button_ensure->Bind(wxEVT_BUTTON, &SelectMachineDialog::on_ok_btn, this);
 
     m_sizer_pcont->Add(0, 0, 1, wxEXPAND, 0);
@@ -908,12 +912,14 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     m_panel_sending = m_status_bar->get_panel();
     m_status_bar->set_status_height_changed_callback([this](int height) {
         const wxSize size(SELECT_MACHINE_DIALOG_SIMBOOK_SIZE2.x, height);
-        m_simplebook->SetMinSize(size);
-        m_simplebook->SetMaxSize(size);
-        m_simplebook->SetSize(size);
+        const wxSize measured(size.x, (std::max)(height, m_panel_prepare->GetBestSize().y));
+        m_simplebook->SetMinSize(measured);
+        m_simplebook->SetMaxSize(wxSize(size.x, -1));
+        m_simplebook->SetSize(measured);
         m_simplebook->Layout();
         Layout();
         Fit();
+        update_scroll_area_size();
     });
     m_simplebook->AddPage(m_panel_sending, wxEmptyString, false);
 
@@ -1059,6 +1065,7 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     sizer_main->Add(0, 0, 0, wxTOP, FromDIP(18));
 
     SetSizer(sizer_main);
+    apply_review_style();
     Layout();
     Fit();
     Thaw();
@@ -1067,6 +1074,7 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     init_timer();
     wxGetApp().UpdateDlgDarkUI(this);
     MD3DialogCaption::Adopt(this);
+    update_scroll_area_size();
     Centre(wxBOTH);
 }
 
@@ -1145,6 +1153,7 @@ void SelectMachineDialog::show_print_failed_info(bool show, int code, wxString d
         }
         Layout();
         Fit();
+        update_scroll_area_size();
     }
     else {
         if (!m_sw_print_failed_info->IsShown()) {return;}
@@ -1154,6 +1163,7 @@ void SelectMachineDialog::show_print_failed_info(bool show, int code, wxString d
         m_st_txt_extra_info->SetLabelText(wxEmptyString);
         Layout();
         Fit();
+        update_scroll_area_size();
     }
 }
 
@@ -2594,20 +2604,23 @@ void SelectMachineDialog::EnableEditing(bool enable)
     enable ? m_saveTimeText->Enable() : m_saveTimeText->Disable();
 }
 
-/*content height > FromDIP(650), make the area scrollable*/
-/*content height < FromDIP(650), make the area size as the content*/
-void SelectMachineDialog::update_scroll_area_size() {
-
-    wxSize new_size(FromDIP(700), -1);
-
-    int height = m_scroll_area->GetSizer()->CalcMin().GetHeight();
-    if (height < FromDIP(650)) {
-        new_size.SetHeight(height);
-    } else {
-        new_size.SetHeight(FromDIP(650));
-    }
-
-    if (m_scroll_area->GetSize() != new_size) {
+// Keep the footer reachable by assigning only the remaining display height to
+// the existing scroll owner. This changes geometry, never the selected page.
+void SelectMachineDialog::update_scroll_area_size()
+{
+    if (!GetSizer() || !m_scroll_area->GetSizer()) return;
+    // A newly constructed dialog is centered on its parent after this pass.
+    wxWindow* display_owner = !IsShown() && GetParent() ? GetParent() : this;
+    const int display_index = wxDisplay::GetFromWindow(display_owner);
+    const wxDisplay display(display_index == wxNOT_FOUND ? 0 : display_index);
+    const int body_minimum = (std::max)(0, m_scroll_area->GetMinSize().y);
+    const int nonclient = (std::max)(0, GetSize().y - GetClientSize().y);
+    const int chrome = (std::max)(0, GetSizer()->CalcMin().y - body_minimum) + nonclient;
+    const int height = PrintSetupLayout::bounded_body_height(
+        m_scroll_area->GetSizer()->CalcMin().y, FromDIP(650),
+        display.GetClientArea().height, chrome, FromDIP(12));
+    const wxSize new_size(FromDIP(700), height);
+    if (m_scroll_area->GetMinSize() != new_size) {
         m_scroll_area->SetMaxSize(new_size);
         m_scroll_area->SetMinSize(new_size);
         Layout();
@@ -4544,6 +4557,36 @@ void SelectMachineDialog::Enable_Send_Button(bool en)
     }
 }
 
+void SelectMachineDialog::apply_review_style()
+{
+    m_scroll_area->SetBackgroundColour(StateColor::semantic(MD3::Role::Surface));
+    for (auto* card : {m_basic_panel, m_filament_panel, m_filament_left_panel, m_filament_right_panel, m_options_other}) {
+        card->SetDensity(MD3::Metrics::isCompact() ? StaticBox::Density::Compact : StaticBox::Density::Comfortable);
+        card->SetBackgroundColor(MD3::resolve(MD3::Role::SurfaceContainerLowest, false));
+        card->SetBorderColor(MD3::resolve(MD3::Role::OutlineVariant, false));
+        card->SetBorderWidth(FromDIP(1));
+    }
+    for (auto* title : {m_filament_left_title, m_filament_right_title}) {
+        title->SetFont(Label::Head_14);
+        title->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
+    }
+    m_rename_text->SetFont(Label::Head_16);
+    const int row = PrepareInspectorLayout::row_height(FromDIP(MD3::Metrics::active().row_height),
+        m_rename_text->GetCharHeight(), m_rename_input->GetTextCtrl()->GetCharHeight(), FromDIP(6));
+    m_rename_switch_panel->SetMinSize(wxSize(FromDIP(360), row));
+    m_rename_switch_panel->SetMaxSize(wxSize(FromDIP(360), -1));
+    m_rename_input->SetMinSize(wxSize(FromDIP(360), row));
+    m_rename_input->SetMaxSize(wxSize(FromDIP(360), -1));
+    m_text_printer_msg_tips->SetMinSize(wxSize(FromDIP(420), -1));
+    m_text_printer_msg_tips->SetMaxSize(wxSize(FromDIP(420), -1));
+    m_text_printer_msg_tips->Wrap(FromDIP(420));
+    m_statictext_finish->SetFont(Label::Head_16);
+    // Progress can grow this region, but must not cap the confirmation button.
+    m_simplebook->SetMaxSize(wxSize(SELECT_MACHINE_DIALOG_SIMBOOK_SIZE2.x, -1));
+    m_simplebook->SetMinSize(wxSize(SELECT_MACHINE_DIALOG_SIMBOOK_SIZE2.x,
+        (std::max)(m_panel_prepare->GetBestSize().y, m_panel_sending->GetBestSize().y)));
+}
+
 void SelectMachineDialog::on_dpi_changed(const wxRect &suggested_rect)
 {
     print_time->msw_rescale();
@@ -4556,8 +4599,7 @@ void SelectMachineDialog::on_dpi_changed(const wxRect &suggested_rect)
         ams_mapping_help_icon->msw_rescale();
         if (img_amsmapping_tip)img_amsmapping_tip->SetBitmap(ams_mapping_help_icon->bmp());
     }
-    m_button_ensure->SetMinSize(SELECT_MACHINE_DIALOG_BUTTON_SIZE2);
-    m_button_ensure->SetCornerRadius(FromDIP(4));
+    m_button_ensure->Rescale();
     m_status_bar->msw_rescale();
 
     for (auto material1 : m_materialList) {
@@ -4576,7 +4618,9 @@ void SelectMachineDialog::on_dpi_changed(const wxRect &suggested_rect)
     m_statictext_ams_msg->Rescale();
     m_text_printer_msg->Rescale();
 
+    apply_review_style();
     Fit();
+    update_scroll_area_size();
     Refresh();
 }
 

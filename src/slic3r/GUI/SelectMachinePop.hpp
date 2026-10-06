@@ -130,6 +130,7 @@ public:
     virtual bool AcceptsFocus() const wxOVERRIDE { return true; }
     virtual bool AcceptsFocusFromKeyboard() const wxOVERRIDE { return true; }
 protected:
+    void apply_row_layout();
     void OnPaint(wxPaintEvent &event);
     void render(wxDC &dc);
     void doRender(wxDC &dc);
