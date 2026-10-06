@@ -4,6 +4,9 @@ The bundled automation companion exposes the running Bambu Studio instance and
 isolated headless slicing through MCP and a matching command-line interface.
 
 - [MCP and CLI setup](mcp-and-cli.md)
+- [Local initial-shell review](local-native-review.md),
+  explicit visible-desktop inspection bound to a completed root build;
+  [香港粵語](local-native-review.yue_HK.md). Live execution remains unverified.
 - [Command and transport reference](../../../automation/README.md)
 - [Hosted native interface verification](native-interface-verification.md),
   parameterized native-input scopes with encrypted evidence and explicit gaps.
