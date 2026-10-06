@@ -2,6 +2,17 @@
 
 ## Build bootstrap repair, 6 October 2026
 
+The baseline root build exited 1 at `2026-10-06T06:49:14Z`, after wx completed
+its install/done stamps. The transcript's terminal diagnostic is wx's umbrella
+MSB8066 custom-build code -1; the underlying diagnostic is not established by
+that transcript. Separate read-only checks prove OpenCV's first three patches
+already applied and its fourth applicable but unapplied. That is a verified
+rerun hazard, not proof of the sole baseline terminal cause. The OpenCV recipe
+now uses per-patch forward/reverse verification, skipping only proven applied
+patches and retaining both diagnostics on conflict. Nine focused fixture
+assertions pass, including the prior batch route's partial-sequence failure.
+No downloaded production source was mutated or rebuilt during this repair.
+
 Application configuration cache reuse now compares exact install/dependency
 prefixes and a recorded content identity covering relevant source trees, selected
 dependency file bytes, CMake/compiler bytes, toolchain versions and selections,

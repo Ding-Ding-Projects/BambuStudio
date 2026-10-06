@@ -48,7 +48,16 @@ message(STATUS "opencv: _use_IPP is ${_use_IPP}")
 bambustudio_add_cmake_project(OpenCV
     URL https://github.com/opencv/opencv/archive/refs/tags/4.6.0.tar.gz
     URL_HASH SHA256=1ec1cba65f9f20fe5a41fda1586e01c70ea0c9a6d7b67c9e13edf0cfe2239277
-    PATCH_COMMAND git apply ${OpenCV_DIRECTORY_FLAG} --verbose --ignore-space-change --whitespace=fix ${CMAKE_CURRENT_LIST_DIR}/0001-OpenCV-fix.patch ${CMAKE_CURRENT_LIST_DIR}/0002-clang19-macos.patch ${CMAKE_CURRENT_LIST_DIR}/0003-logical-release-build-info.patch ${CMAKE_CURRENT_LIST_DIR}/0004-relocatable-data-lookup.patch
+    PATCH_COMMAND ${CMAKE_COMMAND}
+        "-DPATCH_ROOT=${CMAKE_SOURCE_DIR}/.."
+        "-DPATCH_SOURCE=<SOURCE_DIR>"
+        "-DGIT_EXECUTABLE=${GIT_EXECUTABLE}"
+        -DPATCH_COUNT=4
+        "-DPATCH_1=${CMAKE_CURRENT_LIST_DIR}/0001-OpenCV-fix.patch"
+        "-DPATCH_2=${CMAKE_CURRENT_LIST_DIR}/0002-clang19-macos.patch"
+        "-DPATCH_3=${CMAKE_CURRENT_LIST_DIR}/0003-logical-release-build-info.patch"
+        "-DPATCH_4=${CMAKE_CURRENT_LIST_DIR}/0004-relocatable-data-lookup.patch"
+        -P "${CMAKE_CURRENT_LIST_DIR}/../../cmake/modules/ApplyPatchesIdempotently.cmake"
     CMAKE_ARGS
     -DCMAKE_POLICY_VERSION_MINIMUM=3.5
     -DBUILD_SHARED_LIBS=0

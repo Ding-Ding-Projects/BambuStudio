@@ -1,6 +1,13 @@
 # Isolated delivery builds
 
 The supported commands remain `build.bat /s` and `build-installer.bat /s`.
+OpenCV applies its four source patches independently through
+`cmake/modules/ApplyPatchesIdempotently.cmake`. A forward check permits an apply;
+a reverse check proves a patch already applied. Neither state stops with both
+original Git diagnostics. Partial sequences can be retried without rewriting
+patches or resetting their source. Nine Git/CMake fixture assertions demonstrate
+the old batch rerun failure, partial completion, stable repeat, and conflict
+refusal. These checks do not change downloaded production source.
 Squirrel tooling is reused only after its retained NuGet archive matches the
 pinned SHA-256 and every tool-file byte matches that archive. Legacy NuGet and
 old tool caches remain untouched. Verified tools use a content-addressed owned

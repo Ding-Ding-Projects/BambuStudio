@@ -2,6 +2,8 @@
 
 ## Build bootstrap repair, 6 October 2026
 
+- [x] Make OpenCV partial patch sequences repeat-safe using forward/reverse proof, with nine Git/CMake fixture assertions.
+
 - [x] Compare application cache prefixes as exact values and bind configuration reuse to source/toolchain/dependency content, with fourteen fixture/stub assertions.
 - [x] Preserve/reset owned CMake discovery cache without wiping objects; prove two-prefix discovery with seven real configure-only assertions.
 
