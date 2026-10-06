@@ -5,8 +5,16 @@
 Squirrel tool reuse now validates the retained pinned archive and all tool bytes.
 It uses a separate content-addressed owned cache, preserves legacy caches, and
 retains invalid previous owned caches before promotion. Uncertain ownership stops
-repair rather than overwriting. Ten focused fixture-archive assertions pass; no
+repair rather than overwriting. Twelve focused fixture-archive assertions pass,
+including hidden files and hidden subdirectories. Extraction occurs directly in
+cache-parent staging so TEMP can reside on another volume. No
 Squirrel executable or installer is executed by these tests.
+
+`RELEASES` now matches exact package SHA-1 and byte length for the whole produced
+set. Output promotion validates sibling staging and the final directory, retains
+prior outputs under a unique previous name, and restores them after a simulated
+post-promotion failure. Eleven focused fixture assertions pass with a mocked PE
+reader. Actual unsigned installer generation and PE validation remain pending.
 
 The source producer now pins a clean tracked `HEAD` before compilation and
 reasserts it after compilation and before and after packaging. A moved commit,

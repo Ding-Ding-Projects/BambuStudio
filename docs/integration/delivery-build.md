@@ -6,9 +6,17 @@ pinned SHA-256 and every tool-file byte matches that archive. Legacy NuGet and
 old tool caches remain untouched. Verified tools use a content-addressed owned
 cache; invalid owned caches are preserved under a unique previous-cache path
 before atomic directory promotion. An invalid cache without its ownership marker
-stops preparation and remains intact. Ten fixture-archive assertions cover warm
-reuse, tampering, missing and extra files, repair, and uncertain ownership without
+stops preparation and remains intact. Extraction uses cache-parent staging so
+temporary storage may live on another volume. Twelve fixture-archive assertions cover warm
+reuse, tampering, missing, extra, and hidden files/directories, repair, and uncertain ownership without
 executing any tool.
+`RELEASES` must describe exactly the produced packages with their actual SHA-1
+and byte length. Duplicate, unsafe, malformed, and unindexed packages stop
+promotion. The new set is validated in sibling staging, promoted by directory
+rename, and checked again. Prior output directories remain under unique previous
+names; a post-promotion validation failure restores the prior set and retains the
+failed candidate. Eleven fixture assertions exercise these cases using a mocked
+PE reader; no installer or application is executed.
 Production pins `HEAD` before compilation and requires clean tracked source
 and no nonignored untracked files, since resources and automation sources can
 otherwise enter production without belonging to that commit.

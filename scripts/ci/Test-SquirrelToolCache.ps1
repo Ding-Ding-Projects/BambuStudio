@@ -44,6 +44,16 @@ try {
     Assert-True (-not (Test-SquirrelToolTree $cache (Join-Path $cache '.verified-package.nupkg'))) 'A missing supporting file must invalidate a partial cache.'
     $null = Resolve-SquirrelTool -Version 'fixture' -TemporaryParent $fixture
     Assert-True ($script:downloads -eq 3 -and (Test-SquirrelToolTree $cache (Join-Path $cache '.verified-package.nupkg'))) 'A partial owned cache must recover.'
+    $hidden = Join-Path $cache 'tools/hidden.dll'
+    Set-Content $hidden 'unexpected hidden file'
+    [IO.File]::SetAttributes($hidden, [IO.FileAttributes]::Hidden)
+    Assert-True (-not (Test-SquirrelToolTree $cache (Join-Path $cache '.verified-package.nupkg'))) 'Hidden extra tools must invalidate the cache.'
+    Remove-Item -LiteralPath $hidden -Force
+    $hiddenDirectory = Join-Path $cache 'tools/hidden-directory'
+    New-Item $hiddenDirectory -ItemType Directory | Out-Null
+    Set-Content (Join-Path $hiddenDirectory 'extra.dll') 'unexpected nested hidden tool'
+    [IO.File]::SetAttributes($hiddenDirectory, [IO.FileAttributes]::Hidden)
+    Assert-True (-not (Test-SquirrelToolTree $cache (Join-Path $cache '.verified-package.nupkg'))) 'Hidden directories must participate in tool inventory.'
     Set-Content (Join-Path $cache 'tools/extra.dll') 'unexpected file'
     Assert-True (-not (Test-SquirrelToolTree $cache (Join-Path $cache '.verified-package.nupkg'))) 'Unexpected tool files must invalidate the cache.'
     Remove-Item (Join-Path $cache '.bambu-squirrel-cache-owner')
@@ -55,4 +65,4 @@ try {
     if (-not $fixture.StartsWith($tempRoot, [StringComparison]::OrdinalIgnoreCase)) { throw 'Fixture escaped temporary storage.' }
     Remove-Item -LiteralPath $fixture -Recurse -Force
 }
-Write-Host 'Verified Squirrel tool-cache checks passed (10 assertions; fixture archives only, no executable run).'
+Write-Host 'Verified Squirrel tool-cache checks passed (12 assertions; fixture archives only, no executable run).'

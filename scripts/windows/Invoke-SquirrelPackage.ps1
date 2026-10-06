@@ -284,7 +284,7 @@ function Test-SquirrelToolTree {
             finally { $hash.Dispose(); $stream.Dispose() }
             if ((Get-Sha256Lower -Path $file) -cne $expectedHash) { return $false }
         }
-        $actual = @(Get-ChildItem -LiteralPath (Join-Path $Directory 'tools') -File -Recurse)
+        $actual = @(Get-ChildItem -LiteralPath (Join-Path $Directory 'tools') -File -Recurse -Force)
         return $actual.Count -eq $expected.Count
     } finally { $archive.Dispose() }
 }
@@ -341,15 +341,14 @@ function Resolve-SquirrelTool {
             throw "Squirrel.Windows package SHA-256 mismatch; expected $($script:SquirrelPackageSha256), got $actual."
         }
 
-        $extractRoot = Join-Path $temporaryRoot 'package'
+        New-Item -ItemType Directory -Path $cacheParent -Force | Out-Null
+        $staging = Join-Path $cacheParent ($Version + '.staging-' + [guid]::NewGuid().ToString('N'))
+        $extractRoot = $staging
         [System.IO.Compression.ZipFile]::ExtractToDirectory($archive, $extractRoot)
         $squirrel = Join-Path $extractRoot 'tools\Squirrel.exe'
         if (-not (Test-Path -LiteralPath $squirrel -PathType Leaf)) {
             throw 'The Squirrel.Windows package did not contain tools\Squirrel.exe.'
         }
-        New-Item -ItemType Directory -Path $cacheParent -Force | Out-Null
-        $staging = Join-Path $cacheParent ($Version + '.staging-' + [guid]::NewGuid().ToString('N'))
-        [IO.Directory]::Move($extractRoot, $staging)
         Copy-Item -LiteralPath $archive -Destination (Join-Path $staging '.verified-package.nupkg')
         $script:SquirrelPackageSha256 | Set-Content -LiteralPath (Join-Path $staging '.bambu-squirrel-cache-owner') -Encoding Ascii
         if (-not (Test-SquirrelToolTree -Directory $staging -ArchivePath (Join-Path $staging '.verified-package.nupkg'))) {
@@ -488,9 +487,34 @@ function Assert-SquirrelOutputs {
     if (-not (Test-Path -LiteralPath $releases -PathType Leaf)) { throw 'Squirrel did not produce RELEASES.' }
     if ($fullPackages.Count -ne 1) { throw "Expected one Squirrel full package, found $($fullPackages.Count)." }
 
-    $releaseText = Get-Content -LiteralPath $releases -Raw
-    if ($releaseText -notmatch [regex]::Escape($fullPackages[0].Name)) {
-        throw "RELEASES does not reference '$($fullPackages[0].Name)'."
+    $indexed = @{}
+    foreach ($line in @(Get-Content -LiteralPath $releases | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })) {
+        if ($line -notmatch '^([0-9a-fA-F]{40})\s+(\S+\.nupkg)\s+([0-9]+)\s*$') {
+            throw 'RELEASES contains an invalid package row.'
+        }
+        $expectedSha1 = $Matches[1].ToLowerInvariant()
+        $name = $Matches[2]
+        $length = 0L
+        if ([IO.Path]::GetFileName($name) -cne $name -or $name.Contains('\') -or $name.Contains('/') -or
+            -not $name.StartsWith($PackageId + '-', [StringComparison]::OrdinalIgnoreCase) -or
+            -not [long]::TryParse($Matches[3], [ref]$length) -or $indexed.ContainsKey($name)) {
+            throw 'RELEASES contains an unsafe, duplicate, or invalid package identity.'
+        }
+        $path = Join-Path $ReleaseDirectory $name
+        if (-not (Test-Path -LiteralPath $path -PathType Leaf) -or
+            (Get-Item -LiteralPath $path).Length -ne $length) {
+            throw "RELEASES length or package availability does not match '$name'."
+        }
+        $stream = [IO.File]::OpenRead($path)
+        $sha1 = [Security.Cryptography.SHA1]::Create()
+        try { $actualSha1 = ([BitConverter]::ToString($sha1.ComputeHash($stream))).Replace('-', '').ToLowerInvariant() }
+        finally { $sha1.Dispose(); $stream.Dispose() }
+        if ($actualSha1 -cne $expectedSha1) { throw "RELEASES SHA-1 does not match '$name'." }
+        $indexed[$name] = $true
+    }
+    $packages = @(Get-ChildItem -LiteralPath $ReleaseDirectory -Filter '*.nupkg' -File)
+    if ($indexed.Count -ne $packages.Count -or -not $indexed.ContainsKey($fullPackages[0].Name)) {
+        throw "RELEASES does not reference exactly the produced package set, including '$($fullPackages[0].Name)'."
     }
     $archive = [System.IO.Compression.ZipFile]::OpenRead($fullPackages[0].FullName)
     try {
@@ -517,6 +541,40 @@ function Assert-SquirrelOutputs {
     }
 }
 
+function Publish-SquirrelOutputs {
+    param([string] $ReleaseDirectory, [string] $FinalDirectory, [string] $PackageId, [string] $PayloadExecutable)
+    $null = Assert-SquirrelOutputs -ReleaseDirectory $ReleaseDirectory -PackageId $PackageId -PayloadExecutable $PayloadExecutable
+    $parent = [IO.Path]::GetDirectoryName([IO.Path]::GetFullPath($FinalDirectory))
+    New-Item -ItemType Directory -Path $parent -Force | Out-Null
+    $staging = Join-Path $parent ('squirrel.staging-' + [guid]::NewGuid().ToString('N'))
+    $previous = $null
+    New-Item -ItemType Directory -Path $staging | Out-Null
+    foreach ($file in @(Get-ChildItem -LiteralPath $ReleaseDirectory -File)) {
+        Copy-Item -LiteralPath $file.FullName -Destination (Join-Path $staging $file.Name)
+    }
+    $hash = Get-Sha256Lower -Path (Join-Path $staging 'Setup.exe')
+    "$hash *Setup.exe" | Set-Content -LiteralPath (Join-Path $staging 'Setup.exe.sha256') -Encoding Ascii
+    $null = Assert-SquirrelOutputs -ReleaseDirectory $staging -PackageId $PackageId -PayloadExecutable $PayloadExecutable
+    if (Test-Path -LiteralPath $FinalDirectory) {
+        if ((Get-Item -LiteralPath $FinalDirectory).Attributes -band [IO.FileAttributes]::ReparsePoint) {
+            throw 'Squirrel output promotion cannot replace a reparse-point destination.'
+        }
+        $previous = $FinalDirectory + '.previous-' + [guid]::NewGuid().ToString('N')
+        [IO.Directory]::Move($FinalDirectory, $previous)
+    }
+    try {
+        [IO.Directory]::Move($staging, $FinalDirectory)
+        $null = Assert-SquirrelOutputs -ReleaseDirectory $FinalDirectory -PackageId $PackageId -PayloadExecutable $PayloadExecutable
+    } catch {
+        if (Test-Path -LiteralPath $FinalDirectory) {
+            [IO.Directory]::Move($FinalDirectory, ($FinalDirectory + '.failed-' + [guid]::NewGuid().ToString('N')))
+        }
+        if ($previous) { [IO.Directory]::Move($previous, $FinalDirectory) }
+        throw
+    }
+    if ($previous) { Write-SquirrelLog "Preserved the previous Squirrel output set at $previous" }
+}
+
 $resolvedPayload = (Resolve-Path -LiteralPath $PayloadDirectory).Path
 $resolvedOutput = [IO.Path]::GetFullPath($OutputDirectory)
 $squirrelVersion = $SquirrelVersion.Trim()
@@ -531,7 +589,7 @@ $finalDirectory = Join-Path $resolvedOutput 'squirrel'
 $packageCompleted = $false
 
 try {
-    New-Item -ItemType Directory -Path $temporaryRoot,$nupkgOutput,$releaseDirectory,$finalDirectory -Force | Out-Null
+    New-Item -ItemType Directory -Path $temporaryRoot,$nupkgOutput,$releaseDirectory -Force | Out-Null
     $nupkg = New-SquirrelNuGetPackage -Payload $resolvedPayload -PackageRoot $packageRoot -Id $PackageId -Version $normalizedVersion -Commit $SourceCommit -RepositoryUrl $Repository -NupkgPath (Join-Path $nupkgOutput "$PackageId.$normalizedVersion.nupkg")
     if (-not (Test-Path -LiteralPath $nupkg -PathType Leaf)) {
         throw "Squirrel input package '$nupkg' was not created."
@@ -550,9 +608,8 @@ try {
 
     $outputs = Assert-SquirrelOutputs -ReleaseDirectory $releaseDirectory -PackageId $PackageId `
         -PayloadExecutable 'bambu-studio.exe'
-    foreach ($file in @(Get-ChildItem -LiteralPath $releaseDirectory -File)) {
-        Copy-Item -LiteralPath $file.FullName -Destination (Join-Path $finalDirectory $file.Name) -Force
-    }
+    Publish-SquirrelOutputs -ReleaseDirectory $releaseDirectory -FinalDirectory $finalDirectory `
+        -PackageId $PackageId -PayloadExecutable 'bambu-studio.exe'
     $setupFinal = Join-Path $finalDirectory 'Setup.exe'
     $setupHash = Get-Sha256Lower -Path $setupFinal
     "$setupHash *Setup.exe" | Set-Content -LiteralPath (Join-Path $finalDirectory 'Setup.exe.sha256') -Encoding Ascii

@@ -2,7 +2,8 @@
 
 ## Build bootstrap repair, 6 October 2026
 
-- [x] Validate Squirrel warm-cache bytes against its pinned archive and preserve invalid prior caches, with ten fixture-only assertions.
+- [x] Validate Squirrel warm-cache bytes, including hidden files, against its pinned archive and preserve invalid prior caches, with twelve fixture-only assertions.
+- [x] Validate exact RELEASES hashes/lengths and promote one coherent output set with recoverable prior outputs, with eleven fixture assertions.
 
 - [x] Pin clean source before compilation, include nonignored untracked files, and reject source changes before packaging/build-only success, with eleven focused mocked-Git assertions.
 
