@@ -1,0 +1,115 @@
+{
+  "baseline": "df300fb9d93991751e840bdc586d2f770b47b9cf",
+  "functions": [
+    {
+      "file": "src/slic3r/GUI/Widgets/ComboBox.cpp",
+      "name": "void ComboBox::SetSelection(",
+      "sha256": "8b745ff08e20d4942f40786014e90e4311a86245a4d9dcec756ad8ca0061b188"
+    },
+    {
+      "file": "src/slic3r/GUI/Widgets/ComboBox.cpp",
+      "name": "void ComboBox::SetValue(",
+      "sha256": "8c92ebe0e2bea15e056cc2673945224c0d41bea55805d49f2991ebe3a4e4bb8b"
+    },
+    {
+      "file": "src/slic3r/GUI/Widgets/ComboBox.cpp",
+      "name": "void ComboBox::SetLabel(",
+      "sha256": "f4406663b208cfee77c3e938978b0fbb2a2880f14b36cc1fe4a7e065dcc230f8"
+    },
+    {
+      "file": "src/slic3r/GUI/Widgets/ComboBox.cpp",
+      "name": "void ComboBox::OpenDropDown(",
+      "sha256": "b7b49d66d58497cb141212efbded0cddd561dcef90c85cfcb68cce8eaadb2360"
+    },
+    {
+      "file": "src/slic3r/GUI/Widgets/ComboBox.cpp",
+      "name": "void ComboBox::keyDown(",
+      "sha256": "bc45b020ac05623dbc8bf425980c3d92a0dfe2494219ba904facb364d1fa6d36"
+    },
+    {
+      "file": "src/slic3r/GUI/Widgets/ComboBox.cpp",
+      "name": "void ComboBox::OnEdit(",
+      "sha256": "dbe2e233497786239dfd9f6f4548d77bc71503acb076fd5b08a18a217e076e2a"
+    },
+    {
+      "file": "src/slic3r/GUI/Widgets/ComboBox.cpp",
+      "name": "void ComboBox::sendComboBoxEvent(",
+      "sha256": "63ecbcb6f75d6fad9842defc840b1401102850159cea8961a869fe2e52c16fc4"
+    },
+    {
+      "file": "src/slic3r/GUI/Widgets/ComboBox.cpp",
+      "name": "void ComboBox::DoClear(",
+      "sha256": "b82be4d3284fe01b2d04be6ab9d5353f2c8056fbb9441d9447c523c8c96a2792"
+    },
+    {
+      "file": "src/slic3r/GUI/Widgets/ComboBox.cpp",
+      "name": "void ComboBox::DoDeleteOneItem(",
+      "sha256": "90bd4908b40cd3494677d452c21979ba959bf0c796f5359bb500446c5e00ce2e"
+    },
+    {
+      "file": "src/slic3r/GUI/Widgets/TextInput.cpp",
+      "name": "wxString TextInputValIntMinChecker::CheckValid(",
+      "sha256": "1930e8bd3c5251c554d0700222004d7eae80e087eecefe7ab26e4817645d9bd7"
+    },
+    {
+      "file": "src/slic3r/GUI/Widgets/TextInput.cpp",
+      "name": "wxString TextInputValIntRangeChecker::CheckValid(",
+      "sha256": "ba2a4608c0886238db9672a8eb8f9f9393f97e8cd8ee854ed5e7e1db182c157e"
+    },
+    {
+      "file": "src/slic3r/GUI/Widgets/TextInput.cpp",
+      "name": "wxString TextInputValDoubleMinChecker::CheckValid(",
+      "sha256": "784bac7904777728f42396b322e436f0a26f15044f297cecba667a30d57fde56"
+    },
+    {
+      "file": "src/slic3r/GUI/Widgets/TextInput.cpp",
+      "name": "wxString TextInputValDoubleRangeChecker::CheckValid(",
+      "sha256": "4ac575988cf45e061b1bf6b9e270c5f2f6cb7f42c1a618c6c6ce94cba255371a"
+    },
+    {
+      "file": "src/slic3r/GUI/Field.cpp",
+      "name": "void TextCtrl::propagate_value(",
+      "sha256": "df4e1b78a5fb27b2d4ed50933623f1f48f6fe29e6f4723ccf52b894632b0e8df"
+    },
+    {
+      "file": "src/slic3r/GUI/Field.cpp",
+      "name": "void TextCtrl::set_value(",
+      "sha256": "b2e5f1bd90bc8cc0d5648281b7b0e56df45b30af2356523080b8e12c31635bff"
+    },
+    {
+      "file": "src/slic3r/GUI/Field.cpp",
+      "name": "void PointCtrl::propagate_value(",
+      "sha256": "b282f41bc22d333ec256dab99bb7dcb28470d52b50b9910a06728c9bf22c66aa"
+    },
+    {
+      "file": "src/slic3r/GUI/Field.cpp",
+      "name": "void PointCtrl::set_value(const Vec2d&",
+      "sha256": "4a6998db7eee847a5bfcf7d52e88d2c0c1dfac10e846b3f7bd7390c53f58eee4"
+    },
+    {
+      "file": "src/slic3r/GUI/Field.cpp",
+      "name": "void MultiVariantTextCtrl::set_value(",
+      "sha256": "de94ffee09ca0fb947995777f264d9f756496a7aac09f871674f2d37431d29a9"
+    },
+    {
+      "file": "src/slic3r/GUI/Tab.cpp",
+      "name": "void Tab::on_roll_back_value(",
+      "sha256": "a57613cd88111daece2da8b82e33a1fefe2bf1b9662d94d53212a1b0d6581615"
+    },
+    {
+      "file": "src/slic3r/GUI/Tab.cpp",
+      "name": "void Tab::load_config(",
+      "sha256": "c2ef0db4e4da0ae833a8771aa2b47c1e37ae6e3c72923a120bd64bbd45be4206"
+    },
+    {
+      "file": "src/slic3r/GUI/BitmapComboBox.cpp",
+      "name": "bool BitmapComboBox::MSWOnDraw(",
+      "sha256": "23346f49426e4ebddb2144d32945934891828f3ca1c61fb6be214ae6463f7739"
+    },
+    {
+      "file": "src/slic3r/GUI/BitmapComboBox.cpp",
+      "name": "void BitmapComboBox::Rescale(",
+      "sha256": "3322820f3b778c31339b113c86710578b0949c6f7391bc772d37d1196635f3aa"
+    }
+  ]
+}
