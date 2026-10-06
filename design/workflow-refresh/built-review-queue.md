@@ -182,10 +182,22 @@ scroll extent, popup placement and disabled-state contrast before advancing.
 ### 6. `reader-detail-variants`
 
 - **Entry:** a visible native SearchField's `Regex builder` opens
-  `src/slic3r/GUI/Widgets/RegexBuilderPopup.cpp`. Use synthetic sample text, pattern
-  `a`, then `[`, then a valid nonmatching pattern; inspect matches, validation and
-  reference/flag rows, then Cancel. Expected: valid/invalid/no-match states differ
-  and Cancel preserves the invoking search. Do not substitute a generated image.
+  `src/slic3r/GUI/Widgets/RegexBuilderPopup.cpp`. Record the invoking query before
+  opening and record the original Regex mode, case-sensitive, multiline and
+  whole-word flag values before editing. Use synthetic sample text, enable Regex
+  mode, then enter pattern `a`, `[`, and a valid nonmatching pattern; inspect
+  matches, validation and reference rows. Toggle each other flag individually.
+  Expected: the invoking field synchronizes after every pattern/flag edit,
+  including invalid pattern text; validation does not roll back the query.
+  Press Escape while the popover has focus: it dismisses without restoring the
+  original query or flags. Explicitly restore the recorded query through the
+  invoking field and restore every recorded flag through the builder controls.
+  Observe the restored invoking query and reopen the builder to verify all four
+  flags, then dismiss it without further edits. Source anchors:
+  `SearchField::openBuilder()` in `src/slic3r/GUI/Widgets/SearchField.cpp` wires
+  the live callbacks; `RegexBuilderPopup::onPatternEdited()` synchronizes before
+  evaluation, and `Dismiss()`/`OnDismiss()` only dismiss the popover. Do not
+  substitute a generated image.
 - `File > Export > Export preferences` opens `src/slic3r/GUI/Export/ExportDialog.cpp`.
   On the fresh profile, change only format/archive selections to expose their
   explanatory fields, inspect disabled actions/tool-path disclosures, then close
