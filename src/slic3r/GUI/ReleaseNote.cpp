@@ -2420,10 +2420,12 @@ bool InputIpAddressDialog::Show(bool show)
 
      SetSizer(m_sizer_main);
      Layout();
-     fit_content();
+     Fit();
 
      wxGetApp().UpdateDlgDarkUI(this);
      MD3DialogCaption::Adopt(this);
+     // Readback must retain the complete adopted root, including its caption.
+     fit_content();
      CentreOnParent();
      bind_continuation_refresh(this, [this] { fit_content(); });
 }

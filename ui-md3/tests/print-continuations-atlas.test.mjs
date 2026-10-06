@@ -11,6 +11,7 @@ const source=process.env.BAMBU_CONTINUATION_SOURCE_REF
  ? execFileSync('git',['show',`${process.env.BAMBU_CONTINUATION_SOURCE_REF}:src/slic3r/GUI/ReleaseNote.cpp`],{cwd:root,encoding:'utf8'})
  : readFileSync(path.join(root,'src/slic3r/GUI/ReleaseNote.cpp'),'utf8');
 const header=readFileSync(path.join(root,'src/slic3r/GUI/ReleaseNote.hpp'),'utf8');
+const captionSource=readFileSync(path.join(root,'src/slic3r/GUI/Widgets/MD3DialogChrome.cpp'),'utf8');
 function definition(text,signature){
  const start=text.indexOf(signature); assert.ok(start>=0,signature);
  const body=text.indexOf('{',start);
@@ -53,11 +54,14 @@ function ownerMethods(helperText){
   definition(source,'void restore_continuation_layout(')+'\n'+definition(source,'void show_continuation_readback(');
  if(!legacy) methods+='\n'+definition(source,'void set_continuation_action_available(');
  methods+='\n'+(legacy?'void bind_continuation_refresh(wxDialog*,const function<void()>&) {}':definition(source,'void bind_continuation_refresh('));
+ methods+='\n'+definition(captionSource,'void MD3DialogCaption::Adopt(');
  methods+='\n'+helperText+'\n'+ip;
  for(const cls of ['ConfirmBeforeSendDialog','InputIpAddressDialog','SendFailedConfirm']){
   const ctor=definition(source,cls+'::'+cls+'(');
   const refresh=legacy?'':ctor.match(/bind_continuation_refresh\(this, \[this\] \{ fit_content\(\); \}\);/)[0];
-  methods+='\n'+cls+'::'+cls+'() {'+refresh+'}';
+  // Compile the actual completed layout/adoption tail, in source order.
+  const finish=cls==='SendFailedConfirm'?'auto* m_sizer_main=root;SetSizer(nullptr,false);'+ctor.slice(ctor.indexOf('SetSizer(m_sizer_main);'),ctor.lastIndexOf('}')):refresh;
+  methods+='\n'+cls+'::'+cls+'() {'+finish+'}';
   methods+='\n'+definition(source,'void '+cls+'::fit_content()');
   const signature='bool '+cls+'::Show(bool show)';
   methods+='\n'+(source.includes(signature)?definition(source,signature):signature+' { return MD3Dialog::Show(show); }');
@@ -94,10 +98,10 @@ function compileAndRun(helperText){
  }finally{assert.equal(path.dirname(directory),path.resolve(tmpdir()));assert.ok(path.basename(directory).startsWith('print-continuations-'));rmSync(directory,{recursive:true,force:true});}
 }
 test('actual owners retain disclosure, cancellation and requested capability across layout changes',()=>{
- const result=compileAndRun(helper);assert.equal(result.status,0,result.stderr);assert.match(result.stdout,/166 continuation owner assertions passed/);console.log(result.stdout.trim());
+ const result=compileAndRun(helper);assert.equal(result.status,0,result.stderr);assert.match(result.stdout,/172 continuation owner assertions passed/);console.log(result.stdout.trim());
 });
 test('removing the production display clamp is detected',()=>{
  const mutated=helper.replace(/const int height = PrintSetupLayout::bounded_body_height\([\s\S]*?FromDIP\(12\)\);/,'const int height = preferred_height;');
  assert.notEqual(mutated,helper);
- const result=compileAndRun(mutated);assert.equal(result.status,1);assert.match(result.stderr,/exhausted disclosure disables confirmation/);
+ const result=compileAndRun(mutated);assert.equal(result.status,1);assert.match(result.stderr,/constructor saves the adopted caption root before readback/);
 });

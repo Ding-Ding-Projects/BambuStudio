@@ -52,6 +52,11 @@ reconnect handlers also check availability before dispatch. Growth or reopening 
 the original sizer and remeasures before restoring only the capabilities still requested.
 Changes to visibility or disabled state made during readback survive restoration.
 
+The send-failure constructor adopts its caption before the first fallback-capable fit.
+A plain initial Fit establishes content size, then caption adoption builds the complete
+normal root. Readback therefore retains that adopted root, including the nested content
+sizer, and restoration cannot detach a later-added caption wrapper.
+
 The dialog owns the active sizer; the noncopyable layout state owns only the inactive one.
 The body is detached before insertion into either layout. Windows retain one wx parent,
 and restoration reparents the normal controls before returning to their original sizer.
@@ -76,15 +81,22 @@ and failed-send action callbacks, cancellation callbacks, and address validator.
 connection-handler entry checks run with their unchanged networking suffix replaced by an
 observation counter, so the fixture cannot connect to a printer.
 
-Its 166 owner assertions cover tiny/unknown work areas, shrink-grow-shrink, cached reopening,
+Its 172 owner assertions cover tiny/unknown work areas, shrink-grow-shrink, cached reopening,
 caller disable and visibility changes during readback, production move/display-change
 bindings, live cancellation, direct-event
 rejection, restored retry results, and 100/125/150/200% scaling with both density paddings.
-The doubles enforce one containing sizer per window. They are source-bound lifecycle
+The fixture also compiles the actual send-failure constructor completion sequence and
+`MD3DialogCaption::Adopt`, with nested sizer ownership represented by the doubles. It checks
+the initial saved caption root, body-holder nesting, growth/reopen restoration, cancellation,
+and release of both layout trees. The previous `8b8d042ed6730e80c6baeef72b71851a0ac04018`
+source fails at `constructor saves the adopted caption root before readback`. This proves
+the source-order regression in the fixture, not a native double-deletion claim.
+The doubles enforce one containing sizer per window and one owner per nested sizer. They are source-bound lifecycle
 observations, not proof of native ownership, scrolling, focus, cancellation pixels or fonts.
-The previous `b60bd4c8b8fa5eb0d3e5a9f706621e73f8a1a476` source fails the same owner fixture at
-`exhausted disclosure disables confirmation`; the repaired source passes. Removing the
-production work-area clamp also turns that assertion red.
+Before the caption sequence was added, the owner fixture rejected
+`b60bd4c8b8fa5eb0d3e5a9f706621e73f8a1a476` at
+`exhausted disclosure disables confirmation`. The repaired source passes the extended fixture. Removing the
+production work-area clamp is also detected, now by the constructor readback-state check.
 
 The baseline ledger checks 17 action/state function bodies and five action callbacks.
 Normalization permits only the named presentation-fit substitution and exact availability
