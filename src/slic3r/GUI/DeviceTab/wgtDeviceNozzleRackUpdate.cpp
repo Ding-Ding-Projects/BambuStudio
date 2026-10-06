@@ -808,7 +808,7 @@ void wgtDeviceNozzleRackHotendUpdate::Rescale()
     {
         m_icon_bitmap->SetBitmap(m_nozzle_image->bmp());
     }
-    m_status_bitmap->msw_rescale();
+    m_status_bitmap->Rescale();
     MeasureRow();
     m_icon_bitmap->Refresh();
 }
