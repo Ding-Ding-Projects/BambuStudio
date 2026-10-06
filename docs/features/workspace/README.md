@@ -50,6 +50,10 @@ work is in progress.
 - [Device fan motion](fan-motion.md) — independent telemetry-driven part and
   auxiliary fan previews with distinct input and command feedback.
 
+- [Print preparation and workflow navigation](print-preparation.md): observational
+  print review, existing explicit output and confirmation paths, and preserved
+  workspace destinations. Native rendered verification remains pending.
+
 ## Postman collections
 
 Not applicable. These are desktop workspace features with no HTTP or API

@@ -48,6 +48,8 @@ review-status: agent-drafted
 - [設備風扇動作](fan-motion.md)──獨立遙測驅動部件同
   輔助風扇預覽附帶不同輸入同命令反饋。
 
+- [打印準備同工作流程導覽](print-preparation.yue_HK.md)：只讀取狀態嘅打印檢視、原有明確輸出同確認流程，以及保留嘅工作區入口。原生畫面驗證仍然未完成。
+
 ## Postman 集合
 
 不適用。呢啲係桌面工作區特徵附帶冇 HTTP 或 API
