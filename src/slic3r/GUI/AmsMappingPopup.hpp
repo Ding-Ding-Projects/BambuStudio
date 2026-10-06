@@ -22,6 +22,7 @@
 #include <wx/spinctrl.h>
 #include <wx/artprov.h>
 #include <wx/wrapsizer.h>
+#include <wx/scrolwin.h>
 
 #include "GUI_Utils.hpp"
 #include "wxExtensions.hpp"
@@ -412,6 +413,7 @@ public:
 
 public:
     void msw_rescale();
+    void set_available_width(int width);
 
 private:
     void paintEvent(wxPaintEvent& evt);
@@ -433,6 +435,7 @@ public:
 public:
     void set_humidity_level(int level);
     void msw_rescale();
+    void Popup(wxWindow *focus = nullptr) override;
 
 private:
     virtual void OnDismiss() wxOVERRIDE {};
@@ -443,6 +446,8 @@ private:
     void doRender(wxDC& dc);
 
 private:
+    void layout_content();
+    wxScrolledWindow *m_body{nullptr};
     int current_humidity_level = 0;
 
     ScalableBitmap close_img;
