@@ -100,6 +100,8 @@ struct Dataset
     // Suggested output file stem ("project-history"); the dialog appends the
     // format extension.
     std::string file_stem;
+    // Disclosure of deliberate exclusions, never excluded names or values.
+    std::vector<std::string> exclusions;
 
     std::size_t record_count() const
     {
@@ -116,12 +118,13 @@ struct Dataset
 // Formats
 // ---------------------------------------------------------------------------
 
-enum class Format { JSON, JSONL, YAML, TOML, XML, CSV, TSV, Markdown, HTML };
+enum class Format { JSON, JSONL, YAML, TOML, XML, CSV, TSV, Markdown, HTML, SQL, JavaScript, TypeScript, Python, Go, Rust, JSONSchema, Protobuf };
 
 inline const std::vector<Format> &all_formats()
 {
     static const std::vector<Format> formats{Format::JSON, Format::JSONL, Format::YAML, Format::TOML, Format::XML,
-                                             Format::CSV,  Format::TSV,   Format::Markdown, Format::HTML};
+                                             Format::CSV, Format::TSV, Format::Markdown, Format::HTML, Format::SQL, Format::JavaScript,
+        Format::TypeScript, Format::Python, Format::Go, Format::Rust, Format::JSONSchema, Format::Protobuf};
     return formats;
 }
 
@@ -137,6 +140,15 @@ inline const char *format_name(Format f)
     case Format::TSV: return "TSV";
     case Format::Markdown: return "Markdown";
     case Format::HTML: return "HTML";
+    case Format::SQL: return "SQL (JSON document)";
+    case Format::JavaScript: return "JavaScript";
+    case Format::TypeScript: return "TypeScript";
+    case Format::Python: return "Python";
+    case Format::Go: return "Go";
+    case Format::Rust: return "Rust";
+    case Format::JSONSchema: return "JSON Schema (exact snapshot)";
+    case Format::Protobuf: return "Protobuf text (JSON bytes)";
+
     }
     return "?";
 }
@@ -153,6 +165,15 @@ inline const char *format_extension(Format f)
     case Format::TSV: return "tsv";
     case Format::Markdown: return "md";
     case Format::HTML: return "html";
+    case Format::SQL: return "sql";
+    case Format::JavaScript: return "js";
+    case Format::TypeScript: return "ts";
+    case Format::Python: return "py";
+    case Format::Go: return "go";
+    case Format::Rust: return "rs";
+    case Format::JSONSchema: return "schema.json";
+    case Format::Protobuf: return "textproto";
+
     }
     return "txt";
 }

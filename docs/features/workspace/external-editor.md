@@ -58,3 +58,18 @@ an auto-detected editor.
   (review findings on silent Custom fallback fixed).
 - UI captured in the screenshot matrix under `docs/screenshots/preferences/`
   (General tab rows) once built into the running exe.
+
+
+## Dedicated export handoff
+
+The shared export dialog uses `open_export_in_visual_studio_code(target_utf8)` rather
+than the general preferred-editor fallback. It re-detects stable and Insiders installs,
+checks per-user and machine locations, and resolves portable executables placed on
+PATH. The target must exist. Arguments are passed as a vector with an option separator;
+a directory opens as a new workspace root. No unrelated editor is substituted.
+
+When Code is missing, the dialog shows an explicit Download VS Code action opening the
+official download page. Installing Code then retrying does not require an application
+restart. Missing output or launch errors are reported in the dialog. The user-selected
+general editor preference is unchanged. Native GUI compile and interaction evidence for
+this new action remains pending; console export tests do not verify this surface.

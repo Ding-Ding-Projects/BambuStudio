@@ -10,6 +10,10 @@
 #include <filesystem>
 #include <fstream>
 #include <string>
+#include <thread>
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
 using namespace Slic3r::GUI::Export;
 namespace fs = std::filesystem;
@@ -394,7 +398,7 @@ TEST_CASE("7-Zip switch mapping covers every option", "[export][archive][7z]")
     CHECK(has("-ms=512m"));
     CHECK(has("-mmt=4"));
     CHECK(has("-v100m"));
-    CHECK(has("-ps3cret pass"));
+    CHECK(has("-p"));
     CHECK(has("-mhe=on"));
     CHECK(!seven_zip_filenames_visible(o));
 
@@ -484,4 +488,213 @@ TEST_CASE("run_export writes a data file, a sidecar and a ZIP", "[export][job]")
         CHECK(out.command_line.find("-p***") != std::string::npos);
         CHECK(fs::exists(job.output_path));
     }
+}
+
+
+TEST_CASE("Preference export excludes unknown sections keys and invalid safe values", "[export][privacy]")
+{
+    CHECK(preference_export_allowed("", "dark_color_mode", "1"));
+    CHECK(preference_export_allowed("", "motion_preference", "reduced"));
+    CHECK_FALSE(preference_export_allowed("", "access_token", "example"));
+    CHECK_FALSE(preference_export_allowed("custom", "dark_color_mode", "1"));
+    CHECK_FALSE(preference_export_allowed("", "future_setting", "1"));
+    CHECK_FALSE(preference_export_allowed("", "dark_color_mode", "unexpected private text"));
+    CHECK_FALSE(preference_export_allowed("", "personal_vocabulary", "{}"));
+}
+
+TEST_CASE("Invalid encrypted output is rejected before staging spawning or overwriting", "[export][privacy]")
+{
+    TempDir tmp;
+    const auto target = tmp.path() / "keep.7z";
+    { std::ofstream out(target); out << "existing output"; }
+    ArchiveOptions options;
+    options.format = ArchiveFormat::SevenZip;
+    options.password.assign(1025, 'x'); // Synthetic in-memory marker, never a credential.
+    SevenZipLocation location;
+    location.found = true;
+    location.executable = tmp.path() / "must-not-run.exe";
+    const auto result = write_seven_zip(target, {{"data.json", "{}"}}, options, location);
+    CHECK_FALSE(result.ok);
+    CHECK(result.command_line.empty());
+    CHECK_FALSE(result.error.empty());
+    std::ifstream in(target); std::string text; std::getline(in, text);
+    CHECK(text == "existing output");
+    for (bool display : {false, true})
+        for (const auto &arg : seven_zip_switches(options, display))
+            CHECK(arg.find(options.password) == std::string::npos);
+}
+
+TEST_CASE("Source formats preserve JSON payloads and disclose exclusions", "[export][formats]")
+{
+    auto dataset = structured_fixture();
+    dataset.root.set("large", Value::from_int(9007199254740993LL));
+    dataset.exclusions.push_back("One private field omitted");
+    for (auto format : {Format::SQL, Format::JavaScript, Format::TypeScript, Format::Python, Format::Go, Format::Rust, Format::JSONSchema, Format::Protobuf}) {
+        const auto result = serialize(dataset, format);
+        CHECK_FALSE(result.body.empty());
+        CHECK_FALSE(compute_loss_report(dataset, format).lossless);
+        CHECK(format_from_extension(format_extension(format)) == format);
+        if (format != Format::SQL) CHECK(result.body.find("9007199254740993") != std::string::npos);
+    }
+}
+
+
+TEST_CASE("Encrypted archive verification uses real 7-Zip and rejects visible headers", "[export][privacy]")
+{
+#ifdef _WIN32
+    const auto location = find_seven_zip();
+    if (!location.found) { WARN("7-Zip integration unavailable on this host"); return; }
+    TempDir tmp;
+    ArchiveOptions options;
+    options.format = ArchiveFormat::SevenZip;
+    options.password = std::string(24, 'x') + "\xe6\xb8\xac";
+    const auto archive = write_seven_zip(tmp.path() / "private.7z", {{"private-name.txt", "round trip"}}, options, location);
+    INFO(archive.error);
+    REQUIRE(archive.ok); // Production path tests content and rejects no-password header listing.
+    CHECK(archive.command_line.find(options.password) == std::string::npos);
+    CHECK(archive.command_line.find("-p***") != std::string::npos);
+    options.encrypt_headers = false;
+    CHECK_FALSE(write_seven_zip(tmp.path() / "visible.7z", {{"name", "content"}}, options, location).ok);
+    CHECK_FALSE(fs::exists(tmp.path() / "visible.7z"));
+    options.encrypt_headers = true;
+    options.password += "\n";
+    CHECK_FALSE(write_seven_zip(tmp.path() / "newline.7z", {{"name", "content"}}, options, location).ok);
+    CHECK_FALSE(fs::exists(tmp.path() / "newline.7z"));
+#endif
+}
+
+
+TEST_CASE("Preset export excludes connection credentials and free form fields", "[export][privacy]")
+{
+    CHECK(preset_export_allowed("layer_height", "0.2"));
+    CHECK(preset_export_allowed("sparse_infill_density", "15%"));
+    CHECK_FALSE(preset_export_allowed("printhost_apikey", "example"));
+    CHECK_FALSE(preset_export_allowed("printhost_password", "example"));
+    CHECK_FALSE(preset_export_allowed("print_host", "https://example.invalid"));
+    CHECK_FALSE(preset_export_allowed("machine_start_gcode", "example"));
+    CHECK_FALSE(preset_export_allowed("layer_height", "private text"));
+}
+
+
+TEST_CASE("Overwrite authorization is exact and includes sidecars", "[export][privacy]")
+{
+    TempDir tmp;
+    ExportJob job;
+    job.dataset = tabular_fixture();
+    job.format = Format::CSV;
+    job.output_path = tmp.path() / "rows.csv";
+    REQUIRE(run_export(job).ok);
+    CHECK_FALSE(run_export(job).ok);
+    job.overwrite_approved_paths = {job.output_path};
+    CHECK_FALSE(run_export(job).ok);
+    job.overwrite_approved_paths = planned_output_paths(job);
+    CHECK(run_export(job).ok);
+    job.output_path = tmp.path() / "other.csv";
+    { std::ofstream other(job.output_path); other << "preserve"; }
+    CHECK_FALSE(run_export(job).ok);
+    std::ifstream other(job.output_path); std::string text; std::getline(other, text);
+    CHECK(text == "preserve");
+}
+
+
+TEST_CASE("Cancellation before publication preserves primary and sidecar", "[export][cancellation]")
+{
+    TempDir tmp;
+    ExportJob job;
+    job.dataset = tabular_fixture(); job.format = Format::CSV;
+    job.output_path = tmp.path() / "rows.csv";
+    REQUIRE(run_export(job).ok);
+    job.overwrite_approved_paths = planned_output_paths(job);
+    const auto before = fs::file_size(job.output_path);
+    job.control = std::make_shared<ExportControl>();
+    REQUIRE(job.control->request_cancel());
+    const auto result = run_export(job);
+    CHECK_FALSE(result.ok); CHECK(result.cancelled);
+    CHECK(fs::file_size(job.output_path) == before);
+    CHECK(fs::exists(tmp.path() / "rows.csv.meta.json"));
+    ExportControl publication;
+    REQUIRE(publication.begin_publication());
+    CHECK_FALSE(publication.request_cancel());
+}
+
+TEST_CASE("A changed destination is not overwritten by an asynchronous export", "[export][cancellation]")
+{
+    TempDir tmp;
+    ExportJob job;
+    job.dataset = structured_fixture();
+    job.dataset.root.set("payload", Value::from_string(std::string(16000000, 'a')));
+    job.output_path = tmp.path() / "output.json";
+    { std::ofstream out(job.output_path); out << "before"; }
+    job.overwrite_approved_paths = {job.output_path};
+    job.control = std::make_shared<ExportControl>();
+    ExportOutcome outcome;
+    std::thread worker([&] { outcome = run_export(job); });
+    const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+    while (job.control->phase != ExportPhase::Serializing && std::chrono::steady_clock::now() < deadline)
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    const bool observed = job.control->phase == ExportPhase::Serializing;
+    if (observed) { std::ofstream out(job.output_path); out << "another writer"; }
+    worker.join();
+    REQUIRE(observed);
+    CHECK_FALSE(outcome.ok);
+    std::ifstream in(job.output_path); std::string text; std::getline(in, text);
+    CHECK(text == "another writer");
+}
+
+TEST_CASE("Cancellation terminates only the owned archive child", "[export][cancellation]")
+{
+#ifdef _WIN32
+    const char *helper = std::getenv("EXPORT_TEST_CHILD");
+    if (!helper) { WARN("Set EXPORT_TEST_CHILD to the compiled archive_test_child.exe for child-process cancellation coverage"); return; }
+    TempDir tmp;
+    ExportJob job;
+    job.dataset = structured_fixture(); job.archive.format = ArchiveFormat::SevenZip;
+    job.output_path = tmp.path() / "cancelled.7z"; job.seven_zip_override = helper;
+    job.control = std::make_shared<ExportControl>();
+    ExportOutcome outcome;
+    std::thread worker([&] { outcome = run_export(job); });
+    DWORD pid = 0;
+    const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+    while (!pid && std::chrono::steady_clock::now() < deadline) {
+        for (const auto &entry : fs::recursive_directory_iterator(tmp.path()))
+            if (entry.path().filename() == "child.pid") { std::ifstream in(entry.path()); in >> pid; }
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+    HANDLE child = pid ? OpenProcess(SYNCHRONIZE, FALSE, pid) : nullptr;
+    const auto start = std::chrono::steady_clock::now();
+    const bool accepted = job.control->request_cancel();
+    worker.join();
+    CHECK(accepted); REQUIRE(pid != 0);
+    CHECK(outcome.cancelled); CHECK_FALSE(outcome.ok);
+    CHECK_FALSE(fs::exists(job.output_path));
+    CHECK(std::chrono::steady_clock::now() - start < std::chrono::seconds(5));
+    if (child) { CHECK(WaitForSingleObject(child, 0) == WAIT_OBJECT_0); CloseHandle(child); }
+#endif
+}
+
+
+TEST_CASE("ZIP cancellation never publishes a partially compressed output", "[export][cancellation]")
+{
+    TempDir tmp;
+    auto control = std::make_shared<ExportControl>();
+    REQUIRE(control->request_cancel());
+    const auto result = write_zip(tmp.path() / "partial.zip", {{"large", std::string(100000, 'a')}}, control);
+    CHECK_FALSE(result.ok);
+    CHECK_FALSE(fs::exists(tmp.path() / "partial.zip"));
+}
+
+
+TEST_CASE("Confirmation snapshot cannot overwrite a newly replaced destination", "[export][cancellation]")
+{
+    TempDir tmp;
+    ExportJob job;
+    job.dataset = structured_fixture(); job.output_path = tmp.path() / "output.json";
+    { std::ofstream out(job.output_path); out << "confirmed original"; }
+    job.overwrite_approved_paths = {job.output_path};
+    const auto captured = inspect_output_target(job.output_path);
+    REQUIRE(captured.has_value()); job.destination_snapshots = {*captured};
+    { std::ofstream out(job.output_path); out << "new unconfirmed content"; }
+    CHECK_FALSE(run_export(job).ok);
+    std::ifstream in(job.output_path); std::string text; std::getline(in, text);
+    CHECK(text == "new unconfirmed content");
 }

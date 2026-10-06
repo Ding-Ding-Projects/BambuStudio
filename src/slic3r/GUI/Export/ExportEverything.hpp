@@ -9,12 +9,18 @@
 #include "ExportFormats.hpp"
 
 #include <filesystem>
+#include <atomic>
+#include <memory>
 #include <map>
 #include <optional>
 #include <string>
 #include <vector>
 
 namespace Slic3r::GUI::Export {
+
+// Only reviewed non-sensitive preference keys and bounded values are exportable.
+bool preset_export_allowed(const std::string &key, const std::string &value);
+bool preference_export_allowed(const std::string &section, const std::string &key, const std::string &value);
 
 // --- Capability matrix -----------------------------------------------------
 
@@ -41,6 +47,22 @@ std::string markdown_cell(const std::string &text);
 // Apply the requested line ending to LF-normalized text.
 std::string apply_line_ending(const std::string &lf_text, LineEnding le);
 
+enum class ExportPhase { Preparing, Serializing, Writing, Compressing, Verifying, Publishing, Finished };
+struct ExportControl {
+    enum class State { Running, CancelRequested, Publishing, Finished };
+    std::atomic<State> state{State::Running};
+    std::atomic<ExportPhase> phase{ExportPhase::Preparing};
+    bool request_cancel() {
+        auto expected = State::Running;
+        return state.compare_exchange_strong(expected, State::CancelRequested) || expected == State::CancelRequested;
+    }
+    bool cancelled() const { return state.load() == State::CancelRequested; }
+    bool begin_publication() {
+        auto expected = State::Running;
+        return state.compare_exchange_strong(expected, State::Publishing);
+    }
+};
+
 // --- Archives --------------------------------------------------------------
 
 struct ArchiveEntry
@@ -65,10 +87,12 @@ struct ArchiveResult
 
 // Write `entries` into a ZIP at `archive_path` via miniz (Deflate). ZIP here is
 // never encrypted; the dialog says so rather than offering a password.
-ArchiveResult write_zip(const std::filesystem::path &archive_path, const std::vector<ArchiveEntry> &entries);
+ArchiveResult write_zip(const std::filesystem::path &archive_path, const std::vector<ArchiveEntry> &entries,
+                        const std::shared_ptr<ExportControl> &control = {});
 
 // Map the archive options to 7-Zip switches (without the "a", the archive
-// name or the file list). `redact_password` replaces the -p value with "***".
+// name or the file list). Password values never enter switches. The legacy
+// boolean selects display redaction; execution uses bare -p and private stdin.
 std::vector<std::string> seven_zip_switches(const ArchiveOptions &options, bool redact_password = false);
 
 // Human cost hints for the current options ("Ultra needs about 700 MiB RAM").
@@ -94,12 +118,24 @@ SevenZipLocation find_seven_zip(const std::filesystem::path &override = {});
 ArchiveResult write_seven_zip(const std::filesystem::path &archive_path,
                               const std::vector<ArchiveEntry> &entries,
                               const ArchiveOptions &options,
-                              const SevenZipLocation &seven_zip);
+                              const SevenZipLocation &seven_zip,
+                              const std::shared_ptr<ExportControl> &control = {});
 
 // --- One-shot export job ---------------------------------------------------
 
+struct ExportTargetSnapshot {
+    bool exists = false;
+    std::uintmax_t size = 0;
+    std::filesystem::file_time_type time{};
+    std::uint64_t identity = 0;
+    unsigned long volume = 0;
+    std::filesystem::path path;
+};
+std::optional<ExportTargetSnapshot> inspect_output_target(const std::filesystem::path &path);
+
 struct ExportJob
 {
+    std::shared_ptr<ExportControl> control;
     Dataset               dataset;
     Format                format{Format::JSON};
     SerializeOptions      serialize_options;
@@ -108,11 +144,16 @@ struct ExportJob
     // archive it is the .zip/.7z and the data file lives inside it.
     std::filesystem::path output_path;
     std::filesystem::path seven_zip_override;
+    // Explicitly confirmed exact existing targets. Empty means never overwrite.
+    std::vector<std::filesystem::path> overwrite_approved_paths;
+    // Captured before user confirmation. A changed target invalidates approval.
+    std::vector<ExportTargetSnapshot> destination_snapshots;
 };
 
 struct ExportOutcome
 {
     bool                     ok{false};
+    bool                     cancelled{false};
     std::string              error;
     std::filesystem::path    written_path;
     std::vector<std::string> members; // files inside the archive, or the single file name
@@ -120,6 +161,7 @@ struct ExportOutcome
     std::string              command_line;
 };
 
+std::vector<std::filesystem::path> planned_output_paths(const ExportJob &job);
 ExportOutcome run_export(const ExportJob &job);
 
 } // namespace Slic3r::GUI::Export

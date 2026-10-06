@@ -1,4 +1,5 @@
 #include "ExportDatasets.hpp"
+#include "ExportEverything.hpp"
 
 #include "libslic3r/AppConfig.hpp"
 #include "libslic3r/ExtrusionEntity.hpp"
@@ -113,11 +114,17 @@ Dataset app_config_dataset(const AppConfig &config)
     d.kind           = DatasetKind::Structured;
     d.file_stem      = "preferences";
     d.root           = Value::make_object();
+    std::size_t excluded = 0;
     for (const auto &section : config.storage()) {
         Value sec = Value::make_object();
-        for (const auto &kv : section.second) sec.set(kv.first, Value::from_string(kv.second));
-        d.root.set(section.first.empty() ? std::string("app") : section.first, std::move(sec));
+        for (const auto &kv : section.second) {
+            if (preference_export_allowed(section.first, kv.first, kv.second))
+                sec.set(kv.first, Value::from_string(kv.second));
+            else ++excluded;
+        }
+        if (!sec.object.empty()) d.root.set("app", std::move(sec));
     }
+    if (excluded) d.exclusions.push_back(std::to_string(excluded) + " settings omitted: credentials, paths, identifiers, private customizations and unreviewed values are excluded. This is not a complete settings backup.");
     return d;
 }
 
@@ -143,7 +150,13 @@ Dataset preset_dataset(const Preset &preset, const std::string &preset_type)
     d.root.set("filament_id", Value::from_string(preset.filament_id));
     d.root.set("base_id", Value::from_string(preset.base_id));
     Value options = Value::make_object();
-    for (const std::string &key : preset.config.keys()) options.set(key, Value::from_string(preset.config.opt_serialize(key)));
+    std::size_t excluded = 0;
+    for (const std::string &key : preset.config.keys()) {
+        const auto value = preset.config.opt_serialize(key);
+        if (preset_export_allowed(key, value)) options.set(key, Value::from_string(value));
+        else ++excluded;
+    }
+    if (excluded) d.exclusions.push_back(std::to_string(excluded) + " preset options omitted: only reviewed numeric printing settings are included. Connection credentials, free-form scripts and unreviewed fields are excluded. This is not a complete preset backup.");
     d.root.set("options", std::move(options));
     return d;
 }

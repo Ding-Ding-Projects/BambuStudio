@@ -3,6 +3,10 @@
 #include "slic3r/GUI/Widgets/MD3ScrolledWindow.hpp"
 
 #include "ExportEverything.hpp"
+#include "slic3r/Utils/ExternalEditor.hpp"
+#include "slic3r/GUI/Widgets/SuperConfirmGate.hpp"
+#include <wx/utils.h>
+#include <stdexcept>
 
 #include "slic3r/GUI/GUI_App.hpp"
 #include "slic3r/GUI/I18N.hpp"
@@ -109,11 +113,19 @@ wxString join_lines(const std::vector<std::string> &lines)
 
 ExportDialog::ExportDialog(wxWindow *parent, Dataset dataset)
     : DPIDialog(parent, wxID_ANY, _L("Export"), wxDefaultPosition, wxDefaultSize, wxRESIZE_BORDER | wxBORDER_NONE)
+    , m_export_timer(this)
     , m_dataset(std::move(dataset))
 {
     const std::string override = wxGetApp().app_config != nullptr ? wxGetApp().app_config->get(CONFIG_SECTION, CONFIG_SEVEN_ZIP) : std::string();
     m_seven_zip = find_seven_zip(override.empty() ? std::filesystem::path() : std::filesystem::path(override));
 
+    Bind(wxEVT_TIMER, &ExportDialog::poll_export, this, m_export_timer.GetId());
+    Bind(wxEVT_CLOSE_WINDOW, [this](wxCloseEvent &event) {
+        if (m_async && event.CanVeto()) {
+            cancel_export(); event.Veto(); return;
+        }
+        event.Skip();
+    });
     create_ui();
     apply_theme();
     populate_formats();
@@ -129,7 +141,14 @@ ExportDialog::ExportDialog(wxWindow *parent, Dataset dataset)
     MD3DialogCaption::FinishChrome(this);
 }
 
-ExportDialog::~ExportDialog() = default;
+ExportDialog::~ExportDialog()
+{
+    m_export_timer.Stop();
+    if (m_async) m_async->control->request_cancel();
+    // The worker owns no GUI pointer and posts no callback. Joining prevents a
+    // hidden writer from surviving dialog destruction or application shutdown.
+    if (m_worker.joinable()) m_worker.join();
+}
 
 bool ExportDialog::run(wxWindow *parent, Dataset dataset)
 {
@@ -313,14 +332,14 @@ void ExportDialog::create_ui()
     m_password_input = new TextInput(m_archive_card, wxEmptyString, wxEmptyString, wxEmptyString, wxDefaultPosition, FromDIP(wxSize(260, 32)), wxTE_PASSWORD);
     m_password_input->GetTextCtrl()->Bind(wxEVT_TEXT, [this](wxCommandEvent &) { update_hints(); update_export_enabled(); });
     add_option(m_archive_card, m_seven_zip_sizer, _L("AES-256 password (empty = no encryption)"), m_password_input,
-               _L("Encrypts the file contents with AES-256. The password is passed to 7-Zip for this run only and never stored."));
+               _L("On Windows, sends the password through an isolated in-memory pipe, never command arguments. Encrypted headers are required. Single line, at most 1024 UTF-8 bytes."));
     m_password_confirm_input = new TextInput(m_archive_card, wxEmptyString, wxEmptyString, wxEmptyString, wxDefaultPosition, FromDIP(wxSize(260, 32)), wxTE_PASSWORD);
     m_password_confirm_input->GetTextCtrl()->Bind(wxEVT_TEXT, [this](wxCommandEvent &) { update_export_enabled(); });
     add_option(m_archive_card, m_seven_zip_sizer, _L("Confirm password"), m_password_confirm_input, _L("Type the same password again."));
     m_encrypt_headers_check = new LabeledCheckBox(m_archive_card, _L("Encrypt headers too, so file names are hidden (-mhe=on)"));
     m_encrypt_headers_check->SetValue(true);
     m_encrypt_headers_check->SetToolTip(_L("Without this, anyone can list the file names inside the archive even though the contents are encrypted."));
-    m_encrypt_headers_check->Bind(wxEVT_CHECKBOX, [this](wxCommandEvent &) { update_hints(); });
+    m_encrypt_headers_check->Bind(wxEVT_CHECKBOX, [this](wxCommandEvent &) { update_hints(); update_export_enabled(); });
     m_seven_zip_sizer->Add(m_encrypt_headers_check, 0, wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(14));
     m_option_rows.push_back(OptionRow{_L("encrypt headers hidden file names"), nullptr, {m_encrypt_headers_check}});
     m_encryption_warning_label = new Label(m_archive_card, Label::Head_13, wxEmptyString, LB_AUTO_WRAP | wxST_NO_AUTORESIZE);
@@ -372,8 +391,29 @@ void ExportDialog::create_ui()
     m_export_button = new Button(this, _L("Export"), "", 0, 0, wxID_OK);
     m_cancel_button->SetMinSize(FromDIP(wxSize(104, 40)));
     m_export_button->SetMinSize(FromDIP(wxSize(124, 40)));
-    m_cancel_button->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { EndModal(wxID_CANCEL); });
+    m_cancel_button->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) {
+        if (m_async) { cancel_export(); return; }
+        EndModal(m_written_path.empty() ? wxID_CANCEL : wxID_OK);
+    });
     m_export_button->Bind(wxEVT_BUTTON, &ExportDialog::on_export, this);
+    m_vscode_button = new Button(this, _L("Open in VS Code"));
+    m_vscode_button->Enable(false);
+    m_vscode_button->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) {
+        // The completed output is retained even if the user edits the next target.
+        const auto result = open_export_in_visual_studio_code(m_written_path.u8string());
+        if (result == VSCodeOpenResult::NotInstalled) {
+            set_status(_L("Visual Studio Code was not found. Install it, then try again. Portable builds are detected when added to PATH."), true);
+            m_download_code_button->Show();
+            Layout();
+        } else if (result != VSCodeOpenResult::Opened) {
+            set_status(_L("Could not open the completed export in Visual Studio Code. Check that the file still exists."), true);
+        }
+    });
+    m_download_code_button = new Button(this, _L("Download VS Code"));
+    m_download_code_button->Hide();
+    m_download_code_button->Bind(wxEVT_BUTTON, [](wxCommandEvent &) { wxLaunchDefaultBrowser("https://code.visualstudio.com/download"); });
+    actions->Add(m_vscode_button, 0, wxRIGHT, FromDIP(8));
+    actions->Add(m_download_code_button, 0, wxRIGHT, FromDIP(8));
     actions->AddStretchSpacer();
     actions->Add(m_cancel_button, 0, wxRIGHT, FromDIP(8));
     actions->Add(m_export_button, 0);
@@ -622,6 +662,7 @@ void ExportDialog::update_output_path_extension()
 
 void ExportDialog::update_export_enabled()
 {
+    if (m_async) { m_export_button->Enable(false); return; }
     wxString reason;
     if (m_visible_formats.empty()) reason = _L("No format matches the search.");
     else if (m_path_input->GetTextCtrl()->GetValue().Trim().empty()) reason = _L("Choose an output path.");
@@ -629,6 +670,8 @@ void ExportDialog::update_export_enabled()
         if (!m_seven_zip.found) reason = _L("7-Zip was not found on this PC; ZIP and plain files still work.");
         else if (m_password_input->GetTextCtrl()->GetValue() != m_password_confirm_input->GetTextCtrl()->GetValue())
             reason = _L("The two password fields differ.");
+        else if (!archive_options().password.empty() && !archive_options().encrypt_headers)
+            reason = _L("Encrypted exports require encrypted headers to protect member names.");
     }
     m_export_button->Enable(reason.empty());
     m_export_button->SetToolTip(reason.empty() ? _L("Write the export") : reason);
@@ -682,7 +725,12 @@ void ExportDialog::on_locate_seven_zip(wxCommandEvent &)
 
 void ExportDialog::on_export(wxCommandEvent &)
 {
+    if (m_async) return;
     ExportJob job;
+    struct ErasePassword {
+        std::string &value;
+        ~ErasePassword() { volatile char *p = value.empty() ? nullptr : &value[0]; for (std::size_t i = 0; i < value.size(); ++i) p[i] = 0; }
+    } erase_password{job.archive.password};
     job.dataset = m_dataset;
     job.format  = selected_format();
     job.serialize_options.line_ending           = m_line_ending_combo->GetSelection() == 1 ? LineEnding::CRLF : LineEnding::LF;
@@ -691,6 +739,9 @@ void ExportDialog::on_export(wxCommandEvent &)
     job.serialize_options.generator             = std::string(SLIC3R_APP_NAME) + " " + SLIC3R_VERSION;
     job.archive                                 = archive_options();
     job.output_path                             = std::filesystem::path(m_path_input->GetTextCtrl()->GetValue().ToStdWstring());
+    std::error_code path_error;
+    job.output_path = std::filesystem::absolute(job.output_path, path_error).lexically_normal();
+    if (path_error) { set_status(_L("Cannot resolve the export destination."), true); return; }
     if (m_seven_zip.found) job.seven_zip_override = m_seven_zip.executable;
 
     if (job.archive.format == ArchiveFormat::SevenZip && job.archive.password != std::string(m_password_confirm_input->GetTextCtrl()->GetValue().ToUTF8().data())) {
@@ -698,6 +749,31 @@ void ExportDialog::on_export(wxCommandEvent &)
         return;
     }
 
+    // The job above is a value snapshot, never re-read controls after confirmation.
+    SuperConfirmGate::Spec overwrite;
+    overwrite.action = _L("Replace exported files");
+    overwrite.consequence = _L("The exact existing files listed below will be replaced. Their previous contents cannot be restored by this export.");
+    for (const auto &path : planned_output_paths(job)) {
+        const auto snapshot = inspect_output_target(path);
+        if (!snapshot) { set_status(_L("Cannot inspect the export destination."), true); return; }
+        job.destination_snapshots.push_back(*snapshot);
+        if (snapshot->exists) {
+            job.overwrite_approved_paths.push_back(path);
+            overwrite.affected.push_back(wxString(path.wstring()));
+        }
+    }
+    if (!overwrite.affected.empty()) {
+        if (job.archive.format == ArchiveFormat::SevenZip) {
+            set_status(_L("This archive already exists. Choose a new output name."), true);
+            return;
+        }
+        m_export_button->Enable(false);
+        m_body->Enable(false);
+        const bool approved = SuperConfirmGate::Run(m_export_button, overwrite);
+        m_body->Enable(true);
+        m_export_button->Enable(true);
+        if (!approved) { set_status(_L("Export cancelled. Existing files were preserved."), false); return; }
+    }
     const LossReport report = compute_loss_report(job.dataset, job.format);
     if (!report.lossless) {
         // The loss is already spelled out on screen; the status line repeats it
@@ -706,10 +782,76 @@ void ExportDialog::on_export(wxCommandEvent &)
     }
 
     m_export_button->Enable(false);
-    ExportOutcome outcome = run_export(job);
-    m_export_button->Enable(true);
+    m_body->Enable(false);
+    m_vscode_button->Enable(false);
+    m_cancel_button->SetLabel(_L("Cancel export"));
+    m_password_input->GetTextCtrl()->Clear();
+    m_password_confirm_input->GetTextCtrl()->Clear();
+    m_async = std::make_shared<AsyncExport>();
+    job.control = m_async->control;
+    auto state = m_async;
+    m_export_button->Enable(false);
+    // No this, window pointer, event target, or deferred UI callback crosses
+    // the worker boundary. The GUI-owned timer is the only result consumer.
+    try {
+        if (!m_export_timer.Start(100)) throw std::runtime_error("Export timer unavailable");
+        auto owned = std::make_shared<OwnedExportJob>();
+        owned->value = std::move(job);
+        m_worker = std::thread([state, owned]() {
+            try { state->outcome = run_export(owned->value); }
+            catch (...) { state->outcome.error = "Export worker could not complete."; }
+            state->finished.store(true, std::memory_order_release);
+        });
+        set_status(_L("Preparing export. Cancel remains available until publication begins."), false);
+    } catch (...) {
+        m_export_timer.Stop();
+        state->control->request_cancel();
+        if (m_worker.joinable()) m_worker.join();
+        m_async.reset(); m_body->Enable(true); m_export_button->Enable(true);
+        m_cancel_button->SetLabel(_L("Close"));
+        set_status(_L("Could not start the export worker. Nothing was written."), true);
+    }
+}
+
+void ExportDialog::cancel_export()
+{
+    if (!m_async) return;
+    const bool accepted = m_async->control->request_cancel();
+    m_cancel_button->Enable(false);
+    set_status(accepted ? _L("Cancelling export. Waiting for the owned writer to stop.") :
+                         _L("Publishing completed output. Cancellation is no longer available."), false);
+}
+
+void ExportDialog::poll_export(wxTimerEvent &)
+{
+    if (!m_async) return;
+    if (!m_async->finished.load(std::memory_order_acquire)) {
+        if (m_async->control->cancelled()) return;
+        const auto phase = m_async->control->phase.load();
+        const wxString text = phase == ExportPhase::Serializing ? _L("Serializing export...") :
+            phase == ExportPhase::Writing ? _L("Writing temporary output...") :
+            phase == ExportPhase::Compressing ? _L("Compressing archive...") :
+            phase == ExportPhase::Verifying ? _L("Verifying archive encryption...") :
+            phase == ExportPhase::Publishing ? _L("Publishing completed output...") : _L("Preparing export...");
+        if (phase == ExportPhase::Publishing) m_cancel_button->Enable(false);
+        set_status(text, false);
+        return;
+    }
+    m_export_timer.Stop();
+    if (m_worker.joinable()) m_worker.join();
+    const auto outcome = std::move(m_async->outcome);
+    m_async.reset();
+    m_body->Enable(true); m_export_button->Enable(true); m_cancel_button->Enable(true);
+    m_cancel_button->SetLabel(_L("Close"));
+    finish_export(outcome);
+}
+
+void ExportDialog::finish_export(const ExportOutcome &outcome)
+{
     if (!outcome.ok) {
-        set_status(wxString::Format(_L("Export failed: %s"), wxString::FromUTF8(outcome.error)), true);
+        set_status(outcome.cancelled ? _L("Export cancelled. Existing output was preserved.") :
+            wxString::Format(_L("Export failed: %s"), wxString::FromUTF8(outcome.error)), !outcome.cancelled);
+        m_vscode_button->Enable(!m_written_path.empty());
         return;
     }
     m_written_path = outcome.written_path;
@@ -723,12 +865,13 @@ void ExportDialog::on_export(wxCommandEvent &)
     }
     wxString summary = wxString::Format(_L("Wrote %s (%s)."), wxString::FromUTF8(outcome.written_path.string()), members);
     if (!outcome.error.empty()) summary += " " + wxString::FromUTF8(outcome.error);
-    if (!outcome.command_line.empty()) summary += "\n" + _L("7-Zip command:") + " " + wxString::FromUTF8(outcome.command_line);
+    if (!outcome.command_line.empty()) summary += "\n" + _L("7-Zip options:") + " " + wxString::FromUTF8(outcome.command_line);
     if (Plater *plater = wxGetApp().plater(); plater != nullptr && plater->get_notification_manager() != nullptr)
         plater->get_notification_manager()->push_exporting_finished_notification(outcome.written_path.string(),
                                                                                   outcome.written_path.parent_path().string(), false);
     set_status(summary, false);
-    EndModal(wxID_OK);
+    m_vscode_button->Enable(true);
+    m_cancel_button->SetLabel(_L("Close"));
 }
 
 // ---------------------------------------------------------------------------
