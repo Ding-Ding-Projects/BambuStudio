@@ -1,3 +1,5 @@
+#include "Widgets/MD3Tokens.hpp"
+#include "Widgets/StateColor.hpp"
 #include <regex>
 #include "CalibrationWizardPresetPage.hpp"
 #include "I18N.hpp"
@@ -55,7 +57,7 @@ CaliPresetCaliStagePanel::CaliPresetCaliStagePanel(
     long style)
     : wxPanel(parent, id, pos, size, style)
 {
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     m_top_sizer = new wxBoxSizer(wxVERTICAL);
 
@@ -73,7 +75,7 @@ void CaliPresetCaliStagePanel::msw_rescale()
 void CaliPresetCaliStagePanel::create_panel(wxWindow* parent)
 {
     auto title = new Label(parent, _L("Calibration Type"));
-    title->SetFont(Label::Head_14);
+    title->SetFont(Label::Head_16);
     m_top_sizer->Add(title);
     m_top_sizer->AddSpacer(FromDIP(15));
 
@@ -205,7 +207,7 @@ CaliComboBox::CaliComboBox(wxWindow* parent,
     , m_title(title)
     , m_on_value_change_call_back(on_value_change)
 {
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_top_sizer = new wxBoxSizer(wxVERTICAL);
     m_top_sizer->AddSpacer(PRESET_GAP);
     auto combo_title = new Label(this, title);
@@ -265,7 +267,7 @@ CaliPresetWarningPanel::CaliPresetWarningPanel(
     long style)
     : wxPanel(parent, id, pos, size, style)
 {
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     m_top_sizer = new wxBoxSizer(wxHORIZONTAL);
 
@@ -304,7 +306,7 @@ CaliPresetCustomRangePanel::CaliPresetCustomRangePanel(
     : wxPanel(parent, id, pos, size, style)
     , m_input_value_nums(input_value_nums)
 {
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     m_title_texts.resize(input_value_nums);
     m_value_inputs.resize(input_value_nums);
@@ -422,7 +424,7 @@ CaliPresetTipsPanel::CaliPresetTipsPanel(
     long style)
     : wxPanel(parent, id, pos, size, style)
 {
-    this->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
+    this->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
     this->SetMinSize(wxSize(MIN_CALIBRATION_PAGE_WIDTH, -1));
 
     m_top_sizer = new wxBoxSizer(wxVERTICAL);
@@ -460,7 +462,8 @@ void CaliPresetTipsPanel::create_panel(wxWindow* parent)
 
     auto bed_temp_sizer = new wxBoxSizer(wxHORIZONTAL);
     auto printing_param_text = new Label(parent, _L("Printing Parameters"));
-    printing_param_text->SetFont(Label::Head_12);
+    printing_param_text->SetFont(Label::Head_16);
+    printing_param_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     printing_param_text->Wrap(CALIBRATION_TEXT_MAX_LENGTH);
     bed_temp_sizer->Add(printing_param_text, 0, wxALIGN_CENTER | wxRIGHT, FromDIP(20));
     auto bed_temp_text = new Label(parent, _L("Bed temperature"));
@@ -537,7 +540,7 @@ CalibrationPresetPage::CalibrationPresetPage(
     : CalibrationWizardPage(parent, id, pos, size, style)
     , m_show_custom_range(custom_range)
 {
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     m_cali_mode = cali_mode;
     m_page_type = CaliPageType::CALI_PAGE_PRESET;
@@ -653,7 +656,7 @@ void CalibrationPresetPage::create_selection_panel(wxWindow* parent)
     // single extruder
     {
         m_single_nozzle_info_panel = new wxPanel(parent);
-        m_single_nozzle_info_panel->SetBackgroundColour(*wxWHITE);
+        m_single_nozzle_info_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
         auto single_nozzle_sizer = new wxBoxSizer(wxVERTICAL);
         auto nozzle_combo_text = new Label(m_single_nozzle_info_panel, _L("Nozzle Diameter"));
         nozzle_combo_text->SetFont(Label::Head_14);
@@ -692,7 +695,7 @@ void CalibrationPresetPage::create_selection_panel(wxWindow* parent)
     // multi extruder
     {
         m_multi_nozzle_info_panel = new wxPanel(parent);
-        m_multi_nozzle_info_panel->SetBackgroundColour(*wxWHITE);
+        m_multi_nozzle_info_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
         auto nozzle_volume_sizer = new wxBoxSizer(wxVERTICAL);
         auto nozzle_info_text = new Label(m_multi_nozzle_info_panel, _L("Nozzle Info"));
         nozzle_info_text->SetFont(Label::Head_14);
@@ -810,7 +813,7 @@ void CalibrationPresetPage::create_selection_panel(wxWindow* parent)
     filament_for_title_sizer->Add(filament_for_text, 0, wxALIGN_CENTER);
     filament_for_title_sizer->AddSpacer(FromDIP(25));
     m_ams_sync_button = new ScalableButton(parent, wxID_ANY, "ams_fila_sync", wxEmptyString, wxDefaultSize, wxDefaultPosition, wxBU_EXACTFIT | wxNO_BORDER, false, 18);
-    m_ams_sync_button->SetBackgroundColour(*wxWHITE);
+    m_ams_sync_button->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_ams_sync_button->SetToolTip(_L("Synchronize filament list from AMS"));
     filament_for_title_sizer->Add(m_ams_sync_button, 0, wxALIGN_CENTER);
     panel_sizer->Add(filament_for_title_sizer);
@@ -1257,16 +1260,16 @@ void CalibrationPresetPage::create_page(wxWindow* parent)
     m_top_sizer->Add(m_cali_stage_panel, 0);
 
     m_selection_panel = new wxPanel(parent);
-    m_selection_panel->SetBackgroundColour(*wxWHITE);
+    m_selection_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     create_selection_panel(m_selection_panel);
     init_selection_values();
 
     m_filament_list_panel = new wxPanel(parent);
-    m_filament_list_panel->SetBackgroundColour(*wxWHITE);
+    m_filament_list_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     create_filament_list_panel(m_filament_list_panel);
 
     m_multi_exutrder_filament_list_panel = new wxPanel(parent);
-    m_multi_exutrder_filament_list_panel->SetBackgroundColour(*wxWHITE);
+    m_multi_exutrder_filament_list_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     create_multi_extruder_filament_list_panel(m_multi_exutrder_filament_list_panel);
 
     if (m_cali_mode == CalibMode::Calib_PA_Line || m_cali_mode == CalibMode::Calib_PA_Pattern) {
