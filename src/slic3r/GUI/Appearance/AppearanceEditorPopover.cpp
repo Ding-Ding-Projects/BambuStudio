@@ -803,6 +803,11 @@ void AppearanceEditorPopover::build_presets(wxWindow *page)
     io->Add(import_btn, 0, wxBOTTOM, FromDIP(6));
     s->Add(io, 0, wxEXPAND);
     page->SetSizer(s);
+    page->Bind(wxEVT_SIZE, [this, page](wxSizeEvent &event) {
+        event.Skip();
+        if (page->GetClientSize().x != m_preset_page_width)
+            reflow_preset_page();
+    });
 }
 
 void AppearanceEditorPopover::show_section(int index)
@@ -909,6 +914,30 @@ void AppearanceEditorPopover::refresh_preset_list()
         m_preset_apply->Enable(ok);
     if (m_preset_delete)
         m_preset_delete->Enable(ok && !reg.is_shipped_preset(m_preset_visible[sel]));
+    reflow_preset_page();
+}
+
+void AppearanceEditorPopover::reflow_preset_page()
+{
+    if (m_preset_reflowing || !m_preset_active)
+        return;
+    auto *page = dynamic_cast<wxScrolledWindow *>(m_preset_active->GetParent());
+    if (!page || !page->GetSizer() || page->GetClientSize().x <= 0)
+        return;
+    m_preset_reflowing = true;
+    const wxPoint view = page->GetViewStart();
+    // A changed scrollbar can change the available width. Re-measure after
+    // fitting once, without moving keyboard focus or resetting the view.
+    for (int pass = 0; pass < 2; ++pass) {
+        page->Layout();
+        m_preset_active->Wrap(std::max(1, m_preset_active->GetSize().x));
+        page->InvalidateBestSize();
+        page->Layout();
+        page->FitInside();
+    }
+    m_preset_page_width = page->GetClientSize().x;
+    page->Scroll(view.x, view.y);
+    m_preset_reflowing = false;
 }
 
 void AppearanceEditorPopover::refresh_reset_buttons()

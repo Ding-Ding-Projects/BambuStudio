@@ -12,6 +12,12 @@ This source-only unit changes the four property-page builders in `Appearance/App
 
 The earlier independently scrolling page shell remains the overflow owner. This source work does not prove that every combination of custom font, bilingual text, live density change or very narrow viewport has the correct computed height or scroll range.
 
+## Preset content reflow repair
+
+Review of `c17599d086a7b5cc5c0e1f6e47fcdb48678bf1b9` found that applying or saving a longer active preset name at unchanged editor dimensions updated the label but could leave the owning page's layout and virtual extent stale. An outer `Layout()` did not guarantee a size event for that page.
+
+`refresh_preset_list()` now explicitly reflows the Presets page after refreshing its content. A page size handler invokes the same helper when its actual client width changes. The helper protects against recursive layout notifications, lays out the page, wraps the active name at its allocated width, invalidates the page best-size cache, and updates the virtual extent with `FitInside()`. A second pass incorporates a scrollbar-induced width change. The saved scroll position is restored within the new range; no focus request is introduced. The header adds only the helper declaration, reentry flag and last measured width. Existing preset callbacks, registry operations and focus-return methods remain unchanged. No shared widget or catalog source changes.
+
 ## Preserved behavior and verification
 
 `ui-md3/tests/appearance-property-pages-atlas.test.mjs` fingerprints the actual bound child-event call bodies and ten registry/focus/helper methods from the starting revision. It also fingerprints property declarations, numeric ranges/defaults and the color-property table. A deliberate in-memory mutation makes the font-weight callback write font size instead; the callback-preservation check must reject it. Focused geometry checks require stacked labels, retained reset rows, complete decoration groups, expanding preset wrappers and active-name wrapping. They are source contracts, not native execution tests.
@@ -20,7 +26,9 @@ The earlier independently scrolling page shell remains the overflow owner. This 
 node --test ui-md3/tests/appearance-property-pages-atlas.test.mjs ui-md3/tests/appearance-decimal-field.test.mjs
 ```
 
-**18 checks passed**, including the three existing decimal-field checks. No new translation keys were introduced. `git diff --check` and the new-content public-boundary scan passed. No full build, application launch, screenshot or installer execution occurred. Native compilation, visible focus, text fit, contrast and runtime behavior remain unverified.
+**22 checks passed**, including the three existing decimal-field checks. Four new checks execute the actual reflow statements, size-handler body and content-refresh tail through a deterministic non-window adapter. They exercise short-to-long-to-short content at unchanged page dimensions, post-scrollbar width, scroll preservation and clamping, a changed width, and recursive fit notifications. Removing the content hook fails the extent-growth assertion; removing the reentry condition fails the recursion bound. The one new presentation callback is excluded by exact body from the original callback fingerprint and is exercised separately. The adapter supplies simplified font metrics and scroll allocation; it does not execute wxWidgets or prove native layout.
+
+No new translation keys were introduced. `git diff --check` and the new-content public-boundary scan passed. No full build, application launch, screenshot or installer execution occurred. Native compilation, visible focus, text fit, contrast and runtime behavior remain unverified.
 
 ## Nested follow-ups
 

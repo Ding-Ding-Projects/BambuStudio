@@ -41,10 +41,18 @@ function method(name) {
 function callbacks(text) {
   const hidden = mask(text);
   const events = [...hidden.matchAll(/->(?:Bind|SetOnQuery|SetOnRegexToggle)\(/g)]
-    .map(m => balanced(text, m.index, '(', ')'));
+    .map(m => balanced(text, m.index, '(', ')'))
+    .filter(call => call !== presetSizeBinding);
   const values = [...hidden.matchAll(/->on_change\s*=/g)].map(m => balanced(text, m.index, '{', '}'));
   return [...events, ...values].join('\n');
 }
+// Only this new presentation callback is excluded from the original behavior
+// fingerprint. Its source is executed by the lifecycle adapter below.
+const presetSizeBinding = `->Bind(wxEVT_SIZE, [this, page](wxSizeEvent &event) {
+        event.Skip();
+        if (page->GetClientSize().x != m_preset_page_width)
+            reflow_preset_page();
+    })`;
 test('all existing bound event implementations remain unchanged', () => {
   assert.equal(hash(callbacks(source)), expected.callbacks);
   const changed = source.replace('write_number(StyleProp::font_weight,', 'write_number(StyleProp::font_size,');
@@ -82,4 +90,100 @@ test('preset action groups receive available width and active names wrap', () =>
     assert(new RegExp('s->Add\\(' + group + ', 0, wxEXPAND').test(body));
   }
   assert.match(body, /m_preset_active = new Label\([^;]*LB_AUTO_WRAP \| wxST_NO_AUTORESIZE\);/);
+});
+
+// Execute the actual C++ presentation statements against a deterministic
+// non-window adapter. This checks lifecycle wiring, not wx font metrics.
+function presetLifecycle(text = source) {
+  const getMethod = name => balanced(text, mask(text).indexOf('void AppearanceEditorPopover::' + name + '('), '{', '}');
+  const body = getMethod('reflow_preset_page');
+  const translate = cpp => cpp
+    .replace(/auto \*page = dynamic_cast<wxScrolledWindow \*>\(m_preset_active->GetParent\(\)\);/, 'const page = m_preset_active.GetParent();')
+    .replace(/const wxPoint /g, 'const ').replace(/int pass/g, 'let pass')
+    .replace(/->/g, '.').replace(/std::max/g, 'Math.max')
+    .replace(/wxString::Format/g, 'format').replace(/wxString::FromUTF8/g, 'String');
+  const run = cpp => new Function('state', 'with (state) {' + translate(cpp) + '}');
+  const state = { m_preset_reflowing: false, m_preset_page_width: -1,
+    focus: 'preset-apply', width: 180, height: 240, virtualHeight: 240,
+    view: {x: 0, y: 0}, labelWidth: 180, labelHeight: 20, labelText: '',
+    layouts: 0, fits: 0, depth: 0, maxDepth: 0, name: 'Short',
+    _L: text => text, format: (format, value) => format.replace('%s', value),
+  };
+  const page = {
+    GetClientSize: () => ({x: state.width - (state.virtualHeight > state.height ? 16 : 0)}),
+    GetSizer: () => ({}), InvalidateBestSize() {}, GetViewStart: () => ({...state.view}),
+    Layout() { state.layouts++; state.labelWidth = page.GetClientSize().x; },
+    FitInside() { state.fits++; state.virtualHeight = 210 + state.labelHeight; resize(); },
+    Scroll(x, y) { state.view = {x, y: Math.min(y, Math.max(0, state.virtualHeight - state.height))}; },
+  };
+  state.m_preset_active = {
+    GetParent: () => page, GetSize: () => ({x: state.labelWidth}),
+    SetLabel(value) { state.labelText = value; },
+    Wrap(width) { state.labelHeight = Math.ceil(state.labelText.length * 8 / width) * 20; },
+  };
+  const reflow = run(body.slice(body.indexOf('{') + 1, -1));
+  state.reflow_preset_page = () => {
+    state.maxDepth = Math.max(state.maxDepth, ++state.depth);
+    assert(state.depth < 4, 'layout reentry was not bounded');
+    reflow(state); state.depth--;
+  };
+  const builder = getMethod('build_presets');
+  const sizeStart = builder.indexOf('page->Bind(wxEVT_SIZE,');
+  assert(sizeStart >= 0, 'missing width hook');
+  const sizeCall = balanced(builder, sizeStart, '(', ')');
+  const sizeBody = balanced(sizeCall, sizeCall.indexOf('{'), '{', '}');
+  const widthHook = run(sizeBody.slice(1, -1));
+  const resize = () => widthHook({...state, page, event: {Skip() {}}});
+  const refresh = getMethod('refresh_preset_list');
+  const labelStart = refresh.indexOf('    if (m_preset_active)');
+  const labelEnd = refresh.indexOf('    const int sel', labelStart);
+  const enableEnd = refresh.indexOf(';', refresh.indexOf('m_preset_delete->Enable')) + 1;
+  const contentHook = run(refresh.slice(labelStart, labelEnd) + refresh.slice(enableEnd, -1));
+  const update = name => {
+    state.name = name;
+    state.reg = {active_preset: () => state.name};
+    contentHook(state);
+  };
+  return {state, update, resize};
+}
+
+function assertContentLifecycle(text) {
+  const {state, update} = presetLifecycle(text);
+  update('Short');
+  const shortHeight = state.virtualHeight;
+  update('Long preset name '.repeat(30));
+  assert(state.virtualHeight > shortHeight, 'changed content must enlarge the virtual extent without a size event');
+  assert.equal(state.width, 180);
+  assert.equal(state.labelWidth, 164, 'wrap must use the post-scrollbar width');
+  state.view.y = 40;
+  update('Long preset name '.repeat(31));
+  assert.equal(state.view.y, 40, 'valid scroll position must survive reflow');
+  update('Short');
+  assert.equal(state.virtualHeight, shortHeight, 'short content must release stale virtual height');
+  assert.equal(state.view.y, 0, 'a vanished scroll range is clamped');
+  assert.equal(state.focus, 'preset-apply');
+  assert(state.maxDepth <= 2);
+  assert.equal(state.m_preset_reflowing, false);
+}
+
+test('preset content short-long-short lifecycle reflows at unchanged page dimensions', () => assertContentLifecycle(source));
+test('removing the content hook rejects fixed-size preset updates', () => {
+  const broken = source.replace('    reflow_preset_page();\n}\n\nvoid AppearanceEditorPopover::reflow_preset_page', '\n}\n\nvoid AppearanceEditorPopover::reflow_preset_page');
+  assert.notEqual(broken, source);
+  assert.throws(() => assertContentLifecycle(broken), /changed content must enlarge/);
+});
+test('actual width changes reflow current content without stealing focus', () => {
+  const {state, update, resize} = presetLifecycle();
+  update('A long preset '.repeat(20));
+  const before = state.virtualHeight;
+  state.width = 360;
+  resize();
+  assert(state.virtualHeight < before);
+  assert.equal(state.labelWidth, 344);
+  assert.equal(state.focus, 'preset-apply');
+});
+test('removing the reentry guard rejects recursive fit notifications', () => {
+  const broken = source.replace('m_preset_reflowing || !m_preset_active', '!m_preset_active');
+  assert.notEqual(broken, source);
+  assert.throws(() => assertContentLifecycle(broken), /layout reentry was not bounded/);
 });
