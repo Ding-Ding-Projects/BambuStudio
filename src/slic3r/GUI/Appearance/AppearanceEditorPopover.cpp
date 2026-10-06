@@ -13,6 +13,7 @@
 #include <wx/panel.h>
 #include <wx/simplebook.h>
 #include <wx/sizer.h>
+#include <wx/wrapsizer.h>
 #include <wx/spinctrl.h>
 
 #include "ElementStyle.hpp"
@@ -28,6 +29,7 @@
 #include "slic3r/GUI/Widgets/MD3Menu.hpp"
 #include "slic3r/GUI/Widgets/MD3MenuModel.hpp"
 #include "slic3r/GUI/Widgets/MD3Motion.hpp"
+#include "slic3r/GUI/Widgets/MD3ScrolledWindow.hpp"
 #include "slic3r/GUI/Widgets/MD3Tokens.hpp"
 #include "slic3r/GUI/Widgets/MaterialIcon.hpp"
 #include "slic3r/GUI/Widgets/SearchField.hpp"
@@ -41,7 +43,6 @@ namespace {
 
 constexpr int kCardWidth   = 380; // DIP
 constexpr int kFrame       = 1;   // px outline
-constexpr int kPad         = 16;  // DIP card padding
 constexpr int kRowGap      = 8;
 constexpr int kListHeight  = 132;
 constexpr int kTickMs      = 120;
@@ -322,7 +323,7 @@ void AppearanceEditorPopover::paint(wxPaintEvent &)
     dc.Clear();
     dc.SetPen(wxPen(role(MD3::Role::OutlineVariant), kFrame));
     dc.SetBrush(wxBrush(role(MD3::Role::SurfaceContainer)));
-    dc.DrawRoundedRectangle(r, FromDIP(MD3::Metrics::radius_rail));
+    dc.DrawRoundedRectangle(r, FromDIP(MD3::Metrics::active().radius));
 }
 
 void AppearanceEditorPopover::on_char_hook(wxKeyEvent &e)
@@ -397,7 +398,7 @@ Button *AppearanceEditorPopover::make_swatch(wxWindow *parent, const char *key, 
 void AppearanceEditorPopover::build()
 {
     auto *root = new wxBoxSizer(wxVERTICAL);
-    const int pad = FromDIP(kPad);
+    const int pad = FromDIP(MD3::Metrics::active().padding);
 
     // Header: title (display name) + caption (stable id) + close.
     auto *head = new wxBoxSizer(wxHORIZONTAL);
@@ -422,7 +423,7 @@ void AppearanceEditorPopover::build()
     root->Add(head, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, pad);
 
     // Section tabs.
-    auto *tabs = new wxBoxSizer(wxHORIZONTAL);
+    auto *tabs = new wxWrapSizer(wxHORIZONTAL);
     const wxString names[] = {_L("Typography"), _L("Colours"), _L("Shape & spacing"), _L("Presets")};
     for (int i = 0; i < 4; ++i) {
         auto *b = new Button(this, names[i]);
@@ -430,19 +431,24 @@ void AppearanceEditorPopover::build()
         b->SetButtonSize(Button::Size::Small);
         b->SetName(wxString::Format(_L("%s section"), names[i]));
         b->Bind(wxEVT_BUTTON, [this, i](wxCommandEvent &) { show_section(i); });
-        tabs->Add(b, 0, wxRIGHT, FromDIP(4));
+        tabs->Add(b, 0, wxRIGHT | wxBOTTOM, FromDIP(4));
         m_section_buttons.push_back(b);
         ElementStyle::apply(b, "appearance-editor.tab", _L("Appearance editor tab"));
     }
-    root->Add(tabs, 0, wxLEFT | wxRIGHT | wxTOP, FromDIP(10));
+    root->Add(tabs, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(10));
 
     m_book = new wxSimplebook(this, wxID_ANY);
-    m_book->SetBackgroundColour(role(MD3::Role::SurfaceContainer));
+    m_book->SetBackgroundColour(role(MD3::Role::SurfaceContainerLow));
+    m_book->SetMinSize(wxSize(0, FromDIP(240)));
     auto add_page = [this](const wxString &name, void (AppearanceEditorPopover::*builder)(wxWindow *)) {
-        auto *page = new wxPanel(m_book, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
-        page->SetBackgroundColour(role(MD3::Role::SurfaceContainer));
+        // Each section scrolls independently while title, section navigation and reset actions stay reachable.
+        auto *page = new MD3ScrolledWindow(m_book, wxID_ANY, wxDefaultPosition, wxDefaultSize,
+                                          wxTAB_TRAVERSAL | wxVSCROLL | wxHSCROLL | wxBORDER_NONE);
+        page->SetBackgroundColour(role(MD3::Role::SurfaceContainerLow));
         page->SetName(name);
+        page->SetScrollRate(FromDIP(12), FromDIP(12));
         (this->*builder)(page);
+        page->FitInside();
         m_book->AddPage(page, name);
     };
     add_page(_L("Typography"), &AppearanceEditorPopover::build_typography);
@@ -452,7 +458,7 @@ void AppearanceEditorPopover::build()
     root->Add(m_book, 1, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(10));
 
     // Footer: element reset, global reset.
-    auto *foot = new wxBoxSizer(wxHORIZONTAL);
+    auto *foot = new wxWrapSizer(wxHORIZONTAL);
     auto *reset_el = new Button(this, _L("Reset element"));
     reset_el->SetVariant(Button::Variant::Outlined);
     reset_el->SetButtonSize(Button::Size::Small);
@@ -477,16 +483,17 @@ void AppearanceEditorPopover::build()
     });
     foot->Add(reset_el, 0);
     foot->Add(reset_all, 0, wxLEFT, FromDIP(8));
-    foot->AddStretchSpacer(1);
+    // The shortcut wraps below reset actions on narrower displays.
     auto *shortcut = new Label(this, Label::Body_11, AppearanceEditor::shortcut_text());
     shortcut->SetForegroundColour(role(MD3::Role::OnSurfaceVariant));
     shortcut->SetToolTip(_L("Keyboard shortcut that opens this editor for the focused control"));
-    foot->Add(shortcut, 0, wxALIGN_CENTER_VERTICAL);
+    foot->Add(shortcut, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(8));
     root->Add(foot, 0, wxEXPAND | wxALL, pad);
 
     SetSizer(root);
     SetMinSize(wxSize(FromDIP(kCardWidth), -1));
-    root->SetSizeHints(this);
+    // Let placement clamp the card to the display; page content has its own scroll range.
+    SetSize(root->GetMinSize());
 
     // The editor obeys its own customization: its title and body copy are
     // adopted like any other element.
@@ -588,7 +595,7 @@ void AppearanceEditorPopover::build_typography(wxWindow *page)
                            _L("Letter spacing and line height are stored for widgets that measure their own text; native labels ignore them."),
                            LB_AUTO_WRAP);
     note->SetForegroundColour(role(MD3::Role::OnSurfaceVariant));
-    note->Wrap(FromDIP(kCardWidth - 2 * kPad));
+    note->Wrap(FromDIP(kCardWidth - 2 * MD3::Metrics::active().padding));
     s->Add(note, 0, wxEXPAND);
 
     page->SetSizer(s);
@@ -618,7 +625,7 @@ void AppearanceEditorPopover::build_colours(wxWindow *page)
                            _L("Each swatch opens the Material colour picker with its colour translator. An unset colour keeps the theme's token."),
                            LB_AUTO_WRAP);
     note->SetForegroundColour(role(MD3::Role::OnSurfaceVariant));
-    note->Wrap(FromDIP(kCardWidth - 2 * kPad));
+    note->Wrap(FromDIP(kCardWidth - 2 * MD3::Metrics::active().padding));
     s->Add(note, 0, wxEXPAND);
     page->SetSizer(s);
 }
@@ -649,7 +656,7 @@ void AppearanceEditorPopover::build_shape(wxWindow *page)
                            _L("Shape values are read by the Material widgets that paint their own frame (buttons, tabs, menus). Native controls keep the platform shape."),
                            LB_AUTO_WRAP);
     note->SetForegroundColour(role(MD3::Role::OnSurfaceVariant));
-    note->Wrap(FromDIP(kCardWidth - 2 * kPad));
+    note->Wrap(FromDIP(kCardWidth - 2 * MD3::Metrics::active().padding));
     s->Add(note, 0, wxEXPAND);
     page->SetSizer(s);
 }

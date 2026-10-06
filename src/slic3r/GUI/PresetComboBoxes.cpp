@@ -614,6 +614,12 @@ void PresetComboBox::apply_inspector_style()
         std::make_pair(MD3::resolve(MD3::Role::SurfaceContainerHigh, false), int(StateColor::Disabled)),
         std::make_pair(MD3::resolve(MD3::Role::SurfaceContainerLow, false), int(StateColor::Hovered)),
         std::make_pair(MD3::resolve(MD3::Role::SurfaceContainerLowest, false), int(StateColor::Normal))));
+    // The neutral inspector fill overrides the generic focused container, so
+    // its label must override the inherited container foreground as well.
+    SetLabelColor(StateColor(
+        std::make_pair(ThemeColor::TextDisabled, int(StateColor::Disabled)),
+        std::make_pair(MD3::resolve(MD3::Role::OnSurface, false), int(StateColor::Focused)),
+        std::make_pair(MD3::resolve(MD3::Role::OnSurface, false), int(StateColor::Normal))));
     SetBorderColor(StateColor(
         std::make_pair(MD3::resolve(MD3::Role::OutlineVariant, false), int(StateColor::Disabled)),
         std::make_pair(MD3::resolve(MD3::Role::Primary, false), int(StateColor::Focused)),

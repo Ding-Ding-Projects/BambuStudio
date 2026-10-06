@@ -141,12 +141,14 @@ bool ExportDialog::run(wxWindow *parent, Dataset dataset)
 
 Label *ExportDialog::add_option(wxWindow *parent, wxSizer *sizer, const wxString &label, wxWindow *control, const wxString &tooltip)
 {
-    auto *row = new wxBoxSizer(wxHORIZONTAL);
-    auto *text = new Label(parent, Label::Body_13, label);
-    text->SetMinSize(FromDIP(wxSize(200, -1)));
-    row->Add(text, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(12));
-    row->Add(control, 1, wxALIGN_CENTER_VERTICAL);
-    sizer->Add(row, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(14));
+    // Persistent labels above values leave the full card width for long localized names.
+    const int pad = FromDIP(MD3::Metrics::active().padding);
+    auto *row = new wxBoxSizer(wxVERTICAL);
+    auto *text = new Label(parent, Label::Body_13, label, LB_AUTO_WRAP | wxST_NO_AUTORESIZE);
+    text->SetMinSize(wxSize(0, -1));
+    row->Add(text, 0, wxEXPAND | wxBOTTOM, FromDIP(4));
+    row->Add(control, 0, wxEXPAND);
+    sizer->Add(row, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, pad);
     // Accessible name: the row label is what a screen reader announces for the control.
     control->SetName(label);
     if (!tooltip.empty()) {
@@ -168,8 +170,10 @@ void ExportDialog::create_ui()
     auto *body = new wxBoxSizer(wxVERTICAL);
 
     // TRN: %s is the dataset name, e.g. "Project version history".
-    m_title_label = new Label(m_body, Label::Head_24, wxString::Format(_L("Export %s"), wxString::FromUTF8(m_dataset.name)));
-    body->Add(m_title_label, 0, wxLEFT | wxRIGHT | wxTOP, FromDIP(24));
+    m_title_label = new Label(m_body, Label::Head_20, wxString::Format(_L("Export %s"), wxString::FromUTF8(m_dataset.name)),
+                              LB_AUTO_WRAP | wxST_NO_AUTORESIZE);
+    m_title_label->SetMinSize(wxSize(0, -1));
+    body->Add(m_title_label, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(24));
     wxString kind;
     switch (m_dataset.kind) {
     case DatasetKind::Tabular: kind = wxString::Format(_L("%zu row(s), %zu column(s)"), m_dataset.rows.size(), m_dataset.columns.size()); break;
@@ -193,7 +197,7 @@ void ExportDialog::create_ui()
     // --- Format card -----------------------------------------------------
     m_format_card = new StaticBox(m_body);
     auto *format_sizer = new wxBoxSizer(wxVERTICAL);
-    format_sizer->Add(new Label(m_format_card, Label::Head_14, _L("Format")), 0, wxLEFT | wxRIGHT | wxTOP, FromDIP(14));
+    format_sizer->Add(new Label(m_format_card, Label::Head_16, _L("Format")), 0, wxLEFT | wxRIGHT | wxTOP, FromDIP(MD3::Metrics::active().padding));
     m_format_list = new MD3DataViewListCtrl(m_format_card, wxID_ANY, wxDefaultPosition, FromDIP(wxSize(-1, 220)),
                                            wxDV_SINGLE | wxBORDER_NONE);
     // At 150 px the format column cut "CSV (.csv, recommended)" to "CSV (.csv...ommended"; the
@@ -214,17 +218,17 @@ void ExportDialog::create_ui()
     md3_style_data_view(m_format_list);
     format_sizer->Add(m_format_list, 0, wxEXPAND | wxALL, FromDIP(8));
     m_format_badge_label = new Label(m_format_card, Label::Head_13, wxEmptyString);
-    format_sizer->Add(m_format_badge_label, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(14));
+    format_sizer->Add(m_format_badge_label, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(MD3::Metrics::active().padding));
     m_format_detail_label = new Label(m_format_card, Label::Body_13, wxEmptyString, LB_AUTO_WRAP | wxST_NO_AUTORESIZE);
     m_format_detail_label->SetMinSize(wxSize(0, -1));
-    format_sizer->Add(m_format_detail_label, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP | wxBOTTOM, FromDIP(14));
+    format_sizer->Add(m_format_detail_label, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP | wxBOTTOM, FromDIP(MD3::Metrics::active().padding));
     m_format_card->SetSizer(format_sizer);
     body->Add(m_format_card, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(24));
 
     // --- Text options card -------------------------------------------------
     m_text_card = new StaticBox(m_body);
     auto *text_sizer = new wxBoxSizer(wxVERTICAL);
-    text_sizer->Add(new Label(m_text_card, Label::Head_14, _L("Text encoding")), 0, wxLEFT | wxRIGHT | wxTOP | wxBOTTOM, FromDIP(14));
+    text_sizer->Add(new Label(m_text_card, Label::Head_16, _L("Text encoding")), 0, wxLEFT | wxRIGHT | wxTOP | wxBOTTOM, FromDIP(MD3::Metrics::active().padding));
     m_encoding_label = new Label(m_text_card, Label::Body_13, _L("UTF-8 (always)"));
     add_option(m_text_card, text_sizer, _L("Encoding"), m_encoding_label,
                _L("Every export is UTF-8. The header records it so the reader never has to guess."));
@@ -238,11 +242,11 @@ void ExportDialog::create_ui()
     m_header_check = new LabeledCheckBox(m_text_card, _L("Include the schema header (comment, envelope or .meta.json sidecar)"));
     m_header_check->SetValue(true);
     m_header_check->SetToolTip(_L("CSV and TSV have no comment syntax, so their schema goes in a sidecar file next to the data."));
-    text_sizer->Add(m_header_check, 0, wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(14));
+    text_sizer->Add(m_header_check, 0, wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(MD3::Metrics::active().padding));
     m_option_rows.push_back(OptionRow{_L("schema header sidecar"), nullptr, {m_header_check}});
     m_bom_check = new LabeledCheckBox(m_text_card, _L("Write a UTF-8 byte-order mark (only for spreadsheets that misread CSV without one)"));
     m_bom_check->SetValue(false);
-    text_sizer->Add(m_bom_check, 0, wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(14));
+    text_sizer->Add(m_bom_check, 0, wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(MD3::Metrics::active().padding));
     m_option_rows.push_back(OptionRow{_L("byte-order mark BOM UTF-8"), nullptr, {m_bom_check}});
     m_text_card->SetSizer(text_sizer);
     body->Add(m_text_card, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(24));
@@ -250,7 +254,7 @@ void ExportDialog::create_ui()
     // --- Archive card ------------------------------------------------------
     m_archive_card = new StaticBox(m_body);
     auto *archive_sizer = new wxBoxSizer(wxVERTICAL);
-    archive_sizer->Add(new Label(m_archive_card, Label::Head_14, _L("Archive")), 0, wxLEFT | wxRIGHT | wxTOP | wxBOTTOM, FromDIP(14));
+    archive_sizer->Add(new Label(m_archive_card, Label::Head_16, _L("Archive")), 0, wxLEFT | wxRIGHT | wxTOP | wxBOTTOM, FromDIP(MD3::Metrics::active().padding));
     m_archive_combo = new ComboBox(m_archive_card, wxID_ANY, wxEmptyString, wxDefaultPosition, FromDIP(wxSize(300, 32)), 0, nullptr, wxCB_READONLY);
     m_archive_combo->Append(_L("None - write the file directly"));
     m_archive_combo->Append(_L("ZIP - Deflate, built in, no encryption"));
@@ -265,7 +269,7 @@ void ExportDialog::create_ui()
                _L("An archive keeps the data file and its sidecar together. Paths inside are always relative."));
     m_archive_note_label = new Label(m_archive_card, Label::Body_13, wxEmptyString, LB_AUTO_WRAP | wxST_NO_AUTORESIZE);
     m_archive_note_label->SetMinSize(wxSize(0, -1));
-    archive_sizer->Add(m_archive_note_label, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(14));
+    archive_sizer->Add(m_archive_note_label, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(MD3::Metrics::active().padding));
 
     m_seven_zip_sizer = new wxBoxSizer(wxVERTICAL);
     m_method_combo = new ComboBox(m_archive_card, wxID_ANY, wxEmptyString, wxDefaultPosition, FromDIP(wxSize(260, 32)), 0, nullptr, wxCB_READONLY);
@@ -294,7 +298,7 @@ void ExportDialog::create_ui()
     m_solid_check->SetValue(true);
     m_solid_check->SetToolTip(_L("Solid gives a better ratio; extracting one file then decompresses its whole block."));
     m_solid_check->Bind(wxEVT_CHECKBOX, [this](wxCommandEvent &) { update_hints(); });
-    m_seven_zip_sizer->Add(m_solid_check, 0, wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(14));
+    m_seven_zip_sizer->Add(m_solid_check, 0, wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(MD3::Metrics::active().padding));
     m_option_rows.push_back(OptionRow{_L("solid archive block"), nullptr, {m_solid_check}});
     m_solid_block_combo = new ComboBox(m_archive_card, wxID_ANY, wxEmptyString, wxDefaultPosition, FromDIP(wxSize(260, 32)), 0, nullptr, wxCB_READONLY);
     for (unsigned mib : SOLID_BLOCK_CHOICES) m_solid_block_combo->Append(mib_choice_name(mib));
@@ -321,14 +325,14 @@ void ExportDialog::create_ui()
     m_encrypt_headers_check->SetValue(true);
     m_encrypt_headers_check->SetToolTip(_L("Without this, anyone can list the file names inside the archive even though the contents are encrypted."));
     m_encrypt_headers_check->Bind(wxEVT_CHECKBOX, [this](wxCommandEvent &) { update_hints(); });
-    m_seven_zip_sizer->Add(m_encrypt_headers_check, 0, wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(14));
+    m_seven_zip_sizer->Add(m_encrypt_headers_check, 0, wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(MD3::Metrics::active().padding));
     m_option_rows.push_back(OptionRow{_L("encrypt headers hidden file names"), nullptr, {m_encrypt_headers_check}});
     m_encryption_warning_label = new Label(m_archive_card, Label::Head_13, wxEmptyString, LB_AUTO_WRAP | wxST_NO_AUTORESIZE);
     m_encryption_warning_label->SetMinSize(wxSize(0, -1));
-    m_seven_zip_sizer->Add(m_encryption_warning_label, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(14));
+    m_seven_zip_sizer->Add(m_encryption_warning_label, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(MD3::Metrics::active().padding));
     m_hints_label = new Label(m_archive_card, Label::Body_13, wxEmptyString, LB_AUTO_WRAP | wxST_NO_AUTORESIZE);
     m_hints_label->SetMinSize(wxSize(0, -1));
-    m_seven_zip_sizer->Add(m_hints_label, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(14));
+    m_seven_zip_sizer->Add(m_hints_label, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(MD3::Metrics::active().padding));
     auto *seven_zip_row = new wxBoxSizer(wxHORIZONTAL);
     m_seven_zip_status_label = new Label(m_archive_card, Label::Body_13, wxEmptyString, LB_AUTO_WRAP | wxST_NO_AUTORESIZE);
     m_seven_zip_status_label->SetMinSize(wxSize(0, -1));
@@ -337,7 +341,7 @@ void ExportDialog::create_ui()
     m_locate_seven_zip_button->Bind(wxEVT_BUTTON, &ExportDialog::on_locate_seven_zip, this);
     seven_zip_row->Add(m_seven_zip_status_label, 1, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(12));
     seven_zip_row->Add(m_locate_seven_zip_button, 0, wxALIGN_CENTER_VERTICAL);
-    m_seven_zip_sizer->Add(seven_zip_row, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(14));
+    m_seven_zip_sizer->Add(seven_zip_row, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(MD3::Metrics::active().padding));
     archive_sizer->Add(m_seven_zip_sizer, 0, wxEXPAND);
     m_archive_card->SetSizer(archive_sizer);
     body->Add(m_archive_card, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(24));
@@ -345,7 +349,7 @@ void ExportDialog::create_ui()
     // --- Output card -------------------------------------------------------
     m_output_card = new StaticBox(m_body);
     auto *output_sizer = new wxBoxSizer(wxVERTICAL);
-    output_sizer->Add(new Label(m_output_card, Label::Head_14, _L("Output")), 0, wxLEFT | wxRIGHT | wxTOP | wxBOTTOM, FromDIP(14));
+    output_sizer->Add(new Label(m_output_card, Label::Head_16, _L("Output")), 0, wxLEFT | wxRIGHT | wxTOP | wxBOTTOM, FromDIP(MD3::Metrics::active().padding));
     auto *path_row = new wxBoxSizer(wxHORIZONTAL);
     m_path_input = new TextInput(m_output_card, wxEmptyString, wxEmptyString, wxEmptyString, wxDefaultPosition, FromDIP(wxSize(-1, 32)));
     m_path_input->SetName(_L("Output file path"));
@@ -356,7 +360,7 @@ void ExportDialog::create_ui()
     m_browse_button->Bind(wxEVT_BUTTON, &ExportDialog::on_browse, this);
     path_row->Add(m_path_input, 1, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(8));
     path_row->Add(m_browse_button, 0, wxALIGN_CENTER_VERTICAL);
-    output_sizer->Add(path_row, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(14));
+    output_sizer->Add(path_row, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(MD3::Metrics::active().padding));
     m_option_rows.push_back(OptionRow{_L("output file path browse"), path_row, {m_path_input, m_browse_button}});
     m_output_card->SetSizer(output_sizer);
     body->Add(m_output_card, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(24));
@@ -408,6 +412,7 @@ void ExportDialog::apply_theme()
         box->SetBackgroundColorNormal(card);
         box->SetBorderColorNormal(outline);
         box->SetBorderWidth(1);
+        box->SetCornerRadius(FromDIP(MD3::Metrics::active().radius));
     }
     for (Label *label : m_option_labels) {
         label->SetBackgroundColour(card);

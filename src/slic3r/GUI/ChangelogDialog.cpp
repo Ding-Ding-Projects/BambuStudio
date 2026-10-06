@@ -777,7 +777,7 @@ void ChangelogDialog::add_release_card(const Changelog::FilteredRelease &filtere
     card->SetBackgroundColorNormal(card_bg);
     card->SetBorderColorNormal(StateColor::semantic(MD3::Role::OutlineVariant));
     card->SetBorderWidth(1);
-    card->SetCornerRadius(FromDIP(12));
+    card->SetCornerRadius(FromDIP(MD3::Metrics::active().radius));
     auto *body = new wxBoxSizer(wxVERTICAL);
 
     wxString heading = wxString::FromUTF8(release.version);
@@ -792,22 +792,23 @@ void ChangelogDialog::add_release_card(const Changelog::FilteredRelease &filtere
     title->SetForegroundColour(on);
     body->Add(title, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(16));
 
-    auto *meta_row = new wxBoxSizer(wxHORIZONTAL);
+    auto *meta_row = new wxBoxSizer(wxVERTICAL);
     wxString meta = HumanDate::format(HumanDate::utc_stamp(wxString::FromUTF8(release.published))) + wxString::FromUTF8(" · ") + wxString::FromUTF8(release.tag);
     if (release.prerelease)
         meta += wxString::FromUTF8(" · ") + _L("pre-release");
-    auto *meta_label = new Label(card, Label::Body_12, meta);
+    auto *meta_label = new Label(card, Label::Body_13, meta, LB_AUTO_WRAP | wxST_NO_AUTORESIZE);
+    meta_label->SetMinSize(wxSize(0, -1));
     meta_label->SetBackgroundColour(card_bg);
     meta_label->SetForegroundColour(on_var);
-    meta_row->Add(meta_label, 0, wxALIGN_CENTER_VERTICAL);
+    meta_row->Add(meta_label, 0, wxEXPAND);
     if (!release.url.empty()) {
-        meta_row->AddSpacer(FromDIP(12));
+        meta_row->AddSpacer(FromDIP(4));
         auto *link = new LinkLabel(card, _L("Release page"), release.url);
         link->SetName(wxString::Format(_L("Open the release page of %s on GitHub"), wxString::FromUTF8(release.version)));
         link->SeLinkLabelBColour(card_bg);
-        meta_row->Add(link, 0, wxALIGN_CENTER_VERTICAL);
+        meta_row->Add(link, 0);
     }
-    body->Add(meta_row, 0, wxLEFT | wxRIGHT | wxTOP, FromDIP(16));
+    body->Add(meta_row, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(MD3::Metrics::active().padding));
 
     if (filtered.entries.empty()) {
         wxString note;
@@ -827,7 +828,7 @@ void ChangelogDialog::add_release_card(const Changelog::FilteredRelease &filtere
         for (const Changelog::Entry *entry : filtered.entries) {
             auto *row = new wxBoxSizer(wxHORIZONTAL);
             const auto roles = category_roles(entry->category);
-            auto *chip = new Label(card, Label::Body_11, category_label(entry->category), wxALIGN_CENTER_HORIZONTAL);
+            auto *chip = new Label(card, Label::Body_13, category_label(entry->category), wxALIGN_CENTER_HORIZONTAL);
             chip->SetMinSize(FromDIP(wxSize(88, -1)));
             chip->SetBackgroundColour(StateColor::semantic(roles.first));
             chip->SetForegroundColour(StateColor::semantic(roles.second));
@@ -861,7 +862,7 @@ void ChangelogDialog::add_release_card(const Changelog::FilteredRelease &filtere
     }
 
     card->SetSizer(body);
-    into->Add(card, 0, wxEXPAND | wxBOTTOM, FromDIP(12));
+    into->Add(card, 0, wxEXPAND | wxBOTTOM, FromDIP(MD3::Metrics::active().gap));
 }
 
 // --- Dates ---------------------------------------------------------------------

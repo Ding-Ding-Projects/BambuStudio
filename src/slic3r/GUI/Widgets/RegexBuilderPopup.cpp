@@ -28,8 +28,6 @@ namespace {
 // Logical (DIP) metrics + safety bounds. User patterns are evaluated by the
 // bounded worker; these UI limits are the same values the worker revalidates.
 constexpr int kContentW      = 344;  // inner content width
-constexpr int kPad           = 12;   // card padding
-constexpr int kGapY          = 8;    // vertical rhythm between rows
 constexpr int kTargetH       = 44;   // minimum pointer/keyboard target
 constexpr int kMaxPatternLen = static_cast<int>(Slic3r::GUI::BoundedRegex::kMaxPatternCodeUnits);
 constexpr int kMaxSampleLen  = static_cast<int>(Slic3r::GUI::BoundedRegex::kMaxSubjectCodeUnits);
@@ -92,7 +90,7 @@ public:
                   wxTAB_TRAVERSAL | wxBORDER_NONE)
     {
         SetName(name);
-        SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerHigh));
+        SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
         m_defs = std::move(defs);
         for (size_t i = 0; i < m_defs.size(); ++i) {
             const ChipDef &def = m_defs[i];
@@ -162,11 +160,11 @@ RegexBuilderPopup::RegexBuilderPopup(wxWindow *parent)
         const wxSize sz = GetClientSize();
         // Fill the full rect first so the rounded-corner triangles are clean
         // (same approach as DropDown::render), then the outlined card on top.
-        dc.SetBackground(wxBrush(StateColor::semantic(MD3::Role::SurfaceContainerHigh)));
+        dc.SetBackground(wxBrush(StateColor::semantic(MD3::Role::SurfaceContainerLow)));
         dc.Clear();
-        dc.SetBrush(wxBrush(StateColor::semantic(MD3::Role::SurfaceContainerHigh)));
+        dc.SetBrush(wxBrush(StateColor::semantic(MD3::Role::SurfaceContainerLow)));
         dc.SetPen(wxPen(StateColor::semantic(MD3::Role::OutlineVariant), std::max(1, FromDIP(1))));
-        dc.DrawRoundedRectangle(0, 0, sz.x, sz.y, FromDIP(12));
+        dc.DrawRoundedRectangle(0, 0, sz.x, sz.y, FromDIP(MD3::Metrics::active().radius));
     });
     Bind(wxEVT_CHAR_HOOK, [this](wxKeyEvent &e) {
         if (e.GetKeyCode() == WXK_ESCAPE) {
@@ -196,13 +194,13 @@ void RegexBuilderPopup::OnDismiss()
 
 void RegexBuilderPopup::build()
 {
-    const wxColour surface  = StateColor::semantic(MD3::Role::SurfaceContainerHigh);
-    const wxColour field_bg = StateColor::semantic(MD3::Role::SurfaceContainerHighest);
+    const wxColour surface  = StateColor::semantic(MD3::Role::SurfaceContainerLow);
+    const wxColour field_bg = StateColor::semantic(MD3::Role::SurfaceContainerLowest);
     const wxColour on       = StateColor::semantic(MD3::Role::OnSurface);
     const wxColour on_var   = StateColor::semantic(MD3::Role::OnSurfaceVariant);
 
-    const int pad      = FromDIP(kPad);
-    const int gap      = FromDIP(kGapY);
+    const int pad      = FromDIP(MD3::Metrics::active().padding);
+    const int gap      = FromDIP(MD3::Metrics::active().gap);
     const int contentW = FromDIP(kContentW);
 
     m_scroll = new MD3ScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize,
@@ -213,12 +211,12 @@ void RegexBuilderPopup::build()
 
     // Title + engine identification (the popover always names the real engine
     // so the preview can never silently diverge from the search's dialect).
-    auto *title = new Label(m_scroll, Label::Head_14, _L("Regex builder"));
+    auto *title = new Label(m_scroll, Label::Head_20, _L("Regex builder"));
     title->SetBackgroundColour(surface);
     title->SetForegroundColour(on);
     sizer->Add(title, 0, wxLEFT | wxRIGHT | wxTOP, pad);
 
-    auto *engine = new Label(m_scroll, Label::Body_11,
+    auto *engine = new Label(m_scroll, Label::Body_13,
                               _L("Engine: Boost.Regex 1.84 wide-character ECMAScript in an isolated 50 ms worker. Case-insensitive matching uses boost::regex_constants::icase. Escape metacharacters with a backslash."));
     engine->SetBackgroundColour(surface);
     engine->SetForegroundColour(on_var);
@@ -226,7 +224,7 @@ void RegexBuilderPopup::build()
     sizer->Add(engine, 0, wxLEFT | wxRIGHT | wxTOP, pad);
 
     auto sectionLabel = [&](const wxString &text) {
-        auto *lbl = new Label(m_scroll, Label::Head_12, text);
+        auto *lbl = new Label(m_scroll, Label::Head_14, text);
         lbl->SetBackgroundColour(surface);
         lbl->SetForegroundColour(on_var);
         sizer->Add(lbl, 0, wxLEFT | wxRIGHT | wxTOP, pad);
@@ -330,7 +328,7 @@ void RegexBuilderPopup::build()
         if (m_cb.onWord)
             m_cb.onWord(on);
     });
-    auto *word_note = new Label(m_scroll, Label::Body_11,
+    auto *word_note = new Label(m_scroll, Label::Body_13,
                                 _L("Whole word applies to plain-text search only; in regex mode use \\b"));
     word_note->SetBackgroundColour(surface);
     word_note->SetForegroundColour(on_var);
@@ -409,7 +407,7 @@ void RegexBuilderPopup::build()
     m_test_panel->SetBackgroundColour(surface);
     wxBoxSizer *test_sizer = new wxBoxSizer(wxVERTICAL);
 
-    auto *sample_lbl = new Label(m_test_panel, Label::Head_12, _L("Sample text"));
+    auto *sample_lbl = new Label(m_test_panel, Label::Head_14, _L("Sample text"));
     sample_lbl->SetBackgroundColour(surface);
     sample_lbl->SetForegroundColour(on_var);
     test_sizer->Add(sample_lbl, 0, wxTOP, gap / 2);
@@ -431,7 +429,7 @@ void RegexBuilderPopup::build()
     });
     test_sizer->Add(m_sample, 0, wxTOP, gap / 2);
 
-    auto *matches_lbl = new Label(m_test_panel, Label::Head_12, _L("Matches"));
+    auto *matches_lbl = new Label(m_test_panel, Label::Head_14, _L("Matches"));
     matches_lbl->SetBackgroundColour(surface);
     matches_lbl->SetForegroundColour(on_var);
     test_sizer->Add(matches_lbl, 0, wxTOP, gap);
@@ -467,10 +465,10 @@ void RegexBuilderPopup::build()
 
 void RegexBuilderPopup::buildReference()
 {
-    const wxColour surface  = StateColor::semantic(MD3::Role::SurfaceContainerHigh);
+    const wxColour surface  = StateColor::semantic(MD3::Role::SurfaceContainerLow);
     const wxColour on       = StateColor::semantic(MD3::Role::OnSurface);
     const wxColour on_var   = StateColor::semantic(MD3::Role::OnSurfaceVariant);
-    const int pad      = FromDIP(kPad);
+    const int pad      = FromDIP(MD3::Metrics::active().padding);
     const int contentW = FromDIP(kContentW);
 
     m_ref_scroll = new MD3ScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize,
@@ -479,7 +477,7 @@ void RegexBuilderPopup::buildReference()
     wxBoxSizer *sizer = new wxBoxSizer(wxVERTICAL);
 
     auto heading = [&](const wxString &text) {
-        auto *lbl = new Label(m_ref_scroll, Label::Head_12, text);
+        auto *lbl = new Label(m_ref_scroll, Label::Head_14, text);
         lbl->SetBackgroundColour(surface);
         lbl->SetForegroundColour(on_var);
         sizer->Add(lbl, 0, wxLEFT | wxRIGHT | wxTOP, pad);
@@ -541,7 +539,7 @@ void RegexBuilderPopup::buildReference()
     oc_btn->SetColorScheme(m_scheme);
     oc_btn->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { openCodeHelp(); });
     sizer->Add(oc_btn, 0, wxLEFT | wxRIGHT | wxTOP, pad - FromDIP(4));
-    m_ref_status = new Label(m_ref_scroll, Label::Body_11, wxEmptyString);
+    m_ref_status = new Label(m_ref_scroll, Label::Body_13, wxEmptyString);
     m_ref_status->SetBackgroundColour(surface);
     m_ref_status->SetForegroundColour(on_var);
     sizer->Add(m_ref_status, 0, wxLEFT | wxRIGHT | wxTOP, pad - FromDIP(8));
@@ -598,10 +596,10 @@ void RegexBuilderPopup::addSection(wxSizer *sizer, const wxString &title,
                                    const std::vector<ChipDef> &defs)
 {
     m_sections.emplace_back(title, defs); // the Reference tab reuses these
-    const wxColour surface = StateColor::semantic(MD3::Role::SurfaceContainerHigh);
-    const int      pad     = FromDIP(kPad);
+    const wxColour surface = StateColor::semantic(MD3::Role::SurfaceContainerLow);
+    const int      pad     = FromDIP(MD3::Metrics::active().padding);
 
-    auto *lbl = new Label(m_scroll, Label::Head_12, title);
+    auto *lbl = new Label(m_scroll, Label::Head_14, title);
     lbl->SetBackgroundColour(surface);
     lbl->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     sizer->Add(lbl, 0, wxLEFT | wxRIGHT | wxTOP, pad);
@@ -788,7 +786,7 @@ void RegexBuilderPopup::evaluate()
             return;
         wxTextAttr base;
         base.SetTextColour(StateColor::semantic(MD3::Role::OnSurface));
-        base.SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerHighest));
+        base.SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
         m_sample->SetStyle(0, m_sample->GetLastPosition(), base);
     };
 
@@ -918,7 +916,7 @@ void RegexBuilderPopup::fitPopup()
     const int view_w = std::max(1, std::min(content.x + sb_w, area.width - 2 * inset - FromDIP(16)));
     SetClientSize(view_w + 2 * inset, tab_h + view_h + 2 * inset);
     if (m_tab_build && m_tab_ref) {
-        const int tab_w = FromDIP(96);
+        const int tab_w = std::max(FromDIP(96), std::max(m_tab_build->GetBestSize().x, m_tab_ref->GetBestSize().x));
         m_tab_build->SetSize(inset + FromDIP(8), inset + FromDIP(4), tab_w, FromDIP(kTargetH));
         m_tab_ref->SetSize(inset + FromDIP(12) + tab_w, inset + FromDIP(4), tab_w, FromDIP(kTargetH));
     }

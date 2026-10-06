@@ -273,13 +273,15 @@ void ProjectHistoryDialog::create_ui()
     auto *root = new wxBoxSizer(wxVERTICAL);
     root->Add(new MD3DialogCaption(this, _L("Local history")), 0, wxEXPAND);
 
-    m_title_label = new Label(this, Label::Head_24, _L("Local history"));
+    m_title_label = new Label(this, Label::Head_20, _L("Local history"));
     root->Add(m_title_label, 0, wxLEFT | wxRIGHT | wxTOP, FromDIP(24));
 
     // TRN: Subtitle in the project Version history dialog.
     m_subtitle_label = new Label(this, Label::Body_14,
-        _L("Browse project, settings, draft and printer history saved on this device. No history is uploaded."));
-    root->Add(m_subtitle_label, 0, wxLEFT | wxRIGHT | wxTOP, FromDIP(24));
+        _L("Browse project, settings, draft and printer history saved on this device. No history is uploaded."),
+        LB_AUTO_WRAP | wxST_NO_AUTORESIZE);
+    m_subtitle_label->SetMinSize(wxSize(0, -1));
+    root->Add(m_subtitle_label, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(MD3::Metrics::active().gap));
 
     m_info_card = new StaticBox(this);
     auto *info_sizer = new wxBoxSizer(wxVERTICAL);
@@ -296,7 +298,7 @@ void ProjectHistoryDialog::create_ui()
     // extent must not be allowed to push the card's CalcMin out with it.
     m_project_label->SetMinSize(wxSize(0, -1));
     set_wrapped_tooltip(m_project_label, project_line);
-    info_sizer->Add(m_project_label, 0, wxEXPAND | wxALL, FromDIP(14));
+    info_sizer->Add(m_project_label, 0, wxEXPAND | wxALL, FromDIP(MD3::Metrics::active().padding));
     m_info_card->SetSizer(info_sizer);
     root->Add(m_info_card, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(24));
 
@@ -306,13 +308,13 @@ void ProjectHistoryDialog::create_ui()
     auto *failure_sizer = new wxBoxSizer(wxVERTICAL);
     // TRN: Heading of the recovery banner in the Version history dialog.
     m_failure_title_label = new Label(m_failure_card, Label::Head_14, _L("Some versions could not be saved"));
-    failure_sizer->Add(m_failure_title_label, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(14));
+    failure_sizer->Add(m_failure_title_label, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(MD3::Metrics::active().padding));
     m_failure_detail_label = new Label(m_failure_card, Label::Body_13);
     failure_sizer->Add(m_failure_detail_label, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(6));
     m_retry_failures_button = new Button(m_failure_card, _L("Retry saving"));
     m_retry_failures_button->SetMinSize(FromDIP(wxSize(140, 36)));
     m_retry_failures_button->Bind(wxEVT_BUTTON, &ProjectHistoryDialog::on_retry_failures, this);
-    failure_sizer->Add(m_retry_failures_button, 0, wxALIGN_RIGHT | wxALL, FromDIP(14));
+    failure_sizer->Add(m_retry_failures_button, 0, wxALIGN_RIGHT | wxALL, FromDIP(MD3::Metrics::active().padding));
     m_failure_card->SetSizer(failure_sizer);
     root->Add(m_failure_card, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(24));
     m_failure_card->Hide();
@@ -393,7 +395,7 @@ void ProjectHistoryDialog::create_ui()
     // There is deliberately no bulk delete here: the version history is
     // append-only by design (a restore is recorded as a new version and nothing
     // is ever removed), so there is no delete action to run in bulk.
-    auto *bulk_row = new wxBoxSizer(wxHORIZONTAL);
+    auto *bulk_row = new wxWrapSizer(wxHORIZONTAL);
     const auto make_bulk_button = [this](const wxString &text, Button::Variant variant) {
         auto *button = new Button(m_list_card, text);
         button->SetVariant(variant);
@@ -418,7 +420,7 @@ void ProjectHistoryDialog::create_ui()
     bulk_row->Add(m_select_visible_button, 0, wxRIGHT, FromDIP(6));
     bulk_row->Add(m_select_all_button, 0, wxRIGHT, FromDIP(6));
     bulk_row->Add(m_invert_button, 0, wxRIGHT, FromDIP(12));
-    bulk_row->Add(m_bulk_counts_label, 1, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(12));
+    bulk_row->Add(m_bulk_counts_label, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(12));
     bulk_row->Add(m_bulk_export_button, 0, wxRIGHT, FromDIP(6));
     bulk_row->Add(m_label_button, 0);
     list_sizer->Add(bulk_row, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(8));
@@ -430,20 +432,22 @@ void ProjectHistoryDialog::create_ui()
     m_status_label = new Label(m_list_card, Label::Body_13, wxEmptyString,
                                LB_AUTO_WRAP | wxST_NO_AUTORESIZE);
     m_status_label->SetMinSize(wxSize(0, -1)); // as above: the sizer owns the width, the text does not
-    list_sizer->Add(m_status_label, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(14));
+    list_sizer->Add(m_status_label, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(MD3::Metrics::active().padding));
 
     m_load_all_button = new Button(m_list_card, _L("Load all versions"));
     m_load_all_button->SetMinSize(FromDIP(wxSize(144, 36)));
     m_load_all_button->Hide();
     m_load_all_button->Bind(wxEVT_BUTTON, &ProjectHistoryDialog::on_load_all, this);
-    list_sizer->Add(m_load_all_button, 0, wxALIGN_RIGHT | wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(14));
+    list_sizer->Add(m_load_all_button, 0, wxALIGN_RIGHT | wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(MD3::Metrics::active().padding));
 
     m_list_card->SetSizer(list_sizer);
     root->Add(m_list_card, 1, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(24));
 
     // TRN: Safety note in the Version history dialog.
     m_safety_label = new Label(this, Label::Body_12,
-        _L("Restoring adds a new version. It never overwrites the project file or rewinds Git history."));
+        _L("Restoring adds a new version. It never overwrites the project file or rewinds Git history."),
+        LB_AUTO_WRAP | wxST_NO_AUTORESIZE);
+    m_safety_label->SetMinSize(wxSize(0, -1));
     root->Add(m_safety_label, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(24));
 
     auto *actions = new wxBoxSizer(wxHORIZONTAL);
@@ -507,6 +511,7 @@ void ProjectHistoryDialog::apply_theme()
         box->SetBackgroundColorNormal(card);
         box->SetBorderColorNormal(outline);
         box->SetBorderWidth(1);
+        box->SetCornerRadius(FromDIP(MD3::Metrics::active().radius));
     }
 
     // The recovery banner uses the MD3 error-container roles to read as a
@@ -517,6 +522,7 @@ void ProjectHistoryDialog::apply_theme()
     m_failure_card->SetBackgroundColorNormal(error_container);
     m_failure_card->SetBorderColorNormal(error_accent);
     m_failure_card->SetBorderWidth(1);
+    m_failure_card->SetCornerRadius(FromDIP(MD3::Metrics::active().radius));
     m_failure_title_label->SetForegroundColour(on_error_container);
     m_failure_detail_label->SetForegroundColour(on_error_container);
     for (Label *label : {m_failure_title_label, m_failure_detail_label})
@@ -835,9 +841,11 @@ void ProjectHistoryDialog::update_responsive_layout()
     // source before every wrap so repeated resizes do not accumulate breaks.
     m_subtitle_label->SetLabel(
         _L("Browse project, settings, draft and printer history saved on this device. No history is uploaded."));
+    m_subtitle_label->SetMinSize(wxSize(0, -1));
     m_subtitle_label->Wrap(content_width);
     m_safety_label->SetLabel(
         _L("Restoring adds a new version. It never overwrites the project file or rewinds Git history."));
+    m_safety_label->SetMinSize(wxSize(0, -1));
     m_safety_label->Wrap(content_width);
 
     Layout();
