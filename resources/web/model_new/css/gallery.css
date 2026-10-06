@@ -96,3 +96,18 @@
     transition: none !important;
   }
 }
+
+
+/* Studio Atlas composition: gallery.js retains its selected image and dimensions. */
+.bs-gallery { gap: 20px; padding: 16px; border: 1px solid var(--md-outline-variant); border-radius: 20px; background: var(--md-sc-low); box-sizing: border-box; }
+.bs-gallery-main { box-shadow: 0 2px 8px var(--md-shadow); }
+.bs-gallery-thumbs { min-width: 0; max-width: 100%; box-sizing: border-box; }
+.bs-gallery-thumb { box-sizing: border-box; border: 2px solid transparent; margin-bottom: 12px; }
+.bs-gallery-thumb.active { box-shadow: 0 0 0 2px var(--md-sc-lowest); }
+.bs-gallery-counter { line-height: 1.4; font-variant-numeric: tabular-nums; }
+@media (max-width: 720px) {
+  .bs-gallery { padding: 10px; gap: 12px; }
+  .bs-gallery-thumbs { display: flex; gap: 10px; overflow-x: auto; padding: 4px; flex: 1 1 100%; }
+  .bs-gallery-thumb { flex: 0 0 100px; margin-bottom: 0; }
+  .bs-gallery-thumb img { height: 72px; }
+}

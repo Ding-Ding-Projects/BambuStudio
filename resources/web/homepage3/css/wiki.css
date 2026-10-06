@@ -378,3 +378,37 @@ li {
 	background-color: var(--md-primary);
 	color: var(--md-on-primary);
 }
+
+
+/* Studio Atlas composition: carousel widths and offsets remain unchanged. */
+body { min-width: 0; }
+.searchBlock { height: auto; min-height: 60px; padding: 0 48px 12px; }
+.searchResultArea { left: 48px; right: 48px; width: auto; overflow-y: auto; }
+.searchResult { height: auto; min-height: 36px; line-height: 1.5; padding: 8px 16px; overflow-wrap: anywhere; }
+.searchInputArea, .searchInput { min-width: 0; }
+.searchBar:focus-within { outline: 2px solid var(--md-primary); outline-offset: 2px; }
+.academyTabs { gap: 12px; flex-wrap: wrap; }
+.academyTab { padding: 10px 14px; border-radius: 12px 12px 0 0; line-height: 1.4; }
+.academyTab.active { background: var(--md-primary-container); color: var(--md-on-primary-container); }
+.titleBlock { align-items: center; gap: 12px; flex-wrap: wrap; }
+.title { font-size: 20px; line-height: 1.4; font-weight: 700; }
+.card { padding: 24px 24px 16px; }
+.cardImg { margin: 0 auto 12px; display: block; }
+.cardTitle { font-size: 15px; line-height: 1.4; overflow-wrap: anywhere; }
+.topicBlock { padding: 32px 48px; }
+.topicCard { min-width: 0; flex-basis: 320px; padding: 24px; }
+.topicTitle { line-height: 1.4; }
+.topicCard li { padding: 6px 0; line-height: 1.5; overflow-wrap: anywhere; }
+@media (max-width: 720px) {
+  .searchBlock { padding-left: 20px; padding-right: 20px; }
+  .searchResultArea { left: 20px; right: 20px; }
+  .academyBlock, .tutorialBlock { padding-left: 20px; }
+  .academyTabs, .titleBlock { padding-right: 20px; }
+  .academyCardArea { margin-right: 20px; }
+  .tutorialSwitchBlock { width: calc(100% - 20px); }
+  .topicBlock { padding: 24px 20px; }
+  .bannerContent { width: 70%; padding: 20px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .academyTab, .card, .videoCard { transition: none; }
+}

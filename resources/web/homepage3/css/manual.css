@@ -50,3 +50,9 @@
 	font-size: 14px;
 	padding: 0 14px 16px;
 }
+
+
+/* Studio Atlas composition: keep the guide board's existing hidden state. */
+#WikiGuideBoard { padding: 12px 0 24px; gap: 0; }
+.UG_TITLE { margin: 0; padding: 16px 16px 8px; font-size: 18px; line-height: 1.4; overflow-wrap: anywhere; }
+.UG_DESC { padding: 0 16px 18px; font-size: 14px; line-height: 1.6; overflow-wrap: anywhere; }

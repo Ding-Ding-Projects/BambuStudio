@@ -487,3 +487,15 @@ body
 	background-color: var(--md-sc-highest);
 }
 
+
+
+/* Studio Atlas composition: mini-rail visibility remains owned by left_mini.css. */
+@media (min-width: 169px) {
+  #LoginArea { padding: 16px 8px; gap: 8px; }
+  .BtnItem { min-height: 44px; height: auto; box-sizing: border-box; padding: 10px 12px; gap: 8px; }
+  .BtnIcon { flex-shrink: 0; margin-right: 0; }
+  .BtnText { min-width: 0; white-space: normal; overflow-wrap: anywhere; line-height: 1.4; }
+  .BtnItemSelected { box-shadow: inset 3px 0 0 var(--md-primary); }
+  #UserName { max-width: 100%; overflow-wrap: anywhere; }
+}
+.BtnItem:focus-visible, #Login1:focus-visible { outline: 2px solid var(--md-primary); outline-offset: -2px; }

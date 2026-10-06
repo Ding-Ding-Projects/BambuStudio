@@ -51,3 +51,15 @@
   font-weight: 700;
   color: var(--md-on-surface);
 }
+
+
+/* Studio Atlas composition: measured indicator positions remain script-owned. */
+.Navigation { box-sizing: border-box; padding: 12px 8px 12px 20px; border: 1px solid var(--md-outline-variant); border-radius: 16px; background: var(--md-sc-low); }
+.Navigation .rail { top: 12px; bottom: 12px; width: 3px; border-radius: 3px; }
+.Navigation .indicator { width: 3px; border-radius: 3px; }
+.Navigation .nav-item { margin: 2px 0; padding: 10px 12px; line-height: 1.5; border-radius: 10px; overflow-wrap: anywhere; }
+.Navigation .nav-item a { display: block; }
+.Navigation .nav-item:hover { background: var(--md-sc-high); }
+.Navigation .nav-item.active { background: var(--md-primary-container); color: var(--md-on-primary-container); }
+.Navigation .nav-item a:focus-visible { outline: 2px solid var(--md-primary); outline-offset: 2px; border-radius: 4px; }
+@media (prefers-reduced-motion: reduce) { .Navigation .indicator, .Navigation .nav-item { transition: none; } }
