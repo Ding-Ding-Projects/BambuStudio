@@ -7,8 +7,9 @@ and reported MSVC `C2397` at `StaticBox.hpp:91`. The active density radius was
 implicitly converted from integer to double inside a brace initializer.
 Reviewed repair `661f4678e430e6832a510fa20cba420d735c68f1` makes that conversion
 explicit without changing its value or lifecycle. The independently executed
-actual-declaration compiler check and four density assertions pass. The running
-producer remains untouched; a successful native production retry is pending.
+actual-declaration compiler check and four density assertions pass. That producer
+ended with exit 1 at `2026-10-06T10:26:28Z`, without any source/index mutation
+during its run. A successful native production retry is pending.
 
 Two further diagnostics from that same pass have reviewed candidate repairs:
 `StatusPanel.cpp` C2664 is corrected by accepting the actual `wxStaticText*`
@@ -17,9 +18,11 @@ member in the title helper (`ac04eda5`); `Tab.cpp` C2039 is corrected by using
 checks compile the actual extracted production code against configured wx
 headers. They do not substitute for the full native translation units.
 
-The local producer remains active. Observation continues under the existing
-local build authorization and bounded repair retries; the external-wait limit
-does not require a separate extension decision for this local compilation.
+Local build authorization and bounded repair retries remain in effect. The
+external-wait limit does not require a separate extension for local compilation.
+The next candidate is awaiting the finite strict catalog-consistency repair.
+The broader source integration selection now passes 29 checks; nine additional
+checks preserve the exact callers of the replaced raw scroll/table owners.
 The [tracked publication scan](public-boundary-scan-20261006.md)
 records its exact text inventory and contextual review, with no confirmed
 violation and explicit exclusions.
