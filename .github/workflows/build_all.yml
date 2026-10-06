@@ -11,7 +11,17 @@ on:
   pull_request:
     branches: [main]
 
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      debug-symbols:
+        description: 'Build encrypted native crash symbols (full native rebuild)'
+        type: boolean
+        default: false
+      symbol-public-key:
+        description: 'RSA public PEM for encrypted symbols; private key remains local'
+        type: string
+        default: ''
+
 
 permissions:
   contents: read
@@ -83,6 +93,8 @@ jobs:
     with:
       os: windows-latest
       build-deps-only: false
+      debug-symbols: ${{ inputs.debug-symbols || false }}
+      symbol-public-key: ${{ inputs.symbol-public-key || '' }}
 
   release_windows:
     name: Publish Windows release
