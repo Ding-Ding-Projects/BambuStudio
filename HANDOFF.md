@@ -2,7 +2,7 @@
 
 ## Current source and verification boundary
 
-Verified remote `main` is `d4d4bb13bb66eddd53eda9849fd18ec3d5ff0d47`. Reviewed combined source before this
+Verified remote `main` is `cc059003d362b87d53786152ee8c28621d9c2813`. Reviewed combined source before this
 record is `a42c09977ae2d123b9a44dec7d590ab315ec2706`. It includes the reviewed shell/tab drag and focus
 repairs, selection controls and their allocated-size lifecycle, Appearance
 property-page reflow, humidity placement, calibration viewport/preset/result

@@ -12,7 +12,7 @@ Application launches, installer execution, physical printer actions and manual r
 
 ## Source and verification before this documentation commit
 
-- Verified remote `main`: `d4d4bb13bb66eddd53eda9849fd18ec3d5ff0d47`.
+- Verified remote `main`: `cc059003d362b87d53786152ee8c28621d9c2813`.
 - Combined reviewed source: `a42c09977ae2d123b9a44dec7d590ab315ec2706`. The current exact root producer remains pinned to `4147ca9eeb0004f7e18b4a2f5a8c6cb190975d21`, recorded at `2026-10-06T11:04:22Z`. Later changes are documentation and a language-checker repair in separate checkouts.
 - Last exact root build: `05dd932d4de51384742375cb277d51d19e97039f`, started `2026-10-06T08:58:03Z`, ended with exit 1 at `2026-10-06T10:26:28Z`. Configuration and DeviceWeb completed before three native GUI compiler causes. No source/index mutation occurred during the run; the generated route bytes are preserved before reconciliation.
 - Retained diagnostic: generated `OpenCASCADEConfig.cmake:46` exported raw quoted/backslash compiler path mappings and failed with invalid character escape `\U`. That source-template/replay repair is delivered and configuration passed. The completed run predates the later exact-path LF rule for generated route identity; include that rule in the next reconciled candidate.
