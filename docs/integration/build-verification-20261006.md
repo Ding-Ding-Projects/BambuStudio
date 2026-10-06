@@ -10,9 +10,17 @@ explicit without changing its value or lifecycle. The independently executed
 actual-declaration compiler check and four density assertions pass. The running
 producer remains untouched; a successful native production retry is pending.
 
-The one-hour observation boundary was reached at `2026-10-06T09:58:03Z`, with
-the producer still active. Extended observation is awaiting the task-limit
-decision. The [tracked publication scan](public-boundary-scan-20261006.md)
+Two further diagnostics from that same pass have reviewed candidate repairs:
+`StatusPanel.cpp` C2664 is corrected by accepting the actual `wxStaticText*`
+member in the title helper (`ac04eda5`); `Tab.cpp` C2039 is corrected by using
+`wxSizerItem::SetMinSize` for the existing spacer (`9bb8eeb7`). Independent
+checks compile the actual extracted production code against configured wx
+headers. They do not substitute for the full native translation units.
+
+The local producer remains active. Observation continues under the existing
+local build authorization and bounded repair retries; the external-wait limit
+does not require a separate extension decision for this local compilation.
+The [tracked publication scan](public-boundary-scan-20261006.md)
 records its exact text inventory and contextual review, with no confirmed
 violation and explicit exclusions.
 

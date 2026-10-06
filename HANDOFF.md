@@ -3,7 +3,7 @@
 ## Current source and verification boundary
 
 Verified remote `main` is `d4d4bb13bb66eddd53eda9849fd18ec3d5ff0d47`. Reviewed combined source before this
-record is `50715f4355e8b845042bd4809bac2da2ce5c40f4`. It includes the reviewed shell/tab drag and focus
+record is `e7a096df85627fe1f97ccf6f255f470250739858`. It includes the reviewed shell/tab drag and focus
 repairs, selection controls and their allocated-size lifecycle, Appearance
 property-page reflow, humidity placement, calibration viewport/preset/result
 layout and wheel routing, and device-name validation ordering. Design records
@@ -21,14 +21,22 @@ appears dirty under the current checkout line-ending settings. The exact-path LF
 repair is reviewed, tested and delivered to main for the next reconciled run;
 source-identity checks remain unchanged. Do not claim this active run succeeded.
 
-At the `2026-10-06T09:58:03Z` one-hour observation boundary, the producer was
-still active and had reached native GUI compilation. The confirmed diagnostic
+The local producer remains active and has reached native GUI compilation. The confirmed diagnostic
 is `StaticBox.hpp:91`, MSVC `C2397`, implicit integer-to-double conversion in a
 brace initializer. Reviewed repair `661f4678e430e6832a510fa20cba420d735c68f1`
 is incorporated in the candidate. Its actual-declaration compiler check passes
 and all four density assertions pass independently. It is not applied to the
-running producer. Extended observation requires the pending task-limit decision;
-no terminal production verdict is claimed.
+running producer. Local build observation continues within the existing build
+authorization and bounded repair retries. The external-wait limit does not
+require separate approval for this local compilation. No terminal production
+verdict is claimed.
+
+The same native pass exposed `StatusPanel.cpp` C2664, where the printing-title
+helper accepted `Label*` but the member is `wxStaticText*`, and `Tab.cpp` C2039
+for nonexistent `wxSizerItem::SetSpacer`. Reviewed fixes `ac04eda5` and
+`9bb8eeb7` are incorporated. Independent checks compile the extracted production
+helper/member/calls and spacer statement against the real configured wx headers.
+Both passed; full translation-unit and production builds remain pending.
 
 The preceding root run at `5e3f28274` ended at `2026-10-06T08:44:32Z` with the
 OCCT quoted-flag export diagnostic. The source-template repair now preserves
@@ -50,9 +58,13 @@ existing tool inspectors, readable Regex/Export details, and the Cantonese
 shell/tab companion. Three framing checks plus nine reader and seven overlay
 checks passed independently. The connection/send dialog candidate is withheld
 pending a confirmed exhausted-height disclosure repair.
-Three additional bounded visual units are active: the shared ListBox, AMS
-drying controls and nozzle selection/update panels. They are not incorporated
-or verified merely because ownership has been assigned.
+AMS drying controls, their separately corrected troubleshooting-sizer ownership,
+and nozzle selection/update presentation are now incorporated after independent
+reviews. Ten source checks passed, followed by five compiled button cases and
+three compiled owner/state cases. The compiled fixtures initially lacked the
+MSVC environment; the corrected invocation passed both without source changes.
+The shared ListBox remains held for interrupted-hover invalidation, and the
+connection/send disclosure repair remains held for caption/sizer adoption order.
 
 The [tracked publication scan](docs/integration/public-boundary-scan-20261006.md)
 inspected 11,556 UTF-8 files at `24aff6625`. All 142 lexical candidate files
