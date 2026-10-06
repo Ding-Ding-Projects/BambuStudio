@@ -196,6 +196,8 @@ private:
 
 private:
     void create();
+    void queue_layout_refresh();
+    bool m_layout_refresh_pending = false;
     wxBoxSizer* create_guide_page_sizer(wxPanel* parent);
     wxBoxSizer* create_main_content_section(wxPanel* parent);
     wxBoxSizer* create_guide_info_filament(wxPanel* parent);
