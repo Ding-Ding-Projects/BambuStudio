@@ -2,35 +2,40 @@
 
 ## Current source and verification boundary
 
-Verified remote `main` is `8dc8bff8025ac2d21ef0a3d1743a14d3e6423121`.
-Reviewed combined source before this documentation commit is
-`b8fa63ea9c8c95026ebb40c62aa9c9e8726f8044`. It includes shared controls,
-fields, Prepare, Preview rendering, Monitor, Preferences, readers, Workspace,
-setup/calibration, embedded composition and Print continuation source units.
-The complete 28-group design contract remains the scope, not a completion claim.
-Shell drag/focus and confirmation sizing repairs remain separately reviewed work.
+Verified remote `main` is `d4d4bb13bb66eddd53eda9849fd18ec3d5ff0d47`. Reviewed combined source before this
+record is `de774e2f5a14de2b53b59a7292beb73b03df9fa4`. It includes the reviewed shell/tab drag and focus
+repairs, selection controls and their allocated-size lifecycle, Appearance
+property-page reflow, humidity placement, calibration viewport/preset/result
+layout and wheel routing, and device-name validation ordering. Design records
+currently prove 48 source receipts across 24 families at their explicitly pinned
+`432eb0f7` snapshot; later units do not silently acquire rendered acceptance.
 
-The exact `build.bat /s` run at `5e3f28274baec20ddae974aef24ac7dad4c54257`
-ended with exit 1 at `2026-10-06T08:44:32Z`. Dependencies completed. Application
-configuration failed at generated `OpenCASCADEConfig.cmake:46`, where raw compiler
-path mappings entered a quoted CMake export and produced invalid escape `\U`.
-The isolated build lane is repairing the source template and repeat-safe recipe;
-editing only the generated installed file is not accepted as a durable repair.
-The root process has terminated. Retain caches and use the exact root entrypoint
-for the next reviewed candidate.
+The current exact `build.bat /s` producer started at `2026-10-06T08:58:03Z`
+against `05dd932d4de51384742375cb277d51d19e97039f`. Application configuration and generation completed,
+DeviceWeb advanced, and native compilation started at `2026-10-06T09:08:30Z`.
+The producer remains active. No primary source or index has been edited by
+integration work. Its generated route rewrite has the same normalized blob but
+appears dirty under the current checkout line-ending settings. The exact-path LF
+repair is reviewed, tested and delivered to main for the next reconciled run;
+source-identity checks remain unchanged. Do not claim this active run succeeded.
 
-Both native diagnostic streams are now captured, with 12 independently rerun
-assertions. The child-only MSBuild no-reuse setting passed 5 inherited-pipe fixture
-assertions. Workspace passed 8 cases; setup/calibration passed 17; gallery reveal
-passed 2; Print fixtures passed 10 lifecycle and 106 geometry assertions.
-These are focused source/non-window results, not native GUI acceptance.
-The embedded accessibility suite retains one known baseline inline-handler
-expectation mismatch. No strict whole-catalogue or native rendering verdict is
-inferred from narrow checks.
+The preceding root run at `5e3f28274` ended at `2026-10-06T08:44:32Z` with the
+OCCT quoted-flag export diagnostic. The source-template repair now preserves
+exact compiler flags and repeat-safe patching; its five actual-template assertions
+passed independently. Eight disposable Git assertions verify generated-route
+line endings without accepting real content changes.
+
+Latest independent UI checks include 13 shell source cases plus compiled layout,
+drag and focus helpers; 8 selection source cases and 7,296 geometry/lifecycle
+assertions; 14 calibration layout/preservation cases; 5 humidity cases; 22
+Appearance cases; and 10 result/device-name cases, including 26 validation-order
+assertions. The default result fixture still needs its explicit wheel mode made
+part of ordinary discovery before that test update is called complete.
 
 Application launch, installer execution, physical printing and manual release
-publication remain excluded. The current report and `CLOSEOUT_PROMPT.md` own
-continuation state; the dated sections below retain historical evidence only.
+publication remain excluded. Native GUI acceptance, actual scrolling/focus,
+installer outputs and the full visual matrix remain unverified. Current records
+supersede dated continuation claims below without deleting their evidence.
 
 ## Build bootstrap repair, 6 October 2026
 

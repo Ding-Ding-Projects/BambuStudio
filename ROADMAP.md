@@ -13,6 +13,11 @@
 
 ## Current review and build receipts, 6 October 2026
 
+- [x] Deliver the OCCT export repair and pass application configuration on the exact root retry at `05dd932d4`.
+- [x] Deliver exact generated-route LF identity with eight disposable Git assertions at `d4d4bb13b`.
+- [ ] Complete the active native compilation and reconcile later reviewed source before installer production.
+- [ ] Complete real built language/theme/scale/focus/scroll evidence; current source checks do not establish it.
+
 - [x] Record exact root exit 1 at `5e3f28274` and the OCCT generated-config escaping diagnostic at `2026-10-06T08:44:32Z`.
 - [x] Deliver concurrent diagnostic capture and child-only MSBuild node lifetime repair to verified `main` at `8dc8bff80`.
 - [ ] Repair the OCCT source export without weakening compiler path mapping, then retry the root build.

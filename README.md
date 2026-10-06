@@ -1,5 +1,5 @@
 > [!IMPORTANT]
-> Current status, 6 October 2026: verified `main` contains build repairs through `8dc8bff8025ac2d21ef0a3d1743a14d3e6423121`. The complete native interface refresh is under development on preserved task branches. The latest root build exited 1 during application configuration: the generated OCCT package configuration contains incorrectly escaped compiler path mappings. A bounded source repair is in progress. Native GUI compilation, installer production and current screenshots remain unverified. Read the [current build and redesign report](docs/integration/build-verification-20261006.md).
+> Current status, 6 October 2026: verified `main` contains build repairs through `d4d4bb13bb66eddd53eda9849fd18ec3d5ff0d47`. The complete native interface refresh remains under development on preserved task branches. The current exact root build at `05dd932d4de51384742375cb277d51d19e97039f` passed application configuration and DeviceWeb and is compiling native C++. Installer production and current screenshots remain unverified. Read the [current build and redesign report](docs/integration/build-verification-20261006.md).
 
 ![image](https://user-images.githubusercontent.com/106916061/179006347-497d24c0-9bd6-45b7-8c49-d5cc8ecfe5d7.png)
 # BambuStudio

@@ -10,7 +10,7 @@ The baseline production run read the unchanged source at `9a55b7aa1e900f85c2ded1
 
 After repairing concurrent native stdout/stderr capture, the exact root run at `5e3f28274baec20ddae974aef24ac7dad4c54257` exited 1 at `2026-10-06T08:44:32Z`. The retained diagnostic identifies generated `OpenCASCADEConfig.cmake:46`: compiler `/pathmap` strings are not escaped for the generated CMake quoted string, producing `Invalid character escape '\U'`. The next source repair must preserve compiler path mappings and correct their configuration export. No generated installed file is accepted as the sole repair.
 
-Verified remote `main` is `8dc8bff8025ac2d21ef0a3d1743a14d3e6423121`. Reviewed combined source before this documentation commit is `b8fa63ea9c8c95026ebb40c62aa9c9e8726f8044`, pending native compilation. The last production process has terminated; an active build must never read source being changed underneath it.
+Verified remote `main` is `d4d4bb13bb66eddd53eda9849fd18ec3d5ff0d47`. Reviewed combined source before this documentation commit is `de774e2f5a14de2b53b59a7292beb73b03df9fa4`. The current exact root producer started at `2026-10-06T08:58:03Z` against `05dd932d4de51384742375cb277d51d19e97039f`, passed application configuration/generation and DeviceWeb, and began native C++ compilation at `2026-10-06T09:08:30Z`. It remains active. Its source is pinned while integration continues in a separate checkout.
 
 Application launches, installer execution, physical printer actions, and manual release publication remain excluded. Source-based tests and design references do not override those limits. The broader redesign is incomplete and has no current rendered acceptance.
 
@@ -75,3 +75,22 @@ The maintainer may request reversal if the new appearance is not preferred. The 
 - [ ] Continue the whole-application visual implementation inventory; preserve all existing functions.
 - [ ] Obtain permitted built interaction and visual evidence before claiming appearance, accessibility or layout acceptance.
 - [ ] Update this report with exact final receipts, remote proof and retained-work disposition.
+
+## Generated route identity and current source review
+
+DeviceWeb rewrites `src/slic3r/GUI/DeviceWeb/device_page/src/routeTree.gen.ts`
+with LF endings. On the current checkout, `core.autocrlf=true` and no exact
+attribute caused persistent porcelain dirtiness despite an empty content diff
+and equal normalized blob `bc5e97ff6fcb9d164c3f1ecd84e9830ef29c68f9`.
+The delivered exact-path `text eol=lf` rule fixes that state. Eight independent
+disposable Git assertions reproduce the old mismatch, preserve unchanged-source
+identity after generation and reject a genuine added source statement. The
+running candidate predates this rule; its final identity verdict remains pending.
+No primary index refresh or generated-file restoration was performed during it.
+
+The candidate now also incorporates independently reviewed shell focus/drag,
+selection-control allocation, Appearance preset-content reflow, humidity final
+placement, calibration result-table ownership/wheel handling and device-name
+validation ordering. Their focused checks do not establish native event delivery
+or appearance. The source ledger remains pinned to its named review revision;
+static design boards are never current runtime captures.
