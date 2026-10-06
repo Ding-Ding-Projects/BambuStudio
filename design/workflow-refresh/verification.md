@@ -94,3 +94,39 @@ All runtime, reference-viewer, fixture, capture and parity truth states are
 preserved. No production source, full build, launch or publication is part of
 this reconciliation. Remaining caller, nested-dialog, calibration-result,
 device-detail, reader and renderer gaps remain explicitly open.
+
+## Incorporated-source reconciliation at c7868b485
+
+The owned checkout fast-forwarded to immutable candidate
+`c7868b48536e8f8277d6872bd7d8def9d8463d02`. The records now contain 56 source units
+across 27 families and five documentation receipts. Added units cover the runtime
+density-radius compiler correction, calibration result viewports and vertical
+wheel ownership with the default fixture correction, device-name presentation and
+validation fitting, common framing for twelve floating inspectors, Regex/Export
+details and the shell/tab Cantonese companion. The eight new source receipts are
+one appearance-only, three appearance/layout, three correctness-repair and one
+verification-only unit. No existing reversal class was relaxed.
+
+Connection/send unit `b60bd4c8b8fa5eb0d3e5a9f706621e73f8a1a476` is explicitly held
+outside this candidate for disclosure-availability repair. Its absence is checked
+with local ancestry. No completion or article-index inclusion is derived from it.
+The current composition paragraphs and ranked coverage table agree with this
+snapshot; earlier reconciliation sections in this verification file are historical.
+
+The updated receipt checker verifies ancestry, exact candidate agreement, both
+article indexes and their translation hash, plus three concrete untouched source
+families: ListBox rows, AMS drying pages and nozzle rack/selection/update details.
+For each, it verifies unchanged owner files since the original design baseline
+and actual reachable call-site text. This is source reachability evidence only.
+It neither executes a route nor implements the proposed visual follow-up.
+
+The minimum changed-ledger/index check passed. An in-memory stale-composition
+mutation (`NATIVE_DESIGN_STALE_COMPOSITION=1`) is rejected with the assertion that
+the composition summary still excludes incorporated shell work; the unmodified
+summary passes. The checker also preserves the explicit incomplete-engine sentence.
+
+All 1,204 obligation rows and all 56 structural references remain byte-unchanged.
+Runtime, captures, fixtures, reference viewer and parity remain unverified/missing
+as previously recorded. Missing, planned, placeholder and incomplete functional
+obligations are not erased or advanced by this visual inventory. No UI source,
+full build, launch, capture or publication occurred during reconciliation.

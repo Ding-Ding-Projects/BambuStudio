@@ -82,7 +82,7 @@
       "commit": "6faff372404390ba6cd9191c12e9fa5439ce375c"
     }
   ],
-  "reviewedCandidate": "432eb0f7f2147de49479654d0f94f1929f192fa2",
+  "reviewedCandidate": "c7868b48536e8f8277d6872bd7d8def9d8463d02",
   "incorporatedSourceUnits": [
     {
       "commit": "b748affe0f687f6cfbe6068a82d32988047f790a",
@@ -439,6 +439,66 @@
       "summary": "Reflow preset content and scroll extent at unchanged editor dimensions",
       "article": "docs/features/design-system/appearance-property-pages-atlas.md",
       "companion": "c17599d086a7b5cc5c0e1f6e47fcdb48678bf1b9"
+    },
+    {
+      "commit": "661f4678e430e6832a510fa20cba420d735c68f1",
+      "family": "shared-controls",
+      "classification": "correctness-repair",
+      "summary": "Explicit double conversion for runtime-density radius; extracted MSVC declaration proof",
+      "article": "docs/features/design-system/studio-atlas-shared-controls.md",
+      "companion": "df300fb9d93991751e840bdc586d2f770b47b9cf"
+    },
+    {
+      "commit": "4e901cddc5d71949703cbd62adc575f8509b4580",
+      "family": "calibration-children",
+      "classification": "appearance-layout",
+      "summary": "Give result tables local horizontal scrolling while preserving result identities",
+      "article": "docs/features/design-system/calibration-viewport-layout.md"
+    },
+    {
+      "commit": "c6400edaaab7a23d802a8c83145c1fcd1785a414",
+      "family": "calibration-children",
+      "classification": "correctness-repair",
+      "summary": "Forward vertical wheel input to the outer calibration scroll owner",
+      "article": "docs/features/design-system/calibration-viewport-layout.md",
+      "companion": "4e901cddc5d71949703cbd62adc575f8509b4580"
+    },
+    {
+      "commit": "ed76de69b1c5bc6b2dd82d351e9dc6c84ca1f92d",
+      "family": "calibration-children",
+      "classification": "verification-only",
+      "summary": "Default compiled fixture runs geometry and wheel cases together",
+      "article": "docs/features/design-system/calibration-viewport-layout.md",
+      "companion": "4e901cddc5d71949703cbd62adc575f8509b4580"
+    },
+    {
+      "commit": "5b77527856e266aa952392f88d031da05f67c715",
+      "family": "device-name-editor",
+      "classification": "appearance-layout",
+      "summary": "Measured device-name input, validation row and confirmation action",
+      "article": "docs/features/workspace/device-name-editor-atlas.md"
+    },
+    {
+      "commit": "8167cafbc498d66b9209061283a3d1d45da5f02a",
+      "family": "device-name-editor",
+      "classification": "correctness-repair",
+      "summary": "Keep validation wrapping ahead of fitting and retain bounded disclosure",
+      "article": "docs/features/workspace/device-name-editor-atlas.md",
+      "companion": "5b77527856e266aa952392f88d031da05f67c715"
+    },
+    {
+      "commit": "ecbbb99fb0c5c84ef58c636cce270e5eda13b8c8",
+      "family": "gizmo-inspector-framing",
+      "classification": "appearance-only",
+      "summary": "Shared floating inspector plate and heading decoration across twelve existing paired callers",
+      "article": "docs/features/design-system/gizmo-inspector-framing-atlas.md"
+    },
+    {
+      "commit": "e3390a3140546fcae815a65ebe97cc6f8d14d6ea",
+      "family": "reader-details",
+      "classification": "appearance-layout",
+      "summary": "Regex diagnostic content reflow and export disclosure/locator composition",
+      "article": "docs/features/design-system/reader-details-atlas.md"
     }
   ],
   "classificationRules": {
@@ -449,7 +509,15 @@
     "verification-only": "No production appearance change. Retain or adapt the checks to the reviewed production state.",
     "localization": "Localized functional copy and documentation. Preserve independently of visual preference."
   },
-  "notInReviewedCandidate": [],
+  "notInReviewedCandidate": [
+    {
+      "commit": "b60bd4c8b8fa5eb0d3e5a9f706621e73f8a1a476",
+      "family": "print-continuations",
+      "classification": "appearance-layout",
+      "status": "held-not-incorporated",
+      "reason": "Not an ancestor of this immutable candidate. Held for disclosure-availability repair; no source incorporation, functional completion, runtime acceptance or article availability is claimed from it."
+    }
+  ],
   "documentationReceipts": [
     {
       "commit": "51235b9f479d90686b1563ed8f8ece3eefb6f764",
@@ -470,6 +538,11 @@
       "commit": "965c6116b2dab4a8e0f6ea0ed304baa8789e55e2",
       "classification": "localization",
       "summary": "Cantonese transform inspector companion"
+    },
+    {
+      "commit": "32069b56a7c03ee892ec0e90feabf6c941edd54d",
+      "classification": "localization",
+      "summary": "Cantonese shell/tab companion"
     }
   ]
 }

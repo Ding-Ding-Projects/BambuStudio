@@ -46,9 +46,15 @@ const reversal = read('change-ledger.json');
 assert.equal(review.reviewedCandidate, reversal.reviewedCandidate);
 assert.equal(review.reviewedCandidate, scopes.reviewedCandidate);
 assert.equal(review.reviewedCandidate, contracts.latestSourceReview);
-const expectedFamilies = 'native-palette shared-controls fields-presets prepare preferences-project-setup renderer-preview native-monitor native-device-popups readers-overlays live-notifications workspace calibration-children setup-index embedded-palette embedded-composition workflow-navigation print-workspace print-setup shell-tabs confirmations selection-controls transform-inspector humidity-details appearance-properties'.split(' ');
+let handoff = fs.readFileSync(path.join(root, 'design/workflow-refresh.md'), 'utf8');
+if (process.env.NATIVE_DESIGN_STALE_COMPOSITION === '1') handoff += '\nShell/tab work is reported but absent';
+assert.ok(handoff.includes('reconciled against `' + review.reviewedCandidate + '`'), 'Composition summary candidate is stale');
+assert.ok(!handoff.includes('Shell/tab work is reported but absent'), 'Composition summary still excludes incorporated shell work');
+assert.ok(!handoff.includes('confirmations remain separate'), 'Composition summary still excludes incorporated confirmation work');
+assert.ok(handoff.includes('Missing Model Creator, external-source or canonical-tool engines remain their existing incomplete feature obligations.'));
+const expectedFamilies = 'native-palette shared-controls fields-presets prepare preferences-project-setup renderer-preview native-monitor native-device-popups readers-overlays live-notifications workspace calibration-children setup-index embedded-palette embedded-composition workflow-navigation print-workspace print-setup shell-tabs confirmations selection-controls transform-inspector humidity-details appearance-properties device-name-editor gizmo-inspector-framing reader-details'.split(' ');
 if (process.env.NATIVE_DESIGN_REMOVE_RECEIPT === '1') review.units = review.units.filter(unit => unit.family !== 'workspace');
-assert.equal(review.units.length, 48, 'Missing incorporated source receipt');
+assert.equal(review.units.length, 56, 'Missing incorporated source receipt');
 assert.deepEqual([...new Set(review.units.map(unit => unit.family))].sort(), [...expectedFamilies].sort());
 assert.equal(review.completionClaim, false);
 assert.equal(review.runtimeStatus, 'unverified');
@@ -66,17 +72,22 @@ for (const pending of review.notInReviewedCandidate) {
   const result = spawnSync('git', ['merge-base', '--is-ancestor', pending.commit, review.reviewedCandidate], {cwd: root});
   assert.equal(result.status, 1, 'Pending source receipt is not absent from the candidate');
 }
+assert.equal(review.notInReviewedCandidate.length, 1);
+assert.equal(review.notInReviewedCandidate[0].commit, 'b60bd4c8b8fa5eb0d3e5a9f706621e73f8a1a476');
+assert.equal(review.notInReviewedCandidate[0].status, 'held-not-incorporated');
+assert.deepEqual(review.notInReviewedCandidate, reversal.notInReviewedCandidate);
 const pureAppearance = [
   'b748affe0f687f6cfbe6068a82d32988047f790a',
   'df300fb9d93991751e840bdc586d2f770b47b9cf',
   '30031b21eedd58c56b83dc474465d47a3ccc8099',
   '8cfce63ae05d7be03823b3eb9e4b86c4488245b1',
   'a2be7df26cd5981da2c1e50d4c64c5e3a86609b9',
-  '3e765ab09a7d25a1808d437034b8b0e12e67e7bb'
+  '3e765ab09a7d25a1808d437034b8b0e12e67e7bb',
+  'ecbbb99fb0c5c84ef58c636cce270e5eda13b8c8'
 ];
 assert.deepEqual(review.units.filter(unit => unit.classification === 'appearance-only').map(unit => unit.commit).sort(), pureAppearance.sort(), 'Mixed layout or repair must not become paint-only');
 assert.deepEqual(review.documentationReceipts, reversal.documentationReceipts);
-assert.equal(review.documentationReceipts.length, 4);
+assert.equal(review.documentationReceipts.length, 5);
 for (const receipt of review.documentationReceipts) {
   assert.equal(receipt.classification, 'localization');
   execFileSync('git', ['merge-base', '--is-ancestor', receipt.commit, review.reviewedCandidate], {cwd: root});
@@ -96,6 +107,16 @@ for (const article of new Set(review.units.map(unit => unit.article))) {
 }
 assert.ok(cantoneseIndex.includes('calibration-viewport-layout.md'));
 assert.ok(!cantoneseIndex.includes('calibration-viewport-layout.yue_HK.md'), 'Do not invent a separate calibration viewport companion');
+assert.deepEqual(scopes.nextThreeSourceFamilies.map(row => row.id), ['shared-list-rows', 'ams-drying-pages', 'nozzle-rack-details']);
+for (const row of scopes.nextThreeSourceFamilies) {
+  assert.equal(row.status, 'untouched-source-visual-followup');
+  for (const file of row.sourceAnchors) {
+    assert.ok(fs.existsSync(path.join(root, file)));
+    execFileSync('git', ['diff', '--quiet', manifest.baselineCommit, review.reviewedCandidate, '--', file], {cwd: root});
+  }
+  for (const route of row.reachableFrom)
+    assert.ok(fs.readFileSync(path.join(root, route.path), 'utf8').includes(route.needle), `Missing reachable route ${row.id}: ${route.path}`);
+}
 console.log(`Validated ${contracts.surfaces.length} explicit surface anatomy contracts and ${scopes.outsideAnchorFollowups.length} outside-anchor followups. Source inventory only; runtime and parity remain unverified.`);
 console.log(`Verified local ancestry for ${review.units.length} source receipts across ${expectedFamilies.length} families at ${review.reviewedCandidate}; no rendered acceptance.`);
-console.log('Verified four documentation receipts and all incorporated article links in both indexes; inline Cantonese remains inline.');
+console.log('Verified five documentation receipts, both article indexes and three unchanged reachable owner families; held connection/send source remains excluded.');
