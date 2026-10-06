@@ -246,6 +246,14 @@ public:
     TextInput*          m_textCtr{nullptr};
     wxStaticText*       m_static_valid{nullptr};
     MachineObject*      m_info{nullptr};
+private:
+    void apply_form_layout();
+    void fit_validation_content();
+    void on_confirm(wxCommandEvent& event);
+    wxScrolledWindow* m_validation_view{nullptr};
+    wxBoxSizer* m_form_sizer{nullptr};
+    bool m_fitting_content{false};
+
 };
 
 }} // namespace Slic3r::GUI
