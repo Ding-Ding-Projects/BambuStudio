@@ -2,7 +2,13 @@
 
 **Status: in progress. Neither root production entrypoint has a successful result for the reconciled candidate yet. No new installer or application-runtime acceptance is claimed.**
 
-Latest native diagnostic: the pinned `05dd932d4` run reached GUI compilation
+## Latest production result
+
+The exact root build at `4147ca9eeb0004f7e18b4a2f5a8c6cb190975d21` ended with exit 1 at `2026-10-06T12:30:40Z`, after 1 hour 26 minutes 18 seconds from source pinning. The earlier three compiler causes did not recur. The remaining diagnostics were the nozzle-card helpers declared on the wrong class and the nozzle status icon calling an unsupported Button member. Reviewed repairs `a913ae69cb250862e55143949043da964c527d04` and `7b70048ed946bf128463789a8f729bf1ac11c4b6` are incorporated in `e78328d15b6bcaf97d73568c26f70f64494735b9`. Independent real-header MSVC checks passed, with deliberate C2039 negative cases. Full native production verification remains pending. No source or index changed during the completed producer.
+
+## Earlier resolved diagnostics
+
+Earlier native diagnostic: the pinned `05dd932d4` run reached GUI compilation
 and reported MSVC `C2397` at `StaticBox.hpp:91`. The active density radius was
 implicitly converted from integer to double inside a brace initializer.
 Reviewed repair `661f4678e430e6832a510fa20cba420d735c68f1` makes that conversion
@@ -23,7 +29,7 @@ external-wait limit does not require a separate extension for local compilation.
 The catalog-consistency repair is independently reviewed and incorporated at
 `4147ca9eeb0004f7e18b4a2f5a8c6cb190975d21`. Eight focused tests and the terminology
 check pass. The next exact root producer pinned that source at
-`2026-10-06T11:04:22Z` and remains active. All 50 documentation findings are
+`2026-10-06T11:04:22Z` and ended with the nozzle diagnostics above. All 50 documentation findings are
 reconciled: 143 articles and 1,296 changelog entries pass. The subsequent
 PowerShell 5.1 empty-report reader repair `0625de0d2` preserves strict rejection
 of real missing entries. Three production-AST cases pass independently on
@@ -45,7 +51,7 @@ The baseline production run read the unchanged source at `9a55b7aa1e900f85c2ded1
 
 After repairing concurrent native stdout/stderr capture, the exact root run at `5e3f28274baec20ddae974aef24ac7dad4c54257` exited 1 at `2026-10-06T08:44:32Z`. The retained diagnostic identifies generated `OpenCASCADEConfig.cmake:46`: compiler `/pathmap` strings were not escaped for the generated CMake quoted string, producing `Invalid character escape '\U'`. The delivered source-template repair preserves compiler path mappings and corrects their configuration export. Subsequent root configuration passed. No generated installed file was accepted as the sole repair.
 
-Verified remote `main` is `cc059003d362b87d53786152ee8c28621d9c2813`. The current exact root producer reads `4147ca9eeb0004f7e18b4a2f5a8c6cb190975d21`, pinned at `2026-10-06T11:04:22Z`. Configuration and DeviceWeb completed, and native C++ compilation began at `2026-10-06T11:09:39Z`. It remains active. Later reviewed documentation is preserved through `8059f13ddf5c388ceaed4b1f417d0ed88c6f394d` in a separate checkout and does not alter the running producer.
+Verified remote `main` is `cc059003d362b87d53786152ee8c28621d9c2813`. The current exact root producer reads `4147ca9eeb0004f7e18b4a2f5a8c6cb190975d21`, pinned at `2026-10-06T11:04:22Z`. Configuration and DeviceWeb completed, and native C++ compilation began at `2026-10-06T11:09:39Z`. It ended with exit 1 at `2026-10-06T12:30:40Z`. Later reviewed documentation and the two nozzle repairs are incorporated in `e78328d15b6bcaf97d73568c26f70f64494735b9` without altering the completed producer.
 
 Application launches, installer execution, physical printer actions, and manual release publication remain excluded. Source-based tests and design references do not override those limits. The broader redesign is incomplete and has no current rendered acceptance.
 
