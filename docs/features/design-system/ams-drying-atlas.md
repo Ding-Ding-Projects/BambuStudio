@@ -9,3 +9,9 @@ Primary actions use the shared Filled variant, Back uses Outlined, and Stop uses
 Verification at baseline `50715f4355e8b845042bd4809bac2da2ce5c40f4`: `tests/ams_drying_atlas.test.mjs` has three passing preservation cases and three failing design cases; current source passes 6/6. The comparison preserves existing non-construction methods, action bindings and literal strings, normalizing only explicit layout-refresh calls. Deliberate command/timer mutations are rejected. `tests/ams_drying_buttons.test.mjs` compiles the actual two production button methods in a non-window fixture: 5/5 pass for primary, secondary, destructive, changing text and DPI; changing Danger to Filled deliberately gives 4/5.
 
 No full application build, launch, capture or hardware action was performed. Native card geometry, scrolling, keyboard focus and the minimum-client-area, language, theme and scale matrix remain unverified. The pre-existing error-sizer attachment finding is handled in a separate correctness change. No authentication, network, persistence or drying capability behavior changes.
+
+## Error disclosure attachment
+
+The existing error sizer was created and toggled but never attached to a layout owner. It is now inserted at the top of the normal-state vertical sizer. This keeps its original two labels together above the controls, retains Stop in the error state and follows the existing normal/unavailable parent visibility. No state predicate, capability check or command changes.
+
+`tests/ams_drying_error_owner.test.mjs` compiles the actual `create_right_panel` and `update_normal_state` bodies with a non-window ownership model. Previous `fffdc0a9d22f4c230cc27e8930d740c6bc769945` passes 2/3 and fails error-disclosure reachability; repaired source passes 3/3, covering initial hidden state, reachable error disclosure with Stop retained, and return to idle. Existing source preservation remains 6/6. Native rendering remains unverified.

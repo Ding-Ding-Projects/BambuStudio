@@ -602,6 +602,7 @@ wxBoxSizer* AMSDryCtrWin::create_right_panel(wxPanel* parent)
     m_normal_state_sizer = create_normal_state_panel(parent);
     m_cannot_dry_sizer = create_cannot_dry_panel(parent);
     m_dry_error_sizer = create_drying_error_panel(parent);
+    m_normal_state_sizer->Insert(0, m_dry_error_sizer, 0, wxEXPAND | wxBOTTOM, FromDIP(10));
 
     right_sizer->Add(m_normal_state_sizer, 1, wxEXPAND);
     right_sizer->Add(m_cannot_dry_sizer, 1, wxEXPAND);
