@@ -1,5 +1,5 @@
 > [!IMPORTANT]
-> Current status, 6 October 2026: verified `main` contains build repairs through `6a2b2a7de24d0be435d6c94d479d28a14a5ce718`. The complete native interface refresh is under development on preserved task branches. The latest root build exited 1 during wxWidgets patch replay; its reviewed repair is ready for the next exact entrypoint run. Native GUI compilation, installer production and current screenshots remain unverified. Read the [current build and redesign report](docs/integration/build-verification-20261006.md).
+> Current status, 6 October 2026: verified `main` contains build repairs through `8dc8bff8025ac2d21ef0a3d1743a14d3e6423121`. The complete native interface refresh is under development on preserved task branches. The latest root build exited 1 during application configuration: the generated OCCT package configuration contains incorrectly escaped compiler path mappings. A bounded source repair is in progress. Native GUI compilation, installer production and current screenshots remain unverified. Read the [current build and redesign report](docs/integration/build-verification-20261006.md).
 
 ![image](https://user-images.githubusercontent.com/106916061/179006347-497d24c0-9bd6-45b7-8c49-d5cc8ecfe5d7.png)
 # BambuStudio
@@ -14,7 +14,7 @@ under development for the combined delivery; the [audit register](docs/features/
 records historical runtime and layout evidence. Focused source and non-window geometry checks now cover the current redesign; they do not establish native runtime or screenshots.
 Implementation is not a claim of verified physical-printer behavior.
 Current compiler and startup evidence is summarized in the [continuation record](CLOSEOUT_PROMPT.md).
-The earlier production catalogue, documentation bundling and DeviceWeb observations belong to their dated source receipts. The latest build remains in dependency recovery. Packaging and release proof remain pending; no passing DeviceWeb type-check result is claimed.
+The earlier production catalogue, documentation bundling and DeviceWeb observations belong to their dated source receipts. The latest build reached application configuration after dependency completion. Packaging and release proof remain pending; no passing DeviceWeb type-check result is claimed.
 Earlier managed-check results apply only to their recorded source revisions. The combined source includes the reconciled continuation lanes and bounded repairs listed in the current handoff.
 
 Bambu Studio is a cutting-edge, feature-rich slicing software.  

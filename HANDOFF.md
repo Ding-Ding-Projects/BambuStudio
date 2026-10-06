@@ -2,29 +2,35 @@
 
 ## Current source and verification boundary
 
-Verified remote `main` is `6a2b2a7de24d0be435d6c94d479d28a14a5ce718`.
-Reviewed source integration before this documentation commit is
-`61fc57bd63e7426056d6acb25a2ee2346c6d771d`. It incorporates shared control
-anatomy, Prepare, renderer, Monitor, Preferences/setup and the complete
-28-group design contract. These are source receipts, not native acceptance.
-Reader/overlay repair and further nested surfaces remain separate active work.
+Verified remote `main` is `8dc8bff8025ac2d21ef0a3d1743a14d3e6423121`.
+Reviewed combined source before this documentation commit is
+`b8fa63ea9c8c95026ebb40c62aa9c9e8726f8044`. It includes shared controls,
+fields, Prepare, Preview rendering, Monitor, Preferences, readers, Workspace,
+setup/calibration, embedded composition and Print continuation source units.
+The complete 28-group design contract remains the scope, not a completion claim.
+Shell drag/focus and confirmation sizing repairs remain separately reviewed work.
 
-The exact `build.bat /s` run at `be5e1205dcdad8f372d2ba63f367dbd7977c29c4`
-exited 1 at `2026-10-06T07:41:56Z`. OpenCV completed; wxWidgets then retried
-an already-applied patch through its old forward-only recipe. The reviewed
-repair uses the existing whitespace-aware forward/reverse helper without
-rewriting production source. Ten independently rerun nested-Git/template
-assertions passed against wx source `a9d946902685b9946d8775f07d2a73a9b5bef394`.
-The next production run must use the exact root entrypoint and retain caches.
+The exact `build.bat /s` run at `5e3f28274baec20ddae974aef24ac7dad4c54257`
+ended with exit 1 at `2026-10-06T08:44:32Z`. Dependencies completed. Application
+configuration failed at generated `OpenCASCADEConfig.cmake:46`, where raw compiler
+path mappings entered a quoted CMake export and produced invalid escape `\U`.
+The isolated build lane is repairing the source template and repeat-safe recipe;
+editing only the generated installed file is not accepted as a durable repair.
+The root process has terminated. Retain caches and use the exact root entrypoint
+for the next reviewed candidate.
 
-Independent source review found and repaired nested Preferences search-row
-identity, card DPI lifecycle, Monitor sizing and the tooltip style member.
-On combined source `5274e22fa8bbc8a3257d9b12b663117aef6d38ec`, the Preferences
-non-window production-method fixture passed 9 cases, and the Prepare checks
-passed 18 cases including 152 compiled geometry assertions. These do not
-compile the native GUI. Launch, installer execution, physical printing and
-manual release publication remain excluded. See the current integration report
-and `CLOSEOUT_PROMPT.md`; dated sections below retain historical evidence only.
+Both native diagnostic streams are now captured, with 12 independently rerun
+assertions. The child-only MSBuild no-reuse setting passed 5 inherited-pipe fixture
+assertions. Workspace passed 8 cases; setup/calibration passed 17; gallery reveal
+passed 2; Print fixtures passed 10 lifecycle and 106 geometry assertions.
+These are focused source/non-window results, not native GUI acceptance.
+The embedded accessibility suite retains one known baseline inline-handler
+expectation mismatch. No strict whole-catalogue or native rendering verdict is
+inferred from narrow checks.
+
+Application launch, installer execution, physical printing and manual release
+publication remain excluded. The current report and `CLOSEOUT_PROMPT.md` own
+continuation state; the dated sections below retain historical evidence only.
 
 ## Build bootstrap repair, 6 October 2026
 

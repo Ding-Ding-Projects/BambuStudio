@@ -11,6 +11,14 @@
 - [ ] Obtain authorized native interaction, screenshots and the complete language/theme/viewport/scale matrix before claiming visible completion.
 - [ ] Deliver completed changes to verified remote main and retain incomplete work safely.
 
+## Current review and build receipts, 6 October 2026
+
+- [x] Record exact root exit 1 at `5e3f28274` and the OCCT generated-config escaping diagnostic at `2026-10-06T08:44:32Z`.
+- [x] Deliver concurrent diagnostic capture and child-only MSBuild node lifetime repair to verified `main` at `8dc8bff80`.
+- [ ] Repair the OCCT source export without weakening compiler path mapping, then retry the root build.
+- [ ] Complete shell focus/drag and confirmation repair reviews and native verification.
+- [ ] Finish the new design articles' Cantonese companions, indexes and accurate change receipts.
+
 ## Build bootstrap repair, 6 October 2026
 
 - [x] Route wx relocatable-prefix replay through the existing per-patch proof, with ten actual nested-Git/template fixture assertions and preserved conflicts.

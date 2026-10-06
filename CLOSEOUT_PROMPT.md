@@ -1,39 +1,37 @@
 # Current continuation, 6 October 2026
 
-This task is active and incomplete. The current evidence is in
-[the build and redesign verification report](docs/integration/build-verification-20261006.md).
-Earlier continuation records remain available in Git history.
+This task is active and incomplete. Read the [current verification report](docs/integration/build-verification-20261006.md).
 
-## Current objective and boundaries
+## Objective and latest direction
 
-Make the exact root `build.bat` and `build-installer.bat` succeed with automatic supported prerequisite setup, then verify genuine unsigned Squirrel.Windows outputs, source identity, versions and hashes. Preserve and integrate reviewed repairs into `main` with remote-reference proof.
+Deliver a complete new look across the entire native application and product-owned embedded views, preserving every existing function. Use the Prepare, Preview, Print and Monitor workflow, consistent Material Design 3 controls and readable nested surfaces. All design, redesign implementation and review use `gpt-6-astra`. The design may be reverted through reviewed appearance-only reversals, preserving functional and build fixes.
 
-The maintainer has also resumed complete native interface redesign, requires all design/redesign implementation and review to use `gpt-6-astra`, and requests a reversible-design note. Preserve every existing function and feature. The first navigation/Print units do not represent the entire application.
+Make both exact root `build.bat` and `build-installer.bat` succeed with automatic supported prerequisite setup. Verify genuine unsigned Squirrel.Windows outputs, source identity, versions and hashes. Completed work must reach verified remote `main`.
 
-Application launches, installer execution, physical printer actions and manual release publication remain excluded. No current production or rendered success is claimed.
+Application launches, installer execution, physical printer actions and manual release publication remain excluded. No current native or rendered success is claimed.
 
-## Authoritative source state before this documentation commit
+## Source and verification before this documentation commit
 
-- Baseline build source: `9a55b7aa1e900f85c2ded1389854beefabff159f`, terminal exit 1 at `2026-10-06T06:49:14Z`; no production process remains from that run.
-- Last verified remote `main`: `6a2b2a7de24d0be435d6c94d479d28a14a5ce718`, including the independently reviewed wx patch replay repair.
-- Latest attempted root source: `be5e1205dcdad8f372d2ba63f367dbd7977c29c4`, exit 1 at `2026-10-06T07:41:56Z`; OpenCV completed and wx forward-only patch replay failed.
-- Reviewed combined source before this documentation commit: `61fc57bd63e7426056d6acb25a2ee2346c6d771d`, native compilation pending.
-- Design specification: `3c8fe2708ba03470c1b171e2fce12fcbdfaab0fc`, with 28 explicit surface anatomy contracts and ten caller-level followups.
-- Native Print/catalog/test-registration source: `ceb738fdff07cac9864a272aa5d6c262a9547f8b`, on `feature/native-print-workflow`.
-- Native navigation and separate visual palette: `b748affe0f687f6cfbe6068a82d32988047f790a`, on `task/native-navigation-chrome-20261006`.
-- Embedded styling with corrected interaction tests: `6faff372404390ba6cd9191c12e9fa5439ce375c`, on `task/embedded-atlas-20261006`.
+- Verified remote `main`: `8dc8bff8025ac2d21ef0a3d1743a14d3e6423121`.
+- Combined reviewed source: `b8fa63ea9c8c95026ebb40c62aa9c9e8726f8044`, native compilation pending.
+- Latest exact root build: `5e3f28274baec20ddae974aef24ac7dad4c54257`, terminal exit 1 at `2026-10-06T08:44:32Z`.
+- Retained diagnostic: generated `OpenCASCADEConfig.cmake:46` exports raw quoted/backslash compiler path mappings and fails with invalid character escape `\U`. Source-template and repeat-safe recipe repair is in progress.
+- Native stdout/stderr capture: 12 independently rerun assertions. Child-only MSBuild node lifetime: 5 independently rerun fixture assertions. Worker budget: 21; application cache: 14.
+- Reviewed source now includes shared controls/fields, Prepare, Preferences, Monitor and device popups, Preview rendering, readers, notifications, Workspace reflow, setup/calibration, embedded CSS and Print continuation/reopen sizing.
+- Latest independent source runs: 8 Workspace cases, 17 setup/calibration cases, 2 gallery cases, and 2 Print fixtures with 10 lifecycle plus 106 geometry assertions.
+- Shell drag/focus and confirmation minimum-space repairs are separate pending review/integration. Design receipt updates and Cantonese article companions are active.
+- The prior embedded accessibility suite has 3 passes and one established baseline inline-handler expectation mismatch. No passing whole-suite claim.
+- No installer production, execution, current runtime interactions or current screenshots. Existing static references are design material only.
 
-The baseline dependency build failed after wx completed. Completed dependency outputs remain available. OpenCV's partially applied patch sequence is now repeat-safe, and the next root run will retain native stdout diagnostics. Reviewed repair units total 104 focused assertions across their final tests; they are not a substitute for the two real root-entrypoint results or package-byte inspection. The combined redesign candidate passed 28 Node cases, six localization cases and 56 deterministic reference checks, with native compilation and pixels still unverified.
+## Preservation and remaining work
 
-The later wx repair adds ten independently rerun nested-Git/template assertions, using source `a9d946902685b9946d8775f07d2a73a9b5bef394`. The helper's whitespace-aware reverse check proves the existing patch; a strict raw check is a different contract. No helper normalization or production rewrite was required. On combined source `5274e22f`, the Preferences production-method fixture passed nine cases and Prepare passed 18 cases including 152 compiled geometry assertions. Source-only reviews and repairs also cover Monitor sizing, renderer tooltip selection and shared controls. Reader/overlay fixes and further field, popup, notification, Workspace and Print-continuation units remain separately tracked until incorporated.
+The owning integration branch is `task/upstream-development-20261006`. Its previous remotely verified source is `f3565c7580bebd38bcbf5c5f01e272fa5c4b6224`; this documentation and later reconciliation require their own push proof. Individual active branches and clean linked checkouts remain retained. No branch/worktree deletion has been performed.
 
-All eleven open issues received individual source inspections. No issue was closed from source presence alone. See the report for each disposition.
+1. Review the OCCT export repair, independently run its focused negative/positive fixture, reconcile only when the producer is idle, and retry exact `build.bat /s`.
+2. Independently review and incorporate shell focus/drag and confirmation repairs; retain all original actions, stable identities and authorization requirements.
+3. Complete the actual surface inventory and translated/indexed documentation without treating shared palette changes as whole-interface delivery.
+4. After native build success, run exact `build-installer.bat /s` and verify package bytes without executing the installer or application under the current boundary.
+5. Obtain a concrete permitted route for built visual acceptance before claiming appearance, accessibility, motion or layout completion.
+6. Integrate completed verified units into `main`, prove the remote ref, and retain incomplete work. Cleanup requires ownership, archive, preservation and ancestry proof.
 
-## Next safe actions
-
-1. Preserve the combined candidate, check out a dedicated candidate branch in the now-idle primary checkout, and run its exact root entrypoints while keeping that source pinned.
-2. Resolve concrete build/package blockers in the existing isolated repair lane, independently verify each repair, then reconcile only after the active producer ends.
-3. Preserve the verified new-message catalog correction, stable IDs, callbacks and confirmation behavior during native integration.
-4. Continue the full visual surface inventory with isolated design ownership, keeping pure appearance changes separately reversible.
-5. Run both exact root entrypoints against the reconciled source and inspect unsigned Squirrel outputs without executing the installer or application.
-6. Record final source/output/remote receipts and retain active, incomplete, unmerged or ownership-uncertain work. No cleanup is authorized merely by this document.
+All eleven current issues and all sixteen upstream branch tips have been inspected. Reuse their recorded dispositions rather than replaying historical integrations or adopting unrelated backlog.
