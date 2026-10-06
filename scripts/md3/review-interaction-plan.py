@@ -73,7 +73,15 @@ def queue_states(contracts):
     result = {}
     for boundary, text in zip(sections[1::2], sections[2::2]):
         candidates = set()
-        for token in re.findall(r"`([^`\n]+)`", text):
+        # Only the contiguous positive list after the designated declaration.
+        # Prose later in the same paragraph can explicitly exclude valid IDs.
+        declarations = list(re.finditer(r"(?:\*\*States(?:/anchors)?:\*\*|\bStates:)", text))
+        require(len(declarations) == 1, "Expected one positive state declaration")
+        token_pattern = r"`[a-z0-9-]+/(?:[a-z0-9-]+|\{[a-z0-9,-]+\})`"
+        declared = re.match(r"\s*(" + token_pattern + r"(?:(?:\s*,\s*|\s+and\s+)" +
+                            token_pattern + r")*)", text[declarations[0].end():])
+        require(declared is not None, "Positive state list is missing")
+        for token in re.findall(r"`([^`\n]+)`", declared[1]):
             grouped = re.fullmatch(r"([a-z0-9-]+)/\{([a-z0-9,-]+)\}", token)
             if grouped:
                 candidates.update(grouped[1] + "/" + state for state in grouped[2].split(","))

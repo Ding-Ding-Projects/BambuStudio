@@ -55,6 +55,11 @@ class ReviewPlanTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     self.validate(bad)
 
+    def test_excluded_workspace_history_is_not_a_positive_state(self):
+        self.plan["steps"][0].update(boundary="workspace-inherited-details", state="project/history")
+        with self.assertRaises(ValueError):
+            self.validate()
+
     def test_no_actions_that_submit_or_invent_input(self):
         for action in ("print", "send", "slice", "bind", "update-firmware", "shell", "callback",
                        "click", "press_keys", "Enter", "resize", "type-text", "open-menu", "capture"):

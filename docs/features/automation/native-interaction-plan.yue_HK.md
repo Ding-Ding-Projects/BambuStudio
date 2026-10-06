@@ -30,8 +30,10 @@
 {"boundary":"shared-control-callers","state":"menus/keyboard","action":"menu-next","timeoutMs":1000}
 ```
 
-邊界取自 `remainingVisualCoverage`，狀態必須同時出現在該邊界的檢查文字及
-參考清單中。它們是待檢查狀態，不是原生控制項識別碼，也不是已觀察的聲明。
+邊界取自 `remainingVisualCoverage`，狀態必須同時出現在該邊界明確的
+`States` 或 `States/anchors` 正面聲明及參考清單中。只接受標記後連續的狀態清單，
+不採用旁邊文字、排除說明或有條件的附加內容。因此 `workspace-inherited-details`
+不接受 `project/history`。它們是待檢查狀態，不是原生控制項識別碼，也不是已觀察的聲明。
 只支援現有順序的九個邊界。
 
 ## 有限動作
@@ -77,5 +79,5 @@ Lowlevel 的 `win_send_keys` 接受明確的 `hwnd` 及 `keys`；指定的句柄
 & $python -m unittest discover -s scripts/md3/tests -p test_review_interaction_plan.py -v
 ```
 
-八項針對性測試包含九個邊界的實際已提交例子、選單範圍、來源與雜湊不符、
+九項針對性測試包含九個邊界的實際已提交例子、被排除的工作區歷史組合、選單範圍、來源與雜湊不符、
 不明輸入及執行聲明、解析與時限，以及離線命令列。沒有啟動程式，亦沒有運行畫面證據。
