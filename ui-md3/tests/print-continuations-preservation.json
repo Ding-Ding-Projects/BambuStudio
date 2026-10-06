@@ -1,0 +1,100 @@
+{
+  "baseline": "b5c42ce78a8e021509bdc504e5a40ab62d9cd8e4",
+  "functions": [
+    {
+      "signature": "void ConfirmBeforeSendDialog::on_hide(",
+      "sha256": "661164d4b7fb5371bf8fa0df38784f3ce141afbbff107c4122b2b77465b29296"
+    },
+    {
+      "signature": "void ConfirmBeforeSendDialog::OnHeaderClose(",
+      "sha256": "4d33561d58209ef055f7e189d561710cd0f5ea2a9cf95d92a72175d8e0d2df6e"
+    },
+    {
+      "signature": "void ConfirmBeforeSendDialog::disable_button_ok(",
+      "sha256": "30ec41a96d7cd87e4b9de4c77675eac6dc9b6ba21174d8f97ee6bc7474e5398d"
+    },
+    {
+      "signature": "void ConfirmBeforeSendDialog::enable_button_ok(",
+      "sha256": "b60556ec52e8830eb12f7077ebca7108be03a0175ebc45da7b9748650dbdde75"
+    },
+    {
+      "signature": "void InputIpAddressDialog::switch_input_panel(",
+      "sha256": "909113f3d767f81ffb361c99b09ec73e11fdca489e63f5ed1536d167660a1570"
+    },
+    {
+      "signature": "void InputIpAddressDialog::on_cancel(",
+      "sha256": "6285bb1aaa7d2ebf3a337c29a5f68e9cba426fa7d8e905ada078ddfd81752573"
+    },
+    {
+      "signature": "void InputIpAddressDialog::set_machine_obj(",
+      "sha256": "a63ed2053553e2848025fd168f22c1d75a3a7d7603dc0e7156d24d15a1a3985c"
+    },
+    {
+      "signature": "void InputIpAddressDialog::update_test_msg(",
+      "sha256": "2c49cbe94367d3173a5c657a3d9e6b61feeb4f78d59e454110cfd03bcda22f86"
+    },
+    {
+      "signature": "bool InputIpAddressDialog::isIp(",
+      "sha256": "26c8022de3fa83e26656070fd5e9b31701c4871fd34dda243174fd1847a6b3f0"
+    },
+    {
+      "signature": "void InputIpAddressDialog::on_ok(",
+      "sha256": "8648eff3dbcf5f944141e194511c1f1dad81f86c5bd7f14834728c23ee7e72ad"
+    },
+    {
+      "signature": "void InputIpAddressDialog::on_send_retry(",
+      "sha256": "f00283bbef95e27df9d7f207ebf9c832fd13793477e19cbc11a50d1e76f8b165"
+    },
+    {
+      "signature": "void InputIpAddressDialog::workerThreadFunc(",
+      "sha256": "8421a42c3fad62b2f955e83b425dde16b15931277878ae63b26bb9a2cfe64cf4"
+    },
+    {
+      "signature": "void InputIpAddressDialog::OnTimer(",
+      "sha256": "2a5c562aaef341653448b977c90ce8762b64e228e0fd578af055f2be7aaa0602"
+    },
+    {
+      "signature": "void InputIpAddressDialog::check_ip_address_failed(",
+      "sha256": "d764255eea75acbe4f1af762dab5fa201e2f7ac4c72c9828927ef77189ebc772"
+    },
+    {
+      "signature": "void InputIpAddressDialog::on_check_ip_address_failed(",
+      "sha256": "2a7861b68301d6ea6daa2942a1b64b043175264591d59c963ef16cb310b4608f"
+    },
+    {
+      "signature": "void InputIpAddressDialog::on_text(",
+      "sha256": "31978b512592bd2aeb2cfec2c366243c0def5a29c96620d7dff0ea674cb12d39"
+    },
+    {
+      "signature": "void InputIpAddressDialog::OnHeaderClose(",
+      "sha256": "d44e7a44d86fda8a113e4be1505d15954e570eb129c2aa31527d9c1c153a9b31"
+    }
+  ],
+  "callbacks": [
+    {
+      "class": "ConfirmBeforeSendDialog",
+      "signature": "m_button_ok->Bind(wxEVT_LEFT_DOWN",
+      "sha256": "ddb9910a94091e82dac94bd3d8f98a7d2da0d0e34b0c625823f60eb2861ad1d8"
+    },
+    {
+      "class": "ConfirmBeforeSendDialog",
+      "signature": "m_button_cancel->Bind(wxEVT_LEFT_DOWN",
+      "sha256": "f26748875a09ac66578f94defcae2ffc61cd4de26354323138d6303630477554"
+    },
+    {
+      "class": "ConfirmBeforeSendDialog",
+      "signature": "m_button_update_nozzle->Bind(wxEVT_LEFT_DOWN",
+      "sha256": "9e3d2d28ceeea3065bcfdf2cc5abd43f380c066ce9477135b9fcb90d2d71aae6"
+    },
+    {
+      "class": "SendFailedConfirm",
+      "signature": "m_button_retry->Bind(wxEVT_LEFT_DOWN",
+      "sha256": "10ba7a03a522e4517b71bd444f6bd2f8fcd97f6a0dc03a78cd6bed7b6ff7fdee"
+    },
+    {
+      "class": "SendFailedConfirm",
+      "signature": "m_button_input->Bind(wxEVT_LEFT_DOWN",
+      "sha256": "faa11bd389aad967b6733c177279b5c8b636a661b4bd5ad6ade4442e726d7362"
+    }
+  ]
+}

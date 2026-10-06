@@ -287,6 +287,8 @@ public:
     ~ConfirmBeforeSendDialog();
 
 protected:
+    void fit_content();
+    bool m_fitting_content{false};
     // Modal dialog: header close mirrors the native [x] (on_hide() -> EndModal).
     void OnHeaderClose() override;
 
@@ -322,6 +324,7 @@ public:
     Label* m_tip4{ nullptr };
     InputIpAddressDialog(wxWindow* parent = nullptr);
     ~InputIpAddressDialog();
+    bool Show(bool show = true) override;
 
     MachineObject* m_obj{nullptr};
     wxPanel * ip_input_top_panel{ nullptr };
@@ -369,6 +372,10 @@ public:
     void on_dpi_changed(const wxRect& suggested_rect) override;
 
 protected:
+    void apply_form_layout();
+    void fit_content();
+    wxScrolledWindow* m_body{nullptr};
+    bool m_fitting_content{false};
     // The MD3 header close runs the same teardown as the native [x]: interrupt
     // the worker thread, stop the close timer, EndModal(wxID_CANCEL).
     void OnHeaderClose() override;
@@ -379,8 +386,15 @@ class SendFailedConfirm : public DPIDialog
 public:
     SendFailedConfirm(wxWindow *parent = nullptr);
     ~SendFailedConfirm(){};
+    bool Show(bool show = true) override;
 
-    //void on_ok(wxMouseEvent &evt);
+private:
+    void fit_content();
+    wxScrolledWindow* m_body{nullptr};
+    Button* m_button_retry{nullptr};
+    Button* m_button_input{nullptr};
+    bool m_fitting_content{false};
+public:
     void on_dpi_changed(const wxRect &suggested_rect) override;
 };
 
