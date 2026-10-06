@@ -1,6 +1,6 @@
 ---
 translation-of: README.md
-source-sha256: 138083f877adeae0db9b241c04ede6d6f793ea8bc7c8fa74d4b444a032aa951d
+source-sha256: b6ae6e6654ba745006f42799ee8f68b18b330d3c6a64039816392b13db0c7a29
 review-status: agent-drafted
 ---
 
@@ -39,9 +39,9 @@ review-status: agent-drafted
 
 以下文章記錄限定範圍嘅來源改動及驗證限制，唔代表原生畫面或整個應用程式重設計已驗收。
 
-已納入嘅來源清單固定於 `c7868b48536e8f8277d6872bd7d8def9d8463d02`。
+已納入嘅來源清單固定於 `a271602901c1b079a342dc9ea89edca57c5345c6`。
 校準視窗文章內含粵語段落；外框分頁已有粵語版本，工作流程導覽仍連到現有英文文章。
-連線及傳送延續單元 `b60bd4c8` 尚未納入呢個版本，正等候資訊可用性修正。
+連線及傳送延續單元連同資訊可讀性及標題尺寸修正，現已納入原始碼，唔代表執行畫面已驗證。
 
 - [共用控件](studio-atlas-shared-controls.yue_HK.md)：按鈕、卡片、搜尋、選單結構同呼叫者缺口。
 - [欄位同預設](studio-atlas-fields-and-presets.yue_HK.md)：量度幾何、驗證顏色及預設控制。
@@ -70,6 +70,10 @@ review-status: agent-drafted
 - [裝置名稱編輯器](../workspace/device-name-editor-atlas.yue_HK.md)：量度驗證訊息、操作層次及先換行後調整大小嘅修正。
 - [共用浮動檢查器外框](gizmo-inspector-framing-atlas.yue_HK.md)：十二個原有工具共用底板及標題繪畫。
 - [正則診斷同匯出詳情](reader-details-atlas.yue_HK.md)：診斷內容重排及量度匯出資訊列。
+- [共用清單列](studio-atlas-listbox.yue_HK.md)：量度列幾何、焦點及中斷懸停時重新繪畫舊列。
+- [AMS 乾燥](ams-drying-atlas.yue_HK.md)：狀態設定版面及錯誤說明接駁到可見容器。
+- [噴嘴架同熱端詳情](nozzle-rack-atlas.yue_HK.md)：噴嘴架選取卡片及量度更新資料列。
+- [打印及連線延續流程](../workspace/print-continuations-atlas.yue_HK.md)：可讀說明、連線表單及傳送失敗標題尺寸；測試地址修正獨立記錄，唔當成行為改動。
 
 ## 設計來源
 

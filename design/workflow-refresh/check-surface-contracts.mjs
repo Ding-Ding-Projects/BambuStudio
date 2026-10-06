@@ -52,9 +52,9 @@ assert.ok(handoff.includes('reconciled against `' + review.reviewedCandidate + '
 assert.ok(!handoff.includes('Shell/tab work is reported but absent'), 'Composition summary still excludes incorporated shell work');
 assert.ok(!handoff.includes('confirmations remain separate'), 'Composition summary still excludes incorporated confirmation work');
 assert.ok(handoff.includes('Missing Model Creator, external-source or canonical-tool engines remain their existing incomplete feature obligations.'));
-const expectedFamilies = 'native-palette shared-controls fields-presets prepare preferences-project-setup renderer-preview native-monitor native-device-popups readers-overlays live-notifications workspace calibration-children setup-index embedded-palette embedded-composition workflow-navigation print-workspace print-setup shell-tabs confirmations selection-controls transform-inspector humidity-details appearance-properties device-name-editor gizmo-inspector-framing reader-details'.split(' ');
+const expectedFamilies = 'native-palette shared-controls fields-presets prepare preferences-project-setup renderer-preview native-monitor native-device-popups readers-overlays live-notifications workspace calibration-children setup-index embedded-palette embedded-composition workflow-navigation print-workspace print-setup shell-tabs confirmations selection-controls transform-inspector humidity-details appearance-properties device-name-editor gizmo-inspector-framing reader-details ams-drying nozzle-rack shared-list-rows print-continuations'.split(' ');
 if (process.env.NATIVE_DESIGN_REMOVE_RECEIPT === '1') review.units = review.units.filter(unit => unit.family !== 'workspace');
-assert.equal(review.units.length, 56, 'Missing incorporated source receipt');
+assert.equal(review.units.length, 67, 'Missing incorporated source receipt');
 assert.deepEqual([...new Set(review.units.map(unit => unit.family))].sort(), [...expectedFamilies].sort());
 assert.equal(review.completionClaim, false);
 assert.equal(review.runtimeStatus, 'unverified');
@@ -68,13 +68,15 @@ for (const unit of review.units) {
   execFileSync('git', ['merge-base', '--is-ancestor', unit.commit, review.reviewedCandidate], {cwd: root});
   if (unit.companion) assert.ok(review.units.some(candidate => candidate.commit === unit.companion));
 }
+if (process.env.NATIVE_DESIGN_RESTORE_HELD === '1') review.notInReviewedCandidate.push({commit: 'b60bd4c8b8fa5eb0d3e5a9f706621e73f8a1a476'});
 for (const pending of review.notInReviewedCandidate) {
   const result = spawnSync('git', ['merge-base', '--is-ancestor', pending.commit, review.reviewedCandidate], {cwd: root});
   assert.equal(result.status, 1, 'Pending source receipt is not absent from the candidate');
 }
-assert.equal(review.notInReviewedCandidate.length, 1);
-assert.equal(review.notInReviewedCandidate[0].commit, 'b60bd4c8b8fa5eb0d3e5a9f706621e73f8a1a476');
-assert.equal(review.notInReviewedCandidate[0].status, 'held-not-incorporated');
+assert.equal(review.notInReviewedCandidate.length, 0, 'Formerly held units are now incorporated');
+assert.equal(review.units.find(unit => unit.commit === '59405fc894f96525db8f8edc3e45a3839e3001fd')?.classification, 'verification-only');
+assert.ok(review.units.some(unit => unit.commit === 'b60bd4c8b8fa5eb0d3e5a9f706621e73f8a1a476'));
+assert.ok(!handoff.includes('remains held'), 'Current handoff retains a stale held status');
 assert.deepEqual(review.notInReviewedCandidate, reversal.notInReviewedCandidate);
 const pureAppearance = [
   'b748affe0f687f6cfbe6068a82d32988047f790a',
@@ -107,16 +109,18 @@ for (const article of new Set(review.units.map(unit => unit.article))) {
 }
 assert.ok(cantoneseIndex.includes('calibration-viewport-layout.md'));
 assert.ok(!cantoneseIndex.includes('calibration-viewport-layout.yue_HK.md'), 'Do not invent a separate calibration viewport companion');
-assert.deepEqual(scopes.nextThreeSourceFamilies.map(row => row.id), ['shared-list-rows', 'ams-drying-pages', 'nozzle-rack-details']);
-for (const row of scopes.nextThreeSourceFamilies) {
-  assert.equal(row.status, 'untouched-source-visual-followup');
+assert.deepEqual(scopes.followupSurfaceFamilies.map(row => row.id), ['shared-list-rows', 'ams-drying-pages', 'nozzle-rack-details']);
+for (const row of scopes.followupSurfaceFamilies) {
+  assert.equal(row.status, 'source-incorporated-partial');
+  assert.equal(row.unchangedAtCandidate, 'c7868b48536e8f8277d6872bd7d8def9d8463d02');
+  for (const commit of row.sourceUnits) assert.ok(review.units.some(unit => unit.commit === commit));
   for (const file of row.sourceAnchors) {
     assert.ok(fs.existsSync(path.join(root, file)));
-    execFileSync('git', ['diff', '--quiet', manifest.baselineCommit, review.reviewedCandidate, '--', file], {cwd: root});
+    execFileSync('git', ['diff', '--quiet', manifest.baselineCommit, row.unchangedAtCandidate, '--', file], {cwd: root});
   }
   for (const route of row.reachableFrom)
     assert.ok(fs.readFileSync(path.join(root, route.path), 'utf8').includes(route.needle), `Missing reachable route ${row.id}: ${route.path}`);
 }
 console.log(`Validated ${contracts.surfaces.length} explicit surface anatomy contracts and ${scopes.outsideAnchorFollowups.length} outside-anchor followups. Source inventory only; runtime and parity remain unverified.`);
 console.log(`Verified local ancestry for ${review.units.length} source receipts across ${expectedFamilies.length} families at ${review.reviewedCandidate}; no rendered acceptance.`);
-console.log('Verified five documentation receipts, both article indexes and three unchanged reachable owner families; held connection/send source remains excluded.');
+console.log('Verified five documentation receipts, both article indexes and three incorporated followup families; connection/send repairs are incorporated, runtime remains unverified.');

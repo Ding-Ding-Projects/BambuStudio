@@ -83,7 +83,7 @@ The 43 feature families and all 1,204 obligations in `native-feature-delivery.js
 5. Project, Calibration and Preferences: apply the same system to workspace files, notes/checklist/calendar, calibration sequences, all registered preference sections, parameter editors and setup wizard.
 6. Menus, dialogs and auxiliary tools: complete search/regex, palette, appearance editor, notification/history/docs/changelog, import/export, model creator, schedules, confirmations and canonical tool surfaces. Retain unfinished rows until these implementations exist.
 
-The complete incorporated-source inventory is `sourceReview` in [manifest.json](workflow-refresh/manifest.json), reconciled against `c7868b48536e8f8277d6872bd7d8def9d8463d02`. It records 56 exact source revisions across 27 families, including companion repairs, plus five documentation receipts. The six initial native scopes have incorporated source units with partial nested coverage. Product-owned embedded styling has both its 23-stylesheet paint unit and its 13-stylesheet composition unit. These source receipts do not establish full native compilation, rendered completion, geometry or runtime behavior. [implementation-scopes.json](workflow-refresh/implementation-scopes.json) and the ranked map below distinguish incorporated partial work, the held connection/send unit and remaining callers. The introductory receipts below are historical milestones, not the complete current list.
+The complete incorporated-source inventory is `sourceReview` in [manifest.json](workflow-refresh/manifest.json), reconciled against `a271602901c1b079a342dc9ea89edca57c5345c6`. It records 67 exact source revisions across 31 families, including companion repairs, plus five documentation receipts. The six initial native scopes have incorporated source units with partial nested coverage. Product-owned embedded styling has both its 23-stylesheet paint unit and its 13-stylesheet composition unit. These source receipts do not establish full native compilation, rendered completion, geometry or runtime behavior. [implementation-scopes.json](workflow-refresh/implementation-scopes.json) and the ranked map below distinguish incorporated partial work and remaining callers. The introductory receipts below are historical milestones, not the complete current list.
 
 | Source revision | Source receipt | Evidence limit |
 | --- | --- | --- |
@@ -102,7 +102,7 @@ The review at `be5e1205dcdad8f372d2ba63f367dbd7977c29c4` found that the original
 
 [surface-contracts.json](workflow-refresh/surface-contracts.json) now names concrete zones, component anatomy, narrow-layout rules, state transitions, preserved functions, source destinations and ownership scopes for each of the 28 groups. This is the detailed implementation contract. The existing boards remain explicitly approximate structural references, with state-specific design rendering still missing; they were not regenerated for this text-only refinement. Run `node design/workflow-refresh/check-surface-contracts.mjs` for the independent source-inventory check. Its result is not a UI or functionality verdict.
 
-The initial ten outside-anchor groups have individual source dispositions. Workspace, calibration children/results, setup index, fields/presets, Print setup, device popups/name editor, live notifications and additional embedded composition have incorporated units, while their documented nested gaps remain. Shell/tab composition and its drag/focus repairs, plus bounded SuperConfirmGate/general MsgDialog composition and its insufficient-space correction, are incorporated in the current candidate. The separate connection/send continuation unit b60bd4c8 remains held outside it. `NotificationCenterPanel.cpp` is the actual notification reader presentation anchor; `NotificationHistory.cpp` remains its unchanged data model. Conditional existing-tool ownership, persistent field stacks, validation rows, custom control families and other caller-specific anatomy still require work after shared state-surface changes.
+The initial ten outside-anchor groups have individual source dispositions. Workspace, calibration children/results, setup index, fields/presets, Print setup, device popups/name editor, live notifications and additional embedded composition have incorporated units, while their documented nested gaps remain. Shell/tab composition and its drag/focus repairs, plus bounded SuperConfirmGate/general MsgDialog composition and its insufficient-space correction, are incorporated in the current candidate. Connection/send continuation composition, readable-disclosure and caption-fitting repairs are also incorporated. `NotificationCenterPanel.cpp` is the actual notification reader presentation anchor; `NotificationHistory.cpp` remains its unchanged data model. Conditional existing-tool ownership, persistent field stacks, validation rows, custom control families and other caller-specific anatomy still require work after shared state-surface changes.
 
 All work here remains a visual redesign of existing capabilities. Missing Model Creator, external-source or canonical-tool engines remain their existing incomplete feature obligations. A new decorative control, hidden function or removed workflow cannot close those obligations. No source scope may change printer, AMS, slicer, credential, export, history or scheduling semantics merely to match a drawing.
 
@@ -122,11 +122,11 @@ After launch authorization and a real build are available, use the required isol
 
 ## Remaining visual implementation coverage
 
-Reviewed source candidate: `c7868b48536e8f8277d6872bd7d8def9d8463d02`.
+Reviewed source candidate: `a271602901c1b079a342dc9ea89edca57c5345c6`.
 
-The source ledger records 56 exact units across 27 families, plus five documentation
-receipts: seven appearance-only, twenty-two appearance/layout, twenty-one correctness
-repairs, two functional-workflow, three verification-only and one localization unit.
+The source ledger records 67 exact units across 31 families, plus five documentation
+receipts: seven appearance-only, twenty-six appearance/layout, twenty-seven correctness
+repairs, two functional-workflow, four verification-only and one localization unit.
 The formerly pending shell unit is now incorporated with its drag/focus repairs.
 Numeric input allocation, calibration viewport/preset measurement, humidity final
 placement and Appearance preset reflow are recorded as separate repairs. Transform
@@ -137,41 +137,45 @@ The later snapshot adds the StaticBox radius compiler correction, calibration
 result viewport and vertical-wheel ownership plus the default fixture correction,
 device-name layout and validation-fitting repair, common framing for twelve tool
 inspectors, Regex/Export detail composition, and the shell/tab Cantonese companion.
-Connection/send continuation unit `b60bd4c8b8fa5eb0d3e5a9f706621e73f8a1a476` is not
-incorporated. It is held for a disclosure-availability repair and supplies no
-completion, functional-delivery or runtime claim here.
+Connection/send continuation unit `b60bd4c8b8fa5eb0d3e5a9f706621e73f8a1a476` is now
+incorporated with readable-disclosure repair `8b8d042e`, caption fitting `ee4fc3ec`
+and fixture-only address correction `59405fc8`. The prior hold is retired by
+verified source ancestry, not by promoting runtime or functional-delivery evidence.
+This documentation-only reconciliation assigns no new implementation scope.
 
 The ranking below prioritizes the number of actual surface families reached, then continuation importance. It is a bounded visual-implementation map, not a fresh audit of all 1,204 canonical feature obligations. Every runtime, capture and parity verdict remains pending. A named source unit means source is incorporated, not that every nested control is finished.
 
 | Rank | Remaining coverage boundary | Existing source and next bounded action |
 | --- | --- | --- |
-| 1 | Shared controls and caller anatomy used throughout the application | `SpinInput`, `CheckBox` and `SwitchButton` now have bounded source anatomy, including native numeric allocation repair. Their actual narrow callers still need validation. Slider tracks, `SideMenuPopup`, `ListBox`, `TextTabbar`, `LabeledCheckBox`, `ImageSwitchButton` and other toggle classes remain independently owned. Option-name/default/reset/inherited markers, persistent inline validation and full narrow field stacks remain caller-owned. Shared button tiers remain 36/42/44 DIP; the proposed 40/32 density contract has not universally landed. |
+| 1 | Shared controls and caller anatomy used throughout the application | `SpinInput`, `CheckBox` and `SwitchButton` now have bounded source anatomy, including native numeric allocation repair. Their actual narrow callers still need validation. ListBox now has measured rows, focus paint and displaced-hover invalidation. Slider tracks, `SideMenuPopup`, `TextTabbar`, `LabeledCheckBox`, `ImageSwitchButton` and other toggle classes remain independently owned. Option-name/default/reset/inherited markers, persistent inline validation and full narrow field stacks remain caller-owned. Shared button tiers remain 36/42/44 DIP; the proposed 40/32 density contract has not universally landed. |
 | 2 | Shell, project tab strip, nested books and tab dialogs | Shell/title/history/TabStrip/Tabbook source and visible-neighbor drag plus focus/accessibility repairs are incorporated. Overflow remains layout behavior, not paint-only. Full wrapped vertical labels, extreme dialog fit, title-toolbar keyboard evidence and unrelated status owners remain separate. |
-| 3 | Real final-action and recovery continuations | Print review/setup, bounded SuperConfirmGate/general MsgDialog composition and the device-name editor are incorporated. Connection/send continuation unit b60bd4c8 remains held and absent. Material/nozzle tips/tutorial/replacement/reselection, final send variants, local timelapse/storage warnings, account/bind/IP/PIN dialogs, transfer-failure prompts and specialized text/number/choice message branches remain distinct surfaces. Preserve every authorization and physical-action path. |
+| 3 | Real final-action and recovery continuations | Print review/setup, bounded SuperConfirmGate/general MsgDialog composition and the device-name editor are incorporated. Connection/send confirmations, IP entry and send-failure presentation plus disclosure/caption repairs are incorporated. Material/nozzle tips/tutorial/replacement/reselection, final send variants, local timelapse/storage warnings, account/bind/PIN dialogs, other transfer-failure prompts and specialized text/number/choice message branches remain distinct surfaces. Preserve every authorization and physical-action path. |
 | 4 | Dense settings, calibration and schedule subforms | Calibration instruction/advice measurement, whole preset-row wrapping, stale-height release, intrinsic extents, result-table horizontal viewports and outer vertical-wheel ownership are incorporated. Specialized settings/reset dialogs, schedule rule-editor conditional fields and further capability-dependent result controls remain. Native font, wheel/focus and scroll behavior is unverified even where source composition exists. |
-| 5 | Native printer-specific detail and telemetry composition | Humidity legend/value composition and final popup placement are incorporated alongside the Control-header DPI repair. Mapping wheel/multicolor/nozzle detail, material search, pressure-advance profile popovers, custom-color editing, AMS type/order, drying-command surfaces and capability-dependent rows remain independently owned. |
+| 5 | Native printer-specific detail and telemetry composition | Humidity legend/value composition and final popup placement are incorporated alongside the Control-header DPI repair. Nozzle rack/selection/hotend rows and AMS drying cards/pages/error disclosure are also incorporated. Mapping wheel/multicolor detail, material search, pressure-advance profile popovers, custom-color editing, AMS type/order, nested device dialogs and further capability-dependent rows remain independently owned. |
 | 6 | Nested readers/editors and live notice variants | Appearance groups/preset reflow, Regex diagnostic/sample/result composition and Export fidelity/tool-path disclosure rows are incorporated. Font-family search/preview, palette rich rows, Regex reference tables/chips/flags, history filters, documentation article controls, changelog day grid/filter/export, Export checkboxes/destination controls and other detail branches remain individually owned. Live notification blocking banners and semantic state/icon inventory remain unchanged. |
 | 7 | Workspace's inherited detail surfaces | Five workspace subviews and stable-width Overview reflow are incorporated. Existing text-entry/file dialogs, checklist long-label shortening, tab overflow/keyboard and any missing local search/regex remain separate. No History subview exists in `WorkspacePanel`; history-bearing member save remains intact. Do not introduce a new history engine merely to fill the design board. |
 | 8 | Embedded entrypoint and alternate-flow composition | Both the 23-stylesheet paint unit and the 13-stylesheet composition unit are incorporated. The home mini-strip item-count policy, alternate filament-creation flows, JavaScript motion and the pre-existing setup-guide test mismatch remain. Trace actual native-host entrypoints and owned markup before any further CSS scope; preserve event targets, bridge protocols and third-party assets. |
 | 9 | Renderer detail beyond recorded paint | Toolbar/rail, overlays, Preview transport/legend, transform fields and the common floating-inspector frame for twelve paired callers are incorporated. Transform work preserves fifteen numeric inputs and their geometry, axis identity and data colors. Shared framing does not redesign each tool's interior controls. `GLCanvas3D.cpp`, tool interiors, canvas-specific panels and remaining tooltip layout still need individual ownership inventory. |
 | 10 | Existing-tool ownership that remains unknown | Model Creator, smart-home and canonical-tool groups retain unresolved implementation ownership. Trace actual reachable existing tools first. Missing engines remain feature backlog outside this visual-only task; a static board is not authority to add one or imply one exists. |
 
-### Next three concrete untouched source families
+### Disposition of the three previously prioritized families
 
-These production owner files are unchanged between baseline
-`d048cfc3040a1566b78e03334f3871f1dd0144bb` and the reviewed candidate. This is a
-direct styling-coverage statement, not a claim that the current controls lack all
-styling or functionality. Their existing functions remain the preservation target.
+At historical candidate `c7868b48536e8f8277d6872bd7d8def9d8463d02`, these owner
+files were unchanged from the original design baseline. At the current candidate,
+all three have incorporated source units. They are no longer described as untouched
+or proposed next work. The original reachable owner paths remain in the scope map.
 
-| Priority | Owner files and reachable route | Bounded visual follow-up |
+| Family | Incorporated source disposition | Remaining proof boundary |
 | --- | --- | --- |
-| 1 | `Widgets/ListBox.cpp/.hpp`; `WorkspacePanel.cpp` creates the checklist, and `Appearance/AppearanceEditorPopover.cpp` creates font/preset lists. Schedule, Smart Home, draft and tab dialogs also reuse this owner. | Measured row text/check anatomy, selected/hover/focus surfaces and long-label treatment. Preserve row identity, check state, keyboard selection and scroll ownership. |
-| 2 | `AMSDryControl.cpp/.hpp`; `Widgets/AMSControl.cpp` opens `AMSDryCtrWin`, and the embedded `DeviceWeb/ViewModels/DevicePage/AmsControlWeb/ViewModelActions.cpp::open_humidity` routes supported devices through `OpenAmsDryControlDialog`. | Existing humidity/status, settings, unavailable/error and guide composition. Preserve tray/AMS identity, capability decisions, temperatures/timing, commands and confirmation routes. |
-| 3 | `DeviceTab/wgtDeviceNozzleRack.cpp/.h`, `wgtDeviceNozzleSelect.cpp/.h`, `wgtDeviceNozzleRackUpdate.cpp/.h`; `StatusPanel.cpp` constructs the rack, `AmsMappingPopup.cpp` constructs rack selection, and the rack opens its update dialog. | Rack/toolhead cards, nozzle selection and update details. Preserve nozzle indices, selected state, data colors, capability checks and all device commands. |
+| Shared ListBox rows | `ed3cbc35` adds measured row/check anatomy and focus/hover paint; `c8b269d6` invalidates displaced fading rows. | Real caller minima, large text, narrow glyphs, keyboard and paint delivery remain unverified. |
+| AMS drying pages | `fffdc0a9` adds density-aware cards, grouped controls and scrolling; `2b6c799c` attaches the existing error disclosure to its visible state owner. | Native scroll/focus, content updates, language/theme/scale tuples and device interaction remain unverified. |
+| Nozzle rack details | `d31530a3` adds measured rack/selection cards and hotend rows, retaining mapping and hardware identities. | Outer owner allocation, long values, popup fit, native selection and supported display tuples remain unverified. |
 
-`implementation-scopes.json.nextThreeSourceFamilies` records exact paths and
-call-site evidence; its checker verifies those paths and their unchanged source
-state. No implementation is assigned or claimed by this inventory alone.
+`implementation-scopes.json.followupSurfaceFamilies` records the historical
+unchanged-source observation separately from current incorporation. Its checker
+verifies both facts and the real call sites. No new source implementation is assigned
+by this documentation unit; the candidate is ready for the integration owner's
+separate pinned native build process.
 
 The separate functional inventory still contains all 1,204 obligations with their
 existing evidence states. Missing, incomplete, planned and placeholder functions

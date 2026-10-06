@@ -130,3 +130,33 @@ Runtime, captures, fixtures, reference viewer and parity remain unverified/missi
 as previously recorded. Missing, planned, placeholder and incomplete functional
 obligations are not erased or advanced by this visual inventory. No UI source,
 full build, launch, capture or publication occurred during reconciliation.
+
+## Candidate-freeze reconciliation at a27160290
+
+The owned documentation checkout fast-forwarded to immutable candidate
+`a271602901c1b079a342dc9ea89edca57c5345c6`. Its manifest and reversal ledger now
+agree on 67 source units across 31 families, with five documentation receipts.
+Classification totals are seven appearance-only, twenty-six appearance/layout,
+twenty-seven correctness repairs, two functional-workflow, four verification-only
+and one localization unit. No previous repair was reclassified as disposable paint.
+
+The eleven added receipts are the printing-title base-type and preset-spacer API
+compiler repairs, AMS drying composition and disclosure attachment, nozzle cards
+and hotend rows, shared ListBox anatomy and interrupted-hover repair, connection/
+send continuation composition with disclosure/caption repairs, and fixture-only
+documentation-address correction `59405fc8`. The connection/send hold from the
+earlier snapshot is retired because all associated revisions are now ancestors
+of this candidate. Runtime acceptance remains unverified.
+
+The minimum receipt/index/ancestry checker passes, including both actual article
+indexes, their translation hash and the three previously prioritized families'
+current source-incorporated/partial dispositions. Their unchanged-source proof is
+retained only against the historical c7868b485 snapshot. An in-memory attempt to
+restore the old held status (`NATIVE_DESIGN_RESTORE_HELD=1`) fails ancestry validation;
+the unmodified current records pass. No new source implementation scope is assigned.
+
+All 1,204 functional obligations and 56 structural board files are byte-unchanged
+from the immutable candidate. No missing, incomplete or placeholder feature is
+promoted. Runtime, capture, viewer, fixture and parity states remain unchanged.
+Changed public-bound content and staged whitespace are checked before committing.
+No production build, launch, capture, hardware operation or publication is performed.

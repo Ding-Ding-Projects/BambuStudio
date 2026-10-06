@@ -1390,7 +1390,7 @@
   "compositionReviewBase": "be5e1205dcdad8f372d2ba63f367dbd7977c29c4",
   "sourceReview": {
     "schemaVersion": 1,
-    "reviewedCandidate": "c7868b48536e8f8277d6872bd7d8def9d8463d02",
+    "reviewedCandidate": "a271602901c1b079a342dc9ea89edca57c5345c6",
     "completionClaim": false,
     "evidence": "source-incorporation-only",
     "runtimeStatus": "unverified",
@@ -1820,17 +1820,93 @@
         "classification": "appearance-layout",
         "summary": "Regex diagnostic content reflow and export disclosure/locator composition",
         "article": "docs/features/design-system/reader-details-atlas.md"
-      }
-    ],
-    "notInReviewedCandidate": [
+      },
+      {
+        "commit": "ac04eda5d7c7b057dd70f820e5c2614b6b5aabaa",
+        "family": "native-monitor",
+        "classification": "correctness-repair",
+        "summary": "Accept the actual printing-title wxStaticText base type",
+        "article": "docs/features/design-system/monitor-atlas.md",
+        "companion": "396992cfeb7f2e337b43d133a84562c04afd1e69"
+      },
+      {
+        "commit": "9bb8eeb74219039369a289b5acb5c5406f491a1b",
+        "family": "fields-presets",
+        "classification": "correctness-repair",
+        "summary": "Use supported wxSizerItem SetSpacer API for preset header spacing",
+        "article": "docs/features/design-system/studio-atlas-fields-and-presets.md",
+        "companion": "b88acafa95b88884b4e284a0de15d77f7934cfcb"
+      },
+      {
+        "commit": "fffdc0a9d22f4c230cc27e8930d740c6bc769945",
+        "family": "ams-drying",
+        "classification": "appearance-layout",
+        "summary": "Measured drying telemetry/settings cards, complete control groups and scrolling pages",
+        "article": "docs/features/design-system/ams-drying-atlas.md"
+      },
+      {
+        "commit": "2b6c799c30a92ee7758ba035d725da43829ea7d4",
+        "family": "ams-drying",
+        "classification": "correctness-repair",
+        "summary": "Attach existing error disclosure to its visible state owner while retaining Stop",
+        "article": "docs/features/design-system/ams-drying-atlas.md",
+        "companion": "fffdc0a9d22f4c230cc27e8930d740c6bc769945"
+      },
+      {
+        "commit": "d31530a31780c10e7b4f44f85737f036504b7d5b",
+        "family": "nozzle-rack",
+        "classification": "appearance-layout",
+        "summary": "Nozzle cards, mapping selection and measured hotend detail rows",
+        "article": "docs/features/design-system/nozzle-rack-atlas.md"
+      },
+      {
+        "commit": "ed3cbc35d5d3a6b701a5eb7ebfdc69d137684d92",
+        "family": "shared-list-rows",
+        "classification": "appearance-layout",
+        "summary": "Measured native list rows, selection/focus paint and bounded hover feedback",
+        "article": "docs/features/design-system/studio-atlas-listbox.md"
+      },
+      {
+        "commit": "c8b269d6d5925262143c0a0e9d28c83fb788d1b6",
+        "family": "shared-list-rows",
+        "classification": "correctness-repair",
+        "summary": "Invalidate the displaced fading row when hover is interrupted",
+        "article": "docs/features/design-system/studio-atlas-listbox.md",
+        "companion": "ed3cbc35d5d3a6b701a5eb7ebfdc69d137684d92"
+      },
       {
         "commit": "b60bd4c8b8fa5eb0d3e5a9f706621e73f8a1a476",
         "family": "print-continuations",
         "classification": "appearance-layout",
-        "status": "held-not-incorporated",
-        "reason": "Not an ancestor of this immutable candidate. Held for disclosure-availability repair; no source incorporation, functional completion, runtime acceptance or article availability is claimed from it."
+        "summary": "Existing print confirmation, IP entry and send-failure composition",
+        "article": "docs/features/workspace/print-continuations-atlas.md"
+      },
+      {
+        "commit": "8b8d042ed6730e80c6baeef72b71851a0ac04018",
+        "family": "print-continuations",
+        "classification": "correctness-repair",
+        "summary": "Require readable disclosure before existing terminal continuation routes",
+        "article": "docs/features/workspace/print-continuations-atlas.md",
+        "companion": "b60bd4c8b8fa5eb0d3e5a9f706621e73f8a1a476"
+      },
+      {
+        "commit": "ee4fc3ece6afdeec6d3e8783cb6cc8fce41162be",
+        "family": "print-continuations",
+        "classification": "correctness-repair",
+        "summary": "Adopt send-failure caption before bounded readback fitting",
+        "article": "docs/features/workspace/print-continuations-atlas.md",
+        "companion": "8b8d042ed6730e80c6baeef72b71851a0ac04018"
+      },
+      {
+        "commit": "59405fc894f96525db8f8edc3e45a3839e3001fd",
+        "family": "print-continuations",
+        "classification": "verification-only",
+        "summary": "Use a reserved documentation address in the IPv4 fixture only",
+        "article": "docs/features/workspace/print-continuations-atlas.md",
+        "companion": "8b8d042ed6730e80c6baeef72b71851a0ac04018"
       }
     ],
+    "notInReviewedCandidate": [],
     "preservedOutsideDesign": "Build/bootstrap/packaging, diagnostics, source identity, dependency and AMS data/reading repairs are not appearance rollback candidates. Integration merge commits are not reversal handles: inspect and select the individual source unit with its companion repairs.",
     "verificationLimit": "Local ancestry and exact changed-path inspection establish source incorporation only. Existing per-unit articles describe their own checks. No tests were silently promoted to native compilation, live interaction, captures or whole-application acceptance.",
     "documentationReceipts": [
@@ -1860,7 +1936,7 @@
         "summary": "Cantonese shell/tab companion"
       }
     ],
-    "documentationBoundary": "Calibration viewport Cantonese remains inline. Shell/tab now has an incorporated Cantonese companion. Native-workflow navigation still has no separate Cantonese companion. Indexes link existing incorporated articles only; held connection/send work does not receive an incorporation link."
+    "documentationBoundary": "Calibration viewport Cantonese remains inline; shell/tab has its real companion. Native-workflow navigation still has no separate Cantonese companion. Connection/send and its disclosure/caption repairs are incorporated, with their real paired articles indexed. Incorporation is source-only and leaves every runtime/capture/feature obligation state unchanged."
   },
   "reviewedSourceCandidate": "f3565c7580bebd38bcbf5c5f01e272fa5c4b6224"
 }

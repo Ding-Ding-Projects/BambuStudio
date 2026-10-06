@@ -44,10 +44,10 @@ Design 3 design system.
 
 These articles record bounded source changes and their verification limits. They do not establish complete native rendering or application-wide redesign acceptance.
 
-The incorporated source inventory is pinned to `c7868b48536e8f8277d6872bd7d8def9d8463d02`.
+The incorporated source inventory is pinned to `a271602901c1b079a342dc9ea89edca57c5345c6`.
 Calibration viewport documentation includes Cantonese inline. Shell/tab now has a Cantonese
 companion; native-workflow navigation still has no separate companion. Connection/send
-continuation unit `b60bd4c8` is held outside this snapshot for a disclosure-availability repair.
+continuations and their disclosure/caption repairs are now incorporated as source-only work.
 
 - [Shared controls](studio-atlas-shared-controls.md): button, card, search and menu anatomy with caller gaps.
 - [Fields and presets](studio-atlas-fields-and-presets.md): measured field geometry, validation colors and preset controls.
@@ -76,6 +76,10 @@ continuation unit `b60bd4c8` is held outside this snapshot for a disclosure-avai
 - [Device-name editor](../workspace/device-name-editor-atlas.md): measured validation, action hierarchy and wrapping-before-fit correction.
 - [Common floating inspector framing](gizmo-inspector-framing-atlas.md): shared plate/heading paint across twelve existing tool callers.
 - [Regex diagnostics and export details](reader-details-atlas.md): diagnostic content reflow and measured export disclosure rows.
+- [Shared list rows](studio-atlas-listbox.md): measured row geometry, focus and interrupted-hover invalidation.
+- [AMS drying](ams-drying-atlas.md): status/settings composition and reachable error disclosure attachment.
+- [Nozzle rack and hotend details](nozzle-rack-atlas.md): rack/selection cards and measured update rows.
+- [Print and connection continuations](../workspace/print-continuations-atlas.md): readable disclosure, connection form and send-failure caption fitting; fixture-only address correction remains separate from behavior.
 
 ## Design source
 
