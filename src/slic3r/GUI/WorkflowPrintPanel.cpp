@@ -11,7 +11,7 @@
 namespace Slic3r { namespace GUI {
 
 WorkflowPrintPanel::WorkflowPrintPanel(wxWindow* parent, ReadSummary read_summary, RunAction run_action)
-    : wxScrolledWindow(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL | wxTAB_TRAVERSAL),
+    : MD3ScrolledWindow(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL | wxTAB_TRAVERSAL),
       m_read_summary(std::move(read_summary)), m_run_action(std::move(run_action))
 {
     SetName(_L("Print preparation"));

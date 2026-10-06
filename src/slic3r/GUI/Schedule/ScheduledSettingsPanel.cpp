@@ -139,7 +139,7 @@ ScheduleRuleDialog::ScheduleRuleDialog(wxWindow *parent, const Rule &rule, bool 
     , m_rule(rule)
 {
     const wxColour bg = GetBackgroundColour();
-    auto *scroll = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL | wxTAB_TRAVERSAL | wxBORDER_NONE);
+    auto *scroll = new MD3ScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL | wxTAB_TRAVERSAL | wxBORDER_NONE);
     scroll->SetBackgroundColour(bg);
     scroll->SetScrollRate(0, FromDIP(12));
     m_body = new wxBoxSizer(wxVERTICAL);
@@ -533,7 +533,7 @@ bool ScheduleRuleDialog::collect(Rule &out, std::vector<std::string> &problems)
 } // namespace
 
 ScheduledSettingsPanel::ScheduledSettingsPanel(wxWindow *parent)
-    : wxScrolledWindow(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL)
+    : MD3ScrolledWindow(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL)
 {
     SetScrollRate(0, FromDIP(12));
     const wxColour bg = StateColor::semantic(MD3::Role::SurfaceContainerLowest);

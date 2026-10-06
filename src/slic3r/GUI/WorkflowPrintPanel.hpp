@@ -2,7 +2,7 @@
 #define slic3r_GUI_WorkflowPrintPanel_hpp_
 
 #include "WorkflowPrintState.hpp"
-#include <wx/scrolwin.h>
+#include "Widgets/MD3ScrolledWindow.hpp"
 #include <functional>
 #include <map>
 #include <utility>
@@ -29,7 +29,7 @@ struct WorkflowPrintSummary {
 
 // The review page has no printer connection or slicing ownership. All explicit
 // actions return to MainFrame's existing controls and their confirmation paths.
-class WorkflowPrintPanel : public wxScrolledWindow {
+class WorkflowPrintPanel : public MD3ScrolledWindow {
 public:
     using ReadSummary = std::function<WorkflowPrintSummary()>;
     using RunAction = std::function<void(WorkflowPrint::Action, wxWindow*)>;

@@ -1,6 +1,7 @@
 #include "HumanDate.hpp"
 #include "WorkspacePanel.hpp"
 #include "Widgets/MD3DataView.hpp"
+#include "Widgets/MD3ScrolledWindow.hpp"
 
 #include "I18N.hpp"
 #include "GUI_App.hpp"
@@ -176,7 +177,7 @@ void WorkspacePanel::create_ui()
     // Each real page retains its controls inside a card. The outer scroll owner
     // keeps wrapped action rows reachable when their measured height grows.
     const auto make_page = [this, padding]() {
-        auto *scroll = new wxScrolledWindow(m_sections, wxID_ANY, wxDefaultPosition, wxDefaultSize,
+        auto *scroll = new MD3ScrolledWindow(m_sections, wxID_ANY, wxDefaultPosition, wxDefaultSize,
                                              wxVSCROLL | wxTAB_TRAVERSAL);
         scroll->SetScrollRate(0, FromDIP(16));
         scroll->SetBackgroundColour(GetBackgroundColour());
