@@ -29,18 +29,18 @@ static wxPanel* s_create_title(wxWindow *parent, const wxString& text)
     wxPanel *panel = new wxPanel(parent, wxID_ANY);
 
     auto title  = new Label(panel, text);
-    title->SetFont(::Label::Body_13);
-    title->SetBackgroundColour(*wxWHITE);
+    title->SetFont(::Label::Head_14);
+    title->SetBackgroundColour(StateColor::semantic(MD3::Role::Surface));
     title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
 
     auto split_line = new wxPanel(panel, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
     split_line->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
-    split_line->SetMinSize(wxSize(-1, 1));
-    split_line->SetMaxSize(wxSize(-1, 1));
+    split_line->SetMinSize(wxSize(-1, parent->FromDIP(1)));
+    split_line->SetMaxSize(wxSize(-1, parent->FromDIP(1)));
 
     wxBoxSizer *sizer = new wxBoxSizer(wxHORIZONTAL);
     sizer->Add(0, 0, 0, wxEXPAND, 0);
-    sizer->Add(title, 0, wxALIGN_CENTER, 0);
+    sizer->Add(title, 0, wxALIGN_CENTER | wxRIGHT, parent->FromDIP(12));
     sizer->Add(split_line, 1, wxALIGN_CENTER_VERTICAL | wxEXPAND, 0);
     panel->SetSizer(sizer);
     panel->Layout();
@@ -51,7 +51,7 @@ void wgtDeviceNozzleRackSelect::CreateGui()
 {
     wxSizer *main_sizer = new wxBoxSizer(wxVERTICAL);
 
-    wxColour tip_bg_clr("#FFF0E0");
+    const wxColour tip_bg_clr = StateColor::semantic(MD3::Role::SurfaceContainerLow);
     m_title_tips_dynamic = new wgtMsgBox(this);
     m_title_tips_dynamic->SetBackgroundColour(tip_bg_clr);
     m_title_tips_dynamic->SetBorderColor(ThemeColor::Warning);
@@ -99,7 +99,7 @@ void wgtDeviceNozzleRackSelect::CreateGui()
     main_sizer->AddSpacer(FromDIP(10));
     main_sizer->Add(toolhead_sizer, 0, wxALIGN_LEFT);
 
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::Surface));
     SetSizer(main_sizer);
     Layout();
     Fit();

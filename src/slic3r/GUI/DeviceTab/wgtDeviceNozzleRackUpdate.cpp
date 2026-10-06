@@ -238,7 +238,8 @@ void wgtDeviceNozzleRackHotendUpdate::CreateGui()
 {
     SetBackgroundColour(WGT_DEVICE_NOZZLE_RACK_HOTEND_UPDATE_DEFAULT_BG);
     SetBorderColor(WGT_DEVICE_NOZZLE_RACK_HOTEND_UPDATE_DEFAULT_BG);
-    SetCornerRadius(0);
+    SetDensity(StaticBox::Density::Compact);
+    SetBackgroundColor(WGT_DEVICE_NOZZLE_RACK_HOTEND_UPDATE_DEFAULT_BG);
 
     //load nozzle hs image
     for (int i = 1; i <= 4; i++)
@@ -311,12 +312,10 @@ void wgtDeviceNozzleRackHotendUpdate::CreateGui()
     type_sizer_row_2->Add(m_flowtype_label, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(2));
     type_sizer_row_2->Add(m_type_label, 1, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(2));
 
-    main_type_sizer->Add(type_sizer_row_1, 0, wxALIGN_LEFT);
+    main_type_sizer->Add(type_sizer_row_1, 0, wxEXPAND);
     main_type_sizer->Add(type_sizer_row_2, 1, wxALIGN_LEFT | wxEXPAND | wxTOP, FromDIP(4));
     type_panel->SetSizer(main_type_sizer);
-    type_panel->SetMaxSize(WX_DIP_SIZE(220, 40));
-    type_panel->SetMinSize(WX_DIP_SIZE(220, 40));
-    type_panel->SetSize(WX_DIP_SIZE(220, 40));
+    type_panel->SetMinSize(WX_DIP_SIZE(220, -1));
 
     content_sizer->Add(type_panel, 1, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(12));
 
@@ -342,9 +341,7 @@ void wgtDeviceNozzleRackHotendUpdate::CreateGui()
     info_sizer->Add(m_sn_label, 0, wxALIGN_LEFT);
     info_sizer->Add(version_h_sizer, 0, wxALIGN_LEFT | wxTOP, FromDIP(4));
     info_panel->SetSizer(info_sizer);
-    info_panel->SetMaxSize(WX_DIP_SIZE(183, 40));
-    info_panel->SetMinSize(WX_DIP_SIZE(183, 40));
-    info_panel->SetSize(WX_DIP_SIZE(183, 40));
+    info_panel->SetMinSize(WX_DIP_SIZE(183, -1));
 
     //Used Time
     m_used_time = new Label(this);
@@ -356,7 +353,7 @@ void wgtDeviceNozzleRackHotendUpdate::CreateGui()
     m_error_icon = new ScalableBitmap(this, "error", 14);
     // Kit icon Button: Refresh glyph at rest, Error glyph when the update failed.
     m_status_bitmap = new Button(this, "", "", 0, 0);
-    m_status_bitmap->SetIconButton(Button::IconShape::Circle, FromDIP(20));
+    m_status_bitmap->SetIconButton(Button::IconShape::Circle, 20);
     m_status_bitmap->SetGlyph(MaterialIcon::Refresh, FromDIP(14));
     m_status_bitmap->Bind(wxEVT_BUTTON, &wgtDeviceNozzleRackHotendUpdate::OnStatusIconClick, this);
 
@@ -377,7 +374,7 @@ void wgtDeviceNozzleRackHotendUpdate::CreateGui()
     content_sizer->AddSpacer(FromDIP(25));
 
     auto* main_sizer = new wxBoxSizer(wxHORIZONTAL);
-    main_sizer->Add(content_sizer, 0, wxEXPAND | wxTOP | wxBOTTOM, FromDIP(10));
+    main_sizer->Add(content_sizer, 1, wxEXPAND | wxTOP | wxBOTTOM, FromDIP(12));
 
     SetSizer(main_sizer);
     Layout();
@@ -525,7 +522,8 @@ void wgtDeviceNozzleRackHotendUpdate::updateNozzleImage(const DevNozzle& nozzle)
 void wgtDeviceNozzleRackHotendUpdate::UpdateColourStyle(const wxColour& clr)
 {
     SetBackgroundColour(clr);
-    SetBorderColor(clr);
+    SetBackgroundColor(clr);
+    SetBorderColor(StateColor::semantic(MD3::Role::OutlineVariant));
 
     // BFS: Update all children background color
     auto children = GetChildren();
@@ -782,6 +780,19 @@ void wgtDeviceNozzleRackHotendUpdate::UpdateInfo(const DevNozzle& nozzle)
         }
 
     }
+    MeasureRow();
+}
+
+void wgtDeviceNozzleRackHotendUpdate::MeasureRow()
+{
+    m_idx_label->SetFont(Label::Head_14);
+    for (Label* label : {m_material_label, m_diameter_label, m_flowtype_label, m_type_label,
+                        m_sn_label, m_version_label, m_version_new_label, m_used_time, m_status_label})
+        label->SetFont(Label::Body_12);
+    m_material_label->GetParent()->SetMinSize(WX_DIP_SIZE(220, -1));
+    m_sn_label->GetParent()->SetMinSize(WX_DIP_SIZE(183, -1));
+    InvalidateBestSize();
+    Layout();
 }
 
 void wgtDeviceNozzleRackHotendUpdate::Rescale()
@@ -797,6 +808,8 @@ void wgtDeviceNozzleRackHotendUpdate::Rescale()
     {
         m_icon_bitmap->SetBitmap(m_nozzle_image->bmp());
     }
+    m_status_bitmap->msw_rescale();
+    MeasureRow();
     m_icon_bitmap->Refresh();
 }
 
