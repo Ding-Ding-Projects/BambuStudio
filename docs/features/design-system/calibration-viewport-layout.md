@@ -77,3 +77,15 @@ No full application build or launch was performed. Native scrollbar rendering, w
 只有本地捲動容器限制最小闊度，外層頁面繼續保留未指定最小闊度。大小、顯示、DPI 及結果內容變動會合併成延後更新，直接量度表格排列器，需要時預留水平捲動條高度，再更新本地虛擬大小及外層捲動範圍。舊容器高度唔參與新量度，所以結果減少時可以縮短。冇新增動畫、產品文字或校準行為。
 
 來源檢查修正前三項有兩項失敗，修正後三項通過；原有保留檢查五項通過。直接編譯正式容器類別的非視窗測試六項通過，刻意取消本地闊度限制後，溢出擁有權一項失敗，再用原來源重跑六項通過。今次冇完整編譯或啟動程式；原生捲動條、滾輪、焦點、鍵盤及全部畫面組合仍待實機驗證。
+
+## Vertical wheel routing correction
+
+The result viewport now handles vertical wheel events before its horizontal-only scroll helper can consume them. It finds the nearest outer `wxScrolledWindow`, copies the original event, preserves rotation, delta, axis and modifiers, translates the position through screen coordinates, changes the event object to the recipient, and dispatches through that owner's handler. The original event is consumed only when that dispatch reports handled. Horizontal events, missing outer owners and unhandled dispatches remain available to normal processing. `SetRevealOwner` is not used because it would disable local horizontal scrolling.
+
+The non-window fixture executes the actual bound production handler. Six cases cover the copied payload and coordinates, horizontal-local behavior, nearest-owner selection, missing-owner fallback, unhandled dispatch and preservation of the local horizontal scroll rate. At `4e901cddc5d71949703cbd62adc575f8509b4580`, three of six fail. Removing the new binding deliberately produces the same three failures; restored source passes 6/6. Geometry remains 6/6 and related source preservation remains 8/8. This does not replace native wheel, focus or rendering verification.
+
+## 垂直滾輪路由修正
+
+結果容器會先處理垂直滾輪，避免只支援水平捲動的內層處理器吞咗事件。程式找出最近的外層捲動容器，複製原事件，保留轉動量、增量、軸向及修飾鍵，經螢幕座標換算位置，再交俾外層事件處理器。只有外層確認已處理，先消耗原事件。水平事件、冇外層容器及未處理情況繼續交回正常流程，亦唔會停用本地水平捲動。
+
+測試執行正式綁定的處理程序，六項涵蓋事件內容與座標、水平留喺本地、最近容器、冇容器、未處理及水平捲動速度保留。舊版六項有三項失敗，刻意移除新綁定亦有相同三項失敗；還原後六項全部通過。幾何六項及來源保留八項繼續通過，原生滾輪、焦點同畫面仍待驗證。

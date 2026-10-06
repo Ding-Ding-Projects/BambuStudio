@@ -25,9 +25,28 @@ public:
         SetMinSize(wxSize(0, -1));
         SetScrollRate(FromDIP(12), 0);
         ShowScrollbars(wxSHOW_SB_DEFAULT, wxSHOW_SB_NEVER);
+        Bind(wxEVT_MOUSEWHEEL, [this](wxMouseEvent &event) { OnMouseWheel(event); });
         Bind(wxEVT_SIZE, [this](wxSizeEvent &event) { event.Skip(); QueueExtent(); });
         Bind(wxEVT_SHOW, [this](wxShowEvent &event) { event.Skip(); if (event.IsShown()) QueueExtent(); });
         Bind(wxEVT_DPI_CHANGED, [this](wxDPIChangedEvent &event) { event.Skip(); QueueExtent(); });
+    }
+
+    void OnMouseWheel(wxMouseEvent &event)
+    {
+        if (event.GetWheelAxis() == wxMOUSE_WHEEL_VERTICAL) {
+            for (wxWindow *owner = GetParent(); owner; owner = owner->GetParent()) {
+                if (auto *scroll = dynamic_cast<wxScrolledWindow *>(owner)) {
+                    wxMouseEvent forwarded(event);
+                    forwarded.Skip(false);
+                    forwarded.SetEventObject(scroll);
+                    forwarded.SetPosition(scroll->ScreenToClient(ClientToScreen(event.GetPosition())));
+                    const bool handled = scroll->GetEventHandler()->ProcessEvent(forwarded);
+                    event.Skip(!handled);
+                    return;
+                }
+            }
+        }
+        event.Skip();
     }
 
     void QueueExtent()

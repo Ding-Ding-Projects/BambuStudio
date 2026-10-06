@@ -8,10 +8,24 @@ struct wxSize { int x,y; wxSize(int x_=0,int y_=0):x(x_),y(y_){} };
 constexpr int wxID_ANY=0,wxDefaultPosition=0,wxDefaultSize=0,wxTAB_TRAVERSAL=1,wxHSCROLL=2,wxBORDER_NONE=4;
 constexpr int wxSHOW_SB_DEFAULT=0,wxSHOW_SB_NEVER=1,wxEVT_SIZE=1,wxEVT_SHOW=2,wxEVT_DPI_CHANGED=3;
 struct wxSizeEvent{void Skip(){}};struct wxShowEvent{void Skip(){}bool IsShown(){return true;}};struct wxDPIChangedEvent{void Skip(){}};
+struct wxPoint{int x=0,y=0;};
+constexpr int wxMOUSE_WHEEL_VERTICAL=1,wxMOUSE_WHEEL_HORIZONTAL=2;
+struct MouseEventTag{};constexpr MouseEventTag wxEVT_MOUSEWHEEL{};
+struct wxMouseEvent{
+ int axis=wxMOUSE_WHEEL_VERTICAL,rotation=-240,delta=120,modifiers=7;bool skipped=false;void* object=nullptr;wxPoint position{8,9};
+ int GetWheelAxis()const{return axis;}wxPoint GetPosition()const{return position;}
+ void Skip(bool value=true){skipped=value;}void SetEventObject(void*value){object=value;}void SetPosition(wxPoint value){position=value;}
+};
 std::vector<std::function<void()>> pending;
 struct Sizer { wxSize contents{1120,80};wxSize CalcMin()const{return contents;} };
 struct wxWindow {
     virtual ~wxWindow()=default;
+    wxPoint origin;std::function<void(wxMouseEvent&)> wheel;std::vector<wxMouseEvent> received;bool handles=true;
+    wxPoint ClientToScreen(wxPoint p)const{return {p.x+origin.x,p.y+origin.y};}
+    wxPoint ScreenToClient(wxPoint p)const{return {p.x-origin.x,p.y-origin.y};}
+    wxWindow* GetEventHandler(){return this;}bool ProcessEvent(wxMouseEvent&event){received.push_back(event);return handles;}
+    template<class Callback>void Bind(MouseEventTag,Callback cb){wheel=cb;}
+    void SendWheel(wxMouseEvent&event){if(wheel)wheel(event);else event.Skip();}
     wxWindow *parent=nullptr;wxSize client{400,100},minimum{-1,-1},virtual_size;
     std::vector<wxWindow*> children;
     int EffectiveWidth()const{if(minimum.x!=-1)return minimum.x;int width=sizer?sizer->contents.x:0;for(auto*child:children)width=std::max(width,child->EffectiveWidth());return width;}
@@ -42,7 +56,17 @@ struct Setup{
 };
 int run(const char*name,const std::function<void()> &fn){pending.clear();try{fn();std::cout<<"PASS "<<name<<'\n';return 0;}catch(const std::exception&e){std::cout<<"FAIL "<<name<<": "<<e.what()<<'\n';return 1;}}
 }}
-int main(){using namespace Slic3r::GUI;int failed=0;
+int main(int argc,char**argv){using namespace Slic3r::GUI;int failed=0;
+ if(argc>1&&std::string(argv[1])=="wheel"){
+  failed+=run("vertical wheel preserves payload and translates coordinates",[]{Setup s;s.view.origin={100,200};s.outer.origin={20,30};wxMouseEvent e;e.object=&s.view;s.view.SendWheel(e);check(s.outer.received.size()==1&&!e.skipped);const auto &f=s.outer.received.front();check(f.axis==e.axis&&f.rotation==e.rotation&&f.delta==e.delta&&f.modifiers==e.modifiers);check(f.position.x==88&&f.position.y==179&&f.object==&s.outer&&!f.skipped);check(e.position.x==8&&e.position.y==9&&e.object==&s.view);});
+  failed+=run("horizontal wheel remains local",[]{Setup s;wxMouseEvent e;e.axis=wxMOUSE_WHEEL_HORIZONTAL;s.view.SendWheel(e);check(e.skipped&&s.outer.received.empty());});
+  failed+=run("nearest scroll ancestor is the only recipient",[]{Setup s;wxScrolledWindow nearest;nearest.parent=&s.outer;s.panel.parent=&nearest;wxMouseEvent e;s.view.SendWheel(e);check(nearest.received.size()==1&&s.outer.received.empty()&&!e.skipped);});
+  failed+=run("no outer owner leaves wheel available",[]{Setup s;s.page.parent=nullptr;wxMouseEvent e;s.view.SendWheel(e);check(e.skipped&&s.outer.received.empty());});
+  failed+=run("unhandled forwarded wheel remains available",[]{Setup s;s.outer.handles=false;wxMouseEvent e;s.view.SendWheel(e);check(e.skipped&&s.outer.received.size()==1);});
+  failed+=run("wheel routing preserves local horizontal scroll rate",[]{Setup s;s.refresh();wxMouseEvent e;s.view.SendWheel(e);check(s.view.horizontal_rate==12&&s.view.vertical_rate==0&&s.view.virtual_size.x==1120);});
+  std::cout<<6-failed<<"/6 wheel cases passed\n";return failed?1:0;
+ }
+
  failed+=run("wide table keeps local overflow and full height",[]{Setup s;s.refresh();check(s.page.EffectiveWidth()<=s.view.client.x&&s.view.minimum.y==92);check(s.view.virtual_size.x==1120&&s.view.virtual_size.y==80);check(s.view.horizontal_rate==12&&s.view.vertical_rate==0);});
  failed+=run("narrow-wide-narrow removes then restores bar space",[]{Setup s;s.refresh();s.view.client.x=1200;s.refresh();check(s.view.minimum.y==80&&s.view.virtual_size.x==1200);s.view.client.x=400;s.refresh();check(s.view.minimum.y==92);});
  failed+=run("shorter content shrinks without old minimum clamp",[]{Setup s;s.refresh();s.table.contents={800,40};s.refresh();check(s.view.minimum.y==52&&s.view.virtual_size.x==800);});
