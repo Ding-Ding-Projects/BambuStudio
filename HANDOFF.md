@@ -1,5 +1,9 @@
 # Bambu Studio handoff
 
+## Expanded directory consolidation pending
+
+The later request is to leave only the primary main working directory. Eighteen unfinished continuations remain remotely preserved. The decision between retaining their source branches while retiring backed-up directories, or completing all features before integration, is pending. No further deletion occurred. The completed pass below remains a historical milestone.
+
 ## Preservation and eligible cleanup completed, 6 October 2026
 
 All nineteen original source continuations are remotely preserved. The completed historical documentation continuation is integrated. Verified archives preceded removal of 21 local branches, 17 remote branches and nine linked directories. Final inventory: 23 branches and 23 directories; unfinished work and protected state remain. Read [the exact report](docs/integration/closeout-20261006.md). No new product acceptance or release is claimed.
