@@ -1,6 +1,6 @@
 ---
 translation-of: monitor-atlas.md
-source-sha256: 00d9f64e730d6683a409892ebac461cd27b19e91b3b9349d6ca9c5aab94981e9
+source-sha256: 7e1c1fc0df4b76da44529ee8465e529c741b2f23337993e747e3ef7abfb3e04a
 review-status: agent-drafted
 ---
 
@@ -42,3 +42,9 @@ review-status: agent-drafted
 另一個獨立後續修正處理 `StatusPanel::msw_rescale` 原有 Control 標題雙重 `FromDIP(PAGE_TITLE_HEIGHT)`。建立同縮放共用 `layout_control_title`，更新標題字型／量度及按比例留白，清舊 sizer 下限，量度真實標題同操作控件，再更新面板／sizer 最小值及排版。專用檢查先喺舊雙重換算失敗，修正後四項監察 DPI 來源／模型檢查全通過。原標題文字、更多操作同回呼不變；獨立設定尺寸嘅更多圖示不在呢次標題高度修正內。
 
 完成畫面驗收前，監察、揀選、打印選項同相機頁尾須涵蓋英文／廣東話／雙語、明暗、兩密度、四比例、正常／最小尺寸。記錄文字／控件邊界、焦點／選取、DPI／主題切換、不可用／等待／確認遙測、來源版本、執行檔雜湊同真實擷圖。本文唔能夠取代呢啲證據。
+
+### 打印標題原生型別修正
+
+原生編譯器喺兩個打印標題排列呼叫報告 C2664。`c1149eab941cb179f3333f994111899281627ffb` 仍有呢個問題：`PrintingTaskPanel::m_staticText_printing` 宣告為 `wxStaticText*`，但 `layout_printing_title` 要求 `Label*`。輔助方法而家接受實際成員合約及 `Label` 基底類別 `wxStaticText*`。完整量度本體、標題字型、快取失效、最低尺寸、建構呼叫同 DPI 呼叫保持不變。冇加入型別強制轉換、替換成員、修改換行或者遙測。
+
+`ui-md3/tests/printing-title-type-compile.test.mjs` 抽取真實產品成員、完整輔助方法同兩個呼叫陳述，包含實際 `Label.hpp` 同已設定 wxWidgets 標頭，使用 MSVC `/Zs` 語法檢查，冇替身控制項別名、連結或者建立視窗。喺 MSVC 開發環境執行，提供 `--wx-include <wx-include-directory> --wx-setup <configured-setup-directory>`。加上 `--source-revision c1149eab941cb179f3333f994111899281627ffb --expect-mismatch`，重現編譯器結束碼 2 同兩個呼叫嘅 C2664；修正後源碼結束碼為 0。四項現有 `monitor-atlas-dpi.test.mjs` 檢查通過。呢啲只證明抽出嘅產品型別合約，唔代表完整 StatusPanel 翻譯單元建置或者執行時呈現。
