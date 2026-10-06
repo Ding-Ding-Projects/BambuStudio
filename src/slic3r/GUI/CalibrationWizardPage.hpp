@@ -2,6 +2,7 @@
 #define slic3r_GUI_CalibrationWizardPage_hpp_
 
 #include "wx/event.h"
+#include "CalibrationLayout.hpp"
 #include "Widgets/Button.hpp"
 #include "Widgets/LabeledRadioButton.hpp"
 #include "Widgets/ComboBox.hpp"
@@ -18,7 +19,7 @@
 namespace Slic3r { namespace GUI {
 
 
-#define MIN_CALIBRATION_PAGE_WIDTH         FromDIP(1100)
+#define MIN_CALIBRATION_PAGE_WIDTH         0
 #define PRESET_GAP                         FromDIP(25)
 #define CALIBRATION_COMBOX_SIZE            wxSize(FromDIP(500), FromDIP(24))
 #define CALIBRATION_FILAMENT_COMBOX_SIZE   wxSize(FromDIP(250), FromDIP(24))
@@ -352,7 +353,12 @@ protected:
     CaliPageActionPanel*  m_action_panel { nullptr };
     Label*         m_statictext_printer_msg{ nullptr };
 
+    void register_wrapped_label(Label *label);
+    void queue_instruction_reflow();
+
 private:
+    std::vector<Label *> m_wrapped_labels;
+    CalibrationLayout::ReflowState m_instruction_reflow;
     CalibrationWizardPage* m_prev_page {nullptr};
     CalibrationWizardPage* m_next_page {nullptr};
 };

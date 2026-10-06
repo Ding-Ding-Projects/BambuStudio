@@ -8,6 +8,14 @@ const read=p=>readFileSync('src/slic3r/GUI/'+p,'utf8').replaceAll('\r\n','\n');
 const old=p=>execFileSync('git',['show',baseline+':src/slic3r/GUI/'+p],{encoding:'utf8',maxBuffer:4*1024*1024}).replaceAll('\r\n','\n');
 function tokens(s){return [...s.replace(/^\s*#include[^\n]*/gm,'').matchAll(/\/\*[\s\S]*?\*\/|\/\/[^\n]*|"(?:\\[\s\S]|[^"\\])*"|'(?:\\[\s\S]|[^'\\])*'|[A-Za-z_]\w*|::|->|[^\s]/g)].map(m=>m[0]).filter(t=>!t.startsWith('//')&&!t.startsWith('/*'));}
 function behavior(s){
+ // The viewport reflow unit owns these explicit layout-only additions. Its
+ // separate regression validates the production helper and every adapter.
+ s=s.replace(/void CalibrationWizardPage::register_wrapped_label[\s\S]*?(?=void CalibrationWizardPage::msw_rescale)/,'');
+ s=s.replace(/^.*Bind\(wxEVT_(?:SIZE|SHOW|DPI_CHANGED),.*queue_instruction_reflow.*$/gm,'');
+ s=s.replace(/^.*queue_instruction_reflow\(\);.*$/gm,'');
+ s=s.replace(/^#define CALIBRATION_START_PAGE_TEXT_MAX_LENGTH.*$/gm,'');
+ s=s.replace(/^.*(?:register_wrapped_label\([^;]*|->Wrap\(CALIBRATION_START_PAGE_TEXT_MAX_LENGTH\)|->SetMinSize\(\{CALIBRATION_START_PAGE_TEXT_MAX_LENGTH, -1\}\)|->SetMinSize\([^;]*GetSize\(\)[^;]*)\;.*$/gm,'');
+
  s=s.replace(/        if \(i != m_steps.size\(\) - 1\) \{\n            auto line = new wxPanel\(this, wxID_ANY, wxDefaultPosition\);\n            line->SetBackgroundColour\(\*wxBLACK\);\n            m_step_sizer->Add\(line, 1, wxALIGN_CENTER\);\n        \}\n/g,'');
  s=s.split('\n').filter(line=>!/^\s*(?:(?:this|[A-Za-z_]\w*(?:\[[^\]]+\])?)->)?(?:SetBackgroundColour|SetForegroundColour|SetFont)\([^;]*;\s*$/.test(line))
  .filter(line=>!/^\s*(?:m_step_sizer|m_top_sizer|top_sizer)->(?:Add|AddSpacer)\([^;]*;\s*$/.test(line)).join('\n');

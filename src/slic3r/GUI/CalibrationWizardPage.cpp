@@ -1,3 +1,5 @@
+#include "CalibrationLayout.hpp"
+#include <wx/scrolwin.h>
 #include <wx/wrapsizer.h>
 #include "Widgets/MD3Tokens.hpp"
 #include "Widgets/StateColor.hpp"
@@ -1011,10 +1013,57 @@ CalibrationWizardPage::CalibrationWizardPage(wxWindow* parent, wxWindowID id, co
 {
     SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     SetMinSize({ MIN_CALIBRATION_PAGE_WIDTH, -1 });
+    Bind(wxEVT_SIZE, [this](wxSizeEvent &event) { event.Skip(); queue_instruction_reflow(); });
+    Bind(wxEVT_SHOW, [this](wxShowEvent &event) { event.Skip(); if (event.IsShown()) queue_instruction_reflow(); });
+    Bind(wxEVT_DPI_CHANGED, [this](wxDPIChangedEvent &event) { event.Skip(); queue_instruction_reflow(); });
+}
+
+void CalibrationWizardPage::register_wrapped_label(Label *label)
+{
+    const wxFont font = label->GetFont();
+    const wxColour colour = label->GetForegroundColour();
+    label->SetWindowStyleFlag(label->GetWindowStyle() | LB_AUTO_WRAP);
+    label->SetFont(font);
+    label->SetForegroundColour(colour);
+    label->SetMinSize(wxSize(0, -1));
+    m_wrapped_labels.push_back(label);
+    label->Bind(wxEVT_SIZE, [this](wxSizeEvent &event) { event.Skip(); queue_instruction_reflow(); });
+    queue_instruction_reflow();
+}
+
+void CalibrationWizardPage::queue_instruction_reflow()
+{
+    if (m_wrapped_labels.empty() || !m_instruction_reflow.request()) return;
+    CallAfter([this]() {
+        const int width = CalibrationLayout::content_width(GetClientSize().x, 0);
+        {
+            CalibrationLayout::ReflowPass pass(m_instruction_reflow);
+            if (width == 0 || !IsShown()) return;
+            bool changed = false;
+            for (Label *label : m_wrapped_labels) {
+                // Label::Wrap measures the original text, including native padding.
+                label->Wrap(width);
+                label->InvalidateBestSize();
+                const int height = label->GetBestSize().y;
+                if (CalibrationLayout::needs_height_update(label->GetMinSize().y, height)) {
+                    label->SetMinSize(wxSize(0, height));
+                    changed = true;
+                }
+            }
+            if (!changed) return;
+            Layout();
+            if (auto *scroll = dynamic_cast<wxScrolledWindow *>(GetParent())) {
+                scroll->Layout();
+                scroll->FitInside();
+            }
+        }
+        if (GetClientSize().x != width) queue_instruction_reflow();
+    });
 }
 
 void CalibrationWizardPage::msw_rescale()
 {
+    queue_instruction_reflow();
     m_page_caption->msw_rescale();
     m_action_panel->msw_rescale();
 }
