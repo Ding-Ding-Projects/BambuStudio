@@ -1,6 +1,6 @@
 ---
 translation-of: native-controls.md
-source-sha256: 82b9e0fabdb43dbc20d1e81a936dc16558893e176ef08e55e126de2af6fcd222
+source-sha256: cfa0832ec813fb7b518a12f45e78c8e11b99ee8525d4fca153616fe43816e87c
 review-status: agent-drafted
 ---
 

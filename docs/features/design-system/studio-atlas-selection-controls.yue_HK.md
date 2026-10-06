@@ -1,3 +1,9 @@
+---
+translation-of: studio-atlas-selection-controls.md
+source-sha256: 82b93f8a2ba4e5ab230f4cec26f655a2d2b1962c772ce34e3f6d7763824bfddd
+review-status: agent-drafted
+---
+
 # Studio Atlas 數值及選擇控制項
 
 [English](studio-atlas-selection-controls.md)
@@ -68,3 +74,16 @@
 今次同時有外觀及最小尺寸排版改動，唔係單純換色。
 如果維護者唔鍾意新設計，可以審閱後撤回呢個獨立版本連同檢查及文章。
 保留其他建置、AMS、Print、導覽及資料修正；唔會自動回復，亦唔會重設到舊設計基準。
+
+## 重現命令及保留細節
+
+喺儲存庫根目錄執行 `node --test tests/native_controls/atlas_selection_anatomy.test.mjs`；用 `node tests/native_controls/atlas_selection_anatomy.test.mjs --extract "$env:TEMP/atlas-selection-geometry"` 抽出正式方法。舊版比較命令係 `node tests/native_controls/atlas_selection_anatomy.test.mjs --source-revision b37bb7e917398685cb56d2f2f13a5abd0b47048d`。
+
+最小高度依實際編輯器或單位字型加垂直邊距決定；明確指定嘅圓角喺縮放後仍有效。核取方塊保留布林／半選狀態、情境強調色及主題刷新；文字切換掣保留兩個標籤次序、原生切換事件、完整雙語提示同內外圓角關係。滑鼠滾輪、擷取釋放及文字／數值事件亦保留。
+
+喺支援嘅 MSVC 開發者命令提示字元，只編譯抽出嘅正式幾何方法同針對性測試，輸出到暫存目錄：
+
+```bat
+cl /nologo /EHsc /std:c++17 /I"%TEMP%\atlas-selection-geometry" tests\native_controls\atlas_selection_geometry_tests.cpp /Fo"%TEMP%\atlas-selection-geometry\geometry.obj" /Fe"%TEMP%\atlas-selection-geometry\geometry.exe"
+"%TEMP%\atlas-selection-geometry\geometry.exe"
+```

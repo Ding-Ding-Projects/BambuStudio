@@ -1,12 +1,15 @@
 ---
 translation-of: app-updates.md
-source-sha256: 548c046dd01bf043c23e20dbe7c3fb1a1fb7f1efa42ba6659648dfbf7de8d0db
+source-sha256: 281868cd549c7a8a27d13fb1d89d965cd71a6eda42fd112decdde99b2ed4bfa6
 review-status: agent-drafted
 ---
 
 > 英文原文：[App updates from this fork's releases](app-updates.md)
 
 # 來自呢個分叉發佈嘅應用程式更新
+
+> [!NOTE]
+> 背景檢查保持安靜。下載提議、更新準備完成橫幅同後備對話框，只會喺用戶手動檢查更新後出現。下面自動展示嘅描述屬於歷史記錄；目前行為見[安靜工作流程](quiet-workflow.md)。
 
 ## 行為
 
