@@ -2,6 +2,12 @@
 
 ## Build bootstrap repair, 6 October 2026
 
+Squirrel tool reuse now validates the retained pinned archive and all tool bytes.
+It uses a separate content-addressed owned cache, preserves legacy caches, and
+retains invalid previous owned caches before promotion. Uncertain ownership stops
+repair rather than overwriting. Ten focused fixture-archive assertions pass; no
+Squirrel executable or installer is executed by these tests.
+
 The source producer now pins a clean tracked `HEAD` before compilation and
 reasserts it after compilation and before and after packaging. A moved commit,
 dirty tracked source, malformed commit, or failed Git read stops the producer.

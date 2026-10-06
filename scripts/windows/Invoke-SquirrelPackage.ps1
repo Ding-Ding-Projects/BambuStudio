@@ -259,23 +259,79 @@ function Write-SquirrelZipArchive {
     }
 }
 
-function Resolve-SquirrelTool {
-    param([Parameter(Mandatory)][string] $Version)
+function Get-SquirrelCacheParent {
+    return Join-Path ([Environment]::GetFolderPath('LocalApplicationData')) 'BambuStudio\toolcache\squirrel.windows'
+}
 
-    $localPackageRoot = Join-Path ([Environment]::GetFolderPath('UserProfile')) ".nuget\packages\squirrel.windows\$Version\tools"
-    $cachePackageRoot = Join-Path ([Environment]::GetFolderPath('LocalApplicationData')) "BambuStudio\toolcache\squirrel.windows\$Version"
-    foreach ($candidate in @(
-        (Join-Path $localPackageRoot 'Squirrel.exe'),
-        (Join-Path $cachePackageRoot 'tools\Squirrel.exe')
-    )) {
-        if (Test-Path -LiteralPath $candidate -PathType Leaf) {
-            return $candidate
+function Test-SquirrelToolTree {
+    param([string] $Directory, [string] $ArchivePath)
+    if (-not (Test-Path -LiteralPath $ArchivePath -PathType Leaf) -or
+        (Get-Sha256Lower -Path $ArchivePath) -cne $script:SquirrelPackageSha256) { return $false }
+    $archive = [IO.Compression.ZipFile]::OpenRead($ArchivePath)
+    try {
+        $expected = @($archive.Entries | Where-Object {
+            $name = $_.FullName.Replace('\', '/')
+            $name.StartsWith('tools/') -and -not $name.EndsWith('/')
+        })
+        if (@($expected | Where-Object { $_.FullName.Replace('\', '/') -ceq 'tools/Squirrel.exe' }).Count -ne 1) { return $false }
+        foreach ($entry in $expected) {
+            $relative = $entry.FullName.Replace('\', '/').Replace('/', [IO.Path]::DirectorySeparatorChar)
+            $file = Join-Path $Directory $relative
+            if (-not (Test-Path -LiteralPath $file -PathType Leaf)) { return $false }
+            $stream = $entry.Open()
+            $hash = [Security.Cryptography.SHA256]::Create()
+            try { $expectedHash = ([BitConverter]::ToString($hash.ComputeHash($stream))).Replace('-', '').ToLowerInvariant() }
+            finally { $hash.Dispose(); $stream.Dispose() }
+            if ((Get-Sha256Lower -Path $file) -cne $expectedHash) { return $false }
+        }
+        $actual = @(Get-ChildItem -LiteralPath (Join-Path $Directory 'tools') -File -Recurse)
+        return $actual.Count -eq $expected.Count
+    } finally { $archive.Dispose() }
+}
+
+function Publish-OwnedSquirrelCache {
+    param([string] $StagingDirectory, [string] $CacheDirectory)
+    $parent = [IO.Path]::GetFullPath((Get-SquirrelCacheParent)).TrimEnd('\') + '\'
+    foreach ($path in @($StagingDirectory, $CacheDirectory)) {
+        if ([IO.Path]::GetDirectoryName([IO.Path]::GetFullPath($path)).TrimEnd('\') + '\' -cne $parent) {
+            throw 'Squirrel cache promotion is limited to its owned cache parent.'
         }
     }
+    $previous = $null
+    if (Test-Path -LiteralPath $CacheDirectory) {
+        $marker = Join-Path $CacheDirectory '.bambu-squirrel-cache-owner'
+        if (-not (Test-Path -LiteralPath $marker -PathType Leaf) -or
+            (Get-Content -LiteralPath $marker -Raw).Trim() -cne $script:SquirrelPackageSha256) {
+            throw 'The invalid Squirrel cache has no matching ownership marker; it was preserved.'
+        }
+        $previous = $CacheDirectory + '.previous-' + [guid]::NewGuid().ToString('N')
+        [IO.Directory]::Move($CacheDirectory, $previous)
+    }
+    try { [IO.Directory]::Move($StagingDirectory, $CacheDirectory) }
+    catch {
+        if ($previous -and -not (Test-Path -LiteralPath $CacheDirectory)) { [IO.Directory]::Move($previous, $CacheDirectory) }
+        throw
+    }
+    if ($previous) { Write-SquirrelLog "Preserved the previous owned Squirrel cache at $previous" }
+}
 
-    $temporaryRoot = Join-Path ([IO.Path]::GetTempPath()) ($script:TempPrefix + [guid]::NewGuid().ToString('N'))
+function Resolve-SquirrelTool {
+    param([Parameter(Mandatory)][string] $Version, [string] $TemporaryParent = '')
+
+    # Legacy and NuGet caches are never trusted merely because Squirrel.exe
+    # exists. Use a separately owned content-addressed cache and retain them.
+    $cacheParent = Get-SquirrelCacheParent
+    $cachePackageRoot = Join-Path $cacheParent "$Version-$($script:SquirrelPackageSha256)"
+    $cachedArchive = Join-Path $cachePackageRoot '.verified-package.nupkg'
+    if (Test-SquirrelToolTree -Directory $cachePackageRoot -ArchivePath $cachedArchive) {
+        return Join-Path $cachePackageRoot 'tools\Squirrel.exe'
+    }
+
+    if (-not $TemporaryParent) { $TemporaryParent = [IO.Path]::GetTempPath() }
+    $temporaryRoot = Join-Path $TemporaryParent ($script:TempPrefix + [guid]::NewGuid().ToString('N'))
     $archive = Join-Path $temporaryRoot "squirrel.windows.$Version.nupkg"
     $toolResolved = $false
+    $staging = $null
     try {
         New-Item -ItemType Directory -Path $temporaryRoot -Force | Out-Null
         Write-SquirrelLog "Downloading Squirrel.Windows $Version from NuGet..."
@@ -291,11 +347,15 @@ function Resolve-SquirrelTool {
         if (-not (Test-Path -LiteralPath $squirrel -PathType Leaf)) {
             throw 'The Squirrel.Windows package did not contain tools\Squirrel.exe.'
         }
-        $cacheParent = Split-Path -Parent $cachePackageRoot
         New-Item -ItemType Directory -Path $cacheParent -Force | Out-Null
-        if (-not (Test-Path -LiteralPath $cachePackageRoot)) {
-            Move-Item -LiteralPath $extractRoot -Destination $cachePackageRoot
+        $staging = Join-Path $cacheParent ($Version + '.staging-' + [guid]::NewGuid().ToString('N'))
+        [IO.Directory]::Move($extractRoot, $staging)
+        Copy-Item -LiteralPath $archive -Destination (Join-Path $staging '.verified-package.nupkg')
+        $script:SquirrelPackageSha256 | Set-Content -LiteralPath (Join-Path $staging '.bambu-squirrel-cache-owner') -Encoding Ascii
+        if (-not (Test-SquirrelToolTree -Directory $staging -ArchivePath (Join-Path $staging '.verified-package.nupkg'))) {
+            throw 'Extracted Squirrel tools do not match the verified archive.'
         }
+        Publish-OwnedSquirrelCache -StagingDirectory $staging -CacheDirectory $cachePackageRoot
         $cached = Join-Path $cachePackageRoot 'tools\Squirrel.exe'
         if (-not (Test-Path -LiteralPath $cached -PathType Leaf)) {
             throw "Squirrel.Windows extraction completed but '$cached' is missing."
@@ -305,7 +365,7 @@ function Resolve-SquirrelTool {
     }
     finally {
         if (-not $toolResolved -and (Test-Path -LiteralPath $temporaryRoot)) {
-            Write-Warning "Squirrel tool preparation failed; retained input and extraction at $temporaryRoot."
+            Write-Warning "Squirrel tool preparation failed; retained input and extraction at $temporaryRoot; staged cache: $staging."
         }
         if ($toolResolved -and (Test-Path -LiteralPath $temporaryRoot)) {
             $resolved = [IO.Path]::GetFullPath($temporaryRoot)

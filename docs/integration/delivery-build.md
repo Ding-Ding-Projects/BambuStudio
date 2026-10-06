@@ -1,6 +1,14 @@
 # Isolated delivery builds
 
 The supported commands remain `build.bat /s` and `build-installer.bat /s`.
+Squirrel tooling is reused only after its retained NuGet archive matches the
+pinned SHA-256 and every tool-file byte matches that archive. Legacy NuGet and
+old tool caches remain untouched. Verified tools use a content-addressed owned
+cache; invalid owned caches are preserved under a unique previous-cache path
+before atomic directory promotion. An invalid cache without its ownership marker
+stops preparation and remains intact. Ten fixture-archive assertions cover warm
+reuse, tampering, missing and extra files, repair, and uncertain ownership without
+executing any tool.
 Production pins `HEAD` before compilation and requires clean tracked source
 and no nonignored untracked files, since resources and automation sources can
 otherwise enter production without belonging to that commit.

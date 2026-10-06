@@ -2,6 +2,8 @@
 
 ## Build bootstrap repair, 6 October 2026
 
+- [x] Validate Squirrel warm-cache bytes against its pinned archive and preserve invalid prior caches, with ten fixture-only assertions.
+
 - [x] Pin clean source before compilation, include nonignored untracked files, and reject source changes before packaging/build-only success, with eleven focused mocked-Git assertions.
 
 - [x] Detect paired Strawberry tools instead of accepting unrelated pkg-config.
