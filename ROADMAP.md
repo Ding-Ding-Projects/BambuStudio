@@ -2,6 +2,8 @@
 
 ## Build bootstrap repair, 6 October 2026
 
+- [x] Pin clean tracked source before compilation and reject source changes before packaging, with eight focused mocked-Git assertions.
+
 - [x] Detect paired Strawberry tools instead of accepting unrelated pkg-config.
 - [x] Preserve installed packages during bounded winget installation recovery.
 - [x] Preserve exact producer exit codes and verify both entrypoints with a stub producer.

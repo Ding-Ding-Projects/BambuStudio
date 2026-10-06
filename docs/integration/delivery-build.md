@@ -1,6 +1,11 @@
 # Isolated delivery builds
 
 The supported commands remain `build.bat /s` and `build-installer.bat /s`.
+Production pins `HEAD` before compilation and requires clean tracked source.
+The pinned commit is checked again after compilation and before and after
+packaging. A moved commit or changed tracked source stops production instead of
+labelling the payload with a later commit. `Test-BuildSourceIdentity.ps1` covers
+eight focused assertions with mocked Git; it does not compile or package.
 Both entrypoints retain the producer's exact nonzero exit result and forward
 named options, including output paths containing spaces. The first route forces
 build-only behavior; the installer route includes packaging by default.

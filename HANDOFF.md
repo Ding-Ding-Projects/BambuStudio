@@ -2,6 +2,12 @@
 
 ## Build bootstrap repair, 6 October 2026
 
+The source producer now pins a clean tracked `HEAD` before compilation and
+reasserts it after compilation and before and after packaging. A moved commit,
+dirty tracked source, malformed commit, or failed Git read stops the producer.
+Eight focused mocked-Git assertions pass. Real candidate production remains
+pending; this source check cannot prove that production completed.
+
 Follow-up dependency concurrency diagnosis found two compiler groups with eight
 compiler children each on the eight-logical-processor host, with measured total
 CPU usage 100%. Generated external dependency projects contained bare `/m`,

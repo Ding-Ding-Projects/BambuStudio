@@ -745,6 +745,25 @@ function Import-ToolchainHelpers {
     . $toolchainScript
 }
 
+function Get-PinnedSourceCommit {
+    $commit = (& git -C $script:RepositoryRoot rev-parse HEAD).Trim()
+    Assert-LastExitCode 'Reading the source commit'
+    if ($commit -notmatch '^[0-9a-fA-F]{40}$') { throw 'The build source commit is invalid.' }
+    $changes = @(& git -C $script:RepositoryRoot status --porcelain --untracked-files=no)
+    Assert-LastExitCode 'Checking the build source state'
+    if ($changes.Count -gt 0) {
+        throw 'The build requires clean tracked source so its payload can be bound to the pinned commit. Preserve source changes before building.'
+    }
+    return $commit.ToLowerInvariant()
+}
+
+function Assert-PinnedBuildSource {
+    param([Parameter(Mandatory)][string] $SourceCommit)
+    if ((Get-PinnedSourceCommit) -cne $SourceCommit) {
+        throw 'The source commit changed during the build. The payload cannot be packaged as the pinned source.'
+    }
+}
+
 function Invoke-OneClickBuild {
     if ([System.Environment]::OSVersion.Platform -ne [System.PlatformID]::Win32NT) {
         throw 'The one-click installer build is supported only on Windows.'
@@ -762,6 +781,8 @@ function Invoke-OneClickBuild {
 
     Push-Location $script:RepositoryRoot
     try {
+        $sourceCommit = Get-PinnedSourceCommit
+        Write-BuildLog "Pinned build source: $sourceCommit"
         # This repository tracks no Git LFS objects (git lfs ls-files is empty), and
         # the project policy routes large files through its own transfer path, so the
         # former `git lfs install/pull` steps are gone rather than silently failing.
@@ -791,6 +812,7 @@ function Invoke-OneClickBuild {
         }
         Invoke-ApplicationBuild -Toolchain $toolchain -DependencyDestination $dependencyDestination `
             -InstallPrefix $payloadDirectory -Clean:$cleanApplication
+        Assert-PinnedBuildSource -SourceCommit $sourceCommit
 
         # The application build installed into install-dir already; re-run the
         # install step so a partially staged payload from an interrupted run is
@@ -827,18 +849,11 @@ function Invoke-OneClickBuild {
         }
 
         $productVersion = Get-ProductVersion
-        $sourceCommit = (& git rev-parse HEAD).Trim()
-        Assert-LastExitCode 'Reading the source commit'
-        if ($sourceCommit -notmatch '^[0-9a-fA-F]{40}$') {
-            throw "Git returned invalid source commit '$sourceCommit'."
-        }
+        Assert-PinnedBuildSource -SourceCommit $sourceCommit
         $sourceRepo = (& git remote get-url origin).Trim()
         Assert-LastExitCode 'Reading the origin URL'
         if ($sourceRepo -notmatch '^https://') {
             throw "Origin '$sourceRepo' is not an HTTPS clone URL required by installer source-build mode."
-        }
-        if (@(& git status --porcelain --untracked-files=no).Count -gt 0) {
-            Write-Warning 'Tracked working-tree changes are included in this local payload but cannot be represented by the installer source commit.'
         }
 
         $releaseNumber = Resolve-ReleaseNumber -Requested $ReleaseNumber -Repository ($sourceRepo -replace '^https://github.com/|\.git$', '')
@@ -855,12 +870,14 @@ function Invoke-OneClickBuild {
             -PayloadDir $payloadDirectory -OutputPath $sbom -Version $productVersion `
             -Commit $sourceCommit -Repository ($sourceRepo -replace '^https://github.com/|\.git$', '')
         Write-BuildLog 'Building the unsigned Squirrel.Windows release...'
+        Assert-PinnedBuildSource -SourceCommit $sourceCommit
         & powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass `
             -File (Join-Path $script:RepositoryRoot 'scripts\windows\Invoke-SquirrelPackage.ps1') `
             -PayloadDirectory $payloadDirectory -OutputDirectory $outputDirectory `
             -ProductVersion $productVersion -SourceCommit $sourceCommit `
             -Repository $sourceRepo -ReleaseNumber $releaseNumber -PreviousPackageVersion $previousPackageVersion -IconPath (Join-Path $script:RepositoryRoot 'resources\images\BambuStudio.ico')
         Assert-LastExitCode 'Building the Squirrel.Windows release'
+        Assert-PinnedBuildSource -SourceCommit $sourceCommit
         if (-not (Test-Path -LiteralPath $installer -PathType Leaf)) {
             throw "Squirrel.Windows did not produce '$installer'."
         }
