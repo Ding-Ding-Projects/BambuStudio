@@ -3,7 +3,24 @@
   "baselineCommit": "d048cfc3040a1566b78e03334f3871f1dd0144bb",
   "authoringBaseCommit": "8610aeeb49297ecda6a25747be125d5e4034b30d",
   "automaticRollback": false,
-  "entries": [],
+  "entries": [
+    {
+      "preserve": "Unrelated build, packaging, AMS, printer and functional workflow commits",
+      "kind": "design-specification-only",
+      "summary": "Studio Atlas visual contract, state inventory, static references and source-inventory checks",
+      "commit": "1c859687cb878a5fbf698de631a04118df4d8a49",
+      "reviewRequired": true,
+      "runtimeBehaviorChanged": false,
+      "scope": [
+        "design/native-feature-delivery.json",
+        "design/native-feature-delivery.md",
+        "design/native-print-workflows.md",
+        "design/workflow-refresh.md",
+        "design/workflow-refresh/",
+        "ui-md3/tests/native-feature-delivery.test.mjs"
+      ]
+    }
+  ],
   "registration": "The integration owner records each reviewed design-only commit after it exists, excluding functional workflow, AMS, build and packaging changes. This file cannot name its own enclosing commit without a later ledger update.",
   "reversal": "Review git show for every listed commit, then use git revert in reverse dependency order. Never reset to the baseline or reverse mixed functional fixes without preserving them."
 }
