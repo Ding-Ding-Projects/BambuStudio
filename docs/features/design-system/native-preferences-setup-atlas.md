@@ -66,3 +66,40 @@ canonical functionality stays separate from this visual work.
 Keep this unit as a separately reversible visual commit. Reverting it must not
 remove independent build, serialization, scheduling, calibration or printer
 fixes. The integration owner supplies the later build and runtime receipts.
+
+## Card lifecycle and nested search repair
+
+The initial composition commit `8b0b5e6da19d0ce877a3c5eb770de6945a516e77`
+had two defects. Explicit pixel radii disabled the shared card's default DPI
+rescaling. The new schedule card also moved registered rows below the immediate
+page sizer, while the search index still visited only immediate items.
+
+The follow-up uses `StaticBox::SetDensity` without an earlier radius override
+on all three new cards. `PreferencesSearchTraversal.hpp` is used by the real
+Preferences index through wx sizer/window adapters. It descends only through
+containers proven to contain a registered row, stops at exact registered sizer
+or window identities, preserves unregistered immediate rows and baseline
+visibility, and excludes structural cards from row visibility mutations. Thus a
+filtered child cannot hide its own card. Existing parent-relative scrolling
+already accumulates ancestor positions and requires no replacement.
+
+From an MSVC developer shell, run
+`node tests/native_preferences_behavior.test.mjs`. This compiles one temporary
+non-window fixture outside the repository. It inserts the actual production
+`build_search_index` and card radius method bodies, plus all three actual card
+initialization statements. Small in-memory substitutes supply window/sizer
+identity and DPI conversion; no native window or application is created.
+
+The original commit fails both independent negative runs: append
+`--baseline=8b0b5e6da19d0ce877a3c5eb770de6945a516e77 --case=rows` to observe
+`nested card was indexed instead of its rows`, or use `--case=radius` to observe
+`card initializer pinned radius`. The repaired fixture passes nine cases,
+covering exact key/text matching, filtering and reset, hidden ancestors,
+registered stop boundaries, unregistered compound rows, structural wrappers,
+spacers, all three initializers at four DPI scales, density changes and explicit
+override semantics. The seven earlier source checks also pass.
+
+MSVC reports warning C4458 for the unchanged production `SetCornerRadius`
+parameter hiding its member; it is not suppressed or presented as a new defect.
+These results validate the isolated production logic, not native rendering,
+keyboard dispatch, real DPI events or the complete application build.

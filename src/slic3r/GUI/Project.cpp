@@ -74,7 +74,7 @@ ProjectPanel::ProjectPanel(wxWindow *parent, wxWindowID id, const wxPoint &pos, 
     auto *navigation = new StaticBox(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
     navigation->SetBackgroundColor(StateColor::semantic(MD3::Role::SurfaceContainerLow));
     navigation->SetBorderColor(StateColor::semantic(MD3::Role::OutlineVariant));
-    navigation->SetCornerRadius(FromDIP(MD3::Metrics::active().radius));
+    navigation->SetDensity(MD3::Metrics::isCompact() ? StaticBox::Density::Compact : StaticBox::Density::Comfortable);
     auto *view_actions = new wxWrapSizer(wxHORIZONTAL);
     // Kit Buttons in place of the stock wxButton pair, matching the rest of the MD3 widget kit.
     // Outlined is the kit's own default action-button variant.

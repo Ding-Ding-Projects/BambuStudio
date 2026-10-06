@@ -542,7 +542,7 @@ ScheduledSettingsPanel::ScheduledSettingsPanel(wxWindow *parent)
     auto *card = new StaticBox(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
     card->SetBackgroundColor(bg);
     card->SetBorderColor(StateColor::semantic(MD3::Role::OutlineVariant));
-    card->SetCornerRadius(FromDIP(MD3::Metrics::active().radius));
+    card->SetDensity(MD3::Metrics::isCompact() ? StaticBox::Density::Compact : StaticBox::Density::Comfortable);
     auto *sizer = new wxBoxSizer(wxVERTICAL);
     const int kLeft = MD3::Metrics::active().padding, kRight = kLeft;
 

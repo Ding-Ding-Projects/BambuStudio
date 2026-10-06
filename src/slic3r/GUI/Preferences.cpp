@@ -1,5 +1,6 @@
 #include <wx/wrapsizer.h>
 #include "Preferences.hpp"
+#include "PreferencesSearchTraversal.hpp"
 #include "PersonalVocabulary.hpp"
 #include "Widgets/MD3ScrolledWindow.hpp"
 #include "Export/ExportDatasets.hpp"
@@ -1625,7 +1626,7 @@ void PreferencesDialog::create()
     auto *content_card = new StaticBox(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
     content_card->SetBackgroundColor(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     content_card->SetBorderColor(StateColor::semantic(MD3::Role::OutlineVariant));
-    content_card->SetCornerRadius(FromDIP(MD3::Metrics::active().radius));
+    content_card->SetDensity(MD3::Metrics::isCompact() ? StaticBox::Density::Compact : StaticBox::Density::Comfortable);
     m_book   = new wxSimplebook(content_card, wxID_ANY);
     m_book->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
@@ -1770,18 +1771,38 @@ void PreferencesDialog::build_search_index()
     m_search_rows.clear();
     if (m_book == nullptr) return;
 
+    std::vector<PreferencesSearch::Registration> registrations;
+    for (const OptionRow &opt : m_option_rows)
+        registrations.push_back({{opt.sizer, opt.window}, opt.key});
+    const auto child_items = [](wxSizer *owner) {
+        std::vector<wxSizerItem *> items;
+        if (owner)
+            for (auto *item : owner->GetChildren())
+                if (item && !item->IsSpacer()) items.push_back(item);
+        return items;
+    };
+    const auto identity_of = [](wxSizerItem *item) {
+        return PreferencesSearch::Identity{item->IsSizer() ? item->GetSizer() : nullptr,
+                                           item->IsWindow() ? item->GetWindow() : nullptr};
+    };
+    const auto children_of = [&child_items](wxSizerItem *item) {
+        return child_items(item->IsSizer() ? item->GetSizer() :
+                           item->IsWindow() ? item->GetWindow()->GetSizer() : nullptr);
+    };
     for (size_t page = 0; page < m_book->GetPageCount(); ++page) {
         wxWindow *page_win = m_book->GetPage(page);
         wxSizer  *sizer    = page_win ? page_win->GetSizer() : nullptr;
         if (sizer == nullptr) continue;
 
-        for (auto *item : sizer->GetChildren()) {
-            if (item == nullptr || item->IsSpacer()) continue; // inter-row spacers stay put
+        const auto indexed = PreferencesSearch::collect_rows(child_items(sizer), registrations,
+            identity_of, children_of, [](wxSizerItem *item) { return item->IsShown(); });
+        for (const auto &indexed_row : indexed) {
+            auto *item = indexed_row.item;
 
             SearchRow row;
             row.page           = int(page);
             row.item           = item;
-            row.baseline_shown = item->IsShown();
+            row.baseline_shown = indexed_row.baseline_shown;
             if (item->IsWindow()) collect_search_labels_from_window(item->GetWindow(), row.labels);
             else if (item->IsSizer()) collect_search_labels_from_sizer(item->GetSizer(), row.labels);
 
@@ -1795,11 +1816,7 @@ void PreferencesDialog::build_search_index()
             row.is_title = !row.labels.empty() && row.labels.front()->GetFont() == ::Label::Head_16;
             // Fold the create_item_* key registry into the row: a palette
             // teleport looks rows up by AppConfig key.
-            for (const OptionRow &opt : m_option_rows) {
-                const bool same_sizer  = opt.sizer != nullptr && item->IsSizer() && item->GetSizer() == opt.sizer;
-                const bool same_window = opt.window != nullptr && item->IsWindow() && item->GetWindow() == opt.window;
-                if (same_sizer || same_window) row.keys.push_back(opt.key);
-            }
+            row.keys = indexed_row.keys;
             m_search_rows.push_back(std::move(row));
         }
     }
