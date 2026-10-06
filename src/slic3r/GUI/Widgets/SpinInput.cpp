@@ -7,6 +7,28 @@
 #include "../BilingualDecorator.hpp"
 
 #include <wx/dcgraph.h>
+#include <algorithm>
+
+namespace {
+struct AtlasSpinLayout {
+    int width, height, minimum_width, entry_x, entry_width, label_x, step_width, step_height;
+};
+
+// All arguments are measured device pixels. Keep the editor and steppers disjoint
+// even when a caller requests less room than the current font and unit require.
+AtlasSpinLayout atlasSpinLayout(int width, int height, int text_height, int digit_width,
+                               int label_width, int label_height, int padding, int step_width)
+{
+    const int label_gap = label_width > 0 ? padding : 0;
+    const int minimum = 3 * padding + step_width + digit_width + label_gap + label_width;
+    width = std::max(width, minimum);
+    height = std::max(height, std::max(text_height, label_height) + 2 * padding);
+    const int entry_x = 2 * padding + step_width;
+    const int label_x = width - padding - label_width;
+    return {width, height, minimum, entry_x, label_x - label_gap - entry_x,
+            label_x, step_width, std::max(1, (height - 2 * padding) / 2)};
+}
+} // namespace
 
 wxDEFINE_EVENT(EVT_SPINCTRL_TEXT, wxCommandEvent);
 
@@ -30,19 +52,20 @@ SpinInput::SpinInput()
     , text_color(std::make_pair(ThemeColor::TextDisabled, (int) StateColor::Disabled), std::make_pair(ThemeColor::TextPrimary, (int) StateColor::Normal))
     , text_updating(false)
 {
-    // MD3 ValueField geometry: r10 (FromDIP-scaled via the StaticBox
-    // default-radius path so it recomputes on DPI change), SurfaceContainerHighest
-    // fill, resting Outline border (hover Primary, disabled OutlineVariant). Every
+    // Studio Atlas value field: density radius through the StaticBox rescale
+    // path, SurfaceContainerLow fill and resting Outline border (focus/hover
+    // Primary, disabled OutlineVariant). Every
     // colour is stored as its MD3 light role value -- all keys in StateColor.cpp's
     // gDarkColors table -- so colorForStates() live-remaps them on a dark-mode
     // toggle, dropping the White / Grey300 / Grey400 / BrandGreen literals.
-    SetDefaultCornerRadius(10);
+    SetDefaultCornerRadius(MD3::Metrics::active().small_radius);
     border_width     = 1;
     border_color     = StateColor(std::make_pair(MD3::Light::outlineVariant, (int) StateColor::Disabled),
+                              std::make_pair(MD3::Light::primary, (int) StateColor::Focused),
                               std::make_pair(MD3::Light::primary, (int) StateColor::Hovered),
                               std::make_pair(MD3::Light::outline, (int) StateColor::Normal));
     background_color = StateColor(std::make_pair(MD3::Light::scHigh, (int) StateColor::Disabled),
-                              std::make_pair(MD3::Light::scHighest, (int) StateColor::Normal));
+                              std::make_pair(MD3::Light::scLow, (int) StateColor::Normal));
 }
 
 
@@ -107,7 +130,7 @@ void SpinInput::Create(wxWindow *parent,
 
 void SpinInput::SetCornerRadius(double radius)
 {
-    this->radius = radius;
+    StaticBox::SetCornerRadius(radius);
     Refresh();
 }
 
@@ -178,6 +201,8 @@ void SpinInput::DoSetToolTipText(wxString const &tip)
 
 void SpinInput::Rescale()
 {
+    SetDefaultCornerRadius(MD3::Metrics::active().small_radius);
+    RescaleDefaultCornerRadius();
     button_inc->Rescale();
     button_dec->Rescale();
     messureSize();
@@ -215,11 +240,15 @@ void SpinInput::render(wxDC& dc)
     StaticBox::render(dc);
     int    states = state_handler.states();
     wxSize size = GetSize();
-    // draw label (the legacy Grey400 line between the steppers is dropped in MD3)
+    // A quiet divider separates the stepper well from the editable value.
+    const int padding = FromDIP(MD3::Metrics::isCompact() ? 3 : 4);
+    const int divider_x = button_inc->GetPosition().x + button_inc->GetSize().x + padding / 2;
+    dc.SetPen(wxPen(StateColor::semantic(MD3::Role::OutlineVariant), 1));
+    dc.DrawLine(divider_x, padding, divider_x, size.y - padding);
     auto label = GetLabel();
     if (!label.IsEmpty()) {
         wxPoint pt;
-        pt.x = size.x - labelSize.x - 5;
+        pt.x = size.x - labelSize.x - padding;
         pt.y = (size.y - labelSize.y) / 2;
         dc.SetFont(GetFont());
         dc.SetTextForeground(label_color.colorForStates(states));
@@ -242,27 +271,24 @@ void SpinInput::render(wxDC& dc)
 
 void SpinInput::messureSize()
 {
-    wxSize size = GetSize();
-    wxSize textSize = text_ctrl->GetSize();
-    int h = textSize.y + 8;
-    if (size.y < h) {
-        size.y = h;
-    }
-    wxSize minSize = size;
-    minSize.x      = GetMinWidth();
-    StaticBox::SetSize(size);
-    SetMinSize(size);
-    wxSize btnSize = {14, (size.y - 4) / 2};
-    btnSize.x = btnSize.x * btnSize.y / 10;
     wxClientDC dc(this);
-    labelSize  = dc.GetMultiLineTextExtent(GetLabel());
-    textSize.x = size.x - labelSize.x - btnSize.x - 16;
-    text_ctrl->SetSize(textSize);
-    text_ctrl->SetPosition({6 + btnSize.x, (size.y - textSize.y) / 2});
+    dc.SetFont(GetFont());
+    labelSize = dc.GetMultiLineTextExtent(GetLabel());
+    dc.SetFont(text_ctrl->GetFont());
+    const int padding = FromDIP(MD3::Metrics::isCompact() ? 3 : 4);
+    const wxSize textSize = text_ctrl->GetBestSize();
+    const auto layout = atlasSpinLayout(GetSize().x, GetSize().y, textSize.y,
+        dc.GetTextExtent("0").x + FromDIP(2), labelSize.x, labelSize.y,
+        padding, FromDIP(MD3::Metrics::isCompact() ? 18 : 20));
+    StaticBox::SetSize({layout.width, layout.height});
+    SetMinSize({layout.minimum_width, std::max(textSize.y, labelSize.y) + 2 * padding});
+    text_ctrl->SetSize({layout.entry_width, textSize.y});
+    text_ctrl->SetPosition({layout.entry_x, (layout.height - textSize.y) / 2});
+    const wxSize btnSize{layout.step_width, layout.step_height};
     button_inc->SetSize(btnSize);
     button_dec->SetSize(btnSize);
-    button_inc->SetPosition({3, size.y / 2 - btnSize.y - 1});
-    button_dec->SetPosition({3, size.y / 2 + 1});
+    button_inc->SetPosition({padding, padding});
+    button_dec->SetPosition({padding, layout.height - padding - layout.step_height});
 }
 
 Button *SpinInput::createButton(bool inc)
@@ -273,7 +299,7 @@ Button *SpinInput::createButton(bool inc)
     auto btn = new Button(this, "", inc ? "spin_inc" : "spin_dec", wxBORDER_NONE, 6);
     btn->SetTextColor(StateColor(std::make_pair(MD3::Light::onSurfaceVariant, (int) StateColor::Normal)));
     btn->SetGlyph(inc ? MaterialIcon::ExpandLess : MaterialIcon::ExpandMore, 12);
-    btn->SetCornerRadius(0);
+    btn->SetCornerRadius(FromDIP(3));
     btn->DisableFocusFromKeyboard();
     btn->Bind(wxEVT_LEFT_DOWN, [=](auto &e) {
         delta = inc ? 1 : -1;

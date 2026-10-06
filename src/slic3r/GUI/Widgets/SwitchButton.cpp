@@ -157,9 +157,13 @@ void SwitchButton::Rescale()
 		wxSize thumbSize;
 		wxSize trackSize;
 		wxClientDC dc(this);
+        dc.SetFont(GetFont());
 #ifdef __WXOSX__
         dc.SetFont(dc.GetFont().Scaled(scale));
 #endif
+        const int segment_padding = BS * FromDIP(MD3::Metrics::active().padding / 2);
+        const int segment_inset = BS * FromDIP(2);
+        const int segment_radius = BS * FromDIP(MD3::Metrics::active().small_radius);
         wxFontMetrics fm = dc.GetFontMetrics();
         int fmHeight = fm.ascent + fm.descent;
         wxSize textSize[2];
@@ -173,15 +177,16 @@ void SwitchButton::Rescale()
 			auto size = textSize[1];
 			if (size.x > thumbSize.x) thumbSize.x = size.x;
 			else size.x = thumbSize.x;
-			thumbSize.x += BS * 12;
-			thumbSize.y += BS * 6;
-			trackSize.x = thumbSize.x + size.x + BS * 10;
-			trackSize.y = thumbSize.y + BS * 2;
+			thumbSize.x += 2 * segment_padding;
+			thumbSize.y = std::max(thumbSize.y + 2 * BS * FromDIP(3),
+                BS * FromDIP(MD3::Metrics::active().row_height - 8));
+			trackSize.x = 2 * thumbSize.x + 2 * segment_inset;
+			trackSize.y = thumbSize.y + 2 * segment_inset;
             auto maxWidth = GetMaxWidth();
 #ifdef __WXOSX__
             maxWidth *= scale;
 #endif
-			if (trackSize.x > maxWidth) {
+			if (maxWidth > 2 * segment_inset && trackSize.x > maxWidth) {
                 fontScale   = float(maxWidth) / trackSize.x;
                 thumbSize.x -= (trackSize.x - maxWidth) / 2;
                 trackSize.x = maxWidth;
@@ -213,7 +218,7 @@ void SwitchButton::Rescale()
 			// form when it fits the room its thumbSize slot already has (the slot
 			// itself stays sized from the English labels above); otherwise that
 			// half stays English and both notes join this control's own tooltip.
-			const int bilingual_avail = std::max(0, thumbSize.x - BS * 12);
+			const int bilingual_avail = std::max(0, thumbSize.x - 2 * segment_padding);
 			wxString note0;
 			const wxString shown_label0 = Slic3r::GUI::I18N::fit_bilingual(memdc, labels[0], bilingual_avail, &note0);
 			wxString note1;
@@ -239,13 +244,14 @@ void SwitchButton::Rescale()
 #endif
 				dc2.SetBrush(wxBrush(eff_track.colorForStates(state)));
 				dc2.SetPen(wxPen(eff_track.colorForStates(state)));
-                dc2.DrawRoundedRectangle(wxRect({0, 0}, trackSize), trackSize.y / 2);
+                dc2.DrawRoundedRectangle(wxRect({0, 0}, trackSize), std::min(segment_radius, trackSize.y / 2));
 				dc2.SetBrush(wxBrush(eff_thumb.colorForStates(StateColor::Checked | StateColor::Enabled)));
 				dc2.SetPen(wxPen(eff_thumb.colorForStates(StateColor::Checked | StateColor::Enabled)));
-				dc2.DrawRoundedRectangle(wxRect({ i == 0 ? BS : (trackSize.x - thumbSize.x - BS), BS}, thumbSize), thumbSize.y / 2);
+				dc2.DrawRoundedRectangle(wxRect({ i == 0 ? segment_inset : (trackSize.x - thumbSize.x - segment_inset), segment_inset}, thumbSize),
+                    std::min(std::max(1, segment_radius - segment_inset), thumbSize.y / 2));
 			}
             memdc.SetTextForeground(eff_text.colorForStates(state ^ StateColor::Checked));
-            auto text_y = BS + (thumbSize.y - textSize[0].y) / 2;
+            auto text_y = segment_inset + (thumbSize.y - textSize[0].y) / 2;
 #ifdef __APPLE__
             /* wx计算文字长宽都是浮点数向下取整
                macOS系统文字渲染为了抗锯齿效果，会在边缘向外多渲染0.5到1个像素，所以需要向上取整
@@ -253,13 +259,13 @@ void SwitchButton::Rescale()
             */
             text_y -= FromDIP(1);
 #endif
-            memdc.DrawText(shown_label0, {BS + (thumbSize.x - memdc.GetTextExtent(shown_label0).x) / 2, text_y});
+            memdc.DrawText(shown_label0, {segment_inset + (thumbSize.x - memdc.GetTextExtent(shown_label0).x) / 2, text_y});
             memdc.SetTextForeground(text_color2.count() == 0 ? eff_text.colorForStates(state) : text_color2.colorForStates(state));
-            auto text_y_1 = BS + (thumbSize.y - textSize[1].y) / 2;
+            auto text_y_1 = segment_inset + (thumbSize.y - textSize[1].y) / 2;
 #ifdef __APPLE__
             text_y_1 -= FromDIP(1);
 #endif
-            memdc.DrawText(shown_label1, {trackSize.x - thumbSize.x - BS + (thumbSize.x - memdc.GetTextExtent(shown_label1).x) / 2, text_y_1});
+            memdc.DrawText(shown_label1, {trackSize.x - thumbSize.x - segment_inset + (thumbSize.x - memdc.GetTextExtent(shown_label1).x) / 2, text_y_1});
 			memdc.SelectObject(wxNullBitmap);
 #ifdef __WXOSX__
             bmp = wxBitmap(bmp.ConvertToImage(), -1, scale);
@@ -302,6 +308,7 @@ wxBitmap SwitchButton::renderSwitch(double t, bool enabled) const
 	const wxColour onPrimary  = StateColor::semantic(MD3::Role::OnPrimary, m_scheme);
 	const wxColour outline    = StateColor::semantic(MD3::Role::Outline);
 	const wxColour onSurface  = StateColor::semantic(MD3::Role::OnSurface);
+	const wxColour offSurface = StateColor::semantic(MD3::Role::SurfaceContainerLow);
 
 	wxBitmap bmp(dw, dh);
 #if defined(__WXMSW__) || defined(__WXOSX__)
@@ -317,7 +324,7 @@ wxBitmap SwitchButton::renderSwitch(double t, bool enabled) const
 			gc->Scale(scale, scale); // logical 0..44 x 0..24
 
 			const double radius = H / 2.0;
-			wxColour trackFill = lerpColour(withAlpha(primary, 0), primary, t);
+			wxColour trackFill = lerpColour(offSurface, primary, t);
 			wxColour border    = lerpColour(outline, primary, t);
 			wxColour knob      = lerpColour(outline, onPrimary, t);
 			if (!enabled) {
