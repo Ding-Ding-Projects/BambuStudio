@@ -590,8 +590,13 @@ function Resolve-BuildToolchain {
     if (-not (Test-Path -LiteralPath (Join-Path $sdkInclude 'winrt\windows.graphics.printing3d.h') -PathType Leaf)) {
         throw "Windows SDK $sdkVersion at '$sdkInclude' lacks winrt\windows.graphics.printing3d.h, which CMakeLists.txt requires through WIN10SDK_PATH."
     }
+    $compilerVersion = (Get-Content -LiteralPath (Join-Path $vsPath 'VC\Auxiliary\Build\Microsoft.VCToolsVersion.default.txt') -Raw).Trim()
+    $compilerPath = Join-Path $vsPath "VC\Tools\MSVC\$compilerVersion\bin\Hostx64\x64\cl.exe"
     return [pscustomobject]@{
         VisualStudioPath = $vsPath
+        VisualStudioVersion = $version
+        CompilerVersion = $compilerVersion
+        CompilerPath = $compilerPath
         GeneratorInstance = if ($major -eq 18) { "$vsPath,version=$version" } else { $vsPath }
         Generator        = $generator
         SdkVersion       = [string]$sdkVersion
@@ -682,6 +687,55 @@ function Get-BoundedCompilerOptions {
     return $options
 }
 
+function Get-ApplicationCacheIdentity {
+    param($Toolchain, [string] $DependencyDestination, [string] $InstallPrefix)
+    $sourceTree = @(& git -C $script:RepositoryRoot ls-tree HEAD -- CMakeLists.txt version.inc cmake deps src resources ui-md3 scripts/windows packaging/windows/build-from-source)
+    Assert-LastExitCode 'Reading application build source-tree identity'
+    if ($sourceTree.Count -eq 0) { throw 'The application source-tree identity is empty.' }
+    $prefix = [IO.Path]::GetFullPath((Join-Path $DependencyDestination 'usr\local'))
+    $dependencyFiles = @(Get-ChildItem -LiteralPath $prefix -File -Recurse -Force | Sort-Object FullName)
+    if ($dependencyFiles.Count -eq 0) { throw 'The selected dependency prefix contains no files.' }
+    $dependencyIdentity = foreach ($file in $dependencyFiles) {
+        $relative = $file.FullName.Substring($prefix.TrimEnd('\').Length + 1).Replace('\', '/')
+        $relative + ':' + (Get-FileSha256Lower -Path $file.FullName)
+    }
+    $identity = [ordered]@{
+        schema = 1
+        sourceTree = $sourceTree
+        sourceRoot = [IO.Path]::GetFullPath($script:RepositoryRoot)
+        dependencyPrefix = $prefix
+        dependencyFiles = @($dependencyIdentity)
+        installPrefix = [IO.Path]::GetFullPath($InstallPrefix)
+        generator = $Toolchain.Generator
+        generatorInstance = $Toolchain.GeneratorInstance
+        visualStudioVersion = $Toolchain.VisualStudioVersion
+        compilerVersion = $Toolchain.CompilerVersion
+        compilerSha256 = Get-FileSha256Lower -Path $Toolchain.CompilerPath
+        sdk = $Toolchain.SdkIncludePath
+        cmake = [IO.Path]::GetFullPath($Toolchain.CMake)
+        cmakeSha256 = Get-FileSha256Lower -Path $Toolchain.CMake
+    }
+    $bytes = [Text.Encoding]::UTF8.GetBytes(($identity | ConvertTo-Json -Compress -Depth 4))
+    $hash = [Security.Cryptography.SHA256]::Create()
+    try { return ([BitConverter]::ToString($hash.ComputeHash($bytes))).Replace('-', '').ToLowerInvariant() }
+    finally { $hash.Dispose() }
+}
+
+function Test-ApplicationCacheIdentity {
+    param([string] $CachePath, [string] $Identity, [string] $InstallPrefix, [string] $DependencyPrefix)
+    if (-not (Test-Path -LiteralPath $CachePath -PathType Leaf)) { return $false }
+    $expected = @{
+        CMAKE_INSTALL_PREFIX = [IO.Path]::GetFullPath($InstallPrefix).Replace('\', '/')
+        CMAKE_PREFIX_PATH = [IO.Path]::GetFullPath($DependencyPrefix).Replace('\', '/')
+        BAMBU_APPLICATION_CACHE_ID = $Identity
+    }
+    foreach ($key in $expected.Keys) {
+        $lines = @(Select-String -LiteralPath $CachePath -Pattern ('^' + [regex]::Escape($key) + ':[^=]+=(.*)$'))
+        if ($lines.Count -ne 1 -or $lines[0].Matches[0].Groups[1].Value.Replace('\', '/') -cne $expected[$key]) { return $false }
+    }
+    return $true
+}
+
 function Invoke-ApplicationBuild {
     param(
         [Parameter(Mandatory)] $Toolchain,
@@ -703,10 +757,9 @@ function Invoke-ApplicationBuild {
     # for; otherwise the generator's own ZERO_CHECK re-runs CMake exactly when a
     # CMakeLists changed.
     $appCache = Join-Path $buildDirectory 'CMakeCache.txt'
-    $expectedPrefix = [System.IO.Path]::GetFullPath($InstallPrefix).Replace('\', '/')
-    $cacheMatches = (Test-Path -LiteralPath $appCache -PathType Leaf) -and
-        ($null -ne (Select-String -LiteralPath $appCache -SimpleMatch `
-            -Pattern "CMAKE_INSTALL_PREFIX:PATH=$expectedPrefix" -Quiet))
+    $cacheIdentity = Get-ApplicationCacheIdentity -Toolchain $Toolchain -DependencyDestination $DependencyDestination -InstallPrefix $InstallPrefix
+    $cacheMatches = Test-ApplicationCacheIdentity -CachePath $appCache -Identity $cacheIdentity `
+        -InstallPrefix $InstallPrefix -DependencyPrefix $prefixPath
     $pathPolicyCurrent = (Test-Path -LiteralPath $appCache -PathType Leaf) -and
         (Select-String -LiteralPath $appCache -SimpleMatch -Pattern 'BAMBU_RELEASE_SOURCE_PATH_POLICY:INTERNAL=msvc-pathmap-v1' -Quiet)
     $forceConfigure = ($env:BAMBU_RECONFIGURE -eq '1') -or -not $pathPolicyCurrent
@@ -722,6 +775,7 @@ function Invoke-ApplicationBuild {
                 -DSLIC3R_MSVC_PDB=OFF -DBBL_RELEASE_TO_PUBLIC=1 -DBBL_INTERNAL_TESTING=0 `
                 -DSLIC3R_BUILD_TESTS=OFF `
                 "-DCMAKE_PREFIX_PATH=$prefixPath" "-DCMAKE_INSTALL_PREFIX=$InstallPrefix" `
+                "-DBAMBU_APPLICATION_CACHE_ID:STRING=$cacheIdentity" `
                 -DCMAKE_CONFIGURATION_TYPES=Release -DCMAKE_BUILD_TYPE=Release `
                 "-DWIN10SDK_PATH=$($Toolchain.SdkIncludePath)" `
                 "-DPython3_EXECUTABLE=$python"

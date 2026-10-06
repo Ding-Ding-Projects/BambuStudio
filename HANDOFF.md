@@ -2,6 +2,14 @@
 
 ## Build bootstrap repair, 6 October 2026
 
+Application configuration cache reuse now compares exact install/dependency
+prefixes and a recorded content identity covering relevant source trees, selected
+dependency file bytes, CMake/compiler bytes, toolchain versions and selections,
+and source/install roots. The former nonnull check treated Boolean false as a
+match. Ten focused fixture/stub assertions pass, with the old source observed
+reusing a cache whose install prefix differed. Dependency content hashing adds
+an actual file read at startup. Production build evidence remains pending.
+
 Squirrel tool reuse now validates the retained pinned archive and all tool bytes.
 It uses a separate content-addressed owned cache, preserves legacy caches, and
 retains invalid previous owned caches before promotion. Uncertain ownership stops

@@ -2,6 +2,8 @@
 
 ## Build bootstrap repair, 6 October 2026
 
+- [x] Compare application cache prefixes as exact values and bind configuration reuse to source/toolchain/dependency content, with ten fixture/stub assertions.
+
 - [x] Validate Squirrel warm-cache bytes, including hidden files, against its pinned archive and preserve invalid prior caches, with twelve fixture-only assertions.
 - [x] Validate exact RELEASES hashes/lengths and promote one coherent output set with recoverable prior outputs, with eleven fixture assertions.
 

@@ -62,6 +62,15 @@ the application. These checks do not prove a fresh-machine build or installer.
 Set `BAMBU_DEPENDENCY_CACHE` to an existing dependency destination containing
 `usr/local/include` and `usr/local/lib` to reuse it without modifying it.
 Application build and install output remains inside the current checkout.
+Application configuration reuse compares exact install/dependency prefix values
+and a recorded content identity. That identity covers relevant committed source
+trees, every file in the selected dependency `usr/local` prefix, compiler and
+CMake bytes and paths, compiler/Visual Studio versions, generator instance, SDK
+selection, and source/install roots. Missing or changed identity causes a fresh
+configure. Content hashing adds a read of the selected dependency files at build
+startup; timestamps alone cannot prove their content. Ten fixture/stub assertions
+verify mismatched-prefix rejection and invalidation for source, dependency,
+compiler, and SDK changes. They perform no native build.
 An incompatible or incomplete cache causes configuration or compilation to stop;
 the caller must select a compatible cache or omit the variable for a local build.
 FFmpeg package flags quote their include and library paths so an isolated checkout
