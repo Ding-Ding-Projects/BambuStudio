@@ -14,22 +14,23 @@ Application launches, installer execution, physical printer actions and manual r
 
 ## Authoritative source state before this documentation commit
 
-- Active baseline build source: `9a55b7aa1e900f85c2ded1389854beefabff159f`. Its primary checkout must not change until the actual process terminates.
-- Last verified remote `main`: `6cfe889fb85f7fa0e9a21dd9411f990f9d57aa9d`.
-- Latest isolated build-repair candidate: `a95ab58fbc53fee855418a80af4cea44ba26ed6b`, application discovery/cache follow-up pending independent review.
-- Design specification: `669af08fe25582d75a4775389eb53760fea39481`, on `task/native-feature-ledger`.
-- Native Print source: `f28dad52e0a848d613f661849a4fdd64f30c3a60`, on `feature/native-print-workflow`; catalog correction in progress.
-- Native navigation source: `624e2ed52e2fe7afcb91961fcaefe9bb201ba15e`, on `task/native-navigation-chrome-20261006`; further shared styling in progress.
+- Baseline build source: `9a55b7aa1e900f85c2ded1389854beefabff159f`, terminal exit 1 at `2026-10-06T06:49:14Z`; no production process remains from that run.
+- Last verified remote `main`: `085738374211e3c192e32fcb570b95d543335b5e`, containing all reviewed bootstrap/cache/patch/diagnostic repairs.
+- First combined native redesign source: `e38414ff6b471b26b45c3fb79082efdafb0028cb`, local integration awaiting native compilation.
+- Design specification: `ca4f1dc724587479d9e48d331cd9d15e1af02ad2`, on `task/native-feature-ledger`.
+- Native Print/catalog/test-registration source: `ceb738fdff07cac9864a272aa5d6c262a9547f8b`, on `feature/native-print-workflow`.
+- Native navigation and separate visual palette: `b748affe0f687f6cfbe6068a82d32988047f790a`, on `task/native-navigation-chrome-20261006`.
+- Embedded styling with corrected interaction tests: `6faff372404390ba6cd9191c12e9fa5439ce375c`, on `task/embedded-atlas-20261006`.
 
-The baseline dependency build remains active. Reviewed bootstrap, worker-budget, pinned-source, Squirrel cache and coherent-output repairs are already on the verified remote main receipt. Focused assertions passed; they are not a substitute for the two real root-entrypoint results or package-byte inspection.
+The baseline dependency build failed after wx completed. Completed dependency outputs remain available. OpenCV's partially applied patch sequence is now repeat-safe, and the next root run will retain native stdout diagnostics. Reviewed repair units total 104 focused assertions across their final tests; they are not a substitute for the two real root-entrypoint results or package-byte inspection. The combined redesign candidate passed 28 Node cases, six localization cases and 56 deterministic reference checks, with native compilation and pixels still unverified.
 
 All eleven open issues received individual source inspections. No issue was closed from source presence alone. See the report for each disposition.
 
 ## Next safe actions
 
-1. Read the actual baseline build process result, preserving its pinned source while live.
-2. Resolve only concrete build/package blockers in the existing isolated repair lane, then independently verify and integrate each coherent unit.
-3. Finish the single catalog correction for both new native source units; preserve IDs, callbacks and confirmation behavior.
+1. Preserve the combined candidate, check out a dedicated candidate branch in the now-idle primary checkout, and run its exact root entrypoints while keeping that source pinned.
+2. Resolve concrete build/package blockers in the existing isolated repair lane, independently verify each repair, then reconcile only after the active producer ends.
+3. Preserve the verified new-message catalog correction, stable IDs, callbacks and confirmation behavior during native integration.
 4. Continue the full visual surface inventory with isolated design ownership, keeping pure appearance changes separately reversible.
 5. Run both exact root entrypoints against the reconciled source and inspect unsigned Squirrel outputs without executing the installer or application.
 6. Record final source/output/remote receipts and retain active, incomplete, unmerged or ownership-uncertain work. No cleanup is authorized merely by this document.

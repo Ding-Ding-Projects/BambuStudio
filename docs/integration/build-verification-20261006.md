@@ -6,7 +6,7 @@
 
 The current work makes `build.bat` and `build-installer.bat` acquire missing supported prerequisites automatically, preserves useful caches, verifies unsigned Squirrel.Windows outputs, and delivers reviewed repairs to `main`. The maintainer subsequently resumed a complete native interface redesign, preserving existing functions and features. All design and redesign implementation/review uses explicitly selected `gpt-6-astra` workers. Build-script implementation remains in one isolated `gpt-6.1-sol` lane.
 
-The baseline production build reads the unchanged source at `9a55b7aa1e900f85c2ded1389854beefabff159f`. The verified remote `main` receipt before this report is `6cfe889fb85f7fa0e9a21dd9411f990f9d57aa9d`. These are intentionally different: an active build must not read source being changed underneath it.
+The baseline production run read the unchanged source at `9a55b7aa1e900f85c2ded1389854beefabff159f` and terminated with exit 1 at `2026-10-06T06:49:14Z`. The verified remote `main` repair receipt is `085738374211e3c192e32fcb570b95d543335b5e`. The first combined redesign source candidate is `e38414ff6b471b26b45c3fb79082efdafb0028cb`, pending native compilation. An active build must not read source being changed underneath it.
 
 Application launches, installer execution, physical printer actions, and manual release publication remain excluded. Source-based tests and design references do not override those limits. The broader redesign is incomplete and has no current rendered acceptance.
 
@@ -19,10 +19,12 @@ Application launches, installer execution, physical printer actions, and manual 
 | `48f9df9b8e797a4373fdece63960ffe189946693`, `97a6790b1a89e7068d4b3ae40cdfaf3c4a952b6d` | Bounded nested MSBuild/compiler pools; OpenSSL preserves the selected budget | 21 script-mode CMake and stub assertions, independently rerun |
 | `c660e846fa42e8e0d18f95bac3c7de16a84777ed`, `12a986b201ff59ecd9afea5cb68a3e3eb26cd13d` | Source identity pinned before compilation; tracked and nonignored untracked inputs checked; build-only staging rechecked | 11 mocked source-state assertions, independently rerun |
 | `f41adbf1e212e6afcc25eeec8bd06a301ee73d6d`, `6cfe889fb85f7fa0e9a21dd9411f990f9d57aa9d` | Pinned warm Squirrel tool bytes, hidden-file inventory, same-volume staging, complete RELEASES hashes/lengths, recoverable output promotion | 12 cache and 11 output-set fixture assertions, independently rerun under Windows PowerShell |
+| `4ec74967d878afe7a47fa1b121fa465598fd797f`, `a95ab58fbc53fee855418a80af4cea44ba26ed6b` | Content-bound application configuration, preserved discovery cache and application compiler cap | 14 cache assertions and 7 real configure-only assertions, independently rerun with CMake 4.3.1-msvc1 |
+| `92778d4fb315c2b4d704f25f184cc84d8fef56df`, `085738374211e3c192e32fcb570b95d543335b5e` | Repeat-safe OpenCV patch sequence and complete native stdout transcription | 9 patch and 4 PowerShell diagnostic assertions, independently rerun |
 
 These focused results are not production-build or installer-execution evidence. The output fixtures mock the PE reader. Real package provenance, certificate-table absence, embedded versions, complete package contents, source identity and hashes must be checked after the root installer entrypoint succeeds.
 
-The baseline bootstrap installed or selected Visual Studio Build Tools 2026, its CMake, Strawberry Perl, Python 3.13, .NET 10, and archive tooling through the supported bootstrap route. This records activity on the actual host, not a pristine-VM certification. The dependency superbuild is still active; application compilation and packaging remain pending.
+The baseline bootstrap installed or selected Visual Studio Build Tools 2026, its CMake, Strawberry Perl, Python 3.13, .NET 10, and archive tooling through the supported bootstrap route. This records activity on the actual host, not a pristine-VM certification. wxWidgets completed installation at `2026-10-06T06:49:13.8497026Z`, but its umbrella custom-build then reported `MSB8066`, code `-1`. The historical transcript does not expose the underlying diagnostic. OpenCV separately had three already-applied patches and one individually applicable patch, a proven retry hazard now repaired. Neither fact is a successful root build. Completed dependency outputs are retained for the next exact entrypoint run.
 
 ## Inspected issue inventory
 
@@ -48,18 +50,17 @@ All 16 upstream branch tips were inspected. The upstream master and current rele
 
 The requested scope is the entire application: shell, Prepare, Preview, Print, Monitor, sidebars, settings, menus, dialogs, editors and product-owned embedded panels. The first source units add a Print preparation page and shared navigation styling. They do not complete that scope.
 
-The retained design specification at `669af08fe25582d75a4775389eb53760fea39481` contains 28 surface groups, 324 states and 56 static light/dark structural references. They are design references, not screenshots of implemented behavior. Its 1,204 feature obligations preserve missing and unverified states.
+The retained design specification at `ca4f1dc724587479d9e48d331cd9d15e1af02ad2` contains 28 surface groups, 324 states and 56 static light/dark structural references. They are design references, not screenshots of implemented behavior. Its 1,204 feature obligations preserve missing and unverified states. The combined candidate passed 28 Node test cases, including 30 compiled Print-state assertions, and six actual-extraction/compiled-translation tests. All 56 deterministic reference files matched. These results do not cover the native window integration or rendering.
 
 The maintainer may request reversal if the new appearance is not preferred. The pre-redesign baseline is `d048cfc3040a1566b78e03334f3871f1dd0144bb`. Review and reverse only design changes, preserving later build, packaging, AMS and functional repairs. Mixed navigation/function commits must not be reverted wholesale as if they were pure styling. The design lane maintains the detailed change ledger.
 
 ## Remaining decisive work
 
-- [ ] Complete the active baseline production run and record its actual exit result.
-- [ ] Independently review and incorporate application-cache discovery repairs.
+- [x] Record the baseline production result: exit 1, with the diagnostic limits above.
+- [x] Independently review and incorporate application-cache discovery repairs into the verified repair line.
 - [ ] Reconcile the intended build candidate, then run its exact `build.bat` and `build-installer.bat`.
 - [ ] Verify genuine unsigned Squirrel bytes, package versions, source identity, RELEASES contents and all output hashes.
 - [ ] Integrate reviewed redesign source and complete its extraction/catalog and documentation requirements without claiming rendered acceptance.
 - [ ] Continue the whole-application visual implementation inventory; preserve all existing functions.
 - [ ] Obtain permitted built interaction and visual evidence before claiming appearance, accessibility or layout acceptance.
 - [ ] Update this report with exact final receipts, remote proof and retained-work disposition.
-
