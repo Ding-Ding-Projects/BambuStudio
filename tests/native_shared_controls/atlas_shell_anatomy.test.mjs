@@ -30,10 +30,18 @@ const extract = process.argv.indexOf('--extract');
 if (extract >= 0) {
     const destination = path.resolve(process.argv[extract + 1]);
     fs.mkdirSync(destination, {recursive: true});
-    const geometry = body(strip, 'struct AtlasTabOverflow') + ';\n' + body(strip, 'AtlasTabOverflow atlasTabOverflow(')
-        + '\n' + body(title, 'static int atlasTitleTextBudget(');
+    const overflow = body(strip, 'struct AtlasTabOverflow') + ';\n' + body(strip, 'AtlasTabOverflow atlasTabOverflow(');
+    const geometry = overflow + '\n' + body(title, 'static int atlasTitleTextBudget(');
+    fs.writeFileSync(path.join(destination, 'atlas_tab_overflow.inc'), overflow);
     fs.writeFileSync(path.join(destination, 'atlas_shell_layout.inc'), geometry);
+    const drag = body(strip, 'struct AtlasDragTab') + ';\n' + body(strip, 'int atlasTabDragTarget(');
+    fs.writeFileSync(path.join(destination, 'atlas_tab_drag.inc'), drag);
+    const model = read('src/slic3r/GUI/Widgets/TabStripModel.hpp');
+    const operations = ['int add(Tab tab)', 'int index_of(', 'int pinned_count()', 'bool move(int from, int to)']
+        .map(name => body(model, name)).join('\n');
+    fs.writeFileSync(path.join(destination, 'atlas_tab_model_operations.inc'), operations);
     console.log(`Production geometry SHA-256: ${digest(geometry)}`);
+    console.log(`Production drag SHA-256: ${digest(drag)}; model operations SHA-256: ${digest(operations)}`);
 }
 
 test('horizontal tab measurement includes complete bilingual names and independently scaled markers', () => {
@@ -62,6 +70,20 @@ function checkOverflow(source) {
 test('active overflow retains checked stable identity and reachable existing actions', () => checkOverflow(strip));
 test('overflow guard rejects losing active identity', () => {
     assert.throws(() => checkOverflow(strip.replace('menu.Check(id, m_model.active_index() == m_model.index_of(t.id))', 'menu.Check(id, false)')));
+});
+function checkDragProjection(source) {
+    const drag = body(source, 'void TabStrip::OnTabDragEnd(');
+    assert(drag.includes('!m_buttons[index]->IsShown()'));
+    assert(drag.includes('visible.push_back({m_model.at(index).id,'));
+    assert(drag.includes('atlasTabDragTarget(id, from, visible,'));
+    assert(drag.includes('m_model.index_of(neighbor_id)'));
+    assert(drag.includes('MoveTab(from, target)'));
+    assert(!drag.includes('disp[slot]'));
+    assert(!drag.includes('m_model.size() - 1'));
+}
+test('drag insertion maps current shown controls through stable neighbor identities', () => checkDragProjection(strip));
+test('drag projection guard rejects counting hidden control rectangles', () => {
+    assert.throws(() => checkDragProjection(strip.replace('!m_buttons[index]->IsShown()', 'false')));
 });
 test('tab state is immediate while selection motion honors the shared reduced-motion route', () => {
     const active = body(strip, 'void TabStripButton::SetActive(');

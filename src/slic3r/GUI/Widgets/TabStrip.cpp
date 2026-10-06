@@ -97,6 +97,30 @@ AtlasTabOverflow atlasTabOverflow(const std::vector<int>& extents, const std::ve
     return result;
 }
 
+// A drag boundary is expressed by visible tab identities, never by a slot in
+// displayed_indices(): overflowed controls retain obsolete rectangles.
+struct AtlasDragTab {
+    std::string id;
+    int center;
+};
+
+int atlasTabDragTarget(const std::string& dragged_id, int from,
+                       const std::vector<AtlasDragTab>& visible, int coordinate,
+                       const std::function<int(const std::string&)>& model_index)
+{
+    int previous = -1;
+    for (const auto& tab : visible) {
+        if (tab.id == dragged_id) continue;
+        const int neighbor = model_index(tab.id);
+        if (neighbor < 0) continue;
+        if (coordinate <= tab.center)
+            return neighbor - (neighbor > from ? 1 : 0); // before this neighbor, after source removal
+        previous = neighbor;
+    }
+    // After the last visible neighbor, not after an unrelated hidden model tail.
+    return previous < 0 ? from : previous + (previous < from ? 1 : 0);
+}
+
 const char *kConfigSection = "tab_strips";
 
 // Menu command ids, local to this widget.
@@ -1217,24 +1241,18 @@ void TabStrip::OnTabDragEnd(const std::string &id, const wxPoint &screen)
     const int from = m_model.index_of(id);
     if (from < 0)
         return;
-    const wxPoint          local = ScreenToClient(screen);
-    const std::vector<int> disp  = m_model.displayed_indices();
-    // Insertion slot among displayed tabs, along the main axis.
-    int slot = 0;
-    for (int k = 0; k < int(disp.size()); ++k) {
-        const wxRect r = m_buttons[disp[k]]->GetRect();
-        const bool   after = IsVertical() ? local.y > r.y + r.height / 2 : local.x > r.x + r.width / 2;
-        if (after)
-            ++slot;
+    const wxPoint local = ScreenToClient(screen);
+    const bool vertical = IsVertical();
+    std::vector<AtlasDragTab> visible;
+    for (int index : m_model.displayed_indices()) {
+        if (index < 0 || index >= int(m_buttons.size()) || !m_buttons[index]->IsShown())
+            continue;
+        const wxRect rect = m_buttons[index]->GetRect();
+        visible.push_back({m_model.at(index).id,
+            vertical ? rect.y + rect.height / 2 : rect.x + rect.width / 2});
     }
-    // Map the slot back to a model index.
-    int target;
-    if (slot >= int(disp.size()))
-        target = m_model.size() - 1;
-    else
-        target = disp[slot];
-    if (target > from)
-        --target;
+    const int target = atlasTabDragTarget(id, from, visible, vertical ? local.y : local.x,
+        [this](const std::string& neighbor_id) { return m_model.index_of(neighbor_id); });
     MoveTab(from, target);
     m_focus_index = m_model.index_of(id);
 }

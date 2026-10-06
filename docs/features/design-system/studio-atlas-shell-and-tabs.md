@@ -45,11 +45,26 @@ cl /nologo /std:c++17 /EHsc /W4 /WX /I"%TEMP%/BambuStudio-atlas-shell-layout" te
 "%TEMP%/BambuStudio-atlas-shell-layout/atlas_shell_layout_tests.exe"
 ```
 
-Eight source-contract tests passed. They include deliberate rejected mutations for losing active overflow identity and inventing a palette identifier, as well as 44 unchanged function/identifier snapshots against `b88acafa95b88884b4e284a0de15d77f7934cfcb`. The initializer snapshot uses an explicit adjacent-function boundary because its conditional-compilation alternatives are unsuitable for a simple brace counter.
+The initial appearance unit passed eight source-contract tests with 44 unchanged function/identifier snapshots against `b88acafa95b88884b4e284a0de15d77f7934cfcb`. The overflow-drag repair below brings the source checks to ten and retains 43 unchanged snapshots. Its intentionally changed drag handler is explicitly listed in the fixture and covered by final model-order regressions. The initializer snapshot uses an explicit adjacent-function boundary because its conditional-compilation alternatives are unsuitable for a simple brace counter.
 
 The standalone test compiles the exact extracted production allocation and title-budget helpers. Seven cases passed with 137,673 assertions. Cases cover empty strips, exact fits, reserved overflow space, oversized pinned destinations, tiny budgets, stable identity partitions across both pinned states and 100/125/150/200 percent scales, and title-command budgets. The assertion count includes exhaustive combinations; it is not a count of independent behaviors.
 
 Native wxWidgets compilation and runtime interaction remain unverified. No application launch, installer execution or rendered capture was performed. The English, Cantonese and bilingual light/dark layout matrix at normal and minimum viewport sizes and all four display scales remains required. Material Designer's live flow is unavailable under the no-launch boundary, so checked-in native design references are source guidance rather than runtime evidence.
+
+### Overflow drag correction
+
+The first bounded overflow allocator exposed a stale-rectangle assumption in `OnTabDragEnd`: it counted every model-displayed tab, including width-hidden controls, then mapped the resulting slot through that unfiltered list. With pinned widths A=100, B=400, C=100 and D=100, a wide-to-narrow resize leaves B's old center at 304 while visible C and D move to 154 and 258. Dropping D at 180, after C, incorrectly moved it before C.
+
+The corrected handler gathers only shown tab controls. It excludes the dragged identity when choosing the next visible neighbor, resolves that neighbor's stable ID to its current model position, and adjusts the insertion boundary for source removal. A drop after the final visible neighbor anchors there rather than after an unrelated hidden model tail. `MoveTab` and `Model::move` remain unchanged, including pinned-region constraints.
+
+The standalone regression uses the production overflow allocator, production drag-target helper and verbatim extracted `Model::add`, `index_of`, `pinned_count` and `move` bodies. Its minimal storage adapter replaces wxString title storage with std::string; it does not run wxWidgets or simulate native input. Eight cases passed with 28 assertions on actual resulting tab order, including the reported wide-to-narrow sequence, before/after neighbors, unchanged-position drops, no visible neighbors, a hidden tail and pinned-region protection. Removing the final-neighbor boundary offset in the temporary extracted helper produced two failed assertions and exit 1. Restoring the production helper returned all 28 assertions to passing. The ten source checks also reject removing the shown-control filter.
+
+After the extraction command above, compile and run the additional focused regression:
+
+```bat
+cl /nologo /std:c++17 /EHsc /W4 /WX /I"%TEMP%/BambuStudio-atlas-shell-layout" tests/native_shared_controls/atlas_tab_drag_tests.cpp /Fe:"%TEMP%/BambuStudio-atlas-shell-layout/atlas_tab_drag_tests.exe" /Fo:"%TEMP%/BambuStudio-atlas-shell-layout/atlas_tab_drag_tests.obj"
+"%TEMP%/BambuStudio-atlas-shell-layout/atlas_tab_drag_tests.exe"
+```
 
 ## Reversal and remaining work
 
