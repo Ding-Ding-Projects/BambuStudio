@@ -48,6 +48,26 @@ No native GUI target was compiled or launched. Actual selection/check interactio
 
 ## Reversal and remaining limits
 
+### Interrupted hover correction
+
+The initial hover implementation could leave row A highlighted when A-to-B was interrupted by B-to-C or B-to-leave before the 100 ms fade ended. Stopping the shared animator cancels callbacks without a final tick. Replacing the previous-row index then lost the only refresh reference to A. The corrected transition saves that displaced row, replaces the paint state, and invalidates the saved row within the current row-count bounds before starting the new animation. Current/previous row callbacks and every selection/check handler remain unchanged.
+
+The standalone hover regression extracts the production `onMotion`, `onLeave` and `animateHover` bodies plus the actual hover paint expression. Non-window adapters record invalidated rows and cached paint, model cancellation without a final tick, and use the real `MD3MotionPolicy.hpp` owner decision for normal, reduced and hidden-owner motion. It does not instantiate a native widget or claim timer/event-delivery evidence. Six cases cover both interruption paths under all three motion conditions. The unchanged `ed3cbc35d5d3a6b701a5eb7ebfdc69d137684d92` production bodies failed 12 of 48 assertions; repaired bodies passed all 48. All nine existing source checks, including the 17 preserved behavior bodies, still pass.
+
+```powershell
+node tests/native_shared_controls/atlas_listbox_hover.test.mjs --extract "$env:TEMP/BambuStudio-atlas-listbox-hover"
+# To reproduce the failing production revision, also pass --source-revision ed3cbc35d5d3a6b701a5eb7ebfdc69d137684d92.
+```
+
+In an initialized x64 MSVC command prompt:
+
+```bat
+cl /nologo /std:c++17 /EHsc /W4 /WX /I"%TEMP%/BambuStudio-atlas-listbox-hover" tests/native_shared_controls/atlas_listbox_hover_tests.cpp /Fe:"%TEMP%/BambuStudio-atlas-listbox-hover/atlas_listbox_hover_tests.exe" /Fo:"%TEMP%/BambuStudio-atlas-listbox-hover/atlas_listbox_hover_tests.obj"
+"%TEMP%/BambuStudio-atlas-listbox-hover/atlas_listbox_hover_tests.exe"
+```
+
+This separate correction changes only interrupted-hover invalidation. Reverting it reintroduces stale row paint. Native compilation, timer delivery and rendered hover remain unverified.
+
 This is a separate shared-row appearance and measured-layout unit. Reverting it restores the previous fixed row-height behavior, 13 body-font default, unbounded narrow text rectangle and row state paint. It does not require reverting caller cards, selection models or the neutral palette.
 
 Caller-size changes, new persistent supporting labels, keyboard-only full-text disclosure and other list implementations remain outside this slice. Nine reachable construction sites establish source coverage, not runtime parity or completion of the application-wide redesign.

@@ -303,8 +303,12 @@ void ListBox::onLeave(wxMouseEvent &evt)
 void ListBox::animateHover(int previous)
 {
     m_hover_motion.Stop();
+    const int displaced = m_previous_hover;
     m_previous_hover = previous;
     m_hover_progress = 0.0;
+    // Stop cancels without a final tick. Repaint the outgoing fade's old row
+    // after replacing its state, even when the new transition settles immediately.
+    if (displaced >= 0 && size_t(displaced) < m_rows.size()) RefreshRow(size_t(displaced));
     m_hover_motion.Play(MD3::Motion::short2, [this](double progress) {
         m_hover_progress = progress;
         if (m_previous_hover >= 0 && size_t(m_previous_hover) < m_rows.size()) RefreshRow(size_t(m_previous_hover));

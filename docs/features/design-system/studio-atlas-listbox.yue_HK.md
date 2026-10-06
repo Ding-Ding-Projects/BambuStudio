@@ -1,6 +1,6 @@
 ---
 translation-of: studio-atlas-listbox.md
-source-sha256: 8f6210894d30deb1b59da3b8ef1d335a65739d783d37e077b72bb255f2aa2877
+source-sha256: e6b5521b8afdc48f1af1971713d88d31ff1a4d356e51bbfd4a356454ee19296f
 review-status: agent-drafted
 ---
 
@@ -55,6 +55,26 @@ cl /nologo /std:c++17 /EHsc /W4 /WX /I"%TEMP%/BambuStudio-atlas-listbox" tests/n
 冇編譯或啟動原生圖形介面目標。實際選取／核取互動、焦點像素、工具提示傳遞、捲軸行為，以及英文／廣東話／雙語淺色／深色佈局矩陣仍未驗證。冇執行安裝程式、硬件操作或擷取實際畫面。已納入版本控制嘅 Atlas 設計合約喺禁止啟動界線下只係原始碼指引，唔係實際畫面證據。
 
 ## 還原同剩餘限制
+
+### 中斷懸停修正
+
+最初懸停實作喺 100 ms 淡出完成前，A 到 B 被 B 到 C 或 B 到離開中斷時，可能令 A 列一直亮住。停止共用動畫器會取消回呼，唔會補最後一次更新。之後取代上一列索引，就失去唯一會更新 A 嘅參照。修正後轉換先記住被取代嘅列，換好繪畫狀態，再喺目前列數界線內令該列重新繪畫，然後先開始新動畫。目前／上一列回呼，以及所有選取／核取處理函式保持不變。
+
+獨立懸停回歸擷取正式 `onMotion`、`onLeave` 同 `animateHover` 函式內容，以及實際懸停繪畫運算式。非視窗轉接器記錄需要重畫嘅列同快取畫面，模擬取消時冇最後更新，並用真正 `MD3MotionPolicy.hpp` 擁有者決策處理正常、減少動態效果同隱藏擁有者模式。佢唔會建立原生控件，亦唔聲稱證明計時器／事件傳遞。六個案例涵蓋兩條中斷路徑同三種動態條件。未修改嘅 `ed3cbc35d5d3a6b701a5eb7ebfdc69d137684d92` 正式函式喺 48 項斷言中有 12 項失敗；修正後全部 48 項通過。原有九項原始碼檢查，包括 17 個保留行為函式內容，仍然全部通過。
+
+```powershell
+node tests/native_shared_controls/atlas_listbox_hover.test.mjs --extract "$env:TEMP/BambuStudio-atlas-listbox-hover"
+# To reproduce the failing production revision, also pass --source-revision ed3cbc35d5d3a6b701a5eb7ebfdc69d137684d92.
+```
+
+喺已初始化嘅 x64 MSVC 命令提示字元執行：
+
+```bat
+cl /nologo /std:c++17 /EHsc /W4 /WX /I"%TEMP%/BambuStudio-atlas-listbox-hover" tests/native_shared_controls/atlas_listbox_hover_tests.cpp /Fe:"%TEMP%/BambuStudio-atlas-listbox-hover/atlas_listbox_hover_tests.exe" /Fo:"%TEMP%/BambuStudio-atlas-listbox-hover/atlas_listbox_hover_tests.obj"
+"%TEMP%/BambuStudio-atlas-listbox-hover/atlas_listbox_hover_tests.exe"
+```
+
+呢項獨立修正只改中斷懸停嘅重畫處理。還原會重新引入殘留列畫面。原生編譯、計時器傳遞同實際懸停畫面仍未驗證。
 
 呢個係獨立共用列外觀同量度佈局單元。還原會恢復之前固定列高度、13 內文字型預設、窄文字矩形缺乏界限嘅行為，同原有列狀態繪畫。唔需要一併還原呼叫端卡片、選取模型或中性色配色。
 
