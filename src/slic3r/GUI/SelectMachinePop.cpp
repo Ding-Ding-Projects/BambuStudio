@@ -995,40 +995,40 @@ EditDevNameDialog::EditDevNameDialog(Plater *plater /*= nullptr*/)
     SetIcon(wxIcon(encode_path(icon_path.c_str()), wxBITMAP_TYPE_ICO));
 
     SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
-    wxBoxSizer *m_sizer_main = new wxBoxSizer(wxVERTICAL);
-    auto        m_line_top   = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 1), wxTAB_TRAVERSAL);
-    m_line_top->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
-    m_sizer_main->Add(m_line_top, 0, wxEXPAND, 0);
-    m_sizer_main->Add(0, 0, 0, wxTOP, FromDIP(38));
+    m_form_sizer = new wxBoxSizer(wxVERTICAL);
     m_textCtr = new ::TextInput(this, wxEmptyString, wxEmptyString, wxEmptyString, wxDefaultPosition, wxSize(FromDIP(260), FromDIP(40)), wxTE_PROCESS_ENTER);
-    m_textCtr->GetTextCtrl()->SetSize(wxSize(-1, FromDIP(22)));
-    m_textCtr->SetMinSize(wxSize(FromDIP(260), FromDIP(40)));
-    m_sizer_main->Add(m_textCtr, 0, wxALIGN_CENTER_HORIZONTAL | wxLEFT | wxRIGHT, FromDIP(40));
+    m_form_sizer->Add(m_textCtr, 0, wxEXPAND | wxALL);
 
     m_static_valid = new Label(this, wxT(""));
     m_static_valid->Wrap(-1);
     m_static_valid->SetFont(::Label::Body_13);
-    m_static_valid->SetForegroundColour(StateColor::darkModeColorFor(ThemeColor::Warning));
-    m_sizer_main->Add(m_static_valid, 0, wxALIGN_CENTER_HORIZONTAL | wxTOP | wxLEFT | wxRIGHT, FromDIP(10));
+    m_static_valid->SetForegroundColour(StateColor::semantic(MD3::Role::Error));
+    m_form_sizer->Add(m_static_valid, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM);
 
 
     m_button_confirm = new Button(this, _L("Confirm"));
-    StateColor btn_bg_green(std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
     m_button_confirm->SetVariant(Button::Variant::Filled);
-    m_button_confirm->SetSize(wxSize(FromDIP(72), FromDIP(24)));
-    m_button_confirm->SetMinSize(wxSize(FromDIP(72), FromDIP(24)));
-    m_button_confirm->SetCornerRadius(FromDIP(12));
+    m_button_confirm->SetButtonSize(Button::Size::Medium);
     m_button_confirm->Bind(wxEVT_BUTTON, &EditDevNameDialog::on_edit_name, this);
 
-    m_sizer_main->Add(m_button_confirm, 0, wxALIGN_CENTER_HORIZONTAL | wxTOP, FromDIP(10));
-    m_sizer_main->Add(0, 0, 0, wxBOTTOM, FromDIP(38));
+    auto footer = new wxBoxSizer(wxHORIZONTAL);
+    footer->AddStretchSpacer();
+    footer->Add(m_button_confirm, 0, wxALIGN_CENTER_VERTICAL);
+    m_form_sizer->Add(footer, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM);
 
-    SetSizer(m_sizer_main);
+    SetSizer(m_form_sizer);
+    apply_form_layout();
     Layout();
     Fit();
     wxGetApp().UpdateDlgDarkUI(this);
     MD3DialogCaption::Adopt(this);
     Centre(wxBOTH);
+    // Validation updates already call Layout. When the measured label grows,
+    // grow the dialog as well so the existing confirmation remains reachable.
+    m_static_valid->Bind(wxEVT_SIZE, [this](wxSizeEvent& event) {
+        fit_validation_content();
+        event.Skip();
+    });
 }
 
 EditDevNameDialog::~EditDevNameDialog() {}
@@ -1040,10 +1040,38 @@ void EditDevNameDialog::set_machine_obj(MachineObject *obj)
         m_textCtr->GetTextCtrl()->SetValue(from_u8(m_info->get_dev_name()));
 }
 
+void EditDevNameDialog::apply_form_layout()
+{
+    const auto& metrics = MD3::Metrics::active();
+    const wxFont font = MD3::Metrics::isCompact() ? Label::Body_13 : Label::Body_14;
+    m_textCtr->SetFont(font);
+    m_textCtr->GetTextCtrl()->SetFont(font);
+    m_static_valid->SetFont(font);
+    const int height = PrepareInspectorLayout::row_height(FromDIP(metrics.row_height),
+        m_textCtr->GetTextCtrl()->GetCharHeight(), 0, FromDIP(6));
+    m_textCtr->SetMinSize(wxSize(FromDIP(MD3::Metrics::isCompact() ? 260 : 280), height));
+    for (auto* item : m_form_sizer->GetChildren()) item->SetBorder(FromDIP(metrics.padding));
+    m_button_confirm->Rescale();
+}
+
+void EditDevNameDialog::fit_validation_content()
+{
+    if (m_fitting_content || !GetSizer()) return;
+    m_fitting_content = true;
+    const wxSize required = GetSizer()->CalcMin();
+    const wxSize current = GetClientSize();
+    const wxSize target((std::max)(current.x, required.x), (std::max)(current.y, required.y));
+    if (target != current) SetClientSize(target);
+    Layout();
+    m_fitting_content = false;
+}
+
 void EditDevNameDialog::on_dpi_changed(const wxRect &suggested_rect)
 {
-    m_button_confirm->SetSize(wxSize(FromDIP(72), FromDIP(24)));
-    m_button_confirm->SetMinSize(wxSize(FromDIP(72), FromDIP(24)));
+    apply_form_layout();
+    Layout();
+    Fit();
+    fit_validation_content();
 }
 
 void EditDevNameDialog::on_edit_name(wxCommandEvent &e)
