@@ -38,7 +38,7 @@
       "highest": "#d7e1ed",
       "text": "#172434",
       "secondary": "#46576a",
-      "outline": "#718298",
+      "outline": "#6d7e94",
       "edge": "#c4d0df",
       "primary": "#146c2e",
       "onPrimary": "#ffffff",
@@ -1133,6 +1133,41 @@
           "theme": "dark"
         }
       ]
+    }
+  ],
+  "implementationScopeReference": "design/workflow-refresh/implementation-scopes.json",
+  "sourceImplementationReceipts": [
+    {
+      "commit": "f28dad52e0a848d613f661849a4fdd64f30c3a60",
+      "classification": "functional-workflow",
+      "evidence": "source-only",
+      "scope": "Native Print workspace and existing action routing",
+      "runtimeStatus": "unverified",
+      "captureStatus": "missing"
+    },
+    {
+      "commit": "b69528b150ec03fd33db79f36be16c92812bdef0",
+      "classification": "localization",
+      "evidence": "source-only",
+      "scope": "Print and navigation localization plus workspace documentation",
+      "runtimeStatus": "unverified",
+      "captureStatus": "missing"
+    },
+    {
+      "commit": "624e2ed52e2fe7afcb91961fcaefe9bb201ba15e",
+      "classification": "mixed-navigation-behavior",
+      "evidence": "source-only",
+      "scope": "Measured Notebook navigation, stable page mapping and overflow API",
+      "runtimeStatus": "unverified",
+      "captureStatus": "missing"
+    },
+    {
+      "commit": "b748affe0f687f6cfbe6068a82d32988047f790a",
+      "classification": "appearance-only",
+      "evidence": "source-only",
+      "scope": "Shared native neutral palette and compatibility mapping",
+      "runtimeStatus": "unverified",
+      "captureStatus": "missing"
     }
   ]
 }

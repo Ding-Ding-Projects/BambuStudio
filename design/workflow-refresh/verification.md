@@ -34,6 +34,12 @@ WCAG sRGB relative-luminance arithmetic for the specified default colors produce
 | On primary / primary | 6.53:1 | 7.75:1 |
 | On primary container / primary container | 13.29:1 | 7.29:1 |
 
+The initial light field outline `#718298` against the highest container `#d7e1ed` measured 2.969:1. The reviewed palette source changes it to `#6d7e94`, measuring 3.137:1 on the same background. The shared source references now use the implemented color. The dark outline is unchanged. These ratios describe default source colors, not live pixels or custom appearance values.
+
+## First implementation receipts
+
+The manifest records exact source revisions for the Print workspace (`f28dad52e0a848d613f661849a4fdd64f30c3a60`), localization (`b69528b150ec03fd33db79f36be16c92812bdef0`), navigation (`624e2ed52e2fe7afcb91961fcaefe9bb201ba15e`) and shared palette (`b748affe0f687f6cfbe6068a82d32988047f790a`). Their relevant paths and source were inspected to establish the handoff references. Their own reported checks are not rerun or upgraded here. None is a native-build, interaction, capture or visual-parity receipt. The palette is separately reversible; navigation owns API/overflow behavior and is not a simple appearance-only reversal candidate.
+
 ## Remaining proof
 
 Runtime implementation for the full surface set, no-function-loss interaction coverage, exact state fixtures, reference-viewer implementation, native text/control geometry, embedded-view layout probes, actual font metrics, keyboard/screen-reader behavior, temporal motion, localization, all supported size/scale tuples, and paired visual differences remain pending. Fonts are locally resolved by a future viewer, so byte-deterministic SVG generation alone does not establish pixel-deterministic rendering. The source boards must not be filed as production screenshot evidence.

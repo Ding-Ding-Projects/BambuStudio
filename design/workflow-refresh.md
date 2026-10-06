@@ -26,10 +26,12 @@ The decisive changes are the porcelain/slate neutral ramp, rounded workspace nav
 | Surface container highest | `#d7e1ed` | `#344557` | Pressed decoration |
 | On surface | `#172434` | `#e8eff8` | Primary text |
 | On surface variant | `#46576a` | `#b9c8da` | Supporting text |
-| Outline | `#718298` | `#899caf` | Field boundaries |
+| Outline | `#6d7e94` | `#899caf` | Field boundaries |
 | Outline variant | `#c4d0df` | `#43566a` | Group separators |
 
 Retain the six context accent roles and error/inverse roles through `MD3::resolve`, including user seed customization. New dark values must not alias the light lookup keys in `StateColor.cpp`; check that exact invariant before integration. Text contrast must be measured for actual foreground/background pairs, including state layers and user colors. Do not dark-map an already resolved color twice.
+
+The implemented light outline is deliberately darker than the initial `#718298` proposal: against the highest container `#d7e1ed`, the initial color yields 2.969:1 and the adopted `#6d7e94` yields 3.137:1. This clears the 3:1 threshold for an essential field boundary on that background. The exact shared palette source is `b748affe0f687f6cfbe6068a82d32988047f790a`; static color arithmetic does not establish rendered accessibility. Its additional dim/bright roles are light `#d6e0ec` / `#fafcff` and dark `#111821` / `#3b4c60`. Context accents, error/inverse roles and saved user overrides remain unchanged.
 
 ### Geometry and type
 
@@ -81,7 +83,16 @@ The 43 feature families and all 1,204 obligations in `native-feature-delivery.js
 5. Project, Calibration and Preferences: apply the same system to workspace files, notes/checklist/calendar, calibration sequences, all registered preference sections, parameter editors and setup wizard.
 6. Menus, dialogs and auxiliary tools: complete search/regex, palette, appearance editor, notification/history/docs/changelog, import/export, model creator, schedules, confirmations and canonical tool surfaces. Retain unfinished rows until these implementations exist.
 
-Only steps 1 and 2 have current implementation owners. The rest is an explicit integration backlog. Completion of this design does not complete those steps. Integration review must compare the actual changed-path set against the manifest and assign every uncovered destination.
+The first source implementation receipts are recorded below and in the manifest. None establishes native compilation, rendered completion, geometry or runtime behavior. The next active styling scope is product-owned embedded CSS under [issue 36](https://github.com/Ding-Ding-Projects/BambuStudio/issues/36), covering DeviceWeb styles and product-owned `resources/web` CSS. That scope does not own callbacks, network bridges, telemetry, hardware actions or third-party content. The concrete remaining native scopes are in [implementation-scopes.json](workflow-refresh/implementation-scopes.json). They are bounded work proposals, not silently assigned workers or completed surfaces.
+
+| Source revision | Source receipt | Evidence limit |
+| --- | --- | --- |
+| `f28dad52e0a848d613f661849a4fdd64f30c3a60` | Appended Print review workspace, current-plate summary, readiness and existing action routes in `MainFrame`, `WorkflowPrintPanel` and `WorkflowPrintState` | Source only; preserve original setup/confirmation semantics; no rendered proof |
+| `b69528b150ec03fd33db79f36be16c92812bdef0` | Print/navigation catalog entries and associated workspace documentation/localization check | Source only; no three-language rendering or text-fit proof |
+| `624e2ed52e2fe7afcb91961fcaefe9bb201ba15e` | `Notebook::SetWorkflowPages`, measured navigation and overflow layout | Mixed presentation/API behavior; excluded from simple appearance-only reversal |
+| `b748affe0f687f6cfbe6068a82d32988047f790a` | Shared native neutral palette, legacy alias compatibility and theme conversion | Appearance-only source unit with separate source/color checks; no native pixels |
+
+The shared palette reaches only consumers that actually resolve those roles. It does not prove that hard-coded colors, local component anatomy, panel geometry, fonts, every nested state or embedded CSS have changed. Integration review must compare each source path and state against the full manifest. Keep all 1,204 feature obligations at their existing evidence status until their own proof arrives.
 
 ## Motion, readability and supported tuples
 

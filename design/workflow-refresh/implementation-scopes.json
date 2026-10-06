@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 1,
+  "completionClaim": false,
+  "contract": "Bounded styling and layout scopes. Preserve all feature, data, callback, telemetry, printer and file behavior. New search fields require their own adjacent anchored full regex builder. A shared palette does not complete a surface.",
+  "currentScope": {
+    "id": "embedded-product-styles",
+    "status": "assigned-source-work",
+    "trackingIssue": "https://github.com/Ding-Ding-Projects/BambuStudio/issues/36",
+    "surfaces": ["home-web", "ink-web", "printer-web", "project", "monitor"],
+    "allowedBoundaries": ["Product-owned DeviceWeb style sources", "Product-owned resources/web CSS"],
+    "excludedBoundaries": ["Callbacks", "Network bridges", "Telemetry", "Hardware actions", "Third-party content", "Standalone website"],
+    "implementationStatus": "unverified",
+    "runtimeStatus": "unverified",
+    "captureStatus": "missing"
+  },
+  "nextScopes": [
+    {
+      "id": "native-shared-component-anatomy",
+      "status": "unassigned",
+      "surfaces": ["shell", "preferences", "parameters", "menus", "appearance-editor", "palette", "regex"],
+      "sourceAnchors": ["src/slic3r/GUI/Widgets/Button.cpp", "src/slic3r/GUI/Widgets/StaticBox.cpp", "src/slic3r/GUI/Widgets/SearchField.cpp", "src/slic3r/GUI/Widgets/MD3Menu.cpp"],
+      "work": "Audit registered shared controls for actual role resolution, field/button/card anatomy, density, measured labels, focus ring and state layers. Retain identifiers, input geometry and callbacks. Inventory callers that bypass shared controls before claiming coverage.",
+      "exclude": "Do not rework Notebook routing, stable IDs, print actions or global tokens owned by the integrated palette unit.",
+      "acceptance": "Control-specific before/after source review and focused checks, then real theme/density/language/scale interaction and geometry receipts when launches are authorized."
+    },
+    {
+      "id": "native-prepare-inspector-and-lists",
+      "status": "unassigned",
+      "surfaces": ["prepare", "parameters"],
+      "sourceAnchors": ["src/slic3r/GUI/ParamsPanel.cpp", "src/slic3r/GUI/OptionsGroup.cpp", "src/slic3r/GUI/GUI_ObjectList.cpp", "src/slic3r/GUI/PresetComboBoxes.cpp"],
+      "work": "Apply section hierarchy, consistent fields, local search/builder, readable preset controls, bounded inspector scrolling and measured object rows. Resolve hard-coded styling at these call sites without changing values or preset inheritance.",
+      "exclude": "No slicing, grouping-solver, preset serialization, object identity or undo changes. Plater integration points require a separate reviewed owner.",
+      "acceptance": "Prepare process/object panels remain reachable at the actual minimum size and all language/scale tuples; every existing parameter and action remains available."
+    },
+    {
+      "id": "native-renderer-tools-and-preview",
+      "status": "unassigned",
+      "surfaces": ["prepare", "preview", "model-creator"],
+      "sourceAnchors": ["src/slic3r/GUI/GLToolbar.cpp", "src/slic3r/GUI/ImGuiWrapper.cpp", "src/slic3r/GUI/IMSlider.cpp", "src/slic3r/GUI/GLCanvas3D.cpp"],
+      "work": "Map renderer-owned toolbar, legends, timeline, tooltips and selection affordances to the same hierarchy and state roles while preserving data colors and actual hit targets.",
+      "exclude": "No geometry, toolpath, slider-value, camera, selection, simulation or Model Creator algorithm changes. No arbitrary canvas crossfade.",
+      "acceptance": "Actual canvas states, tooltip bounds and temporal transitions need renderer-specific built evidence; shared native palette tests cannot stand in for it."
+    },
+    {
+      "id": "native-printer-monitor-and-farm",
+      "status": "unassigned",
+      "surfaces": ["monitor", "farm", "ink-web", "printer-web"],
+      "sourceAnchors": ["src/slic3r/GUI/StatusPanel.cpp", "src/slic3r/GUI/MonitorPage.cpp", "src/slic3r/GUI/MultiMachinePage.cpp", "src/slic3r/GUI/AmsWidgets.cpp", "src/slic3r/GUI/MediaPlayCtrl.cpp", "src/slic3r/GUI/PrintOptionsDialog.cpp"],
+      "work": "Unify native telemetry cards, printer rows, fan/camera controls, material mapping popups and print-option geometry. Show actual pending/offline states without layout jumps.",
+      "exclude": "No DeviceCore, AMS identity/mapping logic, telemetry parsing, hardware command, camera lifecycle or embedded CSS changes. Preserve the independent AMS fixes.",
+      "acceptance": "Native and embedded monitor boundaries need separate receipts; test unavailable/pending/confirmed states without asserting real hardware execution."
+    },
+    {
+      "id": "native-project-preferences-and-setup",
+      "status": "unassigned",
+      "surfaces": ["project", "preferences", "calibration", "wizard", "schedules", "smart-home"],
+      "sourceAnchors": ["src/slic3r/GUI/Project.cpp", "src/slic3r/GUI/Preferences.cpp", "src/slic3r/GUI/CalibrationPanel.cpp", "src/slic3r/GUI/CalibrationWizard.cpp", "src/slic3r/GUI/ConfigWizard.cpp", "src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp"],
+      "work": "Apply native collection/detail, settings and stepped-flow composition to every registered section and nested dialog, with measured bilingual labels and reachable footer actions. Split additional writable scopes by exact file before dispatch.",
+      "exclude": "No calibration algorithms, scheduling precedence, timezone semantics, authentication, network bridge, project serialization or shared-widget edits.",
+      "acceptance": "Explicit nested-section inventory, unchanged option/callback mapping, and real minimum-size and keyboard proof; missing canonical features remain separate incomplete obligations."
+    },
+    {
+      "id": "native-auxiliary-readers-and-overlays",
+      "status": "unassigned",
+      "surfaces": ["menus", "appearance-editor", "palette", "regex", "notifications", "history", "documentation", "changelog", "import-export", "confirmations", "canonical-tools"],
+      "sourceAnchors": ["src/slic3r/GUI/Appearance/AppearanceEditorPopover.cpp", "src/slic3r/GUI/CommandPalette.cpp", "src/slic3r/GUI/Widgets/RegexBuilderPopup.cpp", "src/slic3r/GUI/NotificationHistory.cpp", "src/slic3r/GUI/ProjectHistoryDialog.cpp", "src/slic3r/GUI/DocsBrowserDialog.cpp", "src/slic3r/GUI/ChangelogDialog.cpp", "src/slic3r/GUI/Export/ExportDialog.cpp"],
+      "work": "Complete call-site geometry and hierarchy for readers, history, palettes, editors and anchored overlays. Enumerate every nested dialog and missing implementation before splitting exact owned paths into smaller work units.",
+      "exclude": "No command registry, regex engine, restore semantics, export serializers, credential handling or destructive-confirmation behavior changes. Missing tool implementations are not supplied by a visual board.",
+      "acceptance": "Per-dialog search/builder, focus return, actual accessible state and content bounds; confirmation still requires its existing independent controls."
+    }
+  ],
+  "verificationBoundary": "All next scopes remain unassigned proposals. Source existence and shared colors never establish complete styling, functionality, localization, native compilation or rendered proof. Runtime/viewer/fixture/parity states and all existing 1,204 feature obligations remain unchanged."
+}
