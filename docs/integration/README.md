@@ -14,3 +14,5 @@ These records distinguish implemented source, focused verification, production b
 
 
 - [Historical feature acceptance snapshot, 5 October 2026](current-feature-state.md)
+
+- [Preservation and cleanup, 6 October 2026](closeout-20261006.md)

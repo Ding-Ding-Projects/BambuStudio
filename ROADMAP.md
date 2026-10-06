@@ -806,4 +806,5 @@ truth; the counts here are a snapshot.
 - [x] Create and integrity-test the complete pre-cleanup archive.
 - [ ] Preserve the symbol-workflow checkpoint remotely after workflow authorization.
 - [ ] Verify archive filename coverage and remove only eligible merged inactive candidates.
-- [ ] Diagnose the damaged working directory while retaining original bytes.
+- [x] Restore 6,131 proven zero-filled files and the index to the unchanged committed HEAD after preserving original bytes.
+- [x] Verify exact archive filename coverage and the post-preservation administrative supplement.
