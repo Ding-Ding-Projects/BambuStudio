@@ -27,4 +27,14 @@ The existing `ui-md3/tests/ams-reading-state.test.mjs` source-derived model suit
 
 Source review compares event bindings, hardware-command expressions, and the unchanged AMS model with the preserved implementation baseline. `git diff --check` validates whitespace. No full build, application launch, screenshot capture, installer execution, or printer action was performed.
 
+### DPI review corrections
+
+Independent source review found two defects in the initial appearance revision. The camera button passed an already-scaled value to `SetIconButton`, which owns its own conversion. It now receives the literal design value `32`; its four-DIP margin remains converted at the sizer boundary. At 200%, the production sizing expressions yield a 72-by-64 pixel square target and an 80-pixel total footer height including margins, rather than a 136-by-128 target overflowing that footer.
+
+The printing header formerly retained the sizer minimum calculated at construction. The shared `layout_printing_title` helper now reapplies the heading font, invalidates its measurement, calculates the larger of 40 DIP and measured text plus 16 DIP, replaces both sizer and panel minimums, invalidates the panel cache and lays it out. Construction and `msw_rescale` call the same helper; rescale also invalidates and lays out the owning printing panel. Downward scale transitions can shrink the prior minimum again.
+
+`ui-md3/tests/monitor-atlas-dpi.test.mjs` executes sizing expressions and the helper body extracted from production source. Its three tests failed against the initial revision and passed after correction. They cover camera geometry at 100%, 125%, 150%, 200%; text-height and DPI transitions in both directions; cache/font ordering; and the real construction/rescale call sites. Together with the eight AMS model tests, 11 tests pass. These tests model source geometry and lifecycle, not native window rendering.
+
+The pre-existing Control-header rescale still contains a separate double `FromDIP(PAGE_TITLE_HEIGHT)` expression in `StatusPanel::msw_rescale`. This narrow follow-up preserves it as requested for separate review. Correcting the printing header does not establish correctness of that independent Control path.
+
 Before rendered completion, verify the actual monitor, picker, print options and camera footer in English, Cantonese and bilingual modes, light/dark, comfortable/compact and 100%, 125%, 150%, 200% scale at normal and minimum supported sizes. Record measured text/control rectangles, focus/selection states, DPI and theme transitions, unavailable/pending/confirmed telemetry states, source revision, executable hash and genuine captures. Never replace that evidence with this source receipt.

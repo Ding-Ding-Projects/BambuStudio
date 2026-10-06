@@ -140,7 +140,7 @@ MediaPlayCtrl::MediaPlayCtrl(wxWindow *parent, wxMediaCtrl3 *media_ctrl, const w
     // MD3: draw the play/stop affordance as a Material Symbols glyph (coloured by
     // the button's text role) instead of the legacy media_play/media_stop PNGs.
     m_button_play->SetGlyph(MaterialIcon::PlayArrow);
-    m_button_play->SetIconButton(Button::IconShape::Square, FromDIP(32));
+    m_button_play->SetIconButton(Button::IconShape::Square, 32);
     // a11y: the play/stop toggle is the camera strip's only actionable control.
     // Keep it in the keyboard tab order (Button already maps Space/Enter to a
     // synthetic click via keyDownUp) and give the icon-only control an accessible

@@ -1213,6 +1213,19 @@ PrintingTaskPanel::~PrintingTaskPanel()
     }
 }
 
+static void layout_printing_title(wxPanel *panel, Label *label)
+{
+    // Reapply the current heading font before measuring. Both minima are physical
+    // pixels and must be replaced, including when moving to a lower-DPI display.
+    label->SetFont(Label::Head_16);
+    label->InvalidateBestSize();
+    const int height = std::max(panel->FromDIP(40), label->GetBestSize().y + panel->FromDIP(16));
+    panel->GetSizer()->SetMinSize(wxSize(-1, height));
+    panel->SetMinSize(wxSize(-1, height));
+    panel->InvalidateBestSize();
+    panel->Layout();
+}
+
 void PrintingTaskPanel::create_panel(wxWindow *parent)
 {
     wxBoxSizer *sizer                 = new wxBoxSizer(wxVERTICAL);
@@ -1223,15 +1236,13 @@ void PrintingTaskPanel::create_panel(wxWindow *parent)
 
     m_staticText_printing = new Label(m_panel_printing_title, _L("Printing Progress"));
     m_staticText_printing->Wrap(-1);
-    m_staticText_printing->SetFont(Label::Head_16);
     m_staticText_printing->SetForegroundColour(device_text_color());
 
     bSizer_printing_title->Add(m_staticText_printing, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, PAGE_TITLE_LEFT_MARGIN);
-    bSizer_printing_title->SetMinSize(wxSize(-1, std::max(PAGE_TITLE_HEIGHT, m_staticText_printing->GetBestSize().y + FromDIP(16))));
     bSizer_printing_title->Add(0, 0, 1, wxEXPAND, 0);
 
     m_panel_printing_title->SetSizer(bSizer_printing_title);
-    m_panel_printing_title->Layout();
+    layout_printing_title(m_panel_printing_title, m_staticText_printing);
     bSizer_printing_title->Fit(m_panel_printing_title);
 
     m_bitmap_thumbnail = new wxStaticBitmap(parent, wxID_ANY, m_thumbnail_placeholder.bmp(), wxDefaultPosition, TASK_THUMBNAIL_SIZE, 0);
@@ -1769,7 +1780,7 @@ void PrintingTaskPanel::msw_rescale()
 {
     m_pausing_icon->Rescale();
     m_stopping_icon->Rescale();
-    m_panel_printing_title->SetSize(wxSize(-1, PAGE_TITLE_HEIGHT));
+    layout_printing_title(m_panel_printing_title, m_staticText_printing);
     m_printing_sizer->SetMinSize(wxSize(PAGE_MIN_WIDTH, -1));
     // m_staticText_printing->SetMinSize(wxSize(PAGE_TITLE_TEXT_WIDTH, PAGE_TITLE_HEIGHT));
     m_gauge_progress->SetHeight(PROGRESSBAR_HEIGHT);
@@ -1803,6 +1814,8 @@ void PrintingTaskPanel::msw_rescale()
         m_button_clean->Rescale();
         m_button_market_retry->Rescale();
     }
+    InvalidateBestSize();
+    Layout();
 }
 
 void PrintingTaskPanel::init_bitmaps()
