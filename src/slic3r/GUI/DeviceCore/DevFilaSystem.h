@@ -60,6 +60,8 @@ public:
     std::string              id;
     std::string              ams_id; // same as id if it's EXT_SPOOL
     DevAmsType               ams_type = DevAmsType::EXT_SPOOL;
+    // Keep the display-facing type normalized; reading telemetry has a separate layout.
+    bool                    is_ams_lite_mixed = false;
     std::string              tag_uid;             // tag_uid
     std::string              setting_id;          // tray_info_idx
     std::string              filament_setting_id; // setting_id

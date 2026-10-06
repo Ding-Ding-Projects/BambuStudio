@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const read = file => readFileSync(path.join(root, file), 'utf8');
 const model = read('src/slic3r/GUI/DeviceCore/DevFilaSystem.cpp');
+const modelHeader = read('src/slic3r/GUI/DeviceCore/DevFilaSystem.h');
 const panel = read('src/slic3r/GUI/StatusPanel.cpp');
 const definitions = read('src/slic3r/GUI/DeviceCore/DevDefs.h');
 const types = Object.fromEntries([...definitions.matchAll(/^\s*(EXT_SPOOL|AMS|AMS_LITE|N3F|N3S|AMS_LITE_MIXED)\s*=\s*(\d+)/gm)]
@@ -42,6 +43,21 @@ const readBody = translate(body(model, 'bool DevAmsTray::is_reading('))
   .replace(/sGetAmsFlagBit\(this\)/g, 'bitIndex(tray, types)')
   .replace(/DevUtil::get_flag_bits/g, 'flagBits');
 const readFlag = new Function('tray', 'tray_reading_bits', 'types', 'bitIndex', 'flagBits', readBody);
+const getType = new Function('rawType', 'types',
+  translate(body(modelHeader, 'DevAmsType GetAmsType() const')).replace(/\bm_ams_type\b/g, 'rawType'));
+const isMixed = new Function('rawType', 'types',
+  translate(body(modelHeader, 'bool IsAmsLiteMixed() const')).replace(/\bm_ams_type\b/g, 'rawType'));
+const typeAssignment = model.match(/curr_tray->ams_type\s*=\s*([^;]+);/);
+assert.ok(typeAssignment, 'The real tray parser must assign its device type');
+const parsedType = new Function('ams', 'types', `return ${translate(typeAssignment[1]).replace(/curr_ams->/g, 'ams.')};`);
+const readingFlagAssignment = model.match(/curr_tray->is_ams_lite_mixed\s*=\s*([^;]+);/);
+const parsedReadingFlag = readingFlagAssignment && new Function('ams',
+  `return ${readingFlagAssignment[1].replace(/curr_ams->/g, 'ams.')};`);
+const readingFlagDefault = modelHeader.match(/bool\s+is_ams_lite_mixed\s*=\s*(false|true);/);
+const resetTray = new Function('tray', body(model, 'void DevAmsTray::reset()')
+  .replace(/\/\/[^\n]*/g, '')
+  .replace(/\b([A-Za-z_]\w*)\s*=(?!=)/g, 'tray.$1 =')
+  .replace(/(\d+\.\d+)f\b/g, '$1'));
 
 function flagBits(bits, start) {
   assert.ok(Number.isInteger(start) && start >= 0 && start < 32,
@@ -49,9 +65,18 @@ function flagBits(bits, start) {
   return Number((BigInt.asUintN(32, BigInt(bits)) >> BigInt(start)) & 1n);
 }
 
+function applyParsedType(result, type) {
+  const rawType = types[type] ?? type;
+  const ams = { GetAmsType: () => getType(rawType, types), IsAmsLiteMixed: () => isMixed(rawType, types) };
+  result.ams_type = parsedType(ams, types);
+  if (parsedReadingFlag) result.is_ams_lite_mixed = parsedReadingFlag(ams);
+}
+
 function tray(type, unit, slot) {
-  const result = { ams_type: types[type] ?? type,
+  const result = {
     get_ams_slot_id: () => ({ first: unit, second: slot }) };
+  if (readingFlagDefault) result.is_ams_lite_mixed = readingFlagDefault[1] === 'true';
+  applyParsedType(result, type);
   result.is_reading = bits => Boolean(readFlag(result, bits, types, bitIndex, flagBits));
   return result;
 }
@@ -81,6 +106,34 @@ test('mixed Lite reads its own high bit without requiring an ordinary AMS bit', 
     assert.equal(native('AMS_LITE_MIXED', 0, slot, 2 ** (24 + slot)), true);
     assert.equal(native('AMS_LITE_MIXED', 0, slot, 2 ** slot), false);
   }
+});
+
+test('the tray parser retains reading identity without changing the normalized display type', () => {
+  assert.equal(getType(types.AMS_LITE_MIXED, types), types.AMS_LITE);
+  assert.ok(readingFlagDefault && readingFlagDefault[1] === 'false', 'new trays default to ordinary reading');
+  for (const type of ['AMS', 'AMS_LITE', 'N3F', 'N3S', 'AMS_LITE_MIXED'])
+    assert.equal(tray(type, type === 'N3S' ? 128 : 0, 0).ams_type,
+      type === 'AMS_LITE_MIXED' ? types.AMS_LITE : types[type]);
+  assert.equal(tray('AMS_LITE_MIXED', 0, 0).is_ams_lite_mixed, true);
+  const parseBody = body(model, 'DevAmsTray* DevFilaSystemParser::ParseAmsTrayInfo(');
+  const assignmentAt = parseBody.indexOf('curr_tray->is_ams_lite_mixed =');
+  const holdAt = parseBody.indexOf('if (curr_tray->hold_count > 0)');
+  assert.ok(assignmentAt >= 0 && holdAt >= 0 && assignmentAt < holdAt,
+    'protocol identity updates before a retained-settings early return');
+});
+
+test('a reused tray resets mixed reading identity when its unit becomes ordinary Lite', () => {
+  const reused = tray('AMS_LITE_MIXED', 0, 0);
+  assert.equal(reused.is_reading(2 ** 24), true);
+  resetTray(reused); // Material reset retains the physical unit's protocol identity.
+  assert.equal(reused.is_ams_lite_mixed, true);
+  assert.equal(reused.is_reading(2 ** 24), true);
+  applyParsedType(reused, 'AMS_LITE');
+  assert.equal(reused.is_ams_lite_mixed, false);
+  assert.equal(reused.is_reading(2 ** 24), false);
+  assert.equal(reused.is_reading(1), true);
+  resetTray(reused);
+  assert.equal(reused.is_ams_lite_mixed, false);
 });
 
 test('ordinary AMS, Lite and 2 Pro trays remain independent', () => {

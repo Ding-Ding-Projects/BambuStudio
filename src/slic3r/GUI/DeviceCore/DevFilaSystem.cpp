@@ -118,16 +118,16 @@ static long long sGetAmsFlagBit(const DevAmsTray* tray) {
     if (ams_id < 0 || slot_id < 0) return -1;
 
     long long bit = -1;
-    if (ams_type == DevAmsType::AMS || ams_type == DevAmsType::AMS_LITE || ams_type == DevAmsType::N3F) {
+    if (ams_type == DevAmsType::AMS_LITE_MIXED || (ams_type == DevAmsType::AMS_LITE && tray->is_ams_lite_mixed)) {
+        if (slot_id >= 4) return -1;
+        bit = 24 + slot_id;
+    } else if (ams_type == DevAmsType::AMS || ams_type == DevAmsType::AMS_LITE || ams_type == DevAmsType::N3F) {
         if (slot_id >= 4) return -1;
         bit = ams_id * 4 + slot_id;
     } else if (ams_type == DevAmsType::N3S) {
         // AMS HT has one slot per unit, unlike four-slot AMS models.
         if (ams_id < 128 || slot_id != 0) return -1;
         bit = 16 + (ams_id - 128);
-    } else if (ams_type == DevAmsType::AMS_LITE_MIXED) {
-        if (slot_id >= 4) return -1;
-        bit = 24 + slot_id;
     }
 
     // MachineObject stores this telemetry in a 32-bit long on Windows, and
@@ -841,6 +841,7 @@ DevAmsTray* DevFilaSystemParser::ParseAmsTrayInfo(const json& j_tray, MachineObj
 
     curr_tray->ams_id   = curr_ams->GetAmsId();
     curr_tray->ams_type = curr_ams->GetAmsType();
+    curr_tray->is_ams_lite_mixed = curr_ams->IsAmsLiteMixed();
     curr_tray->current_extruder_id = curr_ams->GetCurrentExtruderId();
     curr_tray->binded_extruder_set = curr_ams->GetBindedExtruderSet();
     curr_tray->binded_switcher_pos = curr_ams->GetSwitcherPos();
