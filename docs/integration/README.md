@@ -12,3 +12,5 @@ These records distinguish implemented source, focused verification, production b
 - [Surface delivery](delivery-surface.md)
 - [Responsive integration](responsive-reconciliation.md)
 
+
+- [Historical feature acceptance snapshot, 5 October 2026](current-feature-state.md)

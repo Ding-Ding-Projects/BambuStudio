@@ -797,3 +797,13 @@ truth; the counts here are a snapshot.
 
 - [x] Preserve OCCT compiler path maps in parseable generated package config, verified by five real-template assertions.
 - [ ] Regenerate/install the reviewed OCCT config through the exact root build and verify application configuration proceeds.
+
+
+## Preservation and cleanup, 6 October 2026
+
+- [x] Preserve the dated 5 October feature acceptance matrix without upgrading its evidence.
+- [x] Push and read back eighteen local source continuation branches.
+- [x] Create and integrity-test the complete pre-cleanup archive.
+- [ ] Preserve the symbol-workflow checkpoint remotely after workflow authorization.
+- [ ] Verify archive filename coverage and remove only eligible merged inactive candidates.
+- [ ] Diagnose the damaged working directory while retaining original bytes.

@@ -1,5 +1,11 @@
 # Current handoff: 6 October 2026
 
+## Branch preservation pass, 6 October 2026
+
+The historical [feature acceptance snapshot](docs/integration/current-feature-state.md) is now retained alongside the newer records. Its incomplete acceptance rows remain incomplete. Eighteen unmerged local branch tips have been pushed and independently read back. Source checkpoints 7c59058ce and 02ba7a3ca preserve unfinished retention and service wiring; neither is product acceptance. Checkpoint 936174420 preserves symbol workflow work locally, but its push needs the GitHub workflow scope. The full archive passed its integrity test; filename coverage verification and cleanup remain pending. A damaged separate working directory is retained. No new release or runtime result is claimed.
+
+粵語：保存較早嘅功能驗收記錄，唔會覆蓋較新建置狀態。十八個來源分支已推送並讀回核實；未完成來源仍按未完成處理。符號流程修改暫時只在本機，等待 workflow 權限。備份完整性檢查通過，檔名覆蓋核對同清理仍未完成。
+
 ## Latest verified production and startup state
 
 The exact root build retry passed at `2026-10-06T16:43:57.0661669Z` for `cc059003d362b87d53786152ee8c28621d9c2813`. Post-run metadata-only recovery preserved the complete index tree after the preceding source-state failure. The exact root installer started at `2026-10-06T16:45:58.9532106Z` and is running; package verification remains pending.
