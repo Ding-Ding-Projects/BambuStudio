@@ -61,3 +61,36 @@ The design inventory was safely fast-forwarded to reviewed candidate `f3565c7580
 The updated source checker passed. Setting `NATIVE_DESIGN_REMOVE_RECEIPT=1` removes the workspace receipts from an in-memory fixture and produced exit 1 with `Missing incorporated source receipt`; clearing it restored a passing result. The existing feature/design ledger suite passed 9 of 9 cases. These checks protect receipt completeness, exact local ancestry and the boundary preventing a mixed layout/repair unit from becoming paint-only. They do not rerun or upgrade the implementation units' own tests.
 
 The 1,204 feature obligations and all 56 structural boards remain unchanged. No reference regeneration, production build, launch, capture or rendered acceptance occurred. `workflow-refresh.md` now ranks concrete remaining caller/subview implementation work by coverage instead of repeating the universal feature audit.
+
+## Incorporated-source reconciliation at 432eb0f7f
+
+The isolated documentation checkout fast-forwarded to immutable candidate
+`432eb0f7f2147de49479654d0f94f1929f192fa2`. The manifest and reversal ledger now
+agree on 48 exact source units across 24 families: six appearance-only, nineteen
+appearance/layout, eighteen correctness repairs, two functional-workflow, two
+verification-only and one localization unit. Four separate documentation receipts
+are ancestry-checked without being counted as additional production surface work.
+
+The 17 added units register shell/tab layout and drag/focus repairs, confirmation
+composition and insufficient-space cancellation, Control-heading DPI repair,
+selection controls and numeric allocation repair, calibration viewport/preset
+layout and height/intrinsic-width corrections, transform paint, humidity layout
+and final placement repair, and Appearance property layout/content reflow.
+Integration merges, build/bootstrap/OCCT repairs and unrelated AMS behavior are
+not appearance rollback handles. No automatic rollback is permitted.
+
+The source receipt checker passes, including ancestry, reversal classifications,
+candidate agreement and all supporting article links in both indexes. Removing
+the numeric-selection article link from its in-memory index produces exit 1 with
+`Missing incorporated article link`; removing Workspace receipts produces exit 1
+with `Missing incorporated source receipt`. The nine feature/design tests pass,
+and the deterministic-reference check still matches all 56 boards. The Cantonese
+index hash binds its current English source. Calibration viewport Cantonese stays
+inline in the real article; no separate companion is invented. Shell/tab and
+native-workflow navigation retain their currently English-only source links.
+
+The 1,204 obligations and 56 board files are byte-unchanged from this candidate.
+All runtime, reference-viewer, fixture, capture and parity truth states are
+preserved. No production source, full build, launch or publication is part of
+this reconciliation. Remaining caller, nested-dialog, calibration-result,
+device-detail, reader and renderer gaps remain explicitly open.

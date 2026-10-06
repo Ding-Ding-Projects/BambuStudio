@@ -3,6 +3,7 @@ import path from 'node:path';
 import assert from 'node:assert/strict';
 import { fileURLToPath } from 'node:url';
 import { execFileSync, spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 
 const directory = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(directory, '../..');
@@ -42,9 +43,12 @@ assert.equal(ledger.completionClaim, false);
 assert.equal(ledger.rows.length, 1204);
 const review = manifest.sourceReview;
 const reversal = read('change-ledger.json');
-const expectedFamilies = 'native-palette shared-controls fields-presets prepare preferences-project-setup renderer-preview native-monitor native-device-popups readers-overlays live-notifications workspace calibration-children setup-index embedded-palette embedded-composition workflow-navigation print-workspace print-setup'.split(' ');
+assert.equal(review.reviewedCandidate, reversal.reviewedCandidate);
+assert.equal(review.reviewedCandidate, scopes.reviewedCandidate);
+assert.equal(review.reviewedCandidate, contracts.latestSourceReview);
+const expectedFamilies = 'native-palette shared-controls fields-presets prepare preferences-project-setup renderer-preview native-monitor native-device-popups readers-overlays live-notifications workspace calibration-children setup-index embedded-palette embedded-composition workflow-navigation print-workspace print-setup shell-tabs confirmations selection-controls transform-inspector humidity-details appearance-properties'.split(' ');
 if (process.env.NATIVE_DESIGN_REMOVE_RECEIPT === '1') review.units = review.units.filter(unit => unit.family !== 'workspace');
-assert.equal(review.units.length, 31, 'Missing incorporated source receipt');
+assert.equal(review.units.length, 48, 'Missing incorporated source receipt');
 assert.deepEqual([...new Set(review.units.map(unit => unit.family))].sort(), [...expectedFamilies].sort());
 assert.equal(review.completionClaim, false);
 assert.equal(review.runtimeStatus, 'unverified');
@@ -67,8 +71,31 @@ const pureAppearance = [
   'df300fb9d93991751e840bdc586d2f770b47b9cf',
   '30031b21eedd58c56b83dc474465d47a3ccc8099',
   '8cfce63ae05d7be03823b3eb9e4b86c4488245b1',
-  'a2be7df26cd5981da2c1e50d4c64c5e3a86609b9'
+  'a2be7df26cd5981da2c1e50d4c64c5e3a86609b9',
+  '3e765ab09a7d25a1808d437034b8b0e12e67e7bb'
 ];
 assert.deepEqual(review.units.filter(unit => unit.classification === 'appearance-only').map(unit => unit.commit).sort(), pureAppearance.sort(), 'Mixed layout or repair must not become paint-only');
+assert.deepEqual(review.documentationReceipts, reversal.documentationReceipts);
+assert.equal(review.documentationReceipts.length, 4);
+for (const receipt of review.documentationReceipts) {
+  assert.equal(receipt.classification, 'localization');
+  execFileSync('git', ['merge-base', '--is-ancestor', receipt.commit, review.reviewedCandidate], {cwd: root});
+}
+const indexDirectory = 'docs/features/design-system';
+let englishIndex = fs.readFileSync(path.join(root, indexDirectory, 'README.md'), 'utf8');
+const cantoneseIndex = fs.readFileSync(path.join(root, indexDirectory, 'README.yue_HK.md'), 'utf8');
+const indexHash = createHash('sha256').update(englishIndex.replaceAll('\r\n', '\n')).digest('hex');
+assert.ok(cantoneseIndex.includes(`source-sha256: ${indexHash}`), 'Cantonese index source hash is stale');
+if (process.env.NATIVE_DESIGN_REMOVE_INDEX_LINK === '1') englishIndex = englishIndex.replaceAll('studio-atlas-selection-controls.md', 'missing-selection-article.md');
+for (const article of new Set(review.units.map(unit => unit.article))) {
+  const relative = path.posix.relative(indexDirectory, article);
+  const translated = article.replace(/\.md$/, '.yue_HK.md');
+  const cantoneseTarget = fs.existsSync(path.join(root, translated)) ? path.posix.relative(indexDirectory, translated) : relative;
+  assert.ok(englishIndex.includes(`](${relative})`), `Missing incorporated article link: ${relative}`);
+  assert.ok(cantoneseIndex.includes(`](${cantoneseTarget})`), `Missing Cantonese index source link: ${cantoneseTarget}`);
+}
+assert.ok(cantoneseIndex.includes('calibration-viewport-layout.md'));
+assert.ok(!cantoneseIndex.includes('calibration-viewport-layout.yue_HK.md'), 'Do not invent a separate calibration viewport companion');
 console.log(`Validated ${contracts.surfaces.length} explicit surface anatomy contracts and ${scopes.outsideAnchorFollowups.length} outside-anchor followups. Source inventory only; runtime and parity remain unverified.`);
 console.log(`Verified local ancestry for ${review.units.length} source receipts across ${expectedFamilies.length} families at ${review.reviewedCandidate}; no rendered acceptance.`);
+console.log('Verified four documentation receipts and all incorporated article links in both indexes; inline Cantonese remains inline.');

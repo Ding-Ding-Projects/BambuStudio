@@ -1390,7 +1390,7 @@
   "compositionReviewBase": "be5e1205dcdad8f372d2ba63f367dbd7977c29c4",
   "sourceReview": {
     "schemaVersion": 1,
-    "reviewedCandidate": "f3565c7580bebd38bcbf5c5f01e272fa5c4b6224",
+    "reviewedCandidate": "432eb0f7f2147de49479654d0f94f1929f192fa2",
     "completionClaim": false,
     "evidence": "source-incorporation-only",
     "runtimeStatus": "unverified",
@@ -1632,19 +1632,162 @@
         "summary": "Refresh cached review body bounds on reopening before centering",
         "companion": "f09f6af453b1ea2a694d81e382137afaba9cc6d7",
         "article": "docs/features/workspace/print-setup-atlas.md"
-      }
-    ],
-    "notInReviewedCandidate": [
+      },
       {
         "commit": "44cba370a948dc6653189e8c835274d2db10d0ac",
         "family": "shell-tabs",
         "classification": "appearance-layout",
-        "status": "reported-source-unit-not-incorporated",
-        "reason": "Not an ancestor of the reviewed candidate. Reported title/history paint, project strips, nested books and tab dialogs are not claimed present here."
+        "summary": "Shell/title/tab composition and bounded visible tab allocation",
+        "article": "docs/features/design-system/studio-atlas-shell-and-tabs.md"
+      },
+      {
+        "commit": "831bba8e9337c8b7aa42a1b6389111c047d99c09",
+        "family": "shell-tabs",
+        "classification": "correctness-repair",
+        "summary": "Resolve drag destinations from visible neighbor identities",
+        "article": "docs/features/design-system/studio-atlas-shell-and-tabs.md",
+        "companion": "44cba370a948dc6653189e8c835274d2db10d0ac"
+      },
+      {
+        "commit": "3570481d7b8d0a81ed77bc364fa55676a8860a1b",
+        "family": "shell-tabs",
+        "classification": "correctness-repair",
+        "summary": "Project focus and accessibility onto visible tabs and native overflow",
+        "article": "docs/features/design-system/studio-atlas-shell-and-tabs.md",
+        "companion": "44cba370a948dc6653189e8c835274d2db10d0ac"
+      },
+      {
+        "commit": "33958f9673677886c4a15f2834a1619aaa1cf738",
+        "family": "confirmations",
+        "classification": "appearance-layout",
+        "summary": "Separate scrolling affected detail from persistent authorization controls and message actions",
+        "article": "docs/features/design-system/confirmations-atlas.md"
+      },
+      {
+        "commit": "6714b1f8da313fc2ea267a8e03a9b42c25f90c78",
+        "family": "confirmations",
+        "classification": "correctness-repair",
+        "summary": "Block terminal authorization when mandatory controls cannot fit; retain cancellation",
+        "article": "docs/features/design-system/confirmations-atlas.md",
+        "companion": "33958f9673677886c4a15f2834a1619aaa1cf738"
+      },
+      {
+        "commit": "cf78247110bcbe30dc2b2fd98e3ce97a4a6fa119",
+        "family": "native-monitor",
+        "classification": "correctness-repair",
+        "summary": "Measure Control heading once across DPI transitions",
+        "article": "docs/features/design-system/monitor-atlas.md",
+        "companion": "396992cfeb7f2e337b43d133a84562c04afd1e69"
+      },
+      {
+        "commit": "b37bb7e917398685cb56d2f2f13a5abd0b47048d",
+        "family": "selection-controls",
+        "classification": "appearance-layout",
+        "summary": "Numeric stepper/editor anatomy, checkbox glyph and inset switch segments",
+        "article": "docs/features/design-system/studio-atlas-selection-controls.md"
+      },
+      {
+        "commit": "6885f674b348a7d46ec946b2aacc9da215e15066",
+        "family": "selection-controls",
+        "classification": "correctness-repair",
+        "summary": "Relayout numeric children after native size allocation while preserving caller minima",
+        "article": "docs/features/design-system/studio-atlas-selection-controls.md",
+        "companion": "b37bb7e917398685cb56d2f2f13a5abd0b47048d"
+      },
+      {
+        "commit": "7d829820017edf5acd6fa6494dd72d3a1353c56b",
+        "family": "calibration-children",
+        "classification": "appearance-layout",
+        "summary": "Measure instruction pages from their real scroll viewport",
+        "article": "docs/features/design-system/calibration-viewport-layout.md"
+      },
+      {
+        "commit": "2ea14a5ea158e3311ad7680409243d51cd35b37a",
+        "family": "calibration-children",
+        "classification": "appearance-layout",
+        "summary": "Wrap complete preset rows and advice parameter groups without changing slot identities",
+        "article": "docs/features/design-system/calibration-viewport-layout.md"
+      },
+      {
+        "commit": "6e040fe62119938e1310893c2d927ef92ca89ff8",
+        "family": "calibration-children",
+        "classification": "correctness-repair",
+        "summary": "Release stale explicit label heights before measuring shorter content",
+        "article": "docs/features/design-system/calibration-viewport-layout.md",
+        "companion": "7d829820017edf5acd6fa6494dd72d3a1353c56b"
+      },
+      {
+        "commit": "eb07dfe7e6f61f5ae5601c42a179cecd0dbbbe46",
+        "family": "calibration-children",
+        "classification": "correctness-repair",
+        "summary": "Preserve intrinsic fixed-descendant width in outer scroll extents",
+        "article": "docs/features/design-system/calibration-viewport-layout.md",
+        "companion": "7d829820017edf5acd6fa6494dd72d3a1353c56b"
+      },
+      {
+        "commit": "3e765ab09a7d25a1808d437034b8b0e12e67e7bb",
+        "family": "transform-inspector",
+        "classification": "appearance-only",
+        "summary": "Decorate existing transform fields and tooltip states without changing item or cursor geometry",
+        "article": "docs/features/design-system/transform-inspector-atlas.md"
+      },
+      {
+        "commit": "990fdaaeb6e7d92f06a726f5035062e6b80ebbd7",
+        "family": "humidity-details",
+        "classification": "appearance-layout",
+        "summary": "Measured humidity legend and scroll-body value composition with unchanged readings",
+        "article": "docs/features/design-system/humidity-details-atlas.md"
+      },
+      {
+        "commit": "81b50c8d04d7f109af8b5e72f17c3ad080d41652",
+        "family": "humidity-details",
+        "classification": "correctness-repair",
+        "summary": "Clamp the humidity popup after final measured body expansion",
+        "article": "docs/features/design-system/humidity-details-atlas.md",
+        "companion": "990fdaaeb6e7d92f06a726f5035062e6b80ebbd7"
+      },
+      {
+        "commit": "c17599d086a7b5cc5c0e1f6e47fcdb48678bf1b9",
+        "family": "appearance-properties",
+        "classification": "appearance-layout",
+        "summary": "Stack measured property labels and value/reset groups; wrap preset actions",
+        "article": "docs/features/design-system/appearance-property-pages-atlas.md"
+      },
+      {
+        "commit": "b41e37d4680ac1713e566f667b2168bf57d19c32",
+        "family": "appearance-properties",
+        "classification": "correctness-repair",
+        "summary": "Reflow preset content and scroll extent at unchanged editor dimensions",
+        "article": "docs/features/design-system/appearance-property-pages-atlas.md",
+        "companion": "c17599d086a7b5cc5c0e1f6e47fcdb48678bf1b9"
       }
     ],
+    "notInReviewedCandidate": [],
     "preservedOutsideDesign": "Build/bootstrap/packaging, diagnostics, source identity, dependency and AMS data/reading repairs are not appearance rollback candidates. Integration merge commits are not reversal handles: inspect and select the individual source unit with its companion repairs.",
-    "verificationLimit": "Local ancestry and exact changed-path inspection establish source incorporation only. Existing per-unit articles describe their own checks. No tests were silently promoted to native compilation, live interaction, captures or whole-application acceptance."
+    "verificationLimit": "Local ancestry and exact changed-path inspection establish source incorporation only. Existing per-unit articles describe their own checks. No tests were silently promoted to native compilation, live interaction, captures or whole-application acceptance.",
+    "documentationReceipts": [
+      {
+        "commit": "51235b9f479d90686b1563ed8f8ece3eefb6f764",
+        "classification": "localization",
+        "summary": "Cantonese Atlas article companions and indexes"
+      },
+      {
+        "commit": "0f034f2fed3c2b913f4c308d0130cce9eeee763f",
+        "classification": "localization",
+        "summary": "Correct Cantonese field-measurement wording"
+      },
+      {
+        "commit": "8fb54ada88eb9d92afc13b0712d412ba3bb55aa7",
+        "classification": "localization",
+        "summary": "Cantonese confirmation companion"
+      },
+      {
+        "commit": "965c6116b2dab4a8e0f6ea0ed304baa8789e55e2",
+        "classification": "localization",
+        "summary": "Cantonese transform inspector companion"
+      }
+    ],
+    "documentationBoundary": "Calibration viewport layout contains Cantonese inline. Shell/tab and native-workflow navigation articles have no separate Cantonese companion at this candidate. Indexes link the actual existing source. Documentation receipts do not advance runtime or feature obligations."
   },
   "reviewedSourceCandidate": "f3565c7580bebd38bcbf5c5f01e272fa5c4b6224"
 }

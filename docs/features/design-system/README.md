@@ -44,6 +44,10 @@ Design 3 design system.
 
 These articles record bounded source changes and their verification limits. They do not establish complete native rendering or application-wide redesign acceptance.
 
+The incorporated source inventory is pinned to `432eb0f7f2147de49479654d0f94f1929f192fa2`.
+Calibration viewport documentation includes Cantonese inline. Shell/tab and native-workflow
+navigation articles currently have no separate Cantonese companion.
+
 - [Shared controls](studio-atlas-shared-controls.md): button, card, search and menu anatomy with caller gaps.
 - [Fields and presets](studio-atlas-fields-and-presets.md): measured field geometry, validation colors and preset controls.
 - [Prepare inspector and lists](prepare-inspector-atlas.md): native inspector rows, sections and selection surfaces.
@@ -58,6 +62,16 @@ These articles record bounded source changes and their verification limits. They
 - [Live notifications](live-notifications-atlas.md): renderer-owned notification cards and preserved action targets.
 - [Embedded palette](embedded-studio-atlas.md): product-owned stylesheet colors, focus and reduced-motion rules.
 - [Embedded composition](embedded-composition-atlas.md): nine entrypoints, fourteen imports and source verification limits.
+- [Workflow navigation and palette](native-workflow-navigation.md): stable page identities, visual projection and independent palette reversal.
+- [Shell and tabs](studio-atlas-shell-and-tabs.md): measured allocation, visible-neighbor drag identities and focus/accessibility repairs.
+- [Numeric and selection controls](studio-atlas-selection-controls.md): numeric allocation lifecycle, checkbox glyphs and switch segments.
+- [Calibration viewport and presets](calibration-viewport-layout.md): measured instruction/advice text, complete preset rows and intrinsic scroll extents; English and Cantonese in one article.
+- [Confirmations and message dialogs](confirmations-atlas.md): scrolling details, persistent authorization controls and cancel-only insufficient-space behavior.
+- [Humidity details](humidity-details-atlas.md): measured legend/value rows and final popup placement repair.
+- [Transform inspector](transform-inspector-atlas.md): field state paint and hierarchy with unchanged input and item geometry.
+- [Appearance property pages](appearance-property-pages-atlas.md): stacked property/reset groups and same-size preset-content reflow.
+- [Print preparation](../workspace/print-preparation.md): real Print workspace and existing action continuations.
+- [Print setup](../workspace/print-setup-atlas.md): destination/mapping review composition and reopening bounds.
 
 ## Design source
 

@@ -175,7 +175,7 @@
     },
     {
       "id": "shell-tab-callers",
-      "status": "reported-source-not-incorporated",
+      "status": "source-incorporated-partial",
       "sourceAnchors": [
         "src/slic3r/GUI/MainFrame.cpp",
         "src/slic3r/GUI/Widgets/TabStrip.cpp",
@@ -247,7 +247,7 @@
     },
     {
       "id": "native-confirmation-and-dialogs",
-      "status": "unassigned",
+      "status": "source-incorporated-partial",
       "sourceAnchors": [
         "src/slic3r/GUI/Widgets/SuperConfirmGate.cpp",
         "src/slic3r/GUI/MsgDialog.cpp"
@@ -307,5 +307,55 @@
     }
   ],
   "verificationBoundary": "Recorded source units are incorporated at the reviewed candidate but remain partial at nested-control level. Shell/tab followup 44cba370 is not in this candidate. See the ranked remaining implementation map in workflow-refresh.md. Runtime, capture and parity states and all 1,204 obligations remain unchanged.",
-  "reviewedCandidate": "f3565c7580bebd38bcbf5c5f01e272fa5c4b6224"
+  "reviewedCandidate": "432eb0f7f2147de49479654d0f94f1929f192fa2",
+  "incorporatedFollowupArticles": [
+    {
+      "family": "shell-tabs",
+      "commit": "44cba370a948dc6653189e8c835274d2db10d0ac",
+      "article": "docs/features/design-system/studio-atlas-shell-and-tabs.md",
+      "status": "source-incorporated-partial"
+    },
+    {
+      "family": "confirmations",
+      "commit": "33958f9673677886c4a15f2834a1619aaa1cf738",
+      "article": "docs/features/design-system/confirmations-atlas.md",
+      "status": "source-incorporated-partial"
+    },
+    {
+      "family": "selection-controls",
+      "commit": "b37bb7e917398685cb56d2f2f13a5abd0b47048d",
+      "article": "docs/features/design-system/studio-atlas-selection-controls.md",
+      "status": "source-incorporated-partial"
+    },
+    {
+      "family": "calibration-children",
+      "commit": "7d829820017edf5acd6fa6494dd72d3a1353c56b",
+      "article": "docs/features/design-system/calibration-viewport-layout.md",
+      "status": "source-incorporated-partial"
+    },
+    {
+      "family": "calibration-children",
+      "commit": "2ea14a5ea158e3311ad7680409243d51cd35b37a",
+      "article": "docs/features/design-system/calibration-viewport-layout.md",
+      "status": "source-incorporated-partial"
+    },
+    {
+      "family": "transform-inspector",
+      "commit": "3e765ab09a7d25a1808d437034b8b0e12e67e7bb",
+      "article": "docs/features/design-system/transform-inspector-atlas.md",
+      "status": "source-incorporated-partial"
+    },
+    {
+      "family": "humidity-details",
+      "commit": "990fdaaeb6e7d92f06a726f5035062e6b80ebbd7",
+      "article": "docs/features/design-system/humidity-details-atlas.md",
+      "status": "source-incorporated-partial"
+    },
+    {
+      "family": "appearance-properties",
+      "commit": "c17599d086a7b5cc5c0e1f6e47fcdb48678bf1b9",
+      "article": "docs/features/design-system/appearance-property-pages-atlas.md",
+      "status": "source-incorporated-partial"
+    }
+  ]
 }
