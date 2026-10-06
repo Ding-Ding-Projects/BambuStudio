@@ -34,8 +34,8 @@ The visible route uses documented Lowlevel `run_command` with `command`, `shell`
 `cwd` and `timeout` arguments passed through `--json`. Its command invokes a bounded
 worker in this same script. The wrapper stays hidden. A short launcher that returns
 and abandons its job handle is deliberately avoided: the worker retains its unnamed
-kill-on-close job for the entire inspection. The target starts suspended, joins the
-job, and only then resumes on `WinSta0\Default`. The currently active input desktop
+kill-on-close job for the entire inspection. The target is created suspended inside
+the job through `PROC_THREAD_ATTRIBUTE_JOB_LIST`, then resumes on `WinSta0\Default`. The currently active input desktop
 must already be `Default`; the route never switches desktops. Launcher paths with
 shell metacharacters are rejected. The target receives only `--datadir <fresh-profile>`.
 
@@ -148,7 +148,7 @@ obligations. The 56 structural reference boards are not screenshots.
 
 The tests use temporary synthetic receipts, mocked native calls and synthetic PNGs.
 They exercise negative provenance, source/payload drift, incomplete transcripts,
-foreign/ambiguous windows, partial startup, timeout, job assignment before resume,
+foreign/ambiguous windows, partial startup, timeout, atomic job membership at creation,
 owned teardown, complete-probe checks and separate capture verdicts. They do not start
 the product, use Lowlevel against a real window, validate a real build receipt or prove
 Windows containment at runtime. A live review remains pending.

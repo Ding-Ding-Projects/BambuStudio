@@ -13,6 +13,9 @@
 
 ## Current review and build receipts, 6 October 2026
 
+- [x] Combine independently reviewed local inspection provenance and atomic containment repairs, pass 26 non-window checks and validate the actual immutable build receipt without launching.
+- [ ] Resolve the pending launch-scope clarification and perform genuine initial-shell inspection before expanding the nine built-review boundaries.
+
 - [x] Deliver the OCCT export repair and pass application configuration on the exact root retry at `05dd932d4`.
 - [x] Deliver exact generated-route LF identity with eight disposable Git assertions at `d4d4bb13b`.
 - [x] Record the `4147ca9ee` root build exit 1 and independently verify both subsequent nozzle compiler repairs, including real-header negative cases.

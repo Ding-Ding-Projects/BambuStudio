@@ -1,6 +1,6 @@
 ---
 translation-of: local-native-review.md
-source-sha256: 9d2a3a9e1bbdf68729c0833401aa9387bbf6f0c460606df22901ed3bc1539f38
+source-sha256: 7e7650f259c03f6a1b285b77abc72cc677af87d53c413c8e91dc6113b83cb76b
 review-status: agent-drafted
 ---
 
@@ -37,7 +37,8 @@ Python、建置工作目錄、收據同 Lowlevel CLI，唔係使用者平日用�
 可見路線使用 Lowlevel 已記錄嘅 `run_command`，透過 `--json` 傳入
 `command`、`shell`、`cwd` 同 `timeout`。隱藏嘅命令外層會執行同一份腳本
 入面有時限嘅工作程序。工作程序保留自己嘅匿名、關閉即終止程序容器，直到
-檢查同清理完成。目標先以暫停狀態建立，加入容器後先恢復執行，桌面固定係
+檢查同清理完成。目標透過 `PROC_THREAD_ATTRIBUTE_JOB_LIST` 建立嗰刻已經
+以暫停狀態置於容器內，再恢復執行，桌面固定係
 `WinSta0\Default`。目前輸入桌面本身必須已經係 `Default`，路線唔會切換
 桌面。帶命令殼特殊字元嘅啟動路徑會被拒絕。目標只接收
 `--datadir <fresh-profile>`。
@@ -120,8 +121,8 @@ Python、建置工作目錄、收據同 Lowlevel CLI，唔係使用者平日用�
 ```
 
 測試只用暫存合成收據、模擬原生呼叫同合成 PNG，覆蓋來源反例、來源及
-payload 漂移、未完整記錄、錯誤或含糊視窗身分、部分啟動、逾時、先加入
-容器後恢復、所屬清理、完整探測同分開截圖結果。測試唔會啟動產品、對真實
+payload 漂移、未完整記錄、錯誤或含糊視窗身分、部分啟動、逾時、建立嗰刻已經
+歸入容器、所屬清理、完整探測同分開截圖結果。測試唔會啟動產品、對真實
 視窗操作 Lowlevel、核實真實建置收據，亦唔證明 Windows 執行中容器行為。
 實際檢查仍然待辦。
 

@@ -1,53 +1,36 @@
 # Current continuation, 6 October 2026
 
-This task is active and incomplete. Read the [current verification report](docs/integration/build-verification-20261006.md).
+This task remains active and incomplete. The entire native application is the redesign scope, preserving every existing function, with Prepare, Preview, Print and Monitor navigation. All design, redesign implementation and review use `gpt-6-astra`. Appearance reversals must preserve functional and build repairs.
 
-## Objective and latest direction
+## Verified production candidate
 
-Deliver a complete new look across the entire native application and product-owned embedded views, preserving every existing function. Use the Prepare, Preview, Print and Monitor workflow, consistent Material Design 3 controls and readable nested surfaces. All design, redesign implementation and review use `gpt-6-astra`. The design may be reverted through reviewed appearance-only reversals, preserving functional and build fixes.
+Source: `a28944e3c14b2066ee63d14151c8aca23066d743`.
 
-Make both exact root `build.bat` and `build-installer.bat` succeed with automatic supported prerequisite setup. Verify genuine unsigned Squirrel.Windows outputs, source identity, versions and hashes. Completed work must reach verified remote `main`.
+- Exact `build.bat /s`: exit 0, `2026-10-06T12:41:43Z` to `2026-10-06T13:04:12Z`.
+- Exact `build-installer.bat /s`: exit 0, `2026-10-06T13:05:30Z` to `2026-10-06T13:18:59Z`.
+- Source was clean before and after both runs. No source or index changed during production.
+- Setup.exe: 772,747,776 bytes; SHA-256 `42f1a4fe732a937b4a7016db26d946f14bae85e9d1bc354cc39a99b522579435`.
+- Full package: `BambuStudioMD3-2.8.4814-full.nupkg`, 778,525,807 bytes; SHA-256 `629867b0d5854cafe249754d6b4fe644a70bb058f6d94f0ad46577584270432e`.
+- Independent validation matched all 13,639 SBOM components to staged and package bytes, 310 bundled Markdown articles, both compiled language catalogs, source/version metadata, RELEASES names/hashes/lengths and unsigned PE status. The generated execution stub's executable section matches the pinned Squirrel template.
+- See [the byte report](docs/integration/package-byte-verification-20261006.json) and [the detailed verification report](docs/integration/build-verification-20261006.md). Immutable transcripts and observer receipts remain in ignored local evidence.
+- No application launch, installer execution, physical printer action, fresh-machine receipt, current screenshot or release publication is claimed. Package sequence 229 is local metadata only.
 
-Application launches, installer execution, physical printer actions and manual release publication remain excluded. No current native or rendered success is claimed.
+## Source and preservation
 
-## Source and verification before this documentation commit
+Verified remote main remains `cc059003d362b87d53786152ee8c28621d9c2813`. The primary production checkout remains at `a28944e3c` so the observer receipt keeps its exact source identity.
 
-Both exact root entrypoints passed for `a28944e3c14b2066ee63d14151c8aca23066d743`: `build.bat /s` returned 0 at `2026-10-06T13:04:12Z`; `build-installer.bat /s` returned 0 at `2026-10-06T13:18:59Z`. The installer invocation ran from `2026-10-06T13:05:30Z`, lasting 13 minutes 29 seconds. Independent byte verification passed for all 13,639 SBOM files against both staged and compressed bytes, all 310 bundled articles, both compiled catalogs, source/version metadata, RELEASES hashes/lengths and the unsigned PE boundary. The generated execution stub's executable section matches the pinned Squirrel template. No installer or application execution, visual acceptance or release publication is claimed.
+The integration branch is `task/upstream-development-20261006`. Its last remotely verified record before this update is `e544feb24dc85465e894b216d563674f32a3d4e0`. Reviewed local-inspection work is combined at `b777219432f1df917fbd7638dd7f2105afc2ff1d`, with the paired containment wording corrected in this documentation update. That later tooling and its two new articles are not included in the a28944e3c installer.
 
-### Native-build milestone retained below
+The preserved source branches contain `415b213d126e9a2850f45d0a9c38c2c60d5327fe` (creation-time job membership) and `e8b7a654730882e7e614de6552b72a6ec519385f` (latest-invocation transcript binding). Both received independent review. Combined validation passes 26 non-window tests and the real immutable build receipt; launch/probe/capture remain not attempted. The source documentation check passes 144 paired feature articles and 1,296 changelog entries. No checkout, branch or stash has been deleted.
 
-Exact root `build.bat /s` succeeded with exit 0 at `2026-10-06T13:04:12Z` for `a28944e3c14b2066ee63d14151c8aca23066d743`. The observed run started at `2026-10-06T12:41:43Z`, lasting 22 minutes 29 seconds. Source was clean before and after. Native compilation/linking, pinned renderer staging and the automation companion completed. Exact `build-installer.bat /s` is now running against the same unchanged source; installer production and byte verification are still pending. No application launch, installed-copy behavior or rendered acceptance is claimed.
+## Remaining work and active boundary
 
-### Earlier results retained for recovery
+A structured clarification is pending: the recreated goal prohibits application launches, while later direction requests the complete redesign and earlier specifies the visible desktop. Do not infer approval from elapsed time. Build and source work are authorized; live inspection waits for that answer. Installer execution, physical printer actions and manual release publication remain excluded.
 
-The exact root build at `4147ca9eeb0004f7e18b4a2f5a8c6cb190975d21` ended with exit 1 at `2026-10-06T12:30:40Z`, after 1 hour 26 minutes 18 seconds from source pinning. The earlier three compiler causes did not recur. The remaining diagnostics were the nozzle-card helpers declared on the wrong class and the nozzle status icon calling an unsupported Button member. Reviewed repairs `a913ae69cb250862e55143949043da964c527d04` and `7b70048ed946bf128463789a8f729bf1ac11c4b6` are incorporated in `e78328d15b6bcaf97d73568c26f70f64494735b9`. Independent real-header MSVC checks passed, with deliberate C2039 negative cases. Full native production verification remains pending. No source or index changed during the completed producer.
+1. After the launch scope is resolved, use the reviewed local route with the immutable successful build receipt and explicit visible-desktop selection. Never invent a hosted environment or installation receipt.
+2. Establish initial shell identity, actual geometry and genuine captures, then cover the nine remaining built-review boundaries in `design/workflow-refresh/implementation-scopes.json`. The initial-shell route does not cover them all.
+3. Repair concrete findings through bounded Astra lanes, preserve functions, rebuild changed shipping source and repeat the relevant actual tuple. No current rendered parity is established.
+4. Preserve the 1,204 functional-obligation truth states and 56 structural boards. They are not runtime evidence. Hardware/account-dependent variants need genuine fixtures or explicit unavailable-state evidence.
+5. Integrate only completed, verified work into main and verify its remote ref. Retain unfinished work. Cleanup requires ownership, archive, preservation and ancestry proof.
 
-- Verified remote `main`: `cc059003d362b87d53786152ee8c28621d9c2813`.
-- Combined reviewed source: `a42c09977ae2d123b9a44dec7d590ab315ec2706`. The completed exact root producer was pinned to `4147ca9eeb0004f7e18b4a2f5a8c6cb190975d21`, recorded at `2026-10-06T11:04:22Z`. Later changes are documentation and a language-checker repair in separate checkouts.
-- Last exact root build: `05dd932d4de51384742375cb277d51d19e97039f`, started `2026-10-06T08:58:03Z`, ended with exit 1 at `2026-10-06T10:26:28Z`. Configuration and DeviceWeb completed before three native GUI compiler causes. No source/index mutation occurred during the run; the generated route bytes are preserved before reconciliation.
-- Retained diagnostic: generated `OpenCASCADEConfig.cmake:46` exported raw quoted/backslash compiler path mappings and failed with invalid character escape `\U`. That source-template/replay repair is delivered and configuration passed. The completed run predates the later exact-path LF rule for generated route identity; include that rule in the next reconciled candidate.
-- Native stdout/stderr capture: 12 independently rerun assertions. Child-only MSBuild node lifetime: 5 independently rerun fixture assertions. Worker budget: 21; application cache: 14.
-- Reviewed source now includes shared controls/fields, Prepare, Preferences, Monitor and device popups, Preview rendering, readers, notifications, Workspace reflow, setup/calibration, embedded CSS and Print continuation/reopen sizing.
-- Latest independent source runs: 8 Workspace cases, 17 setup/calibration cases, 2 gallery cases, and 2 Print fixtures with 10 lifecycle plus 106 geometry assertions.
-- Shell drag/focus, confirmation, selection controls, Appearance content reflow, humidity placement, calibration result tables and device-name validation repairs are incorporated after independent review. Sixty-nine source receipts across 33 families and five documentation receipts are recorded at the explicit 4147ca9ee design snapshot. All 1,204 obligation states remain unchanged.
-- The prior embedded accessibility suite has 3 passes and one established baseline inline-handler expectation mismatch. No passing whole-suite claim.
-- No installer production, execution, current runtime interactions or current screenshots. Existing static references are design material only.
-- The failed native run reported StaticBox C2397, printing-title C2664 at two calls and unsupported spacer C2039. All three reviewed repairs are incorporated and independently pass focused compiler checks, including actual wx headers. The subsequent production retry included these repairs and the reviewed catalog; it ended with the two nozzle diagnostics recorded above.
-- All 50 documentation findings are repaired. The complete strict language check passes for 8,102 native entries, 7,109 drafts, 143 articles, 1,296 changelog entries, 212 DeviceWeb resources, 282 legacy keys, 334 keyed elements and 18 interface-language tests. Repair `0625de0d2` also passes three production-AST cases on actual PowerShell 5.1, retaining strict rejection of real missing entries.
-- Shared framing for twelve tool inspectors, Regex/Export details and the shell/tab Cantonese companion are incorporated. Three framing, nine reader and seven overlay checks pass independently. The connection/send-dialog disclosure corrections are incorporated with the independent checks recorded below.
-- A tracked-text publication scan at `24aff6625` covered 11,556 files. Both halves of its 142 candidate files were contextually reviewed with no confirmed violation; see the dedicated report for binary, submodule and external-surface exclusions.
-- AMS drying controls, troubleshooting disclosure ownership and nozzle selection/update presentation are incorporated. Ten source checks, five compiled button cases and three compiled owner/state cases passed independently. Shared ListBox and connection/send repairs are incorporated. Independent checks pass nine list source cases, four list geometry cases (24,088 assertions), six hover cases (48 assertions), and three continuation tests (172 owner assertions).
-- Reviewed native compiler repairs `ac04eda5` (actual printing-title widget type) and `9bb8eeb7` (supported spacer API) are incorporated and independently compile against the real configured wx headers. Full native production verification remains pending.
-
-## Preservation and remaining work
-
-The owning integration branch is `task/upstream-development-20261006`. Its latest remotely verified integration source before this documentation is `3ce3a350d0b29af9f10af388b9a2f67a1a04775d`. The local inspection lane is preserved separately at `415b213d126e9a2850f45d0a9c38c2c60d5327fe`; its transcript repair remains separate until reviewed. This new installer-result record requires its own push proof. Individual active branches and linked checkouts remain retained. No branch/worktree deletion has been performed.
-
-1. Preserve the verified native and package receipts. Complete independent review of the local inspection route and its two bounded repairs. Resolve the pending launch-scope clarification before any live inspection. Catalog repair `7a681fd0f` and empty-report repair `0625de0d2` are reviewed; strict language and terminology checks pass. The raw scroll/table-owner repairs pass 29 integration and nine preservation checks. After the build terminates, reconcile later reviewed documentation/checker changes before packaging and retain valid caches.
-2. Continue current documentation links/receipts and any concrete native compiler repairs; retain all actions, stable identities and authorization requirements. Default wheel-fixture discovery is complete at the source/non-window level.
-3. Complete the actual surface inventory and translated/indexed documentation without treating shared palette changes as whole-interface delivery.
-4. Both exact entrypoints and independent package-byte checks now pass at `a28944e3c`; retain the source boundary and do not infer runtime success.
-5. Obtain a concrete permitted route for built visual acceptance before claiming appearance, accessibility, motion or layout completion.
-6. Integrate completed verified units into `main`, prove the remote ref, and retain incomplete work. Cleanup requires ownership, archive, preservation and ancestry proof.
-
-All eleven current issues and all sixteen upstream branch tips have been inspected. Reuse their recorded dispositions rather than replaying historical integrations or adopting unrelated backlog.
+The goal remains active. Both root build outcomes are verified, but the complete visual objective and its default-branch delivery are unfinished. Eleven project issues and all sixteen upstream branch tips have already been inspected; do not replay historical integrations or adopt unrelated backlog. The latest project and canonical-instruction issue scans were unchanged. Hosted workflows remain disabled; no green CI claim is made.

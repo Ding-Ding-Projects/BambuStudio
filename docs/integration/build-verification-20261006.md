@@ -2,6 +2,10 @@
 
 **Status: both exact root entrypoints and independent package-byte verification passed. Application-runtime and rendered acceptance remain unverified.**
 
+## Later local-inspection tooling
+
+Local inspection route `0a02f1a` required two independently confirmed repairs: `415b213d` establishes process-container membership during creation; `e8b7a654` binds all production records to the latest completed invocation. Combined source `b777219432f1df917fbd7638dd7f2105afc2ff1d` passes 26 non-window tests and validates the actual immutable a28944e3c receipt. No live route ran. The paired article's containment sentence is aligned in this update. The source documentation check passes 144 paired articles and 1,296 changelog entries; the two new local-review articles were added after the installer candidate and are not claimed in its 310-article bundle. The saved no-launch boundary and earlier visible-desktop request are awaiting structured clarification.
+
 ## Successful installer production and byte verification
 
 Both exact root entrypoints passed for `a28944e3c14b2066ee63d14151c8aca23066d743`: `build.bat /s` returned 0 at `2026-10-06T13:04:12Z`; `build-installer.bat /s` returned 0 at `2026-10-06T13:18:59Z`. The installer invocation ran from `2026-10-06T13:05:30Z`, lasting 13 minutes 29 seconds. Independent byte verification passed for all 13,639 SBOM files against both staged and compressed bytes, all 310 bundled articles, both compiled catalogs, source/version metadata, RELEASES hashes/lengths and the unsigned PE boundary. The generated execution stub's executable section matches the pinned Squirrel template. No installer or application execution, visual acceptance or release publication is claimed.

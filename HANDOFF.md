@@ -1,6 +1,10 @@
 # Current handoff: 6 October 2026
 
-## Current source and verification boundary
+## Current continuation boundary
+
+Both exact root entrypoints and independent package-byte verification passed at `a28944e3c14b2066ee63d14151c8aca23066d743`. The latest authoritative continuation is [CLOSEOUT_PROMPT.md](CLOSEOUT_PROMPT.md). Main remains `cc059003d`; the complete redesign still lacks current rendered acceptance. The local initial-shell route has both independently reviewed repairs combined at `b777219432f1df917fbd7638dd7f2105afc2ff1d`, plus the paired documentation correction in this update. All 26 non-window checks and read-only validation of the actual immutable build receipt pass. The source documentation inventory now has 144 paired articles; the earlier a28944e3c package contains 310 total Markdown articles and does not contain the two new local-review articles. The launch-scope clarification remains pending; no application or installer has been executed.
+
+## Earlier source and verification records
 
 Both exact root entrypoints passed for `a28944e3c14b2066ee63d14151c8aca23066d743`: `build.bat /s` returned 0 at `2026-10-06T13:04:12Z`; `build-installer.bat /s` returned 0 at `2026-10-06T13:18:59Z`. The installer invocation ran from `2026-10-06T13:05:30Z`, lasting 13 minutes 29 seconds. Independent byte verification passed for all 13,639 SBOM files against both staged and compressed bytes, all 310 bundled articles, both compiled catalogs, source/version metadata, RELEASES hashes/lengths and the unsigned PE boundary. The generated execution stub's executable section matches the pinned Squirrel template. No installer or application execution, visual acceptance or release publication is claimed.
 
