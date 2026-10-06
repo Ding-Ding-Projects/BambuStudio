@@ -5,6 +5,8 @@ import importlib.util
 import io
 import json
 from pathlib import Path
+import subprocess
+import sys
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -157,6 +159,34 @@ class TupleTests(unittest.TestCase):
             dump.write_text('{"kind": NaN}', encoding="utf-8")
             with redirect_stdout(io.StringIO()) as output:
                 self.assertEqual(tuples.main(arguments + ["--probe", str(dump)]), 1)
+
+    def test_cli_diagnostics_never_reflect_private_paths(self):
+        marker = "synthetic-private-path-marker-52f20"
+        with tempfile.TemporaryDirectory() as directory:
+            private_path = Path(directory) / marker / "missing.json"
+            base = ["compare", "--requested", str(private_path), "--pid", "7", "--hwnd", "20", "--tag", "fixture"]
+            cases = [(base, "input-unreadable"),
+                     (base + ["--probe", str(private_path)], "input-unreadable"),
+                     (base + ["--unknown", str(private_path)], "invalid-arguments"),
+                     (base + ["--pid", str(private_path)], "invalid-arguments")]
+            private_path.parent.mkdir()
+            for arguments, category in cases:
+                with self.subTest(category=category, arguments=arguments):
+                    result = subprocess.run([sys.executable, str(SCRIPT), *arguments],
+                                            capture_output=True, text=True, timeout=10)
+                    self.assertEqual(result.returncode, 1)
+                    self.assertNotIn(marker, result.stdout + result.stderr)
+                    self.assertNotIn(directory, result.stdout + result.stderr)
+                    self.assertEqual(result.stderr, "")
+                    self.assertEqual(json.loads(result.stdout),
+                                     {"status": "invalid", "acceptance": False, "reason": category})
+            private_path.write_text('{"' + marker + '":NaN}', encoding="utf-8")
+            result = subprocess.run([sys.executable, str(SCRIPT), *base],
+                                    capture_output=True, text=True, timeout=10)
+            self.assertEqual(result.returncode, 1)
+            self.assertEqual(result.stderr, "")
+            self.assertNotIn(marker, result.stdout)
+            self.assertEqual(json.loads(result.stdout)["reason"], "invalid-input")
 
 
 if __name__ == "__main__":

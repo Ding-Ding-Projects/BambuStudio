@@ -1,6 +1,6 @@
 ---
 translation-of: native-review-tuples.md
-source-sha256: 21eba587553b43c049dd6e33cd99f5a16b7e1124e37c9e544a3afb95fce8f1d7
+source-sha256: ad8324d31838ebf706395eb7e0dbefcac1361fe56862a4606ae3d9540badbffb
 review-status: agent-drafted
 ---
 
@@ -58,6 +58,11 @@ python scripts/md3/review-tuples.py compare --requested requested.json --probe n
 單一原生探針唔足夠，工具唔會偽造 DOM 量度、畫面、來源身分或收據。
 輸入身分只供關聯核對，唔係當下擁有權證明。
 
+無效輸入診斷只包含固定分類：`invalid-arguments`、`input-unreadable` 或
+`invalid-input`。參數解析同讀檔失敗都唔會將輸入值、私人路徑、原始例外文字
+或檔案內容反映到 stdout 或 stderr。分類只指出需要檢查嘅輸入階段，
+唔暴露觀察檔案位置；詳細例外物件只留喺內部。
+
 ## 幾何同目前缺乏嘅觀察
 
 一般尺寸係 1200 × 800 DIP。比較目標乘以觀察比例後嘅原生客戶區尺寸，
@@ -102,3 +107,5 @@ python scripts/md3/review-tuples.py compare --requested requested.json --probe n
 `python -m unittest discover -s scripts/md3/tests -p test_review_tuples.py -v`
 核對 1,728 行清單、現有驗證器重用、數值拒絕、身分及完整性、個別不符同缺乏觀察。
 測試全部用離線合成輸入，唔會產生執行、視覺或硬件證據。
+實際 CLI 子程序回歸會用合成私人路徑標記，核對要求檔／探針檔不存在、
+參數無效同內容格式錯誤時都唔會輸出標記。

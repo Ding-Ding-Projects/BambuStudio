@@ -159,8 +159,14 @@ def read_text(path):
     return path.read_text(encoding="utf-8-sig")
 
 
+class RedactedArgumentParser(argparse.ArgumentParser):
+    def error(self, message):
+        # argparse diagnostics can contain argument values, including private paths.
+        raise argparse.ArgumentError(None, "invalid-arguments")
+
+
 def main(argv=None):
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = RedactedArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
     commands.add_parser("inventory")
     comparison = commands.add_parser("compare")
@@ -169,8 +175,8 @@ def main(argv=None):
     comparison.add_argument("--pid", type=int, required=True)
     comparison.add_argument("--hwnd", type=int, required=True)
     comparison.add_argument("--tag", required=True)
-    args = parser.parse_args(argv)
     try:
+        args = parser.parse_args(argv)
         if args.command == "inventory":
             output = {"kind": "requested-review-inventory", "acceptance": False, "tuples": inventory()}
         else:
@@ -179,9 +185,14 @@ def main(argv=None):
                              pid=args.pid, hwnd=args.hwnd, tag=args.tag)
         print(json.dumps(output, ensure_ascii=False, allow_nan=False, indent=2))
         return 0 if args.command == "inventory" else 2 if output["status"] == "mismatch" else 3
-    except (ValueError, OSError, KeyError, TypeError, OverflowError) as error:
-        print(json.dumps({"status": "invalid", "acceptance": False, "reason": str(error)}))
-        return 1
+    except argparse.ArgumentError:
+        reason = "invalid-arguments"
+    except OSError:
+        reason = "input-unreadable"
+    except (ValueError, KeyError, TypeError, OverflowError):
+        reason = "invalid-input"
+    print(json.dumps({"status": "invalid", "acceptance": False, "reason": reason}))
+    return 1
 
 
 if __name__ == "__main__":

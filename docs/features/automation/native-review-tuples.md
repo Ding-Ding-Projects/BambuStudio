@@ -40,6 +40,12 @@ returns pending with `nativeProbe` unavailable. Standard output is JSON; the hel
 writes no files. Exit 0 means inventory generation only; 1 means invalid input;
 2 means a known mismatch; 3 means pending observations. None means visual acceptance.
 
+Invalid-input diagnostics contain only fixed categories: `invalid-arguments`,
+`input-unreadable` or `invalid-input`. Argument-parser and file-read failures never
+echo supplied values, private paths, raw exception text or file contents to stdout
+or stderr. The categories identify which input stage needs attention without exposing
+the observation's location. Detailed exception objects remain internal.
+
 The comparison reads the existing native NDJSON format documented in
 [Runtime layout probe](../design-system/layout-probe.md). It requires exactly one
 header, one matching shown top-level target, the final `end` record, exact PID/tag
@@ -119,5 +125,7 @@ names and current target identities. Do not replay coordinates from a historical
 `python -m unittest discover -s scripts/md3/tests -p test_review_tuples.py -v`
 checks the 1,728-row inventory, reuse of the current validator, numeric refusal,
 identity/completeness checks, individual mismatches and unavailable measurements.
+An actual CLI subprocess regression uses a synthetic private-path marker to verify
+redaction for missing requested/probe files, invalid arguments and malformed content.
 All fixtures are synthetic, offline inputs. No runtime, visual or hardware evidence
 is produced by those tests.
