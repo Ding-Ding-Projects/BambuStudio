@@ -769,3 +769,6 @@ truth; the counts here are a snapshot.
 
 - [x] Capture both native producer streams concurrently with exact exit propagation, verified by 12 focused diagnostics assertions.
 - [ ] Retry the exact root build after review and establish the application configure cause from retained stderr; the 2026-10-06T08:15:46Z cause remains unproved.
+
+- [x] Disable MSBuild node reuse in the producer child environment, with five inherited-pipe/exit/environment assertions.
+- [ ] Verify the reviewed no-reuse producer through an exact root build; existing production pipe ownership remains inferred.

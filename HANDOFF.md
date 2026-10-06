@@ -3065,3 +3065,21 @@ worker-budget and application cache fixtures pass 21 and 14 assertions.
 These are fixture checks, not a production retry or a successful application
 build. The next owner must review the change and retry the exact root entrypoint
 to obtain the missing diagnostic before deciding any application repair.
+
+## Native pipe ownership, 2026-10-06
+
+During the root build at 5e3f28274, the transcript stopped updating at
+2026-10-06T08:40:14Z after final dependency custom rules. A read-only sample
+found MSBuild PID 856 (created 08:39:52Z) alive with parent PID 10436 absent,
+no live CMake process, and the elevated PowerShell processes still alive.
+Production handle ownership was not inspected, so this does not directly prove
+which process holds the pipe. A disposable native fixture does prove the exact
+invoker hazard: parent exit 7 with both redirected streams pending until a
+self-expiring descendant releases inherited handles.
+
+The producer now forwards MSBUILDDISABLENODEREUSE=1 in its child's environment,
+as documented by Microsoft for disabling retained MSBuild nodes. The caller
+setting is preserved. Five focused ownership assertions pass; the prior source
+fails the forwarding assertion. The existing 12 stream/exit/argument assertions
+remain green. No production process was killed, restarted or mutated. Parent
+review and an exact root retry remain necessary to verify this production route.

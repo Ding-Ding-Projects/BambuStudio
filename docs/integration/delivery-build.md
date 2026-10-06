@@ -21,6 +21,15 @@ pipe capacity, empty arguments, spaces, quotes, trailing backslashes and Unicode
 The former direct-native route fails the stderr transcript assertion. Cross-stream
 ordering is not guaranteed; each stream preserves its own line order. Missing
 historical output does not establish a production failure's underlying cause.
+Each producer child receives `MSBUILDDISABLENODEREUSE=1`. Reusable MSBuild nodes
+can inherit redirected pipe handles and retain them after CMake exits, preventing
+the transcript reader from reaching EOF. The setting is confined to the child
+environment and inherited by nested builds; it does not kill processes or change
+the caller's setting. Microsoft's [MSBuild environment reference](https://github.com/dotnet/msbuild/blob/main/documentation/wiki/MSBuild-Environment-Variables.md)
+documents this supported no-reuse route. Five native fixture assertions prove
+parent exit with still-open descendant pipes, child-only environment forwarding,
+and unchanged native exit status. The descendant expires itself. The fixture
+does not establish the handle ownership of any existing production process.
 OpenCV applies its four source patches independently through
 `cmake/modules/ApplyPatchesIdempotently.cmake`. A forward check permits an apply;
 a reverse check proves a patch already applied. Neither state stops with both
