@@ -3,12 +3,16 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
 import test from 'node:test';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const read = file => fs.readFileSync(path.join(root, file), 'utf8').replaceAll('\r\n', '\n');
 const digest = text => createHash('sha256').update(text).digest('hex');
-const spin = read('src/slic3r/GUI/Widgets/SpinInput.cpp');
+const sourceRevision = process.argv.indexOf('--source-revision');
+const spin = sourceRevision < 0 ? read('src/slic3r/GUI/Widgets/SpinInput.cpp') :
+    execFileSync('git', ['show', `${process.argv[sourceRevision + 1]}:src/slic3r/GUI/Widgets/SpinInput.cpp`],
+        { cwd: root, encoding: 'utf8' }).replaceAll('\r\n', '\n');
 const check = read('src/slic3r/GUI/Widgets/CheckBox.cpp');
 const toggle = read('src/slic3r/GUI/Widgets/SwitchButton.cpp');
 export function body(source, name) {
@@ -29,13 +33,22 @@ if (extract >= 0) {
     const destination = path.resolve(process.argv[extract + 1]);
     fs.mkdirSync(destination, { recursive: true });
     fs.writeFileSync(path.join(destination, 'atlas_selection_geometry.inc'),
-        body(spin, 'struct AtlasSpinLayout') + ';\n' + body(spin, 'AtlasSpinLayout atlasSpinLayout('));
+        body(spin, 'struct AtlasSpinLayout') + ';\n' + body(spin, 'AtlasSpinLayout atlasSpinLayout(') + '\n' +
+        body(spin, 'struct AtlasSpinAllocation') + ';\n' + body(spin, 'AtlasSpinAllocation atlasSpinAllocation('));
+    fs.writeFileSync(path.join(destination, 'atlas_selection_lifecycle.inc'),
+        body(spin, 'void SpinInput::onSize(') + '\n' + body(spin, 'void SpinInput::layoutChildren('));
 }
 
 function preserved(sources) {
     const fixture = JSON.parse(read('tests/native_controls/atlas_selection_preserved.json'));
-    for (const entry of fixture.functions)
-        assert.equal(digest(body(sources[entry.file], entry.name)), entry.sha256, entry.name);
+    for (const entry of fixture.functions) {
+        let method = body(sources[entry.file], entry.name);
+        // Only the post-child presentation connection is new. All original
+        // construction, validators, callbacks and initial-value work stays exact.
+        if (entry.name === 'void SpinInput::Create(')
+            method = method.replace('    m_requested_minimum_dip = ToDIP(size);\n    Bind(wxEVT_SIZE, &SpinInput::onSize, this);\n', '');
+        assert.equal(digest(method), entry.sha256, entry.name);
+    }
     assert.equal(digest(sources['SwitchButton.cpp'].slice(sources['SwitchButton.cpp'].indexOf('#if wxUSE_ACCESSIBILITY\nclass SwitchBoard'))), fixture.otherClasses);
 }
 
@@ -53,15 +66,37 @@ function layoutContract(source) {
     assert(size.includes('dc.SetFont(GetFont())'));
     assert(size.includes('dc.SetFont(text_ctrl->GetFont())'));
     assert(size.includes('atlasSpinLayout('));
-    assert(size.includes('SetMinSize({layout.minimum_width'));
-    assert(size.includes('text_ctrl->SetSize({layout.entry_width'));
+    assert(size.includes('SetMinSize({std::max(requested.x, layout.minimum_width)'));
+    assert(size.includes('layoutChildren()'));
     assert(body(source, 'void SpinInput::Rescale(').includes('RescaleDefaultCornerRadius()'));
     assert(body(source, 'void SpinInput::SetCornerRadius(').includes('StaticBox::SetCornerRadius(radius)'));
 }
 test('numeric field measures actual fonts and preserves explicit caller radii', () => layoutContract(spin));
 test('layout guard rejects missing editor measurement and minimum-width reporting', () => {
     assert.throws(() => layoutContract(spin.replace('dc.SetFont(text_ctrl->GetFont())', 'dc.SetFont(GetFont())')));
-    assert.throws(() => layoutContract(spin.replace('SetMinSize({layout.minimum_width', 'SetMinSize({GetSize().x')));
+    assert.throws(() => layoutContract(spin.replace('SetMinSize({std::max(requested.x, layout.minimum_width)', 'SetMinSize({GetSize().x')));
+});
+
+function lifecycleContract(source) {
+    const create = body(source, 'void SpinInput::Create(');
+    const bind = 'Bind(wxEVT_SIZE, &SpinInput::onSize, this)';
+    assert(create.includes(bind));
+    assert(create.indexOf(bind) > create.indexOf('button_dec = createButton(false)'));
+    const resize = body(source, 'void SpinInput::onSize(');
+    assert(resize.includes('layoutChildren()'));
+    assert(resize.includes('event.Skip()'));
+    const layout = body(source, 'void SpinInput::layoutChildren(');
+    assert(layout.includes('GetClientSize()'));
+    assert(layout.includes('if (m_layout_children) return'));
+    assert(layout.includes('m_layout_children = false'));
+    assert(!layout.includes('StaticBox::SetSize'));
+    assert(!layout.includes('SetMinSize'));
+    assert(!layout.includes('messureSize()'));
+}
+test('native size connection follows child construction and only positions allocated children', () => lifecycleContract(spin));
+test('lifecycle guard rejects removal of the size connection or owner resize recursion', () => {
+    assert.throws(() => lifecycleContract(spin.replace('Bind(wxEVT_SIZE, &SpinInput::onSize, this)', 'MissingSizeConnection()')));
+    assert.throws(() => lifecycleContract(spin.replace('const wxSize allocated = GetClientSize();', 'StaticBox::SetSize(GetClientSize());')));
 });
 
 test('bilingual fitting, caller overrides and bitmap minimum remain connected', () => {

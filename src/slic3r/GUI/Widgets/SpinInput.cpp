@@ -28,6 +28,30 @@ AtlasSpinLayout atlasSpinLayout(int width, int height, int text_height, int digi
     return {width, height, minimum, entry_x, label_x - label_gap - entry_x,
             label_x, step_width, std::max(1, (height - 2 * padding) / 2)};
 }
+
+struct AtlasSpinAllocation {
+    int entry_x, entry_y, entry_width, entry_height;
+    int step_x, increment_y, decrement_y, step_width, step_height;
+};
+
+// Position within the actual client allocation, including a forced allocation
+// below the published minimum. This function never grows the owning window.
+AtlasSpinAllocation atlasSpinAllocation(int width, int height, int text_height,
+                                       int label_width, int padding, int step_width)
+{
+    width = std::max(0, width);
+    height = std::max(0, height);
+    const int pad_x = std::min(padding, width / 2);
+    const int pad_y = std::min(padding, height / 2);
+    step_width = std::min(step_width, std::max(0, width - 2 * pad_x));
+    const int entry_x = std::min(width, 2 * pad_x + step_width);
+    const int label_gap = label_width > 0 ? pad_x : 0;
+    const int entry_width = std::max(0, width - pad_x - label_width - label_gap - entry_x);
+    const int entry_height = std::min(text_height, height - 2 * pad_y);
+    const int step_height = (height - 2 * pad_y) / 2;
+    return {entry_x, (height - entry_height) / 2, entry_width, entry_height,
+            pad_x, pad_y, height - pad_y - step_height, step_width, step_height};
+}
 } // namespace
 
 wxDEFINE_EVENT(EVT_SPINCTRL_TEXT, wxCommandEvent);
@@ -125,6 +149,8 @@ void SpinInput::Create(wxWindow *parent,
     if (text.ToLong(&initialFromText)) initial = initialFromText;
     SetRange(min, max);
     SetValue(initial);
+    m_requested_minimum_dip = ToDIP(size);
+    Bind(wxEVT_SIZE, &SpinInput::onSize, this);
     messureSize();
 }
 
@@ -155,6 +181,7 @@ void SpinInput::SetTextColor(StateColor const &color)
 
 void SpinInput::SetSize(wxSize const &size)
 {
+    m_requested_minimum_dip = ToDIP(size);
     StaticBox::SetSize(size);
     Rescale();
 }
@@ -277,18 +304,39 @@ void SpinInput::messureSize()
     dc.SetFont(text_ctrl->GetFont());
     const int padding = FromDIP(MD3::Metrics::isCompact() ? 3 : 4);
     const wxSize textSize = text_ctrl->GetBestSize();
+    m_editor_best = textSize;
     const auto layout = atlasSpinLayout(GetSize().x, GetSize().y, textSize.y,
         dc.GetTextExtent("0").x + FromDIP(2), labelSize.x, labelSize.y,
         padding, FromDIP(MD3::Metrics::isCompact() ? 18 : 20));
-    StaticBox::SetSize({layout.width, layout.height});
-    SetMinSize({layout.minimum_width, std::max(textSize.y, labelSize.y) + 2 * padding});
-    text_ctrl->SetSize({layout.entry_width, textSize.y});
-    text_ctrl->SetPosition({layout.entry_x, (layout.height - textSize.y) / 2});
+    const wxSize requested = FromDIP(m_requested_minimum_dip);
+    SetMinSize({std::max(requested.x, layout.minimum_width),
+        std::max(requested.y, std::max(textSize.y, labelSize.y) + 2 * padding)});
+    StaticBox::SetSize({std::max(layout.width, GetMinWidth()), std::max(layout.height, GetMinHeight())});
+    layoutChildren();
+}
+
+void SpinInput::onSize(wxSizeEvent &event)
+{
+    layoutChildren();
+    event.Skip();
+}
+
+void SpinInput::layoutChildren()
+{
+    if (m_layout_children) return;
+    m_layout_children = true;
+    const wxSize allocated = GetClientSize();
+    const int padding = FromDIP(MD3::Metrics::isCompact() ? 3 : 4);
+    const auto layout = atlasSpinAllocation(allocated.x, allocated.y, m_editor_best.y,
+        labelSize.x, padding, FromDIP(MD3::Metrics::isCompact() ? 18 : 20));
+    text_ctrl->SetSize({layout.entry_width, layout.entry_height});
+    text_ctrl->SetPosition({layout.entry_x, layout.entry_y});
     const wxSize btnSize{layout.step_width, layout.step_height};
     button_inc->SetSize(btnSize);
     button_dec->SetSize(btnSize);
-    button_inc->SetPosition({padding, padding});
-    button_dec->SetPosition({padding, layout.height - padding - layout.step_height});
+    button_inc->SetPosition({layout.step_x, layout.increment_y});
+    button_dec->SetPosition({layout.step_x, layout.decrement_y});
+    m_layout_children = false;
 }
 
 Button *SpinInput::createButton(bool inc)

@@ -30,6 +30,23 @@ Comfortable stepper width/padding are 20/4 DIP; compact values are 18/3 DIP. The
 minimum height follows the actual editor or unit font plus vertical padding.
 Explicit caller corner radii remain authoritative after a rescale.
 
+### Native allocation lifecycle repair
+
+The first implementation positioned children only while measuring the outer
+control. A native sizer can allocate through the five-argument `SetSize` path,
+which does not call the convenience `SpinInput::SetSize(wxSize)` overload. That
+left children at their old requested width and height after a smaller allocation.
+
+The repair binds `wxEVT_SIZE` after both stepper children exist. The handler calls
+only `layoutChildren()` and then propagates the event. Child positioning uses
+`GetClientSize()`, clamps all child rectangles to that actual allocation, and
+never changes the owner's size or minimum. A reentrancy flag protects that path.
+Font/unit measurement and minimum publication remain separate, and explicitly
+requested constructor or convenience-overload dimensions remain density-independent
+DIP minimums across rescaling. Unspecified dimensions use the measured content
+floor. Even a forced allocation below the minimum gets nonnegative, contained
+child geometry rather than stale rectangles.
+
 The labelled switch adds two-DIP thumb insets. Horizontal padding per segment is
 half the density padding, eight or five DIP. Thumb height is the larger of measured
 text plus six DIP and density row height minus eight DIP. The outer/inner radii
@@ -51,10 +68,13 @@ node --test tests/native_controls/atlas_selection_anatomy.test.mjs
 node tests/native_controls/atlas_selection_anatomy.test.mjs --extract "$env:TEMP/atlas-selection-geometry"
 ```
 
-The six source tests protect 40 exact baseline method bodies, the entire unrelated
+The eight source tests protect 40 baseline method bodies, the entire unrelated
 class suffix, font measurement, minimum geometry, caller overrides, bilingual
-routing and native state variants. Deliberate mutations to range storage, sibling
-content, editor measurement and minimum-width reporting must fail their checks.
+routing and native state variants. The constructor comparison permits only its
+two added presentation lines: requested-minimum capture and size-event binding.
+All original constructor code remains exact. Deliberate mutations to range
+storage, sibling content, editor measurement, minimum-width reporting, the size
+connection and owner-size recursion must fail their checks.
 
 From the supported MSVC developer command prompt, compile only the extracted
 production geometry and focused test, with temporary output:
@@ -64,10 +84,25 @@ cl /nologo /EHsc /std:c++17 /I"%TEMP%\atlas-selection-geometry" tests\native_con
 "%TEMP%\atlas-selection-geometry\geometry.exe"
 ```
 
-The geometry test passed 6,144 assertions across both densities, 100%, 125%, 150%
+The geometry test passed 7,296 assertions across both densities, 100%, 125%, 150%
 and 200% scales, requested widths from zero to 800 DIP, four heights, short/long
 units and shrinking minimum-width transitions. It compiles the actual extracted
-numeric layout function; it does not compile wxWidgets or simulate rendered text.
+numeric layout functions and the production size-event/child-positioning methods.
+A minimal window contract drives the 96/110-DIP requested-size to published
+minimum allocation lifecycle, smaller forced width/height, zero area and later
+growth. The original child's right/bottom edges exceed the smaller allocation
+before relayout; after the event all three child rectangles fit. This does not
+compile wxWidgets or simulate rendered text.
+
+For the deliberate old-source regression:
+
+```powershell
+node tests/native_controls/atlas_selection_anatomy.test.mjs --source-revision b37bb7e917398685cb56d2f2f13a5abd0b47048d
+```
+
+The old source reports six passes and two failures, including the missing native
+size connection. The repaired source reports eight passes. Removing the size
+connection or introducing owner-resize recursion is rejected independently.
 
 The existing `ui-md3/tests/context-menus.test.mjs` suite reports five passes and
 one unrelated failure: `CameraHUD.cpp` still calls `m_zoom_percent->PopupMenu`.
