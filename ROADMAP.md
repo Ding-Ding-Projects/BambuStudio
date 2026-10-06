@@ -2,6 +2,8 @@
 
 ## Exact-main production verification, 6 October 2026
 
+- [x] Preserve independently reviewed inspection preparation and the six negative article/link checks on the redesign branch while the immutable main producer runs; no runtime acceptance is inferred.
+
 - [x] Preserve the reviewed build repairs on main at `cc059003d362b87d53786152ee8c28621d9c2813` and verify the remote reference.
 - [x] Preserve the separate redesign candidate and its successful root-build, root-installer and package-byte receipts without treating them as main acceptance.
 - [ ] Finish the isolated exact-main root build started at `2026-10-06T13:55:51Z`; inspect the actual terminal source-identity result.

@@ -1,5 +1,10 @@
 # Current continuation, 6 October 2026
 
+## Independent progress during compilation
+
+The running producer remains pinned to `cc059003d362b87d53786152ee8c28621d9c2813`. The reviewed nine-boundary inspection queue, corrected live-regex restoration walkthrough and paired-article index checks are preserved separately at [`19d32db164955d4207f6dc89b64b65d13ebfe0d4`](https://github.com/Ding-Ding-Projects/BambuStudio/commit/19d32db164955d4207f6dc89b64b65d13ebfe0d4) on `task/upstream-development-20261006`. These preparation changes preserve native source and are not rendered acceptance. The full redraw remains outside this build-only verdict.
+
+
 The build objective is active and incomplete. See the
 [verification report](docs/integration/build-verification-20261006.md).
 
