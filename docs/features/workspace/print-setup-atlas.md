@@ -16,7 +16,8 @@ button at 32 DIP.
 The existing scroll owner receives the smaller of its content height, the 650-DIP
 preferred height, and the space remaining in the current display work area after actual
 caption, footer, diagnostics, native frame, and margins. The calculation runs after
-caption adoption and on DPI, progress-height, and diagnostic-layout changes. It does not
+caption adoption, on every cached `Show(true)` after content/layout refresh and before
+centering, and on DPI, progress-height, and diagnostic-layout changes. It does not
 move the dialog after the existing centering call or change the selected review page.
 Nonpositive available space produces a zero body allocation, never an unsigned wrap or
 an impossible positive minimum. A display smaller than the fixed chrome still requires
@@ -42,11 +43,12 @@ final confirmation, rename validation, transport dispatch, cancel/join behavior,
 selection, and recovery logic are unchanged. Opening or restyling these surfaces does not
 send or print. Geometry callbacks only resize and lay out existing controls.
 
-A source comparison against `7602228306b7dba316a2d7a91c1f2a195de0e43b` found 32
+A source comparison against `7602228306b7dba316a2d7a91c1f2a195de0e43b` found 31
 sensitive function bodies unchanged, including printing/storage submission, cancellation,
 plate preparation, AMS mapping, readiness enablement, keyboard selection, and existing
 physical-action confirmation branches. This is source preservation evidence, not proof
-that a native interaction ran.
+that a native interaction ran. The cached `Show` path adds only a presentation refresh
+between `Fit()` and `CenterOnParent()`; its existing setup and early hide return remain.
 
 ## Remaining nested surfaces
 
@@ -67,12 +69,17 @@ redesigned or that the entire application now matches Studio Atlas.
 
 ## Verification and privacy
 
-The focused check set passes ten tests. The production C++17 body clamp passes 106
+The focused check set passes eleven tests. The production C++17 body clamp passes 106
 assertions covering short displays, 100/125/150/200% scaling, natural content size,
 progress/diagnostic reservations, nonpositive space, and integer boundaries. Ignoring the
 available display height makes its negative regression fail. The existing Print state
 model separately passes 30 behavioral assertions, including busy/stale output rejection.
-Dialog-header include and caption-title checks also pass.
+Dialog-header include and caption-title checks also pass. A separate lifecycle test
+compiles the actual production `Show` definition with observable wx/device doubles and
+passes ten assertions. The original definition failed the cached-reopen case after only
+the parent moved to a shorter same-DPI display; the corrected definition refreshes the
+body before centering and base Show, while hide still returns before geometry/setup.
+This verifies the call path with doubles, not real monitor movement or native rendering.
 
 No full native build, application launch, installer execution, physical command, or
 screenshot was performed. English, Cantonese and bilingual layouts, both themes, normal

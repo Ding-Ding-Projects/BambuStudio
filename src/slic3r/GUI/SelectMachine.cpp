@@ -5714,6 +5714,7 @@ bool SelectMachineDialog::Show(bool show)
 
     Layout();
     Fit();
+    update_scroll_area_size();
     CenterOnParent();
     return DPIDialog::Show(show);
 }
