@@ -1,6 +1,8 @@
 #ifndef slic3r_GUI_NotificationHistory_hpp_
 #define slic3r_GUI_NotificationHistory_hpp_
 
+#include "Export/ExportFormats.hpp"
+
 #include <cstdint>
 #include <filesystem>
 #include <functional>
@@ -99,6 +101,12 @@ public:
     // the filter yields, rendered or not. The two select-all variants are
     // deliberately distinct so the UI can name which one it offers.
     using Selection = Bulk::BulkSelection<std::uint64_t>;
+
+    // Snapshot the existing selected matches for an immutable confirmation.
+    std::set<std::uint64_t> reviewed_selection(const Selection &selection,
+                                              const std::vector<std::uint64_t> &matches) const;
+
+    Export::Dataset export_dataset(const std::vector<std::uint64_t> &ids, const Filter &filter) const;
 
     // --- Export --------------------------------------------------------------
     enum class ExportFormat { Json, Csv, Markdown, PlainText };

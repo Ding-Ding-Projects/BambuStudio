@@ -18,7 +18,7 @@
 import { execFileSync } from 'node:child_process';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 import { REPO, gh, buildReleaseEntries } from '../../ui-md3/scripts/build-changelog.mjs';
 
@@ -38,7 +38,7 @@ const SCHEMA_VERSION = 1;
  * repository does not hold such a commit. `rev-parse --verify <sha>^{commit}`
  * rejects blobs, trees, tags and unknown or ambiguous prefixes in one call.
  */
-function resolveCommit(sha, context) {
+export function resolveCommit(sha, context) {
   if (!/^[0-9a-f]{7,40}$/i.test(sha)) {
     throw new Error(`${context}: "${sha}" is not a commit SHA.`);
   }
@@ -80,13 +80,13 @@ async function releasesFromSiteData() {
 }
 
 /** ISO instant -> calendar date (UTC) as YYYY-MM-DD. */
-function isoDate(instant) {
+export function isoDate(instant) {
   const match = /^(\d{4}-\d{2}-\d{2})T/.exec(String(instant || ''));
   if (!match) throw new Error(`Release timestamp "${instant}" is not an ISO-8601 instant.`);
   return match[1];
 }
 
-function toAppRelease(site) {
+export function toAppRelease(site) {
   const context = `release ${site.tag}`;
   const commit = site.commit ? resolveCommit(site.commit, context) : '';
   const entries = (site.changes || []).map((change) => {
@@ -116,20 +116,14 @@ function toAppRelease(site) {
   };
 }
 
-async function main() {
+export async function main() {
   let siteReleases;
   if (offline) {
     siteReleases = await releasesFromSiteData();
   } else {
-    try {
-      siteReleases = releasesFromApi();
-    } catch (error) {
-      if (checkOnly) {
-        console.warn(`Skipped the app changelog freshness check: the releases API is unavailable (${error.message.split('\n')[0]}).`);
-        process.exit(0);
-      }
-      throw error;
-    }
+    // A release build must not report fresh data when the source is unavailable.
+    // Offline validation is explicit and proves only the checked-in snapshot.
+    siteReleases = releasesFromApi();
   }
 
   const releases = siteReleases.map(toAppRelease);
@@ -180,4 +174,6 @@ async function main() {
   );
 }
 
-await main();
+if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === import.meta.url) {
+  await main();
+}

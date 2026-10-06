@@ -1,4 +1,5 @@
 #include "HumanDate.hpp"
+#include "Export/ExportDialog.hpp"
 #include "NotificationCenterPanel.hpp"
 #include "Widgets/MD3DataView.hpp"
 
@@ -11,23 +12,18 @@
 #include "Widgets/MD3Tokens.hpp"
 #include "Widgets/MaterialIcon.hpp"
 #include "Widgets/SearchField.hpp"
-#include "Widgets/SlideToConfirm.hpp"
 #include "Widgets/SuperConfirmGate.hpp"
 #include "Bulk/BulkActionPlan.hpp"
 #include "Bulk/BulkActionPreviewDialog.hpp"
 #include "Widgets/StateColor.hpp"
-#include "Widgets/StaticBox.hpp"
 
 #include <algorithm>
-#include <fstream>
 
 #include <boost/log/trivial.hpp>
-#include <boost/nowide/fstream.hpp>
 
 #include <wx/dataview.h>
 #include <wx/datetime.h>
 #include <wx/display.h>
-#include <wx/filedlg.h>
 #include <wx/sizer.h>
 #include <wx/variant.h>
 
@@ -258,9 +254,6 @@ void NotificationCenterPanel::apply_theme()
     const wxColour list      = StateColor::semantic(MD3::Role::SurfaceContainerLowest);
     const wxColour text      = StateColor::semantic(MD3::Role::OnSurface);
     const wxColour secondary = StateColor::semantic(MD3::Role::OnSurfaceVariant);
-    const wxColour error_bg  = StateColor::semantic(MD3::Role::ErrorContainer);
-    const wxColour error_fg  = StateColor::semantic(MD3::Role::OnErrorContainer);
-    const wxColour outline   = StateColor::semantic(MD3::Role::OutlineVariant);
 
     SetBackgroundColour(surface);
     for (Label *label : {m_status_label, m_empty_label}) {
@@ -608,51 +601,24 @@ void NotificationCenterPanel::on_export(wxCommandEvent &)
     if (ids.empty())
         ids = m_matches;
 
-    // Format is chosen through the file-type filter; the wildcard order maps
-    // onto ExportFormat below.
-    wxFileDialog dialog(this, _L("Export notifications"), wxEmptyString, "notification-history",
-                        "JSON (*.json)|*.json|CSV (*.csv)|*.csv|Markdown (*.md)|*.md|Plain text (*.txt)|*.txt",
-                        wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
-    if (dialog.ShowModal() != wxID_OK)
-        return;
-    const NotificationHistory::ExportFormat formats[] = {
-        NotificationHistory::ExportFormat::Json, NotificationHistory::ExportFormat::Csv,
-        NotificationHistory::ExportFormat::Markdown, NotificationHistory::ExportFormat::PlainText};
-    const int index = std::max(0, std::min(3, dialog.GetFilterIndex()));
-    const NotificationHistory::ExportFormat format = formats[index];
-
-    wxString path = dialog.GetPath();
-    const wxString ext = wxString(".") + NotificationHistory::export_extension(format);
-    if (!path.Lower().EndsWith(ext))
-        path += ext;
-
-    const std::string payload = m_manager->history().export_entries(ids, format, current_filter());
-    boost::nowide::ofstream out(path.ToUTF8().data(), std::ios::binary | std::ios::trunc);
-    const bool ok = static_cast<bool>(out) && static_cast<bool>(out << payload);
-    if (ok) {
-        // TRN: %1$d exported entries; %2$s file path.
-        m_manager->push_notification(NotificationType::CustomNotification, NotificationManager::NotificationLevel::RegularNotificationLevel,
-            wxString::Format(_L("Exported %d notifications to %s"), static_cast<int>(ids.size()), path).ToUTF8().data());
-    } else {
-        // TRN: %s is the file path the export could not write.
-        m_manager->push_notification(NotificationType::CustomNotification, NotificationManager::NotificationLevel::ErrorNotificationLevel,
-            wxString::Format(_L("Could not write the export to %s. Check the folder is writable and try again."), path).ToUTF8().data());
-    }
+    // Capture the current filtered data before opening a modal format picker.
+    // The shared dialog owns destination confirmation, archives and editor handoff.
+    ExportDialog::run(this, m_manager->history().export_dataset(ids, current_filter()));
 }
 
 void NotificationCenterPanel::on_delete_requested(wxCommandEvent &)
 {
     if (m_manager == nullptr)
         return;
-    const std::vector<std::uint64_t> ids = m_selection.ordered_within(m_matches);
-    if (ids.empty())
+    const auto reviewed_ids = m_manager->history().reviewed_selection(m_selection, m_matches);
+    if (reviewed_ids.empty())
         return;
     Bulk::BulkActionPlan plan;
     plan.action      = _u8L("Delete notification entries");
     plan.consequence = _u8L("The selected entries are removed from the history permanently. This cannot be undone; use Export first to keep a copy.");
     plan.destructive = true;
     const NotificationHistory &history = m_manager->history();
-    for (std::uint64_t id : ids) {
+    for (std::uint64_t id : reviewed_ids) {
         const NotificationHistoryEntry *entry = history.find(id);
         if (entry == nullptr) {
             plan.items.push_back(Bulk::BulkItem::skipped(std::to_string(id), _u8L("No longer in the history")));
@@ -661,27 +627,26 @@ void NotificationCenterPanel::on_delete_requested(wxCommandEvent &)
         plan.items.push_back(Bulk::BulkItem::changed(entry->title, NotificationHistory::format_iso8601(entry->timestamp_ms)));
     }
     if (Bulk::BulkActionPreviewDialog::Run(this, plan))
-        on_delete_confirmed();
+        on_delete_confirmed(reviewed_ids);
     m_delete_button->SetFocus();
 }
 
-void NotificationCenterPanel::on_delete_confirmed()
+void NotificationCenterPanel::on_delete_confirmed(const std::set<std::uint64_t> &reviewed_ids)
 {
-    if (m_manager == nullptr)
+    if (m_manager == nullptr || reviewed_ids.empty())
         return;
-    std::set<std::uint64_t> ids;
-    for (std::uint64_t id : m_matches)
-        if (m_selection.contains(id))
-            ids.insert(id);
-    // Deleting a live toast's record also closes the toast so the two never disagree.
-    m_manager->dismiss_history_entries(ids);
-    const std::size_t removed = m_manager->history().erase(ids);
-    m_selection.clear();
+    // The current search and selection cannot expand this authorization.
+    // Records removed by retention or another view are counted as unavailable.
+    m_manager->dismiss_history_entries(reviewed_ids);
+    const std::size_t removed = m_manager->history().erase(reviewed_ids);
+    for (const auto id : reviewed_ids)
+        m_selection.set(id, false);
     RefreshNow();
     m_delete_button->SetFocus();
-    // TRN: %d is the number of history entries removed.
+    // TRN: First count is removed records; second is reviewed records already absent.
     m_manager->push_notification(NotificationType::CustomNotification, NotificationManager::NotificationLevel::RegularNotificationLevel,
-        wxString::Format(_L("Deleted %d notification entries from the history"), static_cast<int>(removed)).ToUTF8().data());
+        wxString::Format(_L("Deleted %d notification entries from the history; %d reviewed entries were already unavailable."),
+                         static_cast<int>(removed), static_cast<int>(reviewed_ids.size() - removed)).ToUTF8().data());
 }
 
 } } // namespace Slic3r::GUI

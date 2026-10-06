@@ -83,7 +83,7 @@ private:
     void on_dismiss_selected(wxCommandEvent &event);
     void on_export(wxCommandEvent &event);
     void on_delete_requested(wxCommandEvent &event);
-    void on_delete_confirmed();
+    void on_delete_confirmed(const std::set<std::uint64_t> &reviewed_ids);
 
     NotificationManager *          m_manager{nullptr};
     NotificationHistory::Selection m_selection;
