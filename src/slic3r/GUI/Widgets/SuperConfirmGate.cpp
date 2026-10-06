@@ -14,6 +14,7 @@
 #include "Button.hpp"
 #include "Label.hpp"
 #include "MD3DialogChrome.hpp"
+#include "MD3ScrolledWindow.hpp"
 #include "MD3Tokens.hpp"
 #include "MaterialIcon.hpp"
 #include "SlideToConfirm.hpp"
@@ -274,26 +275,43 @@ SuperConfirmGate::~SuperConfirmGate()
 
 void SuperConfirmGate::build(const Spec &spec)
 {
-    const wxColour surface = StateColor::semantic(MD3::Role::SurfaceContainerHigh);
+    const wxColour surface = StateColor::semantic(MD3::Role::Surface);
     SetBackgroundColour(surface);
-    const int content_w = FromDIP(kMaxWidthDip) - 2 * FromDIP(20);
+    const int pad = FromDIP(MD3::Metrics::active().padding);
+    int display_index = wxDisplay::GetFromWindow(GetParent() ? GetParent() : this);
+    if (display_index == wxNOT_FOUND) display_index = 0;
+    const wxRect work_area = wxDisplay::GetCount() > 0 ? wxDisplay(static_cast<unsigned>(display_index)).GetClientArea() : wxRect();
+    const int available_w = work_area.IsEmpty() ? FromDIP(kMaxWidthDip) : std::max(1, work_area.width - FromDIP(32));
+    const int content_w = std::max(1, std::min(FromDIP(kMaxWidthDip), available_w) - 2 * pad);
 
     auto *root = new wxBoxSizer(wxVERTICAL);
     root->Add(new MD3DialogCaption(this, spec.action), 0, wxEXPAND);
 
-    auto make_label = [&](const wxFont &font, const wxString &text, MD3::Role colour) {
-        auto *l = new Label(this, font, text);
-        l->SetBackgroundColour(surface);
+    auto make_label = [&](wxWindow *owner, const wxFont &font, const wxString &text, MD3::Role colour) {
+        auto *l = new Label(owner, font, text, LB_AUTO_WRAP | wxST_NO_AUTORESIZE);
+        l->SetBackgroundColour(owner->GetBackgroundColour());
         l->SetForegroundColour(StateColor::semantic(colour));
-        l->Wrap(content_w);
+        l->Wrap(owner == this ? content_w : std::max(1, content_w - 2 * pad - MD3ScrolledWindow::BarThickness(this)));
         return l;
     };
 
+    // Keep the exact consequence visible above the independently scrolling names.
+    root->Add(make_label(this, Label::Head_16, spec.consequence, MD3::Role::OnSurface), 0,
+              wxEXPAND | wxLEFT | wxRIGHT | wxTOP, pad);
+
+    // Only affected-name detail scrolls. Keys, slider and cancel remain siblings
+    // outside this pane, so long names cannot move them off-screen.
+    auto *details = new MD3ScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize,
+                                         wxVSCROLL | wxBORDER_NONE | wxTAB_TRAVERSAL);
+    details->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
+    details->SetScrollRate(0, FromDIP(12));
+    auto *detail_sizer = new wxBoxSizer(wxVERTICAL);
+    details->SetSizer(detail_sizer);
+    details->SetMinSize(wxSize(content_w, FromDIP(48)));
+    root->Add(details, 1, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, pad);
+
     // Safety facts first, in the same words at every language mode and funny
     // level: the action, then exactly what it affects.
-    root->Add(make_label(Label::Head_16, spec.consequence, MD3::Role::OnSurface), 0,
-              wxLEFT | wxRIGHT | wxTOP, FromDIP(20));
-
     const int count = spec.affected_count >= 0 ? spec.affected_count : int(spec.affected.size());
     wxString listed;
     const int shown = std::min<int>(kMaxListedNames, int(spec.affected.size()));
@@ -309,18 +327,20 @@ void SuperConfirmGate::build(const Spec &spec)
         listed += wxString::Format(_L("... and %d more"), count - shown);
     }
     if (!listed.empty())
-        root->Add(make_label(Label::Body_13, listed, MD3::Role::OnSurfaceVariant), 0,
-                  wxLEFT | wxRIGHT | wxTOP, FromDIP(12));
+        detail_sizer->Add(make_label(details, Label::Body_13, listed, MD3::Role::OnSurfaceVariant), 0,
+                          wxEXPAND | wxALL, pad);
+    else
+        details->Hide();
     // TRN %d is the total number of items the destructive action affects.
-    root->Add(make_label(Label::Body_13,
+    root->Add(make_label(this, Label::Body_13,
                          count == 1 ? _L("1 item will be affected. This cannot be undone.")
                                     : wxString::Format(_L("%d items will be affected. This cannot be undone."), count),
                          MD3::Role::Error),
-              0, wxLEFT | wxRIGHT | wxTOP, FromDIP(8));
+              0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, pad);
 
     // Stage narration
-    m_stage = make_label(Label::Body_13, wxEmptyString, MD3::Role::OnSurfaceVariant);
-    root->Add(m_stage, 0, wxLEFT | wxRIGHT | wxTOP, FromDIP(16));
+    m_stage = make_label(this, Label::Head_14, wxEmptyString, MD3::Role::OnSurfaceVariant);
+    root->Add(m_stage, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, pad);
 
     // Two independent keys, each with a caption under it.
     auto *keys_row = new wxBoxSizer(wxHORIZONTAL);
@@ -331,11 +351,11 @@ void SuperConfirmGate::build(const Spec &spec)
         auto *key = new KeySwitch(this, key_names[k], [this, k]() { on_key_toggled(k); });
         m_keys[k] = key;
         col->Add(key, 0, wxALIGN_CENTER_HORIZONTAL);
-        col->Add(make_label(Label::Body_12, key_caps[k], MD3::Role::OnSurfaceVariant), 0,
+        col->Add(make_label(this, Label::Body_13, key_caps[k], MD3::Role::OnSurfaceVariant), 0,
                  wxALIGN_CENTER_HORIZONTAL | wxTOP, FromDIP(4));
         keys_row->Add(col, 0, wxRIGHT, FromDIP(24));
     }
-    root->Add(keys_row, 0, wxLEFT | wxRIGHT | wxTOP, FromDIP(12));
+    root->Add(keys_row, 0, wxALIGN_CENTER_HORIZONTAL | wxTOP, FromDIP(MD3::Metrics::active().gap));
 
     // Charge bar: hazard stripes fill as the ritual progresses; the burst
     // plays here once the slide lands.
@@ -397,6 +417,9 @@ void SuperConfirmGate::build(const Spec &spec)
 
     // Emergency exit: always available, always the default focus so Enter
     // can never confirm.
+    auto *divider = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 1));
+    divider->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
+    root->Add(divider, 0, wxEXPAND | wxTOP, pad);
     auto *actions = new wxBoxSizer(wxHORIZONTAL);
     m_exit = new Button(this, _L("Emergency exit"), "", 0, 0, wxID_CANCEL);
     m_exit->SetVariant(Button::Variant::Tonal);
@@ -405,7 +428,7 @@ void SuperConfirmGate::build(const Spec &spec)
     m_exit->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { finish(false); });
     actions->AddStretchSpacer();
     actions->Add(m_exit, 0);
-    root->Add(actions, 0, wxEXPAND | wxALL, FromDIP(20));
+    root->Add(actions, 0, wxEXPAND | wxALL, pad);
 
     Bind(wxEVT_CHAR_HOOK, [this](wxKeyEvent &e) {
         if (e.GetKeyCode() == WXK_ESCAPE) {
@@ -416,9 +439,18 @@ void SuperConfirmGate::build(const Spec &spec)
     });
     Bind(wxEVT_CLOSE_WINDOW, [this](wxCloseEvent &) { finish(false); });
 
-    SetSizerAndFit(root);
-    SetMinSize(wxSize(FromDIP(kMinWidthDip), -1));
+    SetSizer(root);
     refresh_stage();
+    const wxSize fixed = root->GetMinSize();
+    const int wanted_detail_h = detail_sizer->GetMinSize().y;
+    const int wanted_h = fixed.y + std::max(0, wanted_detail_h - FromDIP(48));
+    const int available_h = work_area.IsEmpty() ? wanted_h : std::max(1, work_area.height - FromDIP(32));
+    // Once measured, permit only the detail viewport to shrink inside the fitted shell.
+    details->SetMinSize(wxSize(content_w, 0));
+    SetMinSize(wxSize(std::min(FromDIP(kMinWidthDip), available_w), -1));
+    SetClientSize(std::min(fixed.x, available_w), std::min(wanted_h, available_h));
+    Layout();
+    details->FitInside();
     m_exit->SetFocus();
     MD3DialogCaption::FinishChrome(this);
 }
