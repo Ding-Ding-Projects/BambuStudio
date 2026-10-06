@@ -89,3 +89,15 @@ The non-window fixture executes the actual bound production handler. Six cases c
 結果容器會先處理垂直滾輪，避免只支援水平捲動的內層處理器吞咗事件。程式找出最近的外層捲動容器，複製原事件，保留轉動量、增量、軸向及修飾鍵，經螢幕座標換算位置，再交俾外層事件處理器。只有外層確認已處理，先消耗原事件。水平事件、冇外層容器及未處理情況繼續交回正常流程，亦唔會停用本地水平捲動。
 
 測試執行正式綁定的處理程序，六項涵蓋事件內容與座標、水平留喺本地、最近容器、冇容器、未處理及水平捲動速度保留。舊版六項有三項失敗，刻意移除新綁定亦有相同三項失敗；還原後六項全部通過。幾何六項及來源保留八項繼續通過，原生滾輪、焦點同畫面仍待驗證。
+
+## Default fixture coverage
+
+Run `node tests/calibration_result_viewport.test.mjs` from an MSVC developer environment. It compiles once, then runs all six geometry cases and all six wheel-routing cases (12/12), returning failure if either mode fails. `--wheel` retains the targeted six-case route for baseline and negative runs.
+
+Both default-path negatives were observed: `--negative-unbounded` gives geometry 5/6 plus wheel 6/6 and exit 1; `--negative-wheel` gives geometry 6/6 plus wheel 3/6 and exit 1. Restored production source gives 12/12 and exit 0. This corrects test discovery coverage only; production code is unchanged.
+
+## 預設測試涵蓋範圍
+
+喺 MSVC 開發環境執行 `node tests/calibration_result_viewport.test.mjs`，只編譯一次，再執行六項幾何及六項滾輪路由測試，合共 12/12。任何一組失敗都會傳回失敗狀態。`--wheel` 保留只執行六項滾輪檢查的用途。
+
+預設路徑兩種刻意破壞都已驗證：取消闊度限制得到幾何 5/6、滾輪 6/6；移除滾輪綁定得到幾何 6/6、滾輪 3/6；兩者退出碼都係 1。正式來源 12/12，退出碼 0。今次只修正測試發現範圍，正式程式碼不變。
