@@ -605,7 +605,14 @@ function Get-BuildParallelism {
     # smaller hosts (HANDOFF.md records C3859/C1076 storms). Default to a bounded
     # count and let the caller raise it through BAMBU_BUILD_JOBS.
     $requested = $env:BAMBU_BUILD_JOBS
-    if ($requested -match '^\d+$' -and [int]$requested -ge 1) { return [int]$requested }
+    if (-not [string]::IsNullOrEmpty($requested)) {
+        $parsedJobs = 0
+        if ($requested -notmatch '^[1-9][0-9]*$' -or
+            -not [int]::TryParse($requested, [ref]$parsedJobs)) {
+            throw 'BAMBU_BUILD_JOBS must be a positive integer no greater than 2147483647.'
+        }
+        return $parsedJobs
+    }
     $cores = [Environment]::ProcessorCount
     return [Math]::Max(1, [Math]::Min(8, [int][Math]::Floor($cores / 4)))
 }
@@ -638,14 +645,41 @@ function Invoke-DependencyBuild {
         & $Toolchain.CMake -S (Join-Path $script:RepositoryRoot 'deps') -B $buildDirectory `
             -G $Toolchain.Generator -A x64 `
             "-DCMAKE_GENERATOR_INSTANCE=$($Toolchain.GeneratorInstance)" `
-            "-DDESTDIR=$Destination" -DCMAKE_BUILD_TYPE=Release -DDEP_DEBUG=OFF
+            "-DDESTDIR=$Destination" "-DNPROC=$jobs" -DCMAKE_BUILD_TYPE=Release -DDEP_DEBUG=OFF
     }
-    Invoke-RepositoryCommand "Building dependencies (parallel $jobs)..." {
-        & $Toolchain.CMake --build $buildDirectory --config Release --parallel $jobs
+    # Nested MSBuild owns the worker budget. Serializing external projects
+    # prevents their individual budgets from multiplying. OCCT enables bare
+    # /MP itself, so append /MP1 through Microsoft's compiler environment route
+    # to prevent each MSBuild worker from spawning another full CPU-sized pool.
+    $originalCompilerOptions = [Environment]::GetEnvironmentVariable('_CL_', 'Process')
+    $boundedCompilerOptions = Get-BoundedCompilerOptions -ExistingOptions $originalCompilerOptions
+    try {
+        [Environment]::SetEnvironmentVariable('_CL_', $boundedCompilerOptions, 'Process')
+        Invoke-RepositoryCommand "Building dependencies (one project, at most $jobs workers; compiler /MP1)..." {
+            & $Toolchain.CMake --build $buildDirectory --config Release --parallel 1
+        }
+    } finally {
+        [Environment]::SetEnvironmentVariable('_CL_', $originalCompilerOptions, 'Process')
     }
     if (-not (Test-Path -LiteralPath (Join-Path $Destination 'usr\local') -PathType Container)) {
         throw "The dependency build finished without producing '$Destination\usr\local'."
     }
+}
+
+function Get-BoundedCompilerOptions {
+    param([AllowNull()][string] $ExistingOptions)
+    # _CL_ is appended after command-line compiler flags. Keep all caller
+    # options, inserting the cap before any linker-only argument boundary.
+    $link = [regex]::Match($ExistingOptions, '(?i)(?<!\S)/link(?=\s|$)')
+    if ($link.Success) {
+        $options = $ExistingOptions.Insert($link.Index, '/MP1 ')
+    } else {
+        $options = ($ExistingOptions + ' /MP1').Trim()
+    }
+    if ($options.Length -gt 1024) {
+        throw 'The bounded compiler options exceed the supported _CL_ 1024-character limit.'
+    }
+    return $options
 }
 
 function Invoke-ApplicationBuild {

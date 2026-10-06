@@ -6,6 +6,7 @@
 - [x] Preserve installed packages during bounded winget installation recovery.
 - [x] Preserve exact producer exit codes and verify both entrypoints with a stub producer.
 - [x] Run focused script regressions: nine bootstrap assertions and six forwarding assertions.
+- [x] Bound nested dependency MSBuild/compiler concurrency and verify twenty focused script-mode/stub assertions.
 - [ ] Complete the reconciled native build and installer production; script checks do not prove these outcomes.
 
 

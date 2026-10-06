@@ -5,6 +5,22 @@ Both entrypoints retain the producer's exact nonzero exit result and forward
 named options, including output paths containing spaces. The first route forces
 build-only behavior; the installer route includes packaging by default.
 
+`BAMBU_BUILD_JOBS` accepts a positive integer and controls the dependency worker
+budget. Invalid values fail instead of silently selecting a default. The root
+dependency configure forwards `-DNPROC=<jobs>`, runs one external dependency
+project at a time, and generates numbered MSBuild `/m:<jobs>` arguments. During
+that build only, a trailing compiler `_CL_` option `/MP1` prevents dependencies
+such as OCCT from multiplying MSBuild workers into full CPU-sized compiler pools.
+Existing compiler options are preserved, the cap precedes any `/link` boundary,
+and the original process environment is restored on success or failure. No
+machine-wide setting is changed. This bounds MSBuild and MSVC compiler pools;
+it does not promise a limit on unrelated programs or every tool's helper threads.
+Direct dependency configuration still accepts explicit `NPROC`, then a nonempty
+`CMAKE_BUILD_PARALLEL_LEVEL`, then detected processors. Non-MSVC generated build
+arguments retain their `-j<jobs>` form. `Test-DependencyParallelism.ps1` executes
+twenty focused assertions using script-mode CMake and a stub build, with no
+native compilation or package production.
+
 Strawberry detection requires its paired `perl/bin/pkg-config.bat` and `perl.exe`,
 independently of other pkg-config installations. The dependency build selects
 that Perl interpreter first and checks `Locale::Maketext::Simple` before compiling
