@@ -3,12 +3,14 @@
 ## Current source and verification boundary
 
 Verified remote `main` is `d4d4bb13bb66eddd53eda9849fd18ec3d5ff0d47`. Reviewed combined source before this
-record is `0d7dd31112d86e25884c75150f8a44ced3be5000`. It includes the reviewed shell/tab drag and focus
+record is `50715f4355e8b845042bd4809bac2da2ce5c40f4`. It includes the reviewed shell/tab drag and focus
 repairs, selection controls and their allocated-size lifecycle, Appearance
 property-page reflow, humidity placement, calibration viewport/preset/result
 layout and wheel routing, and device-name validation ordering. Design records
-currently prove 48 source receipts across 24 families at their explicitly pinned
-`432eb0f7` snapshot; later units do not silently acquire rendered acceptance.
+currently prove 56 source receipts across 27 families and five documentation
+receipts at their explicitly pinned `c7868b485` snapshot. All 1,204 obligations
+and 56 structural boards retain their existing truth states; source receipts
+do not silently acquire rendered acceptance.
 
 The current exact `build.bat /s` producer started at `2026-10-06T08:58:03Z`
 against `05dd932d4de51384742375cb277d51d19e97039f`. Application configuration and generation completed,
@@ -48,6 +50,9 @@ existing tool inspectors, readable Regex/Export details, and the Cantonese
 shell/tab companion. Three framing checks plus nine reader and seven overlay
 checks passed independently. The connection/send dialog candidate is withheld
 pending a confirmed exhausted-height disclosure repair.
+Three additional bounded visual units are active: the shared ListBox, AMS
+drying controls and nozzle selection/update panels. They are not incorporated
+or verified merely because ownership has been assigned.
 
 The [tracked publication scan](docs/integration/public-boundary-scan-20261006.md)
 inspected 11,556 UTF-8 files at `24aff6625`. All 142 lexical candidate files
