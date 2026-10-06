@@ -67,6 +67,11 @@ The maintainer may request reversal if the new appearance is not preferred. The 
 
 ## Remaining decisive work
 
+The default calibration result fixture was independently rerun after integration
+at `7334513f1fdcb8c84bd0f57f9a2cb750c85fc7c8`: one compilation, six geometry cases
+and six wheel-routing cases passed. The wheel cases no longer require a separate
+optional invocation. This does not establish native event delivery or appearance.
+
 - [x] Record the baseline production result: exit 1, with the diagnostic limits above.
 - [x] Independently review and incorporate application-cache discovery repairs into the verified repair line.
 - [ ] Reconcile the intended build candidate, then run its exact `build.bat` and `build-installer.bat`.

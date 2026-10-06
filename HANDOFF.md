@@ -3,7 +3,7 @@
 ## Current source and verification boundary
 
 Verified remote `main` is `d4d4bb13bb66eddd53eda9849fd18ec3d5ff0d47`. Reviewed combined source before this
-record is `de774e2f5a14de2b53b59a7292beb73b03df9fa4`. It includes the reviewed shell/tab drag and focus
+record is `7334513f1fdcb8c84bd0f57f9a2cb750c85fc7c8`. It includes the reviewed shell/tab drag and focus
 repairs, selection controls and their allocated-size lifecycle, Appearance
 property-page reflow, humidity placement, calibration viewport/preset/result
 layout and wheel routing, and device-name validation ordering. Design records
@@ -29,8 +29,10 @@ Latest independent UI checks include 13 shell source cases plus compiled layout,
 drag and focus helpers; 8 selection source cases and 7,296 geometry/lifecycle
 assertions; 14 calibration layout/preservation cases; 5 humidity cases; 22
 Appearance cases; and 10 result/device-name cases, including 26 validation-order
-assertions. The default result fixture still needs its explicit wheel mode made
-part of ordinary discovery before that test update is called complete.
+assertions. The default result fixture now compiles once and executes both modes:
+six geometry cases and six wheel-routing cases passed independently at
+`7334513f1fdcb8c84bd0f57f9a2cb750c85fc7c8`. This is non-window coverage, not native
+event-delivery or rendered acceptance.
 
 Application launch, installer execution, physical printing and manual release
 publication remain excluded. Native GUI acceptance, actual scrolling/focus,
