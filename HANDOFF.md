@@ -3,7 +3,7 @@
 ## Current source and verification boundary
 
 Verified remote `main` is `d4d4bb13bb66eddd53eda9849fd18ec3d5ff0d47`. Reviewed combined source before this
-record is `7334513f1fdcb8c84bd0f57f9a2cb750c85fc7c8`. It includes the reviewed shell/tab drag and focus
+record is `0d7dd31112d86e25884c75150f8a44ced3be5000`. It includes the reviewed shell/tab drag and focus
 repairs, selection controls and their allocated-size lifecycle, Appearance
 property-page reflow, humidity placement, calibration viewport/preset/result
 layout and wheel routing, and device-name validation ordering. Design records
@@ -19,6 +19,15 @@ appears dirty under the current checkout line-ending settings. The exact-path LF
 repair is reviewed, tested and delivered to main for the next reconciled run;
 source-identity checks remain unchanged. Do not claim this active run succeeded.
 
+At the `2026-10-06T09:58:03Z` one-hour observation boundary, the producer was
+still active and had reached native GUI compilation. The confirmed diagnostic
+is `StaticBox.hpp:91`, MSVC `C2397`, implicit integer-to-double conversion in a
+brace initializer. Reviewed repair `661f4678e430e6832a510fa20cba420d735c68f1`
+is incorporated in the candidate. Its actual-declaration compiler check passes
+and all four density assertions pass independently. It is not applied to the
+running producer. Extended observation requires the pending task-limit decision;
+no terminal production verdict is claimed.
+
 The preceding root run at `5e3f28274` ended at `2026-10-06T08:44:32Z` with the
 OCCT quoted-flag export diagnostic. The source-template repair now preserves
 exact compiler flags and repeat-safe patching; its five actual-template assertions
@@ -33,6 +42,17 @@ assertions. The default result fixture now compiles once and executes both modes
 six geometry cases and six wheel-routing cases passed independently at
 `7334513f1fdcb8c84bd0f57f9a2cb750c85fc7c8`. This is non-window coverage, not native
 event-delivery or rendered acceptance.
+
+The next incorporated source units add shared floating framing for twelve
+existing tool inspectors, readable Regex/Export details, and the Cantonese
+shell/tab companion. Three framing checks plus nine reader and seven overlay
+checks passed independently. The connection/send dialog candidate is withheld
+pending a confirmed exhausted-height disclosure repair.
+
+The [tracked publication scan](docs/integration/public-boundary-scan-20261006.md)
+inspected 11,556 UTF-8 files at `24aff6625`. All 142 lexical candidate files
+received contextual review, with zero confirmed violations. Binary contents,
+the nested submodule and external published surfaces remain outside that receipt.
 
 Application launch, installer execution, physical printing and manual release
 publication remain excluded. Native GUI acceptance, actual scrolling/focus,

@@ -1,5 +1,5 @@
 > [!IMPORTANT]
-> Current status, 6 October 2026: verified `main` contains build repairs through `d4d4bb13bb66eddd53eda9849fd18ec3d5ff0d47`. The complete native interface refresh remains under development on preserved task branches. The current exact root build at `05dd932d4de51384742375cb277d51d19e97039f` passed application configuration and DeviceWeb and is compiling native C++. Installer production and current screenshots remain unverified. Read the [current build and redesign report](docs/integration/build-verification-20261006.md).
+> Current status, 6 October 2026: verified `main` contains build repairs through `d4d4bb13bb66eddd53eda9849fd18ec3d5ff0d47`. The complete native interface refresh remains under development on preserved task branches. The exact root build at `05dd932d4de51384742375cb277d51d19e97039f` passed application configuration and DeviceWeb, then reported MSVC `C2397` in native GUI compilation. Its reviewed radius-initialization repair is incorporated in the next candidate and passes its focused compiler check; a successful native production result is still pending. Installer production and current screenshots remain unverified. Read the [current build and redesign report](docs/integration/build-verification-20261006.md).
 
 ![image](https://user-images.githubusercontent.com/106916061/179006347-497d24c0-9bd6-45b7-8c49-d5cc8ecfe5d7.png)
 # BambuStudio
@@ -14,7 +14,7 @@ under development for the combined delivery; the [audit register](docs/features/
 records historical runtime and layout evidence. Focused source and non-window geometry checks now cover the current redesign; they do not establish native runtime or screenshots.
 Implementation is not a claim of verified physical-printer behavior.
 Current compiler and startup evidence is summarized in the [continuation record](CLOSEOUT_PROMPT.md).
-The earlier production catalogue, documentation bundling and DeviceWeb observations belong to their dated source receipts. The latest build reached application configuration after dependency completion. Packaging and release proof remain pending; no passing DeviceWeb type-check result is claimed.
+The earlier production catalogue, documentation bundling and DeviceWeb observations belong to their dated source receipts. The latest build reached native GUI compilation after dependency completion. Packaging and release proof remain pending; no passing DeviceWeb type-check result is claimed.
 Earlier managed-check results apply only to their recorded source revisions. The combined source includes the reconciled continuation lanes and bounded repairs listed in the current handoff.
 
 Bambu Studio is a cutting-edge, feature-rich slicing software.  

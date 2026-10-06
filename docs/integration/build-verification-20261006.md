@@ -2,6 +2,20 @@
 
 **Status: in progress. Neither root production entrypoint has a successful result for the reconciled candidate yet. No new installer or application-runtime acceptance is claimed.**
 
+Latest native diagnostic: the pinned `05dd932d4` run reached GUI compilation
+and reported MSVC `C2397` at `StaticBox.hpp:91`. The active density radius was
+implicitly converted from integer to double inside a brace initializer.
+Reviewed repair `661f4678e430e6832a510fa20cba420d735c68f1` makes that conversion
+explicit without changing its value or lifecycle. The independently executed
+actual-declaration compiler check and four density assertions pass. The running
+producer remains untouched; a successful native production retry is pending.
+
+The one-hour observation boundary was reached at `2026-10-06T09:58:03Z`, with
+the producer still active. Extended observation is awaiting the task-limit
+decision. The [tracked publication scan](public-boundary-scan-20261006.md)
+records its exact text inventory and contextual review, with no confirmed
+violation and explicit exclusions.
+
 ## Scope and preserved source
 
 The current work makes `build.bat` and `build-installer.bat` acquire missing supported prerequisites automatically, preserves useful caches, verifies unsigned Squirrel.Windows outputs, and delivers reviewed repairs to `main`. The maintainer subsequently resumed a complete native interface redesign, preserving existing functions and features. All design and redesign implementation/review uses explicitly selected `gpt-6-astra` workers. Build-script implementation remains in one isolated `gpt-6.1-sol` lane.
