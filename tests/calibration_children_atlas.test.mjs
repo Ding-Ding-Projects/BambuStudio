@@ -8,6 +8,10 @@ const read=p=>readFileSync('src/slic3r/GUI/'+p,'utf8').replaceAll('\r\n','\n');
 const old=p=>execFileSync('git',['show',baseline+':src/slic3r/GUI/'+p],{encoding:'utf8',maxBuffer:4*1024*1024}).replaceAll('\r\n','\n');
 function tokens(s){return [...s.replace(/^\s*#include[^\n]*/gm,'').matchAll(/\/\*[\s\S]*?\*\/|\/\/[^\n]*|"(?:\\[\s\S]|[^"\\])*"|'(?:\\[\s\S]|[^'\\])*'|[A-Za-z_]\w*|::|->|[^\s]/g)].map(m=>m[0]).filter(t=>!t.startsWith('//')&&!t.startsWith('/*'));}
 function behavior(s){
+ s=s.replace(/\n\/\/ An indivisible result table[\s\S]*?(?=\n#define CALIBRATION_SAVE_AMS_NAME_SIZE)/,'');
+ s=s.replace(/new CalibrationResultViewport\(parent\)/g,'new wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL)');
+ s=s.replace(/^\s*m_(?:multi_extruder_)?grid_panel->QueueExtent\(\);\n/gm,'');
+
  s=s.replace(/void CaliPresetTipsPanel::queue_tips_reflow[\s\S]*?(?=void CaliPresetTipsPanel::set_params)/,'');
  s=s.replace(/^.*(?:Bind\(wxEVT_(?:SIZE|SHOW|DPI_CHANGED),.*queue_tips_reflow|queue_tips_reflow\(\);|m_top_sizer->Fit\(this\)).*$/gm,'');
  s=s.replace('m_tips_text = new Label','auto m_tips_text = new Label').replaceAll('m_tips_text','preset_panel_tips');

@@ -55,3 +55,25 @@ The shared page minimum is unspecified (`-1`) rather than explicitly zero. This 
 共用頁面最小闊度改為未指定（`-1`），唔再明確設為零。咁樣可以移除 1100 DIP 限制，同時保留固定闊度子控制項計算出嚟的最小闊度。只有真正換行的標籤先用零最小闊度；比可用區域更闊的完整控制項會計入外層捲動範圍。
 
 測試直接編譯正式頁面及提示卡的初始化語句與共用常數，模擬有效最小闊度傳到外層捲動區的過程。四種顯示比例下，600 DIP 狀態控制項放入 540 DIP 頁面再加邊距，舊版四項溢出檢查全部失敗，只有有界標籤一項通過；修正版五項全部通過。呢個只係尺寸契約檢查，唔係原生捲動條或焦點證據。結果表格捲動容器仍待獨立審核。
+
+## Result tables
+
+Automatic pressure-advance, multi-extruder pressure-advance and automatic flow-rate results now use a local `CalibrationResultViewport`, derived from the existing `MD3ScrolledWindow`. Each table keeps its original sizers, header order, direct child controls, values, extruder/tray identities, validation and actions. Complete tables scroll horizontally instead of wrapping columns independently. The three owning sizer items expand to their available width.
+
+The viewport alone has a bounded minimum width. The surrounding page retains its unspecified minimum so other fixed descendants remain represented. Deferred size, show, DPI and result-content updates measure `GetSizer()->CalcMin()` directly, reserve the existing scrollbar thickness when horizontal overflow exists, update the local virtual size and refresh ancestors through the outer scroll host. Shorter result sets can reduce height because the previous viewport minimum is never the measurement source. Refresh requests coalesce; changed client width gets another deferred pass. No animation, product copy or calibration behavior was added.
+
+Verification:
+
+- `tests/calibration_results_layout.test.mjs`: baseline `eb07dfe7e6f61f5ae5601c42a179cecd0dbbbe46` has one pass and two failures; current source passes 3/3. The preservation case compares the complete source after only the exact viewport class, construction, expansion and refresh additions are normalized, and rejects an altered extruder identity.
+- `tests/calibration_result_viewport.test.mjs`: compiles the actual production viewport class against a non-window geometry adapter. Six cases pass: local overflow propagation, narrow/wide/narrow transitions, shorter results, DPI change, hidden/zero-width recovery, and non-recursive ancestor refresh. Deliberately restoring an unbounded viewport width makes the overflow ownership case fail (5/6), then unchanged production source passes 6/6. The adapter models effective-minimum propagation rather than asserting only the assigned minimum value.
+- The existing child-source preservation suite passes 5/5, giving 8/8 source cases with the new suite. Compiler output lives outside the repository.
+
+No full application build or launch was performed. Native scrollbar rendering, wheel routing, focus reveal, keyboard operation and the full minimum-client-area/language/theme/scale matrix remain pending. The non-window adapter is not native wx rendering evidence.
+
+## 結果表格
+
+自動壓力提前、多噴嘴壓力提前及自動流量校準結果，改用沿用現有捲動控制項的本地水平捲動容器。原有表格排列、標題次序、直接子控制項、數值、噴嘴及材料槽識別、驗證同操作全部保留。整張表格水平捲動，唔會將互相關聯的欄位拆散換行。三個容器都擴展至可用闊度。
+
+只有本地捲動容器限制最小闊度，外層頁面繼續保留未指定最小闊度。大小、顯示、DPI 及結果內容變動會合併成延後更新，直接量度表格排列器，需要時預留水平捲動條高度，再更新本地虛擬大小及外層捲動範圍。舊容器高度唔參與新量度，所以結果減少時可以縮短。冇新增動畫、產品文字或校準行為。
+
+來源檢查修正前三項有兩項失敗，修正後三項通過；原有保留檢查五項通過。直接編譯正式容器類別的非視窗測試六項通過，刻意取消本地闊度限制後，溢出擁有權一項失敗，再用原來源重跑六項通過。今次冇完整編譯或啟動程式；原生捲動條、滾輪、焦點、鍵盤及全部畫面組合仍待實機驗證。

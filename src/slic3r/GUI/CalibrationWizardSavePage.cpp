@@ -1,3 +1,4 @@
+#include "Widgets/MD3ScrolledWindow.hpp"
 #include "Widgets/MD3Tokens.hpp"
 #include "Widgets/StateColor.hpp"
 #include "CalibrationWizardSavePage.hpp"
@@ -12,6 +13,53 @@
 #include "DeviceManager.hpp"
 
 namespace Slic3r { namespace GUI {
+
+// An indivisible result table owns horizontal overflow. Its descendants remain
+// direct children, preserving result traversal, validation and identity.
+class CalibrationResultViewport final : public MD3ScrolledWindow {
+public:
+    explicit CalibrationResultViewport(wxWindow *parent)
+        : MD3ScrolledWindow(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize,
+                            wxTAB_TRAVERSAL | wxHSCROLL | wxBORDER_NONE)
+    {
+        SetMinSize(wxSize(0, -1));
+        SetScrollRate(FromDIP(12), 0);
+        ShowScrollbars(wxSHOW_SB_DEFAULT, wxSHOW_SB_NEVER);
+        Bind(wxEVT_SIZE, [this](wxSizeEvent &event) { event.Skip(); QueueExtent(); });
+        Bind(wxEVT_SHOW, [this](wxShowEvent &event) { event.Skip(); if (event.IsShown()) QueueExtent(); });
+        Bind(wxEVT_DPI_CHANGED, [this](wxDPIChangedEvent &event) { event.Skip(); QueueExtent(); });
+    }
+
+    void QueueExtent()
+    {
+        if (!m_reflow.request()) return;
+        CallAfter([this]() {
+            const int width = GetClientSize().x;
+            {
+                CalibrationLayout::ReflowPass pass(m_reflow);
+                if (width <= 0 || !IsShown() || !GetSizer()) return;
+                // Measure the table sizer itself, never this viewport's old
+                // minimum height. A shorter result set must be able to shrink.
+                const wxSize table = GetSizer()->CalcMin();
+                const int height = std::max(1, table.y) + (table.x > width ? BarThickness(this) : 0);
+                SetMinSize(wxSize(0, height));
+                SetScrollRate(FromDIP(12), 0);
+                SetVirtualSize(wxSize(std::max(width, table.x), table.y));
+                Layout();
+                for (wxWindow *owner = GetParent(); owner; owner = owner->GetParent()) {
+                    owner->Layout();
+                    if (auto *scroll = dynamic_cast<wxScrolledWindow *>(owner)) {
+                        scroll->FitInside();
+                        break;
+                    }
+                }
+            }
+            if (GetClientSize().x != width) QueueExtent();
+        });
+    }
+private:
+    CalibrationLayout::ReflowState m_reflow;
+};
 
 #define CALIBRATION_SAVE_AMS_NAME_SIZE wxSize(FromDIP(20), FromDIP(24))
 #define CALIBRATION_SAVE_NUMBER_INPUT_SIZE wxSize(FromDIP(100), FromDIP(24))
@@ -169,13 +217,13 @@ void CaliPASaveAutoPanel::create_panel(wxWindow* parent)
 
     m_top_sizer->AddSpacer(FromDIP(20));
 
-    m_grid_panel = new wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
+    m_grid_panel = new CalibrationResultViewport(parent);
     m_grid_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
-    m_top_sizer->Add(m_grid_panel, 0, wxALIGN_CENTER);
+    m_top_sizer->Add(m_grid_panel, 0, wxEXPAND);
 
-    m_multi_extruder_grid_panel = new wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
+    m_multi_extruder_grid_panel = new CalibrationResultViewport(parent);
     m_multi_extruder_grid_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
-    m_top_sizer->Add(m_multi_extruder_grid_panel, 0, wxALIGN_CENTER);
+    m_top_sizer->Add(m_multi_extruder_grid_panel, 0, wxEXPAND);
 
     m_top_sizer->AddSpacer(FromDIP(10));
 
@@ -325,6 +373,7 @@ void CaliPASaveAutoPanel::sync_cali_result(const std::vector<PACalibResult>& cal
             n_value_failed->Hide();
 
             m_grid_panel->Layout();
+            m_grid_panel->QueueExtent();
             m_grid_panel->Update();
         };
 
@@ -362,6 +411,7 @@ void CaliPASaveAutoPanel::sync_cali_result(const std::vector<PACalibResult>& cal
     }
 
     m_grid_panel->SetSizer(grid_sizer, true);
+    m_grid_panel->QueueExtent();
     m_grid_panel->Bind(wxEVT_LEFT_DOWN, [this](auto& e) {
         SetFocusIgnoringChildren();
         });
@@ -484,6 +534,7 @@ void CaliPASaveAutoPanel::sync_cali_result_for_multi_extruder(const std::vector<
     const int   ROW_GAP          = FromDIP(10);
 
     m_multi_extruder_grid_panel->SetSizer(grid_sizer, true);
+    m_multi_extruder_grid_panel->QueueExtent();
     m_multi_extruder_grid_panel->Bind(wxEVT_LEFT_DOWN, [this](auto &e) { SetFocusIgnoringChildren(); });
 
     const std::string& cwsp_pt = m_obj->printer_type;
@@ -675,6 +726,7 @@ void CaliPASaveAutoPanel::sync_cali_result_for_multi_extruder(const std::vector<
             n_value_failed->Hide();
 
             m_multi_extruder_grid_panel->Layout();
+            m_multi_extruder_grid_panel->QueueExtent();
             m_multi_extruder_grid_panel->Update();
         };
 
@@ -1370,9 +1422,9 @@ void CalibrationFlowX1SavePage::create_page(wxWindow* parent)
 
     m_top_sizer->AddSpacer(FromDIP(20));
 
-    m_grid_panel = new wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
+    m_grid_panel = new CalibrationResultViewport(parent);
     m_grid_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
-    m_top_sizer->Add(m_grid_panel, 0, wxALIGN_CENTER);
+    m_top_sizer->Add(m_grid_panel, 0, wxEXPAND);
 
     m_action_panel = new CaliPageActionPanel(parent, m_cali_mode, CaliPageType::CALI_PAGE_FLOW_SAVE);
     m_top_sizer->Add(m_action_panel, 0, wxEXPAND, 0);
@@ -1443,6 +1495,7 @@ void CalibrationFlowX1SavePage::sync_cali_result(MachineObject* obj, const std::
                 flow_ratio_value_failed->Show();
             }
             m_grid_panel->Layout();
+            m_grid_panel->QueueExtent();
             m_grid_panel->Update();
         };
 
@@ -1478,6 +1531,7 @@ void CalibrationFlowX1SavePage::sync_cali_result(MachineObject* obj, const std::
         m_grid_panel->SetFocusIgnoringChildren();
         });
     m_grid_panel->SetSizer(grid_sizer, true);
+    m_grid_panel->QueueExtent();
 
     if (part_failed) {
         m_part_failed_panel->Show();

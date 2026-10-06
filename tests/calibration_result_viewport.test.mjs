@@ -1,0 +1,18 @@
+import {readFileSync,writeFileSync,mkdtempSync} from 'node:fs';
+import {spawnSync} from 'node:child_process';
+import {tmpdir} from 'node:os';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
+const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
+const output=mkdtempSync(path.join(tmpdir(),'bambustudio-result-viewport-'));
+const source=readFileSync(path.join(root,'src/slic3r/GUI/CalibrationWizardSavePage.cpp'),'utf8');
+const start=source.indexOf('class CalibrationResultViewport final'),end=source.indexOf('#define CALIBRATION_SAVE_AMS_NAME_SIZE',start);
+if(start<0||end<0)throw new Error('Production viewport class missing');
+let production=source.slice(start,end);
+if(process.argv.includes('--negative-unbounded'))production=production.replaceAll('SetMinSize(wxSize(0,','SetMinSize(wxSize(-1,');
+const cpp=path.join(output,'fixture.cpp'),exe=path.join(output,'fixture.exe');
+writeFileSync(cpp,readFileSync(path.join(root,'tests/calibration_result_viewport_fixture.cpp'),'utf8').replace('// PRODUCTION_VIEWPORT',production));
+console.log('Actual production viewport'+(process.argv.includes('--negative-unbounded')?' with deliberately unbounded width':''));console.log('Task-owned output: '+output);
+const compile=spawnSync('cl.exe',['/nologo','/std:c++17','/EHsc','/W4','/I'+root,cpp,'/Fe:'+exe,'/Fo:'+path.join(output,'fixture.obj')],{cwd:output,stdio:'inherit'});
+if(compile.error)throw compile.error;if(compile.status!==0)process.exit(compile.status??1);
+const run=spawnSync(exe,[],{cwd:output,stdio:'inherit'});if(run.error)throw run.error;process.exit(run.status??1);
