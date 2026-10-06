@@ -213,7 +213,7 @@ def validate_image(path, reply, hwnd, geometry):
 
 
 class NativeSession:
-    """Suspended launch is assigned to an owned kill-on-close job before running."""
+    """Create the target inside its owned kill-on-close job, without an assignment gap."""
     def __init__(self, exe, profile, tag):
         require(os.name == "nt", "Native review requires Windows")
         from ctypes import wintypes as w
@@ -226,6 +226,8 @@ class NativeSession:
                 ("stdin", w.HANDLE), ("stdout", w.HANDLE), ("stderr", w.HANDLE)]
         class PI(ctypes.Structure):
             _fields_ = [("process", w.HANDLE), ("thread", w.HANDLE), ("pid", w.DWORD), ("tid", w.DWORD)]
+        class SIEX(ctypes.Structure):
+            _fields_ = [("startup", SI), ("attributes", ctypes.c_void_p)]
         class Basic(ctypes.Structure):
             _fields_ = [("processTime", ctypes.c_int64), ("jobTime", ctypes.c_int64), ("flags", w.DWORD),
                 ("minWorking", ctypes.c_size_t), ("maxWorking", ctypes.c_size_t), ("activeLimit", w.DWORD),
@@ -237,7 +239,11 @@ class NativeSession:
             "SetInformationJobObject": ([w.HANDLE, ctypes.c_int, ctypes.c_void_p, w.DWORD], w.BOOL),
             "CreateProcessW": ([w.LPCWSTR, w.LPWSTR, ctypes.c_void_p, ctypes.c_void_p, w.BOOL, w.DWORD,
                 ctypes.c_void_p, w.LPCWSTR, ctypes.POINTER(SI), ctypes.POINTER(PI)], w.BOOL),
-            "AssignProcessToJobObject": ([w.HANDLE, w.HANDLE], w.BOOL),
+            "InitializeProcThreadAttributeList": ([ctypes.c_void_p, w.DWORD, w.DWORD,
+                ctypes.POINTER(ctypes.c_size_t)], w.BOOL),
+            "UpdateProcThreadAttribute": ([ctypes.c_void_p, w.DWORD, ctypes.c_size_t,
+                ctypes.c_void_p, ctypes.c_size_t, ctypes.c_void_p, ctypes.c_void_p], w.BOOL),
+            "DeleteProcThreadAttributeList": ([ctypes.c_void_p], None),
             "ResumeThread": ([w.HANDLE], w.DWORD), "TerminateProcess": ([w.HANDLE, w.UINT], w.BOOL),
             "TerminateJobObject": ([w.HANDLE, w.UINT], w.BOOL),
             "WaitForSingleObject": ([w.HANDLE, w.DWORD], w.DWORD),
@@ -268,14 +274,33 @@ class NativeSession:
                     del env[key]
             env.update(BAMBU_LAYOUT_PROBE="1", BAMBU_LAYOUT_PROBE_TAG=tag)
             environment = ctypes.create_unicode_buffer("\0".join(k + "=" + v for k, v in sorted(env.items())) + "\0\0")
-            startup, process = SI(), PI()
-            startup.cb, startup.desktop, startup.flags, startup.show = ctypes.sizeof(SI), "WinSta0\\Default", 1, 1
+            startup, process = SIEX(), PI()
+            startup.startup.cb = ctypes.sizeof(SIEX)
+            startup.startup.desktop, startup.startup.flags, startup.startup.show = "WinSta0\\Default", 1, 1
             command = ctypes.create_unicode_buffer(subprocess.list2cmdline([str(exe), "--datadir", str(profile)]))
-            require(self.k.CreateProcessW(str(exe), command, None, None, False, 0x404, environment,
-                        str(exe.parent), ctypes.byref(startup), ctypes.byref(process)), "Native launch failed")
+            size = ctypes.c_size_t()
+            self.k.InitializeProcThreadAttributeList(None, 1, 0, ctypes.byref(size))
+            require(0 < size.value <= 1024 * 1024, "Cannot size process attributes")
+            attributes = ctypes.create_string_buffer(size.value)
+            require(self.k.InitializeProcThreadAttributeList(attributes, 1, 0, ctypes.byref(size)),
+                    "Cannot initialize process attributes")
+            try:
+                jobs = (w.HANDLE * 1)(self.job)
+                # PROC_THREAD_ATTRIBUTE_JOB_LIST (WinBase.h: input attribute 13).
+                # Membership is established by CreateProcessW itself. Even an
+                # abrupt worker exit before that call returns closes the job and
+                # terminates the child. Never fall back to post-creation assignment.
+                require(self.k.UpdateProcThreadAttribute(attributes, 0, 0x2000D, jobs,
+                            ctypes.sizeof(jobs), None, None), "Cannot bind creation-time process job")
+                startup.attributes = ctypes.cast(attributes, ctypes.c_void_p)
+                # EXTENDED_STARTUPINFO_PRESENT | CREATE_UNICODE_ENVIRONMENT | CREATE_SUSPENDED
+                require(self.k.CreateProcessW(str(exe), command, None, None, False, 0x80404, environment,
+                            str(exe.parent), ctypes.cast(ctypes.byref(startup), ctypes.POINTER(SI)),
+                            ctypes.byref(process)), "Native launch failed")
+            finally:
+                self.k.DeleteProcThreadAttributeList(attributes)
             self.process, self.pid = process.process, int(process.pid)
             try:
-                require(self.k.AssignProcessToJobObject(self.job, self.process), "Process containment failed")
                 require(self.k.ResumeThread(process.thread) != 0xFFFFFFFF, "Process resume failed")
             except Exception:
                 self.k.TerminateProcess(self.process, 1)

@@ -132,46 +132,96 @@ def probe(pid=7, hwnd=20, tag="fixture"):
 
 
 class OwnershipTests(unittest.TestCase):
-    def test_native_process_is_suspended_until_contained(self):
-        for assigned in (True, False):
-            with self.subTest(assigned=assigned):
-                kernel, user, events = MagicMock(), MagicMock(), []
-                kernel.CreateJobObjectW.return_value = 11
-                kernel.SetInformationJobObject.return_value = True
-                kernel.TerminateJobObject.return_value = True
-                kernel.WaitForSingleObject.return_value = 0
-                user.OpenInputDesktop.return_value = 44
-                def desktop(handle, kind, buffer, length, needed):
-                    buffer.value = "Default"
-                    return True
-                user.GetUserObjectInformationW.side_effect = desktop
-                def create(exe, command, pa, ta, inherit, flags, env, cwd, si, pi):
-                    events.append("create-suspended")
-                    self.assertEqual(flags & 4, 4)
-                    self.assertEqual(si._obj.desktop, "WinSta0\\Default")
-                    self.assertFalse(inherit)
-                    pi._obj.process, pi._obj.thread, pi._obj.pid = 22, 33, 7
-                    return True
-                kernel.CreateProcessW.side_effect = create
-                kernel.AssignProcessToJobObject.side_effect = lambda job, process: events.append("assign") or assigned
-                kernel.ResumeThread.side_effect = lambda thread: events.append("resume") or 1
-                def accounting(job, kind, buffer, length, returned):
-                    buffer._obj.active = 0
-                    return True
-                kernel.QueryInformationJobObject.side_effect = accounting
+    def native_api(self, *, attributes_ok=True, interrupt=False):
+        kernel, user, events = MagicMock(), MagicMock(), []
+        state = {"attribute_address": None, "jobs": [], "children": {}}
+        kernel.CreateJobObjectW.return_value = 11
+        kernel.SetInformationJobObject.return_value = True
+        kernel.TerminateJobObject.return_value = True
+        kernel.WaitForSingleObject.return_value = 0
+        user.OpenInputDesktop.return_value = 44
+        def desktop(handle, kind, buffer, length, needed):
+            buffer.value = "Default"
+            return True
+        user.GetUserObjectInformationW.side_effect = desktop
+        def initialize(attributes, count, flags, size):
+            size._obj.value = 128
+            return attributes is not None
+        kernel.InitializeProcThreadAttributeList.side_effect = initialize
+        def update(attributes, flags, key, value, size, previous, returned):
+            self.assertEqual(key, 0x2000D)
+            self.assertEqual(size, review.ctypes.sizeof(review.wt.HANDLE))
+            self.assertEqual(list(value), [11])
+            state["attribute_address"] = review.ctypes.addressof(attributes)
+            state["jobs"] = list(value)
+            events.append("bind-creation-job")
+            return attributes_ok
+        kernel.UpdateProcThreadAttribute.side_effect = update
+        class AbruptWorkerExit(BaseException):
+            pass
+        def create(exe, command, pa, ta, inherit, flags, env, cwd, si, pi):
+            # Accept either historical STARTUPINFO or current STARTUPINFOEX so
+            # this exact interruption test can expose the old orphaned child.
+            base = si._obj if hasattr(si, "_obj") else si.contents
+            self.assertEqual(flags & 4, 4)
+            self.assertEqual(base.desktop, "WinSta0\\Default")
+            self.assertFalse(inherit)
+            atomic = False
+            if flags & 0x80000:
+                class ExtendedStartup(review.ctypes.Structure):
+                    _fields_ = [("base", type(base)), ("attributes", review.ctypes.c_void_p)]
+                extended = review.ctypes.cast(si, review.ctypes.POINTER(ExtendedStartup)).contents
+                atomic = (base.cb == review.ctypes.sizeof(ExtendedStartup) and
+                          extended.attributes == state["attribute_address"] and state["jobs"] == [11])
+            state["children"][22] = 11 if atomic else None
+            pi._obj.process, pi._obj.thread, pi._obj.pid = 22, 33, 7
+            events.append("created-contained" if atomic else "created-uncontained")
+            if interrupt:
+                # Model forced worker termination at the first boundary after
+                # child creation, before CreateProcessW returns to Python. OS
+                # closure of the final job handle kills only existing members.
+                state["children"] = {pid: job for pid, job in state["children"].items() if job != 11}
+                raise AbruptWorkerExit()
+            return True
+        kernel.CreateProcessW.side_effect = create
+        kernel.ResumeThread.side_effect = lambda thread: events.append("resume") or 1
+        def accounting(job, kind, buffer, length, returned):
+            buffer._obj.active = 0
+            return True
+        kernel.QueryInformationJobObject.side_effect = accounting
+        return kernel, user, events, state, AbruptWorkerExit
+
+    def test_native_process_is_created_inside_its_job(self):
+        for attributes_ok in (True, False):
+            with self.subTest(attributes_ok=attributes_ok):
+                kernel, user, events, state, _ = self.native_api(attributes_ok=attributes_ok)
                 with patch.object(review.ctypes, "WinDLL", create=True, side_effect=lambda name, **kw: kernel if name == "kernel32" else user), \
                      patch.object(review.os, "name", "nt"):
-                    if assigned:
+                    if attributes_ok:
                         session = review.NativeSession(Path("C:/fixture/app.exe"), Path("C:/fixture/profile"), "fixture")
-                        self.assertEqual(events, ["create-suspended", "assign", "resume"])
+                        self.assertEqual(events, ["bind-creation-job", "created-contained", "resume"])
                         self.assertTrue(session.close())
                     else:
                         with self.assertRaises(review.LaunchFailure) as context:
                             review.NativeSession(Path("C:/fixture/app.exe"), Path("C:/fixture/profile"), "fixture")
-                        self.assertEqual(events, ["create-suspended", "assign"])
+                        self.assertEqual(events, ["bind-creation-job"])
                         self.assertEqual(context.exception.teardown, "verified")
-                        kernel.TerminateProcess.assert_called_once_with(22, 1)
+                        kernel.CreateProcessW.assert_not_called()
+                        kernel.ResumeThread.assert_not_called()
+                kernel.AssignProcessToJobObject.assert_not_called()
+                kernel.DeleteProcThreadAttributeList.assert_called_once()
                 kernel.TerminateJobObject.assert_called_once_with(11, 0)
+
+    def test_abrupt_exit_at_creation_cannot_leave_an_uncontained_child(self):
+        kernel, user, events, state, interruption = self.native_api(interrupt=True)
+        with patch.object(review.ctypes, "WinDLL", create=True, side_effect=lambda name, **kw: kernel if name == "kernel32" else user), \
+             patch.object(review.os, "name", "nt"):
+            with self.assertRaises(interruption):
+                review.NativeSession(Path("C:/fixture/app.exe"), Path("C:/fixture/profile"), "fixture")
+        self.assertEqual(state["children"], {}, "Worker exit orphaned a suspended child outside its job")
+        kernel.ResumeThread.assert_not_called()
+        kernel.AssignProcessToJobObject.assert_not_called()
+        kernel.TerminateJobObject.assert_not_called()  # No Python cleanup discharges the assertion.
 
     def test_foreign_windows_are_never_adopted_by_title(self):
         windows = [{"handle": 10, "title": "Bambu Studio"}, {"handle": 20, "title": ""}]
