@@ -6,7 +6,9 @@ on:
     # release job itself creates, so every release re-triggered a build of the
     # same commit and published another (mis-titled) release — an unbounded
     # release loop (r94..r192 were all echoes of a handful of commits).
-    branches: ['**']
+    # Feature-gap branches (gap/**) reach the build through main, which merges
+    # them in batches; building each one as well would only queue ahead of it.
+    branches: ['**', '!gap/**']
 
   pull_request:
     branches: [main]
