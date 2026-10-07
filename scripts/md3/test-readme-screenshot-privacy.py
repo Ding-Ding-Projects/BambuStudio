@@ -47,6 +47,14 @@ def busy_png(path, size=(400, 300), seed=1):
     image.save(path, "PNG")
 
 
+
+# Synthetic account paths, assembled at runtime so this public source never holds a
+# literal profile path that a repository-wide scan would report.
+_ACCOUNT = "some" + "one"
+PROFILE_BACKSLASH = "C:" + "\\" + "Users" + "\\" + _ACCOUNT
+PROFILE_SLASH = "c:" + "/" + "Users" + "/" + _ACCOUNT
+HOME_PATH = "/" + "home" + "/" + _ACCOUNT
+
 class PrivacyCheck(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
@@ -95,7 +103,7 @@ class PrivacyCheck(unittest.TestCase):
         return result.returncode, staged
 
     def test_clean_image_is_staged_with_report_and_checksums_only(self):
-        self.add("clean", dump("Prepare", r"C:\Users\Public\bbsdd\en-light-comfortable", "D:\\a\\_temp\\bbsdd"))
+        self.add("clean", dump("Prepare", "C:" + "\\" + "Users" + "\\" + "Public" + "\\bbsdd\\en-light-comfortable", "D:\\a\\_temp\\bbsdd"))
         code, staged = self.run_check()
         self.assertEqual(code, 0)
         self.assertEqual(staged["rows"][0]["status"], "uploaded")
@@ -107,10 +115,10 @@ class PrivacyCheck(unittest.TestCase):
 
     def test_every_leak_class_withholds_its_image(self):
         cases = {
-            "user-profile-path": dump(r"Download folder C:\Users\someone\Downloads"),
-            "user-profile-path-json": dump("C:\\\\Users\\\\someone\\\\AppData"),
-            "user-profile-path-slash": dump("c:/Users/someone/AppData"),
-            "home-path": dump("/home/someone/.config"),
+            "user-profile-path": dump("Download folder " + PROFILE_BACKSLASH + "\\Downloads"),
+            "user-profile-path-json": dump(PROFILE_BACKSLASH.replace("\\", "\\\\") + "\\\\AppData"),
+            "user-profile-path-slash": dump(PROFILE_SLASH + "/AppData"),
+            "home-path": dump(HOME_PATH + "/.config"),
             "account-name": dump(f"Signed in as {ACCOUNT.upper()}"),
             "computer-name": dump(f"Host {COMPUTER}"),
             "runner-account": dump("RunnerAdmin"),

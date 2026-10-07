@@ -43,7 +43,8 @@ import sys
 from pathlib import Path, PurePosixPath
 
 # ui-md3/tests/evidence-privacy.test.mjs USER_PROFILE_PATH, in Python syntax:
-# C:\Users\<name> in plain, JSON-escaped or forward-slash form; C:\Users\Public is allowed.
+# a drive letter, the Users folder and an account name, in plain, JSON-escaped or
+# forward-slash form; the shared Public profile folder is allowed.
 USER_PROFILE_PATH = re.compile(r'[A-Za-z]:(?:\\\\|\\|/)Users(?:\\\\|\\|/)(?!Public(?:\\\\|\\|/|"|$))[^\\/"\s]+')
 PATTERNS = (
     ('user-profile-path', USER_PROFILE_PATH),
