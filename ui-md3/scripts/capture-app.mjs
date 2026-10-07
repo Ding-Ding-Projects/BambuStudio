@@ -4,10 +4,17 @@
  * evidence for the fixes that have no visible surface.
  *
  *   node ui-md3/scripts/capture-app.mjs <appUrl> <outputDir>
+ *   node ui-md3/scripts/capture-app.mjs <appUrl> <outputDir> --readme-references --evidence-dir <dir>
  *
  * Everything here is measured from a real headless Chrome against the real
  * files — accessible names come from Chrome's own AX tree, not from reading the
  * markup and assuming.
+ *
+ * --readme-references takes only the README's three design-reference images:
+ * full-page shots of the exact app URLs the README links them to, at the
+ * 1600x1000 size they were first published at. It writes the page text of each
+ * shot and a report to the evidence directory, for
+ * scripts/md3/check-readme-screenshot-privacy.py to read before any upload.
  */
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
@@ -15,10 +22,31 @@ import { existsSync } from 'node:fs';
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const APP_URL = process.argv[2] || 'http://127.0.0.1:4173/app/index.html';
-const OUT_DIR = path.resolve(process.argv[3] || 'docs/screenshots/pages/app');
+const argv = process.argv.slice(2);
+const positional = [];
+let readmeReferences = false;
+let evidenceDir = null;
+for (let i = 0; i < argv.length; i += 1) {
+  if (argv[i] === '--readme-references') readmeReferences = true;
+  else if (argv[i] === '--evidence-dir') evidenceDir = path.resolve(argv[++i] ?? '');
+  else positional.push(argv[i]);
+}
+assert.ok(!readmeReferences || evidenceDir, '--readme-references needs --evidence-dir <dir>');
+const APP_URL = positional[0] || 'http://127.0.0.1:4173/app/index.html';
+const OUT_DIR = path.resolve(positional[1] || 'docs/screenshots/pages/app');
+const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const delay = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// The README's "Interactive design reference" images and the query string each
+// one links to (README.md, "Interactive design reference").
+const README_REFERENCES = [
+  { name: 'material-prepare-light-en', query: 'view=prepare&theme=light&density=comfortable&accent=%2322c55e&lang=en' },
+  { name: 'material-preview-dark-yue-hk', query: 'view=preview&theme=dark&density=comfortable&accent=%237c5cff&lang=yue_HK' },
+  { name: 'material-device-dark-bilingual', query: 'view=device&theme=dark&density=compact&accent=%2314b8a6&lang=bilingual_en_yue_HK' },
+];
+const README_REFERENCE_VIEWPORT = { width: 1600, height: 1000 };
 
 function chromePath() {
   return [
@@ -163,6 +191,67 @@ async function shoot(name, selector, pad = 0) {
   console.log(`captured ${name}.png`);
 }
 
+async function closeBrowser() {
+  try { await session.send('Browser.close'); } catch { chrome.kill(); }
+  session.close();
+  await delay(500);
+  await rm(profile, { recursive: true, force: true, maxRetries: 20, retryDelay: 100 });
+}
+
+/*
+ * The README's design references, each a full-page shot of the URL the README
+ * links it to. A failed shot is reported, not thrown, so the others still run;
+ * the privacy check stages only rows marked done whose text it has read.
+ */
+async function captureReadmeReferences() {
+  await mkdir(evidenceDir, { recursive: true });
+  await viewport(README_REFERENCE_VIEWPORT.width, README_REFERENCE_VIEWPORT.height);
+  const rows = [];
+  for (const { name, query } of README_REFERENCES) {
+    const output = path.join(OUT_DIR, `${name}.png`);
+    const row = { file: path.relative(REPO_ROOT, output).split(path.sep).join('/'), kind: 'pages', status: 'failed' };
+    try {
+      await open(Object.fromEntries(new URLSearchParams(query)));
+      const size = JSON.parse(await evaluate(`JSON.stringify({
+        width: Math.max(document.documentElement.scrollWidth, innerWidth),
+        height: Math.max(document.documentElement.scrollHeight, innerHeight)
+      })`));
+      const shot = await session.send('Page.captureScreenshot', {
+        format: 'png', captureBeyondViewport: true,
+        clip: { x: 0, y: 0, width: size.width, height: size.height, scale: 1 },
+      });
+      await writeFile(output, Buffer.from(shot.data, 'base64'));
+      // What the image shows as text: the rendered text plus every field's
+      // value, which innerText leaves out.
+      const page = JSON.parse(await evaluate(`JSON.stringify({
+        title: document.title,
+        text: document.body.innerText,
+        values: [...document.querySelectorAll('input, textarea, select')].map((field) => field.value)
+      })`));
+      const evidenceName = `${name}.evidence.jsonl`;
+      const records = [{ kind: 'page', name, query, width: size.width, height: size.height, ...page }, { kind: 'end' }];
+      await writeFile(path.join(evidenceDir, evidenceName), records.map((r) => JSON.stringify(r)).join('\n') + '\n');
+      Object.assign(row, { status: 'done', evidence_probe: evidenceName });
+      console.log(`captured ${name}.png (${size.width}x${size.height})`);
+    } catch (error) {
+      row.status = `failed: ${error.message}`;
+      console.log(`failed ${name}.png: ${error.message}`);
+    }
+    rows.push(row);
+  }
+  await writeFile(path.join(evidenceDir, 'report.json'), `${JSON.stringify({ rows }, null, 2)}\n`);
+  return rows.every((row) => row.status === 'done') ? 0 : 1;
+}
+
+if (readmeReferences) {
+  try {
+    process.exitCode = await captureReadmeReferences();
+  } finally {
+    await closeBrowser();
+  }
+  process.exit();
+}
+
 const evidence = {};
 
 try {
@@ -276,8 +365,5 @@ try {
   await writeFile(path.join(OUT_DIR, 'evidence.json'), `${JSON.stringify(evidence, null, 2)}\n`);
   console.log(JSON.stringify(evidence, null, 2));
 } finally {
-  try { await session.send('Browser.close'); } catch { chrome.kill(); }
-  session.close();
-  await delay(500);
-  await rm(profile, { recursive: true, force: true, maxRetries: 20, retryDelay: 100 });
+  await closeBrowser();
 }

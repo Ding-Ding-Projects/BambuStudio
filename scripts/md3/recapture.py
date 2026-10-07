@@ -7,7 +7,8 @@ row's recipe:
 
   page        run the steps, PrintWindow the surface's top-level window
   crop-probe  run the steps, ask the layout probe for a dump, find the control
-              whose label or name matches, crop the page capture to it (+pad)
+              whose label or name matches, crop the page capture to it (+pad);
+              "parent": N crops to its Nth enclosing window instead
   crop-gl     not handled here (needs the GL item rectangles); reported as skipped
   pages       handled by ui-md3/scripts/capture-site.mjs; reported as skipped
   historical  kept as-is; reported as skipped
@@ -23,7 +24,8 @@ wizard-page:<n>, upload:<what>. A step the runner cannot perform marks the row
 
 The report (JSON) lists every attempted row with done / blocked / failed and
 the reason; the manifest's statuses are updated for rows that succeeded, with
-the run's provenance recorded once.
+the run's provenance recorded once. With --evidence-probe each finished row
+also names the layout dump taken right after its capture.
 """
 from __future__ import annotations
 
@@ -48,6 +50,8 @@ PREF_CLOSE = (753, 21)
 # whose tab labels are not English.
 TABS = {'home': (90, 119), 'prepare': (211, 119), 'preview': (346, 119), 'device': (483, 119), 'project': (619, 119), 'ink': (755, 119)}
 PREF_TABS = {'appearance': (79, 75), 'general': (79, 120), 'user': (79, 166), '3d': (79, 212), 'other': (79, 258)}
+# Names the workspace tab strip has carried in the layout probe, newest first.
+RAIL_NAMES = ('Workspace navigation', 'Navigation rail')
 # Surfaces that are the main frame itself.
 MAIN_SURFACES = {'main', 'home', 'prepare', 'preview', 'device', 'project', 'ink', 'toast', 'menu'}
 # Surface -> predicate on a top-level window record from the probe / window list.
@@ -93,6 +97,7 @@ class App:
         self.pid = None
         self.main = None
         self.n = 0
+        self.last_probe = None
 
     def start(self, timeout=None):
         timeout = timeout or getattr(self, 'startup_timeout', 240)
@@ -141,6 +146,7 @@ class App:
     def probe(self):
         self.n += 1
         path = os.path.join(self.probe_dir, f'recapture-{self.pid}-{self.n}.jsonl')
+        self.last_probe = path
         # The sender must live on the hidden desktop (IsWindow fails across
         # desktops), so it is launched there through the cheap CLI.
         sender = os.path.join(HERE, 'send-layout-probe.py')
@@ -262,6 +268,25 @@ def find_control(records, label, toplevel_hwnd=None):
     return r
 
 
+def enclosing_window(records, control, levels):
+    """The window `levels` parents above a find_control result, in the same image frame.
+
+    A region with no name of its own (the process settings header row is an
+    unnamed panel) is reached through a named control inside it; recipes ask
+    for that with "parent": <levels>.
+    """
+    byh = {r['hwnd']: r for r in records if r.get('kind') == 'window'}
+    cur = control
+    for _ in range(levels):
+        cur = byh.get(cur.get('parent'))
+        if cur is None or cur.get('on_screen') is False or not cur.get('screen') or cur['screen']['w'] <= 0 or cur['screen']['h'] <= 0:
+            return None
+    ox = control['screen']['x'] - control['image_rect']['x']
+    oy = control['screen']['y'] - control['image_rect']['y']
+    s = cur['screen']
+    return dict(cur, image_rect={'x': s['x'] - ox, 'y': s['y'] - oy, 'w': s['w'], 'h': s['h']})
+
+
 class Runner:
     def __init__(self, app, lang):
         self.app, self.lang = app, lang
@@ -287,11 +312,13 @@ class Runner:
             # Scope to the navigation rail: 'Ink' is also the sidebar section
             # header, which is smaller and therefore won every exact match,
             # so nav:Ink collapsed the Ink section instead of switching tabs.
-            rail = next((r for r in records if r.get('kind') == 'window' and r.get('name') == 'Navigation rail'), None)
-            c = find_control(records, label, rail['hwnd']) if rail else None
-            if not c:
-                c = find_control(records, label, self.app.main)
-            if not c and label.lower() in TABS:
+            # The rail was renamed 'Workspace navigation' (624e2ed52); both
+            # names resolve. Once the rail is found the label must be one of
+            # its tabs: falling back to the whole frame is how nav:Ink landed
+            # on the sidebar's Ink header and the Prepare page was captured.
+            rail = next((r for r in records if r.get('kind') == 'window' and r.get('name') in RAIL_NAMES), None)
+            c = find_control(records, label, rail['hwnd'] if rail else self.app.main)
+            if not c and label.lower() in TABS and self.lang != 'en':
                 # Non-English tuples label the rail in that language; the rail
                 # geometry is language-independent at 1200x800.
                 self.app.click(self.app.main, *TABS[label.lower()], settle=2.5)
@@ -454,6 +481,11 @@ class Runner:
             if not c:
                 os.remove(page)
                 raise RuntimeError(f"blocked: no control labelled '{recipe['label']}' on {recipe['surface']}")
+            if recipe.get('parent'):
+                c = enclosing_window(records, c, int(recipe['parent']))
+                if not c:
+                    os.remove(page)
+                    raise RuntimeError(f"blocked: '{recipe['label']}' has no shown ancestor {recipe['parent']} up")
             r = c['image_rect']; pad = int(recipe.get('pad', 8))
             cheap('crop_image', input_path=page, left=max(0, r['x'] - pad), top=max(0, r['y'] - pad), width=r['w'] + 2 * pad, height=r['h'] + 2 * pad, output_path=out_path)
             os.remove(page)
@@ -517,6 +549,9 @@ def main():
     ap.add_argument('--desktop', default='bsrecap')
     ap.add_argument('--probe-dir', default=os.path.join(REPO, 'artifacts', 'probe'))
     ap.add_argument('--commit', default=None, help='source commit of the executable, recorded in the manifest provenance')
+    ap.add_argument('--evidence-probe', action='store_true',
+                    help='take one more layout dump after each finished row, while its surface is still up, and name it '
+                         'in the report row as evidence_probe (text evidence for check-readme-screenshot-privacy.py)')
     args = ap.parse_args()
     os.makedirs(args.probe_dir, exist_ok=True)
     os.makedirs(os.path.dirname(args.report), exist_ok=True)
@@ -578,7 +613,18 @@ def main():
                 except Exception as e:  # noqa: BLE001 - every row reports, none aborts the run
                     status = str(e) if str(e).startswith('blocked') else f'failed: {e}'
                 print(f'  {status} :: {r["file"]}')
-                report['rows'].append({'file': r['file'], 'status': status})
+                row = {'file': r['file'], 'kind': r['recipe']['kind'], 'status': status}
+                if args.evidence_probe and status == 'done':
+                    # The dump records every label on screen, so it is the text
+                    # evidence of what the image shows. No dump, no evidence: the
+                    # privacy check then withholds the image.
+                    try:
+                        app.probe()
+                        row['evidence_probe'] = os.path.basename(app.last_probe)
+                    except Exception as e:  # noqa: BLE001 - recorded, never fatal to the run
+                        row['evidence_probe'] = None
+                        row['evidence_error'] = type(e).__name__
+                report['rows'].append(row)
                 # Return to a known state between rows: close any dialog we opened.
                 if runner.front and runner.front != app.main:
                     # press_keys by handle does not reach a window on another

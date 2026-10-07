@@ -1,0 +1,321 @@
+name: Retake README screenshots for review
+run-name: "README screenshots: ${{ inputs.target }} (${{ inputs.release_tag }})"
+
+# Dispatch only. Retakes the README images and uploads them as plain PNG files,
+# kept for three days, for a person to review before anything is committed.
+# Every other hosted capture is encrypted; these are not, so each upload passes
+# scripts/md3/check-readme-screenshot-privacy.py first, which fails closed.
+# See docs/features/automation/readme-screenshots.md.
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Published release to install (md3-v<number>)
+        required: true
+        type: string
+      expected_source_commit:
+        description: Exact 40-character lowercase source commit of that release
+        required: true
+        type: string
+      rows:
+        description: Optional regex narrowing the allowlisted native images; empty retakes all of them
+        required: false
+        default: ''
+        type: string
+      target:
+        description: Native application images, or the Pages design references
+        required: true
+        default: native-app
+        type: choice
+        options:
+          - native-app
+          - design-references
+
+permissions:
+  contents: read
+
+concurrency:
+  group: readme-screenshots-${{ github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  native-app:
+    if: ${{ inputs.target == 'native-app' }}
+    runs-on: windows-2025
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: pwsh
+    env:
+      # The README images a native capture can regenerate. The "before" sidebar
+      # images are historical evidence and the three material-* images are Pages
+      # design references (the design-references job), so neither is listed.
+      README_ALLOWLIST: |
+        docs/readme-assets/yum-20260811-native-main-ca49.png
+        docs/readme-assets/yum-20260811-wizard-ca49.png
+        docs/readme-assets/shot-prepare-frame.png
+        docs/readme-assets/shot-home.png
+        docs/readme-assets/shot-prepare-sidebar.png
+        docs/readme-assets/shot-wizard.png
+        docs/readme-assets/native-material-home-light-en.png
+        docs/readme-assets/native-material-filament-manager-light-en.png
+        docs/readme-assets/native-material-device-plugin-gate-light-en.png
+        docs/readme-assets/native-material-project-history-light-en.png
+        docs/screenshots/notifications/toast-info.png
+        docs/screenshots/version-history/history-dialog.png
+        docs/screenshots/regex-builder/builder-popover.png
+        docs/screenshots/appearance/appearance-tab.png
+        docs/screenshots/project-tabs/tab-bar-two-tabs.png
+        docs/screenshots/preferences/general-tab.png
+        docs/screenshots/preferences/other-tab.png
+        docs/screenshots/main-window/menu-file.png
+        docs/screenshots/wizard/wizard-step-22.png
+        docs/screenshots/config-profiles/dialog.png
+        docs/screenshots/sidebar-process/after-search-settings.png
+        docs/screenshots/sidebar-process/after-sidebar-readable.png
+        docs/screenshots/sidebar-process/after-header-intact.png
+    steps:
+      - name: Check out the capture scripts
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          persist-credentials: false
+
+      - name: Install isolated Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+
+      - name: Validate the inputs and select the rows
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
+          SOURCE_COMMIT: ${{ inputs.expected_source_commit }}
+          ROWS: ${{ inputs.rows }}
+        run: |
+          if ($env:RUNNER_ENVIRONMENT -cne 'github-hosted' -or $env:RUNNER_OS -cne 'Windows') {
+            throw 'A disposable GitHub-hosted Windows runner is required.'
+          }
+          if ($env:RELEASE_TAG -cnotmatch '^md3-v\d+$') { throw 'release_tag must be md3-v<number>.' }
+          if ($env:SOURCE_COMMIT -cnotmatch '^[0-9a-f]{40}$') { throw 'expected_source_commit must be 40 lowercase hex characters.' }
+          $allow = @($env:README_ALLOWLIST -split "`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+          $selected = if ($env:ROWS) { @($allow | Where-Object { $_ -match $env:ROWS }) } else { $allow }
+          if ($selected.Count -eq 0) { throw 'rows selects none of the allowlisted README images.' }
+          # recapture.py takes the selection as an exact-path regex.
+          $match = '^(?:' + (($selected | ForEach-Object { [regex]::Escape($_) }) -join '|') + ')$'
+          "README_MATCH=$match" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          Write-Host "Retaking $($selected.Count) of $($allow.Count) allowlisted README images."
+
+      - name: Install and verify the published release
+        env:
+          # The only step that holds a token: it reads the release. The verifier
+          # clears it before running anything it downloaded.
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+          SOURCE_COMMIT: ${{ inputs.expected_source_commit }}
+        run: |
+          & scripts/ci/Verify-HostedSquirrelInstall.ps1 `
+            -Tag $env:RELEASE_TAG `
+            -Repository $env:GITHUB_REPOSITORY `
+            -ExpectedCommit $env:SOURCE_COMMIT `
+            -OutputPath (Join-Path $env:RUNNER_TEMP 'install.json') `
+            -CiExecutionApproved
+
+      - name: Install the pinned headless tool
+        run: |
+          $toolCommit = 'e6e42f2066d539256d6480401d7cef867f2b8dfe'
+          $toolRoot = Join-Path $env:RUNNER_TEMP 'lowlevel-readme'
+          git clone --quiet --no-checkout https://github.com/Ding-Ding-Projects/lowlevel-computer-use-mcp.git $toolRoot
+          if ($LASTEXITCODE -ne 0) { throw 'Could not fetch the pinned headless tool.' }
+          git -C $toolRoot checkout --quiet --detach $toolCommit
+          if ($LASTEXITCODE -ne 0 -or (git -C $toolRoot rev-parse HEAD).Trim() -cne $toolCommit) {
+            throw 'The pinned headless tool could not be checked out exactly.'
+          }
+          $venv = Join-Path $env:RUNNER_TEMP 'lowlevel-readme-venv'
+          python -m venv $venv
+          if ($LASTEXITCODE -ne 0) { throw 'Could not create a job-local Python environment.' }
+          $python = Join-Path $venv 'Scripts\python.exe'
+          & $python -m pip install --disable-pip-version-check --quiet $toolRoot
+          if ($LASTEXITCODE -ne 0) { throw 'Could not install the pinned headless tool.' }
+          & $python -m pip install --disable-pip-version-check --quiet 'Pillow==11.3.0'
+          if ($LASTEXITCODE -ne 0) { throw 'Could not install the pinned Pillow image inspector.' }
+          $cheap = Join-Path $venv 'Scripts\lowlevel-computer-use-cheap.exe'
+          if (-not (Test-Path -LiteralPath $cheap -PathType Leaf)) { throw 'The job-local headless tool executable is missing.' }
+          "LLCU_CHEAP=$cheap" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "README_PYTHON=$python" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Prove the privacy check on its fixtures
+        run: |
+          & $env:README_PYTHON scripts/md3/test-readme-screenshot-privacy.py
+          if ($LASTEXITCODE -ne 0) { throw 'The privacy check failed its own fixtures.' }
+
+      - name: Set the display to 1920x1080
+        run: |
+          Add-Type -Path scripts/ci/HostedDisplayMode.cs
+          Add-Type -Namespace ReadmeScreenshots -Name Desktop -MemberDefinition `
+            '[DllImport("user32.dll")] public static extern IntPtr GetDesktopWindow();'
+          # The desktop window lies on the primary display, the one the hidden
+          # capture desktop shares. A disposable runner is never restored.
+          $state = [HostedDisplayMode]::Capture([ReadmeScreenshots.Desktop]::GetDesktopWindow())
+          $before = '{0}x{1}' -f [HostedDisplayMode]::Width($state.Original), [HostedDisplayMode]::Height($state.Original)
+          $outcome = [HostedDisplayMode]::Apply($state, [HostedDisplayMode]::Target($state, '1920x1080'))
+          if (-not $outcome.Verified) {
+            throw "The display did not switch from $before to 1920x1080 (test $($outcome.TestCode), apply $($outcome.ApplyCode))."
+          }
+          Write-Host "Display $before -> 1920x1080 (already current: $($outcome.AlreadyCurrent))."
+
+      - name: Stage the packaged software OpenGL pair beside the installed executable
+        run: |
+          $install = Get-Content -LiteralPath (Join-Path $env:RUNNER_TEMP 'install.json') -Raw | ConvertFrom-Json
+          if ($install.status -cne 'verified' -or $install.package_version -cnotmatch '^\d+\.\d+\.\d+$') {
+            throw 'The install receipt does not describe a verified installation.'
+          }
+          $appDir = Join-Path $env:LOCALAPPDATA "BambuStudioMD3\app-$($install.package_version)"
+          $exe = Join-Path $appDir 'bambu-studio.exe'
+          if (-not (Test-Path -LiteralPath $exe -PathType Leaf)) { throw 'The installed executable is missing.' }
+          # A hosted runner has no GPU, so the application would copy this pair
+          # itself and relaunch, and recapture.py follows only the process it
+          # started. Copy it first; the hashes are the pinned upstream build's.
+          $pinned = [ordered]@{
+            'libgallium_wgl.dll' = '1895f8c19ede5efd0497f9dfab463b19bf4377e3af7c06c2d4d073e4680c5f69'
+            'opengl32.dll' = '12499866437a161d2b250d5105188ae00732dd74b4bebbcdf972e6145af00f9e'
+          }
+          foreach ($name in $pinned.Keys) {
+            $source = Join-Path $appDir "mesa\$name"
+            if (-not (Test-Path -LiteralPath $source -PathType Leaf) -or
+                (Get-FileHash -LiteralPath $source -Algorithm SHA256).Hash.ToLowerInvariant() -cne $pinned[$name]) {
+              throw "The packaged $name is missing or differs from the pinned build."
+            }
+            Copy-Item -LiteralPath $source -Destination (Join-Path $appDir $name) -Force
+          }
+          "README_EXE=$exe" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Prepare the capture data directory
+        run: |
+          # Every allowlisted row is English, light and comfortable.
+          & $env:README_PYTHON scripts/md3/prepare-capture-datadirs.py (Join-Path $env:RUNNER_TEMP 'bbsdd') `
+            --languages en --themes light --densities comfortable
+          if ($LASTEXITCODE -ne 0) { throw 'Could not prepare the capture data directory.' }
+
+      - name: Retake the README images on a hidden desktop
+        env:
+          SOURCE_COMMIT: ${{ inputs.expected_source_commit }}
+        run: |
+          # A stale file must never pass for a fresh capture.
+          foreach ($path in @($env:README_ALLOWLIST -split "`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ })) {
+            Remove-Item -LiteralPath $path -ErrorAction SilentlyContinue
+          }
+          $report = Join-Path $env:RUNNER_TEMP 'readme-recapture-report.json'
+          $probeDir = Join-Path $env:RUNNER_TEMP 'readme-probe'
+          & $env:README_PYTHON scripts/md3/recapture.py --exe $env:README_EXE `
+            --datadir-root (Join-Path $env:RUNNER_TEMP 'bbsdd') `
+            --kinds page,crop-probe --mesa --commit $env:SOURCE_COMMIT `
+            --report $report --probe-dir $probeDir --match $env:README_MATCH --evidence-probe
+          $code = $LASTEXITCODE
+          if (-not (Test-Path -LiteralPath $report -PathType Leaf)) { throw "recapture.py wrote no report (exit $code)." }
+          # A partial run is normal: the privacy check decides what may leave.
+          Write-Host "recapture.py exit code $code."
+          $global:LASTEXITCODE = 0
+
+      - name: Withhold every image that is not clearly safe to publish
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
+          SOURCE_COMMIT: ${{ inputs.expected_source_commit }}
+        run: |
+          & $env:README_PYTHON scripts/md3/check-readme-screenshot-privacy.py `
+            --report (Join-Path $env:RUNNER_TEMP 'readme-recapture-report.json') `
+            --evidence-dir (Join-Path $env:RUNNER_TEMP 'readme-probe') `
+            --source-root $env:GITHUB_WORKSPACE `
+            --allowlist-env README_ALLOWLIST `
+            --out (Join-Path $env:RUNNER_TEMP 'readme-screenshots-upload') `
+            --source-commit $env:SOURCE_COMMIT --release-tag $env:RELEASE_TAG
+          if ($LASTEXITCODE -ne 0) { throw "The privacy check staged nothing to upload (exit $LASTEXITCODE)." }
+
+      - name: Upload the staged README images
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: readme-screenshots-${{ github.run_id }}
+          path: ${{ runner.temp }}/readme-screenshots-upload/
+          if-no-files-found: error
+          retention-days: 3
+
+  design-references:
+    if: ${{ inputs.target == 'design-references' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        shell: bash
+    env:
+      # The README's design references, rendered from the Pages app at the
+      # exact URLs the README links them to (ui-md3/scripts/capture-app.mjs).
+      README_ALLOWLIST: |
+        docs/readme-assets/material-prepare-light-en.png
+        docs/readme-assets/material-preview-dark-yue-hk.png
+        docs/readme-assets/material-device-dark-bilingual.png
+    steps:
+      - name: Check out the Pages app and capture scripts
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          persist-credentials: false
+
+      - name: Use the repository Node.js runtime
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+
+      - name: Install isolated Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+
+      - name: Install the pinned image inspector and prove the privacy check
+        run: |
+          python -m venv "$RUNNER_TEMP/readme-venv"
+          "$RUNNER_TEMP/readme-venv/bin/python" -m pip install --disable-pip-version-check --quiet 'Pillow==11.3.0'
+          "$RUNNER_TEMP/readme-venv/bin/python" scripts/md3/test-readme-screenshot-privacy.py
+
+      - name: Compose and serve the Pages site locally
+        run: |
+          node ui-md3/scripts/compose-site.mjs "$RUNNER_TEMP/readme-site"
+          nohup node ui-md3/tests/serve.mjs "$RUNNER_TEMP/readme-site" 4173 > /dev/null 2>&1 &
+          for _ in $(seq 1 30); do
+            if curl -fsS -o /dev/null http://127.0.0.1:4173/app/index.html; then exit 0; fi
+            sleep 1
+          done
+          echo 'The local Pages server did not answer.' >&2
+          exit 1
+
+      - name: Render the README design references
+        run: |
+          # A stale file must never pass for a fresh capture.
+          while IFS= read -r path; do
+            if [ -n "$path" ]; then rm -f -- "$path"; fi
+          done <<< "$README_ALLOWLIST"
+          status=0
+          CHROME_PATH="$(command -v google-chrome)" node ui-md3/scripts/capture-app.mjs \
+            http://127.0.0.1:4173/app/index.html docs/readme-assets \
+            --readme-references --evidence-dir "$RUNNER_TEMP/readme-design-evidence" || status=$?
+          if [ ! -f "$RUNNER_TEMP/readme-design-evidence/report.json" ]; then
+            echo "capture-app.mjs wrote no report (exit $status)." >&2
+            exit 1
+          fi
+          # A partial run is normal: the privacy check decides what may leave.
+          echo "capture-app.mjs exit code $status."
+
+      - name: Withhold every image that is not clearly safe to publish
+        run: |
+          "$RUNNER_TEMP/readme-venv/bin/python" scripts/md3/check-readme-screenshot-privacy.py \
+            --report "$RUNNER_TEMP/readme-design-evidence/report.json" \
+            --evidence-dir "$RUNNER_TEMP/readme-design-evidence" \
+            --source-root "$GITHUB_WORKSPACE" \
+            --allowlist-env README_ALLOWLIST \
+            --out "$RUNNER_TEMP/readme-design-references-upload" \
+            --source-commit "$GITHUB_SHA"
+
+      - name: Upload the staged design references
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: readme-design-references-${{ github.run_id }}
+          path: ${{ runner.temp }}/readme-design-references-upload/
+          if-no-files-found: error
+          retention-days: 3

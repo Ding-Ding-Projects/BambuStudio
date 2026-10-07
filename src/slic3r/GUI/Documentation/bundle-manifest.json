@@ -50,7 +50,7 @@
     {
       "route": "automation/README.md",
       "title": "Automation",
-      "sha256": "ffa92693ad8af63fdcd1c31d40f18464ca688b04e71499ed69e2eb9eeb868431"
+      "sha256": "57b23421b314f1ecca5a0b850a54dd231bee0c1570e020b287192d21bd794314"
     },
     {
       "route": "automation/hosted-display-scale-probe.md",
@@ -151,6 +151,16 @@
       "route": "automation/native-review-tuples.yue_HK.md",
       "title": "原生檢查組合清單",
       "sha256": "f9fe6137111ae88dca811a7f9b4a6dfc79b5df0d70e32bb41624fb78628a45f6"
+    },
+    {
+      "route": "automation/readme-screenshots.md",
+      "title": "README screenshots",
+      "sha256": "035037d2e4266a4fb6446bfdcdaec93d3ba0a01179a516203e6665da3ccaa24c"
+    },
+    {
+      "route": "automation/readme-screenshots.yue_HK.md",
+      "title": "README 截圖",
+      "sha256": "d2b4e36a291a3d311c85ec63f4ed85d2d700fd810842cda483ea9a4403da2fbb"
     },
     {
       "route": "camera/README.md",
@@ -1840,7 +1850,7 @@
       "bytes": 1979
     }
   ],
-  "bundle_sha256": "6986ebc5ff90c80addb6366ad9cdecb2addc503772cbe3bf38c091872064d75b",
+  "bundle_sha256": "89a88f36621faaf968195a5624cbf13019f241e4486ef109bc67a9c7b9ce6043",
   "unavailable_references": [
     {
       "source": "api/README.md",

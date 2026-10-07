@@ -14,16 +14,11 @@
       "page": "material-device-dark-bilingual",
       "control": null,
       "recipe": {
-        "kind": "page",
-        "surface": "device",
-        "steps": [
-          "nav:Device"
-        ],
-        "tuple": {
-          "language": "bilingual_en_yue_HK",
-          "theme": "dark",
-          "density": "comfortable"
-        }
+        "kind": "pages",
+        "script": "ui-md3/scripts/capture-app.mjs",
+        "mode": "--readme-references",
+        "url": "app/?view=device&theme=dark&density=compact&accent=%2314b8a6&lang=bilingual_en_yue_HK",
+        "note": "README design reference rendered from the Pages app at this URL, not a native capture"
       },
       "status": "done"
     },
@@ -34,16 +29,11 @@
       "page": "material-prepare-light-en",
       "control": null,
       "recipe": {
-        "kind": "page",
-        "surface": "prepare",
-        "steps": [
-          "nav:Prepare"
-        ],
-        "tuple": {
-          "language": "en",
-          "theme": "light",
-          "density": "comfortable"
-        }
+        "kind": "pages",
+        "script": "ui-md3/scripts/capture-app.mjs",
+        "mode": "--readme-references",
+        "url": "app/?view=prepare&theme=light&density=comfortable&accent=%2322c55e&lang=en",
+        "note": "README design reference rendered from the Pages app at this URL, not a native capture"
       },
       "status": "done"
     },
@@ -54,16 +44,11 @@
       "page": "material-preview-dark-yue-hk",
       "control": null,
       "recipe": {
-        "kind": "page",
-        "surface": "preview",
-        "steps": [
-          "nav:Preview"
-        ],
-        "tuple": {
-          "language": "yue_HK",
-          "theme": "dark",
-          "density": "comfortable"
-        }
+        "kind": "pages",
+        "script": "ui-md3/scripts/capture-app.mjs",
+        "mode": "--readme-references",
+        "url": "app/?view=preview&theme=dark&density=comfortable&accent=%237c5cff&lang=yue_HK",
+        "note": "README design reference rendered from the Pages app at this URL, not a native capture"
       },
       "status": "pending"
     },
@@ -98,14 +83,14 @@
         "kind": "page",
         "surface": "ink",
         "steps": [
-          "nav:Prepare",
           "nav:Ink"
         ],
         "tuple": {
           "language": "en",
           "theme": "light",
           "density": "comfortable"
-        }
+        },
+        "note": "the Ink workspace tab itself; after nav:Prepare the label 'Ink' also matched the sidebar's Ink header, so the row captured the Prepare page"
       },
       "status": "pending"
     },
@@ -201,13 +186,14 @@
         "steps": [
           "nav:Prepare"
         ],
-        "label": "Process",
-        "pad": 16,
+        "label": "Sidebar",
+        "pad": 0,
         "tuple": {
           "language": "en",
           "theme": "light",
           "density": "comfortable"
-        }
+        },
+        "note": "the whole Prepare sidebar, as the README caption describes; the 'Process' label matched only the section title and cropped a 350x53 strip"
       },
       "status": "done"
     },
@@ -5268,13 +5254,15 @@
         "steps": [
           "nav:Prepare"
         ],
-        "label": "Process",
-        "pad": 16,
+        "label": "Compare presets",
+        "parent": 1,
+        "pad": 4,
         "tuple": {
           "language": "en",
           "theme": "light",
           "density": "comfortable"
-        }
+        },
+        "note": "the process settings header row (title, Global/Objects switch, compare and table buttons) is an unnamed panel; it is the parent of the named 'Compare presets' button. The 'Process' label cropped the title alone"
       },
       "status": "done"
     },
@@ -5312,13 +5300,14 @@
         "steps": [
           "nav:Prepare"
         ],
-        "label": "Process",
-        "pad": 16,
+        "label": "Sidebar",
+        "pad": 0,
         "tuple": {
           "language": "en",
           "theme": "light",
           "density": "comfortable"
-        }
+        },
+        "note": "the whole Prepare sidebar, as the README caption describes; the 'Process' label matched only the section title and cropped a 350x53 strip"
       },
       "status": "done"
     },

@@ -38,8 +38,10 @@ def page(surface, steps=None, tuple_=None, note=None):
     return r
 
 
-def crop(surface, label, steps=None, tuple_=None, pad=8):
-    return {'kind': 'crop-probe', 'surface': surface, 'steps': steps or [], 'label': label, 'pad': pad, 'tuple': tuple_ or TUPLE}
+def crop(surface, label, steps=None, tuple_=None, pad=8, parent=0):
+    r = {'kind': 'crop-probe', 'surface': surface, 'steps': steps or [], 'label': label, 'pad': pad, 'tuple': tuple_ or TUPLE}
+    if parent: r['parent'] = parent
+    return r
 
 
 def gl(item, steps=None):
@@ -63,17 +65,20 @@ def recipe_for(row):
     dark = {**TUPLE, 'theme': 'dark'}
 
     if grp == 'readme-assets':
+        # The README's design references are Pages renders linked to these exact app URLs.
+        if pg.startswith('material-'):
+            return {'kind': 'pages', 'script': 'ui-md3/scripts/capture-app.mjs', 'mode': '--readme-references'}
         m = re.match(r'(?:native-)?material-([\w-]+?)-(light|dark)-(en|bilingual|yue-hk)$', pg)
         if m:
             surf, theme, lang = m.groups()
             t = {**TUPLE, 'theme': theme, 'language': {'en': 'en', 'bilingual': 'bilingual_en_yue_HK', 'yue-hk': 'yue_HK'}[lang]}
             if surf == 'device-plugin-gate': return page('device', ['nav:Device'], t, 'plugin gate visible when the network plugin is absent')
-            if surf == 'filament-manager': return page('filament-manager', ['nav:Prepare', 'open:Ink manager'], t)
+            if surf == 'filament-manager': return page('ink', ['nav:Ink'], t)
             if surf == 'project-history': return page('project-history', ['open:Project history'], t)
             return page(surf, [f'nav:{surf.title()}'], t)
         if pg == 'shot-home': return page('home', ['nav:Home'])
         if pg == 'shot-prepare-frame': return page('prepare', ['nav:Prepare'])
-        if pg == 'shot-prepare-sidebar': return crop('prepare', 'Process', ['nav:Prepare'], pad=16)
+        if pg == 'shot-prepare-sidebar': return crop('prepare', 'Sidebar', ['nav:Prepare'], pad=0)
         if pg in ('shot-wizard', 'yum-20260811-wizard-ca49'): return page('config-wizard', ['open:Config wizard'])
         if pg == 'yum-20260811-native-main-ca49': return page('prepare', ['nav:Prepare'])
 
@@ -182,7 +187,9 @@ def recipe_for(row):
     if grp == 'sidebar-process':
         if pg.startswith('before-'): return hist('sidebar before the starved-row fix')
         if pg == 'after-search-settings': return crop('prepare', 'Search settings', ['nav:Prepare'], pad=12)
-        return crop('prepare', 'Process', ['nav:Prepare'], pad=16)
+        # The header row is an unnamed panel around the named compare button.
+        if pg == 'after-header-intact': return crop('prepare', 'Compare presets', ['nav:Prepare'], pad=4, parent=1)
+        return crop('prepare', 'Sidebar', ['nav:Prepare'], pad=0)
 
     if grp == 'dark':
         return {'config-profiles': page('config-profiles', ['open:Config profiles'], dark), 'menu-file': page('menu', ['menu:File'], dark, 'popup menu, capture via popovercap'),
