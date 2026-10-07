@@ -344,6 +344,8 @@ private:
     std::atomic<bool> m_is_closing {false};
     std::unique_ptr<AutomationBridge> m_automation_bridge;
     std::unique_ptr<PersonalModes::SchoolRuntime> m_school_runtime;
+    // Refers to the school runtime's mode, so it is declared after it.
+    std::unique_ptr<FeatureServices::SchoolCredentials> m_school_credentials;
     std::unique_ptr<FeatureServices::LocalSecurityServices> m_local_security;
     std::unique_ptr<FeatureServices::ScheduledPreferences> m_scheduled_preferences;
     std::unique_ptr<FeatureServices::NarratorEnvironment> m_narrator_environment;
@@ -405,6 +407,7 @@ private:
 
 public:
     PersonalModes::SchoolRuntime* school_runtime() const { return m_school_runtime.get(); }
+    FeatureServices::SchoolCredentials& school_credentials();
     FeatureServices::LocalSecurityServices& local_security();
     FeatureServices::ScheduledPreferences* scheduled_preferences() const { return m_scheduled_preferences.get(); }
     //try again when subscription fails

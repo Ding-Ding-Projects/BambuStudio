@@ -69,7 +69,7 @@ AuthenticatorPanel::AuthenticatorPanel(wxWindow* parent,std::shared_ptr<Authenti
     m_search=search(scroll,body,m_hooks,"Search authenticator entries",[this]{filter();});
     m_list=new wxListBox(scroll,wxID_ANY,wxDefaultPosition,FromDIP(wxSize(350,160)),0,nullptr,wxLB_EXTENDED);m_list->SetName(text(m_hooks,"Authenticator entries"));m_hooks.record_name(m_list,"Authenticator entries");body->Add(m_list,0,wxEXPAND|wxBOTTOM,FromDIP(8));
     m_code=new Label(scroll,text(m_hooks,"Select an entry to show its current code."));m_hooks.register_sensitive(m_code);auto font=m_code->GetFont();font.SetPointSize(26);m_code->SetFont(font);body->Add(m_code,0,wxEXPAND);
-    m_countdown=new Label(scroll,{});body->Add(m_countdown,0,wxEXPAND|wxBOTTOM,FromDIP(8));
+    m_countdown=new Label(scroll,wxString());body->Add(m_countdown,0,wxEXPAND|wxBOTTOM,FromDIP(8));
     action(scroll,body,m_hooks,"Copy current code",[this]{safely([this]{auto id=selected();copy(wxString::FromUTF8(m_store->code(id,seconds()).current));});});
     action(scroll,body,m_hooks,"Show next code",[this]{safely([this]{m_status->SetLabel(text(m_hooks,"Next code: ")+wxString::FromUTF8(m_store->code(selected(),seconds()).next));});});
     action(scroll,body,m_hooks,"Move selected entry up",[this]{safely([this]{m_store->move(selected(),-1);RefreshEntries();});});

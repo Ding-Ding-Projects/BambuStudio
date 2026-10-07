@@ -70,7 +70,7 @@ void MD3ScrolledWindow::SetRevealOwner(MD3ScrolledWindow *owner)
         Scroll(0, 0);
         SetScrollRate(0, 0);
         EnableScrolling(false, false);
-        EnableKeyboardScrolling(false);
+        DisableKeyboardScrolling();
         ShowScrollbars(wxSHOW_SB_NEVER, wxSHOW_SB_NEVER);
     }
 }

@@ -188,6 +188,10 @@ public:
     LocalizedText translate(const wxString &message, const wxString &context = wxString()) const;
     // Independent speech tracks, without display-only private replacements.
     LocalizedText narration(const wxString &message, const wxString &context = wxString()) const;
+    // Language-only translation for fixed factual copy such as safety
+    // disclosures: the same language selection as translate(), without the
+    // funny-level voice variants.
+    LocalizedText factual(const wxString &message, const wxString &context = wxString()) const;
     LocalizedText translate_plural(const wxString &singular, const wxString &plural, unsigned int n,
                                    const wxString &context = wxString()) const;
 

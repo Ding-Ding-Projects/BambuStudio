@@ -34,6 +34,9 @@ const Article* find(wxString route) {
 class DocumentView final : public MD3HtmlWindow {
 public:
     explicit DocumentView(wxWindow* parent) : MD3HtmlWindow(parent) {}
+    // The reader jumps to a heading in the generated page; wxHtmlWindow keeps
+    // this member protected.
+    using wxHtmlWindow::ScrollToAnchor;
     // Generated pages are supplied using SetPage. Never allow renderer IO.
     wxHtmlOpeningStatus OnOpeningURL(wxHtmlURLType type, const wxString& url, wxString*) const override {
         if (type == wxHTML_URL_IMAGE)

@@ -7,6 +7,7 @@
 #include "../MainFrame.hpp"
 #include "../I18N.hpp"
 #include "../BilingualRegistry.hpp"
+#include "../BilingualDecorator.hpp"
 #include "../CommandPaletteIndex.hpp"
 #include "../Widgets/Label.hpp"
 #include "../Widgets/MD3Tokens.hpp"

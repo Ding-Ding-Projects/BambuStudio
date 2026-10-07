@@ -906,6 +906,11 @@ list(APPEND SLIC3R_GUI_SOURCES
     GUI/OllamaSuite/NativeLaunchAdapter.cpp
     GUI/LocalConverter/LocalConverterPanel.cpp
     GUI/FeatureServices/SurfaceRegistry.cpp
+    GUI/FeatureServices/LocalSecurityServices.cpp
+    GUI/FeatureServices/LocalSecurityServices.hpp
+    GUI/LocalCapabilities/NativeCapabilityRegistry.cpp
+    GUI/LocalCapabilities/NativeCapabilityRegistry.hpp
+    GUI/LocalCapabilities/NativeCapabilityDispatch.hpp
     GUI/Documentation/OfflineDocumentation.cpp
     GUI/FeatureServices/ScheduledPreferences.cpp
     GUI/ScheduledSettings/Panel.cpp
@@ -1022,6 +1027,9 @@ if(NOT TARGET libslic3r_local_security)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../libslic3r/LocalSecurity ${CMAKE_CURRENT_BINARY_DIR}/local_security)
 endif()
 target_link_libraries(libslic3r_gui libslic3r_local_security)
+# Local security panels extend libslic3r_gui and need the security libraries
+# declared above, so include them only after both exist.
+include(${CMAKE_CURRENT_SOURCE_DIR}/GUI/LocalSecurity/CMakeLists.txt)
 
 # Compile the converter broker and contained worker from one implementation.
 # Headers come only from an explicitly supplied, verified SDK, never PATH.

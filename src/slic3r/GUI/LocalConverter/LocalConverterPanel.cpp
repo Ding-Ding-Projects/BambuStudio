@@ -132,7 +132,7 @@ LocalConverterPanel::LocalConverterPanel(wxWindow *parent, LC::PackageProof proo
     auto *paging = new wxBoxSizer(wxHORIZONTAL);
     action(body,paging,_L("Previous page"),[this]{ m_after = m_after >= LC::Limits::page_size ? m_after-LC::Limits::page_size : 0; refresh_queue(); });
     action(body,paging,_L("Next page"),[this]{ if (m_queue && m_after + LC::Limits::page_size < m_queue->count()) m_after += LC::Limits::page_size; refresh_queue(); });
-    m_page_label = new wxStaticText(body,wxID_ANY); paging->Add(m_page_label,1,wxALIGN_CENTER_VERTICAL|wxALL,4); layout->Add(paging,0,wxEXPAND|wxALL,4);
+    m_page_label = new wxStaticText(body,wxID_ANY,wxEmptyString); paging->Add(m_page_label,1,wxALIGN_CENTER_VERTICAL|wxALL,4); layout->Add(paging,0,wxEXPAND|wxALL,4);
     m_status = new wxStaticText(body,wxID_ANY,_L("Empty queue. No source files have been selected.")); m_status->SetName(_L("Converter status")); m_status->Wrap(FromDIP(700));
     layout->Add(m_status,0,wxEXPAND|wxALL,8); body->SetSizer(layout); outer->Add(body,1,wxEXPAND); SetSizer(outer);
     try { m_queue = std::make_unique<LC::Queue>(std::move(queue_directory)); }
