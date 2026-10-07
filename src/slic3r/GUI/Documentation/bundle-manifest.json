@@ -3,6 +3,16 @@
   "text_hash_encoding": "UTF-8 without BOM; LF line endings",
   "articles": [
     {
+      "route": "api/README.md",
+      "title": "HTTP/API features",
+      "sha256": "7322ba2da39498d3e999d801691a84da8f6830ea7fec18800aa42d54693507cb"
+    },
+    {
+      "route": "api/README.yue_HK.md",
+      "title": "HTTP/API 功能",
+      "sha256": "bb6b2d7504a42cb21da6cd79ab6e3a9533a5e793f6fd38043583c44ea4975def"
+    },
+    {
       "route": "api/home-assistant-printer-discovery.md",
       "title": "Home Assistant printer-discovery API",
       "sha256": "9b57bede3082d25e550d90b99973b51c473bfbc3909adfa20e04a88a88f5d48d"
@@ -13,14 +23,34 @@
       "sha256": "7a6f634c9af42fb8460869e1886e2e462786d93c38a4c815805e4a02b25ee10b"
     },
     {
-      "route": "api/README.md",
-      "title": "HTTP/API features",
-      "sha256": "7322ba2da39498d3e999d801691a84da8f6830ea7fec18800aa42d54693507cb"
+      "route": "appearance/README.md",
+      "title": "Appearance",
+      "sha256": "3bb99c92ff2113bda61ace9ab140ba787c5ad53331c1de4a61700d4964f86fbd"
     },
     {
-      "route": "api/README.yue_HK.md",
-      "title": "HTTP/API 功能",
-      "sha256": "bb6b2d7504a42cb21da6cd79ab6e3a9533a5e793f6fd38043583c44ea4975def"
+      "route": "appearance/app-logo.md",
+      "title": "Application logo presentation",
+      "sha256": "c761f15a5acfbd9d3e8c14e8db7e42ffd44de1ffbc827f71e6a1f6d014e1437b"
+    },
+    {
+      "route": "appearance/native-rendering.md",
+      "title": "Native appearance rendering",
+      "sha256": "23fc98c6c08322674a29a0f7d834015c03d5c82530c1e8db900f061f1dede011"
+    },
+    {
+      "route": "application-integration/README.md",
+      "title": "Native service integration",
+      "sha256": "e0485a622684558ebc2efd4ce7b7fc387b6a10c29e7df628bf888b0fa4a384c5"
+    },
+    {
+      "route": "application-integration/surface-registry.md",
+      "title": "Native surface registry",
+      "sha256": "dd4f42d155f2f6473b4870ea0897a864dc6580b869d3039f99b19a7c2a11c031"
+    },
+    {
+      "route": "automation/README.md",
+      "title": "Automation",
+      "sha256": "4157b3c8814bf800a2249dba6e5b2530c0b4943c01fd357d9f17740e01015faa"
     },
     {
       "route": "automation/hosted-display-scale-probe.md",
@@ -48,9 +78,14 @@
       "sha256": "01a768f4d6e42fc918f4727e41306cb6acb09788aebc21d968ae25155e71bcad"
     },
     {
-      "route": "automation/README.md",
-      "title": "Automation",
-      "sha256": "4157b3c8814bf800a2249dba6e5b2530c0b4943c01fd357d9f17740e01015faa"
+      "route": "camera/README.md",
+      "title": "Camera monitoring",
+      "sha256": "70413516e4cf2597361cc088460726328bcc77491350d458732fba56fda1158f"
+    },
+    {
+      "route": "camera/continuous-liveview.md",
+      "title": "Continuous liveview and camera view controls",
+      "sha256": "2c74da131aad43d3bbae8c87f96cb7dad0b1562cb46877bcbfdc9d51c39286de"
     },
     {
       "route": "canvas-menu-search.md",
@@ -58,9 +93,39 @@
       "sha256": "cedf43e72584bac60aa486a2223628914017b2df479474c9dd56a923f763e67a"
     },
     {
+      "route": "changelog/README.md",
+      "title": "Changelog completeness",
+      "sha256": "bd7940c9c1338cccb90e18d033370686dbe82541927c6f68d053bef3b1cd02be"
+    },
+    {
+      "route": "changelog/safety-and-export.md",
+      "title": "Changelog completeness",
+      "sha256": "727fb475beff03720efe9172780953955d708ff3e2539ad4ad953333ec601faa"
+    },
+    {
+      "route": "converter/README.md",
+      "title": "Local file converter",
+      "sha256": "f14392868e7752057ab51a280c90b86d9f51f95d46f333ff19c37b914e7293d5"
+    },
+    {
       "route": "converter/pdf-engine.md",
       "title": "Bundled PDF engine",
-      "sha256": "03fe7924890cab70e7678333cdcca8dfedcdc16ecd7529bd1948ec07641cdaba"
+      "sha256": "d9040b7fa1a6bd65f56bbae219eb9531a42a0799f8f82ef37a42b64e6059241c"
+    },
+    {
+      "route": "converter/pdf.md",
+      "title": "Local PDF tools",
+      "sha256": "a2989437bd42b5ef4048b8eed8077089da566e8758feb81171f2b1af1a709834"
+    },
+    {
+      "route": "design-system/README.md",
+      "title": "Design system",
+      "sha256": "dc3fd47a3b1f70910bbcff3dd703672f8cf365b16e1287f008c67eca8ff64201"
+    },
+    {
+      "route": "design-system/README.yue_HK.md",
+      "title": "設計系統",
+      "sha256": "3ebb9ba56f733122fa250318155eeb45d0e23a3eeb5c0f8e48aa5085ea19198d"
     },
     {
       "route": "design-system/clipping-inventory.md",
@@ -168,16 +233,6 @@
       "sha256": "f4fea981478e272e1d82abc6868c88234351e3d33f92df8fda1b9f48d31bd275"
     },
     {
-      "route": "design-system/README.md",
-      "title": "Design system",
-      "sha256": "dc3fd47a3b1f70910bbcff3dd703672f8cf365b16e1287f008c67eca8ff64201"
-    },
-    {
-      "route": "design-system/README.yue_HK.md",
-      "title": "設計系統",
-      "sha256": "3ebb9ba56f733122fa250318155eeb45d0e23a3eeb5c0f8e48aa5085ea19198d"
-    },
-    {
       "route": "design-system/themed-surface-colors.md",
       "title": "Themed surface colors on StaticBox cards",
       "sha256": "5cf8393a660db723ee426cfbb3cbd184936cc22e4814cbab848543c79a6f7fe9"
@@ -198,16 +253,6 @@
       "sha256": "e9a674859e9541e732bca0c516e5b381404005ffa3681e9ab5b1787929fa8825"
     },
     {
-      "route": "device/farm-lan.md",
-      "title": "LAN printer farm",
-      "sha256": "fc9747318d0b16c3faa4b833381ae6b718f5be2ff3086240a91855ca51cf3afb"
-    },
-    {
-      "route": "device/farm-lan.yue_HK.md",
-      "title": "區域網絡打印機群組",
-      "sha256": "4b3936c2d9679ba369acdddc91d1268670dfb97e4c1e4348cce87d3387801543"
-    },
-    {
       "route": "device/README.md",
       "title": "Device features",
       "sha256": "5624ae9c4393f55cea4e61bf012a5d419f194b3162b22cae40e6489d09bf965a"
@@ -218,9 +263,14 @@
       "sha256": "8d1fea491f8f92752e18edec41cac7d5eab1f264b8cf2340d5a8a937d2cf24f6"
     },
     {
-      "route": "documentation/offline-reader.md",
-      "title": "Native offline article browser",
-      "sha256": "ff9300100b7cccd427675882bba6181a29375f807c4bc5938afd15af5b6fe436"
+      "route": "device/farm-lan.md",
+      "title": "LAN printer farm",
+      "sha256": "fc9747318d0b16c3faa4b833381ae6b718f5be2ff3086240a91855ca51cf3afb"
+    },
+    {
+      "route": "device/farm-lan.yue_HK.md",
+      "title": "區域網絡打印機群組",
+      "sha256": "4b3936c2d9679ba369acdddc91d1268670dfb97e4c1e4348cce87d3387801543"
     },
     {
       "route": "documentation/README.md",
@@ -228,14 +278,14 @@
       "sha256": "4c01ca44b0efbe5ed0d6008280238557be127894a1e4319a69c8a0ceb2b62f30"
     },
     {
-      "route": "gcode-preview/preview-overlays.md",
-      "title": "Preview overlays: who owns which part of the canvas",
-      "sha256": "a3116659f02ec2426d471f348dd7d825f38e1df173d2e8688c3abf84924db472"
+      "route": "documentation/offline-reader.md",
+      "title": "Native offline article browser",
+      "sha256": "ff9300100b7cccd427675882bba6181a29375f807c4bc5938afd15af5b6fe436"
     },
     {
-      "route": "gcode-preview/preview-overlays.yue_HK.md",
-      "title": "預覽浮層：畫布邊一忽歸邊個",
-      "sha256": "38352b1f77357cdda55a99252423542b22edbf2edbb0bf49a37e8327e361946d"
+      "route": "exports/README.md",
+      "title": "Export safety and portable formats",
+      "sha256": "0d57339634e1b41abc341e39f64187e9e921f6a1fa4eefa8380a151361398d31"
     },
     {
       "route": "gcode-preview/README.md",
@@ -248,6 +298,16 @@
       "sha256": "eea2f0c79c72efb9ea8e9418e3ec6190470e0c25dadc4a3256af4b54ad26971b"
     },
     {
+      "route": "gcode-preview/preview-overlays.md",
+      "title": "Preview overlays: who owns which part of the canvas",
+      "sha256": "a3116659f02ec2426d471f348dd7d825f38e1df173d2e8688c3abf84924db472"
+    },
+    {
+      "route": "gcode-preview/preview-overlays.yue_HK.md",
+      "title": "預覽浮層：畫布邊一忽歸邊個",
+      "sha256": "38352b1f77357cdda55a99252423542b22edbf2edbb0bf49a37e8327e361946d"
+    },
+    {
       "route": "gcode-preview/toolpath-legend.md",
       "title": "Toolpath color-scheme legend",
       "sha256": "9dd8c7417bfb5fb8b0ea0bc1104c33fb550f989ac62b41fa8f4dac30e5c725ef"
@@ -256,6 +316,31 @@
       "route": "gcode-preview/toolpath-legend.yue_HK.md",
       "title": "工具路徑色彩方案圖例",
       "sha256": "6332021c2ced072fbb2c18c29dd40f4431c2169b15b5295677e96e9cb020e91a"
+    },
+    {
+      "route": "local-capabilities/README.md",
+      "title": "Local browser capability boundary",
+      "sha256": "e6df6a8109be672b70f2048a456652e1665d4b26cd9c270d808202ed1055ca2c"
+    },
+    {
+      "route": "local-security/README.md",
+      "title": "Local security components",
+      "sha256": "d020a814e81ecba85e93ccf3357e1a3db51d20122edf8500484a378700890b64"
+    },
+    {
+      "route": "local-security/identity-history.md",
+      "title": "Encrypted local identity history",
+      "sha256": "989c1efa82fb002eecc068192bd4f0c540fdeb12dfbb4015fbdc6f619af6c7b4"
+    },
+    {
+      "route": "local-security/native-integration.md",
+      "title": "Native local-security integration",
+      "sha256": "a268b930f126e2a73bf014f583f785e41a3c8702bc19c9d0756135e41da3ce3a"
+    },
+    {
+      "route": "local-security/qr-pairing.md",
+      "title": "Local authenticator QR pairing",
+      "sha256": "e6137ada85e8483fcbc7c614a02357839ddbcac97b0b0c5674838ee4062ea2bd"
     },
     {
       "route": "model-creator/README.md",
@@ -268,6 +353,16 @@
       "sha256": "378bb6be5d2de1b4a3e19694e7bc0503c0eb3874c5a94584d60026b9eafbb4d9"
     },
     {
+      "route": "model-preview/README.md",
+      "title": "Model preview",
+      "sha256": "38d86c20c824b013cf6c69c5639788838223da6f16c39eeffb08103efbcd0390"
+    },
+    {
+      "route": "model-preview/README.yue_HK.md",
+      "title": "模型預覽",
+      "sha256": "d91c9873e15882fd14446245c8a25211ac679dcda2f0bedf336bda1c7a7c7b14"
+    },
+    {
       "route": "model-preview/makerworld-opengl-preview.md",
       "title": "MakerWorld OpenGL preview",
       "sha256": "4ee379ee3fba5ec7956521a4475924923e08b79cd859ee6937da6a3989b551be"
@@ -278,14 +373,39 @@
       "sha256": "8260a7b833da8b8233a3a3c6823a6fde3469b3ba3679db681cdc9bb51df75d86"
     },
     {
-      "route": "model-preview/README.md",
-      "title": "Model preview",
-      "sha256": "38d86c20c824b013cf6c69c5639788838223da6f16c39eeffb08103efbcd0390"
+      "route": "notifications/README.md",
+      "title": "Notification history",
+      "sha256": "3aafce25af929d040e34789f673a8da3308e2219a37f2040453d296475e209f3"
     },
     {
-      "route": "model-preview/README.yue_HK.md",
-      "title": "模型預覽",
-      "sha256": "d91c9873e15882fd14446245c8a25211ac679dcda2f0bedf336bda1c7a7c7b14"
+      "route": "notifications/safety-and-export.md",
+      "title": "Notification history",
+      "sha256": "bcfa1c5c0031e70560f8cba0ec431478fd336b443496332ddff3c019d6b60e02"
+    },
+    {
+      "route": "ollama-suite/README.md",
+      "title": "Local Ollama suite",
+      "sha256": "2f692eb8af1f848a3fbbd1c18abd84636caf30d36b2a950968b26a2c58f272b2"
+    },
+    {
+      "route": "pages/README.md",
+      "title": "GitHub Pages site",
+      "sha256": "8347bb99767c392c85deba22d93653e789bf6e8d09984bd9843d3465e8296bfd"
+    },
+    {
+      "route": "pages/README.yue_HK.md",
+      "title": "GitHub Pages 網站",
+      "sha256": "de48b22ae4663ff27120703ea9cc6c13f4d9218f53e429a4ba87485df2307359"
+    },
+    {
+      "route": "pages/attention-and-message-decoration.md",
+      "title": "Attention accommodations and message decoration",
+      "sha256": "d89193185de121ccb4a9e1d5159f62485c166eb3597503ae1e6191ab2b01d85f"
+    },
+    {
+      "route": "pages/attention-and-message-decoration.yue_HK.md",
+      "title": "專注介面調整同訊息裝飾",
+      "sha256": "c6347bd30916acd3b6eec4a0308f7bcfef1b3c07e9eb21434f42b1f2c01cbb0f"
     },
     {
       "route": "pages/changelog-viewer.md",
@@ -308,14 +428,39 @@
       "sha256": "78d0ac885827ab480749e0496cfe6658d95482182281526c2d6849b6158c5ea8"
     },
     {
+      "route": "pages/destructive-confirmation.md",
+      "title": "Two-key destructive confirmation",
+      "sha256": "4f0794a8d734c4cb3d59cf271adcae4f2cf3c192388a0b1705ce72bab39a554e"
+    },
+    {
+      "route": "pages/destructive-confirmation.yue_HK.md",
+      "title": "雙鑰匙破壞性確認",
+      "sha256": "a8758fce674968c515eb3a07468a948c94db4649eed7b1c00941489116874bfc"
+    },
+    {
       "route": "pages/dim-sum-surprise.md",
       "title": "Dim sum surprise",
-      "sha256": "ea2cc2fc8b362560e28f7f63d3f5230601c319ef586a3dbfa63923a2b1132503"
+      "sha256": "f5e552c797de853f6eaed1e98bc095e97cd3731d85ab6bc72c22b435b169ce10"
     },
     {
       "route": "pages/dim-sum-surprise.yue_HK.md",
       "title": "點心驚喜",
       "sha256": "59d4cde7f2517a10045eb66f531dc153a19e15f8d75844134b8c2d1d5a771d5a"
+    },
+    {
+      "route": "pages/event-narration.md",
+      "title": "Browser event narration",
+      "sha256": "f9011e0810621fa8ca48cbb6d2a0b66f5a397686dfac1624c6abd47408a24435"
+    },
+    {
+      "route": "pages/event-narration.yue_HK.md",
+      "title": "瀏覽器事件旁白",
+      "sha256": "ab201fc0102e29ba88140df806ef677a428920d07fb751f4de6a24435734b1fc"
+    },
+    {
+      "route": "pages/hidden-browser-verification.md",
+      "title": "Hidden browser verification",
+      "sha256": "d0a44f82dc62eaaed54d1dfa773f0ac354ff89912c2eaec72e0444aeed68c043"
     },
     {
       "route": "pages/language-and-funny-levels.md",
@@ -338,14 +483,14 @@
       "sha256": "93b1b2d90eddce011fff09b72f3746a2f71724d0933253f20adbec0163273de5"
     },
     {
-      "route": "pages/README.md",
-      "title": "GitHub Pages site",
-      "sha256": "5d49ab519c0f3e05aefa037dc32b455515fe22227cda1c5e4e7ac2c23d84305e"
+      "route": "pages/personal-wording.md",
+      "title": "Local personal wording",
+      "sha256": "211e4ee65f69bab52bf31f13ac223e0508d8aa1f50ba61eb290cf81078d1440d"
     },
     {
-      "route": "pages/README.yue_HK.md",
-      "title": "GitHub Pages 網站",
-      "sha256": "f51044d386e725d1232929fb8186b3fc3548abc8be86c3990afe872aa5e2b799"
+      "route": "pages/personal-wording.yue_HK.md",
+      "title": "本機個人用字",
+      "sha256": "2767353d04b7ec5440311f235213fa0c14b97957f404889f6923d959f3a6922b"
     },
     {
       "route": "pages/regex-builder.md",
@@ -356,6 +501,16 @@
       "route": "pages/regex-builder.yue_HK.md",
       "title": "Regex 構建器",
       "sha256": "91d9a111b3114f9bd4c64e7a641868407245ad4cac4cd1e0140b1ef45a1c263c"
+    },
+    {
+      "route": "pages/scheduled-settings.md",
+      "title": "Scheduled visitor settings",
+      "sha256": "b941ab5c3da166c7c25af389e812ed15e002228eee187cca2b885aaa4b9a4354"
+    },
+    {
+      "route": "pages/scheduled-settings.yue_HK.md",
+      "title": "訪客設定排程",
+      "sha256": "34b763ec41168c0245e25988d2c4f932c94773a59559236ad3fe14647aca9ff1"
     },
     {
       "route": "pages/settings-and-appearance.md",
@@ -378,6 +533,46 @@
       "sha256": "702da17ff14cb913153a3c11fdebb2ec0ea72f2d70970ac32e46d70de7e7326c"
     },
     {
+      "route": "personal-modes/README.md",
+      "title": "Personal presentation services",
+      "sha256": "edb07166cd8c88b99425202faa0349bb0dad7388a7ed4b1cde256fcb5d37a485"
+    },
+    {
+      "route": "personal-modes/attention.md",
+      "title": "Attention accommodations",
+      "sha256": "916ea53419643ba7fa37984d6a0c9bd287fa74c17d62c1ceb061a81575f77a49"
+    },
+    {
+      "route": "personal-modes/funny-default.md",
+      "title": "Funny-level defaults and existing preferences",
+      "sha256": "00fe1bb73d38f67ae2f4ec05f79ecd51efad84c30e60c65b52a8abc0ee7e3e35"
+    },
+    {
+      "route": "personal-modes/integration.md",
+      "title": "Application integration checklist",
+      "sha256": "c55d4cc9f08eb7d344777afa9f7170a5850020a5edd7fced3e828d492fb8f081"
+    },
+    {
+      "route": "personal-modes/narration.md",
+      "title": "Completion-aware narration",
+      "sha256": "b960e1938d63e54812afb72df1c286180de578e50e69b68fd885601245127022"
+    },
+    {
+      "route": "personal-modes/school-mode.md",
+      "title": "Shared presentation mode",
+      "sha256": "43817633dc51a98ad37ba9c5e4bf50a4e17cc3d3b815e950f6b97a674537c59a"
+    },
+    {
+      "route": "prepare/README.md",
+      "title": "Prepare workspace",
+      "sha256": "0b8d20f82cacf0279e8ad2f6ebbbb44b1a2db354e5bb2e584556c214893c7c4d"
+    },
+    {
+      "route": "prepare/README.yue_HK.md",
+      "title": "準備工作區",
+      "sha256": "5ac2ab0f22eeeb31082a848cebe8bacf58d00d6974885907cd060968abd407b8"
+    },
+    {
       "route": "prepare/dockable-sidebar.md",
       "title": "Dockable Prepare sidebar",
       "sha256": "d59987c8960509fcfaef61d7d6946a78a0d4a16f2beaf7aae8fa165b488ea22b"
@@ -386,6 +581,16 @@
       "route": "prepare/dockable-sidebar.yue_HK.md",
       "title": "可停靠準備邊欄",
       "sha256": "c22df2a4debb439f4486752fdcc94b3a99b4b188394bb6855347f0d1980e2f34"
+    },
+    {
+      "route": "prepare/native-lifecycle.md",
+      "title": "Native menu and printer selection lifecycle",
+      "sha256": "609e8400c8b6068745dd28d466e96a586c2c6a989eb1bdac5976502222d7c2b6"
+    },
+    {
+      "route": "prepare/native-lifecycle.yue_HK.md",
+      "title": "原生選單同打印機選擇嘅生命週期",
+      "sha256": "982f705626137359526692b469a2dd2b2db26c19b29387d57d3ed90bcce5b3ef"
     },
     {
       "route": "prepare/process-settings-full-tree.md",
@@ -408,14 +613,14 @@
       "sha256": "3b3fd3fc2c05be08b1f6f20ce2216555b654e430b59e040c9b59997d1300d23b"
     },
     {
-      "route": "prepare/README.md",
-      "title": "Prepare workspace",
-      "sha256": "04ef4b970bdf4b21e7bf158be879af88d2d17b613b5605121bfd46c5db389afd"
+      "route": "prepare/scroll-ownership.md",
+      "title": "Prepare settings scrolling",
+      "sha256": "67abb94b440b887b44aa766e5e9602aab8301168bf11ea8f4788c95766bdea67"
     },
     {
-      "route": "prepare/README.yue_HK.md",
-      "title": "準備工作區",
-      "sha256": "05d9cb9f20eae02e3667d55b9edf70e78c8be3427746684c4083b93b1075335f"
+      "route": "prepare/scroll-ownership.yue_HK.md",
+      "title": "準備設定捲動",
+      "sha256": "c89c063d686f7ac8399dcf0d7593c6969480097d0814d817c7003dd51e273534"
     },
     {
       "route": "prepare/sidebar-tabs.md",
@@ -433,6 +638,16 @@
       "sha256": "4967beaad211c136851ea36e04a5116638fd8d5e1bf37a0ab48b745896835096"
     },
     {
+      "route": "releases/README.md",
+      "title": "Release features",
+      "sha256": "15714a6b65057f5cd1e14a38de9623bf1642ea95ce5e97dec37070b6dad57c35"
+    },
+    {
+      "route": "releases/README.yue_HK.md",
+      "title": "發佈功能",
+      "sha256": "fc09b853a9b7ad962b591b6a929dea37487caf91692d24a0e7d259e1d50b2225"
+    },
+    {
       "route": "releases/dependency-security-alerts.md",
       "title": "Dependency security alerts",
       "sha256": "225609462f78f6fe6bf808304451ad7f802d0c2ba3ae322e6a87d5e81172fbb1"
@@ -443,14 +658,14 @@
       "sha256": "551fc0ce27d83ebef554490af8d763298d1b6fa0dcb48f531e7c72dd666c9881"
     },
     {
-      "route": "releases/README.md",
-      "title": "Release features",
-      "sha256": "a515b87bac10479a1bf148baf39f3b5904d68c9a68e1b114ba970cb9b6dbe614"
+      "route": "releases/native-crash-symbols.md",
+      "title": "Encrypted native crash symbols",
+      "sha256": "2ee5079d6e86f419b1b0d56023d7e0850e2c63cca68cdc889e66318198051981"
     },
     {
-      "route": "releases/README.yue_HK.md",
-      "title": "發佈功能",
-      "sha256": "fc09b853a9b7ad962b591b6a929dea37487caf91692d24a0e7d259e1d50b2225"
+      "route": "releases/native-crash-symbols.yue_HK.md",
+      "title": "加密原生崩潰符號",
+      "sha256": "282487f6bf65f2fc4c398173584394787857732e38ebde3fb2a7688c1288cafe"
     },
     {
       "route": "releases/release-codenames.md",
@@ -485,12 +700,12 @@
     {
       "route": "releases/windows-one-click-build.md",
       "title": "One-click Windows build and installer",
-      "sha256": "903e3a561ba695a011367e8aeda26e3d903dc0633ebe46f17c3dacf21b488dc8"
+      "sha256": "465812bca2911c99f5ef41ca4cfd79f09f97d90982e930dc1de3327e4de79c0b"
     },
     {
       "route": "releases/windows-one-click-build.yue_HK.md",
       "title": "一鍵 Windows 構建和安裝程式",
-      "sha256": "34e1e4c5a1244e6747c1d653e1aaf56a4e2bdeec5c3e788e0dbc2a057053e5f2"
+      "sha256": "afd4de24fe8aa21133bb983f43086af669dd4e14c2571017fa310ab2eec40215"
     },
     {
       "route": "releases/windows-release-supply-chain.md",
@@ -501,6 +716,31 @@
       "route": "releases/windows-release-supply-chain.yue_HK.md",
       "title": "Windows CI 同埋 release 供應鏈",
       "sha256": "045d8f44854146a4684f09514ed777a75a0b2cc09fd8d3b47ee1ba922d565e9a"
+    },
+    {
+      "route": "scheduled-settings/README.md",
+      "title": "Scheduled settings",
+      "sha256": "90ddbbb971a473268afbf9508b5c806a43cd44ed3af0ccc8c0bcccf1244c7a47"
+    },
+    {
+      "route": "settings-drafts.md",
+      "title": "Independent settings drafts",
+      "sha256": "6202756677cc719b4951fa49438f5f4a86e7beb49703b43067bf06387ac50266"
+    },
+    {
+      "route": "status-hub/README.md",
+      "title": "Native Status Hub",
+      "sha256": "d3edaa3f675776ed33b3177a97293f0b78dbf490686a3a0cb2a29c248cd65d55"
+    },
+    {
+      "route": "windows/README.md",
+      "title": "Windows features",
+      "sha256": "688154ab5a09095f542635dae344199a1608841621017a652f14c0d54e971df6"
+    },
+    {
+      "route": "windows/README.yue_HK.md",
+      "title": "Windows 功能",
+      "sha256": "0d04f0f4d5c5ee02ecd83081bbc2ad4f0a38f2aa59137e2b26cf9754bf100d29"
     },
     {
       "route": "windows/ai-filament-scanner.md",
@@ -523,14 +763,19 @@
       "sha256": "1f79f63e813ba13b811b6df99615ae6a8fd10bc90261097ff882e4393b488210"
     },
     {
+      "route": "windows/ams-reading-state.md",
+      "title": "Per-tray reading indicators",
+      "sha256": "09b7baf9413d452cb2bbb3a22601505281467a347f13d69eb37fc42d75fbfe3b"
+    },
+    {
       "route": "windows/app-updates.md",
       "title": "App updates from this fork's releases",
-      "sha256": "548c046dd01bf043c23e20dbe7c3fb1a1fb7f1efa42ba6659648dfbf7de8d0db"
+      "sha256": "66ee16586637030ae71d941183508936486ec90376a7ca4d15e0d4e669413099"
     },
     {
       "route": "windows/app-updates.yue_HK.md",
       "title": "來自呢個分叉發佈嘅應用程式更新",
-      "sha256": "53a4651b47ee81146dca60ff182efc81ce5b22cc58f2ab79a5d2ad99b22abb39"
+      "sha256": "72aae26ed822bb1670289272a096c08058941d94814cac333d88c7c09a745b8c"
     },
     {
       "route": "windows/appearance-customization.md",
@@ -625,7 +870,7 @@
     {
       "route": "windows/dim-sum-surprise.md",
       "title": "Dim sum startup surprise",
-      "sha256": "df975ce65331a67b5fa6ac1d55d2624909372ba6e47723db760482165c4cf72e"
+      "sha256": "b8e4f35658e2f46e4086c9e285caadc4955662b5468756b83b0bbc47bd81008e"
     },
     {
       "route": "windows/dim-sum-surprise.yue_HK.md",
@@ -636,6 +881,16 @@
       "route": "windows/disclosure-motion.md",
       "title": "Disclosure state feedback",
       "sha256": "dc7aeeab8d0bcd9b6bd28d1badc2357c0872400715c356ce2a2ac65822411783"
+    },
+    {
+      "route": "windows/documentation-browser.md",
+      "title": "In-app documentation browser (F1)",
+      "sha256": "f30fb0783e12174695846fb286278593800218cc7831383b4e9886f61fcc266b"
+    },
+    {
+      "route": "windows/documentation-browser.yue_HK.md",
+      "title": "離線文件瀏覽器（F1）",
+      "sha256": "8cce44434f3677826e4596021da2880d24167a2f8ba891361fb77636b7e57756"
     },
     {
       "route": "windows/funny-levels-and-dialog-emojis.md",
@@ -783,14 +1038,14 @@
       "sha256": "ee9b2ab3b66271a3ef1c9ae29c833155a52d1f5aaa133b85ef5c42ea5ecb7791"
     },
     {
-      "route": "windows/README.md",
-      "title": "Windows features",
-      "sha256": "aed1db0e35fe1c48ee1f9cc48a9f143c35a3f217dfcead3485d284b494548bc0"
+      "route": "windows/quiet-workflow.md",
+      "title": "Quiet workflow",
+      "sha256": "471c4cb3051ec498dba4b7b113a19336e113cb6a3d177796659ed91949fed3a5"
     },
     {
-      "route": "windows/README.yue_HK.md",
-      "title": "Windows 功能",
-      "sha256": "0d04f0f4d5c5ee02ecd83081bbc2ad4f0a38f2aa59137e2b26cf9754bf100d29"
+      "route": "windows/quiet-workflow.yue_HK.md",
+      "title": "安靜工作流程",
+      "sha256": "e70e05709c99a79f95e487831f6a025f5115ba317f9972a89bfb2c6137d6ce5b"
     },
     {
       "route": "windows/regex-builder.md",
@@ -821,6 +1076,11 @@
       "route": "windows/renamable-app-name.yue_HK.md",
       "title": "可重新命名嘅應用程式名稱（只係顯示標籤）",
       "sha256": "15b8c31c31859a4e2bc4d743e40857c9526c1f751de549913226c98b107f40f4"
+    },
+    {
+      "route": "windows/scheduled-settings.md",
+      "title": "Scheduled settings",
+      "sha256": "f90a381c169edf830c0dec7a2d1b54430678aa57c20cccef58c9e7f94a33ae52"
     },
     {
       "route": "windows/sidebar-search.md",
@@ -903,6 +1163,21 @@
       "sha256": "9a750fc843df0e50aad18d6ab50d070316ed902d8c0ac698dc31d5d533379b2a"
     },
     {
+      "route": "workspace/README.md",
+      "title": "Workspace",
+      "sha256": "be35b6d039e311ffe2f25e0f5037d9af9d00ec07cc2eda880d5718b1b91b92fd"
+    },
+    {
+      "route": "workspace/README.yue_HK.md",
+      "title": "工作區",
+      "sha256": "43b708e517ef3ed0aeefadd6e85ae6b7098b6d6bb4f0f031aacc65b83c1a2304"
+    },
+    {
+      "route": "workspace/bulk-actions.md",
+      "title": "Bulk actions",
+      "sha256": "3c13a7d35cecde8bcf2a627a9bf04e1b5a0ac875f1aff70297401591ee9cdc2e"
+    },
+    {
       "route": "workspace/config-profiles-backup.md",
       "title": "Config profiles & full-data backup",
       "sha256": "8f9c3cbdc6e95f18906da1ad459848eae02441cde6ce9f85b36f40a0cb474c4f"
@@ -925,7 +1200,7 @@
     {
       "route": "workspace/external-editor.md",
       "title": "External editor",
-      "sha256": "8e46e044c9cc60783210d559e9bbc4e1a324dca0baded441ad9075bfa5200e06"
+      "sha256": "0b7425c9dfa86270c4238ed215a425579d480b3bc8d79a2946a03b127a163811"
     },
     {
       "route": "workspace/external-editor.yue_HK.md",
@@ -993,14 +1268,9 @@
       "sha256": "11702edc366f051c753b2270d94859718b353d4fa58dcd21c56f6c0bd2c023de"
     },
     {
-      "route": "workspace/README.md",
-      "title": "Workspace",
-      "sha256": "f0f37d788c8843f9a8e4183e1481480719262d6f26a9ce477f433a8905670582"
-    },
-    {
-      "route": "workspace/README.yue_HK.md",
-      "title": "工作區",
-      "sha256": "43b708e517ef3ed0aeefadd6e85ae6b7098b6d6bb4f0f031aacc65b83c1a2304"
+      "route": "workspace/readable-dates.md",
+      "title": "Readable dates",
+      "sha256": "1b516af2b3429f47f533968b6fcc07b7c5bc763f292f05e6ed548f509330646f"
     },
     {
       "route": "workspace/tabbed-settings.md",
@@ -1055,7 +1325,7 @@
       "bytes": 1979
     }
   ],
-  "bundle_sha256": "95d8521301d7d0d2c5f83ad61168ab695c7bf71a363a5a42060b6ddf8dc4d327",
+  "bundle_sha256": "41953d092991a7379bd43e9c5565e9c5b4ec8f79ad9848e5f56683f6c79ddb40",
   "unavailable_references": [
     {
       "source": "api/README.md",
@@ -1468,6 +1738,46 @@
       "kind": "link"
     },
     {
+      "source": "local-capabilities/README.md",
+      "target": "https://developer.chrome.com/blog/local-network-access",
+      "kind": "link"
+    },
+    {
+      "source": "local-capabilities/README.md",
+      "target": "https://learn.microsoft.com/en-us/deployedge/ms-edge-local-network-access",
+      "kind": "link"
+    },
+    {
+      "source": "ollama-suite/README.md",
+      "target": "https://docs.ollama.com/api/chat",
+      "kind": "link"
+    },
+    {
+      "source": "ollama-suite/README.md",
+      "target": "https://docs.ollama.com/api/pull",
+      "kind": "link"
+    },
+    {
+      "source": "ollama-suite/README.md",
+      "target": "https://docs.ollama.com/api/tags",
+      "kind": "link"
+    },
+    {
+      "source": "ollama-suite/README.md",
+      "target": "https://docs.ollama.com/llms.txt",
+      "kind": "link"
+    },
+    {
+      "source": "ollama-suite/README.md",
+      "target": "https://github.com/ollama/ollama/blob/main/server/images.go",
+      "kind": "link"
+    },
+    {
+      "source": "ollama-suite/README.md",
+      "target": "https://ollama.com/library",
+      "kind": "link"
+    },
+    {
       "source": "pages/README.md",
       "target": "../../../ui-md3/landing.html",
       "kind": "link"
@@ -1725,6 +2035,21 @@
     {
       "source": "releases/release-codenames.yue_HK.md",
       "target": "../../../scripts/ci/Test-ReleaseCodenames.ps1",
+      "kind": "link"
+    },
+    {
+      "source": "releases/windows-one-click-build.md",
+      "target": "https://learn.microsoft.com/en-us/visualstudio/install/use-command-line-parameters-to-install-visual-studio",
+      "kind": "link"
+    },
+    {
+      "source": "releases/windows-one-click-build.md",
+      "target": "https://learn.microsoft.com/en-us/windows/package-manager/winget/",
+      "kind": "link"
+    },
+    {
+      "source": "releases/windows-one-click-build.yue_HK.md",
+      "target": "https://learn.microsoft.com/en-us/visualstudio/install/use-command-line-parameters-to-install-visual-studio",
       "kind": "link"
     },
     {

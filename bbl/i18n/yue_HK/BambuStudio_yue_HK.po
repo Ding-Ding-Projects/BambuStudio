@@ -37389,6 +37389,16 @@ msgstr "重新啟動以安裝更新"
 msgid "Release notes"
 msgstr "發佈說明"
 
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "The background update to Bambu Studio %s did not finish."
+msgstr "Bambu Studio %s 嘅背景更新未能完成。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Download from the release page"
+msgstr "去發行頁面下載"
+
 #. reviewed-category: preferences
 #. review-status: agent-drafted
 msgid "Previous track"

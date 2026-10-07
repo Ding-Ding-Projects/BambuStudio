@@ -3,6 +3,7 @@
 #include "libslic3r/Technologies.hpp"
 #include "GUI_App.hpp"
 #include "libslic3r_build_time.h"
+#include "AppUpdateCheckPolicy.hpp"
 #include "AppDisplayName.hpp"
 #include "BilingualDecorator.hpp"
 #include "BilingualRegistry.hpp"
@@ -557,18 +558,23 @@ static void push_auto_update_started_notification(const std::string &tag)
     manager->push_notification(auto_update_message(L("Downloading Bambu Studio %s in the background."), tag));
 }
 
-// Squirrel has staged the new version. The link restarts the application; without it the new
-// version starts the next time the application opens.
+// The release page of that tag. The tag comes from the release JSON, so only the fork's own
+// tag form reaches the link; anything else opens the list of releases.
+static std::string release_page_url(const std::string &tag)
+{
+    const std::string releases = "https://github.com/Ding-Ding-Projects/BambuStudio/releases";
+    return std::regex_match(tag, std::regex("md3-v[0-9]+")) ? releases + "/tag/" + tag : releases;
+}
+
+// Squirrel has staged the new version, after a manual or a background check. The link restarts
+// the application; without it the new version starts the next time the application opens.
 static void push_auto_update_ready_notification(const std::string &tag)
 {
     Plater              *plater  = wxGetApp().plater();
     NotificationManager *manager = plater ? plater->get_notification_manager() : nullptr;
     if (manager == nullptr)
         return;
-    // The release page of that tag. The tag comes from the release JSON, so only the fork's own
-    // tag form reaches the link; anything else opens the list of releases.
-    const std::string releases = "https://github.com/Ding-Ding-Projects/BambuStudio/releases";
-    const std::string notes_url = std::regex_match(tag, std::regex("md3-v[0-9]+")) ? releases + "/tag/" + tag : releases;
+    const std::string notes_url = release_page_url(tag);
     // Stays until the user acts: restart, or close it to install later (the new version then
     // starts the next time the app opens). Reading the notes keeps it.
     manager->push_app_update_ready_notification(
@@ -584,6 +590,25 @@ static void push_auto_update_ready_notification(const std::string &tag)
         [notes_url](wxEvtHandler *) {
             wxLaunchDefaultBrowser(wxString::FromUTF8(notes_url));
             return false;
+        });
+}
+
+// A background check found a newer release but Update.exe staged nothing. The notice does not
+// block: it stays until closed and links to the release page for a manual download. The caller
+// shows it once per release; a manual check opens the download dialog instead.
+static void push_auto_update_failed_notification(const std::string &tag)
+{
+    Plater              *plater  = wxGetApp().plater();
+    NotificationManager *manager = plater ? plater->get_notification_manager() : nullptr;
+    if (manager == nullptr)
+        return;
+    const std::string page_url = release_page_url(tag);
+    manager->push_notification(NotificationType::CustomNotification, NotificationManager::NotificationLevel::WarningNotificationLevel,
+        auto_update_message(L("The background update to Bambu Studio %s did not finish."), tag),
+        _u8L("Download from the release page"),
+        [page_url](wxEvtHandler *) {
+            wxLaunchDefaultBrowser(wxString::FromUTF8(page_url));
+            return true;
         });
 }
 
@@ -6416,11 +6441,14 @@ void GUI_App::check_new_version(bool show_tips, int by_user)
     // This fork updates from its own GitHub releases (Ding-Ding-Projects/
     // BambuStudio, tags md3-v<N>), never from Bambu Lab's cloud feed: that feed
     // announced upstream 2.8.2.x builds that would replace this app with the
-    // stock one. A release is "newer" when it was published after this binary
-    // was compiled (SLIC3R_BUILD_TIME, %Y%m%d-%H%M%S on the build host); a
-    // three-hour margin absorbs the build host's clock offset from UTC and
-    // the minutes between compiling and publishing. The dialog then offers the
-    // release's Setup.exe asset (or the release page when no asset is listed).
+    // stock one. A release is "newer" when it was published more than three
+    // hours after this binary was compiled. Both times are UTC (published_at
+    // and SLIC3R_BUILD_TIME_UTC) and AppUpdateCheckPolicy compares them without
+    // any time-zone API, so the verdict is the same in every local zone. An
+    // installed copy with automatic updates on always asks Update.exe, which
+    // compares package versions; the time verdict only decides what a run that
+    // staged nothing means. Every other copy offers the release's Setup.exe
+    // asset (or the release page) in the download dialog, after a manual check.
     const std::string url = "https://api.github.com/repos/Ding-Ding-Projects/BambuStudio/releases/latest";
     Slic3r::Http http = Slic3r::Http::get(url);
     http.header("accept", "application/vnd.github+json")
@@ -6436,25 +6464,13 @@ void GUI_App::check_new_version(bool show_tips, int by_user)
                 }
                 const std::string tag       = j["tag_name"].get<std::string>();
                 const std::string published = j["published_at"].get<std::string>(); // 2026-09-06T03:52:13Z
-                std::tm pub_tm{};
-                std::istringstream pub_in(published);
-                pub_in >> std::get_time(&pub_tm, "%Y-%m-%dT%H:%M:%S");
-                std::tm build_tm{};
-                std::istringstream build_in(std::string(SLIC3R_BUILD_TIME));
-                build_in >> std::get_time(&build_tm, "%Y%m%d-%H%M%S");
-                if (pub_in.fail() || build_in.fail()) {
-                    BOOST_LOG_TRIVIAL(warning) << "check new version: cannot compare " << published << " with build time " << SLIC3R_BUILD_TIME;
-                    if (show_tips) this->no_new_version();
-                    return;
-                }
-                const std::time_t pub_t   = _mkgmtime(&pub_tm);
-                const std::time_t build_t = std::mktime(&build_tm);
-                const double margin_s     = 3.0 * 3600.0;
-                const bool newer = std::difftime(pub_t, build_t) > margin_s;
-                if (!newer) {
-                    if (show_tips) this->no_new_version();
-                    return;
-                }
+                const std::string built     = SLIC3R_BUILD_TIME_UTC;                // 2026-09-06T01:10:42Z
+                long long published_s = 0, built_s = 0;
+                if (!AppUpdateCheckPolicy::parse_utc(published, published_s) || !AppUpdateCheckPolicy::parse_utc(built, built_s))
+                    BOOST_LOG_TRIVIAL(warning) << "check new version: cannot compare " << published << " with build time " << built << ", the release does not count as newer";
+                const bool newer = AppUpdateCheckPolicy::release_is_newer(published, built, AppUpdateCheckPolicy::kMarginSeconds);
+                BOOST_LOG_TRIVIAL(info) << "check new version: " << tag << " published " << published << ", built " << built
+                                        << (newer ? ", newer than this build" : ", not newer than this build");
                 std::string asset_url;
                 if (j.contains("assets") && j["assets"].is_array()) {
                     for (const auto &a : j["assets"]) {
@@ -6474,18 +6490,30 @@ void GUI_App::check_new_version(bool show_tips, int by_user)
                 version_info.force_upgrade = false;
                 wxGetApp().app_config->set_str("app", "cloud_software_url", version_info.url);
                 // "Skip this version" stores the exact tag; a manual check ignores it.
-                if (by_user == 0 && this->app_config->get("app", "skip_version") == tag)
-                    return;
-                // A copy installed by Squirrel updates itself in the background when the preference
-                // is on; every other copy, and a copy with the preference off, keeps the download dialog.
+                const bool skipped = this->app_config->get("app", "skip_version") == tag;
+                // A copy installed by Squirrel with the preference on always runs Update.exe; every
+                // other copy, and a copy with the preference off, keeps the download dialog, which
+                // only a manual check opens.
                 boost::filesystem::path update_exe;
-                if (this->app_config->get_bool("auto_update") && squirrel_update_exe(update_exe)) {
+                const bool auto_update = this->app_config->get_bool("auto_update");
+                const bool installed   = squirrel_update_exe(update_exe);
+                switch (AppUpdateCheckPolicy::decide(auto_update, installed, newer, by_user != 0, skipped)) {
+                case AppUpdateCheckPolicy::Action::RunSquirrelUpdate: {
                     const std::string name = version_info.version_name;
-                    CallAfter([this, tag, name, by_user]() { this->start_auto_update(tag, name, by_user); });
-                    return;
+                    CallAfter([this, tag, name, by_user, newer]() { this->start_auto_update(tag, name, by_user, newer); });
+                    break;
                 }
-                if (by_user != 0)
-                    CallAfter([this, by_user]() { GUI::wxGetApp().request_new_version(by_user); });
+                case AppUpdateCheckPolicy::Action::OfferDownload:
+                    if (by_user != 0)
+                        CallAfter([this, by_user]() { GUI::wxGetApp().request_new_version(by_user); });
+                    break;
+                case AppUpdateCheckPolicy::Action::ShowNoNewVersion:
+                    if (show_tips) this->no_new_version();
+                    break;
+                case AppUpdateCheckPolicy::Action::Nothing:
+                    BOOST_LOG_TRIVIAL(info) << "check new version: nothing to do for " << tag << (skipped ? " (skipped)" : "");
+                    break;
+                }
             }
             catch (...) {
                 if (show_tips) this->no_new_version();
@@ -6497,20 +6525,23 @@ void GUI_App::check_new_version(bool show_tips, int by_user)
         }).perform();
 }
 
-void GUI_App::start_auto_update(const std::string &tag, const std::string &name, int by_user)
+void GUI_App::start_auto_update(const std::string &tag, const std::string &name, int by_user, bool newer_by_time)
 {
 #ifdef _WIN32
     boost::filesystem::path update_exe;
     if (!squirrel_update_exe(update_exe)) {
-        // Not an installed copy after all: keep the manual route.
-        BOOST_LOG_TRIVIAL(info) << "auto update: no Update.exe next to this copy, offering the download instead of updating to " << tag;
-        if (by_user != 0) request_new_version(by_user);
+        // Not an installed copy after all: keep the manual route, which only a manual check opens.
+        BOOST_LOG_TRIVIAL(info) << "auto update: no Update.exe next to this copy, not updating to " << tag;
+        if (by_user != 0 && newer_by_time)
+            request_new_version(by_user);
+        else if (by_user != 0)
+            no_new_version();
         return;
     }
 
-    // A manual check must not look like it did nothing while the package downloads. The
-    // automatic check stays quiet until there is something to say.
-    if (by_user != 0)
+    // A manual check must not look like it did nothing while the package of a newer release
+    // downloads. The automatic check stays quiet until there is something to say.
+    if (by_user != 0 && newer_by_time)
         push_auto_update_started_notification(tag);
 
     bool expected = false;
@@ -6523,7 +6554,7 @@ void GUI_App::start_auto_update(const std::string &tag, const std::string &name,
         m_auto_update_thread.join();
 
     BOOST_LOG_TRIVIAL(info) << "auto update: updating to " << tag << " (" << name << ") through " << boost::nowide::narrow(update_exe.wstring());
-    m_auto_update_thread = Slic3r::create_thread([this, tag, by_user, update_exe]() {
+    m_auto_update_thread = Slic3r::create_thread([this, tag, by_user, newer_by_time, update_exe]() {
         bool updated = false;
         try {
             updated = run_squirrel_update(update_exe, m_auto_update_cancel);
@@ -6535,14 +6566,34 @@ void GUI_App::start_auto_update(const std::string &tag, const std::string &name,
         m_auto_update_running = false;
         if (m_auto_update_cancel.load())
             return;
-        CallAfter([this, tag, by_user, updated]() {
+        CallAfter([this, tag, by_user, updated, newer_by_time]() {
             if (is_closing())
                 return;
-            if (updated) {
-                if (by_user != 0) push_auto_update_ready_notification(tag);
-            } else if (by_user != 0) {
-                // A requested update may offer its manual download fallback.
-                request_new_version(by_user);
+            // Update.exe runs even when the release is not newer by time, so staging nothing means
+            // a failure only when it was newer. The reason of a failure is in the log.
+            const bool reported = m_auto_update_failed_tag == tag;
+            switch (AppUpdateCheckPolicy::after_squirrel_update(updated, newer_by_time, by_user != 0, reported)) {
+            case AppUpdateCheckPolicy::Outcome::ShowReady:
+                // After a manual or a background check: the banner never blocks and stays until
+                // the user acts, and repeated checks refresh the one banner.
+                push_auto_update_ready_notification(tag);
+                break;
+            case AppUpdateCheckPolicy::Outcome::ShowNoNewVersion:
+                BOOST_LOG_TRIVIAL(info) << "auto update: " << tag << " is not newer than this build and Update.exe staged nothing";
+                if (by_user != 0) no_new_version();
+                break;
+            case AppUpdateCheckPolicy::Outcome::OfferDownload:
+                // Manual check: the download dialog, so a broken update never hides a release.
+                m_auto_update_failed_tag = tag;
+                if (by_user != 0) request_new_version(by_user);
+                break;
+            case AppUpdateCheckPolicy::Outcome::NotifyFailure:
+                // Background check: no dialog, one non-blocking notice per release.
+                m_auto_update_failed_tag = tag;
+                push_auto_update_failed_notification(tag);
+                break;
+            case AppUpdateCheckPolicy::Outcome::Nothing:
+                break;
             }
         });
     });
@@ -6550,6 +6601,7 @@ void GUI_App::start_auto_update(const std::string &tag, const std::string &name,
     // Squirrel is a Windows installer: keep the download dialog everywhere else.
     (void) tag;
     (void) name;
+    (void) newer_by_time;
     if (by_user != 0) request_new_version(by_user);
 #endif
 }

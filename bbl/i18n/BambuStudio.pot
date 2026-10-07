@@ -1977,6 +1977,13 @@ msgid "Release notes"
 msgstr ""
 
 #, possible-c-format, possible-boost-format
+msgid "The background update to Bambu Studio %s did not finish."
+msgstr ""
+
+msgid "Download from the release page"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
 msgid "Released %s"
 msgstr ""
 
