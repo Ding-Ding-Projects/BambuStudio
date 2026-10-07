@@ -693,6 +693,27 @@ LocalizedText LanguageModeService::narration(const wxString& message, const wxSt
     return {en ? *en : english(message, context), yue ? *yue : wxString()};
 }
 
+LocalizedText LanguageModeService::factual(const wxString &message, const wxString &context) const
+{
+    // Mirrors translate() but never substitutes a funny-level voice variant.
+    if (PersonalModes::school_presentation_suppressed.load()) return {vocabulary(english(message, context)), wxString()};
+    if (m_profile.kind == LanguageModeKind::Standard)
+        return { vocabulary(translate_standard(message, context)), wxString() };
+
+    const wxString english_text = vocabulary(english(message, context));
+    if (m_profile.kind == LanguageModeKind::English)
+        return { english_text, wxString() };
+
+    const wxString *cantonese = find_cantonese(message, UINT_MAX, context);
+    if (m_profile.kind == LanguageModeKind::CantoneseHongKong)
+        return { cantonese == nullptr ? english_text : PersonalVocabulary::remember(*cantonese), wxString() };
+
+    LocalizedText result { english_text, wxString() };
+    if (cantonese != nullptr && !cantonese->empty() && *cantonese != message && *cantonese != english_text)
+        result.secondary = PersonalVocabulary::remember(*cantonese);
+    return result;
+}
+
 LocalizedText LanguageModeService::translate_plural(const wxString &singular, const wxString &plural,
                                                      unsigned int n, const wxString &context) const
 {

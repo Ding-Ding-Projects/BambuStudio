@@ -19,6 +19,8 @@ try {
     $deps = Join-Path $fixture 'dependencies'
     $prefix = Join-Path $deps 'usr/local'
     $install = Join-Path $fixture 'install'
+    $sdk = Join-Path $fixture 'qpdf-sdk'
+    $sdkEntry = "LOCAL_CONVERTER_QPDF_SDK:PATH=$($sdk.Replace('\','/'))"
     New-Item $prefix, (Join-Path $fixture 'build') -ItemType Directory -Force | Out-Null
     $cache = Join-Path $fixture 'build/CMakeCache.txt'
     @('CMAKE_INSTALL_PREFIX:PATH=C:/wrong-prefix', 'BAMBU_RELEASE_SOURCE_PATH_POLICY:INTERNAL=msvc-pathmap-v1', "CMAKE_HOME_DIRECTORY:INTERNAL=$fixture") | Set-Content $cache
@@ -37,16 +39,20 @@ try {
     function fake-cmake { $script:calls += ,@($args); $script:suffixes += $env:_CL_; $global:LASTEXITCODE = 0 }
     [Environment]::SetEnvironmentVariable('_CL_', '/DAPPKEEP', 'Process')
     $toolchain = @{ CMake = 'fake-cmake'; Generator = 'fixture'; GeneratorInstance = 'fixture'; SdkIncludePath = 'fixture-sdk' }
-    Invoke-ApplicationBuild -Toolchain $toolchain -DependencyDestination $deps -InstallPrefix $install
+    Invoke-ApplicationBuild -Toolchain $toolchain -DependencyDestination $deps -InstallPrefix $install -PdfSdkDirectory $sdk
     Assert-True ($script:calls[0] -contains '-S') 'An existing cache with a mismatched install prefix must reconfigure.'
     Assert-True ($script:calls[0] -contains '-DBAMBU_APPLICATION_CACHE_ID:STRING=fixture-id') 'Configure must record the exact cache identity.'
+    Assert-True ($script:calls[0] -contains ('-D' + $sdkEntry)) 'Configure must pass the verified qpdf SDK the converter compiles against.'
     Assert-True ($script:suffixes[1] -eq '/DAPPKEEP /MP1' -and $script:suffixes[2] -eq '/DAPPKEEP /MP1') 'Both application production commands must receive the compiler cap.'
     Assert-True (($script:calls[2] -join ' ').EndsWith('--parallel 2')) 'Application MSBuild must retain the selected worker budget.'
     Assert-True ($env:_CL_ -eq '/DAPPKEEP') 'Application success must restore the compiler environment.'
     @("CMAKE_INSTALL_PREFIX:PATH=$($install.Replace('\','/'))", "CMAKE_PREFIX_PATH:STRING=$($prefix.Replace('\','/'))", 'BAMBU_APPLICATION_CACHE_ID:STRING=fixture-id') | Set-Content $cache
-    Assert-True (Test-ApplicationCacheIdentity $cache 'fixture-id' $install $prefix) 'An exact cache identity must match.'
-    Assert-True (-not (Test-ApplicationCacheIdentity $cache 'other-id' $install $prefix)) 'A changed source/toolchain identity must invalidate reuse.'
-    Assert-True (-not (Test-ApplicationCacheIdentity $cache 'fixture-id' $install ($prefix + '-other'))) 'A changed dependency destination must invalidate reuse.'
+    Assert-True (-not (Test-ApplicationCacheIdentity $cache 'fixture-id' $install $prefix $sdk)) 'A cache configured before the qpdf SDK requirement must not be reused.'
+    @("CMAKE_INSTALL_PREFIX:PATH=$($install.Replace('\','/'))", "CMAKE_PREFIX_PATH:STRING=$($prefix.Replace('\','/'))", 'BAMBU_APPLICATION_CACHE_ID:STRING=fixture-id', $sdkEntry) | Set-Content $cache
+    Assert-True (Test-ApplicationCacheIdentity $cache 'fixture-id' $install $prefix $sdk) 'An exact cache identity must match.'
+    Assert-True (-not (Test-ApplicationCacheIdentity $cache 'other-id' $install $prefix $sdk)) 'A changed source/toolchain identity must invalidate reuse.'
+    Assert-True (-not (Test-ApplicationCacheIdentity $cache 'fixture-id' $install ($prefix + '-other') $sdk)) 'A changed dependency destination must invalidate reuse.'
+    Assert-True (-not (Test-ApplicationCacheIdentity $cache 'fixture-id' $install $prefix ($sdk + '-other'))) 'A changed qpdf SDK must invalidate reuse.'
     Import-TestFunction 'Get-FileSha256Lower'
     Import-TestFunction 'Assert-LastExitCode'
     Import-TestFunction 'Get-ApplicationCacheIdentity'
@@ -73,10 +79,10 @@ try {
     $toolchain.SdkIncludePath = 'other-sdk'
     Assert-True ((Get-ApplicationCacheIdentity $toolchain $deps $install) -cne $identity) 'Changed SDK selection must invalidate identity.'
     function Get-ApplicationCacheIdentity { return 'fixture-id' }
-    @("CMAKE_INSTALL_PREFIX:PATH=$($install.Replace('\','/'))", "CMAKE_PREFIX_PATH:STRING=$($prefix.Replace('\','/'))", 'BAMBU_APPLICATION_CACHE_ID:STRING=fixture-id', 'BAMBU_RELEASE_SOURCE_PATH_POLICY:INTERNAL=msvc-pathmap-v1', "CMAKE_HOME_DIRECTORY:INTERNAL=$fixture") | Set-Content $cache
+    @("CMAKE_INSTALL_PREFIX:PATH=$($install.Replace('\','/'))", "CMAKE_PREFIX_PATH:STRING=$($prefix.Replace('\','/'))", 'BAMBU_APPLICATION_CACHE_ID:STRING=fixture-id', $sdkEntry, 'BAMBU_RELEASE_SOURCE_PATH_POLICY:INTERNAL=msvc-pathmap-v1', "CMAKE_HOME_DIRECTORY:INTERNAL=$fixture") | Set-Content $cache
     function fake-cmake { throw 'Expected fixture production failure.' }
     $rejected = $false
-    try { Invoke-ApplicationBuild -Toolchain @{ CMake = 'fake-cmake'; Generator = 'fixture'; GeneratorInstance = 'fixture'; SdkIncludePath = 'fixture-sdk' } -DependencyDestination $deps -InstallPrefix $install } catch { $rejected = $true }
+    try { Invoke-ApplicationBuild -Toolchain @{ CMake = 'fake-cmake'; Generator = 'fixture'; GeneratorInstance = 'fixture'; SdkIncludePath = 'fixture-sdk' } -DependencyDestination $deps -InstallPrefix $install -PdfSdkDirectory $sdk } catch { $rejected = $true }
     Assert-True ($rejected -and $env:_CL_ -eq '/DAPPKEEP') 'Application failure must propagate and restore the compiler environment.'
 } finally {
     [Environment]::SetEnvironmentVariable('_CL_', $originalCompilerOptions, 'Process')
@@ -84,4 +90,4 @@ try {
     if (-not $fixture.StartsWith($tempRoot, [StringComparison]::OrdinalIgnoreCase)) { throw 'Fixture escaped temporary storage.' }
     Remove-Item -LiteralPath $fixture -Recurse -Force
 }
-Write-Host 'Application cache identity checks passed (14 assertions; fixture files and stub CMake only).'
+Write-Host 'Application cache identity checks passed (17 assertions; fixture files and stub CMake only).'

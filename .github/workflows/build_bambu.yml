@@ -150,6 +150,25 @@ jobs:
           -DependencyCacheKey '${{ inputs.cache-key }}'
           -Cold:$${{ contains(github.event.head_commit.message, '[cold build]') }}
 
+      # The native converter compiles against the qpdf C API, and configure
+      # stops unless LOCAL_CONVERTER_QPDF_SDK names the verified SDK. This
+      # stages the hash-pinned official qpdf 12.4.2 SDK for configure and its
+      # runtime into install-dir\tools\pdf, where the packaged converter worker
+      # loads it. The job token reads the public release with gh; plain HTTPS
+      # is the fallback, and either copy must match the pinned SHA-256. It runs
+      # after the cache restore, which only ever writes the build directory.
+      - name: Stage the verified qpdf SDK and PDF runtime
+        if: inputs.os == 'windows-latest'
+        working-directory: ${{ github.workspace }}
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          ./scripts/windows/Install-LocalPdfTools.ps1
+          -Destination '${{ github.workspace }}\install-dir\tools\pdf'
+          -SdkDestination '${{ github.workspace }}\artifacts\local-pdf\sdk'
+          -CacheDirectory '${{ github.workspace }}\artifacts\local-pdf-cache'
+
       - name: Build slicer Win
         id: build_win
         if: inputs.os == 'windows-latest'
@@ -181,6 +200,7 @@ jobs:
             '-DSLIC3R_BUILD_TESTS=OFF',
             '-DCMAKE_PREFIX_PATH=${{ github.workspace }}\deps\build\BambuStudio_dep\usr\local',
             '-DCMAKE_INSTALL_PREFIX=${{ github.workspace }}\install-dir',
+            '-DLOCAL_CONVERTER_QPDF_SDK:PATH=${{ github.workspace }}\artifacts\local-pdf\sdk',
             '-DCMAKE_BUILD_TYPE=Release',
             '-DWIN10SDK_PATH=C:/Program Files (x86)/Windows Kits/10/Include/10.0.22000.0'
           )

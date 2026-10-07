@@ -45,6 +45,8 @@ function Assert-Package([string]$Root, $Entries, [bool]$Runtime) {
     }
 }
 $Destination = [IO.Path]::GetFullPath($Destination)
+# One absolute cache root keeps gh, Invoke-WebRequest and the .NET file APIs on the same files.
+$CacheDirectory = [IO.Path]::GetFullPath($CacheDirectory)
 if ($SdkDestination) { $SdkDestination = [IO.Path]::GetFullPath($SdkDestination) }
 if ($VerifyOnly) {
     Assert-Package $Destination $manifest.files $true
@@ -68,11 +70,31 @@ if (!(Test-Path -LiteralPath $archive)) {
     if ($Offline) { throw 'Pinned qpdf archive is unavailable in the offline cache.' }
     $download = Join-Path $CacheDirectory ('download-' + [Guid]::NewGuid().ToString('N'))
     [IO.Directory]::CreateDirectory($download) | Out-Null
-    & gh release download $manifest.tag --repo $manifest.repository --pattern $manifest.archive --dir $download
-    if ($LASTEXITCODE -ne 0) { throw 'Official qpdf release download failed.' }
     $downloaded = Join-Path $download $manifest.archive
+    # A token or signed-in GitHub CLI uses the release API first. Without one,
+    # or when that download fails, the same official release asset is fetched
+    # over HTTPS, so a local build needs no GitHub sign-in. Whichever copy
+    # arrives must still match the pinned size and SHA-256 below.
+    $gh = Get-Command gh -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
+    $fetched = $false
+    if ($gh) {
+        $signedIn = [bool]($env:GH_TOKEN -or $env:GITHUB_TOKEN)
+        if (!$signedIn) { & $gh.Source auth status *> $null; $signedIn = $LASTEXITCODE -eq 0 }
+        if ($signedIn) {
+            & $gh.Source release download $manifest.tag --repo $manifest.repository --pattern $manifest.archive --dir $download
+            $fetched = $LASTEXITCODE -eq 0
+            if (!$fetched) { Write-Warning "gh release download exited with $LASTEXITCODE; fetching the same release asset over HTTPS." }
+        }
+    }
+    if (!$fetched) {
+        $uri = "https://github.com/$($manifest.repository)/releases/download/$($manifest.tag)/$($manifest.archive)"
+        try { Invoke-WebRequest -Uri $uri -OutFile $downloaded -MaximumRetryCount 3 -RetryIntervalSec 15 }
+        catch { throw "Official qpdf release download failed: $($_.Exception.Message)" }
+    }
     Assert-File $downloaded $manifest.archive_sha256 $manifest.archive_bytes
     [IO.File]::Move($downloaded, $archive, $false)
+    # Only the verified archive is kept; the per-download directory is now empty.
+    Remove-Item -LiteralPath $download -Recurse -Force -ErrorAction SilentlyContinue
 }
 Assert-File $archive $manifest.archive_sha256 $manifest.archive_bytes
 $zip = [IO.Compression.ZipFile]::OpenRead($archive)

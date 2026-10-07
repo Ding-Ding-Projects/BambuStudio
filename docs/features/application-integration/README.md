@@ -63,10 +63,13 @@ path and digest into the converter's own executable and capability verification.
 The production CMake target builds the worker beside its broker implementation,
 hashes the linked worker, and installs the executable and receipt together.
 Configuration requires `LOCAL_CONVERTER_QPDF_SDK` with the verified qpdf C API
-headers. No PATH search substitutes for the SDK. The runtime still verifies its
+headers. No PATH search substitutes for the SDK. The one-click build and the hosted
+Windows build workflow stage that SDK and the complete qpdf runtime bundle into the
+payload's `tools/pdf` before configure; `build_win.bat` stages the SDK and leaves the
+runtime in `artifacts/local-pdf/runtime`. The runtime still verifies its
 compiled DLL pins and executes the real sandbox capability probe before enabling
-PDF operations. Runtime staging of the complete qpdf bundle is separately required.
-The native destination and packaging integration have not yet passed a full build.
+PDF operations. The native destination and packaging integration have not yet
+passed a full build.
 
 ## Live surfaces and sensitive controls
 

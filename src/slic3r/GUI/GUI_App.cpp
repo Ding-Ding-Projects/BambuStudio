@@ -3366,6 +3366,13 @@ void GUI_App::UnRegisterMacPowerCallBack()
 }
 #endif
 
+FeatureServices::SchoolCredentials& GUI_App::school_credentials()
+{
+    if (!m_school_credentials)
+        m_school_credentials = std::make_unique<FeatureServices::SchoolCredentials>(m_school_runtime->mode());
+    return *m_school_credentials;
+}
+
 FeatureServices::LocalSecurityServices& GUI_App::local_security()
 {
     if (!m_local_security)
@@ -3431,6 +3438,7 @@ int GUI_App::OnExit()
     StatusHubService::instance().stop();
     m_scheduled_preferences.reset();
     m_local_security.reset();
+    m_school_credentials.reset();
     m_school_runtime.reset();
     m_narrator_environment.reset();
     TtsNarrator::shutdown();

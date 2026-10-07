@@ -101,6 +101,7 @@
 #include "FeatureServices/ServiceWorkspace.hpp"
 #include "FeatureServices/SurfaceRegistry.hpp"
 #include "FeatureServices/ScheduledPreferences.hpp"
+#include "FeatureServices/LocalSecurityServices.hpp"
 #include "Documentation/OfflineDocumentation.hpp"
 #include "StatusHub/StatusHubPanel.hpp"
 #include "libslic3r/StatusHub/StatusHubService.hpp"
@@ -5828,6 +5829,7 @@ wxPanel* MainFrame::open_service(const std::string& id, const wxString& title,
         m_tabpanel->AddPage(m_service_workspace, _L("Local tools"), "", "", false);
     }
     FeatureServices::SurfaceRegistry::instance().register_surface(m_service_workspace, "service-workspace");
+    auto* result = m_service_workspace->open(id, title, create);
     if (result) {
         FeatureServices::SurfaceRegistry::instance().register_surface(result, "services/" + id);
         select_tab(m_service_workspace);

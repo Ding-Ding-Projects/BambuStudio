@@ -245,9 +245,20 @@ FOR /F "tokens=2 delims=," %%I in (
 ) do SET PS_PROJECT_IS_OPEN=%%~I
 SET PS_INSTALL_PREFIX_ARG=
 IF DEFINED BAMBU_INSTALL_PREFIX SET PS_INSTALL_PREFIX_ARG=-DCMAKE_INSTALL_PREFIX="%BAMBU_INSTALL_PREFIX%"
-%PS_CMAKE_EXE% .. %PS_CMAKE_GENERATOR_ARGS% -DCMAKE_PREFIX_PATH="%PS_DESTDIR%\usr\local" -DCMAKE_CONFIGURATION_TYPES=%PS_CONFIG_LIST% %PS_INSTALL_PREFIX_ARG%
+REM The native converter compiles against the qpdf C API, and configure stops
+REM without LOCAL_CONVERTER_QPDF_SDK. Stage the hash-pinned official qpdf SDK
+REM and a verified runtime copy (artifacts\local-pdf\runtime; copy it to
+REM tools\pdf beside the converter worker to enable PDF) with PowerShell 7.
+REM An existing verified tree is reused, so later runs do not download again.
+SET "PS_QPDF_SDK=%~dp0artifacts\local-pdf\sdk"
+where pwsh.exe >nul 2>nul || (
+    @ECHO ERROR: PowerShell 7 ^(pwsh.exe^) is required to stage the verified qpdf SDK. Install it with: winget install --id Microsoft.PowerShell --exact 1>&2
+    GOTO :END
+)
+pwsh.exe -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "%~dp0scripts\windows\Install-LocalPdfTools.ps1" -Destination "%~dp0artifacts\local-pdf\runtime" -SdkDestination "%PS_QPDF_SDK%" -CacheDirectory "%~dp0artifacts\local-pdf-cache" || GOTO :END
+%PS_CMAKE_EXE% .. %PS_CMAKE_GENERATOR_ARGS% -DCMAKE_PREFIX_PATH="%PS_DESTDIR%\usr\local" -DLOCAL_CONVERTER_QPDF_SDK="%PS_QPDF_SDK%" -DCMAKE_CONFIGURATION_TYPES=%PS_CONFIG_LIST% %PS_INSTALL_PREFIX_ARG%
 IF %ERRORLEVEL% NEQ 0 IF "%PS_STEPS_DIRTY%" NEQ "" (
-    (del CMakeCache.txt && %PS_CMAKE_EXE% .. %PS_CMAKE_GENERATOR_ARGS% -DCMAKE_PREFIX_PATH="%PS_DESTDIR%\usr\local" -DCMAKE_CONFIGURATION_TYPES=%PS_CONFIG_LIST% %PS_INSTALL_PREFIX_ARG%) || GOTO :END
+    (del CMakeCache.txt && %PS_CMAKE_EXE% .. %PS_CMAKE_GENERATOR_ARGS% -DCMAKE_PREFIX_PATH="%PS_DESTDIR%\usr\local" -DLOCAL_CONVERTER_QPDF_SDK="%PS_QPDF_SDK%" -DCMAKE_CONFIGURATION_TYPES=%PS_CONFIG_LIST% %PS_INSTALL_PREFIX_ARG%) || GOTO :END
 ) ELSE GOTO :END
 REM Skip the build step if we're using the undocumented app-cmake to regenerate the full config from inside devenv
 IF "%PS_STEPS%" NEQ "app-cmake" msbuild /m ALL_BUILD.vcxproj /p:Configuration=%PS_CONFIG% /v:quiet || GOTO :END
@@ -291,12 +302,12 @@ IF "%PS_RUN%" EQU "console" (
         @ECHO Preparing to run Visual Studio...
         cd ..\.. || GOTO :END
         REM This hack generates a single config for MSVS, guaranteeing it gets set as the active config.
-        %PS_CMAKE_EXE% .. %PS_CMAKE_GENERATOR_ARGS% -DCMAKE_PREFIX_PATH="%PS_DESTDIR%\usr\local" -DCMAKE_CONFIGURATION_TYPES=%PS_CONFIG% > nul 2> nul || GOTO :END
+        %PS_CMAKE_EXE% .. %PS_CMAKE_GENERATOR_ARGS% -DCMAKE_PREFIX_PATH="%PS_DESTDIR%\usr\local" -DLOCAL_CONVERTER_QPDF_SDK="%PS_QPDF_SDK%" -DCMAKE_CONFIGURATION_TYPES=%PS_CONFIG% > nul 2> nul || GOTO :END
         REM Now launch devenv with the single config (setting it active) and a /command switch to re-run cmake and generate the full config list
         start devenv.exe %PS_SOLUTION_NAME%.sln /command ^"shell /o ^^^"%~f0^^^" -d ^^^"%PS_DESTDIR%^^^" -c %PS_CONFIG% -a %PS_ARCH% -r none -s app-cmake^"
         REM If devenv fails to launch just directly regenerate the full config list.
         IF %ERRORLEVEL% NEQ 0 (
-            %PS_CMAKE_EXE% .. %PS_CMAKE_GENERATOR_ARGS% -DCMAKE_PREFIX_PATH="%PS_DESTDIR%\usr\local" -DCMAKE_CONFIGURATION_TYPES=%PS_CONFIG_LIST% 2> nul 1> nul || GOTO :END
+            %PS_CMAKE_EXE% .. %PS_CMAKE_GENERATOR_ARGS% -DCMAKE_PREFIX_PATH="%PS_DESTDIR%\usr\local" -DLOCAL_CONVERTER_QPDF_SDK="%PS_QPDF_SDK%" -DCMAKE_CONFIGURATION_TYPES=%PS_CONFIG_LIST% 2> nul 1> nul || GOTO :END
         )
     )
 )

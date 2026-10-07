@@ -59,7 +59,13 @@ foreach ($required in @(
     # build_win.bat was retired in 8d0c49a04; these direct CMake build calls replaced it.
     'Invoke-DependencyBuild -Toolchain',
     'Invoke-ApplicationBuild -Toolchain',
-    '$toolchain.CMake --install',
+    # c523fe3a7 routed the restage through Invoke-LoggedNativeCommand; it is still cmake --install.
+    "-FilePath `$toolchain.CMake -Arguments @('--install'",
+    # The converter compiles against the verified qpdf SDK, staged with its runtime before configure.
+    "-PackageId 'Microsoft.PowerShell'",
+    'Initialize-LocalPdfTools -PayloadDirectory $payloadDirectory',
+    '-PdfSdkDirectory $pdfSdkDirectory',
+    '"-DLOCAL_CONVERTER_QPDF_SDK:PATH=$pdfSdk"',
     'Add-MesaFallback',
     'New-WindowsCycloneDxSbom.ps1',
     'Invoke-SquirrelPackage.ps1',

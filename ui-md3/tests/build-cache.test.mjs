@@ -42,13 +42,14 @@ test('the build tree is restored before the compile and saved after it, from mai
     'a commit message can ask for a build from scratch');
 
   const build = step('Build slicer Win');
-  assert.match(build, /cmake @configure\n\s*# [^\n]*\n\s*# [^\n]*\n\s*if \(\$LASTEXITCODE -ne 0 -and '\$\{\{ steps\.build_cache\.outputs\.state \}\}' -eq 'warm'\) \{/,
+  // The first configure also tees its output into the retained diagnostics.
+  assert.match(build, /cmake @configure(?: 2>&1 \| Tee-Object -FilePath "[^"\n]+")?\n\s*# [^\n]*\n\s*# [^\n]*\n\s*if \(\$LASTEXITCODE -ne 0 -and '\$\{\{ steps\.build_cache\.outputs\.state \}\}' -eq 'warm'\) \{/,
     'a restored tree that will not configure is dropped');
   assert.match(build, /Remove-Item -LiteralPath build -Recurse -Force\n\s*cmake @configure\n/, 'and the build configures from scratch');
 
   const startStep = step('Start saving the build tree to the build cache release');
-  assert.match(startStep, /if: inputs\.os == 'windows-latest' && github\.event_name == 'push' && github\.ref == 'refs\/heads\/main'/,
-    'only main builds write the cache');
+  assert.match(startStep, /if: inputs\.os == 'windows-latest' && !inputs\.debug-symbols && github\.event_name == 'push' && github\.ref == 'refs\/heads\/main'/,
+    'only main builds without symbols write the cache');
   assert.match(startStep, /Start-Process -FilePath pwsh -WindowStyle Hidden/, 'the save runs in the background while the payload is packaged');
   // A child started with redirected output inherits the step's output pipe, and
   // the runner kills whatever still holds it once the step ends.
@@ -63,6 +64,28 @@ test('the build tree is restored before the compile and saved after it, from mai
   const finish = step('Finish saving the build tree to the build cache release');
   assert.match(finish, /if: always\(\) && inputs\.os == 'windows-latest' && env\.BUILD_CACHE_SAVE_PID != ''/);
   assert.match(finish, /Wait-Process -Timeout 1800/);
+});
+
+test('the verified qpdf SDK and runtime are staged after the restore and passed to every configure', () => {
+  const restoreAt = workflow.indexOf('      - name: Restore the build tree from the build cache release\n');
+  const stageAt = workflow.indexOf('      - name: Stage the verified qpdf SDK and PDF runtime\n');
+  const buildAt = workflow.indexOf('      - name: Build slicer Win\n');
+  assert.ok(restoreAt > 0 && restoreAt < stageAt && stageAt < buildAt, 'restore, stage qpdf, then configure and compile');
+
+  const stage = step('Stage the verified qpdf SDK and PDF runtime');
+  assert.match(stage, /if: inputs\.os == 'windows-latest'\n/, 'every Windows build stages it, symbol builds included');
+  assert.match(stage, /GH_TOKEN: \$\{\{ github\.token \}\}/, 'the job token reads the public release; HTTPS is the fallback');
+  assert.match(stage, /\.\/scripts\/windows\/Install-LocalPdfTools\.ps1\n/, 'the hash-pinned installer does the staging');
+  assert.match(stage, /-Destination '\$\{\{ github\.workspace \}\}\\install-dir\\tools\\pdf'/,
+    'the runtime lands in the payload where the converter worker loads it');
+  assert.match(stage, /-SdkDestination '\$\{\{ github\.workspace \}\}\\artifacts\\local-pdf\\sdk'/);
+  assert.doesNotMatch(stage, /-Offline|-VerifyOnly|-TrustedManifestPath/, 'the hosted build acquires the pinned archive');
+
+  const build = step('Build slicer Win');
+  assert.match(build, /\$configure = @\([^)]*'-DLOCAL_CONVERTER_QPDF_SDK:PATH=\$\{\{ github\.workspace \}\}\\artifacts\\local-pdf\\sdk',/,
+    'the warm and cold configure both receive the staged SDK');
+  // The cache holds only the build directory, so a restore never replaces the staged runtime.
+  assert.match(save, /\$archive \$BuildDirectory "-x!/, 'the build cache archives the build directory alone');
 });
 
 test('the owner token reaches the build job through every reusable workflow', async () => {

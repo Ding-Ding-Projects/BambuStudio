@@ -8,23 +8,40 @@ files, 74 SDK files, license text bytes, and component metadata. Runtime files t
 
 ## Build and package integration
 
+Configuring `src/slic3r` requires `LOCAL_CONVERTER_QPDF_SDK` to name this verified
+SDK, and stops with an error that explains how to stage it otherwise. The build
+routes stage both trees automatically before they configure:
+
+| Route | SDK passed to configure | Runtime |
+| --- | --- | --- |
+| `build.bat`, `build-installer.bat`, `OneClickBuildInstaller.cmd` | `artifacts/local-pdf/sdk` | `install-dir/tools/pdf` (the payload) |
+| Hosted Windows build workflow (`build_bambu.yml`) | `artifacts/local-pdf/sdk` | `install-dir/tools/pdf` (the payload) |
+| `build_win.bat` | `artifacts/local-pdf/sdk` | `artifacts/local-pdf/runtime` (copy it to `tools/pdf` beside the worker) |
+
+Every route runs this script under PowerShell 7 (`pwsh`). The one-click bootstrap
+installs PowerShell 7 when it is missing; `build_win.bat` stops with an install hint.
+To stage by hand for a manual configure, run from the repository root:
+
 ```powershell
 pwsh -NoProfile -File scripts/windows/Install-LocalPdfTools.ps1 `
-  -Destination install-dir/tools/pdf -SdkDestination artifacts/pdf-sdk
+  -Destination install-dir/tools/pdf -SdkDestination artifacts/local-pdf/sdk
 pwsh -NoProfile -File scripts/windows/Install-LocalPdfTools.ps1 `
-  -Destination install-dir/tools/pdf -SdkDestination artifacts/pdf-sdk -VerifyOnly
+  -Destination install-dir/tools/pdf -SdkDestination artifacts/local-pdf/sdk -VerifyOnly
+cmake -S . -B build -DLOCAL_CONVERTER_QPDF_SDK:PATH="$PWD/artifacts/local-pdf/sdk" <other options>
 ```
 
-The parent build must invoke staging before packaging and verification against the
-actual package staging directory. This script alone does not establish that an
-installer contains these files. The SDK exposes `include/qpdf/qpdf-c.h` and the
-MSVC import library `lib/qpdf.lib`. The runtime contains `qpdf30.dll`, `qpdf.exe`,
+Packaging must still verify against the actual package staging directory. This
+script alone does not establish that an installer contains these files. The SDK
+exposes `include/qpdf/qpdf-c.h` and the MSVC import library `lib/qpdf.lib`. The runtime contains `qpdf30.dll`, `qpdf.exe`,
 and the eight Microsoft runtime DLLs supplied in the official distribution.
 Only the import library is staged, not the static library.
 
-The bootstrap obtains the exact archive using `gh release download` from
-`qpdf/qpdf`, tag `v12.4.2`, and verifies its recorded checksum before extracting
-an explicit file allowlist. `-Offline` prohibits acquisition and requires a valid
+The bootstrap obtains the exact archive from the official `qpdf/qpdf` release,
+tag `v12.4.2`. With `GH_TOKEN`, `GITHUB_TOKEN`, or a signed-in GitHub CLI it uses
+`gh release download`; without one, or when that download fails, it fetches the
+same release asset over HTTPS, so a local build needs no GitHub sign-in. Either
+copy must match the recorded size and checksum before an explicit file allowlist
+is extracted. `-Offline` prohibits acquisition and requires a valid
 cache; `-VerifyOnly` never downloads or executes anything. A warm invocation
 verifies existing files. A mismatched existing destination fails without changing
 it. New destinations are assembled in a unique sibling directory, verified, then

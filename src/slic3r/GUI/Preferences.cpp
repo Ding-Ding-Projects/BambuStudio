@@ -2809,12 +2809,12 @@ wxWindow *PreferencesDialog::create_general_tab()
         mode_box->SetSizer(mode_rows);
         auto* mode_title = new Label(mode_box, wxString::FromUTF8(runtime->mode().record().display_name));
         auto* mode_status = new Label(mode_box, wxEmptyString, LB_AUTO_WRAP);
-        auto* mode_name = new TextInput(mode_box, wxString::FromUTF8(runtime->mode().record().display_name), _L("Display name"));
+        auto* mode_name = new ::TextInput(mode_box, wxString::FromUTF8(runtime->mode().record().display_name), _L("Display name"));
         mode_name->GetTextCtrl()->SetMaxLength(128);
         mode_name->GetTextCtrl()->SetName(_L("Display name"));
-        auto* old_answer = new TextInput(mode_box, wxEmptyString, _L("Current unlock credential"), wxEmptyString,
+        auto* old_answer = new ::TextInput(mode_box, wxEmptyString, _L("Current unlock credential"), wxEmptyString,
             wxDefaultPosition, wxDefaultSize, wxTE_PASSWORD);
-        auto* new_answer = new TextInput(mode_box, wxEmptyString, _L("New unlock credential"), wxEmptyString,
+        auto* new_answer = new ::TextInput(mode_box, wxEmptyString, _L("New unlock credential"), wxEmptyString,
             wxDefaultPosition, wxDefaultSize, wxTE_PASSWORD);
         for (auto* input : {old_answer, new_answer}) {
             input->GetTextCtrl()->SetMaxLength(256);
@@ -2861,7 +2861,7 @@ wxWindow *PreferencesDialog::create_general_tab()
             mode_status->SetLabel(state);
             scrolled->Layout(); scrolled->FitInside();
         };
-        auto take_answer = [](TextInput* input) {
+        auto take_answer = [](::TextInput* input) {
             auto value = input->GetTextCtrl()->GetValue().ToUTF8();
             LocalSecurity::Secret secret(std::string_view(value.data(), value.length()));
             if (value.length()) std::fill_n(value.data(), value.length(), '\0');

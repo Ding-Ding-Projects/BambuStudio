@@ -84,6 +84,17 @@ unrelated newer Visual Studio installation and installing a redundant SKU. The i
 non-elevated source build out of the default `Program Files` prefix while producing the same staged
 layout as CI.
 
+The application configure now requires the verified qpdf SDK for the native converter.
+`build_win.bat` stages it automatically before every application configure: it runs
+`scripts/windows/Install-LocalPdfTools.ps1` under PowerShell 7, which downloads the hash-pinned
+official qpdf 12.4.2 archive (through `gh` when signed in, otherwise over HTTPS), places the SDK in
+`<session>\src\artifacts\local-pdf\sdk`, and passes it as `-DLOCAL_CONVERTER_QPDF_SDK`. This
+historical helper does not bootstrap PowerShell 7 (`build_win.bat` stops with an install hint when
+`pwsh.exe` is missing), and it does not copy the verified runtime from `artifacts\local-pdf\runtime`
+into `<session>\install-dir\tools\pdf`. A payload built this way has no PDF engine until that
+runtime is copied there; the current one-click and hosted builds stage it into the payload
+themselves (see [Bundled PDF engine](../converter/pdf-engine.md)).
+
 ## Toolchain bootstrap
 
 The user's consent is the install-source choice itself; individual tool installs run silently with no
