@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-06 02:39-0400\n"
+"POT-Creation-Date: 2026-10-07 01:44+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1973,6 +1973,13 @@ msgid "Restart to install update"
 msgstr ""
 
 msgid "Release notes"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The background update to Bambu Studio %s did not finish."
+msgstr ""
+
+msgid "Download from the release page"
 msgstr ""
 
 #, possible-c-format, possible-boost-format
@@ -6563,6 +6570,18 @@ msgstr ""
 msgid "Please configure the printer host first."
 msgstr ""
 
+msgid "Status Hub"
+msgstr ""
+
+msgid "Inspect status delivery and enrollment state"
+msgstr ""
+
+msgid "Offline documentation"
+msgstr ""
+
+msgid "Read bundled feature guides without opening a browser"
+msgstr ""
+
 msgid "Keyboard Shortcuts"
 msgstr ""
 
@@ -6697,6 +6716,45 @@ msgid "Smart home"
 msgstr ""
 
 msgid "Home Assistant speakers, media controls, TTS narrator and alert lights"
+msgstr ""
+
+msgid "Local model suite"
+msgstr ""
+
+msgid "Inspect local Ollama models, catalog availability and guided tools"
+msgstr ""
+
+msgid "Local file converter"
+msgstr ""
+
+msgid "Convert local files with verified bundled adapters"
+msgstr ""
+
+msgid "Scheduled settings"
+msgstr ""
+
+msgid "Schedule presentation without replacing stored preferences"
+msgstr ""
+
+msgid "Local security is unavailable. No protected action was performed."
+msgstr ""
+
+msgid "Authenticator"
+msgstr ""
+
+msgid "Manage local time-based authentication codes"
+msgstr ""
+
+msgid "Identity history"
+msgstr ""
+
+msgid "Enroll an independent history password and inspect encrypted identity changes"
+msgstr ""
+
+msgid "Local support tickets"
+msgstr ""
+
+msgid "Manage local-only support records; nothing is sent anywhere"
 msgstr ""
 
 msgid "Config profiles & backup"
@@ -7045,6 +7103,9 @@ msgstr[0] ""
 msgstr[1] ""
 
 msgid "Import result"
+msgstr ""
+
+msgid "Local tools"
 msgstr ""
 
 msgid "File is missing"
@@ -10446,6 +10507,64 @@ msgstr ""
 msgid "General Settings"
 msgstr ""
 
+msgid "Display name"
+msgstr ""
+
+msgid "Current unlock credential"
+msgstr ""
+
+msgid "New unlock credential"
+msgstr ""
+
+msgid "Password"
+msgstr ""
+
+msgid "PIN"
+msgstr ""
+
+msgid "Unlock credential type"
+msgstr ""
+
+msgid "Enable"
+msgstr ""
+
+msgid "Unlock and disable"
+msgstr ""
+
+msgid "Set unlock credential"
+msgstr ""
+
+msgid "Replace unlock credential"
+msgstr ""
+
+msgid "This is a presentation lock, not a security boundary. Deleting the shared local application-data record resets it. Credentials remain in the operating-system vault."
+msgstr ""
+
+msgid "Restricted presentation is active."
+msgstr ""
+
+msgid "Normal presentation is active."
+msgstr ""
+
+msgid "Shared record is unreadable. Restricted presentation remains active."
+msgstr ""
+
+msgid "Native monitoring is active."
+msgstr ""
+
+msgid "Native monitoring is unavailable; polling is used."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Try again in %u seconds."
+msgstr ""
+
+msgid "Credential vault is unavailable."
+msgstr ""
+
+msgid "The change was not applied. Check the credential, input limits and shared-record availability."
+msgstr ""
+
 msgid "Show emojis in dialogs and message boxes"
 msgstr ""
 
@@ -10792,6 +10911,93 @@ msgstr ""
 msgid "The peroid of backup in seconds."
 msgstr ""
 
+msgid "Narrator"
+msgstr ""
+
+msgid "Local speech is serialized. Voice network capability is unknown."
+msgstr ""
+
+msgid "Enable narrator"
+msgstr ""
+
+msgid "Off by default. Speak application events using installed voices."
+msgstr ""
+
+msgid "Quiet narration"
+msgstr ""
+
+msgid "Pause local speech without changing saved voice choices. An active screen reader also pauses narration."
+msgstr ""
+
+msgid "English"
+msgstr ""
+
+msgid "Cantonese"
+msgstr ""
+
+msgid "Both languages"
+msgstr ""
+
+msgid "Narration language"
+msgstr ""
+
+msgid "Independent of the interface language. Both speaks English first."
+msgstr ""
+
+msgid "Automatic voice"
+msgstr ""
+
+msgid "Selected voice is not installed"
+msgstr ""
+
+msgid "Effective Cantonese voice"
+msgstr ""
+
+msgid "Effective English voice"
+msgstr ""
+
+msgid "No installed voice can speak this language."
+msgstr ""
+
+msgid "Effective voice:"
+msgstr ""
+
+msgid "Selected voice is missing; the saved choice is kept."
+msgstr ""
+
+msgid "Voice network capability is unknown."
+msgstr ""
+
+msgid "Cantonese voice"
+msgstr ""
+
+msgid "English voice"
+msgstr ""
+
+msgid "Choose an installed voice. Missing selections remain saved."
+msgstr ""
+
+msgid "Cantonese speech rate"
+msgstr ""
+
+msgid "English speech rate"
+msgstr ""
+
+msgid "Platform range: -10 to 10. Normal delivery: 0."
+msgstr ""
+
+msgid "Cantonese speech pitch"
+msgstr ""
+
+msgid "English speech pitch"
+msgstr ""
+
+msgid "External speech mirror is not configured."
+msgstr ""
+
+msgid "External speech mirror is configured. Playback completion is unavailable; local serialization does not cover external playback."
+msgstr ""
+
 msgid "Online Models"
 msgstr ""
 
@@ -11029,9 +11235,6 @@ msgid "Print sequence"
 msgstr ""
 
 msgid "Same as Global"
-msgstr ""
-
-msgid "Enable"
 msgstr ""
 
 msgid "Disable"
@@ -13179,6 +13382,9 @@ msgstr ""
 msgid "resume"
 msgstr ""
 
+msgid "There is not enough space to show all confirmation controls. Review the details, then close this window and use a larger display area."
+msgstr ""
+
 msgid "Confirm and Update Nozzle"
 msgstr ""
 
@@ -14387,9 +14593,6 @@ msgid "Custom CA certificate file can be specified for HTTPS OctoPrint connectio
 msgstr ""
 
 msgid "User"
-msgstr ""
-
-msgid "Password"
 msgstr ""
 
 msgid "Ignore HTTPS certificate revocation checks"
@@ -20627,6 +20830,15 @@ msgstr ""
 msgid "Decrease"
 msgstr ""
 
+msgid "Live shape and typography preview"
+msgstr ""
+
+msgid "Live appearance preview"
+msgstr ""
+
+msgid "Second line"
+msgstr ""
+
 msgid "Edit appearance"
 msgstr ""
 
@@ -20754,6 +20966,12 @@ msgstr ""
 msgid "Letter spacing and line height are stored for widgets that measure their own text; native labels ignore them."
 msgstr ""
 
+msgid "Platform capabilities: variable font axes, oblique angle, underline style and color, double strikethrough, overline, small caps, superscript, subscript, outline, shadow, glow, word spacing, baseline offset, direction and paragraph alignment require a rich-text renderer. They are unavailable on this native element. Stored unknown properties are preserved during export and import."
+msgstr ""
+
+msgid "Typography platform capabilities"
+msgstr ""
+
 msgid "Highlight"
 msgstr ""
 
@@ -20778,7 +20996,7 @@ msgstr ""
 msgid "Margin (px)"
 msgstr ""
 
-msgid "Shape values are read by the Material widgets that paint their own frame (buttons, tabs, menus). Native controls keep the platform shape."
+msgid "Margin updates native sizer layout. The live preview renders radius, border, padding and line height. Other owner-drawn controls require an explicit renderer adapter; native controls retain platform shape."
 msgstr ""
 
 msgid "Search presets"
@@ -20969,7 +21187,7 @@ msgstr ""
 msgid "Copy the shown changes to the clipboard as Markdown"
 msgstr ""
 
-msgid "Save the shown changes as Markdown or plain text"
+msgid "Export the shown changes in a chosen format or archive"
 msgstr ""
 
 msgid "Nothing to copy: the changelog data could not be read."
@@ -21067,23 +21285,6 @@ msgstr ""
 msgid "The clipboard is in use by another application; nothing was copied."
 msgstr ""
 
-msgid "Export changelog"
-msgstr ""
-
-msgid "Markdown"
-msgstr ""
-
-msgid "Plain text"
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "The changelog could not be written to %s."
-msgstr ""
-
-#, possible-c-format
-msgid "Exported %zu versions and %zu changes (%s) to %s."
-msgstr ""
-
 #. TRN: Placeholder of the command palette's search field.
 msgid "Search commands, settings and pages"
 msgstr ""
@@ -21119,6 +21320,9 @@ msgid "Restore unchanged meshes reduced by automatic model import simplification
 msgstr ""
 
 msgid "Setting"
+msgstr ""
+
+msgid "This article is not present in the installed documentation bundle."
 msgstr ""
 
 #, possible-c-format, possible-boost-format
@@ -21819,7 +22023,7 @@ msgstr ""
 msgid "AES-256 password (empty = no encryption)"
 msgstr ""
 
-msgid "Encrypts the file contents with AES-256. The password is passed to 7-Zip for this run only and never stored."
+msgid "On Windows, sends the password through an isolated in-memory pipe, never command arguments. Encrypted headers are required. Single line, at most 1024 UTF-8 bytes."
 msgstr ""
 
 msgid "Confirm password"
@@ -21853,6 +22057,18 @@ msgid "Browse for output file"
 msgstr ""
 
 msgid "output file path browse"
+msgstr ""
+
+msgid "Open in VS Code"
+msgstr ""
+
+msgid "Visual Studio Code was not found. Install it, then try again. Portable builds are detected when added to PATH."
+msgstr ""
+
+msgid "Could not open the completed export in Visual Studio Code. Check that the file still exists."
+msgstr ""
+
+msgid "Download VS Code"
 msgstr ""
 
 msgid "- recommended"
@@ -21920,6 +22136,9 @@ msgstr ""
 msgid "The two password fields differ."
 msgstr ""
 
+msgid "Encrypted exports require encrypted headers to protect member names."
+msgstr ""
+
 msgid "Write the export"
 msgstr ""
 
@@ -21941,7 +22160,61 @@ msgstr ""
 msgid "7-Zip executable (7z.exe;7za.exe)|7z.exe;7za.exe|All files (*.*)|*.*"
 msgstr ""
 
+msgid "Cannot resolve the export destination."
+msgstr ""
+
+msgid "Replace exported files"
+msgstr ""
+
+msgid "The exact existing files listed below will be replaced. Their previous contents cannot be restored by this export."
+msgstr ""
+
+msgid "Cannot inspect the export destination."
+msgstr ""
+
+msgid "This archive already exists. Choose a new output name."
+msgstr ""
+
+msgid "Export cancelled. Existing files were preserved."
+msgstr ""
+
 msgid "Exporting as a lossy format:"
+msgstr ""
+
+msgid "Cancel export"
+msgstr ""
+
+msgid "Preparing export. Cancel remains available until publication begins."
+msgstr ""
+
+msgid "Could not start the export worker. Nothing was written."
+msgstr ""
+
+msgid "Cancelling export. Waiting for the owned writer to stop."
+msgstr ""
+
+msgid "Publishing completed output. Cancellation is no longer available."
+msgstr ""
+
+msgid "Serializing export..."
+msgstr ""
+
+msgid "Writing temporary output..."
+msgstr ""
+
+msgid "Compressing archive..."
+msgstr ""
+
+msgid "Verifying archive encryption..."
+msgstr ""
+
+msgid "Publishing completed output..."
+msgstr ""
+
+msgid "Preparing export..."
+msgstr ""
+
+msgid "Export cancelled. Existing output was preserved."
 msgstr ""
 
 #, possible-c-format, possible-boost-format
@@ -21952,7 +22225,7 @@ msgstr ""
 msgid "Wrote %s (%s)."
 msgstr ""
 
-msgid "7-Zip command:"
+msgid "7-Zip options:"
 msgstr ""
 
 msgid "Scan a spool with your phone; the result lands in an AMS slot."
@@ -22450,13 +22723,6 @@ msgstr ""
 msgid "Dismissed toasts are hidden; click to list them"
 msgstr ""
 
-msgid "Export notifications"
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "Exported %d notifications to %s"
-msgstr ""
-
 msgid "Delete notification entries"
 msgstr ""
 
@@ -22467,7 +22733,7 @@ msgid "No longer in the history"
 msgstr ""
 
 #, possible-c-format, possible-boost-format
-msgid "Deleted %d notification entries from the history"
+msgid "Deleted %d notification entries from the history; %d reviewed entries were already unavailable."
 msgstr ""
 
 msgid "Parameter settings"
@@ -23103,24 +23369,6 @@ msgstr ""
 msgid "Copy to Clipboard"
 msgstr ""
 
-#. TRN: TTS lines for printer state changes.
-msgid "Printing started."
-msgstr ""
-
-msgid "Print finished."
-msgstr ""
-
-msgid "Print paused."
-msgstr ""
-
-msgid "Print failed."
-msgstr ""
-
-#. TRN: TTS line for a printer error; %06X is the hexadecimal error code.
-#, possible-c-format, possible-boost-format
-msgid "Printer error %06X. Check the device screen for details."
-msgstr ""
-
 msgid "XY axis controls"
 msgstr ""
 
@@ -23614,6 +23862,7 @@ msgstr ""
 msgid "... and %d more"
 msgstr ""
 
+#. TRN %d is the total number of items the destructive action affects.
 msgid "1 item will be affected. This cannot be undone."
 msgstr ""
 
@@ -23977,6 +24226,9 @@ msgstr ""
 msgid "Time zone and reminders"
 msgstr ""
 
+msgid "Files"
+msgstr ""
+
 msgid "Member"
 msgstr ""
 
@@ -23995,7 +24247,7 @@ msgstr ""
 msgid "Open selected project"
 msgstr ""
 
-msgid "Files"
+msgid "Checklist"
 msgstr ""
 
 msgid "Edit / due date / link"
@@ -24013,7 +24265,7 @@ msgstr ""
 msgid "Export CSV"
 msgstr ""
 
-msgid "Checklist"
+msgid "Calendar"
 msgstr ""
 
 msgid "Planned print"
@@ -24035,9 +24287,6 @@ msgid "Enable / disable"
 msgstr ""
 
 msgid "Export ICS"
-msgstr ""
-
-msgid "Calendar"
 msgstr ""
 
 #, possible-c-format
@@ -24309,6 +24558,24 @@ msgid "Show the step mesh parameter setting dialog"
 msgstr ""
 
 msgid "Open full screen camera view on active monitor only"
+msgstr ""
+
+msgid "Presentation mode"
+msgstr ""
+
+msgid "Shared local presentation and unlock settings"
+msgstr ""
+
+msgid "Pause local speech without changing saved voice choices"
+msgstr ""
+
+msgid "Independent of the interface language"
+msgstr ""
+
+msgid "Installed narrator voice"
+msgstr ""
+
+msgid "Normal delivery: 0"
 msgstr ""
 
 msgid "Backup period in seconds"
@@ -24862,8 +25129,4 @@ msgstr ""
 
 #: resources/data/helio_hints.ini: [hint: First-Time-Right Reliability]
 msgid "First-Time-Right Reliability\nLess babysitting, more predictable output. Example: a small farm running PETG parts avoids 'fail at hour 6' surprises and keeps batches on schedule."
-msgstr ""
-
-#: src/slic3r/GUI/Widgets/SuperConfirmGate.cpp
-msgid "There is not enough space to show all confirmation controls. Review the details, then close this window and use a larger display area."
 msgstr ""
