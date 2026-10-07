@@ -28,8 +28,8 @@
 
 #define TOPBAR_ICON_SIZE  18
 #define TOPBAR_TITLE_WIDTH  300
-// §3.6 project chip: the ellipsized project name is capped at 150 logical px.
-#define TOPBAR_PROJECT_CHIP_MAX_W  150
+// Project identity uses the remaining caption budget, capped at 240 logical pixels.
+#define TOPBAR_PROJECT_CHIP_MAX_W  240
 // §3.5 history chip: cap the branch label so a long branch name cannot crowd the
 // window controls off the caption; the branch is ellipsized past this logical width.
 #define TOPBAR_HISTORY_BRANCH_MAX_W  130
@@ -123,7 +123,7 @@ static wxBitmap topbar_make_canvas(wxWindow *ref, const wxSize &logical, Paint p
 // Render a text run with plain GDI into a colour+alpha bitmap at device
 // resolution. The privately registered faces (Material Symbols, Roboto Mono)
 // must never go through wxGraphicsContext: GDI+ cannot resolve private HFONTs
-// and intermittently corrupts its heap doing so (the startup heap-corruption
+// and intermittently corrupts process memory doing so (the startup memory-corruption
 // crash dump bottomed out in exactly that path). Plain GDI resolves private
 // faces correctly; alpha is derived from black-on-white coverage.
 static wxBitmap topbar_text_alpha(const wxFont &logical_font, double scale,
@@ -240,7 +240,7 @@ static wxBitmap topbar_brand_tile_bitmap(wxWindow *ref)
         gc->SetPen(*wxTRANSPARENT_PEN);
         gc->SetBrush(wxBrush(StateColor::semantic(MD3::Role::Primary)));
         gc->DrawRoundedRectangle(0, 0, side, side, MD3::Metrics::radius_tiny);
-        // Private icon face must not go through GDI+ (heap corruption); the
+        // Private icon face must not go through GDI+ (memory corruption); the
         // glyph is pre-rendered with plain GDI and composited as a bitmap.
         const wxBitmap gbmp = MaterialIcon::bitmap(ref, MaterialIcon::DeployedCode, glyph,
                                                    StateColor::semantic(MD3::Role::OnPrimary));
@@ -255,10 +255,10 @@ static wxBitmap topbar_brand_tile_bitmap(wxWindow *ref)
 static wxBitmap topbar_history_chip_bitmap(wxWindow *ref, const wxString &branch,
                                            const wxString &head, bool hover)
 {
-    const int  H       = 30;
+    const int  H       = 32;
     const int  padx    = 12;
-    const int  gap     = 7;
-    const int  glyph   = 16;
+    const int  gap     = 8;
+    const int  glyph   = 20;
     const int  dot     = 5;
     const bool icons_ok = MaterialIcon::available();
     const bool has_head = !head.empty();
@@ -308,11 +308,11 @@ static wxBitmap topbar_history_chip_bitmap(wxWindow *ref, const wxString &branch
         gc->SetPen(*wxTRANSPARENT_PEN);
         gc->SetBrush(wxBrush(StateColor::semantic(hover ? MD3::Role::SurfaceContainerHigh
                                                         : MD3::Role::SurfaceContainer)));
-        gc->DrawRoundedRectangle(0, 0, W, H, H / 2.0);
+        gc->DrawRoundedRectangle(0, 0, W, H, MD3::Metrics::active().small_radius);
 
         // Private faces (Material Symbols, Roboto Mono) are pre-rendered with
         // plain GDI and composited as bitmaps; GDI+ text with private HFONTs
-        // corrupts the heap.
+        // corrupts process memory.
         double x = padx;
         if (icons_ok) {
             const wxBitmap abmp = MaterialIcon::bitmap(ref, MaterialIcon::AccountTree, glyph, primary);
@@ -345,31 +345,38 @@ public:
     virtual void DrawSeparator(wxDC& dc, wxWindow* wnd, const wxRect& rect) wxOVERRIDE;
 };
 
+// Widths are device pixels. The caption's fixed commands always retain their space.
+static int atlasTitleTextBudget(int width, int fixed_width, int overhead, int limit)
+{
+    return std::max(0, std::min(limit, width - fixed_width - overhead));
+}
+
 void BBLTopbarArt::DrawLabel(wxDC& dc, wxWindow* wnd, const wxAuiToolBarItem& item, const wxRect& rect)
 {
     if (item.GetId() == ID_TITLE) {
-        // §3.6 project chip: a rounded SurfaceContainer pill with a leading
+        // Project chip: an outlined lowest-container surface with a leading
         // 'description'-family glyph and the ellipsized project name. It stays a
         // non-interactive label so the caption drag path (OnMouseLeftDown /
         // OnMouseLeftDClock special-case m_title_item) keeps working.
-        const int    H      = std::min(rect.height, wnd->FromDIP(30));
-        const int    radius = H / 2;
+        const int    H      = std::min(rect.height, wnd->FromDIP(32));
+        const int    radius = std::min(H / 2, wnd->FromDIP(MD3::Metrics::active().small_radius));
         const wxRect chip(rect.x, rect.y + (rect.height - H) / 2, std::max(0, rect.width), H);
 
-        dc.SetPen(*wxTRANSPARENT_PEN);
-        dc.SetBrush(wxBrush(StateColor::semantic(MD3::Role::SurfaceContainer)));
+        if (chip.width <= 0 || chip.height <= 0) return;
+        dc.SetPen(wxPen(StateColor::semantic(MD3::Role::OutlineVariant), std::max(1, wnd->FromDIP(1))));
+        dc.SetBrush(wxBrush(StateColor::semantic(MD3::Role::SurfaceContainerLowest)));
         dc.DrawRoundedRectangle(chip, radius);
 
-        const wxColour fg   = StateColor::semantic(MD3::Role::OnSurfaceVariant);
-        const int      padx = wnd->FromDIP(8);
-        const int      gap  = wnd->FromDIP(6);
+        const wxColour fg   = StateColor::semantic(MD3::Role::OnSurface);
+        const int      padx = wnd->FromDIP(10);
+        const int      gap  = wnd->FromDIP(8);
         int            x    = chip.x + padx;
 
         // 'description' is absent from the vendored face; 'folder_open' is the
         // nearest verified project/file glyph (reported as a followup).
         if (MaterialIcon::available()) {
-            const wxSize gs = MaterialIcon::measure(dc, MaterialIcon::FolderOpen, 16);
-            MaterialIcon::draw(dc, MaterialIcon::FolderOpen, 16, fg,
+            const wxSize gs = MaterialIcon::measure(dc, MaterialIcon::FolderOpen, 20);
+            MaterialIcon::draw(dc, MaterialIcon::FolderOpen, 20, fg,
                                wxPoint(x, chip.y + (H - gs.y) / 2));
             x += gs.x + gap;
         }
@@ -510,13 +517,13 @@ void BBLTopbarArt::DrawButton(wxDC& dc, wxWindow* wnd, const wxAuiToolBarItem& i
     if (!bakes_own_bg && !(item.GetState() & wxAUI_BUTTON_STATE_DISABLED)) {
         wxColour state_layer;
         // §3.9: the window Close control carries a destructive hover -- its state
-        // layer fills Role::Error instead of the neutral surface-container tint
+        // layer fills ErrorContainer with its paired close glyph instead of the neutral tint
         // used by every other title-bar control.
         const bool is_close = item_id == wxID_CLOSE_FRAME;
         if (item.GetState() & wxAUI_BUTTON_STATE_PRESSED)
-            state_layer = StateColor::semantic(is_close ? MD3::Role::Error : MD3::Role::SurfaceContainerHighest);
+            state_layer = StateColor::semantic(is_close ? MD3::Role::ErrorContainer : MD3::Role::SurfaceContainerHighest);
         else if ((item.GetState() & wxAUI_BUTTON_STATE_HOVER) || item.IsSticky())
-            state_layer = StateColor::semantic(is_close ? MD3::Role::Error : MD3::Role::SurfaceContainerHigh);
+            state_layer = StateColor::semantic(is_close ? MD3::Role::ErrorContainer : MD3::Role::SurfaceContainerHigh);
         else if (item.GetState() & wxAUI_BUTTON_STATE_CHECKED)
             state_layer = StateColor::semantic(MD3::Role::SecondaryContainer);
 
@@ -538,7 +545,12 @@ void BBLTopbarArt::DrawButton(wxDC& dc, wxWindow* wnd, const wxAuiToolBarItem& i
         }
     }
 
-    if (bmp.IsOk())
+    const bool close_feedback = item_id == wxID_CLOSE_FRAME && !(item.GetState() & wxAUI_BUTTON_STATE_DISABLED)
+        && (item.GetState() & (wxAUI_BUTTON_STATE_HOVER | wxAUI_BUTTON_STATE_PRESSED));
+    if (close_feedback && MaterialIcon::available())
+        MaterialIcon::drawCentered(dc, MaterialIcon::Close, TOPBAR_WINDOW_ICON_SIZE,
+            StateColor::semantic(MD3::Role::OnErrorContainer), wxRect(bmpX, bmpY, bmpSize.x, bmpSize.y));
+    else if (bmp.IsOk())
         dc.DrawBitmap(bmp, bmpX, bmpY, true);
 
     // Semantic foregrounds remain readable on both light and dark title surfaces.
@@ -1124,27 +1136,19 @@ void BBLTopbar::update_responsive_title(int width)
 
     // §3.6 project chip geometry (logical px): leading glyph + gap + name, with
     // symmetric horizontal padding. Mirror the values painted in DrawLabel.
-    const int padx = FromDIP(8);
-    const int gap  = FromDIP(6);
+    const int padx = FromDIP(10);
+    const int gap  = FromDIP(8);
     int glyph_w = 0;
     if (MaterialIcon::available())
-        glyph_w = MaterialIcon::measure(dc, MaterialIcon::FolderOpen, 16).x + gap;
+        glyph_w = MaterialIcon::measure(dc, MaterialIcon::FolderOpen, 20).x + gap;
 
-    // Cap the name to 150 logical px, but never let the chip crowd out the rest
-    // of the fixed chrome on a very narrow window.
-    int max_text = FromDIP(TOPBAR_PROJECT_CHIP_MAX_W);
-    if (width > 0) {
-        const int budget = width - measure_fixed_content_width() - padx * 2 - glyph_w;
-        if (budget > 0)
-            max_text = std::min(max_text, std::max(FromDIP(40), budget));
-    }
-
-    const wxString title = wxControl::Ellipsize(m_full_title, dc, wxELLIPSIZE_END, max_text);
-
-    int text_w = 0, text_h = 0;
-    dc.GetTextExtent(title.IsEmpty() ? wxString(" ") : title, &text_w, &text_h);
-
-    const int chip_w = padx * 2 + glyph_w + text_w;
+    const int budget = width > 0 ? std::max(0, width - measure_fixed_content_width())
+                                 : FromDIP(TOPBAR_PROJECT_CHIP_MAX_W) + padx * 2 + glyph_w;
+    const int max_text = atlasTitleTextBudget(budget, 0, padx * 2 + glyph_w, FromDIP(TOPBAR_PROJECT_CHIP_MAX_W));
+    const wxString title = max_text > 0 ? wxControl::Ellipsize(m_full_title, dc, wxELLIPSIZE_END, max_text) : wxString();
+    const wxSize text_size = dc.GetTextExtent(title);
+    const int chip_w = max_text > 0 ? std::min(budget, padx * 2 + glyph_w + text_size.x) : 0;
+    m_title_item->SetShortHelp(m_full_title);
     if (m_title_item->GetMinSize().GetWidth() != chip_w) {
         m_title_item->SetMinSize({chip_w, -1});
         Realize();

@@ -190,7 +190,7 @@ Only `receipt.json` and `output.txt` are retained. Dispatch after the candidate
 has been integrated and pushed:
 
 ```powershell
-gh workflow run native-interface-runtime.yml --repo Ding-Ding-Projects/BambuStudio --ref feature/ui-integration -f vocabulary_contract_only=true
+gh workflow run native-interface-runtime.yml --repo Ding-Ding-Projects/BambuStudio --ref main -f vocabulary_contract_only=true
 ```
 
 This opt-in route ignores release and interaction parameters and always checks

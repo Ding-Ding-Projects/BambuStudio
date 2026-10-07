@@ -2,7 +2,7 @@ name: Verify packaged automation runtime
 on:
   push:
     branches:
-      - feature/mcp-integration
+      - main
     paths:
       - .github/workflows/mcp-runtime.yml
   workflow_dispatch:

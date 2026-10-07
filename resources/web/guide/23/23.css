@@ -268,3 +268,24 @@ input {
 .customGroupHeading { width: 100%; text-align: left; color: var(--md-on-surface); background: var(--md-sc-low); border: 0; border-radius: 8px; padding: 6px 12px; cursor: pointer; }
 .customGroupBody { display: flex; flex-wrap: wrap; }
 .filterSearch :focus-visible, .searchTag:focus-visible, #CFilament_Sort:focus-visible, .customGroupHeading:focus-visible, #CFilament_Empty button:focus-visible { outline: 2px solid var(--md-primary); outline-offset: 2px; }
+
+
+/* Studio Atlas composition: script-owned tab visibility and hidden groups are untouched. */
+#leftBlock, #rightBlock { box-sizing: border-box; min-width: 0; }
+#leftBlock { padding: 12px; }
+#rightBlock { padding: 12px 16px; }
+.CNameBlock { height: auto; min-height: 36px; line-height: 1.5; padding: 8px 0; }
+.CValues { padding: 12px; border-radius: 12px; margin-bottom: 16px; }
+.checkboxText { max-width: 100%; white-space: normal; overflow-wrap: anywhere; line-height: 1.5; }
+.filterSummary { flex-wrap: wrap; gap: 12px; }
+#ItemBlockArea .filament-row { padding: 8px; border-radius: 8px; line-height: 1.5; overflow-wrap: anywhere; }
+#ItemBlockArea .filament-row:hover { background: var(--md-sc-high); }
+#Title { gap: 8px; flex-wrap: wrap; margin: 0 24px; }
+#Title button { min-height: 44px; line-height: 1.4; padding: 10px 16px; border-radius: 12px 12px 0 0; }
+#Title button.TitleSelected { background: var(--md-primary-container); color: var(--md-on-primary-container); }
+.CFilament_Item { gap: 8px; margin: 8px 12px 8px 0; padding: 10px 12px; border: 1px solid var(--md-outline-variant); border-radius: 12px; background: var(--md-sc-lowest); }
+.CFilament_Name { width: 180px; min-width: 0; white-space: normal; overflow-wrap: anywhere; line-height: 1.5; }
+.CFilament_EditBtn, .CFilament_DeleteBtn { flex-shrink: 0; }
+.customGroupHeading { padding: 12px; font-weight: 600; line-height: 1.5; }
+@media (max-width: 760px) { #ItemBlockArea { column-count: 1; } .CFilament_Item { flex-wrap: wrap; max-width: 100%; box-sizing: border-box; } }
+@media (prefers-reduced-motion: reduce) { .CArrow { transition: none; } }

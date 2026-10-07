@@ -1,3 +1,6 @@
+#include "Widgets/MD3ScrolledWindow.hpp"
+#include "Widgets/MD3Tokens.hpp"
+#include "Widgets/StateColor.hpp"
 #include "CalibrationWizardSavePage.hpp"
 #include "I18N.hpp"
 #include "Widgets/Label.hpp"
@@ -10,6 +13,72 @@
 #include "DeviceManager.hpp"
 
 namespace Slic3r { namespace GUI {
+
+// An indivisible result table owns horizontal overflow. Its descendants remain
+// direct children, preserving result traversal, validation and identity.
+class CalibrationResultViewport final : public MD3ScrolledWindow {
+public:
+    explicit CalibrationResultViewport(wxWindow *parent)
+        : MD3ScrolledWindow(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize,
+                            wxTAB_TRAVERSAL | wxHSCROLL | wxBORDER_NONE)
+    {
+        SetMinSize(wxSize(0, -1));
+        SetScrollRate(FromDIP(12), 0);
+        ShowScrollbars(wxSHOW_SB_DEFAULT, wxSHOW_SB_NEVER);
+        Bind(wxEVT_MOUSEWHEEL, [this](wxMouseEvent &event) { OnMouseWheel(event); });
+        Bind(wxEVT_SIZE, [this](wxSizeEvent &event) { event.Skip(); QueueExtent(); });
+        Bind(wxEVT_SHOW, [this](wxShowEvent &event) { event.Skip(); if (event.IsShown()) QueueExtent(); });
+        Bind(wxEVT_DPI_CHANGED, [this](wxDPIChangedEvent &event) { event.Skip(); QueueExtent(); });
+    }
+
+    void OnMouseWheel(wxMouseEvent &event)
+    {
+        if (event.GetWheelAxis() == wxMOUSE_WHEEL_VERTICAL) {
+            for (wxWindow *owner = GetParent(); owner; owner = owner->GetParent()) {
+                if (auto *scroll = dynamic_cast<wxScrolledWindow *>(owner)) {
+                    wxMouseEvent forwarded(event);
+                    forwarded.Skip(false);
+                    forwarded.SetEventObject(scroll);
+                    forwarded.SetPosition(scroll->ScreenToClient(ClientToScreen(event.GetPosition())));
+                    const bool handled = scroll->GetEventHandler()->ProcessEvent(forwarded);
+                    event.Skip(!handled);
+                    return;
+                }
+            }
+        }
+        event.Skip();
+    }
+
+    void QueueExtent()
+    {
+        if (!m_reflow.request()) return;
+        CallAfter([this]() {
+            const int width = GetClientSize().x;
+            {
+                CalibrationLayout::ReflowPass pass(m_reflow);
+                if (width <= 0 || !IsShown() || !GetSizer()) return;
+                // Measure the table sizer itself, never this viewport's old
+                // minimum height. A shorter result set must be able to shrink.
+                const wxSize table = GetSizer()->CalcMin();
+                const int height = std::max(1, table.y) + (table.x > width ? BarThickness(this) : 0);
+                SetMinSize(wxSize(0, height));
+                SetScrollRate(FromDIP(12), 0);
+                SetVirtualSize(wxSize(std::max(width, table.x), table.y));
+                Layout();
+                for (wxWindow *owner = GetParent(); owner; owner = owner->GetParent()) {
+                    owner->Layout();
+                    if (auto *scroll = dynamic_cast<wxScrolledWindow *>(owner)) {
+                        scroll->FitInside();
+                        break;
+                    }
+                }
+            }
+            if (GetClientSize().x != width) QueueExtent();
+        });
+    }
+private:
+    CalibrationLayout::ReflowState m_reflow;
+};
 
 #define CALIBRATION_SAVE_AMS_NAME_SIZE wxSize(FromDIP(20), FromDIP(24))
 #define CALIBRATION_SAVE_NUMBER_INPUT_SIZE wxSize(FromDIP(100), FromDIP(24))
@@ -126,7 +195,7 @@ CaliPASaveAutoPanel::CaliPASaveAutoPanel(
     long style)
     : wxPanel(parent, id, pos, size, style)
 {
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     m_top_sizer = new wxBoxSizer(wxVERTICAL);
 
@@ -140,16 +209,17 @@ CaliPASaveAutoPanel::CaliPASaveAutoPanel(
 void CaliPASaveAutoPanel::create_panel(wxWindow* parent)
 {
     m_complete_text_panel = new wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
-    m_complete_text_panel->SetBackgroundColour(*wxWHITE);
+    m_complete_text_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_complete_text_panel->Hide();
     wxBoxSizer* complete_text_sizer = new wxBoxSizer(wxVERTICAL);
     auto complete_text = new Label(m_complete_text_panel, _L("We found the best Flow Dynamics Calibration Factor"));
-    complete_text->SetFont(Label::Head_14);
+    complete_text->SetFont(Label::Head_16);
+    complete_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     complete_text_sizer->Add(complete_text, 0, wxEXPAND);
     m_complete_text_panel->SetSizer(complete_text_sizer);
 
     m_part_failed_panel = new wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
-    m_part_failed_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
+    m_part_failed_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
     wxBoxSizer* part_failed_sizer = new wxBoxSizer(wxVERTICAL);
     m_part_failed_panel->SetSizer(part_failed_sizer);
     part_failed_sizer->AddSpacer(FromDIP(10));
@@ -166,13 +236,13 @@ void CaliPASaveAutoPanel::create_panel(wxWindow* parent)
 
     m_top_sizer->AddSpacer(FromDIP(20));
 
-    m_grid_panel = new wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
-    m_grid_panel->SetBackgroundColour(*wxWHITE);
-    m_top_sizer->Add(m_grid_panel, 0, wxALIGN_CENTER);
+    m_grid_panel = new CalibrationResultViewport(parent);
+    m_grid_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
+    m_top_sizer->Add(m_grid_panel, 0, wxEXPAND);
 
-    m_multi_extruder_grid_panel = new wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
-    m_multi_extruder_grid_panel->SetBackgroundColour(*wxWHITE);
-    m_top_sizer->Add(m_multi_extruder_grid_panel, 0, wxALIGN_CENTER);
+    m_multi_extruder_grid_panel = new CalibrationResultViewport(parent);
+    m_multi_extruder_grid_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
+    m_top_sizer->Add(m_multi_extruder_grid_panel, 0, wxEXPAND);
 
     m_top_sizer->AddSpacer(FromDIP(10));
 
@@ -322,6 +392,7 @@ void CaliPASaveAutoPanel::sync_cali_result(const std::vector<PACalibResult>& cal
             n_value_failed->Hide();
 
             m_grid_panel->Layout();
+            m_grid_panel->QueueExtent();
             m_grid_panel->Update();
         };
 
@@ -359,6 +430,7 @@ void CaliPASaveAutoPanel::sync_cali_result(const std::vector<PACalibResult>& cal
     }
 
     m_grid_panel->SetSizer(grid_sizer, true);
+    m_grid_panel->QueueExtent();
     m_grid_panel->Bind(wxEVT_LEFT_DOWN, [this](auto& e) {
         SetFocusIgnoringChildren();
         });
@@ -481,6 +553,7 @@ void CaliPASaveAutoPanel::sync_cali_result_for_multi_extruder(const std::vector<
     const int   ROW_GAP          = FromDIP(10);
 
     m_multi_extruder_grid_panel->SetSizer(grid_sizer, true);
+    m_multi_extruder_grid_panel->QueueExtent();
     m_multi_extruder_grid_panel->Bind(wxEVT_LEFT_DOWN, [this](auto &e) { SetFocusIgnoringChildren(); });
 
     const std::string& cwsp_pt = m_obj->printer_type;
@@ -672,6 +745,7 @@ void CaliPASaveAutoPanel::sync_cali_result_for_multi_extruder(const std::vector<
             n_value_failed->Hide();
 
             m_multi_extruder_grid_panel->Layout();
+            m_multi_extruder_grid_panel->QueueExtent();
             m_multi_extruder_grid_panel->Update();
         };
 
@@ -804,7 +878,7 @@ CaliPASaveManualPanel::CaliPASaveManualPanel(
     long style)
     : wxPanel(parent, id, pos, size, style)
 {
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     m_top_sizer = new wxBoxSizer(wxVERTICAL);
 
@@ -817,10 +891,11 @@ CaliPASaveManualPanel::CaliPASaveManualPanel(
 void CaliPASaveManualPanel::create_panel(wxWindow* parent)
 {
     auto complete_text_panel = new wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
-    complete_text_panel->SetBackgroundColour(*wxWHITE);
+    complete_text_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     wxBoxSizer* complete_text_sizer = new wxBoxSizer(wxVERTICAL);
     m_complete_text = new Label(complete_text_panel, _L("Please find the best line on your plate"));
-    m_complete_text->SetFont(Label::Head_14);
+    m_complete_text->SetFont(Label::Head_16);
+    m_complete_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_complete_text->Wrap(CALIBRATION_TEXT_MAX_LENGTH);
     complete_text_sizer->Add(m_complete_text, 0);
     complete_text_panel->SetSizer(complete_text_sizer);
@@ -988,7 +1063,7 @@ CaliPASaveP1PPanel::CaliPASaveP1PPanel(
     long style)
     : wxPanel(parent, id, pos, size, style)
 {
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     m_top_sizer = new wxBoxSizer(wxVERTICAL);
 
@@ -1001,10 +1076,11 @@ CaliPASaveP1PPanel::CaliPASaveP1PPanel(
 void CaliPASaveP1PPanel::create_panel(wxWindow* parent)
 {
     auto complete_text_panel = new wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
-    complete_text_panel->SetBackgroundColour(*wxWHITE);
+    complete_text_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     wxBoxSizer* complete_text_sizer = new wxBoxSizer(wxVERTICAL);
     m_complete_text = new Label(complete_text_panel, _L("Please find the best line on your plate"));
-    m_complete_text->SetFont(Label::Head_14);
+    m_complete_text->SetFont(Label::Head_16);
+    m_complete_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_complete_text->Wrap(CALIBRATION_TEXT_MAX_LENGTH);
     complete_text_sizer->Add(m_complete_text, 0, wxEXPAND);
     complete_text_panel->SetSizer(complete_text_sizer);
@@ -1102,7 +1178,7 @@ CaliSavePresetValuePanel::CaliSavePresetValuePanel(
     long style)
     : wxPanel(parent, id, pos, size, style)
 {
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     m_top_sizer = new wxBoxSizer(wxVERTICAL);
 
@@ -1176,7 +1252,7 @@ void CaliSavePresetValuePanel::msw_rescale()
 CalibrationPASavePage::CalibrationPASavePage(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style)
     : CalibrationCommonSavePage(parent, id, pos, size, style)
 {
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     m_cali_mode = CalibMode::Calib_PA_Line;
 
@@ -1309,7 +1385,7 @@ void CalibrationPASavePage::msw_rescale()
 CalibrationFlowX1SavePage::CalibrationFlowX1SavePage(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style)
     : CalibrationCommonSavePage(parent, id, pos, size, style)
 {
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     m_cali_mode = CalibMode::Calib_Flow_Rate;
 
@@ -1338,16 +1414,17 @@ void CalibrationFlowX1SavePage::create_page(wxWindow* parent)
     m_top_sizer->Add(m_step_panel, 0, wxEXPAND, 0);
 
     m_complete_text_panel = new wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
-    m_complete_text_panel->SetBackgroundColour(*wxWHITE);
+    m_complete_text_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_complete_text_panel->Hide();
     wxBoxSizer* complete_text_sizer = new wxBoxSizer(wxVERTICAL);
     auto complete_text = new Label(m_complete_text_panel, _L("We found the best flow ratio for you"));
-    complete_text->SetFont(Label::Head_14);
+    complete_text->SetFont(Label::Head_16);
+    complete_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     complete_text_sizer->Add(complete_text, 0, wxEXPAND);
     m_complete_text_panel->SetSizer(complete_text_sizer);
 
     m_part_failed_panel = new wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
-    m_part_failed_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
+    m_part_failed_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
     wxBoxSizer* part_failed_sizer = new wxBoxSizer(wxVERTICAL);
     m_part_failed_panel->SetSizer(part_failed_sizer);
     part_failed_sizer->AddSpacer(FromDIP(10));
@@ -1364,9 +1441,9 @@ void CalibrationFlowX1SavePage::create_page(wxWindow* parent)
 
     m_top_sizer->AddSpacer(FromDIP(20));
 
-    m_grid_panel = new wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
-    m_grid_panel->SetBackgroundColour(*wxWHITE);
-    m_top_sizer->Add(m_grid_panel, 0, wxALIGN_CENTER);
+    m_grid_panel = new CalibrationResultViewport(parent);
+    m_grid_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
+    m_top_sizer->Add(m_grid_panel, 0, wxEXPAND);
 
     m_action_panel = new CaliPageActionPanel(parent, m_cali_mode, CaliPageType::CALI_PAGE_FLOW_SAVE);
     m_top_sizer->Add(m_action_panel, 0, wxEXPAND, 0);
@@ -1437,6 +1514,7 @@ void CalibrationFlowX1SavePage::sync_cali_result(MachineObject* obj, const std::
                 flow_ratio_value_failed->Show();
             }
             m_grid_panel->Layout();
+            m_grid_panel->QueueExtent();
             m_grid_panel->Update();
         };
 
@@ -1472,6 +1550,7 @@ void CalibrationFlowX1SavePage::sync_cali_result(MachineObject* obj, const std::
         m_grid_panel->SetFocusIgnoringChildren();
         });
     m_grid_panel->SetSizer(grid_sizer, true);
+    m_grid_panel->QueueExtent();
 
     if (part_failed) {
         m_part_failed_panel->Show();
@@ -1559,7 +1638,7 @@ void CalibrationFlowX1SavePage::msw_rescale()
 CalibrationFlowCoarseSavePage::CalibrationFlowCoarseSavePage(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style)
     : CalibrationCommonSavePage(parent, id, pos, size, style)
 {
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     m_cali_mode = CalibMode::Calib_Flow_Rate;
 
@@ -1589,7 +1668,8 @@ void CalibrationFlowCoarseSavePage::create_page(wxWindow* parent)
     m_top_sizer->Add(m_step_panel, 0, wxEXPAND, 0);
 
     auto complete_text = new Label(parent, _L("Please find the best object on your plate"));
-    complete_text->SetFont(Label::Head_14);
+    complete_text->SetFont(Label::Head_16);
+    complete_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     complete_text->Wrap(-1);
     m_top_sizer->Add(complete_text, 0, wxEXPAND, 0);
     m_top_sizer->AddSpacer(FromDIP(20));
@@ -1618,7 +1698,7 @@ void CalibrationFlowCoarseSavePage::create_page(wxWindow* parent)
     m_top_sizer->AddSpacer(FromDIP(20));
 
     auto checkBox_panel = new wxPanel(parent);
-    checkBox_panel->SetBackgroundColour(*wxWHITE);
+    checkBox_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     auto cb_sizer = new wxBoxSizer(wxHORIZONTAL);
     checkBox_panel->SetSizer(cb_sizer);
     m_checkBox_skip_calibration = new CheckBox(checkBox_panel);
@@ -1636,7 +1716,7 @@ void CalibrationFlowCoarseSavePage::create_page(wxWindow* parent)
     m_top_sizer->Add(checkBox_panel, 0, 0, 0);
 
     auto save_panel = new wxPanel(parent);
-    save_panel->SetBackgroundColour(*wxWHITE);
+    save_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     auto save_sizer = new wxBoxSizer(wxVERTICAL);
     save_panel->SetSizer(save_sizer);
 
@@ -1805,7 +1885,7 @@ void CalibrationFlowCoarseSavePage::msw_rescale()
 CalibrationFlowFineSavePage::CalibrationFlowFineSavePage(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style)
     : CalibrationCommonSavePage(parent, id, pos, size, style)
 {
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     m_cali_mode = CalibMode::Calib_Flow_Rate;
 
@@ -1835,7 +1915,8 @@ void CalibrationFlowFineSavePage::create_page(wxWindow* parent)
     m_top_sizer->Add(m_step_panel, 0, wxEXPAND, 0);
 
     auto complete_text = new Label(parent, _L("Please find the best object on your plate"));
-    complete_text->SetFont(Label::Head_14);
+    complete_text->SetFont(Label::Head_16);
+    complete_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     complete_text->Wrap(-1);
     m_top_sizer->Add(complete_text, 0, wxEXPAND, 0);
     m_top_sizer->AddSpacer(FromDIP(20));
@@ -1956,7 +2037,7 @@ CalibrationMaxVolumetricSpeedSavePage::CalibrationMaxVolumetricSpeedSavePage(
     long style)
     : CalibrationCommonSavePage(parent, id, pos, size, style)
 {
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     m_cali_mode = CalibMode::Calib_Vol_speed_Tower;
 

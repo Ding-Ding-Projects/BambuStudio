@@ -6,6 +6,8 @@
 
 namespace Slic3r { namespace GUI {
 
+class CalibrationResultViewport;
+
 enum CaliSaveStyle {
     CALI_SAVE_P1P_STYLE = 0,
     CALI_SAVE_X1_STYLE,
@@ -107,8 +109,8 @@ protected:
     wxBoxSizer* m_top_sizer;
     wxPanel* m_complete_text_panel;
     wxPanel* m_part_failed_panel;
-    wxPanel*    m_grid_panel{ nullptr };
-    wxPanel*    m_multi_extruder_grid_panel{ nullptr };
+    CalibrationResultViewport*    m_grid_panel{ nullptr };
+    CalibrationResultViewport*    m_multi_extruder_grid_panel{ nullptr };
     std::vector<PACalibResult> m_calib_results;
     bool m_is_all_failed{ true };
     MachineObject* m_obj{ nullptr };
@@ -230,7 +232,7 @@ protected:
     CaliPageStepGuide* m_step_panel{ nullptr };
     wxPanel* m_complete_text_panel;
     wxPanel* m_part_failed_panel;
-    wxPanel*           m_grid_panel{ nullptr };
+    CalibrationResultViewport*           m_grid_panel{ nullptr };
     std::map<int, std::pair<wxString, float>> m_save_results; // map<tray_id, <name, flow ratio>>
     bool m_is_all_failed{ true };
 };

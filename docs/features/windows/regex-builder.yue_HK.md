@@ -1,6 +1,6 @@
 ---
 translation-of: regex-builder.md
-source-sha256: d35f05f335858dbc2948abac0983645973216d1a908e96264e16fdf7a2a508fc
+source-sha256: 95d7520997bb54e8715f6b504268986b1a46d13662142f84d7781d40275eb7de
 review-status: agent-drafted
 ---
 
@@ -96,3 +96,11 @@ review-status: agent-drafted
 - 搜尋欄同構建器浮動視圖被擷取每按鈕喺截圖矩陣下 `docs/screenshots/regex-builder/`。
 - `bounded_regex_tests` 係一個真實 CTest/CI 目標。佢涵蓋有效、無效同冇比對結果；Unicode 同擷取組；明確多行模式；零寬度推進同比對上限；應用程式同協定邊界；純文字對正則表達式行為；缺失工作者開放失敗處理；同一個敵對巢狀量詞逾時跟著工作者重新啟動/恢復；聚合截止跨越 100 不同敵對候選；精確比對上限語義；非阻擋延遲預熱跟著第一個成功 `SearchPass`，同一個開始工作者永遠唔回答佢嘅 ping；構建器/ImGui 雙向狀態；獨立較低/上限計數重複界限；同 POSIX 描述符隔離、關閉父級 stdio 啟動同有限工作者資源上限。喺 macOS，一個平台特定測試証明被包含工作者對有效、無效、比對同冇比對要求保持功能。CI 亦都用 `SLIC3R_GUI=OFF` 同 `SLIC3R_BUILD_TESTS=ON` 配置測試樹，保持呢個集中引擎安全套件 GUI 目標獨立。Windows 工作流程構建呢個目標同每個推同手動派遣通過 CTest 執行佢。每個 macOS 執行器亦都為其原生架構配置無頭目標同喺應用程式構建後執行相同 CTest 門，所以 Darwin 資源上限同功能路徑喺英特爾同蘋果矽工作上被編譯同運動。
 - 視覺/手動涵蓋對焦點、複製、本地化同突出顯示展示保持有用，但佢唔係評估者安全邊界嘅証據；自動化工作者測試係。
+
+## 畫布選單嘅整字邊界一致性
+
+畫布正規表達式會原樣傳入 `CanvasMenuSearchModel.hpp` 嘅正式 `canvas_menu_regex_matches`。即使純文字「整字」旗標開啟，正規表達式模式亦唔會自動加邊界。正規表達式 `aus` 喺兩種旗標狀態都會匹配 `Add Pause`；純文字 `aus` 喺整字模式唔匹配；正規表達式 `\baus\b` 唔匹配，而 `\bPause\b` 會匹配。
+
+`tests/bounded_regex/bounded_regex_tests.cpp` 嘅 `[canvas_menu_parity]` 編譯案例直接使用正式輔助函式同有界 Boost.Regex 工作者，要求啟動及評估成功，唔會把失效開放時仍然顯示項目當成匹配證據。案例亦證明舊有自動包裝 `\b(?:aus)\b` 會錯誤排除子字串。
+
+現有託管 `native-interface-verification.yml` 嘅 `native-services` 工作會編譯 `bounded_regex_tests`，只執行該標籤，並保留帶來源及執行身分嘅 `canvas-menu-parity.xml`。新案例同應用程式編譯仍未驗證，直到確切候選版本喺託管 Windows 完成執行。呢啲亦唔代表已安裝選單嘅畫面、焦點或操作證據。

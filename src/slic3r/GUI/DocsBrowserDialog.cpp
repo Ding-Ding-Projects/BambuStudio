@@ -252,10 +252,11 @@ void DocsBrowserDialog::create_ui()
     auto *root = new wxBoxSizer(wxVERTICAL);
     root->Add(new MD3DialogCaption(this, _L("Documentation")), 0, wxEXPAND);
 
-    m_title_label = new Label(this, Label::Head_24, _L("Documentation"));
+    m_title_label = new Label(this, Label::Head_20, _L("Documentation"));
     root->Add(m_title_label, 0, wxLEFT | wxRIGHT | wxTOP, FromDIP(24));
-    m_status_label = new Label(this, Label::Body_13, wxEmptyString);
-    root->Add(m_status_label, 0, wxLEFT | wxRIGHT | wxTOP, FromDIP(24));
+    m_status_label = new Label(this, Label::Body_13, wxEmptyString, LB_AUTO_WRAP | wxST_NO_AUTORESIZE);
+    m_status_label->SetMinSize(wxSize(0, -1));
+    root->Add(m_status_label, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(16));
 
     auto *columns = new wxBoxSizer(wxHORIZONTAL);
 
@@ -267,7 +268,7 @@ void DocsBrowserDialog::create_ui()
     m_search->SetName(_L("Search documentation"));
     m_search->SetOnQuery([this](const wxString &) { populate_tree(); });
     m_search->SetOnRegexToggle([this](bool) { populate_tree(); });
-    nav_sizer->Add(m_search, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(8));
+    nav_sizer->Add(m_search, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(MD3::Metrics::active().padding));
 
     m_tree = new wxDataViewTreeCtrl(m_nav_card, wxID_ANY, wxDefaultPosition, wxDefaultSize,
                                     wxDV_SINGLE | wxDV_NO_HEADER | wxBORDER_NONE);
@@ -283,7 +284,7 @@ void DocsBrowserDialog::create_ui()
         const auto it = m_tree_articles.find(e.GetItem().GetID());
         if (it != m_tree_articles.end()) open_index(it->second, std::string(), true);
     });
-    nav_sizer->Add(m_tree, 1, wxEXPAND | wxALL, FromDIP(8));
+    nav_sizer->Add(m_tree, 1, wxEXPAND | wxALL, FromDIP(MD3::Metrics::active().padding));
     m_nav_card->SetSizer(nav_sizer);
     columns->Add(m_nav_card, 0, wxEXPAND | wxRIGHT, FromDIP(16));
 
@@ -302,7 +303,8 @@ void DocsBrowserDialog::create_ui()
     m_forward_button->SetName(_L("Forward"));
     m_forward_button->SetToolTip(_L("Forward") + " (Alt+Right)");
     m_forward_button->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { go_forward(); });
-    m_article_title = new Label(this, Label::Head_16, wxEmptyString);
+    m_article_title = new Label(this, Label::Head_16, wxEmptyString, LB_AUTO_WRAP | wxST_NO_AUTORESIZE);
+    m_article_title->SetMinSize(wxSize(0, -1));
     toolbar->Add(m_back_button, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(4));
     toolbar->Add(m_forward_button, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(12));
     toolbar->Add(m_article_title, 1, wxALIGN_CENTER_VERTICAL);
@@ -360,6 +362,7 @@ void DocsBrowserDialog::apply_theme()
     m_nav_card->SetBackgroundColorNormal(card);
     m_nav_card->SetBorderColorNormal(outline);
     m_nav_card->SetBorderWidth(1);
+    m_nav_card->SetCornerRadius(FromDIP(MD3::Metrics::active().radius));
     m_tree->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_tree->SetForegroundColour(text);
 
@@ -588,7 +591,9 @@ std::string DocsBrowserDialog::html_document(const Article &article, const std::
          << ":root{color-scheme:" << (wxGetApp().dark_mode() ? "dark" : "light") << ";}\n"
          << "html,body{margin:0;background:" << hex(MD3::Role::Surface) << ";color:" << hex(MD3::Role::OnSurface) << ";}\n"
          << "body{font-family:'" << MD3::Type::font_family << "','Segoe UI',system-ui,sans-serif;font-size:14px;line-height:1.6;"
-         << "padding:8px 24px 32px 24px;max-width:860px;overflow-wrap:anywhere;}\n"
+         << "padding:16px;box-sizing:border-box;overflow-wrap:anywhere;}\n"
+         << "main{box-sizing:border-box;max-width:860px;margin:0 auto;padding:24px;background:" << hex(MD3::Role::SurfaceContainerLowest) << ";border:1px solid " << hex(MD3::Role::OutlineVariant) << ";border-radius:16px;}\n"
+         << "@media(max-width:480px){body{padding:8px;}main{padding:16px;border-radius:12px;}}\n"
          << "h1,h2,h3,h4,h5,h6{font-weight:500;line-height:1.3;margin:1.4em 0 .5em;scroll-margin-top:12px;}\n"
          << "h1{font-size:28px;margin-top:.4em;}h2{font-size:22px;border-bottom:1px solid " << hex(MD3::Role::OutlineVariant) << ";padding-bottom:.25em;}h3{font-size:18px;}\n"
          << "a{color:" << hex(MD3::Role::Primary) << ";text-decoration:none;}a:hover,a:focus{text-decoration:underline;}\n"

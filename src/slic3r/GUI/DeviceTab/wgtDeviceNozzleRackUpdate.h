@@ -104,6 +104,7 @@ public:
 
 private:
     void CreateGui();
+    void MeasureRow();
 
     void UpdateInfo(const DevNozzle& nozzle);
     bool UpdateFilamentColourSwatch(const std::string& display_color);

@@ -1,6 +1,6 @@
 ---
 translation-of: windows-release-supply-chain.md
-source-sha256: 27598eefbbd44aedb8c66af14b30ce10e89bc53a8b30dcc9180ec4114a8f5ee4
+source-sha256: da329019b2ccd790331fdb70b294d28ea0c95ea6c6cb43a10943bc940733e754
 review-status: agent-drafted
 ---
 
@@ -16,7 +16,11 @@ review-status: agent-drafted
 
 發佈工作會一次執行一個，每一個都喺發佈前立即決定「最新版本」。預設分支構建會喺佢嘅提交比目前最新版本嘅提交更新時（或者係同一提交重新構建）變成最新版本。一個完成得遲嘅舊構建會喺佢嘅標題中帶住「(superseded main build)」發佈並保持非最新狀態，而其他分支嘅構建都保持非最新狀態。構建執行時分支可能已經向前移動；最新版本，同埋已安裝版本讀取嘅更新來源，仍然會向前移動。
 
-GitHub 最多只會留一個發佈工作喺執行緊嗰個後面等候。等候期間如果另一個構建完成，GitHub 會取消等緊嗰個（較舊嘅）發佈工作，所以一連串推送之後，只有最新嘅構建會發佈，中間嘅構建冇自己嘅發佈；佢哋嘅構建工作照樣會做完，結果亦會保留喺工作流程執行記錄入面。
+發佈並行控制使用 `queue: max` 同 `cancel-in-progress: false`：一個工作執行中，最多 100 個等候，超額請求會被取消。先入先出指加入佇列嘅次序，唔係派發或來源提交次序，所以仍然要比較最新來源。詳見 [GitHub 並行控制](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-workflow-concurrency)。
+
+舊有預設只保留一個等候工作，即使 `cancel-in-progress: false` 都一樣。例如執行 `37088514258` 已完成構建及上傳安裝器，但發佈工作 `111113206485` 未執行任何步驟就被取消，註記係 `Canceling since a higher priority waiting request for windows-release-Ding-Ding-Projects/BambuStudio exists`。
+
+復原歷史執行之前，先確認構建成功、安裝器未過期，而且冇同一執行嘅活動嘗試。用 `gh run rerun RUN_ID --failed` 或 `gh run rerun --job JOB_ID`，唔好重跑已成功嘅構建。重試沿用原有安裝器、來源及標籤冪等行為。歷史重試使用原工作流程版本，仍可能受舊單一等候規則影響；先協調清空佇列，再核對發佈、來源、資產雜湊同工作最終狀態。重試限原執行後 30 日內，最多 50 次嘗試，資產是否仍可取得要另外確認。詳見[重跑工作流程及工作](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/re-run-workflows-and-jobs)。
 
 ## Windows 構建同埋軟件包邊界
 
@@ -118,8 +122,8 @@ release 工作會讀取儲存庫不可變 release 設定，若果佢冇被啟用
 ## 僅驗證嘅託管工作流
 
 `.github/workflows/verify-release-evidence.yml` 係一個獨立調度嘅驗證工作流。佢從唔會編譯應用、建立 release、改動標籤或封閉發佈工作流。提供現有嘅不可變 `release_tag`、佢嘅確切 `expected_source_commit` 同埋一個 `verification_scope`。用 `diagnostic` 開始來檢查一個英文、淺色、100%、1200x800 元組。用 `behavior` 針對六個語言同埋主題託管工作，每一個記錄四個請求嘅尺度喺兩個視口大小。驗證檢查的提交係從不可變 release 原始碼提交獨立記錄嘅。
-狹義嘅 `codex/hosted-behavior-verifier` 推送觸發器針對 `md3-v125` 同埋 `c5df6199e1a83b1c94be12e999c0b322fded8730` 執行一個診斷執行，而新嘅驗證器
-喺佢自己嘅分支被審查。佢唔會為其他分支觸發或替換手動矩陣分配。
+呢個工作流冇推送觸發器，只會由手動調度執行，通常喺 `main` 開始。2026 年 10 月 6 日之前，狹義嘅 `codex/hosted-behavior-verifier` 推送觸發器會喺驗證器
+喺佢自己嘅分支審查期間，針對 `md3-v125` 同埋 `c5df6199e1a83b1c94be12e999c0b322fded8730` 執行一個固定診斷；嗰個觸發器已經移除。
 
 每個工作使用 `Verify-HostedSquirrelInstall.ps1` 喺一個新鮮嘅託管 Windows 執行器上安裝同埋驗證已發佈嘅 Squirrel 軟件包。佢然後安裝版本釘選嘅無頭工具同埋 Pillow 喺工作本地 Python、呼叫 `drive-packaged-behavior.py` 對照已安裝嘅可執行檔案、同埋加密驅動器自己嘅報告、映像同埋可歸屬受限日誌。獨立嘅發佈工作流保留佢固定嘅十一表面架構 1 捕捉。架構 2 診斷唔會喺行為驅動器後啟動該舊捕捉路由，所以一個失敗嘅應用啟動仍然會保留佢嘅報告同埋受限日誌，若果存在。只有一個行為元組包括完整工作流驅動；其他元組檢查本地化佈局。一個診斷結果從唔會聲稱矩陣通過。
 工作流使用一個有界超時、兩個併發矩陣工作、冇現有執行嘅取消、同埋一個安全失敗上傳。原始截圖、私人檔案同埋未審查嘅行為報告從唔會以純文字形式附加。

@@ -1,3 +1,6 @@
+#include "PrintSetupLayout.hpp"
+#include <wx/display.h>
+#include "PrepareInspectorLayout.hpp"
 #include "SelectMachinePop.hpp"
 #include "Widgets/MD3ScrolledWindow.hpp"
 #include "Widgets/LinkLabel.hpp"
@@ -59,10 +62,6 @@ MachineObjectPanel::MachineObjectPanel(wxWindow *parent, wxWindowID id, const wx
 {
     wxPanel::Create(parent, id, pos, wxDefaultSize, style, name);
 
-    SetSize(SELECT_MACHINE_ITEM_SIZE);
-    SetMinSize(SELECT_MACHINE_ITEM_SIZE);
-    SetMaxSize(SELECT_MACHINE_ITEM_SIZE);
-
     Bind(wxEVT_PAINT, &MachineObjectPanel::OnPaint, this);
 
     SetBackgroundColour(StateColor::darkModeColorFor(*wxWHITE));
@@ -77,6 +76,12 @@ MachineObjectPanel::MachineObjectPanel(wxWindow *parent, wxWindowID id, const wx
     m_printer_status_lock    = ScalableBitmap(this, "printer_status_lock", 16);
     m_printer_in_lan         = ScalableBitmap(this, "printer_in_lan", 16);
 
+    apply_row_layout();
+    Bind(wxEVT_DPI_CHANGED, [this](wxDPIChangedEvent& event) {
+        apply_row_layout();
+        if (GetParent()) GetParent()->Layout();
+        event.Skip();
+    });
     this->Bind(wxEVT_ENTER_WINDOW, &MachineObjectPanel::on_mouse_enter, this);
     this->Bind(wxEVT_LEAVE_WINDOW, &MachineObjectPanel::on_mouse_leave, this);
     this->Bind(wxEVT_LEFT_UP, &MachineObjectPanel::on_mouse_left_up, this);
@@ -100,6 +105,20 @@ MachineObjectPanel::MachineObjectPanel(wxWindow *parent, wxWindowID id, const wx
 
 }
 
+
+void MachineObjectPanel::apply_row_layout()
+{
+    SetFont(MD3::Metrics::isCompact() ? Label::Body_13 : Label::Body_14);
+    const int height = PrepareInspectorLayout::row_height(FromDIP(MD3::Metrics::active().row_height),
+        GetCharHeight(), FromDIP(18), FromDIP(8));
+    SetMinSize(wxSize(FromDIP(190), height));
+    SetMaxSize(wxSize(-1, height));
+    SetSize(wxSize(GetSize().x, height));
+    for (auto* bitmap : {&m_unbind_img, &m_edit_name_img, &m_select_unbind_img,
+            &m_printer_status_offline, &m_printer_status_busy, &m_printer_status_idle,
+            &m_printer_status_lock, &m_printer_in_lan}) bitmap->msw_rescale();
+    Refresh();
+}
 
 MachineObjectPanel::~MachineObjectPanel() {}
 
@@ -160,9 +179,16 @@ void MachineObjectPanel::render(wxDC &dc)
 
 void MachineObjectPanel::doRender(wxDC &dc)
 {
-    auto   left = 10;
+    auto   left = FromDIP(12);
     wxSize size = GetSize();
+    if (size.x <= FromDIP(4) || size.y <= FromDIP(4)) return;
+    dc.SetBackground(wxBrush(StateColor::semantic(MD3::Role::SurfaceContainerLowest)));
+    dc.Clear();
     dc.SetPen(*wxTRANSPARENT_PEN);
+    dc.SetBrush(wxBrush(StateColor::semantic(m_hover || m_focused
+        ? MD3::Role::PrimaryContainer : MD3::Role::SurfaceContainerLow)));
+    dc.DrawRoundedRectangle(FromDIP(2), FromDIP(2), size.x - FromDIP(4), size.y - FromDIP(4),
+        FromDIP(MD3::Metrics::active().small_radius));
 
     auto dwbitmap = m_printer_status_offline;
     if (m_state == PrinterState::IDLE) { dwbitmap = m_printer_status_idle; }
@@ -174,10 +200,10 @@ void MachineObjectPanel::doRender(wxDC &dc)
     // dc.DrawCircle(left, size.y / 2, 3);
     dc.DrawBitmap(dwbitmap.bmp(), wxPoint(left, (size.y - dwbitmap.GetBmpSize().y) / 2));
 
-    left += dwbitmap.GetBmpSize().x + 8;
-    dc.SetFont(Label::Body_13);
+    left += dwbitmap.GetBmpSize().x + FromDIP(8);
+    dc.SetFont(GetFont());
     dc.SetBackgroundMode(wxTRANSPARENT);
-    dc.SetTextForeground(StateColor::darkModeColorFor(SELECT_MACHINE_GREY900));
+    dc.SetTextForeground(StateColor::semantic(MD3::Role::OnSurface));
     wxString dev_name = "";
     if (m_info) {
         dev_name = from_u8(m_info->get_dev_name());
@@ -216,15 +242,17 @@ void MachineObjectPanel::doRender(wxDC &dc)
         dc.SetPen(wxPen(StateColor::semantic(MD3::Role::Primary), FromDIP(2)));
         dc.SetBrush(*wxTRANSPARENT_BRUSH);
         const int inset = FromDIP(2);
-        dc.DrawRectangle(inset, inset, size.x - 2 * inset, size.y - 2 * inset);
+        dc.DrawRoundedRectangle(inset, inset, size.x - 2 * inset, size.y - 2 * inset,
+            FromDIP(MD3::Metrics::active().small_radius));
     }
 
     if (m_hover || m_is_macos_special_version) {
 
         if (m_hover && !m_is_macos_special_version) {
-            dc.SetPen(SELECT_MACHINE_BRAND);
+            dc.SetPen(wxPen(StateColor::semantic(MD3::Role::Primary), FromDIP(1)));
             dc.SetBrush(*wxTRANSPARENT_BRUSH);
-            dc.DrawRectangle(0, 0, size.x, size.y);
+            dc.DrawRoundedRectangle(FromDIP(2), FromDIP(2), size.x - FromDIP(4), size.y - FromDIP(4),
+                FromDIP(MD3::Metrics::active().small_radius));
         }
 
         if (m_show_bind) {
@@ -387,13 +415,14 @@ SelectMachinePopup::SelectMachinePopup(wxWindow *parent)
 
     Freeze();
     wxBoxSizer *m_sizer_main = new wxBoxSizer(wxVERTICAL);
-    SetBackgroundColour(SELECT_MACHINE_GREY400);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
 
 
 
     m_scrolledWindow = new MD3ScrolledWindow(this, wxID_ANY, wxDefaultPosition, SELECT_MACHINE_LIST_SIZE, wxHSCROLL | wxVSCROLL);
     m_scrolledWindow->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
-    m_scrolledWindow->SetMinSize(SELECT_MACHINE_LIST_SIZE);
+    // The popup owns the viewport height; the list contents own its virtual extent.
+    m_scrolledWindow->SetMinSize(wxSize(FromDIP(212), FromDIP(120)));
     m_scrolledWindow->SetScrollRate(0, 5);
     auto m_sizxer_scrolledWindow = new wxBoxSizer(wxVERTICAL);
     m_scrolledWindow->SetSizer(m_sizxer_scrolledWindow);
@@ -436,7 +465,7 @@ SelectMachinePopup::SelectMachinePopup(wxWindow *parent)
     m_sizxer_scrolledWindow->Add(other_title, 0, wxEXPAND | wxLEFT, FromDIP(15));
     m_sizxer_scrolledWindow->Add(m_sizer_other_devices, 0, wxEXPAND, 0);
 
-    m_sizer_main->Add(m_scrolledWindow, 0, wxALL | wxEXPAND, FromDIP(2));
+    m_sizer_main->Add(m_scrolledWindow, 1, wxALL | wxEXPAND, FromDIP(8));
 
     SetSizer(m_sizer_main);
     Layout();
@@ -546,14 +575,15 @@ wxWindow *SelectMachinePopup::create_title_panel(wxString text)
     wxBoxSizer *m_sizer_title_own = new wxBoxSizer(wxHORIZONTAL);
 
     auto m_title_own = new Label(m_panel_title_own, text);
-    m_title_own->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+    m_title_own->SetFont(Label::Head_16);
+    m_title_own->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_title_own->Wrap(-1);
     m_sizer_title_own->Add(m_title_own, 0, wxALIGN_CENTER, 0);
 
     wxBoxSizer *m_sizer_line_own = new wxBoxSizer(wxHORIZONTAL);
 
     auto m_panel_line_own = new wxPanel(m_panel_title_own, wxID_ANY, wxDefaultPosition, wxSize(SELECT_MACHINE_ITEM_SIZE.x, FromDIP(1)), wxTAB_TRAVERSAL);
-    m_panel_line_own->SetBackgroundColour(SELECT_MACHINE_GREY400);
+    m_panel_line_own->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
 
     m_sizer_line_own->Add(m_panel_line_own, 0, wxALIGN_CENTER, 0);
     m_sizer_title_own->Add(0, 0, 0, wxLEFT, FromDIP(10));
@@ -967,35 +997,38 @@ EditDevNameDialog::EditDevNameDialog(Plater *plater /*= nullptr*/)
     SetIcon(wxIcon(encode_path(icon_path.c_str()), wxBITMAP_TYPE_ICO));
 
     SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
-    wxBoxSizer *m_sizer_main = new wxBoxSizer(wxVERTICAL);
-    auto        m_line_top   = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 1), wxTAB_TRAVERSAL);
-    m_line_top->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
-    m_sizer_main->Add(m_line_top, 0, wxEXPAND, 0);
-    m_sizer_main->Add(0, 0, 0, wxTOP, FromDIP(38));
+    m_form_sizer = new wxBoxSizer(wxVERTICAL);
     m_textCtr = new ::TextInput(this, wxEmptyString, wxEmptyString, wxEmptyString, wxDefaultPosition, wxSize(FromDIP(260), FromDIP(40)), wxTE_PROCESS_ENTER);
-    m_textCtr->GetTextCtrl()->SetSize(wxSize(-1, FromDIP(22)));
-    m_textCtr->SetMinSize(wxSize(FromDIP(260), FromDIP(40)));
-    m_sizer_main->Add(m_textCtr, 0, wxALIGN_CENTER_HORIZONTAL | wxLEFT | wxRIGHT, FromDIP(40));
+    m_form_sizer->Add(m_textCtr, 0, wxEXPAND | wxALL);
 
-    m_static_valid = new Label(this, wxT(""));
+    m_validation_view = new MD3ScrolledWindow(this, wxID_ANY, wxDefaultPosition,
+        wxDefaultSize, wxVSCROLL | wxTAB_TRAVERSAL);
+    m_validation_view->SetBackgroundColour(GetBackgroundColour());
+    m_validation_view->SetMinSize(wxSize(-1, 0));
+    // SetLabel must not resize to its intermediate unwrapped width. The
+    // unchanged validator wraps at the allocated width before on_confirm fits.
+    m_static_valid = new Label(m_validation_view, wxT(""), wxST_NO_AUTORESIZE);
+    auto validation_sizer = new wxBoxSizer(wxVERTICAL);
+    validation_sizer->Add(m_static_valid, 0, wxEXPAND);
+    m_validation_view->SetSizer(validation_sizer);
     m_static_valid->Wrap(-1);
     m_static_valid->SetFont(::Label::Body_13);
-    m_static_valid->SetForegroundColour(StateColor::darkModeColorFor(ThemeColor::Warning));
-    m_sizer_main->Add(m_static_valid, 0, wxALIGN_CENTER_HORIZONTAL | wxTOP | wxLEFT | wxRIGHT, FromDIP(10));
+    m_static_valid->SetForegroundColour(StateColor::semantic(MD3::Role::Error));
+    m_form_sizer->Add(m_validation_view, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM);
 
 
     m_button_confirm = new Button(this, _L("Confirm"));
-    StateColor btn_bg_green(std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
     m_button_confirm->SetVariant(Button::Variant::Filled);
-    m_button_confirm->SetSize(wxSize(FromDIP(72), FromDIP(24)));
-    m_button_confirm->SetMinSize(wxSize(FromDIP(72), FromDIP(24)));
-    m_button_confirm->SetCornerRadius(FromDIP(12));
-    m_button_confirm->Bind(wxEVT_BUTTON, &EditDevNameDialog::on_edit_name, this);
+    m_button_confirm->SetButtonSize(Button::Size::Medium);
+    m_button_confirm->Bind(wxEVT_BUTTON, &EditDevNameDialog::on_confirm, this);
 
-    m_sizer_main->Add(m_button_confirm, 0, wxALIGN_CENTER_HORIZONTAL | wxTOP, FromDIP(10));
-    m_sizer_main->Add(0, 0, 0, wxBOTTOM, FromDIP(38));
+    auto footer = new wxBoxSizer(wxHORIZONTAL);
+    footer->AddStretchSpacer();
+    footer->Add(m_button_confirm, 0, wxALIGN_CENTER_VERTICAL);
+    m_form_sizer->Add(footer, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM);
 
-    SetSizer(m_sizer_main);
+    SetSizer(m_form_sizer);
+    apply_form_layout();
     Layout();
     Fit();
     wxGetApp().UpdateDlgDarkUI(this);
@@ -1012,10 +1045,65 @@ void EditDevNameDialog::set_machine_obj(MachineObject *obj)
         m_textCtr->GetTextCtrl()->SetValue(from_u8(m_info->get_dev_name()));
 }
 
+void EditDevNameDialog::apply_form_layout()
+{
+    const auto& metrics = MD3::Metrics::active();
+    const wxFont font = MD3::Metrics::isCompact() ? Label::Body_13 : Label::Body_14;
+    m_textCtr->SetFont(font);
+    m_textCtr->GetTextCtrl()->SetFont(font);
+    m_static_valid->SetFont(font);
+    const int height = PrepareInspectorLayout::row_height(FromDIP(metrics.row_height),
+        m_textCtr->GetTextCtrl()->GetCharHeight(), 0, FromDIP(6));
+    m_textCtr->SetMinSize(wxSize(FromDIP(MD3::Metrics::isCompact() ? 260 : 280), height));
+    for (auto* item : m_form_sizer->GetChildren()) item->SetBorder(FromDIP(metrics.padding));
+    m_button_confirm->Rescale();
+    m_validation_view->SetScrollRate(0, FromDIP(8));
+}
+
+void EditDevNameDialog::fit_validation_content()
+{
+    if (m_fitting_content || !GetSizer()) return;
+    m_fitting_content = true;
+    // The editor's allocated width is stable across SetLabel and Wrap. Never
+    // derive the dialog width from the validation label's intermediate extent.
+    const int width = (std::max)(1, m_textCtr->GetSize().x);
+    wxWindow* display_owner = !IsShown() && GetParent() ? GetParent() : this;
+    const int display_index = wxDisplay::GetFromWindow(display_owner);
+    const wxDisplay display(display_index == wxNOT_FOUND ? 0 : display_index);
+    const int nonclient = (std::max)(0, GetSize().y - GetClientSize().y);
+    auto* label = static_cast<Label*>(m_static_valid);
+    // A vertical scrollbar may narrow the client area. A second bounded pass
+    // rewraps for that actual width and keeps the full message scrollable.
+    for (int pass = 0; pass < 2; ++pass) {
+        const int text_width = (std::max)(1, (std::min)(width, m_validation_view->GetClientSize().x));
+        label->SetMinSize(wxSize(text_width, -1));
+        label->Wrap(text_width);
+        const int content_height = label->GetBestSize().y;
+        m_validation_view->SetMinSize(wxSize(width, 0));
+        const int chrome = GetSizer()->CalcMin().y + nonclient;
+        const int height = PrintSetupLayout::bounded_body_height(content_height, content_height,
+            display.GetClientArea().height, chrome, FromDIP(12));
+        m_validation_view->SetMinSize(wxSize(width, height));
+        m_validation_view->SetVirtualSize(wxSize(text_width, content_height));
+        SetClientSize(wxSize(GetClientSize().x, GetSizer()->CalcMin().y));
+        Layout();
+        m_validation_view->FitInside();
+    }
+    m_fitting_content = false;
+}
+
+void EditDevNameDialog::on_confirm(wxCommandEvent& event)
+{
+    on_edit_name(event);
+    if (IsShown()) fit_validation_content();
+}
+
 void EditDevNameDialog::on_dpi_changed(const wxRect &suggested_rect)
 {
-    m_button_confirm->SetSize(wxSize(FromDIP(72), FromDIP(24)));
-    m_button_confirm->SetMinSize(wxSize(FromDIP(72), FromDIP(24)));
+    apply_form_layout();
+    Layout();
+    Fit();
+    fit_validation_content();
 }
 
 void EditDevNameDialog::on_edit_name(wxCommandEvent &e)

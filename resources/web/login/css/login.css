@@ -22,7 +22,8 @@ body
 	align-items: center;
 	max-height: 900px;
 	max-width: 1300px;
-	background-color: #fff;
+	background-color: #f7f9fc;
+	color: #172434;
 }
 
 .NormalBtn
@@ -59,4 +60,19 @@ body
 {
 	width:100px;
 	display: none;
+}
+/* Studio Atlas: paint-only interaction states. Existing geometry and actions remain owned by the view. */
+body :is(button, input, select, textarea, a[href], [role="button"], [tabindex]):focus-visible {
+  outline: 2px solid var(--atlas-focus, #146c2e);
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  body :is(button, input, select, textarea, [role="button"]) {
+    transition: background-color 100ms ease-out, border-color 100ms ease-out;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  body :is(button, input, select, textarea, a[href], [role="button"], [tabindex]) {
+    transition: none;
+  }
 }

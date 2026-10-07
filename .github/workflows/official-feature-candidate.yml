@@ -1,19 +1,6 @@
 name: Official source feature candidate
 
 on:
-  push:
-    branches:
-      - codex/official-feature-reapply
-    paths:
-      - '.github/workflows/official-feature-candidate.yml'
-      - 'scripts/ci/Invoke-OfficialFeatureCandidate.ps1'
-      - 'scripts/windows/**'
-      - 'deps/**'
-      - 'src/**'
-      - 'resources/**'
-      - 'ui-md3/**'
-      - 'CMakeLists.txt'
-      - 'version.inc'
   workflow_dispatch:
 
 permissions:
@@ -25,7 +12,7 @@ concurrency:
 
 jobs:
   build-package:
-    if: github.ref == 'refs/heads/codex/official-feature-reapply'
+    if: github.event_name == 'workflow_dispatch'
     runs-on: windows-2025
     timeout-minutes: 360
     defaults:

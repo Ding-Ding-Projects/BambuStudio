@@ -1,3 +1,5 @@
+#include <wx/wrapsizer.h>
+#include "Widgets/StaticBox.hpp"
 #include "AMSDryControl.hpp"
 #include "Widgets/MD3ScrolledWindow.hpp"
 #include "Widgets/TextInput.hpp"
@@ -266,7 +268,7 @@ void AMSFilamentPanel::msw_rescale()
 
 
 AMSDryCtrWin::AMSDryCtrWin(wxWindow *parent)
-    :DPIDialog(parent, wxID_ANY, _L("AMS Dryness Control"), wxDefaultPosition, wxDefaultSize, wxCAPTION | wxCLOSE_BOX)
+    :DPIDialog(parent, wxID_ANY, _L("AMS Dryness Control"), wxDefaultPosition, wxDefaultSize, wxCAPTION | wxCLOSE_BOX | wxRESIZE_BORDER)
 {
     create();
     MD3DialogCaption::Adopt(this);
@@ -303,7 +305,7 @@ wxBoxSizer* AMSDryCtrWin::create_humidity_status_section(wxPanel* parent)
     wxBoxSizer* desc_sizer = new wxBoxSizer(wxHORIZONTAL);
 
     m_image_description_icon = new wxStaticBitmap(parent, wxID_ANY, wxNullBitmap);
-    m_image_description_icon->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
+    m_image_description_icon->SetBackgroundColour(parent->GetBackgroundColour());
     m_image_description_icon->SetMinSize(wxSize(FromDIP(20), FromDIP(20)));
     m_image_description_icon->SetMaxSize(wxSize(FromDIP(20), FromDIP(20)));
     m_image_description_icon->Show(false);
@@ -312,7 +314,7 @@ wxBoxSizer* AMSDryCtrWin::create_humidity_status_section(wxPanel* parent)
     m_image_description = new Label(parent, _L("Idle"));
     m_image_description->SetFont(Label::Head_14);
     m_image_description->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
-    m_image_description->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
+    m_image_description->SetBackgroundColour(parent->GetBackgroundColour());
     desc_sizer->Add(m_image_description, 0, wxALIGN_CENTER_VERTICAL);
 
     image_sizer->Add(desc_sizer, 0, wxALIGN_CENTER | wxALL, FromDIP(5));
@@ -325,12 +327,12 @@ wxBoxSizer* AMSDryCtrWin::create_description_item(wxPanel* parent, const wxStrin
     wxBoxSizer* item_sizer = new wxBoxSizer(wxVERTICAL);
 
     Label* titleLabel = new Label(parent, title);
-    titleLabel->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
-    titleLabel->SetFont(Label::Body_16);
+    titleLabel->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+    titleLabel->SetFont(Label::Body_12);
 
     dataLabel = new Label(parent, wxT("--"));
     dataLabel->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
-    dataLabel->SetFont(Label::Mono_14);
+    dataLabel->SetFont(Label::Head_20);
 
     item_sizer->AddStretchSpacer();
     item_sizer->Add(titleLabel, 0, wxALIGN_CENTER | wxALL, FromDIP(2));
@@ -380,36 +382,12 @@ wxBoxSizer* AMSDryCtrWin::create_left_panel(wxPanel* parent)
 }
 
 Button* AMSDryCtrWin::create_button(wxPanel* parent, const wxString& title,
-    const wxColour& background_color, const wxColour& border_color, const wxColour& text_color)
+    const wxColour& background_color, const wxColour&, const wxColour&)
 {
     Button* button = new Button(parent, title);
-
-    // Create state colors for background
-    StateColor bg_color(
-        std::pair<wxColour, int>(AMS_CONTROL_DISABLE_COLOUR, StateColor::Disabled),
-        std::pair<wxColour, int>(background_color.ChangeLightness(80), StateColor::Pressed),
-        std::pair<wxColour, int>(background_color.ChangeLightness(120), StateColor::Hovered),
-        std::pair<wxColour, int>(background_color, StateColor::Normal)
-    );
-
-    // Create state colors for border
-    StateColor bd_color(
-        std::pair<wxColour, int>(AMS_CONTROL_WHITE_COLOUR, StateColor::Disabled),
-        std::pair<wxColour, int>(border_color, StateColor::Enabled)
-    );
-
-    button->SetBackgroundColor(bg_color);
-    button->SetBorderColor(bd_color);
-    button->SetTextColor(text_color);
-    button->SetFont(Label::Body_14);
-
-    // Auto-size button based on text content with padding
-    wxSize best_size = button->GetBestSize();
-    int padding_width = FromDIP(4);
-    int padding_height = FromDIP(2);
-    wxSize final_size(best_size.GetWidth() + padding_width, best_size.GetHeight() + padding_height);
-    button->SetMinSize(final_size);
-
+    button->SetVariant(background_color == ThemeColor::Danger ? Button::Variant::Danger :
+                       background_color == ThemeColor::Grey200 ? Button::Variant::Outlined : Button::Variant::Filled);
+    update_button_size(button);
     return button;
 }
 
@@ -419,7 +397,7 @@ wxBoxSizer* AMSDryCtrWin::create_normal_state_panel(wxPanel* parent)
 
     Label* description_label = new Label(parent, _L("Filament Drying Settings"));
     description_label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
-    description_label->SetFont(Label::Head_14);
+    description_label->SetFont(Label::Head_18);
     normal_state_sizer->Add(description_label, 0, wxALL, FromDIP(5));
 
     // Part 2: ComboBox for material selection
@@ -454,6 +432,7 @@ wxBoxSizer* AMSDryCtrWin::create_normal_state_panel(wxPanel* parent)
 
 
     Label* temp_unit_label = new Label(parent, wxString::FromUTF8("℃"));
+    temp_unit_label->SetFont(Label::Body_14);
     temp_unit_label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     temp_sizer->Add(m_temperature_input, 1, wxRIGHT, FromDIP(1));
     temp_sizer->Add(temp_unit_label, 0, wxALIGN_CENTER_VERTICAL);
@@ -479,13 +458,14 @@ wxBoxSizer* AMSDryCtrWin::create_normal_state_panel(wxPanel* parent)
 
 
     Label* time_unit_label = new Label(parent, "H");
+    time_unit_label->SetFont(Label::Body_14);
     time_unit_label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     time_sizer->Add(m_time_input, 1, wxRIGHT, FromDIP(1));
     time_sizer->Add(time_unit_label, 0, wxALIGN_CENTER_VERTICAL);
 
-    wxBoxSizer* input_sizer = new wxBoxSizer(wxHORIZONTAL);
-    input_sizer->Add(temp_sizer, 1, wxRIGHT, FromDIP(10));
-    input_sizer->Add(time_sizer, 1, 0);
+    wxBoxSizer* input_sizer = new wxWrapSizer(wxHORIZONTAL);
+    input_sizer->Add(temp_sizer, 0, wxRIGHT | wxBOTTOM, FromDIP(10));
+    input_sizer->Add(time_sizer, 0, wxBOTTOM, FromDIP(10));
     normal_state_sizer->Add(input_sizer, 0, wxEXPAND | wxALL, FromDIP(5));
 
     // Part 4: Abnormal description/message area
@@ -622,6 +602,7 @@ wxBoxSizer* AMSDryCtrWin::create_right_panel(wxPanel* parent)
     m_normal_state_sizer = create_normal_state_panel(parent);
     m_cannot_dry_sizer = create_cannot_dry_panel(parent);
     m_dry_error_sizer = create_drying_error_panel(parent);
+    m_normal_state_sizer->Insert(0, m_dry_error_sizer, 0, wxEXPAND | wxBOTTOM, FromDIP(10));
 
     right_sizer->Add(m_normal_state_sizer, 1, wxEXPAND);
     right_sizer->Add(m_cannot_dry_sizer, 1, wxEXPAND);
@@ -634,16 +615,24 @@ wxBoxSizer* AMSDryCtrWin::create_right_panel(wxPanel* parent)
 
 wxBoxSizer* AMSDryCtrWin::create_main_content_section(wxPanel* parent)
 {
-    wxBoxSizer* content_sizer = new wxBoxSizer(wxHORIZONTAL);
-
-    wxBoxSizer* left_panel = create_left_panel(parent);
-    content_sizer->Add(left_panel, 2, wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(5));
-    left_panel->SetMinSize(wxSize(FromDIP(250), -1));
-
-    wxBoxSizer* right_panel = create_right_panel(parent);
-    content_sizer->Add(right_panel, 1, wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(5));
-    right_panel->SetMinSize(wxSize(FromDIP(250), -1));
-
+    wxBoxSizer* content_sizer = new wxWrapSizer(wxHORIZONTAL);
+    auto create_card = [this, parent, content_sizer]() {
+        auto* card = new StaticBox(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
+        card->SetDensity(MD3::Metrics::isCompact() ? StaticBox::Density::Compact : StaticBox::Density::Comfortable);
+        card->SetBackgroundColor(StateColor::semantic(MD3::Role::SurfaceContainerLow));
+        card->SetBorderColor(StateColor::semantic(MD3::Role::OutlineVariant));
+        auto* body = new wxPanel(card, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
+        body->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
+        auto* padding = new wxBoxSizer(wxVERTICAL);
+        padding->Add(body, 1, wxEXPAND | wxALL, FromDIP(MD3::Metrics::active().padding));
+        card->SetSizer(padding);
+        content_sizer->Add(card, 0, wxEXPAND | wxALL, FromDIP(5));
+        return body;
+    };
+    wxPanel* status_card = create_card();
+    status_card->SetSizer(create_left_panel(status_card));
+    wxPanel* settings_card = create_card();
+    settings_card->SetSizer(create_right_panel(settings_card));
     return content_sizer;
 }
 
@@ -728,8 +717,7 @@ wxBoxSizer* AMSDryCtrWin::create_guide_right_section(wxPanel* parent)
 
     right_section->Add(image_container, 0, wxEXPAND | wxALL, FromDIP(5));
 
-    wxBoxSizer* buttons_container = new wxBoxSizer(wxHORIZONTAL);
-    buttons_container->AddStretchSpacer(1);
+    wxBoxSizer* buttons_container = new wxWrapSizer(wxHORIZONTAL);
 
     m_back_button = create_button(
         parent,
@@ -771,10 +759,10 @@ wxBoxSizer* AMSDryCtrWin::create_guide_right_section(wxPanel* parent)
 
 wxBoxSizer* AMSDryCtrWin::create_guide_page_sizer(wxPanel* parent)
 {
-    wxBoxSizer* guide_sizer = new wxBoxSizer(wxHORIZONTAL);
+    wxBoxSizer* guide_sizer = new wxWrapSizer(wxHORIZONTAL);
 
     wxBoxSizer* info_section = create_guide_info_section(parent);
-    guide_sizer->Add(info_section, 1, wxEXPAND | wxALL, FromDIP(10));
+    guide_sizer->Add(info_section, 0, wxEXPAND | wxALL, FromDIP(10));
 
     wxBoxSizer* right_section = create_guide_right_section(parent);
     guide_sizer->Add(right_section, 0, wxEXPAND | wxALL, FromDIP(10));
@@ -983,21 +971,27 @@ void AMSDryCtrWin::create()
     m_main_simplebook = new wxSimplebook(this, wxID_ANY, wxDefaultPosition, wxDefaultSize);
 
     // Create main page
-    m_original_page = new wxPanel(m_main_simplebook, wxID_ANY);
+    m_original_page = new MD3ScrolledWindow(m_main_simplebook, wxID_ANY);
+    m_original_page->SetMinSize(wxSize(0, 0));
+    static_cast<wxScrolledWindow*>(m_original_page)->SetScrollRate(FromDIP(12), FromDIP(12));
     m_original_page->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     wxBoxSizer* main_sizer = create_main_page_sizer(m_original_page);
     m_original_page->SetSizer(main_sizer);
 
     m_main_simplebook->AddPage(m_original_page, "Main Page");
 
-    m_guide_page = new wxPanel(m_main_simplebook, wxID_ANY);
+    m_guide_page = new MD3ScrolledWindow(m_main_simplebook, wxID_ANY);
+    m_guide_page->SetMinSize(wxSize(0, 0));
+    static_cast<wxScrolledWindow*>(m_guide_page)->SetScrollRate(FromDIP(12), FromDIP(12));
     m_guide_page->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     wxBoxSizer* guide_sizer = create_guide_page_sizer(m_guide_page);
     m_guide_page->SetSizer(guide_sizer);
     m_main_simplebook->AddPage(m_guide_page, "Guide Page");
 
     // Create progress page
-    m_progress_page = new wxPanel(m_main_simplebook, wxID_ANY);
+    m_progress_page = new MD3ScrolledWindow(m_main_simplebook, wxID_ANY);
+    m_progress_page->SetMinSize(wxSize(0, 0));
+    static_cast<wxScrolledWindow*>(m_progress_page)->SetScrollRate(FromDIP(12), FromDIP(12));
     m_progress_page->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     wxBoxSizer* progress_sizer = create_progress_page_sizer(m_progress_page);
     m_progress_page->SetSizer(progress_sizer);
@@ -1013,10 +1007,27 @@ void AMSDryCtrWin::create()
 
     Bind(wxEVT_SHOW, &AMSDryCtrWin::OnShow, this);
 
+    Bind(wxEVT_SIZE, [this](wxSizeEvent &event) { event.Skip(); queue_layout_refresh(); });
     SetSizer(top_level_sizer);
+    queue_layout_refresh();
     Layout();
     Refresh();
     wxGetApp().UpdateDlgDarkUI(this);
+}
+
+void AMSDryCtrWin::queue_layout_refresh()
+{
+    if (m_layout_refresh_pending) return;
+    m_layout_refresh_pending = true;
+    CallAfter([this]() {
+        Layout();
+        for (wxPanel* page : {m_original_page, m_guide_page, m_progress_page}) {
+            if (!page || !page->IsShown()) continue;
+            page->Layout();
+            static_cast<wxScrolledWindow*>(page)->FitInside();
+        }
+        m_layout_refresh_pending = false;
+    });
 }
 
 void AMSDryCtrWin::on_dpi_changed(const wxRect &suggested_rect)
@@ -1073,6 +1084,7 @@ void AMSDryCtrWin::msw_rescale()
 
     Fit();
     Layout();
+    queue_layout_refresh();
     Refresh();
 }
 
@@ -1814,6 +1826,7 @@ void AMSDryCtrWin::update(std::shared_ptr<DevFilaSystem> fila_system, MachineObj
 
     check_values_changed(dev_ams);
 
+    queue_layout_refresh();
     Layout();
     Refresh();
 }

@@ -33,7 +33,7 @@ static const ImVec2 ONE_LAYER_BUTTON_SIZE  = ImVec2(28.0f, 28.0f);
 
 static ImU32 preview_color(MD3::Role role, bool dark, unsigned char alpha = 255)
 {
-    const wxColour &color = MD3::resolve(role, dark, MD3::ColorScheme::Brand);
+    const wxColour &color = MD3::resolve(role, dark, MD3::ColorScheme::Preview);
     return IM_COL32(color.Red(), color.Green(), color.Blue(), alpha);
 }
 

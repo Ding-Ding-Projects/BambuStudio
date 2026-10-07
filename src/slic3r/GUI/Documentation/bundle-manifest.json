@@ -50,7 +50,7 @@
     {
       "route": "automation/README.md",
       "title": "Automation",
-      "sha256": "da45c812b7b508243aab020d8ba8ad01358e593d55ded7f5101138dd1bdae56a"
+      "sha256": "ffa92693ad8af63fdcd1c31d40f18464ca688b04e71499ed69e2eb9eeb868431"
     },
     {
       "route": "automation/hosted-display-scale-probe.md",
@@ -58,9 +58,19 @@
       "sha256": "7bbe91946c3ac28a7962d8523062a72a416f2cd13691023a8c619a4fd0e71f78"
     },
     {
+      "route": "automation/hosted-display-scale-probe.yue_HK.md",
+      "title": "託管顯示縮放可行性探查",
+      "sha256": "705cb0bd647abd9bb768e4a914c4c69b4350a0b28139f42f1181efdf0748ae87"
+    },
+    {
       "route": "automation/hosted-gui-recipient-recovery.md",
       "title": "Versioned hosted evidence recipient recovery",
       "sha256": "27958fe703de154fff589812d90a8aed0fca121198d0c03503595f04e0814048"
+    },
+    {
+      "route": "automation/hosted-gui-recipient-recovery.yue_HK.md",
+      "title": "具版本嘅託管證據收件者復原",
+      "sha256": "4f22cdaf153e6a0d59546a4fa8c52afea1d498418d8e2efa7ef260eac890efa2"
     },
     {
       "route": "automation/installer-first-run-diagnostic.md",
@@ -78,14 +88,69 @@
       "sha256": "7ecbeb5dac9357adef0755669711ae1ae4c072147ed68de8a180fa864ad55bd1"
     },
     {
+      "route": "automation/integration-readiness.yue_HK.md",
+      "title": "預設分支推進後嘅整合準備狀態",
+      "sha256": "f57d32c42ef1c1055fc93e4fb296e05eb70a40e4b8ef0520e7c5a635f87a7906"
+    },
+    {
+      "route": "automation/local-native-review.md",
+      "title": "Local initial-shell review",
+      "sha256": "80497823bdec7c066b9ade6520421ad118a069b75f1a2a52b5917858367c6492"
+    },
+    {
+      "route": "automation/local-native-review.yue_HK.md",
+      "title": "本機初始介面檢查",
+      "sha256": "fbf1a1cb77299c6156d91df88fbbe2d94ac9c26243c969b985646be9fa092b01"
+    },
+    {
       "route": "automation/mcp-and-cli.md",
       "title": "MCP and command-line automation",
       "sha256": "1a01bf95c2abcc4f5b722aad264224d4c0ba42fc3b064411ea780a6e0b9d7f5e"
     },
     {
+      "route": "automation/mcp-and-cli.yue_HK.md",
+      "title": "MCP 同命令列自動化",
+      "sha256": "1aed83c9489661286dc674131e92e6384b809381b6dcc67f9fe783873234a14a"
+    },
+    {
+      "route": "automation/native-interaction-plan.md",
+      "title": "Offline native interaction plan",
+      "sha256": "7e31bcdc43dcfe462fe50e85c826526bb0e147eeac6e2e7d5e177dd137c6af5f"
+    },
+    {
+      "route": "automation/native-interaction-plan.yue_HK.md",
+      "title": "離線原生互動計劃",
+      "sha256": "3dac6acca1aea0030091f44be425763d4aa017ca36331eb883aa9cd92a97c45d"
+    },
+    {
       "route": "automation/native-interface-verification.md",
       "title": "Hosted native interface verification",
-      "sha256": "01a768f4d6e42fc918f4727e41306cb6acb09788aebc21d968ae25155e71bcad"
+      "sha256": "d271b58851592d07e759dcd315c1b8a8dff3b5d0e7ddb6943cddf6b72146aba4"
+    },
+    {
+      "route": "automation/native-interface-verification.yue_HK.md",
+      "title": "託管原生介面驗證",
+      "sha256": "bada0317976611c415450ea06962b7d6dc4190575202dd7dbb08bcfae8a63b2a"
+    },
+    {
+      "route": "automation/native-review-ledger.md",
+      "title": "Private native interaction ledger",
+      "sha256": "a4c3ee7da33329b5f4ded9421cd5d4b96c049c9ad1c8f226e9315f5029f724d5"
+    },
+    {
+      "route": "automation/native-review-ledger.yue_HK.md",
+      "title": "私人原生操作紀錄",
+      "sha256": "7ee44566b5c63ff0be69b9c6ebe165563e951201791a28f7c35e2648e9485dfd"
+    },
+    {
+      "route": "automation/native-review-tuples.md",
+      "title": "Native review tuple inventory",
+      "sha256": "ad8324d31838ebf706395eb7e0dbefcac1361fe56862a4606ae3d9540badbffb"
+    },
+    {
+      "route": "automation/native-review-tuples.yue_HK.md",
+      "title": "原生檢查組合清單",
+      "sha256": "f9fe6137111ae88dca811a7f9b4a6dfc79b5df0d70e32bb41624fb78628a45f6"
     },
     {
       "route": "camera/README.md",
@@ -98,9 +163,19 @@
       "sha256": "2c74da131aad43d3bbae8c87f96cb7dad0b1562cb46877bcbfdc9d51c39286de"
     },
     {
+      "route": "camera/continuous-liveview.yue_HK.md",
+      "title": "持續即時影像同攝影機視圖控制",
+      "sha256": "6a4eb79f7f7e9a55bec56079eb034a4972d2017c38b0ac055ebfa2e121a2e330"
+    },
+    {
       "route": "canvas-menu-search.md",
       "title": "Canvas menu search",
       "sha256": "cedf43e72584bac60aa486a2223628914017b2df479474c9dd56a923f763e67a"
+    },
+    {
+      "route": "canvas-menu-search.yue_HK.md",
+      "title": "畫布選單搜尋",
+      "sha256": "0853f20ce8bc4e6c9d480abe57c9b0c541de9bb88708473d0064c63786e24cda"
     },
     {
       "route": "changelog/README.md",
@@ -123,6 +198,11 @@
       "sha256": "13f17ca7e8c47b78cf4aab27025b85e12aaadf79cc1c6554af89f661cb1cb3aa"
     },
     {
+      "route": "converter/pdf-engine.yue_HK.md",
+      "title": "隨附 PDF 引擎",
+      "sha256": "61179b131593c451527fcc7c94355e12e76252a42f60dcc69bb3636d5b9e51e6"
+    },
+    {
       "route": "converter/pdf.md",
       "title": "Local PDF tools",
       "sha256": "a2989437bd42b5ef4048b8eed8077089da566e8758feb81171f2b1af1a709834"
@@ -130,12 +210,62 @@
     {
       "route": "design-system/README.md",
       "title": "Design system",
-      "sha256": "dc3fd47a3b1f70910bbcff3dd703672f8cf365b16e1287f008c67eca8ff64201"
+      "sha256": "55deec9a01ee953e42464d96cbc2d5c179ea3b5f6a03d182306864f50c621993"
     },
     {
       "route": "design-system/README.yue_HK.md",
       "title": "設計系統",
-      "sha256": "3ebb9ba56f733122fa250318155eeb45d0e23a3eeb5c0f8e48aa5085ea19198d"
+      "sha256": "6b3af7c87772058f4e8f81cd4a96bfb78f02241f881d01ecaabbba32b13ce8e5"
+    },
+    {
+      "route": "design-system/ams-drying-atlas.md",
+      "title": "AMS drying controls: Studio Atlas",
+      "sha256": "6b684ced10ed6cc41ac3f6cf1cba1939bdcabf3480b74828437e6803736a6952"
+    },
+    {
+      "route": "design-system/ams-drying-atlas.yue_HK.md",
+      "title": "AMS 烘乾控制：Studio Atlas",
+      "sha256": "cda21b60da40a20ebe0fc9c9e84da059540d82fdfa3c1fede8a6929f3fa5b68e"
+    },
+    {
+      "route": "design-system/appearance-property-pages-atlas.md",
+      "title": "Studio Atlas appearance property pages",
+      "sha256": "55c882e96247d9f52e91283c1b60fd056536e6a1a31e19e21f8c5958f253a8dc"
+    },
+    {
+      "route": "design-system/appearance-property-pages-atlas.yue_HK.md",
+      "title": "Studio Atlas 外觀屬性分頁",
+      "sha256": "a8134952eb070e7f26f0951ec393f6435368007b074ca612aab3d086a40c38f4"
+    },
+    {
+      "route": "design-system/atlas-scroll-owner-adoption.md",
+      "title": "Atlas scrollbar owners in workflow and bulk callers",
+      "sha256": "b7ab7b3dd5c7a88a78282171920197295c526fe4da298e17f6ad3759b7b27a0a"
+    },
+    {
+      "route": "design-system/atlas-scroll-owner-adoption.yue_HK.md",
+      "title": "工作流程同批次操作呼叫端嘅 Atlas 捲軸擁有者",
+      "sha256": "89d38e8eb3233427a846458c279decfb63491a9ef57adefb9b41750ad1648bbe"
+    },
+    {
+      "route": "design-system/calibration-children-atlas.md",
+      "title": "Studio Atlas calibration child surfaces",
+      "sha256": "f8a3163d0be426aa6b2707a94263df73d8e1dda2bea781512041c2141effdba1"
+    },
+    {
+      "route": "design-system/calibration-children-atlas.yue_HK.md",
+      "title": "Studio Atlas 校準子頁面",
+      "sha256": "b3f7a245408023ed25580134fd4eefeda41597b8a76733bab16d069ce66bc41b"
+    },
+    {
+      "route": "design-system/calibration-viewport-layout.md",
+      "title": "Calibration viewport layout",
+      "sha256": "e2c3de0eae066010e35d905be6301e1566976feca6a890c75f79d9fa2ef8dcdc"
+    },
+    {
+      "route": "design-system/calibration-viewport-layout.yue_HK.md",
+      "title": "校準視窗佈局",
+      "sha256": "16ee6d0ccf25c0420c523813714ab320767908df0350f14e401f5532d1a6aba8"
     },
     {
       "route": "design-system/clipping-inventory.md",
@@ -145,7 +275,17 @@
     {
       "route": "design-system/clipping-inventory.yue_HK.md",
       "title": "版面裁剪紀錄簿",
-      "sha256": "702f9bb068201e2dbc31f61c2f1a379c6db8bc5ab7a451e67683bfb084ff4407"
+      "sha256": "c72e28350403f5597b82c443f54d527ff26c04011bb073759f979d75da288ece"
+    },
+    {
+      "route": "design-system/confirmations-atlas.md",
+      "title": "Studio Atlas confirmations and general message dialogs",
+      "sha256": "0893a94e463002a36d551ec0f1702cb9dc6ace9679c44ba712e596240311f038"
+    },
+    {
+      "route": "design-system/confirmations-atlas.yue_HK.md",
+      "title": "Studio Atlas 確認介面同一般訊息對話框",
+      "sha256": "5fcce79ae924e4b3c343968992e8cb8ea84f653de9c9cd1dca38c8df05ee7278"
     },
     {
       "route": "design-system/context-menus.md",
@@ -155,7 +295,17 @@
     {
       "route": "design-system/context-menus.yue_HK.md",
       "title": "右鍵選單",
-      "sha256": "074d0613be43b76483bd2599c6ae41f1b36767b54c2a44e979199a733604d3f9"
+      "sha256": "cb80860e03b2b49219cfb824e115019dd18e1fd33f18f2f0e6f7e4389c454d51"
+    },
+    {
+      "route": "design-system/device-popups-atlas.md",
+      "title": "Studio Atlas device popups",
+      "sha256": "fb95512c4d9ed4e6455b931f06607c7882f335b565c438f3d4386f5cafe9eb24"
+    },
+    {
+      "route": "design-system/device-popups-atlas.yue_HK.md",
+      "title": "Studio Atlas 裝置彈出介面",
+      "sha256": "8475b31685633737940f315ad1c717f1d8d40cc4a1f990ee1e78872228a68a14"
     },
     {
       "route": "design-system/dialogs-and-pickers.md",
@@ -168,6 +318,26 @@
       "sha256": "769f984110348edeb9e096281caa83aef97fbde47ca0fb24be09cb3827aabc98"
     },
     {
+      "route": "design-system/embedded-composition-atlas.md",
+      "title": "Studio Atlas embedded composition",
+      "sha256": "48c15500aebd2e8840d0580d65f59f9673f6e927152ee46bb72c9129f937c7d5"
+    },
+    {
+      "route": "design-system/embedded-composition-atlas.yue_HK.md",
+      "title": "Studio Atlas 內嵌頁面組合",
+      "sha256": "4bd38dd87a155375f0a27ca9fec932c227514795aa8d3449896f6f2f817de80d"
+    },
+    {
+      "route": "design-system/embedded-studio-atlas.md",
+      "title": "Embedded Studio Atlas styling",
+      "sha256": "979b0b6f8e8ef427b3ff6d574b1a19301f2a1faee77557dda5c349ccd84f3bbc"
+    },
+    {
+      "route": "design-system/embedded-studio-atlas.yue_HK.md",
+      "title": "內嵌 Studio Atlas 樣式",
+      "sha256": "975983dc8433909d1a01ea375114433edc4a040412de38a40009fec248347e6e"
+    },
+    {
       "route": "design-system/generated-visual-showcase.md",
       "title": "Generated visual showcase",
       "sha256": "dd04cdb745aa7644eac12f85740067a2dbeeb6be9d793116b74d262fcc0ebdfd"
@@ -178,6 +348,16 @@
       "sha256": "1902a694d2fa13fd65611b67e19bc2c456ee1c666fe19653fee94fec658942a9"
     },
     {
+      "route": "design-system/gizmo-inspector-framing-atlas.md",
+      "title": "Studio Atlas common floating inspector framing",
+      "sha256": "ffb1391af925e82017413f836bfcab72e1900b53c08b7b734f8f02e5e0f45891"
+    },
+    {
+      "route": "design-system/gizmo-inspector-framing-atlas.yue_HK.md",
+      "title": "Studio Atlas 共用浮動檢查面板框架",
+      "sha256": "076a4aecba216424c902afbdfb9826878fba9d0e307330a58217d9169d31c67e"
+    },
+    {
       "route": "design-system/gizmo-rail-svg-icons-completion.md",
       "title": "Gizmo rail composite SVG completion",
       "sha256": "f9d6fdd81848836ddec1cc8a498032cffc84ab381ebeb8cd731cb2109853b17b"
@@ -186,6 +366,16 @@
       "route": "design-system/gizmo-rail-svg-icons-completion.yue_HK.md",
       "title": "吉茲摩軌複合 SVG 完成",
       "sha256": "ec4e7c1b0be520b684d90d89ab5394a6c45a026fbe9bd7ab3bdb6955fd12b614"
+    },
+    {
+      "route": "design-system/humidity-details-atlas.md",
+      "title": "Studio Atlas humidity detail surfaces",
+      "sha256": "15cca611a795ac5600c55fc96210122409d7a9515ef27f27fa9c191f98bb3321"
+    },
+    {
+      "route": "design-system/humidity-details-atlas.yue_HK.md",
+      "title": "Studio Atlas 濕度詳情",
+      "sha256": "2193d8799be96abe7a25cf260d95dd2b5c44b8e9a059acce7af6b876eef18652"
     },
     {
       "route": "design-system/kit-widgets-2026-09.md",
@@ -208,6 +398,16 @@
       "sha256": "12d255015bbfb69cfba686a2fe2e7ed128754bc1c7c2e4eb5e2ea76db3a1a3e2"
     },
     {
+      "route": "design-system/live-notifications-atlas.md",
+      "title": "Studio Atlas live notification presentation",
+      "sha256": "15affaf9857f295c131e791c7cca42d4338c59c822ad4f3929c1b0af84097a72"
+    },
+    {
+      "route": "design-system/live-notifications-atlas.yue_HK.md",
+      "title": "Studio Atlas 即時通知外觀",
+      "sha256": "671fae72dd2498a27914655a122eca8a6fcc472d66bfb63c5d34e973c0d02808"
+    },
+    {
       "route": "design-system/md3-design-system.md",
       "title": "Vendored Material Design 3 design system",
       "sha256": "11a549b7fb27e84730eef706d560058c9758e984d5a74152dbe00ea1d03f7b95"
@@ -220,12 +420,22 @@
     {
       "route": "design-system/md3-parity-register.md",
       "title": "MD3 parity register",
-      "sha256": "a208cc7c0f547cc918510c9d6011c9865c1b2f97147631910b3f6817b834e68c"
+      "sha256": "1e0d0b842c0682f1973eaab4c6624e7c219bf2da25572e07ba2beb4b71fbe899"
     },
     {
       "route": "design-system/md3-parity-register.yue_HK.md",
       "title": "MD3 統一登記冊",
-      "sha256": "21459af17f1965b71127348f5f3d6ac886b6ddcabbd8b465f8fe8d062b0988e2"
+      "sha256": "66b1d543dbe8f540cb209811fcf4378451edd0423467ce5999b56cb406c10fc3"
+    },
+    {
+      "route": "design-system/monitor-atlas.md",
+      "title": "Studio Atlas native monitor surfaces",
+      "sha256": "7e1c1fc0df4b76da44529ee8465e529c741b2f23337993e747e3ef7abfb3e04a"
+    },
+    {
+      "route": "design-system/monitor-atlas.yue_HK.md",
+      "title": "Studio Atlas 原生監察介面",
+      "sha256": "5cf47fe37238d8ac1a7d5c67b16216d6f439eba224b28cab6655a3ff9b75ef93"
     },
     {
       "route": "design-system/native-controls.md",
@@ -235,12 +445,147 @@
     {
       "route": "design-system/native-controls.yue_HK.md",
       "title": "套件上嘅原生控件",
-      "sha256": "18d4df12be99d76c778c96c382747dcda6b53921085f30d643438adddc83725b"
+      "sha256": "778082bdab6e43ca7eddffbad349901fe79544e32ad92d37f8df4ba0d7573868"
     },
     {
       "route": "design-system/native-interface-audit-2026-10-02.md",
       "title": "Native interface audit and verification register",
       "sha256": "f4fea981478e272e1d82abc6868c88234351e3d33f92df8fda1b9f48d31bd275"
+    },
+    {
+      "route": "design-system/native-interface-audit-2026-10-02.yue_HK.md",
+      "title": "原生介面審查同驗證登記",
+      "sha256": "bd5d5445b5bd810596ef52b1f3da71f5d399a8fef5ba741d3110bb714c15e1c6"
+    },
+    {
+      "route": "design-system/native-preferences-setup-atlas.md",
+      "title": "Studio Atlas: project, preferences and setup composition",
+      "sha256": "98d4b508bc229bcd11b115d8d607420fda0a2b2bf663feb57e2c7de40434ef69"
+    },
+    {
+      "route": "design-system/native-preferences-setup-atlas.yue_HK.md",
+      "title": "Studio Atlas 項目、偏好設定同設定流程",
+      "sha256": "aec844bfb7fbbb322cc9928b04ddadc0247902cd9773d5baefb2653b50f64845"
+    },
+    {
+      "route": "design-system/native-workflow-navigation.md",
+      "title": "Native workflow navigation",
+      "sha256": "3bb0cfe48d742f42a87bcf504d447643888d1f1887375dd79851de4d58fcdf04"
+    },
+    {
+      "route": "design-system/native-workflow-navigation.yue_HK.md",
+      "title": "原生工作流程導航",
+      "sha256": "cd761fb3ff7085a773fddbb4f4c352ee9be01b4003d2ddf6e72e2fe64be59d6e"
+    },
+    {
+      "route": "design-system/nozzle-rack-atlas.md",
+      "title": "Studio Atlas nozzle rack and hotend details",
+      "sha256": "a8163eb28f59ef1b7cef4073a893be33a950a585f9e0b83988f14fc4bf8f65e8"
+    },
+    {
+      "route": "design-system/nozzle-rack-atlas.yue_HK.md",
+      "title": "Studio Atlas 噴嘴架與熱端詳情",
+      "sha256": "255d596165742bf59e267d50041455076e738ff1d0a04e25f45d5f08a57b240b"
+    },
+    {
+      "route": "design-system/overlays-atlas.md",
+      "title": "Studio Atlas readers and overlays",
+      "sha256": "81cde911a0416e034fd72b1df9b8fb4e7c826ac6ff7d80d7381630ccbc2ffae6"
+    },
+    {
+      "route": "design-system/overlays-atlas.yue_HK.md",
+      "title": "Studio Atlas 閱讀器同覆蓋介面",
+      "sha256": "aac6e242804922b975f60671b0b8561bff6f45215e96467a3e5b4b21b403e5e8"
+    },
+    {
+      "route": "design-system/prepare-inspector-atlas.md",
+      "title": "Prepare inspector and list presentation",
+      "sha256": "124f65bc9f449ec72ce128c11cc505587f2c21e424412a7ad50d626f8d34374c"
+    },
+    {
+      "route": "design-system/prepare-inspector-atlas.yue_HK.md",
+      "title": "Prepare 檢查器同清單外觀",
+      "sha256": "8e853a894e42d1a0de895c1237c4b6d3fe9a4b4299d9ed6c6533a1eadcf372fe"
+    },
+    {
+      "route": "design-system/reader-details-atlas.md",
+      "title": "Studio Atlas regex diagnostics and export details",
+      "sha256": "5c71744595347eb1c28620b3d8d85f1e38939d14e0ed9ead46494e38049189cc"
+    },
+    {
+      "route": "design-system/reader-details-atlas.yue_HK.md",
+      "title": "Studio Atlas 正則診斷同匯出詳情",
+      "sha256": "5e90e601134ad97c6081b096460c6ad180c5d78d5cc45d7ec24b3c5aa5ec971d"
+    },
+    {
+      "route": "design-system/renderer-atlas.md",
+      "title": "Studio Atlas renderer surfaces",
+      "sha256": "a846840b6a6a6aa56174730d0414ed26bad82bfca425808a707655083898f885"
+    },
+    {
+      "route": "design-system/renderer-atlas.yue_HK.md",
+      "title": "Studio Atlas 渲染器畫面",
+      "sha256": "6266a666b0e497c2755a295cb34d95582372f6b85793cf16682700a54951cd23"
+    },
+    {
+      "route": "design-system/setup-index-atlas.md",
+      "title": "Studio Atlas setup index",
+      "sha256": "5a8cfe23bae57a2bf755adbc29702fcf244c3d0bfc9353aebb085dd38389a5fd"
+    },
+    {
+      "route": "design-system/setup-index-atlas.yue_HK.md",
+      "title": "Studio Atlas 設定索引",
+      "sha256": "4f95135aac3dc99c27649b31ff5c36c64dbf690c12dbfc3422d07ff252ecaf71"
+    },
+    {
+      "route": "design-system/studio-atlas-fields-and-presets.md",
+      "title": "Studio Atlas fields and preset controls",
+      "sha256": "6c8dc6a4e1f1eabbfe110bca4c7609f806983d306b6af99a25c8d5a43fb62e20"
+    },
+    {
+      "route": "design-system/studio-atlas-fields-and-presets.yue_HK.md",
+      "title": "Studio Atlas 欄位同預設控制",
+      "sha256": "a7d2b7b210c3f75edab61f68fc490a455c9273d80746486bad88551778e53b7a"
+    },
+    {
+      "route": "design-system/studio-atlas-listbox.md",
+      "title": "Studio Atlas shared list rows",
+      "sha256": "e6b5521b8afdc48f1af1971713d88d31ff1a4d356e51bbfd4a356454ee19296f"
+    },
+    {
+      "route": "design-system/studio-atlas-listbox.yue_HK.md",
+      "title": "Studio Atlas 共用清單列",
+      "sha256": "8940c8b5e9c654e34fb06ff98a35c301ff37c9d46a6e6b26e460246df16b9afc"
+    },
+    {
+      "route": "design-system/studio-atlas-selection-controls.md",
+      "title": "Studio Atlas numeric and selection controls",
+      "sha256": "82b93f8a2ba4e5ab230f4cec26f655a2d2b1962c772ce34e3f6d7763824bfddd"
+    },
+    {
+      "route": "design-system/studio-atlas-selection-controls.yue_HK.md",
+      "title": "Studio Atlas 數值及選擇控制項",
+      "sha256": "9fcdd465e7e6c7f039a960e3ab460a6838fff54e3e16cd5ecbd6218f83d45329"
+    },
+    {
+      "route": "design-system/studio-atlas-shared-controls.md",
+      "title": "Studio Atlas shared control anatomy",
+      "sha256": "b80f4d1851599099f61df69822d30da389b3b17ee2943ca6e70463cc16e51f7f"
+    },
+    {
+      "route": "design-system/studio-atlas-shared-controls.yue_HK.md",
+      "title": "Studio Atlas 共用控件結構",
+      "sha256": "3d0fcaca5676fcaa1fb990ceabd0c128b55581e78b854542597fe7ee5f416c24"
+    },
+    {
+      "route": "design-system/studio-atlas-shell-and-tabs.md",
+      "title": "Studio Atlas shell and tab callers",
+      "sha256": "5162eabbc50cfe10193f5580305a93068e5a0c569ea8ebc43f5a17a0c79f9fa8"
+    },
+    {
+      "route": "design-system/studio-atlas-shell-and-tabs.yue_HK.md",
+      "title": "Studio Atlas 外框同分頁呼叫端",
+      "sha256": "e19c243d86abe0c2cb7cc4f860dcfe7d01f05ac7032d062c1ff08271a9ee19b2"
     },
     {
       "route": "design-system/themed-surface-colors.md",
@@ -261,6 +606,26 @@
       "route": "design-system/tooltips.yue_HK.md",
       "title": "工具提示",
       "sha256": "e9a674859e9541e732bca0c516e5b381404005ffa3681e9ab5b1787929fa8825"
+    },
+    {
+      "route": "design-system/transform-inspector-atlas.md",
+      "title": "Studio Atlas transform inspector",
+      "sha256": "a68b703886fccb8bf1c7451166422f888941b457ba4d0aa659f90eeb895e97ba"
+    },
+    {
+      "route": "design-system/transform-inspector-atlas.yue_HK.md",
+      "title": "Studio Atlas 變換檢查面板",
+      "sha256": "90d0b86ed76a6da40d0add5e5b583e8eb2f06d5fc5d074d449e4a923dfea70ef"
+    },
+    {
+      "route": "design-system/workspace-atlas.md",
+      "title": "Studio Atlas workspace composition",
+      "sha256": "436566c860a78c8adccf261b815ef442778861f89ac2f3ca3ee9cea71a9a3e7a"
+    },
+    {
+      "route": "design-system/workspace-atlas.yue_HK.md",
+      "title": "Studio Atlas 工作區組合",
+      "sha256": "dc8000d4777131c4ef581a817639f33c4b3bac136d854db57a8307ec87d56ad7"
     },
     {
       "route": "device/README.md",
@@ -315,7 +680,7 @@
     {
       "route": "gcode-preview/preview-overlays.yue_HK.md",
       "title": "預覽浮層：畫布邊一忽歸邊個",
-      "sha256": "38352b1f77357cdda55a99252423542b22edbf2edbb0bf49a37e8327e361946d"
+      "sha256": "1078383067e7631403a24c6669da08e2da71e36e322ed4dad2d37120ab40dffc"
     },
     {
       "route": "gcode-preview/toolpath-legend.md",
@@ -455,7 +820,7 @@
     {
       "route": "pages/dim-sum-surprise.yue_HK.md",
       "title": "點心驚喜",
-      "sha256": "59d4cde7f2517a10045eb66f531dc153a19e15f8d75844134b8c2d1d5a771d5a"
+      "sha256": "4777f8169aa81b00b95a00c2de382f662987d81ee220ae5b7d56f182df0bd778"
     },
     {
       "route": "pages/event-narration.md",
@@ -600,7 +965,7 @@
     {
       "route": "prepare/native-lifecycle.yue_HK.md",
       "title": "原生選單同打印機選擇嘅生命週期",
-      "sha256": "982f705626137359526692b469a2dd2b2db26c19b29387d57d3ed90bcce5b3ef"
+      "sha256": "2a2015da8834769dee7cf9db7bd2d13d986e359b07e3ce93223ca2632246828c"
     },
     {
       "route": "prepare/process-settings-full-tree.md",
@@ -630,7 +995,7 @@
     {
       "route": "prepare/scroll-ownership.yue_HK.md",
       "title": "準備設定捲動",
-      "sha256": "c89c063d686f7ac8399dcf0d7593c6969480097d0814d817c7003dd51e273534"
+      "sha256": "49f8dfb0606c0d7ace13b97b309a2c9f43ef159cdb03c9d37569596b3ff04110"
     },
     {
       "route": "prepare/sidebar-tabs.md",
@@ -646,6 +1011,11 @@
       "route": "preview-constrained-layout.md",
       "title": "Preview layout in constrained space",
       "sha256": "4967beaad211c136851ea36e04a5116638fd8d5e1bf37a0ab48b745896835096"
+    },
+    {
+      "route": "preview-constrained-layout.yue_HK.md",
+      "title": "受限空間內嘅 Preview 佈局",
+      "sha256": "6708d43d28e54465f2268bfa2df73ce9358c0b4271925bd8c971486fdfc3f204"
     },
     {
       "route": "releases/README.md",
@@ -720,12 +1090,12 @@
     {
       "route": "releases/windows-release-supply-chain.md",
       "title": "Windows CI and release supply chain",
-      "sha256": "2b0d0013c957af19757ef0dcd1e668db54a5b8184999d5ad02b80c601e95da89"
+      "sha256": "da329019b2ccd790331fdb70b294d28ea0c95ea6c6cb43a10943bc940733e754"
     },
     {
       "route": "releases/windows-release-supply-chain.yue_HK.md",
       "title": "Windows CI 同埋 release 供應鏈",
-      "sha256": "045d8f44854146a4684f09514ed777a75a0b2cc09fd8d3b47ee1ba922d565e9a"
+      "sha256": "6938f716879a679f0add015ab580577fd80fd75e07d23c9dc2099d74a1998ff4"
     },
     {
       "route": "scheduled-settings/README.md",
@@ -736,6 +1106,11 @@
       "route": "settings-drafts.md",
       "title": "Independent settings drafts",
       "sha256": "6202756677cc719b4951fa49438f5f4a86e7beb49703b43067bf06387ac50266"
+    },
+    {
+      "route": "settings-drafts.yue_HK.md",
+      "title": "獨立設定草稿",
+      "sha256": "d05a2780d29b6cbff5e60144af7c3482d1662488a5b3e9f3c5badcccf8ca9b29"
     },
     {
       "route": "status-hub/README.md",
@@ -778,6 +1153,11 @@
       "sha256": "09b7baf9413d452cb2bbb3a22601505281467a347f13d69eb37fc42d75fbfe3b"
     },
     {
+      "route": "windows/ams-reading-state.yue_HK.md",
+      "title": "每個托盤嘅讀取指示",
+      "sha256": "198be0fe014509e87c6e3533a2114d714b8ed1d184a55774dbe01e1329fbbd60"
+    },
+    {
       "route": "windows/app-updates.md",
       "title": "App updates from this fork's releases",
       "sha256": "af129e1f6281762017d58fa6aaad874fcb5b12d58cfd6cc33843466b6af677b5"
@@ -813,9 +1193,19 @@
       "sha256": "14db6b3a888b2b8df6750998ff7cb5ff2ff48e9a0f61dc3fd33d581ed33ccccc"
     },
     {
+      "route": "windows/assembly-export-motion.yue_HK.md",
+      "title": "組裝匯出進度進場效果",
+      "sha256": "6dc6444c2fa45376e0edff1fafcf91eb40dc21f6465785f3184510008c878c65"
+    },
+    {
       "route": "windows/async-stl-replacement-proposal.md",
       "title": "Asynchronous STL replacement proposal",
       "sha256": "2d4d26934152b830feccd762718c44758fa9bf3957b1ce7816d9362a29dd1c80"
+    },
+    {
+      "route": "windows/async-stl-replacement-proposal.yue_HK.md",
+      "title": "非同步 STL 替換提案",
+      "sha256": "691876876265da3ee9e7dcb31c2472e1cff063ca05cf5b5a15c68136b3448883"
     },
     {
       "route": "windows/bulk-filament-actions.md",
@@ -841,6 +1231,11 @@
       "route": "windows/choice-motion.md",
       "title": "Checkbox and slider motion",
       "sha256": "5510e2d3f00703fd3857d8aa3876119ee261aed5a3c7a07767a2d0b160dad36d"
+    },
+    {
+      "route": "windows/choice-motion.yue_HK.md",
+      "title": "核取方塊同滑桿動態效果",
+      "sha256": "fe39bc543ce83d07a4b59f36f97841086e3a317b79bbbfc0ac97dbd3f703e165"
     },
     {
       "route": "windows/cloud-web-recovery.md",
@@ -878,6 +1273,11 @@
       "sha256": "1c68330d6208328cd26e7a3832a28de0e63160cb992323724719a3eac0b57d00"
     },
     {
+      "route": "windows/content-motion.yue_HK.md",
+      "title": "內容轉場擁有權同待完成覆蓋",
+      "sha256": "f75fd6ed3b806ea379cea097307577d84cf80a7313cfce3a8cab7f349b87243a"
+    },
+    {
       "route": "windows/dim-sum-surprise.md",
       "title": "Dim sum startup surprise",
       "sha256": "b8e4f35658e2f46e4086c9e285caadc4955662b5468756b83b0bbc47bd81008e"
@@ -885,12 +1285,17 @@
     {
       "route": "windows/dim-sum-surprise.yue_HK.md",
       "title": "點心啟動驚喜",
-      "sha256": "8512000fffd908174eb7091695205f1a7ac7dfa3f3ca108a0974033d22ab478f"
+      "sha256": "85fe8cd851e1d9669536071f0e77e267475dd4e5c9b3e2042fc042384788f398"
     },
     {
       "route": "windows/disclosure-motion.md",
       "title": "Disclosure state feedback",
       "sha256": "dc7aeeab8d0bcd9b6bd28d1badc2357c0872400715c356ce2a2ac65822411783"
+    },
+    {
+      "route": "windows/disclosure-motion.yue_HK.md",
+      "title": "展開狀態回饋",
+      "sha256": "1bf6e4d415ce10f2fc03bc1f569cbc1b6a8419a3d59f444424558aa3ad448ec2"
     },
     {
       "route": "windows/documentation-browser.md",
@@ -900,7 +1305,7 @@
     {
       "route": "windows/documentation-browser.yue_HK.md",
       "title": "離線文件瀏覽器（F1）",
-      "sha256": "8cce44434f3677826e4596021da2880d24167a2f8ba891361fb77636b7e57756"
+      "sha256": "42a0b4e312e70a6020aa13804c805b0aa353c6df39cd6dff324908fce5d6437a"
     },
     {
       "route": "windows/funny-levels-and-dialog-emojis.md",
@@ -936,6 +1341,11 @@
       "route": "windows/interface-motion.md",
       "title": "Interface motion foundation",
       "sha256": "c4a9aabb3845eeda4813bdb3d60acfd51825a90cc68f5ec6901032517f140f09"
+    },
+    {
+      "route": "windows/interface-motion.yue_HK.md",
+      "title": "介面動態基礎",
+      "sha256": "17dc74f545780c76d10172270d40c2fe91765bd80912284a62bfb03c8d9ebc80"
     },
     {
       "route": "windows/lan-farm-sending.md",
@@ -993,19 +1403,39 @@
       "sha256": "7fbbf6cc626d67d385d2adb6cfb851a325d67a091c301925716376ba809e8405"
     },
     {
+      "route": "windows/menu-interaction-verification.yue_HK.md",
+      "title": "原生選單建構器互動驗證",
+      "sha256": "dc9a4c343f0cf3c526218f016b7b9c56f62cbacd141c7dcbec6d399c4c37886d"
+    },
+    {
       "route": "windows/menu-motion.md",
       "title": "Menu motion",
       "sha256": "03117ed31c7dd3c70c2ee14febd490ad7902c80482640e99ee5c8f052a1ad5c9"
     },
     {
+      "route": "windows/menu-motion.yue_HK.md",
+      "title": "選單動態效果",
+      "sha256": "61bd0f5671eb638907ba3ddfca65f8709dae05e0e93288aa2e7bfa18579ff6ef"
+    },
+    {
       "route": "windows/motion-temporal-capture.md",
       "title": "Restricted temporal window observations",
-      "sha256": "7d8d80e18204451005cbe654938f376421c5d8138ec58175f0e0572fa0b8819e"
+      "sha256": "5aa69caa228d82ff917d1f3026796967c92668c065e9f7cba58ed675a555275c"
+    },
+    {
+      "route": "windows/motion-temporal-capture.yue_HK.md",
+      "title": "受限制時序視窗觀察",
+      "sha256": "93cb88e5b3f56ae04f48813e10cc143e9a1ad4bd5d4cbf05835c83b07a2899eb"
     },
     {
       "route": "windows/motion-verification.md",
       "title": "Native motion lifetime verification",
-      "sha256": "5debff5e46ab44994a26cda4f0f6983439e75be392e279a1b49f76738d916131"
+      "sha256": "91b6c26c50c733a804c58a981e3cb604fe314ecbd44d5efbd0033cd8c98d8bab"
+    },
+    {
+      "route": "windows/motion-verification.yue_HK.md",
+      "title": "原生動態生命週期驗證",
+      "sha256": "9b71275f7aa187fbb55a7c55648843d81eeb33d796ffb81dccc0b3ce52d3de79"
     },
     {
       "route": "windows/native-visual-smoke.md",
@@ -1023,9 +1453,19 @@
       "sha256": "c219e01999c758797bfe487d4dc1f758bd5b547a16168b34958779151be9e10e"
     },
     {
+      "route": "windows/notification-motion.yue_HK.md",
+      "title": "通知同進度動態",
+      "sha256": "5ea23f2c4882d8b05f20866a1a8fcf1d1e4479e9929d876a52597e2fc16b98fb"
+    },
+    {
       "route": "windows/personal-vocabulary.md",
       "title": "Personal vocabulary",
       "sha256": "7fda420aacc18e221da22803e91685fa11beb504f516a621ff6cacab20b092ac"
+    },
+    {
+      "route": "windows/personal-vocabulary.yue_HK.md",
+      "title": "個人詞彙",
+      "sha256": "0a6545543ddeed5c218a847f109fc658ffc359dc21b84f792b7a067d3efe57d3"
     },
     {
       "route": "windows/print-actions.md",
@@ -1035,7 +1475,7 @@
     {
       "route": "windows/print-actions.yue_HK.md",
       "title": "打印盤操作同材料映射",
-      "sha256": "51317d39affa6725aae0d4ec8f93b227c2abe56d046f10ff8bdd60a118580f2f"
+      "sha256": "e4a2102e74651df7681911d892fd38c7ad022e32a431f6cc0d8b17f23be3f513"
     },
     {
       "route": "windows/print-simulation.md",
@@ -1065,7 +1505,7 @@
     {
       "route": "windows/regex-builder.yue_HK.md",
       "title": "正則表達式構建器",
-      "sha256": "ff672ab6eba6472f1e617da4ec91bbf4f3323f8203462a9fed0d8b9512b068fb"
+      "sha256": "3c6dc1ca7c2255e7ab8d81b6ad788959c55bb322c4447a63ae94b8877001c465"
     },
     {
       "route": "windows/release-splash-art.md",
@@ -1091,6 +1531,11 @@
       "route": "windows/scheduled-settings.md",
       "title": "Scheduled settings",
       "sha256": "f90a381c169edf830c0dec7a2d1b54430678aa57c20cccef58c9e7f94a33ae52"
+    },
+    {
+      "route": "windows/scheduled-settings.yue_HK.md",
+      "title": "排程設定",
+      "sha256": "e5c724d5352f78f7c5156f66461fc31527bfa257b71d0ac5c634f6b53fbb01b4"
     },
     {
       "route": "windows/sidebar-search.md",
@@ -1158,9 +1603,19 @@
       "sha256": "f713f0f47f0856706ca91df478a8efdc0ee36c5a33081dacdce1533612a36815"
     },
     {
+      "route": "windows/tooltip-motion.yue_HK.md",
+      "title": "畫布工具提示裝飾動態",
+      "sha256": "9b494c81a82d747f99da8f349f83daae4eee215c469620eb7e9690f47fafb171"
+    },
+    {
       "route": "windows/transient-motion.md",
       "title": "Tooltip and dialog entrance motion",
       "sha256": "c6e80e5322e22541c171e726ce2a5fa003a91af9732b45708b2cd84689de13d0"
+    },
+    {
+      "route": "windows/transient-motion.yue_HK.md",
+      "title": "工具提示同對話框進場動態",
+      "sha256": "ec36de8e84beba9c7d5a36bd7ed65fb9067c7159878b72d5175abcf61cb5ab72"
     },
     {
       "route": "windows/windows-only-platform.md",
@@ -1175,17 +1630,22 @@
     {
       "route": "workspace/README.md",
       "title": "Workspace",
-      "sha256": "be35b6d039e311ffe2f25e0f5037d9af9d00ec07cc2eda880d5718b1b91b92fd"
+      "sha256": "eddcad58c6b7bf46ef9477b05255b25894a34899bc9ddfeca5fedba4c170645a"
     },
     {
       "route": "workspace/README.yue_HK.md",
       "title": "工作區",
-      "sha256": "43b708e517ef3ed0aeefadd6e85ae6b7098b6d6bb4f0f031aacc65b83c1a2304"
+      "sha256": "a6722c53d270edc42b525e52d0c9d65e02a2ee6673d1b1ae467af62ca2073d00"
     },
     {
       "route": "workspace/bulk-actions.md",
       "title": "Bulk actions",
       "sha256": "3c13a7d35cecde8bcf2a627a9bf04e1b5a0ac875f1aff70297401591ee9cdc2e"
+    },
+    {
+      "route": "workspace/bulk-actions.yue_HK.md",
+      "title": "批次操作",
+      "sha256": "311427ad22222efbba2c98750b19309149f6edc575c9cc9561670ea94db7fe6c"
     },
     {
       "route": "workspace/config-profiles-backup.md",
@@ -1195,7 +1655,17 @@
     {
       "route": "workspace/config-profiles-backup.yue_HK.md",
       "title": "設定檔案同完整資料備份",
-      "sha256": "b40a76b55b0e594cab6a003ea25592baa5359bcf38a7db8bfb62be40a72e80ba"
+      "sha256": "09fb1490050e78aab622b9a444e0ab79ad8d1ea89c52a08aab56730d4e10e8cf"
+    },
+    {
+      "route": "workspace/device-name-editor-atlas.md",
+      "title": "Device-name editor presentation",
+      "sha256": "48cd805ac495930f8d2bf936e7e408da07fbe904c12ef99187dbf4c1603d6083"
+    },
+    {
+      "route": "workspace/device-name-editor-atlas.yue_HK.md",
+      "title": "裝置名稱編輯器外觀",
+      "sha256": "6bab311342ddcbd79e8914a0b76fd45ca296a1d2c8360f19932caab753a4328d"
     },
     {
       "route": "workspace/export-everything.md",
@@ -1258,6 +1728,36 @@
       "sha256": "7e3afa6d9b9b6530c5c92cfae89ae1f4a8853eb83b12a5a0d489d1597d1b5e51"
     },
     {
+      "route": "workspace/print-continuations-atlas.md",
+      "title": "Print confirmation and connection continuations",
+      "sha256": "e7f82d815c6b0ad539df18fcd8d910a8e4b17902d383c804ecfc2caf0ddc6801"
+    },
+    {
+      "route": "workspace/print-continuations-atlas.yue_HK.md",
+      "title": "列印確認同連線後續畫面",
+      "sha256": "085160abdb8200405ab84af145da3e1e923e98e26423377e7d1efe048ca35577"
+    },
+    {
+      "route": "workspace/print-preparation.md",
+      "title": "Print preparation and workflow navigation",
+      "sha256": "f05c7ccead60cbcf8d2e0ab3bda997bda92406ec04e5a2dc892c14524c6afcba"
+    },
+    {
+      "route": "workspace/print-preparation.yue_HK.md",
+      "title": "打印準備同工作流程導覽",
+      "sha256": "cfb418882f3a796874fe221f474260c8a38344720c8f6f4d1ac343c88b794361"
+    },
+    {
+      "route": "workspace/print-setup-atlas.md",
+      "title": "Print setup and storage transfer presentation",
+      "sha256": "25358084bb72804c0217e95d1137ef024f4aada447b66f4f13229395f2377dc5"
+    },
+    {
+      "route": "workspace/print-setup-atlas.yue_HK.md",
+      "title": "打印設定同儲存傳送外觀",
+      "sha256": "15d6cb65e5da26c6ee15c52d86c839f41daa45b0bbe8ce1b7958a6618ccf16de"
+    },
+    {
       "route": "workspace/project-tabs.md",
       "title": "Browser-like project tabs",
       "sha256": "b9bb90416eb43b3cd90a53815d84932c7a510681e22ae6d76b4b5792f868bc18"
@@ -1281,6 +1781,11 @@
       "route": "workspace/readable-dates.md",
       "title": "Readable dates",
       "sha256": "1b516af2b3429f47f533968b6fcc07b7c5bc763f292f05e6ed548f509330646f"
+    },
+    {
+      "route": "workspace/readable-dates.yue_HK.md",
+      "title": "易讀日期",
+      "sha256": "49e4fbf911ce1cbb5a330d7ea1d33ed9e0769fc5060424c5e2dde6ae7118c805"
     },
     {
       "route": "workspace/tabbed-settings.md",
@@ -1335,7 +1840,7 @@
       "bytes": 1979
     }
   ],
-  "bundle_sha256": "5d277e5a24c62e0344695af8b8cd92b2cb2d0d18570d91d96bab66cc6053fe12",
+  "bundle_sha256": "6986ebc5ff90c80addb6366ad9cdecb2addc503772cbe3bf38c091872064d75b",
   "unavailable_references": [
     {
       "source": "api/README.md",
@@ -1578,7 +2083,37 @@
       "kind": "link"
     },
     {
+      "source": "automation/hosted-display-scale-probe.yue_HK.md",
+      "target": "https://learn.microsoft.com/en-us/windows/apps/develop/launch/launch-settings",
+      "kind": "link"
+    },
+    {
+      "source": "automation/hosted-display-scale-probe.yue_HK.md",
+      "target": "https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-changedisplaysettingsexa",
+      "kind": "link"
+    },
+    {
+      "source": "automation/hosted-display-scale-probe.yue_HK.md",
+      "target": "https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getdpiforwindow",
+      "kind": "link"
+    },
+    {
+      "source": "automation/hosted-display-scale-probe.yue_HK.md",
+      "target": "https://learn.microsoft.com/en-us/windows/win32/hidpi/high-dpi-desktop-application-development-on-windows",
+      "kind": "link"
+    },
+    {
+      "source": "automation/hosted-display-scale-probe.yue_HK.md",
+      "target": "https://support.microsoft.com/en-gb/accessibility/windows/make-text-and-apps-bigger",
+      "kind": "link"
+    },
+    {
       "source": "automation/integration-readiness.md",
+      "target": "https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37149337544",
+      "kind": "link"
+    },
+    {
+      "source": "automation/integration-readiness.yue_HK.md",
       "target": "https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37149337544",
       "kind": "link"
     },
@@ -1590,6 +2125,26 @@
     {
       "source": "automation/mcp-and-cli.md",
       "target": "https://github.com/Ding-Ding-Projects/BambuStudio/issues/53",
+      "kind": "link"
+    },
+    {
+      "source": "automation/mcp-and-cli.yue_HK.md",
+      "target": "../../../automation/README.md",
+      "kind": "link"
+    },
+    {
+      "source": "automation/mcp-and-cli.yue_HK.md",
+      "target": "https://github.com/Ding-Ding-Projects/BambuStudio/issues/53",
+      "kind": "link"
+    },
+    {
+      "source": "automation/native-interaction-plan.md",
+      "target": "../../../design/workflow-refresh/built-review-queue.md",
+      "kind": "link"
+    },
+    {
+      "source": "automation/native-interaction-plan.yue_HK.md",
+      "target": "../../../design/workflow-refresh/built-review-queue.md",
       "kind": "link"
     },
     {
@@ -1618,7 +2173,47 @@
       "kind": "link"
     },
     {
+      "source": "automation/native-interface-verification.yue_HK.md",
+      "target": "https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37095786787",
+      "kind": "link"
+    },
+    {
+      "source": "automation/native-interface-verification.yue_HK.md",
+      "target": "https://learn.microsoft.com/en-us/windows-hardware/drivers/debugger/initial-breakpoint",
+      "kind": "link"
+    },
+    {
+      "source": "automation/native-interface-verification.yue_HK.md",
+      "target": "https://learn.microsoft.com/en-us/windows-hardware/drivers/debugger/symbol-options",
+      "kind": "link"
+    },
+    {
+      "source": "automation/native-interface-verification.yue_HK.md",
+      "target": "https://learn.microsoft.com/en-us/windows-hardware/drivers/debugger/symbol-path",
+      "kind": "link"
+    },
+    {
+      "source": "automation/native-interface-verification.yue_HK.md",
+      "target": "https://learn.microsoft.com/en-us/windows-hardware/drivers/debuggercmds/-gflag",
+      "kind": "link"
+    },
+    {
+      "source": "automation/native-review-tuples.md",
+      "target": "../../../design/workflow-refresh/built-review-queue.md",
+      "kind": "link"
+    },
+    {
+      "source": "automation/native-review-tuples.yue_HK.md",
+      "target": "../../../design/workflow-refresh/built-review-queue.md",
+      "kind": "link"
+    },
+    {
       "source": "converter/pdf-engine.md",
+      "target": "https://qpdf.readthedocs.io/en/12.4/cli.html",
+      "kind": "link"
+    },
+    {
+      "source": "converter/pdf-engine.yue_HK.md",
       "target": "https://qpdf.readthedocs.io/en/12.4/cli.html",
       "kind": "link"
     },
@@ -1695,6 +2290,21 @@
     {
       "source": "design-system/native-interface-audit-2026-10-02.md",
       "target": "hosted-verification-cb5981a5.json",
+      "kind": "link"
+    },
+    {
+      "source": "design-system/native-interface-audit-2026-10-02.yue_HK.md",
+      "target": "hosted-verification-cb5981a5.json",
+      "kind": "link"
+    },
+    {
+      "source": "design-system/studio-atlas-selection-controls.md",
+      "target": "../../../design/workflow-refresh.md",
+      "kind": "link"
+    },
+    {
+      "source": "design-system/studio-atlas-selection-controls.yue_HK.md",
+      "target": "../../../design/workflow-refresh.md",
       "kind": "link"
     },
     {
@@ -2094,6 +2704,16 @@
     },
     {
       "source": "releases/windows-release-supply-chain.yue_HK.md",
+      "target": "https://docs.github.com/en/actions/how-tos/manage-workflow-runs/re-run-workflows-and-jobs",
+      "kind": "link"
+    },
+    {
+      "source": "releases/windows-release-supply-chain.yue_HK.md",
+      "target": "https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-workflow-concurrency",
+      "kind": "link"
+    },
+    {
+      "source": "releases/windows-release-supply-chain.yue_HK.md",
       "target": "https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36631880242",
       "kind": "link"
     },
@@ -2209,6 +2829,11 @@
     },
     {
       "source": "windows/interface-motion.md",
+      "target": "../../../design/interface-motion.md",
+      "kind": "link"
+    },
+    {
+      "source": "windows/interface-motion.yue_HK.md",
       "target": "../../../design/interface-motion.md",
       "kind": "link"
     },

@@ -1,3 +1,4 @@
+#include "PrepareInspectorLayout.hpp"
 #include "OptionsGroup.hpp"
 #include "ConfigExceptions.hpp"
 #include "Plater.hpp"
@@ -22,6 +23,25 @@
 #include "Widgets/StaticGroup.hpp"
 
 namespace Slic3r { namespace GUI {
+
+namespace {
+void style_inspector_section(wxWindow* heading)
+{
+    if (!heading) return;
+    const auto& metrics = MD3::Metrics::active();
+    heading->SetFont(Label::Head_16);
+    heading->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+    if (auto* line = dynamic_cast<::StaticLine*>(heading)) {
+        line->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
+        line->SetLineColour(StateColor::semantic(MD3::Role::OutlineVariant));
+        line->Rescale();
+        const wxSize measured = line->GetMinSize();
+        line->SetMinSize(wxSize(measured.x, PrepareInspectorLayout::row_height(
+            line->FromDIP(metrics.row_height), measured.y, 0, line->FromDIP(4))));
+    }
+}
+} // namespace
+
 
 // BBS: new layout
 constexpr int titleWidth = 20;
@@ -503,18 +523,18 @@ bool OptionsGroup::activate(std::function<void()> throw_if_canceled/* = [](){}*/
 			// BBS: new layout
 			sizer = new wxStaticBoxSizer(stb, wxVERTICAL);
 			this->stb = stb;
+            style_inspector_section(stb);
 		}
 		else {
 			// BBS: new layout
 			::StaticLine* stl = new ::StaticLine(m_parent, false, _(title), icon);
-            stl->SetFont(Label::Head_14);
-            stl->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+            style_inspector_section(stl);
             sizer = new wxBoxSizer(wxVERTICAL);
             if (title.IsEmpty()) {
                 stl->Hide();
             } else {
 			    sizer->Add(stl, 0, wxEXPAND);
-			    sizer->AddSpacer(8);
+			    m_section_spacing = sizer->AddSpacer(m_parent->FromDIP(MD3::Metrics::active().gap));
             }
 			this->stb = stl;
 		}
@@ -532,7 +552,7 @@ bool OptionsGroup::activate(std::function<void()> throw_if_canceled/* = [](){}*/
 			grow_col++;
 		}
 
-		m_grid_sizer = new wxFlexGridSizer(0, num_columns, 1, 0);
+		m_grid_sizer = new wxFlexGridSizer(0, num_columns, m_parent->FromDIP(MD3::Metrics::active().gap), 0);
 		static_cast<wxFlexGridSizer*>(m_grid_sizer)->SetFlexibleDirection(wxBOTH);
 		static_cast<wxFlexGridSizer*>(m_grid_sizer)->AddGrowableCol(grow_col);
 
@@ -567,6 +587,7 @@ void OptionsGroup::clear(bool destroy_custom_ctrl)
 		return;
 
 	m_grid_sizer = nullptr;
+    m_section_spacing = nullptr;
 	sizer = nullptr;
     stb = nullptr; // BBS: fix pointer
 
@@ -941,12 +962,14 @@ void ConfigOptionsGroup::msw_rescale()
     if (custom_ctrl)
         custom_ctrl->msw_rescale();
 
-    if (auto line = dynamic_cast<::StaticLine*>(stb))
-        line->Rescale();
+    style_inspector_section(stb);
+    if (m_section_spacing) m_section_spacing->SetMinSize(0, m_parent->FromDIP(MD3::Metrics::active().gap));
+    if (m_grid_sizer) m_grid_sizer->SetVGap(m_parent->FromDIP(MD3::Metrics::active().gap));
 }
 
 void ConfigOptionsGroup::sys_color_changed()
 {
+    style_inspector_section(stb);
 #ifdef _WIN32
     if (staticbox && stb) {
         wxGetApp().UpdateAllStaticTextDarkUI(stb);

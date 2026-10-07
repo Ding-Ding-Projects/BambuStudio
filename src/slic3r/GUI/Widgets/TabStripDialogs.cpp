@@ -74,8 +74,21 @@ MD3::Tabs::Matcher MatcherForField(const SearchField *field, bool *pattern_ok)
 
 namespace {
 
-void bind_escape(wxDialog *dlg)
+void update_dialog_spacing(MD3Dialog* dialog)
 {
+    const int gap = dialog->FromDIP(MD3::Metrics::active().gap);
+    for (auto* item : dialog->GetContentSizer()->GetChildren())
+        if (item->GetFlag() & wxTOP) item->SetBorder(gap);
+    dialog->Layout();
+}
+
+void bind_escape(MD3Dialog *dlg)
+{
+    update_dialog_spacing(dlg);
+    dlg->Bind(wxEVT_DPI_CHANGED, [dlg](wxDPIChangedEvent& event) {
+        update_dialog_spacing(dlg);
+        event.Skip();
+    });
     dlg->Bind(wxEVT_CHAR_HOOK, [dlg](wxKeyEvent &e) {
         if (e.GetKeyCode() == WXK_ESCAPE)
             dlg->EndModal(wxID_CANCEL);
@@ -91,6 +104,33 @@ Button *footer_button(MD3Dialog *dlg, const wxString &label, Button::Variant var
     b->SetButtonSize(Button::Size::Medium);
     dlg->AddFooterButton(b);
     return b;
+}
+
+// Existing result lists keep their native selection and scrolling inside an opaque card.
+wxWindow* result_card(MD3Dialog* dialog, ListBox* list, int width_dip, int height_dip)
+{
+    auto* card = new wxNavigationEnabled<StaticBox>();
+    card->Create(dialog, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
+    list->Reparent(card);
+    auto* layout = new wxBoxSizer(wxVERTICAL);
+    layout->Add(list, 1, wxEXPAND | wxALL, card->FromDIP(8));
+    card->SetSizer(layout);
+    auto rescale = [card, list, layout, width_dip, height_dip]() {
+        const int display_index = wxDisplay::GetFromWindow(card);
+        const wxRect work = wxDisplay(display_index == wxNOT_FOUND ? 0u : unsigned(display_index)).GetClientArea();
+        const int height = std::min(card->FromDIP(height_dip), std::max(card->FromDIP(96), work.height / 3));
+        list->SetMinSize({card->FromDIP(width_dip), height});
+        list->Rescale();
+        list->SetFont(MD3::Metrics::active().font_size == 13 ? ::Label::Body_13 : ::Label::Body_14);
+        layout->GetItem(list)->SetBorder(card->FromDIP(8));
+        card->SetCornerRadius(card->FromDIP(MD3::Metrics::active().radius));
+        card->SetBackgroundColor(StateColor(MD3::Light::sc));
+        card->SetBorderColor(StateColor(MD3::Light::outlineVariant));
+        card->Layout();
+    };
+    rescale();
+    card->Bind(wxEVT_DPI_CHANGED, [rescale](wxDPIChangedEvent& event) { rescale(); event.Skip(); });
+    return card;
 }
 
 // Forward list keyboard to the list from the search entry so Down / Up / Enter
@@ -149,7 +189,7 @@ GroupNameDialog::GroupNameDialog(wxWindow *parent, const wxString &title, const 
     m_input->SetName(prompt_text);
     if (auto *tc = m_input->GetTextCtrl())
         tc->SetName(prompt_text);
-    GetContentSizer()->Add(m_input, 0, wxEXPAND | wxTOP, FromDIP(10));
+    GetContentSizer()->Add(m_input, 0, wxEXPAND | wxTOP, FromDIP(MD3::Metrics::active().gap));
     m_input->Bind(wxEVT_TEXT_ENTER, [this](wxCommandEvent &) { EndModal(wxID_OK); });
 
     footer_button(this, _L("Cancel"), Button::Variant::Text)->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { EndModal(wxID_CANCEL); });
@@ -189,11 +229,11 @@ MoveToGroupDialog::MoveToGroupDialog(wxWindow *parent, wxWindow *anchor, const M
 
     m_list = new ListBox(this, wxID_ANY, wxSize(FromDIP(360), FromDIP(220)));
     m_list->SetName(_L("Groups"));
-    GetContentSizer()->Add(m_list, 1, wxEXPAND | wxTOP, FromDIP(10));
+    GetContentSizer()->Add(result_card(this, m_list, 360, 220), 1, wxEXPAND | wxTOP, FromDIP(MD3::Metrics::active().gap));
 
-    m_empty = new ::Label(this, ::Label::Body_13, _L("No groups yet. Create one to move this tab into it."));
+    m_empty = new ::Label(this, ::Label::Body_13, _L("No groups yet. Create one to move this tab into it."), LB_AUTO_WRAP, wxSize(FromDIP(360), -1));
     m_empty->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
-    GetContentSizer()->Add(m_empty, 0, wxTOP, FromDIP(6));
+    GetContentSizer()->Add(m_empty, 0, wxEXPAND | wxTOP, FromDIP(MD3::Metrics::active().gap));
 
     auto *create = footer_button(this, _L("New group..."), Button::Variant::Outlined);
     create->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) {
@@ -275,19 +315,19 @@ BulkCloseDialog::BulkCloseDialog(wxWindow *parent, wxWindow *anchor, const MD3::
 
     m_invert = new LabeledCheckBox(this, _L("Close the tabs that do NOT contain the text"));
     m_invert->SetValue(not_containing);
-    GetContentSizer()->Add(m_invert, 0, wxTOP, FromDIP(10));
+    GetContentSizer()->Add(m_invert, 0, wxTOP, FromDIP(MD3::Metrics::active().gap));
 
     m_pinned = new LabeledCheckBox(this, _L("Include pinned tabs"));
     m_pinned->SetValue(false);
     GetContentSizer()->Add(m_pinned, 0, wxTOP, FromDIP(4));
 
-    m_summary = new ::Label(this, ::Label::Body_13, wxEmptyString);
+    m_summary = new ::Label(this, ::Label::Body_13, wxEmptyString, LB_AUTO_WRAP, wxSize(FromDIP(380), -1));
     m_summary->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
-    GetContentSizer()->Add(m_summary, 0, wxEXPAND | wxTOP, FromDIP(10));
+    GetContentSizer()->Add(m_summary, 0, wxEXPAND | wxTOP, FromDIP(MD3::Metrics::active().gap));
 
     m_list = new ListBox(this, wxID_ANY, wxSize(FromDIP(380), FromDIP(180)));
     m_list->SetName(_L("Tabs that will close"));
-    GetContentSizer()->Add(m_list, 1, wxEXPAND | wxTOP, FromDIP(6));
+    GetContentSizer()->Add(result_card(this, m_list, 380, 180), 1, wxEXPAND | wxTOP, FromDIP(MD3::Metrics::active().gap));
 
     footer_button(this, _L("Cancel"), Button::Variant::Text)->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { EndModal(wxID_CANCEL); });
     m_close = footer_button(this, close_verb, Button::Variant::Filled);
@@ -349,6 +389,7 @@ void BulkCloseDialog::Refresh_()
                     << wxString::Format(_L("%d pinned tabs kept"), m_preview.protected_pinned);
     }
     m_summary->SetLabel(summary);
+    m_summary->SetForegroundColour(StateColor::semantic(m_preview.valid ? MD3::Role::OnSurfaceVariant : MD3::Role::Error));
     const bool can_close = m_preview.valid && !m_preview.ids.empty();
     m_close->Enable(can_close);
     m_close->SetLabel(can_close ? wxString::Format("%s (%d)", m_close_verb, int(m_preview.ids.size())) : m_close_verb);
@@ -413,11 +454,11 @@ TabSearchDialog::TabSearchDialog(wxWindow *parent, wxWindow *anchor, Scope scope
 
     m_list = new ListBox(this, wxID_ANY, wxSize(FromDIP(460), FromDIP(240)));
     m_list->SetName(_L("Results"));
-    GetContentSizer()->Add(m_list, 1, wxEXPAND | wxTOP, FromDIP(10));
+    GetContentSizer()->Add(result_card(this, m_list, 460, 240), 1, wxEXPAND | wxTOP, FromDIP(MD3::Metrics::active().gap));
 
-    m_empty = new ::Label(this, ::Label::Body_13, wxEmptyString);
+    m_empty = new ::Label(this, ::Label::Body_13, wxEmptyString, LB_AUTO_WRAP, wxSize(FromDIP(460), -1));
     m_empty->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
-    GetContentSizer()->Add(m_empty, 0, wxTOP, FromDIP(6));
+    GetContentSizer()->Add(m_empty, 0, wxEXPAND | wxTOP, FromDIP(MD3::Metrics::active().gap));
 
     footer_button(this, _L("Cancel"), Button::Variant::Text)->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { EndModal(wxID_CANCEL); });
     footer_button(this, _L("Go to tab"), Button::Variant::Filled)->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { Accept(); });

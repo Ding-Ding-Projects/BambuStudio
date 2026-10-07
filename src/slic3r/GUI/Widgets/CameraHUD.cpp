@@ -32,7 +32,7 @@ constexpr int    kChipDIP     = 34;
 constexpr int    kChipGlyphPx = 18;   // logical px; the gc scales it by DPI
 constexpr int    kHudHeight   = 44;
 constexpr int    kTempChipPadX  = 10; // kit temp-chip horizontal padding
-constexpr int    kTempChipPillH = 22; // pill height (matches the LIVE badge)
+constexpr int    kTempChipPillH = 26; // minimum height; measured text may grow it
 constexpr int    kTempChipGap   = 6;  // gap between the nozzle / bed chips
 
 // "°C" as a UTF-8 unit suffix. Kept split ("\xC2\xB0" "C") so the trailing 'C'
@@ -129,49 +129,49 @@ bool CameraHUD::HighContrastActive()
 wxColour CameraHUD::CardBg()
 {
     return HighContrastActive() ? wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOW)
-                                : wxColour(0x0c, 0x0e, 0x13);
+                                : MD3::resolve(MD3::Role::SurfaceContainerLowest, true);
 }
 
 wxColour CameraHUD::Border()
 {
     return HighContrastActive() ? wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOWTEXT)
-                                : wxColour(0x2a, 0x2d, 0x34);
+                                : MD3::resolve(MD3::Role::OutlineVariant, true);
 }
 
 wxColour CameraHUD::ChipBg()
 {
     return HighContrastActive() ? wxSystemSettings::GetColour(wxSYS_COLOUR_BTNFACE)
-                                : wxColour(0x1b, 0x1e, 0x25);
+                                : MD3::resolve(MD3::Role::SurfaceContainer, true);
 }
 
 wxColour CameraHUD::ChipHover()
 {
     return HighContrastActive() ? wxSystemSettings::GetColour(wxSYS_COLOUR_HIGHLIGHT)
-                                : wxColour(0x26, 0x2a, 0x33);
+                                : MD3::resolve(MD3::Role::SurfaceContainerHigh, true);
 }
 
 wxColour CameraHUD::ChipPress()
 {
     return HighContrastActive() ? wxSystemSettings::GetColour(wxSYS_COLOUR_HIGHLIGHT)
-                                : wxColour(0x12, 0x14, 0x19);
+                                : MD3::resolve(MD3::Role::SurfaceContainerHighest, true);
 }
 
 wxColour CameraHUD::Glyph()
 {
     return HighContrastActive() ? wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOWTEXT)
-                                : wxColour(0xE6, 0xE8, 0xEC);
+                                : MD3::resolve(MD3::Role::OnSurface, true);
 }
 
 wxColour CameraHUD::GlyphMuted()
 {
     return HighContrastActive() ? wxSystemSettings::GetColour(wxSYS_COLOUR_GRAYTEXT)
-                                : wxColour(0x8A, 0x8F, 0x98);
+                                : MD3::resolve(MD3::Role::OnSurfaceVariant, true);
 }
 
 wxColour CameraHUD::FocusRing()
 {
     return HighContrastActive() ? wxSystemSettings::GetColour(wxSYS_COLOUR_HIGHLIGHT)
-                                : wxColour(0xE6, 0xE8, 0xEC);
+                                : MD3::resolve(MD3::Role::Primary, true, MD3::ColorScheme::Device);
 }
 
 // ===========================================================================
@@ -417,7 +417,7 @@ CameraHUD::CameraHUDTempChip::CameraHUDTempChip(wxWindow *parent)
 #ifdef __WINDOWS__
     SetDoubleBuffered(true);
 #endif
-    SetFont(::Label::Mono_11);
+    SetFont(::Label::Mono_13);
     Bind(wxEVT_PAINT, &CameraHUDTempChip::on_paint, this);
 }
 
@@ -434,6 +434,7 @@ void CameraHUD::CameraHUDTempChip::SetText(const wxString &text)
 
 void CameraHUD::CameraHUDTempChip::msw_rescale()
 {
+    SetFont(::Label::Mono_13);
     InvalidateBestSize();
     Refresh();
 }
@@ -444,8 +445,8 @@ wxSize CameraHUD::CameraHUDTempChip::DoGetBestSize() const
     // reserves a sane width) in the mono face and pad to the kit pill geometry.
     int      tw = 0, th = 0;
     wxString probe = m_text.empty() ? wxString("000") + wxString::FromUTF8("\xC2\xB0" "C") : m_text;
-    GetTextExtent(probe, &tw, &th, nullptr, nullptr, &::Label::Mono_11);
-    return wxSize(tw + 2 * FromDIP(kTempChipPadX), FromDIP(kTempChipPillH));
+    GetTextExtent(probe, &tw, &th, nullptr, nullptr, &::Label::Mono_13);
+    return wxSize(tw + 2 * FromDIP(kTempChipPadX), std::max(FromDIP(kTempChipPillH), th + FromDIP(8)));
 }
 
 void CameraHUD::CameraHUDTempChip::on_paint(wxPaintEvent &)
@@ -469,7 +470,7 @@ void CameraHUD::CameraHUDTempChip::on_paint(wxPaintEvent &)
     if (m_text.empty())
         return;
 
-    const double pillH  = FromDIP(kTempChipPillH);
+    const double pillH  = sz.y;
     const double pillY  = (sz.y - pillH) / 2.0;
     const double radius = FromDIP(10);
     const wxColour pill_bg = CameraHUD::HighContrastActive()
@@ -480,7 +481,7 @@ void CameraHUD::CameraHUDTempChip::on_paint(wxPaintEvent &)
 
     // The pill spans the whole (best-fitted) chip; centre the mono value so a
     // minor DC/gc metric difference never clips it.
-    gc->SetFont(::Label::Mono_11, CameraHUD::Glyph());
+    gc->SetFont(::Label::Mono_13, CameraHUD::Glyph());
     wxDouble tw = 0, thd = 0, desc = 0, lead = 0;
     gc->GetTextExtent(m_text, &tw, &thd, &desc, &lead);
     gc->DrawText(m_text, (sz.x - tw) / 2.0, pillY + (pillH - thd) / 2.0);

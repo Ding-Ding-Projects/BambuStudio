@@ -1,14 +1,6 @@
 name: Official portable runtime comparison
 
 on:
-  push:
-    branches:
-      - codex/official-native-reapply
-    paths:
-      - '.github/workflows/official-runtime-baseline.yml'
-      - 'scripts/ci/Invoke-OfficialRuntimeBaseline.ps1'
-      - 'scripts/md3/drive-official-portable.py'
-      - 'scripts/md3/hosted_process.py'
   workflow_dispatch:
 
 permissions:
@@ -20,7 +12,7 @@ concurrency:
 
 jobs:
   compare:
-    if: github.ref == 'refs/heads/codex/official-native-reapply'
+    if: github.event_name == 'workflow_dispatch'
     runs-on: windows-2025
     timeout-minutes: 55
     defaults:

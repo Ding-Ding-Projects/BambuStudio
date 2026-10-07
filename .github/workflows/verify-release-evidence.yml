@@ -1,10 +1,7 @@
 name: Verify published Windows release evidence
-run-name: "Release evidence (${{ inputs.verification_scope || 'diagnostic' }}) at ${{ github.sha }}"
+run-name: "Release evidence (${{ inputs.verification_scope }}) at ${{ github.sha }}"
 
 on:
-  push:
-    branches:
-      - codex/hosted-behavior-verifier
   workflow_dispatch:
     inputs:
       release_tag:
@@ -29,8 +26,8 @@ permissions:
   contents: read
 
 env:
-  VERIFY_RELEASE_TAG: ${{ github.event_name == 'push' && 'md3-v125' || inputs.release_tag }}
-  VERIFY_SOURCE_COMMIT: ${{ github.event_name == 'push' && 'c5df6199e1a83b1c94be12e999c0b322fded8730' || inputs.expected_source_commit }}
+  VERIFY_RELEASE_TAG: ${{ inputs.release_tag }}
+  VERIFY_SOURCE_COMMIT: ${{ inputs.expected_source_commit }}
 
 concurrency:
   group: release-evidence-${{ github.run_id }}
@@ -38,7 +35,7 @@ concurrency:
 
 jobs:
   verify:
-    if: ${{ github.event_name == 'push' || inputs.verification_scope == 'diagnostic' || inputs.verification_scope == 'checks' }}
+    if: ${{ inputs.verification_scope == 'diagnostic' || inputs.verification_scope == 'checks' }}
     runs-on: windows-2025
     timeout-minutes: 55
     env:
@@ -96,7 +93,7 @@ jobs:
           & $checkPython scripts/md3/test-drive-packaged-behavior.py
           if ($LASTEXITCODE -ne 0) { throw 'Focused hosted Python driver checks failed.' }
       - name: Verify published package and collect restricted behavior evidence
-        if: ${{ github.event_name == 'push' || inputs.verification_scope == 'diagnostic' }}
+        if: ${{ inputs.verification_scope == 'diagnostic' }}
         shell: pwsh
         run: |
           & scripts/ci/Invoke-HostedReleaseVerification.ps1 `
@@ -107,7 +104,7 @@ jobs:
             -VerificationScope diagnostic `
             -OutputDirectory (Join-Path $env:GITHUB_WORKSPACE 'hosted-verification')
       - name: Upload safe verification diagnostics and encrypted evidence
-        if: ${{ always() && (github.event_name == 'push' || inputs.verification_scope == 'diagnostic') }}
+        if: ${{ always() && inputs.verification_scope == 'diagnostic' }}
         continue-on-error: true
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:

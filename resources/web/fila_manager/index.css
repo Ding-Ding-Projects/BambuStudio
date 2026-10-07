@@ -3,18 +3,18 @@
     color-scheme: light;
 
     /* Canonical Material Design 3 tonal surfaces from ui-md3/app/styles.css. */
-    --md-surface: #faf8fd;
-    --md-surface-dim: #dad9e0;
-    --md-surface-bright: #faf8fd;
+    --md-surface: #f7f9fc;
+    --md-surface-dim: #d7e1ed;
+    --md-surface-bright: #f7f9fc;
     --md-sc-lowest: #ffffff;
-    --md-sc-low: #f4f2f9;
-    --md-sc: #eeedf3;
-    --md-sc-high: #e8e7ee;
-    --md-sc-highest: #e2e1e9;
-    --md-on-surface: #1a1b1f;
-    --md-on-surface-variant: #44464e;
-    --md-outline: #75777f;
-    --md-outline-variant: #c5c6d0;
+    --md-sc-low: #eef2f7;
+    --md-sc: #e7edf5;
+    --md-sc-high: #dfe7f1;
+    --md-sc-highest: #d7e1ed;
+    --md-on-surface: #172434;
+    --md-on-surface-variant: #46576a;
+    --md-outline: #6d7e94;
+    --md-outline-variant: #c4d0df;
     --md-primary: #146c2e;
     --md-on-primary: #ffffff;
     --md-primary-container: #a6f4b8;
@@ -62,18 +62,18 @@
 
 [data-theme="dark"] {
     color-scheme: dark;
-    --md-surface: #1b1c21;
-    --md-surface-dim: #161619;
-    --md-surface-bright: #3b3c43;
-    --md-sc-lowest: #131317;
-    --md-sc-low: #202127;
-    --md-sc: #25262b;
-    --md-sc-high: #2f3036;
-    --md-sc-highest: #393a41;
-    --md-on-surface: #e8e7ee;
-    --md-on-surface-variant: #cdced8;
-    --md-outline: #94959f;
-    --md-outline-variant: #4a4c54;
+    --md-surface: #151c25;
+    --md-surface-dim: #101720;
+    --md-surface-bright: #344557;
+    --md-sc-lowest: #101720;
+    --md-sc-low: #1a2430;
+    --md-sc: #202d3b;
+    --md-sc-high: #293849;
+    --md-sc-highest: #344557;
+    --md-on-surface: #e8eff8;
+    --md-on-surface-variant: #b9c8da;
+    --md-outline: #899caf;
+    --md-outline-variant: #43566a;
     --md-primary: #8bd89b;
     --md-on-primary: #00391a;
     --md-primary-container: #095228;
@@ -2671,4 +2671,20 @@ textarea:focus-visible {
     .search-box {
         width: 190px;
     }
+}
+
+/* Studio Atlas: paint-only interaction states. Existing geometry and actions remain owned by the view. */
+body :is(button, input, select, textarea, a[href], [role="button"], [tabindex]):focus-visible {
+  outline: 2px solid var(--md-primary);
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  body :is(button, input, select, textarea, [role="button"]) {
+    transition: background-color 100ms ease-out, border-color 100ms ease-out;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  body :is(button, input, select, textarea, a[href], [role="button"], [tabindex]) {
+    transition: none;
+  }
 }

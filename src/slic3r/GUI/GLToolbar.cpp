@@ -2086,8 +2086,13 @@ bool md3_decorate_pill_item(const GLToolbar& tb, const GLToolbarItem& item, floa
 
 bool md3_decorate_rail_item(const GLToolbar& tb, const GLToolbarItem& item, float tile_world, float glyph_ratio, float inv_zoom, float tile_device)
 {
-    if (!item.is_pressed())
+    if (!item.is_pressed()) {
+        if (item.is_hovered() && !item.is_disabled()) {
+            const float r = kMD3RailCornerRatio * tile_world;
+            md3_fill_rounded_world(tb, item.render_rect[0], item.render_rect[2], item.render_rect[1], item.render_rect[3], r, MD3::Role::SurfaceContainerHigh);
+        }
         return false;
+    }
     const uint32_t cp = GLIconGlyphBridge::glyph_for_toolbar_item(item.get_name());
     if (cp == 0)
         return false; // unmapped: keep the atlas Primary glyph as the selected mark
@@ -2156,7 +2161,7 @@ bool render_md3_toolbar_backdrop(const GLToolbar& t_toolbar, float left, float t
         fill(x1 - px, y0, x1, y1, 0.0f, md3_toolbar_color(MD3::Role::OutlineVariant));
     }
     else {
-        const float r = 16.0f * px; // r16 pill
+        const float r = static_cast<float>(MD3::Metrics::active().radius) * px;
         // Soft elevation-3 shadow, feathered across a few translucent layers so the
         // hard-edged fill approximates the kit's blurred drop shadow.
         const wxColour& sh = MD3::shadowTint(wxGetApp().dark_mode());
@@ -2169,7 +2174,7 @@ bool render_md3_toolbar_backdrop(const GLToolbar& t_toolbar, float left, float t
         }
 
         fill(x0, y0, x1, y1, r, md3_toolbar_color(MD3::Role::OutlineVariant));
-        fill(x0 + px, y0 + px, x1 - px, y1 - px, r - px, md3_toolbar_color(MD3::Role::SurfaceContainer));
+        fill(x0 + px, y0 + px, x1 - px, y1 - px, r - px, md3_toolbar_color(MD3::Role::SurfaceContainerLowest));
     }
 
     wxGetApp().unbind_shader();

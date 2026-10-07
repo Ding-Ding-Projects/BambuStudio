@@ -1,0 +1,1958 @@
+{
+  "schemaVersion": 1,
+  "designName": "Studio Atlas",
+  "kind": "static-source-reference",
+  "completionClaim": false,
+  "baselineCommit": "d048cfc3040a1566b78e03334f3871f1dd0144bb",
+  "framework": "wxWidgets native controls and renderer-owned OpenGL/ImGui; existing product-owned embedded views",
+  "referenceViewportDIP": [
+    1200,
+    800
+  ],
+  "themes": [
+    "light",
+    "dark"
+  ],
+  "workflowOrder": [
+    "prepare",
+    "preview",
+    "print",
+    "monitor"
+  ],
+  "preserveNumericPageIds": true,
+  "sourceKit": "ui-md3/design-system/readme.md",
+  "runtimeStatus": "unverified",
+  "captureStatus": "missing",
+  "referenceViewerStatus": "missing",
+  "productionFixtureStatus": "missing",
+  "parityStatus": "blocked",
+  "parityBlocker": "Application launches are prohibited. No reference-viewer or built-product route was exercised. Static boards specify structure, not rendered runtime evidence.",
+  "stateContract": "Each listed state requires its own built route, interactions, layout measurements and capture tuple before acceptance. Board references specify the shared composition only; state-specific pixels are not yet supplied.",
+  "tokens": {
+    "light": {
+      "surface": "#f7f9fc",
+      "lowest": "#ffffff",
+      "low": "#eef2f7",
+      "container": "#e7edf5",
+      "high": "#dfe7f1",
+      "highest": "#d7e1ed",
+      "text": "#172434",
+      "secondary": "#46576a",
+      "outline": "#6d7e94",
+      "edge": "#c4d0df",
+      "primary": "#146c2e",
+      "onPrimary": "#ffffff",
+      "accent": "#a6f4b8",
+      "onAccent": "#00210c"
+    },
+    "dark": {
+      "surface": "#151c25",
+      "lowest": "#101720",
+      "low": "#1a2430",
+      "container": "#202d3b",
+      "high": "#293849",
+      "highest": "#344557",
+      "text": "#e8eff8",
+      "secondary": "#b9c8da",
+      "outline": "#899caf",
+      "edge": "#43566a",
+      "primary": "#8bd89b",
+      "onPrimary": "#00391a",
+      "accent": "#095228",
+      "onAccent": "#a7f5b9"
+    },
+    "comfortable": {
+      "gap": 12,
+      "padding": 16,
+      "row": 40,
+      "body": 14,
+      "rail": 60,
+      "sidebar": 344,
+      "radius": 16
+    },
+    "compact": {
+      "gap": 7,
+      "padding": 10,
+      "row": 32,
+      "body": 13,
+      "rail": 50,
+      "sidebar": 312,
+      "radius": 12
+    },
+    "motionMs": {
+      "feedback": 100,
+      "selection": 250,
+      "panel": 300,
+      "progress": 500,
+      "reduced": 0
+    }
+  },
+  "surfaces": [
+    {
+      "id": "shell",
+      "title": "Workspace",
+      "layout": "overview",
+      "anchor": "src/slic3r/GUI/MainFrame.cpp",
+      "states": [
+        "titlebar",
+        "workspace-navigation",
+        "project-tabs",
+        "secondary-destinations",
+        "overflow",
+        "grouped-tabs",
+        "pinned-tabs",
+        "reorder",
+        "search",
+        "unsaved-close",
+        "maximized",
+        "minimum-size"
+      ],
+      "sections": [
+        "Continue working",
+        "Prepare a plate",
+        "Review toolpaths",
+        "Choose print destination",
+        "Monitor activity"
+      ],
+      "preserve": "All numeric page identities, close/pin/group/reorder behavior, window controls, project routing and existing auxiliary destinations.",
+      "references": [
+        {
+          "path": "design/workflow-refresh/references/shell-light.svg",
+          "theme": "light"
+        },
+        {
+          "path": "design/workflow-refresh/references/shell-dark.svg",
+          "theme": "dark"
+        }
+      ]
+    },
+    {
+      "id": "prepare",
+      "title": "Prepare",
+      "layout": "canvas",
+      "anchor": "src/slic3r/GUI/Plater.cpp",
+      "states": [
+        "empty",
+        "model-loaded",
+        "object-selection",
+        "plate-selection",
+        "process-sidebar",
+        "printer-preset",
+        "filament-preset",
+        "object-list",
+        "grouping-menu",
+        "dual-nozzle",
+        "single-nozzle",
+        "swap-groups",
+        "slice-ready",
+        "slicing",
+        "slice-cancel",
+        "slice-error",
+        "stale-result",
+        "action-overflow"
+      ],
+      "sections": [
+        "Printer and plate",
+        "Filament assignments",
+        "Process settings",
+        "Objects",
+        "Slice and print"
+      ],
+      "preserve": "Real object/plate manipulation, presets, grouping, nozzle mapping, slicer generations, undo and all tool actions.",
+      "references": [
+        {
+          "path": "design/workflow-refresh/references/prepare-light.svg",
+          "theme": "light"
+        },
+        {
+          "path": "design/workflow-refresh/references/prepare-dark.svg",
+          "theme": "dark"
+        }
+      ]
+    },
+    {
+      "id": "preview",
+      "title": "Preview",
+      "layout": "canvas",
+      "anchor": "src/slic3r/GUI/MainFrame.cpp",
+      "states": [
+        "unsliced",
+        "sliced",
+        "stale",
+        "legend",
+        "layer-range",
+        "move-range",
+        "statistics",
+        "simulation-idle",
+        "simulation-playing",
+        "export",
+        "slicing-error"
+      ],
+      "sections": [
+        "Toolpath view",
+        "Color by feature",
+        "Layer range",
+        "Material and time",
+        "Continue to print"
+      ],
+      "preserve": "Actual toolpaths, legends, sliders, simulation, exports and selected plate identity.",
+      "references": [
+        {
+          "path": "design/workflow-refresh/references/preview-light.svg",
+          "theme": "light"
+        },
+        {
+          "path": "design/workflow-refresh/references/preview-dark.svg",
+          "theme": "dark"
+        }
+      ]
+    },
+    {
+      "id": "print",
+      "title": "Print",
+      "layout": "print",
+      "anchor": "src/slic3r/GUI/SelectMachine.cpp",
+      "states": [
+        "empty",
+        "unsliced",
+        "slicing",
+        "stale",
+        "ready",
+        "destination",
+        "offline-destination",
+        "mapping",
+        "external-spool",
+        "incompatible",
+        "setup",
+        "final-confirmation",
+        "submitting",
+        "cancel",
+        "partial-result",
+        "success",
+        "error"
+      ],
+      "sections": [
+        "Plate readiness",
+        "Destination and mapping",
+        "Print summary",
+        "Review print setup"
+      ],
+      "preserve": "Current generation and plate checks, existing setup and final print confirmation, real AMS checks and cancellation. Navigation never submits.",
+      "references": [
+        {
+          "path": "design/workflow-refresh/references/print-light.svg",
+          "theme": "light"
+        },
+        {
+          "path": "design/workflow-refresh/references/print-dark.svg",
+          "theme": "dark"
+        }
+      ]
+    },
+    {
+      "id": "monitor",
+      "title": "Monitor",
+      "layout": "monitor",
+      "anchor": "src/slic3r/GUI/StatusPanel.cpp",
+      "states": [
+        "offline",
+        "connecting",
+        "connected",
+        "idle",
+        "printing",
+        "paused",
+        "completed",
+        "camera-connecting",
+        "camera-playing",
+        "camera-stopped",
+        "camera-unavailable",
+        "fan-pending",
+        "fan-confirmed",
+        "fan-zero",
+        "telemetry-stale",
+        "storage",
+        "firmware",
+        "recovery"
+      ],
+      "sections": [
+        "Printer activity",
+        "Live camera",
+        "Temperatures and fans",
+        "Material system",
+        "Storage and firmware"
+      ],
+      "preserve": "Telemetry, camera stop/play/reconnect, physical commands, confirmations, storage and firmware workflows.",
+      "references": [
+        {
+          "path": "design/workflow-refresh/references/monitor-light.svg",
+          "theme": "light"
+        },
+        {
+          "path": "design/workflow-refresh/references/monitor-dark.svg",
+          "theme": "dark"
+        }
+      ]
+    },
+    {
+      "id": "farm",
+      "title": "Multi-device",
+      "layout": "collection",
+      "anchor": "src/slic3r/GUI/MultiMachinePage.cpp",
+      "states": [
+        "account",
+        "lan-discovery",
+        "saved-offline",
+        "paired",
+        "multi-select",
+        "six-selected",
+        "mapping-unavailable",
+        "sending",
+        "partial-transfer",
+        "task-list",
+        "empty",
+        "recovery"
+      ],
+      "sections": [
+        "Printers",
+        "Account and LAN",
+        "Selection summary",
+        "Transfer results",
+        "Tasks"
+      ],
+      "preserve": "Account and LAN identity, saved offline devices, real compatibility, multi-send and partial-result handling.",
+      "references": [
+        {
+          "path": "design/workflow-refresh/references/farm-light.svg",
+          "theme": "light"
+        },
+        {
+          "path": "design/workflow-refresh/references/farm-dark.svg",
+          "theme": "dark"
+        }
+      ]
+    },
+    {
+      "id": "home-web",
+      "title": "Home",
+      "layout": "overview",
+      "anchor": "src/slic3r/GUI/MainFrame.cpp",
+      "states": [
+        "loading",
+        "offline",
+        "content",
+        "empty",
+        "signed-out",
+        "recent-projects",
+        "create",
+        "open",
+        "recovery"
+      ],
+      "sections": [
+        "Start a project",
+        "Recent projects",
+        "Learning resources",
+        "Connection state"
+      ],
+      "preserve": "Existing web bridge, create/open routes, account flow and offline behavior; no seeded fake documents.",
+      "references": [
+        {
+          "path": "design/workflow-refresh/references/home-web-light.svg",
+          "theme": "light"
+        },
+        {
+          "path": "design/workflow-refresh/references/home-web-dark.svg",
+          "theme": "dark"
+        }
+      ]
+    },
+    {
+      "id": "ink-web",
+      "title": "Filament",
+      "layout": "collection",
+      "anchor": "src/slic3r/GUI/DeviceWeb/DeviceWebPage.cpp",
+      "states": [
+        "signed-out",
+        "plugin-missing",
+        "loading",
+        "spools",
+        "spool-detail",
+        "edit",
+        "history",
+        "filtered",
+        "empty",
+        "offline",
+        "recovery"
+      ],
+      "sections": [
+        "Filament inventory",
+        "Spool details",
+        "Assignments",
+        "Usage history",
+        "Import and export"
+      ],
+      "preserve": "Real spool identities, inventory edits, plugin requirements, assignments and history.",
+      "references": [
+        {
+          "path": "design/workflow-refresh/references/ink-web-light.svg",
+          "theme": "light"
+        },
+        {
+          "path": "design/workflow-refresh/references/ink-web-dark.svg",
+          "theme": "dark"
+        }
+      ]
+    },
+    {
+      "id": "printer-web",
+      "title": "Printer details",
+      "layout": "monitor",
+      "anchor": "src/slic3r/GUI/PrinterWebView.cpp",
+      "states": [
+        "loading",
+        "connected",
+        "offline",
+        "telemetry",
+        "control-pending",
+        "storage",
+        "firmware",
+        "empty",
+        "recovery"
+      ],
+      "sections": [
+        "Connection",
+        "Printer state",
+        "Telemetry",
+        "Available controls",
+        "Recovery"
+      ],
+      "preserve": "Existing embedded command bridge, selected printer, permissions and action confirmations.",
+      "references": [
+        {
+          "path": "design/workflow-refresh/references/printer-web-light.svg",
+          "theme": "light"
+        },
+        {
+          "path": "design/workflow-refresh/references/printer-web-dark.svg",
+          "theme": "dark"
+        }
+      ]
+    },
+    {
+      "id": "project",
+      "title": "Project",
+      "layout": "collection",
+      "anchor": "src/slic3r/GUI/Project.cpp",
+      "states": [
+        "online",
+        "workspace",
+        "empty",
+        "files",
+        "file-detail",
+        "notes",
+        "checklist",
+        "calendar-month",
+        "calendar-agenda",
+        "slot-editor",
+        "overlap-warning",
+        "history",
+        "missing-member",
+        "recovery"
+      ],
+      "sections": [
+        "Workspace files",
+        "Checklist and notes",
+        "Print calendar",
+        "Project history",
+        "Project details"
+      ],
+      "preserve": "Online project destination and local workspace identities, save/load, stable members, reminders and non-printing calendar.",
+      "references": [
+        {
+          "path": "design/workflow-refresh/references/project-light.svg",
+          "theme": "light"
+        },
+        {
+          "path": "design/workflow-refresh/references/project-dark.svg",
+          "theme": "dark"
+        }
+      ]
+    },
+    {
+      "id": "calibration",
+      "title": "Calibration",
+      "layout": "steps",
+      "anchor": "src/slic3r/GUI/CalibrationPanel.cpp",
+      "states": [
+        "selector",
+        "method",
+        "inputs",
+        "validation",
+        "printer-unavailable",
+        "progress",
+        "cancel",
+        "results",
+        "save-result",
+        "recovery"
+      ],
+      "sections": [
+        "Choose calibration",
+        "Review inputs",
+        "Run calibration",
+        "Inspect results",
+        "Save preset"
+      ],
+      "preserve": "Every existing calibration algorithm, range, printer selection, actual action and result-save route.",
+      "references": [
+        {
+          "path": "design/workflow-refresh/references/calibration-light.svg",
+          "theme": "light"
+        },
+        {
+          "path": "design/workflow-refresh/references/calibration-dark.svg",
+          "theme": "dark"
+        }
+      ]
+    },
+    {
+      "id": "preferences",
+      "title": "Preferences",
+      "layout": "settings",
+      "anchor": "src/slic3r/GUI/Preferences.cpp",
+      "states": [
+        "general",
+        "appearance",
+        "language",
+        "notifications",
+        "network",
+        "files",
+        "search",
+        "no-match",
+        "validation",
+        "reset",
+        "unsaved",
+        "locked",
+        "local-vocabulary",
+        "narrator",
+        "scheduled-settings",
+        "school-mode"
+      ],
+      "sections": [
+        "General",
+        "Appearance and motion",
+        "Language and narration",
+        "Files and network",
+        "Notifications and schedules"
+      ],
+      "preserve": "All registered settings and default provenance, saved values, search/palette paths, privacy and reset semantics. Listed missing features remain backlog.",
+      "references": [
+        {
+          "path": "design/workflow-refresh/references/preferences-light.svg",
+          "theme": "light"
+        },
+        {
+          "path": "design/workflow-refresh/references/preferences-dark.svg",
+          "theme": "dark"
+        }
+      ]
+    },
+    {
+      "id": "parameters",
+      "title": "Parameters",
+      "layout": "settings",
+      "anchor": "src/slic3r/GUI/ParamsPanel.cpp",
+      "states": [
+        "printer",
+        "material",
+        "process",
+        "preset",
+        "simple",
+        "advanced",
+        "expert",
+        "custom",
+        "modified",
+        "search",
+        "no-match",
+        "validation",
+        "reset",
+        "compare"
+      ],
+      "sections": [
+        "Printer",
+        "Filament",
+        "Process",
+        "Preset comparison",
+        "Modified values"
+      ],
+      "preserve": "Every real parameter, expert visibility, novice mapping, preset inheritance, validation and comparison.",
+      "references": [
+        {
+          "path": "design/workflow-refresh/references/parameters-light.svg",
+          "theme": "light"
+        },
+        {
+          "path": "design/workflow-refresh/references/parameters-dark.svg",
+          "theme": "dark"
+        }
+      ]
+    },
+    {
+      "id": "wizard",
+      "title": "Setup",
+      "layout": "steps",
+      "anchor": "src/slic3r/GUI/GUI_App.cpp",
+      "states": [
+        "welcome",
+        "region",
+        "privacy",
+        "network-plugin",
+        "printer-selection",
+        "filament-selection",
+        "association",
+        "validation",
+        "cancel",
+        "finish",
+        "recovery"
+      ],
+      "sections": [
+        "Welcome",
+        "Choose printers",
+        "Choose materials",
+        "Review preferences",
+        "Finish setup"
+      ],
+      "preserve": "All reachable setup steps, choices, plugin consent, file associations, cancellation and completion behavior.",
+      "references": [
+        {
+          "path": "design/workflow-refresh/references/wizard-light.svg",
+          "theme": "light"
+        },
+        {
+          "path": "design/workflow-refresh/references/wizard-dark.svg",
+          "theme": "dark"
+        }
+      ]
+    },
+    {
+      "id": "menus",
+      "title": "Menus and dialogs",
+      "layout": "overlay",
+      "anchor": "src/slic3r/GUI/Widgets/MD3Menu.cpp",
+      "states": [
+        "root",
+        "submenu",
+        "filtered",
+        "no-match",
+        "disabled",
+        "overflow",
+        "keyboard",
+        "appearance",
+        "element-lock",
+        "dismiss",
+        "confirmation",
+        "validation"
+      ],
+      "sections": [
+        "Local search and pattern builder",
+        "Actions and shortcuts",
+        "Nested choices",
+        "Disabled explanation",
+        "Focus return"
+      ],
+      "preserve": "Existing item order, identifiers, shortcuts, callbacks, enable rules and dismissal focus.",
+      "references": [
+        {
+          "path": "design/workflow-refresh/references/menus-light.svg",
+          "theme": "light"
+        },
+        {
+          "path": "design/workflow-refresh/references/menus-dark.svg",
+          "theme": "dark"
+        }
+      ]
+    },
+    {
+      "id": "appearance-editor",
+      "title": "Appearance editor",
+      "layout": "settings",
+      "anchor": "src/slic3r/GUI/Appearance/AppearanceEditorPopover.cpp",
+      "states": [
+        "target",
+        "properties",
+        "color",
+        "font",
+        "size",
+        "spacing",
+        "shape",
+        "motion",
+        "presets",
+        "reset",
+        "unsupported",
+        "state-selector",
+        "locked"
+      ],
+      "sections": [
+        "Selected element",
+        "Color and typography",
+        "Spacing and shape",
+        "Interaction states",
+        "Presets and reset"
+      ],
+      "preserve": "Target identity, property scope, state editing, user overrides, locks, history and original-value restoration.",
+      "references": [
+        {
+          "path": "design/workflow-refresh/references/appearance-editor-light.svg",
+          "theme": "light"
+        },
+        {
+          "path": "design/workflow-refresh/references/appearance-editor-dark.svg",
+          "theme": "dark"
+        }
+      ]
+    },
+    {
+      "id": "palette",
+      "title": "Command palette",
+      "layout": "overlay",
+      "anchor": "src/slic3r/GUI/CommandPalette.cpp",
+      "states": [
+        "card",
+        "full",
+        "query",
+        "rich-control",
+        "teleport",
+        "locked-result",
+        "no-match",
+        "keyboard",
+        "dismiss"
+      ],
+      "sections": [
+        "Search commands and settings",
+        "Live value controls",
+        "Destination and shortcut",
+        "Open exact setting"
+      ],
+      "preserve": "Registered command IDs, actual controls, shortcuts, lock checks, focus routing and current values.",
+      "references": [
+        {
+          "path": "design/workflow-refresh/references/palette-light.svg",
+          "theme": "light"
+        },
+        {
+          "path": "design/workflow-refresh/references/palette-dark.svg",
+          "theme": "dark"
+        }
+      ]
+    },
+    {
+      "id": "regex",
+      "title": "Pattern builder",
+      "layout": "settings",
+      "anchor": "src/slic3r/GUI/Widgets/RegexBuilderPopup.cpp",
+      "states": [
+        "guided",
+        "raw",
+        "invalid",
+        "matches",
+        "no-match",
+        "replacement",
+        "captures",
+        "explanation",
+        "snippets",
+        "unsupported-syntax",
+        "limits",
+        "cancel"
+      ],
+      "sections": [
+        "Pattern and engine",
+        "Guided construction",
+        "Match and capture table",
+        "Replacement preview",
+        "Diagnostics and limits"
+      ],
+      "preserve": "Real engine capabilities, bounded evaluation, isolated field state, pattern/flags synchronization and focus return.",
+      "references": [
+        {
+          "path": "design/workflow-refresh/references/regex-light.svg",
+          "theme": "light"
+        },
+        {
+          "path": "design/workflow-refresh/references/regex-dark.svg",
+          "theme": "dark"
+        }
+      ]
+    },
+    {
+      "id": "notifications",
+      "title": "Notifications",
+      "layout": "collection",
+      "anchor": "src/slic3r/GUI/NotificationHistory.cpp",
+      "states": [
+        "progress",
+        "success",
+        "warning",
+        "error",
+        "history",
+        "actions",
+        "dismiss",
+        "quiet",
+        "empty",
+        "bulk-selection",
+        "filter"
+      ],
+      "sections": [
+        "Current activity",
+        "Needs attention",
+        "History",
+        "Notification preferences"
+      ],
+      "preserve": "Existing event identity, action callbacks, local progress, cancel, notification history and quiet settings.",
+      "references": [
+        {
+          "path": "design/workflow-refresh/references/notifications-light.svg",
+          "theme": "light"
+        },
+        {
+          "path": "design/workflow-refresh/references/notifications-dark.svg",
+          "theme": "dark"
+        }
+      ]
+    },
+    {
+      "id": "history",
+      "title": "Version history",
+      "layout": "collection",
+      "anchor": "src/slic3r/GUI/ProjectHistoryDialog.cpp",
+      "states": [
+        "project",
+        "preferences",
+        "printer",
+        "search",
+        "diff",
+        "restore-preview",
+        "restore-confirm",
+        "export",
+        "empty",
+        "corrupt",
+        "save-interrupted"
+      ],
+      "sections": [
+        "Revision timeline",
+        "Selected revision",
+        "Changes",
+        "Restore preview",
+        "Export history"
+      ],
+      "preserve": "Append-only history, actual differences, restore confirmation, file identity and credential exclusion.",
+      "references": [
+        {
+          "path": "design/workflow-refresh/references/history-light.svg",
+          "theme": "light"
+        },
+        {
+          "path": "design/workflow-refresh/references/history-dark.svg",
+          "theme": "dark"
+        }
+      ]
+    },
+    {
+      "id": "documentation",
+      "title": "Help and documentation",
+      "layout": "reader",
+      "anchor": "src/slic3r/GUI/DocsBrowserDialog.cpp",
+      "states": [
+        "tree",
+        "article",
+        "search",
+        "no-match",
+        "links",
+        "offline",
+        "empty",
+        "history",
+        "external-editor"
+      ],
+      "sections": [
+        "Contents",
+        "Search documentation",
+        "Article",
+        "Related features",
+        "Reading history"
+      ],
+      "preserve": "Offline articles, category tree, links, search, navigation history and exact-feature help routes.",
+      "references": [
+        {
+          "path": "design/workflow-refresh/references/documentation-light.svg",
+          "theme": "light"
+        },
+        {
+          "path": "design/workflow-refresh/references/documentation-dark.svg",
+          "theme": "dark"
+        }
+      ]
+    },
+    {
+      "id": "changelog",
+      "title": "Changelog",
+      "layout": "reader",
+      "anchor": "src/slic3r/GUI/ChangelogDialog.cpp",
+      "states": [
+        "versions",
+        "dates",
+        "search",
+        "no-match",
+        "copy",
+        "export",
+        "empty",
+        "offline"
+      ],
+      "sections": [
+        "Versions",
+        "Release details",
+        "Changes",
+        "Copy and export"
+      ],
+      "preserve": "Actual release/version/date provenance and existing copy/export behavior.",
+      "references": [
+        {
+          "path": "design/workflow-refresh/references/changelog-light.svg",
+          "theme": "light"
+        },
+        {
+          "path": "design/workflow-refresh/references/changelog-dark.svg",
+          "theme": "dark"
+        }
+      ]
+    },
+    {
+      "id": "import-export",
+      "title": "Import and export",
+      "layout": "steps",
+      "anchor": "src/slic3r/GUI/Export/ExportDialog.cpp",
+      "states": [
+        "picker",
+        "format",
+        "options",
+        "validation",
+        "conflict",
+        "progress",
+        "cancel",
+        "success",
+        "recovery"
+      ],
+      "sections": [
+        "Choose files",
+        "Format and options",
+        "Review destination",
+        "Transfer progress",
+        "Result"
+      ],
+      "preserve": "Existing formats, path browse/validation parity, cancellation, overwrite confirmation and recovery.",
+      "references": [
+        {
+          "path": "design/workflow-refresh/references/import-export-light.svg",
+          "theme": "light"
+        },
+        {
+          "path": "design/workflow-refresh/references/import-export-dark.svg",
+          "theme": "dark"
+        }
+      ]
+    },
+    {
+      "id": "model-creator",
+      "title": "Model Creator",
+      "layout": "canvas",
+      "anchor": "src/slic3r/GUI/MainFrame.cpp",
+      "states": [
+        "disconnected",
+        "provider",
+        "credential-entry",
+        "prompt",
+        "generating",
+        "preview",
+        "refine",
+        "cancel",
+        "error",
+        "add"
+      ],
+      "sections": [
+        "Provider and model",
+        "Describe geometry",
+        "Accepted preview",
+        "Refinement",
+        "Add validated model"
+      ],
+      "preserve": "Explicit credential consent, structured scenes, bounded generation, prior accepted preview and explicit add. Missing implementation remains missing.",
+      "references": [
+        {
+          "path": "design/workflow-refresh/references/model-creator-light.svg",
+          "theme": "light"
+        },
+        {
+          "path": "design/workflow-refresh/references/model-creator-dark.svg",
+          "theme": "dark"
+        }
+      ]
+    },
+    {
+      "id": "smart-home",
+      "title": "External settings",
+      "layout": "settings",
+      "anchor": "src/slic3r/GUI/MainFrame.cpp",
+      "states": [
+        "configuration",
+        "source",
+        "credential-entry",
+        "validation",
+        "connected",
+        "inactive",
+        "offline",
+        "recovery"
+      ],
+      "sections": [
+        "Settings source",
+        "Entity and mapping",
+        "Connection status",
+        "Fallback settings"
+      ],
+      "preserve": "Existing source validation, local base settings, bounded refresh, credential vault and offline fallback.",
+      "references": [
+        {
+          "path": "design/workflow-refresh/references/smart-home-light.svg",
+          "theme": "light"
+        },
+        {
+          "path": "design/workflow-refresh/references/smart-home-dark.svg",
+          "theme": "dark"
+        }
+      ]
+    },
+    {
+      "id": "schedules",
+      "title": "Scheduled settings",
+      "layout": "collection",
+      "anchor": "src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp",
+      "states": [
+        "empty",
+        "rule-editor",
+        "weekdays",
+        "date-range",
+        "cross-midnight",
+        "source",
+        "active",
+        "inactive",
+        "error",
+        "restore",
+        "overlap"
+      ],
+      "sections": [
+        "Schedule rules",
+        "Rule timing",
+        "Source and values",
+        "Precedence",
+        "Base settings"
+      ],
+      "preserve": "Stable rule IDs, timezone/DST semantics, precedence, external source validation and base restoration.",
+      "references": [
+        {
+          "path": "design/workflow-refresh/references/schedules-light.svg",
+          "theme": "light"
+        },
+        {
+          "path": "design/workflow-refresh/references/schedules-dark.svg",
+          "theme": "dark"
+        }
+      ]
+    },
+    {
+      "id": "confirmations",
+      "title": "Confirm action",
+      "layout": "overlay",
+      "anchor": "src/slic3r/GUI/MainFrame.cpp",
+      "states": [
+        "untouched",
+        "one-key",
+        "both-keys",
+        "partial-slider",
+        "full-slider",
+        "cancel",
+        "authorized",
+        "action-result",
+        "recovery"
+      ],
+      "sections": [
+        "Affected data",
+        "First key",
+        "Second key",
+        "Confirmation slider",
+        "Emergency exit"
+      ],
+      "preserve": "Both independent keys, full slider, keyboard cancellation, exact affected data and action only after authorization.",
+      "references": [
+        {
+          "path": "design/workflow-refresh/references/confirmations-light.svg",
+          "theme": "light"
+        },
+        {
+          "path": "design/workflow-refresh/references/confirmations-dark.svg",
+          "theme": "dark"
+        }
+      ]
+    },
+    {
+      "id": "canonical-tools",
+      "title": "Application tools",
+      "layout": "collection",
+      "anchor": "src/slic3r/GUI/MainFrame.cpp",
+      "states": [
+        "converter",
+        "assistant",
+        "authenticator",
+        "locks",
+        "support",
+        "registration",
+        "empty",
+        "validation",
+        "progress",
+        "recovery"
+      ],
+      "sections": [
+        "File conversion",
+        "Local assistant",
+        "Authenticator",
+        "Element locks",
+        "Local support"
+      ],
+      "preserve": "Every canonical tool remains an explicit required feature, not a shipped capability inferred from this board. Secrets are excluded from references.",
+      "references": [
+        {
+          "path": "design/workflow-refresh/references/canonical-tools-light.svg",
+          "theme": "light"
+        },
+        {
+          "path": "design/workflow-refresh/references/canonical-tools-dark.svg",
+          "theme": "dark"
+        }
+      ]
+    }
+  ],
+  "implementationScopeReference": "design/workflow-refresh/implementation-scopes.json",
+  "sourceImplementationReceipts": [
+    {
+      "evidence": "source-only",
+      "scope": "Shared neutral roles and legacy theme-color compatibility",
+      "classification": "appearance-only",
+      "runtimeStatus": "unverified",
+      "captureStatus": "missing",
+      "commit": "b748affe0f687f6cfbe6068a82d32988047f790a"
+    },
+    {
+      "evidence": "source-only",
+      "scope": "Button/card/search/menu state surfaces and density-aware shape",
+      "classification": "appearance-only",
+      "runtimeStatus": "unverified",
+      "captureStatus": "missing",
+      "commit": "df300fb9d93991751e840bdc586d2f770b47b9cf"
+    },
+    {
+      "evidence": "source-only",
+      "scope": "Measured TextInput parts, choice paint, field minima and preset header spacing",
+      "classification": "appearance-layout",
+      "runtimeStatus": "unverified",
+      "captureStatus": "missing",
+      "commit": "b88acafa95b88884b4e284a0de15d77f7934cfcb"
+    },
+    {
+      "evidence": "source-only",
+      "scope": "Inspector hierarchy, measured headers, object rows and preset treatment",
+      "classification": "appearance-layout",
+      "runtimeStatus": "unverified",
+      "captureStatus": "missing",
+      "commit": "7602228306b7dba316a2d7a91c1f2a195de0e43b"
+    },
+    {
+      "evidence": "source-only",
+      "scope": "Pair neutral preset focus fill with its own foreground",
+      "classification": "correctness-repair",
+      "runtimeStatus": "unverified",
+      "captureStatus": "missing",
+      "commit": "f107320e7c273254af6d35c130b699780bebf41c"
+    },
+    {
+      "evidence": "source-only",
+      "scope": "Native parent cards, settings rows, calibration surrounds and schedule shell",
+      "classification": "appearance-layout",
+      "runtimeStatus": "unverified",
+      "captureStatus": "missing",
+      "commit": "8b0b5e6da19d0ce877a3c5eb770de6945a516e77"
+    },
+    {
+      "evidence": "source-only",
+      "scope": "Restore card DPI lifecycle and nested settings row identity/search traversal",
+      "classification": "correctness-repair",
+      "runtimeStatus": "unverified",
+      "captureStatus": "missing",
+      "commit": "54810146717bbf4d531a17f4b6c471bd3300d190"
+    },
+    {
+      "evidence": "source-only",
+      "scope": "Viewport tool surfaces, ImGui overlays, transport and legend paint",
+      "classification": "appearance-only",
+      "runtimeStatus": "unverified",
+      "captureStatus": "missing",
+      "commit": "30031b21eedd58c56b83dc474465d47a3ccc8099"
+    },
+    {
+      "evidence": "source-only",
+      "scope": "Apply tooltip rounding through the actual ImGui style member",
+      "classification": "correctness-repair",
+      "runtimeStatus": "unverified",
+      "captureStatus": "missing",
+      "commit": "35a329da565a61b98f541166e51b85c44958add8"
+    },
+    {
+      "evidence": "source-only",
+      "scope": "Monitor hierarchy, print-option groups and device selection states",
+      "classification": "appearance-layout",
+      "runtimeStatus": "unverified",
+      "captureStatus": "missing",
+      "commit": "396992cfeb7f2e337b43d133a84562c04afd1e69"
+    },
+    {
+      "evidence": "source-only",
+      "scope": "Correct camera scaling and title-height lifecycle across DPI changes",
+      "classification": "correctness-repair",
+      "runtimeStatus": "unverified",
+      "captureStatus": "missing",
+      "commit": "c9178754f31b4b32421544e96b6e26977aed04fe"
+    },
+    {
+      "evidence": "source-only",
+      "scope": "Camera popup and HUD typography and hierarchy",
+      "classification": "appearance-layout",
+      "runtimeStatus": "unverified",
+      "captureStatus": "missing",
+      "commit": "e54de1a0ae7cd36cc1f1d734fea591dad7722ef3"
+    },
+    {
+      "evidence": "source-only",
+      "scope": "Fan and AMS mapping/material/settings popup hierarchy",
+      "classification": "appearance-layout",
+      "runtimeStatus": "unverified",
+      "captureStatus": "missing",
+      "commit": "c0aedba0991821d20ed2d6b6884cce80dfe9f02c"
+    },
+    {
+      "evidence": "source-only",
+      "scope": "Appearance, palette, regex, notification center, history, docs, changelog and export composition",
+      "classification": "appearance-layout",
+      "runtimeStatus": "unverified",
+      "captureStatus": "missing",
+      "commit": "83cf6a2677356c20664c073e8f04f818fc292e67"
+    },
+    {
+      "evidence": "source-only",
+      "scope": "Correct history label calls and preserve live palette accent swatches",
+      "classification": "correctness-repair",
+      "runtimeStatus": "unverified",
+      "captureStatus": "missing",
+      "commit": "e000d2da647aeddf4255455fd276d268abd3244a"
+    },
+    {
+      "evidence": "source-only",
+      "scope": "Bind constructor regression assertions to each real call boundary",
+      "classification": "verification-only",
+      "runtimeStatus": "unverified",
+      "captureStatus": "missing",
+      "commit": "71170bc334656d51af49d3ae682ae14320a110f5"
+    },
+    {
+      "evidence": "source-only",
+      "scope": "Bounded status rail, action paint and inverse progress track",
+      "classification": "appearance-only",
+      "runtimeStatus": "unverified",
+      "captureStatus": "missing",
+      "commit": "8cfce63ae05d7be03823b3eb9e4b86c4488245b1"
+    },
+    {
+      "evidence": "source-only",
+      "scope": "Five real nested workspace cards, wrapping actions and calendar/agenda reflow",
+      "classification": "appearance-layout",
+      "runtimeStatus": "unverified",
+      "captureStatus": "missing",
+      "commit": "7ef2efed0e58ba6def38adee061349afc106f533"
+    },
+    {
+      "evidence": "source-only",
+      "scope": "Relayout Overview content and scroll extent without waiting for a resize",
+      "classification": "correctness-repair",
+      "runtimeStatus": "unverified",
+      "captureStatus": "missing",
+      "commit": "a742702a7315a9e97a4d1a585ed739d82d97cdd5"
+    },
+    {
+      "evidence": "source-only",
+      "scope": "Child page hierarchy and wrapping action groups",
+      "classification": "appearance-layout",
+      "runtimeStatus": "unverified",
+      "captureStatus": "missing",
+      "commit": "d3821d9bcbbc6e90fb9b941013ab7b8039534c68"
+    },
+    {
+      "evidence": "source-only",
+      "scope": "Correct completion-label receivers in save panels",
+      "classification": "correctness-repair",
+      "runtimeStatus": "unverified",
+      "captureStatus": "missing",
+      "commit": "5568ae6ec28bb86cf481989da79d5582ca76dbfd"
+    },
+    {
+      "evidence": "source-only",
+      "scope": "ConfigWizardIndex state hierarchy and native step presentation",
+      "classification": "appearance-layout",
+      "runtimeStatus": "unverified",
+      "captureStatus": "missing",
+      "commit": "34fa40252bbb9b755fd22eb503280a045d8923ee"
+    },
+    {
+      "evidence": "source-only",
+      "scope": "Neutral roles, focus and color-only transitions in 23 product-owned stylesheets",
+      "classification": "appearance-only",
+      "runtimeStatus": "unverified",
+      "captureStatus": "missing",
+      "commit": "a2be7df26cd5981da2c1e50d4c64c5e3a86609b9"
+    },
+    {
+      "evidence": "source-only",
+      "scope": "Require complete embedded interaction stylesheet contracts",
+      "classification": "verification-only",
+      "runtimeStatus": "unverified",
+      "captureStatus": "missing",
+      "commit": "6faff372404390ba6cd9191c12e9fa5439ce375c"
+    },
+    {
+      "evidence": "source-only",
+      "scope": "Owned home/project/setup CSS composition across 13 additional stylesheets",
+      "classification": "appearance-layout",
+      "runtimeStatus": "unverified",
+      "captureStatus": "missing",
+      "commit": "8ecd2823f1529f183a806075f078932659fe295a"
+    },
+    {
+      "evidence": "source-only",
+      "scope": "Keep narrow thumbnails on the unchanged reveal handler's vertical axis",
+      "classification": "correctness-repair",
+      "runtimeStatus": "unverified",
+      "captureStatus": "missing",
+      "commit": "2a3528c451f3a5caccdfd7fd9e8d9d8964e4d4c8"
+    },
+    {
+      "evidence": "source-only",
+      "scope": "Stable workflow page projection, navigation API and measured overflow",
+      "classification": "functional-workflow",
+      "runtimeStatus": "unverified",
+      "captureStatus": "missing",
+      "commit": "624e2ed52e2fe7afcb91961fcaefe9bb201ba15e"
+    },
+    {
+      "evidence": "source-only",
+      "scope": "Appended Print review page and original physical-action continuation routes",
+      "classification": "functional-workflow",
+      "runtimeStatus": "unverified",
+      "captureStatus": "missing",
+      "commit": "f28dad52e0a848d613f661849a4fdd64f30c3a60"
+    },
+    {
+      "evidence": "source-only",
+      "scope": "Print/workflow catalog entries and paired documentation",
+      "classification": "localization",
+      "runtimeStatus": "unverified",
+      "captureStatus": "missing",
+      "commit": "b69528b150ec03fd33db79f36be16c92812bdef0"
+    },
+    {
+      "evidence": "source-only",
+      "scope": "Existing destination, mapping and review-dialog hierarchy with bounded body",
+      "classification": "appearance-layout",
+      "runtimeStatus": "unverified",
+      "captureStatus": "missing",
+      "commit": "f09f6af453b1ea2a694d81e382137afaba9cc6d7"
+    },
+    {
+      "evidence": "source-only",
+      "scope": "Refresh cached review body bounds on reopening before centering",
+      "classification": "correctness-repair",
+      "runtimeStatus": "unverified",
+      "captureStatus": "missing",
+      "commit": "6b4ebfa5a6207d66750a1a059124119229fa38cf"
+    }
+  ],
+  "surfaceContractReference": "design/workflow-refresh/surface-contracts.json",
+  "compositionReviewBase": "be5e1205dcdad8f372d2ba63f367dbd7977c29c4",
+  "sourceReview": {
+    "schemaVersion": 1,
+    "reviewedCandidate": "4147ca9eeb0004f7e18b4a2f5a8c6cb190975d21",
+    "completionClaim": false,
+    "evidence": "source-incorporation-only",
+    "runtimeStatus": "unverified",
+    "captureStatus": "missing",
+    "parityStatus": "blocked",
+    "reversalRules": {
+      "appearance-only": "Potentially reversible as its own reviewed presentation unit. Check later consumers and companion fixes; never infer blanket permission from this classification.",
+      "appearance-layout": "Changes geometry, container ownership, wrapping or scroll behavior. Review dependent callers and subsequent lifecycle repairs; not a paint-only reversal.",
+      "functional-workflow": "Owns routing, API, dispatch or workflow behavior. Excluded from appearance-only reversal.",
+      "correctness-repair": "Preserves or restores behavior, compilation, identity or lifecycle after a presentation change. Retain with its dependent unit; never reverse independently to express an appearance preference.",
+      "verification-only": "No production appearance change. Retain or adapt the checks to the reviewed production state.",
+      "localization": "Localized functional copy and documentation. Preserve independently of visual preference."
+    },
+    "units": [
+      {
+        "commit": "b748affe0f687f6cfbe6068a82d32988047f790a",
+        "family": "native-palette",
+        "classification": "appearance-only",
+        "summary": "Shared neutral roles and legacy theme-color compatibility",
+        "article": "docs/features/design-system/native-workflow-navigation.md"
+      },
+      {
+        "commit": "df300fb9d93991751e840bdc586d2f770b47b9cf",
+        "family": "shared-controls",
+        "classification": "appearance-only",
+        "summary": "Button/card/search/menu state surfaces and density-aware shape",
+        "article": "docs/features/design-system/studio-atlas-shared-controls.md"
+      },
+      {
+        "commit": "b88acafa95b88884b4e284a0de15d77f7934cfcb",
+        "family": "fields-presets",
+        "classification": "appearance-layout",
+        "summary": "Measured TextInput parts, choice paint, field minima and preset header spacing",
+        "article": "docs/features/design-system/studio-atlas-fields-and-presets.md"
+      },
+      {
+        "commit": "7602228306b7dba316a2d7a91c1f2a195de0e43b",
+        "family": "prepare",
+        "classification": "appearance-layout",
+        "summary": "Inspector hierarchy, measured headers, object rows and preset treatment",
+        "article": "docs/features/design-system/prepare-inspector-atlas.md"
+      },
+      {
+        "commit": "f107320e7c273254af6d35c130b699780bebf41c",
+        "family": "prepare",
+        "classification": "correctness-repair",
+        "summary": "Pair neutral preset focus fill with its own foreground",
+        "companion": "7602228306b7dba316a2d7a91c1f2a195de0e43b",
+        "article": "docs/features/design-system/prepare-inspector-atlas.md"
+      },
+      {
+        "commit": "8b0b5e6da19d0ce877a3c5eb770de6945a516e77",
+        "family": "preferences-project-setup",
+        "classification": "appearance-layout",
+        "summary": "Native parent cards, settings rows, calibration surrounds and schedule shell",
+        "article": "docs/features/design-system/native-preferences-setup-atlas.md"
+      },
+      {
+        "commit": "54810146717bbf4d531a17f4b6c471bd3300d190",
+        "family": "preferences-project-setup",
+        "classification": "correctness-repair",
+        "summary": "Restore card DPI lifecycle and nested settings row identity/search traversal",
+        "companion": "8b0b5e6da19d0ce877a3c5eb770de6945a516e77",
+        "article": "docs/features/design-system/native-preferences-setup-atlas.md"
+      },
+      {
+        "commit": "30031b21eedd58c56b83dc474465d47a3ccc8099",
+        "family": "renderer-preview",
+        "classification": "appearance-only",
+        "summary": "Viewport tool surfaces, ImGui overlays, transport and legend paint",
+        "article": "docs/features/design-system/renderer-atlas.md"
+      },
+      {
+        "commit": "35a329da565a61b98f541166e51b85c44958add8",
+        "family": "renderer-preview",
+        "classification": "correctness-repair",
+        "summary": "Apply tooltip rounding through the actual ImGui style member",
+        "companion": "30031b21eedd58c56b83dc474465d47a3ccc8099",
+        "article": "docs/features/design-system/renderer-atlas.md"
+      },
+      {
+        "commit": "396992cfeb7f2e337b43d133a84562c04afd1e69",
+        "family": "native-monitor",
+        "classification": "appearance-layout",
+        "summary": "Monitor hierarchy, print-option groups and device selection states",
+        "article": "docs/features/design-system/monitor-atlas.md"
+      },
+      {
+        "commit": "c9178754f31b4b32421544e96b6e26977aed04fe",
+        "family": "native-monitor",
+        "classification": "correctness-repair",
+        "summary": "Correct camera scaling and title-height lifecycle across DPI changes",
+        "companion": "396992cfeb7f2e337b43d133a84562c04afd1e69",
+        "article": "docs/features/design-system/monitor-atlas.md"
+      },
+      {
+        "commit": "e54de1a0ae7cd36cc1f1d734fea591dad7722ef3",
+        "family": "native-device-popups",
+        "classification": "appearance-layout",
+        "summary": "Camera popup and HUD typography and hierarchy",
+        "article": "docs/features/design-system/device-popups-atlas.md"
+      },
+      {
+        "commit": "c0aedba0991821d20ed2d6b6884cce80dfe9f02c",
+        "family": "native-device-popups",
+        "classification": "appearance-layout",
+        "summary": "Fan and AMS mapping/material/settings popup hierarchy",
+        "article": "docs/features/design-system/device-popups-atlas.md"
+      },
+      {
+        "commit": "83cf6a2677356c20664c073e8f04f818fc292e67",
+        "family": "readers-overlays",
+        "classification": "appearance-layout",
+        "summary": "Appearance, palette, regex, notification center, history, docs, changelog and export composition",
+        "article": "docs/features/design-system/overlays-atlas.md"
+      },
+      {
+        "commit": "e000d2da647aeddf4255455fd276d268abd3244a",
+        "family": "readers-overlays",
+        "classification": "correctness-repair",
+        "summary": "Correct history label calls and preserve live palette accent swatches",
+        "companion": "83cf6a2677356c20664c073e8f04f818fc292e67",
+        "article": "docs/features/design-system/overlays-atlas.md"
+      },
+      {
+        "commit": "71170bc334656d51af49d3ae682ae14320a110f5",
+        "family": "readers-overlays",
+        "classification": "verification-only",
+        "summary": "Bind constructor regression assertions to each real call boundary",
+        "companion": "e000d2da647aeddf4255455fd276d268abd3244a",
+        "article": "docs/features/design-system/overlays-atlas.md"
+      },
+      {
+        "commit": "8cfce63ae05d7be03823b3eb9e4b86c4488245b1",
+        "family": "live-notifications",
+        "classification": "appearance-only",
+        "summary": "Bounded status rail, action paint and inverse progress track",
+        "article": "docs/features/design-system/live-notifications-atlas.md"
+      },
+      {
+        "commit": "7ef2efed0e58ba6def38adee061349afc106f533",
+        "family": "workspace",
+        "classification": "appearance-layout",
+        "summary": "Five real nested workspace cards, wrapping actions and calendar/agenda reflow",
+        "article": "docs/features/design-system/workspace-atlas.md"
+      },
+      {
+        "commit": "a742702a7315a9e97a4d1a585ed739d82d97cdd5",
+        "family": "workspace",
+        "classification": "correctness-repair",
+        "summary": "Relayout Overview content and scroll extent without waiting for a resize",
+        "companion": "7ef2efed0e58ba6def38adee061349afc106f533",
+        "article": "docs/features/design-system/workspace-atlas.md"
+      },
+      {
+        "commit": "d3821d9bcbbc6e90fb9b941013ab7b8039534c68",
+        "family": "calibration-children",
+        "classification": "appearance-layout",
+        "summary": "Child page hierarchy and wrapping action groups",
+        "article": "docs/features/design-system/calibration-children-atlas.md"
+      },
+      {
+        "commit": "5568ae6ec28bb86cf481989da79d5582ca76dbfd",
+        "family": "calibration-children",
+        "classification": "correctness-repair",
+        "summary": "Correct completion-label receivers in save panels",
+        "companion": "d3821d9bcbbc6e90fb9b941013ab7b8039534c68",
+        "article": "docs/features/design-system/calibration-children-atlas.md"
+      },
+      {
+        "commit": "34fa40252bbb9b755fd22eb503280a045d8923ee",
+        "family": "setup-index",
+        "classification": "appearance-layout",
+        "summary": "ConfigWizardIndex state hierarchy and native step presentation",
+        "article": "docs/features/design-system/setup-index-atlas.md"
+      },
+      {
+        "commit": "a2be7df26cd5981da2c1e50d4c64c5e3a86609b9",
+        "family": "embedded-palette",
+        "classification": "appearance-only",
+        "summary": "Neutral roles, focus and color-only transitions in 23 product-owned stylesheets",
+        "article": "docs/features/design-system/embedded-studio-atlas.md"
+      },
+      {
+        "commit": "6faff372404390ba6cd9191c12e9fa5439ce375c",
+        "family": "embedded-palette",
+        "classification": "verification-only",
+        "summary": "Require complete embedded interaction stylesheet contracts",
+        "companion": "a2be7df26cd5981da2c1e50d4c64c5e3a86609b9",
+        "article": "docs/features/design-system/embedded-studio-atlas.md"
+      },
+      {
+        "commit": "8ecd2823f1529f183a806075f078932659fe295a",
+        "family": "embedded-composition",
+        "classification": "appearance-layout",
+        "summary": "Owned home/project/setup CSS composition across 13 additional stylesheets",
+        "article": "docs/features/design-system/embedded-composition-atlas.md"
+      },
+      {
+        "commit": "2a3528c451f3a5caccdfd7fd9e8d9d8964e4d4c8",
+        "family": "embedded-composition",
+        "classification": "correctness-repair",
+        "summary": "Keep narrow thumbnails on the unchanged reveal handler's vertical axis",
+        "companion": "8ecd2823f1529f183a806075f078932659fe295a",
+        "article": "docs/features/design-system/embedded-composition-atlas.md"
+      },
+      {
+        "commit": "624e2ed52e2fe7afcb91961fcaefe9bb201ba15e",
+        "family": "workflow-navigation",
+        "classification": "functional-workflow",
+        "summary": "Stable workflow page projection, navigation API and measured overflow",
+        "article": "docs/features/design-system/native-workflow-navigation.md"
+      },
+      {
+        "commit": "f28dad52e0a848d613f661849a4fdd64f30c3a60",
+        "family": "print-workspace",
+        "classification": "functional-workflow",
+        "summary": "Appended Print review page and original physical-action continuation routes",
+        "article": "docs/features/workspace/print-preparation.md"
+      },
+      {
+        "commit": "b69528b150ec03fd33db79f36be16c92812bdef0",
+        "family": "print-workspace",
+        "classification": "localization",
+        "summary": "Print/workflow catalog entries and paired documentation",
+        "article": "docs/features/workspace/print-preparation.md"
+      },
+      {
+        "commit": "f09f6af453b1ea2a694d81e382137afaba9cc6d7",
+        "family": "print-setup",
+        "classification": "appearance-layout",
+        "summary": "Existing destination, mapping and review-dialog hierarchy with bounded body",
+        "article": "docs/features/workspace/print-setup-atlas.md"
+      },
+      {
+        "commit": "6b4ebfa5a6207d66750a1a059124119229fa38cf",
+        "family": "print-setup",
+        "classification": "correctness-repair",
+        "summary": "Refresh cached review body bounds on reopening before centering",
+        "companion": "f09f6af453b1ea2a694d81e382137afaba9cc6d7",
+        "article": "docs/features/workspace/print-setup-atlas.md"
+      },
+      {
+        "commit": "44cba370a948dc6653189e8c835274d2db10d0ac",
+        "family": "shell-tabs",
+        "classification": "appearance-layout",
+        "summary": "Shell/title/tab composition and bounded visible tab allocation",
+        "article": "docs/features/design-system/studio-atlas-shell-and-tabs.md"
+      },
+      {
+        "commit": "831bba8e9337c8b7aa42a1b6389111c047d99c09",
+        "family": "shell-tabs",
+        "classification": "correctness-repair",
+        "summary": "Resolve drag destinations from visible neighbor identities",
+        "article": "docs/features/design-system/studio-atlas-shell-and-tabs.md",
+        "companion": "44cba370a948dc6653189e8c835274d2db10d0ac"
+      },
+      {
+        "commit": "3570481d7b8d0a81ed77bc364fa55676a8860a1b",
+        "family": "shell-tabs",
+        "classification": "correctness-repair",
+        "summary": "Project focus and accessibility onto visible tabs and native overflow",
+        "article": "docs/features/design-system/studio-atlas-shell-and-tabs.md",
+        "companion": "44cba370a948dc6653189e8c835274d2db10d0ac"
+      },
+      {
+        "commit": "33958f9673677886c4a15f2834a1619aaa1cf738",
+        "family": "confirmations",
+        "classification": "appearance-layout",
+        "summary": "Separate scrolling affected detail from persistent authorization controls and message actions",
+        "article": "docs/features/design-system/confirmations-atlas.md"
+      },
+      {
+        "commit": "6714b1f8da313fc2ea267a8e03a9b42c25f90c78",
+        "family": "confirmations",
+        "classification": "correctness-repair",
+        "summary": "Block terminal authorization when mandatory controls cannot fit; retain cancellation",
+        "article": "docs/features/design-system/confirmations-atlas.md",
+        "companion": "33958f9673677886c4a15f2834a1619aaa1cf738"
+      },
+      {
+        "commit": "cf78247110bcbe30dc2b2fd98e3ce97a4a6fa119",
+        "family": "native-monitor",
+        "classification": "correctness-repair",
+        "summary": "Measure Control heading once across DPI transitions",
+        "article": "docs/features/design-system/monitor-atlas.md",
+        "companion": "396992cfeb7f2e337b43d133a84562c04afd1e69"
+      },
+      {
+        "commit": "b37bb7e917398685cb56d2f2f13a5abd0b47048d",
+        "family": "selection-controls",
+        "classification": "appearance-layout",
+        "summary": "Numeric stepper/editor anatomy, checkbox glyph and inset switch segments",
+        "article": "docs/features/design-system/studio-atlas-selection-controls.md"
+      },
+      {
+        "commit": "6885f674b348a7d46ec946b2aacc9da215e15066",
+        "family": "selection-controls",
+        "classification": "correctness-repair",
+        "summary": "Relayout numeric children after native size allocation while preserving caller minima",
+        "article": "docs/features/design-system/studio-atlas-selection-controls.md",
+        "companion": "b37bb7e917398685cb56d2f2f13a5abd0b47048d"
+      },
+      {
+        "commit": "7d829820017edf5acd6fa6494dd72d3a1353c56b",
+        "family": "calibration-children",
+        "classification": "appearance-layout",
+        "summary": "Measure instruction pages from their real scroll viewport",
+        "article": "docs/features/design-system/calibration-viewport-layout.md"
+      },
+      {
+        "commit": "2ea14a5ea158e3311ad7680409243d51cd35b37a",
+        "family": "calibration-children",
+        "classification": "appearance-layout",
+        "summary": "Wrap complete preset rows and advice parameter groups without changing slot identities",
+        "article": "docs/features/design-system/calibration-viewport-layout.md"
+      },
+      {
+        "commit": "6e040fe62119938e1310893c2d927ef92ca89ff8",
+        "family": "calibration-children",
+        "classification": "correctness-repair",
+        "summary": "Release stale explicit label heights before measuring shorter content",
+        "article": "docs/features/design-system/calibration-viewport-layout.md",
+        "companion": "7d829820017edf5acd6fa6494dd72d3a1353c56b"
+      },
+      {
+        "commit": "eb07dfe7e6f61f5ae5601c42a179cecd0dbbbe46",
+        "family": "calibration-children",
+        "classification": "correctness-repair",
+        "summary": "Preserve intrinsic fixed-descendant width in outer scroll extents",
+        "article": "docs/features/design-system/calibration-viewport-layout.md",
+        "companion": "7d829820017edf5acd6fa6494dd72d3a1353c56b"
+      },
+      {
+        "commit": "3e765ab09a7d25a1808d437034b8b0e12e67e7bb",
+        "family": "transform-inspector",
+        "classification": "appearance-only",
+        "summary": "Decorate existing transform fields and tooltip states without changing item or cursor geometry",
+        "article": "docs/features/design-system/transform-inspector-atlas.md"
+      },
+      {
+        "commit": "990fdaaeb6e7d92f06a726f5035062e6b80ebbd7",
+        "family": "humidity-details",
+        "classification": "appearance-layout",
+        "summary": "Measured humidity legend and scroll-body value composition with unchanged readings",
+        "article": "docs/features/design-system/humidity-details-atlas.md"
+      },
+      {
+        "commit": "81b50c8d04d7f109af8b5e72f17c3ad080d41652",
+        "family": "humidity-details",
+        "classification": "correctness-repair",
+        "summary": "Clamp the humidity popup after final measured body expansion",
+        "article": "docs/features/design-system/humidity-details-atlas.md",
+        "companion": "990fdaaeb6e7d92f06a726f5035062e6b80ebbd7"
+      },
+      {
+        "commit": "c17599d086a7b5cc5c0e1f6e47fcdb48678bf1b9",
+        "family": "appearance-properties",
+        "classification": "appearance-layout",
+        "summary": "Stack measured property labels and value/reset groups; wrap preset actions",
+        "article": "docs/features/design-system/appearance-property-pages-atlas.md"
+      },
+      {
+        "commit": "b41e37d4680ac1713e566f667b2168bf57d19c32",
+        "family": "appearance-properties",
+        "classification": "correctness-repair",
+        "summary": "Reflow preset content and scroll extent at unchanged editor dimensions",
+        "article": "docs/features/design-system/appearance-property-pages-atlas.md",
+        "companion": "c17599d086a7b5cc5c0e1f6e47fcdb48678bf1b9"
+      },
+      {
+        "commit": "661f4678e430e6832a510fa20cba420d735c68f1",
+        "family": "shared-controls",
+        "classification": "correctness-repair",
+        "summary": "Explicit double conversion for runtime-density radius; extracted MSVC declaration proof",
+        "article": "docs/features/design-system/studio-atlas-shared-controls.md",
+        "companion": "df300fb9d93991751e840bdc586d2f770b47b9cf"
+      },
+      {
+        "commit": "4e901cddc5d71949703cbd62adc575f8509b4580",
+        "family": "calibration-children",
+        "classification": "appearance-layout",
+        "summary": "Give result tables local horizontal scrolling while preserving result identities",
+        "article": "docs/features/design-system/calibration-viewport-layout.md"
+      },
+      {
+        "commit": "c6400edaaab7a23d802a8c83145c1fcd1785a414",
+        "family": "calibration-children",
+        "classification": "correctness-repair",
+        "summary": "Forward vertical wheel input to the outer calibration scroll owner",
+        "article": "docs/features/design-system/calibration-viewport-layout.md",
+        "companion": "4e901cddc5d71949703cbd62adc575f8509b4580"
+      },
+      {
+        "commit": "ed76de69b1c5bc6b2dd82d351e9dc6c84ca1f92d",
+        "family": "calibration-children",
+        "classification": "verification-only",
+        "summary": "Default compiled fixture runs geometry and wheel cases together",
+        "article": "docs/features/design-system/calibration-viewport-layout.md",
+        "companion": "4e901cddc5d71949703cbd62adc575f8509b4580"
+      },
+      {
+        "commit": "5b77527856e266aa952392f88d031da05f67c715",
+        "family": "device-name-editor",
+        "classification": "appearance-layout",
+        "summary": "Measured device-name input, validation row and confirmation action",
+        "article": "docs/features/workspace/device-name-editor-atlas.md"
+      },
+      {
+        "commit": "8167cafbc498d66b9209061283a3d1d45da5f02a",
+        "family": "device-name-editor",
+        "classification": "correctness-repair",
+        "summary": "Keep validation wrapping ahead of fitting and retain bounded disclosure",
+        "article": "docs/features/workspace/device-name-editor-atlas.md",
+        "companion": "5b77527856e266aa952392f88d031da05f67c715"
+      },
+      {
+        "commit": "ecbbb99fb0c5c84ef58c636cce270e5eda13b8c8",
+        "family": "gizmo-inspector-framing",
+        "classification": "appearance-only",
+        "summary": "Shared floating inspector plate and heading decoration across twelve existing paired callers",
+        "article": "docs/features/design-system/gizmo-inspector-framing-atlas.md"
+      },
+      {
+        "commit": "e3390a3140546fcae815a65ebe97cc6f8d14d6ea",
+        "family": "reader-details",
+        "classification": "appearance-layout",
+        "summary": "Regex diagnostic content reflow and export disclosure/locator composition",
+        "article": "docs/features/design-system/reader-details-atlas.md"
+      },
+      {
+        "commit": "ac04eda5d7c7b057dd70f820e5c2614b6b5aabaa",
+        "family": "native-monitor",
+        "classification": "correctness-repair",
+        "summary": "Accept the actual printing-title wxStaticText base type",
+        "article": "docs/features/design-system/monitor-atlas.md",
+        "companion": "396992cfeb7f2e337b43d133a84562c04afd1e69"
+      },
+      {
+        "commit": "9bb8eeb74219039369a289b5acb5c5406f491a1b",
+        "family": "fields-presets",
+        "classification": "correctness-repair",
+        "summary": "Use supported wxSizerItem SetSpacer API for preset header spacing",
+        "article": "docs/features/design-system/studio-atlas-fields-and-presets.md",
+        "companion": "b88acafa95b88884b4e284a0de15d77f7934cfcb"
+      },
+      {
+        "commit": "fffdc0a9d22f4c230cc27e8930d740c6bc769945",
+        "family": "ams-drying",
+        "classification": "appearance-layout",
+        "summary": "Measured drying telemetry/settings cards, complete control groups and scrolling pages",
+        "article": "docs/features/design-system/ams-drying-atlas.md"
+      },
+      {
+        "commit": "2b6c799c30a92ee7758ba035d725da43829ea7d4",
+        "family": "ams-drying",
+        "classification": "correctness-repair",
+        "summary": "Attach existing error disclosure to its visible state owner while retaining Stop",
+        "article": "docs/features/design-system/ams-drying-atlas.md",
+        "companion": "fffdc0a9d22f4c230cc27e8930d740c6bc769945"
+      },
+      {
+        "commit": "d31530a31780c10e7b4f44f85737f036504b7d5b",
+        "family": "nozzle-rack",
+        "classification": "appearance-layout",
+        "summary": "Nozzle cards, mapping selection and measured hotend detail rows",
+        "article": "docs/features/design-system/nozzle-rack-atlas.md"
+      },
+      {
+        "commit": "ed3cbc35d5d3a6b701a5eb7ebfdc69d137684d92",
+        "family": "shared-list-rows",
+        "classification": "appearance-layout",
+        "summary": "Measured native list rows, selection/focus paint and bounded hover feedback",
+        "article": "docs/features/design-system/studio-atlas-listbox.md"
+      },
+      {
+        "commit": "c8b269d6d5925262143c0a0e9d28c83fb788d1b6",
+        "family": "shared-list-rows",
+        "classification": "correctness-repair",
+        "summary": "Invalidate the displaced fading row when hover is interrupted",
+        "article": "docs/features/design-system/studio-atlas-listbox.md",
+        "companion": "ed3cbc35d5d3a6b701a5eb7ebfdc69d137684d92"
+      },
+      {
+        "commit": "b60bd4c8b8fa5eb0d3e5a9f706621e73f8a1a476",
+        "family": "print-continuations",
+        "classification": "appearance-layout",
+        "summary": "Existing print confirmation, IP entry and send-failure composition",
+        "article": "docs/features/workspace/print-continuations-atlas.md"
+      },
+      {
+        "commit": "8b8d042ed6730e80c6baeef72b71851a0ac04018",
+        "family": "print-continuations",
+        "classification": "correctness-repair",
+        "summary": "Require readable disclosure before existing terminal continuation routes",
+        "article": "docs/features/workspace/print-continuations-atlas.md",
+        "companion": "b60bd4c8b8fa5eb0d3e5a9f706621e73f8a1a476"
+      },
+      {
+        "commit": "ee4fc3ece6afdeec6d3e8783cb6cc8fce41162be",
+        "family": "print-continuations",
+        "classification": "correctness-repair",
+        "summary": "Adopt send-failure caption before bounded readback fitting",
+        "article": "docs/features/workspace/print-continuations-atlas.md",
+        "companion": "8b8d042ed6730e80c6baeef72b71851a0ac04018"
+      },
+      {
+        "commit": "59405fc894f96525db8f8edc3e45a3839e3001fd",
+        "family": "print-continuations",
+        "classification": "verification-only",
+        "summary": "Use a reserved documentation address in the IPv4 fixture only",
+        "article": "docs/features/workspace/print-continuations-atlas.md",
+        "companion": "8b8d042ed6730e80c6baeef72b71851a0ac04018"
+      },
+      {
+        "commit": "334eb7fa466e79fc885bd8af0689f22e034f9d60",
+        "family": "scroll-table-owner-adoption",
+        "classification": "appearance-layout",
+        "summary": "Adopt existing kit scroll/table owners in six Schedule, Print, Workspace and bulk caller sites while retaining models and constructor contracts",
+        "article": "docs/features/design-system/atlas-scroll-owner-adoption.md",
+        "reversalNote": "A reviewed reversal restores raw scrollbar owners and scanner failures; preserve kit implementations, models, callbacks and unrelated correctness repairs."
+      },
+      {
+        "commit": "7a681fd0f15bc35364f06268df650e5bf28a82f3",
+        "family": "native-catalog",
+        "classification": "localization",
+        "summary": "Reconcile existing English/Cantonese catalog keys, translations, terminology overrides and coverage without changing feature labels or the extracted template",
+        "article": "docs/features/windows/language-modes.md",
+        "reversalNote": "Catalog delivery is not a visual rollback handle. Preserve localized content independently of appearance preference; no runtime text-fit or functional obligation is promoted."
+      }
+    ],
+    "notInReviewedCandidate": [],
+    "preservedOutsideDesign": "Build/bootstrap/packaging, diagnostics, source identity, dependency and AMS data/reading repairs are not appearance rollback candidates. Integration merge commits are not reversal handles: inspect and select the individual source unit with its companion repairs.",
+    "verificationLimit": "Local ancestry and exact changed-path inspection establish source incorporation only. Existing per-unit articles describe their own checks. No tests were silently promoted to native compilation, live interaction, captures or whole-application acceptance.",
+    "documentationReceipts": [
+      {
+        "commit": "51235b9f479d90686b1563ed8f8ece3eefb6f764",
+        "classification": "localization",
+        "summary": "Cantonese Atlas article companions and indexes"
+      },
+      {
+        "commit": "0f034f2fed3c2b913f4c308d0130cce9eeee763f",
+        "classification": "localization",
+        "summary": "Correct Cantonese field-measurement wording"
+      },
+      {
+        "commit": "8fb54ada88eb9d92afc13b0712d412ba3bb55aa7",
+        "classification": "localization",
+        "summary": "Cantonese confirmation companion"
+      },
+      {
+        "commit": "965c6116b2dab4a8e0f6ea0ed304baa8789e55e2",
+        "classification": "localization",
+        "summary": "Cantonese transform inspector companion"
+      },
+      {
+        "commit": "32069b56a7c03ee892ec0e90feabf6c941edd54d",
+        "classification": "localization",
+        "summary": "Cantonese shell/tab companion"
+      }
+    ],
+    "documentationBoundary": "Calibration viewport Cantonese remains inline; shell/tab has its real companion. Native-workflow navigation still has no separate Cantonese companion. Connection/send and its disclosure/caption repairs are incorporated, with their real paired articles indexed. Incorporation is source-only and leaves every runtime/capture/feature obligation state unchanged."
+  },
+  "reviewedSourceCandidate": "f3565c7580bebd38bcbf5c5f01e272fa5c4b6224"
+}

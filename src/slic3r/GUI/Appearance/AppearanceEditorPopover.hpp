@@ -74,6 +74,7 @@ private:
     void refresh_from_registry();
     void refresh_font_list();
     void refresh_preset_list();
+    void reflow_preset_page();
     void refresh_reset_buttons();
 
     void write_number(const char *key, double value);
@@ -137,6 +138,8 @@ private:
     Button *                 m_preset_apply { nullptr };
     Button *                 m_preset_delete { nullptr };
     Label *                  m_preset_active { nullptr };
+    bool                     m_preset_reflowing { false };
+    int                      m_preset_page_width { -1 };
 
     std::map<std::string, Button *> m_reset_buttons; // key -> per-property reset
 

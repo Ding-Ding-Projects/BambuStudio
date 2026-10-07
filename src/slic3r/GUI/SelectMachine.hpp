@@ -367,7 +367,7 @@ protected:
     AmsTutorialPopup                    m_mapping_tutorial_popup{ nullptr };
     MaterialHash                        m_materialList;
     Plater *                            m_plater{nullptr};
-    wxPanel *                           m_options_other {nullptr};
+    StaticBox*                          m_options_other {nullptr};
     wxPanel *                           m_options_line_panel {nullptr};
     wxStaticBitmap*                     m_options_line_bmp{nullptr};
     Label*                              m_options_line_label{nullptr};
@@ -396,7 +396,7 @@ protected:
     wxStaticBitmap*                     img_amsmapping_tip{nullptr};
     ThumbnailPanel*                     m_thumbnailPanel{ nullptr };
     wxPanel*                            m_panel_status{ nullptr };
-    wxPanel*                            m_basic_panel;
+    StaticBox*                          m_basic_panel;
     wxPanel*                            m_rename_normal_panel{nullptr};
     wxPanel*                            m_panel_sending{nullptr};
     wxPanel*                            m_panel_prepare{nullptr};
@@ -553,6 +553,7 @@ public:
     void on_selection_changed(wxCommandEvent &event);
     void Enable_Refresh_Button(bool en);
     void Enable_Send_Button(bool en);
+    void apply_review_style();
     void on_dpi_changed(const wxRect& suggested_rect) override;
     void update_user_machine_list();
     void update_print_status_msg();

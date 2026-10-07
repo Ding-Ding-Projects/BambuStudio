@@ -2,7 +2,7 @@ name: Hosted temporal observation contracts
 
 on:
   push:
-    branches: [feature/ui-integration]
+    branches: [main]
     paths:
       - '.github/workflows/motion-temporal-contract.yml'
       - 'scripts/md3/motion_temporal.py'

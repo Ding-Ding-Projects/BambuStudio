@@ -263,6 +263,7 @@ protected:
     t_optionfield_map		m_fields;
     bool					m_disabled {false};
     wxGridSizer*			m_grid_sizer {nullptr};
+    wxSizerItem*        m_section_spacing {nullptr};
 	// "true" if option is created in preset tabs
 	bool					m_use_custom_ctrl{ false };
 

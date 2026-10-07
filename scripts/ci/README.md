@@ -1,8 +1,10 @@
 # Official Windows baseline diagnostic
 
 `official-windows-baseline.yml` builds the official `v02.08.04.57` native
-source on a GitHub-hosted `windows-2025` runner. It runs for the
-`codex/official-native-reapply` branch or a manual dispatch on that branch.
+source on a GitHub-hosted `windows-2025` runner. It runs only by manual
+dispatch, normally from `main`, and has no push trigger. A dispatched revision
+whose native trees differ from the official tag stops at the baseline check
+described below.
 The portable ZIP, PDB files, build transcript, and source/build metadata are
 short-lived workflow artifacts for diagnosis. They are not a release or a
 supported installer. The workflow does not launch the GUI or open a project.
@@ -28,13 +30,12 @@ baseline. The script fails if any of those trees changes before reapplication.
 
 The inherited cross-platform entry workflow is inactive during this
 diagnostic. Its reusable files are left intact. No inherited release publisher
-runs from this branch push.
+runs from this diagnostic.
 
 ## Published portable comparison
 
-`official-runtime-baseline.yml` is a separate hosted diagnostic. It runs on
-changes to its own comparison route on `codex/official-native-reapply`, and it
-also supports manual dispatch once available from the default branch. It verifies
+`official-runtime-baseline.yml` is a separate hosted diagnostic. It runs only
+by manual dispatch, normally from `main`, and has no push trigger. It verifies
 that the official `v02.08.04.57` tag peels to commit
 `f977235e6d736c4c0b650520ac5a5b72cbfe9244`, checks the published ZIP's
 size and SHA-256 against the vendor release metadata, and hashes the extracted

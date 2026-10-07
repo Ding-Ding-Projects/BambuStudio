@@ -1,7 +1,7 @@
 body
 {
-	background-color:#242428;
-	color: #B3B3B5;
+	background-color:#151c25;
+	color: #b9c8da;
 }
 
 a
@@ -10,11 +10,11 @@ a
 }
 
 .ZScrol::-webkit-scrollbar-thumb {/*滚动条里面小方块*/
-    background-color: #939594;
+    background-color: #899caf;
 }
 
 .ZScrol::-webkit-scrollbar-track {/*滚动条里面轨道*/
-        background: #161817;
+        background: #101720;
 }
 
 #EmptyArea img
@@ -24,22 +24,22 @@ a
 
 .Text_Title
 {
-	color: #EFEFF0;
+	color: #e8eff8;
 }
 
 .Text_Value
 {
-	color: #B3B3B5;
+	color: #b9c8da;
 }
 
 .Text_TitleBoard
 {
-	border-bottom: 1px solid #54545A;
+	border-bottom: 1px solid #43566a;
 }
 
 .LeftProcessBar
 {
-	border-left: 2px solid #4C4C55;
+	border-left: 2px solid #43566a;
 }
 
 .ProcessBarSelected
@@ -49,20 +49,21 @@ a
 
 .Block_BKGA
 {
-	background-color:#36363C;
+	background-color:#202d3b;
 }
 
 .InfoBlock
 {
-	background-color:#36363C;
+	background-color:#202d3b;
 }
 
 .File_Board
 {
-	background-color:#242428;
+	background-color:#151c25;
 }
 
 .FileItem
 {
-	background-color:#36363C;
+	background-color:#202d3b;
 }
+:root { --atlas-focus: #8bd89b; }

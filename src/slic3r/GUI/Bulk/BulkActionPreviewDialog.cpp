@@ -10,6 +10,7 @@
 #include "../Widgets/Button.hpp"
 #include "../Widgets/Label.hpp"
 #include "../Widgets/MaterialIcon.hpp"
+#include "../Widgets/MD3DataView.hpp"
 #include "../Widgets/ProgressDialog.hpp"
 #include "../Widgets/SearchField.hpp"
 #include "../Widgets/StateColor.hpp"
@@ -111,7 +112,7 @@ void BulkActionPreviewDialog::build()
     m_search->SetOnRegexToggle([this](bool) { populate(); });
     content->Add(m_search, 0, wxEXPAND | wxTOP, FromDIP(12));
 
-    m_list = new wxDataViewListCtrl(this, wxID_ANY, wxDefaultPosition, wxSize(-1, FromDIP(220)),
+    m_list = new MD3DataViewListCtrl(this, wxID_ANY, wxDefaultPosition, wxSize(-1, FromDIP(220)),
                                     wxDV_ROW_LINES | wxBORDER_NONE);
     // TRN: Accessible name of the list that previews the items a bulk action will touch.
     m_list->SetName(_L("Bulk action preview"));
