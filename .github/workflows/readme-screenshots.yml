@@ -206,12 +206,19 @@ jobs:
           }
           $report = Join-Path $env:RUNNER_TEMP 'readme-recapture-report.json'
           $probeDir = Join-Path $env:RUNNER_TEMP 'readme-probe'
-          & $env:README_PYTHON scripts/md3/recapture.py --exe $env:README_EXE `
-            --datadir-root (Join-Path $env:RUNNER_TEMP 'bbsdd') `
+          # Unbuffered, so every line reaches the log even if the run is cut short.
+          # The launch holder is the hosted verifiers' route: it keeps the hidden
+          # desktop open and records the application's exit code.
+          & $env:README_PYTHON -u scripts/md3/recapture.py --exe $env:README_EXE `
+            --datadir-root (Join-Path $env:RUNNER_TEMP 'bbsdd') --hosted-holder `
             --kinds page,crop-probe --mesa --commit $env:SOURCE_COMMIT `
             --report $report --probe-dir $probeDir --match $env:README_MATCH --evidence-probe
           $code = $LASTEXITCODE
           if (-not (Test-Path -LiteralPath $report -PathType Leaf)) { throw "recapture.py wrote no report (exit $code)." }
+          # What each row did: file, kind and status, redacted with the privacy
+          # check's own patterns. No evidence is read or printed.
+          & $env:README_PYTHON -u scripts/md3/check-readme-screenshot-privacy.py --status-table $report
+          if ($LASTEXITCODE -ne 0) { Write-Host "The row table could not be printed (exit $LASTEXITCODE)." }
           # A partial run is normal: the privacy check decides what may leave.
           Write-Host "recapture.py exit code $code."
           $global:LASTEXITCODE = 0
@@ -240,7 +247,8 @@ jobs:
 
   design-references:
     if: ${{ inputs.target == 'design-references' }}
-    runs-on: ubuntu-latest
+    # A fixed image, so the pinned CJK font package below exists in its archive.
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     defaults:
       run:
@@ -274,6 +282,22 @@ jobs:
           "$RUNNER_TEMP/readme-venv/bin/python" -m pip install --disable-pip-version-check --quiet 'Pillow==11.3.0'
           "$RUNNER_TEMP/readme-venv/bin/python" scripts/md3/test-readme-screenshot-privacy.py
 
+      - name: Install and verify a pinned CJK font
+        run: |
+          # The runner has no CJK font and the Pages app ships none, so every
+          # Cantonese label would render as a missing-glyph box. Noto Sans CJK at
+          # the exact Ubuntu 24.04 archive version makes the capture deterministic.
+          sudo apt-get update -q
+          sudo apt-get install -y -q --no-install-recommends 'fonts-noto-cjk=1:20230817+repack1-3'
+          fc-cache -f
+          dpkg-query -W -f='${Package} ${Version}\n' fonts-noto-cjk
+          faces="$(fc-list ':lang=zh-hk' family)"
+          if ! grep -q 'Noto Sans CJK' <<< "$faces"; then
+            echo 'No Noto Sans CJK face covers Hong Kong Chinese after the install.' >&2
+            exit 1
+          fi
+          echo "Hong Kong Chinese sans-serif: $(fc-match -f '%{family}' 'sans-serif:lang=zh-hk')"
+
       - name: Compose and serve the Pages site locally
         run: |
           node ui-md3/scripts/compose-site.mjs "$RUNNER_TEMP/readme-site"
@@ -299,6 +323,9 @@ jobs:
             echo "capture-app.mjs wrote no report (exit $status)." >&2
             exit 1
           fi
+          # What each row did, redacted with the privacy check's own patterns.
+          "$RUNNER_TEMP/readme-venv/bin/python" -u scripts/md3/check-readme-screenshot-privacy.py \
+            --status-table "$RUNNER_TEMP/readme-design-evidence/report.json" || echo 'The row table could not be printed.'
           # A partial run is normal: the privacy check decides what may leave.
           echo "capture-app.mjs exit code $status."
 

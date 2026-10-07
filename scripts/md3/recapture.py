@@ -20,19 +20,26 @@ wizard-page:<n>, upload:<what>. A step the runner cannot perform marks the row
 "blocked: <step>" in the report and leaves the file untouched.
 
     py -3 scripts/md3/recapture.py --exe <bambu-studio.exe> --datadir-root <root>
-        [--only <substring>] [--report <path>] [--desktop bsrecap]
+        [--only <substring>] [--report <path>] [--desktop bsrecap] [--hosted-holder]
 
 The report (JSON) lists every attempted row with done / blocked / failed and
 the reason; the manifest's statuses are updated for rows that succeeded, with
 the run's provenance recorded once. With --evidence-probe each finished row
 also names the layout dump taken right after its capture.
+
+When a tuple's application does not start, the run prints "start failed:
+<type>: <message>" once, followed by the launch holder's receipt (status and
+exit code) and the launcher trace lines of that launch, all redacted with the
+README privacy check's patterns, because every row of the tuple fails with it.
 """
 from __future__ import annotations
 
 import argparse
 import hashlib
+import importlib.util
 import json
 import os
+from pathlib import Path
 import subprocess
 import sys
 import time
@@ -197,6 +204,76 @@ class App:
         cheap('screenshot', hwnd=hwnd, output_path=path)
         if os.path.getsize(path) < 2000:
             raise RuntimeError(f'{path}: not a rendered frame')
+
+
+def load_script(name, path):
+    spec = importlib.util.spec_from_file_location(name, path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+_PRIVACY = []
+
+
+def printable(text, width):
+    """Text for a public log: the README privacy check's findings replaced by their category, then cut."""
+    if not _PRIVACY:
+        try:
+            module = load_script('readme_privacy', os.path.join(HERE, 'check-readme-screenshot-privacy.py'))
+            _PRIVACY.append((module.redact, module.literals_from_environment([])))
+        except Exception:  # noqa: BLE001 - without the patterns nothing is printed
+            _PRIVACY.append(None)
+    if _PRIVACY[0] is None:
+        return '<withheld: the privacy patterns could not be loaded>'
+    redact, literals = _PRIVACY[0]
+    return redact(text, literals)[:width]
+
+
+def hosted_app_class():
+    """HostedApp from drive-packaged-behavior.py: the launch route the hosted verifiers use.
+
+    hosted_launch_holder.py starts the application from a process that keeps the
+    hidden desktop open for the whole tuple and records the application's exit
+    code, and the window search accepts a verified relaunch of it. A direct
+    one-shot launch leaves nothing holding the desktop, so an early exit takes
+    the desktop with it and the next call can only report that it is missing.
+    """
+    sys.modules.setdefault('recapture', sys.modules[__name__])
+    return load_script('packaged_behavior', os.path.join(HERE, 'drive-packaged-behavior.py')).HostedApp
+
+
+def launch_facts(app):
+    """Short printable facts about a launch that failed: the holder's receipt and the launcher's trace."""
+    facts = []
+    receipt_path = getattr(app, 'holder_receipt_path', None)
+    if receipt_path is not None:
+        try:
+            receipt = json.loads(Path(receipt_path).read_text(encoding='utf-8'))
+        except (OSError, ValueError):
+            receipt = None
+        if isinstance(receipt, dict):
+            code = receipt.get('app_exit_code')
+            code = f'{code} (0x{code & 0xFFFFFFFF:08X})' if isinstance(code, int) else 'none'
+            facts.append(f"holder: status={receipt.get('status')} app_exit_code={code} "
+                         f"exit_confirmed={receipt.get('app_exit_confirmed')} terminated_by_holder={receipt.get('app_terminated_by_holder')}")
+        else:
+            facts.append('holder: no readable receipt')
+        facts.append(f"startup state: {getattr(app, 'startup_state', None)}")
+    # The launcher mirrors each early decision to %TEMP%\bbs-launcher-trace.log,
+    # one line per decision, each tagged with its process id.
+    pids = {app.pid, getattr(app, 'launch_pid', None), *getattr(app, 'seen_owned', {})} - {None}
+    trace = os.path.join(os.environ.get('TEMP', ''), 'bbs-launcher-trace.log')
+    try:
+        with open(trace, encoding='utf-8-sig', errors='replace') as fh:
+            lines = [line.strip() for line in fh if any(f' pid={pid} ' in line for pid in pids)]
+    except OSError:
+        lines = None
+    if lines is None:
+        facts.append('launcher trace: none')
+    else:
+        facts += [f'launcher: {line}' for line in lines[-12:]] or ['launcher trace: no line from this launch']
+    return [printable(fact, 300) for fact in facts]
 
 
 def norm(s):
@@ -552,7 +629,11 @@ def main():
     ap.add_argument('--evidence-probe', action='store_true',
                     help='take one more layout dump after each finished row, while its surface is still up, and name it '
                          'in the report row as evidence_probe (text evidence for check-readme-screenshot-privacy.py)')
+    ap.add_argument('--hosted-holder', action='store_true',
+                    help='GitHub-hosted runners only: launch through hosted_launch_holder.py, as the hosted verifiers do, '
+                         'so the hidden desktop outlives an early exit and the exit code is reported')
     args = ap.parse_args()
+    app_class = hosted_app_class() if args.hosted_holder else App
     os.makedirs(args.probe_dir, exist_ok=True)
     os.makedirs(os.path.dirname(args.report), exist_ok=True)
     manifest = json.load(open(MANIFEST, encoding='utf-8'))
@@ -588,11 +669,27 @@ def main():
             for r in trows:
                 report['rows'].append({'file': r['file'], 'status': f'blocked: no datadir for {tuple_id}'})
             continue
-        app = App(args.exe, datadir, args.desktop, args.probe_dir)
+        desktop = f'{args.desktop}-{os.getpid()}-{tuple_id}' if args.hosted_holder else args.desktop
+        app = app_class(args.exe, datadir, desktop, args.probe_dir)
+        if args.hosted_holder:
+            # The holder refuses to reuse its files, so each tuple gets its own.
+            files = {name: Path(args.probe_dir) / f'hosted-launch-{tuple_id}{name}' for name in ('.json', '.stop', '-stdout.log', '-stderr.log')}
+            app.holder_receipt_path, app.holder_stop_path = files['.json'], files['.stop']
+            app.holder_stdout_path, app.holder_stderr_path = files['-stdout.log'], files['-stderr.log']
+            app.holder_lifetime = 2400  # the holder's own ceiling, inside the job's hour
         app.startup_timeout = 300 if args.mesa else 240
         print(f'== {tuple_id}: {len(trows)} rows')
+        reported, started = set(), False
         try:
-            app.start()
+            try:
+                app.start(timeout=app.startup_timeout)
+                started = True
+            except Exception as e:
+                # Every row of the tuple fails with this, so say why once.
+                print(f'  start failed: {type(e).__name__}: {printable(e, 400)}')
+                for fact in launch_facts(app):
+                    print(f'    {fact}')
+                raise
             runner = Runner(app, tuple_id.split('-')[0])
             for r in trows:
                 out_path = os.path.join(REPO, r['file'])
@@ -625,6 +722,7 @@ def main():
                         row['evidence_probe'] = None
                         row['evidence_error'] = type(e).__name__
                 report['rows'].append(row)
+                reported.add(r['file'])
                 # Return to a known state between rows: close any dialog we opened.
                 if runner.front and runner.front != app.main:
                     # press_keys by handle does not reach a window on another
@@ -652,10 +750,18 @@ def main():
                             except (RuntimeError, SystemExit):
                                 pass
         except Exception as e:  # noqa: BLE001
+            if started:
+                print(f'  tuple failed: {type(e).__name__}: {printable(e, 400)}')
+            # Rows already reported keep their own result; a duplicate row would be withheld.
             for r in trows:
-                report['rows'].append({'file': r['file'], 'status': f'failed: {e}'})
+                if r['file'] not in reported:
+                    report['rows'].append({'file': r['file'], 'kind': r['recipe']['kind'], 'status': f'failed: {type(e).__name__}: {e}'})
         finally:
-            app.stop()
+            try:
+                app.stop()
+            except Exception as e:  # noqa: BLE001 - the captures are taken; the report must still be written
+                print(f'  teardown failed: {type(e).__name__}: {printable(e, 400)}')
+                report.setdefault('teardown_failures', []).append({'tuple': tuple_id, 'error': f'{type(e).__name__}: {e}'})
     done = sum(1 for r in report['rows'] if r['status'] == 'done')
     report['finished'] = time.strftime('%Y-%m-%dT%H:%M:%S')
     report['summary'] = {'attempted': len(report['rows']), 'done': done}

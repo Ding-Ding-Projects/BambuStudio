@@ -55,7 +55,8 @@ test('the README screenshot workflow is dispatch-only, read-only and pinned', as
   const jobs = jobsOf(workflow);
   assert.deepEqual(Object.keys(jobs), ['native-app', 'design-references']);
   assert.match(jobs['native-app'].header, /\n    if: \$\{\{ inputs\.target == 'native-app' \}\}\n    runs-on: windows-2025\n    timeout-minutes: 60\n/);
-  assert.match(jobs['design-references'].header, /\n    if: \$\{\{ inputs\.target == 'design-references' \}\}\n    runs-on: ubuntu-latest\n/);
+  assert.match(jobs['design-references'].header, /\n    if: \$\{\{ inputs\.target == 'design-references' \}\}\n(?: {4}#.*\n)*    runs-on: ubuntu-24\.04\n/,
+    'a fixed image, whose archive holds the pinned font package');
   for (const line of workflow.split('\n').filter((text) => text.includes('${{ inputs.'))) {
     assert.match(line, /^ {10}[A-Z_]+: \$\{\{ inputs\.[a-z_]+ \}\}$|^    if: \$\{\{ inputs\.target == '[a-z-]+' \}\}$|^run-name: /,
       'inputs reach a script only through the environment');
@@ -81,7 +82,8 @@ test('the privacy check runs before a three-day upload of the staged directory o
   const staged = { 'native-app': 'readme-screenshots-upload', 'design-references': 'readme-design-references-upload' };
   const names = { 'native-app': 'readme-screenshots', 'design-references': 'readme-design-references' };
   for (const [name, job] of Object.entries(jobs)) {
-    const check = job.steps.findIndex((step) => step.includes('scripts/md3/check-readme-screenshot-privacy.py'));
+    // The staging run, not the row table the capture step prints.
+    const check = job.steps.findIndex((step) => step.includes('scripts/md3/check-readme-screenshot-privacy.py') && step.includes('--allowlist-env'));
     const upload = job.steps.findIndex((step) => step.includes('uses: actions/upload-artifact@'));
     assert.ok(check >= 0 && upload >= 0, `${name} checks and uploads`);
     assert.equal(upload, job.steps.length - 1, `${name} uploads last`);
@@ -137,6 +139,51 @@ test('the allowlists name only README images the right route can regenerate', as
   }
   assert.match(jobs['native-app'].text, /prepare-capture-datadirs\.py [^\n]*`\n\s+--languages en --themes light --densities comfortable\n/);
   assert.match(jobs['native-app'].text, /recapture\.py --exe \$env:README_EXE `\n[^]*?--kinds page,crop-probe --mesa --commit \$env:SOURCE_COMMIT `\n[^]*?--match \$env:README_MATCH --evidence-probe\n/);
+});
+
+test('a failed native capture says why in the log, redacted', async () => {
+  const workflow = await read(...workflowPath);
+  const retake = jobsOf(workflow)['native-app'].steps.find((step) => step.includes('scripts/md3/recapture.py'));
+  // Unbuffered, through the hosted verifiers' launch holder.
+  assert.match(retake, /& \$env:README_PYTHON -u scripts\/md3\/recapture\.py --exe \$env:README_EXE `\n\s+--datadir-root [^\n]* --hosted-holder `\n/);
+  // The row table comes from the report, after it is known to exist, through the privacy patterns.
+  const table = retake.indexOf('& $env:README_PYTHON -u scripts/md3/check-readme-screenshot-privacy.py --status-table $report\n');
+  assert.ok(table > retake.indexOf('recapture.py wrote no report'), 'the table follows the report check');
+  assert.ok(table < retake.indexOf('$global:LASTEXITCODE = 0'), 'the table cannot decide the step result');
+  const design = jobsOf(workflow)['design-references'].steps.find((step) => step.includes('ui-md3/scripts/capture-app.mjs'));
+  assert.match(design, /check-readme-screenshot-privacy\.py \\\n\s+--status-table "\$RUNNER_TEMP\/readme-design-evidence\/report\.json"/);
+
+  const checker = await read('scripts', 'md3', 'check-readme-screenshot-privacy.py');
+  assert.match(checker, /def redact\(text, literals\):\n[^]*?for category, pattern in PATTERNS:\n\s+text = pattern\.sub\(f'<\{category\}>', text\)/);
+  assert.match(checker, /status\[:width\]/, 'the status is cut after it is redacted');
+  const recapture = await read('scripts', 'md3', 'recapture.py');
+  assert.match(recapture, /print\(f'  start failed: \{type\(e\)\.__name__\}: \{printable\(e, 400\)\}'\)/);
+  assert.match(recapture, /ap\.add_argument\('--hosted-holder', action='store_true',/);
+  assert.match(recapture, /load_script\('packaged_behavior', os\.path\.join\(HERE, 'drive-packaged-behavior\.py'\)\)\.HostedApp/);
+});
+
+test('the design references install and verify a pinned CJK font before the capture', async () => {
+  const workflow = await read(...workflowPath);
+  const { steps } = jobsOf(workflow)['design-references'];
+  const font = steps.findIndex((step) => step.includes('fonts-noto-cjk'));
+  const capture = steps.findIndex((step) => step.includes('ui-md3/scripts/capture-app.mjs'));
+  assert.ok(font >= 0, 'a CJK font is installed');
+  assert.ok(capture >= 0 && font < capture, 'the font is installed and verified before the capture');
+  const step = steps[font];
+  assert.doesNotMatch(step, /\n        if:|continue-on-error/, 'a failed install stops the job');
+  assert.match(step, /sudo apt-get install -y -q --no-install-recommends 'fonts-noto-cjk=\d+:[0-9A-Za-z.+~-]+'\n/, 'an exact package version');
+  assert.match(step, /\n\s+fc-cache -f\n/);
+  assert.match(step, /faces="\$\(fc-list ':lang=zh-hk' family\)"\n\s+if ! grep -q 'Noto Sans CJK' <<< "\$faces"; then\n[^]*?\n\s+exit 1\n/,
+    'no Hong Kong Chinese face fails the step');
+
+  // The capture refuses a Cantonese or bilingual shot whose characters would render as boxes.
+  const capturer = await read('ui-md3', 'scripts', 'capture-app.mjs');
+  assert.match(capturer, /const CJK_LANGUAGES = new Set\(\['yue_HK', 'bilingual_en_yue_HK'\]\);/);
+  assert.match(capturer, /const box = draw\('\\\\u0378'\);/, 'compared with the missing-glyph box');
+  const guard = capturer.indexOf('if (CJK_LANGUAGES.has(language)) {');
+  assert.ok(guard > capturer.indexOf("await writeFile(output, Buffer.from(shot.data, 'base64'));"), 'checked after each shot');
+  assert.ok(guard < capturer.indexOf("Object.assign(row, { status: 'done', evidence_probe: evidenceName });"), 'before the row can be done');
+  assert.match(capturer.slice(guard), /^if \(CJK_LANGUAGES\.has\(language\)\) \{\n[^]*?if \(cjk\.checked === 0 \|\| cjk\.missing > 0\) \{\n\s+await rm\(output, \{ force: true \}\);\n\s+throw new Error\(/);
 });
 
 test('the privacy check and the capture scripts carry the evidence it needs', async () => {

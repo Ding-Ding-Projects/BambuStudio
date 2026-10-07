@@ -173,6 +173,48 @@ class PrivacyCheck(unittest.TestCase):
         self.assertEqual(reasons[missing], "missing-image")
         self.assertEqual(staged["rows"][good]["status"], "uploaded")
 
+    def test_status_table_redacts_each_row_and_never_reads_evidence(self):
+        statuses = {
+            "profile": "failed: CreateProcessW('\"" + PROFILE_BACKSLASH + "\\AppData\\Local\\app.exe\"') failed",
+            "slash": "failed: " + PROFILE_SLASH + "/AppData",
+            "home": "failed: " + HOME_PATH + "/.config",
+            "token": "failed: token ghp_" + "A1b2C3d4E5f6G7h8I9j0K1",
+            "email": "failed: mail person@example.org",
+            "account": f"failed: signed in as {ACCOUNT}",
+            "computer": f"failed: on {COMPUTER}",
+            "runner": "failed: RunnerAdmin\nsecond line",
+            "long": "failed: " + "x" * 400,
+        }
+        for name, status in statuses.items():
+            self.add(name, dump("evidence-only-marker"), status=status)
+        report = Path(self.tmp.name) / "report.json"
+        report.write_text(json.dumps({"rows": self.rows}), encoding="utf-8")
+        env = {k: v for k, v in os.environ.items() if k not in ("USER", "HOSTNAME")}
+        env.update(USERNAME=ACCOUNT, COMPUTERNAME=COMPUTER)
+        result = subprocess.run([sys.executable, str(CHECKER), "--status-table", str(report)],
+                                capture_output=True, text=True, env=env, timeout=120)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        for secret in SECRETS:
+            self.assertNotIn(secret, result.stdout.lower(), "a finding's text reached the table")
+        self.assertNotIn("evidence-only-marker", result.stdout, "the table read evidence")
+        lines = result.stdout.splitlines()
+        self.assertEqual(lines[0], "row  file  kind  status")
+        self.assertEqual(len(lines), 1 + len(statuses), "one line per row, even for a multi-line status")
+        by_name = {name: lines[1 + i] for i, name in enumerate(statuses)}
+        for name, category in (("profile", "user-profile-path"), ("slash", "user-profile-path"), ("home", "home-path"),
+                               ("token", "token"), ("email", "email"), ("account", "account-name"),
+                               ("computer", "computer-name"), ("runner", "runner-account")):
+            self.assertIn(f"<{category}>", by_name[name], name)
+        self.assertIn("\\AppData\\Local\\app.exe", by_name["profile"], "only the finding is replaced")
+        status = by_name["long"].split("  page  ", 1)[1]
+        self.assertEqual(status, ("failed: " + "x" * 400)[:200])
+        self.assertFalse(self.out.exists(), "the table stages nothing")
+
+        report.write_text("{}", encoding="utf-8")
+        result = subprocess.run([sys.executable, str(CHECKER), "--status-table", str(report)],
+                                capture_output=True, text=True, env=env, timeout=120)
+        self.assertEqual(result.returncode, 2, "a report without rows is unusable")
+
     def test_unusable_inputs_stop_before_anything_is_staged(self):
         self.add("clean", dump("Prepare"))
         self.allowlist.append("docs/readme-assets/receipt.json")
