@@ -999,7 +999,13 @@ if (WIN32)
     target_include_directories(libslic3r_gui PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/WebView2/include)
 endif()
 
-source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SLIC3R_GUI_SOURCES})
+# The GUI library also compiles shared ../libslic3r service sources, which
+# a tree grouping rooted here rejects at configure time on every generator.
+include(SourceGroupTree)
+bambu_source_group_tree(ROOT ${CMAKE_CURRENT_SOURCE_DIR}
+    OUTSIDE_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/..
+    OUTSIDE_PREFIX "Shared"
+    FILES ${SLIC3R_GUI_SOURCES})
 
 encoding_check(libslic3r_gui)
 

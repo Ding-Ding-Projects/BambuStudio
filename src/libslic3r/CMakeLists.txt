@@ -567,7 +567,11 @@ set(libslic3r_runtime_sources
 add_library(libslic3r STATIC ${lisbslic3r_sources} ${libslic3r_runtime_sources}
     "${CMAKE_CURRENT_BINARY_DIR}/libslic3r_version.h"
     ${OpenVDBUtils_SOURCES})
-source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${lisbslic3r_sources})
+include(SourceGroupTree)
+bambu_source_group_tree(ROOT ${CMAKE_CURRENT_SOURCE_DIR}
+    OUTSIDE_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/..
+    OUTSIDE_PREFIX "Shared"
+    FILES ${lisbslic3r_sources})
 source_group("Runtime" FILES ${libslic3r_runtime_sources})
 
 if (SLIC3R_STATIC)
