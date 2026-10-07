@@ -2,7 +2,7 @@ name: Trace published startup on hosted Windows
 
 on:
   push:
-    branches: [codex/hosted-startup-stack, feature/ui-integration]
+    branches: [main]
     paths:
       - '.github/workflows/trace-release-startup.yml'
       - 'scripts/ci/Trace-HostedReleaseStartup.ps1'
@@ -126,7 +126,7 @@ jobs:
           path: diagnostic/contract/receipt.json
           if-no-files-found: warn
   trace:
-    if: (github.ref == 'refs/heads/codex/hosted-startup-stack' || (github.event_name == 'workflow_dispatch' && inputs.from_creation)) && !inputs.contract_only
+    if: github.event_name == 'workflow_dispatch' && !inputs.contract_only
     runs-on: windows-2025
     timeout-minutes: ${{ inputs.from_creation && 25 || 90 }}
     defaults:
@@ -155,8 +155,8 @@ jobs:
       - name: Trace exact installed release process
         env:
           GH_TOKEN: ${{ secrets.RELEASE_TOKEN || secrets.ORG_TOKEN || github.token }}
-          TRACE_TAG: ${{ inputs.tag || 'md3-v125' }}
-          TRACE_SOURCE_COMMIT: ${{ inputs.source_commit || 'c5df6199e1a83b1c94be12e999c0b322fded8730' }}
+          TRACE_TAG: ${{ inputs.tag }}
+          TRACE_SOURCE_COMMIT: ${{ inputs.source_commit }}
           TRACE_FROM_CREATION: ${{ inputs.from_creation }}
         run: |
           $arguments = @{Tag=$env:TRACE_TAG; ExpectedCommit=$env:TRACE_SOURCE_COMMIT}

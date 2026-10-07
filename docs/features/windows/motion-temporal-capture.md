@@ -141,7 +141,7 @@ lifetime, never actual MCP shutdown, achieved capture cadence or rendered motion
 
 Before this workflow exists on the default branch, GitHub's manual dispatch API
 can return HTTP 404. Activation therefore also supports pushes to
-`feature/ui-integration`, restricted to the workflow, helper and contract file
+`main`, restricted to the workflow, helper and contract file
 paths. That event derives the expected revision from `github.sha`; manual events
 still require the explicit input to equal the checked-out workflow revision.
 An automatic activation run must not be followed by a duplicate manual run of
@@ -153,7 +153,7 @@ The focused `motion-temporal-contract.yml` job now loads both actual contract
 modules, requiring exactly 18 temporal-helper cases and seven checkbox-predicate
 cases. All 25 must execute successfully with distinct per-case identifiers and no
 skips. The receipt hashes the workflow and both helper/test pairs. Automatic
-activation includes those five exact paths on the integration branch; manual
+activation includes those five exact paths on `main`; manual
 dispatch retains exact source equality. The five-minute bound and product-free,
 installation-free route are unchanged. Module imports use standard Python modules;
 the MCP and native interaction functions are not invoked by these contracts.
