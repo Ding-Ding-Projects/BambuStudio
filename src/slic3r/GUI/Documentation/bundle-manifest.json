@@ -40,7 +40,7 @@
     {
       "route": "application-integration/README.md",
       "title": "Native service integration",
-      "sha256": "e0485a622684558ebc2efd4ce7b7fc387b6a10c29e7df628bf888b0fa4a384c5"
+      "sha256": "82a44633f2b47312d60e4ab6dc97e098161a985cda9dd4655da55e825a416967"
     },
     {
       "route": "application-integration/surface-registry.md",
@@ -50,7 +50,7 @@
     {
       "route": "automation/README.md",
       "title": "Automation",
-      "sha256": "4157b3c8814bf800a2249dba6e5b2530c0b4943c01fd357d9f17740e01015faa"
+      "sha256": "da45c812b7b508243aab020d8ba8ad01358e593d55ded7f5101138dd1bdae56a"
     },
     {
       "route": "automation/hosted-display-scale-probe.md",
@@ -61,6 +61,16 @@
       "route": "automation/hosted-gui-recipient-recovery.md",
       "title": "Versioned hosted evidence recipient recovery",
       "sha256": "27958fe703de154fff589812d90a8aed0fca121198d0c03503595f04e0814048"
+    },
+    {
+      "route": "automation/installer-first-run-diagnostic.md",
+      "title": "Installer first-run diagnostic",
+      "sha256": "b825b63a6693999c5b75308a61540ff91889b11ada32b655965cde551501491c"
+    },
+    {
+      "route": "automation/installer-first-run-diagnostic.yue_HK.md",
+      "title": "安裝程式首次啟動診斷",
+      "sha256": "3a23b90412e633ad8ede4d5a9bf6f1be1eaef42845934981aeba81648fce1fe1"
     },
     {
       "route": "automation/integration-readiness.md",
@@ -105,12 +115,12 @@
     {
       "route": "converter/README.md",
       "title": "Local file converter",
-      "sha256": "f14392868e7752057ab51a280c90b86d9f51f95d46f333ff19c37b914e7293d5"
+      "sha256": "5c95e2c316f79a61b5a384202f2639b87e266a56538ae3618600d1e7f521c328"
     },
     {
       "route": "converter/pdf-engine.md",
       "title": "Bundled PDF engine",
-      "sha256": "d9040b7fa1a6bd65f56bbae219eb9531a42a0799f8f82ef37a42b64e6059241c"
+      "sha256": "13f17ca7e8c47b78cf4aab27025b85e12aaadf79cc1c6554af89f661cb1cb3aa"
     },
     {
       "route": "converter/pdf.md",
@@ -680,12 +690,12 @@
     {
       "route": "releases/windows-build-from-source.md",
       "title": "Build from source (Windows installer)",
-      "sha256": "8c25c0d2f3afbc1e0636197c6c9bbe629444075270768afcc642c01cb9029596"
+      "sha256": "7bbd771a9aa810e98948e8a327a437541f8f33e517c1d14c164a60864eedb269"
     },
     {
       "route": "releases/windows-build-from-source.yue_HK.md",
       "title": "從源碼構建（Windows 安裝程式）",
-      "sha256": "7c0e1eb465d26c2526faf37619d7084e5a0659d73ea1cc33af8b4863b7f4f160"
+      "sha256": "4f3c3bbf0765eb5627813d53d5f9af10dfd5e346c78098536d2531511e4cd877"
     },
     {
       "route": "releases/windows-native-installer.md",
@@ -700,12 +710,12 @@
     {
       "route": "releases/windows-one-click-build.md",
       "title": "One-click Windows build and installer",
-      "sha256": "465812bca2911c99f5ef41ca4cfd79f09f97d90982e930dc1de3327e4de79c0b"
+      "sha256": "b5c9d823140317ada9c7e41e77a1d9cfef494d6f320029b34afbbdaf5bbbdcfc"
     },
     {
       "route": "releases/windows-one-click-build.yue_HK.md",
       "title": "一鍵 Windows 構建和安裝程式",
-      "sha256": "afd4de24fe8aa21133bb983f43086af669dd4e14c2571017fa310ab2eec40215"
+      "sha256": "804c6e0b90d2d41bbf4d430fa83e4282c8eeed8f9bd27c8219381c1ebe9ee71c"
     },
     {
       "route": "releases/windows-release-supply-chain.md",
@@ -770,12 +780,12 @@
     {
       "route": "windows/app-updates.md",
       "title": "App updates from this fork's releases",
-      "sha256": "66ee16586637030ae71d941183508936486ec90376a7ca4d15e0d4e669413099"
+      "sha256": "af129e1f6281762017d58fa6aaad874fcb5b12d58cfd6cc33843466b6af677b5"
     },
     {
       "route": "windows/app-updates.yue_HK.md",
       "title": "來自呢個分叉發佈嘅應用程式更新",
-      "sha256": "72aae26ed822bb1670289272a096c08058941d94814cac333d88c7c09a745b8c"
+      "sha256": "da1f0029fbaa7260ce662a3d766b0b6527623c84a12b2239376c40804f985c28"
     },
     {
       "route": "windows/appearance-customization.md",
@@ -1325,7 +1335,7 @@
       "bytes": 1979
     }
   ],
-  "bundle_sha256": "41953d092991a7379bd43e9c5565e9c5b4ec8f79ad9848e5f56683f6c79ddb40",
+  "bundle_sha256": "5d277e5a24c62e0344695af8b8cd92b2cb2d0d18570d91d96bab66cc6053fe12",
   "unavailable_references": [
     {
       "source": "api/README.md",
@@ -2050,6 +2060,11 @@
     {
       "source": "releases/windows-one-click-build.yue_HK.md",
       "target": "https://learn.microsoft.com/en-us/visualstudio/install/use-command-line-parameters-to-install-visual-studio",
+      "kind": "link"
+    },
+    {
+      "source": "releases/windows-one-click-build.yue_HK.md",
+      "target": "https://learn.microsoft.com/en-us/windows/package-manager/winget/",
       "kind": "link"
     },
     {

@@ -1,6 +1,6 @@
 ---
 translation-of: app-updates.md
-source-sha256: 66ee16586637030ae71d941183508936486ec90376a7ca4d15e0d4e669413099
+source-sha256: af129e1f6281762017d58fa6aaad874fcb5b12d58cfd6cc33843466b6af677b5
 review-status: agent-drafted
 ---
 
