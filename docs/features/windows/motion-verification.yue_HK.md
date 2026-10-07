@@ -1,6 +1,6 @@
 ---
 translation-of: motion-verification.md
-source-sha256: 5debff5e46ab44994a26cda4f0f6983439e75be392e279a1b49f76738d916131
+source-sha256: 91b6c26c50c733a804c58a981e3cb604fe314ecbd44d5efbd0033cd8c98d8bab
 review-status: agent-drafted
 ---
 
@@ -40,7 +40,7 @@ CMake 喺建置目錄建立獨立產品翻譯單元副本，只移除 `Anim::Sto
 工作流程之後執行不變產品翻譯單元。全部十四個個案同桌面清理必須通過。最終收據綁定來源提交、run／attempt、來源同執行檔雜湊、兩個程序結果，同有界數值輸出雜湊。只保留五個固定 JSON／CSV 檔，唔包含帳戶身分、桌面名稱、本機路徑、原始程序輸出或者畫面擷取。
 
 ```powershell
-gh workflow run native-interface-verification.yml --ref feature/ui-integration -f motion_runtime_only=true
+gh workflow run native-interface-verification.yml --ref main -f motion_runtime_only=true
 ```
 
 其他只跑合約開關必須為 false。預設工作流程行為不變。缺少原生依賴快取會明確失敗，唔會建置整套依賴或者改用純模型。

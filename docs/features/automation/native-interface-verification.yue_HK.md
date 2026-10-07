@@ -1,6 +1,6 @@
 ---
 translation-of: native-interface-verification.md
-source-sha256: 01a768f4d6e42fc918f4727e41306cb6acb09788aebc21d968ae25155e71bcad
+source-sha256: d271b58851592d07e759dcd315c1b8a8dff3b5d0e7ddb6943cddf6b72146aba4
 review-status: agent-drafted
 ---
 
@@ -69,7 +69,7 @@ python scripts/md3/test_native_vocabulary_observation.py -v
 同一工作流程接受 `vocabulary_contract_only=true`，啟動一個五分鐘 Windows 工作，取出所派發工作流程提交，只執行該九項來源隔離案例。唔需要發行版本、安裝程式、原生編譯或產品程序。收據將確切工作目錄綁定到 `GITHUB_SHA`、執行同嘗試次數、驅動程式及契約 SHA-256，以及實際退出碼。只保留 `receipt.json` 同 `output.txt`。候選版本整合同推送之後先派發：
 
 ```powershell
-gh workflow run native-interface-runtime.yml --repo Ding-Ding-Projects/BambuStudio --ref feature/ui-integration -f vocabulary_contract_only=true
+gh workflow run native-interface-runtime.yml --repo Ding-Ding-Projects/BambuStudio --ref main -f vocabulary_contract_only=true
 ```
 
 呢個自選路徑忽略發行同互動參數，永遠檢查所派發來源，唔會用 `expected_source_commit` 選另一份工作目錄。同時設定 `provision_resolution=true`，會喺任何顯示或產品工作之前，由獨立驗證工作判定失敗。新開關省略或為 false 時，安裝路徑仍要求有效發行標籤、確切來源 SHA 同受支援互動範圍，先可以取出來源或安裝。來源限定工作通過，唔代表原生 getter、繪製字句、已安裝應用或啟動已驗證。
