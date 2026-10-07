@@ -1,6 +1,6 @@
 ---
 translation-of: windows-build-from-source.md
-source-sha256: 8c25c0d2f3afbc1e0636197c6c9bbe629444075270768afcc642c01cb9029596
+source-sha256: 7bbd771a9aa810e98948e8a327a437541f8f33e517c1d14c164a60864eedb269
 review-status: agent-drafted
 ---
 
@@ -46,6 +46,8 @@ Windows 安裝程式提供咗一個可選嘅、互動式 **從源碼構建** 安
 6. **暫存驗證 + 清單** ： 確認 `<session>\install-dir\bambu-studio.exe` 存在（否則退出 **20**），然後寫入 `<session>\owned-manifest.txt`。成功退出 **0**。
 
 構建步驟係記載嘅 Windows 構建路徑，釘住驗證嘅已安裝 Visual Studio 2022 軟件同一個配置：`build_win.bat -v 17 -p <detected-product> -c Release -d <session>\deps -s deps`，然後 `build_win.bat -v 17 -p <detected-product> -c Release -s app`，然後 `cmake --install build --config Release --prefix <session>\install-dir`。檢測同釘住現有嘅 Community、Professional、Enterprise 或 Build Tools 軟件可以避免選擇唔相關嘅更新版本 Visual Studio 安裝同安裝冗餘 SKU。安裝命令嘅 `--prefix` 覆蓋會喺構建無提升嘅來源時去掉預設嘅 `Program Files` 前綴，同時產生與 CI 相同嘅暫存佈局。
+
+應用程式設定而家需要已驗證嘅 qpdf SDK 先可以編譯原生轉換器。`build_win.bat` 會喺每次應用程式設定之前自動暫存佢：佢用 PowerShell 7 執行 `scripts/windows/Install-LocalPdfTools.ps1`，下載釘住雜湊嘅官方 qpdf 12.4.2 封存檔（已登入就經 `gh`，否則經 HTTPS），將 SDK 放喺 `<session>\src\artifacts\local-pdf\sdk`，再以 `-DLOCAL_CONVERTER_QPDF_SDK` 傳入。呢個歷史助手唔會引導安裝 PowerShell 7（冇 `pwsh.exe` 嘅時候，`build_win.bat` 會停低並提示點樣安裝），亦唔會將 `artifacts\local-pdf\runtime` 入面已驗證嘅執行階段複製去 `<session>\install-dir\tools\pdf`。所以用呢個方法構建嘅有效負載，要將嗰個執行階段複製過去之後先有 PDF 引擎；而家嘅一鍵構建同雲端構建會自己將佢暫存入有效負載（詳見 [Bundled PDF engine](../converter/pdf-engine.md)）。
 
 ## 工具鏈啟動
 

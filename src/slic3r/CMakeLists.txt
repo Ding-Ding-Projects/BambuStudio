@@ -1033,7 +1033,18 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/GUI/LocalSecurity/CMakeLists.txt)
 
 # Compile the converter broker and contained worker from one implementation.
 # Headers come only from an explicitly supplied, verified SDK, never PATH.
+# The root Windows build entry points and the hosted release workflow stage
+# that SDK with scripts/windows/Install-LocalPdfTools.ps1 and pass it on each
+# configure; any other configure must pass it explicitly.
 set(LOCAL_CONVERTER_QPDF_SDK "" CACHE PATH "Verified qpdf 12.4.2 SDK root")
+string(CONCAT _local_converter_qpdf_sdk_help
+    "build.bat, build-installer.bat, OneClickBuildInstaller.cmd, build_win.bat and the hosted "
+    "Windows build workflow stage it automatically (PowerShell 7 is required). For a manual "
+    "configure, run "
+    "'pwsh -NoProfile -File scripts/windows/Install-LocalPdfTools.ps1 "
+    "-Destination artifacts/local-pdf/runtime -SdkDestination artifacts/local-pdf/sdk' "
+    "from the repository root, then pass "
+    "-DLOCAL_CONVERTER_QPDF_SDK=${CMAKE_SOURCE_DIR}/artifacts/local-pdf/sdk")
 add_library(libslic3r_local_converter STATIC
     ../libslic3r/LocalConverter/Converter.cpp
     ../libslic3r/LocalConverter/ArchiveAdapter.cpp
@@ -1043,7 +1054,7 @@ target_include_directories(libslic3r_local_converter PUBLIC "${CMAKE_CURRENT_SOU
 target_link_libraries(libslic3r_local_converter PUBLIC miniz)
 if(LOCAL_CONVERTER_QPDF_SDK)
     if(NOT EXISTS "${LOCAL_CONVERTER_QPDF_SDK}/include/qpdf/qpdf-c.h")
-        message(FATAL_ERROR "LOCAL_CONVERTER_QPDF_SDK does not contain the verified qpdf C API headers")
+        message(FATAL_ERROR "LOCAL_CONVERTER_QPDF_SDK (${LOCAL_CONVERTER_QPDF_SDK}) does not contain the verified qpdf C API header include/qpdf/qpdf-c.h. ${_local_converter_qpdf_sdk_help}")
     endif()
     target_sources(libslic3r_local_converter PRIVATE
         ../libslic3r/LocalConverter/PdfAdapter.cpp
@@ -1052,7 +1063,7 @@ if(LOCAL_CONVERTER_QPDF_SDK)
     target_include_directories(libslic3r_local_converter PRIVATE "${LOCAL_CONVERTER_QPDF_SDK}/include")
     target_compile_definitions(libslic3r_local_converter PUBLIC LOCAL_CONVERTER_WITH_PDF=1)
 else()
-    message(FATAL_ERROR "The native converter requires LOCAL_CONVERTER_QPDF_SDK from the verified qpdf bundle")
+    message(FATAL_ERROR "The native converter requires LOCAL_CONVERTER_QPDF_SDK from the verified qpdf bundle. ${_local_converter_qpdf_sdk_help}")
 endif()
 if(WIN32)
     target_link_libraries(libslic3r_local_converter PUBLIC bcrypt userenv advapi32)

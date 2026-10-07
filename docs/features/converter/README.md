@@ -106,6 +106,11 @@ existing miniz target plus `bcrypt`, `userenv` and `advapi32` on Windows. Define
 `LOCAL_CONVERTER_WITH_PDF=1` only when the verified qpdf SDK headers are present.
 The adapter resolves C API symbols dynamically, so no qpdf import library is
 required. Compile `WorkerMain.cpp` into the separate worker with the same core.
+The application build requires `LOCAL_CONVERTER_QPDF_SDK`. `build.bat`,
+`build-installer.bat`, `OneClickBuildInstaller.cmd`, `build_win.bat` and the hosted
+Windows build workflow stage the verified SDK before configure; all but
+`build_win.bat` also place the runtime in the payload's `tools/pdf` (see
+[Bundled PDF engine](pdf-engine.md)).
 
 The panel provides category searches, PDF-option search, guided input/output
 pickers, PDF page/rotation/title controls, explicit ordered multi-file merge,

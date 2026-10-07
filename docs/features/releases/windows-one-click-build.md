@@ -43,9 +43,9 @@ The package is downloaded from NuGet, checked against the committed SHA-256 pin,
 user-local cache, and then used by `scripts/windows/Invoke-SquirrelPackage.ps1`. No signing command,
 certificate, or signing credential is accepted.
 
-The script compiles dependencies, compiles the Release application, stages
-the CMake install payload, downloads and verifies the same hash-pinned Mesa llvmpipe fallback used
-by CI, creates the CycloneDX SBOM, creates the Squirrel NuGet package with the exact source commit
+The script stages the verified qpdf SDK and PDF runtime, compiles dependencies, compiles the
+Release application, stages the CMake install payload, downloads and verifies the same
+hash-pinned Mesa llvmpipe fallback used by CI, creates the CycloneDX SBOM, creates the Squirrel NuGet package with the exact source commit
 and repository metadata, runs `Squirrel.exe --releasify`, validates `Setup.exe`, `RELEASES`, the
 full package, and an empty PE security directory on Setup.exe (unsigned), then writes the checksum sidecar.
 
@@ -73,14 +73,55 @@ Automation can set `BAMBU_ONE_CLICK_NO_PAUSE=1` before calling the CMD launcher.
 run at a time; a cross-process mutex rejects a second launch before it can write to the shared build
 caches.
 
+## Verified qpdf SDK and PDF runtime
+
+The native converter compiles against the qpdf C API, and configuring `src/slic3r` stops with an
+error unless `LOCAL_CONVERTER_QPDF_SDK` names the verified qpdf 12.4.2 SDK. The one-click build
+stages it automatically, before the dependency build, so a download or hash failure stops the run
+in minutes rather than hours:
+
+- `scripts/windows/Install-LocalPdfTools.ps1` takes the archive name, size, and SHA-256 from
+  `scripts/windows/local-pdf-tools.json`. It downloads the official `qpdf-12.4.2-msvc64.zip`
+  release asset with `gh release download` when a token or a signed-in GitHub CLI is available,
+  and otherwise, or when that download fails, over HTTPS from the same release. Either copy must
+  match the pinned size and SHA-256 before anything is extracted. The verified archive is kept in
+  `artifacts/local-pdf-cache`.
+- The SDK (headers and the `qpdf.lib` import library) is staged in `artifacts/local-pdf/sdk` and
+  passed to configure as `-DLOCAL_CONVERTER_QPDF_SDK:PATH=...`. The SDK path is part of the
+  configure-reuse check, so a build tree configured before this requirement is configured again
+  instead of reused.
+- The runtime (`qpdf30.dll`, `qpdf.exe`, the Microsoft runtime DLLs from the official
+  distribution, license notices, and the manifest) is staged in `install-dir/tools/pdf`, where the
+  packaged converter worker loads it, so it reaches the SBOM and the Squirrel package with the
+  rest of the payload.
+- The installer script requires PowerShell 7, while the one-click producer runs in Windows
+  PowerShell 5.1. The bootstrap installs the `Microsoft.PowerShell` winget package when `pwsh.exe`
+  is missing, and the producer starts `pwsh.exe` for this step only.
+- An existing verified tree is reused without a download. A tree that differs from the pins, or a
+  `pdf.stage-*` directory left in `install-dir/tools` by a failed attempt, stops the build without
+  being changed; inspect and remove it, then rerun.
+
+To stage the same files for a manual CMake configure, run from the repository root:
+
+```powershell
+pwsh -NoProfile -File scripts/windows/Install-LocalPdfTools.ps1 `
+  -Destination artifacts/local-pdf/runtime -SdkDestination artifacts/local-pdf/sdk
+cmake -S . -B build -DLOCAL_CONVERTER_QPDF_SDK:PATH="$PWD/artifacts/local-pdf/sdk" <other options>
+```
+
+Copy the verified runtime to `tools/pdf` beside the installed converter worker to enable PDF
+operations in that build. The hosted Windows build workflow and `build_win.bat` stage the SDK the
+same way; see [Bundled PDF engine](../converter/pdf-engine.md).
+
 ## Failure modes and recovery
 
 - Dependency installation can require Windows elevation or a restart. Rerun the same command after
   approving the vendor installer or restarting; completed prerequisites are detected and reused.
 - A clean build can require more than 40 GB and several hours. The transcript identifies the exact
   failed phase and exit code.
-- Network access is required for missing packages, the pinned Mesa archive, and the
-  hash-pinned Squirrel.Windows NuGet package when it is not cached.
+- Network access is required for missing packages, the pinned Mesa archive, the pinned qpdf
+  archive when it is not cached, and the hash-pinned Squirrel.Windows NuGet package when it is not
+  cached.
 - Tracked working-tree edits can be compiled locally, but the Squirrel nuspec can record only the
   current Git commit. The workflow warns when this makes the local payload non-reproducible.
 - The generated Squirrel package must contain `lib/net45/bambu-studio.exe`; a missing executable,

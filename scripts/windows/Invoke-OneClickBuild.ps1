@@ -182,6 +182,19 @@ function Get-PythonInterpreterPath {
     return $null
 }
 
+# Install-LocalPdfTools.ps1 requires PowerShell 7, while this producer runs in
+# Windows PowerShell 5.1, so the qpdf staging step starts pwsh.exe explicitly.
+function Get-PowerShell7Path {
+    $candidates = @()
+    $command = Get-Command pwsh.exe -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($null -ne $command) { $candidates += $command.Source }
+    if ($env:ProgramFiles) { $candidates += Join-Path $env:ProgramFiles 'PowerShell\7\pwsh.exe' }
+    foreach ($candidate in $candidates) {
+        if (Test-Path -LiteralPath $candidate -PathType Leaf) { return $candidate }
+    }
+    return $null
+}
+
 function Get-StrawberryPkgConfigPath {
     # Locate the paired wrapper and interpreter independently of unrelated
     # native pkg-config tools or the Perl shipped by Git for Windows.
@@ -338,6 +351,9 @@ function Initialize-LocalToolchain {
     # Both routes stage the automation companion before BuildOnly returns.
     Install-WingetPackageIfMissing -DisplayName '.NET 10 SDK' -PackageId 'Microsoft.DotNet.SDK.10' `
         -Probe { Test-DotNet10Sdk }
+    # The verified qpdf SDK and runtime installer requires PowerShell 7.
+    Install-WingetPackageIfMissing -DisplayName 'PowerShell 7' -PackageId 'Microsoft.PowerShell' `
+        -Probe { $null -ne (Get-PowerShell7Path) }
 
     if (-not $Plan) {
         $vsInstance = Get-VisualStudioInstance
@@ -771,12 +787,15 @@ function Get-ApplicationCacheIdentity {
 }
 
 function Test-ApplicationCacheIdentity {
-    param([string] $CachePath, [string] $Identity, [string] $InstallPrefix, [string] $DependencyPrefix)
+    param([string] $CachePath, [string] $Identity, [string] $InstallPrefix, [string] $DependencyPrefix, [string] $PdfSdkDirectory)
     if (-not (Test-Path -LiteralPath $CachePath -PathType Leaf)) { return $false }
+    # A cache configured before the qpdf SDK became required has no value for
+    # it, so it is never reused; the next configure passes the verified SDK.
     $expected = @{
         CMAKE_INSTALL_PREFIX = [IO.Path]::GetFullPath($InstallPrefix).Replace('\', '/')
         CMAKE_PREFIX_PATH = [IO.Path]::GetFullPath($DependencyPrefix).Replace('\', '/')
         BAMBU_APPLICATION_CACHE_ID = $Identity
+        LOCAL_CONVERTER_QPDF_SDK = [IO.Path]::GetFullPath($PdfSdkDirectory).Replace('\', '/')
     }
     foreach ($key in $expected.Keys) {
         $lines = @(Select-String -LiteralPath $CachePath -Pattern ('^' + [regex]::Escape($key) + ':[^=]+=(.*)$'))
@@ -807,11 +826,42 @@ function Preserve-ApplicationConfiguration {
     Write-BuildLog "Preserved prior application configuration at $history; generated objects remain in place."
 }
 
+function Initialize-LocalPdfTools {
+    # The native converter compiles against the qpdf C API headers, and the
+    # packaged worker loads the qpdf runtime from tools\pdf beside it. Both come
+    # from the hash-pinned official archive named in local-pdf-tools.json. The
+    # installer verifies an existing tree instead of replacing it, so repeated
+    # builds reuse both, and a tree that differs stops the build unchanged.
+    param([Parameter(Mandatory)][string] $PayloadDirectory)
+    $pwsh = Get-PowerShell7Path
+    if ($null -eq $pwsh) {
+        throw 'PowerShell 7 (pwsh.exe) is required to stage the verified qpdf SDK. Rerun this entry point to install it, or install the Microsoft.PowerShell package.'
+    }
+    # A failed attempt keeps its private pdf.stage-* sibling for diagnosis. Inside
+    # the payload it would be packaged, so stop instead of deleting it.
+    $leftover = @(Get-ChildItem -LiteralPath (Join-Path $PayloadDirectory 'tools') -Directory -Filter 'pdf.stage-*' -ErrorAction SilentlyContinue)
+    if ($leftover.Count -gt 0) {
+        throw "A failed qpdf staging attempt left '$($leftover[0].FullName)' inside the payload. Inspect and remove it, then rerun."
+    }
+    $sdkDirectory = Join-Path $script:RepositoryRoot 'artifacts\local-pdf\sdk'
+    $installArguments = @('-NoLogo', '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File',
+        (Join-Path $script:RepositoryRoot 'scripts\windows\Install-LocalPdfTools.ps1'),
+        '-Destination', (Join-Path $PayloadDirectory 'tools\pdf'),
+        '-SdkDestination', $sdkDirectory,
+        '-CacheDirectory', (Join-Path $script:RepositoryRoot 'artifacts\local-pdf-cache'))
+    Invoke-RepositoryCommand 'Staging the verified qpdf SDK and PDF runtime...' {
+        Invoke-LoggedNativeCommand -FilePath $pwsh -Arguments $installArguments
+    }
+    return $sdkDirectory
+}
+
 function Invoke-ApplicationBuild {
     param(
         [Parameter(Mandatory)] $Toolchain,
         [Parameter(Mandatory)][string] $DependencyDestination,
         [Parameter(Mandatory)][string] $InstallPrefix,
+        # Verified qpdf SDK root from Initialize-LocalPdfTools.
+        [Parameter(Mandatory)][string] $PdfSdkDirectory,
         [switch] $Clean
     )
     $buildDirectory = Join-Path $script:RepositoryRoot 'build'
@@ -824,13 +874,14 @@ function Invoke-ApplicationBuild {
     # src/libslic3r/CMakeLists.txt stamps the configure time into a generated
     # header (libslic3r_build_time.h), so every explicit configure recompiles
     # the few sources that show the build time. Configure only when the cache is
-    # missing, points at another install prefix, or a reconfigure was asked
+    # missing, points at another install prefix or qpdf SDK, or a reconfigure was asked
     # for; otherwise the generator's own ZERO_CHECK re-runs CMake exactly when a
     # CMakeLists changed.
     $appCache = Join-Path $buildDirectory 'CMakeCache.txt'
     $cacheIdentity = Get-ApplicationCacheIdentity -Toolchain $Toolchain -DependencyDestination $DependencyDestination -InstallPrefix $InstallPrefix
     $cacheMatches = Test-ApplicationCacheIdentity -CachePath $appCache -Identity $cacheIdentity `
-        -InstallPrefix $InstallPrefix -DependencyPrefix $prefixPath
+        -InstallPrefix $InstallPrefix -DependencyPrefix $prefixPath -PdfSdkDirectory $PdfSdkDirectory
+    $pdfSdk = [IO.Path]::GetFullPath($PdfSdkDirectory).Replace('\', '/')
     $pathPolicyCurrent = (Test-Path -LiteralPath $appCache -PathType Leaf) -and
         (Select-String -LiteralPath $appCache -SimpleMatch -Pattern 'BAMBU_RELEASE_SOURCE_PATH_POLICY:INTERNAL=msvc-pathmap-v1' -Quiet)
     $forceConfigure = ($env:BAMBU_RECONFIGURE -eq '1') -or -not $pathPolicyCurrent
@@ -841,7 +892,7 @@ function Invoke-ApplicationBuild {
         }
         Preserve-ApplicationConfiguration -BuildDirectory $buildDirectory
         Invoke-RepositoryCommand "Configuring Bambu Studio ($($Toolchain.Generator))..." {
-            Invoke-LoggedNativeCommand -FilePath $Toolchain.CMake -Arguments @('-S', $script:RepositoryRoot, '-B', $buildDirectory, '-G', $Toolchain.Generator, '-A', 'x64', "-DCMAKE_GENERATOR_INSTANCE=$($Toolchain.GeneratorInstance)", '-DSLIC3R_MSVC_PDB=OFF', '-DBBL_RELEASE_TO_PUBLIC=1', '-DBBL_INTERNAL_TESTING=0', '-DSLIC3R_BUILD_TESTS=OFF', "-DCMAKE_PREFIX_PATH=$prefixPath", "-DCMAKE_INSTALL_PREFIX=$InstallPrefix", "-DBAMBU_APPLICATION_CACHE_ID:STRING=$cacheIdentity", '-DCMAKE_CONFIGURATION_TYPES=Release', '-DCMAKE_BUILD_TYPE=Release', "-DWIN10SDK_PATH=$($Toolchain.SdkIncludePath)", "-DPython3_EXECUTABLE=$python")
+            Invoke-LoggedNativeCommand -FilePath $Toolchain.CMake -Arguments @('-S', $script:RepositoryRoot, '-B', $buildDirectory, '-G', $Toolchain.Generator, '-A', 'x64', "-DCMAKE_GENERATOR_INSTANCE=$($Toolchain.GeneratorInstance)", '-DSLIC3R_MSVC_PDB=OFF', '-DBBL_RELEASE_TO_PUBLIC=1', '-DBBL_INTERNAL_TESTING=0', '-DSLIC3R_BUILD_TESTS=OFF', "-DCMAKE_PREFIX_PATH=$prefixPath", "-DCMAKE_INSTALL_PREFIX=$InstallPrefix", "-DBAMBU_APPLICATION_CACHE_ID:STRING=$cacheIdentity", "-DLOCAL_CONVERTER_QPDF_SDK:PATH=$pdfSdk", '-DCMAKE_CONFIGURATION_TYPES=Release', '-DCMAKE_BUILD_TYPE=Release', "-DWIN10SDK_PATH=$($Toolchain.SdkIncludePath)", "-DPython3_EXECUTABLE=$python")
         }
     } else {
         Write-BuildLog "Reusing the configured build tree at $buildDirectory (set BAMBU_RECONFIGURE=1 to force a configure; note it recompiles everything)."
@@ -921,6 +972,11 @@ function Invoke-OneClickBuild {
         $toolchain = Resolve-BuildToolchain
         Write-BuildLog "Generator: $($toolchain.Generator); SDK include: $($toolchain.SdkIncludePath)"
 
+        # Stage the verified qpdf SDK (for configure) and runtime (into the
+        # payload) before the long dependency build, so a download or hash
+        # failure stops the run in minutes rather than hours.
+        $pdfSdkDirectory = Initialize-LocalPdfTools -PayloadDirectory $payloadDirectory
+
         if ([string]::IsNullOrWhiteSpace($DependencyCacheDirectory)) {
             Invoke-DependencyBuild -Toolchain $toolchain -Destination $dependencyDestination `
                 -Clean:$cleanDependencies
@@ -935,7 +991,7 @@ function Invoke-OneClickBuild {
             Write-BuildLog "Using read-only prebuilt dependencies at $dependencyDestination"
         }
         Invoke-ApplicationBuild -Toolchain $toolchain -DependencyDestination $dependencyDestination `
-            -InstallPrefix $payloadDirectory -Clean:$cleanApplication
+            -InstallPrefix $payloadDirectory -PdfSdkDirectory $pdfSdkDirectory -Clean:$cleanApplication
         Assert-PinnedBuildSource -SourceCommit $sourceCommit
 
         # The application build installed into install-dir already; re-run the
