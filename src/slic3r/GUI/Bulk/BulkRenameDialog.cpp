@@ -9,6 +9,7 @@
 #include "../Widgets/Button.hpp"
 #include "../Widgets/Label.hpp"
 #include "../Widgets/MaterialIcon.hpp"
+#include "../Widgets/MD3DataView.hpp"
 #include "../Widgets/SearchField.hpp"
 #include "../Widgets/SpinInput.hpp"
 #include "../Widgets/StateColor.hpp"
@@ -122,7 +123,7 @@ void BulkRenameDialog::build()
     m_error->SetForegroundColour(StateColor::semantic(MD3::Role::Error));
     content->Add(m_error, 0, wxEXPAND | wxTOP, FromDIP(2));
 
-    m_preview = new wxDataViewListCtrl(this, wxID_ANY, wxDefaultPosition, wxSize(-1, FromDIP(200)),
+    m_preview = new MD3DataViewListCtrl(this, wxID_ANY, wxDefaultPosition, wxSize(-1, FromDIP(200)),
                                        wxDV_ROW_LINES | wxBORDER_NONE);
     // TRN: Accessible name of the live before/after list in the bulk rename dialog.
     m_preview->SetName(_L("Rename preview"));

@@ -1576,7 +1576,7 @@ namespace Slic3r
                 const ImVec4 surface_container_high = md3_imgui_color(MD3::Role::SurfaceContainerHigh, m_is_dark);
                 ImGui::PushStyleColor(ImGuiCol_Separator, outline);
                 ImGui::PushStyleColor(ImGuiCol_Header, primary_container);
-                ImGui::PushStyleColor(ImGuiCol_HeaderHovered, primary_container);
+                ImGui::PushStyleColor(ImGuiCol_HeaderHovered, surface_container_high);
                 ImGui::PushStyleColor(ImGuiCol_ScrollbarGrab, outline);
                 ImGui::PushStyleColor(ImGuiCol_ScrollbarGrabHovered, primary);
                 ImGui::PushStyleColor(ImGuiCol_ScrollbarGrabActive, primary);
@@ -1640,9 +1640,18 @@ namespace Slic3r
                 ImDrawList* draw_list = ImGui::GetWindowDrawList();
                 ImVec2 pos_rect = ImGui::GetCursorScreenPos();
                 float checkbox_offset = 0.0f;
-                draw_list->AddRectFilled(ImVec2(pos_rect.x, pos_rect.y - ImGui::GetStyle().WindowPadding.y),
-                    ImVec2(pos_rect.x + ImGui::GetWindowWidth() + ImGui::GetFrameHeight(), pos_rect.y + ImGui::GetFrameHeight() + window_padding * 2.5),
-                    ImGui::GetColorU32(surface_container_high), 10.0f * m_scale);
+                // A bounded header plate separates dock controls from the data below.
+                // Decoration stays inside the existing content span and changes no targets.
+                const ImVec2 header_min(dock_x0, pos_rect.y);
+                const ImVec2 header_max(dock_x0 + dock_span, pos_rect.y + header_height);
+                const float header_radius = float(MD3::Metrics::active().small_radius) * m_scale;
+                draw_list->AddRectFilled(header_min, header_max,
+                    ImGui::GetColorU32(md3_imgui_color(MD3::Role::SurfaceContainer, m_is_dark)), header_radius);
+                draw_list->AddLine(ImVec2(header_min.x, header_max.y), header_max,
+                    ImGui::GetColorU32(outline), std::max(1.0f, m_scale));
+                draw_list->AddRectFilled(ImVec2(header_min.x + window_padding, header_min.y + window_padding),
+                    ImVec2(header_min.x + window_padding + 2.0f * m_scale, header_max.y - window_padding),
+                    ImGui::GetColorU32(primary), m_scale);
                 auto append_item = [icon_size, &imgui, imperial_units, &window_padding, &draw_list, &checkbox_offset, primary, this](
                     EItemType type,
                     const Color& color,
@@ -3059,10 +3068,9 @@ namespace Slic3r
                     const ImVec2 stats_max(std::max(dock_x0 + dock_span, stats_rect_max.x + 6.0f * m_scale),
                                            stats_rect_max.y + 6.0f * m_scale);
                     draw_list->ChannelsSetCurrent(0);
-                    // Statistics card: sc-highest fill + outline-variant hairline
-                    // at the card radius, matching the kit Preview statistics card.
+                    // A quiet statistics card separates summary values from the dock controls.
                     const float stats_radius = float(MD3::Metrics::active().radius) * m_scale;
-                    draw_list->AddRectFilled(stats_min, stats_max, ImGui::GetColorU32(md3_imgui_color(MD3::Role::SurfaceContainerHighest, m_is_dark)), stats_radius);
+                    draw_list->AddRectFilled(stats_min, stats_max, ImGui::GetColorU32(md3_imgui_color(MD3::Role::SurfaceContainerLowest, m_is_dark)), stats_radius);
                     draw_list->AddRect(stats_min, stats_max, ImGui::GetColorU32(outline), stats_radius, 0, 1.0f * m_scale);
                     draw_list->ChannelsMerge();
                 }

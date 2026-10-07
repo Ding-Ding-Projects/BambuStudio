@@ -13,8 +13,13 @@
 class wxDataViewListCtrl;
 class wxGenericCalendarCtrl;
 class wxSimplebook;
+class wxScrolledWindow;
+class wxBoxSizer;
+class wxSizerItem;
 class wxStaticText;
 class wxTextCtrl;
+class StaticBox;
+class Button;
 
 namespace Slic3r::GUI {
 
@@ -54,6 +59,8 @@ public:
 
 private:
     void create_ui();
+    void refresh_appearance();
+    void reflow();
     void refresh_all();
     void refresh_overview();
     void refresh_files();
@@ -98,6 +105,15 @@ private:
     wxTextCtrl *m_notes = nullptr;
     wxGenericCalendarCtrl *m_month = nullptr;
     wxDataViewListCtrl *m_agenda = nullptr;
+    std::vector<wxScrolledWindow *> m_pages;
+    std::vector<StaticBox *> m_cards;
+    std::vector<wxStaticText *> m_headings;
+    std::vector<Button *> m_action_buttons;
+    std::vector<std::pair<wxSizerItem *, bool>> m_spacing;
+    wxBoxSizer *m_calendar_columns = nullptr;
+    wxSizerItem *m_calendar_month_item = nullptr;
+    bool m_ui_ready = false;
+    bool m_reflowing = false;
 };
 
 } // namespace Slic3r::GUI

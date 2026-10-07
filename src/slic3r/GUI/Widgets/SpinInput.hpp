@@ -27,6 +27,9 @@ class SpinInput : public wxNavigationEnabled<StaticBox>
     int max;
     int delta;
     bool text_updating;
+    bool m_layout_children = false;
+    wxSize m_requested_minimum_dip = wxDefaultSize;
+    wxSize m_editor_best;
 
     // Bilingual mode bookkeeping: the tooltip the caller actually asked for,
     // and the Cantonese note (if any) currently folded on top of it.
@@ -90,6 +93,8 @@ private:
     void render(wxDC& dc);
 
     void messureSize();
+    void layoutChildren();
+    void onSize(wxSizeEvent &event);
 
     Button *createButton(bool inc);
 

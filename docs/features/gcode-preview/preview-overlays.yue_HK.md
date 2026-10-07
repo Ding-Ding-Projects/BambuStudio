@@ -1,6 +1,6 @@
 ---
 translation-of: preview-overlays.md
-source-sha256: b7f2f8c9533c0a95c779707b7bbf4fe884cf52dafad43b919f5e4f24e69004e5
+source-sha256: a3116659f02ec2426d471f348dd7d825f38e1df173d2e8688c3abf84924db472
 review-status: agent-drafted
 ---
 

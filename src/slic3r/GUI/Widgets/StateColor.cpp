@@ -11,8 +11,8 @@ static bool operator<(wxColour const &l, wxColour const &r) { return l.GetRGBA()
 // colours it may visit repeatedly, so the mapping must be a fixed point on its
 // own output — otherwise a second pass corrupts an already-dark colour (the
 // old "#e8e7ee -> #2f3036" collapse that made dark-mode text near-invisible).
-// The MD3::Dark tones referenced below are hex-nudged in MD3Tokens.hpp to keep
-// this invariant (see the HEX-ALIAS INVARIANT note there).
+// New neutral-role pairs and historical raw RGB aliases share one destination
+// per semantic role. Arbitrary colours that are not known keys remain untouched.
 static std::map<wxColour, wxColour> gDarkColors{
     {ThemeColor::BrandGreen,  "#8bd89b"},/*green*/
     {ThemeColor::BrandGreenPressed, "#7ac98a"},
@@ -21,44 +21,45 @@ static std::map<wxColour, wxColour> gDarkColors{
     {ThemeColor::Warning,     "#ffb77c"},
     {ThemeColor::Danger,      "#ffb4ab"},/*red*/
     {ThemeColor::Link,        "#479EF5"},/*blue*/
-    {ThemeColor::TextPrimary, MD3::Dark::onSurface},/*black -> #e9e8ef*/
-    {ThemeColor::TextSecondary, "#cdced8"},
+    {ThemeColor::TextPrimary, MD3::Dark::onSurface},
+    {ThemeColor::TextSecondary, MD3::Dark::onSurfaceVariant},
     {ThemeColor::TextMuted,     "#a8a9b3"},
-    // Disabled text: ~OnSurface @ 50% over the dark containers (#2f3036/#202127).
+    // Disabled text retains the existing explicit tone; normal supporting text
+    // uses the semantic OnSurfaceVariant role.
     // The previous #6a6b73 sat at ~1.7:1 on SurfaceContainerHigh — unreadable
     // disabled labels on the dark Slice/Print pills and input fields.
     {ThemeColor::TextDisabled,  "#8a8b94"},
-    {ThemeColor::White,       "#202127"},
-    {ThemeColor::Grey200,     "#202127"},
-    {ThemeColor::Grey250,     "#25262b"},
-    {ThemeColor::Grey300,     "#2f3036"},/*gray -> */
-    {ThemeColor::Grey350,     "#393a41"},
-    {ThemeColor::Grey400,     "#4a4c54"},
-    {ThemeColor::Grey450,     "#94959f"},
+    {ThemeColor::White,       MD3::Dark::scLowest},
+    {ThemeColor::Grey200,     MD3::Dark::scLow},
+    {ThemeColor::Grey250,     MD3::Dark::sc},
+    {ThemeColor::Grey300,     MD3::Dark::scHigh},/*gray -> */
+    {ThemeColor::Grey350,     MD3::Dark::scHighest},
+    {ThemeColor::Grey400,     MD3::Dark::outlineVariant},
+    {ThemeColor::Grey450,     MD3::Dark::outline},
     {"#2C2C2E", MD3::Dark::onSurface},/*black*/
-    {"#E5E7EB", "#393a41"},/*gray200 -> gray800*/
+    {"#E5E7EB", MD3::Dark::scHighest},/*gray200 -> gray800*/
     {"#6B6B6B", "#a8a9b3"},/*gray -> */
-    {"#ACACAC", "#94959f"},/*gray -> */
-    {"#3B4446", "#2f3036"},
-    {"#CECECE", "#4a4c54"},
+    {"#ACACAC", MD3::Dark::outline},/*gray -> */
+    {"#3B4446", MD3::Dark::scHigh},
+    {"#CECECE", MD3::Dark::outlineVariant},
     {"#DBFDD5", "#095228"},
     {"#000000", MD3::Dark::onSurface},
-    {"#F4F4F4", "#202127"},
-    {"#F7F7F7", "#202127"},
-    {"#DBDBDB", "#4a4c54"},
+    {"#F4F4F4", MD3::Dark::scLow},
+    {"#F7F7F7", MD3::Dark::scLow},
+    {"#DBDBDB", MD3::Dark::outlineVariant},
     {ThemeColor::LightGreen,  "#095228"},
     {"#EDFAF2", "#095228"},
     {"#323A3C", MD3::Dark::onSurface},
     {"#6B6B6A", "#a8a9b3"},
     {"#303A3C", MD3::Dark::onSurface},
-    {"#FEFFFF", "#1b1c21"},
+    {"#FEFFFF", MD3::Dark::surface},
     {"#363636", MD3::Dark::onSurface},
-    {"#F0F0F1", "#25262b"},
-    {"#9E9E9E", "#94959f"},
+    {"#F0F0F1", MD3::Dark::sc},
+    {"#9E9E9E", MD3::Dark::outline},
     {"#D7E8DE", "#2b3a2f"},
-    {"#2B3436", "#cdced8"},
-    {"#ABABAB", "#94959f"},
-    {"#D9D9D9", "#393a41"},
+    {"#2B3436", MD3::Dark::onSurfaceVariant},
+    {"#ABABAB", MD3::Dark::outline},
+    {"#D9D9D9", MD3::Dark::scHighest},
     {"#EBF9F0", "#095228"},
     {"#DBFDE7", "#095228"},
     // MD3 neutral surface roles. Construction-time semantic() snapshots of the
@@ -66,19 +67,30 @@ static std::map<wxColour, wxColour> gDarkColors{
     // page backgrounds, HMSPanel, SideTools) are taken once and never re-resolved,
     // so without these pairs a runtime theme switch leaves a near-white plate on an
     // otherwise dark shell until restart.
-    // SurfaceBright shares Light::surface's #faf8fd and so cannot own a second key;
-    // it remaps to Dark::surface rather than Dark::surfaceBright. Harmless while it
-    // has no consumers, but a future one must re-resolve on theme change instead of
-    // relying on this table.
+    // SurfaceBright has a distinct light key, preserving its brighter role
+    // through the same compatibility route instead of collapsing into Surface.
     // ErrorContainer is deliberately NOT paired: Dark::onErrorContainer aliases
     // Light::errorContainer (#ffdad6). Mapping errorContainer alone would recolour
     // the plate to #93000a while its #410002 text stayed put (~1.3:1, unreadable),
     // and adding the reciprocal onErrorContainer pair to fix that would put #ffdad6
     // on both sides of the table — the idempotency violation described above. It
-    // needs a one-step hex nudge of Dark::onErrorContainer in MD3Tokens.hpp (see
-    // the HEX-ALIAS INVARIANT note there) before either pair is safe.
-    {MD3::Light::surface,    MD3::Dark::surface},    /*#faf8fd -> #1b1c21*/
-    {MD3::Light::surfaceDim, MD3::Dark::surfaceDim}, /*#dad9e0 -> #161619*/
+    // requires a separate change to the error palette before either pair is safe.
+    {MD3::Light::surface,       MD3::Dark::surface},
+    {MD3::Light::surfaceDim,    MD3::Dark::surfaceDim},
+    {MD3::Light::surfaceBright, MD3::Dark::surfaceBright},
+    // Legacy raw colour snapshots retain dark-mode compatibility. Named aliases
+    // above now resolve the current defaults in both themes. No saved style is
+    // rewritten, and values outside this known compatibility set pass through.
+    {"#faf8fd", MD3::Dark::surface},
+    {"#dad9e0", MD3::Dark::surfaceDim},
+    {"#1a1b1f", MD3::Dark::onSurface},
+    {"#44464e", MD3::Dark::onSurfaceVariant},
+    {"#f4f2f9", MD3::Dark::scLow},
+    {"#eeedf3", MD3::Dark::sc},
+    {"#e8e7ee", MD3::Dark::scHigh},
+    {"#e2e1e9", MD3::Dark::scHighest},
+    {"#c5c6d0", MD3::Dark::outlineVariant},
+    {"#75777f", MD3::Dark::outline},
     // MD3 brand container-green tokens. Construction-time semantic() snapshots of
     // the tonal greens capture the light value; these pairs live-remap them when
     // the app toggles to dark mode (mirrors the resolve() dark tones exactly).
@@ -132,7 +144,19 @@ std::map<wxColour, wxColour> revert(std::map<wxColour, wxColour> const & map)
 
 wxColour StateColor::lightModeColorFor(wxColour const &color)
 {
-    static std::map<wxColour, wxColour> gLightColors = revert(gDarkColors);
+    static std::map<wxColour, wxColour> gLightColors = [] {
+        auto result = revert(gDarkColors);
+        // Several historical light values share one dark neutral. Prefer the
+        // current role on return to light mode, not the first numeric map key.
+        // Accent, error and arbitrary/custom colour handling stays unchanged.
+        for (const auto role : {MD3::Role::Surface, MD3::Role::SurfaceDim, MD3::Role::SurfaceBright,
+                MD3::Role::SurfaceContainerLowest, MD3::Role::SurfaceContainerLow,
+                MD3::Role::SurfaceContainer, MD3::Role::SurfaceContainerHigh,
+                MD3::Role::SurfaceContainerHighest, MD3::Role::OnSurface,
+                MD3::Role::OnSurfaceVariant, MD3::Role::Outline, MD3::Role::OutlineVariant})
+            result[MD3::resolve(role, true)] = MD3::resolve(role, false);
+        return result;
+    }();
     auto iter = gLightColors.find(color);
     if (iter != gLightColors.end()) return iter->second;
     return color;

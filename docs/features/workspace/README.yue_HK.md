@@ -1,6 +1,6 @@
 ---
 translation-of: README.md
-source-sha256: f0f37d788c8843f9a8e4183e1481480719262d6f26a9ce477f433a8905670582
+source-sha256: eddcad58c6b7bf46ef9477b05255b25894a34899bc9ddfeca5fedba4c170645a
 review-status: agent-drafted
 ---
 
@@ -9,6 +9,9 @@ review-status: agent-drafted
 # 工作區
 
 項目同工作流級功能嘅原住民應用程式：點項目係開啟、追蹤、版本化同點應用程式與用戶交流當工作進行時。
+
+- [可讀日期](readable-dates.md)：完整月份名稱、本地化日期、觀看者本地時間戳，同如實呈現嘅編譯版本資料。
+- [批次操作](bulk-actions.md)：清單多選、Shift 範圍、Ctrl+A 本頁／Ctrl+Shift+A 全部符合項／Ctrl+I 反選；操作前檢視選取、會改動及略過數目，按模式改名附預覽及衝突偵測，破壞性批次操作經雙鍵確認。
 
 - [非封鎖通知](non-blocking-notifications.md)──資訊、
   警告同錯誤訊息表面作為角落吐司代替模態對話；
@@ -47,6 +50,16 @@ review-status: agent-drafted
   去重）、附帶一個瀏覽器同恢復旁邊活躍檔案語意。
 - [設備風扇動作](fan-motion.md)──獨立遙測驅動部件同
   輔助風扇預覽附帶不同輸入同命令反饋。
+
+- [打印準備同工作流程導覽](print-preparation.yue_HK.md)：只讀取狀態嘅打印檢視、原有明確輸出同確認流程，以及保留嘅工作區入口。原生畫面驗證仍然未完成。
+
+## Studio Atlas 工作流程外觀
+
+- [Prepare 檢查器同清單](../design-system/prepare-inspector-atlas.yue_HK.md)：原生準備控制及來源幾何量度。
+- [打印設定外觀](print-setup-atlas.yue_HK.md)：打印機選取、檢視及原有傳送／匯出流程，包括重新開啟生命週期修正。
+- [工作區組合](../design-system/workspace-atlas.yue_HK.md)：Overview、Files、Checklist、Notes、Calendar 排版，保留資料行為。
+
+以上係來源實作記錄。凡文章列為未驗證嘅原生畫面、支援尺寸互動及完整語言／主題／比例矩陣，仍然未完成。
 
 ## Postman 集合
 

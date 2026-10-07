@@ -1,5 +1,7 @@
 #include "CalibrationWizard.hpp"
 #include "Widgets/MD3ScrolledWindow.hpp"
+#include "Widgets/MD3Tokens.hpp"
+#include "Widgets/StateColor.hpp"
 #include "I18N.hpp"
 #include "GUI_App.hpp"
 #include "MsgDialog.hpp"
@@ -75,25 +77,21 @@ CalibrationWizard::CalibrationWizard(wxWindow* parent, CalibMode mode, wxWindowI
     : wxPanel(parent, id, pos, size, style)
     , m_mode(mode)
 {
-    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
 
     wxBoxSizer* main_sizer = new wxBoxSizer(wxVERTICAL);
 
     m_scrolledWindow = new MD3ScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL | wxVSCROLL);
     m_scrolledWindow->SetScrollRate(5, 5);
-    m_scrolledWindow->SetBackgroundColour(*wxWHITE);
+    m_scrolledWindow->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     wxBoxSizer* padding_sizer = new wxBoxSizer(wxHORIZONTAL);
-    padding_sizer->Add(0, 0, 1);
-
     m_all_pages_sizer = new wxBoxSizer(wxVERTICAL);
-    padding_sizer->Add(m_all_pages_sizer, 0);
-
-    padding_sizer->Add(0, 0, 1);
+    padding_sizer->Add(m_all_pages_sizer, 1, wxEXPAND);
 
     m_scrolledWindow->SetSizer(padding_sizer);
 
-    main_sizer->Add(m_scrolledWindow, 1, wxEXPAND | wxALL, FromDIP(10));
+    main_sizer->Add(m_scrolledWindow, 1, wxEXPAND | wxALL, FromDIP(MD3::Metrics::active().padding));
 
     this->SetSizer(main_sizer);
     this->Layout();
@@ -162,6 +160,7 @@ void CalibrationWizard::show_step(CalibrationWizardPageStep* step)
     }
 
     Layout();
+    m_scrolledWindow->FitInside();
 }
 
 void CalibrationWizard::update(MachineObject* obj)
@@ -554,10 +553,10 @@ void PressureAdvanceWizard::create_pages()
     cali_step   = new CalibrationWizardPageStep(new CalibrationCaliPage(m_scrolledWindow, m_mode));
     save_step   = new CalibrationWizardPageStep(new CalibrationPASavePage(m_scrolledWindow));
 
-    m_all_pages_sizer->Add(start_step->page, 1, wxEXPAND | wxALL, FromDIP(25));
-    m_all_pages_sizer->Add(preset_step->page, 1, wxEXPAND | wxALL, FromDIP(25));
-    m_all_pages_sizer->Add(cali_step->page, 1, wxEXPAND | wxALL, FromDIP(25));
-    m_all_pages_sizer->Add(save_step->page, 1, wxEXPAND | wxALL, FromDIP(25));
+    m_all_pages_sizer->Add(start_step->page, 1, wxEXPAND | wxALL, FromDIP(MD3::Metrics::active().padding));
+    m_all_pages_sizer->Add(preset_step->page, 1, wxEXPAND | wxALL, FromDIP(MD3::Metrics::active().padding));
+    m_all_pages_sizer->Add(cali_step->page, 1, wxEXPAND | wxALL, FromDIP(MD3::Metrics::active().padding));
+    m_all_pages_sizer->Add(save_step->page, 1, wxEXPAND | wxALL, FromDIP(MD3::Metrics::active().padding));
 
 
     m_page_steps.push_back(start_step);
@@ -1117,15 +1116,15 @@ void FlowRateWizard::create_pages()
     cali_step = new CalibrationWizardPageStep(new CalibrationCaliPage(m_scrolledWindow, m_mode));
     save_step = new CalibrationWizardPageStep(new CalibrationFlowX1SavePage(m_scrolledWindow));
 
-    m_all_pages_sizer->Add(start_step->page, 1, wxEXPAND | wxALL, FromDIP(25));
-    m_all_pages_sizer->Add(preset_step->page, 1, wxEXPAND | wxALL, FromDIP(25));
-    m_all_pages_sizer->Add(cali_coarse_step->page, 1, wxEXPAND | wxALL, FromDIP(25));
-    m_all_pages_sizer->Add(coarse_save_step->page, 1, wxEXPAND | wxALL, FromDIP(25));
-    m_all_pages_sizer->Add(cali_fine_step->page, 1, wxEXPAND | wxALL, FromDIP(25));
-    m_all_pages_sizer->Add(fine_save_step->page, 1, wxEXPAND | wxALL, FromDIP(25));
+    m_all_pages_sizer->Add(start_step->page, 1, wxEXPAND | wxALL, FromDIP(MD3::Metrics::active().padding));
+    m_all_pages_sizer->Add(preset_step->page, 1, wxEXPAND | wxALL, FromDIP(MD3::Metrics::active().padding));
+    m_all_pages_sizer->Add(cali_coarse_step->page, 1, wxEXPAND | wxALL, FromDIP(MD3::Metrics::active().padding));
+    m_all_pages_sizer->Add(coarse_save_step->page, 1, wxEXPAND | wxALL, FromDIP(MD3::Metrics::active().padding));
+    m_all_pages_sizer->Add(cali_fine_step->page, 1, wxEXPAND | wxALL, FromDIP(MD3::Metrics::active().padding));
+    m_all_pages_sizer->Add(fine_save_step->page, 1, wxEXPAND | wxALL, FromDIP(MD3::Metrics::active().padding));
 
-    m_all_pages_sizer->Add(cali_step->page, 1, wxEXPAND | wxALL, FromDIP(25));
-    m_all_pages_sizer->Add(save_step->page, 1, wxEXPAND | wxALL, FromDIP(25));
+    m_all_pages_sizer->Add(cali_step->page, 1, wxEXPAND | wxALL, FromDIP(MD3::Metrics::active().padding));
+    m_all_pages_sizer->Add(save_step->page, 1, wxEXPAND | wxALL, FromDIP(MD3::Metrics::active().padding));
 
     m_page_steps.push_back(start_step);
     m_page_steps.push_back(preset_step);
@@ -1678,10 +1677,10 @@ void MaxVolumetricSpeedWizard::create_pages()
     cali_step = new CalibrationWizardPageStep(new CalibrationCaliPage(m_scrolledWindow, m_mode));
     save_step = new CalibrationWizardPageStep(new CalibrationMaxVolumetricSpeedSavePage(m_scrolledWindow));
 
-    m_all_pages_sizer->Add(start_step->page, 1, wxEXPAND | wxALL, FromDIP(25));
-    m_all_pages_sizer->Add(preset_step->page, 1, wxEXPAND | wxALL, FromDIP(25));
-    m_all_pages_sizer->Add(cali_step->page, 1, wxEXPAND | wxALL, FromDIP(25));
-    m_all_pages_sizer->Add(save_step->page, 1, wxEXPAND | wxALL, FromDIP(25));
+    m_all_pages_sizer->Add(start_step->page, 1, wxEXPAND | wxALL, FromDIP(MD3::Metrics::active().padding));
+    m_all_pages_sizer->Add(preset_step->page, 1, wxEXPAND | wxALL, FromDIP(MD3::Metrics::active().padding));
+    m_all_pages_sizer->Add(cali_step->page, 1, wxEXPAND | wxALL, FromDIP(MD3::Metrics::active().padding));
+    m_all_pages_sizer->Add(save_step->page, 1, wxEXPAND | wxALL, FromDIP(MD3::Metrics::active().padding));
 
     m_page_steps.push_back(start_step);
     m_page_steps.push_back(preset_step);

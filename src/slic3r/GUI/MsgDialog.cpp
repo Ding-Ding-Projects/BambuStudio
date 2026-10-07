@@ -118,7 +118,7 @@ MsgDialog::MsgDialog(wxWindow *parent, const wxString &title, const wxString &he
     m_dsa_sizer = new wxBoxSizer(wxHORIZONTAL);
     m_dsa_row_sizer = new wxBoxSizer(wxHORIZONTAL);
     m_dsa_row_sizer->Add(m_dsa_sizer, 1, wxEXPAND);
-    m_action_sizer = new wxFlexGridSizer(1, 0, FromDIP(8), FromDIP(10));
+    m_action_sizer = new wxFlexGridSizer(1, 0, FromDIP(MD3::Metrics::active().gap), FromDIP(MD3::Metrics::active().gap));
     m_action_row_sizer = new wxBoxSizer(wxHORIZONTAL);
     m_action_row_sizer->AddStretchSpacer();
     m_action_row_sizer->Add(m_action_sizer, 0, wxALIGN_CENTER_VERTICAL);
@@ -287,6 +287,8 @@ void MsgDialog::reflow_footer_for_width(int available_width)
 {
     if (!m_action_sizer)
         return;
+    m_action_sizer->SetHGap(FromDIP(MD3::Metrics::active().gap));
+    m_action_sizer->SetVGap(FromDIP(MD3::Metrics::active().gap));
 
     if (m_text_dsa) {
         const int checkbox_width =
@@ -318,7 +320,7 @@ void MsgDialog::reflow_footer_for_width(int available_width)
     }
     if (m_button_order.size() > 1)
         preferred_width +=
-            static_cast<int>(m_button_order.size() - 1) * FromDIP(10);
+            static_cast<int>(m_button_order.size() - 1) * FromDIP(MD3::Metrics::active().gap);
 
     const bool stack = preferred_width > action_budget;
     if (stack) {
@@ -407,7 +409,9 @@ static void add_msg_content(wxWindow   *parent,
                             std::function<void(const wxString &)> link_callback = nullptr)
 {
     wxHtmlWindow* html = new MD3HtmlWindow(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHW_SCROLLBAR_AUTO);
-    html->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
+    const wxColour reading_surface = StateColor::semantic(MD3::Role::SurfaceContainerLowest);
+    const int reading_inset = parent->FromDIP(MD3::Metrics::active().padding);
+    html->SetBackgroundColour(reading_surface);
 
     // count lines in the message
     int msg_lines = 0;
@@ -440,7 +444,7 @@ static void add_msg_content(wxWindow   *parent,
     wxFont      font = ::Label::Body_14.IsOk() ? ::Label::Body_14 : wxSystemSettings::GetFont(wxSYS_DEFAULT_GUI_FONT);
     wxFont      monospace = ::Label::Mono_12.IsOk() ? ::Label::Mono_12 : wxGetApp().code_font();
     wxColour    text_clr = wxGetApp().get_label_clr_default();
-    wxColour    bgr_clr = parent->GetBackgroundColour(); //wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOW);
+    wxColour    bgr_clr = reading_surface;
     auto        text_clr_str = wxString::Format(wxT("#%02X%02X%02X"), text_clr.Red(), text_clr.Green(), text_clr.Blue());
     auto        bgr_clr_str = wxString::Format(wxT("#%02X%02X%02X"), bgr_clr.Red(), bgr_clr.Green(), bgr_clr.Blue());
     // The HTML size ladder stays flat (as before) but is now anchored on the MD3
@@ -448,7 +452,7 @@ static void add_msg_content(wxWindow   *parent,
     const int   font_size = font.GetPointSize();
     int         size[] = { font_size, font_size, font_size, font_size, font_size, font_size, font_size };
     html->SetFonts(font.GetFaceName(), monospace.GetFaceName(), size);
-    html->SetBorders(2);
+    html->SetBorders(reading_inset);
 
     // calculate html page size from text
     wxSize page_size;
@@ -467,7 +471,8 @@ static void add_msg_content(wxWindow   *parent,
         em = std::max<size_t>(10, 10.0f * scale_factor);
 #endif // __WXGTK__
     }
-    auto info_width = bounded_message_content_width(parent, 68 * em);
+    const int reading_gutter = 2 * reading_inset + MD3ScrolledWindow::BarThickness(parent);
+    auto info_width = std::max(1, bounded_message_content_width(parent, 68 * em) - reading_gutter);
     // if message containes the table
     if (msg.Contains("<tr>")) {
         int lines = msg.Freq('\n') + 1;
@@ -508,8 +513,8 @@ static void add_msg_content(wxWindow   *parent,
                 info_width = std::min(info_width, msg_sz.GetX() + parent->FromDIP(4));
             }
             wxScrolledWindow *scrolledWindow = new MD3ScrolledWindow(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL);
-            scrolledWindow->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
-            scrolledWindow->SetScrollRate(0, 20);
+            scrolledWindow->SetBackgroundColour(reading_surface);
+            scrolledWindow->SetScrollRate(0, parent->FromDIP(12));
             scrolledWindow->EnableScrolling(false, true);
             wxBoxSizer *sizer_scrolled = new wxBoxSizer(wxHORIZONTAL);
             Label *wrapped_text = new Label(scrolledWindow, font, msg, LB_AUTO_WRAP, wxSize(info_width, -1));
@@ -519,21 +524,21 @@ static void add_msg_content(wxWindow   *parent,
             // It already shows both languages; the decorator must not stack them again.
             if (!secondary.empty())
                 I18N::BilingualRegistry::instance().set_managed(wrapped_text, true);
-            sizer_scrolled->Add(wrapped_text, wxALIGN_LEFT ,0);
-            sizer_scrolled->AddSpacer(5);
-            sizer_scrolled->AddStretchSpacer();
+            sizer_scrolled->Add(wrapped_text, 0, wxALL, reading_inset);
             scrolledWindow->SetSizer(sizer_scrolled);
             auto info_height = 48 * em;
             if (sizer_scrolled->GetMinSize().GetHeight() < info_height) {
                 info_height = sizer_scrolled->GetMinSize().GetHeight();
             }
-            scrolledWindow->SetMinSize(wxSize(info_width, info_height));
-            scrolledWindow->SetMaxSize(wxSize(info_width, info_height));
+            scrolledWindow->SetMinSize(wxSize(info_width + reading_gutter, info_height));
+            scrolledWindow->SetMaxSize(wxSize(info_width + reading_gutter, info_height));
             scrolledWindow->FitInside();
             content_sizer->Add(scrolledWindow, 1, wxEXPAND | wxRIGHT, 8);
             return;
         }
     }
+    page_size.SetWidth(page_size.GetWidth() + reading_gutter);
+    page_size.SetHeight(page_size.GetHeight() + 2 * reading_inset);
     html->SetMinSize(page_size);
 
     std::string msg_escaped = xml_escape(msg.ToUTF8().data(), is_marked_msg);
@@ -596,8 +601,8 @@ MsgNoteDialog::MsgNoteDialog(wxWindow *parent, const wxString &title, long style
 
 Label *MsgNoteDialog::create_wrapped_label(const wxString &text, const wxFont &font, const wxColour &color)
 {
-    const int content_width = FromDIP(430);
-    const wxColour background = StateColor::darkModeColorFor(*wxWHITE);
+    const int content_width = bounded_message_content_width(this, FromDIP(430));
+    const wxColour background = GetBackgroundColour();
     wxClientDC dc(this);
     dc.SetFont(font);
     wxString wrapped_text;
@@ -613,15 +618,15 @@ Label *MsgNoteDialog::create_wrapped_label(const wxString &text, const wxFont &f
 void MsgNoteDialog::AddMessage(const wxString &message)
 {
     auto *message_label = create_wrapped_label(
-        message, Label::Body_14, StateColor::darkModeColorFor(wxColour("#262E30")));
+        message, Label::Body_14, StateColor::semantic(MD3::Role::OnSurface));
     content_sizer->Add(message_label, 0, wxEXPAND);
 }
 
 void MsgNoteDialog::AddNote(const wxString &note)
 {
     auto *note_label = create_wrapped_label(
-        note, Label::Body_12, StateColor::darkModeColorFor(wxColour("#6B6B6B")));
-    content_sizer->Add(note_label, 0, wxEXPAND | wxTOP, FromDIP(8));
+        note, Label::Body_13, StateColor::semantic(MD3::Role::OnSurfaceVariant));
+    content_sizer->Add(note_label, 0, wxEXPAND | wxTOP, FromDIP(MD3::Metrics::active().gap));
 }
 
 void MsgNoteDialog::Finalize()

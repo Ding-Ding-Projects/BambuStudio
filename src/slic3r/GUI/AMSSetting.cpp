@@ -33,10 +33,10 @@ void AMSSetting::create()
 {
     wxBoxSizer *m_sizer_main;
     m_sizer_main = new wxBoxSizer(wxVERTICAL);
-    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
+    SetBackgroundColour(StateColor::semantic(MD3::Role::Surface));
 
     m_static_ams_settings = new Label(this, _L("AMS Settings"));
-    m_static_ams_settings->SetFont(::Label::Head_14);
+    m_static_ams_settings->SetFont(::Label::Head_20);
     m_static_ams_settings->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
 
 
@@ -64,7 +64,7 @@ void AMSSetting::create()
 
     m_title_Insert_material_auto_read = new Label(m_panel_Insert_material, _L("Insertion update"));
 
-    m_title_Insert_material_auto_read->SetFont(::Label::Head_13);
+    m_title_Insert_material_auto_read->SetFont(::Label::Head_15);
     m_title_Insert_material_auto_read->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_title_Insert_material_auto_read->Wrap(AMS_SETTING_BODY_WIDTH);
     m_sizer_Insert_material->Add(m_title_Insert_material_auto_read, 0, wxALIGN_CENTER_VERTICAL | wxALIGN_LEFT, 0);
@@ -119,7 +119,7 @@ void AMSSetting::create()
     m_sizer_starting->Add(m_checkbox_starting_auto_read, 0, wxALIGN_CENTER_VERTICAL);
     m_sizer_starting->Add(0, 0, 0, wxLEFT, FromDIP(12));
     m_title_starting_auto_read = new Label(m_panel_body, _L("Power on update"));
-    m_title_starting_auto_read->SetFont(::Label::Head_13);
+    m_title_starting_auto_read->SetFont(::Label::Head_15);
     m_title_starting_auto_read->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_title_starting_auto_read->Wrap(AMS_SETTING_BODY_WIDTH);
     m_sizer_starting->Add(m_title_starting_auto_read, 0, wxALIGN_CENTER_VERTICAL | wxALIGN_LEFT, 0);
@@ -156,7 +156,7 @@ void AMSSetting::create()
     m_sizer_remain->Add(m_checkbox_remain, 0, wxALIGN_CENTER_VERTICAL);
     m_sizer_remain->Add(0, 0, 0, wxLEFT, FromDIP(12));
     m_title_remain = new Label(m_panel_body, _L("Update remaining capacity"));
-    m_title_remain->SetFont(::Label::Head_13);
+    m_title_remain->SetFont(::Label::Head_15);
     m_title_remain->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_title_remain->Wrap(AMS_SETTING_BODY_WIDTH);
     m_sizer_remain->Add(m_title_remain, 0, wxALIGN_CENTER_VERTICAL | wxALIGN_LEFT, 0);
@@ -184,7 +184,7 @@ void AMSSetting::create()
     m_sizer_switch_filament->Add(m_checkbox_switch_filament, 0, wxALIGN_CENTER_VERTICAL);
     m_sizer_switch_filament->Add(0, 0, 0, wxLEFT, FromDIP(12));
     m_title_switch_filament = new Label(m_panel_body, _L("AMS filament backup"));
-    m_title_switch_filament->SetFont(::Label::Head_13);
+    m_title_switch_filament->SetFont(::Label::Head_15);
     m_title_switch_filament->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_title_switch_filament->Wrap(AMS_SETTING_BODY_WIDTH);
     m_sizer_switch_filament->Add(m_title_switch_filament, 0, wxALIGN_CENTER_VERTICAL | wxALIGN_LEFT, 0);
@@ -273,9 +273,11 @@ void AMSSetting::create()
     m_sizerl_body->Add(m_ams_arrange_order, 0, wxEXPAND | wxTOP | wxBOTTOM, FromDIP(12));
     m_sizerl_body->Add(m_panel_img, 1, wxEXPAND | wxALL, FromDIP(5));
 
-    m_panel_body->SetSizer(m_sizerl_body);
+    auto *body_frame = new wxBoxSizer(wxVERTICAL);
+    body_frame->Add(m_sizerl_body, 1, wxEXPAND | wxALL, FromDIP(16));
+    m_panel_body->SetSizer(body_frame);
     m_panel_body->Layout();
-    m_sizerl_body->Fit(m_panel_body);
+    body_frame->Fit(m_panel_body);
     m_sizer_main->Add(0, 0, 0, wxTOP, FromDIP(10));
     m_sizer_main->Add(m_static_ams_settings, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(24));
     m_sizer_main->Add(0, 0, 0, wxTOP, FromDIP(10));

@@ -9,7 +9,7 @@
 
 #include "ScheduledSettingsModel.hpp"
 
-#include <wx/scrolwin.h>
+#include "../Widgets/MD3ScrolledWindow.hpp"
 
 #include <functional>
 #include <string>
@@ -25,7 +25,7 @@ class ListBox;
 
 namespace Schedule {
 
-class ScheduledSettingsPanel final : public wxScrolledWindow
+class ScheduledSettingsPanel final : public MD3ScrolledWindow
 {
 public:
     explicit ScheduledSettingsPanel(wxWindow *parent);

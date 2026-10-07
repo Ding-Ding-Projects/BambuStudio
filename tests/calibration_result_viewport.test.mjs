@@ -1,0 +1,31 @@
+import {readFileSync,writeFileSync,mkdtempSync} from 'node:fs';
+import {execFileSync,spawnSync} from 'node:child_process';
+import {tmpdir} from 'node:os';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
+const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
+const output=mkdtempSync(path.join(tmpdir(),'bambustudio-result-viewport-'));
+const revision=process.argv.find(x=>x.startsWith('--baseline='))?.slice(11);
+const source=revision?execFileSync('git',['show',revision+':src/slic3r/GUI/CalibrationWizardSavePage.cpp'],{cwd:root,encoding:'utf8'}):readFileSync(path.join(root,'src/slic3r/GUI/CalibrationWizardSavePage.cpp'),'utf8');
+const start=source.indexOf('class CalibrationResultViewport final'),end=source.indexOf('#define CALIBRATION_SAVE_AMS_NAME_SIZE',start);
+if(start<0||end<0)throw new Error('Production viewport class missing');
+let production=source.slice(start,end);
+if(process.argv.includes('--negative-unbounded'))production=production.replaceAll('SetMinSize(wxSize(0,','SetMinSize(wxSize(-1,');
+if(process.argv.includes('--negative-wheel'))production=production.replace(/^.*Bind\(wxEVT_MOUSEWHEEL[^\n]*\n/m,'');
+const cpp=path.join(output,'fixture.cpp'),exe=path.join(output,'fixture.exe');
+writeFileSync(cpp,readFileSync(path.join(root,'tests/calibration_result_viewport_fixture.cpp'),'utf8').replace('// PRODUCTION_VIEWPORT',production));
+console.log('Production viewport source: '+(revision??'current working source'));
+if(process.argv.includes('--negative-wheel'))console.log('Negative mutation: wheel binding removed');
+if(process.argv.includes('--negative-unbounded'))console.log('Negative mutation: width unbounded');
+console.log('Task-owned output: '+output);
+const compile=spawnSync('cl.exe',['/nologo','/std:c++17','/EHsc','/W4','/I'+root,cpp,'/Fe:'+exe,'/Fo:'+path.join(output,'fixture.obj')],{cwd:output,stdio:'inherit'});
+if(compile.error)throw compile.error;if(compile.status!==0)process.exit(compile.status??1);
+const modes=process.argv.includes('--wheel')?[['wheel']]:[[],['wheel']];
+let result=0;
+for(const args of modes){
+ const run=spawnSync(exe,args,{cwd:output,stdio:'inherit'});
+ if(run.error)throw run.error;
+ if(run.status!==0)result=run.status??1;
+}
+console.log('Executed '+modes.length+' mode(s) after one compile');
+process.exit(result);

@@ -27,27 +27,12 @@
 
 namespace {
 
-// Multiply a colour's RGB channels by a factor and clamp to [0,255] — the MD3
-// "state layer as brightness multiply" the digest uses for filled/tonal hover
-// (filled x1.06, tonal x1.04). Alpha is preserved.
-wxColour brightenColor(const wxColour &c, double factor)
-{
-    auto ch = [factor](unsigned char v) -> unsigned char {
-        double n = v * factor;
-        if (n < 0.0) n = 0.0;
-        if (n > 255.0) n = 255.0;
-        return static_cast<unsigned char>(n + 0.5);
-    };
-    return wxColour(ch(c.Red()), ch(c.Green()), ch(c.Blue()), c.Alpha());
-}
-
-// WCAG 2.1 relative luminance / contrast ratio. Only used to compare two
-// candidate focus-ring colours against the surface the ring is stroked on.
+// WCAG relative luminance / contrast for focus rings and decorative state layers.
 double relativeLuminance(const wxColour &c)
 {
     auto lin = [](unsigned char v) -> double {
         const double s = v / 255.0;
-        return s <= 0.03928 ? s / 12.92 : std::pow((s + 0.055) / 1.055, 2.4);
+        return s <= 0.04045 ? s / 12.92 : std::pow((s + 0.055) / 1.055, 2.4);
     };
     return 0.2126 * lin(c.Red()) + 0.7152 * lin(c.Green()) + 0.0722 * lin(c.Blue());
 }
@@ -57,6 +42,23 @@ double contrastRatio(const wxColour &a, const wxColour &b)
     const double la = relativeLuminance(a);
     const double lb = relativeLuminance(b);
     return (std::max(la, lb) + 0.05) / (std::min(la, lb) + 0.05);
+}
+
+// Material state layers use the paired foreground, never channel multiplication.
+// Reduce the decorative layer if needed to retain the original text contrast.
+wxColour buttonStateLayer(const wxColour &surface, const wxColour &foreground, double opacity)
+{
+    const double minimum = std::min(4.5, contrastRatio(surface, foreground));
+    for (int step = 12; step >= 0; --step) {
+        const double alpha = opacity * step / 12.0;
+        const auto channel = [alpha](unsigned char base, unsigned char over) {
+            return static_cast<unsigned char>(std::lround(base * (1.0 - alpha) + over * alpha));
+        };
+        const wxColour candidate(channel(surface.Red(), foreground.Red()),
+            channel(surface.Green(), foreground.Green()), channel(surface.Blue(), foreground.Blue()), surface.Alpha());
+        if (contrastRatio(candidate, foreground) + 1e-9 >= minimum) return candidate;
+    }
+    return surface;
 }
 
 // The keyboard focus ring is stroked INSIDE the button's own painted surface,
@@ -485,9 +487,12 @@ void Button::applyMD3Style()
         StateColor bg, fg;
         if (m_icon_danger) {
             // Window-close idiom: hover fills Error and flips the glyph to OnError.
-            bg = StateColor(std::make_pair(StateColor::semantic(R::Error), (int) StateColor::Hovered),
+            bg = StateColor(std::make_pair(rest, (int) StateColor::Disabled),
+                            std::make_pair(buttonStateLayer(StateColor::semantic(R::Error), StateColor::semantic(R::OnError), 0.12), (int) StateColor::Pressed),
+                            std::make_pair(StateColor::semantic(R::Error), (int) StateColor::Hovered),
                             std::make_pair(rest, (int) StateColor::Normal));
             fg = StateColor(std::make_pair(disabledFg, (int) StateColor::Disabled),
+                            std::make_pair(StateColor::semantic(R::OnError), (int) StateColor::Pressed),
                             std::make_pair(StateColor::semantic(R::OnError), (int) StateColor::Hovered),
                             std::make_pair(StateColor::semantic(R::OnSurfaceVariant), (int) StateColor::Normal));
         } else {
@@ -495,7 +500,10 @@ void Button::applyMD3Style()
             // pressed toggles and use the MD3 secondary container as their
             // persistent visual state. Ordinary icon buttons never set Checked
             // and retain the historical ghost treatment.
-            bg = StateColor(std::make_pair(StateColor::semantic(R::SecondaryContainer, s),
+            bg = StateColor(std::make_pair(rest, (int) StateColor::Disabled),
+                            std::make_pair(buttonStateLayer(StateColor::semantic(R::SecondaryContainer, s), StateColor::semantic(R::OnSecondaryContainer, s), 0.12), (int) StateColor::Pressed | StateColor::Checked),
+                            std::make_pair(StateColor::semantic(R::SurfaceContainerHighest), (int) StateColor::Pressed),
+                            std::make_pair(StateColor::semantic(R::SecondaryContainer, s),
                                            (int) StateColor::Hovered | StateColor::Checked),
                             std::make_pair(StateColor::semantic(R::SecondaryContainer, s),
                                            (int) StateColor::Checked),
@@ -516,7 +524,7 @@ void Button::applyMD3Style()
         if (m_icon_shape == IconShape::Circle)
             SetCornerRadius(FromDIP(container) / 2.0);
         else
-            SetCornerRadius(FromDIP(MD3::Metrics::radius_tiny));
+            SetCornerRadius(FromDIP(MD3::Metrics::active().small_radius));
 
         // Square adds 4px of width (matches the kit window-control shape); the
         // glyph stays centered via render()'s isCenter path.
@@ -571,7 +579,8 @@ void Button::applyMD3Style()
     case Variant::Filled: {
         const wxColour fill = StateColor::semantic(R::Primary, s);
         bg = StateColor(std::make_pair(disabledBg, (int) StateColor::Disabled),
-                        std::make_pair(brightenColor(fill, 1.06), (int) StateColor::Hovered),
+                        std::make_pair(buttonStateLayer(fill, StateColor::semantic(R::OnPrimary, s), 0.12), (int) StateColor::Pressed),
+                        std::make_pair(buttonStateLayer(fill, StateColor::semantic(R::OnPrimary, s), 0.08), (int) StateColor::Hovered),
                         std::make_pair(fill, (int) StateColor::Normal));
         fg = StateColor(std::make_pair(disabledTxt, (int) StateColor::Disabled),
                         std::make_pair(StateColor::semantic(R::OnPrimary, s), (int) StateColor::Normal));
@@ -581,7 +590,8 @@ void Button::applyMD3Style()
     case Variant::Tonal: {
         const wxColour fill = StateColor::semantic(R::SecondaryContainer, s);
         bg = StateColor(std::make_pair(disabledBg, (int) StateColor::Disabled),
-                        std::make_pair(brightenColor(fill, 1.04), (int) StateColor::Hovered),
+                        std::make_pair(buttonStateLayer(fill, StateColor::semantic(R::OnSecondaryContainer, s), 0.12), (int) StateColor::Pressed),
+                        std::make_pair(buttonStateLayer(fill, StateColor::semantic(R::OnSecondaryContainer, s), 0.08), (int) StateColor::Hovered),
                         std::make_pair(fill, (int) StateColor::Normal));
         fg = StateColor(std::make_pair(disabledTxt, (int) StateColor::Disabled),
                         std::make_pair(StateColor::semantic(R::OnSecondaryContainer, s), (int) StateColor::Normal));
@@ -593,8 +603,11 @@ void Button::applyMD3Style()
         // hover adds a SurfaceContainerHigh wash while the ring/label hold.
         // Checked (a toggle Button) fills SecondaryContainer, the MD3 selected
         // state of an outlined button, so legacy toggles keep a selected look.
-        bg = StateColor(std::make_pair(StateColor::semantic(R::SecondaryContainer, s), (int) StateColor::Hovered | StateColor::Checked),
+        bg = StateColor(std::make_pair(disabledBg, (int) StateColor::Disabled),
+                        std::make_pair(buttonStateLayer(StateColor::semantic(R::SecondaryContainer, s), StateColor::semantic(R::OnSecondaryContainer, s), 0.12), (int) StateColor::Pressed | StateColor::Checked),
+                        std::make_pair(StateColor::semantic(R::SecondaryContainer, s), (int) StateColor::Hovered | StateColor::Checked),
                         std::make_pair(StateColor::semantic(R::SecondaryContainer, s), (int) StateColor::Checked),
+                        std::make_pair(StateColor::semantic(R::SurfaceContainerHighest), (int) StateColor::Pressed),
                         std::make_pair(StateColor::semantic(R::SurfaceContainerHigh), (int) StateColor::Hovered),
                         std::make_pair(parentBg, (int) StateColor::Normal));
         fg = StateColor(std::make_pair(disabledTxt, (int) StateColor::Disabled),
@@ -606,13 +619,18 @@ void Button::applyMD3Style()
         break;
     }
     case Variant::Text: {
-        // No border, transparent at rest; hover adds a SecondaryContainer wash.
-        // Checked keeps the wash as the selected state.
-        bg = StateColor(std::make_pair(StateColor::semantic(R::SecondaryContainer, s), (int) StateColor::Hovered | StateColor::Checked),
+        // Neutral pointer-state surfaces; Checked retains its paired container.
+        bg = StateColor(std::make_pair(disabledBg, (int) StateColor::Disabled),
+                        std::make_pair(buttonStateLayer(StateColor::semantic(R::SecondaryContainer, s), StateColor::semantic(R::OnSecondaryContainer, s), 0.12), (int) StateColor::Pressed | StateColor::Checked),
+                        std::make_pair(StateColor::semantic(R::SecondaryContainer, s), (int) StateColor::Hovered | StateColor::Checked),
                         std::make_pair(StateColor::semantic(R::SecondaryContainer, s), (int) StateColor::Checked),
-                        std::make_pair(StateColor::semantic(R::SecondaryContainer, s), (int) StateColor::Hovered),
+                        std::make_pair(StateColor::semantic(R::SurfaceContainerHighest), (int) StateColor::Pressed),
+                        std::make_pair(StateColor::semantic(R::SurfaceContainerHigh), (int) StateColor::Hovered),
                         std::make_pair(parentBg, (int) StateColor::Normal));
         fg = StateColor(std::make_pair(disabledTxt, (int) StateColor::Disabled),
+                        std::make_pair(StateColor::semantic(R::OnSecondaryContainer, s), (int) StateColor::Checked),
+                        std::make_pair(StateColor::semantic(R::OnSurface), (int) StateColor::Pressed),
+                        std::make_pair(StateColor::semantic(R::OnSurface), (int) StateColor::Hovered),
                         std::make_pair(StateColor::semantic(R::Primary, s), (int) StateColor::Normal));
         bw = 0;
         break;
@@ -620,9 +638,12 @@ void Button::applyMD3Style()
     case Variant::Danger: {
         // Transparent + Error ring/label; hover adds a SurfaceContainerHigh wash
         // while the Error ring and Error label hold.
-        bg = StateColor(std::make_pair(StateColor::semantic(R::SurfaceContainerHigh), (int) StateColor::Hovered),
+        bg = StateColor(std::make_pair(disabledBg, (int) StateColor::Disabled),
+                        std::make_pair(StateColor::semantic(R::ErrorContainer), (int) StateColor::Pressed),
+                        std::make_pair(StateColor::semantic(R::SurfaceContainerHigh), (int) StateColor::Hovered),
                         std::make_pair(parentBg, (int) StateColor::Normal));
         fg = StateColor(std::make_pair(disabledTxt, (int) StateColor::Disabled),
+                        std::make_pair(StateColor::semantic(R::OnErrorContainer), (int) StateColor::Pressed),
                         std::make_pair(StateColor::semantic(R::Error), (int) StateColor::Normal));
         bd = StateColor(std::make_pair(StateColor::semantic(R::OutlineVariant), (int) StateColor::Disabled),
                         std::make_pair(StateColor::semantic(R::Error), (int) StateColor::Normal));
@@ -637,8 +658,8 @@ void Button::applyMD3Style()
         border_color = bd;
 
     SetBorderWidth(bw);
-    // Pill radius = button height / 2 (18 / 21 / 22 for sm / md / lg).
-    SetCornerRadius(FromDIP(height) / 2.0);
+    // Atlas uses a density-aware rounded rectangle; target dimensions stay intact.
+    SetCornerRadius(std::min(FromDIP(height) / 2.0, double(FromDIP(MD3::Metrics::active().radius))));
 
     paddingSize = wxSize(FromDIP(hpad), paddingSize.y);
     minSize.SetHeight(FromDIP(height));

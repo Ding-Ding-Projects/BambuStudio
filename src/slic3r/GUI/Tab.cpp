@@ -87,6 +87,23 @@ namespace GUI {
 
 #define DISABLE_UNDO_SYS
 
+// Recompute from DIP on every layout/DPI refresh, never from previously scaled borders.
+static void applyPresetHeaderAnatomy(wxWindow* panel, wxSizer* sizer)
+{
+    const auto& metrics = MD3::Metrics::active();
+    const int gap = panel->FromDIP(metrics.gap);
+    const int padding = panel->FromDIP(metrics.padding);
+    panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
+    for (auto* item : sizer->GetChildren()) {
+        if (item->GetFlag() & (wxLEFT | wxRIGHT)) item->SetBorder(gap);
+    }
+    if (sizer->GetItemCount() > 0) {
+        auto* last = sizer->GetItem(sizer->GetItemCount() - 1);
+        if (last->IsSpacer()) last->SetMinSize(padding, 1);
+    }
+    sizer->SetMinSize(-1, panel->FromDIP(metrics.row_height) + 2 * gap);
+}
+
 static const std::vector<std::string> plate_keys = { "curr_bed_type", "first_layer_print_sequence", "first_layer_sequence_choice", "other_layers_print_sequence", "other_layers_sequence_choice", "print_sequence", "spiral_mode"};
 
 static std::pair<std::string, std::string> extruder_variant_keys[]{
@@ -421,7 +438,7 @@ void Tab::create_preset_tab()
     const float scale_factor = /*wxGetApp().*/em_unit(this)*0.1;// GetContentScaleFactor();
 #ifndef DISABLE_UNDO_SYS
     m_top_sizer->Add( m_undo_to_sys_btn, 0, wxALIGN_CENTER_VERTICAL);
-    m_top_sizer->AddSpacer(8);
+    m_top_sizer->AddSpacer(FromDIP(8));
 #endif
     m_top_sizer->Add( m_btn_save_preset, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(12));
     m_top_sizer->Add( m_btn_delete_preset, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(12) );
@@ -437,7 +454,7 @@ void Tab::create_preset_tab()
 
     m_top_sizer->AddSpacer(FromDIP(16));
 
-    m_top_sizer->SetMinSize(-1, 3 * m_em_unit);
+    applyPresetHeaderAnatomy(m_top_panel, m_top_sizer);
     m_top_panel->SetSizer(m_top_sizer);
     if (m_presets_choice)
         m_main_sizer->Add(m_top_panel, 0, wxEXPAND | wxUP | wxDOWN, m_em_unit);
@@ -1718,7 +1735,7 @@ void Tab::msw_rescale()
 {
     m_em_unit = em_unit(m_parent);
 
-    m_top_sizer->SetMinSize(-1, 3 * m_em_unit);
+    applyPresetHeaderAnatomy(m_top_panel, m_top_sizer);
 
     //BBS: GUI refactor
     //if (m_mode_sizer)
@@ -1823,6 +1840,7 @@ void Tab::sys_color_changed()
 
     //BBS: GUI refactor
     //Layout();
+    applyPresetHeaderAnatomy(m_top_panel, m_top_sizer);
     m_parent->Layout();
 }
 

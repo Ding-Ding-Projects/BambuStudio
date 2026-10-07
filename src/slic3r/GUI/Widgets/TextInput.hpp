@@ -13,7 +13,7 @@ class TextInput : public wxNavigationEnabled<StaticBox>
     ScalableBitmap icon_1;
     StateColor     label_color;
     StateColor     text_color;
-    wxTextCtrl * text_ctrl;
+    wxTextCtrl * text_ctrl = nullptr;
     
     wxString       m_unit;
     wxString       m_prefix;
@@ -52,6 +52,7 @@ public:
               wxString       prefix = "");
 
     void SetCornerRadius(double radius);
+    bool SetFont(const wxFont& font) override;
 
     void SetLabel(const wxString& label);
 
@@ -95,6 +96,12 @@ private:
 
     void render(wxDC& dc);
 
+    struct ContentMetrics {
+        wxSize label, support, prefix, unit, entry;
+        int padding = 0, gap = 0, icons = 0;
+        bool editable = false;
+    };
+    ContentMetrics measureContent();
     void messureSize();
 
     DECLARE_EVENT_TABLE()

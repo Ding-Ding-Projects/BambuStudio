@@ -73,7 +73,7 @@ MediaPlayCtrl::MediaPlayCtrl(wxWindow *parent, wxMediaCtrl3 *media_ctrl, const w
     , m_media_ctrl(media_ctrl)
 {
     SetLabel("MediaPlayCtrl");
-    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
     m_media_ctrl->Bind(wxEVT_MEDIA_STATECHANGED, &MediaPlayCtrl::onStateChanged, this);
     m_media_ctrl->Bind(EVT_MEDIA_CTRL_FIRST_FRAME, [this](wxCommandEvent &e) {
         if (!m_pending_start_liveview_json.empty()) {
@@ -140,6 +140,7 @@ MediaPlayCtrl::MediaPlayCtrl(wxWindow *parent, wxMediaCtrl3 *media_ctrl, const w
     // MD3: draw the play/stop affordance as a Material Symbols glyph (coloured by
     // the button's text role) instead of the legacy media_play/media_stop PNGs.
     m_button_play->SetGlyph(MaterialIcon::PlayArrow);
+    m_button_play->SetIconButton(Button::IconShape::Square, 32);
     // a11y: the play/stop toggle is the camera strip's only actionable control.
     // Keep it in the keyboard tab order (Button already maps Space/Enter to a
     // synthetic click via keyDownUp) and give the icon-only control an accessible
@@ -148,10 +149,12 @@ MediaPlayCtrl::MediaPlayCtrl(wxWindow *parent, wxMediaCtrl3 *media_ctrl, const w
     m_button_play->SetName(_L("Play or stop the camera live view"));
 
     m_label_status = new Label(this, "");
+    m_label_status->SetFont(Label::Body_13);
     m_label_status->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
 
     m_label_stat = new Label(this, "");
-    m_label_stat->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+    m_label_stat->SetFont(Label::Mono_13);
+    m_label_stat->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     m_media_ctrl->Bind(EVT_MEDIA_CTRL_STAT, [this](auto & e) {
 #if !BBL_RELEASE_TO_PUBLIC
         wxSize size = m_media_ctrl->GetVideoSize();
@@ -210,10 +213,10 @@ MediaPlayCtrl::MediaPlayCtrl(wxWindow *parent, wxMediaCtrl3 *media_ctrl, const w
     });
 
     wxBoxSizer * sizer = new wxBoxSizer(wxHORIZONTAL);
-    sizer->Add(m_button_play, 0, wxEXPAND | wxALL, 0);
-    sizer->Add(m_label_stat, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(25));
+    sizer->Add(m_button_play, 0, wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(4));
+    sizer->Add(m_label_stat, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(12));
     sizer->AddStretchSpacer(1);
-    sizer->Add(m_label_status, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(25));
+    sizer->Add(m_label_status, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(12));
     SetSizer(sizer);
 
     m_thread = boost::thread([this] {

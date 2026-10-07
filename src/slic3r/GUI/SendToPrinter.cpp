@@ -1,3 +1,4 @@
+#include "PrepareInspectorLayout.hpp"
 #include "SendToPrinter.hpp"
 #include "Widgets/MD3ScrolledWindow.hpp"
 #include "Widgets/LinkLabel.hpp"
@@ -355,9 +356,9 @@ SendToPrinterDialog::SendToPrinterDialog(Plater *plater)
 
     sizer_thumbnail = new wxBoxSizer(wxVERTICAL);
     m_thumbnailPanel = new ThumbnailPanel(m_panel_image);
-    m_thumbnailPanel->SetSize(wxSize(FromDIP(256), FromDIP(256)));
-    m_thumbnailPanel->SetMinSize(wxSize(FromDIP(256), FromDIP(256)));
-    m_thumbnailPanel->SetMaxSize(wxSize(FromDIP(256), FromDIP(256)));
+    m_thumbnailPanel->SetSize(wxSize(FromDIP(198), FromDIP(198)));
+    m_thumbnailPanel->SetMinSize(wxSize(FromDIP(198), FromDIP(198)));
+    m_thumbnailPanel->SetMaxSize(wxSize(FromDIP(198), FromDIP(198)));
     sizer_thumbnail->Add(m_thumbnailPanel, 0, wxEXPAND, 0);
     m_panel_image->SetSizer(sizer_thumbnail);
     m_panel_image->Layout();
@@ -383,13 +384,13 @@ SendToPrinterDialog::SendToPrinterDialog(Plater *plater)
     m_line_materia->SetForegroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
     m_line_materia->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
 
-    // Printer card: an sc-highest r16 Material card that wraps the machine
+    // Printer card: a tonal Material card that wraps the machine
     // selection. Its header row carries the "Printer" identity + a leading-dot
     // connection status; the body holds the existing ComboBox (whose own
     // dropdown arrow is the expand_more affordance) and the Refresh button. The
     // ComboBox binding / member pointers are unchanged, so every downstream data
     // path (update_user_printer, on_selection_changed, on_refresh) is preserved.
-    const wxColour card_fill = StateColor::semantic(MD3::Role::SurfaceContainerHighest);
+    const wxColour card_fill = StateColor::semantic(MD3::Role::SurfaceContainerLowest);
 
     m_printer_card = new StaticBox(this);
     m_printer_card->SetDensity(StaticBox::Density::Comfortable); // r16
@@ -401,7 +402,7 @@ SendToPrinterDialog::SendToPrinterDialog(Plater *plater)
     wxBoxSizer *m_sizer_printer_sel  = new wxBoxSizer(wxHORIZONTAL);
 
     m_stext_printer_title = new Label(m_printer_card, _L("Printer"), 0, wxSize(-1, -1));
-    m_stext_printer_title->SetFont(::Label::Head_14);
+    m_stext_printer_title->SetFont(::Label::Head_16);
     m_stext_printer_title->Wrap(-1);
     m_stext_printer_title->SetForegroundColour(m_colour_bold_color);
     m_stext_printer_title->SetBackgroundColour(card_fill);
@@ -421,7 +422,7 @@ SendToPrinterDialog::SendToPrinterDialog(Plater *plater)
     m_sizer_printer_sel->Add(m_comboBox_printer, 1, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(8));
 
     m_button_refresh = new Button(m_printer_card, _L("Refresh"));
-    m_button_refresh->SetVariant(Button::Variant::Filled);
+    m_button_refresh->SetVariant(Button::Variant::Tonal);
     m_button_refresh->SetButtonSize(Button::Size::Medium);
     m_button_refresh->Bind(wxEVT_BUTTON, &SendToPrinterDialog::on_refresh, this);
     m_sizer_printer_sel->Add(m_button_refresh, 0, wxALIGN_CENTER_VERTICAL, 0);
@@ -432,10 +433,12 @@ SendToPrinterDialog::SendToPrinterDialog(Plater *plater)
     m_printer_card->Layout();
 
     /*select storage*/
-    m_storage_panel = new wxPanel(this);
+    m_storage_panel = new StaticBox(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
     m_storage_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
     m_storage_sizer = new wxBoxSizer(wxHORIZONTAL);
-    m_storage_panel->SetSizer(m_storage_sizer);
+    auto storage_card_sizer = new wxBoxSizer(wxVERTICAL);
+    storage_card_sizer->Add(m_storage_sizer, 0, wxEXPAND | wxALL, FromDIP(12));
+    m_storage_panel->SetSizer(storage_card_sizer);
     m_storage_panel->Layout();
 
     // try to connect
@@ -703,14 +706,15 @@ SendToPrinterDialog::SendToPrinterDialog(Plater *plater)
 
     m_sizer_main->Add(m_line_top, 0, wxEXPAND, 0);
     m_sizer_main->Add(0, 0, 0, wxTOP, FromDIP(10));
-    m_sizer_main->Add(m_scrollable_region, 0, wxALIGN_CENTER_HORIZONTAL, 0);
-    m_sizer_main->Add(0, 0, 0, wxEXPAND | wxTOP, FromDIP(6));
     m_sizer_main->Add(m_rename_switch_panel, 0, wxALIGN_CENTER_HORIZONTAL, 0);
+    m_sizer_main->Add(0, 0, 0, wxEXPAND | wxTOP, FromDIP(12));
+    m_sizer_main->Add(m_scrollable_region, 0, wxALIGN_CENTER_HORIZONTAL, 0);
     m_sizer_main->Add(0, 0, 0, wxEXPAND | wxTOP, FromDIP(6));
     m_sizer_main->Add(m_line_materia, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(30));
     m_sizer_main->Add(0, 0, 0, wxEXPAND | wxTOP, FromDIP(12));
     m_sizer_main->Add(m_printer_card, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(30));
-    m_sizer_main->Add(m_storage_panel, 0, wxALIGN_CENTER_HORIZONTAL | wxTOP , FromDIP(8));
+    m_sizer_main->AddSpacer(FromDIP(12));
+    m_sizer_main->Add(m_storage_panel, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(30));
     m_sizer_main->Add(0, 0, 0, wxEXPAND | wxTOP, FromDIP(11));
     m_sizer_main->Add(m_statictext_printer_msg, 0, wxALIGN_CENTER_HORIZONTAL, 0);
     m_sizer_main->Add(m_connecting_panel, 0, wxALIGN_CENTER_HORIZONTAL, 0);
@@ -725,6 +729,7 @@ SendToPrinterDialog::SendToPrinterDialog(Plater *plater)
     // m_sizer_main is the MD3Dialog content sizer (already installed by the shell);
     // do not call SetSizer here or the header/footer chrome would be detached.
     Layout();
+    apply_review_style();
     GetSizer()->SetSizeHints(this);
     Fit();
     UpdateShape();
@@ -1500,7 +1505,7 @@ bool SendToPrinterDialog::is_blocking_printing(MachineObject* obj_)
 
 void SendToPrinterDialog::Enable_Refresh_Button(bool en)
 {
-    // The kit Filled Button renders its own MD3 disabled styling
+    // The kit tonal button renders its own MD3 disabled styling
     // (SurfaceContainerHigh fill + TextDisabled label via StateColor::Disabled),
     // so the enabled/disabled state is driven through Enable() alone; the legacy
     // Grey500 / brand-green SetBackgroundColor overrides used to clobber that
@@ -1723,6 +1728,28 @@ void SendToPrinterDialog::Enable_Send_Button(bool en)
     }
 }
 
+void SendToPrinterDialog::apply_review_style()
+{
+    for (auto* card : {m_printer_card, m_storage_panel}) {
+        card->SetDensity(MD3::Metrics::isCompact() ? StaticBox::Density::Compact : StaticBox::Density::Comfortable);
+        card->SetBackgroundColor(MD3::resolve(MD3::Role::SurfaceContainerLowest, false));
+        card->SetBorderColor(MD3::resolve(MD3::Role::OutlineVariant, false));
+        card->SetBorderWidth(FromDIP(1));
+    }
+    m_rename_text->SetFont(Label::Head_16);
+    const int row = PrepareInspectorLayout::row_height(FromDIP(MD3::Metrics::active().row_height),
+        m_rename_text->GetCharHeight(), m_rename_input->GetTextCtrl()->GetCharHeight(), FromDIP(6));
+    m_rename_switch_panel->SetMinSize(wxSize(FromDIP(420), row));
+    m_rename_switch_panel->SetMaxSize(wxSize(FromDIP(420), -1));
+    m_rename_input->SetMinSize(wxSize(FromDIP(380), row));
+    m_rename_input->SetMaxSize(wxSize(FromDIP(380), -1));
+    m_stext_time->SetFont(Label::Head_16);
+    m_stext_weight->SetFont(Label::Head_16);
+    m_statictext_finish->SetFont(Label::Head_16);
+    m_thumbnailPanel->SetMinSize(wxSize(FromDIP(198), FromDIP(198)));
+    m_thumbnailPanel->SetMaxSize(wxSize(FromDIP(198), FromDIP(198)));
+}
+
 void SendToPrinterDialog::on_dpi_changed(const wxRect &suggested_rect)
 {
     // Buttons are kit variants now; their pill radius + height are re-derived by
@@ -1731,6 +1758,7 @@ void SendToPrinterDialog::on_dpi_changed(const wxRect &suggested_rect)
     m_button_ensure->Rescale();
     if (m_connect_spinner) m_connect_spinner->Rescale();
     m_status_bar->msw_rescale();
+    apply_review_style();
     Fit();
     UpdateShape();
     Refresh();

@@ -76,11 +76,14 @@ class ParamsPanel : public wxPanel
         void free_sizers();
         void delete_subwindows();
         void refresh_tabs();
+        void apply_inspector_layout();
 
 	protected:
         wxBoxSizer* m_top_sizer { nullptr };
         wxBoxSizer* m_left_sizer { nullptr };
         wxBoxSizer* m_mode_sizer { nullptr };
+        wxBoxSizer* m_scope_sizer { nullptr };
+        wxBoxSizer* m_header_sizer { nullptr };
         // // BBS: new layout
         StaticBox* m_top_panel{ nullptr };
         // MD3: the Process leading icon is a borderless IconButton drawing the Tune glyph.

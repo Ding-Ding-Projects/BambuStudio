@@ -633,9 +633,11 @@ void TextCtrl::BUILD() {
 	auto text_ctrl = m_opt.multiline ? (wxTextCtrl *)temp : ((TextInput *) temp)->GetTextCtrl();
     text_ctrl->SetLabel(text_value);
     temp->SetSize(size);
+    if (!m_opt.multiline)
+        static_cast<::TextInput*>(temp)->Rescale();
     m_combine_side_text = !m_opt.multiline;
     if (parent_is_custom_ctrl && m_opt.height < 0)
-        opt_height = (double) text_ctrl->GetSize().GetHeight() / m_em_unit;
+        opt_height = (double) temp->GetSize().GetHeight() / m_em_unit;
     if (m_opt.is_code) // BBS
         temp->SetFont(Slic3r::GUI::wxGetApp().normal_font());
 
@@ -2433,13 +2435,13 @@ void MultiVariantTextCtrl::refresh_text_ctrls_layout(wxWindow *parent)
         if (new_layout.size() != 1 && label_text) {
             auto text_input = dynamic_cast<::TextInput*>(text_ctrl->getWindow());
             if (text_input) {
-                text_input->SetSize(wxSize(def_width_wider() * m_em_unit + 20, wxDefaultCoord));
+                text_input->SetSize(wxSize(def_width_wider() * m_em_unit + text_input->FromDIP(20), wxDefaultCoord));
                 text_input->SetPrefix(label_text);
             }
         }
         wxWindow* text_window = text_ctrl->getWindow();
         h_sizer->Add(text_window, 0, wxALIGN_CENTER_VERTICAL);
-        m_variant_sizer->Add(h_sizer, 0, wxEXPAND | wxBOTTOM, 5);
+        m_variant_sizer->Add(h_sizer, 0, wxEXPAND | wxBOTTOM, parent_to_use->FromDIP(MD3::Metrics::active().gap));
         m_text_ctrls.push_back(VariantTextCtrl(
             std::move(text_ctrl), index, label_text));
     }
@@ -2529,7 +2531,7 @@ void MultiVariantTextCtrl::msw_rescale()
         auto win = ctrl.text_ctrl->getWindow();
         int current_width = win->GetSize().GetWidth();
         ctrl.text_ctrl->msw_rescale();
-        win->SetSize(current_width, win->GetSize().GetHeight());
+        win->SetSize(std::max(current_width, win->GetMinWidth()), win->GetSize().GetHeight());
     }
 
     if (m_parent) {

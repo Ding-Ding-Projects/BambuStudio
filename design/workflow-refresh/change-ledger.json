@@ -1,0 +1,640 @@
+{
+  "schemaVersion": 1,
+  "baselineCommit": "d048cfc3040a1566b78e03334f3871f1dd0144bb",
+  "authoringBaseCommit": "8610aeeb49297ecda6a25747be125d5e4034b30d",
+  "automaticRollback": false,
+  "entries": [
+    {
+      "preserve": "Unrelated build, packaging, AMS, printer and functional workflow commits",
+      "kind": "design-specification-only",
+      "summary": "Studio Atlas visual contract, state inventory, static references and source-inventory checks",
+      "commit": "1c859687cb878a5fbf698de631a04118df4d8a49",
+      "reviewRequired": true,
+      "runtimeBehaviorChanged": false,
+      "scope": [
+        "design/native-feature-delivery.json",
+        "design/native-feature-delivery.md",
+        "design/native-print-workflows.md",
+        "design/workflow-refresh.md",
+        "design/workflow-refresh/",
+        "ui-md3/tests/native-feature-delivery.test.mjs"
+      ]
+    },
+    {
+      "scope": [
+        "src/slic3r/GUI/Widgets/MD3Tokens.hpp",
+        "src/slic3r/GUI/Widgets/StateColor.cpp",
+        "src/slic3r/GUI/Widgets/StateColor.hpp",
+        "tests/native_navigation/neutral_palette.test.mjs",
+        "docs/features/design-system/native-workflow-navigation.md"
+      ],
+      "preserve": "Navigation API and overflow behavior in 624e2ed52e2fe7afcb91961fcaefe9bb201ba15e; all functional workflow, AMS, build and packaging changes",
+      "reviewRequired": true,
+      "reversalNote": "Inspect the later documentation context before reverting. Do not revert the parent navigation commit merely because this palette commit follows it.",
+      "functionalBehaviorChanged": false,
+      "kind": "appearance-only",
+      "commit": "b748affe0f687f6cfbe6068a82d32988047f790a",
+      "summary": "Shared native neutral palette and legacy color compatibility",
+      "runtimeVerification": "unverified"
+    },
+    {
+      "runtimeVerification": "unverified",
+      "scope": [
+        "23 product-owned CSS files listed by the commit",
+        "tests/embedded_atlas_styles.test.mjs",
+        "docs/features/design-system/embedded-studio-atlas.md"
+      ],
+      "preserve": "DOM, callbacks, geometry, typography metrics, bridges, device protocols and unrelated native workflow/build/AMS changes",
+      "commit": "a2be7df26cd5981da2c1e50d4c64c5e3a86609b9",
+      "reversalNote": "Review together with the subsequent verification-only correction 6faff372404390ba6cd9191c12e9fa5439ce375c. Preserve valid checks when possible; never leave a stylesheet assertion describing reverted styles.",
+      "reviewRequired": true,
+      "functionalBehaviorChanged": false,
+      "kind": "appearance-only",
+      "summary": "Product-owned embedded colors, focus outline and reduced-motion-aware color transitions"
+    }
+  ],
+  "registration": "The integration owner records each reviewed design-only commit after it exists, excluding functional workflow, AMS, build and packaging changes. This file cannot name its own enclosing commit without a later ledger update.",
+  "reversal": "Consult incorporatedSourceUnits and classificationRules before selecting any reversal. Appearance-only is a reviewed candidate, not automatic permission. Appearance-layout and correctness repairs require dependent-caller review. Keep functional workflow, localization, build, packaging and AMS behavior. Never revert an integration merge wholesale or reset to the baseline.",
+  "excludedFromAppearanceOnlyReversal": [
+    {
+      "commit": "624e2ed52e2fe7afcb91961fcaefe9bb201ba15e",
+      "reason": "Mixed visual navigation and functional SetWorkflowPages/overflow behavior. Requires semantic review preserving API callers; not a simple appearance-only reversal."
+    },
+    {
+      "commit": "f28dad52e0a848d613f661849a4fdd64f30c3a60",
+      "reason": "Functional Print workspace and action routing; preserve independently of visual preference."
+    },
+    {
+      "commit": "b69528b150ec03fd33db79f36be16c92812bdef0",
+      "reason": "Localization and functional workspace documentation; preserve independently of visual preference."
+    }
+  ],
+  "supportingVerificationUnits": [
+    {
+      "kind": "verification-only",
+      "appearanceUnit": "a2be7df26cd5981da2c1e50d4c64c5e3a86609b9",
+      "reversalNote": "Not a production appearance change. Review test/article alignment if reverting the associated CSS; do not treat it as a functional behavior rollback.",
+      "productionFilesChanged": false,
+      "scope": [
+        "tests/embedded_atlas_styles.test.mjs",
+        "docs/features/design-system/embedded-studio-atlas.md"
+      ],
+      "commit": "6faff372404390ba6cd9191c12e9fa5439ce375c"
+    }
+  ],
+  "reviewedCandidate": "4147ca9eeb0004f7e18b4a2f5a8c6cb190975d21",
+  "incorporatedSourceUnits": [
+    {
+      "commit": "b748affe0f687f6cfbe6068a82d32988047f790a",
+      "family": "native-palette",
+      "classification": "appearance-only",
+      "summary": "Shared neutral roles and legacy theme-color compatibility",
+      "article": "docs/features/design-system/native-workflow-navigation.md"
+    },
+    {
+      "commit": "df300fb9d93991751e840bdc586d2f770b47b9cf",
+      "family": "shared-controls",
+      "classification": "appearance-only",
+      "summary": "Button/card/search/menu state surfaces and density-aware shape",
+      "article": "docs/features/design-system/studio-atlas-shared-controls.md"
+    },
+    {
+      "commit": "b88acafa95b88884b4e284a0de15d77f7934cfcb",
+      "family": "fields-presets",
+      "classification": "appearance-layout",
+      "summary": "Measured TextInput parts, choice paint, field minima and preset header spacing",
+      "article": "docs/features/design-system/studio-atlas-fields-and-presets.md"
+    },
+    {
+      "commit": "7602228306b7dba316a2d7a91c1f2a195de0e43b",
+      "family": "prepare",
+      "classification": "appearance-layout",
+      "summary": "Inspector hierarchy, measured headers, object rows and preset treatment",
+      "article": "docs/features/design-system/prepare-inspector-atlas.md"
+    },
+    {
+      "commit": "f107320e7c273254af6d35c130b699780bebf41c",
+      "family": "prepare",
+      "classification": "correctness-repair",
+      "summary": "Pair neutral preset focus fill with its own foreground",
+      "companion": "7602228306b7dba316a2d7a91c1f2a195de0e43b",
+      "article": "docs/features/design-system/prepare-inspector-atlas.md"
+    },
+    {
+      "commit": "8b0b5e6da19d0ce877a3c5eb770de6945a516e77",
+      "family": "preferences-project-setup",
+      "classification": "appearance-layout",
+      "summary": "Native parent cards, settings rows, calibration surrounds and schedule shell",
+      "article": "docs/features/design-system/native-preferences-setup-atlas.md"
+    },
+    {
+      "commit": "54810146717bbf4d531a17f4b6c471bd3300d190",
+      "family": "preferences-project-setup",
+      "classification": "correctness-repair",
+      "summary": "Restore card DPI lifecycle and nested settings row identity/search traversal",
+      "companion": "8b0b5e6da19d0ce877a3c5eb770de6945a516e77",
+      "article": "docs/features/design-system/native-preferences-setup-atlas.md"
+    },
+    {
+      "commit": "30031b21eedd58c56b83dc474465d47a3ccc8099",
+      "family": "renderer-preview",
+      "classification": "appearance-only",
+      "summary": "Viewport tool surfaces, ImGui overlays, transport and legend paint",
+      "article": "docs/features/design-system/renderer-atlas.md"
+    },
+    {
+      "commit": "35a329da565a61b98f541166e51b85c44958add8",
+      "family": "renderer-preview",
+      "classification": "correctness-repair",
+      "summary": "Apply tooltip rounding through the actual ImGui style member",
+      "companion": "30031b21eedd58c56b83dc474465d47a3ccc8099",
+      "article": "docs/features/design-system/renderer-atlas.md"
+    },
+    {
+      "commit": "396992cfeb7f2e337b43d133a84562c04afd1e69",
+      "family": "native-monitor",
+      "classification": "appearance-layout",
+      "summary": "Monitor hierarchy, print-option groups and device selection states",
+      "article": "docs/features/design-system/monitor-atlas.md"
+    },
+    {
+      "commit": "c9178754f31b4b32421544e96b6e26977aed04fe",
+      "family": "native-monitor",
+      "classification": "correctness-repair",
+      "summary": "Correct camera scaling and title-height lifecycle across DPI changes",
+      "companion": "396992cfeb7f2e337b43d133a84562c04afd1e69",
+      "article": "docs/features/design-system/monitor-atlas.md"
+    },
+    {
+      "commit": "e54de1a0ae7cd36cc1f1d734fea591dad7722ef3",
+      "family": "native-device-popups",
+      "classification": "appearance-layout",
+      "summary": "Camera popup and HUD typography and hierarchy",
+      "article": "docs/features/design-system/device-popups-atlas.md"
+    },
+    {
+      "commit": "c0aedba0991821d20ed2d6b6884cce80dfe9f02c",
+      "family": "native-device-popups",
+      "classification": "appearance-layout",
+      "summary": "Fan and AMS mapping/material/settings popup hierarchy",
+      "article": "docs/features/design-system/device-popups-atlas.md"
+    },
+    {
+      "commit": "83cf6a2677356c20664c073e8f04f818fc292e67",
+      "family": "readers-overlays",
+      "classification": "appearance-layout",
+      "summary": "Appearance, palette, regex, notification center, history, docs, changelog and export composition",
+      "article": "docs/features/design-system/overlays-atlas.md"
+    },
+    {
+      "commit": "e000d2da647aeddf4255455fd276d268abd3244a",
+      "family": "readers-overlays",
+      "classification": "correctness-repair",
+      "summary": "Correct history label calls and preserve live palette accent swatches",
+      "companion": "83cf6a2677356c20664c073e8f04f818fc292e67",
+      "article": "docs/features/design-system/overlays-atlas.md"
+    },
+    {
+      "commit": "71170bc334656d51af49d3ae682ae14320a110f5",
+      "family": "readers-overlays",
+      "classification": "verification-only",
+      "summary": "Bind constructor regression assertions to each real call boundary",
+      "companion": "e000d2da647aeddf4255455fd276d268abd3244a",
+      "article": "docs/features/design-system/overlays-atlas.md"
+    },
+    {
+      "commit": "8cfce63ae05d7be03823b3eb9e4b86c4488245b1",
+      "family": "live-notifications",
+      "classification": "appearance-only",
+      "summary": "Bounded status rail, action paint and inverse progress track",
+      "article": "docs/features/design-system/live-notifications-atlas.md"
+    },
+    {
+      "commit": "7ef2efed0e58ba6def38adee061349afc106f533",
+      "family": "workspace",
+      "classification": "appearance-layout",
+      "summary": "Five real nested workspace cards, wrapping actions and calendar/agenda reflow",
+      "article": "docs/features/design-system/workspace-atlas.md"
+    },
+    {
+      "commit": "a742702a7315a9e97a4d1a585ed739d82d97cdd5",
+      "family": "workspace",
+      "classification": "correctness-repair",
+      "summary": "Relayout Overview content and scroll extent without waiting for a resize",
+      "companion": "7ef2efed0e58ba6def38adee061349afc106f533",
+      "article": "docs/features/design-system/workspace-atlas.md"
+    },
+    {
+      "commit": "d3821d9bcbbc6e90fb9b941013ab7b8039534c68",
+      "family": "calibration-children",
+      "classification": "appearance-layout",
+      "summary": "Child page hierarchy and wrapping action groups",
+      "article": "docs/features/design-system/calibration-children-atlas.md"
+    },
+    {
+      "commit": "5568ae6ec28bb86cf481989da79d5582ca76dbfd",
+      "family": "calibration-children",
+      "classification": "correctness-repair",
+      "summary": "Correct completion-label receivers in save panels",
+      "companion": "d3821d9bcbbc6e90fb9b941013ab7b8039534c68",
+      "article": "docs/features/design-system/calibration-children-atlas.md"
+    },
+    {
+      "commit": "34fa40252bbb9b755fd22eb503280a045d8923ee",
+      "family": "setup-index",
+      "classification": "appearance-layout",
+      "summary": "ConfigWizardIndex state hierarchy and native step presentation",
+      "article": "docs/features/design-system/setup-index-atlas.md"
+    },
+    {
+      "commit": "a2be7df26cd5981da2c1e50d4c64c5e3a86609b9",
+      "family": "embedded-palette",
+      "classification": "appearance-only",
+      "summary": "Neutral roles, focus and color-only transitions in 23 product-owned stylesheets",
+      "article": "docs/features/design-system/embedded-studio-atlas.md"
+    },
+    {
+      "commit": "6faff372404390ba6cd9191c12e9fa5439ce375c",
+      "family": "embedded-palette",
+      "classification": "verification-only",
+      "summary": "Require complete embedded interaction stylesheet contracts",
+      "companion": "a2be7df26cd5981da2c1e50d4c64c5e3a86609b9",
+      "article": "docs/features/design-system/embedded-studio-atlas.md"
+    },
+    {
+      "commit": "8ecd2823f1529f183a806075f078932659fe295a",
+      "family": "embedded-composition",
+      "classification": "appearance-layout",
+      "summary": "Owned home/project/setup CSS composition across 13 additional stylesheets",
+      "article": "docs/features/design-system/embedded-composition-atlas.md"
+    },
+    {
+      "commit": "2a3528c451f3a5caccdfd7fd9e8d9d8964e4d4c8",
+      "family": "embedded-composition",
+      "classification": "correctness-repair",
+      "summary": "Keep narrow thumbnails on the unchanged reveal handler's vertical axis",
+      "companion": "8ecd2823f1529f183a806075f078932659fe295a",
+      "article": "docs/features/design-system/embedded-composition-atlas.md"
+    },
+    {
+      "commit": "624e2ed52e2fe7afcb91961fcaefe9bb201ba15e",
+      "family": "workflow-navigation",
+      "classification": "functional-workflow",
+      "summary": "Stable workflow page projection, navigation API and measured overflow",
+      "article": "docs/features/design-system/native-workflow-navigation.md"
+    },
+    {
+      "commit": "f28dad52e0a848d613f661849a4fdd64f30c3a60",
+      "family": "print-workspace",
+      "classification": "functional-workflow",
+      "summary": "Appended Print review page and original physical-action continuation routes",
+      "article": "docs/features/workspace/print-preparation.md"
+    },
+    {
+      "commit": "b69528b150ec03fd33db79f36be16c92812bdef0",
+      "family": "print-workspace",
+      "classification": "localization",
+      "summary": "Print/workflow catalog entries and paired documentation",
+      "article": "docs/features/workspace/print-preparation.md"
+    },
+    {
+      "commit": "f09f6af453b1ea2a694d81e382137afaba9cc6d7",
+      "family": "print-setup",
+      "classification": "appearance-layout",
+      "summary": "Existing destination, mapping and review-dialog hierarchy with bounded body",
+      "article": "docs/features/workspace/print-setup-atlas.md"
+    },
+    {
+      "commit": "6b4ebfa5a6207d66750a1a059124119229fa38cf",
+      "family": "print-setup",
+      "classification": "correctness-repair",
+      "summary": "Refresh cached review body bounds on reopening before centering",
+      "companion": "f09f6af453b1ea2a694d81e382137afaba9cc6d7",
+      "article": "docs/features/workspace/print-setup-atlas.md"
+    },
+    {
+      "commit": "44cba370a948dc6653189e8c835274d2db10d0ac",
+      "family": "shell-tabs",
+      "classification": "appearance-layout",
+      "summary": "Shell/title/tab composition and bounded visible tab allocation",
+      "article": "docs/features/design-system/studio-atlas-shell-and-tabs.md"
+    },
+    {
+      "commit": "831bba8e9337c8b7aa42a1b6389111c047d99c09",
+      "family": "shell-tabs",
+      "classification": "correctness-repair",
+      "summary": "Resolve drag destinations from visible neighbor identities",
+      "article": "docs/features/design-system/studio-atlas-shell-and-tabs.md",
+      "companion": "44cba370a948dc6653189e8c835274d2db10d0ac"
+    },
+    {
+      "commit": "3570481d7b8d0a81ed77bc364fa55676a8860a1b",
+      "family": "shell-tabs",
+      "classification": "correctness-repair",
+      "summary": "Project focus and accessibility onto visible tabs and native overflow",
+      "article": "docs/features/design-system/studio-atlas-shell-and-tabs.md",
+      "companion": "44cba370a948dc6653189e8c835274d2db10d0ac"
+    },
+    {
+      "commit": "33958f9673677886c4a15f2834a1619aaa1cf738",
+      "family": "confirmations",
+      "classification": "appearance-layout",
+      "summary": "Separate scrolling affected detail from persistent authorization controls and message actions",
+      "article": "docs/features/design-system/confirmations-atlas.md"
+    },
+    {
+      "commit": "6714b1f8da313fc2ea267a8e03a9b42c25f90c78",
+      "family": "confirmations",
+      "classification": "correctness-repair",
+      "summary": "Block terminal authorization when mandatory controls cannot fit; retain cancellation",
+      "article": "docs/features/design-system/confirmations-atlas.md",
+      "companion": "33958f9673677886c4a15f2834a1619aaa1cf738"
+    },
+    {
+      "commit": "cf78247110bcbe30dc2b2fd98e3ce97a4a6fa119",
+      "family": "native-monitor",
+      "classification": "correctness-repair",
+      "summary": "Measure Control heading once across DPI transitions",
+      "article": "docs/features/design-system/monitor-atlas.md",
+      "companion": "396992cfeb7f2e337b43d133a84562c04afd1e69"
+    },
+    {
+      "commit": "b37bb7e917398685cb56d2f2f13a5abd0b47048d",
+      "family": "selection-controls",
+      "classification": "appearance-layout",
+      "summary": "Numeric stepper/editor anatomy, checkbox glyph and inset switch segments",
+      "article": "docs/features/design-system/studio-atlas-selection-controls.md"
+    },
+    {
+      "commit": "6885f674b348a7d46ec946b2aacc9da215e15066",
+      "family": "selection-controls",
+      "classification": "correctness-repair",
+      "summary": "Relayout numeric children after native size allocation while preserving caller minima",
+      "article": "docs/features/design-system/studio-atlas-selection-controls.md",
+      "companion": "b37bb7e917398685cb56d2f2f13a5abd0b47048d"
+    },
+    {
+      "commit": "7d829820017edf5acd6fa6494dd72d3a1353c56b",
+      "family": "calibration-children",
+      "classification": "appearance-layout",
+      "summary": "Measure instruction pages from their real scroll viewport",
+      "article": "docs/features/design-system/calibration-viewport-layout.md"
+    },
+    {
+      "commit": "2ea14a5ea158e3311ad7680409243d51cd35b37a",
+      "family": "calibration-children",
+      "classification": "appearance-layout",
+      "summary": "Wrap complete preset rows and advice parameter groups without changing slot identities",
+      "article": "docs/features/design-system/calibration-viewport-layout.md"
+    },
+    {
+      "commit": "6e040fe62119938e1310893c2d927ef92ca89ff8",
+      "family": "calibration-children",
+      "classification": "correctness-repair",
+      "summary": "Release stale explicit label heights before measuring shorter content",
+      "article": "docs/features/design-system/calibration-viewport-layout.md",
+      "companion": "7d829820017edf5acd6fa6494dd72d3a1353c56b"
+    },
+    {
+      "commit": "eb07dfe7e6f61f5ae5601c42a179cecd0dbbbe46",
+      "family": "calibration-children",
+      "classification": "correctness-repair",
+      "summary": "Preserve intrinsic fixed-descendant width in outer scroll extents",
+      "article": "docs/features/design-system/calibration-viewport-layout.md",
+      "companion": "7d829820017edf5acd6fa6494dd72d3a1353c56b"
+    },
+    {
+      "commit": "3e765ab09a7d25a1808d437034b8b0e12e67e7bb",
+      "family": "transform-inspector",
+      "classification": "appearance-only",
+      "summary": "Decorate existing transform fields and tooltip states without changing item or cursor geometry",
+      "article": "docs/features/design-system/transform-inspector-atlas.md"
+    },
+    {
+      "commit": "990fdaaeb6e7d92f06a726f5035062e6b80ebbd7",
+      "family": "humidity-details",
+      "classification": "appearance-layout",
+      "summary": "Measured humidity legend and scroll-body value composition with unchanged readings",
+      "article": "docs/features/design-system/humidity-details-atlas.md"
+    },
+    {
+      "commit": "81b50c8d04d7f109af8b5e72f17c3ad080d41652",
+      "family": "humidity-details",
+      "classification": "correctness-repair",
+      "summary": "Clamp the humidity popup after final measured body expansion",
+      "article": "docs/features/design-system/humidity-details-atlas.md",
+      "companion": "990fdaaeb6e7d92f06a726f5035062e6b80ebbd7"
+    },
+    {
+      "commit": "c17599d086a7b5cc5c0e1f6e47fcdb48678bf1b9",
+      "family": "appearance-properties",
+      "classification": "appearance-layout",
+      "summary": "Stack measured property labels and value/reset groups; wrap preset actions",
+      "article": "docs/features/design-system/appearance-property-pages-atlas.md"
+    },
+    {
+      "commit": "b41e37d4680ac1713e566f667b2168bf57d19c32",
+      "family": "appearance-properties",
+      "classification": "correctness-repair",
+      "summary": "Reflow preset content and scroll extent at unchanged editor dimensions",
+      "article": "docs/features/design-system/appearance-property-pages-atlas.md",
+      "companion": "c17599d086a7b5cc5c0e1f6e47fcdb48678bf1b9"
+    },
+    {
+      "commit": "661f4678e430e6832a510fa20cba420d735c68f1",
+      "family": "shared-controls",
+      "classification": "correctness-repair",
+      "summary": "Explicit double conversion for runtime-density radius; extracted MSVC declaration proof",
+      "article": "docs/features/design-system/studio-atlas-shared-controls.md",
+      "companion": "df300fb9d93991751e840bdc586d2f770b47b9cf"
+    },
+    {
+      "commit": "4e901cddc5d71949703cbd62adc575f8509b4580",
+      "family": "calibration-children",
+      "classification": "appearance-layout",
+      "summary": "Give result tables local horizontal scrolling while preserving result identities",
+      "article": "docs/features/design-system/calibration-viewport-layout.md"
+    },
+    {
+      "commit": "c6400edaaab7a23d802a8c83145c1fcd1785a414",
+      "family": "calibration-children",
+      "classification": "correctness-repair",
+      "summary": "Forward vertical wheel input to the outer calibration scroll owner",
+      "article": "docs/features/design-system/calibration-viewport-layout.md",
+      "companion": "4e901cddc5d71949703cbd62adc575f8509b4580"
+    },
+    {
+      "commit": "ed76de69b1c5bc6b2dd82d351e9dc6c84ca1f92d",
+      "family": "calibration-children",
+      "classification": "verification-only",
+      "summary": "Default compiled fixture runs geometry and wheel cases together",
+      "article": "docs/features/design-system/calibration-viewport-layout.md",
+      "companion": "4e901cddc5d71949703cbd62adc575f8509b4580"
+    },
+    {
+      "commit": "5b77527856e266aa952392f88d031da05f67c715",
+      "family": "device-name-editor",
+      "classification": "appearance-layout",
+      "summary": "Measured device-name input, validation row and confirmation action",
+      "article": "docs/features/workspace/device-name-editor-atlas.md"
+    },
+    {
+      "commit": "8167cafbc498d66b9209061283a3d1d45da5f02a",
+      "family": "device-name-editor",
+      "classification": "correctness-repair",
+      "summary": "Keep validation wrapping ahead of fitting and retain bounded disclosure",
+      "article": "docs/features/workspace/device-name-editor-atlas.md",
+      "companion": "5b77527856e266aa952392f88d031da05f67c715"
+    },
+    {
+      "commit": "ecbbb99fb0c5c84ef58c636cce270e5eda13b8c8",
+      "family": "gizmo-inspector-framing",
+      "classification": "appearance-only",
+      "summary": "Shared floating inspector plate and heading decoration across twelve existing paired callers",
+      "article": "docs/features/design-system/gizmo-inspector-framing-atlas.md"
+    },
+    {
+      "commit": "e3390a3140546fcae815a65ebe97cc6f8d14d6ea",
+      "family": "reader-details",
+      "classification": "appearance-layout",
+      "summary": "Regex diagnostic content reflow and export disclosure/locator composition",
+      "article": "docs/features/design-system/reader-details-atlas.md"
+    },
+    {
+      "commit": "ac04eda5d7c7b057dd70f820e5c2614b6b5aabaa",
+      "family": "native-monitor",
+      "classification": "correctness-repair",
+      "summary": "Accept the actual printing-title wxStaticText base type",
+      "article": "docs/features/design-system/monitor-atlas.md",
+      "companion": "396992cfeb7f2e337b43d133a84562c04afd1e69"
+    },
+    {
+      "commit": "9bb8eeb74219039369a289b5acb5c5406f491a1b",
+      "family": "fields-presets",
+      "classification": "correctness-repair",
+      "summary": "Use supported wxSizerItem SetSpacer API for preset header spacing",
+      "article": "docs/features/design-system/studio-atlas-fields-and-presets.md",
+      "companion": "b88acafa95b88884b4e284a0de15d77f7934cfcb"
+    },
+    {
+      "commit": "fffdc0a9d22f4c230cc27e8930d740c6bc769945",
+      "family": "ams-drying",
+      "classification": "appearance-layout",
+      "summary": "Measured drying telemetry/settings cards, complete control groups and scrolling pages",
+      "article": "docs/features/design-system/ams-drying-atlas.md"
+    },
+    {
+      "commit": "2b6c799c30a92ee7758ba035d725da43829ea7d4",
+      "family": "ams-drying",
+      "classification": "correctness-repair",
+      "summary": "Attach existing error disclosure to its visible state owner while retaining Stop",
+      "article": "docs/features/design-system/ams-drying-atlas.md",
+      "companion": "fffdc0a9d22f4c230cc27e8930d740c6bc769945"
+    },
+    {
+      "commit": "d31530a31780c10e7b4f44f85737f036504b7d5b",
+      "family": "nozzle-rack",
+      "classification": "appearance-layout",
+      "summary": "Nozzle cards, mapping selection and measured hotend detail rows",
+      "article": "docs/features/design-system/nozzle-rack-atlas.md"
+    },
+    {
+      "commit": "ed3cbc35d5d3a6b701a5eb7ebfdc69d137684d92",
+      "family": "shared-list-rows",
+      "classification": "appearance-layout",
+      "summary": "Measured native list rows, selection/focus paint and bounded hover feedback",
+      "article": "docs/features/design-system/studio-atlas-listbox.md"
+    },
+    {
+      "commit": "c8b269d6d5925262143c0a0e9d28c83fb788d1b6",
+      "family": "shared-list-rows",
+      "classification": "correctness-repair",
+      "summary": "Invalidate the displaced fading row when hover is interrupted",
+      "article": "docs/features/design-system/studio-atlas-listbox.md",
+      "companion": "ed3cbc35d5d3a6b701a5eb7ebfdc69d137684d92"
+    },
+    {
+      "commit": "b60bd4c8b8fa5eb0d3e5a9f706621e73f8a1a476",
+      "family": "print-continuations",
+      "classification": "appearance-layout",
+      "summary": "Existing print confirmation, IP entry and send-failure composition",
+      "article": "docs/features/workspace/print-continuations-atlas.md"
+    },
+    {
+      "commit": "8b8d042ed6730e80c6baeef72b71851a0ac04018",
+      "family": "print-continuations",
+      "classification": "correctness-repair",
+      "summary": "Require readable disclosure before existing terminal continuation routes",
+      "article": "docs/features/workspace/print-continuations-atlas.md",
+      "companion": "b60bd4c8b8fa5eb0d3e5a9f706621e73f8a1a476"
+    },
+    {
+      "commit": "ee4fc3ece6afdeec6d3e8783cb6cc8fce41162be",
+      "family": "print-continuations",
+      "classification": "correctness-repair",
+      "summary": "Adopt send-failure caption before bounded readback fitting",
+      "article": "docs/features/workspace/print-continuations-atlas.md",
+      "companion": "8b8d042ed6730e80c6baeef72b71851a0ac04018"
+    },
+    {
+      "commit": "59405fc894f96525db8f8edc3e45a3839e3001fd",
+      "family": "print-continuations",
+      "classification": "verification-only",
+      "summary": "Use a reserved documentation address in the IPv4 fixture only",
+      "article": "docs/features/workspace/print-continuations-atlas.md",
+      "companion": "8b8d042ed6730e80c6baeef72b71851a0ac04018"
+    },
+    {
+      "commit": "334eb7fa466e79fc885bd8af0689f22e034f9d60",
+      "family": "scroll-table-owner-adoption",
+      "classification": "appearance-layout",
+      "summary": "Adopt existing kit scroll/table owners in six Schedule, Print, Workspace and bulk caller sites while retaining models and constructor contracts",
+      "article": "docs/features/design-system/atlas-scroll-owner-adoption.md",
+      "reversalNote": "A reviewed reversal restores raw scrollbar owners and scanner failures; preserve kit implementations, models, callbacks and unrelated correctness repairs."
+    },
+    {
+      "commit": "7a681fd0f15bc35364f06268df650e5bf28a82f3",
+      "family": "native-catalog",
+      "classification": "localization",
+      "summary": "Reconcile existing English/Cantonese catalog keys, translations, terminology overrides and coverage without changing feature labels or the extracted template",
+      "article": "docs/features/windows/language-modes.md",
+      "reversalNote": "Catalog delivery is not a visual rollback handle. Preserve localized content independently of appearance preference; no runtime text-fit or functional obligation is promoted."
+    }
+  ],
+  "classificationRules": {
+    "appearance-only": "Potentially reversible as its own reviewed presentation unit. Check later consumers and companion fixes; never infer blanket permission from this classification.",
+    "appearance-layout": "Changes geometry, container ownership, wrapping or scroll behavior. Review dependent callers and subsequent lifecycle repairs; not a paint-only reversal.",
+    "functional-workflow": "Owns routing, API, dispatch or workflow behavior. Excluded from appearance-only reversal.",
+    "correctness-repair": "Preserves or restores behavior, compilation, identity or lifecycle after a presentation change. Retain with its dependent unit; never reverse independently to express an appearance preference.",
+    "verification-only": "No production appearance change. Retain or adapt the checks to the reviewed production state.",
+    "localization": "Localized functional copy and documentation. Preserve independently of visual preference."
+  },
+  "notInReviewedCandidate": [],
+  "documentationReceipts": [
+    {
+      "commit": "51235b9f479d90686b1563ed8f8ece3eefb6f764",
+      "classification": "localization",
+      "summary": "Cantonese Atlas article companions and indexes"
+    },
+    {
+      "commit": "0f034f2fed3c2b913f4c308d0130cce9eeee763f",
+      "classification": "localization",
+      "summary": "Correct Cantonese field-measurement wording"
+    },
+    {
+      "commit": "8fb54ada88eb9d92afc13b0712d412ba3bb55aa7",
+      "classification": "localization",
+      "summary": "Cantonese confirmation companion"
+    },
+    {
+      "commit": "965c6116b2dab4a8e0f6ea0ed304baa8789e55e2",
+      "classification": "localization",
+      "summary": "Cantonese transform inspector companion"
+    },
+    {
+      "commit": "32069b56a7c03ee892ec0e90feabf6c941edd54d",
+      "classification": "localization",
+      "summary": "Cantonese shell/tab companion"
+    }
+  ]
+}

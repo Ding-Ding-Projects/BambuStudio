@@ -1,12 +1,15 @@
 ---
 translation-of: dim-sum-surprise.md
-source-sha256: ea2cc2fc8b362560e28f7f63d3f5230601c319ef586a3dbfa63923a2b1132503
+source-sha256: f5e552c797de853f6eaed1e98bc095e97cd3731d85ab6bc72c22b435b169ce10
 review-status: agent-drafted
 ---
 
 > 英文原文：[Dim sum surprise](dim-sum-surprise.md)
 
 # 點心驚喜
+
+> [!NOTE]
+> 自動啟動展示已移除。下面保留退役行為嘅歷史記錄；目前行為見[安靜工作流程](../windows/quiet-workflow.md)。
 
 喺合資格嘅重複訪問嘅十份之一，一個點心菜式會出現喺一個非阻斷卡片喺左下角。抽籤同渲染邏輯住喺 [`ui-md3/site/dimsum.js`](../../../ui-md3/site/dimsum.js)；有界中繼資料快取住喺 [`ui-md3/site/dimsum.data.js`](../../../ui-md3/site/dimsum.data.js)。
 

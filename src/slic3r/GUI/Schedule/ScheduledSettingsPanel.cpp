@@ -15,6 +15,7 @@
 #include "slic3r/GUI/Widgets/MD3Tokens.hpp"
 #include "slic3r/GUI/Widgets/SearchField.hpp"
 #include "slic3r/GUI/Widgets/StateColor.hpp"
+#include "slic3r/GUI/Widgets/StaticBox.hpp"
 #include "slic3r/GUI/Widgets/TextInput.hpp"
 
 #include "libslic3r/AppConfig.hpp"
@@ -138,7 +139,7 @@ ScheduleRuleDialog::ScheduleRuleDialog(wxWindow *parent, const Rule &rule, bool 
     , m_rule(rule)
 {
     const wxColour bg = GetBackgroundColour();
-    auto *scroll = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL | wxTAB_TRAVERSAL | wxBORDER_NONE);
+    auto *scroll = new MD3ScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL | wxTAB_TRAVERSAL | wxBORDER_NONE);
     scroll->SetBackgroundColour(bg);
     scroll->SetScrollRate(0, FromDIP(12));
     m_body = new wxBoxSizer(wxVERTICAL);
@@ -532,16 +533,21 @@ bool ScheduleRuleDialog::collect(Rule &out, std::vector<std::string> &problems)
 } // namespace
 
 ScheduledSettingsPanel::ScheduledSettingsPanel(wxWindow *parent)
-    : wxScrolledWindow(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL)
+    : MD3ScrolledWindow(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL)
 {
     SetScrollRate(0, FromDIP(12));
-    const wxColour bg = StateColor::semantic(MD3::Role::Surface);
-    SetBackgroundColour(bg);
+    const wxColour bg = StateColor::semantic(MD3::Role::SurfaceContainerLowest);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::Surface));
+    // Keep rule search, selection, actions and status in one content-owned card.
+    auto *card = new StaticBox(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
+    card->SetBackgroundColor(bg);
+    card->SetBorderColor(StateColor::semantic(MD3::Role::OutlineVariant));
+    card->SetDensity(MD3::Metrics::isCompact() ? StaticBox::Density::Compact : StaticBox::Density::Comfortable);
     auto *sizer = new wxBoxSizer(wxVERTICAL);
-    constexpr int kLeft = 48 + 16, kRight = 24;
+    const int kLeft = MD3::Metrics::active().padding, kRight = kLeft;
 
     auto make_label = [&](const wxString &text, const wxFont &font, MD3::Role role, bool wrap = false) {
-        auto *l = new Label(this, font, text, wrap ? LB_AUTO_WRAP : 0);
+        auto *l = new Label(card, font, text, wrap ? LB_AUTO_WRAP : 0);
         l->SetBackgroundColour(bg);
         l->SetForegroundColour(StateColor::semantic(role));
         if (wrap)
@@ -562,30 +568,30 @@ ScheduledSettingsPanel::ScheduledSettingsPanel(wxWindow *parent)
         return s;
     };
 
-    auto *title = make_label(_L("Schedules"), Label::Head_14, MD3::Role::OnSurface);
+    auto *title = make_label(_L("Schedules"), Label::Head_20, MD3::Role::OnSurface);
     add_row(wrap_window(title), 24);
     auto *intro = make_label(
         _L("Change the language mode, theme, density, accent, font, text size, funny levels or app name at chosen times, from a settings API, or from a Home Assistant switch. When a rule ends, your own values come back. Later rules in the list win when two rules set the same setting."),
-        Label::Body_12, MD3::Role::OnSurfaceVariant, true);
+        Label::Body_13, MD3::Role::OnSurfaceVariant, true);
     add_row(wrap_window(intro), 8);
-    m_timezone = make_label(wxEmptyString, Label::Body_12, MD3::Role::OnSurfaceVariant, true);
+    m_timezone = make_label(wxEmptyString, Label::Body_13, MD3::Role::OnSurfaceVariant, true);
     add_row(wrap_window(m_timezone), 4);
 
-    m_search = new SearchField(this, _L("Search rules"));
+    m_search = new SearchField(card, _L("Search rules"));
     m_search->SetName(_L("Search rules"));
     add_row(wrap_window(m_search), 12);
     m_search->SetOnQuery([this](const wxString &) { rebuild_list(); });
     m_search->SetOnRegexToggle([this](bool) { rebuild_list(); });
 
-    m_list = new ListBox(this, wxID_ANY, wxSize(-1, FromDIP(180)));
+    m_list = new ListBox(card, wxID_ANY, wxSize(-1, FromDIP(180)));
     m_list->SetName(_L("Schedule rules"));
     add_row(wrap_window(m_list), 8);
-    m_empty = make_label(_L("No rules yet. Add one to change a setting on a schedule."), Label::Body_12, MD3::Role::OnSurfaceVariant, true);
+    m_empty = make_label(_L("No rules yet. Add one to change a setting on a schedule."), Label::Body_13, MD3::Role::OnSurfaceVariant, true);
     add_row(wrap_window(m_empty), 4);
 
     auto *buttons = new wxWrapSizer(wxHORIZONTAL);
     auto  make_button = [&](const wxString &text, Button *&store) {
-        store = new Button(this, text);
+        store = new Button(card, text);
         store->SetName(text);
         buttons->Add(store, 0, wxRIGHT, FromDIP(8));
         return store;
@@ -597,11 +603,16 @@ ScheduledSettingsPanel::ScheduledSettingsPanel(wxWindow *parent)
     make_button(_L("Move up"), m_up);
     make_button(_L("Move down"), m_down);
     make_button(_L("Delete"), m_delete);
-    add_row(buttons, 8);
+    add->SetVariant(Button::Variant::Filled);
+    m_edit->SetVariant(Button::Variant::Tonal);
+    for (Button *button : {m_toggle, m_up, m_down})
+        button->SetVariant(Button::Variant::Outlined);
+    m_delete->SetVariant(Button::Variant::Text);
+    add_row(buttons, MD3::Metrics::active().gap);
 
-    m_detail = make_label(wxEmptyString, Label::Body_12, MD3::Role::OnSurfaceVariant, true);
+    m_detail = make_label(wxEmptyString, Label::Body_13, MD3::Role::OnSurfaceVariant, true);
     add_row(wrap_window(m_detail), 8);
-    m_status = make_label(wxEmptyString, Label::Body_12, MD3::Role::OnSurfaceVariant, true);
+    m_status = make_label(wxEmptyString, Label::Body_13, MD3::Role::OnSurfaceVariant, true);
     add_row(wrap_window(m_status), 4);
 
     add->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { add_rule(); });
@@ -613,7 +624,11 @@ ScheduledSettingsPanel::ScheduledSettingsPanel(wxWindow *parent)
     m_list->Bind(wxEVT_LISTBOX, [this](wxCommandEvent &) { refresh_status(); });
     m_list->Bind(wxEVT_LISTBOX_DCLICK, [this](wxCommandEvent &) { edit_selected(); });
 
-    SetSizer(sizer);
+    sizer->AddSpacer(FromDIP(MD3::Metrics::active().padding));
+    card->SetSizer(sizer);
+    auto *outer = new wxBoxSizer(wxVERTICAL);
+    outer->Add(card, 0, wxEXPAND | wxALL, FromDIP(MD3::Metrics::active().padding));
+    SetSizer(outer);
     Scheduler::instance().set_change_listener([this]() {
         rebuild_list();
     });

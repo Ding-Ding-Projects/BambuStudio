@@ -9,6 +9,7 @@
 #include "slic3r/GUI/Plater.hpp"
 #include "slic3r/GUI/GUI_Colors.hpp"
 #include "slic3r/GUI/OpenGLManager.hpp"
+#include "slic3r/GUI/Widgets/MD3Tokens.hpp"
 
 // TODO: Display tooltips quicker on Linux
 
@@ -485,13 +486,42 @@ bool GLGizmoBase::update_items_state()
 
 bool GLGizmoBase::GizmoImguiBegin(const std::string &name, int flags)
 {
-    return m_imgui->begin(name, flags);
+    const float scale = m_parent.get_scale();
+    const bool dark = m_parent.get_dark_mode_status();
+    const auto color = [dark](MD3::Role role) {
+        const wxColour &value = MD3::resolve(role, dark);
+        return ImVec4(value.Red() / 255.0f, value.Green() / 255.0f, value.Blue() / 255.0f, 1.0f);
+    };
+    // Shared floating inspectors use one opaque action surface. Decoration never
+    // changes the caller's padding, content size, item IDs or input-window flags.
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, color(MD3::Role::SurfaceContainerLowest));
+    ImGui::PushStyleColor(ImGuiCol_Border, color(MD3::Role::OutlineVariant));
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, float(MD3::Metrics::active().radius) * scale);
+    const bool visible = m_imgui->begin(name, flags);
+    if (visible) {
+        const ImVec2 position = ImGui::GetWindowPos();
+        const ImVec2 size = ImGui::GetWindowSize();
+        const ImVec2 padding = ImGui::GetStyle().WindowPadding;
+        const float inset = std::max(padding.x, float(MD3::Metrics::active().radius) * scale);
+        const float available = size.x - 2.0f * inset;
+        // ImGui clips at half the padding. This short heading rule occupies only
+        // its remaining inner half, above the first content row.
+        if (scale > 0.0f && padding.y >= 4.0f * scale && available > 0.0f) {
+            const float y = position.y + padding.y * 0.75f;
+            ImGui::GetWindowDrawList()->AddLine(ImVec2(position.x + inset, y),
+                ImVec2(position.x + inset + std::min(available, 64.0f * scale), y),
+                ImGui::GetColorU32(color(MD3::Role::Primary)), scale);
+        }
+    }
+    return visible;
 }
 
 void GLGizmoBase::GizmoImguiEnd()
 {
     last_input_window_width = ImGui::GetWindowWidth();
     m_imgui->end();
+    ImGui::PopStyleVar();
+    ImGui::PopStyleColor(2);
 }
 
 void GLGizmoBase::GizmoImguiSetNextWIndowPos(float &x, float y, int flag, float pivot_x, float pivot_y)

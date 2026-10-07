@@ -1,0 +1,29 @@
+{
+  "sourceCommit": "a28944e3c14b2066ee63d14151c8aca23066d743",
+  "result": "byte-verification-passed",
+  "rootBuildExitCode": 0,
+  "rootInstallerExitCode": 0,
+  "installerExecution": "not-attempted",
+  "applicationLaunch": "not-attempted",
+  "setupBytes": 772747776,
+  "setupSha256": "42f1a4fe732a937b4a7016db26d946f14bae85e9d1bc354cc39a99b522579435",
+  "package": "BambuStudioMD3-2.8.4814-full.nupkg",
+  "packageBytes": 778525807,
+  "packageSha256": "629867b0d5854cafe249754d6b4fe644a70bb058f6d94f0ad46577584270432e",
+  "components": 13639,
+  "payloadBytes": 1823278738,
+  "documentationArticles": 310,
+  "catalogReferenceHashes": {
+    "en": "5aedb969453905d78e0a1768d791b40d21d3c1b31df9be7f8e3d3f4b4eff0037",
+    "yue_HK": "96c12ddc299bc261ba0ef43a6893605a87b93c66e47b6a8bb9ca6912bb28458c"
+  },
+  "generatedStub": {
+    "name": "bambu-studio_ExecutionStub.exe",
+    "sha256": "660687932dec1b8213c31594b5c17e6649c6f5a5fd86dc7b6de4d1c42718377b",
+    "executableSections": {
+      ".text": "10490ddeb5225dea65fe045ef661cb5e98e4852c294ce59a5a51706fc880dcde"
+    },
+    "pinnedTemplateExecutableSectionsMatch": true
+  },
+  "sbomSha256": "7e1de513ddb49b0cbade7b208aa8790a1ae235a136cbeeb60ceaca8ae4693558"
+}
