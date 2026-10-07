@@ -20,6 +20,12 @@ Source repairs and focused checks exist; these items remain unticked until their
 
 # Roadmap
 
+## Update check fix (issue #46), 6 October 2026
+
+- [x] Source fix: the release check compares `published_at` with `SLIC3R_BUILD_TIME_UTC` through the header-only `AppUpdateCheckPolicy` instead of reading the build host's local-time stamp in the user's time zone, and an installed copy with "Update automatically" on asks Update.exe at every check, which compares package versions. A background update shows only the ready banner or one non-blocking failure notice per release; only a manual check opens the download dialog or the newest-version message ([App updates](docs/features/windows/app-updates.md)). `tests/app_update_check_policy_test.cpp` passes with g++ and clang++ under the `UTC`, `America/Toronto` and `Asia/Hong_Kong` time zones, and the updater and quiet-prompt contracts pass.
+- [ ] Native compile of `GUI_App.cpp` with the policy: pending the hosted Windows build.
+- [ ] Installed copies built before this fix keep the old comparison and must be reinstalled once from the latest `Setup.exe`; the release capture below confirms the corrected update and restart.
+
 ## Exact-main production and actual startup, 6 October 2026
 
 - [x] Complete the exact root build retry at cc059003d with unchanged source and an immutable invocation receipt.
@@ -409,7 +415,8 @@ captures are a separate box and stay unticked until they exist from the real bui
       latest-release feed on a worker thread at launch and every six hours (preference "Update
       automatically", default on), shows a banner that stays until the user acts, with Restart to
       install update, Release notes and a notice that updates are not code-signed, and keeps the
-      download dialog as the fallback (issue #46). Ticked once a release capture installs an older
+      download dialog as the fallback of a manual check, with one non-blocking failure notice per
+      release after a background check (issue #46). Ticked once a release capture installs an older
       release and watches it update and restart (docs/features/windows/app-updates.md). Captured so
       far: `md3-v151` shows the "Update automatically" row, switched on, in all three language modes
       (`preferences-search-update--*--md3-v151.png`).

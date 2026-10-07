@@ -398,8 +398,9 @@ private:
     bool               m_restart_after_update { false };
     // An installed copy with automatic updates checks the feed again every six hours while it runs.
     wxTimer            m_update_check_timer;
-    // UI thread only: the release whose failed automatic update already showed the download dialog.
-    std::string        m_auto_update_fallback_tag;
+    // UI thread only: the release whose failed update was already reported, so a background check
+    // shows its failure notice once per release.
+    std::string        m_auto_update_failed_tag;
 
     TryLoadLastMachine m_load_last_machine;
 
@@ -603,10 +604,12 @@ public:
 
     // Automatic update of a copy installed by Squirrel (docs/features/windows/app-updates.md).
     // start_auto_update() runs Squirrel's Update.exe against this fork's latest release on a
-    // worker thread, at most one at a time, and tells the user through a notification when the
-    // new version is ready. A failed update falls back to the download dialog, so the user still
-    // hears about the release. Never called for a copy without Update.exe.
-    void            start_auto_update(const std::string &tag, const std::string &name, int by_user);
+    // worker thread, at most one at a time, and shows the non-blocking ready banner when a new
+    // version is staged. `newer_by_time` is the release check's UTC verdict: when it is set and
+    // nothing is staged the update failed, so a manual check opens the download dialog and a
+    // background check shows one non-blocking failure notice per release; when it is not set
+    // there was nothing to install. Never called for a copy without Update.exe.
+    void            start_auto_update(const std::string &tag, const std::string &name, int by_user, bool newer_by_time);
     // "Restart now": closes the main frame through the normal close path (so the unsaved
     // project prompt still applies and can cancel). Squirrel starts the newest version once the
     // application has really exited.
