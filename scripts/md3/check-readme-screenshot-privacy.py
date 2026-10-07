@@ -22,6 +22,12 @@ when every one of these holds:
         --evidence-dir <dir> --source-root <checkout> --allowlist-env README_ALLOWLIST
         --out <new upload dir> [--source-commit <sha>] [--release-tag <tag>]
         [--forbid <literal>]...
+    python scripts/md3/check-readme-screenshot-privacy.py --status-table <report.json> [--forbid <literal>]...
+
+--status-table only prints one line per report row (file, kind, and the status cut
+to 200 characters) after replacing every match of the patterns below with its
+category, so a failure is visible in a public log. It reads no evidence and
+stages nothing.
 
 The upload directory receives the staged PNGs at their repository paths, a
 sanitized report.json (row, path, status, sha256, width, height, and a fixed
@@ -137,6 +143,50 @@ def scan(texts, literals):
         if any(pattern.search(text) for text in texts):
             return category
     return None
+
+
+def redact(text, literals):
+    """The text with every finding the scan would report replaced by <category>, on one line."""
+    text = ' '.join(str(text).split())
+    for category, pattern in PATTERNS:
+        text = pattern.sub(f'<{category}>', text)
+    for value, category in literals:
+        text = literal_pattern(value).sub(f'<{category}>', text)
+    return text
+
+
+def status_table(report, literals, width=200):
+    """One printable line per report row: index, file, kind and status, redacted, the status cut to width.
+
+    Only these three fields are read, so no evidence text is ever printed. Redaction
+    comes before the cut, so a cut can never leave half a finding behind.
+    """
+    rows = report.get('rows') if isinstance(report, dict) else None
+    if not isinstance(rows, list):
+        raise UnusableInput('the capture report has no rows list')
+    lines = ['row  file  kind  status']
+    for index, row in enumerate(rows):
+        row = row if isinstance(row, dict) else {}
+        file, kind, status = (redact(row.get(key) or '-', literals) for key in ('file', 'kind', 'status'))
+        lines.append(f'{index:3d}  {file}  {kind}  {status[:width]}')
+    return lines
+
+
+def print_status_table(argv):
+    ap = argparse.ArgumentParser(prog='check-readme-screenshot-privacy.py --status-table',
+                                 description='Print what each capture report row did, redacted with the privacy patterns.')
+    ap.add_argument('report', help='recapture.py --report output, or the capture-app.mjs references report')
+    ap.add_argument('--forbid', action='append', default=[], help='another literal to redact (repeatable)')
+    args = ap.parse_args(argv)
+    try:
+        report = json.loads(Path(args.report).read_text(encoding='utf-8'))
+        lines = status_table(report, literals_from_environment(args.forbid))
+    except (UnusableInput, OSError, ValueError) as exc:
+        message = str(exc) if isinstance(exc, UnusableInput) else f'the capture report is unreadable ({type(exc).__name__})'
+        print(f'check-readme-screenshot-privacy: {message}', file=sys.stderr)
+        return 2
+    print('\n'.join(lines))
+    return 0
 
 
 def inspect_image(path, kind):
@@ -275,6 +325,9 @@ def check(args):
 
 
 def main(argv=None):
+    argv = sys.argv[1:] if argv is None else list(argv)
+    if argv[:1] == ['--status-table']:
+        return print_status_table(argv[1:])
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('--report', required=True, help='recapture.py --report output, or the capture-app.mjs references report')
     ap.add_argument('--evidence-dir', required=True, help='directory holding the evidence files the report rows name')

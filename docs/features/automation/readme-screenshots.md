@@ -48,14 +48,51 @@ an environment variable.
    helper of the display scaling workflow.
 5. It copies the package's own software OpenGL pair (`mesa\opengl32.dll`, `mesa\libgallium_wgl.dll`)
    beside the installed executable after checking both against their pinned SHA-256 values. A
-   hosted runner has no GPU, so the application would otherwise make that copy itself and relaunch,
-   and the capture driver follows only the process it started.
+   hosted runner has no GPU, so the application would otherwise make that copy itself and relaunch
+   into a second process.
 6. It prepares one data directory, English, light and comfortable, which is the tuple of every
    allowlisted row, under the runner's temporary directory and outside the user profile.
 7. It deletes the allowlisted files from the checkout, so an old image can never pass for a new one,
-   and runs `scripts/md3/recapture.py` with `--kinds page,crop-probe --mesa --evidence-probe` on the
-   selected rows. `--evidence-probe` takes one more layout dump right after each finished capture,
-   while its window is still up, and names it in the report row.
+   and runs `scripts/md3/recapture.py` unbuffered (`python -u`) with
+   `--hosted-holder --kinds page,crop-probe --mesa --evidence-probe` on the selected rows.
+   `--evidence-probe` takes one more layout dump right after each finished capture, while its
+   window is still up, and names it in the report row.
+8. It prints one line per report row (file, kind, and the status cut to 200 characters) with
+   `check-readme-screenshot-privacy.py --status-table`, described below.
+
+`--hosted-holder` starts the application the way the hosted verifiers do
+(`scripts/md3/drive-packaged-behavior.py`): through `scripts/md3/hosted_launch_holder.py`, which
+keeps the hidden desktop open for the whole run, starts the application from the installation
+folder, records its exit code, and lets the window search accept a verified relaunch. Without it,
+nothing holds the hidden desktop except the application, so an application that exits early takes
+the desktop with it, and the next call can only report the desktop as missing.
+
+## When a capture fails
+
+The first hosted run (37682575876, release `md3-v227`) reported every row as not done after about
+nine seconds and printed nothing else, because `recapture.py` turned the start failure into a status
+on every row. Nine seconds is about the time of five calls of the headless tool plus the two-second
+pause in teardown, so the application most likely left the hidden desktop within a few seconds, and
+the following window listing found the desktop gone. That is a hypothesis: the run kept no evidence
+of it. A hosted startup diagnosis of `md3-v190` once recorded the launcher failing to load
+`BambuStudio.dll` with Windows error 1114 after loading Mesa; whether the same applies here is
+unknown.
+
+The run now says what happened in the job log:
+
+- `start failed: <type>: <message>` once per data directory, when the application does not start,
+  followed by the holder's receipt (its status and the application's exit code, also in
+  hexadecimal) and the launcher's own trace lines for that process from
+  `%TEMP%\bbs-launcher-trace.log`;
+- `tuple failed` or `teardown failed` with the same detail when a later step or the teardown fails;
+  a teardown failure no longer stops the report from being written, and a row already reported is
+  never reported twice;
+- the row table after every run.
+
+Every printed message passes through the privacy check's own patterns first: a user-profile path,
+a home path, the runner's account or computer name, a token or an email address is replaced with
+its category, such as `<user-profile-path>`. The table reads only the file, kind and status of each
+row, never an evidence file.
 
 ## The design-references job
 
@@ -65,12 +102,27 @@ app, each linked to the app URL it shows. Later native recapture runs had overwr
 native captures; their recipes in `docs/screenshots/recapture-manifest.json` now say `pages`, so the
 native route leaves them alone.
 
-`design-references` runs on `ubuntu-latest` for at most 20 minutes. It composes the Pages site with
+`design-references` runs on `ubuntu-24.04` for at most 20 minutes. It composes the Pages site with
 `ui-md3/scripts/compose-site.mjs`, serves it on the loopback interface with `ui-md3/tests/serve.mjs`,
 and runs `ui-md3/scripts/capture-app.mjs --readme-references`, which takes a full-page shot of each
 exact README URL at 1600x1000, the size they were first published at, in headless Chrome. For each
 shot it writes the page's rendered text and the values of its fields as the evidence the privacy
 check reads.
+
+The runner image has no CJK font, so the first run (37682579484) rendered every Cantonese label of
+`material-preview-dark-yue-hk.png`, and the Cantonese half of every label of
+`material-device-dark-bilingual.png`, as missing-glyph boxes. Two changes make this deterministic:
+
+- Before the capture, the job installs `fonts-noto-cjk` at the exact version in the Ubuntu 24.04
+  archive (`1:20230817+repack1-3`), rebuilds the font cache, prints the installed version, and fails
+  unless `fc-list ':lang=zh-hk'` lists a Noto Sans CJK face. The image is fixed at `ubuntu-24.04` so
+  that version stays in its archive.
+- After each Cantonese or bilingual shot, `capture-app.mjs` draws every distinct Chinese character on
+  the page in the app's own font stack and compares it with U+0378, an unassigned code point that can
+  only render as the missing-glyph box. If any character matches the box, or the page has no Chinese
+  text at all, the image is deleted and its row is reported failed, so the privacy check withholds it.
+
+The capture prints the same row table as the native job.
 
 ## The allowlists
 
@@ -144,6 +196,12 @@ them is committed, and the workflow itself never commits, pushes or publishes an
   row is reported blocked instead of capturing another page.
 - The README captions of the earlier installed-app captures describe the old images; update them
   together with the images.
+- The Pages app ships no CJK font. The app names `'Roboto', system-ui, sans-serif`, and the landing
+  site adds `'Noto Sans HK', 'PingFang HK', 'Microsoft JhengHei', 'Microsoft YaHei'` without
+  bundling any of them, so a visitor whose system has no CJK font sees Cantonese text as boxes. The
+  font installed by this workflow fixes the capture only, not the published site.
+- Whether the installed application starts on a hosted runner's hidden desktop is not yet shown
+  by any run of this workflow; the next run's `start failed` lines will say.
 
 ## Verification
 
@@ -151,6 +209,13 @@ them is committed, and the workflow itself never commits, pushes or publishes an
   the read-only permission, the pinned actions, the token on the install step alone, the privacy
   check before the upload, the three-day retention, the PNG-only allowlists against the README and
   the recapture manifest, the staged directory as the only upload path, and the README URLs of the
-  design references.
+  design references. It also pins the unbuffered holder launch, the row table after the report
+  exists, the pinned CJK font install and check before the design capture, and the capture's
+  missing-glyph check after each Cantonese or bilingual shot.
 - `python scripts/md3/test-readme-screenshot-privacy.py` builds a clean fixture and one fixture per
-  leak class and checks what is staged, what is withheld and why. Both jobs run it before capturing.
+  leak class and checks what is staged, what is withheld and why, and that the row table replaces
+  every leak class with its category, keeps one line per row, cuts the status at 200 characters and
+  reads no evidence. Both jobs run it before capturing.
+- Locally, with Chromium limited to Latin fonts, the missing-glyph check refused the Cantonese and
+  bilingual references (79 of 79 and 65 of 65 characters had no font) and kept the English one; with
+  a CJK font present it kept all three.

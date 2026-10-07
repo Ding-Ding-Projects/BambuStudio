@@ -15,6 +15,8 @@
  * 1600x1000 size they were first published at. It writes the page text of each
  * shot and a report to the evidence directory, for
  * scripts/md3/check-readme-screenshot-privacy.py to read before any upload.
+ * A Cantonese or bilingual shot in which any Chinese character would render as
+ * a missing-glyph box is deleted and reported failed, so it is never uploaded.
  */
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
@@ -47,6 +49,43 @@ const README_REFERENCES = [
   { name: 'material-device-dark-bilingual', query: 'view=device&theme=dark&density=compact&accent=%2314b8a6&lang=bilingual_en_yue_HK' },
 ];
 const README_REFERENCE_VIEWPORT = { width: 1600, height: 1000 };
+// Languages whose labels are Chinese characters, so a shot needs a CJK face.
+const CJK_LANGUAGES = new Set(['yue_HK', 'bilingual_en_yue_HK']);
+
+/*
+ * Every distinct Han character on the page, drawn in the app's own font stack,
+ * compared with a code point no font maps (U+0378, unassigned), which can only
+ * come out as the missing-glyph box. A character whose advance and pixels equal
+ * that box has no face on this machine: the shot would show it as a box.
+ */
+const CJK_GLYPH_CHECK = `JSON.stringify((() => {
+  const root = document.querySelector('[data-language-mode]') || document.body;
+  const family = getComputedStyle(root).fontFamily;
+  const size = 48;
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = size * 2;
+  const context = canvas.getContext('2d', { willReadFrequently: true });
+  context.font = size + 'px ' + family;
+  context.textBaseline = 'middle';
+  const draw = (text) => {
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    context.fillText(text, size / 2, size);
+    const alpha = context.getImageData(0, 0, canvas.width, canvas.height).data;
+    let ink = 0, hash = 0;
+    for (let i = 3; i < alpha.length; i += 4) {
+      if (alpha[i]) ink += 1;
+      hash = (Math.imul(hash, 31) + alpha[i]) >>> 0;
+    }
+    return { advance: context.measureText(text).width, ink, hash };
+  };
+  const box = draw('\\u0378');
+  const characters = [...new Set(document.body.innerText.match(/\\p{Script=Han}/gu) || [])];
+  const missing = characters.filter((character) => {
+    const glyph = draw(character);
+    return glyph.ink === 0 || (glyph.advance === box.advance && glyph.hash === box.hash);
+  });
+  return { family, checked: characters.length, missing: missing.length, examples: missing.slice(0, 8).join('') };
+})())`;
 
 function chromePath() {
   return [
@@ -221,6 +260,19 @@ async function captureReadmeReferences() {
         clip: { x: 0, y: 0, width: size.width, height: size.height, scale: 1 },
       });
       await writeFile(output, Buffer.from(shot.data, 'base64'));
+      // A Cantonese or bilingual shot is kept only if every Chinese character
+      // on the page had a face to render with.
+      const language = new URLSearchParams(query).get('lang');
+      if (CJK_LANGUAGES.has(language)) {
+        const cjk = JSON.parse(await evaluate(CJK_GLYPH_CHECK));
+        row.cjk_glyphs = { checked: cjk.checked, missing: cjk.missing };
+        if (cjk.checked === 0 || cjk.missing > 0) {
+          await rm(output, { force: true });
+          throw new Error(cjk.checked === 0
+            ? `no Chinese text was found on the ${language} page`
+            : `${cjk.missing} of ${cjk.checked} Chinese characters have no font here and would show as boxes (${cjk.examples})`);
+        }
+      }
       // What the image shows as text: the rendered text plus every field's
       // value, which innerText leaves out.
       const page = JSON.parse(await evaluate(`JSON.stringify({
