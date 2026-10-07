@@ -1155,7 +1155,7 @@ bool open_for_focused()
         // remembered and live restyle works.
         wxString name = focused->GetName();
         if (name.IsEmpty() || name == "panel" || name == "wxWindow" || name == "scrolledWindow")
-            name = focused->GetClassInfo() ? focused->GetClassInfo()->GetClassName() : wxString("control");
+            name = focused->GetClassInfo() ? wxString(focused->GetClassInfo()->GetClassName()) : wxString("control");
         std::string slug;
         for (wxUniChar ch : name) {
             const int c = static_cast<int>(ch.GetValue());
