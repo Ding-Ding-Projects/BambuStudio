@@ -1,6 +1,6 @@
 ---
 translation-of: app-updates.md
-source-sha256: 66ee16586637030ae71d941183508936486ec90376a7ca4d15e0d4e669413099
+source-sha256: af129e1f6281762017d58fa6aaad874fcb5b12d58cfd6cc33843466b6af677b5
 review-status: agent-drafted
 ---
 
@@ -46,7 +46,9 @@ review-status: agent-drafted
 | `--squirrel-updated` | 一樣，不過淨係做仲有呢個應用程式捷徑（新或者舊）嘅位置，所以用家刪咗嘅捷徑唔會再出現 |
 | `--squirrel-uninstall` | 兩個位置都用 `--removeShortcut`，之後「codingmachineedge」開始功能表資料夾變空就一併刪走 |
 | `--squirrel-obsolete` | 乜都唔做 |
-| `--squirrel-firstrun` | 正常啟動；應用程式睇到之前會拎走呢個參數 |
+| `--squirrel-firstrun` | 等 Update.exe 做完之後，將第一次啟動交俾安裝根目錄嘅 `bambu-studio.exe`（見下面）；呢個參數永遠唔會去到應用程式 |
+
+互動安裝嘅時候，Squirrel 會趁安裝程式仲未收尾，自己用 `--squirrel-firstrun` 啟動 `app-<version>\bambu-studio.exe`，而且唔會等佢。有人報告咁樣啟動之後應用程式冇出現，但係捷徑（佢哋啟動嘅係安裝根目錄嘅 `bambu-studio.exe`）就用得。所以啟動器而家唔再自己做呢次啟動：如果佢嘅父程序係 `Update.exe`，就先等佢結束（最多 60 秒），然後用正常視窗、喺 Windows 准許嘅情況下脫離安裝程式嘅 job object，唔帶任何參數啟動安裝根目錄嘅 `bambu-studio.exe`，之後自己退出。搵唔到安裝根目錄或者 stub，又或者嗰次啟動失敗，就照舊正常啟動。每一步都會寫入 `%TEMP%\bbs-launcher-trace.log`，而家每行開頭都有本地時間同程序 ID。靜默安裝（`--silent`）乜都唔會啟動，所以從來冇一個託管安裝檢查行過呢條路：互動安裝之後應用程式係咪真係會出現，只有[安裝程式首次啟動診斷](../automation/installer-first-run-diagnostic.md)同真機安裝先驗證到，合約測試驗證唔到。
 
 新捷徑整好之後（同埋解除安裝嗰陣），佢亦會刪走舊套件整嘅兩個捷徑：桌面同「Bambu Research」入面嘅 `BambuStudio.lnk`，但淨係喺佢哋指住呢個安裝嘅時候先刪。由舊套件第一次更新嗰陣，輔助程式嗰個指錯咗嘅 `Bambu Studio MD3.lnk` 會原地被換走，因為新捷徑同佢同名、同資料夾。
 

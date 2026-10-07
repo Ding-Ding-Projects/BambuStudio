@@ -4,7 +4,10 @@ param(
     [Parameter(Mandatory)][ValidatePattern('^[^/]+/[^/]+$')][string] $Repository,
     [Parameter(Mandatory)][ValidatePattern('^[0-9a-fA-F]{40}$')][string] $ExpectedCommit,
     [Parameter(Mandatory)][string] $OutputPath,
-    [Parameter(Mandatory)][switch] $CiExecutionApproved
+    [Parameter(Mandatory)][switch] $CiExecutionApproved,
+    # Install the way a person does: Setup.exe with no arguments and a visible window, so Squirrel
+    # starts the application with --squirrel-firstrun when it finishes. The default is a silent install.
+    [switch] $Interactive
 )
 
 $ErrorActionPreference = 'Stop'
@@ -101,8 +104,15 @@ try {
 
     $installRoot = Join-Path $env:LOCALAPPDATA 'BambuStudioMD3'
     Assert-True (-not (Test-Path -LiteralPath $installRoot)) 'A prior Squirrel installation exists on this runner.'
-    $setup = Start-Process -FilePath (Join-Path $downloadRoot 'Setup.exe') -ArgumentList '--silent' -PassThru -WindowStyle Hidden
-    Wait-Process -Id $setup.Id -Timeout 600
+    if ($Interactive) {
+        $setup = Start-Process -FilePath (Join-Path $downloadRoot 'Setup.exe') -PassThru
+        $null = $setup.Handle  # keeps the handle open, so the exit code can still be read after the exit
+        Assert-True ($setup.WaitForExit(600000)) 'Squirrel Setup.exe did not finish within 600 seconds.'
+    }
+    else {
+        $setup = Start-Process -FilePath (Join-Path $downloadRoot 'Setup.exe') -ArgumentList '--silent' -PassThru -WindowStyle Hidden
+        Wait-Process -Id $setup.Id -Timeout 600
+    }
     $setup.Refresh()
     Assert-True ($setup.ExitCode -eq 0) "Squirrel Setup.exe exited with code $($setup.ExitCode)."
     $installedExe = Join-Path (Join-Path $installRoot "app-$version") 'bambu-studio.exe'
