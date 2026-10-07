@@ -59,7 +59,7 @@ test('a plain source_group(TREE) rejects a sibling-directory source (the hosted 
     try {
         const result = configure(fixture);
         assert.notEqual(result.status, 0);
-        assert.match(result.stderr, /source_group ROOT: .* is not a prefix\s+of file:/s);
+        assert.match(result.stderr, /source_group ROOT:\s.*\sis\s+not\s+a\s+prefix\s+of\s+file:/s);
     } finally {
         rmSync(fixture.root, { recursive: true, force: true });
     }
