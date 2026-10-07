@@ -1,7 +1,7 @@
 All reviewed local source continuations are integrated, and only the primary working directory remains registered. The [closeout report](docs/integration/closeout-20261006.md) records passing hosted workflows, verified backup consolidation, and two retained directory remnants. [Issue 60](https://github.com/Ding-Ding-Projects/BambuStudio/issues/60) tracks unfinished native and website acceptance; source integration is not product acceptance.
 
 > [!IMPORTANT]
-> Current status, 6 October 2026: the exact-main root build at `cc059003d` passed at 16:43:57 UTC and the exact installer entrypoint is running. Reviewed redesign preparation is preserved separately at `1fa14f33a`; its 71 offline checks do not prove rendering. Two authorized visible attempts exited before inspection, so there is no current screenshot or complete visual acceptance. Read the [current continuation](CLOSEOUT_PROMPT.md).
+> Current status, 6 October 2026: the exact-main root build at `cc059003d` passed at 16:43:57 UTC and the exact installer entrypoint is running. Reviewed redesign preparation from `1fa14f33a` is now merged into main; its 71 offline checks do not prove rendering, and the merged tree has no native build result yet. Separately, both exact root build entrypoints and independent installer-byte verification passed for the earlier redesign candidate `a28944e3c14b2066ee63d14151c8aca23066d743`. Two authorized visible attempts exited before inspection, so there is no current screenshot or complete visual acceptance. Read the [current continuation](CLOSEOUT_PROMPT.md).
 
 ![image](https://user-images.githubusercontent.com/106916061/179006347-497d24c0-9bd6-45b7-8c49-d5cc8ecfe5d7.png)
 # BambuStudio
@@ -12,11 +12,11 @@ slicing, and configured printers. See [setup and verification status](docs/featu
 The current interface work also includes [local personal wording](docs/features/windows/personal-vocabulary.md),
 [separate slicing actions](docs/features/windows/print-actions.md), and
 [searchable canvas menus](docs/features/canvas-menu-search.md). These changes are
-under a local native build for the combined delivery; the [audit register](docs/features/design-system/native-interface-audit-2026-10-02.md)
-records historical runtime and layout evidence. No test suite was deliberately launched, the inherited type stage failed, and screenshots are not produced in this pass;
-implementation is not a claim of verified physical-printer behavior.
+under development for the combined delivery; the [audit register](docs/features/design-system/native-interface-audit-2026-10-02.md)
+records historical runtime and layout evidence. Focused source and non-window geometry checks now cover the current redesign; they do not establish native runtime or screenshots.
+Implementation is not a claim of verified physical-printer behavior.
 Current compiler and startup evidence is summarized in the [continuation record](CLOSEOUT_PROMPT.md).
-The earlier configure blockers are superseded. Current build and package evidence is recorded against exact source revisions in the verification report. The inherited DeviceWeb type stage attempted once and failed before bundling during the older delivery pass; no passing type-check result is claimed.
+The earlier configure blockers are superseded. Current build and package evidence is recorded against exact source revisions in the verification report. The earlier production catalogue, documentation bundling and DeviceWeb observations belong to their dated source receipts. Reviewed inspection preparation covers all 55 declared states; 38 preparation checks and 33 native-review checks pass offline. The initial startup cause remains unknown, and a reviewed target-exit diagnostic prepares the next attempt. Exact-main packaging remains pending. The inherited DeviceWeb type stage attempted once and failed before bundling during the older delivery pass; no passing type-check result is claimed.
 Earlier managed-check results apply only to their recorded source revisions. The combined source includes the reconciled continuation lanes and bounded repairs listed in the current handoff.
 
 Bambu Studio is a cutting-edge, feature-rich slicing software.  
@@ -33,6 +33,10 @@ configured on any other system. Cross-platform builds remain available upstream 
 [Bambu Lab](https://github.com/bambulab/BambuStudio/releases/).
 
 ## Current development work
+
+The [Studio Atlas design](design/workflow-refresh.md) covers the whole native application and product-owned embedded views, retaining existing features and action semantics. It includes Prepare, Preview, Print, Monitor, settings, fields, dialogs and nested tools. Source implementation and independent review are ongoing; a shared palette alone does not complete a surface.
+
+**The design can be reverted if the maintainer dislikes it.** Review the [change ledger](design/workflow-refresh/change-ledger.json) and reverse only the appropriate appearance changes, preserving build, printer, AMS, slicing and data fixes. Mixed functional/presentation commits require selective review; resetting to the old baseline is not the reversal procedure.
 
 The previously preserved responsive-workflow and local-history source has been reconciled into the combined delivery revision. This pass adds bounded draft/history, continuity, import and automation repairs. Release delivery remains pending; see [the current continuation record](CLOSEOUT_PROMPT.md). Import cancellation remains cooperative and cannot interrupt an indivisible reader, hull calculation, object copy or final scene update. Issue #16's separately licensed companion remains a separate decision and is not included in this delivery.
 

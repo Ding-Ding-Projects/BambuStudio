@@ -10,6 +10,7 @@
 #include "Widgets/Label.hpp"
 
 #include <wx/button.h>
+#include <wx/dcclient.h>
 #include <wx/sizer.h>
 
 wxDEFINE_EVENT(wxCUSTOMEVT_TABBOOK_SEL_CHANGED, wxCommandEvent);
@@ -18,7 +19,6 @@ static const wxFont& TAB_BUTTON_FONT     = Label::Body_14;
 static const wxFont& TAB_BUTTON_FONT_SEL = Label::Head_14;
 
 
-static const int BUTTON_DEF_HEIGHT = 46;
 static const int BUTTON_DEF_WIDTH  = 220;
 
 
@@ -28,11 +28,10 @@ TabButtonsListCtrl::TabButtonsListCtrl(wxWindow *parent, wxBoxSizer *side_tools)
 #ifdef __WINDOWS__
     SetDoubleBuffered(true);
 #endif //__WINDOWS__
-    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
 
     int em = em_unit(this);
-    // BBS: no gap
-    m_btn_margin = 0;
+    m_btn_margin = FromDIP(MD3::Metrics::active().gap);
     m_line_margin = std::lround(0.1 * em);
 
     m_arrow_img = ScalableBitmap(this, "monitor_arrow", 14);
@@ -49,29 +48,67 @@ TabButtonsListCtrl::TabButtonsListCtrl(wxWindow *parent, wxBoxSizer *side_tools)
     }
 
     m_buttons_sizer = new wxFlexGridSizer(1, m_btn_margin, m_btn_margin);
-    m_sizer->Add(m_buttons_sizer, 0, wxLEFT | wxTOP, m_btn_margin);
+    m_buttons_sizer->AddGrowableCol(0);
+    m_sizer->Add(m_buttons_sizer, 0, wxEXPAND | wxALL, m_btn_margin);
     m_sizer->AddStretchSpacer(1);
 }
 
 void TabButtonsListCtrl::OnPaint(wxPaintEvent &)
 {
-    Slic3r::GUI::wxGetApp().UpdateDarkUI(this);
     wxPaintDC dc(this);
-    // Kit selection model (navigation/TabBar): the tab surface is transparent and
-    // the selected state is carried by the Primary label + the 3px rounded Primary
-    // indicator that the selected TabButton paints on its inner edge. The legacy
-    // filled SecondaryContainer pill and the neutral TextPrimary under-tab / bottom
-    // marker are gone; this control just holds the SurfaceContainerLowest surround.
+    dc.SetBackground(wxBrush(StateColor::semantic(MD3::Role::SurfaceContainerLow)));
+    dc.Clear();
+}
+
+void TabButtonsListCtrl::StyleButton(TabButton* btn, bool selected)
+{
+    const auto& metrics = MD3::Metrics::active();
+    btn->SetFont(selected ? TAB_BUTTON_FONT_SEL : TAB_BUTTON_FONT);
+    if (!m_custom_padding)
+        btn->SetPaddingSize({FromDIP(metrics.padding), FromDIP(metrics.padding)});
+    const wxSize padding = btn->GetPaddingSize();
+    wxClientDC dc(btn);
+    dc.SetFont(TAB_BUTTON_FONT_SEL);
+    const wxSize title = dc.GetTextExtent(btn->GetLabel());
+    const int width = std::max(FromDIP(BUTTON_DEF_WIDTH), title.x + padding.x + padding.y + FromDIP(28));
+    const int height = std::max(FromDIP(metrics.row_height), title.y + FromDIP(metrics.gap));
+    btn->SetMinSize({width, height});
+    btn->SetCornerRadius(FromDIP(metrics.small_radius));
+    btn->SetBorderWidth(std::max(1, FromDIP(2)));
+    btn->SetColorScheme(m_color_scheme);
+    btn->SetBackgroundColor(StateColor(
+        std::make_pair(MD3::Light::scHigh, (int) StateColor::Disabled),
+        std::make_pair(MD3::Light::scHighest, (int) StateColor::Pressed),
+        std::make_pair(selected ? StateColor::semantic(MD3::Role::PrimaryContainer, m_color_scheme)
+                               : StateColor::semantic(MD3::Role::SurfaceContainerHigh), (int) StateColor::Hovered),
+        std::make_pair(selected ? StateColor::semantic(MD3::Role::PrimaryContainer, m_color_scheme)
+                               : StateColor::semantic(MD3::Role::SurfaceContainerLow), (int) StateColor::Normal)));
+    btn->SetTextColor(StateColor(
+        std::make_pair(MD3::Light::onSurfaceVariant, (int) StateColor::Disabled),
+        std::make_pair(MD3::Light::onSurface, (int) StateColor::Pressed),
+        std::make_pair(selected ? StateColor::semantic(MD3::Role::OnPrimaryContainer, m_color_scheme)
+                               : StateColor::semantic(MD3::Role::OnSurfaceVariant), (int) StateColor::Normal)));
+    // The child has a legacy square border in addition to StaticBox's rounded one.
+    // Keep that stroke transparent so the caller's rounded surface remains visible.
+    btn->SetBorderColor(StateColor(wxColour(0, 0, 0, 0)));
+    btn->StaticBox::SetBorderColor(StateColor(
+        std::make_pair(StateColor::semantic(MD3::Role::Primary, m_color_scheme), (int) StateColor::Focused),
+        std::make_pair(wxColour(0, 0, 0, 0), (int) StateColor::Normal)));
 }
 
 void TabButtonsListCtrl::Rescale()
 {
     m_arrow_img = ScalableBitmap(this, "monitor_arrow", 14);
 
-    int em = em_unit(this);
-    for (TabButton *btn : m_pageButtons) {
-        btn->SetMinSize({BUTTON_DEF_WIDTH * em / 10, BUTTON_DEF_HEIGHT * em / 10});
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
+    m_btn_margin = FromDIP(MD3::Metrics::active().gap);
+    m_buttons_sizer->SetVGap(m_btn_margin);
+    m_buttons_sizer->SetHGap(m_btn_margin);
+    if (auto* item = m_sizer->GetItem(m_buttons_sizer)) item->SetBorder(m_btn_margin);
+    for (int index = 0; index < int(m_pageButtons.size()); ++index) {
+        auto* btn = m_pageButtons[index];
         btn->SetBitmap(m_arrow_img);
+        StyleButton(btn, index == m_selection);
         btn->Rescale();
     }
 
@@ -82,22 +119,17 @@ void TabButtonsListCtrl::SetSelection(int sel)
 {
     if (m_selection == sel)
         return;
-    // Kit selection model: tabs stay transparent (SurfaceContainerLowest, the bar
-    // surround) in both states; selection is carried by the Primary/600 label and
-    // the TabButton's 3px Primary indicator. Inactive labels drop to
-    // OnSurfaceVariant/400.
     if (m_selection >= 0) {
         TabButton *old = m_pageButtons[m_selection];
         old->SetSelected(false);
-        old->SetTextColor(StateColor::semantic(MD3::Role::OnSurfaceVariant));
-        old->SetFont(TAB_BUTTON_FONT);
+        StyleButton(old, false);
     }
     m_selection = sel;
     TabButton *cur = m_pageButtons[m_selection];
     cur->SetColorScheme(m_color_scheme);
     cur->SetSelected(true);
-    cur->SetTextColor(StateColor::semantic(MD3::Role::Primary, m_color_scheme));
-    cur->SetFont(TAB_BUTTON_FONT_SEL);
+    StyleButton(cur, true);
+    m_sizer->Layout();
     Refresh();
 }
 
@@ -106,12 +138,8 @@ void TabButtonsListCtrl::SetColorScheme(MD3::ColorScheme scheme)
     if (m_color_scheme == scheme)
         return;
     m_color_scheme = scheme;
-    for (int idx = 0; idx < int(m_pageButtons.size()); ++idx) {
-        TabButton *btn = m_pageButtons[idx];
-        btn->SetColorScheme(scheme);
-        if (idx == m_selection)
-            btn->SetTextColor(StateColor::semantic(MD3::Role::Primary, scheme));
-    }
+    for (int idx = 0; idx < int(m_pageButtons.size()); ++idx)
+        StyleButton(m_pageButtons[idx], idx == m_selection);
     Refresh();
 }
 
@@ -129,16 +157,7 @@ void TabButtonsListCtrl::showNewTag(int sel, bool tag)
 bool TabButtonsListCtrl::InsertPage(size_t n, const wxString &text, bool bSelect /* = false*/, const std::string &bmp_name /* = ""*/)
 {
     TabButton *btn = new TabButton(this, text, m_arrow_img, wxNO_BORDER);
-    btn->SetCornerRadius(0);
-
-    int em = em_unit(this);
-    btn->SetMinSize({BUTTON_DEF_WIDTH * em / 10, BUTTON_DEF_HEIGHT * em / 10});
-
-    // Transparent tab (bar surround) + inactive OnSurfaceVariant label per the
-    // kit selection model; the scheme feeds the active indicator once selected.
-    btn->SetBackgroundColor(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
-    btn->SetTextColor(StateColor::semantic(MD3::Role::OnSurfaceVariant));
-    btn->SetColorScheme(m_color_scheme);
+    StyleButton(btn, false);
     btn->SetSelected(false);
     btn->Bind(wxEVT_BUTTON, [this, btn](wxCommandEvent& event) {
         if (auto it = std::find(m_pageButtons.begin(), m_pageButtons.end(), btn); it != m_pageButtons.end()) {
@@ -151,7 +170,7 @@ bool TabButtonsListCtrl::InsertPage(size_t n, const wxString &text, bool bSelect
     });
     Slic3r::GUI::wxGetApp().UpdateDarkUI(btn);
     m_pageButtons.insert(m_pageButtons.begin() + n, btn);
-    m_buttons_sizer->Insert(n, new wxSizerItem(btn));
+    m_buttons_sizer->Insert(n, new wxSizerItem(btn, 0, wxEXPAND, 0, nullptr));
     m_buttons_sizer->SetRows(m_pageButtons.size() + 1);
     m_sizer->Layout();
     return true;
@@ -185,6 +204,8 @@ void TabButtonsListCtrl::SetPageText(size_t n, const wxString &strText)
 {
     TabButton *btn = m_pageButtons[n];
     btn->SetLabel(strText);
+    StyleButton(btn, int(n) == m_selection);
+    m_sizer->Layout();
 }
 
 wxString TabButtonsListCtrl::GetPageText(size_t n) const
@@ -198,9 +219,13 @@ const wxSize& TabButtonsListCtrl::GetPaddingSize(size_t n) {
 }
 
 void TabButtonsListCtrl::SetPaddingSize(const wxSize& size) {
-    for (auto& btn : m_pageButtons) {
+    m_custom_padding = true;
+    for (int index = 0; index < int(m_pageButtons.size()); ++index) {
+        auto* btn = m_pageButtons[index];
         btn->SetPaddingSize(size);
+        StyleButton(btn, index == m_selection);
     }
+    m_sizer->Layout();
 }
 
 //#endif // _WIN32

@@ -28,23 +28,14 @@ TextInput::TextInput()
     , text_color(std::make_pair(ThemeColor::TextDisabled, (int) StateColor::Disabled),
                  std::make_pair(ThemeColor::TextPrimary, (int) StateColor::Normal))
 {
-    // MD3 filled-field geometry. Radius 10 flows through the StaticBox
-    // default-radius path so it is FromDIP-scaled at Create and recomputed on
-    // every monitor/DPI change (no stale cached radius). Fill is
-    // SurfaceContainerHighest; the resting border is Outline (not the lighter
-    // OutlineVariant), hover promotes to Primary, disabled falls to
-    // OutlineVariant. Every colour is stored as its MD3 *light* role value, and
-    // each of those hexes is a key in StateColor.cpp's gDarkColors table, so
-    // colorForStates() live-remaps them on a runtime dark-mode toggle -- this is
-    // why the old Grey400 / BrandGreen / White / Grey300 literals are dropped in
-    // favour of the role tones rather than semantic() snapshots.
-    SetDefaultCornerRadius(10);
+    // The default radius follows density; explicit caller radii remain authoritative.
+    SetDefaultCornerRadius(MD3::Metrics::active().small_radius);
     border_width = 1;
     border_color = StateColor(std::make_pair(MD3::Light::outlineVariant, (int) StateColor::Disabled),
                               std::make_pair(MD3::Light::primary, (int) StateColor::Hovered),
                               std::make_pair(MD3::Light::outline, (int) StateColor::Normal));
     background_color = StateColor(std::make_pair(MD3::Light::scHigh, (int) StateColor::Disabled),
-                                  std::make_pair(MD3::Light::scHighest, (int) StateColor::Normal));
+                                  std::make_pair(MD3::Light::scLow, (int) StateColor::Normal));
     SetFont(Label::Body_12);
 }
 
@@ -82,14 +73,7 @@ void TextInput::Create(wxWindow *     parent,
     state_handler.attach({&label_color, & text_color});
     state_handler.update_binds();
     
-    int prefix_space = 0;
-    if (!m_prefix.IsEmpty()) {
-        wxClientDC dc(this);
-        wxSize     prefix_size = dc.GetTextExtent(m_prefix);
-        prefix_space           = prefix_size.x + 8;
-    }
-
-    text_ctrl = new TextCtrl(this, wxID_ANY, text, {4 + prefix_space, 4}, wxDefaultSize, style | wxBORDER_NONE | wxTE_PROCESS_ENTER);
+    text_ctrl = new TextCtrl(this, wxID_ANY, text, wxDefaultPosition, wxDefaultSize, style | wxBORDER_NONE | wxTE_PROCESS_ENTER);
     text_ctrl->SetFont(Label::Body_14);
     text_ctrl->SetInitialSize(text_ctrl->GetBestSize());
     text_ctrl->SetBackgroundColour(background_color.colorForStates(state_handler.states()));
@@ -124,8 +108,17 @@ void TextInput::Create(wxWindow *     parent,
 
 void TextInput::SetCornerRadius(double radius)
 {
-    this->radius = radius;
-    Refresh();
+    StaticBox::SetCornerRadius(radius);
+}
+
+bool TextInput::SetFont(const wxFont& font)
+{
+    const bool changed = wxWindow::SetFont(font);
+    if (text_ctrl) {
+        messureSize();
+        Refresh();
+    }
+    return changed;
 }
 
 void TextInput::SetLabel(const wxString& label)
@@ -182,6 +175,7 @@ void TextInput::SetIcon_1(const wxString &icon) {
         return;
     if (icon.empty()) {
         this->icon_1 = ScalableBitmap();
+        Rescale();
         return;
     }
     this->icon_1 = ScalableBitmap(this, icon.ToStdString(), 14);
@@ -211,6 +205,8 @@ void TextInput::SetTextColor(StateColor const& color)
 
 void TextInput::Rescale()
 {
+    SetDefaultCornerRadius(MD3::Metrics::active().small_radius);
+    RescaleDefaultCornerRadius();
     if (!this->icon.name().empty())
         this->icon.msw_rescale();
     if (!this->icon_1.name().empty())
@@ -244,48 +240,63 @@ void TextInput::SetMinSize(const wxSize& size)
     wxWindow::SetMinSize(size2);
 }
 
+namespace {
+// All inputs are measured device pixels. No DPI conversion belongs in this calculation.
+struct AtlasFieldLayout {
+    int entry_x, entry_width, label_x, prefix_x, unit_x, minimum_width;
+};
+
+AtlasFieldLayout atlasFieldLayout(int width, int padding, int gap, int icons,
+                                  int label, int prefix, int unit, int entry_min,
+                                  bool editable, bool label_left)
+{
+    const int label_slot = label > 0 ? label + (editable ? gap : 0) : 0;
+    const int prefix_slot = prefix > 0 ? prefix + gap : 0;
+    const int unit_slot = unit > 0 ? unit + gap : 0;
+    const int left = padding + icons;
+    const int entry_x = left + (label_left ? label_slot : 0) + prefix_slot;
+    const int entry_width = editable ? std::max(0, width - 2 * padding - icons - label_slot - prefix_slot - unit_slot) : 0;
+    const int unit_x = entry_x + entry_width + (unit > 0 ? gap : 0);
+    const int label_x = label_left ? left : entry_x + entry_width + unit_slot + (label > 0 ? gap : 0);
+    return {entry_x, entry_width, label_x, entry_x - prefix_slot, unit_x,
+            2 * padding + icons + label_slot + prefix_slot + unit_slot + (editable ? entry_min : 0)};
+}
+} // namespace
+
+TextInput::ContentMetrics TextInput::measureContent()
+{
+    ContentMetrics m;
+    m.padding = FromDIP(MD3::Metrics::active().padding / 2);
+    m.gap = FromDIP(8);
+    m.editable = text_ctrl && text_ctrl->IsShown();
+    wxClientDC dc(this);
+    dc.SetFont(GetFont());
+    m.label = dc.GetTextExtent(wxWindow::GetLabel());
+    dc.SetFont(Label::Body_12);
+    m.support = dc.GetTextExtent(static_tips);
+    dc.SetFont(text_ctrl->GetFont());
+    m.prefix = dc.GetTextExtent(m_prefix);
+    m.unit = dc.GetTextExtent(m_unit);
+    m.entry = {dc.GetTextExtent(wxS("0.000")).x, text_ctrl->GetBestSize().y};
+    if (icon.bmp().IsOk()) m.icons += icon.GetBmpSize().x + m.gap;
+    if (icon_1.bmp().IsOk()) m.icons += icon_1.GetBmpSize().x + m.gap;
+    return m;
+}
+
 void TextInput::DoSetSize(int x, int y, int width, int height, int sizeFlags)
 {
     const wxSize oldSize = GetSize();
     wxWindow::DoSetSize(x, y, width, height, sizeFlags);
-    if (sizeFlags & wxSIZE_USE_EXISTING) return;
-    wxSize size = GetSize();
-    // The border/background/dropdown arrow are custom-painted from the full bounds; a partial
-    // erase on grow would leave the old right edge stale, so force a full repaint on any resize.
+    if (sizeFlags & wxSIZE_USE_EXISTING || !text_ctrl) return;
+    const wxSize size = GetSize();
     if (size != oldSize) Refresh();
-    wxPoint textPos = {5, 0};
-    if (this->icon.bmp().IsOk()) {
-        wxSize szIcon = this->icon.GetBmpSize();
-        textPos.x += szIcon.x;
-    }
-    if (this->icon_1.bmp().IsOk()) {
-        wxSize szIcon = this->icon_1.GetBmpSize();
-        textPos.x += (szIcon.x);
-    }
-    bool align_right = GetWindowStyle() & wxALIGN_RIGHT;
-    if (align_right)
-        textPos.x += labelSize.x;
-
-    int prefix_space = 0;
-    if (!m_prefix.IsEmpty()) {
-        wxClientDC dc(this);
-        wxSize     prefix_size = dc.GetTextExtent(m_prefix);
-        prefix_space           = prefix_size.x + 8;
-    }
-    if (text_ctrl) {
-        wxClientDC dc(this);
-        wxSize unitSize = dc.GetTextExtent(m_unit);
-        // Reserve room for the trailing unit suffix (gap + glyph + right pad) so
-        // render()'s unit draw (at the entry's right edge + 4) stays inside the
-        // field instead of clipping. 0 when there is no unit, so unit-less fields
-        // keep their previous width exactly.
-        int unit_space = m_unit.IsEmpty() ? 0 : (unitSize.x + 5 + 10);
-        wxSize textSize = text_ctrl->GetSize();
-        textSize.x = size.x - textPos.x - labelSize.x - 10 - prefix_space - unit_space;
-        if(textSize.x < -1) textSize.x = -1;
-        text_ctrl->SetSize(textSize);
-        text_ctrl->SetPosition({textPos.x + prefix_space, (size.y - textSize.y) / 2});
-    }
+    const auto m = measureContent();
+    const auto layout = atlasFieldLayout(size.x, m.padding, m.gap, m.icons,
+        std::max(m.label.x, m.support.x), m.prefix.x, m.unit.x, m.entry.x,
+        m.editable, !m.editable || (GetWindowStyle() & wxALIGN_RIGHT));
+    const int entry_height = std::min(m.entry.y, std::max(0, size.y - 2 * m.padding));
+    text_ctrl->SetSize(layout.entry_width, entry_height);
+    text_ctrl->SetPosition({layout.entry_x, (size.y - entry_height) / 2});
 }
 
 void TextInput::DoSetToolTipText(wxString const &tip)
@@ -309,178 +320,79 @@ void TextInput::paintEvent(wxPaintEvent &evt)
 void TextInput::render(wxDC& dc)
 {
     StaticBox::render(dc);
-    int states = state_handler.states();
-    wxSize size = GetSize();
-    bool   align_center = GetWindowStyle() & wxALIGN_CENTER_HORIZONTAL;
-    bool   align_right = GetWindowStyle() & wxALIGN_RIGHT;
-    // start draw
-    wxPoint pt = {5, 0};
-    if (icon.bmp().IsOk()) {
-        wxSize szIcon = icon.GetBmpSize();
-        pt.y = (size.y - szIcon.y) / 2;
-        if (align_center) {
-            if (pt.x * 2 + szIcon.x + 0 + labelSize.x < size.x)
-                pt.x = (size.x - (szIcon.x + 0 + labelSize.x)) / 2;
-        }
-        dc.DrawBitmap(icon.bmp(), pt);
-        pt.x += (szIcon.x + szIcon.x * 0.2);
-    }
-    if (icon_1.bmp().IsOk()) {
-        wxSize szIcon = icon_1.GetBmpSize();
-        pt.y          = (size.y - szIcon.y) / 2;
-        if (align_center) {
-            if (pt.x * 2 + szIcon.x + 0 + labelSize.x < size.x)
-                pt.x = (size.x - (szIcon.x + 0 + labelSize.x)) / 2;
-        }
-        pt.x += szIcon.x / 4.f;
-        dc.DrawBitmap(icon_1.bmp(), pt);
-        pt.x += szIcon.x + 0;
-    }
-    auto text = wxWindow::GetLabel();
-    if (!text.IsEmpty()) {
-        if (static_tips.IsEmpty()) {
-            wxSize textSize = text_ctrl->GetSize();
-            int    prefix_space = 0;
-            if (!m_prefix.IsEmpty()) {
-                wxClientDC dc(this);
-                wxSize     prefix_size = dc.GetTextExtent(m_prefix);
-                prefix_space           = prefix_size.x + 8;
-            }
-            // Only a right-aligned field moves its entry right to make room for the label on
-            // the left (DoSetSize). A centred one keeps the entry at the left edge, so its label
-            // goes after the entry like a left-aligned one; drawn at the left edge it sat under
-            // the entry, which hid the start of the unit ("0.1/mm" for "0.1 mm/mm").
-            if (align_right)
-            {
-                if (pt.x + labelSize.x + 5 > size.x)
-                    text = wxControl::Ellipsize(text, dc, wxELLIPSIZE_END, size.x - pt.x - 5);
-                pt.y = (size.y - labelSize.y) / 2;
-            }
-            else
-            {
-                pt.x += textSize.x + prefix_space;
-                pt.y = (size.y + textSize.y) / 2 - labelSize.y;
-            }
-            dc.SetTextForeground(label_color.colorForStates(states));
-            dc.SetFont(GetFont());
-            dc.DrawText(text, pt);
-        } else {
-            wxSize textSize = text_ctrl->GetSize();
-            if (align_right) {
-                if (pt.x + labelSize.x + 5 > size.x)
-                    text = wxControl::Ellipsize(text, dc, wxELLIPSIZE_END, size.x - pt.x - 5);
-                pt.y = (size.y - labelSize.y - static_tips_size.y - 8) / 2;
-            } else {
-                pt.x += textSize.x;
-                pt.y = (size.y - labelSize.y - static_tips_size.y - 8) / 2;
-            }
-            dc.SetTextForeground(label_color.colorForStates(states));
-            dc.SetFont(GetFont());
-            dc.DrawText(text, pt);
-
-            if (align_right) {
-                if (pt.x + static_tips_size.x + 5 > size.x) {
-                    text = wxControl::Ellipsize(static_tips, dc, wxELLIPSIZE_END, size.x - pt.x - 5);
-                }
-
-                pt.y += (labelSize.y + 8);
-            } else {
-                pt.x += static_tips_size.x;
-                pt.y += (labelSize.y + 8);
-            }
-
-            dc.SetTextForeground(ThemeColor::TextDisabled);
-
-            wxFont font = GetFont();
-            font.SetPointSize(font.GetPointSize() - 1);// use smaller font
-            dc.SetFont(font);
-            dc.DrawText(static_tips, pt);
+    if (!text_ctrl) return;
+    const int states = state_handler.states();
+    const wxSize size = GetSize();
+    if (IsEnabled() && (states & StateColor::Focused)) {
+        wxRect focus = GetClientRect();
+        const int inset = FromDIP(2);
+        focus.Deflate(inset);
+        if (focus.width > 0 && focus.height > 0) {
+            dc.SetBrush(*wxTRANSPARENT_BRUSH);
+            dc.SetPen(wxPen(border_color.colorForStates(states), FromDIP(2)));
+            dc.DrawRoundedRectangle(focus, std::max(0.0, std::min(radius - inset,
+                std::min(focus.width, focus.height) / 2.0)));
         }
     }
-    if (!m_prefix.IsEmpty() && text_ctrl) {
-        wxPoint ctrl_pos    = text_ctrl->GetPosition();
-        wxSize  ctrl_size   = text_ctrl->GetSize();
-        wxSize  prefix_size = dc.GetTextExtent(m_prefix);
-        int     prefix_space = prefix_size.x + 8;
-
-        int x = ctrl_pos.x - prefix_space - 2;
-        int y = ctrl_pos.y + (ctrl_size.y - prefix_size.y) / 2 - 2;
-
-        wxFont prefix_font = text_ctrl->GetFont();
-        dc.SetFont(prefix_font);
-        dc.SetTextForeground(StateColor::semantic(MD3::Role::OnSurfaceVariant));
-        dc.DrawText(m_prefix, wxPoint(x, y));
+    const auto m = measureContent();
+    const auto layout = atlasFieldLayout(size.x, m.padding, m.gap, m.icons,
+        std::max(m.label.x, m.support.x), m.prefix.x, m.unit.x, m.entry.x,
+        m.editable, !m.editable || (GetWindowStyle() & wxALIGN_RIGHT));
+    // Parent layouts must honour the measured minimum. A forced smaller allocation must
+    // still never paint into neighbouring controls; the complete label remains accessible.
+    wxDCClipper clip(dc, GetClientRect());
+    int icon_x = m.padding;
+    for (auto* bitmap : {&icon, &icon_1}) {
+        if (!bitmap->bmp().IsOk()) continue;
+        const wxSize dimensions = bitmap->GetBmpSize();
+        dc.DrawBitmap(bitmap->bmp(), icon_x, (size.y - dimensions.y) / 2);
+        icon_x += dimensions.x + m.gap;
     }
-    if (!m_unit.IsEmpty() && text_ctrl) {
-        wxPoint ctrl_pos  = text_ctrl->GetPosition();
-        wxSize  ctrl_size = text_ctrl->GetSize();
-
-        // Measure with the actual (smaller) unit font, then clamp+ellipsize the
-        // draw against the field's right edge so a too-narrow field never paints
-        // the unit past the border.
-        wxFont unit_font = text_ctrl->GetFont();
-        unit_font.SetPointSize(unit_font.GetPointSize() - 1);
-        dc.SetFont(unit_font);
-        wxSize unit_size = dc.GetTextExtent(m_unit);
-
-        int x = ctrl_pos.x + ctrl_size.x + 4;
-        int y = ctrl_pos.y + (ctrl_size.y - unit_size.y) / 2;
-        int avail = size.x - x - 5; // room to the field's right edge
-        if (avail > 0) {
-            wxString unit = unit_size.x > avail
-                                ? wxControl::Ellipsize(m_unit, dc, wxELLIPSIZE_END, avail)
-                                : m_unit;
-            dc.SetTextForeground(StateColor::semantic(MD3::Role::OnSurfaceVariant));
-            dc.DrawText(unit, wxPoint(x, y));
-        }
+    const int support_gap = static_tips.empty() ? 0 : FromDIP(4);
+    const int stack_height = m.label.y + (static_tips.empty() ? 0 : m.support.y + support_gap);
+    int label_x = layout.label_x;
+    if (!m.editable && (GetWindowStyle() & wxALIGN_CENTER_HORIZONTAL))
+        label_x = std::max(label_x, (size.x - std::max(m.label.x, m.support.x)) / 2);
+    const int label_y = (size.y - stack_height) / 2;
+    dc.SetFont(GetFont());
+    dc.SetTextForeground(label_color.colorForStates(states));
+    dc.DrawText(wxWindow::GetLabel(), label_x, label_y);
+    if (!static_tips.empty()) {
+        dc.SetFont(Label::Body_12);
+        dc.SetTextForeground(label_color.colorForStates(states));
+        dc.DrawText(static_tips, label_x, label_y + m.label.y + support_gap);
     }
+    dc.SetFont(text_ctrl->GetFont());
+    dc.SetTextForeground(label_color.colorForStates(states));
+    if (!m_prefix.empty())
+        dc.DrawText(m_prefix, layout.prefix_x, (size.y - m.prefix.y) / 2);
+    if (!m_unit.empty())
+        dc.DrawText(m_unit, layout.unit_x, (size.y - m.unit.y) / 2);
 }
 
 void TextInput::messureSize()
 {
-    wxSize size = GetSize();
-    wxClientDC dc(this);
-    labelSize = dc.GetTextExtent(wxWindow::GetLabel());
-    wxSize textSize = text_ctrl->GetSize();
-
-    if (!static_tips.empty()) {
-        static_tips_size = dc.GetTextExtent(static_tips);
-        textSize.x = std::max(labelSize.GetWidth(), static_tips_size.GetWidth());
-        textSize.y += static_tips_size.y;
-        textSize.y += 8;
-    }
-
-    int h = textSize.y + 8;
-    if (size.y < h) {
-        size.y = h;
-    }
-
-    wxSize minSize = size;
-    minSize.x = GetMinWidth();
-    // The label is drawn after the entry (the unit in "0.1 mm/mm") and DoSetSize() takes its
-    // width out of the entry. A field created at a fixed width with a wide unit left the number
-    // a sliver: the retraction step drew "0.1" in 22 px and cut anything longer. Keep room for
-    // a short number beside the label, whatever width the caller asked for.
-    if (text_ctrl && labelSize.x > 0 && static_tips.empty()) {
-        int needed = 5 + labelSize.x + 10 + text_ctrl->GetTextExtent(wxS("0.000")).x + FromDIP(6);
-        if (this->icon.bmp().IsOk())
-            needed += this->icon.GetBmpSize().x;
-        if (this->icon_1.bmp().IsOk())
-            needed += this->icon_1.GetBmpSize().x;
-        if (!m_prefix.IsEmpty())
-            needed += dc.GetTextExtent(m_prefix).x + 8;
-        if (!m_unit.IsEmpty())
-            needed += dc.GetTextExtent(m_unit).x + 5 + 10;
-        minSize.x = std::max(minSize.x, needed);
-        size.x = std::max(size.x, needed);
-    }
-    /*if (!m_unit.IsEmpty()) {
-        wxClientDC dc(this);
-        wxSize     unitSize = dc.GetTextExtent(m_unit);
-        minSize.x += unitSize.x + 20;
-    }*/
-    SetMinSize(minSize);
-    SetSize(size);
+    if (!text_ctrl) return;
+    const auto m = measureContent();
+    labelSize = m.label;
+    static_tips_size = m.support;
+    const auto layout = atlasFieldLayout(GetSize().x, m.padding, m.gap, m.icons,
+        std::max(m.label.x, m.support.x), m.prefix.x, m.unit.x, m.entry.x,
+        m.editable, !m.editable || (GetWindowStyle() & wxALIGN_RIGHT));
+    const int label_height = m.label.y + (static_tips.empty() ? 0 : m.support.y + FromDIP(4));
+    const int content_height = std::max(m.editable ? m.entry.y : 0, label_height);
+    int icon_height = 0;
+    if (icon.bmp().IsOk()) icon_height = icon.GetBmpSize().y;
+    if (icon_1.bmp().IsOk()) icon_height = std::max(icon_height, icon_1.GetBmpSize().y);
+    const int minimum_height = std::max(FromDIP(MD3::Metrics::active().row_height),
+        std::max(content_height, icon_height) + 2 * m.padding);
+    const wxSize minimum(std::max(GetMinWidth(), layout.minimum_width), minimum_height);
+    SetMinSize(minimum);
+    const wxSize current = GetSize();
+    SetSize(std::max(current.x, minimum.x), std::max(current.y, minimum.y));
+    // SetSize can be a no-op after a label, prefix or icon change. Reposition the
+    // native entry even when the outside size stays identical.
+    DoSetSize(wxDefaultCoord, wxDefaultCoord, GetSize().x, GetSize().y, wxSIZE_AUTO);
 }
 
 bool TextInput::CheckValid(bool pop_dlg) const
@@ -491,6 +403,7 @@ bool TextInput::CheckValid(bool pop_dlg) const
         if (!error_msg.IsEmpty())
         {
             text_ctrl->SetBackgroundColour(StateColor::semantic(MD3::Role::ErrorContainer));
+            text_ctrl->SetForegroundColour(StateColor::semantic(MD3::Role::OnErrorContainer));
             text_ctrl->SetToolTip(error_msg);
             text_ctrl->Refresh();
 
@@ -504,10 +417,9 @@ bool TextInput::CheckValid(bool pop_dlg) const
         }
     }
 
-    // Reset-on-valid restores the field's fill ROLE (SurfaceContainerHighest),
-    // not a raw White literal, so the interior matches the MD3 filled field in
-    // both light and dark themes.
-    text_ctrl->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerHighest));
+    // Restore the caller's current state palette after validation succeeds.
+    text_ctrl->SetBackgroundColour(background_color.colorForStates(state_handler.states()));
+    text_ctrl->SetForegroundColour(text_color.colorForStates(state_handler.states()));
     text_ctrl->SetToolTip(wxEmptyString);
     text_ctrl->Refresh();
     return true;

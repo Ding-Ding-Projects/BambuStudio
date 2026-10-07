@@ -7,12 +7,12 @@
 
 // Interactive-card hover animation: step the resting -> hover border promotion
 // toward its target every HOVER_TICK_MS so the OutlineVariant -> Primary swap
-// eases over HOVER_ANIM_MS (~0.15s, matching the kit Card transition). Once the
+// eases over the shared 100-ms feedback duration. Once the
 // promotion is fully in, the timer drops to a cheap HOVER_WATCH_MS poll that
 // notices the pointer leaving via a child window (which does not re-fire
 // LEAVE on the parent card) so the border can never stick promoted.
 static const int HOVER_TICK_MS  = 15;
-static const int HOVER_ANIM_MS  = 150;
+static const int HOVER_ANIM_MS  = MD3::Motion::short2;
 static const int HOVER_WATCH_MS = 100;
 
 BEGIN_EVENT_TABLE(StaticBox, wxWindow)
@@ -31,7 +31,7 @@ END_EVENT_TABLE()
 
 StaticBox::StaticBox()
     : state_handler(this)
-    , radius(MD3::Metrics::compact.radius)
+    , radius(MD3::Metrics::active().radius)
 {
     // MD3 default card border: Outline at rest, the dimmer OutlineVariant when
     // disabled (replacing the legacy Grey400/Grey300 literals). Both are stored
@@ -422,7 +422,9 @@ void StaticBox::doRender(wxDC& dc)
                 dc.DrawRectangle(rc);
             }
             else {
-                dc.DrawRoundedRectangle(rc, radius - border_width);
+                const double painted_radius = std::clamp(radius - border_width, 0.0,
+                    std::max(0.0, std::min(rc.width, rc.height) / 2.0));
+                dc.DrawRoundedRectangle(rc, painted_radius);
             }
         }
     }

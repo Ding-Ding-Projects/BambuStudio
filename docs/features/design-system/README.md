@@ -40,6 +40,49 @@ Design 3 design system.
   the web pages' notice bar and the Workspace panel's tabs, tables, checklist and calendar, the one
   Material style every table takes, and the kit scrollbar in every scrolled page, panel, list and table.
 
+## Studio Atlas implementation receipts
+
+These articles record bounded source changes and their verification limits. They do not establish complete native rendering or application-wide redesign acceptance.
+
+The incorporated source inventory is pinned to `4147ca9eeb0004f7e18b4a2f5a8c6cb190975d21`.
+Calibration viewport, shell/tab and native-workflow navigation documentation all have separate
+Cantonese companions. Connection/send
+continuations and their disclosure/caption repairs are now incorporated as source-only work.
+
+- [Shared controls](studio-atlas-shared-controls.md): button, card, search and menu anatomy with caller gaps.
+- [Fields and presets](studio-atlas-fields-and-presets.md): measured field geometry, validation colors and preset controls.
+- [Prepare inspector and lists](prepare-inspector-atlas.md): native inspector rows, sections and selection surfaces.
+- [Renderer surfaces](renderer-atlas.md): toolbars, tooltips, timeline and Preview legend painting.
+- [Native monitor](monitor-atlas.md): telemetry hierarchy, printer selection, camera footer and DPI corrections.
+- [Device popups](device-popups-atlas.md): camera, fan, mapping, material and AMS setting surfaces.
+- [Project, preferences and setup](native-preferences-setup-atlas.md): native page composition, card lifecycle and nested search.
+- [Workspace](workspace-atlas.md): the five existing subviews and content-triggered reflow.
+- [Setup index](setup-index-atlas.md): wizard step painting with preserved routing.
+- [Calibration child pages](calibration-children-atlas.md): step, preset, active and result surfaces.
+- [Readers and overlays](overlays-atlas.md): eight auxiliary native surfaces and explicit nested boundaries.
+- [Live notifications](live-notifications-atlas.md): renderer-owned notification cards and preserved action targets.
+- [Embedded palette](embedded-studio-atlas.md): product-owned stylesheet colors, focus and reduced-motion rules.
+- [Embedded composition](embedded-composition-atlas.md): nine entrypoints, fourteen imports and source verification limits.
+- [Workflow navigation and palette](native-workflow-navigation.md): stable page identities, visual projection and independent palette reversal.
+- [Shell and tabs](studio-atlas-shell-and-tabs.md): measured allocation, visible-neighbor drag identities and focus/accessibility repairs.
+- [Numeric and selection controls](studio-atlas-selection-controls.md): numeric allocation lifecycle, checkbox glyphs and switch segments.
+- [Calibration viewport and presets](calibration-viewport-layout.md): measured instruction/advice text, complete preset rows and intrinsic scroll extents; a separate Cantonese companion is available.
+- [Confirmations and message dialogs](confirmations-atlas.md): scrolling details, persistent authorization controls and cancel-only insufficient-space behavior.
+- [Humidity details](humidity-details-atlas.md): measured legend/value rows and final popup placement repair.
+- [Transform inspector](transform-inspector-atlas.md): field state paint and hierarchy with unchanged input and item geometry.
+- [Appearance property pages](appearance-property-pages-atlas.md): stacked property/reset groups and same-size preset-content reflow.
+- [Print preparation](../workspace/print-preparation.md): real Print workspace and existing action continuations.
+- [Print setup](../workspace/print-setup-atlas.md): destination/mapping review composition and reopening bounds.
+- [Device-name editor](../workspace/device-name-editor-atlas.md): measured validation, action hierarchy and wrapping-before-fit correction.
+- [Common floating inspector framing](gizmo-inspector-framing-atlas.md): shared plate/heading paint across twelve existing tool callers.
+- [Regex diagnostics and export details](reader-details-atlas.md): diagnostic content reflow and measured export disclosure rows.
+- [Shared list rows](studio-atlas-listbox.md): measured row geometry, focus and interrupted-hover invalidation.
+- [AMS drying](ams-drying-atlas.md): status/settings composition and reachable error disclosure attachment.
+- [Nozzle rack and hotend details](nozzle-rack-atlas.md): rack/selection cards and measured update rows.
+- [Print and connection continuations](../workspace/print-continuations-atlas.md): readable disclosure, connection form and send-failure caption fitting; fixture-only address correction remains separate from behavior.
+- [Workflow and bulk scrollbar owners](atlas-scroll-owner-adoption.md): existing kit scroll/table owners adopted without changing caller models or callbacks.
+- [Native language modes and catalogs](../windows/language-modes.md): existing English/Cantonese catalog coverage, with localization delivery separate from rendered text-fit acceptance.
+
 ## Design source
 
 The canonical in-repo design source is [`ui-md3/design-system/`](../../../ui-md3/design-system/).

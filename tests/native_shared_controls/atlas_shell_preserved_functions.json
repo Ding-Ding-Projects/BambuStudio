@@ -1,0 +1,226 @@
+{
+  "baseline": "b88acafa95b88884b4e284a0de15d77f7934cfcb",
+  "functions": [
+    {
+      "file": "src/slic3r/GUI/MainFrame.cpp",
+      "name": "void MainFrame::update_layout(",
+      "sha256": "51d42cfdcfb3dcda84ee14c41ccfd327c495066c722bc84e214c3224f98aa398"
+    },
+    {
+      "file": "src/slic3r/GUI/MainFrame.cpp",
+      "name": "void MainFrame::init_tabpanel(",
+      "sha256": "5b17b58e5614381e5cf06df66d9f176f62381da74404aba9140408f3a134b644",
+      "end": "void MainFrame::show_device("
+    },
+    {
+      "file": "src/slic3r/GUI/MainFrame.cpp",
+      "name": "void MainFrame::show_print_preparation(",
+      "sha256": "a0f63f7f05066fa8136f13529858c7d3cf8a0cf442a828f76d5c4ec363635041"
+    },
+    {
+      "file": "src/slic3r/GUI/MainFrame.cpp",
+      "name": "bool MainFrame::save_active_tab_snapshot_if_dirty(",
+      "sha256": "14e89f34e148d0bba10b104b658592be6b72193b9e9619298b8d1d0f6755a9f4"
+    },
+    {
+      "file": "src/slic3r/GUI/MainFrame.cpp",
+      "name": "void MainFrame::switch_project_tab(",
+      "sha256": "b4ca0154b162f7278f9c98a20c3cc996f98795cbfcc53ec2d9a200531e2efe57"
+    },
+    {
+      "file": "src/slic3r/GUI/MainFrame.cpp",
+      "name": "void MainFrame::close_project_tab(",
+      "sha256": "baa5f32f819fee3fce82de10bae8a7ef4783f706635763179987d7d2543e3879"
+    },
+    {
+      "file": "src/slic3r/GUI/MainFrame.cpp",
+      "name": "void MainFrame::new_project_tab(",
+      "sha256": "229aef6a6a1a499aab54544815664566c231d2bb6ca697bc3ea08bcc0e5db656"
+    },
+    {
+      "file": "src/slic3r/GUI/BBLTopbar.cpp",
+      "name": "enum CUSTOM_ID",
+      "sha256": "861c2485decb35f5cad98a734847a87f63a4207f2ba4cc87c3273e6e92b8c58b"
+    },
+    {
+      "file": "src/slic3r/GUI/BBLTopbar.cpp",
+      "name": "void BBLTopbar::OnIconize(",
+      "sha256": "5c68efef2af98d6ecb08a6a416724650cc247b7b1461176a2f970d6427d677bf"
+    },
+    {
+      "file": "src/slic3r/GUI/BBLTopbar.cpp",
+      "name": "void BBLTopbar::OnFullScreen(",
+      "sha256": "8a926ed266f4b386d2bb4b69eb34582a6a1cc9418bac92b1b26aad696369312c"
+    },
+    {
+      "file": "src/slic3r/GUI/BBLTopbar.cpp",
+      "name": "void BBLTopbar::OnCloseFrame(",
+      "sha256": "e91c5f2628bcfc10edc7b4bde304ae48c07a0767a919ca4444b270b41cd6bf83"
+    },
+    {
+      "file": "src/slic3r/GUI/BBLTopbar.cpp",
+      "name": "void BBLTopbar::OnMouseLeftDClock(",
+      "sha256": "a789411ee45aa86b33792f4adf385ecfd8fdb8bf824a650f97c7fded81a39070"
+    },
+    {
+      "file": "src/slic3r/GUI/BBLTopbar.cpp",
+      "name": "void BBLTopbar::OnMouseLeftDown(",
+      "sha256": "f46bd47f9a5e81d80e5573ab8d7e39642fa87a58eb1f8ec14037a68176eba022"
+    },
+    {
+      "file": "src/slic3r/GUI/BBLTopbar.cpp",
+      "name": "void BBLTopbar::OnMouseLeftUp(",
+      "sha256": "fedfba9b90daa30dabe593c6f685c531f472843bdaa3e4c403e2a6cd3ab629b5"
+    },
+    {
+      "file": "src/slic3r/GUI/BBLTopbar.cpp",
+      "name": "void BBLTopbar::OnMouseMotion(",
+      "sha256": "ee22b041bb60a9cb2050e0119167386299bebe91829e70980a1d4da49918be27"
+    },
+    {
+      "file": "src/slic3r/GUI/BBLTopbar.cpp",
+      "name": "void BBLTopbar::OnMouseCaptureLost(",
+      "sha256": "19a92270304e827658f33425d2bb2ed2053cda3f66ae7eb9884ee370e063daaf"
+    },
+    {
+      "file": "src/slic3r/GUI/BBLTopbar.cpp",
+      "name": "void BBLTopbar::OnTopMenuToolItem(",
+      "sha256": "e4b47fad4a592e1720861699138236a831ca8851f8127e97ef63e07f73b9e509"
+    },
+    {
+      "file": "src/slic3r/GUI/BBLTopbar.cpp",
+      "name": "void BBLTopbar::OnCalibToolItem(",
+      "sha256": "301e96ba9e3f919bc3c761616f37f7c1e183a9ff9d2b2ef7abbafd9564b681d5"
+    },
+    {
+      "file": "src/slic3r/GUI/BBLTopbar.cpp",
+      "name": "void BBLTopbar::OnHistoryChip(",
+      "sha256": "0dcdb95e7a976dbb376c1336e440afcb44e25418510121555b26b866277307b4"
+    },
+    {
+      "file": "src/slic3r/GUI/BBLTopbar.cpp",
+      "name": "void BBLTopbar::OnNotificationBell(",
+      "sha256": "1e465cde2d20fbc8e42a4ca33cc2293af58c5dad5ea2160caf98a7fc55afbcc6"
+    },
+    {
+      "file": "src/slic3r/GUI/BBLTopbar.cpp",
+      "name": "void BBLTopbar::OnAppearanceButton(",
+      "sha256": "cb27e49f50d164920b2d0b819df1f304978d6e37dd3f69d18c2abf5e659971c4"
+    },
+    {
+      "file": "src/slic3r/GUI/Widgets/TabStrip.cpp",
+      "name": "enum MenuId",
+      "sha256": "75c7283d65a77765e1d32facc01854eb406ad896365ada1e551cbf17b0a63cd6"
+    },
+    {
+      "file": "src/slic3r/GUI/Widgets/TabStrip.cpp",
+      "name": "void TabStrip::Activate(",
+      "sha256": "7468efa0339f7a2738be9e41fab2bd78e27c1f4216dffb14558c7d06abe4de5a"
+    },
+    {
+      "file": "src/slic3r/GUI/Widgets/TabStrip.cpp",
+      "name": "void TabStrip::SetPinned(",
+      "sha256": "f4c3cbe30eec34f92acd0f48d35ea62ee78ce7298a9aa5a5802928206214e21f"
+    },
+    {
+      "file": "src/slic3r/GUI/Widgets/TabStrip.cpp",
+      "name": "void TabStrip::SetHidden(",
+      "sha256": "05b0678a7c94abbfcb2fbb32a7c80d0c0ffedefd60d4c1bae6a6dc4e64599800"
+    },
+    {
+      "file": "src/slic3r/GUI/Widgets/TabStrip.cpp",
+      "name": "void TabStrip::MoveTab(",
+      "sha256": "63564aa814ecb250159ee0990c614e611ff4171e6f3a4e653bd80af3fe2570ec"
+    },
+    {
+      "file": "src/slic3r/GUI/Widgets/TabStrip.cpp",
+      "name": "void TabStrip::SetGroupColor(",
+      "sha256": "0775c6dfe0415486ba2944d072d62f7058a73b35570605a42f7f5aa57503dc95"
+    },
+    {
+      "file": "src/slic3r/GUI/Widgets/TabStrip.cpp",
+      "name": "void TabStrip::SetGroupCollapsed(",
+      "sha256": "ac17b085996de590fbd1112fb36f06bce9cfcdc68ea78d6d216153e6ff330421"
+    },
+    {
+      "file": "src/slic3r/GUI/Widgets/TabStrip.cpp",
+      "name": "void TabStrip::RemoveGroup(",
+      "sha256": "dbcee0490ab233515d933ee65a83e46482503737343c56c27a66402eed0560f5"
+    },
+    {
+      "file": "src/slic3r/GUI/Widgets/TabStrip.cpp",
+      "name": "void TabStrip::LoadLayout(",
+      "sha256": "e96c2b668140b3ddf2cf1f5392d0e370522ad010f4f672afb9b462b298d83808"
+    },
+    {
+      "file": "src/slic3r/GUI/Widgets/TabStrip.cpp",
+      "name": "void TabStrip::SaveLayout(",
+      "sha256": "23941cde578f841bfae75e35dcd7b3d17a901233dc832d6f70d7c43e1c7e7c03"
+    },
+    {
+      "file": "src/slic3r/GUI/Widgets/TabStrip.cpp",
+      "name": "void TabStrip::RequestActivate(",
+      "sha256": "9380cce002b34f04413216fcb204a2b354ba06348a798a219cdc0a271f77af08"
+    },
+    {
+      "file": "src/slic3r/GUI/Widgets/TabStrip.cpp",
+      "name": "void TabStrip::OnTabCloseClicked(",
+      "sha256": "49132c28d301c1cc1ccbb5ce140d32c80fabdeb10252224303c008090ac53d4f"
+    },
+    {
+      "file": "src/slic3r/GUI/Widgets/TabStrip.cpp",
+      "name": "void TabStrip::ShowStripMenu(",
+      "sha256": "9d66b8ffc5d56845abddc2f78cb20f37644f0d784bbb49085642b44e8d9a0789"
+    },
+    {
+      "file": "src/slic3r/GUI/Widgets/TabStripDialogs.cpp",
+      "name": "MD3::Tabs::Matcher MatcherForField(",
+      "sha256": "b2a8476f694a366e8f1694a722200a55896b648ab1148b64db1f882e27ec2fc2"
+    },
+    {
+      "file": "src/slic3r/GUI/Widgets/TabStripDialogs.cpp",
+      "name": "void wire_search_to_list(",
+      "sha256": "a51da9de1fec0c952459c33c82918597ebb0cecfdda7f8e487ea5383e12f4503"
+    },
+    {
+      "file": "src/slic3r/GUI/Widgets/TabStripDialogs.cpp",
+      "name": "void MoveToGroupDialog::Accept(",
+      "sha256": "e50309ea8a8dcd1b1c3e9498747c045e8554f799988b3712d9d81911122e2d9c"
+    },
+    {
+      "file": "src/slic3r/GUI/Widgets/TabStripDialogs.cpp",
+      "name": "void MoveToGroupDialog::Refilter(",
+      "sha256": "b4d706b90c0da432c081b91c8023d6622e06b3b66c8e361fdfe9bd620f83ee4a"
+    },
+    {
+      "file": "src/slic3r/GUI/Widgets/TabStripDialogs.cpp",
+      "name": "void TabSearchDialog::Refilter(",
+      "sha256": "47025f4737811476132082041dcdf898ac242aaecdeb680c02d41e0826b4f84e"
+    },
+    {
+      "file": "src/slic3r/GUI/Widgets/TabStripDialogs.cpp",
+      "name": "void TabSearchDialog::Accept(",
+      "sha256": "c4349b35b8be7215e145997948c4d1397d10b71056229f2480381276c5926d32"
+    },
+    {
+      "file": "src/slic3r/GUI/Tabbook.cpp",
+      "name": "void TabButtonsListCtrl::RemovePage(",
+      "sha256": "d68c0c1266d8333b563d4043b0f2296defae556b28a87816cef5a5f7dda52780"
+    },
+    {
+      "file": "src/slic3r/GUI/Tabbook.cpp",
+      "name": "bool TabButtonsListCtrl::SetPageImage(",
+      "sha256": "325b11f6809f51cac1daae92b031d1d7d88dcb4adfb5089b7119b3898905b345"
+    }
+  ],
+  "intentionalChanges": [
+    {
+      "name": "void TabStrip::OnTabDragEnd(",
+      "reason": "Overflow drag uses visible neighbor identities. Covered by atlas_tab_drag_tests.cpp and the source projection checks."
+    },
+    {
+      "name": "void TabStrip::OnKeyDown(",
+      "reason": "Roving navigation and activation follow visible tabs plus the native overflow button. Covered by atlas_tab_focus_tests.cpp and native focus/accessibility source checks."
+    }
+  ]
+}

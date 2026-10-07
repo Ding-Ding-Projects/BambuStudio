@@ -609,8 +609,11 @@ void FanOperate::doRender(wxDC& dc)
     dc.SetPen(wxPen(HasFocus() ? StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Device)
                                : DRAW_OPERATE_LINE_COLOUR,
                     HasFocus() ? std::max(FromDIP(2), 1) : 1));
-    dc.SetBrush(*wxTRANSPARENT_BRUSH);
-    dc.DrawRoundedRectangle(0, 0, size.x, size.y, FromDIP(MD3::Metrics::radius_tiny));
+    dc.SetBrush(wxBrush(StateColor::semantic(MD3::Role::SurfaceContainerLow)));
+    // Keep the entire focus stroke inside the existing input target.
+    const int inset = std::max(FromDIP(2), 1);
+    dc.DrawRoundedRectangle(inset, inset, std::max(0, size.x - 2 * inset),
+                            std::max(0, size.y - 2 * inset), FromDIP(MD3::Metrics::active().small_radius));
 
     //splt
     auto left_fir = size.x / 3;
@@ -623,7 +626,7 @@ void FanOperate::doRender(wxDC& dc)
     dc.DrawLine(size.x - m_bitmap_add.GetBmpWidth(), 0, size.x - m_bitmap_add.GetBmpWidth(), size.y);
 
     //txt
-    dc.SetFont(::Label::Body_12);
+    dc.SetFont(::Label::Mono_13);
     dc.SetTextForeground(StateColor::semantic(MD3::Role::OnSurface));
     wxString text = wxString::Format("%d%%", m_current_speeds * 10);
     wxSize text_size = dc.GetTextExtent(text);
@@ -654,10 +657,10 @@ FanControlNew::FanControlNew(wxWindow *parent, const AirDuctData &fan_data, int 
     SetMinSize(wxSize(FromDIP(196), FromDIP(80)));
     m_bitmap_fan = new ScalableBitmap(this, MaterialIcon::bitmap(this, MaterialIcon::ModeFan, 20, StateColor::semantic(MD3::Role::OnSurfaceVariant)));
 
-    // Cards read as raised blocks on the popup's SurfaceContainer body. Set the
+    // Cards read as quiet blocks on the popup's SurfaceContainer body. Set the
     // surface before any child is built: the drawn Switch and the stepper both
     // sample their parent's background when they first render.
-    const wxColour card_bg = StateColor::semantic(MD3::Role::SurfaceContainerHighest);
+    const wxColour card_bg = StateColor::semantic(MD3::Role::SurfaceContainerLowest);
     SetBackgroundColour(card_bg);
 
     wxBoxSizer* m_sizer_main = new wxBoxSizer(wxHORIZONTAL);
@@ -977,7 +980,7 @@ FanControlPopupNew::FanControlPopupNew(wxWindow* parent, MachineObject* obj, con
     m_mode_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
 
     m_sub_mode_panel = new wxPanel(this, wxID_ANY);
-    m_sub_mode_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerHighest));
+    m_sub_mode_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_sub_mode_sizer = new wxBoxSizer(wxVERTICAL);
     m_sub_mode_panel->SetSizer(m_sub_mode_sizer);
 
@@ -1441,7 +1444,7 @@ FanControlNewSwitchPanel::FanControlNewSwitchPanel(wxWindow* parent, const wxStr
     // first: Label and the drawn Switch both read their parent's background when
     // they are constructed, so setting it last (as this ctor used to) left them
     // seeded from the system button face.
-    const wxColour panel_bg = StateColor::semantic(MD3::Role::SurfaceContainerHighest);
+    const wxColour panel_bg = StateColor::semantic(MD3::Role::SurfaceContainerLowest);
     SetBackgroundColour(panel_bg);
 
     Label* label = new Label(this);

@@ -64,7 +64,7 @@
     align-items: center;
     padding: 10px 12px;
     cursor: pointer;
-    border-bottom: 1px solid #F5F5F5;
+    border-bottom: 1px solid #dfe7f1;
     gap: 10px;
     font-size: 13px;
     color: var(--color-text-main);
@@ -76,7 +76,7 @@
 
 .list-row .row-name { flex: 1; }
 .list-row .row-arrow {
-    color: #CECECE;
+    color: #c4d0df;
     font-size: 16px;
 }
 
@@ -84,7 +84,7 @@
 .row-checkbox {
     width: 16px;
     height: 16px;
-    border: 1px solid #CECECE;
+    border: 1px solid #c4d0df;
     border-radius: 3px;
     display: flex;
     align-items: center;
@@ -145,9 +145,9 @@
 
 /* Disabled next button */
 #btn-next:disabled {
-    background: #CECECE;
+    background: #c4d0df;
     cursor: not-allowed;
 }
 #btn-next:disabled:hover {
-    background: #CECECE;
+    background: #c4d0df;
 }

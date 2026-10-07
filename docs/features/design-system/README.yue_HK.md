@@ -1,6 +1,6 @@
 ---
 translation-of: README.md
-source-sha256: ded90ec2a47d7e3ca77768be94416eee0f82a3e4cb2fd8d724be198d49114296
+source-sha256: 55deec9a01ee953e42464d96cbc2d5c179ea3b5f6a03d182306864f50c621993
 review-status: agent-drafted
 ---
 
@@ -9,6 +9,8 @@ review-status: agent-drafted
 # 設計系統
 
 呢個分類記錄原生 wxWidgets/OpenGL 應用程式點樣使用內置嘅 Material Design 3 設計系統。
+
+- [目前原生介面審查](native-interface-audit-2026-10-02.md)：目前選單、動態、個人詞彙及切片操作要求，列明待完成嘅託管驗證同私隱邊界。
 
 - [內置嘅 Material Design 3 設計系統](md3-design-system.md)：設計令牌嘅唯一來源、由零開始遷移嘅顏色、字型同尺寸、
   情境配色、字體、出錯情況，同對照審計嘅結果。
@@ -32,6 +34,48 @@ review-status: agent-drafted
 - [工具提示](tooltips.md)：每個工具提示都係 Material 純文字工具提示，兩種主題都係，同點樣檢查發佈套件有冇系統工具提示。
 - [對話框同揀選器](dialogs-and-pickers.md)：取代 wxWidgets 內置提示、揀選器、忙碌通知同顏色對話框嘅 Material 對話框、最近使用嘅顏色，同邊啲保留原生。
 - [套件上嘅原生控件](native-controls.md)：停用咗嘅掣嘅提示、網頁嘅通知橫額，同工作區面板嘅分頁、表格、待辦清單同日曆嘅套件替代品、所有表格共用嘅 Material 樣式，同埋每個會捲動嘅頁面、面板、清單同表格嘅套件捲動列。
+
+## Studio Atlas 實作記錄
+
+以下文章記錄限定範圍嘅來源改動及驗證限制，唔代表原生畫面或整個應用程式重設計已驗收。
+
+已納入嘅來源清單固定於 `4147ca9eeb0004f7e18b4a2f5a8c6cb190975d21`。
+校準視窗、外框分頁同工作流程導覽都有獨立粵語版本。
+連線及傳送延續單元連同資訊可讀性及標題尺寸修正，現已納入原始碼，唔代表執行畫面已驗證。
+
+- [共用控件](studio-atlas-shared-controls.yue_HK.md)：按鈕、卡片、搜尋、選單結構同呼叫者缺口。
+- [欄位同預設](studio-atlas-fields-and-presets.yue_HK.md)：量度幾何、驗證顏色及預設控制。
+- [Prepare 檢查器同清單](prepare-inspector-atlas.yue_HK.md)：原生檢查列、章節及選取表面。
+- [渲染器畫面](renderer-atlas.yue_HK.md)：工具列、提示、時間軸及 Preview 圖例繪畫。
+- [原生監察](monitor-atlas.yue_HK.md)：遙測層次、打印機選取、相機頁尾及 DPI 修正。
+- [裝置彈出介面](device-popups-atlas.yue_HK.md)：相機、風扇、映射、材料及 AMS 設定。
+- [項目、偏好設定同設定流程](native-preferences-setup-atlas.yue_HK.md)：原生頁面、卡片生命週期及巢狀搜尋。
+- [工作區](workspace-atlas.yue_HK.md)：原有五頁同內容觸發重新排版。
+- [設定索引](setup-index-atlas.yue_HK.md)：保留路由嘅精靈流程繪畫。
+- [校準子頁面](calibration-children-atlas.yue_HK.md)：步驟、預設、進行中及結果頁。
+- [閱讀器同覆蓋介面](overlays-atlas.yue_HK.md)：八個輔助原生介面同明確子頁面邊界。
+- [即時通知](live-notifications-atlas.yue_HK.md)：渲染器通知卡同原操作目標。
+- [內嵌配色](embedded-studio-atlas.yue_HK.md)：產品樣式顏色、焦點及減少動態規則。
+- [內嵌頁面組合](embedded-composition-atlas.yue_HK.md)：九個入口、十四個匯入及來源驗證限制。
+- [工作流程導覽同配色](native-workflow-navigation.yue_HK.md)：固定頁面識別、視覺投影及獨立配色撤回範圍。
+- [外框同分頁](studio-atlas-shell-and-tabs.yue_HK.md)：量度配置、可見鄰近分頁拖放識別及焦點輔助功能修正。
+- [數值及選擇控制項](studio-atlas-selection-controls.yue_HK.md)：數值配置生命週期、核取圖形及切換分段。
+- [校準視窗同預設](calibration-viewport-layout.yue_HK.md)：說明提示量度、完整預設列及原有捲動範圍。
+- [確認同訊息對話框](confirmations-atlas.yue_HK.md)：捲動詳情、固定授權控制項及空間不足時只可取消嘅行為。
+- [濕度詳情](humidity-details-atlas.yue_HK.md)：量度圖例及數值列，連同最終彈出位置修正。
+- [變形檢查器](transform-inspector-atlas.yue_HK.md)：欄位狀態繪畫同層次，保留輸入及項目幾何。
+- [外觀屬性頁](appearance-property-pages-atlas.yue_HK.md)：屬性及重設組別，同尺寸下預設內容重排。
+- [打印準備](../workspace/print-preparation.yue_HK.md)：實際 Print 工作區同原有操作延續流程。
+- [打印設定](../workspace/print-setup-atlas.yue_HK.md)：目的地及映射檢視版面，同重新開啟時嘅範圍修正。
+- [裝置名稱編輯器](../workspace/device-name-editor-atlas.yue_HK.md)：量度驗證訊息、操作層次及先換行後調整大小嘅修正。
+- [共用浮動檢查器外框](gizmo-inspector-framing-atlas.yue_HK.md)：十二個原有工具共用底板及標題繪畫。
+- [正則診斷同匯出詳情](reader-details-atlas.yue_HK.md)：診斷內容重排及量度匯出資訊列。
+- [共用清單列](studio-atlas-listbox.yue_HK.md)：量度列幾何、焦點及中斷懸停時重新繪畫舊列。
+- [AMS 乾燥](ams-drying-atlas.yue_HK.md)：狀態設定版面及錯誤說明接駁到可見容器。
+- [噴嘴架同熱端詳情](nozzle-rack-atlas.yue_HK.md)：噴嘴架選取卡片及量度更新資料列。
+- [打印及連線延續流程](../workspace/print-continuations-atlas.yue_HK.md)：可讀說明、連線表單及傳送失敗標題尺寸；測試地址修正獨立記錄，唔當成行為改動。
+- [工作流程及批次捲軸擁有者](atlas-scroll-owner-adoption.yue_HK.md)：採用現有套件捲動及表格擁有者，保留呼叫端模型同回呼。
+- [原生語言模式及目錄](../windows/language-modes.yue_HK.md)：原有英文粵語目錄覆蓋，本地化交付同實際文字排版驗收分開。
 
 ## 設計來源
 

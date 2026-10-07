@@ -1,3 +1,4 @@
+#include "PrepareInspectorLayout.hpp"
 ///////////////////////////////////////////////////////////////////////////
 // C++ code generated with wxFormBuilder (version 3.10.0-4761b0c)
 // http://www.wxformbuilder.org/
@@ -295,7 +296,7 @@ ParamsPanel::ParamsPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, c
         //int width, height;
         // BBS: new layout
         m_mode_region = new SwitchButton(m_top_panel);
-        m_mode_region->SetMaxSize({em_unit(this) * 12, -1});
+        m_mode_region->SetMaxSize(wxDefaultSize);
         // SetLabels -> SwitchButton::Rescale also installs the rendered track as
         // the control's MIN size, so the header sizer always reserves room for
         // the longest localized label pair (no more mid-clipped "bal Obj").
@@ -409,42 +410,28 @@ void ParamsPanel::create_layout()
 
     m_left_sizer = new wxBoxSizer( wxVERTICAL );
     // BBS: new layout
-    m_left_sizer->SetMinSize( wxSize(40 * em_unit(this), -1 ) );
+    m_left_sizer->SetMinSize(wxDefaultSize);
 
     if (m_top_panel) {
-        m_mode_sizer = new wxBoxSizer( wxHORIZONTAL );
-        m_mode_sizer->AddSpacer(FromDIP(10));
-        m_mode_sizer->Add(m_process_icon, 0, wxALIGN_CENTER);
-        m_mode_sizer->AddSpacer(FromDIP(10));
-        // The title is a fixed item and the header carries exactly ONE stretch
-        // spacer. wxBoxSizer::CalcMin scales the largest proportional item's
-        // minimum by the TOTAL proportion, so the former layout (title at
-        // proportion 1 with a FromDIP(56) minimum beside stretch spacers of
-        // 2, 1 and 12) reported a minimum width of 56 x 16 + the fixed items,
-        // 1271 px at 100%. The sidebar scroller honours the content minimum as
-        // its virtual width, so every sidebar row was laid out 1271 px wide and
-        // cut at the sidebar edge behind a horizontal scrollbar (CJ-012).
+        // Keep context and scope in separate rows. No label is proportional:
+        // one stretch spacer leaves the title's measured width intact.
+        m_header_sizer = new wxBoxSizer(wxVERTICAL);
+        m_mode_sizer = new wxBoxSizer(wxHORIZONTAL);
+        m_scope_sizer = new wxBoxSizer(wxHORIZONTAL);
+        m_mode_sizer->Add(m_process_icon, 0, wxALIGN_CENTER | wxRIGHT);
         m_mode_sizer->Add( m_title_label, 0, wxALIGN_CENTER );
-        m_mode_sizer->AddSpacer(FromDIP(8));
-        m_mode_sizer->Add(m_mode_region, 0, wxALIGN_CENTER);
-        m_mode_sizer->AddSpacer(FromDIP(4));
-        m_mode_sizer->Add(m_tips_arrow, 0, wxALIGN_CENTER);
         m_mode_sizer->AddStretchSpacer(1);
-        if (m_title_view) m_mode_sizer->Add( m_title_view, 0, wxALIGN_CENTER );
-        if (m_mode_view) {
-            m_mode_sizer->AddSpacer(FromDIP(2));
-            m_mode_sizer->Add(m_mode_view, 0, wxALIGN_CENTER);
-        }
-        m_mode_sizer->AddSpacer(FromDIP(10));
-        m_mode_sizer->Add(m_setting_btn, 0, wxALIGN_CENTER);
-        m_mode_sizer->AddSpacer(FromDIP(12));
-        m_mode_sizer->Add(m_compare_btn, 0, wxALIGN_CENTER);
-        m_mode_sizer->AddSpacer(FromDIP(16));
-        //m_mode_sizer->Add( m_search_btn, 0, wxALIGN_CENTER );
-        //m_mode_sizer->AddSpacer(16);
-        m_mode_sizer->SetMinSize(-1, FromDIP(30));
-        m_top_panel->SetSizer(m_mode_sizer);
-        //m_left_sizer->Add( m_top_panel, 0, wxEXPAND );
+        m_mode_sizer->Add(m_setting_btn, 0, wxALIGN_CENTER | wxLEFT);
+        m_mode_sizer->Add(m_compare_btn, 0, wxALIGN_CENTER | wxLEFT);
+        m_scope_sizer->Add(m_mode_region, 0, wxALIGN_CENTER);
+        m_scope_sizer->Add(m_tips_arrow, 0, wxALIGN_CENTER | wxLEFT);
+        m_scope_sizer->AddStretchSpacer(1);
+        if (m_title_view) m_scope_sizer->Add(m_title_view, 0, wxALIGN_CENTER);
+        if (m_mode_view) m_scope_sizer->Add(m_mode_view, 0, wxALIGN_CENTER | wxLEFT);
+        m_header_sizer->Add(m_mode_sizer, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP);
+        m_header_sizer->Add(m_scope_sizer, 0, wxEXPAND | wxALL);
+        m_top_panel->SetSizer(m_header_sizer);
+        apply_inspector_layout();
     }
 
     if (m_tab_print) {
@@ -733,6 +720,26 @@ void ParamsPanel::update_mode()
     }
 }
 
+void ParamsPanel::apply_inspector_layout()
+{
+    if (!m_top_panel || !m_header_sizer) return;
+    const auto& metrics = MD3::Metrics::active();
+    m_title_label->SetFont(Label::Head_16);
+    m_top_panel->SetBackgroundColor(MD3::resolve(MD3::Role::SurfaceContainerLow, false));
+    m_top_panel->SetBackgroundColor2(MD3::resolve(MD3::Role::SurfaceContainerLow, false));
+    m_top_panel->SetBorderColor(MD3::resolve(MD3::Role::OutlineVariant, false));
+    m_top_panel->SetDensity(MD3::Metrics::isCompact() ? StaticBox::Density::Compact : StaticBox::Density::Comfortable);
+    for (auto* item : m_header_sizer->GetChildren()) item->SetBorder(FromDIP(metrics.padding));
+    for (auto* row : {m_mode_sizer, m_scope_sizer}) {
+        row->SetMinSize(wxDefaultSize);
+        for (auto* item : row->GetChildren()) item->SetBorder(FromDIP(metrics.gap));
+        const int content_height = row->CalcMin().y;
+        row->SetMinSize(-1, PrepareInspectorLayout::row_height(
+            FromDIP(metrics.row_height), m_title_label->GetBestSize().y, content_height, 0));
+    }
+    m_top_panel->Layout();
+}
+
 void ParamsPanel::msw_rescale()
 {
     // MD3 IconButtons rescale via Button::Rescale(); the raster search/tips arrows still use msw_rescale().
@@ -741,13 +748,12 @@ void ParamsPanel::msw_rescale()
     if (m_search_btn) m_search_btn->msw_rescale();
     if (m_compare_btn) m_compare_btn->Rescale();
     if (m_tips_arrow) m_tips_arrow->msw_rescale();
-    if (m_left_sizer) m_left_sizer->SetMinSize(wxSize(40 * em_unit(this), -1));
-    if (m_mode_sizer)
-        m_mode_sizer->SetMinSize(-1, 3 * em_unit(this));
+    if (m_left_sizer) m_left_sizer->SetMinSize(wxDefaultSize);
     if (m_mode_region)
         ((SwitchButton* )m_mode_region)->Rescale();
     if (m_mode_view)
         ((SwitchButton* )m_mode_view)->Rescale();
+    apply_inspector_layout();
     for (auto tab : {m_tab_print, m_tab_print_plate, m_tab_print_object, m_tab_print_part, m_tab_print_layer, m_tab_filament, m_tab_printer}) {
         if (tab) dynamic_cast<Tab*>(tab)->msw_rescale();
     }
@@ -828,6 +834,8 @@ void ParamsPanel::free_sizers()
     m_left_sizer = nullptr;
     //m_right_sizer = nullptr;
     m_mode_sizer = nullptr;
+    m_scope_sizer = nullptr;
+    m_header_sizer = nullptr;
     //m_print_sizer = nullptr;
     //m_filament_sizer = nullptr;
     //m_printer_sizer = nullptr;

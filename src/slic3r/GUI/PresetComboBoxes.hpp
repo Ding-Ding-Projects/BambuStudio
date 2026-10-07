@@ -106,6 +106,8 @@ public:
     virtual void OnSelect(wxCommandEvent& evt);
 
 protected:
+    void apply_inspector_style();
+    int inspector_row_height() const;
     typedef std::size_t Marker;
     std::function<void(int)>    on_selection_changed { nullptr };
 

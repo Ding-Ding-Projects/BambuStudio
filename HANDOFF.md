@@ -1,5 +1,19 @@
 # Bambu Studio handoff
 
+## Native redesign continuation merged into main, 7 October 2026
+
+The preserved redesign and preparation line `task/upstream-development-20261006` (tip `1fa14f33a025e58f2a82ef4e21d4edeff027c6ea`, 193 commits after merge base `cc059003d362b87d53786152ee8c28621d9c2813`) is now merged into main on top of `2f66e245a116f515ba8022db45a74e7d63bb58a8`. Before merging, `feature/native-print-workflow`, `task/embedded-atlas-20261006` and all nine `task/native-*` branches were each proven to be ancestors of that tip; no other remote branch carried commits outside main or the tip.
+
+Ten conflicts were resolved by role rather than by side. The Appearance shape page keeps main's live geometry preview and margin wording at the redesign's body size, and main's typography capability note now wraps with the shared padding metric because the redesign removed the old padding constant. The Export dialog keeps main's header-encryption revalidation with the redesign's padding. Handoff, roadmap, README and integration records keep both sides' facts with the newest first; the continuation prompt is main's. The two Cantonese Prepare articles keep main's fuller translation and now translate the current English text.
+
+Three preservation fingerprints written on the redesign line were moved to main's newer method bodies after confirming that each merged body is byte-identical to main's and that the redesign left it untouched: Export dialog validation, execution and bindings; the drop-down lifetime guard in `ComboBox::OpenDropDown`; and the six Preferences and setup anchors, which now compare against main at `2f66e245a`.
+
+Platform-neutral checks on a host without the Windows compiler or wxWidgets: the node source contracts report 494 of 521 passing on main, 657 of 693 on the redesign tip and 711 of 757 on the merged tree. Every remaining merged failure also fails on a parent with the same cause, or needs the Windows compiler, configured wx headers or network access; the Material conversion contract fails the union of both parents' offender lists. CMake source contracts pass 8 of 12 on main and 7 of 12 on the redesign tip and merged tree (the redesign tip's MainFrame split-button contract). The strict Cantonese catalog check passes on the merged tree (8,102 entries) and fails on main. The offline render check timed out on every tree, and the two gettext-based catalog scripts could not run on this host.
+
+No native compile, installer, launch or screenshot exists for the merged tree. Main's preserved unfinished security wiring still leaves `MainFrame::open_service` without its `result` declaration and calls an undeclared `GUI_App::school_credentials()` from Preferences; the merge leaves both unchanged, so the next native build is expected to stop there until they are repaired.
+
+粵語：重新設計同準備工作線已經合併入 main，十個衝突按角色處理，兩邊行為同紀錄都保留。三個保存指紋已經對齊 main 較新而內容完全相同嘅方法。合併後只做咗跨平台原始碼檢查；原生建置、安裝程式同畫面仍未驗證，而 main 原有嘅兩處未完成接線仍會令下一次原生建置停低。
+
 ## Integrated source and current acceptance, 6 October 2026
 
 All reviewed local continuation tips are now ancestors of pushed main `d12a00862633e50865d908dab26908ef892f3a43`. The two workflows triggered for that revision completed successfully: [cloud compression](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37538336754) and [website deployment](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37538336681). The manually disabled Windows build/release workflow was not enabled, and no release was created.
@@ -32,10 +46,17 @@ Later visible-desktop and screenshot requests supersede the older launch exclusi
 
 ## Historical records
 
+## Preparation-line progress before the exact-main result
+
+Remote main is `4e18b78b3f8a78ebd63f875fb4b06b28db433afb`. The exact-main producer completed native staging but returned exit 1 for stale generated-file index metadata. Raw bytes equalled HEAD and the entire index tree remained unchanged after post-run refresh. The exact root retry started at `2026-10-06T16:36:39.3765008Z` and remains pending.
+
+Reviewed preparation and target-exit diagnostics are integrated at `f260b6fab51e23730a6e9d831df756566c104cd7`, with 38 preparation checks and 33 native-review checks passing offline. All 55 declared state pairs are covered; 147 paired articles and 1,296 changelog entries pass translation validation. The first authorized visible attempt started the owned target but it exited before inspection. Teardown was verified; no probe or screenshot exists. The reviewed helper now records its exact exit before teardown for the next diagnostic attempt.
+
+The later visible-desktop and screenshot requests supersede the older launch exclusion. The current [continuation](CLOSEOUT_PROMPT.md) is authoritative. Every older source identifier, pending-integration statement and no-launch statement below is a historical snapshot rather than current authorization or evidence.
+
 ## Independent progress during compilation
 
 The running producer remains pinned to `cc059003d362b87d53786152ee8c28621d9c2813`. The reviewed nine-boundary inspection queue, corrected live-regex restoration walkthrough and paired-article index checks are preserved separately at [`19d32db164955d4207f6dc89b64b65d13ebfe0d4`](https://github.com/Ding-Ding-Projects/BambuStudio/commit/19d32db164955d4207f6dc89b64b65d13ebfe0d4) on `task/upstream-development-20261006`. These preparation changes preserve native source and are not rendered acceptance. The full redraw remains outside this build-only verdict.
-
 
 ## Exact-main verification
 
@@ -66,6 +87,119 @@ and manual publication remain excluded pending explicit scope resolution.
 
 See [the current report](docs/integration/build-verification-20261006.md).
 The records below are historical diagnostics, not current production state.
+
+## Historical continuation boundary
+
+Both exact root entrypoints and independent package-byte verification passed at `a28944e3c14b2066ee63d14151c8aca23066d743`. The latest authoritative continuation is [CLOSEOUT_PROMPT.md](CLOSEOUT_PROMPT.md). Main remains `cc059003d`; the complete redesign still lacks current rendered acceptance. The local initial-shell route has both independently reviewed repairs combined at `b777219432f1df917fbd7638dd7f2105afc2ff1d`, plus the paired documentation correction in this update. All 26 non-window checks and read-only validation of the actual immutable build receipt pass. The source documentation inventory now has 144 paired articles; the earlier a28944e3c package contains 310 total Markdown articles and does not contain the two new local-review articles. The launch-scope clarification remains pending; no application or installer has been executed.
+
+## Earlier source and verification records
+
+Both exact root entrypoints passed for `a28944e3c14b2066ee63d14151c8aca23066d743`: `build.bat /s` returned 0 at `2026-10-06T13:04:12Z`; `build-installer.bat /s` returned 0 at `2026-10-06T13:18:59Z`. The installer invocation ran from `2026-10-06T13:05:30Z`, lasting 13 minutes 29 seconds. Independent byte verification passed for all 13,639 SBOM files against both staged and compressed bytes, all 310 bundled articles, both compiled catalogs, source/version metadata, RELEASES hashes/lengths and the unsigned PE boundary. The generated execution stub's executable section matches the pinned Squirrel template. No installer or application execution, visual acceptance or release publication is claimed.
+
+### Native-build milestone retained below
+
+Exact root `build.bat /s` succeeded with exit 0 at `2026-10-06T13:04:12Z` for `a28944e3c14b2066ee63d14151c8aca23066d743`. The observed run started at `2026-10-06T12:41:43Z`, lasting 22 minutes 29 seconds. Source was clean before and after. Native compilation/linking, pinned renderer staging and the automation companion completed. Exact `build-installer.bat /s` is now running against the same unchanged source; installer production and byte verification are still pending. No application launch, installed-copy behavior or rendered acceptance is claimed.
+
+### Earlier producer results and incorporated repairs
+
+The exact root build at `4147ca9eeb0004f7e18b4a2f5a8c6cb190975d21` ended with exit 1 at `2026-10-06T12:30:40Z`, after 1 hour 26 minutes 18 seconds from source pinning. The earlier three compiler causes did not recur. The remaining diagnostics were the nozzle-card helpers declared on the wrong class and the nozzle status icon calling an unsupported Button member. Reviewed repairs `a913ae69cb250862e55143949043da964c527d04` and `7b70048ed946bf128463789a8f729bf1ac11c4b6` are incorporated in `e78328d15b6bcaf97d73568c26f70f64494735b9`. Independent real-header MSVC checks passed, with deliberate C2039 negative cases. Full native production verification remains pending. No source or index changed during the completed producer.
+
+Verified remote `main` is `cc059003d362b87d53786152ee8c28621d9c2813`. Reviewed combined source before this
+record is `a42c09977ae2d123b9a44dec7d590ab315ec2706`. It includes the reviewed shell/tab drag and focus
+repairs, selection controls and their allocated-size lifecycle, Appearance
+property-page reflow, humidity placement, calibration viewport/preset/result
+layout and wheel routing, and device-name validation ordering. Design records
+currently prove 69 source receipts across 33 families and five documentation
+receipts at their explicitly pinned `4147ca9ee` snapshot. All 1,204 obligations
+and 56 structural boards retain their existing truth states; source receipts
+do not silently acquire rendered acceptance.
+
+The last exact `build.bat /s` producer started at `2026-10-06T08:58:03Z`
+against `05dd932d4de51384742375cb277d51d19e97039f`. Application configuration and generation completed,
+DeviceWeb advanced, and native compilation started at `2026-10-06T09:08:30Z`.
+It ended with exit 1 at `2026-10-06T10:26:28Z`, after 1 hour 28 minutes 25 seconds.
+No primary source or index was edited during that producer. Its generated route rewrite has the same normalized blob but
+appears dirty under the current checkout line-ending settings. The exact-path LF
+repair is reviewed, tested and delivered to main for the next reconciled run;
+source-identity checks remain unchanged. The generated bytes were preserved after
+termination before reconciliation. The subsequent exact root retry ran at
+`4147ca9eeb0004f7e18b4a2f5a8c6cb190975d21`, pinned by the producer at
+`2026-10-06T11:04:22Z`. The normalized generated route was proved equal to HEAD,
+its raw bytes were preserved, and the production checkout was clean before
+fast-forwarding. That producer ended with the nozzle diagnostics recorded above; documentation work remained in separate checkouts.
+
+The confirmed native GUI diagnostic
+is `StaticBox.hpp:91`, MSVC `C2397`, implicit integer-to-double conversion in a
+brace initializer. Reviewed repair `661f4678e430e6832a510fa20cba420d735c68f1`
+is incorporated in the candidate. Its actual-declaration compiler check passes
+and all four density assertions pass independently. Local builds remain
+authorized with bounded repair retries; no additional external-wait approval is
+needed for local compilation. The failed run is not a successful native verdict.
+
+The same native pass exposed `StatusPanel.cpp` C2664, where the printing-title
+helper accepted `Label*` but the member is `wxStaticText*`, and `Tab.cpp` C2039
+for nonexistent `wxSizerItem::SetSpacer`. Reviewed fixes `ac04eda5` and
+`9bb8eeb7` are incorporated. Independent checks compile the extracted production
+helper/member/calls and spacer statement against the real configured wx headers.
+Both passed; full translation-unit and production builds remain pending.
+
+The preceding root run at `5e3f28274` ended at `2026-10-06T08:44:32Z` with the
+OCCT quoted-flag export diagnostic. The source-template repair now preserves
+exact compiler flags and repeat-safe patching; its five actual-template assertions
+passed independently. Eight disposable Git assertions verify generated-route
+line endings without accepting real content changes.
+
+Latest independent UI checks include 13 shell source cases plus compiled layout,
+drag and focus helpers; 8 selection source cases and 7,296 geometry/lifecycle
+assertions; 14 calibration layout/preservation cases; 5 humidity cases; 22
+Appearance cases; and 10 result/device-name cases, including 26 validation-order
+assertions. The default result fixture now compiles once and executes both modes:
+six geometry cases and six wheel-routing cases passed independently at
+`7334513f1fdcb8c84bd0f57f9a2cb750c85fc7c8`. This is non-window coverage, not native
+event-delivery or rendered acceptance.
+
+The next incorporated source units add shared floating framing for twelve
+existing tool inspectors, readable Regex/Export details, and the Cantonese
+shell/tab companion. Three framing checks plus nine reader and seven overlay
+checks passed independently. Connection/send disclosure availability and caption
+ownership repairs are incorporated, with three focused tests and 172 compiled
+owner assertions passing independently.
+AMS drying controls, their separately corrected troubleshooting-sizer ownership,
+and nozzle selection/update presentation are now incorporated after independent
+reviews. Ten source checks passed, followed by five compiled button cases and
+three compiled owner/state cases. The compiled fixtures initially lacked the
+MSVC environment; the corrected invocation passed both without source changes.
+Shared ListBox anatomy and interrupted-hover invalidation are incorporated:
+nine source checks, four geometry cases with 24,088 assertions and six hover
+cases with 48 assertions passed independently.
+
+Final source integration initially found raw scroll/table owners in seven files.
+The reviewed kit-owner substitutions now pass all 29 native-control, scrollbar
+and feature-ledger checks plus nine complete-caller preservation checks. The
+terminology checker now preserves a singleton Python command array; six real
+PowerShell fixture assertions pass. The stricter language/terminology run exposed
+84 existing English catalog membership gaps, six display-override gaps and 80
+missing Cantonese entries. Reviewed repair `7a681fd0f` is incorporated. All eight
+focused tests pass independently, as does the complete terminology check.
+Strict catalog validation accepts 8,102 translations; the existing 109
+source-pending exceptions remain unchanged. All 50 documentation findings are
+reconciled through reviewed translation units. The complete check passes for
+143 articles and 1,296 changelog entries. A subsequent PowerShell 5.1 empty-array
+reader defect is repaired at `0625de0d2`, with three actual production-AST cases
+passing independently on PowerShell 5.1.26100.9444. The complete strict language
+check with `-RequireComplete` now passes: 8,102 native entries, 7,109 audited
+drafts, 212 DeviceWeb resources, 282 legacy keys, 334 keyed elements and 18
+interface-language tests. This is source/catalog evidence, not native rendering.
+
+The [tracked publication scan](docs/integration/public-boundary-scan-20261006.md)
+inspected 11,556 UTF-8 files at `24aff6625`. All 142 lexical candidate files
+received contextual review, with zero confirmed violations. Binary contents,
+the nested submodule and external published surfaces remain outside that receipt.
+
+Application launch, installer execution, physical printing and manual release
+publication remain excluded. Native GUI acceptance, actual scrolling/focus,
+installer outputs and the full visual matrix remain unverified. Current records
+supersede dated continuation claims below without deleting their evidence.
 
 ## Build bootstrap repair, 6 October 2026
 

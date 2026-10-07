@@ -130,6 +130,7 @@ public:
     virtual bool AcceptsFocus() const wxOVERRIDE { return true; }
     virtual bool AcceptsFocusFromKeyboard() const wxOVERRIDE { return true; }
 protected:
+    void apply_row_layout();
     void OnPaint(wxPaintEvent &event);
     void render(wxDC &dc);
     void doRender(wxDC &dc);
@@ -245,6 +246,14 @@ public:
     TextInput*          m_textCtr{nullptr};
     wxStaticText*       m_static_valid{nullptr};
     MachineObject*      m_info{nullptr};
+private:
+    void apply_form_layout();
+    void fit_validation_content();
+    void on_confirm(wxCommandEvent& event);
+    wxScrolledWindow* m_validation_view{nullptr};
+    wxBoxSizer* m_form_sizer{nullptr};
+    bool m_fitting_content{false};
+
 };
 
 }} // namespace Slic3r::GUI

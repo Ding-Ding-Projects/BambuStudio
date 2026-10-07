@@ -1,6 +1,6 @@
 ---
 translation-of: windows-one-click-build.md
-source-sha256: 1eeaf049486b1f70b71b5aa56b80fea8c87cc8b81359e6e2dbda2dee142681e3
+source-sha256: 465812bca2911c99f5ef41ca4cfd79f09f97d90982e930dc1de3327e4de79c0b
 review-status: agent-drafted
 ---
 
@@ -73,3 +73,37 @@ VS 2026 亦會使用同一註冊記錄嘅四段數字 `installationVersion`，�
 可選執行 `scripts/ci/Test-BuildFromSourceHelpers.ps1 -ProbeHostCMake`，用所選實例附帶嘅 CMake 做有界限、只設定唔編譯嘅測試。即使直接編譯器測試通過，MSBuild 組件載入錯誤仍然係工具鏈阻塞。安裝暱稱使用 `BambuMD3`，符合 Microsoft 最多十個字元嘅限制。
 
 偵測亦會以 `-nologo -version` 啟動確切嘅 x64 MSBuild，限時十五秒。啟動錯誤、逾時或冇數字版本會排除該實例、記錄原因，再試下一個。全部都唔可用先執行支援嘅 Stable 安裝路徑，唔會複製組件入其他安裝，亦唔會修復其他產品嘅安裝。
+
+## 全新 Windows 引導及管理員交接
+
+`build.bat /s` 同 `build-installer.bat /s` 都傳回共用 PowerShell 生產程序嘅真實退出碼。根目錄啟動器喺取得互斥鎖、開始轉錄或安裝之前，用正常 `RunAs` 要求 UAC。輔助程序隱藏，但 UAC 仍需互動批准；已具管理員權限就直接執行。取消或無法提升權限傳回 1223。只保留程序層級執行原則，唔改持久設定。完整原始參數陣列序列化為資料，經確切 `build.bat`、`build-installer.bat` 或 `OneClickBuildInstaller.cmd` 重入。Plan 只讀，唔要求 UAC；靜默模式唔會略過批准。
+
+只安裝缺少嘅 Git、VS 2026 C++／SDK、CMake、Node、Strawberry Perl、Python 3 同 7-Zip。冇 WinGet 時使用 Microsoft.WinGet.Client 及 `Repair-WinGetPackageManager -AllUsers`，再更新程序 PATH。唔會改持久執行原則、套件來源信任、防毒或電源設定。兩個入口都準備穩定版 .NET 10 SDK，並喺僅構建返回之前放妥自動化配套。
+
+安裝路徑依照 [Microsoft WinGet 文件](https://learn.microsoft.com/en-us/windows/package-manager/winget/)。網絡、發行者套件、服務、批准或註冊問題都係明確阻塞，唔會報成功。原生安裝器使用 `--norestart`，唔會重新啟動或關閉主機。若未能經認證讀取發佈歷史，打包需要 `-PreviousPackageVersion` 或 `BAMBU_PREVIOUS_PACKAGE_VERSION`；唔會虛構歷史或認證。有效快取會重用；過時原生輸入只修復受影響來源路徑再重新構建。未有全新 Windows 執行證據，唔能夠聲稱全新安裝已驗證。
+
+原啟動器等候子程序並回傳實際退出碼。`exit 1` 直接終止子程序；輔助程序只喺正常返回後檢查成功，例外傳回 1223。呢啲係原始碼事實，唔代表已測試取消 UAC、子程序失敗或全新主機。
+
+`scripts/windows/Invoke-BuildEntryPoint.ps1` 只接受上述三個確切啟動器，以 JSON 傳遞入口身分及完整參數，再用原生 PowerShell 陣列呼叫批次檔，唔會拼接原始 `cmd /c` 字串。提升權限只重入一次；僅構建／安裝器模式，以及 `/s`、`--silent` 都保留到生產程序邊界。直接呼叫生產程序唔能夠證明入口正常。
+
+參數以具名雜湊表傳遞，唔係位置展開。值參數包括 BuildMode、OutputDirectory、DependencyCacheDirectory、ReleaseNumber、PreviousPackageVersion；開關包括 Install、BootstrapOnly、Plan、BuildOnly。未知或重複參數會被拒絕；`build.bat` 即使收到 false 都強制 BuildOnly 為 true。原生參數先到確切批次入口，證明來源後先綁定。
+
+啟動器讀取程序環境既有 PSExecutionPolicyPreference，只接受已知值；缺少或 Undefined 就省略，未知值會停止。唔需要載入可選 Microsoft.PowerShell.Security，亦唔改持久執行原則。
+
+CMake 優先重用 PATH 中符合最小值及不含上限嘅版本；否則試所選可用 VS 嘅 `Common7/IDE/CommonExtensions/Microsoft/CMake/CMake/bin/cmake.exe`，使用同一版本界限，加入程序 PATH 並喺更新 PATH 後保留，最後先安裝。偵測喺提升權限後進行，唔依賴呼叫者 PATH。呢個來源缺口已確認；現場 WinGet 操作嘅目的未明，唔作歸因，亦唔構成執行證據。
+
+## 可搬移嘅 OpenCV 資料查找
+
+啟用 `OPENCV_RELOCATABLE_DATA_LOOKUP` 嘅修補會省略絕對 `OPENCV_INSTALL_PREFIX`，將 `OPENCV_BUILD_DIR` 留空；執行時空值會略過兩條構建根目錄分支。呢個係移除開發路徑後備，唔係填入虛構路徑。明確設定及搜尋覆寫保持不變，`OPENCV_INSTALL_DATA_DIR_RELATIVE`、模組位置加相對路徑、必需／找不到資料及目前目錄實際來源偵測嘅診斷全部保留。停用選項時沿用原有常數。
+
+重新套用第四個受管 OpenCV 修補、重新設定選項、重建資料標頭及靜態程式庫，再經確切根目錄批次入口重新連結及準備套件。`version_string.inc` 對映係另一項改動。呢條工作線冇執行測試、構建、介面或擷圖，最終套件仍需檢查。
+
+提升權限嘅主機取得程序控制代碼後，啟動器用 `Process.WaitForExit` 等候，喺 Dispose 前讀取 ExitCode；唔用 `Start-Process -Wait` 等候後代工作，避免閒置 MSBuild 伺服器拖住返回。唔會終止任何伺服器；參數、隱藏程序同 UAC 行為不變。程序完成唔代表發佈已驗證。
+
+## 可搬移嘅 wxWidgets 安裝前綴
+
+`wxBUILD_RELOCATABLE_INSTALL_PREFIX` 來源修補涵蓋 CMake 產生器同 `wxGetInstallPrefix`。Windows 標頭省略 `wxINSTALL_PREFIX` 並啟用執行時後備；先用 WXPREFIX，否則經 wxStandardPaths 取得實際執行檔所在目錄。`wxGetDataDir` 嘅 share/wx 行為保留。其他平台或停用選項時沿用上游行為。
+
+重新套用受管 wxWidgets 修補、重新設定標頭、重建基礎物件及靜態程式庫，再用確切根目錄入口構建應用程式及檢查套件。唔會修改已編譯位元組或削弱檢查。呢條工作線冇執行測試、構建、介面或擷圖。
+
+wxWidgets 固定為 bambulab/wxWidgets 嘅 `a9d946902685b9946d8775f07d2a73a9b5bef394`，係乾淨快取中嘅來源基準，確切上游 API 已核對；唔再依賴可變嘅 master。

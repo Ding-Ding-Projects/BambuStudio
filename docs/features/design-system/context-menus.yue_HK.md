@@ -1,6 +1,6 @@
 ---
 translation-of: context-menus.md
-source-sha256: 0395d9227a563f1be0d248ddcc9680ed58b7c231f12c6393a768c05f56a6f087
+source-sha256: 3e7082895ef7f1bace2b10080819d57ae00f14584499b9a422715f558936c677
 review-status: agent-drafted
 ---
 
@@ -58,3 +58,11 @@ Material 選單。
   （`docs/screenshots/md3-everything/context-menu-smart-home-right-click--bilingual_en_yue_HK-light-comfortable--md3-v169.png`）。
 
 視窗標題列保留 Windows 嘅系統選單（Alt+Space）；佢屬於視窗框，唔屬於程式嘅內容。
+
+## 搜尋及復原更新
+
+每個原生 Material 選單同共用組合框彈出視窗都有搜尋欄及導引式正規表達式建立器，包括只有一項同巢狀群組嘅選單。篩選保留指令 ID 同原有組合框索引。冇結果會顯示提示；Escape 先清除查詢，再關閉選單。Tab 可以到達查詢、正規表達式開關、建立器同清除操作。建立器顯示期間，選單保持開啟；過高嘅建立器會喺顯示器工作範圍內捲動。
+
+共用動態曲線使用 Material 標準三次曲線同強調式兩段路徑。經過時間及減少動態效果仍由共用動畫管理器負責。
+
+今次驗證只涵蓋原始碼。託管 Windows 上嘅正常及最小尺寸、英文／廣東話／雙語、光暗主題，以及 100%、125%、150%、200% 比例仍要驗證，今次未有執行。

@@ -1,3 +1,12 @@
+## Redesign continuation merge, 7 October 2026
+
+- [x] Prove every diverged redesign branch is contained in the preserved preparation tip `1fa14f33a` before merging.
+- [x] Merge the preparation tip into main, resolving ten conflicts while keeping both sides' behavior and records.
+- [x] Run the platform-neutral source, CMake and catalog contracts on both parents and the merged tree; the merge adds no failure of its own.
+- [ ] Repair main's preserved unfinished security wiring (`MainFrame::open_service`, `GUI_App::school_credentials()`) so the merged tree can compile.
+- [ ] Build the merged tree through both root entrypoints and verify its unsigned package bytes.
+- [ ] Obtain native interaction and screenshot evidence for the merged redesign.
+
 ## Source consolidation, 6 October 2026
 
 - [x] Integrate every reviewed local source continuation and prove its ancestry against pushed main.
@@ -41,6 +50,48 @@ Source repairs and focused checks exist; these items remain unticked until their
 
 Earlier delivery sections retain their dated evidence. A completed script check
 does not establish production, runtime, installer-execution or release success.
+
+## Independent preparation while production runs
+
+- [x] Preserve the nine-boundary source-bound review queue and independently verify its live-regex restoration semantics.
+- [x] Repair the actual Cantonese companion index and verify the positive case plus six missing-link/article negative cases.
+- [x] Implement and independently review bounded plans, tuple comparison and private evidence consistency validation, with all 55 declared states covered.
+- [x] Preserve the first visible startup failure and add independently reviewed target-exit observation before teardown; offline checks pass.
+- [ ] Finish the exact `cc059003d` root build and installer with source-bound package verification.
+- [ ] Diagnose startup using the observed target exit and execute the genuine built review matrix; visible inspection is authorized but the first target exited before inspection.
+
+## Complete native interface refresh, 6 October 2026
+
+- [x] Preserve explicit composition contracts for 28 surface groups and retain all 1,204 existing feature-obligation truth states.
+- [x] Document reviewed appearance reversal without resetting user data or removing functional/build fixes.
+- [ ] Finish source implementation across shared controls, Prepare, renderer, Monitor, Preferences/setup and readers, including independently reviewed repairs.
+- [ ] Finish caller-owned fields, Print setup, device popups, live notifications, Workspace, calibration child pages, confirmations, shell tabs and embedded composition.
+- [ ] Compile the exact combined native source and produce the genuine unsigned Squirrel installer through both root entrypoints.
+- [ ] Verify package bytes, versions, source identity and hashes without executing an installer under the current scope.
+- [ ] Obtain authorized native interaction, screenshots and the complete language/theme/viewport/scale matrix before claiming visible completion.
+- [ ] Deliver completed changes to verified remote main and retain incomplete work safely.
+
+## Current review and build receipts, 6 October 2026
+
+- [x] Combine independently reviewed local inspection provenance and atomic containment repairs, pass 26 non-window checks and validate the actual immutable build receipt without launching.
+- [ ] Complete genuine initial-shell inspection before expanding the nine built-review boundaries; the first authorized attempt produced no probe or screenshot.
+
+- [x] Deliver the OCCT export repair and pass application configuration on the exact root retry at `05dd932d4`.
+- [x] Deliver exact generated-route LF identity with eight disposable Git assertions at `d4d4bb13b`.
+- [x] Record the `4147ca9ee` root build exit 1 and independently verify both subsequent nozzle compiler repairs, including real-header negative cases.
+- [x] Complete exact `build.bat /s` with both nozzle repairs at `a28944e3c`: exit 0 at `2026-10-06T13:04:12Z`.
+- [x] Match the generated 310-article documentation bundle and both compiled catalogs against current source.
+- [x] Complete exact `build-installer.bat /s` at `a28944e3c`: exit 0 at `2026-10-06T13:18:59Z`.
+- [x] Independently verify all 13,639 SBOM files, bundled articles/catalogs, package metadata and unsigned installer bytes.
+- [ ] Complete real built language/theme/scale/focus/scroll evidence; current source checks do not establish it.
+
+- [x] Record exact root exit 1 at `5e3f28274` and the OCCT generated-config escaping diagnostic at `2026-10-06T08:44:32Z`.
+- [x] Deliver concurrent diagnostic capture and child-only MSBuild node lifetime repair to verified `main` at `8dc8bff80`.
+- [x] Repair the OCCT source export without weakening compiler path mapping and prove configuration succeeds on the root retry.
+- [ ] Complete shell focus/drag and confirmation repair reviews and native verification.
+- [ ] Finish the new design articles' Cantonese companions, indexes and accurate change receipts.
+- [x] Independently review and verify the catalog repair at `7a681fd0f`: eight focused tests and the terminology check pass without removing existing keys.
+- [x] Reconcile the 50 documentation language findings and pass strict language integration after the independently tested PowerShell 5.1 empty-report repair.
 
 ## Build bootstrap repair, 6 October 2026
 

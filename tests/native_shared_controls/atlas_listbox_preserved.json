@@ -1,0 +1,75 @@
+{
+  "baseline": "50715f4355e8b845042bd4809bac2da2ce5c40f4",
+  "functions": [
+    {
+      "name": "void ListBox::SetScrollbar(",
+      "sha256": "58a875d131c24beaafba2baf9927869c7b2e9f7e02dd9d1f57623f5dc608eba6"
+    },
+    {
+      "name": "void ListBox::SetScrollPos(",
+      "sha256": "bd6395414107eef708fd173c7f8699c864865c4095db5789197b49ece32ff20b"
+    },
+    {
+      "name": "int ListBox::GetScrollPos(",
+      "sha256": "35e865105e1c8ed11ebb964425bc74dc6e403f05948ee73c9f582e6e318f8908"
+    },
+    {
+      "name": "int ListBox::GetScrollThumb(",
+      "sha256": "ff856cfd508dd4ccc7767335fe75647a5e18af5a21083c166084e189c5982ec1"
+    },
+    {
+      "name": "int ListBox::GetScrollRange(",
+      "sha256": "819a16596a58455979d196d98a17c0c65f73a394fd04cca5795846d1a6d57928"
+    },
+    {
+      "name": "WXDWORD ListBox::MSWGetStyle(",
+      "sha256": "2e64650a63aa207f89ef19907c4c13fe83f733645d0c10b1febf5eab35f360dc"
+    },
+    {
+      "name": "WXLRESULT ListBox::MSWWindowProc(",
+      "sha256": "c68aba0d29d62273e46f91abbb3d87b6eb5e21cf3ce43ce18adfecc968b8091f"
+    },
+    {
+      "name": "void ListBox::EnableChecks(",
+      "sha256": "495a4b444bf3a638e5ee2d8af11ac6b09107b94ca86d2c243289ae1013d332e9"
+    },
+    {
+      "name": "void ListBox::Check(",
+      "sha256": "d3f960e41908c2f19cb0bc9eecccb29da8f07ec982e53491ea8200ae2f3abd7a"
+    },
+    {
+      "name": "int ListBox::checkWidth(",
+      "sha256": "8c150d8418cf1491e7fe3d33f805d9140f579fcc3a6c1321f6bd08d56147730a"
+    },
+    {
+      "name": "void ListBox::toggle(",
+      "sha256": "8adc63007995d9022ba32d2013b1794c6ab23780fb8341ead68923775929325e"
+    },
+    {
+      "name": "void ListBox::onLeftDown(",
+      "sha256": "48d806fbdcf90670de4add0a90fb4c99452914be97461e93df1b25432b2f75b3"
+    },
+    {
+      "name": "void ListBox::onKey(",
+      "sha256": "184a72d1c858f310d848f2095961bd5e585531a0400d268cffb147e31f7fb51c"
+    },
+    {
+      "name": "void ListBox::Set(",
+      "sha256": "39873254938faace030fd578881cc196918be1e8af3843b797847fcec6f7789f",
+      "visualReset": true
+    },
+    {
+      "name": "void ListBox::Append(",
+      "sha256": "679d56926c1d95d7f6338d89634b4d33ea964a5777cb5ba559e47f22af6bf838"
+    },
+    {
+      "name": "void ListBox::Clear(",
+      "sha256": "040585a77a1ea039ea9a040eed6ecba26514c7c4d9e15787bbe929a55c79d34f",
+      "visualReset": true
+    },
+    {
+      "name": "void ListBox::SetColorScheme(",
+      "sha256": "aacaf4f00b396d95d7d1697a547756a6edcde2964c99f99154e85bc1d13527e6"
+    }
+  ]
+}

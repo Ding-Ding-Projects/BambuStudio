@@ -14,6 +14,7 @@
 #include <wx/panel.h>
 #include <wx/simplebook.h>
 #include <wx/sizer.h>
+#include <wx/wrapsizer.h>
 #include <wx/spinctrl.h>
 
 #include "ElementStyle.hpp"
@@ -29,6 +30,7 @@
 #include "slic3r/GUI/Widgets/MD3Menu.hpp"
 #include "slic3r/GUI/Widgets/MD3MenuModel.hpp"
 #include "slic3r/GUI/Widgets/MD3Motion.hpp"
+#include "slic3r/GUI/Widgets/MD3ScrolledWindow.hpp"
 #include "slic3r/GUI/Widgets/MD3Tokens.hpp"
 #include "slic3r/GUI/Widgets/MaterialIcon.hpp"
 #include "slic3r/GUI/Widgets/SearchField.hpp"
@@ -42,7 +44,6 @@ namespace {
 
 constexpr int kCardWidth   = 380; // DIP
 constexpr int kFrame       = 1;   // px outline
-constexpr int kPad         = 16;  // DIP card padding
 constexpr int kRowGap      = 8;
 constexpr int kListHeight  = 132;
 constexpr int kTickMs      = 120;
@@ -370,7 +371,7 @@ void AppearanceEditorPopover::paint(wxPaintEvent &)
     dc.Clear();
     dc.SetPen(wxPen(role(MD3::Role::OutlineVariant), kFrame));
     dc.SetBrush(wxBrush(role(MD3::Role::SurfaceContainer)));
-    dc.DrawRoundedRectangle(r, FromDIP(MD3::Metrics::radius_rail));
+    dc.DrawRoundedRectangle(r, FromDIP(MD3::Metrics::active().radius));
 }
 
 void AppearanceEditorPopover::on_char_hook(wxKeyEvent &e)
@@ -445,7 +446,7 @@ Button *AppearanceEditorPopover::make_swatch(wxWindow *parent, const char *key, 
 void AppearanceEditorPopover::build()
 {
     auto *root = new wxBoxSizer(wxVERTICAL);
-    const int pad = FromDIP(kPad);
+    const int pad = FromDIP(MD3::Metrics::active().padding);
 
     // Header: title (display name) + caption (stable id) + close.
     auto *head = new wxBoxSizer(wxHORIZONTAL);
@@ -470,7 +471,7 @@ void AppearanceEditorPopover::build()
     root->Add(head, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, pad);
 
     // Section tabs.
-    auto *tabs = new wxBoxSizer(wxHORIZONTAL);
+    auto *tabs = new wxWrapSizer(wxHORIZONTAL);
     const wxString names[] = {_L("Typography"), _L("Colours"), _L("Shape & spacing"), _L("Presets")};
     for (int i = 0; i < 4; ++i) {
         auto *b = new Button(this, names[i]);
@@ -478,19 +479,24 @@ void AppearanceEditorPopover::build()
         b->SetButtonSize(Button::Size::Small);
         b->SetName(wxString::Format(_L("%s section"), names[i]));
         b->Bind(wxEVT_BUTTON, [this, i](wxCommandEvent &) { show_section(i); });
-        tabs->Add(b, 0, wxRIGHT, FromDIP(4));
+        tabs->Add(b, 0, wxRIGHT | wxBOTTOM, FromDIP(4));
         m_section_buttons.push_back(b);
         ElementStyle::apply(b, "appearance-editor.tab", _L("Appearance editor tab"));
     }
-    root->Add(tabs, 0, wxLEFT | wxRIGHT | wxTOP, FromDIP(10));
+    root->Add(tabs, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(10));
 
     m_book = new wxSimplebook(this, wxID_ANY);
-    m_book->SetBackgroundColour(role(MD3::Role::SurfaceContainer));
+    m_book->SetBackgroundColour(role(MD3::Role::SurfaceContainerLow));
+    m_book->SetMinSize(wxSize(0, FromDIP(240)));
     auto add_page = [this](const wxString &name, void (AppearanceEditorPopover::*builder)(wxWindow *)) {
-        auto *page = new wxPanel(m_book, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
-        page->SetBackgroundColour(role(MD3::Role::SurfaceContainer));
+        // Each section scrolls independently while title, section navigation and reset actions stay reachable.
+        auto *page = new MD3ScrolledWindow(m_book, wxID_ANY, wxDefaultPosition, wxDefaultSize,
+                                          wxTAB_TRAVERSAL | wxVSCROLL | wxHSCROLL | wxBORDER_NONE);
+        page->SetBackgroundColour(role(MD3::Role::SurfaceContainerLow));
         page->SetName(name);
+        page->SetScrollRate(FromDIP(12), FromDIP(12));
         (this->*builder)(page);
+        page->FitInside();
         m_book->AddPage(page, name);
     };
     add_page(_L("Typography"), &AppearanceEditorPopover::build_typography);
@@ -500,7 +506,7 @@ void AppearanceEditorPopover::build()
     root->Add(m_book, 1, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(10));
 
     // Footer: element reset, global reset.
-    auto *foot = new wxBoxSizer(wxHORIZONTAL);
+    auto *foot = new wxWrapSizer(wxHORIZONTAL);
     auto *reset_el = new Button(this, _L("Reset element"));
     reset_el->SetVariant(Button::Variant::Outlined);
     reset_el->SetButtonSize(Button::Size::Small);
@@ -525,16 +531,17 @@ void AppearanceEditorPopover::build()
     });
     foot->Add(reset_el, 0);
     foot->Add(reset_all, 0, wxLEFT, FromDIP(8));
-    foot->AddStretchSpacer(1);
+    // The shortcut wraps below reset actions on narrower displays.
     auto *shortcut = new Label(this, Label::Body_11, AppearanceEditor::shortcut_text());
     shortcut->SetForegroundColour(role(MD3::Role::OnSurfaceVariant));
     shortcut->SetToolTip(_L("Keyboard shortcut that opens this editor for the focused control"));
-    foot->Add(shortcut, 0, wxALIGN_CENTER_VERTICAL);
+    foot->Add(shortcut, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(8));
     root->Add(foot, 0, wxEXPAND | wxALL, pad);
 
     SetSizer(root);
     SetMinSize(wxSize(FromDIP(kCardWidth), -1));
-    root->SetSizeHints(this);
+    // Let placement clamp the card to the display; page content has its own scroll range.
+    SetSize(root->GetMinSize());
 
     // The editor obeys its own customization: its title and body copy are
     // adopted like any other element.
@@ -546,14 +553,17 @@ void AppearanceEditorPopover::build_typography(wxWindow *page)
 {
     auto *s = new wxBoxSizer(wxVERTICAL);
     auto row = [&](const wxString &label, wxWindow *control, const char *key, const wxString &what) {
-        auto *r = new wxBoxSizer(wxHORIZONTAL);
-        auto *l = new Label(page, Label::Body_13, label, 0, wxSize(FromDIP(110), -1));
+        auto *r = new wxBoxSizer(wxVERTICAL);
+        auto *l = new Label(page, Label::Body_13, label, LB_AUTO_WRAP | wxST_NO_AUTORESIZE);
+        l->SetMinSize(wxSize(0, -1));
         ElementStyle::apply(l, "appearance-editor.label", _L("Appearance editor label"));
-        r->Add(l, 0, wxALIGN_CENTER_VERTICAL);
-        r->Add(control, 1, wxALIGN_CENTER_VERTICAL);
+        r->Add(l, 0, wxEXPAND | wxBOTTOM, FromDIP(4));
+        auto *value_row = new wxBoxSizer(wxHORIZONTAL);
+        value_row->Add(control, 1, wxALIGN_CENTER_VERTICAL);
         if (key)
-            r->Add(make_reset(page, key, what), 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(4));
-        s->Add(r, 0, wxEXPAND | wxBOTTOM, FromDIP(kRowGap));
+            value_row->Add(make_reset(page, key, what), 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(4));
+        r->Add(value_row, 0, wxEXPAND);
+        s->Add(r, 0, wxEXPAND | wxBOTTOM, FromDIP(MD3::Metrics::active().gap));
     };
 
     // Font family: searchable list (installed + bundled) with a live preview.
@@ -598,8 +608,9 @@ void AppearanceEditorPopover::build_typography(wxWindow *page)
     });
     row(_L("Weight"), m_weight, StyleProp::font_weight, _L("font weight"));
 
-    auto *deco = new wxBoxSizer(wxHORIZONTAL);
+    auto *deco = new wxWrapSizer(wxHORIZONTAL);
     auto add_check = [&](CheckBox *&slot, const wxString &label, const char *key) {
+        auto *group = new wxBoxSizer(wxHORIZONTAL);
         slot = new CheckBox(page);
         slot->SetName(label);
         slot->SetToolTip(label);
@@ -613,11 +624,12 @@ void AppearanceEditorPopover::build_typography(wxWindow *page)
             else
                 write_bool(k.c_str(), slot->GetValue());
         });
-        deco->Add(slot, 0, wxALIGN_CENTER_VERTICAL);
+        group->Add(slot, 0, wxALIGN_CENTER_VERTICAL);
         auto *l = new Label(page, Label::Body_13, label);
         ElementStyle::apply(l, "appearance-editor.label", _L("Appearance editor label"));
-        deco->Add(l, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(4));
-        deco->Add(make_reset(page, key, label.Lower()), 0, wxALIGN_CENTER_VERTICAL | wxLEFT | wxRIGHT, FromDIP(4));
+        group->Add(l, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(4));
+        group->Add(make_reset(page, key, label.Lower()), 0, wxALIGN_CENTER_VERTICAL | wxLEFT | wxRIGHT, FromDIP(4));
+        deco->Add(group, 0, wxRIGHT | wxBOTTOM, FromDIP(MD3::Metrics::active().gap));
     };
     add_check(m_italic, _L("Italic"), StyleProp::font_style);
     add_check(m_underline, _L("Underline"), StyleProp::underline);
@@ -632,18 +644,18 @@ void AppearanceEditorPopover::build_typography(wxWindow *page)
     m_line_height->on_change = [this](double value) { if (!m_loading) write_number(StyleProp::line_height, value); };
     row(_L("Line height"), m_line_height, StyleProp::line_height, _L("line height"));
 
-    auto *note = new Label(page, Label::Body_11,
+    auto *note = new Label(page, Label::Body_13,
                            _L("Letter spacing and line height are stored for widgets that measure their own text; native labels ignore them."),
                            LB_AUTO_WRAP);
     note->SetForegroundColour(role(MD3::Role::OnSurfaceVariant));
-    note->Wrap(FromDIP(kCardWidth - 2 * kPad));
+    note->Wrap(FromDIP(kCardWidth - 2 * MD3::Metrics::active().padding));
     s->Add(note, 0, wxEXPAND);
 
     // Explicit limitations are visible rather than accepting inert values.
     auto *limits = new Label(page, Label::Body_11,
         _L("Platform capabilities: variable font axes, oblique angle, underline style and color, double strikethrough, overline, small caps, superscript, subscript, outline, shadow, glow, word spacing, baseline offset, direction and paragraph alignment require a rich-text renderer. They are unavailable on this native element. Stored unknown properties are preserved during export and import."), LB_AUTO_WRAP);
     limits->SetName(_L("Typography platform capabilities"));
-    limits->Wrap(FromDIP(kCardWidth - 2 * kPad));
+    limits->Wrap(FromDIP(kCardWidth - 2 * MD3::Metrics::active().padding));
     s->Add(limits, 0, wxEXPAND | wxTOP, FromDIP(kRowGap));
     page->SetSizer(s);
 }
@@ -659,20 +671,22 @@ void AppearanceEditorPopover::build_colours(wxWindow *page)
         {StyleProp::border_color, _L("Border")},
     };
     for (const Row &r : rows) {
-        auto *row = new wxBoxSizer(wxHORIZONTAL);
-        auto *l = new Label(page, Label::Body_13, r.label, 0, wxSize(FromDIP(110), -1));
+        auto *row = new wxBoxSizer(wxVERTICAL);
+        auto *l = new Label(page, Label::Body_13, r.label, LB_AUTO_WRAP | wxST_NO_AUTORESIZE);
+        l->SetMinSize(wxSize(0, -1));
         ElementStyle::apply(l, "appearance-editor.label", _L("Appearance editor label"));
-        row->Add(l, 0, wxALIGN_CENTER_VERTICAL);
-        row->Add(make_swatch(page, r.key, r.label), 0, wxALIGN_CENTER_VERTICAL);
-        row->AddStretchSpacer(1);
-        row->Add(make_reset(page, r.key, r.label.Lower() + " " + _L("colour")), 0, wxALIGN_CENTER_VERTICAL);
-        s->Add(row, 0, wxEXPAND | wxBOTTOM, FromDIP(kRowGap));
+        row->Add(l, 0, wxEXPAND | wxBOTTOM, FromDIP(4));
+        auto *value_row = new wxBoxSizer(wxHORIZONTAL);
+        value_row->Add(make_swatch(page, r.key, r.label), 1, wxALIGN_CENTER_VERTICAL);
+        value_row->Add(make_reset(page, r.key, r.label.Lower() + " " + _L("colour")), 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(4));
+        row->Add(value_row, 0, wxEXPAND);
+        s->Add(row, 0, wxEXPAND | wxBOTTOM, FromDIP(MD3::Metrics::active().gap));
     }
-    auto *note = new Label(page, Label::Body_11,
+    auto *note = new Label(page, Label::Body_13,
                            _L("Each swatch opens the Material colour picker with its colour translator. An unset colour keeps the theme's token."),
                            LB_AUTO_WRAP);
     note->SetForegroundColour(role(MD3::Role::OnSurfaceVariant));
-    note->Wrap(FromDIP(kCardWidth - 2 * kPad));
+    note->Wrap(FromDIP(kCardWidth - 2 * MD3::Metrics::active().padding));
     s->Add(note, 0, wxEXPAND);
     page->SetSizer(s);
 }
@@ -686,25 +700,27 @@ void AppearanceEditorPopover::build_shape(wxWindow *page)
         const std::string k = key;
         slot->Bind(wxEVT_SPINCTRL, [this, k, &slot](wxCommandEvent &) { if (!m_loading) write_number(k.c_str(), slot->GetValue()); });
         slot->Bind(wxEVT_TEXT_ENTER, [this, k, &slot](wxCommandEvent &) { if (!m_loading) write_number(k.c_str(), slot->GetValue()); });
-        auto *row = new wxBoxSizer(wxHORIZONTAL);
-        auto *l = new Label(page, Label::Body_13, label, 0, wxSize(FromDIP(110), -1));
+        auto *row = new wxBoxSizer(wxVERTICAL);
+        auto *l = new Label(page, Label::Body_13, label, LB_AUTO_WRAP | wxST_NO_AUTORESIZE);
+        l->SetMinSize(wxSize(0, -1));
         ElementStyle::apply(l, "appearance-editor.label", _L("Appearance editor label"));
-        row->Add(l, 0, wxALIGN_CENTER_VERTICAL);
-        row->Add(slot, 0, wxALIGN_CENTER_VERTICAL);
-        row->AddStretchSpacer(1);
-        row->Add(make_reset(page, key, label.Lower()), 0, wxALIGN_CENTER_VERTICAL);
-        s->Add(row, 0, wxEXPAND | wxBOTTOM, FromDIP(kRowGap));
+        row->Add(l, 0, wxEXPAND | wxBOTTOM, FromDIP(4));
+        auto *value_row = new wxBoxSizer(wxHORIZONTAL);
+        value_row->Add(slot, 1, wxALIGN_CENTER_VERTICAL);
+        value_row->Add(make_reset(page, key, label.Lower()), 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(4));
+        row->Add(value_row, 0, wxEXPAND);
+        s->Add(row, 0, wxEXPAND | wxBOTTOM, FromDIP(MD3::Metrics::active().gap));
     };
     spin_row(m_border_width, _L("Border width (px)"), StyleProp::border_width, 12);
     spin_row(m_radius, _L("Corner radius (px)"), StyleProp::radius, 64);
     spin_row(m_padding, _L("Padding (px)"), StyleProp::padding, 64);
     spin_row(m_margin, _L("Margin (px)"), StyleProp::margin, 64);
     s->Add(new AppearanceGeometryPreview(page, m_id), 0, wxEXPAND | wxBOTTOM, FromDIP(kRowGap));
-    auto *note = new Label(page, Label::Body_11,
+    auto *note = new Label(page, Label::Body_13,
                            _L("Margin updates native sizer layout. The live preview renders radius, border, padding and line height. Other owner-drawn controls require an explicit renderer adapter; native controls retain platform shape."),
                            LB_AUTO_WRAP);
     note->SetForegroundColour(role(MD3::Role::OnSurfaceVariant));
-    note->Wrap(FromDIP(kCardWidth - 2 * kPad));
+    note->Wrap(FromDIP(kCardWidth - 2 * MD3::Metrics::active().padding));
     s->Add(note, 0, wxEXPAND);
     page->SetSizer(s);
 }
@@ -712,7 +728,8 @@ void AppearanceEditorPopover::build_shape(wxWindow *page)
 void AppearanceEditorPopover::build_presets(wxWindow *page)
 {
     auto *s = new wxBoxSizer(wxVERTICAL);
-    m_preset_active = new Label(page, Label::Body_12, wxEmptyString, wxST_ELLIPSIZE_END | wxST_NO_AUTORESIZE);
+    m_preset_active = new Label(page, Label::Body_13, wxEmptyString, LB_AUTO_WRAP | wxST_NO_AUTORESIZE);
+    m_preset_active->SetMinSize(wxSize(0, -1));
     m_preset_active->SetForegroundColour(role(MD3::Role::OnSurfaceVariant));
     s->Add(m_preset_active, 0, wxEXPAND | wxBOTTOM, FromDIP(6));
 
@@ -740,7 +757,7 @@ void AppearanceEditorPopover::build_presets(wxWindow *page)
     });
     s->Add(m_preset_list, 0, wxEXPAND | wxBOTTOM, FromDIP(8));
 
-    auto *actions = new wxBoxSizer(wxHORIZONTAL);
+    auto *actions = new wxWrapSizer(wxHORIZONTAL);
     m_preset_apply = new Button(page, _L("Apply"));
     m_preset_apply->SetVariant(Button::Variant::Filled);
     m_preset_apply->SetButtonSize(Button::Size::Small);
@@ -791,12 +808,12 @@ void AppearanceEditorPopover::build_presets(wxWindow *page)
         ElementStyle::registry().delete_preset(name);
         persist();
     });
-    actions->Add(m_preset_apply, 0);
-    actions->Add(save_as, 0, wxLEFT, FromDIP(6));
-    actions->Add(m_preset_delete, 0, wxLEFT, FromDIP(6));
-    s->Add(actions, 0, wxBOTTOM, FromDIP(8));
+    actions->Add(m_preset_apply, 0, wxRIGHT | wxBOTTOM, FromDIP(6));
+    actions->Add(save_as, 0, wxRIGHT | wxBOTTOM, FromDIP(6));
+    actions->Add(m_preset_delete, 0, wxBOTTOM, FromDIP(6));
+    s->Add(actions, 0, wxEXPAND | wxBOTTOM, FromDIP(8));
 
-    auto *io = new wxBoxSizer(wxHORIZONTAL);
+    auto *io = new wxWrapSizer(wxHORIZONTAL);
     auto *export_btn = new Button(page, _L("Export theme..."));
     export_btn->SetVariant(Button::Variant::Outlined);
     export_btn->SetButtonSize(Button::Size::Small);
@@ -837,10 +854,15 @@ void AppearanceEditorPopover::build_presets(wxWindow *page)
                          _L("Import appearance theme"), wxOK | wxICON_INFORMATION, this);
         }
     });
-    io->Add(export_btn, 0);
-    io->Add(import_btn, 0, wxLEFT, FromDIP(6));
-    s->Add(io, 0);
+    io->Add(export_btn, 0, wxRIGHT | wxBOTTOM, FromDIP(6));
+    io->Add(import_btn, 0, wxBOTTOM, FromDIP(6));
+    s->Add(io, 0, wxEXPAND);
     page->SetSizer(s);
+    page->Bind(wxEVT_SIZE, [this, page](wxSizeEvent &event) {
+        event.Skip();
+        if (page->GetClientSize().x != m_preset_page_width)
+            reflow_preset_page();
+    });
 }
 
 void AppearanceEditorPopover::show_section(int index)
@@ -947,6 +969,30 @@ void AppearanceEditorPopover::refresh_preset_list()
         m_preset_apply->Enable(ok);
     if (m_preset_delete)
         m_preset_delete->Enable(ok && !reg.is_shipped_preset(m_preset_visible[sel]));
+    reflow_preset_page();
+}
+
+void AppearanceEditorPopover::reflow_preset_page()
+{
+    if (m_preset_reflowing || !m_preset_active)
+        return;
+    auto *page = dynamic_cast<wxScrolledWindow *>(m_preset_active->GetParent());
+    if (!page || !page->GetSizer() || page->GetClientSize().x <= 0)
+        return;
+    m_preset_reflowing = true;
+    const wxPoint view = page->GetViewStart();
+    // A changed scrollbar can change the available width. Re-measure after
+    // fitting once, without moving keyboard focus or resetting the view.
+    for (int pass = 0; pass < 2; ++pass) {
+        page->Layout();
+        m_preset_active->Wrap(std::max(1, m_preset_active->GetSize().x));
+        page->InvalidateBestSize();
+        page->Layout();
+        page->FitInside();
+    }
+    m_preset_page_width = page->GetClientSize().x;
+    page->Scroll(view.x, view.y);
+    m_preset_reflowing = false;
 }
 
 void AppearanceEditorPopover::refresh_reset_buttons()

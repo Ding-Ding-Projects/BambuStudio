@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-30 19:40-0400\n"
+"POT-Creation-Date: 2026-10-06 02:39-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -364,9 +364,6 @@ msgstr ""
 msgid "Update failed."
 msgstr ""
 
-msgid "Current AMS humidity"
-msgstr ""
-
 msgid "Humidity"
 msgstr ""
 
@@ -374,6 +371,9 @@ msgid "Temperature"
 msgstr ""
 
 msgid "Left Time"
+msgstr ""
+
+msgid "Current AMS humidity"
 msgstr ""
 
 msgid "Drying"
@@ -503,7 +503,6 @@ msgstr ""
 msgid "Abnormal Hotend"
 msgstr ""
 
-#. TRN: Cancel the pending bulk delete in the notification centre.
 msgid "Cancel"
 msgstr ""
 
@@ -1849,18 +1848,18 @@ msgstr ""
 msgid "Change file"
 msgstr ""
 
-msgid "Change to another .svg file"
-msgstr ""
-
 #. TRN: An menu option to convert the SVG into an unmodifiable model part.
 msgid "Bake to model"
 msgstr ""
 
-#. TRN: Tooltip for the menu item.
-msgid "Bake into model as uneditable part"
+msgid "Save as"
 msgstr ""
 
-msgid "Save as"
+msgid "Change to another .svg file"
+msgstr ""
+
+#. TRN: Tooltip for the menu item.
+msgid "Bake into model as uneditable part"
 msgstr ""
 
 msgid "Save SVG file"
@@ -1974,10 +1973,6 @@ msgid "Restart to install update"
 msgstr ""
 
 msgid "Release notes"
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "Released %s"
 msgstr ""
 
 #, possible-c-format, possible-boost-format
@@ -2183,6 +2178,7 @@ msgstr ""
 msgid "Got it"
 msgstr ""
 
+#. TRN: Confirms the version label prompt.
 msgid "Continue"
 msgstr ""
 
@@ -2271,6 +2267,7 @@ msgstr ""
 msgid "Open"
 msgstr ""
 
+#. TRN: Primary button of the bulk rename dialog.
 msgid "Rename"
 msgstr ""
 
@@ -2366,6 +2363,43 @@ msgid "Add to Existing Step"
 msgstr ""
 
 msgid "Delete the selected object"
+msgstr ""
+
+msgid "Select all objects"
+msgstr ""
+
+msgid "Select every object in the list"
+msgstr ""
+
+msgid "Select all matches"
+msgstr ""
+
+msgid "Select every object the list shows (the list has no filter, so this equals Select all objects)"
+msgstr ""
+
+#. TRN: Invert the current selection in the notification centre.
+msgid "Invert selection"
+msgstr ""
+
+msgid "Select every unselected object and unselect the selected ones"
+msgstr ""
+
+msgid "Bulk rename"
+msgstr ""
+
+msgid "Rename the selected objects with a pattern and a live before/after preview"
+msgstr ""
+
+msgid "Bulk delete"
+msgstr ""
+
+msgid "Review the selected objects, then delete them behind the two-key gate"
+msgstr ""
+
+msgid "Bulk export"
+msgstr ""
+
+msgid "Export each selected object to its own STL file in a folder you choose"
 msgstr ""
 
 msgid "Delete all cutter"
@@ -2900,6 +2934,51 @@ msgstr ""
 msgid "Settings for height range"
 msgstr ""
 
+msgid "Bulk rename objects"
+msgstr ""
+
+msgid "Delete objects"
+msgstr ""
+
+msgid "Each object is removed from its plate together with all of its parts and instances. This is only recoverable through Undo."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%d part(s), %d instance(s)"
+msgstr ""
+
+msgid "the list entry is no longer valid"
+msgstr ""
+
+msgid "the current selection cannot be deleted"
+msgstr ""
+
+msgid "Choose a folder for the STL files"
+msgstr ""
+
+msgid "Export objects as STL"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Each object is written to its own STL file in %s. Existing files are never overwritten."
+msgstr ""
+
+msgid "file already exists"
+msgstr ""
+
+msgid "another selected object exports to the same file name"
+msgstr ""
+
+msgid "Exporting STL files"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Bulk export finished: %d exported, %d skipped, %d failed."
+msgstr ""
+
+msgid "The export was cancelled before every object was written."
+msgstr ""
+
 msgid "Layer"
 msgstr ""
 
@@ -3092,16 +3171,16 @@ msgstr ""
 msgid "Add Pause"
 msgstr ""
 
-msgid "Insert a pause command at the beginning of this layer."
-msgstr ""
-
 msgid "Add Custom G-code"
 msgstr ""
 
-msgid "Insert custom G-code at the beginning of this layer."
+msgid "Add Custom Template"
 msgstr ""
 
-msgid "Add Custom Template"
+msgid "Insert a pause command at the beginning of this layer."
+msgstr ""
+
+msgid "Insert custom G-code at the beginning of this layer."
 msgstr ""
 
 msgid "Insert template custom G-code at the beginning of this layer."
@@ -3506,6 +3585,7 @@ msgstr ""
 msgid "transition frame"
 msgstr ""
 
+#. TRN: Field label of the version label prompt.
 msgid "Label"
 msgstr ""
 
@@ -3859,6 +3939,24 @@ msgid "Grey"
 msgstr ""
 
 msgid "White"
+msgstr ""
+
+msgid "Search unavailable. All items are shown."
+msgstr ""
+
+msgid "Search menu"
+msgstr ""
+
+msgid "Clear search"
+msgstr ""
+
+msgid "Searching..."
+msgstr ""
+
+msgid "No matches"
+msgstr ""
+
+msgid "Results"
 msgstr ""
 
 msgid ""
@@ -6199,7 +6297,13 @@ msgstr ""
 msgid "Go Live"
 msgstr ""
 
-msgid "Liveview Retry"
+msgid "Start liveview automatically"
+msgstr ""
+
+msgid "Keep liveview active"
+msgstr ""
+
+msgid "Retry interrupted liveview"
 msgstr ""
 
 msgid "Resolution"
@@ -6299,8 +6403,38 @@ msgstr ""
 msgid "Open project"
 msgstr ""
 
+msgid "Slice plate"
+msgstr ""
+
+msgid "No plate selected"
+msgstr ""
+
+msgid "Time estimate unavailable until slicing completes"
+msgstr ""
+
+msgid "Material estimate unavailable until slicing completes"
+msgstr ""
+
 #, possible-c-format, possible-boost-format
 msgid "Plate %d"
+msgstr ""
+
+msgid "Estimated time"
+msgstr ""
+
+msgid "Material"
+msgstr ""
+
+msgid "Printer preset"
+msgstr ""
+
+msgid "Wait for slicing to finish before sending output."
+msgstr ""
+
+msgid "Add a model in Prepare or open a sliced file."
+msgstr ""
+
+msgid "The selected output action is not available for the current plate."
 msgstr ""
 
 msgid "Not sliced"
@@ -6309,7 +6443,7 @@ msgstr ""
 msgid "Home"
 msgstr ""
 
-msgid "Device"
+msgid "Monitor"
 msgstr ""
 
 msgid "Multi-device"
@@ -6363,10 +6497,16 @@ msgstr ""
 msgid "Unlock faster, more reliable, warp-free prints with Helio Additive."
 msgstr ""
 
-msgid "Slice plate"
+msgid "Slice and Print"
 msgstr ""
 
-msgid "Slice and print"
+msgid "Slice and Send"
+msgstr ""
+
+msgid "Slice this plate, then choose a printer and confirm printing."
+msgstr ""
+
+msgid "Slice this plate, then send it to a printer without starting a print."
 msgstr ""
 
 msgid "Slice options"
@@ -6378,23 +6518,7 @@ msgstr ""
 msgid "Print options"
 msgstr ""
 
-msgid ""
-"This is your first time slicing with the dual extruder machine.\n"
-"Would you like to watch a quick tutorial video?"
-msgstr ""
-
-msgid "First Guide"
-msgstr ""
-
-msgid ""
-"This is your first time printing tpu filaments with the dual extruder machine.\n"
-"Would you like to watch a quick tutorial video?"
-msgstr ""
-
 msgid "PPS-CF/PPA-CF is brittle and could break in bended PTFE tube above Toolhead. Please refer to Wiki before use. "
-msgstr ""
-
-msgid "Tips"
 msgstr ""
 
 msgid "Slice all"
@@ -6443,6 +6567,24 @@ msgid "Keyboard Shortcuts"
 msgstr ""
 
 msgid "Show the list of the keyboard shortcuts"
+msgstr ""
+
+msgid "Documentation"
+msgstr ""
+
+msgid "Browse every feature article offline, inside the app"
+msgstr ""
+
+msgid "Dual-extruder slicing tutorial"
+msgstr ""
+
+msgid "Open the slicing tutorial video"
+msgstr ""
+
+msgid "Dual-extruder TPU tutorial"
+msgstr ""
+
+msgid "Open the TPU printing tutorial video"
 msgstr ""
 
 msgid "Setup Wizard"
@@ -6925,6 +7067,66 @@ msgstr ""
 msgid "Synchronization"
 msgstr ""
 
+msgid "Print preparation"
+msgstr ""
+
+msgid "Review before printing"
+msgstr ""
+
+msgid "Review the selected plate and choose an output action. Opening this page does not slice or send a job."
+msgstr ""
+
+msgid "Plate readiness"
+msgstr ""
+
+msgid "Slice and print"
+msgstr ""
+
+msgid "Slice and send"
+msgstr ""
+
+msgid "Destination and mapping"
+msgstr ""
+
+msgid "Printer destination and material mapping are reviewed in the selected action's existing confirmation flow."
+msgstr ""
+
+msgid "Output options"
+msgstr ""
+
+msgid "Continue deliberately"
+msgstr ""
+
+msgid "The selected action keeps its existing printer selection, validation, and confirmation steps."
+msgstr ""
+
+msgid "Slicing and combined output actions use the same checks and confirmation flow as Prepare."
+msgstr ""
+
+msgid "Print summary"
+msgstr ""
+
+msgid "Estimates describe the selected plate. The output action determines whether one or all plates are included."
+msgstr ""
+
+msgid "No printable content"
+msgstr ""
+
+msgid "Slicing in progress"
+msgstr ""
+
+msgid "Slice required"
+msgstr ""
+
+msgid "Ready for the selected output action"
+msgstr ""
+
+msgid "Output unavailable"
+msgstr ""
+
+msgid "Return to Prepare to review the plate, material settings, or slicing progress."
+msgstr ""
+
 msgid "The device cannot handle more conversations. Please retry later."
 msgstr ""
 
@@ -6982,7 +7184,8 @@ msgstr ""
 msgid "Video Stopped."
 msgstr ""
 
-msgid "LAN Connection Failed (Failed to start liveview)"
+#, possible-c-format, possible-boost-format
+msgid "Connection interrupted. Retrying in %d seconds."
 msgstr ""
 
 msgid ""
@@ -7893,6 +8096,13 @@ msgstr ""
 msgid "Serious warning:"
 msgstr ""
 
+msgid "Next notifications"
+msgstr ""
+
+#. TRN: Accessible name of the notification history list.
+msgid "Notification history"
+msgstr ""
+
 msgid " Click here to install it."
 msgstr ""
 
@@ -8715,9 +8925,6 @@ msgstr ""
 msgid "Used Materials"
 msgstr ""
 
-msgid "Estimated time"
-msgstr ""
-
 msgid "Filament changes"
 msgstr ""
 
@@ -8728,6 +8935,9 @@ msgid "Filament switcher detected. All AMS filaments are now available for both 
 msgstr ""
 
 msgid "A filament switcher is detected but not calibrated and thus currently unavailable. Please calibrate it on the printer and synchronize before use. "
+msgstr ""
+
+msgid "Tips"
 msgstr ""
 
 msgid "Learn more"
@@ -8942,6 +9152,48 @@ msgstr ""
 msgid "Slot %d: %s"
 msgstr ""
 
+#. TRN %1$s preset name, %2$d slot count.
+#, possible-c-format, possible-boost-format
+msgid "preset \"%s\" to %d slot(s)"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "colour %s to %d slot(s)"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "delete %d slot(s)"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "add %d new filament(s)"
+msgstr ""
+
+msgid "Staged:"
+msgstr ""
+
+msgid "Deleted slots are removed from the project; objects and paint assigned to them move to another slot."
+msgstr ""
+
+msgid "the slot no longer exists"
+msgstr ""
+
+msgid "kept (at least one filament must remain); preset/colour still applied"
+msgstr ""
+
+msgid "at least one filament must remain"
+msgstr ""
+
+msgid "deleted"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Add %d new filament(s)"
+msgstr ""
+
+msgid "appended after the last slot"
+msgstr ""
+
 msgid "Project edit"
 msgstr ""
 
@@ -9024,6 +9276,9 @@ msgstr ""
 
 #, possible-c-format, possible-boost-format
 msgid "Loading file: %s"
+msgstr ""
+
+msgid "Automatic simplification skipped this saved project. Original geometry and project metadata were preserved."
 msgstr ""
 
 msgid "The 3mf file has invalid config, load geometry data only"
@@ -9130,13 +9385,13 @@ msgstr ""
 msgid "Importing model to project..."
 msgstr ""
 
+msgid "Placing model on the bed..."
+msgstr ""
+
 msgid "Your object appears to be too large, Do you want to scale it down to fit the heat bed automatically?"
 msgstr ""
 
 msgid "Object too large"
-msgstr ""
-
-msgid "Placing model on the bed..."
 msgstr ""
 
 msgid "Updating object list..."
@@ -9239,9 +9494,6 @@ msgid "Invalid data"
 msgstr ""
 
 msgid "Slicing Canceled"
-msgstr ""
-
-msgid "Great! Now click the Helio button to start optimization."
 msgstr ""
 
 #, possible-c-format, possible-boost-format
@@ -9445,9 +9697,6 @@ msgstr ""
 msgid "See supported printers"
 msgstr ""
 
-msgid "Click the Optimize/Enhance button to start your first optimization."
-msgstr ""
-
 msgid "Previous Helio action is still stopping; try again shortly"
 msgstr ""
 
@@ -9510,6 +9759,9 @@ msgstr ""
 msgid ""
 "Preview only mode:\n"
 "The loaded file contains gcode only, Can not enter the Prepare page"
+msgstr ""
+
+msgid "Canceling slicing..."
 msgstr ""
 
 msgid ""
@@ -9631,6 +9883,39 @@ msgid "does not contain valid gcode."
 msgstr ""
 
 msgid "Error occurs while loading G-code file"
+msgstr ""
+
+msgid "Finish or cancel the current operation before importing models."
+msgstr ""
+
+msgid "Reading model files in the background..."
+msgstr ""
+
+msgid "Simplifying large imported models..."
+msgstr ""
+
+msgid "Preparing model geometry..."
+msgstr ""
+
+msgid "Import canceled"
+msgstr ""
+
+msgid "Large imported meshes were simplified. Dimensions and volume may change; original files are unchanged."
+msgstr ""
+
+msgid "Restore original geometry"
+msgstr ""
+
+msgid "Automatic simplification skipped meshes with painting, textures or protected metadata. Original geometry was preserved."
+msgstr ""
+
+msgid "Restore original imported geometry"
+msgstr ""
+
+msgid "Original imported geometry restored. Undo can restore the simplified meshes."
+msgstr ""
+
+msgid "No unchanged simplified imports are available to restore."
 msgstr ""
 
 msgid "Drop project file"
@@ -10004,6 +10289,9 @@ msgstr ""
 msgid "No settings match your search."
 msgstr ""
 
+msgid "Schedules"
+msgstr ""
+
 msgctxt "Preference"
 msgid "General"
 msgstr ""
@@ -10021,6 +10309,9 @@ msgid "Other"
 msgstr ""
 
 msgid "Developer Tools"
+msgstr ""
+
+msgid "Settings draft"
 msgstr ""
 
 msgid "Appearance preview"
@@ -10122,6 +10413,36 @@ msgstr ""
 msgid "Hide explanation"
 msgstr ""
 
+msgid "Personal vocabulary"
+msgstr ""
+
+msgid "Load a version 1 JSON file to change display wording on this device. Original data, logs and exports keep their original wording."
+msgstr ""
+
+msgid "Load JSON"
+msgstr ""
+
+msgid "Clear personal vocabulary"
+msgstr ""
+
+msgid "Replace JSON"
+msgstr ""
+
+msgid "The vocabulary file could not be applied. Use valid version 1 JSON within the supported size limits."
+msgstr ""
+
+msgid "Personal vocabulary is active on this device."
+msgstr ""
+
+msgid "Original wording is active."
+msgstr ""
+
+msgid "Load personal vocabulary"
+msgstr ""
+
+msgid "JSON files (*.json)|*.json"
+msgstr ""
+
 msgid "General Settings"
 msgstr ""
 
@@ -10153,6 +10474,18 @@ msgid "Imperial"
 msgstr ""
 
 msgid "Units"
+msgstr ""
+
+msgid "Interface motion"
+msgstr ""
+
+msgid "Reduce motion settles supported transitions immediately. System follows your operating system preference."
+msgstr ""
+
+msgid "System"
+msgstr ""
+
+msgid "Reduce motion"
 msgstr ""
 
 msgid "All related changes"
@@ -10231,6 +10564,21 @@ msgstr ""
 msgid "Editor used by File > Open in External Editor; \"Custom\" uses the executable chosen below."
 msgstr ""
 
+msgid "Model import"
+msgstr ""
+
+msgid "Automatically simplify large imported models"
+msgstr ""
+
+msgid "Simplify meshes with at least 1,000,000 triangles before adding them to the scene. Source files are unchanged. Saved projects and meshes with painting or protected metadata keep their original geometry."
+msgstr ""
+
+msgid "Import simplification detail"
+msgstr ""
+
+msgid "Uses the same detail levels as the manual Simplify tool. Extra high is the default."
+msgstr ""
+
 msgid "User Settings"
 msgstr ""
 
@@ -10252,10 +10600,7 @@ msgstr ""
 msgid "Display time in 12-hour format with AM/PM instead of 24-hour format"
 msgstr ""
 
-msgid "Keep liveview when printing."
-msgstr ""
-
-msgid "By default, Liveview will pause after 15 minutes of inactivity on the computer. Check this box to disable this feature during printing."
+msgid "Keep the camera streaming while idle, on other tabs, or minimized. This does not enable recording."
 msgstr ""
 
 msgid "Automatically transfer modified value when switching process and filament presets"
@@ -10632,10 +10977,10 @@ msgstr ""
 msgid "Edit preset"
 msgstr ""
 
-msgid "Project-inside presets"
+msgid "Select, delete, export or rename several user presets at once"
 msgstr ""
 
-msgid "System"
+msgid "Project-inside presets"
 msgstr ""
 
 msgid "Unsupported presets"
@@ -12730,9 +13075,6 @@ msgstr ""
 msgid "Shift+E"
 msgstr ""
 
-msgid "Select all objects"
-msgstr ""
-
 msgid "Shift+D"
 msgstr ""
 
@@ -13046,12 +13388,6 @@ msgid "Run Your First Optimization"
 msgstr ""
 
 msgid "You're nearly there! Now that Helio is activated, your first optimization run for faster, more reliable printing takes only minutes! (Now referred to as 'Enhance' or 'Enhancement')"
-msgstr ""
-
-msgid "Add an object to the build plate, select a material and printer that Helio supports, then slice."
-msgstr ""
-
-msgid "Supported printers and materials"
 msgstr ""
 
 msgid "Copy PAT"
@@ -19078,6 +19414,9 @@ msgstr ""
 msgid "minute each batch.(It depends on how long it takes to complete the heating.)"
 msgstr ""
 
+msgid "Device"
+msgstr ""
+
 msgid "Task Sending"
 msgstr ""
 
@@ -19101,6 +19440,22 @@ msgstr ""
 msgid "This printer is offline. It remains in the farm list."
 msgstr ""
 
+#. TRN: Accessible name of a device card; %1$s device name, %2$s "selected" or "not selected".
+#, possible-c-format, possible-boost-format
+msgid "%s, %s"
+msgstr ""
+
+msgid "selected"
+msgstr ""
+
+msgid "not selected"
+msgstr ""
+
+#. TRN: Accessible name of the per-device selection checkbox; %s is the device name.
+#, possible-c-format, possible-boost-format
+msgid "Select %s"
+msgstr ""
+
 msgid "Device farm"
 msgstr ""
 
@@ -19110,6 +19465,16 @@ msgstr ""
 msgid "Edit Printers"
 msgstr ""
 
+msgid "Select this page"
+msgstr ""
+
+msgid "Export selected..."
+msgstr ""
+
+#. TRN: Tooltip of the device-farm "Export selected..." bulk action.
+msgid "Writes the selected devices (name, id, model, status, task, progress) to a JSON or CSV file"
+msgstr ""
+
 msgid "Task Name"
 msgstr ""
 
@@ -19117,6 +19482,67 @@ msgid "Actions"
 msgstr ""
 
 msgid "Go"
+msgstr ""
+
+#. TRN: %d is how many device cards are on the current page.
+#. TRN: %d is the number of rows currently rendered.
+#, possible-c-format, possible-boost-format
+msgid "Select this page (%d)"
+msgstr ""
+
+msgid "Selects every device card on this page"
+msgstr ""
+
+#. TRN: %d is how many devices match the search across every page.
+#. TRN: %d is the number of notifications matching the filter, rendered or not.
+#, possible-c-format, possible-boost-format
+msgid "Select all %d matches"
+msgstr ""
+
+msgid "Selects every device matching the search, on every page"
+msgstr ""
+
+msgid "Inverts the selection across every matching device"
+msgstr ""
+
+msgid "Clears the selection"
+msgstr ""
+
+#. TRN: %d devices are selected in total.
+#, possible-c-format, possible-boost-format
+msgid "%d selected"
+msgstr ""
+
+#. TRN: %d selected devices sit on other pages (or are hidden by the search).
+#, possible-c-format, possible-boost-format
+msgid "(%d on other pages)"
+msgstr ""
+
+#. TRN: Title of the file picker for exporting selected devices.
+msgid "Export selected devices"
+msgstr ""
+
+msgid "Export devices"
+msgstr ""
+
+#. TRN: %s is the export file name.
+#, possible-c-format, possible-boost-format
+msgid "The selected devices are written as CSV rows to %s. Devices are not changed."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The selected devices are written as a JSON list to %s. Devices are not changed."
+msgstr ""
+
+msgid "device is no longer in the farm"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Could not write %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Exported %d of %d devices to %s"
 msgstr ""
 
 msgid "No devices match your search."
@@ -19176,6 +19602,28 @@ msgstr ""
 msgid "No content"
 msgstr ""
 
+#. TRN: Label beside the master checkbox; toggles every visible preset row.
+msgid "Select visible"
+msgstr ""
+
+msgid "Rename selected..."
+msgstr ""
+
+msgid "Select every preset matching the current search (Ctrl+A)"
+msgstr ""
+
+msgid "Select every preset in this collection, including rows hidden by the search (Ctrl+Shift+A)"
+msgstr ""
+
+msgid "Invert the selection within the visible rows (Ctrl+I)"
+msgstr ""
+
+msgid "Write each selected preset as a .json file into a folder you choose"
+msgstr ""
+
+msgid "Rename the selected presets with a pattern or find/replace"
+msgstr ""
+
 #, possible-c-format, possible-boost-format
 msgid "Printer presets (%d)"
 msgstr ""
@@ -19192,7 +19640,82 @@ msgstr ""
 msgid "%u Selected"
 msgstr ""
 
+#. TRN: %u selected presets are hidden by the current search filter.
+#, possible-c-format, possible-boost-format
+msgid " (%u hidden by the search)"
+msgstr ""
+
+#. TRN: Bulk selection button; %d is the number of versions currently listed.
+#, possible-c-format, possible-boost-format
+msgid "Select visible (%d)"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Select all %d presets"
+msgstr ""
+
+msgid "Review and delete the selected presets (Delete)"
+msgstr ""
+
 msgid "Please select the preset to be deleted"
+msgstr ""
+
+msgid "Delete presets"
+msgstr ""
+
+msgid "The preset files are removed from the user preset folder and cannot be recovered except from a config-profile snapshot. Deleting a custom printer also deletes the filament and process presets attached to it."
+msgstr ""
+
+msgid "Preset no longer exists"
+msgstr ""
+
+#, possible-boost-format
+msgid "Inherited by \"%1%\", which is not selected"
+msgstr ""
+
+msgid "Currently selected in the tab; another preset will be selected"
+msgstr ""
+
+#, possible-boost-format
+msgid "Also deletes %1% filament and %2% process presets attached to this printer"
+msgstr ""
+
+msgid "Choose the folder to export the selected presets into"
+msgstr ""
+
+msgid "Export presets"
+msgstr ""
+
+#, possible-boost-format
+msgid "Each preset is written as a .json file into %1%. Existing files are left untouched."
+msgstr ""
+
+msgid "A file with this name already exists"
+msgstr ""
+
+msgid "Exporting presets"
+msgstr ""
+
+#. TRN: %1$d exported, %2$d skipped (existing file / cancelled), %3$d failed; %4$s folder.
+#, possible-c-format, possible-boost-format
+msgid "Exported %d presets, skipped %d, failed %d - %s"
+msgstr ""
+
+msgid "(cancelled)"
+msgstr ""
+
+msgid "None of the selected presets can be renamed: they are inherited by other presets or have unsaved changes."
+msgstr ""
+
+msgid "Rename presets"
+msgstr ""
+
+msgid "Renaming presets"
+msgstr ""
+
+#. TRN: %1$d renamed, %2$d refused (inherited / unsaved), %3$d failed.
+#, possible-c-format, possible-boost-format
+msgid "Renamed %d presets, refused %d, failed %d"
 msgstr ""
 
 #, possible-c-format, possible-boost-format
@@ -20354,6 +20877,9 @@ msgstr ""
 msgid "Actions apply to the checked filament slots."
 msgstr ""
 
+msgid "Check every unchecked slot and uncheck the checked ones"
+msgstr ""
+
 msgid "Set preset..."
 msgstr ""
 
@@ -20589,10 +21115,10 @@ msgstr ""
 msgid "Find any print / filament / printer parameter"
 msgstr ""
 
-msgid "Setting"
+msgid "Restore unchanged meshes reduced by automatic model import simplification"
 msgstr ""
 
-msgid "Documentation"
+msgid "Setting"
 msgstr ""
 
 #, possible-c-format, possible-boost-format
@@ -20618,13 +21144,22 @@ msgstr ""
 msgid "The selected backup file could not be opened."
 msgstr ""
 
-msgid "The new profile folder could not be created."
+msgid "The new profile folder could not be reserved. Choose a different name or try again."
 msgstr ""
 
 msgid "The backup contains an unsafe path and was rejected."
 msgstr ""
 
 msgid "A file inside the backup could not be written."
+msgstr ""
+
+msgid "The backup is damaged or is not a valid ZIP archive. No profile was imported."
+msgstr ""
+
+msgid "The backup could not be imported."
+msgstr ""
+
+msgid "Finishing the current operation before closing..."
 msgstr ""
 
 msgid "Export everything in your data folder, import it on another PC, and keep unlimited profiles - each with its own local Git-backed snapshot history."
@@ -20640,6 +21175,12 @@ msgstr ""
 msgid "Data folder"
 msgstr ""
 
+msgid "Select every profile matching the current search (Ctrl+A)"
+msgstr ""
+
+msgid "Select every profile, including rows hidden by the search (Ctrl+Shift+A)"
+msgstr ""
+
 msgid "Launch profile"
 msgstr ""
 
@@ -20650,6 +21191,18 @@ msgid "History..."
 msgstr ""
 
 msgid "Preferences history..."
+msgstr ""
+
+msgid "Snapshot selected"
+msgstr ""
+
+msgid "Export list..."
+msgstr ""
+
+msgid "Record a complete snapshot of every selected profile, after a review"
+msgstr ""
+
+msgid "Write the profile list (name, data folder, last snapshot) as JSON or CSV"
 msgstr ""
 
 msgid "A full backup includes secrets: printer access codes, network-plugin login state, API tokens and physical-printer passwords. Anyone with the file can use them. Slide to confirm before exporting or importing."
@@ -20670,6 +21223,28 @@ msgid "Import backup..."
 msgstr ""
 
 msgid "Current (active)"
+msgstr ""
+
+msgid "Launch starts one instance on one profile: select a single row to launch it."
+msgstr ""
+
+msgid "This profile is already running (it is the active one)."
+msgstr ""
+
+msgid "Start another Bambu Studio instance on the selected profile"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Select all %d profiles"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%d profiles selected"
+msgstr ""
+
+#. TRN: %d selected profiles are hidden by the current search filter.
+#, possible-c-format, possible-boost-format
+msgid " (%d hidden by the search)"
 msgstr ""
 
 msgid "Export the complete data folder"
@@ -20705,6 +21280,10 @@ msgstr ""
 msgid "Recording a complete profile snapshot..."
 msgstr ""
 
+#, possible-c-format, possible-boost-format
+msgid "Snapshot of \"%s\" recorded in its local history."
+msgstr ""
+
 msgid "Manual profile snapshot"
 msgstr ""
 
@@ -20712,8 +21291,42 @@ msgstr ""
 msgid "The snapshot could not be recorded: %s"
 msgstr ""
 
+msgid "Snapshot profiles"
+msgstr ""
+
+msgid "A complete zip of each profile's data folder is committed to that profile's local history. Nothing is deleted or overwritten."
+msgstr ""
+
+msgid "Another snapshot or transfer is still running"
+msgstr ""
+
+msgid "The data folder no longer exists"
+msgstr ""
+
+msgid "Recording profile snapshots"
+msgstr ""
+
+#. TRN: %1$d snapshots recorded, %2$d failed, %3$d skipped (preview skips + not reached after cancel).
 #, possible-c-format, possible-boost-format
-msgid "Snapshot of \"%s\" recorded in its local history."
+msgid "Recorded %d snapshots, %d failed, %d skipped."
+msgstr ""
+
+msgid "The run was cancelled."
+msgstr ""
+
+msgid "Export the profile list"
+msgstr ""
+
+#. TRN: %1$d profiles written, %2$s file path.
+#, possible-c-format, possible-boost-format
+msgid "Exported %d profiles to %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Could not write the export to %s. Check the folder is writable and try again."
+msgstr ""
+
+msgid "Loading profile history..."
 msgstr ""
 
 #, possible-c-format, possible-boost-format
@@ -20742,6 +21355,9 @@ msgstr ""
 msgid "Snapshot restored as profile \"%s\"."
 msgstr ""
 
+msgid "Loading preferences history..."
+msgstr ""
+
 #, possible-c-format, possible-boost-format
 msgid "Preferences history could not be read: %s"
 msgstr ""
@@ -20753,6 +21369,9 @@ msgid "Automatic snapshots of your preferences. Restoring writes a copy next to 
 msgstr ""
 
 msgid "Preferences history"
+msgstr ""
+
+msgid "Restoring preferences snapshot..."
 msgstr ""
 
 #, possible-c-format, possible-boost-format
@@ -21701,7 +22320,10 @@ msgstr ""
 msgid "Open in Prepare"
 msgstr ""
 
-msgid "Navigation rail"
+msgid "Workspace navigation"
+msgstr ""
+
+msgid "More workspaces"
 msgstr ""
 
 msgid "Notification centre"
@@ -21728,10 +22350,6 @@ msgstr ""
 msgid "Show dismissed"
 msgstr ""
 
-#. TRN: Accessible name of the notification history list.
-msgid "Notification history"
-msgstr ""
-
 #. TRN: Column headers of the notification centre list.
 msgid "Level"
 msgstr ""
@@ -21741,10 +22359,6 @@ msgstr ""
 
 #. TRN: Empty state of the notification centre.
 msgid "No notifications match. New toasts will appear here as they are shown."
-msgstr ""
-
-#. TRN: Invert the current selection in the notification centre.
-msgid "Invert selection"
 msgstr ""
 
 #. TRN: Clear the selection in the notification centre.
@@ -21761,13 +22375,6 @@ msgstr ""
 
 #. TRN: Bulk action: permanently delete the selected history entries (opens the confirmation gate).
 msgid "Delete selected…"
-msgstr ""
-
-#. TRN: Instruction on the slide-to-confirm control guarding bulk delete; second string is shown once the slide completes.
-msgid "Slide to delete these entries permanently"
-msgstr ""
-
-msgid "Deleting…"
 msgstr ""
 
 msgid "Hint"
@@ -21800,14 +22407,16 @@ msgstr ""
 msgid "%d matches (%d recorded) · %d selected"
 msgstr ""
 
-#. TRN: %d is the number of rows currently rendered.
-#, possible-c-format, possible-boost-format
-msgid "Select this page (%d)"
+#. TRN: Tooltip; Ctrl+A is the shortcut.
+msgid "Select the rows currently rendered (Ctrl+A)"
 msgstr ""
 
-#. TRN: %d is the number of notifications matching the filter, rendered or not.
-#, possible-c-format, possible-boost-format
-msgid "Select all %d matches"
+#. TRN: Tooltip; Ctrl+Shift+A is the shortcut.
+msgid "Select every entry matching the filter, rendered or not (Ctrl+Shift+A)"
+msgstr ""
+
+#. TRN: Tooltip; Ctrl+I is the shortcut.
+msgid "Invert the selection within the current matches (Ctrl+I)"
 msgstr ""
 
 #. TRN: %d is how many more matches the next page reveals.
@@ -21822,7 +22431,8 @@ msgstr ""
 msgid "Close the selected toasts and mark them dismissed"
 msgstr ""
 
-msgid "Permanently remove the selected entries from the history"
+#. TRN: Tooltip; Delete is the shortcut while the list has focus.
+msgid "Review and permanently remove the selected entries from the history (Delete)"
 msgstr ""
 
 msgid "Nothing matches the current filter"
@@ -21847,16 +22457,13 @@ msgstr ""
 msgid "Exported %d notifications to %s"
 msgstr ""
 
-#, possible-c-format, possible-boost-format
-msgid "Could not write the export to %s. Check the folder is writable and try again."
-msgstr ""
-
-#. TRN: Title of the confirmation gate for deleting notification history entries.
 msgid "Delete notification entries"
 msgstr ""
 
-#, possible-c-format, possible-boost-format
-msgid "Permanently delete %d notification entries from the history. This cannot be undone; the export button above keeps a copy first."
+msgid "The selected entries are removed from the history permanently. This cannot be undone; use Export first to keep a copy."
+msgstr ""
+
+msgid "No longer in the history"
 msgstr ""
 
 #, possible-c-format, possible-boost-format
@@ -21871,7 +22478,22 @@ msgstr ""
 msgid "Printer watch: %s"
 msgstr ""
 
-msgid "Browse complete project snapshots saved automatically in a private local Git repository."
+#. TRN: Title of the prompt asking for a label to attach to project versions.
+msgid "Label versions"
+msgstr ""
+
+#. TRN: %d is how many project versions will receive the label.
+#, possible-c-format, possible-boost-format
+msgid "The label is attached to %d selected versions"
+msgstr ""
+
+msgid "Letters, digits, '.', '_' and '-' are kept; other characters become '-'. Labels never change history."
+msgstr ""
+
+msgid "Local history"
+msgstr ""
+
+msgid "Browse project, settings, draft and printer history saved on this device. No history is uploaded."
 msgstr ""
 
 msgid "Untitled project"
@@ -21889,11 +22511,82 @@ msgstr ""
 msgid "Retry saving"
 msgstr ""
 
+msgid "History views"
+msgstr ""
+
+msgid "Table"
+msgstr ""
+
+msgid "Git graph"
+msgstr ""
+
+msgid "Compare"
+msgstr ""
+
+msgid "Past searches"
+msgstr ""
+
 #. TRN: Placeholder of the search field filtering the version list.
 msgid "Search versions"
 msgstr ""
 
+msgid "All categories"
+msgstr ""
+
+msgid "Draft"
+msgstr ""
+
+msgid "All statuses"
+msgstr ""
+
+msgid "Resolved"
+msgstr ""
+
+msgid "Device identifier"
+msgstr ""
+
+msgid "Current project"
+msgstr ""
+
+msgid "From YYYY-MM-DD"
+msgstr ""
+
+msgid "Through YYYY-MM-DD"
+msgstr ""
+
+msgid "Project versions"
+msgstr ""
+
 msgid "Commit"
+msgstr ""
+
+msgid "Compare selected"
+msgstr ""
+
+msgid "Pin / unpin search"
+msgstr ""
+
+msgid "Run selected search"
+msgstr ""
+
+msgid "Delete search"
+msgstr ""
+
+msgid "Clear unpinned searches"
+msgstr ""
+
+msgid "Invert"
+msgstr ""
+
+msgid "Label selected..."
+msgstr ""
+
+#. TRN: Tooltip of the "Export selected..." bulk action in Version history.
+msgid "Writes each selected version as its own .3mf file into a folder you choose"
+msgstr ""
+
+#. TRN: Tooltip of the "Label selected..." bulk action in Version history.
+msgid "Attaches a label to every selected version; labels never change or remove history"
 msgstr ""
 
 msgid "Load all versions"
@@ -21912,17 +22605,7 @@ msgstr ""
 msgid "Export every listed version as JSON, CSV, YAML, TOML, XML, Markdown, HTML or an archive"
 msgstr ""
 
-msgid "Version history is unavailable because its local repository could not be initialized."
-msgstr ""
-
-msgid "Version history is unavailable for this project."
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "Could not load version history: %s"
-msgstr ""
-
-msgid "Could not load version history."
+msgid "Loading local history..."
 msgstr ""
 
 #. TRN: Body text of the recovery banner in the Version history dialog.
@@ -21932,6 +22615,9 @@ msgstr ""
 #. TRN: %d is the number of additional unsaved snapshots not listed above.
 #, possible-c-format, possible-boost-format
 msgid "and %d more"
+msgstr ""
+
+msgid "Printer incident records cannot replace editor settings."
 msgstr ""
 
 msgid ""
@@ -21956,6 +22642,22 @@ msgstr ""
 msgid "Could not restore the selected version."
 msgstr ""
 
+msgid "Could not compare these versions."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Could not load version history: %s"
+msgstr ""
+
+msgid "Enter valid dates in YYYY-MM-DD order, with From before Through."
+msgstr ""
+
+msgid "Root commit"
+msgstr ""
+
+msgid "No versions in the selected store."
+msgstr ""
+
 #. TRN: %1$d is how many project versions match the search; %2$d is the total.
 #, possible-c-format, possible-boost-format
 msgid "%d of %d versions match the search"
@@ -21972,7 +22674,77 @@ msgstr ""
 msgid "No versions yet. A version is created automatically after completed edits and project saves."
 msgstr ""
 
-msgid "Selected commit: "
+msgid "Selects every listed version"
+msgstr ""
+
+#. TRN: %d is the number of versions loaded so far; older ones are not loaded yet.
+#, possible-c-format, possible-boost-format
+msgid "Select all %d loaded versions"
+msgstr ""
+
+#. TRN: Tooltip explaining that "Select all" stops at the loaded versions.
+msgid "Selects every loaded version, including ones hidden by the search. Load all versions to include older ones."
+msgstr ""
+
+#. TRN: Bulk selection button; %d is the total number of versions.
+#, possible-c-format, possible-boost-format
+msgid "Select all %d versions"
+msgstr ""
+
+msgid "Selects every version, including ones hidden by the search"
+msgstr ""
+
+msgid "Inverts the selection of the listed versions"
+msgstr ""
+
+#. TRN: %d selected versions are currently hidden by the search filter.
+#, possible-c-format, possible-boost-format
+msgid "(%d hidden by the search)"
+msgstr ""
+
+#. TRN: Title of the folder picker for exporting project versions.
+msgid "Choose a folder for the exported versions"
+msgstr ""
+
+msgid "Export versions"
+msgstr ""
+
+msgid "Each version is written as its own .3mf named <project>-<commit>-<date>.3mf in the chosen folder. Nothing in the history changes."
+msgstr ""
+
+msgid "This record has no snapshot store"
+msgstr ""
+
+msgid "a file with this name already exists"
+msgstr ""
+
+msgid "Exporting versions"
+msgstr ""
+
+#. TRN: %1$d versions were exported out of %2$d selected.
+#, possible-c-format, possible-boost-format
+msgid "Exported %d of %d selected versions"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid ", %d skipped"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid ", %d failed"
+msgstr ""
+
+#. TRN: %s is the label text the user typed.
+#, possible-c-format, possible-boost-format
+msgid "The label \"%s\" is attached to each version. History is never changed or removed."
+msgstr ""
+
+msgid "Labelling versions"
+msgstr ""
+
+#. TRN: %1$d versions were labelled out of %2$d selected.
+#, possible-c-format, possible-boost-format
+msgid "Labelled %d of %d selected versions"
 msgstr ""
 
 msgid "Unknown time"
@@ -21983,6 +22755,54 @@ msgstr ""
 
 #, possible-c-format, possible-boost-format
 msgid "Autosave: %s"
+msgstr ""
+
+msgid "Pinned"
+msgstr ""
+
+msgid "Search and filters"
+msgstr ""
+
+msgid "Category / description"
+msgstr ""
+
+msgid "Submitted"
+msgstr ""
+
+msgid "Size / state"
+msgstr ""
+
+msgid "This search was not saved. Check the query for sensitive data or check local storage."
+msgstr ""
+
+msgid "Recent"
+msgstr ""
+
+msgid "The last 100 submitted searches are retained. Pinned searches remain until explicitly deleted."
+msgstr ""
+
+msgid "Could not save this pinned search."
+msgstr ""
+
+msgid "Could not delete the saved search."
+msgstr ""
+
+msgid "Could not clear submitted searches."
+msgstr ""
+
+msgid "Comparison base selected. Select another entry and press Compare selected."
+msgstr ""
+
+msgid "History changed. Select a comparison base again."
+msgstr ""
+
+msgid "Choose two entries from the same history store or printer."
+msgstr ""
+
+msgid "Could not read the selected versions for comparison."
+msgstr ""
+
+msgid "Unsupported settings snapshot."
 msgstr ""
 
 msgid "Projects"
@@ -22326,6 +23146,30 @@ msgstr ""
 msgid "Move Y down %d mm"
 msgstr ""
 
+msgid "Zoom out"
+msgstr ""
+
+msgid "Zoom out (-)"
+msgstr ""
+
+msgid "Zoom in"
+msgstr ""
+
+msgid "Zoom in (+)"
+msgstr ""
+
+msgid "Reset camera view"
+msgstr ""
+
+msgid "Reset camera view (0)"
+msgstr ""
+
+msgid "Camera zoom percentage"
+msgstr ""
+
+msgid "Choose camera zoom percentage"
+msgstr ""
+
 msgid "LIVE"
 msgstr ""
 
@@ -22477,13 +23321,17 @@ msgstr ""
 msgid "Copied %s"
 msgstr ""
 
+msgid "No matches."
+msgstr ""
+
 msgid "Menu"
 msgstr ""
 
-msgid "Activate"
+#, possible-c-format, possible-boost-format
+msgid "%d results"
 msgstr ""
 
-msgid "Search menu"
+msgid "Activate"
 msgstr ""
 
 #, possible-c-format, possible-boost-format
@@ -22738,9 +23586,6 @@ msgstr ""
 
 #, possible-c-format, possible-boost-format
 msgid "group %d: (no match)"
-msgstr ""
-
-msgid "No matches."
 msgstr ""
 
 #, possible-c-format, possible-boost-format
@@ -23043,9 +23888,6 @@ msgstr ""
 msgid "%d tab strips"
 msgstr ""
 
-msgid "Results"
-msgstr ""
-
 msgid "Go to tab"
 msgstr ""
 
@@ -23053,10 +23895,6 @@ msgid "Nothing to list."
 msgstr ""
 
 msgid "No tab matches this search."
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "%d results"
 msgstr ""
 
 #, possible-c-format, possible-boost-format
@@ -23181,7 +24019,7 @@ msgstr ""
 msgid "Planned print"
 msgstr ""
 
-msgid "Start (UTC)"
+msgid "Start (local time)"
 msgstr ""
 
 msgid "Add planned print"
@@ -23407,6 +24245,12 @@ msgstr ""
 msgid "Dock the Prepare panel on the left, right, top, or bottom"
 msgstr ""
 
+msgid "Model import: simplify at 1,000,000 triangles before scene attachment"
+msgstr ""
+
+msgid "Extra high, High, Medium, Low or Extra low detail for automatic model import simplification"
+msgstr ""
+
 msgid "Multi-device Management"
 msgstr ""
 
@@ -23620,6 +24464,9 @@ msgstr ""
 msgid "Cloud web-page failure recovery"
 msgstr ""
 
+msgid "Offline documentation browser (F1)"
+msgstr ""
+
 msgid "Command palette (Ctrl+Shift+F)"
 msgstr ""
 
@@ -23771,6 +24618,108 @@ msgid ""
 "Please adjust the post-processing script to change the G-code in place and consult the manual on how to optionally rename the post-processed G-code file.\n"
 msgstr ""
 
+#. TRN: Progress line of a bulk action; %1$d current item, %2$d total, %3$s item name.
+#, possible-c-format, possible-boost-format
+msgid "%d of %d: %s"
+msgstr ""
+
+#. TRN: Placeholder of the search field filtering the bulk-action preview list.
+msgid "Filter the preview"
+msgstr ""
+
+#. TRN: Accessible name of the list that previews the items a bulk action will touch.
+msgid "Bulk action preview"
+msgstr ""
+
+msgid "Item"
+msgstr ""
+
+msgid "Becomes"
+msgstr ""
+
+msgid "Outcome"
+msgstr ""
+
+#. TRN: Outcome column of the bulk preview when the row will be acted on.
+msgid "Will change"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Skipped: %s"
+msgstr ""
+
+#. TRN: Bulk preview counts; %1$d selected, %2$d will change, %3$d skipped.
+#, possible-c-format, possible-boost-format
+msgid "%d selected / %d will change / %d skipped"
+msgstr ""
+
+#. TRN: Tooltip on the disabled Proceed button of a bulk preview.
+msgid "Nothing in the selection would change; every item is skipped for the reason shown"
+msgstr ""
+
+msgid "Opens the two-key confirmation before anything is deleted"
+msgstr ""
+
+#. TRN: Caption above the naming-pattern field of the bulk rename dialog; placeholders are literal.
+msgid "Pattern: {name} keeps the current name, {n} numbers from the start index, {i} from 0, {stem} and {ext} split a file name; {{ and }} are literal braces"
+msgstr ""
+
+msgid "Naming pattern"
+msgstr ""
+
+msgid "Find (plain text; use the .* toggle or the builder for a regex with $1 back-references)"
+msgstr ""
+
+#. TRN: Placeholder of the find field in the bulk rename dialog.
+msgid "Find"
+msgstr ""
+
+msgid "Replace with"
+msgstr ""
+
+msgid "Start {n} at"
+msgstr ""
+
+msgid "Zero-pad to digits"
+msgstr ""
+
+#. TRN: Accessible name of the live before/after list in the bulk rename dialog.
+msgid "Rename preview"
+msgstr ""
+
+msgid "Before"
+msgstr ""
+
+msgid "After"
+msgstr ""
+
+#. TRN: Outcome column of the bulk rename preview.
+msgid "Will rename"
+msgstr ""
+
+msgid "Skipped: name would not change"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Collision: %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Invalid: %s"
+msgstr ""
+
+#. TRN: Bulk rename counts; %1$d selected, %2$d will rename, %3$d skipped.
+#, possible-c-format, possible-boost-format
+msgid "%d selected / %d will rename / %d skipped"
+msgstr ""
+
+#. TRN: Shown under the counts when two planned names collide; Rename stays disabled.
+msgid "Two or more results collide; adjust the pattern so every new name is unique"
+msgstr ""
+
+msgid "Nothing would change with this pattern"
+msgstr ""
+
 #: resources/data/hints.ini: [hint:How to use keyboard shortcuts]
 msgid "How to use keyboard shortcuts\nDid you know that Bambu Studio offers a wide range of keyboard shortcuts and 3D scene operations."
 msgstr ""
@@ -23915,686 +24864,6 @@ msgstr ""
 msgid "First-Time-Right Reliability\nLess babysitting, more predictable output. Example: a small farm running PETG parts avoids 'fail at hour 6' surprises and keeps batches on schedule."
 msgstr ""
 
-#: src/slic3r/GUI/Plater.cpp
-msgid "Large imported meshes were simplified. Dimensions and volume may change; original files are unchanged."
-msgstr ""
-
-#: src/slic3r/GUI/Plater.cpp
-msgid "Import canceled"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid " (%d hidden by the search)"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid " (%u hidden by the search)"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "%d of %d: %s"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "%d part(s), %d instance(s)"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "%d profiles selected"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "%d selected"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "%d selected / %d will change / %d skipped"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "%d selected / %d will rename / %d skipped"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "%s, %s"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "(%d hidden by the search)"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "(%d on other pages)"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "(cancelled)"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid ", %d failed"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid ", %d skipped"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "A complete zip of each profile's data folder is committed to that profile's local history. Nothing is deleted or overwritten."
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "A file with this name already exists"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Add %d new filament(s)"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "After"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Also deletes %1% filament and %2% process presets attached to this printer"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Another snapshot or transfer is still running"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Attaches a label to every selected version; labels never change or remove history"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Becomes"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Before"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Bulk action preview"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Bulk delete"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Bulk export"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Bulk export finished: %d exported, %d skipped, %d failed."
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Bulk rename"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Bulk rename objects"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Check every unchecked slot and uncheck the checked ones"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Choose a folder for the STL files"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Choose a folder for the exported versions"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Choose the folder to export the selected presets into"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Clears the selection"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Collision: %s"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Could not write %s"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Currently selected in the tab; another preset will be selected"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Delete objects"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Delete presets"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Deleted slots are removed from the project; objects and paint assigned to them move to another slot."
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Each object is removed from its plate together with all of its parts and instances. "
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Each object is written to its own STL file in %s. Existing files are never overwritten."
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Each preset is written as a .json file into %1%. Existing files are left untouched."
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Each version is written as its own .3mf named <project>-<commit>-<date>.3mf in the chosen folder. Nothing in the history changes."
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Enter valid dates in YYYY-MM-DD order, with From before Through."
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Export devices"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Export each selected object to its own STL file in a folder you choose"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Export list..."
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Export objects as STL"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Export presets"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Export selected devices"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Export selected..."
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Export the profile list"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Export versions"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Exported %d of %d devices to %s"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Exported %d of %d selected versions"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Exported %d presets, skipped %d, failed %d - %s"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Exported %d profiles to %s"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Exporting STL files"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Exporting presets"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Exporting versions"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Filter the preview"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Find"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Find (plain text; use the .* toggle or the builder for a regex with $1 back-references)"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Inherited by \"%1%\", which is not selected"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Invalid: %s"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Invert"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Invert the selection within the current matches (Ctrl+I)"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Invert the selection within the visible rows (Ctrl+I)"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Inverts the selection across every matching device"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Inverts the selection of the listed versions"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Item"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Label selected..."
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Label versions"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Labelled %d of %d selected versions"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Labelling versions"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Launch starts one instance on one profile: select a single row to launch it."
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Letters, digits, '.', '_' and '-' are kept; other characters become '-'. Labels never change history."
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Naming pattern"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "No longer in the history"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "None of the selected presets can be renamed: they are inherited by other presets or have unsaved changes."
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Nothing in the selection would change; every item is skipped for the reason shown"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Nothing would change with this pattern"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Opens the two-key confirmation before anything is deleted"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Outcome"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Pattern: {name} keeps the current name, {n} numbers from the start index, {i} from 0, {stem} and {ext} split a file name; {{ and }} are literal braces"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Preset no longer exists"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Project versions"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Record a complete snapshot of every selected profile, after a review"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Recorded %d snapshots, %d failed, %d skipped."
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Recording profile snapshots"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Rename presets"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Rename preview"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Rename selected..."
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Rename the selected objects with a pattern and a live before/after preview"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Rename the selected presets with a pattern or find/replace"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Renamed %d presets, refused %d, failed %d"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Renaming presets"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Replace with"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Review and delete the selected presets (Delete)"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Review and permanently remove the selected entries from the history (Delete)"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Review the selected objects, then delete them behind the two-key gate"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Select %s"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Select all %d loaded versions"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Select all %d presets"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Select all %d profiles"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Select all %d versions"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Select all matches"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Select every entry matching the filter, rendered or not (Ctrl+Shift+A)"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Select every object in the list"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Select every object the list shows (the list has no filter, so this equals Select all objects)"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Select every preset in this collection, including rows hidden by the search (Ctrl+Shift+A)"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Select every preset matching the current search (Ctrl+A)"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Select every profile matching the current search (Ctrl+A)"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Select every profile, including rows hidden by the search (Ctrl+Shift+A)"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Select every unselected object and unselect the selected ones"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Select the rows currently rendered (Ctrl+A)"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Select this page"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Select visible"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Select visible (%d)"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Select, delete, export or rename several user presets at once"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Selects every device card on this page"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Selects every device matching the search, on every page"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Selects every listed version"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Selects every loaded version, including ones hidden by the search. Load all versions to include older ones."
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Selects every version, including ones hidden by the search"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Skipped: %s"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Skipped: name would not change"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Snapshot profiles"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Snapshot selected"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Staged:"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Start another Bambu Studio instance on the selected profile"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Start {n} at"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "The data folder no longer exists"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "The export was cancelled before every object was written."
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "The label \"%s\" is attached to each version. History is never changed or removed."
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "The label is attached to %d selected versions"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "The preset files are removed from the user preset folder and cannot be recovered "
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "The run was cancelled."
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "The selected devices are written as CSV rows to %s. Devices are not changed."
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "The selected devices are written as a JSON list to %s. Devices are not changed."
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "The selected entries are removed from the history permanently. This cannot be undone; use Export first to keep a copy."
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "This profile is already running (it is the active one)."
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "This record has no snapshot store"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Two or more results collide; adjust the pattern so every new name is unique"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Will change"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Will rename"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Write each selected preset as a .json file into a folder you choose"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Write the profile list (name, data folder, last snapshot) as JSON or CSV"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Writes each selected version as its own .3mf file into a folder you choose"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Writes the selected devices (name, id, model, status, task, progress) to a JSON or CSV file"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "Zero-pad to digits"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "a file with this name already exists"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "add %d new filament(s)"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "another selected object exports to the same file name"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "appended after the last slot"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "at least one filament must remain"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "colour %s to %d slot(s)"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "delete %d slot(s)"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "deleted"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "device is no longer in the farm"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "file already exists"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "kept (at least one filament must remain); preset/colour still applied"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "not selected"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "preset \"%s\" to %d slot(s)"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "selected"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "the current selection cannot be deleted"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "the list entry is no longer valid"
-msgstr ""
-
-#: src/slic3r/GUI/Bulk
-msgid "the slot no longer exists"
+#: src/slic3r/GUI/Widgets/SuperConfirmGate.cpp
+msgid "There is not enough space to show all confirmation controls. Review the details, then close this window and use a larger display area."
 msgstr ""

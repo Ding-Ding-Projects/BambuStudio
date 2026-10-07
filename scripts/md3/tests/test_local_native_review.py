@@ -1,0 +1,577 @@
+"""Non-window regressions for local provenance and exact-target inspection."""
+import argparse
+from contextlib import redirect_stdout
+from copy import deepcopy
+from datetime import datetime, timezone, timedelta
+import importlib.util
+import io
+import json
+from pathlib import Path
+import subprocess
+import sys
+import tempfile
+import unittest
+from unittest.mock import patch, MagicMock
+
+SCRIPT = Path(__file__).resolve().parents[1] / "local-native-review.py"
+spec = importlib.util.spec_from_file_location("local_review", SCRIPT)
+review = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(review)
+SOURCE = "a" * 40
+TREE = "b" * 40
+
+
+class ReceiptTests(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name).resolve()
+        self.payload = self.root / "install-dir"
+        (self.payload / "automation").mkdir(parents=True)
+        (self.root / "build.bat").write_text("@echo off\nexit /b 0\n")
+        for name in review.REQUIRED[:-1]:
+            (self.payload / name).write_bytes(name.encode())
+        companion = {"sourceCommit": SOURCE, "buildRoute": "local-windows",
+                     "sha256": review.digest(self.payload / "automation/bambu-automation.exe")}
+        (self.payload / "automation/build-identity.json").write_text(json.dumps(companion))
+        self.transcript = self.root / "transcript.log"
+        self.now = datetime.now(timezone.utc).replace(microsecond=0)
+        self.start = self.now - timedelta(minutes=2)
+        self.end = self.now - timedelta(minutes=1)
+        self.transcript.write_text(self.invocation())
+        utc = lambda value: value.isoformat().replace("+00:00", "Z")
+        self.receipt = {"schemaVersion": 1, "kind": "local-root-build", "invocationId": "fixture-only",
+            "entrypoint": "build.bat", "arguments": ["/s"], "exitCode": 0,
+            "sourceCommit": SOURCE, "sourceTree": TREE, "sourceCleanBefore": True, "sourceCleanAfter": True,
+            "startedAtUtc": utc(self.now - timedelta(minutes=2)), "finishedAtUtc": utc(self.now - timedelta(minutes=1)),
+            "entrypointSha256": review.digest(self.root / "build.bat"),
+            "transcript": {"path": str(self.transcript), "sha256": review.digest(self.transcript)},
+            "payload": {"root": str(self.payload), "files": {name: review.digest(self.payload / name) for name in review.REQUIRED}}}
+
+    def git(self, root, *args):
+        return {("rev-parse", "HEAD"): SOURCE, ("rev-parse", "HEAD^{tree}"): TREE,
+                ("status", "--porcelain=v1", "--untracked-files=normal"): ""}[args]
+
+    def validate(self, receipt=None, git=None):
+        return review.validate_receipt(receipt or self.receipt, self.root, SOURCE, self.now, git or self.git)
+
+    def invocation(self, source=SOURCE, start=None, end=None):
+        start, end = start or self.start, end or self.end
+        stamp = lambda value: value.strftime("[%Y-%m-%d %H:%M:%SZ] ")
+        return ("**********************\nWindows PowerShell transcript start\nStart time: 20261006080000\n"
+            + stamp(start) + "Bambu Studio one-click build started (mode=Incremental, install=False, plan=False).\n"
+            + stamp(start + timedelta(seconds=3)) + "Pinned build source: " + source + "\n"
+            + stamp(end) + "Build-only workflow completed; runnable payload: " + str(self.payload / "bambu-studio.exe") + "\n"
+            + stamp(end) + "One-click workflow completed successfully.\n"
+            + "**********************\nWindows PowerShell transcript end\nEnd time: 20261006080100\n**********************\n")
+
+    def rehash_transcript(self, text, encoding="utf-8"):
+        self.transcript.write_text(text, encoding=encoding)
+        self.receipt["transcript"]["sha256"] = review.digest(self.transcript)
+
+    def test_complete_observer_receipt(self):
+        self.assertEqual(self.validate(), self.payload / "bambu-studio.exe")
+
+    def test_failed_unknown_and_non_root_invocations_are_rejected(self):
+        for key, value in (("exitCode", 1), ("exitCode", None), ("exitCode", False),
+                           ("entrypoint", "helper.ps1"), ("arguments", ["/s", "-Plan"]),
+                           ("sourceCleanBefore", False), ("sourceCleanAfter", None),
+                           ("sourceCommit", "c" * 40), ("kind", "hosted-install")):
+            with self.subTest(key=key, value=value):
+                bad = deepcopy(self.receipt)
+                bad[key] = value
+                with self.assertRaises(ValueError):
+                    self.validate(bad)
+
+    def test_stale_future_and_incomplete_receipts_are_rejected(self):
+        for start, end in (("2020-01-01T00:00:00Z", "2020-01-01T00:01:00Z"),
+                           ("2099-01-01T00:00:00Z", "2099-01-01T00:01:00Z"),
+                           (self.receipt["finishedAtUtc"], self.receipt["startedAtUtc"])):
+            bad = deepcopy(self.receipt)
+            bad.update(startedAtUtc=start, finishedAtUtc=end)
+            with self.assertRaises(ValueError):
+                self.validate(bad)
+
+    def test_moved_and_dirty_producers_are_rejected(self):
+        for altered in (("rev-parse", "HEAD"), ("rev-parse", "HEAD^{tree}"),
+                        ("status", "--porcelain=v1", "--untracked-files=normal")):
+            with self.subTest(altered=altered), self.assertRaises(ValueError):
+                self.validate(git=lambda root, *args: "changed" if args == altered else self.git(root, *args))
+
+    def test_each_payload_hash_is_bound(self):
+        for name in review.REQUIRED:
+            path = self.payload / name
+            original = path.read_bytes()
+            path.write_bytes(original + b"changed")
+            with self.subTest(name=name), self.assertRaisesRegex(ValueError, "Payload identity mismatch"):
+                self.validate()
+            path.write_bytes(original)
+        self.validate()
+
+    def test_transcript_requires_real_completion_after_latest_pin(self):
+        original = self.transcript.read_text()
+        self.transcript.write_text(original + "\nPinned build source: " + SOURCE + "\nbuild failed")
+        self.receipt["transcript"]["sha256"] = review.digest(self.transcript)
+        with self.assertRaises(ValueError):
+            self.validate()
+        self.transcript.write_text(original)
+        self.receipt["transcript"]["sha256"] = review.digest(self.transcript)
+        self.validate()
+
+    def test_rehashed_later_different_source_invocation_is_rejected(self):
+        newer = self.invocation(source="c" * 40).split("Build-only workflow completed;")[0]
+        self.rehash_transcript(self.invocation() + newer)
+        with self.assertRaises(ValueError):
+            self.validate()
+
+    def test_rehashed_later_pre_pin_interruption_is_rejected(self):
+        later = self.invocation().split("Pinned build source:")[0]
+        for suffix in (later, "**********************\nWindows PowerShell transcript start\nStart time: 20261006080200\n",
+                       later.split("Windows PowerShell transcript start\n", 1)[1]):
+            with self.subTest(suffix=suffix):
+                self.rehash_transcript(self.invocation() + suffix)
+                with self.assertRaises(ValueError):
+                    self.validate()
+
+    def test_each_production_marker_must_be_inside_receipt_interval(self):
+        original = self.invocation()
+        markers = ("Bambu Studio one-click build started", "Pinned build source:",
+                   "Build-only workflow completed;", "One-click workflow completed successfully.")
+        for marker in markers:
+            for when in (self.start - timedelta(seconds=2), self.end + timedelta(seconds=2)):
+                with self.subTest(marker=marker, when=when):
+                    lines = original.splitlines()
+                    lines = [when.strftime("[%Y-%m-%d %H:%M:%SZ] ") + line.split("] ", 1)[1]
+                             if marker in line else line for line in lines]
+                    self.rehash_transcript("\n".join(lines))
+                    with self.assertRaises(ValueError):
+                        self.validate()
+
+    def test_terminal_success_and_closed_session_are_required(self):
+        original = self.invocation()
+        for altered in (original.replace("One-click workflow completed successfully.", "Build failed."),
+                        original + "Build failed with exit code 1\n",
+                        original.split("Windows PowerShell transcript end")[0]):
+            with self.subTest(altered=altered):
+                self.rehash_transcript(altered)
+                with self.assertRaises(ValueError):
+                    self.validate()
+
+    def test_marker_order_and_complete_latest_source_are_required(self):
+        lines = self.invocation().splitlines()
+        pin = next(i for i, line in enumerate(lines) if "Pinned build source:" in line)
+        completion = next(i for i, line in enumerate(lines) if "Build-only workflow completed;" in line)
+        lines[pin], lines[completion] = lines[completion], lines[pin]
+        for altered in ("\n".join(lines), self.invocation() + self.invocation(source="c" * 40)):
+            with self.subTest(altered=altered):
+                self.rehash_transcript(altered)
+                with self.assertRaises(ValueError):
+                    self.validate()
+
+    def test_previous_sessions_and_supported_encodings_preserve_valid_latest_receipt(self):
+        previous = self.invocation(source="c" * 40, start=self.start - timedelta(minutes=4),
+                                   end=self.start - timedelta(minutes=3))
+        for encoding in ("utf-8", "utf-8-sig", "utf-16"):
+            with self.subTest(encoding=encoding):
+                self.rehash_transcript(previous + self.invocation(), encoding)
+                self.assertEqual(self.validate(), self.payload / "bambu-studio.exe")
+
+    def test_second_precision_log_interval_accepts_fractional_observer_times(self):
+        receipt = deepcopy(self.receipt)
+        receipt["startedAtUtc"] = (self.start + timedelta(microseconds=1)).isoformat().replace("+00:00", "Z")
+        receipt["finishedAtUtc"] = (self.end + timedelta(microseconds=999999)).isoformat().replace("+00:00", "Z")
+        self.assertEqual(self.validate(receipt), self.payload / "bambu-studio.exe")
+
+    def test_entrypoint_and_companion_are_bound(self):
+        self.receipt["entrypointSha256"] = "0" * 64
+        with self.assertRaisesRegex(ValueError, "entrypoint changed"):
+            self.validate()
+        self.receipt["entrypointSha256"] = review.digest(self.root / "build.bat")
+        path = self.payload / "automation/build-identity.json"
+        data = json.loads(path.read_text())
+        data["sourceCommit"] = "d" * 40
+        path.write_text(json.dumps(data))
+        self.receipt["payload"]["files"]["automation/build-identity.json"] = review.digest(path)
+        with self.assertRaisesRegex(ValueError, "companion identity mismatch"):
+            self.validate()
+
+    def test_validation_only_never_launches(self):
+        receipt = self.root / "receipt.json"
+        receipt.write_text(json.dumps(self.receipt))
+        argv = [str(SCRIPT), "--producer", str(self.root), "--build-receipt", str(receipt), "--source-commit", SOURCE]
+        with patch.object(sys, "argv", argv), patch.object(review, "validate_receipt", return_value=self.payload / "bambu-studio.exe"), \
+             patch.object(review, "dispatch_worker", side_effect=AssertionError("must not launch")), redirect_stdout(io.StringIO()):
+            self.assertEqual(review.main(), 0)
+
+
+def probe(pid=7, hwnd=20, tag="fixture"):
+    return [{"kind": "header", "pid": pid, "tag": tag, "language": "en", "dark": False,
+             "density": "comfortable", "dpi_scale": 1.25},
+            {"kind": "toplevel", "hwnd": hwnd, "shown": True, "client": {"w": 1200, "h": 800}},
+            {"kind": "end"}]
+
+
+class OwnershipTests(unittest.TestCase):
+    def native_api(self, *, attributes_ok=True, interrupt=False):
+        kernel, user, events = MagicMock(), MagicMock(), []
+        state = {"attribute_address": None, "jobs": [], "children": {}}
+        kernel.CreateJobObjectW.return_value = 11
+        kernel.SetInformationJobObject.return_value = True
+        kernel.TerminateJobObject.return_value = True
+        kernel.WaitForSingleObject.return_value = 0
+        user.OpenInputDesktop.return_value = 44
+        def desktop(handle, kind, buffer, length, needed):
+            buffer.value = "Default"
+            return True
+        user.GetUserObjectInformationW.side_effect = desktop
+        def initialize(attributes, count, flags, size):
+            size._obj.value = 128
+            return attributes is not None
+        kernel.InitializeProcThreadAttributeList.side_effect = initialize
+        def update(attributes, flags, key, value, size, previous, returned):
+            self.assertEqual(key, 0x2000D)
+            self.assertEqual(size, review.ctypes.sizeof(review.wt.HANDLE))
+            self.assertEqual(list(value), [11])
+            state["attribute_address"] = review.ctypes.addressof(attributes)
+            state["jobs"] = list(value)
+            events.append("bind-creation-job")
+            return attributes_ok
+        kernel.UpdateProcThreadAttribute.side_effect = update
+        class AbruptWorkerExit(BaseException):
+            pass
+        def create(exe, command, pa, ta, inherit, flags, env, cwd, si, pi):
+            # Accept either historical STARTUPINFO or current STARTUPINFOEX so
+            # this exact interruption test can expose the old orphaned child.
+            base = si._obj if hasattr(si, "_obj") else si.contents
+            self.assertEqual(flags & 4, 4)
+            self.assertEqual(base.desktop, "WinSta0\\Default")
+            self.assertFalse(inherit)
+            atomic = False
+            if flags & 0x80000:
+                class ExtendedStartup(review.ctypes.Structure):
+                    _fields_ = [("base", type(base)), ("attributes", review.ctypes.c_void_p)]
+                extended = review.ctypes.cast(si, review.ctypes.POINTER(ExtendedStartup)).contents
+                atomic = (base.cb == review.ctypes.sizeof(ExtendedStartup) and
+                          extended.attributes == state["attribute_address"] and state["jobs"] == [11])
+            state["children"][22] = 11 if atomic else None
+            pi._obj.process, pi._obj.thread, pi._obj.pid = 22, 33, 7
+            events.append("created-contained" if atomic else "created-uncontained")
+            if interrupt:
+                # Model forced worker termination at the first boundary after
+                # child creation, before CreateProcessW returns to Python. OS
+                # closure of the final job handle kills only existing members.
+                state["children"] = {pid: job for pid, job in state["children"].items() if job != 11}
+                raise AbruptWorkerExit()
+            return True
+        kernel.CreateProcessW.side_effect = create
+        kernel.ResumeThread.side_effect = lambda thread: events.append("resume") or 1
+        def accounting(job, kind, buffer, length, returned):
+            buffer._obj.active = 0
+            return True
+        kernel.QueryInformationJobObject.side_effect = accounting
+        return kernel, user, events, state, AbruptWorkerExit
+
+    def test_native_process_is_created_inside_its_job(self):
+        for attributes_ok in (True, False):
+            with self.subTest(attributes_ok=attributes_ok):
+                kernel, user, events, state, _ = self.native_api(attributes_ok=attributes_ok)
+                with patch.object(review.ctypes, "WinDLL", create=True, side_effect=lambda name, **kw: kernel if name == "kernel32" else user), \
+                     patch.object(review.os, "name", "nt"):
+                    if attributes_ok:
+                        session = review.NativeSession(Path("C:/fixture/app.exe"), Path("C:/fixture/profile"), "fixture")
+                        self.assertEqual(events, ["bind-creation-job", "created-contained", "resume"])
+                        self.assertTrue(session.close())
+                    else:
+                        with self.assertRaises(review.LaunchFailure) as context:
+                            review.NativeSession(Path("C:/fixture/app.exe"), Path("C:/fixture/profile"), "fixture")
+                        self.assertEqual(events, ["bind-creation-job"])
+                        self.assertEqual(context.exception.teardown, "verified")
+                        kernel.CreateProcessW.assert_not_called()
+                        kernel.ResumeThread.assert_not_called()
+                kernel.AssignProcessToJobObject.assert_not_called()
+                kernel.DeleteProcThreadAttributeList.assert_called_once()
+                kernel.TerminateJobObject.assert_called_once_with(11, 0)
+
+    def test_abrupt_exit_at_creation_cannot_leave_an_uncontained_child(self):
+        kernel, user, events, state, interruption = self.native_api(interrupt=True)
+        with patch.object(review.ctypes, "WinDLL", create=True, side_effect=lambda name, **kw: kernel if name == "kernel32" else user), \
+             patch.object(review.os, "name", "nt"):
+            with self.assertRaises(interruption):
+                review.NativeSession(Path("C:/fixture/app.exe"), Path("C:/fixture/profile"), "fixture")
+        self.assertEqual(state["children"], {}, "Worker exit orphaned a suspended child outside its job")
+        kernel.ResumeThread.assert_not_called()
+        kernel.AssignProcessToJobObject.assert_not_called()
+        kernel.TerminateJobObject.assert_not_called()  # No Python cleanup discharges the assertion.
+
+    def test_foreign_windows_are_never_adopted_by_title(self):
+        windows = [{"handle": 10, "title": "Bambu Studio"}, {"handle": 20, "title": ""}]
+        identity = lambda hwnd: {"pid": 8 if hwnd == 10 else 7, "class": "wxWindowNR", "visible": True}
+        self.assertEqual(review.select_shell(windows, 7, identity)["hwnd"], 20)
+        self.assertIsNone(review.select_shell(windows[:1], 7, identity))
+        with self.assertRaisesRegex(ValueError, "ambiguous"):
+            review.select_shell(windows, 7, lambda hwnd: identity(20))
+
+    def test_probe_end_identity_tuple_and_geometry_are_required(self):
+        good = probe()
+        self.assertEqual(review.validate_probe(good, 7, 20, "fixture")["client"], {"w": 1200, "h": 800})
+        bads = [good[:-1], probe(pid=8), probe(hwnd=99), probe(tag="old")]
+        for field, value in (("language", "yue_HK"), ("dark", True), ("density", "compact"), ("dpi_scale", float("nan"))):
+            bad = deepcopy(good)
+            bad[0][field] = value
+            bads.append(bad)
+        bad = deepcopy(good)
+        bad[1]["client"]["w"] = 0
+        bads.append(bad)
+        for bad in bads:
+            with self.subTest(bad=bad), self.assertRaises(ValueError):
+                review.validate_probe(bad, 7, 20, "fixture")
+
+    def test_explicit_probe_tuple_preserves_default_and_measurement_checks(self):
+        for language in ("en", "yue_HK", "bilingual_en_yue_HK"):
+            for theme in ("light", "dark"):
+                for density in ("comfortable", "compact"):
+                    rows = probe()
+                    rows[0].update(language=language, dark=theme == "dark", density=density)
+                    expected = dict(expected_language=language, expected_theme=theme,
+                                    expected_density=density)
+                    self.assertEqual(review.validate_probe(rows, 7, 20, "fixture", **expected)["dpi_scale"], 1.25)
+                    if (language, theme, density) != ("en", "light", "comfortable"):
+                        with self.assertRaisesRegex(ValueError, "tuple mismatch"):
+                            review.validate_probe(rows, 7, 20, "fixture")
+                    for invalid in (True, 0, -1, float("inf"), float("nan")):
+                        bad = deepcopy(rows)
+                        bad[0]["dpi_scale"] = invalid
+                        with self.assertRaises(ValueError):
+                            review.validate_probe(bad, 7, 20, "fixture", **expected)
+                    for bad in (rows[:-1], probe(pid=8), probe(hwnd=99), probe(tag="old")):
+                        with self.assertRaises(ValueError):
+                            review.validate_probe(bad, 7, 20, "fixture", **expected)
+        for expected in ({"expected_language": "unknown"}, {"expected_theme": True},
+                         {"expected_density": "unknown"}):
+            with self.assertRaisesRegex(ValueError, "Unsupported expected"):
+                review.validate_probe(probe(), 7, 20, "fixture", **expected)
+
+    def test_existing_profile_is_not_overwritten(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            profile = review.seed_profile(root)
+            before = (profile / "BambuStudio.conf").read_bytes()
+            with self.assertRaises(FileExistsError):
+                review.seed_profile(root)
+            self.assertEqual((profile / "BambuStudio.conf").read_bytes(), before)
+
+    def test_worker_timeout_and_partial_startup_remain_unverified(self):
+        for outcome in (subprocess.TimeoutExpired("mock", 270), {"returncode": 124, "timed_out": False}):
+            with self.subTest(outcome=type(outcome).__name__), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                args = argparse.Namespace(producer=root, build_receipt=root / "receipt.json", source_commit=SOURCE,
+                                          lowlevel_cli=root / "cli.exe", desktop="visible", capture=False)
+                def call(*a, **kw):
+                    self.assertEqual(a[1], "run_command")
+                    self.assertGreater(kw["timeout"], review.WORKER_SECONDS + 10)
+                    if isinstance(outcome, Exception):
+                        raise outcome
+                    return outcome
+                result = review.dispatch_worker(args, root, call)
+                self.assertEqual(result["launch"]["status"], "unverified")
+                self.assertEqual(result["targetExit"]["status"], "unavailable")
+                self.assertNotIn("exitCode", result["targetExit"])
+                self.assertEqual(result["teardown"], "unverified")
+                self.assertTrue((root / "stop").exists())
+
+    def test_partial_launch_tears_down_only_its_session(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            receipt = root / "receipt.json"
+            receipt.write_text("{}")
+            args = argparse.Namespace(build_receipt=receipt, source_commit=SOURCE, producer=root,
+                                      lowlevel_cli=root / "cli.exe", capture=False)
+            class Session:
+                pid = 7
+                closed = 0
+                def alive(self): return False
+                def observe_target_exit(self): return {"status": "exited", "exitCode": 1}
+                def close(self): self.closed += 1; return True
+            owned = Session()
+            with patch.object(review, "validate_receipt", return_value=root / "app.exe"):
+                result = review.inspect_shell(args, {}, root, root / "app.exe", session_factory=lambda *a: owned,
+                                              call=lambda *a, **kw: self.fail("No window operation after exit"))
+            self.assertEqual(owned.closed, 1)
+            self.assertEqual(result["launch"]["status"], "started")
+            self.assertEqual(result["probe"]["status"], "not_attempted")
+            self.assertEqual(result["teardown"], "verified")
+            self.assertIn("failure", result)
+
+    def test_teardown_failure_cannot_be_reported_as_verified(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            receipt = root / "receipt.json"
+            receipt.write_text("{}")
+            args = argparse.Namespace(build_receipt=receipt, source_commit=SOURCE, producer=root,
+                                      lowlevel_cli=root / "cli.exe", capture=False)
+            class Session:
+                pid = 7
+                def alive(self): return False
+                def observe_target_exit(self): return {"status": "exited", "exitCode": 1}
+                def close(self): raise OSError("mock")
+            with patch.object(review, "validate_receipt", return_value=root / "app.exe"):
+                result = review.inspect_shell(args, {}, root, root / "app.exe", session_factory=lambda *a: Session())
+            self.assertEqual(result["teardown"], "unverified")
+
+    def test_complete_initial_probe_keeps_capture_separate(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            receipt = root / "receipt.json"
+            receipt.write_text("{}")
+            args = argparse.Namespace(build_receipt=receipt, source_commit=SOURCE, producer=root,
+                                      lowlevel_cli=root / "cli.exe", capture=False)
+            class Session:
+                pid = 7
+                closed = False
+                def alive(self): return True
+                def observe_target_exit(self): return {"status": "active"}
+                def identity(self, hwnd): return {"pid": 7, "class": "wxWindowNR", "visible": True}
+                def close(self): self.closed = True; return True
+            owned = Session()
+            def sender(command, **kw):
+                self.assertTrue(command[1].endswith("send-layout-probe.py"))
+                self.assertNotIn("--command", command)
+                Path(command[3]).write_text("\n".join(json.dumps(row) for row in probe(tag=root.name)))
+            def call(cli, operation, **kw):
+                self.assertEqual(operation, "list_windows")
+                return {"windows": [{"handle": 20}]}
+            with patch.object(review, "validate_receipt", return_value=root / "app.exe"), \
+                 patch.object(review.subprocess, "run", side_effect=sender):
+                result = review.inspect_shell(args, {}, root, root / "app.exe", lambda *a: owned, call)
+            self.assertEqual(result["probe"]["status"], "received")
+            self.assertEqual(result["screenshot"]["status"], "not_attempted")
+            self.assertEqual(result["runtimeAcceptance"], "unverified")
+            self.assertEqual(result["targetExit"], {"status": "active"})
+            self.assertNotIn("failure", result)
+            self.assertTrue(owned.closed)
+
+    def test_image_bytes_target_and_geometry_require_separate_evidence(self):
+        from PIL import Image
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory).resolve() / "fixture.png"
+            image = Image.new("RGB", (2, 2), "white")
+            image.putpixel((0, 0), (0, 0, 0))
+            image.save(path)
+            response = {"rendered_ok": True, "mode": "window", "window_hwnd": 20, "path": str(path)}
+            self.assertEqual(review.validate_image(path, response, 20, {"w": 2, "h": 2})["visualAcceptance"], "unverified")
+            for bad in ({**response, "window_hwnd": 99}, {**response, "rendered_ok": False}):
+                with self.assertRaises(ValueError):
+                    review.validate_image(path, bad, 20, {"w": 2, "h": 2})
+            with self.assertRaisesRegex(ValueError, "dimensions"):
+                review.validate_image(path, response, 20, {"w": 3, "h": 2})
+            Image.new("RGB", (2, 2), "white").save(path)
+            with self.assertRaisesRegex(ValueError, "blank"):
+                review.validate_image(path, response, 20, {"w": 2, "h": 2})
+
+    def test_launcher_rejects_shell_metacharacters(self):
+        with self.assertRaisesRegex(ValueError, "Unsafe launcher"):
+            review.worker_command(Path("C:/temp/%EXPANSION%/request.json"))
+
+
+class ExitObservationTests(unittest.TestCase):
+    def session(self, wait=0, code=0, get_result=True):
+        owned = review.NativeSession.__new__(review.NativeSession)
+        owned.process, owned.pid = 22, 7
+        owned.k = MagicMock()
+        owned.k.WaitForSingleObject.return_value = wait
+        def get_exit(handle, result):
+            self.assertEqual(handle, owned.process)
+            result._obj.value = code
+            return get_result
+        owned.k.GetExitCodeProcess.side_effect = get_exit
+        return owned
+
+    def test_signaled_target_retains_unsigned_exit_code_including_259(self):
+        for code in (0, 1, 259, 0xC0000135, 0xFFFFFFFF):
+            with self.subTest(code=code):
+                owned = self.session(code=code)
+                result = owned.observe_target_exit()
+                self.assertEqual(result["status"], "exited")
+                self.assertEqual(result["exitCode"], code)
+                self.assertEqual(result["exitCodeHex"], f"0x{code:08X}")
+                self.assertTrue(result["observedBeforeTeardown"])
+                owned.k.WaitForSingleObject.assert_called_once_with(22, 0)
+                owned.k.GetExitCodeProcess.assert_called_once()
+
+    def test_active_target_has_no_exit_code(self):
+        owned = self.session(wait=258, code=259)
+        result = owned.observe_target_exit()
+        self.assertEqual(result["status"], "active")
+        self.assertNotIn("exitCode", result)
+        self.assertNotIn("exitCodeHex", result)
+        owned.k.WaitForSingleObject.assert_called_once_with(22, 0)
+        owned.k.GetExitCodeProcess.assert_not_called()
+
+    def test_unavailable_observation_never_invents_an_exit_code(self):
+        for scenario in ("wait_failed", "unexpected_wait", "query_failed", "query_exception", "missing_handle"):
+            with self.subTest(scenario=scenario):
+                owned = self.session()
+                if scenario == "wait_failed": owned.k.WaitForSingleObject.return_value = 0xFFFFFFFF
+                if scenario == "unexpected_wait": owned.k.WaitForSingleObject.return_value = 128
+                if scenario == "query_failed": owned.k.GetExitCodeProcess.side_effect = lambda *a: False
+                if scenario == "query_exception": owned.k.GetExitCodeProcess.side_effect = OSError("mock")
+                if scenario == "missing_handle": owned.process = None
+                result = owned.observe_target_exit()
+                self.assertEqual(result["status"], "unavailable")
+                self.assertNotIn("exitCode", result)
+                self.assertNotIn("exitCodeHex", result)
+                if scenario in ("wait_failed", "unexpected_wait", "missing_handle"):
+                    owned.k.GetExitCodeProcess.assert_not_called()
+
+    def test_failed_liveness_query_does_not_claim_target_exited(self):
+        owned = self.session(wait=0xFFFFFFFF)
+        with self.assertRaisesRegex(ValueError, "state unavailable"):
+            owned.alive()
+
+    def test_inspection_records_target_before_teardown_overwrites_its_code(self):
+        for wait, expected in ((0, "exited"), (0xFFFFFFFF, "unavailable")):
+            with self.subTest(expected=expected), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                receipt = root / "receipt.json"
+                receipt.write_text("{}")
+                args = argparse.Namespace(build_receipt=receipt, source_commit=SOURCE, producer=root,
+                                          lowlevel_cli=root / "cli.exe", capture=False)
+                owned = self.session(wait=wait, code=0xC0000135)
+                def close():
+                    owned.k.GetExitCodeProcess.side_effect = lambda *a: self.fail("Exit query after teardown")
+                    owned.process = None
+                    return True
+                owned.close = MagicMock(side_effect=close)
+                with patch.object(review, "validate_receipt", return_value=root / "app.exe"):
+                    result = review.inspect_shell(args, {}, root, root / "app.exe", lambda *a: owned,
+                                                  lambda *a, **kw: self.fail("No desktop call after target stops"))
+                self.assertEqual(result["targetExit"]["status"], expected)
+                if expected == "exited":
+                    self.assertEqual(result["targetExit"]["exitCode"], 0xC0000135)
+                else:
+                    self.assertNotIn("exitCode", result["targetExit"])
+                    self.assertIn("state unavailable", result["failure"])
+                self.assertEqual(json.loads((root / "review.json").read_text())["targetExit"], result["targetExit"])
+                self.assertEqual(result["teardown"], "verified")
+                owned.close.assert_called_once()
+
+    def test_observation_exception_still_closes_owned_session(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            receipt = root / "receipt.json"
+            receipt.write_text("{}")
+            args = argparse.Namespace(build_receipt=receipt, source_commit=SOURCE, producer=root,
+                                      lowlevel_cli=root / "cli.exe", capture=False)
+            owned = self.session()
+            owned.observe_target_exit = MagicMock(side_effect=OSError("mock"))
+            owned.close = MagicMock(return_value=True)
+            with patch.object(review, "validate_receipt", return_value=root / "app.exe"):
+                result = review.inspect_shell(args, {}, root, root / "app.exe", lambda *a: owned)
+            self.assertEqual(result["targetExit"]["status"], "unavailable")
+            self.assertNotIn("exitCode", result["targetExit"])
+            self.assertEqual(result["teardown"], "verified")
+            owned.close.assert_called_once()
+
+
+if __name__ == "__main__":
+    unittest.main()

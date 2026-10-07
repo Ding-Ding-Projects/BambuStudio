@@ -1,4 +1,7 @@
 #include "ReleaseNote.hpp"
+#include "PrintSetupLayout.hpp"
+#include <wx/display.h>
+#include <functional>
 #include "Widgets/MD3ScrolledWindow.hpp"
 #include "I18N.hpp"
 #include "GCodeViewer.hpp"
@@ -1102,6 +1105,168 @@ void PrintErrorDialog::rescale()
      }
 }
 
+ContinuationDisclosureLayout::~ContinuationDisclosureLayout()
+{
+    // The active sizer is deleted by wxDialog. Sizers never own the windows.
+    delete (normal_sizer ? normal_sizer : readback_sizer);
+}
+
+namespace {
+// Preserve requests even when an unavailable presentation already disabled the
+// native control. A caller's repeated Disable() is still a new capability input.
+class ContinuationButton : public Button {
+public:
+    using Button::Button;
+    bool Enable(bool enabled = true) override
+    {
+        m_requested = enabled;
+        return Button::Enable(enabled && m_available);
+    }
+    void SetPresentationAvailable(bool available)
+    {
+        m_available = available;
+        Button::Enable(m_requested && available);
+    }
+private:
+    bool m_requested{true};
+    bool m_available{true};
+};
+
+void set_continuation_action_available(Button* button, bool available)
+{
+    static_cast<ContinuationButton*>(button)->SetPresentationAvailable(available);
+}
+
+void restore_continuation_layout(wxDialog* dialog, wxScrolledWindow* body, ContinuationDisclosureLayout& state)
+{
+    if (!state.normal_sizer) return;
+    state.readback_sizer->Detach(body);
+    state.body_holder->Insert(state.body_index, body, state.body_proportion, state.body_flags, state.body_border);
+    std::vector<wxWindow*> controls;
+    for (auto* child : state.hidden_controls->GetChildren()) controls.push_back(child);
+    for (auto* child : controls) child->Reparent(dialog);
+    state.close->Hide();
+    dialog->SetSizer(state.normal_sizer, false);
+    state.normal_sizer = nullptr;
+    body->SetScrollRate(0, dialog->FromDIP(8));
+}
+
+void show_continuation_readback(wxDialog* dialog, wxScrolledWindow* body, ContinuationDisclosureLayout& state,
+                               const wxSize& available, const std::function<void()>& cancel)
+{
+    if (!state.readback_sizer) {
+        state.hidden_controls = new wxPanel(dialog);
+        state.hidden_controls->Hide();
+        state.close = new Button(dialog, _L("Close"));
+        state.close->SetVariant(Button::Variant::Outlined);
+        state.close->SetButtonSize(Button::Size::Medium);
+        state.close->SetToolTip(_L("There is not enough space to show all confirmation controls. Review the details, then close this window and use a larger display area."));
+        state.close->Bind(wxEVT_BUTTON, [cancel](wxCommandEvent&) { cancel(); });
+        state.readback_sizer = new wxBoxSizer(wxVERTICAL);
+        state.readback_sizer->Add(state.close, 0, wxEXPAND);
+    }
+    state.normal_sizer = dialog->GetSizer();
+    state.body_holder = body->GetContainingSizer();
+    const auto* item = state.body_holder->GetItem(body);
+    state.body_proportion = item->GetProportion();
+    state.body_flags = item->GetFlag();
+    state.body_border = item->GetBorder();
+    state.body_index = 0;
+    for (auto* entry : state.body_holder->GetChildren()) {
+        if (entry == item) break;
+        ++state.body_index;
+    }
+    state.body_holder->Detach(body);
+    // A hidden parent preserves each control's own Show/Enable state, including
+    // caller changes made while disclosure-only mode is active.
+    std::vector<wxWindow*> controls;
+    for (auto* child : dialog->GetChildren()) {
+        if (child != body && child != state.close && child != state.hidden_controls) controls.push_back(child);
+    }
+    for (auto* child : controls) child->Reparent(state.hidden_controls);
+    state.readback_sizer->Insert(0, body, 1, wxEXPAND);
+    body->SetMinSize(wxSize(0, 0));
+    body->SetScrollRate(dialog->FromDIP(8), dialog->FromDIP(8));
+    state.close->Rescale();
+    const wxSize best = state.close->GetBestSize();
+    state.close->SetMinSize(wxSize((std::min)(best.x, available.x),
+        (std::min)(best.y, (std::max)(1, available.y / 3))));
+    state.close->Show();
+    dialog->SetSizer(state.readback_sizer, false);
+    dialog->SetMinSize(wxSize(0, 0));
+    dialog->SetClientSize(available);
+    dialog->Layout();
+    body->FitInside();
+}
+
+void bind_continuation_refresh(wxDialog* dialog, const std::function<void()>& fit)
+{
+    dialog->Bind(wxEVT_MOVE, [dialog, fit](wxMoveEvent& event) {
+        if (dialog->IsShown()) fit();
+        event.Skip();
+    });
+    dialog->Bind(wxEVT_DISPLAY_CHANGED, [dialog, fit](wxDisplayChangedEvent& event) {
+        if (dialog->IsShown()) fit();
+        event.Skip();
+    });
+}
+
+// Presentation availability is separate from the caller's action capability.
+bool fit_continuation_body(wxDialog* dialog, wxScrolledWindow* body, int preferred_width,
+                           int preferred_height, bool& fitting, ContinuationDisclosureLayout& state,
+                           const std::function<void()>& cancel)
+{
+    if (fitting || !body || !body->GetSizer() || !dialog->GetSizer()) return false;
+    fitting = true;
+    restore_continuation_layout(dialog, body, state);
+    const int padding = dialog->FromDIP(MD3::Metrics::active().padding);
+    const auto wrap_labels = [body, padding](int width) {
+        for (auto* child : body->GetChildren()) {
+            if (auto* label = dynamic_cast<Label*>(child)) {
+                const int text_width = (std::max)(1, width - 2 * padding);
+                label->SetMaxSize(wxDefaultSize);
+                label->SetMinSize(wxSize(text_width, -1));
+                label->Wrap(text_width);
+            }
+        }
+    };
+    wrap_labels(preferred_width);
+    body->SetMinSize(wxSize(preferred_width, 0));
+    dialog->SetMinSize(wxDefaultSize);
+    dialog->Fit();
+    dialog->Layout();
+    wxWindow* owner = !dialog->IsShown() && dialog->GetParent() ? dialog->GetParent() : dialog;
+    const int index = wxDisplay::GetFromWindow(owner);
+    const wxDisplay display(index == wxNOT_FOUND ? 0 : index);
+    const auto work = display.GetClientArea();
+    const int nonclient = (std::max)(0, dialog->GetSize().y - dialog->GetClientSize().y);
+    const int nonclient_width = (std::max)(0, dialog->GetSize().x - dialog->GetClientSize().x);
+    bool available = work.width > 0 && work.height > 0;
+    for (int pass = 0; pass < 2; ++pass) {
+        wrap_labels(body->GetClientSize().x);
+        const int content = body->GetSizer()->CalcMin().y;
+        body->SetMinSize(wxSize(preferred_width, 0));
+        const int chrome = dialog->GetSizer()->CalcMin().y + nonclient;
+        const int height = PrintSetupLayout::bounded_body_height(content, preferred_height,
+            work.height, chrome, dialog->FromDIP(12));
+        const int readable = (std::min)(content, (std::max)(dialog->FromDIP(64), body->GetCharHeight() * 3 + 2 * padding));
+        available = available && height >= readable;
+        body->SetMinSize(wxSize(preferred_width, height));
+        dialog->Fit();
+        dialog->Layout();
+        body->FitInside();
+    }
+    available = available && dialog->GetSize().x <= work.width - 2 * dialog->FromDIP(12);
+    if (!available) {
+        const int width = work.width > 0 ? (std::max)(1, work.width - nonclient_width - 2 * dialog->FromDIP(12)) : preferred_width;
+        const int height = work.height > 0 ? (std::max)(1, work.height - nonclient - 2 * dialog->FromDIP(12)) : preferred_height;
+        show_continuation_readback(dialog, body, state, wxSize(width, height), cancel);
+    }
+    fitting = false;
+    return available;
+}
+} // namespace
+
 ConfirmBeforeSendDialog::ConfirmBeforeSendDialog(wxWindow* parent, wxWindowID id, const wxString& title, enum ButtonStyle btn_style, const wxPoint& pos, const wxSize& size, long style, bool not_show_again_check)
     :MD3Dialog(parent, title, wxEmptyString, MaterialIcon::Info)
 {
@@ -1114,9 +1279,9 @@ ConfirmBeforeSendDialog::ConfirmBeforeSendDialog(wxWindow* parent, wxWindowID id
     wxBoxSizer* m_sizer_right = GetContentSizer();
 
     m_vebview_release_note = new MD3ScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL);
-    m_vebview_release_note->SetScrollRate(0, 5);
+    m_vebview_release_note->SetScrollRate(0, FromDIP(8));
     m_vebview_release_note->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
-    m_vebview_release_note->SetMinSize(wxSize(FromDIP(400), FromDIP(380)));
+    m_vebview_release_note->SetMinSize(wxSize(FromDIP(480), 0));
     m_sizer_right->Add(m_vebview_release_note, 0, wxEXPAND, 0);
 
     // Primary (filled) / neutral button fills sourced from MD3 roles.
@@ -1150,16 +1315,15 @@ ConfirmBeforeSendDialog::ConfirmBeforeSendDialog(wxWindow* parent, wxWindowID id
         // Footer left edge; buttons cluster right.
         GetFooterSizer()->Insert(0, show_again_row, 0, wxALIGN_CENTER_VERTICAL);
     }
-    m_button_ok = new Button(this, _L("Confirm"));
+    m_button_ok = new ContinuationButton(this, _L("Confirm"));
     m_button_ok->SetBackgroundColor(btn_bg_green);
     m_button_ok->SetBorderColor(StateColor::semantic(MD3::Role::Primary));
     m_button_ok->SetTextColor(StateColor::semantic(MD3::Role::OnPrimary));
-    m_button_ok->SetFont(Label::Body_12);
-    m_button_ok->SetMinSize(wxSize(FromDIP(60), FromDIP(30)));
-    m_button_ok->SetMaxSize(wxSize(-1, FromDIP(30)));
-    m_button_ok->SetCornerRadius(FromDIP(15));
+    m_button_ok->SetVariant(Button::Variant::Filled);
+    m_button_ok->SetButtonSize(Button::Size::Medium);
 
     m_button_ok->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent& e) {
+        if (!m_presentation_available || !m_button_ok->IsEnabled() || !m_button_ok->IsShown()) return;
         wxCommandEvent evt(EVT_SECONDARY_CHECK_CONFIRM, GetId());
         e.SetEventObject(this);
         GetEventHandler()->ProcessEvent(evt);
@@ -1170,10 +1334,8 @@ ConfirmBeforeSendDialog::ConfirmBeforeSendDialog(wxWindow* parent, wxWindowID id
     m_button_cancel->SetBackgroundColor(btn_bg_white);
     m_button_cancel->SetBorderColor(StateColor::semantic(MD3::Role::Outline));
     m_button_cancel->SetTextColor(StateColor::semantic(MD3::Role::OnSurface));
-    m_button_cancel->SetFont(Label::Body_12);
-    m_button_cancel->SetMinSize(wxSize(FromDIP(60), FromDIP(30)));
-    m_button_cancel->SetMaxSize(wxSize(-1, FromDIP(30)));
-    m_button_cancel->SetCornerRadius(FromDIP(15));
+    m_button_cancel->SetVariant(Button::Variant::Outlined);
+    m_button_cancel->SetButtonSize(Button::Size::Medium);
 
     m_button_cancel->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent& e) {
         wxCommandEvent evt(EVT_SECONDARY_CHECK_CANCEL);
@@ -1187,16 +1349,15 @@ ConfirmBeforeSendDialog::ConfirmBeforeSendDialog(wxWindow* parent, wxWindowID id
     else
         m_button_cancel->Show();
 
-    m_button_update_nozzle = new Button(this, _L("Confirm and Update Nozzle"));
+    m_button_update_nozzle = new ContinuationButton(this, _L("Confirm and Update Nozzle"));
     m_button_update_nozzle->SetBackgroundColor(btn_bg_white);
     m_button_update_nozzle->SetBorderColor(StateColor::semantic(MD3::Role::Outline));
     m_button_update_nozzle->SetTextColor(StateColor::semantic(MD3::Role::OnSurface));
-    m_button_update_nozzle->SetFont(Label::Body_12);
-    m_button_update_nozzle->SetMinSize(wxSize(FromDIP(60), FromDIP(30)));
-    m_button_update_nozzle->SetMaxSize(wxSize(-1, FromDIP(30)));
-    m_button_update_nozzle->SetCornerRadius(FromDIP(15));
+    m_button_update_nozzle->SetVariant(Button::Variant::Outlined);
+    m_button_update_nozzle->SetButtonSize(Button::Size::Medium);
 
     m_button_update_nozzle->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent& e) {
+        if (!m_presentation_available || !m_button_update_nozzle->IsEnabled() || !m_button_update_nozzle->IsShown()) return;
         wxCommandEvent evt(EVT_UPDATE_NOZZLE);
         e.SetEventObject(this);
         GetEventHandler()->ProcessEvent(evt);
@@ -1205,10 +1366,11 @@ ConfirmBeforeSendDialog::ConfirmBeforeSendDialog(wxWindow* parent, wxWindowID id
 
     m_button_update_nozzle->Hide();
 
-    // Footer clusters right, in the original left->right order (ok, nozzle, cancel).
-    AddFooterButton(m_button_ok);
-    AddFooterButton(m_button_update_nozzle);
-    AddFooterButton(m_button_cancel);
+    // Stack measured actions in the original semantic order (ok, nozzle, cancel).
+    auto* actions = new wxBoxSizer(wxVERTICAL);
+    for (auto* button : {m_button_ok, m_button_update_nozzle, m_button_cancel})
+        actions->Add(button, 0, wxEXPAND | wxTOP, FromDIP(MD3::Metrics::active().gap));
+    GetFooterSizer()->Add(actions, 1, wxEXPAND);
 
     Bind(wxEVT_CLOSE_WINDOW, [this](auto& e) {this->on_hide(); });
 
@@ -1219,84 +1381,64 @@ ConfirmBeforeSendDialog::ConfirmBeforeSendDialog(wxWindow* parent, wxWindowID id
 
     CenterOnParent();
     wxGetApp().UpdateDlgDarkUI(this);
+    bind_continuation_refresh(this, [this] { fit_content(); });
 }
 
 void ConfirmBeforeSendDialog::update_text(wxString text)
 {
-    wxBoxSizer* sizer_text_release_note = new wxBoxSizer(wxVERTICAL);
-    if (!m_staticText_release_note){
-        m_staticText_release_note = new Label(m_vebview_release_note, text, LB_AUTO_WRAP);
-        wxBoxSizer* top_blank_sizer = new wxBoxSizer(wxVERTICAL);
-        wxBoxSizer* bottom_blank_sizer = new wxBoxSizer(wxVERTICAL);
-        top_blank_sizer->Add(FromDIP(5), 0, wxALIGN_CENTER | wxALL, FromDIP(5));
-        bottom_blank_sizer->Add(FromDIP(5), 0, wxALIGN_CENTER | wxALL, FromDIP(5));
-
-        sizer_text_release_note->Add(top_blank_sizer, 0, wxALIGN_CENTER | wxALL, FromDIP(5));
-        sizer_text_release_note->Add(m_staticText_release_note, 0, wxALIGN_CENTER, FromDIP(5));
-        sizer_text_release_note->Add(bottom_blank_sizer, 0, wxALIGN_CENTER | wxALL, FromDIP(5));
-        m_vebview_release_note->SetSizer(sizer_text_release_note);
+    if (!m_staticText_release_note) {
+        if (auto* previous = m_vebview_release_note->GetSizer()) previous->Clear(true);
+        auto* content = new wxBoxSizer(wxVERTICAL);
+        m_vebview_release_note->SetSizer(content);
+        m_staticText_release_note = new Label(m_vebview_release_note, text, wxST_NO_AUTORESIZE);
+        m_staticText_release_note->SetFont(Label::Body_14);
+        m_staticText_release_note->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+        content->Add(m_staticText_release_note, 0, wxEXPAND | wxALL, FromDIP(MD3::Metrics::active().padding));
     }
-    m_staticText_release_note->SetMaxSize(wxSize(FromDIP(380), -1));
-    m_staticText_release_note->SetMinSize(wxSize(FromDIP(380), -1));
     m_staticText_release_note->SetLabelText(text);
-    m_vebview_release_note->Layout();
-
-    auto text_size = m_staticText_release_note->GetBestSize();
-    if (text_size.y < FromDIP(380))
-        m_vebview_release_note->SetMinSize(wxSize(FromDIP(400), text_size.y + FromDIP(25)));
-    else {
-        m_vebview_release_note->SetMinSize(wxSize(FromDIP(400), FromDIP(380)));
-    }
-
-    Layout();
-    Fit();
+    fit_content();
 }
 
 void ConfirmBeforeSendDialog::update_text(std::vector<ConfirmBeforeSendInfo> texts, bool enable_warning_clr /*= true*/)
 {
+    if (auto* previous = m_vebview_release_note->GetSizer()) previous->Clear(true);
+    m_staticText_release_note = nullptr;
     wxBoxSizer* sizer_text_release_note = new wxBoxSizer(wxVERTICAL);
     m_vebview_release_note->SetSizer(sizer_text_release_note);
 
 
-    auto height = 0;
+    const int padding = FromDIP(MD3::Metrics::active().padding);
     for (auto text : texts) {
 
         Label* label_item = nullptr;
         if (text.wiki_url.empty())
         {
-            label_item = new Label(m_vebview_release_note, text.text, LB_AUTO_WRAP);
+            label_item = new Label(m_vebview_release_note, text.text, wxST_NO_AUTORESIZE);
         }
         else
         {
-            label_item = new Label(m_vebview_release_note, text.text + " " + _L("Please refer to Wiki before use->"), LB_AUTO_WRAP);
+            label_item = new Label(m_vebview_release_note, text.text + " " + _L("Please refer to Wiki before use->"), wxST_NO_AUTORESIZE);
             label_item->Bind(wxEVT_LEFT_DOWN, [this, text](wxMouseEvent& e) { wxLaunchDefaultBrowser(text.wiki_url);});
             label_item->Bind(wxEVT_ENTER_WINDOW, [this](auto& e) { SetCursor(wxCURSOR_HAND); });
             label_item->Bind(wxEVT_LEAVE_WINDOW, [this](auto& e) { SetCursor(wxCURSOR_ARROW); });
         }
 
+        label_item->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
         if (enable_warning_clr && text.level == ConfirmBeforeSendInfo::InfoLevel::Warning)
         {
             label_item->SetForegroundColour(ThemeColor::Warning);
         }
 
-        label_item->SetMaxSize(wxSize(FromDIP(494), -1));
-        label_item->SetMinSize(wxSize(FromDIP(494), -1));
-        label_item->Wrap(FromDIP(494));
+        label_item->SetFont(Label::Body_14);
+        label_item->SetMaxSize(wxSize(FromDIP(448), -1));
+        label_item->SetMinSize(wxSize(FromDIP(448), -1));
+        label_item->Wrap(FromDIP(448));
         label_item->Layout();
 
-        sizer_text_release_note->Add(label_item, 0, wxALIGN_CENTER | wxALL, FromDIP(3));
-        height += label_item->GetSize().y;
+        sizer_text_release_note->Add(label_item, 0, wxEXPAND | wxALL, padding);
     }
 
-    m_vebview_release_note->Layout();
-    if (height < FromDIP(500))
-        m_vebview_release_note->SetMinSize(wxSize(-1, height + FromDIP(25)));
-    else {
-        m_vebview_release_note->SetMinSize(wxSize(-1, FromDIP(500)));
-    }
-
-    Layout();
-    Fit();
+    fit_content();
 }
 
 void ConfirmBeforeSendDialog::on_show()
@@ -1307,6 +1449,7 @@ void ConfirmBeforeSendDialog::on_show()
     m_button_ok->GetEventHandler()->ProcessEvent(evt_ok);
     wxMouseEvent evt_cancel(wxEVT_LEFT_UP);
     m_button_cancel->GetEventHandler()->ProcessEvent(evt_cancel);
+    fit_content();
     CenterOnScreen();
     this->ShowModal();
 }
@@ -1357,6 +1500,7 @@ ConfirmBeforeSendDialog::~ConfirmBeforeSendDialog()
 
 void ConfirmBeforeSendDialog::on_dpi_changed(const wxRect& suggested_rect)
 {
+    MD3Dialog::on_dpi_changed(suggested_rect);
     rescale();
     UpdateShape();
 }
@@ -1407,9 +1551,29 @@ void ConfirmBeforeSendDialog::rescale()
 {
     m_button_ok->Rescale();
     m_button_cancel->Rescale();
+    m_button_update_nozzle->Rescale();
     // Same as SecondaryCheckDialog: the drawn glyph does not follow DPI on its own.
     if (m_show_again_checkbox != nullptr)
         m_show_again_checkbox->Rescale();
+    fit_content();
+}
+
+void ConfirmBeforeSendDialog::fit_content()
+{
+    if (m_fitting_content) return;
+    m_presentation_available = fit_continuation_body(this, m_vebview_release_note, FromDIP(480), FromDIP(480), m_fitting_content, m_disclosure, [this] {
+        wxCommandEvent event(EVT_SECONDARY_CHECK_CANCEL);
+        GetEventHandler()->ProcessEvent(event);
+        on_hide();
+    });
+    set_continuation_action_available(m_button_ok, m_presentation_available);
+    set_continuation_action_available(m_button_update_nozzle, m_presentation_available);
+}
+
+bool ConfirmBeforeSendDialog::Show(bool show)
+{
+    if (show) fit_content();
+    return MD3Dialog::Show(show);
 }
 
 static void nop_deleter(InputIpAddressDialog*) {}
@@ -1429,6 +1593,9 @@ InputIpAddressDialog::InputIpAddressDialog(wxWindow *parent)
     SetIcon(wxIcon(encode_path(icon_path.c_str()), wxBITMAP_TYPE_ICO));
 
     m_result                       = -1;
+    m_body = new MD3ScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL | wxTAB_TRAVERSAL);
+    m_body->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
+    m_body->SetScrollRate(0, FromDIP(8));
     wxBoxSizer *m_sizer_main = new wxBoxSizer(wxVERTICAL);
     wxBoxSizer *m_sizer_msg        = new wxBoxSizer(wxHORIZONTAL);
 
@@ -1437,7 +1604,7 @@ InputIpAddressDialog::InputIpAddressDialog(wxWindow *parent)
     comfirm_after_enter_text  = _L("2. If the IP and Access Code below are different from the actual values on your printer, please correct them.");
     comfirm_last_enter_text   = _L("3. Please obtain the device SN from the printer side; it is usually found in the device information on the printer screen.");
 
-    Label *wiki = new Label(this, ::Label::Body_13, _L("View wiki"), LB_AUTO_WRAP);
+    Label *wiki = new Label(m_body, ::Label::Body_13, _L("View wiki"), LB_AUTO_WRAP);
     wiki->SetForegroundColour(StateColor::semantic(MD3::Role::Primary));
     wiki->Bind(wxEVT_ENTER_WINDOW, [this](auto &e) {SetCursor(wxCURSOR_HAND);});
     wiki->Bind(wxEVT_LEAVE_WINDOW, [this](auto &e) {SetCursor(wxCURSOR_ARROW);});
@@ -1452,26 +1619,26 @@ InputIpAddressDialog::InputIpAddressDialog(wxWindow *parent)
         wxLaunchDefaultBrowser(url);
     });
 
-    m_tip0 = new Label(this, ::Label::Body_13, comfirm_before_check_text, LB_AUTO_WRAP);
+    m_tip0 = new Label(m_body, ::Label::Body_13, comfirm_before_check_text, LB_AUTO_WRAP);
     m_tip0->SetMinSize(wxSize(FromDIP(355), -1));
     m_tip0->SetMaxSize(wxSize(FromDIP(355), -1));
     m_tip0->Wrap(FromDIP(355));
 
-    m_tip1 = new Label(this, ::Label::Body_13, comfirm_before_enter_text, LB_AUTO_WRAP);
+    m_tip1 = new Label(m_body, ::Label::Body_13, comfirm_before_enter_text, LB_AUTO_WRAP);
     m_tip1->SetMinSize(wxSize(FromDIP(355), -1));
     m_tip1->SetMaxSize(wxSize(FromDIP(355), -1));
     m_tip1->Wrap(FromDIP(355));
 
-    m_tip2 = new Label(this, ::Label::Body_13, comfirm_after_enter_text, LB_AUTO_WRAP);
+    m_tip2 = new Label(m_body, ::Label::Body_13, comfirm_after_enter_text, LB_AUTO_WRAP);
     m_tip2->SetMinSize(wxSize(FromDIP(355), -1));
     m_tip2->SetMaxSize(wxSize(FromDIP(355), -1));
 
-    m_tip3 = new Label(this, ::Label::Body_13, comfirm_last_enter_text, LB_AUTO_WRAP);
+    m_tip3 = new Label(m_body, ::Label::Body_13, comfirm_last_enter_text, LB_AUTO_WRAP);
     m_tip3->SetMinSize(wxSize(FromDIP(355), -1));
     m_tip3->SetMaxSize(wxSize(FromDIP(355), -1));
 
-    ip_input_top_panel = new wxPanel(this);
-    ip_input_bot_panel = new wxPanel(this);
+    ip_input_top_panel = new wxPanel(m_body);
+    ip_input_bot_panel = new wxPanel(m_body);
 
     ip_input_top_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
     ip_input_bot_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
@@ -1562,42 +1729,40 @@ InputIpAddressDialog::InputIpAddressDialog(wxWindow *parent)
     ip_input_bot_panel->Fit();
 
     /*other*/
-    m_test_right_msg = new Label(this, Label::Body_13, wxEmptyString, LB_AUTO_WRAP);
+    m_test_right_msg = new Label(m_body, Label::Body_13, wxEmptyString, LB_AUTO_WRAP);
     m_test_right_msg->SetForegroundColour(StateColor::semantic(MD3::Role::Primary));
     m_test_right_msg->Hide();
 
-    m_test_wrong_msg = new Label(this, Label::Body_13, wxEmptyString, LB_AUTO_WRAP);
+    m_test_wrong_msg = new Label(m_body, Label::Body_13, wxEmptyString, LB_AUTO_WRAP);
     m_test_wrong_msg->SetForegroundColour(StateColor::semantic(MD3::Role::Error));
     m_test_wrong_msg->Hide();
 
-    m_tip4 = new Label(this, Label::Body_12, _L("Where to find your printer's IP and Access Code?"), LB_AUTO_WRAP);
+    m_tip4 = new Label(m_body, Label::Body_12, _L("Where to find your printer's IP and Access Code?"), LB_AUTO_WRAP);
     m_tip4->SetMinSize(wxSize(FromDIP(355), -1));
     m_tip4->SetMaxSize(wxSize(FromDIP(355), -1));
 
-    m_trouble_shoot = new LinkLabel(this, _L("How to trouble shooting"), "");
+    m_trouble_shoot = new LinkLabel(m_body, _L("How to trouble shooting"), "");
 
-    m_img_help = new wxStaticBitmap(this, wxID_ANY, create_scaled_bitmap("input_access_code_x1_en", this, 198), wxDefaultPosition, wxSize(FromDIP(355), -1), 0);
+    m_img_help = new wxStaticBitmap(m_body, wxID_ANY, create_scaled_bitmap("input_access_code_x1_en", this, 198), wxDefaultPosition, wxSize(FromDIP(355), -1), 0);
 
     // Connect CTA: filled Primary pill, moved to the kit footer below.
-    m_button_ok = new Button(this, _L("Connect"));
+    m_button_ok = new ContinuationButton(this, _L("Connect"));
     m_button_ok->SetBackgroundColor(StateColor::semantic(MD3::Role::Primary));
     m_button_ok->SetBorderColor(StateColor::semantic(MD3::Role::Primary));
     m_button_ok->SetTextColor(StateColor::semantic(MD3::Role::OnPrimary));
-    m_button_ok->SetFont(Label::Body_12);
-    m_button_ok->SetMinSize(wxSize(FromDIP(80), FromDIP(30)));
-    m_button_ok->SetMaxSize(wxSize(-1, FromDIP(30)));
-    m_button_ok->SetCornerRadius(FromDIP(15));
+    m_button_ok->SetVariant(Button::Variant::Filled);
+    m_button_ok->SetButtonSize(Button::Size::Medium);
     m_button_ok->Bind(wxEVT_LEFT_DOWN, &InputIpAddressDialog::on_ok, this);
     m_button_ok->Enable(false);
     m_button_ok->SetBackgroundColor(StateColor::semantic(MD3::Role::SurfaceContainerHighest));
     m_button_ok->SetBorderColor(StateColor::semantic(MD3::Role::SurfaceContainerHighest));
 
-    m_status_bar = std::make_shared<BBLStatusBarSend>(this);
+    m_status_bar = std::make_shared<BBLStatusBarSend>(m_body);
     m_status_bar->get_panel()->Hide();
 
-    auto m_step_icon_panel1 = new wxWindow(this, wxID_ANY);
-    auto m_step_icon_panel2 = new wxWindow(this, wxID_ANY);
-    m_step_icon_panel3      = new wxWindow(this, wxID_ANY);
+    auto m_step_icon_panel1 = new wxWindow(m_body, wxID_ANY);
+    auto m_step_icon_panel2 = new wxWindow(m_body, wxID_ANY);
+    m_step_icon_panel3      = new wxWindow(m_body, wxID_ANY);
 
     m_step_icon_panel1->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
     m_step_icon_panel2->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
@@ -1666,8 +1831,10 @@ InputIpAddressDialog::InputIpAddressDialog(wxWindow *parent)
 
     // Body into the kit content sizer (already padded 24px per side); the
     // Connect button clusters at the kit footer's right edge.
-    wxBoxSizer *content = GetContentSizer();
-    content->Add(m_sizer_main, 0, wxEXPAND, 0);
+    auto* content = new wxBoxSizer(wxVERTICAL);
+    m_body->SetSizer(content);
+    GetContentSizer()->Add(m_body, 1, wxEXPAND);
+    content->Add(m_sizer_main, 0, wxEXPAND | wxALL, FromDIP(MD3::Metrics::active().padding));
     content->Add(0, 0, 0, wxTOP, FromDIP(4));
     content->Add(m_sizer_msg, 0, wxEXPAND, 0);
     content->Add(0, 0, 0, wxTOP, FromDIP(4));
@@ -1678,14 +1845,11 @@ InputIpAddressDialog::InputIpAddressDialog(wxWindow *parent)
     switch_input_panel(0);
 
     Layout();
-    GetSizer()->SetSizeHints(this);
-    Fit();
+    apply_form_layout();
+    fit_content();
     UpdateShape();
 
-    // for some reason Fit() failed its job here so we do this again
-    SetSize(GetBestSize());
     CentreOnParent(wxBOTH);
-    Move(wxPoint(GetScreenPosition().x, GetScreenPosition().y - FromDIP(50)));
     wxGetApp().UpdateDlgDarkUI(this);
 
     closeTimer = new wxTimer();
@@ -1702,6 +1866,7 @@ InputIpAddressDialog::InputIpAddressDialog(wxWindow *parent)
         on_cancel();
         closeTimer->Stop();
     });
+    bind_continuation_refresh(this, [this] { fit_content(); });
 }
 
 void InputIpAddressDialog::switch_input_panel(int index)
@@ -1776,7 +1941,7 @@ void InputIpAddressDialog::set_machine_obj(MachineObject* obj)
     }
 
     Layout();
-    Fit();
+    fit_content();
 }
 
 void InputIpAddressDialog::update_test_msg(wxString msg,bool connected)
@@ -1801,7 +1966,7 @@ void InputIpAddressDialog::update_test_msg(wxString msg,bool connected)
     }
 
     Layout();
-    Fit();
+    fit_content();
 }
 
 bool InputIpAddressDialog::isIp(std::string ipstr)
@@ -1822,6 +1987,7 @@ bool InputIpAddressDialog::isIp(std::string ipstr)
 
 void InputIpAddressDialog::on_ok(wxMouseEvent& evt)
 {
+    if (!m_presentation_available || !m_button_ok->IsEnabled()) return;
     if (!m_need_input_sn) {
         on_send_retry();
         return;
@@ -1846,7 +2012,7 @@ void InputIpAddressDialog::on_ok(wxMouseEvent& evt)
 
     Refresh();
     Layout();
-    Fit();
+    fit_content();
 
     token_.reset(this, nop_deleter);
     update_test_msg(_L("connecting..."), true);
@@ -1856,13 +2022,14 @@ void InputIpAddressDialog::on_ok(wxMouseEvent& evt)
 
 void InputIpAddressDialog::on_send_retry()
 {
+    if (!m_presentation_available || !m_button_ok->IsEnabled()) return;
     m_test_right_msg->Hide();
     m_test_wrong_msg->Hide();
     m_img_step3->Hide();
     m_tip4->Hide();
     m_trouble_shoot->Hide();
     Layout();
-    Fit();
+    fit_content();
     wxString ip              = m_input_ip->GetTextCtrl()->GetValue();
     wxString str_access_code = m_input_access_code->GetTextCtrl()->GetValue();
 
@@ -1992,7 +2159,7 @@ void InputIpAddressDialog::workerThreadFunc(std::weak_ptr<InputIpAddressDialog> 
             else if (result == -3) {
                 dialog->switch_input_panel(1);
                 dialog->Layout();
-                dialog->Fit();
+                dialog->fit_content();
             }
             return;
         }
@@ -2077,7 +2244,7 @@ void InputIpAddressDialog::on_check_ip_address_failed(wxCommandEvent& evt)
         }
 
         Layout();
-        Fit();
+        fit_content();
     }
 
     m_button_ok->Enable(true);
@@ -2134,6 +2301,9 @@ InputIpAddressDialog::~InputIpAddressDialog()
 
 void InputIpAddressDialog::on_dpi_changed(const wxRect& suggested_rect)
 {
+    MD3Dialog::on_dpi_changed(suggested_rect);
+    apply_form_layout();
+    fit_content();
     UpdateShape();
 }
 
@@ -2147,6 +2317,46 @@ void InputIpAddressDialog::OnHeaderClose()
 }
 
 
+void InputIpAddressDialog::apply_form_layout()
+{
+    const int floor = FromDIP(MD3::Metrics::active().row_height);
+    for (auto* input : {m_input_ip, m_input_access_code, m_input_sn}) {
+        input->SetFont(Label::Body_14);
+        input->GetTextCtrl()->SetFont(Label::Body_14);
+        const int height = (std::max)(floor, input->GetTextCtrl()->GetCharHeight() + FromDIP(12));
+        input->SetMaxSize(wxDefaultSize);
+        input->SetMinSize(wxSize(FromDIP(168), height));
+    }
+    m_input_modelID->SetFont(Label::Body_14);
+    m_input_modelID->SetMaxSize(wxDefaultSize);
+    m_input_modelID->SetMinSize(wxSize(FromDIP(168), (std::max)(floor, m_input_modelID->GetCharHeight() + FromDIP(12))));
+    for (auto* label : {m_tips_ip, m_tips_access_code, m_tips_sn, m_tips_modelID}) {
+        label->SetFont(Label::Body_14);
+        label->SetMaxSize(wxDefaultSize);
+        label->SetMinSize(wxSize(FromDIP(168), -1));
+        label->Wrap(FromDIP(168));
+    }
+    for (auto* label : {m_tip0, m_tip1, m_tip2, m_tip3, m_tip4, m_test_right_msg, m_test_wrong_msg})
+        label->SetFont(Label::Body_14);
+    m_tip4->SetFont(Label::Head_14);
+    m_trouble_shoot->getLabel()->Wrap(FromDIP(408));
+    m_button_ok->Rescale();
+    m_body->SetScrollRate(0, FromDIP(8));
+}
+
+void InputIpAddressDialog::fit_content()
+{
+    if (m_fitting_content) return;
+    m_presentation_available = fit_continuation_body(this, m_body, FromDIP(440), FromDIP(520), m_fitting_content, m_disclosure, [this] { OnHeaderClose(); });
+    set_continuation_action_available(m_button_ok, m_presentation_available);
+}
+
+bool InputIpAddressDialog::Show(bool show)
+{
+    if (show) fit_content();
+    return MD3Dialog::Show(show);
+}
+
  SendFailedConfirm::SendFailedConfirm(wxWindow *parent /*= nullptr*/):
      DPIDialog(static_cast<wxWindow *>(wxGetApp().mainframe),
                   wxID_ANY,
@@ -2155,51 +2365,44 @@ void InputIpAddressDialog::OnHeaderClose()
                   wxDefaultSize,
                   wxCAPTION | wxCLOSE_BOX)
  {
-     SetMinSize(wxSize(FromDIP(560), -1));
-     SetMaxSize(wxSize(FromDIP(560), -1));
 
      std::string icon_path = (boost::format("%1%/images/BambuStudioTitle.ico") % resources_dir()).str();
      SetIcon(wxIcon(encode_path(icon_path.c_str()), wxBITMAP_TYPE_ICO));
 
-     SetBackgroundColour(*wxWHITE);
+     SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
      auto m_sizer_main    = new wxBoxSizer(wxVERTICAL);
      auto m_line_top = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(400), 1));
-     m_line_top->SetBackgroundColour(ThemeColor::Grey400);
+     m_line_top->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
 
 
-     auto tip = new Label(this, _L("Failed to send. Click Retry to attempt sending again. If retrying does not work, please check the reason."));
+     m_body = new MD3ScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL | wxTAB_TRAVERSAL);
+     m_body->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
+     auto* body_sizer = new wxBoxSizer(wxVERTICAL);
+     m_body->SetSizer(body_sizer);
+     auto tip = new Label(m_body, _L("Failed to send. Click Retry to attempt sending again. If retrying does not work, please check the reason."));
+     tip->SetFont(Label::Body_14);
+     tip->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
      tip->Wrap(FromDIP(480));
      tip->SetMinSize(wxSize(FromDIP(480), -1));
      tip->SetMaxSize(wxSize(FromDIP(480), -1));
 
      wxBoxSizer *button_sizer = new wxBoxSizer(wxHORIZONTAL);
 
-     StateColor btn_bg_green(std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
-                             std::pair<wxColour, int>(AMS_CONTROL_BRAND_COLOUR, StateColor::Normal));
-
-     StateColor btn_bg_white(std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::Grey250, StateColor::Hovered),
-                             std::pair<wxColour, int>(*wxWHITE, StateColor::Normal));
-
-
-     auto m_button_retry = new Button(this, _L("Retry"));
-     m_button_retry->SetVariant(Button::Variant::Outlined);
-     m_button_retry->SetFont(Label::Body_12);
-     m_button_retry->SetSize(wxSize(-1, FromDIP(24)));
-     m_button_retry->SetMinSize(wxSize(FromDIP(58), FromDIP(24)));
-     m_button_retry->SetCornerRadius(FromDIP(12));
+     m_button_retry = new ContinuationButton(this, _L("Retry"));
+     m_button_retry->SetVariant(Button::Variant::Filled);
+     m_button_retry->SetButtonSize(Button::Size::Medium);
 
      m_button_retry->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &e) {
+         if (!m_presentation_available || !m_button_retry->IsEnabled() || !m_button_retry->IsShown()) return;
          EndModal(wxYES);
      });
 
-     auto m_button_input = new Button(this, _L("reconnect"));
+     m_button_input = new ContinuationButton(this, _L("reconnect"));
      m_button_input->SetVariant(Button::Variant::Outlined);
-     m_button_input->SetFont(Label::Body_12);
-     m_button_input->SetSize(wxSize(-1, FromDIP(24)));
-     m_button_input->SetMinSize(wxSize(FromDIP(58), FromDIP(24)));
-     m_button_input->SetCornerRadius(FromDIP(12));
+     m_button_input->SetButtonSize(Button::Size::Medium);
 
      m_button_input->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &e) {
+         if (!m_presentation_available || !m_button_input->IsEnabled() || !m_button_input->IsShown()) return;
          EndModal(wxAPPLY);
      });
 
@@ -2209,7 +2412,8 @@ void InputIpAddressDialog::OnHeaderClose()
 
      m_sizer_main->Add(m_line_top, 0, wxEXPAND, 0);
      m_sizer_main->Add(0, 0, 0, wxTOP, FromDIP(20));
-     m_sizer_main->Add(tip, 0, wxEXPAND|wxLEFT|wxRIGHT, FromDIP(25));
+     body_sizer->Add(tip, 0, wxEXPAND | wxALL, FromDIP(MD3::Metrics::active().padding));
+     m_sizer_main->Add(m_body, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(24));
      m_sizer_main->Add(0, 0, 0, wxTOP, FromDIP(25));
      m_sizer_main->Add(button_sizer, 0, wxEXPAND|wxRIGHT, FromDIP(25));
      m_sizer_main->Add(0, 0, 0, wxTOP, FromDIP(20));
@@ -2220,10 +2424,33 @@ void InputIpAddressDialog::OnHeaderClose()
 
      wxGetApp().UpdateDlgDarkUI(this);
      MD3DialogCaption::Adopt(this);
+     // Readback must retain the complete adopted root, including its caption.
+     fit_content();
      CentreOnParent();
- }
+     bind_continuation_refresh(this, [this] { fit_content(); });
+}
 
-void SendFailedConfirm::on_dpi_changed(const wxRect &suggested_rect) {}
+void SendFailedConfirm::fit_content()
+{
+    if (m_fitting_content) return;
+    m_button_retry->Rescale();
+    m_button_input->Rescale();
+    m_body->SetScrollRate(0, FromDIP(8));
+    m_presentation_available = fit_continuation_body(this, m_body, FromDIP(480), FromDIP(360), m_fitting_content, m_disclosure, [this] { EndModal(wxID_CANCEL); });
+    set_continuation_action_available(m_button_retry, m_presentation_available);
+    set_continuation_action_available(m_button_input, m_presentation_available);
+}
+
+void SendFailedConfirm::on_dpi_changed(const wxRect &suggested_rect)
+{
+    fit_content();
+}
+
+bool SendFailedConfirm::Show(bool show)
+{
+    if (show) fit_content();
+    return DPIDialog::Show(show);
+}
 
 ExpandCenterDialog::ExpandCenterDialog(wxWindow* parent /*= nullptr*/) :
     MD3Dialog(static_cast<wxWindow*>(wxGetApp().mainframe),

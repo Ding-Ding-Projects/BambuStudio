@@ -47,12 +47,12 @@ CameraPopup::CameraPopup(wxWindow *parent)
     SetDoubleBuffered(true);
 #endif
     m_panel = new MD3ScrolledWindow(this, wxID_ANY);
-    m_panel->SetBackgroundColour(*wxWHITE);
+    m_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
     m_panel->SetMinSize(wxSize(FromDIP(180),-1));
     m_panel->Bind(wxEVT_MOTION, &CameraPopup::OnMouse, this);
 
     main_sizer = new wxBoxSizer(wxVERTICAL);
-    wxFlexGridSizer* top_sizer = new wxFlexGridSizer(0, 2, 0, FromDIP(50));
+    wxFlexGridSizer* top_sizer = new wxFlexGridSizer(0, 2, FromDIP(4), FromDIP(16));
     top_sizer->AddGrowableCol(0);
     top_sizer->SetFlexibleDirection(wxBOTH);
     top_sizer->SetNonFlexibleGrowMode(wxFLEX_GROWMODE_SPECIFIED);
@@ -99,7 +99,7 @@ CameraPopup::CameraPopup(wxWindow *parent)
     //resolution
     m_text_resolution = new Label(m_panel, _L("Resolution"));
     m_text_resolution->Wrap(-1);
-    m_text_resolution->SetFont(Label::Head_14);
+    m_text_resolution->SetFont(Label::Head_16);
     m_text_resolution->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     top_sizer->Add(m_text_resolution, 0, wxALIGN_CENTER_VERTICAL | wxALIGN_LEFT | wxALL, FromDIP(5));
     top_sizer->Add(0, 0, wxALL, 0);
@@ -110,7 +110,7 @@ CameraPopup::CameraPopup(wxWindow *parent)
         top_sizer->Add(0, 0, wxALL, 0);
     }
 
-    main_sizer->Add(top_sizer, 0, wxALL, FromDIP(10));
+    main_sizer->Add(top_sizer, 0, wxEXPAND | wxALL, FromDIP(16));
 
     auto url = wxString::Format(L"https://wiki.bambulab.com/%s/software/bambu-studio/virtual-camera", L"en");
     auto text = _L("Show \"Live Video\" guide page.");
@@ -207,11 +207,10 @@ void CameraPopup::Popup(wxWindow *WXUNUSED(focus))
 
 wxWindow* CameraPopup::create_item_radiobox(wxString title, wxWindow* parent, wxString tooltip, int padding_left)
 {
-    wxWindow *item = new wxWindow(parent, wxID_ANY, wxDefaultPosition, wxSize(-1, FromDIP(20)));
-    item->SetBackgroundColour(*wxWHITE);
+    wxWindow *item = new wxWindow(parent, wxID_ANY);
+    item->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
 
     RadioBox *radiobox = new RadioBox(item);
-    radiobox->SetPosition(wxPoint(padding_left, (item->GetSize().GetHeight() - radiobox->GetSize().GetHeight()) / 2));
     resolution_rbtns.push_back(radiobox);
     int btn_idx = resolution_rbtns.size() - 1;
     radiobox->Bind(wxEVT_LEFT_DOWN, [this, btn_idx](wxMouseEvent &e) {
@@ -222,11 +221,9 @@ wxWindow* CameraPopup::create_item_radiobox(wxString title, wxWindow* parent, wx
         });
 
     wxStaticText *text = new Label(item, title);
-    text->SetForegroundColour(*wxBLACK);
     resolution_texts.push_back(text);
-    text->SetPosition(wxPoint(padding_left + radiobox->GetSize().GetWidth() + 10, (item->GetSize().GetHeight() - text->GetSize().GetHeight()) / 2));
-    text->SetFont(Label::Body_13);
-    text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+    text->SetFont(Label::Body_14);
+    text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     text->Bind(wxEVT_LEFT_DOWN, [this, btn_idx](wxMouseEvent &e) {
         if (m_obj && allow_alter_resolution) {
             select_curr_radiobox(btn_idx);
@@ -236,6 +233,13 @@ wxWindow* CameraPopup::create_item_radiobox(wxString title, wxWindow* parent, wx
 
     radiobox->SetToolTip(tooltip);
     text->SetToolTip(tooltip);
+    // Let the actual controls determine the row height and full label width.
+    // Absolute placement in a 20-DIP slot clipped the radio and paired labels.
+    auto *row = new wxBoxSizer(wxHORIZONTAL);
+    row->AddSpacer(padding_left);
+    row->Add(radiobox, 0, wxALIGN_CENTER_VERTICAL | wxTOP | wxBOTTOM, FromDIP(8));
+    row->Add(text, 0, wxALIGN_CENTER_VERTICAL | wxLEFT | wxTOP | wxBOTTOM, FromDIP(8));
+    item->SetSizerAndFit(row);
     return item;
 }
 

@@ -1,6 +1,8 @@
 #include <wx/dcgraph.h>
 #include "GUI.hpp"
 #include "Widgets/MD3ScrolledWindow.hpp"
+#include "Widgets/MD3Tokens.hpp"
+#include "Widgets/StateColor.hpp"
 #include "GUI_App.hpp"
 #include "MainFrame.hpp"
 #include "CalibrationPanel.hpp"
@@ -201,12 +203,12 @@ SelectMObjectPopup::SelectMObjectPopup(wxWindow* parent)
 
     Freeze();
     wxBoxSizer* m_sizer_main = new wxBoxSizer(wxVERTICAL);
-    SetBackgroundColour(SELECT_MACHINE_GREY400);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
 
 
 
     m_scrolledWindow = new MD3ScrolledWindow(this, wxID_ANY, wxDefaultPosition, SELECT_MACHINE_LIST_SIZE, wxHSCROLL | wxVSCROLL);
-    m_scrolledWindow->SetBackgroundColour(*wxWHITE);
+    m_scrolledWindow->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_scrolledWindow->SetMinSize(SELECT_MACHINE_LIST_SIZE);
     m_scrolledWindow->SetScrollRate(0, 5);
     auto m_sizxer_scrolledWindow = new wxBoxSizer(wxVERTICAL);
@@ -452,12 +454,12 @@ CalibrationPanel::CalibrationPanel(wxWindow* parent, wxWindowID id, const wxPoin
     : wxPanel(parent, id, pos, size, style),
     m_mobjectlist_popup(SelectMObjectPopup(this))
 {
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::Surface));
 
     init_tabpanel();
 
     wxBoxSizer* sizer_main = new wxBoxSizer(wxVERTICAL);
-    sizer_main->Add(m_tabpanel, 1, wxEXPAND, 0);
+    sizer_main->Add(m_tabpanel, 1, wxEXPAND | wxALL, FromDIP(MD3::Metrics::active().padding));
 
     SetSizerAndFit(sizer_main);
     Layout();
@@ -476,7 +478,7 @@ void CalibrationPanel::init_tabpanel() {
 
     m_tabpanel = new Tabbook(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, sizer_side_tools, wxNB_LEFT | wxTAB_TRAVERSAL | wxNB_NOPAGETHEME);
     m_side_tools->set_table_panel(m_tabpanel);
-    m_tabpanel->SetBackgroundColour(*wxWHITE);
+    m_tabpanel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
 
     m_cali_panels[0] = new PressureAdvanceWizard(m_tabpanel);
     m_cali_panels[1] = new FlowRateWizard(m_tabpanel);
@@ -496,7 +498,7 @@ void CalibrationPanel::init_tabpanel() {
         m_tabpanel->SetPageImage(i, "");
 
     auto padding_size = m_tabpanel->GetBtnsListCtrl()->GetPaddingSize(0);
-    m_tabpanel->GetBtnsListCtrl()->SetPaddingSize({ FromDIP(15), padding_size.y });
+    m_tabpanel->GetBtnsListCtrl()->SetPaddingSize({ FromDIP(MD3::Metrics::active().padding), padding_size.y });
 
     m_initialized = true;
 }

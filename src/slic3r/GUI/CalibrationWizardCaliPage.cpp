@@ -1,3 +1,5 @@
+#include "Widgets/MD3Tokens.hpp"
+#include "Widgets/StateColor.hpp"
 #include "CalibrationWizardCaliPage.hpp"
 #include "MainFrame.hpp"
 #include "I18N.hpp"
@@ -61,9 +63,9 @@ void CalibrationCaliPage::create_page(wxWindow* parent)
     m_printing_panel->enable_pause_resume_button(false, "resume_disable");
     m_printing_panel->enable_abort_button(false);
 
-    m_top_sizer->Add(m_printing_panel, 0, wxALIGN_CENTER, 0);
+    m_top_sizer->Add(m_printing_panel, 0, wxALIGN_CENTER | wxTOP | wxBOTTOM, FromDIP(MD3::Metrics::active().padding));
     m_action_panel = new CaliPageActionPanel(parent, m_cali_mode, CaliPageType::CALI_PAGE_CALI);
-    m_top_sizer->Add(m_action_panel, 0, wxEXPAND, 0);
+    m_top_sizer->Add(m_action_panel, 0, wxEXPAND | wxTOP, FromDIP(MD3::Metrics::active().gap));
 
     m_printing_panel->get_pause_resume_button()->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(CalibrationCaliPage::on_subtask_pause_resume), NULL, this);
     m_printing_panel->get_abort_button()->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(CalibrationCaliPage::on_subtask_abort), NULL, this);

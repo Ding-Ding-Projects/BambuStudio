@@ -1,0 +1,26 @@
+{
+  "baseline": "71170bc334656d51af49d3ae682ae14320a110f5",
+  "gateMethods": {
+    "bool SuperConfirmGate::Run(": "eb9820a0ea374fc36a93a69e2c0330363ab94eaa6f23abf1f75b3b2039f0cd66",
+    "void SuperConfirmGate::Show(": "565a57d847d222b4b8af8879f54971bc6063c35aa7f444309745a934347dd08a",
+    "wxString SuperConfirmGate::stage_text(": "1c6c932087010b1aa26d16e40e1ca2278440bffc564144f104df5d71daefb3b4",
+    "void SuperConfirmGate::refresh_stage(": "b8455969b6af5d4823ad7e0eb5485092d2a5608bb352c171f68cddc405421156",
+    "void SuperConfirmGate::on_key_toggled(": "ba69756c97c7fedf5a8c49e3a6aa571451dc3d90dc56361718ff284d7110e3c3",
+    "void SuperConfirmGate::on_slide_progress(": "8151ab0416d91f3ec9fba39d58d846259c1190c0a7684067eae4810b304c362b",
+    "void SuperConfirmGate::on_slide_complete(": "7d86b0337c57e49e0736f2161cf9c53ef6ef4c5a8bc1dd5746ea701e79103b73",
+    "void SuperConfirmGate::finish(": "3c2eed7053b8ecff34930f864d706e04a25f18f5b3e2aec23c150f69d8ec730f",
+    "void SuperConfirmGate::restore_focus(": "108dd3d7552180ce77f76a395e6555e2229d0a14da75fd605c7315e50cba0646"
+  },
+  "messageMethods": {
+    "void MsgDialog::apply_style(": "b4d35b3d231d9ee06c2fe4afb336def7090088d6cb2257efbcdc11c5977c591e",
+    "Button* MsgDialog::add_button(": "543a580321fce97e902647bd706b79a5dbfcca0f796289986daa26d86a046414",
+    "void MsgDialog::SetButtonLabel(": "9249239eee3fb117378aeb1fe3ff14fffc9864ccf97cd20f7f4ac7279145d826",
+    "void MsgDialog::AddButton(": "7bd4780eb5b9fa72dbf7f826410ab6bf832caf4a152468ddbda81b9fb2c80626",
+    "bool MsgDialog::get_checkbox_state(": "14e1ca912e3c0b1c81916317c8352fb674c3b602bdb7abb56eb57c92f46da26b"
+  },
+  "wholeFiles": {
+    "src/slic3r/GUI/Widgets/SuperConfirmState.hpp": "daa4cdeb2cfeb0e759b29c14d1855dd254b0b1bc2d180474d1484a13d09dc4e7",
+    "src/slic3r/GUI/Widgets/SlideToConfirm.cpp": "0d531136e85390382588e1da843930bc639c193d5330fdd614d1b1b7ff3d1f6d"
+  },
+  "keyClass": "09f567a28dbfb15872d14b491da33b9dafec97e6fb15a18d25d7da1a803c3796"
+}

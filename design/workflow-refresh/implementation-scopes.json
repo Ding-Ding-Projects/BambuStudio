@@ -1,0 +1,537 @@
+{
+  "schemaVersion": 1,
+  "completionClaim": false,
+  "contract": "Bounded styling and layout scopes. Preserve all feature, data, callback, telemetry, printer and file behavior. New search fields require their own adjacent anchored full regex builder. A shared palette does not complete a surface.",
+  "currentScope": {
+    "id": "embedded-product-styles",
+    "status": "source-incorporated-partial",
+    "trackingIssue": "https://github.com/Ding-Ding-Projects/BambuStudio/issues/36",
+    "surfaces": [
+      "home-web",
+      "ink-web",
+      "printer-web",
+      "project",
+      "monitor"
+    ],
+    "allowedBoundaries": [
+      "Product-owned DeviceWeb style sources",
+      "Product-owned resources/web CSS"
+    ],
+    "excludedBoundaries": [
+      "Callbacks",
+      "Network bridges",
+      "Telemetry",
+      "Hardware actions",
+      "Third-party content",
+      "Standalone website"
+    ],
+    "implementationStatus": "unverified",
+    "runtimeStatus": "unverified",
+    "captureStatus": "missing"
+  },
+  "nextScopes": [
+    {
+      "id": "native-shared-component-anatomy",
+      "status": "source-incorporated-partial",
+      "surfaces": [
+        "shell",
+        "preferences",
+        "parameters",
+        "menus",
+        "appearance-editor",
+        "palette",
+        "regex"
+      ],
+      "sourceAnchors": [
+        "src/slic3r/GUI/Widgets/Button.cpp",
+        "src/slic3r/GUI/Widgets/StaticBox.cpp",
+        "src/slic3r/GUI/Widgets/SearchField.cpp",
+        "src/slic3r/GUI/Widgets/MD3Menu.cpp"
+      ],
+      "work": "Audit registered shared controls for actual role resolution, field/button/card anatomy, density, measured labels, focus ring and state layers. Retain identifiers, input geometry and callbacks. Inventory callers that bypass shared controls before claiming coverage.",
+      "exclude": "Do not rework Notebook routing, stable IDs, print actions or global tokens owned by the integrated palette unit.",
+      "acceptance": "Control-specific before/after source review and focused checks, then real theme/density/language/scale interaction and geometry receipts when launches are authorized."
+    },
+    {
+      "id": "native-prepare-inspector-and-lists",
+      "status": "source-incorporated-partial",
+      "surfaces": [
+        "prepare",
+        "parameters"
+      ],
+      "sourceAnchors": [
+        "src/slic3r/GUI/ParamsPanel.cpp",
+        "src/slic3r/GUI/OptionsGroup.cpp",
+        "src/slic3r/GUI/GUI_ObjectList.cpp",
+        "src/slic3r/GUI/PresetComboBoxes.cpp"
+      ],
+      "work": "Apply section hierarchy, consistent fields, local search/builder, readable preset controls, bounded inspector scrolling and measured object rows. Resolve hard-coded styling at these call sites without changing values or preset inheritance.",
+      "exclude": "No slicing, grouping-solver, preset serialization, object identity or undo changes. Plater integration points require a separate reviewed owner.",
+      "acceptance": "Prepare process/object panels remain reachable at the actual minimum size and all language/scale tuples; every existing parameter and action remains available."
+    },
+    {
+      "id": "native-renderer-tools-and-preview",
+      "status": "source-incorporated-partial",
+      "surfaces": [
+        "prepare",
+        "preview",
+        "model-creator"
+      ],
+      "sourceAnchors": [
+        "src/slic3r/GUI/GLToolbar.cpp",
+        "src/slic3r/GUI/ImGuiWrapper.cpp",
+        "src/slic3r/GUI/IMSlider.cpp",
+        "src/slic3r/GUI/GLCanvas3D.cpp",
+        "src/slic3r/GUI/GCodeRenderer/BaseRenderer.cpp"
+      ],
+      "work": "Map renderer-owned toolbar, legends, timeline, tooltips and selection affordances to the same hierarchy and state roles while preserving data colors and actual hit targets.",
+      "exclude": "No geometry, toolpath, slider-value, camera, selection, simulation or Model Creator algorithm changes. No arbitrary canvas crossfade.",
+      "acceptance": "Actual canvas states, tooltip bounds and temporal transitions need renderer-specific built evidence; shared native palette tests cannot stand in for it."
+    },
+    {
+      "id": "native-printer-monitor-and-farm",
+      "status": "source-incorporated-partial",
+      "surfaces": [
+        "monitor",
+        "farm",
+        "ink-web",
+        "printer-web"
+      ],
+      "sourceAnchors": [
+        "src/slic3r/GUI/StatusPanel.cpp",
+        "src/slic3r/GUI/MonitorPage.cpp",
+        "src/slic3r/GUI/MultiMachinePage.cpp",
+        "src/slic3r/GUI/AmsWidgets.cpp",
+        "src/slic3r/GUI/MediaPlayCtrl.cpp",
+        "src/slic3r/GUI/PrintOptionsDialog.cpp"
+      ],
+      "work": "Unify native telemetry cards, printer rows, fan/camera controls, material mapping popups and print-option geometry. Show actual pending/offline states without layout jumps.",
+      "exclude": "No DeviceCore, AMS identity/mapping logic, telemetry parsing, hardware command, camera lifecycle or embedded CSS changes. Preserve the independent AMS fixes.",
+      "acceptance": "Native and embedded monitor boundaries need separate receipts; test unavailable/pending/confirmed states without asserting real hardware execution."
+    },
+    {
+      "id": "native-project-preferences-and-setup",
+      "status": "source-incorporated-partial",
+      "surfaces": [
+        "project",
+        "preferences",
+        "calibration",
+        "wizard",
+        "schedules",
+        "smart-home"
+      ],
+      "sourceAnchors": [
+        "src/slic3r/GUI/Project.cpp",
+        "src/slic3r/GUI/Preferences.cpp",
+        "src/slic3r/GUI/CalibrationPanel.cpp",
+        "src/slic3r/GUI/CalibrationWizard.cpp",
+        "src/slic3r/GUI/ConfigWizard.cpp",
+        "src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp"
+      ],
+      "work": "Apply native collection/detail, settings and stepped-flow composition to every registered section and nested dialog, with measured bilingual labels and reachable footer actions. Split additional writable scopes by exact file before dispatch.",
+      "exclude": "No calibration algorithms, scheduling precedence, timezone semantics, authentication, network bridge, project serialization or shared-widget edits.",
+      "acceptance": "Explicit nested-section inventory, unchanged option/callback mapping, and real minimum-size and keyboard proof; missing canonical features remain separate incomplete obligations."
+    },
+    {
+      "id": "native-auxiliary-readers-and-overlays",
+      "status": "source-incorporated-partial",
+      "surfaces": [
+        "menus",
+        "appearance-editor",
+        "palette",
+        "regex",
+        "notifications",
+        "history",
+        "documentation",
+        "changelog",
+        "import-export",
+        "confirmations",
+        "canonical-tools"
+      ],
+      "sourceAnchors": [
+        "src/slic3r/GUI/Appearance/AppearanceEditorPopover.cpp",
+        "src/slic3r/GUI/CommandPalette.cpp",
+        "src/slic3r/GUI/Widgets/RegexBuilderPopup.cpp",
+        "src/slic3r/GUI/NotificationCenterPanel.cpp",
+        "src/slic3r/GUI/ProjectHistoryDialog.cpp",
+        "src/slic3r/GUI/DocsBrowserDialog.cpp",
+        "src/slic3r/GUI/ChangelogDialog.cpp",
+        "src/slic3r/GUI/Export/ExportDialog.cpp"
+      ],
+      "work": "Complete call-site geometry and hierarchy for readers, history, palettes, editors and anchored overlays. Enumerate every nested dialog and missing implementation before splitting exact owned paths into smaller work units.",
+      "exclude": "No command registry, regex engine, restore semantics, export serializers, credential handling or destructive-confirmation behavior changes. Missing tool implementations are not supplied by a visual board.",
+      "acceptance": "Per-dialog search/builder, focus return, actual accessible state and content bounds; confirmation still requires its existing independent controls."
+    }
+  ],
+  "outsideAnchorFollowups": [
+    {
+      "id": "workspace-nested-content",
+      "status": "source-incorporated-partial",
+      "sourceAnchors": [
+        "src/slic3r/GUI/WorkspacePanel.cpp"
+      ],
+      "reason": "Project.cpp constructs WorkspacePanel at the reviewed baseline, so restyling the Project host does not establish its files, notes, checklist, calendar or other nested content composition.",
+      "boundary": "Coordinate with the active Project host owner. Preserve workspace data identity, local history, file operations, calendar and existing callbacks; no new engines."
+    },
+    {
+      "id": "shell-tab-callers",
+      "status": "source-incorporated-partial",
+      "sourceAnchors": [
+        "src/slic3r/GUI/MainFrame.cpp",
+        "src/slic3r/GUI/Widgets/TabStrip.cpp",
+        "src/slic3r/GUI/Widgets/TabStripDialogs.cpp",
+        "src/slic3r/GUI/Tabbook.cpp"
+      ],
+      "reason": "Notebook work does not establish the project-tab strip, nested book pages, title/status chrome or each tab dialog's composition.",
+      "boundary": "Retain stable page/command identities, pin/group/reorder/close behavior; coordinate MainFrame with existing Print changes."
+    },
+    {
+      "id": "field-and-preset-callers",
+      "status": "source-incorporated-partial",
+      "sourceAnchors": [
+        "src/slic3r/GUI/Field.cpp",
+        "src/slic3r/GUI/Tab.cpp",
+        "src/slic3r/GUI/BitmapComboBox.cpp",
+        "src/slic3r/GUI/Widgets/ComboBox.cpp",
+        "src/slic3r/GUI/Widgets/TextInput.cpp"
+      ],
+      "reason": "SearchField has no persistent-label API in the current bounded work; label/support/validation stacks and default provenance require caller-aware composition. OptionsGroup and ParamsPanel do not own every actual field or preset tab.",
+      "boundary": "Visual stack, measured geometry and state paint only; no value, preset, validation-engine or inheritance changes."
+    },
+    {
+      "id": "print-setup-callers",
+      "status": "source-incorporated-partial",
+      "sourceAnchors": [
+        "src/slic3r/GUI/SelectMachine.cpp",
+        "src/slic3r/GUI/SelectMachinePop.cpp",
+        "src/slic3r/GUI/SendToPrinter.cpp"
+      ],
+      "reason": "The new Print review page delegates to these real selection/mapping/setup/transport surfaces; a redesigned review page does not redesign its continuation dialogs.",
+      "boundary": "Preserve real selected/all-plate scope, AMS validation, transport progress, cancellation and final physical-action confirmation."
+    },
+    {
+      "id": "wizard-child-pages",
+      "status": "source-incorporated-partial",
+      "sourceAnchors": [
+        "src/slic3r/GUI/CalibrationWizardPage.cpp",
+        "src/slic3r/GUI/CalibrationWizardStartPage.cpp",
+        "src/slic3r/GUI/CalibrationWizardPresetPage.cpp",
+        "src/slic3r/GUI/CalibrationWizardCaliPage.cpp",
+        "src/slic3r/GUI/CalibrationWizardSavePage.cpp"
+      ],
+      "reason": "The parent CalibrationWizard owns navigation but separate child source files own selection, inputs, results and save composition.",
+      "boundary": "Coordinate shared heading/footer geometry with the active parent scope; retain algorithms, sequence and result-save callbacks."
+    },
+    {
+      "id": "native-device-popups",
+      "status": "source-incorporated-partial",
+      "sourceAnchors": [
+        "src/slic3r/GUI/Widgets/FanControl.cpp",
+        "src/slic3r/GUI/Widgets/CameraHUD.cpp",
+        "src/slic3r/GUI/AmsMappingPopup.cpp",
+        "src/slic3r/GUI/AMSMaterialsSetting.cpp",
+        "src/slic3r/GUI/AMSSetting.cpp",
+        "src/slic3r/GUI/CameraPopup.cpp"
+      ],
+      "reason": "Monitor/AmsWidgets changes do not own every fan/camera/map/material child popup or control.",
+      "boundary": "Paint and measured composition only; preserve telemetry, per-tray identity, requested/confirmed state, camera lifecycle and hardware callbacks."
+    },
+    {
+      "id": "native-notification-paint",
+      "status": "source-incorporated-partial",
+      "sourceAnchors": [
+        "src/slic3r/GUI/NotificationManager.cpp"
+      ],
+      "reason": "NotificationHistory owns records; the live notification paint and operation surfaces have separate renderer ownership.",
+      "boundary": "No event timing, cancellation, state generation, callback or quiet-setting change."
+    },
+    {
+      "id": "native-confirmation-and-dialogs",
+      "status": "source-incorporated-partial",
+      "sourceAnchors": [
+        "src/slic3r/GUI/Widgets/SuperConfirmGate.cpp",
+        "src/slic3r/GUI/MsgDialog.cpp"
+      ],
+      "reason": "The auxiliary-reader scope does not own the confirmation state surface or general native message-dialog composition.",
+      "boundary": "No authorization state-machine changes; preserve independent keys, full-range slider, Escape/cancel, exact affected data and action dispatch."
+    },
+    {
+      "id": "embedded-composition-followup",
+      "status": "source-incorporated-partial",
+      "sourceAnchors": [
+        "resources/web/homepage3/css/home.css",
+        "resources/web/homepage3/css/recent.css",
+        "resources/web/homepage3/css/online.css",
+        "resources/web/homepage3/css/left.css",
+        "resources/web/homepage3/css/manual.css",
+        "resources/web/homepage3/css/wiki.css",
+        "resources/web/model_new/css/gallery.css",
+        "resources/web/model_new/css/navigation.css",
+        "resources/web/model_new/css/tool.css",
+        "resources/web/model_new/css/accessory_dropdown.css",
+        "resources/web/filament_create/step2.css",
+        "resources/web/guide/1/1.css",
+        "resources/web/guide/23/23.css"
+      ],
+      "reason": "The recorded 23-stylesheet palette unit intentionally preserved geometry and typography metrics. Additional owned styles and actual component markup may still need composition work; none is covered merely by a shared neutral ramp.",
+      "boundary": "First enumerate reachable product-owned entrypoints and component owners. Any later markup/layout assignment needs exact paths; retain DOM event targets, bridges, theme selectors and callbacks. Third-party assets and standalone website remain excluded."
+    },
+    {
+      "id": "conditional-existing-tools",
+      "status": "inventory-required",
+      "sourceAnchors": [
+        "src/slic3r/GUI/MainFrame.cpp"
+      ],
+      "reason": "Model Creator, external-setting and canonical-tool groups include unresolved capability obligations. MainFrame is a discovery anchor, not evidence of an implemented engine or editor.",
+      "boundary": "Trace actual existing reachable tools to their owning files before assigning visual work. Keep missing engines as separate feature backlog; do not invent them in a visual-only scope."
+    }
+  ],
+  "inAnchorReviewHotspots": [
+    {
+      "sourceAnchor": "src/slic3r/GUI/ConfigWizard.cpp",
+      "symbol": "ConfigWizardIndex::on_paint",
+      "scopeId": "native-project-preferences-and-setup",
+      "reason": "The index has its own custom paint path inside an already assigned file; a frame-only theme update does not establish its step typography, active marker or measured labels."
+    },
+    {
+      "sourceAnchor": "src/slic3r/GUI/Preferences.cpp",
+      "symbol": "Preference row construction helpers",
+      "scopeId": "native-project-preferences-and-setup",
+      "reason": "Multiple helpers construct labels with fixed nominal widths plus ComboBox/TextInput controls. Review each real row composition for stacked bilingual labels and reachable validation, not only the dialog background."
+    },
+    {
+      "sourceAnchor": "src/slic3r/GUI/GCodeRenderer/BaseRenderer.cpp",
+      "symbol": "BaseRenderer::render_legend",
+      "scopeId": "native-renderer-tools-and-preview",
+      "reason": "Actual preview legend paint has separate renderer ownership and must be included explicitly; shared native colors alone cannot reach it."
+    }
+  ],
+  "verificationBoundary": "Recorded source units are incorporated at the reviewed candidate but remain partial at nested-control level. Shell/tab followup 44cba370 is incorporated with its separately recorded drag and focus repairs. See the ranked remaining implementation map in workflow-refresh.md. Runtime, capture and parity states and all 1,204 obligations remain unchanged.",
+  "reviewedCandidate": "4147ca9eeb0004f7e18b4a2f5a8c6cb190975d21",
+  "incorporatedFollowupArticles": [
+    {
+      "family": "shell-tabs",
+      "commit": "44cba370a948dc6653189e8c835274d2db10d0ac",
+      "article": "docs/features/design-system/studio-atlas-shell-and-tabs.md",
+      "status": "source-incorporated-partial"
+    },
+    {
+      "family": "confirmations",
+      "commit": "33958f9673677886c4a15f2834a1619aaa1cf738",
+      "article": "docs/features/design-system/confirmations-atlas.md",
+      "status": "source-incorporated-partial"
+    },
+    {
+      "family": "selection-controls",
+      "commit": "b37bb7e917398685cb56d2f2f13a5abd0b47048d",
+      "article": "docs/features/design-system/studio-atlas-selection-controls.md",
+      "status": "source-incorporated-partial"
+    },
+    {
+      "family": "calibration-children",
+      "commit": "7d829820017edf5acd6fa6494dd72d3a1353c56b",
+      "article": "docs/features/design-system/calibration-viewport-layout.md",
+      "status": "source-incorporated-partial"
+    },
+    {
+      "family": "calibration-children",
+      "commit": "2ea14a5ea158e3311ad7680409243d51cd35b37a",
+      "article": "docs/features/design-system/calibration-viewport-layout.md",
+      "status": "source-incorporated-partial"
+    },
+    {
+      "family": "transform-inspector",
+      "commit": "3e765ab09a7d25a1808d437034b8b0e12e67e7bb",
+      "article": "docs/features/design-system/transform-inspector-atlas.md",
+      "status": "source-incorporated-partial"
+    },
+    {
+      "family": "humidity-details",
+      "commit": "990fdaaeb6e7d92f06a726f5035062e6b80ebbd7",
+      "article": "docs/features/design-system/humidity-details-atlas.md",
+      "status": "source-incorporated-partial"
+    },
+    {
+      "family": "appearance-properties",
+      "commit": "c17599d086a7b5cc5c0e1f6e47fcdb48678bf1b9",
+      "article": "docs/features/design-system/appearance-property-pages-atlas.md",
+      "status": "source-incorporated-partial"
+    }
+  ],
+  "followupSurfaceFamilies": [
+    {
+      "id": "shared-list-rows",
+      "status": "source-incorporated-partial",
+      "sourceAnchors": [
+        "src/slic3r/GUI/Widgets/ListBox.cpp",
+        "src/slic3r/GUI/Widgets/ListBox.hpp"
+      ],
+      "reachableFrom": [
+        {
+          "path": "src/slic3r/GUI/WorkspacePanel.cpp",
+          "needle": "m_checklist = new ListBox"
+        },
+        {
+          "path": "src/slic3r/GUI/Appearance/AppearanceEditorPopover.cpp",
+          "needle": "m_font_list = new ListBox"
+        }
+      ],
+      "intent": "Redesign measured row anatomy, checkbox/text spacing and hover/selection/focus surfaces while preserving row identities, checking, keyboard selection and scroll ownership.",
+      "unchangedAtCandidate": "c7868b48536e8f8277d6872bd7d8def9d8463d02",
+      "sourceUnits": [
+        "ed3cbc35d5d3a6b701a5eb7ebfdc69d137684d92",
+        "c8b269d6d5925262143c0a0e9d28c83fb788d1b6"
+      ]
+    },
+    {
+      "id": "ams-drying-pages",
+      "status": "source-incorporated-partial",
+      "sourceAnchors": [
+        "src/slic3r/GUI/AMSDryControl.cpp",
+        "src/slic3r/GUI/AMSDryControl.hpp"
+      ],
+      "reachableFrom": [
+        {
+          "path": "src/slic3r/GUI/Widgets/AMSControl.cpp",
+          "needle": "m_ams_dry_ctr_win->ShowModal()"
+        },
+        {
+          "path": "src/slic3r/GUI/DeviceWeb/ViewModels/DevicePage/AmsControlWeb/ViewModelActions.cpp",
+          "needle": "OpenAmsDryControlDialog(machine_obj, ams_id)"
+        }
+      ],
+      "intent": "Redesign existing humidity/status, settings, unavailable/error and guide composition. Preserve AMS/tray identity, capability routing, drying parameters, start/stop commands and confirmation paths.",
+      "unchangedAtCandidate": "c7868b48536e8f8277d6872bd7d8def9d8463d02",
+      "sourceUnits": [
+        "fffdc0a9d22f4c230cc27e8930d740c6bc769945",
+        "2b6c799c30a92ee7758ba035d725da43829ea7d4"
+      ]
+    },
+    {
+      "id": "nozzle-rack-details",
+      "status": "source-incorporated-partial",
+      "sourceAnchors": [
+        "src/slic3r/GUI/DeviceTab/wgtDeviceNozzleRack.cpp",
+        "src/slic3r/GUI/DeviceTab/wgtDeviceNozzleRack.h",
+        "src/slic3r/GUI/DeviceTab/wgtDeviceNozzleSelect.cpp",
+        "src/slic3r/GUI/DeviceTab/wgtDeviceNozzleSelect.h",
+        "src/slic3r/GUI/DeviceTab/wgtDeviceNozzleRackUpdate.cpp",
+        "src/slic3r/GUI/DeviceTab/wgtDeviceNozzleRackUpdate.h"
+      ],
+      "reachableFrom": [
+        {
+          "path": "src/slic3r/GUI/StatusPanel.cpp",
+          "needle": "m_panel_nozzle_rack = new wgtDeviceNozzleRack(parent)"
+        },
+        {
+          "path": "src/slic3r/GUI/AmsMappingPopup.cpp",
+          "needle": "new wgtDeviceNozzleRackSelect(m_scrolled_window)"
+        },
+        {
+          "path": "src/slic3r/GUI/DeviceTab/wgtDeviceNozzleRack.cpp",
+          "needle": "new wgtDeviceNozzleRackUpgradeDlg"
+        }
+      ],
+      "intent": "Redesign rack/toolhead cards, nozzle selection and update detail composition without changing nozzle indices, capability checks, update commands, data colors or selected state.",
+      "unchangedAtCandidate": "c7868b48536e8f8277d6872bd7d8def9d8463d02",
+      "sourceUnits": [
+        "d31530a31780c10e7b4f44f85737f036504b7d5b"
+      ]
+    }
+  ],
+  "followupSourceBoundary": "The three previously prioritized families now have incorporated source units. Their historical unchanged-source observation is pinned separately to c7868b485. Actual nested coverage and all runtime evidence remain incomplete; the unchanged 1,204-row functional ledger is authoritative for missing/planned/placeholder obligations.",
+  "scopeFreeze": "Source coverage reconciliation only. No further UI implementation is assigned before built review establishes a concrete gap at this immutable candidate.",
+  "remainingVisualCoverage": [
+    {
+      "id": "shared-control-callers",
+      "status": "awaiting-built-review",
+      "sourceAnchors": [
+        "src/slic3r/GUI/Widgets/SideMenuPopup.cpp",
+        "src/slic3r/GUI/Widgets/TextTabbar.cpp",
+        "src/slic3r/GUI/Widgets/Slider.cpp",
+        "src/slic3r/GUI/Field.cpp"
+      ],
+      "implementationAssigned": false
+    },
+    {
+      "id": "shell-nested-fit",
+      "status": "awaiting-built-review",
+      "sourceAnchors": [
+        "src/slic3r/GUI/Widgets/TabStrip.cpp",
+        "src/slic3r/GUI/Widgets/TabStripDialogs.cpp",
+        "src/slic3r/GUI/Tabbook.cpp"
+      ],
+      "implementationAssigned": false
+    },
+    {
+      "id": "specialized-continuations",
+      "status": "awaiting-built-review",
+      "sourceAnchors": [
+        "src/slic3r/GUI/BindDialog.cpp",
+        "src/slic3r/GUI/MsgDialog.cpp",
+        "src/slic3r/GUI/ReleaseNote.cpp"
+      ],
+      "implementationAssigned": false
+    },
+    {
+      "id": "dense-settings-subforms",
+      "status": "awaiting-built-review",
+      "sourceAnchors": [
+        "src/slic3r/GUI/Preferences.cpp",
+        "src/slic3r/GUI/Schedule/ScheduledSettingsPanel.cpp",
+        "src/slic3r/GUI/CalibrationWizardSavePage.cpp"
+      ],
+      "implementationAssigned": false
+    },
+    {
+      "id": "device-nested-details",
+      "status": "awaiting-built-review",
+      "sourceAnchors": [
+        "src/slic3r/GUI/AmsMappingPopup.cpp",
+        "src/slic3r/GUI/AMSMaterialsSetting.cpp",
+        "src/slic3r/GUI/AMSSetting.cpp"
+      ],
+      "implementationAssigned": false
+    },
+    {
+      "id": "reader-detail-variants",
+      "status": "awaiting-built-review",
+      "sourceAnchors": [
+        "src/slic3r/GUI/Widgets/RegexBuilderPopup.cpp",
+        "src/slic3r/GUI/Export/ExportDialog.cpp",
+        "src/slic3r/GUI/ProjectHistoryDialog.cpp",
+        "src/slic3r/GUI/ChangelogDialog.cpp"
+      ],
+      "implementationAssigned": false
+    },
+    {
+      "id": "workspace-inherited-details",
+      "status": "awaiting-built-review",
+      "sourceAnchors": [
+        "src/slic3r/GUI/WorkspacePanel.cpp"
+      ],
+      "implementationAssigned": false
+    },
+    {
+      "id": "embedded-alternate-flows",
+      "status": "awaiting-built-review",
+      "sourceAnchors": [
+        "resources/web/filament_create/step2.css",
+        "resources/web/guide/1/1.css",
+        "resources/web/homepage3/css/home.css"
+      ],
+      "implementationAssigned": false
+    },
+    {
+      "id": "renderer-tool-interiors",
+      "status": "awaiting-built-review",
+      "sourceAnchors": [
+        "src/slic3r/GUI/GLCanvas3D.cpp",
+        "src/slic3r/GUI/Gizmos/GLGizmoBase.cpp",
+        "src/slic3r/GUI/Gizmos/GizmoObjectManipulation.cpp"
+      ],
+      "implementationAssigned": false
+    }
+  ],
+  "functionalGapBoundary": "These nine visual review boundaries refer to existing implementation destinations and do not authorize new engines or count missing/planned/placeholder features as delivered. The unchanged 1,204-row ledger retains every functional obligation and its evidence state."
+}

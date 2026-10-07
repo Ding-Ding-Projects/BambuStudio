@@ -69,18 +69,23 @@ ComboBox::ComboBox(wxWindow *parent,
         TextInput::SetBorderColor(StateColor(std::make_pair(MD3::Light::outlineVariant, (int) StateColor::Disabled),
             std::make_pair(MD3::Light::primary, (int) StateColor::Hovered),
             std::make_pair(MD3::Light::outline, (int) StateColor::Normal)));
-        // Filled SelectField fill: SurfaceContainerHighest at rest,
+        // Filled SelectField fill: SurfaceContainerLow at rest,
         // SecondaryContainer for the read-only focus tint (the MD3 selected/active
         // tonal, replacing the raw 0xEDFAF2), SurfaceContainerHigh for disabled.
         // Each light role value is a gDarkColors key, so colorForStates()
         // re-adapts it live on a dark-mode toggle. (SetColorScheme() re-applies
         // this for a non-Brand accent -- see below.)
         TextInput::SetBackgroundColor(StateColor(std::make_pair(MD3::Light::scHigh, (int) StateColor::Disabled),
+            std::make_pair(MD3::Light::scHighest, (int) StateColor::Pressed),
             std::make_pair(MD3::Light::secondaryContainer, (int) StateColor::Focused),
-            std::make_pair(MD3::Light::scHighest, (int) StateColor::Normal)));
+            std::make_pair(MD3::Light::scHigh, (int) StateColor::Hovered),
+            std::make_pair(MD3::Light::scLow, (int) StateColor::Normal)));
         TextInput::SetLabelColor(StateColor(std::make_pair(ThemeColor::TextDisabled, (int) StateColor::Disabled),
+            std::make_pair(MD3::Light::onSurface, (int) StateColor::Pressed),
+            std::make_pair(MD3::Light::onSecondaryContainer, (int) StateColor::Focused),
             std::make_pair(ThemeColor::TextPrimary, (int) StateColor::Normal)));
     }
+    TextInput::Rescale();
     if (auto scroll = GetScrollParent(this))
         scroll->Bind(wxEVT_MOVE, &ComboBox::onMove, this);
     drop.Bind(wxEVT_COMBOBOX, [this](wxCommandEvent &e) {
@@ -114,8 +119,16 @@ void ComboBox::SetColorScheme(MD3::ColorScheme scheme)
         const wxColour focus_fill = scheme == MD3::ColorScheme::Brand ? MD3::Light::secondaryContainer
                                                                        : StateColor::semantic(MD3::Role::SecondaryContainer, scheme);
         TextInput::SetBackgroundColor(StateColor(std::make_pair(MD3::Light::scHigh, (int) StateColor::Disabled),
+            std::make_pair(MD3::Light::scHighest, (int) StateColor::Pressed),
             std::make_pair(focus_fill, (int) StateColor::Focused),
-            std::make_pair(MD3::Light::scHighest, (int) StateColor::Normal)));
+            std::make_pair(MD3::Light::scHigh, (int) StateColor::Hovered),
+            std::make_pair(MD3::Light::scLow, (int) StateColor::Normal)));
+        const wxColour focus_text = scheme == MD3::ColorScheme::Brand ? MD3::Light::onSecondaryContainer
+            : StateColor::semantic(MD3::Role::OnSecondaryContainer, scheme);
+        TextInput::SetLabelColor(StateColor(std::make_pair(ThemeColor::TextDisabled, (int) StateColor::Disabled),
+            std::make_pair(MD3::Light::onSurface, (int) StateColor::Pressed),
+            std::make_pair(focus_text, (int) StateColor::Focused),
+            std::make_pair(ThemeColor::TextPrimary, (int) StateColor::Normal)));
         // Re-tint the hover/focus border accent to the scheme so a keyboard-
         // focused SelectField shows the workspace accent (Preview/Device) instead
         // of always Brand-green. Focus resolves to the Hovered entry because

@@ -275,10 +275,11 @@ void NotificationManager::PopNotification::ensure_ui_inited()
         m_is_dark_inited = true;
     }
 
-    if (!m_WindowRadius_inited) {
-        m_WindowRadius        = 12.0f * wxGetApp().plater()->get_current_canvas3D()->get_scale();
-        m_WindowRadius_inited = true;
-    }
+    // Appearance density and canvas scale may change while a notice stays alive.
+    // This is decoration only; text measurement and action rectangles are unchanged.
+    m_WindowRadius = static_cast<float>(MD3::Metrics::active().radius) *
+        wxGetApp().plater()->get_current_canvas3D()->get_scale();
+    m_WindowRadius_inited = true;
 }
 
 void NotificationManager::PopNotification::on_change_color_mode(bool is_dark)
@@ -1056,10 +1057,10 @@ void NotificationManager::PopNotification::render_close_button(ImGuiWrapper& img
 	ImVec2 win_size(win_size_x, win_size_y);
 	ImVec2 win_pos(win_pos_x, win_pos_y);
 	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(.0f, .0f, .0f, .0f));
-	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(.0f, .0f, .0f, .0f));
+	push_style_color(ImGuiCol_ButtonHovered, md3_notif_color(MD3::Role::InverseOn, m_is_dark, 0.08f), m_state == EState::FadingOut, m_current_fade_opacity);
 	push_style_color(ImGuiCol_Text, ImVec4(1.f, 1.f, 1.f, 1.f), m_state == EState::FadingOut, m_current_fade_opacity);
 	push_style_color(ImGuiCol_TextSelectedBg, ImVec4(0, .75f, .75f, 1.f), m_state == EState::FadingOut, m_current_fade_opacity);
-	ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(.0f, .0f, .0f, .0f));
+	push_style_color(ImGuiCol_ButtonActive, md3_notif_color(MD3::Role::InverseOn, m_is_dark, 0.12f), m_state == EState::FadingOut, m_current_fade_opacity);
 
 
 	std::wstring button_text;
@@ -1086,7 +1087,11 @@ void NotificationManager::PopNotification::render_close_button(ImGuiWrapper& img
 		close();
 	}
 
-	//invisible large button
+	// Keep the enlarged interaction-only target transparent; feedback belongs
+    // to the visible icon, so a full-height wash cannot cover text or corners.
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0, 0, 0, 0));
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0, 0, 0, 0));
+    //invisible large button
 	ImGui::SetCursorPosX(win_size.x - m_line_height * 2.35f);
 	ImGui::SetCursorPosY(0);
 	if (imgui.button(" ", m_line_height * 2.125, win_size.y - ( m_minimize_b_visible ? 2 * m_line_height : 0)))
@@ -1094,6 +1099,7 @@ void NotificationManager::PopNotification::render_close_button(ImGuiWrapper& img
 		close();
 	}
 
+	ImGui::PopStyleColor(2);
 	ImGui::PopStyleColor(5);
 }
 
@@ -1180,16 +1186,27 @@ void NotificationManager::PopNotification::bbl_render_left_sign(ImGuiWrapper &im
 {
     ensure_ui_inited();
     ImDrawList *draw_list = ImGui::GetWindowDrawList();
-	ImVec2 round_rect_pos = ImVec2(win_pos_x - win_size_x + ImGui::GetStyle().WindowBorderSize, win_pos_y + ImGui::GetStyle().WindowBorderSize);
-    ImVec2 round_rect_size = ImVec2(m_WindowRadius * 2, win_size_y - 2 * ImGui::GetStyle().WindowBorderSize);
-
-	ImVec2 rect_pos = round_rect_pos + ImVec2(m_WindowRadius, 0);
-    ImVec2 rect_size = ImVec2(round_rect_size.x / 2, round_rect_size.y);
-
-	ImU32 clr = ImGui::GetColorU32(ImVec4(m_CurrentColor.x, m_CurrentColor.y, m_CurrentColor.z, m_current_fade_opacity));
-
-    draw_list->AddRectFilled(round_rect_pos, round_rect_pos + round_rect_size, clr, m_WindowRadius);
-    draw_list->AddRectFilled(rect_pos, rect_pos + rect_size, clr, 0);
+    const float scale = wxGetApp().plater()->get_current_canvas3D()->get_scale();
+    const float inset = 4.0f * scale;
+    const ImVec2 card_min(win_pos_x - win_size_x, win_pos_y);
+    const ImVec2 card_max(win_pos_x, win_pos_y + win_size_y);
+    // An inset state rail leaves the text gutter quiet, including on compact cards.
+    // Its paint is bounded by the existing text indentation, never by new layout.
+    const float rail_left = card_min.x + inset;
+    const float rail_right = std::min(rail_left + 3.0f * scale,
+        card_min.x + m_left_indentation - 2.0f * scale);
+    const float rail_inset_y = std::max(inset, m_WindowRadius);
+    const ImVec2 rail_min(rail_left, card_min.y + rail_inset_y);
+    const ImVec2 rail_max(rail_right, card_max.y - rail_inset_y);
+    const ImU32 accent = ImGui::GetColorU32(ImVec4(m_CurrentColor.x, m_CurrentColor.y,
+        m_CurrentColor.z, m_current_fade_opacity));
+    if (rail_max.x > rail_min.x && rail_max.y > rail_min.y)
+        draw_list->AddRectFilled(rail_min, rail_max, accent, 1.5f * scale);
+    // The same inverse content role keeps the edge subtle in both themes.
+    const ImVec4 edge = md3_notif_color(MD3::Role::InverseOn, m_is_dark, 0.12f * m_current_fade_opacity);
+    if (win_size_x > 2.0f * scale && win_size_y > 2.0f * scale)
+        draw_list->AddRect(card_min + ImVec2(scale, scale), card_max - ImVec2(scale, scale),
+            ImGui::GetColorU32(edge), std::max(0.0f, m_WindowRadius - scale), 0, scale);
 }
 
 void NotificationManager::PopNotification::render_left_sign(ImGuiWrapper& imgui)
@@ -1212,8 +1229,8 @@ void NotificationManager::PopNotification::render_minimize_button(ImGuiWrapper& 
 {
     ensure_ui_inited();
 	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(.0f, .0f, .0f, .0f));
-	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(.0f, .0f, .0f, .0f));
-	push_style_color(ImGuiCol_ButtonActive, ImGui::GetStyleColorVec4(ImGuiCol_WindowBg), m_state == EState::FadingOut, m_current_fade_opacity);
+	push_style_color(ImGuiCol_ButtonHovered, md3_notif_color(MD3::Role::InverseOn, m_is_dark, 0.08f), m_state == EState::FadingOut, m_current_fade_opacity);
+	push_style_color(ImGuiCol_ButtonActive, md3_notif_color(MD3::Role::InverseOn, m_is_dark, 0.12f), m_state == EState::FadingOut, m_current_fade_opacity);
 	push_style_color(ImGuiCol_Text, ImVec4(1.f, 1.f, 1.f, 1.f), m_state == EState::FadingOut, m_current_fade_opacity);
 	push_style_color(ImGuiCol_TextSelectedBg, ImVec4(0, .75f, .75f, 1.f), m_state == EState::FadingOut, m_current_fade_opacity);
 
@@ -1575,13 +1592,13 @@ void NotificationManager::ProgressBarNotification::render_bar(ImGuiWrapper& imgu
 {
 	//ImVec4 orange_color			= ImVec4(.99f, .313f, .0f, 1.0f);
 	//ImVec4 gray_color			= ImVec4(.34f, .34f, .34f, 1.0f);
-    // MD3 ProgressBar: Primary fill on a SurfaceContainerHighest track.
+    // Progress stays on the inverse card: pair its quiet track with inverse content.
     ImVec4 orange_color         = m_NormalColor;
-    ImVec4 gray_color           = md3_notif_color(MD3::Role::SurfaceContainerHighest, m_is_dark);
+    ImVec4 gray_color           = md3_notif_color(MD3::Role::InverseOn, m_is_dark, 0.18f);
 	ImVec2 lineEnd				= ImVec2(win_pos_x - m_window_width_offset, win_pos_y + win_size_y / 2 + (m_multiline ? m_line_height / 2 : 0));
 	ImVec2 lineStart			= ImVec2(win_pos_x - win_size_x + m_left_indentation, win_pos_y + win_size_y / 2 + (m_multiline ? m_line_height / 2 : 0));
 	ImVec2 midPoint				= ImVec2(lineStart.x + (lineEnd.x - lineStart.x) * m_percentage, lineStart.y);
-	ImGui::GetWindowDrawList()->AddLine(lineStart, lineEnd, IM_COL32((int)(gray_color.x * 255), (int)(gray_color.y * 255), (int)(gray_color.z * 255), (m_current_fade_opacity * 255.f)), m_line_height * 0.2f);
+	ImGui::GetWindowDrawList()->AddLine(lineStart, lineEnd, IM_COL32((int)(gray_color.x * 255), (int)(gray_color.y * 255), (int)(gray_color.z * 255), (gray_color.w * m_current_fade_opacity * 255.f)), m_line_height * 0.2f);
 	ImGui::GetWindowDrawList()->AddLine(lineStart, midPoint, IM_COL32((int)(orange_color.x * 255), (int)(orange_color.y * 255), (int)(orange_color.z * 255), (m_current_fade_opacity * 255.f)), m_line_height * 0.2f);
 	if (m_render_percentage) {
 		std::string text;
@@ -1738,10 +1755,10 @@ void NotificationManager::PrintHostUploadNotification::render_cancel_button(ImGu
 	ImVec2 win_size(win_size_x, win_size_y);
 	ImVec2 win_pos(win_pos_x, win_pos_y);
 	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(.0f, .0f, .0f, .0f));
-	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(.0f, .0f, .0f, .0f));
+	push_style_color(ImGuiCol_ButtonHovered, md3_notif_color(MD3::Role::InverseOn, m_is_dark, 0.08f), m_state == EState::FadingOut, m_current_fade_opacity);
 	push_style_color(ImGuiCol_Text, ImVec4(1.f, 1.f, 1.f, 1.f), m_state == EState::FadingOut, m_current_fade_opacity);
 	push_style_color(ImGuiCol_TextSelectedBg, ImVec4(0, .75f, .75f, 1.f), m_state == EState::FadingOut, m_current_fade_opacity);
-	ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(.0f, .0f, .0f, .0f));
+	push_style_color(ImGuiCol_ButtonActive, md3_notif_color(MD3::Role::InverseOn, m_is_dark, 0.12f), m_state == EState::FadingOut, m_current_fade_opacity);
 
 	std::string button_text;
 	button_text = ImGui::CancelButton;
@@ -1775,13 +1792,18 @@ void NotificationManager::PrintHostUploadNotification::render_cancel_button(ImGu
 		wxGetApp().printhost_job_queue().cancel(m_job_id - 1);
 	}
 
-	//invisible large button
+	// Keep the enlarged interaction-only target transparent; feedback belongs
+    // to the visible icon, so a full-height wash cannot cover text or corners.
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0, 0, 0, 0));
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0, 0, 0, 0));
+    //invisible large button
 	ImGui::SetCursorPosX(win_size.x - m_line_height * 4.625f);
 	ImGui::SetCursorPosY(0);
 	if (imgui.button("  ", m_line_height * 2.f, win_size.y))
 	{
 		wxGetApp().printhost_job_queue().cancel(m_job_id - 1);
 	}
+	ImGui::PopStyleColor(2);
 	ImGui::PopStyleColor(5);
 }
 //------ProgressIndicatorNotification-------

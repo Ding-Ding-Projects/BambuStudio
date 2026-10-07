@@ -92,6 +92,7 @@ private:
     std::function<void()> m_on_confirm;
     std::function<void()> m_on_cancel;
     bool m_finished { false };
+    bool m_presentation_available { true }; // false means cancel-only, regardless of input events
     bool m_nested_loop { false };
     wxEventLoopBase *m_loop { nullptr }; // nested loop owned by Run() while it blocks
 

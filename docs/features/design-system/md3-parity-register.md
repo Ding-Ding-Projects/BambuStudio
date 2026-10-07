@@ -634,6 +634,6 @@ Audited the entire GUI icon/asset pipeline in src/slic3r/GUI (worktree bambu-stu
 
 ---
 
-*Register consolidated from 132 raw audit findings (10 surfaces) into 128 unique open gaps after four
-cross-surface merges. Source of truth for closing rows: the surface tables above; sequencing: the
+*Register consolidated from 132 raw audit findings (10 surfaces) into 128 unique inventoried gaps after four
+cross-surface merges. Current status for each gap: the Status column in the surface tables above; sequencing: the
 Wave plan; scope boundaries: the verbatim Coverage notes.*

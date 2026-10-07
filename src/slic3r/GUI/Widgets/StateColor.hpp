@@ -27,24 +27,24 @@ inline const wxColour Danger{"#ba1a1a"};  // error / destructive — red
 inline const wxColour Link{"#0078D4"};
 
 // Text
-inline const wxColour TextPrimary{"#1a1b1f"};   // default body text on light surfaces
-inline const wxColour TextSecondary{"#44464e"}; // slightly softer heading/label text
+inline const wxColour TextPrimary{MD3::Light::onSurface};   // default body text on light surfaces
+inline const wxColour TextSecondary{MD3::Light::onSurfaceVariant}; // slightly softer heading/label text
 inline const wxColour TextMuted{"#5c5f66"};     // secondary / placeholder (same hex as Grey700 below)
 inline const wxColour TextDisabled{"#9a9ba3"};  // disabled / inactive text
 
 // Pure white (card / dialog / hub fill)
-inline const wxColour White{"#ffffff"};
+inline const wxColour White{MD3::Light::scLowest};
 
 // Neutral grey scale — lightest (200) → darkest (700). Suffixes follow the
 // legacy WXCOLOUR_GREY* macro numbering (which skips 600); 250 and 350 are
 // half-steps for shades that sit between the macro rungs.
-inline const wxColour Grey200{"#f4f2f9"};
-inline const wxColour Grey250{"#eeedf3"}; // panel wrap bg
-inline const wxColour Grey300{"#e8e7ee"};
-inline const wxColour Grey350{"#e2e1e9"}; // borders / dividers
-inline const wxColour Grey400{"#c5c6d0"};
-inline const wxColour Grey450{"#75777f"}; // dividers / disabled borders
-inline const wxColour Grey500{"#75777f"};
+inline const wxColour Grey200{MD3::Light::scLow};
+inline const wxColour Grey250{MD3::Light::sc}; // panel wrap bg
+inline const wxColour Grey300{MD3::Light::scHigh};
+inline const wxColour Grey350{MD3::Light::scHighest}; // borders / dividers
+inline const wxColour Grey400{MD3::Light::outlineVariant};
+inline const wxColour Grey450{MD3::Light::outline}; // dividers / disabled borders
+inline const wxColour Grey500{MD3::Light::outline};
 inline const wxColour Grey700{"#5c5f66"}; // same hex as TextMuted
 
 } // namespace ThemeColor

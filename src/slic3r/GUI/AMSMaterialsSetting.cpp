@@ -212,16 +212,16 @@ void AMSMaterialsSetting::create_panel_normal(wxWindow* parent)
 
     m_filament_box = new StaticBox(parent);
     m_filament_box->SetMinSize(AMS_MATERIALS_SETTING_COMBOX_WIDTH);
-    m_filament_box->SetCornerRadius(FromDIP(4));
-    m_filament_box->SetBorderColor(StateColor(std::make_pair(wxColour(0xDB, 0xDB, 0xDB), (int)StateColor::Normal)));
-    m_filament_box->SetBackgroundColor(StateColor(std::make_pair(wxColour(0xF0, 0xF0, 0xF1), (int)StateColor::Disabled),
-                                                  std::make_pair(*wxWHITE, (int)StateColor::Normal)));
+    m_filament_box->SetCornerRadius(FromDIP(MD3::Metrics::active().small_radius));
+    m_filament_box->SetBorderColor(StateColor(StateColor::semantic(MD3::Role::Outline)));
+    m_filament_box->SetBackgroundColor(StateColor(std::make_pair(StateColor::semantic(MD3::Role::SurfaceContainer), (int)StateColor::Disabled),
+                                                  std::make_pair(StateColor::semantic(MD3::Role::SurfaceContainerLow), (int)StateColor::Normal)));
 
     auto* box_sizer = new wxBoxSizer(wxHORIZONTAL);
     m_filament_text = new Label(m_filament_box, wxEmptyString);
     m_filament_text->SetFont(::Label::Body_14);
-    m_filament_text->SetForegroundColour(StateColor::darkModeColorFor(AMS_MATERIALS_SETTING_GREY900));
-    m_filament_text->SetBackgroundColour(StateColor::darkModeColorFor(*wxWHITE));   // match box fill; avoid grey default label bg
+    m_filament_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+    m_filament_text->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
     box_sizer->Add(m_filament_text, 1, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(8));
 
     // Kit icon button carrying the jump chevron; a wxStaticBitmap cannot take
@@ -229,7 +229,7 @@ void AMSMaterialsSetting::create_panel_normal(wxWindow* parent)
     m_filament_arrow = new Button(m_filament_box, "");
     m_filament_arrow->SetIconButton(Button::IconShape::Circle, 20);
     m_filament_arrow->SetGlyph(MaterialIcon::ExpandMore, 14);
-    m_filament_arrow->SetBackgroundColour(StateColor::darkModeColorFor(*wxWHITE));
+    m_filament_arrow->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
     box_sizer->Add(m_filament_arrow, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(8));
     m_filament_box->SetSizer(box_sizer);
 
@@ -267,12 +267,12 @@ void AMSMaterialsSetting::create_panel_normal(wxWindow* parent)
 
     m_panel_temperature = new StaticBox(parent);
     m_panel_temperature->SetCornerRadius(FromDIP(10));
-    m_panel_temperature->SetBackgroundColor(StateColor(std::make_pair(ThemeColor::Grey250, (int)StateColor::Normal)));
-    m_panel_temperature->SetBorderColor(StateColor(std::make_pair(ThemeColor::Grey250, (int)StateColor::Normal)));
+    m_panel_temperature->SetBackgroundColor(StateColor(StateColor::semantic(MD3::Role::SurfaceContainerLow)));
+    m_panel_temperature->SetBorderColor(StateColor(StateColor::semantic(MD3::Role::OutlineVariant)));
 
     wxBoxSizer* temp_box_sizer = new wxBoxSizer(wxHORIZONTAL);
     m_nozzle_temp_label = new Label(m_panel_temperature, wxEmptyString);
-    m_nozzle_temp_label->SetFont(::Label::Body_13);
+    m_nozzle_temp_label->SetFont(::Label::Mono_13);
     m_nozzle_temp_label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     temp_box_sizer->Add(m_nozzle_temp_label, 1, wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(8));
     m_panel_temperature->SetSizer(temp_box_sizer);
@@ -2646,7 +2646,7 @@ void AMSMaterialsSetting::on_dpi_changed(const wxRect &suggested_rect)
     m_input_k_val->GetTextCtrl()->SetSize(wxSize(-1, FromDIP(20)));
     m_clr_picker->msw_rescale();
     m_filament_box->SetMinSize(AMS_MATERIALS_SETTING_COMBOX_WIDTH);
-    m_filament_box->SetCornerRadius(FromDIP(4));
+    m_filament_box->SetCornerRadius(FromDIP(MD3::Metrics::active().small_radius));
     m_filament_arrow->Rescale();
     m_button_reset->SetMinSize(AMS_MATERIALS_SETTING_BUTTON_SIZE);
     m_button_reset->SetCornerRadius(FromDIP(12));

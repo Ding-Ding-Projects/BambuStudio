@@ -50,6 +50,18 @@ work is in progress.
 - [Device fan motion](fan-motion.md) — independent telemetry-driven part and
   auxiliary fan previews with distinct input and command feedback.
 
+- [Print preparation and workflow navigation](print-preparation.md): observational
+  print review, existing explicit output and confirmation paths, and preserved
+  workspace destinations. Native rendered verification remains pending.
+
+## Studio Atlas workflow presentation
+
+- [Prepare inspector and lists](../design-system/prepare-inspector-atlas.md): native preparation controls and measured source geometry.
+- [Print setup presentation](print-setup-atlas.md): printer selection, review and existing send/export routes, including reopen lifecycle corrections.
+- [Workspace composition](../design-system/workspace-atlas.md): Overview, Files, Checklist, Notes and Calendar layout with preserved data behavior.
+
+These are source implementation receipts. Native rendering, supported-size interaction and the complete language/theme/scale matrix remain unverified where the articles say so.
+
 ## Postman collections
 
 Not applicable. These are desktop workspace features with no HTTP or API

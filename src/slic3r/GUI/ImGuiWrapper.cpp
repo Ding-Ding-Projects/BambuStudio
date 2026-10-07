@@ -1650,6 +1650,10 @@ void ImGuiWrapper::tooltip(const char *label, float wrap_width)
 {
     const std::string display = bilingual_stacked_utf8(label);
     const ImGuiID source = tooltip_source_id();
+    // Explicitly pair the opaque plate and text, independent of the calling tool.
+    ImGui::PushStyleColor(ImGuiCol_PopupBg, md3_imgui_color(MD3::Role::InverseSurface));
+    ImGui::PushStyleColor(ImGuiCol_Border, md3_imgui_color(MD3::Role::InversePrimary));
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, static_cast<float>(MD3::Metrics::active().small_radius) * m_style_scaling);
     ImGui::BeginTooltip();
     ImGui::PushTextWrapPos(wrap_width);
     ImGui::PushStyleColor(ImGuiCol_Text, md3_imgui_color(MD3::Role::InverseOn)); // tooltip plate is InverseSurface
@@ -1658,6 +1662,8 @@ void ImGuiWrapper::tooltip(const char *label, float wrap_width)
     ImGui::PopStyleColor(1);
     ImGui::PopTextWrapPos();
     ImGui::EndTooltip();
+    ImGui::PopStyleVar();
+    ImGui::PopStyleColor(2);
 }
 
 ImGuiID ImGuiWrapper::tooltip_source_id() const
@@ -3135,27 +3141,24 @@ void ImGuiWrapper::on_change_color_mode(bool is_dark)
 
 void ImGuiWrapper::push_toolbar_style(const float scale)
 {
-    // Neutrals/accents resolved from the shared MD3 tokens (Brand scheme). Roles
-    // are chosen so the resulting colours match the previous hand-copied values.
+    // Atlas overlays share resting, hover and pressed roles in both themes.
+    // Context-specific accents are layered by the caller.
     const ImVec4 text     = md3_imgui_color(MD3::Role::OnSurface);
     const ImVec4 window   = m_is_dark_mode ? md3_imgui_color(MD3::Role::SurfaceContainer)
                                            : md3_imgui_color(MD3::Role::SurfaceContainerLowest);
     const ImVec4 title    = md3_imgui_color(MD3::Role::SurfaceContainerLow);
     const ImVec4 outline  = md3_imgui_color(MD3::Role::OutlineVariant);
-    const ImVec4 button   = m_is_dark_mode ? md3_imgui_color(MD3::Role::SurfaceContainerHighest)
-                                           : md3_imgui_color(MD3::Role::SurfaceContainerLow);
-    const ImVec4 hover    = m_is_dark_mode ? md3_imgui_color(MD3::Role::OutlineVariant)
-                                           : md3_imgui_color(MD3::Role::SurfaceContainerHigh);
-    const ImVec4 active   = m_is_dark_mode ? md3_imgui_color(MD3::Role::PrimaryContainer)
-                                           : md3_imgui_color(MD3::Role::SurfaceContainerHighest);
+    const ImVec4 button   = md3_imgui_color(MD3::Role::SurfaceContainerLow);
+    const ImVec4 hover    = md3_imgui_color(MD3::Role::SurfaceContainerHigh);
+    const ImVec4 active   = md3_imgui_color(MD3::Role::SurfaceContainerHighest);
     const ImVec4 primary  = md3_imgui_color(MD3::Role::Primary);
     const ImVec4 selected = md3_imgui_color(MD3::Role::PrimaryContainer);
 
     ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.0f * scale);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(16.0f, 12.0f) * scale);
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 16.0f * scale);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, static_cast<float>(MD3::Metrics::active().radius) * scale);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 1.0f * scale);
-    ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 10.0f * scale);
+    ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, static_cast<float>(MD3::Metrics::active().small_radius) * scale);
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(12.0f, 12.0f) * scale);
     ImGui::PushStyleColor(ImGuiCol_Text, text);                 // 1
     ImGui::PushStyleColor(ImGuiCol_WindowBg, window);           // 2
@@ -3190,12 +3193,12 @@ void ImGuiWrapper::push_menu_style(const float scale)
     const ImVec4 header = md3_imgui_color(MD3::Role::PrimaryContainer);
     ImGuiWrapper::push_toolbar_style(scale);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(12.0f, 12.0f) * scale);
-    ImGui::PushStyleVar(ImGuiStyleVar_PopupRounding, 10.0f * scale);
+    ImGui::PushStyleVar(ImGuiStyleVar_PopupRounding, static_cast<float>(MD3::Metrics::active().small_radius) * scale);
     ImGui::PushStyleVar(ImGuiStyleVar_PopupBorderSize, 1.0f * scale);
     ImGui::PushStyleColor(ImGuiCol_PopupBg, popup);
     ImGui::PushStyleColor(ImGuiCol_Header, header);
-    ImGui::PushStyleColor(ImGuiCol_HeaderHovered, header);
-    ImGui::PushStyleColor(ImGuiCol_HeaderActive, header);
+    ImGui::PushStyleColor(ImGuiCol_HeaderHovered, md3_imgui_color(MD3::Role::SurfaceContainerHigh));
+    ImGui::PushStyleColor(ImGuiCol_HeaderActive, md3_imgui_color(MD3::Role::SurfaceContainerHighest));
 }
 
 void ImGuiWrapper::push_preview_toolbar_style(const float scale)
@@ -3228,27 +3231,24 @@ void ImGuiWrapper::pop_menu_style()
 }
 
 void ImGuiWrapper::push_common_window_style(const float scale) {
-    // Neutrals/accents resolved from the shared MD3 tokens (Brand scheme). Roles
-    // are chosen so the resulting colours match the previous hand-copied values.
+    // Atlas overlays share resting, hover and pressed roles in both themes.
+    // Context-specific accents are layered by the caller.
     const ImVec4 text     = md3_imgui_color(MD3::Role::OnSurface);
     const ImVec4 window   = m_is_dark_mode ? md3_imgui_color(MD3::Role::SurfaceContainer)
                                            : md3_imgui_color(MD3::Role::SurfaceContainerLowest);
     const ImVec4 title    = m_is_dark_mode ? md3_imgui_color(MD3::Role::SurfaceContainerHigh)
                                            : md3_imgui_color(MD3::Role::SurfaceContainerLow);
     const ImVec4 outline  = md3_imgui_color(MD3::Role::OutlineVariant);
-    const ImVec4 button   = m_is_dark_mode ? md3_imgui_color(MD3::Role::SurfaceContainerHighest)
-                                           : md3_imgui_color(MD3::Role::SurfaceContainerLow);
-    const ImVec4 hover    = m_is_dark_mode ? md3_imgui_color(MD3::Role::OutlineVariant)
-                                           : md3_imgui_color(MD3::Role::SurfaceContainerHigh);
-    const ImVec4 active   = m_is_dark_mode ? md3_imgui_color(MD3::Role::PrimaryContainer)
-                                           : md3_imgui_color(MD3::Role::SurfaceContainerHighest);
+    const ImVec4 button   = md3_imgui_color(MD3::Role::SurfaceContainerLow);
+    const ImVec4 hover    = md3_imgui_color(MD3::Role::SurfaceContainerHigh);
+    const ImVec4 active   = md3_imgui_color(MD3::Role::SurfaceContainerHighest);
     const ImVec4 primary  = md3_imgui_color(MD3::Role::Primary);
     const ImVec4 selected = md3_imgui_color(MD3::Role::PrimaryContainer);
 
     ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.0f * scale);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(16.0f, 12.0f) * scale);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowTitleAlign, ImVec2(0.05f, 0.50f));
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 16.0f * scale);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, static_cast<float>(MD3::Metrics::active().radius) * scale);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 1.0f * scale);
     ImGui::PushStyleColor(ImGuiCol_Text, text);               // 1
     ImGui::PushStyleColor(ImGuiCol_WindowBg, window);         // 2
@@ -3273,12 +3273,12 @@ void ImGuiWrapper::push_preview_menu_style(const float scale)
     const ImVec4 header = md3_imgui_color(MD3::Role::PrimaryContainer, MD3::ColorScheme::Preview);
     push_preview_toolbar_style(scale);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(12.0f, 12.0f) * scale);
-    ImGui::PushStyleVar(ImGuiStyleVar_PopupRounding, 10.0f * scale);
+    ImGui::PushStyleVar(ImGuiStyleVar_PopupRounding, static_cast<float>(MD3::Metrics::active().small_radius) * scale);
     ImGui::PushStyleVar(ImGuiStyleVar_PopupBorderSize, 1.0f * scale);
     ImGui::PushStyleColor(ImGuiCol_PopupBg, popup);
     ImGui::PushStyleColor(ImGuiCol_Header, header);
-    ImGui::PushStyleColor(ImGuiCol_HeaderHovered, header);
-    ImGui::PushStyleColor(ImGuiCol_HeaderActive, header);
+    ImGui::PushStyleColor(ImGuiCol_HeaderHovered, md3_imgui_color(MD3::Role::SurfaceContainerHigh));
+    ImGui::PushStyleColor(ImGuiCol_HeaderActive, md3_imgui_color(MD3::Role::SurfaceContainerHighest));
 }
 
 void ImGuiWrapper::pop_preview_menu_style()

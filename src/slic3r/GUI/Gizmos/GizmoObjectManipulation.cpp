@@ -36,8 +36,8 @@ inline ImVec4 md3_imvec4(MD3::Role role, bool dark, float alpha = 1.0f)
     return ImVec4(c.Red() / 255.0f, c.Green() / 255.0f, c.Blue() / 255.0f, alpha);
 }
 // Kit ValueField (Prepare > Object manipulation): the digits are Roboto Mono in
-// OnSurface on the SurfaceContainerHighest pill that the enclosing window
-// style already paints for every frame. Every numeric input of the move,
+// OnSurface on a quiet surface, with a state outline on its rendered bounds.
+// Every numeric input of the move,
 // rotate and scale panels goes through here so the anatomy cannot drift
 // between the three windows.
 inline bool md3_value_input(ImGuiWrapper *imgui, bool dark, const char *label, double *v, double step, double step_fast,
@@ -45,8 +45,26 @@ inline bool md3_value_input(ImGuiWrapper *imgui, bool dark, const char *label, d
 {
     const bool mono = imgui->push_mono_font();
     ImGui::PushStyleColor(ImGuiCol_Text, md3_imvec4(MD3::Role::OnSurface, dark));
+    ImGui::PushStyleColor(ImGuiCol_FrameBg, md3_imvec4(MD3::Role::SurfaceContainerLow, dark));
     const bool changed = ImGui::BBLInputDouble(label, v, step, step_fast, format, flags, support_numerical_operation);
-    ImGui::PopStyleColor();
+    // The vendored input paints FrameBg and owns its active-border style internally.
+    // Decorate the final item bounds after input handling, without adding an item,
+    // moving the cursor, or replacing its parsing and activation path.
+    const bool active = ImGui::IsItemActive();
+    const bool hovered = ImGui::IsItemHovered();
+    const ImVec2 minimum = ImGui::GetItemRectMin();
+    const ImVec2 maximum = ImGui::GetItemRectMax();
+    const float scale = std::max(1.0f, ImGui::GetFontSize() / MD3::Type::body.size);
+    const ImGuiStyle &style = ImGui::GetStyle();
+    const float padding = std::max(0.0f, std::min(style.FramePadding.x, style.FramePadding.y));
+    const float stroke = std::min((active ? 2.0f : 1.0f) * scale, padding);
+    if (stroke > 0.0f && ImGui::IsItemVisible() && maximum.x - minimum.x > stroke && maximum.y - minimum.y > stroke) {
+        const MD3::Role role = active ? MD3::Role::Primary : hovered ? MD3::Role::Outline : MD3::Role::OutlineVariant;
+        ImGui::GetWindowDrawList()->AddRect(ImVec2(minimum.x + stroke * 0.5f, minimum.y + stroke * 0.5f),
+            ImVec2(maximum.x - stroke * 0.5f, maximum.y - stroke * 0.5f), ImGui::GetColorU32(md3_imvec4(role, dark)),
+            std::max(0.0f, ImGui::GetStyle().FrameRounding - stroke * 0.5f), 0, stroke);
+    }
+    ImGui::PopStyleColor(2);
     if (mono) imgui->pop_mono_font();
     return changed;
 }
@@ -59,12 +77,18 @@ inline ImVec4 imvec4_of(const wxColour &c, float alpha = 1.0f)
 // Centered single-character axis header. Mirrors ImGui::TextAlignCenter's
 // centering math (strlen("X"/"Y"/"Z") == 1), but paints the label with the MD3
 // viewport axis token instead of the hardcoded RGB baked into TextAlignCenter.
-inline void axis_header(const char *label, const wxColour &axis)
+inline void axis_header(const char *label, const wxColour &axis, bool dark)
 {
+    const ImVec2 cell_start = ImGui::GetCursorScreenPos();
     const float item_width = ImGui::CalcItemWidth();
     const float half_glyph = ImGui::GetFontSize() / 2.0f;
     ImGui::SameLine(ImGui::GetCursorPos().x + (item_width - half_glyph) / 2);
     ImGui::TextColored(imvec4_of(axis), "%s", label);
+    // Separate the axis heading from the editable column inside the existing row gap.
+    const float y = ImGui::GetItemRectMax().y + ImGui::GetStyle().ItemSpacing.y * 0.5f;
+    if (item_width > 0.0f && ImGui::GetStyle().ItemSpacing.y > 0.0f)
+        ImGui::GetWindowDrawList()->AddLine(ImVec2(cell_start.x, y), ImVec2(cell_start.x + item_width, y),
+            ImGui::GetColorU32(md3_imvec4(MD3::Role::OutlineVariant, dark)));
 }
 } // namespace
 
@@ -906,9 +930,8 @@ void GizmoObjectManipulation::set_init_rotation(const Geometry::Transformation &
 
     // BBS
     ImGuiWrapper::push_toolbar_style(m_glcanvas.get_scale());
-    // Kit panel anatomy: label column in OnSurfaceVariant, value fields as
-    // filled borderless SurfaceContainerHighest pills (md3_value_input paints
-    // the digits in OnSurface and Roboto Mono).
+    // Labels use OnSurfaceVariant; the numeric helper owns quiet value surfaces
+    // and state outlines. Other controls retain the enclosing filled style.
     ImGui::PushStyleColor(ImGuiCol_Text, md3_imvec4(MD3::Role::OnSurfaceVariant, m_is_dark_mode));
     ImGui::PushStyleColor(ImGuiCol_FrameBg, md3_imvec4(MD3::Role::SurfaceContainerHighest, m_is_dark_mode));
     ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.0f);
@@ -987,13 +1010,13 @@ void GizmoObjectManipulation::set_init_rotation(const Geometry::Transformation &
     index       = 2;
     ImGui::SameLine(caption_max + index * space_size);
     ImGui::PushItemWidth(unit_size);
-    axis_header("X", MD3::Viewport::axisX);
+    axis_header("X", MD3::Viewport::axisX, m_is_dark_mode);
     ImGui::SameLine(caption_max + unit_size + (++index) * space_size + temp_space_size);
     ImGui::PushItemWidth(unit_size);
-    axis_header("Y", MD3::Viewport::axisY);
+    axis_header("Y", MD3::Viewport::axisY, m_is_dark_mode);
     ImGui::SameLine(caption_max + (++index_unit) * unit_size + (++index) * space_size + temp_space_size *1.2);
     ImGui::PushItemWidth(unit_size);
-    axis_header("Z", MD3::Viewport::axisZ);
+    axis_header("Z", MD3::Viewport::axisZ, m_is_dark_mode);
 
     index      = 1;
     index_unit = 1;
@@ -1270,8 +1293,10 @@ void GizmoObjectManipulation::show_align_icon(ImGuiWrapper *              imgui_
             m_align_type = GLGizmoAlignment::AlignType::NONE;
         }
         //imgui_wrapper->tooltip(tip, max_tooltip_width);
-        ImGui::PushStyleColor(ImGuiCol_PopupBg, ImGuiWrapper::COL_WINDOW_BACKGROUND);
-        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
+        ImGui::PushStyleColor(ImGuiCol_PopupBg, md3_imvec4(MD3::Role::InverseSurface, m_is_dark_mode));
+        ImGui::PushStyleColor(ImGuiCol_Text, md3_imvec4(MD3::Role::InverseOn, m_is_dark_mode));
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding,
+            static_cast<float>(MD3::Metrics::active().small_radius) * m_glcanvas.get_scale());
         if (can_align) {
             ImGui::SetTooltip("%s", function_tip.ToUTF8().data());
         } else {
@@ -1282,6 +1307,7 @@ void GizmoObjectManipulation::show_align_icon(ImGuiWrapper *              imgui_
                 ImGui::SetTooltip("%s", function_tip.ToUTF8().data());
             }
         }
+        ImGui::PopStyleVar();
         ImGui::PopStyleColor(2);
     }
 }
@@ -1305,9 +1331,8 @@ void GizmoObjectManipulation::do_render_rotate_window(ImGuiWrapper *imgui_wrappe
 
     // BBS
     ImGuiWrapper::push_toolbar_style(m_glcanvas.get_scale());
-    // Kit panel anatomy: label column in OnSurfaceVariant, value fields as
-    // filled borderless SurfaceContainerHighest pills (md3_value_input paints
-    // the digits in OnSurface and Roboto Mono).
+    // Labels use OnSurfaceVariant; the numeric helper owns quiet value surfaces
+    // and state outlines. Other controls retain the enclosing filled style.
     ImGui::PushStyleColor(ImGuiCol_Text, md3_imvec4(MD3::Role::OnSurfaceVariant, m_is_dark_mode));
     ImGui::PushStyleColor(ImGuiCol_FrameBg, md3_imvec4(MD3::Role::SurfaceContainerHighest, m_is_dark_mode));
     ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.0f);
@@ -1354,13 +1379,13 @@ void GizmoObjectManipulation::do_render_rotate_window(ImGuiWrapper *imgui_wrappe
     imgui_wrapper->text(_L("World coordinates"));
     ImGui::SameLine(caption_max + index * space_size);
     ImGui::PushItemWidth(unit_size);
-    axis_header("X", MD3::Viewport::axisX);
+    axis_header("X", MD3::Viewport::axisX, m_is_dark_mode);
     ImGui::SameLine(caption_max + unit_size + (++index) * space_size);
     ImGui::PushItemWidth(unit_size);
-    axis_header("Y", MD3::Viewport::axisY);
+    axis_header("Y", MD3::Viewport::axisY, m_is_dark_mode);
     ImGui::SameLine(caption_max + (++index_unit) * unit_size + (++index) * space_size);
     ImGui::PushItemWidth(unit_size);
-    axis_header("Z", MD3::Viewport::axisZ);
+    axis_header("Z", MD3::Viewport::axisZ, m_is_dark_mode);
 
     index      = 1;
     index_unit = 1;
@@ -1513,9 +1538,8 @@ void GizmoObjectManipulation::do_render_scale_input_window(ImGuiWrapper* imgui_w
 
     //BBS
     ImGuiWrapper::push_toolbar_style(m_glcanvas.get_scale());
-    // Kit panel anatomy: label column in OnSurfaceVariant, value fields as
-    // filled borderless SurfaceContainerHighest pills (md3_value_input paints
-    // the digits in OnSurface and Roboto Mono).
+    // Labels use OnSurfaceVariant; the numeric helper owns quiet value surfaces
+    // and state outlines. Other controls retain the enclosing filled style.
     ImGui::PushStyleColor(ImGuiCol_Text, md3_imvec4(MD3::Role::OnSurfaceVariant, m_is_dark_mode));
     ImGui::PushStyleColor(ImGuiCol_FrameBg, md3_imvec4(MD3::Role::SurfaceContainerHighest, m_is_dark_mode));
     ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.0f);
@@ -1583,13 +1607,13 @@ void GizmoObjectManipulation::do_render_scale_input_window(ImGuiWrapper* imgui_w
     //ImGui::Dummy(ImVec2(caption_max, -1));
     ImGui::SameLine(caption_max + space_size);
     ImGui::PushItemWidth(unit_size);
-    axis_header("X", MD3::Viewport::axisX);
+    axis_header("X", MD3::Viewport::axisX, m_is_dark_mode);
     ImGui::SameLine(caption_max + unit_size + index * space_size);
     ImGui::PushItemWidth(unit_size);
-    axis_header("Y", MD3::Viewport::axisY);
+    axis_header("Y", MD3::Viewport::axisY, m_is_dark_mode);
     ImGui::SameLine(caption_max + (++index_unit) * unit_size + (++index) * space_size);
     ImGui::PushItemWidth(unit_size);
-    axis_header("Z", MD3::Viewport::axisZ);
+    axis_header("Z", MD3::Viewport::axisZ, m_is_dark_mode);
 
     index      = 2;
     index_unit = 1;

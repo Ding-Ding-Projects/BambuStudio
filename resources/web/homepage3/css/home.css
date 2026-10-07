@@ -250,3 +250,19 @@ body
 	font-weight: 600;
 }
 
+
+
+/* Studio Atlas composition: existing route visibility remains script-owned. */
+html { padding: 24px clamp(12px, 3vw, 36px); }
+body { min-width: 0; }
+#HomeFullArea > div { margin-bottom: 24px; }
+#HomeFullArea .Title_Bar { gap: 16px; flex-wrap: wrap; padding: 8px 10px 14px; }
+#HomeFullArea .Content-Title { font-size: 20px; line-height: 1.4; font-weight: 700; }
+.MakerlabTextBlock, .PrintHistoryTextBlock { padding: 14px 16px 16px; }
+.MakerlabName, .PrintHistoryName { font-size: 15px; line-height: 1.4; }
+.MakerlabTextBlock div, .PrintHistoryName { white-space: normal; overflow-wrap: anywhere; word-break: normal; }
+.MakerlabDesc, .MakerlabAuthor { font-size: 13px; line-height: 1.5; margin-top: 4px; }
+.PrintHistory_Line2, .PrintHistoryInfo { gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+.PH_PrintTime, .PH_PrintDate { flex-shrink: 0; width: auto; }
+.PH_DeviceName, .PH_PlateName { white-space: normal; overflow-wrap: anywhere; min-width: 0; }
+.PrintHistoryStatus { padding: 2px 8px; border: 1px solid currentColor; border-radius: 999px; }

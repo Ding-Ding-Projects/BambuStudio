@@ -1,4 +1,5 @@
 #include "BitmapComboBox.hpp"
+#include "Widgets/StateColor.hpp"
 
 #include <cstddef>
 #include <vector>
@@ -235,34 +236,24 @@ bool BitmapComboBox::MSWOnDraw(WXDRAWITEMSTRUCT* item)
 
 void BitmapComboBox::DrawBackground_(wxDC& dc, const wxRect& rect, int WXUNUSED(item), int flags) const
 {
-    if (flags & wxODCB_PAINTING_SELECTED)
-    {
-        const int vSizeDec = 0;  // Vertical size reduction of selection rectangle edges
-
-        dc.SetTextForeground(wxGetApp().get_label_highlight_clr());
-
-        wxColour selCol = wxGetApp().get_highlight_default_clr();
-        dc.SetPen(selCol);
-        dc.SetBrush(selCol);
-        dc.DrawRectangle(rect.x,
-            rect.y + vSizeDec,
-            rect.width,
-            rect.height - (vSizeDec * 2));
-    }
-    else
-    {
-        dc.SetTextForeground(flags & ODCB_PAINTING_DISABLED ? wxColour(108,108,108) : wxGetApp().get_label_clr_default());
-
-        wxColour selCol = flags & ODCB_PAINTING_DISABLED ? 
-//#ifdef _MSW_DARK_MODE
-            //wxRGBToColour(NppDarkMode::GetSofterBackgroundColor()) :
-//#else
-            wxGetApp().get_highlight_default_clr() :
-//#endif
-            wxGetApp().get_window_default_clr();
-        dc.SetPen(selCol);
-        dc.SetBrush(selCol);
-        dc.DrawRectangle(rect);
+    const bool disabled = (flags & ODCB_PAINTING_DISABLED) != 0;
+    const bool selected = !disabled && (flags & wxODCB_PAINTING_SELECTED) != 0;
+    const wxColour backing = StateColor::semantic(MD3::Role::SurfaceContainerLow);
+    dc.SetPen(*wxTRANSPARENT_PEN);
+    dc.SetBrush(wxBrush(backing));
+    dc.DrawRectangle(rect);
+    dc.SetTextForeground(StateColor::semantic(disabled ? MD3::Role::OnSurfaceVariant
+        : selected ? MD3::Role::OnSecondaryContainer : MD3::Role::OnSurface));
+    if (selected) {
+        // Paint stays within the existing native item rectangle. wxWidgets still owns
+        // the text, bitmap offsets, item height, selection and keyboard interaction.
+        wxRect selection = rect;
+        selection.Deflate(FromDIP(1));
+        if (selection.width > 0 && selection.height > 0) {
+            dc.SetBrush(wxBrush(StateColor::semantic(MD3::Role::SecondaryContainer)));
+            dc.DrawRoundedRectangle(selection, std::min(FromDIP(MD3::Metrics::active().small_radius),
+                std::min(selection.width, selection.height) / 2));
+        }
     }
 }
 
