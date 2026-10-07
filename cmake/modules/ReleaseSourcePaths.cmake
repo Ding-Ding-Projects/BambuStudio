@@ -5,6 +5,7 @@ if(MSVC AND (CMAKE_C_COMPILER_ID STREQUAL "MSVC" OR CMAKE_CXX_COMPILER_ID STREQU
         message(FATAL_ERROR "Release source-path mapping is enabled only for the inspected MSVC 19.51-or-newer baseline; older compiler compatibility has not been established.")
     endif()
     get_filename_component(_bambu_source_root "${CMAKE_CURRENT_LIST_DIR}/../.." ABSOLUTE)
+    set(_bambu_path_options "/experimental:deterministic")
     set(_bambu_path_flags "/experimental:deterministic")
     # Map repository content precisely, with a broader host-root mapping for
     # generated files, dependency caches and headers outside the source tree.
@@ -40,10 +41,12 @@ if(MSVC AND (CMAKE_C_COMPILER_ID STREQUAL "MSVC" OR CMAKE_CXX_COMPILER_ID STREQU
         list(APPEND _bambu_embedded_labels "${_bambu_label}")
         # Source/header strings can use either separator form, or mix them
         # after the matched prefix. Do not assume compiler normalization.
+        list(APPEND _bambu_path_options "/pathmap:${_bambu_native_root}=${_bambu_label}")
         string(APPEND _bambu_path_flags " /pathmap:\"${_bambu_native_root}=${_bambu_label}\"")
         if(NOT _bambu_forward_root STREQUAL _bambu_native_root)
             list(APPEND _bambu_embedded_roots "${_bambu_forward_root}")
             list(APPEND _bambu_embedded_labels "${_bambu_label}")
+            list(APPEND _bambu_path_options "/pathmap:${_bambu_forward_root}=${_bambu_label}")
             string(APPEND _bambu_path_flags " /pathmap:\"${_bambu_forward_root}=${_bambu_label}\"")
         endif()
     endwhile()
@@ -63,8 +66,19 @@ if(MSVC AND (CMAKE_C_COMPILER_ID STREQUAL "MSVC" OR CMAKE_CXX_COMPILER_ID STREQU
         endif()
         set(${output} "${_text}" PARENT_SCOPE)
     endfunction()
-    string(APPEND CMAKE_C_FLAGS " ${_bambu_path_flags}")
-    string(APPEND CMAKE_CXX_FLAGS " ${_bambu_path_flags}")
+    # Deliver the mapping as directory compile options, never through
+    # CMAKE_C_FLAGS or CMAKE_CXX_FLAGS. Dependencies copy those variables into
+    # generated CMake code (libpng scripts/genout.cmake, the OCCT package
+    # config), where a native root such as D:\a\... is an invalid escape.
+    # The options reach every later C and C++ target of this project and its
+    # subdirectories, including each dependency that loads this module as its
+    # CMAKE_PROJECT_INCLUDE, and stay off assembler and resource sources.
+    foreach(_bambu_path_option IN LISTS _bambu_path_options)
+        add_compile_options("$<$<COMPILE_LANGUAGE:C,CXX>:${_bambu_path_option}>")
+    endforeach()
+    # _bambu_path_flags keeps the same mapping as one quoted command-line
+    # string for producers built outside CMake that read it through the _CL_
+    # environment variable (OpenSSL). It must not be added to a flag variable.
     foreach(_bambu_link_kind EXE SHARED MODULE)
         string(APPEND CMAKE_${_bambu_link_kind}_LINKER_FLAGS " /PDBALTPATH:%_PDB%")
     endforeach()

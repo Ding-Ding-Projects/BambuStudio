@@ -1,3 +1,9 @@
+## Dependency flag re-embedding, 7 October 2026
+
+- [x] Deliver release path maps as C/C++ compile options so no dependency re-embeds a native backslash root from `CMAKE_C_FLAGS` or `CMAKE_CXX_FLAGS` (libpng `genout.cmake`).
+- [x] Reproduce the hosted `Invalid character escape '\a'` with libpng's real template and prove the repair with a five-test configure contract.
+- [ ] Confirm through a fresh hosted Windows dependency build that `dep_PNG` and every later dependency build under the Visual Studio generator.
+
 ## Redesign continuation merge, 7 October 2026
 
 - [x] Prove every diverged redesign branch is contained in the preserved preparation tip `1fa14f33a` before merging.

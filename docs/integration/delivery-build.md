@@ -16,6 +16,9 @@ Five actual-template configure/parse assertions demonstrate the old invalid
 `\U` escape, exact flag preservation, delimiter collision handling and replay.
 An existing installed config is refreshed through the supported dependency
 configure/install route, never by hand-editing that generated file alone.
+Release path maps no longer reach these flag strings: the shared source-path
+module adds them as compile options (see `delivery-package-version.md`). The
+quoting stays for any backslash or quote a flag still carries.
 wx uses the same per-patch helper for its relocatable-prefix patch. A successful
 reverse check with the helper's documented whitespace options proves the whole
 patch already applied; a strict raw reverse check is a different contract and

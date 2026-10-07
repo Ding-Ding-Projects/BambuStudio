@@ -3317,3 +3317,39 @@ config parses with exact C/C++ flag equality, bracket collisions grow the
 delimiter, and patch replay preserves bytes. No generated production file was
 edited and no production build was started. Parent review and exact root retry
 remain necessary to regenerate and install the corrected package config.
+
+## Dependency flag re-embedding (libpng genout), 2026-10-07
+
+Hosted run 37677335079 missed the dependency cache and built dependencies from
+source for the first time under the release source-path policy. dep_PNG failed
+in scripts/genout.cmake line 17 with "Invalid character escape '\a'" while
+parsing the option below, then MSB8066 for its generated files:
+
+    /pathmap:"D:\a\BambuStudio\BambuStudio\deps\build\dep_PNG-prefix\src\dep_PNG-build=build/libpng"
+
+libpng 1.6.35 configures scripts/genout.cmake.in with set(CMAKE_C_FLAGS
+@CMAKE_C_FLAGS@), an unquoted CMake argument, and ReleaseSourcePaths.cmake had
+appended native-backslash /pathmap options to CMAKE_C_FLAGS and CMAKE_CXX_FLAGS
+of every dependency through CMAKE_PROJECT_INCLUDE. The OCCT package-config
+failure of 2026-10-06 was the same class.
+
+The module now adds /experimental:deterministic and every /pathmap option as
+directory compile options gated by $<COMPILE_LANGUAGE:C,CXX> and leaves both
+flag variables untouched. Native and forward-slash spellings, the
+longest-root-first order, labels, /PDBALTPATH, the quoted _bambu_path_flags
+string that OpenSSL reads through _CL_, and the msvc-pathmap-v1 marker are
+unchanged. Forward-slash-only roots were rejected: separator normalization by
+/pathmap is unproven, which is why both spellings exist. Escaping backslashes
+for re-embedding was rejected because each consumer re-parses differently.
+
+Verified on Linux with CMake 4.2.3: libpng's real v1.6.35 genout template
+configured with the hosted flag string fails with the identical error, and
+parses and runs with the unchanged flags. A real libpng configure through the
+module as CMAKE_PROJECT_INCLUDE fails its genfiles target with the previous
+module and passes with this one; its compile command for png.c carries every
+mapping. A mixed C, C++ and assembler fixture shows the options reach only the
+C and C++ sources. ui-md3/tests/release-source-paths.test.mjs (5 tests) fails
+5 of 5 with the previous carrier and passes with this one. The OCCT config and
+application cache identity scripts pass unchanged. A fresh hosted Windows
+dependency build must still confirm dep_PNG and every later dependency under
+the Visual Studio generator.
