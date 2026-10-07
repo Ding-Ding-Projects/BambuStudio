@@ -7,6 +7,9 @@ isolated headless slicing through MCP and a matching command-line interface.
 - [Command and transport reference](../../../automation/README.md)
 - [Hosted native interface verification](native-interface-verification.md),
   parameterized native-input scopes with encrypted evidence and explicit gaps.
+- [Installer first-run diagnostic](installer-first-run-diagnostic.md)
+  ([粵語](installer-first-run-diagnostic.yue_HK.md)), the dispatch-only workflow that installs a
+  release interactively and silently on hosted Windows and classifies the first start, text evidence only.
 - [Hosted managed verification receipt](hosted-verification.json), 24 passing
   cases at the recorded source SHA, with native runtime and hardware excluded.
 - [Expanded managed verification receipt](hosted-verification-ce61d22e.json),

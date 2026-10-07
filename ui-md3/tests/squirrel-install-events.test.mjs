@@ -46,7 +46,8 @@ test('the launcher handles every install event before it loads anything', async 
   assert.match(handler, /const bool uninstall = wcscmp\(event, L"--squirrel-uninstall"\) == 0;/);
   assert.match(handler, /uninstall \? L"--removeShortcut=" : L"--createShortcut="\) \+ exe_name \+\s*L" --shortcut-locations=" \+ locations;/,
     'the shortcuts are made and removed by Update.exe, for this executable only');
-  assert.match(handler, /if \(wcscmp\(event, L"--squirrel-firstrun"\) == 0\)\s*return -1;/, 'the first run after an install is a normal start');
+  assert.match(handler, /if \(wcscmp\(event, L"--squirrel-firstrun"\) == 0\)\s*return squirrel_first_run\(\);/,
+    'the first run after an install is handed to the install root stub');
   // An update keeps only the places that still hold one of this application's shortcuts.
   assert.match(handler, /const bool desktop = installed \|\| uninstall \|\| squirrel_link_exists\(CSIDL_DESKTOPDIRECTORY, kSquirrelDesktopLink\) \|\|\s*squirrel_link_exists\(CSIDL_DESKTOPDIRECTORY, kLegacyDesktopLink\);/);
   assert.match(handler, /const bool start   = installed \|\| uninstall \|\| squirrel_link_exists\(CSIDL_PROGRAMS, kSquirrelStartLink\) \|\|\s*squirrel_link_exists\(CSIDL_PROGRAMS, kLegacyStartLink\);/);
@@ -65,6 +66,136 @@ test('the launcher handles every install event before it loads anything', async 
     'an install event returns before the OpenGL check opens a window and before BambuStudio.dll loads');
   assert.match(main, /if \(squirrel_exit >= 0\)\s*return squirrel_exit;/);
   assert.match(main, /if \(wcscmp\(argv\[i\], L"--squirrel-firstrun"\) == 0\)\s*continue;/, 'the first-run argument never reaches the app');
+});
+
+// After an interactive install Squirrel starts app-<version>\bambu-studio.exe --squirrel-firstrun
+// itself and does not wait for it. That start has been reported not to show the application, so
+// the launcher waits (bounded) for Update.exe to finish and starts the install root's stub, the
+// target of the working shortcuts, without any Squirrel argument. Any failure is a normal start.
+test('the first run after an install hands over to the install root stub', async () => {
+  const launcher = code(await read('src', 'BambuStudio_app_msvc.cpp'));
+  const start = launcher.indexOf('static int squirrel_first_run()');
+  const end = launcher.indexOf('static int handle_squirrel_event(');
+  assert.ok(start !== -1 && end > start, 'squirrel_first_run is defined before the event handler that calls it');
+  const firstRun = launcher.slice(start, end);
+
+  // Only the parent that is Update.exe is waited for, and only for a bounded minute.
+  assert.match(firstRun, /CreateToolhelp32Snapshot\(TH32CS_SNAPPROCESS, 0\)/);
+  assert.match(firstRun, /if \(entry\.th32ProcessID == self\) \{\s*parent = entry\.th32ParentProcessID;/);
+  assert.match(firstRun, /const bool from_update = _wcsicmp\(parent_image\.c_str\(\), L"Update\.exe"\) == 0;/);
+  assert.match(firstRun, /if \(from_update\) \{[\s\S]*?::OpenProcess\(SYNCHRONIZE, FALSE, parent\)[\s\S]*?::WaitForSingleObject\(update, 60000\)/,
+    'the wait for Update.exe is bounded to a minute');
+  assert.doesNotMatch(firstRun, /INFINITE/, 'no unbounded wait');
+
+  // The stub is the install root's executable of the same name, started with nothing but its own
+  // path: no Squirrel argument, so the application it starts makes a normal start.
+  assert.match(firstRun, /if \(!squirrel_paths\(exe_name, root\)\) \{[\s\S]*?return -1;/, 'no install root: a normal start');
+  assert.match(firstRun, /const std::wstring stub = root \+ exe_name;/);
+  assert.match(firstRun, /if \(::GetFileAttributesW\(stub\.c_str\(\)\) == INVALID_FILE_ATTRIBUTES\) \{[\s\S]*?return -1;/, 'no stub: a normal start');
+  assert.match(firstRun, /const std::wstring command = L"\\"" \+ stub \+ L"\\"";/, 'the stub gets no argument');
+  assert.doesNotMatch(firstRun.replace(/L"squirrel event --squirrel-firstrun: /g, ''), /--squirrel-/,
+    'no Squirrel argument appears anywhere but in the trace text');
+  assert.match(firstRun, /std::vector<wchar_t> buffer\(command\.begin\(\), command\.end\(\)\);/);
+  assert.match(firstRun, /::CreateProcessW\(stub\.c_str\(\), buffer\.data\(\), nullptr, nullptr, FALSE, attempts\[attempt\], nullptr, root\.c_str\(\),/,
+    'started from the install root, like a shortcut');
+  assert.match(firstRun, /const DWORD attempts\[\] = \{ CREATE_BREAKAWAY_FROM_JOB, 0 \};/, 'breaks away from a job, else starts without the flag');
+  assert.match(firstRun, /for \(int attempt = 0; attempt < 2 && !started; \+\+attempt\)/);
+  assert.match(firstRun, /startup\.dwFlags = STARTF_USESHOWWINDOW;\s*startup\.wShowWindow = SW_SHOWNORMAL;/, 'shown normally');
+  assert.match(firstRun, /if \(!started\) \{\s*outcome\([^)]*\);\s*return -1;\s*\}/, 'a failed start is a normal start');
+  assert.match(firstRun, /::AllowSetForegroundWindow\(process\.dwProcessId\)/);
+  assert.match(firstRun, /outcome\(stub, process\.dwProcessId, [^;]*\);\s*return 0;\s*\}\s*$/, 'a started stub ends this process');
+  assert.equal(firstRun.match(/return -1;/g).length, 3, 'exactly the three failures fall back to a normal start');
+  assert.equal(firstRun.match(/return 0;/g).length, 1);
+
+  // The launcher keeps to the Windows version it declares: nothing newer than Windows Server 2003.
+  assert.match(launcher, /^#define _WIN32_WINNT 0x0502$/m);
+  assert.match(launcher, /#include <tlhelp32\.h>/);
+  for (const newer of ['QueryFullProcessImageName', 'PROCESS_QUERY_LIMITED_INFORMATION', 'PROC_THREAD_ATTRIBUTE', 'EXTENDED_STARTUPINFO_PRESENT', 'GetTickCount64']) {
+    assert.doesNotMatch(firstRun, new RegExp(newer), `${newer} needs a newer Windows than the launcher declares`);
+  }
+
+  // A first run that could not be handed over is a normal start without the Squirrel argument.
+  const main = launcher.slice(launcher.indexOf('_set_error_mode(_OUT_TO_MSGBOX);'));
+  assert.match(main, /if \(squirrel_exit >= 0\)\s*return squirrel_exit;/);
+  assert.match(main, /if \(wcscmp\(argv\[i\], L"--squirrel-firstrun"\) == 0\)\s*continue;/);
+});
+
+test('the launcher trace says when, which process, and how every start ended', async () => {
+  const launcher = code(await read('src', 'BambuStudio_app_msvc.cpp'));
+  const trace = launcher.slice(launcher.indexOf('static void launcher_trace('), launcher.indexOf('#include <objbase.h>'));
+  assert.match(trace, /_wfopen\(path, L"a, ccs=UTF-8"\)/, 'the log stays append-only');
+  assert.match(trace, /::GetLocalTime\(&now\);\s*fwprintf\(f, L"%04u-%02u-%02uT%02u:%02u:%02u\.%03u pid=%lu ",[\s\S]*?::GetCurrentProcessId\(\)\);\s*va_list args;/,
+    'every line starts with the local time and the process id');
+  assert.match(launcher, /launcher_trace\(L"launcher start: %ls", ::GetCommandLineW\(\)\);\s*const int squirrel_exit = handle_squirrel_event\(argc, argv\);/,
+    'every launcher process records its command line before anything else');
+  assert.match(launcher, /if \(bambustu_main == nullptr\) \{[\s\S]*?launcher_trace\(L"EXIT -1: bambustu_main not exported"\);\s*return -1;/);
+  assert.match(launcher, /const int result = bambustu_main\([^;]*\);\s*launcher_trace\(L"bambustu_main returned %d", result\);\s*return result;/);
+  const firstRun = launcher.slice(launcher.indexOf('static int squirrel_first_run()'), launcher.indexOf('static int handle_squirrel_event('));
+  assert.match(firstRun, /launcher_trace\(L"squirrel event --squirrel-firstrun: waiting up to 60 s for Update\.exe pid=%lu"/);
+  assert.match(firstRun, /L"squirrel event --squirrel-firstrun: parent=%lu %ls update=%d wait=%ls wait_error=%lu stub=%ls "\s*L"started=%d pid=%lu error=%lu foreground=%d; %ls"/,
+    'one outcome line carries the parent, the wait, the start and its error');
+  assert.match(firstRun, /launcher_trace\(L"squirrel event --squirrel-firstrun: CreateProcess flags=0x%08lx failed, error=%lu"/);
+  // Each way out of squirrel_first_run is traced.
+  for (const why of ['no install root, starting here', 'no stub, starting here', 'start failed, starting here', 'handed over, exiting']) {
+    assert.ok(firstRun.includes(`L"${why}"`), why);
+  }
+});
+
+test('the first-run diagnostic is dispatch-only, pinned, bounded and text-only', async () => {
+  const workflow = await read('.github', 'workflows', 'diagnose-installer-first-run.yml');
+  const on = workflow.slice(workflow.indexOf('\non:'), workflow.indexOf('\npermissions:'));
+  assert.match(on, /^\non:\n  workflow_dispatch:\n/, 'dispatched by hand only');
+  assert.doesNotMatch(on, /^  (push|pull_request|schedule|workflow_run|release):/m);
+  assert.match(on, /tag:\n[\s\S]*?default: md3-v225\n/);
+  assert.match(on, /observe_seconds:\n[\s\S]*?default: '180'\n/);
+  assert.match(workflow, /\npermissions:\n  contents: read\n\n/);
+  // Each action at the revision the startup trace workflow pins it to.
+  const trace = await read('.github', 'workflows', 'trace-release-startup.yml');
+  const pins = (text) => [...new Set(text.match(/uses: [^\s@]+@[0-9a-f]{40}/g))].sort();
+  assert.deepEqual(pins(workflow), ['uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10',
+    'uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f']);
+  for (const pin of pins(workflow)) assert.ok(pins(trace).includes(pin), `${pin} matches the startup trace workflow`);
+  assert.doesNotMatch(workflow.replace(/uses: [^\s@]+@[0-9a-f]{40}/g, ''), /uses: /, 'every action is pinned to a commit');
+  const jobs = workflow.slice(workflow.indexOf('\njobs:'));
+  assert.equal(jobs.match(/\n    runs-on: windows-2025\n/g).length, 2);
+  assert.equal(jobs.match(/\n    timeout-minutes: 30\n/g).length, 2);
+  assert.match(jobs, /-Arm Interactive\b/);
+  assert.match(jobs, /-Arm Silent\b/);
+  assert.equal(jobs.match(/\n          retention-days: 7\n/g).length, 2);
+  assert.equal(jobs.match(/\n          path: diagnostic\/installer-first-run\/\n/g).length, 2);
+  assert.doesNotMatch(workflow, /secrets\./, 'only the run token, which reads the release');
+  for (const line of workflow.split('\n').filter((text) => text.includes('${{ inputs.'))) {
+    assert.match(line, /^ {10}[A-Z_]+: \$\{\{ inputs\.[a-z_]+ \}\}$/, 'inputs reach the script only through the environment');
+  }
+
+  const diagnose = await read('scripts', 'ci', 'Diagnose-InstallerFirstRun.ps1');
+  assert.match(diagnose, /\$ErrorActionPreference = 'Stop'\nSet-StrictMode -Version Latest\n/);
+  assert.match(diagnose, /\$env:RUNNER_ENVIRONMENT -ne 'github-hosted'/, 'refuses to run off a disposable hosted runner');
+  assert.match(diagnose, /\[ValidateRange\(30, 420\)\]\[int\] \$ObserveSeconds/);
+  assert.match(diagnose, /\$PollSeconds = 5\n/);
+  assert.match(diagnose, /Interactive = \(\$Arm -eq 'Interactive'\)/, 'the interactive arm installs through the verifier with -Interactive');
+  for (const source of [/Join-Path \$env:LOCALAPPDATA 'SquirrelTemp'/, /Join-Path \$env:TEMP 'bbs-launcher-trace\.log'/,
+    /Join-Path \(Join-Path \$env:APPDATA 'BambuStudio'\) 'log'/, /LogName = 'Application'/, /Win32_VideoController/, /WTSGetActiveConsoleSessionId/]) {
+    assert.match(diagnose, source);
+  }
+  for (const verdict of ['not_started', 'started_exited', 'started_hidden', 'started_visible']) {
+    assert.match(diagnose, new RegExp(`classification = '${verdict}'`), verdict);
+  }
+  assert.match(diagnose, /function Start-InstalledStub \{[\s\S]*?'GH_TOKEN', 'GITHUB_TOKEN', 'ORG_TOKEN', 'RELEASE_TOKEN'[\s\S]*?Start-Process -FilePath \$stubPath/,
+    'no workflow credential reaches installed code');
+  assert.doesNotMatch(diagnose, /CopyFromScreen|\.png|PrintWindow|BitBlt/i, 'no screenshots');
+});
+
+test('the hosted install check installs silently unless asked for the interactive install', async () => {
+  const verify = code(await read('scripts', 'ci', 'Verify-HostedSquirrelInstall.ps1'));
+  assert.match(verify, /\[switch\] \$Interactive\n\)/);
+  assert.match(verify, /if \(\$Interactive\) \{\s*\$setup = Start-Process -FilePath \(Join-Path \$downloadRoot 'Setup\.exe'\) -PassThru\n/,
+    'the interactive install passes no argument and shows its window');
+  assert.match(verify, /Assert-True \(\$setup\.WaitForExit\(600000\)\)/);
+  assert.match(verify, /else \{\s*\$setup = Start-Process -FilePath \(Join-Path \$downloadRoot 'Setup\.exe'\) -ArgumentList '--silent' -PassThru -WindowStyle Hidden\s*Wait-Process -Id \$setup\.Id -Timeout 600\s*\}/,
+    'the default stays the silent, hidden install');
+  // Credentials are cleared before either install starts.
+  assert.ok(verify.indexOf("'GH_TOKEN', 'GITHUB_TOKEN', 'ORG_TOKEN', 'RELEASE_TOKEN'") < verify.indexOf('if ($Interactive)'));
 });
 
 test('the hosted install check reads the shortcuts back', async () => {

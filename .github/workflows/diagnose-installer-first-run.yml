@@ -1,0 +1,117 @@
+name: Diagnose installer first run on hosted Windows
+
+# Dispatch only. Installs a published release on disposable hosted Windows runners and records
+# what happens at the first start: after an interactive install (Squirrel starts the application
+# itself) and after a silent install followed by a start through the install root's
+# bambu-studio.exe. The evidence is text only; no screenshots are taken.
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Published release tag to install (md3-v<N>)
+        required: true
+        default: md3-v225
+      observe_seconds:
+        description: Seconds to keep observing after each start (30 to 420)
+        required: true
+        default: '180'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: installer-first-run-${{ github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  interactive:
+    name: Interactive install, Squirrel first run, then a shortcut-style control start
+    runs-on: windows-2025
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - name: Check out this commit
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Parse the diagnostic PowerShell
+        run: |
+          foreach ($path in @('scripts/ci/Diagnose-InstallerFirstRun.ps1',
+                              'scripts/ci/Verify-HostedSquirrelInstall.ps1',
+                              'scripts/ci/Test-SquirrelWindowsPackage.ps1')) {
+            $tokens = $null
+            $parseErrors = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile(
+              (Resolve-Path -LiteralPath $path), [ref]$tokens, [ref]$parseErrors)
+            if ($parseErrors.Count -ne 0) { throw "PowerShell parse failed: $path" }
+          }
+
+      - name: Install interactively and observe the first run
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DIAGNOSE_TAG: ${{ inputs.tag }}
+          DIAGNOSE_OBSERVE_SECONDS: ${{ inputs.observe_seconds }}
+        run: >-
+          ./scripts/ci/Diagnose-InstallerFirstRun.ps1 -Arm Interactive
+          -Tag $env:DIAGNOSE_TAG -Repository $env:GITHUB_REPOSITORY
+          -ObserveSeconds $env:DIAGNOSE_OBSERVE_SECONDS
+          -OutputDirectory diagnostic/installer-first-run -CiExecutionApproved
+
+      - name: Upload text evidence
+        if: ${{ always() }}
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: installer-first-run-interactive-${{ github.run_id }}-${{ github.run_attempt }}
+          path: diagnostic/installer-first-run/
+          if-no-files-found: warn
+          retention-days: 7
+
+  silent:
+    name: Silent install, then the first start through the install root
+    runs-on: windows-2025
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - name: Check out this commit
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Parse the diagnostic PowerShell
+        run: |
+          foreach ($path in @('scripts/ci/Diagnose-InstallerFirstRun.ps1',
+                              'scripts/ci/Verify-HostedSquirrelInstall.ps1',
+                              'scripts/ci/Test-SquirrelWindowsPackage.ps1')) {
+            $tokens = $null
+            $parseErrors = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile(
+              (Resolve-Path -LiteralPath $path), [ref]$tokens, [ref]$parseErrors)
+            if ($parseErrors.Count -ne 0) { throw "PowerShell parse failed: $path" }
+          }
+
+      - name: Install silently and observe the first start through the install root
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DIAGNOSE_TAG: ${{ inputs.tag }}
+          DIAGNOSE_OBSERVE_SECONDS: ${{ inputs.observe_seconds }}
+        run: >-
+          ./scripts/ci/Diagnose-InstallerFirstRun.ps1 -Arm Silent
+          -Tag $env:DIAGNOSE_TAG -Repository $env:GITHUB_REPOSITORY
+          -ObserveSeconds $env:DIAGNOSE_OBSERVE_SECONDS
+          -OutputDirectory diagnostic/installer-first-run -CiExecutionApproved
+
+      - name: Upload text evidence
+        if: ${{ always() }}
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: installer-first-run-silent-${{ github.run_id }}-${{ github.run_attempt }}
+          path: diagnostic/installer-first-run/
+          if-no-files-found: warn
+          retention-days: 7

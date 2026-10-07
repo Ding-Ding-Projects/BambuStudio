@@ -21,6 +21,9 @@ extern "C"
 // The launcher's printf diagnostics are invisible in CI (GUI subsystem, lost
 // pipes). Mirror every decision to %TEMP%\bbs-launcher-trace.log so a dead
 // early exit can be diagnosed from the runner. Best effort, silent on error.
+// Several launcher processes append to the same file (an install event, the
+// first start after an install, the application it hands over to), so every
+// line starts with the local time and the process id.
 static void launcher_trace(const wchar_t *fmt, ...)
 {
     wchar_t path[MAX_PATH + 1] = {0};
@@ -31,6 +34,11 @@ static void launcher_trace(const wchar_t *fmt, ...)
     FILE *f = _wfopen(path, L"a, ccs=UTF-8");
     if (f == nullptr)
         return;
+    SYSTEMTIME now;
+    ::GetLocalTime(&now);
+    fwprintf(f, L"%04u-%02u-%02uT%02u:%02u:%02u.%03u pid=%lu ", (unsigned) now.wYear, (unsigned) now.wMonth,
+             (unsigned) now.wDay, (unsigned) now.wHour, (unsigned) now.wMinute, (unsigned) now.wSecond,
+             (unsigned) now.wMilliseconds, (unsigned long) ::GetCurrentProcessId());
     va_list args;
     va_start(args, fmt);
     vfwprintf(f, fmt, args);
@@ -43,6 +51,7 @@ static void launcher_trace(const wchar_t *fmt, ...)
 #endif /* SLIC3R_GUI */
 #include <objbase.h>
 #include <shlobj.h>
+#include <tlhelp32.h>
 #include <string>
 #include <vector>
 #pragma comment(lib, "ole32.lib")
@@ -148,15 +157,136 @@ static const wchar_t *const kSquirrelStartLink   = L"codingmachineedge\\Bambu St
 static const wchar_t *const kLegacyDesktopLink   = L"BambuStudio.lnk";
 static const wchar_t *const kLegacyStartLink     = L"Bambu Research\\BambuStudio.lnk";
 
+// The first start after an install. After an interactive install, Update.exe starts
+// app-<version>\bambu-studio.exe with --squirrel-firstrun while the installer is still finishing,
+// and does not wait for it. Started that way the application has been reported not to appear,
+// while the install root's bambu-studio.exe (Squirrel's stub, the target of both shortcuts) starts
+// the same version normally. So this process waits, at most a minute, for its parent to finish when
+// that parent is Update.exe, starts the stub the way a shortcut does, without any Squirrel argument,
+// and exits.
+// Returns 0 once the stub has started. Returns -1 when there is no install root or no stub, or the
+// stub could not be started; this process then starts the application itself, as it always did.
+static int squirrel_first_run()
+{
+    // This process's parent. Toolhelp names each image without its folder.
+    const DWORD self = ::GetCurrentProcessId();
+    DWORD parent = 0;
+    std::wstring parent_image = L"unknown";
+    const HANDLE snapshot = ::CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+    if (snapshot != INVALID_HANDLE_VALUE) {
+        PROCESSENTRY32W entry = { 0 };
+        entry.dwSize = sizeof(entry);
+        for (BOOL more = ::Process32FirstW(snapshot, &entry); more; more = ::Process32NextW(snapshot, &entry)) {
+            if (entry.th32ProcessID == self) {
+                parent = entry.th32ParentProcessID;
+                break;
+            }
+        }
+        entry.dwSize = sizeof(entry);
+        for (BOOL more = parent != 0 ? ::Process32FirstW(snapshot, &entry) : FALSE; more; more = ::Process32NextW(snapshot, &entry)) {
+            if (entry.th32ProcessID == parent) {
+                parent_image = entry.szExeFile;
+                break;
+            }
+        }
+        ::CloseHandle(snapshot);
+    }
+    const bool from_update = _wcsicmp(parent_image.c_str(), L"Update.exe") == 0;
+
+    // Update.exe does not wait for this process, so waiting for Update.exe cannot deadlock; the
+    // minute only bounds the wait should the installer hang. A parent that has already exited
+    // cannot be opened, and there is nothing left to wait for.
+    const wchar_t *waited = L"skipped";
+    DWORD wait_error = 0;
+    if (from_update) {
+        launcher_trace(L"squirrel event --squirrel-firstrun: waiting up to 60 s for Update.exe pid=%lu", (unsigned long) parent);
+        const HANDLE update = ::OpenProcess(SYNCHRONIZE, FALSE, parent);
+        if (update == nullptr) {
+            wait_error = ::GetLastError();
+            waited = L"not-opened";
+        } else {
+            const DWORD result = ::WaitForSingleObject(update, 60000);
+            if (result == WAIT_OBJECT_0) {
+                waited = L"exited";
+            } else if (result == WAIT_TIMEOUT) {
+                waited = L"timed-out";
+            } else {
+                wait_error = ::GetLastError();
+                waited = L"failed";
+            }
+            ::CloseHandle(update);
+        }
+    }
+
+    // One line with the whole outcome, whichever way this ends. foreground is -1 when no stub started.
+    const auto outcome = [&](const std::wstring &stub, DWORD pid, DWORD error, int foreground, const wchar_t *next) {
+        launcher_trace(L"squirrel event --squirrel-firstrun: parent=%lu %ls update=%d wait=%ls wait_error=%lu stub=%ls "
+                       L"started=%d pid=%lu error=%lu foreground=%d; %ls",
+                       (unsigned long) parent, parent_image.c_str(), (int) from_update, waited, (unsigned long) wait_error,
+                       stub.c_str(), (int) (pid != 0), (unsigned long) pid, (unsigned long) error, foreground, next);
+    };
+
+    std::wstring exe_name, root;
+    if (!squirrel_paths(exe_name, root)) {
+        outcome(L"none", 0, 0, -1, L"no install root, starting here");
+        return -1;
+    }
+    // Squirrel's stub has this executable's name and sits in the install root, beside Update.exe.
+    const std::wstring stub = root + exe_name;
+    if (::GetFileAttributesW(stub.c_str()) == INVALID_FILE_ATTRIBUTES) {
+        const DWORD missing_error = ::GetLastError();
+        outcome(stub, 0, missing_error, -1, L"no stub, starting here");
+        return -1;
+    }
+
+    // Only the stub's own path: no Squirrel argument reaches it, so the application it starts makes
+    // a normal start. Shown normally, as a shortcut starts it. Breaking away from any job the
+    // installer's processes run in keeps the end of the installer from taking the application with
+    // it; a job that forbids breaking away refuses the flag, so the second attempt goes without it.
+    const std::wstring command = L"\"" + stub + L"\"";
+    const DWORD attempts[] = { CREATE_BREAKAWAY_FROM_JOB, 0 };
+    DWORD start_error = 0;
+    STARTUPINFOW startup = { 0 };
+    startup.cb = sizeof(startup);
+    startup.dwFlags = STARTF_USESHOWWINDOW;
+    startup.wShowWindow = SW_SHOWNORMAL;
+    PROCESS_INFORMATION process = { 0 };
+    BOOL started = FALSE;
+    for (int attempt = 0; attempt < 2 && !started; ++attempt) {
+        std::vector<wchar_t> buffer(command.begin(), command.end());
+        buffer.push_back(L'\0');
+        started = ::CreateProcessW(stub.c_str(), buffer.data(), nullptr, nullptr, FALSE, attempts[attempt], nullptr, root.c_str(),
+                                   &startup, &process);
+        if (!started) {
+            start_error = ::GetLastError();
+            launcher_trace(L"squirrel event --squirrel-firstrun: CreateProcess flags=0x%08lx failed, error=%lu",
+                           (unsigned long) attempts[attempt], (unsigned long) start_error);
+        }
+    }
+    if (!started) {
+        outcome(stub, 0, start_error, -1, L"start failed, starting here");
+        return -1;
+    }
+    // The stub hands the right to take the foreground on to the application, as it does for a
+    // shortcut; this works only while this process holds that right itself, so it is best effort.
+    const BOOL foreground = ::AllowSetForegroundWindow(process.dwProcessId);
+    const DWORD foreground_error = foreground ? 0 : ::GetLastError();
+    ::CloseHandle(process.hThread);
+    ::CloseHandle(process.hProcess);
+    outcome(stub, process.dwProcessId, foreground_error, foreground ? 1 : 0, L"handed over, exiting");
+    return 0;
+}
+
 // Returns -1 when the arguments are not a Squirrel event (a normal start), else the exit code.
 static int handle_squirrel_event(int argc, wchar_t **argv)
 {
     if (argc < 2 || wcsncmp(argv[1], L"--squirrel-", 11) != 0)
         return -1;
     const wchar_t *event = argv[1];
-    // The first start after an install: a normal start; the argument is dropped from the command line.
+    // The first start after an install goes through the install root's stub (squirrel_first_run).
+    // When that cannot be done it is a normal start, and the argument is dropped from the command line.
     if (wcscmp(event, L"--squirrel-firstrun") == 0)
-        return -1;
+        return squirrel_first_run();
     const bool installed = wcscmp(event, L"--squirrel-install") == 0;
     const bool updated   = wcscmp(event, L"--squirrel-updated") == 0;
     const bool uninstall = wcscmp(event, L"--squirrel-uninstall") == 0;
@@ -391,6 +521,7 @@ extern "C" {
         // Without this call, the seemingly same message box is being opened by the abort() function, but that is too late and
         // the application will be killed even if "Ignore" button is pressed.
         _set_error_mode(_OUT_TO_MSGBOX);
+        launcher_trace(L"launcher start: %ls", ::GetCommandLineW());
         // An install, update or uninstall event from Squirrel is handled here and never starts the app.
         const int squirrel_exit = handle_squirrel_event(argc, argv);
         if (squirrel_exit >= 0)
@@ -513,9 +644,13 @@ extern "C" {
         );
         if (bambustu_main == nullptr) {
             printf("could not locate the function bambustu_main in BambuStudio.dll\n");
+            launcher_trace(L"EXIT -1: bambustu_main not exported");
             return -1;
         }
         // argc minus the trailing nullptr of the argv
-        return bambustu_main((int)argv_extended.size() - 1, argv_extended.data());
+        const int result = bambustu_main((int)argv_extended.size() - 1, argv_extended.data());
+        // No such line means the process ended inside the application (an exit call or a crash).
+        launcher_trace(L"bambustu_main returned %d", result);
+        return result;
     }
     }
