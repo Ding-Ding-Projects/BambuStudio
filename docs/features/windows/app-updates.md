@@ -78,7 +78,20 @@ launcher handles each one and exits before it loads anything of the application:
 | `--squirrel-updated` | the same, but only for the places that still hold one of this application's shortcuts (new or legacy), so a shortcut the person deleted stays deleted |
 | `--squirrel-uninstall` | `--removeShortcut` for both places, then the Start Menu folder "codingmachineedge" when it is empty |
 | `--squirrel-obsolete` | nothing |
-| `--squirrel-firstrun` | a normal start; the argument is removed before the application sees it |
+| `--squirrel-firstrun` | hands the first start to the install root's `bambu-studio.exe` once Update.exe has finished (below); the argument never reaches the application |
+
+After an interactive install, Squirrel starts `app-<version>\bambu-studio.exe --squirrel-firstrun`
+itself while the installer is still finishing, and does not wait for it. Started that way, the
+application has been reported not to appear, although the shortcuts, which start the install root's
+`bambu-studio.exe`, work. So the launcher no longer makes that start itself: when its parent is
+`Update.exe` it waits for it to exit (at most 60 seconds), starts the install root's
+`bambu-studio.exe` with no argument, shown normally and outside the installer's job object where
+Windows allows, and exits. With no install root or stub, or when that start fails, it makes a normal
+start as before. Each step is written to `%TEMP%\bbs-launcher-trace.log`, whose lines now begin with
+the local time and the process id. A silent install (`--silent`) starts nothing, so no hosted install
+check has ever exercised this path: whether the application really appears after an interactive
+install is verified only by the [installer first-run diagnostic](../automation/installer-first-run-diagnostic.md)
+and by installs on real machines, not by the contract tests.
 
 Once the new shortcuts exist (and on uninstall) it also removes the two shortcuts older packages made,
 `BambuStudio.lnk` on the desktop and in "Bambu Research", but only when they point into this
