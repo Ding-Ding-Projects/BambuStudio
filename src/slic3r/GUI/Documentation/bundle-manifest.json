@@ -155,12 +155,12 @@
     {
       "route": "automation/readme-screenshots.md",
       "title": "README screenshots",
-      "sha256": "035037d2e4266a4fb6446bfdcdaec93d3ba0a01179a516203e6665da3ccaa24c"
+      "sha256": "02aec4451ea443add790761007f95edeb78a0e3d37f6a1265de473ce224cd43d"
     },
     {
       "route": "automation/readme-screenshots.yue_HK.md",
       "title": "README 截圖",
-      "sha256": "d2b4e36a291a3d311c85ec63f4ed85d2d700fd810842cda483ea9a4403da2fbb"
+      "sha256": "2b2480a88be016ece28def5b5e33d5a9fab1dbab94c8f4d0e21ac59fce1b4169"
     },
     {
       "route": "camera/README.md",
@@ -1850,7 +1850,7 @@
       "bytes": 1979
     }
   ],
-  "bundle_sha256": "89a88f36621faaf968195a5624cbf13019f241e4486ef109bc67a9c7b9ce6043",
+  "bundle_sha256": "83f73beaf446ccb7aa0e07b95fb5c875fff6514846b64ea38be78a6e9c61515c",
   "unavailable_references": [
     {
       "source": "api/README.md",
