@@ -9,8 +9,11 @@ import { fileURLToPath } from 'node:url';
 // true for that to be safe and honest: only a Squirrel install takes the route,
 // Squirrel is pointed at one fixed feed and nothing else reaches its command
 // line, the app downloads and runs nothing itself, the helper never opens a
-// console window, the restart waits for the app to exit, and a cancelled close
-// never restarts. They read the sources as text, so they run without a build.
+// console window, the restart waits for the app to exit, a cancelled close
+// never restarts, the release check compares UTC times, and a background check
+// reports through non-blocking notices only. They read the sources as text, so
+// they run without a build. tests/app_update_check_policy_test.cpp executes the
+// decisions themselves.
 
 const testDir = path.dirname(fileURLToPath(import.meta.url));
 const repoDir = path.resolve(testDir, '..', '..');
@@ -64,6 +67,8 @@ const preferences = stripComments(await read('src', 'slic3r', 'GUI', 'Preference
 const paletteIndex = stripComments(await read('src', 'slic3r', 'GUI', 'CommandPaletteIndex.cpp'));
 const notificationHeader = stripComments(await read('src', 'slic3r', 'GUI', 'NotificationManager.hpp'));
 const notificationSource = stripComments(await read('src', 'slic3r', 'GUI', 'NotificationManager.cpp'));
+const policy = stripComments(await read('src', 'slic3r', 'GUI', 'AppUpdateCheckPolicy.hpp'));
+const guiAppHeader = stripComments(await read('src', 'slic3r', 'GUI', 'GUI_App.hpp'));
 
 const FEED = 'https://github.com/Ding-Ding-Projects/BambuStudio/releases/latest/download';
 
@@ -78,13 +83,43 @@ test('only a Squirrel install takes the automatic route', () => {
 test('the release check hands an installed copy with the preference on to the updater and everyone else to the dialog', () => {
   const check = bodyOf(guiApp, 'void GUI_App::check_new_version(');
   const skip = check.indexOf('"skip_version"');
-  const route = check.search(/get_bool\("auto_update"\)\s*&&\s*squirrel_update_exe\(/);
-  const updater = check.indexOf('start_auto_update(tag, name, by_user)');
-  const dialog = check.lastIndexOf('request_new_version(by_user)');
+  const preference = check.search(/auto_update\s*=\s*this->app_config->get_bool\("auto_update"\);/);
+  const layout = check.search(/installed\s*=\s*squirrel_update_exe\(update_exe\);/);
+  const route = check.search(/switch \(AppUpdateCheckPolicy::decide\(auto_update, installed, newer, by_user != 0, skipped\)\)/);
+  const updater = check.search(/case AppUpdateCheckPolicy::Action::RunSquirrelUpdate: \{[^}]*CallAfter\(\[this, tag, name, by_user, newer\]\(\) \{ this->start_auto_update\(tag, name, by_user, newer\); \}\);/);
+  const dialog = check.search(/case AppUpdateCheckPolicy::Action::OfferDownload:\s*if \(by_user != 0\)\s*CallAfter\(\[this, by_user\]\(\) \{ GUI::wxGetApp\(\)\.request_new_version\(by_user\); \}\);\s*break;/);
+  const none = check.search(/case AppUpdateCheckPolicy::Action::ShowNoNewVersion:\s*if \(show_tips\) this->no_new_version\(\);\s*break;/);
+  const nothing = check.search(/case AppUpdateCheckPolicy::Action::Nothing:\s*BOOST_LOG_TRIVIAL\(info\)[^;]*;\s*break;/);
   assert.ok(skip >= 0, 'a skipped version must still be honoured');
-  assert.ok(route > skip, 'the route is chosen after the skip check, from the preference and the install layout');
-  assert.ok(updater > route, 'an installed copy with the preference on starts the automatic update');
-  assert.ok(dialog > updater, 'every other copy keeps the download dialog, unchanged');
+  assert.ok(preference > skip && layout > skip, 'the route is chosen after the skip check, from the preference and the install layout');
+  assert.ok(route > preference && route > layout, 'one policy decision routes every copy');
+  assert.ok(updater > route, 'an installed copy with the preference on starts the automatic update with the time verdict');
+  assert.ok(dialog > route, 'every other copy keeps the download dialog, for an explicit check only');
+  assert.ok(none > route, 'a manual check with nothing newer says so');
+  assert.ok(nothing > route, 'a background check with nothing to do stays silent');
+  assert.equal(check.split('request_new_version(').length - 1, 1, 'the release check opens the download dialog in one place');
+});
+
+test('the release check compares UTC times without a time-zone API', () => {
+  const check = bodyOf(guiApp, 'void GUI_App::check_new_version(');
+  assert.match(check, /const std::string built\s*=\s*SLIC3R_BUILD_TIME_UTC;/, 'the build time is the UTC stamp');
+  assert.match(check, /const bool newer = AppUpdateCheckPolicy::release_is_newer\(published, built, AppUpdateCheckPolicy::kMarginSeconds\);/);
+  assert.doesNotMatch(check, /\bSLIC3R_BUILD_TIME\b|mktime|_mkgmtime|timegm|get_time|difftime/, 'the local-time build stamp and time-zone APIs are gone');
+  assert.match(guiApp, /#include "AppUpdateCheckPolicy\.hpp"/);
+  assert.match(policy, /kMarginSeconds = 3 \* 60 \* 60;/, 'the three-hour margin stays');
+  assert.match(policy, /published - built > margin_seconds;/, 'exactly the margin is not newer');
+  assert.doesNotMatch(policy, /mktime|timegm|gmtime|localtime|strptime|get_time|#include <(?:ctime|chrono|iomanip)>|\bwx|boost/, 'the policy is plain arithmetic');
+  assert.match(policy, /stamp\.size\(\) != 20/, 'only the exact YYYY-MM-DDTHH:MM:SSZ form is read');
+});
+
+test('an installed copy always asks Update.exe, and only a background check honours a skipped release', () => {
+  assert.match(
+    policy,
+    /if \(auto_update_enabled && squirrel_installed\)\s*return manual_check \|\| !tag_is_skipped \? Action::RunSquirrelUpdate : Action::Nothing;/,
+    'Update.exe compares package versions, so it runs whatever the time verdict says'
+  );
+  assert.match(policy, /if \(!manual_check\)\s*return Action::Nothing;/, 'a background check never opens the download dialog');
+  assert.match(policy, /return newer_by_time \? Action::OfferDownload : Action::ShowNoNewVersion;/);
 });
 
 test('Squirrel is pointed at one fixed feed and nothing else reaches its command line', () => {
@@ -121,15 +156,59 @@ test('the helper process never opens a console window', () => {
 test('the update runs once at a time on a worker thread and reports back on the UI thread', () => {
   const start = bodyOf(guiApp, 'void GUI_App::start_auto_update(');
   assert.match(start, /m_auto_update_running\.compare_exchange_strong\(/, 'an atomic flag lets one update run at a time');
-  assert.match(start, /Slic3r::create_thread\(/, 'the wait happens off the UI thread');
-  assert.match(start, /CallAfter\(\[this, tag, by_user, updated\]/, 'the outcome is handled on the UI thread');
-  assert.match(start, /if \(updated\)\s*\{?\s*push_auto_update_ready_notification\(tag\);/, 'success tells the user the update is ready');
+  assert.match(start, /Slic3r::create_thread\(\[this, tag, by_user, newer_by_time, update_exe\]/, 'the wait happens off the UI thread');
+  assert.match(start, /CallAfter\(\[this, tag, by_user, updated, newer_by_time\]/, 'the outcome is handled on the UI thread');
+  assert.match(start, /const bool reported = m_auto_update_failed_tag == tag;/, 'a failure is remembered per release');
   assert.match(
     start,
-    /else if \(by_user != 0 \|\| m_auto_update_fallback_tag != tag\) \{\s*m_auto_update_fallback_tag = tag;\s*request_new_version\(by_user\);/,
-    'a failed update falls back to the download dialog: always for a manual check, once per release for the automatic ones'
+    /switch \(AppUpdateCheckPolicy::after_squirrel_update\(updated, newer_by_time, by_user != 0, reported\)\)/,
+    'one policy decides the outcome from the staging result, the time verdict and the kind of check'
   );
-  assert.doesNotMatch(start, /else if \(by_user != 0\)\s*request_new_version/, 'the automatic check is not silenced on failure');
+  const outcome = (name) => {
+    const match = start.match(new RegExp(`case AppUpdateCheckPolicy::Outcome::${name}:([\\s\\S]*?)break;`));
+    assert.ok(match, `the ${name} outcome must be handled`);
+    assert.equal(start.split(`case AppUpdateCheckPolicy::Outcome::${name}:`).length - 1, 1, `the ${name} outcome is handled once`);
+    return match[1];
+  };
+  assert.match(outcome('ShowReady'), /^\s*push_auto_update_ready_notification\(tag\);\s*$/, 'success always shows the ready banner, after a manual or a background check');
+  assert.match(
+    outcome('OfferDownload'),
+    /^\s*m_auto_update_failed_tag = tag;\s*if \(by_user != 0\) request_new_version\(by_user\);\s*$/,
+    'a real failure after a manual check always opens the download dialog'
+  );
+  assert.match(
+    outcome('NotifyFailure'),
+    /^\s*m_auto_update_failed_tag = tag;\s*push_auto_update_failed_notification\(tag\);\s*$/,
+    'a real failure after a background check shows the non-blocking failure notice and remembers the release'
+  );
+  assert.match(outcome('ShowNoNewVersion'), /if \(by_user != 0\) no_new_version\(\);\s*$/, 'nothing newer and nothing staged: a manual check says so');
+  assert.match(outcome('Nothing'), /^\s*$/, 'a background check with nothing to install stays silent');
+  assert.doesNotMatch(start, /if \(by_user != 0\) push_auto_update_ready_notification/, 'the ready banner is not limited to a manual check');
+  assert.doesNotMatch(start, /if \(by_user != 0\)\s*push_auto_update_failed_notification/, 'the background failure is not silenced');
+
+  assert.match(policy, /if \(updated\)\s*return Outcome::ShowReady;/, 'a staged version always shows the banner');
+  assert.match(policy, /if \(!newer_by_time\)\s*return manual_check \? Outcome::ShowNoNewVersion : Outcome::Nothing;/, 'nothing staged and nothing newer is not a failure');
+  assert.match(policy, /if \(manual_check\)\s*return Outcome::OfferDownload;/, 'a manual check always falls back to the dialog');
+  assert.match(policy, /return failure_already_reported \? Outcome::Nothing : Outcome::NotifyFailure;/, 'a background check reports a failure once per release');
+});
+
+test('a failed background update shows one non-blocking notice that links to the release page', () => {
+  const failed = bodyOf(guiApp, 'static void push_auto_update_failed_notification(');
+  assert.match(
+    failed,
+    /manager->push_notification\(NotificationType::CustomNotification, NotificationManager::NotificationLevel::WarningNotificationLevel,/,
+    'a warning-level notification never fades and never blocks'
+  );
+  assert.match(failed, /auto_update_message\(L\("The background update to Bambu Studio %s did not finish\."\), tag\)/);
+  assert.match(failed, /_u8L\("Download from the release page"\)/);
+  assert.match(failed, /page_url = release_page_url\(tag\);[\s\S]*wxLaunchDefaultBrowser\(wxString::FromUTF8\(page_url\)\);/, 'the link opens the release page in the browser');
+  assert.doesNotMatch(failed, /request_new_version|ShowModal|wxMessageBox|MessageDialog/, 'no dialog');
+  assert.match(guiAppHeader, /std::string\s+m_auto_update_failed_tag;/, 'the reported release lives on the application, UI thread only');
+  assert.match(
+    guiAppHeader,
+    /void\s+start_auto_update\(const std::string &tag, const std::string &name, int by_user, bool newer_by_time\);/,
+    'the updater receives the time verdict'
+  );
 });
 
 test('a success needs a newer app folder as well as exit code 0', () => {
@@ -152,9 +231,11 @@ test('the ready banner stays until the user acts, says the update is unsigned, a
     'the link is clicked while the canvas renders, so the window closes on the next turn of the event loop'
   );
   assert.match(ready, /wxLaunchDefaultBrowser\(/, 'release notes open in the browser');
-  assert.match(ready, /"https:\/\/github\.com\/Ding-Ding-Projects\/BambuStudio\/releases"/, 'the fork\'s own releases');
-  assert.match(ready, /releases \+ "\/tag\/" \+ tag/, 'on the page of that release');
-  assert.match(ready, /std::regex_match\(tag, std::regex\("md3-v\[0-9\]\+"\)\)/, 'only a well-formed tag reaches the link; anything else opens the release list');
+  assert.match(ready, /notes_url = release_page_url\(tag\);/, 'release notes open the release page');
+  const page = bodyOf(guiApp, 'static std::string release_page_url(');
+  assert.match(page, /"https:\/\/github\.com\/Ding-Ding-Projects\/BambuStudio\/releases"/, 'the fork\'s own releases');
+  assert.match(page, /releases \+ "\/tag\/" \+ tag/, 'on the page of that release');
+  assert.match(page, /std::regex_match\(tag, std::regex\("md3-v\[0-9\]\+"\)\)/, 'only a well-formed tag reaches the link; anything else opens the release list');
 
   const push = bodyOf(notificationSource, 'void NotificationManager::push_app_update_ready_notification(');
   assert.match(push, /NotificationType::AppUpdateReady,\s*NotificationLevel::ImportantNotificationLevel,\s*0,/, 'duration 0: the banner never fades');
@@ -225,6 +306,8 @@ test('the new messages are extracted into the source catalogue', async () => {
     'Release notes',
     'Bambu Studio %s is ready. It starts the next time you open the app. Updates from this fork are not code-signed.',
     'Downloading Bambu Studio %s in the background.',
+    'The background update to Bambu Studio %s did not finish.',
+    'Download from the release page',
   ]) {
     assert.ok(ids.has(id), `${id} must be in bbl/i18n/BambuStudio.pot (run scripts/i18n/update_catalogs.py)`);
   }
@@ -232,7 +315,7 @@ test('the new messages are extracted into the source catalogue', async () => {
 
 test('the feature article describes the preference, the restart and the fallbacks', async () => {
   const doc = await read('docs', 'features', 'windows', 'app-updates.md');
-  for (const needle of ['Update automatically', '`auto_update`', 'Update.exe', 'Restart to install update', 'Release notes', 'not code-signed', 'every six hours', '--processStartAndWait']) {
+  for (const needle of ['Update automatically', '`auto_update`', 'Update.exe', 'Restart to install update', 'Release notes', 'not code-signed', 'every six hours', '--processStartAndWait', 'SLIC3R_BUILD_TIME_UTC', 'did not finish', 'reinstall']) {
     assert.ok(doc.includes(needle), `app-updates.md must mention ${needle}`);
   }
 });
