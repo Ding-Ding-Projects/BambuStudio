@@ -316,21 +316,28 @@ std::vector<Factor> factors(Policy p) {
     throw Failure(Error::InvalidInput);
 }
 AttemptState AttemptBudget::state(Time now) {
-    if(m_wait_until!=Time{} && now>=m_wait_until) {m_wait_until={};m_remaining=5;}
+    if(m_wait_until!=Time{} && now>=m_wait_until) {m_wait_until={};m_remaining=5;m_ladder={};}
     unsigned seconds=0; if(m_wait_until>now)seconds=static_cast<unsigned>(std::chrono::ceil<std::chrono::seconds>(m_wait_until-now).count());
-    return {m_remaining,seconds};
+    return {m_remaining,seconds,m_lockout};
 }
 void AttemptBudget::failed(Time now) {
     if(state(now).wait_seconds)return;
     if(m_remaining)--m_remaining;
-    if(!m_remaining) {unsigned seconds=std::min(900u,30u<<std::min(m_escalation,5u));m_escalation=std::min(5u,m_escalation+1);m_wait_until=now+std::chrono::seconds(seconds);}
+    if(!m_remaining) {unsigned seconds=std::min(900u,30u<<std::min(m_escalation,5u));m_escalation=std::min(5u,m_escalation+1);m_wait_until=now+std::chrono::seconds(seconds);++m_lockout;m_ladder={};}
 }
-void AttemptBudget::succeeded() {m_remaining=5;m_escalation=0;m_wait_until={};}
+void AttemptBudget::succeeded() {m_remaining=5;m_escalation=0;m_wait_until={};m_ladder={};}
 bool AttemptBudget::clear_wait(Time now) {
-    if(!state(now).wait_seconds)return false;
+    if(!state(now).wait_seconds||!skips_left(now))return false;
+    m_skips.push_back(now);m_wait_until={};m_remaining=5;m_ladder={};return true;
+}
+unsigned AttemptBudget::skips_left(Time now) {
     m_skips.erase(std::remove_if(m_skips.begin(),m_skips.end(),[now](Time t){return now-t>=std::chrono::hours(1);}),m_skips.end());
-    if(m_skips.size()>=3)return false;
-    m_skips.push_back(now);m_wait_until={};m_remaining=5;return true;
+    return m_skips.size()>=3?0u:static_cast<unsigned>(3-m_skips.size());
+}
+LadderProgress AttemptBudget::ladder(Time now) {return state(now).wait_seconds?m_ladder:LadderProgress{};}
+void AttemptBudget::set_ladder(std::uint64_t lockout,const LadderProgress& progress,Time now) {
+    require(progress.rung<=LadderRung::Clock&&progress.wrong_dishes<=5);
+    if(state(now).wait_seconds&&lockout==m_lockout)m_ladder=progress;
 }
 LockSession::LockSession(LockSettings settings):m_settings(settings),m_factors(factors(settings.policy)) {
     require(settings.duration==Duration::ThisSurface||settings.duration==Duration::Minutes||settings.duration==Duration::UntilExit);

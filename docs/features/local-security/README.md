@@ -45,9 +45,11 @@ lifetime. The owner must call `leave_surface()` and intercept every protected
 action, shortcut, and programmatic activation before executing it.
 
 Five incorrect attempts start a 30-second wait. Consecutive waits double up to
-900 seconds. Ordinary expiry restores five attempts. The optional ladder bridge
-can clear three waits per rolling hour, restores the same five attempts, and
-never unlocks a session. Only verified challenge results may call it. Lock and
+900 seconds. Ordinary expiry restores five attempts. The
+[unlock ladder](unlock-ladder.md) service is the only caller of `clear_wait`. It
+generates and grades its own challenges against single-use nonces, can clear
+three waits per rolling hour, restores the same five attempts, and never unlocks
+a session. Lock and
 attempt state must be persisted by the owner if restart-resistant throttling is
 required; the current session model is deliberately in-memory.
 

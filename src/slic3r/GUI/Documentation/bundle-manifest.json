@@ -710,7 +710,7 @@
     {
       "route": "local-security/README.md",
       "title": "Local security components",
-      "sha256": "d020a814e81ecba85e93ccf3357e1a3db51d20122edf8500484a378700890b64"
+      "sha256": "f4578697f9e71abe40c3ce46534cdd09f9205973e754c2d0622e474154ceb6ce"
     },
     {
       "route": "local-security/identity-history.md",
@@ -726,6 +726,16 @@
       "route": "local-security/qr-pairing.md",
       "title": "Local authenticator QR pairing",
       "sha256": "e6137ada85e8483fcbc7c614a02357839ddbcac97b0b0c5674838ee4062ea2bd"
+    },
+    {
+      "route": "local-security/unlock-ladder.md",
+      "title": "Unlock ladder",
+      "sha256": "b696dd0a35752fb4b2411359e4de514b49c1433a7b6518ee1005a3b5a3a601f5"
+    },
+    {
+      "route": "local-security/unlock-ladder.yue_HK.md",
+      "title": "解鎖階梯",
+      "sha256": "f27999001c19477548e305fb785756c61d6ba1273be1ac84b6073e84c133ebd5"
     },
     {
       "route": "model-creator/README.md",
@@ -1850,7 +1860,7 @@
       "bytes": 1979
     }
   ],
-  "bundle_sha256": "83f73beaf446ccb7aa0e07b95fb5c875fff6514846b64ea38be78a6e9c61515c",
+  "bundle_sha256": "1d0435cbb12d8331faa9ecd6cc08873ae40f87edf984b0968db170c689efa46e",
   "unavailable_references": [
     {
       "source": "api/README.md",

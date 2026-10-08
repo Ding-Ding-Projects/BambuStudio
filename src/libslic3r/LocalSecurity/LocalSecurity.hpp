@@ -101,7 +101,13 @@ std::vector<Factor> factors(Policy);
 enum class Duration { ThisSurface, Minutes, UntilExit };
 struct LockSettings { Policy policy = Policy::Pin; Duration duration = Duration::ThisSurface; unsigned minutes = 5; };
 using Time = std::chrono::steady_clock::time_point;
-struct AttemptState { unsigned remaining; unsigned wait_seconds; };
+// `lockout` numbers the waits this budget has started; a new wait gets a new number.
+struct AttemptState { unsigned remaining; unsigned wait_seconds; std::uint64_t lockout = 0; };
+// The unlock ladder's rungs in their fixed order. Clock means only the wait is left.
+enum class LadderRung : unsigned char { DimSum, Sums, Moles, Clock };
+// Where the ladder stands inside the current lockout. Every new lockout, expiry,
+// cleared wait and successful answer discards it.
+struct LadderProgress { bool started = false; LadderRung rung = LadderRung::DimSum; unsigned wrong_dishes = 0; };
 class AttemptBudget {
 public:
     AttemptState state(Time now);
@@ -110,11 +116,18 @@ public:
     // A ladder can clear at most three waits per rolling hour. It restores
     // exactly the attempts that ordinary expiry restores; never authentication.
     bool clear_wait(Time now);
+    unsigned skips_left(Time now);
+    // Ladder progress for the wait in progress; empty when nothing is waiting.
+    LadderProgress ladder(Time now);
+    // Ignored unless `lockout` is still the wait in progress.
+    void set_ladder(std::uint64_t lockout, const LadderProgress& progress, Time now);
 private:
     unsigned m_remaining = 5;
     unsigned m_escalation = 0;
     Time m_wait_until{};
     std::vector<Time> m_skips;
+    std::uint64_t m_lockout = 0;
+    LadderProgress m_ladder;
 };
 class LockSession {
 public:
@@ -128,6 +141,8 @@ public:
     void relock();
     AttemptState attempts(Time now) { return m_budget.state(now); }
     bool clear_wait(Time now) { return m_budget.clear_wait(now); }
+    // For the unlock ladder, which may clear the wait and never the lock.
+    AttemptBudget& budget() noexcept { return m_budget; }
 private:
     LockSettings m_settings;
     std::vector<Factor> m_factors;
