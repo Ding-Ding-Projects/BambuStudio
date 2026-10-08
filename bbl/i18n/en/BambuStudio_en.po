@@ -28816,3 +28816,83 @@ msgstr ""
 
 msgid "Highlight a preset first."
 msgstr ""
+
+msgid "What the selected appearance preset sets"
+msgstr ""
+
+msgid "Select a preset to see exactly what it sets before you apply it."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Applied \"%s\". It sets nothing; the Material tokens and your own element overrides apply."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Applied \"%s\". It sets %s."
+msgstr ""
+
+msgid "Makes this shipped preset the active appearance preset. It creates nothing new, and your own element overrides stay on top of it."
+msgstr ""
+
+msgid "Makes this saved preset the active appearance preset. It creates nothing new, and your own element overrides stay on top of it."
+msgstr ""
+
+msgid "Font size (pt)"
+msgstr ""
+
+msgid "Font style"
+msgstr ""
+
+msgid "Text colour"
+msgstr ""
+
+msgid "Background colour"
+msgstr ""
+
+msgid "Highlight colour"
+msgstr ""
+
+msgid "Border colour"
+msgstr ""
+
+msgid "every element"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Started from \"%s\". It sets nothing yet."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Started from \"%s\". It set %s."
+msgstr ""
+
+msgid "Appearance change"
+msgstr ""
+
+msgid "Appearance at startup"
+msgstr ""
+
+msgid "Reset all appearance"
+msgstr ""
+
+msgid "Restore appearance snapshot"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Save appearance preset: %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Delete appearance preset: %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Reset element appearance: %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Add schedule rule from preset: %s"
+msgstr ""
+
+msgid "Unsupported appearance snapshot."
+msgstr ""

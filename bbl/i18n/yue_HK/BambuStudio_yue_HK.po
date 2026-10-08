@@ -39860,3 +39860,123 @@ msgstr "用已標示嘅預設開始新項目"
 #. review-status: agent-drafted
 msgid "Highlight a preset first."
 msgstr "請先標示一個預設。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "What the selected appearance preset sets"
+msgstr "已選外觀預設會設定嘅內容"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Select a preset to see exactly what it sets before you apply it."
+msgstr "揀一個預設，套用之前就會見到佢實際會設定乜嘢。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Applied \"%s\". It sets nothing; the Material tokens and your own element overrides apply."
+msgstr "已套用「%s」。佢唔會設定任何嘢，沿用 Material 樣式記號同你自己嘅元素覆寫。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Applied \"%s\". It sets %s."
+msgstr "已套用「%s」。佢會設定：%s。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Makes this shipped preset the active appearance preset. It creates nothing new, and your own element overrides stay on top of it."
+msgstr "將呢個內置預設設為使用中嘅外觀預設。唔會建立任何新嘢，你自己嘅元素覆寫會繼續蓋喺上面。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Makes this saved preset the active appearance preset. It creates nothing new, and your own element overrides stay on top of it."
+msgstr "將呢個已儲存預設設為使用中嘅外觀預設。唔會建立任何新嘢，你自己嘅元素覆寫會繼續蓋喺上面。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Font size (pt)"
+msgstr "字體大小（pt）"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Font style"
+msgstr "字體樣式"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Text colour"
+msgstr "文字顏色"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Background colour"
+msgstr "背景顏色"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Highlight colour"
+msgstr "強調顏色"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Border colour"
+msgstr "邊框顏色"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "every element"
+msgstr "所有元素"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Started from \"%s\". It sets nothing yet."
+msgstr "已由「%s」開始，暫時未設定任何嘢。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Started from \"%s\". It set %s."
+msgstr "已由「%s」開始，設定咗：%s。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Appearance change"
+msgstr "外觀變更"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Appearance at startup"
+msgstr "啟動時嘅外觀"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Reset all appearance"
+msgstr "重設所有外觀"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Restore appearance snapshot"
+msgstr "還原外觀快照"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Save appearance preset: %s"
+msgstr "儲存外觀預設：%s"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Delete appearance preset: %s"
+msgstr "刪除外觀預設：%s"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Reset element appearance: %s"
+msgstr "重設元素外觀：%s"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Add schedule rule from preset: %s"
+msgstr "由預設新增排程規則：%s"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Unsupported appearance snapshot."
+msgstr "唔支援呢個外觀快照。"

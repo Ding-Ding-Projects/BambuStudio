@@ -36,6 +36,28 @@ nlohmann::json safe_snapshot(const AppConfig &config);
 bool read_snapshot(const std::filesystem::path &path, nlohmann::json &snapshot, std::string &error);
 bool apply_snapshot(const std::filesystem::path &path, std::string &error);
 
+// Appearance history: the per-element styles, saved appearance presets and the
+// active preset (Appearance/ElementStyle) are recorded under their own identity
+// in the same local store. Every successful ElementStyle::save() schedules a
+// debounced "Appearance change" snapshot; install() records the state at
+// startup so the first change of a session can be undone.
+std::filesystem::path appearance_identity();
+
+// Start a named appearance action such as "Apply appearance preset: Large
+// text". Any pending unnamed change is recorded first, so the state before the
+// action keeps a revision of its own; the next ElementStyle::save() is then
+// recorded at once with `label`. Call before changing the registry.
+void begin_appearance_action(const std::string &label);
+// Drop a named action that ended without changing anything (a failed import),
+// so its name is not given to a later, unrelated change.
+void cancel_appearance_action();
+
+// A snapshot holds {"format": "bambu-appearance", "version": 1, "document": ...}
+// where the document is the ElementStyle file schema.
+bool read_appearance_snapshot(const std::filesystem::path &path, nlohmann::json &document, std::string &error);
+// Replace the live appearance with a snapshot and record the restore.
+bool apply_appearance_snapshot(const std::filesystem::path &path, std::string &error);
+
 } } // namespace GUI::PreferencesHistory
 } // namespace Slic3r
 

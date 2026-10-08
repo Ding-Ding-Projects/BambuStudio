@@ -261,3 +261,50 @@ TEST_CASE("Values are shown with their choice or empty label", "[blank-editors][
     CHECK(shown_value(name, "", translatable) == "Shipped name");
     CHECK(translatable);
 }
+
+TEST_CASE("An appearance preset is stated property by property", "[blank-editors][appearance]")
+{
+    // The shape of the shipped "Large text" preset: every element gets a size
+    // and a line height; one element also gets a weight, a decoration and a
+    // property this version does not know.
+    std::map<std::string, nlohmann::json> preset;
+    preset["*"]           = nlohmann::json{{"fontSize", 15.5}, {"lineHeight", 1.4}};
+    preset["project-tab"] = nlohmann::json{{"fontWeight", 600}, {"underline", true}, {"glowRadius", 3}};
+    const std::vector<Assignment> sets = style_assignments(preset);
+    REQUIRE(sets.size() == 5);
+    // "*" first, then the element ids in order; properties in the bag's order.
+    CHECK(sets[0].scope == "every element");
+    CHECK(sets[0].scope_translatable);
+    CHECK(sets[0].key == "*/fontSize");
+    CHECK(sets[0].label == "Font size (pt)");
+    CHECK(sets[0].value == "15.5");
+    CHECK(sets[0].shown == "15.5");
+    CHECK_FALSE(sets[0].shown_translatable);
+    CHECK(sets[1].label == "Line height");
+    CHECK(sets[1].shown == "1.4");
+    CHECK(sets[2].scope == "project-tab");
+    CHECK_FALSE(sets[2].scope_translatable);
+    CHECK(sets[2].key == "project-tab/fontWeight");
+    CHECK(sets[2].label == "Font weight");
+    CHECK(sets[2].shown == "600");
+    // An unknown property is still stated, by its key.
+    CHECK(sets[3].key == "project-tab/glowRadius");
+    CHECK(sets[3].label == "glowRadius");
+    CHECK(sets[3].shown == "3");
+    CHECK(sets[4].label == "Underline");
+    CHECK(sets[4].shown == "On");
+    CHECK(sets[4].shown_translatable);
+    // Strings are shown as written; the Material default preset sets nothing.
+    CHECK(style_assignments({{"*", nlohmann::json{{"foreground", "#112233"}}}})[0].shown == "#112233");
+    CHECK(style_assignments({}).empty());
+    CHECK(style_property_label("radius") == std::string("Corner radius (px)"));
+    CHECK(style_property_label("glowRadius") == nullptr);
+}
+
+TEST_CASE("Applying a preset is labelled in local history by what it applied", "[blank-editors][history]")
+{
+    CHECK(history_label("Apply appearance preset", "Large text") == "Apply appearance preset: Large text");
+    CHECK(history_label("Add schedule rule from preset", "Shipped defaults") == "Add schedule rule from preset: Shipped defaults");
+    // History messages stay one line however the title was written.
+    CHECK(history_label("Apply appearance preset", "Two\nlines") == "Apply appearance preset: Two lines");
+}

@@ -138,4 +138,81 @@ const char *unfixed_reason(const std::string &key)
     return PresentationDefaults::is_unfixed(key) ? L("The app does not ship a fixed value for this setting.") : nullptr;
 }
 
+const char *style_property_label(const std::string &key)
+{
+    // The property keys of Appearance/ElementStyle.hpp (StyleProp), in its order.
+    static const std::map<std::string, const char *> labels = {
+        {"fontFamily", L("Font family")},
+        {"fontSize", L("Font size (pt)")},
+        {"fontWeight", L("Font weight")},
+        {"fontStyle", L("Font style")},
+        {"underline", L("Underline")},
+        {"strikethrough", L("Strikethrough")},
+        {"letterSpacing", L("Letter spacing")},
+        {"lineHeight", L("Line height")},
+        {"foreground", L("Text colour")},
+        {"background", L("Background colour")},
+        {"highlight", L("Highlight colour")},
+        {"borderColor", L("Border colour")},
+        {"borderWidth", L("Border width (px)")},
+        {"radius", L("Corner radius (px)")},
+        {"padding", L("Padding (px)")},
+        {"margin", L("Margin (px)")},
+    };
+    const auto found = labels.find(key);
+    return found == labels.end() ? nullptr : found->second;
+}
+
+std::vector<Assignment> style_assignments(const std::map<std::string, nlohmann::json> &preset)
+{
+    std::vector<Assignment> out;
+    auto add_bag = [&out](const std::string &id, const nlohmann::json &bag) {
+        if (!bag.is_object())
+            return;
+        for (auto it = bag.begin(); it != bag.end(); ++it) {
+            Assignment assignment;
+            assignment.key   = id + "/" + it.key();
+            assignment.scope              = id == "*" ? std::string(L("every element")) : id;
+            assignment.scope_translatable = id == "*";
+            const char *label = style_property_label(it.key());
+            assignment.label = label ? label : it.key();
+            const nlohmann::json &value = it.value();
+            if (value.is_boolean()) {
+                assignment.value              = value.get<bool>() ? "true" : "false";
+                assignment.shown              = value.get<bool>() ? L("On") : L("Off");
+                assignment.shown_translatable = true;
+            } else {
+                assignment.value = value.is_string() ? value.get<std::string>() : value.dump();
+                assignment.shown = assignment.value;
+            }
+            out.push_back(std::move(assignment));
+        }
+    };
+    const auto every = preset.find("*");
+    if (every != preset.end())
+        add_bag(every->first, every->second);
+    for (const auto &entry : preset)
+        if (entry.first != "*")
+            add_bag(entry.first, entry.second);
+    return out;
+}
+
+std::string history_label(const std::string &action, const std::string &preset_title)
+{
+    std::string line = action + ": ";
+    bool        space = false;
+    for (const char c : preset_title) {
+        const bool control = static_cast<unsigned char>(c) < 0x20 || c == 0x7f;
+        if (control || c == ' ') {
+            space = true;
+            continue;
+        }
+        if (space && line.back() != ' ')
+            line += ' ';
+        space = false;
+        line += c;
+    }
+    return line;
+}
+
 } } } // namespace Slic3r::GUI::BlankEditorPresets

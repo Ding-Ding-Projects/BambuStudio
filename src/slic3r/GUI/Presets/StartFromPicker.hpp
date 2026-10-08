@@ -33,6 +33,9 @@ wxString describe_preset(const BlankEditorPresets::Preset &preset);
 // Every setting the preset sets on one line ("Theme: Light; Density: ..."),
 // or a plain "Sets nothing." for an empty start.
 wxString preset_settings_line(const BlankEditorPresets::Preset &preset);
+// The statement an editor shows right after a preset was applied, naming the
+// preset and every value it set.
+wxString preset_applied_note(const BlankEditorPresets::Preset &preset);
 
 class StartFromPicker final : public MD3Dialog
 {

@@ -3,8 +3,12 @@ import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import test from 'node:test';
 const source = readFileSync(new URL('../../src/slic3r/GUI/Appearance/AppearanceEditorPopover.cpp', import.meta.url), 'utf8').replace(/\r\n/g, '\n');
+// The callbacks fingerprint was re-taken once, deliberately, when the Presets
+// page started stating what a preset sets and recording preset, reset, save,
+// delete and import actions in local history; blank-editor-presets.test.mjs
+// covers that behaviour. Every other callback is unchanged.
 const expected = {
-  "callbacks": "654f26e533cf4860cbae9272c2d4e35f4cf9cc0b5ee99be54d6402f90e8ef418",
+  "callbacks": "705d3f31a4d3cc6f5da3baafc1c0958a6aea55e22b491440905677cec9add87d",
   "methods": {
     "void AppearanceEditorPopover::write_number(": "5d869e189d5e88de174b0a576e295cb0372f210704543a74b8688f2171dc5e76",
     "void AppearanceEditorPopover::write_bool(": "6b572419c86014ef0b0bf398d6514d04d298d8ed9dbbcb69d1456849bdd1b679",

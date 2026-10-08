@@ -1650,12 +1650,12 @@
     {
       "route": "workspace/blank-editor-presets.md",
       "title": "Start-from presets for blank editors",
-      "sha256": "4d33bd2df0f0363b31875643774d6173823e3749f80c2acdb650467c9257041f"
+      "sha256": "fc7c54bad3b8ed0fc1b1425f8e003f67ae8767dfcbb19582806788ba3337b60a"
     },
     {
       "route": "workspace/blank-editor-presets.yue_HK.md",
       "title": "空白編輯器嘅「由預設開始」",
-      "sha256": "56fdaeb2c9b10bea9559258c72f6660de2a0e17628da0f133c013a207fc6eb97"
+      "sha256": "67ccaa111141d7749f7d45985134e5efe31775bdd46017cece14aafce53d7aed"
     },
     {
       "route": "workspace/bulk-actions.md",
@@ -1860,7 +1860,7 @@
       "bytes": 1979
     }
   ],
-  "bundle_sha256": "228846715cf91665d4d81b9384583e39296410d12b8b551a02bf5e275afa62d1",
+  "bundle_sha256": "9ff27d2f0bc813d95556acd5122d6137d2206d481083b68c067784aa6133e593",
   "unavailable_references": [
     {
       "source": "api/README.md",

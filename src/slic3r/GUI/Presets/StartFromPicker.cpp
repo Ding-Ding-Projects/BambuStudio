@@ -34,7 +34,8 @@ wxString assignment_text(const Assignment &assignment)
 {
     wxString label = tr(assignment.label);
     if (!assignment.scope.empty())
-        label = wxString::Format(_L("%s (%s)"), label, tr(assignment.scope));
+        label = wxString::Format(_L("%s (%s)"), label,
+                                 assignment.scope_translatable ? tr(assignment.scope) : wxString::FromUTF8(assignment.scope.c_str()));
     const wxString shown = assignment.shown_translatable ? tr(assignment.shown) : wxString::FromUTF8(assignment.shown.c_str());
     wxString text = wxString::Format(_L("%s: %s"), label, shown);
     if (assignment.from_default)
@@ -78,6 +79,13 @@ wxString preset_settings_line(const Preset &preset)
         line << assignment_text(assignment);
     }
     return line;
+}
+
+wxString preset_applied_note(const Preset &preset)
+{
+    if (preset.sets.empty())
+        return wxString::Format(_L("Started from \"%s\". It sets nothing yet."), tr(preset.title));
+    return wxString::Format(_L("Started from \"%s\". It set %s."), tr(preset.title), preset_settings_line(preset));
 }
 
 StartFromPicker::StartFromPicker(wxWindow *parent, const wxString &title, const wxString &subtitle, std::vector<Preset> presets)

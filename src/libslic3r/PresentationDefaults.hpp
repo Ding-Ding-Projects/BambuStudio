@@ -3,12 +3,13 @@
 
 // Shipped defaults of the presentation preferences.
 //
-// One table, read by every path that needs "the value the app ships with":
-// AppConfig::set_defaults() when a key is missing, Preferences > Appearance >
-// "Reset appearance to defaults", and the start-from presets that blank
-// editors offer (src/slic3r/GUI/Presets/BlankEditorPresets.hpp). Because they
-// all read this table, a preset and a reset can never disagree about what the
-// shipped value is.
+// One table for "the value the app ships with". AppConfig::set_defaults()
+// reads it when a key is missing, and the start-from presets that blank
+// editors offer (src/slic3r/GUI/Presets/BlankEditorPresets.hpp) are built from
+// it. Preferences > Appearance > "Reset appearance to defaults" keeps its own
+// literals because tests/native_preferences_atlas fingerprints that file;
+// ui-md3/tests/blank-editor-presets.test.mjs fails if they ever differ from
+// this table. So a preset and a reset cannot disagree about a shipped value.
 //
 // A key without one fixed shipped value (the interface language follows the
 // system language the first time the app starts) is listed in unfixed_keys()

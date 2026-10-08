@@ -645,9 +645,17 @@ ElementStyle::AttachHook &attach_hook_state()
     return hook;
 }
 
+ElementStyle::SaveObserver &save_observer_state()
+{
+    static ElementStyle::SaveObserver observer;
+    return observer;
+}
+
 } // namespace
 
 void ElementStyle::set_attach_hook(AttachHook hook) { attach_hook_state() = std::move(hook); }
+
+void ElementStyle::set_save_observer(SaveObserver observer) { save_observer_state() = std::move(observer); }
 
 StyleRegistry &ElementStyle::registry()
 {
@@ -691,6 +699,8 @@ bool ElementStyle::save()
     if (!ok)
         // See the ElementStyle.cpp / wx-core-only note above load().
         wxLogWarning("Appearance: %s", wxString::FromUTF8(err));
+    else if (const SaveObserver &observer = save_observer_state())
+        observer();
     return ok;
 }
 

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-08 14:53+0000\n"
+"POT-Creation-Date: 2026-10-08 15:14+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -21005,6 +21005,9 @@ msgstr ""
 msgid "Appearance presets"
 msgstr ""
 
+msgid "What the selected appearance preset sets"
+msgstr ""
+
 msgid "Make the selected preset the active one; your element overrides stay on top of it"
 msgstr ""
 
@@ -21076,11 +21079,28 @@ msgstr ""
 msgid "Active preset: %s"
 msgstr ""
 
+msgid "Select a preset to see exactly what it sets before you apply it."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Applied \"%s\". It sets nothing; the Material tokens and your own element overrides apply."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Applied \"%s\". It sets %s."
+msgstr ""
+
 #, possible-c-format, possible-boost-format
 msgid "Edit appearance: %s"
 msgstr ""
 
 msgid "Theme default"
+msgstr ""
+
+msgid "Makes this shipped preset the active appearance preset. It creates nothing new, and your own element overrides stay on top of it."
+msgstr ""
+
+msgid "Makes this saved preset the active appearance preset. It creates nothing new, and your own element overrides stay on top of it."
 msgstr ""
 
 msgid "Edit appearance..."
@@ -21113,6 +21133,27 @@ msgstr ""
 msgid "Follows your system language the first time the app starts, so there is no single shipped value."
 msgstr ""
 
+msgid "Font size (pt)"
+msgstr ""
+
+msgid "Font style"
+msgstr ""
+
+msgid "Text colour"
+msgstr ""
+
+msgid "Background colour"
+msgstr ""
+
+msgid "Highlight colour"
+msgstr ""
+
+msgid "Border colour"
+msgstr ""
+
+msgid "every element"
+msgstr ""
+
 #, possible-c-format, possible-boost-format
 msgid "%s (%s)"
 msgstr ""
@@ -21128,6 +21169,14 @@ msgid "Sets:"
 msgstr ""
 
 msgid "Leaves out:"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Started from \"%s\". It sets nothing yet."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Started from \"%s\". It set %s."
 msgstr ""
 
 msgid "Every preset comes from the values the app ships with, your own saved settings, or a template the app ships. Nothing is applied until you start from one."
@@ -22806,6 +22855,18 @@ msgstr ""
 msgid "Printer watch: %s"
 msgstr ""
 
+msgid "Appearance change"
+msgstr ""
+
+msgid "Appearance at startup"
+msgstr ""
+
+msgid "Reset all appearance"
+msgstr ""
+
+msgid "Restore appearance snapshot"
+msgstr ""
+
 #. TRN: Title of the prompt asking for a label to attach to project versions.
 msgid "Label versions"
 msgstr ""
@@ -23085,6 +23146,22 @@ msgstr ""
 msgid "Autosave: %s"
 msgstr ""
 
+#, possible-c-format, possible-boost-format
+msgid "Save appearance preset: %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Delete appearance preset: %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Reset element appearance: %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Add schedule rule from preset: %s"
+msgstr ""
+
 msgid "Pinned"
 msgstr ""
 
@@ -23128,6 +23205,9 @@ msgid "Choose two entries from the same history store or printer."
 msgstr ""
 
 msgid "Could not read the selected versions for comparison."
+msgstr ""
+
+msgid "Unsupported appearance snapshot."
 msgstr ""
 
 msgid "Unsupported settings snapshot."

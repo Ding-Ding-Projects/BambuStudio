@@ -17,7 +17,9 @@
 //
 // Text fields hold English source strings; the GUI translates them with _L().
 // The module is free of wxWidgets: tests/blank_editor_presets builds it with
-// g++ alone.
+// g++ and the bundled nlohmann json header only.
+
+#include "nlohmann/json.hpp"
 
 #include <functional>
 #include <map>
@@ -56,6 +58,7 @@ struct Assignment
 {
     std::string key;
     std::string scope;                      // what the value applies to; "" = the new item itself
+    bool        scope_translatable = false; // `scope` is an English source string, not an id
     std::string label;                      // the setting, English source string
     std::string value;                      // the stored value written
     std::string shown;                      // how the value is shown
@@ -119,6 +122,22 @@ std::string shown_value(const Field &field, const std::string &value, bool &tran
 // Why a field is left out of the shipped-defaults preset, as an English source
 // string, or nullptr when the key has a shipped value.
 const char *unfixed_reason(const std::string &key);
+
+// The words for one appearance property key (fontSize, radius, ...), as an
+// English source string, or nullptr for a property this version does not know.
+const char *style_property_label(const std::string &key);
+
+// An appearance preset (element id -> property bag) as assignments, one per
+// property: the "*" entry first, scoped to "every element", then each element
+// id in order, scoped to the id (the GUI shows the element's display name).
+// A property this version does not know is still stated, by its key, so
+// nothing a preset sets goes unsaid.
+std::vector<Assignment> style_assignments(const std::map<std::string, nlohmann::json> &preset);
+
+// The local history message for applying a preset, for example
+// "Apply appearance preset: Large text". English like every history message,
+// and always one line.
+std::string history_label(const std::string &action, const std::string &preset_title);
 
 } } } // namespace Slic3r::GUI::BlankEditorPresets
 
