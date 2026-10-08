@@ -6,22 +6,44 @@
 #include <boost/regex.hpp>
 
 #include <algorithm>
+#include <climits>
 #include <cstring>
 #include <limits>
 #include <optional>
 #include <stdexcept>
+#include <string>
 #include <utility>
 
 namespace Slic3r::GUI::BoundedRegex::Protocol {
 
-inline constexpr std::uint32_t kVersion       = 1;
+// Version 2 added Mode::Describe and the error offset in every result.
+inline constexpr std::uint32_t kVersion       = 2;
 inline constexpr std::uint32_t kRequestMagic  = 0x31525842; // BXR1
 inline constexpr std::uint32_t kResponseMagic = 0x31535842; // BXS1
 inline constexpr std::size_t   kPrefixBytes   = 12;
 inline constexpr std::size_t   kMaxRequestBytes  = 128 * 1024;
 inline constexpr std::size_t   kMaxResponseBytes = 4 * 1024 * 1024;
 
-enum class Mode : std::uint32_t { Ping = 0, Validate = 1, Search = 2, FindAll = 3 };
+enum class Mode : std::uint32_t { Ping = 0, Validate = 1, Search = 2, FindAll = 3, Describe = 4 };
+
+inline constexpr std::uint32_t kNoOffsetWire = 0xFFFFFFFFu;
+
+// Identity of the engine this translation unit compiles, reported by the
+// worker for Mode::Describe and parsed by RegexAnalysis::parse_engine_descriptor.
+// Every value comes from the Boost.Regex build actually linked into the worker.
+inline std::string engine_descriptor()
+{
+#if defined(BOOST_REGEX_USE_WIN32_LOCALE)
+    const char *traits = "win32";
+#elif defined(BOOST_REGEX_USE_CPP_LOCALE)
+    const char *traits = "cpp";
+#else
+    const char *traits = "c";
+#endif
+    return std::string("engine=boost.regex;version=") + std::to_string(BOOST_VERSION) +
+           ";syntax=perl;code_unit_bits=" + std::to_string(sizeof(wchar_t) * CHAR_BIT) + ";traits=" + traits +
+           ";max_states=" + std::to_string(static_cast<unsigned long long>(BOOST_REGEX_MAX_STATE_COUNT));
+}
 
 struct Request {
     Mode         mode = Mode::Search;
@@ -106,7 +128,7 @@ inline bool decode_request(const std::vector<std::uint8_t> &payload, Request &re
         !read_u32(payload, offset, max_matches) || !read_u32(payload, offset, pattern_units) ||
         !read_u32(payload, offset, subject_units))
         return false;
-    if (mode > static_cast<std::uint32_t>(Mode::FindAll) || max_matches > kMaxMatches ||
+    if (mode > static_cast<std::uint32_t>(Mode::Describe) || max_matches > kMaxMatches ||
         pattern_units > kMaxPatternCodeUnits || subject_units > kMaxSubjectCodeUnits)
         return false;
     const std::size_t pattern_bytes = static_cast<std::size_t>(pattern_units) * sizeof(wchar_t);
@@ -135,6 +157,9 @@ inline std::vector<std::uint8_t> encode_result(const Result &result)
     append_u32(payload, static_cast<std::uint32_t>(result.status));
     append_u32(payload, static_cast<std::uint32_t>(result.detail));
     append_u32(payload, result.match_limit_reached ? 1u : 0u);
+    append_u32(payload, result.error_offset == kNoErrorOffset
+                            ? kNoOffsetWire
+                            : static_cast<std::uint32_t>(std::min<std::size_t>(result.error_offset, kNoOffsetWire - 1)));
     append_u32(payload, static_cast<std::uint32_t>(result.matches.size()));
     append_u32(payload, static_cast<std::uint32_t>(result.diagnostic.size()));
     append_bytes(payload, result.diagnostic.data(), result.diagnostic.size());
@@ -152,19 +177,21 @@ inline std::vector<std::uint8_t> encode_result(const Result &result)
 inline bool decode_result(const std::vector<std::uint8_t> &payload, Result &result)
 {
     std::size_t offset = 0;
-    std::uint32_t status = 0, detail = 0, flags = 0, match_count = 0, diagnostic_bytes = 0;
+    std::uint32_t status = 0, detail = 0, flags = 0, error_offset = 0, match_count = 0, diagnostic_bytes = 0;
     if (!read_u32(payload, offset, status) || !read_u32(payload, offset, detail) ||
-        !read_u32(payload, offset, flags) || !read_u32(payload, offset, match_count) ||
-        !read_u32(payload, offset, diagnostic_bytes))
+        !read_u32(payload, offset, flags) || !read_u32(payload, offset, error_offset) ||
+        !read_u32(payload, offset, match_count) || !read_u32(payload, offset, diagnostic_bytes))
         return false;
     if (status > static_cast<std::uint32_t>(Status::ProtocolError) ||
         detail > static_cast<std::uint32_t>(ErrorDetail::Unknown) ||
+        (error_offset != kNoOffsetWire && error_offset > kMaxPatternCodeUnits) ||
         match_count > kMaxMatches || offset > payload.size() ||
         diagnostic_bytes > payload.size() - offset)
         return false;
     result.status = static_cast<Status>(status);
     result.detail = static_cast<ErrorDetail>(detail);
     result.match_limit_reached = (flags & 1u) != 0;
+    result.error_offset = error_offset == kNoOffsetWire ? kNoErrorOffset : static_cast<std::size_t>(error_offset);
     result.diagnostic.assign(reinterpret_cast<const char *>(payload.data() + offset), diagnostic_bytes);
     offset += diagnostic_bytes;
     result.matches.clear();
@@ -288,6 +315,12 @@ public:
             ready.status = Status::Valid;
             return ready;
         }
+        if (request.mode == Mode::Describe) {
+            Result described;
+            described.status = Status::Valid;
+            described.diagnostic = engine_descriptor();
+            return described;
+        }
         if (request.pattern.size() > kMaxPatternCodeUnits)
             return failure(Status::PatternTooLong, "pattern exceeds worker limit");
         if (request.subject.size() > kMaxSubjectCodeUnits)
@@ -379,6 +412,9 @@ private:
                                                                     : Status::InvalidPattern,
                                        "regex compilation rejected by engine");
             m_compile_result.detail = detail;
+            if (error.position() >= 0)
+                m_compile_result.error_offset = std::min<std::size_t>(
+                    static_cast<std::size_t>(error.position()), request.pattern.size());
         } catch (const std::bad_alloc &) {
             m_compile_result = failure(Status::PatternTooComplex, "regex allocation limit reached");
         } catch (const std::exception &) {

@@ -378,6 +378,7 @@ src/slic3r/GUI/Widgets/MD3Dialog.cpp
 src/slic3r/GUI/Widgets/MD3DialogChrome.cpp
 src/slic3r/GUI/Widgets/MD3Menu.cpp
 src/slic3r/GUI/Widgets/ProgressDialog.cpp
+src/slic3r/GUI/Widgets/RegexAnalysis.hpp
 src/slic3r/GUI/Widgets/RegexBuilderPopup.cpp
 src/slic3r/GUI/Widgets/SearchField.cpp
 src/slic3r/GUI/Widgets/SideButton.cpp

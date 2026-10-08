@@ -62,7 +62,7 @@ Result preflight(const Protocol::Request &request)
         return failure(Status::PatternTooComplex, "pattern exceeds structural limit");
     if (request.max_matches > kMaxMatches ||
         (request.mode != Protocol::Mode::Validate && request.mode != Protocol::Mode::Ping &&
-         request.max_matches == 0))
+         request.mode != Protocol::Mode::Describe && request.max_matches == 0))
         return failure(Status::ProtocolError, "invalid match limit");
     Result ready;
     ready.status = Status::Valid;
@@ -953,6 +953,11 @@ Result find_all(const std::wstring &pattern, const std::wstring &subject,
         return validation;
     return execute(Protocol::Mode::FindAll, pattern, subject,
                    std::min(max_matches, kMaxMatches), options);
+}
+
+Result describe_engine(const Options &options)
+{
+    return execute(Protocol::Mode::Describe, {}, {}, 0, options);
 }
 
 void prewarm()
