@@ -9,13 +9,18 @@
 // instructions, kept outside this repository. --source-revision records the
 // canonical revision it was exported from. --check writes nothing and exits 1
 // when either file would change. --root selects another repository root (tests).
+//
+// The export is refused, and nothing is written, when the privacy guard finds
+// a private detail in it. --private-terms <file> (or the environment variable
+// INSTRUCTION_MIRROR_PRIVATE_TERMS) names a term list kept outside the
+// repository whose terms must not appear either.
 import { readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { MIRROR_TARGETS, MirrorError, planRefresh } from './instruction-mirror.mjs';
+import { MIRROR_TARGETS, MirrorError, planRefresh, resolvePrivateTerms } from './instruction-mirror.mjs';
 
 const defaultRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-const VALUE_OPTIONS = new Set(['--source', '--source-revision', '--date', '--root']);
+const VALUE_OPTIONS = new Set(['--source', '--source-revision', '--date', '--root', '--private-terms']);
 
 function parseArguments(argv) {
   const options = { check: false };
@@ -43,8 +48,10 @@ function main() {
   const files = {};
   for (const name of Object.keys(MIRROR_TARGETS)) files[name] = readFileSync(path.join(root, name), 'utf8');
   const sourceText = readFileSync(path.resolve(options.source), 'utf8');
+  const { terms, note } = resolvePrivateTerms(options['private-terms']);
+  console.log(note);
   const { digest, mirroredOn, plan } = planRefresh({
-    files, sourceText, sourceRevision: options['source-revision'], mirroredOn: options.date,
+    files, sourceText, sourceRevision: options['source-revision'], mirroredOn: options.date, terms,
   });
   const changed = plan.filter((entry) => entry.changed);
   if (options.check) {
