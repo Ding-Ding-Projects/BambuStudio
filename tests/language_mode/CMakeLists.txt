@@ -41,3 +41,17 @@ target_link_libraries(language_mode_tests test_common ${wxWidgets_LIBRARIES} PNG
 set_property(TARGET language_mode_tests PROPERTY FOLDER "tests")
 
 add_test(language_mode_tests language_mode_tests "${CATCH_EXTRA_ARGS}")
+
+# Pure-model tests for the funny-level step of the first-run setup guide. The
+# header under test is wxWidgets-free, so this target needs only Catch2 and the
+# bundled nlohmann json header from src/.
+add_executable(first_run_disclosure_tests
+    first_run_disclosure_tests.cpp
+    ${PROJECT_SOURCE_DIR}/src/slic3r/GUI/FirstRunFunnyDisclosure.hpp
+)
+target_include_directories(first_run_disclosure_tests PRIVATE ${PROJECT_SOURCE_DIR}/src)
+target_compile_features(first_run_disclosure_tests PRIVATE cxx_std_17)
+target_link_libraries(first_run_disclosure_tests PRIVATE test_common)
+set_property(TARGET first_run_disclosure_tests PROPERTY FOLDER "tests")
+
+add_test(NAME first_run_disclosure_tests COMMAND first_run_disclosure_tests "${CATCH_EXTRA_ARGS}")

@@ -18,6 +18,7 @@
 - [Assembly export progress entrance and pending verification](assembly-export-motion.md)
 - [English, Hong Kong Cantonese, and bilingual modes](language-modes.md)
 - [Funny levels and dialog emojis](funny-levels-and-dialog-emojis.md)
+- [First-run funny-level disclosure (Setup Wizard)](first-run-funny-level-disclosure.md)
 - [Ink terminology (filament → ink, AMS → Ink Dispenser)](ink-terminology.md)
 - [Appearance customization](appearance-customization.md)
 - [Renamable app name (display label only)](renamable-app-name.md)

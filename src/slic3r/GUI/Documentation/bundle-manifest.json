@@ -1130,12 +1130,12 @@
     {
       "route": "windows/README.md",
       "title": "Windows features",
-      "sha256": "688154ab5a09095f542635dae344199a1608841621017a652f14c0d54e971df6"
+      "sha256": "7d29e23a136b082d004af7fd56494f3a78461477e252f688c0de4c60cf221655"
     },
     {
       "route": "windows/README.yue_HK.md",
       "title": "Windows 功能",
-      "sha256": "0d04f0f4d5c5ee02ecd83081bbc2ad4f0a38f2aa59137e2b26cf9754bf100d29"
+      "sha256": "d88f727d88b29be66d50646933cf95bc5d1bdceed4287b7db62e1236da7bd78b"
     },
     {
       "route": "windows/ai-filament-scanner.md",
@@ -1316,6 +1316,16 @@
       "route": "windows/documentation-browser.yue_HK.md",
       "title": "離線文件瀏覽器（F1）",
       "sha256": "42a0b4e312e70a6020aa13804c805b0aa353c6df39cd6dff324908fce5d6437a"
+    },
+    {
+      "route": "windows/first-run-funny-level-disclosure.md",
+      "title": "First-run funny-level disclosure",
+      "sha256": "476a34a795039f2e529832928e369d36525a255b68099f275d3752fff96ef42e"
+    },
+    {
+      "route": "windows/first-run-funny-level-disclosure.yue_HK.md",
+      "title": "首次設定時講清楚搞笑程度",
+      "sha256": "0c891d760087e1708c44257eb4a9ad7702d74deb5b23e38c0c5907f44470f4b2"
     },
     {
       "route": "windows/funny-levels-and-dialog-emojis.md",
@@ -1850,7 +1860,7 @@
       "bytes": 1979
     }
   ],
-  "bundle_sha256": "83f73beaf446ccb7aa0e07b95fb5c875fff6514846b64ea38be78a6e9c61515c",
+  "bundle_sha256": "ceaf0c71be2f64007e30fa1d6f9a859e7b3364b77f3bdf172c0b0e07c3c489c1",
   "unavailable_references": [
     {
       "source": "api/README.md",
