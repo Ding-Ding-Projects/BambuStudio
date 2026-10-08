@@ -1,6 +1,6 @@
 ---
 translation-of: first-run-funny-level-disclosure.md
-source-sha256: 476a34a795039f2e529832928e369d36525a255b68099f275d3752fff96ef42e
+source-sha256: 3e63a61e74eb0965a04dee5c278cb4f622895dca96e4e3fb914149ae06cfef0e
 review-status: agent-drafted
 ---
 
@@ -58,7 +58,7 @@ review-status: agent-drafted
 ## 驗證
 
 - `g++ -std=c++17 -Isrc -Itests -Itests/catch2 tests/language_mode/first_run_disclosure_tests.cpp`，再執行個程式：模型嘅預設值、搞笑程度兩個極端、學校模式，同每個接受同拒絕嘅請求（CTest 目標 `first_run_disclosure_tests`）。
-- `node --test ui-md3/tests/first-run-funny-disclosure.test.mjs`：嚮導次序、頁面控制項、原生接線、目錄條目，同全新設定檔顯示出嚟嘅一步。
+- `node --test ui-md3/tests/first-run-funny-disclosure.test.mjs`：嚮導次序、頁面控制項、原生接線、目錄條目，同全新設定檔顯示出嚟嘅一步。之後再用英文、廣東話同雙語模式顯示呢一步，英文同廣東話程度分別係 1 同 1、5 同 5、1 同 5、5 同 1：每個模式都要用佢顯示嘅每種語言講齊三件事，第 1 級同第 5 級嘅事實要一字不差、只有開場白會變，每條滑桿要讀返自己嘅程度，亦唔可以留低未填嘅佔位符。退路都有測試：嚮導用其他語言或者冇廣東話條目時顯示英文；冇應用程式嘅頁面顯示第 5 級嘅事實但冇控制項；超出範圍嘅程度會被限制；學校模式會話呢一步唔適用。頁面邏輯唔可以自己帶任何文字，而反向回歸測試（講錯預設值、事實冇再提錯誤同警告、少咗廣東話一行、事實跟住程度變）每一個都一定要令檢查變紅。
 - `node resources/web/data/validate-text-locales.mjs`：新鍵嘅廣東話對應。
 
 仲要喺建置好嘅 Windows 應用程式入面親眼睇到：呢一步出現喺首次執行嚮導、滑桿同重設按鈕儲存到 `BambuStudio.conf`、示範訊息同開場白跟住滑桿變、學校模式開住時跳過呢一步，同埋每個語言模式喺窄闊度同高顯示比例下嘅版面。

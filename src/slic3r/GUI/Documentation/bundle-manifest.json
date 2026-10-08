@@ -1320,12 +1320,12 @@
     {
       "route": "windows/first-run-funny-level-disclosure.md",
       "title": "First-run funny-level disclosure",
-      "sha256": "476a34a795039f2e529832928e369d36525a255b68099f275d3752fff96ef42e"
+      "sha256": "3e63a61e74eb0965a04dee5c278cb4f622895dca96e4e3fb914149ae06cfef0e"
     },
     {
       "route": "windows/first-run-funny-level-disclosure.yue_HK.md",
       "title": "首次設定時講清楚搞笑程度",
-      "sha256": "0c891d760087e1708c44257eb4a9ad7702d74deb5b23e38c0c5907f44470f4b2"
+      "sha256": "6772aa8501d3ced5293427404c3c559f14d269c59ce34f114220f65d2d0d31d5"
     },
     {
       "route": "windows/funny-levels-and-dialog-emojis.md",
@@ -1860,7 +1860,7 @@
       "bytes": 1979
     }
   ],
-  "bundle_sha256": "ceaf0c71be2f64007e30fa1d6f9a859e7b3364b77f3bdf172c0b0e07c3c489c1",
+  "bundle_sha256": "4dde48bc060b2a5f75a3f076d244262c1866fb64aaa87a949aaee2cd83abc143",
   "unavailable_references": [
     {
       "source": "api/README.md",

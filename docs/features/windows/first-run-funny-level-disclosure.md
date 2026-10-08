@@ -97,7 +97,16 @@ light and dark colour tokens.
   then run the binary: the model's defaults, both funny-level extremes, School mode, and every
   accepted and rejected request (CTest target `first_run_disclosure_tests`).
 - `node --test ui-md3/tests/first-run-funny-disclosure.test.mjs`: the wizard order, the page's
-  controls, the native wiring, the catalog entries, and the rendered step on a fresh profile.
+  controls, the native wiring, the catalog entries, and the rendered step on a fresh profile. The
+  step is then rendered in English, Cantonese and bilingual mode with the English and Cantonese
+  levels at 1 and 1, 5 and 5, 1 and 5, and 5 and 1: every mode must state all three facts in each
+  language it shows, the facts must be word for word the same at levels 1 and 5 while the opening
+  line changes, each slider must read back its own level, and no placeholder may be left unfilled.
+  The fallbacks are covered too: other guide languages and missing Cantonese entries show English,
+  a page without the application shows the facts with level 5 and no controls, out-of-range levels
+  are clamped and School mode reports the step unavailable. The page logic must carry no words of
+  its own, and negative regressions (a misstated default, a fact that no longer mentions errors and
+  warnings, a missing Cantonese line, a fact that follows the level) must each turn the check red.
 - `node resources/web/data/validate-text-locales.mjs`: Cantonese key parity for the new keys.
 
 Still to be observed in a built Windows application: the step appearing in the first-run wizard,

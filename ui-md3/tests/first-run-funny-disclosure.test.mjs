@@ -177,3 +177,221 @@ test('a fresh profile reads the three facts with the level 5 defaults', () => {
   assert.equal(copy.cantonese.label, 'Funny level (Cantonese)');
   assert.equal(copy.english.sample, 'Slicing done. Every layer counted and nothing left behind.');
 });
+
+// ---------------------------------------------------------------------------
+// All three language modes at both funny-level extremes.
+// ---------------------------------------------------------------------------
+
+const MODES = ['en', 'yue_HK', 'bilingual_en_yue_HK'];
+const EXTREMES = [[1, 1], [5, 5], [1, 5], [5, 1]];
+const CANTONESE_SPAN = /<span class="BilingualSecondary"[^>]*lang="yue-Hant-HK"[^>]*>粵語：/;
+
+// What each mode must say, in its own language(s), whatever the levels are.
+const FACT_PHRASES = {
+  en: [
+    [0, 'including errors and warnings'],
+    [0, 'what happened, what is affected and what you can do are stated exactly at every level'],
+    [1, 'English and Cantonese each have their own funny level'],
+    [1, 'Both start at level 5.'],
+    [2, 'change or reset either level'],
+    [2, 'at any time'],
+  ],
+  yue_HK: [
+    [0, '包括錯誤同警告'],
+    [0, '每個程度都會講得清清楚楚'],
+    [1, '英文同廣東話各自有自己嘅搞笑程度'],
+    [1, '兩個都由第 5 級開始'],
+    [2, '更改或者重設任何一個程度'],
+    [2, '任何時候'],
+  ],
+};
+
+function render(lang, english, cantonese, mutateCatalog) {
+  const sandbox = loadDisclosure(lang, mutateCatalog);
+  const copy = sandbox.BuildFunnyDisclosureCopy(sandbox.FunnyDisclosureState(hostPayload(english, cantonese)));
+  return { sandbox, copy };
+}
+
+// The disclosure contract for one rendered step: every fact in every language
+// the mode shows, no placeholder left behind, the default stated as 5.
+function assertDisclosed(lang, copy) {
+  const languages = lang === 'bilingual_en_yue_HK' ? ['en', 'yue_HK'] : [lang];
+  for (const language of languages) {
+    for (const [fact, phrase] of FACT_PHRASES[language]) {
+      assert.ok(copy.facts[fact].includes(phrase), `${lang}: fact ${fact} must say "${phrase}"`);
+    }
+  }
+  if (lang === 'en') assert.doesNotMatch(copy.facts.join(''), /[㐀-鿿]/, 'English mode shows no Cantonese');
+  if (lang === 'yue_HK') assert.doesNotMatch(copy.facts.join(''), /including errors|Both start/, 'Cantonese mode shows no English facts');
+  if (lang === 'bilingual_en_yue_HK') {
+    for (const fact of copy.facts) assert.match(fact, CANTONESE_SPAN, 'bilingual facts carry the Cantonese line');
+  }
+  const rendered = [copy.title, copy.intro, ...copy.facts, copy.english.value, copy.english.valuePlain, copy.english.reset,
+    copy.cantonese.value, copy.cantonese.valuePlain, copy.cantonese.reset, copy.english.label, copy.cantonese.label];
+  for (const text of rendered) assert.doesNotMatch(plain(text), /\{\w+\}/, `${lang}: unfilled placeholder in "${text}"`);
+}
+
+// Facts rendered at level 1 and at level 5 must be identical. The arrays come
+// from separate VM contexts, so compare copies made in this one.
+function assertFactsInvariant(lang, factsAt) {
+  assert.deepEqual([...factsAt(5)], [...factsAt(1)], `${lang}: facts must not follow the level`);
+}
+
+test('every language mode discloses all three facts at both funny-level extremes', () => {
+  for (const lang of MODES) {
+    for (const [english, cantonese] of EXTREMES) {
+      const { copy } = render(lang, english, cantonese);
+      assert.equal(copy.lang, lang);
+      assert.equal(copy.controls, true);
+      assertDisclosed(lang, copy);
+    }
+  }
+});
+
+test('the facts are word for word the same at level 1 and level 5; only the voice changes', () => {
+  for (const lang of MODES) {
+    const serious = render(lang, 1, 1).copy;
+    const playful = render(lang, 5, 5).copy;
+    assertFactsInvariant(lang, (level) => render(lang, level, level).copy.facts);
+    assertFactsInvariant(lang, (level) => render(lang, level, 6 - level).copy.facts);
+    assert.equal(playful.english.reset, serious.english.reset, `${lang}: reset names the default, not the level`);
+    assert.equal(playful.cantonese.reset, serious.cantonese.reset);
+    assert.equal(playful.title, serious.title);
+    assert.notEqual(playful.intro, serious.intro, `${lang}: the opening line is styled by the level`);
+  }
+
+  const { LangText } = loadDisclosure('en');
+  assert.equal(render('en', 1, 5).copy.intro, LangText.en.t301);
+  assert.equal(render('en', 5, 1).copy.intro, LangText.en.t303);
+  assert.equal(render('en', 3, 3).copy.intro, LangText.en.t302);
+  assert.equal(render('yue_HK', 5, 1).copy.intro, LangText.yue_HK.t301);
+  assert.equal(render('yue_HK', 1, 5).copy.intro, LangText.yue_HK.t303);
+
+  // Bilingual: each language follows its own level.
+  const mixed = render('bilingual_en_yue_HK', 1, 5).copy.intro;
+  assert.ok(mixed.startsWith(`<span lang="en">${LangText.en.t301}</span>`), mixed);
+  assert.ok(mixed.includes(`粵語：${LangText.yue_HK.t303}</span>`), mixed);
+  const crossed = render('bilingual_en_yue_HK', 5, 1).copy.intro;
+  assert.ok(crossed.startsWith(`<span lang="en">${LangText.en.t303}</span>`), crossed);
+  assert.ok(crossed.includes(`粵語：${LangText.yue_HK.t301}</span>`), crossed);
+});
+
+test('each slider reads back its own level in every mode', () => {
+  const expected = {
+    en: (n) => [`Level ${n} of 5`],
+    yue_HK: (n) => [`第 ${n} 級（共 5 級）`],
+    bilingual_en_yue_HK: (n) => [`Level ${n} of 5`, `第 ${n} 級（共 5 級）`],
+  };
+  for (const lang of MODES) {
+    for (const [english, cantonese] of EXTREMES) {
+      const { copy } = render(lang, english, cantonese);
+      assert.equal(copy.english.level, english);
+      assert.equal(copy.cantonese.level, cantonese);
+      for (const text of expected[lang](english)) {
+        assert.ok(plain(copy.english.value).includes(text), `${lang} English value`);
+        assert.ok(copy.english.valuePlain.includes(text), `${lang} English spoken value`);
+      }
+      for (const text of expected[lang](cantonese)) {
+        assert.ok(plain(copy.cantonese.value).includes(text), `${lang} Cantonese value`);
+        assert.ok(copy.cantonese.valuePlain.includes(text), `${lang} Cantonese spoken value`);
+      }
+      assert.doesNotMatch(copy.english.valuePlain, /</, 'spoken values are plain text');
+      assert.equal(copy.english.sample, `english sample ${english}`);
+      assert.equal(copy.cantonese.sample, `cantonese sample ${cantonese}`);
+    }
+  }
+  assert.equal(render('en', 1, 1).copy.english.reset, 'Reset English to level 5');
+  assert.equal(render('yue_HK', 1, 1).copy.cantonese.reset, '將廣東話重設返第 5 級');
+});
+
+// ---------------------------------------------------------------------------
+// Fallback behaviour.
+// ---------------------------------------------------------------------------
+
+test('other guide languages and missing Cantonese entries fall back to English', () => {
+  for (const lang of ['de_DE', 'zh_CN', 'xx_YY']) {
+    const { copy } = render(lang, 5, 5);
+    assertDisclosed('en', copy);
+    assert.equal(copy.title, 'Funny levels');
+  }
+
+  const english = loadDisclosure('en').LangText.en;
+  const dropCantonese = (LangText) => { delete LangText.yue_HK.t304; LangText.yue_HK.t301 = ''; };
+  const bilingual = render('bilingual_en_yue_HK', 1, 1, dropCantonese).copy;
+  assert.equal(bilingual.facts[0], english.t304, 'no Cantonese entry: English only, no annotation');
+  assert.equal(bilingual.intro, english.t301);
+  const cantonese = render('yue_HK', 1, 1, dropCantonese).copy;
+  assert.equal(cantonese.facts[0], english.t304);
+  assert.equal(cantonese.intro, english.t301);
+});
+
+test('without the application the facts stand with the shipped default and the controls hide', () => {
+  for (const lang of MODES) {
+    const sandbox = loadDisclosure(lang);
+    for (const payload of [null, undefined, { command: 'response_funny_disclosure', available: true }]) {
+      const state = sandbox.FunnyDisclosureState(payload);
+      assert.equal(state.available, true);
+      assert.equal(state.controls, false);
+      const copy = sandbox.BuildFunnyDisclosureCopy(state);
+      assert.equal(copy.controls, false);
+      assertDisclosed(lang, copy);
+      // No controls on the page, so the step must not point "below".
+      assert.equal(copy.facts[2], sandbox.GetLocalizedTextByKey('t307', lang));
+    }
+  }
+});
+
+test('levels from the application are clamped, and School mode reports the step unavailable', () => {
+  const sandbox = loadDisclosure('en');
+  const state = sandbox.FunnyDisclosureState(hostPayload(0, 9, { default: 'five' }));
+  assert.equal(state.english.level, 1);
+  assert.equal(state.cantonese.level, 5);
+  assert.equal(state.defaultLevel, 5);
+  assert.equal(sandbox.FunnyDisclosureState(hostPayload('loud', 3)).english.level, 5);
+  assert.equal(sandbox.FunnyDisclosureClampLevel('2'), 2);
+
+  const school = sandbox.FunnyDisclosureState({ command: 'response_funny_disclosure', available: false });
+  assert.equal(school.available, false);
+  assert.equal(school.controls, false);
+
+  for (const [size, level, index] of [[3, 1, 0], [3, 2, 0], [3, 3, 1], [3, 4, 2], [3, 5, 2], [2, 2, 0], [2, 3, 1], [5, 4, 3], [1, 5, 0]]) {
+    assert.equal(sandbox.FunnyDisclosureLadderIndex(size, level), index, `ladder ${size} at level ${level}`);
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Localization resources stay separate from logic.
+// ---------------------------------------------------------------------------
+
+test('the step logic carries no user-facing words of its own', () => {
+  const { LangText } = loadDisclosure('en');
+  // Sentences and phrases, not single words that can also be identifiers.
+  const english = Object.values(LangText.en).filter((text) => /\S \S/.test(text) && text.length > 8);
+  for (const file of [`${guide}/12/funny-disclosure.js`, `${guide}/12/12.js`]) {
+    const code = stripComments(read(file));
+    assert.doesNotMatch(code, /[㐀-鿿＀-￯]/, `${file}: Cantonese text belongs in the catalog`);
+    for (const text of english) assert.ok(!code.includes(text), `${file}: "${text}" belongs in the catalog`);
+  }
+  const page = stripMarkupComments(read(`${guide}/12/index.html`));
+  const body = page.slice(page.indexOf('<body'));
+  // The only words in the markup are the catalog-keyed Back and Next fallbacks.
+  const words = body.replace(/<[^>]*>/g, ' ').split(/\s+/).filter(Boolean);
+  assert.deepEqual(words, ['Back', 'Next']);
+});
+
+test('the disclosure check catches a step that misstates the default or lets a fact follow the level', () => {
+  // Negative regressions: each mutation must turn the contract check red.
+  const wrongDefault = (LangText) => { LangText.yue_HK.t305 = LangText.yue_HK.t305.replace('{default}', '4'); };
+  assert.throws(() => assertDisclosed('yue_HK', render('yue_HK', 5, 5, wrongDefault).copy), /兩個都由第 5 級開始/);
+
+  const silentOnErrors = (LangText) => { LangText.en.t304 = 'The funny level styles messages.'; };
+  assert.throws(() => assertDisclosed('en', render('en', 1, 1, silentOnErrors).copy), /including errors and warnings/);
+
+  const noCantonese = (LangText) => { LangText.yue_HK.t306 = ''; };
+  assert.throws(() => assertDisclosed('bilingual_en_yue_HK', render('bilingual_en_yue_HK', 5, 5, noCantonese).copy));
+
+  // A fact that took its wording from the voice ladder.
+  const levelled = (level) => (LangText) => { LangText.en.t304 = level <= 2 ? LangText.en.t301 : LangText.en.t303; };
+  assert.throws(() => assertFactsInvariant('en', (level) => render('en', level, level, levelled(level)).copy.facts),
+    /facts must not follow the level/);
+});
