@@ -1,6 +1,6 @@
 ---
 translation-of: instruction-mirror.md
-source-sha256: 03d8547ce10ab0f77699b0ab5410707f9eab77dd7c8ce6b35fd8ec31245adac5
+source-sha256: 245859918defbfdfdbfff5511ea42637eea0ebac5e024a4d14720eb43ef9976d
 review-status: agent-drafted
 ---
 
@@ -49,6 +49,8 @@ review-status: agent-drafted
 5. 喺改指示嘅同一個工作入面，提交更新咗嘅檔案。
 
 `--check` 乜都唔寫。如果任何一個檔案冇用呢份匯出應該產生嘅鏡像，就會以狀態 1 結束；兩個都係最新，就以狀態 0 結束。
+
+Windows 嘅 checkout 可能會用 CRLF 行尾儲存 `README.md` 同 `AGENTS.md`，匯出檔開頭亦可能有 byte-order mark。兩個腳本都接受。鏡像內文會用 LF 行尾比較，而更新會用每個檔案原本嘅行尾寫返去，所以重複執行都唔會改到任何嘢。
 
 ## 私隱同偏差把關
 

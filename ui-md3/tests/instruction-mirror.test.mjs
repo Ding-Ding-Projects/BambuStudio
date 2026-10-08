@@ -192,6 +192,31 @@ test('refresh refuses malformed input instead of writing a misleading mirror', a
   assert.equal(read(root, 'AGENTS.md'), AGENTS, 'refused input leaves AGENTS.md unchanged');
 });
 
+test('a Windows checkout with CRLF line endings keeps them and stays idempotent', async (t) => {
+  const { extractMirror } = await import(libraryUrl);
+  const root = fixtureRoot(t);
+  const crlf = (text) => text.replace(/\n/g, '\r\n');
+  writeFileSync(path.join(root, 'README.md'), crlf(README));
+  writeFileSync(path.join(root, 'AGENTS.md'), crlf(AGENTS));
+  // Windows editors may also prefix the export with a byte-order mark.
+  const byteOrderMark = String.fromCharCode(0xfeff);
+  writeFileSync(path.join(root, 'shared.md'), byteOrderMark + crlf(SOURCE));
+  const run = refresh(root);
+  assert.equal(run.status, 0, run.stderr + run.stdout);
+  for (const file of ['README.md', 'AGENTS.md']) {
+    const text = read(root, file);
+    assert.doesNotMatch(text, /[^\r]\n/, `${file} keeps CRLF on every line`);
+    const mirror = extractMirror(text.replace(/\r\n/g, '\n'));
+    assert.ok(mirror, `${file} carries the mirror`);
+    assert.ok(!text.includes(byteOrderMark), `${file} carries no byte-order mark`);
+    assert.match(mirror.body, /^These are example defaults/, 'the export title is still replaced');
+  }
+  const first = read(root, 'README.md');
+  assert.equal(refresh(root).status, 0);
+  assert.equal(read(root, 'README.md'), first, 'a CRLF checkout is not rewritten by a repeated refresh');
+  assert.equal(refresh(root, '--check').status, 0, 'check mode accepts the CRLF checkout');
+});
+
 test('a fenced level-one heading inside the source is content, not a title', async (t) => {
   const { extractMirror } = await import(libraryUrl);
   const root = fixtureRoot(t);

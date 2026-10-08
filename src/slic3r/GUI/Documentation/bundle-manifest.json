@@ -665,12 +665,12 @@
     {
       "route": "documentation/instruction-mirror.md",
       "title": "Shared instruction mirror",
-      "sha256": "03d8547ce10ab0f77699b0ab5410707f9eab77dd7c8ce6b35fd8ec31245adac5"
+      "sha256": "245859918defbfdfdbfff5511ea42637eea0ebac5e024a4d14720eb43ef9976d"
     },
     {
       "route": "documentation/instruction-mirror.yue_HK.md",
       "title": "共用指示鏡像",
-      "sha256": "bd71a75a91adcbb9b3103839bd052716b002b04cbaef794859a94a01c6fb3f53"
+      "sha256": "9e3978bd0d7fd9c19d1b43bf11b122d1666fe03d3960cb47bb926a8142fd48b8"
     },
     {
       "route": "documentation/offline-reader.md",
@@ -1860,7 +1860,7 @@
       "bytes": 1979
     }
   ],
-  "bundle_sha256": "c7474dfa6e9db52bb511f214b174bbeffbd8cdc1aaa682e1a6ea37552c71d106",
+  "bundle_sha256": "47d0d6036b174c38154173f585519071a05ab7b7c5a83014f8e73377696831c8",
   "unavailable_references": [
     {
       "source": "api/README.md",

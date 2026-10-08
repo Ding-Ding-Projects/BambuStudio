@@ -29,6 +29,10 @@ const SHA256 = /^[0-9a-f]{64}$/u;
 
 export class MirrorError extends Error {}
 
+function toLf(text) {
+  return text.replace(/\r\n/gu, '\n');
+}
+
 export function bodyDigest(body) {
   return createHash('sha256').update(body, 'utf8').digest('hex');
 }
@@ -48,8 +52,8 @@ export function validateDate(value) {
   return value;
 }
 
-// Lines outside fenced code blocks, so a quoted heading or marker inside a
-// fence is treated as content.
+// Lines outside fenced code blocks, so a quoted heading inside a fence is
+// treated as content.
 function proseLines(lines) {
   const result = [];
   let fence = null;
@@ -74,7 +78,7 @@ function proseLines(lines) {
 // level-one heading would break the mirror's outline and is refused.
 export function normalizeSource(text) {
   if (typeof text !== 'string') throw new MirrorError('The instruction source must be text.');
-  let body = text.replace(/^﻿/u, '').replace(/\r\n?/gu, '\n');
+  let body = text.replace(/^\uFEFF/u, '').replace(/\r\n?/gu, '\n');
   if (MARKER_PATTERN.test(body)) {
     throw new MirrorError('The instruction source already contains mirror markers; export it again from the canonical instructions.');
   }
@@ -348,7 +352,7 @@ function collectStrings(value, out) {
 export function loadPrivateTerms(file) {
   let text;
   try {
-    text = readFileSync(file, 'utf8').replace(/^﻿/u, '');
+    text = readFileSync(file, 'utf8').replace(/^\uFEFF/u, '');
   } catch (error) {
     throw new MirrorError(`The private term list could not be read (${error.code ?? 'error'}).`);
   }
@@ -389,8 +393,11 @@ export function checkMirror({ files, sourceText, terms = [] }) {
       continue;
     }
     try {
-      const mirror = extractMirror(files[name]);
-      if (mirror) found[name] = { kind, text: files[name], ...mirror };
+      // A Windows checkout may convert the files to CRLF; the mirror is
+      // compared with LF line endings, which keeps every line number.
+      const text = toLf(files[name]);
+      const mirror = extractMirror(text);
+      if (mirror) found[name] = { kind, text, ...mirror };
     } catch (error) {
       if (!(error instanceof MirrorError)) throw error;
       problems.push(`${name}: ${error.message}`);
@@ -445,7 +452,7 @@ export function planRefresh({ files, sourceText, sourceRevision, mirroredOn, ter
   validateRevision(sourceRevision);
   if (mirroredOn !== undefined) validateDate(mirroredOn);
   const body = normalizeSource(sourceText);
-  const findings = scanPrivacy(sourceText.replace(/^﻿/u, ''), { terms });
+  const findings = scanPrivacy(sourceText.replace(/^\uFEFF/u, ''), { terms });
   if (findings.length) {
     throw new MirrorError(['The export is not sanitized, so nothing was written:',
       ...describeFindings(findings).map((line) => `  ${line}`)].join('\n'));
@@ -453,7 +460,7 @@ export function planRefresh({ files, sourceText, sourceRevision, mirroredOn, ter
   const digest = bodyDigest(body);
   const targets = Object.entries(MIRROR_TARGETS).map(([name, kind]) => {
     if (typeof files[name] !== 'string') throw new MirrorError(`${name} is missing from the repository root.`);
-    return { name, kind, current: files[name], existing: extractMirror(files[name]) };
+    return { name, kind, current: files[name], existing: extractMirror(toLf(files[name])) };
   });
   // Keep the recorded date only when both files already mirror this exact
   // body and revision on the same date.
@@ -462,8 +469,12 @@ export function planRefresh({ files, sourceText, sourceRevision, mirroredOn, ter
     ? existing.meta.mirroredOn : null));
   const recorded = dates.size === 1 ? [...dates][0] : null;
   const date = mirroredOn ?? recorded ?? new Date().toISOString().slice(0, 10);
+  // The block is rendered with LF and written back in the file's own line
+  // endings, so a CRLF checkout stays CRLF and a repeated refresh is a no-op.
   const plan = targets.map(({ name, kind, current }) => {
-    const next = applyMirrorBlock(current, kind, renderMirrorBlock({ kind, body, sourceRevision, mirroredOn: date }));
+    const lf = toLf(current);
+    const rendered = applyMirrorBlock(lf, kind, renderMirrorBlock({ kind, body, sourceRevision, mirroredOn: date }));
+    const next = lf === current ? rendered : rendered.replace(/\n/gu, '\r\n');
     return { name, kind, current, next, changed: next !== current };
   });
   return { body, digest, mirroredOn: date, plan };

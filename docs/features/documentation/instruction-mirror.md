@@ -42,6 +42,8 @@ The private conversation vocabulary is the one deliberate exception. The canonic
 
 `--check` writes nothing. It exits with status 1 when either file does not carry the mirror that the given export would produce, and with status 0 when both are current.
 
+A Windows checkout may hold `README.md` and `AGENTS.md` with CRLF line endings, and an export may start with a byte-order mark. Both scripts accept either. The mirror body is compared with LF line endings, and a refresh writes each file back in its own line endings, so repeating it changes nothing.
+
 ## Privacy and drift guard
 
 `node scripts/instructions/check-instruction-mirror.mjs` checks both files and exits with status 0 when they pass, 1 when they fail and 2 when it is used incorrectly. It fails when:

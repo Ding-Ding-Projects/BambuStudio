@@ -223,6 +223,17 @@ test('the check catches hand edits, one-sided refreshes and stale mirrors', asyn
   assert.match(stale.stdout, /stale/i);
 });
 
+test('the check reads a CRLF checkout the same way as an LF one', (t) => {
+  const root = fixtureRoot(t);
+  assert.equal(refresh(root).status, 0);
+  for (const file of ['README.md', 'AGENTS.md']) {
+    writeFileSync(path.join(root, file), read(root, file).replace(/\n/g, '\r\n'));
+  }
+  const result = check(root, '--require', '--source', path.join(root, 'shared.md'));
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.match(result.stdout, /PASS/);
+});
+
 test('this repository passes the mirror guard', () => {
   const result = spawnSync(process.execPath, [checkScript], {
     encoding: 'utf8', cwd: repoDir, env: { ...process.env, INSTRUCTION_MIRROR_PRIVATE_TERMS: '' },
