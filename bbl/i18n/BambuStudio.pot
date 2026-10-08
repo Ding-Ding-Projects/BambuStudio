@@ -25130,3 +25130,917 @@ msgstr ""
 #: resources/data/helio_hints.ini: [hint: First-Time-Right Reliability]
 msgid "First-Time-Right Reliability\nLess babysitting, more predictable output. Example: a small farm running PETG parts avoids 'fail at hour 6' surprises and keeps batches on schedule."
 msgstr ""
+
+msgid "Windows locale (w32_regex_traits)"
+msgstr ""
+
+msgid "C++ locale (cpp_regex_traits)"
+msgstr ""
+
+msgid "C locale (c_regex_traits)"
+msgstr ""
+
+msgid "unknown locale traits"
+msgstr ""
+
+msgid "Off by default, so the query is plain text. When on, the worker compiles the query as a pattern."
+msgstr ""
+
+msgid "Off by default, so letters match in either case. Folding follows the engine's locale traits."
+msgstr ""
+
+msgid "Multiline anchors"
+msgstr ""
+
+msgid "Off by default. When on, ^ and $ also match at line breaks."
+msgstr ""
+
+msgid "Dot matches line breaks"
+msgstr ""
+
+msgid "Never set by a search field, so . stops at line breaks. Use (?s) inside the pattern to change it."
+msgstr ""
+
+msgid "Free spacing"
+msgstr ""
+
+msgid "Spaces and # comments are ignored only after (?x) inside the pattern."
+msgstr ""
+
+msgid "Applies to plain-text search only. In regex mode, write \\b around the word."
+msgstr ""
+
+msgid "Outside brackets these characters are syntax. Put a backslash before one to match it literally."
+msgstr ""
+
+msgid "Inside brackets, escape ], \\, [, a leading ^ and a - that is not first or last."
+msgstr ""
+
+msgid "Everything between \\Q and \\E is literal. Without \\E the quoted text runs to the end."
+msgstr ""
+
+msgid "A code unit by hexadecimal value. With 16-bit code units, values above FFFF are rejected."
+msgstr ""
+
+msgid "NUL or an octal value. A backslash and a digit from 1 to 9 is a backreference, never octal."
+msgstr ""
+
+msgid "Tab, newline, carriage return, form feed, bell, escape and Ctrl+X control characters."
+msgstr ""
+
+msgid "A backslash before a letter with no meaning here matches that letter. Other engines may reject it."
+msgstr ""
+
+msgid "Under (?x), escape # and spaces that should match literally."
+msgstr ""
+
+msgid "Supported"
+msgstr ""
+
+msgid "Partly supported"
+msgstr ""
+
+msgid "Not supported"
+msgstr ""
+
+msgid "Literal characters"
+msgstr ""
+
+msgid "Characters match themselves. Escape a metacharacter with a backslash."
+msgstr ""
+
+msgid "Quoted literal text"
+msgstr ""
+
+msgid "Everything between \\Q and \\E matches literally."
+msgstr ""
+
+msgid "Hexadecimal code units"
+msgstr ""
+
+msgid "One code unit by value. With 16-bit code units (Windows), values above FFFF are rejected, so type such characters directly."
+msgstr ""
+
+msgid "\\uHHHH code point escape"
+msgstr ""
+
+msgid "\\u is the uppercase-letter class here, so \\u0041 means an uppercase letter followed by 0041. Use \\x{0041}."
+msgstr ""
+
+msgid "Control escapes"
+msgstr ""
+
+msgid "Tab, newline, carriage return, form feed, bell, escape, Ctrl+X and NUL."
+msgstr ""
+
+msgid "\\o{...} octal escape"
+msgstr ""
+
+msgid "Not recognised: \\o is the letter o, so \\o{12} means twelve o characters. Use \\012 or \\x{A}."
+msgstr ""
+
+msgid "\\N{name} named characters"
+msgstr ""
+
+msgid "Rejected: this engine has no \\N escape."
+msgstr ""
+
+msgid "Character sets and ranges"
+msgstr ""
+
+msgid "Match one character from the list, or one not in it after ^."
+msgstr ""
+
+msgid "Class shorthands"
+msgstr ""
+
+msgid "\\h is horizontal and \\v vertical whitespace; \\l and \\u are lowercase and uppercase letters. Capitals negate."
+msgstr ""
+
+msgid "POSIX classes"
+msgstr ""
+
+msgid "Named classes inside brackets, including negated [:^name:] forms."
+msgstr ""
+
+msgid "Named classes with \\p"
+msgstr ""
+
+msgid "Only the engine's class names work (alnum, alpha, blank, cntrl, digit, graph, lower, print, punct, space, upper, word, xdigit and the letters d, h, l, s, u, v, w). \\p{L} means lowercase here, not Letter. Inside brackets \\p is just the letter p."
+msgstr ""
+
+msgid "Unicode categories and scripts"
+msgstr ""
+
+msgid "Rejected: the engine has no Unicode property tables."
+msgstr ""
+
+msgid "Set intersection and subtraction"
+msgstr ""
+
+msgid "Not available: && is two literal ampersands and -- after a range is an error."
+msgstr ""
+
+msgid "Without multiline anchors, $ matches only at the very end; \\Z also allows one final line break."
+msgstr ""
+
+msgid "Word boundaries"
+msgstr ""
+
+msgid "\\< and \\> match the start and end of a word."
+msgstr ""
+
+msgid "Buffer anchors"
+msgstr ""
+
+msgid "\\` and \\' are start-of-text and end-of-text anchors, not quote characters."
+msgstr ""
+
+msgid "Numbered capture groups"
+msgstr ""
+
+msgid "Groups are numbered by their opening parenthesis."
+msgstr ""
+
+msgid "Named capture groups"
+msgstr ""
+
+msgid "Named groups are also numbered; refer to them with \\k<name> or \\g{name}."
+msgstr ""
+
+msgid "Python-style named groups"
+msgstr ""
+
+msgid "Rejected: use (?<name>...), \\k<name> and (?&name) instead."
+msgstr ""
+
+msgid "Non-capturing groups"
+msgstr ""
+
+msgid "Group without creating a capture."
+msgstr ""
+
+msgid "Atomic groups"
+msgstr ""
+
+msgid "Once the group matches, the engine never backtracks into it."
+msgstr ""
+
+msgid "Branch reset groups"
+msgstr ""
+
+msgid "Each alternative reuses the same group numbers."
+msgstr ""
+
+msgid "Alternation"
+msgstr ""
+
+msgid "Alternatives are tried from left to right."
+msgstr ""
+
+msgid "Greedy quantifiers"
+msgstr ""
+
+msgid "A { that does not form a count, such as {,3}, is a literal brace."
+msgstr ""
+
+msgid "Lazy quantifiers"
+msgstr ""
+
+msgid "Match as few repetitions as possible."
+msgstr ""
+
+msgid "Possessive quantifiers"
+msgstr ""
+
+msgid "Never give characters back, so a*+a cannot match."
+msgstr ""
+
+msgid "Lookahead"
+msgstr ""
+
+msgid "Checks what follows without consuming it."
+msgstr ""
+
+msgid "Lookbehind"
+msgstr ""
+
+msgid "Fixed width only: every alternative must have the same constant length, and repeated groups, \\R, \\X and backreferences are rejected inside."
+msgstr ""
+
+msgid "Variable-width lookbehind"
+msgstr ""
+
+msgid "Rejected by the engine. JavaScript and .NET accept it; rewrite with a fixed width or use \\K."
+msgstr ""
+
+msgid "Backreferences"
+msgstr ""
+
+msgid "A backslash takes only one digit: \\10 is group 1 then 0, so write \\g{10}. \\g<1> is a backreference here, not a subroutine call."
+msgstr ""
+
+msgid "Conditionals"
+msgstr ""
+
+msgid "Choose an alternative by a group, a lookaround, recursion or a DEFINE block."
+msgstr ""
+
+msgid "Recursion and subroutine calls"
+msgstr ""
+
+msgid "Re-run the whole pattern or one group at this point."
+msgstr ""
+
+msgid "Inline modifiers"
+msgstr ""
+
+msgid "i, m, s and x work, for the rest of the group or inside (?flags:...)."
+msgstr ""
+
+msgid "Other inline modifiers"
+msgstr ""
+
+msgid "Rejected: only i, m, s and x are modifiers in this engine."
+msgstr ""
+
+msgid "Comments"
+msgstr ""
+
+msgid "Ignored by the engine. An unclosed (?# runs to the end of the pattern."
+msgstr ""
+
+msgid "Match start reset"
+msgstr ""
+
+msgid "Text before \\K must match but is left out of the reported match."
+msgstr ""
+
+msgid "Backtracking control verbs"
+msgstr ""
+
+msgid "These six verbs work. Verbs with an argument, such as (*MARK:name), are rejected."
+msgstr ""
+
+msgid "Verbs with names"
+msgstr ""
+
+msgid "Rejected: verb arguments are not supported."
+msgstr ""
+
+msgid "Line breaks, graphemes, code units"
+msgstr ""
+
+msgid "\\R matches any line break (CRLF as one), \\X one grapheme cluster and \\C one code unit."
+msgstr ""
+
+msgid "Case-insensitive matching"
+msgstr ""
+
+msgid "Case folding follows the engine's locale traits, so letters outside ASCII fold as that locale says."
+msgstr ""
+
+msgid "Characters above U+FFFF"
+msgstr ""
+
+msgid "With 16-bit code units (Windows) such a character is two code units: . and [ ] see each half, and a quantifier repeats only the second half. Type it directly outside brackets."
+msgstr ""
+
+msgid "Moderate"
+msgstr ""
+
+msgid "Unbalanced closing parenthesis"
+msgstr ""
+
+msgid "Ignored whitespace (free-spacing mode)"
+msgstr ""
+
+msgid "Comment, ignored by the engine"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "One of %s alternatives"
+msgstr ""
+
+msgid "Quantifier with nothing to repeat"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Quoted literal text: %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Literal text: %s"
+msgstr ""
+
+msgid "Empty: matches the empty string"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Sequence of %s items"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Repeat exactly %s times"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Repeat %s or more times (greedy: as many as possible)"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Repeat %s or more times (lazy: as few as possible)"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Repeat %s or more times (possessive: never gives back)"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Repeat %s to %s times (greedy: as many as possible)"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Repeat %s to %s times (lazy: as few as possible)"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Repeat %s to %s times (possessive: never gives back)"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "JavaScript RegExp has no %s, so this pattern will not work there unchanged."
+msgstr ""
+
+msgid "Any character, including line breaks"
+msgstr ""
+
+msgid "Start of a line"
+msgstr ""
+
+msgid "Without multiline anchors $ matches only at the very end, not before a final line break as in Perl and PCRE. Use \\Z to allow one."
+msgstr ""
+
+msgid "End of a line"
+msgstr ""
+
+msgid "This { does not form a valid count, so it is a literal brace. Some engines read {,n} as a count."
+msgstr ""
+
+msgid "A character above U+FFFF is two UTF-16 code units for this engine: inside [ ] each half is separate and a quantifier repeats only the second half."
+msgstr ""
+
+msgid "A character above U+FFFF is one code unit here but two in UTF-16 engines, including the Windows build."
+msgstr ""
+
+msgid "Trailing backslash with nothing to escape"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "A backslash takes only one digit here: %s is group %s followed by the digit %s. Write \\g{%s} for a higher group."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Octal escape for code unit U+%s"
+msgstr ""
+
+msgid "Incomplete hexadecimal escape"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s is above FFFF, which 16-bit code units cannot hold, so the Windows engine rejects it. Type the character itself."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Code unit U+%s by hexadecimal value"
+msgstr ""
+
+msgid "Incomplete control escape"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Control character U+%s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Bell character U+%s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Escape character U+%s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Form feed U+%s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Newline (line feed) U+%s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Carriage return U+%s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Tab character U+%s"
+msgstr ""
+
+msgid "Unterminated \\p{...} class name"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Characters outside class %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Characters in class %s"
+msgstr ""
+
+msgid "\\< and \\> are word start and end anchors here, not literal angle brackets. Escape-free < and > match themselves."
+msgstr ""
+
+msgid "Start of a word"
+msgstr ""
+
+msgid "End of a word"
+msgstr ""
+
+msgid "Start of the text, even with multiline anchors"
+msgstr ""
+
+msgid "End of the text, even with multiline anchors"
+msgstr ""
+
+msgid "End of the text or before a final line break"
+msgstr ""
+
+msgid "Where the previous match ended"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s is a start-of-text or end-of-text anchor here, not a quote character. Write the quote without a backslash."
+msgstr ""
+
+msgid "Start of the text (buffer anchor)"
+msgstr ""
+
+msgid "End of the text (buffer anchor)"
+msgstr ""
+
+msgid "Reported match starts here; earlier text must still match"
+msgstr ""
+
+msgid "Any line break sequence, CRLF counted as one"
+msgstr ""
+
+msgid "One grapheme cluster: a character with its combining marks"
+msgstr ""
+
+msgid "Exactly one code unit"
+msgstr ""
+
+msgid "Empty quoted text"
+msgstr ""
+
+msgid "\\E without an earlier \\Q is the literal letter E here."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Not recognised by this engine: %s"
+msgstr ""
+
+msgid "\\o{...} is not an octal escape here: \\o is the letter o and the braces repeat it. Use \\0oo or \\x{...}."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s has no special meaning here, so it matches the letter %s. JavaScript with the u flag, Python and .NET reject it."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Escaped %s: matches the character itself"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s is not a code point here: \\u is the uppercase-letter class, followed by the literal text %s. Write \\x{%s}."
+msgstr ""
+
+msgid "\\u and \\U are uppercase-letter classes in this engine. In JavaScript, Java, .NET and Python \\u starts a code point escape."
+msgstr ""
+
+msgid "\\l and \\L are lowercase-letter classes that only Boost.Regex understands."
+msgstr ""
+
+msgid "\\h and \\v match horizontal and vertical whitespace here. In JavaScript \\v is only the vertical tab and \\h is not an escape."
+msgstr ""
+
+msgid "Horizontal whitespace: space or tab"
+msgstr ""
+
+msgid "Not horizontal whitespace"
+msgstr ""
+
+msgid "Vertical whitespace: a line break character"
+msgstr ""
+
+msgid "Not vertical whitespace"
+msgstr ""
+
+msgid "Lowercase letter"
+msgstr ""
+
+msgid "Not a lowercase letter"
+msgstr ""
+
+msgid "Uppercase letter"
+msgstr ""
+
+msgid "Not an uppercase letter"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s uses the engine class %s, not the Unicode general category %s. Write the full class name, such as \\p{alpha}."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s is rejected: this engine has no Unicode categories or scripts, only its class names such as alpha, digit and upper."
+msgstr ""
+
+msgid "Recurse into the whole pattern"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Call group %s as a subroutine"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Call group \"%s\" as a subroutine"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Backreference to group %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Backreference to group \"%s\""
+msgstr ""
+
+msgid "Incomplete \\g or \\k reference"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s is a backreference here. In PCRE and Oniguruma the same syntax calls the group as a subroutine; use (?1) or (?&name) for that."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Capture group %s"
+msgstr ""
+
+msgid "Unclosed group"
+msgstr ""
+
+msgid "This (?# comment has no closing parenthesis, so the rest of the pattern is ignored."
+msgstr ""
+
+msgid "Lookahead: must be followed by this"
+msgstr ""
+
+msgid "Negative lookahead: must not be followed by this"
+msgstr ""
+
+msgid "Atomic group: never backtracks into its content"
+msgstr ""
+
+msgid "Branch reset group: alternatives share group numbers"
+msgstr ""
+
+msgid "Negative lookbehind: must not be preceded by this"
+msgstr ""
+
+msgid "Lookbehind: must be preceded by this"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Python-style %s is rejected here. Use (?<name>...), \\k<name> and (?&name)."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Capture group %s named \"%s\""
+msgstr ""
+
+msgid "End of group"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Unclosed group opened at offset %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Backtracking control verb %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s is rejected: only (*ACCEPT), (*COMMIT), (*FAIL), (*PRUNE), (*SKIP) and (*THEN) work, without arguments."
+msgstr ""
+
+msgid "Conditional on a lookaround assertion"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Conditional on group %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Conditional on group \"%s\""
+msgstr ""
+
+msgid "DEFINE block: definitions for subroutine calls, never matched directly"
+msgstr ""
+
+msgid "Conditional on recursion"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s is rejected: only the modifiers i, m, s and x exist in this engine."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Group with modifiers %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Modifiers for the rest of the group: %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Unknown class name %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Not in POSIX class %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "POSIX class %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Collating element %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Equivalence class %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Backspace U+%s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Vertical tab U+%s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Inside [ ], %s is just the letter %s. Use a POSIX class such as [[:alpha:]] instead."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Backreferences are not allowed inside [ ]; %s is rejected"
+msgstr ""
+
+msgid "[...&&...] is not an intersection here: && matches literal ampersands. This engine has no set operations."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Set member %s"
+msgstr ""
+
+msgid "End of character set"
+msgstr ""
+
+msgid "[...--...] is not a subtraction here. This engine has no set operations and rejects -- after a range."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Range %s to %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Invalid range %s: the engine rejects it"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Unterminated character set opened at offset %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Nested repetition %s can split the same text in many ways, so a failing match may backtrack exponentially. Make the inner or outer repeat possessive (++) or atomic (?>...), or remove the overlap."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Alternatives %s and %s inside the repeat %s can start with the same characters, so the engine may retry many combinations. Make the alternatives start differently or use an atomic group."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The repeat %s contains a backreference, which the engine cannot optimise; long inputs can be slow."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The repeat %s contains recursion or a subroutine call; each iteration can re-run large parts of the pattern."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The count in %s is large; the engine's state limit or the time limit may stop it on long input."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The pattern starts with %s, so every start position rescans the rest of the text. Anchor it with ^ or drop the leading wildcard; a search already looks anywhere."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s and %s can match the same characters next to each other, so a failing match tries every split point (polynomial backtracking)."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The lookbehind %s is not fixed width (or repeats a group), which this engine rejects. JavaScript and .NET accept it; rewrite it with one constant length or use \\K."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s refers to a group that does not exist, so the engine rejects the pattern."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s refers to a group that has not finished matching at this point, so it can never match here."
+msgstr ""
+
+msgid "This pattern can succeed without consuming any text, so rows can match with nothing highlighted; a pattern such as a* matches every row."
+msgstr ""
+
+msgid "Case-insensitive matching of letters outside ASCII follows the engine's locale traits shown under Engine."
+msgstr ""
+
+msgid "Whole word is ignored in regex mode. Put \\b around the word instead."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Engine: Boost.Regex %s wide-character ECMAScript in an isolated 50 ms worker. Case-insensitive matching uses boost::regex_constants::icase. Escape metacharacters with a backslash."
+msgstr ""
+
+msgid "Pattern analysis summary"
+msgstr ""
+
+msgid "Explain"
+msgstr ""
+
+msgid "Engine, structure, tokens, compatibility and backtracking risk of this pattern"
+msgstr ""
+
+msgid "Escaping rules"
+msgstr ""
+
+msgid "What this engine supports, partly supports and rejects. Each row has a probe pattern; the button runs every probe through the worker to confirm the row."
+msgstr ""
+
+msgid "Check against the engine"
+msgstr ""
+
+msgid "Capability check result"
+msgstr ""
+
+msgid "Explain this pattern"
+msgstr ""
+
+msgid "Engine"
+msgstr ""
+
+msgid "Flags in effect"
+msgstr ""
+
+msgid "Engine verdict"
+msgstr ""
+
+msgid "Structure"
+msgstr ""
+
+msgid "Pattern structure"
+msgstr ""
+
+msgid "Tokens"
+msgstr ""
+
+msgid "Token annotations"
+msgstr ""
+
+msgid "Compatibility"
+msgstr ""
+
+msgid "Compatibility notes"
+msgstr ""
+
+msgid "Backtracking risk"
+msgstr ""
+
+msgid "Backtracking risk findings"
+msgstr ""
+
+msgid "Use example as sample text"
+msgstr ""
+
+msgid "Load the adversarial example into Test pattern to see the worker stop it safely"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Tokens: %d, capture groups: %d, backtracking risk: %s, compatibility warnings: %d"
+msgstr ""
+
+msgid "Regex mode is off, so the search field matches this text literally. The analysis below shows how the engine would read it as a pattern."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Boost.Regex %s as reported by the worker. Syntax: Perl-compatible, selected by the ECMAScript flag. Code units: %d-bit. Locale traits: %s. State limit: %s."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The worker has not reported its engine yet, so this shows the Boost.Regex %s this build was compiled with. Open this tab again to retry."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s: %s. Engine flag: %s. In the pattern: %s"
+msgstr ""
+
+msgid "The engine accepts this pattern."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The engine rejected the pattern at offset %d: %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Tokens: %d, capture groups: %d (%d named), backtracking risk: %s."
+msgstr ""
+
+msgid "No compatibility notes."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Example input: %s"
+msgstr ""
+
+msgid "No backtracking risks found."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "All %d rows behaved as listed on Boost.Regex %s in the worker."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%d of %d rows behaved as listed."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Different on this engine: %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The worker did not answer for %d rows. Try again in a moment."
+msgstr ""

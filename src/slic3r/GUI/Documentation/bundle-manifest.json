@@ -1510,12 +1510,12 @@
     {
       "route": "windows/regex-builder.md",
       "title": "Regex builder",
-      "sha256": "95d7520997bb54e8715f6b504268986b1a46d13662142f84d7781d40275eb7de"
+      "sha256": "ba72e6c493f8beaa2e57904f4b4fced651e59c3b6d58c88a3bfcd715f1d52128"
     },
     {
       "route": "windows/regex-builder.yue_HK.md",
       "title": "正則表達式構建器",
-      "sha256": "3c6dc1ca7c2255e7ab8d81b6ad788959c55bb322c4447a63ae94b8877001c465"
+      "sha256": "aef308b386b4f86737f6069662e1ad0864cf222d725115397c323952c74845e2"
     },
     {
       "route": "windows/release-splash-art.md",
@@ -1850,7 +1850,7 @@
       "bytes": 1979
     }
   ],
-  "bundle_sha256": "83f73beaf446ccb7aa0e07b95fb5c875fff6514846b64ea38be78a6e9c61515c",
+  "bundle_sha256": "1ac6702fee4570d526e5c303daf49be9aa1a6b2b23d6253e16b9113f65b01125",
   "unavailable_references": [
     {
       "source": "api/README.md",

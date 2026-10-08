@@ -6,7 +6,12 @@ font picker, generic ImGui list search, and assembly-tree search expose a
 keyboard-reachable tune button connected through `RegexBuilderBridgeState`.
 Both routes provide sectioned token construction, a raw pattern editor, flag
 toggles, live syntax feedback, bounded sample-text testing with match and
-capture-group listing, and copy/export against the app's real regex engine.
+capture-group listing, pattern copy, and an **Explain** tab that analyses the
+pattern against the app's real regex engine: the engine identity the worker
+reports, the flags in effect, the engine's verdict with its error offset, a
+structure tree, token-by-token annotation, compatibility warnings and
+backtracking-risk diagnostics. The **Reference** tab adds the flag table, the
+escaping rules and a capability matrix that can be checked against the worker.
 
 ## Engine, dialect, flags, escaping
 
@@ -28,6 +33,18 @@ capture-group listing, and copy/export against the app's real regex engine.
 - **Escaping**: a backslash escapes the ECMAScript metacharacters
   `\ ^ $ . | ? * + ( ) [ ] { }`. The *Literals* section performs this escaping
   automatically.
+- **Dialect detail**: `ECMAScript` selects Boost.Regex's Perl syntax, so
+  Perl constructs such as atomic groups, possessive quantifiers, conditionals,
+  recursion, `\K`, `\Q...\E` and backtracking verbs are available, while
+  JavaScript-only forms such as `\uHHHH` are not (`\u` is the uppercase-letter
+  class). `no_mod_s` is always set, so `.` stops at line breaks unless the
+  pattern says `(?s)`; free spacing exists only as the inline `(?x)`.
+- **Reported identity**: the Windows dependency build pins Boost.Regex 1.84.
+  The builder never trusts that number alone: its captions use the version
+  the application was compiled with, and the Explain tab asks the worker
+  (protocol `Describe` request) for the version, syntax, code-unit width
+  (16-bit UTF-16 on Windows), locale traits (`w32_regex_traits` on Windows)
+  and state limit it was really built with.
 
 ## Reaching the builder
 
@@ -84,20 +101,100 @@ still required separately.
 - Query, pattern, flags, and mode stay synchronized bidirectionally: typing in
   the field updates the popover's raw editor live, and edits in the popover
   re-fire the field's query callback so the host list re-filters immediately.
-- The popover is **tabbed**: **Build** hosts the guided sections, and
-  **Reference** is the built-in mini-documentation — how search works (plain
-  text default, flags, fail-safe invalid patterns, bounded evaluation),
-  every token with its full description (rendered from the same tables the
-  chips use, so docs can never drift), worked examples, and the **OpenCode
-  helper**: one button copies a prompt describing the engine, current
-  pattern and sample text to the clipboard and launches OpenCode when it is
-  on PATH (the prompt never goes onto a command line; nothing is sent
-  anywhere by the app itself).
+- The popover is **tabbed**: **Build** hosts the guided sections,
+  **Explain** analyses the current pattern (see below), and **Reference** is
+  the built-in mini-documentation — how search works (plain text default,
+  flags, fail-safe invalid patterns, bounded evaluation), the flag table, the
+  escaping rules, every token with its full description (rendered from the
+  same tables the chips use, so docs can never drift), the capability matrix,
+  worked examples, and the **OpenCode helper**: one button copies a prompt
+  describing the engine, current pattern and sample text to the clipboard and
+  launches OpenCode when it is on PATH (the prompt never goes onto a command
+  line; nothing is sent anywhere by the app itself). Explain and Reference are
+  built the first time they are opened, so opening the popover stays cheap.
+
+## Explain tab: structure, capability and risk analysis
+
+The analysis lives in `src/slic3r/GUI/Widgets/RegexAnalysis.hpp`, a pure
+C++17 model with no wxWidgets or Boost dependency. The worker remains the only
+authority on validity; the model explains. Every edit, flag change and tab
+switch re-runs it (it is linear in the 512-code-unit pattern and never runs a
+user regex itself).
+
+- **Engine** — the identity the worker reports for a `Describe` request:
+  Boost.Regex version, Perl-compatible syntax selected by the ECMAScript flag,
+  code-unit width, locale traits and the 1,000,000-state limit. The report is
+  cached for the process after the first answer. If the worker has not
+  started yet, the tab says so, shows the compiled version and retries the
+  next time it opens.
+- **Flags in effect** — every builder flag with its state, the exact engine
+  flag behind it (`icase` added when *Case sensitive* is off, `no_mod_m`
+  cleared for *Multiline anchors*, `no_mod_s` always set, `mod_x` never set)
+  and its inline form (`(?i)`, `(?m)`, `(?s)`, `(?x)`). When regex mode is off
+  the tab says that the field matches the text literally and shows how the
+  engine would read it as a pattern.
+- **Engine verdict** — the worker's validation of the pattern with the
+  current flags. An invalid pattern reports the friendly reason and the
+  **error offset** where Boost.Regex stopped (`boost::regex_error::position()`,
+  carried in every protocol result since version 2).
+- **Summary** — token count, capture groups (and how many are named) and the
+  backtracking-risk level. The same one-line summary appears under the
+  validity line on the Build tab, in the error colour when the risk is high.
+- **Structure** — the structure tree: sequences, alternations, groups (capture,
+  named, non-capturing, atomic, branch reset, lookahead, lookbehind,
+  conditionals, modifier groups), quantifiers and atoms, each with its pattern
+  excerpt. Adjacent literals read as one literal text; a quantifier after
+  `\Q...\E` repeats only the last character, and the tree shows that.
+- **Tokens** — token-by-token annotation: offset range, excerpt and meaning
+  for every token, including escapes (`\xHH`, `\x{...}`, octal `\0oo`, control
+  escapes, `\cX`), class shorthands (`\d \w \s \h \v \l \u` and negations),
+  `\p{name}` classes, set members, ranges and POSIX classes, anchors and
+  boundaries (`^ $ \A \z \Z \G \b \B \< \>` and the buffer anchors `` \` `` and
+  `\'`), `\K`, `\R`, `\X`, `\C`, backreferences (`\1`, `\g{n}`, `\g{-n}`,
+  `\k<name>`), subroutine calls and recursion, conditionals, inline modifiers,
+  comments, ignored free-spacing whitespace and backtracking verbs.
+  Unrecognised syntax is listed as such rather than hidden.
+- **Compatibility** — dialect traps verified against the real worker:
+  `\uHHHH` is an uppercase-letter class followed by digits; `\p{L}` is the
+  lowercase class, not the Unicode Letter category, and Unicode categories or
+  scripts (`\p{Lu}`, `\p{Han}`) are rejected; inside brackets `\p` is the
+  letter p; a backslash takes one digit, so `\10` is group 1 then `0`;
+  `\g<1>` is a backreference, not a subroutine call; `` \` `` and `\'` are
+  anchors, not quotes; `\<` and `\>` are word anchors; `\o{...}`, `\N{...}`,
+  `(?P<name>...)`, `(?n)`/`(?U)`/`(?J)`/`(?^)` and verbs with arguments are
+  rejected; `&&` and `--` are not set operations; lookbehind must be fixed
+  width and may not repeat a group; `$` without multiline anchors does not
+  match before a final line break; references to groups that do not exist or
+  have not closed yet; patterns that can match empty text; characters above
+  U+FFFF, which are two code units on the 16-bit Windows engine; and
+  JavaScript portability notes for Perl-only constructs.
+- **Backtracking risk** — static diagnostics with an overall level (low,
+  moderate, high): nested variable repeats that can split the same text
+  between iterations (`(a+)+`, `(\w+\s?)+`), overlapping alternatives inside a
+  repeat (`(a|a)*`, `(a|ab)*`), adjacent repeats over the same characters
+  (`\d+\d+`, `.*.*`), backreferences or recursion inside a repeat, very large
+  counts and an unanchored leading wildcard. Possessive quantifiers and atomic
+  groups that remove the ambiguity silence the finding. High-risk findings
+  include an **adversarial example input**; **Use example as sample text**
+  loads it into *Test pattern*, where the bounded worker stops it and the
+  builder reports that the pattern is too complex to evaluate safely.
+
+The Reference tab's **Capabilities** section is the engine's capability
+matrix: supported, partly supported and unsupported constructs, each with its
+syntax and an exact engine-capability explanation (unsupported constructs stay
+listed with the reason instead of disappearing). Every row carries a probe
+pattern, subject and expected outcome; **Check against the engine** runs all
+of them through the worker and reports how many rows behaved as listed and
+which, if any, differ.
 
 ## Popover anatomy (`src/slic3r/GUI/Widgets/RegexBuilderPopup.{hpp,cpp}`)
 
-1. **Title + engine caption** — names Boost.Regex 1.84's wide-character
-   engine, the ECMAScript grammar,
+The tab header holds **Build**, **Explain** and **Reference** as equal-width
+44-DIP tab buttons with accessible names; the active one is tonal. The Build
+tab contains:
+
+1. **Title + engine caption** — names Boost.Regex's wide-character engine with
+   the version the application was compiled with, the ECMAScript grammar,
    the isolated bounded worker, the `icase` flag, and the backslash escaping
    rule.
 2. **Pattern** — raw pattern editor (Roboto Mono), bidirectionally synced with
@@ -108,7 +205,8 @@ still required separately.
    Error-coloured message mapping the worker's stable regex error code to a friendly
    description (unbalanced `[ ]` / `( )` / `{ }`, bad counts, invalid escape,
    invalid backreference, invalid range, dangling quantifier, unknown class,
-   too-complex pattern).
+   too-complex pattern). Below it, the one-line analysis summary (tokens,
+   capture groups, backtracking risk, compatibility warnings).
 4. **Flags** — *Regex mode* (the `.*` toggle), *Case sensitive*, *Multiline
    anchors*, and *Whole word* checkboxes. Flag changes re-fire the field's regex-toggle callback so
    consumers re-run their filter with the shared `textMatches()` semantics.
@@ -237,7 +335,9 @@ missing mandatory hash on either bootstrapped executable download.
 ## Security considerations and bounds
 
 - Patterns and sample text are evaluated **locally only** — never
-  transmitted, logged, or persisted.
+  transmitted, logged, or persisted. The `Describe` request carries no
+  pattern or text, and the capability check sends only the matrix's fixed
+  probe patterns through the same bounded worker.
 - **Pattern cap**: 512 `wchar_t` code units (enforced by the editor, app
   client, wire decoder, and worker before compilation).
 - **Subject/sample cap**: 8192 `wchar_t` code units. The builder sample editor
@@ -344,6 +444,27 @@ missing mandatory hash on either bootstrapped executable download.
   target for its native architecture and runs the same CTest gate after the app
   build, so the Darwin resource-limit and functional path is compiled and
   exercised on both Intel and Apple Silicon jobs.
+- `regex_analysis_tests` (`tests/regex_analysis`) is a pure-model Catch2
+  target for the Explain analysis: token-by-token annotation and the structure
+  tree for groups, alternation, sets, escapes, quantifier forms, modifiers,
+  references, conditionals and verbs; every compatibility warning; the
+  backtracking-risk rules with their possessive and atomic mitigations; the
+  capability matrix (unsupported rows stay listed, supported probes parse
+  without invented errors); the flag and escaping tables; the engine
+  descriptor parser; and a prefix sweep over hostile patterns that keeps
+  every span inside the pattern.
+- The `[regex_workbench]` cases in `bounded_regex_tests` run the same model
+  against the real worker: the worker's `Describe` report matches the Boost
+  version, code-unit width, locale traits and state limit it was built with;
+  invalid patterns carry the engine's error offset through the version 2
+  protocol; every capability row's probe behaves as documented; each
+  compatibility warning's claim (for example `A`, `\p{L}`, `\10`,
+  `\g<1>`, variable lookbehind, `$` before a final line break) is what the
+  engine actually does; and the adversarial example of a high-risk pattern
+  makes the worker stop while the low-risk rewrite answers definitively.
+- `ui-md3/tests/regex-workbench.test.mjs` keeps the popover, protocol, build
+  lists, catalogue list and this article wired to the model, and proves each
+  check turns red when one binding is removed.
 - Visual/manual coverage remains useful for focus, copy, localization, and
   highlight presentation, but it is not evidence for the evaluator's safety
   boundary; the automated worker tests are.
