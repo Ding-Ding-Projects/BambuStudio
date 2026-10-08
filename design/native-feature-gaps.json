@@ -2641,12 +2641,14 @@
       ],
       "hotFiles": [],
       "dependsOn": [],
-      "status": "open",
-      "landedIn": null,
-      "testReferences": [],
+      "status": "landed",
+      "landedIn": "6095c5c9debc30157d0c7f25ecbd1d4d8f3fc980",
+      "testReferences": [
+        "tests/dim_sum/dim_sum_tests_main.cpp"
+      ],
       "documentationReferences": [],
       "runtimeEvidence": [],
-      "note": null
+      "note": "DimSum::FUNNY_LEVEL_DEFAULT is 5, matching I18N::FUNNY_LEVEL_DEFAULT; tests/dim_sum went from one failed assertion to 240 passing."
     },
     {
       "id": "dim-sum#02",

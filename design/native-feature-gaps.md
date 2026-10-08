@@ -8,8 +8,8 @@ Audit source commit: `38c76dfdf572d7881c3f13f67dda4b0bb88a3c16`. Completion clai
 
 | Status | Meaning | Gaps |
 | --- | --- | ---: |
-| open | Not implemented, or implemented only in part. | 398 |
-| landed | Source, documentation and focused tests are on main (landedIn names the commit). Native behaviour is not yet observed on Windows. | 0 |
+| open | Not implemented, or implemented only in part. | 397 |
+| landed | Source, documentation and focused tests are on main (landedIn names the commit). Native behaviour is not yet observed on Windows. | 1 |
 | verified | Landed, and observed working in a built Windows application (runtimeEvidence names the record). | 0 |
 | total | | 398 |
 
@@ -25,7 +25,7 @@ Audit source commit: `38c76dfdf572d7881c3f13f67dda4b0bb88a3c16`. Completion clai
 | language-voice | [personal-vocabulary](#personal-vocabulary) | partial | 5 | 0 | 0 |
 | language-voice | [narration](#narration) | partial | 6 | 0 | 0 |
 | language-voice | [display-name](#display-name) | partial | 3 | 0 | 0 |
-| language-voice | [dim-sum](#dim-sum) | partial | 8 | 0 | 0 |
+| language-voice | [dim-sum](#dim-sum) | partial | 7 | 1 | 0 |
 | material-appearance | [material-design](#material-design) | partial | 10 | 0 | 0 |
 | material-appearance | [motion](#motion) | partial | 6 | 0 | 0 |
 | material-appearance | [appearance-editor](#appearance-editor) | partial | 14 | 0 | 0 |
@@ -200,7 +200,7 @@ The native startup surprise is missing at runtime. DimSumSurprise.cpp and DimSum
 
 | Gap | Size | Needs Windows | Status | Title | Landed in |
 | --- | --- | --- | --- | --- | --- |
-| `dim-sum#01` | S | no | open | Align the dim sum funny-level default with the shared default to fix the static_assert build failure |  |
+| `dim-sum#01` | S | no | landed | Align the dim sum funny-level default with the shared default to fix the static_assert build failure | `6095c5c9de` |
 | `dim-sum#02` | M | yes | open | Reconnect the one-in-ten startup surprise and invert the quiet-prompt regression |  |
 | `dim-sum#03` | S | no | open | Suppress the surprise under School mode and during update flows |  |
 | `dim-sum#04` | S | yes | open | Announce the surprise to screen readers without taking focus |  |
