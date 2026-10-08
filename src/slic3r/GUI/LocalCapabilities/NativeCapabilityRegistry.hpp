@@ -22,7 +22,10 @@ public:
     using Clock = std::chrono::steady_clock;
     using Random = std::function<std::string()>;
     using Now = std::function<Clock::time_point()>;
-    explicit Registry(Random random, Now now = []{return Clock::now();}) : m_owner(std::this_thread::get_id()), m_random(std::move(random)), m_now(std::move(now)) {}
+    // No default-argument lambda here: MSVC cannot resolve the class-scope Clock
+    // inside one (C2653, C2440), so the one-argument form delegates instead.
+    explicit Registry(Random random) : Registry(std::move(random), Now(&Registry::steady_now)) {}
+    Registry(Random random, Now now) : m_owner(std::this_thread::get_id()), m_random(std::move(random)), m_now(std::move(now)) {}
     void register_handler(Capability capability, std::function<bool()> available, std::function<Result()> invoke)
     {
         thread_check();
@@ -109,6 +112,7 @@ public:
         return has_letter && host.back()!='-';
     }
 private:
+    static Clock::time_point steady_now() { return Clock::now(); }
     struct Handler { std::function<bool()> available; std::function<Result()> invoke; };
     std::thread::id m_owner;
     Random m_random;
