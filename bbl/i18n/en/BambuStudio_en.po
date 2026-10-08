@@ -28754,3 +28754,65 @@ msgstr ""
 
 msgid "Extra high, High, Medium, Low or Extra low detail for automatic model import simplification"
 msgstr ""
+
+msgid "Shipped defaults"
+msgstr ""
+
+msgid "The app does not ship a fixed value for this setting."
+msgstr ""
+
+msgid "This editor does not accept the shipped value for this setting."
+msgstr ""
+
+msgid "Your saved settings"
+msgstr ""
+
+msgid "Nothing usable is saved for this setting, and the app does not ship a fixed value for it."
+msgstr ""
+
+msgid "Start empty"
+msgstr ""
+
+msgid "(empty)"
+msgstr ""
+
+msgid "Follows your system language the first time the app starts, so there is no single shipped value."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s (%s)"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s (shipped default, nothing saved)"
+msgstr ""
+
+msgid "Sets nothing."
+msgstr ""
+
+msgid "Sets:"
+msgstr ""
+
+msgid "Leaves out:"
+msgstr ""
+
+msgid "Every preset comes from the values the app ships with, your own saved settings, or a template the app ships. Nothing is applied until you start from one."
+msgstr ""
+
+msgid "Presets to start from"
+msgstr ""
+
+msgid "No preset matches the search. Clear the search to see every preset."
+msgstr ""
+
+msgid "What the highlighted preset creates and sets"
+msgstr ""
+
+msgid "Start from this preset"
+msgstr ""
+
+msgid "Start the new item from the highlighted preset"
+msgstr ""
+
+msgid "Highlight a preset first."
+msgstr ""

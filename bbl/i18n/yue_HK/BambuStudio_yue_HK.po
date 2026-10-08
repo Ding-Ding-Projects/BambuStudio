@@ -39765,3 +39765,98 @@ msgstr "模型匯入：網格達 1,000,000 個三角形時，先簡化再加入�
 #. review-status: agent-drafted
 msgid "Extra high, High, Medium, Low or Extra low detail for automatic model import simplification"
 msgstr "模型匯入自動簡化嘅細節：極高、高、中、低或極低"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Shipped defaults"
+msgstr "出廠預設值"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The app does not ship a fixed value for this setting."
+msgstr "呢個設定出廠時冇固定數值。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "This editor does not accept the shipped value for this setting."
+msgstr "呢個編輯器唔接受呢個設定嘅出廠數值。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Your saved settings"
+msgstr "你已儲存嘅設定"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Nothing usable is saved for this setting, and the app does not ship a fixed value for it."
+msgstr "呢個設定未有可用嘅已儲存數值，出廠時亦冇固定數值。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Start empty"
+msgstr "由空白開始"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "(empty)"
+msgstr "（空白）"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Follows your system language the first time the app starts, so there is no single shipped value."
+msgstr "第一次開啟時會跟隨系統語言，所以冇單一出廠數值。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "%s (%s)"
+msgstr "%s（%s）"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "%s (shipped default, nothing saved)"
+msgstr "%s（出廠預設值，未有儲存）"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Sets nothing."
+msgstr "唔會設定任何嘢。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Leaves out:"
+msgstr "唔包括："
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Every preset comes from the values the app ships with, your own saved settings, or a template the app ships. Nothing is applied until you start from one."
+msgstr "每個預設都嚟自程式嘅出廠數值、你自己已儲存嘅設定，或者程式附帶嘅範本。揀定由邊個開始之前，乜都唔會套用。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Presets to start from"
+msgstr "可以用嚟開始嘅預設"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "No preset matches the search. Clear the search to see every preset."
+msgstr "冇預設符合搜尋。清除搜尋就會見到全部預設。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "What the highlighted preset creates and sets"
+msgstr "已標示預設會建立同設定嘅內容"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Start from this preset"
+msgstr "由呢個預設開始"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Start the new item from the highlighted preset"
+msgstr "用已標示嘅預設開始新項目"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Highlight a preset first."
+msgstr "請先標示一個預設。"

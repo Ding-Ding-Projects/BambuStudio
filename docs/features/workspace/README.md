@@ -49,6 +49,10 @@ work is in progress.
   deduped), with a browser and restore-beside-the-live-file semantics.
 - [Device fan motion](fan-motion.md) — independent telemetry-driven part and
   auxiliary fan previews with distinct input and command feedback.
+- [Start-from presets for blank editors](blank-editor-presets.md) — editors
+  that would open empty first offer presets built only from the shipped
+  defaults (the same values Reset restores), your saved settings or shipped
+  templates, and state what each preset creates and sets before it is applied.
 
 - [Print preparation and workflow navigation](print-preparation.md): observational
   print review, existing explicit output and confirmation paths, and preserved
