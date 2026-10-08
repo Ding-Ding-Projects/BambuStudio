@@ -14,12 +14,14 @@ Secret otp_record(const Enrollment& e){
 }
 ElementLock::ElementLock(Vault& vault,std::string id,RecordIdentityMutation history):m_vault(vault),m_id(std::move(id)),m_history(std::move(history)){
     require(m_id.size()==32&&std::all_of(m_id.begin(),m_id.end(),[](char c){return (c>='0'&&c<='9')||(c>='a'&&c<='f');})&&bool(m_history));auto existing=m_vault.read(account("config"));
-    if(existing){auto s=settings(*existing);for(auto f:factors(s.policy)){auto value=m_vault.read(account(f==Factor::Pin?"pin":f==Factor::Password?"password":"totp"));require(value.has_value(),Error::Missing);}m_session=std::make_unique<LockSession>(s);}
+    if(existing){auto s=settings(*existing);for(auto f:factors(s.policy)){auto value=m_vault.read(account(f==Factor::Pin?"pin":f==Factor::Password?"password":"totp"));require(value.has_value(),Error::Missing);}m_session=std::make_unique<LockSession>(s,AttemptBudget(m_vault,account("attempts")));}
 }
 std::string ElementLock::account(const char* suffix) const{return "bambustudio.element-lock."+m_id+"."+suffix;}
 bool ElementLock::allows_action(Time now){return !m_session||!m_session->locked(now);}
 void ElementLock::create(LockEnrollment enrollment,std::uint64_t seconds){
-    require(!m_session&&!m_vault.read(account("config")),Error::Authentication);auto session=std::make_unique<LockSession>(enrollment.settings);
+    require(!m_session&&!m_vault.read(account("config")),Error::Authentication);
+    // Attempts persist beside the lock, so restarting never refunds them.
+    auto session=std::make_unique<LockSession>(enrollment.settings,AttemptBudget(m_vault,account("attempts")));
     const auto needed=factors(enrollment.settings.policy);
     if(std::find(needed.begin(),needed.end(),Factor::Totp)!=needed.end())require(enrollment.otp&&verify_totp(enrollment.otp->secret,enrollment.otp->parameters,enrollment.confirmation_code,seconds).has_value(),Error::Authentication);
     Credentials credentials(m_vault);std::vector<std::string> created;

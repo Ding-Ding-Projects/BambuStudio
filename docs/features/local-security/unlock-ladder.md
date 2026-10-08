@@ -36,8 +36,11 @@ exactly where they started.
 - **It never refunds the attempt budget.** A win restores exactly the five
   attempts that ordinary expiry restores. Wrong ladder answers never change the
   wait or the attempts.
-- **It is capped.** At most three waits can be cleared per rolling hour. After
-  that no challenge is issued and the clock is the only way through.
+- **It is capped for everyone.** At most three waits can be cleared per rolling
+  hour across every lockout surface, through one shared `LadderAllowance`.
+  After that no challenge is issued anywhere and the clock is the only way
+  through. A right answer that arrives after another surface spent the last
+  skip clears nothing.
 - **It never slows the escalation.** The next lockout after a skipped one is
   still longer: 30, 60, 120, 240, 480 and then 900 seconds.
 - **It is graded by the service against a single-use nonce.** Each challenge has
@@ -71,6 +74,31 @@ switches on while a dish question is open, the question is withdrawn and never
 graded. Rungs only move down, so switching School mode off later does not bring
 the dish back for that lockout.
 
+## Lockouts survive restarts
+
+Every lockout surface keeps its attempts in the operating-system vault, and
+every call reads the record again. Restarting the application, opening another
+window or running another process that shares the record never refunds
+attempts, shortens a wait, resets the escalation or brings back a spent ladder
+rung. A successful answer erases the record, so a budget at rest leaves
+nothing behind.
+
+| Surface | Vault | Record |
+| --- | --- | --- |
+| School mode credential | Shared operating-system vault | `org.dingding.shared.school.attempts.v1` |
+| Identity history password | Application vault | `org.dingding.bambu.identity-history.attempts.v1` |
+| Element lock | Application vault | `bambustudio.element-lock.<element id>.attempts` |
+| Ladder allowance, every surface | Shared operating-system vault | `org.dingding.shared.unlock-ladder.v1` |
+
+Waits are stored as wall-clock deadlines. A clock set back cannot stretch a
+wait past 900 seconds, and a skip recorded before the clock was set back still
+counts for a full hour. A damaged attempt record becomes the longest wait and a
+damaged allowance record counts as spent, so damage never refunds anything. An
+unavailable vault fails closed with an error. On Windows a named mutex in the
+user's session serializes updates between processes. Deleting the records
+resets them. Like the rest of local security, this is a user-experience lock,
+not a security boundary against someone who controls the computer.
+
 ## Dish data
 
 The dim-sum rung uses the same public catalog as the startup dim sum surprise.
@@ -84,8 +112,11 @@ at the sums.
 ## Using the service
 
 Create one `UnlockLadder` per lockout surface with that surface's
-`AttemptBudget`, a function that reads School mode, and the catalog dishes.
-`LockSession::budget()` gives the budget of a lock session.
+`AttemptBudget`, a `LadderAllowance` over the operating-system vault, a
+function that reads School mode, and the catalog dishes. Every allowance object
+over the same vault and account shares one allowance. The budgets come from
+`SchoolCredentials::budget()`, `IdentityHistory::attempt_budget()`,
+`ElementLock::budget()` and `LockSession::budget()`.
 
 | Call | Use |
 | --- | --- |
@@ -105,7 +136,9 @@ lost, the fall to the clock, the hourly cap running out and refilling, a
 replayed nonce, a forged nonce, expired questions, answers of the wrong kind,
 strikes on empty cells, outside the round and repeated on one mole, the strike
 limit, an early hand-in, abandoned rounds, School mode starting at the sums and
-switching on mid-ladder, and that a cleared ladder leaves a lock session locked.
+switching on mid-ladder, one allowance spent across surfaces, a right answer
+after the allowance ran out, ladder progress kept across a restart, and that a
+cleared ladder leaves a lock session locked.
 Build and run it on its own:
 
 ```sh
@@ -114,6 +147,11 @@ g++ -std=c++17 -Wall -Wextra -Werror -Isrc src/libslic3r/LocalSecurity/LocalSecu
 ```
 
 The `[DimSum][ladder]` case in `tests/dim_sum` checks the catalog adapter.
+`tests/local_security/local_security_tests.cpp` checks persisted budgets and
+the shared allowance, including restarts, other instances, a clock set back,
+damaged records and an unavailable vault, and that an element lock still waits
+after a restart. The identity history and School mode credential tests check
+that their waits survive a restart.
 
 ## Remaining work
 
@@ -121,8 +159,9 @@ No lockout surface shows the ladder yet. The School mode credential in
 Preferences, the identity history password and the element lock prompt each
 need the ladder UI with keyboard play, screen-reader names and live score
 announcements, a countdown that does not rely on colour or motion, reduced
-motion for the moles, and copy in all three language modes. None of this has
-been run in a built Windows application.
+motion for the moles, and copy in all three language modes. The persisted
+records and the named mutex have not been run against the real Windows vault in
+a built application.
 
 Related articles: [local security components](README.md),
 [native integration](native-integration.md).

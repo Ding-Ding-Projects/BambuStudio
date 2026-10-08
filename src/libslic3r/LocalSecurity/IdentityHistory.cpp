@@ -251,7 +251,9 @@ struct IdentityHistory::Impl {
     Vault& vault;
     AttemptBudget attempts;
     const std::string owner=new_stable_id();
-    explicit Impl(std::filesystem::path root,Vault& v):data(std::move(root)),path(data/"identity-history-v1.git"),vault(v) {
+    // The history password's attempts persist in the vault, so restarting the
+    // application never refunds them or resets the escalation.
+    explicit Impl(std::filesystem::path root,Vault& v):data(std::move(root)),path(data/"identity-history-v1.git"),vault(v),attempts(v,attempts_account) {
         require(data.is_absolute(),Error::InvalidInput); ok(git_libgit2_init());
     }
     ~Impl(){git_libgit2_shutdown();}
@@ -358,6 +360,7 @@ struct IdentityHistory::Impl {
 };
 IdentityHistory::IdentityHistory(std::filesystem::path root,Vault& vault):m_impl(std::make_unique<Impl>(std::move(root),vault)){}
 IdentityHistory::~IdentityHistory()=default;
+AttemptBudget& IdentityHistory::attempt_budget() noexcept{return m_impl->attempts;}
 void IdentityHistory::initialize(CredentialKind kind,const Secret& answer) {
     std::lock_guard<std::mutex> guard(history_mutex);safe_directory(m_impl->data);
     FileLock lock(m_impl->data/"identity-history-v1.lock");

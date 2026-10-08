@@ -3,15 +3,20 @@
 #include "libslic3r/LocalSecurity/LocalSecurity.hpp"
 
 namespace Slic3r::GUI::FeatureServices {
-// Application-owned attempt budget survives closing and reopening Preferences.
+// The attempt budget lives in the same vault as the shared credential, so it
+// survives closing Preferences, restarting the application and every other
+// process that shares the credential.
 class SchoolCredentials {
 public:
     explicit SchoolCredentials(PersonalModes::SchoolMode& mode)
         : SchoolCredentials(mode, LocalSecurity::make_os_vault()) {}
     SchoolCredentials(PersonalModes::SchoolMode& mode, std::unique_ptr<LocalSecurity::Vault> vault)
-        : m_mode(mode), m_vault(std::move(vault)), m_credentials(*m_vault) {}
+        : m_mode(mode), m_vault(std::move(vault)), m_credentials(*m_vault),
+          m_attempts(*m_vault, LocalSecurity::shared_mode_attempts_account) {}
     LocalSecurity::CredentialMetadata metadata() { return m_credentials.metadata(LocalSecurity::shared_mode_account); }
     LocalSecurity::AttemptState attempts() { return m_attempts.state(std::chrono::steady_clock::now()); }
+    // The persisted budget, for the unlock ladder.
+    LocalSecurity::AttemptBudget& budget() noexcept { return m_attempts; }
     PersonalModes::RecordStatus enroll(LocalSecurity::CredentialKind kind, const LocalSecurity::Secret& answer) {
         const auto result = m_credentials.enroll(LocalSecurity::shared_mode_account, kind, answer);
         return m_mode.credential_changed(result.generation);

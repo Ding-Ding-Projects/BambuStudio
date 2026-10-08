@@ -710,7 +710,7 @@
     {
       "route": "local-security/README.md",
       "title": "Local security components",
-      "sha256": "f4578697f9e71abe40c3ce46534cdd09f9205973e754c2d0622e474154ceb6ce"
+      "sha256": "92ed5e1e460e1ba93b55e937a2377cf7623e68a8382a23aa56823686468251ba"
     },
     {
       "route": "local-security/identity-history.md",
@@ -720,7 +720,7 @@
     {
       "route": "local-security/native-integration.md",
       "title": "Native local-security integration",
-      "sha256": "a268b930f126e2a73bf014f583f785e41a3c8702bc19c9d0756135e41da3ce3a"
+      "sha256": "9512c7b7654a25534e9c5a544b8971ac7e88770a6ebca8e7a8dc281bd25f9dce"
     },
     {
       "route": "local-security/qr-pairing.md",
@@ -730,12 +730,12 @@
     {
       "route": "local-security/unlock-ladder.md",
       "title": "Unlock ladder",
-      "sha256": "b696dd0a35752fb4b2411359e4de514b49c1433a7b6518ee1005a3b5a3a601f5"
+      "sha256": "9bf7b19f5a26d97427a78c16f9658ecc6cd4ef256ebbd0dc108fe3674adfb505"
     },
     {
       "route": "local-security/unlock-ladder.yue_HK.md",
       "title": "解鎖階梯",
-      "sha256": "f27999001c19477548e305fb785756c61d6ba1273be1ac84b6073e84c133ebd5"
+      "sha256": "c243759a1ed7184f01c1a637a30496ca45af5c726bdb21f2fcebc30529fe5886"
     },
     {
       "route": "model-creator/README.md",
@@ -1860,7 +1860,7 @@
       "bytes": 1979
     }
   ],
-  "bundle_sha256": "1d0435cbb12d8331faa9ecd6cc08873ae40f87edf984b0968db170c689efa46e",
+  "bundle_sha256": "642d962e4d42e4f95a3846d1ff706fef390c826d7fb5eeeb9390e08596b3e4ff",
   "unavailable_references": [
     {
       "source": "api/README.md",

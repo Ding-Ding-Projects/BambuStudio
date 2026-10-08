@@ -16,9 +16,10 @@ void require(bool ok, Error e = Error::InvalidInput) { if (!ok) throw Failure(e)
 // Uniform in [0, bound), from OpenSSL's CSPRNG so no question can be predicted.
 unsigned uniform(std::size_t bound)
 {
-    require(bound > 0 && bound <= std::numeric_limits<std::uint32_t>::max());
+    // Parenthesized so a Windows max macro can never capture the call.
+    const std::uint32_t top = (std::numeric_limits<std::uint32_t>::max)();
+    require(bound > 0 && bound <= top);
     const std::uint32_t span = static_cast<std::uint32_t>(bound);
-    const std::uint32_t top = std::numeric_limits<std::uint32_t>::max();
     const std::uint32_t limit = top - top % span;
     for (;;) {
         unsigned char bytes[4];
@@ -111,8 +112,9 @@ struct UnlockLadder::Pending {
     unsigned strikes = 0;
 };
 
-UnlockLadder::UnlockLadder(AttemptBudget& budget, std::function<bool()> school_mode, std::vector<LadderDish> dishes)
-    : m_budget(budget), m_school_mode(std::move(school_mode))
+UnlockLadder::UnlockLadder(AttemptBudget& budget, LadderAllowance& allowance, std::function<bool()> school_mode,
+                           std::vector<LadderDish> dishes)
+    : m_budget(budget), m_allowance(allowance), m_school_mode(std::move(school_mode))
 {
     require(bool(m_school_mode));
     set_dishes(std::move(dishes));
@@ -158,7 +160,7 @@ LadderStatus UnlockLadder::make_status(const Context& c, Time now)
     status.waiting = c.waiting;
     status.wait_seconds = c.attempts.wait_seconds;
     status.remaining_attempts = c.attempts.remaining;
-    status.skips_left = m_budget.skips_left(now);
+    status.skips_left = m_allowance.remaining(now);
     if (!c.waiting) return status;
     status.rung = c.progress.rung;
     status.wrong_dishes = c.progress.wrong_dishes;
@@ -181,7 +183,7 @@ LadderOutcome UnlockLadder::result(LadderVerdict verdict, Time now)
 std::optional<LadderChallenge> UnlockLadder::challenge(Time now)
 {
     const Context c = context(now);
-    if (!c.waiting || m_budget.skips_left(now) == 0) return std::nullopt;
+    if (!c.waiting || m_allowance.remaining(now) == 0) return std::nullopt;
     if (m_pending && now < m_pending->expires) {
         LadderChallenge again = m_pending->challenge;
         again.expires_in_seconds = seconds_until(m_pending->expires, now);
@@ -240,7 +242,7 @@ LadderChallenge UnlockLadder::issue(const Context& c, Time now)
             } else {
                 problem.operation = '-';
                 problem.left = between(5, 60);
-                problem.right = between(1, std::min(20u, problem.left));
+                problem.right = between(1, (std::min)(20u, problem.left));
                 pending->sums[i] = static_cast<long long>(problem.left) - problem.right;
             }
         }
@@ -283,16 +285,17 @@ LadderChallenge UnlockLadder::issue(const Context& c, Time now)
 
 LadderOutcome UnlockLadder::win(Time now)
 {
-    // clear_wait owns the hourly cap and restores exactly the attempts that
-    // ordinary expiry restores. It touches no lock session and no escalation.
-    return result(m_budget.clear_wait(now) ? LadderVerdict::Cleared : LadderVerdict::CapReached, now);
+    // clear_wait spends the shared hourly allowance and restores exactly the
+    // attempts that ordinary expiry restores. It touches no lock session and
+    // no escalation.
+    return result(m_budget.clear_wait(m_allowance, now) ? LadderVerdict::Cleared : LadderVerdict::CapReached, now);
 }
 
 LadderOutcome UnlockLadder::wrong(const Context& c, LadderRung rung, Time now)
 {
     LadderProgress next = c.progress;
     if (rung == LadderRung::DimSum) {
-        next.wrong_dishes = std::min(ladder_wrong_dishes, next.wrong_dishes + 1);
+        next.wrong_dishes = (std::min)(ladder_wrong_dishes, next.wrong_dishes + 1);
         if (next.wrong_dishes >= ladder_wrong_dishes) next.rung = LadderRung::Sums;
     } else if (rung == LadderRung::Sums) {
         next.rung = LadderRung::Moles; // a single wrong sum

@@ -74,6 +74,8 @@ private:
     Vault& m_vault;
 };
 inline constexpr const char* shared_mode_account = "org.dingding.shared.school.v1";
+// Attempt budget of the shared presentation-mode credential, shared like it.
+inline constexpr const char* shared_mode_attempts_account = "org.dingding.shared.school.attempts.v1";
 
 enum class Algorithm { Sha1, Sha256, Sha512 };
 struct TotpParameters { Algorithm algorithm = Algorithm::Sha1; unsigned digits = 6; unsigned period = 30; };
@@ -101,37 +103,88 @@ std::vector<Factor> factors(Policy);
 enum class Duration { ThisSurface, Minutes, UntilExit };
 struct LockSettings { Policy policy = Policy::Pin; Duration duration = Duration::ThisSurface; unsigned minutes = 5; };
 using Time = std::chrono::steady_clock::time_point;
-// `lockout` numbers the waits this budget has started; a new wait gets a new number.
+// Pairs one steady-clock instant with the wall clock, so a deadline can be kept
+// in Unix milliseconds across restarts and processes while every caller keeps
+// passing steady-clock times.
+struct ClockAnchor {
+    Time steady{};
+    std::int64_t unix_ms = 0;
+    static ClockAnchor now();
+    std::int64_t unix_ms_at(Time t) const;
+};
+// `lockout` identifies the wait this budget started most recently; every new
+// wait gets a new random identity.
 struct AttemptState { unsigned remaining; unsigned wait_seconds; std::uint64_t lockout = 0; };
 // The unlock ladder's rungs in their fixed order. Clock means only the wait is left.
 enum class LadderRung : unsigned char { DimSum, Sums, Moles, Clock };
 // Where the ladder stands inside the current lockout. Every new lockout, expiry,
 // cleared wait and successful answer discards it.
 struct LadderProgress { bool started = false; LadderRung rung = LadderRung::DimSum; unsigned wrong_dishes = 0; };
+
+inline constexpr unsigned ladder_skips_per_hour = 3;
+// One allowance for every lockout surface of every product sharing the
+// operating-system vault: any surface's ladder win spends it.
+inline constexpr const char* shared_ladder_account = "org.dingding.shared.unlock-ladder.v1";
+// The ladder may clear at most three waits per rolling hour, whichever
+// surface they belong to. Every call re-reads the persisted record, so any
+// number of instances over the same vault and account share one allowance,
+// across restarts and processes. A damaged record counts as spent.
+class LadderAllowance {
+public:
+    LadderAllowance() = default; // this object only, for tests and transient surfaces
+    LadderAllowance(Vault& vault, std::string account = shared_ladder_account, ClockAnchor anchor = ClockAnchor::now());
+    unsigned remaining(Time now);
+    bool consume(Time now);
+private:
+    std::vector<std::int64_t> load(std::int64_t now_ms);
+    void save(const std::vector<std::int64_t>& skips);
+    Vault* m_vault = nullptr;
+    std::string m_account;
+    ClockAnchor m_anchor{};
+    std::vector<unsigned char> m_memory;
+};
+
+// Five attempts, then a wait of 30 seconds doubling to 900. A persisted budget
+// re-reads its record on every call, so restarting the application, opening a
+// second window or another process sharing the record never refunds attempts,
+// shortens a wait or resets escalation. A wall clock set back cannot stretch a
+// wait past 900 seconds, and a damaged record becomes the longest wait.
 class AttemptBudget {
 public:
+    AttemptBudget() = default; // this object only, for tests and transient surfaces
+    AttemptBudget(Vault& vault, std::string account, ClockAnchor anchor = ClockAnchor::now());
     AttemptState state(Time now);
     void failed(Time now);
     void succeeded();
-    // A ladder can clear at most three waits per rolling hour. It restores
-    // exactly the attempts that ordinary expiry restores; never authentication.
-    bool clear_wait(Time now);
-    unsigned skips_left(Time now);
+    // The unlock ladder's only way to end a wait. Spends one of the shared
+    // allowance's skips and restores exactly the attempts that ordinary expiry
+    // restores; never authentication and never the escalation.
+    bool clear_wait(LadderAllowance& allowance, Time now);
     // Ladder progress for the wait in progress; empty when nothing is waiting.
     LadderProgress ladder(Time now);
     // Ignored unless `lockout` is still the wait in progress.
     void set_ladder(std::uint64_t lockout, const LadderProgress& progress, Time now);
 private:
+    std::int64_t refresh(Time now);
+    void load(std::int64_t now_ms);
+    void reset() noexcept;
+    void save();
+    Vault* m_vault = nullptr;
+    std::string m_account;
+    ClockAnchor m_anchor{};
+    std::vector<unsigned char> m_memory;
     unsigned m_remaining = 5;
     unsigned m_escalation = 0;
-    Time m_wait_until{};
-    std::vector<Time> m_skips;
+    bool m_waiting = false;
+    std::int64_t m_wait_until = 0; // Unix milliseconds
     std::uint64_t m_lockout = 0;
     LadderProgress m_ladder;
 };
 class LockSession {
 public:
     explicit LockSession(LockSettings settings);
+    // A lock that survives restarts passes its persisted budget here.
+    LockSession(LockSettings settings, AttemptBudget budget);
     bool locked(Time now);
     std::optional<Factor> expected(Time now);
     // The caller supplies a locally verified factor result, never a UI assertion.
@@ -140,7 +193,7 @@ public:
     void leave_surface();
     void relock();
     AttemptState attempts(Time now) { return m_budget.state(now); }
-    bool clear_wait(Time now) { return m_budget.clear_wait(now); }
+    bool clear_wait(LadderAllowance& allowance, Time now) { return m_budget.clear_wait(allowance, now); }
     // For the unlock ladder, which may clear the wait and never the lock.
     AttemptBudget& budget() noexcept { return m_budget; }
 private:

@@ -310,6 +310,10 @@ void throttling(){
     for(unsigned i=0;i<5;++i)rejects([&]{history.read(wrong);},"incorrect credential rejected");
     bool limited=false;try{history.read(answer);}catch(const Failure& e){limited=e.code()==Error::RateLimited;}
     check(limited,"attempt budget enforces wait");
+    IdentityHistory restarted(f.root,f.vault);limited=false;
+    try{restarted.read(answer);}catch(const Failure& e){limited=e.code()==Error::RateLimited;}
+    check(limited,"a restarted history keeps the wait");
+    check(f.vault.records.count(IdentityHistory::attempts_account)==1&&restarted.attempt_budget().state(std::chrono::steady_clock::now()).wait_seconds>0,"the history wait is kept in the vault");
 }
 }
 int main(){try{behavior();interrupted_transaction();missing_repository();metadata_and_labels();throttling();v2_retention();legacy_and_stale_preview();store_failure_paths();interrupted_prune();authenticated_store_validation();capacity_limits();std::cout<<"PASS "<<checks<<" identity history checks\n";return 0;}catch(const std::exception&){std::cerr<<"FAIL identity history checks\n";return 1;}}

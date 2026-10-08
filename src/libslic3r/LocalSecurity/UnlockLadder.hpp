@@ -131,13 +131,16 @@ struct StrikeOutcome {
     unsigned strikes_left = 0;
 };
 
-// One ladder per lockout surface, sharing that surface's AttemptBudget. The
-// budget keeps the ladder's position with the lockout it belongs to. Not
-// thread-safe: the surface that owns the lockout owns its ladder.
+// One ladder per lockout surface, sharing that surface's AttemptBudget and the
+// one LadderAllowance every surface spends. The budget keeps the ladder's
+// position with the lockout it belongs to, so a persisted budget carries it
+// across restarts. Not thread-safe: the surface that owns the lockout owns its
+// ladder.
 class UnlockLadder {
 public:
     // `school_mode` is read at every decision; it must be callable.
-    UnlockLadder(AttemptBudget& budget, std::function<bool()> school_mode, std::vector<LadderDish> dishes);
+    UnlockLadder(AttemptBudget& budget, LadderAllowance& allowance, std::function<bool()> school_mode,
+                 std::vector<LadderDish> dishes);
     ~UnlockLadder();
     UnlockLadder(const UnlockLadder&) = delete;
     UnlockLadder& operator=(const UnlockLadder&) = delete;
@@ -175,6 +178,7 @@ private:
     LadderChallenge issue(const Context&, Time now);
 
     AttemptBudget& m_budget;
+    LadderAllowance& m_allowance;
     std::function<bool()> m_school_mode;
     std::vector<LadderDish> m_dishes;
     bool m_dim_sum_ready = false;

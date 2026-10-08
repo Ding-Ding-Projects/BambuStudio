@@ -1,6 +1,6 @@
 ---
 translation-of: unlock-ladder.md
-source-sha256: b696dd0a35752fb4b2411359e4de514b49c1433a7b6518ee1005a3b5a3a601f5
+source-sha256: 9bf7b19f5a26d97427a78c16f9658ecc6cd4ef256ebbd0dc108fe3674adfb505
 review-status: agent-drafted
 ---
 
@@ -25,7 +25,7 @@ review-status: agent-drafted
 
 - **只清除等候，唔清除憑證。** 贏咗會呼叫 `AttemptBudget::clear_wait`，只會移除等候，其他嘢唔郁：`LockSession` 仍然鎖住，並會再問第一個驗證因素。
 - **唔會退還嘗試次數。** 贏咗只會恢復普通到期時同樣嘅五次嘗試。階梯答錯唔會改變等候時間或者嘗試次數。
-- **有上限。** 每個滾動小時最多清除三次等候。之後唔會再發出挑戰，只可以等時鐘。
+- **上限對所有人都一樣。** 所有鎖定介面經同一個 `LadderAllowance`，每個滾動小時合共最多清除三次等候。之後邊度都唔會再發出挑戰，只可以等時鐘。另一個介面用咗最後一次略過之後先到嘅正確答案，乜都唔會清除。
 - **唔會減慢遞增。** 略過一次鎖定之後，下一次鎖定仍然會更長：30、60、120、240、480，之後係 900 秒。
 - **由服務用一次性 nonce 評分。** 每個挑戰都有一個全新、隨機嘅 128 位元 nonce。服務評分之前會先用掉 nonce，所以答錯唔可以用同一條題再試，答啱亦唔可以重播。再要挑戰只會攞返同一個仍然有效嘅挑戰，所以唔可以重新抽題。點心題 2 分鐘後失效，加減數 5 分鐘後失效；失效嘅答案唔會評分。類型唔啱嘅答案，例如將加減數交畀點心題，會當答錯。之前鎖定嘅 nonce 會被拒絕。
 
@@ -40,13 +40,26 @@ review-status: agent-drafted
 
 `ladder_start(school_mode, dim_sum_ready)` 係決定階梯由邊一級開始嘅唯一判斷。學校模式之下冇點心一級，階梯由加減數開始，介面唔會收到任何點心、相片或者名稱。點心題未答而學校模式開咗，題目會被收回，永遠唔會評分。級數只會向下行，所以之後關返學校模式，今次鎖定都唔會再出點心。
 
+## 鎖定喺重新啟動之後仍然有效
+
+每個鎖定介面都將嘗試次數存喺作業系統憑證庫，而每次呼叫都會重新讀取記錄。重新啟動應用程式、開多個視窗，或者另一個共用同一記錄嘅程序，都唔會退還嘗試次數、縮短等候、重設遞增，亦唔會令已用咗嘅階梯級數返嚟。答啱之後記錄會被清除，所以閒置嘅預算唔會留低任何嘢。
+
+| 介面 | 憑證庫 | 記錄 |
+| --- | --- | --- |
+| 學校模式憑證 | 共用作業系統憑證庫 | `org.dingding.shared.school.attempts.v1` |
+| 身份記錄密碼 | 應用程式憑證庫 | `org.dingding.bambu.identity-history.attempts.v1` |
+| 元素鎖 | 應用程式憑證庫 | `bambustudio.element-lock.<element id>.attempts` |
+| 階梯額度，所有介面共用 | 共用作業系統憑證庫 | `org.dingding.shared.unlock-ladder.v1` |
+
+等候以實際時鐘嘅截止時間儲存。時鐘調後唔可以令等候長過 900 秒，而時鐘調後之前記錄嘅略過，仍然會計足一個鐘。損壞嘅嘗試記錄會變成最長嘅等候，損壞嘅額度記錄當已經用晒，所以損壞永遠唔會退還任何嘢。憑證庫用唔到就會以錯誤安全失敗。喺 Windows 上，使用者工作階段入面嘅具名互斥鎖會令唔同程序逐個更新。刪除記錄會重設佢哋。同本機安全其他部分一樣，呢個係使用體驗上嘅鎖，唔係防止控制住部電腦嘅人嘅安全界線。
+
 ## 點心資料
 
 點心一級用嘅係同啟動點心驚喜一樣嘅公開目錄。`DimSumSurpriseModel.hpp` 入面嘅 `DimSum::ladder_dishes` 原封不動複製每款點心嘅名稱、替代文字同相片檔名。只有相片已經快取咗嘅點心先可以做題目；任何點心都可以做錯誤選項。階梯唔會下載任何嘢。四個選項永遠有四個唔同嘅英文名同四個唔同嘅中文名。冇快取相片或者湊唔夠另外三個名，階梯就由加減數開始。
 
 ## 使用服務
 
-每個鎖定介面建立一個 `UnlockLadder`，交畀佢嗰個介面嘅 `AttemptBudget`、一個讀取學校模式嘅函數，同埋目錄點心。`LockSession::budget()` 會畀出鎖定工作階段嘅預算。
+每個鎖定介面建立一個 `UnlockLadder`，交畀佢嗰個介面嘅 `AttemptBudget`、一個建立喺作業系統憑證庫上嘅 `LadderAllowance`、一個讀取學校模式嘅函數，同埋目錄點心。所有建立喺同一個憑證庫同帳戶上嘅額度物件，共用同一個額度。預算可以由 `SchoolCredentials::budget()`、`IdentityHistory::attempt_budget()`、`ElementLock::budget()` 同 `LockSession::budget()` 攞到。
 
 | 呼叫 | 用途 |
 | --- | --- |
@@ -61,17 +74,17 @@ review-status: agent-drafted
 
 ## 驗證
 
-`tests/local_security/unlock_ladder_tests.cpp` 測試每一級贏同輸、跌到時鐘、每小時上限用完同補返、重播 nonce、偽造 nonce、失效題目、類型唔啱嘅答案、打空格、喺局外打同一隻地鼠重複打、次數上限、提早交局、放棄嘅局、學校模式由加減數開始同中途開啟，以及清除階梯之後鎖定工作階段仍然鎖住。可以獨立建置同執行：
+`tests/local_security/unlock_ladder_tests.cpp` 測試每一級贏同輸、跌到時鐘、每小時上限用完同補返、重播 nonce、偽造 nonce、失效題目、類型唔啱嘅答案、打空格、喺局外打同一隻地鼠重複打、次數上限、提早交局、放棄嘅局、學校模式由加減數開始同中途開啟、多個介面共用一個額度、額度用晒之後先到嘅正確答案、重新啟動之後保留階梯進度，以及清除階梯之後鎖定工作階段仍然鎖住。可以獨立建置同執行：
 
 ```sh
 g++ -std=c++17 -Wall -Wextra -Werror -Isrc src/libslic3r/LocalSecurity/LocalSecurity.cpp src/libslic3r/LocalSecurity/UnlockLadder.cpp tests/local_security/unlock_ladder_tests.cpp -lcrypto -o unlock_ladder_tests
 ./unlock_ladder_tests
 ```
 
-`tests/dim_sum` 入面嘅 `[DimSum][ladder]` 測試檢查目錄轉接器。
+`tests/dim_sum` 入面嘅 `[DimSum][ladder]` 測試檢查目錄轉接器。`tests/local_security/local_security_tests.cpp` 檢查持久預算同共用額度，包括重新啟動、其他物件、時鐘調後、損壞記錄同憑證庫用唔到，亦檢查元素鎖重新啟動之後仍然要等。身份記錄同學校模式憑證嘅測試檢查佢哋嘅等候喺重新啟動之後仍然有效。
 
 ## 尚餘工作
 
-暫時未有任何鎖定介面顯示階梯。偏好設定入面嘅學校模式憑證、身份記錄密碼同元素鎖提示，各自都需要階梯介面：可以用鍵盤玩、有螢幕閱讀器名稱同即時分數報讀、倒數唔可以只靠顏色或者動畫、地鼠動畫要支援減少動態效果，仲要有三種語言模式嘅文案。以上全部未喺已建置嘅 Windows 應用程式入面執行過。
+暫時未有任何鎖定介面顯示階梯。偏好設定入面嘅學校模式憑證、身份記錄密碼同元素鎖提示，各自都需要階梯介面：可以用鍵盤玩、有螢幕閱讀器名稱同即時分數報讀、倒數唔可以只靠顏色或者動畫、地鼠動畫要支援減少動態效果，仲要有三種語言模式嘅文案。持久記錄同具名互斥鎖仲未喺已建置嘅應用程式入面，對住真正嘅 Windows 憑證庫執行過。
 
 相關文章：[本機安全元件](README.md)、[原生整合](native-integration.md)。

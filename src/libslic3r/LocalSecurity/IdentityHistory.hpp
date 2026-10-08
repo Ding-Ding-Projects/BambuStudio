@@ -86,6 +86,9 @@ public:
     static constexpr const char* key_account = "org.dingding.bambu.identity-history.key.v1";
     static constexpr const char* key_store_anchor_account = "org.dingding.bambu.identity-history.key-store-anchor.v2";
     static constexpr const char* anchor_account = "org.dingding.bambu.identity-history.anchor.v1";
+    static constexpr const char* attempts_account = "org.dingding.bambu.identity-history.attempts.v1";
+    // The history password's persisted budget, for its unlock ladder.
+    AttemptBudget& attempt_budget() noexcept;
 private:
     std::string append_impl(HistoryAction, const std::string&, const Secret&, const Secret* authorization);
     std::vector<IdentityHistoryEntry> read_impl(const Secret&, unsigned offset, unsigned count,

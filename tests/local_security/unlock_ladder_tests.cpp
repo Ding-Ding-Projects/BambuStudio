@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <map>
 #include <set>
 #include <stdexcept>
 #include <string>
@@ -89,24 +90,26 @@ void starting_rung()
 
 void nothing_to_play()
 {
+    LadderAllowance allowance;
     AttemptBudget budget;
-    UnlockLadder ladder(budget, no_school, pool());
+    UnlockLadder ladder(budget, allowance, no_school, pool());
     const auto status = ladder.status(base);
     check(!status.waiting && !status.offered && status.rung == LadderRung::Clock, "no ladder without a lockout");
     check(!ladder.challenge(base), "no challenge without a lockout");
     check(ladder.answer_dish(unknown_nonce, 0, base).verdict == LadderVerdict::Rejected, "an unknown nonce is rejected");
     bool rejected = false;
-    try { UnlockLadder invalid(budget, {}, pool()); } catch (const Failure&) { rejected = true; }
+    try { UnlockLadder invalid(budget, allowance, {}, pool()); } catch (const Failure&) { rejected = true; }
     check(rejected, "School mode must be readable");
 }
 
 void dim_sum_clears_only_the_wait()
 {
+    LadderAllowance allowance;
     const auto dishes = pool();
     LockSession lock({Policy::Pin, Duration::UntilExit, 5});
     for (unsigned i = 0; i < 5; ++i) lock.submit(Factor::Pin, false, base);
     check(lock.attempts(base).wait_seconds == 30 && lock.attempts(base).remaining == 0, "five wrong answers start a 30 second wait");
-    UnlockLadder ladder(lock.budget(), no_school, dishes);
+    UnlockLadder ladder(lock.budget(), allowance, no_school, dishes);
     auto status = ladder.status(base);
     check(status.waiting && status.offered && status.rung == LadderRung::DimSum && status.skips_left == 3, "rung one is one dish");
     auto q = ladder.challenge(base);
@@ -138,10 +141,11 @@ void dim_sum_clears_only_the_wait()
 
 void wrong_dishes_reach_the_sums()
 {
+    LadderAllowance allowance;
     const auto dishes = pool();
     AttemptBudget budget;
     lock_out(budget, base);
-    UnlockLadder ladder(budget, no_school, dishes);
+    UnlockLadder ladder(budget, allowance, no_school, dishes);
     for (unsigned i = 0; i < ladder_wrong_dishes; ++i) {
         auto q = ladder.challenge(base);
         check(q && q->rung == LadderRung::DimSum, "dish rung until five wrong dishes");
@@ -158,7 +162,7 @@ void wrong_dishes_reach_the_sums()
 
     AttemptBudget out_of_range;
     lock_out(out_of_range, base);
-    UnlockLadder second(out_of_range, no_school, dishes);
+    UnlockLadder second(out_of_range, allowance, no_school, dishes);
     auto dish = second.challenge(base);
     check(second.answer_dish(dish->nonce, 4, base).verdict == LadderVerdict::Wrong, "a choice that does not exist is wrong");
     dish = second.challenge(base);
@@ -169,10 +173,11 @@ void wrong_dishes_reach_the_sums()
 
 void expiry_and_lockout_changes()
 {
+    LadderAllowance allowance;
     const auto dishes = pool();
     AttemptBudget budget;
     const auto start = lock_out(budget, base, 240);
-    UnlockLadder ladder(budget, no_school, dishes);
+    UnlockLadder ladder(budget, allowance, no_school, dishes);
     auto q = ladder.challenge(start);
     const auto late = ladder.answer_dish(q->nonce, right_choice(*q, dishes), start + Seconds(ladder_dish_seconds));
     check(late.verdict == LadderVerdict::Expired && late.status.waiting && late.status.wrong_dishes == 0, "an expired question is not graded");
@@ -188,7 +193,7 @@ void expiry_and_lockout_changes()
     // A question from one lockout is worthless in the next.
     AttemptBudget other;
     const auto first = lock_out(other, base);
-    UnlockLadder carried(other, no_school, dishes);
+    UnlockLadder carried(other, allowance, no_school, dishes);
     auto old = carried.challenge(first);
     const auto second = first + Seconds(31);
     lock_out(other, second);
@@ -198,9 +203,10 @@ void expiry_and_lockout_changes()
 
 void sums_rung()
 {
+    LadderAllowance allowance;
     AttemptBudget budget;
     lock_out(budget, base);
-    UnlockLadder ladder(budget, school, pool());
+    UnlockLadder ladder(budget, allowance, school, pool());
     auto status = ladder.status(base);
     check(status.offered && status.rung == LadderRung::Sums, "School mode starts at the sums");
     auto q = ladder.challenge(base);
@@ -217,7 +223,7 @@ void sums_rung()
 
     AttemptBudget wrong_budget;
     lock_out(wrong_budget, base);
-    UnlockLadder wrong(wrong_budget, school, pool());
+    UnlockLadder wrong(wrong_budget, allowance, school, pool());
     q = wrong.challenge(base);
     answers = sum_answers(*q);
     answers[9] += 1;
@@ -228,7 +234,7 @@ void sums_rung()
 
     AttemptBudget short_budget;
     lock_out(short_budget, base);
-    UnlockLadder short_list(short_budget, school, pool());
+    UnlockLadder short_list(short_budget, allowance, school, pool());
     q = short_list.challenge(base);
     answers = sum_answers(*q);
     answers.pop_back();
@@ -236,7 +242,7 @@ void sums_rung()
 
     AttemptBudget slow_budget;
     const auto start = lock_out(slow_budget, base, 480);
-    UnlockLadder slow(slow_budget, school, pool());
+    UnlockLadder slow(slow_budget, allowance, school, pool());
     q = slow.challenge(start);
     const auto expired = slow.answer_sums(q->nonce, sum_answers(*q), start + Seconds(ladder_sums_seconds));
     check(expired.verdict == LadderVerdict::Expired && expired.status.rung == LadderRung::Sums, "expired sums are not graded");
@@ -244,11 +250,12 @@ void sums_rung()
 
 void school_mode_mid_ladder()
 {
+    LadderAllowance allowance;
     const auto dishes = pool();
     bool on = false;
     AttemptBudget budget;
     lock_out(budget, base);
-    UnlockLadder ladder(budget, [&] { return on; }, dishes);
+    UnlockLadder ladder(budget, allowance, [&] { return on; }, dishes);
     auto q = ladder.challenge(base);
     check(q && q->rung == LadderRung::DimSum, "dish rung outside School mode");
     on = true;
@@ -261,7 +268,7 @@ void school_mode_mid_ladder()
     check(ladder.status(base).rung == LadderRung::Sums && ladder.challenge(base)->nonce == sums->nonce, "rungs never climb back");
     AttemptBudget direct;
     lock_out(direct, base);
-    UnlockLadder answered(direct, [&] { return on; }, dishes);
+    UnlockLadder answered(direct, allowance, [&] { return on; }, dishes);
     q = answered.challenge(base);
     on = true;
     check(answered.answer_dish(q->nonce, right_choice(*q, dishes), base).verdict == LadderVerdict::Rejected && direct.state(base).wait_seconds > 0,
@@ -269,7 +276,7 @@ void school_mode_mid_ladder()
     on = false;
     AttemptBudget empty;
     lock_out(empty, base);
-    UnlockLadder no_catalog(empty, no_school, {});
+    UnlockLadder no_catalog(empty, allowance, no_school, {});
     check(no_catalog.status(base).rung == LadderRung::Sums, "no catalog data starts at the sums");
 }
 
@@ -285,9 +292,10 @@ std::optional<LadderChallenge> moles(UnlockLadder& ladder, Time now)
 
 void mole_round_rules()
 {
+    LadderAllowance allowance;
     AttemptBudget budget;
     const auto now = lock_out(budget, base, 120);
-    UnlockLadder ladder(budget, school, pool());
+    UnlockLadder ladder(budget, allowance, school, pool());
     const auto q = moles(ladder, now);
     check(q && q->rung == LadderRung::Moles && hex_nonce(q->nonce), "whack-a-mole after a wrong sum");
     const auto& round = q->round;
@@ -322,10 +330,11 @@ void mole_round_rules()
 
 void mole_round_won_and_lost()
 {
+    LadderAllowance allowance;
     for (const unsigned hits : {ladder_mole_count, ladder_moles_needed, ladder_moles_needed - 1}) {
         AttemptBudget budget;
         const auto now = lock_out(budget, base, 60);
-        UnlockLadder ladder(budget, school, pool());
+        UnlockLadder ladder(budget, allowance, school, pool());
         const auto q = moles(ladder, now);
         const Time start = now + Milliseconds(q->round.lead_in_ms);
         unsigned live = 0;
@@ -347,9 +356,10 @@ void mole_round_won_and_lost()
 
 void mole_round_abuse()
 {
+    LadderAllowance allowance;
     AttemptBudget budget;
     const auto now = lock_out(budget, base, 60);
-    UnlockLadder ladder(budget, school, pool());
+    UnlockLadder ladder(budget, allowance, school, pool());
     const auto q = moles(ladder, now);
     const Time start = now + Milliseconds(q->round.lead_in_ms);
     const auto& first = q->round.moles[0];
@@ -363,9 +373,9 @@ void mole_round_abuse()
     // Walking away, restarting or answering the wrong kind all lose the round.
     AttemptBudget walked;
     const auto t = lock_out(walked, base, 120);
-    UnlockLadder away(walked, school, pool());
+    UnlockLadder away(walked, allowance, school, pool());
     const auto round = moles(away, t);
-    UnlockLadder restarted(walked, school, pool());
+    UnlockLadder restarted(walked, allowance, school, pool());
     check(restarted.status(t).rung == LadderRung::Clock && !restarted.challenge(t), "a new ladder cannot replay an issued round");
     const auto expires = t + Milliseconds(round->round.lead_in_ms + round->round.duration_ms + ladder_round_grace_ms);
     check(away.status(expires).rung == LadderRung::Clock && !away.challenge(expires), "an abandoned round is lost");
@@ -373,13 +383,13 @@ void mole_round_abuse()
 
     AttemptBudget mixed;
     const auto m = lock_out(mixed, base, 60);
-    UnlockLadder kinds(mixed, school, pool());
+    UnlockLadder kinds(mixed, allowance, school, pool());
     const auto wrong_kind = moles(kinds, m);
     check(kinds.answer_sums(wrong_kind->nonce, sum_answers(*wrong_kind), m).verdict == LadderVerdict::Wrong && kinds.status(m).rung == LadderRung::Clock, "sums against a round lose it");
 
     AttemptBudget handed;
     const auto h = lock_out(handed, base, 120);
-    UnlockLadder late(handed, school, pool());
+    UnlockLadder late(handed, allowance, school, pool());
     const auto slow = moles(late, h);
     const auto deadline = h + Milliseconds(slow->round.lead_in_ms + slow->round.duration_ms + ladder_round_grace_ms);
     check(late.finish_round(slow->nonce, deadline).verdict == LadderVerdict::Expired, "a round handed in after its grace has expired");
@@ -387,9 +397,10 @@ void mole_round_abuse()
 
 void hourly_cap()
 {
+    LadderAllowance allowance;
     const auto dishes = pool();
     AttemptBudget budget;
-    UnlockLadder ladder(budget, no_school, dishes);
+    UnlockLadder ladder(budget, allowance, no_school, dishes);
     Time now = base;
     for (unsigned round = 0; round < 3; ++round) {
         lock_out(budget, now);
@@ -410,12 +421,13 @@ void hourly_cap()
 
 void answer_positions_vary()
 {
+    LadderAllowance allowance;
     const auto dishes = pool();
     std::set<unsigned> positions;
     for (unsigned i = 0; i < 40; ++i) {
         AttemptBudget budget;
         lock_out(budget, base);
-        UnlockLadder ladder(budget, no_school, dishes);
+        UnlockLadder ladder(budget, allowance, no_school, dishes);
         positions.insert(right_choice(*ladder.challenge(base), dishes));
     }
     check(positions.size() > 1, "the right answer is not in a fixed place");
@@ -424,7 +436,7 @@ void answer_positions_vary()
     for (unsigned i = 0; i < 400 && graded < 3; ++i) {
         AttemptBudget budget;
         lock_out(budget, base);
-        UnlockLadder ladder(budget, no_school, dishes);
+        UnlockLadder ladder(budget, allowance, no_school, dishes);
         const auto q = ladder.challenge(base);
         if (right_choice(*q, dishes) != 0) continue;
         LadderVerdict verdict = LadderVerdict::Cleared;
@@ -438,6 +450,101 @@ void answer_positions_vary()
         ++graded;
     }
     check(graded == 3, "every wrong kind was tried against a first-choice question");
+}
+
+class MemoryVault final : public Vault {
+public:
+    std::map<std::string, std::vector<unsigned char>> records;
+    std::optional<Secret> read(const std::string& id) override
+    {
+        const auto found = records.find(id);
+        if (found == records.end()) return {};
+        return Secret(found->second);
+    }
+    void write(const std::string& id, const Secret& value) override { records[id].assign(value.data(), value.data() + value.size()); }
+    void erase(const std::string& id) override { records.erase(id); }
+};
+ClockAnchor anchor_at(Time steady, std::int64_t unix_ms)
+{
+    ClockAnchor anchor;
+    anchor.steady = steady;
+    anchor.unix_ms = unix_ms;
+    return anchor;
+}
+
+void one_allowance_for_every_surface()
+{
+    const auto dishes = pool();
+    MemoryVault vault;
+    const std::int64_t wall = 1800000000000;
+    // Two surfaces, two allowance objects, one shared record.
+    LadderAllowance history_allowance(vault, shared_ladder_account, anchor_at(base, wall));
+    LadderAllowance lock_allowance(vault, shared_ladder_account, anchor_at(base, wall));
+    AttemptBudget history, element, third;
+    UnlockLadder history_ladder(history, history_allowance, no_school, dishes);
+    UnlockLadder element_ladder(element, lock_allowance, no_school, dishes);
+    UnlockLadder third_ladder(third, lock_allowance, no_school, dishes);
+    lock_out(history, base);
+    lock_out(element, base);
+    lock_out(third, base);
+    auto q = history_ladder.challenge(base);
+    check(history_ladder.answer_dish(q->nonce, right_choice(*q, dishes), base).verdict == LadderVerdict::Cleared, "a win on one surface");
+    check(element_ladder.status(base).skips_left == 2 && third_ladder.status(base).skips_left == 2, "is spent from every surface's allowance");
+    auto pending = third_ladder.challenge(base);
+    q = element_ladder.challenge(base);
+    check(element_ladder.answer_dish(q->nonce, right_choice(*q, dishes), base).verdict == LadderVerdict::Cleared, "a second surface wins");
+    lock_out(history, base + Seconds(1));
+    q = history_ladder.challenge(base + Seconds(1));
+    check(history_ladder.answer_dish(q->nonce, right_choice(*q, dishes), base + Seconds(1)).verdict == LadderVerdict::Cleared, "the third skip of the hour");
+    const auto capped = third_ladder.answer_dish(pending->nonce, right_choice(*pending, dishes), base + Seconds(2));
+    check(capped.verdict == LadderVerdict::CapReached && capped.status.waiting && !capped.status.offered, "a right answer after the allowance ran out clears nothing");
+    check(third.state(base + Seconds(2)).wait_seconds > 0 && third.state(base + Seconds(2)).remaining == 0, "and the wait goes on");
+    lock_out(element, base + Seconds(3));
+    check(!element_ladder.challenge(base + Seconds(3)) && !element_ladder.status(base + Seconds(3)).offered, "after three skips the clock is the only way through for everyone");
+    LadderAllowance restarted(vault, shared_ladder_account, anchor_at(Time{} + std::chrono::hours(30), wall + 120000));
+    check(restarted.remaining(Time{} + std::chrono::hours(30)) == 0, "restarting refunds no skips");
+}
+
+void progress_survives_restart()
+{
+    const auto dishes = pool();
+    MemoryVault vault;
+    LadderAllowance allowance;
+    const std::int64_t wall = 1800000000000;
+    {
+        AttemptBudget budget(vault, "test.ladder", anchor_at(base, wall));
+        lock_out(budget, base, 240);
+    }
+    const auto start = base + Seconds(210); // 30 + 60 + 120 seconds of earlier waits
+    {
+        AttemptBudget budget(vault, "test.ladder", anchor_at(base, wall));
+        UnlockLadder ladder(budget, allowance, no_school, dishes);
+        for (unsigned i = 0; i < 2; ++i) {
+            const auto q = ladder.challenge(start);
+            ladder.answer_dish(q->nonce, (right_choice(*q, dishes) + 1) % 4, start);
+        }
+        check(ladder.status(start).wrong_dishes == 2, "two wrong dishes");
+    }
+    // A new process: new objects, a new steady clock, the same wall clock.
+    const auto later = Time{} + std::chrono::hours(40);
+    AttemptBudget reopened(vault, "test.ladder", anchor_at(later, wall + 210000));
+    UnlockLadder ladder(reopened, allowance, no_school, dishes);
+    auto status = ladder.status(later);
+    check(status.rung == LadderRung::DimSum && status.wrong_dishes == 2 && status.wait_seconds == 240, "a restart keeps the ladder and the wait");
+    for (unsigned i = 2; i < ladder_wrong_dishes; ++i) {
+        const auto q = ladder.challenge(later);
+        ladder.answer_dish(q->nonce, (right_choice(*q, dishes) + 1) % 4, later);
+    }
+    auto sums = ladder.challenge(later);
+    auto answers = sum_answers(*sums);
+    answers[3] += 1;
+    ladder.answer_sums(sums->nonce, answers, later);
+    const auto round = ladder.challenge(later);
+    check(round && round->rung == LadderRung::Moles, "whack-a-mole after a wrong sum");
+    AttemptBudget again(vault, "test.ladder", anchor_at(base, wall));
+    UnlockLadder restarted(again, allowance, no_school, dishes);
+    status = restarted.status(start);
+    check(status.waiting && status.rung == LadderRung::Clock && !restarted.challenge(start), "restarting during a round loses it");
 }
 } // namespace
 
@@ -456,6 +563,8 @@ int main()
         mole_round_abuse();
         hourly_cap();
         answer_positions_vary();
+        one_allowance_for_every_surface();
+        progress_survives_restart();
         std::cout << "PASS " << checks << " unlock ladder checks\n";
         return 0;
     } catch (const std::exception& e) {

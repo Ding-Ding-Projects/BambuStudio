@@ -47,11 +47,15 @@ action, shortcut, and programmatic activation before executing it.
 Five incorrect attempts start a 30-second wait. Consecutive waits double up to
 900 seconds. Ordinary expiry restores five attempts. The
 [unlock ladder](unlock-ladder.md) service is the only caller of `clear_wait`. It
-generates and grades its own challenges against single-use nonces, can clear
-three waits per rolling hour, restores the same five attempts, and never unlocks
-a session. Lock and
-attempt state must be persisted by the owner if restart-resistant throttling is
-required; the current session model is deliberately in-memory.
+generates and grades its own challenges against single-use nonces, restores the
+same five attempts, and never unlocks a session. One `LadderAllowance`, kept in
+the shared operating-system vault, lets every surface together clear at most
+three waits per rolling hour. A budget constructed with a vault and account
+keeps its attempts, wait, escalation and ladder position in that record and
+re-reads it on every call, so restarts and other processes never refund
+attempts. The School mode credential, the identity history password and element
+locks use persisted budgets; a default-constructed budget lives only in its
+object. Unlock state itself is not persisted, so every restart starts locked.
 
 ## Snapshot encryption
 
