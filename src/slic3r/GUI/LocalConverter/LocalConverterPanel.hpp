@@ -3,24 +3,35 @@
 #include <atomic>
 #include <array>
 #include <memory>
+#include <mutex>
 #include <thread>
 #include <wx/panel.h>
 #include <wx/timer.h>
 
+class Button;
+class Label;
+class MD3DataViewListCtrl;
 class SearchField;
-class wxListCtrl;
-class wxTextCtrl;
-class wxStaticText;
-class wxNotebook;
+class TextInput;
+class wxBoxSizer;
+class wxSimplebook;
 
 namespace Slic3r::GUI {
+class TabStrip;
 // A real destination panel. Its owner provides the installed package receipt
 // and private local data directory, then places it in the normal tab router.
+// Every control is a registered kit primitive: the eight categories ride a
+// persisted TabStrip, catalogues and the queue are MD3 tables, fields are
+// TextInput and every line of text is a Label.
 class LocalConverterPanel final : public wxPanel {
 public:
     LocalConverterPanel(wxWindow *, LocalConverter::PackageProof, std::filesystem::path queue_directory);
     ~LocalConverterPanel() override;
 private:
+    void place_categories();
+    void show_category(const std::string &id);
+    void select_adapter(unsigned category);
+    void set_rotation(int degrees);
     void refresh_catalog();
     void refresh_queue();
     void choose_source(bool folder);
@@ -34,18 +45,23 @@ private:
     std::vector<LocalConverter::Adapter> m_adapters;
     std::vector<LocalConverter::Job> m_page;
     std::array<SearchField *,8> m_search{};
-    std::array<wxListCtrl *,8> m_catalogs{};
+    std::array<MD3DataViewListCtrl *,8> m_catalogs{};
+    std::array<Label *,8> m_empty{};
     std::array<std::vector<std::size_t>,8> m_visible;
+    std::array<Button *,4> m_rotation{};
     SearchField *m_queue_search = nullptr;
-    wxNotebook *m_categories = nullptr;
-    wxListCtrl *m_jobs = nullptr;
-    wxTextCtrl *m_destination = nullptr;
-    wxTextCtrl *m_pdf_pages = nullptr;
-    wxTextCtrl *m_pdf_title = nullptr;
+    TabStrip *m_categories = nullptr;
+    wxSimplebook *m_category_pages = nullptr;
+    wxBoxSizer *m_category_layout = nullptr;
+    MD3DataViewListCtrl *m_jobs = nullptr;
+    TextInput *m_destination = nullptr;
+    TextInput *m_pdf_pages = nullptr;
+    TextInput *m_pdf_title = nullptr;
+    Label *m_rotation_label = nullptr;
     int m_pdf_rotation = 90;
-    wxStaticText *m_status = nullptr;
-    wxStaticText *m_details = nullptr;
-    wxStaticText *m_page_label = nullptr;
+    Label *m_status = nullptr;
+    Label *m_details = nullptr;
+    Label *m_page_label = nullptr;
     std::vector<std::size_t> m_visible_jobs;
     std::thread m_work;
     std::atomic<bool> m_cancel{false},m_running{false};

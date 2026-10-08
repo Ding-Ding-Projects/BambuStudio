@@ -117,6 +117,29 @@ pickers, PDF page/rotation/title controls, explicit ordered multi-file merge,
 folder discovery, pause/resume/cancel, paged history, page selection/inversion,
 selected retry and visible-row export. PDF page indices are one-based.
 
+## Panel components
+
+Every control on the panel is a registered kit primitive; no stock wx control
+is constructed. The source contract is pinned by
+`ui-md3/tests/local-converter-panel.test.mjs`.
+
+| Part | Kit primitive |
+| --- | --- |
+| Eight categories | `TabStrip` (surface `local_converter_categories`, docked on top, no close) over a `wxSimplebook` page per category |
+| Category, PDF-setting and queue searches | `SearchField` with its anchored regex builder |
+| Adapter catalogues and the queue/result history | `MD3DataViewListCtrl` with `md3_style_data_view` (the queue allows multiple selection) |
+| Page order, PDF title and output folder | `TextInput` |
+| Title, guidance, details, empty states, page and status lines | `Label` (title in the kit headline face) |
+| Actions, rotation choice and paging | `Button` with an explicit Material variant; the chosen rotation is the filled button |
+| Scrolling body | `MD3ScrolledWindow` on the Surface role |
+
+The category strip keeps the shared tab contract: keyboard selection along its
+axis, overflow menu, reorder, pinning and grouping, its own tab search, and a
+saved dock edge. Moving the strip to another edge re-places the category pages
+beside it. A category with no matching adapter shows a visible empty state
+instead of a placeholder row. Every search, table and field carries an
+accessible name.
+
 ## Verification and remaining integration
 
 The standalone test project is `tests/local_converter` and can be configured
@@ -147,7 +170,7 @@ command-palette routing, complete bulk-action coverage and the documented
 language/theme/display-scale capture matrix still require shared integration
 and runtime evidence. No source-only result establishes those properties.
 Material Designer creation/export tooling was unavailable in this implementation
-session; the panel reuses the existing native controls instead of claiming a
-design-tool handoff.
+session; the panel is assembled from the existing kit primitives listed above
+instead of claiming a design-tool handoff.
 
 The converter has no HTTP API. A Postman collection is not applicable.
