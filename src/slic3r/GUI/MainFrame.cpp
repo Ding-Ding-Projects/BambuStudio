@@ -252,11 +252,11 @@ static wxIcon main_frame_icon(GUI_App::EAppMode app_mode)
 
 wxDEFINE_EVENT(EVT_SYNC_CLOUD_PRESET,     SimpleEvent);
 
-#ifdef __APPLE__
-static const wxString ctrl = ("Ctrl+");
-#else
-static const wxString ctrl = _L("Ctrl+");
-#endif
+// Accelerator prefix for menu labels. This is initialized while the DLL loads,
+// before any catalog exists, so translating it here never changed the result
+// and only ran the translation service during static initialization. Keep the
+// untranslated literal: menu accelerators expect "Ctrl+", not a localized form.
+static const wxString ctrl = wxS("Ctrl+");
 
 MainFrame::MainFrame() :
 DPIFrame(NULL, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, BORDERLESS_FRAME_STYLE, "mainframe")

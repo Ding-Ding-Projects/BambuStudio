@@ -26,11 +26,32 @@
 
 namespace Slic3r::GUI::PersonalVocabulary {
 namespace {
-std::mutex source_mutex;
-std::set<std::wstring> sources;
-Entries entries;
-bool initialized = false;
-bool cache_loaded = false;
+struct Observer {
+    wxWeakRef<wxWindow> window;
+    std::function<void()> refresh_display;
+};
+
+// remember() runs inside every translation, and other files translate text in
+// their static initializers while BambuStudio.dll is still loading. A container
+// at namespace scope may not be constructed yet at that point (its constructor
+// is a dynamic initializer that can run later), and inserting into it there
+// faulted during DLL initialization. All mutable state therefore lives in one
+// object created on first use. It is never destroyed, so static destructors
+// that run during unload cannot reach a destroyed container either.
+struct State {
+    std::mutex source_mutex;
+    std::set<std::wstring> sources;
+    Entries entries;
+    std::map<wxWindow *, Observer> observers;
+    bool initialized = false;
+    bool cache_loaded = false;
+};
+
+State &state()
+{
+    static State *const instance = new State();
+    return *instance;
+}
 
 std::filesystem::path cache_path()
 {
@@ -91,17 +112,12 @@ struct PendingFile {
     std::filesystem::path path;
     ~PendingFile() { if (!path.empty()) { std::error_code ignored; std::filesystem::remove(path, ignored); } }
 };
-
-struct Observer {
-    wxWeakRef<wxWindow> window;
-    std::function<void()> refresh_display;
-};
-std::map<wxWindow *, Observer> observers;
 }
 
 void observe(wxWindow *window, std::function<void()> refresh_display)
 {
     if (!window) return;
+    auto &observers = state().observers;
     for (auto it = observers.begin(); it != observers.end();)
         if (!it->second.window) it = observers.erase(it); else ++it;
     observers[window] = Observer{window, std::move(refresh_display)};
@@ -142,13 +158,14 @@ bool parse(std::string_view bytes, Entries &result)
 
 void initialize()
 {
-    if (initialized || !wxTheApp) return;
-    initialized = true;
+    auto &s = state();
+    if (s.initialized || !wxTheApp) return;
+    s.initialized = true;
     std::string bytes;
     Entries cached;
     if (read_bounded(cache_path(), bytes) && parse(bytes, cached)) {
-        entries = std::move(cached);
-        cache_loaded = true;
+        s.entries = std::move(cached);
+        s.cache_loaded = true;
     }
 }
 
@@ -185,8 +202,8 @@ bool load(const std::filesystem::path &file)
     if (ec) return false;
 #endif
     pending.path.clear();
-    entries = std::move(next);
-    cache_loaded = true;
+    state().entries = std::move(next);
+    state().cache_loaded = true;
     refresh();
     return true;
 }
@@ -197,13 +214,13 @@ bool clear()
     std::error_code ec;
     std::filesystem::remove(cache_path(), ec);
     if (ec) return false;
-    entries.clear();
-    cache_loaded = false;
+    state().entries.clear();
+    state().cache_loaded = false;
     refresh();
     return !ec;
 }
 
-bool loaded() { initialize(); return cache_loaded; }
+bool loaded() { initialize(); return state().cache_loaded; }
 
 bool is_cache_path(const std::filesystem::path &path)
 {
@@ -219,8 +236,9 @@ bool is_cache_path(const std::filesystem::path &path)
 wxString remember(const wxString &source)
 {
     if (!source.empty()) {
-        std::lock_guard<std::mutex> lock(source_mutex);
-        if (sources.size() < 50000) sources.insert(source.ToStdWstring());
+        auto &s = state();
+        std::lock_guard<std::mutex> lock(s.source_mutex);
+        if (s.sources.size() < 50000) s.sources.insert(source.ToStdWstring());
     }
     return source;
 }
@@ -229,8 +247,9 @@ wxString display(const wxString &source)
 {
     if (PersonalModes::school_presentation_suppressed.load()) return source;
     const auto value = source.ToStdWstring();
-    { std::lock_guard<std::mutex> lock(source_mutex); if (!sources.count(value)) return source; }
-    return Slic3r::GUI::PersonalVocabulary::apply(source, entries);
+    auto &s = state();
+    { std::lock_guard<std::mutex> lock(s.source_mutex); if (!s.sources.count(value)) return source; }
+    return Slic3r::GUI::PersonalVocabulary::apply(source, s.entries);
 }
 
 wxString apply(const wxString &source, const Entries &mapping)
@@ -266,6 +285,7 @@ void refresh()
     if (!wxTheApp) return;
     // Snapshot callbacks because a display refresh may construct another widget.
     std::vector<Observer> live;
+    auto &observers = state().observers;
     for (auto it = observers.begin(); it != observers.end();) {
         if (!it->second.window) it = observers.erase(it);
         else { live.push_back(it->second); ++it; }
