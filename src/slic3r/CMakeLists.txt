@@ -795,6 +795,10 @@ list(APPEND SLIC3R_GUI_SOURCES
     GUI/Appearance/ElementStyle.hpp
     GUI/Appearance/AppearanceEditorPopover.cpp
     GUI/Appearance/AppearanceEditorPopover.hpp
+    GUI/Presets/BlankEditorPresets.cpp
+    GUI/Presets/BlankEditorPresets.hpp
+    GUI/Presets/StartFromPicker.cpp
+    GUI/Presets/StartFromPicker.hpp
     GUI/Widgets/MaterialIcon.cpp
     GUI/Widgets/MaterialIcon.hpp
     GUI/Widgets/MD3Dialog.cpp

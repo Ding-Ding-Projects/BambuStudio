@@ -1,0 +1,263 @@
+#ifndef _CRT_SECURE_NO_WARNINGS
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+
+#include <catch_main.hpp>
+
+#include "libslic3r/EffectivePreferences.hpp"
+#include "libslic3r/PresentationDefaults.hpp"
+#include "slic3r/GUI/DimSumSurpriseModel.hpp"
+#include "slic3r/GUI/Presets/BlankEditorPresets.hpp"
+#include "slic3r/GUI/Schedule/ScheduledSettingsModel.hpp"
+
+#include <algorithm>
+#include <set>
+#include <string>
+
+using namespace Slic3r;
+using namespace Slic3r::GUI::BlankEditorPresets;
+
+namespace {
+
+const Preset *find(const std::vector<Preset> &presets, const std::string &id)
+{
+    for (const Preset &preset : presets)
+        if (preset.id == id)
+            return &preset;
+    return nullptr;
+}
+
+const Assignment *find_assignment(const Preset &preset, const std::string &key)
+{
+    for (const Assignment &assignment : preset.sets)
+        if (assignment.key == key)
+            return &assignment;
+    return nullptr;
+}
+
+EditorSpec sample_spec()
+{
+    EditorSpec spec;
+    spec.id     = "sample";
+    spec.fields = {
+        {"dark_color_mode", "Theme", {{"0", "Light"}, {"1", "Dark"}}, ""},
+        {"ui_density", "Density", {{"comfortable", "Comfortable"}, {"compact", "Compact"}}, ""},
+        {"ui_font_family", "Font", {}, "Default (Roboto)"},
+        {"language", "Language mode", {}, ""},
+    };
+    spec.creates_defaults = "Creates a sample.";
+    spec.creates_saved    = "Creates a sample from saved values.";
+    spec.creates_empty    = "Creates an empty sample.";
+    return spec;
+}
+
+} // namespace
+
+TEST_CASE("Every presentation preference has a shipped value or a stated reason", "[blank-editors][defaults]")
+{
+    std::set<std::string> covered;
+    for (const PresentationDefaults::Entry &entry : PresentationDefaults::entries()) {
+        INFO(entry.key);
+        CHECK(covered.insert(entry.key).second); // listed once
+        CHECK_FALSE(PresentationDefaults::is_unfixed(entry.key));
+    }
+    for (const std::string &key : PresentationDefaults::unfixed_keys()) {
+        INFO(key);
+        CHECK(covered.insert(key).second);
+        CHECK(unfixed_reason(key) != nullptr);
+    }
+    for (const EffectivePreferences::Descriptor &descriptor : EffectivePreferences::descriptors()) {
+        INFO(descriptor.key);
+        CHECK(covered.count(descriptor.key) == 1);
+        const auto shipped = PresentationDefaults::value(descriptor.key);
+        if (shipped) // the shipped value is one the preference itself accepts
+            CHECK(EffectivePreferences::decode(descriptor, *shipped).has_value());
+    }
+    for (const std::string &key : GUI::Schedule::allowed_keys()) {
+        INFO(key);
+        CHECK(covered.count(key) == 1);
+        const auto shipped = PresentationDefaults::value(key);
+        if (shipped)
+            CHECK(GUI::Schedule::validate_value(key, *shipped).empty());
+    }
+}
+
+TEST_CASE("Shipped funny level and accent agree with their owners", "[blank-editors][defaults]")
+{
+    CHECK(PresentationDefaults::kFunnyLevel == GUI::DimSum::FUNNY_LEVEL_DEFAULT);
+    CHECK(PresentationDefaults::value("funny_level_en") == std::to_string(PresentationDefaults::kFunnyLevel));
+    CHECK(PresentationDefaults::value("funny_level_yue") == std::to_string(PresentationDefaults::kFunnyLevel));
+    CHECK(PresentationDefaults::value("ui_accent_seed") == std::string(PresentationDefaults::kAccentSeed));
+    CHECK_FALSE(PresentationDefaults::value("no_such_key").has_value());
+    CHECK(PresentationDefaults::value_or_empty("no_such_key").empty());
+}
+
+TEST_CASE("Standard presets come in a fixed order and say what they create", "[blank-editors][presets]")
+{
+    const std::vector<Preset> presets = start_presets(sample_spec(), {});
+    REQUIRE(presets.size() == 3);
+    CHECK(presets[0].id == kShippedDefaultsId);
+    CHECK(presets[0].origin == Origin::ShippedDefaults);
+    CHECK(presets[1].id == kSavedSettingsId);
+    CHECK(presets[1].origin == Origin::SavedSettings);
+    CHECK(presets[2].id == kEmptyId);
+    CHECK(presets[2].origin == Origin::Empty);
+    CHECK(find(presets, kSavedSettingsId) == &presets[1]);
+    CHECK(find(presets, "template:none") == nullptr);
+    for (const Preset &preset : presets) {
+        CHECK_FALSE(preset.title.empty());
+        CHECK_FALSE(preset.creates.empty());
+    }
+    CHECK(presets[0].creates == "Creates a sample.");
+    CHECK(presets[1].creates == "Creates a sample from saved values.");
+    CHECK(presets[2].creates == "Creates an empty sample.");
+    CHECK(presets[2].sets.empty());
+    CHECK(presets[2].left_out.empty());
+}
+
+TEST_CASE("The shipped-defaults preset sets exactly the reset values", "[blank-editors][presets]")
+{
+    const std::vector<Preset> presets = start_presets(sample_spec(), {});
+    const Preset &defaults = presets[0];
+    REQUIRE(defaults.sets.size() == 3);
+    for (const Assignment &assignment : defaults.sets) {
+        INFO(assignment.key);
+        CHECK(PresentationDefaults::value(assignment.key) == assignment.value);
+        CHECK_FALSE(assignment.from_default);
+        CHECK(assignment.scope.empty());
+    }
+    const Assignment *theme = find_assignment(defaults, "dark_color_mode");
+    REQUIRE(theme != nullptr);
+    CHECK(theme->label == "Theme");
+    CHECK(theme->shown == "Light");
+    CHECK(theme->shown_translatable);
+    const Assignment *font = find_assignment(defaults, "ui_font_family");
+    REQUIRE(font != nullptr);
+    CHECK(font->value.empty());
+    CHECK(font->shown == "Default (Roboto)");
+    // The language has no single shipped value: left out, with the reason.
+    REQUIRE(defaults.left_out.size() == 1);
+    CHECK(defaults.left_out[0].key == "language");
+    CHECK(defaults.left_out[0].label == "Language mode");
+    CHECK(defaults.left_out[0].reason == unfixed_reason("language"));
+    CHECK(defaults.values() == Values{{"dark_color_mode", "0"}, {"ui_density", "comfortable"}, {"ui_font_family", ""}});
+}
+
+TEST_CASE("The saved-settings preset copies saved values and falls back honestly", "[blank-editors][presets]")
+{
+    EditorSpec spec = sample_spec();
+    spec.valid = [](const std::string &key, const std::string &value) {
+        return key != "ui_density" || value == "comfortable" || value == "compact";
+    };
+    const Values saved = {{"dark_color_mode", "1"}, {"ui_density", "spacious"}, {"language", "yue_HK"}};
+    const std::vector<Preset> presets = start_presets(spec, saved);
+    const Preset &mine = presets[1];
+    REQUIRE(mine.sets.size() == 4);
+    const Assignment *theme = find_assignment(mine, "dark_color_mode");
+    REQUIRE(theme != nullptr);
+    CHECK(theme->value == "1");
+    CHECK(theme->shown == "Dark");
+    CHECK_FALSE(theme->from_default);
+    // A rejected saved value is never carried over: the shipped default is used and flagged.
+    const Assignment *density = find_assignment(mine, "ui_density");
+    REQUIRE(density != nullptr);
+    CHECK(density->value == "comfortable");
+    CHECK(density->from_default);
+    // Nothing saved: the shipped default, flagged.
+    const Assignment *font = find_assignment(mine, "ui_font_family");
+    REQUIRE(font != nullptr);
+    CHECK(font->from_default);
+    // Saved even without a shipped value.
+    const Assignment *language = find_assignment(mine, "language");
+    REQUIRE(language != nullptr);
+    CHECK(language->value == "yue_HK");
+    CHECK(language->shown == "yue_HK");
+    CHECK_FALSE(language->shown_translatable);
+    CHECK(mine.left_out.empty());
+
+    // Neither saved nor shipped: left out with the reason, never guessed.
+    const std::vector<Preset> bare_presets = start_presets(spec, {});
+    const Preset &bare = bare_presets[1];
+    REQUIRE(bare.left_out.size() == 1);
+    CHECK(bare.left_out[0].key == "language");
+    CHECK_FALSE(bare.left_out[0].reason.empty());
+}
+
+TEST_CASE("A preset never carries a value from anywhere but the table or the saved values", "[blank-editors][presets]")
+{
+    EditorSpec spec;
+    spec.id = "every-presentation-key";
+    for (const EffectivePreferences::Descriptor &descriptor : EffectivePreferences::descriptors())
+        spec.fields.push_back({descriptor.key, descriptor.key, {}, ""});
+    spec.creates_defaults = spec.creates_saved = spec.creates_empty = "Creates.";
+    spec.valid = [](const std::string &key, const std::string &value) {
+        const auto *descriptor = EffectivePreferences::descriptor(key);
+        return descriptor && EffectivePreferences::decode(*descriptor, value).has_value();
+    };
+    const Values saved = {{"dark_color_mode", "1"}, {"funny_level_en", "9"}, {"ui_accent_seed", "#123456"}};
+    const std::vector<Preset> presets = start_presets(spec, saved);
+    for (const Preset &preset : presets) {
+        for (const Assignment &assignment : preset.sets) {
+            INFO(preset.id << " " << assignment.key << "=" << assignment.value);
+            const auto shipped = PresentationDefaults::value(assignment.key);
+            const auto stored  = saved.find(assignment.key);
+            const bool from_table = shipped && *shipped == assignment.value;
+            const bool from_saved = preset.origin == Origin::SavedSettings && stored != saved.end() &&
+                                    stored->second == assignment.value;
+            CHECK((from_table || from_saved));
+            CHECK(spec.valid(assignment.key, assignment.value));
+        }
+    }
+    // The out-of-range saved funny level is not copied.
+    const Preset &mine = presets[1];
+    const Assignment *funny = find_assignment(mine, "funny_level_en");
+    REQUIRE(funny != nullptr);
+    CHECK(funny->value == "5");
+    CHECK(funny->from_default);
+}
+
+TEST_CASE("A shipped default the editor rejects is left out, not altered", "[blank-editors][presets]")
+{
+    EditorSpec spec = sample_spec();
+    spec.valid = [](const std::string &key, const std::string &) { return key != "ui_density"; };
+    const std::vector<Preset> presets = start_presets(spec, {});
+    const Preset &defaults = presets[0];
+    CHECK(find_assignment(defaults, "ui_density") == nullptr);
+    bool density_left_out = false;
+    for (const Omission &omission : defaults.left_out)
+        if (omission.key == "ui_density") {
+            density_left_out = true;
+            CHECK_FALSE(omission.reason.empty());
+        }
+    CHECK(density_left_out);
+}
+
+TEST_CASE("Templates pass through exactly as their owner resolved them", "[blank-editors][presets]")
+{
+    Assignment size;
+    size.key   = "*/fontSize";
+    size.scope = "Every element";
+    size.label = "Font size (pt)";
+    size.value = size.shown = "15.5";
+    const Preset preset = template_preset("template:Large text", "Large text", "Makes Large text the active preset.", {size});
+    CHECK(preset.origin == Origin::Template);
+    CHECK(preset.id == "template:Large text");
+    REQUIRE(preset.sets.size() == 1);
+    CHECK(preset.sets[0].value == "15.5");
+    CHECK(preset.values() == Values{{"*/fontSize", "15.5"}});
+}
+
+TEST_CASE("Values are shown with their choice or empty label", "[blank-editors][presets]")
+{
+    const Field theme{"dark_color_mode", "Theme", {{"0", "Light"}, {"1", "Dark"}}, ""};
+    bool translatable = false;
+    CHECK(shown_value(theme, "1", translatable) == "Dark");
+    CHECK(translatable);
+    CHECK(shown_value(theme, "7", translatable) == "7");
+    CHECK_FALSE(translatable);
+    CHECK(shown_value(theme, "", translatable) == "(empty)");
+    CHECK(translatable);
+    const Field name{"app_display_name", "App name", {}, "Shipped name"};
+    CHECK(shown_value(name, "", translatable) == "Shipped name");
+    CHECK(translatable);
+}

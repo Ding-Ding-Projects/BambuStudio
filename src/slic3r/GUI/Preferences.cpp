@@ -24,7 +24,9 @@
 #include "UxProgramTermsDialog.hpp"
 #include "Widgets/StateColor.hpp"
 #include "libslic3r/AppConfig.hpp"
+#include "libslic3r/PresentationDefaults.hpp"
 #include "../Utils/ExternalEditor.hpp"
+#include <algorithm>
 #include <cassert>
 #include <string>
 #include <vector>
@@ -2382,7 +2384,7 @@ wxWindow *PreferencesDialog::create_appearance_tab()
         {"#2563eb", _L("Blue")},  {"#d81b60", _L("Pink")},   {"#ea580c", _L("Orange")},
     };
     std::string cur_seed = app_config->get("ui_accent_seed");
-    if (cur_seed.empty()) cur_seed = "#146c2e";
+    if (cur_seed.empty()) cur_seed = PresentationDefaults::kAccentSeed;
 
     auto *accent_row = new wxBoxSizer(wxHORIZONTAL);
     auto  swatches   = std::make_shared<std::vector<AccentSwatch *>>();
@@ -2419,9 +2421,9 @@ wxWindow *PreferencesDialog::create_appearance_tab()
     accent_custom->SetName(_L("Custom accent"));
     accent_custom->Bind(wxEVT_BUTTON, [this, swatches](wxCommandEvent &) {
         std::string seed = app_config->get("ui_accent_seed");
-        if (seed.empty()) seed = "#146c2e";
+        if (seed.empty()) seed = PresentationDefaults::kAccentSeed;
         wxColour initial(wxString::FromUTF8(seed));
-        if (!initial.IsOk()) initial = wxColour(wxString::FromUTF8("#146c2e"));
+        if (!initial.IsOk()) initial = wxColour(wxString::FromUTF8(PresentationDefaults::kAccentSeed));
         // MD3 continuous picker (hue strip + S/V field + Material tonal
         // ladder + colour translator) instead of the native common dialog.
         MD3ColorPickerDialog dlg(this, initial);
@@ -2556,21 +2558,30 @@ wxWindow *PreferencesDialog::create_appearance_tab()
     m_button_list[m_button_list.size()] = reset_btn;
     reset_btn->SetVariant(Button::Variant::Outlined);
     reset_btn->SetButtonSize(Button::Size::Small);
-    reset_btn->Bind(wxEVT_BUTTON, [this, density, font_combo, text_size, swatches, apply_fonts, resetting](wxCommandEvent &) {
-        app_config->set("ui_density", "comfortable");
-        app_config->set("ui_accent_seed", "#146c2e");
-        app_config->set("ui_font_family", "");
-        app_config->set("ui_font_scale", "1.0");
+    reset_btn->Bind(wxEVT_BUTTON, [this, density, font_combo, font_values, text_size, swatches, seeds, apply_fonts, resetting](wxCommandEvent &) {
+        // The shipped values come from the one table the blank-editor
+        // "Shipped defaults" presets also read, so the two never disagree.
+        const std::string density_value = PresentationDefaults::value_or_empty("ui_density");
+        const std::string seed_value    = PresentationDefaults::value_or_empty("ui_accent_seed");
+        const std::string family_value  = PresentationDefaults::value_or_empty("ui_font_family");
+        const std::string scale_value   = PresentationDefaults::value_or_empty("ui_font_scale");
+        app_config->set("ui_density", density_value);
+        app_config->set("ui_accent_seed", seed_value);
+        app_config->set("ui_font_family", family_value);
+        app_config->set("ui_font_scale", scale_value);
         app_config->save();
-        MD3::Metrics::setDensity(MD3::Metrics::Density::Comfortable);
-        MD3::setAccentSeed(wxColour(wxString::FromUTF8("#146c2e"))); // Brand seed clears the accent override
+        const bool compact = density_value == "compact";
+        MD3::Metrics::setDensity(compact ? MD3::Metrics::Density::Compact : MD3::Metrics::Density::Comfortable);
+        MD3::setAccentSeed(wxColour(wxString::FromUTF8(seed_value))); // Brand seed clears the accent override
         *resetting = true;
-        density->SetSelection(0);   // Comfortable
-        font_combo->SetSelection(0); // Default family ("")
-        text_size->SetSelection(1); // Default scale (1.0)
+        density->SetSelection(compact ? 1 : 0);
+        const auto family = std::find(font_values.begin(), font_values.end(), family_value);
+        font_combo->SetSelection(family == font_values.end() ? 0 : int(family - font_values.begin()));
+        const auto scale = std::find(kScaleStrs.begin(), kScaleStrs.end(), scale_value);
+        text_size->SetSelection(scale == kScaleStrs.end() ? 1 : int(scale - kScaleStrs.begin()));
         *resetting = false;
-        for (size_t j = 0; j < swatches->size(); ++j)
-            (*swatches)[j]->SetSelected(j == 0); // Green = the Brand seed
+        for (size_t j = 0; j < swatches->size() && j < seeds.size(); ++j)
+            (*swatches)[j]->SetSelected(seeds[j].first.IsSameAs(wxString::FromUTF8(seed_value), false));
         apply_fonts(); // rebuild_fonts + preview re-font + refresh_md3_appearance + relayout
     });
 
