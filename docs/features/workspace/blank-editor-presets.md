@@ -59,10 +59,11 @@ Both rule editors open the picker first when you add a rule:
 - A new rule uses the rule model's own window: all day, every day, no date
   limits and local values. It no longer starts from an invented evening
   window or an invented dark theme. Every time and setting stays editable.
-- Right after the preset is applied the editor restates what it set, for
-  example "Started from "Shipped defaults". It set Theme: Light; Density:
-  Comfortable; ...". The Preferences rule dialog shows this above the name;
-  the Scheduled settings window shows it in its status line.
+- Right after the preset is applied, the Preferences rule dialog opens with
+  exactly the preset's settings ticked and filled in, and the Scheduled
+  settings window restates what it set in its status line, for example
+  "Started from "Shipped defaults". It set Theme: Light; Density:
+  Comfortable; ...".
 - Saving the rule is recorded in local history as "Add schedule rule from
   preset: Shipped defaults". Preferences ▸ Schedules rules are recorded with
   the preferences history; Scheduled settings versions have their own

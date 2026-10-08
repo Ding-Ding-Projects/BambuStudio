@@ -943,6 +943,8 @@ list(APPEND SLIC3R_GUI_SOURCES
     GUI/Schedule/ScheduledSettingsPanel.hpp
     GUI/Schedule/ScheduleRulePresets.cpp
     GUI/Schedule/ScheduleRulePresets.hpp
+    GUI/Schedule/ScheduleRuleStart.cpp
+    GUI/Schedule/ScheduleRuleStart.hpp
     GUI/SmartHomeDialog.cpp
     GUI/SmartHomeDialog.hpp
     GUI/third_party/qrcodegen.cpp

@@ -22,8 +22,9 @@ namespace {
 
 constexpr int kDebounceMs = 2000; // burst of saves -> one snapshot
 // Room for the scheduled-settings rule document (at most
-// Schedule::kMaxDocumentBytes) beside the other bounded values.
-constexpr std::uintmax_t kMaxSnapshotBytes = 512 * 1024;
+// Schedule::kMaxDocumentBytes, which grows when escaped inside the snapshot's
+// JSON string) beside the other bounded values.
+constexpr std::uintmax_t kMaxSnapshotBytes = 4 * Schedule::kMaxDocumentBytes;
 constexpr std::size_t kMaxValueBytes = 4096;
 constexpr std::uintmax_t kMaxAppearanceBytes = 2 * 1024 * 1024;
 constexpr const char *kAppearanceFormat = "bambu-appearance";

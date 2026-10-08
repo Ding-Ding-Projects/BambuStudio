@@ -216,13 +216,15 @@ test('Preferences > Schedules starts a rule from a preset with the model default
   const panel = strip(read('src', 'slic3r', 'GUI', 'Schedule', 'ScheduledSettingsPanel.cpp'));
   const add = panel.slice(panel.indexOf('void ScheduledSettingsPanel::add_rule()'), panel.indexOf('void ScheduledSettingsPanel::edit_selected()'));
   assert.doesNotMatch(add, /start_time\s*=\s*\{20, 0\}|end_time\s*=\s*\{7, 0\}/, 'no invented evening window');
-  assert.match(add, /RP::schedule_rule_spec\(RP::language_mode_choices\(/);
-  assert.match(add, /RP::saved_schedule_values\(live, Scheduler::instance\(\)\.override_state\(\)\)/, 'a rule-controlled key starts from the person\'s own value');
-  assert.match(add, /StartFromPicker picker\(this, _L\(RP::picker_title\(\)\), _L\(RP::picker_subtitle\(\)\),/);
-  assert.match(add, /RP::schedule_rule_from\(preset,/);
-  assert.match(add, /ScheduleRuleDialog dlg\(this, rule, true, preset_applied_note\(preset\)\);/, 'the editor restates what the preset set');
-  assert.match(add, /PreferencesHistory::label_next_snapshot\(BlankEditorPresets::history_label\(RP::history_action\(\), preset\.title\)\);/);
-  assert.match(panel, /if \(!started_from\.empty\(\)\)\s*m_body->Add\(make_label\(started_from, true, true\)/);
+  assert.match(add, /if \(!start_rule\(this, entropy_now\(\), start\)\) return;\s*ScheduleRuleDialog dlg\(this, start\.rule, true\);/,
+    'the rule dialog opens with exactly the preset\'s settings ticked');
+  assert.match(add, /record_rule_start\(start\);\s*if \(commit\(doc\)\) \{[\s\S]*\} else \{\s*forget_rule_start\(\);/);
+  const start = strip(read('src', 'slic3r', 'GUI', 'Schedule', 'ScheduleRuleStart.cpp'));
+  assert.match(start, /RP::schedule_rule_spec\(RP::language_mode_choices\(/);
+  assert.match(start, /RP::saved_schedule_values\(live, Scheduler::instance\(\)\.override_state\(\)\)/, 'a rule-controlled key starts from the person\'s own value');
+  assert.match(start, /StartFromPicker picker\(parent, _L\(RP::picker_title\(\)\), _L\(RP::picker_subtitle\(\)\),/);
+  assert.match(start, /start\.rule = RP::schedule_rule_from\(preset, unique_rule_id\(/);
+  assert.match(start, /PreferencesHistory::label_next_snapshot\(\s*BlankEditorPresets::history_label\(ScheduleRulePresets::history_action\(\), start\.preset_title\)\);/);
   const history = strip(read('src', 'slic3r', 'GUI', 'PreferencesHistory.cpp'));
   assert.match(history, /Schedule::kDocumentConfigKey\n\s*\};/, 'the rule document is recorded with the preferences');
   assert.match(history, /Schedule::Scheduler::instance\(\)\.reload\(\);/, 'a restore reloads the rules');
