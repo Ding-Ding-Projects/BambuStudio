@@ -34,6 +34,10 @@
 namespace Slic3r::GUI::RegexAnalysis {
 
 inline constexpr std::size_t npos = static_cast<std::size_t>(-1);
+// Group nesting the analysis descends into; twice the worker's structural
+// limit (BoundedRegex::kMaxNestingDepth), so every pattern the engine can
+// accept is analysed in full.
+inline constexpr int kMaxAnalysisDepth = 64;
 
 // ---------------------------------------------------------------- text ----
 
@@ -1704,6 +1708,16 @@ private:
     std::size_t parse_group(Flags &flags, int depth)
     {
         const std::size_t b = pos;
+        // The engine already rejects more than 32 levels as too complex. The
+        // cap keeps the recursive descent's stack small on the UI thread for
+        // a hostile 512-parenthesis pattern.
+        if (depth >= kMaxAnalysisDepth) {
+            pos = n;
+            add_token(TokenKind::Error, b, n, depth,
+                      text(L("Groups nested too deeply to analyse further; the engine rejects this nesting as too complex")));
+            a.complete = false;
+            return npos;
+        }
         if (pos + 1 < n && p[pos + 1] == L'*')
             return parse_verb(depth);
         if (pos + 1 >= n || p[pos + 1] != L'?') {

@@ -1,5 +1,6 @@
 #include <catch_main.hpp>
 
+#include "slic3r/GUI/Widgets/BoundedRegex.hpp"
 #include "slic3r/GUI/Widgets/RegexAnalysis.hpp"
 
 #include <set>
@@ -516,6 +517,27 @@ TEST_CASE("text substitution keeps placeholders in order", "[regex_analysis]")
     CHECK(from_utf8("\xE2\x80\x94") == L"—");
     CHECK(fragment(L"a\nb", 0, 3) == L"a\\nb");
     CHECK(fragment(std::wstring(100, L'x'), 0, 100, 10) == std::wstring(10, L'x') + L"...");
+}
+
+TEST_CASE("deep nesting stops at the analysis depth instead of exhausting the stack", "[regex_analysis]")
+{
+    // Every nesting the worker can accept is analysed in full.
+    STATIC_REQUIRE(static_cast<std::size_t>(kMaxAnalysisDepth) >= 2 * Slic3r::GUI::BoundedRegex::kMaxNestingDepth);
+    const std::size_t cap = static_cast<std::size_t>(kMaxAnalysisDepth);
+    const Analysis at_cap = analyze(std::wstring(cap, L'(') + L"a" + std::wstring(cap, L')'));
+    CHECK(at_cap.complete);
+    CHECK(at_cap.capture_groups == cap);
+    CHECK_FALSE(has_error_token(at_cap));
+
+    const Analysis beyond = analyze(std::wstring(cap + 1, L'(') + L"a" + std::wstring(cap + 1, L')'));
+    CHECK_FALSE(beyond.complete);
+    CHECK(has_error_token(beyond));
+
+    // A 512-parenthesis pattern (the field's whole budget) stays bounded.
+    const Analysis hostile = analyze(std::wstring(512, L'('));
+    CHECK_FALSE(hostile.complete);
+    for (const Token &tok : hostile.tokens)
+        CHECK(tok.end <= 512);
 }
 
 TEST_CASE("analysis never runs past the pattern on hostile input", "[regex_analysis]")

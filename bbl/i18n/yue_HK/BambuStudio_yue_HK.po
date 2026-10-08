@@ -41150,3 +41150,8 @@ msgstr "喺呢個引擎唔同：%s"
 #. review-status: agent-drafted
 msgid "The worker did not answer for %d rows. Try again in a moment."
 msgstr "worker 冇回應 %d 行。請等陣再試。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Groups nested too deeply to analyse further; the engine rejects this nesting as too complex"
+msgstr "群組巢狀得太深，冇辦法再分析落去；引擎會因為太複雜而拒絕呢種巢狀"

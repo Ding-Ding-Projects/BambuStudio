@@ -25732,6 +25732,9 @@ msgstr ""
 msgid "%s is a backreference here. In PCRE and Oniguruma the same syntax calls the group as a subroutine; use (?1) or (?&name) for that."
 msgstr ""
 
+msgid "Groups nested too deeply to analyse further; the engine rejects this nesting as too complex"
+msgstr ""
+
 #, possible-c-format, possible-boost-format
 msgid "Capture group %s"
 msgstr ""

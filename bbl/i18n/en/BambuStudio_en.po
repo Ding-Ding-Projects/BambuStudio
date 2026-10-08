@@ -29668,3 +29668,6 @@ msgstr ""
 #, possible-c-format, possible-boost-format
 msgid "The worker did not answer for %d rows. Try again in a moment."
 msgstr ""
+
+msgid "Groups nested too deeply to analyse further; the engine rejects this nesting as too complex"
+msgstr ""

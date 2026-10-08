@@ -118,8 +118,10 @@ still required separately.
 The analysis lives in `src/slic3r/GUI/Widgets/RegexAnalysis.hpp`, a pure
 C++17 model with no wxWidgets or Boost dependency. The worker remains the only
 authority on validity; the model explains. Every edit, flag change and tab
-switch re-runs it (it is linear in the 512-code-unit pattern and never runs a
-user regex itself).
+switch re-runs it (it is linear in the 512-code-unit pattern, never runs a
+user regex itself, and stops descending past 64 nested groups, twice the
+nesting the engine accepts, so a hostile pattern cannot exhaust the UI
+thread's stack).
 
 - **Engine** — the identity the worker reports for a `Describe` request:
   Boost.Regex version, Perl-compatible syntax selected by the ECMAScript flag,

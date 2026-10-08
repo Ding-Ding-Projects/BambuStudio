@@ -1,6 +1,6 @@
 ---
 translation-of: regex-builder.md
-source-sha256: ba72e6c493f8beaa2e57904f4b4fced651e59c3b6d58c88a3bfcd715f1d52128
+source-sha256: d0f0a18a2a0c3b5f4e512ff867215b5015249295880ce8b5b0d7ff67f7ca1c5d
 review-status: agent-drafted
 ---
 
@@ -31,7 +31,7 @@ review-status: agent-drafted
 
 ## 解說分頁：結構、功能同風險分析
 
-分析喺 `src/slic3r/GUI/Widgets/RegexAnalysis.hpp`，係一個唔依賴 wxWidgets 或者 Boost 嘅純 C++17 模型。worker 仍然係唯一判斷樣式有冇效嘅權威；模型負責解說。每次編輯、旗標變更同切換分頁都會重新分析（對 512 編碼單位嘅樣式係線性時間，而且自己永遠唔會執行使用者嘅正則表達式）。
+分析喺 `src/slic3r/GUI/Widgets/RegexAnalysis.hpp`，係一個唔依賴 wxWidgets 或者 Boost 嘅純 C++17 模型。worker 仍然係唯一判斷樣式有冇效嘅權威；模型負責解說。每次編輯、旗標變更同切換分頁都會重新分析（對 512 編碼單位嘅樣式係線性時間，自己永遠唔會執行使用者嘅正則表達式，而且超過 64 層巢狀群組就唔再深入分析，即係引擎接受嘅巢狀層數嘅兩倍，所以惡意樣式唔可以耗盡 UI 線程嘅堆疊）。
 
 - **引擎**：worker 對 `Describe` 要求回報嘅身份：Boost.Regex 版本、由 ECMAScript 旗標揀用嘅 Perl 相容語法、編碼單位闊度、地區設定特性同 1,000,000 狀態上限。第一次回答之後，報告會喺成個處理程序入面快取。如果 worker 仲未啟動，分頁會講明，顯示編譯時嘅版本，下次打開再試。
 - **生效中嘅旗標**：每個構建器旗標嘅狀態、背後確實嘅引擎旗標（「大小寫敏感」關閉時加 `icase`、「多行錨點」清除 `no_mod_m`、`no_mod_s` 永遠設定、`mod_x` 永遠唔設定）同佢嘅內嵌寫法（`(?i)`、`(?m)`、`(?s)`、`(?x)`）。正則表達式模式關咗嘅時候，分頁會講明欄位係照字面匹配，並顯示引擎會點樣將佢當樣式解讀。
