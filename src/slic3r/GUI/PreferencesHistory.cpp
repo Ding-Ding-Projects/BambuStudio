@@ -1,6 +1,7 @@
 #include "PreferencesHistory.hpp"
 #include "GUI_App.hpp"
 #include "Appearance/ElementStyle.hpp"
+#include "Schedule/ScheduledSettings.hpp"
 
 #include "libslic3r/AppConfig.hpp"
 #include "libslic3r/ProjectHistoryManager.hpp"
@@ -20,7 +21,10 @@ namespace Slic3r { namespace GUI { namespace PreferencesHistory {
 namespace {
 
 constexpr int kDebounceMs = 2000; // burst of saves -> one snapshot
-constexpr std::uintmax_t kMaxSnapshotBytes = 256 * 1024;
+// Room for the scheduled-settings rule document (at most
+// Schedule::kMaxDocumentBytes) beside the other bounded values.
+constexpr std::uintmax_t kMaxSnapshotBytes = 512 * 1024;
+constexpr std::size_t kMaxValueBytes = 4096;
 constexpr std::uintmax_t kMaxAppearanceBytes = 2 * 1024 * 1024;
 constexpr const char *kAppearanceFormat = "bambu-appearance";
 constexpr const char *kAppearanceChange = "Appearance change";
@@ -37,9 +41,17 @@ const std::set<std::string> &safe_keys()
         "show_shells_in_preview", "show_assembly_bvh_bounds", "show_bed_heat_soak_area",
         "enable_lod", "enable_bvh", "enable_assemble_view_preview", "max_recent_count",
         "backup_switch", "backup_interval", "single_instance", "auto_calculate_flush",
-        "hide_new_filament_prompt", "show_support_recommend_dialog", "gamma_correct_in_import_obj"
+        "hide_new_filament_prompt", "show_support_recommend_dialog", "gamma_correct_in_import_obj",
+        // Preferences > Schedules rules (Schedule/ScheduledSettings): a new rule,
+        // one started from a preset included, is an ordinary recorded change.
+        Schedule::kDocumentConfigKey
     };
     return keys;
+}
+
+std::size_t value_limit(const std::string &key)
+{
+    return key == Schedule::kDocumentConfigKey ? Schedule::kMaxDocumentBytes : kMaxValueBytes;
 }
 
 bool valid_value(const std::string &key, const std::string &value)
@@ -49,6 +61,7 @@ bool valid_value(const std::string &key, const std::string &value)
     if (key == "prepare_sidebar_dock") return value == "left" || value == "right" || value == "top" || value == "bottom";
     if (key == "enable_assemble_view_preview") return value == "Auto" || value == "Open" || value == "Close";
     if (key == "dark_color_mode") return value == "0" || value == "1";
+    if (key == Schedule::kDocumentConfigKey) return value.empty() || Schedule::parse_document(value).ok;
     if (key == "funny_level_en" || key == "funny_level_yue")
         return value.size() == 1 && value[0] >= '1' && value[0] <= '5';
     if (key == "max_recent_count" || key == "backup_interval" || key == "grabber_size_factor") {
@@ -202,7 +215,7 @@ nlohmann::json safe_snapshot(const AppConfig &config)
     nlohmann::json settings = nlohmann::json::object();
     for (const auto &key : safe_keys()) {
         std::string value;
-        if (config.get("app", key, value) && value.size() <= 4096)
+        if (config.get("app", key, value) && value.size() <= value_limit(key))
             settings[key] = value;
     }
     return {{"format", "bambu-safe-preferences"}, {"version", 1}, {"settings", settings}};
@@ -235,7 +248,7 @@ bool read_snapshot(const std::filesystem::path &path, nlohmann::json &snapshot, 
         }
         for (auto it = parsed["settings"].begin(); it != parsed["settings"].end(); ++it) {
             if (safe_keys().count(it.key()) == 0 || !it.value().is_string() ||
-                it.value().get_ref<const std::string &>().size() > 4096 ||
+                it.value().get_ref<const std::string &>().size() > value_limit(it.key()) ||
                 !valid_value(it.key(), it.value().get_ref<const std::string &>())) {
                 error = "Preferences snapshot contains unsupported settings.";
                 return false;
@@ -262,7 +275,9 @@ bool apply_snapshot(const std::filesystem::path &path, std::string &error)
     try {
         for (const auto &key : safe_keys()) {
             const auto it = snapshot["settings"].find(key);
-            if (it == snapshot["settings"].end()) config->erase("app", key);
+            // A snapshot from before schedules were recorded says nothing
+            // about them, so their rules are kept rather than erased.
+            if (it == snapshot["settings"].end()) { if (key != Schedule::kDocumentConfigKey) config->erase("app", key); }
             else config->set(key, it->get<std::string>());
         }
         config->set_dirty();
@@ -270,6 +285,8 @@ bool apply_snapshot(const std::filesystem::path &path, std::string &error)
         pending_reason = "Restore preferences snapshot";
         snapshot_timer()->Stop();
         snapshot_timer()->Notify();
+        // The schedule rules may have changed with the snapshot.
+        Schedule::Scheduler::instance().reload();
         return true;
     } catch (const std::exception &) {
         for (const auto &key : safe_keys()) {
@@ -281,6 +298,11 @@ bool apply_snapshot(const std::filesystem::path &path, std::string &error)
         error = "Unable to save restored preferences.";
         return false;
     }
+}
+
+void label_next_snapshot(const std::string &label)
+{
+    pending_reason = label.empty() ? std::string("Preferences change") : label;
 }
 
 std::filesystem::path appearance_identity()

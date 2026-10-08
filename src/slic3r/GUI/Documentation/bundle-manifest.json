@@ -1110,7 +1110,7 @@
     {
       "route": "scheduled-settings/README.md",
       "title": "Scheduled settings",
-      "sha256": "90ddbbb971a473268afbf9508b5c806a43cd44ed3af0ccc8c0bcccf1244c7a47"
+      "sha256": "c2874a9b28c5c3cd6d6fd202c9f3bf60f377a24a8f7d8019bc6749ca7e40c1b5"
     },
     {
       "route": "settings-drafts.md",
@@ -1650,12 +1650,12 @@
     {
       "route": "workspace/blank-editor-presets.md",
       "title": "Start-from presets for blank editors",
-      "sha256": "fc7c54bad3b8ed0fc1b1425f8e003f67ae8767dfcbb19582806788ba3337b60a"
+      "sha256": "16b9319b9a514e477d4ba954e7d9f623996ccc996cea607fa1f22eca87e6d6ef"
     },
     {
       "route": "workspace/blank-editor-presets.yue_HK.md",
       "title": "空白編輯器嘅「由預設開始」",
-      "sha256": "67ccaa111141d7749f7d45985134e5efe31775bdd46017cece14aafce53d7aed"
+      "sha256": "de83fdd5bef6a6c5a9652ad4d489acd18919082c50b0d2ddaa496e0fb01831ee"
     },
     {
       "route": "workspace/bulk-actions.md",
@@ -1860,7 +1860,7 @@
       "bytes": 1979
     }
   ],
-  "bundle_sha256": "9ff27d2f0bc813d95556acd5122d6137d2206d481083b68c067784aa6133e593",
+  "bundle_sha256": "5ef57344bad0acdd763260029d98aa732628112a2530a807c04829d4792087f3",
   "unavailable_references": [
     {
       "source": "api/README.md",

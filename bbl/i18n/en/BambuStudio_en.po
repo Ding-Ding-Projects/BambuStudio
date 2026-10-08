@@ -28896,3 +28896,63 @@ msgstr ""
 
 msgid "Unsupported appearance snapshot."
 msgstr ""
+
+msgid "Scheduled settings"
+msgstr ""
+
+msgid "English"
+msgstr ""
+
+msgid "Cantonese"
+msgstr ""
+
+msgid "Both languages"
+msgstr ""
+
+msgid "Automatic voice"
+msgstr ""
+
+msgid "Creates a new schedule rule that applies all day, every day and sets each setting below to the value the app ships with."
+msgstr ""
+
+msgid "Creates a new schedule rule that applies all day, every day and sets each setting below to your own saved value."
+msgstr ""
+
+msgid "Creates a new schedule rule that applies all day, every day and sets nothing yet. Choose at least one setting before you save it."
+msgstr ""
+
+msgid "Cantonese (Hong Kong)"
+msgstr ""
+
+msgid "Bilingual: English and Cantonese"
+msgstr ""
+
+msgid "Default (Roboto)"
+msgstr ""
+
+msgid "Shipped name"
+msgstr ""
+
+msgid "Language mode"
+msgstr ""
+
+msgid "Funny level (English)"
+msgstr ""
+
+msgid "Start a new schedule rule"
+msgstr ""
+
+msgid "Choose what the new rule starts with. You can change every value before you save it."
+msgstr ""
+
+msgid "Scheduled settings change"
+msgstr ""
+
+msgid "Restore scheduled settings"
+msgstr ""
+
+msgid "Scheduled settings are not available."
+msgstr ""
+
+msgid "Unsupported scheduled settings version."
+msgstr ""

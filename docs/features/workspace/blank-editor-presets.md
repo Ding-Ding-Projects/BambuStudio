@@ -44,6 +44,33 @@ saved value.
 - **Start from this preset** applies the highlighted preset. **Cancel** closes
   the picker without creating anything.
 
+## Scheduled-settings rules
+
+Both rule editors open the picker first when you add a rule:
+
+- **Preferences ▸ Schedules ▸ Add rule** offers the nine settings a rule may
+  set (language mode, theme, density, accent color, font, text size, both
+  funny levels and app name). **Your saved settings** uses your own value even
+  while a rule controls a setting: the value captured when the rule took over,
+  not the rule's value.
+- **File ▸ Scheduled settings ▸ Add rule** offers every presentation setting
+  the window shows, and its **Your saved settings** preset is the base value
+  the schedule service evaluates.
+- A new rule uses the rule model's own window: all day, every day, no date
+  limits and local values. It no longer starts from an invented evening
+  window or an invented dark theme. Every time and setting stays editable.
+- Right after the preset is applied the editor restates what it set, for
+  example "Started from "Shipped defaults". It set Theme: Light; Density:
+  Comfortable; ...". The Preferences rule dialog shows this above the name;
+  the Scheduled settings window shows it in its status line.
+- Saving the rule is recorded in local history as "Add schedule rule from
+  preset: Shipped defaults". Preferences ▸ Schedules rules are recorded with
+  the preferences history; Scheduled settings versions have their own
+  **Scheduled settings** category in Version history, where they can be
+  compared and restored. Restoring a preferences version also reloads the
+  schedule rules it contains; a version recorded before rules were kept in
+  history leaves the current rules in place.
+
 ## Appearance presets
 
 The appearance editor's **Presets** page (Ctrl+Shift+E on any styled element)
@@ -97,11 +124,15 @@ history**:
   accepted by its setting; the standard presets come in a fixed order; a preset
   never carries a value from anywhere but the shipped defaults or your saved
   values; rejected saved values fall back honestly; an appearance preset is
-  stated property by property; history messages name the preset applied.
+  stated property by property; history messages name the preset applied; both
+  scheduled-rule editors build valid rules from every preset, with the model's
+  default window, and read the person's own value for a rule-controlled key.
 - `ui-md3/tests/blank-editor-presets.test.mjs`: the reset and the shared table
   agree, the picker keeps its search, statement and keyboard paths, every
-  appearance preset path states and records what it does, and Version history
-  lists, compares and restores Appearance versions.
+  appearance preset path states and records what it does, both rule editors
+  open the picker instead of seeding values, and Version history lists,
+  compares and restores Appearance and Scheduled settings versions.
 - Still to observe in a built Windows application: the picker and Presets page
-  layout at every density and language mode, screen reader announcements, and
-  an Appearance version being listed and restored.
+  layout at every density and language mode, screen reader announcements, a
+  rule added from each preset in both editors, and Appearance, preferences and
+  Scheduled settings versions being listed and restored.

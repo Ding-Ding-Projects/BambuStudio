@@ -26,6 +26,7 @@ private:
     wxString tr(const char*,const char*) const;
     void rebuild_rules();
     void select_rule();
+    void add_rule();
     void load_editor();
     bool read_editor(ScheduledSettings::Rule&);
     void save();
@@ -39,6 +40,9 @@ private:
     mutable std::map<wxString,std::pair<std::string,std::string>> m_copy;
     ScheduledSettings::Schedule m_draft;
     std::string m_selected;
+    // Unsaved rules started from a preset: rule id -> preset title, so saving
+    // records which preset the rule came from.
+    std::map<std::string,std::string> m_preset_rules;
     std::vector<std::string> m_rule_ids,m_setting_keys;
     SearchField *m_search=nullptr,*m_setting_search=nullptr,*m_zone_search=nullptr;
     wxListBox *m_rules=nullptr,*m_settings=nullptr,*m_zones=nullptr;

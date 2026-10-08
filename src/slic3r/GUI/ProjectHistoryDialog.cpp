@@ -2,6 +2,7 @@
 #include "HumanDate.hpp"
 #include "ProjectHistoryDialog.hpp"
 #include "PreferencesHistory.hpp"
+#include "FeatureServices/ScheduledPreferences.hpp"
 #include "PrinterHistory.hpp"
 #include "LocalConfigHistory.hpp"
 #include "HistorySearchStore.hpp"
@@ -97,6 +98,9 @@ wxString translate_known_history_reason(const wxString &reason)
         L("Reset all appearance"),
         L("Import appearance theme"),
         L("Restore appearance snapshot"),
+        // Scheduled settings history (FeatureServices/ScheduledPreferences.cpp).
+        L("Scheduled settings change"),
+        L("Restore scheduled settings"),
     };
     for (const wxString &candidate : known)
         if (reason == candidate)
@@ -352,7 +356,7 @@ void ProjectHistoryDialog::create_ui()
     auto *filters = new wxFlexGridSizer(2, 4, FromDIP(6), FromDIP(8));
     filters->AddGrowableCol(1); filters->AddGrowableCol(3);
     m_category_filter = new wxChoice(m_list_card, wxID_ANY);
-    for (const auto &name : {_L("All categories"), _L("Project"), _L("Preferences"), _L("Preset"), _L("Draft"), _L("Printer"), _L("Appearance")}) m_category_filter->Append(name);
+    for (const auto &name : {_L("All categories"), _L("Project"), _L("Preferences"), _L("Preset"), _L("Draft"), _L("Printer"), _L("Appearance"), _L("Scheduled settings")}) m_category_filter->Append(name);
     m_category_filter->SetSelection(0);
     m_status_filter = new wxChoice(m_list_card, wxID_ANY);
     for (const auto &name : {_L("All statuses"), _L("Active"), _L("Unknown"), _L("Resolved")}) m_status_filter->Append(name);
@@ -569,8 +573,9 @@ void ProjectHistoryDialog::refresh_versions()
     const auto config_sources = LocalConfigHistory::sources(); const auto limit = m_show_all ? 0 : HISTORY_INITIAL_LIMIT;
     auto *prefs = PreferencesHistory::manager(); const auto prefs_identity = PreferencesHistory::identity();
     const auto appearance_identity = PreferencesHistory::appearance_identity();
+    const auto schedules_identity = FeatureServices::ScheduledPreferences::history_identity();
     auto *printer = PrinterHistory::instance().manager(); const auto printer_identity = PrinterHistory::instance().identity();
-    m_aggregate_future = std::async(std::launch::async, [identity, manager, config_sources, limit, prefs, prefs_identity, appearance_identity, printer, printer_identity]() {
+    m_aggregate_future = std::async(std::launch::async, [identity, manager, config_sources, limit, prefs, prefs_identity, appearance_identity, schedules_identity, printer, printer_identity]() {
         Aggregate result;
         auto append = [&result, limit](ProjectHistoryManager *store, const std::filesystem::path &key, const std::string &category, const std::string &name) {
             if (!store || key.empty()) return;
@@ -580,6 +585,7 @@ void ProjectHistoryDialog::refresh_versions()
         };
         append(manager, identity, "project", "Current project"); append(prefs, prefs_identity, "preferences", "Preferences");
         append(prefs, appearance_identity, "appearance", "Appearance");
+        append(prefs, schedules_identity, "schedules", "Scheduled settings");
         append(printer, printer_identity, "printer_transition", "Printer transitions");
         for (const auto &source : config_sources) append(LocalConfigHistory::manager(), source.identity, source.category, source.name);
         return result;
@@ -649,7 +655,7 @@ void ProjectHistoryDialog::begin_restore()
     if (selected_version >= m_versions.size()) return;
 
     const Origin origin=m_origins[selected_version];
-    if(origin.category!="project"&&origin.category!="preferences"&&origin.category!="appearance"&&origin.category!="preset"&&origin.category!="draft"){set_status(_L("Printer incident records cannot replace editor settings."));return;}
+    if(origin.category!="project"&&origin.category!="preferences"&&origin.category!="appearance"&&origin.category!="schedules"&&origin.category!="preset"&&origin.category!="draft"){set_status(_L("Printer incident records cannot replace editor settings."));return;}
     MessageDialog confirmation(
         this,
         _L("Restore the selected version in the editor?\n\nThe project file will not be overwritten. The restored state will be recorded as a new version."),
@@ -769,6 +775,14 @@ void ProjectHistoryDialog::finish_restore(ProjectHistoryRestoreResult result)
     }
 
     if(m_restore_category=="preferences"){std::string error;if(!PreferencesHistory::apply_snapshot(result.restored_path,error)){cleanup_restore_temp();show_error(wxString::FromUTF8(error));return;}cleanup_restore_temp();refresh_versions();return;}
+    if (m_restore_category == "schedules") {
+        std::string error;
+        auto *service = wxGetApp().scheduled_preferences();
+        const bool restored = service != nullptr && service->restore(result.restored_path, error);
+        cleanup_restore_temp();
+        if (!restored) { show_error(error.empty() ? _L("Scheduled settings are not available.") : wxString::FromUTF8(error)); return; }
+        refresh_versions(); return;
+    }
     if (m_restore_category == "appearance") {
         std::string error;
         const bool restored = PreferencesHistory::apply_appearance_snapshot(result.restored_path, error);
@@ -795,7 +809,7 @@ void ProjectHistoryDialog::populate_versions()
     m_syncing_selection = true;
     m_version_list->DeleteAllItems();m_filtered_rows.clear();
     SearchField::MatchPass matcher(m_search_field->GetValue(),m_search_field->IsRegexEnabled(),m_search_field->IsCaseSensitive(),m_search_field->IsWholeWord(),m_search_field->IsMultiline());
-    static const char *categories[]={"","project","preferences","preset","draft","printer","appearance"};static const char *states[]={"","active","unknown","resolved"};
+    static const char *categories[]={"","project","preferences","preset","draft","printer","appearance","schedules"};static const char *states[]={"","active","unknown","resolved"};
     const int category=std::max(0,m_category_filter->GetSelection()),status=std::max(0,m_status_filter->GetSelection());
     const wxString from_text=m_from_filter->GetValue(),to_text=m_to_filter->GetValue();wxDateTime from,to;
     if((!from_text.empty()&&!from.ParseISODate(from_text))||(!to_text.empty()&&!to.ParseISODate(to_text))||(from.IsValid()&&to.IsValid()&&from>to)){set_status(_L("Enter valid dates in YYYY-MM-DD order, with From before Through."));m_syncing_selection = false;return;}
@@ -976,7 +990,7 @@ void ProjectHistoryDialog::update_selection()
 {
     if(m_view=="searches"){m_restore_button->Enable(false);update_bulk_controls();return;}
     const int row=m_version_list->GetSelectedRow();const bool selected=row>=0&&static_cast<std::size_t>(row)<m_filtered_rows.size();bool can_restore=false;
-    if(selected){const auto index=m_filtered_rows[row];const auto &origin=m_origins[index];m_selected_id=m_versions[index].commit_id;m_selected_store=origin.category+":"+origin.identity.string()+":"+origin.device;can_restore=origin.category=="project"||origin.category=="preferences"||origin.category=="appearance"||origin.category=="preset"||origin.category=="draft";
+    if(selected){const auto index=m_filtered_rows[row];const auto &origin=m_origins[index];m_selected_id=m_versions[index].commit_id;m_selected_store=origin.category+":"+origin.identity.string()+":"+origin.device;can_restore=origin.category=="project"||origin.category=="preferences"||origin.category=="appearance"||origin.category=="schedules"||origin.category=="preset"||origin.category=="draft";
         if(m_view!="graph"&&m_view!="compare")set_status(wxString::FromUTF8(origin.category+" / "+origin.name+"\n"+m_versions[index].commit_id+"\n"+origin.detail));}
     m_restore_button->Enable(m_pending==PendingOperation::None&&selected&&can_restore);m_compare_button->Enable(selected&&!m_compare_future.valid());
     m_restore_button->Enable(m_restore_button->IsEnabled() && m_bulk.size() == 1);
@@ -1574,6 +1588,18 @@ void ProjectHistoryDialog::clear_searches()
 }
 
 namespace {
+// A recorded Scheduled settings version: the bounded JSON schedule document.
+bool read_schedules_version(const std::filesystem::path &path, nlohmann::json &document)
+{
+    std::error_code ec;
+    const auto size = std::filesystem::file_size(path, ec);
+    if (ec || size == 0 || size > ScheduledSettings::max_payload) return false;
+    std::ifstream in(path, std::ios::binary);
+    std::string bytes(static_cast<std::size_t>(size), '\0');
+    if (!in.read(bytes.data(), static_cast<std::streamsize>(bytes.size()))) return false;
+    document = nlohmann::json::parse(bytes, nullptr, false);
+    return document.is_object();
+}
 std::string history_payload_summary(const std::filesystem::path &path, const std::string &category)
 {
     if (category == "preferences") {
@@ -1582,6 +1608,11 @@ std::string history_payload_summary(const std::filesystem::path &path, const std
         return values.dump(2);
     }
     if (category == "preset" || category == "draft") return nlohmann::json(LocalConfigHistory::read_snapshot(path)).dump(2);
+    if (category == "schedules") {
+        nlohmann::json document;
+        if (!read_schedules_version(path, document)) return "Unsupported scheduled settings version: content excluded.\n";
+        return document.dump(2);
+    }
     if (category == "appearance") {
         nlohmann::json document; std::string error;
         if (!PreferencesHistory::read_appearance_snapshot(path, document, error)) return "Unsupported appearance snapshot: content excluded.\n";
@@ -1636,13 +1667,15 @@ void ProjectHistoryDialog::compare_selection()
         const auto left = before_source.manager->restore_version(before_source.identity, before.commit_id, temporary / "before.3mf").get();
         const auto right = before_source.manager->restore_version(before_source.identity, after.commit_id, temporary / "after.3mf").get();
         if (!left.ok() || !right.ok()) return _L("Could not read the selected versions for comparison.");
-        if (before_source.category == "preset" || before_source.category == "draft" || before_source.category == "preferences" || before_source.category == "appearance") {
+        if (before_source.category == "preset" || before_source.category == "draft" || before_source.category == "preferences" || before_source.category == "appearance" || before_source.category == "schedules") {
             std::map<std::string, std::string> a, b;
-            if (before_source.category == "appearance") {
+            if (before_source.category == "appearance" || before_source.category == "schedules") {
                 nlohmann::json left_document, right_document; std::string error;
-                if (!PreferencesHistory::read_appearance_snapshot(left.restored_path, left_document, error) ||
-                    !PreferencesHistory::read_appearance_snapshot(right.restored_path, right_document, error))
-                    return _L("Unsupported appearance snapshot.");
+                const bool schedules = before_source.category == "schedules";
+                if (schedules ? !read_schedules_version(left.restored_path, left_document) || !read_schedules_version(right.restored_path, right_document)
+                              : !PreferencesHistory::read_appearance_snapshot(left.restored_path, left_document, error) ||
+                                    !PreferencesHistory::read_appearance_snapshot(right.restored_path, right_document, error))
+                    return schedules ? _L("Unsupported scheduled settings version.") : _L("Unsupported appearance snapshot.");
                 // One line per element property, preset entry and the active preset.
                 for (const auto &item : left_document.flatten().items()) a[item.key()] = item.value().dump();
                 for (const auto &item : right_document.flatten().items()) b[item.key()] = item.value().dump();

@@ -33,6 +33,10 @@ ProjectHistoryManager *manager();
 // Only presentation/editor settings are included, never account, device,
 // command, path, or personal-vocabulary data. Legacy raw snapshots are not applied.
 nlohmann::json safe_snapshot(const AppConfig &config);
+// The message the next preferences snapshot is recorded with, for example
+// "Add schedule rule from preset: Shipped defaults"; without one it is
+// "Preferences change".
+void label_next_snapshot(const std::string &label);
 bool read_snapshot(const std::filesystem::path &path, nlohmann::json &snapshot, std::string &error);
 bool apply_snapshot(const std::filesystem::path &path, std::string &error);
 

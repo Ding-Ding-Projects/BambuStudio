@@ -8,6 +8,7 @@
 #include "libslic3r/PresentationDefaults.hpp"
 #include "slic3r/GUI/DimSumSurpriseModel.hpp"
 #include "slic3r/GUI/Presets/BlankEditorPresets.hpp"
+#include "slic3r/GUI/Schedule/ScheduleRulePresets.hpp"
 #include "slic3r/GUI/Schedule/ScheduledSettingsModel.hpp"
 
 #include <algorithm>
@@ -16,6 +17,7 @@
 
 using namespace Slic3r;
 using namespace Slic3r::GUI::BlankEditorPresets;
+namespace ScheduleRulePresets = Slic3r::GUI::ScheduleRulePresets;
 
 namespace {
 
@@ -299,6 +301,158 @@ TEST_CASE("An appearance preset is stated property by property", "[blank-editors
     CHECK(style_assignments({}).empty());
     CHECK(style_property_label("radius") == std::string("Corner radius (px)"));
     CHECK(style_property_label("glowRadius") == nullptr);
+}
+
+namespace {
+
+const std::vector<Choice> kLanguageModes = {
+    {"en_US", "English"}, {"yue_HK", "Cantonese (Hong Kong)"}, {"bilingual_en_yue_HK", "Bilingual: English and Cantonese"}};
+
+// The registry FeatureServices::ScheduledPreferences builds from the
+// presentation descriptors (labels there come from the command palette).
+ScheduledSettings::Registry service_registry()
+{
+    ScheduledSettings::Registry registry;
+    for (const EffectivePreferences::Descriptor &d : EffectivePreferences::descriptors()) {
+        ScheduledSettings::Kind kind = ScheduledSettings::Kind::Text;
+        switch (d.kind) {
+        case EffectivePreferences::Kind::Boolean: kind = ScheduledSettings::Kind::Boolean; break;
+        case EffectivePreferences::Kind::Integer: kind = ScheduledSettings::Kind::Integer; break;
+        case EffectivePreferences::Kind::Choice: kind = ScheduledSettings::Kind::Choice; break;
+        case EffectivePreferences::Kind::Color: kind = ScheduledSettings::Kind::Color; break;
+        default: break;
+        }
+        registry.add({d.key, d.key, d.key, kind, double(d.low), double(d.high), d.choices, d.limit});
+    }
+    return registry;
+}
+
+} // namespace
+
+TEST_CASE("Preferences schedule rules start from shipped defaults, saved settings or nothing", "[blank-editors][schedule]")
+{
+    const EditorSpec spec = ScheduleRulePresets::schedule_rule_spec(kLanguageModes);
+    REQUIRE(spec.fields.size() == GUI::Schedule::allowed_keys().size());
+    for (size_t i = 0; i < spec.fields.size(); ++i)
+        CHECK(spec.fields[i].key == GUI::Schedule::allowed_keys()[i]);
+    CHECK_FALSE(spec.creates_defaults.empty());
+    CHECK_FALSE(spec.creates_saved.empty());
+    CHECK_FALSE(spec.creates_empty.empty());
+
+    // A rule currently controls the theme; its captured base value is the person's own.
+    GUI::Schedule::OverrideState state;
+    state.base["dark_color_mode"]    = "0";
+    state.applied["dark_color_mode"] = "1";
+    std::map<std::string, std::string> live;
+    for (const std::string &key : GUI::Schedule::allowed_keys())
+        live[key] = "";
+    live["dark_color_mode"] = "1"; // the scheduled value, not the person's
+    live["language"]        = "yue_HK";
+    live["ui_density"]      = "compact";
+    const Values saved = ScheduleRulePresets::saved_schedule_values(live, state);
+    CHECK(saved.at("dark_color_mode") == "0");
+    CHECK(saved.at("ui_density") == "compact");
+
+    const std::vector<Preset> presets = start_presets(spec, saved);
+    REQUIRE(presets.size() == 3);
+    const Preset &defaults = presets[0];
+    // Every shipped value is one the rule accepts, and only the language is left out.
+    CHECK(defaults.sets.size() == 8);
+    REQUIRE(defaults.left_out.size() == 1);
+    CHECK(defaults.left_out[0].key == "language");
+    for (const Assignment &assignment : defaults.sets) {
+        INFO(assignment.key);
+        CHECK(GUI::Schedule::validate_value(assignment.key, assignment.value).empty());
+        CHECK(PresentationDefaults::value(assignment.key) == assignment.value);
+    }
+    const Assignment *theme = find_assignment(defaults, "dark_color_mode");
+    REQUIRE(theme != nullptr);
+    CHECK(theme->shown == "Light");
+
+    const Preset &mine = presets[1];
+    CHECK(mine.values().at("dark_color_mode") == "0");
+    CHECK(mine.values().at("ui_density") == "compact");
+    CHECK(mine.values().at("language") == "yue_HK");
+    CHECK(find_assignment(mine, "language")->shown == "Cantonese (Hong Kong)");
+    // Stored as empty (never set): the shipped default, flagged.
+    CHECK(find_assignment(mine, "funny_level_en")->value == "5");
+    CHECK(find_assignment(mine, "funny_level_en")->from_default);
+
+    // The rule a preset creates is valid as it stands and uses the model's
+    // own window: all day, every day, no dates, local values.
+    const GUI::Schedule::Rule rule = ScheduleRulePresets::schedule_rule_from(defaults, "r-0001", "Shipped defaults");
+    CHECK(rule.id == "r-0001");
+    CHECK(rule.label == "Shipped defaults");
+    CHECK(rule.values == defaults.values());
+    CHECK(rule.all_day());
+    CHECK(rule.weekdays == GUI::Schedule::kEveryDay);
+    CHECK_FALSE(rule.start_date.has_value());
+    CHECK(rule.source == GUI::Schedule::SourceKind::Local);
+    CHECK(GUI::Schedule::validate_rule(rule).empty());
+    CHECK(GUI::Schedule::validate_rule(ScheduleRulePresets::schedule_rule_from(mine, "r-0002", "Mine")).empty());
+    // An empty start is honest about needing a setting before it can be saved.
+    const GUI::Schedule::Rule empty_rule = ScheduleRulePresets::schedule_rule_from(presets[2], "r-0003", "Empty");
+    CHECK(empty_rule.values.empty());
+    CHECK_FALSE(GUI::Schedule::validate_rule(empty_rule).empty());
+}
+
+TEST_CASE("Scheduled settings rules start from the registry's real settings", "[blank-editors][schedule]")
+{
+    const ScheduledSettings::Registry registry = service_registry();
+    const EditorSpec all = ScheduleRulePresets::service_rule_spec(registry, nullptr);
+    CHECK(all.fields.size() == registry.entries().size());
+    // The panel's visibility filter (school presentation) is honoured.
+    const EditorSpec visible = ScheduleRulePresets::service_rule_spec(registry, [](const std::string &key) { return key != "language"; });
+    CHECK(visible.fields.size() == registry.entries().size() - 1);
+    for (const Field &field : visible.fields)
+        CHECK(field.key != "language");
+
+    // The base values the service evaluates are the "saved settings".
+    ScheduledSettings::Values base = {{"dark_color_mode", std::string("1")}, {"funny_level_en", int64_t(2)},
+                                      {"dialog_emojis", true}};
+    const Values saved = ScheduleRulePresets::encode_values(base);
+    CHECK(saved.at("dark_color_mode") == "1");
+    CHECK(saved.at("funny_level_en") == "2");
+    CHECK(saved.at("dialog_emojis") == "true");
+
+    const std::vector<Preset> presets = start_presets(all, saved);
+    for (const Preset &preset : presets) {
+        ScheduledSettings::Values typed;
+        INFO(preset.id);
+        REQUIRE(ScheduleRulePresets::decode_values(registry, preset.values(), typed));
+        std::string error;
+        CHECK(registry.validate(typed, error));
+        // The old seed was an invented key the real registry does not have.
+        CHECK(typed.count("theme") == 0);
+    }
+    const Preset &defaults = presets[0];
+    REQUIRE(defaults.left_out.size() == 1);
+    CHECK(defaults.left_out[0].key == "language");
+    ScheduledSettings::Values typed;
+    REQUIRE(ScheduleRulePresets::decode_values(registry, defaults.values(), typed));
+    CHECK(std::get<std::string>(typed.at("dark_color_mode")) == "0");
+    CHECK(std::get<int64_t>(typed.at("funny_level_yue")) == 5);
+    CHECK(std::get<bool>(typed.at("narrator_enabled")) == false);
+    CHECK(find_assignment(defaults, "narrator_enabled")->shown == "Off");
+    CHECK(find_assignment(defaults, "dark_color_mode")->shown == "Light");
+
+    const Preset &mine = presets[1];
+    REQUIRE(ScheduleRulePresets::decode_values(registry, mine.values(), typed));
+    CHECK(std::get<int64_t>(typed.at("funny_level_en")) == 2);
+    CHECK(std::get<bool>(typed.at("dialog_emojis")) == true);
+
+    // Decoding refuses what the registry would refuse, and leaves the output alone.
+    ScheduledSettings::Values untouched = {{"dark_color_mode", std::string("1")}};
+    CHECK_FALSE(ScheduleRulePresets::decode_values(registry, {{"funny_level_en", "9"}}, untouched));
+    CHECK_FALSE(ScheduleRulePresets::decode_values(registry, {{"theme", "dark"}}, untouched));
+    CHECK(untouched.size() == 1);
+    ScheduledSettings::Value value;
+    const auto &emojis = registry.entries().at("dialog_emojis");
+    CHECK(ScheduleRulePresets::decode(emojis, "1", value));
+    CHECK(std::get<bool>(value));
+    CHECK_FALSE(ScheduleRulePresets::decode(emojis, "yes", value));
+    CHECK(ScheduleRulePresets::encode(ScheduledSettings::Value(2.5)) == "2.5");
+    CHECK(std::string(ScheduleRulePresets::history_action()) == "Add schedule rule from preset");
 }
 
 TEST_CASE("Applying a preset is labelled in local history by what it applied", "[blank-editors][history]")

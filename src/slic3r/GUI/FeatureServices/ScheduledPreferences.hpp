@@ -1,6 +1,8 @@
 #pragma once
 #include "libslic3r/ScheduledSettings/Service.hpp"
 #include <wx/timer.h>
+#include <filesystem>
+#include <string>
 class wxPanel;
 class wxWindow;
 namespace Slic3r { class AppConfig; }
@@ -11,6 +13,10 @@ public:
     ~ScheduledPreferences() override;
     wxPanel* create_panel(wxWindow*);
     void pulse();
+    // Local history: where every saved schedule is recorded, and putting a
+    // recorded version back (itself recorded as a restore).
+    static std::filesystem::path history_identity();
+    bool restore(const std::filesystem::path& snapshot, std::string& error);
 private:
     bool save(const std::string&);
     void apply(const ScheduledSettings::Effective&);

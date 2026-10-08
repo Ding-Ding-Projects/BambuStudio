@@ -1,4 +1,5 @@
 #include "ScheduledSettingsPanel.hpp"
+#include "ScheduleRulePresets.hpp"
 #include "ScheduledSettings.hpp"
 
 #include "slic3r/GUI/GUI.hpp"
@@ -6,6 +7,8 @@
 #include "slic3r/GUI/I18N.hpp"
 #include "slic3r/GUI/LanguageMode.hpp"
 #include "slic3r/GUI/MsgDialog.hpp"
+#include "slic3r/GUI/PreferencesHistory.hpp"
+#include "slic3r/GUI/Presets/StartFromPicker.hpp"
 #include "slic3r/GUI/Widgets/Button.hpp"
 #include "slic3r/GUI/Widgets/CheckBox.hpp"
 #include "slic3r/GUI/Widgets/ComboBox.hpp"
@@ -98,7 +101,8 @@ struct ValueRow
 class ScheduleRuleDialog final : public MD3Dialog
 {
 public:
-    ScheduleRuleDialog(wxWindow *parent, const Rule &rule, bool is_new);
+    // `started_from` restates what the preset a new rule started from set.
+    ScheduleRuleDialog(wxWindow *parent, const Rule &rule, bool is_new, const wxString &started_from = wxString());
 
     const Rule &result() const { return m_rule; }
 
@@ -132,7 +136,7 @@ private:
     Label                *m_problems { nullptr };
 };
 
-ScheduleRuleDialog::ScheduleRuleDialog(wxWindow *parent, const Rule &rule, bool is_new)
+ScheduleRuleDialog::ScheduleRuleDialog(wxWindow *parent, const Rule &rule, bool is_new, const wxString &started_from)
     : MD3Dialog(parent, is_new ? _L("New schedule rule") : _L("Edit schedule rule"),
                 _L("Choose when the rule applies, where its values come from, and which settings it changes."),
                 MaterialIcon::Schedule, MD3Dialog::Options{true, false})
@@ -201,6 +205,10 @@ ScheduleRuleDialog::ScheduleRuleDialog(wxWindow *parent, const Rule &rule, bool 
         into->Add(row, 0, wxEXPAND | wxTOP, FromDIP(top));
         return row;
     };
+
+    // --- what the preset a new rule started from set --------------------------
+    if (!started_from.empty())
+        m_body->Add(make_label(started_from, true, true), 0, wxEXPAND | wxBOTTOM, FromDIP(12));
 
     // --- name + enabled ------------------------------------------------------
     m_body->Add(make_label(_L("Name")), 0, wxBOTTOM, FromDIP(4));
@@ -746,18 +754,33 @@ bool ScheduledSettingsPanel::commit(const Document &document)
 
 void ScheduledSettingsPanel::add_rule()
 {
-    Rule rule;
-    rule.id         = unique_rule_id(Scheduler::instance().document(), entropy_now());
-    rule.start_time = {20, 0};
-    rule.end_time   = {7, 0};
-    ScheduleRuleDialog dlg(this, rule, true);
+    // A new rule starts from the shipped defaults, your own saved settings or
+    // nothing (Presets/StartFromPicker), never from values invented here.
+    namespace RP = ScheduleRulePresets;
+    std::map<std::string, std::string> live;
+    if (AppConfig *cfg = wxGetApp().app_config)
+        for (const std::string &key : allowed_keys())
+            live[key] = cfg->get(key);
+    const BlankEditorPresets::EditorSpec spec = RP::schedule_rule_spec(RP::language_mode_choices(
+        I18N::LANGUAGE_MODE_ENGLISH_US, I18N::LANGUAGE_MODE_CANTONESE_HONG_KONG, I18N::LANGUAGE_MODE_ENGLISH_CANTONESE_HK));
+    StartFromPicker picker(this, _L(RP::picker_title()), _L(RP::picker_subtitle()),
+                           BlankEditorPresets::start_presets(spec, RP::saved_schedule_values(live, Scheduler::instance().override_state())));
+    if (picker.ShowModal() != wxID_OK || picker.chosen() == nullptr) return;
+    const BlankEditorPresets::Preset preset = *picker.chosen();
+    const Rule rule = RP::schedule_rule_from(preset, unique_rule_id(Scheduler::instance().document(), entropy_now()),
+                                             into_u8(_L(preset.title.c_str())));
+    ScheduleRuleDialog dlg(this, rule, true, preset_applied_note(preset));
     if (dlg.ShowModal() != wxID_OK) return;
     Document doc = Scheduler::instance().document();
     doc.rules.push_back(dlg.result());
+    // Recorded in the preferences history like any other change.
+    PreferencesHistory::label_next_snapshot(BlankEditorPresets::history_label(RP::history_action(), preset.title));
     if (commit(doc)) {
         for (size_t r = 0; r < m_visible.size(); ++r)
             if (m_visible[r] == int(doc.rules.size()) - 1) m_list->SetSelection(int(r));
         refresh_status();
+    } else {
+        PreferencesHistory::label_next_snapshot(std::string()); // nothing was saved
     }
 }
 

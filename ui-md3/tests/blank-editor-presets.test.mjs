@@ -176,8 +176,8 @@ test('the command palette states and records an appearance preset the same way',
 test('Version history lists, compares and restores appearance revisions', () => {
   const dialog = strip(read('src', 'slic3r', 'GUI', 'ProjectHistoryDialog.cpp'));
   assert.match(dialog, /append\(prefs, appearance_identity, "appearance", "Appearance"\);/);
-  assert.match(dialog, /_L\("Printer"\), _L\("Appearance"\)\}/, 'an Appearance category filter, appended so saved searches keep their indices');
-  assert.match(dialog, /categories\[\]=\{"","project","preferences","preset","draft","printer","appearance"\}/);
+  assert.match(dialog, /_L\("Printer"\), _L\("Appearance"\)[,}]/, 'an Appearance category filter, appended so saved searches keep their indices');
+  assert.match(dialog, /categories\[\]=\{"","project","preferences","preset","draft","printer","appearance"[,}]/);
   assert.match(dialog, /PreferencesHistory::apply_appearance_snapshot\(result\.restored_path, error\)/);
   assert.match(dialog, /can_restore=[^;]*origin\.category=="appearance"/);
   assert.match(dialog, /left_document\.flatten\(\)\.items\(\)/, 'a comparison names each changed property');
@@ -187,4 +187,54 @@ test('Version history lists, compares and restores appearance revisions', () => 
   for (const message of ['Appearance change', 'Appearance at startup', 'Reset all appearance', 'Import appearance theme', 'Restore appearance snapshot']) {
     assert.ok(dialog.includes(`L("${message}")`), message);
   }
+});
+
+// Both scheduled-rule editors start a new rule from a preset: the shipped
+// defaults, the person's own (base) settings or nothing, never an invented value.
+
+test('the Scheduled settings window starts a rule from a preset, not an invented theme', () => {
+  const panel = strip(read('src', 'slic3r', 'GUI', 'ScheduledSettings', 'Panel.cpp'));
+  assert.doesNotMatch(panel, /\{"theme",std::string\("dark"\)\}/, 'the invented seed is gone');
+  assert.match(panel, /button\(scroll,actions,"Add rule","新增規則",\[this\]\{if\(!retain_editor\(\)\)return;add_rule\(\);\}\);/);
+  const add = panel.slice(panel.indexOf('void Panel::add_rule(){'), panel.indexOf('void Panel::load_editor(){'));
+  assert.match(add, /RP::service_rule_spec\(m_service\.registry\(\),m_visible\)/, 'the registry and the visibility filter define the settings');
+  assert.match(add, /BlankEditorPresets::start_presets\(spec,RP::encode_values\(m_service\.base\(\)\)\)/, 'saved settings are the base the service evaluates');
+  assert.match(add, /StartFromPicker picker\(this,/);
+  assert.match(add, /RP::decode_values\(m_service\.registry\(\),preset\.values\(\),r\.values\)/);
+  assert.match(add, /show_status\(preset_applied_note\(preset\)/, 'what the preset set is stated right after');
+  assert.match(panel, /m_service\.label_next_change\(label\);if\(!m_service\.replace\(draft,error\)\)\{m_service\.take_change_label\(\);/,
+    'saving records the preset the rule started from');
+  assert.match(panel, /found\?wxs\(std::get<std::string>\(value\)\):wxString\(\)/, 'no wxString / wxChar* conditional');
+  const service = strip(read('src', 'libslic3r', 'ScheduledSettings', 'Service.hpp'));
+  assert.match(service, /const Values& base\(\) const \{ return m_base; \}/);
+  const owner = strip(read('src', 'slic3r', 'GUI', 'FeatureServices', 'ScheduledPreferences.cpp'));
+  assert.match(owner, /options\.message = label\.empty\(\) \? std::string\("Scheduled settings change"\) : label;/);
+  assert.match(owner, /bool ScheduledPreferences::restore\(/);
+});
+
+test('Preferences > Schedules starts a rule from a preset with the model default window', () => {
+  const panel = strip(read('src', 'slic3r', 'GUI', 'Schedule', 'ScheduledSettingsPanel.cpp'));
+  const add = panel.slice(panel.indexOf('void ScheduledSettingsPanel::add_rule()'), panel.indexOf('void ScheduledSettingsPanel::edit_selected()'));
+  assert.doesNotMatch(add, /start_time\s*=\s*\{20, 0\}|end_time\s*=\s*\{7, 0\}/, 'no invented evening window');
+  assert.match(add, /RP::schedule_rule_spec\(RP::language_mode_choices\(/);
+  assert.match(add, /RP::saved_schedule_values\(live, Scheduler::instance\(\)\.override_state\(\)\)/, 'a rule-controlled key starts from the person\'s own value');
+  assert.match(add, /StartFromPicker picker\(this, _L\(RP::picker_title\(\)\), _L\(RP::picker_subtitle\(\)\),/);
+  assert.match(add, /RP::schedule_rule_from\(preset,/);
+  assert.match(add, /ScheduleRuleDialog dlg\(this, rule, true, preset_applied_note\(preset\)\);/, 'the editor restates what the preset set');
+  assert.match(add, /PreferencesHistory::label_next_snapshot\(BlankEditorPresets::history_label\(RP::history_action\(\), preset\.title\)\);/);
+  assert.match(panel, /if \(!started_from\.empty\(\)\)\s*m_body->Add\(make_label\(started_from, true, true\)/);
+  const history = strip(read('src', 'slic3r', 'GUI', 'PreferencesHistory.cpp'));
+  assert.match(history, /Schedule::kDocumentConfigKey\n\s*\};/, 'the rule document is recorded with the preferences');
+  assert.match(history, /Schedule::Scheduler::instance\(\)\.reload\(\);/, 'a restore reloads the rules');
+  assert.match(history, /if \(key != Schedule::kDocumentConfigKey\) config->erase\("app", key\);/, 'older snapshots never erase the rules');
+});
+
+test('Version history lists, compares and restores Scheduled settings versions', () => {
+  const dialog = strip(read('src', 'slic3r', 'GUI', 'ProjectHistoryDialog.cpp'));
+  assert.match(dialog, /append\(prefs, schedules_identity, "schedules", "Scheduled settings"\);/);
+  assert.match(dialog, /_L\("Appearance"\), _L\("Scheduled settings"\)\}/);
+  assert.match(dialog, /"appearance","schedules"\}/);
+  assert.match(dialog, /service->restore\(result\.restored_path, error\)/);
+  assert.match(dialog, /L\("Add schedule rule from preset: %s"\)/);
+  for (const message of ['Scheduled settings change', 'Restore scheduled settings']) assert.ok(dialog.includes(`L("${message}")`), message);
 });

@@ -138,11 +138,29 @@ bool ScheduledPreferences::save(const std::string& bytes)
     if (!wxRenameFile(stage, wxString(snapshot), false)) return false;
     { std::ofstream output(std::filesystem::path(snapshot), std::ios::binary | std::ios::trunc); output << bytes; output.flush(); if (!output) return false; }
     ProjectHistoryCommitOptions options;
-    options.message = "Scheduled settings change";
-    auto future = history->commit_snapshot(file.parent_path() / "schedules.history.3mf", std::filesystem::path(snapshot), options);
+    // A named change (a rule started from a preset, a restore) keeps its name.
+    const std::string label = m_service.take_change_label();
+    options.message = label.empty() ? std::string("Scheduled settings change") : label;
+    auto future = history->commit_snapshot(history_identity(), std::filesystem::path(snapshot), options);
     if (future.wait_for(std::chrono::seconds(5)) != std::future_status::ready || !future.get().ok()) return false;
     // Publish only after the real local history sink confirms its snapshot.
     return wxRenameFile(wxString(snapshot), wxString(file.wstring()), true);
+}
+std::filesystem::path ScheduledPreferences::history_identity() { return schedule_path().parent_path() / "schedules.history.3mf"; }
+bool ScheduledPreferences::restore(const std::filesystem::path& snapshot, std::string& error)
+{
+    std::error_code ec;
+    const auto length = std::filesystem::file_size(snapshot, ec);
+    if (ec || length == 0 || length > ScheduledSettings::max_payload) { error = "The scheduled settings version is unreadable or too large."; return false; }
+    std::ifstream input(snapshot, std::ios::binary);
+    std::string bytes(static_cast<std::size_t>(length), '\0');
+    if (!input.read(bytes.data(), static_cast<std::streamsize>(bytes.size()))) { error = "Unable to read the scheduled settings version."; return false; }
+    ScheduledSettings::Schedule next;
+    if (!ScheduledSettings::parse(bytes, m_service.registry(), next, error)) return false;
+    m_service.label_next_change("Restore scheduled settings");
+    if (!m_service.replace(next, error)) { m_service.take_change_label(); return false; }
+    pulse();
+    return true;
 }
 wxPanel* ScheduledPreferences::create_panel(wxWindow* parent)
 {

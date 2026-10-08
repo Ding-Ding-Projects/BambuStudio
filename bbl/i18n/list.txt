@@ -321,6 +321,7 @@ src/slic3r/GUI/AmsMappingPopupUpdate.cpp
 src/slic3r/GUI/Appearance/AppearanceEditorPopover.cpp
 src/slic3r/GUI/Presets/BlankEditorPresets.cpp
 src/slic3r/GUI/Presets/StartFromPicker.cpp
+src/slic3r/GUI/Schedule/ScheduleRulePresets.cpp
 src/slic3r/GUI/AuxiliaryDataViewModel.cpp
 src/slic3r/GUI/BBLStatusBar.cpp
 src/slic3r/GUI/BBLStatusBarPrint.cpp

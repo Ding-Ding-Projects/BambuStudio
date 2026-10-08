@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-08 15:14+0000\n"
+"POT-Creation-Date: 2026-10-08 15:35+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -21200,6 +21200,39 @@ msgstr ""
 msgid "Highlight a preset first."
 msgstr ""
 
+msgid "Creates a new schedule rule that applies all day, every day and sets each setting below to the value the app ships with."
+msgstr ""
+
+msgid "Creates a new schedule rule that applies all day, every day and sets each setting below to your own saved value."
+msgstr ""
+
+msgid "Creates a new schedule rule that applies all day, every day and sets nothing yet. Choose at least one setting before you save it."
+msgstr ""
+
+msgid "Cantonese (Hong Kong)"
+msgstr ""
+
+msgid "Bilingual: English and Cantonese"
+msgstr ""
+
+msgid "Default (Roboto)"
+msgstr ""
+
+msgid "Shipped name"
+msgstr ""
+
+msgid "Language mode"
+msgstr ""
+
+msgid "Funny level (English)"
+msgstr ""
+
+msgid "Start a new schedule rule"
+msgstr ""
+
+msgid "Choose what the new rule starts with. You can change every value before you save it."
+msgstr ""
+
 msgid "Model Pictures"
 msgstr ""
 
@@ -22867,6 +22900,12 @@ msgstr ""
 msgid "Restore appearance snapshot"
 msgstr ""
 
+msgid "Scheduled settings change"
+msgstr ""
+
+msgid "Restore scheduled settings"
+msgstr ""
+
 #. TRN: Title of the prompt asking for a label to attach to project versions.
 msgid "Label versions"
 msgstr ""
@@ -23038,6 +23077,9 @@ msgstr ""
 msgid "Could not load version history: %s"
 msgstr ""
 
+msgid "Scheduled settings are not available."
+msgstr ""
+
 msgid "Enter valid dates in YYYY-MM-DD order, with From before Through."
 msgstr ""
 
@@ -23205,6 +23247,9 @@ msgid "Choose two entries from the same history store or printer."
 msgstr ""
 
 msgid "Could not read the selected versions for comparison."
+msgstr ""
+
+msgid "Unsupported scheduled settings version."
 msgstr ""
 
 msgid "Unsupported appearance snapshot."
