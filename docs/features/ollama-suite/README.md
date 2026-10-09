@@ -7,6 +7,7 @@ The host calls `Slic3r::GUI::show_ollama_suite(parent, state_root)` from `Ollama
 ## Articles
 
 - [Hardware fit evidence](hardware-fit.md): what is measured, how the model folder is confirmed, the estimate settings, and how each of the four verdicts is reached.
+- [Official catalog snapshots](catalog-snapshots.md): traversal verdicts, the saved revision, page count and refresh times, stale and offline presentation.
 
 ## Implemented boundaries
 
@@ -15,7 +16,7 @@ The host calls `Slic3r::GUI::show_ollama_suite(parent, state_root)` from `Ollama
 - Incremental NDJSON framing with per-record, transfer, duration and cancellation bounds. An incomplete response never becomes successful merely because the connection ended.
 - Model capabilities and context are read from `/api/show`. Missing metadata is unknown. Remote-model metadata blocks the local-chat path.
 - Hardware estimates require measured evidence and a context-memory estimate. No capability, size or memory requirement is guessed from a name. Windows detection supplies available and total RAM, architecture, and every hardware graphics adapter's name, driver version, dedicated memory and current budget through DXGI. The model folder is confirmed by finding the installed manifests under the documented `OLLAMA_MODELS` views or the default location, never by assuming the application-data drive. GPU backend support counts only when Ollama itself reported GPU-resident bytes for a loaded model, bound to the adapters, drivers and runtime version it was seen with. The context cache is sized from `/api/show` attention geometry for a persisted context and cache precision. See [Hardware fit evidence](hardware-fit.md).
-- Official HTML catalog traversal follows allowlisted family/tag/page links and records a SHA-256 of every received page. Source traversal and authoritative completeness are separate facts. The current HTML adapter has no verified total-count contract and therefore does not declare an exhaustive catalog or replace a verified cache.
+- Official HTML catalog traversal follows allowlisted family/tag/page links and records a SHA-256 of every received page. Source traversal and authoritative completeness are separate verdicts: a refresh that reads every link is saved as fully traversed, and only reconciled published totals certify it. Every verified traversal is saved with its revision digest, page, family and tag counts and refresh time; each attempt is recorded separately, so a failed refresh is reported beside the last verified catalog and never replaces it. See [Official catalog snapshots](catalog-snapshots.md).
 - Exact variant transfer sizes come from schema-2 manifests on the official registry, including each layer and config object. A manifest with no local weight layer is rejected. This metadata operation never downloads model blobs.
 - Persistent pull items use separate atomic files and bounded pages. Interrupted items become interrupted rather than successful. Retry preserves the exact model tag. The batch engine writes a separate reviewed plan, supports one to four workers, rechecks registry identity and destination capacity before transfer, reconciles the installed manifest, and preserves per-item partial outcomes. The UI start action remains disabled until the local service's configured model destination can be verified.
 - Local chat persistence strips image bytes, thinking and tool-call fields. Ordinary exports omit all arbitrary text and image bytes because arbitrary model/user text cannot be proven free of credentials or private paths.
@@ -31,7 +32,7 @@ The tabs are Models, Chat, Batch pulls, Launch profiles and Troubleshooting. Cha
 
 The following remain required before this feature can be claimed complete:
 
-- Authoritative exhaustive catalog totals and immutable catalog revision support, complete guided filters, and full tag capability metadata before installation.
+- Authoritative published catalog totals (the HTML source has none), complete guided filters, and full tag capability metadata before installation.
 - Runtime observation of the DXGI adapter, registry setting and model-folder readings in a built Windows application.
 - Full native batch review/start integration and proof of the runtime's configured model destination. Core concurrency, preflight and reconciliation require real local-service verification.
 - History searches beyond the current bounded page, per-session system-prompt editing, retry/regenerate controls, additional documented parameters and complete localized copy.

@@ -26,6 +26,7 @@
 #include <algorithm>
 #include <iterator>
 #include <mutex>
+#include <stdexcept>
 #include <thread>
 
 namespace Slic3r::GUI {
@@ -49,6 +50,8 @@ class SuiteDialog final : public wxDialog {
         // Hardware evidence and the verdict for the selected model; both are recomputed, never cached across inputs.
         Hardware hardware; std::string runtime_version; FitSettings fit_settings; std::optional<FitResult> fit;
         bool details_ready=false, hardware_ready=false, measured_notice=false, inventory_known=false;
+        // The latest refresh attempt; a failed one is reported beside, never instead of, the last verified catalog.
+        std::optional<CatalogAttempt> catalog_attempt; bool catalog_ready=false;
     };
 public:
     SuiteDialog(wxWindow *parent,const std::filesystem::path &root)
@@ -71,15 +74,21 @@ public:
         auto *stop=new Button(this,_L("Stop current operation")); stop->SetVariant(Button::Variant::Outlined);
         stop->Bind(wxEVT_BUTTON,[this](wxCommandEvent &) { m_state.cancel=true; if(m_launcher)m_launcher->request_cancel(); }); outer->Add(stop,0,wxALL|wxALIGN_RIGHT,FromDIP(12));
         SetSizer(outer); MD3DialogCaption::FinishChrome(this); CentreOnParent();
-        Bind(wxEVT_TIMER,[this](wxTimerEvent &) { poll(); }); m_timer.Start(120);
-        try { m_queue.recover(); if(std::filesystem::exists(m_root/"catalog.json")) m_state.catalog=load_catalog(read_json(m_root/"catalog.json")); }
+        Bind(wxEVT_TIMER,[this](wxTimerEvent &) { poll(); if(++m_ticks%500==0) show_catalog_age(); }); m_timer.Start(120);
+        try { m_queue.recover();
+            if(std::filesystem::exists(m_root/"catalog-attempt.json")) m_state.catalog_attempt=load_attempt(read_json(m_root/"catalog-attempt.json",4096));
+            if(std::filesystem::exists(m_root/"catalog.json")) {
+                // A saved catalog that no longer re-traverses or matches its revision is reported, never shown.
+                auto saved=load_catalog(read_json(m_root/"catalog.json"),content_identity);
+                if(!catalog_verified(saved)) throw std::runtime_error("Saved catalog is not verified");
+                m_state.catalog=std::move(saved); } }
         catch(...) { m_status->SetLabel(_L("Saved suite data is invalid or unavailable. Existing files were retained.")); }
         render_models(); render_queue();
     }
     ~SuiteDialog() override { m_timer.Stop(); m_state.cancel=true; if(m_launcher)m_launcher->request_cancel(); if(m_worker.joinable()) m_worker.join(); }
 private:
     std::filesystem::path m_root; PullQueue m_queue; ChatStore m_history; WorkerState m_state;
-    std::thread m_worker; wxTimer m_timer; Label *m_status=nullptr,*m_catalog_status=nullptr;
+    std::thread m_worker; wxTimer m_timer; std::size_t m_ticks=0; Label *m_status=nullptr,*m_catalog_status=nullptr;
     TabStrip *m_tabs=nullptr; wxSimplebook *m_book=nullptr; wxBoxSizer *m_body=nullptr;
     std::vector<std::string> m_sections; SearchField *m_model_search=nullptr;
     ListBox *m_models=nullptr,*m_pulls=nullptr; TextArea *m_details=nullptr,*m_prompt=nullptr,*m_system=nullptr,*m_output=nullptr;
@@ -125,6 +134,7 @@ private:
             if(done&&!m_state.messages.empty()) { m_session.messages=m_state.messages; m_state.messages=Json::array(); }
             if(m_state.hardware_ready) { m_hardware->SetLabel(OllamaText::hardware_summary(m_state.hardware)); m_state.hardware_ready=false; }
             if(done&&m_state.measured_notice) { m_status->SetLabel(OllamaText::ui(OllamaText::Ui::MeasuredAgain)); m_state.measured_notice=false; }
+            if(done&&m_state.catalog_ready&&m_state.catalog_attempt) { m_status->SetLabel(OllamaText::catalog_outcome(*m_state.catalog_attempt)); m_state.catalog_ready=false; }
             if(done&&m_state.details_ready&&m_state.selected&&m_state.fit) {
                 m_details->SetValue(OllamaText::fit_report(*m_state.selected,*m_state.fit)); m_state.details_ready=false;
                 m_status->SetLabel(OllamaText::ui(OllamaText::Ui::InspectionFinished)); }
@@ -137,9 +147,13 @@ private:
         action(p,buttons,_L("Refresh runtime"),[this] { refresh_runtime(); });
         action(p,buttons,_L("Refresh official catalog"),[this] { start([this] {
             LocalClient c; auto snapshot=refresh_catalog([&](const std::string &path) { return c.catalog_page(path,m_state.cancel); },m_state.cancel);
-            if(snapshot.complete) atomic_json(m_root/"catalog.json",catalog_json(snapshot));
-            std::lock_guard<std::mutex> lock(m_state.mutex); m_state.status=snapshot.reason;
-            if(snapshot.complete || m_state.catalog.models.empty()) m_state.catalog=std::move(snapshot); else m_state.catalog.offline=true;
+            // Every verified traversal replaces the saved catalog with its revision; a failed one is only recorded.
+            const bool verified=catalog_verified(snapshot);
+            if(verified) { snapshot.revision=catalog_revision(snapshot,content_identity); atomic_json(m_root/"catalog.json",catalog_json(snapshot)); }
+            const auto attempt=catalog_attempt(snapshot);
+            try { atomic_json(m_root/"catalog-attempt.json",attempt_json(attempt)); } catch(...) {}
+            std::lock_guard<std::mutex> lock(m_state.mutex); m_state.catalog_attempt=attempt; m_state.catalog_ready=true;
+            if(verified) m_state.catalog=std::move(snapshot); else m_state.catalog.offline=true;
         }); }); s->Add(buttons,0,wxEXPAND);
         build_hardware(p,s);
         m_catalog_status=new Label(p,_L("Catalog has not been verified."),LB_AUTO_WRAP); s->Add(m_catalog_status,0,wxEXPAND|wxALL,FromDIP(8));
@@ -214,10 +228,12 @@ private:
         apply_backend(h,seen,version);
         std::lock_guard<std::mutex> lock(m_state.mutex); m_state.hardware=std::move(h); m_state.hardware_ready=true; m_state.status="Local Ollama responded. Installed model inventory refreshed.";
     }); }
+    // The catalog's age keeps moving while the dialog is open.
+    void show_catalog_age() { std::lock_guard<std::mutex> lock(m_state.mutex); m_catalog_status->SetLabel(OllamaText::catalog_status(m_state.catalog,m_state.catalog_attempt,now_seconds())); }
     void render_models() {
         std::string selected; const auto selection=m_models->GetSelection(); if(selection>=0&&static_cast<std::size_t>(selection)<m_visible.size())selected=m_visible[selection].name;
         std::vector<Model> all; { std::lock_guard<std::mutex> lock(m_state.mutex); all=reconcile(m_state.catalog.models,m_state.installed,m_state.running);
-            m_catalog_status->SetLabel(u8(m_state.catalog.reason.empty()?"No verified catalog is cached. Installed models remain available.":m_state.catalog.reason)+"\n"+u8(m_state.catalog.refreshed_at)); }
+            m_catalog_status->SetLabel(OllamaText::catalog_status(m_state.catalog,m_state.catalog_attempt,now_seconds())); }
         SearchField::MatchPass match(m_model_search->GetValue(),m_model_search->IsRegexEnabled(),m_model_search->IsCaseSensitive(),m_model_search->IsWholeWord(),m_model_search->IsMultiline());
         std::vector<wxString> rows; m_visible.clear(); std::size_t offset=0;
         for(const auto &m:all) { std::string hay=m.name+" "+m.family+" "+m.quantization; for(const auto &c:m.capabilities) hay+=" "+c;

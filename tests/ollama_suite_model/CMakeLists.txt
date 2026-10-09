@@ -4,6 +4,7 @@
 # target needs no GUI, network, runtime or model download.
 add_executable(ollama_suite_model_tests
     ollama_suite_model_tests.cpp
+    catalog_snapshot_tests.cpp
     ${PROJECT_SOURCE_DIR}/src/libslic3r/OllamaSuite/OllamaCore.cpp
 )
 target_include_directories(ollama_suite_model_tests PRIVATE ${PROJECT_SOURCE_DIR}/src)

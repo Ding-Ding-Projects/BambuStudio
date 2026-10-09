@@ -148,6 +148,7 @@ std::vector<GpuAdapter> graphics_adapters() {
 }
 #endif
 }
+std::string content_identity(const std::string &bytes) { return identity(bytes); }
 std::vector<DestinationCandidate> destination_candidates() {
     std::vector<DestinationCandidate> out;
     auto add = [&](std::filesystem::path path, DestinationSource source) {

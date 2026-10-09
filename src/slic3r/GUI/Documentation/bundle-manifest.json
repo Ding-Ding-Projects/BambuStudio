@@ -770,7 +770,17 @@
     {
       "route": "ollama-suite/README.md",
       "title": "Local Ollama suite",
-      "sha256": "73f7e47b8ba8bb1b4ef7606abc93665344f9e500da62ced538f4d92fdeeec357"
+      "sha256": "1c77a914b80bc0f88f4f2df8eaf2ecc14aee2a5b1813bbccab835ce37a3ef34d"
+    },
+    {
+      "route": "ollama-suite/catalog-snapshots.md",
+      "title": "Official catalog snapshots",
+      "sha256": "88df7447acb54261b4c7dcdeb86f5177629000a03824a5f55cce827a83886437"
+    },
+    {
+      "route": "ollama-suite/catalog-snapshots.yue_HK.md",
+      "title": "官方目錄快照",
+      "sha256": "00af4bd57c424ad18b29f2e8e6210e0e67b136f9b56b0bc553cff30c3d419bd7"
     },
     {
       "route": "ollama-suite/hardware-fit.md",
@@ -1860,7 +1870,7 @@
       "bytes": 1979
     }
   ],
-  "bundle_sha256": "9d882902a7b9dd5315058acc12e4409abd1235cc4e74a8b564bc8137cb0a5967",
+  "bundle_sha256": "8d4a2479755ce202bf82ad9f30ed5aa164fa78a8aafa8093a203a0ba8fa69c09",
   "unavailable_references": [
     {
       "source": "api/README.md",

@@ -13,6 +13,8 @@ public:
     CatalogPage catalog_page(const std::string &, const std::atomic_bool &cancel) const;
     Model registry_metadata(const std::string &exact_tag, const std::atomic_bool &cancel) const;
 };
+// Lower-case hex SHA-256 of `bytes`: the response identity of a catalog page and the digest of a catalog revision.
+std::string content_identity(const std::string &bytes);
 // The documented views of OLLAMA_MODELS: the persisted user/computer setting (or the default location)
 // and this process's environment (or the default location). Duplicates are removed.
 std::vector<DestinationCandidate> destination_candidates();

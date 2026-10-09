@@ -138,16 +138,46 @@ struct CatalogPage {
 CatalogPage parse_catalog_html(const std::string &path, const std::string &html,
                                const std::string &identity, const std::string &timestamp);
 bool official_catalog_path(const std::string &path);
+// Traversed: every family, tag and pagination link was fetched and parsed, but the source publishes no
+// verifiable totals. Certified: every advertised collection count also reconciled across its pages.
+enum class CatalogVerdict { None, Failed, Traversed, Certified };
+enum class CatalogFailure { None, Cancelled, Unavailable, Malformed, Bound };
 struct CatalogSnapshot {
     std::vector<Model> models;
     std::vector<CatalogPage> pages;
-    std::string refreshed_at, last_successful_refresh, reason;
+    std::string refreshed_at, last_successful_refresh, reason, revision;
     bool complete = false, offline = false, traversal_complete = false, authority_total_known = false;
+    bool cached = false; // read back from the saved last verified traversal
+    CatalogVerdict verdict = CatalogVerdict::None;
+    CatalogFailure failure = CatalogFailure::None;
+    std::size_t families = 0;
 };
 using CatalogFetcher = std::function<CatalogPage(const std::string &)>;
+using Digest = std::function<std::string(const std::string &)>;
 CatalogSnapshot refresh_catalog(const CatalogFetcher &, const std::atomic_bool &cancel);
+bool catalog_verified(const CatalogSnapshot &);
+// Canonical receipt of every page (path, response identity, count, entries, links), sorted by path.
+// Its digest is the catalog revision: equal revisions mean byte-identical source responses.
+std::string catalog_receipts(const CatalogSnapshot &);
+std::string catalog_revision(const CatalogSnapshot &, const Digest &);
 Json catalog_json(const CatalogSnapshot &);
-CatalogSnapshot load_catalog(const Json &);
+// Re-traverses the saved pages; with a digest, a revision that no longer matches them is rejected.
+CatalogSnapshot load_catalog(const Json &, const Digest &digest = {});
+// The latest refresh attempt, kept separately so a failure never replaces the last verified catalog.
+struct CatalogAttempt {
+    std::string attempted_at, revision;
+    CatalogVerdict verdict = CatalogVerdict::None;
+    CatalogFailure failure = CatalogFailure::None;
+    std::size_t pages = 0;
+};
+CatalogAttempt catalog_attempt(const CatalogSnapshot &);
+Json attempt_json(const CatalogAttempt &);
+CatalogAttempt load_attempt(const Json &);
+constexpr std::int64_t catalog_stale_seconds = 24 * 60 * 60;
+std::optional<std::int64_t> utc_seconds(const std::string &timestamp);
+std::int64_t now_seconds();
+std::optional<std::int64_t> catalog_age(const CatalogSnapshot &, std::int64_t now);
+bool catalog_stale(const CatalogSnapshot &, std::int64_t now);
 
 enum class PullState { Queued, Pulling, Pulled, Skipped, Cancelled, Failed, Interrupted };
 struct PullItem { std::string id, model, message; PullState state = PullState::Queued; std::uint64_t completed = 0, total = 0; };

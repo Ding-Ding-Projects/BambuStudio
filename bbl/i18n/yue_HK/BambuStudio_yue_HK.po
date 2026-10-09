@@ -40105,3 +40105,93 @@ msgstr "冇報告"
 #. review-status: agent-drafted
 msgid "not measurable"
 msgstr "量度唔到"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "less than a minute"
+msgstr "唔夠一分鐘"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "%s minutes"
+msgstr "%s 分鐘"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "1 hour"
+msgstr "1 個鐘"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "%s hours"
+msgstr "%s 個鐘"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "%s days"
+msgstr "%s 日"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "The latest catalog refresh at %s (UTC) was stopped. Only the last verified catalog and the installed models are shown."
+msgstr "最近一次喺 %s（UTC）更新目錄時被停止咗。只會顯示上次已核實嘅目錄同已安裝嘅模型。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "The latest catalog refresh at %s (UTC) could not reach the official catalog; this computer may be offline. Only the last verified catalog and the installed models are shown."
+msgstr "最近一次喺 %s（UTC）更新目錄時連唔到官方目錄；呢部電腦可能離線。只會顯示上次已核實嘅目錄同已安裝嘅模型。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "The latest catalog refresh at %s (UTC) exceeded the safety limit of pages or tags, so nothing from it was kept. Only the last verified catalog and the installed models are shown."
+msgstr "最近一次喺 %s（UTC）更新目錄時超出咗頁數或者標籤嘅安全上限，所以冇保留嗰次嘅任何內容。只會顯示上次已核實嘅目錄同已安裝嘅模型。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "The latest catalog refresh at %s (UTC) found a page that did not pass validation, so nothing from it was kept. Only the last verified catalog and the installed models are shown."
+msgstr "最近一次喺 %s（UTC）更新目錄時有一頁驗證唔到，所以冇保留嗰次嘅任何內容。只會顯示上次已核實嘅目錄同已安裝嘅模型。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "No verified catalog is saved. Installed models remain available. Choose Refresh official catalog to read every family and tag from the official Ollama library."
+msgstr "未儲存任何已核實嘅目錄。已安裝嘅模型仍然可以用。揀「Refresh official catalog」就可以由官方 Ollama 模型庫讀取每個系列同標籤。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Certified complete catalog: every published count reconciled across %s pages (%s families, %s tags)."
+msgstr "已認證完整嘅目錄：%s 頁入面每個公佈數目都對得上（%s 個系列，%s 個標籤）。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Fully traversed catalog: every family, tag and page link was read across %s pages (%s families, %s tags). The official site publishes no total count, so completeness comes from the traversal and is not certified."
+msgstr "已完整走訪嘅目錄：%s 頁入面每個系列、標籤同頁面連結都讀咗（%s 個系列，%s 個標籤）。官方網站冇公佈總數，所以完整性係靠走訪得出，並未經認證。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "not recorded"
+msgstr "冇記錄"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Revision %s, verified at %s (UTC)."
+msgstr "修訂版本 %s，喺 %s（UTC）核實。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Stale: verified %s ago. Choose Refresh official catalog to check for new models and tags."
+msgstr "已過時：%s 前核實。揀「Refresh official catalog」檢查有冇新模型同標籤。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Verified %s ago."
+msgstr "%s 前核實。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Read from the saved last verified catalog."
+msgstr "由已儲存嘅上次已核實目錄讀取。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Catalog refreshed: %s pages were read and saved as the last verified catalog."
+msgstr "目錄已更新：讀咗 %s 頁，並儲存為上次已核實嘅目錄。"

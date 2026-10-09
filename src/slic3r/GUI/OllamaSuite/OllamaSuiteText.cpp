@@ -5,6 +5,10 @@
 namespace Slic3r::GUI::OllamaText {
 // Named one by one: the application also has a Slic3r::Model, and this namespace has its own fit_label.
 using OllamaSuite::BackendState;
+using OllamaSuite::CatalogAttempt;
+using OllamaSuite::CatalogFailure;
+using OllamaSuite::CatalogSnapshot;
+using OllamaSuite::CatalogVerdict;
 using OllamaSuite::DestinationProof;
 using OllamaSuite::DestinationSource;
 using OllamaSuite::Fit;
@@ -203,5 +207,73 @@ wxString fit_report(const Model &model, const FitResult &fit)
     } else
         out += _L("Capabilities are verified only after the model is installed and inspected.");
     return out;
+}
+
+wxString age_text(std::int64_t seconds)
+{
+    if (seconds < 60)
+        return _L("less than a minute");
+    if (seconds < 3600) {
+        const auto minutes = seconds / 60;
+        return minutes == 1 ? _L("1 minute") : wxString::Format(_L("%s minutes"), count(static_cast<std::size_t>(minutes)));
+    }
+    if (seconds < 48 * 3600) {
+        const auto hours = seconds / 3600;
+        return hours == 1 ? _L("1 hour") : wxString::Format(_L("%s hours"), count(static_cast<std::size_t>(hours)));
+    }
+    return wxString::Format(_L("%s days"), count(static_cast<std::size_t>(seconds / 86400)));
+}
+
+namespace {
+wxString failed_refresh(const CatalogAttempt &attempt)
+{
+    const wxString at = u8(attempt.attempted_at);
+    switch (attempt.failure) {
+    case CatalogFailure::Cancelled:
+        return wxString::Format(_L("The latest catalog refresh at %s (UTC) was stopped. Only the last verified catalog and the installed models are shown."), at);
+    case CatalogFailure::Unavailable:
+        return wxString::Format(_L("The latest catalog refresh at %s (UTC) could not reach the official catalog; this computer may be offline. Only the last verified catalog and the installed models are shown."), at);
+    case CatalogFailure::Bound:
+        return wxString::Format(_L("The latest catalog refresh at %s (UTC) exceeded the safety limit of pages or tags, so nothing from it was kept. Only the last verified catalog and the installed models are shown."), at);
+    default:
+        return wxString::Format(_L("The latest catalog refresh at %s (UTC) found a page that did not pass validation, so nothing from it was kept. Only the last verified catalog and the installed models are shown."), at);
+    }
+}
+} // namespace
+
+wxString catalog_status(const CatalogSnapshot &s, const std::optional<CatalogAttempt> &attempt, std::int64_t now)
+{
+    wxString out;
+    if (!OllamaSuite::catalog_verified(s)) {
+        out = _L("No verified catalog is saved. Installed models remain available. Choose Refresh official catalog to read every family and tag from the official Ollama library.");
+    } else {
+        const auto pages = count(s.pages.size()), families = count(s.families), tags = count(s.models.size());
+        out = s.verdict == CatalogVerdict::Certified
+                  ? wxString::Format(_L("Certified complete catalog: every published count reconciled across %s pages (%s families, %s tags)."), pages, families, tags)
+                  : wxString::Format(_L("Fully traversed catalog: every family, tag and page link was read across %s pages (%s families, %s tags). The official site publishes no total count, so completeness comes from the traversal and is not certified."), pages, families, tags);
+        out += "\n";
+        const wxString revision = s.revision.empty() ? _L("not recorded") : u8(s.revision.substr(0, 12));
+        out += wxString::Format(_L("Revision %s, verified at %s (UTC)."), revision, u8(s.last_successful_refresh));
+        if (const auto age = OllamaSuite::catalog_age(s, now))
+            out += " " + (OllamaSuite::catalog_stale(s, now)
+                              ? wxString::Format(_L("Stale: verified %s ago. Choose Refresh official catalog to check for new models and tags."), age_text(*age))
+                              : wxString::Format(_L("Verified %s ago."), age_text(*age)));
+        if (s.cached)
+            out += " " + _L("Read from the saved last verified catalog.");
+    }
+    // A failure newer than the shown catalog is reported; it never replaces the catalog.
+    if (attempt && attempt->verdict == CatalogVerdict::Failed) {
+        const auto failed = OllamaSuite::utc_seconds(attempt->attempted_at), verified = OllamaSuite::utc_seconds(s.last_successful_refresh);
+        if (!verified || (failed && *failed >= *verified))
+            out += "\n" + failed_refresh(*attempt);
+    }
+    return out;
+}
+
+wxString catalog_outcome(const CatalogAttempt &attempt)
+{
+    if (attempt.verdict == CatalogVerdict::Traversed || attempt.verdict == CatalogVerdict::Certified)
+        return wxString::Format(_L("Catalog refreshed: %s pages were read and saved as the last verified catalog."), count(attempt.pages));
+    return failed_refresh(attempt);
 }
 } // namespace Slic3r::GUI::OllamaText

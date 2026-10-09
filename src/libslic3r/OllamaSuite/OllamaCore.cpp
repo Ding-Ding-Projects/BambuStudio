@@ -456,11 +456,17 @@ CatalogPage parse_catalog_html(const std::string &path, const std::string &html,
 CatalogSnapshot refresh_catalog(const CatalogFetcher &fetch, const std::atomic_bool &cancel) {
     CatalogSnapshot s; s.refreshed_at = utc_now(); std::set<std::string> visited, pending{"/library"}, families, variants;
     bool counts_verified = true;
+    // Validation failures mean the source structure no longer matches; specific stages say otherwise.
+    CatalogFailure failure = CatalogFailure::Malformed;
     try {
         while (!pending.empty()) {
-            require(!cancel.load(), "Catalog refresh cancelled"); require(visited.size() < 10000, "Catalog page safety bound reached");
+            if (cancel.load()) { failure = CatalogFailure::Cancelled; throw std::runtime_error("Catalog refresh cancelled"); }
+            if (visited.size() >= 10000) { failure = CatalogFailure::Bound; throw std::runtime_error("Catalog page safety bound reached"); }
             const auto path = *pending.begin(); pending.erase(pending.begin()); if (!visited.insert(path).second) continue;
-            auto p = fetch(path); require(p.path == path && !p.response_identity.empty() && !p.fetched_at.empty(), "Catalog page lacks source receipt");
+            CatalogPage p;
+            try { p = fetch(path); }
+            catch (...) { failure = cancel.load() ? CatalogFailure::Cancelled : CatalogFailure::Unavailable; throw; }
+            require(p.path == path && !p.response_identity.empty() && !p.fetched_at.empty(), "Catalog page lacks source receipt");
             require(!p.names.empty(), "Catalog page contains no recognized entries");
             const bool index = path.substr(0, path.find('?')) == "/library";
             counts_verified = counts_verified && p.advertised_count.has_value();
@@ -471,7 +477,7 @@ CatalogSnapshot refresh_catalog(const CatalogFetcher &fetch, const std::atomic_b
             }
             for (const auto &next : p.next_pages) { require(official_catalog_path(next), "Unsafe catalog pagination"); if (!visited.count(next)) pending.insert(next); }
             s.pages.push_back(std::move(p));
-            require(variants.size() <= 200000, "Catalog variant safety bound reached");
+            if (variants.size() > 200000) { failure = CatalogFailure::Bound; throw std::runtime_error("Catalog variant safety bound reached"); }
         }
         for (const auto &n : variants) { Model m; m.name = n; s.models.push_back(std::move(m)); }
         // Require an explicit count for each source collection and exact reconciliation across its pages.
@@ -483,26 +489,102 @@ CatalogSnapshot refresh_catalog(const CatalogFetcher &fetch, const std::atomic_b
         for (const auto &[base, names] : actual) counts_verified = counts_verified && expected.count(base) && expected[base] == names.size();
         s.traversal_complete = !families.empty() && !variants.empty(); s.authority_total_known = counts_verified;
         s.complete = counts_verified && s.traversal_complete;
-        s.reason = s.complete ? "Every advertised collection count reconciled across all pages." : "Official HTML has no verified total-count contract. Entries are discovered, not certified exhaustive.";
-        if (s.complete) s.last_successful_refresh = s.refreshed_at;
-    } catch (const std::exception &e) { s.reason = e.what(); s.complete = false; s.offline = true; }
+        s.families = families.size();
+        s.verdict = s.complete ? CatalogVerdict::Certified : s.traversal_complete ? CatalogVerdict::Traversed : CatalogVerdict::Failed;
+        s.reason = s.complete ? "Every advertised collection count reconciled across all pages." : "Every family, tag and page link was traversed. The official HTML has no verified total-count contract, so completeness is by traversal.";
+        if (catalog_verified(s)) s.last_successful_refresh = s.refreshed_at;
+    } catch (const std::exception &e) {
+        // A partial traversal is never presented: no entry from it survives.
+        s.reason = e.what(); s.complete = false; s.offline = true; s.traversal_complete = false;
+        s.verdict = CatalogVerdict::Failed; s.failure = failure; s.models.clear(); s.families = 0;
+    }
     return s;
 }
+bool catalog_verified(const CatalogSnapshot &s) {
+    return (s.verdict == CatalogVerdict::Traversed || s.verdict == CatalogVerdict::Certified) && !s.models.empty() && !s.pages.empty();
+}
+std::string catalog_receipts(const CatalogSnapshot &s) {
+    std::vector<const CatalogPage *> pages; for (const auto &p : s.pages) pages.push_back(&p);
+    std::sort(pages.begin(), pages.end(), [](const CatalogPage *a, const CatalogPage *b) { return a->path < b->path; });
+    std::string out;
+    for (const auto *p : pages) {
+        out += p->path + '\t' + p->response_identity + '\t' + (p->advertised_count ? std::to_string(*p->advertised_count) : std::string("-")) + '\t';
+        for (const auto &n : p->names) out += n + ' ';
+        out += '\t';
+        for (const auto &n : p->next_pages) out += n + ' ';
+        out += '\n';
+    }
+    return out;
+}
+std::string catalog_revision(const CatalogSnapshot &s, const Digest &digest) {
+    require(bool(digest) && !s.pages.empty(), "Catalog revision needs pages and a digest");
+    const auto revision = digest(catalog_receipts(s)); require(!revision.empty() && revision.size() <= 128, "Invalid catalog revision"); return revision;
+}
+namespace {
+std::string verdict_name(CatalogVerdict v) { switch (v) { case CatalogVerdict::Certified: return "certified"; case CatalogVerdict::Traversed: return "traversed"; case CatalogVerdict::Failed: return "failed"; default: return "none"; } }
+CatalogVerdict verdict_from(const std::string &s) {
+    for (auto v : {CatalogVerdict::None, CatalogVerdict::Failed, CatalogVerdict::Traversed, CatalogVerdict::Certified}) if (verdict_name(v) == s) return v;
+    throw std::runtime_error("Unknown catalog verdict");
+}
+}
 Json catalog_json(const CatalogSnapshot &s) {
-    Json j = {{"schema",1},{"complete",s.complete},{"offline",s.offline},{"traversal_complete",s.traversal_complete},{"authority_total_known",s.authority_total_known},{"refreshed_at",s.refreshed_at},{"last_successful_refresh",s.last_successful_refresh},{"reason",s.reason},{"models",Json::array()},{"pages",Json::array()}};
-    for (const auto &m : s.models) j["models"].push_back({{"name",m.name}});
+    Json j = {{"schema",2},{"verdict",verdict_name(s.verdict)},{"revision",s.revision},{"page_count",s.pages.size()},{"families",s.families},{"variants",s.models.size()},
+              {"complete",s.complete},{"traversal_complete",s.traversal_complete},{"authority_total_known",s.authority_total_known},
+              {"refreshed_at",s.refreshed_at},{"last_successful_refresh",s.last_successful_refresh},{"pages",Json::array()}};
     for (const auto &p : s.pages) j["pages"].push_back({{"path",p.path},{"response_identity",p.response_identity},{"fetched_at",p.fetched_at},{"names",p.names},{"next_pages",p.next_pages},{"advertised_count",p.advertised_count ? Json(*p.advertised_count) : Json(nullptr)}});
     return j;
 }
-CatalogSnapshot load_catalog(const Json &j) {
-    require(j.value("schema",0) == 1 && j.at("pages").is_array() && j.at("pages").size() <= 10000, "Invalid catalog cache");
+CatalogSnapshot load_catalog(const Json &j, const Digest &digest) {
+    const int schema = j.value("schema",0);
+    require((schema == 1 || schema == 2) && j.at("pages").is_array() && j.at("pages").size() <= 10000, "Invalid catalog cache");
     std::map<std::string,CatalogPage> pages;
     for (const auto &p : j.at("pages")) { CatalogPage x; x.path=text(p,"path"); x.response_identity=text(p,"response_identity"); x.fetched_at=text(p,"fetched_at"); x.names=p.at("names").get<std::vector<std::string>>(); x.next_pages=p.at("next_pages").get<std::vector<std::string>>(); if (!p.at("advertised_count").is_null()) x.advertised_count=p.at("advertised_count").get<std::size_t>(); require(pages.emplace(x.path,x).second,"Duplicate cached catalog page"); }
+    // The saved pages are traversed again, so a damaged or incomplete cache fails closed instead of being trusted.
     std::atomic_bool cancel{false}; auto s=refresh_catalog([&](const std::string &path) { require(pages.count(path),"Cached catalog page missing"); return pages.at(path); },cancel);
-    s.refreshed_at=text(j,"refreshed_at"); s.offline=true;
-    if (s.complete) s.last_successful_refresh=text(j,"last_successful_refresh");
+    s.refreshed_at=text(j,"refreshed_at",40); s.offline=false; s.cached=true;
+    if (catalog_verified(s)) {
+        const auto saved=text(j,"last_successful_refresh",40); s.last_successful_refresh=saved.empty() ? s.refreshed_at : saved;
+        if (schema == 2) {
+            s.revision=text(j,"revision",128);
+            if (digest && !s.revision.empty()) require(catalog_revision(s,digest)==s.revision,"Saved catalog no longer matches its revision");
+        }
+    } else s.last_successful_refresh.clear();
     return s;
 }
+CatalogAttempt catalog_attempt(const CatalogSnapshot &s) {
+    CatalogAttempt a; a.attempted_at = s.refreshed_at; a.revision = s.revision; a.verdict = s.verdict; a.failure = s.failure; a.pages = s.pages.size(); return a;
+}
+Json attempt_json(const CatalogAttempt &a) {
+    return {{"schema",1},{"attempted_at",a.attempted_at},{"revision",a.revision},{"verdict",verdict_name(a.verdict)},{"failure",static_cast<int>(a.failure)},{"pages",a.pages}};
+}
+CatalogAttempt load_attempt(const Json &j) {
+    require(j.is_object() && j.value("schema",0) == 1, "Unsupported catalog attempt schema");
+    CatalogAttempt a; a.attempted_at = text(j,"attempted_at",40); a.revision = text(j,"revision",128); a.verdict = verdict_from(text(j,"verdict",16));
+    const int failure = j.at("failure").get<int>(); require(failure >= 0 && failure <= static_cast<int>(CatalogFailure::Bound), "Invalid catalog failure");
+    a.failure = static_cast<CatalogFailure>(failure); a.pages = j.at("pages").get<std::size_t>(); require(utc_seconds(a.attempted_at).has_value(), "Invalid attempt time");
+    return a;
+}
+std::optional<std::int64_t> utc_seconds(const std::string &t) {
+    // Exactly YYYY-MM-DDTHH:MM:SSZ, as utc_now() writes it.
+    if (t.size() != 20 || t[4] != '-' || t[7] != '-' || t[10] != 'T' || t[13] != ':' || t[16] != ':' || t[19] != 'Z') return {};
+    auto digits = [&](std::size_t at, std::size_t n) -> std::optional<int> {
+        int v = 0; for (std::size_t i = at; i < at + n; ++i) { if (t[i] < '0' || t[i] > '9') return {}; v = v * 10 + (t[i] - '0'); } return v;
+    };
+    const auto y = digits(0,4), mo = digits(5,2), d = digits(8,2), h = digits(11,2), mi = digits(14,2), se = digits(17,2);
+    if (!y || !mo || !d || !h || !mi || !se || *mo < 1 || *mo > 12 || *d < 1 || *d > 31 || *h > 23 || *mi > 59 || *se > 60) return {};
+    // Days from the civil date (proleptic Gregorian calendar).
+    const std::int64_t year = *y - (*mo <= 2 ? 1 : 0), era = (year >= 0 ? year : year - 399) / 400;
+    const std::int64_t yoe = year - era * 400, doy = (153 * (*mo + (*mo > 2 ? -3 : 9)) + 2) / 5 + *d - 1, doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;
+    const std::int64_t days = era * 146097 + doe - 719468;
+    return days * 86400 + *h * 3600 + *mi * 60 + *se;
+}
+std::int64_t now_seconds() { return std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count(); }
+std::optional<std::int64_t> catalog_age(const CatalogSnapshot &s, std::int64_t now) {
+    if (!catalog_verified(s)) return {};
+    const auto at = utc_seconds(s.last_successful_refresh); if (!at) return {};
+    return now > *at ? now - *at : 0;
+}
+bool catalog_stale(const CatalogSnapshot &s, std::int64_t now) { const auto age = catalog_age(s, now); return !age || *age > catalog_stale_seconds; }
 std::string utc_now() {
     auto time=std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()); std::tm tm{};
 #ifdef _WIN32

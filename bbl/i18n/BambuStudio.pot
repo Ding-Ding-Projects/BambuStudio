@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-09 01:07+0000\n"
+"POT-Creation-Date: 2026-10-09 01:24+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -25079,6 +25079,73 @@ msgid "none reported"
 msgstr ""
 
 msgid "Capabilities are verified only after the model is installed and inspected."
+msgstr ""
+
+msgid "less than a minute"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s minutes"
+msgstr ""
+
+msgid "1 hour"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s hours"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s days"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The latest catalog refresh at %s (UTC) was stopped. Only the last verified catalog and the installed models are shown."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The latest catalog refresh at %s (UTC) could not reach the official catalog; this computer may be offline. Only the last verified catalog and the installed models are shown."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The latest catalog refresh at %s (UTC) exceeded the safety limit of pages or tags, so nothing from it was kept. Only the last verified catalog and the installed models are shown."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The latest catalog refresh at %s (UTC) found a page that did not pass validation, so nothing from it was kept. Only the last verified catalog and the installed models are shown."
+msgstr ""
+
+msgid "No verified catalog is saved. Installed models remain available. Choose Refresh official catalog to read every family and tag from the official Ollama library."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Certified complete catalog: every published count reconciled across %s pages (%s families, %s tags)."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Fully traversed catalog: every family, tag and page link was read across %s pages (%s families, %s tags). The official site publishes no total count, so completeness comes from the traversal and is not certified."
+msgstr ""
+
+msgid "not recorded"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Revision %s, verified at %s (UTC)."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Stale: verified %s ago. Choose Refresh official catalog to check for new models and tags."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Verified %s ago."
+msgstr ""
+
+msgid "Read from the saved last verified catalog."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Catalog refreshed: %s pages were read and saved as the last verified catalog."
 msgstr ""
 
 msgid "Time Lapse"
