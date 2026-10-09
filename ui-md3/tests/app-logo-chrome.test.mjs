@@ -29,6 +29,8 @@ test('the logo panel is compiled into the GUI target and extracted for translati
   const cmake = read('src/slic3r/CMakeLists.txt');
   assert.match(cmake, /^\s*GUI\/AppLogo\/LogoPanel\.cpp\s*$/m);
   assert.match(cmake, /^\s*GUI\/AppLogo\/LogoPanel\.hpp\s*$/m);
+  assert.match(cmake, /^\s*GUI\/AppLogo\/LogoRender\.cpp\s*$/m);
+  assert.match(cmake, /^\s*GUI\/AppLogo\/LogoRender\.hpp\s*$/m);
   assert.match(read('bbl/i18n/list.txt'), /^src\/slic3r\/GUI\/AppLogo\/LogoPanel\.cpp$/m);
   assert.match(read('tests/CMakeLists.txt'), /^add_subdirectory\(app_logo\)$/m);
 });
@@ -48,7 +50,9 @@ test('the panel source picker is semantic, searchable and never fakes custom imp
   assert.match(panel, /SearchField::MatchPass/);
   assert.match(panel, /new LabeledRadioButton\(/, 'radio rows carry the radio role and checked state');
   assert.match(panel, /RadioGroup/, 'arrow-key radiogroup navigation');
-  assert.doesNotMatch(panel, /wxFileDialog|wxFile::|decode_bmp/, 'no file is read until the isolated decoder ships');
+  const render = read('src/slic3r/GUI/AppLogo/LogoRender.cpp');
+  for (const source of [panel, render])
+    assert.doesNotMatch(source, /wxFileDialog|wxFile\b|wxFFile|fopen|ifstream|decode_bmp|LoadFile/, 'no file is read until the isolated decoder ships');
   assert.match(panel, /->Disable\(\)/, 'custom import stays visibly disabled');
   assert.doesNotMatch(panel, /\btr\("/, 'every label goes through the catalogue macros');
 });
@@ -113,7 +117,7 @@ test('identity never reads the presentation-only logo key', () => {
   assert.deepEqual(offenders, []);
   // GUI_App.cpp also hosts the updater, data folder and instance identity, so
   // the logo may appear there only in its getter, its setter and the splash.
-  let rest = app.replace('#include "libslic3r/AppLogo/Logo.hpp"', '').replace('#include "AppLogo/LogoPanel.hpp"', '');
+  let rest = app.replace('#include "libslic3r/AppLogo/Logo.hpp"', '').replace('#include "AppLogo/LogoRender.hpp"', '');
   for (const marker of ['AppLogo::Settings GUI_App::app_logo_settings() const', 'bool GUI_App::set_app_logo_settings(',
                         'void Decorate(wxBitmap& bmp)']) {
     const body = functionBody(rest, marker);

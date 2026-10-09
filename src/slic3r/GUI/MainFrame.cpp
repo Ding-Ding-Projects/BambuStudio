@@ -54,7 +54,7 @@
 #include "CommandPaletteIndex.hpp"
 #include "ModelCreator/ModelCreatorDialog.hpp"
 #include "Appearance/AppearanceEditorPopover.hpp"
-#include "AppLogo/LogoPanel.hpp"
+#include "AppLogo/LogoRender.hpp"
 #include "FilamentScanner.hpp"
 #include "SmartHomeDialog.hpp"
 #include "WebViewDialog.hpp"

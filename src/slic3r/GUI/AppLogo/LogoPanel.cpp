@@ -1,4 +1,5 @@
 #include "LogoPanel.hpp"
+#include "LogoRender.hpp"
 
 #include "../I18N.hpp"
 #include "../Widgets/Button.hpp"
@@ -10,62 +11,19 @@
 #include "../Widgets/SearchField.hpp"
 #include "../Widgets/SpinInput.hpp"
 #include "../Widgets/StateColor.hpp"
-#include <wx/icon.h>
-#include <wx/image.h>
 #include <wx/sizer.h>
 #include <wx/statbmp.h>
 #include <wx/wrapsizer.h>
+
+#include <algorithm>
+#include <array>
+#include <initializer_list>
 
 namespace Slic3r { namespace GUI { namespace AppLogoUI {
 
 namespace {
 constexpr std::array<unsigned, 4> preview_sizes {{16, 24, 32, 64}};
 constexpr int wrap_width = 520;
-}
-
-wxBitmap bitmap(const AppLogo::Settings& settings, unsigned pixels)
-{
-    if (!pixels) return wxBitmap();
-    const auto rendered = AppLogo::render_selected(settings, std::min(pixels, AppLogo::max_output_px));
-    if (!rendered.valid()) return wxBitmap();
-    wxImage image(int(rendered.width), int(rendered.height), false);
-    image.InitAlpha();
-    auto* rgb = image.GetData();
-    auto* alpha = image.GetAlpha();
-    for (size_t i = 0; i < rendered.pixels.size(); ++i) {
-        const auto& p = rendered.pixels[i];
-        rgb[i * 3] = p.r; rgb[i * 3 + 1] = p.g; rgb[i * 3 + 2] = p.b; alpha[i] = p.a;
-    }
-    // Past the generation bound the bounded output is resampled up rather than
-    // generated larger, so a high-DPI surface never lifts the limit.
-    if (rendered.width < pixels)
-        image.Rescale(int(pixels), int(pixels), wxIMAGE_QUALITY_BICUBIC);
-    return wxBitmap(image);
-}
-
-wxBitmap scaled_bitmap(const AppLogo::Settings& settings, unsigned logical, double scale)
-{
-    const AppLogo::RenderPlan plan = AppLogo::plan(logical, scale);
-    wxBitmap result = bitmap(settings, plan.draw_px);
-#if wxCHECK_VERSION(3, 1, 6)
-    if (result.IsOk() && logical)
-        result.SetScaleFactor(double(plan.draw_px) / double(logical));
-#endif
-    return result;
-}
-
-wxIconBundle icon_bundle(const AppLogo::Settings& settings)
-{
-    wxIconBundle bundle;
-    for (const unsigned size : AppLogo::window_icon_sizes) {
-        const wxBitmap rendered = bitmap(settings, size);
-        if (!rendered.IsOk()) return wxIconBundle();
-        wxIcon icon;
-        icon.CopyFromBitmap(rendered);
-        if (!icon.IsOk()) return wxIconBundle();
-        bundle.AddIcon(icon);
-    }
-    return bundle;
 }
 
 LogoPanel::LogoPanel(wxWindow* parent, const AppLogo::Resolved& initial, Commit on_commit)

@@ -20,6 +20,7 @@ file,line,member,px,has_bind,verdict,source,reason
 "AMSMaterialsSetting.cpp","3456","hint_bmp","16","no","md3-rendered","MaterialIcon::bitmap(this, MaterialIcon::Info, 16, StateColor::semantic(MD3::Role::OnSurfaceVariant))",""
 "AMSMaterialsSetting.cpp","3468","bmp_ctrl","","no","data","_make_filament_card_bitmap(this, sp)","Composed filament-card preview image (colour chip + name/weight row) fed by _make_filament_card_bitmap(); content data, not a semantic icon, and never bound to a click."
 "AMSSetting.cpp","249","m_am_img","","no","data","create_scaled_bitmap(""ams_icon"", nullptr, 126)",""
+"AppLogo/LogoPanel.cpp","114","view","","no","data","wxNullBitmap","Live RGBA render of the selected app logo at 16 to 64 px, the same render the title bar and window icon draw; a content preview, not an icon to convert."
 "BaseTransparentDPIFrame.cpp","50","completedimg","","no","data","create_scaled_bitmap(icon_name, this, 25)",""
 "BindDialog.cpp","382","m_printer_img","120","no","data","create_scaled_bitmap(""printer_thumbnail"", nullptr, FromDIP(100))",""
 "BindDialog.cpp","399","","34","no","data","m_bind_icon","Bind / unbind link illustration between the printer and account panels; content picture, not an icon."

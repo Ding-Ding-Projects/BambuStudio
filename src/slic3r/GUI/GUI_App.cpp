@@ -6,7 +6,7 @@
 #include "AppUpdateCheckPolicy.hpp"
 #include "AppDisplayName.hpp"
 #include "libslic3r/AppLogo/Logo.hpp"
-#include "AppLogo/LogoPanel.hpp"
+#include "AppLogo/LogoRender.hpp"
 #include "BilingualDecorator.hpp"
 #include "BilingualRegistry.hpp"
 #include <ctime>

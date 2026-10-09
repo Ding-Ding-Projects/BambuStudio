@@ -1,9 +1,7 @@
 #pragma once
 
-#include "libslic3r/AppLogo/Logo.hpp"
-#include <wx/bitmap.h>
+#include "LogoRender.hpp"
 #include <wx/colour.h>
-#include <wx/iconbndl.h>
 #include <wx/panel.h>
 #include <functional>
 #include <memory>
@@ -24,18 +22,6 @@ class LabeledRadioButton;
 class RadioGroup;
 
 namespace AppLogoUI {
-
-// The selected logo as a square bitmap of exactly `pixels` device pixels. It
-// is generated at no more than AppLogo::max_output_px and resampled up past
-// that bound. Invalid for the shipped mark: callers then draw their own
-// shipped asset.
-wxBitmap bitmap(const AppLogo::Settings& settings, unsigned pixels);
-// For a surface of `logical` pixels at display `scale`: bitmap() at
-// AppLogo::plan().draw_px with the bitmap's scale factor set to match.
-wxBitmap scaled_bitmap(const AppLogo::Settings& settings, unsigned logical, double scale);
-// One icon per AppLogo::window_icon_sizes entry, each rendered from the
-// source. Empty for the shipped mark.
-wxIconBundle icon_bundle(const AppLogo::Settings& settings);
 
 // The app logo editor hosted in Preferences > Appearance. The host owns
 // persistence and every chrome consumer: Commit persists and applies the

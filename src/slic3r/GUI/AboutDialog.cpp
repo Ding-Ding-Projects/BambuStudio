@@ -16,14 +16,13 @@
 #include "Widgets/StaticBox.hpp"
 #include "Widgets/MD3HtmlWindow.hpp"
 #include "ChangelogDialog.hpp"
-#include "AppLogo/LogoPanel.hpp"
+#include "AppLogo/LogoRender.hpp"
 
 #include <wx/clipbrd.h>
-#include <wx/dcmemory.h>
+#include <wx/image.h>
 
 #include <algorithm>
 #include <cmath>
-#include <wx/image.h>
 
 namespace Slic3r {
 namespace GUI {
@@ -309,26 +308,10 @@ static wxBitmap about_banner_with_logo(const wxBitmap &banner)
     // the display scale the tile has to match.
     const double scale = banner.GetHeight() / 250.0;
     const AppLogo::RenderPlan plan = AppLogo::plan(AppLogo::logical_px(AppLogo::Target::About), scale);
-    const wxBitmap chosen = AppLogoUI::bitmap(app_logo, plan.draw_px);
-    if (!chosen.IsOk())
-        return banner;
-    const double units_x = banner.GetWidth() / 562.0;
-    const double units_y = banner.GetHeight() / 238.0;
-    const int side = int(plan.draw_px);
-    const int left = int(std::lround(211.1 * units_x - side / 2.0));
-    const int top = int(std::lround(105.05 * units_y - side / 2.0));
-    wxBitmap result = banner.GetSubBitmap(wxRect(0, 0, banner.GetWidth(), banner.GetHeight()));
-    {
-        wxMemoryDC dc(result);
-        if (app_logo.transparent) {
-            dc.SetPen(*wxTRANSPARENT_PEN);
-            dc.SetBrush(*wxWHITE_BRUSH);
-            dc.DrawRoundedRectangle(left, top, side, side, std::max(2.0, side / 6.0));
-        }
-        dc.DrawBitmap(chosen, left, top, true);
-        dc.SelectObject(wxNullBitmap);
-    }
-    return result;
+    const double side = double(plan.draw_px);
+    const int left = int(std::lround(211.1 * banner.GetWidth() / 562.0 - side / 2.0));
+    const int top = int(std::lround(105.05 * banner.GetHeight() / 238.0 - side / 2.0));
+    return AppLogoUI::overlay(banner, app_logo, left, top, plan.draw_px);
 }
 
 AboutDialog::AboutDialog()

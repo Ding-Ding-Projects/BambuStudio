@@ -18,7 +18,7 @@
 #include "Widgets/Label.hpp"
 #include "NotificationCenterPanel.hpp"
 #include "NotificationManager.hpp"
-#include "AppLogo/LogoPanel.hpp"
+#include "AppLogo/LogoRender.hpp"
 
 #include <wx/dcmemory.h>
 #include <wx/graphics.h>

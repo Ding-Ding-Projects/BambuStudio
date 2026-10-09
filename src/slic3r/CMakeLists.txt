@@ -797,6 +797,8 @@ list(APPEND SLIC3R_GUI_SOURCES
     GUI/Appearance/AppearanceEditorPopover.hpp
     GUI/AppLogo/LogoPanel.cpp
     GUI/AppLogo/LogoPanel.hpp
+    GUI/AppLogo/LogoRender.cpp
+    GUI/AppLogo/LogoRender.hpp
     GUI/Widgets/MaterialIcon.cpp
     GUI/Widgets/MaterialIcon.hpp
     GUI/Widgets/MD3Dialog.cpp
