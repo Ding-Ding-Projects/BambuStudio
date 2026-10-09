@@ -140,15 +140,49 @@ beside it. A category with no matching adapter shows a visible empty state
 instead of a placeholder row. Every search, table and field carries an
 accessible name.
 
+## Language modes and funny levels
+
+All converter copy follows the English, Hong Kong Cantonese and bilingual
+language modes. The panel's own labels, buttons, searches and column titles are
+catalogue messages. The registry in `Converter.cpp` keeps fixed English for
+category, adapter and source-kind names, change disclosures, validators,
+unavailable reasons and queue states; that English is the catalogue source, and
+the panel translates it when it is shown. A runtime diagnostic never joins that
+text. It travels separately as a stable machine code in the adapter's `detail`.
+
+Every stable result code has one plain sentence (`result_message()` in
+`Converter.cpp`). A result cell, a detail line and the exported `message`
+column show the translated sentence followed by the code, for example
+`The destination already exists. It was not replaced. (code destination_exists)`.
+Codes that end in a Windows error number, such as `isolated_worker_start_1114`,
+share one sentence for their prefix and keep the number. The CSV export keeps
+the stable `state` and `result` identifiers beside the translated `message`.
+
+In bilingual mode the status, details, page summary and empty-state lines show
+the English and then the Cantonese, and each table cell reads
+`English · 廣東話`. Window labels, buttons and column titles get their second
+language from the shared bilingual decorator.
+
+The funny level changes only non-factual lines: the guidance line, the empty
+queue and no-match states, the no-selection hint, the worker check progress and
+completion lines, the converting line, the stop summary and the export
+confirmation. Each has a serious, light and playful variant
+(`LocalConverterCopy.hpp`; levels 1 and 2 are serious, 3 is light, 4 and 5 are
+playful), every variant states the same facts and keeps the same counts, and
+English and Cantonese each use the variant for their own level. Adapter names,
+disclosures, reasons, states, result sentences, limits and safety statements are
+factual and never change with the level.
+
 ## Verification and remaining integration
 
 The standalone test project is `tests/local_converter` and can be configured
 with `LOCAL_CONVERTER_QPDF_SDK` pointing to the verified SDK. It builds three
-behavioral test executables and the real worker. The verified counts
-are 196 core assertions, 31 typed PDF assertions and 63 framed PDF assertions.
-The core count includes actual hash-verified AppContainer conversion. The PDF
-request test accepts optional worker path and worker digest arguments to run
-all seven operations through the real sandbox.
+behavioral test executables and the real worker. The core test reports 310
+assertions without a worker path and 313 with one, where the extra three are the
+actual hash-verified AppContainer conversion; it also checks that every failure
+it provokes has a result sentence. The PDF tests recorded 31 typed and 63 framed
+assertions. The PDF request test accepts optional worker path and worker digest
+arguments to run all seven operations through the real sandbox.
 
 Deliberate source mutations verified that enabling an unproven adapter fails
 the availability assertion and removing the page limit fails the bounded-page
@@ -163,9 +197,16 @@ PDF stays disabled when the live capability probe encounters this condition.
 An interactive hidden-desktop verification is pending; direct typed tests do
 not establish packaged sandbox support.
 
+Localization is pinned by `ui-md3/tests/local-converter-localization.test.mjs`
+(every catalogue source has English and Cantonese entries, every result code has
+a sentence, registry text is translated at display time and only non-factual
+lines take a voice) and `tests/local_converter_copy` (the voice ladders keep
+their facts and placeholders at every level).
+
 The native panel has not yet been compiled against the full application's wx
-dependency build or exercised in the packaged application. Full localization,
-per-element appearance/locking menus, notification/history integration,
+dependency build or exercised in the packaged application, so the Cantonese and
+bilingual renderings and the funny-level variants still need to be seen there.
+Per-element appearance/locking menus, notification/history integration,
 command-palette routing, complete bulk-action coverage and the documented
 language/theme/display-scale capture matrix still require shared integration
 and runtime evidence. No source-only result establishes those properties.

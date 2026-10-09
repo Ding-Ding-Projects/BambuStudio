@@ -24,6 +24,10 @@ struct Limits {
     static constexpr std::size_t page_size = 100;
     static constexpr std::uint32_t seconds = 30;
 };
+// User-facing text in the registry (name, reason, disclosure, validator) is
+// fixed English that doubles as the message-catalogue source; the application
+// translates it at display time. A runtime diagnostic never joins that text:
+// it travels separately in `detail` as a stable machine code.
 struct Adapter {
     std::string id;
     Category category;
@@ -36,6 +40,7 @@ struct Adapter {
     std::string reason;
     std::string disclosure;
     std::string validator;
+    std::string detail;
 };
 struct PackageProof {
     std::filesystem::path installed_directory;
@@ -118,5 +123,9 @@ private:
     void write(const Job &);
 };
 const char *state_name(State);
+// English catalogue source describing a stable result or diagnostic code, or
+// nullptr for a code the converter never produces. Codes that end in a Windows
+// error number (isolated_worker_start_5) share one message for their prefix.
+const char *result_message(const std::string &code);
 
 } // namespace Slic3r::LocalConverter

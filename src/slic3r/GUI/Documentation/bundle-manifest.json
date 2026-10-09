@@ -200,7 +200,12 @@
     {
       "route": "converter/README.md",
       "title": "Local file converter",
-      "sha256": "2376508cf0d85168aa3a34b5ae0f2f9dcaa99a941d523e945774fdd6a50d2c5c"
+      "sha256": "9ad3213abf7d421cb481329821cb506ea34470cff36d18a6d16e0c8d36d19ec9"
+    },
+    {
+      "route": "converter/README.yue_HK.md",
+      "title": "本機檔案轉換器",
+      "sha256": "bca7ed5d675c03d9ca6addbeeeb88d9dfb2a64febff59e14fc3fa282af5865c3"
     },
     {
       "route": "converter/pdf-engine.md",
@@ -210,12 +215,17 @@
     {
       "route": "converter/pdf-engine.yue_HK.md",
       "title": "隨附 PDF 引擎",
-      "sha256": "61179b131593c451527fcc7c94355e12e76252a42f60dcc69bb3636d5b9e51e6"
+      "sha256": "f04f7d72e9348de301c933f58fab91444ae70b06cabdaa400f0e3420b8ff426f"
     },
     {
       "route": "converter/pdf.md",
       "title": "Local PDF tools",
       "sha256": "a2989437bd42b5ef4048b8eed8077089da566e8758feb81171f2b1af1a709834"
+    },
+    {
+      "route": "converter/pdf.yue_HK.md",
+      "title": "本機 PDF 工具",
+      "sha256": "08663016ed04027e7d7125d545d736ec4f04ae864e3c7dd5043a22ccbe189117"
     },
     {
       "route": "design-system/README.md",
@@ -1850,7 +1860,7 @@
       "bytes": 1979
     }
   ],
-  "bundle_sha256": "cc99c139db24dd5895cdacf8c581c0ce54d7875ff7b93d41ec8ccac525df15c3",
+  "bundle_sha256": "65673780ab6dc9de7b04f87783a7411f3a6c6ffc3e053d870728ea7a02645115",
   "unavailable_references": [
     {
       "source": "api/README.md",

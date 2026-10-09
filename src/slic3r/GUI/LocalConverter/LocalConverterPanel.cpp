@@ -1,7 +1,9 @@
 #include "LocalConverterPanel.hpp"
+#include "LocalConverterCopy.hpp"
 #include "libslic3r/LocalConverter/Worker.hpp"
 #include "slic3r/GUI/GUI_App.hpp"
 #include "slic3r/GUI/I18N.hpp"
+#include "slic3r/GUI/LanguageMode.hpp"
 #include "slic3r/GUI/wxExtensions.hpp"
 #include "slic3r/GUI/Widgets/Button.hpp"
 #include "slic3r/GUI/Widgets/Label.hpp"
@@ -15,6 +17,7 @@
 #include <fstream>
 #include <algorithm>
 #include <functional>
+#include <initializer_list>
 #include <sstream>
 #include <nlohmann/json.hpp>
 #include <wx/dataview.h>
@@ -27,7 +30,9 @@
 namespace Slic3r::GUI {
 namespace {
 namespace LC = LocalConverter;
+namespace Copy = LocalConverterCopy;
 namespace fs = std::filesystem;
+using Text = I18N::LocalizedText;
 // Stable tab ids, in the order of LocalConverter::Category. They key the
 // strip's persisted layout and never change with the language.
 constexpr std::array<const char *,8> kCategoryIds{"documents","images","audio","video","archives","structured","text","binary"};
@@ -39,6 +44,81 @@ wxString category_label(unsigned i)
     case 0:return _L("Documents/PDF"); case 1:return _L("Images"); case 2:return _L("Audio"); case 3:return _L("Video");
     case 4:return _L("Archives"); case 5:return _L("Structured Data/Spreadsheets"); case 6:return _L("Code/Text"); default:return _L("Binary Encodings");
     }
+}
+
+// Factual catalogue text (registry names, disclosures, reasons, states, result
+// messages and safety statements) in the active language mode. It never takes
+// a funny-level voice. In bilingual mode it carries the Cantonese as secondary.
+Text fact(const char *source) { return I18N::language_mode_service().factual(wxString::FromUTF8(source)); }
+Text fact(const std::string &source) { return fact(source.c_str()); }
+// Text that is the same in every language: a code, a number, a file name.
+Text plain(const wxString &value) { return Text{value, wxString()}; }
+Text number(std::uint64_t value) { return plain(wxString::Format("%llu", static_cast<unsigned long long>(value))); }
+// Non-factual copy: English and Cantonese each take the variant for their own
+// funny level, and both state the same facts.
+Text voice(Copy::Line line)
+{
+    const auto &service = I18N::language_mode_service();
+    const Text english = service.factual(wxString::FromUTF8(Copy::source(line, service.funny_level(I18N::FunnyLanguage::English))));
+    const Text cantonese = service.factual(wxString::FromUTF8(Copy::source(line, service.funny_level(I18N::FunnyLanguage::Cantonese))));
+    switch (service.profile().kind) {
+    case I18N::LanguageModeKind::CantoneseHongKong: return Text{cantonese.primary, wxString()};
+    case I18N::LanguageModeKind::BilingualEnglishCantoneseHongKong: return Text{english.primary, cantonese.secondary};
+    default: return Text{english.primary, wxString()};
+    }
+}
+const wxString &language_text(const Text &text, bool secondary) { return secondary && !text.secondary.empty() ? text.secondary : text.primary; }
+// Formats each language with the same arguments (counts and degrees).
+template <class... Args> Text format(const Text &text, Args... args)
+{
+    Text out{wxString::Format(text.primary, args...), wxString()};
+    if (!text.secondary.empty()) out.secondary = wxString::Format(text.secondary, args...);
+    return out;
+}
+// Fills %s placeholders with text that has its own language variants, so the
+// Cantonese line holds the Cantonese argument.
+template <class... Parts> Text fill(const Text &text, const Parts &...parts)
+{
+    const bool bilingual = !text.secondary.empty() || (... || !parts.secondary.empty());
+    Text out{wxString::Format(text.primary, parts.primary...), wxString()};
+    if (bilingual) out.secondary = wxString::Format(language_text(text, true), language_text(parts, true)...);
+    return out;
+}
+// Joins parts per language: in bilingual mode the stacked label reads the
+// English block, then the Cantonese block.
+Text join(std::initializer_list<Text> parts, const wxString &separator)
+{
+    Text out; bool bilingual = false;
+    for (const Text &part : parts) {
+        if (part.primary.empty()) continue;
+        if (!out.primary.empty()) { out.primary += separator; out.secondary += separator; }
+        out.primary += part.primary; out.secondary += language_text(part, true);
+        bilingual = bilingual || !part.secondary.empty();
+    }
+    if (!bilingual) out.secondary.clear();
+    return out;
+}
+// One table cell: "English · 廣東話" in bilingual mode, otherwise the language shown.
+wxString cell(const Text &text) { return text.secondary.empty() ? text.primary : text.primary + wxString::FromUTF8(" \xC2\xB7 ") + text.secondary; }
+wxString searchable(const std::string &english, const Text &shown) { return utf(english) + " " + shown.primary + " " + shown.secondary; }
+// A stable result code with its translated sentence; the code stays visible so
+// the exact boundary is never lost in translation.
+Text result_text(const std::string &code)
+{
+    const char *message = LC::result_message(code);
+    return fill(fact(L("%s (code %s)")), message != nullptr ? fact(message) : fact(L("No description is available for this result code.")), plain(utf(code)));
+}
+Text availability(const LC::Adapter &a)
+{
+    if (a.enabled) return fact(L("Bundled worker verified"));
+    if (a.detail.empty()) return fact(a.reason);
+    return fill(fact(L("%s (code %s)")), fact(a.reason), plain(utf(a.detail)));
+}
+void show(Label *label, const Text &text)
+{
+    I18N::LocalizedTextRenderOptions options;
+    options.presentation = I18N::LocalizedTextPresentation::Stacked;
+    I18N::apply_localized_text(*label, text.finalize_without_arguments(), options);
 }
 Button *action(wxWindow *parent, wxSizer *row, const wxString &name, std::function<void()> fn, Button::Variant variant = Button::Variant::Outlined)
 {
@@ -56,7 +136,7 @@ MD3DataViewListCtrl *table(wxWindow *parent, long style, int height)
 }
 void add_row(MD3DataViewListCtrl *list, std::initializer_list<wxString> cells)
 {
-    wxVector<wxVariant> row; for (const auto &cell : cells) row.push_back(wxVariant(cell)); list->AppendItem(row);
+    wxVector<wxVariant> row; for (const auto &value : cells) row.push_back(wxVariant(value)); list->AppendItem(row);
 }
 SearchField::MatchPass matcher(SearchField *field)
 { return SearchField::MatchPass(field->GetValue(),field->IsRegexEnabled(),field->IsCaseSensitive(),field->IsWholeWord(),field->IsMultiline()); }
@@ -74,7 +154,8 @@ LocalConverterPanel::LocalConverterPanel(wxWindow *parent, LC::PackageProof proo
     body->SetScrollRate(0,FromDIP(16)); auto *layout = new wxBoxSizer(wxVERTICAL);
     auto *title = new Label(body,::Label::Head_20,_L("Local file converter")); title->SetName(_L("Local file converter"));
     layout->Add(title,0,wxEXPAND|wxALL,gap);
-    layout->Add(text(body,_L("Choose a verified adapter, review its data changes, choose an output folder, then add files. Sources are preserved. Existing outputs are skipped. Processing stays offline.")),0,wxEXPAND|wxALL,gap);
+    auto *intro = text(body,wxEmptyString); show(intro,voice(Copy::Line::Intro));
+    layout->Add(intro,0,wxEXPAND|wxALL,gap);
 
     // Categories: a persisted kit TabStrip over one page per category.
     TabStrip::Options options;
@@ -100,7 +181,7 @@ LocalConverterPanel::LocalConverterPanel(wxWindow *parent, LC::PackageProof proo
         list->AppendTextColumn(_L("Availability"),wxDATAVIEW_CELL_INERT,FromDIP(420),wxALIGN_LEFT,wxDATAVIEW_COL_RESIZABLE);
         list->Bind(wxEVT_DATAVIEW_SELECTION_CHANGED,[this,i](wxDataViewEvent &){ select_adapter(i); });
         m_catalogs[i] = list; sizer->Add(list,1,wxEXPAND|wxALL,FromDIP(4));
-        m_empty[i] = text(page,_L("No adapters match this search.")); m_empty[i]->Hide(); sizer->Add(m_empty[i],0,wxEXPAND|wxALL,FromDIP(4));
+        m_empty[i] = text(page,wxEmptyString); show(m_empty[i],voice(Copy::Line::NoMatches)); m_empty[i]->Hide(); sizer->Add(m_empty[i],0,wxEXPAND|wxALL,FromDIP(4));
         page->SetSizer(sizer); m_category_pages->AddPage(page,category_label(i));
         m_categories->AddTab(kCategoryIds[i], category_label(i));
     }
@@ -112,7 +193,7 @@ LocalConverterPanel::LocalConverterPanel(wxWindow *parent, LC::PackageProof proo
     place_categories();
     show_category(m_categories->ActiveId().empty() ? std::string(kCategoryIds[0]) : m_categories->ActiveId());
 
-    m_details = text(body,_L("No adapter selected. Unavailable formats remain listed with their exact reason."));
+    m_details = text(body,wxEmptyString); show(m_details,voice(Copy::Line::NoAdapterSelected));
     m_details->SetName(_L("Selected adapter details")); layout->Add(m_details,0,wxEXPAND|wxALL,gap);
 
     // PDF operation settings, each row discoverable through its own search.
@@ -157,8 +238,8 @@ LocalConverterPanel::LocalConverterPanel(wxWindow *parent, LC::PackageProof proo
     // Queue controls, search, the paged result table and its bulk actions.
     auto *controls = new wxWrapSizer(wxHORIZONTAL);
     action(body,controls,_L("Resume queue"),[this]{ run(); },Button::Variant::Filled);
-    action(body,controls,_L("Pause after current file"),[this]{ if (m_queue) { m_queue->pause(true); update_status(_L("Paused. The current file may finish; pending files stay saved.")); } });
-    action(body,controls,_L("Cancel active and pending"),[this]{ m_cancel = true; if (m_queue) m_queue->cancel_pending(); update_status(_L("Cancellation requested. Completed outputs are preserved.")); });
+    action(body,controls,_L("Pause after current file"),[this]{ if (m_queue) { m_queue->pause(true); update_status(fact(L("Paused. The current file may finish; pending files stay saved."))); } });
+    action(body,controls,_L("Cancel active and pending"),[this]{ m_cancel = true; if (m_queue) m_queue->cancel_pending(); update_status(fact(L("Cancellation requested. Completed outputs are preserved."))); });
     layout->Add(controls,0,wxEXPAND|wxLEFT|wxRIGHT,FromDIP(4));
     m_queue_search = new SearchField(body,_L("Search this queue page")); m_queue_search->SetName(_L("Converter queue page search"));
     m_queue_search->SetOnQuery([this](const wxString &){ refresh_queue(); }); m_queue_search->SetOnRegexToggle([this](bool){ refresh_queue(); });
@@ -177,13 +258,13 @@ LocalConverterPanel::LocalConverterPanel(wxWindow *parent, LC::PackageProof proo
         for (unsigned row=0;row<m_jobs->GetItemCount();++row) { if (m_jobs->IsRowSelected(row)) m_jobs->UnselectRow(row); else m_jobs->SelectRow(row); }
     });
     action(body,bulk,_L("Retry selected"),[this]{
-        if (!m_queue || m_running) { update_status(_L("Pause and wait for the active file before retrying.")); return; }
+        if (!m_queue || m_running) { update_status(fact(L("Pause and wait for the active file before retrying."))); return; }
         std::size_t accepted=0,rejected=0;
         for (unsigned row=0;row<m_jobs->GetItemCount();++row) {
             if (!m_jobs->IsRowSelected(row) || row>=m_visible_jobs.size()) continue;
             try { m_queue->retry(m_page[m_visible_jobs[row]].id); ++accepted; } catch (...) { ++rejected; }
         }
-        update_status(wxString::Format(_L("Retried: %llu. Not eligible or destination already exists: %llu."),static_cast<unsigned long long>(accepted),static_cast<unsigned long long>(rejected))); refresh_queue();
+        update_status(format(fact(L("Retried: %llu. Not eligible or destination already exists: %llu.")),static_cast<unsigned long long>(accepted),static_cast<unsigned long long>(rejected))); refresh_queue();
     });
     action(body,bulk,_L("Export visible results"),[this]{ export_page(); });
     layout->Add(bulk,0,wxEXPAND|wxLEFT|wxRIGHT,FromDIP(4));
@@ -191,10 +272,10 @@ LocalConverterPanel::LocalConverterPanel(wxWindow *parent, LC::PackageProof proo
     action(body,paging,_L("Previous page"),[this]{ m_after = m_after >= LC::Limits::page_size ? m_after-LC::Limits::page_size : 0; refresh_queue(); },Button::Variant::Text);
     action(body,paging,_L("Next page"),[this]{ if (m_queue && m_after + LC::Limits::page_size < m_queue->count()) m_after += LC::Limits::page_size; refresh_queue(); },Button::Variant::Text);
     m_page_label = text(body,wxEmptyString); m_page_label->SetName(_L("Queue page summary")); paging->Add(m_page_label,1,wxALIGN_CENTER_VERTICAL|wxALL,FromDIP(4)); layout->Add(paging,0,wxEXPAND|wxALL,FromDIP(4));
-    m_status = text(body,_L("Empty queue. No source files have been selected.")); m_status->SetName(_L("Converter status"));
+    m_status = text(body,wxEmptyString); show(m_status,voice(Copy::Line::EmptyQueue)); m_status->SetName(_L("Converter status"));
     layout->Add(m_status,0,wxEXPAND|wxALL,gap); body->SetSizer(layout); outer->Add(body,1,wxEXPAND); SetSizer(outer);
     try { m_queue = std::make_unique<LC::Queue>(std::move(queue_directory)); }
-    catch (...) { update_status(_L("The private queue cannot be opened or another converter owns it. Close the other converter and reopen this destination.")); }
+    catch (...) { update_status(fact(L("The private queue cannot be opened or another converter owns it. Close the other converter and reopen this destination."))); }
     refresh_catalog(); refresh_queue();
     Bind(wxEVT_TIMER,[this](wxTimerEvent &){
         if (!m_running && m_work.joinable()) {
@@ -202,17 +283,18 @@ LocalConverterPanel::LocalConverterPanel(wxWindow *parent, LC::PackageProof proo
             if(m_catalog_pending.exchange(false)){
                 {std::lock_guard<std::mutex> lock(m_catalog_mutex);m_adapters=std::move(m_next_adapters);}
                 m_selected=static_cast<std::size_t>(-1);
-                m_details->SetLabel(_L("No adapter selected. Unavailable formats remain listed with their exact reason."));
-                refresh_catalog();update_status(_L("Bundled worker checks finished. Each unavailable adapter shows its exact reason."));return;
+                show(m_details,voice(Copy::Line::NoAdapterSelected));
+                refresh_catalog();update_status(voice(Copy::Line::ChecksFinished));return;
             }
-            wxString preview;
-            if(m_preview_kind.load()>=0) preview=wxString::Format(_L(" Last source preview: %s, %llu bytes."),utf(LC::kind_name(static_cast<LC::Kind>(m_preview_kind.load()))),static_cast<unsigned long long>(m_preview_bytes.load()));
-            update_status(wxString::Format(_L("Operation stopped. Added: %llu. Not admitted: %llu. Review each saved result below."),static_cast<unsigned long long>(m_admitted.load()),static_cast<unsigned long long>(m_rejected.load()))+preview);
+            Text summary=format(voice(Copy::Line::Stopped),static_cast<unsigned long long>(m_admitted.load()),static_cast<unsigned long long>(m_rejected.load()));
+            if(m_preview_kind.load()>=0)
+                summary=join({summary,fill(fact(L("Last source preview: %s, %s bytes.")),fact(LC::kind_name(static_cast<LC::Kind>(m_preview_kind.load()))),number(m_preview_bytes.load()))},wxString(" "));
+            update_status(summary);
             refresh_queue();
         }
         if (m_running) refresh_queue();
     }); m_timer.Start(500);
-    m_running=true;update_status(_L("Checking the bundled worker and offline sandbox. No converter is enabled until its runtime check completes."));
+    m_running=true;update_status(voice(Copy::Line::Checking));
     m_work=std::thread([this]{auto ready=LC::catalog(m_proof);{std::lock_guard<std::mutex> lock(m_catalog_mutex);m_next_adapters=std::move(ready);}m_catalog_pending=true;m_running=false;});
 }
 LocalConverterPanel::~LocalConverterPanel() { m_timer.Stop(); stop(); }
@@ -239,7 +321,13 @@ void LocalConverterPanel::select_adapter(unsigned category)
     const int row = m_catalogs[category]->GetSelectedRow();
     if (row == wxNOT_FOUND || static_cast<std::size_t>(row) >= m_visible[category].size()) return;
     m_selected = m_visible[category][row]; const auto &a = m_adapters[m_selected];
-    m_details->SetLabel(utf(a.disclosure + (a.enabled ? "\nValidation: " + a.validator : "\n" + a.reason)));
+    const Text name = fact(a.name);
+    const Text disclosure = a.disclosure.empty() ? Text{} : fact(a.disclosure);
+    if (a.enabled)
+        show(m_details,join({name,disclosure,fill(fact(L("Validation: %s")),fact(a.validator))},wxString("\n")));
+    else
+        show(m_details,join({name,disclosure,fill(fact(L("Unavailable: %s")),fact(a.reason)),
+                              a.detail.empty() ? Text{} : fill(fact(L("Diagnostic: %s")),result_text(a.detail))},wxString("\n")));
     Layout();
 }
 void LocalConverterPanel::set_rotation(int degrees)
@@ -248,14 +336,17 @@ void LocalConverterPanel::set_rotation(int degrees)
     for (std::size_t r = 0; r != kRotations.size(); ++r) { m_rotation[r]->SetVariant(kRotations[r] == degrees ? Button::Variant::Filled : Button::Variant::Outlined); m_rotation[r]->Refresh(); }
     m_rotation_label->SetLabel(wxString::Format(_L("Absolute page rotation: %d degrees."),degrees));
 }
-void LocalConverterPanel::update_status(const wxString &message) { m_status->SetLabel(message); Layout(); }
+void LocalConverterPanel::update_status(const Text &message) { show(m_status,message); Layout(); }
 void LocalConverterPanel::refresh_catalog()
 {
     for (unsigned c=0;c!=kCategoryIds.size();++c) {
         m_catalogs[c]->DeleteAllItems(); m_visible[c].clear(); auto pass = matcher(m_search[c]);
         for (std::size_t i=0;i<m_adapters.size();++i) {
-            const auto &a=m_adapters[i]; if (static_cast<unsigned>(a.category)!=c || !pass.matches(utf(a.name+" "+a.reason+" "+a.disclosure))) continue;
-            add_row(m_catalogs[c],{utf(a.name),a.enabled ? _L("Bundled worker verified") : utf(a.reason)}); m_visible[c].push_back(i);
+            const auto &a=m_adapters[i]; if (static_cast<unsigned>(a.category)!=c) continue;
+            const Text name=fact(a.name), state=availability(a);
+            const wxString haystack=searchable(a.name,name)+" "+searchable(a.reason+" "+a.disclosure+" "+a.detail,state)+" "+cell(a.disclosure.empty() ? Text{} : fact(a.disclosure));
+            if (!pass.matches(haystack)) continue;
+            add_row(m_catalogs[c],{cell(name),cell(state)}); m_visible[c].push_back(i);
         }
         m_empty[c]->Show(m_visible[c].empty());
     }
@@ -272,24 +363,25 @@ void LocalConverterPanel::refresh_queue()
         m_page=m_queue->page(m_after); m_jobs->DeleteAllItems(); m_visible_jobs.clear(); auto pass=matcher(m_queue_search);
         for(std::size_t i=0;i<m_page.size();++i) {
             const auto &j=m_page[i]; const auto name=j.source.filename().u8string();
-            if(!pass.matches(utf(name+" "+LC::state_name(j.state)+" "+j.code))) continue;
-            add_row(m_jobs,{wxString::Format("%llu",static_cast<unsigned long long>(j.id)),utf(name),utf(LC::state_name(j.state)),utf(j.code)});
+            const Text state=fact(LC::state_name(j.state)), result=result_text(j.code);
+            if(!pass.matches(utf(name)+" "+searchable(LC::state_name(j.state),state)+" "+searchable(j.code,result))) continue;
+            add_row(m_jobs,{wxString::Format("%llu",static_cast<unsigned long long>(j.id)),utf(name),cell(state),cell(result)});
             m_visible_jobs.push_back(i);
             if(std::find(selected.begin(),selected.end(),j.id)!=selected.end()) m_jobs->SelectRow(static_cast<unsigned>(m_visible_jobs.size()-1));
         }
-        m_page_label->SetLabel(wxString::Format(_L("%llu saved files. Showing %llu matches from at most 100 records."),static_cast<unsigned long long>(m_queue->count()),static_cast<unsigned long long>(m_visible_jobs.size())));
-    } catch (...) { update_status(_L("A saved queue record could not be read. Records and outputs have been retained for recovery.")); }
+        show(m_page_label,format(fact(L("%llu saved files. Showing %llu matches from at most 100 records.")),static_cast<unsigned long long>(m_queue->count()),static_cast<unsigned long long>(m_visible_jobs.size())));
+    } catch (...) { update_status(fact(L("A saved queue record could not be read. Records and outputs have been retained for recovery."))); }
 }
 void LocalConverterPanel::choose_source(bool folder)
 {
-    if (!m_queue || m_running) { update_status(_L("Wait for the current operation before adding sources.")); return; }
-    if (m_selected>=m_adapters.size() || !m_adapters[m_selected].enabled) { update_status(_L("Select an enabled adapter first. Unavailable rows explain their missing packaged adapter.")); return; }
+    if (!m_queue || m_running) { update_status(fact(L("Wait for the current operation before adding sources."))); return; }
+    if (m_selected>=m_adapters.size() || !m_adapters[m_selected].enabled) { update_status(fact(L("Select an enabled adapter first. Unavailable rows explain their missing packaged adapter."))); return; }
     const bool merge=m_adapters[m_selected].id=="pdf.merge";
-    if(folder && merge){update_status(_L("PDF merge needs an explicit ordered selection. Use Add source file and select at least two PDFs."));return;}
+    if(folder && merge){update_status(fact(L("PDF merge needs an explicit ordered selection. Use Add source file and select at least two PDFs.")));return;}
     if(folder) { wxDirDialog dialog(this,_L("Choose source folder, discovered one file at a time")); if(dialog.ShowModal()==wxID_OK) admit(fs::path(dialog.GetPath().ToStdWstring()),true); }
     else { wxFileDialog dialog(this,merge?_L("Choose PDFs to merge, in picker order"):_L("Choose source file"),wxEmptyString,wxEmptyString,_L("All files (*.*)|*.*"),wxFD_OPEN|wxFD_FILE_MUST_EXIST|(merge?wxFD_MULTIPLE:0));
         if(dialog.ShowModal()==wxID_OK){
-            if(merge){wxArrayString paths;dialog.GetPaths(paths);if(paths.size()<2||paths.size()>1000){update_status(_L("Select between 2 and 1000 PDFs within the aggregate 16 MiB limit."));return;}
+            if(merge){wxArrayString paths;dialog.GetPaths(paths);if(paths.size()<2||paths.size()>1000){update_status(fact(L("Select between 2 and 1000 PDFs within the aggregate 16 MiB limit.")));return;}
                 std::vector<fs::path> additional;for(std::size_t i=1;i<paths.size();++i)additional.emplace_back(paths[i].ToStdWstring());admit(fs::path(paths[0].ToStdWstring()),false,std::move(additional));}
             else admit(fs::path(dialog.GetPath().ToStdWstring()),false);
         }
@@ -298,20 +390,20 @@ void LocalConverterPanel::choose_source(bool folder)
 void LocalConverterPanel::admit(fs::path source,bool folder,std::vector<fs::path> additional)
 {
     fs::path destination(field_value(m_destination).ToStdWstring());
-    std::error_code ec; if(!fs::is_directory(destination,ec)) { update_status(_L("Choose an existing output folder.")); return; }
+    std::error_code ec; if(!fs::is_directory(destination,ec)) { update_status(fact(L("Choose an existing output folder."))); return; }
     const auto adapter=m_adapters[m_selected]; std::string options;
     if(adapter.id.rfind("pdf.",0)==0){
         nlohmann::json data=nlohmann::json::object();
         if(adapter.id=="pdf.extract"||adapter.id=="pdf.reorder"||adapter.id=="pdf.rotate"){
             data["pages"]=nlohmann::json::array();std::stringstream list(field_value(m_pdf_pages).ToStdString());std::string item;
-            while(std::getline(list,item,',')){std::stringstream field(item);unsigned n=0;field>>n;field>>std::ws;if(!field.eof()||!n||n>1000){update_status(_L("Enter page numbers from 1 to 1000, separated by commas."));return;}data["pages"].push_back(n);}
+            while(std::getline(list,item,',')){std::stringstream field(item);unsigned n=0;field>>n;field>>std::ws;if(!field.eof()||!n||n>1000){update_status(fact(L("Enter page numbers from 1 to 1000, separated by commas.")));return;}data["pages"].push_back(n);}
         }
         if(adapter.id=="pdf.rotate")data["rotation"]=m_pdf_rotation;
         if(adapter.id=="pdf.metadata")data["metadata"]={{"Title",field_value(m_pdf_title).ToUTF8().data()}};
         options=data.dump();
     }
     if(m_work.joinable()) m_work.join(); m_cancel=false; m_running=true; m_admitted=0; m_rejected=0;
-    update_status(_L("Discovering sources with bounded memory. Cancel stops discovery; admitted records stay saved."));
+    update_status(fact(L("Discovering sources with bounded memory. Cancel stops discovery; admitted records stay saved.")));
     m_work=std::thread([this,source=std::move(source),destination=std::move(destination),adapter,folder,options=std::move(options),additional=std::move(additional)]{
         auto add=[&](const fs::path &path){
             if(m_cancel.load()) return;
@@ -336,9 +428,9 @@ void LocalConverterPanel::admit(fs::path source,bool folder,std::vector<fs::path
 void LocalConverterPanel::run()
 {
     if(!m_queue || m_running) return;
-    std::string reason; if(!LC::verify_package(m_proof,reason)) { update_status(utf(reason)); return; }
+    std::string reason; if(!LC::verify_package(m_proof,reason)) { update_status(fact(reason)); return; }
     if(m_work.joinable()) m_work.join(); m_cancel=false; m_running=true; m_queue->pause(false);
-    update_status(_L("Converting offline in the isolated worker. One file runs at a time; every result is saved."));
+    update_status(voice(Copy::Line::Converting));
     m_work=std::thread([this]{
         try { while(m_queue->step([this](const std::string &id,const LC::Bytes &input,const std::atomic<bool> &cancel){return LC::isolated_transform(m_proof,id,input,cancel);},m_cancel)) {} }
         catch (...) { m_cancel=true; }
@@ -350,10 +442,15 @@ void LocalConverterPanel::export_page()
 {
     wxFileDialog dialog(this,_L("Export visible queue results"),wxEmptyString,"conversion-results.csv",_L("CSV files (*.csv)|*.csv"),wxFD_SAVE);
     if(dialog.ShowModal()!=wxID_OK) return;
-    std::string out="id,source_name,state,result\r\n";
+    // State and result stay stable identifiers for tools; the message column is
+    // the result sentence in the language shown.
+    std::string out="id,source_name,state,result,message\r\n";
     auto quote=[](std::string value){ std::string q="\""; for(char c:value){q+=c;if(c=='"')q+='"';} return q+'"'; };
-    for(auto i:m_visible_jobs) { const auto &j=m_page[i]; out+=std::to_string(j.id)+","+quote(j.source.filename().u8string())+","+quote(LC::state_name(j.state))+","+quote(j.code)+"\r\n"; }
+    for(auto i:m_visible_jobs) {
+        const auto &j=m_page[i];
+        out+=std::to_string(j.id)+","+quote(j.source.filename().u8string())+","+quote(LC::state_name(j.state))+","+quote(j.code)+","+quote(result_text(j.code).primary.ToUTF8().data())+"\r\n";
+    }
     std::string code; const bool ok=LC::atomic_create(fs::path(dialog.GetPath().ToStdWstring()),LC::Bytes(out.begin(),out.end()),code);
-    update_status(ok ? _L("Visible result rows exported as UTF-8 CSV. Source paths were excluded.") : _L("Export was not written. Choose a new destination in a writable folder."));
+    update_status(ok ? voice(Copy::Line::Exported) : fact(L("Export was not written. Choose a new destination in a writable folder.")));
 }
 } // namespace Slic3r::GUI

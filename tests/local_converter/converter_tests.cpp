@@ -19,7 +19,7 @@ std::string get(const fs::path &p) { std::ifstream in(p,std::ios::binary); retur
 void good(const char *id, const std::string &input, const std::string &expected)
 { auto r = transform(id,b(input)); require(r.outcome == Outcome::Converted,id); require(s(r.output) == expected,id); }
 void bad(const char *id, const Bytes &input)
-{ auto r = transform(id,input); require(r.outcome == Outcome::Failed,id); require(r.output.empty(),"failed conversion exposes no output"); }
+{ auto r = transform(id,input); require(r.outcome == Outcome::Failed,id); require(r.output.empty(),"failed conversion exposes no output"); require(result_message(r.code) != nullptr,"every failure code has a translatable message"); }
 int main(int argc, char **argv)
 {
     auto root = fs::temp_directory_path() / ("bambu-converter-tests-" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
@@ -66,6 +66,18 @@ int main(int argc, char **argv)
         std::array<bool,8> categories{};
         for (const auto &a : adapters) { categories[static_cast<unsigned>(a.category)] = true; require(!a.enabled,"unproven adapter disabled"); require(!a.reason.empty(),"disabled reason explicit"); }
         for (bool covered : categories) require(covered,"all categories visible");
+        for (const auto &a : adapters) {
+            // Registry text is fixed catalogue English: a runtime diagnostic never
+            // joins it, so every reason can be translated as one message.
+            require(!a.name.empty() && !a.validator.empty(),"adapter text present");
+            require(a.reason.find(": ")==std::string::npos,"no diagnostic concatenated into a reason");
+            require(a.detail.empty() || result_message(a.detail) != nullptr,"diagnostic detail is a described code");
+        }
+        require(result_message("converted") != nullptr && result_message("cancelled") != nullptr,"outcome messages");
+        require(result_message("isolated_worker_start_1114") != nullptr && result_message("pdf_system_ui_load_1114") != nullptr,"numbered Windows codes described by prefix");
+        require(result_message("isolated_worker_start_") == nullptr && result_message("isolated_worker_start_x") == nullptr,"prefix needs a Windows number");
+        require(result_message("no_such_code") == nullptr && result_message("") == nullptr,"unknown codes are reported as unknown");
+        require(std::string(state_name(State::RecoveryRequired)) == "Recovery required" && std::string(kind_name(Kind::Utf8)) == "UTF-8 text","state and kind names stay catalogue English");
         std::atomic<bool> cancel{false};
         Executor exec = [](const std::string &a,const Bytes &v,const std::atomic<bool>&){ return transform(a,v); };
         const auto source = root / "input.dat"; put(source,"hello"); const auto output = root / "out.hex";

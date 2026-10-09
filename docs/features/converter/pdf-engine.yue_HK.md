@@ -1,6 +1,6 @@
 ---
 translation-of: pdf-engine.md
-source-sha256: c5c84d7af9d30155027d7a00960c051b906dbc7a882e9a3ba476feb985ffbf37
+source-sha256: 13f17ca7e8c47b78cf4aab27025b85e12aaadf79cc1c6554af89f661cb1cb3aa
 review-status: agent-drafted
 ---
 
@@ -12,16 +12,27 @@ Windows x64 建置將官方 qpdf 12.4.2 MSVC runtime 放喺應用程式執行檔
 
 ## 建置同打包整合
 
+Configure `src/slic3r` 需要 `LOCAL_CONVERTER_QPDF_SDK` 指向呢個已驗證嘅 SDK，否則會停止並顯示錯誤，解釋點樣暫存。各建置途徑會喺 configure 之前自動暫存兩個目錄樹：
+
+| 途徑 | 傳俾 configure 嘅 SDK | Runtime |
+| --- | --- | --- |
+| `build.bat`、`build-installer.bat`、`OneClickBuildInstaller.cmd` | `artifacts/local-pdf/sdk` | `install-dir/tools/pdf`（套件內容） |
+| 託管 Windows 建置工作流程（`build_bambu.yml`） | `artifacts/local-pdf/sdk` | `install-dir/tools/pdf`（套件內容） |
+| `build_win.bat` | `artifacts/local-pdf/sdk` | `artifacts/local-pdf/runtime`（要複製到工作程序旁邊嘅 `tools/pdf`） |
+
+每條途徑都用 PowerShell 7（`pwsh`）執行呢個指令碼。一鍵啟動程序冇 PowerShell 7 時會自動安裝；`build_win.bat` 會停止並提示點樣安裝。手動 configure 前要自己暫存，就喺儲存庫根目錄執行：
+
 ```powershell
 pwsh -NoProfile -File scripts/windows/Install-LocalPdfTools.ps1 `
-  -Destination install-dir/tools/pdf -SdkDestination artifacts/pdf-sdk
+  -Destination install-dir/tools/pdf -SdkDestination artifacts/local-pdf/sdk
 pwsh -NoProfile -File scripts/windows/Install-LocalPdfTools.ps1 `
-  -Destination install-dir/tools/pdf -SdkDestination artifacts/pdf-sdk -VerifyOnly
+  -Destination install-dir/tools/pdf -SdkDestination artifacts/local-pdf/sdk -VerifyOnly
+cmake -S . -B build -DLOCAL_CONVERTER_QPDF_SDK:PATH="$PWD/artifacts/local-pdf/sdk" <other options>
 ```
 
-父建置必須喺打包前執行暫存，並針對實際套件暫存目錄驗證。單靠呢個指令碼，唔能夠證明安裝程式包含呢啲檔案。SDK 提供 `include/qpdf/qpdf-c.h` 同 MSVC 匯入程式庫 `lib/qpdf.lib`。Runtime 包含 `qpdf30.dll`、`qpdf.exe` 同官方分發包內八個 Microsoft runtime DLL。只暫存匯入程式庫，唔暫存靜態程式庫。
+打包仍然要針對實際套件暫存目錄驗證。單靠呢個指令碼，唔能夠證明安裝程式包含呢啲檔案。SDK 提供 `include/qpdf/qpdf-c.h` 同 MSVC 匯入程式庫 `lib/qpdf.lib`。Runtime 包含 `qpdf30.dll`、`qpdf.exe` 同官方分發包內八個 Microsoft runtime DLL。只暫存匯入程式庫，唔暫存靜態程式庫。
 
-啟動程序用 `gh release download`，由 `qpdf/qpdf` 標籤 `v12.4.2` 取得確切封存，核對已記錄校驗碼後，先解壓明確允許清單內檔案。`-Offline` 禁止下載，要求有效快取；`-VerifyOnly` 永遠唔下載或執行任何內容。已有資料嘅呼叫會驗證現有檔案。現有目的地不符會失敗，唔改內容。新目的地喺唯一相鄰目錄組裝，驗證後以一次目錄重新命名啟用。失敗暫存保留作診斷。唔刪除或取代現有目錄樹。版本更改必須暫存至全新目錄樹。
+啟動程序由官方 `qpdf/qpdf` 發佈版本、標籤 `v12.4.2` 取得確切封存。有 `GH_TOKEN`、`GITHUB_TOKEN` 或者已登入嘅 GitHub CLI 時，佢會用 `gh release download`；冇嘅話，或者嗰個下載失敗，就經 HTTPS 下載同一個發佈檔案，所以本機建置唔使登入 GitHub。無論邊個副本，都要同已記錄嘅大小同校驗碼相符，先至解壓明確允許清單內嘅檔案。`-Offline` 禁止下載，要求有效快取；`-VerifyOnly` 永遠唔下載或執行任何內容。已有資料嘅呼叫會驗證現有檔案。現有目的地不符會失敗，唔改內容。新目的地喺唯一相鄰目錄組裝，驗證後以一次目錄重新命名啟用。失敗暫存保留作診斷。唔刪除或取代現有目錄樹。版本更改必須暫存至全新目錄樹。
 
 ## 執行界線
 

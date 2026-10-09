@@ -18,11 +18,16 @@ class wxSimplebook;
 
 namespace Slic3r::GUI {
 class TabStrip;
+namespace I18N { struct LocalizedText; }
 // A real destination panel. Its owner provides the installed package receipt
 // and private local data directory, then places it in the normal tab router.
 // Every control is a registered kit primitive: the eight categories ride a
 // persisted TabStrip, catalogues and the queue are MD3 tables, fields are
 // TextInput and every line of text is a Label.
+// Registry text from libslic3r (adapter names, disclosures, reasons, states and
+// result codes) is translated here at display time; status, detail, page and
+// empty-state lines render both languages themselves in bilingual mode, and
+// their non-factual voice follows each language's funny level.
 class LocalConverterPanel final : public wxPanel {
 public:
     LocalConverterPanel(wxWindow *, LocalConverter::PackageProof, std::filesystem::path queue_directory);
@@ -39,7 +44,7 @@ private:
     void run();
     void stop();
     void export_page();
-    void update_status(const wxString &);
+    void update_status(const I18N::LocalizedText &);
     LocalConverter::PackageProof m_proof;
     std::unique_ptr<LocalConverter::Queue> m_queue;
     std::vector<LocalConverter::Adapter> m_adapters;
