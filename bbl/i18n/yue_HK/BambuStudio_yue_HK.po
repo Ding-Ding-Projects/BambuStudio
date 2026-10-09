@@ -39795,3 +39795,18 @@ msgstr "%s（%d 個生效中）"
 #. review-status: agent-drafted
 msgid "Hiding %s"
 msgstr "隱藏緊%s"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Legend and statistics"
+msgstr "圖例同統計"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Shift+L"
+msgstr "Shift+L"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Collapse or expand the legend and statistics panel"
+msgstr "收埋或者展開圖例同統計面板"

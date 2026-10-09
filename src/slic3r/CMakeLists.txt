@@ -810,6 +810,8 @@ list(APPEND SLIC3R_GUI_SOURCES
     GUI/Widgets/CollapsibleFilterBar.cpp
     GUI/Widgets/CollapsibleFilterBar.hpp
     GUI/Widgets/CollapsibleFilterState.hpp
+    GUI/Widgets/CanvasDisclosures.cpp
+    GUI/Widgets/CanvasDisclosures.hpp
     GUI/Widgets/TabStripModel.hpp
     GUI/Widgets/TabStrip.cpp
     GUI/Widgets/TabStrip.hpp

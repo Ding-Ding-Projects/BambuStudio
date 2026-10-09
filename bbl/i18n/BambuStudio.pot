@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-09 02:26+0000\n"
+"POT-Creation-Date: 2026-10-09 02:48+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -3558,6 +3558,7 @@ msgstr ""
 msgid "Overall preview"
 msgstr ""
 
+#. TRN: Screen reader name of the collapse toggle of the assembly structure panel.
 msgid "Assembly Structure"
 msgstr ""
 
@@ -3895,6 +3896,7 @@ msgstr ""
 msgid "Assembly tree"
 msgstr ""
 
+#. TRN: Header of the collapsible ink slot search in the sidebar.
 #. TRN: Header of the collapsible object search in the sidebar.
 #. TRN: Header of the collapsible search of a list.
 #. TRN: Header of the collapsible search of the device farm toolbar.
@@ -5617,6 +5619,10 @@ msgid "Thermal Index (max)"
 msgstr ""
 
 msgid "Thermal Index (mean)"
+msgstr ""
+
+#. TRN: Screen reader name of the fold button of the preview legend and statistics dock.
+msgid "Legend and statistics"
 msgstr ""
 
 msgid "Statistics of All Plates"
@@ -13354,6 +13360,12 @@ msgid "Horizontal slider - Move active thumb Right"
 msgstr ""
 
 msgid "On/Off one layer mode of the vertical slider"
+msgstr ""
+
+msgid "Shift+L"
+msgstr ""
+
+msgid "Collapse or expand the legend and statistics panel"
 msgstr ""
 
 msgid "Move slider 5x faster"

@@ -52,6 +52,33 @@ In the sidebar, <kbd>Ctrl</kbd>+<kbd>F</kbd> still focuses the object search.
 If the search is collapsed, the shortcut expands it for the current session
 only; the remembered choice does not change.
 
+## Panels on the 3D canvas
+
+Two panels are drawn on the 3D canvas rather than as native controls: the
+preview's legend and statistics dock and the assembly view's **Assembly
+Structure** panel. They follow the same rules:
+
+- **Remembered.** The fold state is stored as `preview_legend` and
+  `assembly_structure` in the same `collapsible_filters` section and comes back
+  after a restart. Both start expanded: the legend dock carries the view-mode
+  chips and display options that change what the preview shows, and the
+  structure panel is the working step tree. The existing
+  `use_last_fold_state_gcodeview_option_panel` setting (on by default) still
+  decides whether the preview restores the stored state; when it is off, each
+  newly loaded G-code opens the dock expanded, as before.
+- **Keyboard.** With the canvas focused, <kbd>Shift</kbd>+<kbd>L</kbd> folds or
+  unfolds the legend dock in the preview and the structure panel in the assembly
+  view. Plain <kbd>L</kbd> keeps its preview meaning (one layer mode of the
+  vertical slider). After the shortcut, the panel's toggle shows a Primary focus
+  ring; the next mouse press on the canvas hides it again. The shortcut is
+  listed in the keyboard shortcuts dialog under **Preview**.
+- **Screen readers.** The canvas window exposes each panel toggle as a push
+  button named **Legend and statistics** or **Assembly Structure**, reported as
+  expanded or collapsed, placed where it is drawn and activatable from
+  assistive technology. After the keyboard shortcut the toggle receives
+  accessibility focus and then a state change event, so the new state is read
+  out; a mouse toggle raises the state change event.
+
 ## For developers
 
 The shared widget is `CollapsibleFilterBar`
@@ -87,6 +114,11 @@ filters->SetActiveFilters({_L("Errors"), wxString::Format(_L("Search: %s"), quer
   it belongs to, and `SetExpanded(true, false)` reveals the controls without
   storing the choice.
 
+Canvas panels use `CollapsibleFilters::CanvasDisclosure` for their state and
+`CanvasDisclosures::publish()` / `announce()`
+(`src/slic3r/GUI/Widgets/CanvasDisclosures.{hpp,cpp}`) to keep the canvas
+accessible object in step with what ImGui drew.
+
 ## Tests
 
 `tests/collapsible_filters/collapsible_filters_tests.cpp` checks the starting
@@ -97,11 +129,17 @@ discloses its active filters, including unnamed ones.
 the configuration, the keyboard and the accessible object, and
 `collapsible_filters_adoption.test.mjs` checks that every surface in the table
 above creates its controls inside the collapsible body, lays the section out and
-reports its active filters.
+reports its active filters. `canvas_panels_contract.test.mjs` checks that the
+two canvas panels store their state, answer <kbd>Shift</kbd>+<kbd>L</kbd>, draw
+the focus ring and publish and announce their toggles; setting
+`COLLAPSE_SOURCE_REF` runs it against another revision.
 
 ## Still to verify in the built application
 
 Focus ring visibility, screen reader announcements, the layout after a toggle
 on each surface above, the theme of the collapsible body after a light or dark
 switch, and the state surviving a restart need to be observed in the built
-Windows application.
+Windows application. For the canvas panels that also covers
+<kbd>Shift</kbd>+<kbd>L</kbd> in the preview and the assembly view, the focus
+ring position at every display scale, and what a screen reader reads after the
+shortcut and after a mouse toggle.

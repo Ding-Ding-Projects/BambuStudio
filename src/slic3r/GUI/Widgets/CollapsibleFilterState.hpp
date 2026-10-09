@@ -149,6 +149,54 @@ private:
     bool        m_expanded;
 };
 
+// Accessibility events a toggle must raise, in order.
+enum class AnnounceEvent { Focus, StateChange };
+
+// A collapsible panel drawn on the 3D canvas (ImGui), which has no native
+// focus. Its keyboard path is a canvas shortcut: after it the header shows a
+// focus ring until the pointer is used again, and assistive technology is
+// first moved to the header and then told its new state. A pointer toggle
+// only reports the state change. Both are stored like any other section.
+class CanvasDisclosure
+{
+public:
+    CanvasDisclosure(std::string surface_id, Purpose purpose) : m_section(std::move(surface_id), purpose) {}
+
+    const Section &section() const { return m_section; }
+    bool           expanded() const { return m_section.expanded(); }
+    bool           focus_ring_visible() const { return m_focus_ring; }
+
+    void restore(const Section::Read &read) { m_section.restore(read); }
+
+    std::vector<AnnounceEvent> toggle_from_keyboard(const Section::Write &write)
+    {
+        m_section.toggle(write);
+        m_focus_ring = true;
+        return {AnnounceEvent::Focus, AnnounceEvent::StateChange};
+    }
+
+    std::vector<AnnounceEvent> toggle_from_pointer(const Section::Write &write)
+    {
+        m_section.toggle(write);
+        m_focus_ring = false;
+        return {AnnounceEvent::StateChange};
+    }
+
+    void pointer_used() { m_focus_ring = false; }
+
+    // Back to the starting state for this session only (nothing is stored);
+    // used where a preference asks not to keep the last state.
+    void reset_to_default()
+    {
+        m_section    = Section(m_section.surface_id(), m_section.purpose());
+        m_focus_ring = false;
+    }
+
+private:
+    Section m_section;
+    bool    m_focus_ring { false };
+};
+
 }}} // namespace Slic3r::GUI::CollapsibleFilters
 
 #endif // slic3r_GUI_CollapsibleFilterState_hpp_

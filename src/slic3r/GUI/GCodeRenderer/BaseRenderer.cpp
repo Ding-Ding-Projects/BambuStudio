@@ -8,6 +8,7 @@
 #include "slic3r/GUI/MsgDialog.hpp"
 #include "slic3r/GUI/FilamentGroupPopup.hpp"
 #include "slic3r/GUI/GLToolbar.hpp"
+#include "slic3r/GUI/Widgets/CanvasDisclosures.hpp"
 #include "slic3r/GUI/Widgets/MD3Tokens.hpp"
 #include "slic3r/GUI/Widgets/MaterialIcon.hpp"
 #include "slic3r/GUI/Widgets/StateColor.hpp"
@@ -21,6 +22,7 @@
 #include "../Utils/HelioDragon.hpp"
 #include <imgui/imgui_internal.h>
 #include <GL/glew.h>
+#include <wx/glcanvas.h>
 #include <cfloat>
 #include <chrono>
 namespace
@@ -275,6 +277,7 @@ namespace Slic3r
 
             BaseRenderer::~BaseRenderer()
             {
+                CanvasDisclosures::withdraw(m_legend_fold_canvas, "preview_legend", this);
                 if (m_moves_slider) {
                     delete m_moves_slider;
                     m_moves_slider = nullptr;
@@ -309,6 +312,57 @@ namespace Slic3r
             void BaseRenderer::enable_legend(bool enable)
             {
                 m_legend_enabled = enable;
+            }
+
+            void BaseRenderer::ensure_legend_fold_restored()
+            {
+                if (m_legend_fold_restored)
+                    return;
+                m_legend_fold_restored = true;
+                // The existing preference keeps its meaning: only when the last
+                // fold state is wanted is the stored one brought back.
+                if (&wxGetApp() && wxGetApp().app_config && wxGetApp().app_config->get_bool("use_last_fold_state_gcodeview_option_panel"))
+                    m_legend_fold.restore(CanvasDisclosures::config_reader());
+            }
+
+            void BaseRenderer::toggle_legend_fold(bool from_keyboard)
+            {
+                ensure_legend_fold_restored();
+                const auto events = from_keyboard ? m_legend_fold.toggle_from_keyboard(CanvasDisclosures::config_writer())
+                                                  : m_legend_fold.toggle_from_pointer(CanvasDisclosures::config_writer());
+                CanvasDisclosures::announce(m_legend_fold_canvas, "preview_legend", m_legend_fold.expanded(),
+                                            m_legend_fold.focus_ring_visible(), events);
+            }
+
+            void BaseRenderer::on_canvas_pointer_used()
+            {
+                m_legend_fold.pointer_used();
+            }
+
+            bool BaseRenderer::is_legend_folded() const
+            {
+                return !m_legend_fold.expanded();
+            }
+
+            void BaseRenderer::publish_legend_fold(float x, float y, float w, float h)
+            {
+                GLCanvas3D* canvas = &wxGetApp() && wxGetApp().plater() ? wxGetApp().plater()->get_preview_canvas3D() : nullptr;
+                wxWindow* window = canvas != nullptr ? canvas->get_wxglcanvas() : nullptr;
+                if (window == nullptr)
+                    return;
+                if (m_legend_fold_canvas != window) {
+                    CanvasDisclosures::withdraw(m_legend_fold_canvas, "preview_legend", this);
+                    m_legend_fold_canvas = window;
+                }
+                CanvasDisclosures::Entry entry;
+                entry.owner = this;
+                // TRN: Screen reader name of the fold button of the preview legend and statistics dock.
+                entry.name = _L("Legend and statistics");
+                entry.expanded = m_legend_fold.expanded();
+                entry.keyboard_focus = m_legend_fold.focus_ring_visible();
+                entry.client_rect = wxRect(int(x), int(y), std::max(1, int(w)), std::max(1, int(h)));
+                entry.toggle = [this]() { toggle_legend_fold(false); };
+                CanvasDisclosures::publish(window, "preview_legend", std::move(entry));
             }
 
             float BaseRenderer::get_legend_height() const
@@ -757,7 +811,8 @@ namespace Slic3r
                         m_time_estimate_mode = PrintEstimatedStatistics::ETimeMode::Normal;
                 }
                 if (&wxGetApp() && !wxGetApp().app_config->get_bool("use_last_fold_state_gcodeview_option_panel")) {
-                    m_fold = false;
+                    m_legend_fold.reset_to_default();
+                    m_legend_fold_restored = true;
                 }
 
                 bool only_gcode_3mf = false;
@@ -1593,7 +1648,8 @@ namespace Slic3r
                 const float max_height = std::max(1.0f, static_cast<float>(cnv_size.get_height()) - float(MD3::Metrics::preview_timeline_height) * m_scale);
                 const float child_height = 0.3333f * max_height;
                 const float available_width = std::max(1.0f, static_cast<float>(canvas_width) - right_margin * m_scale);
-                const bool dock_collapsed = m_fold;
+                ensure_legend_fold_restored();
+                const bool dock_collapsed = !m_legend_fold.expanded();
                 const float window_padding = 4.0f * m_scale;
                 const float status_wrap = std::max(1.0f, std::min(float(MD3::Metrics::active().sidebar_width) * m_scale, available_width - 12.0f * m_scale) - window_padding * 4.0f - ImGui::GetStyle().ScrollbarSize - 2.0f);
                 const float status_height = dock_status_text.empty() ? 0.0f : ImGui::CalcTextSize(dock_status_text.c_str(), nullptr, false, status_wrap).y + window_padding * 2.0f;
@@ -1931,7 +1987,21 @@ namespace Slic3r
                     ImGui::GetWindowContentRegionMax().x - button_width - window_padding * 2.0f));
                 ImGui::SetCursorPosY(8.0f * m_scale);
                 if (ImGui::Button(into_u8(btn_name).c_str(), ImVec2(button_width, 0)))
-                    m_fold = !m_fold;
+                    toggle_legend_fold(/*from_keyboard=*/false);
+                {
+                    // Keyboard path (Shift+L on the canvas): draw the Material focus ring
+                    // around the fold button and keep the accessible header in
+                    // step with what is drawn.
+                    const ImVec2 fold_min = ImGui::GetItemRectMin();
+                    const ImVec2 fold_max = ImGui::GetItemRectMax();
+                    if (m_legend_fold.focus_ring_visible()) {
+                        const float ring_gap = 2.0f * m_scale;
+                        ImGui::GetWindowDrawList()->AddRect(ImVec2(fold_min.x - ring_gap, fold_min.y - ring_gap),
+                                                            ImVec2(fold_max.x + ring_gap, fold_max.y + ring_gap),
+                                                            ImGui::GetColorU32(primary), 4.0f * m_scale, 0, 2.0f * m_scale);
+                    }
+                    publish_legend_fold(fold_min.x, fold_min.y, fold_max.x - fold_min.x, fold_max.y - fold_min.y);
+                }
                 ImGui::PopStyleColor(3);
                 ImGui::PopStyleVar(1);
                 if (!dock_status_text.empty()) {
@@ -2119,7 +2189,6 @@ namespace Slic3r
                 if (!view_chips.empty()) {
                     const int clicked = render_chip_row(view_chips);
                     if (clicked >= 0) {
-                        m_fold = false;
                         apply_view_type_selection(view_chip_targets[clicked].first, view_chip_targets[clicked].second);
                     }
                 }
@@ -2145,7 +2214,6 @@ namespace Slic3r
                             continue;
                         }
                         if (ImGui::BBLSelectable_LeftImage(view_type_image_names[i].option_name.c_str(), is_selected, view_type_image_names[i].texture_id)) {
-                            m_fold = false;
                             apply_view_type_selection(i, view_type_items[i]);
                         }
                         if (is_selected) {

@@ -548,7 +548,9 @@ void Preview::update_layers_slider_mode()
 
 void Preview::update_layers_slider_from_canvas(wxKeyEvent &event)
 {
-    if (event.HasModifiers()) {
+    // HasModifiers() ignores Shift; Shift+L belongs to the canvas, where it
+    // folds the legend and statistics dock (GLCanvas3D::on_char).
+    if (event.HasModifiers() || event.ShiftDown()) {
         event.Skip();
         return;
     }

@@ -371,6 +371,7 @@ src/slic3r/GUI/WebDownPluginDlg.cpp
 src/slic3r/GUI/Widgets/AxisCtrlButton.cpp
 src/slic3r/GUI/Widgets/Button.cpp
 src/slic3r/GUI/Widgets/CameraHUD.cpp
+src/slic3r/GUI/Widgets/CanvasDisclosures.cpp
 src/slic3r/GUI/Widgets/CollapsibleFilterBar.cpp
 src/slic3r/GUI/Widgets/LabeledRadioButton.cpp
 src/slic3r/GUI/Widgets/LinkLabel.cpp

@@ -1,6 +1,6 @@
 ---
 translation-of: collapsible-filters.md
-source-sha256: 3a19f987992f7891ae786f48f44d4e22d7601524f14dae6a5f48e5a61733eb03
+source-sha256: 83cc49b77ded5b56aab2421029adcd4b47f1f33d70a886611a03c2d8b1fa7171
 review-status: agent-drafted
 ---
 
@@ -39,6 +39,14 @@ review-status: agent-drafted
 
 喺側邊欄，<kbd>Ctrl</kbd>+<kbd>F</kbd> 仍然會聚焦物件搜尋。如果搜尋收埋咗，呢個快捷鍵只會喺今次工作階段展開佢；記住咗嘅選擇唔會變。
 
+## 3D 畫布上嘅面板
+
+有兩個面板係喺 3D 畫布上面畫，唔係原生控制項：預覽嘅圖例同統計欄，同埋組裝檢視嘅 **Assembly Structure** 面板。佢哋跟同一套規則：
+
+- **會記住。** 收埋狀態以 `preview_legend` 同 `assembly_structure` 存喺同一個 `collapsible_filters` 部分，重新開啟之後會還原。兩個一開始都係展開：圖例欄有改變預覽顯示內容嘅檢視模式晶片同顯示選項，結構面板係工作中嘅步驟樹。現有嘅 `use_last_fold_state_gcodeview_option_panel` 設定（預設開啟）仍然決定預覽會唔會還原已儲存嘅狀態；關咗嘅話，每次載入新 G-code 都會好似以前咁展開。
+- **鍵盤。** 畫布有焦點時，<kbd>Shift</kbd>+<kbd>L</kbd> 會喺預覽收埋或者展開圖例欄，喺組裝檢視收埋或者展開結構面板。單獨 <kbd>L</kbd> 喺預覽保持原本意思（垂直滑桿嘅單層模式）。用咗快捷鍵之後，面板嘅切換掣會顯示 Primary 焦點框；之後喺畫布撳滑鼠就會收返。快捷鍵列喺鍵盤快捷鍵對話框嘅 **Preview** 下面。
+- **螢幕閱讀器。** 畫布視窗會將每個面板切換掣公開做一個按鈕，名叫 **Legend and statistics** 或者 **Assembly Structure**，報告已展開或者已收埋，位置就係畫出嚟嘅位置，輔助技術亦可以啟動佢。用快捷鍵之後，切換掣會先收到無障礙焦點，再收到狀態變更事件，所以會讀出新狀態；用滑鼠切換會發出狀態變更事件。
+
 ## 俾開發者
 
 共用元件係 `CollapsibleFilterBar`（`src/slic3r/GUI/Widgets/CollapsibleFilterBar.{hpp,cpp}`）。規則放喺唔使工具包嘅 `src/slic3r/GUI/Widgets/CollapsibleFilterState.hpp`，所以唔使 wxWidgets 都測試到。
@@ -60,10 +68,12 @@ filters->SetActiveFilters({_L("Errors"), wxString::Format(_L("Search: %s"), quer
 - 每個而家排除緊項目嘅篩選條件都要經 `SetActiveFilters()` 報告。統計就留空。靜態輔助函數 `SearchFilterLabel()`、`FilterLabel()` 同 `ExcludedFilterLabel()` 會砌出標籤；值會縮短到 32 個字元。
 - `Layout::Inline` 會將標題、說明行同控制項放喺同一行，俾工具列用。`ShowSection()` 會同所屬集合一齊隱藏或者顯示成個部分，`SetExpanded(true, false)` 會展開控制項但唔儲存選擇。
 
+畫布面板用 `CollapsibleFilters::CanvasDisclosure` 保存狀態，用 `CanvasDisclosures::publish()` / `announce()`（`src/slic3r/GUI/Widgets/CanvasDisclosures.{hpp,cpp}`）令畫布嘅無障礙物件同 ImGui 畫出嚟嘅嘢保持一致。
+
 ## 測試
 
-`tests/collapsible_filters/collapsible_filters_tests.cpp` 會檢查一開始嘅狀態、模擬重新開啟之後嘅儲存、唔認得嘅儲存值點樣退返預設、唔安全嘅表面 ID 會被拒絕，同埋收埋咗嘅篩選列一定會講明生效中嘅篩選條件，包括冇名嗰啲。`collapsible_filters_contract.test.mjs` 會檢查元件將規則接駁到設定、鍵盤同無障礙物件；`collapsible_filters_adoption.test.mjs` 會檢查上面表入面每個表面都喺可收埋嘅主體入面建立控制項、排好個部分，並報告生效中嘅篩選條件。
+`tests/collapsible_filters/collapsible_filters_tests.cpp` 會檢查一開始嘅狀態、模擬重新開啟之後嘅儲存、唔認得嘅儲存值點樣退返預設、唔安全嘅表面 ID 會被拒絕，同埋收埋咗嘅篩選列一定會講明生效中嘅篩選條件，包括冇名嗰啲。`collapsible_filters_contract.test.mjs` 會檢查元件將規則接駁到設定、鍵盤同無障礙物件；`collapsible_filters_adoption.test.mjs` 會檢查上面表入面每個表面都喺可收埋嘅主體入面建立控制項、排好個部分，並報告生效中嘅篩選條件。`canvas_panels_contract.test.mjs` 會檢查兩個畫布面板會儲存狀態、回應 <kbd>Shift</kbd>+<kbd>L</kbd>、畫焦點框，同埋公開同讀出佢哋嘅切換；設定 `COLLAPSE_SOURCE_REF` 就會用另一個版本嚟檢查。
 
 ## 仲要喺已建置應用程式度驗證
 
-焦點框睇唔睇到、螢幕閱讀器讀唔讀出、上面每個表面切換之後嘅版面、轉淺色或者深色主題之後可收埋主體嘅顏色，同埋狀態喺重新開啟之後仲喺唔喺度，都要喺已建置嘅 Windows 應用程式度觀察。
+焦點框睇唔睇到、螢幕閱讀器讀唔讀出、上面每個表面切換之後嘅版面、轉淺色或者深色主題之後可收埋主體嘅顏色，同埋狀態喺重新開啟之後仲喺唔喺度，都要喺已建置嘅 Windows 應用程式度觀察。畫布面板方面，仲要觀察預覽同組裝檢視嘅 <kbd>Shift</kbd>+<kbd>L</kbd>、每個顯示縮放比例下焦點框嘅位置，同埋用快捷鍵同用滑鼠切換之後螢幕閱讀器讀出乜嘢。

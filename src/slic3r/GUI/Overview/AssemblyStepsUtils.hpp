@@ -6,6 +6,7 @@
 #include "../Gizmos/GLGizmosManager.hpp"
 #include "../GLModel.hpp"
 #include "imgui/imgui.h"
+#include "../Widgets/CollapsibleFilterState.hpp"
 
 class wxWindow;
 
@@ -183,7 +184,13 @@ class AssemblyStepsUtils
     ImTextureID         m_tree_icon_from_assembly_end_frame{nullptr};
     ImTextureID         m_tree_icon_from_assembly_end_frame_dark{nullptr};
     // Whether the "Assembly Structure" panel is collapsed to header-only.
-    bool                m_structure_panel_collapsed{false};
+    // Stored as "assembly_structure" in the collapsible_filters config section;
+    // Shift+L on the canvas is its keyboard path. It starts expanded: the panel is
+    // the working step tree, not a summary.
+    CollapsibleFilters::CanvasDisclosure m_structure_fold{"assembly_structure", CollapsibleFilters::Purpose::Narrows};
+    bool                m_structure_fold_restored{false};
+    // Canvas the panel header was last published on (accessibility bridge).
+    wxWindow *          m_structure_fold_canvas{nullptr};
     // Card index whose "Select" popup should be opened this frame (-1 = none).
     int                 m_structure_select_popup_pending_card{-1};
     // Card index whose "Select" popup is currently active (-1 = none).
@@ -576,6 +583,13 @@ public:
     AssemblyStepsUtils();
     ~AssemblyStepsUtils();
 public://logic
+    // Fold or unfold the Assembly Structure panel. Shift+L on the canvas is the
+    // keyboard path (it also shows a focus ring on the toggle); both paths
+    // store the state and announce it.
+    void            toggle_structure_panel(bool from_keyboard);
+    // A pointer press on the canvas ends the keyboard focus ring.
+    void            on_canvas_pointer_used() { m_structure_fold.pointer_used(); }
+    bool            is_structure_panel_collapsed() const { return !m_structure_fold.expanded(); }
     void set_input(ImGuiWrapper *imgui, Model *model, Camera *camera, Selection *selection, GLVolumeCollection *volumes, bool gizmo_active = false);
     void set_render_input(bool is_dark, const std::string &images_dir, float imgui_scale);
     // Dark/light mode just toggled. The switch relayouts/resizes the canvas, which

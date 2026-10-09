@@ -17,6 +17,7 @@
 #include "../MainFrame.hpp"
 #include "../Plater.hpp"
 #include "../MsgDialog.hpp"
+#include "../Widgets/CanvasDisclosures.hpp"
 #include "../NotificationManager.hpp"
 #include "../OpenGLManager.hpp"
 #include "../3DScene.hpp"
@@ -642,7 +643,10 @@ AssemblyStepsUtils::AssemblyStepsUtils()
 // Out-of-line destructor: PBOReader / Mp4Recorder are forward-declared in the
 // header, so unique_ptr's deleter must be instantiated where the full type is
 // visible (this translation unit, after the MP4 includes above).
-AssemblyStepsUtils::~AssemblyStepsUtils() = default;
+AssemblyStepsUtils::~AssemblyStepsUtils()
+{
+    CanvasDisclosures::withdraw(m_structure_fold_canvas, "assembly_structure", this);
+}
 
 void AssemblyStepsUtils::reset_state_on_model_changed()
 {

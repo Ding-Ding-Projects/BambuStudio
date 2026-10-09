@@ -315,6 +315,7 @@ void KBShortcutsDialog::fill_shortcuts()
         { L("Arrow Left"),  L("Horizontal slider - Move active thumb Left")},
         { L("Arrow Right"), L("Horizontal slider - Move active thumb Right")},
         { "L", L("On/Off one layer mode of the vertical slider")},
+        { L("Shift+L"), L("Collapse or expand the legend and statistics panel")},
         {L("Shift+Any arrow"), L("Move slider 5x faster")},
         {L("Shift+Mouse wheel"), L("Move slider 5x faster")},
 		{L(ctrl+"Any arrow"), L("Move slider 5x faster")},

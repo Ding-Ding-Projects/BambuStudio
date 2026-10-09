@@ -28772,3 +28772,12 @@ msgstr ""
 
 msgid "Hiding %s"
 msgstr ""
+
+msgid "Legend and statistics"
+msgstr ""
+
+msgid "Shift+L"
+msgstr ""
+
+msgid "Collapse or expand the legend and statistics panel"
+msgstr ""

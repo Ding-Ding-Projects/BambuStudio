@@ -181,3 +181,62 @@ TEST_CASE("Accessible state always reports exactly one of expanded or collapsed"
     stats.toggle(config.writer());
     REQUIRE(accessible_state(stats.expanded()) == AccessibleState::Expanded);
 }
+
+// --- Canvas (ImGui) panels -------------------------------------------------
+
+TEST_CASE("A canvas panel keyboard toggle shows a focus ring and is announced", "[CollapsibleFilters][Canvas]")
+{
+    MemoryConfig config;
+    CanvasDisclosure legend("preview_legend", Purpose::Narrows);
+    legend.restore(config.reader());
+    REQUIRE(legend.expanded());
+    REQUIRE_FALSE(legend.focus_ring_visible());
+
+    const auto events = legend.toggle_from_keyboard(config.writer());
+    REQUIRE_FALSE(legend.expanded());
+    REQUIRE(legend.focus_ring_visible());
+    // Focus first so assistive technology reads the header, then its new state.
+    REQUIRE(events == std::vector<AnnounceEvent>{AnnounceEvent::Focus, AnnounceEvent::StateChange});
+    REQUIRE(config.values.at({config_section(), "preview_legend"}) == "collapsed");
+
+    // Using the pointer hides the keyboard ring again.
+    legend.pointer_used();
+    REQUIRE_FALSE(legend.focus_ring_visible());
+}
+
+TEST_CASE("A canvas panel pointer toggle is stored and announced without a ring", "[CollapsibleFilters][Canvas]")
+{
+    MemoryConfig config;
+    CanvasDisclosure panel("assembly_structure", Purpose::Narrows);
+    panel.restore(config.reader());
+    const auto events = panel.toggle_from_pointer(config.writer());
+    REQUIRE_FALSE(panel.expanded());
+    REQUIRE_FALSE(panel.focus_ring_visible());
+    REQUIRE(events == std::vector<AnnounceEvent>{AnnounceEvent::StateChange});
+
+    // A restart restores the collapsed panel.
+    CanvasDisclosure again("assembly_structure", Purpose::Narrows);
+    again.restore(config.reader());
+    REQUIRE_FALSE(again.expanded());
+}
+
+TEST_CASE("Resetting a canvas panel returns to the default without storing it", "[CollapsibleFilters][Canvas]")
+{
+    MemoryConfig config;
+    CanvasDisclosure legend("preview_legend", Purpose::Narrows);
+    legend.toggle_from_keyboard(config.writer());
+    const int writes = config.writes;
+    legend.reset_to_default();
+    REQUIRE(legend.expanded());
+    REQUIRE_FALSE(legend.focus_ring_visible());
+    REQUIRE(config.writes == writes);
+    REQUIRE(config.values.at({config_section(), "preview_legend"}) == "collapsed");
+}
+
+TEST_CASE("A described canvas panel starts collapsed", "[CollapsibleFilters][Canvas]")
+{
+    MemoryConfig config;
+    CanvasDisclosure stats("preview_statistics", Purpose::Describes);
+    stats.restore(config.reader());
+    REQUIRE_FALSE(stats.expanded());
+}

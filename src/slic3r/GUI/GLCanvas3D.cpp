@@ -4956,15 +4956,33 @@ void GLCanvas3D::on_char(wxKeyEvent& evt)
         //case 'I':
         //case 'i': { _update_camera_zoom(1.0); break; }
 
-        //case 'L':
-        //case 'l': {
-            //if (!m_main_toolbar.is_enabled()) {
-            //    m_gcode_viewer.enable_legend(!m_gcode_viewer.is_legend_enabled());
-            //    m_dirty = true;
-            //    wxGetApp().plater()->update_preview_bottom_toolbar();
-            //}
-            //break;
-        //}
+        case 'L':
+        case 'l': {
+            // Shift+L is the keyboard path of the canvas side panel: fold or
+            // unfold the legend and statistics dock in the preview, the
+            // Assembly Structure panel in the assembly view. The panel then
+            // shows a focus ring on its toggle and announces its expanded
+            // state. Plain L stays the preview one-layer slider shortcut.
+            if ((evt.GetModifiers() & shiftMask) == 0 || (evt.GetModifiers() & altMask) != 0) {
+                evt.Skip();
+                break;
+            }
+            if (m_canvas_type == ECanvasType::CanvasPreview) {
+                auto &t_gcode_viewer = get_gcode_viewer();
+                if (t_gcode_viewer.is_legend_enabled() && t_gcode_viewer.has_data()) {
+                    t_gcode_viewer.toggle_legend_fold(true);
+                    m_dirty = true;
+                    request_extra_frame();
+                }
+            } else if (m_canvas_type == CanvasAssembleView && m_assembly_steps) {
+                m_assembly_steps->toggle_structure_panel(true);
+                m_dirty = true;
+                request_extra_frame();
+            } else {
+                evt.Skip();
+            }
+            break;
+        }
         //case 'O':
         //case 'o': { _update_camera_zoom(-1.0); break; }
 #if ENABLE_RENDER_PICKING_PASS
@@ -5726,6 +5744,15 @@ void GLCanvas3D::on_mouse(wxMouseEvent& evt)
 #endif
 
     Point pos(evt.GetX(), evt.GetY());
+
+    // A pointer press ends the keyboard path of the canvas side panels: their
+    // focus ring belongs to keyboard use only.
+    if (evt.ButtonDown()) {
+        if (m_canvas_type == ECanvasType::CanvasPreview)
+            get_gcode_viewer().on_canvas_pointer_used();
+        else if (m_canvas_type == CanvasAssembleView && m_assembly_steps)
+            m_assembly_steps->on_canvas_pointer_used();
+    }
 
     ImGuiWrapper* imgui = wxGetApp().imgui();
     if (m_tooltip.is_in_imgui() && evt.LeftUp())
