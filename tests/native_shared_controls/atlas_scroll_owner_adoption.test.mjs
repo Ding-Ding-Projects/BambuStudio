@@ -22,10 +22,33 @@ const old = file => execFileSync('git', ['show', baseline + ':src/slic3r/GUI/' +
 // of this owner-adoption comparison on both sides:
 //   * Preferences > Schedules > Add rule starts from a preset (blank-editor
 //     presets, ui-md3/tests/blank-editor-presets.test.mjs owns add_rule()).
+//   * The print review page's text is the kit Label and the review and workspace
+//     labels take the zero-width sizer contract instead of a 1px literal
+//     (ui-md3/tests/md3-conversion-contracts.test.mjs owns both: no stock
+//     wxStaticText, no unscaled wxSize). Each exact converted line is mapped back
+//     to the line it replaced, so every other line is still compared.
+const restore = (pairs) => (text) => pairs.reduce((t, [now, before]) => t.split(now).join(before), text);
 const later = {
     'Schedule/ScheduledSettingsPanel.cpp': text => text
         .replace('#include "ScheduleRuleStart.hpp"\n', '')
         .replace(/\nvoid ScheduledSettingsPanel::add_rule\(\)\n\{\n[\s\S]*?\n\}\n/, '\n'),
+    'WorkflowPrintPanel.cpp': text => restore([
+        ['#include "Widgets/StateColor.hpp"\n#include <wx/wrapsizer.h>\n', '#include "Widgets/StateColor.hpp"\n#include <wx/stattext.h>\n#include <wx/wrapsizer.h>\n'],
+        ['Label* WorkflowPrintPanel::AddText(', 'wxStaticText* WorkflowPrintPanel::AddText('],
+        ['    auto* label = new Label(parent, text, wxST_NO_AUTORESIZE);\n    // The sizer owns the width; Reflow() wraps the text to whatever it is given.\n    label->SetMinSize(wxSize(0, -1));\n',
+         '    auto* label = new wxStaticText(parent, wxID_ANY, text, wxDefaultPosition, wxDefaultSize, wxST_NO_AUTORESIZE);\n    label->SetMinSize(wxSize(1, -1));\n'],
+        // A wxString on both arms: a const wxChar* / wxString ternary does not compile under strict string conversion.
+        ['button->IsEnabled() ? wxString() : slice_reason', 'button->IsEnabled() ? wxEmptyString : slice_reason'],
+        ['void WorkflowPrintPanel::SetText(Label* label', 'void WorkflowPrintPanel::SetText(wxStaticText* label'],
+    ])(text),
+    'WorkflowPrintPanel.hpp': text => restore([
+        ['class StaticBox;\nclass Label;\n', 'class StaticBox;\nclass wxStaticText;\n'],
+        ['Label*', 'wxStaticText*'],
+    ])(text),
+    'WorkspacePanel.cpp': text => restore([
+        ['        // The sizer owns the width; the label wraps to whatever it is given.\n        title->SetMinSize(wxSize(0, -1));\n', '        title->SetMinSize(wxSize(1, -1));\n'],
+        ['    m_overview->SetMinSize(wxSize(0, -1));\n', '    m_overview->SetMinSize(wxSize(1, -1));\n'],
+    ])(text),
 };
 function verify(file, kind, include, count, source = read(file)) {
     const owner = kind === 'scroll' ? 'MD3ScrolledWindow' : 'MD3DataViewListCtrl';
