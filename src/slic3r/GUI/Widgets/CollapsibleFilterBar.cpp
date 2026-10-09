@@ -351,6 +351,11 @@ void CollapsibleFilterBar::SyncTheme()
     m_body->SetBackgroundColour(background);
     m_summary->SetBackgroundColour(background);
     m_summary->SetForegroundColour(foreground);
+    // Custom-drawn controls in the body clear their corners with the window
+    // background they were seeded with; re-seed them from the new body colour.
+    for (wxWindow *child : m_body->GetChildren())
+        if (auto *box = dynamic_cast<StaticBox *>(child))
+            box->SyncWindowBackground();
     m_body->Refresh();
     m_summary->Refresh();
 }
@@ -368,6 +373,12 @@ void CollapsibleFilterBar::relayout()
     if (parent == nullptr)
         return;
     parent->Layout();
+    // A wrapping disclosure line only learns its width in that pass (it
+    // re-wraps on EVT_SIZE), so lay out once more with its real height.
+    if (m_summary != nullptr && m_summary->IsShown()) {
+        m_summary->InvalidateBestSize();
+        parent->Layout();
+    }
     // Inside a scrolled host the virtual height changes with the body.
     if (dynamic_cast<wxScrollHelper *>(parent) != nullptr)
         parent->FitInside();
