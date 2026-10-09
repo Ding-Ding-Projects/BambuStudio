@@ -7,6 +7,7 @@
 #include "NotificationManager.hpp"
 #include "Plater.hpp"
 #include "Widgets/CheckBox.hpp"
+#include "Widgets/CollapsibleFilterBar.hpp"
 #include "Widgets/MaterialIcon.hpp"
 #include "Widgets/SearchField.hpp"
 
@@ -433,16 +434,28 @@ MultiMachineManagerPage::MultiMachineManagerPage(wxWindow* parent)
     farm_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     farm_title->SetFont(Label::Head_20);
 
-    m_search = new SearchField(m_main_panel, _L("Search devices"));
+    // The search sits in the shared collapsible filter bar (toolbar form);
+    // collapsed, it still says when a query narrows the card grid.
+    // TRN: Header of the collapsible search of the device farm toolbar.
+    m_filters = new CollapsibleFilterBar(m_main_panel, "device_farm", _L("Search"),
+                                         CollapsibleFilterBar::Purpose::Narrows,
+                                         CollapsibleFilterBar::Layout::Inline);
+    m_filters->SetColorScheme(MD3::ColorScheme::Device);
+    m_search = new SearchField(m_filters->GetBody(), _L("Search devices"));
     m_search->SetColorScheme(MD3::ColorScheme::Device);
     m_search->SetMinSize(wxSize(FromDIP(240), FromDIP(40)));
     m_search->SetMaxSize(wxSize(FromDIP(340), FromDIP(40)));
+    m_filters->GetBodySizer()->Add(m_search, 0, wxALIGN_LEFT);
     // Live name/type filter of the card grid: reset to the first page and rebuild
     // so paging tracks the filtered set (see refresh_user_device).
     m_search->SetOnQuery([this](const wxString& kw) {
         // Store the raw query; case handling is delegated to the shared matcher.
         m_search_filter = kw;
         m_search_filter.Trim(true).Trim(false);
+        std::vector<wxString> active;
+        if (!m_search_filter.IsEmpty())
+            active.push_back(CollapsibleFilterBar::SearchFilterLabel(m_search_filter));
+        m_filters->SetActiveFilters(active);
         m_current_page = 0;
         refresh_user_device();
     });
@@ -468,7 +481,7 @@ MultiMachineManagerPage::MultiMachineManagerPage(wxWindow* parent)
     });
 
     toolbar_sizer->Add(farm_title, 0, wxALIGN_CENTER_VERTICAL, 0);
-    toolbar_sizer->Add(m_search, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(16));
+    toolbar_sizer->Add(m_filters->GetSectionSizer(), 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(16));
     toolbar_sizer->AddStretchSpacer(1);
     toolbar_sizer->Add(m_button_edit, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(16));
 
@@ -1234,6 +1247,8 @@ void MultiMachineManagerPage::msw_rescale()
     m_button_edit->SetMinSize(wxSize(FromDIP(120), FromDIP(40)));
     m_button_edit->SetMaxSize(wxSize(FromDIP(150), FromDIP(40)));
 
+    if (m_filters)
+        m_filters->Rescale();
     if (m_search) {
         m_search->Rescale();
         m_search->SetMinSize(wxSize(FromDIP(240), FromDIP(40)));

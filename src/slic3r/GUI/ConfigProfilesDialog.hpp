@@ -13,6 +13,7 @@
 #include <wx/timer.h>
 
 class Button;
+class CollapsibleFilterBar;
 class Label;
 class SearchField;
 class SlideToConfirm;
@@ -123,6 +124,7 @@ private:
 
     Label              *m_title_label { nullptr };
     Label              *m_subtitle_label { nullptr };
+    CollapsibleFilterBar *m_filters    { nullptr };
     SearchField        *m_search_field { nullptr };
     wxDataViewListCtrl *m_profile_list { nullptr };
     StaticBox          *m_list_card { nullptr };

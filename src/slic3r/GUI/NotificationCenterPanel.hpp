@@ -11,6 +11,7 @@
 #include <wx/timer.h>
 
 class Button;
+class CollapsibleFilterBar;
 class Label;
 class SearchField;
 class StaticBox;
@@ -68,6 +69,8 @@ private:
     void update_status();
     void update_bulk_buttons();
     void update_level_chips();
+    // Report the level, dismissed and search filters to the collapsible bar.
+    void update_active_filters();
     static std::set<int> chip_levels(LevelChip chip);
     static wxString level_label(int level);
     wxString format_time(std::int64_t timestamp_ms) const;
@@ -96,6 +99,7 @@ private:
     bool                           m_syncing_selection{false};
     wxTimer                        m_timer;
 
+    CollapsibleFilterBar *m_filters{nullptr};
     SearchField *        m_search{nullptr};
     Button *             m_level_buttons[static_cast<int>(LevelChip::Count)]{};
     Button *             m_dismissed_chip{nullptr};

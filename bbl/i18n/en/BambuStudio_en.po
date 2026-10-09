@@ -31525,4 +31525,29 @@ msgstr ""
 
 #, possible-c-format, possible-boost-format
 msgid "Showing %s of %s variants."
+msgid "Show or hide these controls. Your choice is remembered."
+msgstr ""
+
+msgid "Active filters (%d)"
+msgstr ""
+
+msgid "+%d more"
+msgstr ""
+
+msgid "Active filters (%d): %s"
+msgstr ""
+
+msgid "%s (%d active)"
+msgstr ""
+
+msgid "Hiding %s"
+msgstr ""
+
+msgid "Legend and statistics"
+msgstr ""
+
+msgid "Shift+L"
+msgstr ""
+
+msgid "Collapse or expand the legend and statistics panel"
 msgstr ""

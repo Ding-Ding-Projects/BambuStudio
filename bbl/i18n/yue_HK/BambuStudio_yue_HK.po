@@ -44114,3 +44114,47 @@ msgstr "目前硬件適配：%s"
 #. review-status: agent-drafted
 msgid "Showing %s of %s variants."
 msgstr "顯示緊 %s／%s 個變體。"
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Show or hide these controls. Your choice is remembered."
+msgstr "顯示或者收埋呢啲控制項，你揀咗點會記住。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Active filters (%d)"
+msgstr "生效中嘅篩選條件（%d）"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "+%d more"
+msgstr "仲有 %d 個"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Active filters (%d): %s"
+msgstr "生效中嘅篩選條件（%d）：%s"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "%s (%d active)"
+msgstr "%s（%d 個生效中）"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Hiding %s"
+msgstr "隱藏緊%s"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Legend and statistics"
+msgstr "圖例同統計"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Shift+L"
+msgstr "Shift+L"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Collapse or expand the legend and statistics panel"
+msgstr "收埋或者展開圖例同統計面板"

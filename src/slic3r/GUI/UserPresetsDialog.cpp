@@ -8,6 +8,7 @@
 #include <slic3r/GUI/Widgets/CheckBox.hpp>
 #include <slic3r/GUI/Widgets/TabCtrl.hpp>
 #include <slic3r/GUI/Widgets/SearchField.hpp>
+#include "Widgets/CollapsibleFilterBar.hpp"
 
 #include "Bulk/BulkActionPlan.hpp"
 #include "Bulk/BulkActionPreviewDialog.hpp"
@@ -75,8 +76,13 @@ UserPresetsDialog::UserPresetsDialog(wxWindow *parent)
 
     // Kit SearchField (r22 pill, sc-highest, leading search glyph) replaces the
     // legacy r12 TextInput + im_text_search raster icon.
-    m_search = new SearchField(this, _L("Search"));
+    // The search sits in the shared collapsible filter bar; collapsed, it
+    // still says when a query narrows the preset list.
+    // TRN: Header of the collapsible search of a list.
+    m_filters = new CollapsibleFilterBar(this, "user_presets", _L("Search"));
+    m_search = new SearchField(m_filters->GetBody(), _L("Search"));
     m_search->SetMinSize({FromDIP(568), FromDIP(40)});
+    m_filters->GetBodySizer()->Add(m_search, 0, wxALIGN_CENTER);
     m_search->SetOnQuery([this](const wxString &kw) { on_search(kw); });
     // Re-run the active filter when the regex / case / whole-word chrome toggles.
     m_search->SetOnRegexToggle([this](bool) { on_search(m_search->GetValue()); });
@@ -155,7 +161,7 @@ UserPresetsDialog::UserPresetsDialog(wxWindow *parent)
     auto *content = GetContentSizer();
     content->Add(m_tab_ctrl, 0, wxALIGN_CENTER | wxBOTTOM, FromDIP(16));
     content->Add(m_switch_button, 0, wxALIGN_CENTER | wxBOTTOM, FromDIP(10));
-    content->Add(m_search, 0, wxALIGN_CENTER | wxBOTTOM, FromDIP(10));
+    content->Add(m_filters->GetSectionSizer(), 0, wxEXPAND | wxBOTTOM, FromDIP(10));
     content->Add(m_scrolled, 1, wxEXPAND);
     content->Add(m_empty_panel, 1, wxEXPAND);
 
@@ -335,6 +341,7 @@ void UserPresetsDialog::on_dpi_changed(const wxRect &suggested_rect)
     m_tab_ctrl->Rescale();
     m_switch_button->SetMaxSize({FromDIP(182), -1});
     m_switch_button->Rescale();
+    m_filters->Rescale();
     m_search->SetMinSize({FromDIP(568), FromDIP(40)});
     m_search->Rescale();
     m_scrolled->SetMinSize({-1, FromDIP(320)});
@@ -362,6 +369,7 @@ void UserPresetsDialog::on_collection_changed(int collection)
     m_tab_ctrl->SetItemBold(m_collection, true);
     m_tab_ctrl->SetItemTextColour(m_collection, StateColor::semantic(MD3::Role::Primary));
     m_search->SetValue("");
+    update_active_filters(wxString());
     m_switch_button->Show(m_collection == 1);
     Freeze();
     create_preset_list(m_scrolled);
@@ -373,8 +381,20 @@ void UserPresetsDialog::on_collection_changed(int collection)
     Refresh();
 }
 
+void UserPresetsDialog::update_active_filters(wxString const &keyword)
+{
+    if (m_filters == nullptr)
+        return;
+    std::vector<wxString> active;
+    const wxString search = CollapsibleFilterBar::SearchFilterLabel(keyword);
+    if (!search.IsEmpty())
+        active.push_back(search);
+    m_filters->SetActiveFilters(active);
+}
+
 void UserPresetsDialog::on_search(wxString const &keyword)
 {
+    update_active_filters(keyword);
     if (keyword.IsEmpty()) {
         for (auto sizer : m_hiden_sizers)
             sizer->Show(true);

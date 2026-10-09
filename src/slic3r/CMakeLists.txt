@@ -813,6 +813,11 @@ list(APPEND SLIC3R_GUI_SOURCES
     GUI/Widgets/RegexBuilderBridgeState.hpp
     GUI/Widgets/SearchField.cpp
     GUI/Widgets/SearchField.hpp
+    GUI/Widgets/CollapsibleFilterBar.cpp
+    GUI/Widgets/CollapsibleFilterBar.hpp
+    GUI/Widgets/CollapsibleFilterState.hpp
+    GUI/Widgets/CanvasDisclosures.cpp
+    GUI/Widgets/CanvasDisclosures.hpp
     GUI/Widgets/TabStripModel.hpp
     GUI/Widgets/TabStrip.cpp
     GUI/Widgets/TabStrip.hpp

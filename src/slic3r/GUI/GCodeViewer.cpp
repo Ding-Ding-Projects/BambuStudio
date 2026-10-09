@@ -227,6 +227,20 @@ namespace Slic3r {
                     p_renderer->refresh_render_paths();
                 }
             }
+            void GCodeViewer::toggle_legend_fold(bool from_keyboard)
+            {
+                const auto& p_renderer = get_renderer();
+                if (p_renderer) {
+                    p_renderer->toggle_legend_fold(from_keyboard);
+                }
+            }
+            void GCodeViewer::on_canvas_pointer_used()
+            {
+                const auto& p_renderer = get_renderer();
+                if (p_renderer) {
+                    p_renderer->on_canvas_pointer_used();
+                }
+            }
             void GCodeViewer::toggle_gcode_window_visibility()
             {
                 const auto& p_renderer = get_renderer();

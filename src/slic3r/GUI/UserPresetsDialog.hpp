@@ -11,6 +11,7 @@
 class TabCtrl;
 class SwitchButton;
 class SearchField;
+class CollapsibleFilterBar;
 class CheckBox;
 class Label;
 class Button;
@@ -51,6 +52,8 @@ private:
     void on_collection_changed(int collection);
 
     void on_search(wxString const & keyword);
+    // Report the search query to the collapsible filter bar.
+    void update_active_filters(wxString const & keyword);
 
     void on_preset_checked(std::string const &preset, bool checked, bool from_user);
 
@@ -97,6 +100,7 @@ private:
 private:
     TabCtrl * m_tab_ctrl;
     SwitchButton * m_switch_button;
+    CollapsibleFilterBar * m_filters { nullptr };
     SearchField * m_search;
     wxPanel * m_empty_panel;
     wxScrolledWindow * m_scrolled;

@@ -11,6 +11,7 @@
 
 #include "../I18N.hpp"
 #include "../ImGuiWrapper.hpp"
+#include "../Widgets/CanvasDisclosures.hpp"
 #include "../Widgets/MD3Tokens.hpp"
 #include "../Widgets/MaterialIcon.hpp"
 #include "../Widgets/BoundedRegex.hpp"
@@ -19,6 +20,7 @@
 #include "../GUI.hpp"
 #include "../MainFrame.hpp"
 #include "../Plater.hpp"
+#include "../GLCanvas3D.hpp"
 #include "../NotificationManager.hpp"
 #include "../Gizmos/GLGizmoMeasure.hpp"//use ndc_to_ss_matrix_inverse
 #include "../OpenGLManager.hpp"
@@ -3332,11 +3334,27 @@ void AssemblyStepsUtils::render_structure_step_option_menu(
     ImGui::PopStyleColor(3);
 }
 
+void AssemblyStepsUtils::toggle_structure_panel(bool from_keyboard)
+{
+    if (!m_structure_fold_restored) {
+        m_structure_fold.restore(CanvasDisclosures::config_reader());
+        m_structure_fold_restored = true;
+    }
+    const auto events = from_keyboard ? m_structure_fold.toggle_from_keyboard(CanvasDisclosures::config_writer())
+                                      : m_structure_fold.toggle_from_pointer(CanvasDisclosures::config_writer());
+    CanvasDisclosures::announce(m_structure_fold_canvas, "assembly_structure", m_structure_fold.expanded(),
+                                m_structure_fold.focus_ring_visible(), events);
+}
+
 void AssemblyStepsUtils::render_assembly_structure_panel(float canvas_w, float canvas_h)
 {
     m_assembly_structure_right_x = 0.f;
     if (!m_imgui || !m_model)
         return;
+    if (!m_structure_fold_restored) {
+        m_structure_fold.restore(CanvasDisclosures::config_reader());
+        m_structure_fold_restored = true;
+    }
     ImGuiWrapper &imgui = *m_imgui;
     const float   sc    = m_imgui_scale > 0.f ? m_imgui_scale : 1.f;
 
@@ -3444,7 +3462,7 @@ void AssemblyStepsUtils::render_assembly_structure_panel(float canvas_w, float c
     const float max_scroll_region_h = std::max(0.0f, overall_max_h - non_scroll_h);
     const float scroll_region_h_target = std::min(scroll_content_h, max_scroll_region_h);
     const float full_h      = header_h + scroll_region_h_target + action_h + bottom_pad + card_gap + footer_hint_extra_h;
-    const float panel_h     = m_structure_panel_collapsed
+    const float panel_h     = !m_structure_fold.expanded()
                                 ? header_h
                                 : std::min(overall_max_h, full_h);
 
@@ -3479,7 +3497,7 @@ void AssemblyStepsUtils::render_assembly_structure_panel(float canvas_w, float c
     const ImVec2 hd_min = win_min;
     const ImVec2 hd_max = ImVec2(win_max.x, win_min.y + header_h);
     dl->AddRectFilled(hd_min, hd_max, col_header_top, panel_radius,
-                      m_structure_panel_collapsed ? ImDrawFlags_RoundCornersAll
+                      !m_structure_fold.expanded() ? ImDrawFlags_RoundCornersAll
                                                    : ImDrawFlags_RoundCornersTop);
 
     // Left icon: collapse / expand toggle (vertically centered on title line).
@@ -3488,20 +3506,46 @@ void AssemblyStepsUtils::render_assembly_structure_panel(float canvas_w, float c
         const ImVec2 toggle_min(win_min.x + 8.f * sc,
                                 title_line_cy - icon_sz_hdr * 0.5f);
         const ImVec2 toggle_max(toggle_min.x + icon_sz_hdr, toggle_min.y + icon_sz_hdr);
-        ImTextureID toggle_icon = m_structure_panel_collapsed ? s_assembly_tree_icons.expand_external
-                                                              : s_assembly_tree_icons.collapse_external;
+        ImTextureID toggle_icon = !m_structure_fold.expanded() ? s_assembly_tree_icons.expand_external
+                                                               : s_assembly_tree_icons.collapse_external;
         if (toggle_icon)
             dl->AddImage(toggle_icon, toggle_min, toggle_max);
         ImGui::SetCursorScreenPos(toggle_min);
         ImGui::PushID("##asp_toggle");
         ImGui::InvisibleButton("##t", ImVec2(icon_sz_hdr, icon_sz_hdr));
         if (ImGui::IsItemClicked(0))
-            m_structure_panel_collapsed = !m_structure_panel_collapsed;
+            toggle_structure_panel(/*from_keyboard=*/false);
         if (ImGui::IsItemHovered()) {
             dl->AddRectFilled(toggle_min, toggle_max, md3_u32(MD3::Role::OnSurface, m_is_dark, 18), 3.0f * sc);
-            render_panel_tooltip(m_structure_panel_collapsed ? _u8L("Expand") : _u8L("Collapse"));
+            render_panel_tooltip(!m_structure_fold.expanded() ? _u8L("Expand") : _u8L("Collapse"));
+        }
+        // Keyboard path (Shift+L on the canvas): the Material focus ring around the toggle.
+        if (m_structure_fold.focus_ring_visible()) {
+            const float ring_gap = 2.0f * sc;
+            dl->AddRect(ImVec2(toggle_min.x - ring_gap, toggle_min.y - ring_gap),
+                        ImVec2(toggle_max.x + ring_gap, toggle_max.y + ring_gap),
+                        md3_u32(MD3::Role::Primary, m_is_dark), 4.0f * sc, 0, 2.0f * sc);
         }
         ImGui::PopID();
+        // Keep the accessible header of the assembly canvas in step with what is drawn.
+        GLCanvas3D *canvas = wxGetApp().plater() ? wxGetApp().plater()->get_assmeble_canvas3D() : nullptr;
+        if (wxWindow *window = canvas != nullptr ? canvas->get_wxglcanvas() : nullptr) {
+            if (m_structure_fold_canvas != window) {
+                CanvasDisclosures::withdraw(m_structure_fold_canvas, "assembly_structure", this);
+                m_structure_fold_canvas = window;
+            }
+            CanvasDisclosures::Entry entry;
+            entry.owner          = this;
+            // TRN: Screen reader name of the collapse toggle of the assembly structure panel.
+            entry.name           = _L("Assembly Structure");
+            entry.expanded       = m_structure_fold.expanded();
+            entry.keyboard_focus = m_structure_fold.focus_ring_visible();
+            entry.client_rect    = wxRect(int(toggle_min.x), int(toggle_min.y),
+                                          std::max(1, int(toggle_max.x - toggle_min.x)),
+                                          std::max(1, int(toggle_max.y - toggle_min.y)));
+            entry.toggle         = [this]() { toggle_structure_panel(false); };
+            CanvasDisclosures::publish(window, "assembly_structure", std::move(entry));
+        }
     }
 
     // Header right icons: pack from the right edge so hidden icons leave no gap.
@@ -3632,7 +3676,7 @@ void AssemblyStepsUtils::render_assembly_structure_panel(float canvas_w, float c
     };
 
     // When collapsed, only the header is visible.
-    if (m_structure_panel_collapsed) {
+    if (!m_structure_fold.expanded()) {
         // Prefer the live ImGui window bounds so play-bar clearance stays correct
         // if DPI / style scaling ever expands the window past panel_w.
         const ImVec2 wp = ImGui::GetWindowPos();

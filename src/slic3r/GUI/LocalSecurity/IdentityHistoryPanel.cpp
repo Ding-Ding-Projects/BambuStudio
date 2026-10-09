@@ -1,5 +1,6 @@
 #include "IdentityHistoryPanel.hpp"
 #include "../Widgets/Button.hpp"
+#include "../Widgets/CollapsibleFilterBar.hpp"
 #include "../Widgets/Label.hpp"
 #include "../Widgets/TextInput.hpp"
 #include "../Widgets/SearchField.hpp"
@@ -31,10 +32,14 @@ IdentityHistoryPanel::IdentityHistoryPanel(wxWindow* parent,std::shared_ptr<Iden
     button(scroll,body,m_hooks,"Create protected history",[this,password,confirmation]{safely([&]{auto answer=take(password),repeat=take(confirmation);if(answer.size()!=repeat.size()||CRYPTO_memcmp(answer.data(),repeat.data(),answer.size())!=0)throw Failure(Error::Authentication);m_history->initialize(CredentialKind::Password,answer);m_answer=std::move(answer);m_expires=std::chrono::steady_clock::now()+std::chrono::minutes(5);read_page();m_status->SetLabel(t(m_hooks,"Protected history was created. Existing histories are never overwritten by this action."));});});
     button(scroll,body,m_hooks,"Unlock history for five minutes",[this,password]{safely([&]{auto answer=take(password);m_rows=m_history->read_metadata(answer,0,10);m_answer=std::move(answer);m_offset=0;m_expires=std::chrono::steady_clock::now()+std::chrono::minutes(5);filter();});});
     button(scroll,body,m_hooks,"Lock history now",[this]{LockHistory();});
-    m_search=new SearchField(scroll,t(m_hooks,"Search redacted history metadata"));m_search->GetTextCtrl()->SetName(t(m_hooks,"Search redacted history metadata"));m_hooks.record_name(m_search->GetTextCtrl(),"Search redacted history metadata");m_search->SetOnQuery([this](const wxString&){safely([this]{filter();});});m_search->SetOnRegexToggle([this](bool){safely([this]{filter();});});body->Add(m_search,0,wxEXPAND|wxBOTTOM,FromDIP(8));
-    m_from=entry(scroll,body,m_hooks,"From date (YYYY-MM-DD, local time)");m_to=entry(scroll,body,m_hooks,"Through date (YYYY-MM-DD, local time)");m_from->SetMaxLength(10);m_to->SetMaxLength(10);
-    button(scroll,body,m_hooks,"Apply date filters",[this]{safely([this]{filter();});});
-    for(unsigned i=0;i<7;++i){auto choice=new wxCheckBox(scroll,wxID_ANY,t(m_hooks,action_name(static_cast<HistoryAction>(i))));m_hooks.record_label(choice,action_name(static_cast<HistoryAction>(i)));choice->SetValue(true);choice->Bind(wxEVT_CHECKBOX,[this,i](wxCommandEvent& event){m_actions[i]=event.IsChecked();safely([this]{filter();});});body->Add(choice,0,wxEXPAND|wxBOTTOM,FromDIP(4));}
+    // Search, date range and action filters sit in the shared collapsible filter bar; collapsed, it still names every active filter.
+    m_filters=new CollapsibleFilterBar(scroll,"identity_history",t(m_hooks,"Search and filters"));auto filter_body=m_filters->GetBody();auto filter_sizer=m_filters->GetBodySizer();
+    m_search=new SearchField(m_filters->GetBody(),t(m_hooks,"Search redacted history metadata"));m_search->GetTextCtrl()->SetName(t(m_hooks,"Search redacted history metadata"));m_hooks.record_name(m_search->GetTextCtrl(),"Search redacted history metadata");m_search->SetOnQuery([this](const wxString&){update_active_filters();safely([this]{filter();});});m_search->SetOnRegexToggle([this](bool){safely([this]{filter();});});filter_sizer->Add(m_search,0,wxEXPAND|wxBOTTOM,FromDIP(8));
+    m_from=entry(filter_body,filter_sizer,m_hooks,"From date (YYYY-MM-DD, local time)");m_to=entry(filter_body,filter_sizer,m_hooks,"Through date (YYYY-MM-DD, local time)");m_from->SetMaxLength(10);m_to->SetMaxLength(10);
+    for(auto date_field:{m_from,m_to})date_field->Bind(wxEVT_TEXT,[this](wxCommandEvent& event){update_active_filters();event.Skip();});
+    button(filter_body,filter_sizer,m_hooks,"Apply date filters",[this]{safely([this]{filter();});});
+    for(unsigned i=0;i<7;++i){auto choice=new wxCheckBox(filter_body,wxID_ANY,t(m_hooks,action_name(static_cast<HistoryAction>(i))));m_hooks.record_label(choice,action_name(static_cast<HistoryAction>(i)));choice->SetValue(true);choice->Bind(wxEVT_CHECKBOX,[this,i](wxCommandEvent& event){m_actions[i]=event.IsChecked();update_active_filters();safely([this]{filter();});});filter_sizer->Add(choice,0,wxEXPAND|wxBOTTOM,FromDIP(4));}
+    body->Add(m_filters->GetSectionSizer(),0,wxEXPAND|wxBOTTOM,FromDIP(8));
     m_list=new wxListBox(scroll,wxID_ANY,wxDefaultPosition,FromDIP(wxSize(420,200)),0,nullptr,wxLB_EXTENDED);m_list->SetName(t(m_hooks,"Redacted history revisions"));m_hooks.record_name(m_list,"Redacted history revisions");body->Add(m_list,0,wxEXPAND|wxBOTTOM,FromDIP(8));
     button(scroll,body,m_hooks,"Previous history page",[this]{safely([this]{require_session();m_offset=m_offset>=10?m_offset-10:0;read_page();});});
     button(scroll,body,m_hooks,"Next history page",[this]{safely([this]{require_session();if(m_offset>=10000||m_rows.size()<10)throw Failure(Error::InvalidInput);m_offset+=10;read_page();});});
@@ -65,5 +70,15 @@ void IdentityHistoryPanel::LockHistory(){m_answer.reset();m_rows.clear();m_visib
 void IdentityHistoryPanel::require_session(){if(!m_answer||std::chrono::steady_clock::now()>=m_expires){LockHistory();throw Failure(Error::Authentication);}}
 void IdentityHistoryPanel::safely(const std::function<void()>& action){try{action();}catch(const Failure& e){m_status->SetLabel(t(m_hooks,e.what()));m_hooks.notify(t(m_hooks,e.what()));}catch(...){m_status->SetLabel(t(m_hooks,"History operation did not complete. Existing data is retained."));}}
 void IdentityHistoryPanel::read_page(){require_session();m_rows=m_history->read_metadata(*m_answer,m_offset,10);filter();}
+void IdentityHistoryPanel::update_active_filters(){
+    if(!m_filters)return;
+    std::vector<wxString> active;
+    const wxString search=CollapsibleFilterBar::SearchFilterLabel(m_search->GetValue());if(!search.empty())active.push_back(search);
+    // Dates apply when the history is filtered; a typed date is reported as entered.
+    if(!m_from->GetValue().empty())active.push_back(CollapsibleFilterBar::FilterLabel(t(m_hooks,"From"),m_from->GetValue()));
+    if(!m_to->GetValue().empty())active.push_back(CollapsibleFilterBar::FilterLabel(t(m_hooks,"To"),m_to->GetValue()));
+    for(std::size_t i=0;i<m_actions.size();++i)if(!m_actions[i])active.push_back(CollapsibleFilterBar::ExcludedFilterLabel(t(m_hooks,action_name(static_cast<HistoryAction>(i)))));
+    m_filters->SetActiveFilters(active);
+}
 void IdentityHistoryPanel::filter(){require_session();auto from=date(m_from->GetValue()),to=date(m_to->GetValue());if(from&&to&&*from>*to)throw Failure(Error::InvalidInput);if(to)*to+=wxDateSpan::Days(1);m_list->Clear();m_visible.clear();SearchField::MatchPass match(m_search->GetValue(),m_search->IsRegexEnabled(),m_search->IsCaseSensitive(),m_search->IsWholeWord(),m_search->IsMultiline());for(std::size_t i=0;i<m_rows.size();++i){const auto& row=m_rows[i];auto action=static_cast<std::size_t>(row.action);if(action>=m_actions.size()||!m_actions[action])continue;wxDateTime timestamp(static_cast<time_t>(row.committed_at_utc_seconds));if((from&&timestamp<*from)||(to&&timestamp>=*to))continue;auto label=timestamp.FormatISOCombined(' ')+" | "+t(m_hooks,action_name(row.action))+" | "+wxString::FromUTF8(row.identity)+" | "+wxString::FromUTF8(row.revision);if(row.pruned)label+=" | "+t(m_hooks,"Payload access removed");if(match.matches(label)){m_visible.push_back(i);m_list->Append(label);}}m_status->SetLabel(wxString::Format("%zu / %zu ",m_visible.size(),m_rows.size())+t(m_hooks,"revisions shown on this page. Labels and snapshot contents are omitted."));}
 }

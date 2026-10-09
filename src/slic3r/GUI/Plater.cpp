@@ -191,6 +191,7 @@
 #include "Widgets/StateColor.hpp"
 #include "Widgets/ComboBox.hpp"
 #include "Widgets/SearchField.hpp"
+#include "Widgets/CollapsibleFilterBar.hpp"
 #include "Widgets/SwitchButton.hpp"
 #include "Widgets/TextInput.hpp"
 #include "Widgets/StaticGroup.hpp"
@@ -908,6 +909,8 @@ struct Sidebar::priv
     // tune builder popover included) filtering the visible filament rows by
     // preset name and by colour ("#RRGGBB" / nearest colour name, via
     // SearchField::colorSearchText — same semantics as the Objects search).
+    // Collapsible holder of m_filament_search (inside the filament wrapper).
+    CollapsibleFilterBar *m_filament_search_filters{nullptr};
     SearchField *     m_filament_search{nullptr};
     int m_menu_filament_id = -1;
     wxPanel*          m_filament_area_wrapper{nullptr};   // Wrapper panel for collapse/expand
@@ -922,6 +925,8 @@ struct Sidebar::priv
     // MD3 Objects card (Prepare.jsx:116-126): SectionHeader account_tree + the
     // kit SearchField pill in place of the raw native wxSearchCtrl.
     SectionHeader* m_objects_header = nullptr;
+    // Collapsible holder of m_search_bar: hidden and shown with the object list.
+    CollapsibleFilterBar* m_object_search_filters = nullptr;
     SearchField* m_search_bar = nullptr;
     Search::SearchObjectDialog* dia = nullptr;
 
@@ -966,6 +971,10 @@ struct Sidebar::priv
     // option on activation. The guard flag keeps the focus-driven popup from
     // being re-opened by the popup's own focus bounce.
     SearchField  *m_process_search = nullptr;
+    // Collapsible holders of the two settings searches. They open a results
+    // popup rather than narrowing a list, so they never report active filters.
+    CollapsibleFilterBar *m_process_search_filters = nullptr;
+    CollapsibleFilterBar *m_process_search_adv_filters = nullptr;
     // Same searcher, second host: the compact card's field is hidden along with
     // the card in advanced mode, which would leave the FULL process-settings
     // tree — the surface with the most options in it — as the only settings
@@ -1408,6 +1417,13 @@ void Sidebar::priv::on_search_update()
     m_object_list->assembly_plate_object_name();
 
     wxString search_text = m_search_bar->GetValue();
+    if (m_object_search_filters != nullptr) {
+        std::vector<wxString> active;
+        const wxString query = CollapsibleFilterBar::SearchFilterLabel(search_text);
+        if (!query.IsEmpty())
+            active.push_back(query);
+        m_object_search_filters->SetActiveFilters(active);
+    }
     // Route the SearchField's live matcher state (".*" regex toggle plus the
     // tune-popover case-sensitive / whole-word checkboxes) into the model so
     // search_object() filters through SearchField::textMatches.
@@ -1426,7 +1442,11 @@ void Sidebar::priv::jump_to_object(ObjectDataViewModelNode* item)
 
 void Sidebar::priv::can_search()
 {
-    if (m_search_bar->IsShown()) {
+    if (m_object_search_filters != nullptr && m_object_search_filters->IsSectionShown()) {
+        // The shortcut reveals a collapsed search for this session only; the
+        // stored choice stays what the user picked with the header.
+        if (!m_object_search_filters->IsExpanded())
+            m_object_search_filters->SetExpanded(true, /*remember=*/false);
         m_search_bar->GetTextCtrl()->SetFocus();
     }
 }
@@ -3704,8 +3724,18 @@ Sidebar::Sidebar(Plater *parent)
     // substring by default, regex via the pill's ".*" toggle / tune builder
     // popover, and colour-aware matching ("#RRGGBB" or a colour name) through
     // SearchField::colorSearchText — the same recipe as the Objects search.
-    p->m_filament_search = new SearchField(p->m_filament_area_wrapper, _L("Search filaments"));
+    // TRN: Header of the collapsible ink slot search in the sidebar.
+    p->m_filament_search_filters = new CollapsibleFilterBar(p->m_filament_area_wrapper, "filament_search", _L("Search"));
+    p->m_filament_search_filters->SetOnToggled([this](bool) { CallAfter([this]() { update_scroll_body(); }); });
+    p->m_filament_search = new SearchField(p->m_filament_search_filters->GetBody(), _L("Search filaments"));
+    p->m_filament_search_filters->GetBodySizer()->Add(p->m_filament_search, 0, wxEXPAND);
     auto refilter_filament_rows = [this]() {
+        // A collapsed search still names the query that hides slot rows.
+        std::vector<wxString> active;
+        const wxString query = CollapsibleFilterBar::SearchFilterLabel(p->m_filament_search->GetValue());
+        if (!query.IsEmpty())
+            active.push_back(query);
+        p->m_filament_search_filters->SetActiveFilters(active);
         // recalc re-applies the filter itself (it is the shared authority so
         // add/remove/rescale paths stay filtered), then resizes the scroll
         // areas around the surviving rows.
@@ -3720,7 +3750,7 @@ Sidebar::Sidebar(Plater *parent)
     // case-sensitive / whole-word checkboxes change (the popover re-fires this
     // callback for all three).
     p->m_filament_search->SetOnRegexToggle([refilter_filament_rows](bool) { refilter_filament_rows(); });
-    wrapper_sizer->Add(p->m_filament_search, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(8));
+    wrapper_sizer->Add(p->m_filament_search_filters->GetSectionSizer(), 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(8));
 
     // ---- Physical filament scroll area (independent scrollbar) ----
     p->m_physical_scroll_area = new MD3ScrolledWindow(p->m_filament_area_wrapper, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
@@ -4034,7 +4064,11 @@ Sidebar::Sidebar(Plater *parent)
         // filament options — so the Printer section needs no third search bar.
         // The pill's ".*" toggle and tune builder popover are wired into the
         // searcher's regex / case / whole-word flags by the SearchDialog.
-        p->m_process_search = new SearchField(p->m_process_card, _L("Search settings"));
+        // TRN: Header of the collapsible settings search in the sidebar.
+        p->m_process_search_filters = new CollapsibleFilterBar(p->m_process_card, "settings_search", _L("Search"));
+        p->m_process_search_filters->SetOnToggled([this](bool) { CallAfter([this]() { update_scroll_body(); }); });
+        p->m_process_search = new SearchField(p->m_process_search_filters->GetBody(), _L("Search settings"));
+        p->m_process_search_filters->GetBodySizer()->Add(p->m_process_search, 0, wxEXPAND);
         p->m_process_search->GetTextCtrl()->Bind(wxEVT_SET_FOCUS, [this](wxFocusEvent &e) {
             if (!p->m_process_search_open) {
                 p->m_process_search_open = true;
@@ -4048,7 +4082,7 @@ Sidebar::Sidebar(Plater *parent)
         p->m_process_search->Bind(wxCUSTOMEVT_EXIT_SEARCH, [this](wxCommandEvent &) {
             p->m_process_search_open = false;
         });
-        card_sizer->Add(p->m_process_search, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, pad / 2);
+        card_sizer->Add(p->m_process_search_filters->GetSectionSizer(), 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, pad / 2);
 
         // Process-preset SelectField: the live PlaterPresetComboBox (TYPE_PRINT)
         // dressed with kit SelectField chrome (r10 small-radius, SurfaceContainer-
@@ -4211,7 +4245,13 @@ Sidebar::Sidebar(Plater *parent)
     // the live ObjectList below. All search/popup/jump behaviour is preserved.
     p->m_objects_header = new SectionHeader(p->scrolled, _L("Objects"), MaterialIcon::AccountTree);
 
-    p->m_search_bar = new SearchField(p->scrolled, _L("Search plate, object and part."));
+    // The object search sits in the shared collapsible filter bar.
+    // TRN: Header of the collapsible object search in the sidebar.
+    p->m_object_search_filters = new CollapsibleFilterBar(p->scrolled, "object_search", _L("Search"));
+    p->m_search_bar = new SearchField(p->m_object_search_filters->GetBody(), _L("Search plate, object and part."));
+    p->m_object_search_filters->GetBodySizer()->Add(p->m_search_bar, 0, wxEXPAND);
+    // The sidebar body sizes itself; refit it when the search folds.
+    p->m_object_search_filters->SetOnToggled([this](bool) { CallAfter([this]() { update_scroll_body(); }); });
     p->m_search_bar->SetOnQuery([this](const wxString &) {
         this->p->on_search_update();
     });
@@ -4250,7 +4290,7 @@ Sidebar::Sidebar(Plater *parent)
     {
         const int pad = FromDIP(MD3::Metrics::active().padding);
         p->sizer_params->Add(p->m_objects_header, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, pad / 2);
-        p->sizer_params->Add(p->m_search_bar, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP | wxBOTTOM, pad / 2);
+        p->sizer_params->Add(p->m_object_search_filters->GetSectionSizer(), 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP | wxBOTTOM, pad / 2);
     }
     p->sizer_params->Add(p->m_object_list, 1, wxEXPAND | wxTOP, 0);
     // Proportion 0: nothing stretches inside a scroll body. The list gets a
@@ -4258,7 +4298,7 @@ Sidebar::Sidebar(Plater *parent)
     // slack that the settings tree below it needs.
     scrolled_sizer->Add(p->sizer_params, 0, wxEXPAND | wxLEFT, 0);
     p->m_object_list->Hide();
-    p->m_search_bar->Hide();
+    p->m_object_search_filters->ShowSection(false);
     p->m_objects_header->Hide();
     // Frequently Object Settings
     p->object_settings = new ObjectSettings(p->scrolled);
@@ -4281,7 +4321,13 @@ Sidebar::Sidebar(Plater *parent)
         // as the compact card's, so the advanced surface is searchable too.
         // Preset::TYPE_INVALID keeps the query scoped across every indexed preset
         // type, and jumping to a result lands on the owning option in this tree.
-        p->m_process_search_adv = new SearchField(p->m_process_simple_bar, _L("Search settings"));
+        // TRN: Header of the collapsible settings search above the full process settings.
+        p->m_process_search_adv_filters = new CollapsibleFilterBar(p->m_process_simple_bar, "settings_search_full", _L("Search"),
+                                                                   CollapsibleFilterBar::Purpose::Narrows,
+                                                                   CollapsibleFilterBar::Layout::Inline);
+        p->m_process_search_adv_filters->SetOnToggled([this](bool) { CallAfter([this]() { update_scroll_body(); }); });
+        p->m_process_search_adv = new SearchField(p->m_process_search_adv_filters->GetBody(), _L("Search settings"));
+        p->m_process_search_adv_filters->GetBodySizer()->Add(p->m_process_search_adv, 0, wxEXPAND);
         p->m_process_search_adv->GetTextCtrl()->Bind(wxEVT_SET_FOCUS, [this](wxFocusEvent &e) {
             if (!p->m_process_search_open) {
                 p->m_process_search_open = true;
@@ -4293,7 +4339,7 @@ Sidebar::Sidebar(Plater *parent)
         p->m_process_search_adv->Bind(wxCUSTOMEVT_EXIT_SEARCH, [this](wxCommandEvent &) {
             p->m_process_search_open = false;
         });
-        simple_sizer->Add(p->m_process_search_adv, 1, wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(4));
+        simple_sizer->Add(p->m_process_search_adv_filters->GetSectionSizer(), 1, wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(4));
 
         p->m_process_simple_bar->SetSizer(simple_sizer);
         scrolled_sizer->Add(p->m_process_simple_bar, 0, wxEXPAND);
@@ -4602,7 +4648,7 @@ void Sidebar::apply_prepare_section(const std::string &section) const
     if (p->params_panel_ref)
         p->params_panel_ref->set_host_visibility_gate(process && p->process_advanced);
     p->m_objects_header->Show(objects);
-    p->m_search_bar->Show(objects);
+    p->m_object_search_filters->ShowSection(objects);
     p->m_object_list->Show(objects);
     if (objects)
         p->refresh_manip_card();
@@ -5393,11 +5439,15 @@ void Sidebar::msw_rescale()
             box->SetCornerRadius(FromDIP(7));
 
     // MD3 Objects card + compact Process card widgets.
+    if (p->m_object_search_filters) p->m_object_search_filters->Rescale();
     if (p->m_search_bar) p->m_search_bar->Rescale();
     // Sidebar settings search + filament slot search pills re-derive their
     // geometry and glyph rasters at the new DPI the same way.
+    if (p->m_process_search_filters) p->m_process_search_filters->Rescale();
+    if (p->m_process_search_adv_filters) p->m_process_search_adv_filters->Rescale();
     if (p->m_process_search) p->m_process_search->Rescale();
     if (p->m_process_search_adv) p->m_process_search_adv->Rescale();
+    if (p->m_filament_search_filters) p->m_filament_search_filters->Rescale();
     if (p->m_filament_search) p->m_filament_search->Rescale();
     if (p->process_layer_height) {
         p->process_layer_height->SetCornerRadius(FromDIP(MD3::Metrics::active().small_radius));
@@ -6906,7 +6956,7 @@ bool Sidebar::show_object_list(bool show) const
         if (p->m_object_list->IsShown() == show)
             return false;
         if (p->m_objects_header) p->m_objects_header->Show(show);
-        p->m_search_bar->Show(show);
+        p->m_object_search_filters->ShowSection(show);
         p->m_object_list->Show(show);
         if (!show)
             p->object_layers->Show(false);

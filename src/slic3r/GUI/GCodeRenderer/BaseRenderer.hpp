@@ -4,11 +4,14 @@
 #include "libslic3r/Config.hpp"
 #include "libslic3r/CustomGCode.hpp"
 #include "slic3r/GUI/3DScene.hpp"
+#include "slic3r/GUI/Widgets/CollapsibleFilterState.hpp"
 #include <boost/iostreams/device/mapped_file.hpp>
 #include <imgui/imgui.h>
 #include <vector>
 #include <string>
 #include <array>
+class wxWindow;
+
 namespace Slic3r {
     class BuildVolume;
     class PresetBundle;
@@ -95,6 +98,13 @@ namespace Slic3r {
                 virtual void init(ConfigOptionMode mode, PresetBundle* preset_bundle);
                 bool is_legend_enabled() const;
                 void enable_legend(bool enable);
+                // Fold or unfold the legend and statistics dock. Shift+L on the canvas
+                // is the keyboard path (it also shows a focus ring on the fold
+                // button); both paths store the state and announce it.
+                void toggle_legend_fold(bool from_keyboard);
+                // A pointer press on the canvas ends the keyboard focus ring.
+                void on_canvas_pointer_used();
+                bool is_legend_folded() const;
                 float get_legend_height() const;
                 // Pixel width of the legend dock while it is expanded; 0 when it is
                 // folded, disabled or not drawn. The notification column stops left of it.
@@ -208,6 +218,8 @@ namespace Slic3r {
                 void init_thermal_icons();
                 // end helio
             private:
+                void ensure_legend_fold_restored();
+                void publish_legend_fold(float x, float y, float w, float h);
                 void delete_wipe_tower();
                 void render_legend_color_arr_recommen(float window_padding, bool is_show_left_right_result);
 
@@ -254,7 +266,14 @@ namespace Slic3r {
                 std::vector<ExtruderFilament> m_left_extruder_filament;
                 std::vector<ExtruderFilament> m_right_extruder_filament;
                 size_t m_nozzle_nums{ 0 };
-                bool m_fold{ false };
+                // Legend dock fold, stored as "preview_legend" in the
+                // collapsible_filters config section (see CollapsibleFilterState).
+                // It starts expanded: the dock carries the view-mode chips and
+                // option toggles that change what the preview shows.
+                CollapsibleFilters::CanvasDisclosure m_legend_fold{ "preview_legend", CollapsibleFilters::Purpose::Narrows };
+                bool m_legend_fold_restored{ false };
+                // Canvas the fold button was last published on (for the accessibility bridge).
+                wxWindow* m_legend_fold_canvas{ nullptr };
                 std::vector<size_t> m_ssid_to_moveid_map;
                 // feedrate-true playback: cumulative print seconds per moves-slider
                 // tick, forward-filled (only TimeBlock-owning moves carry a prefix

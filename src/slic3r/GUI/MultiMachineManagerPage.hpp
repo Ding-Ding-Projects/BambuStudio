@@ -11,6 +11,7 @@
 #include <vector>
 
 class CheckBox;
+class CollapsibleFilterBar;
 class SearchField;
 
 namespace Slic3r {
@@ -130,6 +131,7 @@ private:
     // query (case handled by SearchField::textMatches); it is applied to the card
     // grid BEFORE paging so the page count / flipping stay consistent with what is
     // shown.
+    CollapsibleFilterBar*   m_filters{ nullptr };
     SearchField*            m_search{ nullptr };
     wxString                m_search_filter;
     wxBoxSizer*             page_sizer{ nullptr };

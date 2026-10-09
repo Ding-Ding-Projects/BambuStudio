@@ -40,6 +40,9 @@ namespace Slic3r {
                 void enable_legend(bool enable);
                 void render_calibration_thumbnail(ThumbnailData& thumbnail_data, unsigned int w, unsigned int h, const ThumbnailsParams& thumbnail_params, PartPlateList& partplate_list, OpenGLManager& opengl_manager);
                 bool is_legend_enabled();
+                // Legend and statistics dock fold (keyboard path: Shift+L on the canvas).
+                void toggle_legend_fold(bool from_keyboard);
+                void on_canvas_pointer_used();
                 std::vector<double> get_layers_zs() const;
                 size_t get_extruders_count() const;
                 std::vector<CustomGCode::Item>& get_custom_gcode_per_print_z() const;

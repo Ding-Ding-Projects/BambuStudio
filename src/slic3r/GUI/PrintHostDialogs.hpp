@@ -19,6 +19,7 @@ class ComboBox;
 class Label;
 class TextInput;
 class SearchField;
+class CollapsibleFilterBar;
 
 namespace Slic3r {
 
@@ -110,6 +111,7 @@ private:
     Button *btn_cancel;
     Button *btn_error;
     Button *btn_close { nullptr };
+    CollapsibleFilterBar *search_filters { nullptr };
     SearchField *search_field { nullptr };
     Label *search_status { nullptr };
     wxDataViewListCtrl *job_list;

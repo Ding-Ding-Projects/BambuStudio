@@ -19,6 +19,7 @@
 #include <wx/string.h>
 
 class Button;
+class CollapsibleFilterBar;
 class ComboBox;
 class Label;
 class LabeledCheckBox;
@@ -108,6 +109,7 @@ private:
     wxScrolledWindow   *m_body{nullptr};
     Label              *m_title_label{nullptr};
     Label              *m_subtitle_label{nullptr};
+    CollapsibleFilterBar *m_filters{nullptr};
     SearchField        *m_search_field{nullptr};
 
     StaticBox          *m_format_card{nullptr};

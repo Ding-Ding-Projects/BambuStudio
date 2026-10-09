@@ -8,6 +8,7 @@
 #include "NotificationManager.hpp"
 #include "Plater.hpp"
 #include "Widgets/Button.hpp"
+#include "Widgets/CollapsibleFilterBar.hpp"
 #include "Widgets/Label.hpp"
 #include "Widgets/MD3Tokens.hpp"
 #include "Widgets/MaterialIcon.hpp"
@@ -109,19 +110,24 @@ void NotificationCenterPanel::build_ui()
     wxBoxSizer *root = GetContentSizer();
 
     // --- Search + filter chips -------------------------------------------
+    // Both sit in the shared collapsible filter bar; collapsed, it still names
+    // every filter that narrows the list.
+    // TRN: Header of the collapsible search and filter row of a list.
+    m_filters = new CollapsibleFilterBar(this, "notification_center", _L("Search and filters"));
+    wxSizer *filter_sizer = m_filters->GetBodySizer();
     // TRN: Placeholder of the notification centre search field.
-    m_search = new SearchField(this, _L("Search notifications"));
+    m_search = new SearchField(m_filters->GetBody(), _L("Search notifications"));
     m_search->SetOnQuery([this](const wxString &) { RefreshNow(); });
     m_search->SetOnRegexToggle([this](bool) { RefreshNow(); });
     m_search->SetName("notification_center_search");
-    root->Add(m_search, 0, wxEXPAND | wxBOTTOM, FromDIP(MD3::Metrics::active().gap));
+    filter_sizer->Add(m_search, 0, wxEXPAND | wxBOTTOM, FromDIP(MD3::Metrics::active().gap));
 
     auto *chips = new wxWrapSizer(wxHORIZONTAL);
     const wxString chip_labels[] = {
         // TRN: Level filter chips of the notification centre.
         _L("All levels"), _L("Info"), _L("Important"), _L("Warnings"), _L("Errors")};
     for (int i = 0; i < static_cast<int>(LevelChip::Count); ++i) {
-        auto *chip = new Button(this, chip_labels[i]);
+        auto *chip = new Button(m_filters->GetBody(), chip_labels[i]);
         chip->SetVariant(Button::Variant::Outlined);
         chip->SetButtonSize(Button::Size::Small);
         chip->SetName("notification_center_level_chip");
@@ -135,7 +141,7 @@ void NotificationCenterPanel::build_ui()
     }
     // Filter groups wrap without consuming the list's minimum width.
     // TRN: Toggle chip: include dismissed toasts in the notification centre list.
-    m_dismissed_chip = new Button(this, _L("Show dismissed"));
+    m_dismissed_chip = new Button(m_filters->GetBody(), _L("Show dismissed"));
     m_dismissed_chip->SetVariant(Button::Variant::Tonal);
     m_dismissed_chip->SetButtonSize(Button::Size::Small);
     m_dismissed_chip->SetGlyph(MaterialIcon::Visibility);
@@ -145,7 +151,8 @@ void NotificationCenterPanel::build_ui()
         RefreshNow();
     });
     chips->Add(m_dismissed_chip, 0, wxBOTTOM, FromDIP(6));
-    root->Add(chips, 0, wxEXPAND | wxBOTTOM, FromDIP(MD3::Metrics::active().gap));
+    filter_sizer->Add(chips, 0, wxEXPAND);
+    root->Add(m_filters->GetSectionSizer(), 0, wxEXPAND | wxBOTTOM, FromDIP(MD3::Metrics::active().gap));
 
     // --- Status line -----------------------------------------------------
     m_status_label = new Label(this, Label::Body_13, wxEmptyString, LB_AUTO_WRAP | wxST_NO_AUTORESIZE);
@@ -260,6 +267,8 @@ void NotificationCenterPanel::apply_theme()
     const wxColour secondary = StateColor::semantic(MD3::Role::OnSurfaceVariant);
 
     SetBackgroundColour(surface);
+    if (m_filters != nullptr)
+        m_filters->SyncTheme();
     for (Label *label : {m_status_label, m_empty_label}) {
         label->SetBackgroundColour(surface);
         label->SetForegroundColour(secondary);
@@ -274,6 +283,8 @@ void NotificationCenterPanel::apply_theme()
 void NotificationCenterPanel::on_dpi_changed(const wxRect &suggested_rect)
 {
     MD3Dialog::on_dpi_changed(suggested_rect);
+    if (m_filters != nullptr)
+        m_filters->Rescale();
     if (m_search != nullptr)
         m_search->Rescale();
     Layout();
@@ -396,6 +407,22 @@ void NotificationCenterPanel::RefreshNow()
 {
     recompute_matches();
     populate_list();
+    update_active_filters();
+}
+
+void NotificationCenterPanel::update_active_filters()
+{
+    if (m_filters == nullptr)
+        return;
+    std::vector<wxString> active;
+    const wxString query = CollapsibleFilterBar::SearchFilterLabel(m_search != nullptr ? m_search->GetValue() : wxString());
+    if (!query.IsEmpty())
+        active.push_back(query);
+    if (m_level_chip != LevelChip::All && m_level_buttons[static_cast<int>(m_level_chip)] != nullptr)
+        active.push_back(m_level_buttons[static_cast<int>(m_level_chip)]->GetLabel());
+    if (!m_show_dismissed)
+        active.push_back(CollapsibleFilterBar::ExcludedFilterLabel(_L("Dismissed")));
+    m_filters->SetActiveFilters(active);
 }
 
 void NotificationCenterPanel::on_timer(wxTimerEvent &)
