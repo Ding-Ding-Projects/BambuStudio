@@ -125,8 +125,8 @@ bool Slider::Create(wxWindow *parent, int value, int minValue, int maxValue, boo
     Bind(wxEVT_KEY_DOWN, &Slider::onKey, this);
     Bind(wxEVT_SET_FOCUS, &Slider::onFocus, this);
     Bind(wxEVT_KILL_FOCUS, &Slider::onFocus, this);
-    Bind(wxEVT_MOUSE_CAPTURE_LOST, [this](wxMouseCaptureLostEvent &) { m_dragging = false; settleHalo(); });
-    Bind(wxEVT_SHOW, [this](wxShowEvent &e) { if (!e.IsShown()) settleHalo(); e.Skip(); });
+    Bind(wxEVT_MOUSE_CAPTURE_LOST, &Slider::onCaptureLost, this);
+    Bind(wxEVT_SHOW, &Slider::onShow, this);
     Bind(wxEVT_UPDATE_UI, [this](wxUpdateUIEvent &e) {
         if (m_halo_motion.IsRunning() && (!IsEnabled() || MD3::Motion::reduced())) settleHalo();
         e.Skip();
@@ -309,6 +309,24 @@ void Slider::onFocus(wxFocusEvent &evt)
         wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_FOCUS, this, wxOBJID_CLIENT, wxACC_SELF);
 #endif
     evt.Skip();
+}
+
+void Slider::onShow(wxShowEvent &e)
+{
+    e.Skip();
+    // A window that is being deleted gets its hide from inside ::DestroyWindow;
+    // there is nothing left to settle by then.
+    if (e.IsShown() || IsBeingDeleted())
+        return;
+    settleHalo();
+}
+
+void Slider::onCaptureLost(wxMouseCaptureLostEvent &)
+{
+    if (IsBeingDeleted())
+        return;
+    m_dragging = false;
+    settleHalo();
 }
 
 void Slider::settleHalo()

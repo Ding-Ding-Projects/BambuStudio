@@ -256,12 +256,15 @@ public:
     explicit FilamentDisclosureHeader(wxWindow *parent)
         : StaticBox(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL | wxBORDER_NONE)
     {
-        Bind(wxEVT_SHOW, [this](wxShowEvent &event) {
-            if (event.GetEventObject() == this && !event.IsShown()) settle();
-            event.Skip();
-        });
+        Bind(wxEVT_SHOW, &FilamentDisclosureHeader::onShow, this);
     }
-    ~FilamentDisclosureHeader() override { m_motion.Stop(); }
+    // ::DestroyWindow, run by ~wxWindowMSW after this class is gone, sends the
+    // visible child a hide. Unbind first so it never stops a destroyed m_motion.
+    ~FilamentDisclosureHeader() override
+    {
+        Unbind(wxEVT_SHOW, &FilamentDisclosureHeader::onShow, this);
+        m_motion.Stop();
+    }
 
     void SetExpanded(bool expanded, bool animate = true)
     {
@@ -299,6 +302,12 @@ protected:
     }
 
 private:
+    void onShow(wxShowEvent &event)
+    {
+        event.Skip();
+        if (IsBeingDeleted()) return;
+        if (event.GetEventObject() == this && !event.IsShown()) settle();
+    }
     void settle() { m_motion.Stop(); m_extent = m_expanded ? 1.0 : 0.0; }
     bool m_expanded = true;
     double m_extent = 1.0;
