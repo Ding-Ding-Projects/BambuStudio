@@ -142,60 +142,81 @@ and responsive-layout baseline; see
 
 ### Live application captures
 
-These are captures of the running native executable at the current tip, produced by launching the
-built binary on an isolated off-screen desktop (via the headless computer-use harness) over a
-software OpenGL renderer, and capturing individual windows with `PrintWindow`. That method renders
-wxWidgets chrome and panels but not the OpenGL 3D viewport or the webview-backed panes (the Home
-body and Ink library are web content), so those regions appear empty in whole-window shots; the
-Prepare capture is a direct sidebar-panel grab to show real migrated content. The frame shot dates
-from 2026-07-26 and the sidebar from 2026-07-28, both taken after the ink rename.
+These are captures of the running native application, launched on a hidden desktop and captured
+window by window with `PrintWindow`. They come from more than one capture run, and some file names
+keep a date or commit that no longer describes their pixels. The
+[screenshot provenance](#screenshot-provenance) table gives the real source of every image.
 
-**Fresh release capture set — 2026-08-11**
+- **New on 2026-10-09.** Eight images were retaken from the published release
+  [`md3-v231`](https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v231) (package
+  `2.8.4835`, source commit
+  [`31410274b6fda69ff51b01a7a978704e8908a884`](https://github.com/Ding-Ding-Projects/BambuStudio/commit/31410274b6fda69ff51b01a7a978704e8908a884))
+  by the dispatch-only [README screenshot workflow](docs/features/automation/readme-screenshots.md),
+  target `native-app`, in
+  [run 37875388464](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37875388464).
+  The run installed the release on a hosted Windows runner, verified the installation, and captured
+  the installed application at a 1920x1080 display with the package's Mesa llvmpipe software
+  OpenGL renderer, so the 3D plate is drawn. The data folder was a fresh English, light,
+  comfortable profile with no model loaded, so the plate is empty and nothing is sliced. Every
+  image passed the workflow's fail-closed privacy check, and the maintainer reviewed each one
+  before it was committed.
+- **Earlier captures.** Every other native image in this README was not replaced by that run and is
+  still the earlier file. The `md3-v231` retakes of the Home page and the Ink page were rejected
+  because their embedded web pages rendered blank on the runner; the privacy check withheld the
+  Setup Wizard retakes because the captured files fell outside its size bounds (reason
+  `image-bytes`); the remaining rows' capture steps were not done (reason `not-done`); and the two
+  process-sidebar "before" images are historical evidence of a fixed defect and are never retaken.
+  Most of these earlier images were last written on 2026-09-06 by `scripts/md3/recapture.py`
+  passes on builds of `main` at `2cf53a936`, `84f6bc5c9` or `2dcc26658`; where they include the 3D
+  canvas, it is blank. A few of them do not show what their file name says, and their captions
+  below say what they do show.
 
-The native binary was built by `build-installer.bat /s` from source commit
-[`ca49ec7d9f6623a5474ec85d6b5b3c556ab2ab8a`](https://github.com/Ding-Ding-Projects/BambuStudio/commit/ca49ec7d9f6623a5474ec85d6b5b3c556ab2ab8a),
-then launched on a named hidden desktop through the Cheap Lowlevel route. Each image below is a
-real `PrintWindow` capture resolved from the live window list; the documentation-only descendant
-`fe52d9766d900f09d7611d1dc5e0bc24854ca1cf` does not change these pixels.
+**Main surface and Setup Wizard**
 
-| Fresh native main surface | Fresh Setup Wizard surface |
+These file names come from a 2026-08-11 capture of source commit `ca49ec7d`, but neither image is
+from that capture any more: the main surface is new from `md3-v231`, and the Setup Wizard welcome
+page is the earlier 2026-09-06 capture from build attempt 20 of `main` at `84f6bc5c9`.
+
+| Native main surface (`md3-v231`) | Setup Wizard welcome page (earlier capture, 2026-09-06) |
 | :---: | :---: |
-| ![Fresh Bambu Studio native main surface with Home and project tabs](docs/readme-assets/yum-20260811-native-main-ca49.png) | ![Fresh Bambu Studio Setup Wizard welcome surface](docs/readme-assets/yum-20260811-wizard-ca49.png) |
+| ![Bambu Studio main window on Prepare with the project tab bar, from release md3-v231](docs/readme-assets/yum-20260811-native-main-ca49.png) | ![Bambu Studio Setup Wizard welcome page, earlier capture](docs/readme-assets/yum-20260811-wizard-ca49.png) |
 
-**Home — with the browser-like project tab bar**
+**Prepare — with the browser-like project tab bar**
 
 The new project tab strip (one tab per open project, a close button, and a "+" new-tab button) sits
-between the Material title bar and the workspace tabs.
+between the Material title bar and the workspace tabs. This capture is new from `md3-v231`.
 
-![Sliced preview with the project tab bar](docs/readme-assets/shot-prepare-frame.png)
+![Prepare workspace with the project tab bar, from release md3-v231](docs/readme-assets/shot-prepare-frame.png)
 
-The Home tab and the Setup Wizard body are WebView2 surfaces, shown below as rendered from the
-app's own bundled page assets (a native-window capture cannot include WebView2 compositor
-content, which is why earlier captures of them were blank):
+The Home tab and the Setup Wizard body are WebView2 pages. The two images below are earlier
+2026-09-06 window captures in which the web content did render; on the `md3-v231` runner the Home
+page rendered blank and the Setup Wizard capture was withheld, so neither image was replaced:
 
-![Home page](docs/readme-assets/shot-home.png)
+![Home page, earlier capture](docs/readme-assets/shot-home.png)
 
-| Prepare sidebar (Material cards) | First-run Setup Wizard (welcome page) |
+| Prepare sidebar (`md3-v231`) | First-run Setup Wizard welcome page (earlier capture, 2026-09-06) |
 | :---: | :---: |
-| ![Prepare sidebar](docs/readme-assets/shot-prepare-sidebar.png) | ![Setup Wizard welcome page](docs/readme-assets/shot-wizard.png) |
+| ![Prepare sidebar, from release md3-v231](docs/readme-assets/shot-prepare-sidebar.png) | ![Setup Wizard welcome page, earlier capture](docs/readme-assets/shot-wizard.png) |
 
-The Prepare sidebar shows the migrated Printer, Ink, Process, and Object-manipulation cards —
-including the Process card's Quality / Strength / Support / Others segmented control and the
-head of the axis-colored X/Y/Z manipulation grid; that grid's rows sit below the fold at this panel
-height and the panel scrolls to them. The Setup Wizard is now hosted on the Material dialog shell
-(rounded surface, header icon tile) in place of the legacy native caption.
+The Prepare sidebar capture shows the section rail (Ink, Process, Objects), the Printer card, and
+the Ink card with its search field and **Add ink** action; the Process and Objects sections are not
+in this view. The Setup Wizard is hosted on the Material dialog shell (rounded surface, header icon
+tile) in place of the legacy native caption.
 
 #### Feature gallery — every page, every button
 
 The full screenshot matrix lives under [`docs/screenshots/`](docs/screenshots/): **one capture per
-page and one per button** for every feature, taken headlessly from the real running app (Mesa
-llvmpipe + PrintWindow for the native surfaces, rendered page HTML for the webview surfaces).
+page and one per button** for every feature, taken headlessly from the real running app
+(`PrintWindow` for the native surfaces, rendered page HTML for some webview surfaces). The images
+shown here come from different runs: four are new from `md3-v231` (the toast, Version history,
+Config profiles, and the "after" process sidebar), and the rest are earlier captures. The
+[screenshot provenance](#screenshot-provenance) table lists each one.
 
-**Non-blocking notifications** — informational messages are corner toasts, not modal dialogs. The
-proof shot: loading a model raises the dark inverse-surface snackbar over the live scene while the
-UI stays fully interactive.
+**Non-blocking notifications** — informational messages are corner toasts, not modal dialogs. This
+`md3-v231` capture shows the dark inverse-surface snackbar over the live Prepare scene; the capture
+driver raised a sample notification, and no model is loaded.
 
-![Non-blocking info toast over the Prepare scene](docs/screenshots/notifications/toast-info.png)
+![Non-blocking info toast over the Prepare scene, from release md3-v231](docs/screenshots/notifications/toast-info.png)
 
 | Version history (local Git snapshots) | Regex builder (on every search bar) |
 | :---: | :---: |
@@ -203,7 +224,7 @@ UI stays fully interactive.
 
 | Appearance settings (theme / density / accent / font) — plus a per-element editor: right-click ▸ *Edit appearance...* or Ctrl+Shift+E ([docs](docs/features/windows/appearance-editor.md)) | Project tabs (one tab per project) |
 | :---: | :---: |
-| ![Appearance tab](docs/screenshots/appearance/appearance-tab.png) | ![Two project tabs](docs/screenshots/project-tabs/tab-bar-two-tabs.png) |
+| ![Appearance tab](docs/screenshots/appearance/appearance-tab.png) | ![Project tab bar with seven Untitled tabs](docs/screenshots/project-tabs/tab-bar-two-tabs.png) |
 
 | Preferences · General | Preferences · Other |
 | :---: | :---: |
@@ -213,11 +234,15 @@ The [latest Preferences startup and tab-navigation captures](docs/screenshots/pr
 
 | File menu (Version history · Open in External Editor) | Setup Wizard · Ink Selection |
 | :---: | :---: |
-| ![File menu](docs/screenshots/main-window/menu-file.png) | ![Wizard ink page](docs/screenshots/wizard/wizard-step-22.png) |
+| ![Main window with the File menu title highlighted and no menu open](docs/screenshots/main-window/menu-file.png) | ![Setup Wizard showing a File not found page](docs/screenshots/wizard/wizard-step-22.png) |
 
-| Config profiles & backup (slide-to-confirm export) | Settings search on the full process tree |
+Neither of these earlier captures shows its subject: the File menu capture is the main window with
+**File** highlighted, because the popup menu is not part of a `PrintWindow` capture, and the Ink
+Selection capture shows the wizard's "File not found" page.
+
+| Config profiles & backup (slide-to-confirm export) | Settings search field (a crop of the field only) |
 | :---: | :---: |
-| ![Config profiles & backup dialog](docs/screenshots/config-profiles/dialog.png) | ![Search settings pill on the Simple settings bar](docs/screenshots/sidebar-process/after-search-settings.png) |
+| ![Config profiles & backup dialog, from release md3-v231](docs/screenshots/config-profiles/dialog.png) | ![Search settings field](docs/screenshots/sidebar-process/after-search-settings.png) |
 
 **Prepare sidebar · process settings** — the full process tree is the settings-tab layout hosted in
 the sidebar, so Advanced mode widens the dock (weakly: capped at 55% of the frame, grow-only, and
@@ -226,13 +251,20 @@ row had been over-subscribed badly enough that the `Process` title and the Compa
 allocated **zero width** and vanished. Details and measurements:
 [`docs/features/prepare/process-settings-sidebar.md`](docs/features/prepare/process-settings-sidebar.md).
 
-| Before — values cut off, title and Compare button gone | After — values, units, tabs and title all present |
+| Before (2026-07-30) — values cut off, title and Compare button gone | After (`md3-v231`) — the whole sidebar, nothing cut off |
 | :---: | :---: |
-| ![Clipped process settings](docs/screenshots/sidebar-process/before-sidebar-clipped.png) | ![Readable process settings](docs/screenshots/sidebar-process/after-sidebar-readable.png) |
+| ![Clipped process settings](docs/screenshots/sidebar-process/before-sidebar-clipped.png) | ![Prepare sidebar on its Ink section, from release md3-v231](docs/screenshots/sidebar-process/after-sidebar-readable.png) |
 
-| Header before (starved) | Header after |
+| Header before (starved, 2026-07-30) | Header after (earlier capture, 2026-09-06) |
 | :---: | :---: |
-| ![Starved header row](docs/screenshots/sidebar-process/before-header-starved.png) | ![Intact header row](docs/screenshots/sidebar-process/after-header-intact.png) |
+| ![Starved header row](docs/screenshots/sidebar-process/before-header-starved.png) | ![Process section title](docs/screenshots/sidebar-process/after-header-intact.png) |
+
+The two "before" images are headless captures of a Release build at an 846-pixel frame width,
+showing the sidebar before the fix (committed 2026-07-30). The new "after" sidebar is open on its
+Ink section, with the Printer card's plate type and nozzle fields and the Ink card fully inside the
+panel; the process values themselves are not in this view. The "header after" image is an earlier
+crop that shows only the `PROCESS` section title, not the header row; its `md3-v231` retake, now
+aimed at the whole header row, was not done.
 
 Per-feature folders with every button close-up: [notifications](docs/screenshots/notifications/) ·
 [version-history](docs/screenshots/version-history/) · [regex-builder](docs/screenshots/regex-builder/) ·
@@ -244,18 +276,23 @@ Per-feature folders with every button close-up: [notifications](docs/screenshots
 
 #### Earlier installed-app captures
 
-Reviewed on 2026-07-20; these predate the full token sweep and are kept for continuity. They also
-predate the ink rename, so their captions and their on-screen labels are the pre-rename wording —
-the shipped page is "Ink Manager" now. See
-[Ink terminology](docs/features/windows/ink-terminology.md).
+These four file names come from an installed-app set reviewed on 2026-07-20, but none of the images
+is from that set any more. Project Version History is new from `md3-v231` and is the same image as
+the Version history dialog above. The other three were last written on 2026-09-06 by a recapture
+pass on build attempt 20 of `main` at `84f6bc5c9` and are kept because their `md3-v231` retakes were
+rejected (Home and Ink: blank embedded web pages) or not done (Device). Two of those three show the
+Prepare page rather than their subject: that pass's Filament Manager recipe opened Prepare (the
+recipe has since been corrected; see
+[README screenshots](docs/features/automation/readme-screenshots.md)), and the Device plug-in gate
+image shows Prepare as well.
 
-| Home | Filament Manager (pre-rename capture) |
+| Home (earlier capture, 2026-09-06) | Filament Manager file name; shows the Prepare page (2026-09-06) |
 | :---: | :---: |
-| ![Native Home](docs/readme-assets/native-material-home-light-en.png) | ![Native Filament Manager](docs/readme-assets/native-material-filament-manager-light-en.png) |
+| ![Native Home, earlier capture](docs/readme-assets/native-material-home-light-en.png) | ![Prepare page captured under the Filament Manager file name](docs/readme-assets/native-material-filament-manager-light-en.png) |
 
-| Device boundary | Project Version History |
+| Device plug-in gate file name; shows the Prepare page (2026-09-06) | Project Version History (`md3-v231`) |
 | :---: | :---: |
-| ![Native Device plug-in gate](docs/readme-assets/native-material-device-plugin-gate-light-en.png) | ![Native Version History](docs/readme-assets/native-material-project-history-light-en.png) |
+| ![Prepare page captured under the Device plug-in gate file name](docs/readme-assets/native-material-device-plugin-gate-light-en.png) | ![Local history dialog, from release md3-v231](docs/readme-assets/native-material-project-history-light-en.png) |
 
 ### Interactive design reference
 
@@ -263,6 +300,17 @@ The images below are deterministic captures of the separate [`ui-md3`](ui-md3/) 
 reference, not screenshots of the native application. Select an image to open the same reference
 screen, theme, density, accent, and language state. The installed-app captures are the separate
 gallery above.
+
+The three design-reference images below were retaken on 2026-10-09 by the same README screenshot
+workflow, target `design-references`, from source commit
+[`e7c4e7c6f7e8fa81d0ba562ce87eee5703402950`](https://github.com/Ding-Ding-Projects/BambuStudio/commit/e7c4e7c6f7e8fa81d0ba562ce87eee5703402950)
+in the second attempt of
+[run 37864716163](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37864716163). The
+job composed the Pages site from that commit, served it on the runner's loopback interface, and
+took each linked URL in headless Chrome at 1600x1000 with a pinned Noto Sans CJK font. Each image
+passed the privacy check and was reviewed before it was committed. The illustration directly below
+is generated artwork from the
+[visual showcase](docs/features/design-system/generated-visual-showcase.md), not a capture.
 
 [![Bambu Studio reimagined in Material You, with a desktop 3D printer and luminous toolpaths](ui-md3/assets/showcase/og-social.webp)](https://ding-ding-projects.github.io/BambuStudio/)
 
@@ -285,6 +333,63 @@ real headless browser.
 | Preview · dark theme · Hong Kong Cantonese | Device · compact dark theme · English + Cantonese |
 | :---: | :---: |
 | [![Bambu Studio Material Design 3 Preview design reference in the dark theme and Hong Kong Cantonese](docs/readme-assets/material-preview-dark-yue-hk.png)](https://ding-ding-projects.github.io/BambuStudio/app/?view=preview&theme=dark&density=comfortable&accent=%237c5cff&lang=yue_HK) | [![Bambu Studio Material Design 3 Device design reference in the compact dark theme with English and Cantonese](docs/readme-assets/material-device-dark-bilingual.png)](https://ding-ding-projects.github.io/BambuStudio/app/?view=device&theme=dark&density=compact&accent=%2314b8a6&lang=bilingual_en_yue_HK) |
+
+### Screenshot provenance
+
+Every screenshot in this README, in the order it appears. **New** images were captured on
+2026-10-09 and committed after review; **earlier** images were not replaced then, and their date is
+the date of the commit that last wrote the file. File names did not change when images were
+retaken, so a date or commit in a file name is not its source.
+
+Capture routes:
+
+- **A**: [README screenshot workflow](docs/features/automation/readme-screenshots.md), target
+  `native-app`, [run 37875388464](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37875388464):
+  release `md3-v231` installed and verified on a hosted Windows runner, then captured on a hidden
+  desktop at 1920x1080 with Mesa llvmpipe, as a `PrintWindow` window capture or a crop of one.
+- **B**: the same workflow, target `design-references`,
+  [run 37864716163](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37864716163)
+  (second attempt): the Pages app composed from the source commit and rendered in headless Chrome at
+  1600x1000.
+- **C**: an earlier `scripts/md3/recapture.py` pass on a build of `main`, on a hidden desktop, as a
+  `PrintWindow` window capture or a crop of one; the commit that wrote the file names the build.
+- **D**: an earlier headless capture of a Release build at an 846-pixel frame width, showing the
+  sidebar before the process-sidebar fix; committed in `b35f078d5`.
+
+| Image | What it shows | Source | Route | Date |
+| --- | --- | --- | --- | --- |
+| `docs/readme-assets/yum-20260811-native-main-ca49.png` | Main window on Prepare with the project tab bar, the Bambu Lab X1 Carbon card and an empty plate | New: `md3-v231` (`31410274b`) | A | 2026-10-09 |
+| `docs/readme-assets/yum-20260811-wizard-ca49.png` | Setup Wizard welcome page | Earlier: build attempt 20 of `main` at `84f6bc5c9`; the `md3-v231` retake was withheld by the privacy check (`image-bytes`) | C | 2026-09-06 |
+| `docs/readme-assets/shot-prepare-frame.png` | Main window on Prepare with the project tab bar, the default ink and an empty plate | New: `md3-v231` (`31410274b`) | A | 2026-10-09 |
+| `docs/readme-assets/shot-home.png` | Home tab with its web page and four project tabs | Earlier: build attempt 20, `84f6bc5c9`; the retake was rejected because the Home web page rendered blank | C | 2026-09-06 |
+| `docs/readme-assets/shot-prepare-sidebar.png` | Prepare sidebar: section rail, Printer card and Ink card | New: `md3-v231` (`31410274b`) | A | 2026-10-09 |
+| `docs/readme-assets/shot-wizard.png` | Setup Wizard welcome page | Earlier: build attempt 20, `84f6bc5c9`; the retake was withheld (`image-bytes`) | C | 2026-09-06 |
+| `docs/screenshots/notifications/toast-info.png` | Prepare window with a sample info toast raised by the capture driver | New: `md3-v231` (`31410274b`) | A | 2026-10-09 |
+| `docs/screenshots/version-history/history-dialog.png` | Local history dialog on its Timeline tab | New: `md3-v231` (`31410274b`) | A | 2026-10-09 |
+| `docs/screenshots/regex-builder/builder-popover.png` | Regex builder popover on its Build tab | Earlier: build attempt 19 of `main` at `2cf53a936`; the retake was not done | C | 2026-09-06 |
+| `docs/screenshots/appearance/appearance-tab.png` | Preferences, Appearance tab | Earlier: build attempt 19, `2cf53a936`; not done | C | 2026-09-06 |
+| `docs/screenshots/project-tabs/tab-bar-two-tabs.png` | Project tab bar with seven Untitled tabs | Earlier: build attempt 20, `84f6bc5c9`; not done | C | 2026-09-06 |
+| `docs/screenshots/preferences/general-tab.png` | Preferences, General tab | Earlier: build attempt 19, `2cf53a936`; not done | C | 2026-09-06 |
+| `docs/screenshots/preferences/other-tab.png` | Preferences, Other tab | Earlier: build attempt 20, `84f6bc5c9`; not done | C | 2026-09-06 |
+| `docs/screenshots/main-window/menu-file.png` | Main window on Prepare with **File** highlighted; no menu is open and the 3D canvas is blank | Earlier: build attempt 20, `84f6bc5c9`; not done | C | 2026-09-06 |
+| `docs/screenshots/wizard/wizard-step-22.png` | Setup Wizard showing a "File not found" page, not Ink Selection | Earlier: build attempt 23 of `main` at `2dcc26658`; the retake was withheld (`image-bytes`) | C | 2026-09-06 |
+| `docs/screenshots/config-profiles/dialog.png` | Config profiles & backup dialog with the slide-to-confirm export | New: `md3-v231` (`31410274b`) | A | 2026-10-09 |
+| `docs/screenshots/sidebar-process/after-search-settings.png` | Crop of the Search settings field | Earlier: build attempt 19, `2cf53a936`; not done | C | 2026-09-06 |
+| `docs/screenshots/sidebar-process/before-sidebar-clipped.png` | Dark Prepare sidebar with its process values cut off, before the fix | Earlier: historical evidence of a fixed defect, never retaken | D | 2026-07-30 |
+| `docs/screenshots/sidebar-process/after-sidebar-readable.png` | Prepare sidebar on its Ink section, with the Printer card's plate type and nozzle fields | New: `md3-v231` (`31410274b`) | A | 2026-10-09 |
+| `docs/screenshots/sidebar-process/before-header-starved.png` | Dark settings header row without the Process title, before the fix | Earlier: historical, never retaken | D | 2026-07-30 |
+| `docs/screenshots/sidebar-process/after-header-intact.png` | Crop of the `PROCESS` section title only | Earlier: build attempt 19, `2cf53a936`; not done | C | 2026-09-06 |
+| `docs/readme-assets/native-material-home-light-en.png` | Home tab with its web page and four project tabs | Earlier: build attempt 20, `84f6bc5c9`; the retake was rejected because the Home web page rendered blank | C | 2026-09-06 |
+| `docs/readme-assets/native-material-filament-manager-light-en.png` | Prepare page, not the Ink page | Earlier: build attempt 20, `84f6bc5c9`; the retake was rejected because the Ink web page rendered blank | C | 2026-09-06 |
+| `docs/readme-assets/native-material-device-plugin-gate-light-en.png` | Prepare page, not the Device tab | Earlier: build attempt 20, `84f6bc5c9`; not done | C | 2026-09-06 |
+| `docs/readme-assets/native-material-project-history-light-en.png` | Local history dialog, the same image as `history-dialog.png` | New: `md3-v231` (`31410274b`) | A | 2026-10-09 |
+| `docs/readme-assets/material-prepare-light-en.png` | Pages design reference: Prepare, light theme, English | New: Pages app at `e7c4e7c6f` | B | 2026-10-09 |
+| `docs/readme-assets/material-preview-dark-yue-hk.png` | Pages design reference: Preview, dark theme, Hong Kong Cantonese | New: Pages app at `e7c4e7c6f` | B | 2026-10-09 |
+| `docs/readme-assets/material-device-dark-bilingual.png` | Pages design reference: Device, compact dark theme, English + Cantonese | New: Pages app at `e7c4e7c6f` | B | 2026-10-09 |
+
+Not in the table: the banner at the top of this README is inherited from upstream Bambu Studio's
+README, and the Pages social card in the design-reference section is generated artwork; neither is
+a capture of this fork.
 
 ## Home Assistant printer handover
 

@@ -1,6 +1,6 @@
 ---
 translation-of: process-settings-sidebar.md
-source-sha256: 073e8f2237b4fa6541c55eb7f93024028dc2b73bafa681575cc8ccc574a48784
+source-sha256: 6ed06840f8fe3edc3076a568cd80616ca5b47b882439ee83d9e5b4239756a8da
 review-status: agent-drafted
 ---
 
@@ -60,16 +60,16 @@ review-status: agent-drafted
 
 ## 驗證
 
-捕捉無頭從真實發佈構建喺 846 px ， 寬度呢個主機嘅展示力、同埋最窄支援情況：
+「之前」嗰兩張圖係喺 846 px 闊嘅真實 Release 構建度無頭截取嘅（嗰部機嘅顯示器逼出嚟嘅闊度，亦係支援嘅最窄情況），喺 2026-07-30 提交。「之後」嗰兩張之後重新影過，已經唔再係同一個畫面；每張圖嘅來源列喺 README 嘅[截圖來源](../../../README.md#screenshot-provenance)表。
 
 | 之前 | 之後 |
 | --- | --- |
-| ![剪輯邊欄](../../screenshots/sidebar-process/before-sidebar-clipped.png) | ![可讀邊欄](../../screenshots/sidebar-process/after-sidebar-readable.png) |
-| 值欄被切片，正確邊緣、標籤條切割中間`支持`、預設名稱截斷。 | 值帶佢哋嘅單位、完整標籤條加溢出、完整預設名稱。 |
+| ![剪輯邊欄](../../screenshots/sidebar-process/before-sidebar-clipped.png) | ![停喺墨水部分嘅準備側欄](../../screenshots/sidebar-process/after-sidebar-readable.png) |
+| 值欄被切片，正確邊緣、標籤條切割中間`支持`、預設名稱截斷。 | 版本 `md3-v231`（2026-10-09）：成個側欄停喺墨水部分，打印機卡同墨水卡都喺面板入面；呢個畫面睇唔到工序數值。 |
 
 | 之前 | 之後 |
 | --- | --- |
-| ![飢餓標頭](../../screenshots/sidebar-process/before-header-starved.png) | ![完整標頭](../../screenshots/sidebar-process/after-header-intact.png) |
-| 冇 `流程` 標題、冇比較按鈕。 | 標題同埋 `全球` / `物件` 開關佈置。 |
+| ![飢餓標頭](../../screenshots/sidebar-process/before-header-starved.png) | ![工序部分標題](../../screenshots/sidebar-process/after-header-intact.png) |
+| 冇 `流程` 標題、冇比較按鈕。 | 較早嘅截圖（2026-09-06，`main` 喺 `2cf53a936` 嘅第 19 次構建）：淨係裁咗 `PROCESS` 部分標題，唔係成行標頭。 |
 
 用 `press.py controls` 測量：3D 畫布開始喺**x=348** 之前同埋**x=461** 之後、同埋 `物件操控` 係缺失從控制列表直到某樣嘢係被選擇。
