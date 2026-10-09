@@ -6,7 +6,6 @@
 #define NOMINMAX
 #endif
 #include <winsock2.h>
-#include <ws2tcpip.h>
 #include <iphlpapi.h>
 #ifdef _MSC_VER
 #pragma comment(lib, "iphlpapi.lib")
@@ -210,11 +209,11 @@ std::vector<AdapterAddress> adapter_addresses()
             }
             for (const IP_ADAPTER_UNICAST_ADDRESS *unicast = adapter->FirstUnicastAddress; unicast != nullptr; unicast = unicast->Next) {
                 if (unicast->Address.lpSockaddr == nullptr || unicast->Address.lpSockaddr->sa_family != AF_INET) continue;
-                const auto *ipv4 = reinterpret_cast<const sockaddr_in *>(unicast->Address.lpSockaddr);
-                char text[INET_ADDRSTRLEN] = {};
-                if (::inet_ntop(AF_INET, &ipv4->sin_addr, text, sizeof(text)) == nullptr) continue;
+                const auto *ipv4  = reinterpret_cast<const sockaddr_in *>(unicast->Address.lpSockaddr);
+                const auto *octet = reinterpret_cast<const unsigned char *>(&ipv4->sin_addr);
                 AdapterAddress address;
-                address.ipv4         = text;
+                address.ipv4 = std::to_string(octet[0]) + "." + std::to_string(octet[1]) + "." + std::to_string(octet[2]) + "." +
+                               std::to_string(octet[3]);
                 address.adapter_name = name;
                 address.up           = adapter->OperStatus == IfOperStatusUp;
                 address.loopback     = adapter->IfType == IF_TYPE_SOFTWARE_LOOPBACK;

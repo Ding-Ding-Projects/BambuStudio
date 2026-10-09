@@ -65,10 +65,20 @@ bool show(wxWindow *window, bool shown)
     return true;
 }
 
+// True while `window` or one of its ancestors is being destroyed: a focus change during the
+// teardown of Preferences must not save or lay anything out.
+bool tearing_down(const wxWindow *window)
+{
+    for (const wxWindow *w = window; w != nullptr; w = w->GetParent())
+        if (w->IsBeingDeleted()) return true;
+    return false;
+}
+
 // Lays out `self` and its ancestors up to the top-level window, and lets a scrolled page recompute
 // its virtual size. A dialog that hosts the row is fitted to its new content.
 void relayout(wxWindow *self, bool fit_top_level)
 {
+    if (tearing_down(self)) return;
     for (wxWindow *w = self; w != nullptr; w = w->GetParent()) {
         w->Layout();
         if (auto *scrolled = dynamic_cast<wxScrolledWindow *>(w)) scrolled->FitInside();
@@ -533,7 +543,7 @@ private:
     void save()
     {
         AppConfig *cfg = wxGetApp().app_config;
-        if (cfg == nullptr) return;
+        if (cfg == nullptr || tearing_down(this)) return;
         const std::string text   = m_input->GetTextCtrl()->GetValue().ToUTF8().data();
         const auto        parsed = parse_base_address(text);
         if (!parsed) {
@@ -657,6 +667,7 @@ private:
 
     void save()
     {
+        if (tearing_down(this)) return;
         std::string key = shown()->GetTextCtrl()->GetValue().ToUTF8().data();
         // Trim surrounding spaces a copy and paste may bring along.
         while (!key.empty() && (key.back() == ' ' || key.back() == '\t' || key.back() == '\r' || key.back() == '\n')) key.pop_back();
