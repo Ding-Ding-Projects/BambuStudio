@@ -1714,8 +1714,11 @@ void ProjectHistoryDialog::compare_selection()
                                     !PreferencesHistory::read_appearance_snapshot(right.restored_path, right_document, error))
                     return schedules ? _L("Unsupported scheduled settings version.") : _L("Unsupported appearance snapshot.");
                 // One line per element property, preset entry and the active preset.
-                for (const auto &item : left_document.flatten().items()) a[item.key()] = item.value().dump();
-                for (const auto &item : right_document.flatten().items()) b[item.key()] = item.value().dump();
+                // Keep the flattened documents alive for the loops: items() refers to
+                // its json, and a temporary from flatten() would already be destroyed.
+                const nlohmann::json left_flat = left_document.flatten(), right_flat = right_document.flatten();
+                for (const auto &item : left_flat.items()) a[item.key()] = item.value().dump();
+                for (const auto &item : right_flat.items()) b[item.key()] = item.value().dump();
             } else if (before_source.category == "preferences") {
                 nlohmann::json left_values, right_values; std::string error;
                 if (!PreferencesHistory::read_snapshot(left.restored_path, left_values, error) ||
