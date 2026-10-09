@@ -675,12 +675,12 @@
     {
       "route": "downloads/browser-download-capture.md",
       "title": "Browser download capture",
-      "sha256": "767244288e7f2b4781996dc7f5936b6107acc9fd9c983c0d1f0ababe7c184369"
+      "sha256": "bd97e21fa1ece76b1b2cf12c60034251e51d8f9913a4482880f7a84d4e5758fa"
     },
     {
       "route": "downloads/browser-download-capture.yue_HK.md",
       "title": "瀏覽器下載接手",
-      "sha256": "bde457271c6c70259ae44dda70cf46d732b0ddd1c6d85b0efa594db354889fe9"
+      "sha256": "1cc5a31f0896c669fd07caa3d0cbf2d1c846d2493125b54a31445d92b55acbe5"
     },
     {
       "route": "exports/README.md",
@@ -1865,7 +1865,7 @@
       "bytes": 1979
     }
   ],
-  "bundle_sha256": "d4576b03c9dfa449fb44c2e7dfa954cd5398c0e7f27e72a8dac9510b7527f498",
+  "bundle_sha256": "0e28346f7747c25499ba7d8229cdc91e134cf4ce09e1b0d9693c052a89456760",
   "unavailable_references": [
     {
       "source": "api/README.md",

@@ -27,7 +27,7 @@ The service worker listens to `chrome.downloads.onDeterminingFilename`. While a 
 4. **Queued.** Only the answer `queued` for the same capture makes the extension cancel the browser's download and remove it from the browser's download list. Bambu Studio MD3 then owns the download and must ask before transferring anything.
 5. **Kept.** A missing or refusing browser connection, a declined capture, an answer for another capture, an answer the extension cannot read, or no answer within 30 seconds resumes the browser's transfer. The browser finishes it as usual (including its own Save As question, if you turned that on), and the extension shows a notification naming the file and the reason.
 
-The extension never starts a transfer itself and never sends cookies, page content or the page's query string.
+The extension never starts a transfer itself and never sends cookies, page content or the page's query string. Bambu Studio MD3 downloads the address itself, without the browser's cookies or sign-in, so a site that serves files only to a signed-in browser session, or whose signed addresses expire within moments, may fail there. Add such a site to the excluded list to keep its downloads in the browser.
 
 ### Link menu
 

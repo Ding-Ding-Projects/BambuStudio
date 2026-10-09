@@ -146,7 +146,11 @@ process.stdin.on('data', (chunk) => {
 }
 
 async function launch() {
-  const root = mkdtempSync(path.join(os.tmpdir(), 'bambu-extension-'));
+  // Chromium on Linux keeps its single-instance socket in TMPDIR, and a
+  // socket path longer than 107 bytes stops it from starting, so a long
+  // TMPDIR is replaced by /tmp for this browser.
+  const shortBase = process.platform !== 'win32' && os.tmpdir().length > 48 && existsSync('/tmp') ? '/tmp' : os.tmpdir();
+  const root = mkdtempSync(path.join(shortBase, 'bambu-extension-'));
   const profile = path.join(root, 'profile');
   const downloads = path.join(root, 'downloads');
   mkdirSync(path.join(profile, 'Default'), { recursive: true });
@@ -178,7 +182,7 @@ async function launch() {
     '--disable-default-apps', '--disable-domain-reliability',
     `--user-data-dir=${profile}`, '--remote-debugging-port=0',
     `--disable-extensions-except=${extensionDir}`, `--load-extension=${extensionDir}`, 'about:blank',
-  ], { stdio: ['ignore', 'ignore', 'pipe'] });
+  ], { stdio: ['ignore', 'ignore', 'pipe'], env: { ...process.env, TMPDIR: root } });
   const exited = new Promise((resolve) => browser.once('exit', resolve));
   let stderr = '';
   browser.stderr.on('data', (chunk) => { stderr += chunk; });
@@ -268,13 +272,13 @@ async function launch() {
 
 test('a real Chromium hands model downloads over, keeps everything else, and resumes when the handoff fails', { skip, timeout: 120000 }, async (t) => {
   const server = await startServer();
-  const base = `http://127.0.0.1:${server.address().port}`;
-  const browser = await launch();
-  t.after(async () => {
+  t.after(() => {
     server.closeAllConnections();
     server.close();
-    await browser.close();
   });
+  const base = `http://127.0.0.1:${server.address().port}`;
+  const browser = await launch();
+  t.after(() => browser.close());
 
   const readLog = () => browser.inWorker(`chrome.storage.local.get(${JSON.stringify(LOG_KEY)}).then((v) => v[${JSON.stringify(LOG_KEY)}] ?? [])`);
   const searchDownloads = () => browser.inWorker('chrome.downloads.search({})');
