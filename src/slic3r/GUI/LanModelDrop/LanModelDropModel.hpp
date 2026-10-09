@@ -66,6 +66,9 @@ bool is_station_key(std::string_view key);
 bool is_drop_code(std::string_view code);
 // Lowercase hexadecimal of raw digest bytes.
 std::string to_hex(const unsigned char *bytes, std::size_t size);
+// The value of the last `name:` field in raw HTTP response header lines, matched without regard to
+// case and trimmed; empty when absent. Used for X-Content-SHA256 on a file download.
+std::string header_value(std::string_view headers, std::string_view name);
 
 // ---------------------------------------------------------------------------------------------
 // Protocol messages

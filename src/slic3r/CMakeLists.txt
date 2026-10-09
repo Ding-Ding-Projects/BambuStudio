@@ -912,6 +912,12 @@ list(APPEND SLIC3R_GUI_SOURCES
     GUI/PreferencesHistory.hpp
     GUI/PrinterWatch.cpp
     GUI/PrinterWatch.hpp
+    GUI/LanModelDrop/LanModelDropModel.cpp
+    GUI/LanModelDrop/LanModelDropModel.hpp
+    GUI/LanModelDrop/LanModelDropKeyStore.cpp
+    GUI/LanModelDrop/LanModelDropKeyStore.hpp
+    GUI/LanModelDrop/LanModelDropStation.cpp
+    GUI/LanModelDrop/LanModelDropStation.hpp
     GUI/DimSumSurprise.cpp
     GUI/DimSumSurprise.hpp
     GUI/DimSumSurpriseModel.hpp
@@ -1115,7 +1121,7 @@ target_link_libraries(libslic3r_gui libslic3r_local_converter)
 
 if (MSVC)
     target_link_libraries(libslic3r_gui Setupapi.lib dwmapi.lib Advapi32.lib ole32.lib oleaut32.lib
-        bcrypt.lib wintrust.lib shell32.lib uuid.lib ws2_32.lib winhttp.lib iphlpapi.lib user32.lib version.lib)
+        bcrypt.lib wintrust.lib shell32.lib uuid.lib ws2_32.lib winhttp.lib iphlpapi.lib user32.lib version.lib Crypt32.lib)
 elseif (CMAKE_SYSTEM_NAME STREQUAL "Linux")
     FIND_LIBRARY(WAYLAND_SERVER_LIBRARIES NAMES wayland-server)
     FIND_LIBRARY(WAYLAND_EGL_LIBRARIES    NAMES wayland-egl)

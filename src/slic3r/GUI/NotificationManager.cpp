@@ -2146,6 +2146,13 @@ void NotificationManager::push_lan_model_drop_notification(const std::string& te
 	push_notification_data(data, 0);
 }
 
+void NotificationManager::close_lan_model_drop_notification(const std::string& text)
+{
+	for (std::unique_ptr<PopNotification> &notification : m_pop_notifications)
+		if (notification->get_type() == NotificationType::LanModelDropReceived && notification->compare_text(text))
+			notification->close();
+}
+
 void NotificationManager::push_delayed_notification(const NotificationType type, std::function<bool(void)> condition_callback, int64_t initial_delay, int64_t delay_interval)
 {
 	auto it = std::find_if(std::begin(basic_notifications), std::end(basic_notifications),

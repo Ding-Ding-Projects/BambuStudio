@@ -274,6 +274,8 @@ public:
 	void push_lan_model_drop_notification(const std::string& text,
 	                                      const std::string& open_text, std::function<bool(wxEvtHandler*)> open_callback,
 	                                      const std::string& discard_text, std::function<bool(wxEvtHandler*)> discard_callback);
+	// Closes the LAN model drop notification with this text (the file was opened or discarded elsewhere).
+	void close_lan_model_drop_notification(const std::string& text);
 	// Pushes basic_notification with delay. See push_delayed_notification_data.
 	void push_delayed_notification(const NotificationType type, std::function<bool(void)> condition_callback, int64_t initial_delay, int64_t delay_interval);
 	// Removes all notifications of type from m_waiting_notifications

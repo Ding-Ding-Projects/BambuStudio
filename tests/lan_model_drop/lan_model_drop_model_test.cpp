@@ -237,6 +237,14 @@ static void status_messages()
     CHECK(is_error_state(LinkState::NotReachable) && is_error_state(LinkState::NeedsStationKey));
     CHECK(!is_error_state(LinkState::Connected) && !is_error_state(LinkState::Off) && !is_error_state(LinkState::Checking));
 
+    const std::string headers = "HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nx-content-sha256:  " + kSha +
+                                " \r\nContent-Length: 5\r\n\r\n";
+    CHECK(header_value(headers, "X-Content-SHA256") == kSha);
+    CHECK(header_value(headers, "content-length") == "5");
+    CHECK(header_value(headers, "X-Missing").empty());
+    CHECK(header_value("X-Content-SHA256-Extra: 1\r\n", "X-Content-SHA256").empty());
+    CHECK(header_value("A: 1\r\nA: 2\r\n", "a") == "2");
+
     CHECK(next_poll_delay_seconds(0) == 5);
     CHECK(next_poll_delay_seconds(-3) == 5);
     CHECK(next_poll_delay_seconds(1) == 10);

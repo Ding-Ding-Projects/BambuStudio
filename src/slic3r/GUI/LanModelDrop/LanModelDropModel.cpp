@@ -388,6 +388,29 @@ std::string to_hex(const unsigned char *bytes, std::size_t size)
     return out;
 }
 
+std::string header_value(std::string_view headers, std::string_view name)
+{
+    std::string value;
+    std::size_t start = 0;
+    while (start < headers.size()) {
+        std::size_t end = headers.find('\n', start);
+        if (end == std::string_view::npos) end = headers.size();
+        std::string_view line = headers.substr(start, end - start);
+        start = end + 1;
+        if (!line.empty() && line.back() == '\r') line.remove_suffix(1);
+        const std::size_t colon = line.find(':');
+        if (colon == std::string_view::npos || colon != name.size()) continue;
+        bool same = true;
+        for (std::size_t i = 0; i < colon && same; ++i) same = ascii_lower(line[i]) == ascii_lower(name[i]);
+        if (!same) continue;
+        std::string_view rest = line.substr(colon + 1);
+        while (!rest.empty() && (rest.front() == ' ' || rest.front() == '\t')) rest.remove_prefix(1);
+        while (!rest.empty() && (rest.back() == ' ' || rest.back() == '\t')) rest.remove_suffix(1);
+        value.assign(rest.begin(), rest.end());
+    }
+    return value;
+}
+
 // ---------------------------------------------------------------------------------------------
 
 InboxListing parse_inbox(std::string_view body)
