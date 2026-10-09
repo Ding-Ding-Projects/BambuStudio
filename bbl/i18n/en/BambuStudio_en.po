@@ -28959,3 +28959,6 @@ msgstr ""
 
 msgid "Preferences at startup"
 msgstr ""
+
+msgid "Scheduled settings at startup"
+msgstr ""

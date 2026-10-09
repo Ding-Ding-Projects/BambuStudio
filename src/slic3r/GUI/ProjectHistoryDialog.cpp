@@ -101,6 +101,7 @@ wxString translate_known_history_reason(const wxString &reason)
         L("Preferences at startup"),
         // Scheduled settings history (FeatureServices/ScheduledPreferences.cpp).
         L("Scheduled settings change"),
+        L("Scheduled settings at startup"),
         L("Restore scheduled settings"),
     };
     for (const wxString &candidate : known)

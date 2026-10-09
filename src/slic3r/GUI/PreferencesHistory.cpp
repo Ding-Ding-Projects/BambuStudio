@@ -308,6 +308,13 @@ bool apply_snapshot(const std::filesystem::path &path, std::string &error)
 
 void label_next_snapshot(const std::string &label)
 {
+    if (!label.empty() && snapshot_timer()->IsRunning()) {
+        // Record an earlier unnamed change on its own first, so the state
+        // right before the named action (a rule started from a preset) keeps
+        // a version that can be restored.
+        snapshot_timer()->Stop();
+        snapshot_timer()->Notify();
+    }
     pending_reason = label.empty() ? std::string("Preferences change") : label;
 }
 

@@ -68,8 +68,12 @@ Both rule editors open the picker first when you add a rule:
   preset: Shipped defaults". Preferences ▸ Schedules rules are recorded with
   the preferences history; Scheduled settings versions have their own
   **Scheduled settings** category in Version history, where they can be
-  compared and restored. The preferences at startup are recorded too, so the
-  first rule of a session can be undone by restoring the version before it.
+  compared and restored. The preferences at startup are recorded too, and a
+  preferences change still waiting to be recorded is recorded on its own
+  first, so the version right before the rule can always be restored. The
+  first save of Scheduled settings in a session first records the schedule
+  as it was ("Scheduled settings at startup"), so even the first rule ever
+  added there can be undone.
   Restoring a preferences version also reloads the schedule rules it holds;
   a version recorded before rules were kept in history leaves the current
   rules in place.

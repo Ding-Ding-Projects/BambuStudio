@@ -40055,3 +40055,8 @@ msgstr "唔支援呢個排程設定版本。"
 #. review-status: agent-drafted
 msgid "Preferences at startup"
 msgstr "啟動時嘅偏好設定"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Scheduled settings at startup"
+msgstr "啟動時嘅排程設定"

@@ -25,5 +25,8 @@ private:
     wxTimer m_timer;
     ScheduledSettings::Values m_last;
     bool m_applying = false;
+    // The schedule as it was before this session's first change is recorded
+    // once, so that change can be undone from Version history.
+    bool m_recorded_start = false;
 };
 }

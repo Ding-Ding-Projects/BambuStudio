@@ -208,8 +208,14 @@ test('the Scheduled settings window starts a rule from a preset, not an invented
   const service = strip(read('src', 'libslic3r', 'ScheduledSettings', 'Service.hpp'));
   assert.match(service, /const Values& base\(\) const \{ return m_base; \}/);
   const owner = strip(read('src', 'slic3r', 'GUI', 'FeatureServices', 'ScheduledPreferences.cpp'));
-  assert.match(owner, /options\.message = label\.empty\(\) \? std::string\("Scheduled settings change"\) : label;/);
+  assert.match(owner, /record_version\(\*history, file, bytes, label\.empty\(\) \? std::string\("Scheduled settings change"\) : label, snapshot\)/);
   assert.match(owner, /bool ScheduledPreferences::restore\(/);
+  // The schedule before the session's first change is recorded first, so even
+  // the first rule ever started from a preset can be undone from Version history.
+  const save = owner.slice(owner.indexOf('bool ScheduledPreferences::save('), owner.indexOf('std::filesystem::path ScheduledPreferences::history_identity()'));
+  assert.match(save, /if \(!m_recorded_start\) \{[\s\S]*?record_version\(\*history, file, ScheduledSettings::serialize\(m_service\.schedule\(\)\), "Scheduled settings at startup", baseline\)/);
+  assert.ok(save.indexOf('"Scheduled settings at startup"') < save.indexOf('m_service.take_change_label()'), 'the earlier state is recorded before the change');
+  assert.ok(strip(read('src', 'slic3r', 'GUI', 'ProjectHistoryDialog.cpp')).includes('L("Scheduled settings at startup")'), 'the message is shown in the active language');
 });
 
 test('Preferences > Schedules starts a rule from a preset with the model default window', () => {
@@ -233,6 +239,9 @@ test('Preferences > Schedules starts a rule from a preset with the model default
   assert.match(history, /if \(key != Schedule::kDocumentConfigKey \|\| records_schedules\) config->erase\("app", key\);/,
     'a version 1 snapshot never erases the rules; a version 2 snapshot without them means there were none');
   assert.match(history, /pending_reason = "Preferences at startup";\s*snapshot_timer\(\)->Notify\(\);/, 'the first rule of a session can be undone');
+  const label = history.slice(history.indexOf('void label_next_snapshot(const std::string &label)'), history.indexOf('std::filesystem::path appearance_identity()'));
+  assert.match(label, /if \(!label\.empty\(\) && snapshot_timer\(\)->IsRunning\(\)\) \{\s*snapshot_timer\(\)->Stop\(\);\s*snapshot_timer\(\)->Notify\(\);\s*\}\s*pending_reason = /,
+    'an earlier unnamed change keeps its own version, so the state right before the preset can be restored');
 });
 
 test('Version history lists, compares and restores Scheduled settings versions', () => {
