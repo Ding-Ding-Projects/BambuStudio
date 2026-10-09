@@ -9,6 +9,7 @@
 // parser, asset URL construction and the application-data cache record.
 // DimSumSurprise.cpp owns the HTTP transfers and the card itself.
 
+#include "libslic3r/LocalSecurity/UnlockLadder.hpp"
 #include "nlohmann/json.hpp"
 
 #include <algorithm>
@@ -364,6 +365,31 @@ template <typename Predicate>
 std::optional<Dish> pick_prefetch(const std::vector<Dish> &dishes, Predicate &&photo_cached, std::mt19937 &rng)
 {
     return pick_dish(dishes, [&](const Dish &d) { return !photo_cached(d); }, rng);
+}
+
+// ------------------------------------------------------ unlock ladder dishes
+
+// The unlock ladder's dim-sum rung asks about these same public catalog
+// dishes, so a lockout never invents a dish. Only a dish whose photo is
+// already on disk can be the question; any dish can be a wrong choice. The
+// ladder fetches nothing, so the predicate must only look at the cache.
+template <typename Predicate>
+std::vector<::Slic3r::LocalSecurity::LadderDish> ladder_dishes(const std::vector<Dish> &dishes, Predicate &&photo_cached)
+{
+    std::vector<::Slic3r::LocalSecurity::LadderDish> out;
+    out.reserve(dishes.size());
+    for (const Dish &dish : dishes) {
+        ::Slic3r::LocalSecurity::LadderDish entry;
+        entry.id           = dish.id;
+        entry.name_en      = dish.name_en;
+        entry.name_zh_hant = dish.name_zh_hant;
+        entry.alt_en       = dish.alt_en;
+        entry.alt_yue      = dish.alt_yue;
+        entry.image_file   = dish.image_file;
+        entry.photo_ready  = photo_cached(dish);
+        out.push_back(std::move(entry));
+    }
+    return out;
 }
 
 // --------------------------------------------------------------------- copy

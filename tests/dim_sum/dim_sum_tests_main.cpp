@@ -298,6 +298,24 @@ TEST_CASE("Picking only ever returns a dish whose photo is cached", "[DimSum][pi
     REQUIRE(prefetch->id != "hk-dish-0002");
 }
 
+TEST_CASE("Unlock ladder dishes are the public catalog's, photo state from the cache", "[DimSum][ladder]")
+{
+    const std::vector<Dish> dishes = parse_catalog(SAMPLE_CATALOG);
+    REQUIRE(dishes.size() == 2);
+    const auto ladder = ladder_dishes(dishes, [](const Dish &d) { return d.id == "hk-dish-0011"; });
+    REQUIRE(ladder.size() == dishes.size());
+    for (std::size_t i = 0; i < dishes.size(); ++i) {
+        CHECK(ladder[i].id == dishes[i].id);
+        CHECK(ladder[i].name_en == dishes[i].name_en);
+        CHECK(ladder[i].name_zh_hant == dishes[i].name_zh_hant);
+        CHECK(ladder[i].alt_en == dishes[i].alt_en);
+        CHECK(ladder[i].alt_yue == dishes[i].alt_yue);
+        CHECK(ladder[i].image_file == dishes[i].image_file);
+        CHECK(ladder[i].photo_ready == (dishes[i].id == "hk-dish-0011"));
+    }
+    CHECK(ladder_dishes(std::vector<Dish>{}, [](const Dish &) { return true; }).empty());
+}
+
 TEST_CASE("Copy honours the funny level but never touches the dish name", "[DimSum][copy]")
 {
     // The absent-key default mirrors the shared language-mode default (2).

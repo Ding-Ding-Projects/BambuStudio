@@ -15,8 +15,9 @@ Never use a display name to derive the data directory or namespace.
 
 Create a separate `make_os_vault()` instance for `shared_mode_account`. The shared
 presentation-mode credential is intentionally outside the product-local namespace.
-The shared-mode owner enforces `AttemptBudget` and stores only the configured flag
-and generation returned by `Credentials` in its shared settings record.
+The shared-mode owner enforces a persisted `AttemptBudget` in the same vault, under
+`shared_mode_attempts_account`, and stores only the configured flag and generation
+returned by `Credentials` in its shared settings record.
 
 Keep one `IdentityHistory`, `AuthenticatorStore`, and `SupportTickets` alive for
 the application session. Construct `IdentityHistory(data_dir, *local_vault)` and
@@ -159,8 +160,8 @@ accessibility, localization or layout captures.
 Outstanding before feature completion: full shell/action interception, localized
 copy and live language/tone updates, rendered QR proof and packaged image/clipboard/
 camera import, parameter controls for manual enrollment, history-manager built
-verification and native retention confirmation, atomic live-state/history reconciliation, durable cross-process
-attempt throttling, unlock-ladder UI, dynamic anchor tracking, complete bulk actions
+verification and native retention confirmation, atomic live-state/history reconciliation,
+built verification of the persisted attempt budgets and their named mutex, unlock-ladder UI, dynamic anchor tracking, complete bulk actions
 and filtered multi-format export, per-element context-menu integration, and genuine
 built verification across supported themes, languages, viewports and scales.
 

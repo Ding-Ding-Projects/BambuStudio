@@ -7,6 +7,7 @@
 #include <iomanip>
 #include <limits>
 #include <map>
+#include <mutex>
 #include <sstream>
 #include <fstream>
 #include <openssl/crypto.h>
@@ -315,27 +316,184 @@ std::vector<Factor> factors(Policy p) {
     switch(p) {case Policy::Pin:return {Factor::Pin};case Policy::Password:return {Factor::Password};case Policy::PinPassword:return {Factor::Pin,Factor::Password};case Policy::PasswordTotp:return {Factor::Password,Factor::Totp};case Policy::PinTotp:return {Factor::Pin,Factor::Totp};case Policy::PasswordPinTotp:return {Factor::Password,Factor::Pin,Factor::Totp};}
     throw Failure(Error::InvalidInput);
 }
+namespace {
+constexpr std::int64_t hour_ms = 3600000;
+constexpr std::int64_t longest_wait_ms = 900000;
+// v1 | remaining | escalation | flags (1 waiting, 2 ladder started) | rung | wrong dishes | wait until (Unix ms) | lockout.
+constexpr std::size_t attempt_record_size = 22;
+std::recursive_mutex& record_mutex() { static std::recursive_mutex mutex; return mutex; }
+// Serializes every read-modify-write of attempt and allowance records: threads
+// through the process mutex and, for persisted records on Windows, processes
+// through a named mutex in the user's session.
+class RecordLock {
+public:
+    explicit RecordLock(bool persisted) : m_guard(record_mutex()) {
+#ifdef _WIN32
+        if(!persisted)return;
+        m_handle=CreateMutexW(nullptr,FALSE,L"Local\\DingDing.LocalSecurity.Attempts.v1");
+        require(m_handle!=nullptr,Error::Unavailable);
+        const DWORD result=WaitForSingleObject(m_handle,5000);
+        if(result!=WAIT_OBJECT_0&&result!=WAIT_ABANDONED){CloseHandle(m_handle);m_handle=nullptr;throw Failure(Error::Unavailable);}
+#else
+        (void)persisted;
+#endif
+    }
+    ~RecordLock() {
+#ifdef _WIN32
+        if(m_handle){ReleaseMutex(m_handle);CloseHandle(m_handle);}
+#endif
+    }
+    RecordLock(const RecordLock&)=delete;
+    RecordLock& operator=(const RecordLock&)=delete;
+private:
+    std::lock_guard<std::recursive_mutex> m_guard;
+#ifdef _WIN32
+    HANDLE m_handle=nullptr;
+#endif
+};
+void put64(unsigned char* p,std::uint64_t value) {for(int i=7;i>=0;--i){p[i]=static_cast<unsigned char>(value);value>>=8;}}
+std::uint64_t get64(const unsigned char* p) {std::uint64_t value=0;for(int i=0;i<8;++i)value=(value<<8)|p[i];return value;}
+std::uint64_t new_lockout() {
+    std::uint64_t id=0;
+    while(!id){unsigned char bytes[8];require(RAND_bytes(bytes,8)==1,Error::Unavailable);id=get64(bytes);}
+    return id;
+}
+std::optional<std::vector<unsigned char>> read_record(Vault* vault,const std::string& account,const std::vector<unsigned char>& memory) {
+    if(vault){auto value=vault->read(account);if(!value)return std::nullopt;return std::vector<unsigned char>(value->data(),value->data()+value->size());}
+    if(memory.empty())return std::nullopt;
+    return memory;
+}
+// An empty record is erased, so a budget at rest leaves nothing behind.
+void write_record(Vault* vault,const std::string& account,std::vector<unsigned char>& memory,std::vector<unsigned char> bytes) {
+    if(bytes.empty()){if(vault)vault->erase(account);else memory.clear();return;}
+    if(vault)vault->write(account,Secret(std::move(bytes)));else memory=std::move(bytes);
+}
+}
+ClockAnchor ClockAnchor::now() {
+    ClockAnchor anchor;anchor.steady=std::chrono::steady_clock::now();
+    anchor.unix_ms=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    return anchor;
+}
+std::int64_t ClockAnchor::unix_ms_at(Time t) const {return unix_ms+std::chrono::duration_cast<std::chrono::milliseconds>(t-steady).count();}
+
+LadderAllowance::LadderAllowance(Vault& vault,std::string account,ClockAnchor anchor):m_vault(&vault),m_account(std::move(account)),m_anchor(anchor) {
+    require(valid_stable_id(m_account));
+}
+std::vector<std::int64_t> LadderAllowance::load(std::int64_t now_ms) {
+    std::vector<std::int64_t> skips;bool changed=false;
+    if(auto raw=read_record(m_vault,m_account,m_memory)) {
+        const auto& b=*raw;
+        const unsigned count=b.size()>=2?b[1]:0u;
+        if(b.size()>=2&&b[0]==1&&count<=ladder_skips_per_hour&&b.size()==2+8u*count) {
+            for(unsigned i=0;i<count;++i)skips.push_back(static_cast<std::int64_t>(get64(b.data()+2+8*i)));
+        } else {skips.assign(ladder_skips_per_hour,now_ms);changed=true;} // damaged: spent, never refunded
+    }
+    // A skip recorded under a clock that was later set back still counts for a full hour.
+    for(auto& t:skips)if(t>now_ms){t=now_ms;changed=true;}
+    const auto before=skips.size();
+    skips.erase(std::remove_if(skips.begin(),skips.end(),[now_ms](std::int64_t t){return now_ms-t>=hour_ms;}),skips.end());
+    if(changed||skips.size()!=before)save(skips);
+    return skips;
+}
+void LadderAllowance::save(const std::vector<std::int64_t>& skips) {
+    std::vector<unsigned char> bytes;
+    if(!skips.empty()) {
+        bytes.assign(2+8*skips.size(),0);bytes[0]=1;bytes[1]=static_cast<unsigned char>(skips.size());
+        for(std::size_t i=0;i<skips.size();++i)put64(bytes.data()+2+8*i,static_cast<std::uint64_t>(skips[i]));
+    }
+    write_record(m_vault,m_account,m_memory,std::move(bytes));
+}
+unsigned LadderAllowance::remaining(Time now) {
+    RecordLock lock(m_vault!=nullptr);
+    const auto skips=load(m_anchor.unix_ms_at(now));
+    return skips.size()>=ladder_skips_per_hour?0u:static_cast<unsigned>(ladder_skips_per_hour-skips.size());
+}
+bool LadderAllowance::consume(Time now) {
+    RecordLock lock(m_vault!=nullptr);
+    const auto now_ms=m_anchor.unix_ms_at(now);auto skips=load(now_ms);
+    if(skips.size()>=ladder_skips_per_hour)return false;
+    skips.push_back(now_ms);save(skips);return true;
+}
+
+AttemptBudget::AttemptBudget(Vault& vault,std::string account,ClockAnchor anchor):m_vault(&vault),m_account(std::move(account)),m_anchor(anchor) {
+    require(valid_stable_id(m_account));
+}
+void AttemptBudget::reset() noexcept {m_remaining=5;m_escalation=0;m_waiting=false;m_wait_until=0;m_lockout=0;m_ladder={};}
+void AttemptBudget::load(std::int64_t now_ms) {
+    reset();
+    const auto raw=read_record(m_vault,m_account,m_memory);if(!raw)return;
+    const auto& b=*raw;
+    bool ok=b.size()==attempt_record_size&&b[0]==1&&b[1]<=5&&b[2]<=5&&b[3]<=3&&b[4]<=3&&b[5]<=5;
+    if(ok) {
+        m_remaining=b[1];m_escalation=b[2];m_waiting=(b[3]&1)!=0;
+        m_ladder.started=(b[3]&2)!=0;m_ladder.rung=static_cast<LadderRung>(b[4]);m_ladder.wrong_dishes=b[5];
+        m_wait_until=static_cast<std::int64_t>(get64(b.data()+6));m_lockout=get64(b.data()+14);
+        ok=(!m_waiting||(m_remaining==0&&m_lockout!=0))&&(!m_ladder.started||m_waiting);
+    }
+    if(!ok) {
+        // A damaged record never refunds anything: it becomes the longest wait.
+        m_remaining=0;m_escalation=5;m_waiting=true;m_wait_until=now_ms+longest_wait_ms;m_lockout=new_lockout();m_ladder={};save();
+    } else if(m_waiting&&m_wait_until>now_ms+longest_wait_ms) {
+        // A wall clock set back since the wait began cannot stretch it.
+        m_wait_until=now_ms+longest_wait_ms;save();
+    }
+}
+void AttemptBudget::save() {
+    std::vector<unsigned char> bytes;
+    if(m_remaining!=5||m_escalation!=0||m_waiting||m_ladder.started) {
+        bytes.assign(attempt_record_size,0);bytes[0]=1;
+        bytes[1]=static_cast<unsigned char>(m_remaining);bytes[2]=static_cast<unsigned char>(m_escalation);
+        bytes[3]=static_cast<unsigned char>((m_waiting?1:0)|(m_ladder.started?2:0));
+        bytes[4]=static_cast<unsigned char>(m_ladder.rung);bytes[5]=static_cast<unsigned char>(m_ladder.wrong_dishes);
+        put64(bytes.data()+6,static_cast<std::uint64_t>(m_wait_until));put64(bytes.data()+14,m_lockout);
+    }
+    write_record(m_vault,m_account,m_memory,std::move(bytes));
+}
+std::int64_t AttemptBudget::refresh(Time now) {
+    const auto now_ms=m_anchor.unix_ms_at(now);load(now_ms);
+    if(m_waiting&&now_ms>=m_wait_until){m_waiting=false;m_remaining=5;m_ladder={};save();}
+    return now_ms;
+}
 AttemptState AttemptBudget::state(Time now) {
-    if(m_wait_until!=Time{} && now>=m_wait_until) {m_wait_until={};m_remaining=5;}
-    unsigned seconds=0; if(m_wait_until>now)seconds=static_cast<unsigned>(std::chrono::ceil<std::chrono::seconds>(m_wait_until-now).count());
-    return {m_remaining,seconds};
+    RecordLock lock(m_vault!=nullptr);
+    const auto now_ms=refresh(now);
+    unsigned seconds=0;if(m_waiting)seconds=static_cast<unsigned>((m_wait_until-now_ms+999)/1000);
+    return {m_remaining,seconds,m_lockout};
 }
 void AttemptBudget::failed(Time now) {
-    if(state(now).wait_seconds)return;
+    RecordLock lock(m_vault!=nullptr);
+    const auto now_ms=refresh(now);
+    if(m_waiting)return;
     if(m_remaining)--m_remaining;
-    if(!m_remaining) {unsigned seconds=std::min(900u,30u<<std::min(m_escalation,5u));m_escalation=std::min(5u,m_escalation+1);m_wait_until=now+std::chrono::seconds(seconds);}
+    if(!m_remaining) {unsigned seconds=std::min(900u,30u<<std::min(m_escalation,5u));m_escalation=std::min(5u,m_escalation+1);m_waiting=true;m_wait_until=now_ms+std::int64_t(seconds)*1000;m_lockout=new_lockout();m_ladder={};}
+    save();
 }
-void AttemptBudget::succeeded() {m_remaining=5;m_escalation=0;m_wait_until={};}
-bool AttemptBudget::clear_wait(Time now) {
-    if(!state(now).wait_seconds)return false;
-    m_skips.erase(std::remove_if(m_skips.begin(),m_skips.end(),[now](Time t){return now-t>=std::chrono::hours(1);}),m_skips.end());
-    if(m_skips.size()>=3)return false;
-    m_skips.push_back(now);m_wait_until={};m_remaining=5;return true;
+void AttemptBudget::succeeded() {
+    RecordLock lock(m_vault!=nullptr);
+    const bool stored=read_record(m_vault,m_account,m_memory).has_value();
+    reset();if(stored)save();
+}
+bool AttemptBudget::clear_wait(LadderAllowance& allowance,Time now) {
+    RecordLock lock(m_vault!=nullptr);
+    refresh(now);
+    if(!m_waiting||!allowance.consume(now))return false;
+    m_waiting=false;m_remaining=5;m_ladder={};save();return true;
+}
+LadderProgress AttemptBudget::ladder(Time now) {
+    RecordLock lock(m_vault!=nullptr);
+    refresh(now);return m_waiting?m_ladder:LadderProgress{};
+}
+void AttemptBudget::set_ladder(std::uint64_t lockout,const LadderProgress& progress,Time now) {
+    require(progress.rung<=LadderRung::Clock&&progress.wrong_dishes<=5);
+    RecordLock lock(m_vault!=nullptr);
+    refresh(now);
+    if(m_waiting&&lockout==m_lockout){m_ladder=progress;save();}
 }
 LockSession::LockSession(LockSettings settings):m_settings(settings),m_factors(factors(settings.policy)) {
     require(settings.duration==Duration::ThisSurface||settings.duration==Duration::Minutes||settings.duration==Duration::UntilExit);
     require(settings.minutes>=1 && settings.minutes<=1440);
 }
+LockSession::LockSession(LockSettings settings,AttemptBudget budget):LockSession(settings) {m_budget=std::move(budget);}
 bool LockSession::locked(Time now) { if(m_unlocked&&m_settings.duration==Duration::Minutes&&now>=m_until)relock();return !m_unlocked; }
 std::optional<Factor> LockSession::expected(Time now) {
     if(!locked(now)||m_budget.state(now).wait_seconds)return {};

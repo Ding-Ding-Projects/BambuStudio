@@ -20,6 +20,8 @@ public:
     std::optional<Factor> expected(Time now);
     bool submit(const Secret& answer, Time now, std::uint64_t unix_seconds);
     AttemptState attempts(Time now);
+    // The persisted budget for this element's unlock ladder; null until created.
+    AttemptBudget* budget() noexcept { return m_session ? &m_session->budget() : nullptr; }
     void cancel();
     void leave_surface();
     void relock();

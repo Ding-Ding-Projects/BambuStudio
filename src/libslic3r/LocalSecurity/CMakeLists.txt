@@ -1,4 +1,4 @@
-add_library(libslic3r_local_security STATIC LocalSecurity.cpp LocalSecurity.hpp Authenticator.cpp Authenticator.hpp ElementLock.cpp ElementLock.hpp SupportTickets.cpp SupportTickets.hpp)
+add_library(libslic3r_local_security STATIC LocalSecurity.cpp LocalSecurity.hpp Authenticator.cpp Authenticator.hpp ElementLock.cpp ElementLock.hpp SupportTickets.cpp SupportTickets.hpp UnlockLadder.cpp UnlockLadder.hpp)
 target_compile_features(libslic3r_local_security PUBLIC cxx_std_17)
 target_include_directories(libslic3r_local_security PUBLIC "${CMAKE_CURRENT_LIST_DIR}/../..")
 target_link_libraries(libslic3r_local_security PUBLIC OpenSSL::Crypto)

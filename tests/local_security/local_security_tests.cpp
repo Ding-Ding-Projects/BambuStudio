@@ -107,15 +107,85 @@ void locks() {
     LockSession single({Policy::Pin,Duration::ThisSurface,5});single.submit(Factor::Pin,true,now);single.leave_surface();check(single.locked(now),"surface exit relocks");
     LockSession one({Policy::Pin,Duration::UntilExit,5}),two({Policy::Pin,Duration::UntilExit,5});
     one.submit(Factor::Pin,true,now);check(!one.locked(now)&&two.locked(now),"locks independent");one.relock();check(one.locked(now),"explicit relock");
+    LadderAllowance allowance;
     for(unsigned round=0;round<4;++round) {
         for(unsigned n=0;n<5;++n)one.submit(Factor::Pin,false,now);
         check(one.attempts(now).remaining==0&&one.attempts(now).wait_seconds>0,"attempt budget enforced");
         check(!one.submit(Factor::Pin,true,now)&&one.locked(now),"lockout blocks even correct answer");
-        check(one.clear_wait(now)==(round<3),"rolling skip cap");
+        check(one.clear_wait(allowance,now)==(round<3),"rolling skip cap");
         check(one.locked(now),"skip does not authenticate");
     }
     check(one.attempts(now+std::chrono::hours(1)).remaining==5,"ordinary wait restores same budget");
     rejects([&]{LockSession invalid({static_cast<Policy>(99),Duration::UntilExit,5});},"invalid policy rejected");
+}
+ClockAnchor anchor(Time steady,std::int64_t unix_ms) {ClockAnchor result;result.steady=steady;result.unix_ms=unix_ms;return result;}
+void persisted_budgets() {
+    using std::chrono::seconds;
+    MemoryVault vault;const auto now=Time{}+std::chrono::hours(1);const std::int64_t wall=1800000000000;
+    {
+        AttemptBudget budget(vault,"test.attempts",anchor(now,wall));
+        check(budget.state(now).remaining==5&&!vault.records.count("test.attempts"),"an untouched budget stores nothing");
+        for(unsigned i=0;i<4;++i)budget.failed(now);
+        check(vault.records.count("test.attempts")==1,"failures are persisted");
+    }
+    // A restart: a new object, a new steady clock, ten seconds later on the wall clock.
+    const auto later=Time{}+std::chrono::hours(5);
+    AttemptBudget restarted(vault,"test.attempts",anchor(later,wall+10000));
+    check(restarted.state(later).remaining==1,"restarting refunds no attempts");
+    restarted.failed(later);
+    check(restarted.state(later).remaining==0&&restarted.state(later).wait_seconds==30,"the fifth failure after a restart locks");
+    const auto lockout=restarted.state(later).lockout;
+    AttemptBudget again(vault,"test.attempts",anchor(Time{}+std::chrono::hours(9),wall+20000));
+    check(again.state(Time{}+std::chrono::hours(9)).wait_seconds==20&&again.state(Time{}+std::chrono::hours(9)).lockout==lockout,"a restart keeps the rest of the wait");
+    AttemptBudget other(vault,"test.attempts",anchor(later,wall+10000));
+    check(other.state(later+seconds(5)).wait_seconds==25,"every instance sharing the record sees one lockout");
+    other.failed(later+seconds(5));check(restarted.state(later+seconds(5)).wait_seconds==25,"failures during a wait change nothing");
+    check(other.state(later+seconds(30)).remaining==5&&vault.records.count("test.attempts")==1,"expiry restores attempts and keeps the escalation");
+    AttemptBudget third(vault,"test.attempts",anchor(later+seconds(40),wall+50000));
+    for(unsigned i=0;i<5;++i)third.failed(later+seconds(40));
+    check(third.state(later+seconds(40)).wait_seconds==60&&third.state(later+seconds(40)).lockout!=lockout,"escalation survives restarts");
+    third.succeeded();
+    check(!vault.records.count("test.attempts")&&third.state(later).remaining==5,"a successful answer leaves no record");
+    AttemptBudget fresh(vault,"test.attempts",anchor(now,wall));for(unsigned i=0;i<5;++i)fresh.failed(now);
+    AttemptBudget rolled(vault,"test.attempts",anchor(now,wall-86400000));
+    check(rolled.state(now).wait_seconds==900,"a clock set back cannot stretch a wait past 900 seconds");
+    check(rolled.state(now+seconds(900)).wait_seconds==0&&rolled.state(now+seconds(900)).remaining==5,"the capped wait still ends");
+    vault.records["test.attempts"]={1,5,0};
+    AttemptBudget damaged(vault,"test.attempts",anchor(now,wall));
+    check(damaged.state(now).remaining==0&&damaged.state(now).wait_seconds==900,"a damaged record is the longest wait, never a refund");
+    vault.unavailable=true;rejects([&]{damaged.state(now);},"an unavailable vault fails closed");vault.unavailable=false;
+    rejects([&]{AttemptBudget invalid(vault,"display name");},"budget accounts are stable identifiers");
+    MemoryVault lock_vault;
+    {
+        LockSession lock({Policy::Pin,Duration::UntilExit,5},AttemptBudget(lock_vault,"test.lock",anchor(now,wall)));
+        for(unsigned i=0;i<5;++i)lock.submit(Factor::Pin,false,now);
+    }
+    LockSession reopened({Policy::Pin,Duration::UntilExit,5},AttemptBudget(lock_vault,"test.lock",anchor(now,wall)));
+    check(reopened.attempts(now).wait_seconds==30&&!reopened.expected(now)&&!reopened.submit(Factor::Pin,true,now),"a reopened lock session still waits");
+}
+void ladder_allowance() {
+    using std::chrono::hours;
+    MemoryVault vault;const auto now=Time{}+hours(1);const std::int64_t wall=1800000000000;
+    LadderAllowance first(vault,shared_ladder_account,anchor(now,wall)),second(vault,shared_ladder_account,anchor(now,wall));
+    check(first.remaining(now)==ladder_skips_per_hour&&!vault.records.count(shared_ladder_account),"an unspent allowance stores nothing");
+    std::array<AttemptBudget,4> surfaces;
+    for(auto& surface:surfaces)for(unsigned i=0;i<5;++i)surface.failed(now);
+    check(surfaces[0].clear_wait(first,now)&&surfaces[1].clear_wait(second,now)&&surfaces[2].clear_wait(first,now),"three skips across surfaces");
+    check(!surfaces[3].clear_wait(second,now)&&surfaces[3].state(now).wait_seconds>0,"a fourth skip on any surface is refused");
+    check(first.remaining(now)==0&&second.remaining(now)==0,"every surface spends one allowance");
+    LadderAllowance restarted(vault,shared_ladder_account,anchor(Time{}+hours(7),wall+60000));
+    check(restarted.remaining(Time{}+hours(7))==0,"restarting refunds no skips");
+    check(first.remaining(now+hours(1))==ladder_skips_per_hour&&!vault.records.count(shared_ladder_account),"skips leave the rolling hour");
+    MemoryVault back_vault;LadderAllowance before(back_vault,shared_ladder_account,anchor(now,wall));AttemptBudget budget;
+    for(unsigned i=0;i<5;++i)budget.failed(now);
+    check(budget.clear_wait(before,now),"a skip within the allowance");
+    LadderAllowance back(back_vault,shared_ladder_account,anchor(now,wall-86400000));
+    check(back.remaining(now)==2&&back.remaining(now+std::chrono::minutes(59))==2,"a clock set back keeps the skip");
+    check(back.remaining(now+hours(1))==3,"it leaves an hour after the clock was set back");
+    back_vault.records[shared_ladder_account]={1,9};
+    check(back.remaining(now)==0,"a damaged allowance counts as spent");
+    vault.unavailable=true;rejects([&]{first.remaining(now);},"an unavailable allowance fails closed");vault.unavailable=false;
+    rejects([&]{LadderAllowance invalid(vault,"display name");},"allowance accounts are stable identifiers");
 }
 void encryption() {
     auto key=random_secret(32);Secret plain("private snapshot fixture");auto encrypted=encrypt_snapshot(key,plain,"record.1");
@@ -170,6 +240,13 @@ void element_locks() {
     check(!first.submit(Secret("287082"),now,59)&&!first.allows_action(now),"used OTP step cannot replay");
     ElementLock restarted(vault,"11111111111111111111111111111111",history);check(restarted.configured()&&!restarted.allows_action(now),"configured element relocks on restart");
     ElementLock other(vault,"22222222222222222222222222222222",history);check(other.allows_action(now),"lock credentials do not inherit");
+    check(restarted.budget()!=nullptr&&other.budget()==nullptr,"only a configured element has a budget");
+    for(unsigned i=0;i<5&&!restarted.attempts(now).wait_seconds;++i)restarted.submit(Secret("not the password"),now,59);
+    check(restarted.attempts(now).wait_seconds>0,"element attempt budget enforced");
+    ElementLock reopened(vault,"11111111111111111111111111111111",history);
+    check(reopened.attempts(now).remaining==0&&reopened.attempts(now).wait_seconds>0,"element lockout survives restart");
+    check(!reopened.submit(Secret("test password answer"),now,59)&&!reopened.expected(now),"a restarted element still waits");
+    check(vault.records.count("bambustudio.element-lock.11111111111111111111111111111111.attempts")==1,"element attempts persist beside the lock");
 }
 void native_vault() {
 #ifdef _WIN32
@@ -208,6 +285,6 @@ void application_vault() {
 }
 }
 int main() {
-    try { rfc_vectors();parsing();credentials();locks();encryption();authenticator();element_locks();support_tickets();native_vault();application_vault();std::cout<<"PASS "<<checks<<" local security behavioral checks\n";return 0; }
+    try { rfc_vectors();parsing();credentials();locks();persisted_budgets();ladder_allowance();encryption();authenticator();element_locks();support_tickets();native_vault();application_vault();std::cout<<"PASS "<<checks<<" local security behavioral checks\n";return 0; }
     catch(const std::exception& e) { std::cerr<<"FAIL after "<<checks<<" checks: "<<e.what()<<'\n';return 1; }
 }
