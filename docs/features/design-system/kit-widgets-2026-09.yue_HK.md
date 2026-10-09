@@ -1,6 +1,6 @@
 ---
 translation-of: kit-widgets-2026-09.md
-source-sha256: 126c0d1b2d062453911ca741130513d49ac415f2d43069deee22ff85c770daef
+source-sha256: 919304f0dc22a59c25306677ecd85552873540d71b298ee7d8adbd965ccc5fd5
 review-status: agent-drafted
 ---
 
@@ -18,9 +18,9 @@ review-status: agent-drafted
 
 **配置。** `SetColorScheme()` 將選擇點重新著色到預覽或設備重點；`Rescale()` 喺 DPI 改變；`SetLabel("")` 隱藏標籤用於純字形列。
 
-**失敗模式。** 一列添加到兩個組被第二個 `Add()` 忽視。摧毀成員從其組移除佢。程式方式 `SetValue()` 永遠唔排放。
+**失敗模式。** 一列添加到兩個組被第二個 `Add()` 忽視。摧毀成員從其組移除佢。程式方式 `SetValue()` 永遠唔排放。如果組係擁有嗰啲列嘅視窗嘅成員，佢會喺 wx 摧毀嗰啲列之前先被摧毀；佢嘅解構函數會解除自己加過嘅所有處理器，連摧毀處理器都包埋，所以冇任何列事件會去到已經摧毀咗嘅組。
 
-**網站。** FeedDirectionDialog、CalibrationWizardPresetPage（階段對同每個位置選擇器）、SavePresetDialog。
+**網站。** FeedDirectionDialog、CalibrationWizardPresetPage（階段對同每個位置選擇器）、SavePresetDialog、元素鎖精靈（解鎖方式同時長）、本機支援工單（類別）、排程設定（數值來源）。
 
 ## TextArea（`src/slic3r/GUI/Widgets/TextArea.{hpp,cpp}`）
 
@@ -34,7 +34,11 @@ review-status: agent-drafted
 
 **行為。** 一個所有者繪製 `wxVListBox` 繪製帶著下拉選單解剖：SurfaceContainer 欄位、圓形 SurfaceContainerHigh 懸停窗格、SecondaryContainer 選擇活動計劃中嘅窗格、OnSurface 文字喺工具組件主體面孔。原生鍵盤模型同 `wxEVT_LISTBOX` 被繼承。長列省略喺末尾同懸停列暴露其完整文字作為提示。
 
-**網站。** 智能家庭實體清單。
+**延伸選取。** 用 `wxLB_MULTIPLE` 建立嘅清單取代用 `wxLB_EXTENDED` 建立嘅 `wxListBox`：`wxVListBox` 提供延伸選取模式（撳一下揀一列，Ctrl+撳一下切換一列，Shift+撳一下同 Shift+方向鍵延伸範圍，Space 切換目前嗰列），而 `GetSelections()` 喺兩種模式都按次序交返已揀嘅列，同 `wxListBox::GetSelections()` 一樣。`SetSelection(n)` 會將第 `n` 列加入多重選取，`Clear()` 會清空佢。
+
+**失敗模式。** 焦點環畫喺已揀嘅列上面。喺多重選取清單入面，Ctrl+方向鍵移動目前嗰列但唔會揀佢，嗰列要揀咗先會有焦點環。
+
+**網站。** 智能家庭實體清單；排程設定嘅規則（延伸選取）、可用設定、設定選項同時區；驗證器項目、本機支援工單同身份記錄版本（延伸選取）。
 
 ## Button::SetIconBitmap 同 ScalableBitmap(wxWindow*, wxBitmap)
 

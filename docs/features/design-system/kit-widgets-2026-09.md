@@ -22,10 +22,13 @@ A 2 px Primary focus ring is painted around the glyph. The glyph itself is not f
 `Rescale()` on DPI change; `SetLabel("")` hides the label for glyph-only rows.
 
 **Failure modes.** A row added to two groups is ignored by the second `Add()`. Destroying a member
-removes it from its group. Programmatic `SetValue()` never emits.
+removes it from its group. Programmatic `SetValue()` never emits. A group that is a member of the
+window owning its rows is destroyed before wx destroys those rows; its destructor unbinds every
+handler it added, the destroy handler included, so no row event reaches the destroyed group.
 
 **Sites.** FeedDirectionDialog, CalibrationWizardPresetPage (stage pair and per-slot selectors),
-SavePresetDialog.
+SavePresetDialog, the element lock wizard (unlock policy and duration), local support tickets
+(category), Scheduled settings (value source).
 
 ## TextArea (`src/slic3r/GUI/Widgets/TextArea.{hpp,cpp}`)
 
@@ -48,7 +51,19 @@ field, rounded SurfaceContainerHigh hover pane, SecondaryContainer selected pane
 scheme, OnSurface text in the kit body face. Native keyboard model and `wxEVT_LISTBOX` are inherited.
 Long rows ellipsize at the end and the hovered row exposes its full text as the tooltip.
 
-**Sites.** Smart home entity list.
+**Extended selection.** Created with `wxLB_MULTIPLE`, the list replaces a `wxListBox` created with
+`wxLB_EXTENDED`: `wxVListBox` supplies the extended model (a click selects one row, Ctrl+click
+toggles a row, Shift+click and Shift+arrows extend the range, Space toggles the current row) and
+`GetSelections()` returns the selected rows in ascending order in either mode, as
+`wxListBox::GetSelections()` did. `SetSelection(n)` adds row `n` to a multiple selection, and
+`Clear()` empties it.
+
+**Failure modes.** The focus ring is drawn on selected rows. In a multiple-selection list, Ctrl+arrow
+moves the current row without selecting it, and that row shows no ring until it is selected.
+
+**Sites.** Smart home entity list; Scheduled settings rules (extended selection), available
+settings, setting choices and timezones; authenticator entries, local support tickets and identity
+history revisions (extended selection).
 
 ## Button::SetIconBitmap and ScalableBitmap(wxWindow*, wxBitmap)
 

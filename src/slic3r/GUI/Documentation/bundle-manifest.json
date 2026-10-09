@@ -415,12 +415,12 @@
     {
       "route": "design-system/kit-widgets-2026-09.md",
       "title": "Kit widgets added in the every-element sweep (2026-09-05)",
-      "sha256": "126c0d1b2d062453911ca741130513d49ac415f2d43069deee22ff85c770daef"
+      "sha256": "919304f0dc22a59c25306677ecd85552873540d71b298ee7d8adbd965ccc5fd5"
     },
     {
       "route": "design-system/kit-widgets-2026-09.yue_HK.md",
       "title": "喺每元素掃過中添加嘅工具組件（2026-09-05）",
-      "sha256": "cc8bb79bbd8c354e9922b58fd4213b423b9a38805fb1dfc21a45cb716ddf139a"
+      "sha256": "5346704a75f67f07f0609ffad2fa6efccbce2ba600b588c7ea830cb96c601819"
     },
     {
       "route": "design-system/layout-probe.md",
@@ -1975,7 +1975,7 @@
       "bytes": 1979
     }
   ],
-  "bundle_sha256": "b19323313f12186b6c21fd9572dd89359b0a57e08cda6c9da1a2d533286a7718",
+  "bundle_sha256": "af520713e1a34bce59b60973c24841007361a616b8c72c72a11049501b179384",
   "unavailable_references": [
     {
       "source": "api/README.md",
