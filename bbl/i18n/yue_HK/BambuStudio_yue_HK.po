@@ -44364,7 +44364,7 @@ msgstr "查看本機 Ollama 模型、目錄可用情況同引導式工具"
 #. reviewed-category: file-actions
 #. review-status: agent-drafted
 msgid "Convert local files with verified bundled adapters"
-msgstr "用已驗證嘅內置轉換模組轉換本機檔案"
+msgstr "用已驗證嘅隨附轉接器轉換本機檔案"
 
 #. reviewed-category: preferences
 #. review-status: agent-drafted
@@ -44649,7 +44649,7 @@ msgstr "字型平台能力"
 #. reviewed-category: preferences
 #. review-status: agent-drafted
 msgid "Margin updates native sizer layout. The live preview renders radius, border, padding and line height. Other owner-drawn controls require an explicit renderer adapter; native controls retain platform shape."
-msgstr "外邊距會更新原生排版佈局。即時預覽會顯示角半徑、邊框、內邊距同行高。其他自繪控制項要有指定嘅渲染轉接器先得；原生控制項會保留平台本身嘅形狀。"
+msgstr "邊距會更新原生排版佈局。即時預覽會顯示角半徑、邊框、填充同行高。其他自繪控制項要有指定嘅渲染轉接器先得；原生控制項會保留平台本身嘅形狀。"
 
 #. reviewed-category: file-actions
 #. review-status: agent-drafted
