@@ -1,6 +1,6 @@
 ---
 translation-of: lan-model-drop.md
-source-sha256: 8ae2eefa9d4edddc0f3790ab80e3605ada66d790a6f34e73d58a30765a7556e1
+source-sha256: 4d57dbbd9f34179d928a16641cb85b993b985e7bfde59d5fb9de776be9faf9c6
 review-status: agent-drafted
 ---
 
@@ -92,7 +92,8 @@ AMF）。檔案會儲存喺資料資料夾嘅 `lan-model-drop/received/<id>/<檔
 
 - 接收站金鑰係秘密。佢只會以目前 Windows 帳戶嘅 DPAPI 加密資料儲存（`CryptProtectData`，有用途熵，
   禁止使用者介面），放喺資料資料夾嘅 `lan-model-drop/station-key.dpapi`，永遠唔會寫入設定檔。第二個
-  帳戶，或者喺第二部電腦嘅資料夾副本，都解唔開。其他系統會報告儲存用唔到，而唔會用純文字保存金鑰。
+  帳戶，或者喺第二部電腦嘅資料夾副本，都解唔開；所以完整備份資料資料夾時，只會帶走嗰份加密資料，永遠唔會
+  帶走明文金鑰。其他系統會報告儲存用唔到，而唔會用純文字保存金鑰。
 - 金鑰永遠唔會寫入記錄。請求只會帶 `Authorization: Bearer <金鑰>` 同 `Accept`：程式平時嘅額外標頭會
   被移除，唔會跟隨重新導向，傳輸追蹤亦都關閉。記憶體入面嘅金鑰副本用完會被覆寫。遮蔽咗嘅欄位可以用眼睛掣
   顯示；兩個欄位都唔會被擷取、記入歷史或者匯出。

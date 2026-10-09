@@ -103,8 +103,9 @@ it; use Save Project as to keep a project somewhere else.
 - The station key is a secret. It is stored only as a Windows DPAPI blob for the current Windows
   account (`CryptProtectData` with purpose entropy, user interface forbidden) in
   `lan-model-drop/station-key.dpapi` in the data folder, never in the settings file. Another
-  account, or a copy of the folder on another computer, cannot decrypt it. Other systems report
-  the storage as unavailable instead of keeping the key in plain text.
+  account, or a copy of the folder on another computer, cannot decrypt it; a full data-folder
+  backup therefore carries only that blob, never the key in clear. Other systems report the storage
+  as unavailable instead of keeping the key in plain text.
 - The key is never logged. Requests carry only `Authorization: Bearer <key>` and `Accept`: the
   application's usual extra headers are removed, redirects are not followed and the transfer trace
   is off. Copies of the key in memory are overwritten after use. The masked field can be shown with
