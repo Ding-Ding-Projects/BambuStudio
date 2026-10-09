@@ -1,52 +1,88 @@
 #pragma once
 
 #include "libslic3r/AppLogo/Logo.hpp"
-#include <wx/panel.h>
 #include <wx/bitmap.h>
 #include <wx/colour.h>
+#include <wx/iconbndl.h>
+#include <wx/panel.h>
 #include <functional>
+#include <memory>
+#include <vector>
 
-class ComboBox;
-class SpinInput;
-class CheckBox;
 class Button;
+class CheckBox;
+class ComboBox;
 class Label;
+class SearchField;
+class SpinInput;
+class wxBoxSizer;
 class wxStaticBitmap;
-class wxStaticText;
 
-namespace Slic3r { namespace GUI { namespace AppLogoUI {
+namespace Slic3r { namespace GUI {
 
+class LabeledRadioButton;
+class RadioGroup;
+
+namespace AppLogoUI {
+
+// The selected logo as a square bitmap of exactly `pixels` device pixels. It
+// is generated at no more than AppLogo::max_output_px and resampled up past
+// that bound. Invalid for the shipped mark: callers then draw their own
+// shipped asset.
 wxBitmap bitmap(const AppLogo::Settings& settings, unsigned pixels);
-bool load(const wxString& private_file, AppLogo::Settings& settings);
-bool save(const wxString& private_file, const AppLogo::Settings& settings);
+// For a surface of `logical` pixels at display `scale`: bitmap() at
+// AppLogo::plan().draw_px with the bitmap's scale factor set to match.
+wxBitmap scaled_bitmap(const AppLogo::Settings& settings, unsigned logical, double scale);
+// One icon per AppLogo::window_icon_sizes entry, each rendered from the
+// source. Empty for the shipped mark.
+wxIconBundle icon_bundle(const AppLogo::Settings& settings);
 
-// Integrator owns the private, writable data directory and all presentation
-// consumers. Changed fires only after atomic persistence succeeds. It never
-// changes application/package identity or the operating system's installed icon.
+// The app logo editor hosted in Preferences > Appearance. The host owns
+// persistence and every chrome consumer: Commit persists and applies the
+// candidate and returns false when it could not, in which case the panel keeps
+// showing the previous logo. The panel never reads a file, never changes
+// application or package identity, and never touches the installed
+// operating-system icon.
 class LogoPanel : public wxPanel {
 public:
-    using Changed = std::function<void(const AppLogo::Settings&)>;
-    using Translate = std::function<wxString(const char*)>;
-    LogoPanel(wxWindow* parent, const wxString& private_file,
-        Changed changed = {}, Translate translate = {});
+    using Commit = std::function<bool(const AppLogo::Settings&)>;
+    LogoPanel(wxWindow* parent, const AppLogo::Resolved& initial, Commit on_commit);
+    ~LogoPanel() override;
     const AppLogo::Settings& settings() const { return m_settings; }
+
 private:
+    struct SourceRow {
+        LabeledRadioButton* radio = nullptr;
+        wxString haystack;
+    };
     void refresh();
-    void apply();
-    wxString tr(const char* value) const;
-    wxString m_file;
-    Changed m_changed;
-    Translate m_translate;
+    void filter_sources();
+    void select_source(size_t index);
+    void apply_edits();
+    bool commit(const AppLogo::Settings& candidate);
+    void set_status(const wxString& text, bool error);
+    wxString source_name(const AppLogo::Settings& settings) const;
+    wxString resting_status() const;
+
+    Commit m_commit;
     AppLogo::Settings m_settings;
-    ComboBox* m_preset = nullptr;
+    AppLogo::Provenance m_provenance;
+    std::unique_ptr<RadioGroup> m_group;
+    std::vector<SourceRow> m_rows;
+    std::vector<wxString> m_names;
+    SearchField* m_search = nullptr;
+    Label* m_no_match = nullptr;
     ComboBox* m_fit = nullptr;
     SpinInput* m_x = nullptr;
     SpinInput* m_y = nullptr;
     SpinInput* m_inset = nullptr;
     CheckBox* m_transparent = nullptr;
     Button* m_background = nullptr;
+    Label* m_edit_note = nullptr;
     wxColour m_color;
     std::vector<wxStaticBitmap*> m_previews;
+    wxBoxSizer* m_preview_sizer = nullptr;
+    Label* m_preview_note = nullptr;
     Label* m_status = nullptr;
 };
 

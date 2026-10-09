@@ -18,6 +18,7 @@
 #include "Widgets/Label.hpp"
 #include "NotificationCenterPanel.hpp"
 #include "NotificationManager.hpp"
+#include "AppLogo/LogoPanel.hpp"
 
 #include <wx/dcmemory.h>
 #include <wx/graphics.h>
@@ -221,9 +222,17 @@ static wxBitmap topbar_bell_bitmap(wxWindow *ref, int unread)
 
 // §3.1 brand tile: a 26x26 r8 Primary rounded square carrying the on-primary
 // 'deployed_code' glyph, replacing the legacy 22px BambuStudio PNG. Falls back
-// to that raster when the Material Symbols face is unavailable.
+// to that raster when the Material Symbols face is unavailable. A logo chosen
+// in Preferences > Appearance > App logo replaces the tile at the same size.
 static wxBitmap topbar_brand_tile_bitmap(wxWindow *ref)
 {
+    const AppLogo::Settings app_logo = wxGetApp().app_logo_settings();
+    if (!app_logo.shipped()) {
+        const wxBitmap chosen = AppLogoUI::scaled_bitmap(app_logo, AppLogo::logical_px(AppLogo::Target::TitleBar),
+                                                         topbar_scale(ref));
+        if (chosen.IsOk())
+            return chosen;
+    }
     if (!MaterialIcon::available())
         return create_scaled_bitmap("BambuStudio", ref, 22);
 
@@ -1101,6 +1110,18 @@ void BBLTopbar::SetBrandLabel(const wxString& label)
     m_brand_item->SetLabel(label);
     // The wordmark width changed, so the fixed-content budget the project chip
     // measures against did too: re-realize and re-fit the chip in one pass.
+    Realize();
+    update_responsive_title();
+    Refresh(false);
+}
+
+void BBLTopbar::RefreshBrandTile()
+{
+    if (!m_brand_item)
+        return;
+    const wxBitmap brand = topbar_brand_tile_bitmap(this);
+    m_brand_item->SetBitmap(brand);
+    m_brand_item->SetHoverBitmap(brand);
     Realize();
     update_responsive_title();
     Refresh(false);

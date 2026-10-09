@@ -303,6 +303,12 @@ public:
     // Re-derive the window title and topbar wordmark after the user renamed the
     // app (GUI_App::set_app_display_name calls this before broadcasting).
     void        on_app_display_name_changed();
+    // Redraw the title bar tile and the window/taskbar icon after the user chose
+    // another app logo (GUI_App::set_app_logo_settings calls this).
+    void        on_app_logo_changed();
+    // The selected logo as this window's icon; the shipped mark (or a failed
+    // render) keeps the icon embedded in the executable.
+    void        apply_app_logo_icon();
     void        set_max_recent_count(int max);
 
     void        show_calibration_button(bool show, bool is_BBL);

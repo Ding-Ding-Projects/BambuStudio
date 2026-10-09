@@ -70,6 +70,7 @@ struct wxLanguageInfo;
 
 namespace Slic3r {
 
+namespace AppLogo { struct Settings; }
 class AppConfig;
 class FilamentColorCodeQuery;
 class GLShaderProgram;
@@ -776,6 +777,16 @@ public:
     // live surfaces re-read app_display_name() without a restart. Returns false
     // (and changes nothing) when the sanitized value fails validation.
     bool            set_app_display_name(const std::string &candidate);
+    // Presentation-only app logo (its AppConfig key is defined in
+    // libslic3r/AppLogo/Logo.hpp; empty or invalid = the shipped mark). It feeds
+    // the title bar tile, the window and taskbar icon, the About banner and the
+    // startup screen. The installed icon, package and update identity never
+    // read it. Safe before app_config exists (returns the shipped mark).
+    AppLogo::Settings app_logo_settings() const;
+    // Persist a validated selection (the shipped defaults clear the key) and
+    // re-apply the chrome. Returns false and changes nothing when the settings
+    // are invalid or there is no config yet.
+    bool            set_app_logo_settings(const AppLogo::Settings &settings);
 
 	// Translate the language code to a code, for which Prusa Research maintains translations. Defaults to "en_US".
     wxString 		current_language_code_safe() const;

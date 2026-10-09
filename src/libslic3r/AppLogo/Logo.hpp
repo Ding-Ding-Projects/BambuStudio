@@ -18,15 +18,39 @@ struct Image {
         uint64_t(width) * height <= 1048576 && pixels.size() == size_t(width) * height; }
 };
 enum class Fit { Contain, Cover };
+
+// AppConfig key holding serialize(settings). Empty or missing selects the
+// shipped mark. The logo is presentation only: package identity, application
+// ids, executables, installer, update feed, data folder and the installed
+// operating-system icon never read this key.
+constexpr const char *config_key = "app_logo";
+constexpr unsigned preset_count = 3;
+constexpr unsigned max_output_px = 256;
+
+// Shipped: every surface keeps drawing its own shipped asset. Preset: the
+// surfaces draw the generated preset rendered with the settings below.
+enum class Source { Shipped, Preset };
+
 struct Settings {
+    Source source = Source::Shipped;
     unsigned preset = 0;
     Fit fit = Fit::Contain;
     unsigned focal_x = 50, focal_y = 50, inset = 8;
     bool transparent = true;
     Pixel background {255, 255, 255, 255};
-    bool valid() const { return preset < 3 && (fit == Fit::Contain || fit == Fit::Cover) &&
+    bool valid() const { return (source == Source::Shipped || source == Source::Preset) && preset < preset_count &&
+        (fit == Fit::Contain || fit == Fit::Cover) &&
         focal_x <= 100 && focal_y <= 100 && inset <= 25 && background.a == 255; }
+    bool shipped() const { return source == Source::Shipped; }
 };
+
+inline bool same(const Settings& a, const Settings& b)
+{
+    return a.source == b.source && a.preset == b.preset && a.fit == b.fit && a.focal_x == b.focal_x &&
+        a.focal_y == b.focal_y && a.inset == b.inset && a.transparent == b.transparent &&
+        a.background.r == b.background.r && a.background.g == b.background.g &&
+        a.background.b == b.background.b && a.background.a == b.background.a;
+}
 
 // This is a bounded decoder primitive, not an isolation boundary. Do not connect
 // an untrusted file picker until the host supplies a verified isolated worker.
@@ -82,7 +106,7 @@ inline Image preset(unsigned index)
 
 inline Image render(const Image& source, const Settings& settings, unsigned size)
 {
-    if (!source.valid() || !settings.valid() || !size || size > 256) return {};
+    if (!source.valid() || !settings.valid() || !size || size > max_output_px) return {};
     const Pixel background = settings.transparent ? Pixel{} : settings.background;
     Image result {size, size, std::vector<Pixel>(size_t(size) * size, background)};
     const double inset = size * settings.inset / 100.0;
@@ -108,12 +132,94 @@ inline Image render(const Image& source, const Settings& settings, unsigned size
     return result;
 }
 
+// The picker catalogue: the shipped mark first, then every generated preset.
+// Display names are translated by the GUI; the ids are stable and searchable.
+struct SourceEntry { Source source; unsigned preset; const char* id; };
+inline const std::array<SourceEntry, 1 + preset_count>& sources()
+{
+    static const std::array<SourceEntry, 1 + preset_count> list {{
+        {Source::Shipped, 0, "shipped"},
+        {Source::Preset, 0, "green-printer"},
+        {Source::Preset, 1, "blue-layers"},
+        {Source::Preset, 2, "amber-nozzle"},
+    }};
+    return list;
+}
+
+inline int source_index(const Settings& s)
+{
+    if (!s.valid()) return -1;
+    return s.shipped() ? 0 : int(1 + s.preset);
+}
+
+// Selects catalogue entry `index` and keeps every other presentation choice.
+// An out-of-range index returns the settings unchanged.
+inline Settings with_source(Settings s, size_t index)
+{
+    if (index >= sources().size()) return s;
+    s.source = sources()[index].source;
+    s.preset = sources()[index].preset;
+    return s;
+}
+
+// The generated image a selection renders from. The shipped mark has none:
+// each surface keeps drawing its own shipped asset.
+inline Image source_image(const Settings& s)
+{
+    return s.valid() && s.source == Source::Preset ? preset(s.preset) : Image{};
+}
+
+inline Image render_selected(const Settings& s, unsigned size)
+{
+    return render(source_image(s), s, size);
+}
+
+// Where the selected logo is drawn, at its logical size. Each consumer asks
+// plan() for the device size, so a high-DPI display never exceeds the bound.
+enum class Target { TitleBar, WindowIcon, About, StartupScreen };
+struct TargetSpec { Target target; const char* id; unsigned logical_px; };
+inline const std::array<TargetSpec, 4>& chrome_targets()
+{
+    static const std::array<TargetSpec, 4> list {{
+        {Target::TitleBar, "title-bar", 26},
+        {Target::WindowIcon, "window-icon", 32},
+        {Target::About, "about", 64},
+        {Target::StartupScreen, "startup-screen", 122},
+    }};
+    return list;
+}
+
+inline unsigned logical_px(Target target)
+{
+    for (const auto& spec : chrome_targets())
+        if (spec.target == target) return spec.logical_px;
+    return 0;
+}
+
+// Window and taskbar icon sizes, each rendered from the source rather than
+// resampled from another size.
+constexpr std::array<unsigned, 9> window_icon_sizes {{16, 20, 24, 32, 40, 48, 64, 128, 256}};
+
+// render_px is what render() generates (never above max_output_px); draw_px
+// is the device size the surface occupies. When draw_px is larger the caller
+// resamples the generated image up, so a bound is never bypassed.
+struct RenderPlan { unsigned render_px = 0, draw_px = 0; };
+inline RenderPlan plan(unsigned logical, double scale)
+{
+    if (!logical) return {};
+    if (!(scale > 0.0) || !std::isfinite(scale)) scale = 1.0;
+    scale = std::min(scale, 8.0);
+    const unsigned draw = std::max(1u, unsigned(std::ceil(logical * scale - 1e-9)));
+    return {std::min(draw, max_output_px), draw};
+}
+
 // Only neutral numeric presentation settings are serialized. Source bytes and
 // filenames must never enter settings export, history or telemetry.
+// Version 2 adds the source; version 1 (preset only) still reads as a preset.
 inline std::string serialize(const Settings& s)
 {
     if (!s.valid()) return {};
-    return "1 " + std::to_string(s.preset) + " " + std::to_string(int(s.fit)) + " " +
+    return "2 " + std::to_string(int(s.source)) + " " + std::to_string(s.preset) + " " + std::to_string(int(s.fit)) + " " +
         std::to_string(s.focal_x) + " " + std::to_string(s.focal_y) + " " + std::to_string(s.inset) + " " +
         std::to_string(s.transparent ? 1 : 0) + " " + std::to_string(s.background.r) + " " +
         std::to_string(s.background.g) + " " + std::to_string(s.background.b);
@@ -122,24 +228,55 @@ inline std::string serialize(const Settings& s)
 inline bool deserialize(const std::string& text, Settings& destination)
 {
     if (text.empty() || text.size() > 64) return false;
-    std::array<unsigned, 10> values {};
-    size_t pos = 0;
-    for (size_t n = 0; n < values.size(); ++n) {
-        if (pos == text.size() || text[pos] < '0' || text[pos] > '9') return false;
+    std::array<unsigned, 11> values {};
+    size_t count = 0, pos = 0;
+    for (;;) {
+        if (count == values.size() || pos == text.size() || text[pos] < '0' || text[pos] > '9') return false;
+        unsigned value = 0;
         while (pos < text.size() && text[pos] >= '0' && text[pos] <= '9') {
-            values[n] = values[n] * 10 + unsigned(text[pos++] - '0');
-            if (values[n] > 255) return false;
+            value = value * 10 + unsigned(text[pos++] - '0');
+            if (value > 255) return false;
         }
-        if (n + 1 < values.size() && (pos == text.size() || text[pos++] != ' ')) return false;
+        values[count++] = value;
+        if (pos == text.size()) break;
+        if (text[pos++] != ' ') return false;
     }
-    if (pos != text.size() || values[0] != 1 || values[2] > 1 || values[6] > 1) return false;
+    const unsigned version = values[0];
+    if (!((version == 1 && count == 10) || (version == 2 && count == 11))) return false;
+    const size_t o = version == 2 ? 1 : 0;
+    if (version == 2 && values[1] > 1) return false;
+    if (values[2 + o] > 1 || values[6 + o] > 1) return false;
     Settings s;
-    s.preset = values[1]; s.fit = Fit(values[2]); s.focal_x = values[3]; s.focal_y = values[4];
-    s.inset = values[5]; s.transparent = values[6] != 0;
-    s.background = {uint8_t(values[7]), uint8_t(values[8]), uint8_t(values[9]), 255};
+    s.source = version == 2 ? Source(values[1]) : Source::Preset;
+    s.preset = values[1 + o]; s.fit = Fit(values[2 + o]); s.focal_x = values[3 + o]; s.focal_y = values[4 + o];
+    s.inset = values[5 + o]; s.transparent = values[6 + o] != 0;
+    s.background = {uint8_t(values[7 + o]), uint8_t(values[8 + o]), uint8_t(values[9 + o]), 255};
     if (!s.valid()) return false;
     destination = s;
     return true;
+}
+
+// The value to persist: empty for the shipped defaults, so a reset clears the
+// key, otherwise serialize(). Invalid settings are refused and `out` is kept.
+inline bool stored_value(const Settings& s, std::string& out)
+{
+    if (!s.valid()) return false;
+    out = same(s, Settings{}) ? std::string() : serialize(s);
+    return true;
+}
+
+// Default: nothing stored. Stored: a valid value. Invalid: a value that does
+// not parse; the shipped mark is shown and the value is left for the user to
+// replace or reset, never silently rewritten.
+enum class Provenance { Default, Stored, Invalid };
+struct Resolved { Settings settings; Provenance provenance = Provenance::Default; };
+inline Resolved resolve(const std::string& stored)
+{
+    Resolved result;
+    if (stored.empty()) return result;
+    if (deserialize(stored, result.settings)) result.provenance = Provenance::Stored;
+    else { result.settings = Settings{}; result.provenance = Provenance::Invalid; }
+    return result;
 }
 
 } }
