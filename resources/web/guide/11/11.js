@@ -62,7 +62,8 @@ function GotoPolicyPage()
 	
 	SendWXMessage( JSON.stringify(tSend) );
 	
-	window.location.href="../3/index.html?region="+RegionFinal;
+	// The funny-level step (12) comes next; it passes the region on to 3.
+	window.location.href="../12/index.html?region="+encodeURIComponent(RegionFinal);
 }
 
 

@@ -1,6 +1,9 @@
 #include "WebGuideDialog.hpp"
 #include "ConfigWizard.hpp"
+#include "FirstRunFunnyDisclosure.hpp"
+#include "PersonalModes/SchoolMode.hpp"
 
+#include <optional>
 #include <string.h>
 #include "I18N.hpp"
 #include "libslic3r/AppConfig.hpp"
@@ -42,6 +45,84 @@ using namespace nlohmann;
 namespace Slic3r { namespace GUI {
 
 json m_ProfileJson;
+
+namespace {
+
+// Funny-level step of the first-run guide (resources/web/guide/12). The page
+// holds the wording; FirstRunFunnyDisclosure holds the state it renders and the
+// requests it may send. The step must disclose the default the application
+// really ships, so the two sets of bounds are tied together here.
+namespace Disclosure = FirstRunFunnyDisclosure;
+static_assert(Disclosure::LEVEL_MIN == I18N::FUNNY_LEVEL_MIN, "guide disclosure must use the shipped minimum");
+static_assert(Disclosure::LEVEL_MAX == I18N::FUNNY_LEVEL_MAX, "guide disclosure must use the shipped maximum");
+static_assert(Disclosure::LEVEL_DEFAULT == I18N::FUNNY_LEVEL_DEFAULT, "guide disclosure must state the shipped default");
+
+I18N::FunnyLanguage disclosure_funny_language(Disclosure::Language language)
+{
+    return language == Disclosure::Language::English ? I18N::FunnyLanguage::English : I18N::FunnyLanguage::Cantonese;
+}
+
+const char *disclosure_level_key(Disclosure::Language language)
+{
+    return language == Disclosure::Language::English ? I18N::FUNNY_LEVEL_ENGLISH_KEY : I18N::FUNNY_LEVEL_CANTONESE_KEY;
+}
+
+Disclosure::LanguageState disclosure_language_state(const AppConfig *config, Disclosure::Language language)
+{
+    const I18N::FunnyLanguage funny = disclosure_funny_language(language);
+    Disclosure::LanguageState state;
+    state.level  = I18N::language_mode_service().funny_level(funny);
+    state.stored = config != nullptr && config->has(disclosure_level_key(language));
+    if (const wxString *sample = I18N::funny_copy_variant(wxString::FromUTF8(Disclosure::SAMPLE_SOURCE), funny, state.level))
+        state.sample = into_u8(*sample);
+    return state;
+}
+
+// Applies one request from the funny-level step with the same persistence as
+// the Preferences sliders, and returns the script that refreshes the page, or
+// an empty string when the page needs no answer. While School mode treats funny
+// levels as not installed nothing is written and the answer carries no levels.
+wxString apply_funny_disclosure_request(const Disclosure::Request &request)
+{
+    AppConfig *config    = wxGetApp().app_config;
+    const bool available = !PersonalModes::school_presentation_suppressed.load();
+
+    if (request.action == Disclosure::Action::Acknowledge) {
+        // The step was read and left with Next: the one-time disclosure
+        // notification after start-up has nothing left to say.
+        if (available && config != nullptr) {
+            config->set_bool(I18N::FUNNY_LEVEL_DISCLOSED_KEY, true);
+            config->save();
+        }
+        return wxEmptyString;
+    }
+
+    if (available && config != nullptr && request.action != Disclosure::Action::Describe) {
+        const char *key = disclosure_level_key(request.language);
+        if (request.action == Disclosure::Action::Save) {
+            config->set(key, std::to_string(request.level));
+        } else {
+            // Reset returns to the shipped default: the stored value is removed,
+            // which is exactly the state of a profile that never changed it.
+            config->erase("app", key);
+            config->set_dirty();
+        }
+        config->save();
+        I18N::language_mode_service().set_funny_level(disclosure_funny_language(request.language), request.level);
+    }
+
+    Disclosure::State state;
+    state.available = available;
+    if (available) {
+        state.english   = disclosure_language_state(config, Disclosure::Language::English);
+        state.cantonese = disclosure_language_state(config, Disclosure::Language::Cantonese);
+    }
+    // ASCII-only JSON (non-ASCII escaped) so the script survives any conversion.
+    const std::string payload = Disclosure::payload(state).dump(-1, ' ', true);
+    return wxString::Format("HandleStudio(%s)", wxString::FromUTF8(payload));
+}
+
+} // namespace
 
 static wxString update_custom_filaments()
 {
@@ -675,6 +756,12 @@ void GuideFrame::OnScriptMessage(wxWebViewEvent &evt)
                 UxProgramTermsDialog dlg(this);
                 dlg.ShowModal();
             });
+        }
+        else if (const std::optional<FirstRunFunnyDisclosure::Request> funny_request = FirstRunFunnyDisclosure::parse_request(j))
+        {
+            const wxString strJS = apply_funny_disclosure_request(*funny_request);
+            if (!strJS.empty())
+                wxGetApp().CallAfter([this, strJS] { RunScript(strJS); });
         }
     } catch (std::exception &e) {
         // wxMessageBox(e.what(), "json Exception", MB_OK);

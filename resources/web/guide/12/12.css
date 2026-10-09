@@ -1,0 +1,114 @@
+/* Funny-level step of the first-run guide. Colours come from the --md-* role
+   tokens in ../css/common.css (light) and ../css/dark.css (dark). */
+[hidden]
+{
+	display: none !important;
+}
+
+#Title h1
+{
+	font-size: var(--md-type-headline);
+	line-height: 30px;
+	font-weight: 700;
+	color: var(--md-on-surface);
+	padding: 0px 10mm;
+}
+
+#Content
+{
+	padding: 12px 15%;
+}
+
+#FunnyIntro
+{
+	font-size: var(--md-type-section-title);
+	line-height: 24px;
+	color: var(--md-on-surface);
+	margin-bottom: 12px;
+}
+
+#FunnyFacts
+{
+	margin: 0 0 16px 20px;
+	color: var(--md-on-surface-variant);
+}
+
+#FunnyFacts li
+{
+	margin-bottom: 8px;
+	overflow-wrap: anywhere;
+}
+
+#FunnyControls
+{
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.FunnyRow
+{
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	padding: 12px 16px;
+	border: 1px solid var(--md-outline-variant);
+	border-radius: var(--md-radius-list);
+	background-color: var(--md-sc-low);
+}
+
+.FunnyRowHead
+{
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	align-items: baseline;
+	gap: 4px 16px;
+}
+
+.FunnyRowHead label
+{
+	font-weight: 500;
+	color: var(--md-on-surface);
+}
+
+.FunnyRowHead output
+{
+	color: var(--md-on-surface-variant);
+}
+
+.FunnyRow input[type="range"]
+{
+	width: 100%;
+	min-height: 24px;
+	accent-color: var(--md-primary);
+	cursor: pointer;
+}
+
+.FunnySample
+{
+	font-size: var(--md-type-body-s);
+	color: var(--md-on-surface-variant);
+	overflow-wrap: anywhere;
+}
+
+.FunnySampleText
+{
+	color: var(--md-on-surface);
+}
+
+button.FunnyReset
+{
+	align-self: flex-start;
+	margin-left: 0;
+	min-height: 40px;
+	padding: 8px 20px;
+}
+
+@media (max-width: 600px)
+{
+	#Content
+	{
+		padding: 12px 16px;
+	}
+}

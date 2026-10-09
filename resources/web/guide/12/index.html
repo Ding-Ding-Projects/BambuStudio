@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Cache-Control" content="max-age=7200" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Funny levels</title>
+<link rel="stylesheet" type="text/css" href="../css/common.css" />
+<link rel="stylesheet" type="text/css" href="12.css" />
+<link rel="stylesheet" type="text/css" href="../css/dark.css" />
+<script type="text/javascript" src="../js/jquery-3.6.0.min.js"></script>
+<script type="text/javascript" src="../js/json2.js"></script>
+<script type="text/javascript" src="../../data/text.js"></script>
+<script type="text/javascript" src="../js/globalapi.js"></script>
+<script type="text/javascript" src="../js/common.js"></script>
+<script type="text/javascript" src="funny-disclosure.js"></script>
+<script type="text/javascript" src="12.js"></script>
+</head>
+<body onLoad="OnInit()">
+<!-- Funny-level step of the first-run guide. Nothing below is shown until the
+     application has answered, so School mode can skip the step without the
+     page ever mentioning funny levels. -->
+<div id="Title">
+	<h1 id="FunnyTitle" hidden></h1>
+</div>
+<div id="Content" class="ZScrol">
+	<div id="FunnyDisclosure" hidden>
+		<p id="FunnyIntro"></p>
+		<ul id="FunnyFacts">
+			<li id="FunnyFactAffects"></li>
+			<li id="FunnyFactDefaults"></li>
+			<li id="FunnyFactChange"></li>
+		</ul>
+		<div id="FunnyControls" hidden>
+			<div class="FunnyRow" role="group" aria-labelledby="FunnyEnglishLabel">
+				<div class="FunnyRowHead">
+					<label id="FunnyEnglishLabel" for="FunnyEnglishRange"></label>
+					<output id="FunnyEnglishValue" for="FunnyEnglishRange" aria-live="polite"></output>
+				</div>
+				<input type="range" id="FunnyEnglishRange" min="1" max="5" step="1" value="5" aria-describedby="FunnyEnglishSample" />
+				<p class="FunnySample" id="FunnyEnglishSample"><span class="FunnySampleLabel"></span> <span class="FunnySampleText" lang="en"></span></p>
+				<button type="button" class="GrayBtn FunnyReset" id="FunnyEnglishReset"></button>
+			</div>
+			<div class="FunnyRow" role="group" aria-labelledby="FunnyCantoneseLabel">
+				<div class="FunnyRowHead">
+					<label id="FunnyCantoneseLabel" for="FunnyCantoneseRange"></label>
+					<output id="FunnyCantoneseValue" for="FunnyCantoneseRange" aria-live="polite"></output>
+				</div>
+				<input type="range" id="FunnyCantoneseRange" min="1" max="5" step="1" value="5" aria-describedby="FunnyCantoneseSample" />
+				<p class="FunnySample" id="FunnyCantoneseSample"><span class="FunnySampleLabel"></span> <span class="FunnySampleText" lang="yue-Hant-HK"></span></p>
+				<button type="button" class="GrayBtn FunnyReset" id="FunnyCantoneseReset"></button>
+			</div>
+		</div>
+	</div>
+</div>
+<div id="AcceptArea">
+	<button type="button" class="GrayBtn trans" tid="t8" id="PreBtn" onclick="GotoPreviousPage()">Back</button>
+	<button type="button" class="NormalBtn trans" tid="t9" id="AcceptBtn" onclick="GotoNextPage()">Next</button>
+</div>
+</body>
+</html>

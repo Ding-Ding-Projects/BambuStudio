@@ -13,6 +13,7 @@ review-status: agent-drafted
 - [鍵盤、輔助同回應 GUI 可訪問性](gui-accessibility.md)
 - [英文、香港廣東話同雙語模式](language-modes.md)
 - [有趣等級同對話框 emoji](funny-levels-and-dialog-emojis.md)
+- [首次設定時講清楚搞笑程度（設定嚮導）](first-run-funny-level-disclosure.md)
 - [墨水術語（墨水 → 墨水、AMS → 墨水機）](ink-terminology.md)
 - [外觀自訂](appearance-customization.md)
 - [可重新命名應用名稱（顯示標籤只）](renamable-app-name.md)
