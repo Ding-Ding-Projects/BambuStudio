@@ -198,7 +198,17 @@ static void status_messages()
                              "\"queuedBytes\":4096,\"maxBytes\":268435456,\"ttlHours\":24}";
     const auto status = parse_status(good);
     CHECK(status && status->drop_code == "123456" && status->station_name == "Bambu Studio" && status->queued == 2 &&
-          status->queued_bytes == 4096 && status->max_bytes == 268435456ULL && status->ttl_hours == 24);
+          status->queued_bytes == 4096 && status->max_bytes == 268435456ULL && status->ttl_hours == 24.0 &&
+          status->public_url.empty());
+    // DROP_TTL_HOURS accepts fractions; publicUrl is optional, may be null, and is normalized.
+    const std::string head = "{\"protocol\":1,\"stationName\":\"Bambu Studio\",\"dropCode\":\"123456\",\"queued\":0,"
+                             "\"queuedBytes\":0,\"maxBytes\":1024,";
+    CHECK(parse_status(head + "\"ttlHours\":0.5}") && parse_status(head + "\"ttlHours\":0.5}")->ttl_hours == 0.5);
+    CHECK(!parse_status(head + "\"ttlHours\":0}") && !parse_status(head + "\"ttlHours\":-1}") && !parse_status(head + "\"ttlHours\":\"24\"}"));
+    CHECK(parse_status(head + "\"ttlHours\":24,\"publicUrl\":null}")->public_url.empty());
+    CHECK(parse_status(head + "\"ttlHours\":24,\"publicUrl\":\"https://Drop.Example.org/models/\"}")->public_url ==
+          "https://drop.example.org/models");
+    CHECK(parse_status(head + "\"ttlHours\":24,\"publicUrl\":\"https://user:pw@drop.example.org\"}")->public_url.empty());
     CHECK(!parse_status("{\"protocol\":2,\"stationName\":\"x\",\"dropCode\":\"1\",\"queued\":0,\"queuedBytes\":0,\"maxBytes\":1,\"ttlHours\":1}"));
     CHECK(!parse_status("{\"stationName\":\"x\",\"dropCode\":\"1\",\"queued\":0,\"queuedBytes\":0,\"maxBytes\":1,\"ttlHours\":1}"));
     CHECK(!parse_status("{\"protocol\":1,\"stationName\":\"x\",\"dropCode\":\"\",\"queued\":0,\"queuedBytes\":0,\"maxBytes\":1,\"ttlHours\":1}"));
@@ -275,15 +285,66 @@ static void addresses()
         {dotted(10, 8, 0, 2), "Ethernet", false, false, true},
     };
     CHECK(choose_lan_ipv4(adapters) == lan_ip);
+    // Loopback, link-local and down adapters are never offered; the WSL switch is private, so it stays
+    // as a lower choice.
+    CHECK((lan_ipv4_candidates(adapters) == std::vector<std::string>{lan_ip, dotted(172, 28, 48, 1)}));
     adapters[3].up = false;
     CHECK(choose_lan_ipv4(adapters) == dotted(172, 28, 48, 1));
     CHECK(choose_lan_ipv4({}).empty());
     CHECK(choose_lan_ipv4({{"127.0.0.1", "lo", true, true, false}}).empty());
+    // A public address is never offered, even on the only adapter with a gateway.
+    CHECK(lan_ipv4_candidates({{"198.51.100.7", "Ethernet", true, false, true}}).empty());
+    CHECK(lan_ipv4_candidates({{"224.0.0.1", "Ethernet", true, false, true}, {dotted(100, 64, 0, 1), "Ethernet", true, false, true}}).empty());
+    // The same address on two adapters is listed once.
+    CHECK(lan_ipv4_candidates({{lan_ip, "Wi-Fi", true, false, true}, {lan_ip, "Wi-Fi 2", true, false, false}}).size() == 1);
+    CHECK(parse_base_address("http://0.0.0.0:8833")->loopback && parse_base_address("http://[::]:8833")->loopback);
+}
 
-    CHECK(share_address(*local, lan_ip) == "http://" + lan_ip + ":8833");
-    CHECK(share_address(*local, "").empty());
-    CHECK(share_address(*lan, lan_ip) == "http://192.0.2.20:8833");
-    CHECK(share_address(*parse_base_address("localhost"), lan_ip) == "http://" + lan_ip);
+static void invites()
+{
+    const auto local = *parse_base_address(kDefaultAddress);
+    const auto lan   = *parse_base_address("http://192.0.2.20:8833");
+    const std::string first  = dotted(192, 168, 1, 20);
+    const std::string second = dotted(10, 0, 0, 7);
+
+    CHECK(normalize_public_url("https://drop.example.org") == "https://drop.example.org");
+    CHECK(normalize_public_url("HTTPS://Drop.Example.org:8443/a/b/") == "https://drop.example.org:8443/a/b");
+    CHECK(normalize_public_url("http://drop.example.org/%7Eme") == "http://drop.example.org/%7Eme");
+    for (const char *bad : {"", "drop.example.org", "ftp://drop.example.org", "https://user@drop.example.org",
+                            "https://drop.example.org/?code=1", "https://drop.example.org/#code=1", "javascript:alert(1)",
+                            "https://drop.example.org/a b", "https://drop.example.org/%zz", "https://drop.example.org//x",
+                            "https://", "https://drop.example.org:99999"})
+        CHECK(normalize_public_url(bad).empty());
+
+    // 1. The container's public URL wins over everything.
+    InviteBase invite = choose_invite_base("https://drop.example.org/models", local, {first}, "");
+    CHECK(invite.source == InviteSource::PublicUrl && invite.base == "https://drop.example.org/models" && invite.choices.empty());
+    // An unusable public URL is skipped, never shown.
+    CHECK(choose_invite_base("https://user:pw@drop.example.org", lan, {first}, "").source == InviteSource::Configured);
+    // 2. A configured address that is not this computer's loopback.
+    invite = choose_invite_base("", lan, {first, second}, second);
+    CHECK(invite.source == InviteSource::Configured && invite.base == "http://192.0.2.20:8833" && invite.choices.empty());
+    // 3. This computer's private LAN IPv4 with the configured port, the first candidate by default...
+    invite = choose_invite_base("", local, {first, second}, "");
+    CHECK(invite.source == InviteSource::LanAddress && invite.base == "http://" + first + ":8833" && invite.chosen == first &&
+          (invite.choices == std::vector<std::string>{first, second}));
+    // ...or the user's pick while it is still a candidate.
+    CHECK(choose_invite_base("", local, {first, second}, second).base == "http://" + second + ":8833");
+    CHECK(choose_invite_base("", local, {first, second}, "192.0.2.99").chosen == first);
+    // Loopback, link-local and public addresses never become a link base, even when passed in.
+    CHECK(choose_invite_base("", local, {"127.0.0.1", "169.254.3.4", "198.51.100.7"}, "127.0.0.1").source == InviteSource::None);
+    invite = choose_invite_base("", local, {}, "");
+    CHECK(invite.source == InviteSource::None && invite.base.empty() && invite.choices.empty());
+    CHECK(choose_invite_base("", *parse_base_address("localhost"), {first}, "").base == "http://" + first);
+    CHECK(choose_invite_base("", *parse_base_address("http://0.0.0.0:8833"), {first}, "").source == InviteSource::LanAddress);
+
+    // The code travels in the fragment, encoded like encodeURIComponent.
+    CHECK(invite_link("http://" + first + ":8833", "123456") == "http://" + first + ":8833/#code=123456");
+    CHECK(invite_link("https://drop.example.org/models", "12+4&5") == "https://drop.example.org/models/#code=12%2B4%265");
+    CHECK(invite_link("", "123456").empty());
+    CHECK(invite_link("https://drop.example.org", "").empty());
+    CHECK(invite_link("https://drop.example.org", "12\n34").empty());
+    CHECK(invite_link("https://drop.example.org", "123456").find('?') == std::string::npos);
 }
 
 static void presentation_and_tracking()
@@ -333,6 +394,7 @@ int main()
     inbox();
     status_messages();
     addresses();
+    invites();
     presentation_and_tracking();
     std::cout << "lan_model_drop_model_test: " << assertions << " assertions passed\n";
     return 0;

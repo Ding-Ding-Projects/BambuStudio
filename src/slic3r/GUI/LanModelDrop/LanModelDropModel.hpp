@@ -98,9 +98,13 @@ struct StationStatus
     std::uint64_t queued       = 0;
     std::uint64_t queued_bytes = 0;
     std::uint64_t max_bytes    = 0;
-    std::uint64_t ttl_hours    = 0;
+    double        ttl_hours    = 0; // the container accepts fractions of an hour
+    // DROP_PUBLIC_URL as the container reports it, normalized (see normalize_public_url); empty when
+    // the container has none, reports null, or reports a value that is not an acceptable link base.
+    std::string   public_url;
 };
-// Only a protocol-1 answer with every field present and well formed.
+// Only a protocol-1 answer with every required field present and well formed. `publicUrl` is
+// optional so a container from before the invite link still connects.
 std::optional<StationStatus> parse_status(std::string_view body);
 // {"dropCode":"654321"}
 std::optional<std::string> parse_drop_code(std::string_view body);
@@ -149,7 +153,7 @@ struct BaseAddress
     std::string host;   // lowercase; IPv6 keeps its brackets
     int         port = 0;
     bool        explicit_port = false;
-    bool        loopback = false;
+    bool        loopback = false; // localhost, 127.0.0.0/8, [::1], or the unspecified 0.0.0.0 and [::]
     std::string base;   // scheme://host[:port], no trailing slash
 };
 // Accepts "http://host[:port]", "https://host[:port]" or "host[:port]" (http), with an optional
@@ -175,13 +179,44 @@ struct AdapterAddress
     bool        has_gateway = false;
 };
 bool        looks_virtual_adapter(std::string_view adapter_name);
-// The address other devices on the LAN most likely reach this computer at: an up, non-loopback,
-// non-link-local IPv4, preferring an adapter with a gateway, a private range and a physical adapter.
-// Empty when there is none.
+// The private IPv4 addresses (10/8, 172.16/12, 192.168/16) of up adapters that other devices on
+// the LAN could open, best first: an adapter with a gateway, then a physical one. Never loopback,
+// link-local, multicast or public addresses; each address once.
+std::vector<std::string> lan_ipv4_candidates(const std::vector<AdapterAddress> &addresses);
+// The first of lan_ipv4_candidates, or empty when there is none.
 std::string choose_lan_ipv4(const std::vector<AdapterAddress> &addresses);
-// The address to share with senders: the configured address, or http://<LAN IPv4>:<port> when the
-// configured host is this computer's loopback. Empty when a loopback address has no LAN address.
-std::string share_address(const BaseAddress &address, const std::string &lan_ipv4);
+
+// ---------------------------------------------------------------------------------------------
+// Invite link
+// ---------------------------------------------------------------------------------------------
+
+// An http or https URL with a host, an optional port and an optional path, without a user name,
+// query or fragment, returned without a trailing slash. Empty when the text is not such a URL.
+std::string normalize_public_url(std::string_view url);
+
+enum class InviteSource {
+    None,        // no usable base: the address is this computer and it has no private LAN IPv4
+    PublicUrl,   // the container's DROP_PUBLIC_URL
+    Configured,  // the configured address, which is not a loopback address
+    LanAddress   // http(s)://<private LAN IPv4>:<port> of this computer
+};
+
+struct InviteBase
+{
+    InviteSource             source = InviteSource::None;
+    std::string              base;    // no trailing slash; empty with InviteSource::None
+    std::vector<std::string> choices; // with LanAddress: every candidate, for the picker
+    std::string              chosen;  // with LanAddress: the candidate in `base`
+};
+// The base of the invite link, in the brief's order of preference: the container's public URL, then
+// the configured address when it is not a loopback or unspecified address, then this computer's
+// private LAN IPv4 with the configured scheme and port. `preferred_ipv4` (the user's pick) wins
+// when it is still one of `lan_candidates`; otherwise the first candidate is used.
+InviteBase choose_invite_base(const std::string &public_url, const BaseAddress &configured,
+                              const std::vector<std::string> &lan_candidates, const std::string &preferred_ipv4);
+// <base>/#code=<code>, the code percent-encoded like encodeURIComponent. The code travels in the
+// fragment, so it reaches neither server logs nor a Referer header. Empty when either part is unusable.
+std::string invite_link(const std::string &base, const std::string &drop_code);
 
 // ---------------------------------------------------------------------------------------------
 // Presentation helpers

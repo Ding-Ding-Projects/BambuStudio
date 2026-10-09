@@ -5,6 +5,7 @@
 #include <nlohmann/json.hpp>
 
 #include <algorithm>
+#include <cctype>
 #include <cstdio>
 
 namespace Slic3r { namespace GUI { namespace LanModelDrop {
@@ -444,9 +445,16 @@ std::optional<StationStatus> parse_status(std::string_view body)
     StationStatus status;
     if (!read_string(*object, "stationName", status.station_name) || !read_string(*object, "dropCode", status.drop_code) ||
         !read_count(*object, "queued", status.queued) || !read_count(*object, "queuedBytes", status.queued_bytes) ||
-        !read_count(*object, "maxBytes", status.max_bytes) || !read_count(*object, "ttlHours", status.ttl_hours))
+        !read_count(*object, "maxBytes", status.max_bytes))
         return std::nullopt;
+    const auto ttl = object->find("ttlHours");
+    if (ttl == object->end() || !ttl->is_number() || !(ttl->get<double>() > 0.0)) return std::nullopt;
+    status.ttl_hours = ttl->get<double>();
     if (!is_drop_code(status.drop_code)) return std::nullopt;
+    // Optional and never fatal: a value that is not an acceptable link base is ignored, and the
+    // invite falls back to the configured or the LAN address.
+    std::string public_url;
+    if (read_string(*object, "publicUrl", public_url)) status.public_url = normalize_public_url(public_url);
     status.station_name = sanitize_sender(status.station_name);
     return status;
 }
@@ -566,7 +574,8 @@ std::optional<BaseAddress> parse_base_address(std::string_view input)
     } else
         address.port = address.scheme == "https" ? 443 : 80;
     address.host     = host;
-    address.loopback = host == "localhost" || host == "[::1]" || (is_ipv4(host) && starts_with(host, "127."));
+    address.loopback = host == "localhost" || host == "[::1]" || host == "[::]" || host == "0.0.0.0" ||
+                       (is_ipv4(host) && starts_with(host, "127."));
     address.base     = address.scheme + "://" + host + (address.explicit_port ? ":" + std::to_string(address.port) : std::string());
     return address;
 }
@@ -600,29 +609,115 @@ bool looks_virtual_adapter(std::string_view adapter_name)
     return false;
 }
 
-std::string choose_lan_ipv4(const std::vector<AdapterAddress> &addresses)
+std::vector<std::string> lan_ipv4_candidates(const std::vector<AdapterAddress> &addresses)
 {
-    std::string best;
-    int         best_score = -1;
+    struct Scored
+    {
+        int         score;
+        std::size_t order;
+        std::string ipv4;
+    };
+    std::vector<Scored> scored;
     for (const AdapterAddress &a : addresses) {
-        const auto octets = ipv4_octets(a.ipv4);
-        if (!a.up || a.loopback || !octets) continue;
-        const auto &o = *octets;
-        if (o[0] == 127 || o[0] == 0 || (o[0] == 169 && o[1] == 254) || o[0] >= 224) continue;
-        const int score = (a.has_gateway ? 4 : 0) + (is_private_ipv4(a.ipv4) ? 2 : 0) + (looks_virtual_adapter(a.adapter_name) ? 0 : 1);
-        if (score > best_score) {
-            best_score = score;
-            best       = a.ipv4;
-        }
+        // Private ranges only: loopback, link-local, multicast and public addresses are never offered.
+        if (!a.up || a.loopback || !is_private_ipv4(a.ipv4)) continue;
+        if (std::any_of(scored.begin(), scored.end(), [&a](const Scored &s) { return s.ipv4 == a.ipv4; })) continue;
+        const int score = (a.has_gateway ? 2 : 0) + (looks_virtual_adapter(a.adapter_name) ? 0 : 1);
+        scored.push_back({score, scored.size(), a.ipv4});
     }
-    return best;
+    std::stable_sort(scored.begin(), scored.end(), [](const Scored &l, const Scored &r) { return l.score > r.score; });
+    std::vector<std::string> out;
+    for (const Scored &s : scored) out.push_back(s.ipv4);
+    return out;
 }
 
-std::string share_address(const BaseAddress &address, const std::string &lan_ipv4)
+std::string choose_lan_ipv4(const std::vector<AdapterAddress> &addresses)
 {
-    if (!address.loopback) return address.base;
-    if (!is_ipv4(lan_ipv4)) return {};
-    return address.scheme + "://" + lan_ipv4 + (address.explicit_port ? ":" + std::to_string(address.port) : std::string());
+    const auto candidates = lan_ipv4_candidates(addresses);
+    return candidates.empty() ? std::string() : candidates.front();
+}
+
+// ---------------------------------------------------------------------------------------------
+
+std::string normalize_public_url(std::string_view url)
+{
+    std::string text(url);
+    if (text.empty() || text.size() > 1024 || !visible_ascii(text)) return {};
+    const std::size_t scheme_end = text.find("://");
+    if (scheme_end == std::string::npos) return {};
+    const std::string scheme = lower(text.substr(0, scheme_end));
+    if (scheme != "http" && scheme != "https") return {};
+    std::string rest = text.substr(scheme_end + 3);
+    // No query, fragment or backslash anywhere; no user name in the authority.
+    if (rest.find_first_of("?#\\") != std::string::npos) return {};
+    const std::size_t slash = rest.find('/');
+    const std::string authority = rest.substr(0, slash);
+    std::string       path      = slash == std::string::npos ? std::string() : rest.substr(slash);
+    if (authority.empty() || authority.find('@') != std::string::npos) return {};
+    const auto parsed = parse_base_address(scheme + "://" + authority);
+    if (!parsed) return {};
+    while (!path.empty() && path.back() == '/') path.pop_back();
+    for (std::size_t i = 0; i < path.size(); ++i) {
+        const char c = path[i];
+        const bool plain = (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') ||
+                           std::string_view("-._~/!$&'()*+,;=:@%").find(c) != std::string_view::npos;
+        if (!plain) return {};
+        if (c == '%' && (i + 2 >= path.size() || !std::isxdigit(static_cast<unsigned char>(path[i + 1])) ||
+                         !std::isxdigit(static_cast<unsigned char>(path[i + 2]))))
+            return {};
+    }
+    if (path.find("//") != std::string::npos) return {};
+    return parsed->base + path;
+}
+
+InviteBase choose_invite_base(const std::string &public_url, const BaseAddress &configured,
+                              const std::vector<std::string> &lan_candidates, const std::string &preferred_ipv4)
+{
+    InviteBase invite;
+    const std::string public_base = normalize_public_url(public_url);
+    if (!public_base.empty()) {
+        invite.source = InviteSource::PublicUrl;
+        invite.base   = public_base;
+        return invite;
+    }
+    if (!configured.loopback && !configured.base.empty()) {
+        invite.source = InviteSource::Configured;
+        invite.base   = configured.base;
+        return invite;
+    }
+    for (const std::string &candidate : lan_candidates)
+        if (is_private_ipv4(candidate) &&
+            std::find(invite.choices.begin(), invite.choices.end(), candidate) == invite.choices.end())
+            invite.choices.push_back(candidate);
+    if (invite.choices.empty() || configured.scheme.empty()) {
+        invite.choices.clear();
+        return invite;
+    }
+    const auto preferred = std::find(invite.choices.begin(), invite.choices.end(), preferred_ipv4);
+    invite.chosen = preferred != invite.choices.end() ? *preferred : invite.choices.front();
+    invite.source = InviteSource::LanAddress;
+    invite.base   = configured.scheme + "://" + invite.chosen +
+                  (configured.explicit_port ? ":" + std::to_string(configured.port) : std::string());
+    return invite;
+}
+
+std::string invite_link(const std::string &base, const std::string &drop_code)
+{
+    if (base.empty() || !is_drop_code(drop_code)) return {};
+    static const char digits[] = "0123456789ABCDEF";
+    std::string code;
+    for (const char c : drop_code) {
+        const bool unreserved = (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') ||
+                                std::string_view("-_.!~*'()").find(c) != std::string_view::npos;
+        if (unreserved) code.push_back(c);
+        else {
+            const auto u = static_cast<unsigned char>(c);
+            code.push_back('%');
+            code.push_back(digits[u >> 4]);
+            code.push_back(digits[u & 0x0F]);
+        }
+    }
+    return base + "/#code=" + code;
 }
 
 // ---------------------------------------------------------------------------------------------
