@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-09 16:20+0000\n"
+"POT-Creation-Date: 2026-10-09 22:38+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -4813,6 +4813,18 @@ msgstr ""
 msgid "Notifications (%d unread)"
 msgstr ""
 
+#. TRN: Tooltip and accessible name of the LAN model drop indicator in the title bar.
+#, possible-boost-format
+msgid "LAN model drop: %1%"
+msgstr ""
+
+#, possible-boost-format
+msgid "%1% received files waiting"
+msgstr ""
+
+msgid "Click to invite someone to send a model."
+msgstr ""
+
 msgid "Failed to download the plug-in. Please check your firewall settings and vpn software, check and retry."
 msgstr ""
 
@@ -6729,6 +6741,18 @@ msgid "Smart home"
 msgstr ""
 
 msgid "Home Assistant speakers, media controls, TTS narrator and alert lights"
+msgstr ""
+
+msgid "LAN model drop"
+msgstr ""
+
+msgid "Receive 3D models that people on your local network send through the drop site"
+msgstr ""
+
+msgid "Invite someone to send a model"
+msgstr ""
+
+msgid "Show the link and QR code of the LAN drop site"
 msgstr ""
 
 msgid "Local model suite"
@@ -12233,6 +12257,15 @@ msgid "Associate .step/.stp files to Bambu Studio"
 msgstr ""
 
 msgid "If enabled, sets Bambu Studio as default application to open .step files"
+msgstr ""
+
+msgid "Receive models from the LAN drop site"
+msgstr ""
+
+msgid "Check the drop site every few seconds and show each received model with Open and Discard."
+msgstr ""
+
+msgid "Connection to the drop site"
 msgstr ""
 
 msgid "Log"
@@ -22742,6 +22775,15 @@ msgstr ""
 msgid "Find any print / filament / printer parameter"
 msgstr ""
 
+msgid "Link and QR code for the LAN drop site, so someone on your network can send a 3D model"
+msgstr ""
+
+msgid "LAN model drop settings"
+msgstr ""
+
+msgid "Receive models from the LAN drop site: switch, address, station key and status"
+msgstr ""
+
 msgid "Restore unchanged meshes reduced by automatic model import simplification"
 msgstr ""
 
@@ -26998,6 +27040,39 @@ msgstr ""
 msgid "Minutes between live-view checks"
 msgstr ""
 
+msgid "LAN model drop, off by default"
+msgstr ""
+
+msgid "Invite link and QR code"
+msgstr ""
+
+msgid "Copy the link or show the QR code for the LAN drop site"
+msgstr ""
+
+msgid "Test connection"
+msgstr ""
+
+msgid "LAN model drop status"
+msgstr ""
+
+msgid "Drop site address"
+msgstr ""
+
+msgid "Where Bambu Studio reaches the LAN drop site"
+msgstr ""
+
+msgid "Station key"
+msgstr ""
+
+msgid "Kept protected with Windows data protection"
+msgstr ""
+
+msgid "Drop code"
+msgstr ""
+
+msgid "New code stops older links"
+msgstr ""
+
 msgid "DEV host"
 msgstr ""
 
@@ -27904,6 +27979,202 @@ msgid "Two or more results collide; adjust the pattern so every new name is uniq
 msgstr ""
 
 msgid "Nothing would change with this pattern"
+msgstr ""
+
+#, possible-boost-format
+msgid "Someone sent %1% (%2%)"
+msgstr ""
+
+#, possible-boost-format
+msgid "%1% sent %2% (%3%)"
+msgstr ""
+
+msgid "Discard"
+msgstr ""
+
+msgid "its size does not match what the drop site announced"
+msgstr ""
+
+msgid "its SHA-256 checksum does not match"
+msgstr ""
+
+msgid "it is not a 3MF, STL, STEP, OBJ or AMF model"
+msgstr ""
+
+msgid "the drop site described it with details that are not valid"
+msgstr ""
+
+msgid "A file"
+msgstr ""
+
+#, possible-boost-format
+msgid "Bambu Studio refused %1% from the LAN drop site because %2%. It was removed from the drop site."
+msgstr ""
+
+#, possible-boost-format
+msgid "%1% could not be received from the LAN drop site. It stays there until it expires; switch LAN model drop off and on again to retry."
+msgstr ""
+
+msgid "Not reachable"
+msgstr ""
+
+msgid "Wrong station key"
+msgstr ""
+
+msgid "Protocol not supported"
+msgstr ""
+
+msgid "Station key needed"
+msgstr ""
+
+msgid "Address not valid"
+msgstr ""
+
+msgid "Protected key storage unavailable"
+msgstr ""
+
+#, possible-boost-format
+msgid "Status: %1%"
+msgstr ""
+
+msgid "The link uses the public address the drop site announces."
+msgstr ""
+
+msgid "The link uses the drop site address from the LAN model drop settings."
+msgstr ""
+
+msgid "The link uses this computer's address on your local network."
+msgstr ""
+
+msgid "This computer has no private local network address to put in a link."
+msgstr ""
+
+msgid "Invite link QR code"
+msgstr ""
+
+msgid "They open the link on a phone or computer on your local network and send a 3D model to Bambu Studio."
+msgstr ""
+
+msgid "QR code of the invite link"
+msgstr ""
+
+msgid "Send them the link, or let them scan the QR code. It opens the drop site with the code filled in."
+msgstr ""
+
+msgid "LAN model drop is off. Switch it on to get a link to share."
+msgstr ""
+
+msgid "Turn on LAN model drop"
+msgstr ""
+
+msgid "Invite link"
+msgstr ""
+
+msgid "Copy link"
+msgstr ""
+
+msgid "New link"
+msgstr ""
+
+msgid "Show larger QR code"
+msgstr ""
+
+msgid "Address of this computer"
+msgstr ""
+
+msgid "Show them"
+msgstr ""
+
+msgid "Link copied to the clipboard."
+msgstr ""
+
+msgid "The clipboard is not available. Select the link and copy it."
+msgstr ""
+
+msgid "This computer has no private local network address to put in a link. Set the drop site address to an address the others can open."
+msgstr ""
+
+#, possible-boost-format
+msgid "The link appears once Bambu Studio is connected to the drop site. %1%"
+msgstr ""
+
+#, possible-boost-format
+msgid "Waiting for the drop site to send its code. %1%"
+msgstr ""
+
+msgid "The drop site's code is fixed by DROP_CODE, so New link cannot change it. Change DROP_CODE on the drop site to stop older links."
+msgstr ""
+
+msgid "The drop site did not make a new code. Older links still work."
+msgstr ""
+
+msgid "New link ready. Older links no longer work."
+msgstr ""
+
+#, possible-boost-format
+msgid "%1% received files waiting for Open or Discard."
+msgstr ""
+
+msgid "Testing the connection..."
+msgstr ""
+
+#, possible-boost-format
+msgid "Test result: %1%"
+msgstr ""
+
+msgid "The address Bambu Studio uses to reach the drop site, for example http://localhost:8833 when it runs on this computer."
+msgstr ""
+
+msgid "This address is not valid. Use http:// or https://, a host name or IPv4 address, and an optional port, for example http://localhost:8833."
+msgstr ""
+
+msgid "Show station key"
+msgstr ""
+
+msgid "Save key"
+msgstr ""
+
+#, possible-boost-format
+msgid "Read the key on the computer that runs the drop site with: %1%"
+msgstr ""
+
+msgid "Protected key storage is not available on this system, so the key cannot be saved."
+msgstr ""
+
+msgid "Saved for this Windows account, protected with Windows data protection. It is never shown in logs or exports."
+msgstr ""
+
+msgid "No station key is saved."
+msgstr ""
+
+msgid "Hide station key"
+msgstr ""
+
+msgid "The station key must be 16 to 512 visible characters without spaces. Nothing was saved."
+msgstr ""
+
+msgid "Station key saved."
+msgstr ""
+
+msgid "Station key removed."
+msgstr ""
+
+msgid "The station key could not be saved."
+msgstr ""
+
+msgid "New code"
+msgstr ""
+
+msgid "Not known yet"
+msgstr ""
+
+msgid "The code is fixed by DROP_CODE on the drop site."
+msgstr ""
+
+msgid "Make a new code; links with the old one stop working."
+msgstr ""
+
+msgid "People on your local network can send 3D models to this computer through the LAN drop site that runs in Docker. Each model waits for you: nothing is opened, sliced or printed until you choose Open."
 msgstr ""
 
 #: resources/data/hints.ini: [hint:How to use keyboard shortcuts]

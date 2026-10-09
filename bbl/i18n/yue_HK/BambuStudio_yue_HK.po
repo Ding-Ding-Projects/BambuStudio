@@ -44820,3 +44820,433 @@ msgstr "已安裝嘅旁白語音"
 #. review-status: agent-drafted
 msgid "Normal delivery: 0"
 msgstr "正常：0"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "LAN model drop: %1%"
+msgstr "LAN 模型投遞：%1%"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "%1% received files waiting"
+msgstr "%1% 個收到嘅檔案等緊處理"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Click to invite someone to send a model."
+msgstr "撳一下就可以邀請人傳送模型。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "LAN model drop"
+msgstr "LAN 模型投遞"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Receive 3D models that people on your local network send through the drop site"
+msgstr "接收區域網絡上其他人經投遞網站傳過嚟嘅 3D 模型"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Invite someone to send a model"
+msgstr "邀請人傳送模型"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Show the link and QR code of the LAN drop site"
+msgstr "顯示 LAN 投遞網站嘅連結同 QR 碼"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Receive models from the LAN drop site"
+msgstr "接收 LAN 投遞網站傳嚟嘅模型"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Check the drop site every few seconds and show each received model with Open and Discard."
+msgstr "每隔幾秒檢查一次投遞網站，每個收到嘅模型都會彈出通知，畀你揀「開啟」或者「捨棄」。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Connection to the drop site"
+msgstr "同投遞網站嘅連接"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Link and QR code for the LAN drop site, so someone on your network can send a 3D model"
+msgstr "LAN 投遞網站嘅連結同 QR 碼，等同一個網絡上嘅人可以傳 3D 模型過嚟"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "LAN model drop settings"
+msgstr "LAN 模型投遞設定"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Receive models from the LAN drop site: switch, address, station key and status"
+msgstr "接收 LAN 投遞網站傳嚟嘅模型：開關、地址、接收站金鑰同狀態"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "LAN model drop, off by default"
+msgstr "LAN 模型投遞，預設關閉"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Invite link and QR code"
+msgstr "邀請連結同 QR 碼"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Copy the link or show the QR code for the LAN drop site"
+msgstr "複製 LAN 投遞網站嘅連結，或者顯示佢嘅 QR 碼"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Test connection"
+msgstr "測試連接"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "LAN model drop status"
+msgstr "LAN 模型投遞狀態"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Drop site address"
+msgstr "投遞網站地址"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Where Bambu Studio reaches the LAN drop site"
+msgstr "Bambu Studio 連去 LAN 投遞網站嘅地址"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Station key"
+msgstr "接收站金鑰"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Kept protected with Windows data protection"
+msgstr "用 Windows 資料保護加密保存"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Drop code"
+msgstr "投遞碼"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "New code stops older links"
+msgstr "換咗新投遞碼，舊連結就會失效"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Someone sent %1% (%2%)"
+msgstr "有人傳咗 %1%（%2%）"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "%1% sent %2% (%3%)"
+msgstr "%1% 傳咗 %2%（%3%）"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Discard"
+msgstr "捨棄"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "its size does not match what the drop site announced"
+msgstr "檔案大小同投遞網站公布嘅唔一樣"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "its SHA-256 checksum does not match"
+msgstr "SHA-256 校驗碼唔一致"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "it is not a 3MF, STL, STEP, OBJ or AMF model"
+msgstr "佢唔係 3MF、STL、STEP、OBJ 或者 AMF 模型"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "the drop site described it with details that are not valid"
+msgstr "投遞網站提供嘅檔案資料無效"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "A file"
+msgstr "一個檔案"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Bambu Studio refused %1% from the LAN drop site because %2%. It was removed from the drop site."
+msgstr "Bambu Studio 拒絕咗 LAN 投遞網站傳嚟嘅 %1%，因為%2%。呢個檔案已經喺投遞網站移除。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "%1% could not be received from the LAN drop site. It stays there until it expires; switch LAN model drop off and on again to retry."
+msgstr "收唔到 LAN 投遞網站嘅 %1%。佢會留喺投遞網站直到過期；想再試，可以將 LAN 模型投遞關咗再開返。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Not reachable"
+msgstr "連唔到"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Wrong station key"
+msgstr "接收站金鑰唔啱"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Protocol not supported"
+msgstr "唔支援呢個協定"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Station key needed"
+msgstr "需要接收站金鑰"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Address not valid"
+msgstr "地址無效"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Protected key storage unavailable"
+msgstr "受保護嘅金鑰儲存用唔到"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Status: %1%"
+msgstr "狀態：%1%"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The link uses the public address the drop site announces."
+msgstr "連結用緊投遞網站公布嘅公開地址。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The link uses the drop site address from the LAN model drop settings."
+msgstr "連結用緊 LAN 模型投遞設定入面嘅投遞網站地址。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The link uses this computer's address on your local network."
+msgstr "連結用緊呢部電腦喺區域網絡上嘅地址。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "This computer has no private local network address to put in a link."
+msgstr "呢部電腦冇可以放入連結嘅私人區域網絡地址。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Invite link QR code"
+msgstr "邀請連結 QR 碼"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "They open the link on a phone or computer on your local network and send a 3D model to Bambu Studio."
+msgstr "對方喺同一個區域網絡嘅手機或者電腦打開連結，就可以傳 3D 模型畀 Bambu Studio。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "QR code of the invite link"
+msgstr "邀請連結嘅 QR 碼"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Send them the link, or let them scan the QR code. It opens the drop site with the code filled in."
+msgstr "將連結傳畀對方，或者畀佢掃 QR 碼。打開之後，投遞網站會自動填好投遞碼。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "LAN model drop is off. Switch it on to get a link to share."
+msgstr "LAN 模型投遞已經關閉。開咗佢先會有連結分享。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Turn on LAN model drop"
+msgstr "開啟 LAN 模型投遞"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Invite link"
+msgstr "邀請連結"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Copy link"
+msgstr "複製連結"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "New link"
+msgstr "新連結"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Show larger QR code"
+msgstr "放大 QR 碼"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Address of this computer"
+msgstr "呢部電腦嘅地址"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Show them"
+msgstr "顯示出嚟"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Link copied to the clipboard."
+msgstr "連結已經複製到剪貼簿。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "The clipboard is not available. Select the link and copy it."
+msgstr "剪貼簿用唔到。請自己揀選連結再複製。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "This computer has no private local network address to put in a link. Set the drop site address to an address the others can open."
+msgstr "呢部電腦冇可以放入連結嘅私人區域網絡地址。請將投遞網站地址設定做其他人打得開嘅地址。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "The link appears once Bambu Studio is connected to the drop site. %1%"
+msgstr "Bambu Studio 連接到投遞網站之後就會顯示連結。%1%"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Waiting for the drop site to send its code. %1%"
+msgstr "等緊投遞網站傳投遞碼過嚟。%1%"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The drop site's code is fixed by DROP_CODE, so New link cannot change it. Change DROP_CODE on the drop site to stop older links."
+msgstr "投遞網站嘅投遞碼由 DROP_CODE 固定咗，所以「新連結」改唔到佢。想舊連結失效，就要喺投遞網站改 DROP_CODE。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "The drop site did not make a new code. Older links still work."
+msgstr "投遞網站冇整到新投遞碼，舊連結仲用得。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "New link ready. Older links no longer work."
+msgstr "新連結準備好，舊連結已經失效。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "%1% received files waiting for Open or Discard."
+msgstr "有 %1% 個收到嘅檔案等緊你揀「開啟」或者「捨棄」。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Testing the connection..."
+msgstr "測試緊連接..."
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Test result: %1%"
+msgstr "測試結果：%1%"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The address Bambu Studio uses to reach the drop site, for example http://localhost:8833 when it runs on this computer."
+msgstr "Bambu Studio 用嚟連去投遞網站嘅地址；如果投遞網站喺呢部電腦運行，例如 http://localhost:8833。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "This address is not valid. Use http:// or https://, a host name or IPv4 address, and an optional port, for example http://localhost:8833."
+msgstr "呢個地址無效。請用 http:// 或者 https://，加主機名稱或者 IPv4 地址，可以再加連接埠，例如 http://localhost:8833。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Show station key"
+msgstr "顯示接收站金鑰"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Save key"
+msgstr "儲存金鑰"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Read the key on the computer that runs the drop site with: %1%"
+msgstr "喺運行投遞網站嘅電腦，用呢個指令睇金鑰：%1%"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Protected key storage is not available on this system, so the key cannot be saved."
+msgstr "呢個系統冇受保護嘅金鑰儲存，所以儲存唔到金鑰。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Saved for this Windows account, protected with Windows data protection. It is never shown in logs or exports."
+msgstr "已經為呢個 Windows 帳戶儲存，用 Windows 資料保護加密。記錄同匯出都唔會顯示佢。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "No station key is saved."
+msgstr "未儲存接收站金鑰。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Hide station key"
+msgstr "隱藏接收站金鑰"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The station key must be 16 to 512 visible characters without spaces. Nothing was saved."
+msgstr "接收站金鑰要係 16 至 512 個可見字元，唔可以有空格。冇儲存任何嘢。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Station key saved."
+msgstr "接收站金鑰已經儲存。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Station key removed."
+msgstr "接收站金鑰已經移除。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The station key could not be saved."
+msgstr "儲存唔到接收站金鑰。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "New code"
+msgstr "新投遞碼"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Not known yet"
+msgstr "暫時未知"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The code is fixed by DROP_CODE on the drop site."
+msgstr "投遞碼由投遞網站嘅 DROP_CODE 固定咗。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Make a new code; links with the old one stop working."
+msgstr "整一個新投遞碼；用舊投遞碼嘅連結會失效。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "People on your local network can send 3D models to this computer through the LAN drop site that runs in Docker. Each model waits for you: nothing is opened, sliced or printed until you choose Open."
+msgstr "同一個區域網絡上嘅人可以經喺 Docker 運行嘅 LAN 投遞網站，將 3D 模型傳去呢部電腦。每個模型都會等你處理：你揀「開啟」之前，乜都唔會開啟、切片或者打印。"

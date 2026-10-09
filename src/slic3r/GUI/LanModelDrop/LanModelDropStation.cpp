@@ -988,7 +988,7 @@ wxString invite_source_text(const View &v)
 {
     switch (v.invite.source) {
     case InviteSource::PublicUrl: return _L("The link uses the public address the drop site announces.");
-    case InviteSource::Configured: return _L("The link uses the drop site address set below.");
+    case InviteSource::Configured: return _L("The link uses the drop site address from the LAN model drop settings.");
     case InviteSource::LanAddress: return _L("The link uses this computer's address on your local network.");
     case InviteSource::None: break;
     }
