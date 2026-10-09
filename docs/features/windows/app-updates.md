@@ -212,7 +212,9 @@ remove it with its own uninstaller.
   the newer version starts; then repeat with the preference off and with a portable copy, run a
   manual check and confirm the download dialog appears instead. Launch a build newer than the
   latest release and confirm neither route triggers. The native compile of this change is pending
-  the hosted Windows build.
+  the hosted Windows build. On hosted Windows, the
+  [self-update diagnostic](../automation/self-update-diagnostic.md) installs an older release, starts
+  it with its default settings and records whether it stages the latest one by itself.
 
 ## Related
 

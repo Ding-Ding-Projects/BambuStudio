@@ -1,0 +1,76 @@
+name: Diagnose self-update on hosted Windows
+
+# Dispatch only. Installs an older published release silently on a disposable hosted Windows runner,
+# starts it the way its shortcuts do, with its default settings, and records whether the installed
+# copy stages the latest release by itself, and which version the next start runs. The evidence is
+# text only; no screenshots are taken, and only text files are uploaded.
+on:
+  workflow_dispatch:
+    inputs:
+      from_tag:
+        description: Published release tag to install and update from (md3-v<N>, older than the latest)
+        required: true
+        default: md3-v231
+      observe_seconds:
+        description: Seconds to watch the running copy for its update (120 to 1500)
+        required: true
+        default: '900'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: self-update-${{ github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  self-update:
+    name: Install an older release, start it like a shortcut, and watch it update itself
+    runs-on: windows-2025
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - name: Check out this commit
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Parse the diagnostic PowerShell
+        run: |
+          foreach ($path in @('scripts/ci/Diagnose-SelfUpdate.ps1',
+                              'scripts/ci/Diagnose-InstallerFirstRun.ps1',
+                              'scripts/ci/Verify-HostedSquirrelInstall.ps1',
+                              'scripts/ci/Test-SquirrelWindowsPackage.ps1')) {
+            $tokens = $null
+            $parseErrors = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile(
+              (Resolve-Path -LiteralPath $path), [ref]$tokens, [ref]$parseErrors)
+            if ($parseErrors.Count -ne 0) { throw "PowerShell parse failed: $path" }
+          }
+
+      - name: Install the older release and observe its self-update
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DIAGNOSE_FROM_TAG: ${{ inputs.from_tag }}
+          DIAGNOSE_OBSERVE_SECONDS: ${{ inputs.observe_seconds }}
+        run: >-
+          ./scripts/ci/Diagnose-SelfUpdate.ps1
+          -FromTag $env:DIAGNOSE_FROM_TAG -Repository $env:GITHUB_REPOSITORY
+          -ObserveSeconds $env:DIAGNOSE_OBSERVE_SECONDS
+          -OutputDirectory diagnostic/self-update -CiExecutionApproved
+
+      - name: Upload text evidence
+        if: ${{ always() }}
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: self-update-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            diagnostic/self-update/**/*.json
+            diagnostic/self-update/**/*.jsonl
+            diagnostic/self-update/**/*.txt
+            diagnostic/self-update/**/*.log
+          if-no-files-found: warn
+          retention-days: 7
