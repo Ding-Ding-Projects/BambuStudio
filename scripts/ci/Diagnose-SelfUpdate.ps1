@@ -105,7 +105,7 @@ $SquirrelLinePattern = '(?i)releases|download|apply|updat|newer|version|error|ex
 # $squirrelTemp, $launcherTrace, $appLogDirectory, $MaxAppLogs) by these names.
 $ReusedFunctions = @(
     'Format-Utc', 'Format-ExitCode', 'Test-CrashExitCode', 'ConvertTo-UtcTime', 'Get-CimValue',
-    'Register-ProcessTraces', 'Read-ProcessTraces', 'Get-FirstRunSample', 'Merge-FirstRunProcesses',
+    'Register-ProcessTraces', 'Read-ProcessTraces', 'Get-FirstRunSample', 'New-ProcessRecord', 'Merge-FirstRunProcesses',
     'ConvertFrom-HexText', 'ConvertFrom-ApplicationEventText', 'Test-MainFrameShown',
     'Get-FirstRunClassification', 'Save-TextFile', 'Save-PhaseEvidence', 'Stop-InstalledProcesses',
     'Start-InstalledStub')
