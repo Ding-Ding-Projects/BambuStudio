@@ -54,6 +54,7 @@
 #include "CommandPaletteIndex.hpp"
 #include "ModelCreator/ModelCreatorDialog.hpp"
 #include "Appearance/AppearanceEditorPopover.hpp"
+#include "AppLogo/LogoRender.hpp"
 #include "FilamentScanner.hpp"
 #include "SmartHomeDialog.hpp"
 #include "WebViewDialog.hpp"
@@ -363,8 +364,8 @@ DPIFrame(NULL, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, BORDERLESS_FRAME_
     }
 #endif // __APPLE__
 
-    // Load the icon either from the exe, or from the ico file.
-    SetIcon(main_frame_icon(wxGetApp().get_app_mode()));
+    // The selected app logo, or the icon from the exe / the ico file.
+    apply_app_logo_icon();
 
     // initialize tabpanel and menubar
     init_tabpanel();
@@ -1354,6 +1355,24 @@ void MainFrame::on_app_display_name_changed()
         m_topbar->SetBrandLabel(wxGetApp().app_display_name());
 #endif
     update_title();
+}
+
+void MainFrame::on_app_logo_changed()
+{
+#ifdef __WINDOWS__
+    if (m_topbar)
+        m_topbar->RefreshBrandTile();
+#endif
+    apply_app_logo_icon();
+}
+
+void MainFrame::apply_app_logo_icon()
+{
+    const wxIconBundle icons = AppLogoUI::icon_bundle(wxGetApp().app_logo_settings());
+    if (icons.IsEmpty())
+        SetIcon(main_frame_icon(wxGetApp().get_app_mode()));
+    else
+        SetIcons(icons);
 }
 
 void MainFrame::update_title()

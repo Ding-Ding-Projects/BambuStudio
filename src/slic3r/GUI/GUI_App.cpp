@@ -5,6 +5,8 @@
 #include "libslic3r_build_time.h"
 #include "AppUpdateCheckPolicy.hpp"
 #include "AppDisplayName.hpp"
+#include "libslic3r/AppLogo/Logo.hpp"
+#include "AppLogo/LogoRender.hpp"
 #include "BilingualDecorator.hpp"
 #include "BilingualRegistry.hpp"
 #include <ctime>
@@ -763,7 +765,18 @@ public:
         int logo_margin = FromDIP(72 * m_scale);
         int logo_size = FromDIP(122 * m_scale);
         int logo_width = FromDIP(94 * m_scale);
-        wxBitmap logo_bmp = *bmp_cache.load_svg("splash_logo", logo_size, logo_size);
+        // The logo the user chose in Preferences > Appearance replaces the
+        // shipped steamer artwork; the shipped mark (or a failed render) keeps it.
+        const AppLogo::Settings app_logo = wxGetApp().app_logo_settings();
+        wxBitmap logo_bmp;
+        if (!app_logo.shipped()) {
+            const int side = FromDIP(int(AppLogo::logical_px(AppLogo::Target::StartupScreen) * m_scale));
+            logo_bmp = AppLogoUI::bitmap(app_logo, unsigned(std::max(1, side)));
+            if (logo_bmp.IsOk())
+                logo_width = side;
+        }
+        if (!logo_bmp.IsOk())
+            logo_bmp = *bmp_cache.load_svg("splash_logo", logo_size, logo_size);
         // the logo keeps its place unless a large font pushed the header into it
         int logo_y = std::max(top_margin + title_rect.GetHeight() + logo_margin, header_bottom + FromDIP(16 * m_scale));
         memDc.DrawBitmap(logo_bmp, (width - logo_width) / 2, logo_y, true);
@@ -9074,6 +9087,28 @@ bool GUI_App::set_app_display_name(const std::string &candidate)
     wxCommandEvent evt(EVT_APP_DISPLAY_NAME_CHANGED);
     evt.SetString(app_display_name());
     ProcessEvent(evt); // synchronous, for any other live surface that Bind()s on wxGetApp()
+    return true;
+}
+
+AppLogo::Settings GUI_App::app_logo_settings() const
+{
+    if (app_config == nullptr)
+        return AppLogo::Settings{};
+    return AppLogo::resolve(app_config->get(AppLogo::config_key)).settings;
+}
+
+bool GUI_App::set_app_logo_settings(const AppLogo::Settings &settings)
+{
+    std::string stored;
+    if (app_config == nullptr || !AppLogo::stored_value(settings, stored))
+        return false;
+    if (app_config->get(AppLogo::config_key) == stored)
+        return true; // nothing changed; leave the chrome alone
+    app_config->set(AppLogo::config_key, stored);
+    app_config->save();
+    // Told directly, as for the display name: recreate_GUI() rebuilds the frame.
+    if (mainframe)
+        mainframe->on_app_logo_changed();
     return true;
 }
 

@@ -43191,6 +43191,97 @@ msgstr "文字顏色"
 #. reviewed-category: preferences
 #. review-status: agent-drafted
 msgid "Background colour"
+msgid "App logo"
+msgstr "應用程式標誌"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Choose the mark shown in the title bar, the window and taskbar icon, the About dialog and the startup screen. It changes presentation only: the installed app, its shortcuts and its updates keep the shipped identity."
+msgstr "揀一個標誌，用喺標題欄、視窗同工作列圖示、「關於」對話方塊同啟動畫面。佢淨係改外觀：已安裝嘅應用程式、捷徑同更新都保留出廠身份。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Search logo sources"
+msgstr "搜尋標誌來源"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Shipped mark"
+msgstr "出廠標誌"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Green printer"
+msgstr "綠色打印機"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Blue layers"
+msgstr "藍色打印層"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Amber nozzle"
+msgstr "琥珀色噴嘴"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Custom image (unavailable)"
+msgstr "自訂圖片（未能使用）"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Custom images need the isolated image decoder, which this build does not include yet."
+msgstr "自訂圖片要用隔離嘅圖片解碼器，呢個版本暫時未有。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "No logo source matches your search."
+msgstr "搵唔到符合搜尋嘅標誌來源。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Contain: show the whole mark"
+msgstr "完整顯示：成個標誌都睇到"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Cover: crop to fill"
+msgstr "填滿：裁剪到填滿為止"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Image fit"
+msgstr "圖片適配"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Horizontal focal point (%)"
+msgstr "水平焦點（%）"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Vertical focal point (%)"
+msgstr "垂直焦點（%）"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Safe area inset (%)"
+msgstr "安全區內縮（%）"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Transparent background"
+msgstr "透明背景"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Choose background color"
+msgstr "揀背景顏色"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Background color"
 msgstr "背景顏色"
 
 #. reviewed-category: preferences
@@ -44158,3 +44249,80 @@ msgstr "Shift+L"
 #. review-status: agent-drafted
 msgid "Collapse or expand the legend and statistics panel"
 msgstr "收埋或者展開圖例同統計面板"
+msgid "Fit, focal point, safe area and background apply to the presets. The shipped mark keeps its own artwork."
+msgstr "適配、焦點、安全區同背景淨係用喺預設標誌。出廠標誌保留自己嘅圖案。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Logo preview at %u pixels"
+msgstr "%u 像素標誌預覽"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "%u px"
+msgstr "%u 像素"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The title bar, the window and taskbar icon, the About dialog and the startup screen show their shipped artwork."
+msgstr "標題欄、視窗同工作列圖示、「關於」對話方塊同啟動畫面都會顯示出廠圖案。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Small sizes use nearest-neighbor sampling, so fine detail can drop out. Cover crops the mark. A transparent mark can lose contrast on some backgrounds; choose an opaque background if it does."
+msgstr "細尺寸用最近鄰取樣，幼細位可能會唔見咗。「填滿」會裁剪標誌。透明標誌喺某啲背景上可能對比唔夠；遇到咁就揀個唔透明嘅背景。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Import custom image (unavailable)"
+msgstr "匯入自訂圖片（未能使用）"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Reset to shipped mark"
+msgstr "重設為出廠標誌"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Custom image import is unavailable: this build has no verified isolated image decoder, so no image file is read."
+msgstr "暫時唔可以匯入自訂圖片：呢個版本未有經驗證嘅隔離圖片解碼器，所以唔會讀取任何圖片檔案。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "App logo status"
+msgstr "應用程式標誌狀態"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Shipped mark restored. The saved logo setting was cleared."
+msgstr "已還原出廠標誌，儲存咗嘅標誌設定已經清除。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Saved logo settings are invalid. The shipped mark is shown, and the saved value is kept until you choose a logo or reset."
+msgstr "儲存咗嘅標誌設定無效。而家顯示出廠標誌；儲存值會保留，直至你揀過標誌或者重設。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Shipped mark in use. No custom image loaded."
+msgstr "而家用緊出廠標誌，冇載入自訂圖片。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "%s in use, saved in your settings. No custom image loaded."
+msgstr "而家用緊「%s」，已儲存喺你嘅設定中。冇載入自訂圖片。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "%s applied and saved in your settings."
+msgstr "已套用「%s」，並儲存喺你嘅設定中。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Logo settings applied and saved in your settings."
+msgstr "標誌設定已套用，並儲存喺你嘅設定中。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Unable to save logo settings. The previous logo is kept."
+msgstr "儲存唔到標誌設定，會保留之前嘅標誌。"

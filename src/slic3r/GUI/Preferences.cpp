@@ -14,6 +14,7 @@
 #include "OptionsGroup.hpp"
 #include "GUI_App.hpp"
 #include "AppDisplayName.hpp"
+#include "AppLogo/LogoPanel.hpp"
 #include "MainFrame.hpp"
 #include "Plater.hpp"
 #include "MsgDialog.hpp"
@@ -2764,6 +2765,22 @@ wxWindow *PreferencesDialog::create_appearance_tab()
     name_actions->Add(name_explain_line, 0, wxEXPAND | wxTOP, FromDIP(4));
     sizer->Add(name_actions, flags);
     refresh_name_status();
+
+    // ---- App logo (presentation-only mark) ---------------------------------
+    // The panel commits through GUI_App::set_app_logo_settings, which persists
+    // AppConfig "app_logo" and redraws the title bar tile and the window icon at
+    // once; the About dialog and the startup screen read it when they open. The
+    // installed icon, shortcuts, installer and updater never read the key.
+    auto *logo_title = create_item_title(_L("App logo"), scrolled, _L("App logo"));
+    sizer->Add(logo_title, wxSizerFlags().Expand().Border(wxTOP, FromDIP(24)));
+    auto *logo_panel = new AppLogoUI::LogoPanel(scrolled, AppLogo::resolve(app_config->get(AppLogo::config_key)),
+        [](const AppLogo::Settings &settings) { return wxGetApp().set_app_logo_settings(settings); });
+    logo_panel->SetName(_L("App logo"));
+    auto *logo_line = new wxBoxSizer(wxHORIZONTAL);
+    logo_line->AddSpacer(FromDIP(ITEM_LEFT_PADDING));
+    logo_line->Add(logo_panel, 1, wxEXPAND | wxRIGHT, FromDIP(ITEM_RIGHT_PADDING));
+    sizer->Add(logo_line, flags);
+    register_option_row(AppLogo::config_key, logo_line);
 
     if (!PersonalModes::school_presentation_suppressed.load()) {
     auto *wording = new StaticBox(scrolled);

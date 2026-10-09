@@ -16,9 +16,13 @@
 #include "Widgets/StaticBox.hpp"
 #include "Widgets/MD3HtmlWindow.hpp"
 #include "ChangelogDialog.hpp"
+#include "AppLogo/LogoRender.hpp"
 
 #include <wx/clipbrd.h>
 #include <wx/image.h>
+
+#include <algorithm>
+#include <cmath>
 
 namespace Slic3r {
 namespace GUI {
@@ -290,6 +294,26 @@ static wxColour about_banner_backdrop(const wxBitmap &banner)
     return StateColor::semantic(MD3::Role::Primary);
 }
 
+// The banner draws the shipped mark at (191, 79)-(231.2, 131.1) of its
+// 562 x 238 artwork. A logo chosen in Preferences > Appearance > App logo is
+// drawn over that spot at the About target size, on a white rounded tile when
+// the logo is transparent so it stays visible on the green artwork. The
+// shipped mark (or a failed render) returns the banner unchanged.
+static wxBitmap about_banner_with_logo(const wxBitmap &banner)
+{
+    const AppLogo::Settings app_logo = wxGetApp().app_logo_settings();
+    if (app_logo.shipped() || !banner.IsOk() || banner.GetHeight() <= 0)
+        return banner;
+    // The banner is created 250 logical pixels tall, so its own height gives
+    // the display scale the tile has to match.
+    const double scale = banner.GetHeight() / 250.0;
+    const AppLogo::RenderPlan plan = AppLogo::plan(AppLogo::logical_px(AppLogo::Target::About), scale);
+    const double side = double(plan.draw_px);
+    const int left = int(std::lround(211.1 * banner.GetWidth() / 562.0 - side / 2.0));
+    const int top = int(std::lround(105.05 * banner.GetHeight() / 238.0 - side / 2.0));
+    return AppLogoUI::overlay(banner, app_logo, left, top, plan.draw_px);
+}
+
 AboutDialog::AboutDialog()
     : DPIDialog(static_cast<wxWindow *>(wxGetApp().mainframe),wxID_ANY,from_u8((boost::format(_utf8(L("About %s"))) % (wxGetApp().is_editor() ? into_u8(wxGetApp().app_display_name()) : std::string(GCODEVIEWER_APP_NAME))).str()),wxDefaultPosition,
         wxDefaultSize, /*wxCAPTION*/wxDEFAULT_DIALOG_STYLE)
@@ -315,7 +339,7 @@ AboutDialog::AboutDialog()
 
     // logo
     m_logo_bitmap = ScalableBitmap(this, "BambuStudio_about", 250);
-    m_logo = new wxStaticBitmap(this, wxID_ANY, m_logo_bitmap.bmp(), wxDefaultPosition,wxDefaultSize, 0);
+    m_logo = new wxStaticBitmap(this, wxID_ANY, about_banner_with_logo(m_logo_bitmap.bmp()), wxDefaultPosition,wxDefaultSize, 0);
     m_logo->SetSizer(vesizer);
 
     panel_versizer->Add(m_logo, 1, wxALL | wxEXPAND, 0);
@@ -509,7 +533,7 @@ AboutDialog::AboutDialog()
 void AboutDialog::on_dpi_changed(const wxRect &suggested_rect)
 {
     m_logo_bitmap.msw_rescale();
-    m_logo->SetBitmap(m_logo_bitmap.bmp());
+    m_logo->SetBitmap(about_banner_with_logo(m_logo_bitmap.bmp()));
 
     const wxFont& font = GetFont();
     const int fs = font.GetPointSize() - 1;

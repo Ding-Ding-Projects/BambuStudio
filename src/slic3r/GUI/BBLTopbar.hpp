@@ -58,6 +58,9 @@ public:
     // Live update of the wordmark beside the brand tile (user-renamable display
     // name); re-fits the project chip against the new fixed-content width.
     void SetBrandLabel(const wxString& label);
+    // Redraw the brand tile from the selected app logo (the shipped tile when
+    // none is chosen), e.g. after Preferences > Appearance > App logo changed.
+    void RefreshBrandTile();
     // §3.5 history chip label content (branch + short head). Decorative; the
     // click always opens the real version-history backend.
     void SetHistoryInfo(const wxString& branch, const wxString& head);
