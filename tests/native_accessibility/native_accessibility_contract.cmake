@@ -8,11 +8,13 @@ set(CAPSULE_HEADER "${BAMBU_SOURCE_DIR}/src/slic3r/GUI/CapsuleButton.hpp")
 set(CAPSULE_SOURCE "${BAMBU_SOURCE_DIR}/src/slic3r/GUI/CapsuleButton.cpp")
 set(FAN_HEADER "${BAMBU_SOURCE_DIR}/src/slic3r/GUI/Widgets/FanControl.hpp")
 set(FAN_SOURCE "${BAMBU_SOURCE_DIR}/src/slic3r/GUI/Widgets/FanControl.cpp")
+set(BUTTON_SOURCE "${BAMBU_SOURCE_DIR}/src/slic3r/GUI/Widgets/Button.cpp")
 
 foreach(REQUIRED_FILE IN ITEMS
         "${AXIS_HEADER}" "${AXIS_SOURCE}"
         "${CAPSULE_HEADER}" "${CAPSULE_SOURCE}"
-        "${FAN_HEADER}" "${FAN_SOURCE}")
+        "${FAN_HEADER}" "${FAN_SOURCE}"
+        "${BUTTON_SOURCE}")
     if(NOT EXISTS "${REQUIRED_FILE}")
         message(FATAL_ERROR "Missing native accessibility source: ${REQUIRED_FILE}")
     endif()
@@ -24,6 +26,7 @@ file(READ "${CAPSULE_HEADER}" CAPSULE_HEADER_TEXT)
 file(READ "${CAPSULE_SOURCE}" CAPSULE_SOURCE_TEXT)
 file(READ "${FAN_HEADER}" FAN_HEADER_TEXT)
 file(READ "${FAN_SOURCE}" FAN_SOURCE_TEXT)
+file(READ "${BUTTON_SOURCE}" BUTTON_SOURCE_TEXT)
 
 function(require_token SOURCE_TEXT TOKEN DESCRIPTION)
     string(FIND "${SOURCE_TEXT}" "${TOKEN}" TOKEN_OFFSET)
@@ -92,10 +95,18 @@ foreach(CAPSULE_SOURCE_TOKEN IN ITEMS
         "key != WXK_NUMPAD_ENTER"
         "wxCommandEvent click_event(wxEVT_BUTTON, GetId())"
         "click_event.SetEventObject(this)"
-        "DisableFocusFromKeyboard"
+        # The selection mark is the kit icon Button (no wxBitmapButton remains);
+        # it refuses focus so the capsule stays the only keyboard stop.
+        "m_btn->SetCanFocus(false)"
         "DLGC_WANTMESSAGE")
     require_token("${CAPSULE_SOURCE_TEXT}" "${CAPSULE_SOURCE_TOKEN}" "Capsule radio/selection contract")
 endforeach()
+string(FIND "${CAPSULE_SOURCE_TEXT}" "wxBitmapButton" CAPSULE_BITMAP_BUTTON_OFFSET)
+if(NOT CAPSULE_BITMAP_BUTTON_OFFSET EQUAL -1)
+    message(FATAL_ERROR "Capsule selection mark must stay the kit icon Button, not wxBitmapButton")
+endif()
+require_token("${BUTTON_SOURCE_TEXT}" "bool Button::AcceptsFocus() const { return canFocus; }"
+    "kit Button focus refusal used by the Capsule selection mark")
 
 foreach(FAN_HEADER_TOKEN IN ITEMS
         "get_fan_speeds() const"
