@@ -918,6 +918,8 @@ list(APPEND SLIC3R_GUI_SOURCES
     GUI/LanModelDrop/LanModelDropKeyStore.hpp
     GUI/LanModelDrop/LanModelDropStation.cpp
     GUI/LanModelDrop/LanModelDropStation.hpp
+    GUI/LanModelDrop/LanModelDropUi.cpp
+    GUI/LanModelDrop/LanModelDropUi.hpp
     GUI/DimSumSurprise.cpp
     GUI/DimSumSurprise.hpp
     GUI/DimSumSurpriseModel.hpp
