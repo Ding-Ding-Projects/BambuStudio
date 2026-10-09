@@ -16,11 +16,18 @@ if(hpp_source MATCHES "MakeDisconnectUrl")
     message(FATAL_ERROR "The legacy disconnect navigation API must remain retired")
 endif()
 
+if(cpp_source MATCHES "new[ \t]+wxInfoBar[ \t]*\\(")
+    message(FATAL_ERROR "The cloud failure notice is the Material banner, not the native wxInfoBar")
+endif()
+
+# The Retry action is the banner's own kit text button (the Material banner
+# replaced wxInfoBar::AddButton); its wxEVT_BUTTON reaches OnCloudPageRetry.
 foreach(required_symbol
         "ShowCloudPageFailure"
         "ClearCloudPageFailure"
         "OnCloudPageRetry"
-        "m_info->AddButton"
+        "m_info = new MD3InfoBanner\\(this, m_cloud_retry_button_id, _L\\(\"Retry\"\\)\\);"
+        "Bind\\(wxEVT_BUTTON, &WebViewPanel::OnCloudPageRetry, this, m_cloud_retry_button_id\\);"
         "m_info->ShowMessage"
         "wxWEBVIEW_NAV_ERR_CONNECTION"
         "wxWEBVIEW_NAV_ERR_NOT_FOUND"
