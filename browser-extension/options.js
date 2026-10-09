@@ -237,6 +237,8 @@ async function start() {
     render();
   });
   render();
+  // The page is ready for input once its controls hold the stored values.
+  document.querySelector('main').removeAttribute('aria-busy');
 }
 
 start();
