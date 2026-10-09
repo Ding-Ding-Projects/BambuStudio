@@ -366,7 +366,10 @@ async function sendAll(event) {
       entry.progress = 1;
       sent += 1;
     } else {
-      entry.status = 'failed';
+      // A refusal that stops the send (wrong code, lockout, full box, no
+      // connection) leaves the file ready to try again; a refusal of this
+      // file itself (type, size, name) would only repeat.
+      entry.status = outcome.stop ? 'failed' : 'rejected';
       entry.reason = outcome.reason;
     }
     if (outcome.codeError) setCodeError(outcome.codeError);

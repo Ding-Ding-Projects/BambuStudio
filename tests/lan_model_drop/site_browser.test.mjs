@@ -130,10 +130,10 @@ async function launch(t) {
   return { page, requests, logs };
 }
 
-async function chooseFile(page, file) {
+async function chooseFiles(page, files) {
   const { root } = await page.send('DOM.getDocument', { depth: 1 });
   const { nodeId } = await page.send('DOM.querySelector', { nodeId: root.nodeId, selector: '#files' });
-  await page.send('DOM.setFileInputFiles', { nodeId, files: [file] });
+  await page.send('DOM.setFileInputFiles', { nodeId, files });
 }
 
 test('the sender page works end to end in Chromium', { skip, timeout: 90000 }, async (t) => {
@@ -194,18 +194,26 @@ test('the sender page works end to end in Chromium', { skip, timeout: 90000 }, a
   for (const name of icons) assert.ok(widths[name] > 0 && widths[name] <= 26, `${name} drew ${widths[name]} px wide`);
   assert.ok(widths.not_an_icon_name > 60, `a plain word stays a word (${widths.not_an_icon_name} px)`);
 
-  // 3. A model goes in, with the sender's name.
-  await chooseFile(page, model);
-  await waitFor(() => page.evaluate("document.querySelectorAll('#file-list .file-row').length === 1"), 'the file to be listed');
-  assert.equal(await page.evaluate("document.getElementById('send-label').textContent"), 'Send 1');
+  // 3. A model goes in, with the sender's name; a file whose content is not
+  // a model is refused for itself and not offered again.
+  const fake = path.join(files, 'fake.3mf');
+  fs.writeFileSync(fake, 'plain text, not a 3MF archive');
+  const notes = path.join(files, 'notes.txt');
+  fs.writeFileSync(notes, 'notes');
+  await chooseFiles(page, [model, fake, notes]);
+  await waitFor(() => page.evaluate("document.querySelectorAll('#file-list .file-row').length === 3"), 'the files to be listed');
+  assert.equal(await page.evaluate("document.getElementById('send-label').textContent"), 'Send 2');
+  assert.equal(await page.evaluate("document.querySelectorAll('#file-list .file-row')[2].dataset.status"), 'rejected');
   await page.evaluate("document.getElementById('sender').value = 'Mei'; document.getElementById('send').click()");
-  const done = await waitFor(() => page.evaluate("document.getElementById('live').dataset.tone === 'success' && document.getElementById('live').textContent"),
+  const done = await waitFor(() => page.evaluate("!document.getElementById('send').disabled || document.getElementById('live').dataset.tone === 'error' ? document.getElementById('live').textContent : ''"),
     'the send to finish');
-  assert.equal(done, english.liveDone.replace('$1', '1').replace('$2', '1'));
+  assert.equal(done, english.liveDone.replace('$1', '1').replace('$2', '2'));
   const inbox = (await station(service.port, service.key, 'GET', '/api/station/inbox')).json.items;
   assert.deepEqual(inbox.map(({ fileName, sender, type, bytes }) => ({ fileName, sender, type, bytes })),
     [{ fileName: 'cube.stl', sender: 'Mei', type: 'stl', bytes: ASCII_STL.length }]);
-  assert.equal(await page.evaluate("document.querySelector('#file-list .file-row').dataset.status"), 'sent');
+  const rows = await page.evaluate("[...document.querySelectorAll('#file-list .file-row')].map((row) => row.dataset.status + ' ' + row.querySelector('.file-state').textContent)");
+  assert.deepEqual(rows, ['sent Sent', `rejected Not sent: ${english.reasonType}`, `rejected Not sent: ${english.reasonType}`]);
+  assert.equal(await page.evaluate("document.getElementById('send').disabled"), true, 'nothing is left to send');
 
   // 4. A wrong code is explained, with the way to a new link, and the
   // keyboard goes back to the code.
@@ -217,7 +225,7 @@ test('the sender page works end to end in Chromium', { skip, timeout: 90000 }, a
   })()`);
   assert.equal(await page.evaluate("document.getElementById('code-help').textContent"), english.codeHelp);
   fs.writeFileSync(path.join(files, 'second.stl'), ASCII_STL);
-  await chooseFile(page, path.join(files, 'second.stl'));
+  await chooseFiles(page, [path.join(files, 'second.stl')]);
   await page.evaluate("document.getElementById('send').click()");
   await waitFor(() => page.evaluate("document.getElementById('live').dataset.tone === 'error'"), 'the wrong code answer');
   const refused = await page.evaluate(`({
@@ -226,7 +234,7 @@ test('the sender page works end to end in Chromium', { skip, timeout: 90000 }, a
     errorHidden: document.getElementById('code-error').hidden,
     invalid: document.getElementById('code').getAttribute('aria-invalid'),
     focus: document.activeElement.id,
-    status: document.querySelectorAll('#file-list .file-row')[1].dataset.status,
+    status: document.querySelectorAll('#file-list .file-row')[3].dataset.status,
   })`);
   assert.deepEqual(refused, {
     live: english.liveWrongCode,
@@ -255,6 +263,8 @@ test('the sender page works end to end in Chromium', { skip, timeout: 90000 }, a
   // 7. Nothing came from anywhere else, and no policy rule was broken.
   assert.ok(requests.length >= 8, requests.join('\n'));
   for (const url of requests) assert.ok(url.startsWith(base), `request to ${url}`);
-  const unexpected = logs.filter((line) => !/the server responded with a status of 401/.test(line));
+  // The browser reports the refused uploads (401 wrong code, 415 not a
+  // model) as failed loads; anything else is a fault.
+  const unexpected = logs.filter((line) => !/the server responded with a status of (?:401|415)\b/.test(line));
   assert.deepEqual(unexpected, []);
 });
