@@ -44330,3 +44330,493 @@ msgstr "標誌設定已套用，並儲存喺你嘅設定中。"
 #. review-status: agent-drafted
 msgid "Unable to save logo settings. The previous logo is kept."
 msgstr "儲存唔到標誌設定，會保留之前嘅標誌。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Status Hub"
+msgstr "狀態中心"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Inspect status delivery and enrollment state"
+msgstr "查看狀態傳送同登記狀況"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Offline documentation"
+msgstr "離線文件"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Read bundled feature guides without opening a browser"
+msgstr "唔使開瀏覽器，直接睇內置功能指南"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Local model suite"
+msgstr "本機模型套件"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Inspect local Ollama models, catalog availability and guided tools"
+msgstr "查看本機 Ollama 模型、目錄可用情況同引導式工具"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Convert local files with verified bundled adapters"
+msgstr "用已驗證嘅內置轉換模組轉換本機檔案"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Schedule presentation without replacing stored preferences"
+msgstr "按排程調整顯示方式，唔會取代已儲存嘅偏好設定"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Local security is unavailable. No protected action was performed."
+msgstr "本機安全功能無法使用。冇執行任何受保護嘅操作。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Authenticator"
+msgstr "驗證器"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Manage local time-based authentication codes"
+msgstr "管理本機按時間產生嘅驗證碼"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Identity history"
+msgstr "身份歷史紀錄"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Enroll an independent history password and inspect encrypted identity changes"
+msgstr "設定一個獨立嘅歷史紀錄密碼，並查看已加密嘅身份變更"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Local support tickets"
+msgstr "本機支援個案"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Manage local-only support records; nothing is sent anywhere"
+msgstr "管理只儲存喺本機嘅支援紀錄；唔會傳送任何資料去任何地方"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Local tools"
+msgstr "本機工具"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Display name"
+msgstr "顯示名稱"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Current unlock credential"
+msgstr "目前解鎖憑證"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "New unlock credential"
+msgstr "新解鎖憑證"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "PIN"
+msgstr "PIN 碼"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Unlock credential type"
+msgstr "解鎖憑證類型"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Unlock and disable"
+msgstr "解鎖並停用"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Set unlock credential"
+msgstr "設定解鎖憑證"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Replace unlock credential"
+msgstr "更換解鎖憑證"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "This is a presentation lock, not a security boundary. Deleting the shared local application-data record resets it. Credentials remain in the operating-system vault."
+msgstr "呢個係顯示鎖，唔係安全防線。刪除共用嘅本機應用程式資料紀錄就會重設佢。憑證仍然保存喺作業系統嘅憑證保管庫入面。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Restricted presentation is active."
+msgstr "受限顯示模式生效中。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Normal presentation is active."
+msgstr "正常顯示模式生效中。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Shared record is unreadable. Restricted presentation remains active."
+msgstr "讀唔到共用紀錄。受限顯示模式會繼續生效。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Native monitoring is active."
+msgstr "原生監察生效中。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Native monitoring is unavailable; polling is used."
+msgstr "原生監察無法使用；改用定時輪詢。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Try again in %u seconds."
+msgstr "請喺 %u 秒後再試。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Credential vault is unavailable."
+msgstr "憑證保管庫無法使用。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The change was not applied. Check the credential, input limits and shared-record availability."
+msgstr "變更未有套用。請檢查憑證、輸入限制，同埋共用紀錄係咪可以使用。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Narrator"
+msgstr "旁白"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Local speech is serialized. Voice network capability is unknown."
+msgstr "本機語音會逐段依次播放。未能確定語音會唔會連接網絡。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Enable narrator"
+msgstr "啟用旁白"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Off by default. Speak application events using installed voices."
+msgstr "預設關閉。用已安裝嘅語音讀出應用程式事件。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Quiet narration"
+msgstr "旁白靜音"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Pause local speech without changing saved voice choices. An active screen reader also pauses narration."
+msgstr "暫停本機語音，唔會改動已儲存嘅語音選擇。螢幕閱讀器運作緊嗰陣，旁白都會暫停。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Narration language"
+msgstr "旁白語言"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Independent of the interface language. Both speaks English first."
+msgstr "同介面語言分開設定。揀「兩種語言」會先講英文。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Selected voice is not installed"
+msgstr "所選語音未安裝"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Effective Cantonese voice"
+msgstr "實際使用嘅廣東話語音"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Effective English voice"
+msgstr "實際使用嘅英文語音"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "No installed voice can speak this language."
+msgstr "冇已安裝嘅語音識講呢種語言。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Effective voice:"
+msgstr "實際使用語音："
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Selected voice is missing; the saved choice is kept."
+msgstr "搵唔到所選語音；已儲存嘅選擇會保留。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Voice network capability is unknown."
+msgstr "未能確定語音會唔會連接網絡。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Cantonese voice"
+msgstr "廣東話語音"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "English voice"
+msgstr "英文語音"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Choose an installed voice. Missing selections remain saved."
+msgstr "揀一個已安裝嘅語音。搵唔到嘅選擇會繼續保存。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Cantonese speech rate"
+msgstr "廣東話語速"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "English speech rate"
+msgstr "英文語速"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Platform range: -10 to 10. Normal delivery: 0."
+msgstr "平台範圍：-10 至 10。正常：0。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Cantonese speech pitch"
+msgstr "廣東話音調"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "English speech pitch"
+msgstr "英文音調"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "External speech mirror is not configured."
+msgstr "未設定外部語音鏡像。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "External speech mirror is configured. Playback completion is unavailable; local serialization does not cover external playback."
+msgstr "已設定外部語音鏡像。無法得知播放幾時完成；本機嘅逐段播放唔包括外部播放。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Live shape and typography preview"
+msgstr "形狀同字型即時預覽"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Live appearance preview"
+msgstr "外觀即時預覽"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Second line"
+msgstr "第二行"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Platform capabilities: variable font axes, oblique angle, underline style and color, double strikethrough, overline, small caps, superscript, subscript, outline, shadow, glow, word spacing, baseline offset, direction and paragraph alignment require a rich-text renderer. They are unavailable on this native element. Stored unknown properties are preserved during export and import."
+msgstr "平台能力：可變字型軸、傾斜角度、底線樣式同顏色、雙刪除線、上劃線、小型大寫字母、上標、下標、外框、陰影、光暈、詞間距、基線偏移、文字方向同段落對齊，都要用富文本渲染器先做得到。呢個原生元素用唔到呢啲功能。匯出同匯入時會保留已儲存但未能識別嘅屬性。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Typography platform capabilities"
+msgstr "字型平台能力"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Margin updates native sizer layout. The live preview renders radius, border, padding and line height. Other owner-drawn controls require an explicit renderer adapter; native controls retain platform shape."
+msgstr "外邊距會更新原生排版佈局。即時預覽會顯示角半徑、邊框、內邊距同行高。其他自繪控制項要有指定嘅渲染轉接器先得；原生控制項會保留平台本身嘅形狀。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Export the shown changes in a chosen format or archive"
+msgstr "將顯示嘅變更匯出為所選格式或者壓縮包"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "This article is not present in the installed documentation bundle."
+msgstr "已安裝嘅文件套件入面冇呢篇文章。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "On Windows, sends the password through an isolated in-memory pipe, never command arguments. Encrypted headers are required. Single line, at most 1024 UTF-8 bytes."
+msgstr "喺 Windows 上，密碼會經隔離嘅記憶體管道傳送，永遠唔會放喺命令參數入面。一定要加密標題。只限單行，最多 1024 個 UTF-8 位元組。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Open in VS Code"
+msgstr "喺 VS Code 開啟"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Visual Studio Code was not found. Install it, then try again. Portable builds are detected when added to PATH."
+msgstr "搵唔到 Visual Studio Code。請先安裝，然後再試。可攜式版本要加入 PATH 先會偵測到。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Could not open the completed export in Visual Studio Code. Check that the file still exists."
+msgstr "未能喺 Visual Studio Code 開啟已完成嘅匯出。請檢查檔案仲喺唔喺度。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Download VS Code"
+msgstr "下載 VS Code"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Encrypted exports require encrypted headers to protect member names."
+msgstr "加密匯出一定要加密標題，先可以保護壓縮包入面嘅檔案名。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Cannot resolve the export destination."
+msgstr "無法確定匯出目的地。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Replace exported files"
+msgstr "取代已匯出嘅檔案"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The exact existing files listed below will be replaced. Their previous contents cannot be restored by this export."
+msgstr "下面列出嘅現有檔案會被取代。今次匯出無法還原佢哋原本嘅內容。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Cannot inspect the export destination."
+msgstr "無法檢查匯出目的地。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "This archive already exists. Choose a new output name."
+msgstr "呢個壓縮包已經存在。請揀過另一個輸出名稱。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Export cancelled. Existing files were preserved."
+msgstr "已取消匯出。現有檔案保持不變。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Cancel export"
+msgstr "取消匯出"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Preparing export. Cancel remains available until publication begins."
+msgstr "準備緊匯出。開始發佈輸出之前，仍然可以取消。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Could not start the export worker. Nothing was written."
+msgstr "未能啟動匯出程序，冇寫入任何嘢。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Cancelling export. Waiting for the owned writer to stop."
+msgstr "取消緊匯出，等緊負責寫入嘅程序停低。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Publishing completed output. Cancellation is no longer available."
+msgstr "發佈緊已完成嘅輸出，已經唔可以再取消。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Serializing export..."
+msgstr "序列化緊匯出資料..."
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Writing temporary output..."
+msgstr "寫入緊暫存輸出..."
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Compressing archive..."
+msgstr "製作緊壓縮包..."
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Verifying archive encryption..."
+msgstr "驗證緊壓縮包加密..."
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Publishing completed output..."
+msgstr "發佈緊已完成嘅輸出..."
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Preparing export..."
+msgstr "準備緊匯出..."
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Export cancelled. Existing output was preserved."
+msgstr "已取消匯出。現有輸出保持不變。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "7-Zip options:"
+msgstr "7-Zip 選項："
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Deleted %d notification entries from the history; %d reviewed entries were already unavailable."
+msgstr "已從歷史紀錄刪除 %d 個通知紀錄；另外 %d 個已確認嘅紀錄之前已經唔存在。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Presentation mode"
+msgstr "顯示模式"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Shared local presentation and unlock settings"
+msgstr "共用嘅本機顯示同解鎖設定"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Pause local speech without changing saved voice choices"
+msgstr "暫停本機語音，唔會改動已儲存嘅語音選擇"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Independent of the interface language"
+msgstr "同介面語言分開設定"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Installed narrator voice"
+msgstr "已安裝嘅旁白語音"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Normal delivery: 0"
+msgstr "正常：0"
