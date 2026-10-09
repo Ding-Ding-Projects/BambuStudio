@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bambu Studio MD3 download capture</title>
+  <link rel="stylesheet" href="options.css">
+  <script type="module" src="options.js"></script>
+</head>
+<body>
+  <main class="page" aria-labelledby="page-heading">
+    <header class="page-header">
+      <img class="page-icon" src="icons/icon-48.png" alt="" width="48" height="48">
+      <div>
+        <p class="eyebrow" data-i18n="extName">Bambu Studio MD3 download capture</p>
+        <h1 id="page-heading" data-i18n="optionsHeading">Download capture settings</h1>
+      </div>
+    </header>
+    <p class="intro" data-i18n="optionsIntro"></p>
+    <p id="status" class="status" role="status" aria-live="polite"></p>
+
+    <section class="card" aria-labelledby="connection-heading">
+      <h2 id="connection-heading" data-i18n="sectionConnection">Connection to Bambu Studio MD3</h2>
+      <p id="connection-state" class="connection" role="status" aria-live="polite"></p>
+      <div class="actions">
+        <button type="button" id="check-connection" class="filled" data-i18n="checkConnection">Check connection</button>
+      </div>
+      <dl class="facts">
+        <dt data-i18n="hostNameLabel">Browser connection name</dt>
+        <dd><code id="host-name"></code></dd>
+        <dt data-i18n="extensionIdLabel">Extension ID</dt>
+        <dd>
+          <code id="extension-id"></code>
+          <button type="button" id="copy-id" class="text" data-i18n="copyExtensionId">Copy extension ID</button>
+        </dd>
+      </dl>
+    </section>
+
+    <section class="card" aria-labelledby="capture-heading">
+      <h2 id="capture-heading" data-i18n="sectionCapture">Capture</h2>
+      <div class="toggle-row">
+        <input type="checkbox" role="switch" id="enabled" aria-describedby="enabled-help">
+        <label for="enabled" data-i18n="captureEnabled">Hand model downloads to Bambu Studio MD3</label>
+      </div>
+      <p id="enabled-help" class="help" data-i18n="captureEnabledHelp"></p>
+
+      <fieldset class="types" aria-describedby="types-help">
+        <legend data-i18n="fileTypesLegend">File types to hand over</legend>
+        <div id="types" class="checks"></div>
+        <p id="types-help" class="help" data-i18n="fileTypesHelp"></p>
+      </fieldset>
+
+      <div class="field">
+        <label for="excluded" data-i18n="excludedLabel">Never hand over downloads from these sites</label>
+        <p id="excluded-help" class="help" data-i18n="excludedHelp"></p>
+        <textarea id="excluded" rows="4" spellcheck="false" autocomplete="off" autocapitalize="off"
+                  aria-describedby="excluded-help excluded-error"></textarea>
+        <p id="excluded-error" class="error" hidden></p>
+        <div class="actions">
+          <button type="button" id="save-sites" class="tonal" data-i18n="saveSites">Save sites</button>
+        </div>
+      </div>
+
+      <div class="toggle-row">
+        <input type="checkbox" id="notify">
+        <label for="notify" data-i18n="notifyOnFallback">Tell me when the browser keeps a download</label>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="language-heading">
+      <h2 id="language-heading" data-i18n="sectionLanguage">Language</h2>
+      <div class="field">
+        <label for="language" data-i18n="languageLabel">Language of this extension</label>
+        <select id="language" aria-describedby="language-help"></select>
+        <p id="language-help" class="help" data-i18n="languageHelp"></p>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="recent-heading">
+      <h2 id="recent-heading" data-i18n="sectionRecent">Recent handoffs</h2>
+      <p id="recent-help" class="help" data-i18n="recentHelp"></p>
+      <p id="recent-empty" class="empty" data-i18n="recentEmpty" hidden></p>
+      <table id="recent" class="recent" aria-labelledby="recent-heading" aria-describedby="recent-help">
+        <thead>
+          <tr>
+            <th scope="col" data-i18n="colTime">Time</th>
+            <th scope="col" data-i18n="colFile">File</th>
+            <th scope="col" data-i18n="colSite">Site</th>
+            <th scope="col" data-i18n="colOutcome">Outcome</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <div class="actions">
+        <button type="button" id="clear-recent" class="outlined" data-i18n="clearRecent">Clear the list</button>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

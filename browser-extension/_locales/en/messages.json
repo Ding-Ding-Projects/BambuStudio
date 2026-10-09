@@ -1,0 +1,326 @@
+{
+  "extName": {
+    "message": "Bambu Studio MD3 download capture",
+    "description": "Extension name in the browser's extension list and on the settings page."
+  },
+  "extShortName": {
+    "message": "MD3 capture",
+    "description": "Short extension name where space is tight."
+  },
+  "extDescription": {
+    "message": "Hands 3D model downloads to Bambu Studio MD3, which asks before it downloads anything.",
+    "description": "Extension description in the browser's extension list."
+  },
+  "actionTitleOn": {
+    "message": "Bambu Studio MD3 download capture is on. Open its settings.",
+    "description": "Toolbar button tooltip while capture is on."
+  },
+  "actionTitleOff": {
+    "message": "Bambu Studio MD3 download capture is off. Open its settings.",
+    "description": "Toolbar button tooltip while capture is off."
+  },
+  "badgeOff": {
+    "message": "off",
+    "description": "Badge on the toolbar button while capture is off. Keep it to four characters or fewer."
+  },
+  "menuOpenLink": {
+    "message": "Open link in Bambu Studio MD3",
+    "description": "Context menu item on links to model files."
+  },
+  "notifyKeptTitle": {
+    "message": "The browser kept this download",
+    "description": "Notification title when a captured download could not be handed over and the browser continued it."
+  },
+  "notifyNotSentTitle": {
+    "message": "Not sent to Bambu Studio MD3",
+    "description": "Notification title when a link from the context menu could not be handed over."
+  },
+  "notifyBody": {
+    "message": "$1: $2",
+    "description": "Notification text. $1 is the file name, $2 is the reason."
+  },
+  "reasonQueued": {
+    "message": "Bambu Studio MD3 has it and downloads nothing until you choose Start download there.",
+    "description": "Explains a successful handoff."
+  },
+  "reasonPauseFailed": {
+    "message": "The browser would not pause the download, so it carried on in the browser.",
+    "description": "Reason a download stayed in the browser."
+  },
+  "reasonHostMissing": {
+    "message": "Bambu Studio MD3's browser connection is not installed for this browser.",
+    "description": "Reason: the native messaging host is not registered."
+  },
+  "reasonHostForbidden": {
+    "message": "Bambu Studio MD3's browser connection does not accept this extension.",
+    "description": "Reason: the native messaging host does not list this extension ID."
+  },
+  "reasonHostExited": {
+    "message": "Bambu Studio MD3's browser connection closed without answering.",
+    "description": "Reason: the native messaging host exited before replying."
+  },
+  "reasonHostError": {
+    "message": "The browser could not talk to Bambu Studio MD3's browser connection.",
+    "description": "Reason: any other native messaging failure."
+  },
+  "reasonHostTimeout": {
+    "message": "Bambu Studio MD3 did not answer within 30 seconds.",
+    "description": "Reason: no reply before the time limit."
+  },
+  "reasonHostReply": {
+    "message": "Bambu Studio MD3 sent an answer this extension does not understand.",
+    "description": "Reason: the reply was malformed or named another download."
+  },
+  "reasonHostProtocol": {
+    "message": "This extension and Bambu Studio MD3 use different handoff versions. Update both.",
+    "description": "Reason: protocol version mismatch."
+  },
+  "reasonDeclinedBusy": {
+    "message": "Bambu Studio MD3 is busy and could not take the download.",
+    "description": "Reason: the application declined because it is busy."
+  },
+  "reasonDeclinedDisabled": {
+    "message": "Download capture is turned off in Bambu Studio MD3.",
+    "description": "Reason: the application has handoffs turned off."
+  },
+  "reasonDeclinedInvalid": {
+    "message": "Bambu Studio MD3 refused the download address.",
+    "description": "Reason: the application rejected the address."
+  },
+  "reasonDeclinedShuttingDown": {
+    "message": "Bambu Studio MD3 is closing.",
+    "description": "Reason: the application is shutting down."
+  },
+  "reasonDeclinedUnsupported": {
+    "message": "Bambu Studio MD3 cannot open this kind of file.",
+    "description": "Reason: the application does not open this file type."
+  },
+  "reasonDeclinedOther": {
+    "message": "Bambu Studio MD3 did not take the download.",
+    "description": "Reason: the application declined for a reason this extension does not know."
+  },
+  "reasonScheme": {
+    "message": "Only web addresses (http and https) can be handed over.",
+    "description": "Reason: the address is not http or https."
+  },
+  "reasonCredentials": {
+    "message": "The address contains a user name or password, so it was not handed over.",
+    "description": "Reason: the address carries credentials."
+  },
+  "reasonTooLong": {
+    "message": "The address is too long to hand over.",
+    "description": "Reason: the address is longer than 8192 characters."
+  },
+  "reasonNotModel": {
+    "message": "The link does not name a model file that Bambu Studio MD3 opens.",
+    "description": "Reason: the link is not a known model file."
+  },
+  "optionsHeading": {
+    "message": "Download capture settings",
+    "description": "Main heading of the settings page."
+  },
+  "optionsIntro": {
+    "message": "When a 3D model download starts in this browser, the extension pauses it and asks Bambu Studio MD3 to take it. The browser only cancels its own copy after Bambu Studio MD3 answers that it will ask you first: it names the file, the site and the folder, and downloads nothing until you choose Start download there. Any other answer, or no answer, lets the browser carry on.",
+    "description": "Introduction on the settings page."
+  },
+  "sectionConnection": {
+    "message": "Connection to Bambu Studio MD3",
+    "description": "Settings section heading."
+  },
+  "connectionUnknown": {
+    "message": "Not checked yet.",
+    "description": "Connection status before the first check."
+  },
+  "connectionChecking": {
+    "message": "Checking…",
+    "description": "Connection status while checking."
+  },
+  "connectionOk": {
+    "message": "Connected to $1 $2.",
+    "description": "Connection status. $1 is the application name, $2 its version."
+  },
+  "connectionFailed": {
+    "message": "Not connected. $1",
+    "description": "Connection status. $1 is the reason."
+  },
+  "checkConnection": {
+    "message": "Check connection",
+    "description": "Button that asks the native messaging host to answer."
+  },
+  "hostNameLabel": {
+    "message": "Browser connection name",
+    "description": "Label for the native messaging host name."
+  },
+  "extensionIdLabel": {
+    "message": "Extension ID",
+    "description": "Label for this extension's ID."
+  },
+  "copyExtensionId": {
+    "message": "Copy extension ID",
+    "description": "Button that copies the extension ID."
+  },
+  "copied": {
+    "message": "Copied.",
+    "description": "Status after copying."
+  },
+  "copyFailed": {
+    "message": "Could not copy. Select the ID and copy it yourself.",
+    "description": "Status when copying failed."
+  },
+  "sectionCapture": {
+    "message": "Capture",
+    "description": "Settings section heading."
+  },
+  "captureEnabled": {
+    "message": "Hand model downloads to Bambu Studio MD3",
+    "description": "Switch that turns automatic capture on or off."
+  },
+  "captureEnabledHelp": {
+    "message": "When this is off, every download stays in the browser. The link menu item still works.",
+    "description": "Help under the capture switch."
+  },
+  "fileTypesLegend": {
+    "message": "File types to hand over",
+    "description": "Group label for the file type checkboxes."
+  },
+  "fileTypesHelp": {
+    "message": "Drawings, scenes and G-code start off, because websites also offer them for other programs.",
+    "description": "Help under the file type checkboxes."
+  },
+  "type3mf": {
+    "message": "3MF projects and models (.3mf)",
+    "description": "File type checkbox."
+  },
+  "typeStl": {
+    "message": "STL models (.stl)",
+    "description": "File type checkbox."
+  },
+  "typeStep": {
+    "message": "STEP models (.step, .stp)",
+    "description": "File type checkbox."
+  },
+  "typeObj": {
+    "message": "OBJ models (.obj)",
+    "description": "File type checkbox."
+  },
+  "typeAmf": {
+    "message": "AMF models (.amf)",
+    "description": "File type checkbox."
+  },
+  "typeOltp": {
+    "message": "OLTP models (.oltp)",
+    "description": "File type checkbox."
+  },
+  "typeGcode": {
+    "message": "G-code files (.gcode)",
+    "description": "File type checkbox."
+  },
+  "typeSvg": {
+    "message": "SVG drawings (.svg)",
+    "description": "File type checkbox."
+  },
+  "typeGltf": {
+    "message": "glTF scenes (.gltf, .glb)",
+    "description": "File type checkbox."
+  },
+  "typeFbx": {
+    "message": "FBX scenes (.fbx)",
+    "description": "File type checkbox."
+  },
+  "excludedLabel": {
+    "message": "Never hand over downloads from these sites",
+    "description": "Label for the excluded sites text box."
+  },
+  "excludedHelp": {
+    "message": "One site per line, such as example.com. Start a line with *. to include every address under that site, such as *.example.com. Both the page's site and the file's site count.",
+    "description": "Help for the excluded sites text box."
+  },
+  "excludedInvalid": {
+    "message": "These lines are not sites and were not saved: $1",
+    "description": "Error under the excluded sites text box. $1 lists the rejected lines."
+  },
+  "saveSites": {
+    "message": "Save sites",
+    "description": "Button that saves the excluded sites."
+  },
+  "notifyOnFallback": {
+    "message": "Tell me when the browser keeps a download",
+    "description": "Checkbox for fallback notifications."
+  },
+  "sectionLanguage": {
+    "message": "Language",
+    "description": "Settings section heading."
+  },
+  "languageLabel": {
+    "message": "Language of this extension",
+    "description": "Label for the language list."
+  },
+  "languageAuto": {
+    "message": "Same as the browser",
+    "description": "Language choice that follows the browser's interface language."
+  },
+  "languageHelp": {
+    "message": "Browsers do not offer Cantonese as an interface language, so choose it here.",
+    "description": "Help under the language list."
+  },
+  "sectionRecent": {
+    "message": "Recent handoffs",
+    "description": "Settings section heading."
+  },
+  "recentHelp": {
+    "message": "The last 25 decisions, kept only in this browser.",
+    "description": "Help for the recent handoffs list."
+  },
+  "recentEmpty": {
+    "message": "Nothing has been handed over yet.",
+    "description": "Empty state of the recent handoffs list."
+  },
+  "clearRecent": {
+    "message": "Clear the list",
+    "description": "Button that clears the recent handoffs list."
+  },
+  "recentCleared": {
+    "message": "The list is clear.",
+    "description": "Status after clearing the list."
+  },
+  "colTime": {
+    "message": "Time",
+    "description": "Column heading."
+  },
+  "colFile": {
+    "message": "File",
+    "description": "Column heading."
+  },
+  "colSite": {
+    "message": "Site",
+    "description": "Column heading."
+  },
+  "colOutcome": {
+    "message": "Outcome",
+    "description": "Column heading."
+  },
+  "outcomeQueued": {
+    "message": "Handed to Bambu Studio MD3",
+    "description": "Outcome in the recent handoffs list."
+  },
+  "outcomeKept": {
+    "message": "Kept in the browser",
+    "description": "Outcome in the recent handoffs list."
+  },
+  "outcomeNotSent": {
+    "message": "Not sent",
+    "description": "Outcome in the recent handoffs list."
+  },
+  "originLink": {
+    "message": "From the link menu",
+    "description": "Marks a handoff that came from the context menu."
+  },
+  "saved": {
+    "message": "Saved.",
+    "description": "Status after a setting is saved."
+  },
+  "saveFailed": {
+    "message": "Could not save. $1",
+    "description": "Status when saving failed. $1 is the browser's error."
+  }
+}

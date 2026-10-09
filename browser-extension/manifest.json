@@ -1,0 +1,39 @@
+{
+  "manifest_version": 3,
+  "name": "__MSG_extName__",
+  "short_name": "__MSG_extShortName__",
+  "description": "__MSG_extDescription__",
+  "version": "1.0.0",
+  "default_locale": "en",
+  "minimum_chrome_version": "116",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAo5LzZKzfZJTwwuxR+rftho0WMzkWyPDrO7+CUSzFFrNY1h8BnG7xT265Yqervi3i0mBD4M6JeN4KEdK9nlE42NcYu/RNFmfuz34ovO5Wtk/6dJ+/YNvr+DfxIsKdvhautDrM+/W2t2errHQmOSLY7Pm4i/HG2i3JFa4uUC+lb/8WEHO5TWGMKgmmSJbY+n2N+wp+BNbDQJgaoaDXQbjW5KpOqpr+EICktFt/t8T6SySKLMpOZjt8U8iHeEFuoxt9/uA1jNEq6W6IzZBTc9q2H16TmU1JA96TyERIC8Hcnscuea2HJjFjbz5VUJEFYZRDv/vb/1eAHvPradE+uL9HUwIDAQAB",
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "action": {
+    "default_title": "__MSG_actionTitleOn__",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png"
+    }
+  },
+  "background": {
+    "service_worker": "service-worker.js",
+    "type": "module"
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
+  "incognito": "not_allowed",
+  "permissions": [
+    "contextMenus",
+    "downloads",
+    "nativeMessaging",
+    "notifications",
+    "storage"
+  ]
+}

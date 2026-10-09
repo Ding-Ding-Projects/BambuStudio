@@ -1,0 +1,326 @@
+{
+  "extName": {
+    "message": "Bambu Studio MD3 下載接手",
+    "description": "Extension name in the browser's extension list and on the settings page."
+  },
+  "extShortName": {
+    "message": "MD3 接手",
+    "description": "Short extension name where space is tight."
+  },
+  "extDescription": {
+    "message": "將 3D 模型下載交俾 Bambu Studio MD3，佢會先問過你先下載。",
+    "description": "Extension description in the browser's extension list."
+  },
+  "actionTitleOn": {
+    "message": "Bambu Studio MD3 下載接手開咗。㩒一下開設定。",
+    "description": "Toolbar button tooltip while capture is on."
+  },
+  "actionTitleOff": {
+    "message": "Bambu Studio MD3 下載接手關咗。㩒一下開設定。",
+    "description": "Toolbar button tooltip while capture is off."
+  },
+  "badgeOff": {
+    "message": "關",
+    "description": "Badge on the toolbar button while capture is off. Keep it to four characters or fewer."
+  },
+  "menuOpenLink": {
+    "message": "用 Bambu Studio MD3 開呢條連結",
+    "description": "Context menu item on links to model files."
+  },
+  "notifyKeptTitle": {
+    "message": "瀏覽器繼續處理呢個下載",
+    "description": "Notification title when a captured download could not be handed over and the browser continued it."
+  },
+  "notifyNotSentTitle": {
+    "message": "冇交到俾 Bambu Studio MD3",
+    "description": "Notification title when a link from the context menu could not be handed over."
+  },
+  "notifyBody": {
+    "message": "$1：$2",
+    "description": "Notification text. $1 is the file name, $2 is the reason."
+  },
+  "reasonQueued": {
+    "message": "Bambu Studio MD3 收到咗，喺嗰邊揀「開始下載」之前乜都唔會下載。",
+    "description": "Explains a successful handoff."
+  },
+  "reasonPauseFailed": {
+    "message": "瀏覽器唔肯暫停呢個下載，所以由瀏覽器繼續下載。",
+    "description": "Reason a download stayed in the browser."
+  },
+  "reasonHostMissing": {
+    "message": "呢個瀏覽器未裝 Bambu Studio MD3 嘅瀏覽器連接。",
+    "description": "Reason: the native messaging host is not registered."
+  },
+  "reasonHostForbidden": {
+    "message": "Bambu Studio MD3 嘅瀏覽器連接唔接受呢個擴充功能。",
+    "description": "Reason: the native messaging host does not list this extension ID."
+  },
+  "reasonHostExited": {
+    "message": "Bambu Studio MD3 嘅瀏覽器連接未回覆就關咗。",
+    "description": "Reason: the native messaging host exited before replying."
+  },
+  "reasonHostError": {
+    "message": "瀏覽器聯絡唔到 Bambu Studio MD3 嘅瀏覽器連接。",
+    "description": "Reason: any other native messaging failure."
+  },
+  "reasonHostTimeout": {
+    "message": "Bambu Studio MD3 喺 30 秒內冇回覆。",
+    "description": "Reason: no reply before the time limit."
+  },
+  "reasonHostReply": {
+    "message": "Bambu Studio MD3 嘅回覆，呢個擴充功能睇唔明。",
+    "description": "Reason: the reply was malformed or named another download."
+  },
+  "reasonHostProtocol": {
+    "message": "呢個擴充功能同 Bambu Studio MD3 用緊唔同版本嘅交接方式，兩樣都要更新。",
+    "description": "Reason: protocol version mismatch."
+  },
+  "reasonDeclinedBusy": {
+    "message": "Bambu Studio MD3 忙緊，接唔到呢個下載。",
+    "description": "Reason: the application declined because it is busy."
+  },
+  "reasonDeclinedDisabled": {
+    "message": "Bambu Studio MD3 入面關咗下載接手。",
+    "description": "Reason: the application has handoffs turned off."
+  },
+  "reasonDeclinedInvalid": {
+    "message": "Bambu Studio MD3 唔接受呢個下載地址。",
+    "description": "Reason: the application rejected the address."
+  },
+  "reasonDeclinedShuttingDown": {
+    "message": "Bambu Studio MD3 關緊。",
+    "description": "Reason: the application is shutting down."
+  },
+  "reasonDeclinedUnsupported": {
+    "message": "Bambu Studio MD3 開唔到呢類檔案。",
+    "description": "Reason: the application does not open this file type."
+  },
+  "reasonDeclinedOther": {
+    "message": "Bambu Studio MD3 冇接手呢個下載。",
+    "description": "Reason: the application declined for a reason this extension does not know."
+  },
+  "reasonScheme": {
+    "message": "淨係網址（http 同 https）先可以交接。",
+    "description": "Reason: the address is not http or https."
+  },
+  "reasonCredentials": {
+    "message": "呢個地址包含用戶名稱或者密碼，所以冇交出去。",
+    "description": "Reason: the address carries credentials."
+  },
+  "reasonTooLong": {
+    "message": "呢個地址太長，交接唔到。",
+    "description": "Reason: the address is longer than 8192 characters."
+  },
+  "reasonNotModel": {
+    "message": "呢條連結唔係 Bambu Studio MD3 開到嘅模型檔案。",
+    "description": "Reason: the link is not a known model file."
+  },
+  "optionsHeading": {
+    "message": "下載接手設定",
+    "description": "Main heading of the settings page."
+  },
+  "optionsIntro": {
+    "message": "呢個瀏覽器開始下載 3D 模型嗰陣，擴充功能會暫停下載，再叫 Bambu Studio MD3 接手。Bambu Studio MD3 要回覆話佢會先問你，瀏覽器先會取消自己嗰份：佢會講明檔案、網站同資料夾，你喺嗰邊揀「開始下載」之前乜都唔會下載。其他回覆、或者冇回覆，瀏覽器都會照下載落去。",
+    "description": "Introduction on the settings page."
+  },
+  "sectionConnection": {
+    "message": "同 Bambu Studio MD3 嘅連接",
+    "description": "Settings section heading."
+  },
+  "connectionUnknown": {
+    "message": "未檢查。",
+    "description": "Connection status before the first check."
+  },
+  "connectionChecking": {
+    "message": "檢查緊…",
+    "description": "Connection status while checking."
+  },
+  "connectionOk": {
+    "message": "連接咗 $1 $2。",
+    "description": "Connection status. $1 is the application name, $2 its version."
+  },
+  "connectionFailed": {
+    "message": "未連接。$1",
+    "description": "Connection status. $1 is the reason."
+  },
+  "checkConnection": {
+    "message": "檢查連接",
+    "description": "Button that asks the native messaging host to answer."
+  },
+  "hostNameLabel": {
+    "message": "瀏覽器連接名稱",
+    "description": "Label for the native messaging host name."
+  },
+  "extensionIdLabel": {
+    "message": "擴充功能 ID",
+    "description": "Label for this extension's ID."
+  },
+  "copyExtensionId": {
+    "message": "複製擴充功能 ID",
+    "description": "Button that copies the extension ID."
+  },
+  "copied": {
+    "message": "複製咗。",
+    "description": "Status after copying."
+  },
+  "copyFailed": {
+    "message": "複製唔到。請自己揀起個 ID 再複製。",
+    "description": "Status when copying failed."
+  },
+  "sectionCapture": {
+    "message": "接手",
+    "description": "Settings section heading."
+  },
+  "captureEnabled": {
+    "message": "將模型下載交俾 Bambu Studio MD3",
+    "description": "Switch that turns automatic capture on or off."
+  },
+  "captureEnabledHelp": {
+    "message": "關咗嘅話，所有下載都留喺瀏覽器。連結選單項目照用得。",
+    "description": "Help under the capture switch."
+  },
+  "fileTypesLegend": {
+    "message": "要交接嘅檔案類型",
+    "description": "Group label for the file type checkboxes."
+  },
+  "fileTypesHelp": {
+    "message": "圖樣、場景同 G-code 一開始係關咗嘅，因為網站都會為其他程式提供呢啲檔案。",
+    "description": "Help under the file type checkboxes."
+  },
+  "type3mf": {
+    "message": "3MF 項目同模型（.3mf）",
+    "description": "File type checkbox."
+  },
+  "typeStl": {
+    "message": "STL 模型（.stl）",
+    "description": "File type checkbox."
+  },
+  "typeStep": {
+    "message": "STEP 模型（.step、.stp）",
+    "description": "File type checkbox."
+  },
+  "typeObj": {
+    "message": "OBJ 模型（.obj）",
+    "description": "File type checkbox."
+  },
+  "typeAmf": {
+    "message": "AMF 模型（.amf）",
+    "description": "File type checkbox."
+  },
+  "typeOltp": {
+    "message": "OLTP 模型（.oltp）",
+    "description": "File type checkbox."
+  },
+  "typeGcode": {
+    "message": "G-code 檔案（.gcode）",
+    "description": "File type checkbox."
+  },
+  "typeSvg": {
+    "message": "SVG 圖樣（.svg）",
+    "description": "File type checkbox."
+  },
+  "typeGltf": {
+    "message": "glTF 場景（.gltf、.glb）",
+    "description": "File type checkbox."
+  },
+  "typeFbx": {
+    "message": "FBX 場景（.fbx）",
+    "description": "File type checkbox."
+  },
+  "excludedLabel": {
+    "message": "以下網站嘅下載永遠唔好交接",
+    "description": "Label for the excluded sites text box."
+  },
+  "excludedHelp": {
+    "message": "每行一個網站，例如 example.com。行頭寫 *. 就包埋嗰個網站下面所有地址，例如 *.example.com。網頁嘅網站同檔案嘅網站都計。",
+    "description": "Help for the excluded sites text box."
+  },
+  "excludedInvalid": {
+    "message": "以下幾行唔係網站，冇儲存：$1",
+    "description": "Error under the excluded sites text box. $1 lists the rejected lines."
+  },
+  "saveSites": {
+    "message": "儲存網站",
+    "description": "Button that saves the excluded sites."
+  },
+  "notifyOnFallback": {
+    "message": "瀏覽器繼續處理下載嗰陣通知我",
+    "description": "Checkbox for fallback notifications."
+  },
+  "sectionLanguage": {
+    "message": "語言",
+    "description": "Settings section heading."
+  },
+  "languageLabel": {
+    "message": "擴充功能用嘅語言",
+    "description": "Label for the language list."
+  },
+  "languageAuto": {
+    "message": "跟瀏覽器",
+    "description": "Language choice that follows the browser's interface language."
+  },
+  "languageHelp": {
+    "message": "瀏覽器介面冇廣東話可以揀，所以喺呢度揀。",
+    "description": "Help under the language list."
+  },
+  "sectionRecent": {
+    "message": "最近交接",
+    "description": "Settings section heading."
+  },
+  "recentHelp": {
+    "message": "最近 25 個決定，淨係儲喺呢個瀏覽器。",
+    "description": "Help for the recent handoffs list."
+  },
+  "recentEmpty": {
+    "message": "暫時未交接過任何嘢。",
+    "description": "Empty state of the recent handoffs list."
+  },
+  "clearRecent": {
+    "message": "清除列表",
+    "description": "Button that clears the recent handoffs list."
+  },
+  "recentCleared": {
+    "message": "列表清咗。",
+    "description": "Status after clearing the list."
+  },
+  "colTime": {
+    "message": "時間",
+    "description": "Column heading."
+  },
+  "colFile": {
+    "message": "檔案",
+    "description": "Column heading."
+  },
+  "colSite": {
+    "message": "網站",
+    "description": "Column heading."
+  },
+  "colOutcome": {
+    "message": "結果",
+    "description": "Column heading."
+  },
+  "outcomeQueued": {
+    "message": "交咗俾 Bambu Studio MD3",
+    "description": "Outcome in the recent handoffs list."
+  },
+  "outcomeKept": {
+    "message": "留喺瀏覽器",
+    "description": "Outcome in the recent handoffs list."
+  },
+  "outcomeNotSent": {
+    "message": "冇交出去",
+    "description": "Outcome in the recent handoffs list."
+  },
+  "originLink": {
+    "message": "由連結選單",
+    "description": "Marks a handoff that came from the context menu."
+  },
+  "saved": {
+    "message": "儲存咗。",
+    "description": "Status after a setting is saved."
+  },
+  "saveFailed": {
+    "message": "儲存唔到。$1",
+    "description": "Status when saving failed. $1 is the browser's error."
+  }
+}
